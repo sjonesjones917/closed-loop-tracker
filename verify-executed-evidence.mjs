@@ -27,6 +27,7 @@ const declaredVerifierInputs=[...new Set([...Object.values(verificationCatalog),
 const activeFixtureInputs=declaredVerifierInputs.filter(file=>file.startsWith('verification/')),activeHelperInputs=declaredVerifierInputs.filter(file=>!file.startsWith('verification/'));
 const expectedActiveFixtureInputs=[
   'verification/deferred-definition-compatibility-legacy-fixture-20261005.json',
+  'verification/deferred-definition-current-prerequisite-fixture-20261007.json',
   'verification/handoff-producer88-source-fixture-20261005.json',
   'verification/handoff-producer89-source-fixture-20261005.json',
   'verification/stage01-retained-capture-legacy-fixture-20261005.json'

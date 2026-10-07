@@ -21,6 +21,7 @@ const ANSWER_TYPES=schema.HUMAN_INPUT_ANSWER_TYPES;
 const RESPONSE_SCOPE_KEYS=Object.freeze(['projectRevision',...new Set(Object.values(schema.STAGE_OPERATION_SCOPE_MATRIX).flatMap(contract=>contract.requiredDimensions))]);
 
 const clone=workflow.clone;
+function cloneProject(project){const copied=typeof structuredClone==='function'?structuredClone(project):clone(project);globalThis.closedLoopPromptEngine?.copyRetainedPromptContextFiles?.(project,copied);return copied;}
 const now=workflow.now;
 const safe=workflow.safe;
 const upper=workflow.upper;
@@ -771,7 +772,7 @@ function planProposal(project,envelope,{rawRecord,promptRecord,validationRecord,
     evidenceRecord.fields.SHA256=evidenceRecord.SHA256=hash.sha256Text(String(evidenceRecord.CONTENT||''));evidenceRecord.sha256=hash.sha256Value(evidenceRecord.fields);
   }
   if(['failureTests','regressions'].some(family=>safe(canonicalRecords[family]).length)){
-    const projected=promoteVerifiedReturnedArtifacts(typeof structuredClone==='function'?structuredClone(project):clone(project),{stage:Number(envelope.stage),rawRecord,scope:envelope.scope||{}});
+    const projected=promoteVerifiedReturnedArtifacts(cloneProject(project),{stage:Number(envelope.stage),rawRecord,scope:envelope.scope||{}});
     const correctionTarget=promptRecord.contextManifest?.deferredDefinitionCorrectionTarget;
     if(correctionTarget){const state=workflow.deferredDefinitionCorrectionTargetState(project,correctionTarget,{stage:Number(envelope.stage),operation:envelope.operation});if(!state.valid)throw Object.assign(new Error(state.reasons.join(' ')),{code:'INVALID_DEFERRED_DEFINITION_CORRECTION_TARGET'});}
     projected.projectData.evidenceRecords.push(...clone(evidence));
@@ -847,7 +848,7 @@ function planProposal(project,envelope,{rawRecord,promptRecord,validationRecord,
   }
   if(schema.deferredExecutionFamily(Number(envelope.stage),envelope.operation)&&envelope.responseType==='DATA_PROPOSAL'){
     if(safe(canonicalRecords.regressionExecutions).length!==1)throw new Error('A deferred execution appends exactly one bound receipt.');
-    const projected=promoteVerifiedReturnedArtifacts(typeof structuredClone==='function'?structuredClone(project):clone(project),{stage:Number(envelope.stage),rawRecord,scope:envelope.scope||{}});
+    const projected=promoteVerifiedReturnedArtifacts(cloneProject(project),{stage:Number(envelope.stage),rawRecord,scope:envelope.scope||{}});
     workflow.normalizeDeferredReceipt(projected,Number(envelope.stage),envelope.operation,canonicalRecords.regressionExecutions[0],evidence,{binding:promptRecord?.contextManifest?.deferredExecutionBinding,receivedAt:rawRecord.createdAt});
   }
   for(const [collection,items] of Object.entries(canonicalRecords))for(const record of items){const def=schema.RECORD_SCHEMAS[collection];record.contentSha256=hash.contentRecordSha256(record,def.idField);record.recordSha256=hash.recordSha256(record);record.sha256=record.recordSha256;}
@@ -929,7 +930,7 @@ function stagedValidationPrompt(project,raw,prompt){
 // history. Use the same native clone boundary as canonical acceptance; byte and
 // revision validation remain unchanged and the source project stays untouched.
 function captureRaw(project,{stage,text,promptRecord,contextId='UNKNOWN',files=[],transport=null}={}){
-  const next=typeof structuredClone==='function'?structuredClone(project):clone(project);workflow.ensureShape(next);const stageNumber=Number(stage),prompt=promptRecordFor(next,promptRecord);
+  const next=cloneProject(project);workflow.ensureShape(next);const stageNumber=Number(stage),prompt=promptRecordFor(next,promptRecord);
   if(!Number.isInteger(stageNumber)||stageNumber<1||stageNumber>schema.STAGE_COUNT)throw new Error('A valid stage is required for raw capture.');if(!prompt)throw new Error('The controlling persisted prompt is required for raw capture.');
   const rawResponseId=workflow.allocateInfrastructureId(next,'RAW-RESPONSE','rawResponses'),outputId=workflow.allocateInfrastructureId(next,`STAGE-${String(stageNumber).padStart(2,'0')}-OUTPUT`,'generatedOutputs'),rawText=String(text??''),rawSha256=hash.rawResponseSha256(rawText),createdAt=now();
   const transportRecord=transport&&typeof transport==='object'?clone(transport):{authority:'NONAUTHORITATIVE_TEXT_FALLBACK',materializedAsResponseFile:true};if(Object.hasOwn(transportRecord,'archive')){const observation=schema.validateInboundResponseArchiveObservation(transportRecord.archive);if(!observation.valid||transportRecord.archive.selectionArtifactId!==transportRecord.recoverySelectionArtifactId)throw Object.assign(new Error('Inbound archive observation must preserve the exact original selection identity and registered byte/manifest metadata.'),{code:'INBOUND_ARCHIVE_OBSERVATION_INVALID'});}if(transportRecord?.sha256&&String(transportRecord.sha256)!==rawSha256)throw Object.assign(new Error('Decoded response text does not match the staged response-file SHA-256.'),{code:'RESPONSE_FILE_DECODE_HASH_MISMATCH'});const rawRecord={rawResponseId,outputId,jobId:next.job.JOB_ID,stage:stageNumber,role:globalThis.closedLoopCore?.STAGES?.[stageNumber-1]?.role||'UNKNOWN',contextId:prompt.scope?.contextId||contextId||'NOT APPLICABLE',runId:prompt.scope?.runId||'NOT APPLICABLE',iteration:prompt.scope?.iterationId||'NOT APPLICABLE',promptInstructionId:prompt.instructionId||prompt.promptId,promptBodySha256:prompt.bodySha256||prompt.sha256,promptContractSha256:prompt.contractSha256,promptContextSignature:prompt.contextSignature,promptScope:clone(prompt.scope||{}),createdAt,sha256:rawSha256,completeRawResponse:rawText,files:clone(files),transport:transportRecord,responseFileStagingId:transportRecord.stagingId||null,responseRawFilename:transportRecord.rawFilename||null,responseMediaType:transportRecord.mediaType||null,responseByteSize:Number.isFinite(Number(transportRecord.byteSize))?Number(transportRecord.byteSize):new TextEncoder().encode(rawText).byteLength,status:'PRESERVED',projectRevisionAtCapture:Number(next.revision||0)};
@@ -937,7 +938,7 @@ function captureRaw(project,{stage,text,promptRecord,contextId='UNKNOWN',files=[
 }
 
 function prepareCaptured(project,{rawResponseId,promptRecord=null,expectedCommittedRevision=null}={}){
-  const next=typeof structuredClone==='function'?structuredClone(project):clone(project);workflow.ensureShape(next);const rawRecord=findRaw(next,rawResponseId);if(!rawRecord)throw new Error('Preserved raw response does not exist.');
+  const next=cloneProject(project);workflow.ensureShape(next);const rawRecord=findRaw(next,rawResponseId);if(!rawRecord)throw new Error('Preserved raw response does not exist.');
   if(rawRecord.status!=='PRESERVED'&&rawRecord.status!=='VALIDATION_FAILED'&&rawRecord.status!=='VALIDATED_PENDING_REVIEW'){const priorReceipt=rawRecord.receiptId?findReceipt(next,rawRecord.receiptId):null,priorProposal=rawRecord.proposalId?findProposal(next,rawRecord.proposalId):null,priorValidation=rawRecord.validationId?findValidation(next,rawRecord.validationId):null;return {project:next,rawRecord,validation:priorValidation,proposal:priorProposal,receipt:priorReceipt,disposition:safe(next.projectData.responseDispositions).find(d=>d.rawResponseId===rawRecord.rawResponseId)||null,idempotent:true};}
   if(rawRecord.status==='VALIDATED_PENDING_REVIEW'&&rawRecord.proposalId){const proposal=findProposal(next,rawRecord.proposalId);try{ensureProposalCurrent(next,proposal);return {project:next,rawRecord,validation:findValidation(next,rawRecord.validationId),proposal,receipt:findReceipt(next,rawRecord.receiptId),idempotent:true};}catch{/* Revalidate stale saved work and retain its actual rejection. */}}
   const stageNumber=Number(rawRecord.stage),prompt=promptRecordFor(next,promptRecord||{instructionId:rawRecord.promptInstructionId});if(!prompt)throw new Error('The controlling persisted prompt is unavailable.');const rawText=String(rawRecord.completeRawResponse??'');
@@ -1061,7 +1062,7 @@ function assertAcceptanceConfirmation(project,proposalId,confirmation){
 
 function commit(project,proposalId,{operator='HUMAN_OPERATOR',reviewNote='Accepted after operator review.',humanAuthorityConfirmations=null,replacementConfirmation=null}={}){
   // Keep rollback isolation without materializing a project-sized JSON string.
-  const next=typeof structuredClone==='function'?structuredClone(project):clone(project);workflow.ensureShape(next);const proposal=findProposal(next,proposalId);if(!proposal)throw new Error('Response proposal does not exist.');if(['ACCEPTED','QUESTIONS_CREATED','BLOCKER_ACCEPTED','EXECUTION_FAILURE_ACCEPTED'].includes(proposal.status)){const existing=safe(next.projectData.responseDispositions).find(d=>d.proposalId===proposalId);return {project:next,acceptedChange:existing?.acceptedChangeId?safe(next.projectData.acceptedChanges).find(c=>c.changeId===existing.acceptedChangeId):null,disposition:existing,manifest:existing?.manifestId?safe(next.projectData.extractionManifests).find(m=>m.manifestId===existing.manifestId):null,receipt:findReceipt(next,proposal.receiptId),idempotent:true};}
+  const next=cloneProject(project);workflow.ensureShape(next);const proposal=findProposal(next,proposalId);if(!proposal)throw new Error('Response proposal does not exist.');if(['ACCEPTED','QUESTIONS_CREATED','BLOCKER_ACCEPTED','EXECUTION_FAILURE_ACCEPTED'].includes(proposal.status)){const existing=safe(next.projectData.responseDispositions).find(d=>d.proposalId===proposalId);return {project:next,acceptedChange:existing?.acceptedChangeId?safe(next.projectData.acceptedChanges).find(c=>c.changeId===existing.acceptedChangeId):null,disposition:existing,manifest:existing?.manifestId?safe(next.projectData.extractionManifests).find(m=>m.manifestId===existing.manifestId):null,receipt:findReceipt(next,proposal.receiptId),idempotent:true};}
   ensureProposalCurrent(next,proposal);const impact=assertAcceptanceConfirmation(next,proposalId,replacementConfirmation);const validation=findValidation(next,proposal.validationId);if(!validation?.valid)throw new Error('Only a fully valid response proposal can be committed.');const stage=Number(proposal.stage),stamp=now(),receipt=findReceipt(next,proposal.receiptId),raw=findRaw(next,proposal.rawResponseId);
   if(stage===21&&safe(raw?.files).some(file=>file.attachmentSlotId))workflow.assertOperationScope(next,stage,proposal.envelope.operation,proposal.envelope.scope);
   // Promote verified returned-byte metadata only inside the accepted transaction.
@@ -1134,7 +1135,7 @@ function recoverInvalidSemanticReviews(project,{owningTabInstance='APPLICATION'}
   const invalid=['semanticReviews','semanticChallenges'].flatMap(collection=>workflow.recordsForCurrentScope(project,collection).filter(r=>!schema.SEMANTIC_REVIEW_RESULT_VALUES.includes(String(workflow.recordValue(r,collection==='semanticChallenges'?'DISPOSITION':'RESULT')||''))));
   const changes=Array.from({length:schema.STAGE_COUNT},(_,i)=>workflow.acceptedChanges(project,i+1)).flat().filter(c=>invalid.some(r=>r.rawResponseId===c.rawResponseId));
   if(!changes.length)return {project,changed:false};
-  const next=typeof structuredClone==='function'?structuredClone(project):clone(project),recovered=[];
+  const next=cloneProject(project),recovered=[];
   for(const change of changes){if(!workflow.acceptedChanges(next,change.stage).some(c=>c.rawResponseId===change.rawResponseId))continue;
     const rows=invalid.filter(r=>r.rawResponseId===change.rawResponseId),reason=`Application contract repair: ${rows.length} recorded review findings used unsupported RESULT values or challenge dispositions. Return the complete review using ACCEPTED, REJECTED, PARTIAL, UNKNOWN, or DISAGREED. Reassess each original finding against its evidence; do not turn failed or unknown findings into approval to clear the gate.`;
     const event=workflow.invalidateAcceptedResponse(next,{stage:change.stage,rawResponseId:change.rawResponseId,reason,operatorLabel:'APPLICATION_CONTRACT_REPAIR'});recovered.push({stage:change.stage,rawResponseId:change.rawResponseId,eventId:event.eventId});

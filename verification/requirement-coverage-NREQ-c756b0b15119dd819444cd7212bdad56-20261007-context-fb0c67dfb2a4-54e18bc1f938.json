@@ -1,0 +1,132 @@
+{
+  "schema": "closed-loop-requirement-coverage-review/1",
+  "normativeRequirementId": "NREQ-c756b0b15119dd819444cd7212bdad56",
+  "sourceLineSha256": "3d14033f2bcab6a74bb1206dc1ffc21a22450ac131f2d2fdb084c28d43c05623",
+  "specificationSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
+  "declarationSha256": "fb0c67dfb2a427260e8f06a665608bcd938320f935a7bf2f67b12431d5f9b576",
+  "decision": "COMPLETE_COVERAGE",
+  "evidenceBasis": "EXTERNALLY_SUPPORTED",
+  "method": "The exact narrow controlling clause and unchanged proof decomposition were independently reviewed in the embedded original semantic assessment. Current production, verifier, fixture and catalog deltas were separately reviewed in the referenced source-delta review bundle. This is coverage-design evidence only: current frozen-source executed receipts remain independently required, and unsupported clauses are not promoted.",
+  "author": {
+    "actor": "Codex exact-source coverage renewal integrator",
+    "contextId": "/root"
+  },
+  "reviewer": {
+    "actor": "Codex independent verifier-context correction reviewer",
+    "contextId": "/root/pr_inventory_review"
+  },
+  "reviewedInputs": [
+    {
+      "declarationSha256": "fb0c67dfb2a427260e8f06a665608bcd938320f935a7bf2f67b12431d5f9b576"
+    },
+    {
+      "path": "hash.js",
+      "sha256": "a13cf57bd7c7414bc801f511d5937f80eaf7fd675c0e6c2b5a92b365df16e4d7"
+    },
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d"
+    },
+    {
+      "path": "verification-evidence-catalog.mjs",
+      "sha256": "84b51f38a50fb8169896008ab821c000e6dba8f6b0364576f2572c1a930c1930"
+    },
+    {
+      "path": "verification/current-source-delta-review-20261007.json",
+      "sha256": "45cca5871ac89cf1583a3825aec5a7d488d4d40dc70afb51a8534470dececf09"
+    },
+    {
+      "path": "verification/normative-context-applicability-20261005.json",
+      "sha256": "7cd05ff0028578a1ca1c2560533519a602ce6a974c240ee11dbbd272524cf656"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-c756b0b15119dd819444cd7212bdad56-20261005.json",
+      "sha256": "2022cbf17e50777b289e9e7dbc1fc2810ee54e99591fa96551f734bc97009255"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-c756b0b15119dd819444cd7212bdad56-20261006-followup-7456da2e55f4.json",
+      "sha256": "abd105a76cf8deff5197b2671c521dfa96d9baf99c3429ef41564b3f87f84073"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-c756b0b15119dd819444cd7212bdad56-20261006.json",
+      "sha256": "a6d0eb911a90e29d9cea72124c92d59ab6c4ce34e9fe146c9641a2be5b462b1c"
+    },
+    {
+      "path": "verifier-runtime.mjs",
+      "sha256": "8a4c9058b6c72a5aa8dd68809e3cbfd8e5c217b358c41970347443a338f83933"
+    },
+    {
+      "path": "verify-hash.mjs",
+      "sha256": "05e6cf685433a3314c777aa7734017e6e9d885779fb88b1fd920430f0c10a136"
+    },
+    {
+      "path": "workbook.js",
+      "sha256": "3a8098a9bb4ea108eadaa9bec90c76a1522f57f6465f45341cedf60937ddd008"
+    },
+    {
+      "path": "workflow-schema.js",
+      "sha256": "656e9e632cea3a60e1c7e0fb486e6630d205011d7db32d9674ac5e88593d24f1"
+    }
+  ],
+  "findings": [],
+  "reviewPerformed": true,
+  "sourceLocation": {
+    "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+    "startLine": 3029,
+    "endLine": 3029,
+    "lineSha256": "3d14033f2bcab6a74bb1206dc1ffc21a22450ac131f2d2fdb084c28d43c05623"
+  },
+  "controllingText": "- rejection of negative zero, NaN, Infinity, undefined, sparse holes, cyclic values, and implementation objects.",
+  "governingContext": [],
+  "additionalControllingContext": [],
+  "reviewedChecks": [
+    {
+      "suite": "verify-hash.mjs",
+      "checkId": "canonical.exact-serialization-controls"
+    }
+  ],
+  "scopeLimit": "The named serialization clause; Unicode normalization tables, all hash preimages and ID allocation remain separate obligations.",
+  "independentSemanticAssessment": {
+    "path": "/workspace/scratch/normative-review/root-37-semantic-review.json",
+    "sha256": "c2bcfc442003d363c9a1abb2430eaa67d8182d55a87c5c89288b36cf35f06c28",
+    "row": {
+      "normativeRequirementId": "NREQ-c756b0b15119dd819444cd7212bdad56",
+      "sourceLocation": {
+        "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "startLine": 3029,
+        "endLine": 3029,
+        "lineSha256": "3d14033f2bcab6a74bb1206dc1ffc21a22450ac131f2d2fdb084c28d43c05623"
+      },
+      "controllingText": "- rejection of negative zero, NaN, Infinity, undefined, sparse holes, cyclic values, and implementation objects.",
+      "activeDeclarationReview": {
+        "path": "verification/requirement-coverage-NREQ-c756b0b15119dd819444cd7212bdad56-20261006-followup-7456da2e55f4.json",
+        "sha256": "abd105a76cf8deff5197b2671c521dfa96d9baf99c3429ef41564b3f87f84073"
+      },
+      "decision": "DESIGN_ADEQUATE_FOR_EXACT_NARROW_CLAUSE",
+      "basis": "Reviewed hash.canonicalChunks and registeredSetSemantics ownership with verify-hash exact source-line observations. Literal independent object scalar ordering, array order/duplicates, CR/LF and composed/decomposed strings, every U+0000..001F escape, printable nonASCII, safe integer/tagged rational paths and prohibited values are checked. Set normalization requires named registration; no general array sorting inferred. Bounds/memory checks do not establish browser responsiveness.",
+      "executionStatus": "CURRENT_CANDIDATE_OWNING_RECEIPT_PENDING",
+      "findings": []
+    }
+  },
+  "priorReview": {
+    "path": "verification/requirement-coverage-NREQ-c756b0b15119dd819444cd7212bdad56-20261007-fb0c67dfb2a4.json",
+    "sha256": "b9c3e9cc4fd5ddce3ae1d285c6a35502deb92474892d3de16ca95d113f39bfc0",
+    "author": {
+      "actor": "Codex coordinated exact-clause renewal proposer",
+      "contextId": "/root/normative_review"
+    },
+    "reviewer": {
+      "actor": "Codex independent narrow declaration reviewer",
+      "contextId": "/root"
+    },
+    "reviewCompletedAt": "2026-10-07T01:21:18.248Z"
+  },
+  "reviewerPriorContributionDisclosure": "Reviewer authored only the conformanceSources registration of test-verifier-context-ui.mjs and test-prompt-context-storage.mjs. CI owner independently reviewed those additive source-input registrations. No runtime repair or owning behavioral test was authored by this reviewer in this correction chain.",
+  "currentExecutionRequired": true,
+  "applicationConformanceClaim": false,
+  "reviewCompletedAt": "2026-10-07T05:10:44.883240+00:00",
+  "currentDependencyDeltaReview": {
+    "path": "verification/current-source-delta-review-20261007.json",
+    "sha256": "45cca5871ac89cf1583a3825aec5a7d488d4d40dc70afb51a8534470dececf09"
+  }
+}

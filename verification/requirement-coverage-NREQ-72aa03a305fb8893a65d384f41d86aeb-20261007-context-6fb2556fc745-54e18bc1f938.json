@@ -1,0 +1,331 @@
+{
+  "schema": "closed-loop-requirement-coverage-review/1",
+  "normativeRequirementId": "NREQ-72aa03a305fb8893a65d384f41d86aeb",
+  "sourceLineSha256": "8ededc0484506b379333087aa41def4dc7f1fb6168b5f52ea3c4cf5079b26041",
+  "specificationSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
+  "declarationSha256": "6fb2556fc745f970470b2df3327107a4f3d18f28136b4720d7c36b8dda3ea1b3",
+  "decision": "COMPLETE_COVERAGE",
+  "evidenceBasis": "EXTERNALLY_SUPPORTED",
+  "method": "The exact narrow controlling clause and unchanged proof decomposition were independently reviewed in the embedded original semantic assessment. Current production, verifier, fixture and catalog deltas were separately reviewed in the referenced source-delta review bundle. This is coverage-design evidence only: current frozen-source executed receipts remain independently required, and unsupported clauses are not promoted.",
+  "author": {
+    "actor": "Codex exact-source coverage renewal integrator",
+    "contextId": "/root"
+  },
+  "reviewer": {
+    "actor": "Codex independent verifier-context correction reviewer",
+    "contextId": "/root/pr_inventory_review"
+  },
+  "reviewedInputs": [
+    {
+      "declarationSha256": "6fb2556fc745f970470b2df3327107a4f3d18f28136b4720d7c36b8dda3ea1b3"
+    },
+    {
+      "path": "app-core.js",
+      "sha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8"
+    },
+    {
+      "path": "hash.js",
+      "sha256": "a13cf57bd7c7414bc801f511d5937f80eaf7fd675c0e6c2b5a92b365df16e4d7"
+    },
+    {
+      "path": "index.html",
+      "sha256": "7ef019fa3ae9887d8ba2286731c5269083cbceae143892b5858db50c038d563a"
+    },
+    {
+      "path": "operator-browser-driver.mjs",
+      "sha256": "140e0c94b6b77294f7a2275026e6c1693811fc841f5232749a20660d332062ac"
+    },
+    {
+      "path": "operator-journey-fixtures.mjs",
+      "sha256": "73cca7813dfdca430c66e76487efc60b91cbf4642bfcd93b96f6bad2a9314c38"
+    },
+    {
+      "path": "project-store.js",
+      "sha256": "79213ca03e60d7fe0b2b1c7d17c42a99158c063de8e25b88136bd8aed89650bb"
+    },
+    {
+      "path": "prompt-engine.js",
+      "sha256": "61e363381dfb88fcfd32a176066762e2a37cf7b14fb9d39bff4eacf7e6d5706f"
+    },
+    {
+      "path": "response-ingestion.js",
+      "sha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5"
+    },
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d"
+    },
+    {
+      "path": "test-app-markup.mjs",
+      "sha256": "d72db0dc996779541d13f65aa2b8c42d9f744ac44a7e4837ce76d97fdfac369c"
+    },
+    {
+      "path": "test-artifact-fixtures.mjs",
+      "sha256": "d695e57716d9aef5ea7c5d96464ed9492ef036a4f759fff1b6147e0cae21c3b4"
+    },
+    {
+      "path": "test-backup-import-staging.mjs",
+      "sha256": "4a0073eedc1092ef2d673437f6ea789fd8ace4eb42d80e4b479fb72d28479e3f"
+    },
+    {
+      "path": "test-backup-staging-store.mjs",
+      "sha256": "ff495b1155c1990f0c7431e52aab035c64f46862571a8d7ad2ebe6c7598ea3d5"
+    },
+    {
+      "path": "test-fixtures.mjs",
+      "sha256": "666a66d54f5944eae28c608eb0d627aefe45972413b8f5ac004db306205f00c7"
+    },
+    {
+      "path": "test-handoff-authorization.mjs",
+      "sha256": "37bfb4e255afb6701fccaccdf055ee7961e838eaf03927c2963dfcf880cf82b6"
+    },
+    {
+      "path": "test-human-job-authority.mjs",
+      "sha256": "3b8db1e6efdbe38354951bc5aed5788f680518be52d0a6f0fbbf4f77f0bf015d"
+    },
+    {
+      "path": "test-human-job-controls.mjs",
+      "sha256": "ed5c7be79e2111667eeede3562115e396afaf0fc5d6a20236e668fe2c1ba7138"
+    },
+    {
+      "path": "test-inbound-response-archive.mjs",
+      "sha256": "fa564d46a7469f229e35528f29f5cd0da83e50381e549d00ac4c89291b791431"
+    },
+    {
+      "path": "test-ingestion-context-reference.mjs",
+      "sha256": "18e4446b5960a39981964a8c2fa80128fc10f6d1008d84111f418130b4d277ee"
+    },
+    {
+      "path": "test-ingestion-syntax-transport.mjs",
+      "sha256": "e6f0c330defc80309158dd2bf2fa229e8b2b96a2bb119b6a8f0bf9611a3785cb"
+    },
+    {
+      "path": "test-operator-safety-feedback.mjs",
+      "sha256": "a6e804b9b3f05952b6ceff89933b248b899dce50bed79039cb758998a4f91a45"
+    },
+    {
+      "path": "test-project-store-runtime.mjs",
+      "sha256": "563817f6d8256a0ea3ebbc1d8836b6c5887fa7275b0378ade657ecfb61f00eed"
+    },
+    {
+      "path": "test-reservation-scope-fixture.mjs",
+      "sha256": "cfe6f9fb9667170d311f971d79088bd7c44b14e00bb5d4f32a412c90e7554aff"
+    },
+    {
+      "path": "test-response-staging-recovery-ui.mjs",
+      "sha256": "216a44b3c901f9df403473871004290b24428b9dc1e000e332d3ad56d97e1f68"
+    },
+    {
+      "path": "test-response-type-boundaries.mjs",
+      "sha256": "795224a6d8b5a6c13a81dc69072ef511cac15c07e8d311c142bfed0ed8d3db8f"
+    },
+    {
+      "path": "test-retained-history-browser.mjs",
+      "sha256": "df87262003b9be6eaef9bdbc0278c9c51188d64b78d6c9dbedf9762b55124bc3"
+    },
+    {
+      "path": "test-returned-attachment-boundaries.mjs",
+      "sha256": "895a14cef6cbfb7850ef485d7ec909c326b47916b01e97bf43da09002460a820"
+    },
+    {
+      "path": "test-runtime.js",
+      "sha256": "e4e01a79c526592f9d044e2c104845e63c9aa341eb64837c138f5c3e3ecba353"
+    },
+    {
+      "path": "test-semantic-response-retries.mjs",
+      "sha256": "9bb4e549699694e3f9d7ad4ba46aaf500c80517c3df18ee9af67548fdbd33257"
+    },
+    {
+      "path": "test-zip.mjs",
+      "sha256": "b5080a8e58eb7b13f421ecce5c63a3d95b765a5b021f5bd4543dce28d171e89d"
+    },
+    {
+      "path": "verification-evidence-catalog.mjs",
+      "sha256": "84b51f38a50fb8169896008ab821c000e6dba8f6b0364576f2572c1a930c1930"
+    },
+    {
+      "path": "verification/current-source-delta-review-20261007.json",
+      "sha256": "45cca5871ac89cf1583a3825aec5a7d488d4d40dc70afb51a8534470dececf09"
+    },
+    {
+      "path": "verification/normative-context-applicability-20261005.json",
+      "sha256": "7cd05ff0028578a1ca1c2560533519a602ce6a974c240ee11dbbd272524cf656"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-72aa03a305fb8893a65d384f41d86aeb-20261005.json",
+      "sha256": "9ee3f927941cce713a6a5eb4b8dfa3e2bdb07c65da012ea33d769c8c1028b664"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-72aa03a305fb8893a65d384f41d86aeb-20261006-followup-4c8b0e401503.json",
+      "sha256": "414874782468c0bc197fc0e2295f7eb0e9b029225761c084e36a80278f78a6ed"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-72aa03a305fb8893a65d384f41d86aeb-20261006.json",
+      "sha256": "c8d9bd478f06d17145f2ae0ed8295c5b9f1769dee524e381432eb443796ff991"
+    },
+    {
+      "path": "verification/stage01-retained-capture-legacy-fixture-20261005.json",
+      "sha256": "8352b036eca02dfd86bb441df4ea3fe0ea54b9ad6bcaaee9a000219ddfae09c5"
+    },
+    {
+      "path": "verifier-runtime.mjs",
+      "sha256": "8a4c9058b6c72a5aa8dd68809e3cbfd8e5c217b358c41970347443a338f83933"
+    },
+    {
+      "path": "verify-browser-extra.mjs",
+      "sha256": "ded6caf799125c5a423da1863298679dc8d43633ad46d984b1e78f1c266f1e11"
+    },
+    {
+      "path": "verify-complete-operator-journey.mjs",
+      "sha256": "40173709f06b0a985ff8528c75d7aaeef6e24f25686adb17477d73dbceb1af48"
+    },
+    {
+      "path": "verify-conformance-regressions.mjs",
+      "sha256": "526c150869be212d2c76d29a80958ef56dd3eaa5c7aa336b5604262932b65c62"
+    },
+    {
+      "path": "verify-file-first-operator.mjs",
+      "sha256": "569822f6436034038775d3a62ab115e4a952bcd8e1d25397f0e87e8b8730c1ac"
+    },
+    {
+      "path": "verify-handoff-authorization-ui.mjs",
+      "sha256": "1013ed85e4682b74e2b9c93459971aece451285293e43e7d2570b78f6e6af299"
+    },
+    {
+      "path": "verify-ingestion.mjs",
+      "sha256": "f7b4aef437956f2593401cc1923bc48ed8127223467b91d71f83608f7fa1c285"
+    },
+    {
+      "path": "verify-operator-action-lifecycle.mjs",
+      "sha256": "145bcbf002337f8dcc9240fbffed2e0ce5a8f6e6a538c3aeeda15b07e556b086"
+    },
+    {
+      "path": "verify-reservation-contract.mjs",
+      "sha256": "8c26d4f085118e956af896460f5e05ad90398570736c0043a0a5378767721d86"
+    },
+    {
+      "path": "verify-response-contract-profile.mjs",
+      "sha256": "a925643310ee061f5de2e25481ab1a3e4bb4470d9fef4d5e58a1447ce9247ce6"
+    },
+    {
+      "path": "verify-retained-history-oracles.mjs",
+      "sha256": "a5b821d861295746c629fceedc52368ba98640e1d9231c1c149f36c6d26f18a6"
+    },
+    {
+      "path": "workbook.js",
+      "sha256": "3a8098a9bb4ea108eadaa9bec90c76a1522f57f6465f45341cedf60937ddd008"
+    },
+    {
+      "path": "workflow-engine.js",
+      "sha256": "16c2a16d61d6a462ecebd25cd7d530a3cce46e11c1d9f88664c2e9a27cf61295"
+    },
+    {
+      "path": "workflow-schema.js",
+      "sha256": "656e9e632cea3a60e1c7e0fb486e6630d205011d7db32d9674ac5e88593d24f1"
+    }
+  ],
+  "findings": [],
+  "reviewPerformed": true,
+  "sourceLocation": {
+    "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+    "startLine": 1443,
+    "endLine": 1443,
+    "lineSha256": "8ededc0484506b379333087aa41def4dc7f1fb6168b5f52ea3c4cf5079b26041"
+  },
+  "controllingText": "- stale iteration;",
+  "governingContext": [
+    {
+      "normativeRequirementId": "NREQ-6c392009e2925e9e3e3baaf1e42cbc93",
+      "sourceLineSha256": "a8a298876c99dfea0ed6a1c39c7a06c729213341e056ac22e85dc6ce6f53a8b0",
+      "controllingText": "17.5 Closed-schema rejection"
+    }
+  ],
+  "additionalControllingContext": [
+    {
+      "line": 1421,
+      "text": "The single ingestion path rejects before canonical mutation:",
+      "normativeRequirementId": "NREQ-f3c76d5b2691175b5c4f18f5b12f2892"
+    }
+  ],
+  "reviewedChecks": [
+    {
+      "suite": "verify-ingestion.mjs",
+      "checkId": "ingestion.scope-negative-population"
+    }
+  ],
+  "scopeLimit": "Machine transport identity boundary only; no universal agent semantic or reference-family guarantee.",
+  "independentSemanticAssessment": {
+    "path": "/workspace/scratch/stage-review/32-stage1-freshness-declaration-review.json",
+    "sha256": "6245f19b3f1bdb320025cf07f86f1fa4055328974855b0fd072d1af27c61078a",
+    "row": {
+      "normativeRequirementId": "NREQ-72aa03a305fb8893a65d384f41d86aeb",
+      "sourceLocation": {
+        "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "startLine": 1443,
+        "endLine": 1443,
+        "lineSha256": "8ededc0484506b379333087aa41def4dc7f1fb6168b5f52ea3c4cf5079b26041"
+      },
+      "controllingText": "- stale iteration;",
+      "activeReview": {
+        "path": "verification/requirement-coverage-NREQ-72aa03a305fb8893a65d384f41d86aeb-20261006-followup-4c8b0e401503.json",
+        "sha256": "414874782468c0bc197fc0e2295f7eb0e9b029225761c084e36a80278f78a6ed"
+      },
+      "scope": "At the one response ingestion boundary, a response changing iterationId away from the controlling current prompt scope is rejected with STALE_SCOPE at that exact /scope path before any accepted canonical change. The owning verifier independently supplies the stale identity and checks zero accepted changes; its conforming all-stage response controls remain required. This is transport-scope rejection, not proof that every downstream reference family or gate is correct.",
+      "checkIds": [
+        "ingestion.scope-negative-population"
+      ],
+      "productionOwners": [
+        {
+          "path": "response-ingestion.js",
+          "symbol": "validateEnvelope",
+          "sha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19",
+          "currentSha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19",
+          "hashMatches": true
+        },
+        {
+          "path": "workflow-schema.js",
+          "symbol": "STAGE_OPERATION_SCOPE_MATRIX",
+          "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8",
+          "currentSha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8",
+          "hashMatches": true
+        }
+      ],
+      "decision": "COVERAGE_DESIGN_SUFFICIENT_FOR_EXACT_SPECIFIED_BOUNDARY",
+      "rationale": "Current validateEnvelope compares every permitted/known scope echo to the issued/current operation scope after type validation. The owner changes one field in an otherwise admitted BLOCKED envelope to a different type-conforming value, requires STALE_SCOPE at that exact field, excludes WRONG_VALUE_TYPE as the intended cause, and asserts zero accepted changes. An independent fixed catalog requires all23 named stage/key controls (22keys), including nonrequired extra scope. This adequately tests the listed shared transport freshness prohibition; it does not prove all reference families, all state transitions, or whole-stage operation behavior.",
+      "exactCases": [
+        "scope.11.iterationId.iteration"
+      ],
+      "evidence": {
+        "kind": "REUSED_CURRENT_A194_OWNING_EXECUTION_RECEIPT",
+        "path": "/workspace/scratch/recovery/latest/evidence/receipts/verify-ingestion.mjs.json",
+        "sha256": "17b457294d8da3b93beefd9d136687d4a307c2f42a66fdf8ed0f44bb4e139e77",
+        "newOwnerRun": false,
+        "source": "a194ae7020c40bf27bb4d5d1c586d271d4c87e92"
+      },
+      "mutationsQualification": "Named invalid-input controls and carrier mutations, not a claim all implementation mutants were executed.",
+      "semanticOrPhysicalNonapplicability": "Only the deterministic producer/accounting/identity clause is covered. Related actual semantic actor, browser, persistence, physical-device and full-stage obligations remain separately tracked.",
+      "unresolvedDesignIssues": []
+    }
+  },
+  "priorReview": {
+    "path": "verification/requirement-coverage-NREQ-72aa03a305fb8893a65d384f41d86aeb-20261007-fef9393f9841.json",
+    "sha256": "100db00fe5e2ce35ab255481b461b3302b77b17801613d239e5524fde2aee0e8",
+    "author": {
+      "actor": "Codex coordinated exact-clause renewal proposer",
+      "contextId": "/root"
+    },
+    "reviewer": {
+      "actor": "Codex independent narrow declaration reviewer",
+      "contextId": "/root/stage_contract_review"
+    },
+    "reviewCompletedAt": "2026-10-07T01:21:18.248Z"
+  },
+  "reviewerPriorContributionDisclosure": "Reviewer authored only the conformanceSources registration of test-verifier-context-ui.mjs and test-prompt-context-storage.mjs. CI owner independently reviewed those additive source-input registrations. No runtime repair or owning behavioral test was authored by this reviewer in this correction chain.",
+  "currentExecutionRequired": true,
+  "applicationConformanceClaim": false,
+  "reviewCompletedAt": "2026-10-07T05:10:44.883240+00:00",
+  "currentDependencyDeltaReview": {
+    "path": "verification/current-source-delta-review-20261007.json",
+    "sha256": "45cca5871ac89cf1583a3825aec5a7d488d4d40dc70afb51a8534470dececf09"
+  }
+}

@@ -1,3 +1,4 @@
+import {verifyPromptContextStorage} from './test-prompt-context-storage.mjs';
 import {verifyArtifactByteSharing,verifyArtifactByteSharingFaultDetection} from './test-artifact-byte-sharing.mjs';
 import {verifyInboundArchiveParser} from './test-inbound-archive-parser.mjs';
 import assert from 'node:assert/strict';
@@ -131,3 +132,10 @@ const artifactByteSharing=await verifyArtifactByteSharing();
 console.log(JSON.stringify({artifactByteSharing:'PASS',...artifactByteSharing}));
 const artifactByteSharingFaults=await verifyArtifactByteSharingFaultDetection();
 console.log(JSON.stringify({artifactByteSharingFaults:'PASS',...artifactByteSharingFaults}));
+
+const promptContextStorage=await verifyPromptContextStorage(),promptContextStorageFaults=[];
+for(const [faultId,oracle] of [['omit-hydration','PROMPT_CONTEXT_STORAGE_COLD_READ_ORACLE'],['omit-ingestion-cache-transfer','PROMPT_CONTEXT_INGESTION_CAPTURE_CACHE_ORACLE']]){
+ await assert.rejects(()=>verifyPromptContextStorage({fault:faultId}),error=>error.code==='ERR_ASSERTION'&&error.message.includes(oracle),'PROMPT_CONTEXT_STORAGE_INTENDED_FAULT_ORACLE '+faultId);
+ promptContextStorageFaults.push({faultId,detected:true,oracle});
+}
+console.log(JSON.stringify({promptContextStorage:'PASS',...promptContextStorage,faults:promptContextStorageFaults}));

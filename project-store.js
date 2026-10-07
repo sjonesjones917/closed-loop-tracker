@@ -20,7 +20,7 @@ const META='meta';
 const LEGACY_KEYS=Object.freeze(['closed-loop-reliability-projects-v4','closed-loop-reliability-projects-v3','closed-loop-reliability-projects-v2','closed-loop-reliability-projects']);
 const STORE_KEY=LEGACY_KEYS[0];
 const hash=globalThis.closedLoopHash;
-const clone=value=>value===undefined?undefined:(typeof structuredClone==='function'?structuredClone(value):JSON.parse(JSON.stringify(value)));
+const clone=value=>{const copy=value===undefined?undefined:(typeof structuredClone==='function'?structuredClone(value):JSON.parse(JSON.stringify(value)));globalThis.closedLoopPromptEngine?.copyRetainedPromptContextFiles?.(value,copy);return copy;};
 // Readiness uses verified bytes from this storage context, never a persisted
 // success flag. Entries expire on observed byte changes and across tab changes.
 let artifactCustody=new Map();
@@ -45,13 +45,36 @@ async function observedArtifactDigest(row){
  if(observed&&observed.blob===row.blob&&observed.byteSize===row.blob.size&&observed.byteSize===row.byteSize&&observed.sha256===row.sha256)return observed.sha256;
  return hash.sha256Bytes(row.blob);
 }
+async function hydrateLegacyRunPromptContexts(project,recoveryArtifacts=null){
+ const prompts=globalThis.closedLoopPromptEngine,jobId=projectIdentity(project),texts=new Map(),observedEpoch=custodyEpoch,recoveryFiles=recoveryArtifacts&&new Map(recoveryArtifacts.map(row=>[row.artifactId,row]));
+ // Historical independence is assessed from the generation-time bytes. Read
+ // only the legacy run carriers that need those bytes, once per exact digest
+ // and length in this observation; never reconstruct them from today's state.
+ for(const record of project.projectData?.generatedPrompts||[]){
+  if(!prompts.requiresRetainedRunContext(record))continue;
+  const files=[];let unavailable=false;
+  for(const identity of record.contextManifest.promptContext.attachments){
+   const key=JSON.stringify([identity.sha256,identity.byteSize]);
+   if(!texts.has(key)){
+    try{
+     const file=recoveryFiles?await verifyPromptContextFile(identity,jobId,recoveryFiles.get(promptContextArtifactId(jobId,identity))):await readPromptContextFile(record,jobId,identity.path),bytes=await hash.readWithDeadline(file.blob.arrayBuffer(),'Reading saved instruction context');
+     let text;try{text=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(bytes);}catch{throw storageError('Exact saved context bytes are not valid UTF-8.','PROMPT_CONTEXT_INTEGRITY_FAILED');}
+     texts.set(key,text);
+    }catch(error){if(!['PROMPT_CONTEXT_INTEGRITY_FAILED','PROMPT_CONTEXT_NOT_AUTHORIZED'].includes(error.code))throw error;texts.set(key,null);}
+   }
+   const text=texts.get(key);if(text===null){unavailable=true;break;}files.push({...identity,text});
+  }
+  if(!unavailable&&(custodyInvalidations.get(String(jobId))||0)<=observedEpoch){try{prompts.retainPromptContextFiles(record,files);}catch(error){if(error.code!=='PROMPT_CONTEXT_INTEGRITY_FAILED')throw error;}}
+ }
+}
 async function observeProjectArtifactCustody(project){
  const engine=globalThis.closedLoopWorkflowEngine,jobId=projectIdentity(project);
  forgetArtifactCustody(jobId);
  // Reobserve current files and the exact retained attachments still used by
  // active canonical evidence. Historical failing executions keep their own
  // compatible scope; refreshing current custody must not erase that evidence.
- // Prompt contexts and unrelated history files remain verified by their readers.
+ // Legacy run contexts use their exact saved reader below. Unrelated history
+ // files remain verified only when their owning operation requests them.
  const artifactIds=new Set(engine.recordsForCurrentScope(project,'artifacts').map(record=>engine.recordId(record,'artifacts')));
  // Explicitly retained supplied input is still a current authorized input after
  // an objective correction. Reuse the intake owner rather than requiring its
@@ -78,6 +101,7 @@ async function observeProjectArtifactCustody(project){
   for(const entry of prompt?.contextManifest?.deferredDefinitionCorrectionInputs?.records||[])if(entry.family==='artifacts'&&engine.deferredDefinitionCorrectionInputState(project,prompt,'artifacts',entry.recordId,{subject,requireBytes:false}).allowed)artifactIds.add(entry.recordId);
  }
  for(const artifactId of artifactIds){try{await getArtifact(artifactId);}catch(error){if(!['ARTIFACT_BYTE_REFERENCE_INVALID','ARTIFACT_BYTES_UNAVAILABLE','ARTIFACT_LEGACY_BYTES_INVALID'].includes(error.code))throw error;/* Canonical metadata remains usable; missing/corrupt bytes confer no custody. Explicit reads and recovery diagnostics retain the precise failure. */}}
+ await hydrateLegacyRunPromptContexts(project);
 }
 function artifactCustodyState(identity){
  const verified=artifactCustody.get(custodyKey(identity.jobId,identity.artifactId));
@@ -436,6 +460,7 @@ async function writeOperationalProject(project,options={}){
   if(Number(next.revision)!==Number(prior.revision))throw storageError('An operational event cannot advance the canonical revision.','OPERATIONAL_OWNERSHIP_VIOLATION');
   const pendingArtifacts=await preparePendingReturnedArtifacts(next,prior,options.pendingArtifacts);
   if(projectSha256(next)===prior.projectSha256){if(pendingArtifacts.length)throw storageError('Pending returned files require their response mapping transaction.','PENDING_ARTIFACTS_WITHOUT_CHANGE');return prior;}
+  globalThis.closedLoopPromptEngine.copyRetainedPromptContextFiles(prior,next);
   globalThis.closedLoopWorkflowEngine.recalculate(next);assertOperationalChange(prior,next);assertProjectIntegrity(next);
   const digest=projectSha256(next);if(digest===prior.projectSha256){if(pendingArtifacts.length)throw storageError('Pending returned files require their response mapping transaction.','PENDING_ARTIFACTS_WITHOUT_CHANGE');return prior;}
   const retainedArtifacts=pendingArtifacts.length?await listArtifacts(id):null,byId=new Map((retainedArtifacts||[]).map(row=>[row.artifactId,row]));
@@ -1050,6 +1075,7 @@ async function decodeCheckpoint(jobId,entry,readFile=sha=>metaGet(historyFileKey
   // Ordinary History reads validate anew; no receipt survives an import.
   const projectionKey=validatedProjections?JSON.stringify([body.projectSha256,historyArtifactsSha256(artifacts)]):null;
   if(!validatedProjections?.has(projectionKey)){
+    await hydrateLegacyRunPromptContexts(body.project,artifacts);
     withVerifiedRecoveryCustody(artifacts,()=>assertRecoveryCompatibility(body.project));
     validatedProjections?.add(projectionKey);
   }
@@ -1843,6 +1869,7 @@ async function importPackage(blob,{operationId=null,passphrase=null,pendingBacku
   const manifest=body.packageManifest||{},manifestArtifacts=Array.isArray(manifest.artifacts)?manifest.artifacts:[],manifestIds=manifestArtifacts.map(a=>String(a?.artifactId||''));if(manifestIds.some(x=>!x)||new Set(manifestIds).size!==manifestIds.length)throw Object.assign(new Error('Package manifest contains a missing or duplicate artifact identity.'),{existingProjectsUnchanged:true});if(manifest.jobId!==id||Number(manifest.artifactCount)!==verifiedArtifacts.length||manifestArtifacts.length!==verifiedArtifacts.length||manifest.projectSha256!==projectSha256(project))throw Object.assign(new Error('Package manifest does not reconcile with the embedded project and artifacts.'),{existingProjectsUnchanged:true});
   const manifestById=new Map(manifestArtifacts.map(a=>[String(a.artifactId),a]));for(const a of verifiedArtifacts){const m=manifestById.get(String(a.artifactId));if(!m||m.sha256!==a.sha256||Number(m.byteSize)!==Number(a.byteSize)||m.filename!==a.filename||String(m.mediaType||'')!==String(a.mediaType||''))throw Object.assign(new Error(`Package manifest mismatch for artifact ${a.artifactId}.`),{existingProjectsUnchanged:true});}
   recoveryProjectionBounds.set(project,body.exportedAt);
+  await hydrateLegacyRunPromptContexts(project,verifiedArtifacts.filter(a=>!a.archiveKind));
   try{withVerifiedRecoveryCustody(verifiedArtifacts,()=>assertProjectIntegrity(project));assertPackageArtifactCustody(project,verifiedArtifacts);}catch(error){if(!withVerifiedRecoveryCustody(verifiedArtifacts,()=>historicalProjectionConsistent(project,error)||legacyJobPointerProjection(project)))throw Object.assign(error,{existingProjectsUnchanged:true});assertPackageArtifactCustody(project,verifiedArtifacts);}
   if(verifiedArtifacts.some(a=>a.archiveKind&&!['RECOVERY_BYTES','RECOVERY_SNAPSHOT'].includes(a.archiveKind)))throw storageError('Unknown recovery archive member.','HISTORY_VERSION_MISMATCH');
   const activeArtifacts=verifiedArtifacts.filter(a=>!a.archiveKind);await verifyOriginalSourceBindings(project,activeArtifacts,verifiedSources);const priorProject=await readProject(id);
@@ -1987,7 +2014,10 @@ async function readPromptContextFile(record,jobId,path='context.json'){
   const file=(record.contextManifest?.promptContext?.attachments||[]).find(file=>file.path===path);
   if(!file)throw storageError('The instruction does not authorize this context file.','PROMPT_CONTEXT_NOT_AUTHORIZED');
   let stored;try{stored=await readArtifactRow(promptContextArtifactId(jobId,file),{allowOccurrenceSizeMismatch:true});}catch(error){if(!['ARTIFACT_BYTE_REFERENCE_INVALID','ARTIFACT_BYTES_UNAVAILABLE','ARTIFACT_LEGACY_BYTES_INVALID'].includes(error.code))throw error;throw storageError('Exact saved context bytes failed read-back verification.','PROMPT_CONTEXT_INTEGRITY_FAILED');}
-  if(!stored||String(stored.jobId)!==String(jobId)||stored.blob.size!==file.byteSize||stored.sha256!==file.sha256||await observedArtifactDigest(stored)!==file.sha256)throw storageError('Exact saved context bytes failed read-back verification.','PROMPT_CONTEXT_INTEGRITY_FAILED');
+  return verifyPromptContextFile(file,jobId,stored);
+}
+async function verifyPromptContextFile(file,jobId,stored){
+  if(!stored||String(stored.jobId)!==String(jobId)||!(stored.blob instanceof Blob)||stored.blob.size!==file.byteSize||stored.sha256!==file.sha256||await observedArtifactDigest(stored)!==file.sha256)throw storageError('Exact saved context bytes failed read-back verification.','PROMPT_CONTEXT_INTEGRITY_FAILED');
   return {...file,blob:stored.blob};
 }
 

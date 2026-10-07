@@ -1,0 +1,209 @@
+{
+  "schema": "closed-loop-requirement-coverage-review/1",
+  "normativeRequirementId": "NREQ-5811c65fa83521ee7afeedd602cec806",
+  "sourceLineSha256": "18224b9976a791263c28459c906bb3d02f552f2a08271c984890d13a137175c6",
+  "specificationSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
+  "declarationSha256": "60e25b364eb4ac2844630b117f34c0de7fa258e7f7b81d6aed1284368f99c009",
+  "decision": "COMPLETE_COVERAGE",
+  "evidenceBasis": "EXTERNALLY_SUPPORTED",
+  "method": "The exact narrow controlling clause and unchanged proof decomposition were independently reviewed in the embedded original semantic assessment. Current production, verifier, fixture and catalog deltas were separately reviewed in the referenced source-delta review bundle. This is coverage-design evidence only: current frozen-source executed receipts remain independently required, and unsupported clauses are not promoted.",
+  "author": {
+    "actor": "Codex exact-source coverage renewal integrator",
+    "contextId": "/root"
+  },
+  "reviewer": {
+    "actor": "Codex independent verifier-context correction reviewer",
+    "contextId": "/root/pr_inventory_review"
+  },
+  "reviewedInputs": [
+    {
+      "declarationSha256": "60e25b364eb4ac2844630b117f34c0de7fa258e7f7b81d6aed1284368f99c009"
+    },
+    {
+      "path": "app-core.js",
+      "sha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8"
+    },
+    {
+      "path": "hash.js",
+      "sha256": "a13cf57bd7c7414bc801f511d5937f80eaf7fd675c0e6c2b5a92b365df16e4d7"
+    },
+    {
+      "path": "project-store.js",
+      "sha256": "79213ca03e60d7fe0b2b1c7d17c42a99158c063de8e25b88136bd8aed89650bb"
+    },
+    {
+      "path": "prompt-engine.js",
+      "sha256": "61e363381dfb88fcfd32a176066762e2a37cf7b14fb9d39bff4eacf7e6d5706f"
+    },
+    {
+      "path": "response-ingestion.js",
+      "sha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5"
+    },
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d"
+    },
+    {
+      "path": "test-backup-capacity-roundtrip.mjs",
+      "sha256": "6222a2467d95ea84c452eb9505852c2aa817b5e38071d4b74796fb94e512cc94"
+    },
+    {
+      "path": "test-canonical-field-integrity.mjs",
+      "sha256": "4007b3d29127189806f1d723730f08ab87168255a61c3293111746951db204be"
+    },
+    {
+      "path": "test-handoff-authorization.mjs",
+      "sha256": "37bfb4e255afb6701fccaccdf055ee7961e838eaf03927c2963dfcf880cf82b6"
+    },
+    {
+      "path": "test-migration-source-retention.mjs",
+      "sha256": "46758013d469fe70cab397662b5cad6d181e5bc5258da325e8c21581e6054d41"
+    },
+    {
+      "path": "test-project-store-runtime.mjs",
+      "sha256": "563817f6d8256a0ea3ebbc1d8836b6c5887fa7275b0378ade657ecfb61f00eed"
+    },
+    {
+      "path": "test-runtime.js",
+      "sha256": "e4e01a79c526592f9d044e2c104845e63c9aa341eb64837c138f5c3e3ecba353"
+    },
+    {
+      "path": "test-specification-field-registry.mjs",
+      "sha256": "064ebc232eaa07ce51587de4233e075c97824b15b953f1f7d925195f6d0f7f05"
+    },
+    {
+      "path": "verification-evidence-catalog.mjs",
+      "sha256": "84b51f38a50fb8169896008ab821c000e6dba8f6b0364576f2572c1a930c1930"
+    },
+    {
+      "path": "verification/current-source-delta-review-20261007.json",
+      "sha256": "45cca5871ac89cf1583a3825aec5a7d488d4d40dc70afb51a8534470dececf09"
+    },
+    {
+      "path": "verification/normative-context-applicability-20261005.json",
+      "sha256": "7cd05ff0028578a1ca1c2560533519a602ce6a974c240ee11dbbd272524cf656"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-5811c65fa83521ee7afeedd602cec806-20261005.json",
+      "sha256": "da13dd891eee2a6152e90d010263131dbff0fea903629790a0fea5bace1dca42"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-5811c65fa83521ee7afeedd602cec806-20261006-followup-fe65bb9312b0.json",
+      "sha256": "08c0ce36ae81eb9bbd1d53a9c7658f692d184ae38a3782d8143462ebcdefdb70"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-5811c65fa83521ee7afeedd602cec806-20261006.json",
+      "sha256": "1cfd2a935bf7ca6c320f293d3fd476e6d5c4bf36282b8eaa0dbe7af43cec4e4b"
+    },
+    {
+      "path": "verifier-runtime.mjs",
+      "sha256": "8a4c9058b6c72a5aa8dd68809e3cbfd8e5c217b358c41970347443a338f83933"
+    },
+    {
+      "path": "verify-conformance-regressions.mjs",
+      "sha256": "526c150869be212d2c76d29a80958ef56dd3eaa5c7aa336b5604262932b65c62"
+    },
+    {
+      "path": "verify-v3-migration.mjs",
+      "sha256": "4436683fdbc009fa70dd1266eab9bf0968dfe2b1002ce5e3b0328d82e925800a"
+    },
+    {
+      "path": "workbook.js",
+      "sha256": "3a8098a9bb4ea108eadaa9bec90c76a1522f57f6465f45341cedf60937ddd008"
+    },
+    {
+      "path": "workflow-engine.js",
+      "sha256": "16c2a16d61d6a462ecebd25cd7d530a3cce46e11c1d9f88664c2e9a27cf61295"
+    },
+    {
+      "path": "workflow-schema.js",
+      "sha256": "656e9e632cea3a60e1c7e0fb486e6630d205011d7db32d9674ac5e88593d24f1"
+    }
+  ],
+  "findings": [],
+  "reviewPerformed": true,
+  "sourceLocation": {
+    "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+    "startLine": 922,
+    "endLine": 922,
+    "lineSha256": "18224b9976a791263c28459c906bb3d02f552f2a08271c984890d13a137175c6"
+  },
+  "controllingText": "- all 30 stages;",
+  "governingContext": [],
+  "additionalControllingContext": [],
+  "reviewedChecks": [
+    {
+      "suite": "verify-v3-migration.mjs",
+      "checkId": "migration.current-profile"
+    }
+  ],
+  "scopeLimit": "Final reviewed core/schema migration and exercised production transaction-adapter startup boundaries; no native-prefix browser/deployed proof inference.",
+  "independentSemanticAssessment": {
+    "path": "/workspace/scratch/normative-review/24-declaration-semantic-review.json",
+    "sha256": "5440a66128d087b55a4d858ea0149fd024916806fa7d0ea9c23b6d0243f480ac",
+    "row": {
+      "normativeRequirementId": "NREQ-5811c65fa83521ee7afeedd602cec806",
+      "sourceLocation": {
+        "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "startLine": 922,
+        "endLine": 922,
+        "lineSha256": "18224b9976a791263c28459c906bb3d02f552f2a08271c984890d13a137175c6"
+      },
+      "controllingText": "- all 30 stages;",
+      "review": {
+        "path": "verification/requirement-coverage-NREQ-5811c65fa83521ee7afeedd602cec806-20261006-followup-fe65bb9312b0.json",
+        "sha256": "08c0ce36ae81eb9bbd1d53a9c7658f692d184ae38a3782d8143462ebcdefdb70"
+      },
+      "checkIds": [
+        "migration.current-profile"
+      ],
+      "status": "NARROW_COVERAGE_DESIGN_REVIEWED_NO_GAP_FOUND",
+      "rationale": "Source13 parent908 requires preservation, and927 independently prohibits old responses from gating. Tests compare opaque nested extension values, raw string/envelope, exactly30 stages, and entire original parsed payload with operational:false; invalid claimed prior audit and legacy status cannot discard incoming original. These declarations prove only their small exact clauses; original lexical bytes/storage/restore and all other migration entries require their separate evidence. New source-reference representation directly affects source-retention reader and must preserve independent exact-byte expectations.",
+      "reviewedSourceInputs": [
+        {
+          "path": "workflow-schema.js",
+          "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
+        },
+        {
+          "path": "workbook.js",
+          "sha256": "3a8098a9bb4ea108eadaa9bec90c76a1522f57f6465f45341cedf60937ddd008"
+        },
+        {
+          "path": "verify-v3-migration.mjs",
+          "sha256": "b2380efea8896ac027976ca73e13b907d21468140f8a7ba1da3c778fc519ffc7"
+        },
+        {
+          "path": "test-migration-source-retention.mjs",
+          "sha256": "8a6bea20773ebedb5bab61744bc541d4f64d60d69c2cd466380aff5c7ea90c78"
+        },
+        {
+          "path": "verification-evidence-catalog.mjs",
+          "sha256": "e6378e7747ba860e5312a813c55625748d2fbaee5f2838d8ee4e97349ba4640f"
+        }
+      ],
+      "executedCurrentProducerByThisReview": false,
+      "fullApplicationConformanceClaim": false
+    }
+  },
+  "priorReview": {
+    "path": "verification/requirement-coverage-NREQ-5811c65fa83521ee7afeedd602cec806-20261007-60e25b364eb4.json",
+    "sha256": "eccd268c3a8323fb58ad94d5a6e8f8963a0a80bde6bad5d5539d03ed9a51535a",
+    "author": {
+      "actor": "Codex coordinated exact-clause renewal proposer",
+      "contextId": "/root"
+    },
+    "reviewer": {
+      "actor": "Codex independent narrow declaration reviewer",
+      "contextId": "/root/normative_review"
+    },
+    "reviewCompletedAt": "2026-10-07T01:21:18.248Z"
+  },
+  "reviewerPriorContributionDisclosure": "Reviewer authored only the conformanceSources registration of test-verifier-context-ui.mjs and test-prompt-context-storage.mjs. CI owner independently reviewed those additive source-input registrations. No runtime repair or owning behavioral test was authored by this reviewer in this correction chain.",
+  "currentExecutionRequired": true,
+  "applicationConformanceClaim": false,
+  "reviewCompletedAt": "2026-10-07T05:10:44.883240+00:00",
+  "currentDependencyDeltaReview": {
+    "path": "verification/current-source-delta-review-20261007.json",
+    "sha256": "45cca5871ac89cf1583a3825aec5a7d488d4d40dc70afb51a8534470dececf09"
+  }
+}

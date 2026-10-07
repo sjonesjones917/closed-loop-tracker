@@ -1,0 +1,182 @@
+{
+  "schema": "closed-loop-requirement-coverage-review/1",
+  "normativeRequirementId": "NREQ-b366c2ac73e0e846627de23589a5a772",
+  "sourceLineSha256": "b0dd669ce7d101830eb3ef3eb6500a313e0dfc2c4d463f02366ea4c22dccd9f7",
+  "specificationSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
+  "declarationSha256": "a26853843e415b3cbf6d242b8a391f05b66f4caa4a21e2f65590592009e2db30",
+  "decision": "COMPLETE_COVERAGE",
+  "evidenceBasis": "EXTERNALLY_SUPPORTED",
+  "method": "The exact narrow controlling clause and unchanged proof decomposition were independently reviewed in the embedded original semantic assessment. Current production, verifier, fixture and catalog deltas were separately reviewed in the referenced source-delta review bundle. This is coverage-design evidence only: current frozen-source executed receipts remain independently required, and unsupported clauses are not promoted.",
+  "author": {
+    "actor": "Codex exact-source coverage renewal integrator",
+    "contextId": "/root"
+  },
+  "reviewer": {
+    "actor": "Codex independent verifier-context correction reviewer",
+    "contextId": "/root/pr_inventory_review"
+  },
+  "reviewedInputs": [
+    {
+      "declarationSha256": "a26853843e415b3cbf6d242b8a391f05b66f4caa4a21e2f65590592009e2db30"
+    },
+    {
+      "path": "app-core.js",
+      "sha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8"
+    },
+    {
+      "path": "hash.js",
+      "sha256": "a13cf57bd7c7414bc801f511d5937f80eaf7fd675c0e6c2b5a92b365df16e4d7"
+    },
+    {
+      "path": "project-store.js",
+      "sha256": "79213ca03e60d7fe0b2b1c7d17c42a99158c063de8e25b88136bd8aed89650bb"
+    },
+    {
+      "path": "prompt-engine.js",
+      "sha256": "61e363381dfb88fcfd32a176066762e2a37cf7b14fb9d39bff4eacf7e6d5706f"
+    },
+    {
+      "path": "response-ingestion.js",
+      "sha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5"
+    },
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d"
+    },
+    {
+      "path": "test-fixtures.mjs",
+      "sha256": "666a66d54f5944eae28c608eb0d627aefe45972413b8f5ac004db306205f00c7"
+    },
+    {
+      "path": "test-handoff-authorization.mjs",
+      "sha256": "37bfb4e255afb6701fccaccdf055ee7961e838eaf03927c2963dfcf880cf82b6"
+    },
+    {
+      "path": "test-project-store-runtime.mjs",
+      "sha256": "563817f6d8256a0ea3ebbc1d8836b6c5887fa7275b0378ade657ecfb61f00eed"
+    },
+    {
+      "path": "test-runtime-operation-registry.mjs",
+      "sha256": "8892e1f7aea7a6565af693233fe802785d8dbcabee972c6b61890a66a02f233e"
+    },
+    {
+      "path": "test-runtime.js",
+      "sha256": "e4e01a79c526592f9d044e2c104845e63c9aa341eb64837c138f5c3e3ecba353"
+    },
+    {
+      "path": "verification-evidence-catalog.mjs",
+      "sha256": "84b51f38a50fb8169896008ab821c000e6dba8f6b0364576f2572c1a930c1930"
+    },
+    {
+      "path": "verification/current-source-delta-review-20261007.json",
+      "sha256": "45cca5871ac89cf1583a3825aec5a7d488d4d40dc70afb51a8534470dececf09"
+    },
+    {
+      "path": "verification/deferred-definition-compatibility-legacy-fixture-20261005.json",
+      "sha256": "d7a1b076de3d301ee108660c1e7ea5dafdf4e630e202f2c498d32c30d3f72bb1"
+    },
+    {
+      "path": "verification/normative-context-applicability-20261005.json",
+      "sha256": "7cd05ff0028578a1ca1c2560533519a602ce6a974c240ee11dbbd272524cf656"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-b366c2ac73e0e846627de23589a5a772-20261005.json",
+      "sha256": "14540e1076a650867f82059eb28ce39747cc5ca48591c4f58b853b8ac140159e"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-b366c2ac73e0e846627de23589a5a772-20261006-followup-fc08a3accbcd.json",
+      "sha256": "eedf9f7c0ebf6556008895c6f4c4717cd064500070f2f98129295dfbb6322350"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-b366c2ac73e0e846627de23589a5a772-20261006.json",
+      "sha256": "817584bc66d445538651d001fe7e7d4927dd4f7865f2dcd2601ba37fd05f9cd4"
+    },
+    {
+      "path": "verifier-runtime.mjs",
+      "sha256": "8a4c9058b6c72a5aa8dd68809e3cbfd8e5c217b358c41970347443a338f83933"
+    },
+    {
+      "path": "verify-test-runtime-v3.mjs",
+      "sha256": "4a86e7340d01ad8ccafc364fa0784f01a49583ab6423a65323f625c09424a971"
+    },
+    {
+      "path": "workbook.js",
+      "sha256": "3a8098a9bb4ea108eadaa9bec90c76a1522f57f6465f45341cedf60937ddd008"
+    },
+    {
+      "path": "workflow-engine.js",
+      "sha256": "16c2a16d61d6a462ecebd25cd7d530a3cce46e11c1d9f88664c2e9a27cf61295"
+    },
+    {
+      "path": "workflow-schema.js",
+      "sha256": "656e9e632cea3a60e1c7e0fb486e6630d205011d7db32d9674ac5e88593d24f1"
+    }
+  ],
+  "findings": [],
+  "reviewPerformed": true,
+  "sourceLocation": {
+    "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+    "startLine": 1858,
+    "endLine": 1858,
+    "lineSha256": "b0dd669ce7d101830eb3ef3eb6500a313e0dfc2c4d463f02366ea4c22dccd9f7"
+  },
+  "controllingText": "- UNIQUE",
+  "governingContext": [
+    {
+      "normativeRequirementId": "NREQ-658c71fb2e3992ee94fb6b4ecedc1681",
+      "sourceLineSha256": "e6081e1fc0a5cdd4edf6d99920c352c45cd10859b8a8c6458c3c752855e6d1db",
+      "controllingText": "21.4 Required primitives"
+    }
+  ],
+  "additionalControllingContext": [],
+  "reviewedChecks": [
+    {
+      "suite": "verify-test-runtime-v3.mjs",
+      "checkId": "test-ir.operation-registry-admission"
+    }
+  ],
+  "scopeLimit": "Primitive existence/basic declared semantics; no full Test IR safety or every-input parser correctness claim.",
+  "independentSemanticAssessment": {
+    "path": "/workspace/scratch/normative-review/root-37-semantic-review.json",
+    "sha256": "c2bcfc442003d363c9a1abb2430eaa67d8182d55a87c5c89288b36cf35f06c28",
+    "row": {
+      "normativeRequirementId": "NREQ-b366c2ac73e0e846627de23589a5a772",
+      "sourceLocation": {
+        "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "startLine": 1858,
+        "endLine": 1858,
+        "lineSha256": "b0dd669ce7d101830eb3ef3eb6500a313e0dfc2c4d463f02366ea4c22dccd9f7"
+      },
+      "controllingText": "- UNIQUE",
+      "activeDeclarationReview": {
+        "path": "verification/requirement-coverage-NREQ-b366c2ac73e0e846627de23589a5a772-20261006-followup-fc08a3accbcd.json",
+        "sha256": "eedf9f7c0ebf6556008895c6f4c4717cd064500070f2f98129295dfbb6322350"
+      },
+      "decision": "DESIGN_ADEQUATE_FOR_EXACT_NARROW_CLAUSE",
+      "basis": "Compared all27 source-listed primitive names against OP_DEFINITIONS/PORT_CONTRACTS and execute switch. The owning test constructs one explicit DAG containing all27, uses independent literal expected outputs and node:crypto hash, tests malformed JSON/XML, compares prior/current execution, and fails early if any assertion violates. This covers the narrow primitive-support list item; separate parser, resource, isolation and semantic requirements remain separately accountable.",
+      "executionStatus": "CURRENT_CANDIDATE_OWNING_RECEIPT_PENDING",
+      "findings": []
+    }
+  },
+  "priorReview": {
+    "path": "verification/requirement-coverage-NREQ-b366c2ac73e0e846627de23589a5a772-20261007-a26853843e41.json",
+    "sha256": "9fca9940d15578c3a0b62dc11612653f60a0f653b7e89159fb3da12dbe185989",
+    "author": {
+      "actor": "Codex coordinated exact-clause renewal proposer",
+      "contextId": "/root/normative_review"
+    },
+    "reviewer": {
+      "actor": "Codex independent narrow declaration reviewer",
+      "contextId": "/root"
+    },
+    "reviewCompletedAt": "2026-10-07T01:21:18.248Z"
+  },
+  "reviewerPriorContributionDisclosure": "Reviewer authored only the conformanceSources registration of test-verifier-context-ui.mjs and test-prompt-context-storage.mjs. CI owner independently reviewed those additive source-input registrations. No runtime repair or owning behavioral test was authored by this reviewer in this correction chain.",
+  "currentExecutionRequired": true,
+  "applicationConformanceClaim": false,
+  "reviewCompletedAt": "2026-10-07T05:10:44.883240+00:00",
+  "currentDependencyDeltaReview": {
+    "path": "verification/current-source-delta-review-20261007.json",
+    "sha256": "45cca5871ac89cf1583a3825aec5a7d488d4d40dc70afb51a8534470dececf09"
+  }
+}

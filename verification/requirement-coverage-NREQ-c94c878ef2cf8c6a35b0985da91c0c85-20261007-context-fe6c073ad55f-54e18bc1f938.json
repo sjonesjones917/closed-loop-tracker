@@ -1,0 +1,238 @@
+{
+  "schema": "closed-loop-requirement-coverage-review/1",
+  "normativeRequirementId": "NREQ-c94c878ef2cf8c6a35b0985da91c0c85",
+  "sourceLineSha256": "81e2f80bd8992d1328c44a89fd0c5e5bc19f1046c9bb0f959e63730d2ed4c487",
+  "specificationSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
+  "declarationSha256": "fe6c073ad55f40831bb495222406fb733cec2946ba3bf47c138039368d26cfe4",
+  "decision": "COMPLETE_COVERAGE",
+  "evidenceBasis": "EXTERNALLY_SUPPORTED",
+  "method": "The exact narrow controlling clause and unchanged proof decomposition were independently reviewed in the embedded original semantic assessment. Current production, verifier, fixture and catalog deltas were separately reviewed in the referenced source-delta review bundle. This is coverage-design evidence only: current frozen-source executed receipts remain independently required, and unsupported clauses are not promoted.",
+  "author": {
+    "actor": "Codex exact-source coverage renewal integrator",
+    "contextId": "/root"
+  },
+  "reviewer": {
+    "actor": "Codex independent verifier-context correction reviewer",
+    "contextId": "/root/pr_inventory_review"
+  },
+  "reviewedInputs": [
+    {
+      "declarationSha256": "fe6c073ad55f40831bb495222406fb733cec2946ba3bf47c138039368d26cfe4"
+    },
+    {
+      "path": "app-core.js",
+      "sha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8"
+    },
+    {
+      "path": "hash.js",
+      "sha256": "a13cf57bd7c7414bc801f511d5937f80eaf7fd675c0e6c2b5a92b365df16e4d7"
+    },
+    {
+      "path": "project-store.js",
+      "sha256": "79213ca03e60d7fe0b2b1c7d17c42a99158c063de8e25b88136bd8aed89650bb"
+    },
+    {
+      "path": "prompt-engine.js",
+      "sha256": "61e363381dfb88fcfd32a176066762e2a37cf7b14fb9d39bff4eacf7e6d5706f"
+    },
+    {
+      "path": "response-ingestion.js",
+      "sha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5"
+    },
+    {
+      "path": "specification/closed-loop-normative-requirements.json",
+      "sha256": "97b43f690b60219d67f498459439bce30416650b9f26c46c34a89b972a13929f"
+    },
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d"
+    },
+    {
+      "path": "specification/closed-loop-specification-manifest.json",
+      "sha256": "651e71dffee949524793d50195d4958a777dc7392cb31f40b5975079a846b258"
+    },
+    {
+      "path": "specification/requirement-evidence-bindings.json",
+      "sha256": "9c4631c86ccd2d8234f23469ffc7e11374bcda51eb4bb1f27c1f4a97ade7b72e"
+    },
+    {
+      "path": "test-due-verification-scheduling.mjs",
+      "sha256": "d3fc5cc1c2d7e86cffe73028a50cb840229b54285f1e88473e64ff7f5d802f33"
+    },
+    {
+      "path": "test-ingestion-context-reference.mjs",
+      "sha256": "18e4446b5960a39981964a8c2fa80128fc10f6d1008d84111f418130b4d277ee"
+    },
+    {
+      "path": "test-normative-catalog-consumers.mjs",
+      "sha256": "6c14d578e5d70351f30288c9182ca9f6cbfcced5ec35e230167b22874a202044"
+    },
+    {
+      "path": "test-project-store-runtime.mjs",
+      "sha256": "563817f6d8256a0ea3ebbc1d8836b6c5887fa7275b0378ade657ecfb61f00eed"
+    },
+    {
+      "path": "test-runtime.js",
+      "sha256": "e4e01a79c526592f9d044e2c104845e63c9aa341eb64837c138f5c3e3ecba353"
+    },
+    {
+      "path": "test-staging-safe-cleanup.mjs",
+      "sha256": "68b0bbe312782d3d32633dac52fdc97f7f4207897833d46003569b0426c23b64"
+    },
+    {
+      "path": "test-startup-storage-boundaries.mjs",
+      "sha256": "e773e6573a490461833943d5c83ea30484323ac01f09c40ef4e1894a36466e11"
+    },
+    {
+      "path": "verification-evidence-catalog.mjs",
+      "sha256": "84b51f38a50fb8169896008ab821c000e6dba8f6b0364576f2572c1a930c1930"
+    },
+    {
+      "path": "verification-evidence-preload.mjs",
+      "sha256": "3c7835db4197c92c07dc83abae8f1f63bf1815d389d9f8392e08096093d92ffa"
+    },
+    {
+      "path": "verification/current-source-delta-review-20261007.json",
+      "sha256": "45cca5871ac89cf1583a3825aec5a7d488d4d40dc70afb51a8534470dececf09"
+    },
+    {
+      "path": "verification/normative-context-applicability-20261005.json",
+      "sha256": "7cd05ff0028578a1ca1c2560533519a602ce6a974c240ee11dbbd272524cf656"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-c94c878ef2cf8c6a35b0985da91c0c85-20261006-followup-b1fe67c0903e.json",
+      "sha256": "567dc2dbf936a04cc275e213efe3328cdb7949f57df45f0cb8174731037339d9"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-c94c878ef2cf8c6a35b0985da91c0c85-20261006.json",
+      "sha256": "bf9dbb1993a2b8ca9c7699e5407e612b15cdd183ae35d00d0ee9b283d2b0c189"
+    },
+    {
+      "path": "verifier-runtime.mjs",
+      "sha256": "8a4c9058b6c72a5aa8dd68809e3cbfd8e5c217b358c41970347443a338f83933"
+    },
+    {
+      "path": "verify-conformance-regressions.mjs",
+      "sha256": "526c150869be212d2c76d29a80958ef56dd3eaa5c7aa336b5604262932b65c62"
+    },
+    {
+      "path": "verify-integrity-recovery-faults.mjs",
+      "sha256": "9b5770fa7fb2bef7e20754cfefd54471d98bcfff5cbf0ec7facf1e85bee8a181"
+    },
+    {
+      "path": "verify-project-lifecycle-full.mjs",
+      "sha256": "4f11056968dc3696e8d61bf9f59363c129342ba91d599a1491ba77a1f592f789"
+    },
+    {
+      "path": "verify-project-lifecycle.mjs",
+      "sha256": "4842f20f99c8663890ab6539bc6a8a69c3c6ba62c235e5c600abe1445715aa93"
+    },
+    {
+      "path": "verify-quarantine-recovery.mjs",
+      "sha256": "16a10823e793b2023b59621ac688d94fe637c68cb454c5383219c49fe44f596d"
+    },
+    {
+      "path": "verify-workflow-focus.mjs",
+      "sha256": "31f0a501b34d1a8566f0d06a3d14d3c4657b904c4453ec076aa8d0b25014fafe"
+    },
+    {
+      "path": "workbook.js",
+      "sha256": "3a8098a9bb4ea108eadaa9bec90c76a1522f57f6465f45341cedf60937ddd008"
+    },
+    {
+      "path": "workflow-engine.js",
+      "sha256": "16c2a16d61d6a462ecebd25cd7d530a3cce46e11c1d9f88664c2e9a27cf61295"
+    },
+    {
+      "path": "workflow-schema.js",
+      "sha256": "656e9e632cea3a60e1c7e0fb486e6630d205011d7db32d9674ac5e88593d24f1"
+    }
+  ],
+  "findings": [],
+  "reviewPerformed": true,
+  "sourceLocation": {
+    "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+    "startLine": 3088,
+    "endLine": 3088,
+    "lineSha256": "81e2f80bd8992d1328c44a89fd0c5e5bc19f1046c9bb0f959e63730d2ed4c487"
+  },
+  "controllingText": "A mismatch quarantines the project.",
+  "governingContext": [],
+  "additionalControllingContext": [],
+  "reviewedChecks": [
+    {
+      "suite": "verify-quarantine-recovery.mjs",
+      "checkId": "store.hash-mismatch-quarantine"
+    },
+    {
+      "suite": "verify-project-lifecycle.mjs",
+      "checkId": "lifecycle.complete-report-population"
+    }
+  ],
+  "scopeLimit": "Finite production storage/transaction-adapter mismatch controls; no actual IndexedDB/browser concurrency, whole recovery action set, all damaged object shapes, UI/device acceptance or full application conformance claim.",
+  "independentSemanticAssessment": {
+    "path": "/workspace/scratch/normative-review/24-declaration-semantic-review.json",
+    "sha256": "5440a66128d087b55a4d858ea0149fd024916806fa7d0ea9c23b6d0243f480ac",
+    "row": {
+      "normativeRequirementId": "NREQ-c94c878ef2cf8c6a35b0985da91c0c85",
+      "sourceLocation": {
+        "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "startLine": 3088,
+        "endLine": 3088,
+        "lineSha256": "81e2f80bd8992d1328c44a89fd0c5e5bc19f1046c9bb0f959e63730d2ed4c487"
+      },
+      "controllingText": "A mismatch quarantines the project.",
+      "review": {
+        "path": "verification/requirement-coverage-NREQ-c94c878ef2cf8c6a35b0985da91c0c85-20261006-followup-b1fe67c0903e.json",
+        "sha256": "567dc2dbf936a04cc275e213efe3328cdb7949f57df45f0cb8174731037339d9"
+      },
+      "checkIds": [
+        "store.hash-mismatch-quarantine",
+        "lifecycle.complete-report-population"
+      ],
+      "status": "NARROW_COVERAGE_DESIGN_REVIEWED_NO_GAP_FOUND",
+      "rationale": "Owning read recomputes canonical hash before normalization; quarantine transaction preserves exact corrupt row and Blob bytes, removes active source, records catalog. Tests independently decode raw export, preserve valid checkpoint/control, and interrupt quarantine without losing source. Active-row exclusion is linked to lifecycle population. Full UI/recovery action coverage not claimed.",
+      "reviewedSourceInputs": [
+        {
+          "path": "project-store.js",
+          "sha256": "2d6896f47164f4a232c631d949cce64d2200e6d4e2202c2c3cdb29b08648cdf2"
+        },
+        {
+          "path": "verify-quarantine-recovery.mjs",
+          "sha256": "12a0dd0dfc01dc04b16915681c92967c30557ca8a5e626f1ce0b1ee57cce79cf"
+        },
+        {
+          "path": "verify-project-lifecycle.mjs",
+          "sha256": "4842f20f99c8663890ab6539bc6a8a69c3c6ba62c235e5c600abe1445715aa93"
+        },
+        {
+          "path": "verification-evidence-catalog.mjs",
+          "sha256": "e6378e7747ba860e5312a813c55625748d2fbaee5f2838d8ee4e97349ba4640f"
+        }
+      ],
+      "executedCurrentProducerByThisReview": false,
+      "fullApplicationConformanceClaim": false
+    }
+  },
+  "priorReview": {
+    "path": "verification/requirement-coverage-NREQ-c94c878ef2cf8c6a35b0985da91c0c85-20261007-93ccf52a7420.json",
+    "sha256": "ab636f69e934e282fa128b907a77bddfce7df4967ddaf076f2e2049c29bb7cdf",
+    "author": {
+      "actor": "Codex coordinated exact-clause renewal proposer",
+      "contextId": "/root"
+    },
+    "reviewer": {
+      "actor": "Codex independent narrow declaration reviewer",
+      "contextId": "/root/normative_review"
+    },
+    "reviewCompletedAt": "2026-10-07T01:21:18.248Z"
+  },
+  "reviewerPriorContributionDisclosure": "Reviewer authored only the conformanceSources registration of test-verifier-context-ui.mjs and test-prompt-context-storage.mjs. CI owner independently reviewed those additive source-input registrations. No runtime repair or owning behavioral test was authored by this reviewer in this correction chain.",
+  "currentExecutionRequired": true,
+  "applicationConformanceClaim": false,
+  "reviewCompletedAt": "2026-10-07T05:10:44.883240+00:00",
+  "currentDependencyDeltaReview": {
+    "path": "verification/current-source-delta-review-20261007.json",
+    "sha256": "45cca5871ac89cf1583a3825aec5a7d488d4d40dc70afb51a8534470dececf09"
+  }
+}

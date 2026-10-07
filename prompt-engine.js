@@ -9,11 +9,14 @@ const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/90';
 const SCOPED_REVIEW_PROMPT_VERSION='closed-loop-prompt-engine/91';
 const PREFLIGHT_COMPLETION_PROMPT_VERSION='closed-loop-prompt-engine/92';
 const EXTERNAL_RESULT_PROMPT_VERSION='closed-loop-prompt-engine/93';
+const INDEPENDENT_RUN_PROMPT_VERSION='closed-loop-prompt-engine/94';
+const INDEPENDENT_RUN_CONTEXT_VERSION='closed-loop-independent-run-context/1';
+function independentRunContextRole(stage,operation){const number=Number(stage);return [11,17,19].includes(number)&&operation==='EXECUTE_RUN'?'EXECUTION':[12,17,19].includes(number)&&operation==='VERIFY'?'VERIFICATION':null;}
 function externalResultCompletionPolicy(stage,operation){
   const policy=schema.EXTERNAL_RESULT_COMPLETION_POLICY,collections=schema.operationContract(Number(stage),String(operation))?.agentWritableCollections||[];
   return policy&&collections.some(collection=>policy.collections.includes(collection))?policy:null;
 }
-function versionFor(stage,operation){return Number(stage)===9&&String(operation)==='COMPLETE'?PREFLIGHT_COMPLETION_PROMPT_VERSION:externalResultCompletionPolicy(stage,operation)?EXTERNAL_RESULT_PROMPT_VERSION:(Number(stage)===1&&['SEMANTIC_CHALLENGE','RECONCILE_INTAKE'].includes(String(operation)))||(Number(stage)===3&&String(operation)==='SEMANTIC_CHALLENGE')?SCOPED_REVIEW_PROMPT_VERSION:PROMPT_ENGINE_VERSION;}
+function versionFor(stage,operation){return independentRunContextRole(stage,operation)?INDEPENDENT_RUN_PROMPT_VERSION:Number(stage)===9&&String(operation)==='COMPLETE'?PREFLIGHT_COMPLETION_PROMPT_VERSION:externalResultCompletionPolicy(stage,operation)?EXTERNAL_RESULT_PROMPT_VERSION:(Number(stage)===1&&['SEMANTIC_CHALLENGE','RECONCILE_INTAKE'].includes(String(operation)))||(Number(stage)===3&&String(operation)==='SEMANTIC_CHALLENGE')?SCOPED_REVIEW_PROMPT_VERSION:PROMPT_ENGINE_VERSION;}
 const RETURNED_FILE_LIMITS=schema.RETURNED_FILE_LIMITS;
 const PROMPT_INLINE_LIMITS=Object.freeze({version:'PROMPT_INLINE_LIMITS/1',maxMemberBytes:65536,maxAggregateBytes:262144});
 const promptContextFiles=new WeakMap();
@@ -83,10 +86,50 @@ function compactContextManifest(manifest){
   manifest.externalizedContextDigests=digests;
 }
 
+// Storage may restore immutable generation-time bytes to the existing cache.
+// A legacy independence check must never reconstruct a historical instruction
+// through today's gates or current context projection.
+function promptContextCacheBinding(record){
+  return JSON.stringify([record?.instructionId,record?.promptId,record?.jobId,record?.stage,record?.operation,record?.promptEngineVersion,record?.bodySha256,record?.contextSignature,record?.scopeSha256,record?.scope,record?.prompt,record?.contextManifest]);
+}
+function cachedPromptContextFiles(record){
+  const entry=promptContextFiles.get(record);
+  return entry&&entry.binding===promptContextCacheBinding(record)?entry.files:null;
+}
+function retainPromptContextFiles(record,files){
+  const fail=message=>{throw Object.assign(new Error(message),{code:'PROMPT_CONTEXT_INTEGRITY_FAILED'});};
+  const expected=safe(record?.contextManifest?.promptContext?.attachments);
+  if(!record||typeof record!=='object'||!Array.isArray(files)||files.length!==expected.length)fail('Exact saved prompt context file membership is required.');
+  const retained=expected.map(identity=>{
+    const matches=files.filter(file=>file.path===identity.path);
+    if(matches.length!==1)fail('Exact saved prompt context file membership is required.');
+    const file=matches[0];
+    if(['filename','mediaType','sha256','byteSize'].some(key=>file[key]!==identity[key])||typeof file.text!=='string'||hash.sha256Text(file.text)!==identity.sha256||new TextEncoder().encode(file.text).length!==identity.byteSize)fail('Saved prompt context bytes do not match their immutable manifest.');
+    return Object.freeze({...identity,text:file.text});
+  });
+  promptContextFiles.set(record,{binding:promptContextCacheBinding(record),files:Object.freeze(retained)});
+}
+function requiresRetainedRunContext(record){
+  return Boolean(independentRunContextRole(record?.stage,record?.operation)&&safe(record?.contextManifest?.promptContext?.attachments).length&&!(record.contextManifest?.independentRunContextVersion===INDEPENDENT_RUN_CONTEXT_VERSION&&record.promptEngineVersion===versionFor(record.stage,record.operation)));
+}
+// Cloning canonical state must preserve privately retained exact bytes without
+// adding them to canonical JSON or regenerating historical context. Only known
+// project/prompt carriers are traversed; arbitrary project data is untouched.
+function copyRetainedPromptContextFiles(from,to,seen=new WeakMap()){
+  if(!from||!to||typeof from!=='object'||typeof to!=='object')return;
+  let targets=seen.get(from);if(targets?.has(to))return;
+  if(!targets){targets=new WeakSet();seen.set(from,targets);}targets.add(to);
+  const entry=promptContextFiles.get(from);
+  if(entry&&entry.binding===promptContextCacheBinding(from)&&entry.binding===promptContextCacheBinding(to))promptContextFiles.set(to,entry);
+  if(Array.isArray(from)&&Array.isArray(to)){for(let i=0;i<from.length;i++)copyRetainedPromptContextFiles(from[i],to[i],seen);return;}
+  if(from.project&&to.project)copyRetainedPromptContextFiles(from.project,to.project,seen);
+  if(from.projectData?.generatedPrompts&&to.projectData?.generatedPrompts)copyRetainedPromptContextFiles(from.projectData.generatedPrompts,to.projectData.generatedPrompts,seen);
+  else if(from.generatedPrompts&&to.generatedPrompts)copyRetainedPromptContextFiles(from.generatedPrompts,to.generatedPrompts,seen);
+}
 function materializePromptContextFiles(record,state){
   const expected=record?.contextManifest?.promptContext?.attachments||[];
   if(!expected.length)return [];
-  let files=promptContextFiles.get(record);
+  let files=cachedPromptContextFiles(record);
   if(!files){
     if(!state)throw new Error('Exact prompt context bytes are unavailable.');
     files=transportedBody(Number(record.stage),state,record.operation,record.scope,safe(record.contextManifest?.blindAliasMap),record.contextManifest?.deferredDefinitionCorrectionTarget||null).files;
@@ -237,7 +280,25 @@ const procedureAugmentation=Object.freeze({
 });
 const procedures=Object.freeze(Object.fromEntries(Object.entries(stageSpecial).map(([stage,text])=>[stage,procedureAugmentation[stage]?`${text} ${procedureAugmentation[stage]}`:text])));
 function selectedContextRecords(state,collection,scope={}){const list=safe(state?.projectData?.[collection]).filter(record=>record?.active!==false&&!record?.invalidatedBy),keys=['inputVersion','sourceSetVersion','researchVersion','requirementsVersion','testSuiteVersion','instructionVersion','iterationId','candidateId','runId','contextId','baselineId','productId'],inputVersions=new Map(),policy=schema.RECORD_SCHEMAS?.[collection]?.commitPolicy,scoped=['REPLACE_CURRENT_STAGE_SET','APPEND_SCOPED','UPDATE_RESERVED','APPLICATION_DERIVED'].includes(policy);return list.filter(record=>{const rs=record?.scope||{};if(scoped&&!Object.keys(rs).length)return false;for(const key of keys){const owner=Number(record.stage||schema.RECORD_SCHEMAS[collection]?.stage||state.activeStage);if(key==='inputVersion'&&!inputVersions.has(owner))inputVersions.set(owner,workflow.inputVersionForStage(state,owner));const expected=key==='inputVersion'?inputVersions.get(owner):scope?.[key];if(expected===undefined||expected===null||expected==='')continue;const actual=rs?.[key];if(actual!==undefined&&actual!==null&&actual!==''&&String(actual)!==String(expected))return false;}if(collection==='runs'&&scope.runId&&recordId(record,'runs')!==String(scope.runId))return false;if(collection==='freshContexts'&&scope.contextId&&recordId(record,'freshContexts')!==String(scope.contextId))return false;return true;});}
-function verificationBatchPlan(stage,state,operation,scope={}){const applicable=stage===12||((stage===17||stage===19)&&operation==='VERIFY');if(!applicable||!scope.iterationId)return null;const matrix=workflow.verificationMatrix(state,scope.iterationId),limit=Math.max(1,Number(schema.STAGE_CONTRACTS[stage]?.resourceLimits?.maxRecordsPerCollection||250));let missing=matrix.missing.map(key=>{const [requirementId,runId,testId]=String(key).split('|');return {requirementId,runId,testId};});if(scope.runId)missing=missing.filter(item=>item.runId===String(scope.runId));const triples=missing.slice(0,limit);return {expectedMatrixTotal:matrix.expected.length,completedMatrixTotal:matrix.expected.length-matrix.missing.length,remainingInOperationBeforeBatch:missing.length,batchRecordLimit:limit,batchSize:triples.length,continuationRequired:missing.length>triples.length,triples};}
+function verificationBatchPlan(stage,state,operation,scope={}){
+  const applicable=stage===12||((stage===17||stage===19)&&operation==='VERIFY');
+  if(!applicable||!scope.iterationId)return null;
+  const matrix=workflow.verificationMatrix(state,scope.iterationId),limit=Math.max(1,Number(schema.STAGE_CONTRACTS[stage]?.resourceLimits?.maxRecordsPerCollection||250));
+  const pending=matrix.pending;
+  let remaining=pending.map(key=>{const [requirementId,runId,testId]=String(key).split('|');return {requirementId,runId,testId};});
+  if(scope.runId)remaining=remaining.filter(item=>item.runId===String(scope.runId));
+  const triples=remaining.slice(0,limit);
+  return {expectedMatrixTotal:matrix.expected.length,completedMatrixTotal:matrix.expected.length-pending.length,remainingInOperationBeforeBatch:remaining.length,batchRecordLimit:limit,batchSize:triples.length,continuationRequired:remaining.length>triples.length,triples};
+}
+const INDEPENDENT_RUN_FORBIDDEN_FAMILIES={VERIFICATION:new Set(['verification','comparisons','defects','rootCauses','changes','meaningResults','adversarialResults','processAudits','productAudits','releaseGateReviews','releaseRecords']),EXECUTION:new Set(['verification','comparisons','defects','rootCauses','changes','regressions','regressionExecutions','meaningResults','adversarialResults','representationInspections','processAudits','productAudits','releaseGateReviews','releaseRecords','artifactIdentities','evidenceChains'])};
+function projectIndependentInputFacts(record,family,{includeAuthorRationale=false}={}){
+  const fieldsByFamily={products:['PRODUCT_ID','PRODUCT_VERSION','BASELINE_ID','EXECUTION_ID','PRODUCTION_CONTEXT_ID','INSTRUCTION_VERSION','GENERATED_ARTIFACT_INVENTORY','STATUS'],propositions:['PROPOSITION_ID','REQUIREMENT_ID','PROPOSITION_TEXT','SUBJECT_AND_SCOPE_DESCRIPTION','SATISFACTION_MEANING','FAILURE_MEANING','CURRENT_SCOPE','CONTENT_SHA256'],proofObligations:['PROOF_OBLIGATION_ID','PROPOSITION_ID','REQUIREMENT_ID','NORMATIVE_CLASS','APPLICABILITY','PROOF_EXPRESSION_ID','REQUIRED_TEST_IDS','REQUIRED_EVIDENCE_CLASSES','ALLOWED_EPISTEMIC_BASES','REQUIRED_ARTIFACT_IDS','REQUIRED_DEPENDENCY_IDS','FRESHNESS_REQUIREMENTS','INDEPENDENCE_REQUIREMENTS'],proofExpressions:['PROOF_EXPRESSION_ID','TARGET_PROPOSITION_ID','PROPOSED_EXPRESSION','NORMALIZED_EXPRESSION','CURRENT_SCOPE_HASH'],environmentDependencies:['DEPENDENCY_ID','DEPENDENCY_DESCRIPTION','PROPOSED_REQUIRED_CONDITION','TARGET_PROPOSITION_IDS','CURRENT_SCOPE','VERSION_OR_CONDITION']};
+  const allowedFields=fieldsByFamily[family];if(!allowedFields)return record;
+  if(includeAuthorRationale&&family==='proofExpressions')allowedFields.push('SEMANTIC_RATIONALE');
+  const fields=Object.fromEntries(allowedFields.filter(key=>Object.hasOwn(recordFields(record),key)).map(key=>[key,recordFields(record)[key]])),projected={...record,fields};
+  for(const key of schema.RECORD_SCHEMAS[family]?.fields||[])if(!Object.hasOwn(fields,key))delete projected[key];
+  return projected;
+}
 // One authorization decision for every carrier, including retained retry files.
 // Producer provenance is controlling; arbitrary text is never classified by keywords.
 function contextContentAuthorization(state,{stage,operation,family,record,scope={},purpose='CONTEXT'}={}){
@@ -256,6 +317,35 @@ function contextContentAuthorization(state,{stage,operation,family,record,scope=
     // or returned bytes. Keep exact declared test inputs, never arbitrary prior
     // conclusions merely because a different carrier contains them.
     if(!explicitInput&&(family==='regressionExecutions'||priorExecution))return {allowed:false,reason:'Prior deferred-review conclusions and their supporting content are withheld from this independent execution.'};
+  }
+  const runRole=independentRunContextRole(number,operation);
+  if(runRole){
+    if(INDEPENDENT_RUN_FORBIDDEN_FAMILIES[runRole].has(family))return {allowed:false,reason:'This record family contains findings prohibited from the independent run context.'};
+    const observation=family==='entailmentReviews'?safe(state.projectData?.observationRecords).find(row=>recordId(row,'observationRecords')===String(value(record,'OBSERVATION_ID')||record.relationships?.OBSERVATION_ID||'')):null;
+    if(observation){const origin=contextContentAuthorization(state,{stage,operation,family:'observationRecords',record:observation,scope});if(!origin.allowed)return {allowed:false,...(origin.independenceViolation===false?{independenceViolation:false}:{}),reason:'The entailment carries a withheld observation conclusion.'};}
+    const producerStage=Number(raw?.stage??proposal?.stage??sourcePrompt?.stage??record.stage??record.lineage?.stage??0),secondary=['evidenceRecords','observationRecords','entailmentReviews','semanticReviews','semanticChallenges'].includes(family);
+    const resultOperation=['VERIFY','COMPARE','ROOT_CAUSE','CORRECT','REGRESSION','REGRESSION_VERIFY'].includes(sourceOperation)||Boolean(schema.deferredExecutionFamily(producerStage,sourceOperation)),runBound=[sourcePrompt?.scope,raw?.promptScope,raw?.scope,proposal?.envelope?.scope,record.scope,value(record,'CURRENT_SCOPE')].some(binding=>workflow.contextRunBinding({scope:binding},null).known);
+    if(secondary){
+      const governing=selectedContextRecords(state,'requirements',scope).concat(selectedContextRecords(state,'tests',scope)),id=recordId(record,family),sourceId=String(value(record,'SOURCE_ID')||record.relationships?.SOURCE_ID||''),governingSource=family==='evidenceRecords'&&sourceId&&selectedContextRecords(state,'requirements',scope).some(row=>String(value(row,'SOURCE_ID')||row.relationships?.SOURCE_ID||'')===sourceId),declaredInput=governing.some(row=>safe(row.evidenceRefs).includes(id));
+      // A governing definition can be corrected later in the workflow. Its
+      // source evidence stays usable; a reference cannot authorize prior
+      // execution or reviewer conclusions carried by that same record.
+      if(resultOperation||sourceOperation==='EXECUTE_RUN'||runBound||[12,13,14].includes(producerStage))return {allowed:false,reason:'Prior execution, verification, comparison and correction findings are withheld from this independent run context.'};
+      if(!governingSource&&!declaredInput)return {allowed:false,independenceViolation:false,reason:'Secondary content is not a referenced governing input for this operation.'};
+    }
+    if(family==='artifacts'){
+      const id=recordId(record,'artifacts'),candidateId=String(scope.candidateId||state.job?.CURRENT_CANDIDATE_ID||''),candidate=workflow.recordsForCurrentScope(state,'candidateFreezes').find(row=>recordId(row,'candidateFreezes')===candidateId),frozenComponent=safe(value(candidate,'COMPONENT_MANIFEST')).some(row=>row.artifactId===id&&row.sha256===String(value(record,'SHA256'))&&Number(row.byteSize)===Number(value(record,'BYTE_SIZE')));
+      // Exact selected bytes remain the governing package even when CORRECT
+      // authored them. Unselected returned review files have no such authority.
+      {
+        const originStage=Number(raw?.stage??proposal?.stage??sourcePrompt?.stage??record.lineage?.stage??artifactLineage?.stage??record.stage??0);
+        if(sourceOperation==='EXECUTE_RUN'){
+          const sourceRunId=String(sourceScope.runId||raw?.runId||'');
+          if(runRole==='EXECUTION'||scope.runId&&sourceRunId!==String(scope.runId))return {allowed:false,reason:'Another or prior run output is outside this independent execution or verification target.'};
+        }else if(([12,13,14].includes(originStage)||resultOperation)&&!(sourceOperation==='CORRECT'&&frozenComponent))return {allowed:false,reason:'Prior reviewer findings cannot be supplied as artifact bytes in this independent run context.'};
+      }
+    }
+    return {allowed:true,reason:'Authorized current run inputs without prior proof conclusions.',record:projectIndependentInputFacts(record,family,{includeAuthorRationale:true})};
   }
   if(![23,24].includes(number))return {allowed:true,reason:'No independent final-review content restriction applies.',record};
   const selected=deferred?workflow.recordsForCurrentScope(state,'tests').filter(test=>recordId(test,'tests')===deferred.testId):workflow.finalProductTestSelection(state,number).tests,explicit=new Set(),attackInputs=new Set(),sourceIds=new Set();
@@ -277,12 +367,50 @@ function contextContentAuthorization(state,{stage,operation,family,record,scope=
     const productId=String(scope.productId||state?.job?.CURRENT_PRODUCT_ID||''),product=safe(state?.projectData?.products).find(row=>recordId(row,'products')===productId),productIds=new Set(safe(value(product,'GENERATED_ARTIFACT_INVENTORY')).map(String)),sourceEvidence=safe(state?.projectData?.evidenceRecords).filter(row=>sourceIds.has(String(value(row,'SOURCE_ID')||row.relationships?.SOURCE_ID||''))&&Number(row.stage||0)<21),sourceArtifacts=new Set(sourceEvidence.map(row=>String(value(row,'ATTACHMENT_ID')||row.relationships?.ATTACHMENT_ID||'')).filter(Boolean));
     if(!productIds.has(String(id))&&!sourceArtifacts.has(String(id))&&!explicit.has(String(id)))return {allowed:false,reason:'Artifact is not actual product, governing source bytes or an exact declared input.'};
   }
-  const fieldsByFamily={products:['PRODUCT_ID','PRODUCT_VERSION','BASELINE_ID','EXECUTION_ID','PRODUCTION_CONTEXT_ID','INSTRUCTION_VERSION','GENERATED_ARTIFACT_INVENTORY','STATUS'],propositions:['PROPOSITION_ID','REQUIREMENT_ID','PROPOSITION_TEXT','SUBJECT_AND_SCOPE_DESCRIPTION','SATISFACTION_MEANING','FAILURE_MEANING','CURRENT_SCOPE','CONTENT_SHA256'],proofObligations:['PROOF_OBLIGATION_ID','PROPOSITION_ID','REQUIREMENT_ID','NORMATIVE_CLASS','APPLICABILITY','PROOF_EXPRESSION_ID','REQUIRED_TEST_IDS','REQUIRED_EVIDENCE_CLASSES','ALLOWED_EPISTEMIC_BASES','REQUIRED_ARTIFACT_IDS','REQUIRED_DEPENDENCY_IDS','FRESHNESS_REQUIREMENTS','INDEPENDENCE_REQUIREMENTS'],proofExpressions:['PROOF_EXPRESSION_ID','TARGET_PROPOSITION_ID','PROPOSED_EXPRESSION','NORMALIZED_EXPRESSION','CURRENT_SCOPE_HASH'],environmentDependencies:['DEPENDENCY_ID','DEPENDENCY_DESCRIPTION','PROPOSED_REQUIRED_CONDITION','TARGET_PROPOSITION_IDS','CURRENT_SCOPE','VERSION_OR_CONDITION']};
-  const allowedFields=fieldsByFamily[family];if(!allowedFields)return {allowed:true,reason:explicitAttack?'Explicit attack input.':'Authorized final-review input.',record};
-  const fields=Object.fromEntries(allowedFields.filter(key=>Object.hasOwn(recordFields(record),key)).map(key=>[key,recordFields(record)[key]])),projected={...record,fields};for(const key of schema.RECORD_SCHEMAS[family]?.fields||[])if(!Object.hasOwn(fields,key))delete projected[key];return {allowed:true,reason:'Canonical input facts projected without producer conclusions.',record:projected};
+  return {allowed:true,reason:'Canonical input facts projected without producer conclusions.',record:projectIndependentInputFacts(record,family)};
 }
 
-function contextRecordsFor(state,collection,scope,plan,stage,operation){const deferred=schema.deferredExecutionFamily(stage,operation);if(deferred&&[deferred,'tests','regressionExecutions'].includes(collection)){const item=workflow.currentDeferredExecution(state,stage,operation);return selectedContextRecords(state,collection,{...scope,iterationId:null,candidateId:null,runId:null,contextId:null,baselineId:null,productId:null}).filter(record=>collection===deferred?recordId(record,collection)===item.subjectId:collection==='tests'?recordId(record,collection)===item.testId:String(record.fields?.[deferred==='failureTests'?'MUTATION_ID':'REG_ID']||'')===item.subjectId).flatMap(record=>{const authorization=contextContentAuthorization(state,{stage,operation,family:collection,record,scope});return authorization.allowed?[authorization.record]:[];});}const verifierStage=stage===12||((stage===17||stage===19)&&operation==='VERIFY'),executionLane=stage===11||((stage===17||stage===19)&&operation==='EXECUTE_RUN');const selectionScope=collection==='regressions'?{...scope,iterationId:null,candidateId:null,runId:null,contextId:null,baselineId:null,productId:null}:verifierStage&&collection==='runs'?{...scope,contextId:null}:scope;const contract=schema.STAGE_OPERATION_SCOPE_MATRIX[`${Number(stage)}:${operation}`],currentInputs=workflow.currentScope(state),inputSelection={...selectionScope};for(const [key,role] of Object.entries(contract?.dimensions||{}))if(role==='TARGET_RESERVED'&&schema.SCOPE_VERSION_TARGETS[key])inputSelection[key]=currentInputs[key]??null;let selected=selectedContextRecords(state,collection,inputSelection).flatMap(record=>{const authorization=contextContentAuthorization(state,{stage,operation,family:collection,record,scope:inputSelection});return authorization.allowed?[authorization.record]:[];});if(verifierStage&&collection==='freshContexts'&&scope?.contextId)selected=selected.filter(record=>recordId(record,'freshContexts')===String(scope.contextId));const verificationForbidden=new Set(['verification','comparisons','defects','rootCauses','changes','meaningResults','adversarialResults','processAudits','productAudits','releaseGateReviews','releaseRecords']);const executionForbidden=new Set(['verification','comparisons','defects','rootCauses','changes','regressions','regressionExecutions','meaningResults','adversarialResults','representationInspections','processAudits','productAudits','releaseGateReviews','releaseRecords','artifactIdentities','evidenceChains']);const stage23Forbidden=new Set(['deterministicResults','meaningResults','adversarialResults','processAudits','productAudits','releaseRecords']);const stage24Forbidden=new Set(['deterministicResults','meaningResults','adversarialResults','processAudits','productAudits','releaseRecords']);const forbidden=executionLane?executionForbidden:verifierStage?verificationForbidden:stage===23?stage23Forbidden:stage===24?stage24Forbidden:new Set();if(forbidden.has(collection))return [];if(verifierStage&&collection==='artifacts'){const handoff=workflow.executionHandoff(state,{stage,operation,testIds:plan?.triples?.map(item=>item.testId),runIds:scope.runId?[scope.runId]:plan?.triples?.map(item=>item.runId)}),allowed=new Set(handoff.send.map(item=>item.artifactId));selected=selected.filter(record=>allowed.has(recordId(record,'artifacts')));}if(stage===19&&operation==='COMPARE'&&collection==='instructions'){const governing=new Set(workflow.semanticReviewBasis(state,19).targets.filter(row=>row.collection==='instructions').map(row=>row.id));selected=selected.filter(record=>governing.has(recordId(record,collection)));}if(!plan?.triples?.length)return selected;let ids=null;if(collection==='requirements')ids=new Set(plan.triples.map(x=>x.requirementId));else if(collection==='tests')ids=new Set(plan.triples.map(x=>x.testId));else if(collection==='runs')ids=new Set(plan.triples.map(x=>x.runId));return ids?selected.filter(record=>ids.has(recordId(record,collection))):selected;}
+// Assess preserved carrier bytes, not the current project rendered as an old
+// instruction. This is separate from whether any transfer actually occurred.
+function runPromptContextIsolation(state,prompt){
+  if(!prompt||!independentRunContextRole(prompt.stage,prompt.operation))return {determination:'NOT_APPLICABLE',refreshRequired:false,reasons:[]};
+  if(prompt.contextManifest?.independentRunContextVersion===INDEPENDENT_RUN_CONTEXT_VERSION&&prompt.promptEngineVersion===versionFor(prompt.stage,prompt.operation))return {determination:'CURRENT',refreshRequired:false,reasons:[]};
+  const members=[],reasons=[];let unavailable=false;
+  try{
+    for(const match of String(prompt.prompt||'').matchAll(/BEGIN_UNTRUSTED_DATA_BLOCK\s*([\s\S]*?)\s*END_UNTRUSTED_DATA_BLOCK/g))members.push(JSON.parse(match[1]));
+    const expected=safe(prompt.contextManifest?.promptContext?.attachments),files=cachedPromptContextFiles(prompt);
+    if(expected.length&&!files)unavailable=true;
+    for(const file of files||[])members.push(...safe(JSON.parse(file.text).members));
+  }catch{unavailable=true;}
+  const aliases=safe(prompt.contextManifest?.blindAliasMap),selected=prompt.contextManifest?.readCollections||{};
+  for(const [family,refs]of Object.entries(selected)){
+    if(!safe(refs).length)continue;
+    const packets=members.filter(member=>member.sourceIdentity==='collection.'+family);
+    if(!packets.length){unavailable=true;continue;}
+    let rows=[];try{rows=packets.flatMap(packet=>safe(JSON.parse(packet.value).records)).map(row=>applyBlindReviewAliases(row,aliases,'CANONICAL'));}catch{unavailable=true;continue;}
+    for(const ref of safe(refs)){
+      const row=rows.find(item=>recordId(item,family)===ref.id);if(!row){unavailable=true;continue;}
+      const canonical=safe(state.projectData?.[family]).find(item=>recordId(item,family)===ref.id),sameContent=canonical&&(canonical.contentSha256||canonical.sha256)===ref.contentSha256,observed=sameContent?{...canonical,...row,fields:row.fields,scope:row.scope,relationships:row.relationships}:row;
+      const authorization=contextContentAuthorization(state,{stage:Number(prompt.stage),operation:prompt.operation,family,record:observed,scope:prompt.scope||{}});
+      if(!authorization.allowed&&authorization.independenceViolation!==false)reasons.push(family+'/'+ref.id+': '+authorization.reason);
+      // These are the engine's controlled target-proof outcomes. Unknown
+      // pre-execution status and accepted governing test definitions are not
+      // retroactively classified as another verifier's successful result.
+      if(family==='proofObligations'&&['SATISFIED','VIOLATED','CONTRADICTED'].includes(upper(recordValue(row,'SATISFACTION_STATE')))||family==='propositions'&&(['TRUE','FALSE'].includes(upper(recordValue(row,'TRUTH_VALUE')))||upper(recordValue(row,'CONTRADICTION_STATUS'))==='CONTRADICTED'))reasons.push(family+'/'+ref.id+': A prior derived target-proof outcome was exposed.');
+    }
+  }
+  for(const sent of safe(prompt.contextManifest?.executionHandoff?.send)){
+    const artifact=safe(state.projectData?.artifacts).find(row=>recordId(row,'artifacts')===sent.artifactId);
+    if(!artifact||String(recordValue(artifact,'SHA256'))!==sent.sha256||Number(recordValue(artifact,'BYTE_SIZE'))!==Number(sent.byteSize)){unavailable=true;continue;}
+    const authorization=contextContentAuthorization(state,{stage:Number(prompt.stage),operation:prompt.operation,family:'artifacts',record:artifact,scope:prompt.scope||{}});
+    if(!authorization.allowed)reasons.push('artifact/'+sent.artifactId+': '+authorization.reason);
+  }
+  if(reasons.length)return {determination:'VIOLATED',refreshRequired:true,reasons};
+  if(unavailable||!members.length)return {determination:'UNKNOWN',refreshRequired:true,reasons:['Exact preserved legacy context bytes are unavailable for the applicable input-isolation check.']};
+  return {determination:'CURRENT',refreshRequired:false,instructionRebuildRequired:true,reasons:['Legacy carriers were inspected without prohibited findings; rebuild the instruction using the current scoped projection.']};
+}
+
+function contextRecordsFor(state,collection,scope,plan,stage,operation){const deferred=schema.deferredExecutionFamily(stage,operation);if(deferred&&[deferred,'tests','regressionExecutions'].includes(collection)){const item=workflow.currentDeferredExecution(state,stage,operation);return selectedContextRecords(state,collection,{...scope,iterationId:null,candidateId:null,runId:null,contextId:null,baselineId:null,productId:null}).filter(record=>collection===deferred?recordId(record,collection)===item.subjectId:collection==='tests'?recordId(record,collection)===item.testId:String(record.fields?.[deferred==='failureTests'?'MUTATION_ID':'REG_ID']||'')===item.subjectId).flatMap(record=>{const authorization=contextContentAuthorization(state,{stage,operation,family:collection,record,scope});return authorization.allowed?[authorization.record]:[];});}const verifierStage=stage===12||((stage===17||stage===19)&&operation==='VERIFY');const selectionScope=collection==='regressions'?{...scope,iterationId:null,candidateId:null,runId:null,contextId:null,baselineId:null,productId:null}:verifierStage&&collection==='runs'?{...scope,contextId:null}:scope;const contract=schema.STAGE_OPERATION_SCOPE_MATRIX[`${Number(stage)}:${operation}`],currentInputs=workflow.currentScope(state),inputSelection={...selectionScope};for(const [key,role] of Object.entries(contract?.dimensions||{}))if(role==='TARGET_RESERVED'&&schema.SCOPE_VERSION_TARGETS[key])inputSelection[key]=currentInputs[key]??null;let selected=selectedContextRecords(state,collection,inputSelection).flatMap(record=>{const authorization=contextContentAuthorization(state,{stage,operation,family:collection,record,scope:inputSelection});return authorization.allowed?[authorization.record]:[];});if(verifierStage&&collection==='freshContexts'&&scope?.contextId)selected=selected.filter(record=>recordId(record,'freshContexts')===String(scope.contextId));const stage23Forbidden=new Set(['deterministicResults','meaningResults','adversarialResults','processAudits','productAudits','releaseRecords']);const stage24Forbidden=new Set(['deterministicResults','meaningResults','adversarialResults','processAudits','productAudits','releaseRecords']);const forbidden=INDEPENDENT_RUN_FORBIDDEN_FAMILIES[independentRunContextRole(stage,operation)]||(stage===11?INDEPENDENT_RUN_FORBIDDEN_FAMILIES.EXECUTION:stage===12?INDEPENDENT_RUN_FORBIDDEN_FAMILIES.VERIFICATION:stage===23?stage23Forbidden:stage===24?stage24Forbidden:new Set());if(forbidden.has(collection))return [];if(verifierStage&&collection==='artifacts'){const handoff=workflow.executionHandoff(state,{stage,operation,testIds:plan?.triples?.map(item=>item.testId),runIds:scope.runId?[scope.runId]:plan?.triples?.map(item=>item.runId)}),allowed=new Set(handoff.send.map(item=>item.artifactId));selected=selected.filter(record=>allowed.has(recordId(record,'artifacts')));}if(stage===19&&operation==='COMPARE'&&collection==='instructions'){const governing=new Set(workflow.semanticReviewBasis(state,19).targets.filter(row=>row.collection==='instructions').map(row=>row.id));selected=selected.filter(record=>governing.has(recordId(record,collection)));}if(!plan?.triples?.length)return selected;let ids=null;if(collection==='requirements')ids=new Set(plan.triples.map(x=>x.requirementId));else if(collection==='tests')ids=new Set(plan.triples.map(x=>x.testId));else if(collection==='runs')ids=new Set(plan.triples.map(x=>x.runId));return ids?selected.filter(record=>ids.has(recordId(record,collection))):selected;}
 function boundedCollection(state,collection,scope={},selectedOverride=null,stage=0,operation=null){const selected=selectedOverride||selectedContextRecords(state,collection,scope);if(!selected.length)return 'NONE';const rows=selected.map(record=>{let fields=recordFields(record);if((stage===23||stage===24)&&collection==='products'){const allowed=['PRODUCT_ID','PRODUCT_VERSION','BASELINE_ID','EXECUTION_ID','PRODUCTION_CONTEXT_ID','INSTRUCTION_VERSION','GENERATED_ARTIFACT_INVENTORY','STATUS'];fields=Object.fromEntries(allowed.filter(key=>Object.prototype.hasOwnProperty.call(fields,key)).map(key=>[key,fields[key]]));}const evidenceSupport=deferredDefinitionWriter(stage,operation)&&collection==='defects'?(()=>{const provided=new Set(contextRecordsFor(state,'evidenceRecords',scope,null,stage,operation).map(row=>recordId(row,'evidenceRecords'))),refs=safe(record.evidenceRefs);return {evidenceRefs:refs.filter(id=>provided.has(id)),unavailableEvidenceRefCount:refs.filter(id=>!provided.has(id)).length};})():{};return {id:recordId(record,collection),stage:record.stage??'UNKNOWN',scope:record.scope||{},fields,relationships:record.relationships||{},...evidenceSupport,contentSha256:record.contentSha256||record.sha256||hash.sha256Value(recordFields(record))};});return dataEnvelope({totalSelected:rows.length,records:rows,omitted:0,selectionRule:'Only active records matching the explicit operation read contract, current scope, application-derived batch, and information-isolation projection are selected.'},`collection.${collection}`);}
 const samePromptScope=(a,b={})=>['iterationId','candidateId','runId','contextId','baselineId','productId'].every(key=>String(a?.[key]??'')===String(b?.[key]??''));
 function retrySubstanceAuthorization(state,stage,operation,scope,raw){
@@ -398,7 +526,7 @@ const PROMPT_CONTEXT_ADDITIONS=Object.freeze({
 const PROMPT_OPERATION_CONTEXT_ADDITIONS=Object.freeze({17:Object.freeze({FREEZE:Object.freeze(['instructions','preflightRecords','failureTests','artifacts','requirements','requirementResolutions']),EXECUTE_RUN:Object.freeze(['instructions','artifacts']),VERIFY:Object.freeze(['sources','research','evidenceRecords','artifacts']),COMPARE:Object.freeze(['tests']),ROOT_CAUSE:Object.freeze(['requirements','tests','instructions','runs','sources','research','candidateRequirements','requirementResolutions','failureTests','preflightRecords','artifacts','evidenceRecords','changes']),REGRESSION:Object.freeze(['requirements','tests','artifacts','evidenceRecords','runs']),CORRECT:Object.freeze(['requirements','requirementResolutions','instructions','tests','failureTests','artifacts','evidenceRecords'])}),19:Object.freeze({CONFIRM_FREEZE:Object.freeze(['requirements','tests','artifacts','instructions']),EXECUTE_RUN:Object.freeze(['instructions','artifacts']),VERIFY:Object.freeze(['sources','research','evidenceRecords','artifacts']),COMPARE:Object.freeze(['tests','sources','sourceConflicts','sourceSearchContracts','research','candidateRequirements','requirements','propositions','instructions','instructionTraces','candidateFreezes','iterations','evidenceRecords']),REGRESSION_VERIFY:Object.freeze(['requirements','tests','artifacts','evidenceRecords','candidateFreezes']),CONFIRM:Object.freeze(['requirements','tests','defects','rootCauses','evidenceRecords','blockers'])})});
 function promptReadCollections(stage,operation){const op=schema.operationContract(stage,operation||schema.STAGE_CONTRACTS[stage].operations[0]);return [...new Set([...(op?.readCollections||schema.STAGE_CONTRACTS[stage].readCollections||[]),...(PROMPT_CONTEXT_ADDITIONS[stage]||[]),...(PROMPT_OPERATION_CONTEXT_ADDITIONS[stage]?.[operation]||[])])];}
 function projectAuthorityBasis(state,stage,operation,scope={}){
-  const job=state?.job||{},stageOne=state?.stages?.[1]||{},batchPlan=verificationBatchPlan(stage,state,operation,scope),allowedCollections=new Set(promptReadCollections(stage,operation)),isolatedReviewer=[12,23,24].includes(Number(stage));
+  const job=state?.job||{},stageOne=state?.stages?.[1]||{},batchPlan=verificationBatchPlan(stage,state,operation,scope),allowedCollections=new Set(promptReadCollections(stage,operation)),isolatedReviewer=[12,23,24].includes(Number(stage))||independentRunContextRole(stage,operation)==='VERIFICATION';
   const humanFieldNames=Object.entries(schema.JOB_FIELDS||{}).filter(([,definition])=>['HUMAN','HUMAN_DECISION'].includes(definition?.producer)).map(([name])=>name);
   const reviewerHumanFields=new Set(['EXACT_USER_OBJECTIVE_VERBATIM','PROHIBITED_ACTIONS']);
   const carryForwardHumanFields=new Set(humanFieldNames);
@@ -607,7 +735,7 @@ function promptDisclosureSources(state,stage,contextManifest){
   if(stage===1)for(const unit of safe(contextManifest.intakeCoverageManifest?.units))if(unit.kind==='SUPPLIED_MATERIAL_CONTENT'&&unit.artifactId)ids.add(unit.artifactId);
   // This mirrors the producer's actual accepted-intake carrier. Independent
   // final reviewers receive a narrow governing projection, not this capture.
-  if(stage!==1&&![12,23,24].includes(stage)){
+  if(stage!==1&&![12,23,24].includes(stage)&&independentRunContextRole(stage,contextManifest.operation)!=='VERIFICATION'){
     const capture=workflow.parseCapturedInputSet(state),accepted=safe(state.projectData?.acceptedChanges).filter(change=>Number(change.stage)===1&&!change.invalidatedBy).at(-1),sourcePrompt=safe(state.projectData?.generatedPrompts).find(record=>record.instructionId===accepted?.promptId),manifest=sourcePrompt?.contextManifest?.intakeCoverageManifest;
     if(capture.format==='STRUCTURED'&&manifest?.manifestSha256===capture.manifestSha256){const sourceUnits=new Map(safe(manifest.units).map(unit=>[unit.unitId,unit]));for(const unit of safe(capture.units))if(safe(unit.extractedStatements).some(statement=>typeof statement.text==='string'&&statement.text.length)){const artifactId=sourceUnits.get(unit.sourceUnitId)?.artifactId;if(artifactId)ids.add(artifactId);}}
   }
@@ -652,6 +780,7 @@ function buildPromptRecord(stageOrDefinition,state,options={}){
     ...(deferredDefinitionWriter(stage,operation)?{deferredDefinitionCompatibilityContractVersion:schema.DEFERRED_DEFINITION_COMPATIBILITY_CONTRACT.version,deferredDefinitionTestProfiles:deferredDefinitionTestProfiles(stage,state,operation,scope)}:{}),
     deferredExecutionBinding:schema.deferredExecutionFamily(stage,operation)?workflow.currentDeferredExecution(state,stage,operation).binding:null,
     promptEngineVersion:versionFor(stage,operation),
+    ...(independentRunContextRole(stage,operation)?{independentRunContextVersion:INDEPENDENT_RUN_CONTEXT_VERSION}:{}),
     returnedFilePolicy:returnedFilePolicy(stage,operation),
     untrustedDataBoundary:{schema:UNTRUSTED_DATA_SCHEMA,applied:true,controllingCompletionVersion:CONTROLLING_COMPLETION_VERSION},
     blindAliasMap:blindAliasMap.map(x=>({...x})),
@@ -705,7 +834,7 @@ Use the stage appropriate to the actual target and proof route. These stages are
   const bodySha256=hash.sha256Text(prompt),transportBinding=promptTransportBinding(state,stage,operation,instructionId,scope),attachmentSlots=issuedAttachmentSlots({jobId:state.job.JOB_ID,stage,operation,instructionId,...(transportBinding||{})});
   const instructionMaterialSha256=hash.sha256Text(bodyText),producerTemplateSha256=hash.sha256Value({render:render.toString(),dataRendering:prettyDataJson.toString(),dataKeyOrdering:hash.canonicalizationVersion,descriptor,returnedFilePolicy:returnedFilePolicy(stage,operation)});
   const record={instructionMaterialSha256,producerTemplateSha256,instructionId,promptId:instructionId,identityAllocation,historyActivationId:state.historyActivationId||null,promptEngineVersion:versionFor(stage,operation),stage,operation,role:schema.deferredExecutionFamily(stage,operation)?'isolated deferred-test executor':definition.role,bodySha256,sha256:bodySha256,contractSha256,contextSignature,contextManifest,scope,scopeSha256:hash.sha256Value(scope),prompt,fullTextSha256:bodySha256,promptInjectionBoundaryApplied:true,untrustedDataBoundaryVersion:UNTRUSTED_DATA_SCHEMA,packageId:transportBinding?.packageId||null,operationReservationId:transportBinding?.operationReservationId||null,challengeNonce:transportBinding?.challengeNonce||null,targetSlot:transportBinding?.targetSlot||null,reservationRevision:transportBinding?.reservationRevision||null,transportBindingRequired:Boolean(transportBinding),jobId:state.job.JOB_ID,attachmentSlots};
-  promptContextFiles.set(record,transported.files);return record;
+  retainPromptContextFiles(record,transported.files);return record;
 }
 // A saved correction is recoverable only through its exact application-issued
 // prompt, reservation and still-current immutable input binding.
@@ -776,7 +905,7 @@ function reserveAndBuildPromptRecord(state,stageOrDefinition,options={},metadata
   if(workflow.allocateInstructionIdentity(state,provisional.identityAllocation)!==provisional.instructionId)throw new Error('The instruction allocation changed before reservation.');
   const packageId=workflow.allocateExecutionPackageIdentity(state,provisional),reservation=workflow.reserveOperation(state,{stage,expectedRevision:Number(state.revision||0),operation:provisional.operation,scope:provisional.scope,promptId:provisional.instructionId,packageId,owningTabInstance:String(metadata.owningTabInstance||'APPLICATION'),payload:{instructionId:provisional.instructionId,packageId,...(options.deferredDefinitionCorrectionTarget?{deferredDefinitionCorrectionTarget:options.deferredDefinitionCorrectionTarget}:{})}}),candidate=buildPromptRecord(stage,state,options),record={...candidate,generatedAt:metadata.generatedAt||new Date().toISOString(),iteration:candidate.scope?.iterationId||'NOT APPLICABLE'};
   if(record.instructionId!==provisional.instructionId||!record.transportBindingRequired||record.operationReservationId!==recordId(reservation,'operationReservations')||record.packageId!==packageId||record.challengeNonce!==recordValue(reservation,'CHALLENGE_NONCE')||Number(record.scope?.projectRevision)!==Number(recordValue(reservation,'RESERVATION_REVISION')))throw new Error('The authoritative external instruction was not atomically bound to its application-owned reservation transaction.');
-  const registered=workflow.registerGeneratedPrompt(state,record);promptContextFiles.set(registered,promptContextFiles.get(candidate)||[]);return {prompt:registered,reservation};
+  const registered=workflow.registerGeneratedPrompt(state,record);retainPromptContextFiles(registered,cachedPromptContextFiles(candidate)||[]);return {prompt:registered,reservation};
 }
 function prepareSemanticAuthorCorrection(state,reviewStage,{owningTabInstance}={}){
  const action=workflow.operationalNextAction(state,Number(reviewStage)),deferredTarget=action.correctionTarget;
@@ -803,5 +932,5 @@ function promptFileManifest(record){
 }
 function build(stageOrDefinition,state,options){return buildPromptRecord(stageOrDefinition,state,options).prompt;}
 core.buildStagePrompt=build;
-globalThis.closedLoopPromptEngine=Object.freeze({version:PROMPT_ENGINE_VERSION,versionFor,PROMPT_INLINE_LIMITS,RETURNED_FILE_LIMITS,fileHandoff,publicHandoffValue,handoffMaterialState,materializePromptContextFiles,__controllingCompletionAmendmentVersion:CONTROLLING_COMPLETION_VERSION,build,buildPromptRecord,reserveAndBuildPromptRecord,deferredDefinitionCorrectionPromptState,deferredDefinitionCorrectionContinuationState,deferredDefinitionCorrectionPromptOptions,prepareSemanticAuthorCorrection,promptFileManifest,procedures,procedureFor,contextFor,scopeFor,assertRequiredPromptScope,responseContractDescriptor,responseContract,packageIdForPrompt,promptTransportBinding,intakeCoverageManifest,obligationManifest,parseCapturedInputSet,dataEnvelope,refreshDataEnvelopes,contextContentAuthorization,deferredExecutionContextPolicy,retryContextFor,retryInputIdentities});
+globalThis.closedLoopPromptEngine=Object.freeze({version:PROMPT_ENGINE_VERSION,versionFor,independentRunContextRole,runPromptContextIsolation,PROMPT_INLINE_LIMITS,RETURNED_FILE_LIMITS,fileHandoff,publicHandoffValue,handoffMaterialState,retainPromptContextFiles,requiresRetainedRunContext,copyRetainedPromptContextFiles,materializePromptContextFiles,__controllingCompletionAmendmentVersion:CONTROLLING_COMPLETION_VERSION,build,buildPromptRecord,reserveAndBuildPromptRecord,deferredDefinitionCorrectionPromptState,deferredDefinitionCorrectionContinuationState,deferredDefinitionCorrectionPromptOptions,prepareSemanticAuthorCorrection,promptFileManifest,procedures,procedureFor,contextFor,scopeFor,assertRequiredPromptScope,responseContractDescriptor,responseContract,packageIdForPrompt,promptTransportBinding,intakeCoverageManifest,obligationManifest,parseCapturedInputSet,dataEnvelope,refreshDataEnvelopes,contextContentAuthorization,deferredExecutionContextPolicy,retryContextFor,retryInputIdentities});
 })();

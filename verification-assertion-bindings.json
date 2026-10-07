@@ -1388,8 +1388,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-9e0ad66ef878f9e97c909997e976cc13-20261007-c8e259a009f0.json",
-          "sha256": "7405148aa9b725052cbd97a891ec3ac50c1c809892914adf44ee7cef14d965c8"
+          "path": "verification/requirement-coverage-NREQ-9e0ad66ef878f9e97c909997e976cc13-20261007-context-c8e259a009f0-54e18bc1f938.json",
+          "sha256": "eae48e3b1bbaec840a946a8f9cfd80f615d3a27b82a9e98c6c4d1c6a08becf75"
         }
       }
     },
@@ -1445,8 +1445,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-606a27b2b9b712e933dda6e0e7b0ce68-20261007-c717ae8f5d63.json",
-          "sha256": "f11fa269c0f56ea906311f3f97484068f4f58a45717fd39f733819167bd7d889"
+          "path": "verification/requirement-coverage-NREQ-606a27b2b9b712e933dda6e0e7b0ce68-20261007-context-c717ae8f5d63-54e18bc1f938.json",
+          "sha256": "a5410397c4c8f9edaae8ae8c1bbbe10dd585d33ec4e9bd3bb80ebd077f8208b7"
         }
       }
     },
@@ -1502,8 +1502,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-a99b13aa6aa9c7ffa4b65010951f18ec-20261007-8e1c768bc690.json",
-          "sha256": "3a259b071fed491bb84b847c2abcf227d62ad704845e2d7e8d1ce75d2ae5f49d"
+          "path": "verification/requirement-coverage-NREQ-a99b13aa6aa9c7ffa4b65010951f18ec-20261007-context-8e1c768bc690-54e18bc1f938.json",
+          "sha256": "dd3836e45da9e654e226d5f135c43b8d5c00a8a2fff6897695ecb3b965548a00"
         }
       }
     },
@@ -1559,8 +1559,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-178819f4c44ad7250656e79d18a8cae3-20261007-c1c5855362aa.json",
-          "sha256": "d94790dc4354cea7d1b850b8c30b2551323687823445d145d068982dd353b36a"
+          "path": "verification/requirement-coverage-NREQ-178819f4c44ad7250656e79d18a8cae3-20261007-context-c1c5855362aa-54e18bc1f938.json",
+          "sha256": "f0c5248b2527e76162c2f914f23e9437de0554756dbdc4ed12076bbf7abbcad6"
         }
       }
     },
@@ -1616,8 +1616,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-6a5e773812226552e3448329be3966cd-20261007-14f5a52593d0.json",
-          "sha256": "1aaba3c90cfa4fc275f1cd75c87d9ffe36bebb3eace7451fbc7216a395c39077"
+          "path": "verification/requirement-coverage-NREQ-6a5e773812226552e3448329be3966cd-20261007-context-14f5a52593d0-54e18bc1f938.json",
+          "sha256": "ad465db347a1cc2fab1413b8690dbac8793ea3ea70fa95ea0f5315b238bf53a6"
         }
       }
     },
@@ -1673,8 +1673,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-b67c348ca653ff5a19ba01272dfd4262-20261007-d619c471e8d3.json",
-          "sha256": "6002a7b57c2b0c0beabc2d2294163cbe68faa10dfb8785bc02698c1585c94176"
+          "path": "verification/requirement-coverage-NREQ-b67c348ca653ff5a19ba01272dfd4262-20261007-context-d619c471e8d3-54e18bc1f938.json",
+          "sha256": "37ca15965c773d4ebd942d1f031672907ecd9698c4fade22adf07508f9104c22"
         }
       }
     },
@@ -1730,8 +1730,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-4592c9487837c81077b166abf57bb4a7-20261007-86ef01f1c3cb.json",
-          "sha256": "b8ddb9b7e9b957896f7bb19ab8064bcb4de34b3e642c7c285f1950d151bfa435"
+          "path": "verification/requirement-coverage-NREQ-4592c9487837c81077b166abf57bb4a7-20261007-context-86ef01f1c3cb-54e18bc1f938.json",
+          "sha256": "0de57560debdd930e8706d63f87aa5af27ef67de484d5303ed9194c280fac668"
         }
       }
     },
@@ -1787,8 +1787,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-c0a2fa84e2aafe674742a0bb98c40e02-20261007-949b3819c6b9.json",
-          "sha256": "71e7c0dfb3906f99afe283bea373182527ca2ed34fa055a56db76847ea03b77e"
+          "path": "verification/requirement-coverage-NREQ-c0a2fa84e2aafe674742a0bb98c40e02-20261007-context-949b3819c6b9-54e18bc1f938.json",
+          "sha256": "72b3bc5d72906168eefd2299d136c2b2ad5c94e73520fd5f4737d62c10991bea"
         }
       }
     },
@@ -1844,8 +1844,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-f6e1df45974ccc5d32aafbc5f38dd535-20261007-b48c49f827aa.json",
-          "sha256": "fd7590616e2f6135bc2ad8da8c6a5517aee7e8e974ddf0d221376bffd0eb0143"
+          "path": "verification/requirement-coverage-NREQ-f6e1df45974ccc5d32aafbc5f38dd535-20261007-context-b48c49f827aa-54e18bc1f938.json",
+          "sha256": "98ec9f4632a49ad63881f683daa7cc6909426acb818bff86740467a6baccb66f"
         }
       }
     },
@@ -1901,8 +1901,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-012f85cfd2196b3413752b3deb14edf0-20261007-faf7fb1b8f5f.json",
-          "sha256": "ae085704b322de39ed07563a04fae5ab2ac356c0badddc16b9c44cd6659128f6"
+          "path": "verification/requirement-coverage-NREQ-012f85cfd2196b3413752b3deb14edf0-20261007-context-faf7fb1b8f5f-54e18bc1f938.json",
+          "sha256": "7a46a3ae145301ca985ac2b5b2f003f29c97f0756617a4ff2d61b16717011af3"
         }
       }
     },
@@ -1958,8 +1958,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-75151f881444015977da6a6d7d86cb1c-20261007-5c2a016004df.json",
-          "sha256": "5affcf687a624b57e7d71428550332bb52be9854d2458d97022a772ce36cdd58"
+          "path": "verification/requirement-coverage-NREQ-75151f881444015977da6a6d7d86cb1c-20261007-context-5c2a016004df-54e18bc1f938.json",
+          "sha256": "fca027bf5262f82da3d11ec50a6e5030bca83591d06aa90160a153365139126e"
         }
       }
     },
@@ -2015,8 +2015,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-595ff4d66406e3bd9529e12f036c882b-20261007-b22989818f22.json",
-          "sha256": "8ae09ad78e06bd966b79697798d23d36732403aab85be7f81f1847e753f25484"
+          "path": "verification/requirement-coverage-NREQ-595ff4d66406e3bd9529e12f036c882b-20261007-context-b22989818f22-54e18bc1f938.json",
+          "sha256": "74a39cd00f9ee3078f9a13fcb1d47ae19d6b9d94bc4e1fe6cfc05222464bc084"
         }
       }
     },
@@ -2072,8 +2072,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-d2fa27e805583d3a5c7d281ed7051950-20261007-8e1b30f0d0bb.json",
-          "sha256": "5eaf987aa9feee4548692fde0dbeff80930c00d5c1268508e4da5eb406c1bc4e"
+          "path": "verification/requirement-coverage-NREQ-d2fa27e805583d3a5c7d281ed7051950-20261007-context-8e1b30f0d0bb-54e18bc1f938.json",
+          "sha256": "4e2a7896254cb9657040d53e4e765f9783a72a8e9cf9ab9664929289483278ee"
         }
       }
     },
@@ -2129,8 +2129,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-b366c2ac73e0e846627de23589a5a772-20261007-a26853843e41.json",
-          "sha256": "9fca9940d15578c3a0b62dc11612653f60a0f653b7e89159fb3da12dbe185989"
+          "path": "verification/requirement-coverage-NREQ-b366c2ac73e0e846627de23589a5a772-20261007-context-a26853843e41-54e18bc1f938.json",
+          "sha256": "a6024af85a577765b7aafc9e1826857715881b403c29e8b72eaae473b8681f35"
         }
       }
     },
@@ -2186,8 +2186,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-e0b91994f249e0b795ab80a6e3f4a4a2-20261007-b609fa37652f.json",
-          "sha256": "6336ae6d22d3666406e4f0f399b40e029a37b2c55e315ad2d705fed271585138"
+          "path": "verification/requirement-coverage-NREQ-e0b91994f249e0b795ab80a6e3f4a4a2-20261007-context-b609fa37652f-54e18bc1f938.json",
+          "sha256": "4843ea4b75f768a365520bc45050fa870a8efc88022e07b37342d7b80d59d3a3"
         }
       }
     },
@@ -2243,8 +2243,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-bde18b0504b7485cf77fad020a4a494b-20261007-90bbee2744c4.json",
-          "sha256": "d6b4f6b0faa8d39758dbaa45c1dbff602e3c1b01c28a189295a738f189314d01"
+          "path": "verification/requirement-coverage-NREQ-bde18b0504b7485cf77fad020a4a494b-20261007-context-90bbee2744c4-54e18bc1f938.json",
+          "sha256": "8552eca883101d10e4ae7e162742119764ad38ea503f0c312ef7ace9ae817d88"
         }
       }
     },
@@ -2300,8 +2300,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-1e002259d64a939cee2f2a41f4bf3515-20261007-19c88e9b3697.json",
-          "sha256": "5e4230c1965a2ff7071ca85f537ee09985346bd9e77a008e5b80a68d89121f12"
+          "path": "verification/requirement-coverage-NREQ-1e002259d64a939cee2f2a41f4bf3515-20261007-context-19c88e9b3697-54e18bc1f938.json",
+          "sha256": "6459d50f6e31fc6c3a64aa57ee51c0c595e3f49c924eb696a09a4d009990a777"
         }
       }
     },
@@ -2357,8 +2357,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-55f458162d319bfbb710223b3528ef9f-20261007-5b104c0b9184.json",
-          "sha256": "580ae3108d49798be01e86787199b3f229ebca55a98bc674fb36fa0fae2ca77c"
+          "path": "verification/requirement-coverage-NREQ-55f458162d319bfbb710223b3528ef9f-20261007-context-5b104c0b9184-54e18bc1f938.json",
+          "sha256": "fb72d227b26389ca39c1da973299ddb58035a38dbb8abfe0bb26615fc3d3c69f"
         }
       }
     },
@@ -2414,8 +2414,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-d6eeb36f75c6f6f6854a2e3aa9ac2070-20261007-e9e30bbb47a8.json",
-          "sha256": "d669e94dbd1e43cbb27b7e532b914544cda7b1a4446318b4e16471a3247c18ca"
+          "path": "verification/requirement-coverage-NREQ-d6eeb36f75c6f6f6854a2e3aa9ac2070-20261007-context-e9e30bbb47a8-54e18bc1f938.json",
+          "sha256": "e4a6a45f80dfc8b8ecb10d8a9ba4f1fca8bd27a3c012839120718a3ea34c3bb2"
         }
       }
     },
@@ -2471,8 +2471,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-1543275bf85c6f452bce3c65a31dd691-20261007-bc25b407a6a7.json",
-          "sha256": "76b47738f92d3c7708731a335c397988b0672fe4fef94c84b9157f0a43d70fbc"
+          "path": "verification/requirement-coverage-NREQ-1543275bf85c6f452bce3c65a31dd691-20261007-context-bc25b407a6a7-54e18bc1f938.json",
+          "sha256": "fea97a66c0419829cd0acbdf573e4bdca3387bd0892cea2c32133ff6caad4bcd"
         }
       }
     },
@@ -2528,8 +2528,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-2323c8d363fd8c29f965d8c0e67549ae-20261007-cb02bb332e42.json",
-          "sha256": "e14bac2feef3d399e63c409318da1a7aa80973a8372e177b46d54d32b5dd5667"
+          "path": "verification/requirement-coverage-NREQ-2323c8d363fd8c29f965d8c0e67549ae-20261007-context-cb02bb332e42-54e18bc1f938.json",
+          "sha256": "a5ef12e577f4949da6bfa885ecf0c14210e686a1622b539aa1eea88e4d103456"
         }
       }
     },
@@ -2585,8 +2585,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-7643f1fb351e295ecb8565583cb9a37f-20261007-1fe2c84cf115.json",
-          "sha256": "1a4cdbeb8c99c24fa8f4b25965169408a6c82551c04e17755a2e8cec1ba47f88"
+          "path": "verification/requirement-coverage-NREQ-7643f1fb351e295ecb8565583cb9a37f-20261007-context-1fe2c84cf115-54e18bc1f938.json",
+          "sha256": "c8c41040aae3ab192a8624dd8a7b6b2e0fbfbb5fea8713d466f50fc5d8d5977d"
         }
       }
     },
@@ -2642,8 +2642,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-b04395198a63faa09666a1bfca300a1e-20261007-3d6d12bed622.json",
-          "sha256": "720517cd19aa0b7d6b318addc6d6590fd1d62c292d487b90837f34b91c867e2e"
+          "path": "verification/requirement-coverage-NREQ-b04395198a63faa09666a1bfca300a1e-20261007-context-3d6d12bed622-54e18bc1f938.json",
+          "sha256": "1c283cd61700b240b0dca5e6cb75a4e1c0c50ab48f7d54f9a648ad8191efa80e"
         }
       }
     },
@@ -2699,8 +2699,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-bc997511e2328af90b68d1898bcf6ed7-20261007-18574f44b5d8.json",
-          "sha256": "6636d5711944572bfd50cbe0f8792b12c5ba54365c3a467a554c6c956e40f9d2"
+          "path": "verification/requirement-coverage-NREQ-bc997511e2328af90b68d1898bcf6ed7-20261007-context-18574f44b5d8-54e18bc1f938.json",
+          "sha256": "6b0cccf4ee00d7caa9b3d01fbc5647dc20a5f1ceb1a99eab2d9c13e7387b67f9"
         }
       }
     },
@@ -2756,8 +2756,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-2969c103b4ac33435f1e5d6c258a7b7b-20261007-857befb4ca6d.json",
-          "sha256": "bcf3ecb873f9af43cacd6fbb307fb80e914927eede632e6dd8a6d6b872b0af05"
+          "path": "verification/requirement-coverage-NREQ-2969c103b4ac33435f1e5d6c258a7b7b-20261007-context-857befb4ca6d-54e18bc1f938.json",
+          "sha256": "ffd994b7631efcd97c63a1d74d7e13a583d03ef34f312d16c1b50b16d6e38ac2"
         }
       }
     },
@@ -2813,8 +2813,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-ec756b9a468c4ea50f2d35c578a1a11a-20261007-5b0bc69cf0f7.json",
-          "sha256": "540de56d12442bca77c200ae7db73751d133fa0b1ffa25695ca81f36f41a8a05"
+          "path": "verification/requirement-coverage-NREQ-ec756b9a468c4ea50f2d35c578a1a11a-20261007-context-5b0bc69cf0f7-54e18bc1f938.json",
+          "sha256": "e4a9a11d10b48fe6d7efde70a46420095ed54d960e1a77927c794fb2cc1171e3"
         }
       }
     },
@@ -2870,8 +2870,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-797b5fe50f9d13ae34d17cc98c7c8f24-20261007-0a94e402d167.json",
-          "sha256": "cbdd8b537667ee9cac2696ee00b170fa00d1dad7d7bc0bdad80a37d23e59af18"
+          "path": "verification/requirement-coverage-NREQ-797b5fe50f9d13ae34d17cc98c7c8f24-20261007-context-0a94e402d167-54e18bc1f938.json",
+          "sha256": "c6d303fb4fcb4f8c498f02a9fcec66f8a23e3ca0372407d9a39f6dc75d36e750"
         }
       }
     },
@@ -2934,8 +2934,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-1cb8c122e35c6f4e36f01c95ea0d02c9-20261007-4e1b5cc17d08.json",
-          "sha256": "ce64b051a75841f9e664df18c339e41ebc58f44f832a613541166b1576fdd3d2"
+          "path": "verification/requirement-coverage-NREQ-1cb8c122e35c6f4e36f01c95ea0d02c9-20261007-context-4e1b5cc17d08-54e18bc1f938.json",
+          "sha256": "12e664fea6b50a28bfde23b238b6ac54890fc3570908fcf6e041dccc88f691fc"
         }
       }
     },
@@ -3004,8 +3004,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-318da161cc5f30f33449238ba3870773-20261007-123b97ea9f3d.json",
-          "sha256": "052d30ec062aa08adf80117232a2ea828f12b3f9a364e4e3f1c787c3707542ad"
+          "path": "verification/requirement-coverage-NREQ-318da161cc5f30f33449238ba3870773-20261007-context-123b97ea9f3d-54e18bc1f938.json",
+          "sha256": "163b2242e01399325eaf72d9db12680eb36c2f33fa3aefe2ded9532aabf122c1"
         }
       }
     },
@@ -3064,8 +3064,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-a1bafeb7c6f6f12bf0c7b0f6fcadaab9-20261007-4b6563194ed6.json",
-          "sha256": "b7e6b9d21b8dc52ee7a10eb09cf5c3b11cdf9cb7bd722b000f337b87c85a52ac"
+          "path": "verification/requirement-coverage-NREQ-a1bafeb7c6f6f12bf0c7b0f6fcadaab9-20261007-context-4b6563194ed6-54e18bc1f938.json",
+          "sha256": "ee0bf586e195b1a98371fa2a35c7b2476b420724e8fdc9d7879c058ef26efaf4"
         }
       }
     },
@@ -3124,8 +3124,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-f41a79c58369bd76c58ad7e831e953ce-20261007-a6f639cd6cfc.json",
-          "sha256": "323866fa0fccc13583f9a0fa65ecf0d165f3122d536b6b0bd590759472314d62"
+          "path": "verification/requirement-coverage-NREQ-f41a79c58369bd76c58ad7e831e953ce-20261007-context-a6f639cd6cfc-54e18bc1f938.json",
+          "sha256": "9c9128c342b912252f34cdd2c008d4a34c1d91169d32620811fe18b38c68840a"
         }
       }
     },
@@ -3180,8 +3180,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-5811c65fa83521ee7afeedd602cec806-20261007-60e25b364eb4.json",
-          "sha256": "eccd268c3a8323fb58ad94d5a6e8f8963a0a80bde6bad5d5539d03ed9a51535a"
+          "path": "verification/requirement-coverage-NREQ-5811c65fa83521ee7afeedd602cec806-20261007-context-60e25b364eb4-54e18bc1f938.json",
+          "sha256": "33568b2cb04bc4e980f77b9724d911753a180ee287bd5f465c97f9ced4aa0f72"
         }
       }
     },
@@ -3236,8 +3236,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-2046e21dd63ad76f992233d5582c716d-20261007-8d03363ebd61.json",
-          "sha256": "6dba2381372f53ec2173fbdc4f85b08401050e556a82ba8bec03e58ad3e9249f"
+          "path": "verification/requirement-coverage-NREQ-2046e21dd63ad76f992233d5582c716d-20261007-context-8d03363ebd61-54e18bc1f938.json",
+          "sha256": "a33ce179c4d8dbdf0b5d9af1e734a8e666e5079db68d9848c2d9281d32eb4886"
         }
       }
     },
@@ -3292,8 +3292,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-1b07d67693ef773b4800dc6e06626b5b-20261007-dcaf72405bbe.json",
-          "sha256": "c7acbc75ed6f34d435c319d0f57b8535ce51f8b074699f6dc3cf478e8fbc99d4"
+          "path": "verification/requirement-coverage-NREQ-1b07d67693ef773b4800dc6e06626b5b-20261007-context-dcaf72405bbe-54e18bc1f938.json",
+          "sha256": "534a3c5eb47ec2dea51b7fb340f555c6ff99641215805d1e4fba48117a3898e5"
         }
       }
     },
@@ -3314,12 +3314,12 @@
           {
             "path": "project-store.js",
             "symbol": "putArtifact / getArtifact / observeArtifactCustody / observeProjectArtifactCustody",
-            "sha256": "e6c37175a93b934585d7b461ad6448bb0a929670e24e8fc03940dcc132330db8"
+            "sha256": "79213ca03e60d7fe0b2b1c7d17c42a99158c063de8e25b88136bd8aed89650bb"
           },
           {
             "path": "workflow-engine.js",
             "symbol": "timingArtifactAvailability / evaluateEvidenceSufficiency",
-            "sha256": "fac2c0f35a3e10f4be41711ea36d6da4b4b49d86f45ec751b509134dc5ab8777"
+            "sha256": "16c2a16d61d6a462ecebd25cd7d530a3cce46e11c1d9f88664c2e9a27cf61295"
           }
         ],
         "obligations": [
@@ -3361,8 +3361,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-72ba9c97f91e20a56d469fe3d4acf669-20261007-027740e2add6.json",
-          "sha256": "8dae854adfa0eb81feff1e56f1b72d667e834c56f8d1d54d983584e7f9ad3cc6"
+          "path": "verification/requirement-coverage-NREQ-72ba9c97f91e20a56d469fe3d4acf669-20261007-context-ce1798099b2f-54e18bc1f938.json",
+          "sha256": "21a0d43ce54cd0a26cafcafbddb99600605a795dbb3299f1c519d9697493e9be"
         }
       }
     },
@@ -3383,12 +3383,12 @@
           {
             "path": "project-store.js",
             "symbol": "putArtifact / getArtifact / observeArtifactCustody / observeProjectArtifactCustody",
-            "sha256": "e6c37175a93b934585d7b461ad6448bb0a929670e24e8fc03940dcc132330db8"
+            "sha256": "79213ca03e60d7fe0b2b1c7d17c42a99158c063de8e25b88136bd8aed89650bb"
           },
           {
             "path": "workflow-engine.js",
             "symbol": "timingArtifactAvailability / evaluateEvidenceSufficiency",
-            "sha256": "fac2c0f35a3e10f4be41711ea36d6da4b4b49d86f45ec751b509134dc5ab8777"
+            "sha256": "16c2a16d61d6a462ecebd25cd7d530a3cce46e11c1d9f88664c2e9a27cf61295"
           }
         ],
         "obligations": [
@@ -3430,8 +3430,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-d3216139914fb4c3ec1d54819ee18890-20261007-e159112d367c.json",
-          "sha256": "cf7bf82286ef515995dc68c5b03d6105203f07cea02bb6d867b160c7ac539760"
+          "path": "verification/requirement-coverage-NREQ-d3216139914fb4c3ec1d54819ee18890-20261007-context-4d85dbcad915-54e18bc1f938.json",
+          "sha256": "c05e0b57e0c2d950cd57a7d7a636fa647b3c343ac3d15606e5815071922960db"
         }
       }
     },
@@ -3452,12 +3452,12 @@
           {
             "path": "project-store.js",
             "symbol": "putArtifact / getArtifact / observeArtifactCustody / observeProjectArtifactCustody",
-            "sha256": "e6c37175a93b934585d7b461ad6448bb0a929670e24e8fc03940dcc132330db8"
+            "sha256": "79213ca03e60d7fe0b2b1c7d17c42a99158c063de8e25b88136bd8aed89650bb"
           },
           {
             "path": "workflow-engine.js",
             "symbol": "timingArtifactAvailability / evaluateEvidenceSufficiency",
-            "sha256": "fac2c0f35a3e10f4be41711ea36d6da4b4b49d86f45ec751b509134dc5ab8777"
+            "sha256": "16c2a16d61d6a462ecebd25cd7d530a3cce46e11c1d9f88664c2e9a27cf61295"
           }
         ],
         "obligations": [
@@ -3499,8 +3499,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-949f1919a3c7d66486dd74bbd084b71a-20261007-850b4de61355.json",
-          "sha256": "d53b9fec7f8a21e5551521171a403f50fac76fdabf7d67834205e2b390c78a88"
+          "path": "verification/requirement-coverage-NREQ-949f1919a3c7d66486dd74bbd084b71a-20261007-context-51d18e6898a2-54e18bc1f938.json",
+          "sha256": "070b045dac4d7c690b36764735bd8e20ce2ecf7176a7af7c3341f7b89254e98b"
         }
       }
     },
@@ -3521,12 +3521,12 @@
           {
             "path": "project-store.js",
             "symbol": "putArtifact / getArtifact / observeArtifactCustody / observeProjectArtifactCustody",
-            "sha256": "e6c37175a93b934585d7b461ad6448bb0a929670e24e8fc03940dcc132330db8"
+            "sha256": "79213ca03e60d7fe0b2b1c7d17c42a99158c063de8e25b88136bd8aed89650bb"
           },
           {
             "path": "workflow-engine.js",
             "symbol": "timingArtifactAvailability / evaluateEvidenceSufficiency",
-            "sha256": "fac2c0f35a3e10f4be41711ea36d6da4b4b49d86f45ec751b509134dc5ab8777"
+            "sha256": "16c2a16d61d6a462ecebd25cd7d530a3cce46e11c1d9f88664c2e9a27cf61295"
           }
         ],
         "obligations": [
@@ -3568,8 +3568,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-a7139de247d6263164ddc139ec1fe2ce-20261007-65ff328a856c.json",
-          "sha256": "3f38f4daf25c5ca9366fc622f799ee0325edf3973c1d17d14973c1059dfb9828"
+          "path": "verification/requirement-coverage-NREQ-a7139de247d6263164ddc139ec1fe2ce-20261007-context-1e402d1c19b7-54e18bc1f938.json",
+          "sha256": "eb13faaab703ce7def3f0509bec4616b89338013e0c9cb58bed00aadeb508d92"
         }
       }
     },
@@ -3590,12 +3590,12 @@
           {
             "path": "project-store.js",
             "symbol": "putArtifact / getArtifact / observeArtifactCustody / observeProjectArtifactCustody",
-            "sha256": "e6c37175a93b934585d7b461ad6448bb0a929670e24e8fc03940dcc132330db8"
+            "sha256": "79213ca03e60d7fe0b2b1c7d17c42a99158c063de8e25b88136bd8aed89650bb"
           },
           {
             "path": "workflow-engine.js",
             "symbol": "timingArtifactAvailability / evaluateEvidenceSufficiency",
-            "sha256": "fac2c0f35a3e10f4be41711ea36d6da4b4b49d86f45ec751b509134dc5ab8777"
+            "sha256": "16c2a16d61d6a462ecebd25cd7d530a3cce46e11c1d9f88664c2e9a27cf61295"
           }
         ],
         "obligations": [
@@ -3637,8 +3637,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-87e7a29563e2235e49d5eea31da7db0c-20261007-b046478e32c3.json",
-          "sha256": "df4e8f2acc2e2313e97ca88a5eeedac7aa482b54a4effb6f62d88b9ce928d837"
+          "path": "verification/requirement-coverage-NREQ-87e7a29563e2235e49d5eea31da7db0c-20261007-context-04879b11d740-54e18bc1f938.json",
+          "sha256": "df64e07d6167c21ab49ab244f7c3eb40856d5458405e826c67227e7120258e38"
         }
       }
     },
@@ -3693,8 +3693,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-ab9ab7c7ba110dfd3e0a5f8f5c9908cb-20261007-d64ec081ccf9.json",
-          "sha256": "51d36afea64012f6c955bb5d52cfd1d894a095717c5122f6b1e48eb9dc8d56eb"
+          "path": "verification/requirement-coverage-NREQ-ab9ab7c7ba110dfd3e0a5f8f5c9908cb-20261007-context-d64ec081ccf9-54e18bc1f938.json",
+          "sha256": "02f71400bcd471ea43be9eff7817b947d6f9c2d2063efb82ef5855690c46a7c0"
         }
       }
     },
@@ -3744,8 +3744,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-853a934199459ed6bf419687ca08ba34-20261007-00fada70b5c9.json",
-          "sha256": "536b44bafdb485312ba6b3355ade8603574d6cc512262ec5d3f89fb39dd37d3e"
+          "path": "verification/requirement-coverage-NREQ-853a934199459ed6bf419687ca08ba34-20261007-context-00fada70b5c9-54e18bc1f938.json",
+          "sha256": "57bad2e8a7d5f6381b670948abd685d76a001f040069621e56b2a08bb1663969"
         }
       }
     },
@@ -3800,8 +3800,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-7add6f24a57198b72b500e5a2acf1ca6-20261007-6cba32557505.json",
-          "sha256": "b071b228f903bf430509da659416233cdedcc92c403a243c2db570c1ad740b6b"
+          "path": "verification/requirement-coverage-NREQ-7add6f24a57198b72b500e5a2acf1ca6-20261007-context-6cba32557505-54e18bc1f938.json",
+          "sha256": "4dae7e8ce2ca98ad6219a4061888daa9d1d2d78db22ace75446db00ffeb64208"
         }
       }
     },
@@ -3851,8 +3851,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-d6f8519fc2d36e59e4eba26af0442d14-20261007-2fbfbdc64e39.json",
-          "sha256": "4bd5bf47d83204212ab056adbc93d38362082fa06348f04243c400ad6e82d10c"
+          "path": "verification/requirement-coverage-NREQ-d6f8519fc2d36e59e4eba26af0442d14-20261007-context-2fbfbdc64e39-54e18bc1f938.json",
+          "sha256": "14f2f6f812ba0be96e8c898022d96311667b27935fc1635b7bbb2bf9888e12f2"
         }
       }
     },
@@ -3902,8 +3902,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-dba22c5f93e4359c4b7d4ebdd9799dbf-20261007-20dec9a14f41.json",
-          "sha256": "ddf4d7cd1d195ce0822fa34e060f08a325ccdf893a8d45346bd11d70f7529dc7"
+          "path": "verification/requirement-coverage-NREQ-dba22c5f93e4359c4b7d4ebdd9799dbf-20261007-context-20dec9a14f41-54e18bc1f938.json",
+          "sha256": "4a973d22e7061f4086ef0c191729e63d4c0afcd0cbd7b8e36b33dba55dfec83a"
         }
       }
     },
@@ -3953,8 +3953,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-27f437fe3040767de849d06a48cdb3c3-20261007-f1acc99ffcf8.json",
-          "sha256": "51c02db844ebdbcf06a67b80c3422e8c973432b479bb841db0e2bbe518c1e992"
+          "path": "verification/requirement-coverage-NREQ-27f437fe3040767de849d06a48cdb3c3-20261007-context-f1acc99ffcf8-54e18bc1f938.json",
+          "sha256": "0fc19a5fc588acc1fde8b8a5a99cec30d9d80174686424fb51fa5408c9d76592"
         }
       }
     },
@@ -4004,8 +4004,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-c756b0b15119dd819444cd7212bdad56-20261007-fb0c67dfb2a4.json",
-          "sha256": "b9c3e9cc4fd5ddce3ae1d285c6a35502deb92474892d3de16ca95d113f39bfc0"
+          "path": "verification/requirement-coverage-NREQ-c756b0b15119dd819444cd7212bdad56-20261007-context-fb0c67dfb2a4-54e18bc1f938.json",
+          "sha256": "59ca6cdee07ba55950d94a474f3efa5ee9edbd7068b8bf60b821129d3aa43c14"
         }
       }
     },
@@ -4060,8 +4060,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-092f78e488e6282f342b533fa7801e3e-20261007-11d306878126.json",
-          "sha256": "57686c95c275e800e9d45b7c2e6dabd9e7c3234940087a12981fb36aa6f46a44"
+          "path": "verification/requirement-coverage-NREQ-092f78e488e6282f342b533fa7801e3e-20261007-context-11d306878126-54e18bc1f938.json",
+          "sha256": "2df987d26df5d6e56534d42837883388f55cf861592af029fbdf91284e1b5690"
         }
       }
     },
@@ -4081,7 +4081,7 @@
           {
             "path": "project-store.js",
             "symbol": "writeProjectRow / writeProject / restoreCheckpoint",
-            "sha256": "e6c37175a93b934585d7b461ad6448bb0a929670e24e8fc03940dcc132330db8"
+            "sha256": "79213ca03e60d7fe0b2b1c7d17c42a99158c063de8e25b88136bd8aed89650bb"
           }
         ],
         "obligations": [
@@ -4117,8 +4117,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-5003532a6cda7a68c13be508fbf4d723-20261007-191e2d20f83f.json",
-          "sha256": "88cef397d4acd2f81c3a4c1c3e8ab6516f429304fb9612ca8dde75e15aa695a5"
+          "path": "verification/requirement-coverage-NREQ-5003532a6cda7a68c13be508fbf4d723-20261007-context-dccb85cd4973-54e18bc1f938.json",
+          "sha256": "e74097666d17b1437b738a6b27c70f8411bf76a9359645d951d7ac9dfbd84062"
         }
       }
     },
@@ -4138,7 +4138,7 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "e761fb032005030b8a63e5250e56c4bbb3ea617625be5ea55bbbc2d0b5029117"
+            "sha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5"
           },
           {
             "path": "workflow-schema.js",
@@ -4183,8 +4183,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-360281bfdd66bed29237ed7202962808-20261007-73f8c82cd834.json",
-          "sha256": "8692094aae2ad92563dccb0b95b42951b805e9026b1cf6cf58c26bd018ba5d9f"
+          "path": "verification/requirement-coverage-NREQ-360281bfdd66bed29237ed7202962808-20261007-context-defd14234c9a-54e18bc1f938.json",
+          "sha256": "c695094c56fbc8a51929e41f0492fa68a9390222c0cb74977aac1f09cb0e3aae"
         }
       }
     },
@@ -4204,7 +4204,7 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "e761fb032005030b8a63e5250e56c4bbb3ea617625be5ea55bbbc2d0b5029117"
+            "sha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5"
           },
           {
             "path": "workflow-schema.js",
@@ -4249,8 +4249,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-a0db6ddcb33d9af123b08d4d481c8ebd-20261007-b3c7a4a1a0bc.json",
-          "sha256": "3bef50bde72053e3690af27efcc771db0d4234fac7bf9efa3275d6161c7c0f70"
+          "path": "verification/requirement-coverage-NREQ-a0db6ddcb33d9af123b08d4d481c8ebd-20261007-context-6d4092da78f9-54e18bc1f938.json",
+          "sha256": "ea01f7fa0bd6f670e258552b819141f55d8a6fd4ad940d0b15c737ad3fab72b5"
         }
       }
     },
@@ -4270,7 +4270,7 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "e761fb032005030b8a63e5250e56c4bbb3ea617625be5ea55bbbc2d0b5029117"
+            "sha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5"
           },
           {
             "path": "workflow-schema.js",
@@ -4315,8 +4315,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-baa1c33b2e2490264f91881b06ff9da8-20261007-023baa60eb5e.json",
-          "sha256": "caf740e104958ad4d49282a58db196abbc03e8a1b78fe3dac50ae91addab7875"
+          "path": "verification/requirement-coverage-NREQ-baa1c33b2e2490264f91881b06ff9da8-20261007-context-029f6195f4ba-54e18bc1f938.json",
+          "sha256": "d4ea1ed264e4ca15526f08898a551850f70963edee3c4a021ad81de468ba3ef0"
         }
       }
     },
@@ -4336,7 +4336,7 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "e761fb032005030b8a63e5250e56c4bbb3ea617625be5ea55bbbc2d0b5029117"
+            "sha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5"
           },
           {
             "path": "workflow-schema.js",
@@ -4381,8 +4381,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-f1919b51ebfc8561d0140c02cbf08abd-20261007-084940a86716.json",
-          "sha256": "6f6ba392f0be94ad1c4b3323e31f4f10f0b87441146c7ac4be536f4cbaa5cab9"
+          "path": "verification/requirement-coverage-NREQ-f1919b51ebfc8561d0140c02cbf08abd-20261007-context-5b509fd997c1-54e18bc1f938.json",
+          "sha256": "093fe67087d0b595614d8b12105ea369141301412e6ed75d74502cf37819d38a"
         }
       }
     },
@@ -4402,7 +4402,7 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "e761fb032005030b8a63e5250e56c4bbb3ea617625be5ea55bbbc2d0b5029117"
+            "sha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5"
           },
           {
             "path": "workflow-schema.js",
@@ -4447,8 +4447,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-4b27c9f604f44c29404eacc12a59fd68-20261007-a95712cc73f2.json",
-          "sha256": "e5b2457f1305b695b12ae8aa23f0f7bc27f638f9e3c85bcc14d52111cb458176"
+          "path": "verification/requirement-coverage-NREQ-4b27c9f604f44c29404eacc12a59fd68-20261007-context-0ea535138580-54e18bc1f938.json",
+          "sha256": "828f6d438ae2a765c18e17df92eed95023c1c8718f40884a1cb466456879ff98"
         }
       }
     },
@@ -4468,7 +4468,7 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "e761fb032005030b8a63e5250e56c4bbb3ea617625be5ea55bbbc2d0b5029117"
+            "sha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5"
           },
           {
             "path": "workflow-schema.js",
@@ -4513,8 +4513,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-71896faa31bc64e94d98bc976e1e6f1d-20261007-d5323956e09f.json",
-          "sha256": "dd9d3f3b9a32c147904da0df673232e321476c49f21a475f191d105a477be0e4"
+          "path": "verification/requirement-coverage-NREQ-71896faa31bc64e94d98bc976e1e6f1d-20261007-context-def6b5edfdba-54e18bc1f938.json",
+          "sha256": "6b1b77b06b082d95e9bede7e355d9ee01da3fc50d5bdb0616f159fa89d6545a3"
         }
       }
     },
@@ -4534,7 +4534,7 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "e761fb032005030b8a63e5250e56c4bbb3ea617625be5ea55bbbc2d0b5029117"
+            "sha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5"
           },
           {
             "path": "workflow-schema.js",
@@ -4579,8 +4579,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-78fef21919bbd7bb3bafba6f62210631-20261007-dd89dac29dc4.json",
-          "sha256": "e55743fad3b6ac58aed37db981f78ed95f753f0dfa90cd70edaa9d7616e50f1a"
+          "path": "verification/requirement-coverage-NREQ-78fef21919bbd7bb3bafba6f62210631-20261007-context-8f3806190781-54e18bc1f938.json",
+          "sha256": "a359069a33135c2b279712128a31558bfc1d3a00a270f2a941c82e0b8c35d6d7"
         }
       }
     },
@@ -4600,7 +4600,7 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "e761fb032005030b8a63e5250e56c4bbb3ea617625be5ea55bbbc2d0b5029117"
+            "sha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5"
           },
           {
             "path": "workflow-schema.js",
@@ -4645,8 +4645,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-72aa03a305fb8893a65d384f41d86aeb-20261007-fef9393f9841.json",
-          "sha256": "100db00fe5e2ce35ab255481b461b3302b77b17801613d239e5524fde2aee0e8"
+          "path": "verification/requirement-coverage-NREQ-72aa03a305fb8893a65d384f41d86aeb-20261007-context-6fb2556fc745-54e18bc1f938.json",
+          "sha256": "b0b5b17ba6f3f681cf29af9ca85af2b5e21148cdcd7ee0a9409e4426e4a815ba"
         }
       }
     },
@@ -4666,7 +4666,7 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "e761fb032005030b8a63e5250e56c4bbb3ea617625be5ea55bbbc2d0b5029117"
+            "sha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5"
           },
           {
             "path": "workflow-schema.js",
@@ -4711,8 +4711,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-848909d4b95219bdb481803a4b1b91c2-20261007-f750620335b7.json",
-          "sha256": "5b214caeef74f2ad24ba3bab5604bd07221158ab6fc92e198cb6883a8e64bfe6"
+          "path": "verification/requirement-coverage-NREQ-848909d4b95219bdb481803a4b1b91c2-20261007-context-73f60d480258-54e18bc1f938.json",
+          "sha256": "a9a3c12c5948a5c9e560f56d8f1dddc6038656e69edf32049b6e31f38acf5654"
         }
       }
     },
@@ -4732,7 +4732,7 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "e761fb032005030b8a63e5250e56c4bbb3ea617625be5ea55bbbc2d0b5029117"
+            "sha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5"
           },
           {
             "path": "workflow-schema.js",
@@ -4777,8 +4777,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-601ec85ffefcffd713520f4067f7529c-20261007-c332f470cef1.json",
-          "sha256": "52dc54f107589bc29431753d3b75fe37ee8261a53a99c4b360ccc9e1c2931698"
+          "path": "verification/requirement-coverage-NREQ-601ec85ffefcffd713520f4067f7529c-20261007-context-be7aad854ceb-54e18bc1f938.json",
+          "sha256": "e6092cf98c15e425ac4e80b5f1655c6b7a5c67bb12f9124bd64b679d28ac5742"
         }
       }
     },
@@ -4798,7 +4798,7 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "e761fb032005030b8a63e5250e56c4bbb3ea617625be5ea55bbbc2d0b5029117"
+            "sha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5"
           },
           {
             "path": "workflow-schema.js",
@@ -4843,8 +4843,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-c0080ab56f40757c88225dc35a1f98f0-20261007-a287a83ae9f9.json",
-          "sha256": "2744aac54b09790100876ebc63f7ca426b8fcd5d4b35cb2189e6535f8cf01153"
+          "path": "verification/requirement-coverage-NREQ-c0080ab56f40757c88225dc35a1f98f0-20261007-context-79fe3bf8357b-54e18bc1f938.json",
+          "sha256": "d93ffe302b110030cd90810b26a3ea8e61e1145be054f12ac32047f4ac9483ca"
         }
       }
     },
@@ -4864,7 +4864,7 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "e761fb032005030b8a63e5250e56c4bbb3ea617625be5ea55bbbc2d0b5029117"
+            "sha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5"
           },
           {
             "path": "workflow-schema.js",
@@ -4909,8 +4909,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-a42ec803577aa8ccbe176ed8e20a8595-20261007-086553a7b0ad.json",
-          "sha256": "4cdf193aeb5784af5444e5af7032103a0f11b05cd8ac124dead826da80d56efe"
+          "path": "verification/requirement-coverage-NREQ-a42ec803577aa8ccbe176ed8e20a8595-20261007-context-66547fe135c2-54e18bc1f938.json",
+          "sha256": "d5c678a8b9c99916642af5ab582cc12d78bd67d09a70726c1b9e1592f70372f1"
         }
       }
     },
@@ -4930,7 +4930,7 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "e761fb032005030b8a63e5250e56c4bbb3ea617625be5ea55bbbc2d0b5029117"
+            "sha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5"
           }
         ],
         "obligations": [
@@ -4970,8 +4970,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-928a65a08b403be3edc8b160ef9cc53c-20261007-d17b7627dac4.json",
-          "sha256": "a9a10d1f0e8054f549b225d8feecc19e7ed5b96fe9a71c919e2c8923e2a4acb3"
+          "path": "verification/requirement-coverage-NREQ-928a65a08b403be3edc8b160ef9cc53c-20261007-context-bc514f8d980c-54e18bc1f938.json",
+          "sha256": "89eac7e14e7cfcaeae19e9d30302b6d139755208fa71b16d3de9a6ca8c546a3c"
         }
       }
     },
@@ -4991,17 +4991,17 @@
           {
             "path": "prompt-engine.js",
             "symbol": "procedureFor / responseContractDescriptor / body",
-            "sha256": "66a1eb2976826eb15b3d8d2963363836a160e75bf8ebaf904673c64963a20ba4"
+            "sha256": "61e363381dfb88fcfd32a176066762e2a37cf7b14fb9d39bff4eacf7e6d5706f"
           },
           {
             "path": "workflow-engine.js",
             "symbol": "evaluateIntakeAccounting",
-            "sha256": "fac2c0f35a3e10f4be41711ea36d6da4b4b49d86f45ec751b509134dc5ab8777"
+            "sha256": "16c2a16d61d6a462ecebd25cd7d530a3cce46e11c1d9f88664c2e9a27cf61295"
           },
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "e761fb032005030b8a63e5250e56c4bbb3ea617625be5ea55bbbc2d0b5029117"
+            "sha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5"
           }
         ],
         "obligations": [
@@ -5035,8 +5035,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-0fe0693c63b640aac77aa7fa2ad3861d-20261007-d6896a78f175.json",
-          "sha256": "0bd94688de53be75ed6d5e8d8bd085ce47284f046532961ad467080b9ddca805"
+          "path": "verification/requirement-coverage-NREQ-0fe0693c63b640aac77aa7fa2ad3861d-20261007-context-e479a2d67661-54e18bc1f938.json",
+          "sha256": "4aa77a00cd1bc1df450b292495c4cdf67f43f7626a3db946ddeaf801196fa9bc"
         }
       }
     },
@@ -5056,17 +5056,17 @@
           {
             "path": "prompt-engine.js",
             "symbol": "procedureFor / responseContractDescriptor / body",
-            "sha256": "66a1eb2976826eb15b3d8d2963363836a160e75bf8ebaf904673c64963a20ba4"
+            "sha256": "61e363381dfb88fcfd32a176066762e2a37cf7b14fb9d39bff4eacf7e6d5706f"
           },
           {
             "path": "workflow-engine.js",
             "symbol": "evaluateIntakeAccounting",
-            "sha256": "fac2c0f35a3e10f4be41711ea36d6da4b4b49d86f45ec751b509134dc5ab8777"
+            "sha256": "16c2a16d61d6a462ecebd25cd7d530a3cce46e11c1d9f88664c2e9a27cf61295"
           },
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "e761fb032005030b8a63e5250e56c4bbb3ea617625be5ea55bbbc2d0b5029117"
+            "sha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5"
           }
         ],
         "obligations": [
@@ -5100,8 +5100,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-57f8fa829a872f35948a81bd58477291-20261007-4eec16fef5d9.json",
-          "sha256": "5f4590f4f274ff4d440ce1f35fa9869c30fcad2f3d9c10240f7614b83e35d17f"
+          "path": "verification/requirement-coverage-NREQ-57f8fa829a872f35948a81bd58477291-20261007-context-fd3ea3b718ef-54e18bc1f938.json",
+          "sha256": "bf5598be2c5943d9354cb438e2c3813c57bd9f295c43913d6e1e5fe35bd56d7d"
         }
       }
     },
@@ -5121,17 +5121,17 @@
           {
             "path": "prompt-engine.js",
             "symbol": "procedureFor / responseContractDescriptor / body",
-            "sha256": "66a1eb2976826eb15b3d8d2963363836a160e75bf8ebaf904673c64963a20ba4"
+            "sha256": "61e363381dfb88fcfd32a176066762e2a37cf7b14fb9d39bff4eacf7e6d5706f"
           },
           {
             "path": "workflow-engine.js",
             "symbol": "evaluateIntakeAccounting",
-            "sha256": "fac2c0f35a3e10f4be41711ea36d6da4b4b49d86f45ec751b509134dc5ab8777"
+            "sha256": "16c2a16d61d6a462ecebd25cd7d530a3cce46e11c1d9f88664c2e9a27cf61295"
           },
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "e761fb032005030b8a63e5250e56c4bbb3ea617625be5ea55bbbc2d0b5029117"
+            "sha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5"
           }
         ],
         "obligations": [
@@ -5165,8 +5165,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-ebadc5f449d2029613a3af4b31f78c6f-20261007-18171b0ab481.json",
-          "sha256": "a4a451dbb4fc875d8c1a1d104c87eef11da9d4f544fcd42119ba56f378589fa7"
+          "path": "verification/requirement-coverage-NREQ-ebadc5f449d2029613a3af4b31f78c6f-20261007-context-4fd7fab953a6-54e18bc1f938.json",
+          "sha256": "809aec10d97603d18c730d9179fe15b9e7bca6a6bb4ddc34b7caca3bab6eb755"
         }
       }
     },
@@ -5186,17 +5186,17 @@
           {
             "path": "prompt-engine.js",
             "symbol": "procedureFor / responseContractDescriptor / body",
-            "sha256": "66a1eb2976826eb15b3d8d2963363836a160e75bf8ebaf904673c64963a20ba4"
+            "sha256": "61e363381dfb88fcfd32a176066762e2a37cf7b14fb9d39bff4eacf7e6d5706f"
           },
           {
             "path": "workflow-engine.js",
             "symbol": "evaluateIntakeAccounting",
-            "sha256": "fac2c0f35a3e10f4be41711ea36d6da4b4b49d86f45ec751b509134dc5ab8777"
+            "sha256": "16c2a16d61d6a462ecebd25cd7d530a3cce46e11c1d9f88664c2e9a27cf61295"
           },
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "e761fb032005030b8a63e5250e56c4bbb3ea617625be5ea55bbbc2d0b5029117"
+            "sha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5"
           }
         ],
         "obligations": [
@@ -5230,8 +5230,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-85b110cf9d0bf8e7e2a6ca34dcdee412-20261007-bb369762d8db.json",
-          "sha256": "2f3771ed6245eb1be15bac719803ebe35f6721a4f415fc7429830596b7e29a90"
+          "path": "verification/requirement-coverage-NREQ-85b110cf9d0bf8e7e2a6ca34dcdee412-20261007-context-80144a03a02d-54e18bc1f938.json",
+          "sha256": "885b65138a8e45db03ff813c8a1e7280b68f7ccfac782366c02d089fe27874ca"
         }
       }
     },
@@ -5251,17 +5251,17 @@
           {
             "path": "prompt-engine.js",
             "symbol": "procedureFor / responseContractDescriptor / body",
-            "sha256": "66a1eb2976826eb15b3d8d2963363836a160e75bf8ebaf904673c64963a20ba4"
+            "sha256": "61e363381dfb88fcfd32a176066762e2a37cf7b14fb9d39bff4eacf7e6d5706f"
           },
           {
             "path": "workflow-engine.js",
             "symbol": "evaluateIntakeAccounting",
-            "sha256": "fac2c0f35a3e10f4be41711ea36d6da4b4b49d86f45ec751b509134dc5ab8777"
+            "sha256": "16c2a16d61d6a462ecebd25cd7d530a3cce46e11c1d9f88664c2e9a27cf61295"
           },
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "e761fb032005030b8a63e5250e56c4bbb3ea617625be5ea55bbbc2d0b5029117"
+            "sha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5"
           }
         ],
         "obligations": [
@@ -5295,8 +5295,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-b7b9ecdbceaad6aaefc9e55f7d5b3d48-20261007-6bde77f8e10d.json",
-          "sha256": "e9138e27342becc5d110b8b553e9c5d6877dde2c81ae47085d3afbb707fbc4dc"
+          "path": "verification/requirement-coverage-NREQ-b7b9ecdbceaad6aaefc9e55f7d5b3d48-20261007-context-08a2d1fe5fc7-54e18bc1f938.json",
+          "sha256": "cc24802d1b12266d49c92a5be362199ad03bbc17e4e284485bf81e71b9289ad2"
         }
       }
     },
@@ -5316,17 +5316,17 @@
           {
             "path": "prompt-engine.js",
             "symbol": "procedureFor / responseContractDescriptor / body",
-            "sha256": "66a1eb2976826eb15b3d8d2963363836a160e75bf8ebaf904673c64963a20ba4"
+            "sha256": "61e363381dfb88fcfd32a176066762e2a37cf7b14fb9d39bff4eacf7e6d5706f"
           },
           {
             "path": "workflow-engine.js",
             "symbol": "evaluateIntakeAccounting",
-            "sha256": "fac2c0f35a3e10f4be41711ea36d6da4b4b49d86f45ec751b509134dc5ab8777"
+            "sha256": "16c2a16d61d6a462ecebd25cd7d530a3cce46e11c1d9f88664c2e9a27cf61295"
           },
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "e761fb032005030b8a63e5250e56c4bbb3ea617625be5ea55bbbc2d0b5029117"
+            "sha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5"
           }
         ],
         "obligations": [
@@ -5360,8 +5360,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-5dbdcf72dd32a519bb29fbf8250726d3-20261007-178027c31442.json",
-          "sha256": "ed7596835cbb982cfab88f5b765d3def88007ac769f6f9de464b13d8c18a23b6"
+          "path": "verification/requirement-coverage-NREQ-5dbdcf72dd32a519bb29fbf8250726d3-20261007-context-99eab70395b3-54e18bc1f938.json",
+          "sha256": "3c3610fd68d925394b05156f292b6c7cc29ce510cc88f5e0dc4e420b7b9b76f6"
         }
       }
     },
@@ -5381,17 +5381,17 @@
           {
             "path": "prompt-engine.js",
             "symbol": "procedureFor / responseContractDescriptor / body",
-            "sha256": "66a1eb2976826eb15b3d8d2963363836a160e75bf8ebaf904673c64963a20ba4"
+            "sha256": "61e363381dfb88fcfd32a176066762e2a37cf7b14fb9d39bff4eacf7e6d5706f"
           },
           {
             "path": "workflow-engine.js",
             "symbol": "evaluateIntakeAccounting",
-            "sha256": "fac2c0f35a3e10f4be41711ea36d6da4b4b49d86f45ec751b509134dc5ab8777"
+            "sha256": "16c2a16d61d6a462ecebd25cd7d530a3cce46e11c1d9f88664c2e9a27cf61295"
           },
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "e761fb032005030b8a63e5250e56c4bbb3ea617625be5ea55bbbc2d0b5029117"
+            "sha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5"
           }
         ],
         "obligations": [
@@ -5425,8 +5425,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-f2d6f77dfa27e853d7eb5dab69be388d-20261007-4c065192f275.json",
-          "sha256": "af878f9dc0c2f36ae01f89025711eb93f041be232f25e42b1d2656454d5f6bef"
+          "path": "verification/requirement-coverage-NREQ-f2d6f77dfa27e853d7eb5dab69be388d-20261007-context-e9122d35086e-54e18bc1f938.json",
+          "sha256": "657fce36c2a8166d24dd57705e5e36b6a0bf17e1fa44a5105a7ae1dad36bde52"
         }
       }
     },
@@ -5446,17 +5446,17 @@
           {
             "path": "prompt-engine.js",
             "symbol": "procedureFor / responseContractDescriptor / body",
-            "sha256": "66a1eb2976826eb15b3d8d2963363836a160e75bf8ebaf904673c64963a20ba4"
+            "sha256": "61e363381dfb88fcfd32a176066762e2a37cf7b14fb9d39bff4eacf7e6d5706f"
           },
           {
             "path": "workflow-engine.js",
             "symbol": "evaluateIntakeAccounting",
-            "sha256": "fac2c0f35a3e10f4be41711ea36d6da4b4b49d86f45ec751b509134dc5ab8777"
+            "sha256": "16c2a16d61d6a462ecebd25cd7d530a3cce46e11c1d9f88664c2e9a27cf61295"
           },
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "e761fb032005030b8a63e5250e56c4bbb3ea617625be5ea55bbbc2d0b5029117"
+            "sha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5"
           }
         ],
         "obligations": [
@@ -5490,8 +5490,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-ade9df74bf03ff347d7ae537fbfa738d-20261007-804dcdf17892.json",
-          "sha256": "daa87b35d371ef8a036b1acb018c2ffada0a23501f2544cb3942800f3c766a94"
+          "path": "verification/requirement-coverage-NREQ-ade9df74bf03ff347d7ae537fbfa738d-20261007-context-61a2341f94ae-54e18bc1f938.json",
+          "sha256": "537724f9e2704178408359dfcdc2ee08b42a142e1f683a63311c88482a36fc3d"
         }
       }
     },
@@ -5511,17 +5511,17 @@
           {
             "path": "prompt-engine.js",
             "symbol": "procedureFor / responseContractDescriptor / body",
-            "sha256": "66a1eb2976826eb15b3d8d2963363836a160e75bf8ebaf904673c64963a20ba4"
+            "sha256": "61e363381dfb88fcfd32a176066762e2a37cf7b14fb9d39bff4eacf7e6d5706f"
           },
           {
             "path": "workflow-engine.js",
             "symbol": "evaluateIntakeAccounting",
-            "sha256": "fac2c0f35a3e10f4be41711ea36d6da4b4b49d86f45ec751b509134dc5ab8777"
+            "sha256": "16c2a16d61d6a462ecebd25cd7d530a3cce46e11c1d9f88664c2e9a27cf61295"
           },
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "e761fb032005030b8a63e5250e56c4bbb3ea617625be5ea55bbbc2d0b5029117"
+            "sha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5"
           }
         ],
         "obligations": [
@@ -5555,8 +5555,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-1f578d8524f1af57b280fd03422827f1-20261007-333058391a36.json",
-          "sha256": "49988f9d1d910916c0876d1183175afeef05b7d543170ae6cac1e55fde607b35"
+          "path": "verification/requirement-coverage-NREQ-1f578d8524f1af57b280fd03422827f1-20261007-context-33c756e92bb7-54e18bc1f938.json",
+          "sha256": "96919ce916ebebeaa709768faf3e1bfc814d058347ef6d7016a0e1b3f53cb98c"
         }
       }
     },
@@ -5576,17 +5576,17 @@
           {
             "path": "prompt-engine.js",
             "symbol": "procedureFor / responseContractDescriptor / body",
-            "sha256": "66a1eb2976826eb15b3d8d2963363836a160e75bf8ebaf904673c64963a20ba4"
+            "sha256": "61e363381dfb88fcfd32a176066762e2a37cf7b14fb9d39bff4eacf7e6d5706f"
           },
           {
             "path": "workflow-engine.js",
             "symbol": "evaluateIntakeAccounting",
-            "sha256": "fac2c0f35a3e10f4be41711ea36d6da4b4b49d86f45ec751b509134dc5ab8777"
+            "sha256": "16c2a16d61d6a462ecebd25cd7d530a3cce46e11c1d9f88664c2e9a27cf61295"
           },
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "e761fb032005030b8a63e5250e56c4bbb3ea617625be5ea55bbbc2d0b5029117"
+            "sha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5"
           }
         ],
         "obligations": [
@@ -5620,8 +5620,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-cf2cbee76666e1f836c4cca046988062-20261007-0ad6e9d4c8b1.json",
-          "sha256": "5691ad545d06b3ee99c1eb29f444b7828c99244b369457926584d2f6b77a3c1e"
+          "path": "verification/requirement-coverage-NREQ-cf2cbee76666e1f836c4cca046988062-20261007-context-ee826876a6b9-54e18bc1f938.json",
+          "sha256": "cfd314233e0bb0aef6d17c1949fabaa408f19e04448b8f135d700ce2ba759a61"
         }
       }
     },
@@ -5641,17 +5641,17 @@
           {
             "path": "prompt-engine.js",
             "symbol": "procedureFor / responseContractDescriptor / body",
-            "sha256": "66a1eb2976826eb15b3d8d2963363836a160e75bf8ebaf904673c64963a20ba4"
+            "sha256": "61e363381dfb88fcfd32a176066762e2a37cf7b14fb9d39bff4eacf7e6d5706f"
           },
           {
             "path": "workflow-engine.js",
             "symbol": "evaluateIntakeAccounting",
-            "sha256": "fac2c0f35a3e10f4be41711ea36d6da4b4b49d86f45ec751b509134dc5ab8777"
+            "sha256": "16c2a16d61d6a462ecebd25cd7d530a3cce46e11c1d9f88664c2e9a27cf61295"
           },
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "e761fb032005030b8a63e5250e56c4bbb3ea617625be5ea55bbbc2d0b5029117"
+            "sha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5"
           }
         ],
         "obligations": [
@@ -5685,8 +5685,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-2524a1d9ecc583bbd420778cfb147983-20261007-b0c3c6c9bad9.json",
-          "sha256": "9c849bac8300da21e242d3870e07d40e0bb7d132604a0f5c33789ee1776b7bf2"
+          "path": "verification/requirement-coverage-NREQ-2524a1d9ecc583bbd420778cfb147983-20261007-context-04970fd5ee41-54e18bc1f938.json",
+          "sha256": "7337dc35d0d5087093cbd7c3759c07d36f7f2560f19f66b5da8e8b5a8952deb3"
         }
       }
     },
@@ -5706,17 +5706,17 @@
           {
             "path": "prompt-engine.js",
             "symbol": "procedureFor / responseContractDescriptor / body",
-            "sha256": "66a1eb2976826eb15b3d8d2963363836a160e75bf8ebaf904673c64963a20ba4"
+            "sha256": "61e363381dfb88fcfd32a176066762e2a37cf7b14fb9d39bff4eacf7e6d5706f"
           },
           {
             "path": "workflow-engine.js",
             "symbol": "evaluateIntakeAccounting",
-            "sha256": "fac2c0f35a3e10f4be41711ea36d6da4b4b49d86f45ec751b509134dc5ab8777"
+            "sha256": "16c2a16d61d6a462ecebd25cd7d530a3cce46e11c1d9f88664c2e9a27cf61295"
           },
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "e761fb032005030b8a63e5250e56c4bbb3ea617625be5ea55bbbc2d0b5029117"
+            "sha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5"
           }
         ],
         "obligations": [
@@ -5750,8 +5750,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-e2c966ff2db0502c8d0f2d40e87f4262-20261007-0a4dc657dba6.json",
-          "sha256": "7ca65538db15d1e32c37bb0c8ede32b18b01d780bf88bdeb2909b1a0631030a4"
+          "path": "verification/requirement-coverage-NREQ-e2c966ff2db0502c8d0f2d40e87f4262-20261007-context-c6d95e2cb2e2-54e18bc1f938.json",
+          "sha256": "e8f4edf83307dea3fd35f6cf1bf94f22c4c3f8d51dcf4bde31968e641fa4857e"
         }
       }
     },
@@ -5771,17 +5771,17 @@
           {
             "path": "prompt-engine.js",
             "symbol": "procedureFor / responseContractDescriptor / body",
-            "sha256": "66a1eb2976826eb15b3d8d2963363836a160e75bf8ebaf904673c64963a20ba4"
+            "sha256": "61e363381dfb88fcfd32a176066762e2a37cf7b14fb9d39bff4eacf7e6d5706f"
           },
           {
             "path": "workflow-engine.js",
             "symbol": "evaluateIntakeAccounting",
-            "sha256": "fac2c0f35a3e10f4be41711ea36d6da4b4b49d86f45ec751b509134dc5ab8777"
+            "sha256": "16c2a16d61d6a462ecebd25cd7d530a3cce46e11c1d9f88664c2e9a27cf61295"
           },
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "e761fb032005030b8a63e5250e56c4bbb3ea617625be5ea55bbbc2d0b5029117"
+            "sha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5"
           }
         ],
         "obligations": [
@@ -5815,8 +5815,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-b3e8d9cffdde1f94d9d342ff0ed4f097-20261007-2245f2d912e1.json",
-          "sha256": "2c37dd932c58ee330b9eb213736d0bbb9485af8a4c2456195d8185b3e1a23950"
+          "path": "verification/requirement-coverage-NREQ-b3e8d9cffdde1f94d9d342ff0ed4f097-20261007-context-b36ec8d0d499-54e18bc1f938.json",
+          "sha256": "f560765662446de0ae7c8fb192bf3fc3ab5879100d7313e521704a3b7e8868d8"
         }
       }
     },
@@ -5836,17 +5836,17 @@
           {
             "path": "prompt-engine.js",
             "symbol": "procedureFor / responseContractDescriptor / body",
-            "sha256": "66a1eb2976826eb15b3d8d2963363836a160e75bf8ebaf904673c64963a20ba4"
+            "sha256": "61e363381dfb88fcfd32a176066762e2a37cf7b14fb9d39bff4eacf7e6d5706f"
           },
           {
             "path": "workflow-engine.js",
             "symbol": "evaluateIntakeAccounting",
-            "sha256": "fac2c0f35a3e10f4be41711ea36d6da4b4b49d86f45ec751b509134dc5ab8777"
+            "sha256": "16c2a16d61d6a462ecebd25cd7d530a3cce46e11c1d9f88664c2e9a27cf61295"
           },
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "e761fb032005030b8a63e5250e56c4bbb3ea617625be5ea55bbbc2d0b5029117"
+            "sha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5"
           }
         ],
         "obligations": [
@@ -5880,8 +5880,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-c1d94148ff5023aac7735baefed6c35d-20261007-bc256faf316a.json",
-          "sha256": "f21d0cea1930500260b9d53fc65a5a7b2c0818f0c4b42d9b06c3d92e51dcfc7a"
+          "path": "verification/requirement-coverage-NREQ-c1d94148ff5023aac7735baefed6c35d-20261007-context-c697349e63e8-54e18bc1f938.json",
+          "sha256": "cb590a2bd0aae9206204e2b46af50c263874ec04db54d7d7ee105dd49551c211"
         }
       }
     },
@@ -5901,17 +5901,17 @@
           {
             "path": "prompt-engine.js",
             "symbol": "procedureFor / responseContractDescriptor / body",
-            "sha256": "66a1eb2976826eb15b3d8d2963363836a160e75bf8ebaf904673c64963a20ba4"
+            "sha256": "61e363381dfb88fcfd32a176066762e2a37cf7b14fb9d39bff4eacf7e6d5706f"
           },
           {
             "path": "workflow-engine.js",
             "symbol": "evaluateIntakeAccounting",
-            "sha256": "fac2c0f35a3e10f4be41711ea36d6da4b4b49d86f45ec751b509134dc5ab8777"
+            "sha256": "16c2a16d61d6a462ecebd25cd7d530a3cce46e11c1d9f88664c2e9a27cf61295"
           },
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "e761fb032005030b8a63e5250e56c4bbb3ea617625be5ea55bbbc2d0b5029117"
+            "sha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5"
           }
         ],
         "obligations": [
@@ -5945,8 +5945,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-7be2bf6dfeab825b0549d41a0151841e-20261007-c57fcd1ed718.json",
-          "sha256": "186d3fac1844c3a5a435ed3f4408c925519efc32d5bcc205ef11b107c22b05b5"
+          "path": "verification/requirement-coverage-NREQ-7be2bf6dfeab825b0549d41a0151841e-20261007-context-4d745e4aa672-54e18bc1f938.json",
+          "sha256": "ec4903993007216664722d0547bde3743e9da597e6bc7bc78c61f85fdf4fa43c"
         }
       }
     },
@@ -5966,17 +5966,17 @@
           {
             "path": "prompt-engine.js",
             "symbol": "procedureFor / responseContractDescriptor / body",
-            "sha256": "66a1eb2976826eb15b3d8d2963363836a160e75bf8ebaf904673c64963a20ba4"
+            "sha256": "61e363381dfb88fcfd32a176066762e2a37cf7b14fb9d39bff4eacf7e6d5706f"
           },
           {
             "path": "workflow-engine.js",
             "symbol": "evaluateIntakeAccounting",
-            "sha256": "fac2c0f35a3e10f4be41711ea36d6da4b4b49d86f45ec751b509134dc5ab8777"
+            "sha256": "16c2a16d61d6a462ecebd25cd7d530a3cce46e11c1d9f88664c2e9a27cf61295"
           },
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope",
-            "sha256": "e761fb032005030b8a63e5250e56c4bbb3ea617625be5ea55bbbc2d0b5029117"
+            "sha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5"
           }
         ],
         "obligations": [
@@ -6010,8 +6010,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-a6fb1ab9c309f702b7cd3d8c7f38cf8f-20261007-9149554f8d99.json",
-          "sha256": "7294e6756a10a730ff4affc8b7431e6abecdba792dc034852ba57b9c823bc988"
+          "path": "verification/requirement-coverage-NREQ-a6fb1ab9c309f702b7cd3d8c7f38cf8f-20261007-context-683bf6ce202e-54e18bc1f938.json",
+          "sha256": "47b799bc1d9be4ffbd29fd6c1b4ccd2c382c91a763458c9bf31c0a135292143d"
         }
       }
     },
@@ -6031,12 +6031,12 @@
           {
             "path": "workflow-engine.js",
             "symbol": "gate / evaluateIntakeAccounting / recordStageConfirmation",
-            "sha256": "fac2c0f35a3e10f4be41711ea36d6da4b4b49d86f45ec751b509134dc5ab8777"
+            "sha256": "16c2a16d61d6a462ecebd25cd7d530a3cce46e11c1d9f88664c2e9a27cf61295"
           },
           {
             "path": "response-ingestion.js",
             "symbol": "prepareCaptured / commit",
-            "sha256": "e761fb032005030b8a63e5250e56c4bbb3ea617625be5ea55bbbc2d0b5029117"
+            "sha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5"
           }
         ],
         "obligations": [
@@ -6070,8 +6070,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-0b73c99557630a5deeace7e89ea0e28f-20261007-a64c00aefaec.json",
-          "sha256": "7e2a5448faa4d5aa38a0d234df782d2cb22cb2d14063d73643548f9979c693eb"
+          "path": "verification/requirement-coverage-NREQ-0b73c99557630a5deeace7e89ea0e28f-20261007-context-70f6fc73db90-54e18bc1f938.json",
+          "sha256": "d3d67313f5cea59b0dc7525f5b9fe3ac6017bb8b1ccba71537054837b11e2f14"
         }
       }
     },
@@ -6091,12 +6091,12 @@
           {
             "path": "workflow-engine.js",
             "symbol": "gate / evaluateIntakeAccounting / recordStageConfirmation",
-            "sha256": "fac2c0f35a3e10f4be41711ea36d6da4b4b49d86f45ec751b509134dc5ab8777"
+            "sha256": "16c2a16d61d6a462ecebd25cd7d530a3cce46e11c1d9f88664c2e9a27cf61295"
           },
           {
             "path": "response-ingestion.js",
             "symbol": "prepareCaptured / commit",
-            "sha256": "e761fb032005030b8a63e5250e56c4bbb3ea617625be5ea55bbbc2d0b5029117"
+            "sha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5"
           }
         ],
         "obligations": [
@@ -6136,8 +6136,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-8bb8790d8dd6c5082d6e0351c032cda5-20261007-e700bb4018c4.json",
-          "sha256": "14918cb74cc8d2ff668814a59074cd94fb0625ccd8263debd61fa7cc9c3a627c"
+          "path": "verification/requirement-coverage-NREQ-8bb8790d8dd6c5082d6e0351c032cda5-20261007-context-ebd61b02b8d5-54e18bc1f938.json",
+          "sha256": "691dbf84fb89b4097ce750df6d8e4c66c6c80eea4755958ff6c58054b877f900"
         }
       }
     },
@@ -6157,12 +6157,12 @@
           {
             "path": "workflow-engine.js",
             "symbol": "gate / evaluateIntakeAccounting / recordStageConfirmation",
-            "sha256": "fac2c0f35a3e10f4be41711ea36d6da4b4b49d86f45ec751b509134dc5ab8777"
+            "sha256": "16c2a16d61d6a462ecebd25cd7d530a3cce46e11c1d9f88664c2e9a27cf61295"
           },
           {
             "path": "response-ingestion.js",
             "symbol": "prepareCaptured / commit",
-            "sha256": "e761fb032005030b8a63e5250e56c4bbb3ea617625be5ea55bbbc2d0b5029117"
+            "sha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5"
           }
         ],
         "obligations": [
@@ -6202,8 +6202,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-a3f1c0440fabe4b988fb5fca68a0487c-20261007-f0b3c3a30e5c.json",
-          "sha256": "391e84b2fb16e663eaa2f8442f691929ebc69dda6423fb6510565877c3a39910"
+          "path": "verification/requirement-coverage-NREQ-a3f1c0440fabe4b988fb5fca68a0487c-20261007-context-eac1ae13e05b-54e18bc1f938.json",
+          "sha256": "3e34a9b8e6d36414931ff04a69a52db6318b8028ffd5e47e5f44e18746f5c71c"
         }
       }
     },
@@ -6258,8 +6258,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-2b14774ffd65e947a3d3deae3ad09c92-20261007-aa8204f96091.json",
-          "sha256": "0ed6ec3339e5a7191d3921a6914c105a11d0a5a3d265a830b05bc50228201254"
+          "path": "verification/requirement-coverage-NREQ-2b14774ffd65e947a3d3deae3ad09c92-20261007-context-aa8204f96091-54e18bc1f938.json",
+          "sha256": "fb661e69aa102e7dd45bc70d3c33ab576be56854cc7613896698706327d53e0b"
         }
       }
     },
@@ -6314,8 +6314,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-c6ad5908eba2e59771e74f2ceebc5077-20261007-e1522203239f.json",
-          "sha256": "468d4bedd156516b3e641de63589b531628e279392cb2b0adb5902b4fcc668ff"
+          "path": "verification/requirement-coverage-NREQ-c6ad5908eba2e59771e74f2ceebc5077-20261007-context-e1522203239f-54e18bc1f938.json",
+          "sha256": "6251aaa040e79b7ba1802647ad52f59508cf32a6a00fc23e0eafd8a7678c0e43"
         }
       }
     },
@@ -6370,8 +6370,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-5fe6282f6c99d8d0f13fdf06bb5317fa-20261007-b3f25a0a1514.json",
-          "sha256": "85acdc74ea85e63527ca77364c553f8139c1acdbf15b6b7e7804e5f5705fe27e"
+          "path": "verification/requirement-coverage-NREQ-5fe6282f6c99d8d0f13fdf06bb5317fa-20261007-context-b3f25a0a1514-54e18bc1f938.json",
+          "sha256": "5abd4625735598d026e3e2422d66f08338991eb5c94667a6c355e7573c7fc2f2"
         }
       }
     },
@@ -6426,8 +6426,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-18edc302ca3fad90513b66c585e688e6-20261007-c29757d88109.json",
-          "sha256": "5390b5b4830383240f2efc32b37144ccfbf0f5df5973ff4a79be0c593f845ad6"
+          "path": "verification/requirement-coverage-NREQ-18edc302ca3fad90513b66c585e688e6-20261007-context-c29757d88109-54e18bc1f938.json",
+          "sha256": "633bc24db454ba442b456a37820f08b992fe69fa0317e195224bfe9e70b9338c"
         }
       }
     },
@@ -6482,8 +6482,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-26b8cfa830777dd2bfa4c8aac620403c-20261007-08c3774267c0.json",
-          "sha256": "c1c9720449f29e7bee59a3d0218a78b0e3b6fff1c9942d8b22a6405b3405c696"
+          "path": "verification/requirement-coverage-NREQ-26b8cfa830777dd2bfa4c8aac620403c-20261007-context-08c3774267c0-54e18bc1f938.json",
+          "sha256": "961763f251212b18247be3f78130dc9e2627c86613c8ed1a32596d4287c7dd60"
         }
       }
     },
@@ -6538,8 +6538,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-04e156310ae4ecdd6915448e3f30e047-20261007-9f8a35215a69.json",
-          "sha256": "8cd175467ef7dbc870200cdc11eae236f77bef7a8df297ababc1628bd864712d"
+          "path": "verification/requirement-coverage-NREQ-04e156310ae4ecdd6915448e3f30e047-20261007-context-9f8a35215a69-54e18bc1f938.json",
+          "sha256": "168f6d5298019455f92c746576d0e1529483ac759449d6f97e23eae29fe705b8"
         }
       }
     },
@@ -6594,8 +6594,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-f0d3896f2d4c46e85ce52981147764ef-20261007-01afc04c65c4.json",
-          "sha256": "c7ff1b30ff034ad7b8519f7a2d0b22c414bc250c411d383f932e2b69bd480bf7"
+          "path": "verification/requirement-coverage-NREQ-f0d3896f2d4c46e85ce52981147764ef-20261007-context-01afc04c65c4-54e18bc1f938.json",
+          "sha256": "4bcccfb744efd0f127ee6295d030ae718692567f70af1034f3e4cdd1e92660e0"
         }
       }
     },
@@ -6650,8 +6650,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-a8822e7da5b9525a6c3e097b71e59183-20261007-c52dc24f6227.json",
-          "sha256": "6bcebd6637f62856ca27c18dcd5d85497f1aa649f58a7b246b8db3762984895e"
+          "path": "verification/requirement-coverage-NREQ-a8822e7da5b9525a6c3e097b71e59183-20261007-context-c52dc24f6227-54e18bc1f938.json",
+          "sha256": "c62ea0c8cc25b1c1741783baa93275aa20dec581e1a7cea0f0e7a787ac25259d"
         }
       }
     },
@@ -6706,8 +6706,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-8c2bdedb1f707a1a97695f7b0745365c-20261007-96450c77219a.json",
-          "sha256": "f9cebeaf4fdc9c6195ff94391d6a2bf4f203be69ba32200848e639196d9d2ad8"
+          "path": "verification/requirement-coverage-NREQ-8c2bdedb1f707a1a97695f7b0745365c-20261007-context-96450c77219a-54e18bc1f938.json",
+          "sha256": "dd791b4a922ec24767c96d73606cb57a915844a0a4f0d17e25ae88ca7c013ace"
         }
       }
     },
@@ -6762,8 +6762,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-a9ef7326ce64b6049b07bdddd8d9d024-20261007-f1fcf2f90e43.json",
-          "sha256": "6a9dcc269dcaf1691768883b3bf4d344f703ccb6307fd115db6e4026a4a35004"
+          "path": "verification/requirement-coverage-NREQ-a9ef7326ce64b6049b07bdddd8d9d024-20261007-context-f1fcf2f90e43-54e18bc1f938.json",
+          "sha256": "dd3c21ba1cca959fb36549f1c7afb01d1f6b11ef8abc7956ce5391507f54d51f"
         }
       }
     },
@@ -6818,8 +6818,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-f50ee5baca83ff85d962de77d313fda6-20261007-fd5c589d06d2.json",
-          "sha256": "e6a6c863aa15c98542e1c6057e0e8234e5033cc890eae6b4a52a1c54503039cc"
+          "path": "verification/requirement-coverage-NREQ-f50ee5baca83ff85d962de77d313fda6-20261007-context-fd5c589d06d2-54e18bc1f938.json",
+          "sha256": "5021f5c0077a740a5c3f91a53b742ae2de9059ba19a74633a4d7e379566bb049"
         }
       }
     },
@@ -6874,8 +6874,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-7d91a0dd124e5a78fc01449f23a3e8fa-20261007-dfcfcb839c96.json",
-          "sha256": "95d98a6cbb389a527efda08989933d5f02e6aca529c55867864676e38cae0ecd"
+          "path": "verification/requirement-coverage-NREQ-7d91a0dd124e5a78fc01449f23a3e8fa-20261007-context-dfcfcb839c96-54e18bc1f938.json",
+          "sha256": "72e5509d19a1f928eed4042a42d908c7266bac6f102c4a58645d33d2733147ef"
         }
       }
     },
@@ -6930,8 +6930,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-f9c8f3d1723060ee3fd3fa87ba2a4d75-20261007-0bef4700f599.json",
-          "sha256": "7c91d4fbba09a962c440798e917617093faabf4eab84a9b366acb383c1ef6a8a"
+          "path": "verification/requirement-coverage-NREQ-f9c8f3d1723060ee3fd3fa87ba2a4d75-20261007-context-0bef4700f599-54e18bc1f938.json",
+          "sha256": "2a7b364b76345e536bb0f82da870a1920d4310f3584cdd9099c4705c4791dd40"
         }
       }
     },
@@ -6986,8 +6986,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-925405b741265dbbc292d4f3a74c2bd6-20261007-acc52814e6d6.json",
-          "sha256": "b4c093b784a4ad54377ba383a8df0a47b5711a4b82eecbd4d008543969194692"
+          "path": "verification/requirement-coverage-NREQ-925405b741265dbbc292d4f3a74c2bd6-20261007-context-acc52814e6d6-54e18bc1f938.json",
+          "sha256": "6d3a641a43887cc72d83d227a4d44b7278337328f1c0297591e7555e7ffde66b"
         }
       }
     },
@@ -7042,8 +7042,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-4363c0420b1bd921591c1f2446cfb8eb-20261007-de3533a949d5.json",
-          "sha256": "bf4d795d94c1164c88fde81553dcb793030ef0a8afec0cddf4910053645d4f7c"
+          "path": "verification/requirement-coverage-NREQ-4363c0420b1bd921591c1f2446cfb8eb-20261007-context-de3533a949d5-54e18bc1f938.json",
+          "sha256": "4fe6f7769b10fb8b8acec8500ccde0131235eb46d67a1ac00367e6d5a7872a2a"
         }
       }
     },
@@ -7098,8 +7098,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-2174af2894ceaa1acb9a032113db659d-20261007-8376db0a1333.json",
-          "sha256": "3f8cf1a5f6083fa26a5de3158207b1d825dc3a84777bbac30a3b022cd03df000"
+          "path": "verification/requirement-coverage-NREQ-2174af2894ceaa1acb9a032113db659d-20261007-context-8376db0a1333-54e18bc1f938.json",
+          "sha256": "8372fb02df168ef7c9de46895cc3554973dc8d9d9e7d6bced560b37a855922f5"
         }
       }
     },
@@ -7154,8 +7154,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-a12012292224d4b4a0a9b1088c8c49d0-20261007-3fe1f1abe0f4.json",
-          "sha256": "6863e22ca38505061545c097f7a21d08756abe892d2d62d224f906cf0472bfd6"
+          "path": "verification/requirement-coverage-NREQ-a12012292224d4b4a0a9b1088c8c49d0-20261007-context-3fe1f1abe0f4-54e18bc1f938.json",
+          "sha256": "c289efafc2dda0177b3143e5206039f0f5ee9e0e24ac5fda675375c5a25dfaa8"
         }
       }
     },
@@ -7210,8 +7210,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-255fe5112069486751f53087b1ab699e-20261007-608c37b31d30.json",
-          "sha256": "9af2ac3cdb5c00c61d891db4e4da2a34305e12eb850f6f77b6782871a04ae419"
+          "path": "verification/requirement-coverage-NREQ-255fe5112069486751f53087b1ab699e-20261007-context-608c37b31d30-54e18bc1f938.json",
+          "sha256": "291477472df35bdd2e0895db9e799bcee242075b589430009352df8c8f962788"
         }
       }
     },
@@ -7266,8 +7266,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-6fe30b5cb969bf2fb9daaabc3422ac38-20261007-2594d1e812f8.json",
-          "sha256": "bf90b4416f1b535cd032c82ae5b2e61488d05fdf1ed487d0a2298c5be00e2b8b"
+          "path": "verification/requirement-coverage-NREQ-6fe30b5cb969bf2fb9daaabc3422ac38-20261007-context-2594d1e812f8-54e18bc1f938.json",
+          "sha256": "267ae114e8144af43418020fce5e9ba247b2cd3522c1b07ad72a50aa5b959530"
         }
       }
     },
@@ -7322,8 +7322,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-229f56cf458329f04d589d3aa92b95e5-20261007-23fcc35649f3.json",
-          "sha256": "d2aa213fcfa17a122b36369de98da5d9bad5febf70cc469d1637d2ebc6d84cc0"
+          "path": "verification/requirement-coverage-NREQ-229f56cf458329f04d589d3aa92b95e5-20261007-context-23fcc35649f3-54e18bc1f938.json",
+          "sha256": "d5e3764d2711f3518441b640ce2e74e2f45c0fd56a12b4adee1ca770b2345693"
         }
       }
     },
@@ -7378,8 +7378,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-4d7b09d088c999d3c6e91a968cbe1a02-20261007-03745896590f.json",
-          "sha256": "1fae8bf2033c2cf21c9d89dc3ddf30b18a13d3941bbbe8df05716f0af3b699cb"
+          "path": "verification/requirement-coverage-NREQ-4d7b09d088c999d3c6e91a968cbe1a02-20261007-context-03745896590f-54e18bc1f938.json",
+          "sha256": "1e1d22f677c2f5c257e5548a3c3ac0763f21eee69fe36ab467f438bef590bec5"
         }
       }
     },
@@ -7434,8 +7434,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-55dce831e47c4a26e093cc6134572e8f-20261007-b731d3ee0180.json",
-          "sha256": "b9939a0cf5ec5bda365087b9518857b8c61a02dea9526c67b9aecf6d50703782"
+          "path": "verification/requirement-coverage-NREQ-55dce831e47c4a26e093cc6134572e8f-20261007-context-b731d3ee0180-54e18bc1f938.json",
+          "sha256": "3d9711ede3bd679b901883d7bfd211369f79c1d994bafc6ba99f424369914336"
         }
       }
     },
@@ -7490,8 +7490,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-7542acad543ceb37f7fb325baac0d9d0-20261007-1dab787f784f.json",
-          "sha256": "9df2c3cf043ebc0a3e27f1475df16a1bc3d061f6f4d039bd454998e48b3e1f16"
+          "path": "verification/requirement-coverage-NREQ-7542acad543ceb37f7fb325baac0d9d0-20261007-context-1dab787f784f-54e18bc1f938.json",
+          "sha256": "ad69dd64a828da1c51d6aee6b956e095b285eccffc83e5f515f5d5441e48cc7b"
         }
       }
     },
@@ -7546,8 +7546,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-292af594522de75d72b35851b9befed4-20261007-e580690eff15.json",
-          "sha256": "f96bce03856b71c4c4509eead9169f84bb2b47a4c7feebada342bcbb84c077ec"
+          "path": "verification/requirement-coverage-NREQ-292af594522de75d72b35851b9befed4-20261007-context-e580690eff15-54e18bc1f938.json",
+          "sha256": "52b283c861c82ba11d1ff3311f720e0e87100952b7621a2289563f7650ea4af5"
         }
       }
     },
@@ -7602,8 +7602,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-f295ec535d0d117429de1cced6886a6e-20261007-c064f5db48cd.json",
-          "sha256": "676fb17112ed2d33de3becde355c7837102e9d322660b53ae135cd6d3fb7502e"
+          "path": "verification/requirement-coverage-NREQ-f295ec535d0d117429de1cced6886a6e-20261007-context-c064f5db48cd-54e18bc1f938.json",
+          "sha256": "adb1dd210dacc7b834351a84bebc642d9cef6045fe1ff17294af42ec6047f4e1"
         }
       }
     },
@@ -7658,8 +7658,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-9b21240c5c27ee356dec92b459a0fcb9-20261007-f0585937ea82.json",
-          "sha256": "c3562f9a34fffcbff776377033147644da22b7077bc939601c335c490273b114"
+          "path": "verification/requirement-coverage-NREQ-9b21240c5c27ee356dec92b459a0fcb9-20261007-context-f0585937ea82-54e18bc1f938.json",
+          "sha256": "9ddb69e5665d3bbc880d32fedb956b195195b55fca350df46a63814d92a603a5"
         }
       }
     },
@@ -7714,8 +7714,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-0774fcb2b6e2510d755133d371474ec8-20261007-d48d5f2a8e1a.json",
-          "sha256": "1fbf192f1a18b1ae574cec4ead266110e96c959c592fda27ab6e650a4d2ea362"
+          "path": "verification/requirement-coverage-NREQ-0774fcb2b6e2510d755133d371474ec8-20261007-context-d48d5f2a8e1a-54e18bc1f938.json",
+          "sha256": "e6f7b02fa3c5f93cf2ffabfcfefb734e5e55e2ddf4e94ec0454bdf74d3f433dc"
         }
       }
     },
@@ -7765,8 +7765,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-39eba2aba9049ed18beade0c11e0c107-20261007-3f29c46a8871.json",
-          "sha256": "f3733d33aa0115b1c69d57cbc3d025c4efa82572271b57939881df2efdd32755"
+          "path": "verification/requirement-coverage-NREQ-39eba2aba9049ed18beade0c11e0c107-20261007-context-3f29c46a8871-54e18bc1f938.json",
+          "sha256": "4e9f952246b42be4dde7fad2170edca74d51ced3c0326a136069fba1ad069f2e"
         }
       }
     },
@@ -7816,8 +7816,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-0f5cdc9e49a6fb5b69455d4b2338448c-20261007-fb52feb719db.json",
-          "sha256": "a861c040aaa59ffcd04b2c2fbf9a033e7eaf918d02dc1325358ccf60a9b94226"
+          "path": "verification/requirement-coverage-NREQ-0f5cdc9e49a6fb5b69455d4b2338448c-20261007-context-fb52feb719db-54e18bc1f938.json",
+          "sha256": "894012c35552a87681a47bafb14a2f7fb6599f8e99c3ecafb3d74472df217aa2"
         }
       }
     },
@@ -7872,8 +7872,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-a5e73329c9ae93f23b01a42d43179133-20261007-71a07396be34.json",
-          "sha256": "5b85587f2617f407097d28bbab8d5a295faeef8d7818395ee4be1647ae40bfbb"
+          "path": "verification/requirement-coverage-NREQ-a5e73329c9ae93f23b01a42d43179133-20261007-context-71a07396be34-54e18bc1f938.json",
+          "sha256": "a6bd5cdfa9aaabead2b21b5b08320898e907132ff6a5c7b28f3fb1ab44d2170e"
         }
       }
     },
@@ -7928,8 +7928,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-70114fe79e900fc756a0d6cc14ea8f90-20261007-0322b753560e.json",
-          "sha256": "61d4ae9e0be2b0373d887f9608968b9f762373f4b83586ef7f0175aab8972dce"
+          "path": "verification/requirement-coverage-NREQ-70114fe79e900fc756a0d6cc14ea8f90-20261007-context-0322b753560e-54e18bc1f938.json",
+          "sha256": "5bc565fadfd5a7b35693178da4d0565ee193bff4f278c9d6e9f34174659bbc34"
         }
       }
     },
@@ -7984,8 +7984,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-db8a127d9ff92a6510ae92e3eb1fbb86-20261007-e4c13fc3e86d.json",
-          "sha256": "989276124f0e1eacbd47440603ec8aab00eb2a737e33f06ac297eeba1e587cae"
+          "path": "verification/requirement-coverage-NREQ-db8a127d9ff92a6510ae92e3eb1fbb86-20261007-context-e4c13fc3e86d-54e18bc1f938.json",
+          "sha256": "19dccf1b341fe58ec471d0533db556fbf2cf66ac633d02dfd0c302174f31eae0"
         }
       }
     },
@@ -8040,8 +8040,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-f6858b1d41ca1327e88e31e7f0e8f94f-20261007-4f6feb334f83.json",
-          "sha256": "7bf7d24614bd6d698a32d52d779a884150d5eac051e7542aee094878660485ee"
+          "path": "verification/requirement-coverage-NREQ-f6858b1d41ca1327e88e31e7f0e8f94f-20261007-context-4f6feb334f83-54e18bc1f938.json",
+          "sha256": "2d34eb6c1f1c708d7deb642a57efc6556c950bdb3c6d52f634918376f3d62898"
         }
       }
     },
@@ -8096,8 +8096,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-b14772d932b286c302b05996186c8022-20261007-53abd11134eb.json",
-          "sha256": "00a505b83277249ee42f8c7b09eb94c69b7476343a2f50a7d63acb1a6a7b8d2c"
+          "path": "verification/requirement-coverage-NREQ-b14772d932b286c302b05996186c8022-20261007-context-53abd11134eb-54e18bc1f938.json",
+          "sha256": "006206a2b1e6540422d9972f076e31bc233e2ac6349c15301eb033fdf9ac856b"
         }
       }
     },
@@ -8152,8 +8152,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-9e413bfc92a85655c990712d56002499-20261007-ce45300844ea.json",
-          "sha256": "0d1dcbad978382903c3c1b5c215b1ce5ceabe3c9b42bd0f7749433615e8fd464"
+          "path": "verification/requirement-coverage-NREQ-9e413bfc92a85655c990712d56002499-20261007-context-ce45300844ea-54e18bc1f938.json",
+          "sha256": "0e30034d97a0fcbc03c5fcba066f034bd2135e84b86aebecc85c9df6d75f27af"
         }
       }
     },
@@ -8208,8 +8208,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-22cf265b2b952dcb7187618a915c98bd-20261007-78f2e077c3d8.json",
-          "sha256": "5389648ef2b967d1af5d63c5738e669b0a78bfa37298123c552fdf2083f9e180"
+          "path": "verification/requirement-coverage-NREQ-22cf265b2b952dcb7187618a915c98bd-20261007-context-78f2e077c3d8-54e18bc1f938.json",
+          "sha256": "6df33db6ff8c960f855f026fbe08d8021f36cfa78defd5b62614a508dc3ed6a8"
         }
       }
     },
@@ -8264,8 +8264,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-928c9bbcf0101e2a0e4a0e69edc59164-20261007-c00b5434d55a.json",
-          "sha256": "5efcd6b85d82577886825c6ca12c94c686af90477ebc97edca5021e930cfac23"
+          "path": "verification/requirement-coverage-NREQ-928c9bbcf0101e2a0e4a0e69edc59164-20261007-context-c00b5434d55a-54e18bc1f938.json",
+          "sha256": "549d5f90c570758cf711c913b55909e30283c09c948ca19e259aa51781722c91"
         }
       }
     },
@@ -8320,8 +8320,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-27cf5e6a8e4cf40ff1873bd4d059b3cd-20261007-079978627600.json",
-          "sha256": "597450e195efee1d13fa14b4bd7b5152eabfa17b5d5ab1a9f48dbe8b80d18352"
+          "path": "verification/requirement-coverage-NREQ-27cf5e6a8e4cf40ff1873bd4d059b3cd-20261007-context-079978627600-54e18bc1f938.json",
+          "sha256": "26bb7761acc8541b40918d8a0374548a82b9dd2519412bbf4f07fee7a92e8b96"
         }
       }
     },
@@ -8376,8 +8376,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-e5db8a7c723f5b54ada73ce37c7725a2-20261007-6d038e318a4a.json",
-          "sha256": "c201ad525ec4d8d0fa062a234fbf37b492459bc2a018a6df7b5a06227c2d8936"
+          "path": "verification/requirement-coverage-NREQ-e5db8a7c723f5b54ada73ce37c7725a2-20261007-context-6d038e318a4a-54e18bc1f938.json",
+          "sha256": "24dfecbb07f847405bc84a815cc7764a3708ef3110ad09df8bfebe7d47b01bd6"
         }
       }
     },
@@ -8432,8 +8432,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-4bb54f6379863c0a17e6fbc58edcd042-20261007-c3df825e72e4.json",
-          "sha256": "39e3a47f10b78c050522368b3c8c073d80e79e36e3081e24f2839038dc00f212"
+          "path": "verification/requirement-coverage-NREQ-4bb54f6379863c0a17e6fbc58edcd042-20261007-context-c3df825e72e4-54e18bc1f938.json",
+          "sha256": "6b3118d16d1bbc798956d8c0db091333f8c01cf7e8da6d7573c049efcc676a38"
         }
       }
     },
@@ -8488,8 +8488,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-266e79545a48e7c4310883faa04e9844-20261007-7b27fb019885.json",
-          "sha256": "d42a9bb926aa1be753fae0748f58ca91397212de0cc2b77791f77f21da7986af"
+          "path": "verification/requirement-coverage-NREQ-266e79545a48e7c4310883faa04e9844-20261007-context-7b27fb019885-54e18bc1f938.json",
+          "sha256": "2624d3b7d6d758e5202f85e4db428418646e336dea7b8524eb0df3fa92b6352b"
         }
       }
     },
@@ -8544,8 +8544,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-e1a8ce05f1d7a97c385039fd3bd71143-20261007-6e9650794698.json",
-          "sha256": "757df498267c4391b03d3a02eb5459338763b1e8b08746b36be83bed595509f2"
+          "path": "verification/requirement-coverage-NREQ-e1a8ce05f1d7a97c385039fd3bd71143-20261007-context-6e9650794698-54e18bc1f938.json",
+          "sha256": "24b33b5e119d31ee7ee3b1eac932b04b2f9ab6a1d2ab184c56459eacfbed6046"
         }
       }
     },
@@ -8600,8 +8600,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-ddf7192c16e06f5276d4d324b2e1f6c3-20261007-471ddf5379c5.json",
-          "sha256": "ff045b7125b0514871029b59b989561379a0278ce1514a35f02e45398a0bb723"
+          "path": "verification/requirement-coverage-NREQ-ddf7192c16e06f5276d4d324b2e1f6c3-20261007-context-471ddf5379c5-54e18bc1f938.json",
+          "sha256": "93ec70b56da1545418e1bbc78945baa4fbed5786b49f24b65e5ead988a7d5ec4"
         }
       }
     },
@@ -8656,8 +8656,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-1000a70e39109bdb76b85fa6855a4892-20261007-fab4e794a047.json",
-          "sha256": "9e50db81da90c95dbd923ddd5c9507cf8c3e59bec007531809be2b1c413924bf"
+          "path": "verification/requirement-coverage-NREQ-1000a70e39109bdb76b85fa6855a4892-20261007-context-fab4e794a047-54e18bc1f938.json",
+          "sha256": "5b4f3dd807e4d129d107e4fb856f541b23b21ff5253355a61b7c374e0ca4f772"
         }
       }
     },
@@ -8712,8 +8712,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-252dcf08d6bbe6a5893bc9cd551ef6ec-20261007-568f2f91efca.json",
-          "sha256": "bc9fa307ec26504ee8a5ef7ea9a109b7ecef1a0cfa5f827dbeddee7ab06eb968"
+          "path": "verification/requirement-coverage-NREQ-252dcf08d6bbe6a5893bc9cd551ef6ec-20261007-context-568f2f91efca-54e18bc1f938.json",
+          "sha256": "e66d944ce65c66d4e7f25be7894696f752116ba7d5070acd6c6aa1ef3a6f2b90"
         }
       }
     },
@@ -8768,8 +8768,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-931f08afd15144dcac6c7768f2c393d0-20261007-4eaa8fcb825e.json",
-          "sha256": "e4274c6e4819eab1237a8de4f9592b4649fa1a1046aa113d8bea4c81cf1e5ff7"
+          "path": "verification/requirement-coverage-NREQ-931f08afd15144dcac6c7768f2c393d0-20261007-context-4eaa8fcb825e-54e18bc1f938.json",
+          "sha256": "9c0cacaeeb8c75356d77b6d4ab625a28686ffb34545765a58574efcb0f424a6a"
         }
       }
     },
@@ -8824,8 +8824,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-3a3ba3d92dd569d454e781fcccf7ac61-20261007-66b766ea1a5d.json",
-          "sha256": "16758adcda51e8570299e297efb1123c4af416e8c588e3a8f025a9e33bdb5df9"
+          "path": "verification/requirement-coverage-NREQ-3a3ba3d92dd569d454e781fcccf7ac61-20261007-context-66b766ea1a5d-54e18bc1f938.json",
+          "sha256": "b991b6f04694b7a6b5b37d02d8b22015c5b8888f8a2220fe50e3b9c1843868a3"
         }
       }
     },
@@ -8880,8 +8880,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-bfc0e4b5d516977d7fcad7b3f74e43c6-20261007-a86412ff6400.json",
-          "sha256": "d467f3f624815b62e3fb7965f002578cbb93a5be9a3305e7138b4e87f1d5f504"
+          "path": "verification/requirement-coverage-NREQ-bfc0e4b5d516977d7fcad7b3f74e43c6-20261007-context-a86412ff6400-54e18bc1f938.json",
+          "sha256": "553b7e5c100456b76b02f897b22f53f0c7ab7dbcc3666dbd736a973686f7a2e5"
         }
       }
     },
@@ -8936,8 +8936,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-5d9431875519d7cfc3188157a10d6bfc-20261007-6cff1723f402.json",
-          "sha256": "3926b536f3d23de417f7c6f832ed251366bb584bf2ba327a87c544ac1a300a8b"
+          "path": "verification/requirement-coverage-NREQ-5d9431875519d7cfc3188157a10d6bfc-20261007-context-6cff1723f402-54e18bc1f938.json",
+          "sha256": "fee210bc2a692e5e1dac5453146ea9fca25e10ab3fa98029f39398870c9f91a6"
         }
       }
     },
@@ -8992,8 +8992,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-aafc7cd5dc54af415d36425000d76acb-20261007-a26debd029d2.json",
-          "sha256": "414d81fdc3938f1940b128be8ddd0c6781e83c3e8dd36d9d90c49729abfe2d2c"
+          "path": "verification/requirement-coverage-NREQ-aafc7cd5dc54af415d36425000d76acb-20261007-context-a26debd029d2-54e18bc1f938.json",
+          "sha256": "ca5bc42a14d15bd47644731280df1f5bc5aab836493ed66631c9e0cb46180387"
         }
       }
     },
@@ -9048,8 +9048,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-829ac5f73d2b01828644e51c0675d6b6-20261007-b712f2bc0f59.json",
-          "sha256": "584738979aba93a4aacd392ae68876267bd292e59bf741d48df7734ae64445ed"
+          "path": "verification/requirement-coverage-NREQ-829ac5f73d2b01828644e51c0675d6b6-20261007-context-b712f2bc0f59-54e18bc1f938.json",
+          "sha256": "f32e922eb998c3d44983506533a75d8ab8756a7b6a025dc5949ff0a3841ffc1f"
         }
       }
     },
@@ -9104,8 +9104,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-9050383f9f0b382f0fd9b465a0a20f78-20261007-cfc13d3d88ae.json",
-          "sha256": "bf3700b16f91a9bfc9ff06abf2b17a33e7c88a4f1c6f5fb9300c2ac9ab55fa1b"
+          "path": "verification/requirement-coverage-NREQ-9050383f9f0b382f0fd9b465a0a20f78-20261007-context-cfc13d3d88ae-54e18bc1f938.json",
+          "sha256": "117f96f5d36d7b43573c7287c6c8c2154d8b367eae03bb32ca9474b6fb27f108"
         }
       }
     },
@@ -9160,8 +9160,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-dd1241e76fbe641c1c88243ba947dc89-20261007-d1b7c31332df.json",
-          "sha256": "bad48d660180dbb04681295de9df4e9910be1016b78cab2fbac2f76be25d927f"
+          "path": "verification/requirement-coverage-NREQ-dd1241e76fbe641c1c88243ba947dc89-20261007-context-d1b7c31332df-54e18bc1f938.json",
+          "sha256": "a92c51de7d273a70b84f78483ef5e86bfcc26637d19cbeb8e05aea44e42d4047"
         }
       }
     },
@@ -9216,8 +9216,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-536910c50d3998944884b519e0d89555-20261007-0ceefe702ac1.json",
-          "sha256": "bb1320825d4abecdb48d7d80191c5dc4bd579c1b3d1f3c5777c582fec2742ec1"
+          "path": "verification/requirement-coverage-NREQ-536910c50d3998944884b519e0d89555-20261007-context-0ceefe702ac1-54e18bc1f938.json",
+          "sha256": "f3286ac9ea9fc6e19667e970ae621e424ddfb01ea22845b6c59f360bbcaf8e24"
         }
       }
     },
@@ -9272,8 +9272,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-efa519285f6f28591dc9ad7936c1caa6-20261007-67b0bcc51a0a.json",
-          "sha256": "a8e9f02296556555e4f4b38d9f53330a99d1d2cc473ba8b4f9532f2badd7f75e"
+          "path": "verification/requirement-coverage-NREQ-efa519285f6f28591dc9ad7936c1caa6-20261007-context-67b0bcc51a0a-54e18bc1f938.json",
+          "sha256": "cb748155b072ead3a6b2450934945af30d1c265e0e06d382e548f1e6bf82c8f7"
         }
       }
     },
@@ -9328,8 +9328,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-ee95aae3e46bebd05ef8469aff39c9da-20261007-4ab906314fee.json",
-          "sha256": "8528a82ebdb7ec89bdd910aae9529dbcd3404f7e6e0042d5913baeb44fbbddff"
+          "path": "verification/requirement-coverage-NREQ-ee95aae3e46bebd05ef8469aff39c9da-20261007-context-4ab906314fee-54e18bc1f938.json",
+          "sha256": "bec7a771c7f0bbb45db056ddc823c517be7a5ef38641787dd56d5dc6ccd7b906"
         }
       }
     },
@@ -9384,8 +9384,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-647d36595971915d7c485a338ddc4013-20261007-661182e4e06d.json",
-          "sha256": "1cca83353db0f2826667d7b2b977dd1e7394835a0cf9a95a049856a83af0ab3a"
+          "path": "verification/requirement-coverage-NREQ-647d36595971915d7c485a338ddc4013-20261007-context-661182e4e06d-54e18bc1f938.json",
+          "sha256": "f8f214aabbec9cea4b08fa2034cc72c274d10a6c9a4fd97ab97ebe3201dcfbe3"
         }
       }
     },
@@ -9440,8 +9440,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-aa165dd96291b05acd70bf948f215d04-20261007-bb47e51ecefe.json",
-          "sha256": "6b460263656fa5e04ed949237e859fc14f186c1d92568d81cab27a90569b287f"
+          "path": "verification/requirement-coverage-NREQ-aa165dd96291b05acd70bf948f215d04-20261007-context-bb47e51ecefe-54e18bc1f938.json",
+          "sha256": "e6923790693ad5d25b5f4e97dfed05b4378bad6f9109371463fb54d6d0e5cf62"
         }
       }
     },
@@ -9496,8 +9496,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-5f9aa84ccae751c1692f148708a9288c-20261007-1a6ddd562cda.json",
-          "sha256": "1e12909b0a56c4091bdf1b5260269f5cfdb5fd0b93107b1fb16145eee79f1eca"
+          "path": "verification/requirement-coverage-NREQ-5f9aa84ccae751c1692f148708a9288c-20261007-context-1a6ddd562cda-54e18bc1f938.json",
+          "sha256": "36724907684574b5c53d733f37b2ec936029a608ee8a8bc327deee0b418ce5e3"
         }
       }
     },
@@ -9561,8 +9561,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-bedc4564e47ae7ebf86911eb8426b6f0-20261007-303caf90caff.json",
-          "sha256": "868908354009788784fc5b4e6f7b93370d49aab6d8b165e41c01817f66f2ce38"
+          "path": "verification/requirement-coverage-NREQ-bedc4564e47ae7ebf86911eb8426b6f0-20261007-context-303caf90caff-54e18bc1f938.json",
+          "sha256": "27c19f096bef7bdf06e1457c2828b081c8d9f7ac53be10e9e72e0c038e256dfe"
         }
       }
     },
@@ -9626,8 +9626,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-4b26e20f450b23eb551b2da03e69c9c9-20261007-07d6150a1321.json",
-          "sha256": "4a228f592f5681a8bbabdb6ab571974cbdb1b1dffd0ef3cbf271e85995da7583"
+          "path": "verification/requirement-coverage-NREQ-4b26e20f450b23eb551b2da03e69c9c9-20261007-context-07d6150a1321-54e18bc1f938.json",
+          "sha256": "9602a1e52ab4358362e5b8a88b54012fc72a19bcc6c4c292f4fd0b4c77af83e0"
         }
       }
     },
@@ -9715,8 +9715,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-befdab6cc6a4121936987a35fc18e1c9-20261007-c8b0b09a87ad.json",
-          "sha256": "f4e84d65368d9d7c9a4c5a064ed81e990841d28dc4a4c2759c2e2b6ab742b291"
+          "path": "verification/requirement-coverage-NREQ-befdab6cc6a4121936987a35fc18e1c9-20261007-context-c8b0b09a87ad-54e18bc1f938.json",
+          "sha256": "2b2026568d14a4c49ca9205cb0dc777081f09856cc41c5583f83ed1a2de0d764"
         }
       }
     },
@@ -9804,8 +9804,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-a011968eff2ed2dc314d58ed27dfad88-20261007-87882d5bae07.json",
-          "sha256": "6d4f00588f2789470ba071b1abc84db8faef2b501c3b698ad21f48007353aa57"
+          "path": "verification/requirement-coverage-NREQ-a011968eff2ed2dc314d58ed27dfad88-20261007-context-87882d5bae07-54e18bc1f938.json",
+          "sha256": "585b1be77bca508371404ef8a0f78fc42a3760cdb0283d3dc233fe401fe8e446"
         }
       }
     },
@@ -9826,7 +9826,7 @@
           {
             "path": "project-store.js",
             "symbol": "readProject / quarantine",
-            "sha256": "e6c37175a93b934585d7b461ad6448bb0a929670e24e8fc03940dcc132330db8"
+            "sha256": "79213ca03e60d7fe0b2b1c7d17c42a99158c063de8e25b88136bd8aed89650bb"
           }
         ],
         "obligations": [
@@ -9860,8 +9860,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-c94c878ef2cf8c6a35b0985da91c0c85-20261007-93ccf52a7420.json",
-          "sha256": "ab636f69e934e282fa128b907a77bddfce7df4967ddaf076f2e2049c29bb7cdf"
+          "path": "verification/requirement-coverage-NREQ-c94c878ef2cf8c6a35b0985da91c0c85-20261007-context-fe6c073ad55f-54e18bc1f938.json",
+          "sha256": "0bbf1afebce1fefa76253e2603b7832b9c66ab57f34c8c3dc9d4067953269a73"
         }
       }
     },
@@ -9882,7 +9882,7 @@
           {
             "path": "project-store.js",
             "symbol": "removeQuarantinedProject",
-            "sha256": "e6c37175a93b934585d7b461ad6448bb0a929670e24e8fc03940dcc132330db8"
+            "sha256": "79213ca03e60d7fe0b2b1c7d17c42a99158c063de8e25b88136bd8aed89650bb"
           }
         ],
         "obligations": [
@@ -9916,8 +9916,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-ea453611a3a1f48cdd2fbfbe946d7ac7-20261007-4bab29605585.json",
-          "sha256": "7d77bd21c6bc0853240e7af6c0d7461ad3f5103bab87786de33026114219a340"
+          "path": "verification/requirement-coverage-NREQ-ea453611a3a1f48cdd2fbfbe946d7ac7-20261007-context-5fb3beeac070-54e18bc1f938.json",
+          "sha256": "2b342fa1d36ca0ca00cab39e7a91b39ed64f0a9134a8c8827b1d831d65dc7c42"
         }
       }
     },
@@ -9937,12 +9937,12 @@
           {
             "path": "response-ingestion.js",
             "symbol": "strictParse / prepareCaptured",
-            "sha256": "e761fb032005030b8a63e5250e56c4bbb3ea617625be5ea55bbbc2d0b5029117"
+            "sha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5"
           },
           {
             "path": "project-store.js",
             "symbol": "writeOperationalProject / assertOperationalChange / readProject",
-            "sha256": "e6c37175a93b934585d7b461ad6448bb0a929670e24e8fc03940dcc132330db8"
+            "sha256": "79213ca03e60d7fe0b2b1c7d17c42a99158c063de8e25b88136bd8aed89650bb"
           }
         ],
         "obligations": [
@@ -9982,8 +9982,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-7a68fe07ee725cf205dd2102cd997b7f-20261007-2ddde02a4678.json",
-          "sha256": "338d93797dcc4df793e381e04bf1fca22ef2a4bdbcb37ac19f0f970f79e0fb0d"
+          "path": "verification/requirement-coverage-NREQ-7a68fe07ee725cf205dd2102cd997b7f-20261007-context-652ecb1fe1af-54e18bc1f938.json",
+          "sha256": "ef7978e9ffbaf38859b6d803c9aa8de1b0505bb3226e7c55bb356bc2f1cbba29"
         }
       }
     },
@@ -10003,12 +10003,12 @@
           {
             "path": "response-ingestion.js",
             "symbol": "strictParse / prepareCaptured",
-            "sha256": "e761fb032005030b8a63e5250e56c4bbb3ea617625be5ea55bbbc2d0b5029117"
+            "sha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5"
           },
           {
             "path": "project-store.js",
             "symbol": "writeOperationalProject / assertOperationalChange / readProject",
-            "sha256": "e6c37175a93b934585d7b461ad6448bb0a929670e24e8fc03940dcc132330db8"
+            "sha256": "79213ca03e60d7fe0b2b1c7d17c42a99158c063de8e25b88136bd8aed89650bb"
           }
         ],
         "obligations": [
@@ -10048,8 +10048,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-4bb86ccfacff0ea8bbbc59df67b0ca4f-20261007-e74055a277ac.json",
-          "sha256": "2231a0b10e75196d8b26f358b6f4a89f81cf10dd3e5bbb6ab92791f51597c3b5"
+          "path": "verification/requirement-coverage-NREQ-4bb86ccfacff0ea8bbbc59df67b0ca4f-20261007-context-6dcc93386d57-54e18bc1f938.json",
+          "sha256": "9d73deb8fdf776df1b36d8c1b0a7e8bdd1b92091373e4ffcc905401233c3e591"
         }
       }
     },
@@ -10069,12 +10069,12 @@
           {
             "path": "response-ingestion.js",
             "symbol": "strictParse / prepareCaptured",
-            "sha256": "e761fb032005030b8a63e5250e56c4bbb3ea617625be5ea55bbbc2d0b5029117"
+            "sha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5"
           },
           {
             "path": "project-store.js",
             "symbol": "writeOperationalProject / assertOperationalChange / readProject",
-            "sha256": "e6c37175a93b934585d7b461ad6448bb0a929670e24e8fc03940dcc132330db8"
+            "sha256": "79213ca03e60d7fe0b2b1c7d17c42a99158c063de8e25b88136bd8aed89650bb"
           }
         ],
         "obligations": [
@@ -10114,8 +10114,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-768d67996244254c83c0d11796f63912-20261007-f27867d3f39f.json",
-          "sha256": "6d7161bf90636c7f6cf7108670a47a439064a9ef60267bd4d989063496f9a284"
+          "path": "verification/requirement-coverage-NREQ-768d67996244254c83c0d11796f63912-20261007-context-291bd5dd0e04-54e18bc1f938.json",
+          "sha256": "4f43291be865633705806cd2332827758e9f3ef6f3641fa1721a0c66c4159f19"
         }
       }
     },
@@ -10135,12 +10135,12 @@
           {
             "path": "project-store.js",
             "symbol": "stageResponseFile / readStagedResponseFile",
-            "sha256": "e6c37175a93b934585d7b461ad6448bb0a929670e24e8fc03940dcc132330db8"
+            "sha256": "79213ca03e60d7fe0b2b1c7d17c42a99158c063de8e25b88136bd8aed89650bb"
           },
           {
             "path": "project-store.js",
             "symbol": "writeOperationalProject / assertOperationalChange / readProject",
-            "sha256": "e6c37175a93b934585d7b461ad6448bb0a929670e24e8fc03940dcc132330db8"
+            "sha256": "79213ca03e60d7fe0b2b1c7d17c42a99158c063de8e25b88136bd8aed89650bb"
           }
         ],
         "obligations": [
@@ -10180,8 +10180,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-59d5854af99ac5a566eb61e978519b21-20261007-bec120a81af2.json",
-          "sha256": "43b7146fd81f93bc4d532112e4ec7afe70adef70a3bd423754b800a6fd702a3f"
+          "path": "verification/requirement-coverage-NREQ-59d5854af99ac5a566eb61e978519b21-20261007-context-e53573db3335-54e18bc1f938.json",
+          "sha256": "a8c778e5e5be6e500cb77b913fe46a2eadc87b122596dd1adad20d21cad2dc50"
         }
       }
     },
@@ -10201,12 +10201,12 @@
           {
             "path": "response-ingestion.js",
             "symbol": "strictParse / prepareCaptured",
-            "sha256": "e761fb032005030b8a63e5250e56c4bbb3ea617625be5ea55bbbc2d0b5029117"
+            "sha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5"
           },
           {
             "path": "project-store.js",
             "symbol": "writeOperationalProject / assertOperationalChange / readProject",
-            "sha256": "e6c37175a93b934585d7b461ad6448bb0a929670e24e8fc03940dcc132330db8"
+            "sha256": "79213ca03e60d7fe0b2b1c7d17c42a99158c063de8e25b88136bd8aed89650bb"
           }
         ],
         "obligations": [
@@ -10246,8 +10246,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-75b670fc6ea047b7452b4148f12a30ba-20261007-c98d1cd39228.json",
-          "sha256": "4dc2922e98f0761b0c765d22feb1f944d605adaa28cd750de749fdec3ae83cfc"
+          "path": "verification/requirement-coverage-NREQ-75b670fc6ea047b7452b4148f12a30ba-20261007-context-dfc64a21a246-54e18bc1f938.json",
+          "sha256": "1cb92654b509efb36f934d8b41592f8907c2a9f1131a71db636a86388a1bdb7b"
         }
       }
     },
@@ -10267,12 +10267,12 @@
           {
             "path": "response-ingestion.js",
             "symbol": "strictParse / prepareCaptured",
-            "sha256": "e761fb032005030b8a63e5250e56c4bbb3ea617625be5ea55bbbc2d0b5029117"
+            "sha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5"
           },
           {
             "path": "project-store.js",
             "symbol": "writeOperationalProject / assertOperationalChange / readProject",
-            "sha256": "e6c37175a93b934585d7b461ad6448bb0a929670e24e8fc03940dcc132330db8"
+            "sha256": "79213ca03e60d7fe0b2b1c7d17c42a99158c063de8e25b88136bd8aed89650bb"
           }
         ],
         "obligations": [
@@ -10312,8 +10312,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-86651d173d1583e48cf6c03f9d486f4f-20261007-03f461c72985.json",
-          "sha256": "221c5d9c8ccf0db156f3c940d8b9d42a43c2d9b9e7306287796bdf58475f91a0"
+          "path": "verification/requirement-coverage-NREQ-86651d173d1583e48cf6c03f9d486f4f-20261007-context-327d2cc2c990-54e18bc1f938.json",
+          "sha256": "1a8bec238c83c64785d8731d42d3ea61c0cff149ab9e582a2c73cfb698f0c4a2"
         }
       }
     },
@@ -10333,12 +10333,12 @@
           {
             "path": "response-ingestion.js",
             "symbol": "strictParse / prepareCaptured",
-            "sha256": "e761fb032005030b8a63e5250e56c4bbb3ea617625be5ea55bbbc2d0b5029117"
+            "sha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5"
           },
           {
             "path": "project-store.js",
             "symbol": "writeOperationalProject / assertOperationalChange / readProject",
-            "sha256": "e6c37175a93b934585d7b461ad6448bb0a929670e24e8fc03940dcc132330db8"
+            "sha256": "79213ca03e60d7fe0b2b1c7d17c42a99158c063de8e25b88136bd8aed89650bb"
           }
         ],
         "obligations": [
@@ -10378,8 +10378,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-1576e27fba46e1d68631bb2ade2e37f4-20261007-d57d86116816.json",
-          "sha256": "df6b7f046b9bc13d522c9c1ec1895d1e2c0e8295101acc287c844527ef79f2d6"
+          "path": "verification/requirement-coverage-NREQ-1576e27fba46e1d68631bb2ade2e37f4-20261007-context-f03bceab9e8e-54e18bc1f938.json",
+          "sha256": "a46eea64bed37921f10419593d1a3c60d0da02a31b3ac8d1d2ee6797c19033fb"
         }
       }
     },
@@ -10399,12 +10399,12 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope / prepareCaptured",
-            "sha256": "e761fb032005030b8a63e5250e56c4bbb3ea617625be5ea55bbbc2d0b5029117"
+            "sha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5"
           },
           {
             "path": "project-store.js",
             "symbol": "writeOperationalProject / assertOperationalChange / readProject",
-            "sha256": "e6c37175a93b934585d7b461ad6448bb0a929670e24e8fc03940dcc132330db8"
+            "sha256": "79213ca03e60d7fe0b2b1c7d17c42a99158c063de8e25b88136bd8aed89650bb"
           }
         ],
         "obligations": [
@@ -10444,8 +10444,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-cf25cf824db06866df51c0e538fcbc03-20261007-a9ea93e2ae18.json",
-          "sha256": "ed36c79b4ea5598bafbced703ab24ee5ee79753ba90bbd28908e3346bdc65693"
+          "path": "verification/requirement-coverage-NREQ-cf25cf824db06866df51c0e538fcbc03-20261007-context-fde639603c5f-54e18bc1f938.json",
+          "sha256": "f2b9ec200decb4ceb0f4f5ca459ee717f3d20e9aa717b4020322ffd1096b6964"
         }
       }
     },
@@ -10465,12 +10465,12 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope / prepareCaptured",
-            "sha256": "e761fb032005030b8a63e5250e56c4bbb3ea617625be5ea55bbbc2d0b5029117"
+            "sha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5"
           },
           {
             "path": "project-store.js",
             "symbol": "writeOperationalProject / assertOperationalChange / readProject",
-            "sha256": "e6c37175a93b934585d7b461ad6448bb0a929670e24e8fc03940dcc132330db8"
+            "sha256": "79213ca03e60d7fe0b2b1c7d17c42a99158c063de8e25b88136bd8aed89650bb"
           }
         ],
         "obligations": [
@@ -10510,8 +10510,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-41ab1c200b4ce5c9d1d96613a3e5b264-20261007-551018f10e2a.json",
-          "sha256": "840c663ba368b1590b2996d00206c4c35a185eab689a7053fd8c01631aa836dd"
+          "path": "verification/requirement-coverage-NREQ-41ab1c200b4ce5c9d1d96613a3e5b264-20261007-context-867dae61e345-54e18bc1f938.json",
+          "sha256": "5cc01ef9ea90602d4ecddc8642c17c9c425b2b501a470bb98c09913bb52a869c"
         }
       }
     },
@@ -10531,12 +10531,12 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope / prepareCaptured",
-            "sha256": "e761fb032005030b8a63e5250e56c4bbb3ea617625be5ea55bbbc2d0b5029117"
+            "sha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5"
           },
           {
             "path": "project-store.js",
             "symbol": "writeOperationalProject / assertOperationalChange / readProject",
-            "sha256": "e6c37175a93b934585d7b461ad6448bb0a929670e24e8fc03940dcc132330db8"
+            "sha256": "79213ca03e60d7fe0b2b1c7d17c42a99158c063de8e25b88136bd8aed89650bb"
           }
         ],
         "obligations": [
@@ -10576,8 +10576,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-0c973b955d61ee36887734df0ade5e69-20261007-d3e1f54846aa.json",
-          "sha256": "ef77d0f1da42f3ed8f75b423e0f123e94297b83e1153de384d878a0658dd73de"
+          "path": "verification/requirement-coverage-NREQ-0c973b955d61ee36887734df0ade5e69-20261007-context-aa211674369a-54e18bc1f938.json",
+          "sha256": "47476d513b0ed850bedf38224045d030291004710856def3e4f5101484e179db"
         }
       }
     },
@@ -10597,12 +10597,12 @@
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope / prepareCaptured",
-            "sha256": "e761fb032005030b8a63e5250e56c4bbb3ea617625be5ea55bbbc2d0b5029117"
+            "sha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5"
           },
           {
             "path": "project-store.js",
             "symbol": "writeOperationalProject / assertOperationalChange / readProject",
-            "sha256": "e6c37175a93b934585d7b461ad6448bb0a929670e24e8fc03940dcc132330db8"
+            "sha256": "79213ca03e60d7fe0b2b1c7d17c42a99158c063de8e25b88136bd8aed89650bb"
           }
         ],
         "obligations": [
@@ -10642,8 +10642,8 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-971af7158d193e9b1d780c13b6c8e0ec-20261007-e0eb650aa5b5.json",
-          "sha256": "5c138792b13c4e442de946df0e92e7825e60a082ed9a27c520032b358aac3464"
+          "path": "verification/requirement-coverage-NREQ-971af7158d193e9b1d780c13b6c8e0ec-20261007-context-3e84d85be560-54e18bc1f938.json",
+          "sha256": "bce8fbe685e454318398fbaa9e3856fac48a9d371f7e072849463ee42804dabe"
         }
       }
     }

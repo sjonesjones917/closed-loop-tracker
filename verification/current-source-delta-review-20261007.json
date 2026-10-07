@@ -10862,6 +10862,2957 @@
           "qualification": "Actual production transaction-adapter boundaries with explicit priorStagesEstablished:false; no reviewer duplicate run."
         }
       }
+    },
+    {
+      "path": "/workspace/scratch/pr-review/verifier-context-final-156-external-fixture-renewal-approval.json",
+      "sha256": "54e18bc1f93824ef62e39ce37e2ae366b559b66e6cf56599fa2b4ac0cd54f563",
+      "record": {
+        "schema": "closed-loop-final-context-coverage-renewal-review/1",
+        "reviewer": "/root/pr_inventory_review",
+        "status": "APPROVED_FINAL_CONTEXT_COVERAGE_RENEWAL",
+        "reviewedAtUtc": "2026-10-07T05:10:44.883240+00:00",
+        "sourceCommit": "72a22d036239816ced94caddfd55d63b360995e5",
+        "sourceSha256": {
+          "app-core.js": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "project-store.js": "79213ca03e60d7fe0b2b1c7d17c42a99158c063de8e25b88136bd8aed89650bb",
+          "prompt-engine.js": "61e363381dfb88fcfd32a176066762e2a37cf7b14fb9d39bff4eacf7e6d5706f",
+          "response-ingestion.js": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5",
+          "test-artifact-fixtures.mjs": "d695e57716d9aef5ea7c5d96464ed9492ef036a4f759fff1b6147e0cae21c3b4",
+          "test-fixtures.mjs": "666a66d54f5944eae28c608eb0d627aefe45972413b8f5ac004db306205f00c7",
+          "test-handoff-blind-export.mjs": "e241f52913e35a13a0f69782ee5d68ba4af74aaf70a363a836e04139a23d4e9a",
+          "test-prompt-context-storage.mjs": "64d4b412417f7f17ff6e85f57aa692aaaeaec773adebe669be01a2152252964d",
+          "test-verifier-context-relations.mjs": "017e9aab1fd7abfadd2d96d938e7968934338921a8f8cd910ea8a69c97a95ba1",
+          "test-verifier-context-ui.mjs": "c0d9f0abad45f3d73f2f398454ca4f1c0174a76d7b0b7bbec01306e6a0ca5409",
+          "verification-evidence-catalog.mjs": "84b51f38a50fb8169896008ab821c000e6dba8f6b0364576f2572c1a930c1930",
+          "verification/deferred-definition-current-prerequisite-fixture-20261007.json": "61966404f4bff8a74ad0f42ef8b8b6a04964f3e5630fddb8a0df33c09302ba2f",
+          "verify-conformance-regressions.mjs": "526c150869be212d2c76d29a80958ef56dd3eaa5c7aa336b5604262932b65c62",
+          "verify-due-stage-timing.mjs": "f646d3d25f8b15347f7f8af666d5e4e1f5c0f1b591512aa3afc7b021385e260d",
+          "verify-executed-evidence.mjs": "b286765760a41e3929e45e7b860c6a5805d66739756cb0cc0fd301cb71f74add",
+          "verify-independent-run-verification.mjs": "a9e2394f8026edba71ef96ae5f0812e94f2d28081c7c7fd13e2912a90a987344",
+          "verify-operational-persistence.mjs": "15cca43979fb6f7d27f988ff53af8c8f540c02857ffdfc2c8fd13ce801269822",
+          "verify-proposal-acceptance-memory.mjs": "52d814fb2623c8aa63394f0c7bd7afa5cc8e684459ef05d152e3884573629b68",
+          "workflow-engine.js": "16c2a16d61d6a462ecebd25cd7d530a3cce46e11c1d9f88664c2e9a27cf61295"
+        },
+        "reviewedRequirementIds": [
+          "NREQ-9e0ad66ef878f9e97c909997e976cc13",
+          "NREQ-606a27b2b9b712e933dda6e0e7b0ce68",
+          "NREQ-a99b13aa6aa9c7ffa4b65010951f18ec",
+          "NREQ-178819f4c44ad7250656e79d18a8cae3",
+          "NREQ-6a5e773812226552e3448329be3966cd",
+          "NREQ-b67c348ca653ff5a19ba01272dfd4262",
+          "NREQ-4592c9487837c81077b166abf57bb4a7",
+          "NREQ-c0a2fa84e2aafe674742a0bb98c40e02",
+          "NREQ-f6e1df45974ccc5d32aafbc5f38dd535",
+          "NREQ-012f85cfd2196b3413752b3deb14edf0",
+          "NREQ-75151f881444015977da6a6d7d86cb1c",
+          "NREQ-595ff4d66406e3bd9529e12f036c882b",
+          "NREQ-d2fa27e805583d3a5c7d281ed7051950",
+          "NREQ-b366c2ac73e0e846627de23589a5a772",
+          "NREQ-e0b91994f249e0b795ab80a6e3f4a4a2",
+          "NREQ-bde18b0504b7485cf77fad020a4a494b",
+          "NREQ-1e002259d64a939cee2f2a41f4bf3515",
+          "NREQ-55f458162d319bfbb710223b3528ef9f",
+          "NREQ-d6eeb36f75c6f6f6854a2e3aa9ac2070",
+          "NREQ-1543275bf85c6f452bce3c65a31dd691",
+          "NREQ-2323c8d363fd8c29f965d8c0e67549ae",
+          "NREQ-7643f1fb351e295ecb8565583cb9a37f",
+          "NREQ-b04395198a63faa09666a1bfca300a1e",
+          "NREQ-bc997511e2328af90b68d1898bcf6ed7",
+          "NREQ-2969c103b4ac33435f1e5d6c258a7b7b",
+          "NREQ-ec756b9a468c4ea50f2d35c578a1a11a",
+          "NREQ-797b5fe50f9d13ae34d17cc98c7c8f24",
+          "NREQ-1cb8c122e35c6f4e36f01c95ea0d02c9",
+          "NREQ-318da161cc5f30f33449238ba3870773",
+          "NREQ-a1bafeb7c6f6f12bf0c7b0f6fcadaab9",
+          "NREQ-f41a79c58369bd76c58ad7e831e953ce",
+          "NREQ-5811c65fa83521ee7afeedd602cec806",
+          "NREQ-2046e21dd63ad76f992233d5582c716d",
+          "NREQ-1b07d67693ef773b4800dc6e06626b5b",
+          "NREQ-72ba9c97f91e20a56d469fe3d4acf669",
+          "NREQ-d3216139914fb4c3ec1d54819ee18890",
+          "NREQ-949f1919a3c7d66486dd74bbd084b71a",
+          "NREQ-a7139de247d6263164ddc139ec1fe2ce",
+          "NREQ-87e7a29563e2235e49d5eea31da7db0c",
+          "NREQ-ab9ab7c7ba110dfd3e0a5f8f5c9908cb",
+          "NREQ-853a934199459ed6bf419687ca08ba34",
+          "NREQ-7add6f24a57198b72b500e5a2acf1ca6",
+          "NREQ-d6f8519fc2d36e59e4eba26af0442d14",
+          "NREQ-dba22c5f93e4359c4b7d4ebdd9799dbf",
+          "NREQ-27f437fe3040767de849d06a48cdb3c3",
+          "NREQ-c756b0b15119dd819444cd7212bdad56",
+          "NREQ-092f78e488e6282f342b533fa7801e3e",
+          "NREQ-5003532a6cda7a68c13be508fbf4d723",
+          "NREQ-360281bfdd66bed29237ed7202962808",
+          "NREQ-a0db6ddcb33d9af123b08d4d481c8ebd",
+          "NREQ-baa1c33b2e2490264f91881b06ff9da8",
+          "NREQ-f1919b51ebfc8561d0140c02cbf08abd",
+          "NREQ-4b27c9f604f44c29404eacc12a59fd68",
+          "NREQ-71896faa31bc64e94d98bc976e1e6f1d",
+          "NREQ-78fef21919bbd7bb3bafba6f62210631",
+          "NREQ-72aa03a305fb8893a65d384f41d86aeb",
+          "NREQ-848909d4b95219bdb481803a4b1b91c2",
+          "NREQ-601ec85ffefcffd713520f4067f7529c",
+          "NREQ-c0080ab56f40757c88225dc35a1f98f0",
+          "NREQ-a42ec803577aa8ccbe176ed8e20a8595",
+          "NREQ-928a65a08b403be3edc8b160ef9cc53c",
+          "NREQ-0fe0693c63b640aac77aa7fa2ad3861d",
+          "NREQ-57f8fa829a872f35948a81bd58477291",
+          "NREQ-ebadc5f449d2029613a3af4b31f78c6f",
+          "NREQ-85b110cf9d0bf8e7e2a6ca34dcdee412",
+          "NREQ-b7b9ecdbceaad6aaefc9e55f7d5b3d48",
+          "NREQ-5dbdcf72dd32a519bb29fbf8250726d3",
+          "NREQ-f2d6f77dfa27e853d7eb5dab69be388d",
+          "NREQ-ade9df74bf03ff347d7ae537fbfa738d",
+          "NREQ-1f578d8524f1af57b280fd03422827f1",
+          "NREQ-cf2cbee76666e1f836c4cca046988062",
+          "NREQ-2524a1d9ecc583bbd420778cfb147983",
+          "NREQ-e2c966ff2db0502c8d0f2d40e87f4262",
+          "NREQ-b3e8d9cffdde1f94d9d342ff0ed4f097",
+          "NREQ-c1d94148ff5023aac7735baefed6c35d",
+          "NREQ-7be2bf6dfeab825b0549d41a0151841e",
+          "NREQ-a6fb1ab9c309f702b7cd3d8c7f38cf8f",
+          "NREQ-0b73c99557630a5deeace7e89ea0e28f",
+          "NREQ-8bb8790d8dd6c5082d6e0351c032cda5",
+          "NREQ-a3f1c0440fabe4b988fb5fca68a0487c",
+          "NREQ-2b14774ffd65e947a3d3deae3ad09c92",
+          "NREQ-c6ad5908eba2e59771e74f2ceebc5077",
+          "NREQ-5fe6282f6c99d8d0f13fdf06bb5317fa",
+          "NREQ-18edc302ca3fad90513b66c585e688e6",
+          "NREQ-26b8cfa830777dd2bfa4c8aac620403c",
+          "NREQ-04e156310ae4ecdd6915448e3f30e047",
+          "NREQ-f0d3896f2d4c46e85ce52981147764ef",
+          "NREQ-a8822e7da5b9525a6c3e097b71e59183",
+          "NREQ-8c2bdedb1f707a1a97695f7b0745365c",
+          "NREQ-a9ef7326ce64b6049b07bdddd8d9d024",
+          "NREQ-f50ee5baca83ff85d962de77d313fda6",
+          "NREQ-7d91a0dd124e5a78fc01449f23a3e8fa",
+          "NREQ-f9c8f3d1723060ee3fd3fa87ba2a4d75",
+          "NREQ-925405b741265dbbc292d4f3a74c2bd6",
+          "NREQ-4363c0420b1bd921591c1f2446cfb8eb",
+          "NREQ-2174af2894ceaa1acb9a032113db659d",
+          "NREQ-a12012292224d4b4a0a9b1088c8c49d0",
+          "NREQ-255fe5112069486751f53087b1ab699e",
+          "NREQ-6fe30b5cb969bf2fb9daaabc3422ac38",
+          "NREQ-229f56cf458329f04d589d3aa92b95e5",
+          "NREQ-4d7b09d088c999d3c6e91a968cbe1a02",
+          "NREQ-55dce831e47c4a26e093cc6134572e8f",
+          "NREQ-7542acad543ceb37f7fb325baac0d9d0",
+          "NREQ-292af594522de75d72b35851b9befed4",
+          "NREQ-f295ec535d0d117429de1cced6886a6e",
+          "NREQ-9b21240c5c27ee356dec92b459a0fcb9",
+          "NREQ-0774fcb2b6e2510d755133d371474ec8",
+          "NREQ-39eba2aba9049ed18beade0c11e0c107",
+          "NREQ-0f5cdc9e49a6fb5b69455d4b2338448c",
+          "NREQ-a5e73329c9ae93f23b01a42d43179133",
+          "NREQ-70114fe79e900fc756a0d6cc14ea8f90",
+          "NREQ-db8a127d9ff92a6510ae92e3eb1fbb86",
+          "NREQ-f6858b1d41ca1327e88e31e7f0e8f94f",
+          "NREQ-b14772d932b286c302b05996186c8022",
+          "NREQ-9e413bfc92a85655c990712d56002499",
+          "NREQ-22cf265b2b952dcb7187618a915c98bd",
+          "NREQ-928c9bbcf0101e2a0e4a0e69edc59164",
+          "NREQ-27cf5e6a8e4cf40ff1873bd4d059b3cd",
+          "NREQ-e5db8a7c723f5b54ada73ce37c7725a2",
+          "NREQ-4bb54f6379863c0a17e6fbc58edcd042",
+          "NREQ-266e79545a48e7c4310883faa04e9844",
+          "NREQ-e1a8ce05f1d7a97c385039fd3bd71143",
+          "NREQ-ddf7192c16e06f5276d4d324b2e1f6c3",
+          "NREQ-1000a70e39109bdb76b85fa6855a4892",
+          "NREQ-252dcf08d6bbe6a5893bc9cd551ef6ec",
+          "NREQ-931f08afd15144dcac6c7768f2c393d0",
+          "NREQ-3a3ba3d92dd569d454e781fcccf7ac61",
+          "NREQ-bfc0e4b5d516977d7fcad7b3f74e43c6",
+          "NREQ-5d9431875519d7cfc3188157a10d6bfc",
+          "NREQ-aafc7cd5dc54af415d36425000d76acb",
+          "NREQ-829ac5f73d2b01828644e51c0675d6b6",
+          "NREQ-9050383f9f0b382f0fd9b465a0a20f78",
+          "NREQ-dd1241e76fbe641c1c88243ba947dc89",
+          "NREQ-536910c50d3998944884b519e0d89555",
+          "NREQ-efa519285f6f28591dc9ad7936c1caa6",
+          "NREQ-ee95aae3e46bebd05ef8469aff39c9da",
+          "NREQ-647d36595971915d7c485a338ddc4013",
+          "NREQ-aa165dd96291b05acd70bf948f215d04",
+          "NREQ-5f9aa84ccae751c1692f148708a9288c",
+          "NREQ-bedc4564e47ae7ebf86911eb8426b6f0",
+          "NREQ-4b26e20f450b23eb551b2da03e69c9c9",
+          "NREQ-befdab6cc6a4121936987a35fc18e1c9",
+          "NREQ-a011968eff2ed2dc314d58ed27dfad88",
+          "NREQ-c94c878ef2cf8c6a35b0985da91c0c85",
+          "NREQ-ea453611a3a1f48cdd2fbfbe946d7ac7",
+          "NREQ-7a68fe07ee725cf205dd2102cd997b7f",
+          "NREQ-4bb86ccfacff0ea8bbbc59df67b0ca4f",
+          "NREQ-768d67996244254c83c0d11796f63912",
+          "NREQ-59d5854af99ac5a566eb61e978519b21",
+          "NREQ-75b670fc6ea047b7452b4148f12a30ba",
+          "NREQ-86651d173d1583e48cf6c03f9d486f4f",
+          "NREQ-1576e27fba46e1d68631bb2ade2e37f4",
+          "NREQ-cf25cf824db06866df51c0e538fcbc03",
+          "NREQ-41ab1c200b4ce5c9d1d96613a3e5b264",
+          "NREQ-0c973b955d61ee36887734df0ade5e69",
+          "NREQ-971af7158d193e9b1d780c13b6c8e0ec"
+        ],
+        "productionOwnerRequirementIds": [
+          "NREQ-72ba9c97f91e20a56d469fe3d4acf669",
+          "NREQ-d3216139914fb4c3ec1d54819ee18890",
+          "NREQ-949f1919a3c7d66486dd74bbd084b71a",
+          "NREQ-a7139de247d6263164ddc139ec1fe2ce",
+          "NREQ-87e7a29563e2235e49d5eea31da7db0c",
+          "NREQ-5003532a6cda7a68c13be508fbf4d723",
+          "NREQ-360281bfdd66bed29237ed7202962808",
+          "NREQ-a0db6ddcb33d9af123b08d4d481c8ebd",
+          "NREQ-baa1c33b2e2490264f91881b06ff9da8",
+          "NREQ-f1919b51ebfc8561d0140c02cbf08abd",
+          "NREQ-4b27c9f604f44c29404eacc12a59fd68",
+          "NREQ-71896faa31bc64e94d98bc976e1e6f1d",
+          "NREQ-78fef21919bbd7bb3bafba6f62210631",
+          "NREQ-72aa03a305fb8893a65d384f41d86aeb",
+          "NREQ-848909d4b95219bdb481803a4b1b91c2",
+          "NREQ-601ec85ffefcffd713520f4067f7529c",
+          "NREQ-c0080ab56f40757c88225dc35a1f98f0",
+          "NREQ-a42ec803577aa8ccbe176ed8e20a8595",
+          "NREQ-928a65a08b403be3edc8b160ef9cc53c",
+          "NREQ-0fe0693c63b640aac77aa7fa2ad3861d",
+          "NREQ-57f8fa829a872f35948a81bd58477291",
+          "NREQ-ebadc5f449d2029613a3af4b31f78c6f",
+          "NREQ-85b110cf9d0bf8e7e2a6ca34dcdee412",
+          "NREQ-b7b9ecdbceaad6aaefc9e55f7d5b3d48",
+          "NREQ-5dbdcf72dd32a519bb29fbf8250726d3",
+          "NREQ-f2d6f77dfa27e853d7eb5dab69be388d",
+          "NREQ-ade9df74bf03ff347d7ae537fbfa738d",
+          "NREQ-1f578d8524f1af57b280fd03422827f1",
+          "NREQ-cf2cbee76666e1f836c4cca046988062",
+          "NREQ-2524a1d9ecc583bbd420778cfb147983",
+          "NREQ-e2c966ff2db0502c8d0f2d40e87f4262",
+          "NREQ-b3e8d9cffdde1f94d9d342ff0ed4f097",
+          "NREQ-c1d94148ff5023aac7735baefed6c35d",
+          "NREQ-7be2bf6dfeab825b0549d41a0151841e",
+          "NREQ-a6fb1ab9c309f702b7cd3d8c7f38cf8f",
+          "NREQ-0b73c99557630a5deeace7e89ea0e28f",
+          "NREQ-8bb8790d8dd6c5082d6e0351c032cda5",
+          "NREQ-a3f1c0440fabe4b988fb5fca68a0487c",
+          "NREQ-c94c878ef2cf8c6a35b0985da91c0c85",
+          "NREQ-ea453611a3a1f48cdd2fbfbe946d7ac7",
+          "NREQ-7a68fe07ee725cf205dd2102cd997b7f",
+          "NREQ-4bb86ccfacff0ea8bbbc59df67b0ca4f",
+          "NREQ-768d67996244254c83c0d11796f63912",
+          "NREQ-59d5854af99ac5a566eb61e978519b21",
+          "NREQ-75b670fc6ea047b7452b4148f12a30ba",
+          "NREQ-86651d173d1583e48cf6c03f9d486f4f",
+          "NREQ-1576e27fba46e1d68631bb2ade2e37f4",
+          "NREQ-cf25cf824db06866df51c0e538fcbc03",
+          "NREQ-41ab1c200b4ce5c9d1d96613a3e5b264",
+          "NREQ-0c973b955d61ee36887734df0ade5e69",
+          "NREQ-971af7158d193e9b1d780c13b6c8e0ec"
+        ],
+        "declarationMeaningsUnchanged": true,
+        "dependencyClosureReviewed": true,
+        "substantiveCoverageAssessment": "The156 existing fullCoverage declarations retain every controlling clause, obligation, required check reference, expected semantic outcome and execution boundary. Exact51 affected runtime owner declarations are independently approved in the linked final runtime review; remaining105 production-owner sets are unchanged. Shared run selection, six-role carrier projection, own saved-packet diagnosis, pending-cell recovery and exact private context hydration/copy preserve the Stage1, data-custody, CAS, authority and stale-scope obligations named by those declarations. The present catalog adds explicit producer/UI/storage populations and fault controls without removing prior21 consumer cases, five original context faults or existing persistence assertions. Existing memory regression changes only owner-local mutation anchors to the actual shared clone boundary while retaining512MiB positive and JSON-clone negative expectations. The new governed fixture was generated through actual synthetic Stage7–14 execution and Stage15 file admission/operator/store boundaries with reused1–6 prerequisites; both serialized cohorts independently match exact executed output bytes. Default current Stage15/regression readers select that fixture; explicit historical, failure-test and nativeStage7 carriers remain available and the original archive is unchanged. The current-reader138MiB bound is the measured admitted cohort rounded to the next MiB and changes no application limits. The five-file source-fingerprint population retains all four prior fixture paths, adds the current carrier, and directly binds its test-fixtures loader for all four actual consumers. This closes current dependency identity without treating a listed input, source review, synthetic prerequisite or metadata renewal as executed conformance. All156 narrow designs remain adequate for their original declared scope; full owner, hosted CI and physical/runtime release evidence are separately required. The first current native admitted cohort did not satisfy the unchanged external prompt-cache scenario because its mandatory target artifact was absent; the guard correctly rejected the setup. The corrected cohort uses actual fresh Stage15 admission of the already reviewed external test from the same successful prerequisite prefix. Its external16/16 route and unchanged scheduled-binding/cache assertions passed; this correction changes only selected fixture bytes and the reader measured-size comment, leaving all156 meanings and actual51 owner approvals unchanged.",
+        "reviewerPriorContributionDisclosure": "Reviewer authored only the conformanceSources registration of test-verifier-context-ui.mjs and test-prompt-context-storage.mjs. CI owner independently reviewed those additive source-input registrations. No runtime repair or owning behavioral test was authored by this reviewer in this correction chain.",
+        "findings": [],
+        "applicationConformanceClaim": false,
+        "executionProof": false,
+        "reviewRefs": [
+          {
+            "path": "/workspace/scratch/pr-review/verifier-context-final-51-runtime-owner-approval.json",
+            "sha256": "454689f756ac09fabafb069cc0cbb217bdcecf3fb0a12a5e97fe60996400a16c"
+          },
+          {
+            "path": "/workspace/scratch/pr-review/verifier-context-156-renewal-assessment-provisional.json",
+            "sha256": "748fa6178865bce78466fdcc85422d623b3e861e54c2b8e364113ddc33e27637"
+          },
+          {
+            "path": "/workspace/scratch/pr-review/current-prerequisite-carrier-design-review.json",
+            "sha256": "7f097dfe5796e333092de0d05bb1b0f29fc6a8fd46444d3096b85fda96dfb4cc"
+          },
+          {
+            "path": "/workspace/scratch/ci-audit/current-fixture-owner/integration.json",
+            "sha256": "9a2ab890b74cd5d554eb419550ed175399ec8030bc4bb70224f1a21189888b9b"
+          },
+          {
+            "path": "/workspace/scratch/pr-review/current-prerequisite-external-cohort-review.json",
+            "sha256": "c70ee224e35b4eaf63a14347e85dd0c77dea8fb7acca8f10598c79f9d20609b5"
+          }
+        ],
+        "dependencyReviewRows": [
+          {
+            "normativeRequirementId": "NREQ-9e0ad66ef878f9e97c909997e976cc13",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-9e0ad66ef878f9e97c909997e976cc13-20261007-c8e259a009f0.json",
+              "sha256": "7405148aa9b725052cbd97a891ec3ac50c1c809892914adf44ee7cef14d965c8"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-606a27b2b9b712e933dda6e0e7b0ce68",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-606a27b2b9b712e933dda6e0e7b0ce68-20261007-c717ae8f5d63.json",
+              "sha256": "f11fa269c0f56ea906311f3f97484068f4f58a45717fd39f733819167bd7d889"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-a99b13aa6aa9c7ffa4b65010951f18ec",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-a99b13aa6aa9c7ffa4b65010951f18ec-20261007-8e1c768bc690.json",
+              "sha256": "3a259b071fed491bb84b847c2abcf227d62ad704845e2d7e8d1ce75d2ae5f49d"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-178819f4c44ad7250656e79d18a8cae3",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-178819f4c44ad7250656e79d18a8cae3-20261007-c1c5855362aa.json",
+              "sha256": "d94790dc4354cea7d1b850b8c30b2551323687823445d145d068982dd353b36a"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-6a5e773812226552e3448329be3966cd",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-6a5e773812226552e3448329be3966cd-20261007-14f5a52593d0.json",
+              "sha256": "1aaba3c90cfa4fc275f1cd75c87d9ffe36bebb3eace7451fbc7216a395c39077"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-b67c348ca653ff5a19ba01272dfd4262",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-b67c348ca653ff5a19ba01272dfd4262-20261007-d619c471e8d3.json",
+              "sha256": "6002a7b57c2b0c0beabc2d2294163cbe68faa10dfb8785bc02698c1585c94176"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-4592c9487837c81077b166abf57bb4a7",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-4592c9487837c81077b166abf57bb4a7-20261007-86ef01f1c3cb.json",
+              "sha256": "b8ddb9b7e9b957896f7bb19ab8064bcb4de34b3e642c7c285f1950d151bfa435"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-c0a2fa84e2aafe674742a0bb98c40e02",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-c0a2fa84e2aafe674742a0bb98c40e02-20261007-949b3819c6b9.json",
+              "sha256": "71e7c0dfb3906f99afe283bea373182527ca2ed34fa055a56db76847ea03b77e"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-f6e1df45974ccc5d32aafbc5f38dd535",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-f6e1df45974ccc5d32aafbc5f38dd535-20261007-b48c49f827aa.json",
+              "sha256": "fd7590616e2f6135bc2ad8da8c6a5517aee7e8e974ddf0d221376bffd0eb0143"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-012f85cfd2196b3413752b3deb14edf0",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-012f85cfd2196b3413752b3deb14edf0-20261007-faf7fb1b8f5f.json",
+              "sha256": "ae085704b322de39ed07563a04fae5ab2ac356c0badddc16b9c44cd6659128f6"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-75151f881444015977da6a6d7d86cb1c",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-75151f881444015977da6a6d7d86cb1c-20261007-5c2a016004df.json",
+              "sha256": "5affcf687a624b57e7d71428550332bb52be9854d2458d97022a772ce36cdd58"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-595ff4d66406e3bd9529e12f036c882b",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-595ff4d66406e3bd9529e12f036c882b-20261007-b22989818f22.json",
+              "sha256": "8ae09ad78e06bd966b79697798d23d36732403aab85be7f81f1847e753f25484"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-d2fa27e805583d3a5c7d281ed7051950",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-d2fa27e805583d3a5c7d281ed7051950-20261007-8e1b30f0d0bb.json",
+              "sha256": "5eaf987aa9feee4548692fde0dbeff80930c00d5c1268508e4da5eb406c1bc4e"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-b366c2ac73e0e846627de23589a5a772",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-b366c2ac73e0e846627de23589a5a772-20261007-a26853843e41.json",
+              "sha256": "9fca9940d15578c3a0b62dc11612653f60a0f653b7e89159fb3da12dbe185989"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-e0b91994f249e0b795ab80a6e3f4a4a2",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-e0b91994f249e0b795ab80a6e3f4a4a2-20261007-b609fa37652f.json",
+              "sha256": "6336ae6d22d3666406e4f0f399b40e029a37b2c55e315ad2d705fed271585138"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-bde18b0504b7485cf77fad020a4a494b",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-bde18b0504b7485cf77fad020a4a494b-20261007-90bbee2744c4.json",
+              "sha256": "d6b4f6b0faa8d39758dbaa45c1dbff602e3c1b01c28a189295a738f189314d01"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-1e002259d64a939cee2f2a41f4bf3515",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-1e002259d64a939cee2f2a41f4bf3515-20261007-19c88e9b3697.json",
+              "sha256": "5e4230c1965a2ff7071ca85f537ee09985346bd9e77a008e5b80a68d89121f12"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-55f458162d319bfbb710223b3528ef9f",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-55f458162d319bfbb710223b3528ef9f-20261007-5b104c0b9184.json",
+              "sha256": "580ae3108d49798be01e86787199b3f229ebca55a98bc674fb36fa0fae2ca77c"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-d6eeb36f75c6f6f6854a2e3aa9ac2070",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-d6eeb36f75c6f6f6854a2e3aa9ac2070-20261007-e9e30bbb47a8.json",
+              "sha256": "d669e94dbd1e43cbb27b7e532b914544cda7b1a4446318b4e16471a3247c18ca"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-1543275bf85c6f452bce3c65a31dd691",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-1543275bf85c6f452bce3c65a31dd691-20261007-bc25b407a6a7.json",
+              "sha256": "76b47738f92d3c7708731a335c397988b0672fe4fef94c84b9157f0a43d70fbc"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-2323c8d363fd8c29f965d8c0e67549ae",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-2323c8d363fd8c29f965d8c0e67549ae-20261007-cb02bb332e42.json",
+              "sha256": "e14bac2feef3d399e63c409318da1a7aa80973a8372e177b46d54d32b5dd5667"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-7643f1fb351e295ecb8565583cb9a37f",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-7643f1fb351e295ecb8565583cb9a37f-20261007-1fe2c84cf115.json",
+              "sha256": "1a4cdbeb8c99c24fa8f4b25965169408a6c82551c04e17755a2e8cec1ba47f88"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-b04395198a63faa09666a1bfca300a1e",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-b04395198a63faa09666a1bfca300a1e-20261007-3d6d12bed622.json",
+              "sha256": "720517cd19aa0b7d6b318addc6d6590fd1d62c292d487b90837f34b91c867e2e"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-bc997511e2328af90b68d1898bcf6ed7",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-bc997511e2328af90b68d1898bcf6ed7-20261007-18574f44b5d8.json",
+              "sha256": "6636d5711944572bfd50cbe0f8792b12c5ba54365c3a467a554c6c956e40f9d2"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-2969c103b4ac33435f1e5d6c258a7b7b",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-2969c103b4ac33435f1e5d6c258a7b7b-20261007-857befb4ca6d.json",
+              "sha256": "bcf3ecb873f9af43cacd6fbb307fb80e914927eede632e6dd8a6d6b872b0af05"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-ec756b9a468c4ea50f2d35c578a1a11a",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-ec756b9a468c4ea50f2d35c578a1a11a-20261007-5b0bc69cf0f7.json",
+              "sha256": "540de56d12442bca77c200ae7db73751d133fa0b1ffa25695ca81f36f41a8a05"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-797b5fe50f9d13ae34d17cc98c7c8f24",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-797b5fe50f9d13ae34d17cc98c7c8f24-20261007-0a94e402d167.json",
+              "sha256": "cbdd8b537667ee9cac2696ee00b170fa00d1dad7d7bc0bdad80a37d23e59af18"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-1cb8c122e35c6f4e36f01c95ea0d02c9",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-1cb8c122e35c6f4e36f01c95ea0d02c9-20261007-4e1b5cc17d08.json",
+              "sha256": "ce64b051a75841f9e664df18c339e41ebc58f44f832a613541166b1576fdd3d2"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-318da161cc5f30f33449238ba3870773",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-318da161cc5f30f33449238ba3870773-20261007-123b97ea9f3d.json",
+              "sha256": "052d30ec062aa08adf80117232a2ea828f12b3f9a364e4e3f1c787c3707542ad"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-a1bafeb7c6f6f12bf0c7b0f6fcadaab9",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-a1bafeb7c6f6f12bf0c7b0f6fcadaab9-20261007-4b6563194ed6.json",
+              "sha256": "b7e6b9d21b8dc52ee7a10eb09cf5c3b11cdf9cb7bd722b000f337b87c85a52ac"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "verification-evidence-catalog.mjs",
+              "verify-conformance-regressions.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-f41a79c58369bd76c58ad7e831e953ce",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-f41a79c58369bd76c58ad7e831e953ce-20261007-a6f639cd6cfc.json",
+              "sha256": "323866fa0fccc13583f9a0fa65ecf0d165f3122d536b6b0bd590759472314d62"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "verification-evidence-catalog.mjs",
+              "verify-conformance-regressions.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-5811c65fa83521ee7afeedd602cec806",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-5811c65fa83521ee7afeedd602cec806-20261007-60e25b364eb4.json",
+              "sha256": "eccd268c3a8323fb58ad94d5a6e8f8963a0a80bde6bad5d5539d03ed9a51535a"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "verification-evidence-catalog.mjs",
+              "verify-conformance-regressions.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-2046e21dd63ad76f992233d5582c716d",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-2046e21dd63ad76f992233d5582c716d-20261007-8d03363ebd61.json",
+              "sha256": "6dba2381372f53ec2173fbdc4f85b08401050e556a82ba8bec03e58ad3e9249f"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "verification-evidence-catalog.mjs",
+              "verify-conformance-regressions.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-1b07d67693ef773b4800dc6e06626b5b",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-1b07d67693ef773b4800dc6e06626b5b-20261007-dcaf72405bbe.json",
+              "sha256": "c7acbc75ed6f34d435c319d0f57b8535ce51f8b074699f6dc3cf478e8fbc99d4"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "verification-evidence-catalog.mjs",
+              "verify-conformance-regressions.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-72ba9c97f91e20a56d469fe3d4acf669",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-72ba9c97f91e20a56d469fe3d4acf669-20261007-027740e2add6.json",
+              "sha256": "8dae854adfa0eb81feff1e56f1b72d667e834c56f8d1d54d983584e7f9ad3cc6"
+            },
+            "productionOwnerStatus": "APPROVED_EXACT51_SOURCE_CHANGE",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "verify-operational-persistence.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": [
+              "test-prompt-context-storage.mjs",
+              "test-artifact-fixtures.mjs"
+            ]
+          },
+          {
+            "normativeRequirementId": "NREQ-d3216139914fb4c3ec1d54819ee18890",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-d3216139914fb4c3ec1d54819ee18890-20261007-e159112d367c.json",
+              "sha256": "cf7bf82286ef515995dc68c5b03d6105203f07cea02bb6d867b160c7ac539760"
+            },
+            "productionOwnerStatus": "APPROVED_EXACT51_SOURCE_CHANGE",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "verify-operational-persistence.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": [
+              "test-prompt-context-storage.mjs",
+              "test-artifact-fixtures.mjs"
+            ]
+          },
+          {
+            "normativeRequirementId": "NREQ-949f1919a3c7d66486dd74bbd084b71a",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-949f1919a3c7d66486dd74bbd084b71a-20261007-850b4de61355.json",
+              "sha256": "d53b9fec7f8a21e5551521171a403f50fac76fdabf7d67834205e2b390c78a88"
+            },
+            "productionOwnerStatus": "APPROVED_EXACT51_SOURCE_CHANGE",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "verify-operational-persistence.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": [
+              "test-prompt-context-storage.mjs",
+              "test-artifact-fixtures.mjs"
+            ]
+          },
+          {
+            "normativeRequirementId": "NREQ-a7139de247d6263164ddc139ec1fe2ce",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-a7139de247d6263164ddc139ec1fe2ce-20261007-65ff328a856c.json",
+              "sha256": "3f38f4daf25c5ca9366fc622f799ee0325edf3973c1d17d14973c1059dfb9828"
+            },
+            "productionOwnerStatus": "APPROVED_EXACT51_SOURCE_CHANGE",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "verify-operational-persistence.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": [
+              "test-prompt-context-storage.mjs",
+              "test-artifact-fixtures.mjs"
+            ]
+          },
+          {
+            "normativeRequirementId": "NREQ-87e7a29563e2235e49d5eea31da7db0c",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-87e7a29563e2235e49d5eea31da7db0c-20261007-b046478e32c3.json",
+              "sha256": "df4e8f2acc2e2313e97ca88a5eeedac7aa482b54a4effb6f62d88b9ce928d837"
+            },
+            "productionOwnerStatus": "APPROVED_EXACT51_SOURCE_CHANGE",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "verify-operational-persistence.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": [
+              "test-prompt-context-storage.mjs",
+              "test-artifact-fixtures.mjs"
+            ]
+          },
+          {
+            "normativeRequirementId": "NREQ-ab9ab7c7ba110dfd3e0a5f8f5c9908cb",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-ab9ab7c7ba110dfd3e0a5f8f5c9908cb-20261007-d64ec081ccf9.json",
+              "sha256": "51d36afea64012f6c955bb5d52cfd1d894a095717c5122f6b1e48eb9dc8d56eb"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-853a934199459ed6bf419687ca08ba34",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-853a934199459ed6bf419687ca08ba34-20261007-00fada70b5c9.json",
+              "sha256": "536b44bafdb485312ba6b3355ade8603574d6cc512262ec5d3f89fb39dd37d3e"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-7add6f24a57198b72b500e5a2acf1ca6",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-7add6f24a57198b72b500e5a2acf1ca6-20261007-6cba32557505.json",
+              "sha256": "b071b228f903bf430509da659416233cdedcc92c403a243c2db570c1ad740b6b"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-d6f8519fc2d36e59e4eba26af0442d14",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-d6f8519fc2d36e59e4eba26af0442d14-20261007-2fbfbdc64e39.json",
+              "sha256": "4bd5bf47d83204212ab056adbc93d38362082fa06348f04243c400ad6e82d10c"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-dba22c5f93e4359c4b7d4ebdd9799dbf",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-dba22c5f93e4359c4b7d4ebdd9799dbf-20261007-20dec9a14f41.json",
+              "sha256": "ddf4d7cd1d195ce0822fa34e060f08a325ccdf893a8d45346bd11d70f7529dc7"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-27f437fe3040767de849d06a48cdb3c3",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-27f437fe3040767de849d06a48cdb3c3-20261007-f1acc99ffcf8.json",
+              "sha256": "51c02db844ebdbcf06a67b80c3422e8c973432b479bb841db0e2bbe518c1e992"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-c756b0b15119dd819444cd7212bdad56",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-c756b0b15119dd819444cd7212bdad56-20261007-fb0c67dfb2a4.json",
+              "sha256": "b9c3e9cc4fd5ddce3ae1d285c6a35502deb92474892d3de16ca95d113f39bfc0"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-092f78e488e6282f342b533fa7801e3e",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-092f78e488e6282f342b533fa7801e3e-20261007-11d306878126.json",
+              "sha256": "57686c95c275e800e9d45b7c2e6dabd9e7c3234940087a12981fb36aa6f46a44"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-5003532a6cda7a68c13be508fbf4d723",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-5003532a6cda7a68c13be508fbf4d723-20261007-191e2d20f83f.json",
+              "sha256": "88cef397d4acd2f81c3a4c1c3e8ab6516f429304fb9612ca8dde75e15aa695a5"
+            },
+            "productionOwnerStatus": "APPROVED_EXACT51_SOURCE_CHANGE",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "verification-evidence-catalog.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-360281bfdd66bed29237ed7202962808",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-360281bfdd66bed29237ed7202962808-20261007-73f8c82cd834.json",
+              "sha256": "8692094aae2ad92563dccb0b95b42951b805e9026b1cf6cf58c26bd018ba5d9f"
+            },
+            "productionOwnerStatus": "APPROVED_EXACT51_SOURCE_CHANGE",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "verify-conformance-regressions.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-a0db6ddcb33d9af123b08d4d481c8ebd",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-a0db6ddcb33d9af123b08d4d481c8ebd-20261007-b3c7a4a1a0bc.json",
+              "sha256": "3bef50bde72053e3690af27efcc771db0d4234fac7bf9efa3275d6161c7c0f70"
+            },
+            "productionOwnerStatus": "APPROVED_EXACT51_SOURCE_CHANGE",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "verify-conformance-regressions.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-baa1c33b2e2490264f91881b06ff9da8",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-baa1c33b2e2490264f91881b06ff9da8-20261007-023baa60eb5e.json",
+              "sha256": "caf740e104958ad4d49282a58db196abbc03e8a1b78fe3dac50ae91addab7875"
+            },
+            "productionOwnerStatus": "APPROVED_EXACT51_SOURCE_CHANGE",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "verify-conformance-regressions.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-f1919b51ebfc8561d0140c02cbf08abd",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-f1919b51ebfc8561d0140c02cbf08abd-20261007-084940a86716.json",
+              "sha256": "6f6ba392f0be94ad1c4b3323e31f4f10f0b87441146c7ac4be536f4cbaa5cab9"
+            },
+            "productionOwnerStatus": "APPROVED_EXACT51_SOURCE_CHANGE",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "verify-conformance-regressions.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-4b27c9f604f44c29404eacc12a59fd68",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-4b27c9f604f44c29404eacc12a59fd68-20261007-a95712cc73f2.json",
+              "sha256": "e5b2457f1305b695b12ae8aa23f0f7bc27f638f9e3c85bcc14d52111cb458176"
+            },
+            "productionOwnerStatus": "APPROVED_EXACT51_SOURCE_CHANGE",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "verify-conformance-regressions.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-71896faa31bc64e94d98bc976e1e6f1d",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-71896faa31bc64e94d98bc976e1e6f1d-20261007-d5323956e09f.json",
+              "sha256": "dd9d3f3b9a32c147904da0df673232e321476c49f21a475f191d105a477be0e4"
+            },
+            "productionOwnerStatus": "APPROVED_EXACT51_SOURCE_CHANGE",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "verify-conformance-regressions.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-78fef21919bbd7bb3bafba6f62210631",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-78fef21919bbd7bb3bafba6f62210631-20261007-dd89dac29dc4.json",
+              "sha256": "e55743fad3b6ac58aed37db981f78ed95f753f0dfa90cd70edaa9d7616e50f1a"
+            },
+            "productionOwnerStatus": "APPROVED_EXACT51_SOURCE_CHANGE",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "verify-conformance-regressions.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-72aa03a305fb8893a65d384f41d86aeb",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-72aa03a305fb8893a65d384f41d86aeb-20261007-fef9393f9841.json",
+              "sha256": "100db00fe5e2ce35ab255481b461b3302b77b17801613d239e5524fde2aee0e8"
+            },
+            "productionOwnerStatus": "APPROVED_EXACT51_SOURCE_CHANGE",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "verify-conformance-regressions.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-848909d4b95219bdb481803a4b1b91c2",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-848909d4b95219bdb481803a4b1b91c2-20261007-f750620335b7.json",
+              "sha256": "5b214caeef74f2ad24ba3bab5604bd07221158ab6fc92e198cb6883a8e64bfe6"
+            },
+            "productionOwnerStatus": "APPROVED_EXACT51_SOURCE_CHANGE",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "verify-conformance-regressions.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-601ec85ffefcffd713520f4067f7529c",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-601ec85ffefcffd713520f4067f7529c-20261007-c332f470cef1.json",
+              "sha256": "52dc54f107589bc29431753d3b75fe37ee8261a53a99c4b360ccc9e1c2931698"
+            },
+            "productionOwnerStatus": "APPROVED_EXACT51_SOURCE_CHANGE",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "verify-conformance-regressions.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-c0080ab56f40757c88225dc35a1f98f0",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-c0080ab56f40757c88225dc35a1f98f0-20261007-a287a83ae9f9.json",
+              "sha256": "2744aac54b09790100876ebc63f7ca426b8fcd5d4b35cb2189e6535f8cf01153"
+            },
+            "productionOwnerStatus": "APPROVED_EXACT51_SOURCE_CHANGE",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "verify-conformance-regressions.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-a42ec803577aa8ccbe176ed8e20a8595",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-a42ec803577aa8ccbe176ed8e20a8595-20261007-086553a7b0ad.json",
+              "sha256": "4cdf193aeb5784af5444e5af7032103a0f11b05cd8ac124dead826da80d56efe"
+            },
+            "productionOwnerStatus": "APPROVED_EXACT51_SOURCE_CHANGE",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "verify-conformance-regressions.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-928a65a08b403be3edc8b160ef9cc53c",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-928a65a08b403be3edc8b160ef9cc53c-20261007-d17b7627dac4.json",
+              "sha256": "a9a10d1f0e8054f549b225d8feecc19e7ed5b96fe9a71c919e2c8923e2a4acb3"
+            },
+            "productionOwnerStatus": "APPROVED_EXACT51_SOURCE_CHANGE",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "verify-conformance-regressions.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-0fe0693c63b640aac77aa7fa2ad3861d",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-0fe0693c63b640aac77aa7fa2ad3861d-20261007-d6896a78f175.json",
+              "sha256": "0bd94688de53be75ed6d5e8d8bd085ce47284f046532961ad467080b9ddca805"
+            },
+            "productionOwnerStatus": "APPROVED_EXACT51_SOURCE_CHANGE",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "verification-evidence-catalog.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": [
+              "test-fixtures.mjs",
+              "verification/deferred-definition-current-prerequisite-fixture-20261007.json"
+            ]
+          },
+          {
+            "normativeRequirementId": "NREQ-57f8fa829a872f35948a81bd58477291",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-57f8fa829a872f35948a81bd58477291-20261007-4eec16fef5d9.json",
+              "sha256": "5f4590f4f274ff4d440ce1f35fa9869c30fcad2f3d9c10240f7614b83e35d17f"
+            },
+            "productionOwnerStatus": "APPROVED_EXACT51_SOURCE_CHANGE",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "verification-evidence-catalog.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": [
+              "test-fixtures.mjs",
+              "verification/deferred-definition-current-prerequisite-fixture-20261007.json"
+            ]
+          },
+          {
+            "normativeRequirementId": "NREQ-ebadc5f449d2029613a3af4b31f78c6f",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-ebadc5f449d2029613a3af4b31f78c6f-20261007-18171b0ab481.json",
+              "sha256": "a4a451dbb4fc875d8c1a1d104c87eef11da9d4f544fcd42119ba56f378589fa7"
+            },
+            "productionOwnerStatus": "APPROVED_EXACT51_SOURCE_CHANGE",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "verification-evidence-catalog.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": [
+              "test-fixtures.mjs",
+              "verification/deferred-definition-current-prerequisite-fixture-20261007.json"
+            ]
+          },
+          {
+            "normativeRequirementId": "NREQ-85b110cf9d0bf8e7e2a6ca34dcdee412",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-85b110cf9d0bf8e7e2a6ca34dcdee412-20261007-bb369762d8db.json",
+              "sha256": "2f3771ed6245eb1be15bac719803ebe35f6721a4f415fc7429830596b7e29a90"
+            },
+            "productionOwnerStatus": "APPROVED_EXACT51_SOURCE_CHANGE",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "verification-evidence-catalog.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": [
+              "test-fixtures.mjs",
+              "verification/deferred-definition-current-prerequisite-fixture-20261007.json"
+            ]
+          },
+          {
+            "normativeRequirementId": "NREQ-b7b9ecdbceaad6aaefc9e55f7d5b3d48",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-b7b9ecdbceaad6aaefc9e55f7d5b3d48-20261007-6bde77f8e10d.json",
+              "sha256": "e9138e27342becc5d110b8b553e9c5d6877dde2c81ae47085d3afbb707fbc4dc"
+            },
+            "productionOwnerStatus": "APPROVED_EXACT51_SOURCE_CHANGE",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "verification-evidence-catalog.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": [
+              "test-fixtures.mjs",
+              "verification/deferred-definition-current-prerequisite-fixture-20261007.json"
+            ]
+          },
+          {
+            "normativeRequirementId": "NREQ-5dbdcf72dd32a519bb29fbf8250726d3",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-5dbdcf72dd32a519bb29fbf8250726d3-20261007-178027c31442.json",
+              "sha256": "ed7596835cbb982cfab88f5b765d3def88007ac769f6f9de464b13d8c18a23b6"
+            },
+            "productionOwnerStatus": "APPROVED_EXACT51_SOURCE_CHANGE",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "verification-evidence-catalog.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": [
+              "test-fixtures.mjs",
+              "verification/deferred-definition-current-prerequisite-fixture-20261007.json"
+            ]
+          },
+          {
+            "normativeRequirementId": "NREQ-f2d6f77dfa27e853d7eb5dab69be388d",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-f2d6f77dfa27e853d7eb5dab69be388d-20261007-4c065192f275.json",
+              "sha256": "af878f9dc0c2f36ae01f89025711eb93f041be232f25e42b1d2656454d5f6bef"
+            },
+            "productionOwnerStatus": "APPROVED_EXACT51_SOURCE_CHANGE",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "verification-evidence-catalog.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": [
+              "test-fixtures.mjs",
+              "verification/deferred-definition-current-prerequisite-fixture-20261007.json"
+            ]
+          },
+          {
+            "normativeRequirementId": "NREQ-ade9df74bf03ff347d7ae537fbfa738d",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-ade9df74bf03ff347d7ae537fbfa738d-20261007-804dcdf17892.json",
+              "sha256": "daa87b35d371ef8a036b1acb018c2ffada0a23501f2544cb3942800f3c766a94"
+            },
+            "productionOwnerStatus": "APPROVED_EXACT51_SOURCE_CHANGE",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "verification-evidence-catalog.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": [
+              "test-fixtures.mjs",
+              "verification/deferred-definition-current-prerequisite-fixture-20261007.json"
+            ]
+          },
+          {
+            "normativeRequirementId": "NREQ-1f578d8524f1af57b280fd03422827f1",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-1f578d8524f1af57b280fd03422827f1-20261007-333058391a36.json",
+              "sha256": "49988f9d1d910916c0876d1183175afeef05b7d543170ae6cac1e55fde607b35"
+            },
+            "productionOwnerStatus": "APPROVED_EXACT51_SOURCE_CHANGE",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "verification-evidence-catalog.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": [
+              "test-fixtures.mjs",
+              "verification/deferred-definition-current-prerequisite-fixture-20261007.json"
+            ]
+          },
+          {
+            "normativeRequirementId": "NREQ-cf2cbee76666e1f836c4cca046988062",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-cf2cbee76666e1f836c4cca046988062-20261007-0ad6e9d4c8b1.json",
+              "sha256": "5691ad545d06b3ee99c1eb29f444b7828c99244b369457926584d2f6b77a3c1e"
+            },
+            "productionOwnerStatus": "APPROVED_EXACT51_SOURCE_CHANGE",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "verification-evidence-catalog.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": [
+              "test-fixtures.mjs",
+              "verification/deferred-definition-current-prerequisite-fixture-20261007.json"
+            ]
+          },
+          {
+            "normativeRequirementId": "NREQ-2524a1d9ecc583bbd420778cfb147983",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-2524a1d9ecc583bbd420778cfb147983-20261007-b0c3c6c9bad9.json",
+              "sha256": "9c849bac8300da21e242d3870e07d40e0bb7d132604a0f5c33789ee1776b7bf2"
+            },
+            "productionOwnerStatus": "APPROVED_EXACT51_SOURCE_CHANGE",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "verification-evidence-catalog.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": [
+              "test-fixtures.mjs",
+              "verification/deferred-definition-current-prerequisite-fixture-20261007.json"
+            ]
+          },
+          {
+            "normativeRequirementId": "NREQ-e2c966ff2db0502c8d0f2d40e87f4262",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-e2c966ff2db0502c8d0f2d40e87f4262-20261007-0a4dc657dba6.json",
+              "sha256": "7ca65538db15d1e32c37bb0c8ede32b18b01d780bf88bdeb2909b1a0631030a4"
+            },
+            "productionOwnerStatus": "APPROVED_EXACT51_SOURCE_CHANGE",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "verification-evidence-catalog.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": [
+              "test-fixtures.mjs",
+              "verification/deferred-definition-current-prerequisite-fixture-20261007.json"
+            ]
+          },
+          {
+            "normativeRequirementId": "NREQ-b3e8d9cffdde1f94d9d342ff0ed4f097",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-b3e8d9cffdde1f94d9d342ff0ed4f097-20261007-2245f2d912e1.json",
+              "sha256": "2c37dd932c58ee330b9eb213736d0bbb9485af8a4c2456195d8185b3e1a23950"
+            },
+            "productionOwnerStatus": "APPROVED_EXACT51_SOURCE_CHANGE",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "verification-evidence-catalog.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": [
+              "test-fixtures.mjs",
+              "verification/deferred-definition-current-prerequisite-fixture-20261007.json"
+            ]
+          },
+          {
+            "normativeRequirementId": "NREQ-c1d94148ff5023aac7735baefed6c35d",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-c1d94148ff5023aac7735baefed6c35d-20261007-bc256faf316a.json",
+              "sha256": "f21d0cea1930500260b9d53fc65a5a7b2c0818f0c4b42d9b06c3d92e51dcfc7a"
+            },
+            "productionOwnerStatus": "APPROVED_EXACT51_SOURCE_CHANGE",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "verification-evidence-catalog.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": [
+              "test-fixtures.mjs",
+              "verification/deferred-definition-current-prerequisite-fixture-20261007.json"
+            ]
+          },
+          {
+            "normativeRequirementId": "NREQ-7be2bf6dfeab825b0549d41a0151841e",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-7be2bf6dfeab825b0549d41a0151841e-20261007-c57fcd1ed718.json",
+              "sha256": "186d3fac1844c3a5a435ed3f4408c925519efc32d5bcc205ef11b107c22b05b5"
+            },
+            "productionOwnerStatus": "APPROVED_EXACT51_SOURCE_CHANGE",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "verification-evidence-catalog.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": [
+              "test-fixtures.mjs",
+              "verification/deferred-definition-current-prerequisite-fixture-20261007.json"
+            ]
+          },
+          {
+            "normativeRequirementId": "NREQ-a6fb1ab9c309f702b7cd3d8c7f38cf8f",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-a6fb1ab9c309f702b7cd3d8c7f38cf8f-20261007-9149554f8d99.json",
+              "sha256": "7294e6756a10a730ff4affc8b7431e6abecdba792dc034852ba57b9c823bc988"
+            },
+            "productionOwnerStatus": "APPROVED_EXACT51_SOURCE_CHANGE",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "verification-evidence-catalog.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": [
+              "test-fixtures.mjs",
+              "verification/deferred-definition-current-prerequisite-fixture-20261007.json"
+            ]
+          },
+          {
+            "normativeRequirementId": "NREQ-0b73c99557630a5deeace7e89ea0e28f",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-0b73c99557630a5deeace7e89ea0e28f-20261007-a64c00aefaec.json",
+              "sha256": "7e2a5448faa4d5aa38a0d234df782d2cb22cb2d14063d73643548f9979c693eb"
+            },
+            "productionOwnerStatus": "APPROVED_EXACT51_SOURCE_CHANGE",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "verification-evidence-catalog.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": [
+              "test-fixtures.mjs",
+              "verification/deferred-definition-current-prerequisite-fixture-20261007.json"
+            ]
+          },
+          {
+            "normativeRequirementId": "NREQ-8bb8790d8dd6c5082d6e0351c032cda5",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-8bb8790d8dd6c5082d6e0351c032cda5-20261007-e700bb4018c4.json",
+              "sha256": "14918cb74cc8d2ff668814a59074cd94fb0625ccd8263debd61fa7cc9c3a627c"
+            },
+            "productionOwnerStatus": "APPROVED_EXACT51_SOURCE_CHANGE",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "verification-evidence-catalog.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": [
+              "test-fixtures.mjs",
+              "verification/deferred-definition-current-prerequisite-fixture-20261007.json"
+            ]
+          },
+          {
+            "normativeRequirementId": "NREQ-a3f1c0440fabe4b988fb5fca68a0487c",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-a3f1c0440fabe4b988fb5fca68a0487c-20261007-f0b3c3a30e5c.json",
+              "sha256": "391e84b2fb16e663eaa2f8442f691929ebc69dda6423fb6510565877c3a39910"
+            },
+            "productionOwnerStatus": "APPROVED_EXACT51_SOURCE_CHANGE",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "verification-evidence-catalog.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": [
+              "test-fixtures.mjs",
+              "verification/deferred-definition-current-prerequisite-fixture-20261007.json"
+            ]
+          },
+          {
+            "normativeRequirementId": "NREQ-2b14774ffd65e947a3d3deae3ad09c92",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-2b14774ffd65e947a3d3deae3ad09c92-20261007-aa8204f96091.json",
+              "sha256": "0ed6ec3339e5a7191d3921a6914c105a11d0a5a3d265a830b05bc50228201254"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-c6ad5908eba2e59771e74f2ceebc5077",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-c6ad5908eba2e59771e74f2ceebc5077-20261007-e1522203239f.json",
+              "sha256": "468d4bedd156516b3e641de63589b531628e279392cb2b0adb5902b4fcc668ff"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-5fe6282f6c99d8d0f13fdf06bb5317fa",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-5fe6282f6c99d8d0f13fdf06bb5317fa-20261007-b3f25a0a1514.json",
+              "sha256": "85acdc74ea85e63527ca77364c553f8139c1acdbf15b6b7e7804e5f5705fe27e"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-18edc302ca3fad90513b66c585e688e6",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-18edc302ca3fad90513b66c585e688e6-20261007-c29757d88109.json",
+              "sha256": "5390b5b4830383240f2efc32b37144ccfbf0f5df5973ff4a79be0c593f845ad6"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-26b8cfa830777dd2bfa4c8aac620403c",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-26b8cfa830777dd2bfa4c8aac620403c-20261007-08c3774267c0.json",
+              "sha256": "c1c9720449f29e7bee59a3d0218a78b0e3b6fff1c9942d8b22a6405b3405c696"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-04e156310ae4ecdd6915448e3f30e047",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-04e156310ae4ecdd6915448e3f30e047-20261007-9f8a35215a69.json",
+              "sha256": "8cd175467ef7dbc870200cdc11eae236f77bef7a8df297ababc1628bd864712d"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-f0d3896f2d4c46e85ce52981147764ef",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-f0d3896f2d4c46e85ce52981147764ef-20261007-01afc04c65c4.json",
+              "sha256": "c7ff1b30ff034ad7b8519f7a2d0b22c414bc250c411d383f932e2b69bd480bf7"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-a8822e7da5b9525a6c3e097b71e59183",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-a8822e7da5b9525a6c3e097b71e59183-20261007-c52dc24f6227.json",
+              "sha256": "6bcebd6637f62856ca27c18dcd5d85497f1aa649f58a7b246b8db3762984895e"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-8c2bdedb1f707a1a97695f7b0745365c",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-8c2bdedb1f707a1a97695f7b0745365c-20261007-96450c77219a.json",
+              "sha256": "f9cebeaf4fdc9c6195ff94391d6a2bf4f203be69ba32200848e639196d9d2ad8"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-a9ef7326ce64b6049b07bdddd8d9d024",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-a9ef7326ce64b6049b07bdddd8d9d024-20261007-f1fcf2f90e43.json",
+              "sha256": "6a9dcc269dcaf1691768883b3bf4d344f703ccb6307fd115db6e4026a4a35004"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-f50ee5baca83ff85d962de77d313fda6",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-f50ee5baca83ff85d962de77d313fda6-20261007-fd5c589d06d2.json",
+              "sha256": "e6a6c863aa15c98542e1c6057e0e8234e5033cc890eae6b4a52a1c54503039cc"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-7d91a0dd124e5a78fc01449f23a3e8fa",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-7d91a0dd124e5a78fc01449f23a3e8fa-20261007-dfcfcb839c96.json",
+              "sha256": "95d98a6cbb389a527efda08989933d5f02e6aca529c55867864676e38cae0ecd"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-f9c8f3d1723060ee3fd3fa87ba2a4d75",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-f9c8f3d1723060ee3fd3fa87ba2a4d75-20261007-0bef4700f599.json",
+              "sha256": "7c91d4fbba09a962c440798e917617093faabf4eab84a9b366acb383c1ef6a8a"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-925405b741265dbbc292d4f3a74c2bd6",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-925405b741265dbbc292d4f3a74c2bd6-20261007-acc52814e6d6.json",
+              "sha256": "b4c093b784a4ad54377ba383a8df0a47b5711a4b82eecbd4d008543969194692"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-4363c0420b1bd921591c1f2446cfb8eb",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-4363c0420b1bd921591c1f2446cfb8eb-20261007-de3533a949d5.json",
+              "sha256": "bf4d795d94c1164c88fde81553dcb793030ef0a8afec0cddf4910053645d4f7c"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-2174af2894ceaa1acb9a032113db659d",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-2174af2894ceaa1acb9a032113db659d-20261007-8376db0a1333.json",
+              "sha256": "3f8cf1a5f6083fa26a5de3158207b1d825dc3a84777bbac30a3b022cd03df000"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-a12012292224d4b4a0a9b1088c8c49d0",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-a12012292224d4b4a0a9b1088c8c49d0-20261007-3fe1f1abe0f4.json",
+              "sha256": "6863e22ca38505061545c097f7a21d08756abe892d2d62d224f906cf0472bfd6"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-255fe5112069486751f53087b1ab699e",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-255fe5112069486751f53087b1ab699e-20261007-608c37b31d30.json",
+              "sha256": "9af2ac3cdb5c00c61d891db4e4da2a34305e12eb850f6f77b6782871a04ae419"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-6fe30b5cb969bf2fb9daaabc3422ac38",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-6fe30b5cb969bf2fb9daaabc3422ac38-20261007-2594d1e812f8.json",
+              "sha256": "bf90b4416f1b535cd032c82ae5b2e61488d05fdf1ed487d0a2298c5be00e2b8b"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-229f56cf458329f04d589d3aa92b95e5",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-229f56cf458329f04d589d3aa92b95e5-20261007-23fcc35649f3.json",
+              "sha256": "d2aa213fcfa17a122b36369de98da5d9bad5febf70cc469d1637d2ebc6d84cc0"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-4d7b09d088c999d3c6e91a968cbe1a02",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-4d7b09d088c999d3c6e91a968cbe1a02-20261007-03745896590f.json",
+              "sha256": "1fae8bf2033c2cf21c9d89dc3ddf30b18a13d3941bbbe8df05716f0af3b699cb"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-55dce831e47c4a26e093cc6134572e8f",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-55dce831e47c4a26e093cc6134572e8f-20261007-b731d3ee0180.json",
+              "sha256": "b9939a0cf5ec5bda365087b9518857b8c61a02dea9526c67b9aecf6d50703782"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-7542acad543ceb37f7fb325baac0d9d0",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-7542acad543ceb37f7fb325baac0d9d0-20261007-1dab787f784f.json",
+              "sha256": "9df2c3cf043ebc0a3e27f1475df16a1bc3d061f6f4d039bd454998e48b3e1f16"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-292af594522de75d72b35851b9befed4",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-292af594522de75d72b35851b9befed4-20261007-e580690eff15.json",
+              "sha256": "f96bce03856b71c4c4509eead9169f84bb2b47a4c7feebada342bcbb84c077ec"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-f295ec535d0d117429de1cced6886a6e",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-f295ec535d0d117429de1cced6886a6e-20261007-c064f5db48cd.json",
+              "sha256": "676fb17112ed2d33de3becde355c7837102e9d322660b53ae135cd6d3fb7502e"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-9b21240c5c27ee356dec92b459a0fcb9",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-9b21240c5c27ee356dec92b459a0fcb9-20261007-f0585937ea82.json",
+              "sha256": "c3562f9a34fffcbff776377033147644da22b7077bc939601c335c490273b114"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-0774fcb2b6e2510d755133d371474ec8",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-0774fcb2b6e2510d755133d371474ec8-20261007-d48d5f2a8e1a.json",
+              "sha256": "1fbf192f1a18b1ae574cec4ead266110e96c959c592fda27ab6e650a4d2ea362"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-39eba2aba9049ed18beade0c11e0c107",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-39eba2aba9049ed18beade0c11e0c107-20261007-3f29c46a8871.json",
+              "sha256": "f3733d33aa0115b1c69d57cbc3d025c4efa82572271b57939881df2efdd32755"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-0f5cdc9e49a6fb5b69455d4b2338448c",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-0f5cdc9e49a6fb5b69455d4b2338448c-20261007-fb52feb719db.json",
+              "sha256": "a861c040aaa59ffcd04b2c2fbf9a033e7eaf918d02dc1325358ccf60a9b94226"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-a5e73329c9ae93f23b01a42d43179133",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-a5e73329c9ae93f23b01a42d43179133-20261007-71a07396be34.json",
+              "sha256": "5b85587f2617f407097d28bbab8d5a295faeef8d7818395ee4be1647ae40bfbb"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-70114fe79e900fc756a0d6cc14ea8f90",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-70114fe79e900fc756a0d6cc14ea8f90-20261007-0322b753560e.json",
+              "sha256": "61d4ae9e0be2b0373d887f9608968b9f762373f4b83586ef7f0175aab8972dce"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-db8a127d9ff92a6510ae92e3eb1fbb86",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-db8a127d9ff92a6510ae92e3eb1fbb86-20261007-e4c13fc3e86d.json",
+              "sha256": "989276124f0e1eacbd47440603ec8aab00eb2a737e33f06ac297eeba1e587cae"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-f6858b1d41ca1327e88e31e7f0e8f94f",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-f6858b1d41ca1327e88e31e7f0e8f94f-20261007-4f6feb334f83.json",
+              "sha256": "7bf7d24614bd6d698a32d52d779a884150d5eac051e7542aee094878660485ee"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-b14772d932b286c302b05996186c8022",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-b14772d932b286c302b05996186c8022-20261007-53abd11134eb.json",
+              "sha256": "00a505b83277249ee42f8c7b09eb94c69b7476343a2f50a7d63acb1a6a7b8d2c"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-9e413bfc92a85655c990712d56002499",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-9e413bfc92a85655c990712d56002499-20261007-ce45300844ea.json",
+              "sha256": "0d1dcbad978382903c3c1b5c215b1ce5ceabe3c9b42bd0f7749433615e8fd464"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-22cf265b2b952dcb7187618a915c98bd",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-22cf265b2b952dcb7187618a915c98bd-20261007-78f2e077c3d8.json",
+              "sha256": "5389648ef2b967d1af5d63c5738e669b0a78bfa37298123c552fdf2083f9e180"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-928c9bbcf0101e2a0e4a0e69edc59164",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-928c9bbcf0101e2a0e4a0e69edc59164-20261007-c00b5434d55a.json",
+              "sha256": "5efcd6b85d82577886825c6ca12c94c686af90477ebc97edca5021e930cfac23"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-27cf5e6a8e4cf40ff1873bd4d059b3cd",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-27cf5e6a8e4cf40ff1873bd4d059b3cd-20261007-079978627600.json",
+              "sha256": "597450e195efee1d13fa14b4bd7b5152eabfa17b5d5ab1a9f48dbe8b80d18352"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-e5db8a7c723f5b54ada73ce37c7725a2",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-e5db8a7c723f5b54ada73ce37c7725a2-20261007-6d038e318a4a.json",
+              "sha256": "c201ad525ec4d8d0fa062a234fbf37b492459bc2a018a6df7b5a06227c2d8936"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-4bb54f6379863c0a17e6fbc58edcd042",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-4bb54f6379863c0a17e6fbc58edcd042-20261007-c3df825e72e4.json",
+              "sha256": "39e3a47f10b78c050522368b3c8c073d80e79e36e3081e24f2839038dc00f212"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-266e79545a48e7c4310883faa04e9844",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-266e79545a48e7c4310883faa04e9844-20261007-7b27fb019885.json",
+              "sha256": "d42a9bb926aa1be753fae0748f58ca91397212de0cc2b77791f77f21da7986af"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-e1a8ce05f1d7a97c385039fd3bd71143",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-e1a8ce05f1d7a97c385039fd3bd71143-20261007-6e9650794698.json",
+              "sha256": "757df498267c4391b03d3a02eb5459338763b1e8b08746b36be83bed595509f2"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-ddf7192c16e06f5276d4d324b2e1f6c3",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-ddf7192c16e06f5276d4d324b2e1f6c3-20261007-471ddf5379c5.json",
+              "sha256": "ff045b7125b0514871029b59b989561379a0278ce1514a35f02e45398a0bb723"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-1000a70e39109bdb76b85fa6855a4892",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-1000a70e39109bdb76b85fa6855a4892-20261007-fab4e794a047.json",
+              "sha256": "9e50db81da90c95dbd923ddd5c9507cf8c3e59bec007531809be2b1c413924bf"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-252dcf08d6bbe6a5893bc9cd551ef6ec",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-252dcf08d6bbe6a5893bc9cd551ef6ec-20261007-568f2f91efca.json",
+              "sha256": "bc9fa307ec26504ee8a5ef7ea9a109b7ecef1a0cfa5f827dbeddee7ab06eb968"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-931f08afd15144dcac6c7768f2c393d0",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-931f08afd15144dcac6c7768f2c393d0-20261007-4eaa8fcb825e.json",
+              "sha256": "e4274c6e4819eab1237a8de4f9592b4649fa1a1046aa113d8bea4c81cf1e5ff7"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-3a3ba3d92dd569d454e781fcccf7ac61",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-3a3ba3d92dd569d454e781fcccf7ac61-20261007-66b766ea1a5d.json",
+              "sha256": "16758adcda51e8570299e297efb1123c4af416e8c588e3a8f025a9e33bdb5df9"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-bfc0e4b5d516977d7fcad7b3f74e43c6",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-bfc0e4b5d516977d7fcad7b3f74e43c6-20261007-a86412ff6400.json",
+              "sha256": "d467f3f624815b62e3fb7965f002578cbb93a5be9a3305e7138b4e87f1d5f504"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-5d9431875519d7cfc3188157a10d6bfc",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-5d9431875519d7cfc3188157a10d6bfc-20261007-6cff1723f402.json",
+              "sha256": "3926b536f3d23de417f7c6f832ed251366bb584bf2ba327a87c544ac1a300a8b"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-aafc7cd5dc54af415d36425000d76acb",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-aafc7cd5dc54af415d36425000d76acb-20261007-a26debd029d2.json",
+              "sha256": "414d81fdc3938f1940b128be8ddd0c6781e83c3e8dd36d9d90c49729abfe2d2c"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-829ac5f73d2b01828644e51c0675d6b6",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-829ac5f73d2b01828644e51c0675d6b6-20261007-b712f2bc0f59.json",
+              "sha256": "584738979aba93a4aacd392ae68876267bd292e59bf741d48df7734ae64445ed"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-9050383f9f0b382f0fd9b465a0a20f78",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-9050383f9f0b382f0fd9b465a0a20f78-20261007-cfc13d3d88ae.json",
+              "sha256": "bf3700b16f91a9bfc9ff06abf2b17a33e7c88a4f1c6f5fb9300c2ac9ab55fa1b"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-dd1241e76fbe641c1c88243ba947dc89",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-dd1241e76fbe641c1c88243ba947dc89-20261007-d1b7c31332df.json",
+              "sha256": "bad48d660180dbb04681295de9df4e9910be1016b78cab2fbac2f76be25d927f"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-536910c50d3998944884b519e0d89555",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-536910c50d3998944884b519e0d89555-20261007-0ceefe702ac1.json",
+              "sha256": "bb1320825d4abecdb48d7d80191c5dc4bd579c1b3d1f3c5777c582fec2742ec1"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-efa519285f6f28591dc9ad7936c1caa6",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-efa519285f6f28591dc9ad7936c1caa6-20261007-67b0bcc51a0a.json",
+              "sha256": "a8e9f02296556555e4f4b38d9f53330a99d1d2cc473ba8b4f9532f2badd7f75e"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-ee95aae3e46bebd05ef8469aff39c9da",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-ee95aae3e46bebd05ef8469aff39c9da-20261007-4ab906314fee.json",
+              "sha256": "8528a82ebdb7ec89bdd910aae9529dbcd3404f7e6e0042d5913baeb44fbbddff"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-647d36595971915d7c485a338ddc4013",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-647d36595971915d7c485a338ddc4013-20261007-661182e4e06d.json",
+              "sha256": "1cca83353db0f2826667d7b2b977dd1e7394835a0cf9a95a049856a83af0ab3a"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-aa165dd96291b05acd70bf948f215d04",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-aa165dd96291b05acd70bf948f215d04-20261007-bb47e51ecefe.json",
+              "sha256": "6b460263656fa5e04ed949237e859fc14f186c1d92568d81cab27a90569b287f"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-5f9aa84ccae751c1692f148708a9288c",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-5f9aa84ccae751c1692f148708a9288c-20261007-1a6ddd562cda.json",
+              "sha256": "1e12909b0a56c4091bdf1b5260269f5cfdb5fd0b93107b1fb16145eee79f1eca"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "verification-evidence-catalog.mjs"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-bedc4564e47ae7ebf86911eb8426b6f0",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-bedc4564e47ae7ebf86911eb8426b6f0-20261007-303caf90caff.json",
+              "sha256": "868908354009788784fc5b4e6f7b93370d49aab6d8b165e41c01817f66f2ce38"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "verify-conformance-regressions.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-4b26e20f450b23eb551b2da03e69c9c9",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-4b26e20f450b23eb551b2da03e69c9c9-20261007-07d6150a1321.json",
+              "sha256": "4a228f592f5681a8bbabdb6ab571974cbdb1b1dffd0ef3cbf271e85995da7583"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "verify-conformance-regressions.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-befdab6cc6a4121936987a35fc18e1c9",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-befdab6cc6a4121936987a35fc18e1c9-20261007-c8b0b09a87ad.json",
+              "sha256": "f4e84d65368d9d7c9a4c5a064ed81e990841d28dc4a4c2759c2e2b6ab742b291"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "verify-conformance-regressions.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-a011968eff2ed2dc314d58ed27dfad88",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-a011968eff2ed2dc314d58ed27dfad88-20261007-87882d5bae07.json",
+              "sha256": "6d4f00588f2789470ba071b1abc84db8faef2b501c3b698ad21f48007353aa57"
+            },
+            "productionOwnerStatus": "UNCHANGED_APPROVED_OWNER",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "verify-conformance-regressions.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-c94c878ef2cf8c6a35b0985da91c0c85",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-c94c878ef2cf8c6a35b0985da91c0c85-20261007-93ccf52a7420.json",
+              "sha256": "ab636f69e934e282fa128b907a77bddfce7df4967ddaf076f2e2049c29bb7cdf"
+            },
+            "productionOwnerStatus": "APPROVED_EXACT51_SOURCE_CHANGE",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "verification-evidence-catalog.mjs",
+              "verify-conformance-regressions.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-ea453611a3a1f48cdd2fbfbe946d7ac7",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-ea453611a3a1f48cdd2fbfbe946d7ac7-20261007-4bab29605585.json",
+              "sha256": "7d77bd21c6bc0853240e7af6c0d7461ad3f5103bab87786de33026114219a340"
+            },
+            "productionOwnerStatus": "APPROVED_EXACT51_SOURCE_CHANGE",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "verify-conformance-regressions.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-7a68fe07ee725cf205dd2102cd997b7f",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-7a68fe07ee725cf205dd2102cd997b7f-20261007-2ddde02a4678.json",
+              "sha256": "338d93797dcc4df793e381e04bf1fca22ef2a4bdbcb37ac19f0f970f79e0fb0d"
+            },
+            "productionOwnerStatus": "APPROVED_EXACT51_SOURCE_CHANGE",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "verify-conformance-regressions.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-4bb86ccfacff0ea8bbbc59df67b0ca4f",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-4bb86ccfacff0ea8bbbc59df67b0ca4f-20261007-e74055a277ac.json",
+              "sha256": "2231a0b10e75196d8b26f358b6f4a89f81cf10dd3e5bbb6ab92791f51597c3b5"
+            },
+            "productionOwnerStatus": "APPROVED_EXACT51_SOURCE_CHANGE",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "verify-conformance-regressions.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-768d67996244254c83c0d11796f63912",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-768d67996244254c83c0d11796f63912-20261007-f27867d3f39f.json",
+              "sha256": "6d7161bf90636c7f6cf7108670a47a439064a9ef60267bd4d989063496f9a284"
+            },
+            "productionOwnerStatus": "APPROVED_EXACT51_SOURCE_CHANGE",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "verify-conformance-regressions.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-59d5854af99ac5a566eb61e978519b21",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-59d5854af99ac5a566eb61e978519b21-20261007-bec120a81af2.json",
+              "sha256": "43b7146fd81f93bc4d532112e4ec7afe70adef70a3bd423754b800a6fd702a3f"
+            },
+            "productionOwnerStatus": "APPROVED_EXACT51_SOURCE_CHANGE",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "verify-conformance-regressions.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-75b670fc6ea047b7452b4148f12a30ba",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-75b670fc6ea047b7452b4148f12a30ba-20261007-c98d1cd39228.json",
+              "sha256": "4dc2922e98f0761b0c765d22feb1f944d605adaa28cd750de749fdec3ae83cfc"
+            },
+            "productionOwnerStatus": "APPROVED_EXACT51_SOURCE_CHANGE",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "verify-conformance-regressions.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-86651d173d1583e48cf6c03f9d486f4f",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-86651d173d1583e48cf6c03f9d486f4f-20261007-03f461c72985.json",
+              "sha256": "221c5d9c8ccf0db156f3c940d8b9d42a43c2d9b9e7306287796bdf58475f91a0"
+            },
+            "productionOwnerStatus": "APPROVED_EXACT51_SOURCE_CHANGE",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "verify-conformance-regressions.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-1576e27fba46e1d68631bb2ade2e37f4",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-1576e27fba46e1d68631bb2ade2e37f4-20261007-d57d86116816.json",
+              "sha256": "df6b7f046b9bc13d522c9c1ec1895d1e2c0e8295101acc287c844527ef79f2d6"
+            },
+            "productionOwnerStatus": "APPROVED_EXACT51_SOURCE_CHANGE",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "verify-conformance-regressions.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-cf25cf824db06866df51c0e538fcbc03",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-cf25cf824db06866df51c0e538fcbc03-20261007-a9ea93e2ae18.json",
+              "sha256": "ed36c79b4ea5598bafbced703ab24ee5ee79753ba90bbd28908e3346bdc65693"
+            },
+            "productionOwnerStatus": "APPROVED_EXACT51_SOURCE_CHANGE",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "verify-conformance-regressions.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-41ab1c200b4ce5c9d1d96613a3e5b264",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-41ab1c200b4ce5c9d1d96613a3e5b264-20261007-551018f10e2a.json",
+              "sha256": "840c663ba368b1590b2996d00206c4c35a185eab689a7053fd8c01631aa836dd"
+            },
+            "productionOwnerStatus": "APPROVED_EXACT51_SOURCE_CHANGE",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "verify-conformance-regressions.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-0c973b955d61ee36887734df0ade5e69",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-0c973b955d61ee36887734df0ade5e69-20261007-d3e1f54846aa.json",
+              "sha256": "ef77d0f1da42f3ed8f75b423e0f123e94297b83e1153de384d878a0658dd73de"
+            },
+            "productionOwnerStatus": "APPROVED_EXACT51_SOURCE_CHANGE",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "verify-conformance-regressions.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          },
+          {
+            "normativeRequirementId": "NREQ-971af7158d193e9b1d780c13b6c8e0ec",
+            "exactPriorReview": {
+              "path": "verification/requirement-coverage-NREQ-971af7158d193e9b1d780c13b6c8e0ec-20261007-e0eb650aa5b5.json",
+              "sha256": "5c138792b13c4e442de946df0e92e7825e60a082ed9a27c520032b358aac3464"
+            },
+            "productionOwnerStatus": "APPROVED_EXACT51_SOURCE_CHANGE",
+            "meaningScopeAndRequiredOutcomes": "UNCHANGED",
+            "reviewedChangedInputs": [
+              "app-core.js",
+              "project-store.js",
+              "prompt-engine.js",
+              "response-ingestion.js",
+              "test-fixtures.mjs",
+              "verification-evidence-catalog.mjs",
+              "verify-conformance-regressions.mjs",
+              "workflow-engine.js"
+            ],
+            "reviewedAddedInputs": []
+          }
+        ],
+        "toolReview": {
+          "path": "/workspace/scratch/current-context-rebind/rebind.mjs",
+          "sha256": "c5014bc0275aa4bb763063f9ab49ca3457638312806edd8305d67ae08b1b7568",
+          "authorContextId": "/root",
+          "priorAuthorPreserved": true,
+          "readOnlyReview": true,
+          "projectedPlanReviewed": false
+        },
+        "executionLimits": [
+          "This is final source/dependency design approval, not a test execution receipt or whole application conformance claim.",
+          "Generator receipt honestly records source changes during its run; exact final-source Stage15 admission separately passed without source changes. Earlier1–6 history was reused and no actual external actor/browser/physical device is claimed by that fixture.",
+          "Final protected CI, required physical/mobile/visual acceptance, merge/deployment/live obligations remain separate and unpromoted.",
+          "Initial full owner failed on native-positive setup; corrected external admission, decoder negative/control and unchanged regression-cache branch passed. Current full owner retry remains separately pending; this review does not predeclare success."
+        ],
+        "supersedesSourceTuple": {
+          "path": "/workspace/scratch/pr-review/verifier-context-final-156-coverage-renewal-approval.json",
+          "sha256": "172ae1223bada5cd5247f1b9157d5041eb33d6193eede9ed7c4d98429dc4d77b",
+          "changedPaths": [
+            "test-fixtures.mjs",
+            "verification/deferred-definition-current-prerequisite-fixture-20261007.json"
+          ],
+          "reason": "Correct external-agent regression cohort for unchanged actual instruction-cache fixture; preserve prior failed native setup evidence."
+        }
+      }
     }
   ]
 }

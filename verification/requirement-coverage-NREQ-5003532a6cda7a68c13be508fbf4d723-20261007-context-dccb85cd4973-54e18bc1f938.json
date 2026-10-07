@@ -1,0 +1,187 @@
+{
+  "schema": "closed-loop-requirement-coverage-review/1",
+  "normativeRequirementId": "NREQ-5003532a6cda7a68c13be508fbf4d723",
+  "sourceLineSha256": "e3b13b5c54e898d4f1d4d88840cf7b90baa8e95b381220354450f376f4053e54",
+  "specificationSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
+  "declarationSha256": "dccb85cd49734c03e5e687c9986575c05af4e48f170649fc7468da5d59c4d18d",
+  "decision": "COMPLETE_COVERAGE",
+  "evidenceBasis": "EXTERNALLY_SUPPORTED",
+  "method": "The exact narrow controlling clause and unchanged proof decomposition were independently reviewed in the embedded original semantic assessment. Current production, verifier, fixture and catalog deltas were separately reviewed in the referenced source-delta review bundle. This is coverage-design evidence only: current frozen-source executed receipts remain independently required, and unsupported clauses are not promoted.",
+  "author": {
+    "actor": "Codex exact-source coverage renewal integrator",
+    "contextId": "/root"
+  },
+  "reviewer": {
+    "actor": "Codex independent verifier-context correction reviewer",
+    "contextId": "/root/pr_inventory_review"
+  },
+  "reviewedInputs": [
+    {
+      "declarationSha256": "dccb85cd49734c03e5e687c9986575c05af4e48f170649fc7468da5d59c4d18d"
+    },
+    {
+      "path": "app-core.js",
+      "sha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8"
+    },
+    {
+      "path": "hash.js",
+      "sha256": "a13cf57bd7c7414bc801f511d5937f80eaf7fd675c0e6c2b5a92b365df16e4d7"
+    },
+    {
+      "path": "project-store.js",
+      "sha256": "79213ca03e60d7fe0b2b1c7d17c42a99158c063de8e25b88136bd8aed89650bb"
+    },
+    {
+      "path": "prompt-engine.js",
+      "sha256": "61e363381dfb88fcfd32a176066762e2a37cf7b14fb9d39bff4eacf7e6d5706f"
+    },
+    {
+      "path": "response-ingestion.js",
+      "sha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5"
+    },
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d"
+    },
+    {
+      "path": "test-artifact-fixtures.mjs",
+      "sha256": "d695e57716d9aef5ea7c5d96464ed9492ef036a4f759fff1b6147e0cae21c3b4"
+    },
+    {
+      "path": "test-project-store-runtime.mjs",
+      "sha256": "563817f6d8256a0ea3ebbc1d8836b6c5887fa7275b0378ade657ecfb61f00eed"
+    },
+    {
+      "path": "test-runtime.js",
+      "sha256": "e4e01a79c526592f9d044e2c104845e63c9aa341eb64837c138f5c3e3ecba353"
+    },
+    {
+      "path": "verification-evidence-catalog.mjs",
+      "sha256": "84b51f38a50fb8169896008ab821c000e6dba8f6b0364576f2572c1a930c1930"
+    },
+    {
+      "path": "verification/current-source-delta-review-20261007.json",
+      "sha256": "45cca5871ac89cf1583a3825aec5a7d488d4d40dc70afb51a8534470dececf09"
+    },
+    {
+      "path": "verification/normative-context-applicability-20261005.json",
+      "sha256": "7cd05ff0028578a1ca1c2560533519a602ce6a974c240ee11dbbd272524cf656"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-5003532a6cda7a68c13be508fbf4d723-20261005.json",
+      "sha256": "6dfaf7a1cd1b752373d26e0f406bcc4d6e10a13b106cf97d064d9f0d3f4f8d91"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-5003532a6cda7a68c13be508fbf4d723-20261006-followup-6592f15eaff3.json",
+      "sha256": "a346484560cbadc42396371ba35c1e8b63e669b52caf693193afc70a2f52f568"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-5003532a6cda7a68c13be508fbf4d723-20261006.json",
+      "sha256": "728d071e901508d49319ca1a64d57804e96f4022c33ede1299ce593cd092e434"
+    },
+    {
+      "path": "verifier-runtime.mjs",
+      "sha256": "8a4c9058b6c72a5aa8dd68809e3cbfd8e5c217b358c41970347443a338f83933"
+    },
+    {
+      "path": "verify-recoverable-history.mjs",
+      "sha256": "bec8d5ebf0bd61d89a4b7c7b6fd060fe362a20edde7e82890b038fe7763fa1f8"
+    },
+    {
+      "path": "workbook.js",
+      "sha256": "3a8098a9bb4ea108eadaa9bec90c76a1522f57f6465f45341cedf60937ddd008"
+    },
+    {
+      "path": "workflow-engine.js",
+      "sha256": "16c2a16d61d6a462ecebd25cd7d530a3cce46e11c1d9f88664c2e9a27cf61295"
+    },
+    {
+      "path": "workflow-schema.js",
+      "sha256": "656e9e632cea3a60e1c7e0fb486e6630d205011d7db32d9674ac5e88593d24f1"
+    }
+  ],
+  "findings": [],
+  "reviewPerformed": true,
+  "sourceLocation": {
+    "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+    "startLine": 3082,
+    "endLine": 3082,
+    "lineSha256": "e3b13b5c54e898d4f1d4d88840cf7b90baa8e95b381220354450f376f4053e54"
+  },
+  "controllingText": "A stale tab cannot overwrite a newer revision.",
+  "governingContext": [
+    {
+      "normativeRequirementId": "NREQ-2782d9ffebe3a79637b31fc8b6b4ecdb",
+      "sourceLineSha256": "5a107ddef71a5a6ae718108b986c1c81b4b593ad1caf33c6db7754c45a317245",
+      "controllingText": "35.1 Compare-and-swap"
+    }
+  ],
+  "additionalControllingContext": [],
+  "reviewedChecks": [
+    {
+      "suite": "verify-recoverable-history.mjs",
+      "checkId": "store.cas-stale-write-population"
+    }
+  ],
+  "scopeLimit": "Production transaction adapter exercises CAS state/history isolation; browser two-tab UI behavior remains separate proof.",
+  "independentSemanticAssessment": {
+    "path": "/workspace/scratch/normative-review/24-declaration-semantic-review.json",
+    "sha256": "5440a66128d087b55a4d858ea0149fd024916806fa7d0ea9c23b6d0243f480ac",
+    "row": {
+      "normativeRequirementId": "NREQ-5003532a6cda7a68c13be508fbf4d723",
+      "sourceLocation": {
+        "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "startLine": 3082,
+        "endLine": 3082,
+        "lineSha256": "e3b13b5c54e898d4f1d4d88840cf7b90baa8e95b381220354450f376f4053e54"
+      },
+      "controllingText": "A stale tab cannot overwrite a newer revision.",
+      "review": {
+        "path": "verification/requirement-coverage-NREQ-5003532a6cda7a68c13be508fbf4d723-20261006-followup-6592f15eaff3.json",
+        "sha256": "a346484560cbadc42396371ba35c1e8b63e669b52caf693193afc70a2f52f568"
+      },
+      "checkIds": [
+        "store.cas-stale-write-population"
+      ],
+      "status": "NARROW_COVERAGE_DESIGN_REVIEWED_NO_GAP_FOUND",
+      "rationale": "Exact stale revision rejected through owning writeProject after real restore increased revision; test compares whole canonical state and complete history before/after refusal, then successful newer restore. Finite CAS adapter control is appropriate for deterministic clause; real IndexedDB overlapping-tab behavior is separate.",
+      "reviewedSourceInputs": [
+        {
+          "path": "project-store.js",
+          "sha256": "2d6896f47164f4a232c631d949cce64d2200e6d4e2202c2c3cdb29b08648cdf2"
+        },
+        {
+          "path": "verify-recoverable-history.mjs",
+          "sha256": "3eea361576cc9f38bf1eb968fcc15142eafc08be20da1d9a1da2075ed42afae6"
+        },
+        {
+          "path": "verification-evidence-catalog.mjs",
+          "sha256": "e6378e7747ba860e5312a813c55625748d2fbaee5f2838d8ee4e97349ba4640f"
+        }
+      ],
+      "executedCurrentProducerByThisReview": false,
+      "fullApplicationConformanceClaim": false
+    }
+  },
+  "priorReview": {
+    "path": "verification/requirement-coverage-NREQ-5003532a6cda7a68c13be508fbf4d723-20261007-191e2d20f83f.json",
+    "sha256": "88cef397d4acd2f81c3a4c1c3e8ab6516f429304fb9612ca8dde75e15aa695a5",
+    "author": {
+      "actor": "Codex coordinated exact-clause renewal proposer",
+      "contextId": "/root"
+    },
+    "reviewer": {
+      "actor": "Codex independent narrow declaration reviewer",
+      "contextId": "/root/normative_review"
+    },
+    "reviewCompletedAt": "2026-10-07T01:21:18.248Z"
+  },
+  "reviewerPriorContributionDisclosure": "Reviewer authored only the conformanceSources registration of test-verifier-context-ui.mjs and test-prompt-context-storage.mjs. CI owner independently reviewed those additive source-input registrations. No runtime repair or owning behavioral test was authored by this reviewer in this correction chain.",
+  "currentExecutionRequired": true,
+  "applicationConformanceClaim": false,
+  "reviewCompletedAt": "2026-10-07T05:10:44.883240+00:00",
+  "currentDependencyDeltaReview": {
+    "path": "verification/current-source-delta-review-20261007.json",
+    "sha256": "45cca5871ac89cf1583a3825aec5a7d488d4d40dc70afb51a8534470dececf09"
+  }
+}
