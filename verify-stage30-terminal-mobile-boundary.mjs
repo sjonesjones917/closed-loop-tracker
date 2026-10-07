@@ -44,19 +44,25 @@ assert.equal(target.basePath,MOBILE_ACCEPTANCE_BASE_PATH);
 
 // Obtain a complete Stage 30-ready project through the production lifecycle, then
 // perform every mutation probe against disposable in-memory clones.
-const fixturePath=path.join(process.cwd(),`.stage30-fixture-${process.pid}.json`);
+const sharedFixturePath=process.env.CLRT_STAGE30_FIXTURE_PATH;
+const fixturePath=sharedFixturePath||path.join(process.cwd(),`.stage30-fixture-${process.pid}.json`);
 const fixtureMarker='STAGE30_READY_FIXTURE';
-const fixtureAnchor='engine.recordDeliveryAttempt(p';
-const fixtureIndex=fullCycleSource.indexOf(fixtureAnchor);
-assert.ok(fixtureIndex>0,'The full-cycle production mechanism did not expose its terminal-ready boundary.');
-const instrumentedPath=path.join(process.cwd(),`.stage30-full-cycle-${process.pid}.mjs`);
-fs.writeFileSync(instrumentedPath,fullCycleSource.slice(0,fixtureIndex)+`fs.writeFileSync(${JSON.stringify(fixturePath)},JSON.stringify({project:p,artifacts:await captureArtifactFixture(byteStore,p.job.JOB_ID)}));console.log(${JSON.stringify(fixtureMarker)});process.exit(0);\n`+fullCycleSource.slice(fixtureIndex));
-let fixtureOutput='';
-try{fixtureOutput=(await checkedVerifier(process.execPath,[instrumentedPath],{encoding:'utf8',timeout:600000,maxBuffer:64*1024*1024}));}
-finally{fs.rmSync(instrumentedPath,{force:true});}
-assert.match(fixtureOutput,new RegExp(fixtureMarker));
+if(!sharedFixturePath){
+ const fixtureAnchor='engine.recordDeliveryAttempt(p';
+ const fixtureIndex=fullCycleSource.indexOf(fixtureAnchor);
+ assert.ok(fixtureIndex>0,'The full-cycle production mechanism did not expose its terminal-ready boundary.');
+ const instrumentedPath=path.join(process.cwd(),`.stage30-full-cycle-${process.pid}.mjs`);
+ const sourceFiles=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','verify-full-cycle.mjs'];
+ fs.writeFileSync(instrumentedPath,fullCycleSource.slice(0,fixtureIndex)+`fs.writeFileSync(${JSON.stringify(fixturePath)},JSON.stringify({schema:'closed-loop-stage30-ready-fixture/1',project:p,artifacts:await captureArtifactFixture(byteStore,p.job.JOB_ID),sourceHashes:Object.fromEntries(${JSON.stringify(sourceFiles)}.map(file=>[file,hash.sha256Text(fs.readFileSync(file,'utf8'))]))}));console.log(${JSON.stringify(fixtureMarker)});process.exit(0);\n`+fullCycleSource.slice(fixtureIndex));
+ let fixtureOutput='';
+ try{fixtureOutput=(await checkedVerifier(process.execPath,[instrumentedPath],{encoding:'utf8',timeout:1800000,maxBuffer:64*1024*1024}));}
+ finally{fs.rmSync(instrumentedPath,{force:true});}
+ assert.match(fixtureOutput,new RegExp(fixtureMarker));
+}
 assert.ok(fs.existsSync(fixturePath),'The disposable Stage 30 fixture was not captured.');
 const captured=JSON.parse(fs.readFileSync(fixturePath,'utf8')),sourceProject=captured.project;
+assert.equal(captured.schema,'closed-loop-stage30-ready-fixture/1','The Stage 30 fixture has the wrong schema.');
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','verify-full-cycle.mjs'])assert.equal(captured.sourceHashes?.[file],createHash('sha256').update(fs.readFileSync(file,'utf8')).digest('hex'),`The Stage 30 fixture has stale source: ${file}`);
 assert.equal(engine.terminalPrerequisites(sourceProject).complete,false,'JSON metadata alone must not preserve byte custody.');
 await bindArtifactFixture(captured.artifacts);
 assert.equal(engine.terminalPrerequisites(sourceProject).complete,true,'Exact restored bytes must restore terminal readiness.');

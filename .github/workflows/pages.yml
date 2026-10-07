@@ -234,6 +234,7 @@ jobs:
         if: steps.reuse.outputs.reused != 'true'
         run: |
           set -euo pipefail
+          export CLRT_STAGE30_FIXTURE_PATH="$(mktemp)"
           node verify-full-cycle.mjs | tee /tmp/full-cycle-proof.json
           node --input-type=module -e "import fs from 'node:fs'; JSON.parse(fs.readFileSync('/tmp/full-cycle-proof.json','utf8'));"
           node verify-stage30-terminal-mobile-boundary.mjs
