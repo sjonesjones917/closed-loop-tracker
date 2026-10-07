@@ -1106,9 +1106,10 @@ function stage17DeferredReceiptParentControls(){
  return {case:'STAGE17_REQUIRED_RECEIPT_PARENT_CONSUMER',validLiteralAccepted:true,malformedOrMissingMarkersRejected:cases.length,cases,actualStage17Executed:false,syntheticConsumerOnly:true};
 }
 function generateDefinitionCompatibilityPrefixes(generated){
- // The required Stage 8–16 continuation was still doing its tenth Stage 11
- // execution after 15 minutes on Node 22. Keep the complete path bounded.
- const continuationTimeoutMs=60*60*1000;
+ // The required continuation took 27 minutes to reach the fifth Stage 12
+ // review. It also builds a failed Stage 17 iteration with ten runs and ten
+ // reviews after Stage 16. Bound that complete path, not just the stage loop.
+ const continuationTimeoutMs=120*60*1000;
  const startedAt=performance.now(),input=path.join(generated.outputDir,'prefix-stage08.json'),hash=runtime().runtime.closedLoopHash,stdout=execFileSync(process.execPath,['verify-operator-counterpart.mjs'],{env:{...process.env,CLRT_COUNTERPART_FAULT:'',CLRT_COUNTERPART_STAGE_LIMIT:'16',CLRT_COUNTERPART_DIAGNOSTIC_PREFIX_DIR:generated.outputDir,CLRT_COUNTERPART_DIAGNOSTIC_PREFIX_INPUT:input},encoding:'utf8',timeout:continuationTimeoutMs,maxBuffer:16*1024*1024});
  let deferredReceiptRegression;for(const stage of [7,15,17]){const prefix=JSON.parse(fs.readFileSync(path.join(generated.outputDir,'prefix-stage'+String(stage).padStart(2,'0')+'.json'),'utf8'));assert.equal(prefix.entryStage,stage);assert.equal(prefix.earlierCompleteFlagsForced,false);for(const[file,digest]of Object.entries(prefix.sourceFingerprints))assert.equal(hash.sha256Text(fs.readFileSync(file,'utf8')),digest,'DEFINITION_COMPATIBILITY_DERIVED_PREFIX_SOURCE_ORACLE: '+file);if(stage===17)deferredReceiptRegression=requireStage17DeferredReceiptRegression(prefix);}
  return {directory:generated.outputDir,setup:{case:'LEGITIMATE_DEFERRED_DEFINITION_AUTHOR_PREFIXES',deferredReceiptRegression,resumedFromStage8:true,entryStages:[7,15,17],childExitStatus:0,childStdoutSha256:hash.sha256Text(stdout),earlierCompleteFlagsForced:false,elapsedSeconds:(performance.now()-startedAt)/1000,historicalPredecessorResumeSeconds:716.058,historicalPredecessorBoundary:'Retained 8→14 continuation that failed at Stage15 admission; excludes current invocation Stage17 failed-iteration/RCA work.',childBudgetMilliseconds:continuationTimeoutMs,synthetic:true,actualBrowser:false}};
