@@ -588,7 +588,14 @@ async function deferredNativeJourney(r,{appSource,executionStage}={}){
  const count=e.records(p,'regressionExecutions').length,retry=await e.executeDeferredNative(p,{stage,operation,subjectId:subject.id,bindingSha256:item.bindingSha256,artifactPayload:payload});
  assert.equal(retry.id,receipt.id,'DEFERRED_NATIVE_RETRY_ORACLE');assert.equal(e.records(p,'regressionExecutions').length,count,'DEFERRED_NATIVE_RETRY_ORACLE');
  const integrity=r.store.validateProjectIntegrity(p);assert(integrity.valid,'DEFERRED_NATIVE_DURABILITY_ORACLE: '+integrity.issues.join(' | '));
- const rendered=appMarkup(r.runtime,p,{operations:{[stage]:operation},instructionEvidence:true,...(appSource?{source:appSource}:{})});assert.equal(typeof rendered.selectedOperation,'string','DEFERRED_NEXT_ACTION_ORACLE: selected-operation observation missing.');assert.notEqual(rendered.selectedOperation,operation,'DEFERRED_NEXT_ACTION_ORACLE: a completed execution leaves its obsolete operation selected.');
+ let rendered;
+ try{rendered=appMarkup(r.runtime,p,{operations:{[stage]:operation},instructionEvidence:true,...(appSource?{source:appSource}:{})});}
+ catch(error){
+  const completed=e.deferredExecutionPlan(p,stage,{operation}).items.some(row=>row.subjectId===subject.id&&row.completed);
+  if(appSource&&completed&&error?.code==='DEFERRED_EXECUTION_UNAVAILABLE'&&error.message==='No current deferred definition permits this execution operation.')assert.fail('DEFERRED_NEXT_ACTION_ORACLE: a completed execution made the Workflow view unavailable.');
+  throw error;
+ }
+ assert.equal(typeof rendered.selectedOperation,'string','DEFERRED_NEXT_ACTION_ORACLE: selected-operation observation missing.');assert.notEqual(rendered.selectedOperation,operation,'DEFERRED_NEXT_ACTION_ORACLE: a completed execution leaves its obsolete operation selected.');
  results.push({case:'DEFERRED_NATIVE_ISOLATED_EXECUTION',stage,receiptId:receipt.id,actualWorker:'NODE_WORKER_WITH_PRODUCTION_TEST_WORKER_AND_TEST_IR',originalBytesPreserved:true,exactRetryPreserved:true,durable:true});
 }
 async function deferredRegressionJourney(r){
