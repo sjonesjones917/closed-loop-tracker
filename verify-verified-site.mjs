@@ -21,7 +21,7 @@ function assertNoNestedCataloguedOwners(sources){
 }
 const repository='test-owner/test-repo',headSha='a'.repeat(40),workflowId=42;
 const run={id:123,run_attempt:1,event:'pull_request',status:'completed',conclusion:'success',repository:{full_name:repository},head_repository:{full_name:repository},head_sha:headSha,workflow_id:workflowId,path:'.github/workflows/pages.yml'};
-const jobs=[{name:'test',status:'completed',conclusion:'success',steps:fullTestSteps.map(name=>({name,status:'completed',conclusion:'success'}))}];
+const jobs=[{name:'test',status:'completed',conclusion:'success',steps:fullTestSteps.map(name=>({name,status:'completed',conclusion:'success'}))},{name:'deferred-matrix',status:'completed',conclusion:'success',steps:['Execute complete deferred stage matrix','Preserve complete deferred matrix receipt'].map(name=>({name,status:'completed',conclusion:'success'}))}];
 const bindings={repository,headSha,workflowId};
 const clone=value=>structuredClone(value);
 try{
@@ -42,8 +42,15 @@ try{
     const altered=clone(jobs);altered[0].steps[3].conclusion=conclusion;
     (await rejects(`unpassed-required-step-${conclusion}`,()=>assertPassedRun(run,altered,bindings),/did not pass/));
   }
-  (await rejects('missing-required-step',()=>assertPassedRun(run,[{...jobs[0],steps:jobs[0].steps.slice(1)}],bindings),/did not pass/));
+  (await rejects('missing-required-step',()=>assertPassedRun(run,[{...jobs[0],steps:jobs[0].steps.slice(1)},jobs[1]],bindings),/did not pass/));
   (await rejects('duplicate-test-job',()=>assertPassedRun(run,[...jobs,...jobs],bindings),/Required test job/));
+  (await rejects('missing-deferred-matrix-job',()=>assertPassedRun(run,[jobs[0]],bindings),/Required deferred matrix job/));
+  for(const conclusion of ['failure','skipped',null]){
+    const altered=clone(jobs);altered[1].conclusion=conclusion;
+    (await rejects(`unpassed-deferred-matrix-${conclusion}`,()=>assertPassedRun(run,altered,bindings),/Required deferred matrix job/));
+  }
+  (await rejects('missing-deferred-matrix-step',()=>assertPassedRun(run,[jobs[0],{...jobs[1],steps:[]}],bindings),/Required complete deferred matrix/));
+  (await rejects('missing-deferred-matrix-upload',()=>assertPassedRun(run,[jobs[0],{...jobs[1],steps:jobs[1].steps.slice(0,1)}],bindings),/Required complete deferred matrix/));
 
   const workspace=path.join(temporary,'workspace');fs.mkdirSync(path.join(workspace,'.github/workflows'),{recursive:true});
   for(const name of [...runtimePaths,'build-static-site.mjs','deployment-contract-identities.mjs','.github/workflows/pages.yml'])fs.copyFileSync(path.join(root,name),path.join(workspace,name));
@@ -131,6 +138,13 @@ try{
   const workflow=fs.readFileSync('.github/workflows/pages.yml','utf8');
   const testWorkflow=workflow.slice(workflow.indexOf('\n  test:'),workflow.indexOf('\n  deploy:'));
   assertLifecycleWorkflowCommand(workflow);
+  const deferredBlock=workflow.slice(workflow.indexOf('\n  deferred-matrix:\n'),workflow.indexOf('\n  test:\n'));
+  for(const [name,alter,diagnostic] of [
+    ['missing-job',text=>text.replace(deferredBlock,''),/deferred matrix proof job/],
+    ['missing-producer',text=>text.replace('node verify-due-stage-timing.mjs > /tmp/deferred-stage-matrix.json','node missing-deferred-matrix.mjs'),/complete deferred matrix execution/],
+    ['missing-dependency',text=>text.replace('    needs: deferred-matrix\n',''),/deferred matrix proof dependency/],
+    ['missing-receipt-validation',text=>text.replace('name: Validate complete deferred matrix receipt','name: Skip deferred matrix validation'),/deferred matrix proof dependency/]
+  ]){const changed=alter(workflow);assert.notEqual(changed,workflow,`DEFERRED_MATRIX_CI_FAULT_SETUP_ORACLE: ${name}`);(await rejects(`deferred-matrix-${name}`,()=>assertLifecycleWorkflowCommand(changed),diagnostic));}
   const lifecycleLine='          node verify-project-lifecycle.mjs\n',definitionLine='          node verify-v3-definition-of-done.mjs\n';
   const externalLine='          node verify-external-result-determination.mjs\n',doneLine='          node verify-definition-of-done.mjs\n';
   const stage01Line='          node verify-stage01-intake-closure.mjs\n',preflightLine='          node verify-independent-preflight.mjs\n',receiptControlLine='          node verify-definition-of-done.mjs --owner-receipt-controls\n';

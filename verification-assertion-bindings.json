@@ -9527,7 +9527,7 @@
           {
             "path": ".github/workflows/pages.yml",
             "symbol": "publish-status: Build acceptance artifact from executed proof jobs, report projection and closed-loop-acceptance.json writer",
-            "sha256": "4fed28a3de65b94d42023edf661d7383b65a3a134e8d562a6575558072aef59b"
+            "sha256": "09de20c336b249964d0ca6839f272694cb645463705528e0932b155f5f207cb7"
           }
         ],
         "obligations": [
@@ -9562,7 +9562,7 @@
         "governingContext": [],
         "review": {
           "path": "verification/requirement-coverage-NREQ-bedc4564e47ae7ebf86911eb8426b6f0-20261007-context-303caf90caff-54e18bc1f938.json",
-          "sha256": "27c19f096bef7bdf06e1457c2828b081c8d9f7ac53be10e9e72e0c038e256dfe"
+          "sha256": "db78c8228ecbcf3fbf3ccdb9e4cea28d00947b24d270f23e94943e8ee461f38a"
         }
       }
     },
@@ -9592,7 +9592,7 @@
           {
             "path": ".github/workflows/pages.yml",
             "symbol": "publish-status: Build acceptance artifact from executed proof jobs, report projection and closed-loop-acceptance.json writer",
-            "sha256": "4fed28a3de65b94d42023edf661d7383b65a3a134e8d562a6575558072aef59b"
+            "sha256": "09de20c336b249964d0ca6839f272694cb645463705528e0932b155f5f207cb7"
           }
         ],
         "obligations": [
@@ -9627,7 +9627,7 @@
         "governingContext": [],
         "review": {
           "path": "verification/requirement-coverage-NREQ-4b26e20f450b23eb551b2da03e69c9c9-20261007-context-07d6150a1321-54e18bc1f938.json",
-          "sha256": "9602a1e52ab4358362e5b8a88b54012fc72a19bcc6c4c292f4fd0b4c77af83e0"
+          "sha256": "7dbbf0b11003b1afcdeb6f349728a69e54709a50b5a81a84e796da5a20a495fa"
         }
       }
     },
@@ -9658,7 +9658,7 @@
           {
             "path": ".github/workflows/pages.yml",
             "symbol": "publish-status: Build acceptance artifact from executed proof jobs, report projection and closed-loop-acceptance.json writer",
-            "sha256": "4fed28a3de65b94d42023edf661d7383b65a3a134e8d562a6575558072aef59b"
+            "sha256": "09de20c336b249964d0ca6839f272694cb645463705528e0932b155f5f207cb7"
           },
           {
             "path": "deployment-contract-identities.mjs",
@@ -9668,7 +9668,7 @@
           {
             "path": "verified-site.mjs",
             "symbol": "validateSite",
-            "sha256": "54dd0953a0cd17f0ad0f88ab33224f495248bccebca4dff8f0759dd15f10db3c"
+            "sha256": "e4965c30cc1714ec9279e60d566e80950eb3837c185e7d27dc72655f03b9a6a9"
           },
           {
             "path": "build-static-site.mjs",
@@ -9716,7 +9716,7 @@
         "governingContext": [],
         "review": {
           "path": "verification/requirement-coverage-NREQ-befdab6cc6a4121936987a35fc18e1c9-20261007-context-c8b0b09a87ad-54e18bc1f938.json",
-          "sha256": "2b2026568d14a4c49ca9205cb0dc777081f09856cc41c5583f83ed1a2de0d764"
+          "sha256": "b9013bf69b0b8a1d75366c83c8ece3faa454233e9c0aef544b16b69835f3cdcb"
         }
       }
     },
@@ -9747,7 +9747,7 @@
           {
             "path": ".github/workflows/pages.yml",
             "symbol": "publish-status: Build acceptance artifact from executed proof jobs, report projection and closed-loop-acceptance.json writer",
-            "sha256": "4fed28a3de65b94d42023edf661d7383b65a3a134e8d562a6575558072aef59b"
+            "sha256": "09de20c336b249964d0ca6839f272694cb645463705528e0932b155f5f207cb7"
           },
           {
             "path": "deployment-contract-identities.mjs",
@@ -9757,7 +9757,7 @@
           {
             "path": "verified-site.mjs",
             "symbol": "validateSite",
-            "sha256": "54dd0953a0cd17f0ad0f88ab33224f495248bccebca4dff8f0759dd15f10db3c"
+            "sha256": "e4965c30cc1714ec9279e60d566e80950eb3837c185e7d27dc72655f03b9a6a9"
           },
           {
             "path": "build-static-site.mjs",
@@ -9805,7 +9805,7 @@
         "governingContext": [],
         "review": {
           "path": "verification/requirement-coverage-NREQ-a011968eff2ed2dc314d58ed27dfad88-20261007-context-87882d5bae07-54e18bc1f938.json",
-          "sha256": "585b1be77bca508371404ef8a0f78fc42a3760cdb0283d3dc233fe401fe8e446"
+          "sha256": "81a08fa7ca5098c34c6bb0d5ed13fc187d4396fe929266fd1fcbfea5cb7591e1"
         }
       }
     },
@@ -9861,7 +9861,7 @@
         "governingContext": [],
         "review": {
           "path": "verification/requirement-coverage-NREQ-c94c878ef2cf8c6a35b0985da91c0c85-20261007-context-fe6c073ad55f-54e18bc1f938.json",
-          "sha256": "0bbf1afebce1fefa76253e2603b7832b9c66ab57f34c8c3dc9d4067953269a73"
+          "sha256": "61753a7bc76034494fc082bc9d989386618ff51ceca58ffa805469738943e0b5"
         }
       }
     },
@@ -9917,7 +9917,7 @@
         "governingContext": [],
         "review": {
           "path": "verification/requirement-coverage-NREQ-ea453611a3a1f48cdd2fbfbe946d7ac7-20261007-context-5fb3beeac070-54e18bc1f938.json",
-          "sha256": "2b342fa1d36ca0ca00cab39e7a91b39ed64f0a9134a8c8827b1d831d65dc7c42"
+          "sha256": "e0efc503d07a33a3583995c74c090468f81f843fd97cd1bc0f66c21d1fcb0980"
         }
       }
     },

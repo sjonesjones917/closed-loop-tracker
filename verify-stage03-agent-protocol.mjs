@@ -60,8 +60,8 @@ assert(prepared.validation.valid,`Canonical recordId relationship was rejected: 
 let badRef=structuredClone(good);badRef.records.research[0].relationships.SOURCE_ID={targetId:'SOURCE-000001'};badRef.evidence[0].sourceRef={targetId:'SOURCE-000001'};
 prepared=ingestion.prepare(structuredClone(p),{stage:3,text:JSON.stringify(badRef),promptRecord:pr});
 assert(!prepared.validation.valid,'Nested targetId relationship alias was accepted.');
-assert(prepared.validation.issues.some(i=>i.code==='UNKNOWN_PROPERTY'&&i.path.endsWith('/targetId')),'Nested targetId rejection did not identify the unknown relationship key.');
-assert(prepared.validation.issues.some(i=>['INVALID_RELATIONSHIP_REFERENCE','INVALID_EVIDENCE_SOURCE_REF'].includes(i.code)),'Nested targetId rejection did not enforce recordId/tempKey relationship shape.');
+for(const [code,path]of [['INVALID_RELATIONSHIP_REFERENCE','/records/research/0/relationships/SOURCE_ID'],['INVALID_EVIDENCE_SOURCE_REF','/evidence/0/sourceRef']])
+ assert(prepared.validation.issues.some(i=>i.code===code&&i.path===path),`Nested targetId alias did not identify the invalid contracted ${path} reference: ${JSON.stringify(prepared.validation.issues)}`);
 let badTypes=structuredClone(good);badTypes.stageData.SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED='YES — Evidence ref';badTypes.stageData.LATEST_PASS_NUMBER='3 — Evidence ref';badTypes.stageData.NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS='NO — Evidence ref';
 prepared=ingestion.prepare(structuredClone(p),{stage:3,text:JSON.stringify(badTypes),promptRecord:pr});
 assert(!prepared.validation.valid,'Prose-tainted Stage 03 gate values were accepted.');

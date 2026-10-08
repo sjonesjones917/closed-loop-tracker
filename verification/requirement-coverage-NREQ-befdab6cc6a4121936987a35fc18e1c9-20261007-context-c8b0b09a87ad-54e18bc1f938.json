@@ -3,10 +3,10 @@
   "normativeRequirementId": "NREQ-befdab6cc6a4121936987a35fc18e1c9",
   "sourceLineSha256": "becce9129e4ab0de761a982b5328fb9ce25f5dc27a6abd09f964b35b13896e96",
   "specificationSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
-  "declarationSha256": "c8b0b09a87adea9a0112dc367c97d248ef57532804f1142ad358f109f7ee1dfd",
+  "declarationSha256": "0f7e44eb6bfe96f918ffab3c4c8906a1031e2327545dbf0810e67a62e5e7e431",
   "decision": "COMPLETE_COVERAGE",
   "evidenceBasis": "EXTERNALLY_SUPPORTED",
-  "method": "The exact narrow controlling clause and unchanged proof decomposition were independently reviewed in the embedded original semantic assessment. Current production, verifier, fixture and catalog deltas were separately reviewed in the referenced source-delta review bundle. This is coverage-design evidence only: current frozen-source executed receipts remain independently required, and unsupported clauses are not promoted.",
+  "method": "The retained independent semantic assessment controls the unchanged narrow clause and check decomposition. The current workflow and artifact-owner scheduling delta is separately inspected by the integrator in verification/ci-scheduling-delta-review-20261008.json; that delta record does not claim a new independent semantic review or substitute for current executed receipts. Exact production, verifier, and specification bytes are rebound below; full CI and live evidence remain required.",
   "author": {
     "actor": "Codex exact-source coverage renewal integrator",
     "contextId": "/root"
@@ -17,11 +17,11 @@
   },
   "reviewedInputs": [
     {
-      "declarationSha256": "c8b0b09a87adea9a0112dc367c97d248ef57532804f1142ad358f109f7ee1dfd"
+      "declarationSha256": "0f7e44eb6bfe96f918ffab3c4c8906a1031e2327545dbf0810e67a62e5e7e431"
     },
     {
       "path": ".github/workflows/pages.yml",
-      "sha256": "4fed28a3de65b94d42023edf661d7383b65a3a134e8d562a6575558072aef59b"
+      "sha256": "09de20c336b249964d0ca6839f272694cb645463705528e0932b155f5f207cb7"
     },
     {
       "path": "app-core.js",
@@ -165,7 +165,7 @@
     },
     {
       "path": "verified-site.mjs",
-      "sha256": "54dd0953a0cd17f0ad0f88ab33224f495248bccebca4dff8f0759dd15f10db3c"
+      "sha256": "e4965c30cc1714ec9279e60d566e80950eb3837c185e7d27dc72655f03b9a6a9"
     },
     {
       "path": "verifier-runtime.mjs",
@@ -206,6 +206,10 @@
     {
       "path": "workflow-schema.js",
       "sha256": "656e9e632cea3a60e1c7e0fb486e6630d205011d7db32d9674ac5e88593d24f1"
+    },
+    {
+      "path": "verification/ci-scheduling-delta-review-20261008.json",
+      "sha256": "35eb42e92769a80c1dc993dcfcb62ac4f48a46d9a218190197ba0888c72b217f"
     }
   ],
   "findings": [],
@@ -400,7 +404,13 @@
   "applicationConformanceClaim": false,
   "reviewCompletedAt": "2026-10-07T05:10:44.883240+00:00",
   "currentDependencyDeltaReview": {
-    "path": "verification/current-source-delta-review-20261007.json",
-    "sha256": "45cca5871ac89cf1583a3825aec5a7d488d4d40dc70afb51a8534470dececf09"
+    "path": "verification/ci-scheduling-delta-review-20261008.json",
+    "sha256": "8da9d69a13b6cf19774ac816b6a435b283c6576cdcd56380db5400d7204fb8cc"
+  },
+  "reviewRenewedAt": "2026-10-08T09:12:00Z",
+  "renewalActor": {
+    "actor": "Codex current source integrator",
+    "contextId": "/root",
+    "scope": "Exact source hash renewal after narrow CI scheduling review; original independent semantic assessment retained."
   }
 }

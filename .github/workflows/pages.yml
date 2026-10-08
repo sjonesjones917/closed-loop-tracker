@@ -29,8 +29,73 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  deferred-matrix:
+    name: deferred-matrix
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    env:
+      CLOSED_LOOP_VERIFICATION_SOURCE_ROOT: ${{ github.workspace }}
+      CLOSED_LOOP_VERIFICATION_RECEIPTS: ${{ github.workspace }}/.verification-receipts
+      NODE_OPTIONS: --import ${{ github.workspace }}/verification-evidence-preload.mjs
+    outputs:
+      executed: ${{ steps.matrix.outputs.executed }}
+      receipt_name: ${{ steps.matrix.outputs.receipt_name }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        env:
+          NODE_OPTIONS: ''
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Find complete PR verification for this main commit
+        id: candidate
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node verified-site.mjs select
+      - name: Download reusable PR artifact for deferred proof
+        if: steps.candidate.outputs.artifact_id != ''
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          artifact-ids: ${{ steps.candidate.outputs.artifact_id }}
+          run-id: ${{ steps.candidate.outputs.run_id }}
+          github-token: ${{ github.token }}
+          merge-multiple: true
+          path: _verified-pr
+      - name: Verify exact reusable source for deferred proof
+        id: reuse
+        if: steps.candidate.outputs.artifact_id != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node verified-site.mjs reuse
+      - name: Execute complete deferred stage matrix
+        id: matrix
+        if: steps.reuse.outputs.reused != 'true'
+        timeout-minutes: 330
+        run: |
+          set -euo pipefail
+          node verify-due-stage-timing.mjs > /tmp/deferred-stage-matrix.json
+          node verify-deferred-proof-handoff.mjs
+          echo "executed=true" >> "$GITHUB_OUTPUT"
+          echo "receipt_name=deferred-matrix-${{ github.sha }}-${{ github.run_id }}" >> "$GITHUB_OUTPUT"
+      - name: Preserve complete deferred matrix receipt
+        if: always() && steps.matrix.outcome != 'skipped'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: deferred-matrix-${{ github.sha }}-${{ github.run_id }}
+          path: .verification-receipts/verify-due-stage-timing.mjs.json
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 30
+
   test:
     name: test
+    needs: deferred-matrix
+    if: always() && needs.deferred-matrix.result == 'success'
     permissions:
       contents: read
       actions: read
@@ -78,6 +143,18 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: node verified-site.mjs reuse
+      - name: Require deferred matrix proof or verified artifact reuse
+        if: steps.reuse.outputs.reused != 'true'
+        run: test "${{ needs.deferred-matrix.outputs.executed }}" = true
+      - name: Download complete deferred matrix receipt
+        if: steps.reuse.outputs.reused != 'true'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: ${{ needs.deferred-matrix.outputs.receipt_name }}
+          path: .verification-receipts
+      - name: Validate complete deferred matrix receipt
+        if: steps.reuse.outputs.reused != 'true'
+        run: node verify-deferred-proof-handoff.mjs
 
       - name: Capture exact PR source workspace
         if: github.event_name == 'pull_request'

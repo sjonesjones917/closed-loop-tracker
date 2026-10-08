@@ -1,0 +1,92 @@
+{
+  "schema": "closed-loop-ci-scheduling-delta-review/1",
+  "reviewedAtUtc": "2026-10-08T10:38:57Z",
+  "actor": "Codex current source integrator",
+  "contextId": "/root",
+  "priorIndependentSemanticReviewRetained": true,
+  "newIndependentSemanticReviewClaimed": false,
+  "narrowNormativeRequirementIds": [
+    "NREQ-bedc4564e47ae7ebf86911eb8426b6f0",
+    "NREQ-4b26e20f450b23eb551b2da03e69c9c9",
+    "NREQ-befdab6cc6a4121936987a35fc18e1c9",
+    "NREQ-a011968eff2ed2dc314d58ed27dfad88"
+  ],
+  "sourceScope": [
+    ".github/workflows/pages.yml",
+    "verified-site.mjs",
+    "verify-verified-site.mjs",
+    "verify-spec-residual-closure.mjs",
+    "verify-deferred-proof-handoff.mjs",
+    "test-due-verification-scheduling.mjs",
+    "verify-executed-evidence.mjs",
+    "verify-stage03-agent-protocol.mjs",
+    "collect-verification-evidence.mjs"
+  ],
+  "preFixEvidence": {
+    "head": "32b9bf8018086e0c3bf3e81dc499abfcb55c1582",
+    "runId": 37730277595,
+    "testJobId": 113157585809,
+    "outcome": "FAILURE",
+    "owner": "verify-spec-residual-closure.mjs -> verify-due-stage-timing.mjs",
+    "failure": "The complete deferred matrix child was terminated at its three-hour deadline after accepted synthetic Stage 17 ROOT_CAUSE; no matrix assertion failure or completed receipt was reported.",
+    "childStartedAtUtc": "2026-10-08T05:50:15.116Z",
+    "childTerminatedAtUtc": "2026-10-08T08:50:15.259Z",
+    "childTimeoutMilliseconds": 10800000,
+    "localExecutedEvidenceTimeout": {
+      "boundary": "verify-executed-evidence.mjs -> executeEvidenceProducer(verify-ingestion.mjs) -> checkedVerifier",
+      "startedAtUtc": "2026-10-08T09:26:25.136Z",
+      "endedAtUtc": "2026-10-08T09:46:25.240Z",
+      "timeoutMilliseconds": 1200000,
+      "result": "ETIMEDOUT/SIGTERM after reaching nonbrowser:large-history-execution-package, with no intended ingestion assertion failure; the earlier workflow ingestion step already executes this producer."
+    },
+    "localOwnerPopulationMismatch": {
+      "boundary": "verify-executed-evidence.mjs exact registered owner population after validating and reusing a current 73-report/87-observation ingestion receipt",
+      "startedAtUtc": "2026-10-08T10:26:08Z",
+      "endedAtUtc": "2026-10-08T10:36:40Z",
+      "result": "The response-authority producer passed and emitted 11 assertion IDs; its consumer expected only the previous 10 and failed at OBSERVATION_OWNER_ORACLE before examining the returned-slot ID set. The additional RESPONSE-CLOSED-FAMILY-BOUNDARY is registered in verification-evidence-catalog.mjs with 15 explicit rejections."
+    }
+  },
+  "platformSource": {
+    "url": "https://docs.github.com/en/actions/reference/limits",
+    "accessedAtUtc": "2026-10-08",
+    "fact": "All GitHub-hosted runners have a six-hour job execution time limit."
+  },
+  "sourceReview": {
+    "unchangedClauseOwners": "The publish-status acceptance report projection and validateSite registry identity checks retain their earlier logic; the new workflow schedules the complete deferred matrix in a separate required job.",
+    "proofHandoff": "The deferred job executes the unchanged complete producer and uploads its executed receipt. The test job requires job success, downloads the same-run artifact, validates source/specification/catalog/runtime/commit and all observations, and only then reuses that receipt. Missing, failed, stale, corrupt, or incomplete receipts fail; direct verification without a receipt still runs the producer.",
+    "publicationGate": "Verified PR reuse now requires the deferred job and both execution and receipt-upload steps to pass. The existing test, artifact seal, deployed-byte check, and live operator checks remain required.",
+    "sourceChangesDoNotReplaceExecutionEvidence": true,
+    "testOnlyCorrections": "The Stage 03 fixture still requires rejection of invalid nested targetId aliases, now asserted through both exact early nested-type rejection codes and paths; its conforming control passes. The scheduling fixture now asserts the separate checked producer and its 330-minute bounded budget while retaining failed, malformed, collector and direct execution controls. The evidence-owner assertion includes actual child stderr on failure. No product runtime rule was changed by these test corrections.",
+    "ingestionReceiptReuse": "The executed-evidence consumer now requires and validates the exact current ingestion receipt when a receipt directory is configured, then uses its original reports and observations in all existing negative/ownership controls. Missing, stale, corrupt, or incomplete receipts fail; standalone execution without a receipt directory can still run the full owner with the existing bounded aggregate timeout. The shared producer helper accepts an explicit timeout without changing other callers.",
+    "ownerPopulation": "The consumer exact-set oracle now includes the independently registered RESPONSE-CLOSED-FAMILY-BOUNDARY check. No owner assertion or negative case was removed; omitted, duplicate, or unregistered IDs still fail the exact comparison. Full corrected consumer execution remains required."
+  },
+  "executedFocusedEvidence": {
+    "nodeVersion": "22.23.3",
+    "verifiedSiteOwner": "PASS: 72 controls, including five deferred job/step negatives and four deferred workflow mutation controls.",
+    "yamlParse": "PASS: deferred-matrix, test, deploy, verify-live, and publish-status jobs present with test dependent on deferred-matrix.",
+    "missingReceiptControl": "PASS: required handoff rejects an absent receipt with exit status 1 and an exact missing-receipt diagnostic.",
+    "syntaxAndDiff": "PASS for all changed executable modules and git diff --check.",
+    "stage03Owner": "PASS: Node 22.23.3 direct Stage 03 protocol verifier, including valid recordId and both invalid nested targetId paths; original pre-fix UNKNOWN_PROPERTY-only assertion failed because current nested-type preflight rejected both references earlier.",
+    "schedulingOwner": "PARTIAL: both synthetic scheduling fixture groups passed before the original broad evidence run reached its cold-checkout Stage 03 assertion; complete post-correction evidence owner remains running.",
+    "actionlint": "PASS: actionlint v1.7.12, GitHub release SHA256 8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8; .github/workflows/pages.yml produced no diagnostics.",
+    "ingestionReceipt": "PASS: current standalone ingestion producer exit 0; its actual receipt validated against exact integration source with 73 reports and 87 observations, SHA256 c94039f021a932722e5b756eb6a455d13ec478578dfcd4e44f3b8d0a795cd4f4. This receipt predates the final expected-ID source edit and cannot be promoted as final-source execution.",
+    "firstReuseOwner": "FAILED: current ingestion receipt was reused without another ingestion child and the consumer reached the independent authority owner; exact expected-ID population omitted one registered closed-family assertion. Corrected source must still execute."
+  },
+  "remainingEvidence": [
+    "The replacement hosted deferred matrix must finish and produce a validated receipt on its exact source revision.",
+    "The dependent complete test job, verified artifact, protected merge, Pages deployment, and live operator path must pass.",
+    "The isolated local complete compatibility consumer is running; no verdict is recorded here.",
+    "The pre-fix complete executed-evidence owner failed at the measured 20-minute redundant ingestion timeout. The corrected reuse route and standalone fallback still require direct post-fix verification on the exact candidate."
+  ],
+  "sourceSha256": {
+    ".github/workflows/pages.yml": "09de20c336b249964d0ca6839f272694cb645463705528e0932b155f5f207cb7",
+    "verified-site.mjs": "e4965c30cc1714ec9279e60d566e80950eb3837c185e7d27dc72655f03b9a6a9",
+    "verify-verified-site.mjs": "642cfbbd01372b34ef29f03493ab4961aafdf01454eb3410956d6943005a2246",
+    "verify-spec-residual-closure.mjs": "d9649a4916d916e212d73a3ca756fe42d84e42cd1da9083f4d9e3b73ac8d4720",
+    "verify-deferred-proof-handoff.mjs": "ee3e2826087d10e5bf023b4b66673e8e8f39965559b8cc7ec5f8896db2df02b0",
+    "test-due-verification-scheduling.mjs": "c182697281c056c7f56734a305af1207c4a224ce98dc7a02fa62ea56e126f7b9",
+    "verify-executed-evidence.mjs": "b5c6122bcc7011d48758ceace1a9439adebc2299a77bafc28418c959bdb752dc",
+    "verify-stage03-agent-protocol.mjs": "23cacea56a1d54596bfd75146dcc1766f9b8bef849d0c777f9c2aacc7e240d7e",
+    "collect-verification-evidence.mjs": "408461939020fae60a99950e8fc42364132cd75eb5384dc05d29e75b253535ff"
+  }
+}

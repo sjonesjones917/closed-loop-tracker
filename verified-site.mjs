@@ -12,7 +12,7 @@ const hash=globalThis.closedLoopHash;
 export const manifestName='closed-loop-deployment-manifest.json';
 export const runtimePaths=['index.html','workbook.js','hash.js','workflow-schema.js','test-runtime.js','test-worker.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js','TEST_PROJECT.json','.nojekyll'];
 export const fullTestSteps=[
-  'Verified artifact reuse checks','Syntax','Stage 01 agent response contract alignment','Stale project navigation and draft preservation','Verification routing and capability evidence','Startup and scrolling at phone and desktop sizes',
+  'Verified artifact reuse checks','Require deferred matrix proof or verified artifact reuse','Download complete deferred matrix receipt','Validate complete deferred matrix receipt','Syntax','Stage 01 agent response contract alignment','Stale project navigation and draft preservation','Verification routing and capability evidence','Startup and scrolling at phone and desktop sizes',
   'Acceptance viewport regression and targeted layout fault','Deployment manifest, build identity, and reproducibility',
   'Physical iPhone release-tag governance','Schema, ownership, and single-architecture proof',
   'Complete 30-stage canonical data-route closure','Migration and v3 contracts',
@@ -25,9 +25,14 @@ export const fullTestSteps=[
 export const digest=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
 const requireValue=(condition,message)=>{if(!condition)throw new Error(message);};
 export function assertLifecycleWorkflowCommand(workflow){
+  const deferredStart=workflow.indexOf('\n  deferred-matrix:\n');
+  requireValue(deferredStart>=0,'Required deferred matrix proof job is absent.');
+  const deferredFollowing=workflow.slice(deferredStart+'\n  deferred-matrix:\n'.length),deferredEnd=deferredFollowing.search(/\n  [a-z][\w-]*:\n/),deferredJob=deferredEnd<0?deferredFollowing:deferredFollowing.slice(0,deferredEnd);
+  requireValue(deferredJob.includes('node verify-due-stage-timing.mjs > /tmp/deferred-stage-matrix.json')&&deferredJob.includes('node verify-deferred-proof-handoff.mjs')&&deferredJob.includes('path: .verification-receipts/verify-due-stage-timing.mjs.json'),'Required complete deferred matrix execution and receipt are absent.');
   const start=workflow.indexOf('\n  test:\n');
   requireValue(start>=0,'Required test job is absent from the workflow.');
   const following=workflow.slice(start+'\n  test:\n'.length),end=following.search(/\n  [a-z][\w-]*:\n/),testJob=end<0?following:following.slice(0,end);
+  requireValue(testJob.includes('needs: deferred-matrix')&&testJob.includes("needs.deferred-matrix.result == 'success'")&&testJob.includes('name: Download complete deferred matrix receipt')&&testJob.includes('name: Validate complete deferred matrix receipt')&&testJob.includes('node verify-deferred-proof-handoff.mjs'),'Required deferred matrix proof dependency and handoff are absent.');
   const heading='      - name: Workflow and gates\n',at=testJob.indexOf(heading);
   requireValue(at>=0&&testJob.indexOf(heading,at+heading.length)<0,'Required workflow gate step is absent or duplicated.');
   const migrationHeading='      - name: Migration and v3 contracts\n',migrationAt=testJob.indexOf(migrationHeading);
@@ -108,6 +113,12 @@ export function assertPassedRun(run,jobs,{repository,headSha,workflowId}){
   requireValue(run.workflow_id===workflowId&&run.path==='.github/workflows/pages.yml','PR verification used a different workflow.');
   const tests=jobs.filter(job=>job.name==='test');
   requireValue(tests.length===1&&tests[0].status==='completed'&&tests[0].conclusion==='success','Required test job has not passed.');
+  const deferred=jobs.filter(job=>job.name==='deferred-matrix');
+  requireValue(deferred.length===1&&deferred[0].status==='completed'&&deferred[0].conclusion==='success','Required deferred matrix job has not passed.');
+  for(const name of ['Execute complete deferred stage matrix','Preserve complete deferred matrix receipt']){
+    const matrixSteps=deferred[0].steps.filter(step=>step.name===name);
+    requireValue(matrixSteps.length===1&&matrixSteps[0].status==='completed'&&matrixSteps[0].conclusion==='success','Required complete deferred matrix did not pass: '+name);
+  }
   for(const name of fullTestSteps){
     const steps=tests[0].steps.filter(step=>step.name===name);
     requireValue(steps.length===1&&steps[0].status==='completed'&&steps[0].conclusion==='success',`Required PR verification did not pass: ${name}`);

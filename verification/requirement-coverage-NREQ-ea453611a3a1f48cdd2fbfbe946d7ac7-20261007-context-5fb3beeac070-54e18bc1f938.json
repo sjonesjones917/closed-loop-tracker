@@ -6,7 +6,7 @@
   "declarationSha256": "5fb3beeac0707949f4e79fdb066df755bc05fc30226fbea0a9fe1c8f7c83ede5",
   "decision": "COMPLETE_COVERAGE",
   "evidenceBasis": "EXTERNALLY_SUPPORTED",
-  "method": "The exact narrow controlling clause and unchanged proof decomposition were independently reviewed in the embedded original semantic assessment. Current production, verifier, fixture and catalog deltas were separately reviewed in the referenced source-delta review bundle. This is coverage-design evidence only: current frozen-source executed receipts remain independently required, and unsupported clauses are not promoted.",
+  "method": "The exact narrow controlling clause and unchanged proof decomposition were independently reviewed in the embedded original semantic assessment. Current production, verifier, fixture and catalog deltas were separately reviewed in the referenced source-delta review bundle. This is coverage-design evidence only: current frozen-source executed receipts remain independently required, and unsupported clauses are not promoted. The 2026-10-08 scheduling-fixture change was separately inspected by the current integrator in verification/ci-scheduling-delta-review-20261008.json; the earlier independent semantic assessment remains historical and no new independent semantic review of these current bytes is claimed.",
   "author": {
     "actor": "Codex exact-source coverage renewal integrator",
     "contextId": "/root"
@@ -61,7 +61,7 @@
     },
     {
       "path": "test-due-verification-scheduling.mjs",
-      "sha256": "d3fc5cc1c2d7e86cffe73028a50cb840229b54285f1e88473e64ff7f5d802f33"
+      "sha256": "c182697281c056c7f56734a305af1207c4a224ce98dc7a02fa62ea56e126f7b9"
     },
     {
       "path": "test-fixtures.mjs",
@@ -234,5 +234,11 @@
   "currentDependencyDeltaReview": {
     "path": "verification/current-source-delta-review-20261007.json",
     "sha256": "45cca5871ac89cf1583a3825aec5a7d488d4d40dc70afb51a8534470dececf09"
-  }
+  },
+  "currentIntegratorDelta": {
+    "path": "verification/ci-scheduling-delta-review-20261008.json",
+    "sha256": "35eb42e92769a80c1dc993dcfcb62ac4f48a46d9a218190197ba0888c72b217f",
+    "newIndependentSemanticReviewClaimed": false
+  },
+  "currentIntegratorReviewedAtUtc": "2026-10-08T09:46:23Z"
 }

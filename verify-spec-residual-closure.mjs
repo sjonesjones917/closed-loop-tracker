@@ -1,5 +1,6 @@
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import {checkedVerifier,AGGREGATE_TIMEOUT_MS} from './verify-conformance-regressions.mjs';
+import {currentDeferredMatrixReceipt} from './verify-deferred-proof-handoff.mjs';
 import fs from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import vm from 'node:vm';
@@ -9,6 +10,7 @@ globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
 for(const file of ['workbook.js','hash.js','workflow-schema.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
 const schema=globalThis.closedLoopWorkflowSchema;
+const DEFERRED_MATRIX_TIMEOUT_MS=330*60*1000;
 assert(schema,'workflow schema did not load');
 const source=fs.readFileSync('workflow-schema.js','utf8');
 assert.doesNotMatch(source,/HASHES_RECORDED_WHERE_PRACTICAL/,'Obsolete Stage 10 best-effort hashing contract must not exist.');
@@ -22,7 +24,10 @@ console.log(JSON.stringify({specResidualClosure:'PASS',testIrOperations:controll
 
 // The complete deferred matrix owns its receipt. An in-process import records
 // only the wrapper and makes the collector repeat this same composite proof.
-await checkedVerifier(process.execPath,[fileURLToPath(new URL('./verify-due-stage-timing.mjs',import.meta.url))],{stdio:'inherit',timeout:AGGREGATE_TIMEOUT_MS});
+// An exact current receipt from the separate bounded CI job owns this proof.
+// Direct/local verification still executes the complete matrix when no receipt
+// is present; a stale or corrupt receipt fails instead of falling back.
+if(!currentDeferredMatrixReceipt())await checkedVerifier(process.execPath,[fileURLToPath(new URL('./verify-due-stage-timing.mjs',import.meta.url))],{stdio:'inherit',timeout:DEFERRED_MATRIX_TIMEOUT_MS});
 await import('./verify-ten-independent-runs.mjs');
 await checkedVerifier(process.execPath,[fileURLToPath(new URL('./verify-independent-run-verification.mjs',import.meta.url))],{stdio:'inherit',timeout:AGGREGATE_TIMEOUT_MS});
 await checkedVerifier(process.execPath,[fileURLToPath(new URL('./verify-cross-run-comparison.mjs',import.meta.url))],{stdio:'inherit',timeout:AGGREGATE_TIMEOUT_MS});

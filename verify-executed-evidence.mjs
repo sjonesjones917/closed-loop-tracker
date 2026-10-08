@@ -6,7 +6,7 @@ import {pathToFileURL} from 'node:url';
 import {execFileSync} from 'node:child_process';
 import {verifyDueEvidenceConsumers} from './test-due-evidence-consumers.mjs';
 import {verifyDueVerificationScheduling,verifyCrossRunVerificationScheduling} from './test-due-verification-scheduling.mjs';
-import {runVerifier} from './verify-conformance-regressions.mjs';
+import {runVerifier,AGGREGATE_TIMEOUT_MS} from './verify-conformance-regressions.mjs';
 import {evidenceFingerprint,createExecutionReceipt,validateExecutionReceipt,aggregateExecutedEvidence,readExecutedEvidence,observationsFromReports,sha} from './verification-evidence.mjs';
 import {metricCatalog,verificationCatalog,browserVerificationCatalog} from './verification-evidence-catalog.mjs';
 import {collectVerificationEvidence,executeEvidenceProducer} from './collect-verification-evidence.mjs';
@@ -74,7 +74,7 @@ try{
     // must actually record the required verifier receipt, rather than relying
     // on the collector's separate explicit preload to conceal lost wiring.
     const producer=await runVerifier(process.execPath,[path.join(workspace,suite)],{cwd:workspace,env:{...process.env,NODE_OPTIONS:inherited,CLOSED_LOOP_VERIFICATION_SOURCE_ROOT:workspace,CLOSED_LOOP_VERIFICATION_RECEIPTS:receiptDirectory}});
-    assert.equal(producer.status,0,'COLD_CHECKOUT_ORACLE: checked-out required producer did not pass.');
+    assert.equal(producer.status,0,'COLD_CHECKOUT_ORACLE: checked-out required producer did not pass: '+producer.stderr);
     const receipt=JSON.parse(fs.readFileSync(path.join(receiptDirectory,suite+'.json'),'utf8'));validateExecutionReceipt(receipt,suite,evidenceFingerprint(workspace));
     assert(receipt.observations.some(row=>row.checkId==='stage03.canonical-recordId-accepted'&&row.passed));
     coldCheckoutCases.push({job,actionRuntime:actionReport.runtime,formerInheritedExit:before.status,formerActionBodyExecuted:false,checkoutExit:after.status,checkoutBodyExecuted:true,postCheckoutProducerRuntime:receipt.fingerprint.runtime.node,postCheckoutProducerExit:producer.status,jobPreloadCreatedCurrentReceipt:true,producerFileSha256:receipt.producerFileSha256,stdoutSha256:receipt.stdoutSha256,stderrSha256:receipt.stderrSha256,receiptSha256:receipt.receiptSha256});
@@ -227,7 +227,7 @@ try{
   // Their exact receipt assertions cannot be supplied by the ingestion wrapper.
   const expectedCanonicalIdsByOwner={
     'verify-response-authority-integrity.mjs':[
-      'PRODUCER-TIMING-REJECT-VERIFICATION_PHASE','PRODUCER-TIMING-REJECT-EARLIEST_EXECUTABLE_STAGE','PRODUCER-TIMING-REJECT-REQUIRED_BY_STAGE','PRODUCER-TIMING-REJECT-PER_RUN_REQUIRED','PRODUCER-TIMING-REJECT-FINAL_PRODUCT_REQUIRED','PRODUCER-TIMING-REJECT-DELIVERY_REQUIRED','PRODUCER-TIMING-REJECT-TARGET_AVAILABILITY_CONDITION','PRODUCER-TIMING-REJECT-TIMING_ENTRIES','PRODUCER-TIMING-REJECT-TIMING_SCHEDULE_SHA256','PRODUCER-TIMING-PROMPT-EXCLUDES-APPLICATION-FIELDS'
+      'PRODUCER-TIMING-REJECT-VERIFICATION_PHASE','PRODUCER-TIMING-REJECT-EARLIEST_EXECUTABLE_STAGE','PRODUCER-TIMING-REJECT-REQUIRED_BY_STAGE','PRODUCER-TIMING-REJECT-PER_RUN_REQUIRED','PRODUCER-TIMING-REJECT-FINAL_PRODUCT_REQUIRED','PRODUCER-TIMING-REJECT-DELIVERY_REQUIRED','PRODUCER-TIMING-REJECT-TARGET_AVAILABILITY_CONDITION','PRODUCER-TIMING-REJECT-TIMING_ENTRIES','PRODUCER-TIMING-REJECT-TIMING_SCHEDULE_SHA256','PRODUCER-TIMING-PROMPT-EXCLUDES-APPLICATION-FIELDS','RESPONSE-CLOSED-FAMILY-BOUNDARY'
     ],
     'verify-returned-slot-authority.mjs':[
       'ATTACHMENT-SLOT-INVENTED-REJECTED','ATTACHMENT-SLOT-FOREIGN-REJECTED','ATTACHMENT-SLOT-ROLE-MISMATCH-REJECTED','ATTACHMENT-PACKAGE-EXACT-SLOT-BYTES','BOUNDARY-CORRECTED-RETURNED-FILE-RETRY','RETURNED-BYTE-CUSTODY-RETRY-RECOVERY','ACTUAL-UI-RETURNED-BYTE-REVERIFY'
@@ -235,7 +235,15 @@ try{
   };
   const ownershipSuites=['verify-ingestion.mjs','verify-response-authority-integrity.mjs','verify-returned-slot-authority.mjs'];
   const ownershipReceipts=new Map();
-  for(const owner of ownershipSuites)ownershipReceipts.set(owner,await executeEvidenceProducer(owner,{directory:path.join(directory,'ownership-receipts'),evidenceDirectory:path.join(directory,'ownership-runner')}));
+  // The workflow has already executed ingestion under the receipt preload.
+  // Revalidate those exact bytes instead of repeating its large-history work
+  // under this consumer's shorter child deadline. Standalone invocation may
+  // still establish the receipt itself with a bound that permits that work.
+  const currentReceiptDirectory=process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS;
+  const currentIngestionPath=currentReceiptDirectory&&path.join(currentReceiptDirectory,'verify-ingestion.mjs.json');
+  if(currentReceiptDirectory&&!fs.existsSync(currentIngestionPath))throw new Error('EXECUTED_EVIDENCE_ORACLE: current ingestion receipt is missing; run verify-ingestion.mjs before this consumer.');
+  const currentIngestion=currentIngestionPath?validateExecutionReceipt(JSON.parse(fs.readFileSync(currentIngestionPath,'utf8')),'verify-ingestion.mjs',evidenceFingerprint()):null;
+  for(const owner of ownershipSuites)ownershipReceipts.set(owner,owner==='verify-ingestion.mjs'&&currentIngestion?currentIngestion:await executeEvidenceProducer(owner,{directory:path.join(directory,'ownership-receipts'),evidenceDirectory:path.join(directory,'ownership-runner'),timeout:owner==='verify-ingestion.mjs'?AGGREGATE_TIMEOUT_MS:undefined}));
   const wrapper=ownershipReceipts.get('verify-ingestion.mjs'),canonicalIds=ownershipSuites.slice(1).flatMap(owner=>ownershipReceipts.get(owner).reports.flatMap(report=>report.verificationObservations||[]).map(row=>row.checkId));
   for(const [owner,expectedIds]of Object.entries(expectedCanonicalIdsByOwner)){
     const actualIds=ownershipReceipts.get(owner).reports.flatMap(report=>report.verificationObservations||[]).map(row=>row.checkId);
