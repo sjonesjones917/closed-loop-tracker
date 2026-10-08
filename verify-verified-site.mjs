@@ -143,7 +143,9 @@ try{
     ['missing-job',text=>text.replace(deferredBlock,''),/deferred matrix proof job/],
     ['missing-producer',text=>text.replace('node verify-due-stage-timing.mjs > /tmp/deferred-stage-matrix.json','node missing-deferred-matrix.mjs'),/complete deferred matrix execution/],
     ['missing-dependency',text=>text.replace('    needs: deferred-matrix\n',''),/deferred matrix proof dependency/],
-    ['missing-receipt-validation',text=>text.replace('name: Validate complete deferred matrix receipt','name: Skip deferred matrix validation'),/deferred matrix proof dependency/]
+    ['missing-receipt-validation',text=>text.replace('name: Validate complete deferred matrix receipt','name: Skip deferred matrix validation'),/deferred matrix proof dependency/],
+    ['skipped-required-test',text=>text.replace('    if: always()\n    permissions:\n','    if: always() && needs.deferred-matrix.result == \'success\'\n    permissions:\n'),/failed deferred matrix must fail the required test job/],
+    ['missing-required-gate',text=>text.replace('      - name: Require successful deferred matrix job\n        run: test "${{ needs.deferred-matrix.result }}" = "success"\n',''),/failed deferred matrix must fail the required test job/]
   ]){const changed=alter(workflow);assert.notEqual(changed,workflow,`DEFERRED_MATRIX_CI_FAULT_SETUP_ORACLE: ${name}`);(await rejects(`deferred-matrix-${name}`,()=>assertLifecycleWorkflowCommand(changed),diagnostic));}
   const lifecycleLine='          node verify-project-lifecycle.mjs\n',definitionLine='          node verify-v3-definition-of-done.mjs\n';
   const externalLine='          node verify-external-result-determination.mjs\n',doneLine='          node verify-definition-of-done.mjs\n';
@@ -231,8 +233,8 @@ try{
     const escaped=name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
     const step=workflow.match(new RegExp('^      - name: '+escaped+'\\n(?:(?!      - ).*(?:\\n|$))*','m'))?.[0];
     assert.ok(step,`Required gate missing from workflow: ${name}`);
-    if(!['Verified artifact reuse checks','Collect current executed assertion evidence','Seal verified deployment artifact'].includes(name))assert.match(step,/if: steps\.reuse\.outputs\.reused != 'true'/,'Only proven reuse may skip a full check.');
-    else assert.doesNotMatch(step,/^        if:/m,'The artifact contract and final seal must always run.');
+    if(!['Require successful deferred matrix job','Verified artifact reuse checks','Collect current executed assertion evidence','Seal verified deployment artifact'].includes(name))assert.match(step,/if: steps\.reuse\.outputs\.reused != 'true'/,'Only proven reuse may skip a full check.');
+    else assert.doesNotMatch(step,/^        if:/m,'The matrix gate, artifact contract, and final seal must always run.');
   }
   assert.ok(workflow.indexOf('name: Seal verified deployment artifact')>workflow.indexOf('name: Shared production faults, bounded sequences, and executed observations'));
   assert.ok(workflow.indexOf('name: Collect current executed assertion evidence')>workflow.indexOf('name: Shared production faults, bounded sequences, and executed observations'));

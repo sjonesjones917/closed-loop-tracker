@@ -95,7 +95,7 @@ jobs:
   test:
     name: test
     needs: deferred-matrix
-    if: always() && needs.deferred-matrix.result == 'success'
+    if: always()
     permissions:
       contents: read
       actions: read
@@ -111,6 +111,8 @@ jobs:
       verification_run_id: ${{ steps.reuse.outputs.run_id || github.run_id }}
       verification_source_commit: ${{ steps.reuse.outputs.tested_commit || github.sha }}
     steps:
+      - name: Require successful deferred matrix job
+        run: test "${{ needs.deferred-matrix.result }}" = "success"
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         env:
           # The repository preload does not exist until checkout completes.

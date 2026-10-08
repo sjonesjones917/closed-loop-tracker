@@ -12,7 +12,7 @@ const hash=globalThis.closedLoopHash;
 export const manifestName='closed-loop-deployment-manifest.json';
 export const runtimePaths=['index.html','workbook.js','hash.js','workflow-schema.js','test-runtime.js','test-worker.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js','TEST_PROJECT.json','.nojekyll'];
 export const fullTestSteps=[
-  'Verified artifact reuse checks','Require deferred matrix proof or verified artifact reuse','Download complete deferred matrix receipt','Validate complete deferred matrix receipt','Syntax','Stage 01 agent response contract alignment','Stale project navigation and draft preservation','Verification routing and capability evidence','Startup and scrolling at phone and desktop sizes',
+  'Require successful deferred matrix job','Verified artifact reuse checks','Require deferred matrix proof or verified artifact reuse','Download complete deferred matrix receipt','Validate complete deferred matrix receipt','Syntax','Stage 01 agent response contract alignment','Stale project navigation and draft preservation','Verification routing and capability evidence','Startup and scrolling at phone and desktop sizes',
   'Acceptance viewport regression and targeted layout fault','Deployment manifest, build identity, and reproducibility',
   'Physical iPhone release-tag governance','Schema, ownership, and single-architecture proof',
   'Complete 30-stage canonical data-route closure','Migration and v3 contracts',
@@ -32,7 +32,9 @@ export function assertLifecycleWorkflowCommand(workflow){
   const start=workflow.indexOf('\n  test:\n');
   requireValue(start>=0,'Required test job is absent from the workflow.');
   const following=workflow.slice(start+'\n  test:\n'.length),end=following.search(/\n  [a-z][\w-]*:\n/),testJob=end<0?following:following.slice(0,end);
-  requireValue(testJob.includes('needs: deferred-matrix')&&testJob.includes("needs.deferred-matrix.result == 'success'")&&testJob.includes('name: Download complete deferred matrix receipt')&&testJob.includes('name: Validate complete deferred matrix receipt')&&testJob.includes('node verify-deferred-proof-handoff.mjs'),'Required deferred matrix proof dependency and handoff are absent.');
+  requireValue(testJob.includes('needs: deferred-matrix')&&testJob.includes('name: Download complete deferred matrix receipt')&&testJob.includes('name: Validate complete deferred matrix receipt')&&testJob.includes('node verify-deferred-proof-handoff.mjs'),'Required deferred matrix proof dependency and handoff are absent.');
+  const matrixGate='      - name: Require successful deferred matrix job\n        run: test "${{ needs.deferred-matrix.result }}" = "success"\n';
+  requireValue(/^    if: always\(\)$/m.test(testJob)&&testJob.includes(matrixGate)&&testJob.indexOf(matrixGate)<testJob.indexOf('      - uses: actions/checkout@'),'A failed deferred matrix must fail the required test job, not skip it.');
   const heading='      - name: Workflow and gates\n',at=testJob.indexOf(heading);
   requireValue(at>=0&&testJob.indexOf(heading,at+heading.length)<0,'Required workflow gate step is absent or duplicated.');
   const migrationHeading='      - name: Migration and v3 contracts\n',migrationAt=testJob.indexOf(migrationHeading);

@@ -9527,7 +9527,7 @@
           {
             "path": ".github/workflows/pages.yml",
             "symbol": "publish-status: Build acceptance artifact from executed proof jobs, report projection and closed-loop-acceptance.json writer",
-            "sha256": "09de20c336b249964d0ca6839f272694cb645463705528e0932b155f5f207cb7"
+            "sha256": "5976e1e69757ff7742673a9fcad04a52fc34857d161a44fc121a769e52e7d36b"
           }
         ],
         "obligations": [
@@ -9562,7 +9562,7 @@
         "governingContext": [],
         "review": {
           "path": "verification/requirement-coverage-NREQ-bedc4564e47ae7ebf86911eb8426b6f0-20261007-context-303caf90caff-54e18bc1f938.json",
-          "sha256": "eab6c0bb0708eafa333fbd3b7c37b35870bc8f12e1f7b62e5532bfb25d5dedfb"
+          "sha256": "0494699709876f6a50254c2597f19f98122f2512b88a89290080c78ce64a76e7"
         }
       }
     },
@@ -9592,7 +9592,7 @@
           {
             "path": ".github/workflows/pages.yml",
             "symbol": "publish-status: Build acceptance artifact from executed proof jobs, report projection and closed-loop-acceptance.json writer",
-            "sha256": "09de20c336b249964d0ca6839f272694cb645463705528e0932b155f5f207cb7"
+            "sha256": "5976e1e69757ff7742673a9fcad04a52fc34857d161a44fc121a769e52e7d36b"
           }
         ],
         "obligations": [
@@ -9627,7 +9627,7 @@
         "governingContext": [],
         "review": {
           "path": "verification/requirement-coverage-NREQ-4b26e20f450b23eb551b2da03e69c9c9-20261007-context-07d6150a1321-54e18bc1f938.json",
-          "sha256": "1975975f2788ff6536e4eb4da2da3d82f983b25200ea535eb33b501c81dcfa2a"
+          "sha256": "8b2be77e49fd1e7bda9adaa73185ffbafa79b67a17fc6b89f8d521815aab187b"
         }
       }
     },
@@ -9658,7 +9658,7 @@
           {
             "path": ".github/workflows/pages.yml",
             "symbol": "publish-status: Build acceptance artifact from executed proof jobs, report projection and closed-loop-acceptance.json writer",
-            "sha256": "09de20c336b249964d0ca6839f272694cb645463705528e0932b155f5f207cb7"
+            "sha256": "5976e1e69757ff7742673a9fcad04a52fc34857d161a44fc121a769e52e7d36b"
           },
           {
             "path": "deployment-contract-identities.mjs",
@@ -9668,7 +9668,7 @@
           {
             "path": "verified-site.mjs",
             "symbol": "validateSite",
-            "sha256": "e4965c30cc1714ec9279e60d566e80950eb3837c185e7d27dc72655f03b9a6a9"
+            "sha256": "c32ef23aa3bf1dda105fc774d84911ddb7603febe0479a2aabb751fb8820659a"
           },
           {
             "path": "build-static-site.mjs",
@@ -9716,7 +9716,7 @@
         "governingContext": [],
         "review": {
           "path": "verification/requirement-coverage-NREQ-befdab6cc6a4121936987a35fc18e1c9-20261007-context-c8b0b09a87ad-54e18bc1f938.json",
-          "sha256": "55d8bb2de74d78573fb0feb1e838831b9a731caf042536ac3b3d63d753c2034a"
+          "sha256": "4c8400ff3dcb75d3b5c6e2d021d94c5b069df514fcedc5a494e5c890b2370035"
         }
       }
     },
@@ -9747,7 +9747,7 @@
           {
             "path": ".github/workflows/pages.yml",
             "symbol": "publish-status: Build acceptance artifact from executed proof jobs, report projection and closed-loop-acceptance.json writer",
-            "sha256": "09de20c336b249964d0ca6839f272694cb645463705528e0932b155f5f207cb7"
+            "sha256": "5976e1e69757ff7742673a9fcad04a52fc34857d161a44fc121a769e52e7d36b"
           },
           {
             "path": "deployment-contract-identities.mjs",
@@ -9757,7 +9757,7 @@
           {
             "path": "verified-site.mjs",
             "symbol": "validateSite",
-            "sha256": "e4965c30cc1714ec9279e60d566e80950eb3837c185e7d27dc72655f03b9a6a9"
+            "sha256": "c32ef23aa3bf1dda105fc774d84911ddb7603febe0479a2aabb751fb8820659a"
           },
           {
             "path": "build-static-site.mjs",
@@ -9805,7 +9805,7 @@
         "governingContext": [],
         "review": {
           "path": "verification/requirement-coverage-NREQ-a011968eff2ed2dc314d58ed27dfad88-20261007-context-87882d5bae07-54e18bc1f938.json",
-          "sha256": "4ac6348abb43c4b95befd8db7265dc2d16a85e2d8dc6109bea2c4ba2f5e52cff"
+          "sha256": "3f96838f3d2ab160cd66b713c2f5bb805d0091c15cc6133bc8886c5eb8fe3cbe"
         }
       }
     },

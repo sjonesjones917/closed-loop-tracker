@@ -3,7 +3,7 @@
   "normativeRequirementId": "NREQ-befdab6cc6a4121936987a35fc18e1c9",
   "sourceLineSha256": "becce9129e4ab0de761a982b5328fb9ce25f5dc27a6abd09f964b35b13896e96",
   "specificationSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
-  "declarationSha256": "0f7e44eb6bfe96f918ffab3c4c8906a1031e2327545dbf0810e67a62e5e7e431",
+  "declarationSha256": "c9774469a92eccd89bdaad3b0977c364c4c0f0619c742d155ab75cba545d6522",
   "decision": "COMPLETE_COVERAGE",
   "evidenceBasis": "EXTERNALLY_SUPPORTED",
   "method": "The retained independent semantic assessment controls the unchanged narrow clause and check decomposition. The current workflow and artifact-owner scheduling delta is separately inspected by the integrator in verification/ci-scheduling-delta-review-20261008.json; that delta record does not claim a new independent semantic review or substitute for current executed receipts. Exact production, verifier, and specification bytes are rebound below; full CI and live evidence remain required.",
@@ -17,11 +17,11 @@
   },
   "reviewedInputs": [
     {
-      "declarationSha256": "0f7e44eb6bfe96f918ffab3c4c8906a1031e2327545dbf0810e67a62e5e7e431"
+      "declarationSha256": "c9774469a92eccd89bdaad3b0977c364c4c0f0619c742d155ab75cba545d6522"
     },
     {
       "path": ".github/workflows/pages.yml",
-      "sha256": "09de20c336b249964d0ca6839f272694cb645463705528e0932b155f5f207cb7"
+      "sha256": "5976e1e69757ff7742673a9fcad04a52fc34857d161a44fc121a769e52e7d36b"
     },
     {
       "path": "app-core.js",
@@ -165,7 +165,7 @@
     },
     {
       "path": "verified-site.mjs",
-      "sha256": "e4965c30cc1714ec9279e60d566e80950eb3837c185e7d27dc72655f03b9a6a9"
+      "sha256": "c32ef23aa3bf1dda105fc774d84911ddb7603febe0479a2aabb751fb8820659a"
     },
     {
       "path": "verifier-runtime.mjs",
@@ -209,7 +209,7 @@
     },
     {
       "path": "verification/ci-scheduling-delta-review-20261008.json",
-      "sha256": "cbfaccb8c4b0815a06cbe9f0bbb2c60d52a967c8b9eac38f6b5ed351ba1fa173"
+      "sha256": "260c9692d817fed7fceeac3bde709ae61df1ae7b150715cf46e343ea49232a95"
     }
   ],
   "findings": [],
@@ -405,7 +405,7 @@
   "reviewCompletedAt": "2026-10-07T05:10:44.883240+00:00",
   "currentDependencyDeltaReview": {
     "path": "verification/ci-scheduling-delta-review-20261008.json",
-    "sha256": "cbfaccb8c4b0815a06cbe9f0bbb2c60d52a967c8b9eac38f6b5ed351ba1fa173"
+    "sha256": "260c9692d817fed7fceeac3bde709ae61df1ae7b150715cf46e343ea49232a95"
   },
   "reviewRenewedAt": "2026-10-08T09:12:00Z",
   "renewalActor": {
@@ -414,9 +414,9 @@
     "scope": "Exact source hash renewal after narrow CI scheduling review; original independent semantic assessment retained."
   },
   "currentIntegratorFollowup": {
-    "reviewedAtUtc": "2026-10-08T11:27:00Z",
-    "scope": "Exact supplemental assertion-link and Stage 02 bounded-preview test corrections on the existing CI scheduling candidate; no new independent semantic review claimed.",
+    "reviewedAtUtc": "2026-10-08T11:55:00Z",
+    "scope": "Exact required-check skip-gate correction on the existing CI scheduling candidate; prior independent semantic review retained, no new independent semantic review claimed.",
     "reviewPath": "verification/ci-scheduling-delta-review-20261008.json",
-    "reviewSha256": "cbfaccb8c4b0815a06cbe9f0bbb2c60d52a967c8b9eac38f6b5ed351ba1fa173"
+    "reviewSha256": "260c9692d817fed7fceeac3bde709ae61df1ae7b150715cf46e343ea49232a95"
   }
 }
