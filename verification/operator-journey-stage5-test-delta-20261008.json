@@ -1,0 +1,74 @@
+{
+  "schema": "closed-loop-operator-journey-test-delta-review/1",
+  "reviewedAtUtc": "2026-10-08T15:16:36.066Z",
+  "actor": "Codex current source integrator",
+  "contextId": "/root",
+  "examinedHead": "dab92671137e9438b9b7e513e6d733480156b0b3",
+  "controllingSource": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+  "controllingSourceSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
+  "governingLines": [
+    {
+      "line": 4301,
+      "obligation": "Current state and primary next action appear within the first viewport."
+    },
+    {
+      "line": 4316,
+      "obligation": "The centralized UI acceptance registry defines deterministic scroll postconditions."
+    },
+    {
+      "line": 5054,
+      "obligation": "Canonical state persists across reload."
+    }
+  ],
+  "affectedRequirementIds": [
+    "NREQ-360281bfdd66bed29237ed7202962808",
+    "NREQ-a0db6ddcb33d9af123b08d4d481c8ebd",
+    "NREQ-baa1c33b2e2490264f91881b06ff9da8",
+    "NREQ-f1919b51ebfc8561d0140c02cbf08abd",
+    "NREQ-4b27c9f604f44c29404eacc12a59fd68",
+    "NREQ-71896faa31bc64e94d98bc976e1e6f1d",
+    "NREQ-78fef21919bbd7bb3bafba6f62210631",
+    "NREQ-72aa03a305fb8893a65d384f41d86aeb",
+    "NREQ-848909d4b95219bdb481803a4b1b91c2",
+    "NREQ-601ec85ffefcffd713520f4067f7529c",
+    "NREQ-c0080ab56f40757c88225dc35a1f98f0",
+    "NREQ-a42ec803577aa8ccbe176ed8e20a8595",
+    "NREQ-928a65a08b403be3edc8b160ef9cc53c",
+    "NREQ-7a68fe07ee725cf205dd2102cd997b7f",
+    "NREQ-4bb86ccfacff0ea8bbbc59df67b0ca4f",
+    "NREQ-768d67996244254c83c0d11796f63912",
+    "NREQ-59d5854af99ac5a566eb61e978519b21",
+    "NREQ-75b670fc6ea047b7452b4148f12a30ba",
+    "NREQ-86651d173d1583e48cf6c03f9d486f4f",
+    "NREQ-1576e27fba46e1d68631bb2ade2e37f4",
+    "NREQ-cf25cf824db06866df51c0e538fcbc03",
+    "NREQ-41ab1c200b4ce5c9d1d96613a3e5b264",
+    "NREQ-0c973b955d61ee36887734df0ade5e69",
+    "NREQ-971af7158d193e9b1d780c13b6c8e0ec"
+  ],
+  "sourceDelta": {
+    "path": "verify-complete-operator-journey.mjs",
+    "priorSha256": "40173709f06b0a985ff8528c75d7aaeef6e24f25686adb17477d73dbceb1af48",
+    "currentSha256": "abe9a68f7fe0fb8e329ccfd05125405552d008cc881584ab7ca94c44919ef6d8",
+    "change": "Immediately after the actual Stage 5 reload and canonical-state comparison, assert current-action visibility. Then exercise genuine Overview to Workflow navigation before the next stage; the old script clicked an already-selected Workflow tab and already-selected picker, whose native pointer scroll changed viewport position."
+  },
+  "preFixReproduction": {
+    "sourceHead": "dab92671137e9438b9b7e513e6d733480156b0b3",
+    "builtRuntimeSha256": "f0c332e72f326dd7950015a36036a10358004e1415fa14e6d63c067472958389",
+    "runs": 2,
+    "observation": "Both original-script disposable browser journeys failed at Stage 5 sequence 14 after the script moved scrollY from the correctly restored action position to 0 by clicking the already-selected Workflow tab. The canonical project revision and hash did not change across reload."
+  },
+  "conformingControl": {
+    "observation": "Read-only fresh browser observation immediately after Stage 5 reload showed the next action at y=268–421 within a 852 px viewport, scrollY=2924; a real Overview to Workflow navigation also restored next-action visibility."
+  },
+  "postFixEvidence": {
+    "sourceTestSha256": "abe9a68f7fe0fb8e329ccfd05125405552d008cc881584ab7ca94c44919ef6d8",
+    "builtRuntimeUnchanged": true,
+    "observation": "The corrected script passed actual reload visibility and canonical equality, completed Stages 1–10 and the first Stage 11 EXECUTE_RUN. That diagnostic was intentionally interrupted at Stage 11 sequence 28 for isolated latency investigation; a complete journey and hosted check remain pending."
+  },
+  "reviewDecision": "NARROW_TEST_PREMISE_CORRECTION",
+  "priorIndependentSemanticReviewRetained": true,
+  "newIndependentSemanticReviewClaimed": false,
+  "applicationConformanceClaim": false,
+  "fullCurrentCandidateExecutionStillRequired": true
+}

@@ -6,7 +6,7 @@
   "declarationSha256": "e53573db33356eb258d72e607d2d8d4c26dd602715e4fc082d4629771b5054eb",
   "decision": "COMPLETE_COVERAGE",
   "evidenceBasis": "EXTERNALLY_SUPPORTED",
-  "method": "The exact narrow controlling clause and unchanged proof decomposition were independently reviewed in the embedded original semantic assessment. Current production, verifier, fixture and catalog deltas were separately reviewed in the referenced source-delta review bundle. This is coverage-design evidence only: current frozen-source executed receipts remain independently required, and unsupported clauses are not promoted. The current integrator separately inspected the two later verifier-fixture prerequisite deltas recorded in verification/fixture-prerequisite-delta-review-20261008.json. The original independent semantic assessment remains historical; current execution remains required.",
+  "method": "The exact narrow controlling clause and unchanged proof decomposition were independently reviewed in the embedded original semantic assessment. Current production, verifier, fixture and catalog deltas were separately reviewed in the referenced source-delta review bundle. This is coverage-design evidence only: current frozen-source executed receipts remain independently required, and unsupported clauses are not promoted. The current integrator separately inspected the two later verifier-fixture prerequisite deltas recorded in verification/fixture-prerequisite-delta-review-20261008.json. The original independent semantic assessment remains historical; current execution remains required. The current integrator separately reviewed the later Stage 5 test-premise correction in verification/operator-journey-stage5-test-delta-20261008.json. The earlier independent semantic assessment is retained as historical; this delta does not claim a new independent semantic review or complete current-candidate execution.",
   "author": {
     "actor": "Codex exact-source coverage renewal integrator",
     "contextId": "/root"
@@ -177,7 +177,7 @@
     },
     {
       "path": "verify-complete-operator-journey.mjs",
-      "sha256": "40173709f06b0a985ff8528c75d7aaeef6e24f25686adb17477d73dbceb1af48"
+      "sha256": "abe9a68f7fe0fb8e329ccfd05125405552d008cc881584ab7ca94c44919ef6d8"
     },
     {
       "path": "verify-conformance-regressions.mjs",
@@ -226,6 +226,10 @@
     {
       "path": "verification/fixture-prerequisite-delta-review-20261008.json",
       "sha256": "6a42b7c27a36bd28162e6f19a993ee92df8d818dc41d5f2b3279b9995c1b9226"
+    },
+    {
+      "path": "verification/operator-journey-stage5-test-delta-20261008.json",
+      "sha256": "100722115633f28626f441e1384053874f38d7887fbaa5c563f77eb2e7a9db8b"
     }
   ],
   "findings": [],
@@ -336,5 +340,9 @@
     "sha256": "6a42b7c27a36bd28162e6f19a993ee92df8d818dc41d5f2b3279b9995c1b9226",
     "reviewedAtUtc": "2026-10-08T11:31:00Z",
     "newIndependentSemanticReviewClaimed": false
+  },
+  "currentTestCorrectionReview": {
+    "path": "verification/operator-journey-stage5-test-delta-20261008.json",
+    "sha256": "100722115633f28626f441e1384053874f38d7887fbaa5c563f77eb2e7a9db8b"
   }
 }
