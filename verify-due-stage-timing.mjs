@@ -943,7 +943,11 @@ async function verifyUnresolvedThenSatisfiedRetry(r,input,stage=8,{existingPromp
 }
 for(const caseId of caseIds) {
  const result=caseId==='INVALID_REPORT'?'SATISFIED':caseId==='UNDETERMINED_AT9'?'UNDETERMINED':caseId;
- const r=projectStoreRuntime({sourceOverrides}),e=r.engine,i=r.ingestion,s=r.runtime.closedLoopWorkflowSchema,h=r.runtime.closedLoopHash;
+ const r=projectStoreRuntime({sourceOverrides});
+ // Replay this saved synthetic prefix before its recorded capability expiry.
+ // Wall time may advance for hours while the complete matrix exercises other cases.
+ replayArchivedDeferredFixtureAtRecordedTime(r,{archivedFixtureClockUtc:derivedDiagnosticPrefixInstant(retained)});
+ const e=r.engine,i=r.ingestion,s=r.runtime.closedLoopWorkflowSchema,h=r.runtime.closedLoopHash;
  await restoreArtifactFixture(r.store,retained.artifacts);
  const p=r.copy(retained.project);p.activeStage=8;await hydrateRetainedPromptContexts(r,p,retained.contextFiles);
  assert.equal(e.gate(7,p).complete,true,'LEGITIMATE_CONDITIONAL_UPSTREAM_ORACLE');
@@ -1251,7 +1255,7 @@ for(const [name,file,before,after,oracle,run]of [
 for(const [name,file,before,after,oracle,caseIds]of [
  ['deferred-returned-byte-projection-omitted','response-ingestion.js','workflow.normalizeDeferredReceipt(projected,Number(envelope.stage)', 'workflow.normalizeDeferredReceipt(project,Number(envelope.stage)','LEGITIMATE_CONDITIONAL_ADMISSION_ORACLE',['SATISFIED']],
  ['deferred-closed-producer-contract-omitted','prompt-engine.js',"...(op?.deferredSubjectFamily?{deferredExecutionEvidenceContract:schema.DEFERRED_EXECUTION_EVIDENCE}:{}),",'', 'DEFERRED_PUBLISHED_VOCABULARY_ORACLE',['SATISFIED']],
- ['deferred-producer-rejection-feedback-escapes','response-ingestion.js',"if(!['INVALID_DEFERRED_EXECUTION_RECEIPT','STALE_DEFERRED_EXECUTION_BINDING','INVALID_DEFERRED_DEFINITION_COMPATIBILITY'].includes(error?.code))throw error;",'throw error;', 'DEFERRED_TYPED_PRODUCER_FAILURE_ORACLE',['INVALID_REPORT']],
+ ['deferred-producer-rejection-feedback-escapes','response-ingestion.js',"if(!['INVALID_DEFERRED_EXECUTION_RECEIPT','STALE_DEFERRED_EXECUTION_BINDING','INVALID_DEFERRED_DEFINITION_COMPATIBILITY','INVALID_TEST_IR_BINDING'].includes(error?.code))throw error;",'throw error;', 'DEFERRED_TYPED_PRODUCER_FAILURE_ORACLE',['INVALID_REPORT']],
  ['deferred-failed-plan-retains-allocations','response-ingestion.js','next.projectData.idCounters=planningIdentities.idCounters;next.projectData.allocationReceipts=planningIdentities.allocationReceipts;','void planningIdentities;', 'DEFERRED_FAILED_PLAN_IDENTITY_ROLLBACK_ORACLE',['INVALID_REPORT']],
  ['deferred-current-observation-identity-omitted','workflow-engine.js',"if(collection==='regressionExecutions')return project?globalThis.closedLoopWorkflowEngine.deferredReceiptObservationIdentity(project,record,evidence):null;","if(collection==='regressionExecutions')return null;", 'DEFERRED_RECEIPT_TARGET_IDENTITY_ORACLE',['SATISFIED']]
 ]){
