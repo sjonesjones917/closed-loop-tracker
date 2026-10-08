@@ -365,7 +365,17 @@ try{
     {checkId:'RETAINED-HISTORICAL-EVIDENCE-CUSTODY',boundary:'controlled catalog population fixture',expected:true,observed:true,passed:true},
     {checkId:'CURRENT-SUPPLIED-INPUT-CUSTODY',boundary:'controlled catalog population fixture',expected:{omittedInputObserverInsufficient:true,currentSuppliedIdentityRetained:true,noManualReadRequired:true,commitReloadRestoreWorks:true,negativeVariantsInsufficient:5,noRetroactiveHistoricalAuthorization:true},observed:{omittedInputObserverInsufficient:true,currentSuppliedIdentityRetained:true,noManualReadRequired:true,commitReloadRestoreWorks:true,negativeVariantsInsufficient:5,noRetroactiveHistoricalAuthorization:true},passed:true}
   ]};
-  const storagePopulationSuite='verify-operational-persistence.mjs';
+  // This controlled report contains only the two custody assertions. Isolate
+  // their real catalog checks so later, independently owned storage markers do
+  // not make this focused consumer fixture malformed.
+  const storagePopulationSuite='verify-operational-persistence.custody-fixture.mjs';
+  const storageCustodyCheckIds=['store.retained-evidence-custody','store.current-supplied-input-custody'];
+  const custodyChecks=verificationCatalog['verify-operational-persistence.mjs'].checks.filter(check=>storageCustodyCheckIds.includes(check.id));
+  assert.deepEqual(custodyChecks.map(check=>check.id),storageCustodyCheckIds,'STORAGE_POPULATION_ORACLE: custody catalog checks changed.');
+  assert.throws(()=>observationsFromReports('verify-operational-persistence.mjs',[storagePopulationFixture]),/expected exactly one report marker/,'STORAGE_POPULATION_ORACLE: the focused fixture cannot stand in for the complete persistence producer.');
+  assert.equal(verificationCatalog[storagePopulationSuite],undefined,'STORAGE_POPULATION_ORACLE: fixture suite collided with a registered producer.');
+  verificationCatalog[storagePopulationSuite]={boundary:'controlled custody catalog fixture only',checks:custodyChecks};
+  try{
   assert(observationsFromReports(storagePopulationSuite,[storagePopulationFixture]).every(row=>row.passed),'STORAGE_POPULATION_ORACLE: conforming consumer report shape failed.');
   for(const [caseId,mutate] of [
     ['missing-current-supplied-input-outcome',value=>{delete value.noManualReadRequired;}],
@@ -387,6 +397,7 @@ try{
     assert.throws(()=>observationsFromReports(storagePopulationSuite,[missingMarker]),new RegExp('expected exactly one report marker '+marker),'STORAGE_POPULATION_ORACLE: missing canonical storage marker passed.');
     producerControls.push({caseId:'missing-required-storage-population:'+checkId,accepted:false,result:'DETECTED'});
   }
+  }finally{delete verificationCatalog[storagePopulationSuite];}
 
   // Controlled catalog input only. The Stage 28 owner must supply its own
   // direct derivation and disposable blank-project store observation.

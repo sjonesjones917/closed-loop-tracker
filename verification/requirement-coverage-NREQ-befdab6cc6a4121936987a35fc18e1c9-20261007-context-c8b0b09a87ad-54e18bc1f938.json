@@ -209,7 +209,7 @@
     },
     {
       "path": "verification/ci-scheduling-delta-review-20261008.json",
-      "sha256": "260c9692d817fed7fceeac3bde709ae61df1ae7b150715cf46e343ea49232a95"
+      "sha256": "a5fa35ea7c8f4364e5e6635d81bf97f6a441efbf96c58461e4b7bf07bd79455d"
     }
   ],
   "findings": [],
@@ -405,7 +405,7 @@
   "reviewCompletedAt": "2026-10-07T05:10:44.883240+00:00",
   "currentDependencyDeltaReview": {
     "path": "verification/ci-scheduling-delta-review-20261008.json",
-    "sha256": "260c9692d817fed7fceeac3bde709ae61df1ae7b150715cf46e343ea49232a95"
+    "sha256": "a5fa35ea7c8f4364e5e6635d81bf97f6a441efbf96c58461e4b7bf07bd79455d"
   },
   "reviewRenewedAt": "2026-10-08T09:12:00Z",
   "renewalActor": {
@@ -414,9 +414,9 @@
     "scope": "Exact source hash renewal after narrow CI scheduling review; original independent semantic assessment retained."
   },
   "currentIntegratorFollowup": {
-    "reviewedAtUtc": "2026-10-08T11:55:00Z",
-    "scope": "Exact required-check skip-gate correction on the existing CI scheduling candidate; prior independent semantic review retained, no new independent semantic review claimed.",
+    "reviewedAtUtc": "2026-10-08T12:22:00Z",
+    "scope": "Exact controlled persistence-catalog fixture correction in the CI evidence consumer; no production owner, normative requirement, or independent semantic review changed.",
     "reviewPath": "verification/ci-scheduling-delta-review-20261008.json",
-    "reviewSha256": "260c9692d817fed7fceeac3bde709ae61df1ae7b150715cf46e343ea49232a95"
+    "reviewSha256": "a5fa35ea7c8f4364e5e6635d81bf97f6a441efbf96c58461e4b7bf07bd79455d"
   }
 }
