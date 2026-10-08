@@ -9,7 +9,13 @@ import {resolveVisualBaselineSubmission as resolve,resolveVisualBaselineResource
 // Isolated synthetic fixtures test transport only; they are not acceptance evidence.
 const commit='a'.repeat(40);
 let clock=Date.parse('2026-10-05T00:00:00Z');
-const advancingDate=class extends Date{constructor(...args){super(...(args.length?args:[clock++]));}};
+// The production clock calls Date.now() before constructing an ISO timestamp.
+// Advance that static method too, so distinct captures cannot collide within
+// the same real millisecond on a fast CI host.
+const advancingDate=class extends Date{
+ constructor(...args){super(...(args.length?args:[clock++]));}
+ static now(){return clock++;}
+};
 const evidence=visualBaselineFixture(projectStoreRuntime({environment:{Date:advancingDate}}),{commit});
 assert.notEqual(evidence.authorityRecord.fields.VALID_FROM,evidence.authorityReceipt.createdAt,'Production decision and receipt use separate clock captures.');
 const context={inputJson:JSON.stringify(evidence),ledgerVisualBaseline:{status:'OPEN'},eventName:'workflow_dispatch',ref:'refs/heads/main',submitter:'DISPOSABLE-ACTOR',commit,deploymentManifestDigest:evidence.comparison.deploymentManifest.manifestDigest.digest,baselineResourceGraph:{sourceCommit:commit,paths:runtimePaths}};
