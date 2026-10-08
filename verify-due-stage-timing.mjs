@@ -33,6 +33,16 @@ function runtime(overrides={}){
  return projectStoreRuntime({sourceOverrides:{...overrides,[file]:source.replace(anchor,expose+anchor)}});
 }
 function replayArchivedDeferredFixtureAtRecordedTime(r,prefix=null){const instant=prefix?.archivedFixtureClockUtc||ARCHIVED_DEFERRED_FIXTURE_CLOCK_UTC;assert.equal(new Date(instant).toISOString(),instant);r.runtime.Date=class extends Date {constructor(...args){super(...(args.length?args:[instant]));}static now(){return Date.parse(instant);}};}
+function derivedDiagnosticPrefixInstant(seed){
+ assert.equal(seed?.synthetic,true,'DERIVED_PREFIX_SYNTHETIC_CLOCK_ORACLE');
+ const recorded=seed.project?.projectData?.history?.at(-1)?.createdAt;
+ assert.equal(typeof recorded,'string','DERIVED_PREFIX_RECORDED_HISTORY_CLOCK_ORACLE');
+ const millis=Date.parse(recorded);
+ assert(Number.isFinite(millis)&&new Date(millis).toISOString()===recorded,'DERIVED_PREFIX_RECORDED_HISTORY_CLOCK_ORACLE');
+ // Re-evaluate a saved synthetic snapshot immediately after its last recorded
+ // transition. Wall-clock expiry still applies to an actual current project.
+ return new Date(millis+1).toISOString();
+}
 function scalarCases(r){
  const s=r.runtime.closedLoopWorkflowSchema,e=r.engine,p=r.core.createBlankState('JOB-TIMING-SCALARS');e.ensureShape(p);
  const fields=recordProposal(s,'tests').fields,cases=[];
@@ -199,7 +209,8 @@ async function submitDefinitionCompatibilityFile(r,packet,envelope,{accept=false
 }
 async function definitionCompatibilitySeed(r,{family='regressions',native=false,stage=family==='regressions'?15:7,operation='COMPLETE',fixtureValue='VERIFIED',prefixDirectory,testKey=null,compatibility=deferredCompatibilityFixtureValues(family),knownInvalidCase,oldContractEvidence=null,timingOverrides=null}={}){
  assert(prefixDirectory,'DEFINITION_COMPATIBILITY_DERIVED_PREFIX_REQUIRED: supply --definition-compatibility-prefix-dir with production-derived Stage06/14/17-author snapshots and captured bytes.');
- const filename=path.join(prefixDirectory,'prefix-stage'+String(stage).padStart(2,'0')+'.json'),text=fs.readFileSync(filename,'utf8'),seed=JSON.parse(text),e=r.engine,s=r.runtime.closedLoopWorkflowSchema;if(seed.archivedFixtureClockUtc)replayArchivedDeferredFixtureAtRecordedTime(r,seed);
+ const filename=path.join(prefixDirectory,'prefix-stage'+String(stage).padStart(2,'0')+'.json'),text=fs.readFileSync(filename,'utf8'),seed=JSON.parse(text),e=r.engine,s=r.runtime.closedLoopWorkflowSchema;
+ replayArchivedDeferredFixtureAtRecordedTime(r,seed.archivedFixtureClockUtc?seed:{archivedFixtureClockUtc:derivedDiagnosticPrefixInstant(seed)});
  assert.equal(seed.synthetic,true);assert.equal(seed.earlierCompleteFlagsForced,false,'DEFINITION_COMPATIBILITY_NO_FORCED_GATE_ORACLE');assert.equal(seed.entryStage,stage);
  let p=r.copy(seed.project);await restoreArtifactFixture(r.store,seed.artifacts);await hydrateRetainedPromptContexts(r,p,seed.contextFiles);
  for(let prior=1;prior<stage;prior++)assert.equal(e.gate(prior,p).complete,true,'DEFINITION_COMPATIBILITY_DERIVED_PREREQUISITE_ORACLE: '+prior+' -> '+stage);
@@ -366,8 +377,31 @@ for(const variant of ['missing','UNKNOWN','malformed']){
  return observations;
 }
 
+async function definitionCompatibilityClockReplayControl(sources,prefixDirectory){
+ assert(prefixDirectory,'DERIVED_PREFIX_CLOCK_DIRECTORY_ORACLE');
+ const seed=JSON.parse(fs.readFileSync(path.join(prefixDirectory,'prefix-stage07.json'),'utf8'));
+ const reports=seed.project.projectData.environmentManifests.map(row=>row.fields?.EXTERNAL_CLAIMS||row.EXTERNAL_CLAIMS).filter(report=>report?.request?.targetFamily==='sourceSearchContracts');
+ assert.equal(reports.length,1,'DERIVED_PREFIX_SOURCE_CAPABILITY_ORACLE');
+ const until=Date.parse(reports[0].validUntil);
+ assert(Number.isFinite(until),'DERIVED_PREFIX_SOURCE_CAPABILITY_ORACLE');
+ const expiredInstant=new Date(until+1).toISOString(),r=runtime(sources);
+ const ExpiredDate=class extends Date {constructor(...args){super(...(args.length?args:[expiredInstant]));}static now(){return Date.parse(expiredInstant);}};
+ r.runtime.Date=ExpiredDate;
+ const expired=r.engine.gate(2,r.copy(seed.project));
+ assert.equal(expired.complete,false,'DERIVED_PREFIX_ACTUAL_EXPIRY_ORACLE');
+ assert(expired.reasons.some(reason=>reason.includes('Register current source-search performer')),'DERIVED_PREFIX_ACTUAL_EXPIRY_ORACLE');
+ const f=await definitionCompatibilitySeed(r,{family:'failureTests',prefixDirectory});
+ const replayInstant=derivedDiagnosticPrefixInstant(seed);
+ assert.equal(r.runtime.Date.now(),Date.parse(replayInstant),'DERIVED_PREFIX_REPLAY_CLOCK_ORACLE');
+ assert.equal(r.engine.gate(2,f.p).complete,true,'DERIVED_PREFIX_SNAPSHOT_PREREQUISITE_ORACLE');
+ r.runtime.Date=ExpiredDate;
+ assert.equal(r.engine.gate(2,f.p).complete,false,'DERIVED_PREFIX_EXPIRY_STILL_ENFORCED_ORACLE');
+ return {case:'derived-prefix-recorded-clock-replay',expiredAtUtc:expiredInstant,replayedAtUtc:replayInstant,expiredCurrentGateBlocked:true,recordedSnapshotGateComplete:true,realExpiryGuardRetained:true,synthetic:true,actualBrowser:false};
+}
+
 export async function verifyDefinitionCompatibility({onlyCase=null,witnessDirectory=null,prefixDirectory=null,generateLegacyFixture=false}={}){
  const names=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'],sources=Object.fromEntries(names.map(name=>[name,fs.readFileSync(name,'utf8')])),hashRuntime=runtime(sources),sourceHashes=Object.fromEntries(names.map(name=>[name,hashRuntime.runtime.closedLoopHash.sha256Text(sources[name])])),observations=[];
+ if(!onlyCase||onlyCase==='clock-replay')observations.push(await definitionCompatibilityClockReplayControl(sources,prefixDirectory));
  const controls=[['external-future-regression',{family:'regressions'}],['native-future-regression',{family:'regressions',native:true}],['external-future-failure',{family:'failureTests'}],['zero-byte-future-failure',{family:'failureTests',byteBackedFixture:true,zeroByte:true,knownInvalidCase:'The exact preserved attachment contains zero bytes, so it differs from the required complete nine-byte VERIFIED followed by LF. This attributable negative account binds the actual empty artifact to the reviewed complete-content comparison; no future execution is claimed.',compatibility:deferredCompatibilityFixtureValues('failureTests',{actualTarget:'The exact zero-byte preserved artifact and independently reviewed complete-content target comparison.',rationale:'Preserve the actual empty Blob and identity; zero bytes differ from the required nine-byte VERIFIED plus LF value and must be rejected when this complete-content test is legitimately due.'})}],['native-owning-failure-execution',{family:'failureTests',native:true,byteBackedFixture:true,operation:'EXECUTE_FAILURE_TEST'}],['owning-regression-execution',{family:'regressions',operation:'EXECUTE_REGRESSION'}],['corrected-iteration-regression-author',{family:'regressions',stage:17,operation:'REGRESSION'}],['lossless-capacity-and-normalizer',{family:'regressions',testKey:'compat-capacity-regressions',capacity:true,fixtureValue:'X'.repeat(199900),knownInvalidCase:'The exact preserved 199900-character ASCII X fixture differs from the governing nine-byte VERIFIED followed by LF. This complete original negative string and current reviewed complete-content comparison establish the attributable negative case; no future execution is claimed.'.padEnd(200000,' '),compatibility:Object.fromEntries(Object.entries({...deferredCompatibilityFixtureValues('regressions',{actualTarget:'The exact preserved199900-character ASCII X fixture and current published complete-content target contract.'.padEnd(100000,' '),rationale:'The full negative string differs from the required nine bytes; actual PRE must fail and a distinct exact corrected target must pass while preserving the original fixture.'.padEnd(110000,' ')}),preCorrectionFailureMeaning:'The original199900-character ASCII X target differs from the required nine-byte literal, so actual PRE_CORRECTION must be VIOLATED.',postCorrectionSuccessMeaning:'A distinct corrected target containing exactly VERIFIED followed by LF matches all nine bytes, so actual POST_CORRECTION must be SATISFIED with the original negative string preserved.'}).reverse())}]];
  for(const [caseId,options]of controls){if(onlyCase&&caseId!==onlyCase)continue;const r=runtime(sources),f=await definitionCompatibilitySeed(r,{...options,prefixDirectory});if(options.capacity){f.envelope.evidence=f.envelope.evidence.filter(row=>row.temporaryKey!=='negative-fixture');f.envelope.records.regressions[0].evidenceRefs=f.envelope.records.regressions[0].evidenceRefs.filter(key=>key!=='negative-fixture');changeDefinitionSupport(f.envelope,report=>{report.fixture={literal:{definitionField:'FAILURE_FIXTURE'}};report.supportingEvidenceRefs=report.supportingEvidenceRefs.filter(ref=>ref.tempKey!=='negative-fixture');});assert(Buffer.byteLength(JSON.stringify(f.envelope),'utf8')<=r.runtime.closedLoopWorkflowSchema.DEFAULT_RESOURCE_LIMITS.maxRawResponseBytes);assert(f.envelope.evidence.every(row=>row.content.length<=r.runtime.closedLoopWorkflowSchema.DEFAULT_RESOURCE_LIMITS.maxTextFieldLength));}const returnedAttachments=options.byteBackedFixture?await definitionCompatibilityReturnedFixture(r,f,f.envelope,options):[],done=await submitDefinitionCompatibilityFile(r,f,f.envelope,{accept:true,returnedAttachments}),subject=r.engine.records(done.p,f.family).find(row=>row.rawResponseId===done.rawResponseId),state=r.engine.deferredDefinitionCompatibilityState(done.p,subject,f.family),plan=r.engine.deferredExecutionPlan(done.p,Math.max(f.stage+1,r.runtime.closedLoopWorkflowSchema.RECORD_SCHEMAS[f.family].stage+1));
   assert.equal(state.compatible,true,'DEFINITION_COMPATIBILITY_RESTORED_SUPPORT_ORACLE: '+JSON.stringify(state.issues));assert.equal(state.basis,'EXTERNALLY_SUPPORTED');if(options.byteBackedFixture){assert.equal(state.fixture.kind,'ARTIFACT');if(options.zeroByte)assert.equal(state.fixture.byteSize,0);if(options.native)assert.equal(state.mechanicalAssessment.fixtureInputCompatibility,'UNKNOWN','DEFINITION_COMPATIBILITY_QUALIFIED_NATIVE_FALLBACK_ORACLE');}assert(plan.future.some(row=>row.subjectId===subject.id),'DEFINITION_COMPATIBILITY_FUTURE_ORACLE');assert.equal(r.engine.records(done.p,'regressionExecutions').length,f.executionCount,'DEFINITION_COMPATIBILITY_NO_EARLY_EXECUTION_ORACLE');assert.equal(r.engine.recordValue(r.engine.records(done.p,'tests').find(row=>row.id===f.testId),'EXECUTION_MODE'),options.native?'APPLICATION_DETERMINISTIC':'INDEPENDENT_AGENT_REVIEW','DEFINITION_COMPATIBILITY_EXECUTOR_PRESERVATION_ORACLE');
