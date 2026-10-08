@@ -237,8 +237,14 @@
   },
   "currentIntegratorDelta": {
     "path": "verification/ci-scheduling-delta-review-20261008.json",
-    "sha256": "35eb42e92769a80c1dc993dcfcb62ac4f48a46d9a218190197ba0888c72b217f",
+    "sha256": "cbfaccb8c4b0815a06cbe9f0bbb2c60d52a967c8b9eac38f6b5ed351ba1fa173",
     "newIndependentSemanticReviewClaimed": false
   },
-  "currentIntegratorReviewedAtUtc": "2026-10-08T09:46:23Z"
+  "currentIntegratorReviewedAtUtc": "2026-10-08T09:46:23Z",
+  "currentIntegratorFollowup": {
+    "reviewedAtUtc": "2026-10-08T11:27:00Z",
+    "scope": "Exact supplemental assertion-link and Stage 02 bounded-preview test corrections on the existing CI scheduling candidate; no new independent semantic review claimed.",
+    "reviewPath": "verification/ci-scheduling-delta-review-20261008.json",
+    "reviewSha256": "cbfaccb8c4b0815a06cbe9f0bbb2c60d52a967c8b9eac38f6b5ed351ba1fa173"
+  }
 }

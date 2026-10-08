@@ -316,7 +316,14 @@ try{
   assert(absentLinks.length>0&&absentLinks.every(row=>row.disposition==='UNKNOWN'),'OBSERVATION_OWNER_ORACLE: imported reports masked missing canonical owner proof.');
   const ownedAggregate=aggregateExecutedEvidence(ownershipReceipts,evidenceFingerprint());
   assert.equal(ownedAggregate.receiptCount,3,'OBSERVATION_OWNER_ORACLE: actual composed/owner receipts did not aggregate.');
-  assert(canonicalIds.every(id=>ownedAggregate.normativeRequirementTrace.some(row=>row.executedAssertions.some(assertion=>assertion.checkId===id&&assertion.suite!=='verify-ingestion.mjs'))),'OBSERVATION_OWNER_ORACLE: exact canonical assertion links were lost.');
+  // This additional closed-family regression is required by its producer
+  // catalog, but is supplemental to the reviewed normative assertion bindings.
+  // Every other independently owned detail must retain its exact clause link.
+  const supplementalCanonicalIds=['RESPONSE-CLOSED-FAMILY-BOUNDARY'];
+  const normativeBindingIds=new Set(JSON.parse(fs.readFileSync('verification-assertion-bindings.json','utf8')).bindings.flatMap(binding=>binding.checkIds));
+  assert.deepEqual(canonicalIds.filter(id=>!normativeBindingIds.has(id)),supplementalCanonicalIds,'OBSERVATION_OWNER_ORACLE: the exact supplemental owner population changed.');
+  assert(ownershipReceipts.get('verify-response-authority-integrity.mjs').observations.some(row=>row.checkId==='admission-contract.response.closed-family-boundary'&&row.passed===true),'OBSERVATION_OWNER_ORACLE: supplemental closed-family catalog check is missing.');
+  assert(canonicalIds.filter(id=>normativeBindingIds.has(id)).every(id=>ownedAggregate.normativeRequirementTrace.some(row=>row.executedAssertions.some(assertion=>assertion.checkId===id&&assertion.suite!=='verify-ingestion.mjs'))),'OBSERVATION_OWNER_ORACLE: exact canonical assertion links were lost.');
   for(const normativeRequirementId of ['NREQ-749b81ff8c36960f18ded1d0142a724a','NREQ-8c446bb0f81585af8291c866b1d2ef37']){
     const requirement=ownedAggregate.normativeRequirementTrace.find(row=>row.normativeRequirementId===normativeRequirementId);
     assert.equal(requirement?.disposition,'QUALIFIED_EXECUTED_ASSERTION_EVIDENCE','INGESTION_REFERENCE_NORMATIVE_LINK_ORACLE: exact relationship/scope/precommit obligation lost its executed control.');

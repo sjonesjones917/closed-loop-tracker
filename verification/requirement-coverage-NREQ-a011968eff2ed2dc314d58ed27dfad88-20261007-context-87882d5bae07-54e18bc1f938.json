@@ -209,7 +209,7 @@
     },
     {
       "path": "verification/ci-scheduling-delta-review-20261008.json",
-      "sha256": "35eb42e92769a80c1dc993dcfcb62ac4f48a46d9a218190197ba0888c72b217f"
+      "sha256": "cbfaccb8c4b0815a06cbe9f0bbb2c60d52a967c8b9eac38f6b5ed351ba1fa173"
     }
   ],
   "findings": [],
@@ -404,12 +404,18 @@
   "reviewCompletedAt": "2026-10-07T05:10:44.883240+00:00",
   "currentDependencyDeltaReview": {
     "path": "verification/ci-scheduling-delta-review-20261008.json",
-    "sha256": "8da9d69a13b6cf19774ac816b6a435b283c6576cdcd56380db5400d7204fb8cc"
+    "sha256": "cbfaccb8c4b0815a06cbe9f0bbb2c60d52a967c8b9eac38f6b5ed351ba1fa173"
   },
   "reviewRenewedAt": "2026-10-08T09:12:00Z",
   "renewalActor": {
     "actor": "Codex current source integrator",
     "contextId": "/root",
     "scope": "Exact source hash renewal after narrow CI scheduling review; original independent semantic assessment retained."
+  },
+  "currentIntegratorFollowup": {
+    "reviewedAtUtc": "2026-10-08T11:27:00Z",
+    "scope": "Exact supplemental assertion-link and Stage 02 bounded-preview test corrections on the existing CI scheduling candidate; no new independent semantic review claimed.",
+    "reviewPath": "verification/ci-scheduling-delta-review-20261008.json",
+    "reviewSha256": "cbfaccb8c4b0815a06cbe9f0bbb2c60d52a967c8b9eac38f6b5ed351ba1fa173"
   }
 }

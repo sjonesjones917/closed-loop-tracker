@@ -6,7 +6,7 @@
   "declarationSha256": "f03bceab9e8e5c95df32ea74c7d241fb8e9f024b9dc4900623dedc3925a9260e",
   "decision": "COMPLETE_COVERAGE",
   "evidenceBasis": "EXTERNALLY_SUPPORTED",
-  "method": "The exact narrow controlling clause and unchanged proof decomposition were independently reviewed in the embedded original semantic assessment. Current production, verifier, fixture and catalog deltas were separately reviewed in the referenced source-delta review bundle. This is coverage-design evidence only: current frozen-source executed receipts remain independently required, and unsupported clauses are not promoted.",
+  "method": "The exact narrow controlling clause and unchanged proof decomposition were independently reviewed in the embedded original semantic assessment. Current production, verifier, fixture and catalog deltas were separately reviewed in the referenced source-delta review bundle. This is coverage-design evidence only: current frozen-source executed receipts remain independently required, and unsupported clauses are not promoted. The current integrator separately inspected the two later verifier-fixture prerequisite deltas recorded in verification/fixture-prerequisite-delta-review-20261008.json. The original independent semantic assessment remains historical; current execution remains required.",
   "author": {
     "actor": "Codex exact-source coverage renewal integrator",
     "contextId": "/root"
@@ -193,7 +193,7 @@
     },
     {
       "path": "verify-ingestion.mjs",
-      "sha256": "f7b4aef437956f2593401cc1923bc48ed8127223467b91d71f83608f7fa1c285"
+      "sha256": "433db26aef984c714c8e59d3d02dfe174b9cfdd8a7dc2daeb8e0e5fb1fbb24bf"
     },
     {
       "path": "verify-operator-action-lifecycle.mjs",
@@ -201,7 +201,7 @@
     },
     {
       "path": "verify-reservation-contract.mjs",
-      "sha256": "8c26d4f085118e956af896460f5e05ad90398570736c0043a0a5378767721d86"
+      "sha256": "d90035bced2ff5abb4c562f9bfa8c91d79db368c1f460d926bfae6668dbcfca8"
     },
     {
       "path": "verify-response-contract-profile.mjs",
@@ -222,6 +222,10 @@
     {
       "path": "workflow-schema.js",
       "sha256": "656e9e632cea3a60e1c7e0fb486e6630d205011d7db32d9674ac5e88593d24f1"
+    },
+    {
+      "path": "verification/fixture-prerequisite-delta-review-20261008.json",
+      "sha256": "6a42b7c27a36bd28162e6f19a993ee92df8d818dc41d5f2b3279b9995c1b9226"
     }
   ],
   "findings": [],
@@ -326,5 +330,11 @@
   "currentDependencyDeltaReview": {
     "path": "verification/current-source-delta-review-20261007.json",
     "sha256": "45cca5871ac89cf1583a3825aec5a7d488d4d40dc70afb51a8534470dececf09"
+  },
+  "currentIntegratorFixtureDeltaReview": {
+    "path": "verification/fixture-prerequisite-delta-review-20261008.json",
+    "sha256": "6a42b7c27a36bd28162e6f19a993ee92df8d818dc41d5f2b3279b9995c1b9226",
+    "reviewedAtUtc": "2026-10-08T11:31:00Z",
+    "newIndependentSemanticReviewClaimed": false
   }
 }

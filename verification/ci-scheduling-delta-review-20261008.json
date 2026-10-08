@@ -1,6 +1,6 @@
 {
   "schema": "closed-loop-ci-scheduling-delta-review/1",
-  "reviewedAtUtc": "2026-10-08T10:38:57Z",
+  "reviewedAtUtc": "2026-10-08T11:27:00Z",
   "actor": "Codex current source integrator",
   "contextId": "/root",
   "priorIndependentSemanticReviewRetained": true,
@@ -20,7 +20,8 @@
     "test-due-verification-scheduling.mjs",
     "verify-executed-evidence.mjs",
     "verify-stage03-agent-protocol.mjs",
-    "collect-verification-evidence.mjs"
+    "collect-verification-evidence.mjs",
+    "verify-browser.mjs"
   ],
   "preFixEvidence": {
     "head": "32b9bf8018086e0c3bf3e81dc499abfcb55c1582",
@@ -44,6 +45,17 @@
       "startedAtUtc": "2026-10-08T10:26:08Z",
       "endedAtUtc": "2026-10-08T10:36:40Z",
       "result": "The response-authority producer passed and emitted 11 assertion IDs; its consumer expected only the previous 10 and failed at OBSERVATION_OWNER_ORACLE before examining the returned-slot ID set. The additional RESPONSE-CLOSED-FAMILY-BOUNDARY is registered in verification-evidence-catalog.mjs with 15 explicit rejections."
+    },
+    "localNormativeLinkMismatch": {
+      "boundary": "verify-executed-evidence.mjs -> composed exact owner receipts -> normativeRequirementTrace",
+      "sourceCommit": "41178d281428ca27ac9a80f68439594b73811999",
+      "startedAtUtc": "2026-10-08T11:10:30Z",
+      "endedAtUtc": "2026-10-08T11:20:16Z",
+      "result": "Producer population and catalog check passed, but the consumer required every emitted owner assertion to have a normative binding. RESPONSE-CLOSED-FAMILY-BOUNDARY is a supplemental catalog regression, absent from the reviewed normative binding list, so the old all-ID trace assertion failed."
+    },
+    "localBrowserPreviewMismatch": {
+      "boundary": "Built static site at head 41178d, actual local Chromium Stage 02 UI after startup and navigation",
+      "result": "The real generated instruction was 82408 characters; the UI explicitly displayed its exact 65536-character prefix with export guidance. The response schema occurred at character 73892. The old test wrongly required the schema and a removed transport phrase in visible truncated text; no app runtime failure was established."
     }
   },
   "platformSource": {
@@ -58,7 +70,9 @@
     "sourceChangesDoNotReplaceExecutionEvidence": true,
     "testOnlyCorrections": "The Stage 03 fixture still requires rejection of invalid nested targetId aliases, now asserted through both exact early nested-type rejection codes and paths; its conforming control passes. The scheduling fixture now asserts the separate checked producer and its 330-minute bounded budget while retaining failed, malformed, collector and direct execution controls. The evidence-owner assertion includes actual child stderr on failure. No product runtime rule was changed by these test corrections.",
     "ingestionReceiptReuse": "The executed-evidence consumer now requires and validates the exact current ingestion receipt when a receipt directory is configured, then uses its original reports and observations in all existing negative/ownership controls. Missing, stale, corrupt, or incomplete receipts fail; standalone execution without a receipt directory can still run the full owner with the existing bounded aggregate timeout. The shared producer helper accepts an explicit timeout without changing other callers.",
-    "ownerPopulation": "The consumer exact-set oracle now includes the independently registered RESPONSE-CLOSED-FAMILY-BOUNDARY check. No owner assertion or negative case was removed; omitted, duplicate, or unregistered IDs still fail the exact comparison. Full corrected consumer execution remains required."
+    "ownerPopulation": "The consumer exact-set oracle now includes the independently registered RESPONSE-CLOSED-FAMILY-BOUNDARY check. No owner assertion or negative case was removed; omitted, duplicate, or unregistered IDs still fail the exact comparison. Full corrected consumer execution remains required.",
+    "supplementalOwnerLinkage": "The exact owner ID universe and required catalog check remain enforced. The normative trace assertion now applies to the 17 IDs declared by reviewed normative bindings, while an explicit one-ID supplemental set checks RESPONSE-CLOSED-FAMILY-BOUNDARY. Any further missing normative binding or supplemental catalog check fails.",
+    "browserPreview": "The Stage 02 browser assertion checks the schema in the complete generated instruction, confirms the visible 65536-character preview is an exact prefix with export guidance, and checks the current file-first response guidance in the visible operator UI. It does not require a token beyond the preview cutoff to appear on screen."
   },
   "executedFocusedEvidence": {
     "nodeVersion": "22.23.3",
@@ -70,13 +84,18 @@
     "schedulingOwner": "PARTIAL: both synthetic scheduling fixture groups passed before the original broad evidence run reached its cold-checkout Stage 03 assertion; complete post-correction evidence owner remains running.",
     "actionlint": "PASS: actionlint v1.7.12, GitHub release SHA256 8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8; .github/workflows/pages.yml produced no diagnostics.",
     "ingestionReceipt": "PASS: current standalone ingestion producer exit 0; its actual receipt validated against exact integration source with 73 reports and 87 observations, SHA256 c94039f021a932722e5b756eb6a455d13ec478578dfcd4e44f3b8d0a795cd4f4. This receipt predates the final expected-ID source edit and cannot be promoted as final-source execution.",
-    "firstReuseOwner": "FAILED: current ingestion receipt was reused without another ingestion child and the consumer reached the independent authority owner; exact expected-ID population omitted one registered closed-family assertion. Corrected source must still execute."
+    "firstReuseOwner": "FAILED: current ingestion receipt was reused without another ingestion child and the consumer reached the independent authority owner; exact expected-ID population omitted one registered closed-family assertion. Corrected source must still execute.",
+    "currentIngestionReceipt": "PASS: Node 22.23.3, 2026-10-08T10:39:46Z–11:09:52Z, 73 reports/87 observations; current sourceCommit 41178d281428ca27ac9a80f68439594b73811999 and sourceInputsSha256 c80837fde27da99348a8959232ccf657da53dee37ed0d9f6a5866f1834fe6970 validated; receipt SHA256 3ea0c854db237ac40ba9bb08a09092f2542735e5a140e231cff36f55e6f1e932.",
+    "secondReuseOwner": "FAILED: reused current ingestion receipt without another ingestion child, then exact normative link assertion incorrectly included the supplemental closed-family ID. The producer catalog check itself passed; the corrected consumer still requires post-fix execution.",
+    "browserDiagnostic": "PASS: isolated actual built-head Chromium --startup-scroll-only at 320/393/1280 after correcting two stale visible-text premises; source built artifact remained 41178d. This diagnostic had a modified test file and is not final-source owning receipt."
   },
   "remainingEvidence": [
     "The replacement hosted deferred matrix must finish and produce a validated receipt on its exact source revision.",
     "The dependent complete test job, verified artifact, protected merge, Pages deployment, and live operator path must pass.",
     "The isolated local complete compatibility consumer is running; no verdict is recorded here.",
-    "The pre-fix complete executed-evidence owner failed at the measured 20-minute redundant ingestion timeout. The corrected reuse route and standalone fallback still require direct post-fix verification on the exact candidate."
+    "The pre-fix complete executed-evidence owner failed at the measured 20-minute redundant ingestion timeout. The corrected reuse route and standalone fallback still require direct post-fix verification on the exact candidate.",
+    "The exact owning browser file is running against the built head after the test-only correction; do not promote the isolated diagnostic as final-source owner proof.",
+    "The post-fix complete executed-evidence consumer still requires current-source ingestion receipt and execution; the 41178d receipt becomes stale after the source edit and cannot be restamped."
   ],
   "sourceSha256": {
     ".github/workflows/pages.yml": "09de20c336b249964d0ca6839f272694cb645463705528e0932b155f5f207cb7",
@@ -85,8 +104,9 @@
     "verify-spec-residual-closure.mjs": "d9649a4916d916e212d73a3ca756fe42d84e42cd1da9083f4d9e3b73ac8d4720",
     "verify-deferred-proof-handoff.mjs": "ee3e2826087d10e5bf023b4b66673e8e8f39965559b8cc7ec5f8896db2df02b0",
     "test-due-verification-scheduling.mjs": "c182697281c056c7f56734a305af1207c4a224ce98dc7a02fa62ea56e126f7b9",
-    "verify-executed-evidence.mjs": "b5c6122bcc7011d48758ceace1a9439adebc2299a77bafc28418c959bdb752dc",
+    "verify-executed-evidence.mjs": "134e748a1151204db579374f958c1a1ee6493b16e1bf6a658735b9ec44f2a668",
     "verify-stage03-agent-protocol.mjs": "23cacea56a1d54596bfd75146dcc1766f9b8bef849d0c777f9c2aacc7e240d7e",
-    "collect-verification-evidence.mjs": "408461939020fae60a99950e8fc42364132cd75eb5384dc05d29e75b253535ff"
+    "collect-verification-evidence.mjs": "408461939020fae60a99950e8fc42364132cd75eb5384dc05d29e75b253535ff",
+    "verify-browser.mjs": "1d69e2fcb227a1161e695db06c64fc27215b506137e95ec60aa66a3effc972bd"
   }
 }
