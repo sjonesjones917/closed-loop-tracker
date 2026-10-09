@@ -744,19 +744,23 @@ async function evidenceChainFrontierCases(r,{requiredBy=30}={}){
  await r.store.deleteArtifact(artifactId,accepted.job.JOB_ID);const missingBytes=e.evidenceChainResultState(accepted,requirement,{stage:30});assert.equal(missingBytes.complete,false);assert(missingBytes.missing.includes('TEST_RESULT:'+negative.id),'EVIDENCE_CHAIN_TYPED_BYTES_ORACLE');
  results.push({case:'EVIDENCE_CHAIN_DUE_FRONTIER_AND_TYPED_RECEIPT',boundary:'Actually authored/reviewed two-test archived prerequisite and actual supported Stage7 definition admission; disposable resolver clone with a synthetic canonical product, actual positive native predicate and actual reserved ZIP, returned-slot responsefile, operator acceptance and reload of a synthetic external typed receipt. No Stage29 release journey.',future:{earliest:8,requiredBy,at29:{targetAvailability:futureTiming.targetAvailability,executableNow:futureTiming.executableNow,dueNow:futureTiming.dueNow,inventoryRetained:true,executedReceiptIncludedInStage29Graph:requiredBy===29,executedHistoryRetained:true},at30MissingRejected:true},ordinaryNativePredicate:true,nativeInputAuthorityControls,typedFailureValidationReceipt:true,negativeNotAffirmativeProof:true,staleStoredFutureLinkRejected:true,malformedTimingRejected:true,lateMissingTargetsRemainBlocked:true,wrongHashTargetIsolationAndPhaseRejected:true,missingBytesRejected:true,stableChainIdentity,synthetic:true,actualBrowser:false,completePrerequisiteStages:false});
 }
-async function evidenceChainFrontierFaults(){
+async function evidenceChainFrontierFaults({only=null}={}){
  const file='workflow-engine.js',original=fs.readFileSync(file,'utf8'),faults=[];
  for(const[name,before,after,oracle,run]of[
   ['evidence-chain-future-treated-as-due',"if(!timing.dueNow)continue;\n    const negativeOnly=", "if(false&&!timing.dueNow)continue;\n    const negativeOnly=",'EVIDENCE_CHAIN_DUE_FRONTIER_ORACLE',evidenceChainFrontierCases],
   ['evidence-chain-stored-result-current-guard-omitted',"if(resultIds!==null){const currentIds=new Set(allResults.map(item=>recordId(item.record,item.collection)));", "if(false&&resultIds!==null){const currentIds=new Set(allResults.map(item=>recordId(item.record,item.collection)));",'EVIDENCE_CHAIN_FUTURE_STALE_LINK_ORACLE',evidenceChainFrontierCases],
-  ['evidence-chain-historical-pre-receipt-omitted',"priorReceipts:previous.map(row=>rid(row,'regressionExecutions'))",'priorReceipts:[]','EVIDENCE_CHAIN_PRE_HISTORY_ORACLE',deferredRegressionJourney],
+  // Keep PRE history available to the native POST executor; remove it only
+  // from the chain reader whose missing-link behavior this fault exercises.
+  ['evidence-chain-historical-pre-receipt-omitted','for(const id of [...item.priorReceipts,...item.receipts]){','for(const id of item.receipts){','EVIDENCE_CHAIN_PRE_POST_TYPED_ORACLE',deferredRegressionJourney],
   ['evidence-chain-noop-record-reuse-omitted','const unchangedPrior=prior&&prior.recordSha256===hash.recordSha256(prior)', 'const unchangedPrior=false&&prior&&prior.recordSha256===hash.recordSha256(prior)','EVIDENCE_CHAIN_NOOP_TARGET_IDENTITY_ORACLE',evidenceChainFrontierCases],
   ['evidence-chain-negative-receipt-promoted-to-affirmative',"if(item.kind==='REQUIREMENT_PROOF'&&recordValue(item.test,'TEST_ROLE')!=='NEGATIVE_ONLY')affirmativeEvidenceIds.add(id);",'affirmativeEvidenceIds.add(id);','EVIDENCE_CHAIN_NEGATIVE_AFFIRMATIVE_ORACLE',r=>evidenceChainFrontierCases(r,{requiredBy:29})]
  ]){
+  if(only&&name!==only)continue;
   assert.equal(original.split(before).length-1,1,'EVIDENCE_CHAIN_FAULT_ANCHOR_ORACLE: '+name);let caught;
   try{await run(runtime({[file]:original.replace(before,after)}));}catch(error){caught=error;}
   assert(caught?.message.includes(oracle),'Fault was not caught by its intended evidence-chain invariant: '+name+' '+caught?.message);faults.push({name,oracle,detected:true,observedCode:caught.code,observedMessage:caught.message,boundary:'Direct isolated canonical chain result resolver; actual native predicate or typed synthetic receipt'});assert.equal(fs.readFileSync(file,'utf8'),original);
  }
+ if(only)assert.equal(faults.length,1,'EVIDENCE_CHAIN_FAULT_SELECTION_ORACLE: '+only);
  return faults;
 }
 // These controls reuse an identity-checked, actually authored/reviewed synthetic
@@ -853,6 +857,8 @@ if(process.argv.includes('--stage-binding-regressions')){console.log(JSON.string
 if(process.argv.includes('--definition-compatibility-witness-only')){console.log(JSON.stringify(await verifyDefinitionCompatibilityWitnessReplay(process.argv.find(arg=>arg.startsWith('--definition-compatibility-witness='))?.slice('--definition-compatibility-witness='.length))));process.exit(0);}
 if(process.argv.includes('--definition-compatibility')){console.log(JSON.stringify(await verifyDefinitionCompatibility({onlyCase:process.argv.find(arg=>arg.startsWith('--definition-compatibility-case='))?.slice('--definition-compatibility-case='.length),witnessDirectory:process.argv.find(arg=>arg.startsWith('--definition-compatibility-witness='))?.slice('--definition-compatibility-witness='.length),prefixDirectory:process.argv.find(arg=>arg.startsWith('--definition-compatibility-prefix-dir='))?.slice('--definition-compatibility-prefix-dir='.length),generateLegacyFixture:process.argv.includes('--definition-compatibility-generate-legacy-fixture')})));process.exit(0);}
 if(process.argv.includes('--evidence-chain-frontier-only')){await evidenceChainFrontierCases(runtime());await evidenceChainFrontierCases(runtime(),{requiredBy:29});console.log(JSON.stringify({evidenceChainFrontier:'PASS',results}));process.exit(0);}
+const evidenceChainFault=process.argv.find(arg=>arg.startsWith('--evidence-chain-fault='))?.slice('--evidence-chain-fault='.length);
+if(evidenceChainFault){console.log(JSON.stringify({evidenceChainFault:'PASS',faults:await evidenceChainFrontierFaults({only:evidenceChainFault}),sourceRestored:true}));process.exit(0);}
 if(process.argv.includes('--evidence-chain-faults-only')){console.log(JSON.stringify({evidenceChainFaults:'PASS',faults:await evidenceChainFrontierFaults(),sourceRestored:true}));process.exit(0);}
 if(process.argv.includes('--deferred-reservations')){await deferredReservationBoundaries(runtime());console.log(JSON.stringify({deferredReservations:'PASS',results}));process.exit(0);}
 if(process.argv.includes('--conditional-handoff-material')){console.log(JSON.stringify(await verifyDeferredHandoffMaterialContract()));process.exit(0);}
