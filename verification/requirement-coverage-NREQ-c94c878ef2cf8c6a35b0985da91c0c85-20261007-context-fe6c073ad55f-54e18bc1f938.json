@@ -85,7 +85,7 @@
     },
     {
       "path": "verification-evidence-catalog.mjs",
-      "sha256": "84b51f38a50fb8169896008ab821c000e6dba8f6b0364576f2572c1a930c1930"
+      "sha256": "815be4bcc3e2b097f8a9607417356dea0d6e136b7555a197a8efcc7568fbb845"
     },
     {
       "path": "verification-evidence-preload.mjs",
