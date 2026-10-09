@@ -133,7 +133,7 @@
     },
     {
       "path": "verification-evidence-catalog.mjs",
-      "sha256": "815be4bcc3e2b097f8a9607417356dea0d6e136b7555a197a8efcc7568fbb845"
+      "sha256": "f1aa5344f635d85140e476e3775a87f1e03e4d509eb4ad5260a9bf82a6eb03e3"
     },
     {
       "path": "verification-evidence.mjs",
