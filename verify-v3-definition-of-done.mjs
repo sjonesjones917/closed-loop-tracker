@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
 import {selectExecutionReport} from './execution-report.mjs';
-import {applyAvailableExecutedEvidence,readExecutionReceipts} from './verification-evidence.mjs';
+import {applyAvailableExecutedEvidence,currentOwnerReport,readExecutionReceipts} from './verification-evidence.mjs';
 const read=path=>fs.readFileSync(new URL(path,import.meta.url),'utf8');
 const readIf=path=>{try{return read(path);}catch{return '';}};
 const schema=read('./workflow-schema.js'),runtime=read('./test-runtime.js'),worker=read('./test-worker.js'),engine=read('./workflow-engine.js'),prompt=read('./prompt-engine.js'),ingestion=read('./response-ingestion.js'),store=read('./project-store.js'),app=read('./app-core.js');
@@ -42,7 +42,7 @@ for(const [name,mutation] of [
   ['missing-ingestion',{...infrastructureProof,executableIngestionSuite:undefined}],
   ['failed-lifecycle',{...infrastructureProof,executableLifecycleSuite:false}]
 ])assert.throws(()=>assertInfrastructureProof(mutation),/INFRASTRUCTURE_GATE_ORACLE/,'Required infrastructure proof mutation was accepted: '+name);
-const mobileGovernanceProof=JSON.parse((await checkedVerifier(process.execPath,[new URL('./verify-mobile-release-governance.mjs',import.meta.url).pathname],{encoding:'utf8'})));
+const mobileGovernanceProof=await currentOwnerReport('verify-mobile-release-governance.mjs','mobileReleaseGovernance',{run:()=>checkedVerifier(process.execPath,[new URL('./verify-mobile-release-governance.mjs',import.meta.url).pathname],{encoding:'utf8'})});
 assert.equal(mobileGovernanceProof.mobileReleaseGovernance,'PASS');assert.equal(mobileGovernanceProof.actualIPhoneRequiredForTag,true);assert.equal(mobileGovernanceProof.unconditionalTagMutationDetected,true);assert.equal(mobileGovernanceProof.androidSubstitutionRejected,true);
 const specificationManifest=JSON.parse(read('./specification/closed-loop-specification-manifest.json'));
 const specificationGovernanceProof=JSON.parse((await checkedVerifier(process.execPath,[new URL('./verify-specification-governance.mjs',import.meta.url).pathname],{encoding:'utf8',maxBuffer:64*1024*1024,env:{...process.env,SOURCE_COMMIT:specificationManifest.sourceCommit}})));

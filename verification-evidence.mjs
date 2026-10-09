@@ -226,6 +226,7 @@ export function validateExecutionReceipt(receipt,suite,fingerprint){
   requireEvidence(receipt?.schema===RECEIPT_SCHEMA&&receipt.suite===suite,'receipt schema/producer mismatch');
   const {receiptSha256,...payload}=receipt;requireEvidence(receiptSha256===sha(payload),'receipt content digest mismatch');
   requireEvidence(receipt.complete===true&&receipt.exitCode===0&&receipt.outcome==='PASS','failed/incomplete receipt');
+  requireEvidence(Array.isArray(receipt.command)&&receipt.command.length===2&&path.basename(receipt.command[1])===suite,'receipt is not a complete default producer invocation');
   requireEvidence(receipt.producerFileSha256===fingerprint.inputSha256[suite],'receipt producer bytes are not the current registered verifier');
   requireEvidence(receipt.fingerprint?.sourceInputsSha256===fingerprint.sourceInputsSha256&&receipt.fingerprint.specificationSha256===fingerprint.specificationSha256&&receipt.fingerprint.catalogSha256===fingerprint.catalogSha256&&isDeepStrictEqual(receipt.fingerprint.runtime,fingerprint.runtime),'stale source/specification/catalog/runtime receipt');
   // Same tree promotion is permitted only through the verified-site owner. The
@@ -261,13 +262,23 @@ export function recordExecutionReceipt(result,{cwd=process.cwd(),directory=proce
   }
   const temporary=file+'.'+crypto.randomUUID()+'.partial';fs.writeFileSync(temporary,JSON.stringify(receipt,null,2)+'\n');fs.renameSync(temporary,file);return receipt;
 }
+export function readExecutionReceipt(directory,suite,fingerprint=evidenceFingerprint()){
+  requireEvidence(Object.hasOwn(verificationCatalog,suite),'unregistered producer '+suite);
+  const file=path.join(directory,suite+'.json');
+  return fs.existsSync(file)?validateExecutionReceipt(readJson(file),suite,fingerprint):null;
+}
+export async function currentOwnerReport(suite,marker,{directory=process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS,run}={}){
+  const receipt=directory?readExecutionReceipt(directory,suite):null;
+  if(receipt)return selectedReport(receipt.reports,marker);
+  requireEvidence(typeof run==='function','missing producer fallback for '+suite);
+  return selectedReport(executionReports(await run()),marker);
+}
 export function readExecutionReceipts(directory,fingerprint=evidenceFingerprint()){
   const receipts=new Map();
   for(const suite of Object.keys(verificationCatalog)){
-    const file=path.join(directory,suite+'.json');if(!fs.existsSync(file))continue;
     // A stale or corrupt mandatory receipt is a failed evidence handoff, rather
     // than a reason to silently reuse or replace an old green result.
-    const receipt=validateExecutionReceipt(readJson(file),suite,fingerprint);receipts.set(suite,receipt);
+    const receipt=readExecutionReceipt(directory,suite,fingerprint);if(receipt)receipts.set(suite,receipt);
   }
   for(const scope of ['LOCAL','DEPLOYED'])for(const suite of Object.keys(browserVerificationCatalog)){const file=path.join(directory,'browser',scope,suite+'.json');if(fs.existsSync(file)){const receipt=validateExecutionReceipt(readJson(file),suite,fingerprint);requireEvidence(receipt.browser.scope===scope,'browser receipt stored under wrong scope');receipts.set(`browser/${scope}/${suite}`,receipt);}}
   return receipts;

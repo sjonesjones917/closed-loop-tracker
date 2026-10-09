@@ -51,7 +51,7 @@ function comparisonModuleSource(file){
   if(source.split(injectedComparisonFault.from).length-1!==(injectedComparisonFault.expectedMatches||1))throw new Error('FAULT_ANCHOR_ORACLE: exact single fault location required.');
   source=source.replace(injectedComparisonFault.from,injectedComparisonFault.to);
  }
- if(file==='workflow-engine.js'){const anchor='globalThis.closedLoopWorkflowEngine=Object.freeze({stageContext,';assertSourceAnchor(source,anchor);source=source.replace(anchor,'globalThis.__comparisonFixtureOwners=Object.freeze({acceptedOperationSet,confirmationDetermination});\n'+anchor);}
+ if(file==='workflow-engine.js'){const anchor='globalThis.closedLoopWorkflowEngine=Object.freeze({jobPointerTargets,jobPointerIntegrityIssues,jobPointerProjectionRepairs,stageContext,';assertSourceAnchor(source,anchor);source=source.replace(anchor,'globalThis.__comparisonFixtureOwners=Object.freeze({acceptedOperationSet,confirmationDetermination});\n'+anchor);}
  return source;
 }
 

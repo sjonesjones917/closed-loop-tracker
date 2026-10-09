@@ -3,7 +3,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {checkedVerifier,runVerifier} from './verify-conformance-regressions.mjs';
 import {verificationCatalog,browserVerificationCatalog} from './verification-evidence-catalog.mjs';
-import {evidenceFingerprint,readExecutionReceipts,aggregateExecutedEvidence,validateExecutionReceipt,createExecutionReceipt,sha} from './verification-evidence.mjs';
+import {evidenceFingerprint,readExecutionReceipt,readExecutionReceipts,aggregateExecutedEvidence,validateExecutionReceipt,createExecutionReceipt,sha} from './verification-evidence.mjs';
 
 export async function executeEvidenceProducer(suite,{directory,cwd=process.cwd(),environment=process.env,fingerprint=evidenceFingerprint(cwd),evidenceDirectory,timeout}={}){
   if(!verificationCatalog[suite])throw new Error('EXECUTED_EVIDENCE_ORACLE: unregistered producer '+suite);
@@ -38,16 +38,39 @@ export async function collectVerificationEvidence({directory=process.env.CLOSED_
   const fingerprint=evidenceFingerprint(),receipts=readExecutionReceipts(directory,fingerprint);
   for(const suite of Object.keys(verificationCatalog)){
     if(receipts.has(suite))continue;
+    // An earlier producer may have executed this registered child and written
+    // its own receipt after the initial directory scan. Validate that receipt
+    // before deciding whether this suite still needs to run.
+    const current=readExecutionReceipt(directory,suite,fingerprint);
+    if(current){receipts.set(suite,current);continue;}
     if(!runMissing)throw new Error('EXECUTED_EVIDENCE_ORACLE: missing required current receipt '+suite);
     const receipt=await executeEvidenceProducer(suite,{directory,fingerprint});receipts.set(suite,receipt);
   }
-  const output=aggregateExecutedEvidence(receipts,fingerprint);output.evidenceSha256=sha(output);
+  if(sha(evidenceFingerprint())!==sha(fingerprint))throw new Error('EXECUTED_EVIDENCE_ORACLE: source identity changed during evidence collection');
+  // Never aggregate an earlier in-memory PASS after another child has replaced
+  // or invalidated that receipt. The final directory is the evidence source.
+  const finalReceipts=readExecutionReceipts(directory,fingerprint);
+  for(const suite of Object.keys(verificationCatalog))if(!finalReceipts.has(suite))throw new Error('EXECUTED_EVIDENCE_ORACLE: missing required current receipt '+suite);
+  const output=aggregateExecutedEvidence(finalReceipts,fingerprint);output.evidenceSha256=sha(output);
   if(outputPath){fs.mkdirSync(path.dirname(outputPath),{recursive:true});fs.writeFileSync(outputPath,JSON.stringify(output,null,2)+'\n');}
   return output;
 }
+export function exportOwnerReports({suite,marker,directory=process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS||'.verification-receipts'}={}){
+  if(!suite||!Object.hasOwn(verificationCatalog,suite))throw new Error('EXECUTED_EVIDENCE_ORACLE: unregistered export owner '+suite);
+  const fingerprint=evidenceFingerprint(),receipt=readExecutionReceipts(directory,fingerprint).get(suite);
+  if(!receipt)throw new Error('EXECUTED_EVIDENCE_ORACLE: missing required current receipt '+suite);
+  const reports=marker===undefined?receipt.reports:receipt.reports.filter(report=>Object.hasOwn(report,marker));
+  if(marker!==undefined&&(!marker||reports.length!==1))throw new Error('EXECUTED_EVIDENCE_ORACLE: expected exactly one report marker '+marker+'; received '+reports.length);
+  return reports.map(report=>JSON.stringify(report)).join('\n')+'\n';
+}
 if(process.argv[1]===fileURLToPath(import.meta.url)){
   const browserSuite=process.argv.find(arg=>arg.startsWith('--browser-suite='))?.slice(16);
-  if(browserSuite){await executeBrowserEvidenceProducer(browserSuite,{scope:process.argv.find(arg=>arg.startsWith('--browser-scope='))?.slice(16)});}else {
+  const exportOwner=process.argv.find(arg=>arg.startsWith('--export-owner='))?.slice(15);
+  if(process.argv.some(arg=>arg.startsWith('--export-owner=')||arg.startsWith('--report-marker='))){
+    const args=process.argv.slice(2),allowed=args.every(arg=>arg.startsWith('--export-owner=')||arg.startsWith('--report-marker='));
+    if(!allowed||args.filter(arg=>arg.startsWith('--export-owner=')).length!==1||args.filter(arg=>arg.startsWith('--report-marker=')).length>1)throw new Error('EXECUTED_EVIDENCE_ORACLE: incompatible report-export arguments');
+    process.stdout.write(exportOwnerReports({suite:exportOwner,marker:args.find(arg=>arg.startsWith('--report-marker='))?.slice(16)}));
+  }else if(browserSuite){await executeBrowserEvidenceProducer(browserSuite,{scope:process.argv.find(arg=>arg.startsWith('--browser-scope='))?.slice(16)});}else {
   const output=await collectVerificationEvidence({runMissing:process.argv.includes('--run-missing'),outputPath:process.argv.find(arg=>arg.startsWith('--out='))?.slice(6)||'.verification-receipts/evidence.json'});
   console.log(JSON.stringify({executedVerificationEvidence:'PASS',receiptCount:output.receiptCount,observationCount:output.observationCount,evidenceSha256:output.evidenceSha256,sourceCommit:output.fingerprint.sourceCommit,scopeHash:output.fingerprint.sourceInputsSha256}));
   }

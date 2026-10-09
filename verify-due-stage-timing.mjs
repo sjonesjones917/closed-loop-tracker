@@ -1204,15 +1204,27 @@ for(const status of ['RESERVED','EXPORTED']){
 
 if(process.argv.includes('--deferred-cache-only')){const generated=generateLegitimateDeferredPrefix();console.log(JSON.stringify({deferredCachedPackages:'PASS',setup:generated.setup,control:await verifyLegitimateDeferredCachedPackages(generated.prefix)}));process.exit(0);}
 
+// Keep phase timing outside the assertion report and flush after each phase so
+// a failed matrix still leaves useful diagnostics on its own runner.
+const deferredTimingFile='conformance-regression-evidence/deferred-phase-timings.json',deferredPhaseTimings=[];
+async function timedDeferredPhase(name,run){const start=process.hrtime.bigint(),startedAt=new Date().toISOString();try{return await run();}finally{deferredPhaseTimings.push({name,startedAt,finishedAt:new Date().toISOString(),durationMs:Number(process.hrtime.bigint()-start)/1e6});fs.mkdirSync('conformance-regression-evidence',{recursive:true});fs.writeFileSync(deferredTimingFile,JSON.stringify({schema:'closed-loop-deferred-phase-timings/1',synthetic:true,phases:deferredPhaseTimings},null,2)+'\n');}}
 const source=fs.readFileSync('workflow-schema.js','utf8'),r=runtime();
+await timedDeferredPhase('bounded-contract-controls',async()=>{
 results.push(deferredFixtureDecoderBounds());
 results.push(stage17CorrectionParentControls());results.push(stage17DeferredReceiptParentControls());results.push(await maintainedStageBindingRegressions());results.push(await verifyDeferredProducerContracts());results.push(await verifyDeferredByteCarrierContracts());
+});
+await timedDeferredPhase('receipt-and-native-journeys',async()=>{
 deferredReviewProvenance(runtime());await deferredArtifactOwnership(runtime());await deferredReservationBoundaries(runtime());await deferredReceiptJourney(runtime());await deferredNativeJourney(runtime());await deferredNativeJourney(runtime(),{executionStage:r.core.STAGES.at(-1).number});await deferredRegressionJourney(runtime());await evidenceChainFrontierCases(runtime());await evidenceChainFrontierCases(runtime(),{requiredBy:29});scalarCases(r);conditions(r);await availability(r);
 regressionIterationBoundary(r);regressionTimingConsumers(r);
 const completedFixture=process.argv.find(arg=>arg.startsWith('--completed-fixture='))?.slice('--completed-fixture='.length);if(completedFixture)await completedPhaseTargets(r,completedFixture);
-const generatedDeferredPrefix=generateLegitimateDeferredPrefix();results.push(generatedDeferredPrefix.setup);results.push(await verifyLegitimateDeferredCachedPackages(generatedDeferredPrefix.prefix));results.push(await legitimateDeferredReturnedJourney(generatedDeferredPrefix.prefix));
-const generatedDefinitionPrefixes=generateDefinitionCompatibilityPrefixes(generatedDeferredPrefix);results.push(generatedDefinitionPrefixes.setup);const definitionCompatibilityCohort=await verifyDefinitionCompatibility({prefixDirectory:generatedDefinitionPrefixes.directory});results.push({case:'DEFERRED_DEFINITION_COMPATIBILITY_ADMISSION',...definitionCompatibilityCohort});
+});
+const generatedDeferredPrefix=await timedDeferredPhase('legitimate-deferred-prefix',()=>generateLegitimateDeferredPrefix());results.push(generatedDeferredPrefix.setup);
+results.push(await timedDeferredPhase('cached-package-refresh',()=>verifyLegitimateDeferredCachedPackages(generatedDeferredPrefix.prefix)));
+results.push(await timedDeferredPhase('returned-file-admission',()=>legitimateDeferredReturnedJourney(generatedDeferredPrefix.prefix)));
+const generatedDefinitionPrefixes=await timedDeferredPhase('definition-compatibility-prefixes',()=>generateDefinitionCompatibilityPrefixes(generatedDeferredPrefix));results.push(generatedDefinitionPrefixes.setup);
+const definitionCompatibilityCohort=await timedDeferredPhase('definition-compatibility-admission',()=>verifyDefinitionCompatibility({prefixDirectory:generatedDefinitionPrefixes.directory}));results.push({case:'DEFERRED_DEFINITION_COMPATIBILITY_ADMISSION',...definitionCompatibilityCohort});
 const faults=[];
+await timedDeferredPhase('controlled-fault-populations',async()=>{
 for(const [name,before,after,oracle] of [
  ['stage-coercion',"!Number.isInteger(value[name])||!core.STAGES.some(stage=>stage.number===value[name])","!Number.isInteger(Number(value[name]))||!core.STAGES.some(stage=>stage.number===Number(value[name]))",'TIMING_SCALAR_ORACLE'],
  ['unknown-condition',"const visiting=new Set(),references=[];let count=0;", "if(value&&Object.hasOwn(value,'__UNREGISTERED_TARGET_CONDITION__'))return {valid:true,normalized:{type:'PHASE_TARGET'},references:[],reasons:[]};const visiting=new Set(),references=[];let count=0;",'CONDITION_GRAMMAR_ORACLE']
@@ -1276,5 +1288,6 @@ for(const [name,file,before,after,oracle,caseIds]of [
 }
 
 faults.push(...await evidenceChainFrontierFaults());
+});
 assert.equal(fs.readFileSync('workflow-schema.js','utf8'),source);scalarCases(r);conditions(r);
 console.log(JSON.stringify({dueStageTiming:'PASS',results,faults,sourceRestored:true,deferredDefinitionCompatibilityAdmission:definitionCompatibilityCohort.passed,verificationObservations:[{checkId:'DEFERRED-DEFINITION-COMPATIBILITY-ADMISSION',passed:definitionCompatibilityCohort.passed,boundary:definitionCompatibilityCohort.boundary,expected:definitionCompatibilityCohort.expected,observed:definitionCompatibilityCohort.observed,detail:definitionCompatibilityCohort}]}));
