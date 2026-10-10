@@ -1,0 +1,224 @@
+{
+  "schema": "closed-loop-coverage-resume/1",
+  "observedAtUtc": "2026-10-10T16:16:49.783728+00:00",
+  "repository": "sjonesjones917/closed-loop-tracker",
+  "baseCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
+  "headCommit": "1599f9cfb33cc246292ade693c877fbe200b1986",
+  "branch": "fix/stage01-agent-contract-alignment",
+  "workingTreeAtInspection": "Clean at initial scan; root later concurrently edited .github/workflows/pages.yml, verified-site.mjs and verify-verified-site.mjs. Preserved; not covered by clean-head scan.",
+  "scope": "Read-only cumulative inventory continuity and existing metadata identity checks. No app or tracked metadata edits; no CI run queried or started; no complete verification repeated.",
+  "specification": {
+    "schema": "closed-loop-specification-manifest/1",
+    "manifestIdentity": "SPEC-MANIFEST-498102a2bfeb9d52bef01a345914fd7d",
+    "generatorVersion": "closed-loop-governance-generator/9",
+    "sourceCommit": "8283121898e18d7868eef81c5ca8bebf0c9585c0",
+    "repositoryPath": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+    "artifactFilename": "closed-loop-reliability-controlling-implementation-specification.txt",
+    "byteLength": 342110,
+    "sha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
+    "physicalLineCount": 5806,
+    "logicalLineCount": 5807,
+    "contractProfileId": "closed-loop-completion-profile/1",
+    "normativeRequirementManifestIdentity": "NRM-498102a2bfeb9d52bef01a345914fd7d",
+    "normativeRequirementManifestSha256": "97b43f690b60219d67f498459439bce30416650b9f26c46c34a89b972a13929f",
+    "normativeRequirementManifestCanonicalSha256": "e0efbd27cbd574c4df9da7fc658540c3b438f15da62d8917ff1cd494b3c7fa7f",
+    "normativeRequirementManifestPath": "specification/closed-loop-normative-requirements.json",
+    "normativeRequirementCount": 4066,
+    "challengeAndReconciliation": {
+      "independentReviewerIdentity": "7e08fd37e0885c3de089d1939ea25515a1bc933dc45aa7997e8062d68ac845bb",
+      "independentReconciliationIdentity": "b2b22f137623d5916a025d12575152a36b2b8b20daa8100db5c420e4d90f87a8",
+      "sourceCoverageOnly": true,
+      "status": "ACCEPTED"
+    },
+    "manifestSha256": "6deda6533165a6a86ff605e4b70d8d730a4d6a318e9dc9d8eff46eeb8ec1531a"
+  },
+  "specificationBytesMatchManifest": true,
+  "stageCount": 30,
+  "operationCount": 104,
+  "operationExecutors": {
+    "EXTERNAL_AGENT": 88,
+    "APPLICATION": 13,
+    "HUMAN_DECISION": 1,
+    "OPERATOR_ACTION": 2
+  },
+  "ordinaryOperations": 66,
+  "conditionalDeferredOperations": 38,
+  "prPathCount": 1001,
+  "prChangeCounts": {
+    "M": 154,
+    "A": 847
+  },
+  "fileContinuityClasses": {
+    "CURRENT_HASH_MATCHES_RETAINED_SCOPED_REVIEW_INPUT": 542,
+    "RECOVERED_EXACT_SOURCE_SCOPED_REVIEW_RETAINED_WITH_ORIGINAL_LIMITS": 70,
+    "HISTORICAL_ALL_FILE_REVIEW_REPORTED_BACKING_INVENTORY_UNAVAILABLE": 52,
+    "CURRENT_HASH_REFERENCED_BY_RETAINED_DELTA_REVIEW": 180,
+    "CURRENT_ACTIVE_SCOPED_COVERAGE_REVIEW_RECORD": 156,
+    "CURRENT_DELTA_REVIEW_ASSIGNED_ACTIVATION_AGENT": 1
+  },
+  "latestReportCommit": "2c90a7dd982dd67b2ae41b91f9707dd73016da4d",
+  "deltaAfterLatestReport": [
+    "verify-project-activation.mjs"
+  ],
+  "deltaReviewOwner": "/root/activation_delta",
+  "metadataRenewalForLatestDeltaRequired": false,
+  "retainedCoverage": {
+    "normativeSourceEntries": 4066,
+    "reviewedContextEntries": 67,
+    "noncontextEntries": 3999,
+    "explicitFullClauseDesigns": 156,
+    "noncontextWithoutFullClauseDesign": 3843,
+    "assertionBindings": 263,
+    "activeReviewPaths": 156,
+    "staleActiveReviewBindings": 0,
+    "manifestDispositionCounts": {
+      "UNKNOWN": 210,
+      "IMPLEMENTED_UNPROVEN": 3856
+    },
+    "sourceInputsSha256": "14439e27e8651e41a7189ca7a9330080ce602ecb274ebee6526c23f577d455b4",
+    "executedConformanceClaim": false
+  },
+  "continuityGaps": {
+    "literalScratchReferences": 53,
+    "literalExistingAtInitialInspection": 0,
+    "missingScratchReferences": [
+      "/workspace/scratch/ci-audit/current-fixture-owner/external-cohort/run.json",
+      "/workspace/scratch/ci-audit/finite-four/review-record.json.",
+      "/workspace/scratch/ci-audit/harness-input-rebind/applied.json",
+      "/workspace/scratch/ci-audit/post-push-37560348583/review.json.",
+      "/workspace/scratch/ci-audit/report.txt.",
+      "/workspace/scratch/ci-audit/run-37578861934/closure-correction/coherent-run.json",
+      "/workspace/scratch/ci-audit/verifier-context-producer/before.json",
+      "/workspace/scratch/ci-audit/verifier-context-producer/coherent-focused.stdout",
+      "/workspace/scratch/ci-audit/worker-receipt-repair-record.json.",
+      "/workspace/scratch/ci-ingestion-order/{ingestion-final",
+      "/workspace/scratch/current-context-rebind/applied.json",
+      "/workspace/scratch/current-deferred-regression-control.log",
+      "/workspace/scratch/current-evidence-chain-",
+      "/workspace/scratch/current-evidence/candidate-ingestion-passed.json",
+      "/workspace/scratch/current-evidence/ci-37578861934-current.json",
+      "/workspace/scratch/current-evidence/integrated-build-4183/mobile/capability.json",
+      "/workspace/scratch/current-evidence/integrated-build-4183/snapshot.json.",
+      "/workspace/scratch/current-evidence/response-harness-integration/record.json",
+      "/workspace/scratch/current-evidence/storage-capacity/execution-manifest.json.",
+      "/workspace/scratch/normative-review/artifact-byte-sharing-repair-record.json.",
+      "/workspace/scratch/normative-review/current-deferred-prerequisites/integration-record.json",
+      "/workspace/scratch/normative-review/persisted-scope-fixture-repair.json",
+      "/workspace/scratch/normative-review/synthetic-version-fixture-repair.json",
+      "/workspace/scratch/pr-review/43-dependency-renewal-review.json",
+      "/workspace/scratch/pr-review/catalog-final-independent-delta-review.json.",
+      "/workspace/scratch/pr-review/data-route-projection-final-review.json",
+      "/workspace/scratch/pr-review/file-first-intake-harness-review.json",
+      "/workspace/scratch/pr-review/final-backup-sequence-harness-review.json",
+      "/workspace/scratch/pr-review/navigation-draft-independent-review.json.",
+      "/workspace/scratch/pr-review/persisted-scope-fixture-review.json",
+      "/workspace/scratch/pr-review/response-intake-harness-dependencies-review.json",
+      "/workspace/scratch/pr-review/run-carrier-policy-applicability-review.json",
+      "/workspace/scratch/pr-review/synthetic-version-fixture-review.json",
+      "/workspace/scratch/pr-review/verifier-context-final-51-runtime-owner-approval.json",
+      "/workspace/scratch/pr-review/working-pr-context-applied-inventory.json",
+      "/workspace/scratch/pr-review/working-pr-frozen-source-inventory.json",
+      "/workspace/scratch/pr-review/working-pr-frozen-source-inventory.json.",
+      "/workspace/scratch/recovery/next/evidence/complete-system-root-cause-inventory.json.",
+      "/workspace/scratch/release-normative-review/current-build-4179/overflow-disclosure-diagnosis.json.",
+      "/workspace/scratch/release-normative-review/inbound-archive-defect.json.",
+      "/workspace/scratch/release-normative-review/mobile-target-correction-status.json.",
+      "/workspace/scratch/stage-review/ci-contract-alignment-37560348583/review.json",
+      "/workspace/scratch/stage-review/current-operation-coverage.json",
+      "/workspace/scratch/stage-review/current-stage-matrix.json",
+      "/workspace/scratch/stage-review/file-first-intake-harness-fix/record.json",
+      "/workspace/scratch/stage-review/final-backup-sequence-fix/record.json",
+      "/workspace/scratch/stage-review/final-pointer-mobile-schema-delta.json.",
+      "/workspace/scratch/stage-review/ingestion-suffix-checks/manifest.json",
+      "/workspace/scratch/stage-review/native-context-4184/record.json",
+      "/workspace/scratch/stage-review/section35-six-staging-detection-classes.json.",
+      "/workspace/scratch/stage-review/verifier-context-ui/before-selection.json",
+      "/workspace/scratch/stage-review/verifier-context-ui/current-record.json",
+      "/workspace/scratch/system-diagnosis/quality-primary-sources-20261004/."
+    ],
+    "olderTaskRegister": {
+      "path": "verification/current-task-requirement-register.json",
+      "rows": 4343,
+      "allRowsStatus": "UNVERIFIED",
+      "status": "HISTORICAL_SPECIFICATION_SNAPSHOT; NOT_CURRENT_4066_REQUIREMENT_INVENTORY"
+    },
+    "historicalRecoveryCheckpoint": {
+      "url": "https://github.com/sjonesjones917/closed-loop-tracker/pull/1248#issuecomment-6027182767",
+      "manifestGitBlob": "23cb364dbdba418910f30b59f66a22212f304a3c",
+      "reportedMembers": 1496,
+      "capturedUtc": "2026-10-06T23:08:56Z",
+      "scope": "Older WIP checkpoint. Matching scoped source/descriptor reviews restored, not full current verification.",
+      "retrievedAndValidated": true,
+      "archiveSha256": "415de13c078cf0175bd06ea41bddf3d8efd23b64311e142a51ce1c96d3588e0f",
+      "rootRecoveryValidation": {
+        "checkedAtUtc": "2026-10-10T16:14:17.361533+00:00",
+        "archiveSha256": "415de13c078cf0175bd06ea41bddf3d8efd23b64311e142a51ce1c96d3588e0f",
+        "validatedMembers": 1496,
+        "extractedEvidenceAndReferenceFiles": 612,
+        "destination": "/workspace/scratch/recovered-20261006",
+        "scope": "Historical WIP byte recovery only; no current source overwrite or verification promotion"
+      },
+      "continuationSelectedMemberValidation": "recovered-review-continuity.json"
+    },
+    "originalLiteralPathsRemainAbsentButRebasedRecoveryNowAvailable": true
+  },
+  "deliveryGateSequence": {
+    "specificationLines": "5077-5113",
+    "nextGate": "Actual current required PR test and applicable protected-branch requirements; parent owns run/branch-protection observation.",
+    "then": "Merge existing repair candidate, main deploy of sealed tested artifact, exact origin/bytes, deployed browser, actual physical iPhone, final acceptance publication, release tag.",
+    "finalPublicationOwner": "final-acceptance.mjs:evaluateFinalAcceptance -> verification-evidence.mjs:validateFinalNormativeProof",
+    "finalPublicationRequires": [
+      "current complete normative proof",
+      "all Section49 metrics/zero invariants",
+      "approved visual baseline evidence",
+      "physical iPhone evidence bound to final deployed target",
+      "test/deploy/live success"
+    ],
+    "noPrematureGate": "Full final publication evidence does not become a predeployment condition; \u00a746 requires deployment before live and physical proof. Known implementation defects and actual required-test failures remain premerge blockers."
+  },
+  "outstandingReleaseObligations": [
+    "Reconcile activation_delta review and any confirmed current defects before next coherent push after existing required run terminates.",
+    "Observe actual existing required CI result; preserve independent passed evidence under exact source/environment/artifact identity rules.",
+    "Restore/reference unavailable detailed all-file/operation review backing when possible; current reconstructed inventory records scope limits and does not assert historical review it cannot inspect.",
+    "Obtain complete current source-specific normative proof for final acceptance; 3843 missing full-clause declarations are evidence gaps, not automatically distinct defects.",
+    "Complete normal new/existing project, full operator, file-first, save/reload, backup/restore and delivery journeys under required source/built/live boundaries; synthetic controls do not establish real external actor or physical device actions.",
+    "Perform authorized merge/deployment as soon as actual protected PR barrier is met; then exact live bytes/browser proof.",
+    "Record actual physical iPhone Safari and approved visual baseline through existing supported evidence paths; never convert emulation or fixture facts to human observations."
+  ],
+  "commands": [
+    {
+      "purpose": "metadata identity scan",
+      "boundary": "existing evidenceFingerprint/reviewedContextApplicability/coverageDeclarationSha256; file SHA comparison",
+      "result": "PASS; 156/156 current, 0 stale",
+      "runtime": "Node v24.19.0; declaration/hash inspection only, not CI runtime equivalence"
+    },
+    {
+      "purpose": "actual operation registry load",
+      "result": "PASS; exactly 30 stages and 104 operations",
+      "boundary": "workbook/hash/schema loaded through verifier-runtime; no behavior execution claim",
+      "initialAttempt": "Harness lacked dispatchEvent and stopped at workbook load; corrected browser Event/dispatchEvent adapters identical in role to registry owner; not a product failure."
+    }
+  ],
+  "outputs": [
+    "verification/release-resume-20261010-current-pr-file-inventory.tsv",
+    "verification/release-resume-20261010-current-operation-registry.json",
+    "verification/release-resume-20261010-stage-matrix-continuity.json",
+    "verification/release-resume-20261010-normative-status-inventory.tsv",
+    "verification/release-resume-20261010-active-review-input-scan.json",
+    "verification/release-resume-20261010-recovered-review-continuity.json",
+    "verification/release-resume-20261010-quality-practice-continuity.json"
+  ],
+  "fileInventoryIdentity": "Every file SHA-256 and review-reference comparison in current-pr-file-inventory.tsv uses Git blob bytes from 1599f9cfb33cc246292ade693c877fbe200b1986; concurrent working-tree edits excluded.",
+  "scopeLimit": "Hash matches identify surviving narrow review provenance, not a fresh full-file content review, execution pass, or whole-clause conformance. Missing backing records are not proof past review did not occur.",
+  "recoveredEvidenceContinuity": {
+    "recoveryRecord": "recovered-review-continuity.json",
+    "qualityPracticeRecord": "quality-practice-continuity.json",
+    "exactHashMatchedHistoricalInventoryFiles": 551,
+    "reportOnlyFilePathsResolved": 70,
+    "remainingReportOnlyPaths": 52,
+    "allOperationDescriptorsMatch": true,
+    "specificationWorkbookAndRecoveryAmendmentBytesUnchanged": true,
+    "changedRuntimeOwnersDoNotInheritExecutedConformance": true
+  },
+  "retentionNote": "The compact active scan retains every declaration status, stale-input/owner result and reviewed-input count; detailed old inputs remain in the exact pinned Git revision of each active review record."
+}

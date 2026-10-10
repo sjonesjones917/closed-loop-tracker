@@ -7,9 +7,39 @@ import {execFileSync} from 'node:child_process';
 import {verifyDueEvidenceConsumers} from './test-due-evidence-consumers.mjs';
 import {verifyDueVerificationScheduling,verifyCrossRunVerificationScheduling} from './test-due-verification-scheduling.mjs';
 import {runVerifier,AGGREGATE_TIMEOUT_MS} from './verify-conformance-regressions.mjs';
-import {evidenceFingerprint,createExecutionReceipt,validateExecutionReceipt,aggregateExecutedEvidence,readExecutedEvidence,observationsFromReports,sha} from './verification-evidence.mjs';
+import {evidenceFingerprint,createExecutionReceipt,validateExecutionReceipt,aggregateExecutedEvidence,readExecutedEvidence,readExecutionReceipt,observationsFromReports,sha} from './verification-evidence.mjs';
 import {metricCatalog,verificationCatalog,browserVerificationCatalog} from './verification-evidence-catalog.mjs';
 import {collectVerificationEvidence,executeEvidenceProducer} from './collect-verification-evidence.mjs';
+
+const ownershipSuites=['verify-ingestion.mjs','verify-response-authority-integrity.mjs','verify-returned-slot-authority.mjs'];
+async function ownershipReceiptSource(owner,{currentReceiptDirectory=process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS,readReceipt=readExecutionReceipt,run=executeEvidenceProducer,fallbackDirectory,evidenceDirectory}={}){
+  if(currentReceiptDirectory){
+    const receipt=readReceipt(currentReceiptDirectory,owner);
+    if(!receipt)throw new Error('EXECUTED_EVIDENCE_ORACLE: current ownership receipt is missing for '+owner+'; run '+owner+' before this consumer.');
+    return receipt;
+  }
+  return run(owner,{directory:fallbackDirectory,evidenceDirectory,timeout:owner==='verify-ingestion.mjs'?AGGREGATE_TIMEOUT_MS:undefined});
+}
+async function verifyOwnershipReceiptRouting(load=ownershipReceiptSource){
+  const cases=[];
+  for(const owner of ownershipSuites){
+    const receipt={suite:owner,reports:[{syntheticOwnershipRouting:true,exactReport:{preserved:[1,2,3]}}]},currentReceiptDirectory='SYNTHETIC_CURRENT_RECEIPTS';
+    let calls=0,reads=0;
+    const options={currentReceiptDirectory,readReceipt:(directory,suite)=>{reads++;assert.equal(directory,currentReceiptDirectory);assert.equal(suite,owner);return receipt;},run:async()=>{calls++;throw new Error('OWNERSHIP_RECEIPT_REUSE_ORACLE: current owner started again.');}};
+    assert.equal(await load(owner,options),receipt,'OWNERSHIP_RECEIPT_COMPLETE_REPORT_ORACLE');assert.equal(calls,0);assert.equal(reads,1);
+    await assert.rejects(()=>load(owner,{...options,readReceipt:()=>null}),/current ownership receipt is missing/,'OWNERSHIP_RECEIPT_MISSING_ORACLE');assert.equal(calls,0);
+    for(const reason of ['stale source/specification/catalog/runtime receipt','receipt content digest mismatch','failed/incomplete receipt']){
+      const failure=new Error('EXECUTED_EVIDENCE_ORACLE: '+reason);
+      await assert.rejects(()=>load(owner,{...options,readReceipt:()=>{throw failure;}}),error=>error===failure,'OWNERSHIP_RECEIPT_INVALID_ORACLE');assert.equal(calls,0);
+    }
+    const fallback=await load(owner,{currentReceiptDirectory:null,fallbackDirectory:'SYNTHETIC_PRIVATE_RECEIPTS',evidenceDirectory:'SYNTHETIC_RUNNER',run:async(suite,options)=>{
+      calls++;assert.equal(suite,owner);assert.deepEqual(options,{directory:'SYNTHETIC_PRIVATE_RECEIPTS',evidenceDirectory:'SYNTHETIC_RUNNER',timeout:owner==='verify-ingestion.mjs'?AGGREGATE_TIMEOUT_MS:undefined});return receipt;
+    }});
+    assert.equal(fallback,receipt);assert.equal(calls,1);
+    cases.push({owner,currentReceiptExtraInvocations:0,standaloneAbsentInvocations:1,completeReportPreserved:true,missingCurrentRejected:true,invalidCurrentRejectedWithoutFallback:true});
+  }
+  return {syntheticRoutingControls:true,receiptAuthenticationClaimed:false,cases};
+}
 
 // This exercises the real preload producer, not a YAML presence or mocked
 // successful suite. The unchanged Stage 03 verifier first runs all its actual
@@ -43,6 +73,9 @@ assert.throws(()=>assertActiveFixtureInputs([...activeFixtureInputs.slice(0,-1),
 fixtureCatalogMutations.push({file:'verification/unknown-fixture.json',mutation:'changed-path',result:'DETECTED'});
 const producerFixtureInputs=['verify-stage03-agent-protocol.mjs','verifier-runtime.mjs','workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','verification-evidence-preload.mjs','verification-evidence.mjs','deployment-contract-identities.mjs','browser-execution-evidence.mjs','evaluate-mobile-acceptance-submission.mjs','verify-mobile-acceptance-evidence.mjs','verification-evidence-catalog.mjs','verification-negative-populations.json','verification-assertion-bindings.json','specification/closed-loop-reliability-controlling-implementation-specification.txt',governanceDeclaration,...governedApprovalInputs,...declaredVerifierInputs];
 try{
+  const ownershipReceiptRoutingControl=await verifyOwnershipReceiptRouting();
+  await assert.rejects(()=>verifyOwnershipReceiptRouting((owner,options)=>options.run(owner,{})),/OWNERSHIP_RECEIPT_REUSE_ORACLE/,'OWNERSHIP_RECEIPT_FORMER_DUPLICATION_ORACLE');
+  ownershipReceiptRoutingControl.formerDuplicateOwnerRejected=true;
   const dueSchedulingControl=await verifyDueVerificationScheduling(path.join(directory,'due-scheduling'));
   const crossRunSchedulingControl=await verifyCrossRunVerificationScheduling(path.join(directory,'cross-run-scheduling'));
   // Project the maintained workflow's actual job and initial checkout step
@@ -233,17 +266,10 @@ try{
       'ATTACHMENT-SLOT-INVENTED-REJECTED','ATTACHMENT-SLOT-FOREIGN-REJECTED','ATTACHMENT-SLOT-ROLE-MISMATCH-REJECTED','ATTACHMENT-PACKAGE-EXACT-SLOT-BYTES','BOUNDARY-CORRECTED-RETURNED-FILE-RETRY','RETURNED-BYTE-CUSTODY-RETRY-RECOVERY','ACTUAL-UI-RETURNED-BYTE-REVERIFY'
     ]
   };
-  const ownershipSuites=['verify-ingestion.mjs','verify-response-authority-integrity.mjs','verify-returned-slot-authority.mjs'];
   const ownershipReceipts=new Map();
-  // The workflow has already executed ingestion under the receipt preload.
-  // Revalidate those exact bytes instead of repeating its large-history work
-  // under this consumer's shorter child deadline. Standalone invocation may
-  // still establish the receipt itself with a bound that permits that work.
-  const currentReceiptDirectory=process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS;
-  const currentIngestionPath=currentReceiptDirectory&&path.join(currentReceiptDirectory,'verify-ingestion.mjs.json');
-  if(currentReceiptDirectory&&!fs.existsSync(currentIngestionPath))throw new Error('EXECUTED_EVIDENCE_ORACLE: current ingestion receipt is missing; run verify-ingestion.mjs before this consumer.');
-  const currentIngestion=currentIngestionPath?validateExecutionReceipt(JSON.parse(fs.readFileSync(currentIngestionPath,'utf8')),'verify-ingestion.mjs',evidenceFingerprint()):null;
-  for(const owner of ownershipSuites)ownershipReceipts.set(owner,owner==='verify-ingestion.mjs'&&currentIngestion?currentIngestion:await executeEvidenceProducer(owner,{directory:path.join(directory,'ownership-receipts'),evidenceDirectory:path.join(directory,'ownership-runner'),timeout:owner==='verify-ingestion.mjs'?AGGREGATE_TIMEOUT_MS:undefined}));
+  // Foundation owns all three complete proofs. Require their validated current
+  // receipts in CI; a standalone invocation retains the original producer path.
+  for(const owner of ownershipSuites)ownershipReceipts.set(owner,await ownershipReceiptSource(owner,{fallbackDirectory:path.join(directory,'ownership-receipts'),evidenceDirectory:path.join(directory,'ownership-runner')}));
   const wrapper=ownershipReceipts.get('verify-ingestion.mjs'),canonicalIds=ownershipSuites.slice(1).flatMap(owner=>ownershipReceipts.get(owner).reports.flatMap(report=>report.verificationObservations||[]).map(row=>row.checkId));
   for(const [owner,expectedIds]of Object.entries(expectedCanonicalIdsByOwner)){
     const actualIds=ownershipReceipts.get(owner).reports.flatMap(report=>report.verificationObservations||[]).map(row=>row.checkId);
@@ -496,7 +522,7 @@ try{
   assert.equal(empty.zeroCounts.staleProposalsAccepted,null,'Absent negative execution was published as zero accepted violations.');
   const saved=metricCatalog.closedMetricUniverseCoverage.checkIds;metricCatalog.closedMetricUniverseCoverage.checkIds=[];
   try{assert.throws(()=>aggregateExecutedEvidence(new Map(),evidenceFingerprint()),/empty\/duplicate metric universe/);}finally{metricCatalog.closedMetricUniverseCoverage.checkIds=saved;}
-  const ownReport={executedEvidenceProtection:'PASS',deferredCatalogConsumerControl,dueSchedulingControl,crossRunSchedulingControl,coldCheckoutCases,producerViolationsRejected:producerControls.every(row=>row.result==='DETECTED'),syntaxChecksDoNotClaimExecution:true,syntaxPopulationCases,collectorOwnOutputControl,governanceFingerprintControl,governanceFingerprintInputs:true,activeFixtureFingerprintControl,activeHelperFingerprintControl,activeFixtureFingerprintInputs:true,normativeRegistryLinkageControl,observationOwnershipControl,emptyUniverseRejected:true,controlledProducerPopulation:producerControls,actualConformingStage03AssertionsExecuted:true,missingEvidenceRemainsUnknown:true,verificationObservations:[{checkId:'evidence.real-producer-controls',boundary:'actual Node exit/preload -> receipt consumer',expected:'ALL_CONTROLS_REJECTED_FOR_NAMED_REASON',observed:producerControls,passed:true,requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt#49']},{checkId:'APPROVED-GOVERNANCE-SOURCE-BYTES',boundary:governanceFingerprintControl.boundary,expected:{actualGovernanceByteHashBound:true,changedBytesRejectActualReceipt:true,missingBytesFailHonestly:true,untrackedBytesBound:true,untrackedMutationRejectsActualReceipt:true,exactRestoreAdmitsActualReceipt:true,formerMarkdownOmissionReproduced:true},observed:{actualGovernanceByteHashBound:governanceSourceCases.every(row=>row.actualByteHashBound),changedBytesRejectActualReceipt:governanceSourceCases.every(row=>row.changedBytesRejectActualReceipt),missingBytesFailHonestly:governanceSourceCases.every(row=>row.missingBytesFailHonestly),untrackedBytesBound:governanceSourceCases.every(row=>row.untrackedBytesBound),untrackedMutationRejectsActualReceipt:governanceSourceCases.every(row=>row.untrackedMutationRejectsActualReceipt),exactRestoreAdmitsActualReceipt:governanceSourceCases.every(row=>row.exactRestoreAdmitsActualReceipt),formerMarkdownOmissionReproduced:true},passed:true,requirementRefs:[96]}]};
+  const ownReport={executedEvidenceProtection:'PASS',ownershipReceiptRoutingControl,deferredCatalogConsumerControl,dueSchedulingControl,crossRunSchedulingControl,coldCheckoutCases,producerViolationsRejected:producerControls.every(row=>row.result==='DETECTED'),syntaxChecksDoNotClaimExecution:true,syntaxPopulationCases,collectorOwnOutputControl,governanceFingerprintControl,governanceFingerprintInputs:true,activeFixtureFingerprintControl,activeHelperFingerprintControl,activeFixtureFingerprintInputs:true,normativeRegistryLinkageControl,observationOwnershipControl,emptyUniverseRejected:true,controlledProducerPopulation:producerControls,actualConformingStage03AssertionsExecuted:true,missingEvidenceRemainsUnknown:true,verificationObservations:[{checkId:'evidence.real-producer-controls',boundary:'actual Node exit/preload -> receipt consumer',expected:'ALL_CONTROLS_REJECTED_FOR_NAMED_REASON',observed:producerControls,passed:true,requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt#49']},{checkId:'APPROVED-GOVERNANCE-SOURCE-BYTES',boundary:governanceFingerprintControl.boundary,expected:{actualGovernanceByteHashBound:true,changedBytesRejectActualReceipt:true,missingBytesFailHonestly:true,untrackedBytesBound:true,untrackedMutationRejectsActualReceipt:true,exactRestoreAdmitsActualReceipt:true,formerMarkdownOmissionReproduced:true},observed:{actualGovernanceByteHashBound:governanceSourceCases.every(row=>row.actualByteHashBound),changedBytesRejectActualReceipt:governanceSourceCases.every(row=>row.changedBytesRejectActualReceipt),missingBytesFailHonestly:governanceSourceCases.every(row=>row.missingBytesFailHonestly),untrackedBytesBound:governanceSourceCases.every(row=>row.untrackedBytesBound),untrackedMutationRejectsActualReceipt:governanceSourceCases.every(row=>row.untrackedMutationRejectsActualReceipt),exactRestoreAdmitsActualReceipt:governanceSourceCases.every(row=>row.exactRestoreAdmitsActualReceipt),formerMarkdownOmissionReproduced:true},passed:true,requirementRefs:[96]}]};
   const ownGovernanceCheck='receipts.approved-governance-input-observation';
   assert.equal(observationsFromReports('verify-executed-evidence.mjs',[ownReport]).find(row=>row.checkId===ownGovernanceCheck)?.passed,true,'GOVERNANCE_INPUT_OBSERVATION_ORACLE: actual owner population was not admitted.');
   for(const variant of ['omitted','wrong-value','missing-field','extra-field']){

@@ -12,53 +12,90 @@ import {evidenceFingerprint,readExecutionReceipts,aggregateExecutedEvidence,sha 
 const hash=globalThis.closedLoopHash;
 export const manifestName='closed-loop-deployment-manifest.json';
 export const runtimePaths=['index.html','workbook.js','hash.js','workflow-schema.js','test-runtime.js','test-worker.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js','TEST_PROJECT.json','.nojekyll'];
+export const foundationProofSteps=[
+  'Syntax','Schema, ownership, and single-architecture proof','Deployment manifest, build identity, and reproducibility',
+  'Complete 30-stage canonical data-route closure','Contract-profile migration','Stage 01 agent response contract alignment',
+  'Stage 01 raw intake and semantic accounting','Stage 02 bounded search and Stage 03 omission challenge',
+  'Stage 04 obligation accounting and prompt completeness','Test IR validation, security, and deterministic runtime',
+  'Raw-first ingestion and negative cases','Preserve foundation proof'
+];
+export const workflowGateProofSteps=[
+  'Download foundation proof','Validate foundation ingestion receipt','Download complete deferred matrix receipt',
+  'Validate complete deferred matrix receipt','Validate current registry receipt','Cross-stage contract gates','Physical iPhone release-tag governance',
+  'Workflow and gates','Prompt semantics and leakage','Preserve workflow gate proof'
+];
 export const fullTestSteps=[
-  'Require successful deferred matrix job','Require successful conformance groups','Download complete conformance group reports','Download complete conformance execution receipts','Validate complete conformance handoff','Verified artifact reuse checks','Require deferred matrix proof or verified artifact reuse','Download complete deferred matrix receipt','Validate complete deferred matrix receipt','Syntax','Stage 01 agent response contract alignment','Stale project navigation and draft preservation','Verification routing and capability evidence','Startup and scrolling at phone and desktop sizes',
-  'Acceptance viewport regression and targeted layout fault','Deployment manifest, build identity, and reproducibility',
-  'Physical iPhone release-tag governance','Schema, ownership, and single-architecture proof',
-  'Complete 30-stage canonical data-route closure','Migration and v3 contracts',
-  'Stage 01 raw intake and semantic accounting','Stage 04 obligation accounting and prompt completeness',
-  'Test IR validation, security, and deterministic runtime','Raw-first ingestion and negative cases',
-  'Workflow and gates','Prompt semantics and leakage','Full cycle and terminal boundary',
-  'Build static application for operator verification','Local Chromium operator path',
+  'Require successful foundation job','Require successful workflow gate job','Require successful deferred matrix job','Require successful conformance groups',
+  'Download workflow gate proof','Validate workflow gate ingestion receipt','Download complete conformance group reports',
+  'Download complete conformance execution receipts','Validate complete conformance handoff','Verified artifact reuse checks',
+  'Require deferred matrix proof or verified artifact reuse','Download complete deferred matrix receipt','Validate complete deferred matrix receipt',
+  'Full cycle and terminal boundary','Complete current non-browser assertion evidence','Stale project navigation and draft preservation',
+  'Verification routing and capability evidence','Startup and scrolling at phone and desktop sizes',
+  'Acceptance viewport regression and targeted layout fault','Build static application for operator verification','Local Chromium operator path',
   'Collect current executed assertion evidence','Seal verified deployment artifact'
 ];
 export const digest=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
 const requireValue=(condition,message)=>{if(!condition)throw new Error(message);};
+function workflowJob(workflow,name){
+  const marker='\n  '+name+':\n',start=workflow.indexOf(marker);
+  requireValue(start>=0,'Required '+name+' proof job is absent.');
+  const following=workflow.slice(start+marker.length),end=following.search(/\n  [a-z][\w-]*:\n/);
+  return end<0?following:following.slice(0,end);
+}
 export function assertLifecycleWorkflowCommand(workflow){
-  const deferredStart=workflow.indexOf('\n  deferred-matrix:\n');
-  requireValue(deferredStart>=0,'Required deferred matrix proof job is absent.');
-  const deferredFollowing=workflow.slice(deferredStart+'\n  deferred-matrix:\n'.length),deferredEnd=deferredFollowing.search(/\n  [a-z][\w-]*:\n/),deferredJob=deferredEnd<0?deferredFollowing:deferredFollowing.slice(0,deferredEnd);
+  const foundation=workflowJob(workflow,'foundation'),deferredJob=workflowJob(workflow,'deferred-matrix'),workflowGates=workflowJob(workflow,'workflow-gates'),conformanceJob=workflowJob(workflow,'conformance'),protectedTest=workflowJob(workflow,'test');
+  requireValue(deferredJob.includes('    needs: foundation\n')&&workflowGates.includes('    needs: [foundation, deferred-matrix]\n')&&conformanceJob.includes('    needs: workflow-gates\n')&&protectedTest.includes('    needs: [foundation, deferred-matrix, workflow-gates, conformance]\n'),'Required proof phase dependencies must preserve foundation, deferred, workflow, conformance, and browser order.');
+  let previous=-1;
+  for(const name of foundationProofSteps){const marker='      - name: '+name+'\n',at=foundation.indexOf(marker);requireValue(at>previous&&foundation.indexOf(marker,at+marker.length)<0,'Required foundation proof order is absent, duplicated, or changed: '+name);previous=at;}
+  requireValue(foundation.includes('          node verify-contract-closure.mjs\n')&&foundation.includes('          node verify-stage-operation-registry.mjs\n'),'Required authoritative registry proofs are absent.');
+  requireValue(foundation.includes('          node verify-semantic-review-acceptance.mjs\n          node verify-stage03-agent-protocol.mjs\n'),'Required Stage 02 bounded-search and Stage 03 omission/response proofs are absent.');
+  for(const owner of ['verify-stage-contract-closure.mjs','verify-file-first-response.mjs','verify-response-authority-integrity.mjs','verify-returned-slot-authority.mjs'])requireValue((foundation.match(new RegExp('^          node '+owner.replaceAll('.','\\.')+'$','gm'))||[]).length===1,'Required foundation owner must execute once before later phases: '+owner);
+  requireValue(workflowGates.includes('        run: node collect-verification-evidence.mjs --export-owner=verify-stage-operation-registry.mjs\n')&&workflowGates.indexOf('--export-owner=verify-stage-operation-registry.mjs')<workflowGates.indexOf('node verify-v3-contract.mjs'),'Required current registry receipt must precede its contract consumer.');
+  for(const owner of ['verify-response-authority-integrity.mjs','verify-returned-slot-authority.mjs'])requireValue(conformanceJob.includes('          node collect-verification-evidence.mjs --export-owner='+owner+'\n')&&conformanceJob.indexOf('--export-owner='+owner)<conformanceJob.indexOf('      - name: Execute complete conformance group\n'),'Required current authority receipt must precede its conformance consumer: '+owner);
   requireValue(deferredJob.includes('node verify-due-stage-timing.mjs > /tmp/deferred-stage-matrix.json')&&deferredJob.includes('node verify-deferred-proof-handoff.mjs')&&deferredJob.includes('path: .verification-receipts/verify-due-stage-timing.mjs.json'),'Required complete deferred matrix execution and receipt are absent.');
-  const start=workflow.indexOf('\n  test:\n');
-  requireValue(start>=0,'Required test job is absent from the workflow.');
-  const following=workflow.slice(start+'\n  test:\n'.length),end=following.search(/\n  [a-z][\w-]*:\n/),testJob=end<0?following:following.slice(0,end);
-  requireValue(testJob.includes('needs: [deferred-matrix, conformance]')&&testJob.includes('name: Download complete deferred matrix receipt')&&testJob.includes('name: Validate complete deferred matrix receipt')&&testJob.includes('node verify-deferred-proof-handoff.mjs'),'Required deferred matrix proof dependency and handoff are absent.');
-  const matrixGate='      - name: Require successful deferred matrix job\n        run: test "${{ needs.deferred-matrix.result }}" = "success"\n';
-  requireValue(/^    if: always\(\)$/m.test(testJob)&&testJob.includes(matrixGate)&&testJob.indexOf(matrixGate)<testJob.indexOf('      - uses: actions/checkout@'),'A failed deferred matrix must fail the required test job, not skip it.');
-  const conformanceStart=workflow.indexOf('\n  conformance:\n');
-  requireValue(conformanceStart>=0,'Required conformance group job is absent.');
-  const conformanceFollowing=workflow.slice(conformanceStart+'\n  conformance:\n'.length),conformanceEnd=conformanceFollowing.search(/\n  [a-z][\w-]*:\n/),conformanceJob=conformanceEnd<0?conformanceFollowing:conformanceFollowing.slice(0,conformanceEnd);
+  requireValue(protectedTest.includes('name: Download complete deferred matrix receipt')&&protectedTest.includes('name: Validate complete deferred matrix receipt')&&protectedTest.includes('node verify-deferred-proof-handoff.mjs'),'Required deferred matrix proof dependency and handoff are absent.');
+  requireValue(/^    if: always\(\)$/m.test(protectedTest),'A failed deferred matrix must fail the required test job, not skip it.');
+  for(const [job,label]of [['foundation','foundation job'],['deferred-matrix','deferred matrix job'],['workflow-gates','workflow gate job'],['conformance','conformance groups']]){
+    const gate='      - name: Require successful '+label+'\n        run: test "${{ needs.'+job+'.result }}" = "success"\n';
+    requireValue(protectedTest.includes(gate)&&protectedTest.indexOf(gate)<protectedTest.indexOf('      - uses: actions/checkout@'),'A failed '+(job==='deferred-matrix'?'deferred matrix':job==='conformance'?'conformance group':job)+' must fail the required test job.');
+  }
   requireValue(conformanceJob.includes('group: [core, creation, counterpart]')&&conformanceJob.includes('fail-fast: false')&&conformanceJob.includes('node verify-conformance-regressions.mjs --group=${{ matrix.group }} > /tmp/conformance-regressions.json')&&conformanceJob.includes('name: Preserve complete conformance group report')&&conformanceJob.includes('name: Preserve conformance execution receipts'),'Required complete conformance group execution or artifacts are absent.');
-  const ingestionPrerequisite='          if [ "${{ matrix.group }}" = core ]; then node verify-ingestion.mjs; fi\n';
-  requireValue(conformanceJob.split(ingestionPrerequisite).length===2&&conformanceJob.indexOf(ingestionPrerequisite)<conformanceJob.indexOf('          node verify-conformance-regressions.mjs --group='),'Required current ingestion receipt must be produced before the core evidence consumer.');
-  const conformanceGate='      - name: Require successful conformance groups\n        run: test "${{ needs.conformance.result }}" = "success"\n';
-  requireValue(testJob.includes(conformanceGate)&&testJob.indexOf(conformanceGate)<testJob.indexOf('      - uses: actions/checkout@'),'A failed conformance group must fail the required test job.');
-  requireValue(testJob.includes('name: Download complete conformance group reports')&&testJob.includes('name: Download complete conformance execution receipts')&&testJob.includes('node verify-conformance-handoff.mjs'),'Required conformance group proof handoff is absent.');
+  const ingestionProducer='          node verify-ingestion.mjs\n',ingestionExport='        run: node collect-verification-evidence.mjs --export-owner=verify-ingestion.mjs\n';
+  requireValue(foundation.split(ingestionProducer).length===2&&(workflow.match(/^\s*node verify-ingestion\.mjs(?:\s|$)/gm)||[]).length===1,'Required ingestion proof must execute its complete producer once in the foundation phase.');
+  for(const [name,job,artifact]of [['deferred-matrix',deferredJob,'foundation-proof'],['workflow-gates',workflowGates,'foundation-proof'],['conformance',conformanceJob,'workflow-gate-proof'],['test',protectedTest,'workflow-gate-proof']]){
+    requireValue(job.includes('          name: '+artifact+'-${{ github.sha }}-${{ github.run_id }}\n')&&job.split(ingestionExport).length===2,'Required current ingestion receipt must be transferred and validated before '+name+' consumers.');
+  }
+  requireValue(conformanceJob.indexOf(ingestionExport)<conformanceJob.indexOf('      - name: Execute complete conformance group\n'),'Required current ingestion receipt must be produced before the core evidence consumer.');
+  requireValue(protectedTest.includes('name: Download complete conformance group reports')&&protectedTest.includes('name: Download complete conformance execution receipts')&&protectedTest.includes('node verify-conformance-handoff.mjs'),'Required conformance group proof handoff is absent.');
+  for(const [job,artifact]of [[foundation,'foundation-proof'],[workflowGates,'workflow-gate-proof']])requireValue(job.includes('          name: '+artifact+'-${{ github.sha }}-${{ github.run_id }}\n')&&job.includes('            .verification-receipts/\n            TEST_PROJECT.json\n')&&job.includes('          include-hidden-files: true\n'),'Required complete prerequisite proof artifact is absent.');
+  const collect='      - name: Complete current non-browser assertion evidence\n',collectAt=protectedTest.indexOf(collect),browserAt=protectedTest.indexOf('      - name: Stale project navigation and draft preservation\n');
+  requireValue(collectAt>=0&&collectAt<browserAt&&(protectedTest.match(/^        run: node collect-verification-evidence\.mjs$/gm)||[]).length===2&&!protectedTest.includes('collect-verification-evidence.mjs --run-missing')&&protectedTest.includes('      - name: Collect current executed assertion evidence\n        run: node collect-verification-evidence.mjs\n'),'Missing non-browser proof must finish before Chromium; final aggregation must not execute producers.');
+  // Below, validate the original cross-phase command invariants over the actual
+  // dependency-ordered source while keeping each producer in its owning job.
+  const testJob=foundation+workflowGates+protectedTest;
   const heading='      - name: Workflow and gates\n',at=testJob.indexOf(heading);
   requireValue(at>=0&&testJob.indexOf(heading,at+heading.length)<0,'Required workflow gate step is absent or duplicated.');
-  const migrationHeading='      - name: Migration and v3 contracts\n',migrationAt=testJob.indexOf(migrationHeading);
+  const migrationHeading='      - name: Contract-profile migration\n',migrationAt=testJob.indexOf(migrationHeading);
   requireValue(migrationAt>=0&&migrationAt<at,'Registry and migration proof step is absent or late.');
   const migrationRemainder=testJob.slice(migrationAt+migrationHeading.length),migrationNext=migrationRemainder.search(/\n      - /),migration=migrationNext<0?migrationRemainder:migrationRemainder.slice(0,migrationNext);
   requireValue((testJob.match(/^          node verify-contract-closure\.mjs$/gm)||[]).length===1&&
-    migration.indexOf('node verify-contract-closure.mjs')>=0&&
-    migration.indexOf('node verify-contract-closure.mjs')<migration.indexOf('node verify-v3-migration.mjs')&&
-    migration.indexOf('node verify-v3-migration.mjs')<migration.indexOf('node verify-v3-contract.mjs'),'Contract-closure must execute once before migration and v3 contract checks.');
+    foundation.indexOf('node verify-contract-closure.mjs')<foundation.indexOf('node verify-v3-migration.mjs')&&
+    migration.includes('node verify-v3-migration.mjs')&&
+    workflowGates.includes('node verify-v3-contract.mjs'),'Contract-closure must execute once before migration and v3 contract checks.');
   requireValue(!/^          node verify-infrastructure-route-closure\.mjs$/m.test(testJob),'Infrastructure route must execute after ingestion and lifecycle through the v3 gate.');
   const remainder=testJob.slice(at+heading.length),next=remainder.search(/\n      - /),gate=next<0?remainder:remainder.slice(0,next);
+  requireValue((testJob.match(/^          node verify-verification-routing\.mjs$/gm)||[]).length===1&&gate.includes('          node verify-verification-routing.mjs\n'),'Required non-browser routing proof must execute once in the Workflow gate before strict collection and Chromium.');
+  requireValue((testJob.match(/^          node verify-proposal-acceptance-memory\.mjs$/gm)||[]).length===1&&gate.includes('          node verify-proposal-acceptance-memory.mjs\n'),'Required acceptance memory proof must execute once in the Workflow gate after ingestion.');
   const promptHeading='      - name: Prompt semantics and leakage\n',fullHeading='      - name: Full cycle and terminal boundary\n';
   const promptAt=testJob.indexOf(promptHeading),fullAt=testJob.indexOf(fullHeading);
   requireValue(promptAt>at&&fullAt>promptAt&&testJob.indexOf(fullHeading,fullAt+fullHeading.length)<0,'Required gate, prompt, and full-cycle proof steps must run in specification order.');
+  const promptRemainder=testJob.slice(promptAt+promptHeading.length),promptNext=promptRemainder.search(/\n      - /),prompt=promptNext<0?promptRemainder:promptRemainder.slice(0,promptNext);
+  for(const owner of ['verify-all-stage-prompts.mjs','verify-stage-context-boundary.mjs','verify-handoff-metadata-boundary.mjs','verify-handoff-disclosure.mjs','verify-stage-prompts-complete.mjs','verify-user-prompt-invariants.mjs']){
+    const line='          node '+owner+'\n';
+    requireValue(testJob.split(line).length===2&&prompt.includes(line),'Required broad prompt and disclosure proof must execute once after workflow gates: '+owner);
+  }
+  const stage04Heading='      - name: Stage 04 obligation accounting and prompt completeness\n',stage04At=foundation.indexOf(stage04Heading),stage04Remainder=foundation.slice(stage04At+stage04Heading.length),stage04Next=stage04Remainder.search(/\n      - /),stage04=stage04Next<0?stage04Remainder:stage04Remainder.slice(0,stage04Next);
+  requireValue(stage04.includes('          node verify-zero-loss-accounting.mjs\n'),'Required Stage 04 obligation accounting proof must precede Test IR and ingestion.');
   const fullRemainder=testJob.slice(fullAt+fullHeading.length),fullNext=fullRemainder.search(/\n      - /),full=fullNext<0?fullRemainder:fullRemainder.slice(0,fullNext);
   requireValue((testJob.match(/^          node verify-full-cycle\.mjs \| tee \/tmp\/full-cycle-proof\.json$/gm)||[]).length===1&&
     (full.match(/^          node verify-full-cycle\.mjs \| tee \/tmp\/full-cycle-proof\.json$/gm)||[]).length===1&&
@@ -150,10 +187,15 @@ export function assertPassedRun(run,jobs,{repository,headSha,workflowId}){
   for(const group of ['core','creation','counterpart']){
     const matches=jobs.filter(job=>job.name==='conformance-'+group);
     requireValue(matches.length===1&&matches[0].status==='completed'&&matches[0].conclusion==='success','Required conformance group job has not passed: '+group);
-    for(const name of ['Execute complete conformance group','Preserve complete conformance group report','Preserve conformance execution receipts']){
+    for(const name of ['Validate current authority receipts','Execute complete conformance group','Preserve complete conformance group report','Preserve conformance execution receipts']){
       const steps=matches[0].steps.filter(step=>step.name===name);
       requireValue(steps.length===1&&steps[0].status==='completed'&&steps[0].conclusion==='success','Required conformance group execution or artifact did not pass: '+group+' '+name);
     }
+  }
+  for(const [jobName,names]of [['foundation',foundationProofSteps],['workflow-gates',workflowGateProofSteps]]){
+    const matches=jobs.filter(job=>job.name===jobName);
+    requireValue(matches.length===1&&matches[0].status==='completed'&&matches[0].conclusion==='success','Required '+jobName+' proof job has not passed.');
+    for(const name of names){const steps=matches[0].steps.filter(step=>step.name===name);requireValue(steps.length===1&&steps[0].status==='completed'&&steps[0].conclusion==='success','Required '+jobName+' proof did not pass: '+name);}
   }
   for(const name of fullTestSteps){
     const steps=tests[0].steps.filter(step=>step.name===name);

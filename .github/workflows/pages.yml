@@ -29,8 +29,169 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  foundation:
+    name: foundation
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    env:
+      CLOSED_LOOP_VERIFICATION_SOURCE_ROOT: ${{ github.workspace }}
+      CLOSED_LOOP_VERIFICATION_RECEIPTS: ${{ github.workspace }}/.verification-receipts
+      NODE_OPTIONS: --import ${{ github.workspace }}/verification-evidence-preload.mjs
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        env:
+          NODE_OPTIONS: ''
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          # Receipts bind the exact Node version across jobs and PR promotion.
+          node-version: '22.23.3'
+      - name: Find complete PR verification for this main commit
+        id: candidate
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node verified-site.mjs select
+      - name: Download reusable PR artifact for prerequisite proof
+        if: steps.candidate.outputs.artifact_id != ''
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          artifact-ids: ${{ steps.candidate.outputs.artifact_id }}
+          run-id: ${{ steps.candidate.outputs.run_id }}
+          github-token: ${{ github.token }}
+          merge-multiple: true
+          path: _verified-pr
+      - name: Verify exact reusable source for prerequisite proof
+        id: reuse
+        if: steps.candidate.outputs.artifact_id != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node verified-site.mjs reuse
+      - name: Syntax
+        if: steps.reuse.outputs.reused != 'true'
+        run: |
+          set -euo pipefail
+          for file in *.js *.mjs; do
+            node --check "$file"
+          done
+
+      - name: Schema, ownership, and single-architecture proof
+        if: steps.reuse.outputs.reused != 'true'
+        run: |
+          set -euo pipefail
+          node build-test-project.mjs
+          node verify.mjs
+          node verify-contract-closure.mjs
+          node verify-stage-operation-registry.mjs
+          node verify-stage-contract-closure.mjs
+          test "$(find . -maxdepth 1 -type f -name '*.html' | wc -l)" -eq 1
+          test ! -f app.js
+          test -z "$(find . -maxdepth 1 -type f -name '.repair-*' -print -quit)"
+          test -z "$(find .github/workflows -maxdepth 1 -type f ! -name 'pages.yml' -print -quit)"
+          ! grep -R "document.write" --include='*.js' --include='*.html' .
+          ! grep -R "MutationObserver" --include='*.js' --include='*.html' .
+          ! grep -REi "human-project/31|Stage 31|Operation 31" --include='*.js' --include='*.html' --include='TEST_PROJECT.json' .
+          node - <<'NODE'
+          const fs=require('fs');
+          const html=fs.readFileSync('index.html','utf8');
+          const expected=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+          const src=[...html.matchAll(/<script\s+defer\s+src="([^"]+)"\s*><\/script>/g)].map(match=>match[1]);
+          if(src.length!==expected.length)throw new Error(`Expected ${expected.length} direct deferred scripts; found ${src.length}`);
+          const tokens=new Set();
+          expected.forEach((file,index)=>{
+            if(src[index]?.split('?')[0]!==file)throw new Error(`Wrong script order at ${file}`);
+            if(src.filter(value=>value.split('?')[0]===file).length!==1)throw new Error(`${file} is not unique`);
+            const token=new URLSearchParams(src[index].split('?')[1]||'').get('v');
+            if(!token)throw new Error(`${file} lacks build token`);
+            tokens.add(token);
+          });
+          if(tokens.size!==1)throw new Error('Mixed runtime build tokens');
+          if(!/worker-src\s+'self'/.test(html))throw new Error('CSP does not restrict the worker to same origin.');
+          NODE
+
+      - name: Deployment manifest, build identity, and reproducibility
+        if: steps.reuse.outputs.reused != 'true'
+        run: |
+          set -euo pipefail
+          node verify-deployment-manifest.mjs
+
+      - name: Complete 30-stage canonical data-route closure
+        if: steps.reuse.outputs.reused != 'true'
+        run: |
+          set -euo pipefail
+          node verify-data-route-closure.mjs
+
+      - name: Contract-profile migration
+        if: steps.reuse.outputs.reused != 'true'
+        run: |
+          set -euo pipefail
+          node verify-v3-migration.mjs
+
+      - name: Stage 01 agent response contract alignment
+        if: steps.reuse.outputs.reused != 'true'
+        run: |
+          set -euo pipefail
+          node verify-stage01-agent-contract-alignment.mjs
+
+      - name: Stage 01 raw intake and semantic accounting
+        if: steps.reuse.outputs.reused != 'true'
+        run: |
+          set -euo pipefail
+          node verify-stage01-intake-closure.mjs
+          node verify-one-time-intent-intake.mjs
+          node verify-stage01-review-subject.mjs
+
+      - name: Stage 02 bounded search and Stage 03 omission challenge
+        if: steps.reuse.outputs.reused != 'true'
+        run: |
+          set -euo pipefail
+          node verify-semantic-review-acceptance.mjs
+          node verify-stage03-agent-protocol.mjs
+
+      - name: Stage 04 obligation accounting and prompt completeness
+        if: steps.reuse.outputs.reused != 'true'
+        run: |
+          set -euo pipefail
+          node verify-zero-loss-accounting.mjs
+
+      - name: Test IR validation, security, and deterministic runtime
+        if: steps.reuse.outputs.reused != 'true'
+        run: |
+          set -euo pipefail
+          node verify-test-runtime-v3.mjs
+          node verify-test-runtime-limits.mjs
+          node verify-test-runtime.mjs
+          node verify-hash.mjs
+
+      - name: Raw-first ingestion and negative cases
+        if: steps.reuse.outputs.reused != 'true'
+        run: |
+          set -euo pipefail
+          node verify-ingestion.mjs
+          node verify-file-first-response.mjs
+          node verify-response-authority-integrity.mjs
+          node verify-returned-slot-authority.mjs
+          node verify-execution-reports.mjs
+          node verify-backup-json-stream.mjs
+
+      - name: Preserve foundation proof
+        if: steps.reuse.outputs.reused != 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: foundation-proof-${{ github.sha }}-${{ github.run_id }}
+          path: |
+            .verification-receipts/
+            TEST_PROJECT.json
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 30
+
   deferred-matrix:
     name: deferred-matrix
+    needs: foundation
     permissions:
       contents: read
       actions: read
@@ -73,6 +234,16 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: node verified-site.mjs reuse
+      - name: Download foundation proof
+        if: steps.reuse.outputs.reused != 'true'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: foundation-proof-${{ github.sha }}-${{ github.run_id }}
+          path: .
+      - name: Validate foundation ingestion receipt
+        if: steps.reuse.outputs.reused != 'true'
+        run: node collect-verification-evidence.mjs --export-owner=verify-ingestion.mjs
+
       - name: Execute complete deferred stage matrix
         id: matrix
         if: steps.reuse.outputs.reused != 'true'
@@ -109,8 +280,136 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
 
+  workflow-gates:
+    name: workflow-gates
+    needs: [foundation, deferred-matrix]
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    env:
+      CLOSED_LOOP_VERIFICATION_SOURCE_ROOT: ${{ github.workspace }}
+      CLOSED_LOOP_VERIFICATION_RECEIPTS: ${{ github.workspace }}/.verification-receipts
+      NODE_OPTIONS: --import ${{ github.workspace }}/verification-evidence-preload.mjs
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        env:
+          NODE_OPTIONS: ''
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          # Receipts bind the exact Node version across jobs and PR promotion.
+          node-version: '22.23.3'
+      - name: Find complete PR verification for this main commit
+        id: candidate
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node verified-site.mjs select
+      - name: Download reusable PR artifact for prerequisite proof
+        if: steps.candidate.outputs.artifact_id != ''
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          artifact-ids: ${{ steps.candidate.outputs.artifact_id }}
+          run-id: ${{ steps.candidate.outputs.run_id }}
+          github-token: ${{ github.token }}
+          merge-multiple: true
+          path: _verified-pr
+      - name: Verify exact reusable source for prerequisite proof
+        id: reuse
+        if: steps.candidate.outputs.artifact_id != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node verified-site.mjs reuse
+      - name: Download foundation proof
+        if: steps.reuse.outputs.reused != 'true'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: foundation-proof-${{ github.sha }}-${{ github.run_id }}
+          path: .
+      - name: Validate foundation ingestion receipt
+        if: steps.reuse.outputs.reused != 'true'
+        run: node collect-verification-evidence.mjs --export-owner=verify-ingestion.mjs
+
+      - name: Download complete deferred matrix receipt
+        if: steps.reuse.outputs.reused != 'true'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: ${{ needs.deferred-matrix.outputs.receipt_name }}
+          path: .verification-receipts
+      - name: Validate complete deferred matrix receipt
+        if: steps.reuse.outputs.reused != 'true'
+        run: node verify-deferred-proof-handoff.mjs
+
+      - name: Validate current registry receipt
+        if: steps.reuse.outputs.reused != 'true'
+        run: node collect-verification-evidence.mjs --export-owner=verify-stage-operation-registry.mjs
+
+      - name: Cross-stage contract gates
+        if: steps.reuse.outputs.reused != 'true'
+        run: |
+          set -euo pipefail
+          node verify-v3-contract.mjs
+          node verify-spec3-contract.mjs
+
+      - name: Physical iPhone release-tag governance
+        if: steps.reuse.outputs.reused != 'true'
+        run: |
+          set -euo pipefail
+          node verify-mobile-acceptance-target.mjs
+          node verify-browser-execution-evidence.mjs
+          node verify-final-acceptance.mjs
+          node verify-visual-baseline-submission.mjs
+          node verify-final-product-timing.mjs
+          node verify-mobile-release-governance.mjs
+
+      - name: Workflow and gates
+        if: steps.reuse.outputs.reused != 'true'
+        run: |
+          set -euo pipefail
+          node verify-complete.mjs
+          node verify-proposal-acceptance-memory.mjs
+          node verify-verification-routing.mjs
+          node verify-independent-preflight.mjs
+          node verify-external-result-determination.mjs
+          node verify-stage28-artifact-delivery-intent.mjs
+          node verify-stage29-evidence-chain-checkpoint.mjs
+          node verify-production-baseline-authority.mjs
+          node verify-definition-of-done.mjs --owner-receipt-controls
+          node verify-definition-of-done.mjs
+          node verify-project-lifecycle.mjs
+          node verify-v3-definition-of-done.mjs
+
+      - name: Prompt semantics and leakage
+        if: steps.reuse.outputs.reused != 'true'
+        run: |
+          set -euo pipefail
+          node verify-all-stage-prompts.mjs
+          node verify-stage-context-boundary.mjs
+          node verify-handoff-metadata-boundary.mjs
+          node verify-handoff-disclosure.mjs
+          node verify-stage-prompts-complete.mjs
+          node verify-user-prompt-invariants.mjs
+          node verify-prompt-file-identity.mjs
+          node verify-prompt-semantics.mjs
+          node verify-semantic-invariant.mjs
+
+      - name: Preserve workflow gate proof
+        if: steps.reuse.outputs.reused != 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: workflow-gate-proof-${{ github.sha }}-${{ github.run_id }}
+          path: |
+            .verification-receipts/
+            TEST_PROJECT.json
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 30
+
   conformance:
     name: conformance-${{ matrix.group }}
+    needs: workflow-gates
     strategy:
       fail-fast: false
       matrix:
@@ -154,14 +453,29 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: node verified-site.mjs reuse
+      - name: Download workflow gate proof
+        if: steps.reuse.outputs.reused != 'true'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: workflow-gate-proof-${{ github.sha }}-${{ github.run_id }}
+          path: .
+      - name: Validate workflow gate ingestion receipt
+        if: steps.reuse.outputs.reused != 'true'
+        run: node collect-verification-evidence.mjs --export-owner=verify-ingestion.mjs
+
+      - name: Validate current authority receipts
+        if: steps.reuse.outputs.reused != 'true'
+        run: |
+          set -euo pipefail
+          node collect-verification-evidence.mjs --export-owner=verify-response-authority-integrity.mjs
+          node collect-verification-evidence.mjs --export-owner=verify-returned-slot-authority.mjs
+
       - name: Execute complete conformance group
         id: conformance
         if: steps.reuse.outputs.reused != 'true'
         timeout-minutes: 305
         run: |
           set -euo pipefail
-          # The evidence consumer requires ingestion's current executed receipt.
-          if [ "${{ matrix.group }}" = core ]; then node verify-ingestion.mjs; fi
           node verify-conformance-regressions.mjs --group=${{ matrix.group }} > /tmp/conformance-regressions.json
       - name: Stage conformance group report
         if: always() && steps.conformance.outcome != 'skipped'
@@ -198,7 +512,7 @@ jobs:
 
   test:
     name: test
-    needs: [deferred-matrix, conformance]
+    needs: [foundation, deferred-matrix, workflow-gates, conformance]
     if: always()
     permissions:
       contents: read
@@ -215,6 +529,10 @@ jobs:
       verification_run_id: ${{ steps.reuse.outputs.run_id || github.run_id }}
       verification_source_commit: ${{ steps.reuse.outputs.tested_commit || github.sha }}
     steps:
+      - name: Require successful foundation job
+        run: test "${{ needs.foundation.result }}" = "success"
+      - name: Require successful workflow gate job
+        run: test "${{ needs.workflow-gates.result }}" = "success"
       - name: Require successful deferred matrix job
         run: test "${{ needs.deferred-matrix.result }}" = "success"
       - name: Require successful conformance groups
@@ -251,6 +569,16 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: node verified-site.mjs reuse
+      - name: Download workflow gate proof
+        if: steps.reuse.outputs.reused != 'true'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: workflow-gate-proof-${{ github.sha }}-${{ github.run_id }}
+          path: .
+      - name: Validate workflow gate ingestion receipt
+        if: steps.reuse.outputs.reused != 'true'
+        run: node collect-verification-evidence.mjs --export-owner=verify-ingestion.mjs
+
       - name: Require deferred matrix proof or verified artifact reuse
         if: steps.reuse.outputs.reused != 'true'
         run: test "${{ needs.deferred-matrix.outputs.executed }}" = true
@@ -295,145 +623,6 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
-      - name: Syntax
-        if: steps.reuse.outputs.reused != 'true'
-        run: |
-          set -euo pipefail
-          for file in *.js *.mjs; do
-            node --check "$file"
-          done
-
-      - name: Deployment manifest, build identity, and reproducibility
-        if: steps.reuse.outputs.reused != 'true'
-        run: |
-          set -euo pipefail
-          node verify-deployment-manifest.mjs
-
-      - name: Physical iPhone release-tag governance
-        if: steps.reuse.outputs.reused != 'true'
-        run: |
-          set -euo pipefail
-          node verify-mobile-acceptance-target.mjs
-          node verify-browser-execution-evidence.mjs
-          node verify-final-acceptance.mjs
-          node verify-visual-baseline-submission.mjs
-          node verify-prompt-file-identity.mjs
-          node verify-final-product-timing.mjs
-          node verify-mobile-release-governance.mjs
-
-      - name: Schema, ownership, and single-architecture proof
-        if: steps.reuse.outputs.reused != 'true'
-        run: |
-          set -euo pipefail
-          node build-test-project.mjs
-          node verify.mjs
-          node verify-proposal-acceptance-memory.mjs
-          node verify-semantic-review-acceptance.mjs
-          test "$(find . -maxdepth 1 -type f -name '*.html' | wc -l)" -eq 1
-          test ! -f app.js
-          test -z "$(find . -maxdepth 1 -type f -name '.repair-*' -print -quit)"
-          test -z "$(find .github/workflows -maxdepth 1 -type f ! -name 'pages.yml' -print -quit)"
-          ! grep -R "document.write" --include='*.js' --include='*.html' .
-          ! grep -R "MutationObserver" --include='*.js' --include='*.html' .
-          ! grep -REi "human-project/31|Stage 31|Operation 31" --include='*.js' --include='*.html' --include='TEST_PROJECT.json' .
-          node - <<'NODE'
-          const fs=require('fs');
-          const html=fs.readFileSync('index.html','utf8');
-          const expected=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
-          const src=[...html.matchAll(/<script\s+defer\s+src="([^"]+)"\s*><\/script>/g)].map(match=>match[1]);
-          if(src.length!==expected.length)throw new Error(`Expected ${expected.length} direct deferred scripts; found ${src.length}`);
-          const tokens=new Set();
-          expected.forEach((file,index)=>{
-            if(src[index]?.split('?')[0]!==file)throw new Error(`Wrong script order at ${file}`);
-            if(src.filter(value=>value.split('?')[0]===file).length!==1)throw new Error(`${file} is not unique`);
-            const token=new URLSearchParams(src[index].split('?')[1]||'').get('v');
-            if(!token)throw new Error(`${file} lacks build token`);
-            tokens.add(token);
-          });
-          if(tokens.size!==1)throw new Error('Mixed runtime build tokens');
-          if(!/worker-src\s+'self'/.test(html))throw new Error('CSP does not restrict the worker to same origin.');
-          NODE
-
-      - name: Complete 30-stage canonical data-route closure
-        if: steps.reuse.outputs.reused != 'true'
-        run: |
-          set -euo pipefail
-          node verify-data-route-closure.mjs
-
-      - name: Migration and v3 contracts
-        if: steps.reuse.outputs.reused != 'true'
-        run: |
-          set -euo pipefail
-          node verify-contract-closure.mjs
-          node verify-v3-migration.mjs
-          node verify-v3-contract.mjs
-          node verify-spec3-contract.mjs
-
-      - name: Stage 01 agent response contract alignment
-        if: steps.reuse.outputs.reused != 'true'
-        run: |
-          set -euo pipefail
-          node verify-stage01-agent-contract-alignment.mjs
-
-      - name: Stage 01 raw intake and semantic accounting
-        if: steps.reuse.outputs.reused != 'true'
-        run: |
-          set -euo pipefail
-          node verify-stage01-intake-closure.mjs
-          node verify-one-time-intent-intake.mjs
-          node verify-zero-loss-accounting.mjs
-          node verify-stage01-review-subject.mjs
-
-      - name: Stage 04 obligation accounting and prompt completeness
-        if: steps.reuse.outputs.reused != 'true'
-        run: |
-          set -euo pipefail
-          node verify-all-stage-prompts.mjs
-          node verify-stage-context-boundary.mjs
-          node verify-handoff-metadata-boundary.mjs
-          node verify-handoff-disclosure.mjs
-          node verify-stage-prompts-complete.mjs
-          node verify-user-prompt-invariants.mjs
-
-      - name: Test IR validation, security, and deterministic runtime
-        if: steps.reuse.outputs.reused != 'true'
-        run: |
-          set -euo pipefail
-          node verify-test-runtime-v3.mjs
-          node verify-test-runtime-limits.mjs
-          node verify-test-runtime.mjs
-          node verify-hash.mjs
-
-      - name: Raw-first ingestion and negative cases
-        if: steps.reuse.outputs.reused != 'true'
-        run: |
-          set -euo pipefail
-          node verify-ingestion.mjs
-          node verify-execution-reports.mjs
-          node verify-backup-json-stream.mjs
-
-      - name: Workflow and gates
-        if: steps.reuse.outputs.reused != 'true'
-        run: |
-          set -euo pipefail
-          node verify-complete.mjs
-          node verify-independent-preflight.mjs
-          node verify-external-result-determination.mjs
-          node verify-stage28-artifact-delivery-intent.mjs
-          node verify-stage29-evidence-chain-checkpoint.mjs
-          node verify-production-baseline-authority.mjs
-          node verify-definition-of-done.mjs --owner-receipt-controls
-          node verify-definition-of-done.mjs
-          node verify-project-lifecycle.mjs
-          node verify-v3-definition-of-done.mjs
-
-      - name: Prompt semantics and leakage
-        if: steps.reuse.outputs.reused != 'true'
-        run: |
-          set -euo pipefail
-          node verify-prompt-semantics.mjs
-          node verify-semantic-invariant.mjs
-
       - name: Full cycle and terminal boundary
         if: steps.reuse.outputs.reused != 'true'
         run: |
@@ -442,6 +631,10 @@ jobs:
           node verify-full-cycle.mjs | tee /tmp/full-cycle-proof.json
           node --input-type=module -e "import fs from 'node:fs'; JSON.parse(fs.readFileSync('/tmp/full-cycle-proof.json','utf8'));"
           node verify-stage30-terminal-mobile-boundary.mjs
+
+      - name: Complete current non-browser assertion evidence
+        if: steps.reuse.outputs.reused != 'true'
+        run: node collect-verification-evidence.mjs
 
       - name: Stale project navigation and draft preservation
         if: steps.reuse.outputs.reused != 'true'
@@ -472,7 +665,6 @@ jobs:
           BROWSER: /usr/bin/google-chrome
         run: |
           set -euo pipefail
-          node verify-verification-routing.mjs
           export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
           test -n "$BROWSER"
           node build-static-site.mjs --out _routing_site --source-commit "$GITHUB_SHA" --workflow-run "$GITHUB_RUN_ID"
@@ -601,7 +793,7 @@ jobs:
           path: _site
 
       - name: Collect current executed assertion evidence
-        run: node collect-verification-evidence.mjs --run-missing
+        run: node collect-verification-evidence.mjs
 
       # This is reached only after full verification or proven reuse of the
       # identical Git tree and runtime bytes from a fully passing PR attempt.

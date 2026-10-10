@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {execFileSync,spawnSync} from 'node:child_process';
-import {runtimePaths,manifestName,fullTestSteps,digest,validateSite,assertLifecycleWorkflowCommand,assertPassedRun,assertReceipt,promoteSite,promoteExecutedProofs,executedProofFileHashes,sealSite} from './verified-site.mjs';
+import {runtimePaths,manifestName,foundationProofSteps,workflowGateProofSteps,fullTestSteps,digest,validateSite,assertLifecycleWorkflowCommand,assertPassedRun,assertReceipt,promoteSite,promoteExecutedProofs,executedProofFileHashes,sealSite} from './verified-site.mjs';
 import {verificationCatalog} from './verification-evidence-catalog.mjs';
 
 const root=process.cwd(),temporary=fs.mkdtempSync(path.join(root,'.verify-artifact-'));
@@ -22,7 +22,8 @@ function assertNoNestedCataloguedOwners(sources){
 const repository='test-owner/test-repo',headSha='a'.repeat(40),workflowId=42;
 const run={id:123,run_attempt:1,event:'pull_request',status:'completed',conclusion:'success',repository:{full_name:repository},head_repository:{full_name:repository},head_sha:headSha,workflow_id:workflowId,path:'.github/workflows/pages.yml'};
 const jobs=[{name:'test',status:'completed',conclusion:'success',steps:fullTestSteps.map(name=>({name,status:'completed',conclusion:'success'}))},{name:'deferred-matrix',status:'completed',conclusion:'success',steps:['Execute complete deferred stage matrix','Preserve complete deferred matrix receipt'].map(name=>({name,status:'completed',conclusion:'success'}))}];
-for(const group of ['core','creation','counterpart'])jobs.push({name:'conformance-'+group,status:'completed',conclusion:'success',steps:['Execute complete conformance group','Preserve complete conformance group report','Preserve conformance execution receipts'].map(name=>({name,status:'completed',conclusion:'success'}))});
+for(const group of ['core','creation','counterpart'])jobs.push({name:'conformance-'+group,status:'completed',conclusion:'success',steps:['Validate current authority receipts','Execute complete conformance group','Preserve complete conformance group report','Preserve conformance execution receipts'].map(name=>({name,status:'completed',conclusion:'success'}))});
+for(const [name,steps]of [['foundation',foundationProofSteps],['workflow-gates',workflowGateProofSteps]])jobs.push({name,status:'completed',conclusion:'success',steps:steps.map(name=>({name,status:'completed',conclusion:'success'}))});
 const bindings={repository,headSha,workflowId};
 const clone=value=>structuredClone(value);
 try{
@@ -49,7 +50,7 @@ try{
     const name='conformance-'+group;
     await rejects('missing-'+name,()=>assertPassedRun(run,jobs.filter(job=>job.name!==name),bindings),/Required conformance group job/);
     for(const conclusion of ['failure','cancelled','skipped']){const altered=clone(jobs);altered.find(job=>job.name===name).conclusion=conclusion;await rejects('unpassed-'+name+'-'+conclusion,()=>assertPassedRun(run,altered,bindings),/Required conformance group job/);}
-    for(const step of ['Execute complete conformance group','Preserve complete conformance group report','Preserve conformance execution receipts']){const altered=clone(jobs);altered.find(job=>job.name===name).steps=altered.find(job=>job.name===name).steps.filter(row=>row.name!==step);await rejects('missing-'+name+'-'+step,()=>assertPassedRun(run,altered,bindings),/Required conformance group execution or artifact/);}
+    for(const step of ['Validate current authority receipts','Execute complete conformance group','Preserve complete conformance group report','Preserve conformance execution receipts']){const altered=clone(jobs);altered.find(job=>job.name===name).steps=altered.find(job=>job.name===name).steps.filter(row=>row.name!==step);await rejects('missing-'+name+'-'+step,()=>assertPassedRun(run,altered,bindings),/Required conformance group execution or artifact/);}
   }
   (await rejects('missing-deferred-matrix-job',()=>assertPassedRun(run,[jobs[0]],bindings),/Required deferred matrix job/));
   for(const conclusion of ['failure','skipped',null]){
@@ -59,6 +60,11 @@ try{
   (await rejects('missing-deferred-matrix-step',()=>assertPassedRun(run,[jobs[0],{...jobs[1],steps:[]}],bindings),/Required complete deferred matrix/));
   (await rejects('missing-deferred-matrix-upload',()=>assertPassedRun(run,[jobs[0],{...jobs[1],steps:jobs[1].steps.slice(0,1)}],bindings),/Required complete deferred matrix/));
 
+  for(const [name,requiredSteps]of [['foundation',foundationProofSteps],['workflow-gates',workflowGateProofSteps]]){
+    await rejects('missing-'+name+'-job',()=>assertPassedRun(run,jobs.filter(job=>job.name!==name),bindings),new RegExp('Required '+name+' proof job'));
+    for(const conclusion of ['failure','cancelled','skipped']){const altered=clone(jobs);altered.find(job=>job.name===name).conclusion=conclusion;await rejects('unpassed-'+name+'-'+conclusion,()=>assertPassedRun(run,altered,bindings),new RegExp('Required '+name+' proof job'));}
+    for(const step of requiredSteps){const altered=clone(jobs);altered.find(job=>job.name===name).steps=altered.find(job=>job.name===name).steps.filter(row=>row.name!==step);await rejects('missing-'+name+'-'+step,()=>assertPassedRun(run,altered,bindings),new RegExp('Required '+name+' proof did not pass'));}
+  }
   // Synthetic authenticated-bundle boundary controls. Runtime changes must
   // require fresh execution without copying even an earlier compatible proof.
   const proofSource=path.join(temporary,'synthetic-proofs'),proofTarget=path.join(temporary,'promoted-proofs');
@@ -180,7 +186,7 @@ try{
 
   const workflow=fs.readFileSync('.github/workflows/pages.yml','utf8');
   const nodeVersions=[...workflow.matchAll(/^          node-version: '([^']+)'$/gm)].map(match=>match[1]);
-  assert.equal(nodeVersions.length,5,'CI_RUNTIME_IDENTITY_ORACLE: every proof job must select Node explicitly.');
+  assert.equal(nodeVersions.length,7,'CI_RUNTIME_IDENTITY_ORACLE: every proof job must select Node explicitly.');
   assert(nodeVersions.every(version=>/^22\.\d+\.\d+$/.test(version)&&version===nodeVersions[0]),'CI_RUNTIME_IDENTITY_ORACLE: all proof jobs require the same exact supported Node version.');
   const deferredDiagnostics=workflow.match(/      - name: Preserve deferred matrix diagnostics\n([\s\S]*?)(?=\n      - name:|\n  [a-z])/);
   assert(deferredDiagnostics,'CI_DEFERRED_DIAGNOSTICS_ORACLE: deferred diagnostics upload is required.');
@@ -189,23 +195,76 @@ try{
   cases.push('exact-runtime-and-visible-deferred-diagnostics');
   const testWorkflow=workflow.slice(workflow.indexOf('\n  test:'),workflow.indexOf('\n  deploy:'));
   assertLifecycleWorkflowCommand(workflow);
+  const conformanceStart=workflow.indexOf('\n  conformance:\n'),conformanceEnd=workflow.indexOf('\n  test:\n'),conformanceWorkflow=workflow.slice(conformanceStart,conformanceEnd);
   for(const [name,before,after,diagnostic] of [
     ['missing-group','group: [core, creation, counterpart]','group: [core, creation]',/complete conformance group execution/],
     ['missing-execution','node verify-conformance-regressions.mjs --group=${{ matrix.group }} > /tmp/conformance-regressions.json','node missing-conformance.mjs',/complete conformance group execution/],
     ['missing-report','name: Preserve complete conformance group report','name: Missing group report',/complete conformance group execution/],
     ['missing-receipts','name: Preserve conformance execution receipts','name: Missing group receipts',/complete conformance group execution/],
-    ['missing-ingestion-prerequisite','          if [ "${{ matrix.group }}" = core ]; then node verify-ingestion.mjs; fi\n','',/current ingestion receipt must be produced before/],
-    ['wrong-ingestion-group','if [ "${{ matrix.group }}" = core ]; then node verify-ingestion.mjs; fi','if [ "${{ matrix.group }}" = creation ]; then node verify-ingestion.mjs; fi',/current ingestion receipt must be produced before/],
-    ['late-ingestion-prerequisite','          if [ "${{ matrix.group }}" = core ]; then node verify-ingestion.mjs; fi\n          node verify-conformance-regressions.mjs --group=${{ matrix.group }} > /tmp/conformance-regressions.json','          node verify-conformance-regressions.mjs --group=${{ matrix.group }} > /tmp/conformance-regressions.json\n          if [ "${{ matrix.group }}" = core ]; then node verify-ingestion.mjs; fi',/current ingestion receipt must be produced before/],
     ['missing-handoff','node verify-conformance-handoff.mjs','node missing-handoff.mjs',/conformance group proof handoff/],
     ['missing-group-gate','      - name: Require successful conformance groups\n        run: test "${{ needs.conformance.result }}" = "success"\n','',/failed conformance group must fail/]
   ]){assert.equal(workflow.split(before).length,2,'CONFORMANCE_CI_FAULT_SETUP_ORACLE: '+name);await rejects('conformance-workflow-'+name,()=>assertLifecycleWorkflowCommand(workflow.replace(before,after)),diagnostic);}
-  const deferredBlock=workflow.slice(workflow.indexOf('\n  deferred-matrix:\n'),workflow.indexOf('\n  test:\n'));
+  const ingestionExport='        run: node collect-verification-evidence.mjs --export-owner=verify-ingestion.mjs\n';
+  const conformanceExport=mutate=>workflow.slice(0,conformanceStart)+mutate(conformanceWorkflow)+workflow.slice(conformanceEnd);
+  for(const [name,mutate,diagnostic] of [
+    ['missing-ingestion-prerequisite',text=>text.replace(ingestionExport,''),/current ingestion receipt must be transferred/],
+    ['wrong-ingestion-group',text=>text.replace(ingestionExport,'        run: if [ "${{ matrix.group }}" = creation ]; then node collect-verification-evidence.mjs --export-owner=verify-ingestion.mjs; fi\n'),/current ingestion receipt must be transferred/],
+    ['late-ingestion-prerequisite',text=>text.replace(ingestionExport,'').replace('      - name: Stage conformance group report\n',ingestionExport+'      - name: Stage conformance group report\n'),/current ingestion receipt must be produced before/],
+    ['former-duplicate-producer',text=>text.replace(ingestionExport,'        run: |\n          node verify-ingestion.mjs\n'),/complete producer once/],
+    ['partial-report-export',text=>text.replace(ingestionExport,ingestionExport.trimEnd()+' --report-marker=ingestion\n'),/current ingestion receipt must be transferred/],
+    ['repeated-producer-after-export',text=>text.replace('          node verify-conformance-regressions.mjs','          node verify-ingestion.mjs\n          node verify-conformance-regressions.mjs'),/complete producer once/]
+  ]){const changed=conformanceExport(mutate);assert.notEqual(changed,workflow,'INGESTION_REUSE_FAULT_SETUP_ORACLE: '+name);await rejects('conformance-workflow-'+name,()=>assertLifecycleWorkflowCommand(changed),diagnostic);}
+  assertLifecycleWorkflowCommand(workflow);cases.push('ingestion-report-reuse-restored-workflow');
+  for(const [name,from,to]of [
+    ['deferred-before-foundation','    needs: foundation\n',''],
+    ['workflow-before-deferred','    needs: [foundation, deferred-matrix]\n','    needs: foundation\n'],
+    ['conformance-before-prompts','    needs: workflow-gates\n','    needs: foundation\n']
+  ]){const changed=workflow.replace(from,to);assert.notEqual(changed,workflow);await rejects('phase-order-'+name,()=>assertLifecycleWorkflowCommand(changed),/proof phase dependencies/);}
+  for(const [job,label]of [['foundation','foundation job'],['workflow-gates','workflow gate job']]){
+    const guard='      - name: Require successful '+label+'\n        run: test "${{ needs.'+job+'.result }}" = "success"\n';
+    await rejects('phase-missing-'+job+'-required-guard',()=>assertLifecycleWorkflowCommand(workflow.replace(guard,'')),new RegExp('failed '+job+' must fail'));
+  }
+  for(const [name,mutate,diagnostic]of [
+    ['migration-before-registries',text=>text.replace('      - name: Contract-profile migration\n','      - name: EARLY MIGRATION\n').replace('      - name: Syntax\n','      - name: Contract-profile migration\n'),/foundation proof order/],
+    ['final-collector-runs-producers',text=>text.replace('      - name: Collect current executed assertion evidence\n        run: node collect-verification-evidence.mjs\n','      - name: Collect current executed assertion evidence\n        run: node collect-verification-evidence.mjs --run-missing\n'),/final aggregation must not execute producers/]
+  ]){const changed=mutate(workflow);assert.notEqual(changed,workflow);await rejects('phase-order-'+name,()=>assertLifecycleWorkflowCommand(changed),diagnostic);}
+  for(const owner of ['verify-stage-contract-closure.mjs','verify-file-first-response.mjs','verify-response-authority-integrity.mjs','verify-returned-slot-authority.mjs']){
+    const line='          node '+owner+'\n';
+    assert.equal(workflow.split(line).length,2,'FOUNDATION_OWNER_SETUP_ORACLE: '+owner);
+    for(const [kind,replacement]of [['missing',''],['duplicate',line+line]])await rejects('foundation-owner-'+kind+'-'+owner,()=>assertLifecycleWorkflowCommand(workflow.replace(line,replacement)),/foundation owner must execute once/);
+  }
+  for(const [owner,indent,diagnostic]of [['verify-stage-operation-registry.mjs','        run: ',/current registry receipt/],['verify-response-authority-integrity.mjs','          ',/current authority receipt/],['verify-returned-slot-authority.mjs','          ',/current authority receipt/]]){
+    const line=indent+'node collect-verification-evidence.mjs --export-owner='+owner+'\n';
+    assert.equal(workflow.split(line).length,2,'PREREQUISITE_RECEIPT_SETUP_ORACLE: '+owner);
+    await rejects('phase-missing-current-receipt-'+owner,()=>assertLifecycleWorkflowCommand(workflow.replace(line,'')),diagnostic);
+  }
+  const routingLine='          node verify-verification-routing.mjs\n';
+  for(const [name,mutate,diagnostic]of [
+    ['routing-owner-after-collector',text=>text.replace(routingLine,'').replace('          timeout --signal=TERM --kill-after=10s 5m node verify-verification-routing-browser.mjs',routingLine+'          timeout --signal=TERM --kill-after=10s 5m node verify-verification-routing-browser.mjs'),/non-browser routing proof/],
+    ['missing-prebrowser-collector',text=>text.replace('        run: node collect-verification-evidence.mjs\n',''),/final aggregation must not execute producers/]
+  ]){const changed=mutate(workflow);assert.notEqual(changed,workflow);await rejects('phase-order-'+name,()=>assertLifecycleWorkflowCommand(changed),diagnostic);}
+  for(const owner of ['verify-all-stage-prompts.mjs','verify-stage-context-boundary.mjs','verify-handoff-metadata-boundary.mjs','verify-handoff-disclosure.mjs','verify-stage-prompts-complete.mjs','verify-user-prompt-invariants.mjs']){
+    const line='          node '+owner+'\n';
+    assert.equal(workflow.split(line).length,2,'PROMPT_PHASE_SETUP_ORACLE: '+owner);
+    for(const [name,mutate]of [
+      ['former-stage04-placement',text=>text.replace(line,'').replace('          node verify-zero-loss-accounting.mjs\n','          node verify-zero-loss-accounting.mjs\n'+line)],
+      ['missing',text=>text.replace(line,'')],
+      ['duplicate',text=>text.replace(line,line+line)]
+    ])await rejects('prompt-phase-'+name+'-'+owner,()=>assertLifecycleWorkflowCommand(mutate(workflow)),/broad prompt and disclosure proof must execute once after workflow gates/);
+  }
+  await rejects('stage04-obligation-owner-missing',()=>assertLifecycleWorkflowCommand(workflow.replace('          node verify-zero-loss-accounting.mjs\n','')),/Stage 04 obligation accounting proof/);
+  const memoryLine='          node verify-proposal-acceptance-memory.mjs\n';
+  for(const [name,mutate]of [
+    ['former-registry-placement',text=>text.replace(memoryLine,'').replace('          node verify.mjs\n','          node verify.mjs\n'+memoryLine)],
+    ['missing',text=>text.replace(memoryLine,'')],
+    ['duplicate',text=>text.replace(memoryLine,memoryLine+memoryLine)]
+  ])await rejects('acceptance-memory-phase-'+name,()=>assertLifecycleWorkflowCommand(mutate(workflow)),/acceptance memory proof must execute once/);
+  const deferredBlock=workflow.slice(workflow.indexOf('\n  deferred-matrix:\n'),workflow.indexOf('\n  workflow-gates:\n'));
   for(const [name,alter,diagnostic] of [
-    ['missing-job',text=>text.replace(deferredBlock,''),/deferred matrix proof job/],
+    ['missing-job',text=>text.replace(deferredBlock,''),/deferred-matrix proof job/],
     ['missing-producer',text=>text.replace('node verify-due-stage-timing.mjs > /tmp/deferred-stage-matrix.json','node missing-deferred-matrix.mjs'),/complete deferred matrix execution/],
-    ['missing-dependency',text=>text.replace('    needs: [deferred-matrix, conformance]\n',''),/deferred matrix proof dependency/],
-    ['missing-receipt-validation',text=>text.replace('name: Validate complete deferred matrix receipt','name: Skip deferred matrix validation'),/deferred matrix proof dependency/],
+    ['missing-dependency',text=>text.replace('    needs: [foundation, deferred-matrix, workflow-gates, conformance]\n',''),/proof phase dependencies/],
+    ['missing-receipt-validation',text=>text.replaceAll('name: Validate complete deferred matrix receipt','name: Skip deferred matrix validation'),/deferred matrix proof dependency/],
     ['skipped-required-test',text=>text.replace('    if: always()\n    permissions:\n','    if: always() && needs.deferred-matrix.result == \'success\'\n    permissions:\n'),/failed deferred matrix must fail the required test job/],
     ['missing-required-gate',text=>text.replace('      - name: Require successful deferred matrix job\n        run: test "${{ needs.deferred-matrix.result }}" = "success"\n',''),/failed deferred matrix must fail the required test job/]
   ]){const changed=alter(workflow);assert.notEqual(changed,workflow,`DEFERRED_MATRIX_CI_FAULT_SETUP_ORACLE: ${name}`);(await rejects(`deferred-matrix-${name}`,()=>assertLifecycleWorkflowCommand(changed),diagnostic));}
@@ -237,16 +296,16 @@ try{
   const promptAt=workflow.indexOf(promptHeading),fullAt=workflow.indexOf(fullHeading),sharedAt=workflow.indexOf('      - name: Stale project navigation and draft preservation\n');
   assert(promptAt>=0&&fullAt>promptAt&&sharedAt>fullAt,'CI_PROOF_ORDER_SETUP_ORACLE: required current proof steps are missing.');
   for(const [name,alter,diagnostic] of [
-    ['contract-missing',text=>text.replace(contractLine,''),/Contract-closure/],
+    ['contract-missing',text=>text.replace(contractLine,''),/authoritative registry proofs/],
     ['contract-duplicate',text=>text.replace(contractLine,contractLine+contractLine),/Contract-closure/],
-    ['contract-after-migration',text=>text.replace(contractLine+migrationLine,migrationLine+contractLine),/Contract-closure/],
+    ['contract-after-migration',text=>text.replace(contractLine,'').replace(migrationLine,migrationLine+contractLine),/Contract-closure/],
     ['early-infrastructure',text=>text.replace('          node verify-data-route-closure.mjs\n','          node verify-data-route-closure.mjs\n          node verify-infrastructure-route-closure.mjs\n'),/Infrastructure route/],
     ['full-cycle-missing',text=>text.replace(fullCycleLine,''),/Full-cycle and Stage 30/],
     ['terminal-duplicate',text=>text.replace(terminalLine,terminalLine+terminalLine),/Full-cycle and Stage 30/],
-    ['prompt-after-full-cycle',text=>text.slice(0,promptAt)+text.slice(fullAt,sharedAt)+text.slice(promptAt,fullAt)+text.slice(sharedAt),/specification order/]
+    ['prompt-after-full-cycle',text=>{const next=text.indexOf('      - name:',promptAt+promptHeading.length),block=text.slice(promptAt,next);return text.slice(0,promptAt)+text.slice(next,sharedAt)+block+text.slice(sharedAt);},/specification order/]
   ]){const changed=alter(workflow);assert.notEqual(changed,workflow,`CI_PROOF_ORDER_SETUP_ORACLE: ${name} mutation did not apply.`);(await rejects(`proof-order-${name}`,()=>assertLifecycleWorkflowCommand(changed),diagnostic));}
   cases.push('workflow-proof-order-and-direct-owner-mutations');
-  assert.equal((testWorkflow.match(/^          node build-test-project\.mjs$/gm)||[]).length,1,'CI_DUPLICATE_FIXTURE_ORACLE: retained fixture verification runs once');
+  assert.equal((workflow.match(/^          node build-test-project\.mjs$/gm)||[]).length,1,'CI_DUPLICATE_FIXTURE_ORACLE: retained fixture verification runs once');
   const conformancePosition=testWorkflow.indexOf('name: Validate complete conformance handoff');
   for(const name of ['Stale project navigation and draft preservation','Verification routing and capability evidence','Startup and scrolling at phone and desktop sizes','Acceptance viewport regression and targeted layout fault','Local Chromium operator path'])assert.ok(conformancePosition>=0&&testWorkflow.indexOf('name: '+name)>conformancePosition,'CI_PROOF_ORDER_ORACLE: non-browser proof precedes '+name);
   // Execute the early prompt entry point with the actual child-launch boundary
@@ -291,11 +350,11 @@ try{
     assert.throws(()=>assert.equal(masked.status,1,'BROWSER_GATE_FAILURE_ORACLE'),error=>error.code==='ERR_ASSERTION'&&error.message.startsWith('BROWSER_GATE_FAILURE_ORACLE'),'BROWSER_GATE_FAULT_DETECTION_ORACLE');
     cases.push('browser-gate-'+index+'-failure-retained-and-masking-fault-detected');
   }
-  for(const name of fullTestSteps){
+  for(const name of [...foundationProofSteps,...workflowGateProofSteps,...fullTestSteps]){
     const escaped=name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
     const step=workflow.match(new RegExp('^      - name: '+escaped+'\\n(?:(?!      - ).*(?:\\n|$))*','m'))?.[0];
     assert.ok(step,`Required gate missing from workflow: ${name}`);
-    if(!['Require successful deferred matrix job','Require successful conformance groups','Verified artifact reuse checks','Collect current executed assertion evidence','Seal verified deployment artifact'].includes(name))assert.match(step,/if: steps\.reuse\.outputs\.reused != 'true'/,'Only proven reuse may skip a full check.');
+    if(!['Require successful foundation job','Require successful workflow gate job','Require successful deferred matrix job','Require successful conformance groups','Verified artifact reuse checks','Collect current executed assertion evidence','Seal verified deployment artifact'].includes(name))assert.match(step,/if: steps\.reuse\.outputs\.reused != 'true'/,'Only proven reuse may skip a full check.');
     else assert.doesNotMatch(step,/^        if:/m,'The matrix gate, artifact contract, and final seal must always run.');
   }
   assert.ok(workflow.indexOf('name: Seal verified deployment artifact')>workflow.indexOf('name: Validate complete conformance handoff'));
