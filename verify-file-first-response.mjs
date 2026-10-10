@@ -48,7 +48,7 @@ export function assertFileFirstResponseContract({appSource=app,promptSource=prom
 function assertResponseFileInstruction(text){
   assert.match(text,/create exactly one authoritative UTF-8 JSON file named response\.json/,'The controlling prompt must require the response.json file.');
   assert.match(text,/Return one authoritative UTF-8 JSON file named response\.json only when ready for machine ingestion/,'Mandatory response rules must require response.json file transport.');
-  assert.match(text,/Return every required output artifact as a separate file/,'Required returned artifacts must remain separate files.');
+  assert.match(text,/Return response\.json and every required output artifact as separate files matching the declared attachment entries/,'Required returned artifacts must remain separate files matching the declared attachment entries.');
   assert.match(text,/Do not substitute inline or pasted JSON for response\.json/,'Inline JSON must not replace the authoritative response file.');
   assert.match(text,/final chat message must contain only links or attachments to the actual returned files/,'The final files must be accessible to the operator.');
   assert.doesNotMatch(text,/return exactly one complete strict JSON object and no surrounding prose|Return one final strict JSON object only when ready for machine ingestion/,'Inline-only final JSON instructions must not remain.');
@@ -90,7 +90,7 @@ assert.throws(()=>assertFileFirstResponseContract({ingestionProofSource:ingestio
 
 assert.throws(()=>assertFileFirstResponseContract({promptSource:prompt.replace('create exactly one authoritative UTF-8 JSON file named response.json','return exactly one complete strict JSON object and no surrounding prose')}),/response.json file/,'Mutation restoring inline-only output must fail.');
 assert.throws(()=>assertFileFirstResponseContract({promptSource:prompt.replace('Return one authoritative UTF-8 JSON file named response.json only when ready for machine ingestion','Return one final strict JSON object only when ready for machine ingestion')}),/response.json file transport/,'Mutation restoring inline mandatory response rules must fail.');
-assert.throws(()=>assertFileFirstResponseContract({promptSource:prompt.replace('Return every required output artifact as a separate file','Describe output artifacts in chat')}),/separate files/,'Mutation dropping required artifact files must fail.');
+assert.throws(()=>assertFileFirstResponseContract({promptSource:prompt.replace('Return response.json and every required output artifact as separate files matching the declared attachment entries','Describe output artifacts in chat')}),/separate files/,'Mutation dropping required artifact files must fail.');
 assert.throws(()=>assertFileFirstResponseContract({promptSource:prompt.replace('final chat message must contain only links or attachments to the actual returned files','final chat message may describe unavailable files')}),/accessible to the operator/,'Mutation removing actual file delivery must fail.');
 
 console.log(JSON.stringify({
