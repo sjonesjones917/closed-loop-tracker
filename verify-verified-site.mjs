@@ -180,7 +180,7 @@ try{
 
   const workflow=fs.readFileSync('.github/workflows/pages.yml','utf8');
   const nodeVersions=[...workflow.matchAll(/^          node-version: '([^']+)'$/gm)].map(match=>match[1]);
-  assert.equal(nodeVersions.length,4,'CI_RUNTIME_IDENTITY_ORACLE: every proof job must select Node explicitly.');
+  assert.equal(nodeVersions.length,5,'CI_RUNTIME_IDENTITY_ORACLE: every proof job must select Node explicitly.');
   assert(nodeVersions.every(version=>/^22\.\d+\.\d+$/.test(version)&&version===nodeVersions[0]),'CI_RUNTIME_IDENTITY_ORACLE: all proof jobs require the same exact supported Node version.');
   const deferredDiagnostics=workflow.match(/      - name: Preserve deferred matrix diagnostics\n([\s\S]*?)(?=\n      - name:|\n  [a-z])/);
   assert(deferredDiagnostics,'CI_DEFERRED_DIAGNOSTICS_ORACLE: deferred diagnostics upload is required.');
@@ -194,6 +194,9 @@ try{
     ['missing-execution','node verify-conformance-regressions.mjs --group=${{ matrix.group }} > /tmp/conformance-regressions.json','node missing-conformance.mjs',/complete conformance group execution/],
     ['missing-report','name: Preserve complete conformance group report','name: Missing group report',/complete conformance group execution/],
     ['missing-receipts','name: Preserve conformance execution receipts','name: Missing group receipts',/complete conformance group execution/],
+    ['missing-ingestion-prerequisite','          if [ "${{ matrix.group }}" = core ]; then node verify-ingestion.mjs; fi\n','',/current ingestion receipt must be produced before/],
+    ['wrong-ingestion-group','if [ "${{ matrix.group }}" = core ]; then node verify-ingestion.mjs; fi','if [ "${{ matrix.group }}" = creation ]; then node verify-ingestion.mjs; fi',/current ingestion receipt must be produced before/],
+    ['late-ingestion-prerequisite','          if [ "${{ matrix.group }}" = core ]; then node verify-ingestion.mjs; fi\n          node verify-conformance-regressions.mjs --group=${{ matrix.group }} > /tmp/conformance-regressions.json','          node verify-conformance-regressions.mjs --group=${{ matrix.group }} > /tmp/conformance-regressions.json\n          if [ "${{ matrix.group }}" = core ]; then node verify-ingestion.mjs; fi',/current ingestion receipt must be produced before/],
     ['missing-handoff','node verify-conformance-handoff.mjs','node missing-handoff.mjs',/conformance group proof handoff/],
     ['missing-group-gate','      - name: Require successful conformance groups\n        run: test "${{ needs.conformance.result }}" = "success"\n','',/failed conformance group must fail/]
   ]){assert.equal(workflow.split(before).length,2,'CONFORMANCE_CI_FAULT_SETUP_ORACLE: '+name);await rejects('conformance-workflow-'+name,()=>assertLifecycleWorkflowCommand(workflow.replace(before,after)),diagnostic);}
@@ -231,7 +234,7 @@ try{
   const contractLine='          node verify-contract-closure.mjs\n',migrationLine='          node verify-v3-migration.mjs\n';
   const fullCycleLine='          node verify-full-cycle.mjs | tee /tmp/full-cycle-proof.json\n',terminalLine='          node verify-stage30-terminal-mobile-boundary.mjs\n';
   const promptHeading='      - name: Prompt semantics and leakage\n',fullHeading='      - name: Full cycle and terminal boundary\n';
-  const promptAt=workflow.indexOf(promptHeading),fullAt=workflow.indexOf(fullHeading),sharedAt=workflow.indexOf('      - name: Shared production faults, bounded sequences, and executed observations\n');
+  const promptAt=workflow.indexOf(promptHeading),fullAt=workflow.indexOf(fullHeading),sharedAt=workflow.indexOf('      - name: Stale project navigation and draft preservation\n');
   assert(promptAt>=0&&fullAt>promptAt&&sharedAt>fullAt,'CI_PROOF_ORDER_SETUP_ORACLE: required current proof steps are missing.');
   for(const [name,alter,diagnostic] of [
     ['contract-missing',text=>text.replace(contractLine,''),/Contract-closure/],
@@ -244,7 +247,7 @@ try{
   ]){const changed=alter(workflow);assert.notEqual(changed,workflow,`CI_PROOF_ORDER_SETUP_ORACLE: ${name} mutation did not apply.`);(await rejects(`proof-order-${name}`,()=>assertLifecycleWorkflowCommand(changed),diagnostic));}
   cases.push('workflow-proof-order-and-direct-owner-mutations');
   assert.equal((testWorkflow.match(/^          node build-test-project\.mjs$/gm)||[]).length,1,'CI_DUPLICATE_FIXTURE_ORACLE: retained fixture verification runs once');
-  const conformancePosition=testWorkflow.indexOf('name: Shared production faults, bounded sequences, and executed observations');
+  const conformancePosition=testWorkflow.indexOf('name: Validate complete conformance handoff');
   for(const name of ['Stale project navigation and draft preservation','Verification routing and capability evidence','Startup and scrolling at phone and desktop sizes','Acceptance viewport regression and targeted layout fault','Local Chromium operator path'])assert.ok(conformancePosition>=0&&testWorkflow.indexOf('name: '+name)>conformancePosition,'CI_PROOF_ORDER_ORACLE: non-browser proof precedes '+name);
   // Execute the early prompt entry point with the actual child-launch boundary
   // rejecting its former transitive browser call. The later browser gate still
@@ -292,11 +295,11 @@ try{
     const escaped=name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
     const step=workflow.match(new RegExp('^      - name: '+escaped+'\\n(?:(?!      - ).*(?:\\n|$))*','m'))?.[0];
     assert.ok(step,`Required gate missing from workflow: ${name}`);
-    if(!['Require successful deferred matrix job','Verified artifact reuse checks','Collect current executed assertion evidence','Seal verified deployment artifact'].includes(name))assert.match(step,/if: steps\.reuse\.outputs\.reused != 'true'/,'Only proven reuse may skip a full check.');
+    if(!['Require successful deferred matrix job','Require successful conformance groups','Verified artifact reuse checks','Collect current executed assertion evidence','Seal verified deployment artifact'].includes(name))assert.match(step,/if: steps\.reuse\.outputs\.reused != 'true'/,'Only proven reuse may skip a full check.');
     else assert.doesNotMatch(step,/^        if:/m,'The matrix gate, artifact contract, and final seal must always run.');
   }
-  assert.ok(workflow.indexOf('name: Seal verified deployment artifact')>workflow.indexOf('name: Shared production faults, bounded sequences, and executed observations'));
-  assert.ok(workflow.indexOf('name: Collect current executed assertion evidence')>workflow.indexOf('name: Shared production faults, bounded sequences, and executed observations'));
+  assert.ok(workflow.indexOf('name: Seal verified deployment artifact')>workflow.indexOf('name: Validate complete conformance handoff'));
+  assert.ok(workflow.indexOf('name: Collect current executed assertion evidence')>workflow.indexOf('name: Validate complete conformance handoff'));
   assert.ok(workflow.indexOf('name: Seal verified deployment artifact')>workflow.indexOf('name: Collect current executed assertion evidence'));
   assert.match(workflow,/include-hidden-files: true/);
   assert.match(workflow,/name: \$\{\{ needs\.test\.outputs\.verified_artifact_name \}\}/,'Live verification must retain the successful test attempt artifact on job reruns.');

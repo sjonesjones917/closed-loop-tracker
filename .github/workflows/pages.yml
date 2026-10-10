@@ -160,6 +160,8 @@ jobs:
         timeout-minutes: 305
         run: |
           set -euo pipefail
+          # The evidence consumer requires ingestion's current executed receipt.
+          if [ "${{ matrix.group }}" = core ]; then node verify-ingestion.mjs; fi
           node verify-conformance-regressions.mjs --group=${{ matrix.group }} > /tmp/conformance-regressions.json
       - name: Stage conformance group report
         if: always() && steps.conformance.outcome != 'skipped'
