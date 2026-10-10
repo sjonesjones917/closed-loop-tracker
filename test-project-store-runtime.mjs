@@ -26,7 +26,7 @@ export function projectStoreRuntime({fault=null,sourceOverrides={},environment={
  // Keep empty stores present too, so an otherwise read-only transaction
  // cannot appear to mutate state merely by materializing an empty adapter map.
  const rows=new Map([['projects',new Map()],['artifacts',new Map()],['meta',new Map()]]);
- const runtime=createVerifierRuntime({Blob,Uint8Array,ArrayBuffer,TextEncoder,TextDecoder,ReadableStream,CompressionStream,DecompressionStream,Response,crypto:globalThis.crypto,btoa,atob,setTimeout,clearTimeout,queueMicrotask,console,Event:class Event{},dispatchEvent(){},...environment});
+ const runtime=createVerifierRuntime.withNativeGlobal({Blob,Uint8Array,ArrayBuffer,TextEncoder,TextDecoder,ReadableStream,CompressionStream,DecompressionStream,Response,crypto:globalThis.crypto,btoa,atob,setTimeout,clearTimeout,queueMicrotask,console,Event:class Event{},dispatchEvent(){},...environment});
  const parse=vm.runInContext('(text)=>JSON.parse(text)',runtime);
  // Preserve undefined properties and shared references just as structured clone
  // does. JSON cloning would hide invalid durable-view fields in these tests.

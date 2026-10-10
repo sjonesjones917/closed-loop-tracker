@@ -2,14 +2,14 @@
 // manufacture visual approval, screenshots, measurements, or comparison results.
 import './hash.js';
 import fs from 'node:fs';
-import vm from 'node:vm';
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import {execFileSync} from 'node:child_process';
 import {runtimePaths} from './verified-site.mjs';
 // Read the existing browser registry in a private realm, rather than copying its
 // authority vocabulary or installing application globals into the controller.
 const humanDecisionPolicy=(()=>{
-  const context=vm.createContext({TextEncoder,TextDecoder,dispatchEvent(){},Event:class Event{}});
-  for(const file of ['hash.js','workbook.js','workflow-schema.js','test-runtime.js'])vm.runInContext(fs.readFileSync(new URL(file,import.meta.url),'utf8'),context,{filename:file});
+  const context=createVerifierRuntime({TextEncoder,TextDecoder,dispatchEvent(){},Event:class Event{}});
+  for(const file of ['hash.js','workbook.js','workflow-schema.js','test-runtime.js'])createVerifierRuntime.loadScript(context,fs.readFileSync(new URL(file,import.meta.url),'utf8'),{filename:file});
   return {...context.closedLoopWorkflowSchema,exactDecimalParts:context.closedLoopTestRuntime.exactDecimalParts};
 })();
 const object=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);

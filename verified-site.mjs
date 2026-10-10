@@ -13,7 +13,7 @@ const hash=globalThis.closedLoopHash;
 export const manifestName='closed-loop-deployment-manifest.json';
 export const runtimePaths=['index.html','workbook.js','hash.js','workflow-schema.js','test-runtime.js','test-worker.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js','TEST_PROJECT.json','.nojekyll'];
 export const fullTestSteps=[
-  'Require successful deferred matrix job','Verified artifact reuse checks','Require deferred matrix proof or verified artifact reuse','Download complete deferred matrix receipt','Validate complete deferred matrix receipt','Syntax','Stage 01 agent response contract alignment','Stale project navigation and draft preservation','Verification routing and capability evidence','Startup and scrolling at phone and desktop sizes',
+  'Require successful deferred matrix job','Require successful conformance groups','Download complete conformance group reports','Download complete conformance execution receipts','Validate complete conformance handoff','Verified artifact reuse checks','Require deferred matrix proof or verified artifact reuse','Download complete deferred matrix receipt','Validate complete deferred matrix receipt','Syntax','Stage 01 agent response contract alignment','Stale project navigation and draft preservation','Verification routing and capability evidence','Startup and scrolling at phone and desktop sizes',
   'Acceptance viewport regression and targeted layout fault','Deployment manifest, build identity, and reproducibility',
   'Physical iPhone release-tag governance','Schema, ownership, and single-architecture proof',
   'Complete 30-stage canonical data-route closure','Migration and v3 contracts',
@@ -21,7 +21,7 @@ export const fullTestSteps=[
   'Test IR validation, security, and deterministic runtime','Raw-first ingestion and negative cases',
   'Workflow and gates','Prompt semantics and leakage','Full cycle and terminal boundary',
   'Build static application for operator verification','Local Chromium operator path',
-  'Shared production faults, bounded sequences, and executed observations','Collect current executed assertion evidence','Seal verified deployment artifact'
+  'Collect current executed assertion evidence','Seal verified deployment artifact'
 ];
 export const digest=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
 const requireValue=(condition,message)=>{if(!condition)throw new Error(message);};
@@ -33,9 +33,16 @@ export function assertLifecycleWorkflowCommand(workflow){
   const start=workflow.indexOf('\n  test:\n');
   requireValue(start>=0,'Required test job is absent from the workflow.');
   const following=workflow.slice(start+'\n  test:\n'.length),end=following.search(/\n  [a-z][\w-]*:\n/),testJob=end<0?following:following.slice(0,end);
-  requireValue(testJob.includes('needs: deferred-matrix')&&testJob.includes('name: Download complete deferred matrix receipt')&&testJob.includes('name: Validate complete deferred matrix receipt')&&testJob.includes('node verify-deferred-proof-handoff.mjs'),'Required deferred matrix proof dependency and handoff are absent.');
+  requireValue(testJob.includes('needs: [deferred-matrix, conformance]')&&testJob.includes('name: Download complete deferred matrix receipt')&&testJob.includes('name: Validate complete deferred matrix receipt')&&testJob.includes('node verify-deferred-proof-handoff.mjs'),'Required deferred matrix proof dependency and handoff are absent.');
   const matrixGate='      - name: Require successful deferred matrix job\n        run: test "${{ needs.deferred-matrix.result }}" = "success"\n';
   requireValue(/^    if: always\(\)$/m.test(testJob)&&testJob.includes(matrixGate)&&testJob.indexOf(matrixGate)<testJob.indexOf('      - uses: actions/checkout@'),'A failed deferred matrix must fail the required test job, not skip it.');
+  const conformanceStart=workflow.indexOf('\n  conformance:\n');
+  requireValue(conformanceStart>=0,'Required conformance group job is absent.');
+  const conformanceFollowing=workflow.slice(conformanceStart+'\n  conformance:\n'.length),conformanceEnd=conformanceFollowing.search(/\n  [a-z][\w-]*:\n/),conformanceJob=conformanceEnd<0?conformanceFollowing:conformanceFollowing.slice(0,conformanceEnd);
+  requireValue(conformanceJob.includes('group: [core, creation, counterpart]')&&conformanceJob.includes('fail-fast: false')&&conformanceJob.includes('node verify-conformance-regressions.mjs --group=${{ matrix.group }} > /tmp/conformance-regressions.json')&&conformanceJob.includes('name: Preserve complete conformance group report')&&conformanceJob.includes('name: Preserve conformance execution receipts'),'Required complete conformance group execution or artifacts are absent.');
+  const conformanceGate='      - name: Require successful conformance groups\n        run: test "${{ needs.conformance.result }}" = "success"\n';
+  requireValue(testJob.includes(conformanceGate)&&testJob.indexOf(conformanceGate)<testJob.indexOf('      - uses: actions/checkout@'),'A failed conformance group must fail the required test job.');
+  requireValue(testJob.includes('name: Download complete conformance group reports')&&testJob.includes('name: Download complete conformance execution receipts')&&testJob.includes('node verify-conformance-handoff.mjs'),'Required conformance group proof handoff is absent.');
   const heading='      - name: Workflow and gates\n',at=testJob.indexOf(heading);
   requireValue(at>=0&&testJob.indexOf(heading,at+heading.length)<0,'Required workflow gate step is absent or duplicated.');
   const migrationHeading='      - name: Migration and v3 contracts\n',migrationAt=testJob.indexOf(migrationHeading);
@@ -137,6 +144,14 @@ export function assertPassedRun(run,jobs,{repository,headSha,workflowId}){
   for(const name of ['Execute complete deferred stage matrix','Preserve complete deferred matrix receipt']){
     const matrixSteps=deferred[0].steps.filter(step=>step.name===name);
     requireValue(matrixSteps.length===1&&matrixSteps[0].status==='completed'&&matrixSteps[0].conclusion==='success','Required complete deferred matrix did not pass: '+name);
+  }
+  for(const group of ['core','creation','counterpart']){
+    const matches=jobs.filter(job=>job.name==='conformance-'+group);
+    requireValue(matches.length===1&&matches[0].status==='completed'&&matches[0].conclusion==='success','Required conformance group job has not passed: '+group);
+    for(const name of ['Execute complete conformance group','Preserve complete conformance group report','Preserve conformance execution receipts']){
+      const steps=matches[0].steps.filter(step=>step.name===name);
+      requireValue(steps.length===1&&steps[0].status==='completed'&&steps[0].conclusion==='success','Required conformance group execution or artifact did not pass: '+group+' '+name);
+    }
   }
   for(const name of fullTestSteps){
     const steps=tests[0].steps.filter(step=>step.name===name);

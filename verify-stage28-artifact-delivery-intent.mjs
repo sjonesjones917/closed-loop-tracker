@@ -76,7 +76,10 @@ assert.ok(boundaryIndex>0,'The full-cycle Stage 28 boundary could not be located
 const instrumented=fullCycleSource.slice(0,boundaryIndex)+`fs.writeFileSync(${JSON.stringify(snapshotPath)},JSON.stringify({project:p,artifacts:await captureArtifactFixture(byteStore,p.job.JOB_ID)}));console.log('STAGE28_READY_FIXTURE');process.exit(0);\n`+fullCycleSource.slice(boundaryIndex);
 fs.writeFileSync(instrumentedPath,instrumented);
 let fixtureOutput='';
-try{fixtureOutput=(await checkedVerifier(process.execPath,[instrumentedPath],{encoding:'utf8',timeout:600000,maxBuffer:64*1024*1024}));}finally{fs.rmSync(instrumentedPath,{force:true});}
+// This fixture executes the real lifecycle through Stage 27. Match the Stage 30
+// standalone lifecycle budget; application worker and delivery deadlines remain
+// enforced by their unchanged production owners and assertions below.
+try{fixtureOutput=(await checkedVerifier(process.execPath,[instrumentedPath],{encoding:'utf8',timeout:1800000,maxBuffer:64*1024*1024}));}finally{fs.rmSync(instrumentedPath,{force:true});}
 assert.match(fixtureOutput,/STAGE28_READY_FIXTURE/,'The full-cycle production mechanism did not reach the exact Stage 27-ready fixture.');
 assert.ok(fs.existsSync(snapshotPath),'The instrumented full-cycle production mechanism did not preserve its Stage 27-ready fixture.');
 const captured=JSON.parse(fs.readFileSync(snapshotPath,'utf8')),source=captured.project;

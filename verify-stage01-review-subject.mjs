@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import fs from 'node:fs';
 import vm from 'node:vm';
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import {projectStoreRuntime} from './test-project-store-runtime.mjs';
 import {readStoreArchive} from './test-zip.mjs';
 import {acceptPrerequisite, authorizeFixtureHandoff, stage01AcceptanceFixture, stage04AcceptanceFixture, stage04AcceptanceEnvelope, recordProposal, evidence} from './test-fixtures.mjs';
@@ -227,7 +228,7 @@ for(const filename of ['verify-browser.mjs','verify-browser-extra.mjs']){
   assert(match,filename+' lost its actual saved-prompt wait predicate.');
   assert(match[1].includes(selectorAnchor),filename+' retained the global-only version check.');
   assert(match[1].includes(operationAnchor),filename+' omitted the selected operation from the saved-prompt wait.');
-  const evaluate=(expression,project,stage,operation)=>vm.runInNewContext(expression,{document:{querySelector:selector=>selector==='#current-project-summary'?{dataset:{projectId:project.job.JOB_ID}}:selector==='#stage-picker'?{value:String(stage)}:selector==='#operation-picker'?{value:operation}:null},closedLoopProjectStore:{readProject:async()=>project},closedLoopPromptEngine:r.prompts});
+  const evaluate=(expression,project,stage,operation)=>createVerifierRuntime.loadScript(createVerifierRuntime({document:{querySelector:selector=>selector==='#current-project-summary'?{dataset:{projectId:project.job.JOB_ID}}:selector==='#stage-picker'?{value:String(stage)}:selector==='#operation-picker'?{value:operation}:null},closedLoopProjectStore:{readProject:async()=>project},closedLoopPromptEngine:r.prompts}),expression);
   assert.equal(await evaluate(match[1],challenge.project,1,'SEMANTIC_CHALLENGE'),true,filename+' falsely rejects the saved Stage 01 /91 review prompt.');
   assert.equal(await evaluate(match[1],stage2,2,'COMPLETE'),true,filename+' falsely rejects the saved Stage 02 /90 prompt.');
   assert.equal(await evaluate(match[1],challenge.project,1,'RECONCILE_INTAKE'),false,filename+' matched another current prompt in the selected stage.');

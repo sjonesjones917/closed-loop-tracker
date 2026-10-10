@@ -419,14 +419,43 @@ function assertOperationalChange(before,after){
   for(const proposal of after.projectData?.responseProposals||[]){const prior=(before.projectData?.responseProposals||[]).find(item=>item.proposalId===proposal.proposalId);if(['ACCEPTED','QUESTIONS_CREATED','BLOCKER_ACCEPTED','EXECUTION_FAILURE_ACCEPTED'].includes(proposal.status)&&!equivalent(prior,proposal))throw storageError('Acceptance requires a canonical transaction.','OPERATIONAL_OWNERSHIP_VIOLATION');}
   return patches;
 }
+// Ordinary canonical projects are trees. Preserve the older structured-clone
+// behavior for unusual shared graphs/accessors instead of changing their alias
+// semantics while replaying a path patch.
+function operationalPatchTree(value){
+  const seen=new WeakSet(),pending=[value];
+  while(pending.length){
+    const item=pending.pop();if(!item||typeof item!=='object')continue;
+    if(seen.has(item))return false;seen.add(item);
+    if(!Array.isArray(item)&&Object.getPrototypeOf(item)!==Object.prototype&&Object.getPrototypeOf(item)!==null)return false;
+    if(Object.getOwnPropertySymbols(item).length)return false;
+    for(const key of Object.getOwnPropertyNames(item)){
+      if(Array.isArray(item)&&key==='length')continue;
+      const descriptor=Object.getOwnPropertyDescriptor(item,key);
+      if(!descriptor.enumerable||!Object.hasOwn(descriptor,'value'))return false;
+      pending.push(descriptor.value);
+    }
+  }
+  return true;
+}
+function copyOperationalAncestor(value){
+  const copy=Array.isArray(value)?new Array(value.length):{};
+  for(const key of Object.keys(value))Object.defineProperty(copy,key,{value:value[key],enumerable:true,writable:true,configurable:true});
+  return copy;
+}
 function applyOperationalJournal(row,journal){
   if(!row||!journal)return row;
   const {sha256,...body}=journal;
   if(sha256!==hash.sha256Value(body)||body.schema!=='closed-loop-response-operations/1'||body.jobId!==String(row.jobId)||body.baseProjectSha256!==row.projectSha256||body.projectRevision!==Number(row.revision)||!Array.isArray(body.patches))throw storageError('Saved response operations do not match their canonical project.','OPERATIONAL_STATE_INTEGRITY_FAILED');
-  const next=clone(row.project);
+  // These are private database-read objects. Retain unchanged branches so the
+  // existing ownership comparisons can recognize them, and clone every changed
+  // ancestor before writing. Full journal and resulting-project hashes remain
+  // required; this does not cache or trust a previously validated digest.
+  const copyPaths=operationalPatchTree(row.project)&&body.patches.every(patch=>patch.remove||operationalPatchTree(patch.value));
+  const next=copyPaths?copyOperationalAncestor(row.project):clone(row.project);
   for(const patch of body.patches){
     if(!Array.isArray(patch.path)||!patch.path.length||patch.path.some(key=>typeof key!=='string'||['__proto__','constructor','prototype'].includes(key)))throw storageError('Saved response operation has an invalid field path.','OPERATIONAL_STATE_INTEGRITY_FAILED');
-    let target=next;for(const key of patch.path.slice(0,-1)){if(!target||typeof target!=='object'||!Object.hasOwn(target,key))throw storageError('Saved response operation has an unavailable parent.','OPERATIONAL_STATE_INTEGRITY_FAILED');target=target[key];}
+    let target=next;for(const key of patch.path.slice(0,-1)){if(!target||typeof target!=='object'||!Object.hasOwn(target,key))throw storageError('Saved response operation has an unavailable parent.','OPERATIONAL_STATE_INTEGRITY_FAILED');if(copyPaths&&target[key]&&typeof target[key]==='object')target[key]=copyOperationalAncestor(target[key]);target=target[key];}
     const key=patch.path.at(-1);if(patch.remove)delete target[key];else target[key]=clone(patch.value);
   }
   assertOperationalChange(row.project,next);

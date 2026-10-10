@@ -1,4 +1,5 @@
 import {createBrowserExecutionObserver} from './browser-execution-evidence.mjs';
+import {downloadSyntheticHandoff} from './test-browser-handoff-authorization.mjs';
 import fs from 'node:fs';
 import http from 'node:http';
 import os from 'node:os';
@@ -98,13 +99,26 @@ try{
     const exportButton=document.getElementById('next-export-prompt-file');
     if(!exportButton||exportButton.disabled)throw new Error('Current consolidated stage-file package control is not available.');
     for(const legacy of ['export-prompt-file','export-prompt-manifest','export-prompt-context','export-stage-files'])if(document.getElementById(legacy))throw new Error('Superseded export control remains: '+legacy);
-    const originalCreateObjectURL=URL.createObjectURL.bind(URL);let exportedBlob=null;
-    URL.createObjectURL=blob=>{exportedBlob=blob;return originalCreateObjectURL(blob);};
-    try{exportButton.click();await idle();await waitFor(()=>exportedBlob instanceof Blob,'Stage package export did not create one Blob.');}finally{URL.createObjectURL=originalCreateObjectURL;}
+    return {stages:30,prompts:checked.length,applicationOnlyOperations:applicationOnly.length,first:checked[0],last:checked.at(-1),uiStagesReached:reached.length,oneTimeSupply:true,operatorDoubleCheckGuide:true};
+  })()`);
+  const idleExpression=`(async()=>{const end=Date.now()+15000;while(Date.now()<end){if(document.querySelector('#app')?.getAttribute('aria-busy')!=='true')return;await new Promise(resolve=>setTimeout(resolve,25));}throw new Error('The operator action did not finish.');})()`;
+  const handoff={
+    click:async selector=>{await evalJs(`(()=>{const node=document.querySelector(${JSON.stringify(selector)});if(!node||node.disabled)throw new Error('The required handoff control is unavailable.');node.click();})()`);await evalJs(idleExpression);},
+    fill:async(selector,value)=>{await evalJs(`(()=>{const node=document.querySelector(${JSON.stringify(selector)});if(!node||node.disabled)throw new Error('The required handoff field is unavailable.');node.value=${JSON.stringify(value)};node.dispatchEvent(new Event('input',{bubbles:true}));node.dispatchEvent(new Event('change',{bubbles:true}));})()`);await evalJs(idleExpression);},
+    exists:selector=>evalJs(`Boolean(document.querySelector(${JSON.stringify(selector)}))`),evaluate:evalJs,captureDownloads:task=>task(),events:[]
+  };
+  await evalJs(`(()=>{globalThis.__humanWalkthroughExport={createObjectURL:URL.createObjectURL,blobs:[]};URL.createObjectURL=blob=>{globalThis.__humanWalkthroughExport.blobs.push(blob);return globalThis.__humanWalkthroughExport.createObjectURL.call(URL,blob);};})()`);
+  try{
+    await downloadSyntheticHandoff(handoff,'#next-export-prompt-file',{syntheticProject:true});
+    if(handoff.events.length!==1||handoff.events[0].purposes.length!==1||handoff.events[0].purposes[0]!=='DISCLOSURE_AUTHORIZATION'||handoff.events[0].actualExternalTransfer!==false)throw new Error('Stage package export did not use its exact rendered synthetic disclosure decision.');
+    await evalJs(`(async()=>{const end=Date.now()+15000;while(Date.now()<end){if(globalThis.__humanWalkthroughExport.blobs.length)return;await new Promise(resolve=>setTimeout(resolve,25));}throw new Error('Stage package export did not create one Blob.');})()`);
+    Object.assign(result,await evalJs(`(async()=>{
+    const blobs=globalThis.__humanWalkthroughExport.blobs,exportedBlob=blobs[0];
+    if(blobs.length!==1)throw new Error('Stage package export did not create exactly one Blob.');
     if(!(exportedBlob instanceof Blob)||exportedBlob.type!=='application/zip')throw new Error('Stage package export did not create the required ZIP Blob.');
     const committedDisplayed=document.getElementById('generated-prompt')?.textContent||'';
     if(!committedDisplayed.includes('STRICT RESPONSE CONTRACT'))throw new Error('Export did not commit the displayed controlling instruction.');
-    const stage18Picker=document.querySelector('#stage-picker');stage18Picker.value='18';stage18Picker.dispatchEvent(new Event('change',{bubbles:true}));await idle();
+    const stage18Picker=document.querySelector('#stage-picker');stage18Picker.value='18';stage18Picker.dispatchEvent(new Event('change',{bubbles:true}));await ${idleExpression};
     const appOnlyPrompt=document.querySelector('#generated-prompt')?.textContent||'';
     if(!appOnlyPrompt.includes('NO EXTERNAL AGENT INSTRUCTION REQUIRED'))throw new Error('Application-owned Stage 18 is rendered as external-agent work.');
     for(const id of ['export-prompt-file','export-prompt-manifest','export-prompt-context','export-stage-files','next-export-prompt-file','download-execution-package'])if(document.getElementById(id)&&!document.getElementById(id)?.disabled)throw new Error('Application-owned Stage 18 exposes external transfer control '+id+'.');
@@ -113,8 +127,9 @@ try{
     if(!compact.includes('height: clamp(260px, 45vh, 520px)'))throw new Error('Prompt box base height changed from the restored baseline.');
     if(!compact.includes('.expandable-prompt { max-height: 280px;'))throw new Error('Prompt preview height changed from the restored baseline.');
     if(compact.includes('.expandable-prompt { max-height: 88px;'))throw new Error('Obsolete 88px prompt height returned.');
-    return {stages:30,prompts:checked.length,applicationOnlyOperations:applicationOnly.length,first:checked[0],last:checked.at(-1),uiStagesReached:reached.length,oneTimeSupply:true,promptVisualBaseline:true,operatorDoubleCheckGuide:true};
-  })()`);
+    return {promptVisualBaseline:true};
+  })()`));
+  }finally{await evalJs(`(()=>{URL.createObjectURL=globalThis.__humanWalkthroughExport.createObjectURL;delete globalThis.__humanWalkthroughExport;})()`);}
   if(browserDialog)throw new Error(`Browser UI opened an unexpected dialog: ${browserDialog}`);
   if(result?.stages!==30||result?.uiStagesReached!==30||result?.prompts<8||result?.applicationOnlyOperations<1||result?.oneTimeSupply!==true||result?.promptVisualBaseline!==true||result?.operatorDoubleCheckGuide!==true)throw new Error('Synthetic prompt and navigation checks did not pass.');
   console.log(JSON.stringify({syntheticPromptAndNavigationChecks:true,browserExecution:await executionObserver?.finish(),completeOperatorJourney:false,humanIndependenceEstablished:false,...result}));

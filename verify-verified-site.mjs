@@ -22,6 +22,7 @@ function assertNoNestedCataloguedOwners(sources){
 const repository='test-owner/test-repo',headSha='a'.repeat(40),workflowId=42;
 const run={id:123,run_attempt:1,event:'pull_request',status:'completed',conclusion:'success',repository:{full_name:repository},head_repository:{full_name:repository},head_sha:headSha,workflow_id:workflowId,path:'.github/workflows/pages.yml'};
 const jobs=[{name:'test',status:'completed',conclusion:'success',steps:fullTestSteps.map(name=>({name,status:'completed',conclusion:'success'}))},{name:'deferred-matrix',status:'completed',conclusion:'success',steps:['Execute complete deferred stage matrix','Preserve complete deferred matrix receipt'].map(name=>({name,status:'completed',conclusion:'success'}))}];
+for(const group of ['core','creation','counterpart'])jobs.push({name:'conformance-'+group,status:'completed',conclusion:'success',steps:['Execute complete conformance group','Preserve complete conformance group report','Preserve conformance execution receipts'].map(name=>({name,status:'completed',conclusion:'success'}))});
 const bindings={repository,headSha,workflowId};
 const clone=value=>structuredClone(value);
 try{
@@ -42,8 +43,14 @@ try{
     const altered=clone(jobs);altered[0].steps[3].conclusion=conclusion;
     (await rejects(`unpassed-required-step-${conclusion}`,()=>assertPassedRun(run,altered,bindings),/did not pass/));
   }
-  (await rejects('missing-required-step',()=>assertPassedRun(run,[{...jobs[0],steps:jobs[0].steps.slice(1)},jobs[1]],bindings),/did not pass/));
+  (await rejects('missing-required-step',()=>assertPassedRun(run,[{...jobs[0],steps:jobs[0].steps.slice(1)},...jobs.slice(1)],bindings),/did not pass/));
   (await rejects('duplicate-test-job',()=>assertPassedRun(run,[...jobs,...jobs],bindings),/Required test job/));
+  for(const group of ['core','creation','counterpart']){
+    const name='conformance-'+group;
+    await rejects('missing-'+name,()=>assertPassedRun(run,jobs.filter(job=>job.name!==name),bindings),/Required conformance group job/);
+    for(const conclusion of ['failure','cancelled','skipped']){const altered=clone(jobs);altered.find(job=>job.name===name).conclusion=conclusion;await rejects('unpassed-'+name+'-'+conclusion,()=>assertPassedRun(run,altered,bindings),/Required conformance group job/);}
+    for(const step of ['Execute complete conformance group','Preserve complete conformance group report','Preserve conformance execution receipts']){const altered=clone(jobs);altered.find(job=>job.name===name).steps=altered.find(job=>job.name===name).steps.filter(row=>row.name!==step);await rejects('missing-'+name+'-'+step,()=>assertPassedRun(run,altered,bindings),/Required conformance group execution or artifact/);}
+  }
   (await rejects('missing-deferred-matrix-job',()=>assertPassedRun(run,[jobs[0]],bindings),/Required deferred matrix job/));
   for(const conclusion of ['failure','skipped',null]){
     const altered=clone(jobs);altered[1].conclusion=conclusion;
@@ -89,7 +96,7 @@ try{
   assert.equal(fs.existsSync(proofTarget),false);
 
   const workspace=path.join(temporary,'workspace');fs.mkdirSync(path.join(workspace,'.github/workflows'),{recursive:true});
-  for(const name of [...runtimePaths,'build-static-site.mjs','deployment-contract-identities.mjs','.github/workflows/pages.yml'])fs.copyFileSync(path.join(root,name),path.join(workspace,name));
+  for(const name of [...runtimePaths,'build-static-site.mjs','deployment-contract-identities.mjs','verifier-runtime.mjs','.github/workflows/pages.yml'])fs.copyFileSync(path.join(root,name),path.join(workspace,name));
   const git=(...args)=>execFileSync('git',args,{timeout:30000,killSignal:'SIGKILL',cwd:workspace,encoding:'utf8',stdio:['ignore','pipe','pipe']}).trim();
   git('init','-q');git('add','.');git('-c','user.name=Verification fixture','-c','user.email=fixture@example.invalid','commit','-qm','Tested source');
   const testedCommit=git('rev-parse','HEAD'),tree=git('rev-parse','HEAD^{tree}');
@@ -182,11 +189,19 @@ try{
   cases.push('exact-runtime-and-visible-deferred-diagnostics');
   const testWorkflow=workflow.slice(workflow.indexOf('\n  test:'),workflow.indexOf('\n  deploy:'));
   assertLifecycleWorkflowCommand(workflow);
+  for(const [name,before,after,diagnostic] of [
+    ['missing-group','group: [core, creation, counterpart]','group: [core, creation]',/complete conformance group execution/],
+    ['missing-execution','node verify-conformance-regressions.mjs --group=${{ matrix.group }} > /tmp/conformance-regressions.json','node missing-conformance.mjs',/complete conformance group execution/],
+    ['missing-report','name: Preserve complete conformance group report','name: Missing group report',/complete conformance group execution/],
+    ['missing-receipts','name: Preserve conformance execution receipts','name: Missing group receipts',/complete conformance group execution/],
+    ['missing-handoff','node verify-conformance-handoff.mjs','node missing-handoff.mjs',/conformance group proof handoff/],
+    ['missing-group-gate','      - name: Require successful conformance groups\n        run: test "${{ needs.conformance.result }}" = "success"\n','',/failed conformance group must fail/]
+  ]){assert.equal(workflow.split(before).length,2,'CONFORMANCE_CI_FAULT_SETUP_ORACLE: '+name);await rejects('conformance-workflow-'+name,()=>assertLifecycleWorkflowCommand(workflow.replace(before,after)),diagnostic);}
   const deferredBlock=workflow.slice(workflow.indexOf('\n  deferred-matrix:\n'),workflow.indexOf('\n  test:\n'));
   for(const [name,alter,diagnostic] of [
     ['missing-job',text=>text.replace(deferredBlock,''),/deferred matrix proof job/],
     ['missing-producer',text=>text.replace('node verify-due-stage-timing.mjs > /tmp/deferred-stage-matrix.json','node missing-deferred-matrix.mjs'),/complete deferred matrix execution/],
-    ['missing-dependency',text=>text.replace('    needs: deferred-matrix\n',''),/deferred matrix proof dependency/],
+    ['missing-dependency',text=>text.replace('    needs: [deferred-matrix, conformance]\n',''),/deferred matrix proof dependency/],
     ['missing-receipt-validation',text=>text.replace('name: Validate complete deferred matrix receipt','name: Skip deferred matrix validation'),/deferred matrix proof dependency/],
     ['skipped-required-test',text=>text.replace('    if: always()\n    permissions:\n','    if: always() && needs.deferred-matrix.result == \'success\'\n    permissions:\n'),/failed deferred matrix must fail the required test job/],
     ['missing-required-gate',text=>text.replace('      - name: Require successful deferred matrix job\n        run: test "${{ needs.deferred-matrix.result }}" = "success"\n',''),/failed deferred matrix must fail the required test job/]

@@ -2,7 +2,7 @@
 // deployment does not define another registry or execute any Test IR operation.
 import fs from 'node:fs';
 import path from 'node:path';
-import vm from 'node:vm';
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import {createHash,webcrypto} from 'node:crypto';
 import {isDeepStrictEqual} from 'node:util';
 import {fileURLToPath} from 'node:url';
@@ -17,8 +17,8 @@ export function deploymentContractIdentities(directory){
  // their declarations. Evaluate only those trusted checkout bytes; node:vm is
  // used for namespace isolation and is never an untrusted-code sandbox.
  for(const name of sourceNames)if(!sources[name].equals(fs.readFileSync(path.join(directory,name))))throw new Error('DEPLOYMENT_CONTRACT_IDENTITIES: artifact contract owner differs from checked-out source: '+name+'.');
- const context=vm.createContext({TextEncoder,TextDecoder,crypto:webcrypto,dispatchEvent(){},Event:function(type){this.type=type;}},{codeGeneration:{strings:false,wasm:false}});
- for(const name of sourceNames)new vm.Script(sources[name].toString('utf8'),{filename:name}).runInContext(context,{timeout:5000});
+ const context=createVerifierRuntime({TextEncoder,TextDecoder,crypto:webcrypto,dispatchEvent(){},Event:function(type){this.type=type;}},{codeGeneration:{strings:false,wasm:false}});
+ for(const name of sourceNames)createVerifierRuntime.loadScript(context,sources[name].toString('utf8'),{filename:name,timeout:5000});
  const schema=context.closedLoopWorkflowSchema,hash=context.closedLoopHash,runtime=context.closedLoopTestRuntime;
  if(!schema||!hash||!runtime)throw new Error('DEPLOYMENT_CONTRACT_IDENTITIES: designated runtime contract owner is unavailable.');
  const owner=name=>({path:name,sha256:sha(sources[name])});
@@ -27,7 +27,7 @@ export function deploymentContractIdentities(directory){
  // rather than an invented ID_REGISTRY export. Bind both existing sources and
  // their exact registered identity-field/prefix data under closed-loop-id/1.
  const idDeclarations={identity:hash.idVersion,contentRecordIdFields:[...hash.contentRecordIdFields].sort(),canonicalFamilies:Object.fromEntries(Object.entries(schema.RECORD_SCHEMAS).map(([family,record])=>[family,{idField:record.idField,prefix:record.prefix}]))};
- const registryIdentities={field:schemaRegistry('FIELD_REGISTRY'),operation:schemaRegistry('STAGE_OPERATION_REGISTRY'),scope:schemaRegistry('STAGE_OPERATION_SCOPE_MATRIX'),durableObject:schemaRegistry('DURABLE_OBJECT_REGISTRY'),normalizer:schemaRegistry('normalizerRegistry'),derivation:schemaRegistry('derivationRegistry'),id:{owners:[owner('hash.js'),owner('workflow-schema.js')],members:['idVersion','contentRecordIdFields','RECORD_SCHEMAS.idField/prefix'],identity:hash.idVersion,hashAlgorithm:'SHA-256',digest:hash.sha256Value(vm.runInContext('JSON.parse',context)(JSON.stringify(idDeclarations)))}};
+ const registryIdentities={field:schemaRegistry('FIELD_REGISTRY'),operation:schemaRegistry('STAGE_OPERATION_REGISTRY'),scope:schemaRegistry('STAGE_OPERATION_SCOPE_MATRIX'),durableObject:schemaRegistry('DURABLE_OBJECT_REGISTRY'),normalizer:schemaRegistry('normalizerRegistry'),derivation:schemaRegistry('derivationRegistry'),id:{owners:[owner('hash.js'),owner('workflow-schema.js')],members:['idVersion','contentRecordIdFields','RECORD_SCHEMAS.idField/prefix'],identity:hash.idVersion,hashAlgorithm:'SHA-256',digest:hash.sha256Value(createVerifierRuntime.loadScript(context,'JSON.parse')(JSON.stringify(idDeclarations)))}};
  const testIrIdentities={owner:owner('test-runtime.js'),languageVersion:runtime.TEST_IR_LANGUAGE_VERSION,operationRegistryVersion:runtime.OPERATION_REGISTRY_VERSION,operationRegistrySha256:runtime.OPERATION_REGISTRY_SHA256};
  return JSON.parse(JSON.stringify({registryIdentities,testIrIdentities}));
 }

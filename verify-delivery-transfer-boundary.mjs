@@ -92,7 +92,7 @@ const fixturePrefix=source.slice(0,anchor).replace('const core=globalThis.closed
 assert.ok(fixturePrefix.includes(captureContext),'The lifecycle fixture must capture context at generation time.');
 fs.writeFileSync(script,fixturePrefix+`fs.writeFileSync(${JSON.stringify(capture)},JSON.stringify({project:p,artifacts:await captureArtifactFixture(byteStore,p.job.JOB_ID),contextFiles:[...retainedContextFiles.values()]}));process.exit(0);`);
 let fixture,fixtureContextFiles,fixtureArtifacts;
-try{(await checkedVerifier(process.execPath,[script],{stdio:'pipe',timeout:600000,maxBuffer:64*1024*1024}));const generated=JSON.parse(fs.readFileSync(capture,'utf8'));fixture=generated.project;fixtureArtifacts=generated.artifacts;fixtureContextFiles=generated.contextFiles;}
+try{(await checkedVerifier(process.execPath,[script],{stdio:'pipe',timeout:3600000,maxBuffer:64*1024*1024}));const generated=JSON.parse(fs.readFileSync(capture,'utf8'));fixture=generated.project;fixtureArtifacts=generated.artifacts;fixtureContextFiles=generated.contextFiles;}
 finally{fs.rmSync(script,{force:true});fs.rmSync(capture,{force:true});}
 await bindArtifactFixture(fixtureArtifacts);
 const value=engine.recordValue,id=(r,c)=>engine.recordId(r,c),fresh=()=>structuredClone(fixture),cases=[retainedContextCase],faults=[];

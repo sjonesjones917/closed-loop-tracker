@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {createHash,webcrypto} from 'node:crypto';
 import fs from 'node:fs';
-import vm from 'node:vm';
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import {constants as bufferConstants} from 'node:buffer';
 import {gunzipSync} from 'node:zlib';
 
@@ -85,9 +85,9 @@ function projectAuthority(){
   if(mobileProjectAuthority)return mobileProjectAuthority;
   // Only trusted checkout owners are evaluated. This namespace has no database
   // or localStorage and cannot read or write an operator project.
-  const root=new URL('.',import.meta.url),context=vm.createContext({TextEncoder,TextDecoder,Blob,Response,CompressionStream,DecompressionStream,crypto:webcrypto,URL,URLSearchParams,structuredClone,setTimeout,clearTimeout,queueMicrotask,atob,btoa,console,navigator:{},dispatchEvent(){},Event:class Event{}},{codeGeneration:{strings:false,wasm:false}});
-  for(const name of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'])new vm.Script(fs.readFileSync(new URL(name,root),'utf8'),{filename:name}).runInContext(context,{timeout:5000});
-  mobileProjectAuthority={store:context.closedLoopProjectStore,schema:context.closedLoopWorkflowSchema,parse:vm.runInContext('JSON.parse',context)};
+  const root=new URL('.',import.meta.url),context=createVerifierRuntime({TextEncoder,TextDecoder,Blob,Response,CompressionStream,DecompressionStream,crypto:webcrypto,URL,URLSearchParams,structuredClone,setTimeout,clearTimeout,queueMicrotask,atob,btoa,console,navigator:{},localStorage:null,sessionStorage:null,dispatchEvent(){},Event:class Event{}},{codeGeneration:{strings:false,wasm:false}});
+  for(const name of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'])createVerifierRuntime.loadScript(context,fs.readFileSync(new URL(name,root),'utf8'),{filename:name,timeout:5000});
+  mobileProjectAuthority={store:context.closedLoopProjectStore,schema:context.closedLoopWorkflowSchema,parse:createVerifierRuntime.loadScript(context,'JSON.parse')};
   return mobileProjectAuthority;
 }
 // This synchronous JSON consumer cannot construct a string beyond the Node

@@ -154,8 +154,8 @@ function runOperatorAction(label,operation){
   // Storage still performs its own revision, identity, and transaction checks.
   if(operatorActionInFlight)return operatorActionInFlight.promise;
   if(historyRestoreController)return historyRestoreTail;
-  const pending={label,promise:null,activationId:current?.historyActivationId||null,jobId:current?.job?.JOB_ID||null,projectSha256:current?.projectSha256||null,failed:false,visible:false,startedAt:operationClock(),timer:null};operatorActionInFlight=pending;
-  pending.timer=setTimeout(()=>{if(operatorActionInFlight!==pending)return;pending.visible=true;paintOperatorAction();if(!pending.failed)announce(label);},OPERATION_LOADING_THRESHOLD_MS);
+  const pending={label,promise:null,activationId:current?.historyActivationId||null,jobId:current?.job?.JOB_ID||null,projectSha256:current?.projectSha256||null,failed:false,visible:false,announcementMade:false,startedAt:operationClock(),timer:null};operatorActionInFlight=pending;
+  pending.timer=setTimeout(()=>{if(operatorActionInFlight!==pending)return;pending.visible=true;paintOperatorAction();if(!pending.failed&&!pending.announcementMade)announce(label);},OPERATION_LOADING_THRESHOLD_MS);
   paintOperatorAction();
   pending.promise=(async()=>{
     // Yield once so control disabling is painted before potentially expensive work.
@@ -217,7 +217,7 @@ async function withStorageActivity(label,operation){
   let outcome='COMPLETED';
   try{return await operation();}catch(error){outcome='FAILED';throw error;}finally{clearTimeout(timer);recordOperationLatency('storage',label,entry.startedAt,outcome);storageActivities.delete(token);paintStorageActivity();}
 }
-function announce(message){if(actionFailureNotice){const {node,text,html,className,hidden}=actionFailureNotice;if(node.isConnected){if(html===undefined)node.textContent=text;else node.innerHTML=html;node.className=className;node.hidden=Boolean(hidden);}actionFailureNotice=null;}const node=$('#app-live-status');if(node)node.textContent=String(message||'');}
+function announce(message){if(operatorActionInFlight)operatorActionInFlight.announcementMade=true;if(actionFailureNotice){const {node,text,html,className,hidden}=actionFailureNotice;if(node.isConnected){if(html===undefined)node.textContent=text;else node.innerHTML=html;node.className=className;node.hidden=Boolean(hidden);}actionFailureNotice=null;}const node=$('#app-live-status');if(node)node.textContent=String(message||'');}
 const recordValue=(record,key)=>record?.[key]??record?.fields?.[key]??'';
 // UI disclosures retain references; closed panels never serialize their contents.
 const detailViews=new Map();

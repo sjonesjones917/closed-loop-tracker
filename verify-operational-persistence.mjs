@@ -9,6 +9,8 @@ import {storedArtifactBody,projectStoreRuntime} from './test-project-store-runti
 import {canonicalFixtureRecord} from './test-fixtures.mjs';
 import {verifyResponseStagingRecovery} from './test-response-staging-recovery.mjs';
 import {verifyReturnedSlotAtomicStaging} from './test-returned-slot-atomic-staging.mjs';
+import {verifyOperationalJournalCopy} from './test-operational-journal-copy.mjs';
+console.log(JSON.stringify({operationalJournalCopy:verifyOperationalJournalCopy()}));
 const faultName=process.argv.find(arg=>arg.startsWith('--fault='))?.split('=')[1],faults={ownership:{id:'BYPASS-OPERATIONAL-OWNERSHIP',file:'project-store.js',before:'if(!allowed)throw storageError(\'An operational response event',after:'if(false)throw storageError(\'An operational response event'},revision:{id:'BYPASS-RESERVATION-REVISION',file:'response-ingestion.js',before:'reservationRevision!==effectiveRevision||',after:''},canonical:{id:'CANONICAL-WRITE-FOR-STAGING',file:'project-store.js',before:'if(options.operational)return writeOperationalProject(project,options);',after:''}};
 const r=projectStoreRuntime({fault:faultName?faults[faultName]:null}),{core,engine,prompts,ingestion,store,copy}=r,schema=r.runtime.closedLoopWorkflowSchema,cases=[],note=name=>cases.push({name,result:'PASS'});
 let p=core.createBlankState('OPERATIONAL-REVISION');p.job.EXACT_USER_OBJECTIVE_VERBATIM='Preserve the reserved project revision.';engine.ensureShape(p);engine.recalculate(p);p=await store.writeProject(p,{expectedProjectRevision:0,incrementRevision:false,createOnly:true});const draft=copy(p),pr=prompts.reserveAndBuildPromptRecord(draft,1,{},{}).prompt;p=await store.writeProject(draft,{expectedProjectRevision:p.revision});

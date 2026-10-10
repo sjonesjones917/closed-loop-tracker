@@ -97,16 +97,40 @@ const suites=[
  "verify-native-proof-fault.mjs",
  "verify-operator-counterpart.mjs",
  "verify-counterpart-faults.mjs"];
-function conformanceSources(){
+Object.freeze(suites);
+const creationSuites=Object.freeze(['verify-product-reservation-persistence.mjs','verify-creation-presentation-faults.mjs']);
+const counterpartSuites=Object.freeze(['verify-operator-counterpart.mjs','verify-counterpart-faults.mjs']);
+export const conformanceGroups=Object.freeze({
+ core:Object.freeze(suites.filter(suite=>!creationSuites.includes(suite)&&!counterpartSuites.includes(suite))),
+ creation:creationSuites,
+ counterpart:counterpartSuites
+});
+export function selectConformanceGroup(args=[]){
+ if(args.length===0)return {group:'all',suites};
+ assert.ok(args.length===1&&/^--group=(core|creation|counterpart)$/.test(args[0]),'CONFORMANCE_GROUP_ARGUMENT_ORACLE: expected one --group=core|creation|counterpart option');
+ const group=args[0].slice('--group='.length);
+ return {group,suites:conformanceGroups[group]};
+}
+export function conformanceSources(){
  const verifierRuntimeConsumers=fs.readdirSync('.').filter(path=>/\.mjs$/.test(path)&&fs.readFileSync(path,'utf8').includes("from './verifier-runtime.mjs'"));
- return [...new Set(['.github/workflows/pages.yml','verify-conformance-regressions.mjs','verification-evidence.mjs','verification-evidence-catalog.mjs','verification-evidence-preload.mjs','collect-verification-evidence.mjs','verification-assertion-bindings.json','verification-negative-populations.json','operator-browser-driver.mjs','verify-browser.mjs','verify-browser-extra.mjs','verify-mobile-stage-action.mjs','verify-complete-operator-journey.mjs','verify-acceptance-viewport.mjs','verifier-runtime.mjs','workbook.js','hash.js','app-core.js','index.html','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','test-runtime.js','test-worker.js','test-project-store-runtime.mjs','test-app-markup.mjs','test-artifact-fixtures.mjs','operator-journey-fixtures.mjs','stage19-fixture.mjs','verify-mobile-acceptance-evidence.mjs','test-retained-history-browser.mjs','verify-retained-history-oracles.mjs','test-human-job-authority.mjs','test-human-job-controls.mjs','test-ingestion-syntax-transport.mjs','test-response-retry-browser.mjs','test-semantic-response-retries.mjs','test-returned-attachment-boundaries.mjs','test-backup-import-staging.mjs','test-backup-staging-store.mjs','test-response-staging-recovery-ui.mjs','test-response-staging-recovery.mjs','test-returned-slot-atomic-staging.mjs','test-startup-storage-boundaries.mjs','test-mobile-preparation-ui.mjs','test-mobile-session-storage.mjs','test-verifier-context-relations.mjs','test-verifier-context-ui.mjs','test-prompt-context-storage.mjs','test-job-pointer-integrity.mjs','test-staging-safe-cleanup.mjs','test-operator-safety-feedback.mjs','test-inbound-response-archive.mjs','test-inbound-archive-parser.mjs','test-inbound-archive-browser.mjs','test-artifact-byte-sharing.mjs',...verifierRuntimeConsumers,...suites])];
+ return [...new Set(['.github/workflows/pages.yml','verify-conformance-handoff.mjs','verify-conformance-regressions.mjs','verification-evidence.mjs','verification-evidence-catalog.mjs','verification-evidence-preload.mjs','collect-verification-evidence.mjs','verification-assertion-bindings.json','verification-negative-populations.json','operator-browser-driver.mjs','verify-browser.mjs','verify-browser-extra.mjs','verify-mobile-stage-action.mjs','verify-complete-operator-journey.mjs','verify-acceptance-viewport.mjs','verifier-runtime.mjs','workbook.js','hash.js','app-core.js','index.html','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','test-runtime.js','test-worker.js','test-project-store-runtime.mjs','test-operational-journal-copy.mjs','test-app-markup.mjs','test-artifact-fixtures.mjs','operator-journey-fixtures.mjs','stage19-fixture.mjs','verify-mobile-acceptance-evidence.mjs','test-retained-history-browser.mjs','verify-retained-history-oracles.mjs','test-human-job-authority.mjs','test-human-job-controls.mjs','test-ingestion-syntax-transport.mjs','test-response-retry-browser.mjs','test-semantic-response-retries.mjs','test-returned-attachment-boundaries.mjs','test-backup-import-staging.mjs','test-backup-staging-store.mjs','test-response-staging-recovery-ui.mjs','test-response-staging-recovery.mjs','test-returned-slot-atomic-staging.mjs','test-startup-storage-boundaries.mjs','test-mobile-preparation-ui.mjs','test-mobile-session-storage.mjs','test-verifier-context-relations.mjs','test-verifier-context-ui.mjs','test-prompt-context-storage.mjs','test-job-pointer-integrity.mjs','test-staging-safe-cleanup.mjs','test-operator-safety-feedback.mjs','test-inbound-response-archive.mjs','test-inbound-archive-parser.mjs','test-inbound-archive-browser.mjs','test-artifact-byte-sharing.mjs',...verifierRuntimeConsumers,...suites])];
 }
 
 const sha=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
 const CHILD_TIMEOUT_MS=20*60*1000,KILL_GRACE_MS=5000;
-export const AGGREGATE_TIMEOUT_MS=180*60*1000;
+export const AGGREGATE_TIMEOUT_MS=300*60*1000;
 const MAX_OUTPUT_BYTES=64*1024*1024;
-export const CREATION_MATRIX_TIMEOUT_MS=40*60*1000;
+export const CREATION_MATRIX_TIMEOUT_MS=180*60*1000;
+export const COUNTERPART_MATRIX_TIMEOUT_MS=280*60*1000;
+export const FULL_JOURNEY_TIMEOUT_MS=40*60*1000;
+export function suiteTimeoutMs(suite){
+ if(['verify-product-attachment-journey.mjs','verify-checkpoint-boundary.mjs','verify-delivery-transfer-boundary.mjs'].includes(suite))return 90*60*1000;
+ if(suite==='verify-creation-presentation-faults.mjs')return CREATION_MATRIX_TIMEOUT_MS;
+ if(suite==='verify-counterpart-faults.mjs')return COUNTERPART_MATRIX_TIMEOUT_MS;
+ if(['verify-product-reservation-persistence.mjs','verify-operator-counterpart.mjs','verify-stage28-artifact-delivery-intent.mjs'].includes(suite))return FULL_JOURNEY_TIMEOUT_MS;
+ return CHILD_TIMEOUT_MS;
+}
+export const verifierTimeoutMs=suiteTimeoutMs;
 let childGateNumber=0;
 // All child calls use the same process-group owner, including direct verifier
 // entry points. Await cleanup before a caller can restore a fault or start work.
@@ -261,18 +285,56 @@ export async function verifyLifecycleFaultDispatch(directory){
  const source=fs.readFileSync('verify-full-cycle.mjs','utf8');
  const start=source.indexOf('const timingFaultDefinitions='),end=source.indexOf('globalThis.Event=',start);
  assert.ok(start>=0&&end>start,'FAULT_EXECUTION_OWNER_FIXTURE_ORACLE');
- const prelude=source.slice(start,end),results=[],prerequisiteResults=[];
+ const prelude=source.slice(start,end),results=[],prerequisiteResults=[],prerequisiteSource=healthyFullCyclePrerequisiteSource(source);
  const expectedFaultIds=['premature-failure-execution','unreviewed-expression-identity','retained-version-alias','future-leaf-truth','dropped-timing-leaf','unreviewed-leaf-schedule','prerequisite-path-loss','activation-review-bypass'];
- const prerequisitePrelude=healthyFullCyclePrerequisiteSource(prelude);
- assert.throws(()=>healthyFullCyclePrerequisiteSource(''),/HEALTHY_LIFECYCLE_PREREQUISITE_ANCHOR_ORACLE/);
- assert.throws(()=>healthyFullCyclePrerequisiteSource(prelude+prelude),/HEALTHY_LIFECYCLE_PREREQUISITE_ANCHOR_ORACLE/);
+ const prerequisitePrelude=prerequisiteSource.slice(prerequisiteSource.indexOf('const timingFaultDefinitions='),prerequisiteSource.indexOf('globalThis.Event='));
+ const dispatchAnchors=["if(!timingFault&&(!process.argv.includes('--timing-only')||process.argv.includes('--timing-fault-matrix'))){",'if([3,12,19,26,27,29,30].includes(stage))verifyRecoveryCompatibility(stage);','if([13,17,19].includes(stage))verifyIterationComparisonGate(stage);'];
+ const refinementDispatchAnchor='assertIndependentRefinement(p,stage,changes,changes[0].rawResponseId);';
+ dispatchAnchors.push(...[13,17,19].map(stage=>`verifyComparisonReplacement(${stage});`),refinementDispatchAnchor);
+ const continuationGuard=String.raw`if(!p.stages[stage].gate.complete&&Number(String(p.job.CURRENT_STAGE).match(/\d+/)?.[0])===stage&&['EXTERNAL_AGENT_TOOL','AI_REVIEW','SELECT_RESPONSE_JSON_FILE'].includes(p.job.NEXT_REQUIRED_ACTION.actionType)){`,continuationReplacement='if(false){ /* The full-cycle owner verifies the discarded continuation clone. */';
+ dispatchAnchors.push(continuationGuard);
+ for(const anchor of dispatchAnchors){
+  assert.equal(source.split(anchor).length-1,1,'FULL_CYCLE_DEFAULT_DISPATCH_ANCHOR_ORACLE');
+  assert.throws(()=>healthyFullCyclePrerequisiteSource(source.replace(anchor,'')),/HEALTHY_LIFECYCLE_PREREQUISITE_ANCHOR_ORACLE/);
+  assert.throws(()=>healthyFullCyclePrerequisiteSource(source+anchor),/HEALTHY_LIFECYCLE_PREREQUISITE_ANCHOR_ORACLE/);
+ }
+ function completionDispatch(text){const begin=text.indexOf('function complete(stage){'),finish=text.indexOf('\nfunction rid(c)',begin);assert.ok(begin>=0&&finish>begin,'FULL_CYCLE_COMPLETION_DISPATCH_ANCHOR_ORACLE');return text.slice(begin,finish);}
+ const defaultCompletion=completionDispatch(source),prerequisiteCompletion=completionDispatch(prerequisiteSource),expectedRecoveryStages=[3,12,19,26,27,29,30],expectedComparisonStages=[13,17,19];
+ assert.equal(prerequisiteCompletion,defaultCompletion.replace(dispatchAnchors[1],'/* The full-cycle owner executes every recovery fault. */').replace(dispatchAnchors[2],'/* The full-cycle owner executes every comparison fault. */'),'HEALTHY_LIFECYCLE_POSITIVE_COMPLETION_SOURCE_ORACLE');
+ const expectedRefinementStages=[12,17,19],expectedReplacementStages=[13,17,19];
+ assert.deepEqual([...source.matchAll(/verifyBatch\((\d+),'VERIFY',\w+\);/g)].map(match=>Number(match[1])),expectedRefinementStages,'FULL_CYCLE_REFINEMENT_CALLER_POPULATION_ORACLE');
+ function auxiliaryDispatch(text){
+  const replacements=[...text.matchAll(/verifyComparisonReplacement\((\d+)\);/g)].map(match=>match[0]).join('\n');
+  const refinements=text.includes(refinementDispatchAnchor)?expectedRefinementStages.map(stage=>`{const stage=${stage},changes=[{rawResponseId:'selected'}];${refinementDispatchAnchor}}`).join('\n'):'';
+  const begin=text.indexOf(text.includes(continuationGuard)?continuationGuard:continuationReplacement),end=text.indexOf('const integrity=',begin);
+  assert.ok(begin>=0&&end>begin,'FULL_CYCLE_CONTINUATION_CONTROL_ANCHOR_ORACLE');
+  const continuation=text.slice(begin,end);
+  return replacements+'\n'+refinements+`\nfor(const stage of [11,12,17,19]){const pr={operation:'VERIFY'},p={stages:{[stage]:{gate:{complete:false}}},job:{CURRENT_STAGE:'Stage '+stage,NEXT_REQUIRED_ACTION:{actionType:'EXTERNAL_AGENT_TOOL'}}};const engine={acceptedChanges:()=>[]};const ingestion={prepareStageContinuation(project,{stage}){assert.notEqual(project,p,'Continuation control must use its disposable clone.');continuationStages.push(stage);return {prompt:{stage,operation:'EXECUTE_RUN',scope:{runId:'NEXT'}}};}};${continuation}}`;
+ }
+ const defaultAuxiliary=auxiliaryDispatch(source),prerequisiteAuxiliary=auxiliaryDispatch(prerequisiteSource);
+ const expectedPrerequisite=source.replace(dispatchAnchors[0],'if(false){ // Healthy prerequisite only; the full-cycle owner executes every timing fault.').replace(dispatchAnchors[1],'/* The full-cycle owner executes every recovery fault. */').replace(dispatchAnchors[2],'/* The full-cycle owner executes every comparison fault. */');
+ assert.equal(prerequisiteSource,expectedReplacementStages.reduce((text,stage)=>text.replace(`verifyComparisonReplacement(${stage});`,'/* The full-cycle owner verifies comparison replacement and retry. */'),expectedPrerequisite).replace(refinementDispatchAnchor,'/* The full-cycle owner verifies independent refinement isolation. */').replace(continuationGuard,continuationReplacement),'HEALTHY_LIFECYCLE_ONLY_AUXILIARY_DISPATCH_SOURCE_ORACLE');
+ const expectedPositiveTrace=[];
+ for(let stage=1;stage<=30;stage++){expectedPositiveTrace.push('recalculate','gate:'+stage);if(stage>1)expectedPositiveTrace.push('gate:'+(stage-1));expectedPositiveTrace.push('projection:'+stage);}
  const workflow=fs.readFileSync('.github/workflows/pages.yml','utf8');
  assert.match(workflow,/\n\s+node verify-stage28-artifact-delivery-intent\.mjs\s*\n/,'STAGE28_PREREQUISITE_WORKFLOW_ORACLE');
  assert.match(workflow,/\n\s+node verify-full-cycle\.mjs \| tee \/tmp\/full-cycle-proof\.json\s*\n/,'FULL_CYCLE_DEFAULT_MATRIX_WORKFLOW_ORACLE');
- async function execute(label,body,imported){
+ async function execute(label,body,imported,completion=defaultCompletion,auxiliary=defaultAuxiliary){
   const folder=path.join(directory,label);fs.mkdirSync(folder,{recursive:true});
   const owner=path.join(folder,'renamed-lifecycle.mjs'),launcher=path.join(folder,'importing-verifier.mjs'),trace=path.join(folder,'caller-entries.log');
-  fs.writeFileSync(owner,`import fs from 'node:fs';\nimport {runVerifier,detectedFault} from ${JSON.stringify(import.meta.url)};\n`+body.replace("'conformance-regression-evidence/timing-faults'",JSON.stringify(path.join(folder,'faults')))+`\nif(timingFault)throw new Error(timingFault.oracle);console.log(JSON.stringify({faults:timingInjectedFaults}));\n`);
+  fs.writeFileSync(owner,`import fs from 'node:fs';\nimport assert from 'node:assert/strict';\nimport {runVerifier,detectedFault} from ${JSON.stringify(import.meta.url)};\n`+body.replace("'conformance-regression-evidence/timing-faults'",JSON.stringify(path.join(folder,'faults')))+`\nif(timingFault)throw new Error(timingFault.oracle);
+const positiveTrace=[],recoveryStages=[],comparisonStages=[],replacementStages=[],refinementStages=[],continuationStages=[],stageProjectionCases=[],schema={};
+const p={stages:Object.fromEntries(Array.from({length:30},(_,i)=>[i+1,{status:'COMPLETE'}]))};
+const engine={recalculate:()=>positiveTrace.push('recalculate'),gate:stage=>{positiveTrace.push('gate:'+stage);return {complete:true,reasons:[]};}};
+function verifyCompletedStageProjection(_project,stage,_schema){positiveTrace.push('projection:'+stage);return stage;}
+function verifyRecoveryCompatibility(stage){recoveryStages.push(stage);}
+function verifyIterationComparisonGate(stage){comparisonStages.push(stage);}
+function verifyComparisonReplacement(stage){replacementStages.push(stage);}
+function assertIndependentRefinement(_project,stage){refinementStages.push(stage);}
+${completion}
+for(let stage=1;stage<=30;stage++)complete(stage);
+${auxiliary}
+console.log(JSON.stringify({faults:timingInjectedFaults,positiveTrace,recoveryStages,comparisonStages,replacementStages,refinementStages,continuationStages,stageProjectionCases}));\n`);
   fs.writeFileSync(launcher,`import fs from 'node:fs';fs.appendFileSync(${JSON.stringify(trace)},'entered\\n');await import(${JSON.stringify(new URL('file://'+owner).href)});\n`);
   const child=(await runVerifier(process.execPath,[imported?launcher:owner],{timeout:15000,evidenceDirectory:folder}));
   assert.equal(child.status,0,'FAULT_EXECUTION_OWNER_CONTROL_ORACLE: '+child.stderr);
@@ -280,17 +342,26 @@ export async function verifyLifecycleFaultDispatch(directory){
   return {label,imported,callerEntries,expectedCallerEntries:imported?1:0,child,report:JSON.parse(child.stdout)};
  }
  function check(observation){assert.equal(observation.callerEntries,observation.expectedCallerEntries,'FAULT_EXECUTION_OWNER_ORACLE: a shared verifier fault must execute its owner without rerunning the importing caller');}
+ function checkLifecycle(observation,prerequisite=false){
+  assert.deepEqual(observation.report.positiveTrace,expectedPositiveTrace,'HEALTHY_LIFECYCLE_POSITIVE_COMPLETION_TRACE_ORACLE');
+  assert.deepEqual(observation.report.stageProjectionCases,Array.from({length:30},(_,i)=>i+1),'HEALTHY_LIFECYCLE_STAGE_PROJECTION_POPULATION_ORACLE');
+  assert.deepEqual(observation.report.recoveryStages,prerequisite?[]:expectedRecoveryStages,'FULL_CYCLE_RECOVERY_MATRIX_POPULATION_ORACLE');
+  assert.deepEqual(observation.report.comparisonStages,prerequisite?[]:expectedComparisonStages,'FULL_CYCLE_COMPARISON_MATRIX_POPULATION_ORACLE');
+  assert.deepEqual(observation.report.replacementStages,prerequisite?[]:expectedReplacementStages,'FULL_CYCLE_COMPARISON_REPLACEMENT_POPULATION_ORACLE');
+  assert.deepEqual(observation.report.refinementStages,prerequisite?[]:expectedRefinementStages,'FULL_CYCLE_INDEPENDENT_REFINEMENT_POPULATION_ORACLE');
+  assert.deepEqual(observation.report.continuationStages,prerequisite?[]:[11,12,17,19],'FULL_CYCLE_DISCARDED_CONTINUATION_CONTROL_ORACLE');
+ }
  for(const imported of [false,true]){
-  const result=(await execute(imported?'imported':'direct',prelude,imported));check(result);assert.deepEqual(result.report.faults.map(row=>row.id),expectedFaultIds,'FULL_CYCLE_DEFAULT_FAULT_POPULATION_ORACLE');results.push(result);
-  const prerequisite=(await execute(imported?'prerequisite-imported':'prerequisite-direct',prerequisitePrelude,imported));check(prerequisite);assert.deepEqual(prerequisite.report.faults,[],'HEALTHY_LIFECYCLE_PREREQUISITE_DISPATCH_ORACLE');prerequisiteResults.push(prerequisite);
+  const result=(await execute(imported?'imported':'direct',prelude,imported));check(result);checkLifecycle(result);assert.deepEqual(result.report.faults.map(row=>row.id),expectedFaultIds,'FULL_CYCLE_DEFAULT_FAULT_POPULATION_ORACLE');results.push(result);
+  const prerequisite=(await execute(imported?'prerequisite-imported':'prerequisite-direct',prerequisitePrelude,imported,prerequisiteCompletion,prerequisiteAuxiliary));check(prerequisite);checkLifecycle(prerequisite,true);assert.deepEqual(prerequisite.report.faults,[],'HEALTHY_LIFECYCLE_PREREQUISITE_DISPATCH_ORACLE');prerequisiteResults.push(prerequisite);
  }
  const before="runVerifier(process.execPath,[import.meta.filename,'--timing-only'",after="runVerifier(process.execPath,[process.argv[1],'--timing-only'";
  assert.equal(prelude.split(before).length,2,'FAULT_EXECUTION_OWNER_MUTATION_ANCHOR_ORACLE');
  const mutant=(await execute('wrong-caller',prelude.replace(before,after),true));
  assert.throws(()=>check(mutant),error=>error.code==='ERR_ASSERTION'&&error.message.startsWith('FAULT_EXECUTION_OWNER_ORACLE'),'FAULT_EXECUTION_OWNER_MUTATION_DETECTED_ORACLE');
- const restored=(await execute('restored',prelude,true));check(restored);assert.deepEqual(restored.report.faults.map(row=>row.id),expectedFaultIds,'FULL_CYCLE_RESTORED_FAULT_POPULATION_ORACLE');
+ const restored=(await execute('restored',prelude,true));check(restored);checkLifecycle(restored);assert.deepEqual(restored.report.faults.map(row=>row.id),expectedFaultIds,'FULL_CYCLE_RESTORED_FAULT_POPULATION_ORACLE');
  assert.equal(fs.readFileSync('verify-full-cycle.mjs','utf8'),source,'FULL_CYCLE_PREREQUISITE_SOURCE_RESTORED_ORACLE');
- return {basis:'Actual lifecycle dispatch prelude; disposable child failures. Production timing invariants execute separately.',results,prerequisiteResults,expectedFaultIds,mutant,restored};
+ return {basis:'Actual lifecycle dispatch prelude, complete function and auxiliary call expressions with recording controls; disposable child failures. Production timing, recovery, comparison, replacement and refinement invariants execute separately in the unchanged full-cycle owner.',results,prerequisiteResults,expectedFaultIds,expectedRecoveryStages,expectedComparisonStages,expectedReplacementStages,expectedRefinementStages,mutant,restored};
 }
 export async function verifyNestedChildCleanup(directory){
  const cases=[];
@@ -344,24 +415,46 @@ async function verifyCounterpartRestoredBudget(directory){
  const source=fs.readFileSync('verify-counterpart-faults.mjs','utf8').replace("from './verify-conformance-regressions.mjs'","from "+JSON.stringify(import.meta.url)).replace("from './operator-journey-fixtures.mjs'","from "+JSON.stringify(new URL('./operator-journey-fixtures.mjs',import.meta.url).href));
  const matrix=path.join(folder,'matrix.mjs'),clock=path.join(folder,'clock.mjs');
  fs.writeFileSync(matrix,source);fs.writeFileSync(path.join(folder,'workflow-engine.js'),'Controlled unchanged source for the supervision contract.\n');
- // Advance the owning deadline only after the full child is ready. The same
- // elapsed-work checkpoint exceeds the partial-fault budget, but remains
- // inside the existing full-suite budget. No real five-minute sleep is needed.
- fs.writeFileSync(clock,`import fs from 'node:fs';const later=setTimeout,repeat=setInterval;globalThis.setTimeout=(callback,ms,...args)=>{if(ms<300000)return later(callback,ms,...args);const timer=repeat(()=>{if(!fs.existsSync(${JSON.stringify(ready)}))return;clearInterval(timer);if(ms<=300001)callback(...args);else fs.writeFileSync(${JSON.stringify(release)},'complete');},10);return timer;};\n`);
+ // Each actual matrix child must survive a controlled twenty-minute checkpoint.
+ // Real fault identities, stages and oracles remain unchanged; only work is synthetic.
+ fs.writeFileSync(clock,`import fs from 'node:fs';const later=setTimeout,repeat=setInterval;globalThis.setTimeout=(callback,ms,...args)=>{if(ms<300000||ms>=${COUNTERPART_MATRIX_TIMEOUT_MS})return later(callback,ms,...args);const previous=fs.existsSync(${JSON.stringify(ready)})?fs.readFileSync(${JSON.stringify(ready)},'utf8'):null;const timer=repeat(()=>{if(!fs.existsSync(${JSON.stringify(ready)})||fs.readFileSync(${JSON.stringify(ready)},'utf8')===previous)return;clearInterval(timer);if(ms<=1200001)callback(...args);else fs.writeFileSync(${JSON.stringify(release)},'complete');},10);return timer;};\n`);
  const oracles=Object.fromEntries(COUNTERPART_FAULT_CASES.map(([fault,,oracle])=>[fault,oracle]));
- fs.writeFileSync(path.join(folder,'verify-operator-counterpart.mjs'),`import fs from 'node:fs';import assert from 'node:assert/strict';const fault=process.env.CLRT_COUNTERPART_FAULT;if(fault)assert.fail(${JSON.stringify(oracles)}[fault]);assert.equal(process.env.CLRT_COUNTERPART_STAGE_LIMIT,'30');fs.writeFileSync(${JSON.stringify(ready)},'ready');await new Promise(resolve=>{const timer=setInterval(()=>{if(fs.existsSync(${JSON.stringify(release)})){clearInterval(timer);resolve();}},10);});console.log(JSON.stringify({counterpartContracts:'PASS',stages:30,controlledElapsedMs:300001}));\n`);
+ fs.writeFileSync(path.join(folder,'verify-operator-counterpart.mjs'),`import fs from 'node:fs';import assert from 'node:assert/strict';const fault=process.env.CLRT_COUNTERPART_FAULT;if(!fault)assert.equal(process.env.CLRT_COUNTERPART_STAGE_LIMIT,'30');fs.rmSync(${JSON.stringify(release)},{force:true});fs.writeFileSync(${JSON.stringify(ready)},String(process.pid));await new Promise(resolve=>{const timer=setInterval(()=>{if(fs.existsSync(${JSON.stringify(release)})){clearInterval(timer);resolve();}},10);});if(fault)assert.fail(${JSON.stringify(oracles)}[fault]);console.log(JSON.stringify({counterpartContracts:'PASS',stages:30,controlledElapsedMs:1200001}));\n`);
  const observed=await executeGate({name:'counterpart-restored-budget',args:['--import',clock,matrix]},{directory:folder,cwd:folder,timeoutMs:15000,env:{VERIFIER_CHILD_EVIDENCE_DIRECTORY:path.join(folder,'children')}});
  if(observed.outcome!=='PASS')process.stderr.write(observed.stderr);
- assert.equal(observed.outcome,'PASS','COUNTERPART_RESTORED_BUDGET_ORACLE: the full healthy journey must retain its full-suite supervision budget.');
+ assert.equal(observed.outcome,'PASS','COUNTERPART_RESTORED_BUDGET_ORACLE: every real journey fault and full healthy journey must retain its full-suite supervision budget.');
  assert.deepEqual(observed.report.cases.map(row=>[row.fault,row.throughStage,row.detectedBy]),COUNTERPART_FAULT_CASES.map(row=>Array.from(row)),'COUNTERPART_RESTORED_BUDGET_ORACLE: every current declared fault must execute once with its exact stage and oracle.');
- assert.equal(JSON.parse(observed.report.restoredRun.stdout).controlledElapsedMs,300001,'COUNTERPART_RESTORED_BUDGET_ORACLE: the healthy child must complete beyond the partial-fault deadline');
- return {case:'counterpart-full-journey-keeps-full-suite-budget',controlledClock:true,actualCounterpartJourney:false,observed};
+ assert.ok(observed.report.cases.every(row=>row.timeoutMs===FULL_JOURNEY_TIMEOUT_MS),'COUNTERPART_CHILD_BUDGET_ORACLE');
+ assert.equal(observed.report.aggregateTimeoutMs,COUNTERPART_MATRIX_TIMEOUT_MS,'COUNTERPART_AGGREGATE_BUDGET_ORACLE');
+ assert.equal(observed.report.restoredRun.timeoutMs,FULL_JOURNEY_TIMEOUT_MS,'COUNTERPART_RESTORED_BUDGET_ORACLE');
+ assert.equal(JSON.parse(observed.report.restoredRun.stdout).controlledElapsedMs,1200001,'COUNTERPART_RESTORED_BUDGET_ORACLE: the healthy child must complete beyond the former default deadline');
+ return {case:'counterpart-full-journeys-keep-full-suite-budget',controlledClock:true,actualCounterpartJourney:false,observed};
+}
+function verifyConformanceGroups(){
+ const groups=Object.values(conformanceGroups),population=groups.flat();
+ assert.equal(suites.length,88,'CONFORMANCE_FULL_POPULATION_ORACLE');
+ assert.deepEqual(Object.keys(conformanceGroups),['core','creation','counterpart'],'CONFORMANCE_GROUP_POPULATION_ORACLE');
+ assert.deepEqual(groups.map(group=>group.length),[84,2,2],'CONFORMANCE_GROUP_POPULATION_ORACLE');
+ assert.equal(new Set(population).size,population.length,'CONFORMANCE_GROUP_DISJOINT_ORACLE');
+ assert.deepEqual([...population].sort(),[...suites].sort(),'CONFORMANCE_GROUP_UNION_ORACLE');
+ assert.ok(Object.isFrozen(suites)&&Object.isFrozen(conformanceGroups)&&groups.every(Object.isFrozen),'CONFORMANCE_GROUP_IMMUTABLE_ORACLE');
+ assert.equal(selectConformanceGroup().suites,suites,'CONFORMANCE_DEFAULT_POPULATION_ORACLE');
+ for(const group of Object.keys(conformanceGroups))assert.equal(selectConformanceGroup(['--group='+group]).suites,conformanceGroups[group],'CONFORMANCE_GROUP_SELECTION_ORACLE');
+ for(const args of [['--group=unknown'],['--group=all'],['--group=core','--group=creation'],['--group','core'],['--skip']])assert.throws(()=>selectConformanceGroup(args),/CONFORMANCE_GROUP_ARGUMENT_ORACLE/);
+ for(const suite of suites){
+  const expected=['verify-product-attachment-journey.mjs','verify-checkpoint-boundary.mjs','verify-delivery-transfer-boundary.mjs'].includes(suite)?90:suite==='verify-creation-presentation-faults.mjs'?180:suite==='verify-counterpart-faults.mjs'?280:['verify-product-reservation-persistence.mjs','verify-operator-counterpart.mjs'].includes(suite)?40:20;
+  assert.equal(suiteTimeoutMs(suite),expected*60*1000,'CONFORMANCE_SUITE_BUDGET_ORACLE: '+suite);
+ }
+ assert.equal(suiteTimeoutMs('verify-stage28-artifact-delivery-intent.mjs'),40*60*1000,'CONFORMANCE_STAGE28_BUDGET_ORACLE');
+ assert.equal(AGGREGATE_TIMEOUT_MS,300*60*1000,'CONFORMANCE_AGGREGATE_BUDGET_ORACLE');
+ return {case:'closed-conformance-groups-and-finite-budgets',groups:conformanceGroups,fullSuitePopulation:suites,aggregateTimeoutMs:AGGREGATE_TIMEOUT_MS};
 }
 
 async function verifyRunnerContract(){
  const directory=fs.mkdtempSync(path.join(os.tmpdir(),'clrt-runner-contract-')),cases=[];
  const gate=(name,code)=>({name,args:['--input-type=module','-e',code]});
  try{
+  cases.push(verifyConformanceGroups());
   for(const [name,code,expected]of [
    ['valid',"console.log(JSON.stringify({case:'valid',result:'PASS'}))",'PASS'],
    ['nonzero',"console.log(JSON.stringify({declared:'PASS'}));process.exitCode=7",'FAIL'],
@@ -515,15 +608,23 @@ async function verifyCreationMatrixContract(){
  const fixture=path.join(directory,'fixture.mjs'),sourceFile=path.join(directory,'source.js');
  fs.writeFileSync(sourceFile,'const retained = true;\n');
  try{
-  for(const mode of ['specific-rejection','stalled-after-oracle','unrelated-rejection','source-excerpt-rejection','interrupted-after-completed-child']){
+  for(const mode of ['specific-rejection','stalled-after-oracle','unrelated-rejection','source-excerpt-rejection','interrupted-after-completed-child','standard-child-budget','product-child-budget']){
+   const budgetControl=mode.endsWith('-child-budget'),suite=budgetControl?(mode==='product-child-budget'?'verify-product-reservation-persistence.mjs':'controlled-standard.mjs'):fixture;
    fs.writeFileSync(fixture,`if(${JSON.stringify(mode)}==='interrupted-after-completed-child'&&String(process.env.MATRIX_FAULT_SOURCE).includes('interrupted-')){console.error('last-phase: interrupted-child');setInterval(()=>{},1000);setTimeout(()=>process.exit(99),6000);}else if(process.env.MATRIX_FAULT_SOURCE){console.error('last-phase: injected-child');if(${JSON.stringify(mode)}==='source-excerpt-rejection'){console.error("assert(missingValue,'CONTROLLED_MATRIX_REJECTION');");throw new ReferenceError('missingValue is not defined');}console.error(${JSON.stringify('Error: '+(mode==='unrelated-rejection'?'OTHER_REJECTION':'CONTROLLED_MATRIX_REJECTION'))});${mode==='stalled-after-oracle'?"setInterval(()=>{},1000);setTimeout(()=>process.exit(99),6000);":"process.exitCode=1;"}}else{if(${JSON.stringify(mode)}==='specific-rejection')await new Promise(resolve=>setTimeout(resolve,250));console.log(JSON.stringify({healthy:true}));}\n`);
-   const cases=[{id:'controlled-'+mode,file:sourceFile,env:'MATRIX_FAULT_SOURCE',suite:fixture,oracle:'CONTROLLED_MATRIX_REJECTION',before:'true',after:'false'}];
+   if(budgetControl)fs.copyFileSync(fixture,path.join(directory,suite));
+   const cases=[{id:'controlled-'+mode,file:sourceFile,env:'MATRIX_FAULT_SOURCE',suite,oracle:'CONTROLLED_MATRIX_REJECTION',before:'true',after:'false'}];
    if(mode==='interrupted-after-completed-child'){cases[0].id='completed-child';cases.push({...cases[0],id:'interrupted-child'});}
    const matrix=path.join(directory,mode+'.mjs');
-   fs.writeFileSync(matrix,"process.env.CREATION_FAULT_CHILD_TIMEOUT_MS="+JSON.stringify(mode==='interrupted-after-completed-child'?'5000':mode==='stalled-after-oracle'?'750':'3000')+";process.env.CREATION_FAULT_EVIDENCE_DIRECTORY="+JSON.stringify(path.join(directory,'evidence-'+mode))+";\n"+original.slice(0,start)+'const cases='+JSON.stringify(cases)+';\n'+original.slice(end));
-   const observed=await executeGate({name:'creation-'+mode,args:[matrix]},{directory,timeoutMs:mode==='interrupted-after-completed-child'?800:5000,killGraceMs:50});
+   fs.writeFileSync(matrix,"process.env.CREATION_FAULT_CHILD_TIMEOUT_MS="+JSON.stringify(budgetControl?'':mode==='interrupted-after-completed-child'?'5000':mode==='stalled-after-oracle'?'750':'3000')+";process.env.CREATION_FAULT_EVIDENCE_DIRECTORY="+JSON.stringify(path.join(directory,'evidence-'+mode))+";\n"+original.slice(0,start)+'const cases='+JSON.stringify(cases)+';\n'+original.slice(end));
+   const observed=await executeGate({name:'creation-'+mode,args:[matrix]},{directory,cwd:directory,timeoutMs:mode==='interrupted-after-completed-child'?800:5000,killGraceMs:50});
    results.push({mode,observed});
-   if(mode==='specific-rejection'){
+   if(budgetControl){
+    assert.equal(observed.outcome,'PASS','CREATION_MATRIX_DECLARED_BUDGET_ORACLE');
+    assert.equal(observed.report.aggregateTimeoutMs,180*60*1000,'CREATION_MATRIX_AGGREGATE_BUDGET_ORACLE');
+    assert.ok(observed.report.results.every(row=>row.timeoutMs===(mode==='product-child-budget'?40:10)*60*1000),'CREATION_MATRIX_DECLARED_BUDGET_ORACLE');
+    assert.equal(observed.report.results[0].detected,true,'CREATION_MATRIX_SPECIFIC_REJECTION_ORACLE');
+    assert.equal(observed.report.results.at(-1).exitCode,0,'CREATION_MATRIX_RESTORED_CONTROL_ORACLE');
+   }else if(mode==='specific-rejection'){
     assert.equal(observed.outcome,'PASS','CREATION_MATRIX_SPECIFIC_REJECTION_ORACLE');
     assert.equal(observed.report.results[0].detected,true,'CREATION_MATRIX_SPECIFIC_REJECTION_ORACLE');
     assert.equal(observed.report.results.at(-1).exitCode,0,'CREATION_MATRIX_RESTORED_CONTROL_ORACLE');
@@ -592,7 +693,9 @@ async function verifyRunnerFaults(){
   ['ignore-child-cancellation','signal:controller.signal,timeoutMs:timeout,','timeoutMs:timeout,','CHILD_CANCELLATION_ORACLE'],
   ['ignore-composite-budget','timeoutMs:gate.timeoutMs??childTimeoutMs','timeoutMs:childTimeoutMs','RUNNER_COMPOSITE_BUDGET_ORACLE'],
   ['omit-current-counterpart-oracle','const oracles=Object.fromEntries(COUNTERPART_FAULT_CASES.map(','const oracles=Object.fromEntries(COUNTERPART_FAULT_CASES.slice(1).map(','COUNTERPART_RESTORED_BUDGET_ORACLE'],
-  ['shorten-restored-counterpart-budget','fs.writeFileSync(matrix,source);',"fs.writeFileSync(matrix,source.replace(\"encoding:'utf8',killSignal:'SIGKILL'\",\"encoding:'utf8',timeout:300000,killSignal:'SIGKILL'\"));",'COUNTERPART_RESTORED_BUDGET_ORACLE'],
+  ['shorten-restored-counterpart-budget','fs.writeFileSync(matrix,source);',"fs.writeFileSync(matrix,source.replace(\"const restored=(await runVerifier(process.execPath,['verify-operator-counterpart.mjs'],{encoding:'utf8',timeout:FULL_JOURNEY_TIMEOUT_MS\",\"const restored=(await runVerifier(process.execPath,['verify-operator-counterpart.mjs'],{encoding:'utf8',timeout:300000\"));",'COUNTERPART_RESTORED_BUDGET_ORACLE'],
+  ['drop-conformance-group-suite','creation:creationSuites,','creation:Object.freeze(creationSuites.slice(1)),','CONFORMANCE_GROUP_POPULATION_ORACLE'],
+  ['shorten-product-suite-budget',"'verify-product-reservation-persistence.mjs','verify-operator-counterpart.mjs','verify-stage28-artifact-delivery-intent.mjs'","'verify-operator-counterpart.mjs','verify-stage28-artifact-delivery-intent.mjs'",'CONFORMANCE_SUITE_BUDGET_ORACLE'],
   ['ignore-child-exit','exitCode===0&&!error','!error','RUNNER_OUTCOME_ORACLE: nonzero'],
   ['accept-malformed-report',"&&!reportError?'PASS'","?'PASS'",'RUNNER_OUTCOME_ORACLE: malformed'],
   ['misclassify-timeout',"reason==='TIMEOUT'||reason==='AGGREGATE_TIMEOUT'","false",'RUNNER_OUTCOME_ORACLE: stalled'],
@@ -633,19 +736,18 @@ if(process.argv.includes('--creation-matrix-contract-only')){
  if(!process.argv.includes('--fault-probe')){contract.creationMatrix=await verifyCreationMatrixContract();contract.creationMatrixFaults=await verifyCreationMatrixFaults();Object.assign(contract,await verifyRunnerFaults());contract.restored=await verifyRunnerContract();}
  console.log(JSON.stringify(contract,null,2));
 }else{
+ const selected=selectConformanceGroup(process.argv.slice(2));
  const directory=path.resolve('conformance-regression-evidence'),reportFile=path.join(directory,'report.json');
  const sourceCommit=execFileSync('git',['rev-parse','HEAD'],{timeout:30000,killSignal:'SIGKILL',encoding:'utf8'}).trim();
  const sources=conformanceSources();
  const sourceFiles=sources.map(path=>({path,sha256:sha(fs.readFileSync(path))})),workingTreeChanges=execFileSync('git',['status','--porcelain','--',...sources],{timeout:30000,killSignal:'SIGKILL',encoding:'utf8'}).trim();
  const controller=new AbortController(),onTerm=()=>controller.abort('SIGTERM'),onInt=()=>controller.abort('SIGINT');
  process.on('SIGTERM',onTerm);process.on('SIGINT',onInt);
- const report={schema:'closed-loop-conformance-regressions/1',sourceCommit,workingTreeChanges:workingTreeChanges||null,sourceFiles,controllingSpecification:{path:'specification/closed-loop-reliability-controlling-implementation-specification.txt',sha256:sha(fs.readFileSync('specification/closed-loop-reliability-controlling-implementation-specification.txt'))},synthetic:true,completeOperatorJourney:false,physicalDeviceAcceptance:false};
+ const report={schema:'closed-loop-conformance-regressions/1',group:selected.group,selectedSuites:selected.suites,fullSuitePopulation:suites,sourceCommit,workingTreeChanges:workingTreeChanges||null,sourceFiles,controllingSpecification:{path:'specification/closed-loop-reliability-controlling-implementation-specification.txt',sha256:sha(fs.readFileSync('specification/closed-loop-reliability-controlling-implementation-specification.txt'))},synthetic:true,completeOperatorJourney:false,physicalDeviceAcceptance:false};
  try{
-  // The creation matrix composes nineteen fault children and seven full healthy
-  // controls; it has a forty-minute aggregate budget and ten-minute child bounds.
-  // Other suites retain twenty minutes; the whole sequence retains three hours.
-  // Run the runner's disposable contract inside the same bounded child path.
-  await runSequence([{name:'runner-contract',args:[fileURLToPath(import.meta.url),'--runner-contract-only']},...suites.map(suite=>({name:suite,args:[suite],...(suite==='verify-creation-presentation-faults.mjs'?{timeoutMs:CREATION_MATRIX_TIMEOUT_MS}:{})}))],{directory,reportFile,report,signal:controller.signal});
+  // Every selected original suite runs under a finite workload-specific deadline.
+  // Each group includes the unchanged runner controls; default invocation runs all suites.
+  await runSequence([{name:'runner-contract',args:[fileURLToPath(import.meta.url),'--runner-contract-only']},...selected.suites.map(suite=>({name:suite,args:[suite],timeoutMs:suiteTimeoutMs(suite)}))],{directory,reportFile,report,signal:controller.signal});
  }finally{
   process.removeListener('SIGTERM',onTerm);process.removeListener('SIGINT',onInt);
   report.sourceFilesAtFinish=sources.map(path=>({path,sha256:sha(fs.readFileSync(path))}));

@@ -3,7 +3,7 @@
   "normativeRequirementId": "NREQ-7a68fe07ee725cf205dd2102cd997b7f",
   "sourceLineSha256": "89af7e3ffb6168d966b07568ede7d292cf9e3d346e92d61f5d51c1ded9c4d468",
   "specificationSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
-  "declarationSha256": "652ecb1fe1af490887e22e4b73ebb4cd67b7a72638d50cbf22d72814819f57e8",
+  "declarationSha256": "2d6f800b483189834dd1cf87cf1933418345e0d77d793b1961e3deb34bc94aef",
   "decision": "COMPLETE_COVERAGE",
   "evidenceBasis": "EXTERNALLY_SUPPORTED",
   "method": "The unchanged narrow controlling clause and obligation/check decomposition retain their earlier independent semantic assessment. A separate collaborator inspected the exact supervisor/prerequisite source delta recorded in verification/stage28-prerequisite-independent-delta-review-20261010.json. Only the source dependency is renewed; current actual producer executions remain separately required. Prior review attribution and scope are retained below.",
@@ -17,11 +17,11 @@
   },
   "reviewedInputs": [
     {
-      "declarationSha256": "652ecb1fe1af490887e22e4b73ebb4cd67b7a72638d50cbf22d72814819f57e8"
+      "declarationSha256": "2d6f800b483189834dd1cf87cf1933418345e0d77d793b1961e3deb34bc94aef"
     },
     {
       "path": "app-core.js",
-      "sha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8"
+      "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
     },
     {
       "path": "hash.js",
@@ -41,7 +41,7 @@
     },
     {
       "path": "project-store.js",
-      "sha256": "79213ca03e60d7fe0b2b1c7d17c42a99158c063de8e25b88136bd8aed89650bb"
+      "sha256": "4e8368f0d91eab0b937ee5c256a121c6ca2b3524e9d06ffc16c3f5637a05b060"
     },
     {
       "path": "prompt-engine.js",
@@ -109,7 +109,7 @@
     },
     {
       "path": "test-project-store-runtime.mjs",
-      "sha256": "563817f6d8256a0ea3ebbc1d8836b6c5887fa7275b0378ade657ecfb61f00eed"
+      "sha256": "743e74ce60e3f81f1601daf7a1bf589ac2a3b8600e275a5865c24fbd0f335f1b"
     },
     {
       "path": "test-reservation-scope-fixture.mjs",
@@ -149,7 +149,7 @@
     },
     {
       "path": "verification-evidence-catalog.mjs",
-      "sha256": "f1aa5344f635d85140e476e3775a87f1e03e4d509eb4ad5260a9bf82a6eb03e3"
+      "sha256": "5d8e04d46601123d4552e796d0e69027f29774155d5309d5e1356c6456c53010"
     },
     {
       "path": "verification-negative-populations.json",
@@ -169,7 +169,7 @@
     },
     {
       "path": "verifier-runtime.mjs",
-      "sha256": "8a4c9058b6c72a5aa8dd68809e3cbfd8e5c217b358c41970347443a338f83933"
+      "sha256": "051318fc24ea587ced6268d4a60278e5155e3fee8ed26309b28b532c921277f9"
     },
     {
       "path": "verify-browser-extra.mjs",
@@ -181,7 +181,7 @@
     },
     {
       "path": "verify-conformance-regressions.mjs",
-      "sha256": "fb3f568736b16b87dff48e792fd0b0916284142c91680788bce850eea59f4128"
+      "sha256": "cec69ce4a4eb45ad2c49dccd164852a35cd7386f6b269e22d318d5ed63204a39"
     },
     {
       "path": "verify-file-first-operator.mjs",
@@ -234,6 +234,14 @@
     {
       "path": "verification/stage28-prerequisite-independent-delta-review-20261010.json",
       "sha256": "a6d31e351f0b4c2264b014e93eb8c3e03cbc96264574c05cb485b1ab400c910b"
+    },
+    {
+      "path": "verification/runtime-storage-independent-delta-review-20261010.json",
+      "sha256": "1aeddf08767ed1d3a70ff7d4f31d69a74cde85099cce89d8d7a0d0e97404542a"
+    },
+    {
+      "path": "verification/ci-group-handoff-independent-delta-review-20261010.json",
+      "sha256": "3b8b941ac5a47dec4bd681f3e4dbe939230db8875d40c62c17e862e912f04c4d"
     }
   ],
   "findings": [],
@@ -372,11 +380,23 @@
       },
       "reviewedAtUtc": "2026-10-10T05:12:34Z",
       "scope": "Unchanged supervisor execution implementation; added healthy prerequisite dispatch controls and dependency serialization only."
+    },
+    {
+      "path": "verification/runtime-storage-independent-delta-review-20261010.json",
+      "sha256": "1aeddf08767ed1d3a70ff7d4f31d69a74cde85099cce89d8d7a0d0e97404542a",
+      "reviewedAtUtc": "2026-10-10T05:59:54.689Z",
+      "scope": "Exact reviewed dependency and owner source delta; prior semantic obligation/check decomposition unchanged."
+    },
+    {
+      "path": "verification/ci-group-handoff-independent-delta-review-20261010.json",
+      "sha256": "3b8b941ac5a47dec4bd681f3e4dbe939230db8875d40c62c17e862e912f04c4d",
+      "reviewedAtUtc": "2026-10-10T06:13:50.965Z",
+      "scope": "Exact reviewed dependency and owner source delta; prior semantic obligation/check decomposition unchanged."
     }
   ],
-  "reviewRenewedAt": "2026-10-10T05:12:34Z",
+  "reviewRenewedAt": "2026-10-10T06:13:50.965Z",
   "renewalActor": {
-    "actor": "Codex independent CI evidence delta reviewer",
-    "contextId": "/root/evidence_review"
+    "actor": "Codex CI repair integrator",
+    "contextId": "/root"
   }
 }

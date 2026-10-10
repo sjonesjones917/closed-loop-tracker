@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import assert from 'node:assert/strict';
-import {executeGate,detectedFault,CREATION_MATRIX_TIMEOUT_MS} from './verify-conformance-regressions.mjs';
+import {executeGate,detectedFault,CREATION_MATRIX_TIMEOUT_MS,FULL_JOURNEY_TIMEOUT_MS} from './verify-conformance-regressions.mjs';
 
 const cases=[
  {id:'primary-capability-test-identifier',file:'app-core.js',env:'APP_SOURCE',suite:'verify-verification-routing.mjs',oracle:'CAPABILITY_GUIDANCE_ORACLE',before:'${esc(labels.get(test.testId))}',after:'${esc(test.testId)}'},
@@ -31,15 +31,17 @@ const cases=[
 const directory=fs.mkdtempSync(path.join(os.tmpdir(),'creation-presentation-faults-')),results=[];
 // Every child is independently bounded. The shared supervisor captures streams
 // as they arrive, terminates descendants, and never treats TIMEOUT as rejection.
-const childTimeoutMs=Math.min(10*60*1000,Number(process.env.CREATION_FAULT_CHILD_TIMEOUT_MS)||10*60*1000);
-assert.ok(Number.isFinite(childTimeoutMs)&&childTimeoutMs>0,'A finite child deadline is required.');
+
 const evidenceDirectory=path.resolve(process.env.CREATION_FAULT_EVIDENCE_DIRECTORY||'conformance-regression-evidence/creation-presentation-faults');
 const controller=new AbortController(),onTerm=()=>controller.abort('SIGTERM'),onInt=()=>controller.abort('SIGINT');
 process.on('SIGTERM',onTerm);process.on('SIGINT',onInt);
 const aggregateDeadline=setTimeout(()=>controller.abort('AGGREGATE_TIMEOUT'),CREATION_MATRIX_TIMEOUT_MS);
-const report={synthetic:true,actualBrowser:false,expected:'Each deliberate ownership, identity, custody, receipt, or information-display violation is caught by its behavioral oracle; original sources pass afterward.',results,pending:cases.map(item=>item.id),running:null,complete:false,outcome:'RUNNING'};
+const report={aggregateTimeoutMs:CREATION_MATRIX_TIMEOUT_MS,synthetic:true,actualBrowser:false,expected:'Each deliberate ownership, identity, custody, receipt, or information-display violation is caught by its behavioral oracle; original sources pass afterward.',results,pending:cases.map(item=>item.id),running:null,complete:false,outcome:'RUNNING'};
 const persist=()=>{fs.mkdirSync(evidenceDirectory,{recursive:true});const file=path.join(evidenceDirectory,'report.json'),temporary=file+'.partial';fs.writeFileSync(temporary,JSON.stringify(report,null,2)+'\n');fs.renameSync(temporary,file);};
 const run=async(name,suite,env={})=>{
+ const maximum=suite==='verify-product-reservation-persistence.mjs'?FULL_JOURNEY_TIMEOUT_MS:10*60*1000;
+ const childTimeoutMs=Math.min(maximum,Number(process.env.CREATION_FAULT_CHILD_TIMEOUT_MS)||maximum);
+ assert.ok(Number.isFinite(childTimeoutMs)&&childTimeoutMs>0,'A finite child deadline is required.');
  report.running={name,suite,startedAt:new Date().toISOString()};persist();
  process.stderr.write(JSON.stringify({phase:'START',...report.running})+'\n');
  const observed=await executeGate({name,args:[suite]},{directory:evidenceDirectory,env,signal:controller.signal,timeoutMs:childTimeoutMs,requireJson:false});

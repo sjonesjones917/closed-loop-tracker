@@ -10,7 +10,7 @@ import {responseFixture} from './operator-journey-fixtures.mjs';
 import {execFileSync} from 'node:child_process';
 import {storedArtifactBody,projectStoreRuntime,captureArtifactFixture,restoreArtifactFixture,hydrateRetainedPromptContexts,bindAcceptanceUi} from './test-project-store-runtime.mjs';
 import {appMarkup} from './test-app-markup.mjs';
-import {isolatedVerifierWorkerClass} from './verifier-runtime.mjs';
+import {createVerifierRuntime,isolatedVerifierWorkerClass} from './verifier-runtime.mjs';
 import {authorizeFixtureHandoff,recordProposal,canonicalFixtureRecord,reviewProofFixture,deferredDefinitionResponseFixture,deferredCompatibilityFixtureValues,deferredDefinitionRestorationFixture,deferredDefinitionAdmissionFixture,deferredReviewedPrerequisiteFixture,deferredFailureExecutionResponseFixture} from './test-fixtures.mjs';
 import {DEFERRED_LEGACY_FIXTURE_MAX_OUTPUT_BYTES,readDeferredDefinitionLegacyFixture,currentRetainedFixtureProject,readCurrentDeferredPrerequisiteFixture} from './test-fixtures.mjs';
 import {verifyDeferredHandoffMaterialContract,verifyDeferredProducerContracts,verifyDeferredByteCarrierContracts,verifyDeferredIndependentRetryContracts} from './test-deferred-producer-contracts.mjs';
@@ -635,7 +635,7 @@ async function deferredRegressionJourney(r){
  const chainControl=e.clone(fullChain),canonicalBeforeProjection=h.sha256Value(chainControl),dependencies=r.runtime.__verifierEvidenceChainResolverDependencies;
  const projectedTests=dependencies.applicableTests(chainControl,req).filter(row=>[test.id,affirmative.id].includes(row.id)),allTyped=e.deferredEvidenceChainResults(chainControl,req.id,30),typed={items:allTyped.items.filter(item=>item.subjectId===subject.id),results:allTyped.results.filter(item=>item.subjectId===subject.id)};
  assert.deepEqual(Array.from(projectedTests,row=>row.id).sort(),[test.id,affirmative.id].sort(),'EVIDENCE_CHAIN_DISPOSABLE_COHORT_ORACLE');assert.equal(typed.items.length,1,'EVIDENCE_CHAIN_DISPOSABLE_SUBJECT_ORACLE');
- const resolverSource=e.evidenceChainResultState.toString(),projectedResolver=vm.runInNewContext('('+resolverSource+')',{...dependencies,applicableTests:()=>projectedTests,closedLoopWorkflowEngine:{deferredEvidenceChainResults:()=>typed}}),selected=e.deferredExecutionPlan(chainControl,30,{operation}).items.find(row=>row.subjectId===subject.id);
+ const resolverSource=e.evidenceChainResultState.toString(),projectedResolver=createVerifierRuntime.loadScript(createVerifierRuntime({...dependencies,applicableTests:()=>projectedTests,closedLoopWorkflowEngine:{deferredEvidenceChainResults:()=>typed}}),'('+resolverSource+')'),selected=e.deferredExecutionPlan(chainControl,30,{operation}).items.find(row=>row.subjectId===subject.id);
  assert.deepEqual(Array.from(selected.priorReceipts),[receipt.id],'EVIDENCE_CHAIN_PRE_HISTORY_ORACLE');assert.deepEqual(Array.from(selected.receipts),[result.id],'EVIDENCE_CHAIN_POST_CURRENT_ORACLE');
  assert.equal(JSON.stringify(e.records(chainControl,'regressionExecutions').find(row=>row.id===receipt.id)),preservedPre,'EVIDENCE_CHAIN_PRE_PRESERVATION_ORACLE');
  for(const [id,phase]of[[receipt.id,'PRE_CORRECTION'],[result.id,'POST_CORRECTION']]){const entry=typed.results.find(item=>item.record.id===id);assert(entry&&entry.kind==='DEFERRED_OBLIGATION'&&entry.completed&&entry.phase===phase,'EVIDENCE_CHAIN_PRE_POST_TYPED_ORACLE: '+phase);}

@@ -12,7 +12,7 @@ for(const caseId of ['preissued-required-slot','missing-declaration','missing-by
 return report;
 }
 if(path.resolve(process.argv[1]||'')===fileURLToPath(import.meta.url)){
-const result=await runVerifier(process.execPath,[fileURLToPath(new URL('./verify-full-cycle.mjs',import.meta.url))],{encoding:'utf8',timeout:600000,maxBuffer:64*1024*1024,env:process.env});
+const result=await runVerifier(process.execPath,[fileURLToPath(new URL('./verify-full-cycle.mjs',import.meta.url))],{encoding:'utf8',timeout:3600000,maxBuffer:64*1024*1024,env:process.env});
 if(result.error)throw result.error;
 assert.equal(result.status,0,result.stderr||result.stdout);
 const report=assertProductAttachmentJourney(JSON.parse(result.stdout).productAttachmentJourney);

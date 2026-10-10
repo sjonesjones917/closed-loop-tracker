@@ -29,7 +29,7 @@
     },
     {
       "path": "verification-evidence-catalog.mjs",
-      "sha256": "f1aa5344f635d85140e476e3775a87f1e03e4d509eb4ad5260a9bf82a6eb03e3"
+      "sha256": "5d8e04d46601123d4552e796d0e69027f29774155d5309d5e1356c6456c53010"
     },
     {
       "path": "verification/current-source-delta-review-20261007.json",
@@ -53,7 +53,7 @@
     },
     {
       "path": "verifier-runtime.mjs",
-      "sha256": "8a4c9058b6c72a5aa8dd68809e3cbfd8e5c217b358c41970347443a338f83933"
+      "sha256": "051318fc24ea587ced6268d4a60278e5155e3fee8ed26309b28b532c921277f9"
     },
     {
       "path": "verify-stage-operation-registry.mjs",
@@ -66,6 +66,10 @@
     {
       "path": "workflow-schema.js",
       "sha256": "656e9e632cea3a60e1c7e0fb486e6630d205011d7db32d9674ac5e88593d24f1"
+    },
+    {
+      "path": "verification/runtime-storage-independent-delta-review-20261010.json",
+      "sha256": "1aeddf08767ed1d3a70ff7d4f31d69a74cde85099cce89d8d7a0d0e97404542a"
     }
   ],
   "findings": [],
@@ -150,5 +154,18 @@
   "currentDependencyDeltaReview": {
     "path": "verification/current-source-delta-review-20261007.json",
     "sha256": "45cca5871ac89cf1583a3825aec5a7d488d4d40dc70afb51a8534470dececf09"
+  },
+  "supplementaryIndependentSourceDeltaReviews": [
+    {
+      "path": "verification/runtime-storage-independent-delta-review-20261010.json",
+      "sha256": "1aeddf08767ed1d3a70ff7d4f31d69a74cde85099cce89d8d7a0d0e97404542a",
+      "reviewedAtUtc": "2026-10-10T05:59:54.689Z",
+      "scope": "Exact reviewed dependency and owner source delta; prior semantic obligation/check decomposition unchanged."
+    }
+  ],
+  "reviewRenewedAt": "2026-10-10T05:59:54.689Z",
+  "renewalActor": {
+    "actor": "Codex CI repair integrator",
+    "contextId": "/root"
   }
 }
