@@ -31,9 +31,12 @@ function assertPublished(r,stage,operation,prompt=null){
   const s=r.runtime.closedLoopWorkflowSchema,descriptor=r.prompts.responseContractDescriptor(stage,operation);
   assert.deepEqual(plain(descriptor.externalResultCompletionPolicy),plain(s.EXTERNAL_RESULT_COMPLETION_POLICY));
   assert.deepEqual(plain(descriptor.externalResultCompletionPolicy.normalizedOutcomes),['SATISFIED','VIOLATED','UNDETERMINED']);
-  assert.equal(r.prompts.versionFor(stage,operation),'closed-loop-prompt-engine/93');
+  // Stage 12 VERIFY also carries independent-run context, whose /94 prompt
+  // version takes precedence over the shared external-result /93 version.
+  const expectedVersion=stage===12?'closed-loop-prompt-engine/94':'closed-loop-prompt-engine/93';
+  assert.equal(r.prompts.versionFor(stage,operation),expectedVersion);
   if(prompt){
-    assert.equal(prompt.promptEngineVersion,'closed-loop-prompt-engine/93');
+    assert.equal(prompt.promptEngineVersion,expectedVersion);
     assert(prompt.prompt.includes('"externalResultCompletionPolicy"')&&prompt.prompt.includes('PARTIAL')&&prompt.prompt.includes('cannot become effectively SATISFIED'));
     assert.equal(r.prompts.promptFileManifest(prompt).promptIdentity.contractSha256,prompt.contractSha256);
   }
@@ -49,6 +52,7 @@ function perRunCase(fault){
   const iteration=add(r,p,'iterations',{STATUS:'ACTIVE'},10),generator=e.registerFreshContext(p,{stage:11,externalContextIdentifier:'SYNTHETIC-RUN-GENERATOR',purpose:'GENERAL'});
   const run=add(r,p,'runs',{ITERATION_ID:iteration.id,CONTEXT_ID:generator.id,EXECUTION_STATUS:'COMPLETED',CONTAMINATION_CHECK:'NONE'},11);
   const verifier=e.registerFreshContext(p,{stage:12,externalContextIdentifier:'SYNTHETIC-INDEPENDENT-VERIFIER',purpose:'REVIEWER'});
+  verifier.fields.RUN_ID=verifier.RUN_ID=run.id;e.refreshRecordHashes(verifier,'freshContexts');
   const proof=add(r,p,'evidenceRecords',{KIND:'REVIEW_NOTE',AUTHORITY_TYPE:'INDEPENDENT_REVIEWER',CONTENT:'Synthetic observed verification result',STATUS:'PRESERVED'},12);
   const result=add(r,p,'verification',{REQ_ID:p.projectData.requirements[0].id,RUN_ID:run.id,TEST_ID:f.test.id,VERIFIER_CONTEXT_ID:verifier.id,EXPECTED_RESULT:'SATISFIED',OBSERVED_RESULT:'SATISFIED',DETERMINATION:'SATISFIED',EXACT_EVIDENCE:'Synthetic independently observed result'},12);
   result.evidenceRefs=[proof.id];e.refreshRecordHashes(result,'verification');
@@ -137,8 +141,8 @@ for(const stage of stages){
   const old=stage===12?perRunCase(true):await finalStageCase(stage,true);
   const admissionNegatives=stage===12?[]:current.admissionControls();
   const control=current.evaluate('SATISFIED'),priorControl=old.evaluate('SATISFIED');
-  assert.equal(control.effective,'SATISFIED',`Stage ${stage}: conforming supported result must progress through adjudication.`);
-  assert.equal(priorControl.effective,'SATISFIED',`Stage ${stage}: old control must reach the target, not an unrelated failure.`);
+  assert.equal(control.effective,'SATISFIED',`Stage ${stage}: conforming supported result must progress through adjudication: ${JSON.stringify(control)}`);
+  assert.equal(priorControl.effective,'SATISFIED',`Stage ${stage}: old control must reach the target, not an unrelated failure: ${JSON.stringify(priorControl)}`);
   const negatives=[];
   for(const value of admittedValues.slice(1)){
     const result=current.evaluate(value),expected=value==='VIOLATED'?'VIOLATED':'UNDETERMINED';
