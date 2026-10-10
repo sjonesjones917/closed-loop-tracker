@@ -26,7 +26,7 @@ async function ui(){
   refreshHistory:async()=>{t.historyState=await r.store.historyList(t.current.job.JOB_ID);},historyState:{activeId:null},writeBrowserEntry(checkpointId,view){entries.push({jobId:t.current.job.JOB_ID,checkpointId,view:r.copy(view)});},
   refreshProjectStorage:async()=>{},announce(){},reportActionFailure(error){throw error;},header(){},historyRestoreController:null,restoringHistory:false,recordMobileBackupRestore:async()=>{},requestBackupPassword:()=>false,
   setControlDisabled:(control,disabled)=>{if(control)control.disabled=disabled;},location:{reload(){throw Error('PROJECT_ACTIVATION_UNEXPECTED_RELOAD');}},
-  RUNTIME_BUILD_ID:'CONTROLLED-ACTIVATION-BUILD',parseMobileAcceptanceTargetControl:()=>({testProjectId:'PINNED-ACTIVATION-TEST'}),verifyMobileBuild:async()=>({buildIdentity:'CONTROLLED-ACTIVATION-BUILD'}),recordMobileOperation:async()=>{},
+  RUNTIME_BUILD_ID:'CONTROLLED-ACTIVATION-BUILD',parseMobileAcceptanceTargetControl:()=>({testProjectId:'PINNED-ACTIVATION-TEST',preparationId:'CONTROLLED-ACTIVATION-PREPARATION',performer:'CONTROLLED-ACTIVATION-PERFORMER',identityAssurance:'SELF_ASSERTED',buildIdentity:'CONTROLLED-ACTIVATION-BUILD'}),verifyMobileBuild:async()=>({buildIdentity:'CONTROLLED-ACTIVATION-BUILD'}),recordMobileOperation:async()=>{},
   stagePlanItems:(stage,operation)=>r.engine.stageTestExecutionPlan(t.current,{stage,operation}).items,displayedStageAction:stage=>r.engine.operationalNextAction(t.current,stage),presentationAction:stage=>r.engine.operationalNextAction(t.current,stage),currentNextAction:()=>r.engine.operationalNextAction(t.current,1),
   downloadBlob:(blob,filename)=>downloads.push({blob,filename}),responseSelectionLabel:()=> 'Saved response selection'
  });
@@ -35,7 +35,7 @@ async function ui(){
   extract('async function savePromptRecord(','function promptTransportFilename(')+extract('let promptExportInFlight=','async function exportPromptContext(')+
   extract('async function duplicateCurrentProject(','function selectStageContinuation(')+extract('async function selectProject(','async function importProjectPackageFile(')+
   extract('async function importProjectPackageFile(','let pendingBackupAction=')+extract('async function loadAcceptanceSession(','async function saveAcceptanceSession(')+extract('async function recordCommittedBoundary(','async function navigateWithinVersion(')+
-  extract('function syncDeleteProjectControl(','function setProjectActionsOpen(')+extract('async function startMobileAcceptanceProject(','function mobileProbeMembers(')+
+  extract('function syncDeleteProjectControl(','function setProjectActionsOpen(')+extract('async function captureMobileInitialPackage(','function assertMobilePreparationBinding(')+extract('async function startMobileAcceptanceProject(','function mobileProbeMembers(')+
   extract('async function persistNewProject(','async function persistReplacement(')+extract('function blankStage(','function importSeed(')+
   extract('async function addNew(','async function readApplicationResource('),t);
  t.operationSelection[1]='RECONCILE_INTAKE';t.runSelection[11]='FOREIGN-RUN';nodes.get('#draft').value='Source-only unsaved draft';
@@ -87,7 +87,12 @@ for(const caller of ['addNew','duplicateCurrentProject','archiveCurrentProject',
   if(caller==='restoreArchivedProject')x.t.projectUi[dest.project.job.JOB_ID]={archivedAt:'2026-10-02T00:00:00.000Z'};
  }else expected={runId:undefined,draft:'',checked:false,multiple:[],scrollX:0,scrollY:0};
  await x.t[caller](argument);if(!expected.jobId)expected.jobId=x.t.current.job.JOB_ID;assertDestination(x,expected);
- if(caller==='startMobileAcceptanceProject'){assert.equal(x.t.acceptanceSession.jobId,expected.jobId);assert.equal(x.t.acceptanceSession.buildIdentity,'CONTROLLED-ACTIVATION-BUILD');}
+ if(caller==='startMobileAcceptanceProject'){
+  assert.equal(x.t.acceptanceSession.jobId,expected.jobId);assert.equal(x.t.acceptanceSession.buildIdentity,'CONTROLLED-ACTIVATION-BUILD');
+  assert.deepEqual(JSON.parse(JSON.stringify(x.t.acceptanceSession.target)),x.t.parseMobileAcceptanceTargetControl(),'PROJECT_ACTIVATION_PINNED_TARGET_ORACLE');
+  const initial=x.t.acceptanceSession.initialProjectPackage,bytes=Buffer.from(initial.base64,'base64');
+  assert.equal(initial.testProjectId,expected.jobId);assert.equal(initial.mediaType,'application/gzip');assert.equal(initial.byteSize,bytes.length);assert.equal(initial.sha256,digest(bytes),'PROJECT_ACTIVATION_INITIAL_PACKAGE_ORACLE');
+ }
  const durable=await x.store.readProject(expected.jobId);assert.equal(durable.job.JOB_ID,expected.jobId);
  callerResults.push({caller,result:'PASS',destinationJobId:expected.jobId,selectedOperation:x.t.selectedOperation(1),savedOperation:x.t.operationSelection[1]||null,selectedRun:x.t.runSelection[11]||null,draft:x.nodes().get('#draft').value,scroll:{x:x.t.window.scrollX,y:x.t.window.scrollY},pendingReviewRestored:Boolean(x.t.replacementReview?.next),durableProjectSha256:durable.projectSha256});
 }
