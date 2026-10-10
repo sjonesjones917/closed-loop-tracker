@@ -10,6 +10,13 @@ import {runVerifier,AGGREGATE_TIMEOUT_MS} from './verify-conformance-regressions
 // tiny explicit assertions, so no extra native precursor is generated.
 async function verifyCheckedProducerScheduling(directory,suite,caseId){
  const owner=fs.readFileSync('verify-spec-residual-closure.mjs','utf8'),due=suite==='verify-due-stage-timing.mjs',dispatch=owner.split('\n').filter(line=>line.includes('await checkedVerifier(')&&line.includes("'./"+suite+"'"));
+ const workflow=fs.readFileSync(new URL('./.github/workflows/pages.yml',import.meta.url),'utf8');
+ for(const command of [
+  'node collect-verification-evidence.mjs --export-owner=verify-ingestion.mjs > /tmp/ingestion.out',
+  'node collect-verification-evidence.mjs --export-owner=verify-stage01-intake-closure.mjs --report-marker=stage01IntakeClosure > /tmp/stage01.out',
+  'node collect-verification-evidence.mjs --export-owner=verify-full-cycle.mjs --report-marker=stagesCompleted > /tmp/full-cycle.json',
+  'node collect-verification-evidence.mjs --export-owner=verify-mobile-release-governance.mjs --report-marker=mobileReleaseGovernance > /tmp/mobile-governance.json'
+ ])assert(workflow.includes(command),'PUBLICATION_EXPORT_COMMAND_ORACLE: missing '+command);
  assert.equal(dispatch.length,1,'DUE_RECEIPT_SCHEDULING_OWNER_ORACLE: complete deferred matrix must use its own checked child.');
  const timeout=due?330*60*1000:AGGREGATE_TIMEOUT_MS;
  if(due){
@@ -38,7 +45,7 @@ async function verifyCheckedProducerScheduling(directory,suite,caseId){
   const unrelatedEntry=`'verify-unrelated.mjs':{boundary:'synthetic unrelated producer',checks:[{id:'synthetic.unrelated.completed',marker:'unrelatedCompleted',path:'unrelatedCompleted',expected:true,assertionReference:'unrelated missing producer executed'}]}`;
   const entries=['collector-child-first','missing-own-receipt'].includes(mode)?[childEntry,parentEntry]:[parentEntry,childEntry,...(mode==='late-invalidation'?[lateEntry]:[]),...(mode==='unrelated-missing'?[unrelatedEntry]:[])];
   fs.writeFileSync(path.join(cwd,'verification-evidence-catalog.mjs'),`export const verificationCatalog={${entries.join(',')}};export const browserVerificationCatalog={};export const metricCatalog={};export const zeroCatalog={};export const negativePopulationCatalog={};\n`);
-  const child=`import fs from 'node:fs';import assert from 'node:assert/strict';fs.appendFileSync('invocations.log','child\\n');assert.equal(2+2,4);process.stderr.write(${JSON.stringify(diagnostic)});if(process.env.SCHEDULING_FIXTURE_MODE==='failed-child')throw new Error('SYNTHETIC_SCHEDULING_ASSERTION_FAILURE');if(process.env.SCHEDULING_FIXTURE_MODE==='malformed-child')console.log('SYNTHETIC_MALFORMED_REPORT');else console.log(JSON.stringify({schedulingChild:true,synthetic:true,actualDeferredMatrix:false}));${mode==='collector-empty'?'console.log(JSON.stringify({secondarySyntheticReport:true}));':''}${mode==='missing-own-receipt'?`process.on('exit',()=>{const p='receipts/${suite}.json';if(fs.existsSync(p))fs.unlinkSync(p);});`:''}\n`;
+  const child=`import fs from 'node:fs';import assert from 'node:assert/strict';fs.appendFileSync('invocations.log','child\\n');assert.equal(2+2,4);process.stderr.write(${JSON.stringify(diagnostic)});if(process.env.SCHEDULING_FIXTURE_MODE==='failed-child')throw new Error('SYNTHETIC_SCHEDULING_ASSERTION_FAILURE');if(process.env.SCHEDULING_FIXTURE_MODE==='malformed-child')console.log('SYNTHETIC_MALFORMED_REPORT');else console.log(JSON.stringify({schedulingChild:true,synthetic:true,actualDeferredMatrix:false}));${mode==='collector-empty'?`for(const report of [{secondarySyntheticReport:true,totalNegativeCases:3},{stage01IntakeClosure:true},{stagesCompleted:30},{mobileReleaseGovernance:'PASS'}])console.log(JSON.stringify(report));`:''}${mode==='missing-own-receipt'?`process.on('exit',()=>{const p='receipts/${suite}.json';if(fs.existsSync(p))fs.unlinkSync(p);});`:''}\n`;
   fs.writeFileSync(path.join(cwd,suite),child);
   if(mode==='late-invalidation')fs.writeFileSync(path.join(cwd,'verify-late-invalidation.mjs'),`import fs from 'node:fs';fs.writeFileSync('receipts/${wrapper}.json','{}');console.log(JSON.stringify({lateInvalidation:true,synthetic:true}));\n`);
   if(mode==='unrelated-missing')fs.writeFileSync(path.join(cwd,'verify-unrelated.mjs'),`import fs from 'node:fs';fs.appendFileSync('unrelated.log','unrelated\\n');console.log(JSON.stringify({unrelatedCompleted:true,synthetic:true}));\n`);
@@ -78,12 +85,20 @@ async function verifyCheckedProducerScheduling(directory,suite,caseId){
    const exportRun=await runVerifier(process.execPath,[path.join(cwd,'collect-verification-evidence.mjs'),'--export-owner='+suite,'--report-marker=schedulingChild'],{cwd,env,evidenceDirectory:path.join(cwd,'outer-runner'),timeout:30000});
    assert.equal(exportRun.status,0,'COLD_EXPORT_ORACLE: '+exportRun.stderr);assert.equal(JSON.parse(exportRun.stdout).schedulingChild,true);
    const allReports=await runVerifier(process.execPath,[path.join(cwd,'collect-verification-evidence.mjs'),'--export-owner='+suite],{cwd,env,evidenceDirectory:path.join(cwd,'outer-runner'),timeout:30000});
-   assert.equal(allReports.status,0);assert.deepEqual(allReports.stdout.trim().split('\n').map(JSON.parse).map(row=>Object.keys(row)[0]),['schedulingChild','secondarySyntheticReport']);
+   assert.equal(allReports.status,0);assert.deepEqual(allReports.stdout.trim().split('\n').map(JSON.parse).map(row=>Object.keys(row)[0]),['schedulingChild','secondarySyntheticReport','stage01IntakeClosure','stagesCompleted','mobileReleaseGovernance']);
+   assert.equal(JSON.parse(allReports.stdout.trim().split('\n')[1]).totalNegativeCases,3,'INGESTION_MULTIREPORT_EXPORT_ORACLE: negative population carrier was lost.');
+   for(const [marker,expected] of [['stage01IntakeClosure',true],['stagesCompleted',30],['mobileReleaseGovernance','PASS']]){
+    const selected=await runVerifier(process.execPath,[path.join(cwd,'collect-verification-evidence.mjs'),'--export-owner='+suite,'--report-marker='+marker],{cwd,env,evidenceDirectory:path.join(cwd,'outer-runner'),timeout:30000});
+    assert.equal(selected.status,0,'PUBLICATION_MARKER_EXPORT_ORACLE: '+marker+' '+selected.stderr);assert.equal(JSON.parse(selected.stdout)[marker],expected);
+   }
    assert.equal(count(),1,'COLD_EXPORT_ORACLE: report export launched a producer.');
    assert.equal(fs.readFileSync(path.join(receipts,wrapper+'.json'),'utf8'),first);assert.equal(fs.readFileSync(path.join(receipts,suite+'.json'),'utf8'),second);
    const reportOwnerControl=`import assert from 'node:assert/strict';import {currentOwnerReport} from './verification-evidence.mjs';let calls=0;const reused=await currentOwnerReport(${JSON.stringify(suite)},'schedulingChild',{run:async()=>{calls++;throw new Error('VALID_REUSE_STARTED_CHILD');}});assert.equal(reused.schedulingChild,true);assert.equal(calls,0);const fallback=await currentOwnerReport(${JSON.stringify(suite)},'schedulingChild',{directory:'absent-receipts',run:async()=>{calls++;return JSON.stringify({schedulingChild:true});}});assert.equal(fallback.schedulingChild,true);assert.equal(calls,1);console.log(JSON.stringify({validReuseChildInvocations:0,missingFallbackChildInvocations:1}));`;
    const ownerControl=await runVerifier(process.execPath,['--input-type=module','-e',reportOwnerControl],{cwd,env,evidenceDirectory:path.join(cwd,'outer-runner'),timeout:30000});
    assert.equal(ownerControl.status,0,'OWNER_REPORT_REUSE_ORACLE: '+ownerControl.stderr);assert.equal(JSON.parse(ownerControl.stdout).validReuseChildInvocations,0);assert.equal(count(),1);
+   const strictOwnerControl=`import assert from 'node:assert/strict';import {currentOwnerReport} from './verification-evidence.mjs';let calls=0;const reused=await currentOwnerReport(${JSON.stringify(suite)},'schedulingChild',{run:()=>{calls++;throw new Error('STRICT_REUSE_STARTED_CHILD');}});assert.equal(reused.schedulingChild,true);await assert.rejects(currentOwnerReport(${JSON.stringify(suite)},'schedulingChild',{directory:'absent-receipts',run:()=>{calls++;throw new Error('STRICT_MISSING_STARTED_CHILD');}}),/missing required current receipt/);assert.equal(calls,0);console.log(JSON.stringify({strictReuseChildInvocations:calls,strictMissingProofRejected:true}));`;
+   const strictOwner=await runVerifier(process.execPath,['--input-type=module','-e',strictOwnerControl],{cwd,env:{...env,CLOSED_LOOP_REQUIRE_CURRENT_OWNER_RECEIPTS:'1'},evidenceDirectory:path.join(cwd,'outer-runner'),timeout:30000});
+   assert.equal(strictOwner.status,0,'OWNER_REPORT_PUBLICATION_ORACLE: '+strictOwner.stderr);assert.equal(JSON.parse(strictOwner.stdout).strictReuseChildInvocations,0);assert.equal(count(),1);
    for(const args of [['--export-owner='+suite,'--report-marker=missing'],['--report-marker=schedulingChild','--run-missing'],['--export-owner=unregistered.mjs'],['--export-owner='+suite,'--run-missing'],['--export-owner='+suite,'--browser-suite='+suite]]){
     const rejected=await runVerifier(process.execPath,[path.join(cwd,'collect-verification-evidence.mjs'),...args],{cwd,env,evidenceDirectory:path.join(cwd,'outer-runner'),timeout:30000});
     assert.equal(rejected.status,1,'COLD_EXPORT_ORACLE: invalid export arguments succeeded: '+args.join(' '));assert.equal(count(),1);
@@ -147,7 +162,10 @@ async function verifyCheckedProducerScheduling(directory,suite,caseId){
  }
  return {caseId,result:'PASS',results,formerInvocations:2,currentInvocations:1,existingCompositeTimeoutMs:AGGREGATE_TIMEOUT_MS,producerTimeoutMs:timeout,productionDueAssertionsAltered:false,productionCrossRunAssertionsAltered:false,sourceDirectoryContainsSpaces:true,synthetic:true,actualDeferredMatrix:false,actualCrossRunComparison:false,boundary:'Actual residual dispatch plus existing child supervisor, Node preload, receipt owner and collector; two explicitly synthetic producers only.'};
 }
-export const verifyDueVerificationScheduling=directory=>verifyCheckedProducerScheduling(directory,'verify-due-stage-timing.mjs','due-composite-producer-receipt-scheduling');
+export async function verifyDueVerificationScheduling(directory){
+ const result=await verifyCheckedProducerScheduling(directory,'verify-due-stage-timing.mjs','due-composite-producer-receipt-scheduling');
+ return {...result,governanceOwnerConsumption:await verifyGovernanceOwnerConsumption(path.join(directory,'governance-owner-consumption'))};
+}
 export async function verifyCrossRunVerificationScheduling(directory){
  const result=await verifyCheckedProducerScheduling(directory,'verify-cross-run-comparison.mjs','cross-run-producer-receipt-scheduling');
  const cwd=path.join(directory,'current-child source with spaces'),suite='verify-cross-run-comparison.mjs',receipts=path.join(cwd,'receipts'),receiptPath=path.join(receipts,suite+'.json'),prior=fs.readFileSync(receiptPath,'utf8');
@@ -176,4 +194,60 @@ export async function verifyCrossRunVerificationScheduling(directory){
   const restored=await runVerifier(process.execPath,[path.join(cwd,extraSuite)],{cwd,env,evidenceDirectory:path.join(cwd,'focused-runner'),timeout:30000});assert.equal(restored.status,0);assert.equal(JSON.parse(fs.readFileSync(extraPath,'utf8')).complete,true,'FOCUSED_PRODUCER_RESTORE_ORACLE');
  }
  return {...result,focusedChildren,otherFocused,unrecognizedFlagStillRecorded:true,restoredDefaultRecorded:true};
+}
+
+// Execute the real consumers, including their assertions, against deliberately
+// synthetic reports. The fixture catalog only checks its own arithmetic control:
+// accepting a malformed governance field must therefore fail at the consumer.
+// These receipts stay in this disposable repository and prove no mobile/device
+// acceptance or production migration behavior.
+export async function verifyGovernanceOwnerConsumption(directory){
+ const cwd=path.resolve(directory),receipts=path.join(cwd,'receipts'),evidenceDirectory=path.join(cwd,'runner');fs.mkdirSync(cwd,{recursive:true});
+ const copied=['verify-conformance-regressions.mjs','operator-journey-fixtures.mjs','test-fixtures.mjs','test-handoff-authorization.mjs','test-zip.mjs','test-project-store-runtime.mjs','verifier-runtime.mjs','hash.js','verification-evidence-preload.mjs','verification-evidence.mjs','deployment-contract-identities.mjs','browser-execution-evidence.mjs','evaluate-mobile-acceptance-submission.mjs','verify-mobile-acceptance-evidence.mjs'];
+ for(const file of copied)fs.copyFileSync(new URL('./'+file,import.meta.url),path.join(cwd,file));
+ fs.mkdirSync(path.join(cwd,'specification'));
+ const specification='Synthetic governance-consumer controls only; no application conformance claim.\n',specificationSha256=createHash('sha256').update(specification).digest('hex');
+ fs.writeFileSync(path.join(cwd,'specification/closed-loop-reliability-controlling-implementation-specification.txt'),specification);
+ fs.writeFileSync(path.join(cwd,'specification/closed-loop-normative-requirements.json'),JSON.stringify({specificationSha256,manifestIdentity:'SYNTHETIC_CONSUMER_ONLY',requirements:[]}));
+ fs.writeFileSync(path.join(cwd,'specification/requirement-evidence-bindings.json'),JSON.stringify({approvedAmendments:[]}));
+ fs.writeFileSync(path.join(cwd,'verification-assertion-bindings.json'),JSON.stringify({schema:'closed-loop-verification-assertion-bindings/1',specificationSha256,bindings:[]}));
+ const mobileSource=fs.readFileSync(new URL('./verify-v3-definition-of-done.mjs',import.meta.url),'utf8'),migrationSource=fs.readFileSync(new URL('./verify-specification-governance.mjs',import.meta.url),'utf8');
+ const mobileStart=mobileSource.indexOf('const mobileGovernanceProof='),mobileEnd=mobileSource.indexOf('\nconst specificationManifest=',mobileStart);
+ const migrationStart=migrationSource.indexOf('  const migrationProof='),migrationEnd=migrationSource.indexOf("\n  (await checkedVerifier(process.execPath,['verify-response-contract-profile.mjs']",migrationStart);
+ assert(mobileStart>=0&&mobileEnd>mobileStart,'MOBILE_CONSUMER_SOURCE_ORACLE: exact consumer boundary unavailable.');
+ assert(migrationStart>=0&&migrationEnd>migrationStart,'MIGRATION_CONSUMER_SOURCE_ORACLE: exact consumer boundary unavailable.');
+ const definitions=[
+  {suite:'verify-mobile-release-governance.mjs',consumer:'mobile-consumer.mjs',source:mobileSource.slice(mobileStart,mobileEnd),valid:{mobileReleaseGovernance:'PASS',actualIPhoneRequiredForTag:true,unconditionalTagMutationDetected:true,androidSubstitutionRejected:true}},
+  {suite:'verify-v3-migration.mjs',consumer:'migration-consumer.mjs',source:migrationSource.slice(migrationStart,migrationEnd),valid:{verifyV3Migration:'PASS'}}
+ ];
+ const catalog=Object.fromEntries(definitions.map(({suite})=>[suite,{boundary:'Synthetic governance-consumer scheduling fixture only',checks:[{id:'synthetic.'+suite,marker:'syntheticConsumerControl',path:'syntheticConsumerControl',expected:true,assertionReference:'explicit arithmetic control; governance fields intentionally checked by the actual consumer'}]}]));
+ fs.writeFileSync(path.join(cwd,'verification-evidence-catalog.mjs'),`export const verificationCatalog=${JSON.stringify(catalog)};export const browserVerificationCatalog={};export const metricCatalog={};export const zeroCatalog={};export const negativePopulationCatalog={};\n`);
+ for(const definition of definitions){
+  fs.writeFileSync(path.join(cwd,definition.suite),`import fs from 'node:fs';import assert from 'node:assert/strict';assert.equal(2+2,4);fs.appendFileSync(${JSON.stringify(definition.suite+'.invocations')},'child\\n');console.log(JSON.stringify({...JSON.parse(process.env.SYNTHETIC_CONSUMER_REPORT),syntheticConsumerControl:true,synthetic:true,actualApplicationProof:false}));\n`);
+  fs.writeFileSync(path.join(cwd,definition.consumer),`import assert from 'node:assert/strict';import {checkedVerifier} from './verify-conformance-regressions.mjs';import {currentOwnerReport} from './verification-evidence.mjs';\n${definition.source}\nconsole.log(JSON.stringify({consumerAccepted:true,synthetic:true,actualApplicationProof:false}));\n`);
+ }
+ execFileSync('git',['init','--quiet'],{cwd});execFileSync('git',['add','.'],{cwd});execFileSync('git',['-c','user.name=Synthetic governance fixture','-c','user.email=fixture@localhost','commit','--quiet','-m','Bounded consumer fixture'],{cwd});
+ const env={...process.env,NODE_OPTIONS:'--import '+JSON.stringify(path.join(cwd,'verification-evidence-preload.mjs')),CLOSED_LOOP_VERIFICATION_SOURCE_ROOT:cwd,CLOSED_LOOP_VERIFICATION_RECEIPTS:receipts,CLOSED_LOOP_REQUIRE_CURRENT_OWNER_RECEIPTS:'0',VERIFIER_CHILD_EVIDENCE_DIRECTORY:path.join(cwd,'nested-runner')},results=[];
+ for(const {suite,consumer,valid} of definitions){
+  const receiptPath=path.join(receipts,suite+'.json'),counter=path.join(cwd,suite+'.invocations'),count=()=>fs.existsSync(counter)?fs.readFileSync(counter,'utf8').trim().split('\n').length:0;
+  const run=(file,report=valid,strict=false)=>runVerifier(process.execPath,[path.join(cwd,file)],{cwd,env:{...env,SYNTHETIC_CONSUMER_REPORT:JSON.stringify(report),CLOSED_LOOP_REQUIRE_CURRENT_OWNER_RECEIPTS:strict?'1':'0'},evidenceDirectory,timeout:30000});
+  const fresh=await run(consumer);assert.equal(fresh.status,0,'GOVERNANCE_CONSUMER_FRESH_ORACLE: '+fresh.stderr);assert.equal(count(),1);
+  const complete=fs.readFileSync(receiptPath,'utf8'),reused=await run(consumer,valid,true);assert.equal(reused.status,0,'GOVERNANCE_CONSUMER_REUSE_ORACLE: '+reused.stderr);assert.equal(count(),1);assert.equal(fs.readFileSync(receiptPath,'utf8'),complete);
+  const fieldControls=[];
+  for(const field of Object.keys(valid))for(const mode of ['missing','false']){
+   const report={...valid};if(mode==='missing')delete report[field];else report[field]=false;
+   fs.unlinkSync(receiptPath);const produced=await run(suite,report);assert.equal(produced.status,0,'GOVERNANCE_CONSUMER_FIXTURE_ORACLE: '+produced.stderr);
+   const before=count(),rejected=await run(consumer,report,true);
+   assert.equal(rejected.status,1,`GOVERNANCE_CONSUMER_FIELD_ORACLE: ${suite} accepted ${mode} ${field}`);
+   assert.match(rejected.stderr,/AssertionError|expected exactly one report marker/,'GOVERNANCE_CONSUMER_FIELD_ORACLE: unrelated consumer failure.');assert.equal(count(),before,'GOVERNANCE_CONSUMER_FIELD_ORACLE: reused malformed report launched a producer.');
+   fieldControls.push({field,mode,rejected:true,extraChildInvocations:0});
+  }
+  fs.unlinkSync(receiptPath);const restore=await run(suite);assert.equal(restore.status,0,restore.stderr);const restored=fs.readFileSync(receiptPath,'utf8'),beforeInvalid=count();
+  const stale=JSON.parse(restored);stale.fingerprint.runtime.node='v0';delete stale.receiptSha256;stale.receiptSha256=createHash('sha256').update(JSON.stringify(stale)).digest('hex');fs.writeFileSync(receiptPath,JSON.stringify(stale));
+  const staleRun=await run(consumer);assert.equal(staleRun.status,1);assert.match(staleRun.stderr,/stale source\/specification\/catalog\/runtime receipt/);assert.equal(count(),beforeInvalid);
+  fs.unlinkSync(receiptPath);const missing=await run(consumer,valid,true);assert.equal(missing.status,1);assert.match(missing.stderr,/missing required current receipt/);assert.equal(count(),beforeInvalid);
+  fs.writeFileSync(receiptPath,restored);const repaired=await run(consumer,valid,true);assert.equal(repaired.status,0,repaired.stderr);assert.equal(count(),beforeInvalid);assert.equal(fs.readFileSync(receiptPath,'utf8'),restored);
+  results.push({suite,freshChildInvocations:1,reuseChildInvocations:0,fieldControls,staleReceiptRejectedWithoutFallback:true,strictMissingReceiptRejectedWithoutFallback:true,restoredCurrentReportAccepted:true});
+ }
+ return {sourceBoundGovernanceConsumers:true,results,synthetic:true,actualApplicationProof:false,actualIPhoneAcceptance:false};
 }

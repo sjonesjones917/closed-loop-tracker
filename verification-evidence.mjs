@@ -270,6 +270,7 @@ export function readExecutionReceipt(directory,suite,fingerprint=evidenceFingerp
 export async function currentOwnerReport(suite,marker,{directory=process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS,run}={}){
   const receipt=directory?readExecutionReceipt(directory,suite):null;
   if(receipt)return selectedReport(receipt.reports,marker);
+  requireEvidence(process.env.CLOSED_LOOP_REQUIRE_CURRENT_OWNER_RECEIPTS!=='1','missing required current receipt '+suite);
   requireEvidence(typeof run==='function','missing producer fallback for '+suite);
   return selectedReport(executionReports(await run()),marker);
 }

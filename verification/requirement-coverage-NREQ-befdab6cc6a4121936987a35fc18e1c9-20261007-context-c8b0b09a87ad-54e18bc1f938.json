@@ -3,25 +3,25 @@
   "normativeRequirementId": "NREQ-befdab6cc6a4121936987a35fc18e1c9",
   "sourceLineSha256": "becce9129e4ab0de761a982b5328fb9ce25f5dc27a6abd09f964b35b13896e96",
   "specificationSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
-  "declarationSha256": "c9774469a92eccd89bdaad3b0977c364c4c0f0619c742d155ab75cba545d6522",
+  "declarationSha256": "82bb466d8f04323c0d32f85a9c57e1f5f0b1ae50e9cd5a1f2a2fed87f1d550a5",
   "decision": "COMPLETE_COVERAGE",
   "evidenceBasis": "EXTERNALLY_SUPPORTED",
-  "method": "The retained independent semantic assessment controls the unchanged narrow clause and check decomposition. The current workflow and artifact-owner scheduling delta is separately inspected by the integrator in verification/ci-scheduling-delta-review-20261008.json; that delta record does not claim a new independent semantic review or substitute for current executed receipts. Exact production, verifier, and specification bytes are rebound below; full CI and live evidence remain required.",
+  "method": "The unchanged narrow controlling clause and obligation/check decomposition retain their embedded earlier independent semantic assessment. A separate collaborator independently inspected the exact current source delta from 06e80b7 through the SHA-256-bound consolidated files in verification/ci-evidence-independent-delta-review-20261010.json, including the collector/export, strict publication, migration report reuse, runtime promotion and diagnostic changes. This renewal claims only that scoped source-delta assessment, preserves all existing proof boundaries, and requires current frozen-source execution separately.",
   "author": {
-    "actor": "Codex exact-source coverage renewal integrator",
+    "actor": "Codex consolidated CI repair integrator",
     "contextId": "/root"
   },
   "reviewer": {
-    "actor": "Codex independent verifier-context correction reviewer",
-    "contextId": "/root/pr_inventory_review"
+    "actor": "Codex independent CI evidence delta reviewer",
+    "contextId": "/root/evidence_review"
   },
   "reviewedInputs": [
     {
-      "declarationSha256": "c9774469a92eccd89bdaad3b0977c364c4c0f0619c742d155ab75cba545d6522"
+      "declarationSha256": "82bb466d8f04323c0d32f85a9c57e1f5f0b1ae50e9cd5a1f2a2fed87f1d550a5"
     },
     {
       "path": ".github/workflows/pages.yml",
-      "sha256": "5976e1e69757ff7742673a9fcad04a52fc34857d161a44fc121a769e52e7d36b"
+      "sha256": "13abf513018beffb97a8b51b778aae13b5b05b1f5fcced062985a53e22e632bb"
     },
     {
       "path": "app-core.js",
@@ -145,7 +145,7 @@
     },
     {
       "path": "verification-evidence.mjs",
-      "sha256": "f1b4c7e6435c3cd42a1ed09c3ade9770cc3394a03c1e17a0a405c528e17a5ff2"
+      "sha256": "1fa8705ab0951782d31d4136fcfb1f9be772fb9f6b9039627a32b527320ce972"
     },
     {
       "path": "verification/current-source-delta-review-20261007.json",
@@ -165,7 +165,7 @@
     },
     {
       "path": "verified-site.mjs",
-      "sha256": "c32ef23aa3bf1dda105fc774d84911ddb7603febe0479a2aabb751fb8820659a"
+      "sha256": "1f4b4178f49a0b82a21e27b5217ed0149e4aac38fb8cb8f717f6c8b55e752608"
     },
     {
       "path": "verifier-runtime.mjs",
@@ -173,7 +173,7 @@
     },
     {
       "path": "verify-conformance-regressions.mjs",
-      "sha256": "526c150869be212d2c76d29a80958ef56dd3eaa5c7aa336b5604262932b65c62"
+      "sha256": "fb3f568736b16b87dff48e792fd0b0916284142c91680788bce850eea59f4128"
     },
     {
       "path": "verify-deployment-manifest.mjs",
@@ -210,6 +210,14 @@
     {
       "path": "verification/ci-scheduling-delta-review-20261008.json",
       "sha256": "a5fa35ea7c8f4364e5e6635d81bf97f6a441efbf96c58461e4b7bf07bd79455d"
+    },
+    {
+      "path": "verification/ci-evidence-independent-delta-review-20261010.json",
+      "sha256": "2c95da9d8742f268ad2b73be4ad4baaed0089dfb798f471800d9314cf4f222cd"
+    },
+    {
+      "path": "verification/stage28-prerequisite-independent-delta-review-20261010.json",
+      "sha256": "a6d31e351f0b4c2264b014e93eb8c3e03cbc96264574c05cb485b1ab400c910b"
     }
   ],
   "findings": [],
@@ -399,7 +407,7 @@
     },
     "reviewCompletedAt": "2026-10-07T01:21:18.248Z"
   },
-  "reviewerPriorContributionDisclosure": "Reviewer authored only the conformanceSources registration of test-verifier-context-ui.mjs and test-prompt-context-storage.mjs. CI owner independently reviewed those additive source-input registrations. No runtime repair or owning behavioral test was authored by this reviewer in this correction chain.",
+  "reviewerPriorContributionDisclosure": "The /root/evidence_review collaborator did not author the reviewed executable changes. It inspected the consolidated source delta and retained bounded execution outputs, then prepared these review metadata renewals. This is a separate model context, not a human review or physical-device observation.",
   "currentExecutionRequired": true,
   "applicationConformanceClaim": false,
   "reviewCompletedAt": "2026-10-07T05:10:44.883240+00:00",
@@ -407,16 +415,52 @@
     "path": "verification/ci-scheduling-delta-review-20261008.json",
     "sha256": "a5fa35ea7c8f4364e5e6635d81bf97f6a441efbf96c58461e4b7bf07bd79455d"
   },
-  "reviewRenewedAt": "2026-10-08T09:12:00Z",
+  "reviewRenewedAt": "2026-10-10T05:12:34Z",
   "renewalActor": {
-    "actor": "Codex current source integrator",
-    "contextId": "/root",
-    "scope": "Exact source hash renewal after narrow CI scheduling review; original independent semantic assessment retained."
+    "actor": "Codex independent CI evidence delta reviewer",
+    "contextId": "/root/evidence_review"
   },
   "currentIntegratorFollowup": {
     "reviewedAtUtc": "2026-10-08T12:22:00Z",
     "scope": "Exact controlled persistence-catalog fixture correction in the CI evidence consumer; no production owner, normative requirement, or independent semantic review changed.",
     "reviewPath": "verification/ci-scheduling-delta-review-20261008.json",
     "reviewSha256": "a5fa35ea7c8f4364e5e6635d81bf97f6a441efbf96c58461e4b7bf07bd79455d"
-  }
+  },
+  "previousActiveReview": {
+    "path": "verification/requirement-coverage-NREQ-befdab6cc6a4121936987a35fc18e1c9-20261007-context-c8b0b09a87ad-54e18bc1f938.json",
+    "sourceCommit": "f97e095723d33a10ebbec078d47586602b9d9908",
+    "sha256": "a2bab1c16a176ad3a94789d886fcb838a90a7b66d5bc11e7708a574052623936",
+    "author": {
+      "actor": "Codex exact-source coverage renewal integrator",
+      "contextId": "/root"
+    },
+    "reviewer": {
+      "actor": "Codex independent verifier-context correction reviewer",
+      "contextId": "/root/pr_inventory_review"
+    },
+    "method": "The retained independent semantic assessment controls the unchanged narrow clause and check decomposition. The current workflow and artifact-owner scheduling delta is separately inspected by the integrator in verification/ci-scheduling-delta-review-20261008.json; that delta record does not claim a new independent semantic review or substitute for current executed receipts. Exact production, verifier, and specification bytes are rebound below; full CI and live evidence remain required.",
+    "reviewCompletedAt": "2026-10-07T05:10:44.883240+00:00"
+  },
+  "currentIndependentSourceDeltaReview": {
+    "path": "verification/ci-evidence-independent-delta-review-20261010.json",
+    "sha256": "2c95da9d8742f268ad2b73be4ad4baaed0089dfb798f471800d9314cf4f222cd",
+    "reviewer": {
+      "actor": "Codex independent CI evidence delta reviewer",
+      "contextId": "/root/evidence_review"
+    },
+    "reviewedAtUtc": "2026-10-10T04:57:18Z",
+    "scope": "Source delta only; earlier independent semantic assessment retained."
+  },
+  "supplementaryIndependentSourceDeltaReviews": [
+    {
+      "path": "verification/stage28-prerequisite-independent-delta-review-20261010.json",
+      "sha256": "a6d31e351f0b4c2264b014e93eb8c3e03cbc96264574c05cb485b1ab400c910b",
+      "reviewer": {
+        "actor": "Codex independent CI evidence delta reviewer",
+        "contextId": "/root/evidence_review"
+      },
+      "reviewedAtUtc": "2026-10-10T05:12:34Z",
+      "scope": "Unchanged supervisor execution implementation; added healthy prerequisite dispatch controls and dependency serialization only."
+    }
+  ]
 }

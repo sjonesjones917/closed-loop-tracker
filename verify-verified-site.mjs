@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {execFileSync,spawnSync} from 'node:child_process';
-import {runtimePaths,manifestName,fullTestSteps,digest,validateSite,assertLifecycleWorkflowCommand,assertPassedRun,assertReceipt,promoteSite,sealSite} from './verified-site.mjs';
+import {runtimePaths,manifestName,fullTestSteps,digest,validateSite,assertLifecycleWorkflowCommand,assertPassedRun,assertReceipt,promoteSite,promoteExecutedProofs,executedProofFileHashes,sealSite} from './verified-site.mjs';
 import {verificationCatalog} from './verification-evidence-catalog.mjs';
 
 const root=process.cwd(),temporary=fs.mkdtempSync(path.join(root,'.verify-artifact-'));
@@ -51,6 +51,42 @@ try{
   }
   (await rejects('missing-deferred-matrix-step',()=>assertPassedRun(run,[jobs[0],{...jobs[1],steps:[]}],bindings),/Required complete deferred matrix/));
   (await rejects('missing-deferred-matrix-upload',()=>assertPassedRun(run,[jobs[0],{...jobs[1],steps:jobs[1].steps.slice(0,1)}],bindings),/Required complete deferred matrix/));
+
+  // Synthetic authenticated-bundle boundary controls. Runtime changes must
+  // require fresh execution without copying even an earlier compatible proof.
+  const proofSource=path.join(temporary,'synthetic-proofs'),proofTarget=path.join(temporary,'promoted-proofs');
+  fs.mkdirSync(proofSource);
+  const fingerprint={sourceInputsSha256:'a'.repeat(64),runtime:{node:process.version,platform:process.platform,architecture:process.arch}};
+  const proofNames=['verify-synthetic-first.mjs.json','verify-synthetic-last.mjs.json'];
+  const originals=proofNames.map((name,index)=>({synthetic:true,index,fingerprint:clone(fingerprint),receiptSha256:'original-synthetic-digest'}));
+  const writeProofs=proofs=>proofs.forEach((proof,index)=>fs.writeFileSync(path.join(proofSource,proofNames[index]),JSON.stringify(proof)));
+  const promotion={sourceCommit:'b'.repeat(40),verifiedSourceCommit:'c'.repeat(40)};
+  const promoteProofs=proofFiles=>promoteExecutedProofs({sourceDirectory:proofSource,directory:proofTarget,proofFiles:proofFiles||executedProofFileHashes(proofSource),fingerprint,promotion});
+  writeProofs(originals);
+  assert.equal(promoteProofs(),true);
+  for(const [index,name]of proofNames.entries()){
+    const promoted=JSON.parse(fs.readFileSync(path.join(proofTarget,name),'utf8')),{receiptSha256,...unsigned}=promoted;
+    assert.deepEqual(promoted.fingerprint,originals[index].fingerprint,'Promotion must preserve the original executed runtime.');
+    assert.deepEqual(promoted.promotion,promotion);assert.equal(receiptSha256,digest(JSON.stringify(unsigned)));
+  }
+  fs.rmSync(proofTarget,{recursive:true});
+  for(const field of ['node','platform','architecture']){
+    const changed=clone(originals);changed[1].fingerprint.runtime[field]='different-runtime';writeProofs(changed);
+    assert.equal(promoteProofs(),false,'Runtime drift must request a complete fresh run.');
+    assert.equal(fs.existsSync(proofTarget),false,'A later incompatible proof must not leave partially promoted receipts.');
+    assert.deepEqual(JSON.parse(fs.readFileSync(path.join(proofSource,proofNames[1]),'utf8')),changed[1]);
+    cases.push('changed-proof-'+field+'-requires-full-verification-before-copying');
+  }
+  const wrongSource=clone(originals);wrongSource[1].fingerprint.sourceInputsSha256='d'.repeat(64);writeProofs(wrongSource);
+  await rejects('changed-proof-source-still-rejected',()=>promoteProofs(),/source inputs changed/);
+  assert.equal(fs.existsSync(proofTarget),false);
+  writeProofs(originals);const sealedProofFiles=executedProofFileHashes(proofSource);
+  fs.appendFileSync(path.join(proofSource,proofNames[1]),' ');
+  await rejects('changed-proof-bytes-still-rejected',()=>promoteProofs(sealedProofFiles),/file universe or bytes differs/);
+  assert.equal(fs.existsSync(proofTarget),false);
+  writeProofs(originals);fs.writeFileSync(path.join(proofSource,'unexpected.json'),'{}');
+  await rejects('extra-proof-file-still-rejected',()=>promoteProofs(sealedProofFiles),/file universe or bytes differs/);
+  assert.equal(fs.existsSync(proofTarget),false);
 
   const workspace=path.join(temporary,'workspace');fs.mkdirSync(path.join(workspace,'.github/workflows'),{recursive:true});
   for(const name of [...runtimePaths,'build-static-site.mjs','deployment-contract-identities.mjs','.github/workflows/pages.yml'])fs.copyFileSync(path.join(root,name),path.join(workspace,name));
@@ -136,6 +172,14 @@ try{
   assert.deepEqual(fs.readFileSync(path.join(promoted,'app-core.js')),fs.readFileSync(path.join(site,'app-core.js')),'Failed promotion must not overwrite the last intact artifact.');
 
   const workflow=fs.readFileSync('.github/workflows/pages.yml','utf8');
+  const nodeVersions=[...workflow.matchAll(/^          node-version: '([^']+)'$/gm)].map(match=>match[1]);
+  assert.equal(nodeVersions.length,4,'CI_RUNTIME_IDENTITY_ORACLE: every proof job must select Node explicitly.');
+  assert(nodeVersions.every(version=>/^22\.\d+\.\d+$/.test(version)&&version===nodeVersions[0]),'CI_RUNTIME_IDENTITY_ORACLE: all proof jobs require the same exact supported Node version.');
+  const deferredDiagnostics=workflow.match(/      - name: Preserve deferred matrix diagnostics\n([\s\S]*?)(?=\n      - name:|\n  [a-z])/);
+  assert(deferredDiagnostics,'CI_DEFERRED_DIAGNOSTICS_ORACLE: deferred diagnostics upload is required.');
+  assert.match(deferredDiagnostics[1],/path: \.ci-deferred-diagnostics\//);
+  assert.match(deferredDiagnostics[1],/include-hidden-files: true/,'CI_DEFERRED_DIAGNOSTICS_ORACLE: the hidden diagnostic directory must be included.');
+  cases.push('exact-runtime-and-visible-deferred-diagnostics');
   const testWorkflow=workflow.slice(workflow.indexOf('\n  test:'),workflow.indexOf('\n  deploy:'));
   assertLifecycleWorkflowCommand(workflow);
   const deferredBlock=workflow.slice(workflow.indexOf('\n  deferred-matrix:\n'),workflow.indexOf('\n  test:\n'));

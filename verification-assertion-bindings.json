@@ -3065,7 +3065,7 @@
         "governingContext": [],
         "review": {
           "path": "verification/requirement-coverage-NREQ-a1bafeb7c6f6f12bf0c7b0f6fcadaab9-20261007-context-4b6563194ed6-54e18bc1f938.json",
-          "sha256": "216553f0929c4a6243c352592401dd30b848f360cfa8657f03cc3fc4959f759e"
+          "sha256": "545c0377c59bfc4d1353c80a0014af9e0d7c435e6eb069c22d570d74996501c4"
         }
       }
     },
@@ -3125,7 +3125,7 @@
         "governingContext": [],
         "review": {
           "path": "verification/requirement-coverage-NREQ-f41a79c58369bd76c58ad7e831e953ce-20261007-context-a6f639cd6cfc-54e18bc1f938.json",
-          "sha256": "4ce89b18166ba74d53f300d161da62cd755a18be4a596ba7ccd7511cc4a3c626"
+          "sha256": "7f4801aa9bf964041b62125de6c9871076d1affda21fd6958b3201d633918a44"
         }
       }
     },
@@ -3181,7 +3181,7 @@
         "governingContext": [],
         "review": {
           "path": "verification/requirement-coverage-NREQ-5811c65fa83521ee7afeedd602cec806-20261007-context-60e25b364eb4-54e18bc1f938.json",
-          "sha256": "14b7f047f735d204cab119f110864183f18796116c13d2673825b4d6f09b096f"
+          "sha256": "740d03c2eb954fa3bf057b33cf383354c42dfd032f4d039babd419a62ac08ea2"
         }
       }
     },
@@ -3237,7 +3237,7 @@
         "governingContext": [],
         "review": {
           "path": "verification/requirement-coverage-NREQ-2046e21dd63ad76f992233d5582c716d-20261007-context-8d03363ebd61-54e18bc1f938.json",
-          "sha256": "904300ceedf3f0cdb5fb00061cc3c6062e53d305c23df86933b3e184da361b24"
+          "sha256": "f664e3c94e41300a62d96751cb24d036b0b4ecd51c403761e2314bd39d86d260"
         }
       }
     },
@@ -3293,7 +3293,7 @@
         "governingContext": [],
         "review": {
           "path": "verification/requirement-coverage-NREQ-1b07d67693ef773b4800dc6e06626b5b-20261007-context-dcaf72405bbe-54e18bc1f938.json",
-          "sha256": "01ef96344f443bd2c8f71cfb31b85b4a630de7ff18295996d05760ae1c9aef15"
+          "sha256": "d5a4aec93ba7313175d9f157bc11e26e20794279bb0071ee4012a270ef9d093f"
         }
       }
     },
@@ -4184,7 +4184,7 @@
         ],
         "review": {
           "path": "verification/requirement-coverage-NREQ-360281bfdd66bed29237ed7202962808-20261007-context-defd14234c9a-54e18bc1f938.json",
-          "sha256": "285826e57f31814a99024855caa4c4eab50af692d1c6d9790d01c43d1929e5af"
+          "sha256": "d433d42f8babb044dcc11cab7b67f062543d76aa1b1ca514e6e78a7eaae1413a"
         }
       }
     },
@@ -4250,7 +4250,7 @@
         ],
         "review": {
           "path": "verification/requirement-coverage-NREQ-a0db6ddcb33d9af123b08d4d481c8ebd-20261007-context-6d4092da78f9-54e18bc1f938.json",
-          "sha256": "cb45e974d78ed760f8b9d51eef27b077e731ca3f9fc3c5dfd29efbd3ff0788c9"
+          "sha256": "9c30da9b1604567f484e43cabbb19316dd6f64d783d7c7adff984c8ae23e1690"
         }
       }
     },
@@ -4316,7 +4316,7 @@
         ],
         "review": {
           "path": "verification/requirement-coverage-NREQ-baa1c33b2e2490264f91881b06ff9da8-20261007-context-029f6195f4ba-54e18bc1f938.json",
-          "sha256": "5ad9a77046fbd0c2576d89140990bb24b384345b484c9beada6102927ba77f81"
+          "sha256": "f4111ea2038fca67576304cca848a7af189315c0ba6d32f004b99fcb03639633"
         }
       }
     },
@@ -4382,7 +4382,7 @@
         ],
         "review": {
           "path": "verification/requirement-coverage-NREQ-f1919b51ebfc8561d0140c02cbf08abd-20261007-context-5b509fd997c1-54e18bc1f938.json",
-          "sha256": "59b25d0b4c35ea13b39ac3c99b55ec0c7e72c545359c264095755a6f3f4dc83c"
+          "sha256": "be8429a2f14db7ec4e9d4fa28d10d06becfc16b92f17cddc7e3873f4509610e2"
         }
       }
     },
@@ -4448,7 +4448,7 @@
         ],
         "review": {
           "path": "verification/requirement-coverage-NREQ-4b27c9f604f44c29404eacc12a59fd68-20261007-context-0ea535138580-54e18bc1f938.json",
-          "sha256": "eaed04aa1c2306cbde081cd9069f8309fec58b40752d685a2e262e8c961252ac"
+          "sha256": "e5fd7226b3d10c5d5263ec32409acd8a5be21d72d6e713ecd8f2ecad9619fb15"
         }
       }
     },
@@ -4514,7 +4514,7 @@
         ],
         "review": {
           "path": "verification/requirement-coverage-NREQ-71896faa31bc64e94d98bc976e1e6f1d-20261007-context-def6b5edfdba-54e18bc1f938.json",
-          "sha256": "81b13092164eb5f98b6684faad4ec3ea0eeea71886e606838e878a8dcab6349d"
+          "sha256": "77b062e1fc0056ed7e2a9502adcb3d863e405dabe29aba9af71a8a483e4f8046"
         }
       }
     },
@@ -4580,7 +4580,7 @@
         ],
         "review": {
           "path": "verification/requirement-coverage-NREQ-78fef21919bbd7bb3bafba6f62210631-20261007-context-8f3806190781-54e18bc1f938.json",
-          "sha256": "da25cd506f22ae805967a6e87468290d87afada53133d724b12736140e74815f"
+          "sha256": "a853fa5868701e8774c49d7aa7e77da270c7ecc51b25dd1ec1ba8461c96f8f28"
         }
       }
     },
@@ -4646,7 +4646,7 @@
         ],
         "review": {
           "path": "verification/requirement-coverage-NREQ-72aa03a305fb8893a65d384f41d86aeb-20261007-context-6fb2556fc745-54e18bc1f938.json",
-          "sha256": "1e16c15be3e73b846527d43c20ecd099cd1ad10ff50ca90d43c5ab147e676efe"
+          "sha256": "2dae01a4fd22a756f37d0d9893faab8a323a039bc93ea4ab2ba4c09777653247"
         }
       }
     },
@@ -4712,7 +4712,7 @@
         ],
         "review": {
           "path": "verification/requirement-coverage-NREQ-848909d4b95219bdb481803a4b1b91c2-20261007-context-73f60d480258-54e18bc1f938.json",
-          "sha256": "a5587464ba8ac5976df02c6f8abc1e0129324bad1f9ca29020d586fbabea2522"
+          "sha256": "2c201c432fd64804800ab719722971759fcf7cc512c93c098686e7466da3745c"
         }
       }
     },
@@ -4778,7 +4778,7 @@
         ],
         "review": {
           "path": "verification/requirement-coverage-NREQ-601ec85ffefcffd713520f4067f7529c-20261007-context-be7aad854ceb-54e18bc1f938.json",
-          "sha256": "ce8845d272d4b5ce2776ee82065024ec7d220ecae91616ab73d3bfc746d37717"
+          "sha256": "6f77655de02f6364c0693de7908b0ea9eb612e593eef9e951d36cb6bf2de515d"
         }
       }
     },
@@ -4844,7 +4844,7 @@
         ],
         "review": {
           "path": "verification/requirement-coverage-NREQ-c0080ab56f40757c88225dc35a1f98f0-20261007-context-79fe3bf8357b-54e18bc1f938.json",
-          "sha256": "acb20c9eb8913b74669efd2db9673118f51a62d1ccb265178859a045c5951194"
+          "sha256": "b8022e988d0e1e30afe2ba2e0c7e5ec085e763000aca4b0ac1fb01f5cafd345f"
         }
       }
     },
@@ -4910,7 +4910,7 @@
         ],
         "review": {
           "path": "verification/requirement-coverage-NREQ-a42ec803577aa8ccbe176ed8e20a8595-20261007-context-66547fe135c2-54e18bc1f938.json",
-          "sha256": "08436d6ef9254262fe8ece4906312c981ef5642901dd0dd0bda647977b306aac"
+          "sha256": "933d9257488bef5e2ba3849c7a2330d9147526db3375621df18bb51224b6d671"
         }
       }
     },
@@ -4971,7 +4971,7 @@
         ],
         "review": {
           "path": "verification/requirement-coverage-NREQ-928a65a08b403be3edc8b160ef9cc53c-20261007-context-bc514f8d980c-54e18bc1f938.json",
-          "sha256": "e09ac06eb5c9e14304e6952bedcf5cc0f9c05be4e76f6e4623798e1d88f49e3d"
+          "sha256": "091f4ff930826cd1d34f431524da5a017b65998b6c0622c00043f4d16abca39d"
         }
       }
     },
@@ -9517,7 +9517,7 @@
           {
             "path": "verification-evidence.mjs",
             "symbol": "specificationAcceptanceIdentity / readReleaseExecutedEvidence / readEvidencePayload / applyExecutedEvidence / validateFinalNormativeProof",
-            "sha256": "f1b4c7e6435c3cd42a1ed09c3ade9770cc3394a03c1e17a0a405c528e17a5ff2"
+            "sha256": "1fa8705ab0951782d31d4136fcfb1f9be772fb9f6b9039627a32b527320ce972"
           },
           {
             "path": "final-acceptance.mjs",
@@ -9527,7 +9527,7 @@
           {
             "path": ".github/workflows/pages.yml",
             "symbol": "publish-status: Build acceptance artifact from executed proof jobs, report projection and closed-loop-acceptance.json writer",
-            "sha256": "5976e1e69757ff7742673a9fcad04a52fc34857d161a44fc121a769e52e7d36b"
+            "sha256": "13abf513018beffb97a8b51b778aae13b5b05b1f5fcced062985a53e22e632bb"
           }
         ],
         "obligations": [
@@ -9562,7 +9562,7 @@
         "governingContext": [],
         "review": {
           "path": "verification/requirement-coverage-NREQ-bedc4564e47ae7ebf86911eb8426b6f0-20261007-context-303caf90caff-54e18bc1f938.json",
-          "sha256": "68bed395352a060e9929f572aa4b664650559a52447cc6a05a07c67562f192f7"
+          "sha256": "2e8cae2f00abd4ffd518ffae7e07a32e7086417a49a2a941eaa60127d1144a74"
         }
       }
     },
@@ -9582,7 +9582,7 @@
           {
             "path": "verification-evidence.mjs",
             "symbol": "specificationAcceptanceIdentity / readReleaseExecutedEvidence / readEvidencePayload / applyExecutedEvidence / validateFinalNormativeProof",
-            "sha256": "f1b4c7e6435c3cd42a1ed09c3ade9770cc3394a03c1e17a0a405c528e17a5ff2"
+            "sha256": "1fa8705ab0951782d31d4136fcfb1f9be772fb9f6b9039627a32b527320ce972"
           },
           {
             "path": "final-acceptance.mjs",
@@ -9592,7 +9592,7 @@
           {
             "path": ".github/workflows/pages.yml",
             "symbol": "publish-status: Build acceptance artifact from executed proof jobs, report projection and closed-loop-acceptance.json writer",
-            "sha256": "5976e1e69757ff7742673a9fcad04a52fc34857d161a44fc121a769e52e7d36b"
+            "sha256": "13abf513018beffb97a8b51b778aae13b5b05b1f5fcced062985a53e22e632bb"
           }
         ],
         "obligations": [
@@ -9627,7 +9627,7 @@
         "governingContext": [],
         "review": {
           "path": "verification/requirement-coverage-NREQ-4b26e20f450b23eb551b2da03e69c9c9-20261007-context-07d6150a1321-54e18bc1f938.json",
-          "sha256": "172425f8a4133bd393aa7b517c2e41e38892409162b31112e9caee2102cd7f9f"
+          "sha256": "c039375048d59f515d68d006a2efc64002c541e66cbe3c8ac894418d9f0096a1"
         }
       }
     },
@@ -9648,7 +9648,7 @@
           {
             "path": "verification-evidence.mjs",
             "symbol": "specificationAcceptanceIdentity / readReleaseExecutedEvidence / readEvidencePayload / applyExecutedEvidence / validateFinalNormativeProof",
-            "sha256": "f1b4c7e6435c3cd42a1ed09c3ade9770cc3394a03c1e17a0a405c528e17a5ff2"
+            "sha256": "1fa8705ab0951782d31d4136fcfb1f9be772fb9f6b9039627a32b527320ce972"
           },
           {
             "path": "final-acceptance.mjs",
@@ -9658,7 +9658,7 @@
           {
             "path": ".github/workflows/pages.yml",
             "symbol": "publish-status: Build acceptance artifact from executed proof jobs, report projection and closed-loop-acceptance.json writer",
-            "sha256": "5976e1e69757ff7742673a9fcad04a52fc34857d161a44fc121a769e52e7d36b"
+            "sha256": "13abf513018beffb97a8b51b778aae13b5b05b1f5fcced062985a53e22e632bb"
           },
           {
             "path": "deployment-contract-identities.mjs",
@@ -9668,7 +9668,7 @@
           {
             "path": "verified-site.mjs",
             "symbol": "validateSite",
-            "sha256": "c32ef23aa3bf1dda105fc774d84911ddb7603febe0479a2aabb751fb8820659a"
+            "sha256": "1f4b4178f49a0b82a21e27b5217ed0149e4aac38fb8cb8f717f6c8b55e752608"
           },
           {
             "path": "build-static-site.mjs",
@@ -9716,7 +9716,7 @@
         "governingContext": [],
         "review": {
           "path": "verification/requirement-coverage-NREQ-befdab6cc6a4121936987a35fc18e1c9-20261007-context-c8b0b09a87ad-54e18bc1f938.json",
-          "sha256": "a2bab1c16a176ad3a94789d886fcb838a90a7b66d5bc11e7708a574052623936"
+          "sha256": "9f57d3031238258f79b6198a56eb6af8eb30b1d2ac0c0ed9eff74d8012a18343"
         }
       }
     },
@@ -9737,7 +9737,7 @@
           {
             "path": "verification-evidence.mjs",
             "symbol": "specificationAcceptanceIdentity / readReleaseExecutedEvidence / readEvidencePayload / applyExecutedEvidence / validateFinalNormativeProof",
-            "sha256": "f1b4c7e6435c3cd42a1ed09c3ade9770cc3394a03c1e17a0a405c528e17a5ff2"
+            "sha256": "1fa8705ab0951782d31d4136fcfb1f9be772fb9f6b9039627a32b527320ce972"
           },
           {
             "path": "final-acceptance.mjs",
@@ -9747,7 +9747,7 @@
           {
             "path": ".github/workflows/pages.yml",
             "symbol": "publish-status: Build acceptance artifact from executed proof jobs, report projection and closed-loop-acceptance.json writer",
-            "sha256": "5976e1e69757ff7742673a9fcad04a52fc34857d161a44fc121a769e52e7d36b"
+            "sha256": "13abf513018beffb97a8b51b778aae13b5b05b1f5fcced062985a53e22e632bb"
           },
           {
             "path": "deployment-contract-identities.mjs",
@@ -9757,7 +9757,7 @@
           {
             "path": "verified-site.mjs",
             "symbol": "validateSite",
-            "sha256": "c32ef23aa3bf1dda105fc774d84911ddb7603febe0479a2aabb751fb8820659a"
+            "sha256": "1f4b4178f49a0b82a21e27b5217ed0149e4aac38fb8cb8f717f6c8b55e752608"
           },
           {
             "path": "build-static-site.mjs",
@@ -9805,7 +9805,7 @@
         "governingContext": [],
         "review": {
           "path": "verification/requirement-coverage-NREQ-a011968eff2ed2dc314d58ed27dfad88-20261007-context-87882d5bae07-54e18bc1f938.json",
-          "sha256": "f239011c98a9a18542e2a1b60d1ab0e6fae887114a65afba7324c11058818ff1"
+          "sha256": "b48f1d00f7d89b2acf2fc00b8789e88fdde468e8c35d022b19cc5091d9421679"
         }
       }
     },
@@ -9861,7 +9861,7 @@
         "governingContext": [],
         "review": {
           "path": "verification/requirement-coverage-NREQ-c94c878ef2cf8c6a35b0985da91c0c85-20261007-context-fe6c073ad55f-54e18bc1f938.json",
-          "sha256": "afd7d87bd98c3fc5839066cd18e6a7c40fd79e63aa7f01f56816e8d5d9fdec29"
+          "sha256": "d437d073dc8c94e6f9c423c1cebea330519cd22de6e1e1f15fea403c2c9d5986"
         }
       }
     },
@@ -9917,7 +9917,7 @@
         "governingContext": [],
         "review": {
           "path": "verification/requirement-coverage-NREQ-ea453611a3a1f48cdd2fbfbe946d7ac7-20261007-context-5fb3beeac070-54e18bc1f938.json",
-          "sha256": "cfa03ab5cde8cd69ae835e6d89efeaae4e78e80cd960e1ddc5c9c5a814de05cb"
+          "sha256": "1a183028bed25d0e797400663cfc55cb1d16aace5e2a09d70f72beebd9cca99c"
         }
       }
     },
@@ -9983,7 +9983,7 @@
         ],
         "review": {
           "path": "verification/requirement-coverage-NREQ-7a68fe07ee725cf205dd2102cd997b7f-20261007-context-652ecb1fe1af-54e18bc1f938.json",
-          "sha256": "e4e86481fe8b53de729df2a2a4b0e6aa98df950eee5b95a63d3bae86282c6c3d"
+          "sha256": "7db24fd53210a20af0d75bca761cc242ed2a9ac21a032c13e1e6baaf2604feba"
         }
       }
     },
@@ -10049,7 +10049,7 @@
         ],
         "review": {
           "path": "verification/requirement-coverage-NREQ-4bb86ccfacff0ea8bbbc59df67b0ca4f-20261007-context-6dcc93386d57-54e18bc1f938.json",
-          "sha256": "76e02deac8f1337abba3ca718fd14e067366bc0e502f2cb0475f9e3ef71e6a23"
+          "sha256": "e64dc282791f97da7d62a8248d1442f18a0220240e931a1ea3de35a18d4528ad"
         }
       }
     },
@@ -10115,7 +10115,7 @@
         ],
         "review": {
           "path": "verification/requirement-coverage-NREQ-768d67996244254c83c0d11796f63912-20261007-context-291bd5dd0e04-54e18bc1f938.json",
-          "sha256": "c1f3837342016804cab7591118a262944c158f01b1f101cb2d50a9afc33fff69"
+          "sha256": "16a5235ef605e912f5adcd9f94342e3b6edeecfd5aa2306bbd1f088952ec8264"
         }
       }
     },
@@ -10181,7 +10181,7 @@
         ],
         "review": {
           "path": "verification/requirement-coverage-NREQ-59d5854af99ac5a566eb61e978519b21-20261007-context-e53573db3335-54e18bc1f938.json",
-          "sha256": "88fd626b014223bb6026a698281aa2662d9891a2d02a1abfbac7115404a78136"
+          "sha256": "ea74ce81798af9f9dcb6beb45d1eaa7dd6dedd9988bf55c428ff3ebff9a106ec"
         }
       }
     },
@@ -10247,7 +10247,7 @@
         ],
         "review": {
           "path": "verification/requirement-coverage-NREQ-75b670fc6ea047b7452b4148f12a30ba-20261007-context-dfc64a21a246-54e18bc1f938.json",
-          "sha256": "e7edd9f3ff73adcb6fc22cc24c9e7aa2601d560162346aca21e25ef8f5f78c70"
+          "sha256": "0c6b0955b85597eb0be1a27fc55e2d0d07e2839b75a184c355ceda9f1504c6f8"
         }
       }
     },
@@ -10313,7 +10313,7 @@
         ],
         "review": {
           "path": "verification/requirement-coverage-NREQ-86651d173d1583e48cf6c03f9d486f4f-20261007-context-327d2cc2c990-54e18bc1f938.json",
-          "sha256": "57c8e9f387b059a3088154ba268ae55e6a316b1e7faa440e2c1c50731c0b9967"
+          "sha256": "be9f7bd39b4ee3474f3e0df97ed59723518abcfc94b5db7cf337317f695e9cf9"
         }
       }
     },
@@ -10379,7 +10379,7 @@
         ],
         "review": {
           "path": "verification/requirement-coverage-NREQ-1576e27fba46e1d68631bb2ade2e37f4-20261007-context-f03bceab9e8e-54e18bc1f938.json",
-          "sha256": "806c5d09722edfd1fbd8c9830a78b8c21bb1a4aa200e0b75ca8154e2885a2a79"
+          "sha256": "70e50c7e3b1b24536bb7e61976008ef7545bf682c6aa26ddf1a6de691b9fd896"
         }
       }
     },
@@ -10445,7 +10445,7 @@
         ],
         "review": {
           "path": "verification/requirement-coverage-NREQ-cf25cf824db06866df51c0e538fcbc03-20261007-context-fde639603c5f-54e18bc1f938.json",
-          "sha256": "9e584aa92fd649c80246b3e9b2162de8175e38bd2821c30fac077a70becf4aba"
+          "sha256": "44e10fa5c3e2c2db542bcc578832adec5d20a4f6fc7219ea777dfbe445277301"
         }
       }
     },
@@ -10511,7 +10511,7 @@
         ],
         "review": {
           "path": "verification/requirement-coverage-NREQ-41ab1c200b4ce5c9d1d96613a3e5b264-20261007-context-867dae61e345-54e18bc1f938.json",
-          "sha256": "270bafbee5362a6f3c8cbff4f94b52eec24b2132ac466c704a38effc4d3021b8"
+          "sha256": "0e541ebd61dded77227f5a23ff777d4e60c25a8d15815e2ace28d708b79c1b77"
         }
       }
     },
@@ -10577,7 +10577,7 @@
         ],
         "review": {
           "path": "verification/requirement-coverage-NREQ-0c973b955d61ee36887734df0ade5e69-20261007-context-aa211674369a-54e18bc1f938.json",
-          "sha256": "e887e393477be802cda62f5f9e1dd081aa775d81260c50b8c10fe55054c4ebb4"
+          "sha256": "850c2e3f4f683c94ddc1994fe4355f9952883cc62af817b9523b13cde41f5e41"
         }
       }
     },
@@ -10643,7 +10643,7 @@
         ],
         "review": {
           "path": "verification/requirement-coverage-NREQ-971af7158d193e9b1d780c13b6c8e0ec-20261007-context-3e84d85be560-54e18bc1f938.json",
-          "sha256": "12d8fd986d43479eec47a0c29a57d04b07f265c97194913655e4ff797f8d1524"
+          "sha256": "d2d31d16322ddf0f800559b43e7f3771974bb5190152b61320a2015d27681d22"
         }
       }
     }

@@ -6,14 +6,14 @@
   "declarationSha256": "652ecb1fe1af490887e22e4b73ebb4cd67b7a72638d50cbf22d72814819f57e8",
   "decision": "COMPLETE_COVERAGE",
   "evidenceBasis": "EXTERNALLY_SUPPORTED",
-  "method": "The exact narrow controlling clause and unchanged proof decomposition were independently reviewed in the embedded original semantic assessment. Current production, verifier, fixture and catalog deltas were separately reviewed in the referenced source-delta review bundle. This is coverage-design evidence only: current frozen-source executed receipts remain independently required, and unsupported clauses are not promoted. The current integrator separately inspected the two later verifier-fixture prerequisite deltas recorded in verification/fixture-prerequisite-delta-review-20261008.json. The original independent semantic assessment remains historical; current execution remains required. The current integrator separately reviewed the later Stage 5 test-premise correction in verification/operator-journey-stage5-test-delta-20261008.json. The earlier independent semantic assessment is retained as historical; this delta does not claim a new independent semantic review or complete current-candidate execution.",
+  "method": "The unchanged narrow controlling clause and obligation/check decomposition retain their earlier independent semantic assessment. A separate collaborator inspected the exact supervisor/prerequisite source delta recorded in verification/stage28-prerequisite-independent-delta-review-20261010.json. Only the source dependency is renewed; current actual producer executions remain separately required. Prior review attribution and scope are retained below.",
   "author": {
-    "actor": "Codex exact-source coverage renewal integrator",
+    "actor": "Codex consolidated CI repair integrator",
     "contextId": "/root"
   },
   "reviewer": {
-    "actor": "Codex independent verifier-context correction reviewer",
-    "contextId": "/root/pr_inventory_review"
+    "actor": "Codex independent CI evidence delta reviewer",
+    "contextId": "/root/evidence_review"
   },
   "reviewedInputs": [
     {
@@ -181,7 +181,7 @@
     },
     {
       "path": "verify-conformance-regressions.mjs",
-      "sha256": "526c150869be212d2c76d29a80958ef56dd3eaa5c7aa336b5604262932b65c62"
+      "sha256": "fb3f568736b16b87dff48e792fd0b0916284142c91680788bce850eea59f4128"
     },
     {
       "path": "verify-file-first-operator.mjs",
@@ -230,6 +230,10 @@
     {
       "path": "verification/operator-journey-stage5-test-delta-20261008.json",
       "sha256": "100722115633f28626f441e1384053874f38d7887fbaa5c563f77eb2e7a9db8b"
+    },
+    {
+      "path": "verification/stage28-prerequisite-independent-delta-review-20261010.json",
+      "sha256": "a6d31e351f0b4c2264b014e93eb8c3e03cbc96264574c05cb485b1ab400c910b"
     }
   ],
   "findings": [],
@@ -344,5 +348,35 @@
   "currentTestCorrectionReview": {
     "path": "verification/operator-journey-stage5-test-delta-20261008.json",
     "sha256": "100722115633f28626f441e1384053874f38d7887fbaa5c563f77eb2e7a9db8b"
+  },
+  "preSupplementCoverageReviewAttribution": {
+    "sourceCommit": "f97e095723d33a10ebbec078d47586602b9d9908",
+    "sha256": "e4e86481fe8b53de729df2a2a4b0e6aa98df950eee5b95a63d3bae86282c6c3d",
+    "author": {
+      "actor": "Codex exact-source coverage renewal integrator",
+      "contextId": "/root"
+    },
+    "reviewer": {
+      "actor": "Codex independent verifier-context correction reviewer",
+      "contextId": "/root/pr_inventory_review"
+    },
+    "method": "The exact narrow controlling clause and unchanged proof decomposition were independently reviewed in the embedded original semantic assessment. Current production, verifier, fixture and catalog deltas were separately reviewed in the referenced source-delta review bundle. This is coverage-design evidence only: current frozen-source executed receipts remain independently required, and unsupported clauses are not promoted. The current integrator separately inspected the two later verifier-fixture prerequisite deltas recorded in verification/fixture-prerequisite-delta-review-20261008.json. The original independent semantic assessment remains historical; current execution remains required. The current integrator separately reviewed the later Stage 5 test-premise correction in verification/operator-journey-stage5-test-delta-20261008.json. The earlier independent semantic assessment is retained as historical; this delta does not claim a new independent semantic review or complete current-candidate execution."
+  },
+  "supplementaryIndependentSourceDeltaReviews": [
+    {
+      "path": "verification/stage28-prerequisite-independent-delta-review-20261010.json",
+      "sha256": "a6d31e351f0b4c2264b014e93eb8c3e03cbc96264574c05cb485b1ab400c910b",
+      "reviewer": {
+        "actor": "Codex independent CI evidence delta reviewer",
+        "contextId": "/root/evidence_review"
+      },
+      "reviewedAtUtc": "2026-10-10T05:12:34Z",
+      "scope": "Unchanged supervisor execution implementation; added healthy prerequisite dispatch controls and dependency serialization only."
+    }
+  ],
+  "reviewRenewedAt": "2026-10-10T05:12:34Z",
+  "renewalActor": {
+    "actor": "Codex independent CI evidence delta reviewer",
+    "contextId": "/root/evidence_review"
   }
 }

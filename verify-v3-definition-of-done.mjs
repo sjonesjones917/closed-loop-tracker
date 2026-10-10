@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
 import {selectExecutionReport} from './execution-report.mjs';
 import {applyAvailableExecutedEvidence,currentOwnerReport,readExecutionReceipts} from './verification-evidence.mjs';
+import {verificationCatalog} from './verification-evidence-catalog.mjs';
 const read=path=>fs.readFileSync(new URL(path,import.meta.url),'utf8');
 const readIf=path=>{try{return read(path);}catch{return '';}};
 const schema=read('./workflow-schema.js'),runtime=read('./test-runtime.js'),worker=read('./test-worker.js'),engine=read('./workflow-engine.js'),prompt=read('./prompt-engine.js'),ingestion=read('./response-ingestion.js'),store=read('./project-store.js'),app=read('./app-core.js');
@@ -52,6 +53,7 @@ const executedReceipts=process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS?readExecuti
 const executedProof=async (file,marker)=>{
   const receipt=executedReceipts.get(file);
   if(receipt){const matches=receipt.reports.filter(report=>Object.hasOwn(report,marker));assert.equal(matches.length,1,`Expected one current executed ${file} report containing ${marker}`);return matches[0];}
+  if(process.env.CLOSED_LOOP_REQUIRE_CURRENT_OWNER_RECEIPTS==='1'&&Object.hasOwn(verificationCatalog,file))throw new Error('EXECUTED_EVIDENCE_ORACLE: missing required current receipt '+file);
   const text=(await checkedVerifier(process.execPath,[new URL('./'+file,import.meta.url).pathname],{encoding:'utf8',maxBuffer:64*1024*1024}));
   return selectExecutionReport(text,marker);
 };

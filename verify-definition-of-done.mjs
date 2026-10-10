@@ -21,6 +21,7 @@ const EXECUTED_DEFINITION_PROOF_FIELDS=Object.freeze([
 
 async function currentOwnerReport(file,marker,{receiptDirectory=process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS,run=checkedVerifier}={}){
   const receipt=receiptDirectory?readExecutionReceipts(receiptDirectory).get(file):null;
+  if(!receipt&&process.env.CLOSED_LOOP_REQUIRE_CURRENT_OWNER_RECEIPTS==='1')throw new Error('EXECUTED_EVIDENCE_ORACLE: missing required current receipt '+file);
   const reports=receipt?.reports||executionReports(await run(process.execPath,[new URL('./'+file,import.meta.url).pathname],{encoding:'utf8'}));
   const matching=reports.filter(row=>Object.hasOwn(row,marker));
   assert.equal(matching.length,1,`Expected exactly one current ${file} report containing ${marker}.`);
@@ -49,6 +50,9 @@ if(process.argv.includes('--owner-receipt-controls')){
       }});
       assert.equal(runs,1,`MISSING_RECEIPT_FALLBACK_ORACLE: ${file} was not invoked exactly once.`);
       assert.deepEqual(fallback,selected[0]);
+      const priorRequirement=process.env.CLOSED_LOOP_REQUIRE_CURRENT_OWNER_RECEIPTS;
+      process.env.CLOSED_LOOP_REQUIRE_CURRENT_OWNER_RECEIPTS='1';
+      try{await assert.rejects(currentOwnerReport(file,marker,{receiptDirectory:temporary,run:()=>{throw new Error('PUBLICATION_MISSING_RECEIPT_STARTED_CHILD');}}),/missing required current receipt/);}finally{if(priorRequirement===undefined)delete process.env.CLOSED_LOOP_REQUIRE_CURRENT_OWNER_RECEIPTS;else process.env.CLOSED_LOOP_REQUIRE_CURRENT_OWNER_RECEIPTS=priorRequirement;}
       const stale=structuredClone(receipt);
       stale.fingerprint.sourceInputsSha256='0'.repeat(64);
       delete stale.receiptSha256;
@@ -57,7 +61,7 @@ if(process.argv.includes('--owner-receipt-controls')){
       await assert.rejects(currentOwnerReport(file,marker,{receiptDirectory:temporary,run:()=>{throw new Error('STALE_RECEIPT_FALLBACK_ORACLE: child was started.');}}),/EXECUTED_EVIDENCE_ORACLE: stale source\/specification\/catalog\/runtime receipt/);
     }finally{fs.rmSync(temporary,{recursive:true,force:true});}
   }
-  console.log(JSON.stringify({definitionOfDoneOwnerReceiptControls:'PASS',owners:cases.map(([file])=>file),exactReceiptSkips:true,missingReceiptRunsOnce:true,staleReceiptFailsClosed:true,syntheticFallbackReportReuse:true}));
+  console.log(JSON.stringify({definitionOfDoneOwnerReceiptControls:'PASS',owners:cases.map(([file])=>file),exactReceiptSkips:true,missingReceiptRunsOnce:true,publicationMissingReceiptFailsClosed:true,staleReceiptFailsClosed:true,syntheticFallbackReportReuse:true}));
   process.exit(0);
 }
 
@@ -77,6 +81,7 @@ assert.equal(candidateFreezeProof.exactHumanSelectionReferenced,true,'Stage 14 f
 assert.equal(candidateFreezeProof.frozenManifestImmutable,true,'Stage 14 frozen candidate manifest was not immutable.');
 assert.equal(candidateFreezeProof.isolatedDisposableProjects,true,'Stage 14 candidate-freeze mutations were not isolated.');
 const productionBaselineReceipt=process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS?readExecutionReceipts(process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS).get('verify-production-baseline-authority.mjs'):null;
+if(!productionBaselineReceipt&&process.env.CLOSED_LOOP_REQUIRE_CURRENT_OWNER_RECEIPTS==='1')throw new Error('EXECUTED_EVIDENCE_ORACLE: missing required current receipt verify-production-baseline-authority.mjs');
 const productionBaselineReports=productionBaselineReceipt?.reports||executionReports(await checkedVerifier(process.execPath,[new URL('./verify-production-baseline-authority.mjs',import.meta.url).pathname],{encoding:'utf8'}));
 const productionBaselineAuthorityProof=(()=>{
   const reports=productionBaselineReports.filter(report=>Object.hasOwn(report,'productionBaselineAuthority'));
@@ -90,6 +95,7 @@ assert.equal(productionBaselineAuthorityProof.zeroAcceptedStage20ExternalRespons
 assert.equal(productionBaselineAuthorityProof.isolatedDisposableProjects,true,'Stage 23 production-baseline-authority mutations were not isolated.');
 
 const invariantReceipt=process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS?readExecutionReceipts(process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS).get('verify-definition-of-done-invariants.mjs'):null;
+if(!invariantReceipt&&process.env.CLOSED_LOOP_REQUIRE_CURRENT_OWNER_RECEIPTS==='1')throw new Error('EXECUTED_EVIDENCE_ORACLE: missing required current receipt verify-definition-of-done-invariants.mjs');
 const report=invariantReceipt?(()=>{
   const reports=invariantReceipt.reports.filter(row=>Object.hasOwn(row,'fieldOwnershipCoverage'));
   assert.equal(reports.length,1,'Expected exactly one current definition-of-done invariant report.');

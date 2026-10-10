@@ -17,7 +17,7 @@ const cases=[
  {id:'one-stage-action-downloads-twice',file:'app-core.js',env:'APP_SOURCE',suite:'verify-product-reservation-persistence.mjs',oracle:'ONE_FILE_HANDOFF_ORACLE',before:'downloadBlob(pkg.blob,pkg.filename);',after:'downloadBlob(pkg.blob,pkg.filename);downloadBlob(pkg.blob,pkg.filename);'},
  {id:'unallocated-artifact-promotion',file:'workflow-engine.js',env:'ENGINE_SOURCE',suite:'verify-file-allocation-boundaries.mjs',oracle:'ARTIFACT_PROMOTION_AUTHORITY_ORACLE',before:'function assertArtifactAllocation(project,artifactId){',after:'function assertArtifactAllocation(project,artifactId){return true;'},
  {id:'changed-bytes-under-retained-identity',file:'workflow-engine.js',env:'ENGINE_SOURCE',suite:'verify-file-allocation-boundaries.mjs',oracle:'ARTIFACT_RETRY_CONTENT_ORACLE',before:"if(String(recordValue(existing,'FILENAME'))!==String(filename)",after:"if(false&&String(recordValue(existing,'FILENAME'))!==String(filename)",mutate:source=>source.replace(/    if\(String\(recordValue\(existing,'FILENAME'\)\)[^\n]+ARTIFACT_IDENTITY_CONFLICT'\);/,"    // Injected violation: changed content accepted under a retained identity.")},
- {id:'missing-copied-file-commit',file:'project-store.js',env:'PROJECT_STORE_SOURCE',suite:'verify-copy-transaction.mjs',oracle:'COPY_FILE_CUSTODY_ORACLE',before:'      files.put(copied);',after:'      // Injected violation: omit copied bytes.'},
+ {id:'missing-copied-file-commit',file:'project-store.js',env:'PROJECT_STORE_SOURCE',suite:'verify-copy-transaction.mjs',oracle:'COPY_FILE_CUSTODY_ORACLE',before:'      await storeArtifactRow(tx,copied);',after:'      // Injected violation: omit copied bytes.'},
  {id:'missing-external-copy-receipt',file:'project-store.js',env:'PROJECT_STORE_SOURCE',suite:'verify-copy-transaction.mjs',oracle:'COPY_RECEIPT_ORACLE',before:'    meta.put({key:creation.receiptKey,value:creation.receipt,updatedAt:now()});',after:'    // Injected violation: omit the completed clone receipt.'},
  {id:'inconsistent-copy-source-identity',file:'project-store.js',env:'PROJECT_STORE_SOURCE',suite:'verify-copy-transaction.mjs',oracle:'COPY_SOURCE_IDENTITY_ORACLE: filename',before:'function sameCopiedFileIdentity(actual,expected){',after:'function sameCopiedFileIdentity(actual,expected){return Boolean(actual&&expected);'},
  {id:'copy-source-changed-before-commit',file:'project-store.js',env:'PROJECT_STORE_SOURCE',suite:'verify-copy-transaction.mjs',oracle:'COPY_COMMIT_IDENTITY_ORACLE',before:'if(!sameCopiedFileIdentity(sourceFile,{...mapping,artifactId:mapping.sourceArtifactId})||sourceFile.jobId!==source.jobId||!sameCopiedFileIdentity(copied,mapping)||copied.jobId!==id||await request(files.get(mapping.artifactId)))',after:'if(!sourceFile||!copied||await request(files.get(mapping.artifactId)))'},
@@ -49,7 +49,7 @@ const run=async(name,suite,env={})=>{
 persist();
 try{
  for(const item of cases){
-  const source=fs.readFileSync(item.file,'utf8');assert.ok(source.includes(item.before),'Fault anchor is absent: '+item.id);
+  const source=fs.readFileSync(item.file,'utf8');assert.equal(source.split(item.before).length-1,1,'Fault anchor must identify exactly one current owner: '+item.id);
   const changed=item.mutate?item.mutate(source):source.replace(item.before,item.after);assert.notEqual(changed,source,'Fault was not injected: '+item.id);
   const temporary=path.join(directory,item.id+'.js');fs.writeFileSync(temporary,changed);
   const observed=await run(item.id,item.suite,{[item.env]:temporary});

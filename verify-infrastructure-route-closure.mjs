@@ -71,6 +71,7 @@ assert(!/projectData\.[A-Za-z0-9_]+\.push\([^)]*canonical/i.test(app),`UI contai
 // Exact current receipts establish already executed production suites. A
 // standalone invocation still executes an owner whose receipt is absent.
 const receipts=process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS?readExecutionReceipts(process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS):new Map();
+if(process.env.CLOSED_LOOP_REQUIRE_CURRENT_OWNER_RECEIPTS==='1')for(const suite of ['verify-ingestion.mjs','verify-project-lifecycle.mjs'])if(!receipts.has(suite))throw new Error('EXECUTED_EVIDENCE_ORACLE: missing required current receipt '+suite);
 if(!receipts.has('verify-ingestion.mjs'))await checkedVerifier(process.execPath,[new URL('./verify-ingestion.mjs',import.meta.url).pathname],{stdio:'pipe'});
 const lifecycleReceipt=receipts.get('verify-project-lifecycle.mjs');
 const lifecycleReports=lifecycleReceipt?.reports||executionReports(await checkedVerifier(process.execPath,[new URL('./verify-project-lifecycle.mjs',import.meta.url).pathname],{stdio:'pipe',encoding:'utf8'}));

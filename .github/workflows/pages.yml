@@ -50,7 +50,8 @@ jobs:
           NODE_OPTIONS: ''
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
-          node-version: '22'
+          # Receipts bind the exact Node version across jobs and PR promotion.
+          node-version: '22.23.3'
       - name: Find complete PR verification for this main commit
         id: candidate
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -104,6 +105,7 @@ jobs:
         with:
           name: deferred-matrix-diagnostics-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: .ci-deferred-diagnostics/
+          include-hidden-files: true
           if-no-files-found: warn
           retention-days: 30
 
@@ -134,7 +136,7 @@ jobs:
           NODE_OPTIONS: ''
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
-          node-version: '22'
+          node-version: '22.23.3'
 
       - name: Verified artifact reuse checks
         run: node verify-verified-site.mjs
@@ -568,7 +570,7 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
-          node-version: '22'
+          node-version: '22.23.3'
       - name: Download the exact verified deployment files
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
@@ -613,7 +615,7 @@ jobs:
             operator-evidence/
             recovery-browser-evidence/
             mobile-capability-evidence/
-            /tmp/verify-*.mjs.*.log
+            /tmp/verify-*.mjs.log
             /tmp/deployed-byte-proof.log
           retention-days: 90
           if-no-files-found: warn
@@ -637,6 +639,8 @@ jobs:
     env:
       CLOSED_LOOP_VERIFICATION_SOURCE_ROOT: ${{ github.workspace }}
       CLOSED_LOOP_VERIFICATION_RECEIPTS: ${{ github.workspace }}/.verification-receipts
+      # Publication consumes reconciled proof; missing registered receipts block it.
+      CLOSED_LOOP_REQUIRE_CURRENT_OWNER_RECEIPTS: '1'
       NODE_OPTIONS: --import ${{ github.workspace }}/verification-evidence-preload.mjs
     permissions:
       contents: read
@@ -646,7 +650,7 @@ jobs:
           NODE_OPTIONS: ''
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
-          node-version: '22'
+          node-version: '22.23.3'
       - name: Download current executed assertion evidence
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
@@ -695,7 +699,7 @@ jobs:
             operator-evidence/
             recovery-browser-evidence/
             mobile-capability-evidence/
-            /tmp/mobile-verify-*.mjs.*.log
+            /tmp/verify-*.mjs.log
           retention-days: 90
           if-no-files-found: warn
       - name: Download current deployed browser assertion receipts

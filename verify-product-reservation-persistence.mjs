@@ -136,7 +136,9 @@ report.durableCases=['Persist the baseline before product reservation','Persist 
  };
  // Replay the same valid, bounded case in an isolated shared runtime with one
  // implementation fault. The production files and healthy store stay intact.
- const productionSource=fs.readFileSync('project-store.js','utf8'),faulted=projectStoreRuntime({fault:{id:'omit-candidate-byte-verification',file:'project-store.js',before:'  await observeProjectArtifactCustody(next);',after:'  // Injected fault: derive the new version using only prior-version custody.'}});
+ const productionSource=fs.readFileSync('project-store.js','utf8'),candidateCustodyAnchor='  await observeProjectArtifactCustody(next);\n  engine.recalculate(next);';
+ assert.equal(productionSource.split(candidateCustodyAnchor).length-1,1,'PRODUCT_ACCEPTANCE_CUSTODY_FAULT_ANCHOR_ORACLE: the fault must bind to candidate preparation before recalculation.');
+ const faulted=projectStoreRuntime({fault:{id:'omit-candidate-byte-verification',file:'project-store.js',before:candidateCustodyAnchor,after:'  // Injected fault: derive the new version using only prior-version custody.\n  engine.recalculate(next);'}});
  for(const [name,rows] of durable.rows)faulted.rows.set(name,new Map([...rows].map(([key,row])=>[key,faulted.copy(row)])));
  const faultFailures=bindAcceptanceUi(faulted,faulted.copy(staged),prepared.proposal.proposalId);
  await faulted.runtime.accept();if(faulted.runtime.replacementReview)await faulted.runtime.confirm();

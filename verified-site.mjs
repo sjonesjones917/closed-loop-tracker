@@ -4,6 +4,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 import {pathToFileURL} from 'node:url';
+import {isDeepStrictEqual} from 'node:util';
 import './hash.js';
 import {validateDeploymentContractIdentities} from './deployment-contract-identities.mjs';
 import {evidenceFingerprint,readExecutionReceipts,aggregateExecutedEvidence,sha as evidenceSha} from './verification-evidence.mjs';
@@ -79,6 +80,22 @@ const readJson=file=>JSON.parse(fs.readFileSync(file,'utf8'));
 const writeJson=(file,value)=>{fs.mkdirSync(path.dirname(file),{recursive:true});fs.writeFileSync(file,JSON.stringify(value,null,2)+'\n');};
 function currentProofFiles(directory){const result=[];for(const entry of fs.readdirSync(directory,{withFileTypes:true})){if(entry.isFile()&&entry.name.endsWith('.json'))result.push(entry.name);else if(entry.isDirectory()&&['browser','LOCAL','DEPLOYED'].includes(entry.name))for(const name of currentProofFiles(path.join(directory,entry.name)))result.push(entry.name+'/'+name);}return result.sort();}
 export function executedProofFileHashes(directory){const files=currentProofFiles(directory);return Object.fromEntries(files.map(name=>{requireValue(/^(?:[\w.-]+\.json|browser\/(?:LOCAL|DEPLOYED)\/[\w.-]+\.json)$/.test(name)&&fs.lstatSync(path.join(directory,name)).isFile(),'Invalid executed proof file');return [name,digest(fs.readFileSync(path.join(directory,name)))];}));}
+export function promoteExecutedProofs({sourceDirectory,directory,proofFiles,fingerprint,promotion}){
+  requireValue(isDeepStrictEqual(executedProofFileHashes(sourceDirectory),proofFiles),'Executed proof file universe or bytes differs from sealed bundle.');
+  const proofs=Object.keys(proofFiles).filter(name=>name!=='evidence.json').map(name=>{
+    const proof=readJson(path.join(sourceDirectory,name));
+    requireValue(proof.fingerprint?.sourceInputsSha256===fingerprint.sourceInputsSha256,'Executed proof source inputs changed; current full verification is required.');
+    return [name,proof];
+  });
+  // A different installed runtime needs fresh execution. Decide before copying
+  // any receipts so the full run starts without partially promoted old proof.
+  if(proofs.some(([,proof])=>!isDeepStrictEqual(proof.fingerprint.runtime,fingerprint.runtime)))return false;
+  fs.mkdirSync(directory,{recursive:true});
+  for(const [name,proof]of proofs){
+    delete proof.receiptSha256;proof.promotion=promotion;proof.receiptSha256=evidenceSha(proof);writeJson(path.join(directory,name),proof);
+  }
+  return true;
+}
 const collectsExecutedEvidence=cwd=>Boolean(process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS)&&(!process.env.CLOSED_LOOP_VERIFICATION_SOURCE_ROOT||path.resolve(cwd)===path.resolve(process.env.CLOSED_LOOP_VERIFICATION_SOURCE_ROOT));
 const git=(cwd,...args)=>execFileSync('git',args,{timeout:30000,killSignal:'SIGKILL',cwd,encoding:'utf8'}).trim();
 const artifactName=(run,attempt)=>`verified-site-${run}-${attempt}`;
@@ -258,18 +275,14 @@ async function reuseCandidate(c){
   assertReceipt(receipt,manifest,{run,repository:c.repository,headSha:candidate.headSha,sourceCommit:source.sha,sourceTree:source.tree.sha,workflowDigest:digest(fs.readFileSync('.github/workflows/pages.yml'))});
   if(collectsExecutedEvidence(process.cwd())){
   requireValue(receipt.executedEvidence?.sourceCommit===source.sha&&receipt.executedEvidence.proofBundleSha256===evidenceSha(receipt.executedEvidence.proofFiles),'Executed proof bundle receipt is absent or inconsistent.');
-  requireValue(JSON.stringify(executedProofFileHashes('_verified-pr/proofs'))===JSON.stringify(Object.fromEntries(Object.entries(receipt.executedEvidence.proofFiles).sort(([a],[b])=>a.localeCompare(b)))),'Executed proof file universe or bytes differs from sealed bundle.');
-  for(const [name,expected]of Object.entries(receipt.executedEvidence.proofFiles)){requireValue(/^(?:[\w.-]+\.json|browser\/(?:LOCAL|DEPLOYED)\/[\w.-]+\.json)$/.test(name),'Unsafe executed proof path');requireValue(digest(fs.readFileSync(path.join('_verified-pr/proofs',name)))===expected,'Executed proof bundle file changed: '+name);}
   // Preserve the original tested revision while explicitly binding identical
   // current inputs to this main promotion. Ordinary receipt readers cannot
   // silently substitute a different head revision.
   const fingerprint=evidenceFingerprint(process.cwd()),proofDirectory=process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS||'.verification-receipts';
-  fs.mkdirSync(proofDirectory,{recursive:true});
-  for(const [name]of Object.entries(receipt.executedEvidence.proofFiles)){
-    if(name==='evidence.json')continue;
-    const proof=readJson(path.join('_verified-pr/proofs',name));
-    requireValue(proof.fingerprint?.sourceInputsSha256===fingerprint.sourceInputsSha256&&JSON.stringify(proof.fingerprint.runtime)===JSON.stringify(fingerprint.runtime),'Executed proof runtime/source inputs changed; current full verification is required.');
-    delete proof.receiptSha256;proof.promotion={sourceCommit:c.commit,sourceTree:mainTree,verifiedSourceCommit:source.sha,verifiedRunId:String(run.id),verifiedRunAttempt:run.run_attempt,proofBundleSha256:receipt.executedEvidence.proofBundleSha256};proof.receiptSha256=evidenceSha(proof);writeJson(path.join(proofDirectory,name),proof);
+  const promoted=promoteExecutedProofs({sourceDirectory:'_verified-pr/proofs',directory:proofDirectory,proofFiles:receipt.executedEvidence.proofFiles,fingerprint,promotion:{sourceCommit:c.commit,sourceTree:mainTree,verifiedSourceCommit:source.sha,verifiedRunId:String(run.id),verifiedRunAttempt:run.run_attempt,proofBundleSha256:receipt.executedEvidence.proofBundleSha256}});
+  if(!promoted){
+    console.log('The executed proof runtime differs from the current runtime. Full verification is required.');
+    return;
   }
   }
   (await promoteSite({cwd:process.cwd(),verifiedDirectory:path.resolve('_verified-pr/site'),outputDirectory:path.resolve('_site'),commit:c.commit,runId:c.runId}));

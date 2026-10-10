@@ -9,7 +9,7 @@ const faults={
  'audit-is-work':{file:'workflow-engine.js',id:'AUDIT-IS-WORK',before:"const families=new Set([...Object.keys(schema.RECORD_SCHEMAS),...Object.keys(DOWNSTREAM_WORK_COLLECTIONS)]);",after:"for(const row of safe(project.projectData.migrationArchives))if(Number(row.stage)>Number(stage))add(row.stage,'migrationArchives','');const families=new Set([...Object.keys(schema.RECORD_SCHEMAS),...Object.keys(DOWNSTREAM_WORK_COLLECTIONS)]);"},
  'blank-draft-is-work':{file:'workflow-engine.js',id:'BLANK-DRAFT-IS-WORK',before:"if(!text||text===core.stageTemplate(core.STAGES[Number(stage)-1]))return false;",after:"if(!text||text===core.stageTemplate(core.STAGES[Number(stage)-1]))return false;return true;"},
  'omit-pending-work':{file:'workflow-engine.js',id:'OMIT-PENDING-WORK',before:"if(collection==='responseProposals'&&row.status!=='PENDING_OPERATOR_REVIEW')continue;",after:"if(collection==='responseProposals')continue;"},
- 'post-commit-failure-misreported':{file:'app-core.js',id:'POST-COMMIT-FAILURE-MISREPORTED',before:'if(!acceptance)throw error;',after:'throw error;'}
+ 'post-commit-failure-misreported':{file:'app-core.js',id:'POST-COMMIT-FAILURE-MISREPORTED',before:'if(!acceptance)showPostCommitRecoveryWarning();',after:'throw error;'}
 };
 assert.ok(!faultName||Object.hasOwn(faults,faultName),'Unknown active-work fault');
 const r=projectStoreRuntime({fault:faults[faultName]}),{core,engine,prompts,ingestion,store,copy,runtime}=r;

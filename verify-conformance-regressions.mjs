@@ -256,11 +256,19 @@ async function runSequence(gates,{directory,reportFile,report={},timeoutMs=AGGRE
   report.interruption=controller.signal.reason||null;persist();return report;
  }finally{clearTimeout(deadline);signal?.removeEventListener('abort',relay);}
 }
-async function verifyLifecycleFaultDispatch(directory){
+export async function verifyLifecycleFaultDispatch(directory){
+ const {healthyFullCyclePrerequisiteSource}=await import('./full-cycle-prerequisite.mjs');
  const source=fs.readFileSync('verify-full-cycle.mjs','utf8');
  const start=source.indexOf('const timingFaultDefinitions='),end=source.indexOf('globalThis.Event=',start);
  assert.ok(start>=0&&end>start,'FAULT_EXECUTION_OWNER_FIXTURE_ORACLE');
- const prelude=source.slice(start,end),results=[];
+ const prelude=source.slice(start,end),results=[],prerequisiteResults=[];
+ const expectedFaultIds=['premature-failure-execution','unreviewed-expression-identity','retained-version-alias','future-leaf-truth','dropped-timing-leaf','unreviewed-leaf-schedule','prerequisite-path-loss','activation-review-bypass'];
+ const prerequisitePrelude=healthyFullCyclePrerequisiteSource(prelude);
+ assert.throws(()=>healthyFullCyclePrerequisiteSource(''),/HEALTHY_LIFECYCLE_PREREQUISITE_ANCHOR_ORACLE/);
+ assert.throws(()=>healthyFullCyclePrerequisiteSource(prelude+prelude),/HEALTHY_LIFECYCLE_PREREQUISITE_ANCHOR_ORACLE/);
+ const workflow=fs.readFileSync('.github/workflows/pages.yml','utf8');
+ assert.match(workflow,/\n\s+node verify-stage28-artifact-delivery-intent\.mjs\s*\n/,'STAGE28_PREREQUISITE_WORKFLOW_ORACLE');
+ assert.match(workflow,/\n\s+node verify-full-cycle\.mjs \| tee \/tmp\/full-cycle-proof\.json\s*\n/,'FULL_CYCLE_DEFAULT_MATRIX_WORKFLOW_ORACLE');
  async function execute(label,body,imported){
   const folder=path.join(directory,label);fs.mkdirSync(folder,{recursive:true});
   const owner=path.join(folder,'renamed-lifecycle.mjs'),launcher=path.join(folder,'importing-verifier.mjs'),trace=path.join(folder,'caller-entries.log');
@@ -272,13 +280,17 @@ async function verifyLifecycleFaultDispatch(directory){
   return {label,imported,callerEntries,expectedCallerEntries:imported?1:0,child,report:JSON.parse(child.stdout)};
  }
  function check(observation){assert.equal(observation.callerEntries,observation.expectedCallerEntries,'FAULT_EXECUTION_OWNER_ORACLE: a shared verifier fault must execute its owner without rerunning the importing caller');}
- for(const imported of [false,true]){const result=(await execute(imported?'imported':'direct',prelude,imported));check(result);results.push(result);}
+ for(const imported of [false,true]){
+  const result=(await execute(imported?'imported':'direct',prelude,imported));check(result);assert.deepEqual(result.report.faults.map(row=>row.id),expectedFaultIds,'FULL_CYCLE_DEFAULT_FAULT_POPULATION_ORACLE');results.push(result);
+  const prerequisite=(await execute(imported?'prerequisite-imported':'prerequisite-direct',prerequisitePrelude,imported));check(prerequisite);assert.deepEqual(prerequisite.report.faults,[],'HEALTHY_LIFECYCLE_PREREQUISITE_DISPATCH_ORACLE');prerequisiteResults.push(prerequisite);
+ }
  const before="runVerifier(process.execPath,[import.meta.filename,'--timing-only'",after="runVerifier(process.execPath,[process.argv[1],'--timing-only'";
  assert.equal(prelude.split(before).length,2,'FAULT_EXECUTION_OWNER_MUTATION_ANCHOR_ORACLE');
  const mutant=(await execute('wrong-caller',prelude.replace(before,after),true));
  assert.throws(()=>check(mutant),error=>error.code==='ERR_ASSERTION'&&error.message.startsWith('FAULT_EXECUTION_OWNER_ORACLE'),'FAULT_EXECUTION_OWNER_MUTATION_DETECTED_ORACLE');
- const restored=(await execute('restored',prelude,true));check(restored);
- return {basis:'Actual lifecycle dispatch prelude; disposable child failures. Production timing invariants execute separately.',results,mutant,restored};
+ const restored=(await execute('restored',prelude,true));check(restored);assert.deepEqual(restored.report.faults.map(row=>row.id),expectedFaultIds,'FULL_CYCLE_RESTORED_FAULT_POPULATION_ORACLE');
+ assert.equal(fs.readFileSync('verify-full-cycle.mjs','utf8'),source,'FULL_CYCLE_PREREQUISITE_SOURCE_RESTORED_ORACLE');
+ return {basis:'Actual lifecycle dispatch prelude; disposable child failures. Production timing invariants execute separately.',results,prerequisiteResults,expectedFaultIds,mutant,restored};
 }
 export async function verifyNestedChildCleanup(directory){
  const cases=[];
@@ -593,7 +605,7 @@ async function verifyRunnerFaults(){
  // Preserve the shared fixture authority when the supervisor owner is copied
  // into a disposable module outside the repository for fault injection.
  const fixtureUrl=new URL('./operator-journey-fixtures.mjs',import.meta.url).href;
- const serializedImplementation=implementation.replace("from './operator-journey-fixtures.mjs'","from "+JSON.stringify(fixtureUrl)).replace("new URL('./operator-journey-fixtures.mjs',import.meta.url).href",JSON.stringify(fixtureUrl));
+ const serializedImplementation=implementation.replace("from './operator-journey-fixtures.mjs'","from "+JSON.stringify(fixtureUrl)).replace("import('./full-cycle-prerequisite.mjs')","import("+JSON.stringify(new URL('./full-cycle-prerequisite.mjs',import.meta.url).href)+")").replace("new URL('./operator-journey-fixtures.mjs',import.meta.url).href",JSON.stringify(fixtureUrl));
  try{
   for(const [name,before,after,oracle]of mutations){
    assert.equal(implementation.split(before).length,2,'Unique runner fault anchor required: '+name);

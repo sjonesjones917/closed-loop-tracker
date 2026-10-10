@@ -1,4 +1,5 @@
 import {checkedVerifier} from './verify-conformance-regressions.mjs';
+import {healthyFullCyclePrerequisiteSource} from './full-cycle-prerequisite.mjs';
 import {bindArtifactFixture,projectStoreRuntime} from './test-project-store-runtime.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
@@ -46,7 +47,7 @@ if(process.argv.includes('--pending-id-only')){console.log(JSON.stringify({stage
 const tmp=fs.mkdtempSync(path.join(process.cwd(),'.stage28-fixture-'));
 const snapshotPath=path.join(tmp,'stage27-ready.json');
 const instrumentedPath=path.join(process.cwd(),`.stage28-full-cycle-${process.pid}.mjs`);
-let fullCycleSource=fs.readFileSync('verify-full-cycle.mjs','utf8');
+let fullCycleSource=healthyFullCyclePrerequisiteSource(fs.readFileSync('verify-full-cycle.mjs','utf8'));
 // Build the multi-file positive case through the same canonical file, product,
 // selection, freeze, inspection and release owners as the lifecycle itself.
 // No artifact or frozen candidate is assembled by editing internal record fields.

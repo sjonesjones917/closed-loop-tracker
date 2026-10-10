@@ -1,4 +1,5 @@
 import {runVerifier,checkedVerifier} from './verify-conformance-regressions.mjs';
+import {currentOwnerReport} from './verification-evidence.mjs';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -115,7 +116,8 @@ try{
   assert(mutationRejected,'Intentional committed-manifest mutation was not rejected.');
   assert(mutatedBytes.equals(mutationRun.beforeSpec),'Intentional mutation fixture changed before validation began.');
 
-  (await checkedVerifier(process.execPath,['verify-v3-migration.mjs'],{stdio:'pipe'}));
+  const migrationProof=await currentOwnerReport('verify-v3-migration.mjs','verifyV3Migration',{run:()=>checkedVerifier(process.execPath,['verify-v3-migration.mjs'],{encoding:'utf8'})});
+  assert(migrationProof.verifyV3Migration==='PASS','Current migration owner did not report PASS.');
   (await checkedVerifier(process.execPath,['verify-response-contract-profile.mjs'],{stdio:'pipe'}));
 
   const coreReport=JSON.parse((validation.result.stdout||'').trim());
