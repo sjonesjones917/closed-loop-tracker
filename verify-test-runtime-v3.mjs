@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {webcrypto} from 'node:crypto';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import {testIrLimitFixtures} from './test-fixtures.mjs';
+import {verifyOperationRegistryAdmission} from './test-runtime-operation-registry.mjs';
 
 const source=fs.readFileSync(new URL('./test-runtime.js',import.meta.url),'utf8');
 const context={console,crypto:webcrypto,TextEncoder,TextDecoder,Uint8Array,ArrayBuffer,DataView,URL,setTimeout,clearTimeout,Date,Math,Promise};
@@ -13,6 +14,33 @@ vm.runInContext(fs.readFileSync(new URL('./hash.js',import.meta.url),'utf8'),con
 vm.runInContext(source,context,{filename:'test-runtime.js'});
 const runtime=context.closedLoopTestRuntime;
 assert.ok(runtime,'runtime must load');
+
+async function verifyIntegerBoundaryContract(runtime){
+ const observations=[],bindings={VALUES:{kind:'CANONICAL_VALUE',canonicalKey:'VALUES'}};
+ const execution=(op,values,expected)=>runtime.execute({spec:{version:'closed-loop-test-spec/1',steps:[{op:'LOAD_ARTIFACT',binding:'VALUES'},{op},{op:'ASSERT_EQ',value:expected}]},canonicalBindings:{VALUES:{value:values}},metadata:{testId:'SYNTHETIC-EXACT-INTEGER',bindings}});
+ // Literal expected values derive from the safe-integer contract, independently
+ // of the runtime arithmetic implementation and its exported limit constants.
+ for(const [caseId,op,values,expected]of [
+  ['sum-positive-boundary','SUM',[9007199254740990,1],9007199254740991],
+  ['sum-negative-boundary','SUM',[-9007199254740990,-1],-9007199254740991],
+  ['sum-exact-cancellation','SUM',[9007199254740991,-9007199254740991,7],7],
+  ['minimum-boundary','MIN',[9007199254740991,-9007199254740991,0],-9007199254740991],
+  ['maximum-boundary','MAX',[-9007199254740991,9007199254740991,0],9007199254740991],
+  ['count-exact','COUNT',[-9007199254740991,9007199254740991,0],3]
+ ]){const actual=await execution(op,values,expected);assert.equal(actual.determination,'SATISFIED','TEST_IR_INTEGER_BOUNDARY_ORACLE: '+caseId);assert.equal(actual.actual,expected,'TEST_IR_INTEGER_EXACT_VALUE_ORACLE: '+caseId);observations.push({caseId,op,expected,actual:actual.actual,determination:actual.determination});}
+ for(const [caseId,op,values,code]of [
+  ['sum-positive-overflow','SUM',[9007199254740991,1],'INTEGER_OVERFLOW'],
+  ['sum-negative-overflow','SUM',[-9007199254740991,-1],'INTEGER_OVERFLOW'],
+  ['sum-overflow-before-cancellation','SUM',[9007199254740991,1,-1],'INTEGER_OVERFLOW'],
+  ['unsupported-integer-text-sum-input','SUM',['9007199254740992'],'UNSUPPORTED_NUMERIC_PRECISION'],
+  ['decimal-minimum-input','MIN',[{numberType:'DECIMAL',value:'0.1'}],'UNSUPPORTED_NUMERIC_PRECISION'],
+  ['decimal-maximum-input','MAX',[{numberType:'DECIMAL',value:'0.1'}],'UNSUPPORTED_NUMERIC_PRECISION']
+ ]){let failure;await assert.rejects(()=>execution(op,values,0),error=>{failure=error;return error.code===code&&error.disposition==='UNDETERMINED';},'TEST_IR_INTEGER_REJECTION_ORACLE: '+caseId);observations.push({caseId,op,code:failure.code,disposition:failure.disposition,rejected:true});}
+ const restored=await execution('SUM',[9007199254740990,1],9007199254740991);assert.equal(restored.determination,'SATISFIED','TEST_IR_INTEGER_RESTORED_CONTROL_ORACLE');
+ return {checkId:'test-ir.exact-integer-boundaries',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:1927'],boundary:'Production Test IR execution with explicit immutable canonical bindings; no project commit or worker responsiveness claim',expected:{conforming:6,rejected:6,restoredControl:true},observed:{conforming:observations.filter(row=>!row.rejected).length,rejected:observations.filter(row=>row.rejected).length,restoredControl:restored.determination==='SATISFIED'},cases:observations,passed:true};
+}
+if(process.argv.includes('--numeric-only')){console.log(JSON.stringify({verifyTestRuntimeInteger:'PASS',verificationObservations:[await verifyIntegerBoundaryContract(runtime)]}));process.exit(0);}
+
 
 const artifact=(id,text)=>({artifactId:id,filename:`${id}.txt`,bytes:new TextEncoder().encode(text)});
 const test=(spec,bindings={PRODUCT:{kind:'ARTIFACT',artifactId:'ART-PRODUCT'}})=>({
@@ -149,8 +177,10 @@ assert.equal(timeoutResult.status,'EXECUTION_FAILED');
 assert.equal(timeoutResult.failure.code,'WORKER_TIMEOUT');
 assert.equal(timeoutResult.observations.length,0,'timeout must produce no partial result');
 
+const integerBoundaryContract=await verifyIntegerBoundaryContract(runtime);
+const operationRegistryAdmission=await verifyOperationRegistryAdmission(source,runtime);
 console.log(JSON.stringify({
-  verifyTestRuntimeV3:'PASS',
+  verifyTestRuntimeV3:'PASS',operationRegistryAdmission,verificationObservations:[integerBoundaryContract],
   operations:runtime.OPS.length,
   inputLimit:runtime.LIMITS.maxTotalInputBytes,
   workerTimeoutMs:runtime.LIMITS.workerTimeoutMs,

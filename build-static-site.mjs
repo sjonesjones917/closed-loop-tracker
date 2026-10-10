@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import {deploymentContractIdentities} from './deployment-contract-identities.mjs';
 
 await import('./hash.js');
 const hashAuthority=globalThis.closedLoopHash;
@@ -73,6 +74,7 @@ const manifest={
   testIrSchema,
   verificationPackageSchema,
   contractProfileId,
+  ...deploymentContractIdentities(outDir),
   testWorkerProtocolVersion,
   testWorkerSha256:testWorkerResource.digest,
   sourceCommit,

@@ -37,7 +37,11 @@ requireFields(28,['DELIVERY_CANDIDATE_SET_ID']);
 requireFields(30,['PRE_DELIVERY_CHECKPOINT_ID','DELIVERY_ID','DELIVERY_STATE','DELIVERY_RECORD_HASH','DELIVERY_ATTEMPT_RECORDS']);
 assert.equal(stage(30).title,'PRESERVE FAILURES PERMANENTLY AND CLOSE DELIVERY');
 assert.equal(stage(30).role,'Permanent defect-registry and terminal-delivery custodian');
+const verificationObservations=[
+  {checkId:'stage-contract.stage30.stage-name',stage:30,boundary:'Loaded workbook stage declaration',scopeLimit:'Exact Stage30 title only; no workflow completion or delivery claim.',expected:'PRESERVE FAILURES PERMANENTLY AND CLOSE DELIVERY',observed:stage(30).title,passed:true},
+  {checkId:'stage-contract.stage30.role',stage:30,boundary:'Loaded workbook stage declaration',scopeLimit:'Exact Stage30 role declaration only; no custodian behavior or delivery claim.',expected:'Permanent defect-registry and terminal-delivery custodian',observed:stage(30).role,passed:true}
+];
 
 for(const number of [10,25,28,30])assertOwnershipClosed(number);
 
-console.log(JSON.stringify({stageContractClosure:'PASS',stages:[10,25,28,30]},null,2));
+console.log(JSON.stringify({stageContractClosure:'PASS',stages:[10,25,28,30],verificationObservations},null,2));

@@ -126,6 +126,7 @@ const encoder=new TextEncoder();
 const jsonMemberOrder=new WeakMap();
 const parsedXmlNodes=new WeakSet();
 const hasOwn=(object,key)=>Object.prototype.hasOwnProperty.call(object,key);
+const diagnosticLabel=value=>typeof value==='string'?value:'<non-string>';
 const bytesOf=value=>value instanceof Uint8Array?value:value instanceof ArrayBuffer?new Uint8Array(value):ArrayBuffer.isView(value)?new Uint8Array(value.buffer,value.byteOffset,value.byteLength):null;
 const field=(test,key)=>test?.fields?.[key]??test?.[key];
 const scalarCompare=(a,b)=>{const aa=Array.from(String(a),ch=>ch.codePointAt(0)),bb=Array.from(String(b),ch=>ch.codePointAt(0)),n=Math.min(aa.length,bb.length);for(let i=0;i<n;i++)if(aa[i]!==bb[i])return aa[i]-bb[i];return aa.length-bb.length;};
@@ -454,7 +455,7 @@ function validateType(value,type){
   }
 }
 function validateStep(step,index){
-  const issues=[];if(!step||typeof step!=='object'||Array.isArray(step))return [`Step ${index} must be an object.`];const definition=OP_DEFINITIONS[step.op];if(!definition)return [`Step ${index} uses unknown operation ${String(step.op)}.`];
+  const issues=[];if(!step||typeof step!=='object'||Array.isArray(step))return [`Step ${index} must be an object.`];const definition=typeof step.op==='string'&&hasOwn(OP_DEFINITIONS,step.op)?OP_DEFINITIONS[step.op]:null;if(!definition)return [`Step ${index} uses unknown operation ${typeof step.op==='string'?step.op:'<non-string>'}.`];
   const allowed=new Set(['op',...definition.required,...definition.optional]);for(const key of Object.keys(step))if(!allowed.has(key))issues.push(`Step ${index} operation ${step.op} contains unknown property ${key}.`);
   for(const key of definition.required)if(!hasOwn(step,key))issues.push(`Step ${index} operation ${step.op} is missing required property ${key}.`);
   for(const [key,type] of Object.entries(definition.types||{}))if(hasOwn(step,key)&&!validateType(step[key],type))issues.push(`Step ${index} operation ${step.op} has invalid ${key}.`);
@@ -517,23 +518,24 @@ function validateDagSpec(spec,bindings){
   const rootKeys=['version','languageVersion','operationRegistryVersion','operationRegistrySha256','steps','result'];
   for(const key of Object.keys(spec))if(!rootKeys.includes(key))issues.push(`Test IR contains unknown root property ${key}.`);
   for(const key of rootKeys)if(!hasOwn(spec,key))issues.push(`Test IR is missing required root property ${key}.`);
-  if(spec.version!==SPEC_VERSION)issues.push(`Unsupported Test IR version ${String(spec.version)}.`);
-  if(spec.languageVersion!==TEST_IR_LANGUAGE_VERSION)issues.push(`Unsupported Test IR language version ${String(spec.languageVersion)}.`);
-  if(spec.operationRegistryVersion!==OPERATION_REGISTRY_VERSION)issues.push(`Unsupported operation registry version ${String(spec.operationRegistryVersion)}.`);
+  if(spec.version!==SPEC_VERSION)issues.push(`Unsupported Test IR version ${diagnosticLabel(spec.version)}.`);
+  if(spec.languageVersion!==TEST_IR_LANGUAGE_VERSION)issues.push(`Unsupported Test IR language version ${diagnosticLabel(spec.languageVersion)}.`);
+  if(spec.operationRegistryVersion!==OPERATION_REGISTRY_VERSION)issues.push(`Unsupported operation registry version ${diagnosticLabel(spec.operationRegistryVersion)}.`);
   if(spec.operationRegistrySha256!==OPERATION_REGISTRY_SHA256)issues.push('Operation registry digest does not match the current registered semantics.');
   if(!Array.isArray(spec.steps)||!spec.steps.length)issues.push('Test IR requires a nonempty steps array.');
-  if((spec.steps?.length||0)>LIMITS.maxSteps)issues.push(`Test IR exceeds the ${LIMITS.maxSteps}-step limit.`);
+  if(Array.isArray(spec.steps)&&spec.steps.length>LIMITS.maxSteps)issues.push(`Test IR exceeds the ${LIMITS.maxSteps}-step limit.`);
   const ids=new Set(),prior=new Map();
   for(const [index,step] of (Array.isArray(spec.steps)?spec.steps:[]).entries()){
     if(!step||typeof step!=='object'||Array.isArray(step)){issues.push(`Step ${index} must be an object.`);continue;}
     for(const key of Object.keys(step))if(!['stepId','op','inputs'].includes(key))issues.push(`Step ${index} contains unknown property ${key}.`);
     if(typeof step.stepId!=='string'||!/^S[0-9]{3,}$/.test(step.stepId))issues.push(`Step ${index} requires a canonical stepId such as S001.`);
     else if(ids.has(step.stepId))issues.push(`Duplicate stepId ${step.stepId}.`);
-    const contract=PORT_CONTRACTS[step.op];if(!contract){issues.push(`Step ${index} uses unknown operation ${String(step.op)}.`);continue;}
+    const contract=typeof step.op==='string'&&hasOwn(PORT_CONTRACTS,step.op)?PORT_CONTRACTS[step.op]:null;if(!contract){issues.push(`Step ${index} uses unknown operation ${typeof step.op==='string'?step.op:'<non-string>'}.`);continue;}
     if(!step.inputs||typeof step.inputs!=='object'||Array.isArray(step.inputs)){issues.push(`Step ${index} operation ${step.op} requires a closed inputs object.`);continue;}
     const allowed=[...contract.requiredInputs,...contract.optionalInputs];for(const key of Object.keys(step.inputs))if(!allowed.includes(key))issues.push(`Step ${index} operation ${step.op} contains unknown input port ${key}.`);
     for(const key of contract.requiredInputs)if(!hasOwn(step.inputs,key))issues.push(`Step ${index} operation ${step.op} is missing required input port ${key}.`);
     for(const [name,ref] of Object.entries(step.inputs)){
+      if(!allowed.includes(name))continue;
       if(!isInputRef(ref)){issues.push(`Step ${index} input ${name} is not one literal, bindingRef, or prior step output reference.`);continue;}
       if(hasOwn(ref,'literal')){
         if(!validLiteral(ref.literal))issues.push(`Step ${index} input ${name} must be supported finite exact JSON data.`);
@@ -570,8 +572,8 @@ function validateDagSpec(spec,bindings){
     ids.add(step.stepId);prior.set(step.stepId,step);
   }
   if(!spec.result||typeof spec.result!=='object'||Array.isArray(spec.result)||Object.keys(spec.result).sort().join(',')!=='output,stepRef')issues.push('Test IR result must contain exactly stepRef and output.');
-  else if(!prior.has(spec.result.stepRef))issues.push(`Test IR result references missing step ${String(spec.result.stepRef)}.`);
-  else {const contract=PORT_CONTRACTS[prior.get(spec.result.stepRef).op];if(!hasOwn(contract.outputs,spec.result.output))issues.push(`Test IR result references unknown output ${String(spec.result.output)}.`);else if(contract.outputs[spec.result.output]!=='ASSERTION'||!ASSERTION_OPS.has(prior.get(spec.result.stepRef).op))issues.push('Test IR result must be a registered ASSERTION output; ordinary data cannot supply a determination.');}
+  else if(typeof spec.result.stepRef!=='string'||!prior.has(spec.result.stepRef))issues.push(`Test IR result references missing step ${diagnosticLabel(spec.result.stepRef)}.`);
+  else {const contract=PORT_CONTRACTS[prior.get(spec.result.stepRef).op];if(typeof spec.result.output!=='string'||!hasOwn(contract.outputs,spec.result.output))issues.push(`Test IR result references unknown output ${diagnosticLabel(spec.result.output)}.`);else if(contract.outputs[spec.result.output]!=='ASSERTION'||!ASSERTION_OPS.has(prior.get(spec.result.stepRef).op))issues.push('Test IR result must be a registered ASSERTION output; ordinary data cannot supply a determination.');}
   if(bindings!==undefined){const bindingResult=validateBindings(bindings);issues.push(...bindingResult.issues);}
   return {valid:issues.length===0,issues:[...new Set(issues)]};
 }
@@ -579,11 +581,11 @@ function validateLegacySpec(spec,bindings){
   const issues=[];
   if(!spec||typeof spec!=='object'||Array.isArray(spec))return {valid:false,issues:['Test IR must be an object.']};
   for(const key of Object.keys(spec))if(!['version','steps'].includes(key))issues.push(`Legacy Test IR authoring form contains unknown root property ${key}.`);
-  if(spec.version!==SPEC_VERSION)issues.push(`Unsupported Test IR version ${String(spec.version)}.`);
+  if(spec.version!==SPEC_VERSION)issues.push(`Unsupported Test IR version ${diagnosticLabel(spec.version)}.`);
   if(!Array.isArray(spec.steps)||!spec.steps.length)issues.push('Test IR requires a nonempty steps array.');
-  if((spec.steps?.length||0)>LIMITS.maxSteps)issues.push(`Test IR exceeds the ${LIMITS.maxSteps}-step limit.`);
+  if(Array.isArray(spec.steps)&&spec.steps.length>LIMITS.maxSteps)issues.push(`Test IR exceeds the ${LIMITS.maxSteps}-step limit.`);
   for(const [index,step] of (Array.isArray(spec.steps)?spec.steps:[]).entries()){
-    issues.push(...validateStep(step,index));if(step?.op&&!PORT_CONTRACTS[step.op])issues.push(`Legacy authoring operation ${step.op} cannot compile to the canonical closed operation registry.`);
+    issues.push(...validateStep(step,index));if(typeof step?.op==='string'&&!hasOwn(PORT_CONTRACTS,step.op))issues.push(`Legacy authoring operation ${step.op} cannot compile to the canonical closed operation registry.`);
   }
   if(Array.isArray(spec.steps)&&spec.steps.length&&!spec.steps.some(step=>ASSERTION_OPS.has(step?.op)))issues.push('Test IR must contain at least one registered assertion operation.');
   if(bindings!==undefined){const bindingResult=validateBindings(bindings);issues.push(...bindingResult.issues);const declared=new Set(Object.keys(bindings||{}));for(const [index,step] of (Array.isArray(spec.steps)?spec.steps:[]).entries())if(step&&typeof step.binding==='string'&&!declared.has(step.binding))issues.push(`Step ${index} references undeclared binding ${step.binding}.`);}
@@ -594,19 +596,26 @@ function validateSpec(spec,bindings){
   const legacy=validateLegacySpec(spec,bindings);if(!legacy.valid)return legacy;
   try{return validateDagSpec(compileLegacySpec(spec),bindings);}catch(error){return {valid:false,issues:[String(error?.message||error)]};}
 }
+const INPUT_BINDING_CONTRACT=Object.freeze({
+  bindingName:Object.freeze({valueType:'STRING',pattern:'^[A-Z][A-Z0-9_]{0,63}$'}),
+  bindingValueForms:Object.freeze(['NONEMPTY_ARTIFACT_ID_STRING','CLOSED_BINDING_OBJECT']),
+  closed:true,
+  properties:Object.freeze(Object.fromEntries(['kind','artifactId','source','artifactRole','filename','expectedSha256','canonicalKey','valueSha256'].map(name=>[name,Object.freeze({valueType:'STRING',required:false,nullable:false,nonempty:true,...(name==='kind'?{enumValues:Object.freeze(['ARTIFACT','CANONICAL_VALUE']),defaultValue:'ARTIFACT'}:name==='source'?{enumValues:Object.freeze(['CURRENT_PRODUCT','CURRENT_SCOPE','EXPLICIT_ARTIFACT'])}:['expectedSha256','valueSha256'].includes(name)?{pattern:'^[0-9a-f]{64}$'}:{})})]))),
+  requirementsByKind:Object.freeze({ARTIFACT:Object.freeze({atLeastOne:Object.freeze(['artifactId','artifactRole','filename'])}),CANONICAL_VALUE:Object.freeze({required:Object.freeze(['canonicalKey'])})})
+});
+const inputBindingContract=()=>JSON.parse(JSON.stringify(INPUT_BINDING_CONTRACT));
 function validateBindings(bindings){
   const issues=[];if(!bindings||typeof bindings!=='object'||Array.isArray(bindings))return {valid:false,issues:['EXECUTABLE_INPUT_BINDINGS must be a closed object.']};
   for(const [name,binding] of Object.entries(bindings)){
-    if(!/^[A-Z][A-Z0-9_]{0,63}$/.test(name))issues.push(`Invalid Test IR binding name ${name}.`);
+    if(!new RegExp(INPUT_BINDING_CONTRACT.bindingName.pattern).test(name))issues.push(`Invalid Test IR binding name ${name}.`);
     if(typeof binding==='string'){if(!binding.trim())issues.push(`Binding ${name} cannot be empty.`);continue;}
     if(!binding||typeof binding!=='object'||Array.isArray(binding)){issues.push(`Binding ${name} must be an artifact ID string or a closed binding object.`);continue;}
-    const allowed=new Set(['kind','artifactId','source','artifactRole','filename','expectedSha256','canonicalKey','valueSha256']);for(const key of Object.keys(binding))if(!allowed.has(key))issues.push(`Binding ${name} contains unknown property ${key}.`);
-    const kind=binding.kind||'ARTIFACT';if(!['ARTIFACT','CANONICAL_VALUE'].includes(kind))issues.push(`Binding ${name} has unsupported kind ${kind}.`);
-    if(kind==='ARTIFACT'&&!binding.artifactId&&!binding.artifactRole&&!binding.filename)issues.push(`Binding ${name} does not identify an artifact.`);
-    if(kind==='CANONICAL_VALUE'&&!binding.canonicalKey)issues.push(`Binding ${name} does not identify an immutable canonical value.`);
-    if(binding.source&&!['CURRENT_PRODUCT','CURRENT_SCOPE','EXPLICIT_ARTIFACT'].includes(binding.source))issues.push(`Binding ${name} has unsupported source ${binding.source}.`);
-    if(binding.expectedSha256&&!/^[0-9a-f]{64}$/.test(binding.expectedSha256))issues.push(`Binding ${name} expectedSha256 is invalid.`);
-    if(binding.valueSha256&&!/^[0-9a-f]{64}$/.test(binding.valueSha256))issues.push(`Binding ${name} valueSha256 is invalid.`);
+    const allowed=new Set(Object.keys(INPUT_BINDING_CONTRACT.properties));for(const key of Object.keys(binding)){if(!allowed.has(key))issues.push(`Binding ${name} contains unknown property ${key}.`);else if(typeof binding[key]!=='string'||!binding[key].trim())issues.push(`Binding ${name} ${key} must be a nonempty STRING when present.`);}
+    const kind=hasOwn(binding,'kind')?binding.kind:INPUT_BINDING_CONTRACT.properties.kind.defaultValue;if(typeof kind==='string'&&!INPUT_BINDING_CONTRACT.properties.kind.enumValues.includes(kind))issues.push(`Binding ${name} has unsupported kind ${kind}.`);
+    if(kind==='ARTIFACT'&&!INPUT_BINDING_CONTRACT.requirementsByKind.ARTIFACT.atLeastOne.some(key=>typeof binding[key]==='string'&&binding[key].trim()))issues.push(`Binding ${name} does not identify an artifact.`);
+    if(kind==='CANONICAL_VALUE'&&INPUT_BINDING_CONTRACT.requirementsByKind.CANONICAL_VALUE.required.some(key=>typeof binding[key]!=='string'||!binding[key].trim()))issues.push(`Binding ${name} does not identify an immutable canonical value.`);
+    if(typeof binding.source==='string'&&!INPUT_BINDING_CONTRACT.properties.source.enumValues.includes(binding.source))issues.push(`Binding ${name} has unsupported source ${binding.source}.`);
+    for(const key of ['expectedSha256','valueSha256'])if(hasOwn(binding,key)&&(typeof binding[key]!=='string'||!new RegExp(INPUT_BINDING_CONTRACT.properties[key].pattern).test(binding[key])))issues.push(`Binding ${name} ${key} is invalid.`);
   }
   return {valid:issues.length===0,issues};
 }
@@ -650,9 +659,9 @@ function normalizeSpec(spec){
   return normalized;
 }
 function supports(test){
-  if(String(field(test,'EXECUTION_MODE')||'').toUpperCase()!=='APPLICATION_DETERMINISTIC')return false;
-  if(String(field(test,'REQUIRED_CAPABILITY')||'').toUpperCase()!==CAPABILITY)return false;
-  if(String(field(test,'EXECUTABLE_KIND')||'').toUpperCase()!==EXECUTABLE_KIND)return false;
+  const mode=field(test,'EXECUTION_MODE');if(typeof mode!=='string'||mode.toUpperCase()!=='APPLICATION_DETERMINISTIC')return false;
+  const capability=field(test,'REQUIRED_CAPABILITY');if(typeof capability!=='string'||capability.toUpperCase()!==CAPABILITY)return false;
+  const kind=field(test,'EXECUTABLE_KIND');if(typeof kind!=='string'||kind.toUpperCase()!==EXECUTABLE_KIND)return false;
   if(field(test,'EXECUTABLE_SPEC_VERSION')!==SPEC_VERSION)return false;
   return validateSpec(field(test,'EXECUTABLE_SPEC'),field(test,'EXECUTABLE_INPUT_BINDINGS')).valid;
 }
@@ -693,7 +702,7 @@ function snapshotCanonicalValue(value,seen=new Set(),depth=1){
 async function execute({spec,artifacts={},canonicalBindings={},metadata={}}){
   canonicalBindings=Object.fromEntries(Object.entries(canonicalBindings).map(([name,entry])=>{if(!entry||typeof entry!=='object'||!hasOwn(entry,'value'))fail('INVALID_CANONICAL_BINDING',`Canonical binding ${name} must have its explicit transport value.`);return [name,{...entry,value:snapshotCanonicalValue(entry.value)}];}));
   const normalized=normalizeSpec(spec);const check=validateDagSpec(normalized,metadata.bindings);if(!check.valid)fail('INVALID_TEST_IR',check.issues.join(' '));
-  const bindingCheck=validateBindings(metadata.bindings||Object.fromEntries([...Object.keys(artifacts),...Object.keys(canonicalBindings)].map(key=>[key,{kind:hasOwn(artifacts,key)?'ARTIFACT':'CANONICAL_VALUE',artifactId:hasOwn(artifacts,key)?String(artifacts[key]?.artifactId||key):undefined,canonicalKey:hasOwn(canonicalBindings,key)?key:undefined}])));if(!bindingCheck.valid)fail('INVALID_BINDINGS',bindingCheck.issues.join(' '));
+  const bindingCheck=validateBindings(metadata.bindings||Object.fromEntries([...Object.keys(artifacts),...Object.keys(canonicalBindings)].map(key=>[key,hasOwn(artifacts,key)?{kind:'ARTIFACT',artifactId:String(artifacts[key]?.artifactId||key)}:{kind:'CANONICAL_VALUE',canonicalKey:key}])));if(!bindingCheck.valid)fail('INVALID_BINDINGS',bindingCheck.issues.join(' '));
   const inputViews=new Map();let totalInputBytes=0;for(const artifact of Object.values(artifacts||{})){const bytes=bytesFrom(artifact);if(!bytes)continue;let views=inputViews.get(bytes.buffer);if(!views){views=new Set();inputViews.set(bytes.buffer,views);}const view=`${bytes.byteOffset}:${bytes.byteLength}`;if(!views.has(view)){views.add(view);totalInputBytes+=bytes.byteLength;}}
   const envelope=validateResourceEnvelope({totalInputBytes});if(!envelope.valid)fail('INPUT_BYTE_LIMIT',envelope.issues.join(' '));
   const observations=[],outputs=new Map(),inputArtifactIds=[],inputArtifactSha256Values=[],inputCanonicalIdentities=[];let decisiveResult=null;
@@ -766,5 +775,5 @@ function executeTest(test,artifacts,canonicalBindings,options={}){
 
 const operationContracts=()=>JSON.parse(JSON.stringify(PORT_CONTRACTS));
 const capabilities=()=>Object.freeze([CAPABILITY]);
-root.closedLoopTestRuntime=Object.freeze({VERSION,SPEC_VERSION,EXECUTABLE_KIND,CAPABILITY,TEST_IR_LANGUAGE_VERSION,OPERATION_REGISTRY_VERSION,OPERATION_REGISTRY_SHA256,JSON_SELECTOR_REGISTRY_VERSION,JSON_SELECTOR_REGISTRY_SHA256,XML_SELECTOR_REGISTRY_VERSION,XML_SELECTOR_REGISTRY_SHA256,REGEX_REGISTRY_VERSION,REGEX_REGISTRY_SHA256,OPS,OP_DEFINITIONS,PORT_CONTRACTS,INPUT_PORT_TYPES,LIMITS,STATUS,RuntimeError,validateSpec,validateBindings,normalizeSpec,supports,execute,executeTest,capabilities,operationContracts,sha256Canonical,validateResourceEnvelope,validateRegex,parseJsonSelector});
+root.closedLoopTestRuntime=Object.freeze({VERSION,SPEC_VERSION,EXECUTABLE_KIND,CAPABILITY,TEST_IR_LANGUAGE_VERSION,OPERATION_REGISTRY_VERSION,OPERATION_REGISTRY_SHA256,JSON_SELECTOR_REGISTRY_VERSION,JSON_SELECTOR_REGISTRY_SHA256,XML_SELECTOR_REGISTRY_VERSION,XML_SELECTOR_REGISTRY_SHA256,REGEX_REGISTRY_VERSION,REGEX_REGISTRY_SHA256,OPS,OP_DEFINITIONS,PORT_CONTRACTS,INPUT_PORT_TYPES,LIMITS,STATUS,RuntimeError,exactDecimalParts,validateSpec,validateBindings,inputBindingContract,normalizeSpec,supports,execute,executeTest,capabilities,operationContracts,sha256Canonical,validateResourceEnvelope,validateRegex,parseJsonSelector});
 })();

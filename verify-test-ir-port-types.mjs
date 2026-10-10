@@ -1,4 +1,3 @@
-import './verify-contract-closure.mjs';
 import './verify-test-worker-isolation.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';

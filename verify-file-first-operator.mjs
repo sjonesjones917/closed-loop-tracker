@@ -2,8 +2,9 @@ import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {createHash} from 'node:crypto';
-import {stage04AcceptanceFixture,accumulatedStage04Fixture,evidence,stageHandoffRecoveryProof,scalarFor,recordProposal,stage04AcceptanceEnvelope} from './test-fixtures.mjs';
-import {projectStoreRuntime,bindAcceptanceUi} from './test-project-store-runtime.mjs';
+import {acceptPrerequisite,stage01AcceptanceFixture,boundedSearchProposal,registerFixtureSourceSearchCapability,stage04AcceptanceFixture,accumulatedStage04Fixture,evidence,stageHandoffRecoveryProof,scalarFor,recordProposal,stage04AcceptanceEnvelope} from './test-fixtures.mjs';
+import {projectStoreRuntime,bindAcceptanceUi,bindHandoffReviewUiState} from './test-project-store-runtime.mjs';
+import {authorizeSyntheticHandoff} from './test-handoff-authorization.mjs';
 import {readStoreArchive} from './test-zip.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import {appMarkup,observeWorkflowMarkup,assertWorkflowPresentation} from './test-app-markup.mjs';
@@ -12,11 +13,35 @@ import {appMarkup,observeWorkflowMarkup,assertWorkflowPresentation} from './test
 // History is exercised by verify-recoverable-history and the browser recovery gate.
 const inactiveMobileAcceptance={captureCurrentView:async()=>{},captureView:()=>null,recordCommittedBoundary:async()=>{},APPLICATION_SESSION_ID:'LIFECYCLE-TEST',initializeHistoryNavigation:async()=>{},focusAfterAction:node=>node?.focus(),mobileSessionCurrent:()=>false,recordMobileExport:async()=>{},recordMobileOperation:async()=>{},recordMobileValidation:async()=>{},mobileBackupSelection:async()=>null,recordMobileBackupRestore:async()=>{}};
 
+// Deliberately isolated coordinator fixtures model an already reviewed handoff.
+// They assert scheduling/context/CAS behavior, not disclosure authority. Actual
+// store/ZIP cases below use the registered synthetic human-decision command.
+function bindAuthorizedCoordinatorFixture(runtime){
+ bindHandoffReviewUiState(runtime);runtime.runSelection||={};runtime.selectedOperation||=()=> 'COMPLETE';runtime.promptOptions||=()=>({operation:'COMPLETE'});runtime.displayedStageAction||=()=>({actionType:'CONTINUE_AGENT_CONVERSATION'});runtime.stagePlanItems||=()=>[];runtime.projectStore={...runtime.projectStore,prepareExecutionPackageReview:async()=>({authorization:{allowed:true}})};
+}
+
+
 let app=fs.readFileSync(process.env.APP_SOURCE||'app-core.js','utf8');if(process.argv.includes('--fault=selected-operation')){const anchor='if(!registration||explicit===action.operation)return action;';assert.equal(app.split(anchor).length-1,1);app=app.replace(anchor,'if(true)return action;');}
 const ingestion=fs.readFileSync('response-ingestion.js','utf8');
 const store=fs.readFileSync('project-store.js','utf8');
 const engine=fs.readFileSync('workflow-engine.js','utf8');
 const prompt=fs.readFileSync('prompt-engine.js','utf8');
+
+// Distinguish a current pending proposal from a retained historical receipt.
+{
+const start=app.indexOf('function presentPreparedResponse('),end=app.indexOf('async function prepareStageResponseFallback(',start);assert.ok(start>=0&&end>start);const cases=[];
+for(const [name,pending,prepared,continuation,message,focus] of [
+ ['current pending',{proposalId:'P'},{validation:{valid:true},proposal:{proposalId:'P',status:'PENDING_OPERATOR_REVIEW'}},null,'proposal ready','#proposal-heading'],
+ ['recorded question',null,{duplicate:true,validation:{valid:true},proposal:{proposalId:'P',status:'QUESTIONS_CREATED'}},null,'response already recorded; follow the current action','#next-required-action'],
+ ['stale recorded proposal',null,{duplicate:true,validation:{valid:true},proposal:{proposalId:'P',status:'STALE'}},null,'response already recorded; follow the current action','#next-required-action'],
+ ['different pending',{proposalId:'OTHER'},{validation:{valid:true},proposal:{proposalId:'P'}},null,'response already recorded; follow the current action','#next-required-action'],
+ ['failed with correction',null,{validation:{valid:false}}, {created:true},'response rejected; corrected instruction saved','#validation-report'],
+ ['failed without correction',null,{validation:{valid:false}},null,'validation failed','#validation-report']
+]){const events=[],runtime=createVerifierRuntime({safe:value=>Array.isArray(value)?value:[],pendingProposal:()=>pending,announce:m=>events.push(['announce',m]),render:()=>events.push(['render']),queueMicrotask:fn=>fn(),$:selector=>({focus:()=>events.push(['focus',selector])})});vm.runInContext(app.slice(start,end)+'globalThis.present=presentPreparedResponse;',runtime);runtime.present(prepared,continuation);assert.deepEqual(events,[['announce',message],['render'],['focus',focus]],'RESPONSE_PREPARATION_FEEDBACK_ORACLE: '+name);cases.push({name,message,focus,result:'PASS'});}
+console.log(JSON.stringify({responsePreparationFeedback:'PASS',synthetic:true,actualBrowser:false,cases}));
+
+}
+
 
 // The selected operation, its instruction and its sole handoff must agree.
 {
@@ -37,6 +62,7 @@ const prompt=fs.readFileSync('prompt-engine.js','utf8');
 
 // Exercise the application's one shared pending-action controller.
 await import('./verify-operator-action-lifecycle.mjs');
+await import('./verify-handoff-authorization-ui.mjs');
 
 // User input belongs to the project form; a successful save must lead to the
 // current workflow, including an unchanged save. Repeated clicks share one save.
@@ -73,6 +99,7 @@ await import('./verify-operator-action-lifecycle.mjs');
     withStorageActivity:async(_label,work)=>work(),document:{querySelectorAll:()=>[]},$:()=>null,
     savePromptRecord:async()=>{saves++;await new Promise(resolve=>release=resolve);return {instructionId:'SAME'};}});
   vm.runInContext(app.slice(app.indexOf('let promptExportInFlight='),app.indexOf('async function exportPromptContext('))+'\nglobalThis.exportAttempt=promptExport;',runtime);
+  bindAuthorizedCoordinatorFixture(runtime);
   const first=runtime.exportAttempt(()=>downloads++,'stage-files'),duplicate=runtime.exportAttempt(()=>downloads++,'stage-files');
   await new Promise(resolve=>setTimeout(resolve,5));assert.equal(saves,1);release();
   await Promise.all([first,duplicate]);
@@ -132,28 +159,40 @@ await import('./verify-operator-action-lifecycle.mjs');
   assert.doesNotMatch(runtime.ui.workflow(),/Regenerated and saved for the remaining work/,'INSTRUCTION_STATE_ORACLE: The first saved instruction was mislabeled as regenerated.');
   runtime.closedLoopWorkflowEngine.transitionOperationReservation(saved.reservation,'SUPERSEDED');
   runtime.closedLoopPromptEngine.reserveAndBuildPromptRecord(other,1,{operation:'COMPLETE'});
+  assert.doesNotMatch(runtime.ui.workflow(),/Regenerated and saved for the remaining work/,'INSTRUCTION_STATE_ORACLE: reissuing identical material must not invent additional agent work.');
+  other.job.EXACT_USER_OBJECTIVE_VERBATIM='A changed human objective requires a new instruction.';
+  runtime.closedLoopWorkflowEngine.recordHumanInputVersion(other,['EXACT_USER_OBJECTIVE_VERBATIM'],'SYNTHETIC_OPERATOR');
+  runtime.closedLoopPromptEngine.reserveAndBuildPromptRecord(other,1,{operation:'COMPLETE'});
   assert.match(runtime.ui.workflow(),/Regenerated and saved for the remaining work/, 'INSTRUCTION_STATE_ORACLE: The existing instruction text does not identify the saved replacement.');
   console.log(JSON.stringify({contextFirstPreview:true,previewDoesNotCommit:true,previewBuildsPerRender:1,unavailableStageChecks:29,staleRevisionAndProjectContextRejected:true,presentationCases}));
 }
 
 // Changing selection while raw bytes are being staged must never make the
-// handler read/capture them through the newly selected project or stage.
-for(const change of ['project','stage','revision']){
+// handler read/capture them through a different project, stage, operation or run.
+// The unchanged control reaches an explicit capture sentinel; it does not claim
+// proposal admission or storage correctness from this coordinator fixture.
+const responseOwnerCases=[];
+for(const change of ['project','stage','revision','operation','run','unchanged']){
   let release,entered;const held=new Promise(resolve=>release=resolve),started=new Promise(resolve=>entered=resolve),reads=[],captures=[],failures=[];
-  const source={job:{JOB_ID:'RESPONSE-OWNER'},revision:4,activeStage:1},other={job:{JOB_ID:'RESPONSE-OTHER'},revision:4,activeStage:2};
-  const runtime=createVerifierRuntime({...inactiveMobileAcceptance,current:source,responseActionFailure:null,Blob,TextDecoder,reportResponseFailure:(message,error)=>failures.push(String(error?.message||message)),responseAttemptPrompt:()=>({transportBindingRequired:true,instructionId:'PROMPT-OWNER',bodySha256:'hash',contractSha256:'contract',contextSignature:'scope'}),projectStore:{stageResponseFile:async options=>{entered();await held;return {stagingId:'OWNER-STAGED',jobId:options.jobId};},readStagedResponseFile:async options=>{reads.push(options);return {bytes:new Uint8Array([123,125]),sha256:'digest'};}},closedLoopHash:{sha256Text:()=> 'digest'},responsePromptRecord:()=>({scope:{}}),pendingProposal:()=>null,ingestion:{captureRaw:()=>{captures.push(true);throw new Error('CAPTURE_REACHED');}}});
-  vm.runInContext(app.slice(app.indexOf('async function prepareStageResponseFile('),app.indexOf('async function prepareStageResponseFallback('))+'\nglobalThis.selectResponse=prepareStageResponseFile;',runtime);
-  const pending=runtime.selectResponse(new Blob(['{}'],{type:'application/json'}));await started;
-  if(change==='project')runtime.current=other;else if(change==='stage')source.activeStage=2;else source.revision++;
+  const stage=change==='run'?11:1,operation=stage===11?'EXECUTE_RUN':'COMPLETE',operationSelection={[stage]:operation},runSelection=stage===11?{[stage]:'RUN-OWNER'}:{};
+  const source={job:{JOB_ID:'RESPONSE-OWNER'},revision:4,activeStage:stage},other={job:{JOB_ID:'RESPONSE-OTHER'},revision:4,activeStage:2};
+  const text='{}',digest=createHash('sha256').update(text).digest('hex');
+  const runtime=createVerifierRuntime({...inactiveMobileAcceptance,current:source,responseActionFailure:null,Blob,TextDecoder,runSelection,selectedOperation:n=>operationSelection[n],reportResponseFailure:(message,error)=>failures.push(String(error?.message||message)),responseAttemptPrompt:()=>({transportBindingRequired:true,instructionId:'PROMPT-OWNER',bodySha256:'hash',contractSha256:'contract',contextSignature:'scope'}),projectStore:{stageResponseFile:async options=>{assert.equal(options.jobId,'RESPONSE-OWNER');assert.equal(options.stage,stage);entered();await held;return {stagingId:'OWNER-STAGED',jobId:options.jobId};},readStagedResponseFile:async options=>{reads.push(options);return {bytes:new TextEncoder().encode(text),sha256:digest};}},responsePromptRecord:()=>({scope:{}}),pendingProposal:()=>null,ingestion:{captureRaw:(project,options)=>{assert.equal(project,source);assert.equal(options.text,text);captures.push(true);throw new Error('CAPTURE_REACHED');}}});
+  vm.runInContext(app.slice(app.indexOf('async function responseFilePayload('),app.indexOf('async function prepareStageResponseFallback('))+'\nglobalThis.selectResponse=prepareStageResponseFile;',runtime);
+  const pending=runtime.selectResponse(new Blob([text],{type:'application/json'}));
+  await Promise.race([started,pending.then(()=>{throw new Error('RESPONSE_OWNER_STAGING_BOUNDARY_NOT_REACHED: '+failures.join(' | '));})]);
+  if(change==='project')runtime.current=other;else if(change==='stage')source.activeStage=stage===1?2:12;else if(change==='revision')source.revision++;else if(change==='operation')operationSelection[stage]='SEMANTIC_CHALLENGE';else if(change==='run')runSelection[stage]='RUN-CHANGED';
   release();await pending;
-  assert(captures.length===0,`Response intake captured raw bytes after a ${change} change.`);
+  assert.equal(failures.length,1,'Interrupted response intake must report the preserved staged file.');
   assert(reads.every(row=>row.jobId==='RESPONSE-OWNER'),'Response intake read staged bytes under another project.');
-  assert(failures.length===1,'Interrupted response intake must report the preserved staged file.');
+  if(change==='unchanged'){assert.equal(captures.length,1,'RESPONSE_OWNER_CONFORMING_CONTROL_ORACLE');assert.equal(reads.length,1);assert.equal(failures[0],'CAPTURE_REACHED');}
+  else{assert.equal(captures.length,0,`Response intake captured raw bytes after a ${change} change.`);assert.equal(reads.length,0,'Changed response ownership must stop before reading staged bytes.');assert.match(failures[0],/Project, stage, operation, run, or revision changed/,'RESPONSE_OWNER_PRECISE_FAILURE_ORACLE');}
+  responseOwnerCases.push({change,stage,staged:true,reads:reads.length,captures:captures.length,expectedFailure:change==='unchanged'?'CAPTURE_REACHED':'OWNERSHIP_CHANGED'});
 }
 
 function verify({appSource=app,ingestionSource=ingestion,storeSource=store,engineSource=engine,promptSource=prompt}={}){
   assert.match(appSource,/id="response-json-file"[^>]*type="file"[^>]*accept="[^"]*(?:application\/json|\.json)/,'The normal external-response path must expose the authoritative JSON file selector.');
-  assert.match(appSource,/const operationSelection=\{\},runSelection=\{\},responseFileSelection=\{\},fileSelectionDrafts=\{\};/,'The file-first UI must retain declared response-file selection state before wiring change and process handlers.');
+  assert.match(appSource,/const operationSelection=\{\},runSelection=\{\},responseFileSelection=\{\},fileSelectionDrafts=\{\},pendingBackupImports=\{\};/,'The file-first UI must retain declared response-file selection state before wiring change and process handlers.');
   assert.match(appSource,/id="process-response-file"/,'The normal path must stage and validate the selected response file.');
   assert.match(appSource,/stageResponseFile\(/,'The UI must stage selected response bytes before canonical ingestion.');
   assert.match(appSource,/async function savePromptRecord\(n(?:,retry=true)?\)[\s\S]*reserveAndBuildPromptRecord\(/,'Saving an external instruction must use the reservation-bound prompt transaction helper in the production path.');
@@ -208,6 +247,12 @@ verify();
   assert.match(runtime.mode(stage),/notice warn.*this stage has not passed/,'A saved response appeared to pass an incomplete stage '+stage);
   runtime.current.stages[stage].gate={complete:true};
   assert.match(runtime.mode(stage),/notice success.*this stage is complete/,'The satisfied completion gate was not reported at stage '+stage);
+  runtime.current.projectData.rawResponses[0].status='DUPLICATE_RESPONSE';
+  for(const complete of [false,true]){runtime.current.stages[stage].gate.complete=complete;const markup=runtime.mode(stage);assert.match(markup,/This response is already recorded/,'VALID_DUPLICATE_FEEDBACK_ORACLE: '+stage);assert.match(markup,/No additional changes were accepted from this copy/);assert.doesNotMatch(markup,/same rejected response file|new response.json|stage is complete/);}
+  runtime.current.projectData.responseValidations[0].valid=false;assert.match(runtime.mode(stage),/same rejected response file/);assert.match(runtime.mode(stage),/current stage file package/);
+  runtime.current.projectData.responseValidations=[];assert.match(runtime.mode(stage),/already recorded/);assert.doesNotMatch(runtime.mode(stage),/same rejected/);
+  runtime.pendingProposal=()=>({proposalId:'PENDING'});assert.match(runtime.mode(stage),/Review the proposal/);assert.doesNotMatch(runtime.mode(stage),/already recorded|same rejected/);runtime.pendingProposal=()=>null;
+
  }
 }
 // An action on an inspected stage belongs to that selected stage in the active version.
@@ -223,7 +268,7 @@ verify();
  }
 }
 assert.throws(()=>verify({appSource:app.replace('id="response-json-file" type="file"','id="response-json-file" type="text"')}),/authoritative JSON file selector/);
-assert.throws(()=>verify({appSource:app.replace('const operationSelection={},runSelection={},responseFileSelection={},fileSelectionDrafts={};','const operationSelection={},runSelection={};')}),/declared response-file selection state/);
+assert.throws(()=>verify({appSource:app.replace('const operationSelection={},runSelection={},responseFileSelection={},fileSelectionDrafts={},pendingBackupImports={};','const operationSelection={},runSelection={};')}),/declared response-file selection state/);
 assert.throws(()=>verify({storeSource:store.replaceAll('RESPONSE_STAGE_REHASH_MISMATCH','RESPONSE_STAGE_IGNORED_MISMATCH')}),/read-back mismatch/);
 assert.throws(()=>verify({engineSource:engine.replaceAll('SELECT_RESPONSE_JSON_FILE','PASTE_FINAL_JSON')}),/Paste must not remain/);
 assert.throws(()=>verify({appSource:app.replaceAll('AUTHORITATIVE_RESPONSE_FILE','TEXT_ONLY')}),/marked authoritative/);
@@ -233,7 +278,7 @@ assert.throws(()=>verify({promptSource:prompt.replace('workflow.reserveOperation
 assert.throws(()=>verify({appSource:app.replace('operationReservationId:expectedPrompt.operationReservationId,challengeNonce:expectedPrompt.challengeNonce','operationReservationId:expectedPrompt.operationReservationId')}),/challenge-nonce identity/);
 assert.throws(()=>verify({appSource:app.replaceAll('Export instruction file','Copy instruction text')}),/instruction-file export/);
 
-console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,responseFileSelector:true,durableByteStaging:true,readBackRehash:true,reservationTransportIdentityComplete:true,pasteNotPrimary:true,fallbackSameStagingPath:true,mutationsDetected:10},null,2));
+console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,responseFileSelector:true,durableByteStaging:true,readBackRehash:true,reservationTransportIdentityComplete:true,pasteNotPrimary:true,fallbackSameStagingPath:true,mutationsDetected:10,responseOwnerCases},null,2));
 
 // A saved attempt remains the response's authority after staging advanced the UI
 // revision. Exercise the production handler rather than a fresh-prompt-only path.
@@ -242,10 +287,12 @@ console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,r
   const saved={stage:4,operation:'COMPLETE',scope:{projectRevision:1},instructionId:'SAVED-INSTRUCTION',bodySha256:'body',contractSha256:'contract',contextSignature:'context',promptEngineVersion:'test-version',transportBindingRequired:true,packageId:'package',operationReservationId:'reservation',challengeNonce:'nonce'};
   const proposal={proposalId:'EXISTING-PROPOSAL',rawResponseId:'EXISTING-RAW',promptId:saved.instructionId,stage:4,status:'PENDING_OPERATOR_REVIEW',preconditions:{projectRevision:3,promptEngineVersion:'test-version'}};
   const current={job:{JOB_ID:'RESELECT-PENDING'},activeStage:4,revision:3,stages:{4:{}},projectData:{generatedPrompts:[saved],rawResponses:[{rawResponseId:'EXISTING-RAW',sha256:digest,promptInstructionId:saved.instructionId,status:'VALIDATED_PENDING_REVIEW',transport:{authority:'AUTHORITATIVE_RESPONSE_FILE'},proposalId:proposal.proposalId}],responseProposals:[proposal]}};
+  // Use the verifier's production hash owner: lane identity includes canonical
+  // values as well as raw text. The independent Node digest remains the oracle.
   const dialogs=[],reports=[];let staged=0,captured=0,downloaded=0,renders=0,inlineReplacements=0;const removedStages=[];
-  const runtime=createVerifierRuntime({...inactiveMobileAcceptance,operatorActionInFlight:null,responseActionFailure:null,closedLoopPromptEngine:{version:saved.promptEngineVersion},current,Blob,Uint8Array,TextDecoder,queueMicrotask,safe:value=>Array.isArray(value)?value:[],promptOptions:()=>({operation:'COMPLETE',scope:{}}),currentPromptEngineVersion:()=>saved.promptEngineVersion,pendingProposal:()=>proposal,announce:message=>reports.push(message),render:()=>renders++,detailViews:new Map(),wireDetails:()=>{},document:{createElement:()=>({content:{firstElementChild:{}}})},esc:String,details:()=>'', $:selector=>selector==='#validation-report'?{focus(){},querySelectorAll:()=>[],replaceWith:()=>inlineReplacements++}:{focus(){}},alert:message=>dialogs.push(String(message)),console:{error(){}},downloadRawRecovery:()=>downloaded++,closedLoopHash:{sha256Text:sha},projectStore:{removeStagedResponseFile:async options=>removedStages.push(options),stageResponseFile:async options=>{staged++;return {...options,stagingId:'STAGED',sha256:digest,byteSize:Buffer.byteLength(text)};},readStagedResponseFile:async()=>({bytes:new TextEncoder().encode(text),sha256:digest,stagingId:'STAGED',byteSize:Buffer.byteLength(text)})},ingestion:{strictParse:JSON.parse,captureRaw:()=>{captured++;throw new Error('A reselected pending response must not be captured again.');}},persistReplacement:async()=>{throw new Error('Reselection must not advance canonical revision.');}});
+  const runtime=createVerifierRuntime({...inactiveMobileAcceptance,operatorActionInFlight:null,responseActionFailure:null,closedLoopPromptEngine:{version:saved.promptEngineVersion},current,Blob,Uint8Array,TextDecoder,queueMicrotask,runSelection:{},selectedOperation:()=> 'COMPLETE',safe:value=>Array.isArray(value)?value:[],promptOptions:()=>({operation:'COMPLETE',scope:{}}),currentPromptEngineVersion:()=>saved.promptEngineVersion,pendingProposal:()=>proposal,announce:message=>reports.push(message),render:()=>renders++,detailViews:new Map(),wireDetails:()=>{},document:{createElement:()=>({content:{firstElementChild:{}}})},esc:String,details:()=>'', $:selector=>selector==='#validation-report'?{focus(){},querySelectorAll:()=>[],replaceWith:()=>inlineReplacements++}:{focus(){}},alert:message=>dialogs.push(String(message)),console:{error(){}},downloadRawRecovery:()=>downloaded++,projectStore:{removeStagedResponseFile:async options=>removedStages.push(options),stageResponseFile:async options=>{staged++;return {...options,stagingId:'STAGED',sha256:digest,byteSize:Buffer.byteLength(text)};},readStagedResponseFile:async()=>({bytes:new TextEncoder().encode(text),sha256:digest,stagingId:'STAGED',byteSize:Buffer.byteLength(text)})},ingestion:{strictParse:JSON.parse,captureRaw:()=>{captured++;throw new Error('A reselected pending response must not be captured again.');}},persistReplacement:async()=>{throw new Error('Reselection must not advance canonical revision.');}});
   const helpers=app.slice(app.indexOf('function promptMatches'),app.indexOf('function operationMarkup'));
-  const handler=app.slice(app.indexOf('async function prepareStageResponseFile('),app.indexOf('async function prepareStageResponseFallback('));
+  const handler=app.slice(app.indexOf('async function responseFilePayload('),app.indexOf('async function prepareStageResponseFallback('));
   const failurePolicy=app.slice(app.indexOf('const UNCONFIRMED_ACTION_OUTCOME_MESSAGE='),app.indexOf('function reportActionFailure('));
   vm.runInContext(failurePolicy+'\n'+helpers+'\n'+app.slice(app.indexOf('function reportResponseFailure'),app.indexOf('function proposalMarkup'))+'\n'+handler+'\nglobalThis.selectResponse=prepareStageResponseFile;',runtime);
   await runtime.selectResponse(new Blob([text],{type:'application/json'}));
@@ -291,6 +338,7 @@ console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,r
   const reporterStart=app.indexOf('const UNCONFIRMED_ACTION_OUTCOME_MESSAGE=');
   vm.runInContext(app.slice(reporterStart,app.indexOf('const storageActivities=',reporterStart)),runtime);
   vm.runInContext(app.slice(app.indexOf('async function savePromptRecord('),app.indexOf('function promptTransportFilename('))+'\n'+app.slice(app.indexOf('let promptExportInFlight='),app.indexOf('async function exportPromptContext('))+'\nglobalThis.exportAttempt=promptExport;',runtime);
+  bindAuthorizedCoordinatorFixture(runtime);
   let exported;
   await runtime.exportAttempt(record=>{exported=record;downloaded++;});
   assert.equal(downloaded,1,`Stage 05 still blocks export on manual bookkeeping: ${notice.textContent}`);
@@ -353,7 +401,8 @@ console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,r
   runtime.projectStore={readProject:async()=>runtime.clone(stored),replaceProject:async(next,{expectedProjectRevision,operational=false})=>{if(expectedProjectRevision!==stored.revision){staleWrites++;throw Object.assign(new Error(`Project revision conflict: expected ${expectedProjectRevision}, found ${stored.revision}.`),{code:'STALE_PROJECT_REVISION'});}stored=structuredClone(next);stored.revision=expectedProjectRevision+(operational?0:1);return runtime.clone(stored);}};
   runtime.currentPromptRecord=n=>runtime.current.projectData.generatedPrompts.filter(x=>Number(x.stage)===n&&!x.invalidatedBy&&Number(x.scope.projectRevision)===runtime.current.revision).at(-1)||null;
   function fn(name){const start=app.search(new RegExp('(?:async )?function '+name+'\\(')),end=app.indexOf('\nfunction ',start+1),asyncEnd=app.indexOf('\nasync function ',start+1);return app.slice(start,Math.min(...[end,asyncEnd].filter(x=>x>=0)));}
-  vm.runInContext(['currentOperatorScope','operatorLaneMatches','promptMatches','promptVersionCurrent','currentPromptRecord','unloadInactiveProjects','persistReplacement','latestResponseAttempt','pendingReturnedResponse','validateReturnedResponse','saveRequiredContinuation','restoreStageContinuation','savePromptRecord'].map(fn).join('\n')+'\n'+app.slice(app.indexOf('let promptExportInFlight='),app.indexOf('async function exportPromptContext('))+'\nglobalThis.validate=validateReturnedResponse;globalThis.exportAttempt=promptExport;',runtime);
+  vm.runInContext(['currentOperatorScope','operatorLaneMatches','promptMatches','promptVersionCurrent','currentPromptRecord','unloadInactiveProjects','persistReplacement','latestResponseAttempt','pendingReturnedResponse','validateReturnedResponse','presentPreparedResponse','pendingProposal','saveRequiredContinuation','restoreStageContinuation','savePromptRecord'].map(fn).join('\n')+'\n'+app.slice(app.indexOf('let promptExportInFlight='),app.indexOf('async function exportPromptContext('))+'\nglobalThis.validate=validateReturnedResponse;globalThis.exportAttempt=promptExport;',runtime);
+  bindAuthorizedCoordinatorFixture(runtime);
   assert.equal(vm.runInContext('currentPromptRecord(6)?.instructionId',runtime),saved.instructionId,'Raw capture incorrectly stales the still-open instruction and blocks manifest re-export.');
   const priorRequirements=runtime.current.job.CURRENT_REQUIREMENTS_VERSION;runtime.current.job.CURRENT_REQUIREMENTS_VERSION='CHANGED-AUTHORITY';
   assert.equal(vm.runInContext('currentPromptRecord(6)',runtime),null,'A changed authority scope must not reuse an older instruction.');runtime.current.job.CURRENT_REQUIREMENTS_VERSION=priorRequirements;
@@ -415,9 +464,19 @@ console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,r
 const r=projectStoreRuntime(),t=r.runtime,s=fs.readFileSync(process.env.APP_SOURCE||'app-core.js','utf8');
 const extract=(a,b)=>s.slice(s.indexOf(a),s.indexOf(b,s.indexOf(a)+a.length));
 t.fixtureRuntime={core:r.core,schema:t.closedLoopWorkflowSchema,engine:r.engine,prompts:r.prompts,ingestion:r.ingestion,store:r.store};
-await vm.runInContext([evidence,stage04AcceptanceFixture,accumulatedStage04Fixture].map(f=>f.toString()).join('\n')+'\n(async()=>{globalThis.fixture=await accumulatedStage04Fixture(fixtureRuntime,{jobId:"PROBE-5922",attempts:2,responseCharacters:128});})()',t);
-const initial=await r.store.writeProject(t.fixture,{expectedProjectRevision:0,createOnly:true,incrementRevision:false});
-bindAcceptanceUi(r,initial,null);
+await vm.runInContext([scalarFor,recordProposal,evidence,acceptPrerequisite,stage01AcceptanceFixture,boundedSearchProposal,registerFixtureSourceSearchCapability,stage04AcceptanceFixture,accumulatedStage04Fixture].map(f=>f.toString()).join('\n')+'\n(async()=>{globalThis.fixture=await accumulatedStage04Fixture(fixtureRuntime,{jobId:"PROBE-5922",attempts:2,responseCharacters:128});})()',t);
+// The accumulated helper seeds historical reservations before entering the
+// store. Advance through ordinary saves to its existing revision frontier so
+// fresh authorization cannot reuse a historical expired reservation identity.
+const seededRevision=t.fixture.revision;
+let initial=await r.store.writeProject(t.fixture,{expectedProjectRevision:0,createOnly:true,incrementRevision:false});
+while(initial.revision<seededRevision)initial=await r.store.writeProject(initial,{expectedProjectRevision:initial.revision,skipUnchanged:false});
+const prepare=r.copy(initial),continuation=r.ingestion.prepareStageContinuation(prepare,{stage:4,owningTabInstance:'SYNTHETIC_AUTHORIZED_FILE_FIRST'}),issued=continuation.prompt;assert(issued,'The accumulated fixture must have a current instruction before permission setup.');initial=await r.store.writeProject(prepare,{expectedProjectRevision:initial.revision});
+const authorized=await authorizeSyntheticHandoff(r,{project:initial,prompt:issued});
+// One ordinary subsequent save reproduces the stale reservation that startup
+// must replace, after explicit fixture authorization and before the baseline.
+initial=await r.store.writeProject(authorized.project,{expectedProjectRevision:authorized.project.revision,skipUnchanged:false});
+bindAcceptanceUi(r,initial,null);bindHandoffReviewUiState(t,{source:s});
 Object.assign(t,{schema:t.closedLoopWorkflowSchema,recordValue:r.engine.recordValue,stageContinuationErrors:new Map(),stagePlanItems:(stage,operation)=>r.engine.stageTestExecutionPlan(t.current,{stage,operation}).items,displayedStageAction:stage=>r.engine.operationalNextAction(t.current,stage),announce(){},reportActionFailure(e){throw e;},downloadBlob(blob,filename){t.downloads.push({blob,filename});},downloads:[],$:()=>null});
 vm.runInContext(extract('function canonicalCurrentStage(','function displayedStageAction(')+extract('function stageOperations(','// A saved response may be inspected independently.')+extract('async function savePromptRecord(','function promptTransportFilename(')+extract('let promptExportInFlight=','async function exportPromptContext(')+extract('function selectStageContinuation(','async function materializeProject('),t);
 const snapshots={initial};
@@ -433,11 +492,19 @@ snapshots.restored=await r.store.importPackage(backup);
  assert.equal(r.engine.recordValue(reservation,'STATUS'),'EXPORTED','HANDOFF_RECEIPT_ORACLE: export must record its successful transfer');
  const browser=fs.readFileSync(process.env.BROWSER_EXTRA_SOURCE||'verify-browser-extra.mjs','utf8'),oracle=browser.match(/  assert\(accumulatedRoundTrip[\s\S]*?;\n/)?.[0];
  assert(oracle,'HANDOFF_BROWSER_ORACLE: the real browser assertion must exist');
- const accumulatedRoundTrip={...proof,instructionVerified:true,canonicalUnchanged:snapshots.backup.projectSha256===initial.projectSha256,tailPreserved:true,restoredDigest:true,singleStagePackage:true};
+ assert.equal(t.downloads.length,1,'HANDOFF_BROWSER_VALID_TRANSITION_ORACLE: the VM path must export one actual package.');
+ const exportedMembers=readStoreArchive(new Uint8Array(await t.downloads[0].blob.arrayBuffer())),manifestMember=exportedMembers.find(row=>row.canonicalPath==='manifest.json');
+ assert(manifestMember,'HANDOFF_BROWSER_VALID_TRANSITION_ORACLE: the package must contain its actual manifest.');
+ const exportedManifest=JSON.parse(new TextDecoder().decode(manifestMember.bytes));
+ const handoffContextValid=exportedManifest.jobId===initial.job.JOB_ID&&Number(exportedManifest.stage)===4&&exportedManifest.operation==='COMPLETE'&&exportedManifest.handoff?.disclosureAuthorizationIds?.length===1;
+ const accumulatedRoundTrip={...proof,handoffContextValid,instructionVerified:true,canonicalUnchanged:snapshots.backup.projectSha256===initial.projectSha256,tailPreserved:true,restoredDigest:true,singleStagePackage:true};
  try{createVerifierRuntime.loadScript(createVerifierRuntime({accumulatedRoundTrip,assert,JSON}),oracle);}catch(error){throw new Error('HANDOFF_BROWSER_VALID_TRANSITION_ORACLE: a valid current-instruction/export/restore sequence must pass the actual browser oracle: '+error.message);}
 
+ assert(initial.projectData.humanDecisions.length>0,'HANDOFF_BROWSER_CORRUPTION_ORACLE: a retained decision is required for the negative control.');
  for(const [fault,violate]of [
   ['accepted-response-bytes',p=>{p.projectData.rawResponses[0].completeRawResponse+=' CORRUPTION';}],
+  ['retained-human-decision',p=>{p.projectData.humanDecisions[0].fields.PURPOSE='CORRUPTION';}],
+  ['unauthorized-appended-decision',p=>{p.projectData.humanDecisions.push(r.copy(p.projectData.humanDecisions[0]));}],
   ['retained-instruction-bytes',p=>{p.projectData.generatedPrompts[0].prompt+=' CORRUPTION';}],
   ['retained-history',p=>{p.projectData.history[0].eventType='CORRUPTION';}],
   ['restored-response-bytes',p=>{p.projectData.rawResponses[0].completeRawResponse+=' CORRUPTION';}]
@@ -449,7 +516,7 @@ snapshots.restored=await r.store.importPackage(backup);
  }
  console.log(JSON.stringify({caseId:'HANDOFF_BROWSER_VALID_TRANSITION',result:'PASS',actualBrowser:false,attempts:2,responseCharacters:128,beforePrompts:initial.projectData.generatedPrompts.length,afterPrompts:snapshots.backup.projectData.generatedPrompts.length,proof}));
  t.current=await r.store.readProject(initial.job.JOB_ID);await t.savePromptRecord(4);
- const cdp=null,evalValue=async(_cdp,expression)=>vm.runInContext(expression,t),fixtureFunctions=[scalarFor,recordProposal,evidence,stage04AcceptanceFixture,stage04AcceptanceEnvelope].map(fn=>fn.toString()).join('\n'),runtimeBindings='const runtime=fixtureRuntime;';
+ const cdp=null,evalValue=async(_cdp,expression)=>vm.runInContext(expression,t),fixtureFunctions=[scalarFor,recordProposal,evidence,acceptPrerequisite,stage01AcceptanceFixture,boundedSearchProposal,registerFixtureSourceSearchCapability,stage04AcceptanceFixture,stage04AcceptanceEnvelope].map(fn=>fn.toString()).join('\n'),runtimeBindings='const runtime=fixtureRuntime;';
   console.error('nonbrowser:large-history-execution-package');
   const executionContext=await evalValue(cdp,`(async()=>{${fixtureFunctions}\n${runtimeBindings}
     const store=closedLoopProjectStore,p=await store.readProject('PROBE-5922'),prompt=p.projectData.generatedPrompts.filter(row=>row.stage===4&&!row.invalidatedBy).at(-1),manifest=runtime.prompts.promptFileManifest(prompt),text=JSON.stringify(stage04AcceptanceEnvelope(runtime,p,prompt));
@@ -460,6 +527,8 @@ snapshots.restored=await r.store.importPackage(backup);
     return {contextBytes:file.byteSize,tailPreserved:(await file.blob.text()).includes('EXECUTION-CONTEXT-TAIL'),revision:saved.revision};
   })()`);
   assert(executionContext.contextBytes>262144&&executionContext.tailPreserved,'The accumulated execution fixture did not persist the exact large correction context: '+JSON.stringify(executionContext));
+  const beforeLarge=await r.store.readProject(initial.job.JOB_ID),largePrompt=beforeLarge.projectData.generatedPrompts.filter(row=>row.stage===4&&!row.invalidatedBy).at(-1);
+  const authorizedLarge=await authorizeSyntheticHandoff(r,{project:beforeLarge,prompt:largePrompt});t.current=authorizedLarge.project;
   const largeExecution=await evalValue(cdp,`(async()=>{const store=closedLoopProjectStore,hash=closedLoopHash,before=await store.readProject('PROBE-5922'),nativeRead=Blob.prototype.arrayBuffer;let sourceReadBytes=0,largestRead=0,result;Blob.prototype.arrayBuffer=function(){sourceReadBytes+=this.size;largestRead=Math.max(largestRead,this.size);return nativeRead.call(this);};try{result=await store.createExecutionPackage({jobId:before.job.JOB_ID,stage:4,operation:'COMPLETE'});}finally{Blob.prototype.arrayBuffer=nativeRead;}const archiveBytes=new Uint8Array(await result.blob.arrayBuffer()),members=(${readStoreArchive.toString()})(archiveBytes),files=new Map(members.map(member=>[member.canonicalPath,member.bytes])),manifest=JSON.parse(new TextDecoder().decode(files.get('manifest.json'))),{packageManifestSha256,...body}=manifest,sourceBytes=manifest.members.reduce((sum,file)=>sum+file.byteSize,0),after=await store.readProject(before.job.JOB_ID),contexts=manifest.members.filter(file=>file.role==='PROMPT_CONTEXT');return {packageVerified:hash.sha256Value(body)===packageManifestSha256&&await hash.sha256Bytes(archiveBytes)===result.packageSha256,instructionVerified:await hash.sha256Bytes(files.get('instruction.txt'))===manifest.instructionFullTextSha256,contextVerified:(await Promise.all(contexts.map(async file=>files.get(file.canonicalPath)?.byteLength===file.byteSize&&await hash.sha256Bytes(files.get(file.canonicalPath))===file.sha256))).every(Boolean),contextFiles:contexts.length,sourceBytes,sourceReadBytes,largestRead,canonicalUnchanged:after.projectSha256===before.projectSha256};})()`);
   assert(largeExecution.packageVerified&&largeExecution.instructionVerified&&largeExecution.contextVerified&&largeExecution.contextFiles>0&&largeExecution.largestRead<=65536&&largeExecution.sourceReadBytes<=largeExecution.sourceBytes*4&&largeExecution.canonicalUnchanged,'Accumulated execution package changed exact bytes, canonical state, or reread its file sources: '+JSON.stringify(largeExecution));
   console.log(JSON.stringify({largeExecutionPackage:{...largeExecution,fixture:executionContext}}));

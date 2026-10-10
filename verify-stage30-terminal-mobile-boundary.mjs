@@ -1,12 +1,12 @@
 import {checkedVerifier} from './verify-conformance-regressions.mjs';
 import {bindArtifactFixture} from './test-project-store-runtime.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
-import {syntheticMobileOperations} from './mobile-evidence-test-fixture.mjs';
+import {syntheticMobileOperations,syntheticMobileTargetFacts} from './mobile-evidence-test-fixture.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
-import {webcrypto} from 'node:crypto';
+import {webcrypto,createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 import {createMobileAcceptanceTarget,MOBILE_ACCEPTANCE_ORIGIN,MOBILE_ACCEPTANCE_BASE_PATH} from './generate-mobile-acceptance-target.mjs';
 import {verifyMobileAcceptanceEvidence,REQUIRED_MOBILE_RECEIPT_KINDS,REQUIRED_MOBILE_CAPABILITY_PROBE_KEYS} from './verify-mobile-acceptance-evidence.mjs';
@@ -30,6 +30,7 @@ assert.match(appSource,/function measureMobileAcceptance\(\)/,'Acceptance measur
 assert.match(appSource,/mobileAcceptanceEvidenceId/,'The application must generate and bind an acceptance evidence ID.');
 assert.doesNotMatch(appSource,/viewport:actorEvidence\.viewport/,'Actor evidence must not override the pinned viewport.');
 const target=createMobileAcceptanceTarget({
+  ...syntheticMobileTargetFacts({performer:'STAGE30-IPHONE-OPERATOR',deviceModel:'iPhone 15'}),
   sourceCommit:'f'.repeat(40),deploymentManifestDigest:'a'.repeat(64),
   origin:MOBILE_ACCEPTANCE_ORIGIN,basePath:MOBILE_ACCEPTANCE_BASE_PATH,
   testProjectId:'STAGE30-MOBILE',procedureVersion:'actual-iphone-safari/1',
@@ -43,23 +44,28 @@ assert.equal(target.basePath,MOBILE_ACCEPTANCE_BASE_PATH);
 
 // Obtain a complete Stage 30-ready project through the production lifecycle, then
 // perform every mutation probe against disposable in-memory clones.
-const fixturePath=path.join(process.cwd(),`.stage30-fixture-${process.pid}.json`);
+const sharedFixturePath=process.env.CLRT_STAGE30_FIXTURE_PATH;
+const fixturePath=sharedFixturePath||path.join(process.cwd(),`.stage30-fixture-${process.pid}.json`);
 const fixtureMarker='STAGE30_READY_FIXTURE';
-const fixtureAnchor='engine.recordDeliveryAttempt(p';
-const fixtureIndex=fullCycleSource.indexOf(fixtureAnchor);
-assert.ok(fixtureIndex>0,'The full-cycle production mechanism did not expose its terminal-ready boundary.');
-const instrumentedPath=path.join(process.cwd(),`.stage30-full-cycle-${process.pid}.mjs`);
-fs.writeFileSync(instrumentedPath,fullCycleSource.slice(0,fixtureIndex)+`fs.writeFileSync(${JSON.stringify(fixturePath)},JSON.stringify({project:p,artifacts:await captureArtifactFixture(byteStore,p.job.JOB_ID)}));console.log(${JSON.stringify(fixtureMarker)});process.exit(0);\n`+fullCycleSource.slice(fixtureIndex));
-let fixtureOutput='';
-try{fixtureOutput=(await checkedVerifier(process.execPath,[instrumentedPath],{encoding:'utf8',timeout:600000,maxBuffer:64*1024*1024}));}
-finally{fs.rmSync(instrumentedPath,{force:true});}
-assert.match(fixtureOutput,new RegExp(fixtureMarker));
+if(!sharedFixturePath){
+ const fixtureAnchor='engine.recordDeliveryAttempt(p';
+ const fixtureIndex=fullCycleSource.indexOf(fixtureAnchor);
+ assert.ok(fixtureIndex>0,'The full-cycle production mechanism did not expose its terminal-ready boundary.');
+ const instrumentedPath=path.join(process.cwd(),`.stage30-full-cycle-${process.pid}.mjs`);
+ const sourceFiles=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','verify-full-cycle.mjs'];
+ fs.writeFileSync(instrumentedPath,fullCycleSource.slice(0,fixtureIndex)+`fs.writeFileSync(${JSON.stringify(fixturePath)},JSON.stringify({schema:'closed-loop-stage30-ready-fixture/1',project:p,artifacts:await captureArtifactFixture(byteStore,p.job.JOB_ID),sourceHashes:Object.fromEntries(${JSON.stringify(sourceFiles)}.map(file=>[file,hash.sha256Text(fs.readFileSync(file,'utf8'))]))}));console.log(${JSON.stringify(fixtureMarker)});process.exit(0);\n`+fullCycleSource.slice(fixtureIndex));
+ let fixtureOutput='';
+ try{fixtureOutput=(await checkedVerifier(process.execPath,[instrumentedPath],{encoding:'utf8',timeout:1800000,maxBuffer:64*1024*1024}));}
+ finally{fs.rmSync(instrumentedPath,{force:true});}
+ assert.match(fixtureOutput,new RegExp(fixtureMarker));
+}
 assert.ok(fs.existsSync(fixturePath),'The disposable Stage 30 fixture was not captured.');
 const captured=JSON.parse(fs.readFileSync(fixturePath,'utf8')),sourceProject=captured.project;
+assert.equal(captured.schema,'closed-loop-stage30-ready-fixture/1','The Stage 30 fixture has the wrong schema.');
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','verify-full-cycle.mjs'])assert.equal(captured.sourceHashes?.[file],createHash('sha256').update(fs.readFileSync(file,'utf8')).digest('hex'),`The Stage 30 fixture has stale source: ${file}`);
 assert.equal(engine.terminalPrerequisites(sourceProject).complete,false,'JSON metadata alone must not preserve byte custody.');
 await bindArtifactFixture(captured.artifacts);
 assert.equal(engine.terminalPrerequisites(sourceProject).complete,true,'Exact restored bytes must restore terminal readiness.');
-fs.rmSync(fixturePath,{force:true});
 const fresh=()=>{const p=structuredClone(sourceProject);engine.ensureShape(p);return p;};
 const refresh=(p,family,record)=>engine.refreshRecordHashes(record,family);
 const terminalRecord=p=>engine.records(p,'deliveryRecords').at(-1);
@@ -68,9 +74,25 @@ const hashInput=p=>Object.fromEntries(Object.entries(terminalRecord(p,'deliveryR
 assert.equal(engine.recordValue(terminalRecord(sourceProject),'DELIVERY_STATE'),'AUTHORIZED','The fixture must reach application-owned authorization.');
 assert.equal(engine.records(sourceProject,'deliveryAttempts').length,0,'The terminal-ready fixture must not pre-record an operational attempt.');
 
+// Independent §36.9 terminal oracle. Reconstruct the exact declared record
+// subject without calling either production terminal/evidence-chain preimage helper.
+const terminalHashApi=globalThis.closedLoopHash,nodeSha=value=>createHash('sha256').update(terminalHashApi.stableStringify(value),'utf8').digest('hex');
+const exactDependency=record=>{if(!record)return null;const copy=structuredClone(record);for(const key of ['recordSha256','sha256','contentSha256','createdAt','updatedAt','eventSequence'])delete copy[key];if(copy.scope)delete copy.scope.projectRevision;return copy;};
+const chainRows=engine.recordsForCurrentScope(sourceProject,'evidenceChains').map(exactDependency);for(const row of chainRows){delete row.EVIDENCE_CHAIN_VERSION;delete row.fields.EVIDENCE_CHAIN_VERSION;delete row.scope.evidenceChainVersion;}chainRows.sort((a,b)=>Buffer.compare(Buffer.from(terminalHashApi.stableStringify(a.id)),Buffer.from(terminalHashApi.stableStringify(b.id))));
+const chainScope={...engine.currentScope(sourceProject)};delete chainScope.evidenceChainVersion;delete chainScope.projectRevision;
+const expectedChainSubject={jobId:sourceProject.job.JOB_ID,scope:chainScope,requirementIds:engine.mandatoryRequirements(sourceProject).map(row=>engine.recordId(row,'requirements')),chainRecords:chainRows},expectedChainSha=nodeSha(expectedChainSubject);
+const releaseRecord=engine.recordsForCurrentScope(sourceProject,'releaseRecords').at(-1),identityRecords=engine.recordsForCurrentScope(sourceProject,'artifactIdentities'),intentRecord=engine.records(sourceProject,'humanDecisions').find(row=>engine.recordValue(row,'PURPOSE')==='DELIVERY_INTENT'),intentValue=engine.recordValue(intentRecord,'VALUE'),defects=engine.recordsForCurrentScope(sourceProject,'defects'),regressions=engine.recordsForCurrentScope(sourceProject,'regressions'),missingDefectIds=defects.filter(row=>!regressions.some(reg=>String(engine.recordValue(reg,'DEFECT_ID')||reg.relationships?.DEFECT_ID||'')===engine.recordId(row,'defects'))).map(row=>engine.recordId(row,'defects')),artifactIds=engine.recordValue(terminalRecord(sourceProject),'AUTHORIZED_ARTIFACT_IDS'),artifactRecords=engine.recordsForCurrentScope(sourceProject,'artifacts').filter(row=>artifactIds.includes(engine.recordId(row,'artifacts'))),checkpointRecord=engine.records(sourceProject,'backupCheckpoints').filter(row=>engine.recordValue(row,'CUSTODY_STATE')==='BACKUP_EXPORT_ACTION_COMPLETED').at(-1),terminalScope={...engine.currentScope(sourceProject)};delete terminalScope.projectRevision;
+const expectedTerminalSubject={stage27ReleaseRecord:exactDependency(releaseRecord),stage28IdentityRecords:identityRecords.map(exactDependency),humanDeliveryIntent:exactDependency(intentRecord),stage29EvidenceChainSet:expectedChainSubject,evidenceChainSetSha256:expectedChainSha,stage30RegistryCalculation:{complete:missingDefectIds.length===0,missingDefectIds,hash:nodeSha({defects:defects.map(row=>row.recordSha256||row.sha256||''),regressions:regressions.map(row=>row.recordSha256||row.sha256||'')}),defectRecords:defects.map(exactDependency),regressionRecords:regressions.map(exactDependency)},preDeliveryCheckpoint:exactDependency(checkpointRecord),deliveryScope:{jobId:sourceProject.job.JOB_ID,currentScope:terminalScope,recipientOrClass:String(intentValue.recipientOrClass||''),destination:String(intentValue.destination||''),transferPurpose:String(intentValue.transferPurpose||''),transferChannel:String(intentValue.transferChannel||''),disclosureClassification:String(intentValue.disclosureClassification||''),permittedTransferCount:intentValue.permittedTransferCount??null},authorizedArtifactIdentities:artifactRecords.map(exactDependency)},expectedTerminalSha=nodeSha(expectedTerminalSubject),actualTerminalSha=engine.recordValue(terminalRecord(sourceProject),'TERMINAL_EVIDENCE_HASH'),actualChainSha=engine.recordValue(terminalRecord(sourceProject),'EVIDENCE_CHAIN_SET_SHA256');
+const actualSubjectForDiagnostic=engine.terminalEvidencePreimage(sourceProject);if(actualTerminalSha!==expectedTerminalSha){const differing=Object.keys(expectedTerminalSubject).filter(key=>terminalHashApi.stableStringify(expectedTerminalSubject[key])!==terminalHashApi.stableStringify(actualSubjectForDiagnostic[key]));console.error(JSON.stringify({terminalOracleDifferingMembers:differing,fixturePath}));}
+assert.equal(actualChainSha,expectedChainSha,'TERMINAL_STAGE29_SHA_ORACLE: terminal must preserve the exact full Stage29 chain digest.');assert.equal(actualTerminalSha,expectedTerminalSha,'EXACT_TERMINAL_PREIMAGE_ORACLE: exact prerequisite records, scope, registry and artifact identities must define the terminal evidence SHA.');
+const exactChanged=fresh(),changedRelease=engine.recordsForCurrentScope(exactChanged,'releaseRecords').at(-1);changedRelease.derivationKey=String(changedRelease.derivationKey||'stage27.release')+'-CONTROLLED_DIFFERENT_DERIVATION';refresh(exactChanged,'releaseRecords',changedRelease);assert.notEqual(engine.terminalEvidenceHash(exactChanged),expectedTerminalSha,'EXACT_TERMINAL_PREIMAGE_ORACLE: the canonical release derivation identity must remain bound.');assert.throws(()=>engine.deliveryTransferPrecondition(exactChanged,{deliveryId:engine.recordId(terminalRecord(exactChanged),'deliveryRecords')}),/terminal dependency is no longer satisfied/,'EXACT_TERMINAL_CURRENTNESS_ORACLE: changed exact dependency must revoke the existing authorization.');
+const oldSummaryProject=fresh(),oldSummaryRecord=terminalRecord(oldSummaryProject),propositionSummarySha=nodeSha(engine.records(oldSummaryProject,'propositions').map(row=>({id:row.id,status:engine.recordValue(row,'STATUS'),sha256:row.recordSha256||row.sha256||''})).sort((a,b)=>terminalHashApi.compareUnicodeScalarSequence(a.id,b.id)));oldSummaryRecord.fields.EVIDENCE_CHAIN_SET_SHA256=propositionSummarySha;oldSummaryRecord.EVIDENCE_CHAIN_SET_SHA256=propositionSummarySha;assert.notEqual(propositionSummarySha,expectedChainSha,'The controlled old proposition digest must differ from the independently derived chain digest.');assert.throws(()=>engine.deliveryTransferPrecondition(oldSummaryProject,{deliveryId:engine.recordId(oldSummaryRecord,'deliveryRecords')}),/terminal dependency is no longer satisfied/,'TERMINAL_STAGE29_SHA_ORACLE: corrupted Stage29 digest must revoke authorization even when the terminal fingerprint is unchanged.');
+const verificationObservations=[{checkId:'terminal-exact-record-preimage-sha256',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:3345'],boundary:'actual full lifecycle → terminal calculation → stored-byte restoration → transfer precondition',expected:{evidenceChainSetSha256:expectedChainSha,terminalEvidenceHash:expectedTerminalSha,digestLength:64},observed:{evidenceChainSetSha256:actualChainSha,terminalEvidenceHash:actualTerminalSha,digestLength:actualTerminalSha.length},passed:true},{checkId:'terminal-summary-or-mutated-dependency-rejected',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:3334','specification/closed-loop-reliability-controlling-implementation-specification.txt:3345'],boundary:'actual authorized transfer precondition',expected:{oldSummaryAccepted:false,changedCanonicalDependencyAccepted:false},observed:{oldSummaryAccepted:false,changedCanonicalDependencyAccepted:false},violation:'summary substitution or exact dependency mutation retains authority',accepted:false,passed:true}];
+
 // The mobile validators are independent oracles: malformed target/evidence classes
 // must remain blocked by both the evidence validator and authenticated submission.
 const mobileEvidence={
+  ...target,
   mobileAcceptanceTargetId:target.mobileAcceptanceTargetId,challenge:target.challenge,
   sourceCommit:target.sourceCommit,deploymentManifestDigest:target.deploymentManifestDigest,
   origin:target.origin,basePath:target.basePath,testProjectId:target.testProjectId,
@@ -199,6 +221,7 @@ for(const token of ['calculate-stage30-terminal','export-authorized-artifacts','
 assert.match(appSource,/downloadCanonicalArtifact\(artifactId\)/,'Authorized export/share must reuse exact canonical stored-byte verification before transfer.');
 for(const token of ['mobile-acceptance-panel','mobile-acceptance-target-json','mobile-acceptance-evidence-json','run-mobile-capability-probe','export-mobile-acceptance-evidence','acceptanceSession','acceptanceModeReceipt','receipts'])assert.match(appSource,new RegExp(token),`Stage 30 mobile actor path missing ${token}.`);
 
+fs.rmSync(fixturePath,{force:true});
 console.log(JSON.stringify({
   stage30TerminalMobileBoundary:'PASS',
   intentionalInvalidFixturesRejected:[
@@ -218,5 +241,6 @@ console.log(JSON.stringify({
   deliveryEvidenceDistinct:true,
   visibleOperatorPathWired:true,
   mobileActorHandoffPathWired:true,
-  mobileTargetChallengeBound:true
+  mobileTargetChallengeBound:true,
+  verificationObservations
 },null,2));

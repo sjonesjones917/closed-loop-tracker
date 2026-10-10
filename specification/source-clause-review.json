@@ -1,6 +1,6 @@
 {
   "schema": "closed-loop-source-clause-review/1",
-  "specificationSha256": "a610714d14a6cff6386fc432f071e90507910d844ded7f32d87e110ade88cc8c",
+  "specificationSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
   "reviewBasis": "Continuation source review of omitted mandatory prose. Not an independent review and not behavioral conformance evidence.",
   "clauses": [
     {
@@ -158,13 +158,301 @@
     {
       "line": 2634,
       "sectionId": "29.13",
-      "text": "The closed proof-expression language permits LEAF, ALL_OF, ANY_OF, and AT_LEAST_K only. It has no arbitrary code, unrestricted negation, implicit coercion, stale references, or empty operators. ALL_OF is TRUE when all children are TRUE, FALSE when any is FALSE, and UNKNOWN otherwise. ANY_OF is TRUE when any is TRUE, FALSE when all are FALSE, and UNKNOWN otherwise. AT_LEAST_K is TRUE when trueCount \u2265 K, FALSE when trueCount + unknownCount < K, and UNKNOWN otherwise.",
+      "text": "The closed proof-expression language permits LEAF, ALL_OF, ANY_OF, and AT_LEAST_K only. It has no arbitrary code, unrestricted negation, implicit coercion, stale references, or empty operators. ALL_OF is TRUE when all children are TRUE, FALSE when any is FALSE, and UNKNOWN otherwise. ANY_OF is TRUE when any is TRUE, FALSE when all are FALSE, and UNKNOWN otherwise. AT_LEAST_K is TRUE when trueCount ≥ K, FALSE when trueCount + unknownCount < K, and UNKNOWN otherwise.",
       "sourceLineSha256": "4ee09651801c8b5e92cc7c47ab3429cfa9451c96c3992212d72da63f0b617f05",
       "classification": "MANDATORY",
       "reason": "This clause defines required ownership, behavior, boundaries, or acceptance conditions despite lacking the mechanical extractor keywords."
     },
     {
-      "line": 2993,
+      "line": 2894,
+      "sectionId": "32.4A",
+      "text": "A definition whose EXECUTION_TEST_ID supplies a deferred execution route must contain the agent-owned field EXECUTION_COMPATIBILITY. Missing, FALSE, UNKNOWN, malformed, stale or insufficiently supported compatibility blocks canonical definition admission. A definition with a future schedule that requires EXECUTION_TEST_ID cannot evade this condition by omitting that required relationship. Ordinary legacy owning-stage definitions with no deferred test relationship retain their existing contract and execution path.",
+      "sourceLineSha256": "956f71d67df5f78b53a18bb6fecfa29d10ff33ec2dcb948e0e185135df6d3449",
+      "classification": "MANDATORY",
+      "reason": "Exact approved deferred-definition compatibility field/acceptance/example/closure obligation; independently source-classified before receipt of drafted NREQs, with all approved body lines reconciled. Generation is not implementation or execution evidence."
+    },
+    {
+      "line": 2898,
+      "sectionId": "32.4A",
+      "text": "| failureTests (Stage07) | EXECUTION_COMPATIBILITY | AGENT | OBJECT, closed nested contract below | Required for a deferred definition written by an already authorized owning operation, including Stage07 COMPLETE and the existing owning Stage07 EXECUTE_FAILURE_TEST writer; retained legacy immediate definitions are exempt as above | deferred-definition-compatibility/1 |",
+      "sourceLineSha256": "72f21d53e6e9ec69fe3276bc4a2c99be4e6bf4fdea1a9066dc5a3310d155bef4",
+      "classification": "MANDATORY",
+      "reason": "Exact approved deferred-definition compatibility field/acceptance/example/closure obligation; independently source-classified before receipt of drafted NREQs, with all approved body lines reconciled. Generation is not implementation or execution evidence."
+    },
+    {
+      "line": 2899,
+      "sectionId": "32.4A",
+      "text": "| regressions (Stage15) | EXECUTION_COMPATIBILITY | AGENT | OBJECT, closed nested contract below | Required for a deferred definition written by an already authorized operation, including Stage15 COMPLETE, the existing owning Stage15 EXECUTE_REGRESSION writer, and Stage17 REGRESSION; the same contract follows its canonical family at either stage | deferred-definition-compatibility/1 |",
+      "sourceLineSha256": "653cdfcab71066003c019735b34a7bb18ba67f2ebf2cf7aafada876946c163bc",
+      "classification": "MANDATORY",
+      "reason": "Exact approved deferred-definition compatibility field/acceptance/example/closure obligation; independently source-classified before receipt of drafted NREQs, with all approved body lines reconciled. Generation is not implementation or execution evidence."
+    },
+    {
+      "line": 2901,
+      "sectionId": "32.4A",
+      "text": "This amendment preserves every operation's existing writer permissions. Ordinary owning-stage Stage07 EXECUTE_FAILURE_TEST and Stage15 EXECUTE_REGRESSION currently have definition-writing permissions; when an already authorized response writes a deferred definition, the same required compatibility field applies. The field is not supplied on execution receipts. Later-than-owner conditional execution operations remain receipt-only and cannot rewrite definitions. Stage17 ROOT_CAUSE/CORRECT do not gain regression-author privileges. Application-owned EXECUTION_TEST_ID, IDs, hashes, scope, timing consequences, evidence normalization, receipts and gates remain application-owned. No new operation, family, executor or application store is authorized.",
+      "sourceLineSha256": "09bde6774c6315f959c6dbf36bc9b39cb283ecc1104242eda615d4a2daa23f9d",
+      "classification": "MANDATORY",
+      "reason": "Exact approved deferred-definition compatibility field/acceptance/example/closure obligation; independently source-classified before receipt of drafted NREQs, with all approved body lines reconciled. Generation is not implementation or execution evidence."
+    },
+    {
+      "line": 2903,
+      "sectionId": "32.4A",
+      "text": "The common required object properties are exactly:",
+      "sourceLineSha256": "3ef1adff342b1c23be4a31a3145eb5c732c395f44ac86ce8c8b2cc38017e0ea7",
+      "classification": "MANDATORY",
+      "reason": "Exact approved deferred-definition compatibility field/acceptance/example/closure obligation; independently source-classified before receipt of drafted NREQs, with all approved body lines reconciled. Generation is not implementation or execution evidence."
+    },
+    {
+      "line": 2907,
+      "sectionId": "32.4A",
+      "text": "| actualTargetCompatibility | STRING, exactly TRUE/FALSE/UNKNOWN | Author's supported semantic determination that the execution test addresses the actual target contract of this definition. |",
+      "sourceLineSha256": "38a5351ad677234356d77709b2fbc86a1a28b0d196780d3a79d03179ba9e45bd",
+      "classification": "MANDATORY",
+      "reason": "Exact approved deferred-definition compatibility field/acceptance/example/closure obligation; independently source-classified before receipt of drafted NREQs, with all approved body lines reconciled. Generation is not implementation or execution evidence."
+    },
+    {
+      "line": 2908,
+      "sectionId": "32.4A",
+      "text": "| outcomeCompatibility | STRING, exactly TRUE/FALSE/UNKNOWN | Author's supported semantic determination that the reviewed observation meaning establishes the definition's required rejection or PRE/POST outcomes. |",
+      "sourceLineSha256": "2ca588bdd429e2f46c2a0186a5e4a928e1e010a4fd95550a2f1b85f3251a253e",
+      "classification": "MANDATORY",
+      "reason": "Exact approved deferred-definition compatibility field/acceptance/example/closure obligation; independently source-classified before receipt of drafted NREQs, with all approved body lines reconciled. Generation is not implementation or execution evidence."
+    },
+    {
+      "line": 2909,
+      "sectionId": "32.4A",
+      "text": "| actualTarget | Nonempty STRING | Exact described subject, preserved fixture and required tested inputs, using supplied current identities where available and the published phase/input contract for legitimately future targets. It cannot fabricate a future artifact/run/candidate or replace a typed relationship. |",
+      "sourceLineSha256": "5fa2678269eb66277cd702fef9690831460d8074596adea7982843f916b94cd3",
+      "classification": "MANDATORY",
+      "reason": "Exact approved deferred-definition compatibility field/acceptance/example/closure obligation; independently source-classified before receipt of drafted NREQs, with all approved body lines reconciled. Generation is not implementation or execution evidence."
+    },
+    {
+      "line": 2910,
+      "sectionId": "32.4A",
+      "text": "| rationale | Nonempty STRING | Material reasoning for target and outcome correspondence, including limitations; it does not itself prove bytes, execution, provenance or independence. |",
+      "sourceLineSha256": "f67f8a40b4fed51372a6d7136430c40b3c5ac3166bed69863f1780ded935ea5a",
+      "classification": "MANDATORY",
+      "reason": "Exact approved deferred-definition compatibility field/acceptance/example/closure obligation; independently source-classified before receipt of drafted NREQs, with all approved body lines reconciled. Generation is not implementation or execution evidence."
+    },
+    {
+      "line": 2912,
+      "sectionId": "32.4A",
+      "text": "A failureTests object additionally requires exactly expectedRejectionMeaning: nonempty STRING explaining how the reviewed actual observation establishes the existing EXPECTED_REJECTION for the bound known-invalid fixture.",
+      "sourceLineSha256": "ac2a0c8e0668f8fa3174998c0d5af8cbc6fbda95db15c42d086f95453b7a4198",
+      "classification": "MANDATORY",
+      "reason": "Exact approved deferred-definition compatibility field/acceptance/example/closure obligation; independently source-classified before receipt of drafted NREQs, with all approved body lines reconciled. Generation is not implementation or execution evidence."
+    },
+    {
+      "line": 2914,
+      "sectionId": "32.4A",
+      "text": "A regressions object additionally requires exactly preCorrectionFailureMeaning and postCorrectionSuccessMeaning, both nonempty STRINGs explaining how the same reviewed test/predicate and preserved negative fixture establish the original failure on the defective target and success on a distinct corrected target. These meanings correspond to existing PRE_CORRECTION/VIOLATED and POST_CORRECTION/SATISFIED receipt semantics. They are expected meanings, never a claim those executions occurred.",
+      "sourceLineSha256": "c861fe09d82909f65894a4a9145349c1de78ad75e9cfb6bafeb9379b728e8442",
+      "classification": "MANDATORY",
+      "reason": "Exact approved deferred-definition compatibility field/acceptance/example/closure obligation; independently source-classified before receipt of drafted NREQs, with all approved body lines reconciled. Generation is not implementation or execution evidence."
+    },
+    {
+      "line": 2916,
+      "sectionId": "32.4A",
+      "text": "No other properties are permitted. Missing differs from null; null is prohibited. Strings obey the owning stage's existing text/resource limits; this contract does not shrink supported workloads or create an extra unbounded input channel. The existing wrapper evidenceRefs supplies its exact supporting evidence, resolved by normal typed/current/authorized reference rules; nonempty IDs alone are insufficient.",
+      "sourceLineSha256": "80628c4fde5f332527e78c3ae9779597b43f4a7c4f902843dbbc0c2c4b39cfbc",
+      "classification": "MANDATORY",
+      "reason": "Exact approved deferred-definition compatibility field/acceptance/example/closure obligation; independently source-classified before receipt of drafted NREQs, with all approved body lines reconciled. Generation is not implementation or execution evidence."
+    },
+    {
+      "line": 2920,
+      "sectionId": "32.4A",
+      "text": "The following steps are one shared authority, consumed at proposal preparation, projected-canonical integrity, operator commit/freshness recheck, execution planning, due-stage gates and restoration. Passing admission remains separate from stage completion or release.",
+      "sourceLineSha256": "e2d5a92e14ca0be2236c009f47aceee2a0d9a42b1bacaaf3a1be9a452f8717ea",
+      "classification": "MANDATORY",
+      "reason": "Exact approved deferred-definition compatibility field/acceptance/example/closure obligation; independently source-classified before receipt of drafted NREQs, with all approved body lines reconciled. Generation is not implementation or execution evidence."
+    },
+    {
+      "line": 2922,
+      "sectionId": "32.4A",
+      "text": "1. Check the closed representation, explicit TRUE for both determinations, current typed EXECUTION_TEST_ID, same governing requirement, applicable current scope, compatible phase/timing, and current accepted independent review of that exact test semantic hash. TRUE is necessary and never sufficient by itself. No keyword search or equality of arbitrary prose derives a favorable determination.",
+      "sourceLineSha256": "c8ac53367a93099c0b1bd06e8bc3c1ee576360bc8c63b599521b735828e4398a",
+      "classification": "MANDATORY",
+      "reason": "Exact approved deferred-definition compatibility field/acceptance/example/closure obligation; independently source-classified before receipt of drafted NREQs, with all approved body lines reconciled. Generation is not implementation or execution evidence."
+    },
+    {
+      "line": 2923,
+      "sectionId": "32.4A",
+      "text": "2. Bind the proposed definition's complete canonical meaning (fixture, reproduction/detection, correction, timing, resolved references and EXECUTION_COMPATIBILITY) and supporting evidence to the exact current reviewed test/input/observation contract, current authorized scope, author reservation and raw response. Use application-calculated IDs/hashes and existing proposal/reservation/context/raw evidence records; the actor copies published identities and never allocates replacements. Recheck those material inputs immediately before commit. A changed test, definition, evidence, scope or history activation invalidates the prior authority and uses the existing fresh reservation/correction/confirmation route.",
+      "sourceLineSha256": "9be25f26d698c6e4079c734b4a061b6b2076543112953f82e618b3edb492c037",
+      "classification": "MANDATORY",
+      "reason": "Exact approved deferred-definition compatibility field/acceptance/example/closure obligation; independently source-classified before receipt of drafted NREQs, with all approved body lines reconciled. Generation is not implementation or execution evidence."
+    },
+    {
+      "line": 2924,
+      "sectionId": "32.4A",
+      "text": "3. Check actual preservation of the fixture and attributable support that it represents the recorded defect/known-invalid case. Required byte-backed fixtures must resolve to actual app-verified stored bytes; filename/hash declarations are insufficient. A supported inline literal or isolated canonical-state fixture uses its exact lossless value/identity and the appropriate recorded provenance. The definition's existing defect/requirement relationships and evidence must actually address that fixture; an unrelated successful ordinary observation cannot prove negative execution or compatibility.",
+      "sourceLineSha256": "df0a03c6489e8c14ae4f6df3e07a7ef3b12edcaf1e53d0c7b8651faf41047794",
+      "classification": "MANDATORY",
+      "reason": "Exact approved deferred-definition compatibility field/acceptance/example/closure obligation; independently source-classified before receipt of drafted NREQs, with all approved body lines reconciled. Generation is not implementation or execution evidence."
+    },
+    {
+      "line": 2925,
+      "sectionId": "32.4A",
+      "text": "4. For a native route, mechanical compatibility may be established only for what the existing reviewed Test IR, explicit literal/predicate, EXECUTABLE_INPUT_BINDINGS and published target/fixture selectors actually determine. The application must resolve the exact preserved fixture, required target input contract, primitive/argument types and expected observation meaning. It must not execute not-yet-due work, interpret fixtureMeaning/rationale strings as selectors, or assert an arbitrary semantic proposition from a hash. If existing native syntax cannot mechanically express the semantic correspondence, that mechanical assessment is UNKNOWN. A complete supported author semantic compatibility determination may establish the correspondence at its honest recorded basis while the valid reviewed native Test IR remains the executor. Compatibility assessment basis and execution mode are separate; do not force a valid native executor to become external merely because its meaning needs supported author interpretation. If neither mechanical nor qualified author-supported compatibility is established, retain a blocker.",
+      "sourceLineSha256": "fb3a250deaa022532918901c6b08a78a3134f3b2ef8b6851596232605e932722",
+      "classification": "MANDATORY",
+      "reason": "Exact approved deferred-definition compatibility field/acceptance/example/closure obligation; independently source-classified before receipt of drafted NREQs, with all approved body lines reconciled. Generation is not implementation or execution evidence."
+    },
+    {
+      "line": 2926,
+      "sectionId": "32.4A",
+      "text": "5. For a supported external route, the author may provide an attributable semantic compatibility determination under ordinary agent authority. Support must include the current reviewed test's actual input/artifact/observation contract, the preserved fixture/defect evidence, and the reasoned target/outcome correspondence. It may use the existing ARTIFACT_REQUIREMENTS/handoff and permitted current context; external inputs are not forced into the native EXECUTABLE_INPUT_BINDINGS grammar. A legitimately future target is identified by its allowed reviewed phase/input contract rather than nonexistent future bytes/identities. Author-supported semantic qualification is the conjunction of all of the following: (a) the author operation is permitted and its actual raw response, context and reservation are bound to the current proposed definition and scope; (b) EXECUTION_TEST_ID resolves to exactly the current independently reviewed test semantic hash and its actual input/observation contract; (c) preserved negative fixture and applicable recorded defect/known-invalid-case evidence are bound to this definition, with actual verified custody wherever bytes are required; (d) both controlled determinations are TRUE and all family-specific target/outcome meanings and rationale are complete; (e) every required support reference resolves by family, current identity, authorized scope and recorded provenance and has sufficient support for its declared proposition under the existing evidence rules; and (f) no existing controlled contradiction or unresolved mandatory-support state remains. Failure of any term leaves compatibility FALSE or UNKNOWN, as appropriate, and blocks admission. This conjunction qualifies the supported author's semantic judgment as EXTERNALLY_SUPPORTED where that basis is established; the machine validates the binding and qualification facts and does not claim to prove arbitrary-prose semantic truth. A bare label, generic evidence, populated IDs, or nonblank text cannot satisfy it. The same attributable semantic qualification may support a native test's meaning without changing its executor. No qualification promotes an author claim to application-observed or verified semantic inference.",
+      "sourceLineSha256": "cbd3cc8d841214b1e85c6f3f2e1bb03dd709e5a4ec5ec2b168f787a6e9e7eda2",
+      "classification": "MANDATORY",
+      "reason": "Exact approved deferred-definition compatibility field/acceptance/example/closure obligation; independently source-classified before receipt of drafted NREQs, with all approved body lines reconciled. Generation is not implementation or execution evidence."
+    },
+    {
+      "line": 2927,
+      "sectionId": "32.4A",
+      "text": "6. Missing required fixture/support, declared FALSE/UNKNOWN, a known contradiction, a wrong/stale/unauthorized reference, or current evidence whose existing authority/sufficiency state is unknown/insufficient prevents a commit-ready canonical definition. Return a precise typed validation reason and the existing recovery route, retain complete raw bytes and recoverable work, and distinguish changed state/storage failure from a contract error. No favorable fallback, implicit migration or silent default is allowed.",
+      "sourceLineSha256": "f77d4c59825ab6b4c5f30bd59af9539ed8a2d7e9152e6af0622b2cb77e3495ba",
+      "classification": "MANDATORY",
+      "reason": "Exact approved deferred-definition compatibility field/acceptance/example/closure obligation; independently source-classified before receipt of drafted NREQs, with all approved body lines reconciled. Generation is not implementation or execution evidence."
+    },
+    {
+      "line": 2928,
+      "sectionId": "32.4A",
+      "text": "7. Preserve the raw compatibility object and supporting CONTENT. Any normalized result retains its actual epistemic basis: application-established mechanical facts are distinguished from AGENT_SEMANTIC_OBSERVATION/EXTERNAL_CLAIM and appropriately supported external interpretation under the existing evidence model. A declaration does not establish human action, byte custody, actual execution, future success, provider independence, release authority or SATISFIED receipt. The application may mark definition admission compatible only after all required checks/support pass; actual execution evidence remains separately due and must use distinct PRE/POST executions/input identities.",
+      "sourceLineSha256": "3795e21f35bca6c77bedf8f30fd7055f31a3d419d561f0d4b0983bd571b6b57e",
+      "classification": "MANDATORY",
+      "reason": "Exact approved deferred-definition compatibility field/acceptance/example/closure obligation; independently source-classified before receipt of drafted NREQs, with all approved body lines reconciled. Generation is not implementation or execution evidence."
+    },
+    {
+      "line": 2930,
+      "sectionId": "32.4A",
+      "text": "An accepted review of an earlier test alone is insufficient to establish the later arbitrary fixture/target/outcome pair. The evidence-support check must not be reduced to populated IDs, nonblank reasoning, a selected profile index or a generic successful observation. External semantic authority remains a supported claim with its recorded basis, not stronger authentication or universal machine verification. A report or current recorded authority that expressly leaves target/outcome compatibility UNKNOWN cannot be normalized to TRUE.",
+      "sourceLineSha256": "3382d2424ba6adf8a878950e6d44e6fd9951eadf7691aaabbf95a68868b820d2",
+      "classification": "MANDATORY",
+      "reason": "Exact approved deferred-definition compatibility field/acceptance/example/closure obligation; independently source-classified before receipt of drafted NREQs, with all approved body lines reconciled. Generation is not implementation or execution evidence."
+    },
+    {
+      "line": 2932,
+      "sectionId": "32.4A",
+      "text": "Current unknown legacy deferred definitions remain retained with their identities, raw bytes, historical versions and evidence. They cannot satisfy current deferred work until the existing versioned correction/confirmation route supplies the missing current contract/support. This does not rewrite historical data, retire the obligation or bypass future execution. Future valid definitions remain registered, visible and unexecuted; validation of their admitted compatibility occurs before the planner's FUTURE scheduling branch.",
+      "sourceLineSha256": "375e0378dcb3b01013ef7797243728f909a0a8e9913aa35a76e84f31af5307bb",
+      "classification": "MANDATORY",
+      "reason": "Exact approved deferred-definition compatibility field/acceptance/example/closure obligation; independently source-classified before receipt of drafted NREQs, with all approved body lines reconciled. Generation is not implementation or execution evidence."
+    },
+    {
+      "line": 2936,
+      "sectionId": "32.4A",
+      "text": "These examples define expected outcomes independently of the implementation and do not assert real execution happened.",
+      "sourceLineSha256": "7dcab25ace6ad1c1fa7c50452f8c425cd2a3461634f2d95b4034846fdc2d364a",
+      "classification": "MANDATORY",
+      "reason": "Exact approved deferred-definition compatibility field/acceptance/example/closure obligation; independently source-classified before receipt of drafted NREQs, with all approved body lines reconciled. Generation is not implementation or execution evidence."
+    },
+    {
+      "line": 2940,
+      "sectionId": "32.4A",
+      "text": "| Native compatible regression: reviewed explicit comparison requires UTF-8 VERIFIED followed by LF; recorded failed fixture is exactly eight-byte VERIFIED; preserved defect evidence binds that fixture; the current reviewed input/predicate contract checks the defective/corrected target with that fixture; compatibility explains PRE mismatch and distinct corrected-target match. | Admit and persist the supported definition with current bindings. Leave it unexecuted until due; actual PRE must record VIOLATED, later distinct-input POST must record SATISFIED. No admission-time POST PASS is created. |",
+      "sourceLineSha256": "312abbc6fd70bc2cae6ba7b6503e20aa7bba3bfec78c439b6e3a6fd82ffecb4e",
+      "classification": "MANDATORY",
+      "reason": "Exact approved deferred-definition compatibility field/acceptance/example/closure obligation; independently source-classified before receipt of drafted NREQs, with all approved body lines reconciled. Generation is not implementation or execution evidence."
+    },
+    {
+      "line": 2941,
+      "sectionId": "32.4A",
+      "text": "| External compatible regression: current reviewed external content-comparison contract names the actual permitted target/input and preserves attributable failed-fixture evidence; a supported author determination explains original failure and corrected success at its actual external semantic basis. | Permit admission through existing author/file-first workflow with current support. Do not require native binding grammar, extra stage/op/reviewer, future target identity, or claim application-observed semantic truth. |",
+      "sourceLineSha256": "8ccb263daa15bdda9e664961da772c806eb69fe5173d2232d59b3dff2ee7dffa",
+      "classification": "MANDATORY",
+      "reason": "Exact approved deferred-definition compatibility field/acceptance/example/closure obligation; independently source-classified before receipt of drafted NREQs, with all approved body lines reconciled. Generation is not implementation or execution evidence."
+    },
+    {
+      "line": 2942,
+      "sectionId": "32.4A",
+      "text": "| Compatible failure definition: reviewed negative test's observation establishes rejection of the exact bound invalid fixture, governing requirement/scope match, attributable fixture evidence and capable route are current. | Admit and preserve; a due FAILURE_VALIDATION/SATISFIED receipt separately requires actual supported rejection. |",
+      "sourceLineSha256": "756747c437513f9d3826d3fe7d7cd20cd2d68cda8a49823589e4eaf31d18f0de",
+      "classification": "MANDATORY",
+      "reason": "Exact approved deferred-definition compatibility field/acceptance/example/closure obligation; independently source-classified before receipt of drafted NREQs, with all approved body lines reconciled. Generation is not implementation or execution evidence."
+    },
+    {
+      "line": 2943,
+      "sectionId": "32.4A",
+      "text": "| Existing immediate ordinary Stage15 regression without deferred EXECUTION_TEST_ID. | Retain its existing legitimate admission/execution behavior; new contract cannot block it just for lacking this deferred field. The current recovered control verifies admission/commit/integrity, not prior-stage completion. |",
+      "sourceLineSha256": "0891c2db9127cb039bcee26ee161e7edf7716762cd33a6ebb7325fefb77e2206",
+      "classification": "MANDATORY",
+      "reason": "Exact approved deferred-definition compatibility field/acceptance/example/closure obligation; independently source-classified before receipt of drafted NREQs, with all approved body lines reconciled. Generation is not implementation or execution evidence."
+    },
+    {
+      "line": 2944,
+      "sectionId": "32.4A",
+      "text": "| Either determination FALSE or UNKNOWN; object omitted/null/wrong type/unregistered property; outcome meaning absent. | Reject deferred canonical admission with the exact contract failure while retaining raw/substantive work. |",
+      "sourceLineSha256": "b81524db7922f5a3897657c0af152b170fd143da40f215cb56d3a2b6b8f6eedb",
+      "classification": "MANDATORY",
+      "reason": "Exact approved deferred-definition compatibility field/acceptance/example/closure obligation; independently source-classified before receipt of drafted NREQs, with all approved body lines reconciled. Generation is not implementation or execution evidence."
+    },
+    {
+      "line": 2945,
+      "sectionId": "32.4A",
+      "text": "| TRUE with only a bare label, generic successful observation, nonempty IDs/reasoning, unrelated fixture, missing required bytes or no current supporting evidence. | Reject as insufficient compatibility support; do not mark compatible or complete. |",
+      "sourceLineSha256": "87961908a990bac4844035b868cc7f2c7101c31cee610d4608a8643888b5b81b",
+      "classification": "MANDATORY",
+      "reason": "Exact approved deferred-definition compatibility field/acceptance/example/closure obligation; independently source-classified before receipt of drafted NREQs, with all approved body lines reconciled. Generation is not implementation or execution evidence."
+    },
+    {
+      "line": 2946,
+      "sectionId": "32.4A",
+      "text": "| Test/requirement/fixture/scope/evidence wrong family, unauthorized, stale, changed after preparation, or current accepted test review does not cover the exact test hash. | Reject or fail commit honestly with appropriate reference/freshness reason; preserve last valid state and recoverable work. |",
+      "sourceLineSha256": "8086e02367553b1d75cc11bb405d477093f288707bc1c95797e108ba575d8d09",
+      "classification": "MANDATORY",
+      "reason": "Exact approved deferred-definition compatibility field/acceptance/example/closure obligation; independently source-classified before receipt of drafted NREQs, with all approved body lines reconciled. Generation is not implementation or execution evidence."
+    },
+    {
+      "line": 2947,
+      "sectionId": "32.4A",
+      "text": "| A negative-only test merely proves a separate invalid input was rejected and provides no supported original-defect failure/corrected-success meaning. | UNKNOWN or FALSE compatibility; block admission. NEGATIVE_ONLY itself is not categorically incompatible where its actual supported meaning covers the regression proposition. |",
+      "sourceLineSha256": "648a22aba8e0009f27541ddc58ad373544d818a14bb7dd113d88ea32df1c912a",
+      "classification": "MANDATORY",
+      "reason": "Exact approved deferred-definition compatibility field/acceptance/example/closure obligation; independently source-classified before receipt of drafted NREQs, with all approved body lines reconciled. Generation is not implementation or execution evidence."
+    },
+    {
+      "line": 2948,
+      "sectionId": "32.4A",
+      "text": "| Future target unavailable but its compatible reviewed dynamic input contract and preserved fixture are legitimately established. | Admit the supported future definition, keep visible/unexecuted; do not require future bytes/identity or falsely complete due execution. |",
+      "sourceLineSha256": "06cdbbee5fb34af4f81447e596e320f901386c7a2c96953a8a3bce33c9b64585",
+      "classification": "MANDATORY",
+      "reason": "Exact approved deferred-definition compatibility field/acceptance/example/closure obligation; independently source-classified before receipt of drafted NREQs, with all approved body lines reconciled. Generation is not implementation or execution evidence."
+    },
+    {
+      "line": 2949,
+      "sectionId": "32.4A",
+      "text": "| Unchanged target identities reused for POST; ordinary positive observation reused as PRE proof; restored/abandoned operation returns late. | Existing execution identity/phase/freshness guards reject; compatibility does not override them. |",
+      "sourceLineSha256": "2f5542cca04eb06a77af0a2b4a6814a8ebcf753e77674576456873408bebe38c",
+      "classification": "MANDATORY",
+      "reason": "Exact approved deferred-definition compatibility field/acceptance/example/closure obligation; independently source-classified before receipt of drafted NREQs, with all approved body lines reconciled. Generation is not implementation or execution evidence."
+    },
+    {
+      "line": 2953,
+      "sectionId": "32.4A",
+      "text": "workflow-schema.js owns the one new field, closed family-dependent object contract and existing enum references; prompt-engine.js emits it from that authority with current reviewed test/fixture/evidence/input obligations in all owning author carriers and published correction guidance. response-ingestion.js validates nested syntax and declared negative states, prepares the projected canonical proposal only after the shared support check and rechecks at acceptance. workflow-engine.js owns the shared mechanical/semantic-basis compatibility calculation for admission, FUTURE/due planning, native/external receipts and gates; project-store.js retains raw/canonical/extension data and applies existing transaction/freshness/recovery semantics. Existing application-owned hashes/version/invalidation/context ownership remain with their owners. Prompt compatibility version/freshness must advance once for the integrated approved contract so stale instructions cannot silently submit the old shape.",
+      "sourceLineSha256": "62e10c0971cb8f25a8dcde797ff4ac5a06b67c8a5bc359104865408c78827f7c",
+      "classification": "MANDATORY",
+      "reason": "Exact approved deferred-definition compatibility field/acceptance/example/closure obligation; independently source-classified before receipt of drafted NREQs, with all approved body lines reconciled. Generation is not implementation or execution evidence."
+    },
+    {
+      "line": 2955,
+      "sectionId": "32.4A",
+      "text": "Regression protection must reproduce the pinned explicit UNKNOWN admission through the current authoritative file/operator/store boundary before the fix and detect the intended invariant after it. Include an immediate owning-stage conforming control, supported native and external future-definition controls, all FALSE/UNKNOWN/missing/type/nested/ref/scope/review/support cases above, commit races, recovery/reload/history/export/restore, independent expected PRE/POST outcomes and mutated guard removal. Existing correct tests remain intact; any faulty fixture requiring undocumented producer knowledge must be separately justified. Generated schema guidance may test producer/validator agreement, but expected semantic outcomes come from the independent examples above. No synthetic evidence is promoted to genuine human, physical-device or external execution proof.",
+      "sourceLineSha256": "82a4c725a94491508fa8c043641250d73f0af4bc58659cad0f958d2eb1015eef",
+      "classification": "MANDATORY",
+      "reason": "Exact approved deferred-definition compatibility field/acceptance/example/closure obligation; independently source-classified before receipt of drafted NREQs, with all approved body lines reconciled. Generation is not implementation or execution evidence."
+    },
+    {
+      "line": 2957,
+      "sectionId": "32.4A",
+      "text": "Approval authorizes this narrow contract and implementation closure only; it does not establish a repair, CI result, merge/deployment or release. Any precise supported case still not representable under existing permitted routes remains an explicit blocker rather than hidden scope reduction.",
+      "sourceLineSha256": "e7f6609b42c2590a2e1856287c94c4fbc5adfc8f82dc148e1efbff060de0eafd",
+      "classification": "MANDATORY",
+      "reason": "Exact approved deferred-definition compatibility field/acceptance/example/closure obligation; independently source-classified before receipt of drafted NREQs, with all approved body lines reconciled. Generation is not implementation or execution evidence."
+    },
+    {
+      "line": 3058,
       "sectionId": "34.3",
       "text": "Every normalizer and application derivation has an immutable registry ID, version, implementation-owner file, canonical input contract, output contract, hash or build identity, and invalidation consequences. Every derived value records the exact derivation ID and source-record hashes. A changed normalizer or derivation invalidates affected current values and results unless an explicit compatibility migration proves byte- and semantic-equivalent output.",
       "sourceLineSha256": "a0b8e3621bccd9ca2ba45e940d33506dd86a8a8e8f0b3bc1023220474d429886",
@@ -172,7 +460,7 @@
       "reason": "This clause defines required ownership, behavior, boundaries, or acceptance conditions despite lacking the mechanical extractor keywords."
     },
     {
-      "line": 3065,
+      "line": 3130,
       "sectionId": "35.5",
       "text": "Import validates all identities and bytes before activation.",
       "sourceLineSha256": "20c4e6b697c71a5ccf4cbc2b7167260e5264c8bb7e52f29d24bafceefdc45ed2",
@@ -180,7 +468,7 @@
       "reason": "This clause defines required ownership, behavior, boundaries, or acceptance conditions despite lacking the mechanical extractor keywords."
     },
     {
-      "line": 3066,
+      "line": 3131,
       "sectionId": "35.5",
       "text": "A failed import leaves existing projects unchanged.",
       "sourceLineSha256": "1afc86049dc3377510a1b9b579d0a58165199535b98ce70343504de584c9d64e",
@@ -188,7 +476,7 @@
       "reason": "This clause defines required ownership, behavior, boundaries, or acceptance conditions despite lacking the mechanical extractor keywords."
     },
     {
-      "line": 3259,
+      "line": 3324,
       "sectionId": "36.8",
       "text": "Before Stage 25 inspection, the application executes FREEZE_DELIVERY_CANDIDATE and creates one application-immutable DELIVERY_CANDIDATE_SET_ID containing the exact artifact IDs, versions, authorized candidate filenames, byte lengths, hashes, transformation records, package membership, parser or viewer requirements, and product lineage. Stage 25 inspects that exact set.",
       "sourceLineSha256": "157e18bc47a1bbea9b36db5bcebd1167855666978fd2927dff500aeaf1868118",
@@ -196,7 +484,7 @@
       "reason": "This clause defines required ownership, behavior, boundaries, or acceptance conditions despite lacking the mechanical extractor keywords."
     },
     {
-      "line": 3302,
+      "line": 3367,
       "sectionId": "36.11",
       "text": "After an AUTHORIZED delivery record exists, the current Stage 30 operator action is EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS. It is a non-stage-increasing terminal action. Immediately before export or share, the application revalidates the current delivery record, dependency closure, recipient/destination scope, transfer-count rule, and exact artifact bytes.",
       "sourceLineSha256": "32e3dfe79f5235d632d0edc982c8cdca983a19f816d629b58349376870c3bddf",
@@ -204,7 +492,7 @@
       "reason": "This clause defines required ownership, behavior, boundaries, or acceptance conditions despite lacking the mechanical extractor keywords."
     },
     {
-      "line": 5723,
+      "line": 5788,
       "sectionId": "52",
       "text": "No implementation may assume that the application already extracted arbitrary user-file meaning before the Stage 01 agent inspected the file.",
       "sourceLineSha256": "661103de367f60aa817065fd527470ea13968ab06edb678490a35bfe9716807b",
@@ -212,7 +500,7 @@
       "reason": "This clause defines required ownership, behavior, boundaries, or acceptance conditions despite lacking the mechanical extractor keywords."
     },
     {
-      "line": 5724,
+      "line": 5789,
       "sectionId": "52",
       "text": "After Stage 01 accepts the extracted human-authority information, no later stage may ask the user to supply that information again.",
       "sourceLineSha256": "751bcb378abbb5c2782e55653ebf75ce9169a9b7c9f9aee2a3c6d7efc85dcb2d",
@@ -220,7 +508,7 @@
       "reason": "This clause defines required ownership, behavior, boundaries, or acceptance conditions despite lacking the mechanical extractor keywords."
     },
     {
-      "line": 5726,
+      "line": 5791,
       "sectionId": "52",
       "text": "No human or agent assertion may substitute for a fact the application can establish itself.",
       "sourceLineSha256": "bc01f8652c65df19c74a5765faf48b6ebbbe6a454f4b7904ae1ba23fe5fea438",
@@ -228,7 +516,7 @@
       "reason": "This clause defines required ownership, behavior, boundaries, or acceptance conditions despite lacking the mechanical extractor keywords."
     },
     {
-      "line": 5727,
+      "line": 5792,
       "sectionId": "52",
       "text": "No test, audit, source review, or deployment result substitutes for using the live application through the exact visible path.",
       "sourceLineSha256": "4ea97bff95624c0d5c7d6e0be1df993b7b721a4bd7b01efbc3f88eaa44e46a72",
@@ -236,7 +524,7 @@
       "reason": "This clause defines required ownership, behavior, boundaries, or acceptance conditions despite lacking the mechanical extractor keywords."
     },
     {
-      "line": 5735,
+      "line": 5800,
       "sectionId": "52",
       "text": "Implementation-only instructions, repository audits, specification text, and repository governance manifests are not runtime project content and are not delegated to external stage agents.",
       "sourceLineSha256": "39bf6478e61f3035f0509a3f1af51949585af7161632753b1b766ca8b00697ed",
@@ -244,12 +532,22 @@
       "reason": "This clause defines required ownership, behavior, boundaries, or acceptance conditions despite lacking the mechanical extractor keywords."
     },
     {
-      "line": 5739,
+      "line": 5804,
       "sectionId": "52",
       "text": "Final delivery uses the exact Stage 25 delivery-candidate set, Stage 27 release precedence, Stage 28 byte identity and destination-bound human intent, Stage 29 evidence-chain hash, pre-delivery checkpoint, and the atomic Stage 30 terminal command. Authorization, delivery attempt, and completed delivery are distinct.",
       "sourceLineSha256": "e83e7c31112628af037a2331d5c5036c886bcf75b069d57291fa53f6b3c3aabe",
       "classification": "MANDATORY",
       "reason": "This clause defines required ownership, behavior, boundaries, or acceptance conditions despite lacking the mechanical extractor keywords."
+    }
+  ],
+  "approvedAmendmentSourceReviews": [
+    {
+      "path": "verification/approved-deferred-compatibility-20261005.json",
+      "sha256": "f4e7b4b0ab5a68f3049b14ea0b1056329b82688597ebced5c13e97be4d0f5e9a",
+      "approvedProposalSha256": "06c888569c9eaca414bde1926940cf596838fc2dd12c4ff7d4295e05d27ea22f",
+      "independentDraftManifestReceived": false,
+      "normativeClauseCount": 36,
+      "allApprovedBodyLinesAccounted": true
     }
   ]
 }

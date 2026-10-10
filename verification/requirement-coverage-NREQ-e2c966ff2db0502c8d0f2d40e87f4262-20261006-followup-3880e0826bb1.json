@@ -1,0 +1,317 @@
+{
+  "schema": "closed-loop-requirement-coverage-review/1",
+  "normativeRequirementId": "NREQ-e2c966ff2db0502c8d0f2d40e87f4262",
+  "sourceLineSha256": "b36b5d67ce8a16dbdd8f21c7d25f50100f5f937affe07a7cea376c36b4d498cf",
+  "specificationSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
+  "declarationSha256": "c70195285acd79b93903d9147c2b0a7988199bd985a7b6d2a6bc808df1322640",
+  "decision": "COMPLETE_COVERAGE",
+  "evidenceBasis": "EXTERNALLY_SUPPORTED",
+  "method": "Independent exact declaration/source-clause and complete affected dependency review, followed by fresh recovered-packet hashes and immutable prior-binding comparison.",
+  "author": {
+    "actor": "Codex follow-up source-qualified renewal author",
+    "contextId": "/root/ci_delivery_audit"
+  },
+  "reviewer": {
+    "actor": "Codex independent exact-clause declaration reviewer",
+    "contextId": "/root"
+  },
+  "reviewedInputs": [
+    {
+      "path": "app-core.js",
+      "sha256": "83ab20995a8e3ab8942c6291854630af7b1eea86bf5a6424e685f61b7461bcb3"
+    },
+    {
+      "path": "hash.js",
+      "sha256": "c5df5b7459ad610ee07e1793be3b3b38efbf0a65aeb22b03e2dd89026fed31a6"
+    },
+    {
+      "path": "project-store.js",
+      "sha256": "2d6896f47164f4a232c631d949cce64d2200e6d4e2202c2c3cdb29b08648cdf2"
+    },
+    {
+      "path": "prompt-engine.js",
+      "sha256": "31489eaeffcd4f12696b473467c6be7e494e8e26a8eb64c4c8c69d18f215f94a"
+    },
+    {
+      "path": "response-ingestion.js",
+      "sha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19"
+    },
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d"
+    },
+    {
+      "path": "test-handoff-authorization.mjs",
+      "sha256": "37bfb4e255afb6701fccaccdf055ee7961e838eaf03927c2963dfcf880cf82b6"
+    },
+    {
+      "path": "test-project-store-runtime.mjs",
+      "sha256": "955fc63a1b7ae3ec7f8b71f36fd4d76d4ad8ee8fa0de2fa8d2697a66b1458eef"
+    },
+    {
+      "path": "test-runtime.js",
+      "sha256": "e4e01a79c526592f9d044e2c104845e63c9aa341eb64837c138f5c3e3ecba353"
+    },
+    {
+      "path": "test-stage01-specification-controls.mjs",
+      "sha256": "3455469d384cd50cc4216ddd842d50c70ea088b3639b045ac9f5d82f4d73a2d3"
+    },
+    {
+      "path": "test-zip.mjs",
+      "sha256": "b5080a8e58eb7b13f421ecce5c63a3d95b765a5b021f5bd4543dce28d171e89d"
+    },
+    {
+      "path": "verification-evidence-catalog.mjs",
+      "sha256": "e6378e7747ba860e5312a813c55625748d2fbaee5f2838d8ee4e97349ba4640f"
+    },
+    {
+      "path": "verification/normative-context-applicability-20261005.json",
+      "sha256": "7cd05ff0028578a1ca1c2560533519a602ce6a974c240ee11dbbd272524cf656"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-e2c966ff2db0502c8d0f2d40e87f4262-20261005.json",
+      "sha256": "e6fb328e29cb065d8e980ec84243cfa008ac244be1791ff6fd87b01a7051bd54"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-e2c966ff2db0502c8d0f2d40e87f4262-20261006.json",
+      "sha256": "e2284725dd276815d793e8872d4808395de576fe3df9f26fe1c9a4d3369eaf23"
+    },
+    {
+      "path": "verifier-runtime.mjs",
+      "sha256": "8a4c9058b6c72a5aa8dd68809e3cbfd8e5c217b358c41970347443a338f83933"
+    },
+    {
+      "path": "verify-stage01-agent-contract-alignment.mjs",
+      "sha256": "a3bb726418a565ea1a4f3d4853b4fdfbac423e8c8fa304e73ba4bd9fbbb4bec0"
+    },
+    {
+      "path": "workbook.js",
+      "sha256": "3a8098a9bb4ea108eadaa9bec90c76a1522f57f6465f45341cedf60937ddd008"
+    },
+    {
+      "path": "workflow-engine.js",
+      "sha256": "b47195d41a130cb1b84425f5eb33bd8a163e1047c0e95e19eef59d47525e463d"
+    },
+    {
+      "path": "workflow-schema.js",
+      "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
+    },
+    {
+      "declarationSha256": "c70195285acd79b93903d9147c2b0a7988199bd985a7b6d2a6bc808df1322640"
+    }
+  ],
+  "findings": [],
+  "reviewPerformed": true,
+  "reviewCompletedAt": "2026-10-06T21:53:38.424803+00:00",
+  "sourceLocation": {
+    "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+    "startLine": 438,
+    "endLine": 438,
+    "lineSha256": "b36b5d67ce8a16dbdd8f21c7d25f50100f5f937affe07a7cea376c36b4d498cf"
+  },
+  "controllingText": "- tool restrictions;",
+  "governingContext": [],
+  "additionalControllingContext": [
+    {
+      "line": 422,
+      "text": "The Stage 01 prompt MUST require:",
+      "normativeRequirementId": "NREQ-d72153098f746d8eb6f60b678d7ebbd4"
+    },
+    {
+      "line": 428,
+      "text": "Compare the extracted ledger back against every raw input unit and specifically search for omitted:",
+      "normativeRequirementId": "NREQ-57f8fa829a872f35948a81bd58477291"
+    }
+  ],
+  "reviewedChecks": [
+    {
+      "suite": "verify-stage01-agent-contract-alignment.mjs",
+      "checkId": "STAGE01-SPECIFICATION-CONTRACT-CONTROLS"
+    }
+  ],
+  "semanticDecision": "EXACT_STAGE01_PROMPT_PRODUCER_DUTY",
+  "reason": "Parent422 requires producer instructions: exact exported carrier literals and independent category list test the requirement without claiming the actor actually understands arbitrary input.",
+  "scopeLimit": "Current executed receipts still required. No browser, physical-device, real human semantic confirmation, or arbitrary external actor truth inferred.",
+  "actorIndependenceBoundary": "Renewal author /root/ci_delivery_audit and actual reviewer /root are separate agent contexts. This declaration sufficiency review does not certify hidden-context or external-actor independence.",
+  "reviewerPriorContributionDisclosure": "Root integrated UI/test edits; separate UI/storage/CI reviews were observed. This is independent review of ci_delivery authored declaration renewal, not independent evidence of all root implementation decisions.",
+  "retainedReviewInputs": {
+    "proposal": {
+      "path": "/workspace/scratch/full-coverage-contracts-proposals.json",
+      "sha256": "890122bf31c612738f6bd7d9c994803656c02a7798994a7846f560f6cccb6fcc"
+    },
+    "priorSemanticReview": {
+      "path": "/workspace/scratch/independent-full-coverage-semantic-review-current45.json",
+      "sha256": "8b76d6c6c1425220853a1798090edf609fadde97ad840f2699e006b7ed2bb866"
+    }
+  },
+  "qualifiedExecutionAndReviewEvidence": [
+    {
+      "path": "/workspace/scratch/independent-stage01-producer-controls-current45.json",
+      "sha256": "7c20a2528a79757ea6479f9b8fffe6a6cd746de65e9f067774b7c1a242a87a67",
+      "qualification": "Retained actual boundary/source tuple only; this reference does not substitute for current canonical executed receipts."
+    }
+  ],
+  "currentExecutionRequired": true,
+  "applicationConformanceClaim": false,
+  "priorReview": {
+    "path": "verification/requirement-coverage-NREQ-e2c966ff2db0502c8d0f2d40e87f4262-20261006.json",
+    "sha256": "e2284725dd276815d793e8872d4808395de576fe3df9f26fe1c9a4d3369eaf23",
+    "author": {
+      "actor": "Codex current-owner declaration renewal author",
+      "contextId": "/root/ci_delivery_audit"
+    },
+    "reviewer": {
+      "actor": "Codex independent exact-clause declaration reviewer",
+      "contextId": "/root"
+    },
+    "reviewCompletedAt": "2026-10-06T20:42:39.554Z",
+    "retainedEarlierPriorReview": {
+      "path": "verification/requirement-coverage-NREQ-e2c966ff2db0502c8d0f2d40e87f4262-20261005.json",
+      "sha256": "e6fb328e29cb065d8e980ec84243cfa008ac244be1791ff6fd87b01a7051bd54",
+      "author": {
+        "actor": "Codex declaration author",
+        "contextId": "/root/contracts"
+      },
+      "reviewer": {
+        "actor": "Codex independent declaration reviewer",
+        "contextId": "/root/independent_spec"
+      },
+      "reviewCompletedAt": "2026-10-05T17:00:42.273Z",
+      "declarationSha256": "1f4ac950c5122fa50337cc9aa346490b5315b89cee247c5bde0b94f92f0056ae"
+    }
+  },
+  "currentDependencyReconciliation": {
+    "status": "APPROVED_EXACT_CURRENT_SOURCE_REBIND",
+    "baselineHead": "5fd6d120cea99e514560365684ffe3eec53ea206",
+    "sourceInputsSha256": "3de26df2d3c285c252614b63a5d45bd5fe31e7c283b0bcc022f94caa525b22fd",
+    "changes": [
+      {
+        "path": "app-core.js",
+        "sha256": "83ab20995a8e3ab8942c6291854630af7b1eea86bf5a6424e685f61b7461bcb3",
+        "priorSha256": null,
+        "kind": "ADDED_ACTUAL_DEPENDENCY_OR_RETAINED_REVIEW"
+      },
+      {
+        "path": "hash.js",
+        "sha256": "c5df5b7459ad610ee07e1793be3b3b38efbf0a65aeb22b03e2dd89026fed31a6",
+        "priorSha256": null,
+        "kind": "ADDED_ACTUAL_DEPENDENCY_OR_RETAINED_REVIEW"
+      },
+      {
+        "path": "project-store.js",
+        "sha256": "2d6896f47164f4a232c631d949cce64d2200e6d4e2202c2c3cdb29b08648cdf2",
+        "priorSha256": null,
+        "kind": "ADDED_ACTUAL_DEPENDENCY_OR_RETAINED_REVIEW"
+      },
+      {
+        "path": "response-ingestion.js",
+        "sha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19",
+        "priorSha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92",
+        "kind": "CHANGED_PREVIOUSLY_REVIEWED_INPUT"
+      },
+      {
+        "path": "test-runtime.js",
+        "sha256": "e4e01a79c526592f9d044e2c104845e63c9aa341eb64837c138f5c3e3ecba353",
+        "priorSha256": null,
+        "kind": "ADDED_ACTUAL_DEPENDENCY_OR_RETAINED_REVIEW"
+      },
+      {
+        "path": "verification-evidence-catalog.mjs",
+        "sha256": "e6378e7747ba860e5312a813c55625748d2fbaee5f2838d8ee4e97349ba4640f",
+        "priorSha256": "feedf2e728fca37acf303536dd55216389d591567c1ab89236a53aa0b2d19eed",
+        "kind": "CHANGED_PREVIOUSLY_REVIEWED_INPUT"
+      },
+      {
+        "path": "verification/requirement-coverage-NREQ-e2c966ff2db0502c8d0f2d40e87f4262-20261006.json",
+        "sha256": "e2284725dd276815d793e8872d4808395de576fe3df9f26fe1c9a4d3369eaf23",
+        "priorSha256": null,
+        "kind": "ADDED_ACTUAL_DEPENDENCY_OR_RETAINED_REVIEW"
+      },
+      {
+        "path": "workbook.js",
+        "sha256": "3a8098a9bb4ea108eadaa9bec90c76a1522f57f6465f45341cedf60937ddd008",
+        "priorSha256": null,
+        "kind": "ADDED_ACTUAL_DEPENDENCY_OR_RETAINED_REVIEW"
+      },
+      {
+        "path": "workflow-schema.js",
+        "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8",
+        "priorSha256": null,
+        "kind": "ADDED_ACTUAL_DEPENDENCY_OR_RETAINED_REVIEW"
+      }
+    ],
+    "changedOwners": [
+      {
+        "path": "response-ingestion.js",
+        "priorSha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92",
+        "sha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19"
+      }
+    ],
+    "supplementalInputRationale": [
+      {
+        "path": "workbook.js",
+        "reason": "Actual Stage1 specification controls invoke projectStoreRuntime and staged read/capture/prepare/commit."
+      },
+      {
+        "path": "hash.js",
+        "reason": "Actual Stage1 specification controls invoke projectStoreRuntime and staged read/capture/prepare/commit."
+      },
+      {
+        "path": "workflow-schema.js",
+        "reason": "Actual Stage1 specification controls invoke projectStoreRuntime and staged read/capture/prepare/commit."
+      },
+      {
+        "path": "test-runtime.js",
+        "reason": "Actual Stage1 specification controls invoke projectStoreRuntime and staged read/capture/prepare/commit."
+      },
+      {
+        "path": "workflow-engine.js",
+        "reason": "Actual Stage1 specification controls invoke projectStoreRuntime and staged read/capture/prepare/commit."
+      },
+      {
+        "path": "prompt-engine.js",
+        "reason": "Actual Stage1 specification controls invoke projectStoreRuntime and staged read/capture/prepare/commit."
+      },
+      {
+        "path": "response-ingestion.js",
+        "reason": "Actual Stage1 specification controls invoke projectStoreRuntime and staged read/capture/prepare/commit."
+      },
+      {
+        "path": "project-store.js",
+        "reason": "Actual Stage1 specification controls invoke projectStoreRuntime and staged read/capture/prepare/commit."
+      },
+      {
+        "path": "app-core.js",
+        "reason": "Actual Stage1 specification controls invoke projectStoreRuntime and staged read/capture/prepare/commit."
+      }
+    ],
+    "priorReview": {
+      "path": "verification/requirement-coverage-NREQ-e2c966ff2db0502c8d0f2d40e87f4262-20261006.json",
+      "sha256": "e2284725dd276815d793e8872d4808395de576fe3df9f26fe1c9a4d3369eaf23"
+    },
+    "sourceReviewStatus": "COMPLETE_COVERAGE_DECLARATION_SUFFICIENCY_ONLY",
+    "executionStatus": "CURRENT_COMPLETE_PRODUCER_RECEIPTS_STILL_REQUIRED"
+  },
+  "currentIndependentReview": {
+    "path": "/workspace/.closed-loop-engineering/followup-145-renewal-recovered/root23-independent-final-review.json",
+    "sha256": "8377037173d94daa1580cb4044fb5b9c0410ec96d49e1f7ac1ec17ed1ff421fe",
+    "decision": "APPROVED_CURRENT_SOURCE_QUALIFIED_DECLARATIONS",
+    "proposal": {
+      "path": "/workspace/.closed-loop-engineering/followup-145-renewal-recovered/root23.json",
+      "sha256": "a1c4dda4acf1dee4adc56e43d87b239f7e1b69bd57a70f68b5e82456ac3191f5"
+    },
+    "reviewCompletedAt": "2026-10-06T21:53:38.424803+00:00",
+    "reviewer": {
+      "actor": "Codex independent exact-clause declaration reviewer",
+      "contextId": "/root"
+    },
+    "sourceReviewOnly": true
+  },
+  "recoveryQualification": {
+    "historicalTemporaryArtifactBytesAvailable": false,
+    "priorObservedApprovalSha256": "d9e3791d5776f70f647cb66999c6a4c1c2082d4d1e00f1ff4655f919ac9f3c77",
+    "freshApprovalRequiredAndObtained": true,
+    "retainedRepositoryReviewFilesPreserved": true,
+    "executionEvidenceRecreated": false
+  }
+}

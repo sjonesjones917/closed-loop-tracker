@@ -2,17 +2,20 @@ import {artifactFixtureId} from './test-artifact-fixtures.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
-import {projectStoreRuntime} from './test-project-store-runtime.mjs';
+import {gunzipSync} from 'node:zlib';
+import {storedArtifactBody,projectStoreRuntime,bindProjectActivationUi,restoreArtifactFixture,hydrateRetainedPromptContexts} from './test-project-store-runtime.mjs';
 const mutation=process.argv.find(arg=>arg.startsWith('--fault='))?.slice(8),faults={
- 'mixed-versions':{id:'RESTORE-INCOMPATIBLE-VERSIONS',file:'project-store.js',before:'const next=clone(saved.project);',after:'const next={...clone(saved.project),projectData:clone(prior.projectData)};'},
+ 'mixed-versions':{id:'RESTORE-INCOMPATIBLE-VERSIONS',file:'project-store.js',before:'let next=clone(saved.project);',after:'let next={...clone(saved.project),projectData:clone(prior.projectData)};'},
  'import-projection':{id:'IMPORT-PROJECTION-INTEGRITY',file:'project-store.js',before:'withVerifiedRecoveryCustody(verifiedArtifacts,()=>assertProjectIntegrity(project))',after:'withVerifiedRecoveryCustody(verifiedArtifacts,()=>assertProjectIntegrity(project,{verifyCachedProjection:false}))'},
- 'history-projection':{id:'HISTORY-PROJECTION-INTEGRITY',file:'project-store.js',before:'try{assertProjectIntegrity(project);}catch(error){\n    if(error.code',after:'try{assertProjectIntegrity(project,{verifyCachedProjection:false});}catch(error){\n    if(error.code'},
+ 'history-projection':{id:'HISTORY-PROJECTION-INTEGRITY',file:'project-store.js',before:'try{assertProjectIntegrity(project);}catch(error){',after:'try{assertProjectIntegrity(project,{verifyCachedProjection:false});}catch(error){'},
  'mutate-retained':{id:'MUTATE-RETAINED-CHECKPOINT',file:'project-store.js',before:"meta.put({key:historyKey(state.jobId),value:state,updatedAt:now()});await updateRecoveryCatalog(meta,state);fault('during-history-write');",after:"if(state.entries.length>1){const previous=await request(meta.get(snapshotKey(state.jobId,state.entries[0].id)));previous.value.blob=new Blob(['deliberately mutated retained checkpoint']);meta.put(previous);}meta.put({key:historyKey(state.jobId),value:state,updatedAt:now()});await updateRecoveryCatalog(meta,state);fault('during-history-write');"}
 };
 if(mutation&&!faults[mutation])throw new Error('Unknown deliberate mutation.');
 const r=projectStoreRuntime({fault:faults[mutation]}),{store,engine,core,runtime,rows,copy}=r;
 const plain=value=>JSON.parse(JSON.stringify(value));
-const id='SYNTHETIC-RECOVERY-REGRESSION',cases=[];
+const id='SYNTHETIC-RECOVERY-REGRESSION',cases=[],verificationObservations=[],negativeCasePopulation=[];
+const spec='specification/closed-loop-reliability-controlling-implementation-specification.txt';
+function observedProjection(caseId,boundary,observed){const checkId='projection.recovery-canonical-authority',violation='stageProjectionsOverridingCanonicalRecords';negativeCasePopulation.push({caseId,checkId,violation,boundary,observed,accepted:false,result:'PASS'});const prior=verificationObservations.find(row=>row.checkId===checkId),actual={caseId,boundary,...observed};if(prior)prior.observed.cases.push(actual);else verificationObservations.push({checkId,requirementRefs:[spec+':4663',spec+':5530'],boundary:'Production store backup import, retained view read and checkpoint activation',expected:'Contradictory cached projection rejects before usable view or activation; canonical records remain authoritative.',observed:{cases:[actual]},passed:true,violation,accepted:false});}
 const record=(name,details={})=>cases.push({name,...details,result:'PASS'});
 let p=core.createBlankState(id);engine.ensureShape(p);engine.recalculate(p);p=await store.writeProject(p,{expectedProjectRevision:0,createOnly:true});
 await store.beginHistorySession('SESSION-A');let history=await store.historyList(id);const start=history.sessions['SESSION-A'].checkpointId,starting=copy(p);
@@ -25,8 +28,11 @@ assert.equal(p.job.JOB_TITLE,'First continuation');assert.equal((await store.get
 const currentBytes=await store.getArtifact(file.artifactId,{jobId:id});assert.deepEqual(new Uint8Array(await currentBytes.blob.arrayBuffer()),new Uint8Array(await bytes.arrayBuffer()));
 assert.deepEqual(p.projectData,firstProject.projectData);assert.deepEqual(p.stages,firstProject.stages);assert.ok(p.revision>firstProject.revision,'Restoration must preserve concurrency monotonicity.');
 record('Restore complete project and exact non-text bytes');
+const beforeStaleWrite=copy(p),beforeStaleHistory=await store.historyList(id);
 await assert.rejects(store.writeProject(firstProject,{expectedProjectRevision:firstProject.revision}),error=>error.code==='STALE_PROJECT_REVISION');
+assert.deepEqual(await store.readProject(id),beforeStaleWrite,'STALE_WRITE_CANONICAL_ISOLATION_ORACLE');assert.deepEqual(await store.historyList(id),beforeStaleHistory,'STALE_WRITE_HISTORY_ISOLATION_ORACLE');
 record('Delayed response or stale tab cannot write after restore');
+verificationObservations.push({checkId:'store.cas-stale-write-isolation',requirementRefs:[spec+':3082'],boundary:'Production store compare-and-swap via isolated lifecycle transaction adapter',expected:{staleRevisionRejected:true,canonicalStateUnchanged:true,historyUnchanged:true,newerRevisionRestored:true},observed:{staleRevisionRejected:true,canonicalStateUnchanged:true,historyUnchanged:true,newerRevisionRestored:p.revision>firstProject.revision},passed:true});
 p=(await store.restoreCheckpoint(id,second,{expectedProjectRevision:p.revision,mode:'REDO'})).project;assert.equal(p.job.JOB_TITLE,'Second continuation');record('Redo restores saved continuation without executing commands');
 p=(await store.restoreCheckpoint(id,first,{expectedProjectRevision:p.revision})).project;next=copy(p);next.job.JOB_TITLE='Alternative continuation';p=await store.writeProject(next,{expectedProjectRevision:p.revision});history=await store.historyList(id);assert.ok(history.entries.some(entry=>entry.id===second));const alternative=history.activeId;
 record('New continuation retains previous alternative');
@@ -57,10 +63,10 @@ for(const phase of ['before-history-checkpoint','during-history-write','before-t
 const browserSource=fs.readFileSync(process.env.BROWSER_EXTRA_SOURCE||'verify-browser-extra.mjs','utf8'),contextExpression=browserSource.match(/const contextSaveProof=await evalValue\(cdp,`([\s\S]*?)`\);/)?.[1];
 assert.equal(typeof contextExpression,'string','Browser context fault gate is unavailable');
 for(const interruption of [false,true]){
- const r=projectStoreRuntime({sourceOverrides:process.env.STORE_SOURCE?{'project-store.js':fs.readFileSync(process.env.STORE_SOURCE,'utf8')}:{}}),writes=[];let original,projectBefore,historyBefore;
+ const r=projectStoreRuntime({sourceOverrides:process.env.STORE_SOURCE?{'project-store.js':fs.readFileSync(process.env.STORE_SOURCE,'utf8')}:{}}),writes=[];let original,originalBlob,projectBefore,historyBefore;
  const db={transaction(name,mode){
-  assert.equal(name,'artifacts');assert.equal(mode,'readwrite');const pending=[],tx={objectStore(storeName){assert.equal(storeName,name);return {put(row){pending.push(r.copy(row));}};}};
-  queueMicrotask(()=>{for(const row of pending){if(!original){original=r.copy(r.rows.get(name).get(row.artifactId));projectBefore=r.copy(r.rows.get('projects').get(row.jobId));historyBefore=r.copy(r.rows.get('meta').get('recovery:'+row.jobId));}writes.push(row);r.rows.get(name).set(row.artifactId,row);}tx.oncomplete?.();});return tx;
+  assert.equal(name,'artifacts');assert(['readonly','readwrite'].includes(mode));if(mode==='readonly')return {objectStore:()=>({get:id=>{const req={};queueMicrotask(()=>{req.result=r.copy(r.rows.get(name).get(id));req.onsuccess?.();});return req;}})};const pending=[],tx={objectStore(storeName){assert.equal(storeName,name);return {put(row){pending.push(r.copy(row));}};}};
+  queueMicrotask(()=>{for(const row of pending){if(!original){original=r.copy(r.rows.get(name).get(row.artifactId));originalBlob=storedArtifactBody(r,row.artifactId).blob;projectBefore=r.copy(r.rows.get('projects').get(row.jobId));historyBefore=r.copy(r.rows.get('meta').get('recovery:'+row.jobId));}writes.push(row);r.rows.get(name).set(row.artifactId,row);}tx.oncomplete?.();});return tx;
  }};
  r.runtime.closedLoopProjectStore={...r.store,openDatabase:async()=>db,readProject:async(...args)=>{
   if(interruption&&original&&writes.length===1)throw Object.assign(new Error('CONTROLLED_CONTEXT_OBSERVATION_FAILURE'),{code:'CONTROLLED_CONTEXT_OBSERVATION_FAILURE'});
@@ -70,7 +76,7 @@ for(const interruption of [false,true]){
  assert(original&&writes[0].byteSize===original.byteSize+1,'CONTEXT_FAULT_INJECTION_ORACLE: the negative case must contain exactly one byte-size violation');
  if(!interruption)assert(!error,'CONTEXT_FAULT_LIFECYCLE_ORACLE: the valid negative test must finish and preserve recovery: '+String(error?.code||error));
  const finalWrite=writes.at(-1);
- assert(writes.length===2&&JSON.stringify({...finalWrite,blob:null})===JSON.stringify({...original,blob:null})&&await finalWrite.blob.text()===await original.blob.text(),'CONTEXT_FAULT_RESTORATION_ORACLE: restore the exact faulted row, including when an observation throws');
+ assert(writes.length===2&&JSON.stringify({...finalWrite,blob:null})===JSON.stringify({...original,blob:null})&&await storedArtifactBody(r,original.artifactId).blob.text()===await originalBlob.text(),'CONTEXT_FAULT_RESTORATION_ORACLE: restore the exact faulted row, including when an observation throws');
  const jobId=original.jobId;
  if(interruption){
   assert.equal(error?.code,'CONTROLLED_CONTEXT_OBSERVATION_FAILURE','The original observation error must remain visible');
@@ -82,7 +88,7 @@ for(const interruption of [false,true]){
   assert.equal((await r.store.listArtifacts(jobId)).length,0);
   const history=await r.store.historyList(jobId),restored=await r.store.restoreCheckpoint(jobId,history.activeId);
   assert.deepEqual(restored.project.projectData.generatedPrompts,projectBefore.project.projectData.generatedPrompts,'Removal recovery changed historical instructions');
-  const file=await r.store.getArtifact(original.artifactId);assert.equal(file.byteSize,original.byteSize);assert.equal(file.sha256,original.sha256);assert.deepEqual(new Uint8Array(await file.blob.arrayBuffer()),new Uint8Array(await original.blob.arrayBuffer()));
+  const file=await r.store.getArtifact(original.artifactId);assert.equal(file.byteSize,original.byteSize);assert.equal(file.sha256,original.sha256);assert.deepEqual(new Uint8Array(await file.blob.arrayBuffer()),new Uint8Array(await originalBlob.arrayBuffer()));
   // The application must still reject recoverable removal of corrupt content.
   const project=await r.store.readProject(jobId),retained=await r.store.historyList(jobId);
   for(const violation of ['size','digest','bytes']){
@@ -119,6 +125,7 @@ for(const interruption of [false,true]){
   assert.deepEqual(await store.historyList(source.job.JOB_ID),historyBefore,'Rejected projection changed recovery points');
   assert.deepEqual(await store.metaGet('lastVerifiedImport'),receiptBefore,'Rejected projection recorded successful import');
   assert.deepEqual(new Uint8Array(await blob.arrayBuffer()),sourceBytes,'Rejected source bytes must remain available unchanged');
+  observedProjection('import-'+violation,'Actual verified complete backup import',{violation,rejection:'PROJECT_INTEGRITY_FAILED',canonicalProjectUnchanged:true,recoveryUnchanged:true,importReceiptUnchanged:true,sourceBytesUnchanged:true});
   record('Reject contradictory '+violation+' before backup activation',{oracle:'IMPORT_PROJECTION_INTEGRITY_ORACLE'});
  }
  // Reconstruct the retained state an older permissive import could create.
@@ -134,7 +141,8 @@ for(const interruption of [false,true]){
   old.rows.get('projects').set(jobId,savedRow);
   const retained=await old.store.historyList(jobId);
   await assert.rejects(old.store.readHistoryView(jobId,checkpoint),error=>error.code==='HISTORY_VERSION_INCOMPATIBLE','HISTORY_PROJECTION_INTEGRITY_ORACLE: contradictory '+violation+' became a usable view');
-  for(const mode of ['HISTORY','UNDO','REDO'])await assert.rejects(old.store.restoreCheckpoint(jobId,checkpoint,{expectedProjectRevision:compatible.revision,mode}),error=>error.code==='HISTORY_VERSION_INCOMPATIBLE','HISTORY_PROJECTION_INTEGRITY_ORACLE: '+mode+' activated contradictory '+violation);
+  observedProjection('view-'+violation,'Actual retained History view read',{violation,rejection:'HISTORY_VERSION_INCOMPATIBLE',usableViewReturned:false});
+  for(const mode of ['HISTORY','UNDO','REDO']){await assert.rejects(old.store.restoreCheckpoint(jobId,checkpoint,{expectedProjectRevision:compatible.revision,mode}),error=>error.code==='HISTORY_VERSION_INCOMPATIBLE','HISTORY_PROJECTION_INTEGRITY_ORACLE: '+mode+' activated contradictory '+violation);observedProjection(mode.toLowerCase()+'-'+violation,'Actual '+mode+' checkpoint activation',{violation,rejection:'HISTORY_VERSION_INCOMPATIBLE',activated:false});}
   assert.deepEqual(await old.store.readProject(jobId),compatible,'Rejected History changed the active version');
   assert.deepEqual(await old.store.historyList(jobId),retained,'Rejected History changed retained versions');
   // A valid active version must not hide an incompatible earlier checkpoint
@@ -143,6 +151,7 @@ for(const interruption of [false,true]){
   const backup=await old.store.exportPackage(jobId),destination=projectStoreRuntime();
   await assert.rejects(destination.store.importPackage(backup),error=>error.code==='HISTORY_VERSION_INCOMPATIBLE','HISTORY_PROJECTION_INTEGRITY_ORACLE: backup accepted an incompatible retained checkpoint');
   assert.equal(await destination.store.readProject(jobId),null);
+  observedProjection('nested-import-'+violation,'Actual complete backup import with incompatible retained checkpoint',{violation,rejection:'HISTORY_VERSION_INCOMPATIBLE',destinationProjectCreated:false});
   record('Reject retained '+violation+' through view, History, Undo, Redo and nested backup import',{oracle:'HISTORY_PROJECTION_INTEGRITY_ORACLE'});
  }
  const exact=project=>{const value=copy(project);for(const key of ['projectSha256','historyActivationId','restoredCandidates'])delete value[key];value.revision=original.revision;return value;};
@@ -164,6 +173,7 @@ for(const interruption of [false,true]){
  let prior=core.createBlankState('PRIOR-BACKUP-UI');engine.ensureShape(prior);engine.recalculate(prior);prior=await store.writeProject(prior,{expectedProjectRevision:0,createOnly:true});
  Object.assign(runtime,{projectStore:store,core,engine,schema:runtime.closedLoopWorkflowSchema,current:prior,projects:[prior],clone:copy,views:['Overview','Project','Workflow'],projectIsArchived:()=>false,projectDisplayName:project=>project.job.JOB_TITLE||project.job.JOB_ID,esc:value=>String(value),$:node,document:{querySelector:node},File,DataTransfer:class{constructor(){this.files=[];this.items={add:file=>this.files.push(file)};}},withStorageActivity:async(_label,operation)=>operation(),takeBackupPassphrase:()=>null,requestBackupPassword:()=>false,loadAcceptanceSession:async()=>{},recordMobileBackupRestore:async()=>{},refreshProjectStorage:async()=>{},announce:message=>{node('#app-live-status').textContent=message;},pendingBackupAction:null,replacementReview:null,replacementReviewFromSavedView:()=>null,operationSelection:{},runSelection:{},fileSelectionDrafts:{},applySavedView:()=>{},operatorActionInFlight:null,focusAfterAction:()=>{}});
  const app=fs.readFileSync('app-core.js','utf8'),browser=fs.readFileSync(process.env.BROWSER_EXTRA_SOURCE||'verify-browser-extra.mjs','utf8');
+ bindProjectActivationUi(ui,{source:app});
  vm.runInContext(app.slice(app.indexOf('let actionFailureNotice='),app.indexOf('const storageActivities='))+app.slice(app.indexOf('async function importProjectPackageFile('),app.indexOf('let pendingBackupAction='))+app.slice(app.indexOf('function selectSavedView('),app.indexOf('function applySavedView('))+['completion','header'].map(name=>app.split('\n').find(line=>line.startsWith('function '+name+'('))).join('\n'),runtime);
  runtime.render=()=>runtime.header();runtime.recordCommittedBoundary=()=>store.saveCheckpoint(runtime.current.job.JOB_ID,{expectedProjectRevision:runtime.current.revision});
  node('#import-file').onchange=({target})=>runtime.importProjectPackageFile(target.files[0],{recordSelection:false});runtime.header();
@@ -173,4 +183,44 @@ for(const interruption of [false,true]){
  assert.ok(proof.restored&&proof.originalPreserved&&proof.currentStage==='STAGE 01'&&!proof.fabricatedCompletion&&proof.historyReadable&&proof.successVisible&&proof.progress==='0/30 complete'&&proof.selected&&proof.tailPreserved,'IMPORT_PROJECTION_RESTORE_ORACLE: browser case failed usable restoration '+JSON.stringify(proof));
  record('Browser backup projection sequence through actual import, saved-view and header owners',{actualBrowserExpression:true,nativeIndexedDB:false,proof});
 }
-console.log(JSON.stringify({synthetic:true,environment:'Node VM; production store with the existing lifecycle transaction adapter',realIndexedDB:false,physicalDevice:false,cases},null,2));
+// Expiry changes current readiness; it cannot corrupt an exact historical
+// projection that was valid at its preserved application observation time.
+// The fixture is a retained synthetic prior-contract author journey, not real
+// external capability, human acceptance, physical-device or trusted-time proof.
+{
+ const carrier=JSON.parse(fs.readFileSync('verification/deferred-definition-compatibility-legacy-fixture-20261005.json','utf8'));
+ const decoded=Buffer.from(gunzipSync(Buffer.from(carrier.gzipBase64,'base64'))),cohort=JSON.parse(decoded.toString('utf8')).cohorts.failureTests;
+ assert.equal(decoded.byteLength,carrier.decodedByteSize);assert.equal(runtime.closedLoopHash.sha256Bytes?await runtime.closedLoopHash.sha256Bytes(new Uint8Array(decoded)):null,carrier.decodedSha256);
+ const report=cohort.project.projectData.environmentManifests.find(row=>row.source==='EXTERNAL_CAPABILITY_REGISTRATION').fields.EXTERNAL_CLAIMS;
+ let clock=Date.parse(report.observedAt)+60000,tick=false,clockReads=0;
+ class ObservationClock extends Date{constructor(...args){super(...(args.length?args:[clock]));}static now(){clockReads++;const value=clock;if(tick)clock+=2;return value;}}
+ const target=projectStoreRuntime({environment:{Date:ObservationClock}}),{store:owner,engine:workflow,copy:copyProject}=target,h=target.runtime.closedLoopHash;
+ await restoreArtifactFixture(owner,cohort.artifacts);let current=copyProject(cohort.project);await hydrateRetainedPromptContexts(target,current,cohort.contextFiles);
+ current=await owner.writeProject(current,{expectedProjectRevision:0,createOnly:true,incrementRevision:false});assert.equal(current.stages[2].gate.complete,true);
+ const jobId=current.job.JOB_ID,checkpoint=(await owner.historyList(jobId)).activeId,snapshotKey='recovery:'+jobId+':snapshot:'+checkpoint,snapshotBytes=new Uint8Array(await target.rows.get('meta').get(snapshotKey).value.blob.arrayBuffer()),originalRaw=Array.from(current.projectData.rawResponses,row=>[row.rawResponseId,row.completeRawResponse,row.sha256]),families=['failureTests','regressions','tests','requirements','sources','defects','humanDecisions','externalCapabilities','environmentManifests'],originalFamilies=Object.fromEntries(families.map(family=>[family,h.stableStringify(current.projectData[family])])),backup=await owner.exportPackage(jobId);
+ const originalView=await owner.readHistoryView(jobId,checkpoint);
+ clock=Date.parse(report.validUntil)-1;tick=true;clockReads=0;const projected=copyProject(current);workflow.recalculate(projected);assert.equal(clockReads,1,'READINESS_EPOCH_ORACLE: one 30-stage projection must share one readiness observation');assert.equal(projected.stages[2].gate.complete,true);assert.equal(projected.stages[6].gate.complete,true);tick=false;
+ clock=Date.parse(report.validUntil)+60000;const saved=await owner.readProject(jobId),savedSha=saved.projectSha256;
+ assert.equal(workflow.gate(saved,2).complete,false,'Expired capability must not authorize current work');assert.deepEqual(await owner.readHistoryView(jobId,checkpoint),originalView,'EXPIRED_READINESS_HISTORY_ORACLE: an authentic historical view remains readable');assert.equal((await owner.readProject(jobId)).projectSha256,savedSha);
+ const view=copyProject({activeView:'Workflow',activeStage:7,scrollY:17,drafts:{'#response-draft':{value:'Exact é🙂 pending draft'}}}),child=await owner.saveCheckpoint(jobId,{expectedProjectRevision:saved.revision,expectedStateSha256:savedSha,view});assert.deepEqual(await owner.readHistoryView(jobId,child),view,'A later reference must use the original root projection observation');
+ let refreshed=await owner.refreshProjectProjection(jobId,{expectedProjectRevision:saved.revision,expectedStateSha256:savedSha});assert.equal(refreshed.revision,saved.revision+1);assert.equal(refreshed.job.CURRENT_STAGE,'STAGE 02');assert.equal(refreshed.stages[2].gate.complete,false);assert.equal(owner.validateProjectIntegrity(refreshed).valid,true);
+ for(const family of families)assert.equal(h.stableStringify(refreshed.projectData[family]),originalFamilies[family],family+' exact retained authority');assert.deepEqual(Array.from(refreshed.projectData.rawResponses,row=>[row.rawResponseId,row.completeRawResponse,row.sha256]),originalRaw);
+ await assert.rejects(owner.refreshProjectProjection(jobId,{expectedProjectRevision:saved.revision,expectedStateSha256:savedSha}),error=>error.code==='STALE_PROJECT_REVISION');assert.equal((await owner.readProject(jobId)).projectSha256,refreshed.projectSha256);
+ refreshed=(await owner.restoreCheckpoint(jobId,checkpoint,{expectedProjectRevision:refreshed.revision})).project;assert.equal(refreshed.job.CURRENT_STAGE,'STAGE 02');assert.equal(refreshed.stages[2].gate.complete,false);assert.deepEqual(Array.from(refreshed.projectData.rawResponses,row=>[row.rawResponseId,row.completeRawResponse,row.sha256]),originalRaw);assert.deepEqual(new Uint8Array(await target.rows.get('meta').get(snapshotKey).value.blob.arrayBuffer()),snapshotBytes);
+ const destination=projectStoreRuntime({environment:{Date:ObservationClock}}),imported=await destination.store.importPackage(backup.blob||backup),destinationHash=destination.runtime.closedLoopHash;assert.equal(imported.job.CURRENT_STAGE,'STAGE 02');assert.equal(imported.stages[2].gate.complete,false);assert.equal(destination.store.validateProjectIntegrity(imported).valid,true);assert.deepEqual(Array.from(imported.projectData.rawResponses,row=>[row.rawResponseId,row.completeRawResponse,row.sha256]),originalRaw);for(const family of families)assert.equal(destinationHash.stableStringify(imported.projectData[family]),originalFamilies[family]);
+ const observationNegatives=[];
+ for(const kind of ['missing-observation','observation-after-root']){
+  const invalid=projectStoreRuntime({environment:{Date:ObservationClock}}),invalidOwner=invalid.store,invalidCopy=invalid.copy;
+  await restoreArtifactFixture(invalidOwner,cohort.artifacts);let base=invalidCopy(cohort.project);await hydrateRetainedPromptContexts(invalid,base,cohort.contextFiles);
+  base=await invalidOwner.writeProject(base,{expectedProjectRevision:0,createOnly:true,incrementRevision:false});const originalRow=invalidCopy(invalid.rows.get('projects').get(jobId)),badRow=invalidCopy(originalRow);
+  // Explicit older-permissive-store counterfactual: retain the complete prior
+  // cache, but remove or contradict its sole recorded observation timestamp.
+  badRow.project=invalidCopy(saved);if(kind==='missing-observation')delete badRow.project.stages[2].gate.checkedAt;else badRow.project.stages[2].gate.checkedAt=new ObservationClock(clock+60000).toISOString();badRow.revision=badRow.project.revision;badRow.projectSha256=invalidOwner.projectSha256(badRow.project);invalid.rows.get('projects').set(jobId,badRow);
+  const badCheckpoint=await invalidOwner.saveCheckpoint(jobId,{expectedProjectRevision:badRow.revision,label:'Unproven historical projection timestamp'});invalid.rows.get('projects').set(jobId,originalRow);const beforeRow=invalidCopy(await invalidOwner.readProject(jobId)),beforeHistory=invalidCopy(await invalidOwner.historyList(jobId));
+  await assert.rejects(invalidOwner.readHistoryView(jobId,badCheckpoint),error=>error.code==='HISTORY_VERSION_INCOMPATIBLE','Unproven timestamps cannot reproduce a favorable old projection');assert.deepEqual(await invalidOwner.readProject(jobId),beforeRow);assert.deepEqual(await invalidOwner.historyList(jobId),beforeHistory);observationNegatives.push({kind,rejected:true,canonicalUnchanged:true,historyUnchanged:true});
+ }
+ assert.throws(()=>workflow.withReadinessEvaluationEpoch(()=>{throw new Error('INJECTED_READINESS_PROJECTION_FAILURE');},{observedAt:report.observedAt}),/INJECTED_READINESS_PROJECTION_FAILURE/);assert.throws(()=>workflow.validateExternalCapabilityEvidence(saved,copyProject(report)),/future expiry time/,'Historical observation must not leak into current authorization');
+ record('Expired readiness preserves historical views and exact bytes while current activation and revision refresh stay blocked',{syntheticClock:true,actualExpiry:report.validUntil,canonicalFamiliesPreserved:families,rawResponsesPreserved:originalRaw.length,staleRefreshRejected:true,sameEpochReadiness:true});
+ verificationObservations.push({checkId:'history.expired-readiness-preserved',requirementRefs:[spec+':1160',spec+':1345',spec+':1569',spec+':2646'],boundary:'Production storage transaction adapter: exact legacy fixture write, historical root/reference views, current expected-revision refresh, History activation and full backup import; explicitly controlled clock',expected:'Expired current capability remains blocked, exact historical projection and raw/bytes remain recoverable, forged caches still reject, and each synchronous projection shares one readiness observation.',observed:{historicalViewReadable:true,referenceViewReadable:true,currentStage:'STAGE 02',expiredCapabilityBlocked:true,rawResponseCount:originalRaw.length,canonicalFamiliesPreserved:families,snapshotBytesUnchanged:true,refreshRevision:saved.revision+1,staleRefreshRejected:true,observationNegatives,projectionReadinessClockReads:1,syntheticClock:true,realIndexedDB:false,physicalDevice:false,trustedTime:false},passed:true});
+}
+console.log(JSON.stringify({synthetic:true,environment:'Node VM; production store with the existing lifecycle transaction adapter',realIndexedDB:false,physicalDevice:false,expiredReadinessHistoricalProjection:true,cases,verificationObservations,negativeCasePopulation},null,2));

@@ -1,0 +1,1812 @@
+{
+  "sourceCommit": "1599f9cfb33cc246292ade693c877fbe200b1986",
+  "stageCount": 30,
+  "rows": [
+    {
+      "stage": 1,
+      "name": "1 \u2014 INITIALIZE THE JOB",
+      "contractAndCompletion": "Complete human input/accounting, current input version, inspection custody, human authority confirmation; threshold-triggered independent challenge/reconcile. Completion: Current input version exists; every required file reached its required inspection basis; every raw unit is accounted for; all blocking questions are resolved; every ask-now human issue was answered or explicitly deferred; required agent fields exist; the current proposal is accepted; any intent confirmation references the current input version and accepted change.",
+      "operations": [
+        "COMPLETE",
+        "SEMANTIC_CHALLENGE",
+        "RECONCILE_INTAKE"
+      ],
+      "historicalReview": "workbook.js, workflow-schema.js, workflow-engine.js, prompt-engine.js, response-ingestion.js, project-store.js. Baseline evidence: verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping; Actual initial Stage1 production reserve/store/package export decoded; package-inspection-a194.json; Recovered source-bound a194 verify-ingestion owner exit0; semantic retry pre-fix/current and invalid/correct controls, synthetic adapter boundary only. Findings: EVIDENCE-REFERENCE-PROVIDED-CONTEXT: corrected; exact reserved ZIP/file/capture/admission/precommit/operator/store/reload controls; final integrated verification outstanding. CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED; final integrated whole-stage evidence pending.",
+      "source": "verification/complete-system-repair-20261007.md:137",
+      "currentStatus": "CURRENT_REGISTRY_MEMBERSHIP_LOADED; EXACT_DESCRIPTOR_RECOVERED_CONTRACT_REVIEW_RETAINED; CHANGED_RUNTIME_OWNER_BEHAVIOR_REQUIRES_SEPARATE_CURRENT_PROOF",
+      "recoveredScopedReview": {
+        "path": "/workspace/scratch/recovered-20261006/evidence/01-stage-review/current-stage-matrix.json",
+        "pointer": "/rows/0",
+        "sha256": "617e5e59d357f3c5bc903d03488a557dcfc9e30ae3af00924fb798c14534cc7f",
+        "reviewedCommit": "a194ae7020c40bf27bb4d5d1c586d271d4c87e92",
+        "entryAndDependencies": "Complete human input/accounting, current input version, inspection custody, human authority confirmation; threshold-triggered independent challenge/reconcile.",
+        "controllingCompletion": "Current input version exists; every required file reached its required inspection basis; every raw unit is accounted for; all blocking questions are resolved; every ask-now human issue was answered or explicitly deferred; required agent fields exist; the current proposal is accepted; any intent confirmation references the current input version and accepted change.",
+        "readCollections": [],
+        "agentFields": [
+          "EXACT_DELIVERABLE_REQUESTED",
+          "ASSUMPTIONS",
+          "UNKNOWN_INFORMATION",
+          "INPUT_SET_CONTENTS"
+        ],
+        "implementationPaths": [
+          "workbook.js",
+          "workflow-schema.js",
+          "workflow-engine.js",
+          "prompt-engine.js",
+          "response-ingestion.js",
+          "project-store.js"
+        ],
+        "historicalVerification": [
+          "verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping",
+          "Actual initial Stage1 production reserve/store/package export decoded; package-inspection-a194.json",
+          "Recovered source-bound a194 verify-ingestion owner exit0; semantic retry pre-fix/current and invalid/correct controls, synthetic adapter boundary only"
+        ],
+        "historicalDefects": [
+          {
+            "id": "EVIDENCE-REFERENCE-PROVIDED-CONTEXT",
+            "status": "corrected; exact reserved ZIP/file/capture/admission/precommit/operator/store/reload controls; final integrated verification outstanding",
+            "evidence": "/workspace/scratch/stage-contracts-reference-cohort-repair.json",
+            "qualification": "Counterexample/current Stage1 operation supplied no target identity; separate from observed historical raw-response retry counts, which remain unavailable."
+          }
+        ],
+        "historicalStatus": "CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED"
+      }
+    },
+    {
+      "stage": 2,
+      "name": "2 \u2014 BUILD THE SOURCE INVENTORY",
+      "contractAndCompletion": "Accepted human job; governing-source inventory/search contract; adequacy review/reconcile until no additional controlling source category. Completion: The current bounded SOURCE_SEARCH_CONTRACT was executed; every supplied or discovered candidate source has a disposition; required search-adequacy review is accepted; material discovery risk and controlling conflicts are resolved or blocked. No universal source-completeness claim is made.",
+      "operations": [
+        "COMPLETE",
+        "SEARCH_ADEQUACY_REVIEW",
+        "RECONCILE_SOURCE_SEARCH"
+      ],
+      "historicalReview": "workbook.js, workflow-schema.js, workflow-engine.js, prompt-engine.js, response-ingestion.js, project-store.js. Baseline evidence: verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping. Findings: No new stage-specific defect established by this continuation; shared repairs remain applicable. CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED; final integrated whole-stage evidence pending.",
+      "source": "verification/complete-system-repair-20261007.md:138",
+      "currentStatus": "CURRENT_REGISTRY_MEMBERSHIP_LOADED; EXACT_DESCRIPTOR_RECOVERED_CONTRACT_REVIEW_RETAINED; CHANGED_RUNTIME_OWNER_BEHAVIOR_REQUIRES_SEPARATE_CURRENT_PROOF",
+      "recoveredScopedReview": {
+        "path": "/workspace/scratch/recovered-20261006/evidence/01-stage-review/current-stage-matrix.json",
+        "pointer": "/rows/1",
+        "sha256": "617e5e59d357f3c5bc903d03488a557dcfc9e30ae3af00924fb798c14534cc7f",
+        "reviewedCommit": "a194ae7020c40bf27bb4d5d1c586d271d4c87e92",
+        "entryAndDependencies": "Accepted human job; governing-source inventory/search contract; adequacy review/reconcile until no additional controlling source category.",
+        "controllingCompletion": "The current bounded SOURCE_SEARCH_CONTRACT was executed; every supplied or discovered candidate source has a disposition; required search-adequacy review is accepted; material discovery risk and controlling conflicts are resolved or blocked. No universal source-completeness claim is made.",
+        "readCollections": [],
+        "agentFields": [
+          "AUTHORITY_HIERARCHY",
+          "SOURCE_APPLICABILITY_DETERMINATION",
+          "KNOWN_CONTROLLING_SOURCES_EXAMINED"
+        ],
+        "implementationPaths": [
+          "workbook.js",
+          "workflow-schema.js",
+          "workflow-engine.js",
+          "prompt-engine.js",
+          "response-ingestion.js",
+          "project-store.js"
+        ],
+        "historicalVerification": [
+          "verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping"
+        ],
+        "historicalDefects": [],
+        "historicalStatus": "CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED"
+      }
+    },
+    {
+      "stage": 3,
+      "name": "3 \u2014 RESEARCH THE REQUIREMENTS",
+      "contractAndCompletion": "Current accepted sources and Stage01 job; complete coverage, conflict/exception pass, repeated saturation with independent challenge/reconcile. Completion: Every current source and required source unit has current research coverage or Stage 02 validly established no applicable external source; conflict and exception passes and every triggered independent omission challenge and reconciliation are complete.",
+      "operations": [
+        "COMPLETE",
+        "SEMANTIC_CHALLENGE",
+        "RECONCILE_RESEARCH"
+      ],
+      "historicalReview": "workbook.js, workflow-schema.js, workflow-engine.js, prompt-engine.js, response-ingestion.js, project-store.js. Baseline evidence: verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping. Findings: No new stage-specific defect established by this continuation; shared repairs remain applicable. CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED; final integrated whole-stage evidence pending.",
+      "source": "verification/complete-system-repair-20261007.md:139",
+      "currentStatus": "CURRENT_REGISTRY_MEMBERSHIP_LOADED; EXACT_DESCRIPTOR_RECOVERED_CONTRACT_REVIEW_RETAINED; CHANGED_RUNTIME_OWNER_BEHAVIOR_REQUIRES_SEPARATE_CURRENT_PROOF",
+      "recoveredScopedReview": {
+        "path": "/workspace/scratch/recovered-20261006/evidence/01-stage-review/current-stage-matrix.json",
+        "pointer": "/rows/2",
+        "sha256": "617e5e59d357f3c5bc903d03488a557dcfc9e30ae3af00924fb798c14534cc7f",
+        "reviewedCommit": "a194ae7020c40bf27bb4d5d1c586d271d4c87e92",
+        "entryAndDependencies": "Current accepted sources and Stage01 job; complete coverage, conflict/exception pass, repeated saturation with independent challenge/reconcile.",
+        "controllingCompletion": "Every current source and required source unit has current research coverage or Stage 02 validly established no applicable external source; conflict and exception passes and every triggered independent omission challenge and reconciliation are complete.",
+        "readCollections": [
+          "sources",
+          "sourceConflicts"
+        ],
+        "agentFields": [
+          "EXCEPTIONS_AND_EDGE_CONDITIONS",
+          "CONFLICTING_OR_INVALIDATING_MATERIAL",
+          "RESEARCH_GAPS_AND_BLOCKERS",
+          "SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED",
+          "LATEST_PASS_NUMBER",
+          "NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS"
+        ],
+        "implementationPaths": [
+          "workbook.js",
+          "workflow-schema.js",
+          "workflow-engine.js",
+          "prompt-engine.js",
+          "response-ingestion.js",
+          "project-store.js"
+        ],
+        "historicalVerification": [
+          "verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping"
+        ],
+        "historicalDefects": [],
+        "historicalStatus": "CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED"
+      }
+    },
+    {
+      "stage": 4,
+      "name": "4 \u2014 COMPILE THE REQUIREMENT SPECIFICATION",
+      "contractAndCompletion": "Application-enumerated obligation universe; complete atomic disposition; independent disposition/atomicity challenges and reconciliation. Completion: Every obligation has a valid disposition; every required disposition and atomicity challenge and reconciliation is complete; every resulting requirement and proposition is atomic enough to test, has provenance, and has observable satisfaction and failure conditions.",
+      "operations": [
+        "COMPLETE",
+        "DISPOSITION_CHALLENGE",
+        "ATOMICITY_CHALLENGE",
+        "RECONCILE_REQUIREMENTS"
+      ],
+      "historicalReview": "workbook.js, workflow-schema.js, workflow-engine.js, prompt-engine.js, response-ingestion.js, project-store.js. Baseline evidence: verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping. Findings: STAGE04-NESTED-DISPOSITION-TYPE-COERCION. CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED; final integrated whole-stage evidence pending.",
+      "source": "verification/complete-system-repair-20261007.md:140",
+      "currentStatus": "CURRENT_REGISTRY_MEMBERSHIP_LOADED; EXACT_DESCRIPTOR_RECOVERED_CONTRACT_REVIEW_RETAINED; CHANGED_RUNTIME_OWNER_BEHAVIOR_REQUIRES_SEPARATE_CURRENT_PROOF",
+      "recoveredScopedReview": {
+        "path": "/workspace/scratch/recovered-20261006/evidence/01-stage-review/current-stage-matrix.json",
+        "pointer": "/rows/3",
+        "sha256": "617e5e59d357f3c5bc903d03488a557dcfc9e30ae3af00924fb798c14534cc7f",
+        "reviewedCommit": "a194ae7020c40bf27bb4d5d1c586d271d4c87e92",
+        "entryAndDependencies": "Application-enumerated obligation universe; complete atomic disposition; independent disposition/atomicity challenges and reconciliation.",
+        "controllingCompletion": "Every obligation has a valid disposition; every required disposition and atomicity challenge and reconciliation is complete; every resulting requirement and proposition is atomic enough to test, has provenance, and has observable satisfaction and failure conditions.",
+        "readCollections": [
+          "research",
+          "candidateRequirements",
+          "sources",
+          "evidenceRecords",
+          "sourceConflicts"
+        ],
+        "agentFields": [
+          "DEFINED_TERM_GAPS",
+          "CONDITIONAL_REQUIREMENTS",
+          "OPTIONAL_REQUIREMENTS",
+          "BLOCKED_REQUIREMENTS"
+        ],
+        "implementationPaths": [
+          "workbook.js",
+          "workflow-schema.js",
+          "workflow-engine.js",
+          "prompt-engine.js",
+          "response-ingestion.js",
+          "project-store.js"
+        ],
+        "historicalVerification": [
+          "verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping"
+        ],
+        "historicalDefects": [
+          "STAGE04-NESTED-DISPOSITION-TYPE-COERCION"
+        ],
+        "historicalStatus": "CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED"
+      }
+    },
+    {
+      "stage": 5,
+      "name": "5 \u2014 RESOLVE THE REQUIREMENT SET",
+      "contractAndCompletion": "Complete current requirement set; resolved applicability/dependencies/equivalence, independent semantic review/reconcile. Completion: Every defect, proposition-equivalence issue, classification reduction, activation contract, applicability issue, proof-structure gap, and semantic disagreement is independently reviewed and resolved or blocked. Changed requirements receive a new version and invalidate downstream work.",
+      "operations": [
+        "COMPLETE",
+        "SEMANTIC_REVIEW",
+        "RECONCILE_REQUIREMENT_SET"
+      ],
+      "historicalReview": "workbook.js, workflow-schema.js, workflow-engine.js, prompt-engine.js, response-ingestion.js, project-store.js. Baseline evidence: verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping. Findings: No new stage-specific defect established by this continuation; shared repairs remain applicable. CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED; final integrated whole-stage evidence pending.",
+      "source": "verification/complete-system-repair-20261007.md:141",
+      "currentStatus": "CURRENT_REGISTRY_MEMBERSHIP_LOADED; EXACT_DESCRIPTOR_RECOVERED_CONTRACT_REVIEW_RETAINED; CHANGED_RUNTIME_OWNER_BEHAVIOR_REQUIRES_SEPARATE_CURRENT_PROOF",
+      "recoveredScopedReview": {
+        "path": "/workspace/scratch/recovered-20261006/evidence/01-stage-review/current-stage-matrix.json",
+        "pointer": "/rows/4",
+        "sha256": "617e5e59d357f3c5bc903d03488a557dcfc9e30ae3af00924fb798c14534cc7f",
+        "reviewedCommit": "a194ae7020c40bf27bb4d5d1c586d271d4c87e92",
+        "entryAndDependencies": "Complete current requirement set; resolved applicability/dependencies/equivalence, independent semantic review/reconcile.",
+        "controllingCompletion": "Every defect, proposition-equivalence issue, classification reduction, activation contract, applicability issue, proof-structure gap, and semantic disagreement is independently reviewed and resolved or blocked. Changed requirements receive a new version and invalidate downstream work.",
+        "readCollections": [
+          "requirements",
+          "research",
+          "sources",
+          "sourceConflicts",
+          "evidenceRecords",
+          "candidateRequirements",
+          "propositions",
+          "propositionEquivalenceReviews",
+          "applicabilityRecords",
+          "proofExpressions",
+          "proofObligations",
+          "observationRecords",
+          "entailmentReviews",
+          "environmentDependencies"
+        ],
+        "agentFields": [
+          "DUPLICATES_REMAINING",
+          "IMPOSSIBLE_COMBINATIONS",
+          "UNDEFINED_TERMS",
+          "CIRCULAR_DEPENDENCIES",
+          "UNSUPPORTED_REQUIREMENTS",
+          "APPLICABILITY_UNDETERMINED",
+          "REQUIREMENTS_WITHOUT_VERIFICATION_PATH"
+        ],
+        "implementationPaths": [
+          "workbook.js",
+          "workflow-schema.js",
+          "workflow-engine.js",
+          "prompt-engine.js",
+          "response-ingestion.js",
+          "project-store.js"
+        ],
+        "historicalVerification": [
+          "verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping"
+        ],
+        "historicalDefects": [],
+        "historicalStatus": "CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED"
+      }
+    },
+    {
+      "stage": 6,
+      "name": "6 \u2014 BUILD THE VERIFICATION SUITE BEFORE WRITING THE PRODUCTION INSTRUCTION",
+      "contractAndCompletion": "Current resolved mandatory requirements and supported capabilities/bindings; tests/proofs/timing before instructions; proof review/reconcile. Completion: Every current applicable mandatory proposition has exactly one current proof obligation and an accepted proof expression; every due test has complete timing, semantic-coverage, evidence, independence, environment, and variance contracts; native tests use the current supported Test IR language and registry identities; unavailable mandatory capability remains blocked.",
+      "operations": [
+        "COMPLETE",
+        "PROOF_REVIEW",
+        "RECONCILE_VERIFICATION_SUITE"
+      ],
+      "historicalReview": "workbook.js, workflow-schema.js, workflow-engine.js, prompt-engine.js, response-ingestion.js, project-store.js. Baseline evidence: verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping. Findings: No new stage-specific defect established by this continuation; shared repairs remain applicable. CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED; final integrated whole-stage evidence pending.",
+      "source": "verification/complete-system-repair-20261007.md:142",
+      "currentStatus": "CURRENT_REGISTRY_MEMBERSHIP_LOADED; EXACT_DESCRIPTOR_RECOVERED_CONTRACT_REVIEW_RETAINED; CHANGED_RUNTIME_OWNER_BEHAVIOR_REQUIRES_SEPARATE_CURRENT_PROOF",
+      "recoveredScopedReview": {
+        "path": "/workspace/scratch/recovered-20261006/evidence/01-stage-review/current-stage-matrix.json",
+        "pointer": "/rows/5",
+        "sha256": "617e5e59d357f3c5bc903d03488a557dcfc9e30ae3af00924fb798c14534cc7f",
+        "reviewedCommit": "a194ae7020c40bf27bb4d5d1c586d271d4c87e92",
+        "entryAndDependencies": "Current resolved mandatory requirements and supported capabilities/bindings; tests/proofs/timing before instructions; proof review/reconcile.",
+        "controllingCompletion": "Every current applicable mandatory proposition has exactly one current proof obligation and an accepted proof expression; every due test has complete timing, semantic-coverage, evidence, independence, environment, and variance contracts; native tests use the current supported Test IR language and registry identities; unavailable mandatory capability remains blocked.",
+        "readCollections": [
+          "requirements",
+          "requirementResolutions",
+          "artifacts",
+          "sources",
+          "research",
+          "propositions",
+          "propositionEquivalenceReviews",
+          "applicabilityRecords",
+          "proofExpressions",
+          "proofObligations",
+          "observationRecords",
+          "entailmentReviews",
+          "environmentDependencies"
+        ],
+        "agentFields": [],
+        "implementationPaths": [
+          "workbook.js",
+          "workflow-schema.js",
+          "workflow-engine.js",
+          "prompt-engine.js",
+          "response-ingestion.js",
+          "project-store.js"
+        ],
+        "historicalVerification": [
+          "verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping"
+        ],
+        "historicalDefects": [],
+        "historicalStatus": "CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED"
+      }
+    },
+    {
+      "stage": 7,
+      "name": "7 \u2014 BUILD FAILURE TESTS",
+      "contractAndCompletion": "Reviewed verification architecture; preserved invalid fixtures; due capable isolated execution and sufficient rejection evidence. Completion: Every applicable requirement has failure analysis. Every EXECUTABLE_NOW fixture was executed in isolated disposable state; every target-dependent fixture has a valid future trigger and required-by stage; expected and actual rejection agree; accepted invalid fixtures have validator defects.",
+      "operations": [
+        "COMPLETE",
+        "EXECUTE_FAILURE_TEST"
+      ],
+      "historicalReview": "workbook.js, workflow-schema.js, workflow-engine.js, prompt-engine.js, response-ingestion.js, project-store.js. Baseline evidence: verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping. Findings: Shared stale evidence-reference correction owned and independently verified by state_runtime; final integrated source verification pending.. CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED; final integrated whole-stage evidence pending.",
+      "source": "verification/complete-system-repair-20261007.md:143",
+      "currentStatus": "CURRENT_REGISTRY_MEMBERSHIP_LOADED; EXACT_DESCRIPTOR_RECOVERED_CONTRACT_REVIEW_RETAINED; CHANGED_RUNTIME_OWNER_BEHAVIOR_REQUIRES_SEPARATE_CURRENT_PROOF",
+      "recoveredScopedReview": {
+        "path": "/workspace/scratch/recovered-20261006/evidence/01-stage-review/current-stage-matrix.json",
+        "pointer": "/rows/6",
+        "sha256": "617e5e59d357f3c5bc903d03488a557dcfc9e30ae3af00924fb798c14534cc7f",
+        "reviewedCommit": "a194ae7020c40bf27bb4d5d1c586d271d4c87e92",
+        "entryAndDependencies": "Reviewed verification architecture; preserved invalid fixtures; due capable isolated execution and sufficient rejection evidence.",
+        "controllingCompletion": "Every applicable requirement has failure analysis. Every EXECUTABLE_NOW fixture was executed in isolated disposable state; every target-dependent fixture has a valid future trigger and required-by stage; expected and actual rejection agree; accepted invalid fixtures have validator defects.",
+        "readCollections": [
+          "requirements",
+          "tests",
+          "artifacts",
+          "evidenceRecords",
+          "propositions",
+          "propositionEquivalenceReviews",
+          "applicabilityRecords",
+          "proofExpressions",
+          "proofObligations",
+          "observationRecords",
+          "entailmentReviews",
+          "environmentDependencies"
+        ],
+        "agentFields": [],
+        "implementationPaths": [
+          "workbook.js",
+          "workflow-schema.js",
+          "workflow-engine.js",
+          "prompt-engine.js",
+          "response-ingestion.js",
+          "project-store.js"
+        ],
+        "historicalVerification": [
+          "verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping"
+        ],
+        "historicalDefects": [
+          "Shared stale evidence-reference correction owned and independently verified by state_runtime; final integrated source verification pending."
+        ],
+        "historicalStatus": "CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED"
+      }
+    },
+    {
+      "stage": 8,
+      "name": "8 \u2014 AUTHOR THE PRODUCTION INSTRUCTION",
+      "contractAndCompletion": "Resolved requirements, reviewed tests and failure tests; complete instruction trace; any due failure-test receipt. Completion: One current instruction exists. Every required section exists. Every mandatory requirement has a complete instruction trace.",
+      "operations": [
+        "COMPLETE",
+        "EXECUTE_FAILURE_TEST"
+      ],
+      "historicalReview": "workbook.js, workflow-schema.js, workflow-engine.js, prompt-engine.js, response-ingestion.js, project-store.js. Baseline evidence: verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping. Findings: No new stage-specific defect established by this continuation; shared repairs remain applicable. CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED; final integrated whole-stage evidence pending.",
+      "source": "verification/complete-system-repair-20261007.md:144",
+      "currentStatus": "CURRENT_REGISTRY_MEMBERSHIP_LOADED; EXACT_DESCRIPTOR_RECOVERED_CONTRACT_REVIEW_RETAINED; CHANGED_RUNTIME_OWNER_BEHAVIOR_REQUIRES_SEPARATE_CURRENT_PROOF",
+      "recoveredScopedReview": {
+        "path": "/workspace/scratch/recovered-20261006/evidence/01-stage-review/current-stage-matrix.json",
+        "pointer": "/rows/7",
+        "sha256": "617e5e59d357f3c5bc903d03488a557dcfc9e30ae3af00924fb798c14534cc7f",
+        "reviewedCommit": "a194ae7020c40bf27bb4d5d1c586d271d4c87e92",
+        "entryAndDependencies": "Resolved requirements, reviewed tests and failure tests; complete instruction trace; any due failure-test receipt.",
+        "controllingCompletion": "One current instruction exists. Every required section exists. Every mandatory requirement has a complete instruction trace.",
+        "readCollections": [
+          "requirements",
+          "tests",
+          "failureTests",
+          "requirementResolutions",
+          "sources",
+          "sourceConflicts",
+          "propositions",
+          "propositionEquivalenceReviews",
+          "applicabilityRecords",
+          "proofExpressions",
+          "proofObligations",
+          "observationRecords",
+          "entailmentReviews",
+          "environmentDependencies"
+        ],
+        "agentFields": [
+          "OBJECTIVE",
+          "AUTHORIZED_INPUTS",
+          "INPUT_FAILURE_RULES",
+          "SOURCE_AUTHORITY",
+          "SCOPE",
+          "DEFINED_TERMS",
+          "REQUIRED_PROCEDURE_IN_ORDER",
+          "DECISION_RULES",
+          "TOOL_RULES",
+          "OUTPUT_CONTRACT",
+          "VERIFICATION_AND_FAILURE_HANDLING",
+          "COMPLETION_CRITERIA"
+        ],
+        "implementationPaths": [
+          "workbook.js",
+          "workflow-schema.js",
+          "workflow-engine.js",
+          "prompt-engine.js",
+          "response-ingestion.js",
+          "project-store.js"
+        ],
+        "historicalVerification": [
+          "verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping"
+        ],
+        "historicalDefects": [],
+        "historicalStatus": "CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED"
+      }
+    },
+    {
+      "stage": 9,
+      "name": "9 \u2014 PREFLIGHT THE PRODUCTION INSTRUCTION",
+      "contractAndCompletion": "Complete current instruction; full independent preflight, repeated after changes; any due failure-test receipt. Completion: Independence exists, all clauses were reviewed, and no material finding remains unresolved.",
+      "operations": [
+        "COMPLETE",
+        "EXECUTE_FAILURE_TEST"
+      ],
+      "historicalReview": "workbook.js, workflow-schema.js, workflow-engine.js, prompt-engine.js, response-ingestion.js, project-store.js. Baseline evidence: verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping. Findings: No new stage-specific defect established by this continuation; shared repairs remain applicable. CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED; final integrated whole-stage evidence pending.",
+      "source": "verification/complete-system-repair-20261007.md:145",
+      "currentStatus": "CURRENT_REGISTRY_MEMBERSHIP_LOADED; EXACT_DESCRIPTOR_RECOVERED_CONTRACT_REVIEW_RETAINED; CHANGED_RUNTIME_OWNER_BEHAVIOR_REQUIRES_SEPARATE_CURRENT_PROOF",
+      "recoveredScopedReview": {
+        "path": "/workspace/scratch/recovered-20261006/evidence/01-stage-review/current-stage-matrix.json",
+        "pointer": "/rows/8",
+        "sha256": "617e5e59d357f3c5bc903d03488a557dcfc9e30ae3af00924fb798c14534cc7f",
+        "reviewedCommit": "a194ae7020c40bf27bb4d5d1c586d271d4c87e92",
+        "entryAndDependencies": "Complete current instruction; full independent preflight, repeated after changes; any due failure-test receipt.",
+        "controllingCompletion": "Independence exists, all clauses were reviewed, and no material finding remains unresolved.",
+        "readCollections": [
+          "instructions",
+          "instructionTraces",
+          "requirements",
+          "tests",
+          "failureTests",
+          "requirementResolutions",
+          "sources",
+          "sourceConflicts",
+          "propositions",
+          "propositionEquivalenceReviews",
+          "applicabilityRecords",
+          "proofExpressions",
+          "proofObligations",
+          "observationRecords",
+          "entailmentReviews",
+          "environmentDependencies"
+        ],
+        "agentFields": [
+          "EVERY_SENTENCE_REVIEWED",
+          "KNOWN_MATERIAL_AMBIGUITIES",
+          "KNOWN_MATERIAL_CONFLICTS",
+          "UNAVAILABLE_REQUIRED_CAPABILITIES",
+          "UNVERIFIABLE_INSTRUCTIONS"
+        ],
+        "implementationPaths": [
+          "workbook.js",
+          "workflow-schema.js",
+          "workflow-engine.js",
+          "prompt-engine.js",
+          "response-ingestion.js",
+          "project-store.js"
+        ],
+        "historicalVerification": [
+          "verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping"
+        ],
+        "historicalDefects": [],
+        "historicalStatus": "CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED"
+      }
+    },
+    {
+      "stage": 10,
+      "name": "10 \u2014 FREEZE THE TEST CANDIDATE",
+      "contractAndCompletion": "Approved instruction/components and genuine human component selection; exact-byte application freeze; any due failure-test receipt. Completion: All required components are present and every run will receive the exact same frozen package.",
+      "operations": [
+        "FREEZE",
+        "EXECUTE_FAILURE_TEST"
+      ],
+      "historicalReview": "workbook.js, workflow-schema.js, workflow-engine.js, prompt-engine.js, response-ingestion.js, project-store.js. Baseline evidence: verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping. Findings: No new stage-specific defect established by this continuation; shared repairs remain applicable. CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED; final integrated whole-stage evidence pending.",
+      "source": "verification/complete-system-repair-20261007.md:146",
+      "currentStatus": "CURRENT_REGISTRY_MEMBERSHIP_LOADED; EXACT_DESCRIPTOR_RECOVERED_CONTRACT_REVIEW_RETAINED; CHANGED_RUNTIME_OWNER_BEHAVIOR_REQUIRES_SEPARATE_CURRENT_PROOF",
+      "recoveredScopedReview": {
+        "path": "/workspace/scratch/recovered-20261006/evidence/01-stage-review/current-stage-matrix.json",
+        "pointer": "/rows/9",
+        "sha256": "617e5e59d357f3c5bc903d03488a557dcfc9e30ae3af00924fb798c14534cc7f",
+        "reviewedCommit": "a194ae7020c40bf27bb4d5d1c586d271d4c87e92",
+        "entryAndDependencies": "Approved instruction/components and genuine human component selection; exact-byte application freeze; any due failure-test receipt.",
+        "controllingCompletion": "All required components are present and every run will receive the exact same frozen package.",
+        "readCollections": [
+          "instructions",
+          "preflightRecords",
+          "tests",
+          "failureTests",
+          "artifacts",
+          "propositions",
+          "propositionEquivalenceReviews",
+          "applicabilityRecords",
+          "proofExpressions",
+          "proofObligations",
+          "observationRecords",
+          "entailmentReviews",
+          "environmentDependencies"
+        ],
+        "agentFields": [],
+        "implementationPaths": [
+          "workbook.js",
+          "workflow-schema.js",
+          "workflow-engine.js",
+          "prompt-engine.js",
+          "response-ingestion.js",
+          "project-store.js"
+        ],
+        "historicalVerification": [
+          "verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping"
+        ],
+        "historicalDefects": [],
+        "historicalStatus": "CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED"
+      }
+    },
+    {
+      "stage": 11,
+      "name": "11 \u2014 RUN TEN INDEPENDENT EXECUTIONS",
+      "contractAndCompletion": "Frozen candidate; exactly one current run/context per handoff; all ten distinct lanes, tool failures/contamination explicit. Completion: Exactly ten current reserved runs and contexts exist; all responses are accepted; candidate and hashes match; contexts are distinct; contamination is absent; outputs and receipts are separate.",
+      "operations": [
+        "EXECUTE_RUN",
+        "EXECUTE_FAILURE_TEST"
+      ],
+      "historicalReview": "workbook.js, workflow-schema.js, workflow-engine.js, prompt-engine.js, response-ingestion.js, project-store.js. Baseline evidence: verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping. Findings: No new stage-specific defect established by this continuation; shared repairs remain applicable. CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED; final integrated whole-stage evidence pending. Current follow-on: EXECUTE_RUN secondary carriers exposed prior conclusions; shared role projection has a focused exported-carrier pass, with final integrated proof pending (sectionsD/I).",
+      "source": "verification/complete-system-repair-20261007.md:147",
+      "currentStatus": "CURRENT_REGISTRY_MEMBERSHIP_LOADED; EXACT_DESCRIPTOR_RECOVERED_CONTRACT_REVIEW_RETAINED; CHANGED_RUNTIME_OWNER_BEHAVIOR_REQUIRES_SEPARATE_CURRENT_PROOF",
+      "recoveredScopedReview": {
+        "path": "/workspace/scratch/recovered-20261006/evidence/01-stage-review/current-stage-matrix.json",
+        "pointer": "/rows/10",
+        "sha256": "617e5e59d357f3c5bc903d03488a557dcfc9e30ae3af00924fb798c14534cc7f",
+        "reviewedCommit": "a194ae7020c40bf27bb4d5d1c586d271d4c87e92",
+        "entryAndDependencies": "Frozen candidate; exactly one current run/context per handoff; all ten distinct lanes, tool failures/contamination explicit.",
+        "controllingCompletion": "Exactly ten current reserved runs and contexts exist; all responses are accepted; candidate and hashes match; contexts are distinct; contamination is absent; outputs and receipts are separate.",
+        "readCollections": [
+          "candidateFreezes",
+          "iterations",
+          "runs",
+          "freshContexts",
+          "propositions",
+          "propositionEquivalenceReviews",
+          "applicabilityRecords",
+          "proofExpressions",
+          "proofObligations",
+          "observationRecords",
+          "entailmentReviews",
+          "environmentDependencies"
+        ],
+        "agentFields": [
+          "FROZEN_EXECUTION_PACKAGE"
+        ],
+        "implementationPaths": [
+          "workbook.js",
+          "workflow-schema.js",
+          "workflow-engine.js",
+          "prompt-engine.js",
+          "response-ingestion.js",
+          "project-store.js"
+        ],
+        "historicalVerification": [
+          "verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping"
+        ],
+        "historicalDefects": [],
+        "historicalStatus": "CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED"
+      }
+    },
+    {
+      "stage": 12,
+      "name": "12 \u2014 VERIFY EACH EXECUTION INDEPENDENTLY",
+      "contractAndCompletion": "Current runs/tests/requirements; required verification cells needing work or correction, declared capable route, independently reserved verifier. Completion: The complete current required relation set exists for every due PER_RUN_REQUIRED proposition, run, and test. Every verifier satisfies the semantic-review independence contract. Every required tuple has sufficient evidence and exactly one valid determination; no nondue or meaningless Cartesian cell is manufactured.",
+      "operations": [
+        "VERIFY",
+        "EXECUTE_FAILURE_TEST"
+      ],
+      "historicalReview": "workbook.js, workflow-schema.js, workflow-engine.js, prompt-engine.js, response-ingestion.js, project-store.js. Baseline evidence: verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping. Findings: Shared stale evidence-reference correction owned and independently verified by state_runtime; final integrated source verification pending.. CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED; final integrated whole-stage evidence pending.  Current follow-on: run/context selection, secondary-carrier isolation, exact legacy context recovery and invalid/duplicate expected-cell planning are corrected in published e655 with scoped focused passes; focused owning and native context controls pass; complete current-candidate proof remains pending (sectionsD/I).",
+      "source": "verification/complete-system-repair-20261007.md:148",
+      "currentStatus": "CURRENT_REGISTRY_MEMBERSHIP_LOADED; EXACT_DESCRIPTOR_RECOVERED_CONTRACT_REVIEW_RETAINED; CHANGED_RUNTIME_OWNER_BEHAVIOR_REQUIRES_SEPARATE_CURRENT_PROOF",
+      "recoveredScopedReview": {
+        "path": "/workspace/scratch/recovered-20261006/evidence/01-stage-review/current-stage-matrix.json",
+        "pointer": "/rows/11",
+        "sha256": "617e5e59d357f3c5bc903d03488a557dcfc9e30ae3af00924fb798c14534cc7f",
+        "reviewedCommit": "a194ae7020c40bf27bb4d5d1c586d271d4c87e92",
+        "entryAndDependencies": "Current runs/tests/requirements; exact missing verification cells, declared capable route, independently reserved verifier.",
+        "controllingCompletion": "The complete current required relation set exists for every due PER_RUN_REQUIRED proposition, run, and test. Every verifier satisfies the semantic-review independence contract. Every required tuple has sufficient evidence and exactly one valid determination; no nondue or meaningless Cartesian cell is manufactured.",
+        "readCollections": [
+          "runs",
+          "requirements",
+          "tests",
+          "freshContexts",
+          "sources",
+          "evidenceRecords",
+          "propositions",
+          "propositionEquivalenceReviews",
+          "applicabilityRecords",
+          "proofExpressions",
+          "proofObligations",
+          "observationRecords",
+          "entailmentReviews",
+          "environmentDependencies"
+        ],
+        "agentFields": [],
+        "implementationPaths": [
+          "workbook.js",
+          "workflow-schema.js",
+          "workflow-engine.js",
+          "prompt-engine.js",
+          "response-ingestion.js",
+          "project-store.js"
+        ],
+        "historicalVerification": [
+          "verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping"
+        ],
+        "historicalDefects": [
+          "Shared stale evidence-reference correction owned and independently verified by state_runtime; final integrated source verification pending."
+        ],
+        "historicalStatus": "CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED"
+      }
+    },
+    {
+      "stage": 13,
+      "name": "13 \u2014 COMPARE THE TEN EXECUTIONS",
+      "contractAndCompletion": "Full ten-run verification; every mandatory requirement and correctness variance with defect link. Completion: Every due PER_RUN_REQUIRED mandatory proposition has one comparison covering all ten current runs under its frozen expected-variance contract. Allowed variance is recorded; prohibited variance has a defect; UNKNOWN variance remains blocked.",
+      "operations": [
+        "COMPARE",
+        "EXECUTE_FAILURE_TEST"
+      ],
+      "historicalReview": "workbook.js, workflow-schema.js, workflow-engine.js, prompt-engine.js, response-ingestion.js, project-store.js. Baseline evidence: verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping. Findings: STAGE13-REPEATED-GROUP-INSTANCE-CONFLATION. CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED; final integrated whole-stage evidence pending.",
+      "source": "verification/complete-system-repair-20261007.md:149",
+      "currentStatus": "CURRENT_REGISTRY_MEMBERSHIP_LOADED; EXACT_DESCRIPTOR_RECOVERED_CONTRACT_REVIEW_RETAINED; CHANGED_RUNTIME_OWNER_BEHAVIOR_REQUIRES_SEPARATE_CURRENT_PROOF",
+      "recoveredScopedReview": {
+        "path": "/workspace/scratch/recovered-20261006/evidence/01-stage-review/current-stage-matrix.json",
+        "pointer": "/rows/12",
+        "sha256": "617e5e59d357f3c5bc903d03488a557dcfc9e30ae3af00924fb798c14534cc7f",
+        "reviewedCommit": "a194ae7020c40bf27bb4d5d1c586d271d4c87e92",
+        "entryAndDependencies": "Full ten-run verification; every mandatory requirement and correctness variance with defect link.",
+        "controllingCompletion": "Every due PER_RUN_REQUIRED mandatory proposition has one comparison covering all ten current runs under its frozen expected-variance contract. Allowed variance is recorded; prohibited variance has a defect; UNKNOWN variance remains blocked.",
+        "readCollections": [
+          "verification",
+          "runs",
+          "requirements",
+          "tests",
+          "propositions",
+          "propositionEquivalenceReviews",
+          "applicabilityRecords",
+          "proofExpressions",
+          "proofObligations",
+          "observationRecords",
+          "entailmentReviews",
+          "environmentDependencies"
+        ],
+        "agentFields": [],
+        "implementationPaths": [
+          "workbook.js",
+          "workflow-schema.js",
+          "workflow-engine.js",
+          "prompt-engine.js",
+          "response-ingestion.js",
+          "project-store.js"
+        ],
+        "historicalVerification": [
+          "verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping"
+        ],
+        "historicalDefects": [
+          "STAGE13-REPEATED-GROUP-INSTANCE-CONFLATION"
+        ],
+        "historicalStatus": "CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED"
+      }
+    },
+    {
+      "stage": 14,
+      "name": "14 \u2014 ROOT-CAUSE EVERY DEFECT",
+      "contractAndCompletion": "Every current material defect, full causal backward trace; evidence-supported earliest layer. Completion: Every current material defect has one evidence-supported RCA. Unknown RCA remains blocked.",
+      "operations": [
+        "ROOT_CAUSE",
+        "EXECUTE_FAILURE_TEST"
+      ],
+      "historicalReview": "workbook.js, workflow-schema.js, workflow-engine.js, prompt-engine.js, response-ingestion.js, project-store.js. Baseline evidence: verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping. Findings: No new stage-specific defect established by this continuation; shared repairs remain applicable. CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED; final integrated whole-stage evidence pending.",
+      "source": "verification/complete-system-repair-20261007.md:150",
+      "currentStatus": "CURRENT_REGISTRY_MEMBERSHIP_LOADED; EXACT_DESCRIPTOR_RECOVERED_CONTRACT_REVIEW_RETAINED; CHANGED_RUNTIME_OWNER_BEHAVIOR_REQUIRES_SEPARATE_CURRENT_PROOF",
+      "recoveredScopedReview": {
+        "path": "/workspace/scratch/recovered-20261006/evidence/01-stage-review/current-stage-matrix.json",
+        "pointer": "/rows/13",
+        "sha256": "617e5e59d357f3c5bc903d03488a557dcfc9e30ae3af00924fb798c14534cc7f",
+        "reviewedCommit": "a194ae7020c40bf27bb4d5d1c586d271d4c87e92",
+        "entryAndDependencies": "Every current material defect, full causal backward trace; evidence-supported earliest layer.",
+        "controllingCompletion": "Every current material defect has one evidence-supported RCA. Unknown RCA remains blocked.",
+        "readCollections": [
+          "defects",
+          "comparisons",
+          "verification",
+          "requirements",
+          "tests",
+          "instructions",
+          "instructionTraces",
+          "runs",
+          "candidateFreezes",
+          "failureTests",
+          "requirementResolutions",
+          "candidateRequirements",
+          "research",
+          "sources",
+          "sourceConflicts",
+          "artifacts",
+          "evidenceRecords",
+          "propositions",
+          "propositionEquivalenceReviews",
+          "applicabilityRecords",
+          "proofExpressions",
+          "proofObligations",
+          "observationRecords",
+          "entailmentReviews",
+          "environmentDependencies"
+        ],
+        "agentFields": [],
+        "implementationPaths": [
+          "workbook.js",
+          "workflow-schema.js",
+          "workflow-engine.js",
+          "prompt-engine.js",
+          "response-ingestion.js",
+          "project-store.js"
+        ],
+        "historicalVerification": [
+          "verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping"
+        ],
+        "historicalDefects": [],
+        "historicalStatus": "CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED"
+      }
+    },
+    {
+      "stage": 15,
+      "name": "15 \u2014 CONVERT EVERY CONFIRMED FAILURE INTO A REGRESSION TEST",
+      "contractAndCompletion": "Confirmed defect + RCA + preserved fixture; pre-correction actual failure; future timing remains visible and unexecuted. Completion: Every confirmed defect has a permanent definition and actual pre-correction execution proving failure. Later correction success comes from a distinct later execution.",
+      "operations": [
+        "COMPLETE",
+        "EXECUTE_REGRESSION",
+        "EXECUTE_FAILURE_TEST"
+      ],
+      "historicalReview": "workbook.js, workflow-schema.js, workflow-engine.js, prompt-engine.js, response-ingestion.js, project-store.js. Baseline evidence: verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping. Findings: No new stage-specific defect established by this continuation; shared repairs remain applicable. CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED; final integrated whole-stage evidence pending.",
+      "source": "verification/complete-system-repair-20261007.md:151",
+      "currentStatus": "CURRENT_REGISTRY_MEMBERSHIP_LOADED; EXACT_DESCRIPTOR_RECOVERED_CONTRACT_REVIEW_RETAINED; CHANGED_RUNTIME_OWNER_BEHAVIOR_REQUIRES_SEPARATE_CURRENT_PROOF",
+      "recoveredScopedReview": {
+        "path": "/workspace/scratch/recovered-20261006/evidence/01-stage-review/current-stage-matrix.json",
+        "pointer": "/rows/14",
+        "sha256": "617e5e59d357f3c5bc903d03488a557dcfc9e30ae3af00924fb798c14534cc7f",
+        "reviewedCommit": "a194ae7020c40bf27bb4d5d1c586d271d4c87e92",
+        "entryAndDependencies": "Confirmed defect + RCA + preserved fixture; pre-correction actual failure; future timing remains visible and unexecuted.",
+        "controllingCompletion": "Every confirmed defect has a permanent definition and actual pre-correction execution proving failure. Later correction success comes from a distinct later execution.",
+        "readCollections": [
+          "defects",
+          "rootCauses",
+          "comparisons",
+          "verification",
+          "runs",
+          "requirements",
+          "tests",
+          "failureTests",
+          "instructions",
+          "candidateFreezes",
+          "artifacts",
+          "evidenceRecords",
+          "propositions",
+          "propositionEquivalenceReviews",
+          "applicabilityRecords",
+          "proofExpressions",
+          "proofObligations",
+          "observationRecords",
+          "entailmentReviews",
+          "environmentDependencies"
+        ],
+        "agentFields": [],
+        "implementationPaths": [
+          "workbook.js",
+          "workflow-schema.js",
+          "workflow-engine.js",
+          "prompt-engine.js",
+          "response-ingestion.js",
+          "project-store.js"
+        ],
+        "historicalVerification": [
+          "verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping"
+        ],
+        "historicalDefects": [],
+        "historicalStatus": "CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED"
+      }
+    },
+    {
+      "stage": 16,
+      "name": "16 \u2014 CORRECT THE ROOT CAUSE",
+      "contractAndCompletion": "Current RCA/regression; authorized correction at earliest layer; preserve versions/invalidation and required reruns. Completion: Every confirmed RCA has a controlled correction or blocker; legitimate authorization exists; new versions are created; downstream work is invalidated.",
+      "operations": [
+        "CORRECT",
+        "EXECUTE_FAILURE_TEST",
+        "EXECUTE_REGRESSION"
+      ],
+      "historicalReview": "workbook.js, workflow-schema.js, workflow-engine.js, prompt-engine.js, response-ingestion.js, project-store.js. Baseline evidence: verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping. Findings: No new stage-specific defect established by this continuation; shared repairs remain applicable. CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED; final integrated whole-stage evidence pending.",
+      "source": "verification/complete-system-repair-20261007.md:152",
+      "currentStatus": "CURRENT_REGISTRY_MEMBERSHIP_LOADED; EXACT_DESCRIPTOR_RECOVERED_CONTRACT_REVIEW_RETAINED; CHANGED_RUNTIME_OWNER_BEHAVIOR_REQUIRES_SEPARATE_CURRENT_PROOF",
+      "recoveredScopedReview": {
+        "path": "/workspace/scratch/recovered-20261006/evidence/01-stage-review/current-stage-matrix.json",
+        "pointer": "/rows/15",
+        "sha256": "617e5e59d357f3c5bc903d03488a557dcfc9e30ae3af00924fb798c14534cc7f",
+        "reviewedCommit": "a194ae7020c40bf27bb4d5d1c586d271d4c87e92",
+        "entryAndDependencies": "Current RCA/regression; authorized correction at earliest layer; preserve versions/invalidation and required reruns.",
+        "controllingCompletion": "Every confirmed RCA has a controlled correction or blocker; legitimate authorization exists; new versions are created; downstream work is invalidated.",
+        "readCollections": [
+          "defects",
+          "rootCauses",
+          "regressions",
+          "regressionExecutions",
+          "comparisons",
+          "verification",
+          "runs",
+          "requirements",
+          "requirementResolutions",
+          "candidateRequirements",
+          "research",
+          "sources",
+          "instructions",
+          "instructionTraces",
+          "tests",
+          "failureTests",
+          "candidateFreezes",
+          "artifacts",
+          "evidenceRecords",
+          "changes",
+          "propositions",
+          "propositionEquivalenceReviews",
+          "applicabilityRecords",
+          "proofExpressions",
+          "proofObligations",
+          "observationRecords",
+          "entailmentReviews",
+          "environmentDependencies"
+        ],
+        "agentFields": [],
+        "implementationPaths": [
+          "workbook.js",
+          "workflow-schema.js",
+          "workflow-engine.js",
+          "prompt-engine.js",
+          "response-ingestion.js",
+          "project-store.js"
+        ],
+        "historicalVerification": [
+          "verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping"
+        ],
+        "historicalDefects": [],
+        "historicalStatus": "CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED"
+      }
+    },
+    {
+      "stage": 17,
+      "name": "17 \u2014 RE-RUN THE COMPLETE TEN-EXECUTION ITERATION",
+      "contractAndCompletion": "Changed candidate/iteration; named freeze/run/verify/compare/RCA/regression/correct suboperation; full ten lanes. Completion: New iteration and candidate exist. The shared evaluator proves ten new runs, complete verification, comparison, RCA, regression execution, and correction behavior.",
+      "operations": [
+        "FREEZE",
+        "EXECUTE_RUN",
+        "VERIFY",
+        "COMPARE",
+        "ROOT_CAUSE",
+        "REGRESSION",
+        "CORRECT",
+        "EXECUTE_FAILURE_TEST",
+        "EXECUTE_REGRESSION"
+      ],
+      "historicalReview": "workbook.js, workflow-schema.js, workflow-engine.js, prompt-engine.js, response-ingestion.js, project-store.js. Baseline evidence: verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping. Findings: No new stage-specific defect established by this continuation; shared repairs remain applicable. CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED; final integrated whole-stage evidence pending.  Current follow-on: run/context selection, secondary-carrier isolation, exact legacy context recovery and invalid/duplicate expected-cell planning are corrected in published e655 with scoped focused passes; focused owning and native context controls pass; complete current-candidate proof remains pending (sectionsD/I).",
+      "source": "verification/complete-system-repair-20261007.md:153",
+      "currentStatus": "CURRENT_REGISTRY_MEMBERSHIP_LOADED; EXACT_DESCRIPTOR_RECOVERED_CONTRACT_REVIEW_RETAINED; CHANGED_RUNTIME_OWNER_BEHAVIOR_REQUIRES_SEPARATE_CURRENT_PROOF",
+      "recoveredScopedReview": {
+        "path": "/workspace/scratch/recovered-20261006/evidence/01-stage-review/current-stage-matrix.json",
+        "pointer": "/rows/16",
+        "sha256": "617e5e59d357f3c5bc903d03488a557dcfc9e30ae3af00924fb798c14534cc7f",
+        "reviewedCommit": "a194ae7020c40bf27bb4d5d1c586d271d4c87e92",
+        "entryAndDependencies": "Changed candidate/iteration; named freeze/run/verify/compare/RCA/regression/correct suboperation; full ten lanes.",
+        "controllingCompletion": "New iteration and candidate exist. The shared evaluator proves ten new runs, complete verification, comparison, RCA, regression execution, and correction behavior.",
+        "readCollections": [
+          "changes",
+          "candidateFreezes",
+          "iterations",
+          "tests",
+          "regressions",
+          "regressionExecutions",
+          "propositions",
+          "propositionEquivalenceReviews",
+          "applicabilityRecords",
+          "proofExpressions",
+          "proofObligations",
+          "observationRecords",
+          "entailmentReviews",
+          "environmentDependencies"
+        ],
+        "agentFields": [],
+        "implementationPaths": [
+          "workbook.js",
+          "workflow-schema.js",
+          "workflow-engine.js",
+          "prompt-engine.js",
+          "response-ingestion.js",
+          "project-store.js"
+        ],
+        "historicalVerification": [
+          "verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping"
+        ],
+        "historicalDefects": [],
+        "historicalStatus": "CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED"
+      }
+    },
+    {
+      "stage": 18,
+      "name": "18 \u2014 CONTINUE UNTIL CONVERGENCE",
+      "contractAndCompletion": "Completed corrected iteration with all due mandatory observations; no unresolved material defects; convergence calculation. Completion: Every current applicable PREPRODUCT_ITERATION obligation due by Stage 18 is SATISFIED; required per-run verification and applicable regression coverage equal 1.0; every due blocking defect, mandatory unknown, contradiction, ambiguity, and unexplained variance count is zero simultaneously. Later-phase product, representation, delivery, evidence, registry, and terminal obligations remain scheduled and are not falsely treated as due.",
+      "operations": [
+        "COMPLETE",
+        "EXECUTE_FAILURE_TEST",
+        "EXECUTE_REGRESSION"
+      ],
+      "historicalReview": "workbook.js, workflow-schema.js, workflow-engine.js, prompt-engine.js, response-ingestion.js, project-store.js. Baseline evidence: verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping. Findings: No new stage-specific defect established by this continuation; shared repairs remain applicable. CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED; final integrated whole-stage evidence pending.",
+      "source": "verification/complete-system-repair-20261007.md:154",
+      "currentStatus": "CURRENT_REGISTRY_MEMBERSHIP_LOADED; EXACT_DESCRIPTOR_RECOVERED_CONTRACT_REVIEW_RETAINED; CHANGED_RUNTIME_OWNER_BEHAVIOR_REQUIRES_SEPARATE_CURRENT_PROOF",
+      "recoveredScopedReview": {
+        "path": "/workspace/scratch/recovered-20261006/evidence/01-stage-review/current-stage-matrix.json",
+        "pointer": "/rows/17",
+        "sha256": "617e5e59d357f3c5bc903d03488a557dcfc9e30ae3af00924fb798c14534cc7f",
+        "reviewedCommit": "a194ae7020c40bf27bb4d5d1c586d271d4c87e92",
+        "entryAndDependencies": "Completed corrected iteration with all due mandatory observations; no unresolved material defects; convergence calculation.",
+        "controllingCompletion": "Every current applicable PREPRODUCT_ITERATION obligation due by Stage 18 is SATISFIED; required per-run verification and applicable regression coverage equal 1.0; every due blocking defect, mandatory unknown, contradiction, ambiguity, and unexplained variance count is zero simultaneously. Later-phase product, representation, delivery, evidence, registry, and terminal obligations remain scheduled and are not falsely treated as due.",
+        "readCollections": [
+          "iterations",
+          "runs",
+          "verification",
+          "comparisons",
+          "defects",
+          "regressions",
+          "regressionExecutions",
+          "blockers",
+          "requirements",
+          "tests",
+          "rootCauses",
+          "changes",
+          "propositions",
+          "propositionEquivalenceReviews",
+          "applicabilityRecords",
+          "proofExpressions",
+          "proofObligations",
+          "observationRecords",
+          "entailmentReviews",
+          "environmentDependencies"
+        ],
+        "agentFields": [
+          "RETURN_STAGE_FOR_EACH_FAILURE"
+        ],
+        "implementationPaths": [
+          "workbook.js",
+          "workflow-schema.js",
+          "workflow-engine.js",
+          "prompt-engine.js",
+          "response-ingestion.js",
+          "project-store.js"
+        ],
+        "historicalVerification": [
+          "verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping"
+        ],
+        "historicalDefects": [],
+        "historicalStatus": "CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED"
+      }
+    },
+    {
+      "stage": 19,
+      "name": "19 \u2014 RUN AN UNCHANGED CONFIRMATION ITERATION",
+      "contractAndCompletion": "Converged exact unchanged candidate; new ten fresh contexts; full verification/comparison/regression and discovery challenge. Completion: Candidate versions and hashes are unchanged; ten new contexts exist; every due PREPRODUCT_ITERATION verification and regression executed; the independent requirement-discovery challenge is complete; no accepted new requirement candidate, missed due failure, material defect, contradiction, or unexplained variance exists.",
+      "operations": [
+        "CONFIRM_FREEZE",
+        "EXECUTE_RUN",
+        "VERIFY",
+        "COMPARE",
+        "REGRESSION_VERIFY",
+        "CONFIRM",
+        "EXECUTE_FAILURE_TEST",
+        "EXECUTE_REGRESSION"
+      ],
+      "historicalReview": "workbook.js, workflow-schema.js, workflow-engine.js, prompt-engine.js, response-ingestion.js, project-store.js. Baseline evidence: verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping. Findings: No new stage-specific defect established by this continuation; shared repairs remain applicable. CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED; final integrated whole-stage evidence pending.  Current follow-on: run/context selection, secondary-carrier isolation, exact legacy context recovery and invalid/duplicate expected-cell planning are corrected in published e655 with scoped focused passes; focused owning and native context controls pass; complete current-candidate proof remains pending (sectionsD/I).",
+      "source": "verification/complete-system-repair-20261007.md:155",
+      "currentStatus": "CURRENT_REGISTRY_MEMBERSHIP_LOADED; EXACT_DESCRIPTOR_RECOVERED_CONTRACT_REVIEW_RETAINED; CHANGED_RUNTIME_OWNER_BEHAVIOR_REQUIRES_SEPARATE_CURRENT_PROOF",
+      "recoveredScopedReview": {
+        "path": "/workspace/scratch/recovered-20261006/evidence/01-stage-review/current-stage-matrix.json",
+        "pointer": "/rows/18",
+        "sha256": "617e5e59d357f3c5bc903d03488a557dcfc9e30ae3af00924fb798c14534cc7f",
+        "reviewedCommit": "a194ae7020c40bf27bb4d5d1c586d271d4c87e92",
+        "entryAndDependencies": "Converged exact unchanged candidate; new ten fresh contexts; full verification/comparison/regression and discovery challenge.",
+        "controllingCompletion": "Candidate versions and hashes are unchanged; ten new contexts exist; every due PREPRODUCT_ITERATION verification and regression executed; the independent requirement-discovery challenge is complete; no accepted new requirement candidate, missed due failure, material defect, contradiction, or unexplained variance exists.",
+        "readCollections": [
+          "convergenceRecords",
+          "candidateFreezes",
+          "tests",
+          "regressions",
+          "regressionExecutions",
+          "propositions",
+          "propositionEquivalenceReviews",
+          "applicabilityRecords",
+          "proofExpressions",
+          "proofObligations",
+          "observationRecords",
+          "entailmentReviews",
+          "environmentDependencies"
+        ],
+        "agentFields": [],
+        "implementationPaths": [
+          "workbook.js",
+          "workflow-schema.js",
+          "workflow-engine.js",
+          "prompt-engine.js",
+          "response-ingestion.js",
+          "project-store.js"
+        ],
+        "historicalVerification": [
+          "verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping"
+        ],
+        "historicalDefects": [],
+        "historicalStatus": "CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED"
+      }
+    },
+    {
+      "stage": 20,
+      "name": "20 \u2014 FREEZE THE PRODUCTION BASELINE",
+      "contractAndCompletion": "Convergence and unchanged confirmation complete; exact production component freeze authorized. Completion: Unchanged confirmation succeeded; authorization exists; all components are present and immutable; baseline identity is recorded.",
+      "operations": [
+        "FREEZE_BASELINE",
+        "EXECUTE_FAILURE_TEST",
+        "EXECUTE_REGRESSION"
+      ],
+      "historicalReview": "workbook.js, workflow-schema.js, workflow-engine.js, prompt-engine.js, response-ingestion.js, project-store.js. Baseline evidence: verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping. Findings: No new stage-specific defect established by this continuation; shared repairs remain applicable. CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED; final integrated whole-stage evidence pending.",
+      "source": "verification/complete-system-repair-20261007.md:156",
+      "currentStatus": "CURRENT_REGISTRY_MEMBERSHIP_LOADED; EXACT_DESCRIPTOR_RECOVERED_CONTRACT_REVIEW_RETAINED; CHANGED_RUNTIME_OWNER_BEHAVIOR_REQUIRES_SEPARATE_CURRENT_PROOF",
+      "recoveredScopedReview": {
+        "path": "/workspace/scratch/recovered-20261006/evidence/01-stage-review/current-stage-matrix.json",
+        "pointer": "/rows/19",
+        "sha256": "617e5e59d357f3c5bc903d03488a557dcfc9e30ae3af00924fb798c14534cc7f",
+        "reviewedCommit": "a194ae7020c40bf27bb4d5d1c586d271d4c87e92",
+        "entryAndDependencies": "Convergence and unchanged confirmation complete; exact production component freeze authorized.",
+        "controllingCompletion": "Unchanged confirmation succeeded; authorization exists; all components are present and immutable; baseline identity is recorded.",
+        "readCollections": [
+          "confirmationRecords",
+          "candidateFreezes",
+          "iterations",
+          "artifacts",
+          "propositions",
+          "propositionEquivalenceReviews",
+          "applicabilityRecords",
+          "proofExpressions",
+          "proofObligations",
+          "observationRecords",
+          "entailmentReviews",
+          "environmentDependencies"
+        ],
+        "agentFields": [
+          "BASELINE_PACKAGE_SEPARATED_FROM_WORKING_FILES"
+        ],
+        "implementationPaths": [
+          "workbook.js",
+          "workflow-schema.js",
+          "workflow-engine.js",
+          "prompt-engine.js",
+          "response-ingestion.js",
+          "project-store.js"
+        ],
+        "historicalVerification": [
+          "verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping"
+        ],
+        "historicalDefects": [],
+        "historicalStatus": "CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED"
+      }
+    },
+    {
+      "stage": 21,
+      "name": "21 \u2014 GENERATE THE FINISHED PRODUCT",
+      "contractAndCompletion": "Production baseline; finished product through prescribed external file handoff; actual mandatory returned bytes. Completion: Product and execution identities exist; fresh production context was used; actual output bytes, inventory, hashes, and lineage are stored.",
+      "operations": [
+        "COMPLETE",
+        "EXECUTE_FAILURE_TEST",
+        "EXECUTE_REGRESSION"
+      ],
+      "historicalReview": "workbook.js, workflow-schema.js, workflow-engine.js, prompt-engine.js, response-ingestion.js, project-store.js. Baseline evidence: verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping. Findings: No new stage-specific defect established by this continuation; shared repairs remain applicable. CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED; final integrated whole-stage evidence pending.",
+      "source": "verification/complete-system-repair-20261007.md:157",
+      "currentStatus": "CURRENT_REGISTRY_MEMBERSHIP_LOADED; EXACT_DESCRIPTOR_RECOVERED_CONTRACT_REVIEW_RETAINED; CHANGED_RUNTIME_OWNER_BEHAVIOR_REQUIRES_SEPARATE_CURRENT_PROOF",
+      "recoveredScopedReview": {
+        "path": "/workspace/scratch/recovered-20261006/evidence/01-stage-review/current-stage-matrix.json",
+        "pointer": "/rows/20",
+        "sha256": "617e5e59d357f3c5bc903d03488a557dcfc9e30ae3af00924fb798c14534cc7f",
+        "reviewedCommit": "a194ae7020c40bf27bb4d5d1c586d271d4c87e92",
+        "entryAndDependencies": "Production baseline; finished product through prescribed external file handoff; actual mandatory returned bytes.",
+        "controllingCompletion": "Product and execution identities exist; fresh production context was used; actual output bytes, inventory, hashes, and lineage are stored.",
+        "readCollections": [
+          "baselines",
+          "instructions",
+          "artifacts",
+          "freshContexts",
+          "propositions",
+          "propositionEquivalenceReviews",
+          "applicabilityRecords",
+          "proofExpressions",
+          "proofObligations",
+          "observationRecords",
+          "entailmentReviews",
+          "environmentDependencies"
+        ],
+        "agentFields": [
+          "PRODUCTION_CONTEXT_REFERENCE",
+          "FRESH_CONTEXT",
+          "BASELINE_MATERIALS_SUPPLIED",
+          "EXECUTION_RECORD",
+          "EDITED_OUTSIDE_CONTROLLED_WORKFLOW",
+          "EDIT_REQUIRED",
+          "IF_YES_NEW_PRODUCT_VERSION_CREATED",
+          "AFFECTED_VALIDATION_IDENTIFIED"
+        ],
+        "implementationPaths": [
+          "workbook.js",
+          "workflow-schema.js",
+          "workflow-engine.js",
+          "prompt-engine.js",
+          "response-ingestion.js",
+          "project-store.js"
+        ],
+        "historicalVerification": [
+          "verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping"
+        ],
+        "historicalDefects": [],
+        "historicalStatus": "CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED"
+      }
+    },
+    {
+      "stage": 22,
+      "name": "22 \u2014 RUN DETERMINISTIC VERIFICATION ON THE FINISHED PRODUCT",
+      "contractAndCompletion": "Current product/tests; native deterministic execution or declared external route; complete due proposition evidence. Completion: Every applicable mandatory deterministic test has exactly one current sufficient result and all mandatory results are satisfied.",
+      "operations": [
+        "RUN_NATIVE_TESTS",
+        "EXECUTE_EXTERNAL_TEST",
+        "EXECUTE_FAILURE_TEST",
+        "EXECUTE_REGRESSION"
+      ],
+      "historicalReview": "workbook.js, workflow-schema.js, workflow-engine.js, prompt-engine.js, response-ingestion.js, project-store.js. Baseline evidence: verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping. Findings: Shared stale evidence-reference correction owned and independently verified by state_runtime; final integrated source verification pending.. CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED; final integrated whole-stage evidence pending.",
+      "source": "verification/complete-system-repair-20261007.md:158",
+      "currentStatus": "CURRENT_REGISTRY_MEMBERSHIP_LOADED; EXACT_DESCRIPTOR_RECOVERED_CONTRACT_REVIEW_RETAINED; CHANGED_RUNTIME_OWNER_BEHAVIOR_REQUIRES_SEPARATE_CURRENT_PROOF",
+      "recoveredScopedReview": {
+        "path": "/workspace/scratch/recovered-20261006/evidence/01-stage-review/current-stage-matrix.json",
+        "pointer": "/rows/21",
+        "sha256": "617e5e59d357f3c5bc903d03488a557dcfc9e30ae3af00924fb798c14534cc7f",
+        "reviewedCommit": "a194ae7020c40bf27bb4d5d1c586d271d4c87e92",
+        "entryAndDependencies": "Current product/tests; native deterministic execution or declared external route; complete due proposition evidence.",
+        "controllingCompletion": "Every applicable mandatory deterministic test has exactly one current sufficient result and all mandatory results are satisfied.",
+        "readCollections": [
+          "products",
+          "tests",
+          "artifacts",
+          "propositions",
+          "propositionEquivalenceReviews",
+          "applicabilityRecords",
+          "proofExpressions",
+          "proofObligations",
+          "observationRecords",
+          "entailmentReviews",
+          "environmentDependencies"
+        ],
+        "agentFields": [],
+        "implementationPaths": [
+          "workbook.js",
+          "workflow-schema.js",
+          "workflow-engine.js",
+          "prompt-engine.js",
+          "response-ingestion.js",
+          "project-store.js"
+        ],
+        "historicalVerification": [
+          "verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping"
+        ],
+        "historicalDefects": [
+          "Shared stale evidence-reference correction owned and independently verified by state_runtime; final integrated source verification pending."
+        ],
+        "historicalStatus": "CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED"
+      }
+    },
+    {
+      "stage": 23,
+      "name": "23 \u2014 RUN INDEPENDENT MEANING-BASED VERIFICATION",
+      "contractAndCompletion": "Current actual product and governing requirements; independent semantic review with blind context/byte carriers. Completion: Every meaning-review requirement has one independent current review with location, required meaning, observed meaning, comparison, evidence, and determination. No mandatory review is violated or undetermined.",
+      "operations": [
+        "COMPLETE",
+        "EXECUTE_FAILURE_TEST",
+        "EXECUTE_REGRESSION"
+      ],
+      "historicalReview": "workbook.js, workflow-schema.js, workflow-engine.js, prompt-engine.js, response-ingestion.js, project-store.js. Baseline evidence: verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping. Findings: Shared stale evidence-reference correction owned and independently verified by state_runtime; final integrated source verification pending.. CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED; final integrated whole-stage evidence pending.",
+      "source": "verification/complete-system-repair-20261007.md:159",
+      "currentStatus": "CURRENT_REGISTRY_MEMBERSHIP_LOADED; EXACT_DESCRIPTOR_RECOVERED_CONTRACT_REVIEW_RETAINED; CHANGED_RUNTIME_OWNER_BEHAVIOR_REQUIRES_SEPARATE_CURRENT_PROOF",
+      "recoveredScopedReview": {
+        "path": "/workspace/scratch/recovered-20261006/evidence/01-stage-review/current-stage-matrix.json",
+        "pointer": "/rows/22",
+        "sha256": "617e5e59d357f3c5bc903d03488a557dcfc9e30ae3af00924fb798c14534cc7f",
+        "reviewedCommit": "a194ae7020c40bf27bb4d5d1c586d271d4c87e92",
+        "entryAndDependencies": "Current actual product and governing requirements; independent semantic review with blind context/byte carriers.",
+        "controllingCompletion": "Every meaning-review requirement has one independent current review with location, required meaning, observed meaning, comparison, evidence, and determination. No mandatory review is violated or undetermined.",
+        "readCollections": [
+          "products",
+          "requirements",
+          "tests",
+          "sources",
+          "evidenceRecords",
+          "research",
+          "propositions",
+          "propositionEquivalenceReviews",
+          "applicabilityRecords",
+          "proofExpressions",
+          "proofObligations",
+          "observationRecords",
+          "entailmentReviews",
+          "environmentDependencies"
+        ],
+        "agentFields": [],
+        "implementationPaths": [
+          "workbook.js",
+          "workflow-schema.js",
+          "workflow-engine.js",
+          "prompt-engine.js",
+          "response-ingestion.js",
+          "project-store.js"
+        ],
+        "historicalVerification": [
+          "verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping"
+        ],
+        "historicalDefects": [
+          "Shared stale evidence-reference correction owned and independently verified by state_runtime; final integrated source verification pending."
+        ],
+        "historicalStatus": "CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED"
+      }
+    },
+    {
+      "stage": 24,
+      "name": "24 \u2014 RUN ADVERSARIAL VERIFICATION",
+      "contractAndCompletion": "Current product; native attacks or external adversarial work in disposable state; complete due tests/receipts. Completion: Every applicable attack category and active historical regression pattern was tested. Findings have sufficient evidence. Every unresolved mandatory finding has a defect or blocker.",
+      "operations": [
+        "RUN_NATIVE_ATTACKS",
+        "COMPLETE",
+        "EXECUTE_FAILURE_TEST",
+        "EXECUTE_REGRESSION"
+      ],
+      "historicalReview": "workbook.js, workflow-schema.js, workflow-engine.js, prompt-engine.js, response-ingestion.js, project-store.js. Baseline evidence: verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping. Findings: Shared stale evidence-reference correction owned and independently verified by state_runtime; final integrated source verification pending.. CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED; final integrated whole-stage evidence pending.",
+      "source": "verification/complete-system-repair-20261007.md:160",
+      "currentStatus": "CURRENT_REGISTRY_MEMBERSHIP_LOADED; EXACT_DESCRIPTOR_RECOVERED_CONTRACT_REVIEW_RETAINED; CHANGED_RUNTIME_OWNER_BEHAVIOR_REQUIRES_SEPARATE_CURRENT_PROOF",
+      "recoveredScopedReview": {
+        "path": "/workspace/scratch/recovered-20261006/evidence/01-stage-review/current-stage-matrix.json",
+        "pointer": "/rows/23",
+        "sha256": "617e5e59d357f3c5bc903d03488a557dcfc9e30ae3af00924fb798c14534cc7f",
+        "reviewedCommit": "a194ae7020c40bf27bb4d5d1c586d271d4c87e92",
+        "entryAndDependencies": "Current product; native attacks or external adversarial work in disposable state; complete due tests/receipts.",
+        "controllingCompletion": "Every applicable attack category and active historical regression pattern was tested. Findings have sufficient evidence. Every unresolved mandatory finding has a defect or blocker.",
+        "readCollections": [
+          "products",
+          "requirements",
+          "tests",
+          "failureTests",
+          "regressions",
+          "regressionExecutions",
+          "defects",
+          "sources",
+          "evidenceRecords",
+          "research",
+          "artifacts",
+          "propositions",
+          "propositionEquivalenceReviews",
+          "applicabilityRecords",
+          "proofExpressions",
+          "proofObligations",
+          "observationRecords",
+          "entailmentReviews",
+          "environmentDependencies"
+        ],
+        "agentFields": [],
+        "implementationPaths": [
+          "workbook.js",
+          "workflow-schema.js",
+          "workflow-engine.js",
+          "prompt-engine.js",
+          "response-ingestion.js",
+          "project-store.js"
+        ],
+        "historicalVerification": [
+          "verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping"
+        ],
+        "historicalDefects": [
+          "Shared stale evidence-reference correction owned and independently verified by state_runtime; final integrated source verification pending."
+        ],
+        "historicalStatus": "CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED"
+      }
+    },
+    {
+      "stage": 25,
+      "name": "25 \u2014 INSPECT THE FINAL REPRESENTATION",
+      "contractAndCompletion": "Application-derived exact delivery candidate; final representation observations bind real target/bytes. Completion: DELIVERY_CANDIDATE_SET_ID is frozen; every artifact, representation, page, view, transformation, metadata-sensitive property, and packaged file in that exact set is inspected. Objective file facts are application-derived. Irreducible judgments use the proper human or reviewer authority. No mandatory representation unknown remains.",
+      "operations": [
+        "FREEZE_DELIVERY_CANDIDATE",
+        "COMPLETE",
+        "EXECUTE_FAILURE_TEST",
+        "EXECUTE_REGRESSION"
+      ],
+      "historicalReview": "workbook.js, workflow-schema.js, workflow-engine.js, prompt-engine.js, response-ingestion.js, project-store.js. Baseline evidence: verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping. Findings: Shared stale evidence-reference correction owned and independently verified by state_runtime; final integrated source verification pending.. CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED; final integrated whole-stage evidence pending.",
+      "source": "verification/complete-system-repair-20261007.md:161",
+      "currentStatus": "CURRENT_REGISTRY_MEMBERSHIP_LOADED; EXACT_DESCRIPTOR_RECOVERED_CONTRACT_REVIEW_RETAINED; CHANGED_RUNTIME_OWNER_BEHAVIOR_REQUIRES_SEPARATE_CURRENT_PROOF",
+      "recoveredScopedReview": {
+        "path": "/workspace/scratch/recovered-20261006/evidence/01-stage-review/current-stage-matrix.json",
+        "pointer": "/rows/24",
+        "sha256": "617e5e59d357f3c5bc903d03488a557dcfc9e30ae3af00924fb798c14534cc7f",
+        "reviewedCommit": "a194ae7020c40bf27bb4d5d1c586d271d4c87e92",
+        "entryAndDependencies": "Application-derived exact delivery candidate; final representation observations bind real target/bytes.",
+        "controllingCompletion": "DELIVERY_CANDIDATE_SET_ID is frozen; every artifact, representation, page, view, transformation, metadata-sensitive property, and packaged file in that exact set is inspected. Objective file facts are application-derived. Irreducible judgments use the proper human or reviewer authority. No mandatory representation unknown remains.",
+        "readCollections": [
+          "products",
+          "baselines",
+          "artifacts",
+          "requirements",
+          "tests",
+          "evidenceRecords",
+          "propositions",
+          "propositionEquivalenceReviews",
+          "applicabilityRecords",
+          "proofExpressions",
+          "proofObligations",
+          "observationRecords",
+          "entailmentReviews",
+          "environmentDependencies"
+        ],
+        "agentFields": [
+          "CONTROLLING_EVIDENCE"
+        ],
+        "implementationPaths": [
+          "workbook.js",
+          "workflow-schema.js",
+          "workflow-engine.js",
+          "prompt-engine.js",
+          "response-ingestion.js",
+          "project-store.js"
+        ],
+        "historicalVerification": [
+          "verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping"
+        ],
+        "historicalDefects": [
+          "Shared stale evidence-reference correction owned and independently verified by state_runtime; final integrated source verification pending."
+        ],
+        "historicalStatus": "CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED"
+      }
+    },
+    {
+      "stage": 26,
+      "name": "26 \u2014 RECONCILE PROCESS AND PRODUCT EVIDENCE",
+      "contractAndCompletion": "Complete process/product audits; current independent review, contradictions resolved by reconcile and rereview. Completion: Current process and product audits exist; identities and counts are application-derived; discrepancies and contradictions are reconciled or blocked; both evidence bodies support progression.",
+      "operations": [
+        "COMPLETE",
+        "SEMANTIC_REVIEW",
+        "RECONCILE",
+        "EXECUTE_FAILURE_TEST",
+        "EXECUTE_REGRESSION"
+      ],
+      "historicalReview": "workbook.js, workflow-schema.js, workflow-engine.js, prompt-engine.js, response-ingestion.js, project-store.js. Baseline evidence: verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping. Findings: No new stage-specific defect established by this continuation; shared repairs remain applicable. CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED; final integrated whole-stage evidence pending.",
+      "source": "verification/complete-system-repair-20261007.md:162",
+      "currentStatus": "CURRENT_REGISTRY_MEMBERSHIP_LOADED; EXACT_DESCRIPTOR_RECOVERED_CONTRACT_REVIEW_RETAINED; CHANGED_RUNTIME_OWNER_BEHAVIOR_REQUIRES_SEPARATE_CURRENT_PROOF",
+      "recoveredScopedReview": {
+        "path": "/workspace/scratch/recovered-20261006/evidence/01-stage-review/current-stage-matrix.json",
+        "pointer": "/rows/25",
+        "sha256": "617e5e59d357f3c5bc903d03488a557dcfc9e30ae3af00924fb798c14534cc7f",
+        "reviewedCommit": "a194ae7020c40bf27bb4d5d1c586d271d4c87e92",
+        "entryAndDependencies": "Complete process/product audits; current independent review, contradictions resolved by reconcile and rereview.",
+        "controllingCompletion": "Current process and product audits exist; identities and counts are application-derived; discrepancies and contradictions are reconciled or blocked; both evidence bodies support progression.",
+        "readCollections": [
+          "products",
+          "baselines",
+          "requirements",
+          "instructions",
+          "tests",
+          "runs",
+          "verification",
+          "deterministicResults",
+          "meaningResults",
+          "adversarialResults",
+          "representationInspections",
+          "regressions",
+          "regressionExecutions",
+          "defects",
+          "blockers",
+          "evidenceRecords",
+          "confirmationRecords",
+          "propositions",
+          "propositionEquivalenceReviews",
+          "applicabilityRecords",
+          "proofExpressions",
+          "proofObligations",
+          "observationRecords",
+          "entailmentReviews",
+          "environmentDependencies"
+        ],
+        "agentFields": [
+          "PROCESS_REVIEW",
+          "PROCESS_CORRECTNESS_DETERMINATION",
+          "PROCESS_EVIDENCE",
+          "PRODUCT_REVIEW",
+          "PRODUCT_CORRECTNESS_DETERMINATION",
+          "PRODUCT_EVIDENCE",
+          "PROCESS_PRODUCT_DISCREPANCIES",
+          "RECONCILED_DETERMINATION",
+          "CONTROLLING_REASON",
+          "CONTROLLING_EVIDENCE"
+        ],
+        "implementationPaths": [
+          "workbook.js",
+          "workflow-schema.js",
+          "workflow-engine.js",
+          "prompt-engine.js",
+          "response-ingestion.js",
+          "project-store.js"
+        ],
+        "historicalVerification": [
+          "verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping"
+        ],
+        "historicalDefects": [],
+        "historicalStatus": "CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED"
+      }
+    },
+    {
+      "stage": 27,
+      "name": "27 \u2014 APPLY THE RELEASE GATE",
+      "contractAndCompletion": "All mandatory current proof/evidence, no UNKNOWN/blocker; human authorization only where specified; advisory non-gating. Completion: Stage 26 is complete. CALCULATE_RELEASE applies the precedence in Section 36.4 and produces exactly one idempotent ACCEPTED, REJECTED, or BLOCKED result from the complete current due release-evidence universe.",
+      "operations": [
+        "CALCULATE_RELEASE",
+        "ADVISORY_REVIEW",
+        "EXECUTE_FAILURE_TEST",
+        "EXECUTE_REGRESSION"
+      ],
+      "historicalReview": "workbook.js, workflow-schema.js, workflow-engine.js, prompt-engine.js, response-ingestion.js, project-store.js. Baseline evidence: verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping. Findings: Shared stale evidence-reference correction owned and independently verified by state_runtime; final integrated source verification pending.. CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED; final integrated whole-stage evidence pending.",
+      "source": "verification/complete-system-repair-20261007.md:163",
+      "currentStatus": "CURRENT_REGISTRY_MEMBERSHIP_LOADED; EXACT_DESCRIPTOR_RECOVERED_CONTRACT_REVIEW_RETAINED; CHANGED_RUNTIME_OWNER_BEHAVIOR_REQUIRES_SEPARATE_CURRENT_PROOF",
+      "recoveredScopedReview": {
+        "path": "/workspace/scratch/recovered-20261006/evidence/01-stage-review/current-stage-matrix.json",
+        "pointer": "/rows/26",
+        "sha256": "617e5e59d357f3c5bc903d03488a557dcfc9e30ae3af00924fb798c14534cc7f",
+        "reviewedCommit": "a194ae7020c40bf27bb4d5d1c586d271d4c87e92",
+        "entryAndDependencies": "All mandatory current proof/evidence, no UNKNOWN/blocker; human authorization only where specified; advisory non-gating.",
+        "controllingCompletion": "Stage 26 is complete. CALCULATE_RELEASE applies the precedence in Section 36.4 and produces exactly one idempotent ACCEPTED, REJECTED, or BLOCKED result from the complete current due release-evidence universe.",
+        "readCollections": [
+          "requirements",
+          "tests",
+          "products",
+          "baselines",
+          "deterministicResults",
+          "meaningResults",
+          "adversarialResults",
+          "representationInspections",
+          "processAudits",
+          "productAudits",
+          "defects",
+          "blockers",
+          "regressionExecutions",
+          "evidenceRecords",
+          "confirmationRecords",
+          "regressions",
+          "propositions",
+          "propositionEquivalenceReviews",
+          "applicabilityRecords",
+          "proofExpressions",
+          "proofObligations",
+          "observationRecords",
+          "entailmentReviews",
+          "environmentDependencies"
+        ],
+        "agentFields": [],
+        "implementationPaths": [
+          "workbook.js",
+          "workflow-schema.js",
+          "workflow-engine.js",
+          "prompt-engine.js",
+          "response-ingestion.js",
+          "project-store.js"
+        ],
+        "historicalVerification": [
+          "verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping"
+        ],
+        "historicalDefects": [
+          "Shared stale evidence-reference correction owned and independently verified by state_runtime; final integrated source verification pending."
+        ],
+        "historicalStatus": "CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED"
+      }
+    },
+    {
+      "stage": 28,
+      "name": "28 \u2014 VERIFY ARTIFACT IDENTITY BEFORE RELEASE",
+      "contractAndCompletion": "Exact authorized artifact set and custody; application identity checks, current human capture-delivery intent. Completion: Stage 27 is ACCEPTED. The exact Stage 25 DELIVERY_CANDIDATE_SET_ID is current. Audited and selected delivery bytes match that set one-to-one independent of order. Nothing is missing, extra, duplicated, unauthorized, renamed outside authorization, transformed, resized, or rehashed differently. Human delivery intent is destination-, purpose-, channel-, disclosure-, and validity-bound.",
+      "operations": [
+        "VERIFY_IDENTITY",
+        "CAPTURE_DELIVERY_INTENT",
+        "EXECUTE_FAILURE_TEST",
+        "EXECUTE_REGRESSION"
+      ],
+      "historicalReview": "workbook.js, workflow-schema.js, workflow-engine.js, prompt-engine.js, response-ingestion.js, project-store.js. Baseline evidence: verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping. Findings: No new stage-specific defect established by this continuation; shared repairs remain applicable. CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED; final integrated whole-stage evidence pending.",
+      "source": "verification/complete-system-repair-20261007.md:164",
+      "currentStatus": "CURRENT_REGISTRY_MEMBERSHIP_LOADED; EXACT_DESCRIPTOR_RECOVERED_CONTRACT_REVIEW_RETAINED; CHANGED_RUNTIME_OWNER_BEHAVIOR_REQUIRES_SEPARATE_CURRENT_PROOF",
+      "recoveredScopedReview": {
+        "path": "/workspace/scratch/recovered-20261006/evidence/01-stage-review/current-stage-matrix.json",
+        "pointer": "/rows/27",
+        "sha256": "617e5e59d357f3c5bc903d03488a557dcfc9e30ae3af00924fb798c14534cc7f",
+        "reviewedCommit": "a194ae7020c40bf27bb4d5d1c586d271d4c87e92",
+        "entryAndDependencies": "Exact authorized artifact set and custody; application identity checks, current human capture-delivery intent.",
+        "controllingCompletion": "Stage 27 is ACCEPTED. The exact Stage 25 DELIVERY_CANDIDATE_SET_ID is current. Audited and selected delivery bytes match that set one-to-one independent of order. Nothing is missing, extra, duplicated, unauthorized, renamed outside authorization, transformed, resized, or rehashed differently. Human delivery intent is destination-, purpose-, channel-, disclosure-, and validity-bound.",
+        "readCollections": [
+          "releaseRecords",
+          "artifactIdentities",
+          "artifacts",
+          "propositions",
+          "propositionEquivalenceReviews",
+          "applicabilityRecords",
+          "proofExpressions",
+          "proofObligations",
+          "observationRecords",
+          "entailmentReviews",
+          "environmentDependencies"
+        ],
+        "agentFields": [],
+        "implementationPaths": [
+          "workbook.js",
+          "workflow-schema.js",
+          "workflow-engine.js",
+          "prompt-engine.js",
+          "response-ingestion.js",
+          "project-store.js"
+        ],
+        "historicalVerification": [
+          "verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping"
+        ],
+        "historicalDefects": [],
+        "historicalStatus": "CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED"
+      }
+    },
+    {
+      "stage": 29,
+      "name": "29 \u2014 PRESERVE THE COMPLETE EVIDENCE CHAIN",
+      "contractAndCompletion": "Complete evidence closure per mandatory requirement/phase; independent missing-evidence investigation when needed. Completion: Every mandatory chain is structurally complete, current-scope, evidence-sufficient, and linked to current artifact identity where applicable.",
+      "operations": [
+        "CALCULATE_EVIDENCE_CHAINS",
+        "INVESTIGATE_MISSING_EVIDENCE",
+        "EXECUTE_FAILURE_TEST",
+        "EXECUTE_REGRESSION"
+      ],
+      "historicalReview": "workbook.js, workflow-schema.js, workflow-engine.js, prompt-engine.js, response-ingestion.js, project-store.js. Baseline evidence: verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping. Findings: Shared stale evidence-reference correction owned and independently verified by state_runtime; final integrated source verification pending.. CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED; final integrated whole-stage evidence pending.",
+      "source": "verification/complete-system-repair-20261007.md:165",
+      "currentStatus": "CURRENT_REGISTRY_MEMBERSHIP_LOADED; EXACT_DESCRIPTOR_RECOVERED_CONTRACT_REVIEW_RETAINED; CHANGED_RUNTIME_OWNER_BEHAVIOR_REQUIRES_SEPARATE_CURRENT_PROOF",
+      "recoveredScopedReview": {
+        "path": "/workspace/scratch/recovered-20261006/evidence/01-stage-review/current-stage-matrix.json",
+        "pointer": "/rows/28",
+        "sha256": "617e5e59d357f3c5bc903d03488a557dcfc9e30ae3af00924fb798c14534cc7f",
+        "reviewedCommit": "a194ae7020c40bf27bb4d5d1c586d271d4c87e92",
+        "entryAndDependencies": "Complete evidence closure per mandatory requirement/phase; independent missing-evidence investigation when needed.",
+        "controllingCompletion": "Every mandatory chain is structurally complete, current-scope, evidence-sufficient, and linked to current artifact identity where applicable.",
+        "readCollections": [
+          "sources",
+          "requirements",
+          "instructions",
+          "instructionTraces",
+          "runs",
+          "products",
+          "baselines",
+          "tests",
+          "verification",
+          "deterministicResults",
+          "meaningResults",
+          "adversarialResults",
+          "representationInspections",
+          "processAudits",
+          "productAudits",
+          "regressions",
+          "regressionExecutions",
+          "releaseRecords",
+          "artifactIdentities",
+          "evidenceRecords",
+          "evidenceChains",
+          "propositions",
+          "propositionEquivalenceReviews",
+          "applicabilityRecords",
+          "proofExpressions",
+          "proofObligations",
+          "observationRecords",
+          "entailmentReviews",
+          "environmentDependencies"
+        ],
+        "agentFields": [
+          "EVIDENCE_REPOSITORY_LOCATION",
+          "REPRODUCTION_INSTRUCTIONS",
+          "CONTROLLING_EVIDENCE"
+        ],
+        "implementationPaths": [
+          "workbook.js",
+          "workflow-schema.js",
+          "workflow-engine.js",
+          "prompt-engine.js",
+          "response-ingestion.js",
+          "project-store.js"
+        ],
+        "historicalVerification": [
+          "verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping"
+        ],
+        "historicalDefects": [
+          "Shared stale evidence-reference correction owned and independently verified by state_runtime; final integrated source verification pending."
+        ],
+        "historicalStatus": "CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED"
+      }
+    },
+    {
+      "stage": 30,
+      "name": "30 \u2014 PRESERVE FAILURES PERMANENTLY AND CLOSE DELIVERY",
+      "contractAndCompletion": "Current proof, identity, evidence closure, append-only registry; separately authorized share and actual delivery receipt. Completion: Defect and regression histories are append-only; corrections are new records; every confirmed defect has a permanent regression; every due applicable regression execution is current; the pre-delivery checkpoint exists; CALCULATE_TERMINAL atomically creates one AUTHORIZED or BLOCKED delivery determination under Section 36.9. Export or share and any delivery completion are separately receipted and never inferred from authorization. Stage 30 closes through the one atomic CALCULATE_TERMINAL command, which reads the precondition revision, validates registry integrity and all terminal prerequisites, creates exactly one current terminal determination, sets DELIVERY_STATE = AUTHORIZED only when every prerequisite is true and otherwise BLOCKED, increments revision once, and commits once. The command's own committed revision does not invalidate its result; only a later revision affecting its dependency closure may supersede or withdraw it. Registry incompleteness blocks Stage 30 unless it proves an earlier premise false; it does not create a Stage 27\u2194Stage 30 cycle.",
+      "operations": [
+        "CALCULATE_TERMINAL",
+        "EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS",
+        "RECORD_DELIVERY_EVIDENCE",
+        "EXECUTE_FAILURE_TEST",
+        "EXECUTE_REGRESSION"
+      ],
+      "historicalReview": "workbook.js, workflow-schema.js, workflow-engine.js, prompt-engine.js, response-ingestion.js, project-store.js. Baseline evidence: verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping. Findings: Shared stale evidence-reference correction owned and independently verified by state_runtime; final integrated source verification pending.. CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED; final integrated whole-stage evidence pending.",
+      "source": "verification/complete-system-repair-20261007.md:166",
+      "currentStatus": "CURRENT_REGISTRY_MEMBERSHIP_LOADED; EXACT_DESCRIPTOR_RECOVERED_CONTRACT_REVIEW_RETAINED; CHANGED_RUNTIME_OWNER_BEHAVIOR_REQUIRES_SEPARATE_CURRENT_PROOF",
+      "recoveredScopedReview": {
+        "path": "/workspace/scratch/recovered-20261006/evidence/01-stage-review/current-stage-matrix.json",
+        "pointer": "/rows/29",
+        "sha256": "617e5e59d357f3c5bc903d03488a557dcfc9e30ae3af00924fb798c14534cc7f",
+        "reviewedCommit": "a194ae7020c40bf27bb4d5d1c586d271d4c87e92",
+        "entryAndDependencies": "Current proof, identity, evidence closure, append-only registry; separately authorized share and actual delivery receipt.",
+        "controllingCompletion": "Defect and regression histories are append-only; corrections are new records; every confirmed defect has a permanent regression; every due applicable regression execution is current; the pre-delivery checkpoint exists; CALCULATE_TERMINAL atomically creates one AUTHORIZED or BLOCKED delivery determination under Section 36.9. Export or share and any delivery completion are separately receipted and never inferred from authorization. Stage 30 closes through the one atomic CALCULATE_TERMINAL command, which reads the precondition revision, validates registry integrity and all terminal prerequisites, creates exactly one current terminal determination, sets DELIVERY_STATE = AUTHORIZED only when every prerequisite is true and otherwise BLOCKED, increments revision once, and commits once. The command's own committed revision does not invalidate its result; only a later revision affecting its dependency closure may supersede or withdraw it. Registry incompleteness blocks Stage 30 unless it proves an earlier premise false; it does not create a Stage 27\u2194Stage 30 cycle.",
+        "readCollections": [
+          "defects",
+          "rootCauses",
+          "regressions",
+          "regressionExecutions",
+          "changes",
+          "baselines",
+          "evidenceRecords",
+          "requirements",
+          "propositions",
+          "propositionEquivalenceReviews",
+          "applicabilityRecords",
+          "proofExpressions",
+          "proofObligations",
+          "observationRecords",
+          "entailmentReviews",
+          "environmentDependencies"
+        ],
+        "agentFields": [
+          "REGISTRY_STORAGE_LOCATION",
+          "REGISTRY_RETENTION_RULE",
+          "REGISTRY_HASH_OR_INTEGRITY_EVIDENCE",
+          "CONTROLLING_EVIDENCE"
+        ],
+        "implementationPaths": [
+          "workbook.js",
+          "workflow-schema.js",
+          "workflow-engine.js",
+          "prompt-engine.js",
+          "response-ingestion.js",
+          "project-store.js"
+        ],
+        "historicalVerification": [
+          "verify-stage-operation-registry.mjs exit0; independently literal specification membership/executor mapping"
+        ],
+        "historicalDefects": [
+          "Shared stale evidence-reference correction owned and independently verified by state_runtime; final integrated source verification pending."
+        ],
+        "historicalStatus": "CONTRACT_REVIEW_REUSED_WITH_EXACT_OWNER_IDENTITY; CURRENT_REGISTRY_VERIFIED; FULL_STAGE_CURRENT_CANDIDATE_BEHAVIOR_NOT_CONCLUSIVELY_VERIFIED"
+      }
+    }
+  ],
+  "recoveredReviewIdentity": {
+    "manifestGitBlob": "23cb364dbdba418910f30b59f66a22212f304a3c",
+    "manifestGitBlobUrl": "https://api.github.com/repos/sjonesjones917/closed-loop-tracker/git/blobs/23cb364dbdba418910f30b59f66a22212f304a3c",
+    "checkpointCommentUrl": "https://github.com/sjonesjones917/closed-loop-tracker/pull/1248#issuecomment-6027182767",
+    "archiveSha256": "415de13c078cf0175bd06ea41bddf3d8efd23b64311e142a51ce1c96d3588e0f",
+    "captureManifestSha256": "2828f8cb648b2f6274ab45b50c7b63ba37cf59c0419b7cb920269e17e2dc2eb2",
+    "parts": [
+      {
+        "index": 0,
+        "bytes": 8388608,
+        "sha256": "670030f54056a515713f7d18f1a5b9e05925f8139a498371a0f5d45ff3233270",
+        "gitBlobSha": "a250e84b0b0b375e189325f0f3d19f73cfc4a362"
+      },
+      {
+        "index": 1,
+        "bytes": 8388608,
+        "sha256": "62095ca9f0e3c74c63d52c4de4d46b3dbaa4ea3225b65ca1da2ae594f40872a0",
+        "gitBlobSha": "1b18af019e839cb066481029d39903f2e1d67645"
+      },
+      {
+        "index": 2,
+        "bytes": 7523120,
+        "sha256": "92f26770408cdb729b750a7e72823f180dd4c22d45eb0378d0468b6e79ea2917",
+        "gitBlobSha": "28b9f497fb3ab5d5f2faf7a05b06868ba0d4227a"
+      }
+    ],
+    "captureUtc": "2026-10-06T23:08:56.644801+00:00",
+    "capturedSourceCommit": "a194ae7020c40bf27bb4d5d1c586d271d4c87e92",
+    "captureQualification": "WIP_NONCOHERENT_NOT_RELEASE_PROOF",
+    "rootValidatedMembers": 1496,
+    "rootExtractedEvidenceMembers": 612,
+    "rootRecoveryCheckedAtUtc": "2026-10-10T16:14:17.361533+00:00",
+    "continuationIndependentlyVerifiedSelectedMembers": [
+      {
+        "path": "/workspace/scratch/recovered-20261006/evidence/02-pr-review/complete-pr-file-review-inventory.json",
+        "archiveMember": "evidence/02-pr-review/complete-pr-file-review-inventory.json",
+        "bytes": 892883,
+        "sha256": "49781bf6d7fd87ca5f27c9ba3a308e7bf33fb01bc8d5db7b6b373f9eeb426aff",
+        "gitBlobSha": "a982fdfa18bfade42ce499485bad193f38793370"
+      },
+      {
+        "path": "/workspace/scratch/recovered-20261006/evidence/02-pr-review/working-pr-file-review-inventory.json",
+        "archiveMember": "evidence/02-pr-review/working-pr-file-review-inventory.json",
+        "bytes": 1447751,
+        "sha256": "ecc81683048cc74de6238ad77dcd359bc09ec412368bcca6bef36ee477e3408c",
+        "gitBlobSha": "7e7f71f31546e4eb2a1cdd9805ca704dcfaf6fe8"
+      },
+      {
+        "path": "/workspace/scratch/recovered-20261006/evidence/01-stage-review/current-stage-matrix.json",
+        "archiveMember": "evidence/01-stage-review/current-stage-matrix.json",
+        "bytes": 78588,
+        "sha256": "617e5e59d357f3c5bc903d03488a557dcfc9e30ae3af00924fb798c14534cc7f",
+        "gitBlobSha": "facbe3aa9814afbcb619fb45a10657be3f7cd994"
+      },
+      {
+        "path": "/workspace/scratch/recovered-20261006/evidence/01-stage-review/current-operation-coverage.json",
+        "archiveMember": "evidence/01-stage-review/current-operation-coverage.json",
+        "bytes": 460720,
+        "sha256": "7c645072ecc05e8d89ed6a42b1969e1b7a733e1d6b1fd778c29bb93b449e6c56",
+        "gitBlobSha": "cde2f7b496145f09c590e53461dc5a84e35a99a3"
+      },
+      {
+        "path": "/workspace/scratch/recovered-20261006/evidence/01-stage-review/prior-comparison-a194.json",
+        "archiveMember": "evidence/01-stage-review/prior-comparison-a194.json",
+        "bytes": 2968,
+        "sha256": "531e52a24755fe8191a5f4d2a477b851497962c8153364e352211831784cbe83",
+        "gitBlobSha": "b54ebe906a7f94b6f59393ca88e0194d6433b26e"
+      },
+      {
+        "path": "/workspace/scratch/recovered-20261006/evidence/00-current-evidence/current-quality-practice-record.json",
+        "archiveMember": "evidence/00-current-evidence/current-quality-practice-record.json",
+        "bytes": 111554,
+        "sha256": "0248ae5a978d365a137ddc5756a90264549a1532e433cba974585136eb0aadbc",
+        "gitBlobSha": "e4024151f2ce3e0116a4bd247ecffd7c78b7dc05"
+      }
+    ],
+    "qualification": "Historical WIP evidence recovered exactly. Byte recovery and scoped source identity establish neither current behavioral proof nor release conformance."
+  },
+  "sourceOwnerIdentityComparison": [
+    {
+      "path": "workflow-schema.js",
+      "recoveredReviewedSha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8",
+      "committedHeadSha256": "656e9e632cea3a60e1c7e0fb486e6630d205011d7db32d9674ac5e88593d24f1",
+      "byteIdentical": false
+    },
+    {
+      "path": "prompt-engine.js",
+      "recoveredReviewedSha256": "31489eaeffcd4f12696b473467c6be7e494e8e26a8eb64c4c8c69d18f215f94a",
+      "committedHeadSha256": "61e363381dfb88fcfd32a176066762e2a37cf7b14fb9d39bff4eacf7e6d5706f",
+      "byteIdentical": false
+    },
+    {
+      "path": "workflow-engine.js",
+      "recoveredReviewedSha256": "b47195d41a130cb1b84425f5eb33bd8a163e1047c0e95e19eef59d47525e463d",
+      "committedHeadSha256": "16c2a16d61d6a462ecebd25cd7d530a3cce46e11c1d9f88664c2e9a27cf61295",
+      "byteIdentical": false
+    },
+    {
+      "path": "workbook.js",
+      "recoveredReviewedSha256": "3a8098a9bb4ea108eadaa9bec90c76a1522f57f6465f45341cedf60937ddd008",
+      "committedHeadSha256": "3a8098a9bb4ea108eadaa9bec90c76a1522f57f6465f45341cedf60937ddd008",
+      "byteIdentical": true
+    },
+    {
+      "path": "response-ingestion.js",
+      "recoveredReviewedSha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19",
+      "committedHeadSha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5",
+      "byteIdentical": false
+    },
+    {
+      "path": "app-core.js",
+      "recoveredReviewedSha256": "83ab20995a8e3ab8942c6291854630af7b1eea86bf5a6424e685f61b7461bcb3",
+      "committedHeadSha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460",
+      "byteIdentical": false
+    },
+    {
+      "path": "project-store.js",
+      "recoveredReviewedSha256": "2d6896f47164f4a232c631d949cce64d2200e6d4e2202c2c3cdb29b08648cdf2",
+      "committedHeadSha256": "4e8368f0d91eab0b937ee5c256a121c6ca2b3524e9d06ffc16c3f5637a05b060",
+      "byteIdentical": false
+    },
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "recoveredReviewedSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
+      "committedHeadSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
+      "byteIdentical": true
+    },
+    {
+      "path": "specification/recovery-amendment-20260914.txt",
+      "recoveredReviewedSha256": "40340c453d52878d24aa00dc239ec52a2f3489a1c6989a9fc414158ae17b216f",
+      "committedHeadSha256": "40340c453d52878d24aa00dc239ec52a2f3489a1c6989a9fc414158ae17b216f",
+      "byteIdentical": true
+    }
+  ]
+}

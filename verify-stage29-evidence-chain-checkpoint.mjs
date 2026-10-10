@@ -2,6 +2,8 @@ import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
+import {recordProposal,canonicalFixtureRecord} from './test-fixtures.mjs';
 
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
@@ -34,8 +36,12 @@ const makeProject=({releaseId='REL-1',productId='PROD-1',baselineId='BASE-1',has
   evidence.source='APPLICATION_TEST_RUNTIME';
   const instruction=record('instructions',{INSTRUCTION_ID:'INSTR-1',STATUS:'CURRENT',INSTRUCTION_TEXT:'Execute the Stage 29 requirement evidence validation.'},'INSTR-1',scope);
   const trace=record('instructionTraces',{TRACE_ID:'TRACE-1',REQ_ID:'REQ-1',INSTRUCTION_ID:'INSTR-1',INSTRUCTION_LOCATION:'stage-29.evidence-chain',IMPLEMENTED_BEHAVIOR:'Required evidence-chain validation',EVIDENCE_ID:'EVID-1',STATUS:'CURRENT'},'TRACE-1',scope);
-  const test=record('tests',{REQ_ID:'REQ-1',TEST_ID:'TEST-1',TEST_TYPE:'DETERMINISTIC',EXECUTION_MODE:'APPLICATION_DETERMINISTIC',STATUS:'READY'},'TEST-1',scope);
-  const result=record('verification',{REQ_ID:'REQ-1',TEST_ID:'TEST-1',DETERMINATION:'SATISFIED',EVIDENCE_ID:['EVID-1'],RESULT_ID:'RES-1'},'RES-1',scope);
+  // The fixture isolates exact chain bindings. Supply the normative seven-field
+  // non-run declaration through the existing fixture/schema owner so it is not
+  // a malformed test that can bypass the required-result frontier.
+  const declared=recordProposal(schema,'tests').fields,timing=Object.fromEntries(schema.TIMING_FIELDS.map(key=>[key,declared[key]]));
+  const test=canonicalFixtureRecord({engine,schema},p,'tests',{REQ_ID:'REQ-1',TEST_TYPE:'DETERMINISTIC',EXECUTION_MODE:'APPLICATION_DETERMINISTIC',STATUS:'READY',...timing,EARLIEST_EXECUTABLE_STAGE:6,REQUIRED_BY_STAGE:29,PER_RUN_REQUIRED:false},{scope});
+  const result=record('verification',{REQ_ID:'REQ-1',TEST_ID:engine.recordId(test,'tests'),DETERMINATION:'SATISFIED',EVIDENCE_ID:['EVID-1'],RESULT_ID:'RES-1'},'RES-1',scope);
   const identity=record('artifactIdentities',{IDENTITY_ID:'ART-1',ARTIFACT_ID:'ART-1',AUDITED_FILENAME:'artifact.bin',RELEASE_FILENAME:'artifact.bin',AUTHORIZATION:'AUTHORIZED',EXACT_HASH_MATCH:true,EXACT_SIZE_MATCH:true,RELEASE_BYTE_SIZE:10,AUDITED_SHA256:'fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210',PRE_DELIVERY_SHA256:'fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210'},'ART-1',scope);
   identity.identityEvidenceSha256='7'.repeat(64);identity.scope={...scope,releaseId,deliveryCandidateSetId:'SET-1'};
   p.projectData.deliveryCandidateSets.push(record('deliveryCandidateSets',{STATUS:'FROZEN',ARTIFACT_IDS:['ART-1'],AUTHORIZED_FILENAMES:{'ART-1':'artifact.bin'}},'SET-1',scope));
@@ -46,11 +52,10 @@ const makeProject=({releaseId='REL-1',productId='PROD-1',baselineId='BASE-1',has
   p.projectData.products.push(product);
   p.projectData.releaseRecords.push(release);
   p.projectData.evidenceRecords.push(evidence);
-  p.projectData.tests.push(test);
   p.projectData.verification.push(result);
   p.projectData.artifactIdentities.push(identity);
   p.projectData.propositions.push(record('propositions',{REQUIREMENT_ID:'REQ-1',STATUS:'ACTIVE'},'PROP-1',scope));
-  p.projectData.evidenceChains.push(record('evidenceChains',{REQ_ID:'REQ-1',STATUS:status,MISSING_LINKS:missingLinks,RELEASE_DECISION_ID:chainReleaseId,HASH_REVIEW_ID:hashReviewId,PRODUCT_ELEMENT:productId,BASELINE_ID:baselineId,TEST_ID:['TEST-1'],EVIDENCE_ID:['EVID-1'],ARTIFACT_HASH_IDENTITY:['ART-1'],TEST_RESULT_ID:['RES-1']},'CHAIN-1',scope));
+  p.projectData.evidenceChains.push(record('evidenceChains',{REQ_ID:'REQ-1',STATUS:status,MISSING_LINKS:missingLinks,RELEASE_DECISION_ID:chainReleaseId,HASH_REVIEW_ID:hashReviewId,PRODUCT_ELEMENT:productId,BASELINE_ID:baselineId,TEST_ID:[engine.recordId(test,'tests')],EVIDENCE_ID:['EVID-1'],ARTIFACT_HASH_IDENTITY:['ART-1'],TEST_RESULT_ID:['RES-1']},'CHAIN-1',scope));
   return p;
 };
 
@@ -83,6 +88,39 @@ assert.equal(validProject.projectData.commandReceipts.length,1,'The command must
 const idempotentRetry=engine.calculateEvidenceChains(validProject);
 assert.equal(idempotentRetry.version,validResult.version,'Idempotent retry must return the same current evidence-chain version.');
 assert.equal(validProject.projectData.commandReceipts.length,1,'An idempotent retry must not duplicate the authoritative evidence-chain receipt.');
+
+// Independent §34.1/§36.6 oracle: exact canonical records and registered set
+// membership, with only the declared self-dependent/audit omissions. This does
+// not use the production evidenceChainSetPreimage/hash construction path.
+const evidenceHash=globalThis.closedLoopHash;
+const oracleScope={...engine.currentScope(validProject)};delete oracleScope.projectRevision;delete oracleScope.evidenceChainVersion;
+const oracleChains=structuredClone(engine.currentEvidenceChainSet(validProject).records);
+for(const record of oracleChains){for(const key of ['recordSha256','sha256','contentSha256','createdAt','updatedAt','eventSequence','EVIDENCE_CHAIN_VERSION'])delete record[key];delete record.fields.EVIDENCE_CHAIN_VERSION;delete record.scope.evidenceChainVersion;delete record.scope.projectRevision;}
+const compareBytes=(a,b)=>Buffer.compare(Buffer.from(a),Buffer.from(b));oracleChains.sort((a,b)=>compareBytes(evidenceHash.stableStringify(a.id),evidenceHash.stableStringify(b.id)));
+const expectedSubject={jobId:String(validProject.job.JOB_ID),scope:oracleScope,requirementIds:['REQ-1'],chainRecords:oracleChains},expectedSetSha256=createHash('sha256').update(evidenceHash.stableStringify(expectedSubject),'utf8').digest('hex');
+assert.equal(validResult.setHash,expectedSetSha256,'EXACT_CHAIN_SHA_ORACLE: the full SHA-256 must bind the independently reconstructed complete chain subject.');assert.equal(validResult.setHash.length,64);
+const linkChanges=[];
+for(const key of ['AUTHORITY_ID','INSTRUCTION_ID','EXECUTION_ID','TEST_ID','TEST_RESULT_ID','EVIDENCE_ID','ARTIFACT_HASH_IDENTITY']){
+ const changed=structuredClone(validProject),record=changed.projectData.evidenceChains.find(row=>row.id===validResult.chainIds[0]),old=record.fields[key],value=Array.isArray(old)?[...old,'CONTROLLED_DIFFERENT_LINK']:String(old)+'-CONTROLLED_DIFFERENT_LINK';record.fields[key]=value;record[key]=value;engine.refreshRecordHashes(record,'evidenceChains');const actual=engine.currentEvidenceChainSet(changed);
+ assert.notEqual(actual.setHash,expectedSetSha256,'EXACT_CHAIN_LINK_ORACLE: '+key+' must be part of the complete canonical subject.');assert.equal(actual.complete,false,'EXACT_CHAIN_LINK_ORACLE: previous version must become stale after '+key+' changes.');linkChanges.push(key);
+}
+const oldSummaryDigest=evidenceHash.sha256Value(engine.currentEvidenceChainSet(validProject).records.map(record=>({reqId:String(engine.recordValue(record,'REQ_ID')),chainId:record.id,status:String(engine.recordValue(record,'STATUS')),releaseId:String(engine.recordValue(record,'RELEASE_DECISION_ID')),productId:String(engine.recordValue(record,'PRODUCT_ELEMENT')),baselineId:String(engine.recordValue(record,'BASELINE_ID')),hashReviewId:String(engine.recordValue(record,'HASH_REVIEW_ID'))}))).slice(0,32),oldSummaryProject=structuredClone(validProject);oldSummaryProject.job.CURRENT_EVIDENCE_CHAIN_VERSION='EVIDENCE-CHAIN-'+oldSummaryDigest.toUpperCase();assert.equal(engine.currentEvidenceChainSet(oldSummaryProject).complete,false,'EXACT_CHAIN_SHA_ORACLE: the original truncated summary version must not establish current completion.');
+const verificationObservations=[{checkId:'evidence-chain-full-canonical-sha256',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:3033','specification/closed-loop-reliability-controlling-implementation-specification.txt:3282-3236'],boundary:'actual Stage29 command/current-set/checkpoint owner',expected:{setSha256:expectedSetSha256,digestLength:64,materialLinksBound:linkChanges},observed:{setSha256:validResult.setHash,digestLength:validResult.setHash.length,materialLinksBound:linkChanges},passed:true},{checkId:'evidence-chain-old-summary-rejected',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:3033'],boundary:'actual current evidence-chain set gate',expected:{complete:false,digestLength:32},observed:{complete:engine.currentEvidenceChainSet(oldSummaryProject).complete,digestLength:oldSummaryDigest.length},violation:'truncated chain summary substitutes for full canonical chain',accepted:false,passed:true}];
+
+// Section37 Stage29 construction is separate from validating a preseeded
+// chain. The literal expected identities come from makeProject's declared
+// fixture, not the construction function under test. No completion is implied.
+{
+ const unbuilt=makeProject();unbuilt.projectData.evidenceChains=[];
+ const decoy=structuredClone(unbuilt.projectData.instructions[0]);decoy.id=decoy.INSTRUCTION_ID=decoy.fields.INSTRUCTION_ID='INSTR-UNTRACED-DECOY';engine.refreshRecordHashes(decoy,'instructions');unbuilt.projectData.instructions.push(decoy);
+ assert.equal(unbuilt.projectData.evidenceChains.length,0,'STAGE29_CONSTRUCTION_EMPTY_START_ORACLE');
+ const result=engine.calculateEvidenceChains(unbuilt),created=engine.recordsForCurrentScope(unbuilt,'evidenceChains').find(row=>engine.recordValue(row,'REQ_ID')==='REQ-1');
+ assert(created,'STAGE29_APPLICATION_CONSTRUCTION_ORACLE: no current chain was constructed');
+ const expected={stage:29,source:'APPLICATION_DERIVATION',derivationKey:'stage29.evidenceChains',requirementId:'REQ-1',authorityId:'SRC-1',instructionId:'INSTR-1',executionId:'EXEC-1',productId:'PROD-1'};
+ const observed={stage:created.stage,source:created.source,derivationKey:created.derivationKey,requirementId:engine.recordValue(created,'REQ_ID'),authorityId:engine.recordValue(created,'AUTHORITY_ID'),instructionId:engine.recordValue(created,'INSTRUCTION_ID'),executionId:engine.recordValue(created,'EXECUTION_ID'),productId:engine.recordValue(created,'PRODUCT_ELEMENT')};
+ assert.deepEqual(observed,expected,'STAGE29_APPLICATION_CONSTRUCTION_ORACLE');assert.notEqual(observed.executionId,observed.productId,'STAGE29_DISTINCT_EXECUTION_PRODUCT_ORACLE');assert(result.chainIds.includes(created.id),'STAGE29_CONSTRUCTION_RETURN_ORACLE');
+ verificationObservations.push({checkId:'stage29.application-construction-from-empty',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:3648'],boundary:'Actual CALCULATE_EVIDENCE_CHAINS command from zero chain records -> application canonical chain creation',expected,observed,passed:true,scopeLimit:'Explicit synthetic canonical source/requirement/trace/product/result fixture; no prior-stage completion or physical/external action claimed; structural chain creation does not imply sufficient evidence or completed Stage29.'});
+}
 
 const staleProject=makeProject({releaseId:'REL-2',chainReleaseId:'REL-1'});
 const staleSet=engine.currentEvidenceChainSet(staleProject);
@@ -130,4 +168,4 @@ const exported=engine.recordPreDeliveryCheckpointExport(checkpointProject,{check
 assert.equal(exported.CUSTODY_STATE,'BACKUP_EXPORT_ACTION_COMPLETED','The terminal checkpoint must transition through a bound actual export-custody action.');
 assert.equal(engine.currentPreDeliveryCheckpoint(checkpointProject)?.CUSTODY_STATE,'BACKUP_EXPORT_ACTION_COMPLETED','Only a current exactly-bound export-custody state can satisfy the terminal gate.');
 
-console.log(JSON.stringify({stage29ApplicationCommand:true,stage29CurrentSetValidated:true,stage29IdempotentRetry:true,preDeliveryCheckpointExportCustody:true,staleAndWeakEvidenceRejected:true,nonexistentExportEvidenceRejected:true,genericExportEvidenceRejected:true,fabricatedCheckpointRejected:true,terminalRejectsFabricatedCheckpoint:true}));
+console.log(JSON.stringify({stage29ApplicationCommand:true,stage29CurrentSetValidated:true,stage29IdempotentRetry:true,preDeliveryCheckpointExportCustody:true,staleAndWeakEvidenceRejected:true,nonexistentExportEvidenceRejected:true,genericExportEvidenceRejected:true,fabricatedCheckpointRejected:true,terminalRejectsFabricatedCheckpoint:true,verificationObservations}));

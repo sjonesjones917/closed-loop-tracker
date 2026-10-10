@@ -10,9 +10,13 @@ for(const id of ['project-picker','new-project','import-project','import-file','
 nodes.get('#operation-error').tagName='DIV';nodes.get('#operation-error').hidden=true;
 const c=createVerifierRuntime({console,Event,dispatchEvent(){},URL,URLSearchParams,Blob,TextEncoder,TextDecoder,crypto:globalThis.crypto,structuredClone,setTimeout,clearTimeout,queueMicrotask,requestAnimationFrame:fn=>frames.push(fn),innerHeight:852,innerWidth:393,window:{innerHeight:852,innerWidth:393,scrollX:0,scrollY:0},CSS:{escape:value=>value},document:{currentScript:null,querySelector:s=>nodes.get(s)||null,querySelectorAll:s=>s==='[data-human-answer]'?humanFields:[...nodes.values()].filter(x=>x.tagName==='BUTTON'),dispatchEvent(){}}});
 vm.runInContext(source.slice(0,source.indexOf('globalThis.closedLoopAppReady=false;'))+`globalThis.ui={native:async fixture=>{
- const previous={current,engine,nativeStage22Tests,nativeTestInputs,persistReplacement,render,runtime:globalThis.closedLoopTestRuntime};
- current=fixture.project;engine=fixture.engine;nativeStage22Tests=()=>fixture.items;nativeTestInputs=fixture.inputs;persistReplacement=async next=>{await fixture.commit(next);current=next;};render=fixture.render;globalThis.closedLoopTestRuntime=fixture.runtime;
- try{return await runNativeStage22Tests();}finally{({current,engine,nativeStage22Tests,nativeTestInputs,persistReplacement,render}=previous);globalThis.closedLoopTestRuntime=previous.runtime;}
+ const previous={current,engine,schema,nativeProductTests,nativeTestInputs,persistReplacement,render,runtime:globalThis.closedLoopTestRuntime};
+ current=fixture.project;engine=fixture.engine;schema=globalThis.closedLoopWorkflowSchema;nativeProductTests=fixture.select;nativeTestInputs=fixture.inputs;persistReplacement=async next=>{await fixture.commit(next);current=next;};render=fixture.render;globalThis.closedLoopTestRuntime=fixture.runtime;
+ try{return await runOperatorAction('Running registered application tests',()=>runNativeProductTests(Number(current.activeStage)));}finally{({current,engine,schema,nativeProductTests,nativeTestInputs,persistReplacement,render}=previous);globalThis.closedLoopTestRuntime=previous.runtime;}
+},preDelivery:async fixture=>{
+ const previous={current,engine,projectStore,persistReplacement,downloadBlob,recordMobileExport,render};
+ current=fixture.project;engine=fixture.engine;projectStore=fixture.store;persistReplacement=async next=>{await fixture.commit(next);current=next;};downloadBlob=fixture.download;recordMobileExport=fixture.mobile;render=fixture.render;
+ try{return await runOperatorAction('Preparing and exporting pre-delivery backup',exportPreDeliveryCheckpoint);}finally{({current,engine,projectStore,persistReplacement,downloadBlob,recordMobileExport,render}=previous);}
 },answers:async()=>{const previous={current,ingestion};current={projectData:{humanInputRequests:[]}};ingestion={answerHumanInput(){throw Object.assign(new Error('Correct the required answer.'),{requestId:'REQUIRED-ANSWER'});}};try{await saveHumanAnswers();}finally{({current,ingestion}=previous);}},capture:fn=>{captureCurrentView=fn;},storage:withStorageActivity,focus:focusAfterAction,prompt:setPromptExpanded,run:runOperatorAction,fail:reportActionFailure,announce,retry:async()=>{const previous={current,savePromptRecord,render,selectedOperation};current={job:{JOB_ID:'FOCUS-DISPOSABLE'},activeStage:1};savePromptRecord=async()=>{};render=()=>{};selectedOperation=()=> 'COMPLETE';try{await prepareReplacementAttempt();await Promise.resolve();}finally{({current,savePromptRecord,render,selectedOperation}=previous);}},accept:async()=>{const previous={current,recordMobileOperation,render,replacementReview};current={job:{JOB_ID:'FOCUS-ACCEPT',CURRENT_STAGE:'STAGE 01'},activeStage:1,activeView:'Workflow',projectData:{generatedPrompts:[]},stages:{1:{gate:{complete:false}}}};recordMobileOperation=async()=>{};render=()=>{};replacementReview={};try{await finishAcceptedProposal({proposalId:'P1',rawResponseId:'R1',stage:1,continuationInstructionId:null});}finally{({current,recordMobileOperation,render,replacementReview}=previous);}}};})();`,c,{filename:'app-core.js'});
 async function paint(){for(let i=0;i<3;i++){frames.splice(0).forEach(fn=>fn());await Promise.resolve();}}
 const target=element('visible-next-control');c.ui.focus(target);
@@ -171,19 +175,61 @@ finally{humanFields=[];nodes.delete('[data-human-answer="REQUIRED-ANSWER"]');cal
 // State shape comes from the authoritative blank-state builder; runtime and
 // storage completion are held here to isolate the production UI authority.
 for(const file of ['workbook.js','hash.js','workflow-schema.js'])vm.runInContext(fs.readFileSync(file,'utf8'),c,{filename:file});
-for(const count of [1,3])for(const outcome of ['success','runtime-failure','commit-failure']){
+// Stage 30 checkpoint export replaces the backup action with terminal
+// calculation. Exercise the authored caller, including both commits and the
+// controller's final view checkpoint; settled forward progress must expose
+// the new action without moving an already visible action.
+async function checkpointPhase(check,message){for(let i=0;i<64&&!check();i++){await paint();await new Promise(resolve=>setImmediate(resolve));}assert.ok(check(),message);}
+for(const outcome of ['success-clipped','success-visible','first-commit-failure','second-commit-failure']){
+ frames.length=0;calls.length=0;c.ui.announce('Starting checkpoint export');
+ const project=c.closedLoopCore.createBlankState('PREDELIVERY-FOCUS-'+outcome);project.activeStage=30;project.revision=7;project.projectSha256='PROJECT-CONTROL';
+ const rect=outcome==='success-visible'?{top:500,bottom:677,width:373,height:177}:{top:698.921875,bottom:875.921875,width:373,height:177};
+ const next=element('next-required-action',rect);next.tagName='DIV';nodes.set('#next-required-action',next);
+ next.scrollIntoView=options=>{calls.push({type:'scroll',id:next.id,options});const distance=Math.max(0,rect.bottom-c.innerHeight);rect.top-=distance;rect.bottom-=distance;};
+ c.window.scrollBy=options=>{calls.push({type:'residual-scroll',id:next.id,options});rect.top-=options.top;rect.bottom-=options.top;};
+ let releaseExport,releaseFirst,releaseSecond,releaseFinal,commits=0,downloads=0,exports=0,renders=0,finalCaptures=0;
+ const exported=new Promise(resolve=>releaseExport=resolve),first=new Promise(resolve=>releaseFirst=resolve),second=new Promise(resolve=>releaseSecond=resolve),final=new Promise(resolve=>releaseFinal=resolve),blob=new Blob(['actual synthetic checkpoint bytes']);
+ const fixture={project,store:{async exportPackage(){await exported;return blob;},async metaGet(){return {projectRevision:7,projectSha256:'PROJECT-CONTROL',artifactManifestSha256:'MANIFEST-CONTROL'};},async readProject(){return {revision:7};}},engine:{createPreDeliveryCheckpoint(_project,input){assert.equal(input.projectRevision,7);assert.equal(input.projectSha256,'PROJECT-CONTROL');return {checkpointId:'CHECKPOINT-CONTROL'};},recordId:record=>record.checkpointId,recordCheckpointExportAction(_project,input){assert.equal(input.checkpointId,'CHECKPOINT-CONTROL');exports++;}},async commit(){commits++;await (commits===1?first:second);if(outcome===(commits===1?'first-commit-failure':'second-commit-failure'))throw new Error('Injected pre-delivery commit '+commits+' failure');},download(){downloads++;},async mobile(){},render(){renders++;}};
+ try{
+  c.ui.capture(async()=>{finalCaptures++;await final;});
+  const operation=c.ui.preDelivery(fixture);await paint();
+  assert.equal(calls.some(call=>call.type==='focus'&&call.id===next.id),false,'PREDELIVERY_FOCUS_ORDER_ORACLE: placement preceded verified export bytes.');
+  releaseExport();await checkpointPhase(()=>commits===1,'PREDELIVERY_PHASE_ORACLE: the checkpoint commit was not reached.');
+  assert.equal(calls.some(call=>call.type==='focus'&&call.id===next.id),false,'PREDELIVERY_FOCUS_ORDER_ORACLE: placement preceded the checkpoint commit.');
+  releaseFirst();await checkpointPhase(()=>commits===2||finalCaptures===1,'PREDELIVERY_PHASE_ORACLE: neither export-action commit nor failed-operation finalization was reached.');
+  assert.equal(calls.some(call=>call.type==='focus'&&call.id===next.id),false,'PREDELIVERY_FOCUS_ORDER_ORACLE: placement preceded the export-action commit.');
+  releaseSecond();await checkpointPhase(()=>finalCaptures===1,'PREDELIVERY_PHASE_ORACLE: final durable view capture was not reached.');
+  assert.equal(calls.some(call=>call.type==='focus'&&call.id===next.id),false,'PREDELIVERY_FOCUS_ORDER_ORACLE: placement preceded final durable view capture and unlock.');
+  releaseFinal();await operation;
+  if(outcome.startsWith('success')){
+   assert.equal(commits,2);assert.equal(downloads,1);assert.equal(exports,1);assert.equal(renders,1);assert.equal(finalCaptures,1);
+   assert.equal(calls.filter(call=>call.type==='focus').at(-1)?.id,next.id,'PREDELIVERY_NEXT_ACTION_ORACLE: successful checkpoint export did not expose terminal calculation.');
+   assert.ok(rect.top>=0&&rect.bottom<=c.innerHeight,'PREDELIVERY_NEXT_ACTION_VISIBILITY_ORACLE: terminal calculation remained clipped after checkpoint export.');
+   if(outcome==='success-visible')assert.equal(calls.some(call=>['scroll','residual-scroll'].includes(call.type)),false,'PREDELIVERY_VISIBLE_ORACLE: an already visible next action must not move.');
+   else{frames.splice(0).forEach(fn=>fn());await Promise.resolve();rect.top=698.921875;rect.bottom=875.921875;await paint();assert.ok(rect.bottom<=c.innerHeight,'PREDELIVERY_SETTLED_LAYOUT_ORACLE: terminal calculation became clipped after later layout.');}
+   assert.ok(calls.filter(call=>call.type==='residual-scroll').every(call=>call.options.top>=0),'PREDELIVERY_FORWARD_ORACLE: forward checkpoint completion must not scroll upward.');
+  }else{
+   assert.equal(commits,outcome==='first-commit-failure'?1:2);assert.equal(downloads,outcome==='first-commit-failure'?0:1);assert.equal(exports,outcome==='first-commit-failure'?0:1);assert.equal(renders,0);
+   assert.equal(calls.filter(call=>call.type==='focus').at(-1)?.id,'operation-error','PREDELIVERY_FAILED_COMMIT_ORACLE: a failed commit must expose recovery, not terminal calculation.');
+   assert.match(nodes.get('#operation-error').textContent,/Injected pre-delivery commit [12] failure/,'The intended commit boundary must fail, rather than fixture setup.');
+  }
+  cases.push({caseId:'FOCUS-PREDELIVERY-CHECKPOINT-COMPLETION',outcome,result:'PASS',actualBrowser:false,commits,downloads,exports,renders,finalCaptures});
+ }catch(error){retryFailures.push(String(error.stack||error));cases.push({caseId:'FOCUS-PREDELIVERY-CHECKPOINT-COMPLETION',outcome,result:'FAIL',commits,downloads,exports,renders,finalCaptures,error:String(error.stack||error)});}
+ finally{releaseExport();releaseFirst();releaseSecond();releaseFinal();c.ui.capture(async()=>{});frames.length=0;calls.length=0;nodes.delete('#next-required-action');delete c.window.scrollBy;}
+}
+for(const stage of [22,24])for(const count of [1,3])for(const outcome of ['success','runtime-failure','commit-failure']){
  frames.length=0;calls.length=0;
- const project=c.closedLoopCore.createBlankState('NATIVE-FOCUS-'+count+'-'+outcome);
+ const project=c.closedLoopCore.createBlankState('NATIVE-FOCUS-'+stage+'-'+count+'-'+outcome);project.activeStage=stage;project.job.CURRENT_STAGE='STAGE '+stage;
  const rect={top:920,bottom:1121,width:373,height:201},next=element('next-required-action',rect);next.tagName='DIV';nodes.set('#next-required-action',next);
  next.scrollIntoView=options=>{calls.push({type:'scroll',id:next.id,options});const distance=Math.max(0,rect.bottom-c.innerHeight);rect.top-=distance;rect.bottom-=distance;};
  c.window.scrollBy=options=>{calls.push({type:'residual-scroll',id:next.id,options});rect.top-=options.top;rect.bottom-=options.top;};
  let releaseWorker,releaseCommit,executed=0,commits=0,renders=0,recorded=0;
  const worker=new Promise(resolve=>releaseWorker=resolve),commit=new Promise(resolve=>releaseCommit=resolve);
  const items=Array.from({length:count},(_,i)=>({testId:'NATIVE-'+i}));
- const fixture={project,items,engine:{records:()=>items,recordId:item=>item.testId,recordApplicationDeterministicResult(){recorded++;}},inputs:async()=>({artifactPayload:{},canonicalPayload:{},identities:[]}),runtime:{async executeTest(){executed++;await worker;return outcome==='runtime-failure'?{status:'EXECUTION_FAILED',failure:{message:'Injected runtime failure'}}:{status:'COMPLETE',determination:'SATISFIED'};}},async commit(){commits++;await commit;if(outcome==='commit-failure')throw new Error('Injected checkpoint failure');},render(){renders++;}};
+ const fixture={project,select(selectedStage){assert.equal(selectedStage,stage);return items;},engine:{records:()=>items,recordId:item=>item.testId,recordApplicationNativeProductResult(_project,input){assert.equal(input.stage,stage);recorded++;}},inputs:async()=>({artifactPayload:{},canonicalPayload:{},identities:[]}),runtime:{async executeTest(){executed++;await worker;return outcome==='runtime-failure'?{status:'EXECUTION_FAILED',failure:{message:'Injected runtime failure'}}:{status:'COMPLETE',determination:'SATISFIED'};}},async commit(){commits++;await commit;if(outcome==='commit-failure')throw new Error('Injected checkpoint failure');},render(){renders++;}};
  try{
   c.ui.capture(async()=>{});
-  const operation=c.ui.run('Running registered application tests',()=>c.ui.native(fixture));await paint();
+  const operation=c.ui.native(fixture);await paint();
   assert.equal(calls.some(x=>x.type==='focus'&&x.id===next.id),false,'Native-result placement cannot precede execution.');
   releaseWorker();for(let i=0;i<24;i++)await Promise.resolve();await paint();
   if(outcome!=='runtime-failure')assert.equal(calls.some(x=>x.type==='focus'&&x.id===next.id),false,'Native-result placement cannot precede its required commit.');
@@ -198,9 +244,12 @@ for(const count of [1,3])for(const outcome of ['success','runtime-failure','comm
   }else{
    await paint();assert.equal(renders,0);assert.equal(calls.filter(x=>x.type==='focus').at(-1)?.id,'operation-error','A failed native operation must expose recovery, not successful next-action feedback.');
    assert.equal(commits,outcome==='runtime-failure'?0:1);
+   assert.equal(executed,outcome==='runtime-failure'?1:count,'The failure oracle must reach the intended runtime or commit boundary.');
+   assert.equal(recorded,outcome==='runtime-failure'?0:count,'No partial runtime result may be staged after execution failure.');
+   assert.match(nodes.get('#operation-error').textContent,outcome==='runtime-failure'?/Injected runtime failure/:/Injected checkpoint failure/,'The failure must report the injected boundary, not a fixture setup error.');
   }
-  cases.push({caseId:'FOCUS-NATIVE-RESULT-COMPLETION',count,outcome,result:'PASS',actualBrowser:false,executed,commits,renders});
- }catch(error){retryFailures.push(String(error.stack||error));cases.push({caseId:'FOCUS-NATIVE-RESULT-COMPLETION',count,outcome,result:'FAIL',error:String(error.stack||error)});}
+  cases.push({caseId:'FOCUS-NATIVE-RESULT-COMPLETION',stage,count,outcome,result:'PASS',actualBrowser:false,executed,commits,renders});
+ }catch(error){retryFailures.push(String(error.stack||error));cases.push({caseId:'FOCUS-NATIVE-RESULT-COMPLETION',stage,count,outcome,result:'FAIL',error:String(error.stack||error)});}
  finally{releaseWorker();releaseCommit();frames.length=0;calls.length=0;nodes.delete('#next-required-action');delete c.window.scrollBy;}
 }
 c.ui.fail(new Error('Disposable storage failure'));assert.equal(nodes.get('#operation-error').hidden,false,'OPERATION_ERROR_ORACLE: a failed operation must have a visible report independent of optional tutorial content.');assert.equal(nodes.get('#operation-error').textContent,'Disposable storage failure');assert.equal(nodes.get('#app-live-status').textContent,'Disposable storage failure');c.ui.announce('Retry started');assert.equal(nodes.get('#operation-error').hidden,true);cases.push({caseId:'FOCUS-VISIBLE-FAILURE-AND-RETRY',result:'PASS'});

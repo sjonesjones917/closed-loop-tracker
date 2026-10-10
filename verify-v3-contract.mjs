@@ -1,5 +1,5 @@
-import './verify-test-ir-port-types.mjs';
 import {runVerifier} from './verify-conformance-regressions.mjs';
+import {currentOwnerReport} from './verification-evidence.mjs';
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 
@@ -139,10 +139,18 @@ for(const [file,marker,expected] of [
  ['verify-stage01-disposition-contract.mjs','stage01DispositionContract','PASS'],
  ['verify-terminal-human-authority.mjs','terminalHumanAuthority','PASS']
 ]){
- const result=(await runVerifier(process.execPath,[file],{encoding:'utf8',timeout:60000}));
- assert.equal(result.status,0,'EXECUTED_CONTRACT_PROOF_ORACLE: '+file+'\n'+result.stderr);
- const report=JSON.parse(result.stdout);assert.equal(report[marker],expected,'EXECUTED_CONTRACT_PROOF_ORACLE: '+file);
- executedContractProofs.push({file,report,evidencePath:result.evidencePath});
+ let result=null;
+ const run=async()=>{
+  result=await runVerifier(process.execPath,[file],{encoding:'utf8',timeout:60000});
+  assert.equal(result.status,0,'EXECUTED_CONTRACT_PROOF_ORACLE: '+file+'\n'+result.stderr);
+  return result.stdout;
+ };
+ // The foundation phase already executes the complete registry owner before
+ // migration. Reuse its validated report; standalone execution retains the
+ // same producer and assertions when no current receipt exists.
+ const report=file==='verify-stage-operation-registry.mjs'?await currentOwnerReport(file,marker,{run}):JSON.parse(await run());
+ assert.equal(report[marker],expected,'EXECUTED_CONTRACT_PROOF_ORACLE: '+file);
+ executedContractProofs.push({file,report,evidencePath:result?.evidencePath||null,inputSource:result?'DIRECT_PRODUCER_STDOUT':'VALIDATED_RECEIPT_REPORT'});
 }
 console.log(JSON.stringify({
   verifyV3Contract:'PASS',
@@ -155,5 +163,4 @@ console.log(JSON.stringify({
   centralizedLimits:requiredLimits.length,
   executedContractProofs
 }));
-await import('./verify-stage-contract-closure.mjs');
 await import('./verify-stage27-release-binding.mjs');

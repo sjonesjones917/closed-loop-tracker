@@ -1,3 +1,4 @@
+import {createBrowserExecutionObserver} from './browser-execution-evidence.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
@@ -114,13 +115,13 @@ export async function activateOperatorControl(cdp,evaluate,idle,selector){
  // Interactivity can precede queued focus placement and responsive layout.
  // All callers must observe settled geometry before revealing or hitting a
  // control, including callers whose idle predicate only checks app readiness.
- const settleLayout=async()=>assert.ok(await evaluate(`new Promise(resolve=>{let previous='',stable=0,frames=0;const sample=()=>{const geometry=(()=>{${select}const rect=node.getBoundingClientRect();return [globalThis.scrollX||0,globalThis.scrollY||0,rect.top,rect.left,rect.width,rect.height];})();if(geometry.missing)return resolve(true);const current=JSON.stringify(geometry);stable=current===previous?stable+1:0;previous=current;frames++;if(frames>=4&&stable>=2)return resolve(true);if(frames>=120)return resolve(false);requestAnimationFrame(sample);};requestAnimationFrame(sample);})`),'DRIVER_LAYOUT_QUIESCENCE_ORACLE: control geometry did not settle '+selector);
+ const settleLayout=async()=>assert.ok(await evaluate(`new Promise(resolve=>{let previous='',stable=0,frames=0;const sample=()=>{const geometry=(()=>{${select}const rect=node.getBoundingClientRect();return [globalThis.scrollX||0,globalThis.scrollY||0,rect.top,rect.left,rect.width,rect.height,globalThis.visualViewport?.offsetLeft||0,globalThis.visualViewport?.offsetTop||0,globalThis.visualViewport?.width||innerWidth,globalThis.visualViewport?.height||innerHeight];})();if(geometry.missing)return resolve(true);const current=JSON.stringify(geometry);stable=current===previous?stable+1:0;previous=current;frames++;if(frames>=4&&stable>=2)return resolve(true);if(frames>=120)return resolve(false);requestAnimationFrame(sample);};requestAnimationFrame(sample);})`),'DRIVER_LAYOUT_QUIESCENCE_ORACLE: control geometry did not settle '+selector);
  await idle();await settleLayout();let previousClosedCount=Infinity;
  for(;;){
-  const reveal=await evaluate(`(()=>{${select}if(node.disabled||node.matches?.(':disabled')||node.closest?.('[inert]'))return {disabled:true};const rect=node.getBoundingClientRect();if(rect.top<0||rect.left<0||rect.bottom>innerHeight||rect.right>innerWidth)node.scrollIntoView({block:'nearest',inline:'nearest'});return {closedCount};})()`);
+  const reveal=await evaluate(`(()=>{${select}if(node.disabled||node.matches?.(':disabled')||node.closest?.('[inert]'))return {disabled:true};const rect=node.getBoundingClientRect(),viewport=globalThis.visualViewport,left=viewport?.offsetLeft||0,top=viewport?.offsetTop||0,right=left+(viewport?.width||innerWidth),bottom=top+(viewport?.height||innerHeight);if(rect.top<top||rect.left<left||rect.bottom>bottom||rect.right>right)node.scrollIntoView({block:'nearest',inline:'nearest'});return {closedCount};})()`);
   assert.ok(reveal&&!reveal.missing&&!reveal.disabled,'DRIVER_INTERACTABILITY_ORACLE: missing, disabled, or inert control '+selector);
   await idle();await settleLayout();
-  const observe=()=>evaluate(`(()=>{${select}const rect=node.getBoundingClientRect(),style=getComputedStyle(node),x=(Math.max(0,rect.left)+Math.min(innerWidth,rect.right))/2,y=(Math.max(0,rect.top)+Math.min(innerHeight,rect.bottom))/2,front=document.elementFromPoint(x,y);return {closedCount,x,y,disabled:Boolean(node.disabled||node.matches?.(':disabled')||node.closest?.('[inert]')),visible:style.display!=='none'&&style.visibility!=='hidden'&&style.visibility!=='collapse'&&Number(style.opacity)!==0&&rect.width>0&&rect.height>0&&x>=0&&y>=0&&x<innerWidth&&y<innerHeight,unobscured:Boolean(front&&(front===node||node.contains(front)))};})()`);
+  const observe=()=>evaluate(`(()=>{${select}const rect=node.getBoundingClientRect(),style=getComputedStyle(node),viewport=globalThis.visualViewport,left=viewport?.offsetLeft||0,top=viewport?.offsetTop||0,width=viewport?.width||innerWidth,height=viewport?.height||innerHeight,layoutX=(Math.max(left,rect.left)+Math.min(left+width,rect.right))/2,layoutY=(Math.max(top,rect.top)+Math.min(top+height,rect.bottom))/2,front=document.elementFromPoint(layoutX,layoutY),x=layoutX-left,y=layoutY-top;return {closedCount,x,y,layoutX,layoutY,disabled:Boolean(node.disabled||node.matches?.(':disabled')||node.closest?.('[inert]')),visible:style.display!=='none'&&style.visibility!=='hidden'&&style.visibility!=='collapse'&&Number(style.opacity)!==0&&rect.width>0&&rect.height>0&&x>=0&&y>=0&&x<width&&y<height,unobscured:Boolean(front&&(front===node||node.contains(front)))};})()`);
   let observed=await observe();
   // A sticky header can cover an in-viewport control after scrolling or resize.
   // Center first, then use the viewport end if a tall sticky panel still covers
@@ -135,6 +136,8 @@ export async function activateOperatorControl(cdp,evaluate,idle,selector){
   }
   assert.ok(observed&&!observed.missing&&!observed.disabled&&observed.visible&&observed.unobscured,'DRIVER_INTERACTABILITY_ORACLE: control is hidden or obstructed '+selector+' '+JSON.stringify(observed));
   assert.ok(observed.closedCount===0||observed.closedCount<previousClosedCount,'DRIVER_DISCLOSURE_ORACLE: the selected disclosure did not open');
+  // DOM hit testing uses layout-viewport CSS coordinates. CDP input uses
+  // visible-viewport CSS coordinates; Chrome applies page scale itself.
   await cdp.send('Input.dispatchMouseEvent',{type:'mousePressed',x:observed.x,y:observed.y,button:'left',buttons:1,clickCount:1});
   await cdp.send('Input.dispatchMouseEvent',{type:'mouseReleased',x:observed.x,y:observed.y,button:'left',buttons:0,clickCount:1});
   if(observed.closedCount===0){await idle();await settleLayout();return observed;}
@@ -144,7 +147,7 @@ export async function activateOperatorControl(cdp,evaluate,idle,selector){
 
 // This starts its own disposable CI browser. It never connects to an operator's
 // browser and never invokes workflow commands or writes project state through JS.
-export async function createOperatorBrowser({url=process.env.PAGE_URL||'http://127.0.0.1:4173/',directory,width=393,height=852}={}){
+export async function createOperatorBrowser({url=process.env.PAGE_URL||'http://127.0.0.1:4173/',directory,width=393,height=852,captureExecution=false}={}){
   const executable=process.env.BROWSER||['/usr/bin/google-chrome','/usr/bin/chromium','/usr/bin/chrome'].find(fs.existsSync);
   if(!executable)throw new Error('Chrome/Chromium is required for the complete operator journey.');
   directory=path.resolve(directory||fs.mkdtempSync(path.join(os.tmpdir(),'operator-journey-')));fs.mkdirSync(directory,{recursive:true});
@@ -156,8 +159,11 @@ export async function createOperatorBrowser({url=process.env.PAGE_URL||'http://1
   // CDP Browser.downloadProgress and allowAndName provide actual downloaded
   // bytes, not a mocked Blob or an application-declared success flag.
   await root.send('Browser.setDownloadBehavior',{behavior:'allowAndName',downloadPath:downloads,eventsEnabled:true});
-  const target=await json(`/json/new?${encodeURIComponent(url)}`,{method:'PUT'}),page=new Connection(target.webSocketDebuggerUrl);await page.ready;await page.send('Runtime.enable');await page.send('Page.enable');
+  const target=await json(`/json/new?${encodeURIComponent('about:blank')}`,{method:'PUT'}),page=new Connection(target.webSocketDebuggerUrl);await page.ready;await page.send('Runtime.enable');await page.send('Page.enable');
   await page.send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:width<600});
+  let executionObserver;
+  try{executionObserver=captureExecution?await createBrowserExecutionObserver({webSocketDebuggerUrl:target.webSocketDebuggerUrl,pageUrl:url}):null;await page.send('Page.navigate',{url});}
+  catch(error){executionObserver?.close();page.close();root.close();child.kill('SIGKILL');throw error;}
   const events=[];let inputSequence=0;
   async function evaluate(expression){const result=await page.send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true,userGesture:true});if(result.exceptionDetails)throw new Error(result.exceptionDetails.exception?.description||result.exceptionDetails.text);return result.result?.value;}
   const readiness=createBrowserReadiness(page,evaluate);
@@ -168,7 +174,8 @@ export async function createOperatorBrowser({url=process.env.PAGE_URL||'http://1
   async function fill(selector,value){const started=performance.now();await idle();const filled=await evaluate(`(()=>{const node=document.querySelector(${JSON.stringify(selector)});if(!node||node.disabled)return false;for(const box of [...(function*(n){for(let p=n.parentElement;p;p=p.parentElement)if(p.tagName==='DETAILS'&&!p.open)yield p;})(node)].reverse())box.querySelector(':scope > summary')?.click();node.value=${JSON.stringify(String(value))};node.dispatchEvent(new Event('input',{bubbles:true}));node.dispatchEvent(new Event('change',{bubbles:true}));return true;})()`);assert.equal(filled,true,`Missing or disabled field: ${selector}`);await idle();events.push({operation:'fill',selector,elapsedMs:performance.now()-started});}
   async function selectFiles(selector,members){await idle();const paths=members.map(member=>{const filename=String(member.filename||'response.json');assert.equal(path.basename(filename),filename,'Test file names must be individual file names');const folder=path.join(inputs,String(++inputSequence));fs.mkdirSync(folder);const file=path.join(folder,filename);fs.writeFileSync(file,member.bytes);events.push({operation:'selectFile',selector,filename,sha256:digest(member.bytes),byteSize:member.bytes.length});return file;});const handle=await page.send('Runtime.evaluate',{expression:`document.querySelector(${JSON.stringify(selector)})`,returnByValue:false});assert.ok(handle.result?.objectId,`Missing file input: ${selector}`);await page.send('DOM.setFileInputFiles',{objectId:handle.result.objectId,files:paths});await idle();}
   async function collectDownloads(after,minimum=1){const begun=await until(()=>{const items=root.events.slice(after).filter(event=>event.method==='Browser.downloadWillBegin');return items.length>=minimum?items:null;},'The browser did not begin the requested download');const completed=[];for(const event of begun){const {guid,suggestedFilename}=event.params;const result=await until(()=>root.events.find(item=>item.method==='Browser.downloadProgress'&&item.params.guid===guid&&item.params.state!=='inProgress'),'The browser did not complete the download');assert.equal(result.params.state,'completed',`Download cancelled: ${suggestedFilename}`);assert.match(guid,/^[a-zA-Z0-9-]+$/);const bytes=fs.readFileSync(path.join(downloads,guid));assert.equal(bytes.length,result.params.receivedBytes,'Downloaded byte length differs from the browser completion event');completed.push({filename:suggestedFilename,bytes,sha256:digest(bytes),path:path.join(downloads,guid)});events.push({operation:'download',filename:suggestedFilename,sha256:digest(bytes),byteSize:bytes.length});}return completed;}
-  async function download(selector,minimum=1){const after=root.events.length;await click(selector);return collectDownloads(after,minimum);}
+  async function captureDownloads(action,minimum=1){assert.equal(typeof action,'function','Download capture requires an explicit operator action.');const after=root.events.length;await action();return collectDownloads(after,minimum);}
+  async function download(selector,minimum=1){return captureDownloads(()=>click(selector),minimum);}
   async function project(){if(!(await evaluate(`document.querySelector('#project-actions-toggle')?.closest('details')?.open`)))await click('#project-actions-toggle');const [file]=await download('#export-project'),decoded=JSON.parse(gunzipSync(file.bytes).toString('utf8'));assert.equal(decoded.schema,'closed-loop-project-package/1');assert.ok(decoded.project?.job?.JOB_ID);return {project:decoded.project,package:decoded,file};}
   // Observe stored results without adding another whole-History backup action
   // to every ordinary control interaction. Required exports still use downloads.
@@ -180,6 +187,6 @@ export async function createOperatorBrowser({url=process.env.PAGE_URL||'http://1
   async function navigationHistory(){return page.send('Page.getNavigationHistory');}
   async function restoreEntry(entryId){await readiness.restoreEntry(entryId);await idle();events.push({operation:'browserHistoryTraversal',entryId});}
   async function openUrl(destination){await readiness.navigate('Page.navigate',{url:destination});await idle();events.push({operation:'directLink',url:destination});}
-  async function close(){try{page.close();root.close();}finally{child.kill('SIGKILL');}}
-  await idle();return {click,fill,selectFiles,download,project,readProject,readWorkflow,inspect,reload,exists,visible,settle:idle,evaluate,navigationHistory,restoreEntry,openUrl,events,directory,close,exceptions:()=>page.events.filter(event=>event.method==='Runtime.exceptionThrown'||event.method==='Page.javascriptDialogOpening')};
+  async function close(){try{executionObserver?.close();page.close();root.close();}finally{child.kill('SIGKILL');}}
+  try{await idle();}catch(error){await close();throw error;}return {click,fill,selectFiles,download,captureDownloads,project,readProject,readWorkflow,inspect,reload,exists,visible,settle:idle,evaluate,navigationHistory,restoreEntry,openUrl,events,directory,close,executionEvidence:()=>executionObserver?.finish(),exceptions:()=>page.events.filter(event=>event.method==='Runtime.exceptionThrown'||event.method==='Page.javascriptDialogOpening')};
 }

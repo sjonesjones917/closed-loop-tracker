@@ -1,4 +1,5 @@
 import {createVerifierRuntime} from './verifier-runtime.mjs';
+import {bindArtifactFixture} from './test-project-store-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
@@ -11,6 +12,9 @@ const core=globalThis.closedLoopCore;
 const schema=globalThis.closedLoopWorkflowSchema;
 const engine=globalThis.closedLoopWorkflowEngine;
 assert(core&&schema&&engine,'Stage 19 verifier could not load runtime authorities.');
+const hash=globalThis.closedLoopHash,byteStore=await bindArtifactFixture([]);
+const initialScope=p=>engine.scopeForIteration(p,engine.recordId(p.projectData.iterations.find(row=>row.active!==false&&Number(row.stage)===10),'iterations'));
+const fixtureOperator='SYNTHETIC_ROOT_CAUSE_CORRECTION_GATE_FIXTURE';
 
 const baseScope={
   inputVersion:'INPUT-v001',
@@ -20,25 +24,25 @@ const baseScope={
   instructionVersion:'INSTRUCTION-v001'
 };
 
-function record(collection,id,stage,fields,relationships={}){
+function record(collection,id,stage,fields,relationships={},scope){
   const definition=schema.RECORD_SCHEMAS[collection];
   assert(definition,`Missing schema for ${collection}.`);
   const all={...fields,[definition.idField]:id};
-  const row={id,stage,active:true,scope:{...baseScope},fields:all,...all,relationships:{...relationships}};
+  const row={id,stage,active:true,scope:{...scope},fields:all,...all,relationships:{...relationships}};
   engine.refreshRecordHashes(row,collection);
   return row;
 }
 
-function defect(id,summary){
+function defect(id,summary,scope){
   return record('defects',id,14,{
     OBSERVED_FAILURE:summary,
     EXPECTED_CONDITION:'The controlled workflow must satisfy the governing requirement.',
     EVIDENCE:`Evidence for ${id}`,
     SEVERITY:'MAJOR',
     STATUS:'CONFIRMED'
-  });
+  },{},scope);
 }
-function rca(id,defectId,layer){
+function rca(id,defectId,layer,scope){
   return record('rootCauses',id,14,{
     DEFECT_ID:defectId,
     CATEGORY:layer,
@@ -47,9 +51,9 @@ function rca(id,defectId,layer){
     ROOT_CAUSE:`Controlled ${layer} root cause for ${defectId}`,
     EVIDENCE:`RCA evidence for ${defectId}`,
     DOWNSTREAM_INVALIDATION:'Stages 15-30'
-  },{DEFECT_ID:defectId});
+  },{DEFECT_ID:defectId},scope);
 }
-function change(id,defectId,layer,{oldVersion='v001',newVersion='v002',instructionChange='UNCHANGED',preflight='NOT REQUIRED'}={}){
+function change(id,defectId,layer,{oldVersion='v001',newVersion='v002',instructionChange='UNCHANGED',preflight='NOT REQUIRED'}={},scope){
   return record('changes',id,16,{
     TRIGGERING_DEFECT_IDS:defectId,
     ROOT_CAUSE_ANALYSIS:`Accepted RCA for ${defectId}`,
@@ -63,10 +67,10 @@ function change(id,defectId,layer,{oldVersion='v001',newVersion='v002',instructi
     REQUIRED_REPEATED_PREFLIGHT:preflight,
     JUSTIFIED_UNCHANGED_ARTIFACTS:'Only unaffected controlled artifacts remain unchanged.',
     EVIDENCE:`Correction evidence for ${defectId}`
-  });
+  },{},scope);
 }
 
-function fixture(){
+async function fixture(){
   const p=core.createBlankState('JOB-STAGE19-ROOT-CAUSE-CORRECTION');
   Object.assign(p.job,{
     JOB_ID:'JOB-STAGE19-ROOT-CAUSE-CORRECTION',
@@ -78,20 +82,31 @@ function fixture(){
     CURRENT_INSTRUCTION_VERSION:baseScope.instructionVersion
   });
   engine.ensureShape(p);
+  // These isolated Stage 16 gate cases retain synthetic Stage 15 completion,
+  // accepted correction authority and authored RCA/change facts. They do not
+  // prove predecessor execution or release readiness. The initial subject
+  // itself uses native byte custody, registered selection and freeze IDs.
+  const blob=new Blob(['synthetic initial root-cause correction candidate'],{type:'text/plain'}),artifactId=engine.allocateId(p,'artifacts',{payload:{purpose:'ROOT_CAUSE_CORRECTION_INITIAL_CANDIDATE'}}),sha256=await hash.sha256Bytes(blob);
+  await byteStore.putArtifact({artifactId,jobId:p.job.JOB_ID,blob,filename:'root-cause-correction-candidate.txt',mediaType:'text/plain',expectedSha256:sha256});
+  const stored=await byteStore.getArtifact(artifactId,{jobId:p.job.JOB_ID});assert(stored&&stored.byteSize===blob.size&&await hash.sha256Bytes(stored.blob)===sha256,'ROOT_CAUSE_CORRECTION_NATIVE_CANDIDATE_CUSTODY_ORACLE');
+  engine.registerArtifactBytes(p,{stage:10,artifactId,filename:'root-cause-correction-candidate.txt',mediaType:'text/plain',byteSize:blob.size,sha256});
+  const selection=engine.recordRegisteredHumanDecision(p,{stage:10,purpose:'CANDIDATE_COMPONENT_SELECTION',targetFamily:'artifacts',targetId:hash.sha256Value([artifactId]),value:[artifactId],operatorLabel:fixtureOperator});
+  engine.freezeCandidate(p,{stage:10,artifactIds:[artifactId],selectionDecisionId:engine.recordId(selection,'humanDecisions'),operatorLabel:fixtureOperator});
+  const scope=initialScope(p);
   p.stages[15].status='COMPLETE';
   p.stages[15].gate={complete:true,blocked:false,reasons:[]};
   p.projectData.acceptedChanges.push({
-    changeId:'ACCEPTED-STAGE16-CORRECT',stage:16,status:'COMMITTED',responseType:'DATA_PROPOSAL',operation:'CORRECT'
+    changeId:'ACCEPTED-STAGE16-CORRECT',stage:16,status:'COMMITTED',responseType:'DATA_PROPOSAL',operation:'CORRECT',scope
   });
-  p.projectData.defects.push(defect('DEFECT-1','Instruction defect'),defect('DEFECT-2','Test defect'));
-  p.projectData.rootCauses.push(rca('RCA-1','DEFECT-1','INSTRUCTION'),rca('RCA-2','DEFECT-2','TEST'));
-  p.projectData.changes.push(change('CHANGE-1','DEFECT-1','INSTRUCTION',{oldVersion:'instruction-v001',newVersion:'instruction-v002',instructionChange:'CHANGED',preflight:'REQUIRED'}));
+  p.projectData.defects.push(defect('DEFECT-1','Instruction defect',scope),defect('DEFECT-2','Test defect',scope));
+  p.projectData.rootCauses.push(rca('RCA-1','DEFECT-1','INSTRUCTION',scope),rca('RCA-2','DEFECT-2','TEST',scope));
+  p.projectData.changes.push(change('CHANGE-1','DEFECT-1','INSTRUCTION',{oldVersion:'instruction-v001',newVersion:'instruction-v002',instructionChange:'CHANGED',preflight:'REQUIRED'},scope));
   return p;
 }
 
 // Intentional invalid fixture 1: one arbitrary changeset must not cover two confirmed RCAs.
 {
-  const p=fixture();
+  const p=await fixture();
   const gate=engine.gate(16,p);
   assert.equal(gate.complete,false,'Stage 16 gate falsely completed while DEFECT-2 had no responsible-layer correction.');
   assert(gate.reasons.some(reason=>String(reason).includes('DEFECT-2')),'Missing-defect correction rejection did not identify DEFECT-2.');
@@ -99,8 +114,8 @@ function fixture(){
 
 // Intentional invalid fixture 2: a correction at a downstream/wrong layer must not satisfy the RCA.
 {
-  const p=fixture();
-  p.projectData.changes.push(change('CHANGE-2','DEFECT-2','INSTRUCTION',{oldVersion:'test-v001',newVersion:'test-v002'}));
+  const p=await fixture();
+  p.projectData.changes.push(change('CHANGE-2','DEFECT-2','INSTRUCTION',{oldVersion:'test-v001',newVersion:'test-v002'},initialScope(p)));
   const gate=engine.gate(16,p);
   assert.equal(gate.complete,false,'Stage 16 gate accepted a correction whose responsible layer disagreed with the RCA.');
   assert(gate.reasons.some(reason=>/responsible layer/i.test(String(reason))),'Wrong-layer correction rejection was not explicit.');
@@ -108,8 +123,8 @@ function fixture(){
 
 // Intentional invalid fixture 3: an in-place version rewrite is not a new controlled version.
 {
-  const p=fixture();
-  p.projectData.changes.push(change('CHANGE-2','DEFECT-2','TEST',{oldVersion:'test-v001',newVersion:'test-v001'}));
+  const p=await fixture();
+  p.projectData.changes.push(change('CHANGE-2','DEFECT-2','TEST',{oldVersion:'test-v001',newVersion:'test-v001'},initialScope(p)));
   const gate=engine.gate(16,p);
   assert.equal(gate.complete,false,'Stage 16 gate accepted an in-place correction with unchanged old/new version identity.');
   assert(gate.reasons.some(reason=>/new controlled version|old and new/i.test(String(reason))),'In-place version rejection was not explicit.');
@@ -117,10 +132,10 @@ function fixture(){
 
 // Intentional invalid fixture 4: changing the production instruction requires the specified repeated preflight.
 {
-  const p=fixture();
+  const p=await fixture();
   p.projectData.changes[0].fields.REQUIRED_REPEATED_PREFLIGHT='NOT REQUIRED';
   p.projectData.changes[0].REQUIRED_REPEATED_PREFLIGHT='NOT REQUIRED';
-  p.projectData.changes.push(change('CHANGE-2','DEFECT-2','TEST',{oldVersion:'test-v001',newVersion:'test-v002'}));
+  p.projectData.changes.push(change('CHANGE-2','DEFECT-2','TEST',{oldVersion:'test-v001',newVersion:'test-v002'},initialScope(p)));
   const gate=engine.gate(16,p);
   assert.equal(gate.complete,false,'Stage 16 gate accepted an instruction change without repeated preflight.');
   assert(gate.reasons.some(reason=>/preflight/i.test(String(reason))),'Missing repeated-preflight rejection was not explicit.');
@@ -128,11 +143,11 @@ function fixture(){
 
 // Intentional invalid fixture 5: an execution-only RCA cannot manufacture an instruction change.
 {
-  const p=fixture();
-  p.projectData.changes.push(change('CHANGE-2','DEFECT-2','TEST',{oldVersion:'test-v001',newVersion:'test-v002'}));
-  p.projectData.defects.push(defect('DEFECT-3','Execution-only deviation'));
-  p.projectData.rootCauses.push(rca('RCA-3','DEFECT-3','EXECUTION'));
-  p.projectData.changes.push(change('CHANGE-3','DEFECT-3','EXECUTION',{oldVersion:'execution-attempt-001',newVersion:'execution-attempt-002',instructionChange:'CHANGED',preflight:'REQUIRED'}));
+  const p=await fixture();
+  p.projectData.changes.push(change('CHANGE-2','DEFECT-2','TEST',{oldVersion:'test-v001',newVersion:'test-v002'},initialScope(p)));
+  p.projectData.defects.push(defect('DEFECT-3','Execution-only deviation',initialScope(p)));
+  p.projectData.rootCauses.push(rca('RCA-3','DEFECT-3','EXECUTION',initialScope(p)));
+  p.projectData.changes.push(change('CHANGE-3','DEFECT-3','EXECUTION',{oldVersion:'execution-attempt-001',newVersion:'execution-attempt-002',instructionChange:'CHANGED',preflight:'REQUIRED'},initialScope(p)));
   const gate=engine.gate(16,p);
   assert.equal(gate.complete,false,'Stage 16 gate changed the instruction for an execution-only root cause.');
   assert(gate.reasons.some(reason=>/execution-only|preserve.*instruction/i.test(String(reason))),'Execution-only instruction-preservation rejection was not explicit.');
@@ -141,13 +156,14 @@ function fixture(){
 // Repaired fixture: every confirmed RCA has one valid earliest-layer correction, all changes are versioned,
 // the instruction change repeats preflight, and execution-only defects preserve the instruction.
 {
-  const p=fixture();
-  p.projectData.changes.push(change('CHANGE-2','DEFECT-2','TEST',{oldVersion:'test-v001',newVersion:'test-v002'}));
-  p.projectData.defects.push(defect('DEFECT-3','Execution-only deviation'));
-  p.projectData.rootCauses.push(rca('RCA-3','DEFECT-3','EXECUTION'));
-  p.projectData.changes.push(change('CHANGE-3','DEFECT-3','EXECUTION',{oldVersion:'execution-attempt-001',newVersion:'execution-attempt-002',instructionChange:'UNCHANGED',preflight:'NOT REQUIRED'}));
+  const p=await fixture();
+  p.projectData.changes.push(change('CHANGE-2','DEFECT-2','TEST',{oldVersion:'test-v001',newVersion:'test-v002'},initialScope(p)));
+  p.projectData.defects.push(defect('DEFECT-3','Execution-only deviation',initialScope(p)));
+  p.projectData.rootCauses.push(rca('RCA-3','DEFECT-3','EXECUTION',initialScope(p)));
+  p.projectData.changes.push(change('CHANGE-3','DEFECT-3','EXECUTION',{oldVersion:'execution-attempt-001',newVersion:'execution-attempt-002',instructionChange:'UNCHANGED',preflight:'NOT REQUIRED'},initialScope(p)));
   const gate=engine.gate(16,p);
   assert.equal(gate.complete,true,`Repaired Stage 16 correction did not progress: ${gate.reasons.join('; ')}`);
 }
 
-console.log('verify-root-cause-correction: PASS');
+console.log(JSON.stringify({rootCauseCorrection:'PASS',isolatedDisposableProjects:true,originalGateCases:6,initialCandidateByteCustodyNative:true,initialSelectionAndFreezeNative:true,priorStage15CompletenessSynthetic:true,acceptedStage16AuthoritySynthetic:true,authoredRcaAndCorrectionEvidenceSynthetic:true,runAuthoritySynthetic:true,actualExternalOrHumanExecution:false}));
+console.error('verify-root-cause-correction: PASS');

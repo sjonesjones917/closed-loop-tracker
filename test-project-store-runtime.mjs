@@ -1,4 +1,5 @@
 import {createHash} from 'node:crypto';
+import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
@@ -25,7 +26,7 @@ export function projectStoreRuntime({fault=null,sourceOverrides={},environment={
  // Keep empty stores present too, so an otherwise read-only transaction
  // cannot appear to mutate state merely by materializing an empty adapter map.
  const rows=new Map([['projects',new Map()],['artifacts',new Map()],['meta',new Map()]]);
- const runtime=createVerifierRuntime({Blob,Uint8Array,ArrayBuffer,TextEncoder,TextDecoder,ReadableStream,CompressionStream,DecompressionStream,Response,crypto:globalThis.crypto,btoa,atob,setTimeout,clearTimeout,queueMicrotask,console,Event:class Event{},dispatchEvent(){},...environment});
+ const runtime=createVerifierRuntime.withNativeGlobal({Blob,Uint8Array,ArrayBuffer,TextEncoder,TextDecoder,ReadableStream,CompressionStream,DecompressionStream,Response,crypto:globalThis.crypto,btoa,atob,setTimeout,clearTimeout,queueMicrotask,console,Event:class Event{},dispatchEvent(){},...environment});
  const parse=vm.runInContext('(text)=>JSON.parse(text)',runtime);
  // Preserve undefined properties and shared references just as structured clone
  // does. JSON cloning would hide invalid durable-view fields in these tests.
@@ -55,16 +56,56 @@ export function projectStoreRuntime({fault=null,sourceOverrides={},environment={
  return {runtime,rows,copy,store:runtime.closedLoopProjectStore,engine:runtime.closedLoopWorkflowEngine,core:runtime.closedLoopCore,ingestion:runtime.closedLoopResponseIngestion,prompts:runtime.closedLoopPromptEngine};
 }
 
+// UI-only initial state plus the actual scope matcher. These are not sharing
+// decisions; the review/authorization store boundary remains explicit in tests.
+export function bindHandoffReviewUiState(runtime,{source=fs.readFileSync(process.env.APP_SOURCE||'app-core.js','utf8')}={}){
+ if(!Object.hasOwn(runtime,'handoffReview'))runtime.handoffReview=null;
+ if(!Object.hasOwn(runtime,'handoffNavigationSequence'))runtime.handoffNavigationSequence=0;
+ const first=source.indexOf('function handoffSelection('),last=source.indexOf('function retainHandoffReview(',first);
+ if(first<0||last<=first)throw new Error('The actual handoff review scope dependency is unavailable.');
+ vm.runInContext(source.slice(first,last),runtime,{filename:'app-core.js:handoff-view-scope'});
+}
+
+// Complete actual destination-view dependencies for extracted lifecycle owners.
+// DOM/history plumbing remains explicit; canonical storage and activation policy do not.
+export function bindProjectActivationUi(r,{source=fs.readFileSync(process.env.APP_SOURCE||'app-core.js','utf8')}={}){
+ const t=r.runtime,store=r.store||t.projectStore,copy=r.copy||t.clone;
+ bindHandoffReviewUiState(t,{source});
+ const defaults={schema:t.closedLoopWorkflowSchema,views:['Overview','Project','Workflow','Records','Files','Release'],operationSelection:{},runSelection:{},responseFileSelection:{},fileSelectionDrafts:{},replacementReview:null,pendingBackupAction:null,responseActionFailure:null,promptPreviewCache:null,historyBrowseState:null,historyDestination:null,savedDraftView:null,savedViewSignature:null,historyState:{activeId:null},presentationActions:null,acceptanceSession:null,projectSelectionSequence:0,quarantinedProjects:[],CSS:{escape:String},takeBackupPassphrase:()=>null,$:()=>null,document:{querySelectorAll:()=>[],querySelector:()=>null},window:{scrollX:0,scrollY:0,scrollTo(){}},requestAnimationFrame:fn=>fn(),withStorageActivity:async(_label,fn)=>fn(),render(){},refreshProjectStorage:async()=>{},writeBrowserEntry(){},recordCommittedBoundary:async()=>{}};
+ for(const [name,value]of Object.entries(defaults))if(!Object.hasOwn(t,name))t[name]=value;
+ if(!t.document.querySelectorAll)t.document.querySelectorAll=()=>[];
+ if(!t.captureCurrentView)t.captureCurrentView=async()=>store.saveCheckpoint(t.current.job.JOB_ID,{expectedProjectRevision:t.current.revision,view:t.captureView()});
+ if(!t.refreshHistory)t.refreshHistory=async()=>{t.historyState=await store.historyList(t.current.job.JOB_ID);};
+ if(!t.clone)t.clone=copy;
+ const extract=(a,b)=>{const i=source.indexOf(a),j=source.indexOf(b,i+a.length);if(i<0||j<i)throw Error('Actual activation dependency missing: '+a);return source.slice(i,j);};
+ const key=source.split('\n').find(line=>line.startsWith('const acceptanceSessionKey='));if(!key)throw Error('Actual acceptance-session key missing.');vm.runInContext(key.replace('const acceptanceSessionKey=','globalThis.acceptanceSessionKey='),t);
+ vm.runInContext(extract('const VIEW_NAVIGATION_CONTROL_IDS=','function replacementReviewFromSavedView(')+extract('function replacementReviewFromSavedView(','function entryUrl('),t,{filename:'app-core.js:destination-view'});
+ vm.runInContext(extract('function canonicalCurrentStage(','// One synchronous screen build')+extract('function presentationAction(','function displayedStageAction(')+extract('function stageOperations(','function operatorLaneMatches(')+extract('function fileSelectionKey(','async function saveFileSelection('),t,{filename:'app-core.js:destination-lane'});
+ const materializeEnd=source.includes('async function prepareProjectActivation(')?'async function prepareProjectActivation(':'let projectSelectionSequence=';
+ vm.runInContext(extract('async function materializeProject(',materializeEnd),t,{filename:'app-core.js:materialize-destination'});
+ if(source.includes('async function prepareProjectActivation('))vm.runInContext(extract('async function prepareProjectActivation(','let projectSelectionSequence='),t,{filename:'app-core.js:project-activation'});
+ return t;
+}
+
 // Actual acceptance/confirmation owners under the shared lifecycle adapter.
 export function bindAcceptanceUi(r,p,proposalId,{skipConfirmation=false}={}){
  const {runtime,core,engine,ingestion,store,copy}=r,failures=[],assert=(ok,message)=>{if(!ok)throw new Error(message||'UI fixture source anchor is missing');};
-Object.assign(runtime,{current:p,projects:copy([p]),replacementReview:null,responseActionFailure:null,projectStore:store,core,engine,ingestion,clone:copy,safe:engine.safe,withStorageActivity:async(_label,fn)=>fn(),unloadInactiveProjects:()=>{},mobileSessionCurrent:()=>false,recordMobileOperation:async()=>{},recordCommittedBoundary:async()=>{},render:()=>{},announce:()=>{},reportActionFailure:error=>failures.push(error),reportResponseFailure:(_message,error)=>failures.push(error),focusAfterAction:()=>{},reverifyReturnedFiles:async()=>{},TAB_INSTANCE_ID:'SYNTHETIC-UI',canonicalCurrentStage:()=>Number(runtime.current.job.CURRENT_STAGE.replace(/[^0-9]/g,'')),selectStageContinuation:()=>{},$ :()=>({value:'SYNTHETIC',scrollIntoView(){},focus(){}}),document:{querySelectorAll:()=>[]}});
+Object.assign(runtime,{current:p,projects:copy([p]),replacementReview:null,responseActionFailure:null,projectStore:store,core,engine,ingestion,clone:copy,safe:engine.safe,withStorageActivity:async(_label,fn)=>fn(),unloadInactiveProjects:()=>{},mobileSessionCurrent:()=>false,recordMobileOperation:async()=>{},recordCommittedBoundary:async()=>{},render:()=>{},announce:()=>{},reportActionFailure:error=>failures.push(error),reportResponseFailure:(_message,error)=>failures.push(error),focusAfterAction:()=>{},TAB_INSTANCE_ID:'SYNTHETIC-UI',canonicalCurrentStage:()=>Number(runtime.current.job.CURRENT_STAGE.replace(/[^0-9]/g,'')),selectStageContinuation:()=>{},$ :()=>({value:'SYNTHETIC',scrollIntoView(){},focus(){}}),document:{querySelectorAll:()=>[]}});
 runtime.pendingProposal=()=>{const proposal=ingestion.findProposal(runtime.current,proposalId);return proposal?.status==='PENDING_OPERATOR_REVIEW'?proposal:null;};
 runtime.captureView=()=>copy({activeStage:runtime.current.activeStage,activeView:runtime.current.activeView,pendingMutation:runtime.replacementReview?.next?{baseProjectSha256:runtime.current.projectSha256,next:runtime.replacementReview.next,impact:runtime.replacementReview.impact,expectedProjectRevision:runtime.replacementReview.expectedProjectRevision,...(runtime.replacementReview.acceptance?{acceptance:runtime.replacementReview.acceptance}:{})}:null});
 runtime.captureCurrentView=async()=>store.saveCheckpoint(runtime.current.job.JOB_ID,{expectedProjectRevision:runtime.current.revision,view:runtime.captureView()});
 let source=fs.readFileSync('app-core.js','utf8');if(skipConfirmation){for(const before of ['if(impact?.requiresConfirmation&&mutationConfirmation?.confirmationKey!==impact.confirmationKey)','if(semanticImpact?.requiresConfirmation){']){assert(source.includes(before));source=source.replace(before,before.endsWith('{')?'if(false){':'if(false)');}}const extract=(start,end)=>{const a=source.indexOf(start);assert(a>=0);return source.slice(a,source.indexOf(end,a+start.length));};
-vm.runInContext(extract('async function persistReplacement(','async function save(')+extract('function humanAuthorityConfirmationValues(','async function rejectPendingProposal(')+'\nglobalThis.accept=acceptPendingProposal;globalThis.confirm=confirmReplacement;',runtime);
+vm.runInContext(extract('async function reverifyReturnedFiles(','async function validateReturnedResponse(')+extract('async function persistReplacement(','async function save(')+extract('function humanAuthorityConfirmationValues(','async function rejectPendingProposal(')+'\nglobalThis.accept=acceptPendingProposal;globalThis.confirm=confirmReplacement;',runtime);
  return failures;
+}
+
+// Fault injection locates the persisted payload, not the occurrence metadata.
+// Expected semantic outcomes stay in each independent owning regression.
+export function storedArtifactBody(r,artifactId){
+ const row=r.rows.get('artifacts')?.get(artifactId);if(!row)throw new Error('Artifact fault target is missing: '+artifactId);
+ if(!row.byteReference)return row;
+ const reference=row.byteReference,key='recovery:'+reference.jobId+':bytes:'+reference.sha256,body=r.rows.get('meta')?.get(key)?.value;
+ if(!body)throw new Error('Artifact byte fault target is missing: '+artifactId);return body;
 }
 
 // Crossing a verifier process boundary preserves the bytes that the lifecycle
@@ -78,6 +119,25 @@ export async function restoreArtifactFixture(store,artifacts){
  if(!Array.isArray(artifacts))throw new Error('Artifact fixture bytes are missing.');
  for(const row of artifacts){const bytes=Buffer.from(row.bytesBase64,'base64');if(bytes.length!==row.byteSize||createHash('sha256').update(bytes).digest('hex')!==row.sha256)throw new Error('Artifact fixture restoration does not match captured byte identity.');await store.putArtifact({...row,blob:new Blob([bytes],{type:row.mediaType})});const restored=await store.getArtifact(row.artifactId);if(!restored||restored.sha256!==row.sha256||restored.byteSize!==row.byteSize)throw new Error('Artifact fixture bytes were not restored through the storage authority.');}
 }
+// Preserve original generation-time prompt context across fixture/runtime boundaries.
+// The ordinary production writer still verifies and stores every authorized file.
+export async function hydrateRetainedPromptContexts(r,project,contextFiles,{omitInvalidated=false}={}){
+  const producer=r.runtime.closedLoopPromptEngine;
+  for(const file of contextFiles){
+    assert.equal(createHash('sha256').update(file.text,'utf8').digest('hex'),file.sha256,'RETAINED_PROMPT_CONTEXT_CUSTODY_ORACLE: captured bytes differ from the generation-time digest.');
+    assert.equal(Buffer.byteLength(file.text,'utf8'),file.byteSize,'RETAINED_PROMPT_CONTEXT_CUSTODY_ORACLE: captured bytes differ from the generation-time length.');
+  }
+  r.runtime.closedLoopPromptEngine=Object.freeze({...producer,materializePromptContextFiles:record=>r.copy((record.contextManifest?.promptContext?.attachments||[]).map(required=>{
+    const file=contextFiles.find(file=>['path','filename','mediaType','sha256','byteSize'].every(key=>file[key]===required[key]));
+    assert.ok(file,'RETAINED_PROMPT_CONTEXT_CUSTODY_ORACLE: the lifecycle producer did not retain an authorized original context file.');
+    return file;
+  }))});
+  try{for(const record of project.projectData.generatedPrompts){
+    if(omitInvalidated&&record.invalidatedBy)continue;
+    await r.store.persistPromptContextFiles(record,project);
+  }}finally{r.runtime.closedLoopPromptEngine=producer;}
+}
+
 export async function bindArtifactFixture(artifacts,runtime=globalThis){
  const store=projectStoreRuntime().store;await restoreArtifactFixture(store,artifacts);
  runtime.closedLoopProjectStore=Object.freeze({...runtime.closedLoopProjectStore,artifactCustodyState:identity=>store.artifactCustodyState(identity)});return store;

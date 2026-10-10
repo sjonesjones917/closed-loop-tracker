@@ -1,5 +1,6 @@
-import {projectStoreRuntime} from './test-project-store-runtime.mjs';
+import {projectStoreRuntime,bindArtifactFixture} from './test-project-store-runtime.mjs';
 import {canonicalFixtureRecord,reviewApplicabilityFixture} from './test-fixtures.mjs';
+import {buildUnchangedConfirmationFixture} from './stage19-fixture.mjs';
 import {artifactFixtureId} from './test-artifact-fixtures.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
@@ -143,7 +144,7 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
 // Invalid canonical relationship is rejected before mutation.
 {
   const p=project('JOB-BAD-REL'),stage=3;p.job.CURRENT_SOURCE_SET_VERSION='SYNTHETIC-SOURCES';p.stages[2].agentData.SOURCE_APPLICABILITY_DETERMINATION='NO_APPLICABLE_EXTERNAL_SOURCE';p.stages[2].status='COMPLETE';p.stages[2].gate={complete:true,blocked:false,reasons:[]};const pr=prompt(p,stage);
-  const e={schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:p.job.JOB_ID,stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{},records:{research:[{tempKey:'research-1',fields:{PASS_NUMBER:1,EXACT_PORTION_EXAMINED:'Controlled source portion',FINDING_CLASSIFICATION:'FACT',SOURCE_EVIDENCE:'Controlled evidence'},relationships:{SOURCE_ID:{recordId:'SOURCE-DOES-NOT-EXIST'}},evidenceRefs:['evidence-1']}]},evidence:[{temporaryKey:'evidence-1',kind:'WORKFLOW_EVIDENCE',description:'Relationship validation fixture',location:'synthetic test',content:'controlled'}],unresolved:[],warnings:[],attachments:[]};
+  const e={schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:p.job.JOB_ID,stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{},records:{research:[{tempKey:'research-1',fields:{PASS_NUMBER:'1',EXACT_PORTION_EXAMINED:'Controlled source portion',FINDING_CLASSIFICATION:'FACT',SOURCE_EVIDENCE:'Controlled evidence'},relationships:{SOURCE_ID:{recordId:'SOURCE-DOES-NOT-EXIST'}},evidenceRefs:['evidence-1']}]},evidence:[{temporaryKey:'evidence-1',kind:'WORKFLOW_EVIDENCE',description:'Relationship validation fixture',location:'synthetic test',content:'controlled'}],unresolved:[],warnings:[],attachments:[]};
   const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});
   assert(!prepared.validation.valid&&prepared.validation.issues.some(x=>x.code==='UNRESOLVED_RELATIONSHIP'),'Invalid relationship was not rejected.');
   assert(prepared.project.projectData.research.length===0&&prepared.project.projectData.acceptedChanges.length===0,'Invalid relationship partially mutated canonical state.');
@@ -329,21 +330,16 @@ console.log(JSON.stringify({scopedAcceptedResultRefinement:true},null,2));
 
 // Exact unchanged-confirmed candidate artifact identity controls Stage 20 baseline bytes.
 {
-  const p=project('JOB-BASELINE-EXACT-CANDIDATE');
-  const shaA='aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',shaB='bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb';
-  const a=record('artifacts',17,{FILENAME:'confirmed.bin',TYPE:'application/octet-stream',BYTE_SIZE:10,SHA256:shaA,STORAGE_REFERENCE:'indexeddb:ARTIFACT-CONFIRMED',AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'},'ARTIFACT-CONFIRMED');
-  const b=record('artifacts',20,{FILENAME:'different.bin',TYPE:'application/octet-stream',BYTE_SIZE:10,SHA256:shaB,STORAGE_REFERENCE:'indexeddb:ARTIFACT-DIFFERENT',AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'},'ARTIFACT-DIFFERENT');
-  p.projectData.artifacts.push(a,b);
-  const candidate=record('candidateFreezes',17,{ITERATION_ID:'ITERATION-CORRECTED',COMPONENT_MANIFEST:[{artifactId:'ARTIFACT-CONFIRMED',filename:'confirmed.bin',byteSize:10,sha256:shaA,storageReference:'indexeddb:ARTIFACT-CONFIRMED'}],COMPONENT_HASHES:{'ARTIFACT-CONFIRMED':shaA},STATUS:'FROZEN'},'CANDIDATE-CONFIRMED');
-  p.projectData.candidateFreezes.push(candidate);
-  const iteration=record('iterations',19,{CANDIDATE_ID:'CANDIDATE-CONFIRMED',PURPOSE:'UNCHANGED_CONFIRMATION',STATUS:'FROZEN'},'ITERATION-CONFIRM');
-  p.projectData.iterations.push(iteration);p.job.CURRENT_ITERATION='ITERATION-CONFIRM';
-  const scope={...engine.currentScope(p),iterationId:'ITERATION-CONFIRM',candidateId:'CANDIDATE-CONFIRMED'};candidate.scope={...scope,iterationId:'ITERATION-CORRECTED'};iteration.scope=scope;a.scope=scope;b.scope=scope;
-  const confirmation=record('confirmationRecords',19,{ITERATION_ID:'ITERATION-CONFIRM',CANDIDATE_ID:'CANDIDATE-CONFIRMED',DETERMINATION:'SATISFIED'},'CONFIRM-EXACT-CANDIDATE');confirmation.scope=scope;p.projectData.confirmationRecords.push(confirmation);
-  let rejected=false;try{engine.freezeBaseline(p,{artifactIds:['ARTIFACT-DIFFERENT'],operatorLabel:'VERIFY'});}catch(error){rejected=/exact artifact set/i.test(String(error.message));}
-  assert(rejected,'Stage 20 accepted a baseline artifact set different from the unchanged-confirmed candidate.');
-  const authorizationDecision=engine.recordRegisteredHumanDecision(p,{stage:20,purpose:'BASELINE_AUTHORIZATION',targetFamily:'candidateFreezes',targetId:'CANDIDATE-CONFIRMED',value:'AUTHORIZED',operatorLabel:'VERIFY'});
-  const baseline=engine.freezeBaseline(p,{authorizationDecisionId:engine.recordId(authorizationDecision,'humanDecisions'),operatorLabel:'VERIFY'});assert(JSON.stringify(engine.recordValue(baseline,'IMMUTABLE_ARTIFACT_RECORDS'))===JSON.stringify(['ARTIFACT-CONFIRMED']),'Stage 20 did not derive baseline artifacts from the unchanged-confirmed candidate manifest.');assert(engine.recordValue(baseline,'APPROVED_VERSIONS').candidateId==='CANDIDATE-CONFIRMED'&&engine.recordValue(baseline,'APPROVED_VERSIONS').iterationId==='ITERATION-CONFIRM','Stage 20 baseline lost the exact unchanged-confirmation candidate/iteration identity.');assert(engine.recordValue(baseline,'HUMAN_AUTHORIZATION')===engine.recordId(authorizationDecision,'humanDecisions'),'Stage 20 baseline did not reference the exact BASELINE_AUTHORIZATION human decision.');
+  const {p,cand19,iter19}=buildUnchangedConfirmationFixture('JOB-BASELINE-EXACT-CANDIDATE');
+  const artifactId=artifactFixtureId(engine,p,'ARTIFACT-CANDIDATE');
+  const authorizationDecision=engine.recordRegisteredHumanDecision(p,{stage:20,purpose:'BASELINE_AUTHORIZATION',targetFamily:'candidateFreezes',targetId:cand19,value:'AUTHORIZED',operatorLabel:'VERIFY'});
+  const before=hash.sha256Value(p);let rejected=false;
+  try{engine.freezeBaseline(p,{artifactIds:['ARTIFACT-DIFFERENT'],authorizationDecisionId:engine.recordId(authorizationDecision,'humanDecisions'),operatorLabel:'VERIFY'});}catch(error){rejected=/exact artifact set/i.test(String(error.message));}
+  assert(rejected,'Stage 20 accepted a baseline artifact set different from the unchanged-confirmed candidate.');assert(hash.sha256Value(p)===before,'Rejected exact-candidate selection mutated canonical state.');
+  const baseline=engine.freezeBaseline(p,{authorizationDecisionId:engine.recordId(authorizationDecision,'humanDecisions'),operatorLabel:'VERIFY'});
+  assert(JSON.stringify(engine.recordValue(baseline,'IMMUTABLE_ARTIFACT_RECORDS'))===JSON.stringify([artifactId]),'Stage 20 did not derive baseline artifacts from the unchanged-confirmed candidate manifest.');
+  assert(engine.recordValue(baseline,'APPROVED_VERSIONS').candidateId===cand19&&engine.recordValue(baseline,'APPROVED_VERSIONS').iterationId===iter19,'Stage 20 baseline lost the exact unchanged-confirmation candidate/iteration identity.');
+  assert(engine.recordValue(baseline,'HUMAN_AUTHORIZATION')===engine.recordId(authorizationDecision,'humanDecisions'),'Stage 20 baseline did not reference the exact BASELINE_AUTHORIZATION human decision.');
 }
 
 
@@ -376,7 +372,16 @@ console.log(JSON.stringify({stage5RequirementVersionIsolation:true,iterationOper
  let ev=engine.evaluateContextIndependence(p,{role:'RUN_BATCH',iterationId:iid});assert(ev.determination==='APPLICATION_ESTABLISHED','Ten distinct contexts were not application-established.');const ctx2=engine.records(p,'freshContexts')[1];ctx2.fields.EXTERNAL_CONTEXT_IDENTIFIER='external-0';ctx2.EXTERNAL_CONTEXT_IDENTIFIER='external-0';ev=engine.evaluateContextIndependence(p,{role:'RUN_BATCH',iterationId:iid});assert(ev.determination==='VIOLATED','Duplicate external context was not detected.');
 }
 {
- const p=project('JOB-EVIDENCE-V2'),t=record('tests',6,{REQ_ID:'REQ-E',TEST_TYPE:'DETERMINISTIC',EXECUTION_MODE:'EXTERNAL_AGENT_TOOL',REQUIRED_CAPABILITY:'sha256',ARTIFACT_REQUIREMENTS:'exact bytes',EVIDENCE_TO_PRESERVE:'byte hash',STATUS:'READY'},'TEST-E'),r=record('deterministicResults',22,{TEST_ID:'TEST-E',ACTUAL_RESULT:'same',DETERMINATION:'SATISFIED',EVIDENCE:'agent says same'},'RESULT-E');assert(!engine.evaluateEvidenceSufficiency(p,{test:t,result:r}).sufficient,'Prose satisfied a byte test.');const a=record('artifacts',22,{FILENAME:'x.bin',TYPE:'application/octet-stream',BYTE_SIZE:1,SHA256:'b'.repeat(64),AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'},'ART-E'),e=record('evidenceRecords',22,{KIND:'TOOL_OUTPUT',DESCRIPTION:'hash',LOCATION:'tool',CONTENT:'sha256 output',ATTACHMENT_ID:'ART-E',STATUS:'PRESERVED'},'EVIDENCE-E');p.projectData.artifacts.push(a);p.projectData.evidenceRecords.push(e);r.evidenceRefs=['EVIDENCE-E'];assert(engine.evaluateEvidenceSufficiency(p,{test:t,result:r}).sufficient,'Verified byte-backed evidence was not sufficient.');
+ const p=project('JOB-EVIDENCE-V2'),t=record('tests',6,{REQ_ID:'REQ-E',TEST_TYPE:'DETERMINISTIC',EXECUTION_MODE:'EXTERNAL_AGENT_TOOL',REQUIRED_CAPABILITY:'sha256',ARTIFACT_REQUIREMENTS:'exact bytes',EVIDENCE_TO_PRESERVE:'byte hash',STATUS:'READY'},'TEST-E'),r=record('deterministicResults',22,{TEST_ID:'TEST-E',ACTUAL_RESULT:'same',DETERMINATION:'SATISFIED',EVIDENCE:'agent says same'},'RESULT-E');assert(!engine.evaluateEvidenceSufficiency(p,{test:t,result:r}).sufficient,'Prose satisfied a byte test.');
+ // The synthetic positive byte control uses the production custody authority.
+ // Metadata and a claimed hash alone cannot establish §§17.6/25 byte evidence.
+ const blob=new Blob(['Controlled byte evidence'],{type:'application/octet-stream'}),artifactId=artifactFixtureId(engine,p,'BYTE-EVIDENCE'),digest=await hash.sha256Bytes(blob);
+ engine.registerArtifactBytes(p,{stage:22,artifactId,filename:'x.bin',mediaType:blob.type,byteSize:blob.size,sha256:digest});
+ const e=record('evidenceRecords',22,{KIND:'TOOL_OUTPUT',DESCRIPTION:'Synthetic application byte fixture',LOCATION:'native fixture store',CONTENT:'sha256 output',ATTACHMENT_ID:artifactId,STATUS:'PRESERVED'},'EVIDENCE-E');p.projectData.evidenceRecords.push(e);r.evidenceRefs=['EVIDENCE-E'];
+ assert(!engine.evaluateEvidenceSufficiency(p,{test:t,result:r}).sufficient,'Metadata-only evidence satisfied a byte test.');
+ const byteStore=await bindArtifactFixture([]);await byteStore.putArtifact({artifactId,jobId:p.job.JOB_ID,blob,filename:'x.bin',mediaType:blob.type});const stored=await byteStore.getArtifact(artifactId);
+ assert(stored.jobId===p.job.JOB_ID&&stored.byteSize===blob.size&&await hash.sha256Bytes(stored.blob)===digest,'The synthetic byte fixture did not retain exact actual bytes.');
+ assert(engine.evaluateEvidenceSufficiency(p,{test:t,result:r}).sufficient,'Verified byte-backed evidence was not sufficient.');
 }
 {
  const p=project('JOB-CONTRADICTION-V2');p.job.CURRENT_REQUIREMENTS_VERSION='R1';p.job.CURRENT_TEST_SUITE_VERSION='T1';const scope=engine.currentScope(p);const t=record('tests',6,{REQ_ID:'REQ-C',TEST_TYPE:'DETERMINISTIC',EXECUTION_MODE:'EXTERNAL_AGENT_TOOL',REQUIRED_CAPABILITY:'TEST_TOOL',ARTIFACT_REQUIREMENTS:'NONE',STATUS:'READY'},'TEST-C');t.scope={...scope};p.projectData.tests.push(t);const d=record('deterministicResults',22,{REQ_ID:'REQ-C',TEST_ID:'TEST-C',DETERMINATION:'SATISFIED'},'DET-C'),m=record('meaningResults',23,{REQ_ID:'REQ-C',TEST_ID:'TEST-C',DETERMINATION:'VIOLATED'},'MEAN-C');d.scope={...scope};m.scope={...scope};p.projectData.deterministicResults.push(d);p.projectData.meaningResults.push(m);assert(engine.detectCurrentContradictions(p).some(x=>x.type==='DETERMINISTIC_MEANING_CONFLICT'),'Cross-method contradiction was not detected.');

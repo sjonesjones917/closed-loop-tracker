@@ -1,14 +1,15 @@
 import assert from 'node:assert/strict';
+import {verifyMobileSessionStorage} from './test-mobile-session-storage.mjs';
 import fs from 'node:fs';
 import {createHash} from 'node:crypto';
 import {deployedExpected,evaluateMobileAcceptanceSubmission} from './evaluate-mobile-acceptance-submission.mjs';
 import {createMobileAcceptanceTarget} from './generate-mobile-acceptance-target.mjs';
 import {verifyMobileAcceptanceEvidence} from './verify-mobile-acceptance-evidence.mjs';
-import {syntheticMobileOperations} from './mobile-evidence-test-fixture.mjs';
+import {syntheticMobileOperations,syntheticMobileTargetFacts} from './mobile-evidence-test-fixture.mjs';
 
 // Disposable validator fixtures: human/device facts below are synthetic values.
 // The result proves rejection behavior, never actual physical-device acceptance.
-const target=createMobileAcceptanceTarget({sourceCommit:'a'.repeat(40),deploymentManifestDigest:'b'.repeat(64),origin:'https://sjonesjones917.github.io',basePath:'/closed-loop-tracker/',testProjectId:'DISPOSABLE-RECEIPT-BOUNDARY',procedureVersion:'actual-iphone-safari/1',viewport:{width:393,height:852,devicePixelRatio:3},deviceModel:'UNKNOWN',iosVersion:'19.0',safariVersion:'19.0',safariUserAgent:'Mozilla/5.0 (iPhone) Safari/604.1',issuedAt:'2026-09-14T00:00:00.000Z'});
+const target=createMobileAcceptanceTarget({...syntheticMobileTargetFacts(),sourceCommit:'a'.repeat(40),deploymentManifestDigest:'b'.repeat(64),origin:'https://sjonesjones917.github.io',basePath:'/closed-loop-tracker/',testProjectId:'DISPOSABLE-RECEIPT-BOUNDARY',procedureVersion:'actual-iphone-safari/1',viewport:{width:393,height:852,devicePixelRatio:3},deviceModel:'UNKNOWN',iosVersion:'19.0',safariVersion:'19.0',safariUserAgent:'Mozilla/5.0 (iPhone) Safari/604.1',issuedAt:'2026-09-14T00:00:00.000Z'});
 const evidence={...target,...syntheticMobileOperations(target),mobileAcceptanceEvidenceId:'SYNTHETIC-EVIDENCE',physicalDeviceAssertion:true,evidenceBasis:'HUMAN_OBSERVATION',performer:'SYNTHETIC-PERFORMER',identityAssurance:'SELF_ASSERTED',runtimeFindings:{runtimeExceptions:0,unhandledRejections:0},measurements:{horizontalOverflowPx:0,minimumPrimaryTextPx:16,minimumSecondaryTextPx:14,minimumTouchTargetPx:44},exportedProjectDigest:'b'.repeat(64),screenshotOrRecordingReferences:['SYNTHETIC-REFERENCE']};
 const expected={verificationTime:'2026-09-14T00:30:00.000Z',buildIdentity:'build-sha256-'+ 'f'.repeat(64),runtimeResources:['app-core.js','test-runtime.js','test-worker.js','project-store.js'].map(path=>({path,digest:'b'.repeat(64),byteSize:32}))};
 const run=(e,verify=verifyMobileAcceptanceEvidence)=>verify({target,evidence:e,expected});
@@ -65,10 +66,16 @@ try{
  if(originalSha===undefined)delete process.env.GITHUB_SHA;else process.env.GITHUB_SHA=originalSha;
 }
 const source=fs.readFileSync('verify-mobile-acceptance-evidence.mjs','utf8');
-const fault=source.split('\n').filter(line=>!line.includes("issue(errors,'RECEIPT_OBSERVATION_REQUIRED'")&&!line.includes("issue(errors,'RECEIPT_OPERATION_EVIDENCE_INVALID'")).join('\n');
+const fault=source.replace("new URL('.',import.meta.url)",'new URL('+JSON.stringify(new URL('.',import.meta.url).href)+')').split('\n').filter(line=>!line.includes("issue(errors,'RECEIPT_OBSERVATION_REQUIRED'")&&!line.includes("issue(errors,'RECEIPT_OPERATION_EVIDENCE_INVALID'")).join('\n');
 assert.notEqual(fault,source,'Observation-validation fault was not applied.');
 const mutant=await import('data:text/javascript;base64,'+Buffer.from(fault).toString('base64'));
 const broken=structuredClone(evidence);delete broken.operationReceipts[0].observation;
 assert.throws(()=>assert.equal(run(broken,mutant.verifyMobileAcceptanceEvidence).accepted,false,'Counterfeit receipt accepted'),/Counterfeit receipt accepted/,'The negative test did not detect bypassed observation validation.');
 assert.equal(run(broken).accepted,false);assert.equal(run(evidence).accepted,true);
-console.log(JSON.stringify({schema:'closed-loop-executed-cases/1',synthetic:true,physicalDeviceAcceptance:false,environment:'Node; disposable mobile evidence validator cases',cases,implementationFaults:[{faultId:'BYPASS-OPERATION-OBSERVATION-VALIDATION',detected:true,originalRestored:true}]},null,2));
+const mobileSessionStorage=await verifyMobileSessionStorage();
+const sessionFaults=[];
+for(const [fault,oracle]of [['anchors','MOBILE_SESSION_IMMUTABLE_ANCHOR_ORACLE'],['digest','MOBILE_SESSION_FIRST_BYTES_REHASH_ORACLE'],['merge','MOBILE_SESSION_CONCURRENT_EVIDENCE_ORACLE']]){
+ await assert.rejects(verifyMobileSessionStorage({fault}),error=>String(error.message).includes(oracle),'MOBILE_SESSION_MUTANT_ORACLE: '+fault+' must reach its intended failure.');
+ sessionFaults.push({faultId:fault,detected:true,oracle});
+}
+console.log(JSON.stringify({schema:'closed-loop-executed-cases/1',synthetic:true,physicalDeviceAcceptance:false,environment:'Node; disposable mobile evidence validator cases',cases,mobileSessionStorage,sessionFaults,implementationFaults:[{faultId:'BYPASS-OPERATION-OBSERVATION-VALIDATION',detected:true,originalRestored:true}]},null,2));

@@ -14,7 +14,7 @@ const engineSource=fs.readFileSync(engineSourcePath||new URL('./workflow-engine.
 globalThis.dispatchEvent=()=>{};
 for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])createVerifierRuntime.loadScript(globalThis,file==='workflow-schema.js'?schemaSource:file==='workflow-engine.js'?engineSource:fs.readFileSync(new URL(file,import.meta.url),'utf8'),{filename:file});
 const {closedLoopCore:core,closedLoopWorkflowSchema:schema,closedLoopWorkflowEngine:engine,closedLoopPromptEngine:prompts,closedLoopResponseIngestion:ingestion,closedLoopHash:hash}=globalThis;
-const results=[];
+const results=[],closedFamilyObservations=[];
 async function check(name,operation){try{await operation();results.push({name,result:'PASS'});}catch(error){results.push({name,result:'FAIL',message:String(error.stack||error)});}}
 function blindFixture(stage){
  const project=core.createBlankState('RESPONSE-AUTHORITY-'+stage);engine.ensureShape(project);project.job.EXACT_USER_OBJECTIVE_VERBATIM='Preserve literal returned observations and their exact source provenance.';engine.recalculate(project);
@@ -30,8 +30,18 @@ function blindFixture(stage){
  return {project,prompt,envelope,alias,family,field};
 }
 function prepare(fixture,envelope=fixture.envelope){const text=JSON.stringify(envelope),prepared=ingestion.prepare(fixture.project,{stage:envelope.stage,promptRecord:fixture.prompt,text});assert.equal(prepared.validation.valid,true,JSON.stringify(prepared.validation.issues));assert.equal(prepared.rawRecord.completeRawResponse,text);assert.equal(prepared.rawRecord.sha256,hash.sha256Text(text));return prepared;}
+function rejectClosedFamilyInput(fixture,kind,value){
+ const envelope=structuredClone(fixture.envelope);
+ if(kind==='record-family')envelope.records=JSON.parse(JSON.stringify({[value]:[{tempKey:'unknown-family',fields:{TITLE:'Undeclared family'},relationships:{},evidenceRefs:[]}]}));
+ else envelope.humanAuthorityCandidates=[{temporaryKey:'candidate',label:'Malformed decision identity',value:false,authorityClass:'HUMAN',claimedConversationBasis:'Synthetic boundary input',externalResponsePointer:'/humanAuthorityCandidates/0',affectedStageFields:[],affectedRecords:[],targetFamily:value}];
+ const text=JSON.stringify(envelope),captured=ingestion.captureRaw(fixture.project,{stage:envelope.stage,promptRecord:fixture.prompt,text}),prepared=ingestion.prepareCaptured(captured.project,{rawResponseId:captured.rawRecord.rawResponseId}),code=kind==='record-family'?'UNKNOWN_COLLECTION':'WRONG_VALUE_TYPE',path=kind==='record-family'?'/records/'+value:'/humanAuthorityCandidates/0/targetFamily';
+ assert.equal(prepared.validation.valid,false);assert.equal(prepared.proposal,null);assert.ok(prepared.validation.issues.some(row=>row.code===code&&row.path===path),JSON.stringify(prepared.validation.issues));assert.equal(prepared.rawRecord.completeRawResponse,text);assert.equal(prepared.rawRecord.status,'VALIDATION_FAILED');assert.equal(prepared.project.projectData.acceptedChanges.length,fixture.project.projectData.acceptedChanges.length);
+ closedFamilyObservations.push({stage:envelope.stage,blindAliases:fixture.prompt.contextManifest.blindAliasMap.length>0,kind,case:kind==='record-family'?value:Array.isArray(value)?'hostile-array':'hostile-object',code,rawPreserved:true,noProposal:true});
+}
 for(const stage of [23,24]){
  const fixture=blindFixture(stage),{alias,family,field}=fixture;
+ for(const family of ['constructor','toString','__proto__'])await check(`Stage ${stage}: inherited record family ${family} is rejected before blind remapping`,()=>rejectClosedFamilyInput(fixture,'record-family',family));
+ for(const value of [{toString:null,valueOf:null},[{toString:null,valueOf:null}]])await check(`Stage ${stage}: malformed ${Array.isArray(value)?'array':'object'} candidate family survives blind remapping for typed rejection`,()=>rejectClosedFamilyInput(fixture,'candidate-family',value));
  await check(`Stage ${stage}: literal canonical observation retains alias-looking text`,()=>{const prepared=prepare(fixture);assert.equal(prepared.proposal.canonicalRecords[family][0].fields[field],alias);});
  await check(`Stage ${stage}: typed relationship alone resolves the blind reference`,()=>{const prepared=prepare(fixture);assert.equal(prepared.proposal.canonicalRecords[family][0].relationships.PRODUCT_ID,'PRODUCT-INTEGRITY');assert.equal(prepared.proposal.envelope.scope.productId,'PRODUCT-INTEGRITY');assert.equal(prepared.proposal.envelope.records[family][0].relationships.PRODUCT_ID.recordId,'PRODUCT-INTEGRITY');});
  for(const key of ['description','content','location','notes'])await check(`Stage ${stage}: evidence ${key} is literal data`,()=>{const prepared=prepare(fixture);assert.equal(prepared.proposal.envelope.evidence[0][key],alias);});
@@ -63,6 +73,7 @@ function assertTimingRejected(api,fixture,field){
  assert.equal(prepared.validation.valid,false,'An agent assigned application-owned proposition timing: '+field);
  assert.ok(prepared.validation.issues.some(issue=>['FIELD_OWNERSHIP_VIOLATION','UNKNOWN_RECORD_FIELD'].includes(issue.code)&&issue.path===path),JSON.stringify(prepared.validation.issues));
  assert.equal(api.hash.sha256Value(fixture.project),before,'Rejecting an invalid response changed accepted project state.');
+ return {accepted:prepared.validation.valid,field,path,issues:JSON.parse(JSON.stringify(prepared.validation.issues.filter(issue=>issue.path===path))),acceptedStateUnchanged:api.hash.sha256Value(fixture.project)===before};
 }
 function assertOwnershipViews(api){
  const owners={AGENT:'agent',APPLICATION:'application',HUMAN:'human',HUMAN_DECISION:'humanDecision'};
@@ -84,15 +95,21 @@ function timingSourceWithAgentField(source,field=null){
  return source.slice(0,start)+original+`RS.propositions=extend(RS.propositions,{${additions}});`+source.slice(end+1);
 }
 const currentTiming=timingFixture(runtime,'PROPOSITION-TIMING-AUTHORITY');
+for(const family of ['constructor','toString','__proto__'])await check(`Ordinary Stage 4: inherited record family ${family} is rejected`,()=>rejectClosedFamilyInput(currentTiming,'record-family',family));
+for(const value of [{toString:null,valueOf:null},[{toString:null,valueOf:null}]])await check(`Ordinary Stage 4: malformed ${Array.isArray(value)?'array':'object'} candidate family is rejected`,()=>rejectClosedFamilyInput(currentTiming,'candidate-family',value));
 await check('TIMING-SEMANTIC-CONTROL: permitted proposition meaning still validates and commits',()=>{
  const prepared=prepareTiming(runtime,currentTiming);assert.equal(prepared.validation.valid,true,JSON.stringify(prepared.validation.issues));
  const accepted=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'SYNTHETIC_AUTHORITY_TEST'}),record=engine.recordsForCurrentScope(accepted.project,'propositions')[0];
  assert.equal(engine.recordValue(record,'PROPOSITION_TEXT'),currentTiming.envelope.records.propositions[0].fields.PROPOSITION_TEXT);
 });
-for(const field of Object.keys(timingAssignments))await check('TIMING-REJECT-'+field,()=>assertTimingRejected(runtime,currentTiming,field));
+const verificationObservations=[];
+verificationObservations.push({checkId:'RESPONSE-CLOSED-FAMILY-BOUNDARY',boundary:'Actual production generated blind Stage23/24 and ordinary Stage4 instructions; exact JSON capture/prepare/diagnostic/raw preservation. Synthetic canonical prerequisites and legacy in-memory transport; no browser, staged file, storage reload or external-agent claim.',expected:{rejected:15,blindRejected:10,ordinaryRejected:5,rawPreserved:true,noProposal:true},observed:{rejected:closedFamilyObservations.length,blindRejected:closedFamilyObservations.filter(row=>row.blindAliases).length,ordinaryRejected:closedFamilyObservations.filter(row=>!row.blindAliases).length,rawPreserved:closedFamilyObservations.every(row=>row.rawPreserved),noProposal:closedFamilyObservations.every(row=>row.noProposal)},passed:closedFamilyObservations.length===15});
+for(const field of Object.keys(timingAssignments))await check('TIMING-REJECT-'+field,()=>{const observed=assertTimingRejected(runtime,currentTiming,field);verificationObservations.push({checkId:'PRODUCER-TIMING-REJECT-'+field,requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:132'],boundary:'Production response ingestion rejects agent assignment of application-owned proposition timing',expected:{accepted:false,field,acceptedStateUnchanged:true},observed,passed:true,violation:'externalApplicationOwnedFieldMutation',accepted:false});});
 await check('TIMING-PROMPT-CONTRACT: every proposition-writing operation excludes application-owned timing',()=>{
  const operations=Object.values(schema.STAGE_OPERATION_REGISTRY).filter(operation=>operation.acceptsExternalResponse&&operation.agentWritableCollections.includes('propositions'));assert.ok(operations.length);
- for(const operation of operations){const descriptor=prompts.responseContractDescriptor(operation.stage,operation.operation);for(const field of Object.keys(timingAssignments))assert.equal(Object.hasOwn(descriptor.records.propositions.agentFields,field),false,operation.operation+' disclosed '+field+' as agent-writable.');}
+ const actual=[];
+ for(const operation of operations){const descriptor=prompts.responseContractDescriptor(operation.stage,operation.operation);for(const field of Object.keys(timingAssignments))assert.equal(Object.hasOwn(descriptor.records.propositions.agentFields,field),false,operation.operation+' disclosed '+field+' as agent-writable.');actual.push({stage:operation.stage,operation:operation.operation,applicationTimingFieldsAdvertisedAsAgentWritable:Object.keys(timingAssignments).filter(field=>Object.hasOwn(descriptor.records.propositions.agentFields,field))});}
+ verificationObservations.push({checkId:'PRODUCER-TIMING-PROMPT-EXCLUDES-APPLICATION-FIELDS',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:735'],boundary:'Generated response contract descriptor for every external proposition-writing operation',expected:{applicationTimingFieldsAdvertisedAsAgentWritable:[]},observed:{operations:actual},passed:true});
 });
 await check('TIMING-REGISTRY-OWNER: all producer views preserve application authority',()=>{
  for(const field of ['TIMING_ENTRIES','TIMING_SCHEDULE_SHA256']){
@@ -139,5 +156,5 @@ if(results.every(row=>row.result==='PASS')){
   detectedFault('derived-ownership-omission',/propositions.TIMING_ENTRIES has inconsistent ownership/,()=>assertOwnershipViews(faulty.schema));
  });
 }
-const report={responseAuthorityIntegrity:results.every(row=>row.result==='PASS')?'PASS':'FAIL',syntheticCanonicalContexts:true,productionPromptAndIngestion:true,schemaSha256:hash.sha256Text(schemaSource),engineSha256:hash.sha256Text(engineSource),cases:results.length,passed:results.filter(row=>row.result==='PASS').length,failed:results.filter(row=>row.result==='FAIL').length,results,faults,sourceFaults:'IN_MEMORY_ONLY'};
+const report={responseAuthorityIntegrity:results.every(row=>row.result==='PASS')?'PASS':'FAIL',syntheticCanonicalContexts:true,productionPromptAndIngestion:true,schemaSha256:hash.sha256Text(schemaSource),engineSha256:hash.sha256Text(engineSource),cases:results.length,passed:results.filter(row=>row.result==='PASS').length,failed:results.filter(row=>row.result==='FAIL').length,results,faults,sourceFaults:'IN_MEMORY_ONLY',verificationObservations};
 const reportPath=process.argv.find(value=>value.startsWith('--authority-report='))?.slice('--authority-report='.length);if(reportPath)fs.writeFileSync(reportPath,JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report));assert.equal(report.failed,0,`${report.failed} response authority regressions failed.`);

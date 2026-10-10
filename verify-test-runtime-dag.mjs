@@ -133,4 +133,4 @@ const nonAdjacentResult=await runtime.execute({spec:nonAdjacent,artifacts:{PRODU
 assert.equal(nonAdjacentResult.determination,'SATISFIED');
 
 console.log(JSON.stringify({explicitDag:true,typedPorts:true,forwardReferenceRejected:true,legacyCompiledBeforeExecution:true,regexContract:true,jsonSelectorContract:true,dagResults,dagFaults,productionSourceUnchanged:true},null,2));
-console.log('verify-test-runtime-dag: PASS');
+console.error('verify-test-runtime-dag: PASS');

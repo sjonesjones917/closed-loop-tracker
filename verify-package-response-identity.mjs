@@ -1,3 +1,4 @@
+import {authorizeSyntheticHandoff} from './test-handoff-authorization.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
@@ -6,11 +7,11 @@ import {projectStoreRuntime} from './test-project-store-runtime.mjs';
 import {readStoreArchive} from './test-zip.mjs';
 import {stage04AcceptanceFixture,stage04AcceptanceEnvelope} from './test-fixtures.mjs';
 
-const {core,engine,prompts,ingestion,store,copy,runtime}=projectStoreRuntime();
+const r=projectStoreRuntime(),{core,engine,prompts,ingestion,store,copy,runtime}=r;
 const fixture={core,engine,prompts,ingestion,schema:runtime.closedLoopWorkflowSchema};
 let project=stage04AcceptanceFixture(fixture,'PACKAGE-RESPONSE-IDENTITY');
-const original=prompts.reserveAndBuildPromptRecord(project,4).prompt;
-project=await store.writeProject(project);
+let original=prompts.reserveAndBuildPromptRecord(project,4).prompt;
+project=await store.writeProject(project);({project,prompt:original}=await authorizeSyntheticHandoff(r,{project,prompt:original}));
 const invalid=stage04AcceptanceEnvelope(fixture,project,original);
 invalid.records.propositions[0].fields.PROPOSITION_TEXT=123;
 const rejected=ingestion.prepare(project,{stage:4,text:JSON.stringify(invalid),promptRecord:original,expectedCommittedRevision:project.revision,transport:{authority:'AUTHORITATIVE_RESPONSE_FILE',packageId:original.packageId,operationReservationId:original.operationReservationId,challengeNonce:original.challengeNonce}});
@@ -19,6 +20,7 @@ assert.ok(rejected.validation.issues.some(row=>row.code==='WRONG_VALUE_TYPE'));
 project=await store.writeProject(rejected.project,{expectedProjectRevision:project.revision,expectedStateSha256:project.projectSha256,operational:true});
 const corrected=copy(project);ingestion.prepareStageContinuation(corrected,{stage:4});
 project=await store.writeProject(corrected,{expectedProjectRevision:project.revision});
+const continuation=project.projectData.generatedPrompts.filter(row=>row.stage===4&&!row.invalidatedBy).at(-1);({project}=await authorizeSyntheticHandoff(r,{project,prompt:continuation}));
 const result=await store.createExecutionPackage({jobId:project.job.JOB_ID,stage:4,operation:'COMPLETE'});
 const files=new Map(readStoreArchive(new Uint8Array(await result.blob.arrayBuffer())).map(row=>[row.canonicalPath,Buffer.from(row.bytes)]));
 const manifest=JSON.parse(files.get('manifest.json').toString()),instruction=files.get('instruction.txt');

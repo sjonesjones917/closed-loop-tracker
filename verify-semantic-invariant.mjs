@@ -1,5 +1,8 @@
 import {reviewProofFixture,canonicalFixtureRecord} from './test-fixtures.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
+import {projectStoreRuntime,bindArtifactFixture} from './test-project-store-runtime.mjs';
+import {artifactFixtureId} from './test-artifact-fixtures.mjs';
+import strictAssert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
@@ -33,21 +36,35 @@ for(const [collection,row] of cases)notSatisfied(collection,row,collection==='pr
 // Claimed success can expose a contradiction, but can never establish success without the application's evidence contract.
 for(const [collection,row] of cases){if(collection==='products'||collection==='regressionExecutions'||collection==='failureTests')continue;const claim=collection==='processAudits'?row.fields.PROCESS_DETERMINATION:collection==='productAudits'?row.fields.PRODUCT_DETERMINATION:row.fields.DETERMINATION;if(String(claim||'').toUpperCase()==='SATISFIED'){const contradictions=engine.detectCurrentContradictions({...p,projectData:{...p.projectData,[collection]:[row]}});assert(Array.isArray(contradictions),`${collection} contradiction scan failed`);}}
 
-// Stage 25 uses one strict structured coverage semantics for both aggregate coverage and effective determination.
-{
- const representationScope={...scope,productId:'PRODUCT-REP'};
- p.job.CURRENT_PRODUCT_ID='PRODUCT-REP';
- p.projectData.artifacts.push({id:'ART-REP',stage:25,active:true,scope:representationScope,fields:{ARTIFACT_ID:'ART-REP',FILENAME:'delivery.pdf',SHA256:'b'.repeat(64),AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'}});
- p.projectData.evidenceRecords.push({id:'EVIDENCE-REP',stage:25,active:true,scope:representationScope,fields:{EVIDENCE_ID:'EVIDENCE-REP',KIND:'REPRESENTATION_INSPECTION',AUTHORITY_TYPE:'INDEPENDENT_REVIEWER',DESCRIPTION:'Representation opened and inspected.',CONTENT:'All contracted views and packaged files were inspected.'}});
- const structuredObservation=JSON.stringify({requiredPageOrViewIds:['VIEW-1'],inspectedPageOrViewIds:['VIEW-1'],requiredPackagedFileIds:['FILE-1'],openedOrTestedPackagedFileIds:['FILE-1'],requiredTransformationIds:['TRANSFORM-1'],inspectedTransformationIds:['TRANSFORM-1'],observation:'No material representation defect observed.'});
- const good=record('representationInspections',{ARTIFACT_ID:'ART-REP',OBSERVATIONS:structuredObservation,RENDERING_OPENING_EVIDENCE:'EVIDENCE-REP',DETERMINATION:'SATISFIED'},{stage:25,scope:{productId:'PRODUCT-REP'},evidenceRefs:['EVIDENCE-REP']});
- good.id='INSPECTION-REP-GOOD';good.relationships={ARTIFACT_ID:'ART-REP'};p.projectData.representationInspections.push(good);
- const effective=engine.evaluateResultConsistency('representationInspections',good,null,p);assert(effective.determination==='SATISFIED','Strict Stage 25 coverage JSON was not accepted by effective determination');
- const aggregate=engine.representationInspectionCoverage(p);assert(aggregate.complete,'Strict Stage 25 coverage JSON was not accepted by aggregate coverage');
- good.fields.OBSERVATIONS=JSON.stringify({...JSON.parse(structuredObservation),inspectedPageOrViewIds:[]});
- const broken=engine.evaluateResultConsistency('representationInspections',good,null,p);assert(broken.determination!=='SATISFIED','Incomplete Stage 25 structured coverage was accepted by effective determination');
- p.projectData.representationInspections.pop();p.projectData.evidenceRecords.pop();p.projectData.artifacts.pop();delete p.job.CURRENT_PRODUCT_ID;
+// Stage 25 requires explicit coverage inventories even when a class is empty.
+// The same actual shared parser owns effective determination and stage totals.
+function representationCoverageOracle(runtime){
+ const e=runtime.closedLoopWorkflowEngine,c=runtime.closedLoopCore,h=runtime.closedLoopHash,s=runtime.closedLoopWorkflowSchema,scope={inputVersion:'INPUT-REP',sourceSetVersion:'SOURCE-REP',requirementsVersion:'REQUIREMENTS-REP',testSuiteVersion:'TESTS-REP',instructionVersion:'INSTRUCTION-REP',iterationId:'ITER-REP',productId:'PRODUCT-REP'};
+ const project=c.createBlankState('JOB-REPRESENTATION-INVENTORIES');Object.assign(project.job,{CURRENT_INPUT_VERSION:scope.inputVersion,CURRENT_SOURCE_SET_VERSION:scope.sourceSetVersion,CURRENT_REQUIREMENTS_VERSION:scope.requirementsVersion,CURRENT_TEST_SUITE_VERSION:scope.testSuiteVersion,CURRENT_INSTRUCTION_VERSION:scope.instructionVersion,CURRENT_ITERATION:scope.iterationId,CURRENT_PRODUCT_ID:scope.productId});e.ensureShape(project);
+ const fixture={engine:e,schema:s},artifact=canonicalFixtureRecord(fixture,project,'artifacts',{FILENAME:'delivery.txt',SHA256:h.sha256Text('controlled product'),BYTE_SIZE:18,AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'},{stage:21,scope}),artifactId=e.recordId(artifact,'artifacts'),evidenceRow=canonicalFixtureRecord(fixture,project,'evidenceRecords',{KIND:'REPRESENTATION_INSPECTION',AUTHORITY_TYPE:'INDEPENDENT_REVIEWER',DESCRIPTION:'Controlled maintained synthetic representation inspection.',CONTENT:'Controlled inspection evidence; no physical observation claimed.'},{stage:25,scope}),evidenceId=e.recordId(evidenceRow,'evidenceRecords');
+ const full={requiredPageOrViewIds:['VIEW-1'],inspectedPageOrViewIds:['VIEW-1'],requiredPackagedFileIds:['FILE-1'],openedOrTestedPackagedFileIds:['FILE-1'],requiredTransformationIds:['TRANSFORM-1'],inspectedTransformationIds:['TRANSFORM-1'],observation:'Controlled representation observation.'},keys=Object.keys(full).filter(key=>key!=='observation'),empty={...Object.fromEntries(keys.map(key=>[key,[]])),observation:full.observation};
+ const row=canonicalFixtureRecord(fixture,project,'representationInspections',{ARTIFACT_ID:artifactId,REQUIRED_BY_TRACE:'Controlled representation coverage',TRANSFORMATION_CHAIN:'Controlled transformation',TRANSFORMATION_TOOLS_VERSIONS:'NONE',RENDERING_OPENING_EVIDENCE:evidenceId,OBSERVATIONS:JSON.stringify(full),DETERMINATION:'SATISFIED',EVIDENCE:evidenceId},{stage:25,scope,relationships:{ARTIFACT_ID:artifactId},evidenceRefs:[evidenceId]}),observations=[];
+ const exercise=(caseId,payload,valid,field=null)=>{
+  row.fields.OBSERVATIONS=row.OBSERVATIONS=JSON.stringify(payload);e.refreshRecordHashes(row,'representationInspections');const effective=e.evaluateResultConsistency('representationInspections',row,null,project),aggregate=e.representationInspectionCoverage(project);
+  strictAssert.equal(effective.determination,valid?'SATISFIED':'UNDETERMINED','STAGE25_INVENTORY_ORACLE: '+caseId+' effective determination.');strictAssert.equal(aggregate.complete,valid,'STAGE25_INVENTORY_ORACLE: '+caseId+' aggregate completion.');
+  if(field){const expected='OBSERVATIONS.'+field+' must be an explicitly provided array.';strictAssert(effective.reasons.includes(expected),'STAGE25_INVENTORY_ORACLE: '+caseId+' did not cite its inventory violation.');strictAssert(aggregate.reasons.some(reason=>reason.endsWith(expected)),'STAGE25_INVENTORY_ORACLE: '+caseId+' aggregate did not cite its inventory violation.');}
+  observations.push({caseId,expectedValid:valid,effectiveDetermination:effective.determination,aggregateComplete:aggregate.complete,reasons:effective.reasons});
+ };
+ exercise('explicit-full-coverage',full,true);exercise('explicit-empty-classes',empty,true);
+ exercise('all-inventories-omitted',{observation:full.observation},false,keys[0]);
+ for(const key of keys){const absent={...empty};delete absent[key];exercise('missing-'+key,absent,false,key);for(const [kind,value]of [['string','NONE'],['null',null],['object',{}]])exercise(kind+'-'+key,{...empty,[key]:value},false,key);}
+ exercise('required-view-uninspected',{...full,inspectedPageOrViewIds:[]},false);exercise('observation-missing',Object.fromEntries(keys.map(key=>[key,[]])),false);
+ for(const key of keys)for(const [kind,value]of [['nested-array',['VIEW-1']],['object',{toString:null,valueOf:null}],['number',7],['null',null],['blank',' ']]){exercise(kind+'-item-'+key,{...full,[key]:[value]},false);strictAssert(observations.at(-1).reasons.some(reason=>reason.includes('OBSERVATIONS.'+key+' items must be nonempty STRING')),'STAGE25_ITEM_TYPE_DIAGNOSTIC_ORACLE');}
+ for(const [caseId,observation]of [['object-observation',{invented:'not text'}],['throwing-observation',{toString:null,valueOf:null}],['array-observation',['text']],['null-observation',null]]){exercise(caseId,{...full,observation},false);strictAssert(observations.at(-1).reasons.includes('OBSERVATIONS.observation must be a STRING.'),'STAGE25_OBSERVATION_TYPE_DIAGNOSTIC_ORACLE');}
+ exercise('matching-nested-identities',{...full,requiredPageOrViewIds:[['VIEW-1']],inspectedPageOrViewIds:[['VIEW-1']]},false);
+ return observations;
 }
+const representationInventories=representationCoverageOracle(globalThis);
+const representationGuardFault=projectStoreRuntime({fault:{id:'stage25-required-inventory-guard-bypass',file:'workflow-engine.js',before:"const shapeIssues=schema.representationObservationShapeIssues(payload);",after:"const shapeIssues=[];"}});
+strictAssert.throws(()=>representationCoverageOracle(representationGuardFault.runtime),/STAGE25_INVENTORY_ORACLE: all-inventories-omitted effective determination/,'The inventory guard fault must fail its coverage oracle after valid control setup.');
+const representationVerificationObservation={checkId:'stage25.observation-effective-types',boundary:'Shared representation parser through effective determination and current inventory aggregate on declared synthetic records; no admission, real rendering or release claim',caseIds:representationInventories.map(row=>row.caseId),expected:{cases:64,satisfiedControls:2,undeterminedNegatives:62,inventoryGuardFaultDetected:true},observed:{cases:representationInventories.length,satisfiedControls:representationInventories.filter(row=>row.effectiveDetermination==='SATISFIED'&&row.aggregateComplete).length,undeterminedNegatives:representationInventories.filter(row=>row.effectiveDetermination==='UNDETERMINED'&&!row.aggregateComplete).length,inventoryGuardFaultDetected:true},passed:true};
+strictAssert.deepEqual(representationVerificationObservation.observed,representationVerificationObservation.expected);strictAssert.equal(new Set(representationVerificationObservation.caseIds).size,64);console.log(JSON.stringify({verificationObservations:[representationVerificationObservation]}));
+if(process.argv.includes('--representation-coverage-only')){console.log(JSON.stringify({representationInventories:'PASS',observations:representationInventories,inventoryGuardFaultDetected:true,basis:'MAINTAINED_SYNTHETIC_SCHEMA_FIXTURE_REAL_SHARED_COVERAGE_PARSER'},null,2));process.exit(0);}
 
 // Trace integrity is fail-closed: missing evidence/identity/layer linkage cannot pass RCA or changeset validation.
 const badRca=record('rootCauses',{DEFECT_ID:'DEFECT-X',LAYER_TRACE:'x',EARLIEST_DEFECTIVE_LAYER:'INSTRUCTION',ROOT_CAUSE:'claim',DOWNSTREAM_INVALIDATION:'17+'});assert(!engine.validateTraceIntegrity('RCA',badRca,p).valid,'Unresolved RCA trace passed');
@@ -64,9 +81,16 @@ const nakedVerification=record('verification',{REQ_ID:'REQ-1',RUN_ID:'RUN-X',TES
  const proseOnlyByte=record('verification',{EXACT_EVIDENCE:'An agent claims the byte hash matches.'});
  let byteEvidence=engine.evaluateEvidenceSufficiency(p,{requirement:req,test:byteTest,result:proseOnlyByte});
  assert(!byteEvidence.sufficient&&byteEvidence.requiredEvidenceClasses.includes('APPLICATION_VERIFIED_BYTES'),'Prose or a claimed hash satisfied a byte-authority proposition');
- p.projectData.artifacts.push({id:'ART-BYTE',stage:22,active:true,scope:{...scope},fields:{ARTIFACT_ID:'ART-BYTE',FILENAME:'product.bin',SHA256:'a'.repeat(64),AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'}});
- p.projectData.evidenceRecords.push({id:'EVIDENCE-BYTE',stage:22,active:true,scope:{...scope},fields:{EVIDENCE_ID:'EVIDENCE-BYTE',KIND:'BYTE_HASH',AUTHORITY_TYPE:'APPLICATION',DESCRIPTION:'Application-computed byte identity.',CONTENT:'Verified exact bytes and SHA-256.',ATTACHMENT_ID:'ART-BYTE'},relationships:{ATTACHMENT_ID:'ART-BYTE'}});
+ // This fixture is synthetic evidence. Its byte-authority control must still
+ // cross the actual storage/readback boundary; a metadata availability claim
+ // cannot stand in for the application-observed custody required by §§17.6,25.
+ const byteBlob=new Blob(['Controlled exact product bytes'],{type:'application/octet-stream'}),artifactId=artifactFixtureId(engine,p,'BYTE-AUTHORITY'),digest=await hash.sha256Bytes(byteBlob);
+ engine.registerArtifactBytes(p,{stage:22,artifactId,filename:'product.bin',mediaType:byteBlob.type,byteSize:byteBlob.size,sha256:digest});
+ p.projectData.evidenceRecords.push({id:'EVIDENCE-BYTE',stage:22,active:true,scope:{...scope},fields:{EVIDENCE_ID:'EVIDENCE-BYTE',KIND:'BYTE_HASH',AUTHORITY_TYPE:'APPLICATION',DESCRIPTION:'Synthetic application-computed byte identity fixture.',CONTENT:'Verified exact bytes and SHA-256.',ATTACHMENT_ID:artifactId},relationships:{ATTACHMENT_ID:artifactId}});
  const verifiedByte=record('verification',{EXACT_EVIDENCE:'EVIDENCE-BYTE'},{evidenceRefs:['EVIDENCE-BYTE']});
+ assert(!engine.evaluateEvidenceSufficiency(p,{requirement:req,test:byteTest,result:verifiedByte}).sufficient,'Metadata-only byte availability satisfied a byte-authority proposition');
+ const byteStore=await bindArtifactFixture([]);await byteStore.putArtifact({artifactId,jobId:p.job.JOB_ID,filename:'product.bin',mediaType:byteBlob.type,blob:byteBlob});
+ const stored=await byteStore.getArtifact(artifactId);strictAssert.equal(stored.jobId,p.job.JOB_ID);strictAssert.equal(stored.byteSize,byteBlob.size);strictAssert.equal(await hash.sha256Bytes(stored.blob),digest);
  byteEvidence=engine.evaluateEvidenceSufficiency(p,{requirement:req,test:byteTest,result:verifiedByte});
  assert(byteEvidence.sufficient,'Application-verified byte evidence did not repair byte-authority sufficiency');
 
@@ -101,7 +125,7 @@ assert(adjudicationHotPath.includes('projectData:{...(project?.projectData||{})}
 assert(adjudicationHotPath.includes('map(record=>clone(record))'),'Gate adjudication does not isolate only conclusion-bearing records before rewriting effective determinations');
 for(const unrelated of ['rawResponses','generatedPrompts','history','responseProposals'])assert(!adjudicationHotPath.includes('copy.projectData['+JSON.stringify(unrelated)+']'),'Gate adjudication clones unrelated large provenance collection '+unrelated);
 
-const proof={semanticFalseAcceptanceInvariant:true,conclusionBearingCollections:cases.length,releaseGradeIndependence:true,traceIntegrity:true,centralAdjudication:true,byteAuthorityEvidenceRegression:true,meaningEvidenceRegression:true,humanInspectionEvidenceRegression:true};
+const proof={representationInventories,inventoryGuardFaultDetected:true,semanticFalseAcceptanceInvariant:true,conclusionBearingCollections:cases.length,releaseGradeIndependence:true,traceIntegrity:true,centralAdjudication:true,byteAuthorityEvidenceRegression:true,meaningEvidenceRegression:true,humanInspectionEvidenceRegression:true};
 
 // Capability names and human prose are claims, not capability readiness. A current canonical capability record repairs routing.
 {

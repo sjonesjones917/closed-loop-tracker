@@ -38,7 +38,6 @@ for(const forbidden of [
 ])assert(!source.includes(forbidden),`Hard-coded project-domain prompt branch remains: ${forbidden}`);
 
 for(const required of [
-  'EXECUTION DIRECTIVE — USE THE PROJECT DATA AND DO THE STAGE WORK NOW',
   'APPLICATION INTAKE MANIFEST',
   'APPLICATION OBLIGATION MANIFEST',
   'No obligation may disappear',
@@ -69,7 +68,15 @@ engine.ensureShape(project);
 engine.recalculate(project);
 
 const stage1=prompts.buildPromptRecord(1,project,'COMPLETE').prompt;
-assert(stage1.includes('EXECUTION DIRECTIVE — USE THE PROJECT DATA AND DO THE STAGE WORK NOW'),'Generated Stage 01 prompt lacks explicit execution directive.');
+const stageExecutionDirective='EXECUTION DIRECTIVE — USE THE PROJECT DATA AND DO THE STAGE WORK NOW';
+const assertStageExecutionDirective=prompt=>assert(prompt.includes(stageExecutionDirective),'Generated Stage 01 prompt lacks explicit execution directive.');
+assertStageExecutionDirective(stage1);
+for(const replacement of ['', 'EXECUTION DIRECTIVE — SUMMARIZE THE PROJECT DATA']){
+  let rejected=false;
+  try{assertStageExecutionDirective(stage1.replace(stageExecutionDirective,replacement));}
+  catch(error){rejected=error.message==='Generated Stage 01 prompt lacks explicit execution directive.';}
+  assert(rejected,'Generated execution-directive assertion did not reject a missing or summary-only directive.');
+}
 assert(stage1.includes('APPLICATION INTAKE MANIFEST'),'Generated Stage 01 prompt lacks application intake manifest.');
 assert(stage1.includes('EXACT_USER_OBJECTIVE_VERBATIM'),'Generated Stage 01 prompt omits current user project authority.');
 assert(stage1.includes('BLOCKING_NOW')&&stage1.includes('ASK_NOW_NONBLOCKING')&&stage1.includes('LATER_RESOLVABLE'),'Generated Stage 01 prompt lacks required human-question classification.');
@@ -138,7 +145,7 @@ console.log(JSON.stringify({
   stage04ClosedObligationAccounting:true,
   oneTimeProjectInput:true,
   stage04NoRepeatHandoff:true,
-  visualPromptBaseline:true,
+  promptSizingSourceTokens:true,
   exactPromptIdentity:true,
   promptDelimiterEscapePrevented:true,
   shortValueInstructionCorruptionPrevented:true,

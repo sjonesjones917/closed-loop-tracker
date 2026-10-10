@@ -1,4 +1,6 @@
 import {checkedVerifier} from './verify-conformance-regressions.mjs';
+import {readExecutionReceipts,executionReports,observationsFromReports,validateExecutionReceipt,sha} from './verification-evidence.mjs';
+import {completeLifecycleReports} from './verification-evidence-catalog.mjs';
 import fs from 'node:fs';
 import {execFileSync} from 'node:child_process';
 import {projectStoreRuntime} from './test-project-store-runtime.mjs';
@@ -66,11 +68,40 @@ assert(store.includes('NEXT_REQUIRED_ACTION')&&store.includes('derivedData'),`Pe
 assert(app.includes('NEXT_REQUIRED_ACTION')&&app.includes('currentNextAction'),`UI does not consume application-derived NEXT_REQUIRED_ACTION.`);
 assert(!/projectData\.[A-Za-z0-9_]+\.push\([^)]*canonical/i.test(app),`UI contains a suspicious direct canonical collection write.`);
 
-// Execute the real ingestion and lifecycle suites so static contracts cannot masquerade as route proof.
-(await checkedVerifier(process.execPath,[new URL('./verify-ingestion.mjs',import.meta.url).pathname],{stdio:'pipe'}));
-const lifecycleOutput=(await checkedVerifier(process.execPath,[new URL('./verify-project-lifecycle.mjs',import.meta.url).pathname],{stdio:'pipe',encoding:'utf8'}));
-const lifecycleReports=lifecycleOutput.split('\n').flatMap(line=>{try{return [JSON.parse(line)];}catch{return [];}});
-assert(lifecycleReports.some(report=>report.projectLifecycleControls===true)&&lifecycleReports.filter(report=>report.storageRegression).every(report=>report.passed===true),'Lifecycle verification did not reach its complete executed result.');
+// Exact current receipts establish already executed production suites. A
+// standalone invocation still executes an owner whose receipt is absent.
+const receipts=process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS?readExecutionReceipts(process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS):new Map();
+if(process.env.CLOSED_LOOP_REQUIRE_CURRENT_OWNER_RECEIPTS==='1')for(const suite of ['verify-ingestion.mjs','verify-project-lifecycle.mjs'])if(!receipts.has(suite))throw new Error('EXECUTED_EVIDENCE_ORACLE: missing required current receipt '+suite);
+if(!receipts.has('verify-ingestion.mjs'))await checkedVerifier(process.execPath,[new URL('./verify-ingestion.mjs',import.meta.url).pathname],{stdio:'pipe'});
+const lifecycleReceipt=receipts.get('verify-project-lifecycle.mjs');
+const lifecycleReports=lifecycleReceipt?.reports||executionReports(await checkedVerifier(process.execPath,[new URL('./verify-project-lifecycle.mjs',import.meta.url).pathname],{stdio:'pipe',encoding:'utf8'}));
+assert(completeLifecycleReports(lifecycleReports),'Lifecycle verification omitted or failed a required storage, focus, or final control.');
+const lifecycleStorage=lifecycleReports.find(report=>Object.hasOwn(report,'storageRegression'));
+const lifecycleFocus=lifecycleReports.find(report=>report.schema==='closed-loop-focus-observations/1');
+const lifecycleStartup=lifecycleReports.find(report=>Object.hasOwn(report,'startupStorageBoundaries'));
+const lifecycleCleanup=lifecycleReports.find(report=>Object.hasOwn(report,'stagingSafeCleanup'));
+const lifecycleMutations=[
+  ['missing-storage-case',lifecycleReports.filter(report=>report!==lifecycleStorage)],
+  ['failed-storage-case',lifecycleReports.map(report=>report===lifecycleStorage?{...report,passed:false}:report)],
+  ['missing-final-marker',lifecycleReports.filter(report=>!Object.hasOwn(report,'projectLifecycleControls'))],
+  ['missing-focus-case',lifecycleReports.map(report=>report===lifecycleFocus?{...report,cases:report.cases.slice(1)}:report)],
+  ['missing-startup-marker',lifecycleReports.filter(report=>report!==lifecycleStartup)],
+  ['missing-startup-case',lifecycleReports.map(report=>report===lifecycleStartup?{...report,cases:report.cases.slice(1)}:report)],
+  ['missing-startup-fault',lifecycleReports.map(report=>report===lifecycleStartup?{...report,faults:report.faults.slice(1)}:report)],
+  ['missing-cleanup-marker',lifecycleReports.filter(report=>report!==lifecycleCleanup)],
+  ['missing-cleanup-case',lifecycleReports.map(report=>report===lifecycleCleanup?{...report,cases:report.cases.slice(1)}:report)],
+  ['missing-cleanup-fault',lifecycleReports.map(report=>report===lifecycleCleanup?{...report,faults:report.faults.slice(1)}:report)]
+];
+for(const [name,reports] of lifecycleMutations){
+  assert(!completeLifecycleReports(reports),'LIFECYCLE_REPORT_POPULATION_ORACLE: '+name+' was accepted.');
+  if(lifecycleReceipt){
+    const mutation={...structuredClone(lifecycleReceipt),reports};
+    if(name!=='missing-final-marker')mutation.observations=observationsFromReports('verify-project-lifecycle.mjs',reports);
+    delete mutation.receiptSha256;mutation.receiptSha256=sha(mutation);
+    let rejected=false;try{validateExecutionReceipt(mutation,'verify-project-lifecycle.mjs',lifecycleReceipt.fingerprint);}catch(error){rejected=String(error.message).includes('EXECUTED_EVIDENCE_ORACLE');}
+    assert(rejected,'LIFECYCLE_RECEIPT_MUTATION_ORACLE: '+name+' was accepted.');
+  }
+}
 
 console.log(JSON.stringify({
   infrastructureRouteClosure:'PASS',

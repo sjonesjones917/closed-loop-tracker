@@ -1,0 +1,406 @@
+{
+  "schema": "closed-loop-requirement-coverage-review/1",
+  "normativeRequirementId": "NREQ-befdab6cc6a4121936987a35fc18e1c9",
+  "sourceLineSha256": "becce9129e4ab0de761a982b5328fb9ce25f5dc27a6abd09f964b35b13896e96",
+  "specificationSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
+  "declarationSha256": "c8b0b09a87adea9a0112dc367c97d248ef57532804f1142ad358f109f7ee1dfd",
+  "decision": "COMPLETE_COVERAGE",
+  "evidenceBasis": "EXTERNALLY_SUPPORTED",
+  "method": "The exact narrow controlling clause and unchanged proof decomposition were independently reviewed in the embedded original semantic assessment. Current production, verifier, fixture and catalog deltas were separately reviewed in the referenced source-delta review bundle. This is coverage-design evidence only: current frozen-source executed receipts remain independently required, and unsupported clauses are not promoted.",
+  "author": {
+    "actor": "Codex coordinated exact-clause renewal proposer",
+    "contextId": "/root"
+  },
+  "reviewer": {
+    "actor": "Codex independent narrow declaration reviewer",
+    "contextId": "/root/ci_audit"
+  },
+  "reviewedInputs": [
+    {
+      "declarationSha256": "c8b0b09a87adea9a0112dc367c97d248ef57532804f1142ad358f109f7ee1dfd"
+    },
+    {
+      "path": ".github/workflows/pages.yml",
+      "sha256": "4fed28a3de65b94d42023edf661d7383b65a3a134e8d562a6575558072aef59b"
+    },
+    {
+      "path": "app-core.js",
+      "sha256": "74036d41bcf1178b7030b6b8ef28087e5becd6d61034c11f896443238d23b6a6"
+    },
+    {
+      "path": "browser-execution-evidence.mjs",
+      "sha256": "ded69b26852ae1999b5825f937fa8856b56cfbd6acf9f461ada828632f6455a9"
+    },
+    {
+      "path": "build-static-site.mjs",
+      "sha256": "fdda103454069b9c40cb563ac327bfcc3ab999428466fea647da5364eca1b840"
+    },
+    {
+      "path": "deployment-contract-identities.mjs",
+      "sha256": "f68c2aa2ae755ff856713af5ce7a4cc392b10131dd2976a76291b643056e334c"
+    },
+    {
+      "path": "evaluate-mobile-acceptance-submission.mjs",
+      "sha256": "1fb8e48e2e71b1b78486a1f275322b4b89ef0928c89cb00284c7db3b5eacc2a1"
+    },
+    {
+      "path": "final-acceptance.mjs",
+      "sha256": "5f5187e5f8426d8681f4e88afbc2511ac08a5e3d1ca28fbae10d0632d147d4f2"
+    },
+    {
+      "path": "hash.js",
+      "sha256": "a13cf57bd7c7414bc801f511d5937f80eaf7fd675c0e6c2b5a92b365df16e4d7"
+    },
+    {
+      "path": "mobile-evidence-test-fixture.mjs",
+      "sha256": "eabdada8addb4cdae11c7193f28f53a3b6de3e70d08f026da72b74a2709f6806"
+    },
+    {
+      "path": "operator-journey-fixtures.mjs",
+      "sha256": "73cca7813dfdca430c66e76487efc60b91cbf4642bfcd93b96f6bad2a9314c38"
+    },
+    {
+      "path": "project-store.js",
+      "sha256": "e6c37175a93b934585d7b461ad6448bb0a929670e24e8fc03940dcc132330db8"
+    },
+    {
+      "path": "prompt-engine.js",
+      "sha256": "66a1eb2976826eb15b3d8d2963363836a160e75bf8ebaf904673c64963a20ba4"
+    },
+    {
+      "path": "response-ingestion.js",
+      "sha256": "e761fb032005030b8a63e5250e56c4bbb3ea617625be5ea55bbbc2d0b5029117"
+    },
+    {
+      "path": "specification/closed-loop-normative-requirements.json",
+      "sha256": "97b43f690b60219d67f498459439bce30416650b9f26c46c34a89b972a13929f"
+    },
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d"
+    },
+    {
+      "path": "specification/closed-loop-specification-manifest.json",
+      "sha256": "651e71dffee949524793d50195d4958a777dc7392cb31f40b5975079a846b258"
+    },
+    {
+      "path": "test-deployment-contract-identities.mjs",
+      "sha256": "719fc2bd6fa0744e082c7b7d4bf24dd26e2fe821d162381247304568f5570779"
+    },
+    {
+      "path": "test-external-normative-proof.mjs",
+      "sha256": "46f3f29839cd513f836ecb1219e9b4cd1789f19fc28dc6361c684639adda0e7f"
+    },
+    {
+      "path": "test-fixtures.mjs",
+      "sha256": "fdcaa258f88be52f2b426785ac0fcdcd547392e702c33fbb0eb4823d9c2a711d"
+    },
+    {
+      "path": "test-handoff-authorization.mjs",
+      "sha256": "37bfb4e255afb6701fccaccdf055ee7961e838eaf03927c2963dfcf880cf82b6"
+    },
+    {
+      "path": "test-normative-catalog-consumers.mjs",
+      "sha256": "6c14d578e5d70351f30288c9182ca9f6cbfcced5ec35e230167b22874a202044"
+    },
+    {
+      "path": "test-normative-context-applicability.mjs",
+      "sha256": "a733281294d7af8103cd35340262725635c4565388ca9bcce69493b22c5ba0eb"
+    },
+    {
+      "path": "test-normative-proof-fixture.mjs",
+      "sha256": "b1f24a46bc3aefcfe79be849ecffe2f90f018293701272c487b6e8b6b28b1554"
+    },
+    {
+      "path": "test-project-store-runtime.mjs",
+      "sha256": "563817f6d8256a0ea3ebbc1d8836b6c5887fa7275b0378ade657ecfb61f00eed"
+    },
+    {
+      "path": "test-runtime-operation-registry.mjs",
+      "sha256": "8892e1f7aea7a6565af693233fe802785d8dbcabee972c6b61890a66a02f233e"
+    },
+    {
+      "path": "test-runtime.js",
+      "sha256": "e4e01a79c526592f9d044e2c104845e63c9aa341eb64837c138f5c3e3ecba353"
+    },
+    {
+      "path": "test-specification-field-registry.mjs",
+      "sha256": "064ebc232eaa07ce51587de4233e075c97824b15b953f1f7d925195f6d0f7f05"
+    },
+    {
+      "path": "test-stage01-specification-controls.mjs",
+      "sha256": "3455469d384cd50cc4216ddd842d50c70ea088b3639b045ac9f5d82f4d73a2d3"
+    },
+    {
+      "path": "test-worker.js",
+      "sha256": "e76e168b24b8d89d4f815cb53a78e63fca18558045cb9fac225d65fdbfc88d11"
+    },
+    {
+      "path": "test-zip.mjs",
+      "sha256": "b5080a8e58eb7b13f421ecce5c63a3d95b765a5b021f5bd4543dce28d171e89d"
+    },
+    {
+      "path": "verification-evidence-catalog.mjs",
+      "sha256": "570fcea534cac49e62a5f062d7f44757e7123309595d61150e6b02229a7b5796"
+    },
+    {
+      "path": "verification-evidence.mjs",
+      "sha256": "f1b4c7e6435c3cd42a1ed09c3ade9770cc3394a03c1e17a0a405c528e17a5ff2"
+    },
+    {
+      "path": "verification/current-source-delta-review-20261007.json",
+      "sha256": "3fad9eab08ffad0ce72f8d64771514793b2a282bde132fbc7c036202239b0a73"
+    },
+    {
+      "path": "verification/normative-context-applicability-20261005.json",
+      "sha256": "7cd05ff0028578a1ca1c2560533519a602ce6a974c240ee11dbbd272524cf656"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-befdab6cc6a4121936987a35fc18e1c9-20261006-followup-41a8a451064a.json",
+      "sha256": "991d23e66258a162d7e05353bc5a0d027dcd27f52736b8f202152a30906a28a1"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-befdab6cc6a4121936987a35fc18e1c9-20261006.json",
+      "sha256": "e9871770ab4186573503b36d36ffc0fc49f147dc5191543c5d4155324da43f6d"
+    },
+    {
+      "path": "verified-site.mjs",
+      "sha256": "54dd0953a0cd17f0ad0f88ab33224f495248bccebca4dff8f0759dd15f10db3c"
+    },
+    {
+      "path": "verifier-runtime.mjs",
+      "sha256": "8a4c9058b6c72a5aa8dd68809e3cbfd8e5c217b358c41970347443a338f83933"
+    },
+    {
+      "path": "verify-conformance-regressions.mjs",
+      "sha256": "5c38280e7a84d92a6b7f14b8c1cc8b0340d9004d6bf68e324d680ebbf10b83e0"
+    },
+    {
+      "path": "verify-deployment-manifest.mjs",
+      "sha256": "5b1e4ad3cbfe1b122b39736b588f2c70fb7ed4126561898aba95766be7919e34"
+    },
+    {
+      "path": "verify-final-acceptance.mjs",
+      "sha256": "e21cea176e353bbadb0a98a5e7b344c0c11245019bb3830c564ad790981c1e41"
+    },
+    {
+      "path": "verify-mobile-acceptance-evidence.mjs",
+      "sha256": "128e2973617ed438b9c983844279a72c89499c1cde071c6930157a38c851470c"
+    },
+    {
+      "path": "verify-test-runtime-v3.mjs",
+      "sha256": "4a86e7340d01ad8ccafc364fa0784f01a49583ab6423a65323f625c09424a971"
+    },
+    {
+      "path": "visual-baseline-submission.mjs",
+      "sha256": "8d6414ea25025e21d42cec86a7619b09f6f01a0e0bf80c25d6e46c357d02994f"
+    },
+    {
+      "path": "workbook.js",
+      "sha256": "3a8098a9bb4ea108eadaa9bec90c76a1522f57f6465f45341cedf60937ddd008"
+    },
+    {
+      "path": "workflow-engine.js",
+      "sha256": "fac2c0f35a3e10f4be41711ea36d6da4b4b49d86f45ec751b509134dc5ab8777"
+    },
+    {
+      "path": "workflow-schema.js",
+      "sha256": "656e9e632cea3a60e1c7e0fb486e6630d205011d7db32d9674ac5e88593d24f1"
+    }
+  ],
+  "findings": [],
+  "reviewPerformed": true,
+  "sourceLocation": {
+    "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+    "startLine": 5152,
+    "endLine": 5152,
+    "lineSha256": "becce9129e4ab0de761a982b5328fb9ce25f5dc27a6abd09f964b35b13896e96"
+  },
+  "controllingText": "- field, operation, scope, durable-object, normalizer, derivation, and ID registry identities;",
+  "governingContext": [],
+  "additionalControllingContext": [
+    {
+      "line": 5147,
+      "text": "The final machine acceptance artifact additionally identifies:"
+    },
+    {
+      "lines": [
+        95,
+        99
+      ],
+      "reason": "Specification source commit and manifest are repository-only; not runtime project data."
+    }
+  ],
+  "reviewedChecks": [
+    {
+      "suite": "verify-final-acceptance.mjs",
+      "checkId": "acceptance.registry-identity"
+    },
+    {
+      "suite": "verify-deployment-manifest.mjs",
+      "checkId": "deployment.registry-identities"
+    }
+  ],
+  "scopeLimit": "Registry identity presence/exact binding only, not correctness of every registry entry or runtime enforcement; browser/deployment execution remains separately required.",
+  "independentSemanticAssessment": {
+    "path": "/workspace/scratch/ci-audit/identity-declaration-assessment.json",
+    "sha256": "a5f89fde07c6d371d3a5174984c83c19b8e9838d9b99231feccfc9f57404e158",
+    "row": {
+      "normativeRequirementId": "NREQ-befdab6cc6a4121936987a35fc18e1c9",
+      "sourceLocation": {
+        "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "startLine": 5152,
+        "endLine": 5152,
+        "lineSha256": "becce9129e4ab0de761a982b5328fb9ce25f5dc27a6abd09f964b35b13896e96"
+      },
+      "controllingText": "- field, operation, scope, durable-object, normalizer, derivation, and ID registry identities;",
+      "reviewedBinding": {
+        "normativeRequirementId": "NREQ-befdab6cc6a4121936987a35fc18e1c9",
+        "sourceLineSha256": "becce9129e4ab0de761a982b5328fb9ce25f5dc27a6abd09f964b35b13896e96",
+        "checkIds": [
+          "acceptance.registry-identity",
+          "deployment.registry-identities"
+        ],
+        "scope": "Complete proposed coverage of the exact Section46.2 report identity clause only. Publication occurrence, runtime behavior, other Section46 clauses, and whole release remain separately established.",
+        "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+        "fullCoverage": {
+          "schema": "closed-loop-full-requirement-coverage/1",
+          "sourceLineSha256": "becce9129e4ab0de761a982b5328fb9ce25f5dc27a6abd09f964b35b13896e96",
+          "schemaOrRegistryEntry": "normalizerRegistry",
+          "productionOwners": [
+            {
+              "path": "verification-evidence.mjs",
+              "symbol": "specificationAcceptanceIdentity / readReleaseExecutedEvidence / readEvidencePayload / applyExecutedEvidence / validateFinalNormativeProof",
+              "sha256": "f1b4c7e6435c3cd42a1ed09c3ade9770cc3394a03c1e17a0a405c528e17a5ff2"
+            },
+            {
+              "path": "final-acceptance.mjs",
+              "symbol": "evaluateFinalAcceptance",
+              "sha256": "5f5187e5f8426d8681f4e88afbc2511ac08a5e3d1ca28fbae10d0632d147d4f2"
+            },
+            {
+              "path": ".github/workflows/pages.yml",
+              "symbol": "publish-status: Build acceptance artifact from executed proof jobs, report projection and closed-loop-acceptance.json writer",
+              "sha256": "4fed28a3de65b94d42023edf661d7383b65a3a134e8d562a6575558072aef59b"
+            },
+            {
+              "path": "deployment-contract-identities.mjs",
+              "symbol": "deploymentContractIdentities / validateDeploymentContractIdentities",
+              "sha256": "f68c2aa2ae755ff856713af5ce7a4cc392b10131dd2976a76291b643056e334c"
+            },
+            {
+              "path": "verified-site.mjs",
+              "symbol": "validateSite",
+              "sha256": "54dd0953a0cd17f0ad0f88ab33224f495248bccebca4dff8f0759dd15f10db3c"
+            },
+            {
+              "path": "build-static-site.mjs",
+              "symbol": "manifest registryIdentities / testIrIdentities",
+              "sha256": "fdda103454069b9c40cb563ac327bfcc3ab999428466fea647da5364eca1b840"
+            }
+          ],
+          "obligations": [
+            {
+              "id": "source-line-5152",
+              "sourceText": "- field, operation, scope, durable-object, normalizer, derivation, and ID registry identities;",
+              "expectedBehavior": "The acceptance report identifies all seven current registry families: field, operation, scope, durableObject, normalizer, derivation and id, with exact designated owner and registry identity/digest. It takes the checked deployment manifest identities on release and validates the complete report identity object; omission, extra family, altered digest/owner or report-reference alias mutation is rejected.",
+              "checks": {
+                "deterministic": [
+                  {
+                    "suite": "verify-final-acceptance.mjs",
+                    "checkId": "acceptance.registry-identity"
+                  },
+                  {
+                    "suite": "verify-deployment-manifest.mjs",
+                    "checkId": "deployment.registry-identities"
+                  }
+                ],
+                "semantic": [],
+                "mutation": [
+                  {
+                    "suite": "verify-final-acceptance.mjs",
+                    "checkId": "acceptance.registry-identity"
+                  },
+                  {
+                    "suite": "verify-deployment-manifest.mjs",
+                    "checkId": "deployment.registry-identities"
+                  }
+                ]
+              },
+              "nonapplicable": {
+                "semantic": "Exact repository identity/path/version/digest publication is a deterministic comparison. No human semantic interpretation or external actor conclusion is needed for this narrow report-field clause."
+              },
+              "evidenceKinds": [
+                "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+              ]
+            }
+          ],
+          "unresolvedObligations": [],
+          "governingContext": [],
+          "review": {
+            "path": "verification/requirement-coverage-NREQ-befdab6cc6a4121936987a35fc18e1c9-20261006-followup-41a8a451064a.json",
+            "sha256": "991d23e66258a162d7e05353bc5a0d027dcd27f52736b8f202152a30906a28a1"
+          }
+        }
+      },
+      "semanticAssessment": "COMPLETE_DETERMINISTIC_REPORT_IDENTITY_CLAUSE_WITH_EXECUTION_STILL_REQUIRED",
+      "assessment": {
+        "obligation": "Same artifact identifies all seven field,operation,scope,durable-object,normalizer,derivation,ID registry families.",
+        "trace": [
+          "deploymentContractIdentities projects designated schema exports and hash/schema ID declarations; exact checkout owner bytes must match artifact before trusted script evaluation.",
+          "build-static-site stores registryIdentities in deployment manifest; validateSite invokes full exact identity validation.",
+          "readReleaseExecutedEvidence takes validated built manifest identities, applyExecutedEvidence deep-copies them, final consumer compares complete private identity object.",
+          "Workflow serializes projected same report; this supports required field closure, not proof actual publication occurred."
+        ],
+        "independentOracle": "test-deployment-contract-identities.mjs independently lists seven family keys and six source-member mappings, literal owner versions/ID registry identity; missing each family, wrong each digest, extra family, wrong owner rejected after independently recomputing manifest integrity. Removing only new guard reproduces former omissions. Final consumer missing/wrong registry and alias mutation reject with positive recovery. Catalog requires26 build controls and5 final identity controls."
+      },
+      "semanticReviewer": "/root/ci_audit",
+      "priorReview": {
+        "path": "verification/requirement-coverage-NREQ-befdab6cc6a4121936987a35fc18e1c9-20261006-followup-41a8a451064a.json",
+        "sha256": "991d23e66258a162d7e05353bc5a0d027dcd27f52736b8f202152a30906a28a1"
+      },
+      "retainedReviewInputsMatching": 44,
+      "staleRetainedInputs": [
+        {
+          "path": "project-store.js",
+          "retainedSha256": "2d6896f47164f4a232c631d949cce64d2200e6d4e2202c2c3cdb29b08648cdf2",
+          "currentSha256": "3939810a8ad2cbb06575703083395d1ae38775add51eb881a4acf345ea100ec1"
+        }
+      ],
+      "retentionDecision": "Existing obligation decomposition/check universe remains justified. All direct identity owners, exact test assertions and catalog byte identities match retained review. Source review does not substitute for current executable evidence. Formal active review still stale until frozen changed dependency is reconciled.",
+      "dependencyDeltaAssessment": {
+        "path": "project-store.js",
+        "currentSha256": "3939810a8ad2cbb06575703083395d1ae38775add51eb881a4acf345ea100ec1",
+        "diff": "/workspace/scratch/ci-audit/project-store-identity-dependency.diff",
+        "boundary": "Read complete uncommitted58-added/10-deleted-line change from a194: sourceArchiveReferences, exact canonical byte reconstruction, history import/reference validation and exported readOriginalSourceArchive. Changes do not alter specificationAcceptanceIdentity, registry projection, final private equality or named identity controls. Store fixture is a declared verifier input through visual fixture and runtime contexts, so current successful execution must still bind its exact new hash. This is not a whole storage-correctness approval."
+      },
+      "freshTestExecution": false,
+      "findings": [],
+      "requiresBehavioralProofOnCandidate": true,
+      "actualReleaseAcceptanceClaim": false,
+      "actualPublicationClaim": false,
+      "actualPhysicalDeviceClaim": false
+    }
+  },
+  "priorReview": {
+    "path": "verification/requirement-coverage-NREQ-befdab6cc6a4121936987a35fc18e1c9-20261006-followup-41a8a451064a.json",
+    "sha256": "991d23e66258a162d7e05353bc5a0d027dcd27f52736b8f202152a30906a28a1",
+    "author": {
+      "actor": "Codex follow-up source-qualified renewal author",
+      "contextId": "/root/ci_delivery_audit"
+    },
+    "reviewer": {
+      "actor": "Codex independent exact-clause declaration reviewer",
+      "contextId": "/root"
+    },
+    "reviewCompletedAt": "2026-10-06T21:53:38.424803+00:00"
+  },
+  "reviewerPriorContributionDisclosure": "Actual reviewer contribution and boundary are retained in the embedded assessment. For the five custody clauses, this reviewer authored strengthened tests; parent and separate PR inventory reviewer independently inspected the delta and intended oracle. This does not establish external-agent context independence.",
+  "currentExecutionRequired": true,
+  "applicationConformanceClaim": false,
+  "reviewCompletedAt": "2026-10-07T01:21:18.248Z",
+  "currentDependencyDeltaReview": {
+    "path": "verification/current-source-delta-review-20261007.json",
+    "sha256": "3fad9eab08ffad0ce72f8d64771514793b2a282bde132fbc7c036202239b0a73"
+  }
+}

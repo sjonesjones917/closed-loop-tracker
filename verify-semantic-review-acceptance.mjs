@@ -1,20 +1,59 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import {createHash} from 'node:crypto';
+import {projectStoreRuntime} from './test-project-store-runtime.mjs';
 import vm from 'node:vm';
-import {stage04AcceptanceFixture,stage04AcceptanceEnvelope,recordProposal,evidence} from './test-fixtures.mjs';
+import {stage01AcceptanceFixture,stage04AcceptanceFixture,stage04AcceptanceEnvelope,boundedSearchProposal,registerFixtureSourceSearchCapability,recordProposal,evidence} from './test-fixtures.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 
 globalThis.dispatchEvent=()=>true;
 for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js']){
  let source=fs.readFileSync(file,'utf8');
+ if(file==='workflow-schema.js'&&process.argv.includes('--fault=source-search-completeness')){const anchor='function sourceSearchContractIssues(fields){';assert.ok(source.includes(anchor));source=source.replace(anchor,anchor+'return [];');}
+ if(file==='workflow-schema.js'&&process.argv.includes('--fault=stage04-review-subjects')){const before="DISPOSITION_CHALLENGE:Object.freeze({readCollections:['research','candidateRequirements','sources','evidenceRecords','sourceConflicts','requirements']";assert.ok(source.includes(before),'Stage04 disposition withholding fault must reach the repaired read owner.');source=source.replace(before,before.replace(",'requirements'",''));}
+ if(file==='workflow-schema.js'&&process.argv.includes('--fault=stage04-atomicity-subjects')){const before="ATOMICITY_CHALLENGE:Object.freeze({readCollections:['research','candidateRequirements','sources','evidenceRecords','sourceConflicts','requirements','propositions']";assert.ok(source.includes(before),'Stage04 atomicity withholding fault must reach the repaired read owner.');source=source.replace(before,before.replace(",'propositions'",''));}
+ if(file==='workflow-engine.js'&&process.argv.includes('--fault=source-search-bindings')){const guard="const capability=sourceSearchCapabilityState(project,contract);reasons.push(...capability.reasons);";assert.ok(source.includes(guard));source=source.replace(guard,'');}
  if(file==='workflow-engine.js'&&process.argv.includes('--fault=review-request-invalidates')){const anchor='  if(author?.operation===policy.reconcileOperation';assert.ok(source.includes(anchor));source=source.replace(anchor,"  for(const prompt of safe(p.projectData.generatedPrompts).filter(row=>Number(row.stage)===n&&!row.invalidatedBy&&policy.reviewOperations.includes(row.operation)))requested.add(prompt.operation);\n"+anchor);}
  createVerifierRuntime.loadScript(globalThis,source,{filename:file});
 }
 const core=closedLoopCore,schema=closedLoopWorkflowSchema,engine=closedLoopWorkflowEngine,prompts=closedLoopPromptEngine,ingestion=closedLoopResponseIngestion,hash=closedLoopHash;
 const runtime={core,schema,engine,prompts,ingestion};
 let author=stage04AcceptanceFixture(runtime,'JOB-SEMANTIC-REVIEW-ACCEPTANCE');
+// Specification9.6/37Stage04: the independent reviewer must receive the
+// authored decision or truth conditions it is reviewing, not only their IDs.
+// Expected member families and semantic keys come from that reviewed subject.
+// Values come from the actual accepted author result, independently of prompt
+// selection. Parse the final transported envelopes, including context files.
+const stage04ReviewSubjectObservations=[];
+function stage04ReviewSubjectOracle(project,prompt){
+ const operation=prompt.operation,required=operation==='DISPOSITION_CHALLENGE'?['requirements']:['ATOMICITY_CHALLENGE','RECONCILE_REQUIREMENTS'].includes(operation)?['requirements','propositions']:[];
+ if(!required.length)return;
+ const fields={requirements:['OBLIGATION','MANDATORY_OPTIONAL_STATUS','APPLICABILITY','USER_INPUT_RELATIONSHIP','OBSERVABLE_SATISFACTION_CONDITION','INTENDED_VERIFICATION_METHOD','EXPECTED_EVIDENCE','FAILURE_CONDITION'],propositions:['PROPOSITION_TEXT','REQUIREMENT_ID','SUBJECT_AND_SCOPE_DESCRIPTION','SATISFACTION_MEANING','FAILURE_MEANING']},members=[];
+ for(const match of prompt.prompt.matchAll(/BEGIN_UNTRUSTED_DATA_BLOCK\n([^\n]+)\nEND_UNTRUSTED_DATA_BLOCK/g))members.push(JSON.parse(match[1]));
+ const files=prompts.materializePromptContextFiles(prompt,project);
+ for(const file of files){assert.equal(createHash('sha256').update(file.text,'utf8').digest('hex'),file.sha256,'STAGE04_REVIEW_SUBJECT_ORACLE: materialized context differs from its manifest digest.');members.push(...JSON.parse(file.text).members);}
+ const observed={operation,contextFiles:files.length,subjects:{}};
+ for(const family of required){
+  const expected=project.projectData[family].filter(row=>Number(row.stage)===4&&row.active!==false&&!row.invalidatedBy&&row.scope?.inputVersion===project.job.CURRENT_INPUT_VERSION&&row.scope?.requirementsVersion===project.job.CURRENT_REQUIREMENTS_VERSION);
+  assert(expected.length>0,'STAGE04_REVIEW_SUBJECT_ORACLE: otherwise valid authored '+family+' targets must exist.');
+  const found=members.filter(member=>member.sourceIdentity==='collection.'+family);
+  assert.equal(found.length,1,'STAGE04_REVIEW_SUBJECT_ORACLE: '+operation+' must publish current authored '+family+' semantic content.');
+  const rows=JSON.parse(found[0].value).records;
+  const expectedIds=Array.from(expected,row=>row.id).sort(),actualIds=rows.map(row=>row.id).sort();
+  assert.deepEqual(actualIds,expectedIds,'STAGE04_REVIEW_SUBJECT_ORACLE: current authored '+family+' target selection differs.');
+  for(const row of expected){const actual=rows.find(item=>item.id===row.id);for(const key of fields[family])assert.deepEqual(actual.fields[key],row.fields[key],'STAGE04_REVIEW_SUBJECT_ORACLE: '+operation+' omitted or changed authored '+family+'.'+key);}
+  observed.subjects[family]=actualIds;
+ }
+ if(['DISPOSITION_CHALLENGE','ATOMICITY_CHALLENGE'].includes(operation)){
+  assert.equal(prompt.contextManifest.semanticReviewBinding.bindingStatus,'BOUND','STAGE04_REVIEW_SUBJECT_ORACLE: current review must bind the distinct author and reviewer.');
+  assert.notEqual(prompt.contextManifest.semanticReviewBinding.authorContextId,prompt.contextManifest.semanticReviewBinding.reviewerContextId,'STAGE04_REVIEW_SUBJECT_ORACLE: author cannot approve its own work.');
+ }
+ stage04ReviewSubjectObservations.push(observed);
+}
+
 function prepare(project,stage,operation,content){
   const prompt=prompts.reserveAndBuildPromptRecord(project,stage,{operation}).prompt;
+  if(stage===4)stage04ReviewSubjectOracle(project,prompt);
   const envelope={schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:project.job.JOB_ID,stage,operation,promptIdentity:{instructionId:prompt.instructionId,bodySha256:prompt.bodySha256,contractSha256:prompt.contractSha256,contextSignature:prompt.contextSignature},packageId:prompt.packageId,operationReservationId:prompt.operationReservationId,challengeNonce:prompt.challengeNonce,scope:prompt.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],humanAuthorityCandidates:[],stageData:{},records:{},evidence:[evidence('review-evidence')],unresolved:[],warnings:[],attachments:[],...content(prompt)};
   const text=JSON.stringify(envelope),transport={authority:'NONAUTHORITATIVE_TEXT_FALLBACK',materializedAsResponseFile:true,packageId:prompt.packageId,operationReservationId:prompt.operationReservationId,challengeNonce:prompt.challengeNonce,promptIdentity:envelope.promptIdentity};
   const prepared=ingestion.prepare(project,{stage,promptRecord:prompt,text,transport});if(prepared.validation.valid)assert.equal(engine.operationalNextAction(prepared.project,stage).actionType,'REVIEW_PROPOSAL',`Stage ${stage} replaced a pending proposal with another instruction.`);return {...prepared,text};
@@ -52,6 +91,52 @@ assert.equal(engine.gate(4,mergedAccepted).complete,false,'MERGED_OBLIGATION_CHA
 assert.equal(engine.operationalNextAction(mergedAccepted,4).operation,'ATOMICITY_CHALLENGE','MERGED_OBLIGATION_CONTINUATION_ORACLE');
 const mergeReviewed=accept(prepare(mergedAccepted,4,'ATOMICITY_CHALLENGE',()=>({records:{semanticChallenges:[recordProposal(schema,'semanticChallenges',{tempKey:'independent-merge-review',overrides:{FINDINGS:'The independent reviewer assessed the merged obligation identities and exact source context.',DISPOSITION:'ACCEPTED',REASONING:'The semantic equivalence decision is recorded in the independent review context.'}})]}})));
 assert.equal(engine.gate(4,mergeReviewed).complete,true,'MERGED_OBLIGATION_REVIEW_COMPLETION_ORACLE');
+
+// Reuse the same accepted merge after serialization, and exercise an actual
+// accepted authored response large enough to require manifest-bound context.
+const restoredMerge=JSON.parse(JSON.stringify(mergedAccepted));
+assert.equal(engine.operationalNextAction(restoredMerge,4).operation,'ATOMICITY_CHALLENGE','STAGE04_REVIEW_SUBJECT_ORACLE: restored merge lost its required review.');
+const restoredChallenge=restoredMerge.projectData.generatedPrompts.filter(row=>row.stage===4&&row.operation==='ATOMICITY_CHALLENGE'&&!row.invalidatedBy).at(-1);
+assert(restoredChallenge,'STAGE04_REVIEW_SUBJECT_ORACLE: the restored version must retain its exact reserved instruction without re-execution.');
+stage04ReviewSubjectOracle(restoredMerge,restoredChallenge);
+const pressureProject=stage04AcceptanceFixture(runtime,'JOB-MERGED-OBLIGATIONS-CONTEXT-FILE');
+const pressurePrepared=prepare(pressureProject,4,'COMPLETE',prompt=>{
+ const envelope=stage04AcceptanceEnvelope(runtime,pressureProject,prompt),index=envelope.evidence.findIndex(row=>row.kind==='OBLIGATION_DISPOSITION'),second=JSON.parse(envelope.evidence[index].content).obligationId;
+ envelope.records.requirements[0].fields.USER_INPUT_RELATIONSHIP+=' '+second;envelope.evidence.splice(index,1);
+ envelope.records.requirements[0].fields.OBSERVABLE_SATISFACTION_CONDITION='Required content is present. '+'é'.repeat(45000)+' REQUIREMENT-CONDITION-TAIL';
+ envelope.records.propositions[0].fields.SATISFACTION_MEANING='The required verified content is present. '+'é'.repeat(45000)+' PROPOSITION-CONDITION-TAIL';
+ return envelope;
+});
+const pressureAccepted=accept(pressurePrepared);
+assert.equal(engine.operationalNextAction(pressureAccepted,4).operation,'ATOMICITY_CHALLENGE','STAGE04_REVIEW_SUBJECT_ORACLE: bounded authored pressure must trigger the current required challenge.');
+const pressureChallenge=prompts.reserveAndBuildPromptRecord(pressureAccepted,4,{operation:'ATOMICITY_CHALLENGE'}).prompt;
+stage04ReviewSubjectOracle(pressureAccepted,pressureChallenge);
+assert(stage04ReviewSubjectObservations.at(-1).contextFiles>0,'STAGE04_REVIEW_SUBJECT_ORACLE: pressure did not exercise materialized context.');
+{
+// Published /80 handoffs omit reviewed Stage04 subjects. The shared /81
+// revision already invalidates those instructions; no preparation-only version
+// bump is needed. Exercise the actual saved-continuation freshness owner.
+const previousSchemaSource=fs.readFileSync('workflow-schema.js','utf8').replace("DISPOSITION_CHALLENGE:Object.freeze({readCollections:['research','candidateRequirements','sources','evidenceRecords','sourceConflicts','requirements']","DISPOSITION_CHALLENGE:Object.freeze({readCollections:['research','candidateRequirements','sources','evidenceRecords','sourceConflicts']").replace("ATOMICITY_CHALLENGE:Object.freeze({readCollections:['research','candidateRequirements','sources','evidenceRecords','sourceConflicts','requirements','propositions']","ATOMICITY_CHALLENGE:Object.freeze({readCollections:['research','candidateRequirements','sources','evidenceRecords','sourceConflicts']");
+const previousPromptSource=fs.readFileSync('prompt-engine.js','utf8').replace(/const PROMPT_ENGINE_VERSION='[^']+';/,"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/80';"),previous=projectStoreRuntime({sourceOverrides:{'workflow-schema.js':previousSchemaSource,'prompt-engine.js':previousPromptSource}}),previousRuntime={core:previous.core,schema:previous.runtime.closedLoopWorkflowSchema,engine:previous.engine,prompts:previous.prompts,ingestion:previous.ingestion};
+let previousProject=stage04AcceptanceFixture(previousRuntime,'JOB-STAGE04-SAVED-DEFICIENT-INSTRUCTION');
+const previousAuthor=previous.prompts.reserveAndBuildPromptRecord(previousProject,4,{operation:'COMPLETE'}).prompt,previousRequest=stage04AcceptanceEnvelope(previousRuntime,previousProject,previousAuthor),previousIndex=previousRequest.evidence.findIndex(row=>row.kind==='OBLIGATION_DISPOSITION');
+previousRequest.records.requirements[0].fields.USER_INPUT_RELATIONSHIP+=' '+JSON.parse(previousRequest.evidence[previousIndex].content).obligationId;previousRequest.evidence.splice(previousIndex,1);
+const previousPrepared=previous.ingestion.prepare(previousProject,{stage:4,text:JSON.stringify(previousRequest),promptRecord:previousAuthor,transport:{packageId:previousAuthor.packageId,operationReservationId:previousAuthor.operationReservationId,challengeNonce:previousAuthor.challengeNonce}});
+assert.equal(previousPrepared.validation.valid,true,'STAGE04_SUBJECT_FRESHNESS_ORACLE: otherwise valid old authored merge must reach review.');
+previousProject=previous.ingestion.commit(previousPrepared.project,previousPrepared.proposal.proposalId,{operator:'SYNTHETIC',replacementConfirmation:previous.ingestion.acceptanceImpact(previousPrepared.project,previousPrepared.proposal.proposalId)}).project;
+const previousChallenge=previous.prompts.reserveAndBuildPromptRecord(previousProject,4,{operation:'ATOMICITY_CHALLENGE'}).prompt;
+assert.equal(previousChallenge.promptEngineVersion,'closed-loop-prompt-engine/80','STAGE04_SUBJECT_FRESHNESS_ORACLE: wrong deficient-generation setup.');
+assert.equal(previousChallenge.contextManifest.readCollections.requirements,undefined,'STAGE04_SUBJECT_FRESHNESS_ORACLE: old controlled read defect was not present.');
+const previousCapture=previous.ingestion.captureRaw(previousProject,{stage:4,text:'{',promptRecord:previousChallenge});
+const currentGeneration=projectStoreRuntime(),currentRecovered=currentGeneration.copy(previousCapture.project),replacement=currentGeneration.ingestion.prepareStageContinuation(currentRecovered,{stage:4,owningTabInstance:'STAGE04-SUBJECT-FRESHNESS'});
+assert.equal(replacement?.created,true,'STAGE04_SUBJECT_FRESHNESS_ORACLE: a saved deficient review was silently reused.');
+assert.equal(replacement.prompt.promptEngineVersion,prompts.version,'STAGE04_SUBJECT_FRESHNESS_ORACLE: replacement uses an obsolete instruction engine.');
+assert(currentRecovered.projectData.generatedPrompts.find(row=>row.instructionId===previousChallenge.instructionId)?.invalidatedBy,'STAGE04_SUBJECT_FRESHNESS_ORACLE: old deficient review remains active.');
+assert.equal(currentRecovered.projectData.rawResponses.find(row=>row.rawResponseId===previousCapture.rawRecord.rawResponseId).completeRawResponse,'{','STAGE04_SUBJECT_FRESHNESS_ORACLE: original raw work changed during freshness recovery.');
+stage04ReviewSubjectOracle(currentRecovered,replacement.prompt);
+
+}
+if(process.argv.includes('--stage04-review-subjects-only')){console.log(JSON.stringify({stage04ReviewSubjects:'PASS',savedDeficientInstructionReplaced:true,observations:stage04ReviewSubjectObservations,basis:'REAL_PRIOR_ACCEPTANCE_AND_CURRENT_REQUIRED_REVIEW_WITH_EXACT_EMITTED_CONTEXT',syntheticExternalOutputs:true}));process.exit(0);}
 
 const browserAcceptanceCases=[];
 async function replayBrowserAcceptance(prepared,{helperSource=fs.readFileSync('verify-browser-extra.mjs','utf8'),fault=false}={}){
@@ -129,13 +214,121 @@ for(const [stage,operation] of [[1,'SEMANTIC_CHALLENGE'],[3,'SEMANTIC_CHALLENGE'
   assert(p.projectData.semanticChallenges.some(r=>r.DISPOSITION==='REJECTED'&&r.active===false),'Correction erased the original challenge.');
   if(stage===1){p=accept(prepare(p,1,'COMPLETE',()=>({stageData:{...p.stages[1].agentData,EXACT_DELIVERABLE_REQUESTED:'Revised one-page checklist.'}})));const change=engine.acceptedChanges(p,1).at(-1);engine.recordStageConfirmation(p,1,true,'The revised deliverable matches the requested intent.','FIXTURE',{acceptedChangeId:change.changeId,inputVersion:p.job.CURRENT_INPUT_VERSION});assert.equal(p.stages[1].gate.complete,false,'An earlier challenge approved a new authored intake merely because its author context was reused.');assert.equal(p.job.NEXT_REQUIRED_ACTION.operation,'SEMANTIC_CHALLENGE');}
 }
+const sourceSearchCompletionObservations=[];
+// Specification 8.3: an accepted bounded search defines all nine unconditional
+// semantic components. Jurisdiction is conditional; arrays have no invented
+// minimum cardinality. This literal oracle comes from the controlling text.
+{
+  const required=['PROJECT_SCOPE','SOURCE_CLASSES_CONSIDERED','LOCATIONS_AND_REPOSITORIES','QUERIES_OR_STRATEGIES','DATE_OR_VERSION_CUTOFF','EXCLUSIONS','ACCESS_LIMITATIONS','ADEQUACY_RATIONALE','UNRESOLVED_DISCOVERY_RISK'];
+  const base=stage01AcceptanceFixture(runtime,'JOB-SEARCH-CONTRACT-COMPONENTS'),stageData={AUTHORITY_HIERARCHY:'No external authority applies to the controlled fixture.',SOURCE_APPLICABILITY_DETERMINATION:'NO_APPLICABLE_EXTERNAL_SOURCE',KNOWN_CONTROLLING_SOURCES_EXAMINED:'The closed fixture input universe and supplied references were inspected.'};
+  const omitted=[];
+  for(const name of required){
+    const proposal=boundedSearchProposal(schema);delete proposal.fields[name];
+    const prepared=prepare(structuredClone(base),2,'COMPLETE',()=>({stageData,records:{sourceSearchContracts:[proposal]}}));
+    assert.equal(prepared.validation.valid,false,'SOURCE_SEARCH_MISSING_COMPONENT_ORACLE: omitted '+name+' was accepted.');
+    assert(prepared.validation.issues.some(problem=>problem.code==='MISSING_REQUIRED_FIELD'&&problem.path==='/records/sourceSearchContracts/0/fields/'+name),'SOURCE_SEARCH_MISSING_COMPONENT_REASON_ORACLE: '+name+' '+JSON.stringify(prepared.validation.issues));
+    assert.equal(engine.recordsForCurrentScope(prepared.project,'sourceSearchContracts').length,0,'Invalid search changed accepted state.');
+    assert.equal(prepared.project.projectData.rawResponses.at(-1).completeRawResponse,prepared.text,'Rejected partial search draft bytes were lost.');
+    omitted.push(name);
+  }
+  sourceSearchCompletionObservations.push({checkId:'stage02.search-contract.required-components',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:606'],boundary:'Actual reserved Stage02 response validation before canonical acceptance; raw draft retention',expected:{rejectedMissingComponents:required,acceptedRecords:0},observed:{rejectedMissingComponents:omitted,acceptedRecords:0},passed:true,violation:'INCOMPLETE_ACCEPTED_SOURCE_SEARCH_CONTRACT',accepted:false});
+  for(const name of ['SOURCE_CLASSES_CONSIDERED','LOCATIONS_AND_REPOSITORIES','QUERIES_OR_STRATEGIES','EXCLUSIONS','ACCESS_LIMITATIONS']){
+    const proposal=boundedSearchProposal(schema);proposal.fields[name]=[];
+    const prepared=prepare(structuredClone(base),2,'COMPLETE',()=>({stageData,records:{sourceSearchContracts:[proposal]}}));
+    assert.equal(prepared.validation.valid,true,'SOURCE_SEARCH_ARRAY_CARDINALITY_ORACLE: declared typed empty '+name+' was rejected: '+JSON.stringify(prepared.validation.issues));
+  }
+  for(const value of [null,'',{},[]]){
+    const proposal=boundedSearchProposal(schema);proposal.fields.JURISDICTION_OR_SYSTEM_SCOPE=value;
+    const prepared=prepare(structuredClone(base),2,'COMPLETE',()=>({stageData,records:{sourceSearchContracts:[proposal]}}));
+    assert.equal(prepared.validation.valid,false,'SOURCE_SEARCH_CONDITIONAL_TYPE_ORACLE: malformed supplied jurisdiction was accepted.');
+    assert(prepared.validation.issues.some(problem=>problem.path==='/records/sourceSearchContracts/0/fields/JURISDICTION_OR_SYSTEM_SCOPE'),'Malformed supplied jurisdiction was rejected for an unrelated reason.');
+  }
+  const complete=boundedSearchProposal(schema);complete.fields.EXCLUSIONS=[];complete.fields.ACCESS_LIMITATIONS=[];delete complete.fields.JURISDICTION_OR_SYSTEM_SCOPE;
+  complete.fields.ADEQUACY_RATIONALE='All seven source classes and supplied references were considered within this explicitly closed hermetic fixture. No legal jurisdiction or external system applies to this fixture scope. Every registered location and candidate disposition is accounted for; there are no exclusions, inaccessible locations, or material residual risk. Independent review must assess these fixture claims.';
+  const emitted=prompts.reserveAndBuildPromptRecord(structuredClone(base),2,{operation:'COMPLETE'}).prompt;
+  const descriptorText=emitted.prompt.split('RESPONSE CONTRACT DEFINITIONS\n')[1].split('\n\nEND HASHED INSTRUCTION BODY')[0],descriptor=JSON.parse(descriptorText);
+  assert.deepEqual(descriptor.records.sourceSearchContracts.requiredAgentFields,required,'SOURCE_SEARCH_FINAL_DESCRIPTOR_ORACLE: emitted requiredness differs from controlling components.');
+  assert.equal(emitted.contractSha256,hash.sha256Value(descriptor),'The final required contract is not bound to the existing instruction identity.');
+  assert(emitted.prompt.includes('Include JURISDICTION_OR_SYSTEM_SCOPE where applicable; when supplied it must be a nonempty string.'),'Conditional jurisdiction instructions were not delivered.');
+  assert(emitted.prompt.includes('no exclusions or access limitations are represented by [], not by omitting the component.'),'Empty-array contract instructions were not delivered.');
+  let p=accept(prepare(structuredClone(base),2,'COMPLETE',()=>({stageData,records:{sourceSearchContracts:[complete]}})));
+  registerFixtureSourceSearchCapability(runtime,p);
+  const review=()=>({records:{semanticReviews:[recordProposal(schema,'semanticReviews',{tempKey:'complete-contract-review',overrides:{REVIEW_QUESTION:'Does the exact closed fixture contract define and evidence an adequate executed search?',FINDING:'The complete hermetic fixture contract is adequate; no jurisdiction or external system applies.',REASONING:'Independently checked actual scope, all declared classes and locations, query/cutoff observations, candidate dispositions, the explicit no-jurisdiction basis, empty exclusions/access limitations and residual risk against the exact current contract and registered performer report. This is synthetic external-claim evidence, not live external-source execution.',RESULT:'ACCEPTED'}})]}});
+  p=accept(prepare(p,2,'SEARCH_ADEQUACY_REVIEW',review));
+  assert.equal(engine.gate(2,p).complete,true,'SOURCE_SEARCH_COMPLETE_CONTROL_ORACLE: complete conditionally scoped contract did not progress.');
+  sourceSearchCompletionObservations.push({checkId:'stage02.search-contract.conditional-empty-control',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:606'],boundary:'Actual accepted contract, exact performer registration, independent review and completion; emitted bound descriptor',expected:{complete:true,optionalJurisdictionOmitted:true,emptyArraysAllowed:true,requiredAgentFields:required},observed:{complete:engine.gate(2,p).complete,optionalJurisdictionOmitted:true,emptyArraysAllowed:true,requiredAgentFields:descriptor.records.sourceSearchContracts.requiredAgentFields},passed:true});
+  // Model a retained legacy canonical record, then independently re-bind its
+  // actual current evidence/capability and review. Staleness must not be the
+  // reason the deterministic component obligation blocks completion.
+  const legacy=structuredClone(p),contract=engine.recordsForCurrentScope(legacy,'sourceSearchContracts').at(-1);
+  delete contract.fields.SOURCE_CLASSES_CONSIDERED;delete contract.SOURCE_CLASSES_CONSIDERED;engine.refreshRecordHashes(contract,'sourceSearchContracts');
+  registerFixtureSourceSearchCapability(runtime,legacy);
+  const reviewed=accept(prepare(legacy,2,'SEARCH_ADEQUACY_REVIEW',review)),actual=engine.gate(2,reviewed),capability=engine.sourceSearchCapabilityState(reviewed,engine.recordsForCurrentScope(reviewed,'sourceSearchContracts').at(-1));
+  assert.equal(actual.complete,false,'SOURCE_SEARCH_RETAINED_COMPONENT_ORACLE: current reviewed legacy contract completed without a required component.');
+  assert(actual.reasons.some(reason=>reason.includes('SOURCE_CLASSES_CONSIDERED')&&reason.includes('required')),'SOURCE_SEARCH_RETAINED_COMPONENT_REASON_ORACLE: '+JSON.stringify(actual.reasons));
+  assert.deepEqual(capability.reasons,['SOURCE_CLASSES_CONSIDERED is required in the accepted source search contract.'],'SOURCE_SEARCH_RETAINED_CURRENT_BINDING_ORACLE: stale capability/report authority masked the component violation.');
+  sourceSearchCompletionObservations.push({checkId:'stage02.search-contract.retained-component',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:606'],boundary:'Retained canonical source search plus freshly bound actual capability and independent review',expected:{complete:false,reasons:['SOURCE_CLASSES_CONSIDERED is required in the accepted source search contract.']},observed:{complete:actual.complete,reasons:capability.reasons},passed:true,violation:'INCOMPLETE_RETAINED_SOURCE_SEARCH_CONTRACT',accepted:false});
+}
+
+{
+  let p=stage01AcceptanceFixture(runtime,'JOB-MISSING-BOUNDED-SEARCH');
+  p=accept(prepare(p,2,'COMPLETE',()=>({stageData:{AUTHORITY_HIERARCHY:'No external authority applies.',SOURCE_APPLICABILITY_DETERMINATION:'NO_APPLICABLE_EXTERNAL_SOURCE',KNOWN_CONTROLLING_SOURCES_EXAMINED:'The actor claims no external source applies.'}})));
+  const missing=engine.gate(2,p);
+  assert.equal(missing.complete,false,'SOURCE_SEARCH_CONTRACT_COMPLETION_ORACLE: no-source assertion completed without a bounded search contract.');
+  assert(missing.reasons.some(reason=>reason.includes('source search contract')),'SOURCE_SEARCH_CONTRACT_REASON_ORACLE');
+  assert.equal(engine.operationalNextAction(p,2).operation,'COMPLETE','Missing contract must return to authoring before independent review.');
+  sourceSearchCompletionObservations.push({checkId:'stage02.search-contract.missing',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:606'],boundary:'Current reserved Stage02 response acceptance and completion gate',expected:{complete:false},observed:{complete:missing.complete},passed:true,violation:'STAGE02_COMPLETION_WITHOUT_BOUNDED_SEARCH',accepted:false});
+  p=accept(prepare(p,2,'COMPLETE',()=>({stageData:structuredClone(p.stages[2].agentData),records:{sourceSearchContracts:[boundedSearchProposal(schema)]}})));
+  const unsupported=engine.gate(2,p);assert.equal(unsupported.complete,false,'SOURCE_SEARCH_PERFORMER_ORACLE: a search without registered performer/capability completed.');assert.equal(engine.operationalNextAction(p,2).actionType,'REGISTER_SOURCE_SEARCH_CAPABILITY');
+  const contract=engine.recordsForCurrentScope(p,'sourceSearchContracts').at(-1);assert.deepEqual(engine.recordValue(contract,'EXECUTION_EVIDENCE_IDS'),contract.evidenceRefs,'SOURCE_SEARCH_EXECUTION_EVIDENCE_ORACLE: application must resolve exact canonical evidence IDs.');assert.equal(engine.recordValue(contract,'SEARCH_PERFORMER_CAPABILITY_ID'),'UNKNOWN');
+  const unsupportedReview=accept(prepare(structuredClone(p),2,'SEARCH_ADEQUACY_REVIEW',()=>({records:{semanticReviews:[recordProposal(schema,'semanticReviews',{tempKey:'unsupported-review',overrides:{REVIEW_QUESTION:'Is this claimed search adequate?',FINDING:'The agent claims the search is complete.',REASONING:'This deliberately accepted semantic fixture must not waive missing registered capability.',RESULT:'ACCEPTED'}})]}})));
+  assert.equal(engine.gate(2,unsupportedReview).complete,false,'SOURCE_SEARCH_BOUND_CAPABILITY_ORACLE: accepted independent review waived missing registered performer/capability.');
+  sourceSearchCompletionObservations.push({checkId:'stage02.search-capability.missing-after-review',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:606'],boundary:'Accepted current independently bound review and actual Stage02 completion consumer',expected:{complete:false,capabilityId:'UNKNOWN'},observed:{complete:engine.gate(2,unsupportedReview).complete,capabilityId:engine.recordValue(engine.recordsForCurrentScope(unsupportedReview,'sourceSearchContracts').at(-1),'SEARCH_PERFORMER_CAPABILITY_ID')},passed:true,violation:'SOURCE_SEARCH_COMPLETION_WITHOUT_REGISTERED_PERFORMER',accepted:false});
+  registerFixtureSourceSearchCapability(runtime,p,{checks:{route:'UNKNOWN'}});assert.equal(engine.sourceSearchCapabilityState(p,engine.recordsForCurrentScope(p,'sourceSearchContracts').at(-1)).complete,false,'SOURCE_SEARCH_UNKNOWN_ROUTE_ORACLE');
+  sourceSearchCompletionObservations.push({checkId:'stage02.search-capability.unknown-route',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:606'],boundary:'Registered current source-search capability conjunction',expected:{ready:false},observed:{ready:engine.sourceSearchCapabilityState(p,engine.recordsForCurrentScope(p,'sourceSearchContracts').at(-1)).complete},passed:true,violation:'UNKNOWN_SOURCE_SEARCH_ROUTE',accepted:false});
+  registerFixtureSourceSearchCapability(runtime,p);
+  const unreviewed=engine.gate(2,p);assert.equal(unreviewed.complete,false,'Unreviewed source search completed.');assert.equal(engine.operationalNextAction(p,2).operation,'SEARCH_ADEQUACY_REVIEW');
+  sourceSearchCompletionObservations.push({checkId:'stage02.search-contract.unreviewed',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:608'],boundary:'Current authored search contract completion gate',expected:{complete:false},observed:{complete:unreviewed.complete},passed:true,violation:'STAGE02_COMPLETION_WITHOUT_CURRENT_ADEQUACY_REVIEW',accepted:false});
+  p=accept(prepare(p,2,'SEARCH_ADEQUACY_REVIEW',()=>({records:{semanticReviews:[recordProposal(schema,'semanticReviews',{tempKey:'search-adequacy',overrides:{REVIEW_QUESTION:'Is the executed closed fixture search adequate?',FINDING:'No applicable external source remains.',REASONING:'Every declared location, stopping criterion and candidate disposition is accounted for without residual risk.',RESULT:'ACCEPTED'}})]}})));
+  const reviewed=engine.gate(2,p);assert.equal(reviewed.complete,true,'Current independently reviewed bounded no-source search did not complete.');
+  const bound=engine.recordsForCurrentScope(p,'sourceSearchContracts').at(-1),capability=engine.recordsForCurrentScope(p,'externalCapabilities').find(row=>engine.recordId(row,'externalCapabilities')===engine.recordValue(bound,'SEARCH_PERFORMER_CAPABILITY_ID')),basis=JSON.parse(engine.recordValue(capability,'VERIFICATION_BASIS'));
+  assert.equal(basis.retention,'CANONICAL_UTF8_REPORT');assert.notEqual(engine.recordValue(bound,'SEARCH_PERFORMER_CAPABILITY_ID'),p.projectData.generatedPrompts.at(-1).contextManifest.semanticReviewBinding.authorContextId);
+  const manifest=engine.recordsForCurrentScope(p,'environmentManifests').find(row=>engine.recordId(row,'environmentManifests')===engine.recordValue(capability,'ENVIRONMENT_MANIFEST_ID'));assert.equal(engine.recordValue(manifest,'EVIDENCE_BASES').epistemicBasis,'OPERATOR_CONFIRMED_EXTERNAL_CLAIM');
+  sourceSearchCompletionObservations.push({checkId:'stage02.search-capability.bound-evidence',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:606'],boundary:'Actual canonical execution evidence and registered operator-confirmed performer/capability writer',expected:{evidenceIdsMatch:true,capabilityRegistered:true,retention:'CANONICAL_UTF8_REPORT',basis:'OPERATOR_CONFIRMED_EXTERNAL_CLAIM'},observed:{evidenceIdsMatch:hash.stableStringify(engine.recordValue(bound,'EXECUTION_EVIDENCE_IDS'))===hash.stableStringify(bound.evidenceRefs),capabilityRegistered:capability.source==='EXTERNAL_CAPABILITY_REGISTRATION',retention:basis.retention,basis:engine.recordValue(manifest,'EVIDENCE_BASES').epistemicBasis},passed:true});
+  // The complete operator journey is allowed to run for 120 minutes. Its
+  // positive synthetic source-search claim must remain current throughout that
+  // bounded fixture lifetime, while the real validator must reject at expiry.
+  // Execute the serialized helper in the same VM shape used by browser callers;
+  // the controlled clock changes only time, not identities, evidence or gates.
+  const declaredJourneyBudgets=[...fs.readFileSync('.github/workflows/pages.yml','utf8').matchAll(/run_browser_verifier verify-complete-operator-journey\.mjs (\d+)m/g)].map(match=>Number(match[1])*60000);
+  assert(declaredJourneyBudgets.length>0,'SOURCE_SEARCH_FIXTURE_HORIZON_ORACLE: the existing full journey must declare its hard bound.');
+  const fixtureHorizon=Math.max(...declaredJourneyBudgets),registeredCapability=engine.recordsForCurrentScope(p,'externalCapabilities').at(-1),registeredEnvironment=engine.recordsForCurrentScope(p,'environmentManifests').find(row=>engine.recordId(row,'environmentManifests')===engine.recordValue(registeredCapability,'ENVIRONMENT_MANIFEST_ID')),registeredReport=engine.recordValue(registeredEnvironment,'EXTERNAL_CLAIMS'),issuedAt=Date.parse(registeredReport.observedAt)+1000;
+  let fixtureTime=issuedAt;
+  const clockRuntime=createVerifierRuntime({dispatchEvent:()=>true,Event:globalThis.Event,Date:class extends Date{constructor(...args){super(...(args.length?args:[fixtureTime]));}static now(){return fixtureTime;}}});
+  for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])createVerifierRuntime.loadScript(clockRuntime,fs.readFileSync(file,'utf8'),{filename:'fixture-lease:'+file});
+  createVerifierRuntime.loadScript(clockRuntime,'globalThis.leaseProject=JSON.parse('+JSON.stringify(JSON.stringify(p))+');'+registerFixtureSourceSearchCapability.toString()+';globalThis.leaseReport=registerFixtureSourceSearchCapability({engine:closedLoopWorkflowEngine},leaseProject,{register:false});',{filename:'test-fixtures.mjs:serialized-source-search-capability'});
+  assert.equal(createVerifierRuntime.loadScript(clockRuntime,'closedLoopHash.sha256Value(leaseReport)',{filename:'fixture-lease:exact-issued-report'}),hash.sha256Value(registeredReport),'SOURCE_SEARCH_FIXTURE_REPORT_IDENTITY_ORACLE: the serialized positive report must equal the actual registered claim governing Stage02.');
+  const leaseProbe=instant=>{fixtureTime=instant;return JSON.parse(createVerifierRuntime.loadScript(clockRuntime,`(()=>{const engine=closedLoopWorkflowEngine,contract=engine.recordsForCurrentScope(leaseProject,'sourceSearchContracts').at(-1);let validated=false,error=null;try{engine.validateExternalCapabilityEvidence(leaseProject,leaseReport);validated=true;}catch(failure){error=failure.message;}const capability=engine.sourceSearchCapabilityState(leaseProject,contract),gate=engine.gate(2,leaseProject);return JSON.stringify({validated,error,capability,gate});})()`,{filename:'fixture-lease:real-validation-and-completion'}));};
+  const initial=leaseProbe(issuedAt);assert.equal(initial.validated,true,'SOURCE_SEARCH_FIXTURE_CURRENT_ORACLE: the genuine positive fixture claim must validate when issued.');assert.equal(initial.capability.complete,true,'SOURCE_SEARCH_FIXTURE_CURRENT_ORACLE: the registered exact claim is not current.');assert.equal(initial.gate.complete,true,'SOURCE_SEARCH_FIXTURE_CURRENT_ORACLE: the accepted independent search must initially complete.');
+  for(const elapsed of [fixtureHorizon/2+60000,fixtureHorizon-1]){const observed=leaseProbe(issuedAt+elapsed);assert.equal(observed.validated,true,'SOURCE_SEARCH_FIXTURE_HORIZON_ORACLE: a positive synthetic search claim expired inside the declared full-journey hard bound. '+observed.error);assert.equal(observed.capability.complete,true,'SOURCE_SEARCH_FIXTURE_HORIZON_ORACLE: registered performer expired inside the declared fixture horizon.');assert.equal(observed.gate.complete,true,'SOURCE_SEARCH_FIXTURE_HORIZON_ORACLE: elapsed fixture time invalidated accepted source-search completion before the declared hard bound.');sourceSearchCompletionObservations.push({checkId:'stage02.search-capability.fixture-horizon-'+elapsed,requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:2193','specification/closed-loop-reliability-controlling-implementation-specification.txt:2646'],boundary:'Serialized authoritative synthetic fixture helper, real external capability validator and accepted Stage02 completion under a controlled VM clock',expected:{withinDeclaredHardBound:true,validated:true,capabilityComplete:true,stageComplete:true},observed:{elapsedMs:elapsed,declaredHardBoundMs:fixtureHorizon,validated:observed.validated,capabilityComplete:observed.capability.complete,stageComplete:observed.gate.complete},passed:true});}
+  const expiry=Date.parse(createVerifierRuntime.loadScript(clockRuntime,'leaseReport.validUntil',{filename:'fixture-lease:exact-expiry'}));
+  for(const instant of [expiry,expiry+1]){const observed=leaseProbe(instant);assert.equal(observed.validated,false,'SOURCE_SEARCH_FIXTURE_EXPIRY_ORACLE: production accepted the fixture report at or after its actual expiry.');assert.match(observed.error,/past observation time and a future expiry time/,'SOURCE_SEARCH_FIXTURE_EXPIRY_ORACLE: rejection must identify the expiry condition.');assert.equal(observed.capability.complete,false,'SOURCE_SEARCH_FIXTURE_EXPIRY_ORACLE: expired registered capability passed.');assert.equal(observed.gate.complete,false,'SOURCE_SEARCH_FIXTURE_EXPIRY_ORACLE: expired required capability completed Stage02.');assert(observed.gate.reasons.some(reason=>reason.includes('Register current source-search performer and capability evidence')),'SOURCE_SEARCH_FIXTURE_EXPIRY_ORACLE: completion must identify missing current capability.');sourceSearchCompletionObservations.push({checkId:'stage02.search-capability.fixture-expiry-'+(instant-expiry),requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:2193','specification/closed-loop-reliability-controlling-implementation-specification.txt:2646'],boundary:'Exact positive fixture expiry boundary through production validator and accepted Stage02 completion',expected:{validated:false,capabilityComplete:false,stageComplete:false},observed:{atOrAfterExpiryMs:instant-expiry,validated:observed.validated,capabilityComplete:observed.capability.complete,stageComplete:observed.gate.complete,reasons:observed.gate.reasons},passed:true,violation:'EXPIRED_REQUIRED_SOURCE_SEARCH_CAPABILITY',accepted:false});}
+  const renewed=structuredClone(p);registerFixtureSourceSearchCapability(runtime,renewed);assert.equal(engine.gate(2,renewed).complete,false,'SOURCE_SEARCH_REVIEW_FRESHNESS_ORACLE: registered new capability reused an old adequacy review.');assert.equal(engine.operationalNextAction(renewed,2).operation,'SEARCH_ADEQUACY_REVIEW');
+  sourceSearchCompletionObservations.push({checkId:'stage02.search-capability.changed-binding',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:608'],boundary:'Changed actual capability identity versus prior independently reviewed exact contract hash',expected:{complete:false,operation:'SEARCH_ADEQUACY_REVIEW'},observed:{complete:engine.gate(2,renewed).complete,operation:engine.operationalNextAction(renewed,2).operation},passed:true,violation:'REUSED_STALE_SOURCE_SEARCH_APPROVAL',accepted:false});
+  for(const corruption of ['canonical-report','operator-authorization']){const broken=structuredClone(p);if(corruption==='canonical-report'){const evidence=broken.projectData.evidenceRecords.find(row=>engine.recordId(row,'evidenceRecords')===basis.evidenceId);evidence.fields.APPLICATION_EVIDENCE_CONTENT+=' ';}else{const decision=broken.projectData.humanDecisions.find(row=>engine.recordId(row,'humanDecisions')===basis.decisionId);decision.fields.VALUE.authorized=false;}
+    const actual=engine.gate(2,broken);assert.equal(actual.complete,false,'SOURCE_SEARCH_CURRENT_AUTHORITY_ORACLE: '+corruption);assert.equal(engine.sourceSearchCapabilityState(broken,engine.recordsForCurrentScope(broken,'sourceSearchContracts').at(-1)).complete,false);
+    sourceSearchCompletionObservations.push({checkId:'stage02.search-capability.corrupt-'+corruption,requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:606'],boundary:'Current exact retained report and actual operator authority revalidation',expected:{complete:false,ready:false},observed:{complete:actual.complete,ready:engine.sourceSearchCapabilityState(broken,engine.recordsForCurrentScope(broken,'sourceSearchContracts').at(-1)).complete},passed:true,violation:'INVALID_CURRENT_SOURCE_SEARCH_'+corruption.toUpperCase().replaceAll('-','_'),accepted:false});
+  }
+  sourceSearchCompletionObservations.push({checkId:'stage02.search-contract.reviewed',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:608'],boundary:'Current independently bound accepted search review completion gate',expected:{complete:true},observed:{complete:reviewed.complete},passed:true});
+}
+
 // A bounded search record requires current review authority. Historical author
 // prompts without context binding return through authoring; they do not invent
 // an independent identity or approve the search during project recovery.
 {
   let p=stage04AcceptanceFixture(runtime,'JOB-LEGACY-SOURCE-AUTHOR');
-  p=accept(prepare(p,2,'COMPLETE',()=>({stageData:structuredClone(p.stages[2].agentData),records:{sourceSearchContracts:[recordProposal(schema,'sourceSearchContracts',{tempKey:'bounded-search'})]}})));
-  assert.equal(p.stages[2].gate.complete,false);assert.equal(p.job.NEXT_REQUIRED_ACTION.operation,'SEARCH_ADEQUACY_REVIEW');
+  p=accept(prepare(p,2,'COMPLETE',()=>({stageData:structuredClone(p.stages[2].agentData),records:{sourceSearchContracts:[boundedSearchProposal(schema)]}})));
+  registerFixtureSourceSearchCapability(runtime,p);assert.equal(p.stages[2].gate.complete,false);assert.equal(p.job.NEXT_REQUIRED_ACTION.operation,'SEARCH_ADEQUACY_REVIEW');
   p.projectData.generatedPrompts.at(-1).contextManifest.semanticReviewBinding=null;engine.recalculate(p);
   const raw=p.projectData.rawResponses.map(r=>r.completeRawResponse),next=ingestion.prepareStageContinuation(p,{stage:2});
   assert.equal(next.prompt.operation,'COMPLETE');assert.equal(next.prompt.contextManifest.semanticReviewBinding.bindingStatus,'BOUND');
@@ -149,9 +342,22 @@ for(const [stage,operation] of [[1,'SEMANTIC_CHALLENGE'],[3,'SEMANTIC_CHALLENGE'
   const rows=result=>({records:{semanticReviews:[recordProposal(schema,'semanticReviews',{tempKey:'source-finding',overrides:{REVIEW_QUESTION:'Is the bounded source search adequate?',FINDING:result==='ACCEPTED'?'The corrected search resolves the identified gap.':'A required search category is missing.',REASONING:'The complete governed scope was compared with the source evidence.',RESULT:result}})]}});
   p=accept(prepare(p,2,'SEARCH_ADEQUACY_REVIEW',()=>rows('REJECTED')));
   const priorReview=p.projectData.semanticReviews.at(-1);
-  p=accept(prepare(p,2,'RECONCILE_SOURCE_SEARCH',()=>rows('ACCEPTED')));
+  // A review-only reconciliation supplies no execution evidence for the new
+  // source version. Retaining the search declaration must not confer readiness
+  // or permit the author to approve that stale evidence through a review flag.
+  const preservedRaw=p.projectData.rawResponses.map(raw=>({id:raw.rawResponseId,text:raw.completeRawResponse}));
+  const incomplete=accept(prepare(structuredClone(p),2,'RECONCILE_SOURCE_SEARCH',()=>rows('ACCEPTED')));
+  assert.equal(engine.gate(2,incomplete).complete,false,'SOURCE_RECONCILIATION_STALE_EVIDENCE_ORACLE: a source search without current execution evidence completed.');
+  assert.equal(engine.operationalNextAction(incomplete,2).operation,'COMPLETE','SOURCE_RECONCILIATION_CORRECTION_ROUTE_ORACLE: current execution evidence must be corrected before independent review.');
+  assert(incomplete.projectData.semanticReviews.some(review=>review.rawResponseId===priorReview.rawResponseId&&review.RESULT==='REJECTED'),'SOURCE_RECONCILIATION_HISTORY_ORACLE: the rejected search review was lost.');
+  assert.deepEqual(preservedRaw.map(raw=>({id:raw.id,text:incomplete.projectData.rawResponses.find(saved=>saved.rawResponseId===raw.id)?.completeRawResponse})),preservedRaw,'SOURCE_RECONCILIATION_HISTORY_ORACLE: the original review and response bytes changed.');
+  p=accept(prepare(p,2,'RECONCILE_SOURCE_SEARCH',()=>{const corrected=rows('ACCEPTED');corrected.records.sourceSearchContracts=[boundedSearchProposal(schema)];return corrected;}));
   assert.equal(p.stages[2].gate.complete,false,'Source reconciliation approved itself.');
-  assert.equal(p.job.NEXT_REQUIRED_ACTION.operation,'SEARCH_ADEQUACY_REVIEW');
+  const currentSearch=engine.recordsForCurrentScope(p,'sourceSearchContracts');
+  assert.equal(currentSearch.length,1,'Reconciliation dropped the bounded search from the current source set.');
+  assert.equal(currentSearch[0].scope.sourceSetVersion,p.job.CURRENT_SOURCE_SET_VERSION,'Reconciliation retained stale source-search membership.');
+  assert.equal(p.job.NEXT_REQUIRED_ACTION.actionType,'REGISTER_SOURCE_SEARCH_CAPABILITY','SOURCE_RECONCILIATION_READINESS_ORACLE: a changed current source scope must refresh the capability report.');registerFixtureSourceSearchCapability(runtime,p);assert.equal(p.job.NEXT_REQUIRED_ACTION.operation,'SEARCH_ADEQUACY_REVIEW','SOURCE_RECONCILIATION_REVIEW_PICKER_ORACLE: current registered search must route to independent review.');
+  sourceSearchCompletionObservations.push({checkId:'stage02.search-contract.reconciliation-current',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:608'],boundary:'Reconciled source-set membership and independent-review continuation',expected:{currentContracts:1,operation:'SEARCH_ADEQUACY_REVIEW'},observed:{currentContracts:currentSearch.length,operation:p.job.NEXT_REQUIRED_ACTION.operation},passed:true});
   const reconciler=p.projectData.generatedPrompts.at(-1).contextManifest.semanticReviewBinding.authorContextId;
   assert.notEqual(reconciler,priorReview.AUTHOR_CONTEXT_ID);assert.notEqual(reconciler,priorReview.REVIEWER_CONTEXT_ID);
   p=accept(prepare(p,2,'SEARCH_ADEQUACY_REVIEW',()=>rows('ACCEPTED')));
@@ -252,7 +458,7 @@ for(const result of ['REJECTED','PARTIAL','UNKNOWN','DISAGREED']){
   assert.equal(saved.stages[6].status,'NOT STARTED',`${result} unlocked Stage 6.`);
   assert(saved.stages[5].gate.reasons.some(reason=>reason.includes(result)),`${result} is missing from the completion-gate explanation.`);
   assert.equal(saved.job.NEXT_REQUIRED_ACTION.operation,'RECONCILE_REQUIREMENT_SET',`${result} did not route to correction.`);
-  assert.deepEqual(saved.projectData.semanticReviews.map(r=>r.fields.RESULT),['ACCEPTED',result],'Review findings were rewritten.');
+  assert.deepEqual(saved.projectData.semanticReviews.filter(r=>Number(r.stage)===5).map(r=>r.fields.RESULT),['ACCEPTED',result],'Stage05 review findings were rewritten.');
 }
 
 // Follow the advertised correction operation all the way back to a complete
@@ -293,7 +499,7 @@ for(const value of ['PASS','FAIL','accepted','',null]){
   assert.equal(prepared.proposal,null,'An invalid result produced an actionable proposal.');
   assert(prepared.validation.issues.some(issue=>issue.path.endsWith('/RESULT')),'Missing exact invalid-result pointer.');
   assert.equal(prepared.project.projectData.rawResponses.at(-1).completeRawResponse,prepared.text,'Rejected review bytes were lost.');
-  assert.equal(prepared.project.projectData.semanticReviews.length,0,'Rejected review mutated canonical findings.');
+  assert.deepEqual(prepared.project.projectData.semanticReviews,author.projectData.semanticReviews,'Rejected review mutated canonical findings.');
 }
 for(const name of ['REVIEW_QUESTION','FINDING','REASONING','RESULT']){
   const prepared=review(['ACCEPTED']);delete prepared.proposal.envelope.records.semanticReviews[0].fields[name];
@@ -358,7 +564,7 @@ const recovered=ingestion.recoverInvalidSemanticReviews(legacy);
 assert.equal(recovered.changed,true,'The legacy accepted review has no automatic recovery.');
 assert.equal(hash.sha256Value(legacy),legacyHash,'Preparing recovery changed the original project.');
 assert.deepEqual(recovered.project.projectData.rawResponses.map(r=>r.completeRawResponse),legacyRaw,'Automatic recovery rewrote the original responses.');
-assert.equal(engine.recordsForCurrentScope(recovered.project,'semanticReviews').length,0);
+assert.equal(engine.recordsForCurrentScope(recovered.project,'semanticReviews').filter(r=>Number(r.stage)===5).length,0);
 assert.equal(recovered.continuation?.prompt.operation,'SEMANTIC_REVIEW','Automatic recovery did not save its replacement instruction.');
 assert.match(recovered.continuation.prompt.prompt,/unsupported RESULT values/);
 assert.equal(recovered.project.stages[5].gate.complete,false);
@@ -367,7 +573,7 @@ assert.equal(ingestion.recoverInvalidSemanticReviews(recovered.project).changed,
 assert.equal(ingestion.prepareStageContinuation(recovered.project,{stage:5}).created,false,'Reload regenerated a controlling instruction again.');
 assert.equal(closedLoopProjectStore.validateProjectIntegrity(recovered.project,{verifyDerived:false}).valid,true);
 engine.invalidateAcceptedResponse(legacy,{stage:5,rawResponseId:legacyReview.rawResponseId,reason:'The saved review uses an unrecognized result.'});
-assert.equal(engine.recordsForCurrentScope(legacy,'semanticReviews').length,0,'Correction left invalid findings current.');
+assert.equal(engine.recordsForCurrentScope(legacy,'semanticReviews').filter(r=>Number(r.stage)===5).length,0,'Correction left invalid Stage05 findings current.');
 const replacement=prompts.reserveAndBuildPromptRecord(legacy,5,{operation:'SEMANTIC_REVIEW'}).prompt;
 assert.equal(replacement.contextManifest.semanticReviewBinding.bindingStatus,'BOUND','The existing correction action cannot produce a replacement review.');
-console.log(JSON.stringify({semanticReviewAcceptance:'PASS',inapplicableDispositionRequiresIndependentReview:true,mergedObligationsRequireIndependentReview:true,malformedReviewCases,browserAcceptanceCases,orphanAuditIsNotLiveAttempt:true,requestedReviewPreservesAcceptedProgress:true,pendingReviewIsSeparatelyActionable:true,semanticReviewStages:[1,2,3,4,5,6],pendingProposalsPreserved:true,recordedOperationSelectionPreserved:true,commandGatesUseCurrentOwner:true,automaticNextInstruction:true,explicitLegacyRecovery:true,restorationDoesNotExecuteCorrection:true,reconciliationThenIndependentReview:true,invalidResultsRejected:true,mixedFindingsCannotPass:true,negativeFindingsRouteToCorrection:true,legacyEvidencePreserved:true,validReviewUnlocksStage6:true}));
+console.log(JSON.stringify({semanticReviewAcceptance:'PASS',stage04ReviewSubjectObservations,verificationObservations:sourceSearchCompletionObservations,inapplicableDispositionRequiresIndependentReview:true,mergedObligationsRequireIndependentReview:true,malformedReviewCases,browserAcceptanceCases,orphanAuditIsNotLiveAttempt:true,requestedReviewPreservesAcceptedProgress:true,pendingReviewIsSeparatelyActionable:true,semanticReviewStages:[1,2,3,4,5,6],pendingProposalsPreserved:true,recordedOperationSelectionPreserved:true,commandGatesUseCurrentOwner:true,automaticNextInstruction:true,explicitLegacyRecovery:true,restorationDoesNotExecuteCorrection:true,reconciliationThenIndependentReview:true,invalidResultsRejected:true,mixedFindingsCannotPass:true,negativeFindingsRouteToCorrection:true,legacyEvidencePreserved:true,validReviewUnlocksStage6:true}));

@@ -1,4 +1,6 @@
 import {createVerifierRuntime} from './verifier-runtime.mjs';
+import {routeProjectionFixtureFields,deferredDefinitionRestorationFixture} from './test-fixtures.mjs';
+import {projectStoreRuntime} from './test-project-store-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 
@@ -66,6 +68,8 @@ for(const [collection,recordSchema] of Object.entries(schema.RECORD_SCHEMAS)){
   const staleFields={[recordSchema.idField]:staleId};
   if(agentField){fields[agentField]=`CURRENT-SENTINEL-${collection}`;staleFields[agentField]=`STALE-SENTINEL-${collection}`;}
   if(collection==='defects'){fields.EXPECTED_CONDITION='Expected fixture condition';staleFields.EXPECTED_CONDITION='Stale fixture condition';}
+  Object.assign(fields,routeProjectionFixtureFields(collection,{idPrefix:'ROUTE',variant:'CURRENT',marker:`CURRENT-SENTINEL-${collection}`}));
+  Object.assign(staleFields,routeProjectionFixtureFields(collection,{idPrefix:'ROUTE',variant:'STALE',marker:`STALE-SENTINEL-${collection}`}));
   const current={stage:recordSchema.stage||1,fields,scope:versionScopeFor(collection),active:true,validity:'CURRENT'};
   const stale={stage:recordSchema.stage||1,fields:staleFields,scope:staleScopeFor(collection),active:true,validity:'CURRENT'};
   engine.refreshRecordHashes(current,collection);engine.refreshRecordHashes(stale,collection);
@@ -79,12 +83,22 @@ for(const [collection,recordSchema] of Object.entries(schema.RECORD_SCHEMAS)){
 bindIntake();
 
 const forbiddenReads={
-  '11:COMPLETE':['verification','comparisons','defects','rootCauses','changes','meaningResults','adversarialResults'],
-  '12:COMPLETE':['comparisons','rootCauses','changes'],
+  '11:EXECUTE_RUN':['verification','comparisons','defects','rootCauses','changes','meaningResults','adversarialResults'],
+  '12:VERIFY':['comparisons','rootCauses','changes'],
   '23:COMPLETE':['deterministicResults','adversarialResults'],
   '24:COMPLETE':['deterministicResults','meaningResults']
 };
 for(const operation of ['EXECUTE_RUN','VERIFY'])for(const stage of [17,19])forbiddenReads[`${stage}:${operation}`]=operation==='EXECUTE_RUN'?['verification','comparisons','rootCauses','changes']:['comparisons','rootCauses','changes'];
+// Readable secondary families are not permission to embed unbound prior
+// conclusions in independent product reviews (specification Stages 23/24).
+const unboundSecondaryWithheld={23:['observationRecords','entailmentReviews','semanticReviews'],24:['observationRecords','entailmentReviews','semanticReviews']};
+// §28.1/28.2 and §36.2 preserve governing inputs and exclude unbound secondary
+// conclusions in each independent execution/verification role. Keep this
+// specification-side expectation independent of the production selector.
+const independentRunRoles=['11:EXECUTE_RUN','12:VERIFY','17:EXECUTE_RUN','17:VERIFY','19:EXECUTE_RUN','19:VERIFY'];
+const independentRunSecondaryFamilies=['observationRecords','entailmentReviews','semanticReviews'];
+const independentRunUnboundContextObservations=[];
+
 
 let operationsChecked=0,readEdgesChecked=0,writableCollectionsChecked=0,writableFieldsChecked=0,relationshipDefinitionsChecked=0;
 const writeProducers=new Map();
@@ -123,6 +137,17 @@ for(let stage=1;stage<=30;stage++){
         const ids=(manifest[collection]||[]).map(item=>item.id);
         const sent=collectionSentinels[collection];
         if(Number(schema.RECORD_SCHEMAS[collection].stage)>stage){assert(!ids.includes(sent.currentId)&&!record.prompt.includes(sent.currentText),`Stage ${stage}/${operation} leaked subsequent-stage ${collection}.`);continue;}
+        const independentUnbound=independentRunRoles.includes(`${stage}:${operation}`)&&independentRunSecondaryFamilies.includes(collection);
+        if(unboundSecondaryWithheld[stage]?.includes(collection)||independentUnbound){
+          assert(!ids.includes(sent.currentId)&&!record.prompt.includes(sent.currentText)&&!record.prompt.includes(sent.currentId),`Stage ${stage}/${operation} leaked unauthorized current ${collection}.`);
+          assert(!ids.includes(sent.staleId)&&!record.prompt.includes(sent.staleText)&&!record.prompt.includes(sent.staleId),`Stage ${stage}/${operation} leaked unauthorized stale ${collection}.`);
+          if(independentUnbound){
+            const carriers=[record.prompt,JSON.stringify(prompts.promptFileManifest(record)),...prompts.materializePromptContextFiles(record,state).map(file=>file.text)].join('\n');
+            assert(![sent.currentId,sent.currentText,sent.staleId,sent.staleText].some(value=>carriers.includes(value)),`ROUTE_UNBOUND_SECONDARY_CARRIER_ORACLE: ${stage}/${operation} exposed ${collection} through an exported carrier.`);
+            independentRunUnboundContextObservations.push({operationKey:`${stage}:${operation}`,collection,currentWithheld:true,staleWithheld:true,allCarriersWithheld:true});
+          }
+          continue;
+        }
         assert(ids.includes(sent.currentId),`Stage ${stage}/${operation} prompt manifest omitted current ${collection}.`);
         assert(!ids.includes(sent.staleId),`Stage ${stage}/${operation} prompt manifest leaked stale ${collection}.`);
         assert(record.prompt.includes(sent.currentText)||record.prompt.includes(sent.currentId),`Stage ${stage}/${operation} prompt body omitted selected ${collection} content.`);
@@ -136,6 +161,8 @@ for(let stage=1;stage<=30;stage++){
     }
   }
 }
+
+for(const key of independentRunRoles)for(const collection of independentRunSecondaryFamilies)assert(independentRunUnboundContextObservations.filter(row=>row.operationKey===key&&row.collection===collection).length===1,`ROUTE_UNBOUND_SECONDARY_POPULATION_ORACLE: ${key}/${collection} was not checked exactly once.`);
 
 const terminalFamilies=new Set(['releaseGateReviews','evidenceInvestigations']);
 for(const [collection,producers] of writeProducers){
@@ -165,9 +192,24 @@ for(const phrase of [
   'ask the human directly in concise plain language',
   'The human supplies project information once',
   'If this prompt lists files that you must receive, do not pretend you received or inspected them',
-  'Ask the human to attach or send the exact listed file only when those bytes are actually required',
-  'Before final JSON, re-read the complete current-stage instruction'
+  'Ask the human to attach or send the exact listed file only when those bytes are actually required'
 ])assert(promptSource.includes(phrase),`Prompt authority missing human-experience invariant: ${phrase}`);
+const ordinaryInstruction='Before final JSON, re-read the complete current-stage instruction';
+const deferredInstruction='Before final JSON, re-read the complete current-operation instruction';
+function assertReviewInstruction(text,required,scope){assert(text.includes(required),`PROMPT_HUMAN_EXPERIENCE_ORACLE: generated ${scope} instruction omitted its complete current-work review.`);}
+const ordinaryPrompt=prompts.buildPromptRecord(1,state,{operation:'COMPLETE'}).prompt;
+assertReviewInstruction(ordinaryPrompt,ordinaryInstruction,'Stage 01');
+const deferredRuntime=projectStoreRuntime(),deferredFixture=await deferredDefinitionRestorationFixture(deferredRuntime,{family:'failureTests'});
+const deferredPrompt=deferredRuntime.prompts.reserveAndBuildPromptRecord(deferredFixture.p,deferredFixture.stage,{operation:'EXECUTE_FAILURE_TEST'}).prompt.prompt;
+assertReviewInstruction(deferredPrompt,deferredInstruction,'conditional execution');
+const phraseTemplate='Before final JSON, re-read the complete current-${task} instruction';
+assert(promptSource.includes(phraseTemplate),'PROMPT_HUMAN_EXPERIENCE_SETUP_ORACLE: the controlling prompt template was not reached.');
+const omittedSource=promptSource.replace(phraseTemplate,'Before final JSON, omit the current instruction review');
+const omittedRuntime=projectStoreRuntime({sourceOverrides:{'prompt-engine.js':omittedSource}}),omittedState=omittedRuntime.core.createBlankState('ROUTE-OMITTED-PROMPT-REVIEW');
+omittedRuntime.engine.ensureShape(omittedState);
+let omissionDetected=false;
+try{assertReviewInstruction(omittedRuntime.prompts.buildPromptRecord(1,omittedState,{operation:'COMPLETE'}).prompt,ordinaryInstruction,'Stage 01');}catch(error){omissionDetected=error.message.includes('PROMPT_HUMAN_EXPERIENCE_ORACLE');}
+assert(omissionDetected,'PROMPT_HUMAN_EXPERIENCE_MUTATION_ORACLE: omission in the production prompt source was not detected at the generated instruction.');
 for(const subject of ['patent','legal','medical','software','aec','mechanical','cad','cam','cnc','scientific','financial']){
   const branchPattern=new RegExp(`(?:\\bif\\b|\\bswitch\\b|\\bcase\\b)[^\\n]{0,120}\\b${subject}\\b`,'i');
   assert(!branchPattern.test(promptSource),`prompt-engine.js contains subject-specific runtime branch for ${subject}.`);
@@ -180,6 +222,8 @@ assert(!/agent must |agent should |the agent should/i.test(uiSource),`External-a
 
 console.log(JSON.stringify({
   dataRouteClosure:'PASS',
+  independentRunUnboundContextObservations,
+  scopeLimit:'Synthetic current/stale projection sentinels exercise actual prompt and contract owners; no stage completion, functional lifecycle, or independent semantic approval claim.',
   stages:30,
   operationsChecked,
   canonicalFamilies:Object.keys(schema.RECORD_SCHEMAS).length,

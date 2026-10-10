@@ -1,0 +1,177 @@
+{
+  "schema": "closed-loop-requirement-coverage-review/1",
+  "normativeRequirementId": "NREQ-75151f881444015977da6a6d7d86cb1c",
+  "sourceLineSha256": "7ed60770d1784cd6e233bde75696d22c811f40005fc9e46755a979b3efd4b0fc",
+  "specificationSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
+  "declarationSha256": "5c2a016004df493f253487195b39439daaa03d3a7fa389c289243ce836899edf",
+  "decision": "COMPLETE_COVERAGE",
+  "evidenceBasis": "EXTERNALLY_SUPPORTED",
+  "method": "Independent renewed review of the unchanged exact source clause/declaration and unchanged direct production owner, preserving the retained prior semantic rationale, with explicit current dependency and test-input reconciliation. This review determines declaration sufficiency only; no prior execution is converted into a current PASS.",
+  "author": {
+    "actor": "Codex dependency recertification author",
+    "contextId": "/root/ci_delivery_audit"
+  },
+  "reviewer": {
+    "actor": "Codex independent exact-clause declaration reviewer",
+    "contextId": "/root/stage_contract_audit/late_stage_audit"
+  },
+  "reviewedInputs": [
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d"
+    },
+    {
+      "path": "test-fixtures.mjs",
+      "sha256": "fdcaa258f88be52f2b426785ac0fcdcd547392e702c33fbb0eb4823d9c2a711d"
+    },
+    {
+      "path": "test-handoff-authorization.mjs",
+      "sha256": "37bfb4e255afb6701fccaccdf055ee7961e838eaf03927c2963dfcf880cf82b6"
+    },
+    {
+      "path": "test-project-store-runtime.mjs",
+      "sha256": "955fc63a1b7ae3ec7f8b71f36fd4d76d4ad8ee8fa0de2fa8d2697a66b1458eef"
+    },
+    {
+      "path": "test-runtime-operation-registry.mjs",
+      "sha256": "8892e1f7aea7a6565af693233fe802785d8dbcabee972c6b61890a66a02f233e"
+    },
+    {
+      "path": "test-runtime.js",
+      "sha256": "e4e01a79c526592f9d044e2c104845e63c9aa341eb64837c138f5c3e3ecba353"
+    },
+    {
+      "path": "verification-evidence-catalog.mjs",
+      "sha256": "feedf2e728fca37acf303536dd55216389d591567c1ab89236a53aa0b2d19eed"
+    },
+    {
+      "path": "verification/deferred-definition-compatibility-legacy-fixture-20261005.json",
+      "sha256": "d7a1b076de3d301ee108660c1e7ea5dafdf4e630e202f2c498d32c30d3f72bb1"
+    },
+    {
+      "path": "verification/normative-context-applicability-20261005.json",
+      "sha256": "7cd05ff0028578a1ca1c2560533519a602ce6a974c240ee11dbbd272524cf656"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-75151f881444015977da6a6d7d86cb1c-20261005.json",
+      "sha256": "eb01df3bfc9894028eb965c9da58aad63b2fc46a57d671f3d18487335374eeb1"
+    },
+    {
+      "path": "verifier-runtime.mjs",
+      "sha256": "8a4c9058b6c72a5aa8dd68809e3cbfd8e5c217b358c41970347443a338f83933"
+    },
+    {
+      "path": "verify-test-runtime-v3.mjs",
+      "sha256": "4a86e7340d01ad8ccafc364fa0784f01a49583ab6423a65323f625c09424a971"
+    },
+    {
+      "declarationSha256": "5c2a016004df493f253487195b39439daaa03d3a7fa389c289243ce836899edf"
+    }
+  ],
+  "findings": [],
+  "reviewPerformed": true,
+  "reviewCompletedAt": "2026-10-06T20:48:40.827880+00:00",
+  "sourceLocation": {
+    "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+    "startLine": 1855,
+    "endLine": 1855,
+    "lineSha256": "7ed60770d1784cd6e233bde75696d22c811f40005fc9e46755a979b3efd4b0fc"
+  },
+  "controllingText": "- MIN",
+  "governingContext": [
+    {
+      "normativeRequirementId": "NREQ-658c71fb2e3992ee94fb6b4ecedc1681",
+      "sourceLineSha256": "e6081e1fc0a5cdd4edf6d99920c352c45cd10859b8a8c6458c3c752855e6d1db",
+      "controllingText": "21.4 Required primitives"
+    }
+  ],
+  "additionalControllingContext": [],
+  "reviewedChecks": [
+    {
+      "suite": "verify-test-runtime-v3.mjs",
+      "checkId": "test-ir.operation-registry-admission"
+    }
+  ],
+  "semanticDecision": "REQUIRED_TEST_IR_PRIMITIVE",
+  "reason": "[2,3] yields literal2. The literal operation-name universe is exactly27; every registered operation occurs in the actual executed DAG. A VIOLATED assertion stops execution, so final SATISFIED cannot hide a failed intermediate literal oracle. This is primitive existence/basic semantics, not complete §21.3/21.4 parent-contract coverage. Independently read the registered primitive definition, typed ports and execution switch under Section21.4. Each complete source entry requires that named primitive; additional grammar, parser, resource and worker obligations retain their own requirements.",
+  "scopeLimit": "Primitive existence/basic declared semantics; no full Test IR safety or every-input parser correctness claim.",
+  "actorIndependenceBoundary": "The current recertification author /root/ci_delivery_audit is distinct from the actual independent reviewer /root/stage_contract_audit/late_stage_audit. Attributed identity and hashes do not establish hidden context; prior semantic review attribution is retained separately.",
+  "reviewerPriorContributionDisclosure": "Repository engineering declaration review requested by root; reviewer previously audited late-stage source and withdrew an unsupported result-link hypothesis. This is separate from recertification author; no assertion of source-only blind extraction or independence from all repository context.",
+  "retainedReviewInputs": {
+    "proposal": {
+      "path": "/workspace/scratch/full-coverage-storage-proposals.json",
+      "sha256": "3a805bca70e96b132d5f8923fc4d87d8131af0977692ddfbc361ce9f7bd8656e"
+    },
+    "priorSemanticReview": {
+      "path": "/workspace/scratch/independent-full-coverage-semantic-review-current45.json",
+      "sha256": "8b76d6c6c1425220853a1798090edf609fadde97ad840f2699e006b7ed2bb866"
+    }
+  },
+  "qualifiedExecutionAndReviewEvidence": [
+    {
+      "path": "/workspace/scratch/runtime-operation-registry-focused-current45.json",
+      "sha256": "274216d23ac18e59fc94bbe4de3b8f1e00094f6656386d565e54571b07b9cd34",
+      "qualification": "Retained actual boundary/source tuple only; this reference does not substitute for current canonical executed receipts."
+    },
+    {
+      "path": "/workspace/scratch/runtime-untrusted-operation-repair-current45.json",
+      "sha256": "7cfeab2a56b1574797073f10a80a3a96347dc315744859e828c2e538240f78e4",
+      "qualification": "Retained actual boundary/source tuple only; this reference does not substitute for current canonical executed receipts."
+    }
+  ],
+  "currentExecutionRequired": true,
+  "applicationConformanceClaim": false,
+  "priorReview": {
+    "path": "verification/requirement-coverage-NREQ-75151f881444015977da6a6d7d86cb1c-20261005.json",
+    "sha256": "eb01df3bfc9894028eb965c9da58aad63b2fc46a57d671f3d18487335374eeb1",
+    "author": {
+      "actor": "Codex declaration author",
+      "contextId": "/root/storage"
+    },
+    "reviewer": {
+      "actor": "Codex independent declaration reviewer",
+      "contextId": "/root/independent_spec"
+    },
+    "reviewCompletedAt": "2026-10-05T17:00:41.919Z"
+  },
+  "currentDependencyReconciliation": {
+    "classification": "ONLY_REVIEWED_DEPENDENCIES_CHANGED",
+    "priorStaleInputs": [
+      "test-project-store-runtime.mjs",
+      "verification-evidence-catalog.mjs"
+    ],
+    "newRequiredInputs": [
+      "test-fixtures.mjs",
+      "test-handoff-authorization.mjs"
+    ],
+    "unchangedDeclarationSha256": "5c2a016004df493f253487195b39439daaa03d3a7fa389c289243ce836899edf",
+    "unchangedDirectOwners": [
+      {
+        "path": "test-runtime.js",
+        "sha256": "e4e01a79c526592f9d044e2c104845e63c9aa341eb64837c138f5c3e3ecba353"
+      }
+    ],
+    "owningSuites": [
+      "verify-test-runtime-v3.mjs"
+    ],
+    "sourceReviewStatus": "ACTUAL_INDEPENDENT_REVIEW_COMPLETE_NO_EXECUTION_CLAIM",
+    "finalSourceFreezeStatus": "EXACT_FINAL_INPUTS_APPROVED_WITH_CURRENT_EXECUTION_REQUIRED",
+    "finalIndependentEvidence": {
+      "packet": {
+        "path": "/tmp/closed-loop-evidence/30-runtime-final-renewal-proposal-67436f667382b6d41feee93c91940a64ef4309efe22ea28e71e3341e6a6889ba.json",
+        "sha256": "67436f667382b6d41feee93c91940a64ef4309efe22ea28e71e3341e6a6889ba"
+      },
+      "semanticReview": {
+        "path": "/tmp/closed-loop-evidence/38-independent-recertification-review-1ce8d05370d3bb8b41f75072bc1748adfd0a613281012d98b40f64346d958afe.json",
+        "sha256": "1ce8d05370d3bb8b41f75072bc1748adfd0a613281012d98b40f64346d958afe"
+      },
+      "finalDependencyReview": [
+        {
+          "path": "/tmp/closed-loop-evidence/30-runtime-final-independent-review-92383335786145dff7070b18e59ac97ba382a0aae9d4f902b678914e08eab22f.json",
+          "sha256": "92383335786145dff7070b18e59ac97ba382a0aae9d4f902b678914e08eab22f"
+        }
+      ]
+    },
+    "finalDependencyFinding": "Independent final30 review verifies unchanged exact clause/binding/declaration digests and every listed current input; loader, carrier and previously approved catalog are the only changed dependencies. Existing primitive/integer/unknown-operation sufficiency is retained, with current full runtime receipt separately required."
+  }
+}

@@ -6,9 +6,19 @@ import vm from 'node:vm';
 import {runVerifier,assertDetectedFault} from './verify-conformance-regressions.mjs';
 import {createHash} from 'node:crypto';
 
+if(process.argv.includes('--projection-recovery-only')){const {verifyStage13ProjectionRecovery}=await import('./test-stage13-projection-recovery.mjs');console.log(JSON.stringify(await verifyStage13ProjectionRecovery()));process.exit(0);}
+
 // Inject one fault into an in-memory module copy, never into retained source.
 // Children execute this same existing gate with hard bounds and named oracles.
 const comparisonFaults=[
+ {id:'ITERATION-STAGE13-ALL-MANDATORY',file:'workflow-engine.js',from:'case 13:requireAccepted();break;',to:"case 13:requireAccepted();if(mandatoryRequirements(project).some(req=>!evaluateCrossRunComparison(project).dueRequirementIds.includes(requirementId(req))))reasons.push('Controlled former all-mandatory Stage13 comparison.');break;",oracle:'STAGE13_FUTURE_GATE_ORACLE',scheduled:true},
+ {id:'ITERATION-MATRIX-FIXED12',file:'workflow-engine.js',from:'const timing=testDueState(project,test,evaluationStage,{perRunOnly:true,iterationId});',to:'const timing=testDueState(project,test,12,{perRunOnly:true,iterationId});',oracle:'ITERATION_DUE_STAGE_MATRIX_ORACLE',scheduled:true},
+ {id:'ITERATION-CORRECTED-ALL-MANDATORY',file:'workflow-engine.js',from:"if(mode==='CORRECTED'){",to:"if(mode==='CORRECTED'){for(const requirement of mandatoryRequirements(project,scope))if(!comparisons.some(row=>recordValue(row,'REQ_ID')===requirementId(requirement)))reasons.push('Controlled former all-mandatory comparison requirement.');",oracle:'ITERATION_FUTURE_GATE_ORACLE',scheduled:true},
+ {id:'ITERATION-NO-DEFECT-ALL-MANDATORY',file:'workflow-engine.js',from:"if(comparison.clean&&defects.length===0)out.add('ROOT_CAUSE');",to:"if(comparison.clean&&comparison.dueRequirementIds.length===mandatoryRequirements(project,scopeForIteration(project,iterationId)).length&&defects.length===0)out.add('ROOT_CAUSE');",oracle:'ITERATION_FUTURE_NO_DEFECT_CONTINUATION_ORACLE',scheduled:true},
+ {id:'ITERATION-CONFIRMATION-ALL-MANDATORY',file:'workflow-engine.js',from:"const ev=evaluateIteration(project,iterationId,'UNCHANGED_CONFIRMATION');",to:"for(const requirement of mandatoryRequirements(project,scopeForIteration(project,iterationId)))if(!evaluateCrossRunComparison(project,iterationId).dueRequirementIds.includes(requirementId(requirement)))reasons.push('Controlled former all-mandatory confirmation comparison.');const ev=evaluateIteration(project,iterationId,'UNCHANGED_CONFIRMATION');",oracle:'CONFIRMATION_FUTURE_GATE_ORACLE',scheduled:true},
+ {id:'ITERATION-CONFIRMATION-ALL-REGRESSIONS',file:'workflow-engine.js',from:'regressions=regressionSelection.tests,regExec=currentRegressionExecutions(project,confirmationIterationId)',to:'regressions=activeRegressions(project),regExec=currentRegressionExecutions(project,confirmationIterationId)',oracle:'CONFIRMATION_FUTURE_SUMMARY_ORACLE',scheduled:true},
+ {id:'ITERATION-CONVERGENCE-EARLY-FRONTIER',file:'workflow-engine.js',from:'coverage=coverageMetrics(project,iterationId,{stage:18}),material=',to:'coverage=coverageMetrics(project,iterationId),material=',oracle:'ITERATION_CONVERGENCE_FRONTIER_ORACLE',scheduled:true},
+ {id:'STABILITY-REPEATED-GROUP-MAPPING',file:'workflow-engine.js',from:'REPEATED_FAILURE_GROUPS:stability.repeatedFailureGroupCount',to:'REPEATED_FAILURE_GROUPS:stability.repeatedDefectCount',oracle:'STABILITY_DEFECT_AGGREGATE_ORACLE'},
  {id:'COMPARISON-ATOMIC-DEFECT-BINDING',file:'workflow-engine.js',from:'const defectIds=sorted([...explicitDefectIds,...coacceptedDefectIds]);',to:'const defectIds=sorted(explicitDefectIds);',oracle:'COMPARISON_ATOMIC_DEFECT_HANDOFF_ORACLE'},
  {id:'COMPARISON-ATOMIC-DEFECT-MEMBERSHIP',file:'workflow-engine.js',from:"safe(change.canonicalRecordIds).includes(recordId(defect,'defects'))",to:'true',oracle:'COMPARISON_ATOMIC_HANDOFF_BINDING_ORACLE'},
  {id:'COMPARISON-ATOMIC-DEFECT-PROVENANCE',file:'workflow-engine.js',from:'change.proposalId===defect.sourceProposalId',to:'true',oracle:'COMPARISON_ATOMIC_HANDOFF_BINDING_ORACLE'},
@@ -34,12 +44,14 @@ const selectedComparisonFault=process.argv.find(arg=>arg.startsWith('--compariso
 const injectedComparisonFault=selectedComparisonFault&&comparisonFaults.find(fault=>fault.id===selectedComparisonFault);
 if(selectedComparisonFault&&!injectedComparisonFault)throw new Error('Unknown comparison fault.');
 const comparisonSourceHashes={},comparisonDigest=source=>createHash('sha256').update(source).digest('hex');
+function assertSourceAnchor(source,anchor){if(source.split(anchor).length!==2)throw new Error('COMPARISON_OWNER_EXPOSURE_ORACLE: exact unchanged closure anchor required.');}
 function comparisonModuleSource(file){
  let source=fs.readFileSync(file,'utf8');comparisonSourceHashes[file]=comparisonDigest(source);
  if(injectedComparisonFault?.file===file){
   if(source.split(injectedComparisonFault.from).length-1!==(injectedComparisonFault.expectedMatches||1))throw new Error('FAULT_ANCHOR_ORACLE: exact single fault location required.');
   source=source.replace(injectedComparisonFault.from,injectedComparisonFault.to);
  }
+ if(file==='workflow-engine.js'){const anchor='globalThis.closedLoopWorkflowEngine=Object.freeze({jobPointerTargets,jobPointerIntegrityIssues,jobPointerProjectionRepairs,stageContext,';assertSourceAnchor(source,anchor);source=source.replace(anchor,'globalThis.__comparisonFixtureOwners=Object.freeze({acceptedOperationSet,confirmationDetermination});\n'+anchor);}
  return source;
 }
 
@@ -55,13 +67,20 @@ const assert=(value,message)=>{if(!value)throw new Error(message);};
 assert(typeof engine.evaluateCrossRunComparison==='function','PRODUCTION_COMPARISON_BINDING_ORACLE: actual production modules do not expose the comparison authority.');
 const sha='b'.repeat(64);
 function record(collection,stage,fields,id,scope){const definition=schema.RECORD_SCHEMAS[collection],all={...fields,[definition.idField]:id},value={id,stage,active:true,scope:{...scope},fields:all,...all};engine.refreshRecordHashes(value,collection);return value;}
-function fixture({iterationStage=10,additionalTest=false,varianceContract={dimensions:['semantic-result','output-result'],allowedVariance:'No correctness-affecting or outcome-changing variance; representational differences are allowed only when requirement truth is unchanged.'}}={}){
+function fixture({iterationStage=10,additionalTest=false,scheduledRequirement=null,varianceContract={dimensions:['semantic-result','output-result'],allowedVariance:'No correctness-affecting or outcome-changing variance; representational differences are allowed only when requirement truth is unchanged.'}}={}){
  const freezeStage=iterationStage===19?17:iterationStage,runStage=iterationStage===10?11:iterationStage,verificationStage=iterationStage===10?12:iterationStage,comparisonStage=iterationStage===10?13:iterationStage;
  const p=core.createBlankState('JOB-STAGE17-CROSS-RUN');Object.assign(p.job,{EXACT_USER_OBJECTIVE_VERBATIM:'Prove cross-run comparison over all ten verified runs.',CURRENT_INPUT_VERSION:'INPUT-v001',CURRENT_SOURCE_SET_VERSION:'SOURCE-SET-v001',CURRENT_RESEARCH_VERSION:'RESEARCH-v001',CURRENT_REQUIREMENTS_VERSION:'REQUIREMENTS-v001',CURRENT_TEST_SUITE_VERSION:'TEST-SUITE-v001',CURRENT_INSTRUCTION_VERSION:'INSTRUCTION-v001'});engine.ensureShape(p);
  const req=record('requirements',4,{MANDATORY_OPTIONAL_STATUS:'MANDATORY',STATUS:'ACTIVE',OBLIGATION:'The current candidate must satisfy the controlled proposition.'},'REQ-STAGE17',engine.currentScope(engine.stageContext(p,4)));p.projectData.requirements.push(req);
  const prop=record('propositions',4,{REQUIREMENT_ID:'REQ-STAGE17',PROPOSITION_TEXT:'The current candidate satisfies the controlled proposition.',STATUS:'SATISFIED',TRUTH_VALUE:'TRUE',CURRENT_SCOPE_STATUS:'CURRENT'},'PROPOSITION-STAGE17',engine.currentScope(engine.stageContext(p,4)));p.projectData.propositions.push(prop);
  const applicability=record('applicabilityRecords',5,{SUBJECT_ID:'PROPOSITION-STAGE17',PROPOSED_APPLICABILITY:'APPLICABLE',SELECTED_APPLICABILITY:'APPLICABLE',TRUTH_VALUE:'TRUE',EPISTEMIC_BASIS:'EXTERNALLY_SUPPORTED',CURRENT_SCOPE_STATUS:'CURRENT',FRESHNESS_STATUS:'CURRENT',CONTRADICTION_STATUS:'CLEAR',REASONING:'The mandatory proposition applies to every current run.'},'APPLICABILITY-STAGE17',engine.currentScope(engine.stageContext(p,5)));p.projectData.applicabilityRecords.push(applicability);
  for(let stage=1;stage<6;stage++){p.stages[stage].status='COMPLETE';p.stages[stage].gate={complete:true,blocked:false,reasons:[]};}
+ // Explicit canonical test setup: a separately applicable proposition may be
+ // scheduled after this iteration. It is retained, never marked optional.
+ if(scheduledRequirement){
+  p.projectData.requirements.push(record('requirements',4,{...req.fields,OBLIGATION:'The separately scheduled mandatory condition must hold.'},'REQ-SCHEDULED',req.scope));
+  p.projectData.propositions.push(record('propositions',4,{...prop.fields,REQUIREMENT_ID:'REQ-SCHEDULED',PROPOSITION_TEXT:'The scheduled condition holds.'},'PROPOSITION-SCHEDULED',prop.scope));
+  p.projectData.applicabilityRecords.push(record('applicabilityRecords',5,{...applicability.fields,SUBJECT_ID:'PROPOSITION-SCHEDULED'},'APPLICABILITY-SCHEDULED',applicability.scope));
+ }
  reviewApplicabilityFixture({engine,prompts:globalThis.closedLoopPromptEngine,ingestion:globalThis.closedLoopResponseIngestion,schema},p);
  Object.assign(p.job,{CURRENT_TEST_SUITE_VERSION:'TEST-SUITE-v001',CURRENT_INSTRUCTION_VERSION:'INSTRUCTION-v001'});
  const proofExpression=record('proofExpressions',6,{TARGET_PROPOSITION_ID:'PROPOSITION-STAGE17',PROPOSED_EXPRESSION:{type:'LEAF',testId:'TEST-STAGE17',requiredDisposition:'SATISFIED',truthExtraction:'ACCEPTED_ENTAILMENT',evidenceClasses:['OBSERVATION_RECORD','ACCEPTED_ENTAILMENT'],scopeBinding:'CURRENT'},NORMALIZED_EXPRESSION:{type:'LEAF',testId:'TEST-STAGE17',requiredDisposition:'SATISFIED',truthExtraction:'ACCEPTED_ENTAILMENT',evidenceClasses:['OBSERVATION_RECORD','ACCEPTED_ENTAILMENT'],scopeBinding:'CURRENT'},SEMANTIC_EQUIVALENCE_DISPOSITION:'EQUIVALENT',ACCEPTED_SEMANTIC_REVIEW_IDS:['SEMANTIC-REVIEW-STAGE17']},'PROOF-EXPRESSION-STAGE17',engine.currentScope(engine.stageContext(p,6)));p.projectData.proofExpressions.push(proofExpression);
@@ -69,6 +88,12 @@ function fixture({iterationStage=10,additionalTest=false,varianceContract={dimen
  const test=record('tests',6,{REQ_ID:'REQ-STAGE17',TARGET_PROPOSITION_IDS:['PROPOSITION-STAGE17'],SEMANTIC_COVERAGE_DISPOSITION:'EQUIVALENT',SEMANTIC_REVIEW_IDS:['SEMANTIC-REVIEW-STAGE17'],TEST_ROLE:'REQUIRED_PROOF',TEST_TYPE:'MEANING',EXECUTION_MODE:'INDEPENDENT_AGENT_REVIEW',REQUIRED_CAPABILITY:'independent semantic review',ARTIFACT_REQUIREMENTS:'NONE',EVIDENCE_TO_PRESERVE:'Independent per-run review evidence',STATUS:'READY',VERIFICATION_PHASE:'PREPRODUCT_ITERATION',EARLIEST_EXECUTABLE_STAGE:12,REQUIRED_BY_STAGE:12,PER_RUN_REQUIRED:true,FINAL_PRODUCT_REQUIRED:false,DELIVERY_REQUIRED:false,TARGET_AVAILABILITY_CONDITION:{type:'PHASE_TARGET'},EXPECTED_VARIANCE_CONTRACT:expectedVarianceContract},'TEST-STAGE17',engine.currentScope(engine.stageContext(p,6)));p.projectData.tests.push(test);
  if(additionalTest){const another=engine.clone(test);another.id='TEST-STAGE17-SECOND';another.fields.TEST_ID=another.TEST_ID=another.id;engine.refreshRecordHashes(another,'tests');p.projectData.tests.push(another);}
  for(let stage=1;stage<6;stage++){p.stages[stage].status='COMPLETE';p.stages[stage].gate={complete:true,blocked:false,reasons:[]};}
+ if(scheduledRequirement){
+  const scheduledTest=record('tests',6,{...test.fields,REQ_ID:'REQ-SCHEDULED',TARGET_PROPOSITION_IDS:['PROPOSITION-SCHEDULED'],...scheduledRequirement},'TEST-SCHEDULED',test.scope);
+  p.projectData.tests.push(scheduledTest);
+  const leaf={type:'LEAF',testId:scheduledTest.id,requiredDisposition:'SATISFIED',truthExtraction:'ACCEPTED_ENTAILMENT',evidenceClasses:['OBSERVATION_RECORD','ACCEPTED_ENTAILMENT'],scopeBinding:'CURRENT'};
+  p.projectData.proofExpressions.push(record('proofExpressions',6,{...proofExpression.fields,TARGET_PROPOSITION_ID:'PROPOSITION-SCHEDULED',PROPOSED_EXPRESSION:leaf,NORMALIZED_EXPRESSION:leaf},'PROOF-EXPRESSION-SCHEDULED',proofExpression.scope));
+ }
  reviewProofFixture({engine,prompts:globalThis.closedLoopPromptEngine,ingestion:globalThis.closedLoopResponseIngestion,schema},p);
  engine.registerArtifactBytes(p,{stage:10,artifactId:artifactFixtureId(engine,p,'ARTIFACT-STAGE17-CANDIDATE'),filename:'candidate.bin',mediaType:'application/octet-stream',byteSize:1,sha256:sha});const decision=engine.recordRegisteredHumanDecision(p,{stage:freezeStage,purpose:'CANDIDATE_COMPONENT_SELECTION',targetFamily:'artifacts',targetId:hash.sha256Value([artifactFixtureId(engine,p,'ARTIFACT-STAGE17-CANDIDATE')]),value:[artifactFixtureId(engine,p,'ARTIFACT-STAGE17-CANDIDATE')],operatorLabel:'STAGE17_VERIFIER'});const frozen=engine.freezeCandidate(p,{stage:freezeStage,artifactIds:[artifactFixtureId(engine,p,'ARTIFACT-STAGE17-CANDIDATE')],selectionDecisionId:engine.recordId(decision,'humanDecisions'),operatorLabel:'STAGE17_VERIFIER'});let selectedIteration=frozen.iteration;const candidateId=engine.recordId(frozen.candidate,'candidateFreezes');if(iterationStage===19){p.stages[18].status='COMPLETE';selectedIteration=engine.beginUnchangedConfirmationIteration(p,{candidateId,operatorLabel:'CONTROLLED_COMPARISON_FIXTURE'});}const iterationId=engine.recordId(selectedIteration,'iterations'),scope={...engine.scopeForIteration(p,iterationId),requirementsVersion:p.job.CURRENT_REQUIREMENTS_VERSION,testSuiteVersion:p.job.CURRENT_TEST_SUITE_VERSION,instructionVersion:p.job.CURRENT_INSTRUCTION_VERSION};
  const slots=engine.reserveRunBatch(p,{stage:runStage,iterationId,candidateId,count:10});
@@ -83,7 +108,105 @@ function fixture({iterationStage=10,additionalTest=false,varianceContract={dimen
  return {p,iterationId,comparisonStage,comparison:p.projectData.comparisons.find(r=>r.id===comparison.id),test:p.projectData.tests.find(r=>r.id===test.id)};
 }
 
+// These controls exercise the real calculation/command owners using the
+// existing declared canonical comparison fixture. They do not claim that its
+// missing raw-run receipts or prior stage lineage were established by actors.
+function scheduledIterationControls(){
+ const observations=[],owners=globalThis.__comparisonFixtureOwners;
+ const future={VERIFICATION_PHASE:'FINAL_REPRESENTATION',EARLIEST_EXECUTABLE_STAGE:25,REQUIRED_BY_STAGE:25,PER_RUN_REQUIRED:false,FINAL_PRODUCT_REQUIRED:true,DELIVERY_REQUIRED:false};
+ const perRun=stage=>({VERIFICATION_PHASE:'PREPRODUCT_ITERATION',EARLIEST_EXECUTABLE_STAGE:stage,REQUIRED_BY_STAGE:stage,PER_RUN_REQUIRED:true,FINAL_PRODUCT_REQUIRED:false,DELIVERY_REQUIRED:false});
+ const markComparison=f=>{f.p.projectData.acceptedChanges.find(row=>row.changeId==='CHANGE-STAGE17-COMPARE').operation='COMPARE';return f;};
+ const completeScheduledCells=f=>{
+  for(const original of [...f.p.projectData.verification]){const fields={...original.fields,REQ_ID:'REQ-SCHEDULED',TEST_ID:'TEST-SCHEDULED'},copy=record('verification',original.stage,fields,original.id+'-SCHEDULED',original.scope);copy.evidenceRefs=[...original.evidenceRefs];f.p.projectData.verification.push(copy);}
+  f.p.projectData.comparisons.push(record('comparisons',f.comparisonStage,{...f.comparison.fields,REQ_ID:'REQ-SCHEDULED'},'COMPARISON-SCHEDULED',f.comparison.scope));
+ };
+ {
+  const f=fixture({scheduledRequirement:future}),before=hash.sha256Value(f.p.projectData.tests.find(row=>row.id==='TEST-SCHEDULED')),gate=engine.gate(13,f.p);
+  assert(gate.complete&&gate.reasons.length===0,'STAGE13_FUTURE_GATE_ORACLE: a future-only requirement added an early comparison gate blocker.');
+  f.p.projectData.verification.pop();assert(!engine.gate(13,f.p).complete,'STAGE13_DUE_MISSING_GATE_ORACLE: removing a due verification did not block the comparison gate.');
+  assert(hash.sha256Value(f.p.projectData.tests.find(row=>row.id==='TEST-SCHEDULED'))===before,'STAGE13_FUTURE_PRESERVATION_ORACLE');
+  observations.push({caseId:'FUTURE-REPRESENTATION-13',stage:13,futureRequirementRetained:true,noExtraEarlyBlocker:true,missingDueVerificationBlocked:true,priorStageFlagsAreFixtureSetup:true});
+ }
+ for(const stage of [17,19]){
+  const base=markComparison(fixture({iterationStage:stage})),f=markComparison(fixture({iterationStage:stage,scheduledRequirement:future})),test=f.p.projectData.tests.find(row=>row.id==='TEST-SCHEDULED'),before=hash.sha256Value(test),model=engine.evaluateCrossRunComparison(f.p,f.iterationId),mode=stage===17?'CORRECTED':'UNCHANGED_CONFIRMATION';
+  assert(model.complete&&model.clean&&model.requiredTupleCount===10&&JSON.stringify(model.dueRequirementIds)===JSON.stringify(['REQ-STAGE17']),'ITERATION_FUTURE_COMPARISON_ORACLE');
+  const operations=[...owners.acceptedOperationSet(f.p,stage,{iterationId:f.iterationId})];
+  if(stage===17)assert(operations.includes('ROOT_CAUSE'),'ITERATION_FUTURE_NO_DEFECT_CONTINUATION_ORACLE');
+  if(stage===17){
+   f.p.projectData.regressions.push(record('regressions',15,{...recordProposal(schema,'regressions').fields,...future,ACTIVE_RETIRED_STATE:'ACTIVE'},'REG-FUTURE-CONVERGENCE',engine.currentScope(f.p)));
+   const derived=engine.deriveStageData(f.p,18);assert(derived.TOTAL_STILL_APPLICABLE_REGRESSION_TESTS===0&&derived.SUCCESSFUL_REGRESSION_TESTS===0&&derived.MANDATORY_REQUIREMENTS_WITH_AFFIRMATIVE_APPLICABLE_VERIFICATION===1,'CONVERGENCE_FUTURE_COUNTS_ORACLE: future registrations were counted as verified successes.');
+  }
+  const baseline=engine.evaluateIteration(base.p,base.iterationId,mode),evaluation=engine.evaluateIteration(f.p,f.iterationId,mode);
+  assert(JSON.stringify(evaluation.reasons)===JSON.stringify(baseline.reasons),'ITERATION_FUTURE_GATE_ORACLE: a future-only requirement added an early iteration blocker.');
+  assert(evaluation.complete===false&&evaluation.reasons.some(reason=>reason.includes('accepted run-bound raw response')),'ITERATION_FIXTURE_LIMIT_ORACLE: canonical setup must not masquerade as an accepted actor journey.');
+  if(stage===19){
+   const baselineDetermination=owners.confirmationDetermination(base.p,{CONFIRMATION_ITERATION_ID:base.iterationId}),determination=owners.confirmationDetermination(f.p,{CONFIRMATION_ITERATION_ID:f.iterationId});
+   assert(JSON.stringify(determination.reasons)===JSON.stringify(baselineDetermination.reasons),'CONFIRMATION_FUTURE_GATE_ORACLE');
+   const reg=record('regressions',15,{...recordProposal(schema,'regressions').fields,...future,ACTIVE_RETIRED_STATE:'ACTIVE'},'REG-SCHEDULED',engine.currentScope(f.p));f.p.projectData.regressions.push(reg);
+   const regBefore=hash.sha256Value(reg),selection=engine.regressionExecutionSelection(f.p,19,{iterationId:f.iterationId,perRunOnly:true});
+   assert(selection.tests.length===0&&selection.future.some(row=>row.id===reg.id),'CONFIRMATION_SCHEDULED_FIXTURE_ORACLE');
+   const confirmation=engine.recordUnchangedConfirmation(f.p);
+   assert(confirmation.COMPARISON_RESULTS==='SATISFIED'&&confirmation.REGRESSION_RESULTS==='SATISFIED'&&confirmation.NEW_FAILURE_CASES==='NONE','CONFIRMATION_FUTURE_SUMMARY_ORACLE');
+   assert(confirmation.DETERMINATION==='UNDETERMINED','CONFIRMATION_FIXTURE_LIMIT_ORACLE: summaries do not supply missing execution authority.');
+   assert(hash.sha256Value(f.p.projectData.regressions.find(row=>row.id===reg.id))===regBefore,'CONFIRMATION_FUTURE_PRESERVATION_ORACLE');
+  }
+  assert(hash.sha256Value(f.p.projectData.tests.find(row=>row.id===test.id))===before,'ITERATION_FUTURE_PRESERVATION_ORACLE');
+  const deadline=engine.testDueState(f.p,test,25);assert(deadline.blocking&&!deadline.dueNow,'ITERATION_FUTURE_DEADLINE_ORACLE: absent final representation target became satisfied.');
+  observations.push({caseId:'FUTURE-REPRESENTATION-'+stage,stage,requiredTuples:10,futureRequirementRetained:true,noExtraEarlyBlocker:true,noFullIterationCompletionClaim:true,missingTargetBlocksAt25:true});
+ }
+ for(const stage of [17,19]){
+  const f=markComparison(fixture({iterationStage:stage,scheduledRequirement:perRun(stage)})),model=engine.evaluateCrossRunComparison(f.p,f.iterationId),matrix=engine.verificationMatrix(f.p,f.iterationId);
+  assert(matrix.evaluationStage===stage&&matrix.expected.length===20&&matrix.missing.length===10&&!model.complete&&!model.clean,'ITERATION_DUE_STAGE_MATRIX_ORACLE: newly due ten-cell requirement was omitted.');
+  assert(model.reasons.some(reason=>reason.includes('REQ-SCHEDULED')),'ITERATION_DUE_STAGE_MISSING_ORACLE');
+  completeScheduledCells(f);const complete=engine.evaluateCrossRunComparison(f.p,f.iterationId);
+  assert(complete.complete&&complete.clean&&complete.requiredTupleCount===20,'ITERATION_DUE_STAGE_CONFORMING_ORACLE');
+  const current=f.p.projectData.comparisons.find(row=>row.id==='COMPARISON-SCHEDULED');current.fields.AUTHORIZED_VARIANCE=current.AUTHORIZED_VARIANCE='UNKNOWN';engine.refreshRecordHashes(current,'comparisons');
+  assert(!engine.evaluateCrossRunComparison(f.p,f.iterationId).complete,'ITERATION_DUE_STAGE_UNKNOWN_ORACLE');
+  observations.push({caseId:'NEWLY-DUE-PER-RUN-'+stage,stage,expectedTuples:20,missingTuplesRejected:10,conformingComparisonAccepted:true,unknownComparisonBlocked:true});
+ }
+ // Retained deadline13/18 declarations cannot disappear from their actual
+ // comparison/convergence frontier. Stage6 route admissibility is separate.
+ for(const [iterationStage,frontier]of [[10,13],[17,18]]){
+  const f=fixture({iterationStage,scheduledRequirement:perRun(frontier)}),earlier=engine.verificationMatrix(f.p,f.iterationId),due=engine.verificationMatrix(f.p,f.iterationId,{stage:frontier}),comparison=engine.evaluateCrossRunComparison(f.p,f.iterationId,{stage:frontier});
+  assert(earlier.expected.length===10&&due.expected.length===20&&due.missing.length===10&&!comparison.complete,'ITERATION_RELEVANT_FRONTIER_ORACLE');
+  f.p.activeStage=30;assert(JSON.stringify(engine.verificationMatrix(f.p,f.iterationId).expected)===JSON.stringify(earlier.expected),'ITERATION_SELECTED_SCOPE_ORACLE: opening a later stage changed an earlier matrix.');
+  if(frontier===18)assert(engine.convergenceMetrics(f.p).comparisonComplete===false&&engine.convergenceMetrics(f.p).verificationCoverage===0.5,'ITERATION_CONVERGENCE_FRONTIER_ORACLE');
+  observations.push({caseId:'RETAINED-PER-RUN-FRONTIER-'+frontier,iterationStage,frontier,earlierRequiredTuples:10,currentRequiredTuples:20,laterUiStageDoesNotChangeEarlierMatrix:true,missingDueWorkBlocked:true,newDefinitionAdmissionNotClaimed:true});
+ }
+ for(const owner of ['17',null,0,28]){
+  const f=fixture({iterationStage:17}),iteration=f.p.projectData.iterations.find(row=>row.id===f.iterationId);iteration.stage=owner;
+  const matrix=engine.verificationMatrix(f.p,f.iterationId);assert(matrix.evaluationStage===null&&matrix.timingBlockers.some(row=>row.valid===false)&&!engine.evaluateCrossRunComparison(f.p,f.iterationId).complete,'ITERATION_UNKNOWN_OWNER_ORACLE');
+ }
+ return {scheduledIterationControls:'PASS',boundary:'actual shared matrix/comparison/gate/iteration/confirmation owners with declared canonical fixtures; no actor lifecycle, browser or durable-store claim',observations,unknownIterationOwnerControls:4,futureRegistrationsNotCountedAsSuccessful:true,sourceHashes:{...comparisonSourceHashes}};
+}
+const scheduledIterationReport=!injectedComparisonFault||injectedComparisonFault.scheduled?scheduledIterationControls():null;
+if(scheduledIterationReport)console.log(JSON.stringify(scheduledIterationReport));
+if(process.argv.includes('--scheduled-iteration-controls')||injectedComparisonFault?.scheduled)process.exit(0);
+
 const base=fixture();let model=engine.evaluateCrossRunComparison(base.p);assert(model.reasons.length===0,`Positive Stage 13 model failed: ${model.reasons.join(' | ')}`);assert(model.runIds.length===10&&model.requiredTupleCount===10,'Stage 13 did not derive exactly ten required run tuples.');assert(model.facts['REQ-STAGE17'].ALL_TEN_SATISFIED===true&&model.facts['REQ-STAGE17'].SATISFIED_COUNT===10,'Application did not derive all-ten satisfaction.');assert(model.facts['REQ-STAGE17'].EXPECTED_VARIANCE_CONTRACT_SHA256.length===1,'Frozen expected-variance contract hash was not bound to the comparison model.');let gate=engine.gate(13,base.p);assert(gate.complete,`Positive Stage 13 gate failed: ${gate.reasons.join(' | ')}`);const storedBefore=hash.sha256Value(base.comparison);engine.evaluateCrossRunComparison(base.p);assert(hash.sha256Value(base.comparison)===storedBefore,'Comparison evaluation rewrote an accepted record.');let derived=engine.deriveStageData(base.p,13);assert(derived.REQUIREMENTS_SATISFIED_BY_ALL_TEN.length===1&&derived.PROHIBITED_OUTPUT_VARIANCES.length===0&&derived.REQUIRED_VERIFICATION_TUPLE_COUNT===10,'Stage 13 derived data does not represent the proven ten-run comparison.');const baseStability=engine.executionStability(base.p,base.iterationId),baseReqStability=baseStability.requirementStability['REQ-STAGE17'],baseTestStability=baseStability.testStability['TEST-STAGE17'];assert(baseStability.runCount===10,'Shared stability evaluator did not use exactly ten current runs.');assert(baseReqStability.satisfied===10&&baseReqStability.violated===0&&baseReqStability.undetermined===0&&baseReqStability.agreementRate===1,'Ten identical requirement determinations did not produce exact 1.0 agreement.');assert(baseTestStability.satisfied===10&&baseTestStability.violated===0&&baseTestStability.undetermined===0&&baseTestStability.agreementRate===1,'Ten identical test determinations did not produce exact 1.0 agreement.');assert(baseStability.requirementsWithCompleteAgreement===1&&baseStability.requirementsWithDisagreement===0&&baseStability.completeAgreementRequirementIds.includes('REQ-STAGE17'),'Closed stability universe did not identify the one complete-agreement requirement.');
+
+// The defect aggregates are application calculations over an explicit
+// population, not values copied from the authored comparison prose.
+const stabilityAggregateObservations=[];
+{
+ const {p,iterationId}=fixture(),runs=engine.recordsForIteration(p,'runs',iterationId).map(row=>engine.recordId(row,'runs'));
+ assert(runs.length===10,'STABILITY_DEFECT_FIXTURE_ORACLE');
+ const empty=engine.executionStability(p,iterationId);assert(empty.totalDistinctDefects===0&&empty.repeatedDefectCount===0&&empty.repeatedFailureGroupCount===0&&empty.uniqueDefectCount===0&&Object.keys(empty.newDefectsByRun).length===0,'STABILITY_EMPTY_DEFECT_AGGREGATE_ORACLE');
+ const scope=engine.scopeForIteration(p,iterationId),add=(id,runId,failure,expectation,other={})=>{const row=record('defects',13,{REQ_ID:'REQ-STAGE17',RUN_ID:runId,OBSERVED_FAILURE:failure,EXPECTED_CONDITION:expectation,SEVERITY:'MAJOR',STATUS:'CONFIRMED'},id,other.scope||scope);if(other.active===false)row.active=false;p.projectData.defects.push(row);return row;};
+ add('DEFECT-REPEAT-A',runs[0],'Missing required terminal LF','Nine exact bytes');
+ const singleton=engine.executionStability(p,iterationId);assert(singleton.totalDistinctDefects===1&&singleton.repeatedDefectCount===0&&singleton.repeatedFailureGroupCount===0&&singleton.uniqueDefectCount===1&&singleton.newDefectsByRun[runs[0]]===1,'STABILITY_SINGLETON_DEFECT_AGGREGATE_ORACLE');
+ add('DEFECT-REPEAT-B',runs[1],'Missing required terminal LF','Nine exact bytes');
+ add('DEFECT-UNIQUE-A',runs[0],'Wrong first character','Required first character');
+ add('DEFECT-UNIQUE-B',runs[2],'Extra forbidden field','Closed output fields');
+ add('DEFECT-HISTORICAL',runs[0],'Historical different failure','Historical expectation',{scope:{...scope,iterationId:'UNRELATED-HISTORICAL-ITERATION'}});
+ add('DEFECT-INACTIVE',runs[0],'Inactive different failure','Inactive expectation',{active:false});
+ const actual=engine.executionStability(p,iterationId),derived=engine.deriveStageData(p,13),expected={totalDistinctDefects:4,repeatedDefectCount:2,repeatedFailureGroupCount:1,uniqueDefectCount:2,newDefectsByRun:{[runs[0]]:2,[runs[1]]:1,[runs[2]]:1},derivedRepeatedFailureGroups:1,derivedUniqueFailures:2};
+ const observed={totalDistinctDefects:actual.totalDistinctDefects,repeatedDefectCount:actual.repeatedDefectCount,repeatedFailureGroupCount:actual.repeatedFailureGroupCount,uniqueDefectCount:actual.uniqueDefectCount,newDefectsByRun:actual.newDefectsByRun,derivedRepeatedFailureGroups:derived.REPEATED_FAILURE_GROUPS,derivedUniqueFailures:derived.UNIQUE_FAILURES};
+ assert(hash.stableStringify(observed)===hash.stableStringify(expected),'STABILITY_DEFECT_AGGREGATE_ORACLE: '+JSON.stringify({expected,observed}));
+ assert(derived.STABILITY_SUMMARY.totalDistinctDefects===4&&derived.STABILITY_SUMMARY.repeatedDefectCount===2&&!Object.hasOwn(derived.STABILITY_SUMMARY,'repeatedFailureGroupCount')&&derived.STABILITY_SUMMARY.uniqueDefectCount===2,'STABILITY_DERIVED_DEFECT_SUMMARY_ORACLE');
+ stabilityAggregateObservations.push({checkId:'stage13.application-defect-stability-aggregates',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:3509'],boundary:'Actual executionStability and deriveStageData from independently declared current defect population',expected,observed,passed:true,scopeLimit:'Current canonical defect population deliberately seeded; initial application freeze/reservation and shared computation are real; no external actor, prior-stage lifecycle or defect semantic confirmation claimed.'});
+}
+if(process.argv.includes('--stability-aggregate-control')){console.log(JSON.stringify({stage13StabilityAggregates:'PASS',verificationObservations:stabilityAggregateObservations}));process.exit(0);}
 
 {const {p}=fixture();p.projectData.verification.pop();const m=engine.evaluateCrossRunComparison(p);assert(m.reasons.some(reason=>reason.includes('found 0')),'Missing required run verification was not rejected.');}
 {const {p}=fixture();const duplicate=JSON.parse(JSON.stringify(p.projectData.verification[0]));duplicate.id='VERIFY-STAGE17-DUPLICATE';duplicate.fields.VERIFICATION_ID=duplicate.VERIFICATION_ID='VERIFY-STAGE17-DUPLICATE';p.projectData.verification.push(duplicate);const m=engine.evaluateCrossRunComparison(p);assert(m.reasons.some(reason=>reason.includes('found 2')),'Duplicate required run verification was not rejected.');}
@@ -93,7 +216,7 @@ const base=fixture();let model=engine.evaluateCrossRunComparison(base.p);assert(
 {const {p,iterationId}=fixture();const row=p.projectData.verification[0];row.fields.OBSERVED_RESULT=row.OBSERVED_RESULT='VIOLATED';row.fields.DETERMINATION=row.DETERMINATION='VIOLATED';engine.refreshRecordHashes(row,'verification');const g=engine.gate(13,p),m=engine.evaluateCrossRunComparison(p),stability=engine.executionStability(p,iterationId),req=stability.requirementStability['REQ-STAGE17'],test=stability.testStability['TEST-STAGE17'];assert(m.facts['REQ-STAGE17'].ANY_VIOLATION===true,'Application did not derive a violated run.');assert(!g.reasons.some(reason=>reason.includes('Derived comparison contains a violation')),'Legacy Stage 13 logic still blocks any violated run instead of routing it forward.');assert(req.satisfied===9&&req.violated===1&&req.undetermined===0&&req.agreementRate===0.9,'Nine-of-ten requirement agreement with one violation did not produce exact 0.9 agreement.');assert(test.satisfied===9&&test.violated===1&&test.undetermined===0&&test.agreementRate===0.9,'Nine-of-ten test agreement with one violation did not produce exact 0.9 agreement.');assert(stability.requirementsWithCompleteAgreement===0&&stability.requirementsWithDisagreement===1&&stability.disagreementRequirementIds.includes('REQ-STAGE17'),'Closed stability universe did not classify the one disagreement requirement.');}
 {const {p,iterationId}=fixture();const row=p.projectData.verification[0];row.fields.OBSERVED_RESULT=row.OBSERVED_RESULT='UNDETERMINED';row.fields.DETERMINATION=row.DETERMINATION='UNDETERMINED';engine.refreshRecordHashes(row,'verification');const g=engine.gate(13,p),stability=engine.executionStability(p,iterationId),req=stability.requirementStability['REQ-STAGE17'],test=stability.testStability['TEST-STAGE17'];assert(!g.complete&&g.blocked&&g.reasons.some(reason=>reason.includes('application-derived UNDETERMINED')),'UNDETERMINED run truth did not fail closed at Stage 13.');assert(req.satisfied===9&&req.violated===0&&req.undetermined===1&&req.agreementRate===0.9,'Nine-of-ten requirement agreement with one undetermined result did not produce exact 0.9 agreement.');assert(test.satisfied===9&&test.violated===0&&test.undetermined===1&&test.agreementRate===0.9,'Nine-of-ten test agreement with one undetermined result did not produce exact 0.9 agreement.');assert(stability.requirementsWithCompleteAgreement===0&&stability.requirementsWithDisagreement===1,'Undetermined run did not enter the closed disagreement universe.');}
 
-console.log(JSON.stringify({controllerStage:'17',applicationStage:'13',crossRunComparison:'PASS',requiredRunCount:10,requiredTupleCount:10,expectedVarianceContractBound:true,applicationOwnedAggregateFacts:true,stabilityArithmetic:{tenOfTen:1,nineOfTen:0.9,violationCountExact:true,undeterminedCountExact:true,closedAgreementUniverse:true},prohibitedVarianceDefectHandoffEnforced:true,unknownVarianceBlocked:true,undeterminedTruthBlocked:true,violatedTruthRoutedForward:true,noRunOrEvidenceDiscarded:true,isolatedDisposableProject:true,closureVersion:engine.__stage13CrossRunClosureVersion}));
+console.log(JSON.stringify({controllerStage:'17',applicationStage:'13',crossRunComparison:'PASS',requiredRunCount:10,requiredTupleCount:10,expectedVarianceContractBound:true,applicationOwnedAggregateFacts:true,verificationObservations:stabilityAggregateObservations,stabilityArithmetic:{tenOfTen:1,nineOfTen:0.9,violationCountExact:true,undeterminedCountExact:true,closedAgreementUniverse:true},prohibitedVarianceDefectHandoffEnforced:true,unknownVarianceBlocked:true,undeterminedTruthBlocked:true,violatedTruthRoutedForward:true,noRunOrEvidenceDiscarded:true,isolatedDisposableProject:true,closureVersion:engine.__stage13CrossRunClosureVersion}));
 
 
 // These fixtures use the production freeze/reservation builders for each
@@ -261,3 +384,6 @@ if(!selectedComparisonFault&&!process.argv.includes('--comparison-control')){
   console.log(JSON.stringify({caseId:'COMPARISON-IMPLEMENTATION-FAULTS',result:'PASS',synthetic:true,actualBrowser:false,childBoundSeconds:15,suiteBoundSeconds:180,faults:faultResults,rawRuns,sourceRestored:true}));
  }catch(error){console.log(JSON.stringify({caseId:'COMPARISON-IMPLEMENTATION-FAULTS',result:'FAIL',faults:faultResults,rawRuns,failure:String(error.stack||error)}));throw error;}
 }
+
+// Recovery runs once in the default parent, never in each injected-fault child.
+if(!selectedComparisonFault&&!process.argv.includes('--comparison-control')){const {verifyStage13ProjectionRecovery}=await import('./test-stage13-projection-recovery.mjs');console.log(JSON.stringify(await verifyStage13ProjectionRecovery()));}

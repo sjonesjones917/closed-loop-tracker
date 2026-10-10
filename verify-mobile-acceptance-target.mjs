@@ -1,7 +1,14 @@
 import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
+import {gzipSync,gunzipSync} from 'node:zlib';
+import {projectStoreRuntime} from './test-project-store-runtime.mjs';
+import {syntheticMobileTargetFacts,syntheticMobileOperations} from './mobile-evidence-test-fixture.mjs';
+import {verifyMobileAcceptanceEvidence,decodeMobileInitialPackage} from './verify-mobile-acceptance-evidence.mjs';
+import {evaluateMobileAcceptanceSubmission} from './evaluate-mobile-acceptance-submission.mjs';
 import {createMobileAcceptanceTarget,MOBILE_ACCEPTANCE_ORIGIN,MOBILE_ACCEPTANCE_BASE_PATH} from './generate-mobile-acceptance-target.mjs';
 
 const input={
+  ...syntheticMobileTargetFacts({deviceModel:'iPhone 15'}),
   sourceCommit:'f'.repeat(40),deploymentManifestDigest:'a'.repeat(64),
   origin:MOBILE_ACCEPTANCE_ORIGIN,basePath:MOBILE_ACCEPTANCE_BASE_PATH,
   testProjectId:'JOB-MOBILE-001',procedureVersion:'actual-iphone-safari/1',
@@ -25,4 +32,53 @@ assert.throws(()=>createMobileAcceptanceTarget({...input,issuedAt:'2026-09-03T00
 assert.throws(()=>createMobileAcceptanceTarget({...input,issuedAt:'2026-02-30T00:00:00.000Z'}),/canonical/);
 const mutated={...target,deploymentManifestDigest:'b'.repeat(64)};
 assert.notEqual(mutated.deploymentManifestDigest,target.deploymentManifestDigest);
-console.log(JSON.stringify({mobileAcceptanceTargetGenerator:'PASS',csprngChallengeShape:true,nonrepeatable:true,requiredInputsRejected:true,canonicalBindingEnforced:true,strictUtcAndExpiry:true,mutationSensitive:true},null,2));
+// These are contract controls, not an actual physical-device acceptance record.
+const evidence={...target,...syntheticMobileOperations(target),mobileAcceptanceEvidenceId:'SYNTHETIC-TARGET-CONTRACT-EVIDENCE',physicalDeviceAssertion:true,evidenceBasis:'HUMAN_OBSERVATION',performer:input.performer,identityAssurance:'SELF_ASSERTED',runtimeFindings:{runtimeExceptions:0,unhandledRejections:0},measurements:{horizontalOverflowPx:0,minimumPrimaryTextPx:16,minimumSecondaryTextPx:14,minimumTouchTargetPx:44},exportedProjectDigest:'b'.repeat(64),screenshotOrRecordingReferences:['SYNTHETIC-CAPTURE']};
+const expected={verificationTime:'2026-09-03T00:30:00.000Z',sourceCommit:input.sourceCommit,deploymentManifestDigest:input.deploymentManifestDigest,buildIdentity:input.buildIdentity};
+const check=(t=target,e=evidence)=>verifyMobileAcceptanceEvidence({target:t,evidence:e,expected});
+assert.equal(check().accepted,true,JSON.stringify(check().errors));
+for(const field of ['performer','identityAssurance','buildIdentity','unavailableEnvironmentFacts'])assert.deepEqual(target[field],input[field],'TARGET_FREEZE_ORACLE: generator dropped frozen '+field);
+assert.deepEqual(target.requiredEvidenceArtifacts,['screenshotOrRecordingReferences','operationReceipts','runtimeFindings','exportedProjectDigest'],'TARGET_FREEZE_ORACLE: required artifact declarations changed.');
+assert.match(target.preparationId,/^MOBILE-PREPARATION-[0-9a-f]{24}$/);assert.notEqual(target.preparationId,second.preparationId);
+const cases=[];
+function reject(name,mutate,code){const t=structuredClone(target),e=structuredClone(evidence);mutate(t,e);const result=check(t,e);assert.equal(result.accepted,false,'MOBILE_TARGET_FREEZE_ORACLE: '+name+' was accepted.');assert(result.errors.some(error=>error.code===code),'MOBILE_TARGET_FREEZE_ORACLE: '+name+' rejected for a different reason: '+JSON.stringify(result.errors));assert.equal(check().accepted,true,'MOBILE_TARGET_FREEZE_ORACLE: conforming control failed after '+name);cases.push({caseId:name,expectedCode:code,rejected:true,control:true});}
+for(const field of ['iosVersion','safariUserAgent'])reject('missing-target-'+field,t=>{delete t[field];},'TARGET_DEVICE_FACT_INVALID');
+for(const field of ['performer','identityAssurance','buildIdentity']){
+ reject('missing-target-'+field,t=>{delete t[field];},'TARGET_FROZEN_FACT_REQUIRED');
+ reject('changed-evidence-'+field,(t,e)=>{e[field]='DIFFERENT';},'EVIDENCE_FROZEN_FACT_MISMATCH');
+}
+reject('missing-preparation-id',t=>{delete t.preparationId;},'TARGET_PREPARATION_ID_REQUIRED');
+reject('missing-required-evidence',t=>{t.requiredEvidenceArtifacts.pop();},'TARGET_REQUIRED_EVIDENCE_INVALID');
+reject('duplicate-required-evidence',t=>{t.requiredEvidenceArtifacts[0]=t.requiredEvidenceArtifacts[1];},'TARGET_REQUIRED_EVIDENCE_INVALID');
+reject('unknown-hardware-without-reason',t=>{t.deviceModel='UNKNOWN';t.unavailableEnvironmentFacts=[];},'TARGET_UNKNOWN_FACT_UNEXPLAINED');
+reject('contradictory-unavailable-facts',t=>{t.unavailableEnvironmentFacts.push({fact:'deviceModel',reason:'Declared unavailable despite pinned known model.',evidenceBasis:'HUMAN_OBSERVATION'});},'TARGET_UNAVAILABLE_FACT_CONTRADICTED');
+reject('wrong-type-unavailable-facts',t=>{t.unavailableEnvironmentFacts={some:2};},'TARGET_UNAVAILABLE_FACTS_INVALID');
+reject('unknown-required-ios',t=>{t.iosVersion='UNKNOWN';},'TARGET_MINIMUM_IDENTITY_REQUIRED');
+reject('missing-preparation',(t,e)=>{delete e.preparation;},'MOBILE_PREPARATION_REQUIRED');
+for(const field of ['preparationId','challenge','sourceCommit','deploymentManifestDigest','origin','basePath','testProjectId','procedureVersion','buildIdentity','targetId'])reject('wrong-preparation-'+field,(t,e)=>{e.preparation[field]='DIFFERENT';},'MOBILE_PREPARATION_BINDING_MISMATCH');
+reject('late-preparation',(t,e)=>{e.preparation.recordedAt='2026-09-03T00:20:00.000Z';},'MOBILE_PREPARATION_TIME_INVALID');
+reject('initial-package-captured-late',(t,e)=>{e.preparation.initialProjectPackage.capturedAt='2026-09-03T00:20:00.000Z';},'MOBILE_INITIAL_PACKAGE_INVALID');
+reject('initial-package-digest-mismatch',(t,e)=>{e.preparation.initialProjectPackage.sha256='0'.repeat(64);},'MOBILE_INITIAL_PACKAGE_INVALID');
+reject('initial-package-base64-malformed',(t,e)=>{e.preparation.initialProjectPackage.base64+='!';},'MOBILE_INITIAL_PACKAGE_INVALID');
+function changeInitial(e,mutate){const row=e.preparation.initialProjectPackage,body=JSON.parse(gunzipSync(Buffer.from(row.base64,'base64')).toString('utf8'));mutate(body);const bytes=gzipSync(Buffer.from(JSON.stringify(body)));Object.assign(row,{base64:bytes.toString('base64'),byteSize:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex')});}
+for(const family of ['rawResponses','responseProposals','acceptedChanges','generatedPrompts','responseRecords','proposals'])reject('initial-package-wrong-type-'+family,(t,e)=>changeInitial(e,p=>{p.project.projectData[family]={};}),'MOBILE_INITIAL_PACKAGE_INVALID');
+reject('initial-package-wrong-project',(t,e)=>changeInitial(e,p=>{p.project.job.JOB_ID='OTHER';}),'MOBILE_INITIAL_PACKAGE_INVALID');
+reject('initial-package-not-initial-stage',(t,e)=>changeInitial(e,p=>{p.project.job.CURRENT_STAGE='STAGE 30';}),'MOBILE_INITIAL_PACKAGE_INVALID');
+reject('initial-package-late-work',(t,e)=>changeInitial(e,p=>{p.project.projectData.rawResponses.push({id:'LATE'});}),'MOBILE_INITIAL_PACKAGE_INVALID');
+reject('initial-package-canonical-valid-preworked-prompt',(t,e)=>changeInitial(e,p=>{const r=projectStoreRuntime(),project=r.copy(p.project);project.projectData.generatedPrompts.push(r.prompts.buildPromptRecord(1,project));const integrity=r.store.validateProjectIntegrity(project,{verifyDerived:false});assert.equal(integrity.valid,true,'MOBILE_PREWORKED_CONTROL_INTEGRITY_ORACLE: '+JSON.stringify(integrity.issues));p.project=project;p.packageManifest.projectSha256=r.store.projectSha256(project);}), 'MOBILE_INITIAL_PACKAGE_INVALID');
+for(const field of ['persistent','quotaBytes','usageBytes'])reject('wrong-type-storage-'+field,(t,e)=>{e.preparation.storageObservations[field]=null;},'MOBILE_STORAGE_OBSERVATIONS_INVALID');
+reject('unknown-storage-without-reason',(t,e)=>{e.preparation.storageObservations.quotaBytes='UNKNOWN';},'MOBILE_STORAGE_OBSERVATIONS_INVALID');
+reject('wrong-type-receipts',(t,e)=>{e.operationReceipts={};},'REQUIRED_RECEIPT_MISSING');
+const unknownTarget=createMobileAcceptanceTarget({...input,deviceModel:'UNKNOWN',unavailableEnvironmentFacts:syntheticMobileTargetFacts().unavailableEnvironmentFacts}),unknownEvidence={...evidence,...unknownTarget,...syntheticMobileOperations(unknownTarget)};
+unknownEvidence.preparation.storageObservations.quotaBytes='UNKNOWN';unknownEvidence.preparation.storageObservations.unavailableReasons.quotaBytes='Estimate API unavailable on this synthetic target.';
+assert.equal(check(unknownTarget,unknownEvidence).accepted,true,'UNKNOWN hardware/WebKit and unavailable quota with honest reasons must remain permitted.');
+const initialCompressed=gzipSync(Buffer.from(JSON.stringify({padding:'x'.repeat(4096)}))).toString('base64');
+assert.throws(()=>decodeMobileInitialPackage(initialCompressed,{maxOutputLength:256}),/larger than|too large|buffer|length/i,'MOBILE_INITIAL_PACKAGE_EXPANSION_ORACLE: bounded decoder must stop expansion before constructing an oversized JSON value.');
+assert.equal(decodeMobileInitialPackage(initialCompressed,{maxOutputLength:8192}).pkg.padding.length,4096);
+assert.throws(()=>decodeMobileInitialPackage(gzipSync(Buffer.from([123,34,120,34,58,34,255,34,125])).toString('base64')),/encoded data|encoding/i,'MOBILE_INITIAL_PACKAGE_UTF8_ORACLE: invalid UTF-8 bytes must not become replacement characters.');
+assert.throws(()=>decodeMobileInitialPackage(initialCompressed,{maxOutputLength:1,expectedByteSize:1}),/exact bytes/,'MOBILE_INITIAL_PACKAGE_IDENTITY_FIRST_ORACLE: wrong declared byte identity must fail before decompression.');
+assert.equal(unknownEvidence.evidenceBasis,'HUMAN_OBSERVATION');assert.equal(unknownEvidence.identityAssurance,'SELF_ASSERTED');
+const changedPerformer={...evidence,performer:'OTHER-PERFORMER'},submission=evaluateMobileAcceptanceSubmission({targetJson:JSON.stringify(target),evidenceJson:JSON.stringify(changedPerformer),expected,submitter:'SYNTHETIC-CONTROLLER'});
+assert.equal(submission.actualIPhoneSafariAcceptance,false,'MOBILE_TARGET_FREEZE_ORACLE: authenticated submission must not replace the frozen performer.');
+assert(submission.mobileAcceptanceBlockers.some(row=>row.details.some(error=>error.code==='EVIDENCE_FROZEN_FACT_MISMATCH')));
+console.log(JSON.stringify({mobileAcceptanceTargetGenerator:'PASS',csprngChallengeShape:true,nonrepeatable:true,requiredInputsRejected:true,canonicalBindingEnforced:true,strictUtcAndExpiry:true,mutationSensitive:true,synthetic:true,actualPhysicalDeviceAcceptance:false,targetFreezeCases:cases,unknownFactsAndHumanObservationControl:true,authenticatedSubmissionPerformerMismatchRejected:true},null,2));

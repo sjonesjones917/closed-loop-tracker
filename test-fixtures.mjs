@@ -1,6 +1,22 @@
+import assert from 'node:assert/strict';
+import {authorizeSyntheticHandoff} from './test-handoff-authorization.mjs';
+import fs from 'node:fs';
+import {gunzipSync} from 'node:zlib';
+import {readStoreArchive} from './test-zip.mjs';
+import {restoreArtifactFixture,hydrateRetainedPromptContexts,bindAcceptanceUi} from './test-project-store-runtime.mjs';
+
+// Controlled fixture authorization, never evidence of a real human or external
+// execution. Every caller retains the actual command/save/fresh-prompt boundary.
+export async function authorizeFixtureHandoff(r,{project,prompt,options={}}){
+ const action={target:`Only the disposable synthetic fixture for ${project.job.JOB_ID}, Stage ${prompt.stage} ${prompt.operation}.`,riskClasses:['REVERSIBLE'],expectedEffect:'Perform the declared synthetic comparison or generate disposable fixture response/output files only.',reversibility:'Discard the isolated fixture and all generated outputs.',maximumCost:'No paid service, purchase, or external charge.',authority:'Synthetic verifier operator for this isolated fixture only; no real project authority.',containment:'Only the supplied disposable fixture; no external systems, private user data, production state, physical actions, or security testing.',stopCondition:'Stop if any effect exceeds this exact disposable fixture.',responsibleActor:'SYNTHETIC_VERIFIER_ACTOR'};
+ return authorizeSyntheticHandoff(r,{project,prompt,options,action});
+}
+
 export function scalarFor(def,name,overrides={}){
   if(Object.hasOwn(overrides,name))return overrides[name];
-  if(String(name).toUpperCase()==='EXECUTION_MODE')return 'EXTERNAL_AGENT_TOOL';
+  // Generic synthetic actors perform generally routable independent review.
+  // Tool/system fixtures must select their route and establish scoped readiness.
+  if(String(name).toUpperCase()==='EXECUTION_MODE')return 'INDEPENDENT_AGENT_REVIEW';
   if(def.enumValues?.length)return def.enumValues[0];
   if(def.valueType==='BOOLEAN')return true;
   if(def.valueType==='INTEGER')return 1;
@@ -32,24 +48,148 @@ export function recordProposal(schema,collection,{tempKey,targetId,relationships
 }
 export function evidence(label='fixture'){return {temporaryKey:'evidence-1',kind:'WORKFLOW_EVIDENCE',description:`${label} evidence`,location:'verify-full-cycle.mjs',content:`controlled ${label} evidence`};}
 
-// Advance through real response acceptance to the first proposition-producing stage.
-export function stage04AcceptanceFixture(runtime,jobId='JOB-BROWSER-PROOF-PERSISTENCE'){
-  const {core,schema,engine,prompts,ingestion}=runtime;
-  let p=core.createBlankState(jobId);
+// These meanings come from the approved eight-byte VERIFIED / nine-byte
+// VERIFIED + LF example. The fixture author must supply the current published
+// test profile and actual evidence; this helper grants no compatibility authority.
+export function deferredCompatibilityFixtureValues(family,{actualTarget='The preserved eight-byte VERIFIED fixture and the current reviewed target input contract.',rationale='The preserved eight-byte fixture omits the required terminal LF. The reviewed complete-content comparison distinguishes it from nine-byte VERIFIED followed by LF.'}={}){
+  const common={actualTargetCompatibility:'TRUE',outcomeCompatibility:'TRUE',actualTarget,rationale};
+  if(family==='failureTests')return {...common,expectedRejectionMeaning:'SATISFIED means the exact eight-byte VERIFIED fixture is rejected for differing from the required nine-byte VERIFIED followed by LF; it is not an affirmative product pass.'};
+  if(family==='regressions')return {...common,preCorrectionFailureMeaning:'The original eight-byte VERIFIED target fails complete comparison with nine-byte VERIFIED followed by LF, so the actual PRE_CORRECTION result must be VIOLATED.',postCorrectionSuccessMeaning:'After correction, a distinct target identity containing the required terminal LF matches the nine-byte content, so actual POST_CORRECTION must be SATISFIED while the original negative fixture remains preserved.'};
+  throw new Error('Compatibility fixture family must be failureTests or regressions.');
+}
+
+export function deferredDefinitionSupportFixture(schema,{family,definition,testProfile,fixture,defectRef,supportingEvidenceRefs,knownInvalidCase='The attributable preserved fixture is exactly the eight-byte VERIFIED value; the governing reviewed comparison requires nine-byte VERIFIED followed by LF. Its missing LF is the negative case, not a successful ordinary observation.'}){
+  if(!schema.DEFERRED_DEFINITION_SUPPORT_CONTRACT)throw new Error('The published deferred-definition support contract is unavailable.');
+  if(!testProfile||typeof testProfile.recordId!=='string'||typeof testProfile.semanticSha256!=='string'||typeof testProfile.inputContractSha256!=='string')throw new Error('Copy the complete current application-published reviewed test profile.');
+  const report={schema:schema.DEFERRED_DEFINITION_SUPPORT_CONTRACT.schema,definition,test:{recordId:testProfile.recordId,semanticSha256:testProfile.semanticSha256,inputContractSha256:testProfile.inputContractSha256},fixture,knownInvalidCase,basis:'AGENT_SEMANTIC_OBSERVATION',supportingEvidenceRefs,...(defectRef?{defectRef}:{})};
+  const checked=schema.validateDeferredDefinitionSupport(report,family);if(!checked.valid)throw new Error('Support fixture violates its published schema: '+JSON.stringify(checked.issues));
+  return report;
+}
+
+// Copy a published profile, never manufacture a test identity or digest.
+export function deferredPublishedTestProfile(prompt,testId){
+  const profiles=(prompt.contextManifest?.deferredDefinitionTestProfiles||[]).filter(row=>row.recordId===testId);
+  if(profiles.length!==1||typeof profiles[0].semanticSha256!=='string'||typeof profiles[0].inputContractSha256!=='string')throw new Error('The current instruction must publish exactly one complete reviewed test support profile.');
+  return profiles[0];
+}
+
+export function deferredDefinitionResponseFixture({schema,engine,prompts},project,prompt,{family,fields,relationships,fixtureValue='VERIFIED',fixtureArtifactId=null,defectId=null,defectEvidenceIds=[],tempKey='supported-definition',compatibility=deferredCompatibilityFixtureValues(family),knownInvalidCase='The preserved fixture is exactly eight UTF-8 bytes VERIFIED. It omits the terminal LF required by the current governing nine-byte complete-content comparison. This exact original negative case accounts for fixture rejection and, for regression, original target failure and a distinct corrected target match.'}={}){
+  const testId=relationships?.EXECUTION_TEST_ID?.recordId;if(typeof testId!=='string')throw new Error('A supported fixture requires its application-provided execution test relationship.');
+  const testProfile=deferredPublishedTestProfile(prompt,testId),manifest=prompts.promptFileManifest(prompt),fixture=fixtureArtifactId?{artifactRef:{recordId:fixtureArtifactId}}:{literal:{value:fixtureValue}};
+  const report=deferredDefinitionSupportFixture(schema,{family,definition:{tempKey},testProfile,fixture,...(defectId?{defectRef:{recordId:defectId}}:{}),supportingEvidenceRefs:[{tempKey:'negative-fixture'},{tempKey:'known-invalid-account'},...defectEvidenceIds.map(recordId=>({recordId}))],knownInvalidCase:{evidenceRef:{tempKey:'known-invalid-account'}}});
+  const artifact=fixtureArtifactId?engine.records(project,'artifacts').find(row=>engine.recordId(row,'artifacts')===fixtureArtifactId):null;
+  const evidence=[{temporaryKey:'negative-fixture',kind:'PRESERVED_NEGATIVE_FIXTURE',description:'Exact preserved synthetic negative fixture; no future execution is claimed.',authorityType:'AGENT_CLAIM',location:artifact?engine.recordValue(artifact,'FILENAME'):'response.json#/evidence/0/content',content:fixtureValue.trim()?fixtureValue:JSON.stringify({fixtureLiteral:fixtureValue}),...(fixtureArtifactId?{attachmentRef:{recordId:fixtureArtifactId}}:{})},{temporaryKey:'known-invalid-account',kind:'ATTRIBUTABLE_NEGATIVE_CASE_ACCOUNT',description:'Complete attributable author account of this exact preserved negative case.',authorityType:'AGENT_CLAIM',location:'response.json',content:knownInvalidCase},{temporaryKey:'definition-support',kind:'DEFERRED_DEFINITION_SUPPORT',description:'Attributable supported author correspondence to the current reviewed test and preserved negative fixture.',authorityType:'AGENT_CLAIM',location:'response.json',content:JSON.stringify(report)}];
+  return {schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:project.job.JOB_ID,stage:prompt.stage,operation:prompt.operation,promptIdentity:manifest.promptIdentity,packageId:manifest.packageId,operationReservationId:manifest.operationReservationId,challengeNonce:manifest.challengeNonce,scope:manifest.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{},records:{[family]:[{tempKey,fields:{...fields,EXECUTION_COMPATIBILITY:compatibility},relationships,evidenceRefs:['negative-fixture','known-invalid-account','definition-support'],notes:'Synthetic definition author fixture; admission does not establish future execution or stage completion.'}]},evidence,unresolved:[],warnings:[],attachments:[]};
+}
+
+// Reusable actual author admission for maintained isolated regression fixtures.
+// The caller supplies a derived prerequisite snapshot and its captured bytes;
+// this helper never creates a prerequisite, edits a reviewed test, or sets a gate.
+// The complete current preflight lineage exceeds the former 32 MiB bound.
+// This bounded test-fixture decoder limit does not change application limits.
+export const DEFERRED_LEGACY_FIXTURE_MAX_OUTPUT_BYTES=48*1024*1024;
+export function readDeferredDefinitionLegacyFixture(r,filename='verification/deferred-definition-compatibility-legacy-fixture-20261005.json'){
+ const carrier=JSON.parse(fs.readFileSync(filename,'utf8'));assert.equal(carrier.schema,'closed-loop-deferred-definition-legacy-carrier/1');assert.equal(carrier.encoding,'gzip-base64');const compressed=Buffer.from(carrier.gzipBase64,'base64');assert.equal(compressed.toString('base64'),carrier.gzipBase64);assert.equal(compressed.length,carrier.gzipByteSize);const bytes=gunzipSync(compressed,{maxOutputLength:DEFERRED_LEGACY_FIXTURE_MAX_OUTPUT_BYTES}),text=new TextDecoder('utf-8',{fatal:true}).decode(bytes);assert.equal(bytes.length,carrier.decodedByteSize);assert.equal(r.runtime.closedLoopHash.sha256Text(text),carrier.decodedSha256,'ADMITTED_DEFERRED_RESTORATION_DECODED_IDENTITY_ORACLE');const payload=JSON.parse(text);assert.equal(payload.schema,'closed-loop-deferred-definition-legacy-fixture/1');assert.equal(payload.earlierCompleteFlagsForced,false);return payload;
+}
+// This new pinned cohort contains current normal prerequisite creation. The
+// separate legacy carrier stays available for historical counterexamples.
+export function readCurrentDeferredPrerequisiteFixture(r,key,{filename='verification/deferred-definition-current-prerequisite-fixture-20261007.json'}={}){
+ const entryStage={nativeStage15:15,regressions:16}[key];assert(entryStage,'CURRENT_DEFERRED_PREREQUISITE_COHORT_REQUIRED');
+ const payload=JSON.parse(fs.readFileSync(filename,'utf8'));
+ assert.equal(payload.schema,'closed-loop-current-deferred-prerequisites/1');
+ assert.equal(payload.synthetic,true);assert.equal(payload.actualBrowser,false);assert.equal(payload.earlierCompleteFlagsForced,false);
+ const carrier=payload.cohorts?.[key];assert.equal(carrier?.schema,'closed-loop-reviewed-prerequisite-carrier/1');assert.equal(carrier.encoding,'gzip-base64');
+ const compressed=Buffer.from(carrier.gzipBase64,'base64');assert.equal(compressed.toString('base64'),carrier.gzipBase64);assert.equal(compressed.length,carrier.gzipByteSize);
+ // The measured current admitted cohort is 143,693,623 decoded bytes. This
+ // fixture-only 138 MiB ceiling preserves every byte; older decoder limits stay.
+ const bytes=gunzipSync(compressed,{maxOutputLength:138*1024*1024}),text=new TextDecoder('utf-8',{fatal:true}).decode(bytes);
+ assert.equal(bytes.length,carrier.decodedByteSize);assert.equal(r.runtime.closedLoopHash.sha256Text(text),carrier.decodedSha256,'CURRENT_DEFERRED_PREREQUISITE_DECODED_IDENTITY_ORACLE');
+ const prefix=JSON.parse(text);assert.equal(prefix.schema,'closed-loop-counterpart-diagnostic-prefix/1');assert.equal(prefix.entryStage,entryStage);assert.equal(prefix.completedPriorStages,entryStage-1);assert.equal(prefix.synthetic,true);assert.equal(prefix.actualBrowser,false);assert.equal(prefix.earlierCompleteFlagsForced,false);return prefix;
+}
+
+export async function deferredFailureExecutionResponseFixture({schema,hash},manifest,binding,{isolationIdentity='synthetic-disposable-negative-comparison',filename='synthetic-failure-execution.json'}={}){
+ assert(binding?.subjectId&&binding.phase==='FAILURE_VALIDATION','DEFERRED_FAILURE_RECEIPT_CURRENT_BINDING_REQUIRED');const invalid=Buffer.from(binding.fixture,'utf8'),expected=Buffer.from('VERIFIED\n','utf8');assert.notDeepEqual(invalid,expected,'DEFERRED_FAILURE_RECEIPT_ACTUAL_NEGATIVE_COMPARISON_REQUIRED');const isolation={kind:'TEST_PROJECT_CLONE',identity:isolationIdentity},raw=JSON.stringify({schema:'SYNTHETIC_DISPOSABLE_COMPARISON/1',synthetic:true,binding,isolation,actualInvalidRejected:!invalid.equals(expected),actualConformingAccepted:expected.equals(Buffer.from('VERIFIED\n','utf8')),externalActor:false,actualBrowser:false}),bytes=Buffer.from(raw,'utf8'),blob=new Blob([bytes],{type:'application/json'}),sha256=await hash.sha256Bytes(blob),slot=manifest.attachmentSlots.find(row=>row.role==='SUPPORTING_EVIDENCE');assert(slot,'DEFERRED_FAILURE_RECEIPT_ACTUAL_RETURNED_SLOT_REQUIRED');const report={schema:schema.DEFERRED_EXECUTION_EVIDENCE.schema,binding,phase:binding.phase,result:'SATISFIED',isolation,observedResult:'The actual preserved invalid bytes differ from VERIFIED plus LF and are rejected; the conforming nine-byte control matches.',performer:'Synthetic Node executor in disposable comparison',evidenceLocation:filename,isolationEvidence:'Exact isolated inputs, binding and comparison retained as returned bytes; synthetic only.'},envelope={schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:manifest.jobId,stage:manifest.stage,operation:manifest.operation,promptIdentity:manifest.promptIdentity,packageId:manifest.packageId,operationReservationId:manifest.operationReservationId,challengeNonce:manifest.challengeNonce,scope:manifest.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{},records:{regressionExecutions:[{tempKey:'receipt',fields:{PHASE:binding.phase,RESULT:'SATISFIED'},relationships:{MUTATION_ID:{recordId:binding.subjectId}},evidenceRefs:['execution'],notes:'Actual synthetic disposable negative comparison.'}]},evidence:[{temporaryKey:'execution',kind:'EXTERNAL_EXECUTION',description:'Actual synthetic disposable negative comparison',authorityType:'EXTERNAL_SYSTEM',location:filename,content:JSON.stringify(report),attachmentRef:{tempKey:'returned'},notes:'Synthetic fixture, not real external acceptance.'}],unresolved:[],warnings:[],attachments:[{temporaryKey:'returned',attachmentSlotId:slot.attachmentSlotId,role:slot.role,filename,mediaType:'application/json',byteSize:bytes.length,sha256,required:true}]};return {envelope,returnedAttachments:[{temporaryKey:'returned',bytes}],rawAttachmentText:raw,actualInvalidRejected:true,actualConformingAccepted:true,synthetic:true,actualBrowser:false};
+}
+// Historical prerequisite bytes stay pinned. This copied synthetic setup uses
+// the existing engine owner to restore absent Job pointer projections before a
+// current canonical write; it creates no record, evidence, gate, or migration
+// receipt. Actual source-preserving storage migration has separate regressions.
+export function currentRetainedFixtureProject(r,source){
+ const p=r.copy(source);
+ for(const {field,to} of r.engine.jobPointerProjectionRepairs(p))p.job[field]=to;
+ const issues=r.engine.jobPointerIntegrityIssues(p);
+ assert.equal(issues.length,0,'RETAINED_FIXTURE_CURRENT_POINTER_ORACLE: '+JSON.stringify(issues));
+ return p;
+}
+export async function deferredDefinitionRestorationFixture(r,{family,executionStage=family==='regressions'?16:8,filename,prefix=null,subjectId=null}={}){
+ const current=!prefix&&filename===undefined&&family==='regressions',payload=prefix||current?null:readDeferredDefinitionLegacyFixture(r,filename),retained=prefix||(current?readCurrentDeferredPrerequisiteFixture(r,'regressions'):payload.admittedDueFixtures?.[family]||payload.cohorts?.[family]?.currentSupportedRecovery);assert(retained?.project&&retained.artifacts,'ADMITTED_DEFERRED_RESTORATION_ACTUAL_RECEIPT_REQUIRED');const archivedFixtureClockUtc=retained.archivedFixtureClockUtc||payload?.archivedFixtureClockUtc;if(archivedFixtureClockUtc){assert.equal(new Date(archivedFixtureClockUtc).toISOString(),archivedFixtureClockUtc);r.runtime.Date=class extends Date{constructor(...args){super(...(args.length?args:[archivedFixtureClockUtc]));}static now(){return Date.parse(archivedFixtureClockUtc);}};}let p=currentRetainedFixtureProject(r,retained.project);await restoreArtifactFixture(r.store,retained.artifacts);await hydrateRetainedPromptContexts(r,p,retained.contextFiles||[]);const e=r.engine,subject=e.recordsForCurrentScope(p,family).find(row=>row.id===(subjectId||retained.subjectId))||e.recordsForCurrentScope(p,family).find(row=>row.temporaryKey==='conditional-future-failure');assert(subject,'ADMITTED_DEFERRED_RESTORATION_SUBJECT_REQUIRED');const test=e.recordsForCurrentScope(p,'tests').find(row=>row.id===e.recordValue(subject,'EXECUTION_TEST_ID'));assert(test);const raw=p.projectData.rawResponses.find(row=>row.rawResponseId===subject.rawResponseId);assert(raw?.completeRawResponse,'ADMITTED_DEFERRED_RESTORATION_RAW_REQUIRED');assert(e.acceptedChanges(p,Number(raw.stage)).some(row=>row.canonicalRecordIds?.includes(subject.id)&&row.rawResponseId===raw.rawResponseId),'ADMITTED_DEFERRED_RESTORATION_ACCEPTED_IDENTITY_REQUIRED');assert.equal(e.deferredDefinitionCompatibilityState(p,subject,family).compatible,true,'ADMITTED_DEFERRED_RESTORATION_CURRENT_SUPPORT_REQUIRED');p.activeStage=executionStage;const plan=e.deferredExecutionPlan(p,executionStage);assert(plan.items.some(row=>row.subjectId===subject.id&&row.executableNow),'ADMITTED_DEFERRED_RESTORATION_EXECUTABLE_REQUIRED');return {p,subject,test,stage:executionStage,rawResponseId:raw.rawResponseId,...(archivedFixtureClockUtc?{archivedFixtureClockUtc}:{}),synthetic:true,actualBrowser:false,priorStagesAreSetupOnly:true};
+}
+export function deferredReviewedPrerequisiteFixture(r,key,{filename}={}){if(key==='nativeStage15'&&filename===undefined)return readCurrentDeferredPrerequisiteFixture(r,key);const carrier=readDeferredDefinitionLegacyFixture(r,filename).reviewedPrefixes?.[key];assert.equal(carrier?.schema,'closed-loop-reviewed-prerequisite-carrier/1');assert.equal(carrier.encoding,'gzip-base64');const compressed=Buffer.from(carrier.gzipBase64,'base64');assert.equal(compressed.toString('base64'),carrier.gzipBase64);assert.equal(compressed.length,carrier.gzipByteSize);const bytes=gunzipSync(compressed,{maxOutputLength:128*1024*1024}),text=new TextDecoder('utf-8',{fatal:true}).decode(bytes);assert.equal(bytes.length,carrier.decodedByteSize);assert.equal(r.runtime.closedLoopHash.sha256Text(text),carrier.decodedSha256,'REVIEWED_DEFERRED_PREREQUISITE_DECODED_IDENTITY_ORACLE');const prefix=JSON.parse(text);assert.equal(prefix.synthetic,true);assert.equal(prefix.earlierCompleteFlagsForced,false);return prefix;}
+export async function deferredDefinitionAdmissionFixture(r,{prefix,family,testId,testKey,stage=family==='regressions'?15:7,operation='COMPLETE',fixtureValue='VERIFIED',fixtureArtifactId=null,defectId=null,tempKey='supported-definition',compatibility=deferredCompatibilityFixtureValues(family),knownInvalidCase,fields:fieldOverrides={}}={}){
+ const e=r.engine,s=r.runtime.closedLoopWorkflowSchema,h=r.runtime.closedLoopHash;assert(prefix?.project&&prefix.earlierCompleteFlagsForced===false,'ADMITTED_DEFERRED_FIXTURE_DERIVED_PREFIX_REQUIRED');
+ assert(s.deferredDefinitionWriter(stage,operation),'ADMITTED_DEFERRED_FIXTURE_WRITER_REQUIRED');let p=currentRetainedFixtureProject(r,prefix.project);
+ await restoreArtifactFixture(r.store,prefix.artifacts);await hydrateRetainedPromptContexts(r,p,prefix.contextFiles||[]);
+ for(let prior=1;prior<stage;prior++)assert.equal(e.gate(prior,p).complete,true,'ADMITTED_DEFERRED_FIXTURE_UPSTREAM_ORACLE: '+prior);
+ const test=e.recordsForCurrentScope(p,'tests').find(row=>testId?row.id===testId:row.temporaryKey===testKey);assert(test,'ADMITTED_DEFERRED_FIXTURE_CURRENT_TEST_REQUIRED');
+ const reqId=e.recordValue(test,'REQ_ID'),defect=family==='regressions'?e.recordsForCurrentScope(p,'defects').find(row=>defectId?row.id===defectId:e.recordValue(row,'REQ_ID')===reqId):null;if(family==='regressions')assert(defect,'ADMITTED_DEFERRED_FIXTURE_CURRENT_DEFECT_REQUIRED');
+ const timing=Object.fromEntries(s.TIMING_FIELDS.map(name=>[name,r.copy(e.recordValue(test,name))])),fields={...recordProposal(s,family).fields,...timing,...(family==='failureTests'?{VIOLATION_MODE:'MISSING_REQUIRED_TERMINAL_LF',FIXTURE:fixtureValue,EXPECTED_REJECTION:'REJECT',ACTUAL_RESULT:'NOT_RUN',EXECUTION_OUTCOME:'NOT_RUN'}:{FAILURE_FIXTURE:fixtureValue,REPRODUCTION_PROCEDURE:'Apply the reviewed complete-content predicate to the exact preserved original negative fixture and actual due target.',DETECTION_METHOD:'Complete-content comparison including terminal LF.',CORRECTION:'Use a distinct corrected target preserving the required terminal LF.',PERMANENT_TEST_LOCATION:'Current typed regression registry',APPLICABILITY:'APPLICABLE'}),...fieldOverrides},relationships={REQ_ID:{recordId:reqId},EXECUTION_TEST_ID:{recordId:test.id},...(defect?{DEFECT_ID:{recordId:defect.id}}:{})};
+ const prior=await r.store.readProject(p.job.JOB_ID);p=await r.store.writeProject(p,{expectedProjectRevision:prior?.revision||0,...(prior?{expectedStateSha256:prior.projectSha256}:{createOnly:true}),incrementRevision:!prior});const draft=r.copy(p);draft.activeStage=stage;
+ const issued=r.prompts.reserveAndBuildPromptRecord(draft,stage,{operation}).prompt;p=await r.store.writeProject(draft,{expectedProjectRevision:p.revision,expectedStateSha256:p.projectSha256});
+ const authorized=await authorizeFixtureHandoff(r,{project:p,prompt:p.projectData.generatedPrompts.find(row=>row.instructionId===issued.instructionId)});p=authorized.project;const prompt=authorized.prompt,pkg=await r.store.createExecutionPackage(authorized.request),members=readStoreArchive(new Uint8Array(await pkg.blob.arrayBuffer())),manifest=JSON.parse(Buffer.from(members.find(row=>row.canonicalPath==='manifest.json').bytes).toString('utf8'));
+ assert.equal(Buffer.from(members.find(row=>row.canonicalPath==='instruction.txt').bytes).toString('utf8'),prompt.prompt);assert(manifest.contextManifest?.deferredDefinitionTestProfiles,'ADMITTED_DEFERRED_FIXTURE_ACTUAL_PUBLISHED_PROFILES_REQUIRED');
+ const publicPrompt={...prompt,contextManifest:manifest.contextManifest},envelope=deferredDefinitionResponseFixture({schema:s,engine:e,prompts:{promptFileManifest:()=>manifest}},p,publicPrompt,{family,fields,relationships,fixtureValue,fixtureArtifactId,defectId:defect?.id,defectEvidenceIds:defect?.evidenceRefs||[],tempKey,compatibility,...(knownInvalidCase===undefined?{}:{knownInvalidCase})}),text=JSON.stringify(envelope),staged=await r.store.stageResponseFile({jobId:p.job.JOB_ID,stage,blob:new Blob([text],{type:'application/json'}),rawFilename:'response.json',mediaType:'application/json',promptIdentity:manifest.promptIdentity,packageId:manifest.packageId,operationReservationId:manifest.operationReservationId,challengeNonce:manifest.challengeNonce}),file=await r.store.readStagedResponseFile({jobId:p.job.JOB_ID,stagingId:staged.stagingId});
+ assert.equal(new TextDecoder('utf-8',{fatal:true}).decode(file.bytes),text);const captured=r.ingestion.captureRaw(p,{stage,text,promptRecord:prompt,transport:r.copy({authority:'AUTHORITATIVE_RESPONSE_FILE',stagingId:staged.stagingId,rawFilename:'response.json',mediaType:'application/json',status:file.status,sha256:file.sha256,byteSize:file.byteSize,promptIdentity:manifest.promptIdentity,packageId:manifest.packageId,operationReservationId:manifest.operationReservationId,challengeNonce:manifest.challengeNonce})}),prepared=r.ingestion.prepareCaptured(captured.project,{rawResponseId:captured.rawRecord.rawResponseId});
+ assert.equal(prepared.validation.valid,true,'ADMITTED_DEFERRED_FIXTURE_ADMISSION_ORACLE: '+JSON.stringify(prepared.validation.issues));const executionCount=e.records(p,'regressionExecutions').length;p=await r.store.writeProject(prepared.project,{operational:true,expectedProjectRevision:p.revision,expectedStateSha256:p.projectSha256});
+ const failures=bindAcceptanceUi(r,p,prepared.proposal.proposalId);await r.runtime.accept();if(r.runtime.replacementReview)await r.runtime.confirm();assert.equal(failures.length,0,'ADMITTED_DEFERRED_FIXTURE_OPERATOR_ORACLE: '+failures.map(row=>row.message).join(' '));p=await r.store.readProject(p.job.JOB_ID);assert.equal(r.store.validateProjectIntegrity(p).valid,true);assert.equal(e.records(p,'regressionExecutions').length,executionCount);
+ const subject=e.records(p,family).find(row=>row.rawResponseId===captured.rawRecord.rawResponseId);assert(subject);assert.equal(e.deferredDefinitionCompatibilityState(p,subject,family).compatible,true);
+ return {p,subject,test:e.records(p,'tests').find(row=>row.id===test.id),defect:family==='regressions'?e.records(p,'defects').find(row=>row.id===defect.id):null,prompt,manifest,members,envelope,rawResponseId:captured.rawRecord.rawResponseId,responseSha256:file.sha256,packageSha256:await h.sha256Bytes(pkg.blob),synthetic:true,actualBrowser:false,priorStagesAreSetupOnly:true};
+}
+
+// Controlled external actor responses still use production context/ingestion/
+// acceptance. The synthetic bounded search makes no live-service claim.
+export function acceptPrerequisite(runtime,project,stage,{operation='COMPLETE',stageData={},records={}}={}){
+  const {schema,engine,prompts,ingestion}=runtime,preparedContext=engine.preparePromptContext(project,stage,{operation}),pr=prompts.buildPromptRecord(stage,project,preparedContext.options);
+  project.projectData.generatedPrompts.push(pr);
+  const envelope={schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:project.job.JOB_ID,stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData,records,evidence:[evidence(`stage-${stage}-${operation}`)],unresolved:[],warnings:[],attachments:[]};
+  const prepared=ingestion.prepare(project,{stage,text:JSON.stringify(envelope),promptRecord:pr});
+  if(!prepared.validation.valid)throw new Error(JSON.stringify(prepared.validation.issues));
+  return ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'BROWSER_FIXTURE',replacementConfirmation:ingestion.acceptanceImpact(prepared.project,prepared.proposal.proposalId)});
+}
+export function stage01AcceptanceFixture(runtime,jobId='JOB-BROWSER-PROOF-PERSISTENCE'){
+  const {core,engine}=runtime;let p=core.createBlankState(jobId);
   Object.assign(p.job,{JOB_TITLE:'Response acceptance persistence',EXACT_USER_OBJECTIVE_VERBATIM:'Produce a verified checklist.',EXPLICIT_USER_REQUIREMENTS:'The checklist must contain the required verified content.',CURRENT_INPUT_VERSION:'INPUT-v001'});
   engine.ensureShape(p);engine.recalculate(p);
-  function accept(stage,stageData){
-    const preparedContext=engine.preparePromptContext(p,stage,{operation:'COMPLETE'}),pr=prompts.buildPromptRecord(stage,p,preparedContext.options);p.projectData.generatedPrompts.push(pr);
-    const envelope={schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId,stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData,records:{},evidence:[evidence(`stage-${stage}`)],unresolved:[],warnings:[],attachments:[]};
-    const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(envelope),promptRecord:pr});
-    if(!prepared.validation.valid)throw new Error(JSON.stringify(prepared.validation.issues));
-    const committed=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'BROWSER_FIXTURE'});p=committed.project;return committed;
-  }
   const manifest=engine.intakeCoverageManifest(p),capture={schema:'closed-loop-stage01-capture/2',inputVersion:manifest.inputVersion,manifestSha256:manifest.manifestSha256,pass1Completed:true,pass2OmissionChallenge:{completed:true,checkedCategories:['QUALIFIERS','EXCEPTIONS','DEPENDENCIES','NEGATIVE_REQUIREMENTS','DO_NOT_CHANGE','VISUAL_CONSTRAINTS','TEMPORAL_CONSTRAINTS','ACCEPTANCE_CONDITIONS','AUTHORITY_STATEMENTS','TOOL_RESTRICTIONS','FILE_REFERENCES','OUTPUT_FORMAT_REQUIREMENTS','CORRECTIONS','LATER_OVERRIDES'],omissionsFound:[],omissionsResolved:true},units:manifest.units.map((u,i)=>({sourceUnitId:u.unitId,sourceRawValueSha256:u.rawValueSha256,disposition:'EXTRACTED_RELEVANT_INFORMATION',reason:'Preserved for downstream reuse.',extractedStatements:[{statementKey:`s-${i}`,text:u.rawValueText,statementClass:'REQUIREMENT'}]}))};
-  const first=accept(1,{EXACT_DELIVERABLE_REQUESTED:'Verified checklist',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',INPUT_SET_CONTENTS:JSON.stringify(capture)});
+  const first=acceptPrerequisite(runtime,p,1,{stageData:{EXACT_DELIVERABLE_REQUESTED:'Verified checklist',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',INPUT_SET_CONTENTS:JSON.stringify(capture)}});p=first.project;
   engine.recordStageConfirmation(p,1,true,'Intent confirmed','BROWSER_FIXTURE',{acceptedChangeId:first.acceptedChange.changeId,inputVersion:p.job.CURRENT_INPUT_VERSION,instructionId:first.acceptedChange.promptId,contextSignature:first.acceptedChange.contextSignature,operatorLabel:'BROWSER_FIXTURE'});
-  accept(2,{AUTHORITY_HIERARCHY:'No external authority applies.',SOURCE_APPLICABILITY_DETERMINATION:'NO_APPLICABLE_EXTERNAL_SOURCE',KNOWN_CONTROLLING_SOURCES_EXAMINED:'Evidence-supported search found no applicable external governing source.'});
-  accept(3,{EXCEPTIONS_AND_EDGE_CONDITIONS:'NONE',CONFLICTING_OR_INVALIDATING_MATERIAL:'NONE',RESEARCH_GAPS_AND_BLOCKERS:'NONE',SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED:true,LATEST_PASS_NUMBER:1,NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS:false});
+  engine.recalculate(p);if(!engine.gate(1,p).complete)throw new Error('Stage01 prerequisite did not complete.');return p;
+}
+export function boundedSearchProposal(schema){
+  return recordProposal(schema,'sourceSearchContracts',{tempKey:'bounded-fixture-search',overrides:{PROJECT_SCOPE:'The closed synthetic checklist fixture and its supplied human inputs.',JURISDICTION_OR_SYSTEM_SCOPE:'Disposable hermetic fixture; no legal or external-system authority is claimed.',SOURCE_CLASSES_CONSIDERED:['Project-supplied references'],LOCATIONS_AND_REPOSITORIES:['The complete controlled fixture input set'],QUERIES_OR_STRATEGIES:['Inspect every declared input location and supplied reference.','Final registered query round found no new candidate; no accepted authority has an undisposed citation.'],DATE_OR_VERSION_CUTOFF:'Current controlled fixture input version',EXCLUSIONS:['Other generic source classes are inapplicable to this explicitly hermetic fixture; no live-domain authority is asserted.'],ACCESS_LIMITATIONS:[],ADEQUACY_RATIONALE:'The versioned fixture checklist considered all seven generic source classes. Every registered location was inspected, the final query round was saturated, authority-chain closure is empty, no location was inaccessible, every discovered candidate has a disposition, and no material residual risk remains. The independent reviewer must assess this external fixture claim.',UNRESOLVED_DISCOVERY_RISK:'NONE'}});
+}
+// Advance through actual acceptance and independently bound source review to
+// the first proposition-producing stage. No prerequisite gate is forced green.
+// Retain exact report text in canonical evidence through the supported source-
+// search registration API. This is a declared hermetic external-claim fixture,
+// not a fabricated stored artifact, human identity or live-network execution.
+export function registerFixtureSourceSearchCapability(runtime,project,{checks={},register=true}={}){
+  const {engine}=runtime,contract=engine.recordsForCurrentScope(project,'sourceSearchContracts').at(-1);if(!contract)throw new Error('Fixture search contract is missing.');
+  const report=engine.externalCapabilityEvidenceTemplate(project,engine.recordId(contract,'sourceSearchContracts')),time=Date.now();
+  // This positive hermetic claim remains current for the full declared 120m
+  // operator-journey gate. Expired reports still fail production freshness checks.
+  Object.assign(report,{reportedBy:'SYNTHETIC_SEARCH_PERFORMER',environment:'Explicit closed hermetic fixture input universe',observedAt:new Date(time-1000).toISOString(),validUntil:new Date(time+7200000).toISOString()});
+  report.action={target:engine.recordValue(contract,'PROJECT_SCOPE'),riskClasses:['READ_ONLY'],expectedEffect:'Inspect only the complete declared synthetic input universe and preserve its search observations.',reversibility:'No mutation',maximumCost:'0',authority:'Controlled test fixture operator',containment:'No network or external authority is claimed',stopCondition:'Stop when every declared fixture location and stopping criterion is accounted for',responsibleActor:'SYNTHETIC_SEARCH_PERFORMER'};
+  for(const [key,check]of Object.entries(report.checks)){check.status=checks[key]||'TRUE';check.evidence=`Controlled fixture ${key} basis; not an independently observed live external capability.`;}
+  if(!register)return report;
+  const record=engine.registerExternalCapabilityEvidence(project,{reportText:JSON.stringify(report),operatorConfirmed:true,operatorLabel:'SYNTHETIC_FIXTURE_OPERATOR'});
+  return record;
+}
+export function stage04AcceptanceFixture(runtime,jobId='JOB-BROWSER-PROOF-PERSISTENCE'){
+  const {schema,engine}=runtime;let p=stage01AcceptanceFixture(runtime,jobId);
+  p=acceptPrerequisite(runtime,p,2,{stageData:{AUTHORITY_HIERARCHY:'No external authority applies to the controlled fixture.',SOURCE_APPLICABILITY_DETERMINATION:'NO_APPLICABLE_EXTERNAL_SOURCE',KNOWN_CONTROLLING_SOURCES_EXAMINED:'The controlled bounded search found no applicable external governing source.'},records:{sourceSearchContracts:[boundedSearchProposal(schema)]}}).project;
+  registerFixtureSourceSearchCapability(runtime,p);
+  p=acceptPrerequisite(runtime,p,2,{operation:'SEARCH_ADEQUACY_REVIEW',records:{semanticReviews:[recordProposal(schema,'semanticReviews',{tempKey:'fixture-search-review',overrides:{REVIEW_QUESTION:'Was the bounded fixture search executed adequately?',FINDING:'The closed fixture input universe is exhausted with no applicable external source.',REASONING:'Compared the declared source classes, locations, executed query evidence, stopping criteria, dispositions, exclusions and residual risk with the controlled fixture scope.',RESULT:'ACCEPTED'}})]}}).project;
+  p=acceptPrerequisite(runtime,p,3,{stageData:{EXCEPTIONS_AND_EDGE_CONDITIONS:'NONE',CONFLICTING_OR_INVALIDATING_MATERIAL:'NONE',RESEARCH_GAPS_AND_BLOCKERS:'NONE',SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED:true,LATEST_PASS_NUMBER:2,NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS:false}}).project;
   for(let n=1;n<=3;n++)if(!engine.gate(n,p).complete)throw new Error(`Fixture prerequisite ${n}: ${engine.gate(n,p).reasons.join(' | ')}`);
   p.activeStage=4;p.activeView='Workflow';return p;
 }
@@ -64,17 +204,26 @@ export function stage04AcceptanceEnvelope(runtime,p,pr){
 
 // Accumulate real failed-response and replacement-instruction records. The first
 // three stages use production intake/acceptance; no gate is forced complete.
-export async function accumulatedStage04Fixture(runtime,{jobId='ACCUMULATED-STAGE4',attempts=100,responseCharacters=20000}={}){
+export async function accumulatedStage04Fixture(runtime,{jobId='ACCUMULATED-STAGE4',attempts=100,responseCharacters=20000,persistTransitions=false}={}){
   let project=stage04AcceptanceFixture(runtime,jobId);
-  let prompt=runtime.prompts.reserveAndBuildPromptRecord(project,4).prompt;
-  if(runtime.store)await runtime.store.persistPromptContextFiles(prompt,project);
+  if(persistTransitions){
+    if(!runtime.store)throw new Error('Persisted accumulation requires a project store.');
+    project=await runtime.store.writeProject(project,{expectedProjectRevision:0,createOnly:true,incrementRevision:false});
+  }
+  const reserve=async()=>{
+    const beforeRevision=project.revision,beforeSha=project.projectSha256;
+    const issued=runtime.prompts.reserveAndBuildPromptRecord(project,4).prompt;
+    if(runtime.store)await runtime.store.persistPromptContextFiles(issued,project);
+    if(persistTransitions)project=await runtime.store.writeProject(project,{expectedProjectRevision:beforeRevision,expectedStateSha256:beforeSha});
+    return project.projectData.generatedPrompts.find(row=>row.instructionId===issued.instructionId);
+  };
+  let prompt=await reserve();
   for(let index=0;index<attempts;index++){
     const text=`Invalid response ${index}: ${'X'.repeat(responseCharacters)} é🙂 ACCUMULATION-TAIL-${index}`;
     const result=runtime.ingestion.prepare(project,{stage:4,text,promptRecord:prompt});
     if(result.validation.valid||!result.rawRecord||!result.validation.validationId)throw new Error('Accumulation fixture did not preserve a real failed response and validation.');
-    project=result.project;
-    prompt=runtime.prompts.reserveAndBuildPromptRecord(project,4).prompt;
-    if(runtime.store)await runtime.store.persistPromptContextFiles(prompt,project);
+    project=persistTransitions?await runtime.store.writeProject(result.project,{operational:true,expectedProjectRevision:project.revision,expectedStateSha256:project.projectSha256}):result.project;
+    prompt=await reserve();
   }
   project.activeStage=4;project.activeView='Workflow';return project;
 }
@@ -82,10 +231,10 @@ export async function accumulatedStage04Fixture(runtime,{jobId='ACCUMULATED-STAG
 // Export may prepare a current instruction and record its receipt. Those
 // operational changes must not replace accepted work or rewrite retained bytes.
 // Backup restoration must recover the exact post-export project data.
-export function stageHandoffRecoveryProof(before,exported,restored,hash){
+export function stageHandoffRecoveryProof(before,exported,restored,hash,{handoff=null}={}){
   const stable=value=>JSON.stringify(value,(_key,row)=>row&&typeof row==='object'&&!Array.isArray(row)?Object.fromEntries(Object.keys(row).sort().map(key=>[key,row[key]])):row);
   const equal=(a,b)=>hash.sha256Text(stable(a))===hash.sha256Text(stable(b));
-  const preparation=new Set(['generatedPrompts','operationReservations','history','allocationReceipts','idCounters','eventSequence']);
+  const preparation=new Set(['generatedPrompts','operationReservations','history','allocationReceipts','idCounters','eventSequence','humanDecisions']);
   const accepted=p=>Object.fromEntries(Object.entries(p.projectData).filter(([key])=>!preparation.has(key)));
   const promptBytes=p=>Object.fromEntries(Object.entries(p).filter(([key])=>key!=='invalidatedBy'));
   const retained=(before.projectData.generatedPrompts||[]).every(prior=>{
@@ -94,7 +243,28 @@ export function stageHandoffRecoveryProof(before,exported,restored,hash){
   });
   const prefix=family=>equal(before.projectData[family]||[],(exported.projectData[family]||[]).slice(0,(before.projectData[family]||[]).length));
   const authoredStages=p=>Object.fromEntries(Object.entries(p.stages).map(([stage,row])=>[stage,row.agentData||{}]));
-  return {acceptedDataUnchanged:equal(accepted(before),accepted(exported)),authoredStagesUnchanged:equal(authoredStages(before),authoredStages(exported)),retainedPromptBytes:retained,historyPrefixPreserved:prefix('history'),allocationPrefixPreserved:prefix('allocationReceipts'),restoredProjectDataExact:equal(exported.projectData,restored.projectData),restoredAuthoredStagesExact:equal(authoredStages(exported),authoredStages(restored)),rawResponses:restored.projectData.rawResponses.length,generatedPrompts:restored.projectData.generatedPrompts.length};
+  const priorDecisions=before.projectData.humanDecisions||[],appendedDecisions=(exported.projectData.humanDecisions||[]).slice(priorDecisions.length),authorizedIds=handoff?.disclosureAuthorizationIds||[],authorizedSet=new Set(authorizedIds);
+  const humanDecisionAppendAuthorized=Array.isArray(authorizedIds)&&authorizedSet.size===authorizedIds.length&&appendedDecisions.length===authorizedIds.length&&appendedDecisions.every(row=>{
+    const fields=row?.fields||{},value=fields.VALUE||{},subject=value.subject||{},id=fields.HUMAN_DECISION_ID||row.id;
+    return authorizedSet.has(id)&&fields.PURPOSE==='DISCLOSURE_AUTHORIZATION'&&fields.TARGET_FAMILY==='job'&&fields.TARGET_ID===before.job.JOB_ID&&value.authorized===true&&subject.jobId===before.job.JOB_ID&&Number(subject.stage)===Number(handoff?.stage)&&subject.operation===handoff?.operation&&value.subjectSha256===hash.sha256Value(subject);
+  });
+  return {acceptedDataUnchanged:equal(accepted(before),accepted(exported)),humanDecisionPrefixPreserved:prefix('humanDecisions'),humanDecisionAppendAuthorized,authoredStagesUnchanged:equal(authoredStages(before),authoredStages(exported)),retainedPromptBytes:retained,historyPrefixPreserved:prefix('history'),allocationPrefixPreserved:prefix('allocationReceipts'),restoredProjectDataExact:equal(exported.projectData,restored.projectData),restoredAuthoredStagesExact:equal(authoredStages(exported),authoredStages(restored)),rawResponses:restored.projectData.rawResponses.length,generatedPrompts:restored.projectData.generatedPrompts.length};
+}
+
+// Current/stale route sentinels exercise projection, not accepted stage results.
+// Supply the verified canonical shape and governing relationships reached by
+// semantic review and independent product-review selectors. Do not derive any
+// read/write oracle or semantic approval from production implementation here.
+export function routeProjectionFixtureFields(collection,{idPrefix,variant,marker}){
+ const id=family=>`${idPrefix}-${family}-${variant}`;
+ if(collection==='proofExpressions'){
+  const leaf={type:'LEAF',testId:id('tests'),requiredDisposition:'SATISFIED',truthExtraction:'ACCEPTED_ENTAILMENT',evidenceClasses:['OBSERVATION_RECORD','ACCEPTED_ENTAILMENT'],scopeBinding:'CURRENT'};
+  return {PROPOSED_EXPRESSION:leaf,NORMALIZED_EXPRESSION:leaf,SEMANTIC_RATIONALE:marker};
+ }
+ if(collection==='instructionTraces')return {INSTRUCTION_ID:id('instructions')};
+ if(collection==='requirements')return {SOURCE_ID:id('sources')};
+ if(collection==='evidenceRecords')return {SOURCE_ID:id('sources'),ATTACHMENT_ID:id('artifacts')};
+ return {};
 }
 
 // Bounded canonical records for logic fixtures use the production identity,
@@ -148,4 +318,20 @@ export function testIrLimitFixtures(runtime){
   {caseId:'REGEX_PATTERN_BYTES',control:regex(bytePattern),invalid:regex(bytePattern+'a'),expectedIssue:'Regex pattern exceeds the registered byte limit.',execution:canonical(bytePattern),limit:limits.maxRegexPatternBytes,controlBytes:encode(bytePattern).length,invalidBytes:encode(bytePattern+'a').length,invalidCharacters:(bytePattern+'a').length},
   {caseId:'REGEX_PATTERN_CHARACTERS',control:regex(characterPattern),invalid:regex(characterPattern+'a'),expectedIssue:'Regex pattern exceeds the registered byte limit.',execution:canonical(characterPattern),limit:limits.maxRegexLength,controlCharacters:characterPattern.length,invalidCharacters:characterPattern.length+1,invalidBytes:encode(characterPattern+'a').length}
  ];
+}
+
+// Repository publication metadata only: these screenshot references and visual
+// measurements are declared synthetic. The decision and receipt are generated
+// by the production command in an isolated project, never a claimed human run.
+export function visualBaselineFixture({core,engine,runtime},{commit='a'.repeat(40),sourceCommit=commit,decisionPurpose='VISUAL_BASELINE_AUTHORIZATION',baselineResourcePaths,promptBoxWidth,promptBoxHeight}={}){
+ const hash={...runtime.closedLoopHash,sha256Value:value=>runtime.closedLoopHash.sha256Value(engine.clone(value))},paths=['index.html','workbook.js','hash.js','workflow-schema.js','test-runtime.js','test-worker.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js','TEST_PROJECT.json','.nojekyll'];
+ function manifest(source,resourcePaths=paths){
+  const buildIdentity='SYNTHETIC-VISUAL-BUILD-'+source,description={schema:'closed-loop-deployment-manifest/1',sourceCommit:source,buildIdentity,canonicalOrigin:'https://sjonesjones917.github.io',canonicalHost:'sjonesjones917.github.io',canonicalBasePath:'/closed-loop-tracker/',deploymentEnvironment:'github-pages',noCrossOriginRedirect:true,permittedRuntimeOrigin:'SAME_ORIGIN_ONLY',canonicalizationVersion:hash.canonicalizationVersion,runtimeResources:resourcePaths.map(path=>({path,mediaType:'application/octet-stream',byteSize:1,hashAlgorithm:'SHA-256',digest:hash.sha256Value({syntheticResource:path,source}),buildIdentity}))};
+  return {...description,manifestDigest:{hashAlgorithm:'SHA-256',digest:hash.sha256Value(description)}};
+ }
+ const baseline={VISUAL_BASELINE_ID:'DISPOSABLE-VISUAL-BASELINE',sourceCommit,deploymentManifest:manifest(sourceCommit,baselineResourcePaths??paths),viewports:[[320,568],[393,852],[1280,800]].map(([width,height])=>({id:`DISPOSABLE-${width}x${height}`,width,height,promptBox:{width:promptBoxWidth??width-20,height:promptBoxHeight??120,widthBehavior:'Viewport fits without horizontal overflow',heightBehavior:'Intentional bounded prompt scrolling',computedStyles:{width:`${width-20}px`,height:'120px',overflowY:'auto'}},referenceScreenshot:{reference:`DISPOSABLE-BEFORE-${width}x${height}.png`,sha256:hash.sha256Value({syntheticBefore:width,height})}})),allowedChangeRegions:[{id:'DISPOSABLE-ALLOWED',viewportId:'DISPOSABLE-320x568',selector:'#synthetic-required-ui',normativeRequirementReference:'DISPOSABLE-SPECIFICATION-UI-REQUIREMENT'}],dynamicRegions:[{id:'DISPOSABLE-DYNAMIC',viewportId:'DISPOSABLE-393x852',selector:'#synthetic-clock'}]},baselineSha256=hash.sha256Value(baseline);
+ const comparison={VISUAL_BASELINE_ID:baseline.VISUAL_BASELINE_ID,baselineSha256,comparedCommit:commit,deploymentManifest:manifest(commit),viewportIds:baseline.viewports.map(row=>row.id),screenshots:baseline.viewports.map(({id,width,height})=>({viewportId:id,reference:`DISPOSABLE-AFTER-${width}x${height}.png`,sha256:hash.sha256Value({syntheticAfter:width,height})})),changedRegionIds:[],ignoredDynamicRegionIds:['DISPOSABLE-DYNAMIC']};
+ const project=core.createBlankState('JOB-DISPOSABLE-VISUAL-EVIDENCE');engine.ensureShape(project);
+ const authorityRecord=engine.recordRegisteredHumanDecision(project,{purpose:decisionPurpose,targetFamily:'job',targetId:project.job.JOB_ID,value:{authorized:true,VISUAL_BASELINE_ID:baseline.VISUAL_BASELINE_ID,baselineSha256},operatorLabel:'SYNTHETIC-VISUAL-OPERATOR'}),authorityReceipt=project.projectData.history.find(event=>event.eventId===authorityRecord.fields.RECEIPT_ID);
+ return JSON.parse(JSON.stringify({status:'PROVEN',sourceCommit,comparedCommit:commit,comparisonResult:'PASS',authority:'VISUAL_BASELINE_AUTHORIZATION',authorityRecordId:authorityRecord.id,evidenceReferences:['DISPOSABLE-APPROVAL','DISPOSABLE-BEFORE-AFTER'],baseline,comparison,authorityRecord,authorityReceipt}));
 }

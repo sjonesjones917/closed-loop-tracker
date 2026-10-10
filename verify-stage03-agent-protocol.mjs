@@ -1,4 +1,5 @@
 import {createVerifierRuntime} from './verifier-runtime.mjs';
+import {deepStrictEqual} from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 
@@ -32,7 +33,24 @@ assert(schema.STAGE_FIELDS[3].SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED.value
 assert(schema.STAGE_FIELDS[3].LATEST_PASS_NUMBER.valueType==='INTEGER','Stage 03 latest-pass number must be INTEGER.');
 assert(schema.STAGE_FIELDS[3].NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS.valueType==='BOOLEAN','Stage 03 latest-pass new-material flag must be BOOLEAN.');
 let p=project(),pr=savePrompt(p);
-for(const token of ['relationshipReferenceKeys','Use recordId for an existing canonical application-provided record','Never use targetId inside a relationship reference','RELATIONSHIP REFERENCE OBJECTS — REQUIRED SHAPE'])assert(pr.prompt.includes(token),`Stage 03 prompt omits relationship-reference contract: ${token}`);
+// The emitted typed contract is authoritative. Its explanatory prose may change
+// while the recordId/tempKey boundary and consumer behavior remain unchanged.
+const descriptor=prompts.responseContractDescriptor(3,'COMPLETE');
+function assertEmittedRelationshipContract(prompt,contract){
+  assert(JSON.stringify(contract.envelope.relationshipReferenceKeys)===JSON.stringify(['tempKey','recordId']),'STAGE03_RELATIONSHIP_CONTRACT: relationship references must expose exactly tempKey and recordId.');
+  const start='RESPONSE CONTRACT DEFINITIONS\n',end='\n\nEND HASHED INSTRUCTION BODY',first=prompt.indexOf(start),last=first<0?-1:prompt.indexOf(end,first+start.length);
+  assert(first>=0&&last>first+start.length,'STAGE03_RELATIONSHIP_CONTRACT: the complete typed descriptor was not emitted to the agent.');
+  let emitted;try{emitted=JSON.parse(prompt.slice(first+start.length,last));}catch{throw new Error('STAGE03_RELATIONSHIP_CONTRACT: the emitted typed descriptor is not valid JSON.');}
+  try{deepStrictEqual(emitted,JSON.parse(JSON.stringify(contract)));}catch{throw new Error('STAGE03_RELATIONSHIP_CONTRACT: the emitted typed descriptor differs from its complete consumer contract.');}
+}
+assertEmittedRelationshipContract(pr.prompt,descriptor);
+const missingDescriptor=pr.prompt.replace(/RESPONSE CONTRACT DEFINITIONS\n[\s\S]*?\n\nEND HASHED INSTRUCTION BODY/,'RESPONSE CONTRACT DEFINITIONS\n\nEND HASHED INSTRUCTION BODY');
+let missingDescriptorRejected=false;
+try{assertEmittedRelationshipContract(missingDescriptor,descriptor);}catch(error){missingDescriptorRejected=error.message.startsWith('STAGE03_RELATIONSHIP_CONTRACT:');}
+assert(missingDescriptorRejected,'A prompt missing the real relationship descriptor passed the oracle.');
+const changedProse=pr.prompt.replace('- Existing canonical application-provided record:','- Existing canonical record:');
+assert(changedProse!==pr.prompt,'The prose control did not change the actual emitted instruction.');
+assertEmittedRelationshipContract(changedProse,descriptor);
 assert(pr.prompt.includes('SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED: BOOLEAN'),'Stage 03 prompt does not declare second-pass completion as BOOLEAN.');
 assert(pr.prompt.includes('LATEST_PASS_NUMBER: INTEGER'),'Stage 03 prompt does not declare latest pass as INTEGER.');
 assert(pr.prompt.includes('NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS: BOOLEAN'),'Stage 03 prompt does not declare new-material status as BOOLEAN.');
@@ -42,8 +60,8 @@ assert(prepared.validation.valid,`Canonical recordId relationship was rejected: 
 let badRef=structuredClone(good);badRef.records.research[0].relationships.SOURCE_ID={targetId:'SOURCE-000001'};badRef.evidence[0].sourceRef={targetId:'SOURCE-000001'};
 prepared=ingestion.prepare(structuredClone(p),{stage:3,text:JSON.stringify(badRef),promptRecord:pr});
 assert(!prepared.validation.valid,'Nested targetId relationship alias was accepted.');
-assert(prepared.validation.issues.some(i=>i.code==='UNKNOWN_PROPERTY'&&i.path.endsWith('/targetId')),'Nested targetId rejection did not identify the unknown relationship key.');
-assert(prepared.validation.issues.some(i=>['INVALID_RELATIONSHIP_REFERENCE','INVALID_EVIDENCE_SOURCE_REF'].includes(i.code)),'Nested targetId rejection did not enforce recordId/tempKey relationship shape.');
+for(const [code,path]of [['INVALID_RELATIONSHIP_REFERENCE','/records/research/0/relationships/SOURCE_ID'],['INVALID_EVIDENCE_SOURCE_REF','/evidence/0/sourceRef']])
+ assert(prepared.validation.issues.some(i=>i.code===code&&i.path===path),`Nested targetId alias did not identify the invalid contracted ${path} reference: ${JSON.stringify(prepared.validation.issues)}`);
 let badTypes=structuredClone(good);badTypes.stageData.SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED='YES — Evidence ref';badTypes.stageData.LATEST_PASS_NUMBER='3 — Evidence ref';badTypes.stageData.NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS='NO — Evidence ref';
 prepared=ingestion.prepare(structuredClone(p),{stage:3,text:JSON.stringify(badTypes),promptRecord:pr});
 assert(!prepared.validation.valid,'Prose-tainted Stage 03 gate values were accepted.');
@@ -61,4 +79,4 @@ const derivedStage3=engine.deriveStageData(p,3);assert(derivedStage3.ALL_KNOWN_C
 p.stages[1].status='COMPLETE';p.stages[1].gate={complete:true,blocked:false,reasons:[]};assert(engine.evaluateIntakeAccounting(p).complete,'Stage 03 protocol fixture must preserve complete Stage 01 accounting before Stage 04 transition.');
 let stage4Built=false;try{const stage4=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});stage4Built=Boolean(stage4?.prompt);}catch(error){throw new Error(`A valid completed Stage 03 state could not generate Stage 04: ${error?.code||'ERROR'} ${error?.message||error}`);}assert(stage4Built,'Stage 04 prompt was not produced after valid Stage 03 completion.');
 const incompleteCoverage=structuredClone(p);const currentResearch=engine.recordsForCurrentScope(incompleteCoverage,'research');assert(currentResearch.length>0,'Regression fixture has no Stage 03 research to invalidate.');currentResearch[0].invalidatedBy='REGRESSION-MISSING-COVERAGE';assert(engine.deriveStageData(incompleteCoverage,3).ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED===false,'Application-derived Stage 03 source coverage did not fail closed after current research was invalidated.');let coverageBlocked=false;try{prompts.buildPromptRecord(4,incompleteCoverage,{operation:'COMPLETE'});}catch(error){coverageBlocked=error?.code==='STAGE4_UPSTREAM_INCOMPLETE';}assert(coverageBlocked,'Stage 04 did not fail closed when current Stage 03 source coverage was made incomplete.');
-console.log(JSON.stringify({stage03AgentProtocol:true,relationshipReferenceContract:true,nestedTargetIdRejected:true,recordIdAccepted:true,typedGateFields:true,gateComplete:true,legacyCanonicalCompatibility:true,applicationCoverageDerivation:true,stage04TransitionUsesApplicationCoverage:true,incompleteCoverageBlocksStage04:true,promptEngineVersion:pr.promptEngineVersion},null,2));
+console.log(JSON.stringify({stage03AgentProtocol:true,relationshipReferenceContract:true,nestedTargetIdRejected:true,recordIdAccepted:true,typedGateFields:true,gateComplete:true,legacyCanonicalCompatibility:true,applicationCoverageDerivation:true,stage04TransitionUsesApplicationCoverage:true,incompleteCoverageBlocksStage04:true,promptEngineVersion:pr.promptEngineVersion,verificationObservations:[{checkId:'stage03.emitted-relationship-contract',boundary:'final emitted Stage 03 prompt -> typed ingestion contract',expected:['tempKey','recordId'],observed:descriptor.envelope.relationshipReferenceKeys,passed:true,requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt#8']},{checkId:'stage03.missing-emitted-contract-rejected',boundary:'executed prompt contract oracle',expected:'REJECTED',observed:missingDescriptorRejected?'REJECTED':'ACCEPTED',passed:missingDescriptorRejected},{checkId:'stage03.canonical-recordId-accepted',boundary:'ingestion.prepare/commit -> Stage 03 gate',expected:true,observed:gate.complete,passed:gate.complete},{checkId:'stage03.nested-targetId-rejected',boundary:'typed relationship validator',expected:'REJECTED',observed:'REJECTED',passed:true,violation:'unregisteredFieldsOrStageOperationsAccepted',accepted:false}]},null,2));

@@ -20,8 +20,14 @@ const csv = (text, expected, config={}) => dag([{op:'PARSE_CSV', inputs:{text:li
 const json = (text, path, expected) => dag([{op:'PARSE_JSON',inputs:{text:literal(text)}}, {op:'SELECT_JSON_PATH',inputs:{value:reference('S001'),path:literal(path)}}, eq(reference('S002','selection'),expected)]);
 const xml = (text, path, expected) => dag([{op:'PARSE_XML',inputs:{text:literal(text)}}, {op:'SELECT_XML',inputs:{value:reference('S001'),path:literal(path)}}, eq(reference('S002','selection'),expected)]);
 const passed = async spec => {assert.equal(runtime.validateSpec(spec).valid,true,JSON.stringify(runtime.validateSpec(spec).issues));const result=await execute(spec);assert.equal(result.determination,'SATISFIED',JSON.stringify(result));return result;};
-const invalid = spec => {const result=runtime.validateSpec(spec);assert.equal(result.valid,false,'Invalid Test IR passed ingestion: '+JSON.stringify(spec));};
+const invalid = spec => {const result=runtime.validateSpec(spec);assert.equal(result.valid,false,'Invalid Test IR passed ingestion: '+JSON.stringify(spec));return result;};
 const cases=[];
+const verificationObservations=[];
+function rejectedResult(checkId,spec,violation){
+ const result=invalid(spec),reason='Test IR result must be a registered ASSERTION output; ordinary data cannot supply a determination.';
+ assert.ok(result.issues.includes(reason),'The terminal-result control failed for a different validation reason: '+JSON.stringify(result.issues));
+ verificationObservations.push({checkId,requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:1840',...(violation==='externalAssertionsOverridingApplicationProof'?['specification/closed-loop-reliability-controlling-implementation-specification.txt:5519']:[])],boundary:'Application Test IR validator: declared terminal output type',expected:{accepted:false,requiredResultType:'REGISTERED_ASSERTION'},observed:{accepted:result.valid,validationIssues:plain(result.issues)},passed:true,violation,accepted:false});
+}
 async function check(name, operation) {try {await operation();cases.push({name,result:'PASS'});}catch(error){cases.push({name,result:'FAIL',message:String(error.stack||error)});}}
 
 await check('D01 complete objects are compared without member-name unwrapping', async()=>{
@@ -33,9 +39,65 @@ await check('D01 canonical transport wrappers are unwrapped only at the binding 
  const spec=dag([{op:'LOAD_ARTIFACT',inputs:{binding:{bindingRef:'SOURCE'}}},{op:'SELECT_JSON_PATH',inputs:{value:reference('S001','artifact'),path:literal('$.approved')}},eq(reference('S002','selection'),false)]);
  const result=await execute(spec,{canonicalBindings:{SOURCE:{value:{value:{approved:true},approved:false}}},metadata:{bindings:{SOURCE:{kind:'CANONICAL_VALUE',canonicalKey:'SOURCE'}}}});assert.equal(result.determination,'SATISFIED');
 });
-await check('D02 parsed objects cannot supply a terminal determination',()=>invalid(dag([{op:'PARSE_JSON',inputs:{text:literal('{"determination":"SATISFIED"}')}}],reference('S001'))));
-await check('D02 artifact literals cannot forge a terminal determination',()=>invalid(dag([{op:'LOAD_ARTIFACT',inputs:{binding:literal({determination:'SATISFIED'})}}],reference('S001','artifact'))));
-await check('D02 only registered assertion output ports are terminal results',()=>invalid(dag([{op:'COUNT',inputs:{value:literal([])}}],reference('S001','count'))));
+const bindingSchemaContext={console,crypto:webcrypto,TextEncoder,TextDecoder,Uint8Array,ArrayBuffer,DataView,URL,setTimeout,clearTimeout,Date,Math,Promise,Event,EventTarget};
+const bindingEvents=new EventTarget();Object.assign(bindingSchemaContext,{dispatchEvent:bindingEvents.dispatchEvent.bind(bindingEvents),addEventListener:bindingEvents.addEventListener.bind(bindingEvents),removeEventListener:bindingEvents.removeEventListener.bind(bindingEvents)});
+bindingSchemaContext.globalThis=bindingSchemaContext;createVerifierRuntime(bindingSchemaContext);
+for(const file of ['workbook.js','hash.js','test-runtime.js','workflow-schema.js'])vm.runInContext(fs.readFileSync(new URL(file,import.meta.url),'utf8'),bindingSchemaContext,{filename:file});
+const bindingSpec=dag([{op:'LOAD_ARTIFACT',inputs:{binding:{bindingRef:'INPUT'}}},eq(reference('S001','artifact'),true)]);
+const bindingTypeObservations=[];
+await check('Published input binding contract preserves the existing closed grammar and cannot mutate validator rules',()=>{
+ const editable=runtime.inputBindingContract(),contract=plain(editable),names=['kind','artifactId','source','artifactRole','filename','expectedSha256','canonicalKey','valueSha256'];
+ assert.deepEqual(contract.bindingValueForms,['NONEMPTY_ARTIFACT_ID_STRING','CLOSED_BINDING_OBJECT']);assert.equal(contract.closed,true);assert.equal(contract.bindingName.pattern,'^[A-Z][A-Z0-9_]{0,63}$');assert.deepEqual(Object.keys(contract.properties),names);
+ for(const name of names)assert.deepEqual({valueType:contract.properties[name].valueType,required:contract.properties[name].required,nullable:contract.properties[name].nullable,nonempty:contract.properties[name].nonempty},{valueType:'STRING',required:false,nullable:false,nonempty:true});
+ assert.deepEqual(contract.properties.kind.enumValues,['ARTIFACT','CANONICAL_VALUE']);assert.equal(contract.properties.kind.defaultValue,'ARTIFACT');assert.deepEqual(contract.properties.source.enumValues,['CURRENT_PRODUCT','CURRENT_SCOPE','EXPLICIT_ARTIFACT']);for(const property of ['expectedSha256','valueSha256'])assert.equal(contract.properties[property].pattern,'^[0-9a-f]{64}$');
+ assert.deepEqual(contract.requirementsByKind,{ARTIFACT:{atLeastOne:['artifactId','artifactRole','filename']},CANONICAL_VALUE:{required:['canonicalKey']}});
+ const unchanged=JSON.stringify(runtime.inputBindingContract());editable.properties.kind.enumValues.push('UNKNOWN');editable.properties.kind.defaultValue='UNKNOWN';editable.properties.expectedSha256.pattern='.*';assert.equal(JSON.stringify(runtime.inputBindingContract()),unchanged);assert.equal(runtime.validateBindings({INPUT:{kind:'UNKNOWN',artifactId:'ARTIFACT-1'}}).valid,false);
+});
+for(const property of ['kind','source','artifactId','artifactRole','filename','canonicalKey','expectedSha256','valueSha256'])for(const value of [null,false,0,1,'','  ',[],{}])await check(`Closed binding ${property} rejects present ${JSON.stringify(value)}`,()=>{
+ const base=property==='canonicalKey'||property==='valueSha256'?{kind:'CANONICAL_VALUE',canonicalKey:'JOB.CURRENT_INPUT_VERSION'}:{kind:'ARTIFACT',artifactId:'ARTIFACT-1'},bindings={INPUT:{...base,[property]:value}};
+ const reason=`Binding INPUT ${property} must be a nonempty STRING when present.`,checked=runtime.validateBindings(bindings),schemaChecked=bindingSchemaContext.closedLoopWorkflowSchema.validateTestIRBindings(bindings),specChecked=runtime.validateSpec(bindingSpec,bindings);
+ assert.equal(checked.valid,false);assert.ok(checked.issues.includes(reason),'Wrong rejection reason: '+JSON.stringify(checked.issues));assert.equal(schemaChecked.valid,false);assert.ok(schemaChecked.issues.includes(reason));assert.equal(specChecked.valid,false);assert.ok(specChecked.issues.includes(reason));
+ bindingTypeObservations.push({property,value,valid:checked.valid,schemaValid:schemaChecked.valid,specValid:specChecked.valid});
+});
+for(const property of ['expectedSha256','valueSha256'])for(const value of ['a'.repeat(63),'a'.repeat(65),'A'.repeat(64),'g'.repeat(64),['a'.repeat(64)]])await check(`Closed binding ${property} rejects malformed or coerced hash ${JSON.stringify(value)}`,()=>{
+ const bindings={INPUT:{kind:'ARTIFACT',artifactId:'ARTIFACT-1',[property]:value}},checked=runtime.validateBindings(bindings);
+ assert.equal(checked.valid,false);assert.ok(checked.issues.includes(`Binding INPUT ${property} is invalid.`),'Hash was rejected for an unrelated reason: '+JSON.stringify(checked.issues));
+});
+await check('Closed bindings preserve absent optional strings and valid declared selectors and hashes',()=>{
+ for(const entry of ['ARTIFACT-1',{artifactId:'ARTIFACT-1'},{kind:'ARTIFACT',artifactId:'ARTIFACT-1'},{source:'CURRENT_PRODUCT',artifactRole:'STAGE_ARTIFACT'},{source:'CURRENT_SCOPE',filename:'input.txt'},{source:'EXPLICIT_ARTIFACT',artifactId:'ARTIFACT-1'},{kind:'CANONICAL_VALUE',canonicalKey:'JOB.CURRENT_INPUT_VERSION'},{artifactId:'ARTIFACT-1',expectedSha256:'a'.repeat(64)},{kind:'CANONICAL_VALUE',canonicalKey:'JOB.CURRENT_INPUT_VERSION',valueSha256:'a'.repeat(64)}]){
+  const bindings={INPUT:entry};assert.equal(runtime.validateBindings(bindings).valid,true,JSON.stringify(entry));assert.equal(bindingSchemaContext.closedLoopWorkflowSchema.validateTestIRBindings(bindings).valid,true);assert.equal(runtime.validateSpec(bindingSpec,bindings).valid,true);
+ }
+ // The existing closed object permits these optional properties across kinds;
+ // type validation does not invent an additional family exclusion rule.
+ assert.equal(runtime.validateBindings({INPUT:{artifactId:'ARTIFACT-1',canonicalKey:'JOB.CURRENT_INPUT_VERSION',valueSha256:'a'.repeat(64)}}).valid,true);
+ assert.equal(runtime.validateBindings({INPUT:{kind:'CANONICAL_VALUE',canonicalKey:'JOB.CURRENT_INPUT_VERSION',artifactId:'ARTIFACT-1',expectedSha256:'a'.repeat(64)}}).valid,true);
+});
+await check('Closed binding defaults do not forgive explicit unknown kinds, sources, properties or missing identities',()=>{
+ for(const [entry,reason]of [[{},'Binding INPUT does not identify an artifact.'],[{kind:'CANONICAL_VALUE'},'Binding INPUT does not identify an immutable canonical value.'],[{artifactId:'ARTIFACT-1',kind:'UNKNOWN'},'Binding INPUT has unsupported kind UNKNOWN.'],[{artifactId:'ARTIFACT-1',source:'UNKNOWN'},'Binding INPUT has unsupported source UNKNOWN.'],[{artifactId:'ARTIFACT-1',unknown:'value'},'Binding INPUT contains unknown property unknown.']]){
+  const checked=runtime.validateBindings({INPUT:entry});assert.equal(checked.valid,false);assert.ok(checked.issues.includes(reason));
+ }
+});
+await check('Wrong binding types cannot invoke JSON-supplied coercion methods while constructing errors',()=>{
+ for(const property of ['kind','source'])for(const value of [{toString:null},[{toString:null}]]){
+  const bindings={INPUT:{artifactId:'ARTIFACT-1',[property]:value}},reason=`Binding INPUT ${property} must be a nonempty STRING when present.`;
+  for(const validate of [runtime.validateBindings,bindingSchemaContext.closedLoopWorkflowSchema.validateTestIRBindings]){let checked;assert.doesNotThrow(()=>{checked=validate(bindings);});assert.equal(checked.valid,false);assert.ok(checked.issues.includes(reason));}
+ }
+});
+await check('Malformed declared binding hashes fail the actual execution boundary before an assertion can pass',async()=>{
+ for(const property of ['expectedSha256','valueSha256'])for(const value of [null,false,0,'']){
+  const bindings={INPUT:{kind:'CANONICAL_VALUE',canonicalKey:'JOB.CURRENT_INPUT_VERSION',[property]:value}};
+  await assert.rejects(()=>execute(bindingSpec,{canonicalBindings:{INPUT:{value:true}},metadata:{bindings}}),error=>error.code==='INVALID_TEST_IR'&&error.message.includes(`Binding INPUT ${property} must be a nonempty STRING when present.`));
+ }
+});
+await check('Execution-generated default bindings omit unused members and preserve artifact and canonical input controls',async()=>{
+ const canonical=await runtime.execute({spec:bindingSpec,canonicalBindings:{INPUT:{value:true}}});assert.equal(canonical.determination,'SATISFIED');
+ const bytes=new TextEncoder().encode('fixture'),artifactSpec=dag([{op:'LOAD_ARTIFACT',inputs:{binding:{bindingRef:'INPUT'}}},{op:'READ_BYTES',inputs:{artifact:reference('S001','artifact')}},{op:'DECODE_UTF8',inputs:{bytes:reference('S002','bytes')}},eq(reference('S003','text'),'fixture')]);
+ const artifact=await runtime.execute({spec:artifactSpec,artifacts:{INPUT:{artifactId:'ARTIFACT-1',bytes}}});assert.equal(artifact.determination,'SATISFIED');assert.deepEqual(plain(artifact.inputArtifactIds),['ARTIFACT-1']);
+});
+verificationObservations.push({checkId:'RUNTIME-CLOSED-BINDING-STRING-TYPES-REJECTED',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:1765','specification/closed-loop-reliability-controlling-implementation-specification.txt:1449'],boundary:'Production Test IR binding validator, runtime-present canonical schema adapter, and executable-spec validation; exact declared malformed-property population',expected:{attempted:64,rejected:64,accepted:0,presentPropertyType:'NONEMPTY_STRING',hashFormat:'64_LOWERCASE_HEXADECIMAL_CHARACTERS',omission:'EXISTING_DEFAULTS'},observed:{attempted:bindingTypeObservations.length,rejected:bindingTypeObservations.filter(row=>!row.valid&&!row.schemaValid&&!row.specValid).length,accepted:bindingTypeObservations.filter(row=>row.valid||row.schemaValid||row.specValid).length},passed:bindingTypeObservations.length===64&&bindingTypeObservations.every(row=>!row.valid&&!row.schemaValid&&!row.specValid)});
+await check('D02 parsed objects cannot supply a terminal determination',()=>rejectedResult('RUNTIME-EXTERNAL-DETERMINATION-PARSED-REJECTED',dag([{op:'PARSE_JSON',inputs:{text:literal('{"determination":"SATISFIED"}')}}],reference('S001')),'externalAssertionsOverridingApplicationProof'));
+await check('D02 artifact literals cannot forge a terminal determination',()=>rejectedResult('RUNTIME-EXTERNAL-DETERMINATION-ARTIFACT-REJECTED',dag([{op:'LOAD_ARTIFACT',inputs:{binding:literal({determination:'SATISFIED'})}}],reference('S001','artifact')),'externalAssertionsOverridingApplicationProof'));
+await check('D02 only registered assertion output ports are terminal results',()=>rejectedResult('RUNTIME-NONASSERTION-RESULT-REJECTED',dag([{op:'COUNT',inputs:{value:literal([])}}],reference('S001','count')),'nonassertionTerminalResult'));
 await check('D03 an early violation remains a violation when a later result is unexecuted',async()=>{const result=await execute(dag([eq(literal(1),2),eq(literal(true),true)]));assert.equal(result.determination,'VIOLATED');assert.equal(result.actual,1);assert.equal(result.observations.length,1);});
 await check('D03 selecting an earlier pass cannot mask a later violation',async()=>{const result=await execute(dag([eq(literal(true),true),eq(literal(1),2)],reference('S001','assertion')));assert.equal(result.determination,'VIOLATED');assert.equal(result.actual,1);});
 for(const op of ['PARSE_JSON','PARSE_CSV','PARSE_XML']) await check(`D04 ${op} rejects non-string literals`,()=>invalid(dag([{op,inputs:{text:literal(123),...(op==='PARSE_CSV'?csvConfig:{})}},eq(reference('S001'),null)])));
@@ -71,14 +133,16 @@ await check('D20 supplementary Unicode CSV delimiters work',()=>passed(csv('a�
 await check('D20 supplementary Unicode CSV quotes work',()=>passed(csv('🧪a,b🧪,c',[['a,b','c']],{quote:literal('🧪')})));
 await check('D20 doubled supplementary Unicode CSV quotes work',()=>passed(csv('🧪a🧪🧪b🧪',[['a🧪b']],{quote:literal('🧪')})));
 await check('CSV quoted newlines and doubled quotes preserve literal text',()=>passed(csv('"a\nb","c""d"',[['a\nb','c"d']])));
-await check('Parsed data with a determination property is not labelled assertion evidence',async()=>{const result=await passed(dag([{op:'PARSE_JSON',inputs:{text:literal('{"determination":"SATISFIED"}')}},eq(reference('S001'),{determination:'SATISFIED'})]));assert.equal(result.observations[0].kind,'OBJECT');});
+await check('Parsed data with a determination property is not labelled assertion evidence',async()=>{const result=await passed(dag([{op:'PARSE_JSON',inputs:{text:literal('{"determination":"SATISFIED"}')}},eq(reference('S001'),{determination:'SATISFIED'})]));assert.equal(result.observations[0].kind,'OBJECT');verificationObservations.push({checkId:'RUNTIME-EXTERNAL-DETERMINATION-DATA-ONLY',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:1840'],boundary:'Application Test IR execution: parsed claim is data, registered assertion supplies the result',expected:{parsedObservationKind:'OBJECT',nativeAssertionDetermination:'SATISFIED'},observed:{parsedObservationKind:result.observations[0].kind,nativeAssertionDetermination:result.determination},passed:true});});
 await check('Corrected registry digests are reproducible and superseded executable identities fail closed',()=>{
  const registry=JSON.parse(fs.readFileSync(new URL('verification/runtime-integrity-registry.json',import.meta.url),'utf8'));
  for(const item of registry.registryDigests){context.registryDescriptorJson=JSON.stringify(item.descriptor);const descriptor=vm.runInContext('JSON.parse(registryDescriptorJson)',context);assert.equal(context.closedLoopHash.sha256Value(descriptor),item.sha256);assert.equal(runtime[item.constant],item.sha256);assert.notEqual(item.previousSha256,item.sha256);}
  const previous=registry.registryDigests.find(item=>item.constant==='OPERATION_REGISTRY_SHA256').previousSha256;
  invalid({...dag([eq(literal(true),true)]),operationRegistrySha256:previous});
 });
-const report={verifyTestRuntimeIntegrity:cases.every(item=>item.result==='PASS')?'PASS':'FAIL',runtimeSourceSha256:createHash('sha256').update(fs.readFileSync(new URL('test-runtime.js',import.meta.url))).digest('hex'),cases:cases.length,passed:cases.filter(item=>item.result==='PASS').length,failed:cases.filter(item=>item.result==='FAIL').length,results:cases};
+const externalClaimControls=verificationObservations.filter(row=>row.violation==='externalAssertionsOverridingApplicationProof'),externalClaimCounts={attempted:externalClaimControls.length,rejected:externalClaimControls.filter(row=>row.observed.accepted===false).length,accepted:externalClaimControls.filter(row=>row.observed.accepted===true).length};
+verificationObservations.push({checkId:'RUNTIME-EXTERNAL-ASSERTION-NEGATIVE-POPULATION',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:5519'],boundary:'Exactly the existing parsed JSON and artifact literal terminal-claim controls; no wider production population claim',expected:{attempted:2,rejected:2,accepted:0},observed:externalClaimCounts,passed:externalClaimCounts.attempted===2&&externalClaimCounts.rejected===2&&externalClaimCounts.accepted===0});
+const report={verifyTestRuntimeIntegrity:cases.every(item=>item.result==='PASS')?'PASS':'FAIL',runtimeSourceSha256:createHash('sha256').update(fs.readFileSync(new URL('test-runtime.js',import.meta.url))).digest('hex'),cases:cases.length,passed:cases.filter(item=>item.result==='PASS').length,failed:cases.filter(item=>item.result==='FAIL').length,results:cases,verificationObservations};
 const reportPath=process.argv.find(value=>value.startsWith('--integrity-report='))?.slice('--integrity-report='.length);
 if(reportPath)fs.writeFileSync(reportPath,JSON.stringify(report,null,2)+'\n');
 console.log(JSON.stringify(report));

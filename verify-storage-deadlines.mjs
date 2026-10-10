@@ -17,9 +17,11 @@ function environment({worker=false,broadcast=null}={}){
  const advance=async ms=>{const end=clock+ms;while(true){const due=[...timers].filter(([,x])=>x.at<=end).sort((a,b)=>a[1].at-b[1].at)[0];if(!due)break;clock=due[1].at;timers.delete(due[0]);due[1].fn();await flush();}clock=end;await flush();};
  const context=createVerifierRuntime({Blob,TextEncoder,TextDecoder,ReadableStream,CompressionStream,DecompressionStream,Response,AbortController,URL,URLSearchParams,Uint8Array,ArrayBuffer,structuredClone,crypto:crypto.webcrypto,btoa,atob,setTimeout,clearTimeout,queueMicrotask,console:{log(){},error(...x){errors.push(x.map(String).join(' '));}},navigator:{storage:{persist:async()=>true,estimate:async()=>({usage:0,quota:1024})}},Event:class Event{},dispatchEvent(){}});
  if(broadcast)context.BroadcastChannel=broadcast.Channel;
- if(worker){context.document={currentScript:{src:'https://fixture.invalid/project-store.js?v=FIXTURE-BUILD'}};context.Worker=class{constructor(url){this.url=url;this.messages=[];workers.push(this);}postMessage(message){this.messages.push(message);}terminate(){events.workerTerminated++;}};vm.runInContext(fs.readFileSync('workbook.js','utf8'),context,{filename:'workbook.js'});}
+ if(worker){context.document={currentScript:{src:'https://fixture.invalid/project-store.js?v=FIXTURE-BUILD'}};context.Worker=class{constructor(url){this.url=url;this.messages=[];workers.push(this);}postMessage(message){this.messages.push(message);}terminate(){events.workerTerminated++;}};}
+ vm.runInContext(fs.readFileSync('workbook.js','utf8'),context,{filename:'workbook.js'});
  vm.runInContext(fs.readFileSync(process.env.HASH_SOURCE||'hash.js','utf8'),context,{filename:'hash.js'});
- if(worker)for(const file of ['workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])vm.runInContext(fs.readFileSync(file,'utf8'),context,{filename:file});
+ vm.runInContext(fs.readFileSync('workflow-schema.js','utf8'),context,{filename:'workflow-schema.js'});
+ if(worker)for(const file of ['test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])vm.runInContext(fs.readFileSync(file,'utf8'),context,{filename:file});
  vm.runInContext(source,context,{filename:'project-store.js'});
  context.indexedDB={open(){events.opens++;const req={};opens.push(req);return req;}};
  const makeTx=()=>{const tx={requests:[],committed:false,aborted:false,abort(){events.abortCalls++;if(tx.committed)throw Object.assign(new Error('Already committed'),{name:'InvalidStateError'});tx.aborted=true;queueMicrotask(()=>tx.onabort?.());},objectStore(name){return {get(key){const req={transaction:tx,key,storeName:name,result:undefined};tx.requests.push(req);return req;},put(row){events.writes++;tx.row=row;return {transaction:tx};},delete(key){tx.deleted=key;},index(){return {openKeyCursor(){const req={transaction:tx,result:null,cursor:true};tx.requests.push(req);return req;}};}};}};transactions.push(tx);return tx;};
@@ -66,6 +68,45 @@ for(const reply of ['acknowledged','absent','invalid-build'])await check('IO-WOR
 await check('IO-WORKER-ABSENT','A silent worker is terminated, then a confirmed absent commit receipt rejects without automatically repeating execution.',async()=>{const e=environment({worker:true}),r=e.settle(e.store.writeProject({job:{JOB_ID:'PENDING'}})),w=e.workers[0];await e.advance(600000);assert.equal(e.events.workerTerminated,1,'IO_WORKER_DEADLINE_ORACLE');assert.equal(r.state,'PENDING','Outcome must wait for durable receipt reconciliation');await deliverStorage(e,r);assert.equal(r.state,'REJECTED');assert.equal(r.existingProjectsUnchanged,true);assert.equal(w.messages.length,1);w.onmessage({data:{operationId:w.messages[0].operationId,buildIdentity:'FIXTURE-BUILD',ok:true,project:{revision:999}}});await flush();assert.equal(r.state,'REJECTED');return {result:r,events:e.events};});
 await check('IO-WORKER-UNCONFIRMED','When durable outcome read-back is itself unavailable, report an unconfirmed outcome rather than rollback or success.',async()=>{const e=environment({worker:true}),r=e.settle(e.store.writeProject({job:{JOB_ID:'UNKNOWN'}}));await e.advance(630000);assert.equal(r.state,'REJECTED','IO_WORKER_UNCONFIRMED_ORACLE');assert.equal(r.code,'STORAGE_OUTCOME_UNCONFIRMED');assert.equal(r.existingProjectsUnchanged,false);assert.equal(e.events.workerTerminated,1);return {result:r,events:e.events};});
 await check('IO-WORKER-COMMITTED','A timed-out worker with a matching durable receipt resolves the verified committed project without resubmitting the command.',async()=>{const e=environment({worker:true}),p=e.context.closedLoopCore.createBlankState('WORKER-RECEIPT');e.context.closedLoopWorkflowEngine.ensureShape(p);e.context.closedLoopWorkflowEngine.recalculate(p);p.revision=7;const digest=e.store.projectSha256(p),r=e.settle(e.store.writeProject(p)),w=e.workers[0],m=w.messages[0],rows=new Map([['meta:storageOperation:'+m.operationId,{value:{operationId:m.operationId,jobId:p.job.JOB_ID,revision:7,projectSha256:digest}}],['projects:'+p.job.JOB_ID,{project:p,revision:7,projectSha256:digest}]]);await e.advance(600000);assert.equal(e.events.workerTerminated,1,'IO_WORKER_COMMIT_RECOVERY_ORACLE');await deliverStorage(e,r,rows);assert.equal(r.state,'RESOLVED');assert.equal(r.value.projectSha256,digest);assert.equal(r.value.revision,7);assert.equal(w.messages.length,1);return {state:r.state,revision:r.value.revision,projectSha256:digest,events:e.events};});
+// A durable receipt is evidence of one particular commit. Corrupt identities
+// must stay unconfirmed; a valid newer state must not be overwritten by retry.
+for(const method of ['WRITE_PROJECT','IMPORT_PACKAGE'])for(const variant of ['matching','newer-state','worker-error-after-commit','wrong-operation-id','missing-operation-id','array-operation-id','missing-job-id','empty-job-id','array-job-id','missing-revision','string-revision','null-revision','array-revision','negative-revision','fractional-revision','unsafe-revision','future-revision','missing-digest','array-digest','malformed-digest','same-revision-wrong-digest','null-receipt','false-receipt','array-receipt',...(method==='WRITE_PROJECT'?['different-existing-project']:[])])await check('IO-WORKER-RECEIPT-'+method+'-'+variant,'Only a well-typed matching durable receipt may recover a commit; incompatible or corrupt receipts preserve uncertainty and never replay.',async()=>{
+ const e=environment({worker:true}),p=e.context.closedLoopCore.createBlankState('RECEIPT-'+method+'-'+variant);e.context.closedLoopWorkflowEngine.ensureShape(p);e.context.closedLoopWorkflowEngine.recalculate(p);p.revision=7;
+ const committedDigest=e.store.projectSha256(p),selected={jobId:'SELECTION-OWNER',stagingId:'SELECTED-BACKUP'},r=e.settle(method==='WRITE_PROJECT'?e.store.writeProject(p):e.store.importPackage(new Blob(['synthetic selected transport']),{pendingBackupImport:selected})),w=e.workers[0],message=w.messages[0];
+ assert.equal(message.method,method);if(method==='IMPORT_PACKAGE')assert.deepEqual(message.args[1].pendingBackupImport,selected,'IO_WORKER_IMPORT_SELECTION_IDENTITY_ORACLE');
+ let receipt={operationId:message.operationId,jobId:p.job.JOB_ID,revision:7,projectSha256:committedDigest},stored=vm.runInContext("value=>JSON.parse(JSON.stringify(value))",e.context)(p);
+ if(variant==='newer-state')stored.revision=8;
+ if(variant==='wrong-operation-id')receipt.operationId='ANOTHER-OPERATION';
+ if(variant==='missing-operation-id')delete receipt.operationId;
+ if(variant==='array-operation-id')receipt.operationId=[receipt.operationId];
+ if(variant==='missing-job-id')delete receipt.jobId;
+ if(variant==='empty-job-id')receipt.jobId='';
+ if(variant==='array-job-id')receipt.jobId=[receipt.jobId];
+ if(variant==='missing-revision')delete receipt.revision;
+ if(variant==='string-revision')receipt.revision='7';
+ if(variant==='null-revision')receipt.revision=null;
+ if(variant==='array-revision')receipt.revision=[7];
+ if(variant==='negative-revision')receipt.revision=-1;
+ if(variant==='fractional-revision')receipt.revision=6.5;
+ if(variant==='unsafe-revision')receipt.revision=Number.MAX_SAFE_INTEGER+1;
+ if(variant==='future-revision')receipt.revision=8;
+ if(variant==='missing-digest')delete receipt.projectSha256;
+ if(variant==='array-digest')receipt.projectSha256=[receipt.projectSha256];
+ if(variant==='malformed-digest')receipt.projectSha256='NOT-A-DIGEST';
+ if(variant==='same-revision-wrong-digest')receipt.projectSha256='f'.repeat(64);
+ if(variant==='different-existing-project'){stored.job.JOB_ID='ANOTHER-EXISTING-PROJECT';receipt.jobId=stored.job.JOB_ID;receipt.projectSha256=e.store.projectSha256(stored);}
+ if(variant==='null-receipt')receipt=null;
+ if(variant==='false-receipt')receipt=false;
+ if(variant==='array-receipt')receipt=[receipt];
+ const storedDigest=e.store.projectSha256(stored),key='storageOperation:'+message.operationId,rows=new Map([['meta:'+key,{value:receipt}],['projects:'+stored.job.JOB_ID,{project:stored,revision:stored.revision,projectSha256:storedDigest}]]);
+ if(variant==='worker-error-after-commit')w.onmessage({data:{operationId:message.operationId,buildIdentity:'FIXTURE-BUILD',ok:false,error:{code:'POST_COMMIT_READ_FAILED',message:'Synthetic failure after durable commit.'}}});else await e.advance(600000);
+ await deliverStorage(e,r,rows);
+ const accepted=['matching','newer-state','worker-error-after-commit'].includes(variant);
+ if(accepted){assert.equal(r.state,'RESOLVED','IO_WORKER_RECEIPT_VALID_CONTROL_ORACLE: '+method+'/'+variant);assert.equal(r.value.revision,stored.revision);assert.equal(r.value.projectSha256,storedDigest);assert(e.transactions.some(tx=>tx.deleted===key),'IO_WORKER_RECEIPT_ACKNOWLEDGED_CLEANUP_ORACLE');}
+ else{assert.equal(r.state,'REJECTED','IO_WORKER_RECEIPT_IDENTITY_ORACLE: '+method+'/'+variant);assert.equal(r.code,'STORAGE_OUTCOME_UNCONFIRMED','IO_WORKER_RECEIPT_UNCERTAIN_ORACLE');assert.equal(r.existingProjectsUnchanged,false,'IO_WORKER_RECEIPT_NO_FALSE_ROLLBACK_ORACLE');assert(!e.transactions.some(tx=>tx.deleted===key),'IO_WORKER_RECEIPT_FAILED_RECOVERY_PRESERVED_ORACLE');}
+ assert.equal(w.messages.length,1,'IO_WORKER_RECEIPT_NO_REPLAY_ORACLE');
+ return {method,variant,state:r.state,revision:r.value?.revision??null,code:r.code??null,existingProjectsUnchanged:r.existingProjectsUnchanged??null,workerRequests:w.messages.length};
+});
 for(const bytes of ['valid','missing','corrupt'])await check('IO-WORKER-CUSTODY-'+bytes,'A successful worker reply establishes byte custody only by reading and verifying the receiving context’s stored files.',async()=>{
  const broadcast=storageBroadcastNetwork(),e=environment({worker:true,broadcast}),engine=e.context.closedLoopWorkflowEngine,p=e.context.closedLoopCore.createBlankState('WORKER-BYTES-'+bytes);engine.ensureShape(p);
  const artifactId=engine.allocateId(p,'artifacts',{commandId:'WORKER-FILE',idempotencyKey:'file'}),blob=new Blob(['verified bytes']),sha256=await e.context.closedLoopHash.sha256Bytes(blob);

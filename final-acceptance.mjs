@@ -1,4 +1,6 @@
 // Repository-only Section 49 publication barrier. Never imported by the application.
+import {validateFinalNormativeProof} from './verification-evidence.mjs';
+import {validateVisualBaselineEvidence} from './visual-baseline-submission.mjs';
 export const CORE_COVERAGE_KEYS=Object.freeze(["fieldOwnershipCoverage", "applicationDerivationCoverage", "typedRelationshipCoverage", "acceptedAgentValueExtractionCoverage", "acceptedRelationshipProvenanceCoverage", "currentScopeSelectorCoverage", "exactReqRunTestCoverage", "applicableCurrentRegressionSuccess", "mandatoryEvidenceChainCoverage", "releaseArtifactIdentityCoverage"]);
 export const SECTION49_COVERAGE_KEYS=Object.freeze(["stage01RawInputAccounting", "stage01RequiredFileInspectionAccounting", "stage01AcceptedSemanticMappingCoverage", "stage04ObligationAccounting", "mandatoryEvidenceSufficiencyCoverage", "contractProfileMigrationCoverage", "fieldRegistryCoverage", "stageOperationRegistryCoverage", "stageOperationScopeMatrixCoverage", "durableObjectRegistryCoverage", "fileFirstPromptByteIdentityCoverage", "fileFirstResponseByteCaptureCoverage", "attachmentSlotMappingCoverage", "semanticReviewIndependenceCoverage", "dueStageObligationCoverage", "activationProofCoverage", "testIrDagAndRegistryIdentityCoverage", "closedMetricUniverseCoverage", "deliveryCandidateIdentityCoverage", "terminalCommandPrerequisiteCoverage", "preDeliveryCheckpointCoverage", "destinationBoundAuthorizationCoverage", "actualIPhoneSafariAcceptanceCoverage", "canonicalDeploymentOriginCoverage", "normativeRequirementTraceCoverage"]);
 export const CORE_ZERO_KEYS=Object.freeze(["unauthorizedFieldMutationsAccepted", "canonicalMutationsBeforeAcceptance", "partialCommitsAfterInjectedFailure", "staleProposalsAccepted", "crossProjectRelationshipsAccepted", "historicalScopeSatisfyingCurrentGates", "unmatchedDeliveryFilesAuthorized", "appendOnlyHistoryRewritesAccepted", "unsupportedTestIrTreatedAsExecutable", "externalAssertionsOverridingApplicationProof", "nativeExecutionReceiptsFabricatedExternally", "releaseAcceptedWithContradiction"]);
@@ -8,7 +10,7 @@ const object=value=>value!==null&&typeof value==='object'&&!Array.isArray(value)
 const nonempty=value=>typeof value==='string'&&value.trim().length>0;
 const sha=/^[0-9a-f]{40}$/;
 const sha256=/^[0-9a-f]{64}$/;
-export function evaluateFinalAcceptance(report,{visualBaseline=null}={}){
+export function evaluateFinalAcceptance(report,{visualBaseline=null,baselineResourceGraph,executedEvidence}={}){
   const blockers=[];
   const fail=(code,path,actor='CONTROLLER')=>blockers.push({code,path,requiredActor:actor});
   if(!object(report))return {schema:'closed-loop-final-acceptance-gate/1',accepted:false,automatedChecksReady:false,blockers:[{code:'REPORT_REQUIRED',path:'/',requiredActor:'CONTROLLER'}]};
@@ -29,6 +31,7 @@ export function evaluateFinalAcceptance(report,{visualBaseline=null}={}){
     }
   }
   coverage('coverageMetrics',CORE_COVERAGE_KEYS);coverage('section49CoverageMetrics',SECTION49_COVERAGE_KEYS);
+  try{validateFinalNormativeProof(report,executedEvidence);}catch(error){fail('CURRENT_NORMATIVE_PROOF_REQUIRED','normativeRequirementTrace');blockers.at(-1).reason=String(error.message);}
   for(const key of CORE_ZERO_KEYS)if(report[key]!==0)fail('ZERO_INVARIANT_NOT_PROVEN',key);
   for(const key of SECTION49_ZERO_KEYS)if(report.section49ZeroCountMetrics?.[key]!==0)fail('ZERO_INVARIANT_NOT_PROVEN',`section49ZeroCountMetrics.${key}`);
   if(report.section49ZeroCountInvariantCount!==SECTION49_ZERO_KEYS.length||report.section49ZeroCountInvariantViolations!==0)fail('ZERO_INVARIANT_SUMMARY_MISMATCH','section49ZeroCountInvariantCount');
@@ -41,6 +44,7 @@ export function evaluateFinalAcceptance(report,{visualBaseline=null}={}){
   if(report.mobileAcceptancePhysicalDeviceAssertion!==true||!['HUMAN_OBSERVATION','VERIFIED_EXTERNAL'].includes(report.mobileAcceptanceEvidenceBasis)||!/^[0-9a-f]{32,}$/.test(report.mobileAcceptanceChallenge||''))fail('MOBILE_PHYSICAL_EVIDENCE_REQUIRED','mobileAcceptanceEvidenceBasis','IPHONE_OPERATOR');
   // Authority must identify the baseline, this comparison, and its actual evidence.
   // An informal statement of regular Safari use cannot synthesize this record.
-  if(!object(visualBaseline)||visualBaseline.status!=='PROVEN'||!sha.test(visualBaseline.sourceCommit||'')||visualBaseline.comparedCommit!==report.commit||visualBaseline.comparisonResult!=='PASS'||!Array.isArray(visualBaseline.evidenceReferences)||!visualBaseline.evidenceReferences.length||visualBaseline.evidenceReferences.some(ref=>!nonempty(ref))||!['APPROVED_PREDECESSOR','VISUAL_BASELINE_AUTHORIZATION'].includes(visualBaseline.authority))fail('APPROVED_VISUAL_BASELINE_REQUIRED','visualBaseline','VISUAL_BASELINE_AUTHORITY');
+  const visualValidation=validateVisualBaselineEvidence(visualBaseline,{commit:report.commit,deploymentManifestDigest:report.mobileAcceptanceDeploymentManifestDigest,baselineResourceGraph});
+  if(!visualValidation.valid){fail('APPROVED_VISUAL_BASELINE_REQUIRED','visualBaseline','VISUAL_BASELINE_AUTHORITY');blockers.at(-1).issues=visualValidation.issues;}
   return {schema:'closed-loop-final-acceptance-gate/1',accepted:blockers.length===0,automatedChecksReady:!blockers.some(item=>item.requiredActor==='CONTROLLER'),coverageMetricCount:CORE_COVERAGE_KEYS.length+SECTION49_COVERAGE_KEYS.length,zeroInvariantCount:CORE_ZERO_KEYS.length+SECTION49_ZERO_KEYS.length,blockers};
 }

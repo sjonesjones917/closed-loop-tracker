@@ -12,7 +12,7 @@ const skipProof=process.env.CONFORMANCE_NATIVE_FAULT==='skip-proof-recording';
 if(skipProof){
  const owner="file==='workflow-engine.js'?timingFaultSource(fs.readFileSync(file,'utf8'))";
  assert.equal(source.split(owner).length,2,'The native fault must bind to the current shared lifecycle module loader.');
- source=source.replace(owner,owner+".replace('recordApplicationDeterministicResult:recordNativeProofResult','recordApplicationDeterministicResult:e0.recordApplicationDeterministicResult')");
+ source=source.replace(owner,owner+".replace('recordApplicationDeterministicResult:(p,o={})=>recordNativeProofResult(p,{...o,stage:22})','recordApplicationDeterministicResult:e0.recordApplicationDeterministicResult')");
 }
 const anchor="tempKey:'test-final-det',relationships:{REQ_ID:{recordId:reqId}},overrides:{";
 assert.equal(source.split(anchor).length,2);

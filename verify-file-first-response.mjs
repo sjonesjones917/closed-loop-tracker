@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
+import {verificationCatalog} from './verification-evidence-catalog.mjs';
 
 const read=path=>fs.readFileSync(new URL(path,import.meta.url),'utf8');
 const app=read('./app-core.js');
@@ -11,8 +12,9 @@ const ingestion=read('./response-ingestion.js');
 const store=read('./project-store.js');
 const html=read('./index.html');
 const ingestionProof=read('./verify-ingestion.mjs');
+const collector=read('./collect-verification-evidence.mjs');
 
-export function assertFileFirstResponseContract({appSource=app,promptSource=prompt,engineSource=engine,ingestionSource=ingestion,storeSource=store,htmlSource=html,ingestionProofSource=ingestionProof}={}){
+export function assertFileFirstResponseContract({appSource=app,promptSource=prompt,engineSource=engine,ingestionSource=ingestion,storeSource=store,htmlSource=html,ingestionProofSource=ingestionProof,catalog=verificationCatalog,collectorSource=collector}={}){
   assertResponseFileInstruction(promptSource);
   assert.doesNotMatch(engineSource,/PASTE_FINAL_JSON/,'Paste must not remain a primary workflow action.');
   assert.match(engineSource,/SELECT_RESPONSE_JSON_FILE/,'Workflow engine must expose authoritative response-file selection.');
@@ -35,7 +37,10 @@ export function assertFileFirstResponseContract({appSource=app,promptSource=prom
   assert.match(htmlSource,/obtain the authoritative response\.json file for the current instruction/i,'Static operator guidance must identify the authoritative response.json filename and current-instruction binding.');
   assert.match(htmlSource,/Select the exact response\.json file returned by the agent in the application/i,'Static operator guidance must identify the selected response.json file and its external-agent origin.');
   assert.doesNotMatch(htmlSource,/Paste only that final JSON|Parse \/ validate response/,'Static guidance must not require pasted final JSON.');
-  assert.match(ingestionProofSource,/import ['"]\.\/verify-file-first-response\.mjs['"]/,'The required ingestion proof must permanently execute this file-first regression.');
+  assert.deepEqual(catalog['verify-file-first-response.mjs']?.checks.map(check=>check.id),['response.file-selection','response.byte-rehash-wiring','response.paste-primary'],'The file-first regression must retain its separate required evidence catalog assertions.');
+  assert.match(collectorSource,/for\(const suite of Object\.keys\(verificationCatalog\)\)/,'The collector must enumerate required catalogued producer suites.');
+  assert.match(collectorSource,/await executeEvidenceProducer\(suite,\{directory,fingerprint\}\)/,'The collector must execute a missing catalogued producer.');
+  assert.doesNotMatch(ingestionProofSource,/import ['"]\.\/verify-file-first-response\.mjs['"]/,'The ingestion wrapper must not rerun its separately owned file-first regression.');
   assert.match(ingestionProofSource,/import ['"]\.\/verify-file-first-operator\.mjs['"]/,'The required ingestion proof must permanently execute the operator-path mutation regression.');
   return true;
 }
@@ -79,7 +84,9 @@ assert.throws(()=>assertFileFirstResponseContract({appSource:app.replace('id="re
 assert.throws(()=>assertFileFirstResponseContract({storeSource:store.replaceAll('RESPONSE_STAGE_REHASH_MISMATCH','RESPONSE_STAGE_IGNORED_MISMATCH')}),/Read-back byte mismatch/,'Mutation removing staged-byte mismatch enforcement must fail.');
 assert.throws(()=>assertFileFirstResponseContract({appSource:app.replaceAll('AUTHORITATIVE_RESPONSE_FILE','TEXT_ONLY')}),/authoritative response-file transport/,'Mutation erasing authoritative transport provenance must fail.');
 assert.throws(()=>assertFileFirstResponseContract({htmlSource:html.replace('returned by the agent','from an unspecified source')}),/external-agent origin/,'Mutation erasing the returned-file origin must fail.');
-assert.throws(()=>assertFileFirstResponseContract({ingestionProofSource:ingestionProof.replace("import './verify-file-first-response.mjs';",'')}),/permanently execute this file-first regression/,'Mutation removing the regression from the required ingestion proof must fail.');
+assert.throws(()=>assertFileFirstResponseContract({catalog:{...verificationCatalog,'verify-file-first-response.mjs':undefined}}),/separate required evidence catalog assertions/,'Mutation removing the direct catalog owner must fail.');
+assert.throws(()=>assertFileFirstResponseContract({collectorSource:collector.replace('await executeEvidenceProducer(suite,{directory,fingerprint})','undefined')}),/execute a missing catalogued producer/,'Mutation removing collector execution of the direct owner must fail.');
+assert.throws(()=>assertFileFirstResponseContract({ingestionProofSource:ingestionProof+"\nimport './verify-file-first-response.mjs';\n"}),/must not rerun its separately owned file-first regression/,'Mutation restoring nested duplicate execution must fail.');
 
 assert.throws(()=>assertFileFirstResponseContract({promptSource:prompt.replace('create exactly one authoritative UTF-8 JSON file named response.json','return exactly one complete strict JSON object and no surrounding prose')}),/response.json file/,'Mutation restoring inline-only output must fail.');
 assert.throws(()=>assertFileFirstResponseContract({promptSource:prompt.replace('Return one authoritative UTF-8 JSON file named response.json only when ready for machine ingestion','Return one final strict JSON object only when ready for machine ingestion')}),/response.json file transport/,'Mutation restoring inline mandatory response rules must fail.');
@@ -98,7 +105,9 @@ console.log(JSON.stringify({
   textFallbackNonauthoritative:true,
   promptFileExportExposed:true,
   responseFileOriginBound:true,
-  requiredIngestionProofInvocation:true,
+  directCatalogOwner:true,
+  collectorExecutesMissingOwner:true,
+  nestedDuplicateRejected:true,
   pastePrimaryMutationDetected:true,
   fileSelectorMutationDetected:true,
   stagedRehashMutationDetected:true,

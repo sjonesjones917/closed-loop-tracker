@@ -1,0 +1,506 @@
+{
+  "schema": "closed-loop-requirement-coverage-review/1",
+  "normativeRequirementId": "NREQ-a011968eff2ed2dc314d58ed27dfad88",
+  "sourceLineSha256": "4ead881cf27674aa764ac029016151b38dfde1410776d06b461d35f2043c9bb5",
+  "specificationSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
+  "declarationSha256": "6c92419e911bf0944b22db15b42b94dd1469a50fddccfe72cc6beb182dad9cec",
+  "decision": "COMPLETE_COVERAGE",
+  "evidenceBasis": "EXTERNALLY_SUPPORTED",
+  "method": "The unchanged narrow controlling clause and obligation/check decomposition retain their embedded earlier independent semantic assessment. A separate collaborator independently inspected the exact current source delta from 06e80b7 through the SHA-256-bound consolidated files in verification/ci-evidence-independent-delta-review-20261010.json, including the collector/export, strict publication, migration report reuse, runtime promotion and diagnostic changes. This renewal claims only that scoped source-delta assessment, preserves all existing proof boundaries, and requires current frozen-source execution separately.",
+  "author": {
+    "actor": "Codex consolidated CI repair integrator",
+    "contextId": "/root"
+  },
+  "reviewer": {
+    "actor": "Codex independent CI evidence delta reviewer",
+    "contextId": "/root/evidence_review"
+  },
+  "reviewedInputs": [
+    {
+      "declarationSha256": "6c92419e911bf0944b22db15b42b94dd1469a50fddccfe72cc6beb182dad9cec"
+    },
+    {
+      "path": ".github/workflows/pages.yml",
+      "sha256": "1081433eb92a0b736bc354c1b616e2ac1995898b91a3720b0cdd1b6cf0def4a1"
+    },
+    {
+      "path": "app-core.js",
+      "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+    },
+    {
+      "path": "browser-execution-evidence.mjs",
+      "sha256": "ded69b26852ae1999b5825f937fa8856b56cfbd6acf9f461ada828632f6455a9"
+    },
+    {
+      "path": "build-static-site.mjs",
+      "sha256": "fdda103454069b9c40cb563ac327bfcc3ab999428466fea647da5364eca1b840"
+    },
+    {
+      "path": "deployment-contract-identities.mjs",
+      "sha256": "bd4e76c84bf14a4a88ff1549e45e6c5b9020f779a39dae21ed8d79aab7898ef3"
+    },
+    {
+      "path": "evaluate-mobile-acceptance-submission.mjs",
+      "sha256": "1fb8e48e2e71b1b78486a1f275322b4b89ef0928c89cb00284c7db3b5eacc2a1"
+    },
+    {
+      "path": "final-acceptance.mjs",
+      "sha256": "5f5187e5f8426d8681f4e88afbc2511ac08a5e3d1ca28fbae10d0632d147d4f2"
+    },
+    {
+      "path": "hash.js",
+      "sha256": "a13cf57bd7c7414bc801f511d5937f80eaf7fd675c0e6c2b5a92b365df16e4d7"
+    },
+    {
+      "path": "mobile-evidence-test-fixture.mjs",
+      "sha256": "eabdada8addb4cdae11c7193f28f53a3b6de3e70d08f026da72b74a2709f6806"
+    },
+    {
+      "path": "operator-journey-fixtures.mjs",
+      "sha256": "73cca7813dfdca430c66e76487efc60b91cbf4642bfcd93b96f6bad2a9314c38"
+    },
+    {
+      "path": "project-store.js",
+      "sha256": "4e8368f0d91eab0b937ee5c256a121c6ca2b3524e9d06ffc16c3f5637a05b060"
+    },
+    {
+      "path": "prompt-engine.js",
+      "sha256": "61e363381dfb88fcfd32a176066762e2a37cf7b14fb9d39bff4eacf7e6d5706f"
+    },
+    {
+      "path": "response-ingestion.js",
+      "sha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5"
+    },
+    {
+      "path": "specification/closed-loop-normative-requirements.json",
+      "sha256": "97b43f690b60219d67f498459439bce30416650b9f26c46c34a89b972a13929f"
+    },
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d"
+    },
+    {
+      "path": "specification/closed-loop-specification-manifest.json",
+      "sha256": "651e71dffee949524793d50195d4958a777dc7392cb31f40b5975079a846b258"
+    },
+    {
+      "path": "test-deployment-contract-identities.mjs",
+      "sha256": "719fc2bd6fa0744e082c7b7d4bf24dd26e2fe821d162381247304568f5570779"
+    },
+    {
+      "path": "test-external-normative-proof.mjs",
+      "sha256": "46f3f29839cd513f836ecb1219e9b4cd1789f19fc28dc6361c684639adda0e7f"
+    },
+    {
+      "path": "test-fixtures.mjs",
+      "sha256": "666a66d54f5944eae28c608eb0d627aefe45972413b8f5ac004db306205f00c7"
+    },
+    {
+      "path": "test-handoff-authorization.mjs",
+      "sha256": "37bfb4e255afb6701fccaccdf055ee7961e838eaf03927c2963dfcf880cf82b6"
+    },
+    {
+      "path": "test-normative-catalog-consumers.mjs",
+      "sha256": "6c14d578e5d70351f30288c9182ca9f6cbfcced5ec35e230167b22874a202044"
+    },
+    {
+      "path": "test-normative-context-applicability.mjs",
+      "sha256": "a733281294d7af8103cd35340262725635c4565388ca9bcce69493b22c5ba0eb"
+    },
+    {
+      "path": "test-normative-proof-fixture.mjs",
+      "sha256": "b1f24a46bc3aefcfe79be849ecffe2f90f018293701272c487b6e8b6b28b1554"
+    },
+    {
+      "path": "test-project-store-runtime.mjs",
+      "sha256": "743e74ce60e3f81f1601daf7a1bf589ac2a3b8600e275a5865c24fbd0f335f1b"
+    },
+    {
+      "path": "test-runtime-operation-registry.mjs",
+      "sha256": "8892e1f7aea7a6565af693233fe802785d8dbcabee972c6b61890a66a02f233e"
+    },
+    {
+      "path": "test-runtime.js",
+      "sha256": "e4e01a79c526592f9d044e2c104845e63c9aa341eb64837c138f5c3e3ecba353"
+    },
+    {
+      "path": "test-specification-field-registry.mjs",
+      "sha256": "064ebc232eaa07ce51587de4233e075c97824b15b953f1f7d925195f6d0f7f05"
+    },
+    {
+      "path": "test-stage01-specification-controls.mjs",
+      "sha256": "3455469d384cd50cc4216ddd842d50c70ea088b3639b045ac9f5d82f4d73a2d3"
+    },
+    {
+      "path": "test-worker.js",
+      "sha256": "e76e168b24b8d89d4f815cb53a78e63fca18558045cb9fac225d65fdbfc88d11"
+    },
+    {
+      "path": "test-zip.mjs",
+      "sha256": "b5080a8e58eb7b13f421ecce5c63a3d95b765a5b021f5bd4543dce28d171e89d"
+    },
+    {
+      "path": "verification-evidence-catalog.mjs",
+      "sha256": "5d8e04d46601123d4552e796d0e69027f29774155d5309d5e1356c6456c53010"
+    },
+    {
+      "path": "verification-evidence.mjs",
+      "sha256": "1fa8705ab0951782d31d4136fcfb1f9be772fb9f6b9039627a32b527320ce972"
+    },
+    {
+      "path": "verification/current-source-delta-review-20261007.json",
+      "sha256": "45cca5871ac89cf1583a3825aec5a7d488d4d40dc70afb51a8534470dececf09"
+    },
+    {
+      "path": "verification/normative-context-applicability-20261005.json",
+      "sha256": "7cd05ff0028578a1ca1c2560533519a602ce6a974c240ee11dbbd272524cf656"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-a011968eff2ed2dc314d58ed27dfad88-20261006-followup-2a9e59b2c60f.json",
+      "sha256": "bbc116d6e2dda24d2fa411a36661d736c71c1f59b32affa405e767e317aaaa39"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-a011968eff2ed2dc314d58ed27dfad88-20261006.json",
+      "sha256": "e4a17316d8db2be99674ef1545fadc2a94248200060cc5fad2026a0850a89161"
+    },
+    {
+      "path": "verified-site.mjs",
+      "sha256": "d60bb92fc56f4f8def2dd772d6be6d0ed3d4993bb131db0a4f47ad850395f3cf"
+    },
+    {
+      "path": "verifier-runtime.mjs",
+      "sha256": "051318fc24ea587ced6268d4a60278e5155e3fee8ed26309b28b532c921277f9"
+    },
+    {
+      "path": "verify-conformance-regressions.mjs",
+      "sha256": "cec69ce4a4eb45ad2c49dccd164852a35cd7386f6b269e22d318d5ed63204a39"
+    },
+    {
+      "path": "verify-deployment-manifest.mjs",
+      "sha256": "5b1e4ad3cbfe1b122b39736b588f2c70fb7ed4126561898aba95766be7919e34"
+    },
+    {
+      "path": "verify-final-acceptance.mjs",
+      "sha256": "e21cea176e353bbadb0a98a5e7b344c0c11245019bb3830c564ad790981c1e41"
+    },
+    {
+      "path": "verify-mobile-acceptance-evidence.mjs",
+      "sha256": "d678b1a712f8b8a99c0ec986623030d59ef49fec67511561524cb2a62814cf2f"
+    },
+    {
+      "path": "verify-test-runtime-v3.mjs",
+      "sha256": "4a86e7340d01ad8ccafc364fa0784f01a49583ab6423a65323f625c09424a971"
+    },
+    {
+      "path": "visual-baseline-submission.mjs",
+      "sha256": "5a967920e1e59bbdbcd3d4240b8657ed25e537176c09b514b256d546a2a1f316"
+    },
+    {
+      "path": "workbook.js",
+      "sha256": "3a8098a9bb4ea108eadaa9bec90c76a1522f57f6465f45341cedf60937ddd008"
+    },
+    {
+      "path": "workflow-engine.js",
+      "sha256": "16c2a16d61d6a462ecebd25cd7d530a3cce46e11c1d9f88664c2e9a27cf61295"
+    },
+    {
+      "path": "workflow-schema.js",
+      "sha256": "656e9e632cea3a60e1c7e0fb486e6630d205011d7db32d9674ac5e88593d24f1"
+    },
+    {
+      "path": "verification/ci-scheduling-delta-review-20261008.json",
+      "sha256": "a5fa35ea7c8f4364e5e6635d81bf97f6a441efbf96c58461e4b7bf07bd79455d"
+    },
+    {
+      "path": "verification/ci-evidence-independent-delta-review-20261010.json",
+      "sha256": "2c95da9d8742f268ad2b73be4ad4baaed0089dfb798f471800d9314cf4f222cd"
+    },
+    {
+      "path": "verification/stage28-prerequisite-independent-delta-review-20261010.json",
+      "sha256": "a6d31e351f0b4c2264b014e93eb8c3e03cbc96264574c05cb485b1ab400c910b"
+    },
+    {
+      "path": "verification/runtime-storage-independent-delta-review-20261010.json",
+      "sha256": "1aeddf08767ed1d3a70ff7d4f31d69a74cde85099cce89d8d7a0d0e97404542a"
+    },
+    {
+      "path": "verification/ci-group-handoff-independent-delta-review-20261010.json",
+      "sha256": "3b8b941ac5a47dec4bd681f3e4dbe939230db8875d40c62c17e862e912f04c4d"
+    },
+    {
+      "path": "verification/ingestion-order-independent-delta-review-20261010.json",
+      "sha256": "737d314fffc7623aa35efa6876662c360b913edcddd447d084f6fb5ad9fe1e04"
+    }
+  ],
+  "findings": [],
+  "reviewPerformed": true,
+  "sourceLocation": {
+    "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+    "startLine": 5153,
+    "endLine": 5153,
+    "lineSha256": "4ead881cf27674aa764ac029016151b38dfde1410776d06b461d35f2043c9bb5"
+  },
+  "controllingText": "- Test IR language and operation-registry identities;",
+  "governingContext": [],
+  "additionalControllingContext": [
+    {
+      "line": 5147,
+      "text": "The final machine acceptance artifact additionally identifies:"
+    },
+    {
+      "lines": [
+        95,
+        99
+      ],
+      "reason": "Specification source commit and manifest are repository-only; not runtime project data."
+    }
+  ],
+  "reviewedChecks": [
+    {
+      "suite": "verify-final-acceptance.mjs",
+      "checkId": "acceptance.registry-identity"
+    },
+    {
+      "suite": "verify-deployment-manifest.mjs",
+      "checkId": "deployment.registry-identities"
+    }
+  ],
+  "scopeLimit": "TestIR identity presence/exact binding only; primitive semantics, security, execution and physical observations remain independent obligations.",
+  "independentSemanticAssessment": {
+    "path": "/workspace/scratch/ci-audit/identity-declaration-assessment.json",
+    "sha256": "a5f89fde07c6d371d3a5174984c83c19b8e9838d9b99231feccfc9f57404e158",
+    "row": {
+      "normativeRequirementId": "NREQ-a011968eff2ed2dc314d58ed27dfad88",
+      "sourceLocation": {
+        "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "startLine": 5153,
+        "endLine": 5153,
+        "lineSha256": "4ead881cf27674aa764ac029016151b38dfde1410776d06b461d35f2043c9bb5"
+      },
+      "controllingText": "- Test IR language and operation-registry identities;",
+      "reviewedBinding": {
+        "normativeRequirementId": "NREQ-a011968eff2ed2dc314d58ed27dfad88",
+        "sourceLineSha256": "4ead881cf27674aa764ac029016151b38dfde1410776d06b461d35f2043c9bb5",
+        "checkIds": [
+          "acceptance.registry-identity",
+          "deployment.registry-identities"
+        ],
+        "scope": "Complete proposed coverage of the exact Section46.2 report identity clause only. Publication occurrence, runtime behavior, other Section46 clauses, and whole release remain separately established.",
+        "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+        "fullCoverage": {
+          "schema": "closed-loop-full-requirement-coverage/1",
+          "sourceLineSha256": "4ead881cf27674aa764ac029016151b38dfde1410776d06b461d35f2043c9bb5",
+          "schemaOrRegistryEntry": "closed-loop-test-ir-operations/1",
+          "productionOwners": [
+            {
+              "path": "verification-evidence.mjs",
+              "symbol": "specificationAcceptanceIdentity / readReleaseExecutedEvidence / readEvidencePayload / applyExecutedEvidence / validateFinalNormativeProof",
+              "sha256": "f1b4c7e6435c3cd42a1ed09c3ade9770cc3394a03c1e17a0a405c528e17a5ff2"
+            },
+            {
+              "path": "final-acceptance.mjs",
+              "symbol": "evaluateFinalAcceptance",
+              "sha256": "5f5187e5f8426d8681f4e88afbc2511ac08a5e3d1ca28fbae10d0632d147d4f2"
+            },
+            {
+              "path": ".github/workflows/pages.yml",
+              "symbol": "publish-status: Build acceptance artifact from executed proof jobs, report projection and closed-loop-acceptance.json writer",
+              "sha256": "4fed28a3de65b94d42023edf661d7383b65a3a134e8d562a6575558072aef59b"
+            },
+            {
+              "path": "deployment-contract-identities.mjs",
+              "symbol": "deploymentContractIdentities / validateDeploymentContractIdentities",
+              "sha256": "f68c2aa2ae755ff856713af5ce7a4cc392b10131dd2976a76291b643056e334c"
+            },
+            {
+              "path": "verified-site.mjs",
+              "symbol": "validateSite",
+              "sha256": "54dd0953a0cd17f0ad0f88ab33224f495248bccebca4dff8f0759dd15f10db3c"
+            },
+            {
+              "path": "build-static-site.mjs",
+              "symbol": "manifest registryIdentities / testIrIdentities",
+              "sha256": "fdda103454069b9c40cb563ac327bfcc3ab999428466fea647da5364eca1b840"
+            }
+          ],
+          "obligations": [
+            {
+              "id": "source-line-5153",
+              "sourceText": "- Test IR language and operation-registry identities;",
+              "expectedBehavior": "The acceptance report identifies the current Test IR language version, operation-registry version and operation-registry SHA-256 from test-runtime.js under its exact owner identity. Missing language identity, changed version/digest/owner or changed report values is rejected and an unchanged conforming report remains accepted in the isolated consumer control.",
+              "checks": {
+                "deterministic": [
+                  {
+                    "suite": "verify-final-acceptance.mjs",
+                    "checkId": "acceptance.registry-identity"
+                  },
+                  {
+                    "suite": "verify-deployment-manifest.mjs",
+                    "checkId": "deployment.registry-identities"
+                  }
+                ],
+                "semantic": [],
+                "mutation": [
+                  {
+                    "suite": "verify-final-acceptance.mjs",
+                    "checkId": "acceptance.registry-identity"
+                  },
+                  {
+                    "suite": "verify-deployment-manifest.mjs",
+                    "checkId": "deployment.registry-identities"
+                  }
+                ]
+              },
+              "nonapplicable": {
+                "semantic": "Exact repository identity/path/version/digest publication is a deterministic comparison. No human semantic interpretation or external actor conclusion is needed for this narrow report-field clause."
+              },
+              "evidenceKinds": [
+                "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+              ]
+            }
+          ],
+          "unresolvedObligations": [],
+          "governingContext": [],
+          "review": {
+            "path": "verification/requirement-coverage-NREQ-a011968eff2ed2dc314d58ed27dfad88-20261006-followup-2a9e59b2c60f.json",
+            "sha256": "bbc116d6e2dda24d2fa411a36661d736c71c1f59b32affa405e767e317aaaa39"
+          }
+        }
+      },
+      "semanticAssessment": "COMPLETE_DETERMINISTIC_REPORT_IDENTITY_CLAUSE_WITH_EXECUTION_STILL_REQUIRED",
+      "assessment": {
+        "obligation": "Same artifact identifies Test IR language version, operation-registry version and digest under the test-runtime owner.",
+        "trace": [
+          "deploymentContractIdentities reads TEST_IR_LANGUAGE_VERSION,OPERATION_REGISTRY_VERSION,OPERATION_REGISTRY_SHA256 and owner bytes from checked-out test-runtime.js after owner equality.",
+          "Built manifest includes testIrIdentities; artifact consumer requires equality with designated current owner.",
+          "Private release manifest identities projected to acceptance report; complete final equality prevents omissions, altered digest or owner through the same boundary."
+        ],
+        "independentOracle": "test-deployment-contract-identities.mjs has literal expected language closed-loop-test-ir-language/1, operation registry closed-loop-test-ir-operations/1, exact owner path and digest shape; wrong/missing language block,version,digest,owner and untrusted owner controls reject. Final consumer missing TestIR identity and altered operation digest reject and conforming fixture recovers."
+      },
+      "semanticReviewer": "/root/ci_audit",
+      "priorReview": {
+        "path": "verification/requirement-coverage-NREQ-a011968eff2ed2dc314d58ed27dfad88-20261006-followup-2a9e59b2c60f.json",
+        "sha256": "bbc116d6e2dda24d2fa411a36661d736c71c1f59b32affa405e767e317aaaa39"
+      },
+      "retainedReviewInputsMatching": 44,
+      "staleRetainedInputs": [
+        {
+          "path": "project-store.js",
+          "retainedSha256": "2d6896f47164f4a232c631d949cce64d2200e6d4e2202c2c3cdb29b08648cdf2",
+          "currentSha256": "3939810a8ad2cbb06575703083395d1ae38775add51eb881a4acf345ea100ec1"
+        }
+      ],
+      "retentionDecision": "Existing obligation decomposition/check universe remains justified. All direct identity owners, exact test assertions and catalog byte identities match retained review. Source review does not substitute for current executable evidence. Formal active review still stale until frozen changed dependency is reconciled.",
+      "dependencyDeltaAssessment": {
+        "path": "project-store.js",
+        "currentSha256": "3939810a8ad2cbb06575703083395d1ae38775add51eb881a4acf345ea100ec1",
+        "diff": "/workspace/scratch/ci-audit/project-store-identity-dependency.diff",
+        "boundary": "Read complete uncommitted58-added/10-deleted-line change from a194: sourceArchiveReferences, exact canonical byte reconstruction, history import/reference validation and exported readOriginalSourceArchive. Changes do not alter specificationAcceptanceIdentity, registry projection, final private equality or named identity controls. Store fixture is a declared verifier input through visual fixture and runtime contexts, so current successful execution must still bind its exact new hash. This is not a whole storage-correctness approval."
+      },
+      "freshTestExecution": false,
+      "findings": [],
+      "requiresBehavioralProofOnCandidate": true,
+      "actualReleaseAcceptanceClaim": false,
+      "actualPublicationClaim": false,
+      "actualPhysicalDeviceClaim": false
+    }
+  },
+  "priorReview": {
+    "path": "verification/requirement-coverage-NREQ-a011968eff2ed2dc314d58ed27dfad88-20261007-87882d5bae07.json",
+    "sha256": "6d4f00588f2789470ba071b1abc84db8faef2b501c3b698ad21f48007353aa57",
+    "author": {
+      "actor": "Codex coordinated exact-clause renewal proposer",
+      "contextId": "/root"
+    },
+    "reviewer": {
+      "actor": "Codex independent narrow declaration reviewer",
+      "contextId": "/root/ci_audit"
+    },
+    "reviewCompletedAt": "2026-10-07T01:21:18.248Z"
+  },
+  "reviewerPriorContributionDisclosure": "The /root/evidence_review collaborator did not author the reviewed executable changes. It inspected the consolidated source delta and retained bounded execution outputs, then prepared these review metadata renewals. This is a separate model context, not a human review or physical-device observation.",
+  "currentExecutionRequired": true,
+  "applicationConformanceClaim": false,
+  "reviewCompletedAt": "2026-10-07T05:10:44.883240+00:00",
+  "currentDependencyDeltaReview": {
+    "path": "verification/ci-scheduling-delta-review-20261008.json",
+    "sha256": "a5fa35ea7c8f4364e5e6635d81bf97f6a441efbf96c58461e4b7bf07bd79455d"
+  },
+  "reviewRenewedAt": "2026-10-10T16:23:43.586693+00:00",
+  "renewalActor": {
+    "actor": "Codex independent CI source reviewer applying narrow reviewed source renewal",
+    "contextId": "/root/ci_independent_review"
+  },
+  "currentIntegratorFollowup": {
+    "reviewedAtUtc": "2026-10-08T12:22:00Z",
+    "scope": "Exact controlled persistence-catalog fixture correction in the CI evidence consumer; no production owner, normative requirement, or independent semantic review changed.",
+    "reviewPath": "verification/ci-scheduling-delta-review-20261008.json",
+    "reviewSha256": "a5fa35ea7c8f4364e5e6635d81bf97f6a441efbf96c58461e4b7bf07bd79455d"
+  },
+  "previousActiveReview": {
+    "path": "verification/requirement-coverage-NREQ-a011968eff2ed2dc314d58ed27dfad88-20261007-context-87882d5bae07-54e18bc1f938.json",
+    "sourceCommit": "f97e095723d33a10ebbec078d47586602b9d9908",
+    "sha256": "f239011c98a9a18542e2a1b60d1ab0e6fae887114a65afba7324c11058818ff1",
+    "author": {
+      "actor": "Codex exact-source coverage renewal integrator",
+      "contextId": "/root"
+    },
+    "reviewer": {
+      "actor": "Codex independent verifier-context correction reviewer",
+      "contextId": "/root/pr_inventory_review"
+    },
+    "method": "The retained independent semantic assessment controls the unchanged narrow clause and check decomposition. The current workflow and artifact-owner scheduling delta is separately inspected by the integrator in verification/ci-scheduling-delta-review-20261008.json; that delta record does not claim a new independent semantic review or substitute for current executed receipts. Exact production, verifier, and specification bytes are rebound below; full CI and live evidence remain required.",
+    "reviewCompletedAt": "2026-10-07T05:10:44.883240+00:00"
+  },
+  "currentIndependentSourceDeltaReview": {
+    "path": "verification/ci-evidence-independent-delta-review-20261010.json",
+    "sha256": "2c95da9d8742f268ad2b73be4ad4baaed0089dfb798f471800d9314cf4f222cd",
+    "reviewer": {
+      "actor": "Codex independent CI evidence delta reviewer",
+      "contextId": "/root/evidence_review"
+    },
+    "reviewedAtUtc": "2026-10-10T04:57:18Z",
+    "scope": "Source delta only; earlier independent semantic assessment retained."
+  },
+  "supplementaryIndependentSourceDeltaReviews": [
+    {
+      "path": "verification/stage28-prerequisite-independent-delta-review-20261010.json",
+      "sha256": "a6d31e351f0b4c2264b014e93eb8c3e03cbc96264574c05cb485b1ab400c910b",
+      "reviewer": {
+        "actor": "Codex independent CI evidence delta reviewer",
+        "contextId": "/root/evidence_review"
+      },
+      "reviewedAtUtc": "2026-10-10T05:12:34Z",
+      "scope": "Unchanged supervisor execution implementation; added healthy prerequisite dispatch controls and dependency serialization only."
+    },
+    {
+      "path": "verification/runtime-storage-independent-delta-review-20261010.json",
+      "sha256": "1aeddf08767ed1d3a70ff7d4f31d69a74cde85099cce89d8d7a0d0e97404542a",
+      "reviewedAtUtc": "2026-10-10T05:59:54.689Z",
+      "scope": "Exact reviewed dependency and owner source delta; prior semantic obligation/check decomposition unchanged."
+    },
+    {
+      "path": "verification/ci-group-handoff-independent-delta-review-20261010.json",
+      "sha256": "3b8b941ac5a47dec4bd681f3e4dbe939230db8875d40c62c17e862e912f04c4d",
+      "reviewedAtUtc": "2026-10-10T06:13:50.965Z",
+      "scope": "Exact reviewed dependency and owner source delta; prior semantic obligation/check decomposition unchanged."
+    },
+    {
+      "path": "verification/ingestion-order-independent-delta-review-20261010.json",
+      "sha256": "737d314fffc7623aa35efa6876662c360b913edcddd447d084f6fb5ad9fe1e04",
+      "reviewedAtUtc": "2026-10-10T06:43:53.678Z",
+      "scope": "Exact reviewed dependency and owner source delta; prior semantic obligation/check decomposition unchanged."
+    },
+    {
+      "path": "verification/ci-phase-owner-reuse-independent-delta-review-20261010.json",
+      "sha256": "3ead0c525b186b33c9452880da742e5f38a04c1c6fc730d8889de6925478527e",
+      "reviewer": {
+        "actor": "Codex independent CI source reviewer",
+        "contextId": "/root/ci_independent_review",
+        "distinctFromImplementer": true
+      },
+      "reviewedAtUtc": "2026-10-10T16:23:43.586693+00:00",
+      "scope": "Exact reviewed CI workflow and artifact-owner source delta; prior semantic obligation/check decomposition and historical evidence unchanged. Current coherent execution remains required."
+    }
+  ]
+}

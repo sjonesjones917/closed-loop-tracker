@@ -1,8 +1,16 @@
+import {verifyBackupImportStaging} from './test-backup-import-staging.mjs';
+import {verifyBackupStagingStore} from './test-backup-staging-store.mjs';
+import {verifyResponseStagingRecoveryUI} from './test-response-staging-recovery-ui.mjs';
+import {verifyOperatorSafetyFeedback} from './test-operator-safety-feedback.mjs';
+import {runVerifier,assertDetectedFault} from './verify-conformance-regressions.mjs';
+import {verifyRetainedHistoryOracles} from './verify-retained-history-oracles.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import {projectStoreRuntime} from './test-project-store-runtime.mjs';
+import {deferredDefinitionRestorationFixture} from './test-fixtures.mjs';
+import {appMarkup} from './test-app-markup.mjs';
 const {createBrowserReadiness}=await import(process.env.OPERATOR_DRIVER_MODULE||'./operator-browser-driver.mjs');
 
 // Execute the real UI bindings with a deliberately delayed storage boundary.
@@ -26,6 +34,26 @@ if(process.argv.includes('--fault=incorrect-storage-persistence')){
 }
 const workflowActionCall=source.slice(source.indexOf('function workflow(')).match(/\$\{(nextActionMarkup\([^}]+\))\}/)?.[1];
 const cases=[];
+// Choosing the already selected view does not leave it. Its current drafts and
+// pending review stay visible, while ordinary navigation still captures History.
+{
+ const start=source.indexOf('async function navigateWithinVersion('),end=source.indexOf('function presentRestoredVersion(',start);
+ assert(start>=0&&end>start,'NAVIGATION_OWNER_SOURCE_ORACLE');
+ const r=createVerifierRuntime({});
+ vm.runInContext(`
+ let current={activeView:'Workflow',activeStage:30},draft='Exact unsaved performer observation',captures=0,renders=0,entries=0;
+ let handoffNavigationSequence=7,handoffReview={pending:true},replacementReview={pending:true};
+ const views=['Overview','Workflow'],schema={STAGE_COUNT:30},historyState={activeId:'RETAINED-VIEW'};
+ const captureCurrentView=async()=>{captures++;},captureView=()=>({drafts:{actor:{value:draft}}});
+ const writeBrowserEntry=()=>{entries++;},render=()=>{renders++;draft='';},requestAnimationFrame=fn=>fn(),focusAfterAction=()=>{},$=()=>null,window={scrollTo(){}};
+ ${source.slice(start,end)}
+ globalThis.navigationDraftTest={navigate:navigateWithinVersion,state:()=>({draft,captures,renders,entries,handoffNavigationSequence,handoffReview,replacementReview,view:current.activeView,stage:current.activeStage})};`,r);
+ const t=r.navigationDraftTest;await t.navigate({activeView:'Workflow',activeStage:30});const same=t.state();
+ assert.equal(same.draft,'Exact unsaved performer observation','NOOP_NAVIGATION_DRAFT_ORACLE');assert.equal(same.captures,1);assert.equal(same.renders,0);assert.equal(same.entries,0);assert.equal(same.handoffNavigationSequence,7);assert(same.handoffReview?.pending&&same.replacementReview?.pending);
+ await t.navigate({activeView:'Overview',activeStage:30});const changed=t.state();assert.equal(changed.captures,2);assert.equal(changed.renders,1);assert.equal(changed.entries,1);assert.equal(changed.view,'Overview');assert.equal(changed.handoffReview,null);assert.equal(changed.replacementReview,null);
+ cases.push({caseId:'NOOP-NAVIGATION-PRESERVES-VISIBLE-DRAFT-AND-REVIEW',result:'PASS',ordinaryNavigationStillCapturesHistory:true});
+}
+if(process.argv.includes('--navigation-draft-only')){console.log(JSON.stringify({navigationDraftRetention:true,cases}));process.exit(0);}
 // A deliberately blocked startup must let the browser verifier observe the
 // destination document before application interactivity. Normal navigation
 // still waits for the interactive application boundary.
@@ -53,7 +81,7 @@ const cases=[];
 {
  let driver=fs.readFileSync(process.env.OPERATOR_DRIVER_SOURCE||'operator-browser-driver.mjs','utf8');
  if(process.argv.includes('--fault=forced-operator-scroll')){
-  const before="if(rect.top<0||rect.left<0||rect.bottom>innerHeight||rect.right>innerWidth)node.scrollIntoView({block:'nearest',inline:'nearest'});";
+  const before="if(rect.top<top||rect.left<left||rect.bottom>bottom||rect.right>right)node.scrollIntoView({block:'nearest',inline:'nearest'});";
   assert.equal(driver.split(before).length-1,1,'Operator scroll fault anchor is missing');
   driver=driver.replace(before,"node.scrollIntoView({block:'center'});");
  }
@@ -64,6 +92,9 @@ const cases=[];
  const rect=(top,left=24,width=180,height=44)=>({top,left,width,height,bottom:top+height,right:left+width});
  for(const specimen of [
   {name:'visible centre',box:rect(310),scroll:false},
+  {name:'visual viewport offset',box:rect(860),viewport:{offsetTop:87,offsetLeft:19,width:393,height:852,scale:1},scroll:false},
+  {name:'scaled visual viewport uses CSS input',box:rect(240,100),viewport:{offsetTop:120,offsetLeft:40,width:260,height:400,scale:2},scroll:false},
+  {name:'below visual viewport',box:rect(600,100),viewport:{offsetTop:120,offsetLeft:40,width:260,height:400,scale:2},scroll:true},
   {name:'visible at top edge',box:rect(0),scroll:false},
   {name:'visible at bottom edge',box:rect(808),scroll:false},
   {name:'pending focus before activation',box:rect(310),frameMotion:true,pendingFocus:true,scroll:true},
@@ -84,6 +115,7 @@ const cases=[];
   {name:'inert control',box:rect(310),inert:true,reject:true},
   {name:'layout hides revealed control',box:rect(900),hideAfterReveal:true,reject:true}
  ]){
+  const viewport=specimen.viewport||{offsetTop:0,offsetLeft:0,width:393,height:852,scale:1};
   const moves=[],events=[],inputEvents=[];let clicks=0,directClicks=0,opened=!specimen.disclosure,box={...specimen.box},pendingReveal=false,hidden=false,revealBlock;
   let focusFrames=specimen.pendingFocus?2:0,revealFrames=0,layoutFrames=0;
   const summary={disabled:false,parentElement:null,getBoundingClientRect:()=>rect(100),contains:n=>n===summary,click(){opened=true;disclosure.open=true;directClicks++;}};
@@ -95,13 +127,13 @@ const cases=[];
   const target=specimen.summaryTarget?summary:control;
   const currentNode=()=>specimen.summaryTarget||specimen.disclosure&&!disclosure.open?summary:target;
   let covered=Boolean(specimen.obscuredUntilReveal);
-  const finishReveal=()=>{box=rect(specimen.centerCovered&&revealBlock==='end'?852-box.height:specimen.obscuredUntilReveal?310:Math.max(0,Math.min(852-box.height,box.top)),Math.max(0,Math.min(393-box.width,box.left)),box.width,box.height);hidden=Boolean(specimen.hideAfterReveal);covered=Boolean(specimen.centerCovered&&revealBlock!=='end');pendingReveal=false;};
+  const finishReveal=()=>{box=rect(specimen.centerCovered&&revealBlock==='end'?852-box.height:specimen.obscuredUntilReveal?310:Math.max(viewport.offsetTop,Math.min(viewport.offsetTop+viewport.height-box.height,box.top)),Math.max(viewport.offsetLeft,Math.min(viewport.offsetLeft+viewport.width-box.width,box.left)),box.width,box.height);hidden=Boolean(specimen.hideAfterReveal);covered=Boolean(specimen.centerCovered&&revealBlock!=='end');pendingReveal=false;};
   // Interactivity does not settle a prior action's deferred focus or a reveal.
   // These controls move only on later browser frames, just as the native case.
   const animationFrame=callback=>setTimeout(()=>{layoutFrames++;if(focusFrames){focusFrames--;box=rect(focusFrames?900:930,box.left,box.width,box.height);}if(pendingReveal&&--revealFrames===0)finishReveal();callback(performance.now());},0);
-  const dom=createVerifierRuntime({document:{querySelector:()=>target,elementFromPoint:()=>specimen.obscured||covered?{}:currentNode()},innerHeight:852,innerWidth:393,scrollX:0,scrollY:0,requestAnimationFrame:animationFrame,getComputedStyle:()=>({visibility:specimen.visibility||'visible',display:hidden?'none':specimen.display||'block',opacity:'1'})});
+  const dom=createVerifierRuntime({document:{querySelector:()=>target,elementFromPoint:()=>specimen.obscured||covered?{}:currentNode()},innerHeight:specimen.viewport?1000:852,innerWidth:specimen.viewport?500:393,visualViewport:specimen.viewport,scrollX:0,scrollY:0,requestAnimationFrame:animationFrame,getComputedStyle:()=>({visibility:specimen.visibility||'visible',display:hidden?'none':specimen.display||'block',opacity:'1'})});
   const idle=async()=>{if(pendingReveal&&!specimen.frameMotion)finishReveal();};
-  const page={send:async(method,params)=>{assert.equal(method,'Input.dispatchMouseEvent','DRIVER_POINTER_AUTHORITY_ORACLE');assert.ok(!focusFrames&&!pendingReveal,'DRIVER_LAYOUT_SETTLEMENT_ORACLE: native activation preceded deferred focus or reveal completion: '+specimen.name);inputEvents.push(params);if(params.type==='mouseReleased'){if(specimen.summaryTarget){disclosure.open=!disclosure.open;opened=disclosure.open;clicks++;}else if(specimen.disclosure&&!disclosure.open){opened=true;disclosure.open=true;}else clicks++;}}};
+  const page={send:async(method,params)=>{assert.equal(method,'Input.dispatchMouseEvent','DRIVER_POINTER_AUTHORITY_ORACLE');assert.ok(!focusFrames&&!pendingReveal,'DRIVER_LAYOUT_SETTLEMENT_ORACLE: native activation preceded deferred focus or reveal completion: '+specimen.name);if(specimen.viewport){const hit=currentNode().getBoundingClientRect(),expectedX=(Math.max(viewport.offsetLeft,hit.left)+Math.min(viewport.offsetLeft+viewport.width,hit.right))/2-viewport.offsetLeft,expectedY=(Math.max(viewport.offsetTop,hit.top)+Math.min(viewport.offsetTop+viewport.height,hit.bottom))/2-viewport.offsetTop;assert.equal(params.x,expectedX,'DRIVER_VISUAL_VIEWPORT_INPUT_ORACLE: CSS x');assert.equal(params.y,expectedY,'DRIVER_VISUAL_VIEWPORT_INPUT_ORACLE: CSS y');}inputEvents.push(params);if(params.type==='mouseReleased'){if(specimen.summaryTarget){disclosure.open=!disclosure.open;opened=disclosure.open;clicks++;}else if(specimen.disclosure&&!disclosure.open){opened=true;disclosure.open=true;}else clicks++;}}};
   const click=Function('idle','evaluate','events','performance','assert','page',helper+driver.slice(start,end)+';return click;')(idle,async expression=>vm.runInContext(expression,dom),events,performance,assert,page);
   let rejection=null;try{await click('#current-action');}catch(error){rejection=error;}
   if(specimen.reject){
@@ -147,7 +179,7 @@ const nodes=new Map(['project-picker','new-project','export-project','header-bac
 const frames=[];
 const context=createVerifierRuntime({console,Event:class Event{},dispatchEvent(){},structuredClone,URL,Blob,TextDecoder,TextEncoder,crypto:globalThis.crypto,setTimeout,clearTimeout,queueMicrotask,requestAnimationFrame:fn=>frames.push(fn),
   document:{currentScript:null,querySelector:s=>nodes.get(s)||null,querySelectorAll:s=>s.includes('button')||s.includes('input')||s.includes('select')?[...nodes.values()].filter(n=>!['app','app-live-status','app-operation-status','operation-label','storage-status','project-history'].includes(n.id)):[]}});
-for(const file of ['workbook.js','hash.js','workflow-schema.js'])vm.runInContext(fs.readFileSync(file,'utf8'),context);
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])vm.runInContext(fs.readFileSync(file,'utf8'),context);
 vm.runInContext(source.slice(0,source.indexOf('globalThis.closedLoopAppReady=false;'))+`
   schema=globalThis.closedLoopWorkflowSchema;projectStore={HISTORY_LIMITS:{maxCheckpoints:2048}};
   globalThis.ui={
@@ -158,6 +190,8 @@ vm.runInContext(source.slice(0,source.indexOf('globalThis.closedLoopAppReady=fal
     exports:fn=>{downloadProjectPackage=fn;render=()=>wire();},
     health:fn=>{projectStore={storageHealth:fn};globalThis.closedLoopStorageHealth=null;paintStorageHealth();},
     refreshHealth:()=>refreshStorageHealth(),
+    humanControls:stage=>{current=globalThis.closedLoopCore.createBlankState('SYNTHETIC-HUMAN-CONTROLS');return humanStageMarkup(stage,false);},
+    authorityControls:()=>{engine=globalThis.closedLoopWorkflowEngine;current=globalThis.closedLoopCore.createBlankState('SYNTHETIC-AUTHORITY-CONTROL');const original=pendingProposal;pendingProposal=()=>({changes:[],humanAuthorityCandidates:[{temporaryKey:'synthetic-human-answer',label:'Reported audience',value:'Field technicians'}]});try{return proposalMarkup(1);}finally{pendingProposal=original;}},
 
     history:available=>{projectStore={HISTORY_LIMITS:{maxCheckpoints:2048}};historyState={entries:[],undoId:available?'SAVED-PREVIOUS':null};historyBrowseState=null;recoveryProjects=[];quarantinedProjects=[];paintHistory();},
     action:fn=>runOperatorAction('Restoring version',fn),
@@ -280,19 +314,32 @@ for(const stage of [1]){
  const end=functionStart>=0?journey.indexOf('\nasync function ingest(',start):journey.indexOf('  await captureOperationLatency();assert.equal(report.operationLatency.thresholdMs',start);
  assert.ok(start>=0&&end>start,'The actual final backup round trip must be executable.');
  const sequence=journey.slice(start,end)+(functionStart>=0?'\nawait verifyFinalBackupRoundTrip();':'');
- const bytes=Buffer.from('fixed exported backup bytes'),snapshot={file:{bytes,sha256:'verified-backup-digest'}},report={},phases=[];
- const project={job:{JOB_ID:'ROUNDTRIP'},projectData:{acceptedChanges:[{changeId:'accepted'}]},stages:Object.fromEntries(Array.from({length:30},(_,i)=>[i+1,{status:'COMPLETE'}]))};
- let exported=0,imported=false,reads=0,bounded=false;
+ const bytes=Buffer.from('fixed exported backup bytes'),snapshot={file:{bytes,sha256:'verified-backup-digest'}},report={},phases=[],calls=[];
+ const project={revision:10,historyActivationId:'BEFORE-IMPORT',job:{JOB_ID:'ROUNDTRIP'},projectData:{acceptedChanges:[{changeId:'accepted'}]},stages:Object.fromEntries(Array.from({length:30},(_,i)=>[i+1,{status:'COMPLETE'}]))};
+ let exported=0,imported=false,reads=0,historyObserved=false,exportChecked=false,restoreChecked=false,currentRead=null,exportedProject=null,restoredRead=null;
+ const retained={history:{entries:[{id:"first"},{id:"second"}],sessions:{session:{checkpointId:"first"}}}},exportedHistory={history:retained.history,bytes:[{id:"first",sha256:"first-byte-digest"}],report:{retainedPrefix:true}},restoredHistory={retainedPrefix:true,retainedSessions:true,retainedHistoryBytes:true};
+ const restoredProject={...project,revision:11,historyActivationId:'AFTER-IMPORT'};
  const workflow=Object.keys(project.stages).map(stage=>({stage:Number(stage),gate:{complete:true},action:{actionType:'COMPLETE'}}));
- const saved=async({backup=false,workflow:includeWorkflow=false,stages=[]}={})=>{if(backup){assert.equal(bounded,true,'FINAL_BACKUP_FIXTURE_BOUND_ORACLE: accumulated journey views must not become the final browser backup workload');exported++;}else{assert.equal(imported,true,'Restore observation must follow the import control');reads++;}if(includeWorkflow)assert.deepEqual(stages,workflow.map(row=>row.stage));return includeWorkflow?{project:structuredClone(project),workflow:structuredClone(workflow)}:structuredClone(project);};
- const browser={readProject:async()=>structuredClone(project),selectFiles:async(selector,files)=>{assert.equal(selector,'#import-file');assert.deepEqual(files[0].bytes,bytes,'BACKUP_INPUT_BYTES_ORACLE: restore must select the actual exported bytes');imported=true;}};
- const boundStage30BrowserRecovery=async current=>{assert.deepEqual(current,project,'Bounding the browser history must use the actual completed project, preserving every stage.');bounded=true;};
- await Function('saved','browser','snapshot','report','assert','schema','preserveReport','stage','sequence','boundStage30BrowserRecovery','return (async()=>{'+sequence+'})();')(saved,browser,snapshot,report,assert,{STAGE_COUNT:30},()=>phases.push(report.currentOperation?.phase),31,133,boundStage30BrowserRecovery);
+ const saved=async({backup=false,workflow:includeWorkflow=false,stages=[]}={})=>{if(backup){assert.equal(historyObserved,true,'FINAL_BACKUP_HISTORY_OBSERVATION_ORACLE: observe the naturally accumulated History before export without changing its roots');exported++;calls.push('EXPORT');}else{assert.equal(imported,true,'Restore observation must follow the import control');reads++;calls.push('READ_RESTORED');}if(includeWorkflow){assert.deepEqual(stages,workflow.map(row=>row.stage));restoredRead=structuredClone(restoredProject);return {project:restoredRead,workflow:structuredClone(workflow)};}exportedProject=structuredClone(project);return exportedProject;};
+ const browser={readProject:async()=>{calls.push('READ_CURRENT');currentRead=structuredClone(project);return currentRead;},selectFiles:async(selector,files)=>{assert.equal(selector,'#import-file');assert.deepEqual(files[0].bytes,bytes,'BACKUP_INPUT_BYTES_ORACLE: restore must select the actual exported bytes');calls.push('IMPORT');imported=true;}};
+ // These are explicit sequence spies, not populated-family preservation proof.
+ // The actual family owner separately verifies its independent content hashes.
+ const canonicalBefore={fixture:'small-sequence-spy',jobId:'ROUNDTRIP'},canonicalExport={fixture:'small-sequence-spy',boundary:'DOWNLOADED_BACKUP'},canonicalRestore={fixture:'small-sequence-spy',boundary:'UI_IMPORTED_PROJECT'};
+ const observeBackupCanonicalFamilies=current=>{assert.equal(current,currentRead,'FINAL_BACKUP_CANONICAL_BEFORE_INPUT_ORACLE');assert.deepEqual(current,project);assert.equal(exported,0);assert.equal(imported,false);calls.push('OBSERVE_CANONICAL_BEFORE');return canonicalBefore;};
+ const verifyBackupCanonicalFamilies=(before,current,boundary)=>{assert.equal(before,canonicalBefore,'FINAL_BACKUP_CANONICAL_OBSERVATION_REUSE_ORACLE');if(boundary==='DOWNLOADED_BACKUP'){assert.equal(current,exportedProject,'FINAL_BACKUP_CANONICAL_EXPORT_INPUT_ORACLE');assert.equal(exported,1);assert.equal(imported,false);calls.push('VERIFY_CANONICAL_EXPORT');return canonicalExport;}assert.equal(boundary,'UI_IMPORTED_PROJECT');assert.equal(current,restoredRead,'FINAL_BACKUP_CANONICAL_RESTORE_INPUT_ORACLE');assert.deepEqual(current,restoredProject);assert.equal(imported,true);assert.equal(reads,1);calls.push('VERIFY_CANONICAL_RESTORE');return canonicalRestore;};
+ const observeRetainedHistory=async (driver,current,{verifyBytes=false}={})=>{assert.equal(driver,browser);if(verifyBytes){assert.equal(imported,true);assert.equal(reads,1,'FINAL_BACKUP_OBSERVATION_ORACLE: actual fresh restored state must precede history byte observation');assert.deepEqual(current,restoredProject);calls.push('OBSERVE_RESTORED_HISTORY');return retained;}assert.deepEqual(current,project);calls.push('OBSERVE_CURRENT_HISTORY');historyObserved=true;return retained;};
+ const verifyRetainedBackup=(before,file,{decoded}={})=>{assert.equal(before,retained);assert.equal(file,snapshot.file);assert.equal(decoded,snapshot.package);calls.push('VERIFY_HISTORY_EXPORT');exportChecked=true;return exportedHistory;};
+ const verifyRetainedRestore=(expected,actual)=>{assert.equal(expected,exportedHistory);assert.equal(actual,retained);calls.push('VERIFY_HISTORY_RESTORE');restoreChecked=true;return restoredHistory;};
+ await Function('saved','browser','snapshot','report','assert','schema','preserveReport','stage','sequence','observeRetainedHistory','verifyRetainedBackup','verifyRetainedRestore','observeBackupCanonicalFamilies','verifyBackupCanonicalFamilies','return (async()=>{'+sequence+'})();')(saved,browser,snapshot,report,assert,{STAGE_COUNT:30},()=>phases.push(report.currentOperation?.phase),31,133,observeRetainedHistory,verifyRetainedBackup,verifyRetainedRestore,observeBackupCanonicalFamilies,verifyBackupCanonicalFamilies);
+ assert.equal(exportChecked,true,'FINAL_BACKUP_HISTORY_EXPORT_ORACLE: actual downloaded recovery bytes must be checked');
+ assert.equal(restoreChecked,true,'FINAL_BACKUP_HISTORY_RESTORE_ORACLE: actual restored recovery bytes must be checked');
  assert.equal(exported,1,'FINAL_BACKUP_OBSERVATION_ORACLE: restored state must be read without exporting the complete history again');
  assert.equal(reads,1,'FINAL_BACKUP_OBSERVATION_ORACLE: verify a fresh post-import stored project');
- assert.deepEqual(report.backupRestore,{selectedSha256:snapshot.file.sha256,stagesPreserved:30,workflow});
- assert.deepEqual(phases,['FINAL_BACKUP_FIXTURE','FINAL_BACKUP_EXPORT','FINAL_BACKUP_IMPORT','FINAL_BACKUP_VERIFY'],'FINAL_BACKUP_PHASE_ORACLE: an interruption must identify the actual final operation');
- cases.push({caseId:'FINAL-BACKUP-OBSERVATION',result:'PASS',actualBrowser:false,exports:exported,freshReads:reads,phases});
+ assert.deepEqual(report.backupRestore,{selectedSha256:snapshot.file.sha256,stagesPreserved:30,workflow,canonicalFamilies:{before:canonicalBefore,export:canonicalExport,restore:canonicalRestore},history:restoredHistory,activation:{beforeRevision:10,restoredRevision:11,beforeHistoryActivationId:'BEFORE-IMPORT',restoredHistoryActivationId:'AFTER-IMPORT',activatedNewRevision:true}});
+ assert.deepEqual(phases,['FINAL_BACKUP_HISTORY_OBSERVATION','FINAL_BACKUP_EXPORT','FINAL_BACKUP_HISTORY_EXPORT_VERIFY','FINAL_BACKUP_IMPORT','FINAL_BACKUP_VERIFY','FINAL_BACKUP_HISTORY_RESTORE_VERIFY'],'FINAL_BACKUP_PHASE_ORACLE: an interruption must identify the actual final operation');
+ assert.deepEqual(calls,['READ_CURRENT','OBSERVE_CANONICAL_BEFORE','OBSERVE_CURRENT_HISTORY','EXPORT','VERIFY_CANONICAL_EXPORT','VERIFY_HISTORY_EXPORT','IMPORT','READ_RESTORED','VERIFY_CANONICAL_RESTORE','OBSERVE_RESTORED_HISTORY','VERIFY_HISTORY_RESTORE'],'FINAL_BACKUP_SEQUENCE_DEPENDENCY_ORDER_ORACLE');
+ cases.push({caseId:'FINAL-BACKUP-OBSERVATION',result:'PASS',actualBrowser:false,exports:exported,freshReads:reads,historyExportChecked:exportChecked,historyRestoreChecked:restoreChecked,phases,canonicalFamilySequenceChecked:true,canonicalFamilyContentProof:false,calls});
+ const retainedOracles=await verifyRetainedHistoryOracles();cases.push(...retainedOracles.cases);
 }
 // The complete-export and backup controls share the same pending UI action.
 // A second disabled control is not another queued operator request. Once that
@@ -426,6 +473,26 @@ for(const [actionType,primaryButton,id,stage]of primaryControls){
  assert.ok(markup.includes('Advanced action details'),'Audit disclosure must be retained');
  cases.push({caseId:'UI-WORKFLOW-PRIMARY-'+actionType,stage,control:id,uniqueControl:true,beforeLongDetails:true,result:'PASS'});
 }
+// Conditional independent review is selected by the production route owner,
+// even though the registered operation has the generic execution name. Use the
+// admitted archived fixture at its declared clock; these are presentation
+// assertions, not fresh external review or predecessor-stage acceptance.
+{
+ const r=projectStoreRuntime(),fixture=await deferredDefinitionRestorationFixture(r,{family:'failureTests',executionStage:8}),p=fixture.p;
+ const policy=r.prompts.deferredExecutionContextPolicy(p,8,'EXECUTE_FAILURE_TEST');
+ assert.equal(policy.executionMode,'INDEPENDENT_AGENT_REVIEW','INDEPENDENT_REVIEW_GUIDANCE_FIXTURE_ORACLE');
+ assert.equal(policy.requiresFreshConversation,true);assert.equal(policy.priorExportMayHaveExposedReviewContent,false);
+ const html=appMarkup(r.runtime,p,{source,operations:{8:'EXECUTE_FAILURE_TEST'}}),start=html.indexOf('id="next-required-action"'),notice=html.indexOf('id="independent-review-context-guidance"'),button=html.indexOf('id="next-export-prompt-file"');
+ assert.ok(start>=0&&notice>start&&button>notice,'INDEPENDENT_REVIEW_GUIDANCE_ORACLE: the selected conditional reviewer needs recovery guidance before the primary export control.');
+ const warning=html.slice(notice,button);
+ assert.match(warning,/Start a fresh independent reviewer conversation/,'INDEPENDENT_REVIEW_GUIDANCE_ORACLE');
+ assert.match(warning,/has not received prior verifier conclusions, proposed corrections, or rejected response content/,'INDEPENDENT_REVIEW_GUIDANCE_ORACLE');
+ assert.match(warning,/Prior responses and valid work remain in project History/,'INDEPENDENT_REVIEW_GUIDANCE_ORACLE');
+ assert.doesNotMatch(warning,/earlier exported package may have included/,'INDEPENDENT_REVIEW_UNEXPORTED_GUIDANCE_ORACLE');
+ const ordinary=appMarkup(r.runtime,p,{source,operations:{8:'COMPLETE'}});
+ assert.doesNotMatch(ordinary,/id="independent-review-context-guidance"/,'INDEPENDENT_REVIEW_ORDINARY_CONTROL_ORACLE');
+ cases.push({caseId:'UI-CONDITIONAL-INDEPENDENT-REVIEW-GUIDANCE',stage:8,operation:'EXECUTE_FAILURE_TEST',actualSelectedMode:policy.executionMode,freshConversationVisibleBeforeExport:true,unexportedExposureNeverClaimed:true,ordinaryAuthorControl:true,archivedFixtureClockUtc:fixture.archivedFixtureClockUtc,synthetic:true,actualBrowser:false,result:'PASS'});
+}
 // Replay the browser gate's actual selected-file setup through the production
 // binding, filename policy, recovery artifact custody and import owner. The
 // transport below is synthetic; layout and native worker delivery stay in CI.
@@ -441,15 +508,15 @@ for(const [actionType,primaryButton,id,stage]of primaryControls){
  const activityNodes=new Map(['app','app-operation-status','operation-label','app-live-status','operation-error','storage-status','import-file','project-picker','import-project'].map(id=>['#'+id,{...node(id),value:'',hasAttribute(key){return key in this.attrs;},getBoundingClientRect(){return {top:0,bottom:24,left:0,right:180,width:180,height:24};}}]));
  const delivered=[],requests=[],pending=new Map();let sequence=0,selected;
  class Worker{
-  postMessage(message){requests.push(message);this.onmessage({data:{operationId:'UNRELATED',buildIdentity:message.buildIdentity,ok:true}});void r.store.importPackage(message.args[0]).then(project=>this.onmessage({data:{...message,ok:true,project}}),error=>this.onmessage({data:{...message,ok:false,error}}));}
+  postMessage(message){requests.push(message);this.onmessage({data:{operationId:'UNRELATED',buildIdentity:message.buildIdentity,ok:true}});void r.store.importPackage(...message.args).then(project=>this.onmessage({data:{...message,ok:true,project}}),error=>this.onmessage({data:{...message,ok:false,error}}));}
  }
  const worker=new Worker();worker.onmessage=event=>{delivered.push(event.data);const request=pending.get(event.data.operationId);if(!request)return;pending.delete(event.data.operationId);event.data.ok?request.resolve(event.data.project):request.reject(event.data.error);};
  class DataTransfer{constructor(){this.files=[];this.items={add:file=>{assert.ok(file instanceof File,'DELAYED_IMPORT_VALID_SELECTION_ORACLE: a browser file selection requires a File.');this.files.push(file);}};}}
- const facade={...r.store,importPackage:async blob=>{selected=(await r.store.listArtifacts(p.job.JOB_ID)).find(row=>row.lineage?.selectionKind==='backup-import');return new Promise((resolve,reject)=>{const operationId='IMPORT-'+(++sequence);pending.set(operationId,{resolve,reject});worker.postMessage({method:'IMPORT_PACKAGE',operationId,buildIdentity:'ACTIVITY-TEST',args:[blob]});});}};
- Object.assign(r.runtime,{File,DataTransfer,Worker,history:{state:null},document:{currentScript:null,querySelector:s=>activityNodes.get(s)||null,querySelectorAll:s=>s==='button,input,select,textarea'?[activityNodes.get('#import-file')]:[]},getComputedStyle:()=>({display:'block',visibility:'visible'}),requestAnimationFrame:fn=>setTimeout(fn,0),closedLoopProjectStore:facade,__activityProject:p});r.runtime.window=r.runtime;
+ const facade={...r.store,importPackage:async(blob,options)=>{const staged=await r.store.readPendingBackupImport(p.job.JOB_ID);selected=staged?{...staged,filename:staged.rawFilename}:null;return new Promise((resolve,reject)=>{const operationId='IMPORT-'+(++sequence);pending.set(operationId,{resolve,reject});worker.postMessage({method:'IMPORT_PACKAGE',operationId,buildIdentity:'ACTIVITY-TEST',args:[blob,options]});});}};
+ Object.assign(r.runtime,{File,DataTransfer,Worker,history:{state:null},document:{currentScript:null,querySelector:s=>activityNodes.get(s)||null,querySelectorAll:s=>s==='button,input,select,textarea'?[activityNodes.get('#import-file')]:[]},getComputedStyle:()=>({display:'block',visibility:'visible'}),requestAnimationFrame:fn=>setTimeout(fn,0),scrollX:0,scrollY:0,scrollTo(){},closedLoopProjectStore:facade,__activityProject:p});r.runtime.window=r.runtime;
  vm.runInContext(source.slice(0,source.indexOf('globalThis.closedLoopAppReady=false;'))+`
   core=closedLoopCore;schema=closedLoopWorkflowSchema;engine=closedLoopWorkflowEngine;projectStore=closedLoopProjectStore;current=__activityProject;projects=[current];
-  captureCurrentView=async()=>{};refreshHistory=async()=>{};writeBrowserEntry=()=>{};loadAcceptanceSession=async()=>{};refreshProjectStorage=async()=>{};recordCommittedBoundary=async()=>{};selectSavedView=()=>null;applySavedView=()=>{};render=()=>wire();wire();
+  captureCurrentView=async()=>{};refreshHistory=async()=>{historyState=await projectStore.historyList(current.job.JOB_ID);};writeBrowserEntry=()=>{};loadAcceptanceSession=async()=>{};refreshProjectStorage=async()=>{};recordCommittedBoundary=async()=>{};render=()=>wire();wire();
  })();`,r.runtime,{filename:'app-core.js:delayed-import-control'});
  try{
   await vm.runInContext(setup,r.runtime);
@@ -459,6 +526,7 @@ for(const [actionType,primaryButton,id,stage]of primaryControls){
   assert.ok(observation.requests===1&&observation.held&&!observation.done,'DELAYED_IMPORT_VALID_SELECTION_ORACLE: the browser loading case must reach one valid pending import through its actual file binding: '+JSON.stringify(observation));
   assert.ok(selected&&selected.filename&&selected.byteSize===r.runtime.__activityPackage.size,'DELAYED_IMPORT_VALID_SELECTION_ORACLE: the selected backup must retain its filename and exact bytes.');
   assert.equal(selected.sha256,await r.runtime.closedLoopHash.sha256Bytes(r.runtime.__activityPackage));
+  assert.deepEqual(new Uint8Array(await selected.blob.arrayBuffer()),new Uint8Array(await r.runtime.__activityPackage.arrayBuffer()),'DELAYED_IMPORT_EXACT_PENDING_BYTES_ORACLE');
   await new Promise(resolve=>setTimeout(resolve,1510));
   assert.equal(activityNodes.get('#storage-status').getAttribute('aria-busy'),'true','DELAYED_IMPORT_LOADING_ORACLE: a pending import past the threshold must show storage activity.');
   assert.equal(activityNodes.get('#app-operation-status').hidden,false,'DELAYED_IMPORT_LOADING_ORACLE: a pending import past the threshold must show operator progress.');
@@ -475,8 +543,44 @@ for(const [actionType,primaryButton,id,stage]of primaryControls){
   assert.equal(activityNodes.get('#import-file').disabled,false,'Completed import must release its control.');
   assert.equal(activityNodes.get('#import-file').value,'','Completed import must clear the selected control.');
   assert.match(activityNodes.get('#app-live-status').textContent,/project package imported and reloaded/,'Import must explicitly report completion.');
+  assert.equal(await r.store.pendingBackupImportIdentity(p.job.JOB_ID),null,'DELAYED_IMPORT_PENDING_CONSUMED_ORACLE');
   assert.equal(delivered.filter(message=>message.operationId===requests[0].operationId).length,1,'DELAYED_IMPORT_RELEASE_ORACLE: a held import response must be delivered exactly once.');
   cases.push({caseId:'UI-DELAYED-IMPORT-BROWSER-SELECTION',result:'PASS',actualBrowser:false,requests:requests.length,selectedFilename:selected.filename,selectedByteSize:selected.byteSize,selectedSha256:selected.sha256,importReplies:1,unrelatedReplies:1,lateLayoutShiftRejected:true});
  }finally{r.runtime.__restoreActivityWorker?.();r.runtime.__releaseActivityReply?.();if(r.runtime.__activityImport)await r.runtime.__activityImport;}
 }
-console.log(JSON.stringify({schema:'closed-loop-executed-cases/1',synthetic:true,environment:'Node VM with delayed operation and frame boundary',scope:'Shared action binding and production workflow markup ownership; not browser layout or stage-by-stage file-transport acceptance.',cases},null,2));
+// A preserved failed migration is not a healthy storage-success message.
+context.ui.health(async()=>({persistent:false,migrationStatus:{status:'FAILED',message:'Unsupported project schema: future-project/9',originalPreserved:true}}));
+await context.ui.refreshHealth();assert.match(nodes.get('#storage-status').textContent,/migration needs recovery.*has not removed the original browser data/i,'MIGRATION_FAILURE_VISIBLE_ORACLE');
+cases.push({caseId:'UI-MIGRATION-FAILURE-STATUS',result:'PASS',actualBrowser:false,rawExportVerified:false});
+
+// Sibling labels must name their controls, including neighboring human-owned
+// stages and the reported-human-answer confirmation route. Actual fallback
+// typing, native control behavior and persistence have their browser owner.
+for(const stage of [10,20,28]){
+ const html=context.ui.humanControls(stage),controls=[...html.matchAll(/<input\b[^>]*id="([^"]+)"[^>]*data-human-stage-field="([^"]+)"/g)];
+ assert.equal(controls.length,context.closedLoopWorkflowSchema.humanStageFields(stage).length,'HUMAN_STAGE_CONTROL_POPULATION_ORACLE');
+ for(const [,id]of controls)assert.ok(html.includes('<label for="'+id+'">'),'HUMAN_STAGE_CONTROL_LABEL_ORACLE: '+stage);
+ cases.push({caseId:'UI-HUMAN-STAGE-CONTROL-LABEL',stage,controls:controls.length,result:'PASS',actualBrowser:false});
+}
+{
+ const html=context.ui.authorityControls(),match=html.match(/<textarea\b[^>]*id="([^"]+)"[^>]*data-human-authority-confirmation="synthetic-human-answer"/);
+ assert.ok(match,'HUMAN_AUTHORITY_CONTROL_ID_ORACLE');assert.ok(html.includes('<label for="'+match[1]+'">Reported audience</label>'),'HUMAN_AUTHORITY_CONTROL_LABEL_ORACLE');
+ cases.push({caseId:'UI-HUMAN-AUTHORITY-CONTROL-LABEL',result:'PASS',actualBrowser:false});
+}
+const backupImportStaging=await verifyBackupImportStaging({appSource:source}),backupStagingStore=await verifyBackupStagingStore(),responseStagingRecoveryUI=await verifyResponseStagingRecoveryUI({appSource:source}),operatorSafetyFeedback=await verifyOperatorSafetyFeedback({appSource:source}),backupStagingFaults=[],responseStagingUIFaults=[],operatorSafetyFeedbackFaults=[];
+for(const [script,fault,oracle]of [
+ ['test-backup-import-staging.mjs','permanent-backup-history','BACKUP_UI_CAPACITY_ORACLE'],
+ ['test-backup-import-staging.mjs','empty-staging-identity','BACKUP_EMPTY_STAGING_ID_RECOVERY_ORACLE'],
+ ['test-backup-staging-store.mjs','retain-consumed-input','BACKUP_STAGE_ATOMIC_CONSUME_ORACLE'],
+ ['test-backup-staging-store.mjs','trust-staging-digest','BACKUP_STAGE_REHASH_ORACLE']
+]){
+ const run=await runVerifier(process.execPath,[script,'--fault='+fault],{encoding:'utf8',timeout:60000,maxBuffer:1024*1024});assertDetectedFault(run,oracle,'Backup import staging fault '+fault);backupStagingFaults.push({fault,oracle,result:'DETECTED',exitCode:run.status,evidencePath:run.evidencePath});
+}
+for(const [fault,oracle]of [['missing-diagnostics','RESPONSE_RECOVERY_RENDER_ORACLE'],['stale-project','RESPONSE_RECOVERY_STALE_PROJECT_ORACLE'],['all-files-as-response','RESPONSE_RECOVERY_TYPED_ROUTE_ORACLE:RETURNED_FILE'],['repeat-stale-response','RESPONSE_RECOVERY_STALE_ROUTE_ORACLE:RESPONSE_STAGE_PROMPT_IDENTITY_MISMATCH']]){
+ const run=await runVerifier(process.execPath,['test-response-staging-recovery-ui.mjs','--fault='+fault],{encoding:'utf8',timeout:60000,maxBuffer:1024*1024});assertDetectedFault(run,oracle,'Response staging recovery UI fault '+fault);responseStagingUIFaults.push({fault,oracle,result:'DETECTED',exitCode:run.status,evidencePath:run.evidencePath});
+}
+for(const [fault,oracle]of [['generic-attachment-feedback','ATTACHMENT_LIVE_REGION_ORACLE'],['trust-release-label','RELEASE_RENDER_CONTRADICTION_ORACLE'],['untyped-independence-error','INDEPENDENCE_LIVE_REGION_ORACLE']]){
+ const run=await runVerifier(process.execPath,['test-operator-safety-feedback.mjs','--fault='+fault],{encoding:'utf8',timeout:60000,maxBuffer:1024*1024});assertDetectedFault(run,oracle,'Operator safety feedback fault '+fault);operatorSafetyFeedbackFaults.push({fault,oracle,result:'DETECTED',exitCode:run.status,evidencePath:run.evidencePath});
+}
+cases.push(...backupImportStaging.cases,...backupStagingStore.cases.map(row=>({...row,caseId:'STORE-BACKUP-STAGING-'+row.caseId,result:row.passed?'PASS':'FAIL'})),...responseStagingRecoveryUI.cases,...operatorSafetyFeedback.cases);
+console.log(JSON.stringify({schema:'closed-loop-executed-cases/1',synthetic:true,environment:'Node VM with delayed operation and frame boundary',scope:'Shared action binding and production workflow markup ownership; not browser layout or stage-by-stage file-transport acceptance.',backupImportStaging,backupStagingStore,backupStagingFaults,responseStagingRecoveryUI,responseStagingUIFaults,operatorSafetyFeedback,operatorSafetyFeedbackFaults,cases},null,2));

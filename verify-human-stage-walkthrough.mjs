@@ -1,3 +1,5 @@
+import {createBrowserExecutionObserver} from './browser-execution-evidence.mjs';
+import {downloadSyntheticHandoff} from './test-browser-handoff-authorization.mjs';
 import fs from 'node:fs';
 import http from 'node:http';
 import os from 'node:os';
@@ -8,7 +10,7 @@ const browser=process.env.BROWSER||['/usr/bin/google-chrome','/usr/bin/chromium'
 if(!browser)throw new Error('Chrome/Chromium was not found.');
 const serverPort=9400+Math.floor(Math.random()*300);
 const remotePort=10400+Math.floor(Math.random()*300);
-const root=path.resolve(process.env.STATIC_SITE_ROOT||process.cwd());
+const root=path.resolve(process.env.VERIFIED_SITE_DIR||process.env.STATIC_SITE_ROOT||process.cwd());
 const server=http.createServer((req,res)=>{
   const raw=(req.url||'/').split('?')[0],rel=raw==='/'?'index.html':decodeURIComponent(raw.replace(/^\//,''));
   const absolute=path.resolve(root,rel);
@@ -16,7 +18,7 @@ const server=http.createServer((req,res)=>{
   res.setHeader('Content-Type',rel.endsWith('.js')?'text/javascript; charset=utf-8':rel.endsWith('.html')?'text/html; charset=utf-8':'application/octet-stream');
   res.end(fs.readFileSync(absolute));
 });
-await new Promise((resolve,reject)=>server.listen(serverPort,'127.0.0.1',resolve).once('error',reject));
+if(!process.env.PAGE_URL)await new Promise((resolve,reject)=>server.listen(serverPort,'127.0.0.1',resolve).once('error',reject));
 const profile=fs.mkdtempSync(path.join(os.tmpdir(),'closed-loop-human-stage-'));
 let browserStderr='';
 const child=spawn(browser,['--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage','--disable-background-networking','--no-first-run','--no-default-browser-check','--remote-debugging-address=127.0.0.1',`--remote-debugging-port=${remotePort}`,`--user-data-dir=${profile}`,'about:blank'],{stdio:['ignore','ignore','pipe']});
@@ -24,19 +26,22 @@ child.stderr?.on('data',chunk=>{browserStderr=(browserStderr+String(chunk)).slic
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function poll(fn,timeout=90000){const end=Date.now()+timeout;let last;while(Date.now()<end){try{return await fn();}catch(e){last=e;await sleep(120);}}throw last||new Error('Timed out');}
 async function getJson(url,opts){const r=await fetch(url,opts);if(!r.ok)throw new Error(`${url} -> ${r.status}`);return r.json();}
-let ws;
+let ws,executionObserver;
+const pageUrl=process.env.PAGE_URL||`http://127.0.0.1:${serverPort}/`;
 try{
   await poll(async()=>{
     if(child.exitCode!==null)throw new Error(`Chrome exited before opening DevTools (exit ${child.exitCode}). ${browserStderr}`);
     await getJson(`http://127.0.0.1:${remotePort}/json/version`);
     return true;
   });
-  const target=await getJson(`http://127.0.0.1:${remotePort}/json/new?${encodeURIComponent(`http://127.0.0.1:${serverPort}/?walkthrough=${Date.now()}`)}`,{method:'PUT'});
+  const target=await getJson(`http://127.0.0.1:${remotePort}/json/new?${encodeURIComponent('about:blank')}`,{method:'PUT'});
   ws=new WebSocket(target.webSocketDebuggerUrl);await new Promise((resolve,reject)=>{ws.onopen=resolve;ws.onerror=reject;});
   let seq=0,browserDialog='';const pending=new Map();ws.onmessage=e=>{const m=JSON.parse(e.data);if(m.id&&pending.has(m.id)){const p=pending.get(m.id);pending.delete(m.id);m.error?p.reject(new Error(m.error.message)):p.resolve(m.result);return;}if(m.method==='Page.javascriptDialogOpening'){browserDialog=String(m.params?.message||'Unexpected browser dialog');send('Page.handleJavaScriptDialog',{accept:false}).catch(()=>{});}};
   const send=(method,params={})=>{const id=++seq,timeoutError=new Error('Chromium did not respond to '+method+' within 180 seconds.');return new Promise((resolve,reject)=>{const timer=setTimeout(()=>{pending.delete(id);reject(timeoutError);},180000),finish=fn=>value=>{clearTimeout(timer);pending.delete(id);fn(value);};pending.set(id,{resolve:finish(resolve),reject:finish(reject)});try{ws.send(JSON.stringify({id,method,params}));}catch(error){pending.get(id)?.reject(error);}});};
   const evalJs=async expression=>{const r=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true,userGesture:true});if(r.exceptionDetails)throw new Error(r.exceptionDetails.exception?.description||r.exceptionDetails.text||'browser evaluation failed');return r.result?.value;};
   await send('Runtime.enable');await send('Page.enable');
+  executionObserver=await createBrowserExecutionObserver({webSocketDebuggerUrl:target.webSocketDebuggerUrl,pageUrl});
+  await send('Page.navigate',{url:pageUrl});
   await poll(async()=>{const ready=await evalJs(`document.readyState==='complete'&&globalThis.closedLoopAppReady===true`);if(!ready)throw new Error('app not ready');return true;});
   const result=await evalJs(`(async()=>{
     const waitFor=async(check,description)=>{const end=Date.now()+15000;while(Date.now()<end){if(check())return;await new Promise(r=>setTimeout(r,25));}throw new Error(description);};
@@ -94,13 +99,26 @@ try{
     const exportButton=document.getElementById('next-export-prompt-file');
     if(!exportButton||exportButton.disabled)throw new Error('Current consolidated stage-file package control is not available.');
     for(const legacy of ['export-prompt-file','export-prompt-manifest','export-prompt-context','export-stage-files'])if(document.getElementById(legacy))throw new Error('Superseded export control remains: '+legacy);
-    const originalCreateObjectURL=URL.createObjectURL.bind(URL);let exportedBlob=null;
-    URL.createObjectURL=blob=>{exportedBlob=blob;return originalCreateObjectURL(blob);};
-    try{exportButton.click();await idle();await waitFor(()=>exportedBlob instanceof Blob,'Stage package export did not create one Blob.');}finally{URL.createObjectURL=originalCreateObjectURL;}
+    return {stages:30,prompts:checked.length,applicationOnlyOperations:applicationOnly.length,first:checked[0],last:checked.at(-1),uiStagesReached:reached.length,oneTimeSupply:true,operatorDoubleCheckGuide:true};
+  })()`);
+  const idleExpression=`(async()=>{const end=Date.now()+15000;while(Date.now()<end){if(document.querySelector('#app')?.getAttribute('aria-busy')!=='true')return;await new Promise(resolve=>setTimeout(resolve,25));}throw new Error('The operator action did not finish.');})()`;
+  const handoff={
+    click:async selector=>{await evalJs(`(()=>{const node=document.querySelector(${JSON.stringify(selector)});if(!node||node.disabled)throw new Error('The required handoff control is unavailable.');node.click();})()`);await evalJs(idleExpression);},
+    fill:async(selector,value)=>{await evalJs(`(()=>{const node=document.querySelector(${JSON.stringify(selector)});if(!node||node.disabled)throw new Error('The required handoff field is unavailable.');node.value=${JSON.stringify(value)};node.dispatchEvent(new Event('input',{bubbles:true}));node.dispatchEvent(new Event('change',{bubbles:true}));})()`);await evalJs(idleExpression);},
+    exists:selector=>evalJs(`Boolean(document.querySelector(${JSON.stringify(selector)}))`),evaluate:evalJs,captureDownloads:task=>task(),events:[]
+  };
+  await evalJs(`(()=>{globalThis.__humanWalkthroughExport={createObjectURL:URL.createObjectURL,blobs:[]};URL.createObjectURL=blob=>{globalThis.__humanWalkthroughExport.blobs.push(blob);return globalThis.__humanWalkthroughExport.createObjectURL.call(URL,blob);};})()`);
+  try{
+    await downloadSyntheticHandoff(handoff,'#next-export-prompt-file',{syntheticProject:true});
+    if(handoff.events.length!==1||handoff.events[0].purposes.length!==1||handoff.events[0].purposes[0]!=='DISCLOSURE_AUTHORIZATION'||handoff.events[0].actualExternalTransfer!==false)throw new Error('Stage package export did not use its exact rendered synthetic disclosure decision.');
+    await evalJs(`(async()=>{const end=Date.now()+15000;while(Date.now()<end){if(globalThis.__humanWalkthroughExport.blobs.length)return;await new Promise(resolve=>setTimeout(resolve,25));}throw new Error('Stage package export did not create one Blob.');})()`);
+    Object.assign(result,await evalJs(`(async()=>{
+    const blobs=globalThis.__humanWalkthroughExport.blobs,exportedBlob=blobs[0];
+    if(blobs.length!==1)throw new Error('Stage package export did not create exactly one Blob.');
     if(!(exportedBlob instanceof Blob)||exportedBlob.type!=='application/zip')throw new Error('Stage package export did not create the required ZIP Blob.');
     const committedDisplayed=document.getElementById('generated-prompt')?.textContent||'';
     if(!committedDisplayed.includes('STRICT RESPONSE CONTRACT'))throw new Error('Export did not commit the displayed controlling instruction.');
-    const stage18Picker=document.querySelector('#stage-picker');stage18Picker.value='18';stage18Picker.dispatchEvent(new Event('change',{bubbles:true}));await idle();
+    const stage18Picker=document.querySelector('#stage-picker');stage18Picker.value='18';stage18Picker.dispatchEvent(new Event('change',{bubbles:true}));await ${idleExpression};
     const appOnlyPrompt=document.querySelector('#generated-prompt')?.textContent||'';
     if(!appOnlyPrompt.includes('NO EXTERNAL AGENT INSTRUCTION REQUIRED'))throw new Error('Application-owned Stage 18 is rendered as external-agent work.');
     for(const id of ['export-prompt-file','export-prompt-manifest','export-prompt-context','export-stage-files','next-export-prompt-file','download-execution-package'])if(document.getElementById(id)&&!document.getElementById(id)?.disabled)throw new Error('Application-owned Stage 18 exposes external transfer control '+id+'.');
@@ -109,16 +127,18 @@ try{
     if(!compact.includes('height: clamp(260px, 45vh, 520px)'))throw new Error('Prompt box base height changed from the restored baseline.');
     if(!compact.includes('.expandable-prompt { max-height: 280px;'))throw new Error('Prompt preview height changed from the restored baseline.');
     if(compact.includes('.expandable-prompt { max-height: 88px;'))throw new Error('Obsolete 88px prompt height returned.');
-    return {stages:30,prompts:checked.length,applicationOnlyOperations:applicationOnly.length,first:checked[0],last:checked.at(-1),uiStagesReached:reached.length,oneTimeSupply:true,promptVisualBaseline:true,operatorDoubleCheckGuide:true};
-  })()`);
+    return {promptVisualBaseline:true};
+  })()`));
+  }finally{await evalJs(`(()=>{URL.createObjectURL=globalThis.__humanWalkthroughExport.createObjectURL;delete globalThis.__humanWalkthroughExport;})()`);}
   if(browserDialog)throw new Error(`Browser UI opened an unexpected dialog: ${browserDialog}`);
   if(result?.stages!==30||result?.uiStagesReached!==30||result?.prompts<8||result?.applicationOnlyOperations<1||result?.oneTimeSupply!==true||result?.promptVisualBaseline!==true||result?.operatorDoubleCheckGuide!==true)throw new Error('Synthetic prompt and navigation checks did not pass.');
-  console.log(JSON.stringify({syntheticPromptAndNavigationChecks:true,completeOperatorJourney:false,humanIndependenceEstablished:false,...result}));
+  console.log(JSON.stringify({syntheticPromptAndNavigationChecks:true,browserExecution:await executionObserver?.finish(),completeOperatorJourney:false,humanIndependenceEstablished:false,...result}));
 }finally{
+  executionObserver?.close();
   try{ws?.close();}catch{}
   const exited=new Promise(resolve=>child.once('exit',resolve));
   child.kill('SIGKILL');
   await Promise.race([exited,sleep(1200)]);
-  await new Promise(r=>server.close(r));
+  if(server.listening)await new Promise(r=>server.close(r));
   try{fs.rmSync(profile,{recursive:true,force:true,maxRetries:5,retryDelay:100});}catch{}
 }

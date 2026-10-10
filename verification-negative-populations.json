@@ -1,0 +1,310 @@
+{
+  "schema": "closed-loop-negative-populations/1",
+  "suites": {
+    "verify-copy-transaction.mjs": {
+      "cases": [
+        {
+          "caseId": "clone-exact-retry",
+          "violation": "duplicateDeleteOrCloneEffects",
+          "checkId": "clone.retry-single-effect"
+        },
+        {
+          "caseId": "clone-receipt-missing-schema",
+          "violation": "mutationFixturesAffectingCanonicalUserState",
+          "checkId": "clone.invalid-receipt-isolation"
+        },
+        {
+          "caseId": "clone-receipt-missing-commandId",
+          "violation": "mutationFixturesAffectingCanonicalUserState",
+          "checkId": "clone.invalid-receipt-isolation"
+        },
+        {
+          "caseId": "clone-receipt-missing-sourceJobId",
+          "violation": "mutationFixturesAffectingCanonicalUserState",
+          "checkId": "clone.invalid-receipt-isolation"
+        },
+        {
+          "caseId": "clone-receipt-missing-sourceProjectSha256",
+          "violation": "mutationFixturesAffectingCanonicalUserState",
+          "checkId": "clone.invalid-receipt-isolation"
+        },
+        {
+          "caseId": "clone-receipt-missing-payloadSha256",
+          "violation": "mutationFixturesAffectingCanonicalUserState",
+          "checkId": "clone.invalid-receipt-isolation"
+        },
+        {
+          "caseId": "clone-receipt-missing-resultingJobId",
+          "violation": "mutationFixturesAffectingCanonicalUserState",
+          "checkId": "clone.invalid-receipt-isolation"
+        },
+        {
+          "caseId": "clone-receipt-missing-mappingManifest",
+          "violation": "mutationFixturesAffectingCanonicalUserState",
+          "checkId": "clone.invalid-receipt-isolation"
+        },
+        {
+          "caseId": "clone-receipt-missing-mappingManifestSha256",
+          "violation": "mutationFixturesAffectingCanonicalUserState",
+          "checkId": "clone.invalid-receipt-isolation"
+        },
+        {
+          "caseId": "clone-receipt-missing-result",
+          "violation": "mutationFixturesAffectingCanonicalUserState",
+          "checkId": "clone.invalid-receipt-isolation"
+        },
+        {
+          "caseId": "clone-receipt-missing-mapping-schema",
+          "violation": "mutationFixturesAffectingCanonicalUserState",
+          "checkId": "clone.invalid-receipt-isolation"
+        },
+        {
+          "caseId": "clone-receipt-missing-mapping-sourceJobId",
+          "violation": "mutationFixturesAffectingCanonicalUserState",
+          "checkId": "clone.invalid-receipt-isolation"
+        },
+        {
+          "caseId": "clone-receipt-missing-mapping-resultingJobId",
+          "violation": "mutationFixturesAffectingCanonicalUserState",
+          "checkId": "clone.invalid-receipt-isolation"
+        },
+        {
+          "caseId": "clone-receipt-missing-mapping-files",
+          "violation": "mutationFixturesAffectingCanonicalUserState",
+          "checkId": "clone.invalid-receipt-isolation"
+        },
+        {
+          "caseId": "clone-receipt-missing-file-sourceArtifactId",
+          "violation": "mutationFixturesAffectingCanonicalUserState",
+          "checkId": "clone.invalid-receipt-isolation"
+        },
+        {
+          "caseId": "clone-receipt-missing-file-artifactId",
+          "violation": "mutationFixturesAffectingCanonicalUserState",
+          "checkId": "clone.invalid-receipt-isolation"
+        },
+        {
+          "caseId": "clone-receipt-missing-file-sha256",
+          "violation": "mutationFixturesAffectingCanonicalUserState",
+          "checkId": "clone.invalid-receipt-isolation"
+        },
+        {
+          "caseId": "clone-receipt-missing-file-byteSize",
+          "violation": "mutationFixturesAffectingCanonicalUserState",
+          "checkId": "clone.invalid-receipt-isolation"
+        },
+        {
+          "caseId": "clone-receipt-missing-file-filename",
+          "violation": "mutationFixturesAffectingCanonicalUserState",
+          "checkId": "clone.invalid-receipt-isolation"
+        },
+        {
+          "caseId": "clone-receipt-missing-file-mediaType",
+          "violation": "mutationFixturesAffectingCanonicalUserState",
+          "checkId": "clone.invalid-receipt-isolation"
+        },
+        {
+          "caseId": "clone-receipt-unregistered-receipt-field",
+          "violation": "mutationFixturesAffectingCanonicalUserState",
+          "checkId": "clone.invalid-receipt-isolation"
+        },
+        {
+          "caseId": "clone-receipt-wrong-file-name-type",
+          "violation": "mutationFixturesAffectingCanonicalUserState",
+          "checkId": "clone.invalid-receipt-isolation"
+        },
+        {
+          "caseId": "clone-receipt-wrong-file-media-type",
+          "violation": "mutationFixturesAffectingCanonicalUserState",
+          "checkId": "clone.invalid-receipt-isolation"
+        },
+        {
+          "caseId": "clone-receipt-wrong-result-type",
+          "violation": "mutationFixturesAffectingCanonicalUserState",
+          "checkId": "clone.invalid-receipt-isolation"
+        },
+        {
+          "caseId": "clone-backup-retry",
+          "violation": "duplicateDeleteOrCloneEffects",
+          "checkId": "clone.backup-retry-single-effect"
+        }
+      ],
+      "scopeLimit": "Controlled disposable production-store adapter only. Actual browser/native IndexedDB, physical device and real user state are separate obligations."
+    },
+    "verify-history-project-lifecycle.mjs": {
+      "cases": [
+        {
+          "caseId": "delete-exact-retry",
+          "violation": "duplicateDeleteOrCloneEffects",
+          "checkId": "delete.retry-single-effect"
+        },
+        {
+          "caseId": "delete-receipt-missing-jobId",
+          "violation": "mutationFixturesAffectingCanonicalUserState",
+          "checkId": "delete.invalid-receipt-isolation"
+        },
+        {
+          "caseId": "delete-receipt-missing-commandId",
+          "violation": "mutationFixturesAffectingCanonicalUserState",
+          "checkId": "delete.invalid-receipt-isolation"
+        },
+        {
+          "caseId": "delete-receipt-missing-idempotencyKey",
+          "violation": "mutationFixturesAffectingCanonicalUserState",
+          "checkId": "delete.invalid-receipt-isolation"
+        },
+        {
+          "caseId": "delete-receipt-missing-payloadSha256",
+          "violation": "mutationFixturesAffectingCanonicalUserState",
+          "checkId": "delete.invalid-receipt-isolation"
+        },
+        {
+          "caseId": "delete-receipt-missing-result",
+          "violation": "mutationFixturesAffectingCanonicalUserState",
+          "checkId": "delete.invalid-receipt-isolation"
+        },
+        {
+          "caseId": "delete-receipt-missing-committedMetadataSequence",
+          "violation": "mutationFixturesAffectingCanonicalUserState",
+          "checkId": "delete.invalid-receipt-isolation"
+        },
+        {
+          "caseId": "delete-receipt-missing-retentionExpiry",
+          "violation": "mutationFixturesAffectingCanonicalUserState",
+          "checkId": "delete.invalid-receipt-isolation"
+        },
+        {
+          "caseId": "delete-receipt-wrong-job",
+          "violation": "mutationFixturesAffectingCanonicalUserState",
+          "checkId": "delete.invalid-receipt-isolation"
+        },
+        {
+          "caseId": "delete-receipt-wrong-command-type",
+          "violation": "mutationFixturesAffectingCanonicalUserState",
+          "checkId": "delete.invalid-receipt-isolation"
+        },
+        {
+          "caseId": "delete-receipt-wrong-idempotency-key",
+          "violation": "mutationFixturesAffectingCanonicalUserState",
+          "checkId": "delete.invalid-receipt-isolation"
+        },
+        {
+          "caseId": "delete-receipt-wrong-result",
+          "violation": "mutationFixturesAffectingCanonicalUserState",
+          "checkId": "delete.invalid-receipt-isolation"
+        },
+        {
+          "caseId": "delete-receipt-wrong-sequence-type",
+          "violation": "mutationFixturesAffectingCanonicalUserState",
+          "checkId": "delete.invalid-receipt-isolation"
+        },
+        {
+          "caseId": "delete-receipt-invalid-expiry",
+          "violation": "mutationFixturesAffectingCanonicalUserState",
+          "checkId": "delete.invalid-receipt-isolation"
+        },
+        {
+          "caseId": "delete-receipt-non-rfc3339-expiry",
+          "violation": "mutationFixturesAffectingCanonicalUserState",
+          "checkId": "delete.invalid-receipt-isolation"
+        },
+        {
+          "caseId": "delete-receipt-substantive-project-content",
+          "violation": "mutationFixturesAffectingCanonicalUserState",
+          "checkId": "delete.invalid-receipt-isolation"
+        },
+        {
+          "caseId": "delete-restored-activation-retry",
+          "violation": "duplicateDeleteOrCloneEffects",
+          "checkId": "delete.restored-activation-single-effect"
+        },
+        {
+          "caseId": "delete-backup-retry",
+          "violation": "duplicateDeleteOrCloneEffects",
+          "checkId": "delete.backup-retry-single-effect"
+        }
+      ],
+      "scopeLimit": "Controlled disposable production-store adapter only. Actual browser/native IndexedDB, physical device and real user state are separate obligations."
+    },
+    "verify-recoverable-history.mjs": {
+      "cases": [
+        {
+          "caseId": "import-current-stage",
+          "violation": "stageProjectionsOverridingCanonicalRecords",
+          "checkId": "projection.recovery-canonical-authority"
+        },
+        {
+          "caseId": "import-completion",
+          "violation": "stageProjectionsOverridingCanonicalRecords",
+          "checkId": "projection.recovery-canonical-authority"
+        },
+        {
+          "caseId": "import-derived-data",
+          "violation": "stageProjectionsOverridingCanonicalRecords",
+          "checkId": "projection.recovery-canonical-authority"
+        },
+        {
+          "caseId": "view-current-stage",
+          "violation": "stageProjectionsOverridingCanonicalRecords",
+          "checkId": "projection.recovery-canonical-authority"
+        },
+        {
+          "caseId": "history-current-stage",
+          "violation": "stageProjectionsOverridingCanonicalRecords",
+          "checkId": "projection.recovery-canonical-authority"
+        },
+        {
+          "caseId": "undo-current-stage",
+          "violation": "stageProjectionsOverridingCanonicalRecords",
+          "checkId": "projection.recovery-canonical-authority"
+        },
+        {
+          "caseId": "redo-current-stage",
+          "violation": "stageProjectionsOverridingCanonicalRecords",
+          "checkId": "projection.recovery-canonical-authority"
+        },
+        {
+          "caseId": "nested-import-current-stage",
+          "violation": "stageProjectionsOverridingCanonicalRecords",
+          "checkId": "projection.recovery-canonical-authority"
+        },
+        {
+          "caseId": "view-derived-data",
+          "violation": "stageProjectionsOverridingCanonicalRecords",
+          "checkId": "projection.recovery-canonical-authority"
+        },
+        {
+          "caseId": "history-derived-data",
+          "violation": "stageProjectionsOverridingCanonicalRecords",
+          "checkId": "projection.recovery-canonical-authority"
+        },
+        {
+          "caseId": "undo-derived-data",
+          "violation": "stageProjectionsOverridingCanonicalRecords",
+          "checkId": "projection.recovery-canonical-authority"
+        },
+        {
+          "caseId": "redo-derived-data",
+          "violation": "stageProjectionsOverridingCanonicalRecords",
+          "checkId": "projection.recovery-canonical-authority"
+        },
+        {
+          "caseId": "nested-import-derived-data",
+          "violation": "stageProjectionsOverridingCanonicalRecords",
+          "checkId": "projection.recovery-canonical-authority"
+        }
+      ],
+      "scopeLimit": "Controlled disposable production-store adapter only. Actual browser/native IndexedDB, physical device and real user state are separate obligations."
+    },
+    "verify-shared-contract-faults.mjs": {
+      "scopeLimit": "Exactly the existing disposable production SELF-INVALIDATE-TERMINAL mutation rejected by the independent INVALIDATION_ORACLE. Baseline upstream30 own-transition measured separately; wider dependency-cycle/model/physical correctness remains separate.",
+      "cases": [
+        {
+          "caseId": "terminal-self-invalidation-mutant",
+          "checkId": "terminal-self-invalidation-mutant-detected",
+          "violation": "terminalSelfInvalidationOrDependencyCycles"
+        }
+      ]
+    }
+  }
+}

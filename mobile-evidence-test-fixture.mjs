@@ -1,7 +1,14 @@
+import {projectStoreRuntime} from './test-project-store-runtime.mjs';
+import {createHash} from 'node:crypto';
+import {gzipSync} from 'node:zlib';
 // Synthetic validator inputs only. These declarations are never device evidence.
 // Each observation spells out the independent acceptance contract being tested.
+export function syntheticMobileTargetFacts({performer='SYNTHETIC-PERFORMER',buildIdentity='build-sha256-'+ 'f'.repeat(64),deviceModel='UNKNOWN'}={}){
+ return {performer,identityAssurance:'SELF_ASSERTED',buildIdentity,preparationId:'SYNTHETIC-PREPARATION',iosBuild:'UNKNOWN',webkitBuild:'UNKNOWN',requiredEvidenceArtifacts:['screenshotOrRecordingReferences','operationReceipts','runtimeFindings','exportedProjectDigest'],unavailableEnvironmentFacts:[...(deviceModel==='UNKNOWN'?['deviceModel']:[]),'iosBuild','webkitBuild'].map(fact=>({fact,reason:'Synthetic fixture records the unavailable fact honestly.',evidenceBasis:'HUMAN_OBSERVATION'}))};
+}
+let initialProjectRuntime;
 export function syntheticMobileOperations(target){
- const buildIdentity='build-sha256-'+ 'f'.repeat(64),file={sha256:'b'.repeat(64),byteSize:32,filename:'fixture.txt',selectedFilename:'fixture.txt',verification:'EXPORTED_BYTES_SELECTED_AND_REHASHED'};
+ const buildIdentity=target.buildIdentity||'build-sha256-'+ 'f'.repeat(64),file={sha256:'b'.repeat(64),byteSize:32,filename:'fixture.txt',selectedFilename:'fixture.txt',verification:'EXPORTED_BYTES_SELECTED_AND_REHASHED'};
  const backup={...file,packageSha256:'c'.repeat(64),testProjectId:target.testProjectId,restoredRevision:4,verification:'SELECTED_EXPORTED_BYTES_IMPORTED_AND_VERIFIED'};
  const observation={
   PROJECT_CREATED:{createdProjectId:target.testProjectId,revision:0},
@@ -22,5 +29,9 @@ export function syntheticMobileOperations(target){
   RUNTIME_EXCEPTION_CHECK_COMPLETED:{runtimeExceptions:0,unhandledRejections:0,observedTabs:['FIXTURE-TAB']}
  };
  const binding=Object.fromEntries(['challenge','sourceCommit','deploymentManifestDigest','origin','basePath','testProjectId','procedureVersion'].map(key=>[key,target[key]]));
- return {buildIdentity,operationReceipts:Object.entries(observation).map(([kind,value],i)=>({kind,receiptId:'SYNTHETIC-'+i,result:'PASS',...binding,targetId:target.mobileAcceptanceTargetId,buildIdentity,evidenceBasis:'APPLICATION_OBSERVATION',recordedAt:target.challengeIssuedAt,observation:value})),mobileCapabilityProbe:{...binding,targetId:target.mobileAcceptanceTargetId,probeId:'SYNTHETIC-PROBE',result:'PASS',evidenceBasis:'APPLICATION_OBSERVATION',capabilities:{FILE_EXPORT_OR_SHARE:true,RESPONSE_FILE_SELECTION:true,RETURNED_FILE_SLOT_SELECTION:true,PERSISTENT_STORAGE_REQUEST:true,LOGICAL_PACKAGE_EXPORT:true,BACKUP_EXPORT_AND_RESTORE:true},observations:{selectedMembers:{RESPONSE:{...file},RETURNED:{...file},MANIFEST:{...file}},persistenceRequest:{completed:true,persistent:false},backupRestore:backup}}};
+ initialProjectRuntime||=projectStoreRuntime();
+ const initialProject=initialProjectRuntime.core.createBlankState(target.testProjectId);initialProjectRuntime.engine.ensureShape(initialProject);initialProjectRuntime.engine.recalculate(initialProject);
+ const initialBytes=gzipSync(Buffer.from(JSON.stringify({schema:'closed-loop-project-package/1',projectSchema:initialProject.schema,workflow:initialProject.workflow,project:initialProject,packageManifest:{jobId:target.testProjectId,projectSha256:initialProjectRuntime.store.projectSha256(initialProject)}})));
+ const preparation={schema:'closed-loop-mobile-acceptance-preparation/1',...binding,preparationId:target.preparationId,targetId:target.mobileAcceptanceTargetId,buildIdentity,recordedAt:target.challengeIssuedAt,evidenceBasis:'APPLICATION_OBSERVATION',initialProjectPackage:{testProjectId:target.testProjectId,mediaType:'application/gzip',base64:initialBytes.toString('base64'),sha256:createHash('sha256').update(initialBytes).digest('hex'),byteSize:initialBytes.length,capturedAt:target.challengeIssuedAt},storageObservations:{persistent:false,quotaBytes:1024,usageBytes:0,recordedAt:target.challengeIssuedAt,evidenceBasis:'APPLICATION_OBSERVATION',unavailableReasons:{}}};
+ return {buildIdentity,preparation,operationReceipts:Object.entries(observation).map(([kind,value],i)=>({kind,receiptId:'SYNTHETIC-'+i,result:'PASS',...binding,targetId:target.mobileAcceptanceTargetId,buildIdentity,evidenceBasis:'APPLICATION_OBSERVATION',recordedAt:target.challengeIssuedAt,observation:value})),mobileCapabilityProbe:{...binding,targetId:target.mobileAcceptanceTargetId,probeId:'SYNTHETIC-PROBE',recordedAt:target.challengeIssuedAt,result:'PASS',evidenceBasis:'APPLICATION_OBSERVATION',capabilities:{FILE_EXPORT_OR_SHARE:true,RESPONSE_FILE_SELECTION:true,RETURNED_FILE_SLOT_SELECTION:true,PERSISTENT_STORAGE_REQUEST:true,LOGICAL_PACKAGE_EXPORT:true,BACKUP_EXPORT_AND_RESTORE:true},observations:{selectedMembers:{RESPONSE:{...file},RETURNED:{...file},MANIFEST:{...file}},persistenceRequest:{completed:true,persistent:false},backupRestore:backup}}};
 }
