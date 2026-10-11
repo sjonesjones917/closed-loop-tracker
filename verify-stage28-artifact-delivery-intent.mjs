@@ -11,7 +11,7 @@ import {execFileSync} from 'node:child_process';
 
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
-for (const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','response-ingestion.js']) createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
+for (const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js']) createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
 assert.equal(typeof globalThis.closedLoopResponseIngestion.strictParse,'function','The Stage 28 verifier must load the ingestion owner used by deferred readiness.');
 const {closedLoopWorkflowEngine:engine}=globalThis;
 async function pendingIdentityStoreBoundary(){
