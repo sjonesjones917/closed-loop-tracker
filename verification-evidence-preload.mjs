@@ -4,6 +4,23 @@ import {verificationCatalog} from './verification-evidence-catalog.mjs';
 import {recordExecutionReceipt,evidenceFingerprint,sha,RECEIPT_SCHEMA} from './verification-evidence.mjs';
 
 const suite=path.basename(process.argv[1]||'');
+
+// Hosted-log-independent failure visibility. A required verifier that exits
+// non-zero reports its suite, exit code and error as one GitHub annotation, so
+// the cause is readable through the checks API even where job logs cannot be
+// downloaded. It only observes (uncaughtExceptionMonitor and a bounded stderr
+// tail), never changes output bytes, exit codes or receipts, and does nothing
+// outside GitHub Actions.
+const failureVisibility=process.env.GITHUB_ACTIONS==='true'&&!process.execArgv.includes('--check');
+const failureTail=[];let failureTailBytes=0,failureError='';
+if(failureVisibility){
+  const rawStderrWrite=process.stderr.write;
+  process.stderr.write=function(chunk,encoding,callback){
+    try{const bytes=Buffer.isBuffer(chunk)?chunk:Buffer.from(String(chunk),typeof encoding==='string'?encoding:'utf8');failureTail.push(bytes);failureTailBytes+=bytes.length;while(failureTailBytes>8192&&failureTail.length>1)failureTailBytes-=failureTail.shift().length;}catch{}
+    return rawStderrWrite.apply(this,arguments);
+  };
+  process.on('uncaughtExceptionMonitor',error=>{try{failureError=String(error?.stack||error).slice(0,1400);}catch{}});
+}
 const directory=process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS;
 // --check parses a named file without executing its verifier body. Preserve its
 // actual parser exit status, but never publish it as an executed suite receipt.
@@ -41,5 +58,17 @@ if(directory&&verificationCatalog[suite]&&!syntaxOnly&&!focusedPopulation&&(!pro
       // command, not just a later YAML/source-presence check.
       process.stderr.write('EXECUTED_EVIDENCE_ORACLE: '+suite+': '+error.message+'\n');process.exitCode=1;
     }
+  });
+}
+
+if(failureVisibility){
+  process.on('exit',code=>{
+    const finalCode=process.exitCode||code;
+    if(!finalCode)return;
+    try{
+      const escape=value=>String(value).replace(/%/g,'%25').replace(/\r/g,'%0D').replace(/\n/g,'%0A');
+      const stderrTail=Buffer.concat(failureTail).toString('utf8').slice(-900);
+      fs.writeSync(2,'\n::error title='+escape('Verifier failed: '+(suite||'node')+' exit '+finalCode)+'::'+escape((failureError?'error: '+failureError+' | ':'')+'stderr tail: '+stderrTail)+'\n');
+    }catch{}
   });
 }
