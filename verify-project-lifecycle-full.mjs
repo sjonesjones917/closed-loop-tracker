@@ -242,7 +242,7 @@ vm.runInContext(`
 `,filePackageRuntime);
 // Re-evaluate the same store with only its I/O substituted for immutable rows.
 filePackageRuntime.structuredClone=undefined; // Preserve the isolated realm's plain-object prototypes.
-vm.runInContext(store.replace('globalThis.closedLoopProjectStore=', 'readProject=async()=>fixtureProject;getArtifact=async id=>[...fixtureArtifacts,fixtureContextRow].find(row=>row.artifactId===id);globalThis.closedLoopProjectStore='),filePackageRuntime);
+vm.runInContext(store.replace('globalThis.closedLoopProjectStore=', 'readProject=async()=>fixtureProject;readArtifactRow=getArtifact=async id=>[...fixtureArtifacts,fixtureContextRow].find(row=>row.artifactId===id);globalThis.closedLoopProjectStore='),filePackageRuntime);
 vm.runInContext("fixtureProject.projectData.generatedPrompts[0].promptEngineVersion='STALE-FIXTURE'",filePackageRuntime);
 let stalePromptRejected=false;
 try{await vm.runInContext("closedLoopProjectStore.createExecutionPackage({project:fixtureProject,stage:4,operation:'COMPLETE'})",filePackageRuntime);}catch(error){stalePromptRejected=error.code==='EXECUTION_PACKAGE_CURRENT_PROMPT_REQUIRED';}
@@ -508,14 +508,19 @@ await storageRegression('import:replay-saved-projections-without-fabricating-gat
 });
 await storageRegression('import:saved-projection-does-not-bypass-record-or-release-checks',async()=>{
   const saved=await storageRuntime.makeStored('IMPORT-PROJECTION-NEGATIVES');
-  for(const kind of ['record','release']){
+  // A retained release record must be reachable from the Job's established
+  // CURRENT_RELEASE_ID pointer (job-pointer integrity). 'release' therefore
+  // keeps that pointer consistent so the release-determination owner is still
+  // the validator under test, while 'release-unpointed' proves the pointer
+  // owner independently rejects the same forged record.
+  for(const kind of ['record','release','release-unpointed']){
     const project=storageRead(saved);delete project.projectSha256;
     if(kind==='record')project.projectData.requirements.push(storageRead({id:'REQ-INVALID',fields:{REQ_ID:'REQ-INVALID',OBLIGATION:17}}));
-    else project.projectData.releaseRecords.push(storageRead({id:'RELEASE-FORGED',active:true,fields:{RELEASE_ID:'RELEASE-FORGED',DETERMINATION:'ACCEPTED'}}));
+    else{project.projectData.releaseRecords.push(storageRead({id:'RELEASE-FORGED',active:true,fields:{RELEASE_ID:'RELEASE-FORGED',DETERMINATION:'ACCEPTED'}}));if(kind==='release')project.job.CURRENT_RELEASE_ID='RELEASE-FORGED';}
     const body={schema:'closed-loop-project-package/1',projectSchema:project.schema,workflow:project.workflow,responseSchema:'closed-loop-stage-response/3',project,artifacts:[],packageManifest:{jobId:saved.job.JOB_ID,artifactCount:0,artifacts:[],projectSha256:storageRuntime.projectStore.projectSha256(project)},exportedAt:'2026-09-13T00:00:00.000Z'};
     const packageSha256=globalThis.closedLoopHash.sha256Value(JSON.parse(JSON.stringify(body))),blob=await new Response(new Blob([JSON.stringify({...body,packageSha256})]).stream().pipeThrough(new CompressionStream('gzip'))).blob();
     let error;try{await storageRuntime.projectStore.importPackage(blob);}catch(e){error=e;}
-    assert(error?.code==='PROJECT_INTEGRITY_FAILED'&&error.issues.some(issue=>issue.includes(kind==='record'?'Expected STRING':'release determination')),'Saved projection compatibility bypassed '+kind+' validation.');
+    assert(error?.code==='PROJECT_INTEGRITY_FAILED'&&error.issues.some(issue=>issue.includes(kind==='record'?'Expected STRING':kind==='release'?'release determination':'/job/CURRENT_RELEASE_ID')),'Saved projection compatibility bypassed '+kind+' validation.');
     assert((await storageRuntime.projectStore.readProject(saved.job.JOB_ID)).projectSha256===saved.projectSha256,'Rejected import changed existing canonical work.');
   }
 });
@@ -592,13 +597,17 @@ for(const mismatch of ['owner','digest','size','contradictory-reference'])await 
 });
 await storageRegression('prompt-context:materialize-shared-missing-bytes-once',async()=>{
   const project=await storageRuntime.projectStore.readProject('CONTEXT-READ-PRESSURE'),rows=storageRows.get('artifacts'),row=[...rows.values()].find(row=>row.jobId===project.job.JOB_ID);
+  // Artifact rows reference their bytes through the shared history-file store
+  // (byteReference), so the raw row carries no blob; hydrate the exact
+  // historical bytes through the production reader before removing the row.
+  const originalText=await (await storageRuntime.projectStore.getArtifact(row.artifactId)).blob.text();
   rows.delete(row.artifactId);let materializations=0;const promptEngine=storageRuntime.closedLoopPromptEngine;
   storageRuntime.closedLoopPromptEngine={...promptEngine,materializePromptContextFiles(...args){materializations++;return promptEngine.materializePromptContextFiles(...args);}};
   storageAccess.length=0;
   try{await storageRuntime.projectStore.writeProject(project,{expectedProjectRevision:project.revision});}finally{storageRuntime.closedLoopPromptEngine=promptEngine;}
   const reads=storageAccess.filter(x=>x.kind==='get'&&x.name==='artifacts'),writes=storageAccess.filter(x=>x.kind==='put'&&x.name==='artifacts'),restored=await storageRuntime.projectStore.getArtifact(row.artifactId);
   assert(materializations===1&&writes.length===1&&reads.length===3,`Shared missing context was materialized ${materializations} times, written ${writes.length} times and read ${reads.length} times.`);
-  assert(restored.sha256===row.sha256&&await restored.blob.text()===await row.blob.text(),'Context reconstruction changed exact historical bytes.');
+  assert(restored.sha256===row.sha256&&await restored.blob.text()===originalText,'Context reconstruction changed exact historical bytes.');
 });
 await storageRegression('prompt-context:missing-history-cannot-use-current-content',async()=>{
   const project=await storageRuntime.projectStore.readProject('CONTEXT-READ-PRESSURE'),before=project.projectSha256,rows=storageRows.get('artifacts'),row=[...rows.values()].find(row=>row.jobId===project.job.JOB_ID);
@@ -768,6 +777,9 @@ await storageRegression('artifact-queries:project-local-without-store-scan',asyn
   storageAccess.length=0;await storageRuntime.projectStore.removeProject('DELETE-QUERY');
   assert(!storageAccess.some(row=>row.name==='artifacts'&&row.kind==='getAll'),'Deleting one project scanned unrelated artifact rows.');
 });
+// A browser file-picker selection always carries a name; the production
+// import path records it (stageBackupImport) and rejects an unnamed upload.
+const namedSelection=(blob,name='selected-backup.closed-loop-package.gz')=>Object.defineProperty(blob,'name',{value:name,configurable:true});
 const importStart=app.indexOf("bindFileAction('#import-file'"),importEnd=app.indexOf('\nglobalThis.closedLoopAppReady',importStart);
 await storageRegression('backup:required-prompt-context',async()=>{
   await vm.runInContext(`(async()=>{let p=await makeStored('BACKUP-CONTEXT');p.job.EXACT_USER_OBJECTIVE_VERBATIM='Required context content. '.repeat(4000);const prompt=closedLoopPromptEngine.buildPromptRecord(1,p,{operation:'COMPLETE'});p.projectData.generatedPrompts.push(prompt);p=await projectStore.writeProject(p,{expectedProjectRevision:p.revision});const rows=await projectStore.listArtifacts(p.job.JOB_ID),context=rows.find(row=>row.lineage?.kind==='PROMPT_CONTEXT');if(!context)throw new Error('The real instruction did not materialize its context fixture.');await projectStore.exportPackage(p.job.JOB_ID);await projectStore.deleteArtifact(context.artifactId,p.job.JOB_ID);})()`,storageRuntime);
@@ -783,10 +795,14 @@ assert(importStart>=0&&importEnd>importStart,'Production import handler is missi
 storageRuntime.bindFileAction=(selector,operation)=>{storageRuntime.$(selector).onchange=e=>operation(Array.from(e.target.files||[]));};
 storageRuntime.loadAcceptanceSession=async()=>{};
 storageRuntime.bindAction=()=>{};storageRuntime.saveFileSelection=async()=>{};
-vm.runInContext(app.slice(app.indexOf('async function importProjectPackageFile('),app.indexOf('let projectPackageExportInFlight='))+app.slice(importStart,importEnd),storageRuntime);
+vm.runInContext('const pendingBackupImports={},fileSelectionDrafts={};'+app.slice(app.indexOf('function paintPendingBackupImport('),app.indexOf('let projectPackageExportInFlight='))+app.slice(importStart,importEnd),storageRuntime);
 await storageRegression('import:post-commit-refresh-failure',async()=>{
+  // The package-level regressions above re-imported this project, so the
+  // live project is the stored one (the real operator always imports into
+  // the current saved revision, which stageBackupImport verifies).
+  storageRuntime.backupProject=await storageRuntime.projectStore.readProject('BACKUP-CLOSURE');
   await vm.runInContext(`globalThis.projects=[backupProject];globalThis.current=backupProject;globalThis.failures=[];globalThis.refreshProjectStorage=async()=>{throw new Error('CONTROLLED_REFRESH_FAILURE');};`,storageRuntime);
-  storageAccess.length=0;await storageRuntime.elements['#import-file'].onchange({target:{files:[storageRuntime.goodBackup],value:'selected'}});
+  storageAccess.length=0;await storageRuntime.elements['#import-file'].onchange({target:{files:[namedSelection(storageRuntime.goodBackup)],value:'selected'}});
   assert(!storageAccess.some(x=>x.name==='projects'&&x.kind==='getAll'),'Import reloaded every unrelated project after committing.');
   const committed=await storageRuntime.projectStore.readProject('BACKUP-CLOSURE');
   assert(committed.revision>storageRuntime.backupProject.revision,'The import did not reach its real commit boundary.');
@@ -796,7 +812,7 @@ await storageRegression('import:post-commit-refresh-failure',async()=>{
 await storageRegression('import:pre-commit-failure-preserves-state',async()=>{
   const before=storageRuntime.current,ids=storageRuntime.projects;
   storageRuntime.failures.length=0;
-  await storageRuntime.elements['#import-file'].onchange({target:{files:[new Blob(['invalid package'])],value:'selected'}});
+  await storageRuntime.elements['#import-file'].onchange({target:{files:[namedSelection(new Blob(['invalid package']),'invalid-package.gz')],value:'selected'}});
   assert(storageRuntime.current===before&&storageRuntime.projects===ids,'Rejected import replaced existing in-memory projects.');
   assert(storageRuntime.failures.some(x=>/without changing existing projects/i.test(x)),'Pre-commit import failure lost its accurate rejection message.');
 });
