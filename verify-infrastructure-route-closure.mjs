@@ -96,9 +96,15 @@ for(const [name,reports] of lifecycleMutations){
   assert(!completeLifecycleReports(reports),'LIFECYCLE_REPORT_POPULATION_ORACLE: '+name+' was accepted.');
   if(lifecycleReceipt){
     const mutation={...structuredClone(lifecycleReceipt),reports};
-    if(name!=='missing-final-marker')mutation.observations=observationsFromReports('verify-project-lifecycle.mjs',reports);
-    delete mutation.receiptSha256;mutation.receiptSha256=sha(mutation);
-    let rejected=false;try{validateExecutionReceipt(mutation,'verify-project-lifecycle.mjs',lifecycleReceipt.fingerprint);}catch(error){rejected=String(error.message).includes('EXECUTED_EVIDENCE_ORACLE');}
+    // Deriving observations from a population that lacks a required marker is
+    // itself an evidence-oracle rejection (the producer catalog requires the
+    // marker). That rejection and the receipt validation below are both the
+    // oracle refusing the mutation, so both belong inside the same guard.
+    let rejected=false;try{
+      if(name!=='missing-final-marker')mutation.observations=observationsFromReports('verify-project-lifecycle.mjs',reports);
+      delete mutation.receiptSha256;mutation.receiptSha256=sha(mutation);
+      validateExecutionReceipt(mutation,'verify-project-lifecycle.mjs',lifecycleReceipt.fingerprint);
+    }catch(error){rejected=String(error.message).includes('EXECUTED_EVIDENCE_ORACLE');}
     assert(rejected,'LIFECYCLE_RECEIPT_MUTATION_ORACLE: '+name+' was accepted.');
   }
 }
