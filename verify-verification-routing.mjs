@@ -97,7 +97,7 @@ await check('Section23 execution-route vocabulary and readiness',async()=>{
  }
  const unbound=t.routingFixture();unbound.test.fields.EXECUTABLE_INPUT_BINDINGS.JOB.canonicalKey='JOB.UNAVAILABLE_BOUND_VALUE';
  const blocked=plan(unbound.p,unbound.test);assert.equal(blocked.operatorAction,'BLOCKED');assert.equal(blocked.executionRoute,'BLOCKED','EXECUTION_ROUTE_READINESS_ORACLE: unavailable native input must have a blocked route.');
- verificationObservations.push({checkId:'routing.specification-route-vocabulary',expected:{modes:6,capabilityBlockedControls:2,nativeBindingBlockedControls:1},observed:{modes:observations.length,capabilityBlockedControls,nativeBindingBlockedControls:Number(blocked.executionRoute==='BLOCKED')},cases:observations,passed:true,synthetic:true,actualExternalCapability:false,actualBrowser:false});
+ verificationObservations.push({checkId:'routing.specification-route-vocabulary',boundary:'Specification verification-route vocabulary resolved by the production routing runtime',expected:{modes:6,capabilityBlockedControls:2,nativeBindingBlockedControls:1},observed:{modes:observations.length,capabilityBlockedControls,nativeBindingBlockedControls:Number(blocked.executionRoute==='BLOCKED')},cases:observations,passed:true,synthetic:true,actualExternalCapability:false,actualBrowser:false});
 });
 // Controlled upstream canonical data isolates Stage06 readiness; proof and
 // applicability approvals still pass through the production ingestion owner.
