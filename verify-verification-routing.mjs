@@ -203,7 +203,7 @@ await check('Operator report upload, confirmation, and save survive a production
 await check('A blocked capability is announced after actual report selection and confirmation',async()=>{
  const announcement=controls.get('#app-live-status')||{textContent:''};controls.set('#app-live-status',announcement);
  const priorAnnounce=t.announce,announceStart=source.indexOf('function announce('),announceEnd=source.indexOf('\nconst recordValue=',announceStart+1);
- assert(announceStart>=0&&announceEnd>announceStart);t.actionFailureNotice=null;vm.runInContext(source.slice(announceStart,announceEnd),t);
+ assert(announceStart>=0&&announceEnd>announceStart);t.actionFailureNotice=null;t.operatorActionInFlight=null;vm.runInContext(source.slice(announceStart,announceEnd),t);
  try{
   const report=t.completedReport(t.current,f.test);report.checks.permissions.status='FALSE';
   const text=JSON.stringify(report),file=new Blob([text],{type:'application/json'});Object.defineProperty(file,'name',{value:'blocked-readiness.json'});
