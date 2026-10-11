@@ -280,7 +280,7 @@ function assertRegressionEvidenceEligibility(source){
  const condition=match[1].match(/        if: (.+)/)?.[1];assert.ok(condition,'REGRESSION_EVIDENCE_ELIGIBILITY_ORACLE: evidence eligibility must be explicit');
  const evaluate=Function('always','steps','return ('+condition+');');
  for(const outcome of ['success','failure','cancelled','skipped',''])assert.equal(evaluate(()=>true,{conformance:{outcome}}),['success','failure','cancelled'].includes(outcome),'REGRESSION_EVIDENCE_ELIGIBILITY_ORACLE: '+(outcome||'unstarted'));
- assert.match(source,/name: Shared production faults, bounded sequences, and executed observations\n        id: conformance\n/,'REGRESSION_EVIDENCE_ELIGIBILITY_ORACLE: predicate must bind the actual aggregate step');
+ assert.match(source,/name: Execute complete conformance group\n        id: conformance\n/,'REGRESSION_EVIDENCE_ELIGIBILITY_ORACLE: predicate must bind the actual aggregate step');
  assert.match(match[1],/if-no-files-found: error/,'REGRESSION_EVIDENCE_ELIGIBILITY_ORACLE: missing executed evidence must fail');
 }
 assertRegressionEvidenceEligibility(workflow);
