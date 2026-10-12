@@ -43,7 +43,12 @@ if(failureVisibility){
   };
   process.on('uncaughtExceptionMonitor',error=>{try{failureError=String(error?.stack||error).slice(0,1400);}catch{}});
 }
-if(directory&&verificationCatalog[suite]&&!syntaxOnly&&!focusedPopulation&&(!process.env.CLOSED_LOOP_VERIFICATION_SOURCE_ROOT||path.resolve(process.cwd())===path.resolve(process.env.CLOSED_LOOP_VERIFICATION_SOURCE_ROOT))){
+// A deliberately injected fault is never a complete positive producer: fault selectors are either a
+// --fault style flag or a *_FAULT / *_SOURCE override of the code under test. Such children are asserted
+// by their enclosing verifier, must not append diagnostics to the fault's own output, and must not
+// replace the real producer receipt with a failure receipt.
+const injectedFault=process.argv.slice(2).some(argument=>/^--(?:[a-z0-9]+-)*fault(?:-[a-z0-9]+)*(?:=|$)/.test(argument))||Object.entries(process.env).some(([name,value])=>value&&/(?:_FAULT|_SOURCE)$/.test(name));
+if(directory&&verificationCatalog[suite]&&!syntaxOnly&&!focusedPopulation&&!injectedFault&&(!process.env.CLOSED_LOOP_VERIFICATION_SOURCE_ROOT||path.resolve(process.cwd())===path.resolve(process.env.CLOSED_LOOP_VERIFICATION_SOURCE_ROOT))){
   const fingerprint=evidenceFingerprint(),chunks=[],stderrChunks=[];
   let byteCount=0,outputOverflow=false;
   const write=process.stdout.write;
