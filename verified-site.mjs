@@ -42,7 +42,31 @@ function workflowJob(workflow,name){
   const following=workflow.slice(start+marker.length),end=following.search(/\n  [a-z][\w-]*:\n/);
   return end<0?following:following.slice(0,end);
 }
+export function assertWorkflowPreloadBoundaries(workflow){
+  const preloadedJobs=['foundation','deferred-matrix','workflow-gates','conformance','test','publish-status'];
+  const expected='--import ${{ github.workspace }}/verification-evidence-preload.mjs',uploads=[];
+  for(const name of preloadedJobs){
+    const job=workflowJob(workflow,name),environment=job.split('    env:\n')[1]?.split(/\n    [a-z][\w-]*:/)[0];
+    requireValue(/^      NODE_OPTIONS: (.*)$/m.exec(environment||'')?.[1]===expected,'Required repository producer job preload must remain enabled: '+name);
+  }
+  for(const jobMatch of workflow.slice(workflow.indexOf('\njobs:\n')).matchAll(/^  ([a-z][\w-]*):\n/gm)){
+    const job=jobMatch[1],block=workflowJob(workflow,job);
+    for(const match of block.matchAll(/^      - [\s\S]*?(?=^      - |(?![\s\S]))/gm)){
+      const step=match[0],name=/^      - name: (.*)$/m.exec(step)?.[1]||'unnamed action';
+      const nodeOptions=/^          NODE_OPTIONS: (.*)$/m.exec(step)?.[1];
+      if(/^(?:      - |        )uses: actions\/upload-artifact@/m.test(step)){
+        requireValue(nodeOptions==="''"||nodeOptions==='""','Artifact upload action must clear the repository preload before checkout: '+job+'/'+name);
+        uploads.push({job,name,inheritedNodeOptions:preloadedJobs.includes(job)?expected:'',nodeOptions:''});
+      }else if(preloadedJobs.includes(job)&&/^        run:/m.test(step)){
+        requireValue(nodeOptions===undefined,'Repository producer step must retain its job preload: '+job+'/'+name);
+      }
+    }
+  }
+  requireValue(uploads.length>0,'Required artifact upload actions are absent.');
+  return uploads;
+}
 export function assertLifecycleWorkflowCommand(workflow){
+  assertWorkflowPreloadBoundaries(workflow);
   const foundation=workflowJob(workflow,'foundation'),deferredJob=workflowJob(workflow,'deferred-matrix'),workflowGates=workflowJob(workflow,'workflow-gates'),conformanceJob=workflowJob(workflow,'conformance'),protectedTest=workflowJob(workflow,'test');
   requireValue(deferredJob.includes('    needs: foundation\n')&&workflowGates.includes('    needs: [foundation, deferred-matrix]\n')&&conformanceJob.includes('    needs: workflow-gates\n')&&protectedTest.includes('    needs: [foundation, deferred-matrix, workflow-gates, conformance]\n'),'Required proof phase dependencies must preserve foundation, deferred, workflow, conformance, and browser order.');
   let previous=-1;

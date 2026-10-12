@@ -195,6 +195,24 @@ try{
   cases.push('exact-runtime-and-visible-deferred-diagnostics');
   const testWorkflow=workflow.slice(workflow.indexOf('\n  test:'),workflow.indexOf('\n  deploy:'));
   assertLifecycleWorkflowCommand(workflow);
+  const uploadSteps=[...workflow.matchAll(/^      - [\s\S]*?(?=^      - |^  [a-z][\w-]*:\n|(?![\s\S]))/gm)].map(match=>match[0]).filter(step=>/^        uses: actions\/upload-artifact@/m.test(step));
+  assert.equal(uploadSteps.length,18,'CI_UPLOAD_PRELOAD_ORACLE: all maintained artifact upload actions must be covered.');
+  for(const [index,step] of uploadSteps.entries()){
+    const override="        env:\n          NODE_OPTIONS: ''\n";
+    assert.equal(step.split(override).length,2,'CI_UPLOAD_PRELOAD_ORACLE: exact scoped action override required.');
+    for(const [mutation,replacement] of [['missing',''],['inherited',"        env:\n          NODE_OPTIONS: --import ${{ github.workspace }}/verification-evidence-preload.mjs\n"]]){
+      const changed=workflow.replace(step,step.replace(override,replacement));
+      assert.notEqual(changed,workflow,'CI_UPLOAD_PRELOAD_ORACLE: mutation did not apply.');
+      await rejects('upload-preload-'+index+'-'+mutation,()=>assertLifecycleWorkflowCommand(changed),/Artifact upload action must clear/);
+    }
+  }
+  const jobPreload='      NODE_OPTIONS: --import ${{ github.workspace }}/verification-evidence-preload.mjs\n';
+  assert.equal(workflow.split(jobPreload).length-1,6,'CI_UPLOAD_PRELOAD_ORACLE: six producer job preloads must remain.');
+  await rejects('upload-fix-must-not-disable-job-preload',()=>assertLifecycleWorkflowCommand(workflow.replaceAll(jobPreload,"      NODE_OPTIONS: ''\n")),/repository producer job preload must remain enabled/);
+  const producer='      - name: Syntax\n';
+  assert.equal(workflow.split(producer).length,2);
+  await rejects('upload-fix-must-not-disable-producer-step',()=>assertLifecycleWorkflowCommand(workflow.replace(producer,producer+"        env:\n          NODE_OPTIONS: ''\n")),/Repository producer step must retain/);
+  cases.push('all-upload-preloads-isolated-with-producer-preloads-retained');
   const conformanceStart=workflow.indexOf('\n  conformance:\n'),conformanceEnd=workflow.indexOf('\n  test:\n'),conformanceWorkflow=workflow.slice(conformanceStart,conformanceEnd);
   for(const [name,before,after,diagnostic] of [
     ['missing-group','group: [core, creation, counterpart]','group: [core, creation]',/complete conformance group execution/],

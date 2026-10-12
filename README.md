@@ -1,3 +1,5 @@
+> Current private first-safe19 proposal — 2026-10-12: the independently reviewed14-path uploader/preload/lifecycle/portable packet is extended by five narrowly reviewed owning files to repair the confirmed runner and selected-stage current-run guidance predicates. All19 paths are guarded against pinned published `9ff2d617a85e65858bd114903b677f81cfac35f2` or exact original14 postimages. The only application runtime edit is one selected-stage run-reader line. This proposal is private/unpublished, with no fullCI/whole-app certification or new adequacy admission; repository-only resumption remains PARTIAL. Earlier14/113/115/136 frames and source receipts are retained historical/scoped evidence.
+
 # Closed-Loop Reliability
 
 Live application: https://sjonesjones917.github.io/closed-loop-tracker/
@@ -68,6 +70,8 @@ The deterministic migration path is `human-project/30` → `closed-loop-project/
 
 ## Verification
 
+Current requirement accounting and continuation: [Requirement traceability](verification/requirement-traceability.md).
+
 Run the deterministic repository checks in the order required by the repository verification entry points and CI. The Pages workflow is the single deployment workflow. Pull requests run source/schema/ingestion/gate/full-cycle/semantic and local Chromium acceptance checks. Only `main` deploys. A successful main run then verifies exact deployed bytes and the deployed Chromium application before the later physical-iPhone and final-publication gates can complete.
 
 `build-static-site.mjs` is the single deterministic deployment builder. It derives one SHA-256 build identity from the complete source runtime bundle, binds that identity to every direct script and the Test IR worker, and emits `closed-loop-deployment-manifest.json` with every deployed resource's size and digest. `verify-deployment-manifest.mjs` performs two clean builds, verifies manifest self-digest and resource closure, rejects mixed identities, and confirms that no controlling service worker exists. Live verification rebuilds the same expected site for the exact commit and workflow run, fetches every manifest path with cache bypass, and compares exact bytes.
@@ -108,3 +112,9 @@ For `VISUAL_BASELINE_AUTHORIZATION`, include the actual `authorityRecord` return
 For `APPROVED_PREDECESSOR`, include `predecessorRecord: {recordId, VISUAL_BASELINE_ID, baselineSha256, candidates}` with exactly one qualifying candidate. That candidate names the frozen `sourceCommit`, its `approvalRecordId`, actual `approvalRecord` and `approvalReceipt` using the existing decision-and-receipt mechanism, and nonempty string arrays `approvalEvidenceReferences` and `historyEvidenceReferences`. A historical decision may use `TRADEOFF_OR_SCOPE_DECISION`, `HUMAN_AUTHORITY_CORRECTION`, or `VISUAL_BASELINE_AUTHORIZATION`; it need not retrospectively acquire a new visual-decision purpose. Its explicit authorization value must bind this frozen visual tuple; unrelated risk, disclosure, backup, or retirement decisions do not authorize visual approval. Its predecessor record identity must match `authorityRecordId`. History references locate the predecessor; actual approval evidence is required independently. This transport establishes the attributable recorded-decision form of historical approval. Other historical references remain retained evidence, but do not establish approval through this transport; use the existing human-authorization route if their approval is unknown or ambiguous.
 
 Submission attributes come from authenticated workflow context. The decision's assurance must use the schema registry's currently available basis (`SELF_ASSERTED`); a supplied higher label does not establish an unavailable authentication capability. Supplied proof and unknown extension fields are retained without filling missing evidence, inferring approval, or rewriting the frozen tuple. The default repository baseline remains `OPEN` until actual required evidence exists.
+
+
+Current first-safe scope and next actions are recorded in [requirement traceability](verification/requirement-traceability.md) and [publication packet](verification/handoff-publication-20261011.json).
+
+
+The current selected19 paths include the original14 plus `verify-conformance-regressions.mjs`, `verify-conformance-handoff.mjs`, `app-core.js`, `verify-primary-guidance.mjs` and `test-primary-guidance-current-run.mjs`. Exact guards, exclusions and scoped control identities are in [handoff publication](verification/handoff-publication-20261011.json). No actual publication, green CI or physical delivery is claimed.

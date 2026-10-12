@@ -113,7 +113,7 @@ export function selectConformanceGroup(args=[]){
 }
 export function conformanceSources(){
  const verifierRuntimeConsumers=fs.readdirSync('.').filter(path=>/\.mjs$/.test(path)&&fs.readFileSync(path,'utf8').includes("from './verifier-runtime.mjs'"));
- return [...new Set(['.github/workflows/pages.yml','verify-conformance-handoff.mjs','verify-conformance-regressions.mjs','verification-evidence.mjs','verification-evidence-catalog.mjs','verification-evidence-preload.mjs','collect-verification-evidence.mjs','verification-assertion-bindings.json','verification-negative-populations.json','operator-browser-driver.mjs','verify-browser.mjs','verify-browser-extra.mjs','verify-mobile-stage-action.mjs','verify-complete-operator-journey.mjs','verify-acceptance-viewport.mjs','verifier-runtime.mjs','workbook.js','hash.js','app-core.js','index.html','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','test-runtime.js','test-worker.js','test-project-store-runtime.mjs','test-operational-journal-copy.mjs','test-app-markup.mjs','test-artifact-fixtures.mjs','operator-journey-fixtures.mjs','stage19-fixture.mjs','verify-mobile-acceptance-evidence.mjs','test-retained-history-browser.mjs','verify-retained-history-oracles.mjs','test-human-job-authority.mjs','test-human-job-controls.mjs','test-ingestion-syntax-transport.mjs','test-response-retry-browser.mjs','test-semantic-response-retries.mjs','test-returned-attachment-boundaries.mjs','test-backup-import-staging.mjs','test-backup-staging-store.mjs','test-response-staging-recovery-ui.mjs','test-response-staging-recovery.mjs','test-returned-slot-atomic-staging.mjs','test-startup-storage-boundaries.mjs','test-mobile-preparation-ui.mjs','test-mobile-session-storage.mjs','test-verifier-context-relations.mjs','test-verifier-context-ui.mjs','test-prompt-context-storage.mjs','test-job-pointer-integrity.mjs','test-staging-safe-cleanup.mjs','test-operator-safety-feedback.mjs','test-inbound-response-archive.mjs','test-inbound-archive-parser.mjs','test-inbound-archive-browser.mjs','test-artifact-byte-sharing.mjs',...verifierRuntimeConsumers,...suites])];
+ return [...new Set(['.github/workflows/pages.yml','verify-conformance-handoff.mjs','verify-conformance-regressions.mjs','verification-evidence.mjs','verification-evidence-catalog.mjs','verification-evidence-preload.mjs','collect-verification-evidence.mjs','verification-assertion-bindings.json','verification-negative-populations.json','operator-browser-driver.mjs','verify-browser.mjs','verify-browser-extra.mjs','verify-mobile-stage-action.mjs','verify-complete-operator-journey.mjs','verify-acceptance-viewport.mjs','verifier-runtime.mjs','workbook.js','hash.js','app-core.js','index.html','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','test-runtime.js','test-worker.js','test-project-store-runtime.mjs','test-operational-journal-copy.mjs','test-app-markup.mjs','test-artifact-fixtures.mjs','test-primary-guidance-current-run.mjs','operator-journey-fixtures.mjs','stage19-fixture.mjs','verify-mobile-acceptance-evidence.mjs','test-retained-history-browser.mjs','verify-retained-history-oracles.mjs','test-human-job-authority.mjs','test-human-job-controls.mjs','test-ingestion-syntax-transport.mjs','test-response-retry-browser.mjs','test-semantic-response-retries.mjs','test-returned-attachment-boundaries.mjs','test-backup-import-staging.mjs','test-backup-staging-store.mjs','test-response-staging-recovery-ui.mjs','test-response-staging-recovery.mjs','test-returned-slot-atomic-staging.mjs','test-startup-storage-boundaries.mjs','test-mobile-preparation-ui.mjs','test-mobile-session-storage.mjs','test-verifier-context-relations.mjs','test-verifier-context-ui.mjs','test-prompt-context-storage.mjs','test-job-pointer-integrity.mjs','test-staging-safe-cleanup.mjs','test-operator-safety-feedback.mjs','test-inbound-response-archive.mjs','test-inbound-archive-parser.mjs','test-inbound-archive-browser.mjs','test-artifact-byte-sharing.mjs',...verifierRuntimeConsumers,...suites])];
 }
 
 const sha=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
@@ -511,17 +511,35 @@ async function verifyRunnerContract(){
   const syncDescendantMarker=path.join(directory,'synchronous-descendant.marker');
   const syncGrandchildCode=`const fs=require('node:fs');process.on('SIGTERM',()=>{});const timer=setInterval(()=>fs.appendFileSync(${JSON.stringify(syncDescendantMarker)},'x'),20);setTimeout(()=>{clearInterval(timer);process.exit(0)},3000);`;
   const syncOwnerCode=`const {spawn}=require('node:child_process');const child=spawn(process.execPath,['-e',${JSON.stringify(syncGrandchildCode)}],{stdio:'ignore'});console.log(JSON.stringify({child:child.pid}));setInterval(()=>{},1000);`;
-  const syncDescendant=(await runVerifier(process.execPath,['-e',syncOwnerCode],{timeout:350,evidenceDirectory:directory}));
-  let syncDescendantBefore,syncDescendantAfter;
+  // The cleanup control needs an actually executing descendant. Bound startup
+  // separately; the unchanged stalled-child controls prove automatic deadlines.
+  const syncController=new AbortController();
+  const syncRunning=runVerifier(process.execPath,['-e',syncOwnerCode],{timeout:5000,signal:syncController.signal,evidenceDirectory:directory});
+  let syncDescendant,syncDescendantBefore,syncDescendantAfter,syncExecutionDeadline,syncReadyAt;
   try{
+   const readyBy=Date.now()+3000;
+   while((!fs.existsSync(syncDescendantMarker)||fs.statSync(syncDescendantMarker).size===0)&&Date.now()<readyBy)await new Promise(resolve=>setTimeout(resolve,10));
+   assert.ok(fs.existsSync(syncDescendantMarker)&&fs.statSync(syncDescendantMarker).size>0,'CHILD_DESCENDANT_CONTROL_ORACLE: the child must have executed before the timeout');
+   syncReadyAt=new Date().toISOString();
+   // Exercise the real TIMEOUT stop/cleanup path after its execution premise.
+   // This explicit fixture trigger is not an automatic-deadline observation.
+   syncExecutionDeadline=setTimeout(()=>syncController.abort('TIMEOUT'),350);
+   syncDescendant=await syncRunning;
    syncDescendantBefore=fs.existsSync(syncDescendantMarker)?fs.statSync(syncDescendantMarker).size:0;
    await new Promise(resolve=>setTimeout(resolve,100));
    syncDescendantAfter=fs.existsSync(syncDescendantMarker)?fs.statSync(syncDescendantMarker).size:0;
-  }finally{const pid=JSON.parse(syncDescendant.stdout).child;try{process.kill(pid,'SIGKILL');}catch(error){if(error.code!=='ESRCH')throw error;}}
+  }finally{
+   clearTimeout(syncExecutionDeadline);syncController.abort('CONTRACT_CLEANUP');
+   const finished=syncDescendant||await syncRunning;
+   // A setup failure may have no stdout. Never let a cleanup JSON parse hide
+   // the actual readiness failure; only a literal valid PID is a fallback.
+   let pid;try{pid=JSON.parse(finished.stdout).child;}catch{}
+   if(Number.isSafeInteger(pid)&&pid>0)try{process.kill(pid,'SIGKILL');}catch(error){if(error.code!=='ESRCH')throw error;}
+  }
   assert.ok(syncDescendantBefore>0,'CHILD_DESCENDANT_CONTROL_ORACLE: the child must have executed before the timeout');
   assert.equal(syncDescendant.outcome,'TIMEOUT','CHILD_DESCENDANT_TIMEOUT_ORACLE');
   assert.equal(syncDescendantAfter,syncDescendantBefore,'CHILD_DESCENDANT_CLEANUP_ORACLE: no descendant may continue work after its gate returns');
-  cases.push({case:'timed-out-child-descendants-stop-before-return',syncDescendant,bytesBefore:syncDescendantBefore,bytesAfter:syncDescendantAfter});
+  cases.push({case:'timed-out-child-descendants-stop-before-return',syncDescendant,bytesBefore:syncDescendantBefore,bytesAfter:syncDescendantAfter,executionReadyAt:syncReadyAt,setupDeadlineMs:3000,controlledExecutionTimeoutMs:350,enclosingHardTimeoutMs:5000,timeoutTrigger:'CONTROLLED_SIGNAL_AFTER_ACTUAL_DESCENDANT_EXECUTION'});
   const cancelledController=new AbortController(),cancelReady=path.join(directory,'cancellation-ready');
   const cancellationRun=runVerifier(process.execPath,['-e',`const fs=require('node:fs');process.stdout.write('entered-child'+String.fromCharCode(10),()=>fs.writeFileSync(${JSON.stringify(cancelReady)},'ready'));setInterval(()=>{},1000);`],{timeout:5000,killGraceMs:50,signal:cancelledController.signal,evidenceDirectory:directory});
   let cancelledChild;

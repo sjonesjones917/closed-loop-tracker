@@ -4,29 +4,6 @@ import {verificationCatalog} from './verification-evidence-catalog.mjs';
 import {recordExecutionReceipt,evidenceFingerprint,sha,RECEIPT_SCHEMA} from './verification-evidence.mjs';
 
 const suite=path.basename(process.argv[1]||'');
-
-// Hosted-log-independent failure visibility. A required verifier that exits
-// non-zero reports its suite, exit code and error as one GitHub annotation, so
-// the cause is readable through the checks API even where job logs cannot be
-// downloaded. It only observes (uncaughtExceptionMonitor and a bounded stderr
-// tail), never changes output bytes, exit codes or receipts, and does nothing
-// outside GitHub Actions.
-// Only the outermost Node process (the one the workflow invokes) annotates; it
-// marks its environment so every descendant stays byte-for-byte unchanged.
-// Verifiers spawn controlled failing children and assert their exact stderr,
-// so a descendant must never append an annotation to its own output.
-const failureAnnotationNested=process.env.CLOSED_LOOP_FAILURE_ANNOTATION_OWNER==='1';
-if(process.env.GITHUB_ACTIONS==='true')process.env.CLOSED_LOOP_FAILURE_ANNOTATION_OWNER='1';
-const failureVisibility=process.env.GITHUB_ACTIONS==='true'&&!failureAnnotationNested&&!process.execArgv.includes('--check');
-const failureTail=[];let failureTailBytes=0,failureError='';
-if(failureVisibility){
-  const rawStderrWrite=process.stderr.write;
-  process.stderr.write=function(chunk,encoding,callback){
-    try{const bytes=Buffer.isBuffer(chunk)?chunk:Buffer.from(String(chunk),typeof encoding==='string'?encoding:'utf8');failureTail.push(bytes);failureTailBytes+=bytes.length;while(failureTailBytes>8192&&failureTail.length>1)failureTailBytes-=failureTail.shift().length;}catch{}
-    return rawStderrWrite.apply(this,arguments);
-  };
-  process.on('uncaughtExceptionMonitor',error=>{try{failureError=String(error?.stack||error).slice(0,1400);}catch{}});
-}
 const directory=process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS;
 // --check parses a named file without executing its verifier body. Preserve its
 // actual parser exit status, but never publish it as an executed suite receipt.
@@ -35,7 +12,37 @@ const syntaxOnly=process.execArgv.includes('--check')||process.execArgv.includes
 // Their enclosing required verifiers retain the actual child results; these
 // children must never overwrite the complete positive producer receipt.
 const focusedDueModes=new Set(['--stage17-receipt-parent-controls','--stage17-correction-parent-controls','--fixture-decoder-bounds','--stage-binding-regressions','--definition-compatibility-witness-only','--definition-compatibility','--evidence-chain-frontier-only','--evidence-chain-faults-only','--deferred-reservations','--conditional-handoff-material','--conditional-independent-retry','--conditional-producer-contracts','--conditional-byte-carriers','--deferred-regression','--deferred-native','--deferred-small','--deferred-only','--regression-only','--deferred-cache-only']);
-const focusedPopulation=suite==='verify-due-stage-timing.mjs'&&process.argv.slice(2).some(argument=>focusedDueModes.has(argument)||argument.startsWith('--deferred-fixture='))||suite==='verify-handoff-disclosure.mjs'&&process.argv.slice(2).some(argument=>argument==='--fault=authorization'||argument==='--fault=scan')||suite==='verify-quarantine-recovery.mjs'&&process.argv.slice(2).some(argument=>argument==='--fault=quarantine-files'||argument==='--fault=quarantine-body-delete')||suite==='verify-human-authority-roundtrip.mjs'&&process.argv.includes('--human-stage-save-only')||suite==='verify-full-cycle.mjs'&&process.argv.includes('--timing-only')||suite==='verify-native-proof-journey.mjs'&&process.env.CONFORMANCE_NATIVE_FAULT==='skip-proof-recording'||suite==='verify-cross-run-comparison.mjs'&&process.argv.slice(2).some(argument=>argument.startsWith('--comparison-fault=')||argument==='--comparison-control'||argument==='--stability-aggregate-control'||argument==='--projection-recovery-only'||argument==='--scheduled-iteration-controls');
+const focusedPopulation=suite==='verify-acceptance-active-work.mjs'&&process.argv.slice(2).some(argument=>['--fault=audit-is-work','--fault=blank-draft-is-work','--fault=omit-pending-work','--fault=post-commit-failure-misreported'].includes(argument))||suite==='verify-encrypted-backups.mjs'&&process.argv.slice(2).some(argument=>['--fault=secret','--fault=history','--fault=base64-stack'].includes(argument))||suite==='verify-verifier-runtime.mjs'&&(process.argv.includes('--fault-probe')||Boolean(process.env.VERIFIER_RUNTIME_SOURCE))||suite==='verify-history-navigation.mjs'&&(process.argv.slice(2).some(argument=>argument.startsWith('--case=')||argument.startsWith('--fault='))||process.env.CLOSED_LOOP_STARTUP_DRAFT_FAULT==='1'||Boolean(process.env.APP_SOURCE))||suite==='verify-due-stage-timing.mjs'&&process.argv.slice(2).some(argument=>focusedDueModes.has(argument)||argument.startsWith('--deferred-fixture='))||suite==='verify-handoff-disclosure.mjs'&&process.argv.slice(2).some(argument=>argument==='--fault=authorization'||argument==='--fault=scan')||suite==='verify-quarantine-recovery.mjs'&&process.argv.slice(2).some(argument=>argument==='--fault=quarantine-files'||argument==='--fault=quarantine-body-delete')||suite==='verify-human-authority-roundtrip.mjs'&&process.argv.includes('--human-stage-save-only')||suite==='verify-full-cycle.mjs'&&process.argv.includes('--timing-only')||suite==='verify-native-proof-journey.mjs'&&process.env.CONFORMANCE_NATIVE_FAULT==='skip-proof-recording'||suite==='verify-cross-run-comparison.mjs'&&process.argv.slice(2).some(argument=>argument.startsWith('--comparison-fault=')||argument==='--comparison-control'||argument==='--stability-aggregate-control'||argument==='--projection-recovery-only'||argument==='--scheduled-iteration-controls'||['--materiality-only','--materiality-stage19-only','--materiality-retry-package-only','--materiality-package-only'].includes(argument));
+// Hosted-log-independent visibility for registered, complete verifier producers.
+// Preserve stdout, exit codes and receipt contents; on failure add a bounded
+// stderr annotation. Intentional focused and unregistered children keep their
+// existing raw stderr contracts. Diagnostics are not redacted here.
+// Preserve the contributor's outermost-only annotation ownership: intentional
+// children keep their raw stderr contract even when a registered parent fails.
+const failureAnnotationNested=process.env.CLOSED_LOOP_FAILURE_ANNOTATION_OWNER==='1';
+if(process.env.GITHUB_ACTIONS==='true')process.env.CLOSED_LOOP_FAILURE_ANNOTATION_OWNER='1';
+const failureVisibility=process.env.GITHUB_ACTIONS==='true'&&!failureAnnotationNested&&Boolean(verificationCatalog[suite])&&!syntaxOnly&&!focusedPopulation;
+const failureTail=[];let failureTailBytes=0,failureError='';
+if(failureVisibility){
+  const rawStderrWrite=process.stderr.write;
+  process.stderr.write=function(chunk,encoding,callback){
+    try{
+      // Own the saved bytes: callers may reuse their buffer after the callback.
+      // Bound conversion before allocation for large strings, and never retain
+      // a view of a large backing buffer for a small diagnostic tail.
+      const bytes=ArrayBuffer.isView(chunk)?Buffer.from(chunk.buffer,chunk.byteOffset+Math.max(0,chunk.byteLength-8192),Math.min(chunk.byteLength,8192)):Buffer.from(String(chunk).slice(-8192),typeof encoding==='string'?encoding:'utf8');
+      const saved=Buffer.from(bytes.subarray(Math.max(0,bytes.length-8192)));
+      if(saved.length){failureTail.push(saved);failureTailBytes+=saved.length;}
+      while(failureTailBytes>8192){
+        const excess=failureTailBytes-8192,first=failureTail[0];
+        if(first.length<=excess){failureTailBytes-=first.length;failureTail.shift();}
+        else{failureTail[0]=Buffer.from(first.subarray(excess));failureTailBytes-=excess;}
+      }
+    }catch{}
+    return rawStderrWrite.apply(this,arguments);
+  };
+  process.on('uncaughtExceptionMonitor',error=>{try{failureError=String(error?.stack||error).slice(0,1400);}catch{}});
+}
 if(directory&&verificationCatalog[suite]&&!syntaxOnly&&!focusedPopulation&&(!process.env.CLOSED_LOOP_VERIFICATION_SOURCE_ROOT||path.resolve(process.cwd())===path.resolve(process.env.CLOSED_LOOP_VERIFICATION_SOURCE_ROOT))){
   const fingerprint=evidenceFingerprint(),chunks=[],stderrChunks=[];
   let byteCount=0,outputOverflow=false;
@@ -66,6 +73,7 @@ if(directory&&verificationCatalog[suite]&&!syntaxOnly&&!focusedPopulation&&(!pro
     }
   });
 }
+
 
 if(failureVisibility){
   process.on('exit',code=>{

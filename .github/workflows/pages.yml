@@ -180,6 +180,8 @@ jobs:
       - name: Preserve foundation proof
         if: steps.reuse.outputs.reused != 'true'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        env:
+          NODE_OPTIONS: ''
         with:
           name: foundation-proof-${{ github.sha }}-${{ github.run_id }}
           path: |
@@ -257,6 +259,8 @@ jobs:
       - name: Preserve complete deferred matrix receipt
         if: always() && steps.matrix.outcome != 'skipped'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        env:
+          NODE_OPTIONS: ''
         with:
           name: deferred-matrix-${{ github.sha }}-${{ github.run_id }}
           path: .verification-receipts/verify-due-stage-timing.mjs.json
@@ -273,6 +277,8 @@ jobs:
       - name: Preserve deferred matrix diagnostics
         if: always() && steps.matrix.outcome != 'skipped'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        env:
+          NODE_OPTIONS: ''
         with:
           name: deferred-matrix-diagnostics-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: .ci-deferred-diagnostics/
@@ -398,6 +404,8 @@ jobs:
       - name: Preserve workflow gate proof
         if: steps.reuse.outputs.reused != 'true'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        env:
+          NODE_OPTIONS: ''
         with:
           name: workflow-gate-proof-${{ github.sha }}-${{ github.run_id }}
           path: |
@@ -485,6 +493,8 @@ jobs:
       - name: Preserve complete conformance group report
         if: always() && steps.conformance.outcome != 'skipped'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        env:
+          NODE_OPTIONS: ''
         with:
           name: conformance-report-${{ github.sha }}-${{ github.run_id }}-${{ matrix.group }}
           path: .ci-conformance-handoff/
@@ -494,6 +504,8 @@ jobs:
       - name: Preserve conformance execution receipts
         if: always() && steps.conformance.outcome != 'skipped'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        env:
+          NODE_OPTIONS: ''
         with:
           name: conformance-receipts-${{ github.sha }}-${{ github.run_id }}-${{ matrix.group }}
           path: .verification-receipts/
@@ -503,6 +515,8 @@ jobs:
       - name: Preserve executed regression evidence
         if: always() && (steps.conformance.outcome == 'success' || steps.conformance.outcome == 'failure' || steps.conformance.outcome == 'cancelled')
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        env:
+          NODE_OPTIONS: ''
         with:
           name: conformance-regressions-${{ github.sha }}-${{ matrix.group }}
           path: |
@@ -617,6 +631,8 @@ jobs:
       - name: Preserve exact PR source workspace
         if: github.event_name == 'pull_request'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        env:
+          NODE_OPTIONS: ''
         with:
           name: pr-source-${{ github.event.pull_request.number }}-${{ github.sha }}
           path: /tmp/pr-source.tar.gz
@@ -652,6 +668,8 @@ jobs:
       - name: Preserve stale project navigation observations
         if: always() && steps.reuse.outputs.reused != 'true'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        env:
+          NODE_OPTIONS: ''
         with:
           name: stale-view-${{ github.sha }}-${{ github.run_id }}
           path: |
@@ -676,6 +694,8 @@ jobs:
       - name: Preserve verification routing observations
         if: always() && steps.reuse.outputs.reused != 'true'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        env:
+          NODE_OPTIONS: ''
         with:
           name: verification-routing-${{ github.sha }}-${{ github.run_id }}
           path: |
@@ -716,6 +736,8 @@ jobs:
       - name: Preserve acceptance viewport observations
         if: always() && steps.reuse.outputs.reused != 'true'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        env:
+          NODE_OPTIONS: ''
         with:
           name: acceptance-viewport-${{ github.sha }}-${{ github.run_id }}
           path: |
@@ -774,6 +796,8 @@ jobs:
       - name: Preserve complete operator journey evidence
         if: always() && steps.reuse.outputs.reused != 'true'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        env:
+          NODE_OPTIONS: ''
         with:
           name: operator-journeys-${{ github.sha }}-${{ github.run_id }}
           path: |
@@ -802,6 +826,8 @@ jobs:
         run: node verified-site.mjs seal
       - name: Preserve verified site for merge and live verification
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        env:
+          NODE_OPTIONS: ''
         with:
           name: ${{ steps.verified.outputs.artifact_name }}
           path: _verified-site/
@@ -811,6 +837,8 @@ jobs:
       - name: Preserve verifier child logs after an earlier failed gate
         if: failure()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        env:
+          NODE_OPTIONS: ''
         with:
           name: verifier-child-failure-${{ github.sha }}-${{ github.run_id }}
           path: conformance-regression-evidence/child-processes/
@@ -890,6 +918,8 @@ jobs:
       - name: Preserve deployed operator evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        env:
+          NODE_OPTIONS: ''
         with:
           name: deployed-operator-journeys-${{ github.sha }}-${{ github.run_id }}
           path: |
@@ -903,6 +933,8 @@ jobs:
 
       - name: Preserve current deployed browser assertion receipts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        env:
+          NODE_OPTIONS: ''
         with:
           name: deployed-browser-receipts-${{ github.sha }}-${{ github.run_id }}
           path: .verification-receipts/browser/DEPLOYED/
@@ -974,6 +1006,8 @@ jobs:
       - name: Preserve reverified deployed operator evidence
         if: always() && github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        env:
+          NODE_OPTIONS: ''
         with:
           name: reverified-deployed-operator-journeys-${{ github.sha }}-${{ github.run_id }}
           path: |
@@ -1191,6 +1225,8 @@ jobs:
           NODE
       - name: Upload acceptance report
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        env:
+          NODE_OPTIONS: ''
         with:
           name: closed-loop-acceptance-${{ github.sha }}-${{ github.run_id }}
           path: closed-loop-acceptance.json

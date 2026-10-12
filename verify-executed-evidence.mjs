@@ -6,10 +6,75 @@ import {pathToFileURL} from 'node:url';
 import {execFileSync} from 'node:child_process';
 import {verifyDueEvidenceConsumers} from './test-due-evidence-consumers.mjs';
 import {verifyDueVerificationScheduling,verifyCrossRunVerificationScheduling} from './test-due-verification-scheduling.mjs';
-import {runVerifier,AGGREGATE_TIMEOUT_MS} from './verify-conformance-regressions.mjs';
+import {runVerifier,detectedFault,AGGREGATE_TIMEOUT_MS} from './verify-conformance-regressions.mjs';
 import {evidenceFingerprint,createExecutionReceipt,validateExecutionReceipt,aggregateExecutedEvidence,readExecutedEvidence,readExecutionReceipt,observationsFromReports,sha} from './verification-evidence.mjs';
 import {metricCatalog,verificationCatalog,browserVerificationCatalog} from './verification-evidence-catalog.mjs';
 import {collectVerificationEvidence,executeEvidenceProducer} from './collect-verification-evidence.mjs';
+import {assertWorkflowPreloadBoundaries} from './verified-site.mjs';
+
+async function verifyPreloadFailureVisibility(directory,{preloadFile=path.resolve('verification-evidence-preload.mjs')}={}){
+  const root=path.join(directory,'preload-visibility');fs.mkdirSync(root);
+  const registered='verify-semantic-review-acceptance.mjs',unregistered='preload-unregistered-control.mjs';
+  assert(verificationCatalog[registered],'PRELOAD_VISIBILITY_SETUP_ORACLE: the normal catalogue must own the registered control.');
+  assert(!verificationCatalog[unregistered],'PRELOAD_VISIBILITY_SETUP_ORACLE: the raw child must remain unregistered.');
+  const bytes=fs.readFileSync(preloadFile,'utf8'),cases=[];
+  const run=async(name,body,{registeredChild=false,observer=preloadFile,nested=false}={})=>{
+    const folder=path.join(root,name);fs.mkdirSync(folder);
+    const file=path.join(folder,registeredChild?registered:unregistered);fs.writeFileSync(file,body);
+    const result=await runVerifier(process.execPath,['--import',observer,file],{cwd:process.cwd(),evidenceDirectory:path.join(root,'runner-records'),timeout:5000,maxBuffer:4*1024*1024,env:{...process.env,GITHUB_ACTIONS:'true',NODE_OPTIONS:'',CLOSED_LOOP_VERIFICATION_RECEIPTS:'',CLOSED_LOOP_FAILURE_ANNOTATION_OWNER:nested?'1':''}});
+    assert.equal(result.signal,null,'PRELOAD_VISIBILITY_CHILD_SIGNAL_ORACLE');assert.equal(result.error,null,'PRELOAD_VISIBILITY_CHILD_ERROR_ORACLE');assert.equal(result.reason,null,'PRELOAD_VISIBILITY_CHILD_REASON_ORACLE');
+    return result;
+  };
+  const raw=await run('raw-child',"process.stdout.write('EXACT_STDOUT\\n');process.stderr.write('controlled child failure\\n');process.exitCode=3;");
+  assert.equal(raw.status,3,'PRELOAD_RAW_CHILD_EXIT_ORACLE');assert.equal(raw.stdout,'EXACT_STDOUT\n','PRELOAD_RAW_CHILD_STDOUT_ORACLE');assert.equal(raw.stderr,'controlled child failure\n','PRELOAD_RAW_CHILD_STDERR_ORACLE');
+  cases.push({caseId:'unregistered-exact-stderr',result:'PASS'});
+  const oracle='CONTROLLED_ASSERTION_ORACLE',fault=await run('raw-oracle',"process.stderr.write('CONTROLLED_ASSERTION_ORACLE: controlled failed case\\n');process.exitCode=1;");
+  assert.equal(fault.stderr,oracle+': controlled failed case\n','PRELOAD_RAW_ORACLE_STDERR_ORACLE');assert.equal(detectedFault(fault,oracle),true,'PRELOAD_RAW_FAULT_DETECTION_ORACLE');cases.push({caseId:'unregistered-terminal-oracle',result:'PASS'});
+  const normal=await run('normal-failure',"process.stdout.write('EXACT_STDOUT\\n');process.stderr.write('CONTROLLED_REQUIRED_FAILURE\\n');process.exitCode=3;",{registeredChild:true});
+  assert.equal(normal.status,3,'PRELOAD_NORMAL_EXIT_ORACLE');assert.equal(normal.stdout,'EXACT_STDOUT\n','PRELOAD_NORMAL_STDOUT_ORACLE');assert(normal.stderr.startsWith('CONTROLLED_REQUIRED_FAILURE\n'),'PRELOAD_NORMAL_RAW_PREFIX_ORACLE');assert.equal((normal.stderr.match(/::error title=/g)||[]).length,1,'PRELOAD_NORMAL_ANNOTATION_ORACLE');assert(normal.stderr.includes('exit 3::'),'PRELOAD_NORMAL_ANNOTATION_EXIT_ORACLE');cases.push({caseId:'registered-normal-annotation-output-exit',result:'PASS'});
+  // A registered descendant is still an intentional child, not another owner
+  // of the top-level hosted annotation. Keep its exact stderr oracle intact.
+  const nested=await run('nested-registered-oracle',"process.stdout.write('EXACT_NESTED_STDOUT\\n');process.stderr.write('CONTROLLED_ASSERTION_ORACLE: nested failed case\\n');process.exitCode=1;",{registeredChild:true,nested:true});
+  assert.equal(nested.status,1,'PRELOAD_NESTED_EXIT_ORACLE');assert.equal(nested.stdout,'EXACT_NESTED_STDOUT\n','PRELOAD_NESTED_STDOUT_ORACLE');assert.equal(nested.stderr,'CONTROLLED_ASSERTION_ORACLE: nested failed case\n','PRELOAD_NESTED_EXACT_STDERR_ORACLE');assert.equal(detectedFault(nested,oracle),true,'PRELOAD_NESTED_FAULT_DETECTION_ORACLE');cases.push({caseId:'registered-nested-exact-stderr',result:'PASS'});
+  // Instrument only a disposable full-module copy to observe private retained
+  // bytes; the actual visibility and write wrappers remain byte-for-byte intact.
+  const anchor="\nif(failureVisibility){\n  process.on('exit',code=>{";
+  assert.equal(bytes.split(anchor).length,2,'PRELOAD_TAIL_HOOK_SETUP_ORACLE: one final annotation listener is required.');
+  const statsFile=path.join(root,'tail-stats.json');
+  const hook="\nprocess.on('exit',()=>fs.writeFileSync("+JSON.stringify(statsFile)+",JSON.stringify({bytes:failureTailBytes,storedBytes:failureTail.reduce((sum,row)=>sum+row.length,0),largestEntry:Math.max(0,...failureTail.map(row=>row.length)),largestBacking:Math.max(0,...failureTail.map(row=>row.buffer.byteLength)),smallTail:failureTailBytes<=128?Buffer.concat(failureTail).toString('utf8'):null})));\n";
+  const isolated=path.join(root,'instrumented-preload.mjs'),rebase=specifier=>JSON.stringify(pathToFileURL(path.resolve(path.dirname(preloadFile),specifier)).href);
+  const isolatedBytes=bytes.replace(/from '(\.\/[^']+)'/g,(_match,specifier)=>'from '+rebase(specifier)).replace(anchor,hook+anchor);fs.writeFileSync(isolated,isolatedBytes);
+  const mutation=await run('buffer-reuse',"const value=Buffer.from('ORIGINAL_WRITTEN_BUFFER');process.stderr.write(value,()=>{value.fill(90);process.exitCode=9;});",{registeredChild:true,observer:isolated});
+  assert.equal(mutation.status,9);assert(mutation.stderr.startsWith('ORIGINAL_WRITTEN_BUFFER'),'PRELOAD_BUFFER_RAW_OUTPUT_ORACLE');assert.equal(JSON.parse(fs.readFileSync(statsFile,'utf8')).smallTail,'ORIGINAL_WRITTEN_BUFFER','PRELOAD_BUFFER_OWNERSHIP_ORACLE');cases.push({caseId:'registered-buffer-reuse-owned-snapshot',result:'PASS'});
+  for(const [name,body] of [['huge-buffer',"process.stderr.write(Buffer.alloc(1024*1024,88));"],['huge-string',"process.stderr.write('X'.repeat(1024*1024));"]]){
+    const huge=await run(name,body+'process.exitCode=7;',{registeredChild:true,observer:isolated});assert.equal(huge.status,7);
+    const stats=JSON.parse(fs.readFileSync(statsFile,'utf8'));assert.equal(stats.bytes,8192,'PRELOAD_TAIL_BOUND_ORACLE');assert.equal(stats.storedBytes,8192,'PRELOAD_TAIL_STORAGE_ORACLE');assert(stats.largestEntry<=8192&&stats.largestBacking<=8192,'PRELOAD_TAIL_BACKING_BOUND_ORACLE');cases.push({caseId:'registered-'+name+'-tail-bound',result:'PASS',retainedBytes:stats.bytes,largestBacking:stats.largestBacking});
+  }
+  return {result:'PASS',cases,sourceSha256:sha(bytes),normalCatalogue:true,actualPreloadModule:true,receiptsDisabled:true,tailHookScope:'Unique exit snapshot in disposable complete-module copy; only relative import URLs rebased. No producer report/receipt acceptance or hosted execution.'};
+}
+
+async function verifyColdUploadBootstrap(workflow,directory,bootstrapNode=process.env.CLOSED_LOOP_ACTION_NODE||process.execPath){
+  const actions=assertWorkflowPreloadBoundaries(workflow);
+  assert.equal(actions.length,18,'COLD_UPLOAD_ORACLE: the maintained upload action population changed.');
+  assert(actions.every(row=>row.nodeOptions===''),'COLD_UPLOAD_ORACLE: upload environments must share the empty Node options.');
+  const workspace=path.join(directory,'cold-upload');fs.mkdirSync(workspace);
+  const inherited=actions.find(row=>row.job==='test')?.inheritedNodeOptions;
+  assert(inherited,'COLD_UPLOAD_ORACLE: failed prerequisite job must retain its repository producer preload.');
+  const missingPreload=path.join(workspace,'verification-evidence-preload.mjs'),marker=path.join(workspace,'cleanup-body-reached.json');
+  const action=`const fs=require('node:fs');if(fs.existsSync('verification-evidence-preload.mjs'))throw new Error('COLD_WORKSPACE_ORACLE');fs.writeFileSync('cleanup-body-reached.json','true');console.log(JSON.stringify({cleanupBodyExecuted:true,repositoryInitiallyAbsent:true,runtime:process.version}));`;
+  // One actual Node failure/control pair covers the identical empty environment
+  // of all upload actions; the table retains every workflow job/step identity.
+  const before=await runVerifier(bootstrapNode,['-e',action],{cwd:workspace,env:{...process.env,NODE_OPTIONS:inherited.replaceAll('${{ github.workspace }}',workspace)}});
+  assert.equal(before.status,1,'COLD_UPLOAD_ORACLE: former inherited preload must fail before the cleanup action body.');
+  assert.match(before.stderr,/ERR_MODULE_NOT_FOUND/);assert(before.stderr.includes(missingPreload));
+  assert.equal(fs.existsSync(marker),false,'COLD_UPLOAD_ORACLE: defective preload unexpectedly reached cleanup.');
+  const after=await runVerifier(bootstrapNode,['-e',action],{cwd:workspace,env:{...process.env,NODE_OPTIONS:actions[0].nodeOptions}});
+  assert.equal(after.status,0,'COLD_UPLOAD_ORACLE: scoped upload environment must bootstrap without repository files: '+after.stderr);
+  const report=JSON.parse(after.stdout);assert.equal(report.cleanupBodyExecuted,true);assert.equal(report.repositoryInitiallyAbsent,true);
+  assert.equal(fs.readFileSync(marker,'utf8'),'true');assert.equal(fs.existsSync(missingPreload),false);
+  return {result:'PASS',actions,actionRuntime:report.runtime,formerInheritedExit:before.status,formerCleanupBodyExecuted:false,cleanupExit:after.status,cleanupBodyExecuted:true,repositoryInitiallyAbsent:true,sharedEnvironmentGroups:1,nodeInvocations:2,actualArtifactUpload:false};
+}
+
 
 const ownershipSuites=['verify-ingestion.mjs','verify-response-authority-integrity.mjs','verify-returned-slot-authority.mjs'];
 async function ownershipReceiptSource(owner,{currentReceiptDirectory=process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS,readReceipt=readExecutionReceipt,run=executeEvidenceProducer,fallbackDirectory,evidenceDirectory}={}){
@@ -73,6 +138,7 @@ assert.throws(()=>assertActiveFixtureInputs([...activeFixtureInputs.slice(0,-1),
 fixtureCatalogMutations.push({file:'verification/unknown-fixture.json',mutation:'changed-path',result:'DETECTED'});
 const producerFixtureInputs=['verify-stage03-agent-protocol.mjs','verifier-runtime.mjs','workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','verification-evidence-preload.mjs','verification-evidence.mjs','deployment-contract-identities.mjs','browser-execution-evidence.mjs','evaluate-mobile-acceptance-submission.mjs','verify-mobile-acceptance-evidence.mjs','verification-evidence-catalog.mjs','verification-negative-populations.json','verification-assertion-bindings.json','specification/closed-loop-reliability-controlling-implementation-specification.txt',governanceDeclaration,...governedApprovalInputs,...declaredVerifierInputs];
 try{
+  const preloadFailureVisibilityControl=await verifyPreloadFailureVisibility(directory);
   const ownershipReceiptRoutingControl=await verifyOwnershipReceiptRouting();
   await assert.rejects(()=>verifyOwnershipReceiptRouting((owner,options)=>options.run(owner,{})),/OWNERSHIP_RECEIPT_REUSE_ORACLE/,'OWNERSHIP_RECEIPT_FORMER_DUPLICATION_ORACLE');
   ownershipReceiptRoutingControl.formerDuplicateOwnerRejected=true;
@@ -83,6 +149,7 @@ try{
   // workspace. No repository preload may run before its checkout exists.
   const workflow=fs.readFileSync('.github/workflows/pages.yml','utf8'),coldCheckoutCases=[];
   const bootstrapNode=process.env.CLOSED_LOOP_ACTION_NODE||process.execPath;
+  const coldUploadControl=await verifyColdUploadBootstrap(workflow,directory,bootstrapNode);
   const scalar=value=>value==='\'\''?'':value.startsWith('"')?JSON.parse(value):value;
   for(const job of ['test','publish-status']){
     const start=workflow.indexOf('\n  '+job+':\n');assert(start>=0,'COLD_CHECKOUT_ORACLE: instrumented workflow job missing.');
@@ -522,7 +589,7 @@ try{
   assert.equal(empty.zeroCounts.staleProposalsAccepted,null,'Absent negative execution was published as zero accepted violations.');
   const saved=metricCatalog.closedMetricUniverseCoverage.checkIds;metricCatalog.closedMetricUniverseCoverage.checkIds=[];
   try{assert.throws(()=>aggregateExecutedEvidence(new Map(),evidenceFingerprint()),/empty\/duplicate metric universe/);}finally{metricCatalog.closedMetricUniverseCoverage.checkIds=saved;}
-  const ownReport={executedEvidenceProtection:'PASS',ownershipReceiptRoutingControl,deferredCatalogConsumerControl,dueSchedulingControl,crossRunSchedulingControl,coldCheckoutCases,producerViolationsRejected:producerControls.every(row=>row.result==='DETECTED'),syntaxChecksDoNotClaimExecution:true,syntaxPopulationCases,collectorOwnOutputControl,governanceFingerprintControl,governanceFingerprintInputs:true,activeFixtureFingerprintControl,activeHelperFingerprintControl,activeFixtureFingerprintInputs:true,normativeRegistryLinkageControl,observationOwnershipControl,emptyUniverseRejected:true,controlledProducerPopulation:producerControls,actualConformingStage03AssertionsExecuted:true,missingEvidenceRemainsUnknown:true,verificationObservations:[{checkId:'evidence.real-producer-controls',boundary:'actual Node exit/preload -> receipt consumer',expected:'ALL_CONTROLS_REJECTED_FOR_NAMED_REASON',observed:producerControls,passed:true,requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt#49']},{checkId:'APPROVED-GOVERNANCE-SOURCE-BYTES',boundary:governanceFingerprintControl.boundary,expected:{actualGovernanceByteHashBound:true,changedBytesRejectActualReceipt:true,missingBytesFailHonestly:true,untrackedBytesBound:true,untrackedMutationRejectsActualReceipt:true,exactRestoreAdmitsActualReceipt:true,formerMarkdownOmissionReproduced:true},observed:{actualGovernanceByteHashBound:governanceSourceCases.every(row=>row.actualByteHashBound),changedBytesRejectActualReceipt:governanceSourceCases.every(row=>row.changedBytesRejectActualReceipt),missingBytesFailHonestly:governanceSourceCases.every(row=>row.missingBytesFailHonestly),untrackedBytesBound:governanceSourceCases.every(row=>row.untrackedBytesBound),untrackedMutationRejectsActualReceipt:governanceSourceCases.every(row=>row.untrackedMutationRejectsActualReceipt),exactRestoreAdmitsActualReceipt:governanceSourceCases.every(row=>row.exactRestoreAdmitsActualReceipt),formerMarkdownOmissionReproduced:true},passed:true,requirementRefs:[96]}]};
+  const ownReport={executedEvidenceProtection:'PASS',preloadFailureVisibilityControl,ownershipReceiptRoutingControl,deferredCatalogConsumerControl,dueSchedulingControl,crossRunSchedulingControl,coldCheckoutCases,coldUploadControl,producerViolationsRejected:producerControls.every(row=>row.result==='DETECTED'),syntaxChecksDoNotClaimExecution:true,syntaxPopulationCases,collectorOwnOutputControl,governanceFingerprintControl,governanceFingerprintInputs:true,activeFixtureFingerprintControl,activeHelperFingerprintControl,activeFixtureFingerprintInputs:true,normativeRegistryLinkageControl,observationOwnershipControl,emptyUniverseRejected:true,controlledProducerPopulation:producerControls,actualConformingStage03AssertionsExecuted:true,missingEvidenceRemainsUnknown:true,verificationObservations:[{checkId:'evidence.real-producer-controls',boundary:'actual Node exit/preload -> receipt consumer',expected:'ALL_CONTROLS_REJECTED_FOR_NAMED_REASON',observed:producerControls,passed:true,requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt#49']},{checkId:'APPROVED-GOVERNANCE-SOURCE-BYTES',boundary:governanceFingerprintControl.boundary,expected:{actualGovernanceByteHashBound:true,changedBytesRejectActualReceipt:true,missingBytesFailHonestly:true,untrackedBytesBound:true,untrackedMutationRejectsActualReceipt:true,exactRestoreAdmitsActualReceipt:true,formerMarkdownOmissionReproduced:true},observed:{actualGovernanceByteHashBound:governanceSourceCases.every(row=>row.actualByteHashBound),changedBytesRejectActualReceipt:governanceSourceCases.every(row=>row.changedBytesRejectActualReceipt),missingBytesFailHonestly:governanceSourceCases.every(row=>row.missingBytesFailHonestly),untrackedBytesBound:governanceSourceCases.every(row=>row.untrackedBytesBound),untrackedMutationRejectsActualReceipt:governanceSourceCases.every(row=>row.untrackedMutationRejectsActualReceipt),exactRestoreAdmitsActualReceipt:governanceSourceCases.every(row=>row.exactRestoreAdmitsActualReceipt),formerMarkdownOmissionReproduced:true},passed:true,requirementRefs:[96]}]};
   const ownGovernanceCheck='receipts.approved-governance-input-observation';
   assert.equal(observationsFromReports('verify-executed-evidence.mjs',[ownReport]).find(row=>row.checkId===ownGovernanceCheck)?.passed,true,'GOVERNANCE_INPUT_OBSERVATION_ORACLE: actual owner population was not admitted.');
   for(const variant of ['omitted','wrong-value','missing-field','extra-field']){
