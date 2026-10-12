@@ -11,13 +11,33 @@ export function verifyDueEvidenceConsumers(){
  assert.equal(observations.length,52);
  const detail={schema:'closed-loop-deferred-definition-compatibility-verification/1',passed:true,synthetic:true,actualBrowser:false,realExternalActor:false,boundary:'DISPOSABLE consumer fixture; no actual author execution asserted',expected:{...expected},observed:{...expected},observations};
  const receipt={caseId:'stage17-deferred-receipt-freeze-reservation',operation:'EXECUTE_FAILURE_TEST',subjectId:'DISPOSABLE-SUBJECT',receiptId:'DISPOSABLE-RECEIPT',phases:['after-freeze','after-run-reservation'].map(phase=>({phase,receiptId:'DISPOSABLE-RECEIPT',completed:true,rawPreserved:true,definitionPreserved:true,byteCustodyReobserved:true,oldComparatorWouldRepeat:true})),materialBindingNegatives:['subject','fixture','test','input-version','requirements-version','activation'],idempotentBatch:true,missingBytesBlocked:true,restoredBytesProgress:true,canonicalStateUnchangedByNegatives:true,synthetic:true,actualBrowser:false};
- const conditional={case:'CONDITIONAL_OPERATION_PRODUCER_CONTRACTS',passed:true,expectedOperations:38,observedOperations:38,synthetic:true,actualBrowser:false,realExternalActor:false,ordinaryStage8SavedZip:true,observations:[...Array.from({length:23},(_,i)=>`${i+8}:EXECUTE_FAILURE_TEST`),...Array.from({length:15},(_,i)=>`${i+16}:EXECUTE_REGRESSION`)].map(operationId=>({operationId,actualSavedZip:true,fixturePreserved:true,operationOnlyInstructions:true,receiptOnlyContract:true,supportingEvidenceSlotsOnly:true,roleIsolationRetained:true,stageCompletionClaimed:false})),negatives:['ordinary-stage-procedure','ordinary-stage21-output-slot'].map(name=>({name,intendedFailure:true})),ordinaryPolicies:[{stage:11,operation:'EXECUTE_RUN',role:'RUN_OUTPUT',requiredFileCount:0},{stage:21,operation:'COMPLETE',role:'FINISHED_PRODUCT',requiredFileCount:1}],feedbackScope:{passed:true,ordinaryGateFactsRetained:true,unrelatedWorkNotRequested:true,ordinaryAuthorGuidanceRetained:true,syntheticConsumerProjection:true,actualAcceptanceClaimed:false}};
+ const conditional={case:'CONDITIONAL_OPERATION_PRODUCER_CONTRACTS',passed:true,expectedOperations:38,observedOperations:38,synthetic:true,actualBrowser:false,realExternalActor:false,ordinaryStage8SavedZip:true,observations:[...Array.from({length:23},(_,i)=>`${i+8}:EXECUTE_FAILURE_TEST`),...Array.from({length:15},(_,i)=>`${i+16}:EXECUTE_REGRESSION`)].map(operationId=>({operationId,actualSavedZip:true,fixturePreserved:true,operationOnlyInstructions:true,receiptOnlyContract:true,supportingEvidenceSlotsOnly:true,roleIsolationRetained:true,stageCompletionClaimed:false})),negatives:['ordinary-stage-procedure','ordinary-stage21-output-slot'].map(name=>({name,intendedFailure:true})),ordinaryPolicies:[{stage:11,operation:'EXECUTE_RUN',role:'RUN_OUTPUT',requiredFileCount:0},{stage:21,operation:'COMPLETE',role:'FINISHED_PRODUCT',requiredFileCount:1}],feedbackScope:{passed:true,ordinaryGateFactsRetained:true,unrelatedWorkNotRequested:true,ordinaryAuthorGuidanceRetained:true,syntheticConsumerProjection:true,actualAcceptanceClaimed:false,independentFeedbackWithheld:true,allGeneratedCarriersInspected:true,historyPreserved:true,toolFeedbackRetained:true}};
  const independentRetry={case:'CONDITIONAL_INDEPENDENT_RETRY_CONTEXT',passed:true,observations:['rejected-wrong-type','accepted-undetermined'].map(name=>({case:name,actualSavedZip:true,actualResponseFile:true,operatorAccepted:name==='accepted-undetermined',priorReviewContentWithheld:true,allExportedMembersInspected:true,retainedRawPreserved:true,protocolDiagnosticsPreserved:name==='rejected-wrong-type',requiresFreshConversation:true,selectedWorkStillIncomplete:true,...(name==='accepted-undetermined'?{retainedArtifactPreserved:true}:{})})),intendedRawLeakDetected:true,intendedCanonicalLeakDetected:true,toolPriorWorkAllowed:true,ordinaryVerifierWithholdPreserved:true,synthetic:true,actualBrowser:false,actualExternalActor:false};
  conditional.independentRetry=independentRetry;
+ conditional.historicalReceiptIsolation={case:'CONDITIONAL_HISTORICAL_RECEIPT_ISOLATION',passed:true,synthetic:true,actualBrowser:false,actualExternalActor:false,cases:['exposed','clean'].map(kind=>({kind,actualResponseFileAdmission:true,actualOperatorAcceptance:true,rawPreserved:true,oldCorrectionRawPreserved:true,currentGate:{complete:false},exposedCarriers:kind==='exposed'?['instruction.txt']:[],currentDeferredComplete:kind==='clean',...(kind==='exposed'?{intendedMissingIsolationFaultDetected:true,recovery:{actualFreshReview:true,exactPriorReceiptSuperseded:true,oldRawPreserved:true,currentDeferredComplete:true}}:{recovery:null})}))};
  const fixture={dueStageTiming:'PASS',deferredDefinitionCompatibilityAdmission:true,verificationObservations:[{checkId:'DEFERRED-DEFINITION-COMPATIBILITY-ADMISSION',boundary:detail.boundary,expected:{...expected},observed:{...expected},detail,passed:true}],results:[{case:'LEGITIMATE_DEFERRED_DEFINITION_AUTHOR_PREFIXES',childExitStatus:0,earlierCompleteFlagsForced:false,deferredReceiptRegression:receipt},conditional,{case:'CONDITIONAL_REQUIRED_FIXTURE_BYTES',passed:true,actualDefinitionFileAdmission:true,actualSavedZip:true,synthetic:true,actualBrowser:false,realExternalActor:false,observations:[23,24].map(stage=>({stage,operation:'EXECUTE_FAILURE_TEST',actualBytes:8,byteIdentityVerified:true,priorConclusionsWithheld:true,syntheticPrerequisiteProjection:true}))}]};
- const result=report=>observationsFromReports('verify-due-stage-timing.mjs',[report]);assert(result(fixture).every(row=>row.passed),'DEFERRED_CATALOG_CONFORMING_CONSUMER_ORACLE');
+ // Independently literal report-consumer records for the two added catalogue
+ // checks. These remain disposable fixtures, not execution or storage evidence.
+ const planner='response.validation-result-planner-persistence',success='response.validation-result-success-persistence';
+ const validationFact=(caseId,status,valid,issues,errorCount,warningCount)=>({caseId,passed:true,valid,status,errorCount,warningCount,issues,completeRecord:true,uniqueRecord:true,rawExact:true,rawValidationReceiptLinked:true,promptIdentityLinked:true,proposalOrDispositionLinked:true,actualSaveReload:true,synthetic:true,actualBrowser:false});
+ const plannerMessage='External isolation and execution require attributable supporting evidence with verified attachment bytes.';
+ const returnedValidationOwner={case:'LEGITIMATE_DEFERRED_RETURNED_BYTES_AND_RETRY',synthetic:true,actualBrowser:false,results:[
+  {caseId:'INVALID_REPORT',synthetic:true,actualBrowser:false,retryProof:{errorCode:'INVALID_DEFERRED_EXECUTION_RECEIPT',errorMessage:plannerMessage,rawPersisted:true,validationPersisted:true,canonicalArtifactsUnchanged:true,speculativeIdentityAllocationRolledBack:true,newReservation:true,exactNextExportCarriesFailure:true,stageComplete:false,selectedSubjectCompleteBeforeCorrection:false,freshCorrection:{admitted:true,committed:true,reloaded:true,completed:true},validationResultPreservation:validationFact('planner-failure-complete-result','REJECTED',false,[{code:'INVALID_DEFERRED_EXECUTION_RECEIPT',path:'/records/regressionExecutions',message:plannerMessage,severity:'ERROR'}],1,0)}},
+  {operationId:'8:EXECUTE_FAILURE_TEST',result:'SATISFIED',synthetic:true,actualBrowser:false,externalActor:false,admitted:true,explicitOperatorCommit:true,storedAndReadBack:true,selectedSubjectCompleted:true,staleCustodyCommitRejected:true,ordinaryStage8Complete:false,validationResultPreservation:{pending:validationFact('success-no-warning-complete-result','VALID',true,[],0,0),accepted:validationFact('success-no-warning-complete-result','ACCEPTED_DATA_CHANGE',true,[],0,0),recoveredPendingByteReverification:{initiallyUnverified:true,strictCommitRefusal:true,noMutation:true,actualUiReverify:true,custodyTrue:true}}}
+ ]};
+ const originalChecks=['definitions.compatibility-admission','definitions.stage17-receipt-preserved','definitions.conditional-producer-contracts','definitions.conditional-fixture-bytes'];
+ const unrelatedMetricChecks=['metrics.deferred-recorded-subset','metrics.actual-deferred-recorded-receipts'];
+ const ownedChecks=[...originalChecks,planner,success,'DEFERRED-DEFINITION-COMPATIBILITY-ADMISSION'];
+ const preservesFixtureScope=rows=>ownedChecks.every(checkId=>rows.find(row=>row.checkId===checkId)?.passed===true)&&unrelatedMetricChecks.every(checkId=>rows.find(row=>row.checkId===checkId)?.passed===false);
+ const originalFixtureObservations=observationsFromReports('verify-due-stage-timing.mjs',[fixture]);
+ assert.deepEqual(originalFixtureObservations.map(row=>row.checkId),[...originalChecks,planner,success,...unrelatedMetricChecks,'DEFERRED-DEFINITION-COMPATIBILITY-ADMISSION'],'DEFERRED_CATALOG_EXACT_POPULATION_ORACLE');
+ assert(originalFixtureObservations.filter(row=>originalChecks.includes(row.checkId)).every(row=>row.passed),'DEFERRED_CATALOG_ORIGINAL_SUBSET_ORACLE');
+ for(const checkId of [planner,success])assert.equal(originalFixtureObservations.find(row=>row.checkId===checkId)?.passed,false,'DEFERRED_CATALOG_ABSENT_VALIDATION_RESULT_ORACLE: '+checkId);
+ for(const checkId of unrelatedMetricChecks)assert.equal(originalFixtureObservations.find(row=>row.checkId===checkId)?.passed,false,'DEFERRED_CATALOG_UNRELATED_METRIC_ABSENCE_ORACLE: '+checkId);
+ fixture.sourceRestored=true;fixture.results.push(returnedValidationOwner);
+ const result=report=>observationsFromReports('verify-due-stage-timing.mjs',[report]);assert(preservesFixtureScope(result(fixture)),'DEFERRED_CATALOG_CONFORMING_CONSUMER_ORACLE');
  const cases=[];
- function reject(name,change,id){const report=structuredClone(fixture);change(report);assert.equal(result(report).find(row=>row.checkId===id)?.passed,false,'DEFERRED_CATALOG_CONSUMER_ORACLE: '+name);assert(result(fixture).every(row=>row.passed));cases.push(name);}
+ function reject(name,change,id){const report=structuredClone(fixture);change(report);assert.equal(result(report).find(row=>row.checkId===id)?.passed,false,'DEFERRED_CATALOG_CONSUMER_ORACLE: '+name);assert(preservesFixtureScope(result(fixture)));cases.push(name);}
  const admission='definitions.compatibility-admission',stage17='definitions.stage17-receipt-preserved',producer='definitions.conditional-producer-contracts',bytes='definitions.conditional-fixture-bytes';
  for(const key of Object.keys(expected))reject('changed-population-'+key,report=>{const row=report.verificationObservations[0];for(const object of [row.expected,row.observed,row.detail.expected,row.detail.observed])object[key]--;},admission);
  for(const [name,change]of [['missing-detail',row=>delete row.detail],['empty-observations',row=>row.detail.observations=[]],['missing-author-control',row=>row.detail.observations.splice(0,1)],['duplicate-case',row=>row.detail.observations[1]=row.detail.observations[0]],['false-rejection',row=>row.detail.observations.find(value=>value.case==='declared-unknown').rejected=false],['raw-lost',row=>row.detail.observations.find(value=>value.case==='declared-unknown').rawPreserved=false],['wrong-execution-boundary',row=>row.detail.actualBrowser=true]])reject(name,report=>change(report.verificationObservations[0]),admission);
@@ -26,7 +46,57 @@ export function verifyDueEvidenceConsumers(){
  for(const [name,change]of [['missing-child',row=>delete row.deferredReceiptRegression],['parent-consumer-substituted',row=>row.case='STAGE17_REQUIRED_RECEIPT_PARENT_CONSUMER'],['missing-phase',row=>row.deferredReceiptRegression.phases.pop()],['wrong-receipt',row=>row.deferredReceiptRegression.phases[1].receiptId='WRONG'],['false-custody',row=>row.deferredReceiptRegression.phases[0].byteCustodyReobserved=false],['material-case-missing',row=>row.deferredReceiptRegression.materialBindingNegatives.pop()],['stale-instruction-binding',row=>row.deferredReceiptRegression.materialBindingNegatives[4]='instruction-version'],['restore-did-not-progress',row=>row.deferredReceiptRegression.restoredBytesProgress=false]])reject(name,report=>change(report.results[0]),stage17);
  for(const [name,change]of [['missing-operation',row=>row.observations.pop()],['ordinary-work-demanded',row=>row.observations[0].operationOnlyInstructions=false],['missing-fault',row=>row.negatives.pop()],['ordinary-policy-regressed',row=>row.ordinaryPolicies[1].requiredFileCount=0],['feedback-broadened',row=>row.feedbackScope.unrelatedWorkNotRequested=false]])reject(name,report=>change(report.results[1]),producer);
  for(const [name,change]of [['missing-independent-retry',row=>delete row.independentRetry],['missing-rejected-case',row=>row.independentRetry.observations.shift()],['raw-leak-not-detected',row=>row.independentRetry.intendedRawLeakDetected=false],['canonical-leak-not-detected',row=>row.independentRetry.intendedCanonicalLeakDetected=false],['prior-conclusion-in-retry',row=>row.independentRetry.observations[0].priorReviewContentWithheld=false],['no-fresh-context',row=>row.independentRetry.observations[1].requiresFreshConversation=false],['raw-history-lost',row=>row.independentRetry.observations[0].retainedRawPreserved=false],['accepted-artifact-lost',row=>row.independentRetry.observations[1].retainedArtifactPreserved=false],['valid-tool-prior-work-withheld',row=>row.independentRetry.toolPriorWorkAllowed=false]])reject(name,report=>change(report.results[1]),producer);
+ for(const key of ['independentFeedbackWithheld','allGeneratedCarriersInspected','historyPreserved','toolFeedbackRetained'])reject('independent-feedback-'+key+'-missing',report=>delete report.results[1].feedbackScope[key],producer);
+ for(const [name,change]of [
+  ['historical-isolation-missing',row=>delete row.historicalReceiptIsolation],
+  ['historical-clean-control-missing',row=>row.historicalReceiptIsolation.cases.pop()],
+  ['historical-exposed-case-duplicated',row=>row.historicalReceiptIsolation.cases[1]=row.historicalReceiptIsolation.cases[0]],
+  ['historical-exposure-unproved',row=>row.historicalReceiptIsolation.cases[0].exposedCarriers=[]],
+  ['historical-file-admission-missing',row=>row.historicalReceiptIsolation.cases[0].actualResponseFileAdmission=false],
+  ['historical-acceptance-missing',row=>row.historicalReceiptIsolation.cases[0].actualOperatorAcceptance=false],
+  ['historical-false-completion',row=>row.historicalReceiptIsolation.cases[0].currentDeferredComplete=true],
+  ['historical-fault-missing',row=>row.historicalReceiptIsolation.cases[0].intendedMissingIsolationFaultDetected=false],
+  ['historical-recovery-missing',row=>delete row.historicalReceiptIsolation.cases[0].recovery],
+  ['historical-recovery-no-new-review',row=>row.historicalReceiptIsolation.cases[0].recovery.actualFreshReview=false],
+  ['historical-recovery-no-supersession',row=>row.historicalReceiptIsolation.cases[0].recovery.exactPriorReceiptSuperseded=false],
+  ['historical-recovery-raw-loss',row=>row.historicalReceiptIsolation.cases[0].recovery.oldRawPreserved=false],
+  ['historical-correction-raw-loss',row=>row.historicalReceiptIsolation.cases[0].oldCorrectionRawPreserved=false],
+  ['historical-valid-control-blocked',row=>row.historicalReceiptIsolation.cases[1].currentDeferredComplete=false],
+  ['historical-stage-completion-overclaim',row=>row.historicalReceiptIsolation.cases[0].currentGate.complete=true],
+  ['historical-real-actor-overclaim',row=>row.historicalReceiptIsolation.actualExternalActor=true]
+ ])reject(name,report=>change(report.results[1]),producer);
  for(const [name,change]of [['missing-required-byte-stage',row=>row.observations.pop()],['metadata-only-byte-claim',row=>row.observations[0].byteIdentityVerified=false],['prior-conclusion-exposed',row=>row.observations[1].priorConclusionsWithheld=false]])reject(name,report=>change(report.results[2]),bytes);
+ const returnedOwner=report=>report.results.find(row=>row.case==='LEGITIMATE_DEFERRED_RETURNED_BYTES_AND_RETRY');
+ const plannerFact=report=>returnedOwner(report).results[0].retryProof.validationResultPreservation;
+ const successFacts=report=>returnedOwner(report).results[1].validationResultPreservation;
+ for(const checkId of [planner,success]){
+  reject(checkId+'-missing-owner',report=>report.results.pop(),checkId);
+  reject(checkId+'-duplicate-owner',report=>report.results.push(structuredClone(returnedOwner(report))),checkId);
+  reject(checkId+'-missing-source-restored',report=>delete report.sourceRestored,checkId);
+  reject(checkId+'-false-browser-owner',report=>returnedOwner(report).actualBrowser=true,checkId);
+ }
+ for(const [name,change]of [
+  ['missing-planner-record',report=>delete returnedOwner(report).results[0].retryProof.validationResultPreservation],
+  ['wrong-planner-code',report=>plannerFact(report).issues[0].code='UNKNOWN'],
+  ['wrong-planner-path',report=>plannerFact(report).issues[0].path='/records'],
+  ['wrong-planner-message',report=>plannerFact(report).issues[0].message='DISPOSABLE-WRONG'],
+  ['wrong-planner-severity',report=>plannerFact(report).issues[0].severity='WARNING'],
+  ['wrong-planner-count',report=>plannerFact(report).errorCount=0],
+  ['duplicate-planner-result',report=>returnedOwner(report).results.push(structuredClone(returnedOwner(report).results[0]))],
+  ['wrong-planner-raw-link',report=>plannerFact(report).rawValidationReceiptLinked=false]
+ ])reject(name,change,planner);
+ for(const [name,change]of [
+  ['missing-success-pending',report=>delete successFacts(report).pending],
+  ['missing-success-accepted',report=>delete successFacts(report).accepted],
+  ['wrong-success-pending-status',report=>successFacts(report).pending.status='ACCEPTED_DATA_CHANGE'],
+  ['wrong-success-accepted-status',report=>successFacts(report).accepted.status='VALID'],
+  ['wrong-success-issue',report=>successFacts(report).accepted.issues=[{code:'UNKNOWN',path:'/',message:'DISPOSABLE-WRONG',severity:'WARNING'}]],
+  ['wrong-success-count',report=>successFacts(report).accepted.warningCount=1],
+  ['missing-success-custody-refusal',report=>successFacts(report).recoveredPendingByteReverification.strictCommitRefusal=false],
+  ['missing-success-ui-reverification',report=>successFacts(report).recoveredPendingByteReverification.actualUiReverify=false],
+  ['duplicate-success-result',report=>returnedOwner(report).results.push(structuredClone(returnedOwner(report).results[1]))],
+  ['wrong-success-prompt-link',report=>successFacts(report).accepted.promptIdentityLinked=false]
+ ])reject(name,change,success);
  const oldPartial={checkId:'DEFERRED-DEFINITION-COMPATIBILITY-ADMISSION',passed:true};assert.equal([oldPartial].some(row=>row.checkId===oldPartial.checkId&&row.passed===true),true);
  return {result:'PASS',consumerOnly:true,actualDefaultSuiteExecuted:false,conformingLiteralAccepted:true,negativeCases:cases.length,cases,formerMarkerOnlyAdmissionReproduced:true};
 }

@@ -1,6 +1,7 @@
 import {bindArtifactFixture,projectStoreRuntime as baseProjectStoreRuntime,captureArtifactFixture,restoreArtifactFixture,bindAcceptanceUi,storageBroadcastNetwork,hydrateRetainedPromptContexts} from './test-project-store-runtime.mjs';
 import {artifactFixtureId} from './test-artifact-fixtures.mjs';
-import {createVerifierRuntime} from './verifier-runtime.mjs';
+import {createVerifierRuntime,isolatedVerifierWorkerClass} from './verifier-runtime.mjs';
+import {testIrManifestedEnvironment} from './test-test-ir-native-identity.mjs';
 import fs from 'node:fs';
 import {readStoreArchive} from './test-zip.mjs';
 import vm from 'node:vm';
@@ -62,6 +63,8 @@ for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js
     source=mutated;
   }
   runtimeSources[file]=source;
+  // Real isolated Test IR execution under a source-bound synthetic fixture build.
+  if(file==='test-runtime.js')globalThis.document=testIrManifestedEnvironment(runtimeSources).document;
   createVerifierRuntime.loadScript(globalThis,source,{filename:file});
 }
 const byteStore=await bindArtifactFixture([]);
@@ -634,7 +637,7 @@ for(let stage=diagnosticRecovered?Number(diagnosticRecovered.entryStage):1;stage
     else if(action.actionType==='FREEZE_BASELINE'){const iteration=latest('iterations'),candidateId=value(iteration,'CANDIDATE_ID'),decision=engine.recordRegisteredHumanDecision(p,{stage,purpose:'BASELINE_AUTHORIZATION',targetFamily:'candidateFreezes',targetId:candidateId,value:'AUTHORIZED',operatorLabel:'SYNTHETIC'});engine.freezeBaseline(p,{artifactIds:[],authorizationDecisionId:id(decision,'humanDecisions')});}
     else if(action.actionType==='REGISTER_PRODUCTION_CONTEXT')engine.registerFreshContext(p,{stage,identifier:'SYNTHETIC_PRODUCTION'});
     else if(action.actionType==='RESERVE_PRODUCT_EXECUTION')engine.reserveProductExecution(p);
-    else if(action.actionType==='RUN_APP_TESTS'){for(const test of engine.finalProductTestSelection(p,22).tests){const testId=id(test,'tests'),result=await closedLoopTestRuntime.execute({spec:value(test,'EXECUTABLE_SPEC'),artifacts:{PRODUCT:{artifactId:artifactFixtureId(engine,p,'PRODUCT-FILE'),filename:'result.txt',bytes:Buffer.from(OUTPUT)}},metadata:{testId,bindings:value(test,'EXECUTABLE_INPUT_BINDINGS')}});engine.recordApplicationDeterministicResult(p,{testId,productId:id(latest('products'),'products'),runtimeResult:result,inputArtifacts:[{artifactId:artifactFixtureId(engine,p,'PRODUCT-FILE'),filename:'result.txt',byteSize:Buffer.byteLength(OUTPUT),sha256:hash.sha256Text(OUTPUT)}]});}}
+    else if(action.actionType==='RUN_APP_TESTS'){for(const test of engine.finalProductTestSelection(p,22).tests){const testId=id(test,'tests'),result=await closedLoopTestRuntime.executeTest(test,{PRODUCT:{artifactId:artifactFixtureId(engine,p,'PRODUCT-FILE'),filename:'result.txt',bytes:Buffer.from(OUTPUT)}},{},{Worker:isolatedVerifierWorkerClass()});engine.recordApplicationDeterministicResult(p,{testId,productId:id(latest('products'),'products'),runtimeResult:result,inputArtifacts:[{artifactId:artifactFixtureId(engine,p,'PRODUCT-FILE'),filename:'result.txt',byteSize:Buffer.byteLength(OUTPUT),sha256:hash.sha256Text(OUTPUT)}]});}}
     else if(action.actionType==='FREEZE_DELIVERY_CANDIDATE'){const artifactIds=[artifactFixtureId(engine,p,'PRODUCT-FILE')],decision=engine.recordRegisteredHumanDecision(p,{stage,purpose:'CANDIDATE_COMPONENT_SELECTION',targetFamily:'artifacts',targetId:hash.sha256Value(artifactIds),value:artifactIds,operatorLabel:'SYNTHETIC'});engine.freezeDeliveryCandidate(p,{artifactIds,selectionDecisionId:id(decision,'humanDecisions')});}
     else if(action.actionType==='CALCULATE_RELEASE')engine.recordReleaseDetermination(p);
     else if(action.actionType==='CAPTURE_DELIVERY_INTENT')engine.captureDeliveryIntent(p,{value:{authorized:true,deliveryCandidateSetId:id(latest('deliveryCandidateSets'),'deliveryCandidateSets'),releaseId:id(latest('releaseRecords'),'releaseRecords'),artifactIds:[artifactFixtureId(engine,p,'PRODUCT-FILE')],authorizedFilenames:{[artifactFixtureId(engine,p,'PRODUCT-FILE')]:'result.txt'},recipientOrClass:'Synthetic operator',destination:'Synthetic directory',transferPurpose:'Fixture preflight',transferChannel:'BROWSER_DOWNLOAD',disclosureClassification:'PUBLIC',disclosureAuthorization:true,permittedTransferCount:1},operatorLabel:'SYNTHETIC'});

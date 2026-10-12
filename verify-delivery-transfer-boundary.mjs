@@ -245,23 +245,16 @@ try{
     restorationPhase='restore '+point.expected;
     p=(await r.store.restoreCheckpoint(jobId,point.id,{expectedProjectRevision:p.revision})).project;
     const reloaded=JSON.parse(JSON.stringify(await r.store.readProject(jobId)));
-    // Restoration activates the version under a new history activation. The approved deferred-definition authority
-    // (verification/approved-deferred-compatibility-proposal-20261005.md, verify-due-stage-timing.mjs
-    // HISTORY_ACTIVATION_CURRENT_AUTHORITY_ORACLE) makes definitions authored under the prior activation stale, so a
-    // cached completion is not promoted; what must survive is the retained transfer and observation history, exactly.
-    const retained=project=>['deliveryAttempts','evidenceRecords'].map(family=>r.engine.records(project,family,{active:false}).map(record=>({id:record.id,fields:record.fields})));
-    assert.deepEqual(retained(reloaded),retained(point.project),'Restoration must retain the matching transfer/evidence history without replaying a command.');
-    assert.notEqual(reloaded.stages[r.runtime.closedLoopWorkflowSchema.STAGE_COUNT].status,'COMPLETE','RESTORED_COMPLETION_PROMOTION_ORACLE: restoration must not promote a cached completion under changed authority.');
-    assert.notEqual(reloaded.job.NEXT_REQUIRED_ACTION.actionType,'EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS','DELIVERY_RENDERED_ACTION_ORACLE: restoration must not offer a duplicate transfer.');
-    restorationPhase='render '+point.expected;
-    const restoredView=actionView(reloaded);
-    assert.equal(restoredView.html.includes('id="export-authorized-artifacts"'),false,'DELIVERY_RENDERED_ACTION_ORACLE: the restored version must not expose a transfer control.');
+    assert.deepEqual(reloaded.projectData,point.project.projectData,'Restoration must retain the matching transfer/evidence history without replaying a command.');
+    assert.deepEqual(reloaded.stages,point.project.stages,'Restoration mixed stage completion across delivery versions.');
+    assert.equal(reloaded.job.NEXT_REQUIRED_ACTION.actionType,point.expected);
+    restorationPhase='render '+point.expected;deliveryViewOracle(reloaded,point.expected);
     for(const artifact of r.engine.records(p,'artifacts')){
       const stored=await r.store.getArtifact(r.engine.recordId(artifact,'artifacts'));
       assert.equal(await h.sha256Bytes(stored.blob),r.engine.recordValue(artifact,'SHA256'));
     }
     restorationPhase='reject repeated transfer '+point.expected;
-    await assert.rejects(r.store.assertRecoveryTransfer(p),error=>error.code==='RETAINED_TRANSFER_LIMIT_REACHED'||/AUTHORIZED Stage 30 delivery record/.test(error.message),'Restoration must not authorize a duplicate external transfer.');
+    await assert.rejects(r.store.assertRecoveryTransfer(p),error=>error.code==='RETAINED_TRANSFER_LIMIT_REACHED','Restoration must not authorize a duplicate external transfer.');
   }
   cases.push({name:'restore transfer and observation versions without replaying delivery',result:'PASS',versions:versions.length,restores:versions.length*2,environment:'Production persistence with shared transaction adapter; no physical delivery asserted'});
 }catch(error){cases.push({name:'restore transfer and observation versions without replaying delivery',result:'FAIL',message:error.message,phase:restorationPhase,stack:error.stack});}

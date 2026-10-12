@@ -8,8 +8,10 @@ import './hash.js';
 import {evaluateMobileAcceptanceSubmission,deployedExpected} from './evaluate-mobile-acceptance-submission.mjs';
 import {REQUIRED_MOBILE_RECEIPT_KINDS} from './verify-mobile-acceptance-evidence.mjs';
 import {validateBrowserExecution} from './browser-execution-evidence.mjs';
-import {verificationCatalog,browserVerificationCatalog,metricCatalog,zeroCatalog,negativePopulationCatalog} from './verification-evidence-catalog.mjs';
+import {verificationCatalog,browserVerificationCatalog,metricCatalog,zeroCatalog,negativePopulationCatalog,completeManifestCurrentWorkRecovery} from './verification-evidence-catalog.mjs';
 import {deploymentContractIdentities} from './deployment-contract-identities.mjs';
+import {completeHumanCombinedUi,HUMAN_UI_RUNTIME_SOURCES,HUMAN_UI_TEST_SOURCES} from './human-combined-ui-evidence-contract.mjs';
+import {HUMAN_COMBINED_RUNTIME_SOURCES,HUMAN_COMBINED_TEST_SOURCES,completeHumanCombinedNative} from './native-human-combined-evidence-contract.mjs';
 
 export const RECEIPT_SCHEMA='closed-loop-executed-verification-receipt/1';
 export const SPECIFICATION_PATH='specification/closed-loop-reliability-controlling-implementation-specification.txt';
@@ -140,7 +142,8 @@ export function validateFinalNormativeProof(report,evidence){
 }
 
 export function evidenceFingerprint(cwd=process.cwd()){
-  // Generated retained fixtures and progress/artifact directories are excluded.
+  // Generated retained fixtures and progress/artifact directories are excluded
+  // unless their exact paths are declared as active verifier source inputs.
   // All first-party executable/configuration/specification inputs are included,
   // including newly added regression files before they have been committed.
   const tracked=execFileSync('git',['ls-files','-z'],{cwd,encoding:'utf8'}).split('\0').filter(name=>name&&name!=='TEST_PROJECT.json'&&/\.(?:m?js|html|css|json|txt|ya?ml)$/.test(name));
@@ -153,7 +156,7 @@ export function evidenceFingerprint(cwd=process.cwd()){
   const governed=[...(governance.contextApplicabilityReview?[governance.contextApplicabilityReview.path]:[]),...fullCoverageReviewPaths,...(independentSourceReview?[independentSourceReview.sourceReviewPath,independentSourceReview.reconciliationPath]:[]),...amendments.flatMap(amendment=>['sourceReviewPath','approvedProposalPath'].map(key=>amendment[key])),...[...Object.values(verificationCatalog),...Object.values(browserVerificationCatalog)].flatMap(suite=>suite.sourceInputs||[])];
   const sourceRoot=fs.realpathSync(cwd)+path.sep;
   for(const name of governed){
-    requireEvidence(typeof name==='string'&&/^(?:verification\/[^/\\]+\.(?:json|md)|[\w-]+\.m?js)$/.test(name)&&path.posix.normalize(name)===name,'declared governance or verifier input must be an exact first-party verification path');
+    requireEvidence(typeof name==='string'&&/^(?:verification\/[^/\\]+\.(?:json(?:\.gz)?|md)|[\w-]+\.m?js|test-backup-extension-native\.html|test-retained-root-native\.html|test-human-combined-(?:native|cold|ui-seed)\.html|verification-assertion-bindings\.json|TEST_PROJECT\.json)$/.test(name)&&path.posix.normalize(name)===name,'declared governance or verifier input must be an exact first-party verification path');
     requireEvidence(fs.realpathSync(path.join(cwd,name)).startsWith(sourceRoot),'declared governance or verifier input is outside the first-party source root');
   }
   const inputs=[...new Set([...tracked,...governed,...fs.readdirSync(cwd).filter(name=>!name.startsWith('.')&&/\.(?:m?js|html|css)$/.test(name)),...['verification-assertion-bindings.json','verification-negative-populations.json'].filter(name=>fs.existsSync(path.join(cwd,name)))])];
@@ -222,6 +225,39 @@ export function createExecutionReceipt(suite,result,{cwd=process.cwd(),fingerpri
   const receipt={schema:RECEIPT_SCHEMA,suite,fingerprint,producerFileSha256,...(browser?{browser}:{}),command:result.command,exitCode:result.exitCode,outcome:result.outcome,complete:true,stdoutSha256:sha(result.stdout),stderrSha256:sha(result.stderr||''),reports,observations};
   receipt.receiptSha256=sha(receipt);if(browser)validateExecutionReceipt(receipt,suite,fingerprint);return receipt;
 }
+// The extra native store fixture serves copied source bytes at its own origin.
+// Bind those original bytes to the same fingerprint without replacing the main
+// built-resource browserExecution carrier or claiming execution of app-core.
+export function assertManifestRecoverySourceInputs(report,fingerprint,{buildIdentity}={}){
+ requireEvidence(completeManifestCurrentWorkRecovery(report),'native manifest current-work recovery report incomplete or failed');
+ const inputs=fingerprint?.inputSha256,names=["workbook.js","hash.js","workflow-schema.js","test-runtime.js","workflow-engine.js","prompt-engine.js","response-ingestion.js","project-store.js","app-core.js"],testNames=["verify-browser-recovery.mjs","operator-browser-driver.mjs","test-manifest-current-work-recovery-browser.mjs","test-zip.mjs","test-browser-handoff-authorization.mjs","verification/manifest-stage01-legacy-writer-20261011.json.gz"];
+ for(const name of names)requireEvidence(report.sourceHashes[name]===inputs?.[name],'native manifest recovery current runtime source differs from fingerprint: '+name);
+ for(const name of testNames)requireEvidence(report.testHashes[name]===inputs?.[name],'native manifest recovery owning test source differs from fingerprint: '+name);
+ requireEvidence(report.browserDeclaredBuildIdentity===buildIdentity,'native manifest recovery differs from actual browser build identity');
+ return report;
+}
+export function assertRetainedRootNativeSourceInputs(report,fingerprint){
+ const inputs=fingerprint?.inputSha256,names=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+ const hash=value=>typeof value==='string'&&/^[a-f0-9]{64}$/.test(value);
+ requireEvidence(plain(report?.sourceFiles)&&isDeepStrictEqual(Object.keys(report.sourceFiles).sort(),[...names].sort()),'native retained-root original source population mismatch');
+ for(const name of names)requireEvidence(hash(inputs?.[name])&&report.sourceFiles[name]?.sha256===inputs[name]&&report.sourceFiles[name]?.executed===(name!=='app-core.js'),'native retained-root original source differs from fingerprint: '+name);
+ requireEvidence(hash(inputs?.['test-retained-root-native.mjs']),'native retained-root owning module missing from fingerprint');
+ requireEvidence(report.fixture?.name==='test-retained-root-native.html'&&hash(inputs?.['test-retained-root-native.html'])&&report.fixture.sha256===inputs['test-retained-root-native.html'],'native retained-root fixture differs from fingerprint');
+ return report;
+}
+export function assertHumanCombinedNativeSourceInputs(report,fingerprint){
+ requireEvidence(completeHumanCombinedNative(report),'native human combined report incomplete or failed');
+ const inputs=fingerprint?.inputSha256;
+ for(const name of HUMAN_COMBINED_RUNTIME_SOURCES)requireEvidence(report.originalVsServedSources[name].originalSha256===inputs?.[name],'native human combined original source differs from fingerprint: '+name);
+ for(const name of HUMAN_COMBINED_TEST_SOURCES)requireEvidence(report.owningTestSources[name].sha256===inputs?.[name],'native human combined owning input differs from fingerprint: '+name);
+ return report;
+}
+export function assertHumanCombinedUiSourceInputs(report,fingerprint){
+ requireEvidence(completeHumanCombinedUi(report),'human combined UI report incomplete or failed');
+ for(const name of HUMAN_UI_RUNTIME_SOURCES)requireEvidence(report.sourceProvenance[name].originalSha256===fingerprint?.inputSha256?.[name],'human combined UI original source differs from fingerprint: '+name);
+ for(const name of HUMAN_UI_TEST_SOURCES)requireEvidence(report.owningTestSources[name].sha256===fingerprint?.inputSha256?.[name],'human combined UI owning input differs from fingerprint: '+name);
+ return report;
+}
 export function validateExecutionReceipt(receipt,suite,fingerprint){
   requireEvidence(receipt?.schema===RECEIPT_SCHEMA&&receipt.suite===suite,'receipt schema/producer mismatch');
   const {receiptSha256,...payload}=receipt;requireEvidence(receiptSha256===sha(payload),'receipt content digest mismatch');
@@ -239,6 +275,8 @@ export function validateExecutionReceipt(receipt,suite,fingerprint){
     requireEvidence(receipt.browser.manifest?.sourceCommit===receipt.fingerprint.sourceCommit,'browser manifest belongs to a different original producer candidate');
     requireEvidence(receipt.browser.scope==='LOCAL'||receipt.fingerprint.sourceCommit===fingerprint.sourceCommit,'deployed browser proof cannot be promoted from another deployed revision');
     validateBrowserExecution(carriers[0].browserExecution,{suite,scope:receipt.browser.scope,manifest:receipt.browser.manifest,sourceCommit:receipt.fingerprint.sourceCommit});
+    if(suite==='verify-browser-recovery.mjs')assertManifestRecoverySourceInputs(selectedReport(receipt.reports,'browserRecovery').manifestCurrentWorkRecovery,fingerprint,{buildIdentity:carriers[0].browserExecution.buildIdentity});
+    if(suite==='verify-browser.mjs'){assertRetainedRootNativeSourceInputs(selectedReport(receipt.reports,'retainedRootNative').retainedRootNative,fingerprint);assertHumanCombinedNativeSourceInputs(selectedReport(receipt.reports,'humanCombinedNative').humanCombinedNative,fingerprint);assertHumanCombinedUiSourceInputs(selectedReport(receipt.reports,'humanCombinedUi').humanCombinedUi,fingerprint);}
   }
   const expected=observationsFromReports(suite,receipt.reports,receipt.browser||{});
   requireEvidence(isDeepStrictEqual(expected,receipt.observations)&&expected.every(row=>row.passed),'receipt assertions differ from actual executed report');

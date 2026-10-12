@@ -11,6 +11,7 @@ import {execFileSync} from 'node:child_process';
 import {storedArtifactBody,projectStoreRuntime,captureArtifactFixture,restoreArtifactFixture,hydrateRetainedPromptContexts,bindAcceptanceUi} from './test-project-store-runtime.mjs';
 import {appMarkup} from './test-app-markup.mjs';
 import {createVerifierRuntime,isolatedVerifierWorkerClass} from './verifier-runtime.mjs';
+import {testIrManifestedEnvironment} from './test-test-ir-native-identity.mjs';
 import {authorizeFixtureHandoff,recordProposal,canonicalFixtureRecord,reviewProofFixture,deferredDefinitionResponseFixture,deferredCompatibilityFixtureValues,deferredDefinitionRestorationFixture,deferredDefinitionAdmissionFixture,deferredReviewedPrerequisiteFixture,deferredFailureExecutionResponseFixture} from './test-fixtures.mjs';
 import {DEFERRED_LEGACY_FIXTURE_MAX_OUTPUT_BYTES,readDeferredDefinitionLegacyFixture,currentRetainedFixtureProject,readCurrentDeferredPrerequisiteFixture} from './test-fixtures.mjs';
 import {verifyDeferredHandoffMaterialContract,verifyDeferredProducerContracts,verifyDeferredByteCarrierContracts,verifyDeferredIndependentRetryContracts} from './test-deferred-producer-contracts.mjs';
@@ -29,8 +30,9 @@ function runtime(overrides={}){
  // consumer projection. Production source and the resolver body stay intact;
  // source overrides (including maintained mutants) remain the selected owner.
  const file='workflow-engine.js',source=overrides[file]??fs.readFileSync(file,'utf8'),anchor='function validatedEvidenceChainSet(project,{stage=29}={}){';assert.equal(source.split(anchor).length-1,1,'EVIDENCE_CHAIN_PROJECTION_SOURCE_ANCHOR_ORACLE');
- const expose='globalThis.__verifierEvidenceChainResolverDependencies=Object.freeze({requirementId,applicableTests,recordsForCurrentScope,resultRequirementId,testForResult,recordId,testDueState,recordValue,effectiveDetermination,evaluateEvidenceContract,evaluateEvidenceSufficiency,safe,EVIDENCE_CHAIN_RESULT_FAMILIES});\n';
- return projectStoreRuntime({sourceOverrides:{...overrides,[file]:source.replace(anchor,expose+anchor)}});
+ const expose='globalThis.__verifierRecordedMetrics=recordedTestExecutionMetrics;\n'+'globalThis.__verifierFailureTestTimingState=failureTestTimingState;\nglobalThis.__verifierEvidenceChainResolverDependencies=Object.freeze({requirementId,applicableTests,recordsForCurrentScope,resultRequirementId,testForResult,recordId,testDueState,recordValue,effectiveDetermination,evaluateEvidenceContract,evaluateEvidenceSufficiency,safe,EVIDENCE_CHAIN_RESULT_FAMILIES});\n';
+ const sourceOverrides={...overrides,[file]:source.replace(anchor,expose+anchor)};
+ return projectStoreRuntime({sourceOverrides,environment:testIrManifestedEnvironment(sourceOverrides),storageWorker:false});
 }
 function replayArchivedDeferredFixtureAtRecordedTime(r,prefix=null){const instant=prefix?.archivedFixtureClockUtc||ARCHIVED_DEFERRED_FIXTURE_CLOCK_UTC;assert.equal(new Date(instant).toISOString(),instant);r.runtime.Date=class extends Date {constructor(...args){super(...(args.length?args:[instant]));}static now(){return Date.parse(instant);}};}
 function derivedDiagnosticPrefixInstant(seed){
@@ -43,6 +45,65 @@ function derivedDiagnosticPrefixInstant(seed){
  // transition. Wall-clock expiry still applies to an actual current project.
  return new Date(millis+1).toISOString();
 }
+// The tiny fixture below tests only retained-event attribution. It supplies an
+// explicit already-qualified accepted-response dependency; the existing real
+// deferred admission/worker journeys below independently exercise that input.
+function recordedDeferredMetricControls(r){
+ const e=r.engine,s=r.runtime.closedLoopWorkflowSchema,h=r.runtime.closedLoopHash,cases=[];
+ const build=(native,result='SATISFIED')=>{
+  const p=r.core.createBlankState('JOB-RECORDED-DEFERRED-'+(native?'NATIVE':'EXTERNAL'));e.ensureShape(p);
+  const test=canonical(r,p,'tests',{TEST_TYPE:'DETERMINISTIC',STATUS:'ACTIVE'}),subject=canonical(r,p,'failureTests',{FIXTURE:'VERIFIED',STATUS:'ACTIVE'});
+  const target={family:'tests',recordId:test.id,recordSha256:test.recordSha256},isolation={kind:native?'ISOLATED_WORKER_INPUT':'TEST_PROJECT_CLONE',identity:'SYNTHETIC-RECORDED-ISOLATION'},binding={family:'failureTests',subjectId:subject.id,subjectSha256:'1'.repeat(64),testId:test.id,operation:'EXECUTE_FAILURE_TEST',phase:'FAILURE_VALIDATION',stage:22,scope:{jobId:p.job.JOB_ID},targetIdentities:[target]};
+  const report={schema:'closed-loop-deferred-execution-evidence/1',binding,phase:'FAILURE_VALIDATION',result,isolation,performer:'Synthetic retained report',observedResult:'Explicit controlled observation',evidenceLocation:'isolated.json',isolationEvidence:'Synthetic retained isolated report, no real external actor claim.'},text=JSON.stringify(report);
+  const artifact=canonical(r,p,'artifacts',{FILENAME:'isolated.json',NOTES:JSON.stringify({rawResponseId:'RAW-EXECUTION'}),BYTE_SIZE:4,SHA256:'2'.repeat(64)});artifact.source='APPLICATION_BYTES_VERIFIED';e.refreshRecordHashes(artifact,'artifacts');
+  const evidence=canonical(r,p,'evidenceRecords',native?{APPLICATION_EVIDENCE_KIND:'DEFERRED_NATIVE_EXECUTION',APPLICATION_EVIDENCE_CONTENT:text,SHA256:h.sha256Value(r.copy(report))}:{CONTENT:text,SHA256:h.sha256Text(text),ATTACHMENT_ID:artifact.id});
+  evidence.source=native?'APPLICATION_TEST_RUNTIME':'AGENT';if(!native)Object.assign(evidence,{rawResponseId:'RAW-EXECUTION',sourceProposalId:'PROPOSAL-EXECUTION'});e.refreshRecordHashes(evidence,'evidenceRecords');
+  const receipt=canonicalFixtureRecord({engine:e,schema:s},p,'regressionExecutions',r.copy({MUTATION_ID:subject.id,REG_ID:null,SUBJECT_SHA256:binding.subjectSha256,PHASE:'FAILURE_VALIDATION',RESULT:result,TARGET_IDENTITIES:[target],ISOLATION:isolation,EVIDENCE_ID:evidence.id}),{stage:22,relationships:{MUTATION_ID:subject.id,EVIDENCE_ID:evidence.id}});
+  receipt.source=native?'APPLICATION_TEST_RUNTIME':'AGENT';receipt.evidenceRefs=[evidence.id];if(!native)Object.assign(receipt,{rawResponseId:'RAW-EXECUTION',sourceProposalId:'PROPOSAL-EXECUTION'});e.refreshRecordHashes(receipt,'regressionExecutions');
+  if(native)e.addHistory(p,'DEFERRED_TEST_EXECUTED',{stage:22,operation:'EXECUTE_FAILURE_TEST',subjectId:subject.id,receiptId:receipt.id,result});
+  else{p.projectData.acceptedChanges.push(r.copy({changeId:'CHANGE-EXECUTION',status:'COMMITTED',responseType:'DATA_PROPOSAL',jobId:p.job.JOB_ID,rawResponseId:'RAW-EXECUTION',proposalId:'PROPOSAL-EXECUTION',stage:22,operation:'EXECUTE_FAILURE_TEST',canonicalRecordIds:[receipt.id]}));p.projectData.responseProposals.push(r.copy({proposalId:'PROPOSAL-EXECUTION',canonicalRecords:{regressionExecutions:[r.copy(receipt)]},evidence:[r.copy(evidence)]}));}
+  return {p,receipt,evidence,artifact,subject,test,accepted:{acceptedIds:native?[]:['RAW-EXECUTION'],scopeHash:'3'.repeat(64)}};
+ };
+ const project=(f,native)=>r.runtime.__verifierRecordedMetrics(f.p,r.copy(f.accepted))[native?'nativeTestExecutionsMetric':'externalTestExecutionsMetric'];
+ const check=(name,f,native,expected)=>{let u;assert.doesNotThrow(()=>{u=name.endsWith('-missing-report-target-identities')?e.operationalMetrics(f.p)[native?'nativeTestExecutionsMetric':'externalTestExecutionsMetric']:project(f,native);},'RECORDED_DEFERRED_NO_THROW_ORACLE:'+name);assert.equal(u.disposition,'UNKNOWN','RECORDED_DEFERRED_TOTAL_ORACLE:'+name);assert.equal(u.value,null,'RECORDED_DEFERRED_TOTAL_VALUE_ORACLE:'+name);assert.equal(u.denominator,null);assert.equal(u.recordedValue,expected,'RECORDED_DEFERRED_SUBSET_ORACLE:'+name);assert.equal(u.numerator,expected);assert.equal(u.includedIds.length,expected);assert.equal(new Set(u.includedIds).size,expected);assert(u.unknownIds.every(row=>!u.includedIds.includes(row.id)));assert.equal(u.recordedUnit,'UNIQUE_APPLICATION_RESULT_OR_RECEIPT_ID');assert(/^[a-f0-9]{64}$/.test(u.scopeHash));cases.push({caseId:name,recordedValue:expected,totalValue:null,disposition:'UNKNOWN',passed:true});return u;};
+ for(const native of [true,false]){
+  const label=native?'native':'external',f=build(native),control=check(label+'-retained-bound-receipt',f,native,1),snapshot=JSON.stringify(f.p);
+  check(label+'-repeat-read-same-identity',f,native,1);assert.equal(JSON.stringify(f.p),snapshot,'RECORDED_DEFERRED_READ_ONLY_ORACLE');
+  check(label+'-observed-violation-is-execution',build(native,'VIOLATED'),native,1);
+  if(!native)check('external-observed-undetermined-is-reported-execution',build(false,'UNDETERMINED'),false,1);
+  const edits=[['missing-evidence',x=>x.p.projectData.evidenceRecords=[]],['duplicate-evidence',x=>x.p.projectData.evidenceRecords.push(r.copy(x.evidence))],['missing-test',x=>x.p.projectData.tests=[]],['missing-subject',x=>x.p.projectData.failureTests=[]],['duplicate-receipt',x=>x.p.projectData.regressionExecutions.push(r.copy(x.receipt))],['changed-record-hash',x=>x.receipt.fields.RESULT='VIOLATED'],['wrong-report-target',x=>{const field=native?'APPLICATION_EVIDENCE_CONTENT':'CONTENT',q=JSON.parse(x.evidence.fields[field]);q.binding.subjectId='MISSING';x.evidence.fields[field]=x.evidence[field]=JSON.stringify(q);x.evidence.fields.SHA256=x.evidence.SHA256=native?h.sha256Value(r.copy(q)):h.sha256Text(JSON.stringify(q));e.refreshRecordHashes(x.evidence,'evidenceRecords');}],['missing-report-target-identities',x=>{const field=native?'APPLICATION_EVIDENCE_CONTENT':'CONTENT',q=JSON.parse(x.evidence.fields[field]);delete q.binding.targetIdentities;x.evidence.fields[field]=x.evidence[field]=JSON.stringify(q);x.evidence.fields.SHA256=x.evidence.SHA256=native?h.sha256Value(r.copy(q)):h.sha256Text(JSON.stringify(q));e.refreshRecordHashes(x.evidence,'evidenceRecords');}],['wrong-evidence-owner',x=>{x.evidence.source=native?'AGENT':'APPLICATION_TEST_RUNTIME';e.refreshRecordHashes(x.evidence,'evidenceRecords');}],['malformed-isolation',x=>{x.receipt.fields.ISOLATION.extra=true;e.refreshRecordHashes(x.receipt,'regressionExecutions');}]];
+  if(native)edits.push(['wrong-evidence-kind',x=>{x.evidence.fields.APPLICATION_EVIDENCE_KIND=x.evidence.APPLICATION_EVIDENCE_KIND='UNSUPPORTED';e.refreshRecordHashes(x.evidence,'evidenceRecords');}],['missing-execution-event',x=>x.p.projectData.history=[]],['duplicate-execution-event',x=>x.p.projectData.history.push(r.copy(x.p.projectData.history.at(-1)))],['wrong-execution-subject',x=>x.p.projectData.history.at(-1).subjectId='OTHER']);
+  else edits.push(['unaccepted-source',x=>x.accepted.acceptedIds=[]],['missing-accepted-change',x=>x.p.projectData.acceptedChanges=[]],['wrong-accepted-operation',x=>x.p.projectData.acceptedChanges[0].operation='COMPLETE'],['missing-accepted-record-member',x=>x.p.projectData.acceptedChanges[0].canonicalRecordIds=[]],['missing-proposal',x=>x.p.projectData.responseProposals=[]],['changed-accepted-snapshot',x=>x.p.projectData.responseProposals[0].canonicalRecords.regressionExecutions[0].fields.RESULT='VIOLATED'],['missing-attachment',x=>x.p.projectData.artifacts=[]],['changed-attachment-hash',x=>x.artifact.fields.BYTE_SIZE=5],['wrong-attachment-source',x=>{x.artifact.source='AGENT';e.refreshRecordHashes(x.artifact,'artifacts');}],['wrong-attachment-raw',x=>{x.artifact.fields.NOTES=x.artifact.NOTES=JSON.stringify({rawResponseId:'OTHER'});e.refreshRecordHashes(x.artifact,'artifacts');}]);
+  for(const [name,edit]of edits){const x=build(native);edit(x);check(label+'-'+name,x,native,0);}
+  const changed=build(native);changed.test.fields.TEST_PROCEDURE='Changed current definition';e.refreshRecordHashes(changed.test,'tests');check(label+'-historical-report-not-current-validity',changed,native,1);
+  for(const [kind,change]of (native?[['event-subject',(x,v)=>{x.p.projectData.history.at(-1).subjectId=v;}]]:[['canonical-snapshot',(x,v)=>{x.p.projectData.responseProposals[0].canonicalRecords.regressionExecutions[0].fields.RESULT=v;}],['attachment-source',(x,v)=>{x.artifact.fields.NOTES=x.artifact.NOTES=JSON.stringify({rawResponseId:v});e.refreshRecordHashes(x.artifact,'artifacts');}]])){
+   const first=build(native),second=build(native);second.p=r.copy(first.p);second.receipt=second.p.projectData.regressionExecutions[0];second.evidence=second.p.projectData.evidenceRecords[0];second.artifact=second.p.projectData.artifacts[0];change(first,'WRONG-A');change(second,'WRONG-B');const a=project(first,native),b=project(second,native);assert.equal(a.recordedValue,0);assert.equal(b.recordedValue,0);assert.notEqual(a.scopeHash,b.scopeHash,'RECORDED_DEFERRED_SCOPE_INPUT_ORACLE:'+kind);cases.push({caseId:label+'-unknown-'+kind+'-scope-sensitive',recordedValue:0,totalValue:null,disposition:'UNKNOWN',passed:true});
+  }
+  check(label+'-restored-control',f,native,1);assert.equal(project(f,native).scopeHash,control.scopeHash);
+ }
+ return {case:'RECORDED_DEFERRED_EXECUTION_METRICS',cases,synthetic:true,actualExternalActor:false,actualBrowser:false,fullClauseProof:false,boundary:'Retained-event reducer with explicit already-qualified accepted-response dependency; no native dispatch, admission, byte-custody or complete attempt history claim.'};
+}
+function recordedDeferredMetricFaultControls(){
+ const original=fs.readFileSync('workflow-engine.js','utf8'),faults=[];
+ for(const [caseId,before,after,oracle]of [
+  ['wrong-native-event-subject-accepted',"event.subjectId!==checked.subjectId||",'', 'RECORDED_DEFERRED_SUBSET_ORACLE:native-wrong-execution-subject'],
+  ['unaccepted-external-source-included',"if(!accepted.has(record.rawResponseId)||claims.length!==1||claims[0].stage!==record.stage||claims[0].operation!==checked.operation)","if(claims.length!==1||claims[0].stage!==record.stage||claims[0].operation!==checked.operation)",'RECORDED_DEFERRED_SUBSET_ORACLE:external-unaccepted-source'],
+  ['changed-canonical-snapshot-included',"!same(snapshot[0].fields,record.fields)||",'', 'RECORDED_DEFERRED_SUBSET_ORACLE:external-changed-accepted-snapshot'],
+  ['malformed-retained-report-crashes',"!Array.isArray(report.binding.targetIdentities)||",'', 'RECORDED_DEFERRED_NO_THROW_ORACLE:native-missing-report-target-identities'],
+  ['unknown-total-became-number',"value:null,disposition:'UNKNOWN',recordedValue:includedIds.length","value:includedIds.length,disposition:'UNKNOWN',recordedValue:includedIds.length",'RECORDED_DEFERRED_TOTAL_VALUE_ORACLE:native-retained-bound-receipt']
+ ]){
+  assert.equal(original.split(before).length-1,1,'RECORDED_DEFERRED_MUTATION_ANCHOR_ORACLE:'+caseId);let caught;
+  try{recordedDeferredMetricControls(runtime({'workflow-engine.js':original.replace(before,after)}));}catch(error){caught=error;}
+  assert.equal(caught?.code,'ERR_ASSERTION','RECORDED_DEFERRED_MUTATION_MUST_BE_ASSERTION:'+caseId);assert(caught.message.includes(oracle),'RECORDED_DEFERRED_MUTATION_INTENDED_FAILURE:'+caseId+':'+caught?.message);faults.push({caseId,oracle,detected:true});
+ }
+ assert.equal(fs.readFileSync('workflow-engine.js','utf8'),original);return {case:'RECORDED_DEFERRED_EXECUTION_METRIC_FAULTS',faults,sourceRestored:true};
+}
+function assertActualDeferredMetric(project,e,receipt,native){
+ const u=e.operationalMetrics(project)[native?'nativeTestExecutionsMetric':'externalTestExecutionsMetric'],id='regressionExecutions:'+receipt.id;
+ assert.equal(u.value,null,'ACTUAL_DEFERRED_METRIC_UNKNOWN_TOTAL_ORACLE');assert.equal(u.disposition,'UNKNOWN');assert.equal(u.includedIds.filter(value=>value===id).length,1,'ACTUAL_DEFERRED_METRIC_RECORDED_RECEIPT_ORACLE');
+ return {receiptId:receipt.id,recordedIdentityOnce:true,totalValue:null,disposition:'UNKNOWN',currentValidity:'NOT_REEVALUATED'};
+}
+
 function scalarCases(r){
  const s=r.runtime.closedLoopWorkflowSchema,e=r.engine,p=r.core.createBlankState('JOB-TIMING-SCALARS');e.ensureShape(p);
  const fields=recordProposal(s,'tests').fields,cases=[];
@@ -152,20 +213,58 @@ function regressionTimingConsumers(r){
  results.push({case:'REGRESSION_PHASE_BOUNDARIES',cases});
  results.push({case:'DEFERRED_REGRESSION_CONVERGENCE',stage:18,requiredBy:24,registryPreserved:true,regressionSuccess:metrics.regressionSuccess});
 }
-function deferredExecutionRouting(r){
- const e=r.engine,s=r.runtime.closedLoopWorkflowSchema,p=r.core.createBlankState('JOB-DEFERRED-EXECUTION');e.ensureShape(p);
- const stage=r.core.STAGES.find(row=>row.number>s.RECORD_SCHEMAS.failureTests.stage).number;
- Object.assign(p.job,{AVAILABLE_TOOLS:'fixture-required_capability',CURRENT_REQUIREMENTS_VERSION:'REQ-v1',CURRENT_TEST_SUITE_VERSION:'TEST-v1'});p.activeStage=stage;
+function failureTimingConsumers(r){
+ const e=r.engine,s=r.runtime.closedLoopWorkflowSchema,p=r.core.createBlankState('JOB-FAILURE-TIMING-BOUNDARIES');e.ensureShape(p);
+ Object.assign(p.job,{CURRENT_REQUIREMENTS_VERSION:'REQ-v1',CURRENT_TEST_SUITE_VERSION:'TEST-v1'});
  const req=canonical(r,p,'requirements',{...recordProposal(s,'requirements').fields,STATUS:'ACTIVE'}),reqId=e.recordId(req,'requirements');
- const timing={VERIFICATION_PHASE:'PREPRODUCT_ITERATION',EARLIEST_EXECUTABLE_STAGE:stage,REQUIRED_BY_STAGE:stage,PER_RUN_REQUIRED:false,FINAL_PRODUCT_REQUIRED:false,DELIVERY_REQUIRED:false,TARGET_AVAILABILITY_CONDITION:{type:'PHASE_TARGET'}};
- const test=canonical(r,p,'tests',{...recordProposal(s,'tests').fields,...timing,REQ_ID:reqId});
- const subject=canonical(r,p,'failureTests',{...recordProposal(s,'failureTests').fields,...timing,REQ_ID:reqId,EXECUTION_TEST_ID:e.recordId(test,'tests'),EXECUTION_OUTCOME:'NOT_RUN',FIXTURE:'A bounded deliberately invalid fixture',EXPECTED_REJECTION:'Reject the invalid fixture'});
+ canonical(r,p,'failureTests',{...recordProposal(s,'failureTests').fields,REQ_ID:reqId,VERIFICATION_PHASE:'PREPRODUCT_ITERATION',EARLIEST_EXECUTABLE_STAGE:8,REQUIRED_BY_STAGE:10,PER_RUN_REQUIRED:false,FINAL_PRODUCT_REQUIRED:false,DELIVERY_REQUIRED:false,TARGET_AVAILABILITY_CONDITION:{type:'PHASE_TARGET'}});
+ // Sections16.1/32.4 distinguish executable readiness, deadline due state,
+ // and unavailable targets. These literal outcomes cover the unchanged private
+ // failure-test timing owner through the verifier-only source projection.
+ const timingCases=[
+  ['before-earliest',7,8,10,'TRUE',true,false,false,false],
+  ['ready-before-deadline',8,8,10,'TRUE',true,true,false,false],
+  ['ready-at-deadline',10,8,10,'TRUE',true,true,true,false],
+  ['unknown-future',8,8,10,'UNKNOWN',true,false,false,false],
+  ['unknown-at-deadline',10,8,10,'UNKNOWN',true,false,false,true],
+  ['unavailable-future',8,8,10,'FALSE',true,false,false,false],
+  ['unavailable-at-deadline',10,8,10,'FALSE',true,false,false,true],
+  ['deadline-before-earliest',8,8,7,'UNKNOWN',false,false,false,false]
+ ],timingObservations=[];
+ for(const [name,selectedStage,earliest,requiredBy,targetAvailability,valid,executableNow,dueNow,blocking]of timingCases){
+  const q=r.copy(p),row=q.projectData.failureTests[0],requirement=q.projectData.requirements[0];
+  const condition={type:'CURRENT_RECORD',family:'requirements',recordId:targetAvailability==='UNKNOWN'&&valid?'REQ-TIMING-UNRESOLVED':reqId};
+  if(targetAvailability==='FALSE'){requirement.active=false;e.refreshRecordHashes(requirement,'requirements');}
+  const values={EARLIEST_EXECUTABLE_STAGE:earliest,REQUIRED_BY_STAGE:requiredBy,TARGET_AVAILABILITY_CONDITION:condition};Object.assign(row.fields,r.copy(values));Object.assign(row,r.copy(values));e.refreshRecordHashes(row,'failureTests');
+  const beforeTiming=JSON.stringify(q),actual=r.runtime.__verifierFailureTestTimingState(q,row,selectedStage);
+  const observed={valid:actual.valid,executableNow:actual.executableNow,dueNow:actual.dueNow,blocking:actual.blocking,targetAvailability:actual.targetAvailability};
+  assert.deepEqual(observed,{valid,executableNow,dueNow,blocking,targetAvailability},'FAILURE_TEST_TIMING_BOUNDARY_ORACLE: '+name);
+  assert.equal(actual.deferred,true,'FAILURE_TEST_TIMING_BOUNDARY_ORACLE: declared timing lost its deferred contract.');
+  assert.equal(JSON.stringify(q),beforeTiming,'FAILURE_TEST_TIMING_BOUNDARY_ORACLE: timing inspection changed retained state.');
+  timingObservations.push({name,selectedStage,earliest,requiredBy,observed,definitionAndProjectUnchanged:true});
+ }
+ results.push({case:'FAILURE_TEST_TIMING_BOUNDARIES',boundary:'Unchanged private timing calculation on isolated synthetic canonical copies; no execution, admission, persistence or visible-UI proof.',cases:timingObservations});
+
+}
+async function deferredExecutionRouting(r){
+ // Reuse the existing actually admitted synthetic definition and all retained
+ // support/bytes. A bare seeded EXECUTION_TEST_ID is not compatibility proof.
+ const e=r.engine,s=r.runtime.closedLoopWorkflowSchema,{p,subject,stage}=await deferredDefinitionRestorationFixture(r,{family:'failureTests'});
  const before=JSON.stringify(subject),action=e.operationalNextAction(p,stage);
  assert.equal(action.operation,'EXECUTE_FAILURE_TEST','DEFERRED_EXECUTION_ROUTE_ORACLE: the due failure fixture has no current-stage execution or correction action.');
- assert.equal(JSON.stringify(p.projectData.failureTests[0]),before,'DEFERRED_EXECUTION_ROUTE_ORACLE: selecting execution altered the retained definition.');
+ assert.equal(JSON.stringify(e.records(p,'failureTests').find(row=>row.id===subject.id)),before,'DEFERRED_EXECUTION_ROUTE_ORACLE: selecting execution altered the retained definition.');
  const contract=s.operationContract(stage,action.operation);assert(contract,'DEFERRED_EXECUTION_ROUTE_ORACLE: next action has no registered current-stage contract.');
  assert.deepEqual(Array.from(contract.agentWritableCollections),['regressionExecutions'],'DEFERRED_EXECUTION_ROUTE_ORACLE: a later execution can rewrite definitions or unrelated work.');
  results.push({case:'DEFERRED_EXECUTION_ROUTE',stage,operation:action.operation,definitionPreserved:true});
+ const invalid=e.clone(p),missing=e.records(invalid,'failureTests').find(row=>row.id===subject.id);delete missing.fields.EXECUTION_COMPATIBILITY;delete missing.EXECUTION_COMPATIBILITY;e.refreshRecordHashes(missing,'failureTests');
+ const missingBefore=JSON.stringify(missing),rejected=e.operationalNextAction(invalid,stage);
+ assert.equal(rejected.actionType,'BLOCKED','DEFERRED_EXECUTION_COMPATIBILITY_ORACLE: missing compatibility did not block execution.');
+ assert.equal(rejected.operation,null,'DEFERRED_EXECUTION_COMPATIBILITY_ORACLE: missing compatibility authorized execution.');
+ assert.equal(rejected.correctionTarget?.family,'failureTests');assert.equal(rejected.correctionTarget?.recordId,subject.id);assert.equal(rejected.correctionTarget?.stage,7);
+ const compatibilityIssues=e.deferredDefinitionCompatibilityState(invalid,missing,'failureTests').issues;
+ assert(compatibilityIssues.some(row=>row.code==='INVALID_DEFERRED_DEFINITION_COMPATIBILITY'&&row.path==='/'),'DEFERRED_EXECUTION_COMPATIBILITY_ORACLE: intended missing-object failure not observed.');
+ assert.equal(JSON.stringify(missing),missingBefore,'DEFERRED_EXECUTION_COMPATIBILITY_ORACLE: blocked route changed retained work.');
+ results.push({case:'DEFERRED_EXECUTION_COMPATIBILITY_MISSING',issueCode:'INVALID_DEFERRED_DEFINITION_COMPATIBILITY',blocked:true,executionOffered:false,correctionStage:7,definitionPreserved:true,synthetic:true,priorAdmissionReused:true,admissionExecutedByThisCheck:false});
 }
 
 // Actual file/operator owners under the explicitly synthetic transaction
@@ -527,7 +626,7 @@ async function deferredReceiptJourney(r,path){
  const malformed=r.copy(committed),malformedReceipt=malformed.projectData.regressionExecutions.find(row=>row.id===receipt.id);malformedReceipt.fields.TARGET_IDENTITIES[0].unregistered=true;malformedReceipt.TARGET_IDENTITIES=malformedReceipt.fields.TARGET_IDENTITIES;e.refreshRecordHashes(malformedReceipt,'regressionExecutions');assert(!r.store.validateProjectIntegrity(malformed,{verifyDerived:false}).valid,'DEFERRED_PERSISTENCE_SHAPE_ORACLE: recovery accepted undeclared target identity fields.');
  const restored=r.copy(committed);e.recalculate(restored);assert(e.deferredExecutionPlan(restored,stage,{operation}).items.find(row=>row.subjectId===subjectId).completed,'DEFERRED_RESTORE_ORACLE');
  const changedDefinition=r.copy(committed),changedSubject=changedDefinition.projectData.failureTests.find(row=>row.id===subjectId);changedSubject.fields.FIXTURE+=' Changed';e.refreshRecordHashes(changedSubject,'failureTests');assert(!e.deferredExecutionPlan(changedDefinition,stage,{operation}).items.find(row=>row.subjectId===subjectId).completed,'DEFERRED_STALE_ORACLE');
- results.push({case:'DEFERRED_EXTERNAL_RECEIPT_JOURNEY',stage,source:saved?'SYNTHETIC_CANONICAL_FIXTURE_FROM_EXECUTED_FULL_CYCLE':'ACTUALLY_ADMITTED_REVIEWED_DEFINITION_FIXTURE',issuedReturnedSlot:true,actualReturnedBytes:true,responseLocalAttachmentReference:true,unpublishedCanonicalAttachmentRejected:'CONTEXT_REFERENCE_OUT_OF_SCOPE',receiptId:receipt.id,definitionPreserved:true,unsupportedIsolationRejected:true,staleBindingRejected:true,unacceptedBeforeCommit:true,durable:true,restoration:true});
+ results.push({case:'DEFERRED_EXTERNAL_RECEIPT_JOURNEY',executionMetric:assertActualDeferredMetric(committed,e,receipt,false),stage,source:saved?'SYNTHETIC_CANONICAL_FIXTURE_FROM_EXECUTED_FULL_CYCLE':'ACTUALLY_ADMITTED_REVIEWED_DEFINITION_FIXTURE',issuedReturnedSlot:true,actualReturnedBytes:true,responseLocalAttachmentReference:true,unpublishedCanonicalAttachmentRejected:'CONTEXT_REFERENCE_OUT_OF_SCOPE',receiptId:receipt.id,definitionPreserved:true,unsupportedIsolationRejected:true,staleBindingRejected:true,unacceptedBeforeCommit:true,durable:true,restoration:true});
 }
 function deferredReviewProvenance(r){
  const e=r.engine,s=r.runtime.closedLoopWorkflowSchema;
@@ -596,7 +695,7 @@ async function deferredNativeJourney(r,{appSource,executionStage}={}){
   throw error;
  }
  assert.equal(typeof rendered.selectedOperation,'string','DEFERRED_NEXT_ACTION_ORACLE: selected-operation observation missing.');assert.notEqual(rendered.selectedOperation,operation,'DEFERRED_NEXT_ACTION_ORACLE: a completed execution leaves its obsolete operation selected.');
- results.push({case:'DEFERRED_NATIVE_ISOLATED_EXECUTION',stage,receiptId:receipt.id,actualWorker:'NODE_WORKER_WITH_PRODUCTION_TEST_WORKER_AND_TEST_IR',originalBytesPreserved:true,exactRetryPreserved:true,durable:true});
+ results.push({case:'DEFERRED_NATIVE_ISOLATED_EXECUTION',executionMetric:assertActualDeferredMetric(p,e,receipt,true),stage,receiptId:receipt.id,actualWorker:'NODE_WORKER_WITH_PRODUCTION_TEST_WORKER_AND_TEST_IR',originalBytesPreserved:true,exactRetryPreserved:true,durable:true});
 }
 async function deferredRegressionJourney(r){
  const f=await smallDeferredFixture(r,{native:true,family:'regressions'}),{p,subject,test,stage}=f,e=r.engine,s=r.runtime.closedLoopWorkflowSchema,h=r.runtime.closedLoopHash,operation='EXECUTE_REGRESSION';
@@ -872,18 +971,77 @@ if(deferredFixture||process.argv.includes('--deferred-small')){await deferredRec
 if(process.argv.includes('--deferred-only')){
  const ref=process.argv.find(arg=>arg.startsWith('--source-ref='))?.slice('--source-ref='.length),overrides={};
  if(ref)for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'])overrides[file]=execFileSync('git',['show',ref+':'+file],{encoding:'utf8',timeout:10000,maxBuffer:8*1024*1024});
- deferredExecutionRouting(runtime(overrides));console.log(JSON.stringify({deferredExecution:'PASS',source:ref||'WORKING_TREE',results}));process.exit(0);
+ await deferredExecutionRouting(runtime(overrides));console.log(JSON.stringify({deferredExecution:'PASS',source:ref||'WORKING_TREE',results}));process.exit(0);
 }
 if(process.argv.includes('--regression-only')){
  const ref=process.argv.find(arg=>arg.startsWith('--source-ref='))?.slice('--source-ref='.length),overrides={};
  if(ref)for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'])overrides[file]=execFileSync('git',['show',ref+':'+file],{encoding:'utf8',timeout:10000,maxBuffer:8*1024*1024});
- regressionIterationBoundary(runtime(overrides));regressionTimingConsumers(runtime(overrides));console.log(JSON.stringify({regressionTiming:'PASS',source:ref||'WORKING_TREE',results}));process.exit(0);
+ regressionIterationBoundary(runtime(overrides));const timingRuntime=runtime(overrides);regressionTimingConsumers(timingRuntime);failureTimingConsumers(timingRuntime);console.log(JSON.stringify({regressionTiming:'PASS',source:ref||'WORKING_TREE',results}));process.exit(0);
 }
+// Specification17.6 Phase02: independently expected outcomes precede the
+// complete record comparison; issued identities are supplied by the fixture.
+function verifyDeferredContractDiagnostics(r){
+ const diagnostic=r.engine.deferredExecutionContractDiagnostic;
+ const expected=[
+  ['STALE_DEFERRED_EXECUTION_BINDING','Deferred execution target changed; regenerate and reconfirm the exact operation.'],
+  ...[
+   'Deferred receipt must reference exactly its selected subject.',
+   'Deferred receipt phase does not match the selected execution.',
+   'Deferred execution requires its attributable execution report.',
+   'The execution report does not match the exact current fixture, phase and target identities.',
+   'Actual isolated execution, performer and observation are required.',
+   'Application-native execution cannot be claimed by an external response.',
+   'External isolation and execution require attributable supporting evidence with verified attachment bytes.'
+  ].map(message=>['INVALID_DEFERRED_EXECUTION_RECEIPT',message])
+ ];
+ for(const [code,message]of expected){
+  assert.equal(diagnostic({code,message}),message,'DEFERRED_SAFE_CONTRACT_DIAGNOSTIC_ORACLE');
+  assert.equal(diagnostic({code:'UNKNOWN_PROTOCOL_CODE',message}),null,'DEFERRED_UNTRUSTED_DIAGNOSTIC_WITHHELD_ORACLE');
+  assert.equal(diagnostic({code,message:message+' FORBIDDEN_PRIOR_REVIEW_CONCLUSION'}),null,'DEFERRED_UNTRUSTED_DIAGNOSTIC_WITHHELD_ORACLE');
+ }
+ assert.equal(diagnostic({code:'STALE_DEFERRED_EXECUTION_BINDING',message:expected[7][1]}),null,'DEFERRED_UNTRUSTED_DIAGNOSTIC_WITHHELD_ORACLE');
+ assert.equal(diagnostic({code:'INVALID_DEFERRED_EXECUTION_RECEIPT',message:expected[0][1]}),null,'DEFERRED_UNTRUSTED_DIAGNOSTIC_WITHHELD_ORACLE');
+ assert.equal(diagnostic({code:'INVALID_DEFERRED_EXECUTION_RECEIPT',message:{text:expected[7][1]}}),null,'DEFERRED_UNTRUSTED_DIAGNOSTIC_WITHHELD_ORACLE');
+}
+
+function assertPreservedValidationResult(r,project,{prior,prepared,prompt,rawResponseId,text,stage,caseId,valid,issues,status,receiptState}) {
+ const oracle='VALIDATION_RESULT_PRESERVATION_ORACLE '+caseId,plain=value=>JSON.parse(JSON.stringify(value));
+ const validationId=prepared.validation.validationId,receiptId=prepared.receipt.receiptId;
+ assert.equal(typeof validationId,'string',oracle);assert.ok(validationId.length>0,oracle);
+ assert.equal(typeof receiptId,'string',oracle);assert.ok(receiptId.length>0,oracle);
+ assert.equal(new Date(prepared.validation.createdAt).toISOString(),prepared.validation.createdAt,oracle);
+ assert.equal(prior.projectData.responseValidations.some(row=>row.validationId===validationId),false,oracle);
+ assert.equal(project.projectData.responseValidations.length,prior.projectData.responseValidations.length+1,oracle);
+ const one=(family,key,id)=>{const rows=project.projectData[family].filter(row=>row[key]===id);assert.equal(rows.length,1,oracle+' '+family);return rows[0];};
+ const validation=one('responseValidations','validationId',validationId),raw=one('rawResponses','rawResponseId',rawResponseId),receipt=one('outputReceipts','receiptId',receiptId);
+ const expected={validationId,rawResponseId,jobId:prior.job.JOB_ID,stage,promptId:prompt.instructionId||prompt.promptId,promptSha256:prompt.bodySha256||prompt.sha256,createdAt:prepared.validation.createdAt,valid,issues,errorCount:valid?0:1,warningCount:issues.filter(row=>row.severity==='WARNING').length,responseSchema:'closed-loop-stage-response/3',responseType:'DATA_PROPOSAL',status,attemptPromptId:prompt.instructionId||prompt.promptId,receiptId};
+ assert.deepEqual(plain(validation),expected,oracle+' complete-record');
+ assert.equal(raw.validationId,validationId,oracle);assert.equal(raw.receiptId,receiptId,oracle);assert.equal(raw.completeRawResponse,text,oracle);
+ assert.equal(raw.jobId,prior.job.JOB_ID,oracle);assert.equal(raw.stage,stage,oracle);assert.equal(raw.promptInstructionId,expected.promptId,oracle);assert.equal(raw.promptBodySha256,expected.promptSha256,oracle);
+ assert.equal(raw.sha256,r.runtime.closedLoopHash.sha256Text(text),oracle);assert.equal(raw.status,valid?(status==='VALID'?'VALIDATED_PENDING_REVIEW':'ACCEPTED_DATA_CHANGE'):'VALIDATION_FAILED',oracle);
+ assert.equal(receipt.validationId,validationId,oracle);assert.equal(receipt.rawResponseId,rawResponseId,oracle);assert.equal(receipt.rawResponseSha256,raw.sha256,oracle);
+ assert.equal(receipt.jobId,prior.job.JOB_ID,oracle);assert.equal(receipt.stage,stage,oracle);assert.equal(receipt.promptInstructionId,expected.promptId,oracle);assert.equal(receipt.promptSha256,prompt.sha256||prompt.bodySha256,oracle);
+ assert.deepEqual(plain(receipt.deviations),issues,oracle);assert.equal(receipt.completionState,receiptState,oracle);
+ if(valid){
+  const proposal=one('responseProposals','proposalId',prepared.proposal.proposalId);
+  assert.equal(proposal.validationId,validationId,oracle);assert.equal(proposal.rawResponseId,rawResponseId,oracle);assert.equal(proposal.receiptId,receiptId,oracle);assert.equal(proposal.promptId,expected.promptId,oracle);
+  assert.equal(proposal.jobId,prior.job.JOB_ID,oracle);assert.equal(proposal.stage,stage,oracle);assert.equal(proposal.promptSha256,expected.promptSha256,oracle);
+  assert.equal(raw.proposalId,proposal.proposalId,oracle);assert.equal(receipt.parsedProposalId,proposal.proposalId,oracle);assert.equal(proposal.status,status==='VALID'?'PENDING_OPERATOR_REVIEW':'ACCEPTED',oracle);
+ }else{
+  assert.equal(prepared.proposal,null,oracle);assert.equal(Object.hasOwn(raw,'proposalId'),false,oracle);assert.equal(receipt.parsedProposalId,'NONE',oracle);
+  const disposition=one('responseDispositions','dispositionId',raw.dispositionId);
+  assert.equal(disposition.type,'VALIDATION_FAILED_RESPONSE',oracle);assert.equal(disposition.validationId,validationId,oracle);assert.equal(disposition.rawResponseId,rawResponseId,oracle);assert.equal(disposition.receiptId,receiptId,oracle);assert.equal(disposition.promptId,expected.promptId,oracle);assert.equal(disposition.proposalId,null,oracle);
+  assert.deepEqual(plain(disposition.issueCodes),issues.map(row=>row.code),oracle);assert.equal(receipt.rejectedResponseId,disposition.dispositionId,oracle);
+ }
+ return {caseId,passed:true,valid,status,errorCount:expected.errorCount,warningCount:expected.warningCount,issues:plain(issues),completeRecord:true,uniqueRecord:true,rawExact:true,rawValidationReceiptLinked:true,promptIdentityLinked:true,proposalOrDispositionLinked:true,actualSaveReload:true,synthetic:true,actualBrowser:false};
+}
+
 async function legitimateDeferredReturnedJourney(retained,{sourceOverrides={},caseIds=['SATISFIED','UNDETERMINED','UNDETERMINED_AT9','INVALID_REPORT'],recoveryDir=null,expectedInternalFailure=false}={}){
  assert.equal(retained.schema,'closed-loop-counterpart-diagnostic-prefix/1');assert.equal(retained.earlierCompleteFlagsForced,false);
  const results=[],proofRecovery=recoveryDir||fs.mkdtempSync(path.join(os.tmpdir(),'clrt-deferred-returned-proof-'));fs.mkdirSync(proofRecovery,{recursive:true});
 async function verifyProducerFailureRetry({r,input,prepared,prompt,manifest,files,text}) {
  const e=r.engine,i=r.ingestion;
+ verifyDeferredContractDiagnostics(r);
  assert.equal(prepared.validation.valid,false,'DEFERRED_TYPED_PRODUCER_FAILURE_ORACLE');assert.equal(prepared.proposal,null);
  const expected=prepared.validation.issues.find(row=>row.code==='INVALID_DEFERRED_EXECUTION_RECEIPT');assert(expected,'DEFERRED_TYPED_PRODUCER_FAILURE_ORACLE: '+JSON.stringify(prepared.validation.issues));
  assert.equal(prepared.rawRecord.status,'VALIDATION_FAILED');assert(prepared.disposition.issueCodes.includes(expected.code),'DEFERRED_TYPED_FAILURE_DISPOSITION_ORACLE');
@@ -893,6 +1051,7 @@ async function verifyProducerFailureRetry({r,input,prepared,prompt,manifest,file
  assert(added.length>0);assert(added.every(row=>['responseValidations','outputReceipts','responseDispositions','history'].includes(row.collection)),'DEFERRED_FAILED_PLAN_IDENTITY_ROLLBACK_ORACLE: '+JSON.stringify(added.map(row=>row.collection)));
  let saved=await r.store.writeProject(prepared.project,{operational:true,expectedProjectRevision:input.revision,expectedStateSha256:input.projectSha256});
  const reloaded=await r.store.readProject(saved.job.JOB_ID);assert.equal(i.findValidation(reloaded,prepared.validation.validationId).issues.find(row=>row.code===expected.code).message,expected.message);assert.equal(i.findRaw(reloaded,prepared.rawRecord.rawResponseId).completeRawResponse,text);
+ const validationResultPreservation=assertPreservedValidationResult(r,reloaded,{prior:input,prepared,prompt,rawResponseId:prepared.rawRecord.rawResponseId,text,stage:8,caseId:'planner-failure-complete-result',valid:false,issues:[{code:'INVALID_DEFERRED_EXECUTION_RECEIPT',path:'/records/regressionExecutions',message:'External isolation and execution require attributable supporting evidence with verified attachment bytes.',severity:'ERROR'}],status:'REJECTED',receiptState:'VALIDATION_FAILED_RESPONSE'});
  const draft=r.copy(reloaded),continuation=i.prepareStageContinuation(draft,{stage:8,owningTabInstance:'SYNTHETIC_DEFERRED_RETRY'});assert(continuation?.created,'DEFERRED_TYPED_FAILURE_CONTINUATION_ORACLE: '+JSON.stringify(continuation));
  saved=await r.store.writeProject(draft,{expectedProjectRevision:reloaded.revision,expectedStateSha256:reloaded.projectSha256});
  let next=saved.projectData.generatedPrompts.find(row=>row.instructionId===continuation.prompt.instructionId);assert.notEqual(next.instructionId,prompt.instructionId);assert.notEqual(next.operationReservationId,prompt.operationReservationId);
@@ -903,7 +1062,7 @@ async function verifyProducerFailureRetry({r,input,prepared,prompt,manifest,file
  assert.equal(e.gate(8,saved).complete,false);assert.equal(e.currentDeferredExecution(saved,8,'EXECUTE_FAILURE_TEST').completed,false);
  fs.writeFileSync(proofRecovery+'/stage8-typed-producer-failure-and-retry.json',JSON.stringify({baseSourceSha:'88220df8cee15ffed5b7d6bc948cb5ca80e6abc4',sourceFingerprints:Object.fromEntries(['workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'].map(name=>[name,r.runtime.closedLoopHash.sha256Text(fs.readFileSync(name,'utf8'))])),project:saved,artifacts:await captureArtifactFixture(r.store,saved.job.JOB_ID),invalidResponseText:text,validation:prepared.validation,disposition:prepared.disposition,nextInstructionUtf8:bytes.toString('utf8'),nextExecutionPackageBase64:Buffer.from(await pkg.blob.arrayBuffer()).toString('base64'),synthetic:true,actualBrowser:false}));
  const freshCorrection=await verifyUnresolvedThenSatisfiedRetry(r,saved,8,{existingPrompt:next,requireReplacement:false});
- return {errorCode:expected.code,errorMessage:expected.message,rawPersisted:true,validationPersisted:true,canonicalArtifactsUnchanged:true,speculativeIdentityAllocationRolledBack:true,newReservation:true,exactNextExportCarriesFailure:true,stageComplete:false,selectedSubjectCompleteBeforeCorrection:false,freshCorrection};
+ return {validationResultPreservation,errorCode:expected.code,errorMessage:expected.message,rawPersisted:true,validationPersisted:true,canonicalArtifactsUnchanged:true,speculativeIdentityAllocationRolledBack:true,newReservation:true,exactNextExportCarriesFailure:true,stageComplete:false,selectedSubjectCompleteBeforeCorrection:false,freshCorrection};
 }
 async function acceptOrdinaryStage8(r,input) {
  const e=r.engine,i=r.ingestion;let saved=input;const draft=r.copy(saved),reserved=r.prompts.reserveAndBuildPromptRecord(draft,8,{operation:'COMPLETE'}).prompt;
@@ -1010,10 +1169,23 @@ for(const caseId of caseIds) {
  const priorAllocated=new Set(saved.projectData.allocationReceipts.map(row=>row.resultingId));const planAllocations=prepared.project.projectData.allocationReceipts.filter(row=>!priorAllocated.has(row.resultingId));assert(planAllocations.some(row=>row.collection==='responseProposals')&&planAllocations.some(row=>row.collection==='evidenceRecords')&&planAllocations.some(row=>row.collection==='regressionExecutions'),'DEFERRED_SUCCESSFUL_PLAN_IDENTITY_CONTROL_ORACLE');
  assert.equal(JSON.stringify(prepared.project.projectData.artifacts),JSON.stringify(saved.projectData.artifacts),'DEFERRED_PROJECTION_MUST_NOT_PROMOTE_CANONICAL_ARTIFACTS');
  assert.equal(e.records(prepared.project,'regressionExecutions').filter(row=>e.recordValue(row,'MUTATION_ID')===binding.subjectId).length,0,'LEGITIMATE_CONDITIONAL_ACCEPTANCE_BOUNDARY_ORACLE');
+ const validationResultInput=saved;let validationResultPreservation=null;
  saved=await r.store.writeProject(prepared.project,{operational:true,expectedProjectRevision:saved.revision,expectedStateSha256:saved.projectSha256});
+ if(caseId==='SATISFIED'){const pendingRead=await r.store.readProject(saved.job.JOB_ID);validationResultPreservation={pending:assertPreservedValidationResult(r,pendingRead,{prior:validationResultInput,prepared,prompt,rawResponseId:captured.rawRecord.rawResponseId,text,stage:8,caseId:'success-no-warning-complete-result',valid:true,issues:[],status:'VALID',receiptState:'PARSED_PENDING_REVIEW'})};
+  // readProject reobserves canonical files; pending returned bytes require the
+  // same real read/hash performed by the recovered operator acceptance owner.
+  const pendingBefore=JSON.stringify(saved),identity={jobId:saved.job.JOB_ID,artifactId,filename:stored.filename,byteSize:stored.byteSize,sha256:stored.sha256};
+  assert.equal(r.store.artifactCustodyState(identity),'UNKNOWN','VALIDATION_RESULT_PENDING_BYTE_REVERIFY_ORACLE');
+  assert.throws(()=>i.commit(saved,prepared.proposal.proposalId,{operator:'SYNTHETIC_CONDITIONAL_OWNER_CONTROL',replacementConfirmation:i.acceptanceImpact(saved,prepared.proposal.proposalId)}),error=>error.code==='STALE_PROPOSAL'&&error.issues?.some(row=>row.code==='RETURNED_ARTIFACT_BYTES_UNVERIFIED'),'VALIDATION_RESULT_PENDING_BYTE_REVERIFY_ORACLE');
+  assert.equal(JSON.stringify(saved),pendingBefore,'VALIDATION_RESULT_PENDING_BYTE_REVERIFY_ORACLE');
+  bindAcceptanceUi(r,pendingRead,prepared.proposal.proposalId);await r.runtime.reverifyReturnedFiles(i.findRaw(pendingRead,captured.rawRecord.rawResponseId));
+  assert.equal(r.store.artifactCustodyState(identity),'TRUE','VALIDATION_RESULT_PENDING_BYTE_REVERIFY_ORACLE');
+  validationResultPreservation.recoveredPendingByteReverification={initiallyUnverified:true,strictCommitRefusal:true,noMutation:true,actualUiReverify:true,custodyTrue:true};
+ }
  const committed=i.commit(saved,prepared.proposal.proposalId,{operator:'SYNTHETIC_CONDITIONAL_OWNER_CONTROL',replacementConfirmation:i.acceptanceImpact(saved,prepared.proposal.proposalId)}),impact=r.store.mutationImpact(saved,committed.project);
  saved=await r.store.writeProject(committed.project,{expectedProjectRevision:saved.revision,expectedStateSha256:saved.projectSha256,...(impact.requiresConfirmation?{mutationConfirmation:impact}:{})});
  const reloaded=await r.store.readProject(saved.job.JOB_ID),receipt=e.records(reloaded,'regressionExecutions').find(row=>e.recordValue(row,'MUTATION_ID')===binding.subjectId);assert(receipt);assert.equal(e.recordValue(receipt,'RESULT'),result);
+ if(caseId==='SATISFIED')validationResultPreservation.accepted=assertPreservedValidationResult(r,reloaded,{prior:validationResultInput,prepared,prompt,rawResponseId:captured.rawRecord.rawResponseId,text,stage:8,caseId:'success-no-warning-complete-result',valid:true,issues:[],status:'ACCEPTED_DATA_CHANGE',receiptState:'ACCEPTED_DATA_CHANGE'});
  const state=e.deferredExecutionPlan(reloaded,8,{operation:'EXECUTE_FAILURE_TEST'}).items.find(row=>row.subjectId===binding.subjectId);
  assert.equal(state.completed,result==='SATISFIED','LEGITIMATE_CONDITIONAL_RESULT_GATE_ORACLE: '+JSON.stringify(state));assert.equal(e.gate(8,reloaded).complete,false,'A conditional receipt cannot replace the ordinary Stage8 instruction');
  assert.equal(JSON.stringify(e.records(reloaded,'failureTests').find(row=>e.recordId(row,'failureTests')===binding.subjectId)),beforeDefinition,'LEGITIMATE_CONDITIONAL_APPEND_ONLY_DEFINITION_ORACLE');
@@ -1039,7 +1211,7 @@ for(const caseId of caseIds) {
  const pendingBefore=JSON.stringify(prepared.project);assert.throws(()=>i.commit(prepared.project,prepared.proposal.proposalId,{operator:'SYNTHETIC_INTERRUPTED_CUSTODY',replacementConfirmation:i.acceptanceImpact(prepared.project,prepared.proposal.proposalId)}),error=>error.code==='STALE_PROPOSAL'&&error.issues?.some(row=>row.code==='RETURNED_ARTIFACT_BYTES_UNVERIFIED'),'Lost byte custody must fail before acceptance');assert.equal(JSON.stringify(prepared.project),pendingBefore,'Failed commit changed recoverable proposal/raw state');
  await r.store.putArtifact({artifactId,jobId:saved.job.JOB_ID,blob,filename:stored.filename,mediaType:stored.mediaType,expectedSha256:rawSha});assert.equal(await (await r.store.getArtifact(artifactId,{jobId:saved.job.JOB_ID})).blob.text(),raw);
  const progressRetry=result==='UNDETERMINED'?await verifyUnresolvedThenSatisfiedRetry(r,caseId==='UNDETERMINED_AT9'?await acceptOrdinaryStage8(r,reloaded):reloaded,caseId==='UNDETERMINED_AT9'?9:8):null;
- results.push({operationId:'8:EXECUTE_FAILURE_TEST',result,progressRetry,materialIdentity,admitted:true,explicitOperatorCommit:true,storedAndReadBack:true,selectedSubjectCompleted:state.completed,ordinaryStage8Complete:false,rawResponseSha256:file.sha256,rawAttachmentSha256:rawSha,rawAttachmentBytes:blob.size,receiptId:e.recordId(receipt,'regressionExecutions'),definitionId:binding.subjectId,testId:binding.testId,missingAttachmentRejected:missingPrepared,staleFixtureBindingRejected:wrongPrepared,wrongSlotRejected:wrongSlotPrepared,wrongHashRejected:wrongHashPrepared,absentFileRejected:absentFilesPrepared,wrongFamilyRejected:wrongFamilyPrepared,missingByteCustodyRejected:missingBytesPrepared,staleCustodyCommitRejected:true,retryProof,synthetic:true,actualBrowser:false,externalActor:false});
+ results.push({operationId:'8:EXECUTE_FAILURE_TEST',result,progressRetry,materialIdentity,validationResultPreservation,admitted:true,explicitOperatorCommit:true,storedAndReadBack:true,selectedSubjectCompleted:state.completed,ordinaryStage8Complete:false,rawResponseSha256:file.sha256,rawAttachmentSha256:rawSha,rawAttachmentBytes:blob.size,receiptId:e.recordId(receipt,'regressionExecutions'),definitionId:binding.subjectId,testId:binding.testId,missingAttachmentRejected:missingPrepared,staleFixtureBindingRejected:wrongPrepared,wrongSlotRejected:wrongSlotPrepared,wrongHashRejected:wrongHashPrepared,absentFileRejected:absentFilesPrepared,wrongFamilyRejected:wrongFamilyPrepared,missingByteCustodyRejected:missingBytesPrepared,staleCustodyCommitRejected:true,retryProof,synthetic:true,actualBrowser:false,externalActor:false});
  fs.writeFileSync(proofRecovery+'/retained-stage8-'+result.toLowerCase()+'.json',JSON.stringify({sourceSha:'88220df8cee15ffed5b7d6bc948cb5ca80e6abc4',project:reloaded,artifacts:await captureArtifactFixture(r.store,reloaded.job.JOB_ID),results:results.at(-1),synthetic:true,actualBrowser:false}));
 }
  return {case:'LEGITIMATE_DEFERRED_RETURNED_BYTES_AND_RETRY',setupSourceFingerprints:retained.sourceFingerprints,proofBoundary:'Accepted production Stage1-7 -> exact issued ZIP instruction/manifest/context -> staged response + verified returned bytes -> noncanonical proposal -> explicit operator commit -> production transaction adapter/readback -> deferred gate and corrected retry',results,actualBrowser:false,synthetic:true};
@@ -1202,6 +1374,8 @@ for(const status of ['RESERVED','EXPORTED']){
  return {case:'LEGITIMATE_DEFERRED_CACHED_PACKAGE_REFRESH',results,synthetic:true,actualBrowser:false};
 }
 
+if(process.argv.includes('--recorded-execution-metrics-only')){console.log(JSON.stringify({status:'PASS',recordedExecutionMetrics:recordedDeferredMetricControls(runtime()),faultControls:recordedDeferredMetricFaultControls()}));process.exit(0);}
+
 if(process.argv.includes('--deferred-cache-only')){const generated=generateLegitimateDeferredPrefix();console.log(JSON.stringify({deferredCachedPackages:'PASS',setup:generated.setup,control:await verifyLegitimateDeferredCachedPackages(generated.prefix)}));process.exit(0);}
 
 // Keep phase timing outside the assertion report and flush after each phase so
@@ -1210,12 +1384,14 @@ const deferredTimingFile='conformance-regression-evidence/deferred-phase-timings
 async function timedDeferredPhase(name,run){const start=process.hrtime.bigint(),startedAt=new Date().toISOString();try{return await run();}finally{deferredPhaseTimings.push({name,startedAt,finishedAt:new Date().toISOString(),durationMs:Number(process.hrtime.bigint()-start)/1e6});fs.mkdirSync('conformance-regression-evidence',{recursive:true});fs.writeFileSync(deferredTimingFile,JSON.stringify({schema:'closed-loop-deferred-phase-timings/1',synthetic:true,phases:deferredPhaseTimings},null,2)+'\n');}}
 const source=fs.readFileSync('workflow-schema.js','utf8'),r=runtime();
 await timedDeferredPhase('bounded-contract-controls',async()=>{
+results.push(recordedDeferredMetricControls(runtime()),recordedDeferredMetricFaultControls());
+await deferredExecutionRouting(runtime());
 results.push(deferredFixtureDecoderBounds());
 results.push(stage17CorrectionParentControls());results.push(stage17DeferredReceiptParentControls());results.push(await maintainedStageBindingRegressions());results.push(await verifyDeferredProducerContracts());results.push(await verifyDeferredByteCarrierContracts());
 });
 await timedDeferredPhase('receipt-and-native-journeys',async()=>{
 deferredReviewProvenance(runtime());await deferredArtifactOwnership(runtime());await deferredReservationBoundaries(runtime());await deferredReceiptJourney(runtime());await deferredNativeJourney(runtime());await deferredNativeJourney(runtime(),{executionStage:r.core.STAGES.at(-1).number});await deferredRegressionJourney(runtime());await evidenceChainFrontierCases(runtime());await evidenceChainFrontierCases(runtime(),{requiredBy:29});scalarCases(r);conditions(r);await availability(r);
-regressionIterationBoundary(r);regressionTimingConsumers(r);
+regressionIterationBoundary(r);regressionTimingConsumers(r);failureTimingConsumers(r);
 const completedFixture=process.argv.find(arg=>arg.startsWith('--completed-fixture='))?.slice('--completed-fixture='.length);if(completedFixture)await completedPhaseTargets(r,completedFixture);
 });
 const generatedDeferredPrefix=await timedDeferredPhase('legitimate-deferred-prefix',()=>generateLegitimateDeferredPrefix());results.push(generatedDeferredPrefix.setup);
@@ -1273,7 +1449,7 @@ for(const [name,file,before,after,oracle,run]of [
 for(const [name,file,before,after,oracle,caseIds]of [
  ['deferred-returned-byte-projection-omitted','response-ingestion.js','workflow.normalizeDeferredReceipt(projected,Number(envelope.stage)', 'workflow.normalizeDeferredReceipt(project,Number(envelope.stage)','LEGITIMATE_CONDITIONAL_ADMISSION_ORACLE',['SATISFIED']],
  ['deferred-closed-producer-contract-omitted','prompt-engine.js',"...(op?.deferredSubjectFamily?{deferredExecutionEvidenceContract:schema.DEFERRED_EXECUTION_EVIDENCE}:{}),",'', 'DEFERRED_PUBLISHED_VOCABULARY_ORACLE',['SATISFIED']],
- ['deferred-producer-rejection-feedback-escapes','response-ingestion.js',"if(!['INVALID_DEFERRED_EXECUTION_RECEIPT','STALE_DEFERRED_EXECUTION_BINDING','INVALID_DEFERRED_DEFINITION_COMPATIBILITY','INVALID_TEST_IR_BINDING'].includes(error?.code))throw error;",'throw error;', 'DEFERRED_TYPED_PRODUCER_FAILURE_ORACLE',['INVALID_REPORT']],
+ ['deferred-producer-rejection-feedback-escapes','response-ingestion.js',"if(!['INVALID_DEFERRED_EXECUTION_RECEIPT','STALE_DEFERRED_EXECUTION_BINDING','INVALID_DEFERRED_DEFINITION_COMPATIBILITY','INVALID_TEST_IR_BINDING','INVALID_EXPECTED_VARIANCE_BINDING'].includes(error?.code))throw error;",'throw error;', 'DEFERRED_TYPED_PRODUCER_FAILURE_ORACLE',['INVALID_REPORT']],
  ['deferred-failed-plan-retains-allocations','response-ingestion.js','next.projectData.idCounters=planningIdentities.idCounters;next.projectData.allocationReceipts=planningIdentities.allocationReceipts;','void planningIdentities;', 'DEFERRED_FAILED_PLAN_IDENTITY_ROLLBACK_ORACLE',['INVALID_REPORT']],
  ['deferred-current-observation-identity-omitted','workflow-engine.js',"if(collection==='regressionExecutions')return project?globalThis.closedLoopWorkflowEngine.deferredReceiptObservationIdentity(project,record,evidence):null;","if(collection==='regressionExecutions')return null;", 'DEFERRED_RECEIPT_TARGET_IDENTITY_ORACLE',['SATISFIED']]
 ]){

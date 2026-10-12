@@ -1,6 +1,9 @@
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
+import {verifyExternalChatLauncherContract} from './test-handoff-policy.mjs';
+
+if(process.argv.includes('--external-chat-launcher-only')){console.log(JSON.stringify(await verifyExternalChatLauncherContract()));process.exit(0);}
 
 const assert=(condition,message)=>{if(!condition)throw new Error(message);};
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};

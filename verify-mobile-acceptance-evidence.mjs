@@ -140,7 +140,7 @@ function operationObserved(kind,o,target){
     case 'VALIDATION_FAILURE_RECOVERED':return o.valid===true&&NONEMPTY(o.rawResponseId)&&NONEMPTY(o.validationId)&&NONEMPTY(o.rejectedReceiptId)&&NONEMPTY(o.rejectedResponseId);
     case 'PROPOSAL_REVIEWED_AND_ACCEPTED':return NONEMPTY(o.proposalId)&&NONEMPTY(o.rawResponseId)&&Number.isSafeInteger(o.stage);
     case 'PERSISTENCE_RELOAD_VERIFIED':return SHA256(o.projectSha256)&&o.projectSha256===o.readBackProjectSha256&&NONEMPTY(o.tabId)&&NONEMPTY(o.reloadedTabId)&&o.tabId!==o.reloadedTabId&&Number.isSafeInteger(o.revision);
-    case 'ACCESSIBILITY_AND_OVERFLOW_VERIFIED':return finite(o.horizontalOverflowPx)&&o.horizontalOverflowPx<=1&&o.minimumPrimaryTextPx>=16&&o.minimumSecondaryTextPx>=14&&o.minimumTouchTargetPx>=44&&NONEMPTY(o.focusTarget)&&NONEMPTY(o.liveRegion)&&NONEMPTY(o.liveAnnouncement);
+    case 'ACCESSIBILITY_AND_OVERFLOW_VERIFIED':return projectAuthority().schema.uiAcceptanceMeasurementIssues(o).length===0&&o.focused===true&&o.liveAnnounced===true&&NONEMPTY(o.focusTarget)&&NONEMPTY(o.liveRegion)&&NONEMPTY(o.liveAnnouncement);
     case 'DEPLOYED_BUILD_IDENTITY_VERIFIED':return NONEMPTY(o.buildIdentity)&&Array.isArray(o.resources)&&['app-core.js','test-runtime.js','test-worker.js','project-store.js'].every(path=>o.resources.some(r=>r.path===path&&file(r)));
     case 'RUNTIME_EXCEPTION_CHECK_COMPLETED':return o.runtimeExceptions===0&&o.unhandledRejections===0&&Array.isArray(o.observedTabs)&&o.observedTabs.length>0;
     default:return false;
@@ -244,10 +244,7 @@ export function verifyMobileAcceptanceEvidence({target,evidence,expected={},used
   if(findings.runtimeExceptions!==0)issue(errors,'RUNTIME_EXCEPTION_PRESENT','Physical-device run reported a runtime exception.');
   if(findings.unhandledRejections!==0)issue(errors,'UNHANDLED_REJECTION_PRESENT','Physical-device run reported an unhandled rejection.');
   const measurements=evidence.measurements||{};
-  if(!finite(measurements.horizontalOverflowPx)||measurements.horizontalOverflowPx>1)issue(errors,'HORIZONTAL_OVERFLOW_INVALID','Horizontal overflow must be measured and at most 1 CSS px.');
-  if(!finite(measurements.minimumPrimaryTextPx)||measurements.minimumPrimaryTextPx<16)issue(errors,'PRIMARY_TEXT_FLOOR_INVALID','Primary body and control text must be at least 16 CSS px.');
-  if(!finite(measurements.minimumSecondaryTextPx)||measurements.minimumSecondaryTextPx<14)issue(errors,'SECONDARY_TEXT_FLOOR_INVALID','Secondary metadata must be at least 14 CSS px.');
-  if(!finite(measurements.minimumTouchTargetPx)||measurements.minimumTouchTargetPx<44)issue(errors,'TOUCH_TARGET_FLOOR_INVALID','Interactive targets must meet the 44 CSS px minimum.');
+  for(const finding of projectAuthority().schema.uiAcceptanceMeasurementIssues(measurements))issue(errors,finding.code,finding.message);
 
   if(!NONEMPTY(evidence.exportedProjectDigest)||!SHA256(evidence.exportedProjectDigest))issue(errors,'EXPORTED_PROJECT_DIGEST_INVALID','Exported project digest must be present and SHA-256 encoded.');
   if(evidence.exportedProjectDigest!==receipts.find(r=>r.kind==='BACKUP_RESTORED_FROM_EXPORTED_COPY')?.observation?.sha256)issue(errors,'EXPORTED_PROJECT_RECEIPT_MISMATCH','The exported project digest must match the selected exported backup bytes that were restored.');

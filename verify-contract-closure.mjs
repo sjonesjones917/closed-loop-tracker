@@ -1,17 +1,21 @@
+import {verifyDerivationReceiptContract,verifyConvergenceRegisteredDefinitionChange,verifyProjectProjectionReceiptContract,verifyProjectProjectionStoreContract,verifyCarrierDerivationMetadata} from './test-derivation-receipt-contract.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import { webcrypto } from 'node:crypto';
 import {createHash} from 'node:crypto';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
+import {verifyUiAcceptanceContract,verifyUiAcceptancePresentation} from './test-ui-acceptance-contract.mjs';
+import {verifyExpectedVarianceContract} from './test-expected-variance-contract.mjs';
 import {verifySpecifiedJobFieldRegistry,verifySpecifiedJobFieldMutants,verifySpecifiedCarrierFieldRegistry,verifySpecifiedCarrierFieldMutants,verifyConditionalDeferredManifestCarrier,verifyRecoverySourceReferenceCarrier,verifyBackupImportStagingCarrier,verifyResponseStagingRecoveryCarriers,verifyJobPointerTargets,verifyMobileAcceptanceSessionCarriers,verifyMobileAcceptanceSessionMergeContract,verifyArtifactByteReferenceCarrier} from './test-specification-field-registry.mjs';
 
-function loadSchema(source=fs.readFileSync('workflow-schema.js','utf8')){
+function loadSchema(source=fs.readFileSync('workflow-schema.js','utf8'),onContext=null){
   const context={console,TextEncoder,TextDecoder,crypto:webcrypto,dispatchEvent(){},Event:function Event(type){this.type=type}};
   context.globalThis=context;
   createVerifierRuntime(context);
   for(const file of ['workbook.js','hash.js'])vm.runInContext(fs.readFileSync(file,'utf8'),context,{filename:file});
   vm.runInContext(source,context,{filename:'workflow-schema.js'});
+  onContext?.(context);
   return context.closedLoopWorkflowSchema;
 }
 
@@ -177,6 +181,15 @@ function verify(source){
 
 const source=fs.readFileSync('workflow-schema.js','utf8');
 const result=verify(source);
+const expectedVarianceContract=await verifyExpectedVarianceContract({sourceOverrides:{'workflow-schema.js':source}});
+let derivationRealmParse;const derivationSchema=loadSchema(source,context=>{derivationRealmParse=vm.runInContext('(text)=>JSON.parse(text)',context);});
+const derivationReceiptContract=verifyDerivationReceiptContract(derivationSchema,value=>derivationRealmParse(JSON.stringify(value)));
+const convergenceRegisteredDefinitionChange=await verifyConvergenceRegisteredDefinitionChange();
+const projectProjectionReceiptContract=verifyProjectProjectionReceiptContract(derivationSchema,value=>derivationRealmParse(JSON.stringify(value)));
+const carrierDerivationMetadata=verifyCarrierDerivationMetadata(derivationSchema);
+const projectProjectionStoreContract=await verifyProjectProjectionStoreContract();
+const uiAcceptanceRegistry=verifyUiAcceptanceContract(loadSchema(source));
+const uiAcceptancePresentation=await verifyUiAcceptancePresentation(loadSchema(source));
 // The literal source table is checked separately from the declaration-derived
 // registry consistency tests. Run its coherent mutation controls once.
 const specificationJobFields=verifySpecifiedJobFieldRegistry(loadSchema(source));
@@ -246,4 +259,4 @@ for(const [field,omittedValue] of [['SOURCE_KIND','PROOF_OBLIGATION'],['VERIFICA
 assert.equal(fs.readFileSync('workflow-schema.js','utf8'),source,'FIELD_REGISTRY_SOURCE_UNCHANGED_ORACLE');
 const restored=verify(source);
 assert.deepEqual(restored,result,'FIELD_REGISTRY_RESTORED_ORACLE');
-console.log(JSON.stringify({...result,specificationJobFields,specificationJobFieldMutants,specificationCarrierFields,specificationCarrierFieldMutants,conditionalDeferredManifestCarrier,recoverySourceReferenceCarrier,backupImportStagingCarrier,responseStagingRecoveryCarriers,jobPointerTargets,mobileAcceptanceSessionCarriers,mobileAcceptanceSessionMerge,artifactByteReferenceCarrier,registryFaults,receiptContractFaults,timingContractFaults,timingEnumContractFaults,sourceSha256:createHash('sha256').update(source).digest('hex'),sourceRestored:true,restored:'PASS'}));
+console.log(JSON.stringify({...result,expectedVarianceContract,derivationReceiptContract,convergenceRegisteredDefinitionChange,projectProjectionReceiptContract,projectProjectionStoreContract,carrierDerivationMetadata,uiAcceptanceRegistry,uiAcceptancePresentation,specificationJobFields,specificationJobFieldMutants,specificationCarrierFields,specificationCarrierFieldMutants,conditionalDeferredManifestCarrier,recoverySourceReferenceCarrier,backupImportStagingCarrier,responseStagingRecoveryCarriers,jobPointerTargets,mobileAcceptanceSessionCarriers,mobileAcceptanceSessionMerge,artifactByteReferenceCarrier,registryFaults,receiptContractFaults,timingContractFaults,timingEnumContractFaults,sourceSha256:createHash('sha256').update(source).digest('hex'),sourceRestored:true,restored:'PASS'}));

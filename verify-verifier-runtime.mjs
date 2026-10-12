@@ -106,6 +106,40 @@ const aborted=await persistenceRuntime.runtime.openStorageTransaction(['meta'],'
 assert.equal(read.value.retained,7,'VERIFIER_PERSISTENCE_TRANSACTION_INPUT_ORACLE');read.value.retained=23;aborted.objectStore('meta').put(read);aborted.abort();
 assert.throws(()=>aborted.commit(),/Transaction aborted/,'VERIFIER_PERSISTENCE_TRANSACTION_ABORT_ORACLE');
 assert.equal(persistenceRuntime.rows.get('meta').get(transactionInput.key).value.retained,7,'VERIFIER_PERSISTENCE_TRANSACTION_ABORT_ORACLE');
+// Transaction setup snapshots store membership; public reads/writes still clone.
+// Direct backing-map corruption is test setup, not a production transaction API.
+const adapterSnapshotControls=[];
+const adapterCheck=(caseId,check)=>{check();adapterSnapshotControls.push(caseId);};
+const initialSnapshotWrite=await persistenceRuntime.runtime.openStorageTransaction('meta','readwrite');
+initialSnapshotWrite.objectStore('meta').put({key:'snapshot-retained',group:'snapshot',value:{nested:7}});
+initialSnapshotWrite.objectStore('meta').put({key:'snapshot-deleted',group:'snapshot',value:{nested:8}});initialSnapshotWrite.commit();
+const heldSnapshot=await persistenceRuntime.runtime.openStorageTransaction('meta','readonly'),heldStore=heldSnapshot.objectStore('meta');
+const selectedRead=heldStore.get('snapshot-retained').result;selectedRead.value.nested=999;
+adapterCheck('get-result-isolated',()=>assert.equal(heldStore.get('snapshot-retained').result.value.nested,7,'VERIFIER_TRANSACTION_GET_ISOLATION_ORACLE'));
+const allRead=heldStore.getAll().result;allRead.find(row=>row.key==='snapshot-retained').value.nested=999;
+adapterCheck('getAll-result-isolated',()=>assert.equal(heldStore.get('snapshot-retained').result.value.nested,7,'VERIFIER_TRANSACTION_GETALL_ISOLATION_ORACLE'));
+const indexedRead=heldStore.index('group').getAll('snapshot').result;indexedRead[0].value.nested=999;
+adapterCheck('index-result-isolated',()=>assert.equal(heldStore.get('snapshot-retained').result.value.nested,7,'VERIFIER_TRANSACTION_INDEX_ISOLATION_ORACLE'));
+const changedWrite=await persistenceRuntime.runtime.openStorageTransaction('meta','readwrite'),changedStore=changedWrite.objectStore('meta'),changedInput={key:'snapshot-retained',group:'snapshot',value:{nested:17}};
+changedStore.put(changedInput);changedInput.value.nested=999;changedStore.delete('snapshot-deleted');changedStore.put({key:'snapshot-inserted',group:'snapshot',value:{nested:9}});changedWrite.commit();
+adapterCheck('put-input-isolated',()=>assert.equal(persistenceRuntime.rows.get('meta').get('snapshot-retained').value.nested,17,'VERIFIER_TRANSACTION_PUT_ISOLATION_ORACLE'));
+adapterCheck('prior-snapshot-retains-values',()=>assert.equal(heldStore.get('snapshot-retained').result.value.nested,7,'VERIFIER_TRANSACTION_SNAPSHOT_VALUE_ORACLE'));
+adapterCheck('prior-snapshot-retains-membership',()=>{assert.equal(heldStore.get('snapshot-deleted').result.value.nested,8,'VERIFIER_TRANSACTION_SNAPSHOT_DELETE_ORACLE');assert.equal(heldStore.get('snapshot-inserted').result,undefined,'VERIFIER_TRANSACTION_SNAPSHOT_INSERT_ORACLE');});
+heldStore.put({key:'snapshot-readonly-write',value:1});heldSnapshot.commit();
+adapterCheck('readonly-commit-does-not-publish',()=>assert.equal(persistenceRuntime.rows.get('meta').has('snapshot-readonly-write'),false,'VERIFIER_TRANSACTION_READONLY_COMMIT_ORACLE'));
+const graphNode={undefinedValue:undefined},graph={first:graphNode,second:graphNode,blob:new Blob(['retained graph bytes'])};graph.self=graph;
+const graphWrite=await persistenceRuntime.runtime.openStorageTransaction('meta','readwrite');graphWrite.objectStore('meta').put({key:'snapshot-graph',value:graph});graphWrite.commit();
+const graphReadTransaction=await persistenceRuntime.runtime.openStorageTransaction('meta','readonly'),graphRead=graphReadTransaction.objectStore('meta').get('snapshot-graph').result.value;
+adapterCheck('clone-graph-undefined-blob-preserved',()=>{assert.equal(graphRead.first,graphRead.second,'VERIFIER_TRANSACTION_GRAPH_ORACLE');assert.equal(graphRead.self,graphRead,'VERIFIER_TRANSACTION_GRAPH_ORACLE');assert.equal(Object.hasOwn(graphRead.first,'undefinedValue'),true,'VERIFIER_TRANSACTION_UNDEFINED_ORACLE');assert.notEqual(graphRead.first,graphNode,'VERIFIER_TRANSACTION_GRAPH_ISOLATION_ORACLE');assert.equal(graphRead.blob,graph.blob,'VERIFIER_TRANSACTION_IMMUTABLE_BLOB_ORACLE');});graphReadTransaction.commit();
+// This accessor is only an instrumentation sentinel in the private adapter map;
+// it is never submitted as canonical application data or a stored project.
+let unreadTraversals=0;const unreadSentinel={key:'snapshot-unread-cost',get value(){unreadTraversals++;return {largeUnrequestedBody:'not requested'};}};
+persistenceRuntime.rows.get('meta').set(unreadSentinel.key,unreadSentinel);
+const countOnly=await persistenceRuntime.runtime.openStorageTransaction('meta','readonly');countOnly.objectStore('meta').count();countOnly.commit();
+adapterCheck('unread-rows-not-traversed-on-open-count',()=>assert.equal(unreadTraversals,0,'VERIFIER_TRANSACTION_UNREAD_ROW_TRAVERSAL_ORACLE'));
+persistenceRuntime.rows.get('meta').delete(unreadSentinel.key);
+const graphCleanup=await persistenceRuntime.runtime.openStorageTransaction('meta','readwrite');graphCleanup.objectStore('meta').delete('snapshot-graph');graphCleanup.commit();
+adapterCheck('existing-abort-control-retained',()=>assert.equal(persistenceRuntime.rows.get('meta').get(transactionInput.key).value.retained,7,'VERIFIER_PERSISTENCE_TRANSACTION_ABORT_ORACLE'));
 const healthy=await persistenceRuntime.store.createProject({commandId:'NATIVE-GLOBAL-PERSISTENCE-PARITY'});
 assert.equal((await persistenceRuntime.store.readProject(healthy.job.JOB_ID)).projectSha256,healthy.projectSha256,'VERIFIER_NATIVE_PRODUCTION_STORE_ORACLE');
 const sourceOverride=fs.readFileSync('project-store.js','utf8')+'\nglobalThis.fixtureSourceOverrideExecuted=true;\n';
@@ -173,4 +207,4 @@ if(!process.argv.includes('--fault-probe')){
   assert.equal(restored.status,0,restored.stderr);faults.push({restoredImplementation:'PASS',stdout:restored.stdout,stderr:restored.stderr});
  }finally{fs.rmSync(directory,{recursive:true,force:true});}
 }
-console.log(JSON.stringify({verifierRuntime:'PASS',required,hostRealm:'PASS',explicitOverride:'PASS',nativeGlobal:{canonicalParity,rejectedCanonical,realmIsolation:true,cloneGraphPreserved:true,transactionAbortPreserved:true,productionStoreReadback:true,sourceFaultDetected:true},consumerCount:consumers.length,independentContextAuthorities:independent.length,faults},null,2));
+console.log(JSON.stringify({verifierRuntime:'PASS',required,hostRealm:'PASS',explicitOverride:'PASS',nativeGlobal:{canonicalParity,rejectedCanonical,realmIsolation:true,cloneGraphPreserved:true,transactionAbortPreserved:true,adapterSnapshotControls,productionStoreReadback:true,sourceFaultDetected:true},consumerCount:consumers.length,independentContextAuthorities:independent.length,faults},null,2));

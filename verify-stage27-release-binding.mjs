@@ -54,7 +54,18 @@ function injectRelease(p,{determination='ACCEPTED',releaseEvidenceSha256='fabric
   const binding=engine.releaseBinding(p);
   assert.equal(binding.metrics.productOk,false,'Missing product evidence must normalize to boolean false.');
   assert.equal(binding.determination,'BLOCKED','The intentionally incomplete fixture must calculate BLOCKED.');
-  assert.equal(binding.evidenceDigest,hash.sha256Value({metrics:binding.metrics,inputReferences:binding.metrics.inputReferences}),'Release evidence digest is not the canonical current binding.');
+  // Section34.3 binds actual canonical inputs, not just aggregate counts and
+  // record IDs. The previous ad-hoc digest oracle could not detect a changed
+  // source whose aggregate disposition remained BLOCKED.
+  assert.equal(binding.canonicalInput.calculation,'stage27.release/3');
+  assert.equal(binding.canonicalInput.derivationId,'closed-loop-derivation/stage27-release/3');
+  assert.equal(binding.canonicalInput.sourceBinding.projection,'CANONICAL_RECORD');
+  assert.equal(binding.evidenceDigest,hash.sha256Value(binding.canonicalInput),'Release evidence digest does not bind the retained canonical calculation input.');
+  for(const family of ['processAudits','productAudits'])for(const audit of engine.recordsForCurrentScope(p,family)){
+    const source=binding.canonicalInput.sourceBinding.records.find(row=>row.family===family&&row.id===engine.recordId(audit,family));
+    assert(source,'Release source receipt omitted the actual current '+family+' record.');
+    assert.equal(source.sha256,hash.recordSha256(audit),'Release source receipt used a label instead of the actual canonical '+family+' hash.');
+  }
   injectRelease(p,{determination:'ACCEPTED',releaseEvidenceSha256:binding.evidenceDigest});
   assert.equal(engine.gate(27,p).complete,false,'Stage 27 accepted a release record that contradicts the current application calculation.');
   assert.deepEqual(engine.gate(27,p).reasons,['The current release determination is not bound to the exact application-calculated release evidence, disposition, product, and baseline identities.']);
@@ -77,6 +88,18 @@ function injectRelease(p,{determination='ACCEPTED',releaseEvidenceSha256='fabric
   p.stages[26].status='COMPLETE';p.stages[26].gate={complete:true,blocked:false,reasons:[]};
   assert.equal(engine.gate(27,p).complete,true,'Current application-derived release binding failed Stage 27.');
   assert.equal(engine.recordReleaseDetermination(p).RELEASE_ID,first.RELEASE_ID,'Exact release recalculation retry is not idempotent.');
+  const absentReceipt=engine.clone(first);delete absentReceipt.derivationReceipt;
+  assert.equal(engine.releaseRecordMatchesBinding(absentReceipt,engine.releaseBinding(p)),false,'A missing application derivation receipt remained current.');
+  const unrelatedHistory=engine.clone(p);unrelatedHistory.projectData.history.push({eventId:'SYNTHETIC-UNRELATED-HISTORY',type:'SYNTHETIC_REVIEW_NOTE'});unrelatedHistory.revision++;
+  assert.equal(engine.releaseRecordMatchesBinding(first,engine.releaseBinding(unrelatedHistory)),true,'Unrelated History or project revision invalidated the current release calculation.');
+  // This is an isolated canonical-source fault, not a reauthorized audit or a
+  // full release bypass. Unknown extension data is part of CANONICAL_RECORD.
+  const changedSource=engine.clone(p),audit=engine.recordsForCurrentScope(changedSource,'processAudits')[0],beforeSource=engine.releaseBinding(changedSource);
+  audit.syntheticRetainedSourceNote='Changed canonical extension while the release metric values remain identical.';engine.refreshRecordHashes(audit,'processAudits');
+  const afterSource=engine.releaseBinding(changedSource);
+  assert.deepEqual(afterSource.metrics,beforeSource.metrics,'The changed-source control did not hold aggregate release metrics constant.');
+  assert.notEqual(afterSource.evidenceDigest,beforeSource.evidenceDigest,'Changed actual source data was hidden by unchanged aggregate metrics and record IDs.');
+  assert.equal(engine.releaseRecordMatchesBinding(first,afterSource),false,'Changed source data retained a current release receipt.');
   const beforeHash=first.releaseEvidenceSha256;
   // Reauthor/review the current audit through real custody. Reintroduce the
   // formerly calculated record as a controlled stale-input counterexample;
@@ -137,4 +160,4 @@ assert.equal(engine.selectReleaseDisposition({refutedMandatoryCount:1,blockingCo
 assert.equal(engine.selectReleaseDisposition({refutedMandatoryCount:0,blockingConditionCount:1}),'BLOCKED');
 assert.equal(engine.selectReleaseDisposition({refutedMandatoryCount:0,blockingConditionCount:0}),'ACCEPTED');
 
-console.log(JSON.stringify({stage27ReleaseBinding:'PASS',invalidFixtures:2,repairedFixtures:2,releasePrecedence:'PASS',idempotency:'PASS',optionalAdvisoryNonGating:'PASS',truthfulOperatorText:'PASS',applicationOwnedActionText:'PASS',structuredActionPurity:'PASS',digest:hash.sha256Value('stage27-release-binding-v5')}));
+console.log(JSON.stringify({stage27ReleaseBinding:'PASS',invalidFixtures:2,repairedFixtures:2,releasePrecedence:'PASS',idempotency:'PASS',optionalAdvisoryNonGating:'PASS',truthfulOperatorText:'PASS',applicationOwnedActionText:'PASS',structuredActionPurity:'PASS',registeredDerivationReceipt:'PASS',selectedCanonicalSourceIdentity:'PASS',missingReceiptRejected:'PASS',historyOnlyChangeCurrent:'PASS',sameAggregateSourceChangeStale:'PASS',derivationCases:['registered-contract-and-selected-audits','missing-receipt','history-only-stability','same-aggregate-source-change'],digest:hash.sha256Value('stage27-release-binding-v6')}));

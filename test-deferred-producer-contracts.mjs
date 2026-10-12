@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
-import {projectStoreRuntime,bindAcceptanceUi} from './test-project-store-runtime.mjs';
+import {projectStoreRuntime,bindAcceptanceUi,captureArtifactFixture,restoreArtifactFixture,hydrateRetainedPromptContexts} from './test-project-store-runtime.mjs';
 import {authorizeFixtureHandoff,deferredDefinitionRestorationFixture,deferredReviewedPrerequisiteFixture,deferredDefinitionAdmissionFixture,deferredFailureExecutionResponseFixture} from './test-fixtures.mjs';
 import {readStoreArchive} from './test-zip.mjs';
 
@@ -81,24 +81,36 @@ async function conditionalCase(spec,sourceOverrides={}){
 
 export async function verifyDeferredHandoffMaterialContract(){return conditionalCase(expectedOperations[0]);}
 
-export async function verifyDeferredFeedbackScope(){
- const r=producerRuntime(),{p}=await deferredDefinitionRestorationFixture(r,{family:'failureTests',executionStage:8}),projected=r.copy(p);
- // This is a consumer-only projection of an accepted receipt's still-incomplete
- // ordinary stage, not an accepted-change or persistence fixture.
- projected.projectData.acceptedChanges.push(r.copy({stage:8,status:'COMMITTED',responseType:'DATA_PROPOSAL',operation:'EXECUTE_FAILURE_TEST'}));
- projected.stages[8].gate=r.copy({complete:false,blocked:false,reasons:['SYNTHETIC_ORDINARY_INSTRUCTION_STILL_REQUIRED']});
- const context=r.prompts.contextFor(8,projected,'EXECUTE_FAILURE_TEST',r.prompts.scopeFor(8,projected,{},'EXECUTE_FAILURE_TEST'));
- assert(context.includes('SYNTHETIC_ORDINARY_INSTRUCTION_STILL_REQUIRED'),'DEFERRED_FEEDBACK_SCOPE_ORACLE: contextual gate facts lost');
+export async function verifyDeferredFeedbackScope({sourceOverrides={}}={}){
+ const r=producerRuntime({sourceOverrides}),{p}=await deferredDefinitionRestorationFixture(r,{family:'failureTests',executionStage:8}),projected=r.copy(p),operation='EXECUTE_FAILURE_TEST',scope=r.prompts.scopeFor(8,p,{},operation);
+ // Consumer-only feedback fixture: prior stage-wide prose is another actor's
+ // conclusion, not authorized input merely because the selected test is due.
+ const marker='SYNTHETIC_ORDINARY_INSTRUCTION_STILL_REQUIRED',correction='SYNTHETIC_PRIOR_INDEPENDENT_CORRECTION';
+ projected.projectData.acceptedChanges.push(r.copy({stage:8,status:'COMMITTED',responseType:'DATA_PROPOSAL',operation}));
+ projected.stages[8].gate=r.copy({complete:false,blocked:false,reasons:[marker]});
+ projected.projectData.rejectedResponses.push(r.copy({stage:8,operation,scope,requestCorrection:true,rejectedResponseId:'SYNTHETIC-DEFERRED-REJECTION',rawResponseId:'SYNTHETIC-DEFERRED-RAW',reason:correction}));
+ assert.equal(r.prompts.deferredExecutionContextPolicy(projected,8,operation).independentReview,true,'DEFERRED_FEEDBACK_INDEPENDENT_ROUTE_ORACLE');
+ const before=JSON.stringify(projected),prompt=r.prompts.buildPromptRecord(8,projected,{operation,scope}),files=r.prompts.materializePromptContextFiles(prompt,projected),carriers=[prompt.prompt,JSON.stringify(prompt.contextManifest),...files.map(file=>file.text)];
+ for(const text of carriers)for(const withheld of [marker,correction])assert(!text.includes(withheld),'DEFERRED_FEEDBACK_INDEPENDENT_WITHHOLD_ORACLE: '+withheld);
+ assert(prompt.prompt.includes('Acceptance of this receipt does not complete the ordinary stage'),'DEFERRED_FEEDBACK_INDEPENDENT_BOUNDARY_ORACLE');
+ assert.equal(JSON.stringify(projected),before,'DEFERRED_FEEDBACK_HISTORY_PRESERVED_ORACLE');
+ const ordinary=r.prompts.contextFor(8,projected,'COMPLETE',r.prompts.scopeFor(8,projected,{},'COMPLETE'));assert(ordinary.includes('CURRENT STAGE FINDINGS — RESOLVE THROUGH THIS OPERATION'),'DEFERRED_FEEDBACK_SCOPE_ORACLE: ordinary correction guidance lost');
+ // Preserve the existing legitimate gate/correction feedback case on the tool
+ // route. This projection changes only the tested policy input, never records.
+ const owner=r.runtime.closedLoopWorkflowEngine,tool=item=>({...item,route:{...item.route,executionMode:'EXTERNAL_AGENT_TOOL'}});
+ r.runtime.closedLoopWorkflowEngine=Object.freeze({...owner,currentDeferredExecution:(...args)=>tool(owner.currentDeferredExecution(...args)),deferredExecutionPlan:(...args)=>{const plan=owner.deferredExecutionPlan(...args);return {...plan,pending:plan.pending.map(tool)};}});
+ vm.runInContext(sourceOverrides['prompt-engine.js']??fs.readFileSync('prompt-engine.js','utf8'),r.runtime,{filename:'prompt-engine.js:tool-feedback-policy-projection'});
+ const context=r.runtime.closedLoopPromptEngine.contextFor(8,projected,operation,scope);
+ assert(context.includes(marker)&&context.includes(correction),'DEFERRED_FEEDBACK_TOOL_CONTEXT_ORACLE');
  assert(context.includes('CURRENT STAGE STATUS — COMPLETE ONLY THE BOUND EXECUTION; OTHER STAGE WORK REMAINS APPLICATION-ROUTED'),'DEFERRED_FEEDBACK_SCOPE_ORACLE: missing operation boundary');
  assert(!context.includes('CURRENT STAGE FINDINGS — RESOLVE THROUGH THIS OPERATION'),'DEFERRED_FEEDBACK_SCOPE_ORACLE: unrelated ordinary work requested');
- const ordinary=r.prompts.contextFor(8,projected,'COMPLETE',r.prompts.scopeFor(8,projected,{},'COMPLETE'));assert(ordinary.includes('CURRENT STAGE FINDINGS — RESOLVE THROUGH THIS OPERATION'),'DEFERRED_FEEDBACK_SCOPE_ORACLE: ordinary correction guidance lost');
- return {case:'CONDITIONAL_FEEDBACK_SCOPE',passed:true,ordinaryGateFactsRetained:true,unrelatedWorkNotRequested:true,ordinaryAuthorGuidanceRetained:true,syntheticConsumerProjection:true,actualAcceptanceClaimed:false};
+ return {case:'CONDITIONAL_FEEDBACK_SCOPE',passed:true,ordinaryGateFactsRetained:true,unrelatedWorkNotRequested:true,ordinaryAuthorGuidanceRetained:true,syntheticConsumerProjection:true,actualAcceptanceClaimed:false,independentFeedbackWithheld:true,allGeneratedCarriersInspected:true,historyPreserved:true,toolFeedbackRetained:true};
 }
 
 export async function verifyDeferredProducerContracts(){
  const source=fs.readFileSync('prompt-engine.js','utf8'),r=producerRuntime(),registered=Object.values(r.runtime.closedLoopWorkflowSchema.STAGE_OPERATION_REGISTRY).filter(row=>row.deferredSubjectFamily).map(row=>row.stage+':'+row.operation).sort();
  assert.deepEqual(registered,expectedOperations.map(row=>row.stage+':'+row.operation).sort(),'DEFERRED_PRODUCER_REGISTRY_POPULATION_ORACLE');
- const feedbackScope=await verifyDeferredFeedbackScope(),independentRetry=await verifyDeferredIndependentRetryContracts(),negatives=[];
+ const feedbackScope=await verifyDeferredFeedbackScope(),independentRetry=await verifyDeferredIndependentRetryContracts(),historicalReceiptIsolation=await verifyDeferredHistoricalReceiptIsolation(),negatives=[];
  for(const [name,spec,anchor,replacement,oracle]of [
   ['ordinary-stage-procedure',expectedOperations[0],'if(deferred)return deferred;','if(false&&deferred)return deferred;','DEFERRED_PRODUCER_OPERATION_ORACLE'],
   ['ordinary-stage21-output-slot',expectedOperations.find(row=>row.stage===21),'product=!deferred&&Number(stage)===21','product=Number(stage)===21','DEFERRED_PRODUCER_FILE_POLICY_ORACLE']
@@ -106,7 +118,7 @@ export async function verifyDeferredProducerContracts(){
  const observations=[];for(const spec of expectedOperations)observations.push(await conditionalCase(spec));
  const ordinary=producerRuntime(),{p}=await deferredDefinitionRestorationFixture(ordinary,{family:'failureTests',executionStage:8}),control=await buildPacket(ordinary,p,8,'COMPLETE');assert(control.instruction.includes(ordinarySentinels[8]),'DEFERRED_PRODUCER_ORDINARY_CONTROL_ORACLE');assert(!control.instruction.includes('OPERATION COMPLETION BOUNDARY'));assert(control.manifest.responseContract.agentWritableCollections.includes('instructions'));
  const ordinaryPolicies=[[11,'EXECUTE_RUN','RUN_OUTPUT',0],[21,'COMPLETE','FINISHED_PRODUCT',1]].map(([stage,operation,role,required])=>{const policy=ordinary.prompts.responseContractDescriptor(stage,operation).returnedFilePolicy;assert.equal(policy.role,role);assert.equal(policy.requiredFileCount,required);return {stage,operation,role,requiredFileCount:required};});
- return {case:'CONDITIONAL_OPERATION_PRODUCER_CONTRACTS',passed:true,expectedOperations:38,observedOperations:observations.length,observations,negatives,feedbackScope,independentRetry,ordinaryStage8SavedZip:true,ordinaryPolicies,synthetic:true,actualBrowser:false,realExternalActor:false,boundary:'Actual production reserve/build, saved canonical instruction, createExecutionPackage and every extracted instruction/manifest/context carrier. Stage8 uses genuinely completed archived synthetic predecessors. Later stages explicitly project prerequisite status only to isolate the producer; those flags prove no preceding execution, admission, stage completion or release.'};
+ return {case:'CONDITIONAL_OPERATION_PRODUCER_CONTRACTS',passed:true,expectedOperations:38,observedOperations:observations.length,observations,negatives,feedbackScope,independentRetry,historicalReceiptIsolation,ordinaryStage8SavedZip:true,ordinaryPolicies,synthetic:true,actualBrowser:false,realExternalActor:false,boundary:'Actual production reserve/build, saved canonical instruction, createExecutionPackage and every extracted instruction/manifest/context carrier. Stage8 uses genuinely completed archived synthetic predecessors. Later stages explicitly project prerequisite status only to isolate the producer; those flags prove no preceding execution, admission, stage completion or release.'};
 }
 
 // An independent test retry must retain recoverable work in storage while
@@ -184,4 +196,50 @@ export async function verifyDeferredIndependentRetryContracts(){
  assert.equal(producer.deferredExecutionContextPolicy(rejected.p,8,'EXECUTE_FAILURE_TEST').requiresFreshConversation,false,'DEFERRED_TOOL_PRIOR_WORK_CONTROL_ORACLE');
  assert.equal(producer.contextContentAuthorization(rejected.p,{stage:12,operation:'VERIFY',family:'rawResponses',record:raw,purpose:'RETRY_SUBSTANCE'}).allowed,false,'DEFERRED_ORDINARY_REVIEW_ISOLATION_CONTROL_ORACLE');
  return {case:'CONDITIONAL_INDEPENDENT_RETRY_CONTEXT',passed:true,observations,intendedRawLeakDetected:true,intendedCanonicalLeakDetected:true,toolPriorWorkAllowed:true,toolControlBoundary:'Synthetic selected-route policy consumer only; no canonical test/capability mutation or tool execution claimed.',ordinaryVerifierWithholdPreserved:true,synthetic:true,actualBrowser:false,actualExternalActor:false,boundary:'Actual saved instruction/ZIP, response-file capture, wrong-type rejection or accepted UNDETERMINED receipt via operator persistence, and replacement ZIP. Every exported member and metadata carrier checked; original raw/returned bytes retained. Fresh external conversation is instructed, never claimed observed.'};
+}
+
+// Reuse one actual reviewed-definition/correction prefix for isolated historical
+// and current producer forks. Synthetic observations never claim a real actor.
+export async function verifyDeferredHistoricalReceiptIsolation(){
+ const source=fs.readFileSync('prompt-engine.js','utf8'),feedbackAnchor="||deferredExecutionContextPolicy(state,stage,operation)?.independentReview",versionAnchor="const DEFERRED_FEEDBACK_PROMPT_VERSION='closed-loop-prompt-engine/100';";
+ assert.equal(source.split(feedbackAnchor).length,2);assert.equal(source.split(versionAnchor).length,2);
+ // Documented equivalent of the historical /90 feedback producer: only the
+ // deferred feedback withholding condition and its epoch are restored. All
+ // identities, byte handoff, admission, persistence and gates remain production.
+ const oldSource=source.replace(feedbackAnchor,'').replace(versionAnchor,"const DEFERRED_FEEDBACK_PROMPT_VERSION='closed-loop-prompt-engine/90';"),current={},legacy={'prompt-engine.js':oldSource};
+ const report={case:'CONDITIONAL_HISTORICAL_RECEIPT_ISOLATION',passed:true,synthetic:true,actualBrowser:false,actualExternalActor:false,cases:[],boundary:'One shared genuinely completed reviewed-definition prefix; actual saved ZIP, staged response, operator rejection and acceptance, save/reload, and fresh review supersession. Historical receipt eligibility only; no ordinary Stage8 completion or release claim.'};
+const stage=8,operation='EXECUTE_FAILURE_TEST',marker='FORBIDDEN_HISTORICAL_DEFERRED_CORRECTION_SUBSTANCE';
+async function submit(r,p,packet){
+ const e=r.engine,i=r.ingestion,{prompt,manifest}=packet,draft=r.copy(p),response=await deferredFailureExecutionResponseFixture({schema:r.runtime.closedLoopWorkflowSchema,hash:r.runtime.closedLoopHash},manifest,prompt.contextManifest.deferredExecutionBinding),envelope=response.envelope,files=[];
+ assert.equal(response.actualInvalidRejected,true);assert.equal(response.actualConformingAccepted,true);assert.equal(envelope.records.regressionExecutions[0].fields.RESULT,'SATISFIED');
+ for(const returned of response.returnedAttachments){const declaration=envelope.attachments.find(row=>row.temporaryKey===returned.temporaryKey),blob=new Blob([returned.bytes],{type:declaration.mediaType}),artifactId=e.allocateId(draft,'artifacts',r.copy({targetSlot:declaration.attachmentSlotId,payload:{stage,filename:declaration.filename,mediaType:declaration.mediaType,byteSize:blob.size,sha256:declaration.sha256}}));const stored=await r.store.putArtifact({artifactId,jobId:p.job.JOB_ID,blob,filename:declaration.filename,mediaType:declaration.mediaType,expectedSha256:declaration.sha256});files.push({artifactId,name:stored.filename,type:stored.mediaType,size:stored.byteSize,sha256:stored.sha256,attachmentSlotId:declaration.attachmentSlotId});}
+ const text=JSON.stringify(envelope),staged=await r.store.stageResponseFile({jobId:p.job.JOB_ID,stage,blob:new Blob([text],{type:'application/json'}),rawFilename:'response.json',mediaType:'application/json',promptIdentity:manifest.promptIdentity,packageId:manifest.packageId,operationReservationId:manifest.operationReservationId,challengeNonce:manifest.challengeNonce}),file=await r.store.readStagedResponseFile({jobId:p.job.JOB_ID,stagingId:staged.stagingId});
+ const captured=i.captureRaw(draft,{stage,text,promptRecord:prompt,files:r.copy(files),transport:r.copy({authority:'AUTHORITATIVE_RESPONSE_FILE',stagingId:staged.stagingId,status:file.status,sha256:file.sha256,byteSize:file.byteSize,promptIdentity:manifest.promptIdentity,packageId:manifest.packageId,operationReservationId:manifest.operationReservationId,challengeNonce:manifest.challengeNonce})}),prepared=i.prepareCaptured(captured.project,{rawResponseId:captured.rawRecord.rawResponseId,promptRecord:prompt,expectedCommittedRevision:p.revision});
+ assert.equal(prepared.validation.valid,true,'HISTORICAL_DEFERRED_PROPOSAL_VALID_ORACLE '+JSON.stringify(prepared.validation.issues));p=await r.store.writeProject(prepared.project,{operational:true,expectedProjectRevision:p.revision,expectedStateSha256:p.projectSha256});return {p,proposalId:prepared.proposal.proposalId,rawId:captured.rawRecord.rawResponseId,text};
+}
+async function capture(r,p){const contextFiles=[],seen=new Set();for(const prompt of p.projectData.generatedPrompts)for(const identity of prompt.contextManifest?.promptContext?.attachments||[]){const key=JSON.stringify(identity);if(seen.has(key))continue;seen.add(key);const stored=await r.store.readPromptContextFile(prompt,p.job.JOB_ID,identity.path);contextFiles.push({...identity,text:await stored.blob.text()});}return {project:r.copy(p),artifacts:await captureArtifactFixture(r.store,p.job.JOB_ID),contextFiles,recordedAt:new r.runtime.Date().toISOString()};}
+async function restore(snapshot,sources){const r=producerRuntime({sourceOverrides:sources});r.runtime.Date=class extends Date{constructor(...args){super(...(args.length?args:[snapshot.recordedAt]));}static now(){return Date.parse(snapshot.recordedAt);}};await restoreArtifactFixture(r.store,snapshot.artifacts);let p=r.copy(snapshot.project);await hydrateRetainedPromptContexts(r,p,snapshot.contextFiles);p=await r.store.writeProject(p,{createOnly:true,expectedProjectRevision:0,incrementRevision:false});return {r,p};}
+async function accept(r,submitted){const impact=r.ingestion.acceptanceImpact(submitted.p,submitted.proposalId),failures=bindAcceptanceUi(r,submitted.p,submitted.proposalId);await r.runtime.accept();if(r.runtime.replacementReview)await r.runtime.confirm();assert.equal(failures.length,0,'HISTORICAL_DEFERRED_OPERATOR_ACCEPTANCE_ORACLE '+failures.map(e=>e.message).join(';'));return {p:await r.store.readProject(submitted.p.job.JOB_ID),impact};}
+function selected(r,p,subjectId){return r.engine.deferredExecutionPlan(p,stage,{operation}).items.find(row=>row.subjectId===subjectId);}
+const seed=producerRuntime({sourceOverrides:legacy}),restored=await deferredDefinitionRestorationFixture(seed,{family:'failureTests',executionStage:8});let p=restored.p;
+for(let n=1;n<stage;n++)assert.equal(seed.engine.gate(n,p).complete,true,'HISTORICAL_DEFERRED_ACTUAL_PREFIX_ORACLE '+n);
+assert.equal(seed.prompts.deferredExecutionContextPolicy(p,stage,operation).independentReview,true);const first=await buildPacket(seed,p,stage,operation);p=await seed.store.readProject(p.job.JOB_ID);const proposed=await submit(seed,p,first),rejection=seed.ingestion.reject(proposed.p,proposed.proposalId,{operator:'SYNTHETIC_HISTORICAL_REVIEW_OPERATOR',reason:marker+' Earlier reviewer proposed a substantive correction.',requestCorrection:true});p=await seed.store.writeProject(rejection.project,{expectedProjectRevision:proposed.p.revision,expectedStateSha256:proposed.p.projectSha256,mutationConfirmation:seed.store.mutationImpact(proposed.p,rejection.project)});assert(seed.ingestion.findRaw(p,proposed.rawId).completeRawResponse===proposed.text);const base=await capture(seed,p);
+for(const [kind,sources]of [['exposed',legacy],['clean',current]]){
+ const branch=await restore(base,sources),r=branch.r;let p=branch.p;const packet=await buildPacket(r,p,stage,operation);p=await r.store.readProject(p.job.JOB_ID);const exposedCarriers=packet.members.filter(row=>Buffer.from(row.bytes).toString('utf8').includes(marker)).map(row=>row.canonicalPath);assert.equal(exposedCarriers.length>0,kind==='exposed','HISTORICAL_DEFERRED_EXACT_PACKET_CONTROL_ORACLE '+kind);const submitted=await submit(r,p,packet),accepted=await accept(r,submitted);p=accepted.p;const subjectId=packet.manifest.deferredExecutionBinding.subjectId,prior=r.engine.records(p,'regressionExecutions').find(row=>row.rawResponseId===submitted.rawId);assert(prior,'HISTORICAL_DEFERRED_ACTUAL_RECEIPT_REQUIRED');const before=selected(r,p,subjectId);if(kind==='clean')assert.equal(before.completed,true,'HISTORICAL_DEFERRED_ADMITTED_RESULT_SETUP_ORACLE');
+ const snapshot=await capture(r,p);
+ const observed=await restore(snapshot,current),currentR=observed.r;let currentP=observed.p;currentR.engine.recalculate(currentP);const state=selected(currentR,currentP,subjectId),rawText=currentR.ingestion.findRaw(currentP,submitted.rawId).completeRawResponse;assert.equal(rawText,submitted.text);assert.equal(currentR.ingestion.findRaw(currentP,proposed.rawId).completeRawResponse,proposed.text);
+ const observation={kind,exposedCarriers,actualResponseFileAdmission:true,actualOperatorAcceptance:true,receiptId:prior.id,rawId:submitted.rawId,originalPromptVersion:packet.prompt.promptEngineVersion,oldProducerComplete:before.completed,currentDeferredComplete:state.completed,currentGate:currentR.engine.gate(stage,currentP),rawPreserved:true,oldCorrectionRawPreserved:true,packageSha256:packet.packageSha256,recovery:null};report.cases.push(observation);
+ if(kind==='clean')assert.equal(state.completed,true,'HISTORICAL_DEFERRED_CURRENT_VALID_CONTROL_ORACLE');
+ else{
+  assert.equal(state.completed,false,'HISTORICAL_DEFERRED_EXPOSED_RECEIPT_REJECTED_ORACLE');
+  // Restore only the missing evidence-owner check. The same already accepted
+  // response and exact artifact bytes must expose the original false completion.
+  const consumerAnchor="if(!isolation||!['CURRENT','NOT_APPLICABLE'].includes(isolation.determination))return null;",engineSource=fs.readFileSync('workflow-engine.js','utf8');assert.equal(engineSource.split(consumerAnchor).length,2);
+  const faulty=await restore(snapshot,{'workflow-engine.js':engineSource.replace(consumerAnchor,'/* synthetic historical missing receipt isolation check */')}),faultState=selected(faulty.r,faulty.p,subjectId);
+  assert.equal(faultState.completed,true,'HISTORICAL_DEFERRED_INTENDED_FAULT_CONTROL_ORACLE');observation.intendedMissingIsolationFaultDetected=true;
+const fresh=await buildPacket(currentR,currentP,stage,operation);currentP=await currentR.store.readProject(currentP.job.JOB_ID);for(const member of fresh.members)assert(!Buffer.from(member.bytes).toString('utf8').includes(marker),'HISTORICAL_DEFERRED_RECOVERY_PACKET_WITHHELD_ORACLE');const recovery=await submit(currentR,currentP,fresh),impact=currentR.ingestion.acceptanceImpact(recovery.p,recovery.proposalId);assert(JSON.stringify(impact).includes(prior.id),'HISTORICAL_DEFERRED_RECOVERY_EXACT_REPLACEMENT_ORACLE');const freshAccepted=await accept(currentR,recovery);currentP=freshAccepted.p;assert.equal(selected(currentR,currentP,subjectId).completed,true,'HISTORICAL_DEFERRED_RECOVERY_COMPLETE_ORACLE');assert.equal(currentR.ingestion.findRaw(currentP,submitted.rawId).completeRawResponse,submitted.text);assert.equal(currentR.ingestion.findRaw(currentP,proposed.rawId).completeRawResponse,proposed.text);assert.equal(currentR.engine.isActiveRecord(currentP.projectData.regressionExecutions.find(row=>row.id===prior.id)),false,'HISTORICAL_DEFERRED_RECOVERY_PRIOR_RETAINED_INACTIVE_ORACLE');observation.recovery={actualFreshReview:true,exactPriorReceiptSuperseded:true,oldRawPreserved:true,currentDeferredComplete:true};
+ }
+}
+
+ return report;
 }

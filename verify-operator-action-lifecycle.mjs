@@ -1,5 +1,7 @@
 import {verifyBackupImportStaging} from './test-backup-import-staging.mjs';
 import {verifyBackupStagingStore} from './test-backup-staging-store.mjs';
+import {verifyBackupExtensionByteRetention} from './test-backup-extension-byte-retention.mjs';
+import {verifyBackupExtensionBindingControls} from './test-backup-extension-binding-controls.mjs';
 import {verifyResponseStagingRecoveryUI} from './test-response-staging-recovery-ui.mjs';
 import {verifyOperatorSafetyFeedback} from './test-operator-safety-feedback.mjs';
 import {runVerifier,assertDetectedFault} from './verify-conformance-regressions.mjs';
@@ -179,7 +181,7 @@ const nodes=new Map(['project-picker','new-project','export-project','header-bac
 const frames=[];
 const context=createVerifierRuntime({console,Event:class Event{},dispatchEvent(){},structuredClone,URL,Blob,TextDecoder,TextEncoder,crypto:globalThis.crypto,setTimeout,clearTimeout,queueMicrotask,requestAnimationFrame:fn=>frames.push(fn),
   document:{currentScript:null,querySelector:s=>nodes.get(s)||null,querySelectorAll:s=>s.includes('button')||s.includes('input')||s.includes('select')?[...nodes.values()].filter(n=>!['app','app-live-status','app-operation-status','operation-label','storage-status','project-history'].includes(n.id)):[]}});
-for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])vm.runInContext(fs.readFileSync(file,'utf8'),context);
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])vm.runInContext(fs.readFileSync(file,'utf8'),context);
 vm.runInContext(source.slice(0,source.indexOf('globalThis.closedLoopAppReady=false;'))+`
   schema=globalThis.closedLoopWorkflowSchema;projectStore={HISTORY_LIMITS:{maxCheckpoints:2048}};
   globalThis.ui={
@@ -191,7 +193,7 @@ vm.runInContext(source.slice(0,source.indexOf('globalThis.closedLoopAppReady=fal
     health:fn=>{projectStore={storageHealth:fn};globalThis.closedLoopStorageHealth=null;paintStorageHealth();},
     refreshHealth:()=>refreshStorageHealth(),
     humanControls:stage=>{current=globalThis.closedLoopCore.createBlankState('SYNTHETIC-HUMAN-CONTROLS');return humanStageMarkup(stage,false);},
-    authorityControls:()=>{engine=globalThis.closedLoopWorkflowEngine;current=globalThis.closedLoopCore.createBlankState('SYNTHETIC-AUTHORITY-CONTROL');const original=pendingProposal;pendingProposal=()=>({changes:[],humanAuthorityCandidates:[{temporaryKey:'synthetic-human-answer',label:'Reported audience',value:'Field technicians'}]});try{return proposalMarkup(1);}finally{pendingProposal=original;}},
+    authorityControls:()=>{engine=globalThis.closedLoopWorkflowEngine;ingestion=globalThis.closedLoopResponseIngestion;current=globalThis.closedLoopCore.createBlankState('SYNTHETIC-AUTHORITY-CONTROL');const original=pendingProposal;pendingProposal=()=>({changes:[],humanAuthorityCandidates:[{temporaryKey:'synthetic-human-answer',label:'Reported audience',value:'Field technicians'}]});try{return proposalMarkup(1);}finally{pendingProposal=original;}},
 
     history:available=>{projectStore={HISTORY_LIMITS:{maxCheckpoints:2048}};historyState={entries:[],undoId:available?'SAVED-PREVIOUS':null};historyBrowseState=null;recoveryProjects=[];quarantinedProjects=[];paintHistory();},
     action:fn=>runOperatorAction('Restoring version',fn),
@@ -567,7 +569,7 @@ for(const stage of [10,20,28]){
  assert.ok(match,'HUMAN_AUTHORITY_CONTROL_ID_ORACLE');assert.ok(html.includes('<label for="'+match[1]+'">Reported audience</label>'),'HUMAN_AUTHORITY_CONTROL_LABEL_ORACLE');
  cases.push({caseId:'UI-HUMAN-AUTHORITY-CONTROL-LABEL',result:'PASS',actualBrowser:false});
 }
-const backupImportStaging=await verifyBackupImportStaging({appSource:source}),backupStagingStore=await verifyBackupStagingStore(),responseStagingRecoveryUI=await verifyResponseStagingRecoveryUI({appSource:source}),operatorSafetyFeedback=await verifyOperatorSafetyFeedback({appSource:source}),backupStagingFaults=[],responseStagingUIFaults=[],operatorSafetyFeedbackFaults=[];
+const backupImportStaging=await verifyBackupImportStaging({appSource:source}),backupStagingStore=await verifyBackupStagingStore(),backupExtensionByteRetention=await verifyBackupExtensionByteRetention(),backupExtensionBindingControls=await verifyBackupExtensionBindingControls(),responseStagingRecoveryUI=await verifyResponseStagingRecoveryUI({appSource:source}),operatorSafetyFeedback=await verifyOperatorSafetyFeedback({appSource:source}),backupStagingFaults=[],responseStagingUIFaults=[],operatorSafetyFeedbackFaults=[];
 for(const [script,fault,oracle]of [
  ['test-backup-import-staging.mjs','permanent-backup-history','BACKUP_UI_CAPACITY_ORACLE'],
  ['test-backup-import-staging.mjs','empty-staging-identity','BACKUP_EMPTY_STAGING_ID_RECOVERY_ORACLE'],
@@ -583,4 +585,4 @@ for(const [fault,oracle]of [['generic-attachment-feedback','ATTACHMENT_LIVE_REGI
  const run=await runVerifier(process.execPath,['test-operator-safety-feedback.mjs','--fault='+fault],{encoding:'utf8',timeout:60000,maxBuffer:1024*1024});assertDetectedFault(run,oracle,'Operator safety feedback fault '+fault);operatorSafetyFeedbackFaults.push({fault,oracle,result:'DETECTED',exitCode:run.status,evidencePath:run.evidencePath});
 }
 cases.push(...backupImportStaging.cases,...backupStagingStore.cases.map(row=>({...row,caseId:'STORE-BACKUP-STAGING-'+row.caseId,result:row.passed?'PASS':'FAIL'})),...responseStagingRecoveryUI.cases,...operatorSafetyFeedback.cases);
-console.log(JSON.stringify({schema:'closed-loop-executed-cases/1',synthetic:true,environment:'Node VM with delayed operation and frame boundary',scope:'Shared action binding and production workflow markup ownership; not browser layout or stage-by-stage file-transport acceptance.',backupImportStaging,backupStagingStore,backupStagingFaults,responseStagingRecoveryUI,responseStagingUIFaults,operatorSafetyFeedback,operatorSafetyFeedbackFaults,cases},null,2));
+console.log(JSON.stringify({schema:'closed-loop-executed-cases/1',synthetic:true,environment:'Node VM with delayed operation and frame boundary',scope:'Shared action binding and production workflow markup ownership; not browser layout or stage-by-stage file-transport acceptance.',backupImportStaging,backupStagingStore,backupExtensionByteRetention,backupExtensionBindingControls,backupStagingFaults,responseStagingRecoveryUI,responseStagingUIFaults,operatorSafetyFeedback,operatorSafetyFeedbackFaults,cases},null,2));

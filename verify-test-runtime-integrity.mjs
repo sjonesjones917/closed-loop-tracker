@@ -3,6 +3,7 @@ import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import {webcrypto, createHash} from 'node:crypto';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
+import {verifyTestIrCanonicalOrder} from './test-test-ir-canonical-order.mjs';
 
 const context = {console, crypto:webcrypto, TextEncoder, TextDecoder, Uint8Array, ArrayBuffer, DataView, URL, setTimeout, clearTimeout, Date, Math, Promise};
 context.globalThis = context;
@@ -142,7 +143,8 @@ await check('Corrected registry digests are reproducible and superseded executab
 });
 const externalClaimControls=verificationObservations.filter(row=>row.violation==='externalAssertionsOverridingApplicationProof'),externalClaimCounts={attempted:externalClaimControls.length,rejected:externalClaimControls.filter(row=>row.observed.accepted===false).length,accepted:externalClaimControls.filter(row=>row.observed.accepted===true).length};
 verificationObservations.push({checkId:'RUNTIME-EXTERNAL-ASSERTION-NEGATIVE-POPULATION',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:5519'],boundary:'Exactly the existing parsed JSON and artifact literal terminal-claim controls; no wider production population claim',expected:{attempted:2,rejected:2,accepted:0},observed:externalClaimCounts,passed:externalClaimCounts.attempted===2&&externalClaimCounts.rejected===2&&externalClaimCounts.accepted===0});
-const report={verifyTestRuntimeIntegrity:cases.every(item=>item.result==='PASS')?'PASS':'FAIL',runtimeSourceSha256:createHash('sha256').update(fs.readFileSync(new URL('test-runtime.js',import.meta.url))).digest('hex'),cases:cases.length,passed:cases.filter(item=>item.result==='PASS').length,failed:cases.filter(item=>item.result==='FAIL').length,results:cases,verificationObservations};
+let canonicalObjectOrder;await check('Canonical object order, parser order and retained registry identity stay consistent',async()=>{canonicalObjectOrder=await verifyTestIrCanonicalOrder(runtime,value=>{context.canonicalOrderHashJson=JSON.stringify(value);return context.closedLoopHash.sha256Value(vm.runInContext('JSON.parse(canonicalOrderHashJson)',context));});});
+const report={canonicalObjectOrder,verifyTestRuntimeIntegrity:cases.every(item=>item.result==='PASS')?'PASS':'FAIL',runtimeSourceSha256:createHash('sha256').update(fs.readFileSync(new URL('test-runtime.js',import.meta.url))).digest('hex'),cases:cases.length,passed:cases.filter(item=>item.result==='PASS').length,failed:cases.filter(item=>item.result==='FAIL').length,results:cases,verificationObservations};
 const reportPath=process.argv.find(value=>value.startsWith('--integrity-report='))?.slice('--integrity-report='.length);
 if(reportPath)fs.writeFileSync(reportPath,JSON.stringify(report,null,2)+'\n');
 console.log(JSON.stringify(report));

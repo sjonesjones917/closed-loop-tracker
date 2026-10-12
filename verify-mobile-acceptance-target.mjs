@@ -42,6 +42,17 @@ assert.deepEqual(target.requiredEvidenceArtifacts,['screenshotOrRecordingReferen
 assert.match(target.preparationId,/^MOBILE-PREPARATION-[0-9a-f]{24}$/);assert.notEqual(target.preparationId,second.preparationId);
 const cases=[];
 function reject(name,mutate,code){const t=structuredClone(target),e=structuredClone(evidence);mutate(t,e);const result=check(t,e);assert.equal(result.accepted,false,'MOBILE_TARGET_FREEZE_ORACLE: '+name+' was accepted.');assert(result.errors.some(error=>error.code===code),'MOBILE_TARGET_FREEZE_ORACLE: '+name+' rejected for a different reason: '+JSON.stringify(result.errors));assert.equal(check().accepted,true,'MOBILE_TARGET_FREEZE_ORACLE: conforming control failed after '+name);cases.push({caseId:name,expectedCode:code,rejected:true,control:true});}
+// §39.12: independent numeric boundaries at both the exported measurement and
+// operation-receipt consumers. Synthetic evidence never proves a device run.
+for(const [field,boundary,code]of [['horizontalOverflowPx',1.01,'HORIZONTAL_OVERFLOW_INVALID'],['minimumPrimaryTextPx',15.99,'PRIMARY_TEXT_FLOOR_INVALID'],['minimumSecondaryTextPx',13.99,'SECONDARY_TEXT_FLOOR_INVALID'],['minimumTouchTargetPx',43.99,'TOUCH_TARGET_FLOOR_INVALID']]){
+ for(const [label,value]of [['boundary',boundary],['missing',undefined],['null',null],['string','44'],['infinity',Infinity],['nan',NaN]]){
+  reject('ui-measurement-'+field+'-'+label,(_t,e)=>{e.measurements[field]=value;},code);
+  reject('ui-observation-'+field+'-'+label,(_t,e)=>{e.operationReceipts.find(row=>row.kind==='ACCESSIBILITY_AND_OVERFLOW_VERIFIED').observation[field]=value;},'RECEIPT_OPERATION_EVIDENCE_INVALID');
+ }
+}
+reject('ui-measurement-negative-overflow',(_t,e)=>{e.measurements.horizontalOverflowPx=-1;},'HORIZONTAL_OVERFLOW_INVALID');
+reject('ui-observation-negative-overflow',(_t,e)=>{e.operationReceipts.find(row=>row.kind==='ACCESSIBILITY_AND_OVERFLOW_VERIFIED').observation.horizontalOverflowPx=-1;},'RECEIPT_OPERATION_EVIDENCE_INVALID');
+for(const field of ['focused','liveAnnounced'])for(const [label,value]of [['false',false],['missing',undefined],['string','true']])reject('ui-observation-'+field+'-'+label,(_t,e)=>{e.operationReceipts.find(row=>row.kind==='ACCESSIBILITY_AND_OVERFLOW_VERIFIED').observation[field]=value;},'RECEIPT_OPERATION_EVIDENCE_INVALID');
 for(const field of ['iosVersion','safariUserAgent'])reject('missing-target-'+field,t=>{delete t[field];},'TARGET_DEVICE_FACT_INVALID');
 for(const field of ['performer','identityAssurance','buildIdentity']){
  reject('missing-target-'+field,t=>{delete t[field];},'TARGET_FROZEN_FACT_REQUIRED');
@@ -78,7 +89,15 @@ assert.equal(decodeMobileInitialPackage(initialCompressed,{maxOutputLength:8192}
 assert.throws(()=>decodeMobileInitialPackage(gzipSync(Buffer.from([123,34,120,34,58,34,255,34,125])).toString('base64')),/encoded data|encoding/i,'MOBILE_INITIAL_PACKAGE_UTF8_ORACLE: invalid UTF-8 bytes must not become replacement characters.');
 assert.throws(()=>decodeMobileInitialPackage(initialCompressed,{maxOutputLength:1,expectedByteSize:1}),/exact bytes/,'MOBILE_INITIAL_PACKAGE_IDENTITY_FIRST_ORACLE: wrong declared byte identity must fail before decompression.');
 assert.equal(unknownEvidence.evidenceBasis,'HUMAN_OBSERVATION');assert.equal(unknownEvidence.identityAssurance,'SELF_ASSERTED');
+// Exercise admissible JSON values through the actual submission boundary too.
+// NaN/Infinity checks above belong only to direct helper calls, not JSON syntax.
+const uiJsonSubmissionCases=[],submit=e=>evaluateMobileAcceptanceSubmission({targetJson:JSON.stringify(target),evidenceJson:JSON.stringify(e),expected,submitter:'SYNTHETIC-CONTROLLER'});
+for(const [field,value]of [['minimumPrimaryTextPx','44'],['minimumSecondaryTextPx','44'],['minimumTouchTargetPx','44'],['horizontalOverflowPx',-1],['focused',false],['liveAnnounced',false]]){
+ const changed=structuredClone(evidence);changed.operationReceipts.find(row=>row.kind==='ACCESSIBILITY_AND_OVERFLOW_VERIFIED').observation[field]=value;
+ const result=submit(changed);assert.equal(result.actualIPhoneSafariAcceptance,false,'MOBILE_UI_JSON_SUBMISSION_ORACLE: '+field+' was accepted.');assert(result.mobileAcceptanceBlockers.some(row=>row.details?.some(error=>error.code==='RECEIPT_OPERATION_EVIDENCE_INVALID')),'MOBILE_UI_JSON_SUBMISSION_ORACLE: '+field+' rejected for a different reason.');assert.equal(submit(evidence).actualIPhoneSafariAcceptance,true,'MOBILE_UI_JSON_SUBMISSION_CONTROL_ORACLE');
+ uiJsonSubmissionCases.push({field,value,rejected:true,expectedCode:'RECEIPT_OPERATION_EVIDENCE_INVALID',control:true});
+}
 const changedPerformer={...evidence,performer:'OTHER-PERFORMER'},submission=evaluateMobileAcceptanceSubmission({targetJson:JSON.stringify(target),evidenceJson:JSON.stringify(changedPerformer),expected,submitter:'SYNTHETIC-CONTROLLER'});
 assert.equal(submission.actualIPhoneSafariAcceptance,false,'MOBILE_TARGET_FREEZE_ORACLE: authenticated submission must not replace the frozen performer.');
 assert(submission.mobileAcceptanceBlockers.some(row=>row.details.some(error=>error.code==='EVIDENCE_FROZEN_FACT_MISMATCH')));
-console.log(JSON.stringify({mobileAcceptanceTargetGenerator:'PASS',csprngChallengeShape:true,nonrepeatable:true,requiredInputsRejected:true,canonicalBindingEnforced:true,strictUtcAndExpiry:true,mutationSensitive:true,synthetic:true,actualPhysicalDeviceAcceptance:false,targetFreezeCases:cases,unknownFactsAndHumanObservationControl:true,authenticatedSubmissionPerformerMismatchRejected:true},null,2));
+console.log(JSON.stringify({mobileAcceptanceTargetGenerator:'PASS',csprngChallengeShape:true,nonrepeatable:true,requiredInputsRejected:true,canonicalBindingEnforced:true,strictUtcAndExpiry:true,mutationSensitive:true,synthetic:true,actualPhysicalDeviceAcceptance:false,targetFreezeCases:cases,uiJsonSubmissionCases,unknownFactsAndHumanObservationControl:true,authenticatedSubmissionPerformerMismatchRejected:true},null,2));

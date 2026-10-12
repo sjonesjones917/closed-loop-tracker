@@ -5,11 +5,11 @@
   "registryDigests": [
     {
       "constant": "OPERATION_REGISTRY_SHA256",
-      "previousSha256": "370d3c04ffe55cb21311607833de5311afde8a15e443093abf43425bb44eb393",
-      "sha256": "21b4c97a596fecd7ec5dca7788ded488827ef71c0aee3a041f89bd19d0eede00",
+      "previousSha256": "331f661c553db872097dcbcc1aae8104deef68e6aa206173504ce4a82e6e7b83",
+      "sha256": "77e7b900e5f7f5ac66033564cc0cb4f323cc76b7f7dd95ac6d173c0f649f655d",
       "descriptor": {
         "version": "closed-loop-test-ir-operations/1",
-        "revision": "2026-09-16.integrity.1",
+        "revision": "2026-10-10.native-identity-bounded-diagnostics.1",
         "rules": [
           "named-port data is never unwrapped by member name",
           "canonical transport wrappers are resolved only at their declared binding boundary",
@@ -18,24 +18,86 @@
           "literal types, closed options and selector grammar validate before execution",
           "exact approximate tolerances are explicit, nonnegative and alias-consistent",
           "parsers preserve the selected complete data and fail closed",
-          "CSV Unicode scalar separators, final empty records and post-quote state are explicit"
+          "CSV Unicode scalar separators, final empty records and post-quote state are explicit",
+          "structured literal and immutable canonical object wildcard order follows unsigned Unicode scalar key ordering; parsed JSON and CSV header order remain parser-owned",
+          "native execution receipts bind the actually executed step prefix, selected assertion port, normalized DAG and all used operation, parser, selector and regex registry identities",
+          "release-bearing native receipts retain the loaded build identity, exact worker digest, worker protocol and device-time provenance; missing, altered or stale identities never establish current proof",
+          "a failed execution retains its exact loaded target identity and explicit inconclusive failure without fabricating completed steps or release-bearing observations",
+          "completed native evidence agrees with the executed observation prefix, selected assertion values and determination; canonical result fields cannot contradict retained execution evidence",
+          "invalid specifications stop before traversing more than the registered step limit; closed-shape and binding violations return bounded precise diagnostics with surrogate-safe 256-UTF-16-unit value previews, leaving submitted source unchanged"
         ]
-      }
+      },
+      "priorRevisions": [
+        {
+          "sha256": "331f661c553db872097dcbcc1aae8104deef68e6aa206173504ce4a82e6e7b83",
+          "previousSha256": "21b4c97a596fecd7ec5dca7788ded488827ef71c0aee3a041f89bd19d0eede00",
+          "descriptor": {
+            "version": "closed-loop-test-ir-operations/1",
+            "revision": "2026-10-07.canonical-object-order.1",
+            "rules": [
+              "named-port data is never unwrapped by member name",
+              "canonical transport wrappers are resolved only at their declared binding boundary",
+              "only registered assertion outputs determine results",
+              "first violated assertion is terminal and cannot be masked by result selection",
+              "literal types, closed options and selector grammar validate before execution",
+              "exact approximate tolerances are explicit, nonnegative and alias-consistent",
+              "parsers preserve the selected complete data and fail closed",
+              "CSV Unicode scalar separators, final empty records and post-quote state are explicit",
+              "structured literal and immutable canonical object wildcard order follows unsigned Unicode scalar key ordering; parsed JSON and CSV header order remain parser-owned"
+            ]
+          }
+        },
+        {
+          "sha256": "21b4c97a596fecd7ec5dca7788ded488827ef71c0aee3a041f89bd19d0eede00",
+          "previousSha256": "370d3c04ffe55cb21311607833de5311afde8a15e443093abf43425bb44eb393",
+          "descriptor": {
+            "version": "closed-loop-test-ir-operations/1",
+            "revision": "2026-09-16.integrity.1",
+            "rules": [
+              "named-port data is never unwrapped by member name",
+              "canonical transport wrappers are resolved only at their declared binding boundary",
+              "only registered assertion outputs determine results",
+              "first violated assertion is terminal and cannot be masked by result selection",
+              "literal types, closed options and selector grammar validate before execution",
+              "exact approximate tolerances are explicit, nonnegative and alias-consistent",
+              "parsers preserve the selected complete data and fail closed",
+              "CSV Unicode scalar separators, final empty records and post-quote state are explicit"
+            ]
+          }
+        }
+      ]
     },
     {
       "constant": "JSON_SELECTOR_REGISTRY_SHA256",
-      "previousSha256": "546daaa22cccdbbdb10ba55da859b21b09c852781f42726cd5fb4f8356cd1ee5",
-      "sha256": "dcaae48728eedb33c284b219f258e0fdd09f1b6e645ccb9ce649d0a07373eff9",
+      "previousSha256": "dcaae48728eedb33c284b219f258e0fdd09f1b6e645ccb9ce649d0a07373eff9",
+      "sha256": "3136dbd1f69ee7039a178a1c682bcf1f21da94f11e89bbddc2fd0f8eb668fbc3",
       "descriptor": {
         "version": "closed-loop-json-selector/1",
-        "revision": "2026-09-16.integrity.1",
+        "revision": "2026-10-07.canonical-object-order.1",
         "rules": [
           "nonnegative safe-integer indexes",
           "single-quote and backslash bracket-name escapes",
           "wildcards preserve parser-recorded document order",
-          "unsupported syntax fails ingestion"
+          "unsupported syntax fails ingestion",
+          "without parser-owned source order, object wildcards use unsigned Unicode scalar key order; CSV header order is retained separately from canonical structured values"
         ]
-      }
+      },
+      "priorRevisions": [
+        {
+          "sha256": "dcaae48728eedb33c284b219f258e0fdd09f1b6e645ccb9ce649d0a07373eff9",
+          "previousSha256": "546daaa22cccdbbdb10ba55da859b21b09c852781f42726cd5fb4f8356cd1ee5",
+          "descriptor": {
+            "version": "closed-loop-json-selector/1",
+            "revision": "2026-09-16.integrity.1",
+            "rules": [
+              "nonnegative safe-integer indexes",
+              "single-quote and backslash bracket-name escapes",
+              "wildcards preserve parser-recorded document order",
+              "unsupported syntax fails ingestion"
+            ]
+          }
+        }
+      ]
     },
     {
       "constant": "XML_SELECTOR_REGISTRY_SHA256",

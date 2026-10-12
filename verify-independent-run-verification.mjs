@@ -53,3 +53,10 @@ for(const [fault,oracle] of [['reuse-wrong-context','VERIFIER_UI_WRONG_SELECTION
  verifierUiFaults.push({faultId:fault,detected:true,oracle,sourceUnchanged:fs.readFileSync('app-core.js','utf8')===verifierUiSource});
 }
 console.log(JSON.stringify({verifierContextUi,verifierUiFaults}));
+
+const {verifyIndependentRunFeedback}=await import('./test-independent-run-feedback.mjs');
+const {verifyFinalReviewFeedback}=await import('./test-final-review-feedback.mjs');
+console.log(JSON.stringify({independentRunFeedback:await verifyIndependentRunFeedback(),finalReviewFeedback:await verifyFinalReviewFeedback()}));
+
+const {verifyIndependentRunFeedbackPackage}=await import('./test-independent-run-feedback-package.mjs');
+console.log(JSON.stringify({independentRunFeedbackPackage:await verifyIndependentRunFeedbackPackage()}));

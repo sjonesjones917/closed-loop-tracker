@@ -1,28 +1,48 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {createHash} from 'node:crypto';
-import {gunzipSync} from 'node:zlib';
+import {gzipSync,gunzipSync} from 'node:zlib';
 import {pathToFileURL} from 'node:url';
 import {projectStoreRuntime} from './test-project-store-runtime.mjs';
 
 const plain=value=>JSON.parse(JSON.stringify(value));
 const digest=bytes=>createHash('sha256').update(bytes).digest('hex');
+const canonical=value=>value===null||typeof value!=='object'?JSON.stringify(value):Array.isArray(value)?'['+value.map(canonical).join(',')+']':'{'+Object.keys(value).sort().map(key=>JSON.stringify(key)+':'+canonical(value[key])).join(',')+'}';
 const slot=jobId=>'backupImportStaging:'+jobId;
 export async function verifyBackupStagingStore({fault=null}={}){
- const ownerSource=fs.readFileSync('project-store.js','utf8'),mutations={
+ const ownerSource=fs.readFileSync('project-store.js','utf8'),manifestAnchor='artifacts:artifactEntries.map(a=>({artifactId:a.artifactId,filename:a.filename,mediaType:a.mediaType,byteSize:a.byteSize,sha256:a.sha256}))',mutations={
   'retain-consumed-input':["meta.delete(backupImportStagingKey(stagedBackup.jobId));","/* SYNTHETIC fault: committed input remains actionable. */"],
-  'trust-staging-digest':["if(await hash.sha256Bytes(record.blob)!==record.sha256)throw storageError(","if(false)throw storageError("]
+  'trust-staging-digest':["if(await hash.sha256Bytes(record.blob)!==record.sha256)throw storageError(","if(false)throw storageError("],
+  'omit-normal-manifest-member':[manifestAnchor,"artifacts:artifactEntries.filter(a=>a.artifactId!=='SYNTHETIC-BACKUP-MANIFEST-MEMBER').map(a=>({artifactId:a.artifactId,filename:a.filename,mediaType:a.mediaType,byteSize:a.byteSize,sha256:a.sha256}))"],
+  'wrong-normal-manifest-member':[manifestAnchor,"artifacts:artifactEntries.map(a=>({artifactId:a.artifactId,filename:a.filename,mediaType:a.mediaType,byteSize:a.byteSize,sha256:a.artifactId==='SYNTHETIC-BACKUP-MANIFEST-MEMBER'?'0'.repeat(64):a.sha256}))"]
  };
  let storeSource=ownerSource;if(fault){const [before,after]=mutations[fault]||[];assert(before&&storeSource.split(before).length===2,'BACKUP_STAGE_FAULT_ANCHOR_ORACLE');storeSource=storeSource.replace(before,after);}
- const cases=[],r=projectStoreRuntime({sourceOverrides:{'project-store.js':storeSource}}),s=r.store,p=await s.createProject({commandId:'SYNTHETIC-PENDING-BACKUP'}),id=p.job.JOB_ID,backup=await s.exportPackage(id),bytes=Buffer.from(await backup.arrayBuffer()),history=plain(await s.historyList(id)),artifacts=plain((await s.listArtifacts(id)).map(({blob,...row})=>row));
+ const cases=[],r=projectStoreRuntime({sourceOverrides:{'project-store.js':storeSource}}),s=r.store,p=await s.createProject({commandId:'SYNTHETIC-PENDING-BACKUP'}),id=p.job.JOB_ID;
+ const manifestMemberBytes=Buffer.from('Independent normal backup manifest member bytes.','utf8'),manifestMemberBlob=new Blob([manifestMemberBytes],{type:'application/octet-stream'});
+ await s.putArtifact({artifactId:'SYNTHETIC-BACKUP-MANIFEST-MEMBER',jobId:id,blob:manifestMemberBlob,filename:'manifest-member.bin',mediaType:manifestMemberBlob.type,lineage:{stage:1,role:'SOURCE_MATERIAL'}});
+ const backup=await s.exportPackage(id),bytes=Buffer.from(await backup.arrayBuffer()),history=plain(await s.historyList(id)),artifacts=plain((await s.listArtifacts(id)).map(({blob,...row})=>row));
  const stage=async(blob=backup,expectedStagingId=null,extra={})=>s.stageBackupImport({jobId:id,blob,rawFilename:'exact selected backup.gz',mediaType:'application/gzip',expectedProjectRevision:p.revision,expectedStateSha256:p.projectSha256,expectedStagingId,...extra});
  const unchanged=async()=>{assert.deepEqual(plain(await s.readProject(id)),plain(p),'BACKUP_STAGE_CANONICAL_UNCHANGED_ORACLE');assert.deepEqual(plain(await s.historyList(id)),history,'BACKUP_STAGE_HISTORY_UNCHANGED_ORACLE');};
  const original=await stage();assert.equal(original.sha256,digest(bytes));assert.equal(original.byteSize,bytes.length);assert(!Object.hasOwn(original,'blob'));assert.deepEqual(plain(await s.pendingBackupImportIdentity(id)),plain(original));
  const reloaded=projectStoreRuntime();for(const [name,rows]of r.rows)reloaded.rows.set(name,new Map([...rows].map(([key,value])=>[key,reloaded.copy(value)])));assert.deepEqual(Buffer.from(await (await reloaded.store.readPendingBackupImport(id)).blob.arrayBuffer()),bytes,'BACKUP_STAGE_RELOAD_EXACT_BYTES_ORACLE');
  assert.deepEqual(Buffer.from(await (await s.readPendingBackupImport(id)).blob.arrayBuffer()),bytes,'BACKUP_STAGE_EXACT_BYTES_ORACLE');await unchanged();assert.deepEqual(plain((await s.listArtifacts(id)).map(({blob,...row})=>row)),artifacts);
  const exported=JSON.parse(gunzipSync(Buffer.from(await (await s.exportPackage(id)).arrayBuffer())).toString('utf8'));
+ const manifest=exported.packageManifest,manifestFields=['artifactCount','artifacts','jobId','projectSha256'],memberFields=['artifactId','byteSize','filename','mediaType','sha256'];
+ for(const field of manifestFields)assert(Object.hasOwn(manifest,field),'BACKUP_NORMAL_MANIFEST_REQUIRED_FIELD_ORACLE: '+field);
+ assert.equal(manifest.jobId,id,'BACKUP_NORMAL_MANIFEST_JOB_ORACLE');assert.equal(manifest.projectSha256,p.projectSha256,'BACKUP_NORMAL_MANIFEST_PROJECT_ORACLE');assert.equal(manifest.artifactCount,exported.artifacts.length,'BACKUP_NORMAL_MANIFEST_COUNT_ORACLE');assert.equal(manifest.artifacts.length,exported.artifacts.length,'BACKUP_NORMAL_MANIFEST_MEMBER_COUNT_ORACLE');
+ for(const member of manifest.artifacts)for(const field of memberFields)assert(Object.hasOwn(member,field),'BACKUP_NORMAL_MANIFEST_MEMBER_REQUIRED_FIELD_ORACLE: '+field);
+ const activeMember=manifest.artifacts.find(member=>member.artifactId==='SYNTHETIC-BACKUP-MANIFEST-MEMBER');assert(activeMember,'BACKUP_NORMAL_MANIFEST_ACTIVE_MEMBER_ORACLE');
+ assert.deepEqual(Object.fromEntries(memberFields.map(field=>[field,activeMember[field]])),{artifactId:'SYNTHETIC-BACKUP-MANIFEST-MEMBER',filename:'manifest-member.bin',mediaType:'application/octet-stream',byteSize:manifestMemberBytes.length,sha256:digest(manifestMemberBytes)},'BACKUP_NORMAL_MANIFEST_EXACT_MEMBER_ORACLE');
+ const repack=payload=>{const body=structuredClone(payload);delete body.packageSha256;const packageSha256=digest(Buffer.from(canonical(body),'utf8'));return new Blob([gzipSync(Buffer.from(canonical({...body,packageSha256}),'utf8'))],{type:'application/gzip'});};
+ const extensionPackage=structuredClone(exported);extensionPackage.packageManifest.futureManifestExtension={literal:[false,0,null]};extensionPackage.packageManifest.artifacts.find(member=>member.artifactId==='SYNTHETIC-BACKUP-MANIFEST-MEMBER').futureMemberExtension='retained';
+ const extensionRuntime=projectStoreRuntime({sourceOverrides:{'project-store.js':storeSource}}),extensionImported=await extensionRuntime.store.importPackage(repack(extensionPackage));assert.equal(extensionImported.job.JOB_ID,id,'BACKUP_NORMAL_MANIFEST_EXTENSION_IMPORT_ORACLE');assert.deepEqual(Buffer.from(await (await extensionRuntime.store.getArtifact('SYNTHETIC-BACKUP-MANIFEST-MEMBER')).blob.arrayBuffer()),manifestMemberBytes,'BACKUP_NORMAL_MANIFEST_EXTENSION_BYTES_ORACLE');
+ const manifestFailureState=async()=>{await unchanged();assert.deepEqual(Buffer.from(await (await s.getArtifact('SYNTHETIC-BACKUP-MANIFEST-MEMBER')).blob.arrayBuffer()),manifestMemberBytes,'BACKUP_NORMAL_MANIFEST_REJECTION_BYTE_PRESERVATION_ORACLE');assert.equal((await s.readPendingBackupImport(id)).stagingId,original.stagingId);};
+ const missingMember=structuredClone(exported);missingMember.packageManifest.artifacts=missingMember.packageManifest.artifacts.filter(member=>member.artifactId!=='SYNTHETIC-BACKUP-MANIFEST-MEMBER');
+ await assert.rejects(s.importPackage(repack(missingMember)),error=>error.message==='Package manifest does not reconcile with the embedded project and artifacts.'&&error.existingProjectsUnchanged===true,'BACKUP_NORMAL_MANIFEST_MISSING_MEMBER_ORACLE');await manifestFailureState();
+ const wrongMember=structuredClone(exported);wrongMember.packageManifest.artifacts.find(member=>member.artifactId==='SYNTHETIC-BACKUP-MANIFEST-MEMBER').sha256='0'.repeat(64);
+ await assert.rejects(s.importPackage(repack(wrongMember)),error=>error.message==='Package manifest mismatch for artifact SYNTHETIC-BACKUP-MANIFEST-MEMBER.'&&error.existingProjectsUnchanged===true,'BACKUP_NORMAL_MANIFEST_WRONG_MEMBER_ORACLE');await manifestFailureState();
  assert(!JSON.stringify(exported).includes(original.stagingId),'BACKUP_STAGE_NOT_RECURSIVE_HISTORY_ORACLE');assert.equal((await s.readPendingBackupImport(id)).stagingId,original.stagingId);
- cases.push({caseId:'durable-exact-input-outside-project-history-and-export',passed:true});
+ cases.push({caseId:'durable-exact-input-outside-project-history-and-export',passed:true,normalManifestRequiredFields:true,unknownExtensionsAccepted:true,missingAndWrongMemberRejected:true});
  // Selection replacement is a deliberate atomic action. Neither a stale tab
  // nor a failed transaction may erase the currently recoverable input.
  await assert.rejects(stage(backup,null),{code:'STALE_BACKUP_IMPORT_SELECTION'});

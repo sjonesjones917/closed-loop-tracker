@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {createHash} from 'node:crypto';
+import {gunzipSync} from 'node:zlib';
 import {projectStoreRuntime} from './test-project-store-runtime.mjs';
 import vm from 'node:vm';
 import {stage01AcceptanceFixture,stage04AcceptanceFixture,stage04AcceptanceEnvelope,boundedSearchProposal,registerFixtureSourceSearchCapability,recordProposal,evidence} from './test-fixtures.mjs';
@@ -12,12 +13,179 @@ for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js
  if(file==='workflow-schema.js'&&process.argv.includes('--fault=source-search-completeness')){const anchor='function sourceSearchContractIssues(fields){';assert.ok(source.includes(anchor));source=source.replace(anchor,anchor+'return [];');}
  if(file==='workflow-schema.js'&&process.argv.includes('--fault=stage04-review-subjects')){const before="DISPOSITION_CHALLENGE:Object.freeze({readCollections:['research','candidateRequirements','sources','evidenceRecords','sourceConflicts','requirements']";assert.ok(source.includes(before),'Stage04 disposition withholding fault must reach the repaired read owner.');source=source.replace(before,before.replace(",'requirements'",''));}
  if(file==='workflow-schema.js'&&process.argv.includes('--fault=stage04-atomicity-subjects')){const before="ATOMICITY_CHALLENGE:Object.freeze({readCollections:['research','candidateRequirements','sources','evidenceRecords','sourceConflicts','requirements','propositions']";assert.ok(source.includes(before),'Stage04 atomicity withholding fault must reach the repaired read owner.');source=source.replace(before,before.replace(",'propositions'",''));}
- if(file==='workflow-engine.js'&&process.argv.includes('--fault=source-search-bindings')){const guard="const capability=sourceSearchCapabilityState(project,contract);reasons.push(...capability.reasons);";assert.ok(source.includes(guard));source=source.replace(guard,'');}
+ if(file==='workflow-engine.js'&&process.argv.includes('--fault=source-search-bindings')){const guard="reasons.push(...sourceSearchCapabilityState(project, contract).reasons);";assert.ok(source.includes(guard));source=source.replace(guard,'');}
  if(file==='workflow-engine.js'&&process.argv.includes('--fault=review-request-invalidates')){const anchor='  if(author?.operation===policy.reconcileOperation';assert.ok(source.includes(anchor));source=source.replace(anchor,"  for(const prompt of safe(p.projectData.generatedPrompts).filter(row=>Number(row.stage)===n&&!row.invalidatedBy&&policy.reviewOperations.includes(row.operation)))requested.add(prompt.operation);\n"+anchor);}
  createVerifierRuntime.loadScript(globalThis,source,{filename:file});
 }
 const core=closedLoopCore,schema=closedLoopWorkflowSchema,engine=closedLoopWorkflowEngine,prompts=closedLoopPromptEngine,ingestion=closedLoopResponseIngestion,hash=closedLoopHash;
 const runtime={core,schema,engine,prompts,ingestion};
+// Specification 8.1/8.3 and 14.5: SOURCE_APPLICABILITY_DETERMINATION is an
+// application calculation over accepted current execution and independent
+// adequacy review. These literal outcomes are independent of that calculator.
+// One real Stage01 prefix is reused immutably. Synthetic external claims are
+// explicit; retained-state mutations below are helper/gate faults, not admitted
+// responses or evidence that a real source search occurred.
+async function verifySourceApplicabilityCalculation(){
+  assert.equal(typeof engine.sourceApplicabilityState,'function','SOURCE_APPLICABILITY_OWNER_ORACLE: application calculation owner is missing.');
+  const results=[],base=stage01AcceptanceFixture(runtime,'JOB-SOURCE-APPLICABILITY-CALCULATION');
+  const stageData={AUTHORITY_HIERARCHY:'The complete controlled hermetic fixture and its declared independent synthetic authorities.',KNOWN_CONTROLLING_SOURCES_EXAMINED:'All declared source classes, supplied references, locations and final query rounds were inspected.'};
+  const reviewContent=(result='ACCEPTED')=>({records:{semanticReviews:[recordProposal(schema,'semanticReviews',{tempKey:'applicability-adequacy',overrides:{REVIEW_QUESTION:'Does the exact current executed search establish an adequate source inventory?',FINDING:result==='ACCEPTED'?'The complete closed synthetic input universe has no omitted applicable source.':'A material search condition remains unresolved.',REASONING:'Independent synthetic review compares all declared scope/classes/locations, executed queries, cutoff, candidate dispositions, exclusions/access limitations, actual retained execution evidence, registered performer and stopping criteria. No material residual discovery risk remains in the accepted control; this is not a live external-system claim.',RESULT:result}})]}});
+  const authorSearch=({search=boundedSearchProposal(schema),sources=[],conflicts=[]}={})=>accept(prepare(structuredClone(base),2,'COMPLETE',()=>({stageData,records:{sourceSearchContracts:Array.isArray(search)?search:[search],...(sources.length?{sources}:{}),...(conflicts.length?{sourceConflicts:conflicts}:{})}})));
+  const reviewSearch=(project,result='ACCEPTED')=>accept(prepare(project,2,'SEARCH_ADEQUACY_REVIEW',()=>reviewContent(result)));
+  const fullyReviewed=options=>{let project=authorSearch(options);registerFixtureSourceSearchCapability(runtime,project);return reviewSearch(project);};
+  const record=(caseId,variants,boundary)=>results.push({caseId,status:'PASS',variants,boundary});
+  const expect=(project,expected,label,{stageComplete=expected!=='UNDETERMINED'}={})=>{
+    const before=hash.sha256Value(project),state=engine.sourceApplicabilityState(project);
+    assert.equal(state.determination,expected,'SOURCE_APPLICABILITY_ORACLE: '+label+' '+JSON.stringify(state));
+    assert.equal(hash.sha256Value(project),before,'SOURCE_APPLICABILITY_PURITY_ORACLE: '+label);
+    assert.equal(engine.gate(2,project).complete,stageComplete,'SOURCE_APPLICABILITY_GATE_ORACLE: '+label);
+    return state;
+  };
+  const current=(project,family)=>engine.recordsForCurrentScope(project,family);
+  const set=(row,family,key,value)=>{row.fields[key]=value;row[key]=value;engine.refreshRecordHashes(row,family);};
+  const blank=structuredClone(base);expect(blank,'UNDETERMINED','blank canonical search');
+  // Deliberate retained-label fault: neither live agentData nor acceptedData
+  // can become the new application's semantic input.
+  for(const container of ['agentData','acceptedData']){const labeled=structuredClone(base);labeled.stages[2][container]??={};labeled.stages[2][container].SOURCE_APPLICABILITY_DETERMINATION='NO_APPLICABLE_EXTERNAL_SOURCE';expect(labeled,'UNDETERMINED','unsupported retained '+container+' label');}
+  record('blank-or-label-only',['blank','agentData-label','acceptedData-label'],'Nonmutating calculator and Stage02 gate; isolated label faults do not claim admission.');
+
+  const missing=accept(prepare(structuredClone(base),2,'COMPLETE',()=>({stageData})));
+  expect(missing,'UNDETERMINED','accepted author without search contract');
+  const two=[boundedSearchProposal(schema),boundedSearchProposal(schema)];two[1].tempKey='second-search';two[1].fields.ADEQUACY_RATIONALE+=' This distinct second contract duplicates the governed search scope and cannot replace the exactly-one-current-contract obligation.';
+  expect(authorSearch({search:two}),'UNDETERMINED','two accepted current contracts');
+  record('contract-missing-or-multiple',['zero','two'],'Reserved author response, admission, acceptance, calculator and gate.');
+
+  for(const [name,value]of [['omitted',undefined],['null',null],['wrong-type',{}]]){
+    const search=boundedSearchProposal(schema);if(value===undefined)delete search.fields.DATE_OR_VERSION_CUTOFF;else search.fields.DATE_OR_VERSION_CUTOFF=value;
+    const rejected=prepare(structuredClone(base),2,'COMPLETE',()=>({stageData,records:{sourceSearchContracts:[search]}}));
+    assert.equal(rejected.validation.valid,false,'SOURCE_APPLICABILITY_COMPONENT_ORACLE: '+name);
+    assert(rejected.validation.issues.some(issue=>issue.path==='/records/sourceSearchContracts/0/fields/DATE_OR_VERSION_CUTOFF'),'SOURCE_APPLICABILITY_COMPONENT_REASON_ORACLE: '+name);
+    assert.equal(rejected.project.projectData.rawResponses.at(-1).completeRawResponse,rejected.text);
+  }
+  const acceptedAuthor=authorSearch(),capable=structuredClone(acceptedAuthor);registerFixtureSourceSearchCapability(runtime,capable);
+  const complete=reviewSearch(structuredClone(capable));
+  const malformed=structuredClone(complete),malformedSearch=current(malformed,'sourceSearchContracts')[0];delete malformedSearch.fields.DATE_OR_VERSION_CUTOFF;delete malformedSearch.DATE_OR_VERSION_CUTOFF;engine.refreshRecordHashes(malformedSearch,'sourceSearchContracts');expect(malformed,'UNDETERMINED','retained required component deleted');
+  record('missing-or-invalid-component',['omitted','null','wrong-type','retained-missing'],'Admission and raw retention; separately labeled retained-state calculator/gate fault. Existing nine-field missing-component oracle remains unchanged.');
+
+  const conditional=boundedSearchProposal(schema);conditional.fields.EXCLUSIONS=[];conditional.fields.ACCESS_LIMITATIONS=[];delete conditional.fields.JURISDICTION_OR_SYSTEM_SCOPE;
+  conditional.fields.UNRESOLVED_DISCOVERY_RISK='Residual clerical uncertainty about a non-governing label remains; the independently reviewed complete input universe establishes that it cannot change any governing obligation.';
+  conditional.fields.ADEQUACY_RATIONALE='The explicitly closed synthetic scope has no jurisdiction or external system. All seven generic source classes were considered, every declared location was inspected, query saturation and authority-chain closure are evidenced, and every candidate has a disposition. No exclusions or inaccessible locations exist. Independent review determines whether residual uncertainty is material.';
+  const conditionalComplete=fullyReviewed({search:conditional});expect(conditionalComplete,'NO_APPLICABLE_EXTERNAL_SOURCE','typed empty arrays and conditional jurisdiction');
+  record('typed-empty-arrays-with-supported-scope',['omitted-jurisdiction','empty-exclusions','empty-access-limitations'],'Actual author/capability/independent-review acceptance plus calculator/gate.');
+
+  const absentEvidence=structuredClone(complete),absentSearch=current(absentEvidence,'sourceSearchContracts')[0];set(absentSearch,'sourceSearchContracts','EXECUTION_EVIDENCE_IDS',[]);absentSearch.evidenceRefs=[];engine.refreshRecordHashes(absentSearch,'sourceSearchContracts');
+  expect(absentEvidence,'UNDETERMINED','missing canonical search execution evidence');
+  record('unexecuted-plan-or-evidence-missing',['execution-evidence-removed'],'Isolated loss of canonical execution links after a supported control; calculator/gate fault, not accepted malformed work.');
+  expect(capable,'UNDETERMINED','capability does not replace independent review');
+  record('capability-alone',['registered-capability-without-review'],'Actual registration followed by calculator/gate.');
+  const unsupportedReview=reviewSearch(structuredClone(acceptedAuthor));expect(unsupportedReview,'UNDETERMINED','review without registered capability');
+  const unknownRoute=structuredClone(acceptedAuthor);registerFixtureSourceSearchCapability(runtime,unknownRoute,{checks:{route:'UNKNOWN'}});expect(reviewSearch(unknownRoute),'UNDETERMINED','accepted review of UNKNOWN route');
+  record('review-alone-no-capability',['missing','UNKNOWN-route'],'Actual accepted independent review cannot waive absent or UNKNOWN registered support.');
+
+  const completeState=expect(complete,'NO_APPLICABLE_EXTERNAL_SOURCE','fully supported empty inventory');
+  assert.equal(completeState.sourceIds.length,0);assert(completeState.authorChangeId&&completeState.contractId&&completeState.reviewId&&completeState.evidenceIds.length,'SOURCE_APPLICABILITY_PROVENANCE_ORACLE');
+  assert.equal(Object.hasOwn(complete.stages[2].agentData,'SOURCE_APPLICABILITY_DETERMINATION'),false,'SOURCE_APPLICABILITY_OMISSION_ORACLE');
+  const noSourceResearch=accept(prepare(structuredClone(complete),3,'COMPLETE',()=>({stageData:{EXCEPTIONS_AND_EDGE_CONDITIONS:'NONE',CONFLICTING_OR_INVALIDATING_MATERIAL:'NONE',RESEARCH_GAPS_AND_BLOCKERS:'NONE',SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED:true,LATEST_PASS_NUMBER:2,NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS:false}})));
+  assert.equal(engine.gate(3,noSourceResearch).complete,true,'SOURCE_APPLICABILITY_STAGE03_EMPTY_ORACLE');
+  assert.equal(current(noSourceResearch,'research').length,0,'SOURCE_APPLICABILITY_NO_INVENTED_SOURCE_ORACLE');
+  const stage04Prompt=prompts.reserveAndBuildPromptRecord(noSourceResearch,4,{operation:'COMPLETE'}).prompt;assert(stage04Prompt.instructionId,'SOURCE_APPLICABILITY_STAGE04_HANDOFF_ORACLE');
+  record('fully-supported-reviewed-empty-inventory',['agent-field-omitted','current-independent-review','Stage03-empty-research','Stage04-prompt'],'Actual acceptance and Stage03/04 continuation; synthetic search claims remain explicitly identified.');
+
+  const source=(tempKey,title)=>recordProposal(schema,'sources',{tempKey,overrides:{TITLE:title,ISSUING_ORGANIZATION_OR_AUTHOR:'Independent synthetic fixture authority',SOURCE_TYPE:'PUBLIC_WEBSITE',PUBLICATION_ORIGIN:'Independent authority fixture publication',URL_REFERENCE:'https://example.invalid/independent-fixture-authority/'+tempKey,AUTHORITY_LEVEL:'Controlling within the synthetic fixture',AUTHORITY_ROLE:'Governing synthetic checklist condition',RELEVANCE:'Explicitly supplies a synthetic governing condition.',APPLICABLE_PORTIONS:'The complete single synthetic condition.',INSPECTION_STATUS:'INSPECTED',CURRENCY_STATUS:'CURRENT',SUPERSESSION_STATUS:'NOT_SUPERSEDED',CONTROLLING_STATE:'CONTROLLING'}});
+  const withSources=fullyReviewed({sources:[source('authority-a','Independent source A')]}),sourceState=expect(withSources,'APPLICABLE_SOURCES_ESTABLISHED','legitimate reviewed inventory');
+  assert.deepEqual([...sourceState.sourceIds].sort(),current(withSources,'sources').map(row=>engine.recordId(row,'sources')).sort());
+  const missingResearch=accept(prepare(structuredClone(withSources),3,'COMPLETE',()=>({stageData:{EXCEPTIONS_AND_EDGE_CONDITIONS:'NONE',CONFLICTING_OR_INVALIDATING_MATERIAL:'NONE',RESEARCH_GAPS_AND_BLOCKERS:'NONE',SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED:true,LATEST_PASS_NUMBER:2,NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS:false}})));
+  assert.equal(engine.gate(3,missingResearch).complete,false,'SOURCE_APPLICABILITY_NONEMPTY_RESEARCH_ORACLE');
+  assert(engine.gate(3,missingResearch).reasons.some(reason=>reason.includes('Research is missing for source')),'SOURCE_APPLICABILITY_NONEMPTY_RESEARCH_REASON_ORACLE');
+  record('fully-supported-reviewed-sources',['one-inspected-source','Stage03-cannot-omit-source-research'],'Actual source authoring, registration, independent review and Stage03 completeness boundary.');
+
+  for(const result of ['REJECTED','PARTIAL','UNKNOWN','DISAGREED'])expect(reviewSearch(structuredClone(capable),result),'UNDETERMINED','accepted review '+result);
+  const mixed=reviewContent();mixed.records.semanticReviews.push({...recordProposal(schema,'semanticReviews',{tempKey:'mixed-unknown',overrides:{REVIEW_QUESTION:'Is a second governing condition exhausted?',FINDING:'The condition is unresolved.',REASONING:'An accepted finding cannot erase a distinct UNKNOWN finding.',RESULT:'UNKNOWN'}})});
+  expect(accept(prepare(structuredClone(capable),2,'SEARCH_ADEQUACY_REVIEW',()=>mixed)),'UNDETERMINED','mixed current accepted and UNKNOWN findings');
+  record('negative-or-unknown-review',['REJECTED','PARTIAL','UNKNOWN','DISAGREED','mixed-ACCEPTED-UNKNOWN'],'Actual independent-review acceptance and current calculator/gate.');
+
+  const conflicting=fullyReviewed({sources:[source('authority-a','Independent source A'),source('authority-b','Independent source B')],conflicts:[recordProposal(schema,'sourceConflicts',{tempKey:'unresolved-authority-conflict',relationships:{SOURCE_A:{tempKey:'authority-a'},SOURCE_B:{tempKey:'authority-b'}},overrides:{CONFLICTING_PROPOSITION:'The two synthetic authorities require mutually exclusive wording.',SOURCE_A_AUTHORITY:'Independent authority A',SOURCE_B_AUTHORITY:'Independent authority B',AUTHORITY_RESOLUTION_RULE:'No applicable precedence has yet been established.',CONTROLLING_SOURCE_OBJECTIVELY_ESTABLISHED:'FALSE',RESOLUTION:'Unresolved; do not pick a favorable authority.',RESOLUTION_STATUS:'UNRESOLVED',AFFECTED_WORK:'The synthetic checklist wording.',EVIDENCE:'Exact conflicting synthetic provisions are retained.'}})]});
+  expect(conflicting,'UNDETERMINED','unresolved source conflict despite ACCEPTED review');
+  const blocked=accept(prepare(structuredClone(complete),2,'COMPLETE',()=>({responseType:'BLOCKED',evidence:[],unresolved:[{temporaryKey:'source-access-blocker',kind:'MISSING_CAPABILITY',description:'The required source archive is inaccessible.',whyBlocking:'The mandatory search cannot be completed without the archive.',affectedStageFields:[],affectedRecords:[],blocking:true}]})));
+  expect(blocked,'UNDETERMINED','accepted explicit blocker');
+  const human=accept(prepare(structuredClone(complete),2,'COMPLETE',()=>({responseType:'HUMAN_INPUT_REQUIRED',evidence:[],humanInputRequests:[{temporaryKey:'source-human-scope',question:'Which governing jurisdiction applies?',whyRequired:'The synthetic task does not define a necessary jurisdiction.',affectedStageFields:[],affectedRecords:[],answerType:'TEXT',allowedValues:[],blocking:true}]})));
+  expect(human,'UNDETERMINED','accepted blocking human clarification');
+  record('source-conflict-or-explicit-blocker',['unresolved-conflict','accepted-blocker','blocking-human-input'],'Actual admitted/accepted negative records, calculator and gate; no hand-edited gates.');
+
+  const failed=accept(prepare(structuredClone(complete),2,'COMPLETE',()=>({responseType:'EXECUTION_FAILED',evidence:[],unresolved:[{temporaryKey:'search-tool-failure',kind:'TOOL_FAILURE',description:'Required synthetic source inspection failed.',whyBlocking:'The planned source inspection was not completed.',affectedStageFields:[],affectedRecords:[],blocking:true}]})));
+  expect(failed,'UNDETERMINED','accepted execution failure');assert(failed.projectData.executionFailures.some(row=>Number(row.stage)===2&&!row.resolvedBy&&!row.invalidatedBy));
+  record('accepted-execution-failure',['TOOL_FAILURE'],'Actual failure response admission/acceptance plus calculator/gate.');
+
+  const mutations=[
+    ['search-scope',complete,p=>set(current(p,'sourceSearchContracts')[0],'sourceSearchContracts','PROJECT_SCOPE','A materially different current synthetic scope.')],
+    ['source-content',withSources,p=>set(current(p,'sources')[0],'sources','APPLICABLE_PORTIONS','A new governing condition not included in the accepted review.')],
+    ['review-scope',complete,p=>{current(p,'semanticReviews')[0].scope.sourceSetVersion='SOURCE-SET-OUTSIDE-REVIEW';}],
+    ['review-target',complete,p=>set(current(p,'semanticReviews')[0],'semanticReviews','REVIEWED_RECORD_IDS',[])],
+    ['review-hash',complete,p=>{const row=current(p,'semanticReviews')[0];set(row,'semanticReviews','REVIEWED_HASHES',engine.recordValue(row,'REVIEWED_HASHES').map(()=> '0'.repeat(64)));}],
+    ['capability-rebound',complete,p=>registerFixtureSourceSearchCapability(runtime,p)],
+    ['report-bytes',complete,p=>{const capability=current(p,'externalCapabilities').at(-1),basis=JSON.parse(engine.recordValue(capability,'VERIFICATION_BASIS')),row=p.projectData.evidenceRecords.find(row=>engine.recordId(row,'evidenceRecords')===basis.evidenceId);assert(row,'SOURCE_APPLICABILITY_TAMPER_SETUP_ORACLE');row.fields.APPLICATION_EVIDENCE_CONTENT+=' ';}]
+  ];
+  for(const [name,sourceProject,mutate]of mutations){const p=structuredClone(sourceProject);mutate(p);expect(p,'UNDETERMINED','stale/tampered '+name);}
+  record('source-or-search-mutation',mutations.map(([name])=>name),'Capability renewal is an actual command; other mutations are explicitly isolated currentness faults on a valid retained control.');
+
+  const cap=current(complete,'externalCapabilities').at(-1),env=current(complete,'environmentManifests').find(row=>engine.recordId(row,'environmentManifests')===engine.recordValue(cap,'ENVIRONMENT_MANIFEST_ID')),expiry=Date.parse(engine.recordValue(env,'EXTERNAL_CLAIMS').validUntil);
+  for(const time of [expiry,expiry+1]){
+    const clock=projectStoreRuntime({storageWorker:false,environment:{Date:class extends Date{constructor(...args){super(...(args.length?args:[time]));}static now(){return time;}}}}),p=clock.copy(complete);
+    assert.equal(clock.engine.sourceApplicabilityState(p).determination,'UNDETERMINED','SOURCE_APPLICABILITY_EXPIRY_ORACLE');assert.equal(clock.engine.gate(2,p).complete,false,'SOURCE_APPLICABILITY_EXPIRY_GATE_ORACLE');
+  }
+  record('expired-readiness',['at-validUntil','after-validUntil'],'Actual retained capability lease under controlled VM clock; no declaration of real external readiness.');
+  const repeated=structuredClone(complete);prompts.reserveAndBuildPromptRecord(repeated,2,{operation:'SEARCH_ADEQUACY_REVIEW'});expect(repeated,'NO_APPLICABLE_EXTERNAL_SOURCE','pending repeat independent review');
+  record('pending-repeat-review',['new-reservation-unchanged-inputs'],'Actual new review reservation preserves the prior current accepted determination.');
+  assert.equal(engine.recordValue(current(capable,'sourceSearchContracts')[0],'UNRESOLVED_DISCOVERY_RISK'),'NONE');expect(capable,'UNDETERMINED','NONE keyword without review');
+  record('risk-keyword-not-proof',['NONE-without-review'],'Shared genuinely registered but unreviewed prefix; no extra prerequisite execution.');
+  expect(conditionalComplete,'NO_APPLICABLE_EXTERNAL_SOURCE','nonmaterial residual-risk prose');
+  record('nonmaterial-residual-risk-prose',['nonempty-not-NONE-review-accepted'],'Shared genuinely accepted conditional scope control; no keyword vocabulary imposed.');
+
+  const published=prompts.reserveAndBuildPromptRecord(structuredClone(base),2,{operation:'COMPLETE'}).prompt,descriptor=JSON.parse(published.prompt.split('RESPONSE CONTRACT DEFINITIONS\n')[1].split('\n\nEND HASHED INSTRUCTION BODY')[0]);
+  assert.equal(Object.hasOwn(descriptor.stageData,'SOURCE_APPLICABILITY_DETERMINATION'),false,'SOURCE_APPLICABILITY_PUBLISHED_OWNER_ORACLE');
+  const rejected=prepare(structuredClone(base),2,'COMPLETE',()=>({stageData:{...stageData,SOURCE_APPLICABILITY_DETERMINATION:'NO_APPLICABLE_EXTERNAL_SOURCE'},records:{sourceSearchContracts:[boundedSearchProposal(schema)]}}));
+  assert.equal(rejected.validation.valid,false,'SOURCE_APPLICABILITY_AGENT_WRITE_ORACLE');
+  assert(rejected.validation.issues.some(issue=>issue.code==='FIELD_OWNERSHIP_VIOLATION'&&issue.path==='/stageData/SOURCE_APPLICABILITY_DETERMINATION'),'SOURCE_APPLICABILITY_AGENT_WRITE_REASON_ORACLE');
+  assert.equal(rejected.project.projectData.rawResponses.at(-1).completeRawResponse,rejected.text);assert.equal(engine.acceptedChanges(rejected.project,2).length,0);assert.equal(current(rejected.project,'sourceSearchContracts').length,0);
+  record('new-agent-summary-write',['descriptor-omission','exact-ownership-rejection','raw-preserved','canonical-unchanged'],'Final exported descriptor and actual response admission; valid omission already accepted above.');
+
+  const fixtureBytes=fs.readFileSync(new URL('./verification/source-applicability-legacy4-20261011.json.gz',import.meta.url));
+  assert.equal(createHash('sha256').update(fixtureBytes).digest('hex'),'92b30d3d0b2a6954f1dd7b5dc28fe9f68b15f739cbcc454ae91feb704a888261','SOURCE_APPLICABILITY_LEGACY_GZIP_ORACLE');
+  const decoded=gunzipSync(fixtureBytes);assert.equal(createHash('sha256').update(decoded).digest('hex'),'f2b6904821ca57b3b3faa5d1e33dc0a9218bfec8b296f40b8a1a79ac2f264ef0','SOURCE_APPLICABILITY_LEGACY_CONTENT_ORACLE');
+  const fixture=JSON.parse(decoded);assert.equal(fixture.schema,'source-applicability-legacy4-fixture/1');assert.equal(fixture.synthetic,true);
+  const decode=value=>{if(value?.$fixtureBlob)return new Blob([Buffer.from(value.$fixtureBlob.base64,'base64')],{type:value.$fixtureBlob.type});if(Array.isArray(value))return value.map(decode);if(value&&typeof value==='object')return Object.fromEntries(Object.entries(value).map(([k,v])=>[k,decode(v)]));return value;};
+  const legacyTime=Date.parse(fixture.capturedAt),legacyResults=[];
+  for(const [name,expected,caseId]of [['unsupported','UNDETERMINED','legacy-historical-label'],['supported','NO_APPLICABLE_EXTERNAL_SOURCE','legacy-supported-canonical-search']]){
+    const old=fixture.carriers[name],r=projectStoreRuntime({storageWorker:false,environment:{Date:class extends Date{constructor(...args){super(...(args.length?args:[legacyTime]));}static now(){return legacyTime;}}}});
+    for(const [store,rows]of decode(old.rows))r.rows.set(store,new Map(rows.map(([key,value])=>[key,r.copy(value)])));
+    const original=r.copy(r.rows.get('projects').get(old.jobId).project),priorHistory=new Map(r.rows.get('meta'));
+    assert.equal(original.projectData.applicationProjection.receipt.derivationId,'closed-loop-derivation/project-current-projection/4');
+    const p=await r.store.readProject(old.jobId);
+    assert.equal(p.projectData.applicationProjection.receipt.derivationId,'closed-loop-derivation/project-current-projection/5','SOURCE_APPLICABILITY_NAMED_ACTIVATION_ORACLE');
+    assert.equal(p.revision,old.revision+1);assert.equal(r.engine.sourceApplicabilityState(p).determination,expected);assert.equal(r.engine.gate(2,p).complete,name==='supported');
+    for(const row of old.raw)assert.equal(p.projectData.rawResponses.find(saved=>saved.rawResponseId===row.id)?.completeRawResponse,row.text,'SOURCE_APPLICABILITY_LEGACY_RAW_ORACLE');
+    for(const family of ['sourceSearchContracts','sources','evidenceRecords','semanticReviews'])assert.deepEqual(p.projectData[family],original.projectData[family],'SOURCE_APPLICABILITY_LEGACY_CANONICAL_PRESERVATION_ORACLE: '+family);
+    for(const [key,value]of priorHistory)if(key.includes(':snapshot:')||key.includes(':bytes:'))assert.deepEqual(r.rows.get('meta').get(key),value,'SOURCE_APPLICABILITY_LEGACY_HISTORY_ORACLE: '+key);
+    const event=p.projectData.history.find(row=>row.type==='APPLICATION_PROJECTION_DERIVATION_ACTIVATED'&&row.previousDerivationId==='closed-loop-derivation/project-current-projection/4');assert(event,'SOURCE_APPLICABILITY_LEGACY_EVENT_ORACLE');assert.equal(event.sourceProjectSha256,old.projectSha256);assert.equal(event.historicalProvenanceClaimed,false);
+    const again=await r.store.readProject(old.jobId);assert.equal(again.projectSha256,p.projectSha256,'SOURCE_APPLICABILITY_LEGACY_IDEMPOTENCY_ORACLE');
+    const archived=p.projectData.migrationArchives.find(row=>row.kind==='LEGACY_SOURCE_APPLICABILITY_AGENT_SUMMARY'&&row.sourceProjectSha256===old.projectSha256);
+    assert(archived&&archived.operational===false,'SOURCE_APPLICABILITY_AUDIT_ARCHIVE_ORACLE');
+    for(const carrier of ['agentData','acceptedData']){assert.equal(Object.hasOwn(p.stages[2][carrier],'SOURCE_APPLICABILITY_DETERMINATION'),false,'SOURCE_APPLICABILITY_LIVE_LABEL_REMOVAL_ORACLE');if(Object.hasOwn(original.stages[2][carrier],'SOURCE_APPLICABILITY_DETERMINATION'))assert(archived.values.some(row=>row.sourcePointer==='/stages/2/'+carrier+'/SOURCE_APPLICABILITY_DETERMINATION'&&row.value===original.stages[2][carrier].SOURCE_APPLICABILITY_DETERMINATION),'SOURCE_APPLICABILITY_ARCHIVED_VALUE_ORACLE');}
+    const oldCheckpoint=priorHistory.get('recovery:'+old.jobId).value.activeId,restored=(await r.store.restoreCheckpoint(old.jobId,oldCheckpoint,{expectedProjectRevision:p.revision})).project;
+    assert.equal(restored.projectData.applicationProjection.receipt.derivationId,'closed-loop-derivation/project-current-projection/5','SOURCE_APPLICABILITY_LEGACY_RESTORE_ORACLE');assert.equal(r.engine.sourceApplicabilityState(restored).determination,expected);assert.equal(r.engine.gate(2,restored).complete,name==='supported');
+    for(const raw of old.raw)assert.equal(restored.projectData.rawResponses.find(saved=>saved.rawResponseId===raw.id)?.completeRawResponse,raw.text,'SOURCE_APPLICABILITY_RESTORE_RAW_ORACLE');
+    const backup=await r.store.exportPackage(old.jobId),destination=projectStoreRuntime({storageWorker:false,environment:{Date:class extends Date{constructor(...args){super(...(args.length?args:[legacyTime]));}static now(){return legacyTime;}}}}),imported=await destination.store.importPackage(backup);
+    assert.equal(imported.projectData.applicationProjection.receipt.derivationId,'closed-loop-derivation/project-current-projection/5','SOURCE_APPLICABILITY_BACKUP_IMPORT_ORACLE');assert.equal(destination.engine.sourceApplicabilityState(imported).determination,expected);assert.equal(destination.engine.gate(2,imported).complete,name==='supported');
+    for(const raw of old.raw)assert.equal(imported.projectData.rawResponses.find(saved=>saved.rawResponseId===raw.id)?.completeRawResponse,raw.text,'SOURCE_APPLICABILITY_IMPORT_RAW_ORACLE');
+    assert.equal((await destination.store.readProject(old.jobId)).projectSha256,imported.projectSha256,'SOURCE_APPLICABILITY_IMPORT_COLD_READ_ORACLE');
+    legacyResults.push({name,previousDerivationId:'closed-loop-derivation/project-current-projection/4',currentDerivationId:p.projectData.applicationProjection.receipt.derivationId,sourceProjectSha256:old.projectSha256,determination:expected,originalRawCount:old.raw.length,auditArchivePreserved:true,originalCheckpointRestored:true,backupImported:true});
+    record(caseId,[name,'named-/4-to-/5','original-raw-and-canonical-retained','audit-only-archive','idempotent-cold-read','original-checkpoint-restore','backup-export-import'],'Actual saved /4 store carrier produced through original author/capability/review owners, then named current cold-read activation under an explicit retained fixture clock; Map adapter only.');
+  }
+  assert.deepEqual(results.map(row=>row.caseId),['blank-or-label-only','contract-missing-or-multiple','missing-or-invalid-component','typed-empty-arrays-with-supported-scope','unexecuted-plan-or-evidence-missing','capability-alone','review-alone-no-capability','fully-supported-reviewed-empty-inventory','fully-supported-reviewed-sources','negative-or-unknown-review','source-conflict-or-explicit-blocker','accepted-execution-failure','source-or-search-mutation','expired-readiness','pending-repeat-review','risk-keyword-not-proof','nonmaterial-residual-risk-prose','new-agent-summary-write','legacy-historical-label','legacy-supported-canonical-search']);
+  return {sourceApplicabilityCalculation:'PASS',syntheticExternalClaims:true,cases:results,legacy:{fixtureSha256:'f2b6904821ca57b3b3faa5d1e33dc0a9218bfec8b296f40b8a1a79ac2f264ef0',fixtureClock:fixture.capturedAt,sourceSha256:fixture.sourceSha256,results:legacyResults},boundary:'Current production reservation/admission/acceptance, capability command, independent-review and Stage02/03/04 consumers; explicitly scoped retained-state faults and original /4→/5 Map-store activation. No real agent, external-system or native browser claim.'};
+}
+
+if(process.argv.includes('--source-applicability-only')){const sourceApplicabilityCalculation=await verifySourceApplicabilityCalculation();console.log(JSON.stringify({semanticReviewAcceptance:'PASS',sourceApplicabilityCalculation}));process.exit(0);}
 let author=stage04AcceptanceFixture(runtime,'JOB-SEMANTIC-REVIEW-ACCEPTANCE');
 // Specification9.6/37Stage04: the independent reviewer must receive the
 // authored decision or truth conditions it is reviewing, not only their IDs.
@@ -220,7 +388,7 @@ const sourceSearchCompletionObservations=[];
 // minimum cardinality. This literal oracle comes from the controlling text.
 {
   const required=['PROJECT_SCOPE','SOURCE_CLASSES_CONSIDERED','LOCATIONS_AND_REPOSITORIES','QUERIES_OR_STRATEGIES','DATE_OR_VERSION_CUTOFF','EXCLUSIONS','ACCESS_LIMITATIONS','ADEQUACY_RATIONALE','UNRESOLVED_DISCOVERY_RISK'];
-  const base=stage01AcceptanceFixture(runtime,'JOB-SEARCH-CONTRACT-COMPONENTS'),stageData={AUTHORITY_HIERARCHY:'No external authority applies to the controlled fixture.',SOURCE_APPLICABILITY_DETERMINATION:'NO_APPLICABLE_EXTERNAL_SOURCE',KNOWN_CONTROLLING_SOURCES_EXAMINED:'The closed fixture input universe and supplied references were inspected.'};
+  const base=stage01AcceptanceFixture(runtime,'JOB-SEARCH-CONTRACT-COMPONENTS'),stageData={AUTHORITY_HIERARCHY:'No external authority applies to the controlled fixture.',KNOWN_CONTROLLING_SOURCES_EXAMINED:'The closed fixture input universe and supplied references were inspected.'};
   const omitted=[];
   for(const name of required){
     const proposal=boundedSearchProposal(schema);delete proposal.fields[name];
@@ -272,7 +440,7 @@ const sourceSearchCompletionObservations=[];
 
 {
   let p=stage01AcceptanceFixture(runtime,'JOB-MISSING-BOUNDED-SEARCH');
-  p=accept(prepare(p,2,'COMPLETE',()=>({stageData:{AUTHORITY_HIERARCHY:'No external authority applies.',SOURCE_APPLICABILITY_DETERMINATION:'NO_APPLICABLE_EXTERNAL_SOURCE',KNOWN_CONTROLLING_SOURCES_EXAMINED:'The actor claims no external source applies.'}})));
+  p=accept(prepare(p,2,'COMPLETE',()=>({stageData:{AUTHORITY_HIERARCHY:'No external authority applies.',KNOWN_CONTROLLING_SOURCES_EXAMINED:'The actor claims no external source applies.'}})));
   const missing=engine.gate(2,p);
   assert.equal(missing.complete,false,'SOURCE_SEARCH_CONTRACT_COMPLETION_ORACLE: no-source assertion completed without a bounded search contract.');
   assert(missing.reasons.some(reason=>reason.includes('source search contract')),'SOURCE_SEARCH_CONTRACT_REASON_ORACLE');
@@ -372,7 +540,25 @@ author=accept(prepare(author,4,'COMPLETE',prompt=>stage04AcceptanceEnvelope(runt
 const propositionId=engine.recordId(engine.recordsForCurrentScope(author,'propositions')[0],'propositions');
 const authorPrepared=prepare(author,5,'COMPLETE',()=>({stageData:{DUPLICATES_REMAINING:'NONE',IMPOSSIBLE_COMBINATIONS:'NONE',UNDEFINED_TERMS:'NONE',CIRCULAR_DEPENDENCIES:'NONE',UNSUPPORTED_REQUIREMENTS:'NONE',APPLICABILITY_UNDETERMINED:'NONE',REQUIREMENTS_WITHOUT_VERIFICATION_PATH:'NONE'},records:{applicabilityRecords:[recordProposal(schema,'applicabilityRecords',{tempKey:'applicability',relationships:{SUBJECT_ID:{recordId:propositionId}},overrides:{PROPOSED_APPLICABILITY:'APPLICABLE',REASONING:'The checklist requirement applies.'}})]}}));
 author=accept(authorPrepared);
+const semanticReviewSelfApprovalCases=[];
+{
+  const self=structuredClone(author),basis=engine.semanticReviewBasis(self,5),before=hash.sha256Value(self),promptCount=self.projectData.generatedPrompts.length,reservationCount=self.projectData.operationReservations.length;
+  assert(basis.authorContextId,'SEMANTIC_REVIEW_SELF_APPROVAL_SETUP_ORACLE: accepted author context is missing.');
+  assert.throws(()=>prompts.reserveAndBuildPromptRecord(self,5,{operation:'SEMANTIC_REVIEW',reviewerContextId:basis.authorContextId}),error=>error.message==='Semantic reviewer context is not a current application-registered reviewer context.','SEMANTIC_REVIEW_SELF_APPROVAL_REJECTION_ORACLE: the author context reserved its own semantic review.');
+  assert.equal(hash.sha256Value(self),before,'SEMANTIC_REVIEW_SELF_APPROVAL_ATOMICITY_ORACLE: refusal changed canonical project state.');
+  assert.equal(self.projectData.generatedPrompts.length,promptCount,'SEMANTIC_REVIEW_SELF_APPROVAL_ATOMICITY_ORACLE: refusal retained a generated prompt.');
+  assert.equal(self.projectData.operationReservations.length,reservationCount,'SEMANTIC_REVIEW_SELF_APPROVAL_ATOMICITY_ORACLE: refusal retained an operation reservation.');
+  semanticReviewSelfApprovalCases.push({caseId:'same-author-reviewer-context-rejected-before-proposal',status:'PASS',canonicalStateUnchanged:true,promptCreated:false,reservationCreated:false});
+}
 function review(results){return prepare(structuredClone(author),5,'SEMANTIC_REVIEW',()=>({records:{semanticReviews:results.map((result,index)=>recordProposal(schema,'semanticReviews',{tempKey:`review-${index}`,overrides:{REVIEW_QUESTION:`Independent question ${index}`,FINDING:`Independent finding ${index}`,REASONING:`Evidence for finding ${index}.`,RESULT:result}}))}}));}
+function completeSelfApprovalControl(project){
+ const acceptedReviews=engine.recordsForCurrentScope(project,'semanticReviews').filter(row=>Number(row.stage)===5&&engine.recordValue(row,'RESULT')==='ACCEPTED');
+ assert.equal(acceptedReviews.length,2,'SEMANTIC_REVIEW_DISTINCT_REVIEWER_CONTROL_ORACLE: exact accepted review population changed.');
+ assert(acceptedReviews.every(row=>engine.recordValue(row,'AUTHOR_CONTEXT_ID')&&engine.recordValue(row,'AUTHOR_CONTEXT_ID')!==engine.recordValue(row,'REVIEWER_CONTEXT_ID')&&engine.recordValue(row,'INDEPENDENCE_DETERMINATION')==='APPLICATION_ESTABLISHED'),'SEMANTIC_REVIEW_DISTINCT_REVIEWER_CONTROL_ORACLE: accepted review reused its author context.');
+ semanticReviewSelfApprovalCases.push({caseId:'distinct-reviewer-approval-completes-stage',status:'PASS',acceptedReviewCount:acceptedReviews.length,applicationEstablished:true,stageComplete:project.stages[5].gate.complete});
+ return {checkId:'semantic-review.self-approval-rejected',passed:true,cases:semanticReviewSelfApprovalCases,boundary:'Production Stage05 author reservation and acceptance, same-context review reservation refusal before proposal creation with unchanged canonical state, then distinct application-registered reviewer proposal, acceptance and completion. Synthetic actor contexts; no external provider independence or browser claim.'};
+}
+if(process.argv.includes('--self-approval-only')){const focused=accept(review(['ACCEPTED','ACCEPTED']));assert.equal(focused.stages[5].gate.complete,true,'A complete valid independent review no longer passes.');console.log(JSON.stringify({semanticReviewAcceptance:'PASS',semanticReviewSelfApproval:completeSelfApprovalControl(focused)}));process.exit(0);}
 
 // Execute the real UI acceptance handler with the production engine/ingestor.
 // IndexedDB behavior remains covered by the existing local/deployed browser suite.
@@ -387,6 +573,11 @@ function application(project,operation='COMPLETE',{storageFailure=false,stage=5}
       assert.equal(expectedProjectRevision,saved.revision,'Continuation lost the compare-and-swap revision.');
       if(storageFailure)throw new Error('CONTROLLED_CONTINUATION_STORAGE_FAILURE');
       const candidate=structuredClone(next);candidate.revision=saved.revision+1;
+      const pendingIntegrity=closedLoopProjectStore.validateProjectIntegrity(candidate,{verifyDerived:false});
+      assert(pendingIntegrity.issues.every(issue=>issue.startsWith('Application projection receipt is invalid: STALE_DERIVATION_RECEIPT ')),JSON.stringify(pendingIntegrity.issues));
+      // Mirror prepareProjectWrite: revision-bound reservations and derived
+      // projection receipts are refreshed together before integrity validation.
+      engine.ensureShape(candidate);engine.reconcileReservationRevisions(candidate);engine.recalculate(candidate);
       const integrity=closedLoopProjectStore.validateProjectIntegrity(candidate,{verifyDerived:false});assert.equal(integrity.valid,true,JSON.stringify(integrity.issues));
       saved=candidate;return candidate;
     }},selected:saved,operation,stage,notices});
@@ -515,6 +706,7 @@ assert.equal(hash.sha256Value(pending.project),pendingHash,'Rejection changed th
 
 const passed=accept(review(['ACCEPTED','ACCEPTED']));
 assert.equal(passed.stages[5].gate.complete,true,'A complete valid independent review no longer passes.');
+const semanticReviewSelfApproval=completeSelfApprovalControl(passed);
 assert.equal(prompts.buildPromptRecord(6,passed,{operation:'COMPLETE'}).stage,6);
 const malformedReviewCases=[];
 for(const field of ['REVIEWED_RECORD_IDS','REVIEWED_HASHES'])for(const [label,value]of [['missing',undefined],['null',null],['string','untrusted'],['object',{}],['non-string-member',[1]]]){
@@ -576,4 +768,5 @@ engine.invalidateAcceptedResponse(legacy,{stage:5,rawResponseId:legacyReview.raw
 assert.equal(engine.recordsForCurrentScope(legacy,'semanticReviews').filter(r=>Number(r.stage)===5).length,0,'Correction left invalid Stage05 findings current.');
 const replacement=prompts.reserveAndBuildPromptRecord(legacy,5,{operation:'SEMANTIC_REVIEW'}).prompt;
 assert.equal(replacement.contextManifest.semanticReviewBinding.bindingStatus,'BOUND','The existing correction action cannot produce a replacement review.');
-console.log(JSON.stringify({semanticReviewAcceptance:'PASS',stage04ReviewSubjectObservations,verificationObservations:sourceSearchCompletionObservations,inapplicableDispositionRequiresIndependentReview:true,mergedObligationsRequireIndependentReview:true,malformedReviewCases,browserAcceptanceCases,orphanAuditIsNotLiveAttempt:true,requestedReviewPreservesAcceptedProgress:true,pendingReviewIsSeparatelyActionable:true,semanticReviewStages:[1,2,3,4,5,6],pendingProposalsPreserved:true,recordedOperationSelectionPreserved:true,commandGatesUseCurrentOwner:true,automaticNextInstruction:true,explicitLegacyRecovery:true,restorationDoesNotExecuteCorrection:true,reconciliationThenIndependentReview:true,invalidResultsRejected:true,mixedFindingsCannotPass:true,negativeFindingsRouteToCorrection:true,legacyEvidencePreserved:true,validReviewUnlocksStage6:true}));
+const sourceApplicabilityCalculation=await verifySourceApplicabilityCalculation();
+console.log(JSON.stringify({semanticReviewAcceptance:'PASS',semanticReviewSelfApproval,sourceApplicabilityCalculation,stage04ReviewSubjectObservations,verificationObservations:sourceSearchCompletionObservations,inapplicableDispositionRequiresIndependentReview:true,mergedObligationsRequireIndependentReview:true,malformedReviewCases,browserAcceptanceCases,orphanAuditIsNotLiveAttempt:true,requestedReviewPreservesAcceptedProgress:true,pendingReviewIsSeparatelyActionable:true,semanticReviewStages:[1,2,3,4,5,6],pendingProposalsPreserved:true,recordedOperationSelectionPreserved:true,commandGatesUseCurrentOwner:true,automaticNextInstruction:true,explicitLegacyRecovery:true,restorationDoesNotExecuteCorrection:true,reconciliationThenIndependentReview:true,invalidResultsRejected:true,mixedFindingsCannotPass:true,negativeFindingsRouteToCorrection:true,legacyEvidencePreserved:true,validReviewUnlocksStage6:true}));

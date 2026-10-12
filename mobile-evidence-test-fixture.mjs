@@ -24,7 +24,7 @@ export function syntheticMobileOperations(target){
   LOGICAL_EXECUTION_PACKAGE_EXPORTED:{...file},
   BACKUP_EXPORTED:{...backup},
   BACKUP_RESTORED_FROM_EXPORTED_COPY:{...backup},
-  ACCESSIBILITY_AND_OVERFLOW_VERIFIED:{horizontalOverflowPx:0,minimumPrimaryTextPx:16,minimumSecondaryTextPx:14,minimumTouchTargetPx:44,focusTarget:'PANEL',liveRegion:'STATUS',liveAnnouncement:'ACTUAL DOM TEXT'},
+  ACCESSIBILITY_AND_OVERFLOW_VERIFIED:{horizontalOverflowPx:0,minimumPrimaryTextPx:16,minimumSecondaryTextPx:14,minimumTouchTargetPx:44,focusTarget:'PANEL',liveRegion:'STATUS',liveAnnouncement:'ACTUAL DOM TEXT',focused:true,liveAnnounced:true},
   DEPLOYED_BUILD_IDENTITY_VERIFIED:{buildIdentity,resources:['app-core.js','test-runtime.js','test-worker.js','project-store.js'].map(path=>({path,sha256:file.sha256,byteSize:32}))},
   RUNTIME_EXCEPTION_CHECK_COMPLETED:{runtimeExceptions:0,unhandledRejections:0,observedTabs:['FIXTURE-TAB']}
  };

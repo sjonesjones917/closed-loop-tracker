@@ -87,7 +87,20 @@ jobs:
           node verify-contract-closure.mjs
           node verify-stage-operation-registry.mjs
           node verify-stage-contract-closure.mjs
-          test "$(find . -maxdepth 1 -type f -name '*.html' | wc -l)" -eq 1
+          node --input-type=module - <<'NODE'
+          import assert from 'node:assert/strict';
+          import fs from 'node:fs';
+          import {runtimePaths} from './verified-site.mjs';
+          const fixtureHtml=['test-append-only-native.html','test-backup-extension-native.html','test-human-combined-cold.html','test-human-combined-native.html','test-human-combined-ui-seed.html','test-retained-root-native.html'];
+          const expectedRootHtml=['index.html',...fixtureHtml].sort();
+          const assertHtmlArchitecture=(rootEntries=fs.readdirSync('.',{withFileTypes:true}),deployedPaths=runtimePaths)=>{
+            const rootHtml=rootEntries.filter(row=>row.isFile()&&row.name.endsWith('.html')).map(row=>row.name).sort();
+            assert.deepEqual(rootHtml,expectedRootHtml,'Root HTML must be the application shell plus the exact non-deployed fixture allowlist.');
+            assert(fixtureHtml.every(name=>!deployedPaths.includes(name)),'A repository-only HTML fixture entered the verified deployment allowlist.');
+            assert.deepEqual(deployedPaths.filter(name=>name.endsWith('.html')).sort(),['index.html'],'The verified deployment must contain exactly one HTML document.');
+          };
+          assertHtmlArchitecture();
+          NODE
           test ! -f app.js
           test -z "$(find . -maxdepth 1 -type f -name '.repair-*' -print -quit)"
           test -z "$(find .github/workflows -maxdepth 1 -type f ! -name 'pages.yml' -print -quit)"

@@ -1,3 +1,5 @@
+import {verifyRetainedRootContinuation} from './test-retained-root-continuation.mjs';
+import {verifyWorkerMessageCodec,verifyStorageWorkerStartup} from './test-worker-message-codec.mjs';
 import {verifyPromptContextStorage} from './test-prompt-context-storage.mjs';
 import {verifyArtifactByteSharing,verifyArtifactByteSharingFaultDetection} from './test-artifact-byte-sharing.mjs';
 import {verifyInboundArchiveParser} from './test-inbound-archive-parser.mjs';
@@ -9,8 +11,10 @@ import {storedArtifactBody,projectStoreRuntime} from './test-project-store-runti
 import {canonicalFixtureRecord} from './test-fixtures.mjs';
 import {verifyResponseStagingRecovery} from './test-response-staging-recovery.mjs';
 import {verifyReturnedSlotAtomicStaging} from './test-returned-slot-atomic-staging.mjs';
-import {verifyOperationalJournalCopy} from './test-operational-journal-copy.mjs';
+import {verifyValidationRecordBackupRoundtrip} from './test-validation-record-backup.mjs';
+import {verifyOperationalJournalCopy,verifyOperationalReadProof,verifyCanonicalReadProof,verifyOperationalWarmProof,verifyCheckpointCanonicalProof,verifyCanonicalCommitWarmProof,verifyStartupSelectedReadReuse} from './test-operational-journal-copy.mjs';
 console.log(JSON.stringify({operationalJournalCopy:verifyOperationalJournalCopy()}));
+console.log(JSON.stringify({validationRecordBackupRoundtrip:await verifyValidationRecordBackupRoundtrip()}));
 const faultName=process.argv.find(arg=>arg.startsWith('--fault='))?.split('=')[1],faults={ownership:{id:'BYPASS-OPERATIONAL-OWNERSHIP',file:'project-store.js',before:'if(!allowed)throw storageError(\'An operational response event',after:'if(false)throw storageError(\'An operational response event'},revision:{id:'BYPASS-RESERVATION-REVISION',file:'response-ingestion.js',before:'reservationRevision!==effectiveRevision||',after:''},canonical:{id:'CANONICAL-WRITE-FOR-STAGING',file:'project-store.js',before:'if(options.operational)return writeOperationalProject(project,options);',after:''}};
 const r=projectStoreRuntime({fault:faultName?faults[faultName]:null}),{core,engine,prompts,ingestion,store,copy}=r,schema=r.runtime.closedLoopWorkflowSchema,cases=[],note=name=>cases.push({name,result:'PASS'});
 let p=core.createBlankState('OPERATIONAL-REVISION');p.job.EXACT_USER_OBJECTIVE_VERBATIM='Preserve the reserved project revision.';engine.ensureShape(p);engine.recalculate(p);p=await store.writeProject(p,{expectedProjectRevision:0,incrementRevision:false,createOnly:true});const draft=copy(p),pr=prompts.reserveAndBuildPromptRecord(draft,1,{},{}).prompt;p=await store.writeProject(draft,{expectedProjectRevision:p.revision});
@@ -141,3 +145,67 @@ for(const [faultId,oracle] of [['omit-hydration','PROMPT_CONTEXT_STORAGE_COLD_RE
  promptContextStorageFaults.push({faultId,detected:true,oracle});
 }
 console.log(JSON.stringify({promptContextStorage:'PASS',...promptContextStorage,faults:promptContextStorageFaults}));
+
+const operationalReadProof=await verifyOperationalReadProof(),operationalReadProofFaults=[];
+for(const command of ['checkpoint','operational'])for(const [scenario,fault]of [['same-digest-canonical-payload','digest-label-only'],['same-digest-journal-payload','digest-label-only'],['same-digest-alias-subbranch','digest-label-only'],['corrupt-retained-project-part','omit-retained-part-rehash']]){
+ const caseId=command+':'+scenario;
+ await assert.rejects(()=>verifyOperationalReadProof({fault,caseFilter:[caseId]}),error=>error.code==='ERR_ASSERTION'&&error.message.includes('PRIVATE_READ_REJECTION_ORACLE '+caseId),'PRIVATE_READ_INTENDED_FAULT_ORACLE '+caseId);
+ operationalReadProofFaults.push({caseId,fault,detected:true,oracle:'PRIVATE_READ_REJECTION_ORACLE '+caseId});
+}
+console.log(JSON.stringify({operationalReadProof:{...operationalReadProof,faults:operationalReadProofFaults}}));
+
+const operationalWarmProof=await verifyOperationalWarmProof(),operationalWarmProofFaults=[];
+for(const command of ['checkpoint','operational'])for(const [scenario,fault,oracle]of [['same-digest-journal-payload','omit-full-source-comparison','WARM_PROOF_REJECTION_ORACLE'],['wrong-generated-patches','omit-generated-replay-check','WARM_PROOF_WRONG_PATCH_REJECTION_ORACLE'],['public-read-remains-cold','reuse-public-read','WARM_PROOF_PUBLIC_COLD_ORACLE'],['returned-project-mutation-during-custody','reuse-returned-project','WARM_PROOF_RETURNED_ALIAS_ISOLATION_ORACLE']]){
+ if(fault==='reuse-returned-project'&&command==='checkpoint')continue;
+ const caseId=command+':'+scenario;
+ await assert.rejects(()=>verifyOperationalWarmProof({fault,caseFilter:[caseId]}),error=>error.code==='ERR_ASSERTION'&&error.message.includes(oracle),'WARM_PROOF_INTENDED_FAULT_ORACLE '+caseId);
+ operationalWarmProofFaults.push({caseId,fault,oracle,detected:true});
+}
+console.log(JSON.stringify({operationalWarmProof:{...operationalWarmProof,faults:operationalWarmProofFaults}}));
+
+const canonicalReadProof=await verifyCanonicalReadProof(),canonicalReadProofFaults=[];
+for(const [scenario,fault]of [['same-digest-canonical-payload','digest-label-only'],['same-digest-journal-payload','digest-label-only'],['same-digest-alias-subbranch','digest-label-only'],['corrupt-retained-project-part','omit-retained-part-rehash']]){
+ const caseId='canonical:'+scenario;
+ await assert.rejects(()=>verifyCanonicalReadProof({fault,caseFilter:[caseId]}),error=>error.code==='ERR_ASSERTION'&&error.message.includes('PRIVATE_READ_REJECTION_ORACLE '+caseId),'PRIVATE_CANONICAL_READ_INTENDED_FAULT_ORACLE '+caseId);
+ canonicalReadProofFaults.push({caseId,fault,detected:true,oracle:'PRIVATE_READ_REJECTION_ORACLE '+caseId});
+}
+
+for(const [scenario,fault]of [['prepared-candidate-mutation','omit-candidate-snapshot'],['expired-capability-at-commit','omit-current-derived']]){
+ const caseId='canonical:'+scenario;
+ await assert.rejects(()=>verifyCanonicalReadProof({fault,caseFilter:[caseId]}),error=>error.code==='ERR_ASSERTION'&&error.message.includes('CANONICAL_PREPARED_REJECTION_ORACLE '+caseId),'CANONICAL_PREPARED_INTENDED_FAULT_ORACLE '+caseId);
+ canonicalReadProofFaults.push({caseId,fault,detected:true,oracle:'CANONICAL_PREPARED_REJECTION_ORACLE '+caseId});
+}
+await assert.rejects(()=>verifyCanonicalReadProof({fault:'omit-retained-prompt-context-copy',caseFilter:['canonical:valid-control']}),error=>error.message==='Exact prompt context bytes are unavailable.','CANONICAL_RETAINED_CONTEXT_INTENDED_FAULT_ORACLE');
+canonicalReadProofFaults.push({caseId:'canonical:valid-control',fault:'omit-retained-prompt-context-copy',detected:true,oracle:'CANONICAL_RETAINED_PROMPT_CONTEXT_BYTES_ORACLE'});
+console.log(JSON.stringify({canonicalReadProof:{...canonicalReadProof,faults:canonicalReadProofFaults}}));
+
+const retainedRootContinuation=await verifyRetainedRootContinuation(),retainedRootContinuationFaults=[];
+for(const [fault,caseId,oracle] of [['repeat-root-computations','valid-two-warm-views','RETAINED_ROOT_WARM_RESTORE_ORACLE'],['skip-preparation-requalification','root-mutation-during-preparation','Deferred warm validation cannot escape into ordinary commit']]){
+ await assert.rejects(()=>verifyRetainedRootContinuation({fault,caseFilter:[caseId]}),error=>error.code==='ERR_ASSERTION'&&error.message.includes(oracle),'RETAINED_ROOT_INTENDED_FAULT_ORACLE '+fault);retainedRootContinuationFaults.push({fault,caseId,oracle,detected:true});
+}
+console.log(JSON.stringify({retainedRootContinuation:{...retainedRootContinuation,faults:retainedRootContinuationFaults}}));
+
+const checkpointCanonicalProof=await verifyCheckpointCanonicalProof();
+await assert.rejects(()=>verifyCheckpointCanonicalProof({fault:'omit-full-source-comparison',caseFilter:['same-digest-journal-payload']}),error=>error.code==='ERR_ASSERTION'&&error.message.includes('CHECKPOINT_CANONICAL_REJECTION_ORACLE'),'CHECKPOINT_CANONICAL_INTENDED_FAULT_ORACLE');
+console.log(JSON.stringify({checkpointCanonicalProof:{...checkpointCanonicalProof,faults:[{fault:'omit-full-source-comparison',caseId:'same-digest-journal-payload',detected:true,oracle:'CHECKPOINT_CANONICAL_REJECTION_ORACLE'}]}}));
+
+const workerMessageCodec=await verifyWorkerMessageCodec();
+await assert.rejects(()=>verifyWorkerMessageCodec({fault:'expanded-message'}),error=>error.code==='ERR_ASSERTION'&&error.message.includes('WORKER_CODEC_REPEATED_FRAME_ORACLE'),'WORKER_CODEC_ORIGINAL_EXPANSION_FAULT_ORACLE');
+await assert.rejects(()=>verifyWorkerMessageCodec({fault:'sparse-path'}),error=>error.code==='ERR_ASSERTION'&&error.message.includes('WORKER_CODEC_MALFORMED_ORACLE sparse-path-key'),'WORKER_CODEC_SPARSE_PATH_FAULT_ORACLE');
+console.log(JSON.stringify({workerMessageCodec:{...workerMessageCodec,originalExpandedFault:{detected:true,oracle:'WORKER_CODEC_REPEATED_FRAME_ORACLE'},sparsePathFault:{detected:true,oracle:'WORKER_CODEC_MALFORMED_ORACLE sparse-path-key'}}}));
+
+const storageWorkerStartup=await verifyStorageWorkerStartup(),storageWorkerStartupFaults=[];
+for(const [fault,oracle]of [['missing-parent-barrier','WORKER_STARTUP_PARENT_BARRIER_ORACLE'],['duplicate-worker-recovery','WORKER_STARTUP_NO_DUPLICATE_MIGRATION_ORACLE']]){
+ await assert.rejects(()=>verifyStorageWorkerStartup({fault}),error=>error.code==='ERR_ASSERTION'&&error.message.includes(oracle),'WORKER_STARTUP_INTENDED_FAULT_ORACLE '+fault);storageWorkerStartupFaults.push({fault,oracle,detected:true});
+}
+console.log(JSON.stringify({storageWorkerStartup:{...storageWorkerStartup,faults:storageWorkerStartupFaults}}));
+
+const canonicalCommitWarmProof=await verifyCanonicalCommitWarmProof();
+await assert.rejects(()=>verifyCanonicalCommitWarmProof({fault:'omit-canonical-proof',caseFilter:['valid-control']}),error=>error.code==='ERR_ASSERTION'&&error.message.includes('CANONICAL_WARM_EXACT_REUSE_ORACLE valid-control'),'CANONICAL_WARM_INTENDED_PREBEHAVIOR_ORACLE');
+console.log(JSON.stringify({canonicalCommitWarmProof:{...canonicalCommitWarmProof,prebehavior:{fault:'omit-canonical-proof',detected:true,oracle:'CANONICAL_WARM_EXACT_REUSE_ORACLE valid-control'}}}));
+
+const startupSelectedReadReuse=await verifyStartupSelectedReadReuse(),startupSelectedReadFaults=[];
+for(const [fault,caseId,oracle] of [['repeat-cold-read','boundaries-control','STARTUP_SELECTED_SINGLE_COLD_ORACLE'],['repeat-static-validation','boundaries-control','STARTUP_SELECTED_STATIC_REUSE_ORACLE'],['capture-after-custody','mutation-during-custody','STARTUP_SELECTED_REJECTION_ORACLE'],['repeat-migration-validation','migration','STARTUP_MIGRATION_VERIFIED_WRITE_REUSE_ORACLE'],['repeat-migration-digests','migration-digest-control','STARTUP_MIGRATION_SINGLE_DIGEST_TRAVERSAL_ORACLE']]){
+ await assert.rejects(()=>verifyStartupSelectedReadReuse({fault,caseFilter:[caseId]}),error=>error.code==='ERR_ASSERTION'&&error.message.includes(oracle),'STARTUP_SELECTED_INTENDED_FAULT_ORACLE '+fault);startupSelectedReadFaults.push({fault,caseId,oracle,detected:true});
+}
+console.log(JSON.stringify({startupSelectedReadReuse:{...startupSelectedReadReuse,faults:startupSelectedReadFaults}}));

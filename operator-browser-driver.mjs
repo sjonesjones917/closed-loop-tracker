@@ -103,8 +103,9 @@ export function createWorkflowObservation(evaluate){
   };
 }
 class Connection{
-  constructor(url){this.ws=new WebSocket(url);this.pending=new Map();this.events=[];this.sequence=0;this.ready=new Promise((resolve,reject)=>{this.ws.onopen=resolve;this.ws.onerror=reject;});this.ws.onmessage=event=>{const message=JSON.parse(event.data),waiting=this.pending.get(message.id);if(waiting){this.pending.delete(message.id);clearTimeout(waiting.timer);message.error?waiting.reject(new Error(message.error.message)):waiting.resolve(message.result);}else this.events.push(message);};}
-  async send(method,params={}){await this.ready;const id=++this.sequence;return new Promise((resolve,reject)=>{const timer=setTimeout(()=>{this.pending.delete(id);reject(new Error(`Browser command timed out: ${method}`));},90000);this.pending.set(id,{resolve,reject,timer});this.ws.send(JSON.stringify({id,method,params}));});}
+  constructor(url){this.ws=new WebSocket(url);this.pending=new Map();this.events=[];this.listeners=new Set();this.sequence=0;this.ready=new Promise((resolve,reject)=>{this.ws.onopen=resolve;this.ws.onerror=reject;});this.ws.onmessage=event=>{const message=JSON.parse(event.data),waiting=this.pending.get(message.id);if(waiting){this.pending.delete(message.id);clearTimeout(waiting.timer);message.error?waiting.reject(new Error(message.error.message)):waiting.resolve(message.result);}else {this.events.push(message);for(const listener of this.listeners)listener(message);}};}
+  onEvent(listener){this.listeners.add(listener);return ()=>this.listeners.delete(listener);}
+  async send(method,params={},sessionId){await this.ready;const id=++this.sequence;return new Promise((resolve,reject)=>{const timer=setTimeout(()=>{this.pending.delete(id);reject(new Error(`Browser command timed out: ${method}`));},90000);this.pending.set(id,{resolve,reject,timer});this.ws.send(JSON.stringify({id,method,params,...(sessionId?{sessionId}:{})}));});}
   close(){this.ws.close();for(const pending of this.pending.values()){clearTimeout(pending.timer);pending.reject(new Error('Browser closed'));}this.pending.clear();}
 }
 
@@ -187,6 +188,28 @@ export async function createOperatorBrowser({url=process.env.PAGE_URL||'http://1
   async function navigationHistory(){return page.send('Page.getNavigationHistory');}
   async function restoreEntry(entryId){await readiness.restoreEntry(entryId);await idle();events.push({operation:'browserHistoryTraversal',entryId});}
   async function openUrl(destination){await readiness.navigate('Page.navigate',{url:destination});await idle();events.push({operation:'directLink',url:destination});}
-  async function close(){try{executionObserver?.close();page.close();root.close();}finally{child.kill('SIGKILL');}}
-  try{await idle();}catch(error){await close();throw error;}return {click,fill,selectFiles,download,captureDownloads,project,readProject,readWorkflow,inspect,reload,exists,visible,settle:idle,evaluate,navigationHistory,restoreEntry,openUrl,events,directory,close,executionEvidence:()=>executionObserver?.finish(),exceptions:()=>page.events.filter(event=>event.method==='Runtime.exceptionThrown'||event.method==='Page.javascriptDialogOpening')};
+  // One supplemental document in the existing disposable browser; its response
+  // instrumentation cannot alter the main target's execution-evidence channel.
+  const supplementalTargets=new Set();
+  async function createIsolatedTarget(){
+    const target=await json(`/json/new?${encodeURIComponent('about:blank')}`,{method:'PUT'}),connection=new Connection(target.webSocketDebuggerUrl);await connection.ready;
+    supplementalTargets.add(connection);
+    const targetEvents=[];
+    const evaluate=async expression=>{const result=await connection.send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true,userGesture:true});if(result.exceptionDetails)throw new Error(result.exceptionDetails.exception?.description||result.exceptionDetails.text);return result.result?.value;};
+    const readiness=createBrowserReadiness(connection,evaluate),idle=()=>readiness.idle();
+    const exists=selector=>evaluate(`Boolean(document.querySelector(${JSON.stringify(selector)}))`);
+    const click=async selector=>{const point=await activateOperatorControl(connection,evaluate,idle,selector);targetEvents.push({operation:'click',selector,activation:'NATIVE_POINTER',point:{x:point.x,y:point.y}});};
+    const fill=async(selector,value)=>{await idle();assert.equal(await evaluate(`(()=>{const node=document.querySelector(${JSON.stringify(selector)});if(!node||node.disabled)return false;node.value=${JSON.stringify(String(value))};node.dispatchEvent(new Event('input',{bubbles:true}));node.dispatchEvent(new Event('change',{bubbles:true}));return true;})()`),true,'Missing or disabled isolated-target field: '+selector);await idle();targetEvents.push({operation:'fill',selector});};
+    const selectFiles=async(selector,members)=>{await idle();const files=members.map(member=>{assert.equal(path.basename(member.filename),member.filename);const folder=path.join(inputs,String(++inputSequence));fs.mkdirSync(folder);const file=path.join(folder,member.filename);fs.writeFileSync(file,member.bytes);targetEvents.push({operation:'selectFile',selector,filename:member.filename,sha256:digest(member.bytes),byteSize:member.bytes.length});return file;});const handle=await connection.send('Runtime.evaluate',{expression:`document.querySelector(${JSON.stringify(selector)})`,returnByValue:false});assert.ok(handle.result?.objectId,'Missing isolated-target file selector');await connection.send('DOM.setFileInputFiles',{objectId:handle.result.objectId,files});await idle();};
+    const download=(selector,minimum=1)=>captureDownloads(()=>click(selector),minimum);
+    const project=async()=>{if(!(await evaluate(`document.querySelector('#project-actions-toggle')?.closest('details')?.open`)))await click('#project-actions-toggle');const [file]=await download('#export-project'),decoded=JSON.parse(gunzipSync(file.bytes).toString('utf8'));assert.equal(decoded.schema,'closed-loop-project-package/1');assert.ok(decoded.project?.job?.JOB_ID);await click('#project-actions-toggle');return {project:decoded.project,package:decoded,file};};
+    const observe=createWorkflowObservation(evaluate),readProject=async()=>{await idle();return (await observe()).project;};
+    const close=async()=>{connection.close();supplementalTargets.delete(connection);const response=await fetch(`http://127.0.0.1:${port}/json/close/${target.id}`);if(!response.ok)throw new Error(`Browser close target: ${response.status} ${await response.text()}`);await response.text();};
+    try{await connection.send('Runtime.enable');await connection.send('Page.enable');await connection.send('Network.enable');await connection.send('Network.setCacheDisabled',{cacheDisabled:true});await connection.send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:width<600});}
+    catch(error){await close();throw error;}
+    return {url,send:connection.send.bind(connection),onEvent:connection.onEvent.bind(connection),evaluate,exists,click,fill,selectFiles,download,captureDownloads,project,readProject,settle:idle,openUrl:destination=>readiness.navigate('Page.navigate',{url:destination}),reload:()=>readiness.navigate('Page.reload',{ignoreCache:true}),events:targetEvents,protocolEvents:connection.events,exceptions:()=>connection.events.filter(event=>event.method==='Runtime.exceptionThrown'||event.method==='Page.javascriptDialogOpening'),close};
+  }
+
+  async function close(){try{executionObserver?.close();for(const supplemental of supplementalTargets)supplemental.close();supplementalTargets.clear();page.close();root.close();}finally{child.kill('SIGKILL');}}
+  try{await idle();}catch(error){await close();throw error;}return {createIsolatedTarget,click,fill,selectFiles,download,captureDownloads,project,readProject,readWorkflow,inspect,reload,exists,visible,settle:idle,evaluate,navigationHistory,restoreEntry,openUrl,events,directory,close,executionEvidence:()=>executionObserver?.finish(),exceptions:()=>page.events.filter(event=>event.method==='Runtime.exceptionThrown'||event.method==='Page.javascriptDialogOpening')};
 }

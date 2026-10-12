@@ -62,3 +62,8 @@ All run in CI environment variables with the evidence preload, one suite at a ti
   catalog, the evidence preload and the conformance runner among them), so those digests describe the earlier
   bytes and were not regenerated here. No workflow step reads them; `verification/check-handoff-batch-20261011.mjs`
   exits 0 on this tree.
+
+
+## Later candidate status — 2026-10-12
+
+This continuation retains its historical observations. See [Publication candidate status](requirement-traceability.md#publication-candidate-status--2026-10-12-1600-pdt) for the reviewed 257-path candidate, historical receipt limits, corrected intake and workflow checks, terminal CI6016 observation and remaining fresh publication guards. No full consumer, current whole-clause proof or release PASS is implied.

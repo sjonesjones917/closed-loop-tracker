@@ -21,7 +21,7 @@ export function storageBroadcastNetwork(){
 
 // The existing lifecycle suite's transaction adapter, extracted for recovery
 // regressions. This is explicitly not a browser or an IndexedDB implementation.
-export function projectStoreRuntime({fault=null,sourceOverrides={},environment={}}={}){
+export function projectStoreRuntime({fault=null,sourceOverrides={},environment={},storageWorker=true}={}){
  // Opening the production database creates every declared object store.
  // Keep empty stores present too, so an otherwise read-only transaction
  // cannot appear to mutate state merely by materializing an empty adapter map.
@@ -32,14 +32,19 @@ export function projectStoreRuntime({fault=null,sourceOverrides={},environment={
  // does. JSON cloning would hide invalid durable-view fields in these tests.
  const copy=value=>{const seen=new Map();const visit=item=>{if(item===null||typeof item!=='object'||item instanceof Blob)return item;if(seen.has(item))return seen.get(item);const result=parse(Array.isArray(item)?'[]':'{}');seen.set(item,result);for(const key of Object.keys(item))Object.defineProperty(result,key,{value:visit(item[key]),enumerable:true,writable:true,configurable:true});return result;};return visit(value);};
  runtime.structuredClone=copy;
+ // Stored values are copied on put and every public read. Snapshot only Map
+ // membership here; copying every unrequested project/History body at open
+ // duplicates those boundary copies. Direct row tampering is test-only setup.
  runtime.openStorageTransaction=async(names,mode)=>{
-  const selected=Array.isArray(names)?names:[names],pending=new Map(selected.map(name=>[name,new Map([...(rows.get(name)||[])].map(([key,value])=>[key,copy(value)]))]));let aborted=false;
-  return {objectStore:name=>({get:key=>({result:copy(pending.get(name).get(key))}),getAll:()=>({result:[...pending.get(name).values()].map(copy)}),index:index=>({getAll:key=>({result:[...pending.get(name).values()].filter(row=>String(row[index])===String(key)).map(copy)}),openKeyCursor:()=>{const keys=[...pending.get(name).values()].map(row=>row[index]).filter(Boolean),request={};let i=0;const advance=()=>{request.result=i<keys.length?{key:keys[i++],continue:()=>queueMicrotask(advance)}:null;request.onsuccess?.();};queueMicrotask(advance);return request;}}),count:()=>({result:pending.get(name).size}),put:row=>pending.get(name).set(name==='projects'?row.jobId:name==='artifacts'?row.artifactId:row.key,copy(row)),delete:key=>pending.get(name).delete(key)}),commit(){if(aborted)throw new Error('Transaction aborted.');if(mode==='readwrite')for(const [name,data] of pending)rows.set(name,data);},abort(){aborted=true;}};
+  const selected=Array.isArray(names)?names:[names],pending=new Map(selected.map(name=>[name,new Map(rows.get(name)||[])]));let aborted=false;
+  return {objectStore:name=>({get:key=>({result:copy(pending.get(name).get(key))}),getAllKeys:()=>({result:[...pending.get(name).keys()]}),getAll:()=>({result:[...pending.get(name).values()].map(copy)}),index:index=>({getAll:key=>({result:[...pending.get(name).values()].filter(row=>String(row[index])===String(key)).map(copy)}),openKeyCursor:()=>{const keys=[...pending.get(name).values()].map(row=>row[index]).filter(Boolean),request={};let i=0;const advance=()=>{request.result=i<keys.length?{key:keys[i++],continue:()=>queueMicrotask(advance)}:null;request.onsuccess?.();};queueMicrotask(advance);return request;}}),count:()=>({result:pending.get(name).size}),put:row=>pending.get(name).set(name==='projects'?row.jobId:name==='artifacts'?row.artifactId:row.key,copy(row)),delete:key=>pending.get(name).delete(key)}),commit(){if(aborted)throw new Error('Transaction aborted.');if(mode==='readwrite')for(const [name,data] of pending)rows.set(name,data);},abort(){aborted=true;}};
  };
  for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js']){
   let source=sourceOverrides[file]??fs.readFileSync(file,'utf8');
   if(typeof source!=='string')throw new TypeError('A runtime source override must contain exact source text: '+file);
-  if(file==='project-store.js')source=source.replace(/const request=req=>[^\n]+/,'const request=req=>Promise.resolve(req.result);').replace(/const complete=tx=>[^\n]+/,'const complete=async tx=>tx.commit();').replace(/async function openTransaction\([\s\S]*?\n}\n/,'async function openTransaction(stores,mode="readonly"){return openStorageTransaction(stores,mode);}\n');
+  // Explicit adapter-only mode keeps real Test IR workers without claiming storage-worker RPC.
+  if(file==='project-store.js'&&storageWorker===false){const anchor="const useStoreWorker=()=>Boolean(STORE_SCRIPT_URL&&typeof Worker==='function');";assert.equal(source.split(anchor).length-1,1,'TRANSACTION_ADAPTER_STORAGE_WORKER_ANCHOR_ORACLE');source=source.replace(anchor,'const useStoreWorker=()=>false;');}
+  if(file==='project-store.js')source=adaptProjectStoreSource(source);
   if(fault?.file===file){if(!source.includes(fault.before))throw new Error('Fault anchor missing: '+fault.id);source=source.replace(fault.before,fault.after);}
   vm.runInContext(source,runtime,{filename:file});
  }
@@ -88,13 +93,13 @@ export function bindProjectActivationUi(r,{source=fs.readFileSync(process.env.AP
 }
 
 // Actual acceptance/confirmation owners under the shared lifecycle adapter.
-export function bindAcceptanceUi(r,p,proposalId,{skipConfirmation=false}={}){
+export function bindAcceptanceUi(r,p,proposalId,{skipConfirmation=false,source:providedSource}={}){
  const {runtime,core,engine,ingestion,store,copy}=r,failures=[],assert=(ok,message)=>{if(!ok)throw new Error(message||'UI fixture source anchor is missing');};
 Object.assign(runtime,{current:p,projects:copy([p]),replacementReview:null,responseActionFailure:null,projectStore:store,core,engine,ingestion,clone:copy,safe:engine.safe,withStorageActivity:async(_label,fn)=>fn(),unloadInactiveProjects:()=>{},mobileSessionCurrent:()=>false,recordMobileOperation:async()=>{},recordCommittedBoundary:async()=>{},render:()=>{},announce:()=>{},reportActionFailure:error=>failures.push(error),reportResponseFailure:(_message,error)=>failures.push(error),focusAfterAction:()=>{},TAB_INSTANCE_ID:'SYNTHETIC-UI',canonicalCurrentStage:()=>Number(runtime.current.job.CURRENT_STAGE.replace(/[^0-9]/g,'')),selectStageContinuation:()=>{},$ :()=>({value:'SYNTHETIC',scrollIntoView(){},focus(){}}),document:{querySelectorAll:()=>[]}});
 runtime.pendingProposal=()=>{const proposal=ingestion.findProposal(runtime.current,proposalId);return proposal?.status==='PENDING_OPERATOR_REVIEW'?proposal:null;};
 runtime.captureView=()=>copy({activeStage:runtime.current.activeStage,activeView:runtime.current.activeView,pendingMutation:runtime.replacementReview?.next?{baseProjectSha256:runtime.current.projectSha256,next:runtime.replacementReview.next,impact:runtime.replacementReview.impact,expectedProjectRevision:runtime.replacementReview.expectedProjectRevision,...(runtime.replacementReview.acceptance?{acceptance:runtime.replacementReview.acceptance}:{})}:null});
 runtime.captureCurrentView=async()=>store.saveCheckpoint(runtime.current.job.JOB_ID,{expectedProjectRevision:runtime.current.revision,view:runtime.captureView()});
-let source=fs.readFileSync('app-core.js','utf8');if(skipConfirmation){for(const before of ['if(impact?.requiresConfirmation&&mutationConfirmation?.confirmationKey!==impact.confirmationKey)','if(semanticImpact?.requiresConfirmation){']){assert(source.includes(before));source=source.replace(before,before.endsWith('{')?'if(false){':'if(false)');}}const extract=(start,end)=>{const a=source.indexOf(start);assert(a>=0);return source.slice(a,source.indexOf(end,a+start.length));};
+let source=providedSource??fs.readFileSync('app-core.js','utf8');if(skipConfirmation){for(const before of ['if(impact?.requiresConfirmation&&mutationConfirmation?.confirmationKey!==impact.confirmationKey)','if(semanticImpact?.requiresConfirmation){']){assert(source.includes(before));source=source.replace(before,before.endsWith('{')?'if(false){':'if(false)');}}const extract=(start,end)=>{const a=source.indexOf(start);assert(a>=0);return source.slice(a,source.indexOf(end,a+start.length));};
 vm.runInContext(extract('async function reverifyReturnedFiles(','async function validateReturnedResponse(')+extract('async function persistReplacement(','async function save(')+extract('function humanAuthorityConfirmationValues(','async function rejectPendingProposal(')+'\nglobalThis.accept=acceptPendingProposal;globalThis.confirm=confirmReplacement;',runtime);
  return failures;
 }
@@ -143,4 +148,17 @@ export async function hydrateRetainedPromptContexts(r,project,contextFiles,{omit
 export async function bindArtifactFixture(artifacts,runtime=globalThis){
  const store=projectStoreRuntime().store;await restoreArtifactFixture(store,artifacts);
  runtime.closedLoopProjectStore=Object.freeze({...runtime.closedLoopProjectStore,artifactCustodyState:identity=>store.artifactCustodyState(identity)});return store;
+}
+
+// One synthetic Map adapter is also used when a retained runtime upgrades its
+// store owner. Native IndexedDB event/transaction proof remains separate.
+export function adaptProjectStoreSource(source){
+ source=source.replace(/const request=req=>[^\n]+/,'const request=req=>Promise.resolve(req.result);').replace(/const complete=tx=>[^\n]+/,'const complete=async tx=>tx.commit();').replace(/async function openTransaction\([\s\S]*?\n}\n/,'async function openTransaction(stores,mode="readonly"){return openStorageTransaction(stores,mode);}\n');
+ if(source.includes('function checkpointTransactionOwner(tx,jobId){')){
+   // Adapter-only completion bridge; native lifetime is owned and verified by
+   // the separate native production-store control, not this synchronous Map.
+   const first=source.indexOf('function checkpointTransactionOwner(tx,jobId){'),last=source.indexOf('async function commitRootCheckpoint(',first);
+   source=source.slice(0,first)+`function checkpointTransactionOwner(tx,jobId){let resolve,reject;const completion=new Promise((yes,no)=>{resolve=yes;reject=no;});completion.catch(()=>{});return {external:promise=>Promise.resolve(promise),completion,finish(){tx.commit();resolve();},abort(error){tx.abort();reject(error);}};}\n`+source.slice(last);
+  }
+ return source;
 }

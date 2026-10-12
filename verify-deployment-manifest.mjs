@@ -22,10 +22,11 @@ function verifyRuntimeUrlBindings(html,manifest){
   const sources=runtimeScriptSources(html);
   if(sources.length!==9)throw new Error(`Expected nine runtime scripts; found ${sources.length}.`);
   for(const source of sources){const query=source.split('?')[1]||'',params=new URLSearchParams(query);if(params.get('v')!==manifest.buildIdentity)throw new Error(`Runtime script ${source} is not bound to the deployment build identity.`);}
-  const runtimeSource=sources.find(source=>source.split('?')[0]==='test-runtime.js');
-  if(!runtimeSource)throw new Error('test-runtime.js is absent from the runtime graph.');
-  const runtimeParams=new URLSearchParams(runtimeSource.split('?')[1]||'');
-  if(runtimeParams.get('workerSha256')!==manifest.testWorkerSha256)throw new Error('test-runtime.js URL does not bind the exact deployed test-worker.js SHA-256.');
+  for(const owner of ['test-runtime.js','project-store.js']){
+    const source=sources.find(source=>source.split('?')[0]===owner);
+    if(!source)throw new Error(owner+' is absent from the runtime graph.');
+    if(new URLSearchParams(source.split('?')[1]||'').get('workerSha256')!==manifest.testWorkerSha256)throw new Error(owner+' URL does not bind the exact deployed test-worker.js SHA-256.');
+  }
   return true;
 }
 try{
@@ -92,17 +93,20 @@ try{
   const html=fs.readFileSync(path.join(first,'index.html'),'utf8');
   verifyRuntimeUrlBindings(html,manifest);
   if(!html.includes(`<meta name="closed-loop-build-identity" content="${manifest.buildIdentity}">`))throw new Error('Executed build identity meta is missing.');
-  let missingWorkerDigestDetected=false;
-  try{verifyRuntimeUrlBindings(html.replace(`&workerSha256=${manifest.testWorkerSha256}`,''),manifest);}catch(error){missingWorkerDigestDetected=/worker.*SHA-256/i.test(String(error.message));}
-  if(!missingWorkerDigestDetected)throw new Error('Mutation proof failed: removing the worker digest from the deployed runtime URL was not detected.');
-  let changedWorkerDigestDetected=false;
+  let missingWorkerDigestDetected=true,changedWorkerDigestDetected=true;const workerDigestBindings=[];
   const changedDigest=manifest.testWorkerSha256[0]==='0'?`1${manifest.testWorkerSha256.slice(1)}`:`0${manifest.testWorkerSha256.slice(1)}`;
-  try{verifyRuntimeUrlBindings(html.replace(manifest.testWorkerSha256,changedDigest),manifest);}catch(error){changedWorkerDigestDetected=/worker.*SHA-256/i.test(String(error.message));}
-  if(!changedWorkerDigestDetected)throw new Error('Mutation proof failed: changing the worker digest in the deployed runtime URL was not detected.');
+  for(const owner of ['test-runtime.js','project-store.js']){
+    const target=`${owner}?v=${manifest.buildIdentity}&workerSha256=${manifest.testWorkerSha256}`;
+    let missingDetected=false,changedDetected=false;
+    try{verifyRuntimeUrlBindings(html.replace(target,`${owner}?v=${manifest.buildIdentity}`),manifest);}catch(error){missingDetected=/worker.*SHA-256/i.test(String(error.message));}
+    try{verifyRuntimeUrlBindings(html.replace(target,`${owner}?v=${manifest.buildIdentity}&workerSha256=${changedDigest}`),manifest);}catch(error){changedDetected=/worker.*SHA-256/i.test(String(error.message));}
+    if(!missingDetected||!changedDetected)throw new Error('Mutation proof failed: missing/changed worker digest was not detected for '+owner);
+    workerDigestBindings.push({owner,missingDetected,changedDetected});missingWorkerDigestDetected&&=missingDetected;changedWorkerDigestDetected&&=changedDetected;
+  }
   const active=manifest.runtimeResources.filter(item=>/\.(?:html|js)$/.test(item.path)).map(item=>fs.readFileSync(path.join(first,item.path),'utf8')).join('\n');
   if(/serviceWorker\s*\.\s*register|navigator\s*\.\s*serviceWorker/.test(active))throw new Error('An unmanifested controlling service worker is present.');
   if(!fs.readFileSync(path.join(first,'test-runtime.js'),'utf8').includes("url.search=new URL(source).search"))throw new Error('Worker does not inherit the runtime build and worker-byte identity.');
-  console.log(JSON.stringify({deploymentManifest:'PASS',registryIdentityRegression,schema:manifest.schema,canonicalOrigin:manifest.canonicalOrigin,canonicalBasePath:manifest.canonicalBasePath,contractProfileId:manifest.contractProfileId,testWorkerProtocolVersion:manifest.testWorkerProtocolVersion,testWorkerSha256:manifest.testWorkerSha256,resources:manifest.runtimeResources.length,buildIdentity:manifest.buildIdentity,manifestDigest:manifest.manifestDigest.digest,reproducible:true,sharedCanonicalHashAuthority:true,canonicalUnicodeScalarOrdering:true,integerLikeKeyOrdering:true,unpairedSurrogateRejected:true,workerCanonicalHashDependency:true,workerResultBuildIdentityBound:true,workerResultByteIdentityBound:true,missingWorkerDigestMutationDetected:true,changedWorkerDigestMutationDetected:true,noControllingServiceWorker:true,repositoryGovernanceExcludedFromRuntime:true},null,2));
+  console.log(JSON.stringify({deploymentManifest:'PASS',registryIdentityRegression,schema:manifest.schema,canonicalOrigin:manifest.canonicalOrigin,canonicalBasePath:manifest.canonicalBasePath,contractProfileId:manifest.contractProfileId,testWorkerProtocolVersion:manifest.testWorkerProtocolVersion,testWorkerSha256:manifest.testWorkerSha256,resources:manifest.runtimeResources.length,buildIdentity:manifest.buildIdentity,manifestDigest:manifest.manifestDigest.digest,reproducible:true,sharedCanonicalHashAuthority:true,canonicalUnicodeScalarOrdering:true,integerLikeKeyOrdering:true,unpairedSurrogateRejected:true,workerCanonicalHashDependency:true,workerResultBuildIdentityBound:true,workerResultByteIdentityBound:true,missingWorkerDigestMutationDetected:true,changedWorkerDigestMutationDetected:true,workerDigestBindings,noControllingServiceWorker:true,repositoryGovernanceExcludedFromRuntime:true},null,2));
 }finally{
   fs.rmSync(first,{recursive:true,force:true});fs.rmSync(second,{recursive:true,force:true});
 }

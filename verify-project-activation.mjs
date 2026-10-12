@@ -6,6 +6,8 @@ import {createHash} from 'node:crypto';
 import {projectStoreRuntime,bindAcceptanceUi,bindProjectActivationUi} from './test-project-store-runtime.mjs';
 import {artifactFixtureId} from './test-artifact-fixtures.mjs';
 import {readStoreArchive} from './test-zip.mjs';
+import {verifyStartupActivationReuse,verifyLegacy5ProjectionActivation,verifyStage19ProjectionActivationOrdering} from './test-startup-activation-reuse.mjs';
+import {verifyProjectionVersion7ActivationContract} from './test-derivation-receipt-contract.mjs';
 
 const app=fs.readFileSync(process.env.APP_SOURCE||'app-core.js','utf8'),digest=bytes=>createHash('sha256').update(bytes).digest('hex');
 const observations=[];
@@ -144,4 +146,21 @@ observations.push({id:'PROJECT_ACTIVATION_CALLERS',result:'PASS',callers:callerR
  x.t.operationSelection[1]='RECONCILE_INTAKE';assert.equal(x.t.selectedOperation(1),'RECONCILE_INTAKE','PROJECT_ACTIVATION_SAME_PROJECT_EXPLICIT_ORACLE');
  observations.push({id:'PROJECT_ACTIVATION_SAME_PROJECT_VIEW',result:'PASS',savedOperation:'COMPLETE',ownedRunId:dest.expected.runId,draft:'Destination-own draft',pendingTitle:'Destination pending title',explicitOperationPreserved:'RECONCILE_INTAKE'});
 }
+{
+ const source=fs.readFileSync('project-store.js','utf8'),anchor='async function readProjectMetadata(jobId,sourceProof=null){';assert.equal(source.split(anchor).length,2,'ACTIVATION_COMBINED_READ_COUNTER_OWNER');const r=projectStoreRuntime({sourceOverrides:{'project-store.js':source.replace(anchor,anchor+'globalThis.__activationColdReads=(globalThis.__activationColdReads||0)+1;')}}),p=await r.store.createProject({commandId:'ACTIVATION-COMBINED-READ'});r.runtime.__activationColdReads=0;
+ const combined=await r.store.readProject(p.job.JOB_ID,{refreshProjection:true});assert.equal(r.runtime.__activationColdReads,1,'ACTIVATION_COMBINED_SINGLE_COLD_READ_ORACLE');const explicit=await r.store.refreshProjectProjection(p.job.JOB_ID,{expectedProjectRevision:combined.revision,expectedStateSha256:combined.projectSha256});assert.equal(explicit.projectSha256,combined.projectSha256,'ACTIVATION_COMBINED_EQUIVALENT_CURRENT_RESULT_ORACLE');
+ await assert.rejects(()=>r.store.refreshProjectProjection(p.job.JOB_ID,{expectedProjectRevision:combined.revision,expectedStateSha256:'0'.repeat(64)}),error=>error.code==='STALE_PROJECT_REVISION','ACTIVATION_EXPLICIT_FRESHNESS_PRESERVED_ORACLE');
+ r.rows.get('projects').get(p.job.JOB_ID).project.job.JOB_TITLE='Corrupt bytes under unchanged digest';await assert.rejects(()=>r.store.readProject(p.job.JOB_ID,{refreshProjection:true}),error=>error.code==='PROJECT_HASH_MISMATCH','ACTIVATION_COMBINED_COLD_INTEGRITY_ORACLE');
+ observations.push({id:'PROJECT_ACTIVATION_COMBINED_COLD_READ',result:'PASS',coldReads:1,sameCurrentResult:true,staleExplicitPredicateRejected:true,corruptColdSourceRejected:true});
+}
+const projection5Activation7=await verifyLegacy5ProjectionActivation();
+observations.push({id:'PROJECT_PROJECTION5_ACTIVATION7',...projection5Activation7});
+const projectionVersion7Activation=await verifyProjectionVersion7ActivationContract();
+observations.push({id:'PROJECT_PROJECTION6_ACTIVATION7',...projectionVersion7Activation});
+const stage19ProjectionActivationOrdering=await verifyStage19ProjectionActivationOrdering();
+observations.push({id:'PROJECT_STAGE19_PROJECTION_ACTIVATION_ORDERING',...stage19ProjectionActivationOrdering});
+const startupActivationReuse=await verifyStartupActivationReuse({source:app});
+const startupActivationFaults=[];
+for(const [fault,oracle] of [['duplicate-load',/STARTUP_REUSE_REFRESH_POPULATION_ORACLE/],['duplicate-same-job-url',/STARTUP_REUSE_URL_READ_ORACLE/],['skip-changed-selection',/STARTUP_REUSE_REFRESH_POPULATION_ORACLE/],['duplicate-unloaded-refresh',/STARTUP_REUSE_REFRESH_POPULATION_ORACLE/],['duplicate-linked-read',/STARTUP_REUSE_URL_COMBINED_ORACLE/]]){await assert.rejects(verifyStartupActivationReuse({source:app,fault}),oracle);startupActivationFaults.push({fault,result:'PASS',intendedOracle:String(oracle)});}
+observations.push({...startupActivationReuse,id:startupActivationReuse.caseId,faults:startupActivationFaults});
 console.log(JSON.stringify({schema:'closed-loop-project-activation-proof/1',appSha256:digest(app),actualBrowser:false,transactionAdapter:true,observations},null,2));

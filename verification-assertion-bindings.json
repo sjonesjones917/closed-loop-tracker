@@ -3,6 +3,16 @@
   "specificationSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
   "bindings": [
     {
+      "normativeRequirementId": "NREQ-08d21889678a2a60ba8921fcd1876fe2",
+      "sourceLineSha256": "02e322851c38ba235520c3d13d9f3074d1d6393ecc1308634484081031a0b0c0",
+      "checkIds": [
+        "RESPONSE-BLIND-ALIAS-ADMISSION-BOUNDARY",
+        "RESPONSE-BLIND-ALIAS-ACCEPTANCE-RECHECK"
+      ],
+      "scope": "Focused production response admission with a generated Stage 23 prompt: issued and identical-repeat mappings resolve typed product references while exact raw and alias-looking literal values remain unchanged; unknown aliases, conflicting duplicate mappings in both orders, wrong-family mappings, and an existing product outside prompt scope reject with retained validation and without a proposal or source mutation. A separate in-memory synthetic internal post-prepare map ambiguity fails the production acceptance reparse before commit while preserving raw bytes, pending proposal and accepted state. No storage, browser, external-reviewer mutation, all-stage, or whole-clause claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
       "normativeRequirementId": "NREQ-9b3398156f2078436a91a934b077dcd2",
       "sourceLineSha256": "23745d5e7ce66c18089d328a8939da87fd433c34036c3feb8a749f564416c9d6",
       "checkIds": [
@@ -229,6 +239,17 @@
       "independentExpectedBasis": "Each import rejection is followed by independent deep equality of readProject, historyList, lastVerifiedImport and original input Blob bytes. Only the three import cases carry this unchanged-existing-project evidence; remaining History cases are not additional import population for this clause."
     },
     {
+      "normativeRequirementId": "NREQ-f3a162780b1c810f1a98f9a34500e0ea",
+      "sourceLineSha256": "1afc86049dc3377510a1b9b579d0a58165199535b98ce70343504de584c9d64e",
+      "checkIds": [
+        "store.backup-import-failure-state-preservation"
+      ],
+      "scope": "Three synthetic Map-adapter failed imports against one existing project: a rehashed normal manifest missing the independently known active member, a rehashed manifest with that member SHA wrong, and an injected before-import-commit storage failure. Each rejection is followed by deep equality of canonical project and History; the two manifest failures also preserve exact imported artifact bytes and pending staging identity, while the injected abort retains the staged identity. Adjacent corruption/replacement controls and two intended source faults protect report integrity. No native IndexedDB, browser UI, physical-device or complete §35.5 claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The missing member name and correct SHA-256 are independently computed from the pre-import active project and Node crypto, then the malformed packages are rehashed so outer package integrity passes. The exact expected result is rejection before commit with byte-for-byte project, History, artifact and staging preservation. The storage-failure case independently expects INJECTED_STORAGE_FAILURE and unchanged project/History with the selected staged input retained.",
+      "coverageClassification": "PARTIAL_EXECUTED_BOUNDARY_EVIDENCE"
+    },
+    {
       "normativeRequirementId": "NREQ-e596501d2b544facc0b2fb644217e864",
       "sourceLineSha256": "b6f96ed9ce817cb08da62ccc3cc44d61668ab8063c8a1784c63100e268faaf3c",
       "checkIds": [
@@ -364,9 +385,12 @@
       "checkIds": [
         "BOUNDARY-CORRECTED-RETURNED-FILE-RETRY",
         "CANONICAL-RESPONSE-RECOVERY",
-        "EXTERNAL-RESPONSE-IDENTITY-SHAPE"
+        "EXTERNAL-RESPONSE-IDENTITY-SHAPE",
+        "response.validation-result-planner-persistence",
+        "response.validation-result-success-persistence",
+        "response.validation-result-blind-warning-persistence"
       ],
-      "scope": "Corrected returned-file validation preserves the original MISSING_REQUIRED_ATTACHMENT validation as history. Separately qualified subset: Finite rejection persistence subset: three missing-field error submissions and seven unsupported canonical response-file cases preserve exact authoritative raw bytes and failed validation/disposition through operational save/reload. Isolated old undefined-diagnostic/canonical-guard equivalents fail only for the intended canonical error while retaining staged bytes and the last valid project. Synthetic actor and native Node transaction adapter only; no actual human/browser/physical action, all-stage combinations, general fault-injection population or whole-clause conformance claim.",
+      "scope": "Corrected returned-file validation preserves the original MISSING_REQUIRED_ATTACHMENT validation as history. Separately qualified subset: Finite rejection persistence subset: three missing-field error submissions and seven unsupported canonical response-file cases preserve exact authoritative raw bytes and failed validation/disposition through operational save/reload. Isolated old undefined-diagnostic/canonical-guard equivalents fail only for the intended canonical error while retaining staged bytes and the last valid project. Synthetic actor and native Node transaction adapter only; no actual human/browser/physical action, all-stage combinations, general fault-injection population or whole-clause conformance claim. Separately scoped §17.6 complete validation-result subset: existing file-bound INVALID_REPORT planner failure, existing SATISFIED pending and accepted no-warning result, and designated Stage13 COMPARE actual BLIND_ALIAS_REMAPPED warning retain independently literal issues/count/status and unique raw/prompt/proposal-or-disposition/receipt links through actual operational save/reload. Pending returned bytes retain strict stale refusal and normal UI byte re-verification. Existing owning populations and old checkIds remain required. Focused retained diagnostics are not eligible current receipts; current registered due/complete producer evidence is required. No full-clause, all-stage, browser, external-provider or physical-device proof claim.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
     },
     {
@@ -484,10 +508,13 @@
       "normativeRequirementId": "NREQ-1a635b514dc030428c4d3cfa5312036e",
       "sourceLineSha256": "8ebc60284733a63c3053b43a77a541ecd1115e98bc61c5c33a19af194443cb2d",
       "checkIds": [
-        "native.foreign-receipt-rejected"
+        "native.foreign-receipt-rejected",
+        "native-external-admission.authority",
+        "native-external-admission.report-consumers"
       ],
-      "scope": "Reuse CI-owned actual native receipt mismatched testId/testSpecSha256/inputArtifactSha256Values rejection controls; no new receipt population.",
-      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+      "scope": "Reuse CI-owned actual native receipt mismatched testId/testSpecSha256/inputArtifactSha256Values rejection controls; no new receipt population. Additional partial ingress evidence: Actual reserved Stage1 response file staging/read/raw capture/admission:13 counterfeit receipt/result shapes reject with exact ownership/shape diagnostics; conforming response and native-looking AGENT_CLAIM remain valid without native result/application evidence/event creation. Original native fields are preserved; Stage1 scope additionally rejects result-family writes. Synthetic actor and Map transaction adapter; in-memory claim commit. No Stage22 same-family admission, native-worker execution, native IndexedDB, late-stage readiness, release or full-clause proof. Independent literal report/selector/scoped-binding/default-discovery controls are consumer evidence only.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "coverageClassification": "PARTIAL_EXECUTED_BOUNDARY_EVIDENCE"
     },
     {
       "normativeRequirementId": "NREQ-5ff3f0ebe82ad785adad3a4046c55373",
@@ -1220,9 +1247,10 @@
       "checkIds": [
         "EXTERNAL-RESPONSE-IDENTITY-SHAPE",
         "RESPONSE-CANONICAL-VALUE-BOUNDARIES",
-        "RUNTIME-CLOSED-BINDING-STRING-TYPES-REJECTED"
+        "RUNTIME-CLOSED-BINDING-STRING-TYPES-REJECTED",
+        "ingestion.primitive-reference-types"
       ],
-      "scope": "Finite shared external wrong-type boundary: actual reserved ZIP publishes schema-owned echo/reference identity shapes; eleven array or STRING-stage scalar echoes and ten wrong/null/empty/dual/array canonical or local reference shapes are rejected during authoritative response-file admission, preserving exact raw bytes and omitting proposals. Seventeen isolated guard-removal equivalents reproduce intended false admissions; two exact retained pending proposals refuse repaired precommit without mutation. Seven neighboring already strict vocabulary/scope controls remain rejected, and three scalar canonical/local-reference and arbitrary HUMAN JSON controls proceed through actual operator acceptance and native store reload/integrity. Sixteen published nested STRING/STRING_ARRAY malformed fields reject with sixteen isolated pre-fix false-admission equivalents. Three missing schema/responseType/operation errors preserve raw bytes, fail-closed validation and canonical integrity through operational save/reload; two exact undefined diagnostic-field pre-fix equivalents fail the intended canonical save while preserving staged bytes and the last valid project. Synthetic external actor/setup and Node VM transaction adapter only: no all-stage/record-family combination, reserved-record-target case, allocation/CSPRNG, unavailable capability, actual agent/human/browser/physical execution or whole-clause conformance claim. Separately qualified subset: Finite nested attachment.sha256 singleton ARRAY and inherited stage-field membership cases: actual returned bytes and authoritative response-file admission reject wrong digest type and two inherited field names, preserving raw; isolated guards reproduce intended false admissions. Human OBJECT semantics are separately linked to exact canonical ordering/scalar requirements, not inferred from numeric types. Synthetic actor and native Node transaction adapter only; no actual human/browser/physical action, all-stage combinations, general fault-injection population or whole-clause conformance claim. Also exactly64 malformed present optional Test IR binding STRING properties reject at runtime, runtime-present schema adapter and spec validation; each named owner receipt remains required separately.",
+      "scope": "Finite shared external wrong-type boundary: actual reserved ZIP publishes schema-owned echo/reference identity shapes; eleven array or STRING-stage scalar echoes and ten wrong/null/empty/dual/array canonical or local reference shapes are rejected during authoritative response-file admission, preserving exact raw bytes and omitting proposals. Seventeen isolated guard-removal equivalents reproduce intended false admissions; two exact retained pending proposals refuse repaired precommit without mutation. Seven neighboring already strict vocabulary/scope controls remain rejected, and three scalar canonical/local-reference and arbitrary HUMAN JSON controls proceed through actual operator acceptance and native store reload/integrity. Sixteen published nested STRING/STRING_ARRAY malformed fields reject with sixteen isolated pre-fix false-admission equivalents. Three missing schema/responseType/operation errors preserve raw bytes, fail-closed validation and canonical integrity through operational save/reload; two exact undefined diagnostic-field pre-fix equivalents fail the intended canonical save while preserving staged bytes and the last valid project. Synthetic external actor/setup and Node VM transaction adapter only: no all-stage/record-family combination, reserved-record-target case, allocation/CSPRNG, unavailable capability, actual agent/human/browser/physical execution or whole-clause conformance claim. Separately qualified subset: Finite nested attachment.sha256 singleton ARRAY and inherited stage-field membership cases: actual returned bytes and authoritative response-file admission reject wrong digest type and two inherited field names, preserving raw; isolated guards reproduce intended false admissions. Human OBJECT semantics are separately linked to exact canonical ordering/scalar requirements, not inferred from numeric types. Synthetic actor and native Node transaction adapter only; no actual human/browser/physical action, all-stage combinations, general fault-injection population or whole-clause conformance claim. Also exactly64 malformed present optional Test IR binding STRING properties reject at runtime, runtime-present schema adapter and spec validation; each named owner receipt remains required separately. Separately linked existing direct production validateValue assertions reject numeric scalar REFERENCE123 and mixed REFERENCE_ARRAY [REQ-1,2] with independently expected WRONG_VALUE_TYPE. No authoritative-file, Stage6-specific field admission, valid-array/operator or full-clause execution claim.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
     },
     {
@@ -3646,9 +3674,9 @@
       "normativeRequirementId": "NREQ-ab9ab7c7ba110dfd3e0a5f8f5c9908cb",
       "sourceLineSha256": "e17eda37620c3017ac470eaf42989140e74944e89206e2c9ecf51fb78bb872a2",
       "checkIds": [
-        "canonical.exact-serialization-controls"
+        "canonical.safe-integer-and-typed-string"
       ],
-      "scope": "Complete proposed coverage of this exact small source clause only; its surrounding section and other clauses remain separately accounted.",
+      "scope": "Performed distinct-context final-source semantic coverage review of this exact primitive clause and retained independent assertion body. Complete design only; current normal owning execution and governing consumer admission remain required.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
       "fullCoverage": {
         "schema": "closed-loop-full-requirement-coverage/1",
@@ -3657,33 +3685,33 @@
         "productionOwners": [
           {
             "path": "hash.js",
-            "symbol": "canonicalChunks / stableStringify / compareUnicodeScalarSequence",
-            "sha256": "a13cf57bd7c7414bc801f511d5937f80eaf7fd675c0e6c2b5a92b365df16e4d7"
+            "symbol": "canonicalChunks / stableStringify",
+            "sha256": "bc1c486855fa2096623b560cfc44b7c5d9e263040546921eb00f54e7f38b7420"
           },
           {
             "path": "workflow-schema.js",
-            "symbol": "canonicalDecimal / isCanonicalNumber / reducedNumber",
-            "sha256": "656e9e632cea3a60e1c7e0fb486e6630d205011d7db32d9674ac5e88593d24f1"
+            "symbol": "canonicalDecimal / isCanonicalNumber",
+            "sha256": "5e4e434ea188b750bc8f1d44513c612d5295f550b4124d10ca5aa09506ee4a60"
           }
         ],
         "obligations": [
           {
             "id": "source-line-3023",
             "sourceText": "- safe-integer-only JSON numbers, with typed canonical strings for other exact numbers;",
-            "expectedBehavior": "Canonical JSON permits only safe integer numeric values; exact noninteger quantities retain their typed canonical string representation.",
+            "expectedBehavior": "JSON numbers are safe integers; fractions and unsafe signed integers reject; registered reduced rational strings preserve other exact numbers.",
             "checks": {
               "deterministic": [
                 {
                   "suite": "verify-hash.mjs",
-                  "checkId": "canonical.exact-serialization-controls"
+                  "checkId": "canonical.safe-integer-and-typed-string"
                 }
               ],
               "semantic": [],
               "mutation": []
             },
             "nonapplicable": {
-              "semantic": "This clause is a closed mechanical rule with exact source-derived expected values; it requires no actor semantic determination.",
-              "mutation": "This declaration establishes the narrow required behavior through independent expected input/output controls. The source clause does not itself require a mutation test; unrelated mutation evidence is not used as proof."
+              "semantic": "This exact primitive clause defines a mechanical byte/value operation; it has no actor meaning determination. Its inherited inputs and registry authority remain explicit reviewer prerequisites.",
+              "mutation": "This exact source clause does not independently mandate a mutation test. Retained wrong-slice and reversed-byte-order controls remain separately preserved and must not be replaced or promoted into unrelated proof."
             },
             "evidenceKinds": [
               "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
@@ -3693,8 +3721,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-ab9ab7c7ba110dfd3e0a5f8f5c9908cb-20261007-context-d64ec081ccf9-54e18bc1f938.json",
-          "sha256": "b2fdbfb2d9fa5aebfd41d3efa0cd0c7b006c5aff5b2789a0416f1a409e677042"
+          "path": "verification/requirement-coverage-NREQ-ab9ab7c7ba110dfd3e0a5f8f5c9908cb-20261012-frozen-b0efd-recovery-catalogue-8d816842.json",
+          "sha256": "8c2ee98e1cd964c581ccaff80d52eef598a4f45d59019b41c6487b0ee750e67c"
         }
       }
     },
@@ -3702,9 +3730,9 @@
       "normativeRequirementId": "NREQ-853a934199459ed6bf419687ca08ba34",
       "sourceLineSha256": "6cd002e410cce68e03f5b46b09436696f71111cd2df5ad887d8476e0083c3775",
       "checkIds": [
-        "canonical.exact-serialization-controls"
+        "canonical.unsigned-scalar-key-order"
       ],
-      "scope": "Complete proposed coverage of this exact small source clause only; its surrounding section and other clauses remain separately accounted.",
+      "scope": "Performed distinct-context final-source semantic coverage review of this exact primitive clause and retained independent assertion body. Complete design only; current normal owning execution and governing consumer admission remain required.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
       "fullCoverage": {
         "schema": "closed-loop-full-requirement-coverage/1",
@@ -3714,27 +3742,27 @@
           {
             "path": "hash.js",
             "symbol": "canonicalChunks / stableStringify / compareUnicodeScalarSequence",
-            "sha256": "a13cf57bd7c7414bc801f511d5937f80eaf7fd675c0e6c2b5a92b365df16e4d7"
+            "sha256": "bc1c486855fa2096623b560cfc44b7c5d9e263040546921eb00f54e7f38b7420"
           }
         ],
         "obligations": [
           {
             "id": "source-line-3024",
             "sourceText": "- object-key ordering by unsigned Unicode scalar sequence;",
-            "expectedBehavior": "Object keys sort by unsigned Unicode scalar sequence.",
+            "expectedBehavior": "Object keys sort by unsigned Unicode scalar sequence, including numeric-looking keys and BMP versus astral scalar order.",
             "checks": {
               "deterministic": [
                 {
                   "suite": "verify-hash.mjs",
-                  "checkId": "canonical.exact-serialization-controls"
+                  "checkId": "canonical.unsigned-scalar-key-order"
                 }
               ],
               "semantic": [],
               "mutation": []
             },
             "nonapplicable": {
-              "semantic": "This clause is a closed mechanical rule with exact source-derived expected values; it requires no actor semantic determination.",
-              "mutation": "This declaration establishes the narrow required behavior through independent expected input/output controls. The source clause does not itself require a mutation test; unrelated mutation evidence is not used as proof."
+              "semantic": "This exact primitive clause defines a mechanical byte/value operation; it has no actor meaning determination. Its inherited inputs and registry authority remain explicit reviewer prerequisites.",
+              "mutation": "This exact source clause does not independently mandate a mutation test. Retained wrong-slice and reversed-byte-order controls remain separately preserved and must not be replaced or promoted into unrelated proof."
             },
             "evidenceKinds": [
               "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
@@ -3744,8 +3772,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-853a934199459ed6bf419687ca08ba34-20261007-context-00fada70b5c9-54e18bc1f938.json",
-          "sha256": "406b1dc3d80bea8403c8b3479c59cd2bc497dde1d46712376b3be821dc8ff928"
+          "path": "verification/requirement-coverage-NREQ-853a934199459ed6bf419687ca08ba34-20261012-frozen-b0efd-recovery-catalogue-8d816842.json",
+          "sha256": "43b8aeb7fc81d25d91d10bdfb0a3d74640ec830406488d90b8418c4a7e23f30a"
         }
       }
     },
@@ -3809,9 +3837,9 @@
       "normativeRequirementId": "NREQ-d6f8519fc2d36e59e4eba26af0442d14",
       "sourceLineSha256": "03cb01d5ae34c69335090d3607bb7f3380f6e4eba8070ee4ffa5cba9cb32d751",
       "checkIds": [
-        "canonical.exact-serialization-controls"
+        "canonical.exact-string-scalars-and-lines"
       ],
-      "scope": "Complete proposed coverage of this exact small source clause only; its surrounding section and other clauses remain separately accounted.",
+      "scope": "Performed distinct-context final-source semantic coverage review of this exact primitive clause and retained independent assertion body. Complete design only; current normal owning execution and governing consumer admission remain required.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
       "fullCoverage": {
         "schema": "closed-loop-full-requirement-coverage/1",
@@ -3820,28 +3848,28 @@
         "productionOwners": [
           {
             "path": "hash.js",
-            "symbol": "canonicalChunks / stableStringify / compareUnicodeScalarSequence",
-            "sha256": "a13cf57bd7c7414bc801f511d5937f80eaf7fd675c0e6c2b5a92b365df16e4d7"
+            "symbol": "canonicalChunks / stableStringify",
+            "sha256": "bc1c486855fa2096623b560cfc44b7c5d9e263040546921eb00f54e7f38b7420"
           }
         ],
         "obligations": [
           {
             "id": "source-line-3026",
             "sourceText": "- exact string scalar values and line endings;",
-            "expectedBehavior": "Canonical strings preserve exact scalar sequence and CR/LF line endings.",
+            "expectedBehavior": "Canonical serialization preserves original Unicode scalar strings without implicit normalization and preserves CRLF, LF and CR distinctly.",
             "checks": {
               "deterministic": [
                 {
                   "suite": "verify-hash.mjs",
-                  "checkId": "canonical.exact-serialization-controls"
+                  "checkId": "canonical.exact-string-scalars-and-lines"
                 }
               ],
               "semantic": [],
               "mutation": []
             },
             "nonapplicable": {
-              "semantic": "This clause is a closed mechanical rule with exact source-derived expected values; it requires no actor semantic determination.",
-              "mutation": "This declaration establishes the narrow required behavior through independent expected input/output controls. The source clause does not itself require a mutation test; unrelated mutation evidence is not used as proof."
+              "semantic": "This exact primitive clause defines a mechanical byte/value operation; it has no actor meaning determination. Its inherited inputs and registry authority remain explicit reviewer prerequisites.",
+              "mutation": "This exact source clause does not independently mandate a mutation test. Retained wrong-slice and reversed-byte-order controls remain separately preserved and must not be replaced or promoted into unrelated proof."
             },
             "evidenceKinds": [
               "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
@@ -3851,8 +3879,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-d6f8519fc2d36e59e4eba26af0442d14-20261007-context-2fbfbdc64e39-54e18bc1f938.json",
-          "sha256": "4a43455831b9192effc0e207b781fbdb60cbcfbb307e9acc486b29ca801117da"
+          "path": "verification/requirement-coverage-NREQ-d6f8519fc2d36e59e4eba26af0442d14-20261012-frozen-b0efd-recovery-catalogue-8d816842.json",
+          "sha256": "09012dc9497df559156834d59a5cabbd047b14e28924b68cd6d7e272d401433b"
         }
       }
     },
@@ -3860,9 +3888,9 @@
       "normativeRequirementId": "NREQ-dba22c5f93e4359c4b7d4ebdd9799dbf",
       "sourceLineSha256": "6ceea161cf4fc12d52f66189110a6aae635278efe3442751a653794c8e81c68f",
       "checkIds": [
-        "canonical.exact-serialization-controls"
+        "canonical.exact-json-escapes"
       ],
-      "scope": "Complete proposed coverage of this exact small source clause only; its surrounding section and other clauses remain separately accounted.",
+      "scope": "Performed distinct-context final-source semantic coverage review of this exact primitive clause and retained independent assertion body. Complete design only; current normal owning execution and governing consumer admission remain required.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
       "fullCoverage": {
         "schema": "closed-loop-full-requirement-coverage/1",
@@ -3871,28 +3899,28 @@
         "productionOwners": [
           {
             "path": "hash.js",
-            "symbol": "canonicalChunks / stableStringify / compareUnicodeScalarSequence",
-            "sha256": "a13cf57bd7c7414bc801f511d5937f80eaf7fd675c0e6c2b5a92b365df16e4d7"
+            "symbol": "canonicalChunks / stableStringify",
+            "sha256": "bc1c486855fa2096623b560cfc44b7c5d9e263040546921eb00f54e7f38b7420"
           }
         ],
         "obligations": [
           {
             "id": "source-line-3027",
             "sourceText": "- JSON escapes `\\\"`, `\\\\`, `\\b`, `\\f`, `\\n`, `\\r`, and `\\t`, with every other U+0000 through U+001F emitted as lowercase `\\u00xx`;",
-            "expectedBehavior": "All required JSON escape spellings are exact and other control escapes use lowercase hex.",
+            "expectedBehavior": "Canonical strings emit exact quote, backslash and named control escapes; all remaining U+0000 through U+001F use lowercase four-digit unicode escapes.",
             "checks": {
               "deterministic": [
                 {
                   "suite": "verify-hash.mjs",
-                  "checkId": "canonical.exact-serialization-controls"
+                  "checkId": "canonical.exact-json-escapes"
                 }
               ],
               "semantic": [],
               "mutation": []
             },
             "nonapplicable": {
-              "semantic": "This clause is a closed mechanical rule with exact source-derived expected values; it requires no actor semantic determination.",
-              "mutation": "This declaration establishes the narrow required behavior through independent expected input/output controls. The source clause does not itself require a mutation test; unrelated mutation evidence is not used as proof."
+              "semantic": "This exact primitive clause defines a mechanical byte/value operation; it has no actor meaning determination. Its inherited inputs and registry authority remain explicit reviewer prerequisites.",
+              "mutation": "This exact source clause does not independently mandate a mutation test. Retained wrong-slice and reversed-byte-order controls remain separately preserved and must not be replaced or promoted into unrelated proof."
             },
             "evidenceKinds": [
               "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
@@ -3902,8 +3930,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-dba22c5f93e4359c4b7d4ebdd9799dbf-20261007-context-20dec9a14f41-54e18bc1f938.json",
-          "sha256": "63b792a5f50a232d36498f5f21e730777566486905debb14abe51d7a913d50e7"
+          "path": "verification/requirement-coverage-NREQ-dba22c5f93e4359c4b7d4ebdd9799dbf-20261012-frozen-b0efd-recovery-catalogue-8d816842.json",
+          "sha256": "3e6f14dbfe2510f7cd2c61628653c30e66be781a1b753d6481802c81d0cd24aa"
         }
       }
     },
@@ -3962,9 +3990,9 @@
       "normativeRequirementId": "NREQ-c756b0b15119dd819444cd7212bdad56",
       "sourceLineSha256": "3d14033f2bcab6a74bb1206dc1ffc21a22450ac131f2d2fdb084c28d43c05623",
       "checkIds": [
-        "canonical.exact-serialization-controls"
+        "canonical.prohibited-values-rejected"
       ],
-      "scope": "Complete proposed coverage of this exact small source clause only; its surrounding section and other clauses remain separately accounted.",
+      "scope": "CURRENT_INCOMPLETE / PARTIAL: retained independent enumerated rejection controls; installed observable Array guard is source-reviewed, but its registered current postintegration proof and transparent Proxy/caller-domain premise remain unresolved. No full clause/runtime pass.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
       "fullCoverage": {
         "schema": "closed-loop-full-requirement-coverage/1",
@@ -3974,7 +4002,7 @@
           {
             "path": "hash.js",
             "symbol": "canonicalChunks / stableStringify / compareUnicodeScalarSequence",
-            "sha256": "a13cf57bd7c7414bc801f511d5937f80eaf7fd675c0e6c2b5a92b365df16e4d7"
+            "sha256": "bc1c486855fa2096623b560cfc44b7c5d9e263040546921eb00f54e7f38b7420"
           }
         ],
         "obligations": [
@@ -3986,7 +4014,7 @@
               "deterministic": [
                 {
                   "suite": "verify-hash.mjs",
-                  "checkId": "canonical.exact-serialization-controls"
+                  "checkId": "canonical.prohibited-values-rejected"
                 }
               ],
               "semantic": [],
@@ -4001,11 +4029,26 @@
             ]
           }
         ],
-        "unresolvedObligations": [],
+        "unresolvedObligations": [
+          {
+            "id": "implementation-array-final-integration-and-selected-proof",
+            "sourceBoundary": "implementation objects at direct canonical primitive; Array-derived/nonstandard array prototype",
+            "remaining": "Current root-sealed hash/owner sources contain the observable Array-prototype correction and this distinct review inspected its direct guard and normal owner population. The actual postintegration current registered verify-hash receipt/selected assertion/consumer admission has not yet been performed; private focused evidence cannot substitute it.",
+            "privateProposalPath": "closure-report.json",
+            "privateProposalAccess": "RETAINED_PRIVATE_ARTIFACT_UNAVAILABLE_IN_PUBLICATION",
+            "privateProposalQualification": "HISTORICAL_NONPROOF_REFERENCE",
+            "privateProposalSha256": "a3b72a3883adabbd90ae3f054479cc2d7c796ea18509a2d1ac91527990e86975"
+          },
+          {
+            "id": "implementation-object-proxy-supported-domain",
+            "sourceBoundary": "Controlling meaning and supported caller admission of transparent Proxy implementation objects",
+            "remaining": "Transparent Proxy implementation-object and supported caller-domain premise remains unresolved. Observable prototype rejection does not establish universal implementation-object rejection; no full clause claim."
+          }
+        ],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-c756b0b15119dd819444cd7212bdad56-20261007-context-fb0c67dfb2a4-54e18bc1f938.json",
-          "sha256": "76914b4a35a2d1b7f707d59014ba8264e2de057657b6fedc44b08f88f3d90854"
+          "path": "verification/requirement-coverage-NREQ-c756b0b15119dd819444cd7212bdad56-20261012-final-distinct-renewal-portable-v1.json",
+          "sha256": "94d1e51d306fd70c9b2dc76fef4a1e0a3f3d900fbe1644f0dbb3c95c015b7efc"
         }
       }
     },
@@ -10596,13 +10639,23 @@
         "productionOwners": [
           {
             "path": "response-ingestion.js",
-            "symbol": "validateEnvelope / prepareCaptured",
-            "sha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5"
+            "symbol": "validateEnvelope / validateEnvelopeWithDiagnostics / prepareCaptured",
+            "sha256": "add1cb28571f325299bb1f30aafda4c1d9ba34682f63382730969227a2063f57"
           },
           {
             "path": "project-store.js",
             "symbol": "writeOperationalProject / assertOperationalChange / readProject",
-            "sha256": "4e8368f0d91eab0b937ee5c256a121c6ca2b3524e9d06ffc16c3f5637a05b060"
+            "sha256": "8e9fb248e0f7303177400871e15261ea188296f4b043e3966f7741fddd129ec7"
+          },
+          {
+            "path": "prompt-engine.js",
+            "symbol": "buildPromptRecord / promptFileManifest",
+            "sha256": "72e2d9d36da1e9b1be225dc73d7755a9330f6868770936ce053b49d9912951b6"
+          },
+          {
+            "path": "workflow-schema.js",
+            "symbol": "RESPONSE_ECHO_CONTRACT / RESPONSE_RELATIONSHIP_REFERENCE_CONTRACT",
+            "sha256": "73c38e974d97d01da3bf33987c899b5af6908a18f968c3912fd5fe7bad2b6a07"
           }
         ],
         "obligations": [
@@ -10642,10 +10695,1352 @@
           }
         ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-971af7158d193e9b1d780c13b6c8e0ec-20261007-context-3e84d85be560-54e18bc1f938.json",
-          "sha256": "558abc089a9bee958e1082aefe1036c6d5d9fa7217278dbc91500979c9ddbf63"
+          "path": "verification/requirement-coverage-NREQ-971af7158d193e9b1d780c13b6c8e0ec-20261011-reserved-renewal-portable-v1.json",
+          "sha256": "b3c7a8f173010eab1bdd6c488a36993d37f0b62357fb75f9de3bcb8365144842"
         }
       }
+    },
+    {
+      "normativeRequirementId": "NREQ-7801905b4b71b2b6605a2e7a117b5a39",
+      "sourceLineSha256": "599b075f2c25b3fbfe63ea91ac5ee90ea624824c7047ac2eabfc7f8d2ea7aebc",
+      "checkIds": [
+        "ingestion.invalid.stale-contract-hash",
+        "EXTERNAL-RESPONSE-IDENTITY-SHAPE",
+        "ingestion.contract-profile-literals"
+      ],
+      "scope": "Literal stale contract hash rejects with STALE_CONTRACT_HASH and zero accepted changes; grouped contractProfileId-array shape rejects before proposal. The registered existing literal-profile owner now publishes exactly correct/missing/wrong profile observations from its unchanged direct validateEnvelope assertions: correct literal produces no WRONG_CONTRACT_PROFILE, missing and wrong literals produce WRONG_CONTRACT_PROFILE. Published transport keys and exact rendered template binding remain asserted. That literal-profile fixture intentionally lacks a reservation and does not establish transport authority or canonical acceptance. This is finite registered subset linkage, not every contract boundary or a fullCoverage claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-868e5e73b07e9567fced3551a7d56f4c",
+      "sourceLineSha256": "6fba86dccc83eaff0b6c866a606c9e15b9b4234cc04d011fc0893299364db98c",
+      "checkIds": [
+        "ingestion.invalid.unresolved-relationship",
+        "HUMAN-DECISION-CANDIDATE-TARGET-AUTHORITY",
+        "EXTERNAL-RESPONSE-IDENTITY-SHAPE",
+        "ingestion.ordinary-dangling-temp-reference",
+        "ingestion.evidence-local-reference-absence"
+      ],
+      "scope": "Literal nonexistent canonical research SOURCE_ID rejects with UNRESOLVED_RELATIONSHIP and zero accepted changes; grouped wrong-family HUMAN target, malformed local/canonical reference shapes and correctly resolving temporary reference controls retain their named assertions. The separately registered ordinary local absence check uses a well-typed nonexistent SOURCE_A.tempKey in Stage02 and independently requires UNRESOLVED_RELATIONSHIP at /records/sourceConflicts/0/relationships/SOURCE_A, no proposal, exact raw/failed-validation operational save/reload, and preservation of existing accepted changes/source/conflict records. Altering only that reference in an otherwise conforming pending envelope refuses actual precommit and preserves the whole pending/raw project. Disabling only the ordinary absence lookup guard demonstrates false direct validation followed by actual planner TypeError; no successful faulty pending proposal is fabricated. The existing healthy same-response local-reference control still proceeds through actual operator acceptance/store reload. These declared synthetic transaction-adapter cases do not claim all-family relationship fullCoverage, browser behavior, or real external actors. The additional local evidence absence subset independently names well-typed nonexistent sourceRef.tempKey and attachmentRef.tempKey targets and requires UNRESOLVED_EVIDENCE_SOURCE at /evidence/0/sourceRef and UNRESOLVED_EVIDENCE_ATTACHMENT at /evidence/0/attachmentRef, respectively. Both actual reserved-file negatives preserve exact raw/failed-validation operational save/reload and protected canonical state with no proposal or new accepted change; the attachment case retains actual declared, selected and verified returned bytes under a different valid local key. Each sole lookup-guard omission demonstrates direct false validation and is caught by the owning rejection assertion; no faulty proposal or canonical acceptance is claimed. Existing conforming same-response source and attachment acceptance/reload controls remain unchanged. This is a bounded synthetic transaction-adapter subset, not all-family relationship, fullCoverage, browser or real-actor proof.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-93c729b33968386453af5250e15f4ba6",
+      "sourceLineSha256": "9db4782210ce25328da2de16d20320074b74126514059146d2221d05ba6b4bbb",
+      "checkIds": [
+        "EVIDENCE-SOURCE-SCOPE-AUTHORITY",
+        "ingestion.evidence-reference-raw-attribution"
+      ],
+      "scope": "Actual reserved-file source-binding helper executes in four existing conforming context controls under this registered grouped owner: every response-sourced change in each fixture is independently checked against actual raw JSON pointer/value hash/raw-response identity and each returned declaration against selected slot, metadata, actual digest and artifact mapping. Helper failures propagate before the owning grouped observation; no new selector or manufactured observation is introduced. Private Node22 renewal additionally retained six deliberate corruption refusals and actual bytes after acceptance/reload, but is not a current normal owner receipt or all-stage/derived-value fullCoverage claim. Two explicit same-response source/attachment controls also independently reconstruct exact raw evidence pointers, compare copied reference objects and literal hashes, bind raw/proposal identities and resolved source family/staged-file slots, and detect well-typed wrong-copy oracle inputs. Original source-value/file controls remain; this is a finite synthetic operational save/accept/reload subset, not a current normal producer receipt or full-clause declaration.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-00589ac7ea403394eff5f3f58cd27738",
+      "sourceLineSha256": "7081fe0685baf1aad5e34f729f3f463d3860f2d2a0c1593b9a4bcc96ea7c53c4",
+      "checkIds": [
+        "declaration.stage01.role"
+      ],
+      "scope": "Exact independently literal Stage01 Job-control analyst role in loaded workbook and stage contract, actual current COMPLETE prompt record and ROLE instruction, with eight missing/wrong-role controls. No actor authority, intake completeness, semantic challenge/reconciliation, full-stage operator journey or release-conformance claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "fullCoverage": {
+        "schema": "closed-loop-full-requirement-coverage/1",
+        "sourceLineSha256": "7081fe0685baf1aad5e34f729f3f463d3860f2d2a0c1593b9a4bcc96ea7c53c4",
+        "schemaOrRegistryEntry": "SPECIFICATION_SECTION_37.0",
+        "governingContext": [],
+        "unresolvedObligations": [],
+        "productionOwners": [
+          {
+            "path": "workbook.js",
+            "symbol": "roles[0] and STAGES[0].role",
+            "sha256": "11eff4fea42e47a5a70eafdc6b985d064ea2cdfe9a6feb72be6a74ec54c4b062"
+          },
+          {
+            "path": "workflow-schema.js",
+            "symbol": "STAGE_CONTRACTS[1].role",
+            "sha256": "5e4e434ea188b750bc8f1d44513c612d5295f550b4124d10ca5aa09506ee4a60"
+          },
+          {
+            "path": "prompt-engine.js",
+            "symbol": "body and buildPromptRecord Stage 01 role publication",
+            "sha256": "5d67f8096f91a1efc17ad6ce367dfa43ab5990ecaede9b52c9f12dcc34b41d20"
+          }
+        ],
+        "obligations": [
+          {
+            "id": "exact-stage01-role-declaration-and-publication",
+            "sourceText": "Role: Job-control analyst",
+            "expectedBehavior": "Stage 01 is declared as the Job-control analyst role in the workbook, projected unchanged into the Stage 01 schema contract, and published unchanged in the actual current COMPLETE prompt role and instruction. Missing or changed role values at each owned boundary are rejected.",
+            "evidenceKinds": [
+              "EXECUTED_SCHEMA_METADATA_ASSERTIONS"
+            ],
+            "checks": {
+              "deterministic": [
+                {
+                  "suite": "verify-stage-contract-closure.mjs",
+                  "checkId": "declaration.stage01.role"
+                }
+              ],
+              "semantic": [],
+              "mutation": []
+            },
+            "nonapplicable": {
+              "semantic": "The entire controlling clause is one closed literal role label. It requires no actor-authority judgment, intake interpretation, or surrounding Stage 01 behavior to determine whether the exact label is declared and published.",
+              "mutation": "The owning deterministic check includes eight exact missing/wrong-role controls across workbook declaration, schema contract, prompt role, and published instruction. Those controls are admitted under the same check identity; no separate mutation observation is needed or claimed."
+            }
+          }
+        ],
+        "review": {
+          "path": "verification/requirement-coverage-NREQ-00589ac7ea403394eff5f3f58cd27738-20261012-frozen-b0efd-recovery-catalogue-8d816842.json",
+          "sha256": "e9f9f3a5c5ce535024aa7251eb62239ea982058bb4108e43d97e7b4ceed90bd7"
+        }
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-427f0fb0dd0c2264bbd7b69842eba179",
+      "sourceLineSha256": "7f1343b99742d342341e72f1ced49d79c2b87dc05148e78b5bdb1e8db2dd5b87",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "Exact independently literal Stage2 role declaration/contract and current ordinary external publication where registered; role authority, actual actor behavior and complete-stage/operator journeys remain separate.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-f519a715c4ce0b702fcf4f432a2f3e24",
+      "sourceLineSha256": "7ca6ec131783812b5257fadb315bb561c424c364772107f2a79be85131a29e7f",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "Exact independently literal Stage3 role declaration/contract and current ordinary external publication where registered; role authority, actual actor behavior and complete-stage/operator journeys remain separate.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-cecb8ce5bce13cbdb99027efa0fc1af0",
+      "sourceLineSha256": "3a1c658e16c92b01d778ddfdb2e1e05705fe9ff39a995d48cb614864cc2d8cf2",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "Exact independently literal Stage4 role declaration/contract and current ordinary external publication where registered; role authority, actual actor behavior and complete-stage/operator journeys remain separate.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-4c47880c9ca5429f400dc34ceae3043e",
+      "sourceLineSha256": "94e270e0eaf32079c14a36bf16e127532723ce2c922b91f84284e0ecaf424150",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "Exact independently literal Stage5 role declaration/contract and current ordinary external publication where registered; role authority, actual actor behavior and complete-stage/operator journeys remain separate.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-fa538df94482d0550096ae456a4acc4d",
+      "sourceLineSha256": "8250846f7db1b4033df0a7a641aaadc8d11cc0116edfcdefcb670894f2a2f9bd",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "Exact independently literal Stage6 role declaration/contract and current ordinary external publication where registered; role authority, actual actor behavior and complete-stage/operator journeys remain separate.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-24e6069a277ef302124bf0ad269f477a",
+      "sourceLineSha256": "1f54be8021b4e00d474f0d2afa153f9cfab6d5d23cd55fb1a06d1070b0e0fba9",
+      "checkIds": [
+        "declaration.stage-explanation-core-meanings"
+      ],
+      "scope": "Rendered primary Stage6 explanation core meaning only; proper operation context, browser/CSS visibility, actual execution/frozen identity and full-stage/operator journeys remain separate.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-d2aa6c1021f4d78478919d484b1ae853",
+      "sourceLineSha256": "a4085ba05acb3803f39d1d66a7420cce594f27e242c804f4af4a6bf939620880",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "Only the independently identified Stage6 published controlling procedure obligation at source line3442; actor compliance and complete-stage/operator journeys remain separate.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-a96b0068a391e24691be806831c2ad94",
+      "sourceLineSha256": "38e4f4770efd0470807457e0eae437d43e6d556a04dde7d75f88d761a9457cf4",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "Only the independently identified Stage6 published controlling procedure obligation at source line3443; actor compliance and complete-stage/operator journeys remain separate.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-86fafbed2d6b79f634e7ee47e980d54b",
+      "sourceLineSha256": "c4e35a529bad7bb49466cac23b068a78256e280903ef336530470cdf977761b0",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "Exact independently literal Stage7 role declaration/contract and current ordinary external publication where registered; role authority, actual actor behavior and complete-stage/operator journeys remain separate.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-804783f8a5edc1e25d4e4b8a0761310d",
+      "sourceLineSha256": "436e4a8cc7c06d208c144dc2344d4243c1074d35d6bbec2e2371044c14181784",
+      "checkIds": [
+        "declaration.stage-explanation-core-meanings"
+      ],
+      "scope": "Rendered primary Stage7 explanation core meaning only; proper operation context, browser/CSS visibility, actual execution/frozen identity and full-stage/operator journeys remain separate.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-aa2a1d8c7c45e9c7f0bbea28fd9eb266",
+      "sourceLineSha256": "e93870210f10876726df33ec34423895ac180cdaa94249fca7346c95734861f7",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "Exact independently literal Stage8 role declaration/contract and current ordinary external publication where registered; role authority, actual actor behavior and complete-stage/operator journeys remain separate.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-8c80bba7955aae714b1a5a1cf2398020",
+      "sourceLineSha256": "10c518a4cdb46b6e90b4dc7dcab197d2bcee1c49e3855eef417774db9c0d5a7a",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "Exact independently literal Stage9 role declaration/contract and current ordinary external publication where registered; role authority, actual actor behavior and complete-stage/operator journeys remain separate.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-efb9653c51f466d131fe2fe2099fa9bc",
+      "sourceLineSha256": "bb94a66acc6ca6271844b0c6496d5548bca5293a1b7871719678491a41c09200",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "Exact independently literal Stage10 role declaration/contract and current ordinary external publication where registered; role authority, actual actor behavior and complete-stage/operator journeys remain separate.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-27273749a1bfb5e53140b70e3a8d245a",
+      "sourceLineSha256": "d4053446066c4262e17a67a5c05a16e17aaeec59d38fb51230a7efd6da7fbd0a",
+      "checkIds": [
+        "declaration.stage-explanation-core-meanings"
+      ],
+      "scope": "Rendered primary Stage10 explanation core meaning only; proper operation context, browser/CSS visibility, actual execution/frozen identity and full-stage/operator journeys remain separate.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-cdae1d95803c975e2b5817dcbc1acf43",
+      "sourceLineSha256": "27a1e836059adb6a3c3b285eb2bfa146f2a2586c36a7a1ccd60dbbfbabe78bb0",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "Exact independently literal Stage11 role declaration/contract and current ordinary external publication where registered; role authority, actual actor behavior and complete-stage/operator journeys remain separate.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-5fb114a9f3df0d4a47e7d40cc130d253",
+      "sourceLineSha256": "5258bf9a9eef7da8346faa40c46e8028b67df6edd527eff78126fed68e4e4941",
+      "checkIds": [
+        "declaration.stage-explanation-core-meanings"
+      ],
+      "scope": "Rendered primary Stage11 explanation core meaning only; proper operation context, browser/CSS visibility, actual execution/frozen identity and full-stage/operator journeys remain separate.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-12dbcde7c6fb615b0ff78d471aaa3d08",
+      "sourceLineSha256": "5b7a57788a4b90c4751b05f85495c7d7026d825b2664d5fd80d4dc5c5311c54f",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "Exact independently literal Stage12 role declaration/contract and current ordinary external publication where registered; role authority, actual actor behavior and complete-stage/operator journeys remain separate.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-321537d0e19dda97945429537926ebbc",
+      "sourceLineSha256": "029421debf02d8bb1ecb567b4851b2fb5388e9edab2daa94f54a317f52b853c3",
+      "checkIds": [
+        "declaration.stage-explanation-core-meanings"
+      ],
+      "scope": "Rendered primary Stage12 explanation core meaning only; proper operation context, browser/CSS visibility, actual execution/frozen identity and full-stage/operator journeys remain separate.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-bf4a2a2724397b7b5b06bf5a05bd94f3",
+      "sourceLineSha256": "3fe4d6d555762e6a05d4e1a31e03996b00ec7dbd2be72c8e26e3972094faf493",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "Exact independently literal Stage13 role declaration/contract and current ordinary external publication where registered; role authority, actual actor behavior and complete-stage/operator journeys remain separate.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-f150e202fa4bae8ca5b9785736cf1b24",
+      "sourceLineSha256": "0bb83bb4ed6aae5a1a811a314aef7de887262bbfd96655a21fd007ecadf49c26",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "Exact independently literal Stage14 role declaration/contract and current ordinary external publication where registered; role authority, actual actor behavior and complete-stage/operator journeys remain separate.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-0eb47ae8de2bfae12b06d84e3bc6de03",
+      "sourceLineSha256": "491420959c75c86dbef05dc40661522edee480d1947ca229e6d532857c8f638a",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "Exact independently literal Stage15 role declaration/contract and current ordinary external publication where registered; role authority, actual actor behavior and complete-stage/operator journeys remain separate.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-77fc05bed2f6e7b6e683de1c2b102051",
+      "sourceLineSha256": "356d376e042a7214899f1517abff8d025c89de4cd6c3ca74cc5ee4d972008bdc",
+      "checkIds": [
+        "declaration.stage-explanation-core-meanings"
+      ],
+      "scope": "Rendered primary Stage15 explanation core meaning only; proper operation context, browser/CSS visibility, actual execution/frozen identity and full-stage/operator journeys remain separate.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-fd0607224eb3b5176911a403d86e4034",
+      "sourceLineSha256": "97aa147d19e42ccf1e91f917ec3656c92697e6abb1a96cabd9fd98e0bcfd132a",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "Exact independently literal Stage16 role declaration/contract and current ordinary external publication where registered; role authority, actual actor behavior and complete-stage/operator journeys remain separate.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-2eadf7aa431600ec6d4f1092a60b7c05",
+      "sourceLineSha256": "925a3c88173c1dbe37f38743699b4d65d9d4c56752815f117213ed40ed478f33",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "Only the independently identified Stage16 published controlling procedure obligation at source line3534; actor compliance and complete-stage/operator journeys remain separate.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-527722a8c538d094388563d1a6c01b52",
+      "sourceLineSha256": "fa8f779d4bfd0bc1b314fa2e7cc9357fa8488729985399ed0a58f34fa4e19d00",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "Exact independently literal Stage17 role declaration/contract and current ordinary external publication where registered; role authority, actual actor behavior and complete-stage/operator journeys remain separate.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-1ca1a99e86f24cb2690fc4663009c497",
+      "sourceLineSha256": "8940af8895026cfbeab3c972a69720ca525a111047eed4cfd4b67db704411854",
+      "checkIds": [
+        "declaration.stage-explanation-core-meanings"
+      ],
+      "scope": "Rendered primary Stage17 explanation core meaning only; proper operation context, browser/CSS visibility, actual execution/frozen identity and full-stage/operator journeys remain separate.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-420c6b157ecd757f6a0cb77463de308e",
+      "sourceLineSha256": "3f896919371966203d7292238d95502e2672012b817eb52ba0e6ad4d2409ee52",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "Exact independently literal Stage18 role declaration/contract and current ordinary external publication where registered; role authority, actual actor behavior and complete-stage/operator journeys remain separate.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-e4dac8e0912ddd4d1f86523d9d1560f9",
+      "sourceLineSha256": "b00419cf20820712b42c19fa7a95dc20735a04e9b87550d8d7d32e15cfabc640",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "Exact independently literal Stage19 role declaration/contract and current ordinary external publication where registered; role authority, actual actor behavior and complete-stage/operator journeys remain separate.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-b8ff460c90ce9c09f2fd2e4093918c64",
+      "sourceLineSha256": "72a225ff4e6a68c228c4677937b9832ec05175ba67e02f3257007ca64e906534",
+      "checkIds": [
+        "declaration.stage-explanation-core-meanings"
+      ],
+      "scope": "Rendered primary Stage19 explanation core meaning only; proper operation context, browser/CSS visibility, actual execution/frozen identity and full-stage/operator journeys remain separate.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-bbed713638d67f007309164b5a07a81c",
+      "sourceLineSha256": "efa5838ad011d8e2d49eb7bd62621531317f5c314f775faa2ec873ad9f6d749f",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "Exact independently literal Stage20 role declaration/contract and current ordinary external publication where registered; role authority, actual actor behavior and complete-stage/operator journeys remain separate.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-a3f44049c6c9f372f83fecd7e9841b0a",
+      "sourceLineSha256": "240a4b86cc0d807fd94b9c496d9d251471f6eb9b18522ee364961f76875b7b59",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "Exact independently literal Stage21 role declaration/contract and current ordinary external publication where registered; role authority, actual actor behavior and complete-stage/operator journeys remain separate.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-cb1734917ab51fda9d64f86f7f247925",
+      "sourceLineSha256": "fce118928fdb287bf727169bc16aba2a063bdd67fc539f2f75ea60ecb4055712",
+      "checkIds": [
+        "declaration.stage-explanation-core-meanings"
+      ],
+      "scope": "Rendered primary Stage21 explanation core meaning only; proper operation context, browser/CSS visibility, actual execution/frozen identity and full-stage/operator journeys remain separate.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-6199ac43aaadd4bbdee5e7bdd1ac6421",
+      "sourceLineSha256": "321a432d5dd8b32b0ff2825745ae776f7fcd08f3d65e5f562591dd27b76e77bd",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "Exact independently literal Stage22 role declaration/contract and current ordinary external publication where registered; role authority, actual actor behavior and complete-stage/operator journeys remain separate.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-62a7ed51e5192a6b11be2850b098da98",
+      "sourceLineSha256": "bc84d947cced3f8be7c99297e2f3ef82f89f16e51fbae5c6ec39cc6ab8a18b02",
+      "checkIds": [
+        "declaration.stage-explanation-core-meanings"
+      ],
+      "scope": "Rendered primary Stage22 explanation core meaning only; proper operation context, browser/CSS visibility, actual execution/frozen identity and full-stage/operator journeys remain separate.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-49557d149933baccaf81eb90eb5e1717",
+      "sourceLineSha256": "27e56ea8c13f7fcd18a1a803b9b1cf33bed79feaf3f7132a1f736930331288bd",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "Exact independently literal Stage23 role declaration/contract and current ordinary external publication where registered; role authority, actual actor behavior and complete-stage/operator journeys remain separate.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-b3b8074e42901ec598fe77099a811e63",
+      "sourceLineSha256": "e097334dc8ff875606abac1b1419ba27fd99c5ded7a310983d51a132e538b885",
+      "checkIds": [
+        "declaration.stage-explanation-core-meanings"
+      ],
+      "scope": "Rendered primary Stage23 explanation core meaning only; proper operation context, browser/CSS visibility, actual execution/frozen identity and full-stage/operator journeys remain separate.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-3fb148fc485595ad314466ee24e86991",
+      "sourceLineSha256": "95488fdb13c003c5fa84d887e2789bf712636996215dfce2d311fc8c4fc6e9a0",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "Exact independently literal Stage24 role declaration/contract and current ordinary external publication where registered; role authority, actual actor behavior and complete-stage/operator journeys remain separate.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-f5fbc421f0da0d6b66826b29ce420104",
+      "sourceLineSha256": "3fa9e4937c0d987f6dd255a5ad4f9e588144b6d6b6d1df44fa9db00ec278bccd",
+      "checkIds": [
+        "declaration.stage-explanation-core-meanings"
+      ],
+      "scope": "Rendered primary Stage24 explanation core meaning only; proper operation context, browser/CSS visibility, actual execution/frozen identity and full-stage/operator journeys remain separate.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-21e6acd689da49ef5794ed7b0da45b40",
+      "sourceLineSha256": "808742e614c0f92c89905eb22466805ac733bd5ef6f688b42dc66fc1b813c645",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "Exact independently literal Stage25 role declaration/contract and current ordinary external publication where registered; role authority, actual actor behavior and complete-stage/operator journeys remain separate.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-045d929fc50b7d6fbd16480328112227",
+      "sourceLineSha256": "d5b384680f6f82cf262c265e37193889025a1a596113d2a956bc198427e99994",
+      "checkIds": [
+        "declaration.stage-explanation-core-meanings"
+      ],
+      "scope": "Rendered primary Stage25 explanation core meaning only; proper operation context, browser/CSS visibility, actual execution/frozen identity and full-stage/operator journeys remain separate.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-8906f0d0b1cf7cf54cb4323ed2569940",
+      "sourceLineSha256": "43ec448b86aa5f0ec89a9bd8deecf931d039e55edcde2e87ae3790b67db3e9dc",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "Exact independently literal Stage26 role declaration/contract and current ordinary external publication where registered; role authority, actual actor behavior and complete-stage/operator journeys remain separate.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-25e91e450e724c8ac9d5b51a43867b67",
+      "sourceLineSha256": "67427145e4b8cbd9c934decabc780eee34fbb2bd77d17b94f9828fae5bc9ce75",
+      "checkIds": [
+        "declaration.stage-explanation-core-meanings"
+      ],
+      "scope": "Rendered primary Stage26 explanation core meaning only; proper operation context, browser/CSS visibility, actual execution/frozen identity and full-stage/operator journeys remain separate.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-a8cbcf1c749752d55c4731222628be6f",
+      "sourceLineSha256": "b2e135459a70ba084ca2e32b49da9613b842d5f4238b920bc0ec5ca0ff971519",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "Exact independently literal Stage27 role declaration/contract and current ordinary external publication where registered; role authority, actual actor behavior and complete-stage/operator journeys remain separate.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-57334ead2bc052e40b1c21436c935c28",
+      "sourceLineSha256": "53ec112262bcd0ec463865aafc0de1b1e14b6d1bb019c5e75d49f6af420ada45",
+      "checkIds": [
+        "declaration.stage-explanation-core-meanings"
+      ],
+      "scope": "Rendered primary Stage27 explanation core meaning only; proper operation context, browser/CSS visibility, actual execution/frozen identity and full-stage/operator journeys remain separate.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-604c2ea233a5b328c6cd6e33c6d681db",
+      "sourceLineSha256": "1109c3eb86fdecbc7073157110b4cb1099f7c1452b62fda801493fdea616343f",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "Exact independently literal Stage28 role declaration/contract and current ordinary external publication where registered; role authority, actual actor behavior and complete-stage/operator journeys remain separate.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-38628cafed872262a9b8d9144f0da01f",
+      "sourceLineSha256": "7c9740377ef1a60bedc946c2fb46efa4ad8ffe8cf3fdaf371ca914d8ee34a1f4",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "Exact independently literal Stage29 role declaration/contract and current ordinary external publication where registered; role authority, actual actor behavior and complete-stage/operator journeys remain separate.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-831250724c9d58362ca4ecfd50d4fe89",
+      "sourceLineSha256": "d2564a2db95c873aa1008537045844241299073ed43174935e568ffa5a96df36",
+      "checkIds": [
+        "declaration.stage-explanation-core-meanings"
+      ],
+      "scope": "Rendered primary Stage29 explanation core meaning only; proper operation context, browser/CSS visibility, actual execution/frozen identity and full-stage/operator journeys remain separate.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-e2c6b0ac87e23a3f36fe620da97878dc",
+      "sourceLineSha256": "c7b1a96e6fa9491a1a055e4de06f908abbc03f316b2372252021c572f3f0beeb",
+      "checkIds": [
+        "handoff.shared-object-consumer-controls"
+      ],
+      "scope": "§24 two shared transfer consumer clauses only. Synthetic engine-owned object and isolated stage entry, actual generated prompt and extracted UI owner/details; no completed stage, DOM/browser, export/ingestion, physical possession or external-transfer claim. External transfer conformity and semantic independence remain UNKNOWN; no whole-clause or evidence-authentication acceptance.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-3cac51251c1c25492faf2f4f7fd7abf4",
+      "sourceLineSha256": "cdc643a133a4ab94663140fdbed0b1492c6a9f2613be499630c2540e62946af2",
+      "checkIds": [
+        "handoff.shared-object-consumer-controls"
+      ],
+      "scope": "§24 two shared transfer consumer clauses only. Synthetic engine-owned object and isolated stage entry, actual generated prompt and extracted UI owner/details; no completed stage, DOM/browser, export/ingestion, physical possession or external-transfer claim. External transfer conformity and semantic independence remain UNKNOWN; no whole-clause or evidence-authentication acceptance.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-124b612a8013a2a3bf11d113b0e857e5",
+      "sourceLineSha256": "db3d306c782569f39eb6b3f22fd0f8b5db36cfe1791a99340c3a5d2990260a83",
+      "checkIds": [
+        "correction.stage16.rendered-operator-actions"
+      ],
+      "scope": "Seven production Stage16 plan/action and extracted markup/detail unit cases with eight independent observation mutants; synthetic RCA/authority/proposal/question fixtures. No actual stage entry, acceptance, transaction lifetime, external/human execution or full-clause proof; automatic-only correction applicability remains unresolved.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-1cdb1aa3471aadc0588c8668ec43d79d",
+      "sourceLineSha256": "0c4acaba0dce930ab58cc86550882a0ceccc2bfe9fd93bdf394ba1848e70fff7",
+      "checkIds": [
+        "correction.stage16.rendered-operator-actions"
+      ],
+      "scope": "Seven production Stage16 plan/action and extracted markup/detail unit cases with eight independent observation mutants; synthetic RCA/authority/proposal/question fixtures. No actual stage entry, acceptance, transaction lifetime, external/human execution or full-clause proof; automatic-only correction applicability remains unresolved.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-712536b974c95fb1116eaeb629ec8477",
+      "sourceLineSha256": "c5d3f423a46b2fd25134a157626edfc1690b9b582b5fcd86a2d810e5b7223024",
+      "checkIds": [
+        "correction.stage16.rendered-operator-actions"
+      ],
+      "scope": "Seven production Stage16 plan/action and extracted markup/detail unit cases with eight independent observation mutants; synthetic RCA/authority/proposal/question fixtures. No actual stage entry, acceptance, transaction lifetime, external/human execution or full-clause proof; automatic-only correction applicability remains unresolved.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-bc99f14436618d4d63122555786e5328",
+      "sourceLineSha256": "5e5f4fde0a01d4dceb3612d92d83b0762848f9cfd33d6e6d8436efbd7a8b20b5",
+      "checkIds": [
+        "correction.stage16.rendered-operator-actions"
+      ],
+      "scope": "Seven production Stage16 plan/action and extracted markup/detail unit cases with eight independent observation mutants; synthetic RCA/authority/proposal/question fixtures. No actual stage entry, acceptance, transaction lifetime, external/human execution or full-clause proof; automatic-only correction applicability remains unresolved.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-d03eed203937406b33ee6f94d272e66b",
+      "sourceLineSha256": "482561407deb44c675662c826648db277349c7133fc0a6534794f4403e90ebe1",
+      "checkIds": [
+        "correction.stage16.rendered-operator-actions"
+      ],
+      "scope": "Seven production Stage16 plan/action and extracted markup/detail unit cases with eight independent observation mutants; synthetic RCA/authority/proposal/question fixtures. No actual stage entry, acceptance, transaction lifetime, external/human execution or full-clause proof; automatic-only correction applicability remains unresolved.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-fccc66c2ab30a5427d7fbc20660696e4",
+      "sourceLineSha256": "7155e9c055a840ef27218bf7110e3d034ad24947b8812dc97d718177ffc5bffe",
+      "checkIds": [
+        "correction.stage16.rendered-operator-actions"
+      ],
+      "scope": "Seven production Stage16 plan/action and extracted markup/detail unit cases with eight independent observation mutants; synthetic RCA/authority/proposal/question fixtures. No actual stage entry, acceptance, transaction lifetime, external/human execution or full-clause proof; automatic-only correction applicability remains unresolved.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-108da6880ac945a91faeaec0bbcbcae1",
+      "sourceLineSha256": "d500dc4e924fcc418e0318d0927ffe5077cb1ceb0e8853300a8fd646bd5cb25c",
+      "checkIds": [
+        "canonical.current-contradiction-controls"
+      ],
+      "scope": "Current-canonical contradiction reducer on injected synthetic artifact/product records: incompatible lineage/version and current-baseline conflicts, with legitimate historical/equivalent controls. No admission, storage, byte custody, operator journey, release authorization or whole-clause proof.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-8cb0cab1fc4468426fa977c520b5f9a0",
+      "sourceLineSha256": "1223cda27331dcb0ab8210f59a0a94ad70726b669b361cbef33cec10b5d0e7e8",
+      "checkIds": [
+        "canonical.current-contradiction-controls"
+      ],
+      "scope": "Current-canonical contradiction reducer on injected synthetic artifact/product records: incompatible lineage/version and current-baseline conflicts, with legitimate historical/equivalent controls. No admission, storage, byte custody, operator journey, release authorization or whole-clause proof.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-beaf90ca6a83c8c3f1684060eab17211",
+      "sourceLineSha256": "e757af41f475adff31899d4d8c6a1cbe8cf7e764e5104306ea11d4f9c5380a51",
+      "checkIds": [
+        "canonical.current-contradiction-controls"
+      ],
+      "scope": "Current-canonical contradiction reducer on injected synthetic artifact/product records: incompatible lineage/version and current-baseline conflicts, with legitimate historical/equivalent controls. No admission, storage, byte custody, operator journey, release authorization or whole-clause proof.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-f4bc7842a2dc5225acddacc0651cdc8b",
+      "sourceLineSha256": "e288effaba8fa720aae762d87e9cd1031cf1d0743621d4e583460abef492a251",
+      "checkIds": [
+        "canonical.current-contradiction-controls"
+      ],
+      "scope": "Current-canonical contradiction reducer on injected synthetic artifact/product records: incompatible lineage/version and current-baseline conflicts, with legitimate historical/equivalent controls. No admission, storage, byte custody, operator journey, release authorization or whole-clause proof.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-375bd7af5b0b342e6f3ec35081e833d6",
+      "sourceLineSha256": "db61e458353bf992a9d3f768d4df97a14acc7b01f9706055e6d2a0d2f56df0b9",
+      "checkIds": [
+        "explanation.current-support-controls"
+      ],
+      "scope": "Synthetic production helper and real derived UI callback; controlled proof-state presenter cases explicitly separate. No browser, accepted receipt, upstream proof sufficiency, complete clause or current-global-tuple claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-41833a72f380444b01185b76973422e7",
+      "sourceLineSha256": "2a58510aa82b8bc63175137983abb9126899f82a02ba45c8e2947689f1db816a",
+      "checkIds": [
+        "explanation.current-support-controls"
+      ],
+      "scope": "Synthetic production helper and real derived UI callback; controlled proof-state presenter cases explicitly separate. No browser, accepted receipt, upstream proof sufficiency, complete clause or current-global-tuple claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-99f13e20bdba44edb8e937a8a9e08007",
+      "sourceLineSha256": "7e505e649977ed726cfefa4c86677e829373dcc7472d1bd8aad339dd480ebfe0",
+      "checkIds": [
+        "explanation.current-support-controls"
+      ],
+      "scope": "Synthetic production helper and real derived UI callback; controlled proof-state presenter cases explicitly separate. No browser, accepted receipt, upstream proof sufficiency, complete clause or current-global-tuple claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-d6c080274eecc9806e0a00249034c0db",
+      "sourceLineSha256": "38132508f79f037dfc99cf26a335b324333d3781fab37f107dc2d12d763bb93c",
+      "checkIds": [
+        "explanation.current-support-controls"
+      ],
+      "scope": "Synthetic production helper and real derived UI callback; controlled proof-state presenter cases explicitly separate. No browser, accepted receipt, upstream proof sufficiency, complete clause or current-global-tuple claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-f049e3f0b207ea69f274ad536dc220a8",
+      "sourceLineSha256": "cb13eff96666a2d663472ed17927d820bfeb3263077381b247c092a4df43e600",
+      "checkIds": [
+        "explanation.current-support-controls"
+      ],
+      "scope": "Synthetic production helper and real derived UI callback; controlled proof-state presenter cases explicitly separate. No browser, accepted receipt, upstream proof sufficiency, complete clause or current-global-tuple claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-448df4814730596863f1e5bae3577e64",
+      "sourceLineSha256": "793056e9d533320e26a4f16527d241d68dbd3246ededd1c80ee73d4a1a8352b6",
+      "checkIds": [
+        "evidence.api-current-artifact-contract"
+      ],
+      "scope": "Unchanged exported evaluator and production storage/readback through existing transaction adapter. executionPlan call acceptance only: §29 lists it but does not specify distinct influence or supplied-plan validation rules. No browser/external reviewer/whole clause claim. executionPlan influence remains unspecified; only optional argument acceptance is covered.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-4574e3dbe382b197b5e6b35995ba5ed7",
+      "sourceLineSha256": "5ff06926311a067ef9babcbdf80f7dae49805bbb34bd232d94972ea7e596ecdd",
+      "checkIds": [
+        "evidence.api-current-artifact-contract"
+      ],
+      "scope": "Unchanged exported evaluator and production storage/readback through existing transaction adapter. executionPlan call acceptance only: §29 lists it but does not specify distinct influence or supplied-plan validation rules. No browser/external reviewer/whole clause claim. executionPlan influence remains unspecified; only optional argument acceptance is covered.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-a17fcd2aa50ef5b72f9206ed99536d47",
+      "sourceLineSha256": "576b5f493924ba1b6aef100b6d79d032dc1284c2c82abb40435947c432904add",
+      "checkIds": [
+        "evidence.api-current-artifact-contract"
+      ],
+      "scope": "Unchanged exported evaluator and production storage/readback through existing transaction adapter. executionPlan call acceptance only: §29 lists it but does not specify distinct influence or supplied-plan validation rules. No browser/external reviewer/whole clause claim. executionPlan influence remains unspecified; only optional argument acceptance is covered.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-030c4c2774d2802d6009db314a8dc98d",
+      "sourceLineSha256": "095e19dfcbb672eec2ed0447e8ddcaec7ce5f3b5a722cc0d2256b4a2bddacb67",
+      "checkIds": [
+        "metrics.accepted-external-response-controls"
+      ],
+      "scope": "Project-local retained accepted-response history through actual synthetic Stage01 capture/prepare/commit and all four registered response types, with writer-chain identity/UNKNOWN-null, migration/generated exclusion, duplicate/unbound/wrong-project, historical/current-effectiveness and bounded per-call index controls. Necessary metadata carrier assertions only; no other project metrics, raw-byte freshness, real external actor, browser, global receipt or whole-clause claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "coverageClassification": "PARTIAL_EXECUTED_BOUNDARY_EVIDENCE"
+    },
+    {
+      "normativeRequirementId": "NREQ-0b917ca4689b30acf9bd200f59df49ec",
+      "sourceLineSha256": "231f331c941dd5de20cb6a99b0f69342bac4391b9ba24a473c570754d19fbb65",
+      "checkIds": [
+        "metrics.unproved-observation-protection"
+      ],
+      "scope": "Two §31 unknown observation populations and already suppressed zero-failure bound only; actual command/migration writers and extracted overview, no closed observation universe or whole-metric conformance. Eight exact owning controls and three intended-oracle mutations protect UNKNOWN/null disposition; §31.1 metric-universe completion and exact observation attribution remain unproved.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-ec167bae351e0ee9bb47b7097fa65aed",
+      "sourceLineSha256": "680d10624caf32c2a70288bb62823c7aa8da04c014750457b397634753f38f48",
+      "checkIds": [
+        "metrics.unproved-observation-protection"
+      ],
+      "scope": "Two §31 unknown observation populations and already suppressed zero-failure bound only; actual command/migration writers and extracted overview, no closed observation universe or whole-metric conformance. Eight exact owning controls and three intended-oracle mutations protect UNKNOWN/null disposition; §31.1 metric-universe completion and exact observation attribution remain unproved.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-cd450154228ade7c42964fb447c71825",
+      "sourceLineSha256": "31384352c462877671acae86a23b77334aaf755969eadab0a314d7b791b6b405",
+      "checkIds": [
+        "metrics.response-writer-subset-carriers"
+      ],
+      "scope": "Exact retained operator-rejection/proposal-staleness/recorded external-execution-failure subset observations, eight actual writer cases plus26 controls. Broader required-category totals remain null/UNKNOWN. §31.1 carrier publication only; no complete universe, current global/full-clause/native/external actor acceptance.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-12611c922c086b03f386b2c5e7cb3e19",
+      "sourceLineSha256": "7d1ecf0f02939d2d91b3c1b218587fe1df4946a213667725263b0bc9bc3088b2",
+      "checkIds": [
+        "metrics.response-writer-subset-carriers"
+      ],
+      "scope": "Exact retained operator-rejection/proposal-staleness/recorded external-execution-failure subset observations, eight actual writer cases plus26 controls. Broader required-category totals remain null/UNKNOWN. §31.1 carrier publication only; no complete universe, current global/full-clause/native/external actor acceptance.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-ee1f593ac734ca0725aa02053e6052e3",
+      "sourceLineSha256": "5d95ee022dedddd42c600d70e67bd4baae6b7b2d65dd9c541b1a153346e6cfd6",
+      "checkIds": [
+        "metrics.response-writer-subset-carriers"
+      ],
+      "scope": "Exact retained operator-rejection/proposal-staleness/recorded external-execution-failure subset observations, eight actual writer cases plus26 controls. Broader required-category totals remain null/UNKNOWN. §31.1 carrier publication only; no complete universe, current global/full-clause/native/external actor acceptance.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-220fb40a12e38f5fdcaf751803b1763b",
+      "sourceLineSha256": "8fb564ccd09d34ba097c8e32648b9aa90b4564a8d1cf5bb58390af192fd8ab29",
+      "checkIds": [
+        "metrics.native-recorded-subset",
+        "metrics.deferred-recorded-subset",
+        "metrics.actual-deferred-recorded-receipts"
+      ],
+      "scope": "Project-local attributable recorded native result/receipt subset with UNKNOWN/null total: actual ordinary isolated worker/result evidence and20 projection controls,48 synthetic deferred consumer cases and five intended faults; genuine existing deferred worker/retry observations are separately required by their owner. No complete historical attempt denominator, current result validity, browser or full-clause proof.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "coverageClassification": "PARTIAL_EXECUTED_BOUNDARY_EVIDENCE"
+    },
+    {
+      "normativeRequirementId": "NREQ-98c3117d0fe232f85b933b09e1957913",
+      "sourceLineSha256": "625068b95c25e2f982f8f0206b1fff2b70dba8e64f1dea8f56aff275ce1b90a5",
+      "checkIds": [
+        "metrics.deferred-recorded-subset",
+        "metrics.actual-deferred-recorded-receipts"
+      ],
+      "scope": "Project-local recorded external deferred receipt attribution with UNKNOWN/null total:48 synthetic native/external reducer cases with explicit accepted-response dependency and five intended faults; genuine issued-file/accepted receipt observations remain separately required. Ordinary external event equivalence, actual external actor, complete attempt history, current custody and full-clause conformance are not established.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "coverageClassification": "PARTIAL_EXECUTED_BOUNDARY_EVIDENCE"
+    },
+    {
+      "normativeRequirementId": "NREQ-0005049889063a2551f144189aa7efa1",
+      "sourceLineSha256": "8802fa993d4dd6f512d95fab1e89600e1918fece75f2b27e8f31365bc3000c46",
+      "checkIds": [
+        "test-ir.native-canonical-identity"
+      ],
+      "scope": "Partial native input/runtime recording evidence: original six Stage22/24 canonical-input identity cases and guard controls, plus fourteen heterogeneous UTF-8/binary and canonical-value loader/worker/native-command/Map-adapter cases with four specifically detected recording faults and an order-equivalent control. Synthetic accepted test/product setup; no normally reviewed Stage06 journey, native IndexedDB/storage-worker, deferred stored-version or whole-clause conformance claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "coverageClassification": "PARTIAL_EXECUTED_BOUNDARY_EVIDENCE"
+    },
+    {
+      "normativeRequirementId": "NREQ-d905169d9d9e5f73a4d4c78eb0ea6e85",
+      "sourceLineSha256": "650f7e0773f6abc4b3a2abb5ad6a1be965ea334b67236b2cc876f41f269253bd",
+      "checkIds": [
+        "verify-browser.append-only-native"
+      ],
+      "scope": "Scoped native IndexedDB append-only boundary only: actual APPEND_ONLY authored fields remain unchanged on append/supersession; rewrite/delete of prior definitions, stale winners and transaction failure preserve last-valid physical rows and History; fresh-document cold read confirms retained state. Assertions: test-append-only-native.mjs:9-15,18-27; test-append-only-native.html:10-36. 24 page plus 24 storage-worker realm cases. Synthetic starting definitions only; Stage14/15 authoring, whole operator journey, migration/retirement, manual external truth and whole-clause proof are not established.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-276e171bf2e15663bf20ebc58575d857",
+      "sourceLineSha256": "650f7e0773f6abc4b3a2abb5ad6a1be965ea334b67236b2cc876f41f269253bd",
+      "checkIds": [
+        "verify-browser.append-only-native"
+      ],
+      "scope": "Scoped native IndexedDB append-only boundary only: actual APPEND_ONLY authored fields remain unchanged on append/supersession; rewrite/delete of prior definitions, stale winners and transaction failure preserve last-valid physical rows and History; fresh-document cold read confirms retained state. Assertions: test-append-only-native.mjs:9-15,18-27; test-append-only-native.html:10-36. 24 page plus 24 storage-worker realm cases. Synthetic starting definitions only; Stage14/15 authoring, whole operator journey, migration/retirement, manual external truth and whole-clause proof are not established.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-5e217544fd95f70a4fda42875af8852f",
+      "sourceLineSha256": "44e235a990a223e093e31d176d0f4737830002eeb0b0c0c092df10f5b3df84ca",
+      "checkIds": [
+        "stage22.external-result-normalization",
+        "schema.product-observation-ownership"
+      ],
+      "scope": "Scoped Stage22 canonical ownership only: independent literal producer/authorization/descriptor assertions plus synthetic application normalization/planner/raw-preservation/currentness/refusal and reader contrasts. The positive normalization candidate is uncommitted; no reserved/accepted external or native execution, durable late-stage journey, whole-clause proof or fullCoverage claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-23c9c7a8828718759c2e7e4d2317f525",
+      "sourceLineSha256": "d09b51aaae0c918ce61a45fe90d05a21cbaf0daafb9d975571c38760769d1811",
+      "checkIds": [
+        "stage22.external-result-normalization"
+      ],
+      "scope": "Scoped pre-normalization external observation retention and application-owned normalization boundary using synthetic planner/receipt/currentness/refusal and explicit reader doubles. Original submitted strings remain evidence; no reserved-file admission, accepted external execution, native worker, persistence, whole Stage22 or fullCoverage claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-e74693ce28b14adb92ef359ccec7bb2b",
+      "sourceLineSha256": "cc1adfaf4adf818c9ef8ac1a6d1680bf2070cd2176b6a3cffbe40312d1e01cde",
+      "checkIds": [
+        "canonical.id-literal-payload-and-sha160"
+      ],
+      "scope": "Performed distinct-context final-source semantic coverage review of this exact primitive clause and retained independent assertion body. Complete design only; current normal owning execution and governing consumer admission remain required.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "fullCoverage": {
+        "schema": "closed-loop-full-requirement-coverage/1",
+        "sourceLineSha256": "cc1adfaf4adf818c9ef8ac1a6d1680bf2070cd2176b6a3cffbe40312d1e01cde",
+        "schemaOrRegistryEntry": "SPECIFICATION_SECTION_34.2",
+        "productionOwners": [
+          {
+            "path": "hash.js",
+            "symbol": "canonicalIdPayload / allocateCanonicalId / sha256Value",
+            "sha256": "bc1c486855fa2096623b560cfc44b7c5d9e263040546921eb00f54e7f38b7420"
+          }
+        ],
+        "obligations": [
+          {
+            "id": "source-line-3039",
+            "sourceText": "ID_PAYLOAD = first 160 bits of SHA-256(",
+            "expectedBehavior": "The exact eight-field closed-loop-id/1 tuple specified at lines3041–3048 is canonicalized by closed-loop-canonical-json/1; the payload is the first160 SHA256 bits in output order.",
+            "checks": {
+              "deterministic": [
+                {
+                  "suite": "verify-hash.mjs",
+                  "checkId": "canonical.id-literal-payload-and-sha160"
+                }
+              ],
+              "semantic": [],
+              "mutation": []
+            },
+            "nonapplicable": {
+              "semantic": "This exact primitive clause defines a mechanical byte/value operation; it has no actor meaning determination. Its inherited inputs and registry authority remain explicit reviewer prerequisites.",
+              "mutation": "This exact source clause does not independently mandate a mutation test. Retained wrong-slice and reversed-byte-order controls remain separately preserved and must not be replaced or promoted into unrelated proof."
+            },
+            "evidenceKinds": [
+              "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+            ]
+          }
+        ],
+        "unresolvedObligations": [],
+        "governingContext": [],
+        "review": {
+          "path": "verification/requirement-coverage-NREQ-e74693ce28b14adb92ef359ccec7bb2b-20261012-frozen-b0efd-recovery-catalogue-8d816842.json",
+          "sha256": "2884d2d661ece3c05e17bd3e8cd8bb51ffa6ab9d66d660995063816c9c0c957a"
+        }
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-be0ecfa19d607c0df242b048d6ef63bf",
+      "sourceLineSha256": "0b0f1de963804c1eeb888da7a2b2e1b818c703823a3e117b4eccd6ed3f8f3a07",
+      "checkIds": [
+        "canonical.utf8-no-bom-byte-routes"
+      ],
+      "scope": "Performed distinct-context complete mechanical coverage review of exactly canonical UTF8 encoding without emitted BOM. Actual12-route normal owner observations are scoped synthetic support; a fresh current registered owner receipt and consumer admission are required after installing this new metadata. Raw byte preservation and browser/store/transport claims remain separate.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "fullCoverage": {
+        "schema": "closed-loop-full-requirement-coverage/1",
+        "sourceLineSha256": "0b0f1de963804c1eeb888da7a2b2e1b818c703823a3e117b4eccd6ed3f8f3a07",
+        "schemaOrRegistryEntry": "SPECIFICATION_SECTION_34.1",
+        "productionOwners": [
+          {
+            "path": "hash.js",
+            "symbol": "createSha256.updateText / sha256ValueCold / sha256Chunks / hashRegistered / canonicalEnvelopeSha256",
+            "sha256": "bc1c486855fa2096623b560cfc44b7c5d9e263040546921eb00f54e7f38b7420"
+          }
+        ],
+        "obligations": [
+          {
+            "id": "source-line-3021",
+            "sourceText": "- UTF-8 without BOM;",
+            "expectedBehavior": "Every supported closed-loop-canonical-json/1 semantic serialization is encoded as UTF8 bytes with no automatically emitted leading BOM. Unicode1/2/3/4-byte scalar encoding and interior U+FEFF remain exact; supplied arbitrary byte/BOM inputs are not rewritten. All canonical semantic value/registered/envelope/string-stream hashing routes share this encoder.",
+            "checks": {
+              "deterministic": [
+                {
+                  "suite": "verify-hash.mjs",
+                  "checkId": "canonical.utf8-no-bom-byte-routes"
+                }
+              ],
+              "semantic": [],
+              "mutation": []
+            },
+            "nonapplicable": {
+              "semantic": "This exact clause is a mechanical encoding rule. Actor meaning/authority, filename Unicode normalization/table support, transport custody and other surrounding canonical clauses remain independently governed.",
+              "mutation": "The exact encoding clause does not require a separate mutation role. Preserved original literal noBOM/UTF16 source fault controls show the owning assertions detect the intended faults; no synthetic mutation observation is invented."
+            },
+            "evidenceKinds": [
+              "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+            ]
+          }
+        ],
+        "unresolvedObligations": [],
+        "governingContext": [],
+        "review": {
+          "path": "verification/requirement-coverage-NREQ-be0ecfa19d607c0df242b048d6ef63bf-20261012-frozen-b0efd-recovery-catalogue-8d816842.json",
+          "sha256": "c2159957ed5f7550b46952ce94d4eb3e6da1b95c2c146976c253399ac758d139"
+        }
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-7b1cd2debadb570b49fe041bd444592f",
+      "sourceLineSha256": "b6dc4278eba0b77d47190a27e473be50c1bd1a29c7282aa3cebbe93f6fcd964f",
+      "checkIds": [
+        "canonical.content-complete-record-distinction",
+        "canonical.source-family-content-complete-distinction",
+        "canonical.complete-record-carrier-shapes"
+      ],
+      "scope": "Exact registered content-versus-complete canonical-record hash primitive: the existing nine REQ_ID helper outcomes/two detecting controls, retained 315 source-family contrasts, and proposed 461 complete-root carrier contrasts in one current normal verify-hash owner receipt. This does not establish family admission, writer authority, store/native/browser behavior, arbitrary SHA-256 noncollision, or complete-system acceptance.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "fullCoverage": {
+        "schema": "closed-loop-full-requirement-coverage/1",
+        "sourceLineSha256": "b6dc4278eba0b77d47190a27e473be50c1bd1a29c7282aa3cebbe93f6fcd964f",
+        "schemaOrRegistryEntry": "SPECIFICATION_SECTION_34",
+        "productionOwners": [
+          {
+            "path": "hash.js",
+            "symbol": "CONTENT_RECORD:* / CANONICAL_RECORD registered preimages; contentRecordValue / contentRecordSha256 / recordSha256",
+            "sha256": "bc1c486855fa2096623b560cfc44b7c5d9e263040546921eb00f54e7f38b7420"
+          }
+        ],
+        "obligations": [
+          {
+            "id": "source-line-3014",
+            "sourceText": "contentSha256 and complete recordSha256 remain distinct.",
+            "expectedBehavior": "Registered content identity and complete canonical-record identity use separately defined closed preimages. Content binds fields, relationships and evidenceRefs while omitting the registered family ID and lifecycle fields. Complete identity binds the canonical root, including identity mirrors, content digest, lifecycle, scope, source and other root data, while omitting only recordSha256 and the registered legacy sha256 alias. Semantic, evidence and relationship changes bind both; identity, lifecycle, scope, root-carrier and self-digest contrasts follow those exact distinct preimages. Distinction means separate definitions, not a guarantee that no two arbitrary SHA-256 digests can collide.",
+            "checks": {
+              "deterministic": [
+                {
+                  "suite": "verify-hash.mjs",
+                  "checkId": "canonical.content-complete-record-distinction"
+                },
+                {
+                  "suite": "verify-hash.mjs",
+                  "checkId": "canonical.source-family-content-complete-distinction"
+                },
+                {
+                  "suite": "verify-hash.mjs",
+                  "checkId": "canonical.complete-record-carrier-shapes"
+                }
+              ],
+              "semantic": [],
+              "mutation": []
+            },
+            "nonapplicable": {
+              "semantic": "This exact clause defines mechanical hash-preimage separation. Family semantic requiredness, actor authority, writer, transaction, restoration and admission obligations remain independently mandatory; synthetic fixture hash inputs are not admitted records.",
+              "mutation": "This clause does not impose a separate mutation role. The existing two guarded runtime-mutant detections, retained independent Node SHA/full-text oracles and source-omission controls support the scoped deterministic evidence; no current normal mutation receipt is invented."
+            },
+            "evidenceKinds": [
+              "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+            ]
+          }
+        ],
+        "unresolvedObligations": [],
+        "governingContext": [],
+        "review": {
+          "path": "verification/requirement-coverage-NREQ-7b1cd2debadb570b49fe041bd444592f-20261012-frozen-b0efd-recovery-catalogue-8d816842.json",
+          "sha256": "945b7fae9692c77a8ff6b7a8039755a73a45ecbe9d84eb1554b32ab4163991f7"
+        }
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-5fd38e249cabfceace66e3488d9bef39",
+      "sourceLineSha256": "8434ed441c97f0dfabb16604a746a937730696f98ba749272589a92d86a1b0a6",
+      "checkIds": [
+        "declaration.proposal-acceptance-modes"
+      ],
+      "scope": "Exact current registry declaration boundary: all88 DATA_PROPOSAL entries own one acceptanceMode from the closed two-value proposal vocabulary and publish the same mode through operationContract; exact16 non-external entries remain DIRECT_COMMAND. Six source-bound mutation assertions guard missing/undeclared modes, contract mismatch, forbidden current auto-commit and direct-command mode drift. No proposal preparation, acceptance, commit, external actor or whole-clause operational claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "fullCoverage": {
+        "governingContext": [],
+        "obligations": [
+          {
+            "checks": {
+              "deterministic": [
+                {
+                  "checkId": "declaration.proposal-acceptance-modes",
+                  "suite": "verify-stage-operation-registry.mjs"
+                }
+              ],
+              "mutation": [
+                {
+                  "checkId": "declaration.proposal-acceptance-modes",
+                  "suite": "verify-stage-operation-registry.mjs"
+                }
+              ],
+              "semantic": []
+            },
+            "evidenceKinds": [
+              "EXECUTED_SCHEMA_METADATA_ASSERTIONS"
+            ],
+            "expectedBehavior": "Across the exact current closed stage-operation registry, every row whose responseTypes contains DATA_PROPOSAL owns one scalar acceptanceMode property, that value is one of the two declared proposal-mode values, and the operationContract projection publishes the same value. The exact current population is 88 DATA_PROPOSAL rows. Missing, undeclared, and registry-versus-contract-divergent declarations are detected. The 16 rows that cannot produce DATA_PROPOSAL retain DIRECT_COMMAND only as the separate implementation marker and do not create a third proposal mode.",
+            "id": "source-line-1575-exact-one-proposal-acceptance-mode",
+            "nonapplicable": {
+              "semantic": "This exact source line imposes a closed declaration-membership and scalar-value rule over the canonical registry. It requires no actor meaning determination. The separately extracted child lines govern what each mode does, and the following paragraph governs defaulting, eligibility, human review, commit behavior, response immutability, and command behavior."
+            },
+            "sourceText": "Every stage operation that can produce a DATA_PROPOSAL declares exactly one acceptance mode in the STAGE_OPERATION_REGISTRY:"
+          }
+        ],
+        "productionOwners": [
+          {
+            "path": "workflow-schema.js",
+            "sha256": "5e4e434ea188b750bc8f1d44513c612d5295f550b4124d10ca5aa09506ee4a60",
+            "symbol": "STAGE_OPERATION_REGISTRY / amendedOperationContract / final operationContract wrappers"
+          }
+        ],
+        "schema": "closed-loop-full-requirement-coverage/1",
+        "schemaOrRegistryEntry": "STAGE_OPERATION_REGISTRY",
+        "sourceLineSha256": "8434ed441c97f0dfabb16604a746a937730696f98ba749272589a92d86a1b0a6",
+        "unresolvedObligations": [],
+        "review": {
+          "path": "verification/requirement-coverage-NREQ-5fd38e249cabfceace66e3488d9bef39-20261012-frozen-b0efd-recovery-catalogue-8d816842.json",
+          "sha256": "0873006e4a0011002e3c5cce4900572c61b9a2925246f9ce81b19c66101c5c63"
+        }
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-aacd65892b3a5265252f8af8035bea8f",
+      "sourceLineSha256": "9de897a25e16d82a107119a2924b0ec2b7e3fbb6ad5e2410150c7471ce628e8c",
+      "checkIds": [
+        "declaration.proposal-acceptance-modes",
+        "ingestion.invalid.response-acceptance-mode-override"
+      ],
+      "scope": "Bounded current-profile declaration and closed-envelope subset only: all88 current DATA_PROPOSAL operations, exact Stage01 COMPLETE/RECONCILE_INTAKE and exact16 independently enumerated replacement writers declare HUMAN_ACCEPTANCE_REQUIRED; zero current operations declare VALIDATED_AUTO_COMMIT; exact16 non-external operations remain DIRECT_COMMAND; operationContract values match the registry; a response-supplied acceptanceMode is rejected atomically as UNKNOWN_PROPERTY with zero new accepted changes and the complete pre-action accepted prefix preserved. No positive eligible auto-commit slot, humanAuthorityCandidates co-acceptance, operator acceptance, direct-command commit, browser, deployed, or whole-clause claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-1096a56af1ea51fc0081ded2d594896f",
+      "sourceLineSha256": "f26b6320858ddb23e5e792e64b9e34eb1be607e6bc4197cfe9ee2659c73a1697",
+      "checkIds": [
+        "store.backup-extension-exact-utf8-retention",
+        "store.backup-extension-binding-integrity-controls",
+        "verify-browser.backup-extension-native"
+      ],
+      "scope": "Five exact-retention and twelve descriptor-binding synthetic Map-adapter normal-package cases establish exact uncompressed UTF-8 lexical retention for unknown root, packageManifest and packageManifest.artifacts-member extensions through direct and staged import, an owning before-import-commit abort with same-selection retry, History source-archive readback, export/reload, duplicate-member classification, anchor/occurrence/job/disclosure bindings, validator mutation isolation, and scaled retained-file capacity refusal before the designated import write transaction. Three actual Chromium native IndexedDB page-owner cases add final-transaction abort preservation, exact pending input retention, fresh-document staged resume, cold read and recovery export of the exact retained source fragments under current source guards. Known project/artifact bytes remain intact and extension sentinels remain absent from the canonical project, Stage 1 context and artifact metadata while the reduced gate decision matches baseline. Storage-worker, operator UI, physical-device, protected-export, unscaled production-capacity acceptance, arbitrary source encodings, prompt/handoff exclusion, non-executability and complete §35.10 conformance remain unproved.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The retention test fixes three noncanonical lexical UTF-8 fragments and their SHA-256 values independently with node:crypto, recomputes valid package digests with a test-owned canonical encoder, and requires exact source-archive bytes through historyList/readOriginalSourceArchive. The binding-control test independently fixes root, duplicate-root and superseded-manifest literals; it requires exact descriptor roles, ordinals, shared anchor, byte hashes and known-only absence. Extension-bearing invalid staged inputs and a validator-mutation control preserve the complete observed durable state and exact pending Blob. A separate fresh known-only control first proves the designated import-transaction fault is live under the identical scaled source configuration; only then does the exact-limit extension attempt establish that HISTORY_LIMIT_REACHED wins before that transaction boundary while preserving all prior state and the staged Blob. The native page owner fixes the same root/manifest/member lexical fragments and independently hashes exact gzip/source bytes with Web Crypto; it snapshots every native object store before the injected final-transaction failure, then requires byte-identical physical state and pending input. Fresh documents require exact two-descriptor source readback, independently known root digest, a shared binding anchor, nonoperational isolation and exact recovery-export fragments while all eight served production inputs and both owning tests are bound to current bytes.",
+      "coverageClassification": "PARTIAL_EXECUTED_BOUNDARY_EVIDENCE"
+    },
+    {
+      "normativeRequirementId": "NREQ-2b1c1064fb51fb6b4fdde9c199c3b4c8",
+      "sourceLineSha256": "7439d021b4f6c8efe58f76235e9bfec7a0a72dabc649b26640f9cff06eaa65e3",
+      "checkIds": [
+        "semantic-review.self-approval-rejected"
+      ],
+      "scope": "Scoped Stage05 self-approval exclusion only: actual author reservation/acceptance establishes the production context, the same context is atomically refused as reviewer before prompt/proposal creation, and a distinct application-registered reviewer accepts two findings and completes the gate. Synthetic actor contexts and Map-style UI adapter; no external provider identity, native browser, whole-clause or fullCoverage claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-1d255fb22dcf311f8c59cfd6754608c6",
+      "sourceLineSha256": "eafb1ece826f7c026731b5a6f90b43ad2d8967e51c25be4938a2cd032ba1a28f",
+      "checkIds": [
+        "terminal-persisted-revision-current-control",
+        "terminal-revision-self-invalidation-mutant-detected",
+        "stage27-stage30-dependency-cycle-mutant-detected"
+      ],
+      "scope": "A compact isolated prerequisite reaches a canonically valid Stage 27 release and checkpoint. The actual Stage 30 command is committed and reloaded through project-store, then an unrelated confirmed commit advances revision. Restored source preserves the same current terminal record; a revision-bound terminal-preimage mutant withdraws it. The actual Stage 27 release source binding and the calculated Stage 30 record's derivationInput source binding form an acyclic one-way dependency under restored source; a deliberate Stage 27 binding to Stage 30 delivery output forms a detected two-node cycle and stales the release. This graph case is in-memory; durable project-store commit/reload applies to the separate revision-currentness cases.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "Independent graph-cycle oracle over actual derivation source-binding records plus production terminalRecordMatches observations after two production project-store commits/reloads; deliberate source mutants add projectRevision to terminal scope and deliveryRecords to Stage 27 release inputs.",
+      "suite": "verify-stage30-terminal-mobile-boundary.mjs",
+      "boundary": "Actual releaseCalculation/terminal derivation bindings and calculateTerminal/project-store write/read currentness under restored and controlled mutant source",
+      "sourceLocation": {
+        "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "startLine": 4947,
+        "endLine": 4947,
+        "lineSha256": "eafb1ece826f7c026731b5a6f90b43ad2d8967e51c25be4938a2cd032ba1a28f"
+      },
+      "controllingText": "- terminal self-invalidation and Stage 27/Stage 30 dependency cycle;",
+      "fullCoverage": {
+        "schema": "closed-loop-full-requirement-coverage/1",
+        "sourceLineSha256": "eafb1ece826f7c026731b5a6f90b43ad2d8967e51c25be4938a2cd032ba1a28f",
+        "schemaOrRegistryEntry": "SPECIFICATION_SECTION_44",
+        "productionOwners": [
+          {
+            "path": "workflow-engine.js",
+            "symbol": "releaseCalculation / releaseRecordMatchesBinding / terminalEvidencePreimage / terminalSourceBinding / terminalRecordMatches / calculateTerminal",
+            "sha256": "384746b24ad6d4f50d640b50895736178e1f4102382006cb6584b09f225528bb"
+          },
+          {
+            "path": "project-store.js",
+            "symbol": "writeProject / readProject",
+            "sha256": "e31012867a846860cbbf7990cfb24622473f8c9fa77f4164af7237f10fd6d8cc"
+          }
+        ],
+        "obligations": [
+          {
+            "id": "terminal-self-invalidation-and-stage27-stage30-cycle",
+            "sourceText": "- terminal self-invalidation and Stage 27/Stage 30 dependency cycle;",
+            "expectedBehavior": "A terminal record remains current after its own persisted commit and across an unrelated persisted revision rather than binding its validity to project revision. The Stage 30 terminal derivation binds the exact Stage 27 release, while the Stage 27 release excludes Stage 30 delivery output so the directed dependency graph remains acyclic; deliberate revision-self-binding and reverse Stage 27-to-Stage 30 dependency mutants are detected.",
+            "checks": {
+              "deterministic": [
+                {
+                  "suite": "verify-stage30-terminal-mobile-boundary.mjs",
+                  "checkId": "terminal-persisted-revision-current-control"
+                }
+              ],
+              "semantic": [],
+              "mutation": [
+                {
+                  "suite": "verify-stage30-terminal-mobile-boundary.mjs",
+                  "checkId": "terminal-revision-self-invalidation-mutant-detected"
+                },
+                {
+                  "suite": "verify-stage30-terminal-mobile-boundary.mjs",
+                  "checkId": "stage27-stage30-dependency-cycle-mutant-detected"
+                }
+              ]
+            },
+            "nonapplicable": {
+              "semantic": "This exact source clause states two closed mechanical dependency and currentness faults with literal graph, revision, record-state, and mutation outcomes; it requires no actor semantic determination."
+            },
+            "evidenceKinds": [
+              "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+            ]
+          }
+        ],
+        "unresolvedObligations": [],
+        "governingContext": [],
+        "review": {
+          "path": "verification/requirement-coverage-NREQ-1d255fb22dcf311f8c59cfd6754608c6-20261012-current-c1db019dc2e7-portable-v1.json",
+          "sha256": "00cc3b3359500df9a7d0adb2faf2bc4df3d58bd683b2fe5bffdf8509f9e0b3db"
+        }
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-1da23d24e876891a02b59820d16ec04e",
+      "sourceLineSha256": "7473c4ad24ec41dfc1b67b40962b9e6bc389de62781a442af49eebddb66c22af",
+      "checkIds": [
+        "correction.distinct-version-gate"
+      ],
+      "scope": "A synthetic canonical Stage 16/17 fixture directly exercises production validateTraceIntegrity, evaluateCorrectedIterationLineage, evaluateIteration and the Stage 16 gate. A structurally complete same-version changeset remains canonical trace data but cannot progress as a correction; both lineage and gate refuse it without mutating the project. Distinct and repaired-new-version controls remain valid. Ordinary response-ingestion rejection, persistence and whole-clause conformance are not claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The literal Section 44 prohibition requires OLD_ARTIFACT_VERSION and NEW_ARTIFACT_VERSION to differ for semantic correction progression. Exact expected valid/refusal outcomes and project-state identity are declared independently of production diagnostics.",
+      "suite": "verify-complete.mjs",
+      "boundary": "verify-corrected-iteration.mjs production correction trace/lineage/Stage16 gate assertions under the registered verify-complete.mjs producer",
+      "sourceLocation": {
+        "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "startLine": 4901,
+        "endLine": 4901,
+        "lineSha256": "7473c4ad24ec41dfc1b67b40962b9e6bc389de62781a442af49eebddb66c22af"
+      },
+      "controllingText": "- correction without new version;",
+      "fullCoverage": {
+        "schema": "closed-loop-full-requirement-coverage/1",
+        "sourceLineSha256": "7473c4ad24ec41dfc1b67b40962b9e6bc389de62781a442af49eebddb66c22af",
+        "schemaOrRegistryEntry": "SPECIFICATION_SECTION_44",
+        "productionOwners": [
+          {
+            "path": "workflow-engine.js",
+            "symbol": "validateChangeTrace / evaluateCorrectedIterationLineage / evaluateIteration(CORRECTED) / gate(16)",
+            "sha256": "384746b24ad6d4f50d640b50895736178e1f4102382006cb6584b09f225528bb"
+          }
+        ],
+        "obligations": [
+          {
+            "id": "source-line-4901",
+            "sourceText": "- correction without new version;",
+            "expectedBehavior": "A structurally complete correction whose NEW_ARTIFACT_VERSION does not identify a version distinct from OLD_ARTIFACT_VERSION cannot progress as a corrected iteration or satisfy the Stage 16 correction gate; supplying a distinct new version restores those version-specific conditions without evaluator mutation.",
+            "checks": {
+              "deterministic": [
+                {
+                  "suite": "verify-complete.mjs",
+                  "checkId": "correction.distinct-version-gate"
+                }
+              ],
+              "semantic": [],
+              "mutation": [
+                {
+                  "suite": "verify-complete.mjs",
+                  "checkId": "correction.distinct-version-gate"
+                }
+              ]
+            },
+            "nonapplicable": {
+              "semantic": "This exact clause is a closed mechanical version-identity prohibition with literal expected valid, fault, and repaired outcomes; no human or meaning-based determination is required."
+            },
+            "evidenceKinds": [
+              "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+            ]
+          }
+        ],
+        "unresolvedObligations": [],
+        "governingContext": [],
+        "review": {
+          "path": "verification/requirement-coverage-NREQ-1da23d24e876891a02b59820d16ec04e-20261012-current-c1db019dc2e7-portable-v1.json",
+          "sha256": "326380c91dfb0c1fedb6c8e9882e36b439f5070d5eb04b73f1d2b4542035c638"
+        }
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-299683324f3b5f00ca0ff904b7a29874",
+      "sourceLineSha256": "c7aaa515b75be8772d535a54f6706ee61f59da0e1f4d05ec1ec20bf41009cc7f",
+      "checkIds": [
+        "stage01.first-reader-required-file-package"
+      ],
+      "scope": "The actual saved Stage 01 instruction names the Stage 01 agent as first semantic reader, and the package is constructed before any accepted Stage 01 response or semantic data. This is instruction and preaccepted-state evidence under direct synthetic fixture setup; it does not establish an actual external actor semantic read, normal UI file selection, browser/human observation, or the entire Section 49 clause.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-a9f35aaca83f81ccb0d9f74ebec478a4",
+      "sourceLineSha256": "f17deef691f94a151d94dcadc0b437245e82a47cfd5528209a341b555fb2a6a1",
+      "checkIds": [
+        "stage01.first-reader-required-file-package"
+      ],
+      "scope": "One explicitly selected canonical Stage 01 HUMAN_INPUT artifact with exact stored bytes reaches the intake manifest and saved execution-package ZIP with exact manifest identity; missing or mutated stored bytes reject package creation. One same-job stored Blob absent from canonical state and one same-job canonical byte-valid artifact registered for Stage 02 but not selected for Stage 01 are excluded. This finite synthetic transaction-adapter boundary does not establish normal UI file selection, arbitrary required files, an actual external actor read, or whole-clause conformance.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-4eaa9b928e57703f76066a160c6e7161",
+      "sourceLineSha256": "d60c17df5afb4a1f96a88a9ca3a2189e81e87fb3e5b9d11349eaf3b473eed468",
+      "checkIds": [
+        "store.validation-record-backup-roundtrip"
+      ],
+      "scope": "Three independently fixed validation outcomes preserve the exact validation record, raw UTF-8 source and validation/raw/prompt/proposal-or-disposition/receipt identities through production export, fresh-store import and cold read using the synthetic Node transaction adapter. No native IndexedDB, browser, other Section 35.5 member family, malicious coherently restamped package or whole-clause claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-3609be6ec4dd158303ff1cd49449d896",
+      "sourceLineSha256": "742610b6319698a2799b6fcd4c49328d296e495cf6bcb22889a20819af3b4ece",
+      "checkIds": [
+        "store.extraction-manifest-backup-import"
+      ],
+      "scope": "One actual synthetic transaction-adapter Stage1 response is staged from an authoritative Blob, validated, explicitly accepted and canonically saved. Its nonempty extraction manifest, independently expected literal value hash, exact raw response bytes/hash, accepted-change identity and receipt identity are preserved through production complete backup export, fresh import and cold read. Wrong value-hash and missing-receipt controls prove the consumer observes those links. This does not cover Stage04 obligation manifests, other complete-export families, native IndexedDB, browser UI, external actors or whole Section35.5 conformance.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The fixture fixes the Stage1 literal and JSON pointer independently, computes its raw value hash and response-byte hash with node:crypto, and requires exact pre-export versus post-import manifest, entry, raw response, accepted-change and receipt bodies. It mutates a copied manifest value hash and removes the copied receipt to prove the assertion fails without altering the valid source carrier.",
+      "coverageClassification": "PARTIAL_EXECUTED_BOUNDARY_EVIDENCE"
+    },
+    {
+      "normativeRequirementId": "NREQ-a9e4fee76435c3c36eefe92d6c148fd4",
+      "sourceLineSha256": "991d919d38af62c02013256084b9ccd3e2d1bc824ff1970c47075ea9e370edd3",
+      "checkIds": [
+        "workflow.stage22-product-artifact-equivalence"
+      ],
+      "scope": "Scoped application-derived executionHandoff artifact identity metadata: one literal two-artifact current product, exact Stage22-to-23/24/25 set equivalence, foreign-product exclusion and three perturbed observation controls. The retained focused output is diagnostic only; no actual artifact-byte read, persistence, external execution, browser, eligible receipt, stage completion, whole-clause proof or fullCoverage claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "coverageClassification": "PARTIAL_EXECUTED_BOUNDARY_EVIDENCE"
+    },
+    {
+      "normativeRequirementId": "NREQ-018a05fce60fd4f6dc71dbea85ba4f44",
+      "sourceLineSha256": "5510734a4c63c1cb850dc14189f6d6b0a1b5ae017d6124a66edda4670e347b3b",
+      "checkIds": [
+        "workflow.proof-obligation-dependency-recalculation"
+      ],
+      "scope": "One current application-derived Stage 6 proof obligation is recalculated in memory as one targeted environment dependency is added and deactivated: the obligation identity remains stable, unrelated dependencies stay excluded, exact dependency membership changes, and the independently compared obligation-set hash changes then restores. Synthetic fixture only; no persistence, browser, arbitrary dependency family, Stage 6 completion or whole-clause proof.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "coverageClassification": "PARTIAL_EXECUTED_BOUNDARY_EVIDENCE"
+    },
+    {
+      "normativeRequirementId": "NREQ-53cba25ed9217f0e73651fa2c61364a5",
+      "sourceLineSha256": "ee87ec99bf590ab7ad273f985492a78b8765e7eeb38f9e77cb0d6e9e49e3b20b",
+      "checkIds": [
+        "ingestion.pending-six-authority-recheck"
+      ],
+      "scope": "The response-contract hash member is one of six literal pending-proposal authorities exercised through a valid reserved Stage 1 response, the application acceptance caller, production precommit recheck and cold read using the synthetic Map transaction adapter. One isolated changed authority or retained binding refuses before canonical commit and preserves the complete stored pending/raw/staged/accepted/allocation state; an untouched control commits. No reference-population completeness, all-precondition recomputation, browser, native IndexedDB, external actor or whole-clause claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "coverageClassification": "PARTIAL_EXECUTED_BOUNDARY_EVIDENCE"
+    },
+    {
+      "normativeRequirementId": "NREQ-5587097e6f38c4ebd63b45acc53049e4",
+      "sourceLineSha256": "1be85e91f42d9fcc8283e0655118e8ddf54875b75e4b0c8a9c08a177e2ab2806",
+      "checkIds": [
+        "ingestion.pending-six-authority-recheck"
+      ],
+      "scope": "The prompt instruction identity member is one of six literal pending-proposal authorities exercised through a valid reserved Stage 1 response, the application acceptance caller, production precommit recheck and cold read using the synthetic Map transaction adapter. One isolated changed authority or retained binding refuses before canonical commit and preserves the complete stored pending/raw/staged/accepted/allocation state; an untouched control commits. No reference-population completeness, all-precondition recomputation, browser, native IndexedDB, external actor or whole-clause claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "coverageClassification": "PARTIAL_EXECUTED_BOUNDARY_EVIDENCE"
+    },
+    {
+      "normativeRequirementId": "NREQ-92c98d337503cc6833f7b34b896afa00",
+      "sourceLineSha256": "4d17011d97d3ec8fd256f3aaf88d6d1d430c5ce3ef5f57b2e3987ef8322af95d",
+      "checkIds": [
+        "ingestion.pending-six-authority-recheck"
+      ],
+      "scope": "The prompt-body hash member is one of six literal pending-proposal authorities exercised through a valid reserved Stage 1 response, the application acceptance caller, production precommit recheck and cold read using the synthetic Map transaction adapter. One isolated changed authority or retained binding refuses before canonical commit and preserves the complete stored pending/raw/staged/accepted/allocation state; an untouched control commits. No reference-population completeness, all-precondition recomputation, browser, native IndexedDB, external actor or whole-clause claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "coverageClassification": "PARTIAL_EXECUTED_BOUNDARY_EVIDENCE"
+    },
+    {
+      "normativeRequirementId": "NREQ-b0bca81e89ab8b247b9d9cffdb60b0ba",
+      "sourceLineSha256": "3da8eff66e04a9eda28fa9ffd69bd9fc11872fde3644210c333d591226cfdb13",
+      "checkIds": [
+        "ingestion.pending-six-authority-recheck"
+      ],
+      "scope": "The current response schema member is one of six literal pending-proposal authorities exercised through a valid reserved Stage 1 response, the application acceptance caller, production precommit recheck and cold read using the synthetic Map transaction adapter. One isolated changed authority or retained binding refuses before canonical commit and preserves the complete stored pending/raw/staged/accepted/allocation state; an untouched control commits. No reference-population completeness, all-precondition recomputation, browser, native IndexedDB, external actor or whole-clause claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "coverageClassification": "PARTIAL_EXECUTED_BOUNDARY_EVIDENCE"
+    },
+    {
+      "normativeRequirementId": "NREQ-cfeded273e1987e645c09660471cfc82",
+      "sourceLineSha256": "d9be07a49c644c1987bb9cd82697cd38b72ef93aa259041a99563812bd54c2ae",
+      "checkIds": [
+        "ingestion.pending-six-authority-recheck"
+      ],
+      "scope": "The context signature member is one of six literal pending-proposal authorities exercised through a valid reserved Stage 1 response, the application acceptance caller, production precommit recheck and cold read using the synthetic Map transaction adapter. One isolated changed authority or retained binding refuses before canonical commit and preserves the complete stored pending/raw/staged/accepted/allocation state; an untouched control commits. No reference-population completeness, all-precondition recomputation, browser, native IndexedDB, external actor or whole-clause claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "coverageClassification": "PARTIAL_EXECUTED_BOUNDARY_EVIDENCE"
+    },
+    {
+      "normativeRequirementId": "NREQ-f7b3a80b5425f8b433b87f872c96c45e",
+      "sourceLineSha256": "1a7408b900b863dc353abd86532f4b827edc060fadbaf52b32bbcc52b61b465a",
+      "checkIds": [
+        "ingestion.pending-six-authority-recheck"
+      ],
+      "scope": "The scope hash member is one of six literal pending-proposal authorities exercised through a valid reserved Stage 1 response, the application acceptance caller, production precommit recheck and cold read using the synthetic Map transaction adapter. One isolated changed authority or retained binding refuses before canonical commit and preserves the complete stored pending/raw/staged/accepted/allocation state; an untouched control commits. No reference-population completeness, all-precondition recomputation, browser, native IndexedDB, external actor or whole-clause claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "coverageClassification": "PARTIAL_EXECUTED_BOUNDARY_EVIDENCE"
+    },
+    {
+      "normativeRequirementId": "NREQ-fdd7816da509684a1c111a399187bb62",
+      "sourceLineSha256": "06449562e380b2ffd5f824f7e134f8246fccdc00ac398b14e2c28fd7d5eb1889",
+      "checkIds": [
+        "ingestion.canonical-retry-four-response-types"
+      ],
+      "scope": "Across the exact four schema response types, formatting-only retries before and after acceptance reuse the original proposal, receipt and disposition identities, retain exact raw retry audit after reload, and create no duplicate canonical, allocation or accepted-control state. Direct reaccept is idempotent and one independently valid changed payload per type creates a distinct unaccepted proposal. Synthetic actor and transaction adapter; no browser, external agent, default-owner receipt or whole-clause claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "coverageClassification": "PARTIAL_EXECUTED_BOUNDARY_EVIDENCE"
     }
   ],
   "contractRefs": [

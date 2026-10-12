@@ -3,11 +3,13 @@ import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import {projectStoreRuntime,bindAcceptanceUi,bindHandoffReviewUiState} from './test-project-store-runtime.mjs';
 import {routingFixture,completedReport} from './test-verification-routing-fixtures.mjs';
+import {testIrManifestedEnvironment} from './test-test-ir-native-identity.mjs';
+import {isolatedVerifierWorkerClass} from './verifier-runtime.mjs';
 import {scalarFor,recordProposal,canonicalFixtureRecord,reviewApplicabilityFixture,reviewProofFixture,evidence,acceptPrerequisite,stage01AcceptanceFixture,boundedSearchProposal,registerFixtureSourceSearchCapability,stage04AcceptanceFixture} from './test-fixtures.mjs';
 
 // Isolated projects, real production routing/runtime/commands and storage owners.
 // The shared transaction and DOM adapters do not claim a live-browser replay.
-const r=projectStoreRuntime(),t=r.runtime,e=r.engine,h=t.closedLoopHash,rt=t.closedLoopTestRuntime;
+const r=projectStoreRuntime({environment:testIrManifestedEnvironment(),storageWorker:false}),t=r.runtime,e=r.engine,h=t.closedLoopHash,rt=t.closedLoopTestRuntime;
 Object.assign(t,{engine:e,core:r.core,schema:t.closedLoopWorkflowSchema});
 vm.runInContext([routingFixture,completedReport].map(fn=>fn.toString()).join('\n'),t);
 const checks=[];
@@ -16,7 +18,30 @@ const nativeProductControlsOnly=process.argv.includes('--native-product-controls
 const check=async(name,fn)=>{if(nativeProductControlsOnly&&!/^Stage (22|24) UI /.test(name))return;await fn();checks.push(name);};
 const copy=r.copy;
 const plan=(p,test)=>e.testExecutionPlan(p).items.find(row=>row.testId===test.id);
-const execute=async({p,test,canonical})=>rt.execute(copy({spec:e.recordValue(test,'EXECUTABLE_SPEC'),canonicalBindings:{JOB:canonical},metadata:{testId:test.id,bindings:e.recordValue(test,'EXECUTABLE_INPUT_BINDINGS')}}));
+// Section23.1: a supported native input is insufficient when its operation is
+// unregistered. All route/action/readiness expectations are source literals.
+function verifyUnsupportedNativePlanner(){
+ const f=t.routingFixture(),original=copy(f.test.fields.EXECUTABLE_SPEC),before=e.testExecutionPlan(f.p),positive=plan(f.p,f.test);
+ assert.deepEqual([positive.executionRoute,positive.operatorAction,positive.executableNow,positive.applicationExecutorSupported],['APPLICATION','RUN_IN_APP',true,true],'UNSUPPORTED_NATIVE_PLANNER_VALID_CONTROL_ORACLE');
+ const spec=copy(original);spec.steps[1].op='UNREGISTERED_OPERATION';
+ f.test.fields.EXECUTABLE_SPEC=f.test.EXECUTABLE_SPEC=spec;
+ // Unknown operations have no valid normalized DAG. Bind the explicit fixture bytes
+ // without asking the rejecting normalizer to manufacture an accepted spec.
+ const digest=h.sha256Value(spec);f.test.fields.EXECUTABLE_SPEC_SHA256=f.test.EXECUTABLE_SPEC_SHA256=digest;e.refreshRecordHashes(f.test,'tests');
+ const blocked=plan(f.p,f.test);
+ assert.deepEqual([blocked.executionRoute,blocked.operatorAction,blocked.executableNow,blocked.applicationExecutorSupported],['BLOCKED','BLOCKED',false,false],'UNSUPPORTED_NATIVE_PLANNER_BLOCKED_ORACLE');
+ assert.match(blocked.blockingReason,/No application-native executor is registered/,'UNSUPPORTED_NATIVE_PLANNER_REASON_ORACLE');
+ assert.deepEqual(Array.from(e.testExecutionPlan(f.p).unsupportedApplicationTestIds),[f.test.id],'UNSUPPORTED_NATIVE_PLANNER_POPULATION_ORACLE');
+ f.test.fields.EXECUTABLE_SPEC=f.test.EXECUTABLE_SPEC=original;const restoredDigest=h.sha256Value(rt.normalizeSpec(original));f.test.fields.EXECUTABLE_SPEC_SHA256=f.test.EXECUTABLE_SPEC_SHA256=restoredDigest;e.refreshRecordHashes(f.test,'tests');
+ const restored=plan(f.p,f.test);assert.deepEqual([restored.executionRoute,restored.operatorAction,restored.executableNow,restored.applicationExecutorSupported],['APPLICATION','RUN_IN_APP',true,true],'UNSUPPORTED_NATIVE_PLANNER_RESTORED_CONTROL_ORACLE');
+ assert.equal(e.testExecutionPlan(f.p).items.length,before.items.length);
+ return {unsupportedOperationBlocked:true,conformingControls:2,unsupportedPopulationExact:true,synthetic:true,executedNativeTest:false,boundary:'Actual sole production planner over a complete synthetic canonical-value native test; no worker execution, admission journey or physical browser.'};
+}
+const unsupportedNativePlanner=verifyUnsupportedNativePlanner();
+if(process.argv.includes('--unsupported-native-planner-only')){console.log(JSON.stringify({unsupportedNativePlanner,focused:true,passed:true}));process.exit(0);}
+
+// Real isolated worker identity over explicitly synthetic accepted test/product setup.
+const execute=async({test,canonical})=>copy(await rt.executeTest(test,{}, {JOB:canonical},{Worker:isolatedVerifierWorkerClass()}));
 const native=t.routingFixture();
 await check('Canonical-only test validates, plans, executes, and records without a file',async()=>{
  assert.equal(rt.validateSpec(e.recordValue(native.test,'EXECUTABLE_SPEC'),e.recordValue(native.test,'EXECUTABLE_INPUT_BINDINGS')).valid,true);
@@ -42,7 +67,7 @@ for(const kind of ['missing-key','inherited-key','changed-value','wrong-hash'])a
  assert.equal(plan(f.p,f.test).executableNow,false);assert.throws(()=>e.resolveTestInputBinding(f.p,f.test,'JOB',binding),/unavailable|stale/);
 });
 await check('Runtime rejects a changed value even when its wrapper repeats the old hash',async()=>{
- const f=t.routingFixture();f.canonical.value+='-CHANGED';await assert.rejects(()=>execute(f),error=>error.code==='CANONICAL_HASH_MISMATCH');
+ const f=t.routingFixture();f.canonical.value+='-CHANGED';await assert.rejects(()=>rt.execute(copy({spec:e.recordValue(f.test,'EXECUTABLE_SPEC'),canonicalBindings:{JOB:f.canonical},metadata:{testId:f.test.id,bindings:e.recordValue(f.test,'EXECUTABLE_INPUT_BINDINGS')}})),error=>error.code==='CANONICAL_HASH_MISMATCH');
 });
 for(const kind of ['missing-receipt','wrong-key','wrong-hash','changed-project'])await check(`Result commit rejects ${kind} atomically`,async()=>{
  const f=t.routingFixture(),result=await execute(f);
@@ -59,7 +84,7 @@ await check('Artifact inputs retain exact custody, ambiguity, and expected-hash 
 await check('Mixed canonical and file inputs run with the same resolver',async()=>{
  const f=t.routingFixture(),file=await registerBytes(f.p,'same','input.json');f.test.fields.EXECUTABLE_INPUT_BINDINGS.FILE=copy({kind:'ARTIFACT',artifactId:file.artifactId,expectedSha256:file.sha256});
  assert.equal(plan(f.p,f.test).executableNow,true);
- const payload=copy({spec:f.test.fields.EXECUTABLE_SPEC,artifacts:{FILE:{artifactId:file.artifactId,filename:file.filename,sha256:file.sha256}},canonicalBindings:{JOB:f.canonical},metadata:{testId:f.test.id,bindings:f.test.fields.EXECUTABLE_INPUT_BINDINGS}});payload.artifacts.FILE.bytes=new Uint8Array(await file.blob.arrayBuffer());const result=await rt.execute(payload);
+ const payload=copy({spec:f.test.fields.EXECUTABLE_SPEC,artifacts:{FILE:{artifactId:file.artifactId,filename:file.filename,sha256:file.sha256}},canonicalBindings:{JOB:f.canonical},metadata:{testId:f.test.id,bindings:f.test.fields.EXECUTABLE_INPUT_BINDINGS}});payload.artifacts.FILE.bytes=new Uint8Array(await file.blob.arrayBuffer());const result=copy(await rt.executeTest(f.test,payload.artifacts,payload.canonicalBindings,{Worker:isolatedVerifierWorkerClass()}));
  const saved=e.recordApplicationDeterministicResult(f.p,copy({testId:f.test.id,productId:f.product.id,runtimeResult:result,inputArtifacts:[{artifactId:file.artifactId,filename:file.filename,byteSize:file.blob.size,sha256:file.sha256}]}));assert.equal(saved.source,'APPLICATION_TEST_RUNTIME');
 });
 const external=t.routingFixture('EXTERNAL_AGENT_TOOL');
@@ -97,7 +122,7 @@ await check('Section23 execution-route vocabulary and readiness',async()=>{
  }
  const unbound=t.routingFixture();unbound.test.fields.EXECUTABLE_INPUT_BINDINGS.JOB.canonicalKey='JOB.UNAVAILABLE_BOUND_VALUE';
  const blocked=plan(unbound.p,unbound.test);assert.equal(blocked.operatorAction,'BLOCKED');assert.equal(blocked.executionRoute,'BLOCKED','EXECUTION_ROUTE_READINESS_ORACLE: unavailable native input must have a blocked route.');
- verificationObservations.push({checkId:'routing.specification-route-vocabulary',boundary:'Specification verification-route vocabulary resolved by the production routing runtime',expected:{modes:6,capabilityBlockedControls:2,nativeBindingBlockedControls:1},observed:{modes:observations.length,capabilityBlockedControls,nativeBindingBlockedControls:Number(blocked.executionRoute==='BLOCKED')},cases:observations,passed:true,synthetic:true,actualExternalCapability:false,actualBrowser:false});
+ verificationObservations.push({checkId:'routing.specification-route-vocabulary',boundary:'Production routing plans for six execution modes, missing external capability and unavailable native input; isolated storage/runtime adapters, no external execution or browser claim',expected:{modes:6,capabilityBlockedControls:2,nativeBindingBlockedControls:1},observed:{modes:observations.length,capabilityBlockedControls,nativeBindingBlockedControls:Number(blocked.executionRoute==='BLOCKED')},cases:observations,passed:true,synthetic:true,actualExternalCapability:false,actualBrowser:false});
 });
 // Controlled upstream canonical data isolates Stage06 readiness; proof and
 // applicability approvals still pass through the production ingestion owner.
@@ -110,6 +135,8 @@ function stage06DesignFixture(mode){
  canonicalFixtureRecord(runtime,p,'applicabilityRecords',{...recordProposal(schema,'applicabilityRecords').fields,SUBJECT_ID:prop.id,PROPOSED_APPLICABILITY:'APPLICABLE'},{scope,relationships:{SUBJECT_ID:prop.id}});reviewApplicabilityFixture(runtime,p);
  Object.assign(p.job,{CURRENT_TEST_SUITE_VERSION:'TEST-SUITE-v001'});
  const native=mode==='APPLICATION_DETERMINISTIC',test=canonicalFixtureRecord(runtime,p,'tests',{...recordProposal(schema,'tests').fields,REQ_ID:req.id,TARGET_PROPOSITION_IDS:[prop.id],EXECUTION_MODE:mode,REQUIRED_CAPABILITY:native?'CLOSED_LOOP_TEST_IR':'CAD_TOOL',EXECUTABLE_KIND:native?'TEST_IR':'NONE',EXECUTABLE_SPEC_VERSION:native?'closed-loop-test-spec/1':'NONE',EXECUTABLE_SPEC:native?{version:'closed-loop-test-spec/1',steps:[{op:'LOAD_ARTIFACT',binding:'FILE'},{op:'ASSERT_EQ',value:'Required content'}]}:{},EXECUTABLE_INPUT_BINDINGS:native?{FILE:{kind:'ARTIFACT',filename:'future.txt'}}:{},ARTIFACT_REQUIREMENTS:native?'Final product future.txt':'NONE',VERIFICATION_PHASE:'FINAL_PRODUCT_DETERMINISTIC',EARLIEST_EXECUTABLE_STAGE:22,REQUIRED_BY_STAGE:22,PER_RUN_REQUIRED:false,FINAL_PRODUCT_REQUIRED:true,DELIVERY_REQUIRED:false,TARGET_AVAILABILITY_CONDITION:{type:'PHASE_TARGET'}},{scope,relationships:{REQ_ID:req.id}});
+ // Synthetic accepted setup, not an admission assertion; later stale controls retain this identity.
+ if(native){test.fields.EXECUTABLE_SPEC_SHA256=test.EXECUTABLE_SPEC_SHA256=h.sha256Value(rt.normalizeSpec(test.fields.EXECUTABLE_SPEC));e.refreshRecordHashes(test,'tests');}
  const node={type:'LEAF',testId:test.id,requiredDisposition:'SATISFIED',truthExtraction:'ACCEPTED_ENTAILMENT',evidenceClasses:['OBSERVATION_RECORD','ACCEPTED_ENTAILMENT'],scopeBinding:'CURRENT'};
  canonicalFixtureRecord(runtime,p,'proofExpressions',{TARGET_PROPOSITION_ID:prop.id,PROPOSED_EXPRESSION:node,NORMALIZED_EXPRESSION:node,SEMANTIC_RATIONALE:'Execution awaits the completed final product; the route and evidence remain required.'},{scope,relationships:{TARGET_PROPOSITION_ID:prop.id}});reviewProofFixture(runtime,p);
  return {p,test};
@@ -215,7 +242,7 @@ await check('A blocked capability is announced after actual report selection and
  }finally{t.announce=priorAnnounce;}
 });
 await check('Stage02 file-first capability registration retains the actual report before independent adequacy review',async()=>{
- const searchRuntime={core:r.core,schema:t.closedLoopWorkflowSchema,engine:e,prompts:t.closedLoopPromptEngine,ingestion:t.closedLoopResponseIngestion},project=acceptPrerequisite(searchRuntime,stage01AcceptanceFixture(searchRuntime,'JOB-UI-SOURCE-SEARCH'),2,{stageData:{AUTHORITY_HIERARCHY:'No external authority applies to the controlled fixture.',SOURCE_APPLICABILITY_DETERMINATION:'NO_APPLICABLE_EXTERNAL_SOURCE',KNOWN_CONTROLLING_SOURCES_EXAMINED:'The bounded closed fixture search found no applicable external source.'},records:{sourceSearchContracts:[boundedSearchProposal(searchRuntime.schema)]}}).project;project.activeStage=2;
+ const searchRuntime={core:r.core,schema:t.closedLoopWorkflowSchema,engine:e,prompts:t.closedLoopPromptEngine,ingestion:t.closedLoopResponseIngestion},project=acceptPrerequisite(searchRuntime,stage01AcceptanceFixture(searchRuntime,'JOB-UI-SOURCE-SEARCH'),2,{stageData:{AUTHORITY_HIERARCHY:'No external authority applies to the controlled fixture.',KNOWN_CONTROLLING_SOURCES_EXAMINED:'The bounded closed fixture search found no applicable external source.'},records:{sourceSearchContracts:[boundedSearchProposal(searchRuntime.schema)]}}).project;project.activeStage=2;
  const initial=await r.store.writeProject(project,copy({expectedProjectRevision:0,createOnly:true,incrementRevision:false}));bindAcceptanceUi(r,initial,null);t.$=selector=>controls.get(selector)||null;
  const contract=e.recordsForCurrentScope(t.current,'sourceSearchContracts').at(-1),id=e.recordId(contract,'sourceSearchContracts');controls.set('#capability-test',{value:id});
  await authorizeCapabilityDisclosure(id);await t.downloadCapabilityRequest();const request=JSON.parse(await t.downloads.at(-1).blob.text()).reportTemplate;assert.equal(request.request.targetFamily,'sourceSearchContracts');assert.equal(request.request.sourceSearchContractId,id);assert.equal(Object.hasOwn(request.request,'testId'),false,'SOURCE_SEARCH_TYPED_TARGET_ORACLE: search must never invent a test.');
@@ -244,7 +271,7 @@ await check('Stage 22 UI executes every ready native test once and excludes futu
  const observations=[];
  for(const fault of [true,false]){
   const f=t.routingFixture(),definition=copy(f.test);
-  const add=(label,changes)=>{const row=copy(definition),id=e.allocateId(f.p,'tests');row.id=row.recordId=id;row.fields.TEST_ID=row.TEST_ID=id;row.source='SYNTHETIC_NATIVE_BATCH_ROUTING_FIXTURE';for(const [key,value]of Object.entries(changes)){row.fields[key]=copy(value);row[key]=copy(value);}e.refreshRecordHashes(row,'tests');f.p.projectData.tests.push(row);return row;};
+  const add=(label,changes)=>{const row=copy(definition),id=e.allocateId(f.p,'tests');row.id=row.recordId=id;row.fields.TEST_ID=row.TEST_ID=id;row.source='SYNTHETIC_NATIVE_BATCH_ROUTING_FIXTURE';for(const [key,value]of Object.entries(changes)){row.fields[key]=copy(value);row[key]=copy(value);}if(row.fields.EXECUTION_MODE==='APPLICATION_DETERMINISTIC')row.fields.EXECUTABLE_SPEC_SHA256=row.EXECUTABLE_SPEC_SHA256=h.sha256Value(rt.normalizeSpec(row.fields.EXECUTABLE_SPEC));e.refreshRecordHashes(row,'tests');f.p.projectData.tests.push(row);return row;};
   const refuted=add('refuted',{EXECUTABLE_SPEC:{version:'closed-loop-test-spec/1',steps:[{op:'LOAD_ARTIFACT',binding:'JOB'},{op:'ASSERT_EQ',value:'CONTROLLED_DIFFERENT_PROJECT_ID'}]}});
   const future=add('future',{TEST_TYPE:'ADVERSARIAL',VERIFICATION_PHASE:'FINAL_PRODUCT_ADVERSARIAL',EARLIEST_EXECUTABLE_STAGE:24,REQUIRED_BY_STAGE:24});
   const external=add('external',{EXECUTION_MODE:'EXTERNAL_AGENT_TOOL',REQUIRED_CAPABILITY:'SYNTHETIC_UNAVAILABLE_EXTERNAL_TOOL',EXECUTABLE_KIND:'NONE',EXECUTABLE_SPEC_VERSION:'NONE',EXECUTABLE_SPEC:{},EXECUTABLE_INPUT_BINDINGS:{}});
@@ -270,6 +297,7 @@ await check('Stage 24 UI executes actual adversarial Test IR and owns only Stage
   const f=t.routingFixture();f.p.activeStage=24;
   for(const [key,value]of Object.entries({TEST_TYPE:'ADVERSARIAL',VERIFICATION_PHASE:'FINAL_PRODUCT_ADVERSARIAL',EARLIEST_EXECUTABLE_STAGE:24,REQUIRED_BY_STAGE:24})) {f.test.fields[key]=value;f.test[key]=value;}
   if(outcome==='VIOLATED'){f.test.fields.EXECUTABLE_SPEC.steps[1].value='CONTROLLED_DIFFERENT_PROJECT_ID';f.test.EXECUTABLE_SPEC=f.test.fields.EXECUTABLE_SPEC;}
+  f.test.fields.EXECUTABLE_SPEC_SHA256=f.test.EXECUTABLE_SPEC_SHA256=h.sha256Value(rt.normalizeSpec(f.test.fields.EXECUTABLE_SPEC));
   e.refreshRecordHashes(f.test,'tests');await registerBytes(f.p,'Actual final product bytes','product.json',{productId:f.product.id});
   const initial=await r.store.writeProject(f.p,copy({expectedProjectRevision:0,createOnly:true,incrementRevision:false}));t.current=initial;t.projects=copy([initial]);
   assert.equal(t.nativeProductTests(24).length,1,'NATIVE_STAGE24_ROUTE_ORACLE: the declared native adversarial operation must have one runnable test.');
@@ -305,4 +333,4 @@ await check('Canonical-value bindings survive response validation and commit',()
  })()`,t);
  assert.equal(result.binding.kind,'CANONICAL_VALUE');assert.equal(result.binding.valueSha256,result.expectedSha256);assert.equal(result.forgedValid,false);assert(result.forgedIssues.some(issue=>issue.path.includes('externalCapabilities')));
 });
-console.log(JSON.stringify({verificationRouting:'PASS',focusedNativeProductControls:nativeProductControlsOnly,verificationObservations:[...verificationObservations,...nativeProductObservations],checks:checks.length,results:checks,basis:'ISOLATED_PRODUCTION_ROUTING_RUNTIME_UI_COMMANDS_AND_STORAGE_ADAPTER'}));
+console.log(JSON.stringify({verificationRouting:'PASS',unsupportedNativePlanner,focusedNativeProductControls:nativeProductControlsOnly,verificationObservations:[...verificationObservations,...nativeProductObservations],checks:checks.length,results:checks,actualStorageAdapter:true,actualStorageWorker:false,basis:'ISOLATED_PRODUCTION_ROUTING_RUNTIME_UI_COMMANDS_AND_STORAGE_ADAPTER'}));

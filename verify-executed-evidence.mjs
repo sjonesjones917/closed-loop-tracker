@@ -1,9 +1,13 @@
+import {verifyRetainedRootNativeEvidenceConsumers} from './test-retained-root-native-evidence.mjs';
+import {verifyHumanCombinedNativeEvidenceConsumers} from './test-human-combined-native-evidence.mjs';
+import {verifyHumanCombinedUiEvidenceConsumers} from './test-human-combined-ui-evidence.mjs';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import {pathToFileURL} from 'node:url';
 import {execFileSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
 import {verifyDueEvidenceConsumers} from './test-due-evidence-consumers.mjs';
 import {verifyDueVerificationScheduling,verifyCrossRunVerificationScheduling} from './test-due-verification-scheduling.mjs';
 import {runVerifier,detectedFault,AGGREGATE_TIMEOUT_MS} from './verify-conformance-regressions.mjs';
@@ -11,6 +15,145 @@ import {evidenceFingerprint,createExecutionReceipt,validateExecutionReceipt,aggr
 import {metricCatalog,verificationCatalog,browserVerificationCatalog} from './verification-evidence-catalog.mjs';
 import {collectVerificationEvidence,executeEvidenceProducer} from './collect-verification-evidence.mjs';
 import {assertWorkflowPreloadBoundaries} from './verified-site.mjs';
+
+const COPY_ROOT_ORACLE='EXECUTED_EVIDENCE_COPY_ROOT_ORACLE';
+const EXECUTED_EVIDENCE_SPLIT_REQUIREMENTS=Object.freeze({
+  primaryAvailableBytes:268574720n,
+  secondaryAvailableBytes:119607296n
+});
+const copyRootError=message=>new Error(COPY_ROOT_ORACLE+': '+message);
+const availableBytes=target=>{const value=fs.statfsSync(target,{bigint:true});return value.bavail*value.bsize;};
+const isWithin=(parent,target)=>target===parent||target.startsWith(parent+path.sep);
+const attachCleanupErrors=(error,cleanupErrors)=>{
+  if(!cleanupErrors.length||typeof error!=='object'||error===null)return;
+  try{
+    if(Array.isArray(error.cleanupErrors))error.cleanupErrors.push(...cleanupErrors);
+    else Object.defineProperty(error,'cleanupErrors',{value:[...cleanupErrors],enumerable:false});
+  }catch{/* Cleanup diagnostics are best-effort and never replace the original failure. */}
+};
+
+function validateExecutedEvidenceCopyBase(copyBase,{primaryRoot,sourceRoot=process.cwd(),requirements=EXECUTED_EVIDENCE_SPLIT_REQUIREMENTS}={}){
+  if(typeof copyBase!=='string'||!copyBase||!path.isAbsolute(copyBase))throw copyRootError('CLOSED_LOOP_EXECUTED_EVIDENCE_COPY_BASE must be a nonempty absolute path');
+  if(typeof primaryRoot!=='string'||!path.isAbsolute(primaryRoot))throw copyRootError('primary temporary root must be an absolute path');
+  const normalizedBase=path.normalize(copyBase),normalizedPrimary=path.normalize(primaryRoot);
+  let baseInfo,primaryInfo,realBase,realPrimary,realSource;
+  try{
+    baseInfo=fs.lstatSync(normalizedBase);primaryInfo=fs.lstatSync(normalizedPrimary);
+    realBase=fs.realpathSync(normalizedBase);realPrimary=fs.realpathSync(normalizedPrimary);realSource=fs.realpathSync(sourceRoot);
+  }catch(error){throw copyRootError('configured paths must already exist and resolve: '+error.code);}
+  if(!baseInfo.isDirectory()||baseInfo.isSymbolicLink())throw copyRootError('CLOSED_LOOP_EXECUTED_EVIDENCE_COPY_BASE must be an ordinary directory, not a file or symbolic link');
+  if(realBase!==normalizedBase)throw copyRootError('CLOSED_LOOP_EXECUTED_EVIDENCE_COPY_BASE must not use aliases or symbolic-link ancestors');
+  if(!primaryInfo.isDirectory()||primaryInfo.isSymbolicLink()||realPrimary!==normalizedPrimary)throw copyRootError('primary temporary root must be an unaliased ordinary directory');
+  if(isWithin(realSource,realBase))throw copyRootError('CLOSED_LOOP_EXECUTED_EVIDENCE_COPY_BASE must be outside the source repository');
+  if(baseInfo.dev===primaryInfo.dev)throw copyRootError('CLOSED_LOOP_EXECUTED_EVIDENCE_COPY_BASE must be on a different filesystem from the primary temporary root');
+  const primaryAvailable=availableBytes(realPrimary),secondaryAvailable=availableBytes(realBase);
+  if(primaryAvailable<requirements.primaryAvailableBytes)throw copyRootError('insufficient primary temporary capacity: requires '+requirements.primaryAvailableBytes+' bytes, observed '+primaryAvailable);
+  if(secondaryAvailable<requirements.secondaryAvailableBytes)throw copyRootError('insufficient secondary copy capacity: requires '+requirements.secondaryAvailableBytes+' bytes, observed '+secondaryAvailable);
+  return {base:realBase,primaryRoot:realPrimary,sourceRoot:realSource,primaryDevice:primaryInfo.dev,secondaryDevice:baseInfo.dev,primaryAvailableBytes:primaryAvailable,secondaryAvailableBytes:secondaryAvailable};
+}
+
+function createExecutedEvidenceCopyRoot(copyBase,options){
+  const validated=validateExecutedEvidenceCopyBase(copyBase,options);
+  const secondaryRoot=fs.mkdtempSync(path.join(validated.base,'closed-loop-executed-evidence-copy-'));
+  try{
+    const info=fs.lstatSync(secondaryRoot),realRoot=fs.realpathSync(secondaryRoot);
+    if(!info.isDirectory()||info.isSymbolicLink()||realRoot!==secondaryRoot||path.dirname(realRoot)!==validated.base||isWithin(validated.sourceRoot,realRoot)||info.dev!==validated.secondaryDevice)throw copyRootError('created secondary root violated directory, ancestry, source-isolation, or device invariants');
+    return {...validated,secondaryRoot:realRoot};
+  }catch(error){
+    try{fs.rmSync(secondaryRoot,{recursive:true,force:true});}catch(cleanupError){attachCleanupErrors(error,[cleanupError]);}
+    throw error;
+  }
+}
+
+function validatePersistentChildEvidenceDirectory(value,{primaryRoot,sourceRoot=process.cwd()}={}){
+  if(typeof value!=='string'||!value||!path.isAbsolute(value))throw copyRootError('split mode requires VERIFIER_CHILD_EVIDENCE_DIRECTORY to be a nonempty absolute persistent path');
+  if(typeof primaryRoot!=='string'||!path.isAbsolute(primaryRoot))throw copyRootError('primary temporary root must be an absolute path');
+  const normalized=path.normalize(value),normalizedPrimary=path.normalize(primaryRoot);
+  let info,primaryInfo,realDirectory,realPrimary,realSource;
+  try{
+    info=fs.lstatSync(normalized);primaryInfo=fs.lstatSync(normalizedPrimary);
+    realDirectory=fs.realpathSync(normalized);realPrimary=fs.realpathSync(normalizedPrimary);realSource=fs.realpathSync(sourceRoot);
+  }catch(error){throw copyRootError('persistent child evidence and primary/source paths must already exist and resolve: '+error.code);}
+  if(!info.isDirectory()||info.isSymbolicLink()||realDirectory!==normalized)throw copyRootError('VERIFIER_CHILD_EVIDENCE_DIRECTORY must be an existing unaliased ordinary directory');
+  if(!primaryInfo.isDirectory()||primaryInfo.isSymbolicLink()||realPrimary!==normalizedPrimary)throw copyRootError('primary temporary root must be an unaliased ordinary directory');
+  if(info.dev!==primaryInfo.dev)throw copyRootError('VERIFIER_CHILD_EVIDENCE_DIRECTORY must use the primary temporary filesystem');
+  if(isWithin(realPrimary,realDirectory)||isWithin(realDirectory,realPrimary)||isWithin(realSource,realDirectory)||isWithin(realDirectory,realSource))throw copyRootError('VERIFIER_CHILD_EVIDENCE_DIRECTORY must be persistent and disjoint from temporary and source roots');
+  try{fs.accessSync(realDirectory,fs.constants.R_OK|fs.constants.W_OK|fs.constants.X_OK);}catch(error){throw copyRootError('VERIFIER_CHILD_EVIDENCE_DIRECTORY must be readable, writable, and searchable: '+error.code);}
+  return {directory:realDirectory,primaryDevice:primaryInfo.dev,evidenceDevice:info.dev};
+}
+
+async function verifyPersistentChildEvidenceRetention({primaryRoot,persistent}){
+  const scratch=path.join(primaryRoot,'persistent-child-evidence-control');fs.mkdirSync(scratch);
+  let expected,unexpected;
+  try{
+    expected=await runVerifier(process.execPath,['-e',"process.stderr.write('CONTROLLED_EXPECTED_CHILD_FAILURE\\n');process.exitCode=1"],{cwd:scratch,timeout:5000,maxBuffer:64*1024,env:{...process.env,NODE_OPTIONS:''}});
+    unexpected=await runVerifier(process.execPath,['-e',"throw new Error('CONTROLLED_UNEXPECTED_CHILD_FAILURE')"],{cwd:scratch,timeout:5000,maxBuffer:64*1024,env:{...process.env,NODE_OPTIONS:''}});
+  }finally{fs.rmSync(scratch,{recursive:true,force:true});}
+  assert.equal(expected.status,1,'PERSISTENT_CHILD_EVIDENCE_ORACLE: controlled expected failure exit changed.');
+  assert.equal(expected.stderr,'CONTROLLED_EXPECTED_CHILD_FAILURE\n','PERSISTENT_CHILD_EVIDENCE_ORACLE: expected raw stderr changed.');
+  assert.equal(unexpected.status,1,'PERSISTENT_CHILD_EVIDENCE_ORACLE: controlled unexpected failure exit changed.');
+  assert.match(unexpected.stderr,/CONTROLLED_UNEXPECTED_CHILD_FAILURE/,'PERSISTENT_CHILD_EVIDENCE_ORACLE: unexpected raw stderr disappeared.');
+  for(const result of [expected,unexpected]){
+    for(const file of [result.evidencePath,result.stdoutPath,result.stderrPath]){
+      assert.equal(path.dirname(file),persistent.directory,'PERSISTENT_CHILD_EVIDENCE_ORACLE: raw child output escaped the caller-owned directory.');
+      assert.equal(fs.existsSync(file),true,'PERSISTENT_CHILD_EVIDENCE_ORACLE: raw child output disappeared with temporary cleanup.');
+    }
+    assert.equal(JSON.parse(fs.readFileSync(result.evidencePath,'utf8')).stderr,result.stderr,'PERSISTENT_CHILD_EVIDENCE_ORACLE: persisted runner receipt lost raw stderr.');
+    assert.equal(fs.readFileSync(result.stderrPath,'utf8'),result.stderr,'PERSISTENT_CHILD_EVIDENCE_ORACLE: persisted stderr file differs from the observed bytes.');
+  }
+  return {result:'PASS',boundedMaxOutputBytes:64*1024,retainedAfterPrimaryControlCleanup:true,expected:{status:expected.status,stderrSha256:sha(expected.stderr),evidencePath:expected.evidencePath,stderrPath:expected.stderrPath},unexpected:{status:unexpected.status,stderrSha256:sha(unexpected.stderr),evidencePath:unexpected.evidencePath,stderrPath:unexpected.stderrPath}};
+}
+
+function cleanupExecutedEvidenceRoots({primaryRoot,secondaryRoot,executionFailed=false,executionError,remove=fs.rmSync}){
+  const cleanupErrors=[];
+  for(const root of [secondaryRoot,primaryRoot])if(root)try{remove(root,{recursive:true,force:true});}catch(error){cleanupErrors.push(error);}
+  if(executionFailed){
+    attachCleanupErrors(executionError,cleanupErrors);
+    throw executionError;
+  }
+  if(cleanupErrors.length)throw new AggregateError(cleanupErrors,COPY_ROOT_ORACLE+': temporary root cleanup failed');
+}
+
+function verifyExecutedEvidenceCopyRootControls({primaryRoot,splitLayout,configuredCopyBase,sourceRoot=process.cwd()}){
+  const root=path.join(primaryRoot,'copy-root-controls');fs.mkdirSync(root);
+  const prefix='closed-loop-executed-evidence-copy-';
+  const prefixEntries=base=>fs.readdirSync(base).filter(name=>name.startsWith(prefix)).sort();
+  const canonicalPrimary=fs.realpathSync(primaryRoot),beforeSame=prefixEntries(canonicalPrimary);
+  assert.throws(()=>createExecutedEvidenceCopyRoot(canonicalPrimary,{primaryRoot:canonicalPrimary,sourceRoot}),/must be on a different filesystem/,'COPY_ROOT_CONTROL_ORACLE: same-device copy base was admitted.');
+  assert.deepEqual(prefixEntries(canonicalPrimary),beforeSame,'COPY_ROOT_CONTROL_ORACLE: same-device rejection created a secondary parent.');
+  const alias=['/var/run','/var/lock','/bin','/sbin','/lib'].find(candidate=>{try{return fs.lstatSync(candidate).isSymbolicLink();}catch{return false;}});
+  let symlinkAliasRejection='UNAVAILABLE_NO_SYSTEM_SYMLINK';
+  if(alias){assert.throws(()=>validateExecutedEvidenceCopyBase(alias,{primaryRoot,sourceRoot}),/ordinary directory|aliases or symbolic-link ancestors/,'COPY_ROOT_CONTROL_ORACLE: symbolic-link copy base was admitted.');symlinkAliasRejection='PASS_READ_ONLY_'+alias;}
+  let lowCapacityRefusal='DEFERRED_UNTIL_CONFIGURED_SPLIT_RUN';
+  if(splitLayout){
+    const beforeLow=prefixEntries(splitLayout.secondaryRoot);
+    assert.throws(()=>createExecutedEvidenceCopyRoot(splitLayout.secondaryRoot,{primaryRoot,sourceRoot,requirements:{primaryAvailableBytes:1n,secondaryAvailableBytes:2n**63n}}),/insufficient secondary copy capacity/,'COPY_ROOT_CONTROL_ORACLE: insufficient secondary capacity was admitted.');
+    assert.deepEqual(prefixEntries(splitLayout.secondaryRoot),beforeLow,'COPY_ROOT_CONTROL_ORACLE: low-capacity rejection created a secondary parent.');
+    lowCapacityRefusal='PASS';
+  }
+  const makeRoots=name=>{const primary=path.join(root,name+'-primary'),secondary=path.join(root,name+'-secondary');fs.mkdirSync(primary);fs.mkdirSync(secondary);return {primary,secondary};};
+  const success=makeRoots('success'),successCalls=[];
+  cleanupExecutedEvidenceRoots({primaryRoot:success.primary,secondaryRoot:success.secondary,remove:(target,options)=>{successCalls.push(target);fs.rmSync(target,options);}});
+  assert.deepEqual(successCalls,[success.secondary,success.primary],'COPY_ROOT_CONTROL_ORACLE: success cleanup order changed.');
+  const failureRoots=makeRoots('failure'),failure=Object.assign(new Error('CONTROLLED_COPY_ROOT_FAILURE'),{cleanupErrors:[new Error('CONTROLLED_INNER_CLEANUP_FAILURE')]}),failureCalls=[];let observedFailure;
+  try{cleanupExecutedEvidenceRoots({primaryRoot:failureRoots.primary,secondaryRoot:failureRoots.secondary,executionFailed:true,executionError:failure,remove:(target,options)=>{failureCalls.push(target);if(target===failureRoots.secondary)throw new Error('CONTROLLED_OUTER_CLEANUP_FAILURE');fs.rmSync(target,options);}});}catch(error){observedFailure=error;}
+  assert.equal(observedFailure,failure,'COPY_ROOT_CONTROL_ORACLE: cleanup replaced the original execution failure.');
+  assert.deepEqual(failureCalls,[failureRoots.secondary,failureRoots.primary],'COPY_ROOT_CONTROL_ORACLE: a secondary cleanup failure skipped primary cleanup.');
+  assert.deepEqual(failure.cleanupErrors.map(error=>error.message),['CONTROLLED_INNER_CLEANUP_FAILURE','CONTROLLED_OUTER_CLEANUP_FAILURE'],'COPY_ROOT_CONTROL_ORACLE: nested cleanup failures were lost or reordered.');
+  fs.rmSync(failureRoots.secondary,{recursive:true,force:true});
+  const cancellationRoots=makeRoots('cancellation'),cancellation=Object.assign(new Error('CONTROLLED_COPY_ROOT_ABORT'),{name:'AbortError',code:'ABORT_ERR'});let observedCancellation;
+  try{cleanupExecutedEvidenceRoots({primaryRoot:cancellationRoots.primary,secondaryRoot:cancellationRoots.secondary,executionFailed:true,executionError:cancellation});}catch(error){observedCancellation=error;}
+  assert.equal(observedCancellation,cancellation,'COPY_ROOT_CONTROL_ORACLE: cancellation identity changed during cleanup.');
+  assert(!fs.existsSync(cancellationRoots.primary)&&!fs.existsSync(cancellationRoots.secondary),'COPY_ROOT_CONTROL_ORACLE: cancellation left a temporary root.');
+  const frozenRoots=makeRoots('frozen'),frozen=Object.freeze(new Error('CONTROLLED_FROZEN_FAILURE'));let observedFrozen;
+  try{cleanupExecutedEvidenceRoots({primaryRoot:frozenRoots.primary,secondaryRoot:frozenRoots.secondary,executionFailed:true,executionError:frozen,remove:(target,options)=>{if(target===frozenRoots.secondary)throw new Error('CONTROLLED_FROZEN_CLEANUP_FAILURE');fs.rmSync(target,options);}});}catch(error){observedFrozen=error;}
+  assert.equal(observedFrozen,frozen,'COPY_ROOT_CONTROL_ORACLE: diagnostic attachment replaced a frozen original failure.');fs.rmSync(frozenRoots.secondary,{recursive:true,force:true});
+  const falsyRoots=makeRoots('falsy');let falsyCaught=false,falsyObserved;
+  try{cleanupExecutedEvidenceRoots({primaryRoot:falsyRoots.primary,secondaryRoot:falsyRoots.secondary,executionFailed:true,executionError:0});}catch(error){falsyCaught=true;falsyObserved=error;}
+  assert.equal(falsyCaught,true,'COPY_ROOT_CONTROL_ORACLE: a falsy thrown value was swallowed.');assert.equal(falsyObserved,0,'COPY_ROOT_CONTROL_ORACLE: a falsy thrown value changed identity.');
+  fs.rmSync(root,{recursive:true,force:true});
+  return {result:'PASS',sameDeviceRejectedBeforeCreate:true,symlinkAliasRejection,lowCapacityRefusal,successCleanupOrder:['secondary','primary'],failureCleanupOrder:['secondary','primary'],originalFailurePreserved:true,preexistingCleanupErrorsMerged:true,cancellationIdentityPreserved:true,frozenFailurePreserved:true,falsyFailurePreserved:true,configuredSplit:!!splitLayout,placement:null};
+}
 
 async function verifyPreloadFailureVisibility(directory,{preloadFile=path.resolve('verification-evidence-preload.mjs')}={}){
   const root=path.join(directory,'preload-visibility');fs.mkdirSync(root);
@@ -50,7 +193,47 @@ async function verifyPreloadFailureVisibility(directory,{preloadFile=path.resolv
     const huge=await run(name,body+'process.exitCode=7;',{registeredChild:true,observer:isolated});assert.equal(huge.status,7);
     const stats=JSON.parse(fs.readFileSync(statsFile,'utf8'));assert.equal(stats.bytes,8192,'PRELOAD_TAIL_BOUND_ORACLE');assert.equal(stats.storedBytes,8192,'PRELOAD_TAIL_STORAGE_ORACLE');assert(stats.largestEntry<=8192&&stats.largestBacking<=8192,'PRELOAD_TAIL_BACKING_BOUND_ORACLE');cases.push({caseId:'registered-'+name+'-tail-bound',result:'PASS',retainedBytes:stats.bytes,largestBacking:stats.largestBacking});
   }
-  return {result:'PASS',cases,sourceSha256:sha(bytes),normalCatalogue:true,actualPreloadModule:true,receiptsDisabled:true,tailHookScope:'Unique exit snapshot in disposable complete-module copy; only relative import URLs rebased. No producer report/receipt acceptance or hosted execution.'};
+  // Receipt eligibility is a separate boundary from stderr visibility. Exercise an
+  // actual registered default owner, then prove both diagnostic suffix families
+  // are ineligible without weakening receipt validation.
+  const faultGuard='&&!injectedFault';
+  assert.equal(bytes.split(faultGuard).length,2,'PRELOAD_RECEIPT_GUARD_POPULATION_ORACLE');
+  const receiptPreload=path.join(root,'receipt-preload.mjs'),formerReceiptPreload=path.join(root,'receipt-preload-former.mjs');
+  fs.writeFileSync(receiptPreload,bytes.replace(/from '(\.\/[^']+)'/g,(_match,specifier)=>'from '+rebase(specifier)));
+  fs.writeFileSync(formerReceiptPreload,bytes.replace(faultGuard,'').replace(/from '(\.\/[^']+)'/g,(_match,specifier)=>'from '+rebase(specifier)));
+  const receiptOwner='verify-hash.mjs',receiptOwnerPath=path.resolve(receiptOwner);
+  assert(verificationCatalog[receiptOwner],'PRELOAD_RECEIPT_REGISTERED_OWNER_ORACLE');
+  const receiptEnvironment=()=>Object.fromEntries(Object.entries(process.env).filter(([name])=>!/(?:_FAULT|_SOURCE)$/.test(name)));
+  const runReceiptOwner=async(name,observer,receiptDirectory,extra={})=>{
+    const result=await runVerifier(process.execPath,['--import',observer,receiptOwnerPath],{cwd:process.cwd(),evidenceDirectory:path.join(root,'receipt-runner-records'),timeout:15000,maxBuffer:4*1024*1024,env:{...receiptEnvironment(),GITHUB_ACTIONS:'false',NODE_OPTIONS:'',CLOSED_LOOP_VERIFICATION_RECEIPTS:receiptDirectory,CLOSED_LOOP_VERIFICATION_SOURCE_ROOT:process.cwd(),...extra}});
+    assert.equal(result.signal,null,name+': signal');assert.equal(result.error,null,name+': error');assert.equal(result.reason,null,name+': reason');assert.equal(result.status,0,name+': exit '+result.stderr);return result;
+  };
+  const formerDirectory=path.join(root,'receipt-former-source');
+  await runReceiptOwner('former-source',formerReceiptPreload,formerDirectory,{PRELOAD_RECEIPT_SOURCE:'diagnostic'});
+  const formerReceipt=readExecutionReceipt(formerDirectory,receiptOwner,evidenceFingerprint(process.cwd()));
+  assert.equal(formerReceipt?.complete,true,'PRELOAD_RECEIPT_FORMER_SOURCE_CREATE_ORACLE');
+  const validDirectory=path.join(root,'receipt-valid');
+  await runReceiptOwner('default-positive',receiptPreload,validDirectory);
+  const validFile=path.join(validDirectory,receiptOwner+'.json'),validBytes=fs.readFileSync(validFile),fingerprint=evidenceFingerprint(process.cwd());
+  const validReceipt=readExecutionReceipt(validDirectory,receiptOwner,fingerprint);
+  assert.equal(validReceipt?.complete,true,'PRELOAD_RECEIPT_POSITIVE_ORACLE');
+  assert.deepEqual(validReceipt.command,[process.execPath,receiptOwnerPath],'PRELOAD_RECEIPT_DEFAULT_COMMAND_ORACLE');
+  await runReceiptOwner('source-diagnostic',receiptPreload,validDirectory,{PRELOAD_RECEIPT_SOURCE:'diagnostic'});
+  assert.deepEqual(fs.readFileSync(validFile),validBytes,'PRELOAD_RECEIPT_SOURCE_OVERWRITE_ORACLE');
+  assert.equal(readExecutionReceipt(validDirectory,receiptOwner,fingerprint).receiptSha256,validReceipt.receiptSha256,'PRELOAD_RECEIPT_SOURCE_VALIDITY_ORACLE');
+  const faultDirectory=path.join(root,'receipt-fault');
+  await runReceiptOwner('fault-diagnostic',receiptPreload,faultDirectory,{PRELOAD_RECEIPT_FAULT:'1'});
+  assert.equal(fs.existsSync(path.join(faultDirectory,receiptOwner+'.json')),false,'PRELOAD_RECEIPT_FAULT_CREATE_ORACLE');
+  const corruptDirectory=path.join(root,'receipt-corrupt');fs.mkdirSync(corruptDirectory);
+  const corruptReceipt=JSON.parse(validBytes);corruptReceipt.stdoutSha256=(corruptReceipt.stdoutSha256[0]==='0'?'1':'0')+corruptReceipt.stdoutSha256.slice(1);
+  fs.writeFileSync(path.join(corruptDirectory,receiptOwner+'.json'),JSON.stringify(corruptReceipt,null,2)+'\n');
+  assert.throws(()=>readExecutionReceipt(corruptDirectory,receiptOwner,fingerprint),/receipt content digest mismatch/,'PRELOAD_RECEIPT_CORRUPT_REJECTION_ORACLE');
+  const incompleteDirectory=path.join(root,'receipt-incomplete');fs.mkdirSync(incompleteDirectory);
+  const incompleteReceipt={...JSON.parse(validBytes),complete:false,exitCode:1,outcome:'FAIL',reason:'controlled focused negative'};delete incompleteReceipt.receiptSha256;incompleteReceipt.receiptSha256=sha(incompleteReceipt);
+  fs.writeFileSync(path.join(incompleteDirectory,receiptOwner+'.json'),JSON.stringify(incompleteReceipt,null,2)+'\n');
+  assert.throws(()=>readExecutionReceipt(incompleteDirectory,receiptOwner,fingerprint),/failed\/incomplete receipt/,'PRELOAD_RECEIPT_INCOMPLETE_REJECTION_ORACLE');
+  const receiptEligibility={schema:'closed-loop-preload-receipt-eligibility-control/1',suite:receiptOwner,actualRegisteredProducer:true,positiveDefaultReceiptValid:true,defaultInvocation:true,sourceOverrideFormerlyCreatedEligibleReceipt:true,sourceOverrideOwnerPassed:true,sourceOverrideReceiptUnchanged:true,faultOverrideOwnerPassed:true,faultOverrideCreatedReceipt:false,corruptReceiptRejected:true,incompleteReceiptRejected:true,diagnosticReceiptEligible:false,candidatePreloadSourceSha256:sha(bytes)};
+  return {result:'PASS',cases,receiptEligibility,sourceSha256:sha(bytes),normalCatalogue:true,actualPreloadModule:true,receiptsDisabled:true,tailHookScope:'Unique exit snapshot in disposable complete-module copy; only relative import URLs rebased. Visibility children disable receipts; the separate actual registered default-owner control validates receipt eligibility.'};
 }
 
 async function verifyColdUploadBootstrap(workflow,directory,bootstrapNode=process.env.CLOSED_LOOP_ACTION_NODE||process.execPath){
@@ -74,7 +257,6 @@ async function verifyColdUploadBootstrap(workflow,directory,bootstrapNode=proces
   assert.equal(fs.readFileSync(marker,'utf8'),'true');assert.equal(fs.existsSync(missingPreload),false);
   return {result:'PASS',actions,actionRuntime:report.runtime,formerInheritedExit:before.status,formerCleanupBodyExecuted:false,cleanupExit:after.status,cleanupBodyExecuted:true,repositoryInitiallyAbsent:true,sharedEnvironmentGroups:1,nodeInvocations:2,actualArtifactUpload:false};
 }
-
 
 const ownershipSuites=['verify-ingestion.mjs','verify-response-authority-integrity.mjs','verify-returned-slot-authority.mjs'];
 async function ownershipReceiptSource(owner,{currentReceiptDirectory=process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS,readReceipt=readExecutionReceipt,run=executeEvidenceProducer,fallbackDirectory,evidenceDirectory}={}){
@@ -106,12 +288,89 @@ async function verifyOwnershipReceiptRouting(load=ownershipReceiptSource){
   return {syntheticRoutingControls:true,receiptAuthenticationClaimed:false,cases};
 }
 
+function verifyDeclaredInputPathPolicy(fixture,fingerprint=evidenceFingerprint){
+  const required={'verify-cross-run-comparison.mjs':'verification/stage19-precomparison-prerequisite-20261010.json.gz','verify-acceptance-active-work.mjs':'TEST_PROJECT.json','verify-final-acceptance.mjs':'verification-assertion-bindings.json'},baseline=fingerprint(fixture);
+  for(const [owner,file]of Object.entries(required)){
+    assert(verificationCatalog[owner]?.sourceInputs?.includes(file),'DECLARED_INPUT_PATH_ORACLE: the consuming owner must declare '+file);
+    assert(Object.hasOwn(baseline.inputSha256,file),'DECLARED_INPUT_PATH_ORACLE: the exact declared fixture path must be admitted: '+file);
+  }
+  // Exact authoritative JSON is already an input regardless of tracking;
+  // declaring the consuming owner must preserve byte identity and confinement.
+  const bindingsFile='verification-assertion-bindings.json',bindingsTarget=path.join(fixture,bindingsFile),bindingsBytes=fs.readFileSync(bindingsTarget),bindingsDigest=bytes=>createHash('sha256').update(bytes).digest('hex');
+  assert.equal(baseline.inputSha256[bindingsFile],bindingsDigest(bindingsBytes),'DECLARED_INPUT_PATH_ORACLE: authoritative bindings bytes must be fingerprinted exactly');
+  try{
+    fs.appendFileSync(bindingsTarget,'\n');const changed=fingerprint(fixture);
+    assert.equal(changed.inputSha256[bindingsFile],bindingsDigest(fs.readFileSync(bindingsTarget)),'DECLARED_INPUT_PATH_ORACLE: changed authoritative bindings digest was not exact');
+    assert.notEqual(changed.sourceInputsSha256,baseline.sourceInputsSha256,'DECLARED_INPUT_PATH_ORACLE: changed authoritative JSON retained source identity');
+  }finally{fs.writeFileSync(bindingsTarget,bindingsBytes);}
+  const bindingsOutside=fixture+'-bindings-path-escape';fs.mkdirSync(bindingsOutside);
+  try{
+    const escaped=path.join(bindingsOutside,bindingsFile);fs.writeFileSync(escaped,bindingsBytes);fs.unlinkSync(bindingsTarget);fs.symlinkSync(escaped,bindingsTarget);
+    assert.throws(()=>fingerprint(fixture),/declared governance or verifier input is outside the first-party source root/,'DECLARED_INPUT_PATH_ORACLE: authoritative JSON symlink escaped the source root');
+  }finally{fs.rmSync(bindingsTarget,{force:true});fs.writeFileSync(bindingsTarget,bindingsBytes);fs.rmSync(bindingsOutside,{recursive:true,force:true});}
+  try{fs.unlinkSync(bindingsTarget);assert.throws(()=>fingerprint(fixture),/ENOENT/,'DECLARED_INPUT_PATH_ORACLE: missing declared authoritative JSON disappeared');}
+  finally{fs.writeFileSync(bindingsTarget,bindingsBytes);}
+  const bindingsOwner=verificationCatalog['verify-final-acceptance.mjs'],bindingInputs=bindingsOwner.sourceInputs;
+  try{for(const alias of ['verification/../verification-assertion-bindings.json','../verification-assertion-bindings.json',path.resolve(fixture,bindingsFile),['verification','..','verification-assertion-bindings.json'].join(String.fromCharCode(92))]){
+    bindingsOwner.sourceInputs=[...bindingInputs,alias];assert.throws(()=>fingerprint(fixture),/declared governance or verifier input must be an exact first-party verification path/,'DECLARED_INPUT_PATH_ORACLE: authoritative JSON alias escaped exact path policy: '+alias);
+  }}finally{bindingsOwner.sourceInputs=bindingInputs;}
+  const seed=path.join(fixture,'TEST_PROJECT.json'),seedBytes=fs.readFileSync(seed),catalogues=[...Object.values(verificationCatalog),...Object.values(browserVerificationCatalog)],saved=catalogues.map(owner=>[owner,owner.sourceInputs]);
+  try{
+    for(const [owner,inputs]of saved)if(inputs)owner.sourceInputs=inputs.filter(file=>file!=='TEST_PROJECT.json');
+    const implicit=fingerprint(fixture);
+    assert(!Object.hasOwn(implicit.inputSha256,'TEST_PROJECT.json'),'DECLARED_INPUT_PATH_ORACLE: the undeclared generated seed must remain excluded');
+    fs.appendFileSync(seed,'\n');
+    assert.equal(fingerprint(fixture).sourceInputsSha256,implicit.sourceInputsSha256,'DECLARED_INPUT_PATH_ORACLE: undeclared generated seed bytes must not change source identity');
+  }finally{fs.writeFileSync(seed,seedBytes);for(const [owner,inputs]of saved)if(inputs===undefined)delete owner.sourceInputs;else owner.sourceInputs=inputs;}
+  const owner=verificationCatalog['verify-acceptance-active-work.mjs'],inputs=owner.sourceInputs;
+  try{
+    for(const file of ['verification/../TEST_PROJECT.json','UNKNOWN_PROJECT.json','TEST_PROJECT.json.gz','verification/fixture.zip','verification-assertion-bindings.json.gz']){
+      const target=path.join(fixture,file),temporary=file!=='verification/../TEST_PROJECT.json';
+      if(temporary){assert(!fs.existsSync(target),'DECLARED_INPUT_PATH_ORACLE: private negative path collides with a fixture');fs.writeFileSync(target,'{}\n');}
+      try{owner.sourceInputs=[...inputs,file];assert.throws(()=>fingerprint(fixture),/declared governance or verifier input must be an exact first-party verification path/,'DECLARED_INPUT_PATH_ORACLE: invalid declared path admitted: '+file);}
+      finally{owner.sourceInputs=inputs;if(temporary)fs.unlinkSync(target);}
+    }
+  }finally{owner.sourceInputs=inputs;}
+  // A sibling shares the fixture's text prefix but remains outside its root.
+  const outside=fixture+'-path-escape';fs.mkdirSync(outside);
+  try{
+    const escaped=path.join(outside,'TEST_PROJECT.json');fs.writeFileSync(escaped,seedBytes);fs.unlinkSync(seed);fs.symlinkSync(escaped,seed);
+    assert.throws(()=>fingerprint(fixture),/declared governance or verifier input is outside the first-party source root/,'DECLARED_INPUT_PATH_ORACLE: symlink escaped the source root');
+  }finally{fs.rmSync(seed,{force:true});fs.writeFileSync(seed,seedBytes);fs.rmSync(outside,{recursive:true,force:true});}
+  assert.equal(fingerprint(fixture).sourceInputsSha256,baseline.sourceInputsSha256,'DECLARED_INPUT_PATH_ORACLE: path controls must restore the original source identity');
+}
+
 // This exercises the real preload producer, not a YAML presence or mocked
 // successful suite. The unchanged Stage 03 verifier first runs all its actual
 // prompt/parser/validator/commit/transition assertions in every control.
 const directory=fs.mkdtempSync(path.join(os.tmpdir(),'closed-loop-executed-evidence-'));
-const source=fs.readFileSync('verify-stage03-agent-protocol.mjs','utf8').replace("'./verifier-runtime.mjs'",JSON.stringify(pathToFileURL(path.resolve('verifier-runtime.mjs')).href));
-const preload=path.resolve('verification-evidence-preload.mjs'),suite='verify-stage03-agent-protocol.mjs';
+const configuredCopyBase=Object.hasOwn(process.env,'CLOSED_LOOP_EXECUTED_EVIDENCE_COPY_BASE')?process.env.CLOSED_LOOP_EXECUTED_EVIDENCE_COPY_BASE:undefined;
+let splitLayout=null,persistentChildEvidence=null,executionFailed=false,executionError;
+const inheritedChildEvidenceDirectory=process.env.VERIFIER_CHILD_EVIDENCE_DIRECTORY;
+try{
+if(configuredCopyBase!==undefined){
+  persistentChildEvidence=validatePersistentChildEvidenceDirectory(inheritedChildEvidenceDirectory,{primaryRoot:directory,sourceRoot:process.cwd()});
+  splitLayout=createExecutedEvidenceCopyRoot(configuredCopyBase,{primaryRoot:directory,sourceRoot:process.cwd()});
+}
+const splitRootControl=verifyExecutedEvidenceCopyRootControls({primaryRoot:directory,splitLayout,configuredCopyBase});
+if(splitLayout)splitRootControl.persistentChildEvidence=await verifyPersistentChildEvidenceRetention({primaryRoot:directory,persistent:persistentChildEvidence});
+const suite='verify-stage03-agent-protocol.mjs',ownerPath=path.resolve(suite),ownerBytes=fs.readFileSync(ownerPath,'utf8');
+const expectedOwnerImports=['./test-fixtures.mjs','./verifier-runtime.mjs'];
+const expectedOwnerHelperInputs=['test-fixtures.mjs','test-handoff-authorization.mjs','test-project-store-runtime.mjs','test-zip.mjs'];
+const relativeOwnerImports=bytes=>[...bytes.matchAll(/from '(\.\/[^']+)'/g)].map(match=>match[1]).sort();
+function assertStage03ChildImportClosure(bytes=ownerBytes,inputs=verificationCatalog[suite]?.sourceInputs||[]){
+  assert.deepEqual(relativeOwnerImports(bytes),expectedOwnerImports,'STAGE03_CHILD_IMPORT_CLOSURE_ORACLE: Stage 03 owner relative imports changed.');
+  assert.deepEqual([...inputs].sort(),expectedOwnerHelperInputs,'STAGE03_CHILD_IMPORT_CLOSURE_ORACLE: Stage 03 declared helper closure changed.');
+}
+const rebaseOwnerImports=bytes=>bytes.replace(/from '(\.\/[^']+)'/g,(_match,specifier)=>'from '+JSON.stringify(pathToFileURL(path.resolve(path.dirname(ownerPath),specifier)).href));
+function assertRebasedStage03Child(bytes){assert.deepEqual(relativeOwnerImports(bytes),[],'STAGE03_CHILD_IMPORT_CLOSURE_ORACLE: an isolated Stage 03 child retained a relative import.');}
+assertStage03ChildImportClosure();
+const source=rebaseOwnerImports(ownerBytes);assertRebasedStage03Child(source);
+assert.throws(()=>assertStage03ChildImportClosure(ownerBytes.replace(/^import .* from '\.\/test-fixtures\.mjs';\n/m,''),verificationCatalog[suite].sourceInputs),/Stage 03 owner relative imports changed/,'STAGE03_CHILD_IMPORT_CLOSURE_ORACLE: a missing direct fixture import escaped detection.');
+assert.throws(()=>assertStage03ChildImportClosure(ownerBytes,verificationCatalog[suite].sourceInputs.filter(file=>file!=='test-project-store-runtime.mjs')),/Stage 03 declared helper closure changed/,'STAGE03_CHILD_IMPORT_CLOSURE_ORACLE: an incomplete transitive helper declaration escaped detection.');
+assert.throws(()=>assertRebasedStage03Child(ownerBytes),/retained a relative import/,'STAGE03_CHILD_IMPORT_CLOSURE_ORACLE: an unrebased isolated child escaped detection.');
+const stage03ChildConstructionControl={result:'PASS',owner:suite,directRelativeImports:expectedOwnerImports,declaredHelperInputs:expectedOwnerHelperInputs,allIsolatedImportsRebased:true,counterexamplesDetected:['missing-direct-fixture-import','missing-transitive-helper-input','unrebased-isolated-child']};
+const preload=path.resolve('verification-evidence-preload.mjs');
 const producerControls=[];
 const deferredCatalogConsumerControl=verifyDueEvidenceConsumers();
 const governanceDeclaration='specification/requirement-evidence-bindings.json';
@@ -120,12 +379,27 @@ const fullCoverageReviewInputs=(JSON.parse(fs.readFileSync('verification-asserti
 const governedApprovalInputs=[...new Set([...fullCoverageReviewInputs,...(governance.contextApplicabilityReview?[governance.contextApplicabilityReview.path]:[]),...(governance.approvedAmendments||[]).flatMap(amendment=>[amendment.sourceReviewPath,amendment.approvedProposalPath]),...(governance.independentSourceReview?[governance.independentSourceReview.sourceReviewPath,governance.independentSourceReview.reconciliationPath]:[])])].sort();
 const declaredVerifierInputs=[...new Set([...Object.values(verificationCatalog),...Object.values(browserVerificationCatalog)].flatMap(suite=>suite.sourceInputs||[]))].sort();
 const activeFixtureInputs=declaredVerifierInputs.filter(file=>file.startsWith('verification/')),activeHelperInputs=declaredVerifierInputs.filter(file=>!file.startsWith('verification/'));
+const stage15AuthorFixtureInput='verification/stage15-author-prerequisite-20261012.json.gz',stage15AuthorFixtureOwner='verify-stage01-agent-contract-alignment.mjs';
+const stage15AuthorFixtureDeclarations=Object.entries(verificationCatalog).flatMap(([owner,definition])=>(definition.sourceInputs||[]).filter(file=>file===stage15AuthorFixtureInput).map(file=>[owner,file]));
+function assertStage15AuthorFixtureDeclarations(rows){assert.deepEqual(rows,[[stage15AuthorFixtureOwner,stage15AuthorFixtureInput]],'FIXTURE_INPUT_ORACLE: Stage 15 author fixture must have exactly one declaration at its actual owner.');}
+assertStage15AuthorFixtureDeclarations(stage15AuthorFixtureDeclarations);
+assert.throws(()=>assertStage15AuthorFixtureDeclarations([]),/Stage 15 author fixture/,'FIXTURE_INPUT_ORACLE: a missing Stage 15 author fixture declaration escaped detection.');
+assert.throws(()=>assertStage15AuthorFixtureDeclarations([...stage15AuthorFixtureDeclarations,...stage15AuthorFixtureDeclarations]),/Stage 15 author fixture/,'FIXTURE_INPUT_ORACLE: a duplicate Stage 15 author fixture declaration escaped detection.');
+assert.throws(()=>assertStage15AuthorFixtureDeclarations([[stage15AuthorFixtureOwner,'verification/unknown-stage15-author-fixture.json.gz']]),/Stage 15 author fixture/,'FIXTURE_INPUT_ORACLE: a wrong Stage 15 author fixture path escaped detection.');
+assert.throws(()=>assertStage15AuthorFixtureDeclarations([['verify-project-activation.mjs',stage15AuthorFixtureInput]]),/Stage 15 author fixture/,'FIXTURE_INPUT_ORACLE: a Stage 15 author fixture declared by the wrong owner escaped detection.');
 const expectedActiveFixtureInputs=[
+  'verification/accepted-run-stage10-prerequisite-20261007.json',
   'verification/deferred-definition-compatibility-legacy-fixture-20261005.json',
   'verification/deferred-definition-current-prerequisite-fixture-20261007.json',
+  'verification/handoff-producer88-runtime-owner-fixture-20261011.json.gz',
   'verification/handoff-producer88-source-fixture-20261005.json',
   'verification/handoff-producer89-source-fixture-20261005.json',
-  'verification/stage01-retained-capture-legacy-fixture-20261005.json'
+  'verification/manifest-stage01-legacy-writer-20261011.json.gz',
+  'verification/project-projection5-activation-fixture.json',
+  'verification/source-applicability-legacy4-20261011.json.gz',
+  'verification/stage01-retained-capture-legacy-fixture-20261005.json',
+  'verification/stage15-author-prerequisite-20261012.json.gz',
+  'verification/stage19-precomparison-prerequisite-20261010.json.gz'
 ];
 function assertActiveFixtureInputs(paths){assert.deepEqual(paths,expectedActiveFixtureInputs,'FIXTURE_INPUT_ORACLE: active fixture source paths differ from the independently declared current producer inputs.');}
 assertActiveFixtureInputs(activeFixtureInputs);
@@ -137,8 +411,15 @@ for(const file of expectedActiveFixtureInputs){
 assert.throws(()=>assertActiveFixtureInputs([...activeFixtureInputs.slice(0,-1),'verification/unknown-fixture.json']),/FIXTURE_INPUT_ORACLE/,'A changed fixture path must not preserve the declared source population.');
 fixtureCatalogMutations.push({file:'verification/unknown-fixture.json',mutation:'changed-path',result:'DETECTED'});
 const producerFixtureInputs=['verify-stage03-agent-protocol.mjs','verifier-runtime.mjs','workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','verification-evidence-preload.mjs','verification-evidence.mjs','deployment-contract-identities.mjs','browser-execution-evidence.mjs','evaluate-mobile-acceptance-submission.mjs','verify-mobile-acceptance-evidence.mjs','verification-evidence-catalog.mjs','verification-negative-populations.json','verification-assertion-bindings.json','specification/closed-loop-reliability-controlling-implementation-specification.txt',governanceDeclaration,...governedApprovalInputs,...declaredVerifierInputs];
-try{
+function assertStage03ChildCopyPopulation(inputs){for(const file of expectedOwnerHelperInputs)assert(inputs.includes(file),'STAGE03_CHILD_IMPORT_CLOSURE_ORACLE: copied Stage 03 child helper missing: '+file);}
+assertStage03ChildCopyPopulation(producerFixtureInputs);
+assert.throws(()=>assertStage03ChildCopyPopulation(producerFixtureInputs.filter(file=>file!=='test-zip.mjs')),/copied Stage 03 child helper missing/,'STAGE03_CHILD_IMPORT_CLOSURE_ORACLE: an incomplete copied helper population escaped detection.');
+stage03ChildConstructionControl.copiedHelperPopulation=true;
+stage03ChildConstructionControl.counterexamplesDetected.push('missing-copied-helper-input');
   const preloadFailureVisibilityControl=await verifyPreloadFailureVisibility(directory);
+  const retainedRootNativeEvidenceControl=verifyRetainedRootNativeEvidenceConsumers({directory:path.join(directory,'native-evidence-controls')});
+  const humanCombinedNativeEvidenceControl=verifyHumanCombinedNativeEvidenceConsumers({directory:path.join(directory,'human-native-evidence-controls')});
+  const humanCombinedUiEvidenceControl=verifyHumanCombinedUiEvidenceConsumers({directory:path.join(directory,'human-ui-evidence-controls')});
   const ownershipReceiptRoutingControl=await verifyOwnershipReceiptRouting();
   await assert.rejects(()=>verifyOwnershipReceiptRouting((owner,options)=>options.run(owner,{})),/OWNERSHIP_RECEIPT_REUSE_ORACLE/,'OWNERSHIP_RECEIPT_FORMER_DUPLICATION_ORACLE');
   ownershipReceiptRoutingControl.formerDuplicateOwnerRejected=true;
@@ -203,7 +484,7 @@ try{
   // Real inherited descendant output bypasses the producer's stdout.write
   // capture. Keep it in runner diagnostics without reparsing it as the parent's
   // JSON report or replacing the parent's actual stderr with an empty string.
-  const fixture=path.join(directory,'collector-own-output');fs.mkdirSync(fixture);
+  const fixture=path.join(splitLayout?.secondaryRoot||directory,'collector-own-output');fs.mkdirSync(fixture);
   for(const file of producerFixtureInputs){
     fs.mkdirSync(path.dirname(path.join(fixture,file)),{recursive:true});fs.copyFileSync(file,path.join(fixture,file));
   }
@@ -216,7 +497,21 @@ try{
   const fixtureSource=fs.readFileSync(suite,'utf8')+`\nif(process.env.NODE_OPTIONS!=='--no-warnings')throw new Error('COLLECTOR_RUNTIME_OPTIONS_ORACLE');\nprocess.emitWarning('COLLECTOR_WARNING_MUST_BE_SUPPRESSED');\n(await import('node:child_process')).execFileSync(process.execPath,['-e',${JSON.stringify('process.stdout.write('+JSON.stringify(nestedProgress)+')')}],{stdio:'inherit'});\nprocess.stderr.write(${JSON.stringify(ownDiagnostic)});\n`;
   fs.writeFileSync(path.join(fixture,suite),fixtureSource);
   execFileSync('git',['init','--quiet'],{cwd:fixture});execFileSync('git',['add','.'],{cwd:fixture});execFileSync('git',['-c','user.name=Executed evidence fixture','-c','user.email=fixture@localhost','commit','--quiet','-m','Controlled actual producer output'],{cwd:fixture});
-  const collectorDirectory=path.join(fixture,'receipts'),runnerDirectory=path.join(fixture,'runner');
+  const collectorDirectory=splitLayout?path.join(directory,'collector-own-output-receipts'):path.join(fixture,'receipts');
+  const runnerDirectory=splitLayout?path.join(directory,'collector-own-output-runner'):path.join(fixture,'runner');
+  if(splitLayout){
+    assert.equal(path.dirname(fixture),splitLayout.secondaryRoot,'COPY_ROOT_PLACEMENT_ORACLE: collector source/Git fixture did not use the secondary unique root.');
+    assert.equal(path.dirname(collectorDirectory),directory,'COPY_ROOT_PLACEMENT_ORACLE: collector receipts left the primary root.');
+    assert.equal(path.dirname(runnerDirectory),directory,'COPY_ROOT_PLACEMENT_ORACLE: collector runner output left the primary root.');
+    assert.equal(process.env.VERIFIER_CHILD_EVIDENCE_DIRECTORY,persistentChildEvidence.directory,'COPY_ROOT_PLACEMENT_ORACLE: caller-owned persistent child output setting changed.');
+    assert.equal(persistentChildEvidence.evidenceDevice,splitLayout.primaryDevice,'COPY_ROOT_PLACEMENT_ORACLE: persistent child evidence left the primary filesystem.');
+  }else{
+    assert.equal(fixture,path.join(directory,'collector-own-output'),'COPY_ROOT_PLACEMENT_ORACLE: default collector fixture path changed.');
+    assert.equal(collectorDirectory,path.join(fixture,'receipts'),'COPY_ROOT_PLACEMENT_ORACLE: default collector receipt path changed.');
+    assert.equal(runnerDirectory,path.join(fixture,'runner'),'COPY_ROOT_PLACEMENT_ORACLE: default collector runner path changed.');
+    assert.equal(process.env.VERIFIER_CHILD_EVIDENCE_DIRECTORY,inheritedChildEvidenceDirectory,'COPY_ROOT_PLACEMENT_ORACLE: default inherited child output setting changed.');
+  }
+  splitRootControl.placement={fixture:splitLayout?'SECONDARY_UNIQUE_ROOT':'PRIMARY_ROOT_CURRENT_PATH',collectorReceipts:splitLayout?'PRIMARY_ROOT':'CURRENT_FIXTURE_PATH',runnerEvidence:splitLayout?'PRIMARY_ROOT':'CURRENT_FIXTURE_PATH',inheritedChildEvidence:splitLayout?'CALLER_PERSISTENT_PRIMARY_FILESYSTEM':'INHERITED_UNCHANGED'};
   const ownReceipt=await executeEvidenceProducer(suite,{directory:collectorDirectory,cwd:fixture,evidenceDirectory:runnerDirectory,environment:{...process.env,NODE_OPTIONS:'--no-warnings'}});
   const callerEvidence=fs.readdirSync(runnerDirectory).filter(file=>file.endsWith('.json')).map(file=>JSON.parse(fs.readFileSync(path.join(runnerDirectory,file),'utf8'))).find(row=>Array.isArray(row.command)&&row.command.includes(path.join(fixture,suite)));
   assert(callerEvidence,'COLLECTOR_DIAGNOSTIC_ORACLE: real child runner evidence missing.');
@@ -229,6 +524,7 @@ try{
   assert.deepEqual(ownReceipt,persistedOwnReceipt,'COLLECTOR_OWN_OUTPUT_ORACLE: collector rewrote the child-owned receipt.');
   const collectorOwnOutputControl={caseId:'run-missing-owned-report-and-diagnostics',result:'PASS',actualStage03AssertionsExecuted:true,preloadInNodeOptions:false,ordinaryRuntimeOptionsPreserved:true,inheritedChildOutputInRunner:true,inheritedOutputExcludedFromOwnReport:true,producerProgressOnStderr:true,producerProgressBytes:Buffer.byteLength(producerProgress),actualStderrSha256:ownReceipt.stderrSha256,persistedChildReceiptRetained:true,formerReconstructionRejected:true};
   const governanceSourceCases=[],activeFixtureSourceCases=[],activeHelperSourceCases=[],governanceBaseline=evidenceFingerprint(fixture);
+  verifyDeclaredInputPathPolicy(fixture);
   assert(governedApprovalInputs.length>=2,'GOVERNANCE_INPUT_ORACLE: active approved proposal/review pair is missing.');
   for(const file of [...governedApprovalInputs,...declaredVerifierInputs]){
     const target=path.join(fixture,file),bytes=fs.readFileSync(target);
@@ -327,7 +623,7 @@ try{
   // Their exact receipt assertions cannot be supplied by the ingestion wrapper.
   const expectedCanonicalIdsByOwner={
     'verify-response-authority-integrity.mjs':[
-      'PRODUCER-TIMING-REJECT-VERIFICATION_PHASE','PRODUCER-TIMING-REJECT-EARLIEST_EXECUTABLE_STAGE','PRODUCER-TIMING-REJECT-REQUIRED_BY_STAGE','PRODUCER-TIMING-REJECT-PER_RUN_REQUIRED','PRODUCER-TIMING-REJECT-FINAL_PRODUCT_REQUIRED','PRODUCER-TIMING-REJECT-DELIVERY_REQUIRED','PRODUCER-TIMING-REJECT-TARGET_AVAILABILITY_CONDITION','PRODUCER-TIMING-REJECT-TIMING_ENTRIES','PRODUCER-TIMING-REJECT-TIMING_SCHEDULE_SHA256','PRODUCER-TIMING-PROMPT-EXCLUDES-APPLICATION-FIELDS','RESPONSE-CLOSED-FAMILY-BOUNDARY'
+      'RESPONSE-BLIND-ALIAS-ADMISSION-BOUNDARY','RESPONSE-BLIND-ALIAS-ACCEPTANCE-RECHECK','PRODUCER-TIMING-REJECT-VERIFICATION_PHASE','PRODUCER-TIMING-REJECT-EARLIEST_EXECUTABLE_STAGE','PRODUCER-TIMING-REJECT-REQUIRED_BY_STAGE','PRODUCER-TIMING-REJECT-PER_RUN_REQUIRED','PRODUCER-TIMING-REJECT-FINAL_PRODUCT_REQUIRED','PRODUCER-TIMING-REJECT-DELIVERY_REQUIRED','PRODUCER-TIMING-REJECT-TARGET_AVAILABILITY_CONDITION','PRODUCER-TIMING-REJECT-TIMING_ENTRIES','PRODUCER-TIMING-REJECT-TIMING_SCHEDULE_SHA256','PRODUCER-TIMING-PROMPT-EXCLUDES-APPLICATION-FIELDS','RESPONSE-CLOSED-FAMILY-BOUNDARY'
     ],
     'verify-returned-slot-authority.mjs':[
       'ATTACHMENT-SLOT-INVENTED-REJECTED','ATTACHMENT-SLOT-FOREIGN-REJECTED','ATTACHMENT-SLOT-ROLE-MISMATCH-REJECTED','ATTACHMENT-PACKAGE-EXACT-SLOT-BYTES','BOUNDARY-CORRECTED-RETURNED-FILE-RETRY','RETURNED-BYTE-CUSTODY-RETRY-RECOVERY','ACTUAL-UI-RETURNED-BYTE-REVERIFY'
@@ -425,7 +721,7 @@ try{
   const wrongTypeRequirement=ownedAggregate.normativeRequirementTrace.find(row=>row.normativeRequirementId==='NREQ-486b3d356d1077e6a811948127d14ba7');
   assert.equal(wrongTypeRequirement?.disposition,'UNKNOWN','EXTERNAL_IDENTITY_NORMATIVE_OWNER_ORACLE: ingestion assertions masked the missing closed native binding type owner.');
   assert.deepEqual(wrongTypeRequirement.missingAssertionIds,['RUNTIME-CLOSED-BINDING-STRING-TYPES-REJECTED'],'EXTERNAL_IDENTITY_NORMATIVE_OWNER_ORACLE: exact missing native type owner was not retained.');
-  assert.deepEqual(wrongTypeRequirement.executedAssertions.map(row=>[row.checkId,row.suite]),[[externalIdentityCheckId,'verify-ingestion.mjs'],['RESPONSE-CANONICAL-VALUE-BOUNDARIES','verify-ingestion.mjs']],'EXTERNAL_IDENTITY_NORMATIVE_LINK_ORACLE: wrong-type control was attributed to another producer.');
+  assert.deepEqual(wrongTypeRequirement.executedAssertions.map(row=>[row.checkId,row.suite]),[[externalIdentityCheckId,'verify-ingestion.mjs'],['RESPONSE-CANONICAL-VALUE-BOUNDARIES','verify-ingestion.mjs'],['ingestion.primitive-reference-types','verify-ingestion.mjs']],'EXTERNAL_IDENTITY_NORMATIVE_LINK_ORACLE: wrong-type control was attributed to another producer.');
   const nativeBindingRequirement=ownedAggregate.normativeRequirementTrace.find(row=>row.normativeRequirementId==='NREQ-621d5f7e000ff2bcf9b817b4229ba8e2');
   assert.equal(nativeBindingRequirement?.disposition,'UNKNOWN','NATIVE_BINDING_NORMATIVE_OWNER_ORACLE: unrelated ingestion receipts established a missing native binding owner.');
   assert.deepEqual(nativeBindingRequirement.missingAssertionIds,['RUNTIME-CLOSED-BINDING-STRING-TYPES-REJECTED']);
@@ -589,7 +885,16 @@ try{
   assert.equal(empty.zeroCounts.staleProposalsAccepted,null,'Absent negative execution was published as zero accepted violations.');
   const saved=metricCatalog.closedMetricUniverseCoverage.checkIds;metricCatalog.closedMetricUniverseCoverage.checkIds=[];
   try{assert.throws(()=>aggregateExecutedEvidence(new Map(),evidenceFingerprint()),/empty\/duplicate metric universe/);}finally{metricCatalog.closedMetricUniverseCoverage.checkIds=saved;}
-  const ownReport={executedEvidenceProtection:'PASS',preloadFailureVisibilityControl,ownershipReceiptRoutingControl,deferredCatalogConsumerControl,dueSchedulingControl,crossRunSchedulingControl,coldCheckoutCases,coldUploadControl,producerViolationsRejected:producerControls.every(row=>row.result==='DETECTED'),syntaxChecksDoNotClaimExecution:true,syntaxPopulationCases,collectorOwnOutputControl,governanceFingerprintControl,governanceFingerprintInputs:true,activeFixtureFingerprintControl,activeHelperFingerprintControl,activeFixtureFingerprintInputs:true,normativeRegistryLinkageControl,observationOwnershipControl,emptyUniverseRejected:true,controlledProducerPopulation:producerControls,actualConformingStage03AssertionsExecuted:true,missingEvidenceRemainsUnknown:true,verificationObservations:[{checkId:'evidence.real-producer-controls',boundary:'actual Node exit/preload -> receipt consumer',expected:'ALL_CONTROLS_REJECTED_FOR_NAMED_REASON',observed:producerControls,passed:true,requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt#49']},{checkId:'APPROVED-GOVERNANCE-SOURCE-BYTES',boundary:governanceFingerprintControl.boundary,expected:{actualGovernanceByteHashBound:true,changedBytesRejectActualReceipt:true,missingBytesFailHonestly:true,untrackedBytesBound:true,untrackedMutationRejectsActualReceipt:true,exactRestoreAdmitsActualReceipt:true,formerMarkdownOmissionReproduced:true},observed:{actualGovernanceByteHashBound:governanceSourceCases.every(row=>row.actualByteHashBound),changedBytesRejectActualReceipt:governanceSourceCases.every(row=>row.changedBytesRejectActualReceipt),missingBytesFailHonestly:governanceSourceCases.every(row=>row.missingBytesFailHonestly),untrackedBytesBound:governanceSourceCases.every(row=>row.untrackedBytesBound),untrackedMutationRejectsActualReceipt:governanceSourceCases.every(row=>row.untrackedMutationRejectsActualReceipt),exactRestoreAdmitsActualReceipt:governanceSourceCases.every(row=>row.exactRestoreAdmitsActualReceipt),formerMarkdownOmissionReproduced:true},passed:true,requirementRefs:[96]}]};
+  const ownReport={executedEvidenceProtection:'PASS',splitRootControl,preloadFailureVisibilityControl,retainedRootNativeEvidenceControl,humanCombinedNativeEvidenceControl,humanCombinedUiEvidenceControl,ownershipReceiptRoutingControl,deferredCatalogConsumerControl,dueSchedulingControl,crossRunSchedulingControl,stage03ChildConstructionControl,coldCheckoutCases,coldUploadControl,producerViolationsRejected:producerControls.every(row=>row.result==='DETECTED'),syntaxChecksDoNotClaimExecution:true,syntaxPopulationCases,collectorOwnOutputControl,governanceFingerprintControl,governanceFingerprintInputs:true,activeFixtureFingerprintControl,activeHelperFingerprintControl,activeFixtureFingerprintInputs:true,normativeRegistryLinkageControl,observationOwnershipControl,emptyUniverseRejected:true,controlledProducerPopulation:producerControls,actualConformingStage03AssertionsExecuted:true,missingEvidenceRemainsUnknown:true,verificationObservations:[{checkId:'evidence.real-producer-controls',boundary:'actual Node exit/preload -> receipt consumer',expected:'ALL_CONTROLS_REJECTED_FOR_NAMED_REASON',observed:producerControls,passed:true,requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt#49']},{checkId:'APPROVED-GOVERNANCE-SOURCE-BYTES',boundary:governanceFingerprintControl.boundary,expected:{actualGovernanceByteHashBound:true,changedBytesRejectActualReceipt:true,missingBytesFailHonestly:true,untrackedBytesBound:true,untrackedMutationRejectsActualReceipt:true,exactRestoreAdmitsActualReceipt:true,formerMarkdownOmissionReproduced:true},observed:{actualGovernanceByteHashBound:governanceSourceCases.every(row=>row.actualByteHashBound),changedBytesRejectActualReceipt:governanceSourceCases.every(row=>row.changedBytesRejectActualReceipt),missingBytesFailHonestly:governanceSourceCases.every(row=>row.missingBytesFailHonestly),untrackedBytesBound:governanceSourceCases.every(row=>row.untrackedBytesBound),untrackedMutationRejectsActualReceipt:governanceSourceCases.every(row=>row.untrackedMutationRejectsActualReceipt),exactRestoreAdmitsActualReceipt:governanceSourceCases.every(row=>row.exactRestoreAdmitsActualReceipt),formerMarkdownOmissionReproduced:true},passed:true,requirementRefs:[96]}]};
+  const ownPreloadCheck='receipts.preload-failure-visibility';
+  assert.equal(observationsFromReports('verify-executed-evidence.mjs',[ownReport]).find(row=>row.checkId===ownPreloadCheck)?.passed,true,'PRELOAD_RECEIPT_OBSERVATION_ORACLE: actual preload receipt eligibility population was not admitted.');
+  for(const variant of ['wrong-value','missing-field','extra-field']){
+    const incomplete=structuredClone(ownReport),control=incomplete.preloadFailureVisibilityControl.receiptEligibility;
+    if(variant==='wrong-value')control.sourceOverrideReceiptUnchanged=false;
+    else if(variant==='missing-field')delete control.corruptReceiptRejected;
+    else control.unrelatedSuccess=true;
+    assert.equal(observationsFromReports('verify-executed-evidence.mjs',[incomplete]).find(row=>row.checkId===ownPreloadCheck)?.passed,false,'PRELOAD_RECEIPT_OBSERVATION_ORACLE: '+variant+' was silently admitted.');
+  }
   const ownGovernanceCheck='receipts.approved-governance-input-observation';
   assert.equal(observationsFromReports('verify-executed-evidence.mjs',[ownReport]).find(row=>row.checkId===ownGovernanceCheck)?.passed,true,'GOVERNANCE_INPUT_OBSERVATION_ORACLE: actual owner population was not admitted.');
   for(const variant of ['omitted','wrong-value','missing-field','extra-field']){
@@ -614,4 +919,14 @@ try{
   const noFixtureMarker=structuredClone(ownReport);delete noFixtureMarker.activeFixtureFingerprintInputs;
   assert.throws(()=>observationsFromReports('verify-executed-evidence.mjs',[noFixtureMarker]),/expected exactly one report marker activeFixtureFingerprintInputs/,'FIXTURE_INPUT_OBSERVATION_ORACLE: the required input owner marker disappeared.');
   console.log(JSON.stringify(ownReport));
-}finally{fs.rmSync(directory,{recursive:true,force:true});}
+}catch(error){executionFailed=true;executionError=error;
+}finally{
+  if(splitLayout){
+    if(inheritedChildEvidenceDirectory===undefined)delete process.env.VERIFIER_CHILD_EVIDENCE_DIRECTORY;
+    else process.env.VERIFIER_CHILD_EVIDENCE_DIRECTORY=inheritedChildEvidenceDirectory;
+  }
+  if(configuredCopyBase===undefined){
+    fs.rmSync(directory,{recursive:true,force:true});
+    if(executionFailed)throw executionError;
+  }else cleanupExecutedEvidenceRoots({primaryRoot:directory,secondaryRoot:splitLayout?.secondaryRoot,executionFailed,executionError});
+}

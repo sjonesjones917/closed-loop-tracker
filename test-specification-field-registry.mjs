@@ -69,6 +69,8 @@ export const SPECIFICATION_CARRIER_FIELDS=Object.freeze({
  executionPlanItem:Object.freeze(['testId','requirementId','executionMode','requiredCapability','executorClass','executionRoute','executableNow','capabilityReady','artifactReady','blockingReason','requiredArtifactIds','requiredArtifactNames','operatorAction','returnRequirements'])
 });
 const SPECIFICATION_EXECUTION_ROUTES=Object.freeze(['APPLICATION','INDEPENDENT_AI','EXTERNAL_AGENT_TOOL','HUMAN','EXTERNAL_SYSTEM','BLOCKED']);
+// Independent Section23 operator-action vocabulary, including NO_ACTION.
+const SPECIFICATION_OPERATOR_ACTIONS=Object.freeze(['NO_ACTION','RUN_IN_APP','SEND_TO_TOOL_AGENT','SEND_TO_INDEPENDENT_REVIEWER','HUMAN_INSPECTION','USE_EXTERNAL_SYSTEM','BLOCKED']);
 export function verifySpecifiedCarrierFieldRegistry(schema){
  const contracts=schema.CARRIER_FIELD_CONTRACTS?.objects;
  assert(contracts&&typeof contracts==='object','SPECIFICATION_CARRIER_REGISTRY_OMISSION_ORACLE: authoritative carrier contracts are absent.');
@@ -92,9 +94,12 @@ export function verifySpecifiedCarrierFieldRegistry(schema){
    const producer=name==='responseEnvelope'&&claims.includes(field)?'AGENT':'APPLICATION';
    assert.equal(entry.producer,producer,'SPECIFICATION_CARRIER_PRODUCER_ORACLE: '+name+'.'+field);
    if(name==='executionPlanItem'&&field==='executionRoute')assert.deepEqual([...entry.enumValues].sort(),[...SPECIFICATION_EXECUTION_ROUTES].sort(),'SPECIFICATION_CARRIER_ROUTE_ENUM_ORACLE');
+   if(name==='executionPlanItem'&&field==='operatorAction'){
+    assert.deepEqual([...entry.enumValues].sort(),[...SPECIFICATION_OPERATOR_ACTIONS].sort(),'SPECIFICATION_CARRIER_OPERATOR_ACTION_ENUM_ORACLE');
+   }
    assert(Object.hasOwn(schema.normalizerRegistry.entries,entry.normalizerIdentity),'SPECIFICATION_CARRIER_NORMALIZER_ORACLE: '+name+'.'+field);
    assert(Object.hasOwn(schema.derivationRegistry.entries,entry.derivationIdentity),'SPECIFICATION_CARRIER_DERIVATION_ORACLE: '+name+'.'+field);
-   observations.push({object:name,field,registryKey:definition.registryKey,producer,passed:true});
+   observations.push({object:name,field,registryKey:definition.registryKey,producer,passed:true,...(name==='executionPlanItem'&&field==='operatorAction'?{valueType:entry.valueType,enumValues:plain(entry.enumValues)}:{})});
   }
  }
  return {checkId:'registry.specification-carrier-fields',observations,passed:true,scopeLimit:'Finite source-named carrier declaration membership, owner partition and registry projection. runtimeResult covers Section22.3 only; additional path-specific Section22.6 identities remain separate. Does not establish generated package bytes, actor authority, canonical admission or complete Section14.5 closure.'};
@@ -129,7 +134,16 @@ export function verifySpecifiedCarrierFieldMutants(schema){
   const changed=changedObject('executionPlanItem',{...object,fieldDefinitions:{...object.fieldDefinitions,executionRoute:{...definition,enumValues}}},{...schema.FIELD_REGISTRY,[key]:{...schema.FIELD_REGISTRY[key],enumValues}});
   assert.throws(()=>verifySpecifiedCarrierFieldRegistry(changed),/SPECIFICATION_CARRIER_ROUTE_ENUM_ORACLE/);cases.push({object:'executionPlanItem',field:'executionRoute',fault,detected:true});
  }
- return {checkId:'registry.specification-carrier-mutants',negativeCases:cases.length,cases,restored:verifySpecifiedCarrierFieldRegistry(schema).passed,passed:true,scopeLimit:'Coherent source-field/owner omissions, required registry attributes and literal route vocabulary. No generated package, canonical mutation or external execution is simulated by these declaration mutants.'};
+ const actionDefinition=object.fieldDefinitions.operatorAction,actionKey=actionDefinition.registryKey;
+ for(const [fault,enumValues,valueType]of [
+  ['missing-NO_ACTION',actionDefinition.enumValues.filter(value=>value!=='NO_ACTION'),'ENUM'],
+  ['unregistered-action',[...actionDefinition.enumValues,'SEND_UNREGISTERED_ACTION'],'ENUM'],
+  ['unrestricted-action-string',[],'STRING']
+ ]){
+  const changed=changedObject('executionPlanItem',{...object,fieldDefinitions:{...object.fieldDefinitions,operatorAction:{...actionDefinition,enumValues,valueType}}},{...schema.FIELD_REGISTRY,[actionKey]:{...schema.FIELD_REGISTRY[actionKey],enumValues,valueType}});
+  assert.throws(()=>verifySpecifiedCarrierFieldRegistry(changed),/SPECIFICATION_CARRIER_OPERATOR_ACTION_ENUM_ORACLE/);cases.push({object:'executionPlanItem',field:'operatorAction',fault,detected:true});
+ }
+ return {checkId:'registry.specification-carrier-mutants',negativeCases:cases.length,cases,restored:verifySpecifiedCarrierFieldRegistry(schema).passed,passed:true,scopeLimit:'Coherent source-field/owner omissions, required registry attributes and literal route/operator-action vocabularies. No generated package, canonical mutation or external execution is simulated by these declaration mutants.'};
 }
 function requireAttributes(entry,key){
  assert(entry&&typeof entry==='object'&&!Array.isArray(entry),'SPECIFICATION_FIELD_REGISTRY_MEMBER_ORACLE: '+key);

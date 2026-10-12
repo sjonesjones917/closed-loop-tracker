@@ -46,7 +46,7 @@ for(const file of deployedSources){
   let bytes=fs.readFileSync(file);
   if(file==='index.html'){
     let html=bytes.toString('utf8').replace(/\?v=[^"']+/g,`?v=${buildIdentity}`);
-    html=html.replace(`test-runtime.js?v=${buildIdentity}`,`test-runtime.js?v=${buildIdentity}&workerSha256=${sourceTestWorkerSha256}`);
+    for(const owner of ['test-runtime.js','project-store.js'])html=html.replace(`${owner}?v=${buildIdentity}`,`${owner}?v=${buildIdentity}&workerSha256=${sourceTestWorkerSha256}`);
     const meta=`<meta name="closed-loop-build-identity" content="${buildIdentity}">`;
     html=html.replace(/<meta name="theme-color"[^>]*>/,match=>`${match}\n${meta}`);
     bytes=Buffer.from(html,'utf8');

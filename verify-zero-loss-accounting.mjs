@@ -1,4 +1,5 @@
 import {createVerifierRuntime} from './verifier-runtime.mjs';
+import {verifyStage04ResponseCapacity} from './test-stage04-response-capacity.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 const assert=(x,m)=>{if(!x)throw new Error(m);};
@@ -21,3 +22,4 @@ const o=engine.obligationManifest(project),texts=o.items.map(x=>x.text);for(cons
 const reqs=o.items.map((item,i)=>({tempKey:`r${i+1}`,fields:{USER_INPUT_RELATIONSHIP:item.obligationId}})),complete={records:{requirements:reqs},evidence:[]};assert(engine.evaluateObligationAccounting(project,{envelope:complete}).complete,'Complete Stage 04 accounting did not close.');assert(!engine.evaluateObligationAccounting(project,{envelope:{records:{requirements:reqs.slice(0,-1)},evidence:[]}}).complete,'Incomplete Stage 04 obligation accounting was not detected.');const first=o.items[0]?.obligationId;if(first){const multiple=structuredClone(complete);multiple.records.requirements.push({tempKey:'extra',fields:{USER_INPUT_RELATIONSHIP:first}});assert(engine.evaluateObligationAccounting(project,{envelope:multiple}).complete,'One obligation could not map to multiple atomic requirements.');}
 const source=fs.readFileSync('prompt-engine.js','utf8');for(const key of ['currentUserJobInput','stage01AcceptedCapture','stage01AcceptedDefinition','stage03AcceptedData','stage03Research','stage03CandidateRequirements','applicableSources','applicableEvidence'])assert(source.includes(key),`Stage 04 exhaustive context union omitted ${key}.`);
 console.log(JSON.stringify({zeroLossStage01:true,zeroLossStage04:true,completeStage03ResearchUnion:true,oneTimeProjectInput:true,incompleteIntakeRejected:true,incompleteObligationRejected:true}));
+console.log(JSON.stringify({stage04ResponseCapacity:await verifyStage04ResponseCapacity()}));

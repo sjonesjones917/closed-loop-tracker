@@ -1,0 +1,771 @@
+{
+  "schema": "closed-loop-requirement-coverage-review/1",
+  "normativeRequirementId": "NREQ-d6f8519fc2d36e59e4eba26af0442d14",
+  "sourceLineSha256": "03cb01d5ae34c69335090d3607bb7f3380f6e4eba8070ee4ffa5cba9cb32d751",
+  "specificationSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
+  "declarationSha256": "06c07aa58be76608f04c24252a278351d458e2ade67dd8a6e5fa81df83ce33c6",
+  "decision": "COMPLETE_COVERAGE",
+  "evidenceBasis": "EXTERNALLY_SUPPORTED",
+  "method": "Independent requirement-specific static applicability review of the sealed Stage15 active-fixture dependency closure against the exact retained semantic review, current declaration, current production/assertion sources, and complete catalogue delta from 514d84f4 to fd58eb62. The catalogue adds the exact Stage15 prerequisite gzip to its actual Stage1 owner and expands the existing final-acceptance fixture consumer from 147 to 153 cases while preserving all prior semantic cases. All nine target suite objects, declarations, production owners, assertion sources and requirement-specific populations remain unchanged. The package’s retained 153-case consumer PASS was inspected but not rerun and is not promoted to a producer receipt. No execution renewal, receipt restamp, browser/native, whole-application or release claim is made. Independent current applicability renewal: the exact catalogue delta fd58eb62…→8524974d… changes only verify-executed-evidence.mjs receipt preload selection and adds verify-hash.mjs to that suite’s sourceInputs. The complete normalized objects and direct sourceInputs for verify-hash.mjs, verify-stage-contract-closure.mjs, and verify-stage-operation-registry.mjs are unchanged (projection SHA-256 043e9411f111511796be8134f266e84fdeec61aa4673977ef430942a6fa6e56f). The canonical full-proof consumer requires the referenced owner suite and its direct declared sourceInputs; verification-evidence-preload.mjs is not a direct sourceInput of any of these three target suites. No execution, receipt, source audit, whole-application, or release claim is renewed. Actual coherent-candidate applicability renewal: the three additional changed direct inputs are app-core.js, project-store.js, and test-project-store-runtime.mjs. Their complete hunks and retained bounded reviews were inspected. The app change only classifies INVALID_SCOPE_REFERENCE in currentStagePrompt; the store change privately binds deadline Error identity to the exact transaction; the test helper change adds an optional retained artifact-row locator not used by the canonical-prefix path. None changes hash.js, workflow-schema canonical number behavior, the six independently literal canonical observations, verify-hash.mjs, or the target catalogue object. This is source applicability metadata only; no hash owner, receipt, consumer, browser, CI, whole-application, or release claim is renewed. Recovery-population catalogue applicability successor: the exact verification-evidence-catalog.mjs delta 8524974d…→8d816842… adds the closed 15-case recovery-projection predicate and replaces only the verify-recoverable-history.mjs projection.recovery-controls selector. It does not change the complete normalized verify-hash.mjs, verify-stage-operation-registry.mjs, or verify-stage-contract-closure.mjs target projections, their selected check identities, or their direct sourceInputs. The separately mutable recovery owner report is not an input to these nine rows and is not used here. The prior decision, scope, assertion meaning, and execution-historical qualification are preserved. No owner, consumer, test, browser, or CI execution occurred; no receipt was created or restamped; no current PASS or release claim is made.",
+  "author": {
+    "actor": "Codex canonical/hash declaration author (included GPT)",
+    "contextId": "review-context:canonical_hash_closure"
+  },
+  "reviewer": {
+    "actor": "Codex bounded recovery-catalogue applicability reviewer (included GPT)",
+    "contextId": "review-context:content_record_final_source_review"
+  },
+  "reviewPerformed": true,
+  "reviewedInputs": [
+    {
+      "declarationSha256": "06c07aa58be76608f04c24252a278351d458e2ade67dd8a6e5fa81df83ce33c6"
+    },
+    {
+      "path": "app-core.js",
+      "sha256": "38fad6b6170193b5675c4bf2c69374def1f735c100a51a5ac108489daa3b63b9"
+    },
+    {
+      "path": "hash.js",
+      "sha256": "bc1c486855fa2096623b560cfc44b7c5d9e263040546921eb00f54e7f38b7420"
+    },
+    {
+      "path": "project-store.js",
+      "sha256": "8493c0048c9bc48d72cd97efcc3efcbd5fd65f995a34c790c64d0ff10ad4b067"
+    },
+    {
+      "path": "prompt-engine.js",
+      "sha256": "5d67f8096f91a1efc17ad6ce367dfa43ab5990ecaede9b52c9f12dcc34b41d20"
+    },
+    {
+      "path": "response-ingestion.js",
+      "sha256": "01372de4f5f54a480d8ec8a14b21ae595e5d27486add7c882d944b59497ddd21"
+    },
+    {
+      "path": "test-canonical-prefix-supplier.mjs",
+      "sha256": "9460ed0c645255980e85c7f372134db3657e50489d2b9ab4c370a740f43776a5"
+    },
+    {
+      "path": "test-complete-record-carrier-shapes.mjs",
+      "sha256": "7e0598b04149a45b241c0e7049f62e0d93446e026ca0b3faf94c1b3176859dfb"
+    },
+    {
+      "path": "test-project-store-runtime.mjs",
+      "sha256": "d5a2c93dde17700f524e4e1092e40ee1fdcd650d96022c6e56c117b601beeea0"
+    },
+    {
+      "path": "test-runtime.js",
+      "sha256": "a9eadc5db096997c51540068fecddaa71dca221b7342eac703d243438a9d1c23"
+    },
+    {
+      "path": "verification-evidence-catalog.mjs",
+      "sha256": "8d8168422316cab305f661e4afaaee22babbc73e5d0676aa0a8ad9d4d71e4360"
+    },
+    {
+      "path": "verifier-runtime.mjs",
+      "sha256": "051318fc24ea587ced6268d4a60278e5155e3fee8ed26309b28b532c921277f9"
+    },
+    {
+      "path": "verify-hash.mjs",
+      "sha256": "c09e72b7e718dda677cfd4164fea915494d15ea6290b0a6bbdbcc57ea76ec542"
+    },
+    {
+      "path": "workbook.js",
+      "sha256": "11eff4fea42e47a5a70eafdc6b985d064ea2cdfe9a6feb72be6a74ec54c4b062"
+    },
+    {
+      "path": "workflow-engine.js",
+      "sha256": "7693262468c7c21026921c7b98205205150c0c3887c8926f3fd6974687dda153"
+    },
+    {
+      "path": "workflow-schema.js",
+      "sha256": "5e4e434ea188b750bc8f1d44513c612d5295f550b4124d10ca5aa09506ee4a60"
+    },
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d"
+    }
+  ],
+  "findings": [],
+  "reviewedAt": "2026-10-12T20:38:21.466400+00:00",
+  "sourceLocation": {
+    "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+    "startLine": 3026,
+    "endLine": 3026,
+    "lineSha256": "03cb01d5ae34c69335090d3607bb7f3380f6e4eba8070ee4ffa5cba9cb32d751"
+  },
+  "controllingText": "- exact string scalar values and line endings;",
+  "additionalControllingContext": [
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "startLine": 3019,
+      "endLine": 3033,
+      "meaning": "The primitive is reviewed with its exact surrounding serialization/version/schema conditions and continuation where applicable; adjacent independent obligations are not waived."
+    }
+  ],
+  "reviewedChecks": [
+    {
+      "suite": "verify-hash.mjs",
+      "checkId": "canonical.exact-string-scalars-and-lines"
+    }
+  ],
+  "scopeLimit": "Only exact canonical string scalars and line endings. Filename normalization, transport encoding, user-visible rendering and whole-product behavior remain separate.",
+  "independentlyExpectedSemantics": "Canonical serialization preserves the supplied valid Unicode scalar sequence without implicit normalization and preserves CRLF, LF and CR distinctly.",
+  "currentApplicabilityRenewal": {
+    "catalogSha256": "4c557dc39d9f3a960b5cc4f104ce73db6573c53cdac6af8154732f723a5be4f4",
+    "catalogDeltaScope": "Projection/7 activation declarations, complete 15-path verify-project-activation source-input union, and exact final-acceptance consumer registration; this requirement’s target selector, assertion population and registered owner union are unchanged.",
+    "productionDeltaScope": "Installed projection/7 derivation declaration/resolver/activation and proofGate ordering plus originalPackageExtensionSource carrier metadata; the requirement-specific behavior stated in this review is unchanged.",
+    "priorReviewPath": "verification/requirement-coverage-NREQ-d6f8519fc2d36e59e4eba26af0442d14-20261012-current-c1db019dc2e7.json",
+    "priorReviewSha256": "a6b2d6cc0ef56836a8cf6c6cbd97143930704fb8450cfcb345296361ba30ed70",
+    "semanticDecisionPreserved": true,
+    "testsRunByReviewer": false,
+    "receiptCreatedOrRestamped": false,
+    "historicalOwnerExecutionOnly": true,
+    "freshFinalFingerprintReceiptRequiredForCurrentExecutionClaim": true,
+    "applicationConformanceClaim": false
+  },
+  "coherentNineCatalogueDeltaRenewal": {
+    "priorReview": {
+      "path": "verification/requirement-coverage-NREQ-d6f8519fc2d36e59e4eba26af0442d14-20261012-current-projection7-4c557dc39d9f.json",
+      "sha256": "b084a051aa1092899017cd700bc79e70e1093449cebbcf613e8e8042d451c0d2"
+    },
+    "cataloguePreimageSha256": "4c557dc39d9f3a960b5cc4f104ce73db6573c53cdac6af8154732f723a5be4f4",
+    "cataloguePostimageSha256": "fa15b9d5a3cf356a1217c424ba9741affe585d8654a7177dff3dd7d60ba86648",
+    "changedReviewedInputs": [
+      "verification-evidence-catalog.mjs"
+    ],
+    "unchangedReviewedInputCount": 16,
+    "targetOwnerSuites": [
+      "verify-hash.mjs",
+      "verify-stage-contract-closure.mjs",
+      "verify-stage-operation-registry.mjs"
+    ],
+    "normalizedTargetSuiteProjectionSha256": "57b5c2688d0c903cb4a250aaf9c28a3276612b434358f8887542ec2905c8c423",
+    "targetSuiteProjectionIdentical": true,
+    "catalogueDeltaOutsideTargetSuites": true,
+    "semanticDecisionPreserved": true,
+    "testsRunByReviewer": false,
+    "producerExecutedByReviewer": false,
+    "receiptCreatedOrRestamped": false,
+    "historicalOwnerExecutionOnly": true,
+    "freshFinalFingerprintReceiptRequiredForCurrentExecutionClaim": true,
+    "wholeApplicationOrReleaseClaim": false
+  },
+  "coherentNineFinalCatalogueApplicabilityReview": {
+    "reviewer": {
+      "actor": "Codex bounded final catalogue-applicability reviewer (included GPT)",
+      "contextId": "review-context:content_record_admission_resume"
+    },
+    "reviewedAt": "2026-10-12T15:59:56.482869444Z",
+    "priorReview": {
+      "path": "verification/requirement-coverage-NREQ-d6f8519fc2d36e59e4eba26af0442d14-20261012-current-coherent-fa15b9d5.json",
+      "sha256": "a30322d6ef615dfcdfac46aed28bfc040eb4ded06703bf82a2389dfb8c2e20fe"
+    },
+    "originalSemanticReviewer": {
+      "actor": "Codex independent bounded coherent-nine catalogue-delta reviewer (included GPT)",
+      "contextId": "review-context:content_record_final_source_review"
+    },
+    "originalSemanticReviewedAt": "2026-10-12T15:19:46Z",
+    "declarationAuthor": {
+      "actor": "Codex canonical/hash declaration author (included GPT)",
+      "contextId": "review-context:canonical_hash_closure"
+    },
+    "roleSeparation": "Applicability reviewer is distinct from the declaration author; the preserved original semantic reviewer also remains distinct.",
+    "cataloguePreimageSha256": "fa15b9d5a3cf356a1217c424ba9741affe585d8654a7177dff3dd7d60ba86648",
+    "cataloguePostimageSha256": "f2cc39bf681b0544970141f74186dea1b3dd1b6a3ebe83e70c73802d9e02f576",
+    "changedReviewedInputs": [
+      "verification-evidence-catalog.mjs"
+    ],
+    "unchangedReviewedInputCount": 16,
+    "completeTargetSuiteProjection": {
+      "suites": [
+        "verify-hash.mjs",
+        "verify-stage-contract-closure.mjs",
+        "verify-stage-operation-registry.mjs"
+      ],
+      "preimageSha256": "57b5c2688d0c903cb4a250aaf9c28a3276612b434358f8887542ec2905c8c423",
+      "postimageSha256": "57b5c2688d0c903cb4a250aaf9c28a3276612b434358f8887542ec2905c8c423",
+      "identical": true
+    },
+    "nonTargetCatalogueDelta": [
+      {
+        "suite": "verify-ingestion.mjs",
+        "sourceInputAdded": "test-manifest-record-backup.mjs",
+        "checkAdded": "store.extraction-manifest-backup-import"
+      },
+      {
+        "suite": "verify-operational-persistence.mjs",
+        "sourceInputAdded": "test-validation-record-backup.mjs",
+        "checkAdded": "store.validation-record-backup-roundtrip"
+      },
+      {
+        "suite": "verify-stage01-agent-contract-alignment.mjs",
+        "checkChanged": "stage01.first-reader-required-file-package",
+        "change": "Expected population advances from four to five by adding the same-job canonical byte-valid Stage 02 artifact that is not selected for Stage 01; boundary, basis, requirement refs and target owner suites are unchanged."
+      }
+    ],
+    "semanticDecisionPreserved": true,
+    "testsRun": false,
+    "ownersRun": false,
+    "consumerRun": false,
+    "receiptCreatedOrRestamped": false,
+    "historicalFingerprintOnly": "892106a142d16f0a30c6dab39b6bd9c34a1408fc2a0987b50af48fb955496ab7",
+    "currentExecutionClaim": false,
+    "wholeApplicationOrReleaseClaim": false
+  },
+  "coherentNextTestBatchCatalogueApplicabilityReview": {
+    "reviewer": {
+      "actor": "Codex bounded next-test-batch catalogue-applicability reviewer (included GPT)",
+      "contextId": "review-context:content_record_admission_resume"
+    },
+    "reviewedAt": "2026-10-12T16:38:39.779866Z",
+    "priorReview": {
+      "path": "verification/requirement-coverage-NREQ-d6f8519fc2d36e59e4eba26af0442d14-20261012-current-coherent-f2cc39bf.json",
+      "sha256": "c52ce7963ee00e96b9d1797ee763a309864b4872d32c2db93f1dce64cfc0a5e4"
+    },
+    "originalSemanticReviewer": {
+      "actor": "Codex independent bounded coherent-nine catalogue-delta reviewer (included GPT)",
+      "contextId": "review-context:content_record_final_source_review"
+    },
+    "originalSemanticReviewedAt": "2026-10-12T15:19:46Z",
+    "declarationAuthor": {
+      "actor": "Codex canonical/hash declaration author (included GPT)",
+      "contextId": "review-context:canonical_hash_closure"
+    },
+    "roleSeparation": "Applicability reviewer is distinct from the declaration author and preserves the original semantic review by review-context:content_record_final_source_review; this record establishes only source applicability across the catalogue delta.",
+    "cataloguePreimageSha256": "f2cc39bf681b0544970141f74186dea1b3dd1b6a3ebe83e70c73802d9e02f576",
+    "cataloguePostimageSha256": "e44d444df8bf492248c0334f3b453b7e94559006911849a38045884b2b47b7e1",
+    "changedReviewedInputs": [
+      "verification-evidence-catalog.mjs"
+    ],
+    "unchangedReviewedInputCount": 16,
+    "completeTargetSuiteProjection": {
+      "suites": [
+        "verify-hash.mjs",
+        "verify-stage-contract-closure.mjs",
+        "verify-stage-operation-registry.mjs"
+      ],
+      "preimageFileSha256": "57b5c2688d0c903cb4a250aaf9c28a3276612b434358f8887542ec2905c8c423",
+      "postimageFileSha256": "57b5c2688d0c903cb4a250aaf9c28a3276612b434358f8887542ec2905c8c423",
+      "preimageObjectSha256": "043e9411f111511796be8134f266e84fdeec61aa4673977ef430942a6fa6e56f",
+      "postimageObjectSha256": "043e9411f111511796be8134f266e84fdeec61aa4673977ef430942a6fa6e56f",
+      "identical": true
+    },
+    "nonTargetCatalogueDelta": [
+      {
+        "suite": "verify-complete.mjs",
+        "sourceInputsAdded": [],
+        "sourceInputsRemoved": [],
+        "checkIdsAdded": [
+          "workflow.stage22-product-artifact-equivalence"
+        ],
+        "checkIdsRemoved": [],
+        "commonCheckIdsChanged": [],
+        "boundaryChanged": false,
+        "evidenceBasisChanged": false
+      },
+      {
+        "suite": "verify-contract-closure.mjs",
+        "sourceInputsAdded": [],
+        "sourceInputsRemoved": [],
+        "checkIdsAdded": [],
+        "checkIdsRemoved": [],
+        "commonCheckIdsChanged": [
+          "registry.derivation-carrier-writer-metadata"
+        ],
+        "boundaryChanged": false,
+        "evidenceBasisChanged": false
+      },
+      {
+        "suite": "verify-final-acceptance.mjs",
+        "sourceInputsAdded": [],
+        "sourceInputsRemoved": [],
+        "checkIdsAdded": [
+          "acceptance.proof-obligation-dependency-catalog-consumers"
+        ],
+        "checkIdsRemoved": [],
+        "commonCheckIdsChanged": [
+          "acceptance.stage22-owner-report-consumers"
+        ],
+        "boundaryChanged": false,
+        "evidenceBasisChanged": false
+      },
+      {
+        "suite": "verify-semantic-operation-boundaries.mjs",
+        "sourceInputsAdded": [
+          "test-fixtures.mjs",
+          "test-handoff-authorization.mjs",
+          "test-zip.mjs",
+          "test-project-store-runtime.mjs",
+          "verifier-runtime.mjs",
+          "workbook.js",
+          "hash.js",
+          "workflow-schema.js",
+          "test-runtime.js",
+          "workflow-engine.js",
+          "prompt-engine.js",
+          "response-ingestion.js"
+        ],
+        "sourceInputsRemoved": [],
+        "checkIdsAdded": [
+          "workflow.proof-obligation-dependency-recalculation"
+        ],
+        "checkIdsRemoved": [],
+        "commonCheckIdsChanged": [],
+        "boundaryChanged": true,
+        "evidenceBasisChanged": false
+      }
+    ],
+    "semanticDecisionPreserved": true,
+    "testsRunByApplicabilityReviewer": false,
+    "ownersOrProducersExecutedByApplicabilityReviewer": false,
+    "consumerExecutedByApplicabilityReviewer": false,
+    "receiptCreatedOrRestamped": false,
+    "historicalOwnerExecutionOnly": true,
+    "freshFinalFingerprintReceiptRequiredForCurrentExecutionClaim": true,
+    "wholeApplicationOrReleaseClaim": false,
+    "candidateIdentity": {
+      "combinedRegistrationPatchSha256": "f887dc107372dff5fc55f6621d36c3a5c3147a981dbb54a5b3b7fd7bf44caa62",
+      "catalogueSha256": "e44d444df8bf492248c0334f3b453b7e94559006911849a38045884b2b47b7e1",
+      "consumerSha256": "113fbc44f29f9363bc5bc652f12e1bb4669f725deec943d0cbd835737d091b8b",
+      "bindingsPreApplicabilityAmendmentSha256": "8ae3250f1c302a3899d0d863903266c5da57ba6bfee8280e083053ae273a77bb",
+      "semanticOwnerSha256": "2de5f4af6d8306cd0d3a3d7374c2e1a59e60a64ed68fec55d50448a661f1a87c"
+    }
+  },
+  "response34NineApplicabilityReview": {
+    "reviewer": {
+      "actor": "Codex bounded Response34 nine-review applicability reviewer (included GPT)",
+      "contextId": "review-context:extension_binding_controls"
+    },
+    "reviewedAt": "2026-10-12T17:30:58.246431Z",
+    "priorDeclaredReview": {
+      "path": "verification/requirement-coverage-NREQ-d6f8519fc2d36e59e4eba26af0442d14-20261012-current-coherent-e44d444d.json",
+      "sha256": "b7803465378256db18991616ef347a977cb9a4548e47e4254d7e49503fc75d15"
+    },
+    "priorSemanticReviewer": {
+      "actor": "Codex independent bounded coherent-nine catalogue-delta reviewer (included GPT)",
+      "contextId": "review-context:content_record_final_source_review"
+    },
+    "priorSemanticReviewedAt": "2026-10-12T15:19:46Z",
+    "priorSemanticMethodPreserved": "Independent bounded static renewal against the exact catalogue delta from 4c557dc39d9f3a960b5cc4f104ce73db6573c53cdac6af8154732f723a5be4f4 to fa15b9d5a3cf356a1217c424ba9741affe585d8654a7177dff3dd7d60ba86648. The complete normalized catalogue objects for verify-hash.mjs, verify-stage-operation-registry.mjs and verify-stage-contract-closure.mjs are byte-identical after function-source projection (SHA-256 57b5c2688d0c903cb4a250aaf9c28a3276612b434358f8887542ec2905c8c423). Every other reviewed input, declaration, governing source line, production owner, assertion source and scope limit remains byte-identical. Catalogue changes are confined to Stage30 source-input/consumer closure, Stage01 first-reader file controls, Stage13/17 comparison-materiality controls, projection/7 derivation and activation selectors, carrier-writer metadata, and their final-acceptance consumers. The retained semantic coverage decision therefore remains applicable. Prior execution remains historical; no producer, test, consumer, receipt, browser, native, whole-application or release claim is made. Current derivative applicability: a separately attributed reviewer verified the exact fa15b9d5-to-f2cc39bf catalogue delta, all other reviewed inputs, and the complete normalized target-suite projection. The original semantic reviewer, semantic decision, evidence limits, and historical execution qualification are preserved; no execution or receipt was renewed. Current next-batch applicability: a separately attributed reviewer verified the exact f2cc39bf-to-e44d444d catalogue delta, all other reviewed inputs, and the complete normalized target-suite projection. The original semantic reviewer, semantic decision, evidence limits, and historical execution qualification are preserved; no execution or receipt was renewed.",
+    "roleSeparation": "This applicability reviewer is distinct from every retained declaration author and the prior semantic reviewer. The earlier semantic decision is preserved; this review independently checks only its applicability to the exact current source and catalogue delta.",
+    "cataloguePreimageSha256": "e44d444df8bf492248c0334f3b453b7e94559006911849a38045884b2b47b7e1",
+    "cataloguePostimageSha256": "514d84f400197b8cb0de2151278ec879b692e6a286776147cf83f54271f778df",
+    "changedReviewedInputs": [
+      "verification-evidence-catalog.mjs"
+    ],
+    "unchangedReviewedInputCount": 15,
+    "targetOwnerSuites": [
+      "verify-hash.mjs",
+      "verify-stage-operation-registry.mjs",
+      "verify-stage-contract-closure.mjs"
+    ],
+    "completeTargetSuiteProjection": {
+      "priorSha256": "043e9411f111511796be8134f266e84fdeec61aa4673977ef430942a6fa6e56f",
+      "currentSha256": "043e9411f111511796be8134f266e84fdeec61aa4673977ef430942a6fa6e56f",
+      "identical": true
+    },
+    "nonTargetCatalogueDelta": [
+      {
+        "suite": "verify-final-acceptance.mjs",
+        "priorSha256": "b59f797e6bb1e00762403bed58fe36e763287b2e15b1e6b0acc5c9c1d16a503a",
+        "currentSha256": "387b42f8df51b5e41e70f86f489a83e3dea713af6d29918e3644a825e79d8653",
+        "sourceInputsAdded": [],
+        "sourceInputsRemoved": [],
+        "checkIdsAdded": [
+          "acceptance.response-pending-authority-catalog-consumers",
+          "acceptance.canonical-retry-catalog-consumers"
+        ],
+        "checkIdsRemoved": [],
+        "commonCheckIdsChanged": [],
+        "boundaryChanged": false,
+        "evidenceBasisChanged": false
+      },
+      {
+        "suite": "verify-ingestion.mjs",
+        "priorSha256": "e55aa2c51ee9154828e6e7b75f1a4554e3d19ef7f3210ed68ca8555de4e90869",
+        "currentSha256": "c7a549b91a95a11c0ced07e91629024b27904eac34b73aa5c5c0a968fffbe1ce",
+        "sourceInputsAdded": [
+          "test-response-pending-authority-controls.mjs"
+        ],
+        "sourceInputsRemoved": [],
+        "checkIdsAdded": [
+          "ingestion.pending-six-authority-recheck",
+          "ingestion.canonical-retry-four-response-types"
+        ],
+        "checkIdsRemoved": [],
+        "commonCheckIdsChanged": [],
+        "boundaryChanged": false,
+        "evidenceBasisChanged": false
+      }
+    ],
+    "requirementSpecificAssessment": "The exact scalar-string and line-ending observation remains in the unchanged canonical.exact-serialization-controls route; production owner and literal assertion source are byte-identical.",
+    "declarationIdentity": {
+      "sha256": "06c07aa58be76608f04c24252a278351d458e2ade67dd8a6e5fa81df83ce33c6",
+      "matchesReviewedDeclaration": true
+    },
+    "productionOwnerValidation": [
+      {
+        "path": "hash.js",
+        "symbol": "canonicalChunks / stableStringify",
+        "sha256": "bc1c486855fa2096623b560cfc44b7c5d9e263040546921eb00f54e7f38b7420",
+        "currentSha256": "bc1c486855fa2096623b560cfc44b7c5d9e263040546921eb00f54e7f38b7420",
+        "matches": true
+      }
+    ],
+    "assertionAdmissionRoutes": [
+      {
+        "suite": "verify-hash.mjs",
+        "checkId": "canonical.exact-string-scalars-and-lines",
+        "admissionRoute": "NESTED_RECEIPT_OBSERVATION",
+        "parentCheckId": "canonical.exact-serialization-controls",
+        "registeredExactlyOnce": true,
+        "registeredRequirementRefs": [],
+        "registeredBasis": null,
+        "expectedDescription": "Every exact named serialization assertion is present and passes"
+      }
+    ],
+    "stage01FixtureQualification": {
+      "path": "verify-stage01-agent-contract-alignment.mjs",
+      "currentSha256": "13d937b78feac2b10e66eeec1624b69e949bef6a958aab3c22a949c51661ddf8",
+      "targetOwner": false,
+      "finding": "Not a reviewed input or target owner for any of the nine, including the distinct verify-stage-contract-closure Stage01 role owner. It invalidates the old global fingerprint receipt, so execution remains historical."
+    },
+    "semanticDecisionPreserved": true,
+    "testsRun": false,
+    "ownersRun": false,
+    "consumerRun": false,
+    "receiptCreatedOrRestamped": false,
+    "historicalOwnerExecutionOnly": true,
+    "freshCoherentFingerprintReceiptRequiredForCurrentExecutionClaim": true,
+    "wholeApplicationOrReleaseClaim": false
+  },
+  "stage15FixtureCatalogueApplicabilityReview": {
+    "reviewer": {
+      "actor": "Codex bounded Stage15 fixture catalogue-applicability reviewer (included GPT)",
+      "contextId": "review-context:extension_binding_controls"
+    },
+    "reviewedAt": "2026-10-12T17:44:11.282658Z",
+    "priorDeclaredReview": {
+      "path": "verification/requirement-coverage-NREQ-d6f8519fc2d36e59e4eba26af0442d14-20261012-response34-514d84f4.json",
+      "sha256": "e14dbf47f6b307bb3d0dcfc51abd5491e14acccc044f6755c7ad819ae0e33893"
+    },
+    "priorSemanticReviewer": {
+      "actor": "Codex bounded Response34 nine-review applicability reviewer (included GPT)",
+      "contextId": "review-context:extension_binding_controls"
+    },
+    "priorSemanticReviewedAt": "2026-10-12T17:30:58.246431Z",
+    "priorSemanticMethodPreserved": "Independent requirement-specific static applicability review against the exact declared review, current declaration, current owner/source union, and complete catalogue delta from e44d444d to 514d84f4. The declared production owners, assertion sources, governing sources, declaration identity and target catalogue objects remain byte-identical. The only changed reviewed input is verification-evidence-catalog.mjs; its two changed suites add the Response34 pending-six and canonical-retry owners/strict consumers outside all nine target owner suites. The requirement-specific assertion and expected population were inspected as recorded in response34NineApplicabilityReview. No execution, receipt renewal, browser/native proof, whole-application or release claim is made.",
+    "roleSeparation": "The applicability reviewer remains distinct from the retained declaration author. This review preserves the prior semantic decision and independently checks only its applicability to the exact sealed Stage15 dependency delta.",
+    "sealedDependencyClosure": {
+      "patchSha256": "e421ef36d312112e49d8485be789077a61d39da1ed2a1f65d68dd03f20a29842",
+      "cataloguePreimageSha256": "514d84f400197b8cb0de2151278ec879b692e6a286776147cf83f54271f778df",
+      "cataloguePostimageSha256": "fd58eb624473da1d40770926da765744c3904fe51b11b1e35c95e13829c58574",
+      "verifyExecutedEvidencePreimageSha256": "fab59b9c20bc14e5f5fc2efcc7d060cef374c86277cd6bed0bf086d6329f503a",
+      "verifyExecutedEvidencePostimageSha256": "b5c7b441e8405edea009f16b0b7de0ae8703c8594f04692290153d5bf821012e",
+      "normativeConsumerPreimageSha256": "9b268906e4a9f639062b6b66e347be2a40e4c74803172446ed30d4b28b390f97",
+      "normativeConsumerPostimageSha256": "c92b688426e9c858a35191f6a8be134e61c7eb8e18270e87551dbef64bad90a9",
+      "patchArtifactFilename": "stage15-active-fixture-complete.patch",
+      "patchAccessScope": "RETAINED_PRIVATE_ARTIFACT_UNAVAILABLE_IN_PUBLICATION",
+      "patchPublicationQualification": "HISTORICAL_NONPROOF_REFERENCE"
+    },
+    "actualFixtureDependency": {
+      "path": "verification/stage15-author-prerequisite-20261012.json.gz",
+      "sha256": "fe81e3f02568a6b2f512aa6632721c5705967c5eb78a7e5a5096d06628abf1b2",
+      "byteSize": 3232354,
+      "decodedSha256": "fd1672879e86c0a85a6b34aaab4d6566a43bbbb642e15252354d5681e48539df",
+      "decodedByteSize": 20333755,
+      "actualOwner": "verify-stage01-agent-contract-alignment.mjs",
+      "actualOwnerSha256": "13d937b78feac2b10e66eeec1624b69e949bef6a958aab3c22a949c51661ddf8",
+      "ownerReadBoundary": "The owner reads the default gzip at lines 403-405 and checks exact compressed and decoded size/SHA-256 identities before restoring its retained Stage15 prerequisite."
+    },
+    "changedReviewedInputs": [
+      "verification-evidence-catalog.mjs"
+    ],
+    "unchangedReviewedInputCount": 15,
+    "completeTargetSuiteProjection": {
+      "priorSha256": "043e9411f111511796be8134f266e84fdeec61aa4673977ef430942a6fa6e56f",
+      "currentSha256": "043e9411f111511796be8134f266e84fdeec61aa4673977ef430942a6fa6e56f",
+      "identical": true
+    },
+    "targetOwnerSuites": [
+      "verify-hash.mjs",
+      "verify-stage-operation-registry.mjs",
+      "verify-stage-contract-closure.mjs"
+    ],
+    "nonTargetCatalogueDelta": [
+      {
+        "suite": "verify-final-acceptance.mjs",
+        "priorSha256": "387b42f8df51b5e41e70f86f489a83e3dea713af6d29918e3644a825e79d8653",
+        "currentSha256": "a7d7c6ea174be17dd5008d2dce0c48aebbd3a172bb4c522833b552a623a236f8",
+        "sourceInputsAdded": [],
+        "sourceInputsRemoved": [],
+        "checkIdsAdded": [],
+        "checkIdsRemoved": [],
+        "commonCheckIdsChanged": [
+          "acceptance.projection7-activation-catalog-consumers"
+        ],
+        "boundaryChanged": false,
+        "evidenceBasisChanged": false
+      },
+      {
+        "suite": "verify-stage01-agent-contract-alignment.mjs",
+        "priorSha256": "7a4a8831386d940a15e300d41337eaad67c0810148c9cd197a15c2939c6cf41c",
+        "currentSha256": "c3e820894b0ed35f1ca4b14e30b4f912692797d03f3574c9df2e6add87919f92",
+        "sourceInputsAdded": [
+          "verification/stage15-author-prerequisite-20261012.json.gz"
+        ],
+        "sourceInputsRemoved": [],
+        "checkIdsAdded": [],
+        "checkIdsRemoved": [],
+        "commonCheckIdsChanged": [],
+        "boundaryChanged": false,
+        "evidenceBasisChanged": false
+      }
+    ],
+    "strictConsumerClosure": {
+      "caseIdentityMapSha256": "df38f754b76da6e97e7c6171d49361ef8aff1ac9caa8176d69f9e0e058f96cc7",
+      "preservedOldSemanticCaseCount": 147,
+      "renamedPopulationLabels": {
+        "active-fixture-population11-valid": "active-fixture-population12-valid",
+        "receipt-fixture-consumer11-valid": "receipt-fixture-consumer12-valid"
+      },
+      "addedCaseIds": [
+        "actual-fixture-guard:verification/stage15-author-prerequisite-20261012.json.gz:missing-path",
+        "actual-fixture-stage15-owner-declaration:valid",
+        "actual-fixture-stage15-owner-declaration:missing-rejected",
+        "actual-fixture-stage15-owner-declaration:duplicate-rejected",
+        "actual-fixture-stage15-owner-declaration:wrong-path-rejected",
+        "actual-fixture-stage15-owner-declaration:wrong-owner-rejected"
+      ],
+      "removedCaseIds": [],
+      "currentCaseCount": 153,
+      "allOldSemanticCasesPreserved": true,
+      "retainedExecutionSha256": "ab079b23446068a0d46dcd2a9f0945a2c53641051fd2a7fefbfb7eaf472e9a2f",
+      "retainedStdoutSha256": "d974c6dfd988bdc4c493132b0e74e3f5e85d3e2152c47a021b0cbfc561561311",
+      "retainedStderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "retainedPassed": true,
+      "executedByThisReviewer": false,
+      "boundary": "Candidate-module override consumer execution only; no producer receipt, owner renewal, browser/native execution, whole-application or release proof.",
+      "caseIdentityMapArtifactFilename": "case-identity-map.json",
+      "caseIdentityMapAccessScope": "RETAINED_PRIVATE_ARTIFACT_UNAVAILABLE_IN_PUBLICATION",
+      "caseIdentityMapPublicationQualification": "HISTORICAL_NONPROOF_REFERENCE",
+      "retainedExecutionArtifactFilename": "default-consumer-final-v2.execution.json",
+      "retainedExecutionAccessScope": "RETAINED_PRIVATE_ARTIFACT_UNAVAILABLE_IN_PUBLICATION",
+      "retainedExecutionPublicationQualification": "HISTORICAL_NONPROOF_REFERENCE"
+    },
+    "requirementSpecificAssessment": "The exact scalar-string and line-ending observation remains in the unchanged canonical.exact-serialization-controls route; production owner, literal assertion source, and complete target catalogue suite are unchanged.",
+    "assertionAndProductionApplicabilityPreserved": true,
+    "semanticDecisionPreserved": true,
+    "testsRunByReviewer": false,
+    "ownersRunByReviewer": false,
+    "consumerRunByReviewer": false,
+    "receiptCreatedOrRestamped": false,
+    "historicalOwnerExecutionOnly": true,
+    "freshCoherentFingerprintReceiptRequiredForCurrentExecutionClaim": true,
+    "wholeApplicationOrReleaseClaim": false
+  },
+  "frozenB0efdPreloadCatalogueApplicabilityReview": {
+    "reviewer": {
+      "actor": "Codex bounded frozen-b0efd preload-catalogue applicability reviewer (included GPT)",
+      "contextId": "review-context:content_record_admission_resume"
+    },
+    "reviewedAt": "2026-10-12T19:41:28.900375456Z",
+    "priorPortableReview": {
+      "path": "verification/requirement-coverage-NREQ-d6f8519fc2d36e59e4eba26af0442d14-20261012-stage15-fd58eb62-portable-v1.json",
+      "sha256": "558ee7af95155d4a656bb3f0f5df353671320816ab48b8081548c015886d3c51"
+    },
+    "portableRewritePrerequisite": {
+      "path": "portable-review-prerequisite/independent-review-v5/report.json",
+      "sha256": "4500ffecc66815b43adb83e211aed5f62e01de27ff0fae1f580f3ca14ece20f3",
+      "qualification": "APPROVED_EXACT_PORTABILITY_REWRITE_ONLY; no applicability renewal"
+    },
+    "cataloguePreimageSha256": "fd58eb624473da1d40770926da765744c3904fe51b11b1e35c95e13829c58574",
+    "cataloguePostimageSha256": "8524974d1cb3f0fda7005bce56168eb22021635f7454e143cecf2008ff802dc6",
+    "changedReviewedInputs": [
+      "verification-evidence-catalog.mjs"
+    ],
+    "targetOwnerSuites": [
+      "verify-hash.mjs",
+      "verify-stage-contract-closure.mjs",
+      "verify-stage-operation-registry.mjs"
+    ],
+    "completeNormalizedTargetSuiteProjection": {
+      "preimageSha256": "043e9411f111511796be8134f266e84fdeec61aa4673977ef430942a6fa6e56f",
+      "postimageSha256": "043e9411f111511796be8134f266e84fdeec61aa4673977ef430942a6fa6e56f",
+      "identical": true
+    },
+    "targetSourceInputListsIdentical": true,
+    "newPreloadReviewedInputRequiredForTheseNine": false,
+    "reasonPreloadIsNotRequired": "evaluateFullRequirementProof checks each referenced owner suite, verification-evidence-catalog.mjs, and that owner suite’s direct sourceInputs. verification-evidence-preload.mjs is not a direct sourceInput of verify-hash.mjs, verify-stage-contract-closure.mjs, or verify-stage-operation-registry.mjs. The inverse dependency from verify-executed-evidence.mjs to verify-hash.mjs does not expand these reviews.",
+    "preloadPatchReview": {
+      "path": "retained-review/frozen-b0efd-preload-consumer-independent-review-20261012/report.json",
+      "sha256": "0c8bf39ac4a4a48dacd40b37d46aa623a7f6c7cf6e3aa15a3d54935ac03fe422"
+    },
+    "selectorDiagnostic": {
+      "path": "retained-diagnostic/frozen-b0efd-coherent-reconciliation-checks-20261012/preload-selector-preflight.json",
+      "sha256": "4ff5eaba30e9f20d00f5b51a7690c3b40928902bfcfdde591e76f9667872970d",
+      "qualification": "DIAGNOSTIC_NONELIGIBLE"
+    },
+    "otherReviewedInputsCondition": "Every other reviewed path/declaration identity remains the portable-v1 frozen-b0efd identity. This successor does not apply to a composition that changes any of those bytes without a separate applicability review.",
+    "semanticDecisionPreserved": true,
+    "testsRun": false,
+    "ownersRun": false,
+    "consumerRun": false,
+    "receiptCreatedOrRestamped": false,
+    "currentExecutionClaim": false
+  },
+  "frozenB0efdActualCompositionApplicabilityReview": {
+    "reviewer": {
+      "actor": "Codex bounded frozen-b0efd preload-catalogue applicability reviewer (included GPT)",
+      "contextId": "review-context:content_record_admission_resume"
+    },
+    "reviewedAt": "2026-10-12T19:48:01.363660325Z",
+    "priorCatalogueOnlySuccessor": {
+      "path": "verification/requirement-coverage-NREQ-d6f8519fc2d36e59e4eba26af0442d14-20261012-stage15-fd58eb62-portable-v2-catalogue-8524974d.json",
+      "sha256": "034a8f89d2c95cc813c99c507ab86d7781e45636684815911b4216b6dbdc2a45"
+    },
+    "candidateRoot": "retained private coherent candidate; identity by exact per-file hashes only",
+    "changedReviewedInputs": [
+      {
+        "path": "app-core.js",
+        "preimageSha256": "6d45356cbd672d0e99d317f9fc0f3c6a0cd1195e9d038b56045775298b8dab93",
+        "candidateSha256": "38fad6b6170193b5675c4bf2c69374def1f735c100a51a5ac108489daa3b63b9"
+      },
+      {
+        "path": "project-store.js",
+        "preimageSha256": "5ebf8ced3d613605dbb2593598be6733acb8fc7ce834f8cabd2cd6d9cbe7f5e0",
+        "candidateSha256": "8493c0048c9bc48d72cd97efcc3efcbd5fd65f995a34c790c64d0ff10ad4b067"
+      },
+      {
+        "path": "test-project-store-runtime.mjs",
+        "preimageSha256": "28a45861b76ba38038882e0dfb22afc886b7a32e615e801410a894d542f8cbdf",
+        "candidateSha256": "d5a2c93dde17700f524e4e1092e40ee1fdcd650d96022c6e56c117b601beeea0"
+      }
+    ],
+    "unchangedReviewedInputCount": 13,
+    "deltaAssessments": {
+      "appCore": {
+        "reviewedCorrectionReport": {
+          "path": "retained-review/frozen-b0efd-app-catch-reviewed-v3-20261012/report.json",
+          "sha256": "f75b32f022919bf0cbf39b099216663f749c94888eb48e82092751419bc24049"
+        },
+        "priorIndependentReview": {
+          "path": "retained-review/frozen-b0efd-app-catch-v2-independent-review-20261012/report.json",
+          "sha256": "22906d4b9f72ba0c2db073416abafaa30a0bcd3a3300706b4cbba565426f326f"
+        },
+        "scope": "One currentStagePrompt catch predicate adds INVALID_SCOPE_REFERENCE to the existing unavailable-instruction branch. It does not alter hash.js, the Stage19 artifactControlMarkup source predicate read by verify-hash, script order, or build-token parsing. The corrected controller-unit result is synthetic and not canonical hash execution proof."
+      },
+      "projectStore": {
+        "independentReview": {
+          "path": "retained-review/frozen-b0efd-metaput-independent-review-20261012/report.json",
+          "sha256": "e14789a082e734297bd89fb0f9faac56ad70e7db5e80f011238a8a95c3d526b9"
+        },
+        "correctedV2Report": {
+          "path": "retained-review/frozen-b0efd-metaput-independent-review-20261012/v2/report.json",
+          "sha256": "05e13916be1e087caf8b2712ceb641ef7b7d36377480b4f5d42faa0a78b000bc"
+        },
+        "focusedExecution": {
+          "path": "retained-evidence/frozen-b0efd-metaput-independent-review-20261012/v2/weakmap-candidate-12-final.execution.json",
+          "sha256": "c8e4df7064822f067a2e0e271c588253a1c8227df345c184ea90b46b898c65c5",
+          "qualification": "Focused 12-case synthetic transaction provenance result; not a verify-hash receipt."
+        },
+        "scope": "Adds a private Error-object-to-transaction WeakMap at storageEvent and suppresses metaPut catch abort only for the exact already-aborted transaction. It does not alter canonical serialization, ID allocation, hash registration, runtime script order, workerSha query checks, or the app Stage19 source predicate."
+      },
+      "testProjectStoreRuntime": {
+        "compositionReview": {
+          "path": "retained-review/frozen-b0efd-harness-composition-independent-review-20261012/review.json",
+          "sha256": "bc9e0cd981d3f7f237fa583a5074247dc381b5ad641978ae5244776d75766b21"
+        },
+        "proposalReport": {
+          "path": "retained-proposal/frozen-b0efd-approved-contributor-harness-proposal-20261012/report.json",
+          "sha256": "54a3545f9d1d36eabed28965e2b0d849dee894c996ce7414eee9ed369ede6ecd"
+        },
+        "scope": "The only helper delta adds an optional retained occurrence locator to storedArtifactBody. verify-hash reaches this module through test-canonical-prefix-supplier but uses projectStoreRuntime; the changed helper is neither imported nor invoked on that path. The required recoverable-history caller pair is present in the actual candidate."
+      }
+    },
+    "requirementSpecificEffect": "The reviewed checks are emitted before verify-hash performs its broad runtime script/source guard tail. Each uses hash.js plus independently literal expected canonical text/digest or schema canonical-number checks. None of the three changed inputs supplies an expected value or changes those production functions. The app/store tail invariants read by verify-hash are untouched; the changed test helper export is outside the canonical-prefix execution path.",
+    "catalogueTargetProjectionSha256": "043e9411f111511796be8134f266e84fdeec61aa4673977ef430942a6fa6e56f",
+    "catalogueTargetProjectionIdentical": true,
+    "priorCatalogueOnlyConditionSupersededForThisSuccessor": true,
+    "otherReviewedInputsMatchActualCandidate": true,
+    "semanticDecisionPreserved": true,
+    "testsRunByApplicabilityReviewer": false,
+    "ownersRunByApplicabilityReviewer": false,
+    "consumerRunByApplicabilityReviewer": false,
+    "receiptCreatedOrRestamped": false,
+    "currentExecutionClaim": false,
+    "diagnosticLimit": {
+      "defaultStorageOwnerResult": {
+        "path": "retained-diagnostic/frozen-b0efd-coherent-reconciliation-checks-20261012/storage-deadlines-result.json",
+        "sha256": "58de8a3ca3b505a845084223db1abef1b7adb3083e5c74b8b3a82d77d353e80c",
+        "status": "FAILED_OUTSIDE_FOCUSED_WEAKMAP_CASES"
+      },
+      "effect": "The broad storage diagnostic cannot be promoted as current evidence. Its unrelated worker fixture failures do not change the static applicability finding for the canonical hash assertions; a future current aggregate still requires the normal owners."
+    }
+  },
+  "recoveryPopulationCatalogueApplicabilityReview": {
+    "reviewer": {
+      "actor": "Codex bounded recovery-catalogue applicability reviewer (included GPT)",
+      "contextId": "review-context:content_record_final_source_review"
+    },
+    "reviewedAt": "2026-10-12T20:38:21.466400+00:00",
+    "priorReview": {
+      "path": "verification/requirement-coverage-NREQ-d6f8519fc2d36e59e4eba26af0442d14-20261012-stage15-fd58eb62-portable-v3-coherent-actual-8524974d.json",
+      "sha256": "a6399f2d94f8e105d10756a8bfa2ce16f07fdd55e8b1bdb2952a9094345340dc"
+    },
+    "cataloguePreimageSha256": "8524974d1cb3f0fda7005bce56168eb22021635f7454e143cecf2008ff802dc6",
+    "cataloguePostimageSha256": "8d8168422316cab305f661e4afaaee22babbc73e5d0676aa0a8ad9d4d71e4360",
+    "reviewedRecoveryProposal": {
+      "independentReviewPath": "/tmp/frozen-b0efd-recovery-population-closure-20261012/v3/independent-review.json",
+      "independentReviewSha256": "5e5b1c5290ed7b7658de8442b300087b46e54d9849a78b4d0ba7259bf898a8c1",
+      "qualification": "Catalogue predicate semantics approved for the exact private candidate; compatibility of the mutable actual recovery owner report remains pending and is not promoted here."
+    },
+    "exactCatalogueDelta": {
+      "addedLines": 45,
+      "removedLines": 1,
+      "changedSuite": "verify-recoverable-history.mjs",
+      "changedCheckId": "projection.recovery-controls",
+      "change": "Replace permissive 13-case marker selection with the reviewed exact 15-case route-specific recovery projection population; add its closed predicate constants/helper.",
+      "otherSuiteChanges": []
+    },
+    "selectedSuites": [
+      "verify-hash.mjs"
+    ],
+    "selectedChecks": [
+      {
+        "suite": "verify-hash.mjs",
+        "checkId": "canonical.exact-string-scalars-and-lines"
+      }
+    ],
+    "completeNormalizedTargetSuiteProjection": {
+      "preimageSha256": "043e9411f111511796be8134f266e84fdeec61aa4673977ef430942a6fa6e56f",
+      "postimageSha256": "043e9411f111511796be8134f266e84fdeec61aa4673977ef430942a6fa6e56f",
+      "identical": true
+    },
+    "changedReviewedInputs": [
+      {
+        "path": "verification-evidence-catalog.mjs",
+        "preimageSha256": "8524974d1cb3f0fda7005bce56168eb22021635f7454e143cecf2008ff802dc6",
+        "postimageSha256": "8d8168422316cab305f661e4afaaee22babbc73e5d0676aa0a8ad9d4d71e4360"
+      }
+    ],
+    "directDependencyApplicability": {
+      "verification-evidence-catalog.mjs": {
+        "applicable": true,
+        "reason": "The only changed suite/check is verify-recoverable-history.mjs/projection.recovery-controls. This record selects only the listed target suite/checks; those suite objects, check populations, and direct sourceInputs are unchanged."
+      }
+    },
+    "recoveryOwnerSourceDependency": "NOT_APPLICABLE_TO_THIS_ROW",
+    "recoveryOwnerSourceDependencyReason": "Neither verify-recoverable-history.mjs nor its mutable report/source is a selected suite, assertion source, production owner, or direct catalogue sourceInput for this record.",
+    "otherReviewedInputsCondition": "Every reviewed input other than verification-evidence-catalog.mjs is byte-identical to the prior review record.",
+    "semanticDecisionPreserved": true,
+    "originalDecision": "COMPLETE_COVERAGE",
+    "originalEvidenceBasis": "EXTERNALLY_SUPPORTED",
+    "testsRun": false,
+    "ownersRun": false,
+    "consumerRun": false,
+    "receiptCreatedOrRestamped": false,
+    "currentExecutionClaim": false,
+    "wholeClauseOrReleaseClaim": false
+  }
+}

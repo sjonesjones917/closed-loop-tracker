@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {createHash} from 'node:crypto';
-import {acceptPrerequisite,stage01AcceptanceFixture,boundedSearchProposal,registerFixtureSourceSearchCapability,stage04AcceptanceFixture,accumulatedStage04Fixture,evidence,stageHandoffRecoveryProof,scalarFor,recordProposal,stage04AcceptanceEnvelope} from './test-fixtures.mjs';
+import {acceptPrerequisite,stage01AcceptanceFixture,boundedSearchProposal,registerFixtureSourceSearchCapability,stage04AcceptanceFixture,accumulatedStage04Fixture,evidence,stageHandoffRecoveryProof,scalarFor,recordProposal,stage04AcceptanceEnvelope,stage04AcceptanceFixtureSource,stage02AcceptanceFixture} from './test-fixtures.mjs';
 import {projectStoreRuntime,bindAcceptanceUi,bindHandoffReviewUiState} from './test-project-store-runtime.mjs';
 import {authorizeSyntheticHandoff} from './test-handoff-authorization.mjs';
 import {readStoreArchive} from './test-zip.mjs';
@@ -43,12 +43,32 @@ console.log(JSON.stringify({responsePreparationFeedback:'PASS',synthetic:true,ac
 }
 
 
+// Reuse this owner's already-required Stage 1–3 setup as the serialization
+// regression. The missing-dependency fault must fail before any stage executes.
+function stage04SerializedFixture(runtime,fixtureRuntime,jobId){
+ const source=stage04AcceptanceFixtureSource(),expected=['scalarFor','recordProposal','evidence','acceptPrerequisite','stage01AcceptanceFixture','boundedSearchProposal','registerFixtureSourceSearchCapability','stage02AcceptanceFixture','stage04AcceptanceFixture'];
+ const definitions=vm.runInContext('(()=>{'+source+'\nreturn ['+expected.map(name=>'typeof '+name).join(',')+'];})()',runtime);
+ assert.deepEqual(Array.from(definitions),expected.map(()=>'function'),'STAGE04_FIXTURE_DEPENDENCY_ORACLE');
+ const omitted=stage02AcceptanceFixture.toString();assert.equal(source.split(omitted).length-1,1,'STAGE04_FIXTURE_FAULT_ANCHOR_ORACLE');
+ const hadBinding=Object.hasOwn(runtime,'__stage04FixtureBindings'),priorBinding=runtime.__stage04FixtureBindings;
+ runtime.__stage04FixtureBindings=fixtureRuntime;
+ try{
+  const expression=body=>'(()=>{'+body+'\nconst p=stage04AcceptanceFixture(__stage04FixtureBindings,'+JSON.stringify(jobId)+');if(Object.getPrototypeOf(p)!==Object.prototype)throw new Error("STAGE04_FIXTURE_REALM_ORACLE");return p;})()';
+  assert.throws(()=>vm.runInContext(expression(source.replace(omitted,'')),runtime),error=>error.name==='ReferenceError'&&error.message==='stage02AcceptanceFixture is not defined','STAGE04_FIXTURE_MISSING_DEPENDENCY_ORACLE');
+  const project=vm.runInContext(expression(source),runtime);
+  for(const stage of [1,2,3])assert.equal(fixtureRuntime.engine.gate(stage,project).complete,true,'STAGE04_FIXTURE_ACCEPTED_PREFIX_ORACLE: '+stage);
+  assert.deepEqual(Array.from(project.projectData.rawResponses,row=>[row.stage,JSON.parse(row.completeRawResponse).operation]),[[1,'COMPLETE'],[2,'COMPLETE'],[2,'SEARCH_ADEQUACY_REVIEW'],[3,'COMPLETE']],'STAGE04_FIXTURE_RESPONSE_SEQUENCE_ORACLE');
+  assert.equal(runtime.__stage04FixtureBindings,fixtureRuntime,'STAGE04_FIXTURE_RUNTIME_BINDING_ORACLE');
+  return project;
+ }finally{if(hadBinding)runtime.__stage04FixtureBindings=priorBinding;else delete runtime.__stage04FixtureBindings;}
+}
+
 // The selected operation, its instruction and its sole handoff must agree.
 {
  const runtime=createVerifierRuntime({Event:class Event{},dispatchEvent(){},document:{currentScript:null,querySelector:()=>null,querySelectorAll:()=>[]}});
  for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'])createVerifierRuntime.loadScript(runtime,fs.readFileSync(file,'utf8'),{filename:file});
  const schema=runtime.closedLoopWorkflowSchema,engine=runtime.closedLoopWorkflowEngine,fixtureRuntime={core:runtime.closedLoopCore,schema,engine,prompts:runtime.closedLoopPromptEngine,ingestion:runtime.closedLoopResponseIngestion},results=[];
- const fixture=stage04AcceptanceFixture(fixtureRuntime,'SELECTED-OPERATION-HANDOFF');
+ const fixture=stage04SerializedFixture(runtime,fixtureRuntime,'SELECTED-OPERATION-HANDOFF');
  for(const stage of Object.keys(fixture.stages).map(Number))for(const operation of schema.STAGE_CONTRACTS[stage].operations){
   const p=engine.clone(fixture);p.activeStage=stage;const before=JSON.stringify(p),rendered=appMarkup(runtime,p,{operations:{[stage]:operation},source:app,instructionEvidence:true}),match=rendered.html.match(/id="next-export-prompt-file" data-operation="([^"]+)"/),actual=match?.[1]||null;
   assert.equal(JSON.stringify(p),before,'SELECTED_OPERATION_HANDOFF_ORACLE: selection changed accepted data');
@@ -393,7 +413,7 @@ console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,r
   let p=runtime.closedLoopCore.createBlankState('JOB-RETURNED-REVISION-RECOVERY');p.activeStage=6;p.activeView='Workflow';p.revision=82;Object.assign(p.job,{CURRENT_SOURCE_SET_VERSION:'SYNTHETIC-SOURCES',CURRENT_RESEARCH_VERSION:'SYNTHETIC-RESEARCH',CURRENT_REQUIREMENTS_VERSION:'SYNTHETIC-REQUIREMENTS'});engine.ensureShape(p);p.stages[5].status='COMPLETE';p.stages[5].gate={complete:true};
   const saved=prompts.reserveAndBuildPromptRecord(p,6,{operation:'COMPLETE'}).prompt;
   p=ingestion.captureRaw(p,{stage:6,text:'{"broken":true}',promptRecord:saved,files:[{attachmentSlotId:'DESIGN',artifactId:'DESIGN-BYTES',name:'design.md',sha256:'retained-digest'}]}).project;
-  runtime.withStorageActivity=async(_label,operation)=>operation();runtime.current=p;runtime.projects=[p];runtime.ingestion=ingestion;runtime.engine=engine;runtime.schema=runtime.closedLoopWorkflowSchema;runtime.operatorScopeKeys=['inputVersion','sourceSetVersion','requirementsVersion','testSuiteVersion','instructionVersion','iterationId','candidateId','runId','contextId','baselineId','productId'];runtime.currentPromptEngineVersion=()=>prompts.version;
+  runtime.withStorageActivity=async(_label,operation)=>operation();runtime.current=p;runtime.projects=[p];runtime.ingestion=ingestion;runtime.engine=engine;runtime.schema=runtime.closedLoopWorkflowSchema;runtime.operatorScopeKeys=['inputVersion','sourceSetVersion','requirementsVersion','testSuiteVersion','instructionVersion','iterationId','candidateId','runId','contextId','baselineId','productId'];runtime.currentPromptEngineVersion=(stage,operation)=>prompts.versionFor(stage,operation);
   runtime.stageContinuationErrors=new Map();runtime.operationSelection={};
   let stored=structuredClone(p);stored.revision=p.revision+1;stored.projectData.userEntered.concurrentMarker='PRESERVE NEWER WORK';let staleWrites=0;
   // IndexedDB materializes plain objects in the application's realm. A host
@@ -464,7 +484,7 @@ console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,r
 const r=projectStoreRuntime(),t=r.runtime,s=fs.readFileSync(process.env.APP_SOURCE||'app-core.js','utf8');
 const extract=(a,b)=>s.slice(s.indexOf(a),s.indexOf(b,s.indexOf(a)+a.length));
 t.fixtureRuntime={core:r.core,schema:t.closedLoopWorkflowSchema,engine:r.engine,prompts:r.prompts,ingestion:r.ingestion,store:r.store};
-await vm.runInContext([scalarFor,recordProposal,evidence,acceptPrerequisite,stage01AcceptanceFixture,boundedSearchProposal,registerFixtureSourceSearchCapability,stage04AcceptanceFixture,accumulatedStage04Fixture].map(f=>f.toString()).join('\n')+'\n(async()=>{globalThis.fixture=await accumulatedStage04Fixture(fixtureRuntime,{jobId:"PROBE-5922",attempts:2,responseCharacters:128});})()',t);
+await vm.runInContext(stage04AcceptanceFixtureSource()+'\n'+accumulatedStage04Fixture.toString()+'\n(async()=>{globalThis.fixture=await accumulatedStage04Fixture(fixtureRuntime,{jobId:"PROBE-5922",attempts:2,responseCharacters:128});})()',t);
 // The accumulated helper seeds historical reservations before entering the
 // store. Advance through ordinary saves to its existing revision frontier so
 // fresh authorization cannot reuse a historical expired reservation identity.
@@ -485,7 +505,7 @@ await t.exportStageFiles();snapshots.exported=r.copy(t.current);
 const backup=await r.store.exportPackage(initial.job.JOB_ID);snapshots.backup=await r.store.readProject(initial.job.JOB_ID);
 snapshots.restored=await r.store.importPackage(backup);
 
- const hash=t.closedLoopHash,proof=stageHandoffRecoveryProof(initial,snapshots.backup,snapshots.restored,hash);
+ const hash=t.closedLoopHash,proof=stageHandoffRecoveryProof(initial,snapshots.backup,snapshots.restored,hash,{validateProjection:p=>r.store.validateProjectIntegrity(p)});
  for(const [key,value]of Object.entries(proof))if(typeof value==='boolean')assert.equal(value,true,'HANDOFF_PRESERVATION_ORACLE: '+key);
  assert.equal(snapshots.startup.projectData.generatedPrompts.length,initial.projectData.generatedPrompts.length+1,'HANDOFF_CURRENT_INSTRUCTION_ORACLE: stale scope must get a new current instruction');
  const current=t.currentPromptRecord(4),reservation=t.current.projectData.operationReservations.find(row=>r.engine.recordId(row,'operationReservations')===current.operationReservationId);
@@ -507,16 +527,27 @@ snapshots.restored=await r.store.importPackage(backup);
   ['unauthorized-appended-decision',p=>{p.projectData.humanDecisions.push(r.copy(p.projectData.humanDecisions[0]));}],
   ['retained-instruction-bytes',p=>{p.projectData.generatedPrompts[0].prompt+=' CORRUPTION';}],
   ['retained-history',p=>{p.projectData.history[0].eventType='CORRUPTION';}],
+  ['projection-receipt-corruption',p=>{p.projectData.applicationProjection.receipt.canonicalInputSha256='0'.repeat(64);}],
+  ['derived-job-state-forgery',p=>{p.job.CURRENT_STATE='READY_FOR_NEXT_OPERATION';}],
+  ['derived-state-valid-receipt',p=>{
+    p.job.CURRENT_STATE='READY_FOR_NEXT_OPERATION';
+    const projection=p.projectData.applicationProjection,input=r.engine.applicationProjectionInput(p,projection.observedAt,{observations:projection.inputObservations});
+    projection.receipt=t.schema.createApplicationDerivationReceipt({derivationKey:'project.currentProjection',canonicalInput:input,sourceRecordHashes:input.sourceBinding.records,output:r.engine.applicationProjectionOutput(p)});
+    assert.equal(r.engine.validateApplicationProjection(p,p,{useRetainedObservations:true}).valid,true,'HANDOFF_DERIVED_PROJECTION_ORACLE: signed forgery control must have a valid receipt.');
+    assert.equal(r.store.validateProjectIntegrity(p).valid,false,'HANDOFF_DERIVED_PROJECTION_ORACLE: a valid receipt must not authorize forged derived state.');
+  }],
+  ['restored-projection-corruption',p=>{p.projectData.applicationProjection.observedAt='2020-01-01T00:00:00.000Z';}],
+  ['unknown-extension-bytes',p=>{p.projectData.unregisteredExtension=r.copy({raw:'CORRUPTION'});}],
   ['restored-response-bytes',p=>{p.projectData.rawResponses[0].completeRawResponse+=' CORRUPTION';}]
  ]){
   const exported=r.copy(snapshots.backup),restored=r.copy(snapshots.restored);
   if(fault.startsWith('restored'))violate(restored);else {violate(exported);violate(restored);}
-  const bad={...accumulatedRoundTrip,...stageHandoffRecoveryProof(initial,exported,restored,hash)};
+  const bad={...accumulatedRoundTrip,...stageHandoffRecoveryProof(initial,exported,restored,hash,{validateProjection:p=>r.store.validateProjectIntegrity(p)})};
   assert.throws(()=>createVerifierRuntime.loadScript(createVerifierRuntime({accumulatedRoundTrip:bad,assert,JSON}),oracle),/changed exact retained data/,'HANDOFF_BROWSER_CORRUPTION_ORACLE: '+fault);
  }
  console.log(JSON.stringify({caseId:'HANDOFF_BROWSER_VALID_TRANSITION',result:'PASS',actualBrowser:false,attempts:2,responseCharacters:128,beforePrompts:initial.projectData.generatedPrompts.length,afterPrompts:snapshots.backup.projectData.generatedPrompts.length,proof}));
  t.current=await r.store.readProject(initial.job.JOB_ID);await t.savePromptRecord(4);
- const cdp=null,evalValue=async(_cdp,expression)=>vm.runInContext(expression,t),fixtureFunctions=[scalarFor,recordProposal,evidence,acceptPrerequisite,stage01AcceptanceFixture,boundedSearchProposal,registerFixtureSourceSearchCapability,stage04AcceptanceFixture,stage04AcceptanceEnvelope].map(fn=>fn.toString()).join('\n'),runtimeBindings='const runtime=fixtureRuntime;';
+ const cdp=null,evalValue=async(_cdp,expression)=>vm.runInContext(expression,t),fixtureFunctions=stage04AcceptanceFixtureSource()+'\n'+stage04AcceptanceEnvelope.toString(),runtimeBindings='const runtime=fixtureRuntime;';
   console.error('nonbrowser:large-history-execution-package');
   const executionContext=await evalValue(cdp,`(async()=>{${fixtureFunctions}\n${runtimeBindings}
     const store=closedLoopProjectStore,p=await store.readProject('PROBE-5922'),prompt=p.projectData.generatedPrompts.filter(row=>row.stage===4&&!row.invalidatedBy).at(-1),manifest=runtime.prompts.promptFileManifest(prompt),text=JSON.stringify(stage04AcceptanceEnvelope(runtime,p,prompt));

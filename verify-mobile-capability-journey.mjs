@@ -1,4 +1,4 @@
-import {verifyInboundArchiveOperator} from './test-inbound-archive-browser.mjs';
+import {verifyInboundArchiveOperator,verifyIntakeCapacityOperator} from './test-inbound-archive-browser.mjs';
 import {verifyHumanFallbackControls} from './test-human-fallback-controls.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -9,13 +9,14 @@ import {syntheticMobileTargetFacts} from './mobile-evidence-test-fixture.mjs';
 import {createOperatorBrowser} from './operator-browser-driver.mjs';
 
 const directory=path.resolve(process.env.MOBILE_EVIDENCE_DIR||'mobile-capability-evidence'),browser=await createOperatorBrowser({directory,captureExecution:true}),cases=[];
-let browserExecution,inboundArchiveJourney,complete=false;
+let browserExecution,inboundArchiveJourney,intakeCapacityJourney,complete=false;
 const record=(name,observation)=>{cases.push({name,result:'PASS',observation});console.log(JSON.stringify(cases.at(-1)));};
 async function panel(){await browser.click('[data-view="Workflow"]');await browser.fill('#stage-picker',30);}
 async function shownTarget(){return JSON.parse(await browser.evaluate(`document.querySelector('#mobile-acceptance-target-json').value`));}
 async function probeResult(){return browser.evaluate(`(()=>{const key=[...document.querySelectorAll('#mobile-acceptance-panel .record-key')].find(node=>node.textContent.trim().toLowerCase()==='capability probe');return key?.parentElement.innerText||'';})()`);}
 async function savedSession(target){return browser.evaluate(`closedLoopProjectStore.metaGet(${JSON.stringify('stage30MobileAcceptance.v1:'+target.testProjectId)})`);}
 try{
+  intakeCapacityJourney=await verifyIntakeCapacityOperator(browser);
   inboundArchiveJourney=await verifyInboundArchiveOperator(browser);
   await browser.click('#new-project');await panel();const page=await browser.evaluate(`({origin:location.origin,basePath:new URL('.',location.href).pathname,safariUserAgent:navigator.userAgent,viewport:{width:innerWidth,height:innerHeight,devicePixelRatio}})`),manifest=await (await fetch(new URL('closed-loop-deployment-manifest.json',page.origin+page.basePath))).json();
   const target={...syntheticMobileTargetFacts({performer:'SYNTHETIC_CHROMIUM_OPERATOR',buildIdentity:manifest.buildIdentity,deviceModel:'SYNTHETIC_CHROMIUM'}),preparationId:'SYNTHETIC-PREPARATION-'+randomUUID(),...page,sourceCommit:manifest.sourceCommit,deploymentManifestDigest:manifest.manifestDigest.digest,mobileAcceptanceTargetId:'SYNTHETIC-CAPABILITY-'+randomUUID(),challenge:randomUUID().replaceAll('-','')+randomUUID().replaceAll('-',''),testProjectId:'CAPABILITY-'+randomUUID(),procedureVersion:'actual-iphone-safari/1',deviceModel:'SYNTHETIC_CHROMIUM',iosVersion:'NOT_APPLICABLE',safariVersion:'NOT_APPLICABLE',physicalDeviceRequired:false};
@@ -46,5 +47,5 @@ try{
   const measured=await savedSession(target),failed=measured.observations.find(row=>row.kind==='ACCESSIBILITY_AND_OVERFLOW_VERIFIED'&&row.result==='FAIL'&&row.observation.horizontalOverflowPx>=20);assert.ok(failed,'MOBILE_BROWSER_MEASURED_FAILURE_ORACLE');await browser.reload();await panel();assert.ok((await savedSession(target)).observations.some(row=>row.receiptId===failed.receiptId&&row.result==='FAIL'&&row.observation.horizontalOverflowPx===failed.observation.horizontalOverflowPx),'MOBILE_BROWSER_MEASURED_FAILURE_RELOAD_ORACLE');record('actual measurement records controlled overflow failure and preserves it across reload',{receiptId:failed.receiptId,horizontalOverflowPx:failed.observation.horizontalOverflowPx,result:'FAIL',syntheticDomPerturbation:true});
   assert.deepEqual(browser.exceptions(),[]);await browser.inspect(1);browserExecution=await browser.executionEvidence();complete=true;
 }catch(error){cases.push({name:'journey failure',result:'FAIL',message:error.stack,visibleState:await browser.evaluate(`document.querySelector('#mobile-acceptance-panel')?.innerText||document.body.innerText`)});try{await browser.inspect(30);}catch{}console.error(error);process.exitCode=1;}
-finally{fs.writeFileSync(path.join(directory,'capability.json'),JSON.stringify({browserExecution,inboundArchiveJourney,complete,basis:'ACTUAL_CHROMIUM_FILE_TRANSPORT',physicalIPhoneAcceptance:false,cases,events:browser.events},null,2)+'\n');await browser.close();}
-console.log(JSON.stringify({mobileCapabilityJourney:complete,browserExecution,inboundArchiveJourney,cases,physicalIPhoneAcceptance:false}));
+finally{fs.writeFileSync(path.join(directory,'capability.json'),JSON.stringify({browserExecution,inboundArchiveJourney,intakeCapacityJourney,complete,basis:'ACTUAL_CHROMIUM_FILE_TRANSPORT',physicalIPhoneAcceptance:false,cases,events:browser.events},null,2)+'\n');await browser.close();}
+console.log(JSON.stringify({mobileCapabilityJourney:complete,browserExecution,inboundArchiveJourney,intakeCapacityJourney,cases,physicalIPhoneAcceptance:false}));

@@ -1,11 +1,38 @@
+import {verifyOperationalResponseMetricControls} from './test-operational-response-metrics.mjs';
+import {verifyAcceptedExternalResponseMetrics} from './test-accepted-external-response-metrics.mjs';
 import {projectStoreRuntime,bindArtifactFixture} from './test-project-store-runtime.mjs';
-import {canonicalFixtureRecord,reviewApplicabilityFixture} from './test-fixtures.mjs';
+import {canonicalFixtureRecord,reviewApplicabilityFixture,stage02AcceptanceFixture} from './test-fixtures.mjs';
 import {buildUnchangedConfirmationFixture} from './stage19-fixture.mjs';
 import {artifactFixtureId} from './test-artifact-fixtures.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 
+// §31 safety: diagnostic event proxies do not establish closed observation universes.
+function verifyOperationalMetricSafetyControls(source=fs.readFileSync('workflow-engine.js','utf8'),uiSource=fs.readFileSync('app-core.js','utf8')){
+ const r=createVerifierRuntime({Event:globalThis.Event||class Event{},dispatchEvent:()=>true});for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js'])createVerifierRuntime.loadScript(r,fs.readFileSync(file,'utf8'),{filename:file});createVerifierRuntime.loadScript(r,source,{filename:'workflow-engine.js'});const e=r.closedLoopWorkflowEngine,p=r.closedLoopCore.createBlankState('METRIC-SAFETY-CONTROL');e.ensureShape(p);const cases=[],failures=[],check=(id,fn)=>{try{fn();cases.push({caseId:id,passed:true});}catch(error){failures.push({caseId:id,message:error.message});}};
+ const unknown=(state)=>{const m=e.operationalMetrics(state);if(m.observedSilentFailures!==null||m.silentFailureObservationStatus!=='UNKNOWN')throw new Error('SILENT_FAILURE_UNIVERSE_UNKNOWN_ORACLE');if(m.humanCorrectionFrequency!==null||m.humanCorrectionFrequencyStatus!=='UNKNOWN')throw new Error('HUMAN_CORRECTION_UNIVERSE_UNKNOWN_ORACLE');if(m.zeroFailure95PercentUpperBound!==null)throw new Error('RULE_OF_THREE_EXISTING_SUPPRESSION_ORACLE');return m;};
+ check('existing-rule-of-three-suppression',()=>{if(e.operationalMetrics(p).zeroFailure95PercentUpperBound!==null)throw new Error('RULE_OF_THREE_EXISTING_SUPPRESSION_ORACLE');});
+ check('empty-history-universe-unproved',()=>unknown(p));
+ // Use the actual authoritative human-change command writer; SELF_ASSERTED is preserved.
+ e.invalidateStageForAuthorityChange(p,{stage:1,reason:'Literal human governing input correction.',operatorLabel:'SYNTHETIC HUMAN'});check('actual-human-event-with-empty-denominator-unproved',()=>{const row=p.projectData.history.find(x=>x.type==='STAGE_AUTHORITY_CHANGED');if(row?.identityAssurance!=='SELF_ASSERTED')throw new Error('HUMAN_EVENT_METADATA_PRESERVED_ORACLE');unknown(p);});
+ e.recordMigratedAcceptedChange(p,{changeId:'MIGRATED-SAFETY-1',stage:1,migrationSchema:'LITERAL-HISTORICAL-CONTROL'});check('migration-is-not-correction-universe',()=>{const m=unknown(p);if(m.operationalMetricProxies?.acceptedChangeInvalidationRatio!==1)throw new Error('CORRECTION_PROXY_ARITHMETIC_PRESERVED_ORACLE');if(p.projectData.acceptedChanges[0].source!=='DETERMINISTIC_MIGRATION')throw new Error('MIGRATION_WRITER_METADATA_PRESERVED_ORACLE');});
+ e.recordMigratedAcceptedChange(p,{changeId:'MIGRATED-SAFETY-2',stage:1,migrationSchema:'LITERAL-HISTORICAL-CONTROL'});check('migration-does-not-improve-observed-human-frequency',()=>{const m=unknown(p);if(m.operationalMetricProxies?.acceptedChangeInvalidationRatio!==0.5)throw new Error('MIGRATION_DILUTION_DIAGNOSTIC_ORACLE');});
+ p.projectData.history.push({type:'BASELINE_FROZEN',eventSequence:10});p.projectData.defects.push({id:'DEFECT-SAFETY',active:true,eventSequence:11,fields:{DEFECT_ID:'DEFECT-SAFETY',STATUS:'CONFIRMED'}});check('post-baseline-defect-is-not-silent-discovery-evidence',()=>{const m=unknown(p);if(m.operationalMetricProxies?.postBaselineActiveConfirmedDefects!==1)throw new Error('POST_BASELINE_PROXY_PRESERVED_ORACLE');});
+ check('other-project-not-inferred-empty-observation-universe',()=>unknown(r.closedLoopCore.createBlankState('OTHER-METRIC-PROJECT')));
+ check('actual-overview-shows-unknown',()=>{const state=r.closedLoopCore.createBlankState('UI-METRIC-PROJECT');e.ensureShape(state);const m=e.operationalMetrics(state),ctx=createVerifierRuntime({current:state,core:{STAGES:[]},engine:{workflowProgressState:()=>({completedStageCount:0,resolvedHistoricalStages:[],workflowComplete:false}),openBlockers:()=>[],operationalMetrics:()=>({...m,materiallyIndependentAcceptedOperations:1})},canonicalCurrentStage:()=>1,statusClass:()=>'',label:x=>x||'',esc:x=>String(x||''),safe:x=>Array.isArray(x)?x:[],nextActionMarkup:()=>'',stageList:()=>''}),start=uiSource.indexOf('function overview('),end=uiSource.indexOf('\nfunction ',start+1);createVerifierRuntime.loadScript(ctx,uiSource.slice(start,end)+';globalThis.metricSafetyOverview=overview;');const text=ctx.metricSafetyOverview();if(!text.includes('Observed silent failures: <strong>UNKNOWN</strong>')||text.includes('Zero silent failures observed'))throw new Error('METRIC_SAFETY_UI_UNKNOWN_ORACLE');});
+ return {passed:failures.length===0,cases,failures,synthetic:true,actualBrowser:false,closedMetricUniversesProved:false,boundary:'Two §31 unknown observation populations and already suppressed zero-failure bound only; actual command/migration writers and extracted overview, no closed observation universe or whole-metric conformance.'};
+}
+function verifyOperationalMetricSafetyFaultControls(source=fs.readFileSync('workflow-engine.js','utf8'),uiSource=fs.readFileSync('app-core.js','utf8')){
+ const faults=[];for(const [name,before,after,expectedCase,oracle]of [
+ ['silent-zero','observedSilentFailures:null','observedSilentFailures:0','empty-history-universe-unproved','SILENT_FAILURE_UNIVERSE_UNKNOWN_ORACLE'],
+ ['human-zero','humanCorrectionFrequency:null','humanCorrectionFrequency:0','empty-history-universe-unproved','HUMAN_CORRECTION_UNIVERSE_UNKNOWN_ORACLE'],
+ ['bound-favorable','zeroFailure95PercentUpperBound:null','zeroFailure95PercentUpperBound:0.3','existing-rule-of-three-suppression','RULE_OF_THREE_EXISTING_SUPPRESSION_ORACLE']]){
+ const at=source.indexOf('function metrics(p){'),body=source.slice(at);if(at<0||body.split(before).length!==2)throw new Error('METRIC_SAFETY_FAULT_ANCHOR:'+name);const result=verifyOperationalMetricSafetyControls(source.slice(0,at)+body.replace(before,after),uiSource);
+ if(!result.failures.some(row=>row.caseId===expectedCase&&row.message===oracle))throw new Error('METRIC_SAFETY_FAULT_NOT_DETECTED:'+name);faults.push({name,expectedCase,oracle,detected:true});}
+ return faults;
+}
+if(process.argv.includes('--operational-metric-safety-only')){const report=verifyOperationalMetricSafetyControls();if(report.passed)report.owningFaults=verifyOperationalMetricSafetyFaultControls();console.log(JSON.stringify({operationalMetricSafety:report},null,2));process.exit(report.passed?0:1);}
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
 for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
@@ -143,11 +170,12 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
 
 // Invalid canonical relationship is rejected before mutation.
 {
-  const p=project('JOB-BAD-REL'),stage=3;p.job.CURRENT_SOURCE_SET_VERSION='SYNTHETIC-SOURCES';p.stages[2].agentData.SOURCE_APPLICABILITY_DETERMINATION='NO_APPLICABLE_EXTERNAL_SOURCE';p.stages[2].status='COMPLETE';p.stages[2].gate={complete:true,blocked:false,reasons:[]};const pr=prompt(p,stage);
+  let p=project('JOB-BAD-REL');const stage=3;p.job.CURRENT_SOURCE_SET_VERSION='SYNTHETIC-SOURCES';p=stage02AcceptanceFixture({core,schema,engine,prompts,ingestion},p.job.JOB_ID,{project:p});const canonicalBefore={acceptedChanges:engine.clone(p.projectData.acceptedChanges),research:engine.clone(p.projectData.research)};const pr=prompt(p,stage);
   const e={schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:p.job.JOB_ID,stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{},records:{research:[{tempKey:'research-1',fields:{PASS_NUMBER:'1',EXACT_PORTION_EXAMINED:'Controlled source portion',FINDING_CLASSIFICATION:'FACT',SOURCE_EVIDENCE:'Controlled evidence'},relationships:{SOURCE_ID:{recordId:'SOURCE-DOES-NOT-EXIST'}},evidenceRefs:['evidence-1']}]},evidence:[{temporaryKey:'evidence-1',kind:'WORKFLOW_EVIDENCE',description:'Relationship validation fixture',location:'synthetic test',content:'controlled'}],unresolved:[],warnings:[],attachments:[]};
-  const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});
+  const text=JSON.stringify(e),prepared=ingestion.prepare(p,{stage,text,promptRecord:pr});
+  assert(prepared.proposal===null&&prepared.rawRecord.completeRawResponse===text,'Wrong-source rejection lost its exact raw bytes or created a proposal.');
   assert(!prepared.validation.valid&&prepared.validation.issues.some(x=>x.code==='UNRESOLVED_RELATIONSHIP'),'Invalid relationship was not rejected.');
-  assert(prepared.project.projectData.research.length===0&&prepared.project.projectData.acceptedChanges.length===0,'Invalid relationship partially mutated canonical state.');
+  assert(hash.sha256Value({acceptedChanges:prepared.project.projectData.acceptedChanges,research:prepared.project.projectData.research})===hash.sha256Value(canonicalBefore),'Invalid relationship partially mutated canonical state.');
 }
 
 // Structured blocking human question blocks the stage until answered and versions User Job Input.
@@ -395,12 +423,22 @@ console.log(JSON.stringify({reliabilityV2Execution:true,reliabilityV2Independenc
 }
 
 
-// reliability-hardening-final: Stage 22 exact product handoff, epistemic evidence, and release contradictions.
+// reliability-hardening-final: Stage 22 exact product handoff, cross-stage product-artifact equivalence, epistemic evidence, and release contradictions.
+let stage22ProductArtifactEquivalence;
 {
  const p=project('JOB-STAGE22-PRODUCT-HANDOFF');p.job.CURRENT_PRODUCT_ID='PRODUCT-HANDOFF';const scope={...engine.currentScope(p),productId:'PRODUCT-HANDOFF'};
- const productRecord=record('products',21,{PRODUCT_ID:'PRODUCT-HANDOFF',PRODUCT_VERSION:'PRODUCT-v001',BASELINE_ID:'BASELINE-HANDOFF',EXECUTION_ID:'EXEC-HANDOFF',PRODUCTION_CONTEXT_ID:'CTX-HANDOFF',INSTRUCTION_VERSION:'INSTRUCTION-v001',GENERATED_ARTIFACT_INVENTORY:['ARTIFACT-HANDOFF'],STATUS:'COMPLETED'},'PRODUCT-HANDOFF');productRecord.scope=scope;p.projectData.products.push(productRecord);
- const artifactRecord=record('artifacts',21,{FILENAME:'finished-product.bin',TYPE:'application/octet-stream',VERSION:'v1',BYTE_SIZE:4,SHA256:'a'.repeat(64),ROLE:'FINISHED_PRODUCT',STORAGE_REFERENCE:'indexeddb:ARTIFACT-HANDOFF',AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'},'ARTIFACT-HANDOFF');artifactRecord.scope=scope;p.projectData.artifacts.push(artifactRecord);
- const handoff=engine.executionHandoff(p,{stage:22,operation:'COMPLETE'});assert(handoff.send.some(x=>x.artifactId==='ARTIFACT-HANDOFF'&&x.filename==='finished-product.bin'),'Stage 22 handoff omitted exact current finished-product bytes.');
+ const productRecord=record('products',21,{PRODUCT_ID:'PRODUCT-HANDOFF',PRODUCT_VERSION:'PRODUCT-v001',BASELINE_ID:'BASELINE-HANDOFF',EXECUTION_ID:'EXEC-HANDOFF',PRODUCTION_CONTEXT_ID:'CTX-HANDOFF',INSTRUCTION_VERSION:'INSTRUCTION-v001',GENERATED_ARTIFACT_INVENTORY:['ARTIFACT-HANDOFF-A','ARTIFACT-HANDOFF-B'],STATUS:'COMPLETED'},'PRODUCT-HANDOFF');productRecord.scope=scope;productRecord.completionState='COMPLETED';p.projectData.products.push(productRecord);
+ const artifact=(id,filename,byteSize,sha256,productId='PRODUCT-HANDOFF')=>{const row=record('artifacts',21,{FILENAME:filename,TYPE:'application/octet-stream',VERSION:'v1',BYTE_SIZE:byteSize,SHA256:sha256,ROLE:'FINISHED_PRODUCT',STORAGE_REFERENCE:'indexeddb:'+id,AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'},id);row.scope={...scope,productId};return row;};
+ p.projectData.artifacts.push(artifact('ARTIFACT-HANDOFF-A','finished-product-a.bin',4,'a'.repeat(64)),artifact('ARTIFACT-HANDOFF-B','finished-product-b.bin',7,'b'.repeat(64)),artifact('ARTIFACT-FOREIGN','foreign-product.bin',9,'f'.repeat(64),'PRODUCT-OTHER'));
+ const exact=row=>({artifactId:row.artifactId,filename:row.filename,byteSize:row.byteSize,sha256:row.sha256,availability:row.availability,role:row.role}),sort=rows=>rows.map(exact).sort((a,b)=>a.artifactId.localeCompare(b.artifactId)),expected=[{artifactId:'ARTIFACT-HANDOFF-A',filename:'finished-product-a.bin',byteSize:4,sha256:'a'.repeat(64),availability:'BYTES_PERSISTED_AND_VERIFIED',role:'FINISHED_PRODUCT'},{artifactId:'ARTIFACT-HANDOFF-B',filename:'finished-product-b.bin',byteSize:7,sha256:'b'.repeat(64),availability:'BYTES_PERSISTED_AND_VERIFIED',role:'FINISHED_PRODUCT'}],observed=Object.fromEntries([22,23,24,25].map(stage=>[stage,sort(engine.executionHandoff(p,{stage,operation:'COMPLETE'}).send)])),cases=[],check=(caseId,fn)=>{fn();cases.push({caseId,passed:true});},same=(actual,want,oracle)=>assert(hash.stableStringify(actual)===hash.stableStringify(want),oracle);
+ check('stage22-literal-current-product-artifact-set',()=>same(observed[22],expected,'STAGE22_LITERAL_PRODUCT_ARTIFACT_SET_ORACLE'));
+ for(const stage of [23,24,25])check('stage22-stage'+stage+'-exact-product-artifact-equivalence',()=>same(observed[22],observed[stage],'STAGE22_STAGE'+stage+'_PRODUCT_ARTIFACT_EQUIVALENCE_ORACLE'));
+ check('foreign-product-excluded-from-stages22-through25',()=>assert(Object.values(observed).every(rows=>!rows.some(row=>row.artifactId==='ARTIFACT-FOREIGN')),'FOREIGN_PRODUCT_ARTIFACT_EXCLUSION_ORACLE'));
+ const mustReject=(caseId,mutate,oracle)=>check(caseId,()=>{const changed=structuredClone(observed);mutate(changed);let rejected=false;try{same(changed[22],expected,oracle);for(const stage of [23,24,25])same(changed[22],changed[stage],oracle);}catch(error){rejected=error.message===oracle;}assert(rejected,oracle+'_FAULT_NOT_DETECTED');});
+ mustReject('missing-stage22-product-member-detected',changed=>changed[22].pop(),'STAGE22_MISSING_PRODUCT_MEMBER_ORACLE');
+ mustReject('changed-stage23-product-byte-identity-detected',changed=>{changed[23][0].sha256='c'.repeat(64);},'STAGE23_CHANGED_PRODUCT_BYTE_IDENTITY_ORACLE');
+ mustReject('foreign-stage25-product-member-detected',changed=>{changed[25].push({artifactId:'ARTIFACT-FOREIGN',filename:'foreign-product.bin',byteSize:9,sha256:'f'.repeat(64),availability:'BYTES_PERSISTED_AND_VERIFIED',role:'FINISHED_PRODUCT'});},'STAGE25_FOREIGN_PRODUCT_MEMBER_ORACLE');
+ stage22ProductArtifactEquivalence={passed:true,cases,stagesCompared:[22,23,24,25],expectedArtifactIds:expected.map(row=>row.artifactId),synthetic:true,actualArtifactBytesRead:false,fullClauseProof:false,boundary:'Application-derived executionHandoff product-artifact metadata for one current two-artifact product, the three exact Stage 22 to Stage 23-25 comparisons, foreign-product exclusion, and three independently perturbed observation controls.'};
 }
 {
  const p=project('JOB-EPISTEMIC-EFFECTIVE'),scope=engine.currentScope(p),req=record('requirements',4,{OBLIGATION:'Meaning must be established.',MANDATORY_OPTIONAL_STATUS:'MANDATORY',STATUS:'ACTIVE'},'REQ-EPISTEMIC'),test=record('tests',6,{REQ_ID:'REQ-EPISTEMIC',TEST_TYPE:'MEANING',EXECUTION_MODE:'INDEPENDENT_AGENT_REVIEW',REQUIRED_CAPABILITY:'semantic review',ARTIFACT_REQUIREMENTS:'NONE',INPUTS:'product',TOOLS:'independent reviewer',PROCEDURE:'compare meaning',EXPECTED_RESULT:'SATISFIED',FAILURE_CONDITION:'meaning differs',EVIDENCE_TO_PRESERVE:'meaning comparison',STATUS:'READY'},'TEST-EPISTEMIC'),evidence=record('evidenceRecords',23,{KIND:'REVIEW_NOTE',DESCRIPTION:'generic note',AUTHORITY_TYPE:'INDEPENDENT_REVIEWER',LOCATION:'review',CONTENT:'review performed',STATUS:'PRESERVED'},'EVIDENCE-EPISTEMIC'),result=record('meaningResults',23,{REQ_ID:'REQ-EPISTEMIC',TEST_ID:'TEST-EPISTEMIC',PRODUCT_LOCATION:'',EXTERNAL_SOURCE_EVIDENCE:'',REQUIRED_MEANING:'required meaning',OBSERVED_MEANING:'required meaning',EVIDENCE_BASED_COMPARISON:'SATISFIED',DETERMINATION:'SATISFIED'},'MEAN-EPISTEMIC');req.scope=scope;test.scope=scope;evidence.scope=scope;result.scope=scope;result.evidenceRefs=['EVIDENCE-EPISTEMIC'];p.projectData.requirements.push(req);p.projectData.tests.push(test);p.projectData.evidenceRecords.push(evidence);p.projectData.meaningResults.push(result);const effective=engine.evaluateResultConsistency('meaningResults',result,test,p);assert(effective.determination==='UNDETERMINED'&&effective.reasons.some(x=>x.includes('PRODUCT_LOCATION')),'A structurally present but epistemically insufficient meaning result remained effectively satisfied.');
@@ -440,7 +478,7 @@ assert(JSON.stringify(schema.STAGE_OPERATIONS[19])===JSON.stringify(['CONFIRM_FR
   assert(schema.validateTestIRTest(native).valid===true,'Valid native Test IR test was rejected.');
   assert(engine.applicationTestCapabilities().includes('CLOSED_LOOP_TEST_IR'),'Closed Loop Test IR is not registered as an application-native capability.');
 }
-console.log(JSON.stringify({stage22ProductHandoff:true,epistemicEffectiveEvidence:true,releaseContradictions:true},null,2));
+console.log(JSON.stringify({stage22ProductHandoff:true,stage22ProductArtifactEquivalence,epistemicEffectiveEvidence:true,releaseContradictions:true},null,2));
 
 
 // stage04-captured-input-regression-v3
@@ -517,8 +555,14 @@ console.log(JSON.stringify({nativeHandoffNoExternalReturn:true,capabilityNegatio
   for(const run of p.projectData.runs){run.fields.EXECUTION_STATUS=run.EXECUTION_STATUS='COMPLETED';run.fields.COMPLETE_OUTPUT=run.COMPLETE_OUTPUT='controlled output';}
   metrics=engine.operationalMetrics(p);assert(metrics.materiallyIndependentAcceptedOperations===10,'Ten completed application-established run contexts did not count as ten independent accepted operations.');
 }
-console.log(JSON.stringify({reviewerIndependenceAuthority:true,truthfulOperationalMetrics:true},null,2));
+const acceptedExternalResponseMetrics=verifyAcceptedExternalResponseMetrics();
+console.log(JSON.stringify({reviewerIndependenceAuthority:true,truthfulOperationalMetrics:true,acceptedExternalResponseMetrics},null,2));
 
 await import('./verify-spec-residual-closure.mjs');
 
 await import('./verify-operation-scope-classification.mjs');
+
+const operationalMetricSafety=verifyOperationalMetricSafetyControls();assert(operationalMetricSafety.passed,'OPERATIONAL_METRIC_SAFETY_CONTROLS_ORACLE');operationalMetricSafety.owningFaults=verifyOperationalMetricSafetyFaultControls();console.log(JSON.stringify({operationalMetricSafety}));
+
+const operationalResponseMetrics=verifyOperationalResponseMetricControls();
+console.log(JSON.stringify({operationalResponseMetrics},null,2));

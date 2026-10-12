@@ -1,3 +1,4 @@
+import {verifyStage16OperatorActions} from './test-stage16-operator-action.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import {bindArtifactFixture} from './test-project-store-runtime.mjs';
 import fs from 'node:fs';
@@ -104,6 +105,38 @@ async function fixture(){
   return p;
 }
 
+// Section33: execute-only corrections preserve an actual current instruction,
+// not just a symbolic INSTRUCTION_CHANGE_DETERMINATION field. These are direct
+// plan/gate controls; prior Stage15 and accepted correction authority are synthetic.
+async function verifyExecutionOnlyInstructionPreservation(){
+ const cases=[];
+ for(const instructionChange of ['UNCHANGED','CHANGED']){
+  const p=await fixture(),scope=initialScope(p);
+  p.projectData.defects=[defect('EXECUTION-PRESERVE-DEFECT','A controlled execution ignored the governing instruction.',scope)];
+  p.projectData.rootCauses=[rca('EXECUTION-PRESERVE-RCA','EXECUTION-PRESERVE-DEFECT','EXECUTION',scope)];
+  p.projectData.changes=[change('EXECUTION-PRESERVE-CHANGE','EXECUTION-PRESERVE-DEFECT','EXECUTION',{oldVersion:'attempt-001',newVersion:'attempt-002',instructionChange,preflight:instructionChange==='CHANGED'?'REQUIRED':'NOT REQUIRED'},scope)];
+  const fields={OBJECTIVE:'Produce the exact controlled output.',AUTHORIZED_INPUTS:'The recorded controlled input.',FAILURE_HANDLING:'Stop and preserve the failed execution.',AUTHORITY_RULES:'Follow the current governing requirement.',SCOPE:'One controlled execution.',PROHIBITIONS:'Never edit this instruction to excuse an execution failure.',DEFINED_TERMS:'Controlled output means the specified output.',ORDERED_PROCEDURE:'Read the supplied input. Produce the specified output. Verify its exact content.',BRANCHES:'No alternate instruction path.',TOOL_REQUIREMENTS:'The declared controlled execution tool.',OUTPUT_CONTRACT:'One exact output under the governing instruction.',FACTUAL_STATE_HANDLING:'Keep recorded facts unchanged.',REJECTION_BLOCKING_RULES:'Reject unsupported instruction changes.',COMPLETION_CONDITIONS:'The controlled output matches the governing instruction.',REQUIREMENT_TRACEABILITY:'REQ-CONTROLLED',INSTRUCTION_TEXT:'Keep this exact production instruction.\nAn execution-only failure changes the attempt, not these governing words.'};
+  const instruction=record('instructions','PRODUCTION-INSTRUCTION-PRESERVE',8,fields,{},scope);p.projectData.instructions=[instruction];
+  assert.equal(engine.recordsForCurrentScope(p,'instructions').length,1,'EXECUTION_INSTRUCTION_CURRENT_SUBJECT_ORACLE');
+  const before=JSON.stringify(p.projectData.instructions),version=p.job.CURRENT_INSTRUCTION_VERSION;
+  assert.equal(version,'INSTRUCTION-v001','EXECUTION_INSTRUCTION_VERSION_SETUP_ORACLE');
+  const preserved=phase=>{
+   assert.equal(JSON.stringify(p.projectData.instructions),before,'EXECUTION_INSTRUCTION_EXACT_RECORD_PRESERVATION_ORACLE: '+phase+':'+instructionChange);
+   assert.equal(p.job.CURRENT_INSTRUCTION_VERSION,version,'EXECUTION_INSTRUCTION_VERSION_PRESERVATION_ORACLE: '+phase+':'+instructionChange);
+   assert.equal(p.projectData.instructions[0].fields.INSTRUCTION_TEXT,fields.INSTRUCTION_TEXT,'EXECUTION_INSTRUCTION_LITERAL_BODY_ORACLE');
+  };
+  const plan=engine.stage16CorrectionPlan(p);assert.equal(plan.actionType,'NO_SPECIFICATION_CHANGE','EXECUTION_INSTRUCTION_NO_EDIT_PLAN_ORACLE');preserved('PLAN');
+  const gate=engine.gate(16,p);
+  assert.equal(gate.complete,instructionChange==='UNCHANGED','EXECUTION_INSTRUCTION_GATE_DISPOSITION_ORACLE: '+instructionChange);
+  if(instructionChange==='CHANGED')assert(gate.reasons.some(reason=>/execution-only|preserve.*instruction/i.test(String(reason))),'EXECUTION_INSTRUCTION_REJECTION_REASON_ORACLE');
+  preserved('GATE');
+  cases.push({instructionChange,gateComplete:gate.complete,currentInstructionRecords:1,exactRecordIdentityAndHashesPreserved:true,exactBodyPreserved:true,versionPointerPreserved:true});
+ }
+ return {passed:true,cases,synthetic:true,actualAdmission:false,actualStorage:false,actualRerun:false,boundary:'Actual Stage16 plan/gate over synthetic execution-only RCA/correction authority and one explicit canonical instruction; original record, body, hashes and version pointer preserved. No correction commit, stored prior-byte or rerun journey claim.'};
+}
+const executionOnlyInstructionPreservation=await verifyExecutionOnlyInstructionPreservation();
+if(process.argv.includes('--execution-instruction-preservation-only')){console.log(JSON.stringify({executionOnlyInstructionPreservation}));process.exit(0);}
+
 // Intentional invalid fixture 1: one arbitrary changeset must not cover two confirmed RCAs.
 {
   const p=await fixture();
@@ -165,5 +198,6 @@ async function fixture(){
   assert.equal(gate.complete,true,`Repaired Stage 16 correction did not progress: ${gate.reasons.join('; ')}`);
 }
 
-console.log(JSON.stringify({rootCauseCorrection:'PASS',isolatedDisposableProjects:true,originalGateCases:6,initialCandidateByteCustodyNative:true,initialSelectionAndFreezeNative:true,priorStage15CompletenessSynthetic:true,acceptedStage16AuthoritySynthetic:true,authoredRcaAndCorrectionEvidenceSynthetic:true,runAuthoritySynthetic:true,actualExternalOrHumanExecution:false}));
+const stage16OperatorActions=await verifyStage16OperatorActions({fixture,engine,core,schema,rootCause:rca,defect,scopeFor:initialScope});
+console.log(JSON.stringify({stage16OperatorActions,executionOnlyInstructionPreservation,rootCauseCorrection:'PASS',isolatedDisposableProjects:true,originalGateCases:6,initialCandidateByteCustodyNative:true,initialSelectionAndFreezeNative:true,priorStage15CompletenessSynthetic:true,acceptedStage16AuthoritySynthetic:true,authoredRcaAndCorrectionEvidenceSynthetic:true,runAuthoritySynthetic:true,actualExternalOrHumanExecution:false}));
 console.error('verify-root-cause-correction: PASS');

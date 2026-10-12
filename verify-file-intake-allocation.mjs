@@ -18,17 +18,17 @@ const accepted=await store.readProject(source.job.JOB_ID);
 const artifacts=engine.records(accepted,'artifacts');
 assert.equal(artifacts.length,1,'Fixture must reach actual file intake and its durable canonical record.');
 const id=engine.recordId(artifacts[0],'artifacts'),prefix=runtime.closedLoopWorkflowSchema.RECORD_SCHEMAS.artifacts.prefix;
-console.log(JSON.stringify({sourceRevision:revision,operation:'Actual registerStageFiles handler, durable byte storage and canonical metadata commit',expected:'Every canonical artifact identity is allocated under closed-loop-id/1 and has a matching authoritative receipt in the same committed version.',actualArtifactId:id,requiredPattern:`^${prefix}-[0-9a-v]{32}$`,allocationReceipts:accepted.projectData.allocationReceipts.filter(row=>row.resultingId===id)},null,2));
+const report={sourceRevision:revision,operation:'Actual registerStageFiles handler, durable byte storage and canonical metadata commit',expected:'Every canonical artifact identity is allocated under closed-loop-id/1 and has a matching authoritative receipt in the same committed version.',actualArtifactId:id,requiredPattern:`^${prefix}-[0-9a-v]{32}$`,allocationReceipts:accepted.projectData.allocationReceipts.filter(row=>row.resultingId===id)};
 assert.match(id,new RegExp(`^${prefix}-[0-9a-v]{32}$`),'CANONICAL_INTAKE_IDENTITY_ORACLE: file intake must use the registered canonical artifact allocator.');
 assert.equal(accepted.projectData.allocationReceipts.filter(row=>row.resultingId===id).length,1,'CANONICAL_INTAKE_RECEIPT_ORACLE: committed artifact identity has one authoritative allocation receipt.');
 
 // The free-text inventory is optional. Actual retained input custody, rather
 // than that text or an arbitrary view entry, must drive the one-time file hint.
-// The file panel includes its Stage 01 input-correction disclosure, defined just before it.
-const markupStart=app.indexOf('function stageOneInputCorrectionMarkup('),markupEnd=app.indexOf('function runBatchMarkup(',markupStart);
-assert.ok(markupStart>=0&&markupEnd>markupStart,'Actual file-panel presentation owner is required.');
-Object.assign(runtime,{safe:engine.safe,esc:value=>String(value).replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char])),details:()=>'',displayedStageAction:()=>({expectedReturnFiles:[]}),currentStageProduct:()=>null});
-vm.runInContext(app.slice(markupStart,markupEnd),runtime,{filename:'app-core.js:artifactControlMarkup'});
+const inputMarkupStart=app.indexOf('function stageOneInputCorrectionMarkup('),markupStart=app.indexOf('function artifactControlMarkup(',inputMarkupStart),markupEnd=app.indexOf('function runBatchMarkup(',markupStart);
+assert.ok(inputMarkupStart>=0&&markupStart>inputMarkupStart&&markupEnd>markupStart,'Actual file-panel presentation owner and its Stage 01 input-correction dependency are required.');
+Object.assign(runtime,{safe:engine.safe,esc:String,details:()=>'',displayedStageAction:()=>({expectedReturnFiles:[]}),currentStageProduct:()=>null});
+vm.runInContext(app.slice(inputMarkupStart,markupEnd),runtime,{filename:'app-core.js:artifactControlMarkup'});
+assert.equal(typeof runtime.stageOneInputCorrectionMarkup,'function','Actual Stage 01 input-correction presentation dependency must load with the file-panel owner.');
 const guidance=project=>{runtime.current=project;return runtime.artifactControlMarkup(1,false);};
 assert.equal(String(accepted.job.SUPPLIED_MATERIALS_INVENTORY||'').trim(),'');
 assert.equal(engine.currentAuthorizedInputArtifacts(accepted).length,1);
@@ -48,4 +48,5 @@ assert.doesNotMatch(guidance(declaredOnly),/retained with verified bytes/,'DECLA
 await store.deleteArtifact(id,accepted.job.JOB_ID);
 assert.notEqual(engine.timingArtifactAvailability(accepted,id),'TRUE');
 assert.doesNotMatch(guidance(accepted),/retained with verified bytes/,'MISSING_BYTE_INTAKE_GUIDANCE_ORACLE');
-console.log(JSON.stringify({oneTimeFileGuidance:'PASS',actualRegisteredInput:true,optionalInventoryEmpty:true,emptyAndDeclaredAndMetadataOnlyControls:true,missingBytesNeverClaimedRetained:true}));
+Object.assign(report,{oneTimeFileGuidance:'PASS',actualRegisteredInput:true,optionalInventoryEmpty:true,emptyAndDeclaredAndMetadataOnlyControls:true,missingBytesNeverClaimedRetained:true});
+console.log(JSON.stringify(report,null,2));

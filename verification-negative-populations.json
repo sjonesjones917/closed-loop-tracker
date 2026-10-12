@@ -264,6 +264,11 @@
           "checkId": "projection.recovery-canonical-authority"
         },
         {
+          "caseId": "nested-export-current-stage",
+          "violation": "stageProjectionsOverridingCanonicalRecords",
+          "checkId": "projection.recovery-canonical-authority"
+        },
+        {
           "caseId": "nested-import-current-stage",
           "violation": "stageProjectionsOverridingCanonicalRecords",
           "checkId": "projection.recovery-canonical-authority"
@@ -285,6 +290,11 @@
         },
         {
           "caseId": "redo-derived-data",
+          "violation": "stageProjectionsOverridingCanonicalRecords",
+          "checkId": "projection.recovery-canonical-authority"
+        },
+        {
+          "caseId": "nested-export-derived-data",
           "violation": "stageProjectionsOverridingCanonicalRecords",
           "checkId": "projection.recovery-canonical-authority"
         },

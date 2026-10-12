@@ -1,0 +1,2648 @@
+{
+  "embeddedNamespaceCrosswalk": [
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0001",
+      "recordedSha256": "df61f8a6da3bb8b2c30381cf268f47ce97423928ed7130899611cb633de4df5a",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0020",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": []
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0002",
+      "recordedSha256": "50278359126b21cfdfcb1a888eb3a5263816040b8ed166ba97552b9cc3840138",
+      "standaloneIndexReferenceByExactDigest": null,
+      "targetCardinality": 0,
+      "v5AliasesForSameDigest": []
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0003",
+      "recordedSha256": "e5d2af1dc4a3aa891e24f812c8f85c4b4541040bbe0d06f2334a93128e4f2c98",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0057",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": [
+        "PRIV-0F5B9D151A5DE0E5"
+      ]
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0004",
+      "recordedSha256": "1c5c3f5f458c18f243cb8e3d3fdc7d981ae8bfd8ca760050ee5580b66531e63e",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0058",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": []
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0005",
+      "recordedSha256": "396ed9bb1cd05cd01977a3fd4b3ba96c3fc412f527a6a934257dfb127f5d3f48",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0059",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": [
+        "PRIV-009C2C361353B6EF"
+      ]
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0006",
+      "recordedSha256": "ae9d55ea7259008d39102d9a1a4cafbb049ed46524445ab0b805877ca1be6dd9",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0060",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": [
+        "PRIV-8E5683685B1CDF9D"
+      ]
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0007",
+      "recordedSha256": "906932961fe1162a4a834e2d1914c32e3ef4b4ef9005c633b86d94901ccc6526",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0061",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": [
+        "PRIV-583C59CC82B3CD86"
+      ]
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0008",
+      "recordedSha256": "fcbccd7a62bb9179bde5974767e934ffbc83322e505b2d75463f1d2d37a09db7",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0062",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": [
+        "PRIV-18A0E2BAE7D30522"
+      ]
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0009",
+      "recordedSha256": "4a78a76a85eb0c5649b717167d60ce741ec7a6da49f0899d7d33d35880da5148",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0063",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": [
+        "PRIV-CD84F50D2E2C10B8"
+      ]
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0010",
+      "recordedSha256": "06b59c72aa8d7634c6ada33f97fdd1bf984d1013d9a70080f794df82cada6614",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0064",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": [
+        "PRIV-D1322B66DEB03723"
+      ]
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0011",
+      "recordedSha256": "4faf2a8677b31361842e962cb4afebb94c41222b8a0c950a1a6fff2016b738b1",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0065",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": [
+        "PRIV-760787F37A5EFD18"
+      ]
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0012",
+      "recordedSha256": "05ba2e8cba6627cebc3454093b6be2ee61034a7817ea0bbd22e70704522cd8f7",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0066",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": [
+        "PRIV-1906DE4934401597"
+      ]
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0013",
+      "recordedSha256": "03363401732972b4ef59ae203f6adf3e04638d763a997daf17072265aa107e53",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0067",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": [
+        "PRIV-D5C3299C703EE6F6"
+      ]
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0014",
+      "recordedSha256": "46ed02cf77a3a6a16839163cef7de4fd0cb0adb61a36c6d49572afb903a6cda8",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0068",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": [
+        "PRIV-94B792EA7B3DA417"
+      ]
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0015",
+      "recordedSha256": "f834ff9d72f82490c55dbc4c488f03f68ba04e27666deafb987ddc1683968d49",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0069",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": [
+        "PRIV-EFBA074A92E7383F"
+      ]
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0016",
+      "recordedSha256": "18dfcdfdc7ced0f03ede35996843698be1963f40e057a937677bc880b514bc9d",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0070",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": [
+        "PRIV-02F29ACC8CD6A2C0"
+      ]
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0017",
+      "recordedSha256": "d52872dce58d38761a69a5937ccbf93572978c7db8844381a324ad4ddde23fbc",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0071",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": [
+        "PRIV-A275F3474145E63E"
+      ]
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0018",
+      "recordedSha256": "11e38b183edd13e76753d8ea84bea2e356ed239f963978f1b05f937b335ae714",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0072",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": [
+        "PRIV-49E59468D4F4D9ED"
+      ]
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0019",
+      "recordedSha256": "b72865353cb042f9829c4281736ad6a7773b2f72845868a7b5022f14c2235d75",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0073",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": [
+        "PRIV-CD56FEC5270D4571"
+      ]
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0020",
+      "recordedSha256": "a0046a1dc1defbef56ed45569e3512d7e2e6f067bc363319e24a51f39feea69d",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0074",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": [
+        "PRIV-6955D301F8D88C3E"
+      ]
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0021",
+      "recordedSha256": "d466530d2009971e96808bdcc501f3bd945a63d0a9c3411aea57a18b7c625ada",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0075",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": [
+        "PRIV-CFD1DC34509C645B"
+      ]
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0022",
+      "recordedSha256": "b14a689d4a184f6b20280cca6ce03537ad7535fd16b869f7e1407150ad438f4f",
+      "standaloneIndexReferenceByExactDigest": null,
+      "targetCardinality": 0,
+      "v5AliasesForSameDigest": []
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0023",
+      "recordedSha256": "84b22b7490d7e57cde4ddadee18dc91765169119687a75a77aabf17a3a1fe59f",
+      "standaloneIndexReferenceByExactDigest": null,
+      "targetCardinality": 0,
+      "v5AliasesForSameDigest": []
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0024",
+      "recordedSha256": "a441a4578976886936a531d93e7e8528901d298da536c4097d7aceb3df16a11a",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0077",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": [
+        "PRIV-B5CF5675C24A4F25"
+      ]
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0025",
+      "recordedSha256": "3220c6801c05a710ca953e54c10495fd93cb69236e7d8a8ccec3e5c3ff0092bf",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0078",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": [
+        "PRIV-484DB34706230DBB"
+      ]
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0026",
+      "recordedSha256": "970f769bda4fe67c75405c142da60246232b90c6548ac2d3f0f5037bd736db75",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0079",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": [
+        "PRIV-82101D232F260878"
+      ]
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0027",
+      "recordedSha256": "65f4cc4db53e0de2dd124499c8368981b9b92da9c21c0b2dc335b4ca479c21ce",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0080",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": [
+        "PRIV-AF8050D052F5563D"
+      ]
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0028",
+      "recordedSha256": "99653e49a804cd5c1b344fef1e6d434d0640f510379a6cb19b0ad9254f8172f3",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0081",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": [
+        "PRIV-2576854D3275D19F"
+      ]
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0029",
+      "recordedSha256": "54ac0125ce9a141c270ca52e77995f59750002b7c3e311df43aa8db701db3e51",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0082",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": [
+        "PRIV-7FB0AD02638F4AF4"
+      ]
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0030",
+      "recordedSha256": "66755e291b4ee9475756df032e9574125a32c7113c6924811c931a76e9b36b3c",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0083",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": [
+        "PRIV-5603FC7657FFA4F5"
+      ]
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0031",
+      "recordedSha256": "6a528c0bcfab69d4eeb7a011b5af73c3093032d43b84f163424b3778cddb30c5",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0084",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": [
+        "PRIV-022C44FF7D2880BA"
+      ]
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0032",
+      "recordedSha256": "e615f94196d65406dfb9040960b0983220299063cb8030f7aa49c9e1929e06c5",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0085",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": [
+        "PRIV-657122A82DC952B8"
+      ]
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0033",
+      "recordedSha256": "8ff16d7b66ecb6261446d1c9b974798cb8d3d42b29899129c1186f71bbcec742",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0086",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": [
+        "PRIV-15A4C63A8AE2B62F"
+      ]
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0034",
+      "recordedSha256": "62e7f5b76b7f73012d446cf4b153ffd7955b69b4c3d7f058d29783ef182d023e",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0087",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": [
+        "PRIV-57CDA68162563F52"
+      ]
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0035",
+      "recordedSha256": "dd3b35d0d83fb34e332ae6b2054ce43c4968da821a2e987de5147397f776ab19",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0088",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": [
+        "PRIV-A474D028FE4192EA"
+      ]
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0036",
+      "recordedSha256": "ead0647eafe6c075be2203402685b59fc751dfb1e8cf1a0f609d113adf7f8fc2",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0089",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": [
+        "PRIV-31E6A292AD457A6C"
+      ]
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0037",
+      "recordedSha256": "5987987985a75b7d22e7df92fb0253bbb6cdb46056726e16c32dc839eb25e8f7",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0090",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": [
+        "PRIV-7E94ADB3B4806524"
+      ]
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0038",
+      "recordedSha256": "32bd4cbf331bba4f01be0416529cf7d0f22d7363ca21138c6cba93d08c12f40b",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0091",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": [
+        "PRIV-D916E2E1F95ECE1C"
+      ]
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0039",
+      "recordedSha256": "f8c4292d8ee9d769887a8c4155a0af58af3f4c699f1b10efe856f6064813e708",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0092",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": [
+        "PRIV-7610CA84CE0E68EF"
+      ]
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0040",
+      "recordedSha256": "7120c07f030a645da5c71e89c5c6093be97dd8dd3b0f68b614cd48ad80738bf0",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0093",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": [
+        "PRIV-85C1A9548C3B22D4"
+      ]
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0041",
+      "recordedSha256": "fb98b7dbe468b2d6213debf1b2f34d32a9048c082f0fc8b2f00fdb8c1c16ba39",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0094",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": [
+        "PRIV-0F42F55E1FBE1945"
+      ]
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0042",
+      "recordedSha256": "2d825de4c2a41e68d4d228ca885ffbfcf9ec66e0de3226eae4daf8164e2a783d",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0095",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": [
+        "PRIV-E7CF21C8307F13F6"
+      ]
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0043",
+      "recordedSha256": "537d5dd786598d9682cc53187b1c7533308d9bbeb111b7da974688d43dfca189",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0096",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": [
+        "PRIV-B531C2CA9E60D35F"
+      ]
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0044",
+      "recordedSha256": "1bf6cfc46e30de1b8f56e4b4a701a0dfeb017204bd0c8f9fb1c42118834af6de",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0097",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": []
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0045",
+      "recordedSha256": "c3f0be15a8249e17c5ea36dd5da0343cd05a6e1316eed502e84651d9ff445554",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0098",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": []
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0046",
+      "recordedSha256": "85c5c39bd55abf8cb828b17f7fb9aae959c8d9d7ce3d31a6817916d75f9bbe12",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0099",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": []
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0047",
+      "recordedSha256": "3adc0617bbd8a8ee2025161ae0edb96123a7b94e66a488febfb0d4a1783fc3b5",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0100",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": []
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0048",
+      "recordedSha256": "90ddd1d5a9f94714e8903514af9b3fa3ed9e3dc8c6099ceda1e85167859f7974",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0101",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": []
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0049",
+      "recordedSha256": "112de75892fe81a8f52cfdb7e1e0a5e49e6fe47c532b2a1ad5fb2e5b486f7ac9",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0102",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": []
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0050",
+      "recordedSha256": "bb70a12a5c10e09c56838fcc139459bb5f8f4b05ad0db8e2aa137d63561a7649",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0103",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": []
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0051",
+      "recordedSha256": "0f611671ea4222f1befa285b95ae2486d07510316f6b2dbe26c56c4f0c635105",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0104",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": []
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0052",
+      "recordedSha256": "a7f39749818c4d7580f389deb9565dbc78083c926f7ea06c902cbb396bf338c8",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0105",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": []
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0053",
+      "recordedSha256": "ca261eda06bea2971d267e2c8f8c3f8456bd913a138022ab8a571b49fbcd2ca9",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0106",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": []
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0054",
+      "recordedSha256": "a8735d3c6e1f477b1e4f2fb62011f313b660a3f682a9d0880f07454303f3b450",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0107",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": []
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0055",
+      "recordedSha256": "699ef82eb165ed5403e7dec3e521ba1d47224c8ce723c7634774ff124af20cd9",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0108",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": []
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0056",
+      "recordedSha256": "f2b2bdf5eedaf23280a04d9d04fd67c03fe895568eb9e7031699afdf8ba3a1c4",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0109",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": []
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0057",
+      "recordedSha256": "ac6a05ea55ac5d8862270b423488e9d984602cf8eefa3ab15080ca6fc83f80b9",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0110",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": []
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0058",
+      "recordedSha256": "997c6932e894b8ea90e1e4a0dff31d7b8d019cdbcca52fab88e68b6fe85ab43e",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0111",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": []
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0059",
+      "recordedSha256": "0f2cbfac3279d23f9c5b09ac4737aa6bc67d9008a9d4af575b5ed09636ea14bb",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0112",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": []
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0060",
+      "recordedSha256": "2e599e4756842fd9b87ba218503fb81b26d85dc2bf2e01d725eebcc39db49acf",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0113",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": []
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0061",
+      "recordedSha256": "19145dffa16056b73600bd1693f49698a750024c9b64345f0d60d1024ea038c2",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0114",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": []
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0062",
+      "recordedSha256": "d290cdc60e91d1132722231b495c95f135b024b428da3d30e4f9be293dbc04aa",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0115",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": []
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0063",
+      "recordedSha256": "2f57ad996987550e7a452f8b9c0b459065abac941be618f7a5ed43eaf996842b",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0116",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": []
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0064",
+      "recordedSha256": "e6cd41294839dc0cd00830d67e7de0fe5110f128a06286dfb43ebde0851a1342",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0117",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": []
+    },
+    {
+      "affectedUniqueNreqIds": 9,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0065",
+      "recordedSha256": "7770f80b41ff047ec3f1883a7023ccd62d88e0905e4d2d50e08a0cf77417570e",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0118",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": [
+        "PRIV-BFB7A7C7A834AA92"
+      ]
+    },
+    {
+      "affectedUniqueNreqIds": 80,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0066",
+      "recordedSha256": "e3594462384bf8e5870adda753b433e57cda1d240b1bd8cc655fcad3868526e6",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0119",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": [
+        "PRIV-553075D6074FC634"
+      ]
+    },
+    {
+      "affectedUniqueNreqIds": 37,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0067",
+      "recordedSha256": "6e821b58352119b8a3f12e6fd414b24269988148aa16c2f7aa015e27600dfab8",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0120",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": [
+        "PRIV-57803402A5C4CC3C"
+      ]
+    },
+    {
+      "affectedUniqueNreqIds": 75,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0068",
+      "recordedSha256": "9ed76e667dc6e0f74581e00ddac58d735f6ff05032260ec37d52bc404952ddf7",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0121",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": [
+        "PRIV-957C813B163A86A0"
+      ]
+    },
+    {
+      "affectedUniqueNreqIds": 45,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0069",
+      "recordedSha256": "192acacbbc4eb1f8127fdb91148e27d261eecb0529f300fcb785a21852c76a75",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0122",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": [
+        "PRIV-492F106CCC73525E"
+      ]
+    },
+    {
+      "affectedUniqueNreqIds": 19,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0070",
+      "recordedSha256": "c99d442b3619467d2d9d20da68ec9c91c4b730419bdf64a1adfa9a6bf3a383a9",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0123",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": [
+        "PRIV-1C9025FF50305779"
+      ]
+    },
+    {
+      "affectedUniqueNreqIds": 80,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0071",
+      "recordedSha256": "4b55ac31dca20a50caa90478453cbd88c07d10bae86da73fb54eb61e1978014e",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0124",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": [
+        "PRIV-EFC775AB93D21A37"
+      ]
+    },
+    {
+      "affectedUniqueNreqIds": 80,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0072",
+      "recordedSha256": "63449750c1bfaefa646d7966038e7ad38143da8cae7fe53509f206ad75d7207e",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0125",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": [
+        "PRIV-4107B2B1F9A45A0B"
+      ]
+    },
+    {
+      "affectedUniqueNreqIds": 79,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0073",
+      "recordedSha256": "38659f99c8d8c3d8b1d9b182ae498e9a0ef7b492f18130238959314e8085a21e",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0126",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": [
+        "PRIV-A9B452F9CFE55CCE"
+      ]
+    },
+    {
+      "affectedUniqueNreqIds": 9,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0074",
+      "recordedSha256": "8cafdf4dbd7cb78b589b6723b7b7af450455718430f9b4af90b210e4eb347ba4",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0127",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": [
+        "PRIV-6212446F55035F63"
+      ]
+    },
+    {
+      "affectedUniqueNreqIds": 60,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0075",
+      "recordedSha256": "8e8c984eb5954706f46930b12fddbcf1f2bb4af2f0dbd79cca3cbf4546b84013",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0128",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": [
+        "PRIV-C965B27877C971B3"
+      ]
+    },
+    {
+      "affectedUniqueNreqIds": 25,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0076",
+      "recordedSha256": "0a764e66e528b56ed617450637c8de55378ddd86e365fcc6d412653f2cf261cc",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0129",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": [
+        "PRIV-4577479E11B2CB3F"
+      ]
+    },
+    {
+      "affectedUniqueNreqIds": 69,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0077",
+      "recordedSha256": "517240ef90c3475140abe9bc54ad0da18b5240208ab0c080503f1572bd2c12df",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0130",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": [
+        "PRIV-D4D8CFD8F9AAE14D"
+      ]
+    },
+    {
+      "affectedUniqueNreqIds": 30,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0078",
+      "recordedSha256": "a5bd0dee23cda24652ba9c4bd8a569880cdf16d8736d0dff9452b189335ecf92",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0131",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": [
+        "PRIV-8457BE8105C3C0EF"
+      ]
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0079",
+      "recordedSha256": "2876623984fe317121dfcaf3b111459eb3a7c59da18f998748aea6a6a9573cb9",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0132",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": []
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0080",
+      "recordedSha256": "2727b9df1c45940a850c7d122298f86fd03990e6d7ce402d9a0675401c7d2765",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0133",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": []
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0081",
+      "recordedSha256": "c0a80e0d3a697f0afe8ee05d2b50c919af3170d39559dbd07a0924f584b3a476",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0134",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": []
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0082",
+      "recordedSha256": "cce9a8c438a2da8166f8e7a7017b0d96ffc05a2643bbfe024486fe3f213e1e99",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0135",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": []
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0083",
+      "recordedSha256": "a93292646cec96dc81b9bdcd95ba586328e43b3ae2c38c05b69b650002de9d3a",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0136",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": []
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0084",
+      "recordedSha256": "25b961938a069b7842a5094ed39fd2ba9f7f8733f85309f42dbbf3f82fae68c7",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0137",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": []
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0085",
+      "recordedSha256": "7b2c65695d625d881c8d95c58f100866ac8ee42767dd44ca1e96d845f109cc5a",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0138",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": []
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0086",
+      "recordedSha256": "588c575359bd774d9fae6642582a70a1e1cf73cfa8a5243112cc3ae33f998fbf",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0139",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": []
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0087",
+      "recordedSha256": "318b91e85f8a8d8c264854da3af61c30bc582e18aec71cecd3a95b5cd5f6ea26",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0140",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": []
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0088",
+      "recordedSha256": "995e4568615e2a890cde206a16f2662735047d24065a6c4af34f24073aba95a6",
+      "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0141",
+      "targetCardinality": 1,
+      "v5AliasesForSameDigest": []
+    },
+    {
+      "affectedUniqueNreqIds": 0,
+      "evidenceAvailability": "private source only; reference/digest mapping is not evidence bytes",
+      "oldReference": "PRIVATE_EVIDENCE_REF_0089",
+      "recordedSha256": "579de427eabf52c1325490ba63a1961d729b252e1a8105c9e1e82e58dfb50a6b",
+      "standaloneIndexReferenceByExactDigest": null,
+      "targetCardinality": 0,
+      "v5AliasesForSameDigest": []
+    }
+  ],
+  "forecastScope": {
+    "exceptionPairs": [
+      {
+        "affectedNreqIds": [],
+        "disposition": "UNRESOLVED in standalone namespace: digest has no unique exact match; original forecast pointer is preserved",
+        "occurrenceCount": 4,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0052",
+        "portableJsonPointers": [
+          "forecast.packages.completePackageMap.storageBoundedPackages[51].reusableExactAssertionScope[2].sourceIdentity",
+          "forecast.packages.completePackageMap.storageBoundedPackages[52].reusableExactAssertionScope[1].sourceIdentity",
+          "forecast.packages.completePackageMap.storageBoundedPackages[53].reusableExactAssertionScope[0].sourceIdentity",
+          "forecast.packages.completePackageMap.storageBoundedPackages[56].reusableExactAssertionScope[1].sourceIdentity"
+        ],
+        "recordedSha256": "1efe5dcd319c0d7f0bbd0adda129f3f19775abb9a6eb703e7f00a1584d43ee25",
+        "standaloneIndexReferenceByExactDigest": null,
+        "targetCardinality": 0
+      },
+      {
+        "affectedNreqIds": [],
+        "disposition": "UNRESOLVED in standalone namespace: digest has no unique exact match; original forecast pointer is preserved",
+        "occurrenceCount": 1,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0054",
+        "portableJsonPointers": [
+          "forecast.packages.completePackageMap.storageBoundedPackages[55].reusableExactAssertionScope[1].sourceIdentity"
+        ],
+        "recordedSha256": "cde5bcfa56e44a0da24eba302f3b0f75c86035ee66312e842da0da18a58354cf",
+        "standaloneIndexReferenceByExactDigest": null,
+        "targetCardinality": 0
+      }
+    ],
+    "note": "These five occurrences are unresolved only against the separate standalone index; that does not establish a defect in the forecast\u2019s own reference namespace. Five repeated occurrences collapse to two ref/digest pairs; no requirement IDs are attached to those locations.",
+    "sameStemExplicitPairsChecked": 2166,
+    "sameStemPairsWithNoMatchingStandaloneSameLabelDigest": 5
+  },
+  "notChangedOrClaimed": {
+    "allCountsOrAssignmentsChanged": false,
+    "evidenceContentVerified": false,
+    "evidencePASSInferred": false,
+    "existingUploadedSnapshotChanged": false,
+    "originalCompleteWorkMapBytesChanged": false,
+    "originalMapReferenceValuesPreserved": true,
+    "originalStandaloneIndexBytesChanged": false,
+    "privatePathsOrEvidenceContentsIncluded": false,
+    "semanticAdequacyJudgment": false,
+    "standaloneReferenceSubstitutionAuthorized": false
+  },
+  "observedCauseAndBoundary": {
+    "embeddedDigestPairsWithOneExactStandaloneTarget": 85,
+    "embeddedDigestPairsWithoutUniqueStandaloneTarget": 4,
+    "embeddedLabelsAbsentFromStandaloneIndex": 0,
+    "embeddedLabelsWithDifferentSameLabelShaInStandaloneIndex": 89,
+    "embeddedReferenceEntries": 89,
+    "explanation": "The completed map and its row references use the same locally generated 89-reference namespace. All 1,950 explicit row pairs checked match their digest in that embedded table; within-map mismatch count is zero. The separate 141-entry portable index uses a conflicting namespace: all 89 same-number labels have different digests. The SHA-keyed entries below are a namespace-qualified lookup aid only. Never substitute standalone-index labels into the original map without reindexing its embedded table and all references together. The map creator script documents its sorted-path enumeration; no creator for the separate index was found, so the origin of the second namespace cannot be attributed.",
+    "explicitRowPairs": 1950,
+    "explicitRowPairsMatchingEmbeddedMapTable": 1950,
+    "explicitRowPairsMismatchingEmbeddedMapTable": 0,
+    "standaloneIndexEntries": 141,
+    "twoRowProof": [
+      {
+        "embeddedMapDigest": "517240ef90c3475140abe9bc54ad0da18b5240208ab0c080503f1572bd2c12df",
+        "originalMapReference": "PRIVATE_EVIDENCE_REF_0077",
+        "recordedSha256": "517240ef90c3475140abe9bc54ad0da18b5240208ab0c080503f1572bd2c12df",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0130",
+        "withinMapMatch": true
+      },
+      {
+        "embeddedMapDigest": "a5bd0dee23cda24652ba9c4bd8a569880cdf16d8736d0dff9452b189335ecf92",
+        "originalMapReference": "PRIVATE_EVIDENCE_REF_0078",
+        "recordedSha256": "a5bd0dee23cda24652ba9c4bd8a569880cdf16d8736d0dff9452b189335ecf92",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0131",
+        "withinMapMatch": true
+      }
+    ]
+  },
+  "recordedUtc": "2026-10-12",
+  "rowScope": {
+    "distinctAffectedNreqIds": 697,
+    "distinctOldReferenceAndDigestPairs": 61,
+    "distinctRowPairDigestsWithV5Alias": 52,
+    "explicitReferenceDigestOccurrences": 1950,
+    "namespaceQualifiedCrosswalkEntries": [
+      {
+        "affectedNreqIds": [],
+        "affectedUniqueNreqIds": 0,
+        "fieldPairs": [
+          {
+            "digestField": "sha256",
+            "referenceField": "path"
+          }
+        ],
+        "occurrenceCount": 9,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0003",
+        "recordedSha256": "e5d2af1dc4a3aa891e24f812c8f85c4b4541040bbe0d06f2334a93128e4f2c98",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0057",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [],
+        "affectedUniqueNreqIds": 0,
+        "fieldPairs": [
+          {
+            "digestField": "sha256",
+            "referenceField": "path"
+          }
+        ],
+        "occurrenceCount": 2,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0005",
+        "recordedSha256": "396ed9bb1cd05cd01977a3fd4b3ba96c3fc412f527a6a934257dfb127f5d3f48",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0059",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [],
+        "affectedUniqueNreqIds": 0,
+        "fieldPairs": [
+          {
+            "digestField": "sha256",
+            "referenceField": "path"
+          }
+        ],
+        "occurrenceCount": 9,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0006",
+        "recordedSha256": "ae9d55ea7259008d39102d9a1a4cafbb049ed46524445ab0b805877ca1be6dd9",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0060",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [],
+        "affectedUniqueNreqIds": 0,
+        "fieldPairs": [
+          {
+            "digestField": "sha256",
+            "referenceField": "path"
+          }
+        ],
+        "occurrenceCount": 6,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0007",
+        "recordedSha256": "906932961fe1162a4a834e2d1914c32e3ef4b4ef9005c633b86d94901ccc6526",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0061",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [],
+        "affectedUniqueNreqIds": 0,
+        "fieldPairs": [
+          {
+            "digestField": "sha256",
+            "referenceField": "path"
+          }
+        ],
+        "occurrenceCount": 2,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0008",
+        "recordedSha256": "fcbccd7a62bb9179bde5974767e934ffbc83322e505b2d75463f1d2d37a09db7",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0062",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [],
+        "affectedUniqueNreqIds": 0,
+        "fieldPairs": [
+          {
+            "digestField": "sha256",
+            "referenceField": "path"
+          }
+        ],
+        "occurrenceCount": 7,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0009",
+        "recordedSha256": "4a78a76a85eb0c5649b717167d60ce741ec7a6da49f0899d7d33d35880da5148",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0063",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [],
+        "affectedUniqueNreqIds": 0,
+        "fieldPairs": [
+          {
+            "digestField": "sha256",
+            "referenceField": "path"
+          }
+        ],
+        "occurrenceCount": 59,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0010",
+        "recordedSha256": "06b59c72aa8d7634c6ada33f97fdd1bf984d1013d9a70080f794df82cada6614",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0064",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [],
+        "affectedUniqueNreqIds": 0,
+        "fieldPairs": [
+          {
+            "digestField": "sha256",
+            "referenceField": "path"
+          }
+        ],
+        "occurrenceCount": 2,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0011",
+        "recordedSha256": "4faf2a8677b31361842e962cb4afebb94c41222b8a0c950a1a6fff2016b738b1",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0065",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [],
+        "affectedUniqueNreqIds": 0,
+        "fieldPairs": [
+          {
+            "digestField": "sha256",
+            "referenceField": "path"
+          }
+        ],
+        "occurrenceCount": 50,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0012",
+        "recordedSha256": "05ba2e8cba6627cebc3454093b6be2ee61034a7817ea0bbd22e70704522cd8f7",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0066",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [],
+        "affectedUniqueNreqIds": 0,
+        "fieldPairs": [
+          {
+            "digestField": "sha256",
+            "referenceField": "path"
+          }
+        ],
+        "occurrenceCount": 79,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0013",
+        "recordedSha256": "03363401732972b4ef59ae203f6adf3e04638d763a997daf17072265aa107e53",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0067",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [],
+        "affectedUniqueNreqIds": 0,
+        "fieldPairs": [
+          {
+            "digestField": "sha256",
+            "referenceField": "path"
+          }
+        ],
+        "occurrenceCount": 54,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0014",
+        "recordedSha256": "46ed02cf77a3a6a16839163cef7de4fd0cb0adb61a36c6d49572afb903a6cda8",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0068",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [],
+        "affectedUniqueNreqIds": 0,
+        "fieldPairs": [
+          {
+            "digestField": "sha256",
+            "referenceField": "path"
+          }
+        ],
+        "occurrenceCount": 80,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0015",
+        "recordedSha256": "f834ff9d72f82490c55dbc4c488f03f68ba04e27666deafb987ddc1683968d49",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0069",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [],
+        "affectedUniqueNreqIds": 0,
+        "fieldPairs": [
+          {
+            "digestField": "sha256",
+            "referenceField": "path"
+          }
+        ],
+        "occurrenceCount": 80,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0016",
+        "recordedSha256": "18dfcdfdc7ced0f03ede35996843698be1963f40e057a937677bc880b514bc9d",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0070",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [],
+        "affectedUniqueNreqIds": 0,
+        "fieldPairs": [
+          {
+            "digestField": "sha256",
+            "referenceField": "path"
+          }
+        ],
+        "occurrenceCount": 9,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0017",
+        "recordedSha256": "d52872dce58d38761a69a5937ccbf93572978c7db8844381a324ad4ddde23fbc",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0071",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [],
+        "affectedUniqueNreqIds": 0,
+        "fieldPairs": [
+          {
+            "digestField": "sha256",
+            "referenceField": "path"
+          }
+        ],
+        "occurrenceCount": 4,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0018",
+        "recordedSha256": "11e38b183edd13e76753d8ea84bea2e356ed239f963978f1b05f937b335ae714",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0072",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [],
+        "affectedUniqueNreqIds": 0,
+        "fieldPairs": [
+          {
+            "digestField": "sha256",
+            "referenceField": "path"
+          }
+        ],
+        "occurrenceCount": 2,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0019",
+        "recordedSha256": "b72865353cb042f9829c4281736ad6a7773b2f72845868a7b5022f14c2235d75",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0073",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [],
+        "affectedUniqueNreqIds": 0,
+        "fieldPairs": [
+          {
+            "digestField": "sha256",
+            "referenceField": "path"
+          }
+        ],
+        "occurrenceCount": 31,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0020",
+        "recordedSha256": "a0046a1dc1defbef56ed45569e3512d7e2e6f067bc363319e24a51f39feea69d",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0074",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [],
+        "affectedUniqueNreqIds": 0,
+        "fieldPairs": [
+          {
+            "digestField": "sha256",
+            "referenceField": "path"
+          }
+        ],
+        "occurrenceCount": 7,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0021",
+        "recordedSha256": "d466530d2009971e96808bdcc501f3bd945a63d0a9c3411aea57a18b7c625ada",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0075",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [],
+        "affectedUniqueNreqIds": 0,
+        "fieldPairs": [
+          {
+            "digestField": "sourceSha256",
+            "referenceField": "sourcePath"
+          }
+        ],
+        "occurrenceCount": 3,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0024",
+        "recordedSha256": "a441a4578976886936a531d93e7e8528901d298da536c4097d7aceb3df16a11a",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0077",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [],
+        "affectedUniqueNreqIds": 0,
+        "fieldPairs": [
+          {
+            "digestField": "sha256",
+            "referenceField": "path"
+          }
+        ],
+        "occurrenceCount": 32,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0025",
+        "recordedSha256": "3220c6801c05a710ca953e54c10495fd93cb69236e7d8a8ccec3e5c3ff0092bf",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0078",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [],
+        "affectedUniqueNreqIds": 0,
+        "fieldPairs": [
+          {
+            "digestField": "sha256",
+            "referenceField": "path"
+          }
+        ],
+        "occurrenceCount": 42,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0026",
+        "recordedSha256": "970f769bda4fe67c75405c142da60246232b90c6548ac2d3f0f5037bd736db75",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0079",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [],
+        "affectedUniqueNreqIds": 0,
+        "fieldPairs": [
+          {
+            "digestField": "sha256",
+            "referenceField": "path"
+          }
+        ],
+        "occurrenceCount": 28,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0027",
+        "recordedSha256": "65f4cc4db53e0de2dd124499c8368981b9b92da9c21c0b2dc335b4ca479c21ce",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0080",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [],
+        "affectedUniqueNreqIds": 0,
+        "fieldPairs": [
+          {
+            "digestField": "sha256",
+            "referenceField": "path"
+          }
+        ],
+        "occurrenceCount": 13,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0028",
+        "recordedSha256": "99653e49a804cd5c1b344fef1e6d434d0640f510379a6cb19b0ad9254f8172f3",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0081",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [],
+        "affectedUniqueNreqIds": 0,
+        "fieldPairs": [
+          {
+            "digestField": "sha256",
+            "referenceField": "path"
+          }
+        ],
+        "occurrenceCount": 40,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0029",
+        "recordedSha256": "54ac0125ce9a141c270ca52e77995f59750002b7c3e311df43aa8db701db3e51",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0082",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [],
+        "affectedUniqueNreqIds": 0,
+        "fieldPairs": [
+          {
+            "digestField": "sha256",
+            "referenceField": "path"
+          }
+        ],
+        "occurrenceCount": 28,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0030",
+        "recordedSha256": "66755e291b4ee9475756df032e9574125a32c7113c6924811c931a76e9b36b3c",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0083",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [],
+        "affectedUniqueNreqIds": 0,
+        "fieldPairs": [
+          {
+            "digestField": "sha256",
+            "referenceField": "path"
+          }
+        ],
+        "occurrenceCount": 27,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0031",
+        "recordedSha256": "6a528c0bcfab69d4eeb7a011b5af73c3093032d43b84f163424b3778cddb30c5",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0084",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [],
+        "affectedUniqueNreqIds": 0,
+        "fieldPairs": [
+          {
+            "digestField": "sha256",
+            "referenceField": "path"
+          }
+        ],
+        "occurrenceCount": 20,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0032",
+        "recordedSha256": "e615f94196d65406dfb9040960b0983220299063cb8030f7aa49c9e1929e06c5",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0085",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [],
+        "affectedUniqueNreqIds": 0,
+        "fieldPairs": [
+          {
+            "digestField": "sha256",
+            "referenceField": "path"
+          }
+        ],
+        "occurrenceCount": 68,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0033",
+        "recordedSha256": "8ff16d7b66ecb6261446d1c9b974798cb8d3d42b29899129c1186f71bbcec742",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0086",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [],
+        "affectedUniqueNreqIds": 0,
+        "fieldPairs": [
+          {
+            "digestField": "sha256",
+            "referenceField": "path"
+          }
+        ],
+        "occurrenceCount": 14,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0034",
+        "recordedSha256": "62e7f5b76b7f73012d446cf4b153ffd7955b69b4c3d7f058d29783ef182d023e",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0087",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [],
+        "affectedUniqueNreqIds": 0,
+        "fieldPairs": [
+          {
+            "digestField": "sha256",
+            "referenceField": "path"
+          }
+        ],
+        "occurrenceCount": 67,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0035",
+        "recordedSha256": "dd3b35d0d83fb34e332ae6b2054ce43c4968da821a2e987de5147397f776ab19",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0088",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [],
+        "affectedUniqueNreqIds": 0,
+        "fieldPairs": [
+          {
+            "digestField": "sha256",
+            "referenceField": "path"
+          }
+        ],
+        "occurrenceCount": 26,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0036",
+        "recordedSha256": "ead0647eafe6c075be2203402685b59fc751dfb1e8cf1a0f609d113adf7f8fc2",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0089",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [],
+        "affectedUniqueNreqIds": 0,
+        "fieldPairs": [
+          {
+            "digestField": "sha256",
+            "referenceField": "path"
+          }
+        ],
+        "occurrenceCount": 23,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0037",
+        "recordedSha256": "5987987985a75b7d22e7df92fb0253bbb6cdb46056726e16c32dc839eb25e8f7",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0090",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [],
+        "affectedUniqueNreqIds": 0,
+        "fieldPairs": [
+          {
+            "digestField": "sha256",
+            "referenceField": "path"
+          }
+        ],
+        "occurrenceCount": 23,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0038",
+        "recordedSha256": "32bd4cbf331bba4f01be0416529cf7d0f22d7363ca21138c6cba93d08c12f40b",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0091",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [],
+        "affectedUniqueNreqIds": 0,
+        "fieldPairs": [
+          {
+            "digestField": "sha256",
+            "referenceField": "path"
+          }
+        ],
+        "occurrenceCount": 20,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0039",
+        "recordedSha256": "f8c4292d8ee9d769887a8c4155a0af58af3f4c699f1b10efe856f6064813e708",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0092",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [],
+        "affectedUniqueNreqIds": 0,
+        "fieldPairs": [
+          {
+            "digestField": "sha256",
+            "referenceField": "path"
+          }
+        ],
+        "occurrenceCount": 2,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0040",
+        "recordedSha256": "7120c07f030a645da5c71e89c5c6093be97dd8dd3b0f68b614cd48ad80738bf0",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0093",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [],
+        "affectedUniqueNreqIds": 0,
+        "fieldPairs": [
+          {
+            "digestField": "sha256",
+            "referenceField": "path"
+          }
+        ],
+        "occurrenceCount": 60,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0041",
+        "recordedSha256": "fb98b7dbe468b2d6213debf1b2f34d32a9048c082f0fc8b2f00fdb8c1c16ba39",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0094",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [],
+        "affectedUniqueNreqIds": 0,
+        "fieldPairs": [
+          {
+            "digestField": "sha256",
+            "referenceField": "path"
+          }
+        ],
+        "occurrenceCount": 44,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0042",
+        "recordedSha256": "2d825de4c2a41e68d4d228ca885ffbfcf9ec66e0de3226eae4daf8164e2a783d",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0095",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [],
+        "affectedUniqueNreqIds": 0,
+        "fieldPairs": [
+          {
+            "digestField": "sha256",
+            "referenceField": "path"
+          }
+        ],
+        "occurrenceCount": 1,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0043",
+        "recordedSha256": "537d5dd786598d9682cc53187b1c7533308d9bbeb111b7da974688d43dfca189",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0096",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [],
+        "affectedUniqueNreqIds": 0,
+        "fieldPairs": [
+          {
+            "digestField": "sha256",
+            "referenceField": "path"
+          }
+        ],
+        "occurrenceCount": 5,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0061",
+        "recordedSha256": "19145dffa16056b73600bd1693f49698a750024c9b64345f0d60d1024ea038c2",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0114",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [],
+        "affectedUniqueNreqIds": 0,
+        "fieldPairs": [
+          {
+            "digestField": "sha256",
+            "referenceField": "path"
+          }
+        ],
+        "occurrenceCount": 6,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0062",
+        "recordedSha256": "d290cdc60e91d1132722231b495c95f135b024b428da3d30e4f9be293dbc04aa",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0115",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [],
+        "affectedUniqueNreqIds": 0,
+        "fieldPairs": [
+          {
+            "digestField": "sha256",
+            "referenceField": "path"
+          }
+        ],
+        "occurrenceCount": 21,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0063",
+        "recordedSha256": "2f57ad996987550e7a452f8b9c0b459065abac941be618f7a5ed43eaf996842b",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0116",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [],
+        "affectedUniqueNreqIds": 0,
+        "fieldPairs": [
+          {
+            "digestField": "sha256",
+            "referenceField": "path"
+          }
+        ],
+        "occurrenceCount": 18,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0064",
+        "recordedSha256": "e6cd41294839dc0cd00830d67e7de0fe5110f128a06286dfb43ebde0851a1342",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0117",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [
+          "NREQ-232e3d6afe3850d6fb782b0840ed33a0",
+          "NREQ-44d0e36315d9a8734eaa3a36e4aa0743",
+          "NREQ-5cced37504f11842d4a49ab2b083b581",
+          "NREQ-865b3aa0a2544e606a8d85ebf69fe08e",
+          "NREQ-882e6efab7567e6a5315b6955748f794",
+          "NREQ-9028caa01da209427aae2b21dc2673b6",
+          "NREQ-bfa071ffe7fa2a6dca2c225354122065",
+          "NREQ-c81bb3560b0bf4f17e50d0a5e565bd01",
+          "NREQ-df8f402e41c9bdd576f20a56dddbb724"
+        ],
+        "affectedUniqueNreqIds": 9,
+        "fieldPairs": [
+          {
+            "digestField": "reviewReceiptSha256",
+            "referenceField": "reviewReceiptPath"
+          }
+        ],
+        "occurrenceCount": 9,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0065",
+        "recordedSha256": "7770f80b41ff047ec3f1883a7023ccd62d88e0905e4d2d50e08a0cf77417570e",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0118",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [
+          "NREQ-012f85cfd2196b3413752b3deb14edf0",
+          "NREQ-092f78e488e6282f342b533fa7801e3e",
+          "NREQ-0a4bd97708ec095260d15402b891ad2b",
+          "NREQ-0e5f6d324456aa0155e6a9a1b5232fa1",
+          "NREQ-1483b28da6ff112dc9123e8455005fe9",
+          "NREQ-14c34af7bb0535234f93fb004e0e9ef3",
+          "NREQ-1543275bf85c6f452bce3c65a31dd691",
+          "NREQ-178819f4c44ad7250656e79d18a8cae3",
+          "NREQ-1e002259d64a939cee2f2a41f4bf3515",
+          "NREQ-2323c8d363fd8c29f965d8c0e67549ae",
+          "NREQ-2969c103b4ac33435f1e5d6c258a7b7b",
+          "NREQ-2b66925ed746f4edc554b6e9df9b98c4",
+          "NREQ-2d19151b4d295e17f8486d68d2f909c8",
+          "NREQ-3773e3c09e77cc4938bda066a930e757",
+          "NREQ-37a2fe702063bfc126738fee8bcbd4da",
+          "NREQ-3c6085e807a3789dc0eb874c4fef1787",
+          "NREQ-3cfb348c3b0a0f28ac42b5ef02fa217d",
+          "NREQ-42346e5b0c40cb0521d16109356000f7",
+          "NREQ-4592c9487837c81077b166abf57bb4a7",
+          "NREQ-529b6f9b3c5b7ef1fd478fcbf72db819",
+          "NREQ-55f458162d319bfbb710223b3528ef9f",
+          "NREQ-5625bb896d8c8fdbc8816ab0006fb781",
+          "NREQ-5930e2002cf0063f192c9a8da089ac73",
+          "NREQ-595ff4d66406e3bd9529e12f036c882b",
+          "NREQ-5d9d976d449de0753c8c4f1692905b62",
+          "NREQ-5dcc48766a8c419712125659b9328ed2",
+          "NREQ-606a27b2b9b712e933dda6e0e7b0ce68",
+          "NREQ-60e6bd411553d8951de0e1bbff5fe42a",
+          "NREQ-621d5f7e000ff2bcf9b817b4229ba8e2",
+          "NREQ-62c99c2b72a9d8bd76ae77a0540f340f",
+          "NREQ-6839238c5b7c2ac053fe90b061149fbe",
+          "NREQ-6a5e773812226552e3448329be3966cd",
+          "NREQ-6c9dbd622e90fb226f491908cfd50b97",
+          "NREQ-75151f881444015977da6a6d7d86cb1c",
+          "NREQ-75b53217a5923f55a27f875065b2c28f",
+          "NREQ-7643f1fb351e295ecb8565583cb9a37f",
+          "NREQ-797b5fe50f9d13ae34d17cc98c7c8f24",
+          "NREQ-79daf4b6f8791e36816380c9d96863ff",
+          "NREQ-7b5bab2e0dcf4ec2334d3a67f20fda46",
+          "NREQ-7d4fdaa179bd6f2bbf08e1c63b89519d",
+          "NREQ-806b04832809e8ae25e623917dee9a50",
+          "NREQ-8253a88af292c64ab651c6a175ba19b0",
+          "NREQ-867097323ae6ec454104216021739977",
+          "NREQ-8c41603ad62858c2a6e2fa6babd5d40d",
+          "NREQ-9094db38f0cd4bd83b5fedd5f24a71b9",
+          "NREQ-92b870d0d2245e99909d2de6229cf833",
+          "NREQ-92ddad11c3370531a5ecd18751d4bf77",
+          "NREQ-9816d18225e1fd1996c4ac00dadd9779",
+          "NREQ-9e0ad66ef878f9e97c909997e976cc13",
+          "NREQ-9f719c41e067825af659aa6e3285d964",
+          "NREQ-a54b3aecad7e04d33cf3e5bdc0734415",
+          "NREQ-a7ce597403356aa919328f87611d9e30",
+          "NREQ-a99b13aa6aa9c7ffa4b65010951f18ec",
+          "NREQ-ac56cc341e3ff24380bef0ff95da8e45",
+          "NREQ-b04395198a63faa09666a1bfca300a1e",
+          "NREQ-b2365a86e7b98a508600677609f37ac1",
+          "NREQ-b366c2ac73e0e846627de23589a5a772",
+          "NREQ-b67c348ca653ff5a19ba01272dfd4262",
+          "NREQ-bc997511e2328af90b68d1898bcf6ed7",
+          "NREQ-bde18b0504b7485cf77fad020a4a494b",
+          "NREQ-c0a2fa84e2aafe674742a0bb98c40e02",
+          "NREQ-c653910b9ad114f3957a994830c17d91",
+          "NREQ-c999161135d903d2d37cfadf7ea8542b",
+          "NREQ-d2fa27e805583d3a5c7d281ed7051950",
+          "NREQ-d4bfec4d44399b539e41e237d1803249",
+          "NREQ-d6eeb36f75c6f6f6854a2e3aa9ac2070",
+          "NREQ-d8463dfff1b6adabc30cd27d25b2d3d4",
+          "NREQ-d92f2e4db0673115e267de2640c5d96f",
+          "NREQ-da451a908ba4a4b028e03107ca54afb2",
+          "NREQ-dce65b97f54aab94616709b06bf06414",
+          "NREQ-e0b91994f249e0b795ab80a6e3f4a4a2",
+          "NREQ-e61cda734fb2bd78b881c7ebfdb4ef21",
+          "NREQ-ea3478ff4f44e2f6d381fdcd43954e59",
+          "NREQ-ec756b9a468c4ea50f2d35c578a1a11a",
+          "NREQ-ed93a18f54bcdb7a74b8aa3c591bd4d8",
+          "NREQ-f394d58f4a40fdf8dab74f92be924c25",
+          "NREQ-f6e1df45974ccc5d32aafbc5f38dd535",
+          "NREQ-f9b4405a3333215204129caed30dc5e7",
+          "NREQ-fb704a73d42766fc421d61bf29fc9fae",
+          "NREQ-ff6c454e36be6ed2e78201186509c537"
+        ],
+        "affectedUniqueNreqIds": 80,
+        "fieldPairs": [
+          {
+            "digestField": "reviewReceiptSha256",
+            "referenceField": "reviewReceiptPath"
+          }
+        ],
+        "occurrenceCount": 80,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0066",
+        "recordedSha256": "e3594462384bf8e5870adda753b433e57cda1d240b1bd8cc655fcad3868526e6",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0119",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [
+          "NREQ-02b9539a860e41f9e27e943922a934e2",
+          "NREQ-1055bf0f9af71218ddcb98831d0cc1ce",
+          "NREQ-10d2b22bed9baca81b559f6f6e4b3f34",
+          "NREQ-16220cbed6692640830203fac95cc7ef",
+          "NREQ-1955b1bb1e03b84195c1e5d992d14dab",
+          "NREQ-20c023df2d8e2ab220adabd191231929",
+          "NREQ-285165a035577b2a782c67f7b0828a97",
+          "NREQ-287f55c7f0456d0766d7045a3b21e15d",
+          "NREQ-293834c0fdbefd981d71ac190fcc6b4e",
+          "NREQ-2dcf35af81c79ae53a35f88575f715ab",
+          "NREQ-302e3a8509110ac903ccbf5df33442f2",
+          "NREQ-38cc440932653f635d781450303b4f7f",
+          "NREQ-49c1165a0f1993e4db5d713a6e83e6d4",
+          "NREQ-49e02b9eebfdb4390d68439edad31cc5",
+          "NREQ-526d74bfb3b2ca602dcad65be8f7573c",
+          "NREQ-528601784324e58a4f2aea7f3f5ba442",
+          "NREQ-562cc3b146ee6968933caa96c0e1e451",
+          "NREQ-5bfd36d24585188092b1adbaf0ea2b0b",
+          "NREQ-5ef09e6a03791167b964394dbb9b515c",
+          "NREQ-65584ce694c7d3349af6af4eeaa54392",
+          "NREQ-6e876d599f54e03ca1f549cd870f4aa6",
+          "NREQ-6edd4c40bb7da31835669f3284130824",
+          "NREQ-7a9f1234c0f5cb1e0eb0cad25ab477c7",
+          "NREQ-7e5b8d3856903163ae39c604bca8b0d0",
+          "NREQ-a4f69f7575172a4db3beba6ca124d519",
+          "NREQ-b096964c24a36180c014dd1aeb7cc683",
+          "NREQ-b0df53c5bb2160c660a516acf260b6c7",
+          "NREQ-b6d9425315f51cd48db2416a28e8e87d",
+          "NREQ-c5bd4349c03ee0ebc0e8dff63e69a2e6",
+          "NREQ-c5c388faca4975e21b73c14bffbcd6a0",
+          "NREQ-d34bd5d239061f6baa622044707222d8",
+          "NREQ-d997551de68e51d79301dd6ca02f9400",
+          "NREQ-de3edd99eeda7ef4f7da0062049fb1d8",
+          "NREQ-e6083926e57a07795024b2e33f1fbc2a",
+          "NREQ-f8b75e888278368c5e11f58cab3de3d1",
+          "NREQ-fbe4969ff1caa51099274816bd850ae3",
+          "NREQ-fd11d32533eded72fb27014d349e4d37"
+        ],
+        "affectedUniqueNreqIds": 37,
+        "fieldPairs": [
+          {
+            "digestField": "reviewReceiptSha256",
+            "referenceField": "reviewReceiptPath"
+          }
+        ],
+        "occurrenceCount": 37,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0067",
+        "recordedSha256": "6e821b58352119b8a3f12e6fd414b24269988148aa16c2f7aa015e27600dfab8",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0120",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [
+          "NREQ-05b98791ed9c8223fd14f52e2f211a29",
+          "NREQ-0c3d65721b24f29987652eacfdb5664f",
+          "NREQ-0f2c2bf0e08e9c865d0f66dbdaa46dcc",
+          "NREQ-1110c48bf0ac007ab9bebb95eba561b8",
+          "NREQ-118996b54db3b2d0b25051e498ef26de",
+          "NREQ-1503c0f53673fcb737e795f597a4fbe5",
+          "NREQ-1723157f4adf2e217570ad9f45ff6a14",
+          "NREQ-19867e3f2e5e80239a60c3e74c428419",
+          "NREQ-24219f7ae9a1c3c8a07bc4e3795df1d8",
+          "NREQ-265c5b06d2bffb320043ce7f9d063d3f",
+          "NREQ-2905d22dd28cce34adf519a53b6d91f1",
+          "NREQ-2b87f6751f7c48fe410e0cff9cde3222",
+          "NREQ-2fc31ade4d54db803d1dd8ce5c8fcfea",
+          "NREQ-34d938a10614164ccf54377593612f1b",
+          "NREQ-35d6cfbe5e523929be6cbb4de2987f88",
+          "NREQ-3c14607c9815d17b2a2c5e254f973832",
+          "NREQ-3ee9c09b01e9c8e2e74bb1ac18cf06be",
+          "NREQ-40bc7034f438adc10d07605b9b96e46b",
+          "NREQ-48d7a2e46378c59edc7e6f3dc341f41c",
+          "NREQ-4aae0077aad1d830f9ba34acf39506ea",
+          "NREQ-50122c96b32214f4bf319dd65347dfad",
+          "NREQ-550290326870d5be1a214eafe55f3c99",
+          "NREQ-5521665210402f08ac16ad4a381a0352",
+          "NREQ-5737b1220b87647a12e7aa7ef5d28198",
+          "NREQ-58aa35d97f4888d1118bac316329249b",
+          "NREQ-61ee60539e32911386cfa8b4efe16385",
+          "NREQ-68bffe19b2fdb22ee7ad76dbcbe68c97",
+          "NREQ-6b6ebad551cf644b479c6a630e4b36cb",
+          "NREQ-6c01681f8cd0d6285e5d214ee480ee13",
+          "NREQ-6fbc18c0bcfa1347c713349979226738",
+          "NREQ-72b73b679ba4068b411bd8dd9773b48e",
+          "NREQ-780195ab2f55b55ea7268b20fe6d67b5",
+          "NREQ-78ada6a1b2980161253b0d8a99570156",
+          "NREQ-7bb66e62d1c184f5e1051afb0226d0a2",
+          "NREQ-7c3c5c87dc0d844e12ac9eb2335f77a8",
+          "NREQ-7e1c399b55e29313d69cd12726f6faf7",
+          "NREQ-7eb7e6bb62e186b3d7a7570879c3a189",
+          "NREQ-808e0410eef37c98a17da25fe29979bd",
+          "NREQ-822c58f3002a6a5021346c3f5e4f7b4a",
+          "NREQ-82b8958caa365ab1c27e41ed6f1a47aa",
+          "NREQ-8314f02e04c7205d583f43414685aa6a",
+          "NREQ-83e883aa2c87d49cda7430b6360b673a",
+          "NREQ-8411822c1ab922f28282519a8f1bddab",
+          "NREQ-89dae35d131643c9271aad58301d37ab",
+          "NREQ-97ac21d46b91a2e26869f56ef177ab89",
+          "NREQ-a4361cbb2e63830faee26099c278ec3e",
+          "NREQ-a472336ed96f8d2b6114604d713a5c50",
+          "NREQ-a4c3882e81b8778cc46b88be1f4d7019",
+          "NREQ-a61f817d9f9052b67fe4e904b4428664",
+          "NREQ-a6a9a813898b16a10aea6c18d4887cca",
+          "NREQ-ac196ad54969ab6e29da62b56ca39695",
+          "NREQ-aff4d2ec0fd262e998592b1e4a728791",
+          "NREQ-b0da907290c660cc969f6f0f5ac5b746",
+          "NREQ-b748fe2396debc3a393cb85232efc908",
+          "NREQ-ba5646bb0ea2542bbb7577836b268aff",
+          "NREQ-bc4142fa82272e5e3a0dd215c59bb304",
+          "NREQ-bcc7dc61d15d29d60b8a8a7b1da128d1",
+          "NREQ-cb7faea33fabe86bb96fe466a4d96580",
+          "NREQ-cddf61cf547fd449e0c8445ceb296a85",
+          "NREQ-d4ba38377ec91f50900bd27c6ddb7ec3",
+          "NREQ-d576ac9dfa50e5e97d4d84cb2d6334b8",
+          "NREQ-d7ef66ab25d9166a17cbc65c94de5c54",
+          "NREQ-d833c9973b1397caa85f63e737570568",
+          "NREQ-da2b7160add23c8c2f5ace2900bb8426",
+          "NREQ-df8a0b90b5e088126673b3184914872e",
+          "NREQ-e2a1475f332e7030833239fcf52752c3",
+          "NREQ-e42af611b5d153aee28d012f6d740a9b",
+          "NREQ-e48b8a8a2795e9e3708452227299a3fd",
+          "NREQ-e8cb9fb3d4206411496017ebad5dad95",
+          "NREQ-e960c80e2db277bf251bfa52f9649ab0",
+          "NREQ-ea45fee4b93cb57d03bac64ae6bbb0d3",
+          "NREQ-ee7ba0824c256640b7a92e3b2965a985",
+          "NREQ-f4127a1a6977e45212f4a4e282ea863f",
+          "NREQ-fbb258fb897537e705027be6e2a447b9",
+          "NREQ-fe700971369801cc6f116ea36e5dccc0"
+        ],
+        "affectedUniqueNreqIds": 75,
+        "fieldPairs": [
+          {
+            "digestField": "reviewReceiptSha256",
+            "referenceField": "reviewReceiptPath"
+          }
+        ],
+        "occurrenceCount": 75,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0068",
+        "recordedSha256": "9ed76e667dc6e0f74581e00ddac58d735f6ff05032260ec37d52bc404952ddf7",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0121",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [
+          "NREQ-04d735c6af64483fc16d0fd4c4c19d5c",
+          "NREQ-0aebdac6eeb95950b4482bcc03440369",
+          "NREQ-1118b3312622fd6d93a9072ee0c88554",
+          "NREQ-18c51e0e9c00c44231607920d0694a1b",
+          "NREQ-1ba8fac13e8062def23332f98cd5ea6a",
+          "NREQ-1bd03af2b500d7b6de0c210ee40ca042",
+          "NREQ-201df0f29f71f03983d4e067a21ab666",
+          "NREQ-24943c781f9d964d0eb6d9c0efc36dbb",
+          "NREQ-285160eb943f2aa3a137c9aceeeb861f",
+          "NREQ-2dff64415dcf5a48e44d5f255580905f",
+          "NREQ-35038d9e45737e141fe5ba3b375f23c6",
+          "NREQ-36214a6f021530f5ea637ea348ed49b4",
+          "NREQ-3d38079650f317a3a0c1e0fac17ed7f7",
+          "NREQ-3ec755b4719402f420c586159bafcbcc",
+          "NREQ-4798d1afef342922500c3501fa68883b",
+          "NREQ-4aa8acfae7491def6f648c1370632312",
+          "NREQ-4dba4636ff1da2b72962c354e1b75cb8",
+          "NREQ-4df8df2506480d9344e70e8914aa2e99",
+          "NREQ-52548cf4734f9b19497d845f429ed35b",
+          "NREQ-588bc9d493f211c4c4097216af9027e9",
+          "NREQ-593e0e093c0040fc16f9f9b64b51e66d",
+          "NREQ-5ede3e960c4c0f17701600b429733843",
+          "NREQ-644c4f4679317087abf765c80c1f9cd8",
+          "NREQ-64513bfd6194e49aace27c9f2c387d75",
+          "NREQ-69e2010ea0efb3ea73a0562dad43b549",
+          "NREQ-78c90561b13730c1d219b5f00abb928b",
+          "NREQ-7c6d88fe311626151dbe36800bbb20c1",
+          "NREQ-8774fd4d06261e5d867ca3c4288a464d",
+          "NREQ-889a0185d94022e8785c75fe55abc624",
+          "NREQ-8a07ed9a075815363b6f345c05b3904d",
+          "NREQ-8d1287e5f43ac847a244de0421a300d8",
+          "NREQ-924fb66bc67f90f2ef184b98c3f8e064",
+          "NREQ-9e7251c4b6a6414d44b6cfd1084ffa6d",
+          "NREQ-a2af6f728dbfd0b97f4e556b7f6f0308",
+          "NREQ-b18adce80b35a38f63fd95debe651ca0",
+          "NREQ-b1dc29725cced787dcbd4608880b859b",
+          "NREQ-bc626ab0dbb07e104c4cdb44d04572a4",
+          "NREQ-c619c0d5c14b259032490ccac64ce4fc",
+          "NREQ-c855bcdf333d13e944e723625940ae3a",
+          "NREQ-d48a6041f309c2f9cf37c55740009867",
+          "NREQ-d4a00c2a44ae6fac4be0557f603ccf12",
+          "NREQ-daec6502723e824f6facf0f5359ba506",
+          "NREQ-ea6875f68196833e5fcb097973222ddb",
+          "NREQ-eb587a10937efa9f9e25a28346ba0f4e",
+          "NREQ-f35f5e08c500a365b190deef7d39bab6"
+        ],
+        "affectedUniqueNreqIds": 45,
+        "fieldPairs": [
+          {
+            "digestField": "reviewReceiptSha256",
+            "referenceField": "reviewReceiptPath"
+          }
+        ],
+        "occurrenceCount": 45,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0069",
+        "recordedSha256": "192acacbbc4eb1f8127fdb91148e27d261eecb0529f300fcb785a21852c76a75",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0122",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [
+          "NREQ-106547b7acd8e3418c9b12a09f46ce89",
+          "NREQ-283520fce71327677e6c9451c76e7dba",
+          "NREQ-2fb026827367d7dcef802e30de120469",
+          "NREQ-3d3442dcf27781119d12c9563d987191",
+          "NREQ-48059371f3a05052c25050f35675791c",
+          "NREQ-557dcff71c5994ddad8c654982cd3b35",
+          "NREQ-5d2083470fe7802edf89d7d40018ad4f",
+          "NREQ-5e8ac077754077b9a4c6c5ea279ac85e",
+          "NREQ-649b55b065022e3eaeec42cb5a0d3d95",
+          "NREQ-6e5bf6d14ead71d8ab5288f40d545e7a",
+          "NREQ-78a512502d0b1818ef3603619f35d5d2",
+          "NREQ-86ed1fed4eb9d454ba7da3cc403362d8",
+          "NREQ-919f316d98dfb07a3fe5c71f1d9c4098",
+          "NREQ-b249ae09dd628f4d2d92001b3d7aa8f0",
+          "NREQ-bd2cc50dfae731477f2f2a15b3806fe1",
+          "NREQ-e0c7ddc2988207df43c7f6ed503ea58c",
+          "NREQ-e197c082c9c01ef14bb340ea9db1bd1d",
+          "NREQ-e4b7b3d4e2fdaa1b5f88e04da2ca10cf",
+          "NREQ-f1b0e492fc8a33358ad425dac6790811"
+        ],
+        "affectedUniqueNreqIds": 19,
+        "fieldPairs": [
+          {
+            "digestField": "reviewReceiptSha256",
+            "referenceField": "reviewReceiptPath"
+          }
+        ],
+        "occurrenceCount": 19,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0070",
+        "recordedSha256": "c99d442b3619467d2d9d20da68ec9c91c4b730419bdf64a1adfa9a6bf3a383a9",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0123",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [
+          "NREQ-03089733806918e95520ff635758daee",
+          "NREQ-08151c47f743f8f0bcb8f539486b9b2d",
+          "NREQ-210ae33ff7089bb5a028d0c4ab518ab6",
+          "NREQ-21ef6d93dae0375e0ea3098e3c1c2af0",
+          "NREQ-2295760b2d16752999d995b4fa5e7705",
+          "NREQ-22c24a0ba5c7c8db9a3e413078f271cc",
+          "NREQ-232159dfb55e739fc3b30fdb7247c346",
+          "NREQ-2599c8bf77ffc339b4377587ed1c4c57",
+          "NREQ-2786ec2c59482129e936b1e80f38f9c2",
+          "NREQ-29b3c9251be75958d2fba491d13d9c95",
+          "NREQ-2cde7d4f1412bb5855bb518074cd0c9f",
+          "NREQ-2d3efd67c391f9f2123e1690acd91bb0",
+          "NREQ-324e6589cc84cfcd8008a90dadb0303a",
+          "NREQ-3c659e415ef11fca5de4b8899f519b4c",
+          "NREQ-41f2c521a1aec8cd1785a6a5d79f11cb",
+          "NREQ-441fb5d7e95418b563065a7cb0774e75",
+          "NREQ-462a92f6420b70d9f6a598e7b2b9bbda",
+          "NREQ-478942f7323d71354cf74753fc1b83d8",
+          "NREQ-480fe0d1906ed2364033b0b592a5ef21",
+          "NREQ-488fb95fccd65b03c2adea22d197501b",
+          "NREQ-4d25af38ce3cbe5334462205e2658868",
+          "NREQ-518facf6a542aab60fca6bd50716e542",
+          "NREQ-53b8f1d4937c9991d46f73c77849cede",
+          "NREQ-5670ad547c902946c68c14b305897d98",
+          "NREQ-58ecc79a0367c959572e7bf1b3c9c07b",
+          "NREQ-59dcd4c2c1ac1f3f996a090dfdef7227",
+          "NREQ-5fef5dde271d800ee41f744dca2f10ce",
+          "NREQ-65327daf899cca20a3deb9ec801934cf",
+          "NREQ-67cb1e7229beeb9af69ce954a2fae469",
+          "NREQ-69df747f2a35c28a4d499f4e39fbe37c",
+          "NREQ-7086b6271f031ea452bc3c4050a8925c",
+          "NREQ-70be271288aa2404deae54baa7efa852",
+          "NREQ-70f2f76b05e10b65446cb0a65e300238",
+          "NREQ-71872be81e35a20b307ee26ba99ec409",
+          "NREQ-72d58def136576345e20720f7ee5fd04",
+          "NREQ-73c7917ecf46161ebce71422c725c66b",
+          "NREQ-7e1efceddcb09f71c3cc6d3f2a872d6f",
+          "NREQ-8c169d6d450b2104b4e87149defa7a31",
+          "NREQ-8d541ea85e4e8fc9be263f614b93eb12",
+          "NREQ-91e750bd44c94b6c7e1700c559cf8430",
+          "NREQ-9881e46728a9ac85aeab4d14367b0963",
+          "NREQ-9913b25f6154a93a5bab7b7c6414e8fa",
+          "NREQ-9b42c385920becf04f2a2ca209f8e8c8",
+          "NREQ-9daf2af2a125d2d6e5aea973af5cef38",
+          "NREQ-9e767d3b90265b5ea92070c22a5ad755",
+          "NREQ-9f72569cb3f5741d0cf6f425b3abd0a0",
+          "NREQ-9f983526b7d3e11804b09138949a9efe",
+          "NREQ-a047beb44a12645ced9f5304e1921dcb",
+          "NREQ-a2c136fa02448941c5a39300edd1a6b7",
+          "NREQ-a540132738870b893ecbabe5555036b7",
+          "NREQ-a8101ad1dc28bc2eb12ad81f435c4dae",
+          "NREQ-aadab750cd6c208ff3eab26fd4a62626",
+          "NREQ-ac56cf307095585644978e2c5f1a3138",
+          "NREQ-b013f90912d1a9a8c6fcdadba1a4c8d3",
+          "NREQ-b47cd137dad813503040a11c41564743",
+          "NREQ-b5ef6b2bbd2d6346cb04881aa0529f7c",
+          "NREQ-b857bddd55ecd37d539cf3ece95c9c6c",
+          "NREQ-b9fec5f821a19bbbb1022916b6d501b6",
+          "NREQ-c5bfbac687d6413f87324e4696915177",
+          "NREQ-c6b33ed071f1aac275503c62add53156",
+          "NREQ-c9d43eb823f25d1122c00317c90ecb93",
+          "NREQ-cd47ba89dd3f7cb5efbaab8b9c58d683",
+          "NREQ-cfdfb9fbb4707967ecdac6c659301a4c",
+          "NREQ-d193632e8bc10648d9b6c894310fa6ee",
+          "NREQ-d4dd975a9e7f80a9ff4a262fa034a592",
+          "NREQ-d534a06dc4b8d63aa27e3f0bb0291901",
+          "NREQ-d96ced9b02608dc6d905960d89aba448",
+          "NREQ-d9bb03de6b9d62c815ef6dff7a9fc899",
+          "NREQ-e71d100060df4b8f179f6cb37d4d01c3",
+          "NREQ-e7c3c9a6418856ef4454ce54bde0f159",
+          "NREQ-e8fda49194338ec9b41859d15dafcc0c",
+          "NREQ-e9a6911fbfd6894e31ebd5a7d2a3a4e3",
+          "NREQ-e9fe8ff6b390f6e58efacfcac437198f",
+          "NREQ-eae88a9eaf3eb6b349247d67fb0c2970",
+          "NREQ-f00b5e77cd0f01c2615eefbd7efd6d23",
+          "NREQ-f2142edbc9a6afc4692053f849a03c1e",
+          "NREQ-f2c6c7f37109f84816d0aabbb1b61eb6",
+          "NREQ-f7ff0f9e5fc287104e54d920f79d6c45",
+          "NREQ-fd3385ef6a745c738922a32d68be55e9",
+          "NREQ-ffaf6f0ed94b68a643c19b64d4e9273d"
+        ],
+        "affectedUniqueNreqIds": 80,
+        "fieldPairs": [
+          {
+            "digestField": "reviewReceiptSha256",
+            "referenceField": "reviewReceiptPath"
+          }
+        ],
+        "occurrenceCount": 80,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0071",
+        "recordedSha256": "4b55ac31dca20a50caa90478453cbd88c07d10bae86da73fb54eb61e1978014e",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0124",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [
+          "NREQ-00c589398f17498099e5e7f3ad2eab01",
+          "NREQ-049298b4975f994f0ec2f4a945e435fe",
+          "NREQ-0497e5c4f034d8f739ec4bb85b748ea3",
+          "NREQ-08da0e79aaaca2d357abf8e7eea53233",
+          "NREQ-0a1ebc71db2c69f26889f39fda023b1c",
+          "NREQ-0f9bc094c509871a0fb71d7d8420e570",
+          "NREQ-11762ab91b2365b2d7021de2749a4fcb",
+          "NREQ-11e423a3fa4a091832e2cff987217fc9",
+          "NREQ-18849ac797f835d957134b805a1a1527",
+          "NREQ-1e6b7f9f3f359f116101da75315eab37",
+          "NREQ-29849a8419f4407cfb26f612e9e7ec06",
+          "NREQ-337fe375022bad61ebf641800a9b5690",
+          "NREQ-33c2168d5f53eaf824aa9a6ea24d1593",
+          "NREQ-363a5496213e67e57f2bcb80f3a2f76b",
+          "NREQ-37d7485fd77dcad1170c3cb51cde721c",
+          "NREQ-3af4e1a8f27b80fa2d77e453cd71ec3f",
+          "NREQ-3e0423144c8ca2b800e6262f8ecb1c22",
+          "NREQ-3f7a578ca832b6f70a024571146fffb2",
+          "NREQ-3ffc78a7f6762e4fc20c4d1661075267",
+          "NREQ-45046b541d8b374e8ac5655f222f6d48",
+          "NREQ-4fdb73e1248a246e1ef67180d54a7c7f",
+          "NREQ-50960087d80049288c3b8a44c8a1e7da",
+          "NREQ-51b06c761ca372474702dca42673a025",
+          "NREQ-534aafcae24c7bcea9b02993b854143f",
+          "NREQ-53b072405ef72a2787810fa557a71295",
+          "NREQ-5461e93d4aad529441cf561ad4d37d97",
+          "NREQ-54e6961c36ca01b323a15c0e7997bbc1",
+          "NREQ-559d8789a6216f1c8f82a77f1203cedf",
+          "NREQ-5611fea14e6e2361a9b572d4f58414c9",
+          "NREQ-58c0855a503632f46f955be437d6d16b",
+          "NREQ-59053b4af17eaa2d2a1d65d1e957e4ae",
+          "NREQ-5d5c73fcd447f2e4a28499180c387625",
+          "NREQ-5e3d0f362f8b8b8bf4402ac6487e958e",
+          "NREQ-5efec9608f3e8919843b55173837e85b",
+          "NREQ-61653ef7941a83c3ac4334775ff0e1bb",
+          "NREQ-618a477114d645243a1d81d1d72c02a8",
+          "NREQ-637b2e1e8402a9b40ed8fd7a02325797",
+          "NREQ-6ccc8a20f0c20862dc459a13b2a32ecd",
+          "NREQ-6d462b99b22a6d8caa12308e75812780",
+          "NREQ-6e92a2f92d3d7ae07e0a101c30fdc6e6",
+          "NREQ-7126f232fd2eab36ce6ad74202abfb55",
+          "NREQ-72625dcca6e25e83a77701610539fff3",
+          "NREQ-737e4e03eba584e636ea51424e67616c",
+          "NREQ-73878f84293cbf87d45a140af20f5b73",
+          "NREQ-74546f022dc7974d4d8e41d32fb3d902",
+          "NREQ-78d3e6a57761d6192681f36cfb738811",
+          "NREQ-7ba0c6cbb44ad1649aa1e82c6a473338",
+          "NREQ-7e1744e4abc198adfa937149c350a71b",
+          "NREQ-833f113095c505364c705e6b51da368f",
+          "NREQ-83d727233aa232bb13955e010baa2753",
+          "NREQ-851b85634dc5f741e26bfb1d93269856",
+          "NREQ-8c2b921fb133f8662acb77935cc35c4f",
+          "NREQ-972513168f9034faaeeed3691ec01b7c",
+          "NREQ-989a82338511ea3274fa5391b9c743c6",
+          "NREQ-98db3f379a0483f9dd1925eebe05d6a5",
+          "NREQ-999bfcbd638f3d322eb20c3f05d111a1",
+          "NREQ-99e22222d825c42858f38e6bb427e5d1",
+          "NREQ-9ced02a4aeed73bd985fe8e17736a367",
+          "NREQ-a98344cf6367d9a135915764f89135bb",
+          "NREQ-a9c609a690399837a68495afc7ada4a5",
+          "NREQ-ad2acc2cb7384338a4728d0a6935230b",
+          "NREQ-b1b9a23a0d5aa4609f7d6838078bf3af",
+          "NREQ-b1c809259f6cfca827841845ff8db545",
+          "NREQ-b38ae7865a5a70842352fbe407879583",
+          "NREQ-b6ea4fae4d9bce55c5ab2f6c04178b7f",
+          "NREQ-ba80f170d0551a6a4f3be140a33aa37f",
+          "NREQ-bcb8259cdd39e7f0cd5e86f7c087c679",
+          "NREQ-c1d6c828de230b359f3daa32e7c1bbf0",
+          "NREQ-c61ce6263058fb456dd80135ebc67b1d",
+          "NREQ-ca4f6621fb5732f19daa050befaf692d",
+          "NREQ-ce4bfb5207cf2f190bcec28609e7cf71",
+          "NREQ-d240d04155b39cd59dc96b30fb766e93",
+          "NREQ-d5e4f2370268e41836b879bdf5ad3e26",
+          "NREQ-da06126f64e647a819c9405a2ceeb940",
+          "NREQ-df52257b590c657fdc806d6d3ecea69e",
+          "NREQ-e4ccadda6b657daa292caf33aa43624d",
+          "NREQ-ec3586a429543c05ca886b7e8dcdc1e4",
+          "NREQ-f51628847ef01a641ec6fdde6eb5647c",
+          "NREQ-f792a68f666e8d038f4d2941168aa236",
+          "NREQ-fc272ddaa70c24b9c0ccf73d7d6612fd"
+        ],
+        "affectedUniqueNreqIds": 80,
+        "fieldPairs": [
+          {
+            "digestField": "reviewReceiptSha256",
+            "referenceField": "reviewReceiptPath"
+          }
+        ],
+        "occurrenceCount": 80,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0072",
+        "recordedSha256": "63449750c1bfaefa646d7966038e7ad38143da8cae7fe53509f206ad75d7207e",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0125",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [
+          "NREQ-011f2d68a74b867d684d6e8145798351",
+          "NREQ-056d94294fab4d8bee6a15935ae3c154",
+          "NREQ-08e5d6423be18bae51be160868a69cfc",
+          "NREQ-0b75cf0de04b91470d58f814c38da018",
+          "NREQ-0fd05b2e1a9a153e6fe6ad495da6ca37",
+          "NREQ-13f164d5c9d338db54b142b2e22ec9a4",
+          "NREQ-14b50ef20bf8b931c75230cdc535727c",
+          "NREQ-19020ce86765042872d76e6676aa0968",
+          "NREQ-203a2511805b7bd67275cdd1c7235435",
+          "NREQ-233cf20e9d3af5935489ccfc1a46115b",
+          "NREQ-24e29138c107a37aa9fe0a7d98b85d16",
+          "NREQ-27843bde3a5ca3ddfb19cd8c3f1a33dd",
+          "NREQ-2bbf10b970acb8382c6def922798d68a",
+          "NREQ-2cf743d3013c35198948ed58b599158b",
+          "NREQ-2edd54c3f87247a5af1182cb4561ebd4",
+          "NREQ-30caf835fbf2ada7a8072e1baf78fd4d",
+          "NREQ-3ccb0f669e08bc81100365d35e10b1fe",
+          "NREQ-3f1b8fcbdc2f1a0fdde538a2efd3a361",
+          "NREQ-3f4959cd85ce83c3f29dd413f1d4c912",
+          "NREQ-404a5b1a9db01b3756d96de49e06cf45",
+          "NREQ-46c12967f640e54e4df8e00aabcbd5f2",
+          "NREQ-4a4add5d3ba40f9458faba97212154d7",
+          "NREQ-4abce0fe91bcf2e15be186f6c17be50e",
+          "NREQ-4dcd2760b86a5a985ccfd04ad8b88905",
+          "NREQ-4e26870a58c0a52b4658a54e62373455",
+          "NREQ-5130cc71df4fee64aa0f63dddabbc7a9",
+          "NREQ-5295fa018929d6f20aed3e1e58e70b19",
+          "NREQ-529e6a0ff17016fc649a4337a4881cb8",
+          "NREQ-56363e4bbb5fb1933a64ed2762fc887d",
+          "NREQ-5a6fcee8cce40f354109c4c53486ecc1",
+          "NREQ-5c9143cc5686fbc2559a0dc0f508558e",
+          "NREQ-5d7003a5c0d2748ae54ce67227e4e197",
+          "NREQ-5ff3f0ebe82ad785adad3a4046c55373",
+          "NREQ-63325fd834cddaa41dc941f1e6b0ebf3",
+          "NREQ-647e33c874115f674aff6bb6b5efc818",
+          "NREQ-670b6815d8c435ff0cf3913cfb8ff3b1",
+          "NREQ-6792efcb5aa26ce133dc059f6d2b8219",
+          "NREQ-693af143bedfb91eee0f074d5c566f3c",
+          "NREQ-6c8344c991639f679602032bff939d7f",
+          "NREQ-715091a6897ca17c58e1a10be9b8ed72",
+          "NREQ-7af0fbff2d332ba0be805944552b1730",
+          "NREQ-7df56f818a3147c04aac314073ed745e",
+          "NREQ-80156e28d04d13bdffe9b6f6531c82a0",
+          "NREQ-83fdb26a02f567572492e623daecba4f",
+          "NREQ-89c0571293fc3c832e4f1398dcf37175",
+          "NREQ-8a07f306f30f5e9d5a3882992724c4b6",
+          "NREQ-8a208a89d7753133985974fbe2e766e2",
+          "NREQ-8a9b4ae8fd1eeccf0900340e4c7750e3",
+          "NREQ-8ed7add268e1bd6c3eec9939434b967d",
+          "NREQ-90e1baa2d6ff0f636fd89806a801fa56",
+          "NREQ-928e2a4bee2786f0bfd47dd85548bdaa",
+          "NREQ-92a554fcf6e010050dea478ae8c7e027",
+          "NREQ-97c034cf071717dd562a1fb2e1a048d5",
+          "NREQ-a3e563fb54ab6f49d4d1bb9c171e6b47",
+          "NREQ-a82e9cc86f6339ad84237606b1a00c31",
+          "NREQ-ac1a011faab65abbc347af97dba388ca",
+          "NREQ-b2ea106c0373b1a7a9ac3f98dbef6fe7",
+          "NREQ-b81ad0c9d78b0505aaa9ca75439d74c7",
+          "NREQ-ba8f093b547d0ff37879e1712857fe57",
+          "NREQ-bacd8a1080fe5f3077efd191c053d9ec",
+          "NREQ-bd37cae899ac6b7d82e4dd1d6532bc50",
+          "NREQ-bfa0a1eed11a494d9bade15b1f318133",
+          "NREQ-c32981809413acb82f0913833b2c86db",
+          "NREQ-c80f845f43fb03f65181d85f17ad075d",
+          "NREQ-c9e894b61e0299a99785196314352ff5",
+          "NREQ-cde9bece5f95a0c4e112da15ee50bcb3",
+          "NREQ-d098d2d58943aa97ac42c652b65b9d84",
+          "NREQ-d184bf6b8c10c4f69fdde86e8308ee52",
+          "NREQ-d488ed74b9f506333a1737eedbf99792",
+          "NREQ-d4c01d3f0aea197ebf6930f5488a16db",
+          "NREQ-d5acc6d62c654ed102d896334a62d7e1",
+          "NREQ-d96db3a4c698522d67f4590c3b36ab8d",
+          "NREQ-d9cf643e9d1288963b5494bd94d4f8a6",
+          "NREQ-dbeeefd578b71de00a1bb25b0ec49c17",
+          "NREQ-e51f6f56d854aff2f9a9d15edc631bf6",
+          "NREQ-ee9701e9cbb0481e9c91168d454bd0c8",
+          "NREQ-efbf3cbc5bce63abf48609c5699a83fa",
+          "NREQ-f550deb800b8bcfb5b01c076a579c1f0",
+          "NREQ-f629039de150643f7643af8d1d14497b"
+        ],
+        "affectedUniqueNreqIds": 79,
+        "fieldPairs": [
+          {
+            "digestField": "reviewReceiptSha256",
+            "referenceField": "reviewReceiptPath"
+          }
+        ],
+        "occurrenceCount": 79,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0073",
+        "recordedSha256": "38659f99c8d8c3d8b1d9b182ae498e9a0ef7b492f18130238959314e8085a21e",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0126",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [
+          "NREQ-4c8b5d57a699cf6725efb45bc79d544f",
+          "NREQ-5be5fc2359db8c312f31954391997c98",
+          "NREQ-88d783a17791c6024c240c65e58a8680",
+          "NREQ-8a2739f6d19808f3e3774e7496584f3a",
+          "NREQ-97da15ed1800f6470e3880603071153f",
+          "NREQ-b1ba97b330b44add6cd21c4efa8a1a08",
+          "NREQ-b2dac4225e303bcdd777d3b2cb167fec",
+          "NREQ-e5d858469f2b49ad676266c752c7b5bd",
+          "NREQ-fd362ed186d100212ec89cedef875208"
+        ],
+        "affectedUniqueNreqIds": 9,
+        "fieldPairs": [
+          {
+            "digestField": "reviewReceiptSha256",
+            "referenceField": "reviewReceiptPath"
+          }
+        ],
+        "occurrenceCount": 9,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0074",
+        "recordedSha256": "8cafdf4dbd7cb78b589b6723b7b7af450455718430f9b4af90b210e4eb347ba4",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0127",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [
+          "NREQ-0005049889063a2551f144189aa7efa1",
+          "NREQ-00b95ee969e57367dea12be87d9bc2f3",
+          "NREQ-037b0447c8b1f6e604bc147a32a3cf18",
+          "NREQ-0f7b1d6e1d81d7cc0423afbdbc38028e",
+          "NREQ-1a635b514dc030428c4d3cfa5312036e",
+          "NREQ-1d062866be29a0d9ceffcf35380f9f0d",
+          "NREQ-209ad14f0dfab66322503078671a47d2",
+          "NREQ-210a90fc03afaa1602a2f298c6fd935c",
+          "NREQ-254269c09e323496eb4c606ae44cf16e",
+          "NREQ-2784f1168121c865158035d868fe1973",
+          "NREQ-29b5931587da51c1a0cffac238163cb3",
+          "NREQ-318da161cc5f30f33449238ba3870773",
+          "NREQ-36b04577f78fe4c72a2f402eb5a9d27d",
+          "NREQ-384d468ca927b85ed4fcd94de40fa15a",
+          "NREQ-3e12b5242a7e6e67550c5f2340d8601c",
+          "NREQ-446b145ac31ccc5541b5227c561eba2b",
+          "NREQ-4544b6239343aeb1f08789ba1df8fdf2",
+          "NREQ-4b663608232d750fadbd4c3bb4778240",
+          "NREQ-4dbba1e28d2ddfb5632e8379b47133e9",
+          "NREQ-519791a8273abc8b32cf463f70f883b1",
+          "NREQ-541ed09d346de55f4edb60a3e4730c52",
+          "NREQ-552797b251013c32b33181269120b824",
+          "NREQ-56c1f871cf4bedd9dacfffe068284d67",
+          "NREQ-576b7c04d0ec282294929d7d3f390169",
+          "NREQ-6035095a10bf0ed05d7465d170587602",
+          "NREQ-630038943bc0d4bb7a62c84bfb8a83f4",
+          "NREQ-6570b18b49093c903ebf52690094316a",
+          "NREQ-6789a3daa361dd675dbdb42563d1b556",
+          "NREQ-72fc7ee345ea2f635811e99995f72fef",
+          "NREQ-77b7d82cd6ff1455643b82d71dd275f9",
+          "NREQ-7be9f7af0b7913126c7289a30fec2be2",
+          "NREQ-7e1045cbb8f4826111a6b5c06e6e6c21",
+          "NREQ-800c60fb9e2f47e23e0aa95a4980f329",
+          "NREQ-8140a893ff935afc651d00380610d50f",
+          "NREQ-88a392ae6e98a8b30bbe1229015d0af5",
+          "NREQ-8bbe92f484adb59b7bed2ab6f400b091",
+          "NREQ-8f4ae94053d0807f1e6b1a90870d0c77",
+          "NREQ-92d4ca217584904bab5bc357cc0735ee",
+          "NREQ-9a5979ed71eb2d51f45d679cd2df2234",
+          "NREQ-a35b7a6076b3def511b585a9e1546660",
+          "NREQ-a7a0e65d8ded8515745d3fbc469872cf",
+          "NREQ-a87106d619a159ce6f81f5b953820b7a",
+          "NREQ-a92075da1473d25800d43bc86c1886bc",
+          "NREQ-aab50237cc7f8a5259b3c4064d6753c6",
+          "NREQ-b3000c37f095bad8a802198289e26ca0",
+          "NREQ-b3125d401fb4ee91d7c8b3befdd7db73",
+          "NREQ-bf10319085f016b4c385537f19b582f1",
+          "NREQ-c3f9bb9ae33a3da19ad1491938f3b910",
+          "NREQ-c5e25518a74be5fa7b70e8de93264c0a",
+          "NREQ-cdb594604feb0eee319868beb23e8c18",
+          "NREQ-d67547b5e60d800b35c16ceb55679305",
+          "NREQ-dace94abf4f89ae59986c58e0daae7f5",
+          "NREQ-db1cecf5c7c4843f68d260ebb653b693",
+          "NREQ-db3a774ed6e4eabc3ea9b70e403d3baa",
+          "NREQ-e4ef6f144b21e433257dd9d9d29c5fc9",
+          "NREQ-e9e60cbcc363c173c94b2db6e6a92fa4",
+          "NREQ-ecd61bb2e571c6e2372e1bd1c23e70d5",
+          "NREQ-f078b4ed1bf6965969ab2bf1d1f5db64",
+          "NREQ-f092ff4f0af59f84ce8a67460c8d094a",
+          "NREQ-fffbb0e8f6cdfddb8482fd02795d7cd0"
+        ],
+        "affectedUniqueNreqIds": 60,
+        "fieldPairs": [
+          {
+            "digestField": "reviewReceiptSha256",
+            "referenceField": "reviewReceiptPath"
+          }
+        ],
+        "occurrenceCount": 60,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0075",
+        "recordedSha256": "8e8c984eb5954706f46930b12fddbcf1f2bb4af2f0dbd79cca3cbf4546b84013",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0128",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [
+          "NREQ-0dcfc4a66e6124fb0e2cf728da7af1bb",
+          "NREQ-11d83df8fd7742ef79e814d0355bcfee",
+          "NREQ-12a4e730ff2ba0d9b21b98360888eb0e",
+          "NREQ-3e923478abbef022794550610a94f041",
+          "NREQ-48970c2e7c9ece2b401a838d805b1534",
+          "NREQ-52928b911ddc05b4ef7ed83da1caa409",
+          "NREQ-60973b1cd0d556d8dcb2a2f6bca23049",
+          "NREQ-6351b949144d7a92d83e40eb413f3eab",
+          "NREQ-639eff87c8c451be7e985878b911054d",
+          "NREQ-691cc547a6bd4a93fdb72fa80fbc5786",
+          "NREQ-876001fa3e2354a438141ad45c02906a",
+          "NREQ-890febf497c262d16847f988111b9717",
+          "NREQ-8d616d3d15efd1378860e1a8359d3210",
+          "NREQ-92096eb2c3dd76fe8d73cc0131b30e04",
+          "NREQ-9590a74410136a1eb148fea10a556ea3",
+          "NREQ-a2dae2008d3432d73406f53b8fed366b",
+          "NREQ-b9f6354c9cac7aebe49eab7f724a905b",
+          "NREQ-ba1331ee017964af11771fb44178c972",
+          "NREQ-ef34883d7990c67a02fd49e4d7fb4290",
+          "NREQ-efdd6d05f9193ca0a6cfe67aa57937a4",
+          "NREQ-f6c12b808dcaeea9b0753e2d13e7b889",
+          "NREQ-f7afca4b77d3e6258ca8463a66527777",
+          "NREQ-fcf74facdd1a494b15af4644c8b0aa75",
+          "NREQ-fe171a70a3c54533c838e0d9d4575ee0",
+          "NREQ-fe2e351db9316fea7cc9a20176101298"
+        ],
+        "affectedUniqueNreqIds": 25,
+        "fieldPairs": [
+          {
+            "digestField": "reviewReceiptSha256",
+            "referenceField": "reviewReceiptPath"
+          }
+        ],
+        "occurrenceCount": 25,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0076",
+        "recordedSha256": "0a764e66e528b56ed617450637c8de55378ddd86e365fcc6d412653f2cf261cc",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0129",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [
+          "NREQ-00a48a2e44f107b06375287dd60bbd52",
+          "NREQ-05382c31e17da4ed8db986f2eee343fe",
+          "NREQ-07b8ec532280e0af47b6bfde24e5773b",
+          "NREQ-08d21889678a2a60ba8921fcd1876fe2",
+          "NREQ-0cfa33de1f27f3ad24df0c8ddb42a89a",
+          "NREQ-12d5d3e55675c1d6e534d99a064fed4d",
+          "NREQ-131dd06406d731406d3f6fb6584dbf91",
+          "NREQ-17939b6832781c1deb7bffd03b49662f",
+          "NREQ-184a3dea66b485149d4e3ab5d1c68e1e",
+          "NREQ-1da23d24e876891a02b59820d16ec04e",
+          "NREQ-1df5725609d9828f6fa9f19fe4b140d4",
+          "NREQ-1f02d42985fa54734443195296ded338",
+          "NREQ-2432bffa8696a6faa2cccab2b8ec4801",
+          "NREQ-2f0c32c7338a4607cf311b1adcb98074",
+          "NREQ-320b9022b306ad2fd70d2b11b7f7ffb6",
+          "NREQ-32de14b2739518505272c65693f355ce",
+          "NREQ-3838a9025551b08752837a996a365f46",
+          "NREQ-3a59cca8e1191ff83120fc83c620b214",
+          "NREQ-40fc287b8d0cecf799b4db0fdc0d5871",
+          "NREQ-42a2c6535cadacbb468aebc88d2b0455",
+          "NREQ-43a11fe0862c5898dc63b055389b243e",
+          "NREQ-43afb42866619856736650fd5e5c169c",
+          "NREQ-49f343ca56959eb65e524bfc124db3c7",
+          "NREQ-4cf8df66f3e7c29f66e5d4a277c26e1f",
+          "NREQ-4f004685859d48dcf29b944b21696d18",
+          "NREQ-5c8428916cd8f447dd1e2a6463f84cbe",
+          "NREQ-5cbde8665b9076e2411ec9fa1208d894",
+          "NREQ-665db47aa260b58708037baf96789dde",
+          "NREQ-6ccf5d01c19ef216ce949adb793fae99",
+          "NREQ-7025e3cee64ae1d365296ca6d9876a13",
+          "NREQ-7305972a638d7cea42e19dd65566952a",
+          "NREQ-788ca03644691b82188cca531c7d4198",
+          "NREQ-7c18232b44eb0c3240cc6be853b72d32",
+          "NREQ-80ed9c9011b43a00ec1dfd364b53b922",
+          "NREQ-849bcf78c18c929fba3a81a390cdfac0",
+          "NREQ-8dc9b9c9851a82e0e76a12341548c630",
+          "NREQ-9570ac0a332f4b31df4c878606e9bc84",
+          "NREQ-95a95a148228225d281cddd0359253a9",
+          "NREQ-9ac939eae62af18448913abc7b918156",
+          "NREQ-a051cac0690ef506eb67d3c3cda7098c",
+          "NREQ-a7f9463f3881e287a9d75ffec58d131b",
+          "NREQ-a84ef0bd19d42c914f7dd473967e764c",
+          "NREQ-a9b7c8a9f4c77757dce8868f4a7bfc82",
+          "NREQ-aa5dff2312eef678c082ad8349bbc72b",
+          "NREQ-aa67662003992eccc16baa02ceffa655",
+          "NREQ-ac00bd68aff467c7c548efa1072fd1ed",
+          "NREQ-acda3fef55336b9fbfe4320e064c29b4",
+          "NREQ-afad186780326bfab21d7cc9bbb463a4",
+          "NREQ-b251be075843b4e48b4fff00dc893f26",
+          "NREQ-b579acddce175ea7050804c9d1a8ba73",
+          "NREQ-b5bb061f63937c5fa32f6ffa2c9b99d3",
+          "NREQ-b93018abdc51f726e3040b6322316326",
+          "NREQ-b9af38a518795436587becf2b124ec0d",
+          "NREQ-bc573f0e5234f5ee2a86f4f88529a9d9",
+          "NREQ-c1edf3590c0367c56a4f8238ae70c9b9",
+          "NREQ-c45c540e9af81c52bbf139bf8efe928e",
+          "NREQ-c6f99cab049151390cb86ae6a0b320b2",
+          "NREQ-c8a6bd826006ce2ecf827ed093c7e682",
+          "NREQ-c8d41a89797d9b8c5e2829e604e9e2a1",
+          "NREQ-cd8fa43bdc5a5327bdc8aad96693e59a",
+          "NREQ-cdf4fb788a767a74b31b1e76c6cdbfa5",
+          "NREQ-d80eea323de5241807ccb7a23ad561c2",
+          "NREQ-e37b45b6b765f1b87a34ee0e70c1f3b0",
+          "NREQ-e79565dfa6a3e482413467304bcdbdc0",
+          "NREQ-efae209e9005aba60e11e6d3dcc4229c",
+          "NREQ-f9fdd1cb22efc755d65892bcff8962f8",
+          "NREQ-fae5fe9674e74024a962f3aae3d2848d",
+          "NREQ-fbd29abcac9c1bfc1c03556bdfc1a059",
+          "NREQ-fcb8d97674633480ac1ae767d16e1844"
+        ],
+        "affectedUniqueNreqIds": 69,
+        "fieldPairs": [
+          {
+            "digestField": "reviewReceiptSha256",
+            "referenceField": "reviewReceiptPath"
+          }
+        ],
+        "occurrenceCount": 69,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0077",
+        "recordedSha256": "517240ef90c3475140abe9bc54ad0da18b5240208ab0c080503f1572bd2c12df",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0130",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [
+          "NREQ-136b68306706747299cc3997f43addbd",
+          "NREQ-1d255fb22dcf311f8c59cfd6754608c6",
+          "NREQ-2b1c1064fb51fb6b4fdde9c199c3b4c8",
+          "NREQ-31e1e72a4459901fdeccf8fe439189b5",
+          "NREQ-44bac0c6d1c6c499c7ed8234a52531dc",
+          "NREQ-563de56757295fbfc9f3f706b494b3d8",
+          "NREQ-5e827a89e805ba6212aad7d514247ded",
+          "NREQ-5ebb2d9c3dd49630af285555c3897c24",
+          "NREQ-626034893ef8a64d843625e9fc136046",
+          "NREQ-6ba092a34685d632a82011560aa4ebea",
+          "NREQ-6d5c687ebe51efa7a476aa8e66b81e06",
+          "NREQ-78bf4f2f5537ca81695558cfd4a06a8a",
+          "NREQ-7a2d96c47587a97a406c37ae7f991f26",
+          "NREQ-7f05564be4b78f545fb652d37a0c3bb1",
+          "NREQ-8129910b249e1cbf7c1f403fdfa9a728",
+          "NREQ-8284d0792e5ce17eb0367b65d710e740",
+          "NREQ-83786b5f93f00454db2845761025f8c6",
+          "NREQ-894430c563610225c9bd5d376c3f0af0",
+          "NREQ-95a076f8bbd7f38f12119d8665bd2086",
+          "NREQ-b13542cea0ef5f46fda3ff65d029f3a0",
+          "NREQ-b45bace81fc434ac7e91aa0067bdd74b",
+          "NREQ-cc5110415d3bbf5331d5c449a62b836b",
+          "NREQ-cf3b6e04121ebd3eb1f4f6e2b6a13028",
+          "NREQ-cf8450683c1f64bf84d4ad2f77cc7716",
+          "NREQ-d81bd1f6edae8d817cd2ceef01c64de5",
+          "NREQ-e2d2f6bc0f0c2791323a039fbe8d702a",
+          "NREQ-e99c12f9bfdc54b8a7166c5aea383696",
+          "NREQ-ed69e0a1f3dac8d720ada28144c85b18",
+          "NREQ-f2796fe3c6ced7088ca0d0d1b60e1816",
+          "NREQ-f82710ca40c54d5b22ea615b8e3925dc"
+        ],
+        "affectedUniqueNreqIds": 30,
+        "fieldPairs": [
+          {
+            "digestField": "reviewReceiptSha256",
+            "referenceField": "reviewReceiptPath"
+          }
+        ],
+        "occurrenceCount": 30,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0078",
+        "recordedSha256": "a5bd0dee23cda24652ba9c4bd8a569880cdf16d8736d0dff9452b189335ecf92",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0131",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [],
+        "affectedUniqueNreqIds": 0,
+        "fieldPairs": [
+          {
+            "digestField": "sha256",
+            "referenceField": "path"
+          }
+        ],
+        "occurrenceCount": 26,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0083",
+        "recordedSha256": "a93292646cec96dc81b9bdcd95ba586328e43b3ae2c38c05b69b650002de9d3a",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0136",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [],
+        "affectedUniqueNreqIds": 0,
+        "fieldPairs": [
+          {
+            "digestField": "sha256",
+            "referenceField": "path"
+          }
+        ],
+        "occurrenceCount": 26,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0084",
+        "recordedSha256": "25b961938a069b7842a5094ed39fd2ba9f7f8733f85309f42dbbf3f82fae68c7",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0137",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [],
+        "affectedUniqueNreqIds": 0,
+        "fieldPairs": [
+          {
+            "digestField": "sha256",
+            "referenceField": "path"
+          }
+        ],
+        "occurrenceCount": 26,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0085",
+        "recordedSha256": "7b2c65695d625d881c8d95c58f100866ac8ee42767dd44ca1e96d845f109cc5a",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0138",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [],
+        "affectedUniqueNreqIds": 0,
+        "fieldPairs": [
+          {
+            "digestField": "sha256",
+            "referenceField": "path"
+          }
+        ],
+        "occurrenceCount": 26,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0086",
+        "recordedSha256": "588c575359bd774d9fae6642582a70a1e1cf73cfa8a5243112cc3ae33f998fbf",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0139",
+        "targetCardinality": 1
+      },
+      {
+        "affectedNreqIds": [],
+        "affectedUniqueNreqIds": 0,
+        "fieldPairs": [
+          {
+            "digestField": "sha256",
+            "referenceField": "path"
+          }
+        ],
+        "occurrenceCount": 26,
+        "oldReference": "PRIVATE_EVIDENCE_REF_0087",
+        "recordedSha256": "318b91e85f8a8d8c264854da3af61c30bc582e18aec71cecd3a95b5cd5f6ea26",
+        "standaloneIndexReferenceByExactDigest": "PRIVATE_EVIDENCE_REF_0140",
+        "targetCardinality": 1
+      }
+    ],
+    "originalMapEmbeddedCrosswalkMatches": 1950,
+    "originalMapEmbeddedCrosswalkMismatches": 0,
+    "pairsWithUniqueExactStandaloneDigestTarget": 61,
+    "pairsWithoutUniqueStandaloneTarget": 0
+  },
+  "schema": "v7-portable-reference-provenance-errata-proposal/1",
+  "scope": "Mechanical reconciliation of SHA-explicit opaque reference pairs in the existing complete V7 map, its embedded reference table, and the portable forecast against the separate portable private-evidence index. No source evidence content was read or included; no semantic adequacy, test, or PASS judgment is made.",
+  "sourceArtifacts": {
+    "completeWorkMap": {
+      "portableName": "complete-work-map.json",
+      "sha256": "8b10831c9cf7c1cf069fde6528869ab870f9079e5781e3fbe085e6afd5b33a97"
+    },
+    "mapCreatorRecord": {
+      "portableName": "create-v7-complete.py",
+      "relevantBehavior": "Enumerates a sorted private_paths list into a local refmap, then scrubs row paths and builds the embedded 89-entry table from that same mapping (lines 44-65). This establishes the embedded map namespace. No creator for the separate 141-entry standalone index was present among the inspected V7 delivery records; its precise generation cause cannot be attributed.",
+      "sha256": "4708d4c0df92e4b3241795ad10ed3b4913d15bda70660bedf03478287249ce93"
+    },
+    "portableForecast": {
+      "portableName": "forecast-v7-portable.json",
+      "sha256": "579de427eabf52c1325490ba63a1961d729b252e1a8105c9e1e82e58dfb50a6b"
+    },
+    "standaloneIndex": {
+      "portableName": "private-evidence-index.json",
+      "sha256": "23a54ffc8da76bbeceb609dc0d2b2bdd37c0f71cc7fb6f8fd76a4ddc2725a1be"
+    },
+    "v5CrosswalkRecord": {
+      "portableName": "requirement-traceability-manifest-20261011.json",
+      "sha256": "68e526f3cc726e62961b6edb770984d96be0eb70ec9a6933c7d5a04339ddecb5"
+    }
+  },
+  "status": "PROPOSED_PRIVATE_NAMESPACE_QUALIFIED_CROSSWALK_NOT_INTEGRATED"
+}

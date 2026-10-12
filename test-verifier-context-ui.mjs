@@ -80,3 +80,40 @@ export async function verifyVerifierContextUi({sourceOverrides={},fault=null}={}
  cases.push({caseId:'corrected-package-file-admission',passed:true,exportedRuns:1,otherRunCarrierLeaks:0,priorReviewerRecordLeaks:0,invalidRetainedCellAssigned:true,stagedFileAdmitted:true,persistedPendingProposal:true,automaticAcceptance:false});
  return {verifierContextUi:'PASS',cases,synthetic:true,actualBrowser:false,stageCompletionEstablished:false,boundary:'Actual extracted UI run selection/cache/save, real canonical persistence and exported instruction/context ZIP, actual staged response-file admission and proposal reload. Preserved retained prerequisite cohort; no new full journey or real external actor claim.'};
 }
+
+// Reuse the final-feedback suite's exact historical carrier fixture. This
+// exercises the actual UI selectors without repeating unrelated prerequisites.
+// The isolated unsafe selector models the original context-reuse defect; the
+// current producer still allocates its real prompt and reservation identities.
+export function verifyFinalReviewContextUi(r,{project,stage,priorPrompt,kind,sourceOverrides={}}){
+ const {engine:e,prompts}=r,source=sourceOverrides['app-core.js']??fs.readFileSync('app-core.js','utf8'),promptSource=sourceOverrides['prompt-engine.js']??fs.readFileSync('prompt-engine.js','utf8');
+ const extract=name=>{const start=source.search(new RegExp('(?:async )?function '+name+'\\(')),ends=[source.indexOf('\nfunction ',start+1),source.indexOf('\nasync function ',start+1)].filter(x=>x>=0);assert(start>=0&&ends.length,'FINAL_UI_OWNER_SOURCE_REQUIRED: '+name);return source.slice(start,Math.min(...ends));};
+ const selectionGuard="if([23,24].includes(Number(n))&&selectedOperation(Number(n))==='COMPLETE')return engine.currentFinalReviewContext(current,Number(n));",cacheGuard=" if([23,24].includes(Number(n))&&record.operation==='COMPLETE'&&!engine.currentFinalReviewContext(current,Number(n),record.scope?.contextId))return false;";
+ const selection=extract('currentReviewerContext'),cache=['promptMatches','currentPromptEngineVersion','promptVersionCurrent','currentPromptRecord'].map(extract).join('\n');assert(selection.includes(selectionGuard)&&cache.includes(cacheGuard),'FINAL_UI_GUARD_ANCHOR_ORACLE');
+ const priorGlobals=Object.fromEntries(['engine','schema','recordValue','current','safe','selectedOperation','promptOptions','closedLoopWorkflowEngine','closedLoopPromptEngine'].map(key=>[key,r.runtime[key]]));
+ const exposed=kind!=='clean',p=e.clone(project);let issued;
+ // Preserve every registered context while making the contaminated old one the
+ // latest array entry, so the historical last-record selector demonstrably fails.
+ p.projectData.freshContexts.sort((a,b)=>Number(a.id===priorPrompt.scope.contextId)-Number(b.id===priorPrompt.scope.contextId));
+ try{
+  Object.assign(r.runtime,{engine:e,schema:r.runtime.closedLoopWorkflowSchema,recordValue:e.recordValue,current:p,safe:e.safe,selectedOperation:()=> 'COMPLETE',promptOptions:()=>({operation:'COMPLETE'})});
+  vm.runInContext(selection+'\nglobalThis.finalUiSelect=()=>currentReviewerContext('+stage+');',r.runtime);
+  if(exposed)assert.notEqual(r.runtime.finalUiSelect()?.id,priorPrompt.scope.contextId,'FINAL_UI_EXPOSED_SELECTION_ORACLE '+stage+' '+kind);else assert.equal(r.runtime.finalUiSelect()?.id,priorPrompt.scope.contextId,'FINAL_UI_CLEAN_SELECTION_ORACLE '+stage);
+  vm.runInContext(selection.replace(selectionGuard,'')+'\nglobalThis.finalUiSelectWithoutGuard=()=>currentReviewerContext('+stage+');',r.runtime);
+  assert.equal(r.runtime.finalUiSelectWithoutGuard()?.id,priorPrompt.scope.contextId,'FINAL_UI_SELECTION_INTENDED_FAILURE_CONTROL '+stage+' '+kind);
+  r.runtime.closedLoopWorkflowEngine=Object.freeze({...e,preparePromptContext(state,n,options){return {project:state,options:{...options,scope:{...e.operationScope(state,n,options.operation,options.scope||{},{reserveTargets:true}),contextId:priorPrompt.scope.contextId}}};}});
+  vm.runInContext(promptSource,r.runtime,{filename:'prompt-engine.js:final-ui-unsafe-selector-equivalent'});
+  issued=r.runtime.closedLoopPromptEngine.reserveAndBuildPromptRecord(p,stage,{operation:'COMPLETE',scope:priorPrompt.scope}).prompt;
+  r.runtime.closedLoopWorkflowEngine=e;r.runtime.closedLoopPromptEngine=prompts;
+  // Reservation owns the next revision. The fixture does not claim persistence;
+  // align only the isolated view revision with the issued reservation as a
+  // canonical write would do, leaving every identity and carrier untouched.
+  p.revision=issued.scope.projectRevision;
+  assert.equal(issued.promptEngineVersion,prompts.versionFor(stage,'COMPLETE'),'FINAL_UI_CURRENT_PROMPT_EPOCH_ORACLE');assert(prompts.promptTransportBinding(p,stage,'COMPLETE',issued.instructionId,issued.scope),'FINAL_UI_CURRENT_TRANSPORT_ORACLE');
+  vm.runInContext(cache+'\nglobalThis.finalUiCached=()=>currentPromptRecord('+stage+');',r.runtime);
+  assert.equal(r.runtime.finalUiCached()?.instructionId||null,exposed?null:issued.instructionId,'FINAL_UI_EXPOSED_CACHE_ORACLE '+stage+' '+kind);
+  vm.runInContext(cache.replace(cacheGuard,'')+'\nglobalThis.finalUiCachedWithoutGuard=()=>currentPromptRecord('+stage+');',r.runtime);
+  assert.equal(r.runtime.finalUiCachedWithoutGuard()?.instructionId,issued.instructionId,'FINAL_UI_CACHE_INTENDED_FAILURE_CONTROL '+stage+' '+kind);
+ }finally{Object.assign(r.runtime,priorGlobals);}
+ return {actualUiSelectionAndCache:true,currentProducerAndReservation:true,syntheticViewRevision:true,guardOmissionControls:true,exposedContextRejected:exposed,cleanContextReusable:!exposed,actualBrowser:false,projectPersistence:false};
+}

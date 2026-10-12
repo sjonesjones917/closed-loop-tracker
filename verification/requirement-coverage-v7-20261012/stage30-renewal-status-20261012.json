@@ -1,0 +1,24 @@
+{
+  "currentCatalogueSha256": "b75c339fbbaca1a0dcd5a2fa1e02cac34e5af7c703c802bf948d0a931a4a3ecb",
+  "integrationResultSha256": "a6a56a0b1dc28e2dcf14c26d01bbc9ba5a2ecaafe081a45661fc2f06005f370b",
+  "noReleaseOrWholeClausePass": true,
+  "priorDistinctReviewSha256": "57f7c9838491cb89b55ce95e36bed91864b49fc6223a7a1a31700a9d0bc89b0b",
+  "remaining": {
+    "consumerDiagnosticExitCode": 1,
+    "consumerDiagnosticSha256": "68cbfe778960841bde72433d1dd4cf71ce54d53d4420b00ac8b922c859c86f16",
+    "consumerFailure": "Stale Stage01 role expected-source c680 versus reviewed 5e4; bounded current metadata correction pending.",
+    "currentEligibleReceipt": false,
+    "designatedOwnerRun": false,
+    "requiresCurrentConsumer": true
+  },
+  "renewedReview": {
+    "bindingInstalled": false,
+    "declarationSha256": "a456d36d4456fb3193f412c43ebdff97e8e9d9bf8c55e1e5aa022cdcc80a712c",
+    "repositoryRelativePath": "verification/requirement-coverage-NREQ-1d255fb22dcf311f8c59cfd6754608c6-20261012-current-b75c339f-76932624-5ebf8ced.json",
+    "sha256": "ee09115693b4a26a163c4dfcba78762b4d0016902c78782b5cb79ff830fe69d9"
+  },
+  "schema": "v7-stage30-renewal-status-delta/1",
+  "selectedSevenCaseCarrierInstalled": true,
+  "sourceInputsInstalled": true,
+  "status": "REVIEW_RENEWED_BINDING_AND_CURRENT_CONSUMER/OWNER_RECEIPT_PENDING"
+}

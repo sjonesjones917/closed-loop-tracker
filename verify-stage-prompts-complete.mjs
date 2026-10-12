@@ -1,3 +1,4 @@
+import {stage04AcceptanceFixture} from './test-fixtures.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import {createHash} from 'node:crypto';
@@ -6,7 +7,7 @@ import {projectStoreRuntime} from './test-project-store-runtime.mjs';
 import vm from 'node:vm';
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
-for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
 const core=globalThis.closedLoopCore,schema=globalThis.closedLoopWorkflowSchema,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine;
 if(!core||!schema||!engine||!prompts)throw new Error('Prompt audit runtime failed to load.');
 const p=core.createBlankState('JOB-PROMPT-CLOSURE');
@@ -15,8 +16,7 @@ engine.ensureShape(p);engine.recalculate(p);
 const intake=engine.intakeCoverageManifest(p);
 const capture={schema:'closed-loop-stage01-capture/2',inputVersion:intake.inputVersion,manifestSha256:intake.manifestSha256,pass1Completed:true,pass2OmissionChallenge:{completed:true,checkedCategories:['QUALIFIERS','EXCEPTIONS','DEPENDENCIES','NEGATIVE_REQUIREMENTS','DO_NOT_CHANGE','VISUAL_CONSTRAINTS','TEMPORAL_CONSTRAINTS','ACCEPTANCE_CONDITIONS','AUTHORITY_STATEMENTS','TOOL_RESTRICTIONS','FILE_REFERENCES','OUTPUT_FORMAT_REQUIREMENTS','CORRECTIONS','LATER_OVERRIDES'],omissionsFound:[],omissionsResolved:true},units:intake.units.map((unit,index)=>({sourceUnitId:unit.unitId,sourceRawValueSha256:unit.rawValueSha256,disposition:'RETAINED_AS_CONTEXT',reason:'Prompt closure fixture preserves current human authority.',extractedStatements:[{statementKey:`statement-${index+1}`,text:unit.rawValueText||unit.label||unit.unitId,statementClass:'CONTEXT'}]}))};
 p.stages[1].agentData={EXACT_DELIVERABLE_REQUESTED:'Prompt closure fixture deliverable.',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',INPUT_SET_CONTENTS:JSON.stringify(capture)};
-p.stages[2].agentData={SOURCE_APPLICABILITY_DETERMINATION:'NO_APPLICABLE_EXTERNAL_SOURCE'};
-p.stages[3].agentData={ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED:'TRUE',SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED:'TRUE',LATEST_PASS_NUMBER:2,NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS:'FALSE'};
+Object.assign(p,stage04AcceptanceFixture({core,schema,engine,prompts,ingestion:globalThis.closedLoopResponseIngestion},p.job.JOB_ID,{project:p,stageData:p.stages[1].agentData}));
 for(let stage=1;stage<30;stage++){p.stages[stage].status='COMPLETE';p.stages[stage].gate={complete:true,blocked:false,reasons:[]};}
 if(!engine.evaluateIntakeAccounting(p).complete)throw new Error('Prompt closure fixture failed to establish current Stage 01 accounting.');
 
@@ -69,7 +69,7 @@ assert.throws(()=>stage06CanonicalBindingPublicationOracle(stage06StaleSuiteFaul
 // Reproduce a retained instruction from the known deficient /80 generation in
 // the shared runtime. Version freshness must replace it through the real owner.
 {
- const currentSource=fs.readFileSync('prompt-engine.js','utf8'),oldSource=currentSource.replace(/const PROMPT_ENGINE_VERSION='[^']+';/,"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/80';").replace('workflow.canonicalTestBindingCatalog(state)','{}');
+ const currentSource=fs.readFileSync('prompt-engine.js','utf8'),oldSource=currentSource.replace(/const PROMPT_ENGINE_VERSION='[^']+';/,"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/80';").replace(/const TEST_IR_AUTHORING_PROMPT_VERSION='[^']+';/,"const TEST_IR_AUTHORING_PROMPT_VERSION='closed-loop-prompt-engine/80';").replace('workflow.canonicalTestBindingCatalog(state)','{}');
  const old=projectStoreRuntime({sourceOverrides:{'prompt-engine.js':oldSource}}),state=old.copy(p);state.activeStage=6;state.stages[6].status='NOT STARTED';state.stages[6].gate={complete:false,blocked:false,reasons:[]};
  const prior=old.prompts.reserveAndBuildPromptRecord(state,6,{operation:'COMPLETE'},{owningTabInstance:'STAGE06-CATALOG-REGRESSION'}).prompt;
  assert.equal(prior.promptEngineVersion,'closed-loop-prompt-engine/80','STAGE06_CATALOG_FRESHNESS_ORACLE: wrong historical setup.');
@@ -81,7 +81,7 @@ assert.throws(()=>stage06CanonicalBindingPublicationOracle(stage06StaleSuiteFaul
  assert.equal(captured.project.projectData.acceptedChanges.length,state.projectData.acceptedChanges.length,'STAGE06_CATALOG_FRESHNESS_ORACLE: raw capture accepted work.');
  const current=projectStoreRuntime(),project=current.copy(captured.project),replacement=current.ingestion.prepareStageContinuation(project,{stage:6,owningTabInstance:'STAGE06-CATALOG-REGRESSION'});
  assert.equal(replacement?.created,true,'STAGE06_CATALOG_FRESHNESS_ORACLE: deficient same-scope saved instruction was reused.');
- assert.equal(replacement.prompt.promptEngineVersion,current.prompts.version,'STAGE06_CATALOG_FRESHNESS_ORACLE: replacement uses obsolete generation.');
+ assert.equal(replacement.prompt.promptEngineVersion,'closed-loop-prompt-engine/97','STAGE06_CATALOG_FRESHNESS_ORACLE: replacement uses obsolete Stage06 authoring generation.');
  assert(project.projectData.generatedPrompts.find(row=>row.instructionId===prior.instructionId)?.invalidatedBy,'STAGE06_CATALOG_FRESHNESS_ORACLE: old deficient instruction remains active.');
  stage06CanonicalBindingPublicationOracle(current.runtime,project,stage06ExpectedCatalog);
 }

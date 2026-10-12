@@ -168,4 +168,91 @@ const exported=engine.recordPreDeliveryCheckpointExport(checkpointProject,{check
 assert.equal(exported.CUSTODY_STATE,'BACKUP_EXPORT_ACTION_COMPLETED','The terminal checkpoint must transition through a bound actual export-custody action.');
 assert.equal(engine.currentPreDeliveryCheckpoint(checkpointProject)?.CUSTODY_STATE,'BACKUP_EXPORT_ACTION_COMPLETED','Only a current exactly-bound export-custody state can satisfy the terminal gate.');
 
+// §35.9 / §41 item207: rank evidence-supported custody, never copied labels.
+// These disposable records exercise evidence admissibility only; no actual
+// external destination, disaster-recovery copy or exported-byte restore is claimed.
+const custodyMaturityCases=[];
+const custodyCheck=(name,run)=>{try{run();custodyMaturityCases.push({name,passed:true});}catch(error){custodyMaturityCases.push({name,passed:false,message:error.message});}};
+const setCustodyField=(row,key,value)=>{row.fields[key]=value;row[key]=value;};
+const copiedCustody=(p,state)=>{
+ const row=structuredClone(exported);row.id='CHECKPOINT-MATURITY';setCustodyField(row,'CHECKPOINT_ID',row.id);setCustodyField(row,'CUSTODY_STATE',state);engine.refreshRecordHashes(row,'backupCheckpoints');p.projectData.backupCheckpoints.push(row);return row;
+};
+const observedCustody=(p,row,state)=>{
+ const id='EVID-MATURITY',body={checkpointId:checkpoint.CHECKPOINT_ID,packageId:checkpoint.PACKAGE_ID,packageSha256:checkpoint.PACKAGE_SHA256};
+ const evidence=structuredClone(exportEvidence);evidence.id=id;setCustodyField(evidence,'EVIDENCE_ID',id);setCustodyField(evidence,'APPLICATION_EVIDENCE_KIND',state);setCustodyField(evidence,'APPLICATION_EVIDENCE_CONTENT',JSON.stringify(body));engine.refreshRecordHashes(evidence,'evidenceRecords');p.projectData.evidenceRecords.push(evidence);
+ setCustodyField(row,state==='RESTORE_TESTED_FROM_EXPORTED_COPY'?'RESTORE_EVIDENCE_IDS':'EXTERNAL_EVIDENCE_IDS',state==='RESTORE_TESTED_FROM_EXPORTED_COPY'?[id]:['EVID-EXPORT-1',id]);return evidence;
+};
+const selectedId=p=>engine.recordId(engine.currentPreDeliveryCheckpoint(p),'backupCheckpoints');
+const exportId=engine.recordId(exported,'backupCheckpoints');
+custodyCheck('evidence-backed export satisfies the terminal minimum',()=>assert.equal(selectedId(structuredClone(checkpointProject)),exportId));
+for(const state of ['EXTERNAL_COPY_CONFIRMED','RESTORE_TESTED_FROM_EXPORTED_COPY']){
+ for(const [name,mutate] of [
+  ['absent evidence',(p,row)=>{setCustodyField(row,'EXTERNAL_EVIDENCE_IDS',[]);setCustodyField(row,'RESTORE_EVIDENCE_IDS',[]);}],
+  ['nonexistent evidence',(p,row)=>{setCustodyField(row,'EXTERNAL_EVIDENCE_IDS',['EVID-MISSING']);setCustodyField(row,'RESTORE_EVIDENCE_IDS',['EVID-MISSING']);}],
+  ['export-only wrong-level evidence',()=>{}],
+  ['generic in-origin test-output evidence',(p,row)=>{setCustodyField(row,'EXTERNAL_EVIDENCE_IDS',['EVID-1']);setCustodyField(row,'RESTORE_EVIDENCE_IDS',['EVID-1']);}]
+ ])custodyCheck(state+' rejects '+name,()=>{const p=structuredClone(checkpointProject),row=copiedCustody(p,state);mutate(p,row);engine.refreshRecordHashes(row,'backupCheckpoints');assert.equal(selectedId(p),exportId,'Unsupported '+state+' must not outrank evidence-backed export-completed.');assert.equal(engine.recordId(engine.terminalPrerequisites(p).preDeliveryCheckpoint,'backupCheckpoints'),exportId,'Terminal consumer must preserve the actual export minimum.');});
+ custodyCheck(state+' admission remains unavailable without a registered observational producer',()=>{const p=structuredClone(checkpointProject),row=copiedCustody(p,state);observedCustody(p,row,state);engine.refreshRecordHashes(row,'backupCheckpoints');assert.equal(selectedId(p),exportId);});
+ for(const [name,mutate] of [
+  ['wrong kind',r=>setCustodyField(r,'APPLICATION_EVIDENCE_KIND','TEST_OUTPUT')],
+  ['wrong provenance',r=>{r.source='APPLICATION_TEST_RUNTIME';}],
+  ['inactive evidence',r=>{r.active=false;}],
+  ['invalidated evidence',r=>{r.invalidatedBy='CONTROLLED-CORRECTION';}],
+  ['superseded evidence',r=>setCustodyField(r,'STATUS','SUPERSEDED')],
+  ['missing scope',r=>{r.scope={};}],
+  ['changed scope',r=>{r.scope.productId='PROD-OTHER';}],
+  ['malformed body',r=>setCustodyField(r,'APPLICATION_EVIDENCE_CONTENT','{')],
+  ...['checkpointId','packageId','packageSha256'].map(key=>['wrong '+key,r=>{const body=JSON.parse(r.fields.APPLICATION_EVIDENCE_CONTENT);body[key]='CONTROLLED-UNRELATED';setCustodyField(r,'APPLICATION_EVIDENCE_CONTENT',JSON.stringify(body));}])
+ ])custodyCheck(state+' rejects '+name,()=>{const p=structuredClone(checkpointProject),row=copiedCustody(p,state),evidence=observedCustody(p,row,state);mutate(evidence);engine.refreshRecordHashes(evidence,'evidenceRecords');engine.refreshRecordHashes(row,'backupCheckpoints');assert.equal(selectedId(p),exportId);});
+ custodyCheck(state+' cannot replace export evidence with maturity evidence alone',()=>{const p=structuredClone(checkpointProject),row=copiedCustody(p,state);observedCustody(p,row,state);setCustodyField(row,'EXTERNAL_EVIDENCE_IDS',state==='EXTERNAL_COPY_CONFIRMED'?['EVID-MATURITY']:[]);engine.refreshRecordHashes(row,'backupCheckpoints');assert.equal(selectedId(p),exportId);});
+ custodyCheck(state+' stale checkpoint cannot hide current export',()=>{const p=structuredClone(checkpointProject),row=copiedCustody(p,state);observedCustody(p,row,state);row.scope={...row.scope,releaseId:'REL-OTHER'};setCustodyField(row,'SCOPE',row.scope);engine.refreshRecordHashes(row,'backupCheckpoints');assert.equal(selectedId(p),exportId);});
+}
+for(const [name,mutate] of [
+ ['removed export evidence',p=>{p.projectData.evidenceRecords=p.projectData.evidenceRecords.filter(r=>r.id!=='EVID-EXPORT-1');}],
+ ['wrong export kind',p=>setCustodyField(p.projectData.evidenceRecords.find(r=>r.id==='EVID-EXPORT-1'),'APPLICATION_EVIDENCE_KIND','TEST_OUTPUT')],
+ ['inactive export evidence',p=>{p.projectData.evidenceRecords.find(r=>r.id==='EVID-EXPORT-1').active=false;}],
+ ['stale export evidence',p=>{p.projectData.evidenceRecords.find(r=>r.id==='EVID-EXPORT-1').scope={...exportEvidence.scope,productId:'PROD-OTHER'};}],
+ ['generated-only checkpoint',p=>{p.projectData.backupCheckpoints=p.projectData.backupCheckpoints.filter(r=>r.id!==exportId);}]
+])custodyCheck(name+' blocks the terminal minimum',()=>{const p=structuredClone(checkpointProject);mutate(p);assert.equal(engine.currentPreDeliveryCheckpoint(p),null);assert.equal(engine.terminalPrerequisites(p).preDeliveryCheckpoint,null);});
+verificationObservations.push({checkId:'backup-custody-evidence-supported-maturity',requirementRefs:['NREQ-a855fdffbf43ae80dc0d26784d1e8980','NREQ-f7d22bdd8375c681a04c18d4c237b459'],boundary:'Actual checkpoint creation/export/selection -> terminalPrerequisites checkpoint field',cases:custodyMaturityCases,passed:custodyMaturityCases.every(row=>row.passed),scopeLimit:'Disposable Node canonical records, synthetic operator observations; no full Stage29/terminal completion, actual external-copy fact, physical-device or exported-byte restore maturity.'});
+console.log(JSON.stringify({custodyMaturityCases}));
+assert(custodyMaturityCases.every(row=>row.passed),'Evidence-supported custody maturity controls must all pass.');
+
+// Actual existing application observation route; future delivery outputs must
+// not stale the preauthorization minimum. Custody-only fixture never authorizes.
+{
+const checkpointProject=core.createBlankState('DISPOSABLE-CUSTODY-ONLY');engine.ensureShape(checkpointProject);
+Object.assign(checkpointProject.job,{JOB_ID:'JOB-CUSTODY-ONLY',CURRENT_INPUT_VERSION:'INPUT-v001',CURRENT_SOURCE_SET_VERSION:'SOURCE-v001',CURRENT_REQUIREMENTS_VERSION:'REQ-v001',CURRENT_TEST_SUITE_VERSION:'TEST-v001',CURRENT_INSTRUCTION_VERSION:'INSTR-v001',CURRENT_ITERATION:'ITER-1',CURRENT_CANDIDATE_ID:'CAND-1',CURRENT_BASELINE_ID:'BASE-1',CURRENT_PRODUCT_ID:'PROD-1',CURRENT_PRODUCT_VERSION:'1.0.0',CURRENT_DELIVERY_CANDIDATE_SET_ID:'SET-1',CURRENT_RELEASE_ID:'REL-1',CURRENT_HASH_REVIEW_ID:'HASH_REVIEW-'+ '7'.repeat(64),CURRENT_EVIDENCE_CHAIN_VERSION:'EVIDENCE-CHAIN-CUSTODY-ONLY'});
+assert.equal(engine.currentEvidenceChainSet(checkpointProject).complete,false,'This is a custody-only fixture, never Stage29 completion.');
+const checkpoint=engine.createPreDeliveryCheckpoint(checkpointProject,{packageId:'PKG-1',packageSha256:'abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789',artifactManifestSha256:'0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'});
+assert.equal(checkpoint.CUSTODY_STATE,'BACKUP_PACKAGE_GENERATED');assert.equal(engine.currentPreDeliveryCheckpoint(checkpointProject),null);
+
+const exported=engine.recordCheckpointExportAction(checkpointProject,{checkpointId:checkpoint.CHECKPOINT_ID,packageSha256:checkpoint.PACKAGE_SHA256,filename:'JOB-CUSTODY-ONLY.pre-delivery.closed-loop.json.gz'});
+const eid=engine.recordValue(exported,'EXTERNAL_EVIDENCE_IDS')[0],witness=checkpointProject.projectData.evidenceRecords.find(row=>engine.recordId(row,'evidenceRecords')===eid),observation=JSON.parse(engine.recordValue(witness,'APPLICATION_EVIDENCE_CONTENT'));
+const results=[],run=(name,fn)=>{try{fn();results.push({name,passed:true});}catch(error){results.push({name,passed:false,message:error.message});}};
+const selectedId=p=>engine.recordId(engine.currentPreDeliveryCheckpoint(p),'backupCheckpoints'),exportId=engine.recordId(exported,'backupCheckpoints'),beforeScope=engine.currentScope(checkpointProject);
+run('actual export writer records exact operator observation without external-copy claim',()=>{assert.equal(witness.source,'OPERATOR_ACTION');assert.equal(engine.recordValue(witness,'APPLICATION_EVIDENCE_KIND'),'BACKUP_EXPORT_ACTION_COMPLETED');assert.deepEqual(observation,{checkpointId:checkpoint.CHECKPOINT_ID,packageId:checkpoint.PACKAGE_ID,packageSha256:checkpoint.PACKAGE_SHA256,filename:'JOB-CUSTODY-ONLY.pre-delivery.closed-loop.json.gz',observedAction:'BROWSER_DOWNLOAD_ACTION_COMPLETED',externalCopyConfirmed:false});assert.equal(selectedId(checkpointProject),exportId);});
+run('current scope excludes future delivery output and project revision',()=>{assert(!Object.hasOwn(beforeScope,'deliveryId'));assert(!Object.hasOwn(beforeScope,'projectRevision'));assert.equal(checkpointProject.job.CURRENT_DELIVERY_ID,null);});
+const p=structuredClone(checkpointProject);
+run('actual blocked terminal output preserves prerequisite scope and export checkpoint',()=>{const rev=p.revision;const terminal=engine.calculateTerminal(p,{expectedRevision:rev});assert.equal(engine.recordValue(terminal,'DELIVERY_STATE'),'BLOCKED','Custody fixture must never authorize delivery');assert.equal(p.job.CURRENT_DELIVERY_ID,engine.recordId(terminal,'deliveryRecords'));assert(p.job.CURRENT_DELIVERY_ID);assert.equal(p.revision,rev+1);assert.deepEqual(engine.currentScope(p),beforeScope);assert.equal(selectedId(p),exportId);assert.equal(engine.recordId(engine.terminalPrerequisites(p).preDeliveryCheckpoint,'backupCheckpoints'),exportId);});
+run('actual terminal retry preserves its preauthorization export witness',()=>{const previous=p.job.CURRENT_DELIVERY_ID,rows=p.projectData.deliveryRecords.length,retry=engine.calculateTerminal(p,{expectedRevision:p.revision});assert.equal(engine.recordId(retry,'deliveryRecords'),previous);assert.equal(p.projectData.deliveryRecords.length,rows);assert.equal(selectedId(p),exportId);});
+for(const state of ['EXTERNAL_COPY_CONFIRMED','RESTORE_TESTED_FROM_EXPORTED_COPY']){
+ for(const relabelWitness of [false,true])run(state+(relabelWitness?' cannot turn native export-only observation into maturity by relabeling kind':' copied unsupported label retains lower actual export'),()=>{const p=structuredClone(checkpointProject),row=structuredClone(exported);row.id='CHECK-MATURITY-COPY';row.fields.CHECKPOINT_ID=row.CHECKPOINT_ID=row.id;row.fields.CUSTODY_STATE=row.CUSTODY_STATE=state;if(relabelWitness){const e=structuredClone(witness);e.id='NATIVE-EXPORT-RELABEL';e.fields.EVIDENCE_ID=e.EVIDENCE_ID=e.id;e.fields.APPLICATION_EVIDENCE_KIND=e.APPLICATION_EVIDENCE_KIND=state;engine.refreshRecordHashes(e,'evidenceRecords');p.projectData.evidenceRecords.push(e);if(state==='EXTERNAL_COPY_CONFIRMED')row.fields.EXTERNAL_EVIDENCE_IDS=row.EXTERNAL_EVIDENCE_IDS=[eid,e.id];else row.fields.RESTORE_EVIDENCE_IDS=row.RESTORE_EVIDENCE_IDS=[e.id];}engine.refreshRecordHashes(row,'backupCheckpoints');p.projectData.backupCheckpoints.push(row);assert.equal(selectedId(p),exportId);});
+}
+
+for(const [name,mutate] of [
+ ['wrong evidence source',r=>{r.source='APPLICATION_TEST_RUNTIME';}],
+ ['wrong evidence kind',r=>{r.fields.APPLICATION_EVIDENCE_KIND=r.APPLICATION_EVIDENCE_KIND='TEST_OUTPUT';}],
+ ['inactive evidence',r=>{r.active=false;}],
+ ['invalidated evidence',r=>{r.invalidatedBy='CONTROLLED-CORRECTION';}],
+ ['superseded evidence',r=>{r.fields.STATUS=r.STATUS='SUPERSEDED';}],
+ ['unknown evidence state',r=>{r.fields.STATUS=r.STATUS='UNKNOWN';}],
+ ['missing evidence scope',r=>{r.scope={};}],
+ ...Object.keys(beforeScope).filter(key=>beforeScope[key]!==null).map(key=>['changed evidence scope '+key,r=>{r.scope={...r.scope,[key]:'CONTROLLED-UNRELATED'};}]),
+ ...['checkpointId','packageId','packageSha256'].map(key=>['changed witness '+key,r=>{const body=JSON.parse(engine.recordValue(r,'APPLICATION_EVIDENCE_CONTENT'));body[key]='CONTROLLED-UNRELATED';r.fields.APPLICATION_EVIDENCE_CONTENT=r.APPLICATION_EVIDENCE_CONTENT=JSON.stringify(body);}])
+])run('native minimum rejects '+name,()=>{const p=structuredClone(checkpointProject),r=p.projectData.evidenceRecords.find(row=>engine.recordId(row,'evidenceRecords')===eid);mutate(r);engine.refreshRecordHashes(r,'evidenceRecords');assert.equal(engine.currentPreDeliveryCheckpoint(p),null);});
+console.log(JSON.stringify({scope:beforeScope,witness:{id:eid,source:witness.source,kind:engine.recordValue(witness,'APPLICATION_EVIDENCE_KIND'),content:observation},results},null,2));assert(results.every(r=>r.passed));
+verificationObservations.push({checkId:'backup-export-native-observation-scope-output-boundary',requirementRefs:['NREQ-a855fdffbf43ae80dc0d26784d1e8980','NREQ-f7d22bdd8375c681a04c18d4c237b459'],boundary:'recordCheckpointExportAction -> currentPreDeliveryCheckpoint -> actual blocked terminal output/retry',cases:results,passed:results.every(row=>row.passed),scopeLimit:'Existing observation writer under disposable Node fixture; no browser download or external-copy/restore maturity performed.'});
+}
+
 console.log(JSON.stringify({stage29ApplicationCommand:true,stage29CurrentSetValidated:true,stage29IdempotentRetry:true,preDeliveryCheckpointExportCustody:true,staleAndWeakEvidenceRejected:true,nonexistentExportEvidenceRejected:true,genericExportEvidenceRejected:true,fabricatedCheckpointRejected:true,terminalRejectsFabricatedCheckpoint:true,verificationObservations}));

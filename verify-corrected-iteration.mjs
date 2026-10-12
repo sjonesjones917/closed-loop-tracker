@@ -75,6 +75,46 @@ function fixture(){
   assert.equal(result.changeSetId,'CHANGE-STAGE20');
 }
 
+// §44 correction-version boundary. Canonical response acceptance and structural
+// trace validity are distinct from semantic stage progression: the Stage 16 gate
+// and corrected-lineage evaluator must refuse an in-place version rewrite without
+// mutating the already-recorded project, while a distinct version remains valid.
+const correctionVersionCases=[];
+{
+  const p=fixture(),currentChange=p.projectData.changes.find(row=>row.id==='CHANGE-STAGE20');
+  const trace=engine.validateTraceIntegrity('CHANGESET',currentChange,p),before=hash.sha256Value(p);
+  const lineage=engine.evaluateCorrectedIterationLineage(p,'ITERATION-NEW'),gate=engine.gate(16,p);
+  assert.equal(trace.valid,true,'A structurally complete distinct-version changeset must remain trace-valid.');
+  assert.equal(lineage.valid,true,'A distinct corrected artifact version must remain valid lineage.');
+  assert.equal(gate.reasons.some(reason=>/old and new version identities are identical/i.test(String(reason))),false,'The repaired distinct-version control was misclassified as an in-place rewrite.');
+  assert.equal(hash.sha256Value(p),before,'Correction-version evaluation mutated the repaired project.');
+  correctionVersionCases.push({caseId:'distinct-new-version-control',traceValid:true,lineageValid:true,sameVersionGateReason:false,statePreserved:true});
+}
+{
+  const p=fixture(),currentChange=p.projectData.changes.find(row=>row.id==='CHANGE-STAGE20');
+  setField(currentChange,'NEW_ARTIFACT_VERSION','test-v001');engine.refreshRecordHashes(currentChange,'changes');
+  const before=hash.sha256Value(p),trace=engine.validateTraceIntegrity('CHANGESET',currentChange,p),lineage=engine.evaluateCorrectedIterationLineage(p,'ITERATION-NEW'),evaluation=engine.evaluateIteration(p,'ITERATION-NEW','CORRECTED'),gate=engine.gate(16,p);
+  assert.equal(trace.valid,true,'A complete changeset remains structurally trace-valid before semantic version policy is applied.');
+  assert.equal(lineage.valid,false,'Corrected lineage accepted identical old/new artifact versions.');
+  assert(lineage.reasons.some(reason=>/rewrites a controlled artifact in place instead of creating a new version/i.test(String(reason))),'The corrected-lineage refusal did not name the in-place rewrite.');
+  assert(evaluation.reasons.some(reason=>/rewrites a controlled artifact in place instead of creating a new version/i.test(String(reason))),'The corrected-iteration evaluator did not consume the version refusal.');
+  assert.equal(gate.complete,false,'Stage 16 completed with identical old/new artifact versions.');
+  assert(gate.reasons.some(reason=>/must create a new controlled version; old and new version identities are identical/i.test(String(reason))),'Stage 16 did not report the exact correction-version refusal.');
+  assert.equal(hash.sha256Value(p),before,'Correction-version refusal mutated canonical project state.');
+  correctionVersionCases.push({caseId:'same-version-refused',traceValid:true,lineageValid:false,iterationRejected:true,gateComplete:false,exactLineageReason:true,exactGateReason:true,statePreserved:true});
+}
+{
+  const p=fixture(),currentChange=p.projectData.changes.find(row=>row.id==='CHANGE-STAGE20');
+  setField(currentChange,'NEW_ARTIFACT_VERSION','test-v001');engine.refreshRecordHashes(currentChange,'changes');
+  setField(currentChange,'NEW_ARTIFACT_VERSION','test-v003');engine.refreshRecordHashes(currentChange,'changes');
+  const before=hash.sha256Value(p),lineage=engine.evaluateCorrectedIterationLineage(p,'ITERATION-NEW'),gate=engine.gate(16,p);
+  assert.equal(lineage.valid,true,`A repaired distinct correction version did not restore lineage: ${lineage.reasons.join('; ')}`);
+  assert.equal(gate.reasons.some(reason=>/old and new version identities are identical/i.test(String(reason))),false,'The repaired version remained blocked by the same-version rule.');
+  assert.equal(hash.sha256Value(p),before,'Repaired correction-version evaluation mutated canonical project state.');
+  correctionVersionCases.push({caseId:'same-version-repaired-with-new-version',lineageValid:true,sameVersionGateReason:false,statePreserved:true});
+}
+console.log(JSON.stringify({correctionVersionControl:{schema:'correction-version-control/1',passed:true,synthetic:true,actualBrowser:false,canonicalAdmissionClaimed:false,structuralTraceAndSemanticGateSeparated:true,cases:correctionVersionCases}},null,2));
+
 // Intentional invalid fixture 1: a new iteration cannot silently reuse the prior canonical candidate identity.
 {
   const p=fixture();
@@ -127,4 +167,6 @@ function fixture(){
   assert(result.reasons.some(reason=>/component.*hash|manifest/i.test(String(reason))),'Candidate hash-manifest rejection was not explicit.');
 }
 
+const {verifyAcceptedRunCorrectionJourney} = await import('./test-accepted-run-correction-journey.mjs');
+console.log(JSON.stringify({acceptedRunCorrectionJourney: await verifyAcceptedRunCorrectionJourney()}));
 console.error('verify-corrected-iteration: PASS');

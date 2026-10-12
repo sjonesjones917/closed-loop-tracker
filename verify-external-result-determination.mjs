@@ -16,6 +16,36 @@ const operations={12:'VERIFY',22:'EXECUTE_EXTERNAL_TEST',23:'COMPLETE',24:'COMPL
 const stages=[12,22,23,24];
 const admittedValues=['SATISFIED','VIOLATED','UNKNOWN','UNDETERMINED','PARTIAL','SUCCESS'];
 const plain=value=>JSON.parse(JSON.stringify(value));
+// §38 keeps original actor observations distinct from canonical application values.
+// These literal cases preserve the old independent negative-state obligations;
+// none treats a favorable adjective as an accepted ESTABLISHES relation.
+const stage22OutcomeCases=Object.freeze([
+ {reported:'SATISFIED',relation:'ESTABLISHES',canonical:'SATISFIED'},
+ {reported:'VIOLATED',relation:'REFUTES',canonical:'VIOLATED'},
+ {reported:'UNKNOWN',relation:'UNKNOWN',canonical:'UNDETERMINED'},
+ {reported:'UNDETERMINED',relation:'UNKNOWN',canonical:'UNDETERMINED'},
+ {reported:'PARTIAL',relation:'SUPPORTS_ONLY',canonical:'UNDETERMINED'},
+ {reported:'SUCCESS',relation:'UNKNOWN',canonical:'UNDETERMINED'}
+]);
+function stage22ResponseRecords(schema,{testId,propositionId,value}){
+ const control=stage22OutcomeCases.find(row=>row.reported===value);
+ assert(control,'STAGE22_LITERAL_OUTCOME_FIXTURE_ORACLE');
+ return {
+  observationRecords:[recordProposal(schema,'observationRecords',{tempKey:'external-observation',relationships:{SUBJECT_ID:{recordId:testId}},overrides:{EXTERNAL_OR_AGENT_OBSERVED_VALUE:'PASS'}})],
+  entailmentReviews:[recordProposal(schema,'entailmentReviews',{tempKey:'external-entailment',relationships:{OBSERVATION_ID:{tempKey:'external-observation'},TARGET_PROPOSITION_ID:{recordId:propositionId}},overrides:{ENTAILMENT_FINDING:control.relation,REASONING:'Synthetic observed PASS; original reported outcome '+value+'. The closed relation controls what this observation establishes; the favorable text alone does not establish completion.'}})]
+ };
+}
+function producerContractControls(){
+ const r=runtime(false),s=r.runtime.closedLoopWorkflowSchema,cases=[];
+ for(const stage of [12,22,23,24]){assertPublished(r,stage,operations[stage]);cases.push({caseId:'current-producer-descriptor-stage'+stage,status:'PASS'});}
+ const literal=[['SATISFIED','ESTABLISHES','SATISFIED'],['VIOLATED','REFUTES','VIOLATED'],['UNKNOWN','UNKNOWN','UNDETERMINED'],['UNDETERMINED','UNKNOWN','UNDETERMINED'],['PARTIAL','SUPPORTS_ONLY','UNDETERMINED'],['SUCCESS','UNKNOWN','UNDETERMINED']];
+ for(const [reported,relation,canonical]of literal){const rows=stage22ResponseRecords(s,{testId:'FIXTURE-TEST',propositionId:'FIXTURE-PROPOSITION',value:reported}),entry=stage22OutcomeCases.find(row=>row.reported===reported);assert.equal(Object.hasOwn(rows,'deterministicResults'),false);assert.equal(rows.observationRecords[0].fields.EXTERNAL_OR_AGENT_OBSERVED_VALUE,'PASS');assert.equal(rows.entailmentReviews[0].fields.ENTAILMENT_FINDING,relation);assert(rows.entailmentReviews[0].fields.REASONING.includes('original reported outcome '+reported+'.'));assert.equal(entry.canonical,canonical);const issues=[];r.ingestion.validateValue(s.RECORD_SCHEMAS.entailmentReviews.fieldDefinitions.ENTAILMENT_FINDING,relation,'/ENTAILMENT_FINDING',issues);assert.deepEqual(issues,[]);cases.push({caseId:'stage22-raw-outcome-'+reported,relation,expectedCanonical:canonical,status:'PASS'});}
+ const omitted=stage22ResponseRecords(s,{testId:'FIXTURE-TEST',propositionId:'FIXTURE-PROPOSITION',value:'SATISFIED'});delete omitted.entailmentReviews[0].fields.ENTAILMENT_FINDING;assert.equal(Object.hasOwn(omitted.entailmentReviews[0].fields,'ENTAILMENT_FINDING'),false);assert.equal(s.recordResponseRequiredFields('entailmentReviews').includes('ENTAILMENT_FINDING'),false);cases.push({caseId:'stage22-optional-relation-omission-stimulus',status:'PASS'});
+ const issues=[];r.ingestion.validateValue(s.RECORD_SCHEMAS.entailmentReviews.fieldDefinitions.ENTAILMENT_FINDING,{unsupported:'object'},'/ENTAILMENT_FINDING',issues);assert(issues.some(row=>row.code==='WRONG_VALUE_TYPE'));cases.push({caseId:'stage22-wrong-type-relation-stimulus',status:'PASS'});
+ const guidance=s.EXTERNAL_PRODUCT_RESULT_CONTRACT.finding;assert(!guidance.includes('UNKNOWN/PARTIAL'));for(const value of ['SUPPORTS_ONLY','CONTEXT_ONLY','DOES_NOT_ADDRESS','UNKNOWN'])assert(guidance.includes(value));cases.push({caseId:'stage22-published-closed-relation-vocabulary',status:'PASS'});
+ return {status:'PASS',cases,synthetic:true,actualAdmission:false,fullStageJourney:false,boundary:'Existing owner producer descriptor, literal actor mapping and scalar validator only; no reserved file, acceptance, gate or prior-stage completion is asserted.'};
+}
+
 
 function runtime(fault=false){
   const r=projectStoreRuntime({sourceOverrides:fault?{'workflow-engine.js':faultSource}:{}});
@@ -29,15 +59,14 @@ function add(r,p,family,fields,stage,scope=r.engine.currentScope(p)){
 }
 function assertPublished(r,stage,operation,prompt=null){
   const s=r.runtime.closedLoopWorkflowSchema,descriptor=r.prompts.responseContractDescriptor(stage,operation);
-  assert.deepEqual(plain(descriptor.externalResultCompletionPolicy),plain(s.EXTERNAL_RESULT_COMPLETION_POLICY));
-  assert.deepEqual(plain(descriptor.externalResultCompletionPolicy.normalizedOutcomes),['SATISFIED','VIOLATED','UNDETERMINED']);
-  // Stage 12 VERIFY also carries independent-run context, whose /94 prompt
-  // version takes precedence over the shared external-result /93 version.
-  const expectedVersion=stage===12?'closed-loop-prompt-engine/94':'closed-loop-prompt-engine/93';
+  if(stage===22){assert.deepEqual(plain(descriptor.externalProductResultContract),plain(s.EXTERNAL_PRODUCT_RESULT_CONTRACT));assert.equal(Object.hasOwn(descriptor.records,'deterministicResults'),false);assert.equal(Object.hasOwn(descriptor,'externalResultCompletionPolicy'),false);}else{assert.deepEqual(plain(descriptor.externalResultCompletionPolicy),plain(s.EXTERNAL_RESULT_COMPLETION_POLICY));assert.deepEqual(plain(descriptor.externalResultCompletionPolicy.normalizedOutcomes),['SATISFIED','VIOLATED','UNDETERMINED']);}
+  // The scoped observation-support epoch applies to these four writers; Stage22
+  // additionally changes the canonical-result producer and has its own epoch.
+  const expectedVersion=stage===22?'closed-loop-prompt-engine/stage22-external-result-20261012':'closed-loop-prompt-engine/external-system-support-20261012';
   assert.equal(r.prompts.versionFor(stage,operation),expectedVersion);
   if(prompt){
     assert.equal(prompt.promptEngineVersion,expectedVersion);
-    assert(prompt.prompt.includes('"externalResultCompletionPolicy"')&&prompt.prompt.includes('PARTIAL')&&prompt.prompt.includes('cannot become effectively SATISFIED'));
+    if(stage===22)assert(prompt.prompt.includes('"externalProductResultContract"')&&prompt.prompt.includes('Do not submit deterministicResults'));else assert(prompt.prompt.includes('"externalResultCompletionPolicy"')&&prompt.prompt.includes('PARTIAL')&&prompt.prompt.includes('cannot become effectively SATISFIED'));
     assert.equal(r.prompts.promptFileManifest(prompt).promptIdentity.contractSha256,prompt.contractSha256);
   }
 }
@@ -83,8 +112,13 @@ function finalStageCase(stage,fault){
     await r.store.putArtifact({artifactId,jobId:p.job.JOB_ID,blob,filename:'product.txt',mediaType:blob.type,expectedSha256:sha});
     e.registerArtifactBytes(p,{stage:21,artifactId,filename:'product.txt',mediaType:blob.type,byteSize:blob.size,sha256:sha,role:'FINISHED_PRODUCT',lineage:r.copy({productId:f.product.id})});
     f.product.fields.GENERATED_ARTIFACT_INVENTORY=f.product.GENERATED_ARTIFACT_INVENTORY=r.copy([artifactId]);e.refreshRecordHashes(f.product,'products');
-    add(r,p,'propositions',{REQUIREMENT_ID:p.projectData.requirements[0].id,PROPOSITION_TEXT:'Synthetic exact product content is present.',STATUS:'CURRENT'},4,{...e.currentScope(p),productId:null});
+    const resultProposition=add(r,p,'propositions',{REQUIREMENT_ID:p.projectData.requirements[0].id,PROPOSITION_TEXT:'Synthetic exact product content is present.',STATUS:'CURRENT'},4,{...e.currentScope(p),productId:null});
+    if(stage===22){f.test.fields.TARGET_PROPOSITION_IDS=f.test.TARGET_PROPOSITION_IDS=r.copy([resultProposition.id]);e.refreshRecordHashes(f.test,'tests');}
     let reviewer=null;if(stage!==22)reviewer=e.registerFreshContext(p,{stage,externalContextIdentifier:`SYNTHETIC-STAGE${stage}-REVIEWER`,purpose:'REVIEWER'});
+    // Existing synthetic setup, not proof of prior stages. This late-stage
+    // control still requires replacement by an actual prepared prefix before
+    // claiming a legitimate complete operator journey. The private producer
+    // selector does not execute this setup or the admission path.
     for(let n=1;n<stage;n++){p.stages[n].status='COMPLETE';p.stages[n].gate=r.copy({complete:true,blocked:false,reasons:[]});}
     assert(e.finalProductTestSelection(p,stage).tests.some(row=>row.id===f.test.id),'The test must be due at the target stage.');
     assert.equal(r.store.artifactCustodyState({jobId:p.job.JOB_ID,artifactId,filename:'product.txt',byteSize:blob.size,sha256:sha}),'TRUE');
@@ -92,28 +126,36 @@ function finalStageCase(stage,fault){
     assertPublished(r,stage,operation,prompt);
     const response=value=>{
       const shared={PRODUCT_ID:{recordId:f.product.id},TEST_ID:{recordId:f.test.id}},required={
-        22:{TOOL_AND_VERSION:'Synthetic independent reviewer',PROCEDURE:'Compare exact synthetic product',EXPECTED_RESULT:'PASS',ACTUAL_RESULT:'PASS',DETERMINATION:value,EVIDENCE:'Synthetic observed product pass'},
         23:{PRODUCT_LOCATION:'product.txt',EXTERNAL_SOURCE_EVIDENCE:'Current controlling test',REQUIRED_MEANING:'PASS',OBSERVED_MEANING:'PASS',EVIDENCE_BASED_COMPARISON:'SATISFIED',DETERMINATION:value},
         24:{ATTACK:'Synthetic adversarial check',METHOD:'Inspect exact product',EXPECTED_BEHAVIOR:'No material defect',ACTUAL_RESULT:'NO MATERIAL ADVERSARIAL DEFECT FOUND',DETERMINATION:value,SEVERITY:'MINOR',EVIDENCE:'Synthetic observed product pass'}
       }[stage],relationships=stage===23?{...shared,REQ_ID:{recordId:p.projectData.requirements[0].id}}:shared;
       const row=recordProposal(s,family,{tempKey:'result',relationships,overrides:required});
-      return {schema:s.RESPONSE_SCHEMA,contractProfileId:s.CONTRACT_PROFILE_ID,jobId:p.job.JOB_ID,stage,operation,promptIdentity:{instructionId:prompt.instructionId,bodySha256:prompt.bodySha256,contractSha256:prompt.contractSha256,contextSignature:prompt.contextSignature},packageId:prompt.packageId,operationReservationId:prompt.operationReservationId,challengeNonce:prompt.challengeNonce,scope:prompt.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{},records:{[family]:[row]},evidence:[evidence(`stage${stage}-negative-state-control`)],unresolved:[],warnings:[],attachments:[]};
+      return {schema:s.RESPONSE_SCHEMA,contractProfileId:s.CONTRACT_PROFILE_ID,jobId:p.job.JOB_ID,stage,operation,promptIdentity:{instructionId:prompt.instructionId,bodySha256:prompt.bodySha256,contractSha256:prompt.contractSha256,contextSignature:prompt.contextSignature},packageId:prompt.packageId,operationReservationId:prompt.operationReservationId,challengeNonce:prompt.challengeNonce,scope:prompt.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{},records:stage===22?stage22ResponseRecords(s,{testId:f.test.id,propositionId:resultProposition.id,value}):{[family]:[row]},evidence:[evidence(`stage${stage}-negative-state-control`)],unresolved:[],warnings:[],attachments:[]};
     };
     return {boundary:'EXPORTED_PROMPT_PREPARE_COMMIT_GATE',stage,p,prompt,r,response,admissionControls(){
       const transport={authority:'AUTHORITATIVE_RESPONSE_FILE',packageId:prompt.packageId,operationReservationId:prompt.operationReservationId,challengeNonce:prompt.challengeNonce};
-      const missing=response('SATISFIED');delete missing.records[family][0].fields.DETERMINATION;
-      const wrong=response('SATISFIED');wrong.records[family][0].fields.DETERMINATION={unsupported:'object'};
+      const submissionFamily=stage===22?'entailmentReviews':family,submissionField=stage===22?'ENTAILMENT_FINDING':'DETERMINATION';
+      const missing=response('SATISFIED');if(stage===22)missing.records={deterministicResults:[{tempKey:'legacy-missing-determination',fields:{TOOL_AND_VERSION:'Synthetic reviewer',PROCEDURE:'Observe the fixture',EXPECTED_RESULT:'PASS',ACTUAL_RESULT:'PASS',EVIDENCE:'Synthetic observation'},relationships:{PRODUCT_ID:{recordId:f.product.id},TEST_ID:{recordId:f.test.id}},evidenceRefs:['evidence-1']}]};else delete missing.records[submissionFamily][0].fields[submissionField];
+      const wrong=response('SATISFIED');wrong.records[submissionFamily][0].fields[submissionField]={unsupported:'object'};
       for(const [name,envelope] of [['missing',missing],['wrong-type',wrong]]){
         const prepared=r.ingestion.prepare(p,{stage,text:JSON.stringify(envelope),promptRecord:prompt,transport});
-        assert.equal(prepared.validation.valid,false,`Stage ${stage}: ${name} DETERMINATION must be rejected before proposal.`);
-        assert(prepared.validation.issues.some(issue=>String(issue.path||'').includes('DETERMINATION')),`Stage ${stage}: ${name} must fail at the intended field.`);
+        assert.equal(prepared.validation.valid,false,`Stage ${stage}: ${name} ${submissionField} must be rejected before proposal.`);
+        assert(prepared.validation.issues.some(issue=>String(issue.path||'').includes(stage===22&&name==='missing'?'deterministicResults':submissionField)),`Stage ${stage}: ${name} must fail at the intended field.`);
+      }
+      if(stage===22){
+       // Omission is permitted in the observation protocol. Preserve the absent
+       // original claim and record UNKNOWN without granting stage completion.
+       const partial=response('SATISFIED');delete partial.records.entailmentReviews[0].fields.ENTAILMENT_FINDING;
+       const pending=r.ingestion.prepare(p,{stage,text:JSON.stringify(partial),promptRecord:prompt,transport});assert.equal(pending.validation.valid,true,JSON.stringify(pending.validation.issues));
+       const accepted=r.ingestion.commit(pending.project,pending.proposal.proposalId,{operator:'SYNTHETIC_OPERATOR'}).project,result=e.recordsForCurrentScope(accepted,'deterministicResults').at(-1),review=e.recordsForCurrentScope(accepted,'entailmentReviews').find(row=>row.temporaryKey==='external-entailment');
+       assert.equal(Object.hasOwn(review.fields,'ENTAILMENT_FINDING'),false);assert.equal(e.recordValue(review,'ACCEPTED_RELATION'),'UNKNOWN');assert.equal(e.recordValue(result,'DETERMINATION'),'UNDETERMINED');assert.equal(e.gate(22,accepted).complete,false);
       }
       return ['missing','wrong-type'];
     },evaluate(value){
       const envelope=response(value),prepared=r.ingestion.prepare(p,{stage,text:JSON.stringify(envelope),promptRecord:prompt,transport:{authority:'AUTHORITATIVE_RESPONSE_FILE',packageId:prompt.packageId,operationReservationId:prompt.operationReservationId,challengeNonce:prompt.challengeNonce}});
       assert.equal(prepared.validation.valid,true,JSON.stringify(prepared.validation.issues));
       const committed=r.ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'SYNTHETIC_OPERATOR'}).project,row=e.recordsForCurrentScope(committed,family).at(-1);
-      assert(row,'Accepted external result must reach canonical records.');assert.equal(e.recordValue(row,'DETERMINATION'),value,'Accepted raw determination must be preserved.');
+      assert(row,'Accepted external result must reach canonical records.');if(stage===22){assert.equal(e.recordValue(row,'DETERMINATION'),stage22OutcomeCases.find(item=>item.reported===value).canonical,'Application canonical determination must match the independent expected relation outcome.');const observed=e.recordsForCurrentScope(committed,'observationRecords').find(item=>item.temporaryKey==='external-observation'),review=e.recordsForCurrentScope(committed,'entailmentReviews').find(item=>item.temporaryKey==='external-entailment');assert.equal(e.recordValue(observed,'EXTERNAL_OR_AGENT_OBSERVED_VALUE'),'PASS');assert(e.recordValue(review,'REASONING').includes('original reported outcome '+value+'.'));}else assert.equal(e.recordValue(row,'DETERMINATION'),value,'Accepted raw determination must be preserved.');
       const decision=e.evaluateResultConsistency(family,row,f.test,committed),gate=e.gate(stage,committed);
       assert.equal(decision.evidence.sufficient,true,JSON.stringify(decision.reasons));
       return {actual:value,effective:decision.determination,reasons:decision.reasons,gateReasons:gate.reasons,gateComplete:gate.complete};
@@ -135,6 +177,8 @@ async function stalePackageControl(control){
   return {staleVersion:old.promptEngineVersion,staleCode:'STALE_PROMPT_ENGINE_VERSION',freshVersion:fresh.promptEngineVersion,freshInstructionId: fresh.instructionId};
 }
 
+const producerContracts=producerContractControls();
+if(process.argv.includes('--producer-contracts-only')){console.log(JSON.stringify({externalResultProducerContracts:producerContracts}));process.exit(0);}
 const observations=[];
 for(const stage of stages){
   const current=stage===12?perRunCase(false):await finalStageCase(stage,false);
@@ -156,4 +200,4 @@ for(const stage of stages){
   observations.push({stage,family:families[stage],boundary:current.boundary,conforming:'SATISFIED',negative:negatives,admissionNegatives,formerUnknown:'SATISFIED',currentUnknown:'UNDETERMINED',evidenceSufficient:true,producerDescriptorPublished:true});
   if(stage===22)observations.push({stage,caseId:'stale-external-result-prompt-recovery',...(await stalePackageControl(current))});
 }
-console.log(JSON.stringify({schema:'closed-loop-external-result-determination-regression/1',observations}));
+console.log(JSON.stringify({schema:'closed-loop-external-result-determination-regression/1',observations,producerContracts}));

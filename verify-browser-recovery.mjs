@@ -1,3 +1,4 @@
+import {verifyManifestCurrentWorkRecoveryBrowser} from './test-manifest-current-work-recovery-browser.mjs';
 import {verifyResponseRetryBrowser} from './test-response-retry-browser.mjs';
 import {verifyHumanJobControls} from './test-human-job-controls.mjs';
 import {downloadSyntheticHandoff} from './test-browser-handoff-authorization.mjs';
@@ -86,6 +87,8 @@ async function verifyImportedView(pendingBackup){
  record('Import and reload preserve the saved unaccepted replacement confirmation and accepted canonical state',{destinationJobId:pendingBackup.project.job.JOB_ID,backupSha256:pendingBackup.file.sha256});
 }
 try{
+ report.manifestCurrentWorkRecovery=await verifyManifestCurrentWorkRecoveryBrowser(browser,{schema,engine});
+ for(const observation of report.manifestCurrentWorkRecovery.verificationObservations)record(observation.checkId,{observation});
  record('Equivalent response transfers preserve the original proposal and current operator action',await verifyResponseRetryBrowser(browser));
  await verifyHumanJobControls(browser,record);
  await browser.click('#new-project');await browser.fill('[data-job="JOB_TITLE"]','Disposable recoverable acceptance journey');await browser.fill('[data-job="EXACT_USER_OBJECTIVE_VERBATIM"]',OBJECTIVE);await browser.click('#save-job');
@@ -136,6 +139,6 @@ try{
  await browser.click('[data-quarantine-remove]');assert.equal(await browser.exists('#quarantine-notice'),false);assert.deepEqual((await state()).project.projectData,validRecovery.project.projectData);record('Recovery controls export protected evidence and remove only the damaged copy while preserving the restored project and History');
  await verifyPendingRestoration();await verifyPendingRestoration({failCheckpoint:true});await verifyImportedView(pendingFileCorrection);
  assert.deepEqual(browser.exceptions(),[]);report.browserExecution=await browser.executionEvidence();report.complete=true;
-}catch(error){report.failures.push({message:error.stack});process.exitCode=1;try{await browser.inspect(1);}catch{}}
+}catch(error){if(error.manifestCurrentWorkRecovery)report.manifestCurrentWorkRecovery=error.manifestCurrentWorkRecovery;report.failures.push({message:error.stack});process.exitCode=1;try{await browser.inspect(1);}catch{}}
 finally{report.events=browser.events;fs.writeFileSync(path.join(directory,'recovery.json'),JSON.stringify(report,null,2)+'\n');await browser.close();}
 console.log(JSON.stringify({browserRecovery:report.complete,...report},null,2));

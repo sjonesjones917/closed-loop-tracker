@@ -1,15 +1,21 @@
+import {verifyContractProfileContrasts} from './test-contract-profile-contrasts.mjs';
+import {verifyExtractionManifestBackupPersistence} from './test-manifest-record-backup.mjs';
+import {verifySchemaReferenceAdmission} from './test-schema-reference-admission.mjs';
 import {verifyInboundResponseArchive} from './test-inbound-response-archive.mjs';
 import {verifyReturnedAttachmentBoundaries} from './test-returned-attachment-boundaries.mjs';
 import {verifyHumanJobAuthority} from './test-human-job-authority.mjs';
 import {verifySyntaxTransportStage1} from './test-ingestion-syntax-transport.mjs';
-import {verifySemanticResponseRetryPreservation,verifyNonfiniteResponseNumbers} from './test-semantic-response-retries.mjs';
+import {verifySemanticResponseRetryPreservation,verifyNonfiniteResponseNumbers,verifyCanonicalRetryResponseTypePopulation} from './test-semantic-response-retries.mjs';
+import {verifyResponsePendingAuthorityControls} from './test-response-pending-authority-controls.mjs';
 import {artifactFixtureId} from './test-artifact-fixtures.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
-import {stage04AcceptanceFixture,stage04AcceptanceEnvelope,recordProposal} from './test-fixtures.mjs';
+import {stage01AcceptanceFixture,stage02AcceptanceFixture,stage04AcceptanceFixture,stage04AcceptanceEnvelope,recordProposal,canonicalFixtureRecord,acceptPrerequisite,boundedSearchProposal} from './test-fixtures.mjs';
 import {projectStoreRuntime,bindArtifactFixture} from './test-project-store-runtime.mjs';
 import {verifyIngestionContextReferences,verifyHumanDecisionCandidateTargets,verifyExternalResponseIdentityShape,verifyCanonicalResponseRecovery,verifyResponseCanonicalValueBoundaries} from './test-ingestion-context-reference.mjs';
-import {verifyNestedResponseTypeSafety,verifyResponseTypeBoundaries,verifyStage01CaptureCacheCompatibility,verifyResponseIdentityUiBoundary,verifyStage01LegacyCaptureTypes,verifyStage01LegacyNewResponses,verifyObligationDispositionTypes,verifyRepresentationObservationTypes} from './test-response-type-boundaries.mjs';
+import {verifyExternalNativeReceiptAdmission,verifyNestedResponseTypeSafety,verifyResponseTypeBoundaries,verifyStage01CaptureCacheCompatibility,verifyResponseIdentityUiBoundary,verifyStage01LegacyCaptureTypes,verifyStage01LegacyNewResponses,verifyObligationDispositionTypes,verifyRepresentationObservationTypes} from './test-response-type-boundaries.mjs';
 import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
+import {verifySchemaPolicyRuntime,verifySchemaCurrentSourceSetPolicy} from './test-schema-policy-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import './verify-reservation-contract.mjs';
@@ -39,14 +45,17 @@ async function retainReturnedFixture(p,file,blob){
   assert.equal(globalThis.closedLoopProjectStore.artifactCustodyState({jobId:p.job.JOB_ID,artifactId:file.artifactId,filename:file.name,byteSize:file.size,sha256:file.sha256}),'TRUE','RETURNED_FILE_NATIVE_FIXTURE_ORACLE: native readback must own current custody');
 }
 
-function prepareStage4Upstream(p){
-  const intake=prompts.buildPromptRecord(1,p).contextManifest.intakeCoverageManifest;
-  p.stages[1].agentData.INPUT_SET_CONTENTS=JSON.stringify({schema:'closed-loop-stage01-capture/2',inputVersion:intake.inputVersion,manifestSha256:intake.manifestSha256,pass1Completed:true,pass2OmissionChallenge:{completed:true,checkedCategories:['QUALIFIERS','EXCEPTIONS','DEPENDENCIES','NEGATIVE_REQUIREMENTS','DO_NOT_CHANGE','VISUAL_CONSTRAINTS','TEMPORAL_CONSTRAINTS','ACCEPTANCE_CONDITIONS','AUTHORITY_STATEMENTS','TOOL_RESTRICTIONS','FILE_REFERENCES','OUTPUT_FORMAT_REQUIREMENTS','CORRECTIONS','LATER_OVERRIDES'],omissionsFound:[],omissionsResolved:true},units:intake.units.map((u,i)=>({sourceUnitId:u.unitId,sourceRawValueSha256:u.rawValueSha256,disposition:'EXTRACTED_RELEVANT_INFORMATION',reason:'',extractedStatements:[{statementKey:'S'+String(i+1),text:u.rawValueText||('Captured '+u.label),statementClass:'FACT'}]}))});
-  p.stages[1].status='COMPLETE';p.stages[1].gate={complete:true,blocked:false,reasons:[]};
-  p.stages[2].status='COMPLETE';p.stages[2].gate={complete:true,blocked:false,reasons:[]};p.stages[2].agentData.SOURCE_APPLICABILITY_DETERMINATION='NO_APPLICABLE_EXTERNAL_SOURCE';
-  p.stages[3].status='COMPLETE';p.stages[3].gate={complete:true,blocked:false,reasons:[]};
-  return p;
+const acceptedFixtureBaselines=new WeakMap();
+function recordAcceptedFixtureBaseline(p){if(!acceptedFixtureBaselines.has(p))acceptedFixtureBaselines.set(p,engine.clone(p.projectData.acceptedChanges));}
+function acceptedFixtureBaseline(p){const baseline=acceptedFixtureBaselines.get(p);if(!baseline)throw new Error('The actual owning prerequisite baseline was not captured.');return baseline;}
+function sourcePrerequisitesReady(p,stage){
+  return engine.gate(1,p).complete&&engine.acceptedChanges(p,1).length>0&&(stage<3||engine.gate(2,p).complete&&engine.sourceApplicabilityState(p).determination!=='UNDETERMINED')&&(stage<4||engine.gate(3,p).complete&&engine.acceptedChanges(p,3).length>0);
 }
+function acceptSourcePrerequisites(p,stage){
+  const runtime={core,schema,engine,prompts,ingestion},options={project:p,stageData:p.stages[1].agentData},helper=stage>=4?stage04AcceptanceFixture:stage===3?stage02AcceptanceFixture:stage01AcceptanceFixture;
+  Object.assign(p,helper(runtime,p.job.JOB_ID,options));acceptedFixtureBaselines.set(p,engine.clone(p.projectData.acceptedChanges));return p;
+}
+function prepareStage4Upstream(p){return preparePromptPrerequisites(p,4);}
 function project(jobId='JOB-INGESTION-TEST'){
   const p=core.createBlankState(jobId);
   p.job.JOB_ID=jobId;
@@ -58,15 +67,15 @@ function project(jobId='JOB-INGESTION-TEST'){
   return p;
 }
 function preparePromptPrerequisites(p,stage){
-  if(stage<=1)return p;
+  if(stage<=1){recordAcceptedFixtureBaseline(p);return p;}
+  if(!sourcePrerequisitesReady(p,stage)){
   for(const key of ['CURRENT_SOURCE_SET_VERSION','CURRENT_RESEARCH_VERSION','CURRENT_REQUIREMENTS_VERSION','CURRENT_TEST_SUITE_VERSION','CURRENT_INSTRUCTION_VERSION','CURRENT_PRODUCT_VERSION','CURRENT_REVIEW_VERSION','CURRENT_RECONCILED_REVIEW_VERSION','CURRENT_EVIDENCE_CHAIN_VERSION','CURRENT_RELEASE_ID','CURRENT_HASH_REVIEW_ID'])if(!p.job[key]||['NOT APPLICABLE','NONE'].includes(p.job[key]))p.job[key]='SYNTHETIC-'+key;
   const intake=prompts.buildPromptRecord(1,p).contextManifest.intakeCoverageManifest;
   p.stages[1].agentData.INPUT_SET_CONTENTS=JSON.stringify({schema:'closed-loop-stage01-capture/2',inputVersion:intake.inputVersion,manifestSha256:intake.manifestSha256,pass1Completed:true,pass2OmissionChallenge:{completed:true,checkedCategories:['QUALIFIERS','EXCEPTIONS','DEPENDENCIES','NEGATIVE_REQUIREMENTS','DO_NOT_CHANGE','VISUAL_CONSTRAINTS','TEMPORAL_CONSTRAINTS','ACCEPTANCE_CONDITIONS','AUTHORITY_STATEMENTS','TOOL_RESTRICTIONS','FILE_REFERENCES','OUTPUT_FORMAT_REQUIREMENTS','CORRECTIONS','LATER_OVERRIDES'],omissionsFound:[],omissionsResolved:true},units:intake.units.map((u,i)=>({sourceUnitId:u.unitId,sourceRawValueSha256:u.rawValueSha256,disposition:'EXTRACTED_RELEVANT_INFORMATION',reason:'',extractedStatements:[{statementKey:'S'+String(i+1),text:u.rawValueText||('Captured '+u.label),statementClass:'FACT'}]}))});
-  p.stages[1].status='COMPLETE';p.stages[1].gate={complete:true,blocked:false,reasons:[]};
-  if(stage>=3){p.stages[2].status='COMPLETE';p.stages[2].gate={complete:true,blocked:false,reasons:[]};p.stages[2].agentData.SOURCE_APPLICABILITY_DETERMINATION='NO_APPLICABLE_EXTERNAL_SOURCE';}
-  if(stage>=4){p.stages[3].status='COMPLETE';p.stages[3].gate={complete:true,blocked:false,reasons:[]};}
+  acceptSourcePrerequisites(p,stage);
+  }
   for(let prior=4;prior<stage;prior++){p.stages[prior].status='COMPLETE';p.stages[prior].gate={complete:true,blocked:false,reasons:[]};}
-  return p;
+  recordAcceptedFixtureBaseline(p);return p;
 }
 function fixtureBuildPrompt(stage,p,options={operation:fixturePromptOperation(stage)}){
   preparePromptPrerequisites(p,stage);
@@ -74,9 +83,9 @@ function fixtureBuildPrompt(stage,p,options={operation:fixturePromptOperation(st
   const references={...(options.scope||{})};
   const contract=schema.operationContract(stage,options.operation);
   for(const key of contract.scopeRequirements){
-    // Verification context is issued for the selected run by the application.
+    // Run verification and final review contexts are application-issued.
     // A generic synthetic context is not an authorized independent reviewer.
-    if(key==='contextId'&&options.operation==='VERIFY'&&!references.contextId)continue;
+    if(key==='contextId'&&(options.operation==='VERIFY'||[23,24].includes(stage)&&options.operation==='COMPLETE')&&!references.contextId)continue;
     const family=schema.SCOPE_REFERENCE_FAMILIES[key];if(!family)continue;
     const existing=engine.records(p,family).find(row=>engine.isActiveRecord(row)&&!(family==='products'&&contract.scope.dimensions[key]==='TARGET_RESERVED'&&String(row.completionState||row.status||engine.recordValue(row,'STATUS')).toUpperCase()==='COMPLETED')&&(key!=='confirmationIterationId'||engine.recordValue(row,'PURPOSE')==='UNCHANGED_CONFIRMATION')&&(!references[key]||engine.recordId(row,family)===references[key]));
     if(existing){references[key]=engine.recordId(existing,family);continue;}
@@ -176,6 +185,24 @@ function validEnvelope(p,stage,promptRecord){
 function blockedEnvelope(p,stage,promptRecord){return {schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:p.job.JOB_ID,stage,operation:promptRecord.operation,promptIdentity:{instructionId:promptRecord.instructionId,bodySha256:promptRecord.bodySha256,contractSha256:promptRecord.contractSha256,contextSignature:promptRecord.contextSignature},scope:{...promptRecord.scope},responseType:'BLOCKED',humanInputRequests:[],stageData:{},records:{},evidence:[],unresolved:[{temporaryKey:'u-1',kind:'MISSING_CAPABILITY',description:'Controlled blocked fixture',whyBlocking:'Scope identity validation fixture.',affectedStageFields:[],affectedRecords:[],blocking:true}],warnings:[],attachments:[]};}
 function sourceProposal(tempKey='source-1',overrides={}){return {tempKey,fields:{TITLE:'Web Content Accessibility Guidelines (WCAG) 2.2',ISSUING_ORGANIZATION_OR_AUTHOR:'World Wide Web Consortium',SOURCE_TYPE:'OFFICIAL_STANDARD',PUBLICATION_ORIGIN:'W3C Recommendation',URL_REFERENCE:'https://www.w3.org/TR/WCAG22/',PUBLICATION_UPDATE_DATE:'2024-12-12',RETRIEVAL_DATE:'2026-08-25',AUTHORITY_LEVEL:'PRIMARY TECHNICAL AUTHORITY',AUTHORITY_ROLE:'GOVERNING WHERE APPLICABLE',RELEVANCE:'Independent accessibility authority',APPLICABLE_PORTIONS:'Conformance requirements',INSPECTION_STATUS:'INSPECTED',CURRENCY_STATUS:'CURRENT',SUPERSESSION_STATUS:'NOT SUPERSEDED',CONTROLLING_STATE:'CONTROLLING WHERE APPLICABLE',NOTES:'Controlled fixture',...overrides},relationships:{},evidenceRefs:['evidence-1']};}
 
+const contractProfileContrasts=verifyContractProfileContrasts({project,savePrompt,blockedEnvelope,ingestion,acceptedFixtureBaseline});
+console.log(JSON.stringify({contractProfileContrasts}));
+
+// Source prerequisite fixtures must establish actual accepted authority once,
+// retain it across repeated prompt/prepare calls, and fail closed if support is removed.
+const sourcePrefixObservations=[];
+{
+ const prefix=project('JOB-SOURCE-INGESTION-PREFIX');preparePromptPrerequisites(prefix,4);
+ assert.deepEqual(prefix.projectData.acceptedChanges.map(x=>[x.stage,x.operation]),[[1,'COMPLETE'],[2,'COMPLETE'],[2,'SEARCH_ADEQUACY_REVIEW'],[3,'COMPLETE']],'SOURCE_INGESTION_PREFIX_ORACLE');
+ const accepted=engine.clone(prefix.projectData.acceptedChanges);preparePromptPrerequisites(prefix,4);prepareStage4Upstream(prefix);assert.deepEqual(prefix.projectData.acceptedChanges,accepted,'SOURCE_INGESTION_PREFIX_IDEMPOTENCE_ORACLE');
+ for(const [name,family]of [['missing-search','sourceSearchContracts'],['missing-capability','externalCapabilities'],['missing-independent-review','semanticReviews']]){
+  const control=engine.clone(prefix);control.projectData[family]=[];
+  assert.equal(engine.sourceApplicabilityState(control).determination,'UNDETERMINED',name);assert.equal(engine.gate(2,control).complete,false,name);
+  assert.throws(()=>prompts.buildPromptRecord(4,control),error=>error.code==='STAGE4_UPSTREAM_INCOMPLETE',name);
+  assert.deepEqual(control.projectData.acceptedChanges,accepted,name+' changed acceptance history');sourcePrefixObservations.push({name,expected:'STAGE4_UPSTREAM_INCOMPLETE',acceptedPrefixChanges:accepted.length,acceptedAdditionalChanges:0});
+ }
+}
+
 // Cross-field timing must fail in the same response-validation path that
 // regenerates correction instructions, before any canonical test is accepted.
 for(const operation of ['COMPLETE','RECONCILE_VERIFICATION_SUITE'])for(const [phase,due] of [['DELIVERY_IDENTITY',28],['EVIDENCE_CLOSURE',29],['REGISTRY_CLOSURE',30],['TERMINAL_DELIVERY',30]]){
@@ -186,12 +213,51 @@ for(const operation of ['COMPLETE','RECONCILE_VERIFICATION_SUITE'])for(const [ph
   e.records={tests:[{tempKey:'timing-test',fields,relationships:{},evidenceRefs:['evidence-1']}]};
   const raw=JSON.stringify(e),result=ingestion.prepare(p,{stage:6,text:raw,promptRecord:pr});
   if(result.validation.valid||!result.validation.issues.some(x=>x.code==='INVALID_TEST_TIMING'))throw new Error(`${operation} accepted contradictory ${phase} timing instead of regenerating a correction.`);
-  if(result.project.projectData.tests.length||result.project.projectData.acceptedChanges.length)throw new Error('Invalid test timing changed canonical data.');
+  assert.deepEqual(result.project.projectData.acceptedChanges,acceptedFixtureBaseline(p),'Invalid test timing changed canonical accepted state.');if(result.project.projectData.tests.length)throw new Error('Invalid test timing changed canonical tests.');
   if(result.project.projectData.rawResponses.at(-1).completeRawResponse!==raw)throw new Error('Timing rejection lost the exact response.');
   preparePromptPrerequisites(result.project,6);
   const replacement=prompts.reserveAndBuildPromptRecord(result.project,6,{operation},{owningTabInstance:'TIMING-REGRESSION'}).prompt;
   if(replacement.instructionId===pr.instructionId||!replacement.prompt.includes('INVALID_TEST_TIMING'))throw new Error('Timing failure was omitted from the replacement instruction.');
 }
+
+// Common prerequisite writer uses real application-issued reservations. Text
+// remains a controlled nonauthoritative fixture, not observed response-file bytes.
+function verifyPrerequisiteReservationProvenance(){
+  const issued=[],runtime={core,schema,engine,ingestion,prompts:{...prompts,reserveAndBuildPromptRecord(state,stage,options,metadata){
+    const preRevision=Number(state.revision||0),result=prompts.reserveAndBuildPromptRecord(state,stage,options,metadata);
+    assert.equal(Number(result.prompt.scope.projectRevision),preRevision+1,'PREREQUISITE_RESERVATION_REVISION_ORACLE');
+    issued.push({preRevision,stage,operation:options.operation,promptId:result.prompt.instructionId,reservationId:result.prompt.operationReservationId});return result;
+  }}};
+  const prefix=stage04AcceptanceFixture(runtime,'JOB-INGESTION-PREREQUISITE-RESERVATION');
+  assert.equal(issued.length,4,'PREREQUISITE_RESERVATION_COUNT_ORACLE');
+  assert.deepEqual(issued.map(row=>[row.stage,row.operation]),[[1,'COMPLETE'],[2,'COMPLETE'],[2,'SEARCH_ADEQUACY_REVIEW'],[3,'COMPLETE']],'PREREQUISITE_RESERVATION_OPERATION_ORACLE');
+  for(const expected of issued){
+    const change=prefix.projectData.acceptedChanges.find(row=>row.promptId===expected.promptId),prompt=prefix.projectData.generatedPrompts.find(row=>row.instructionId===expected.promptId),reservation=prefix.projectData.operationReservations.find(row=>row.id===expected.reservationId);
+    assert(change&&prompt&&reservation,'PREREQUISITE_RESERVATION_ADJACENCY_ORACLE');
+    const raw=prefix.projectData.rawResponses.find(row=>row.rawResponseId===change.rawResponseId),validation=prefix.projectData.responseValidations.find(row=>row.rawResponseId===change.rawResponseId),proposal=prefix.projectData.responseProposals.find(row=>row.proposalId===change.proposalId),envelope=JSON.parse(raw.completeRawResponse);
+    assert.equal(raw.sha256,createHash('sha256').update(raw.completeRawResponse,'utf8').digest('hex'),'PREREQUISITE_RAW_SHA_ORACLE');
+    assert.equal(raw.transport.authority,'NONAUTHORITATIVE_TEXT_FALLBACK','PREREQUISITE_TEXT_AUTHORITY_ORACLE');
+    assert.equal(raw.projectRevisionAtCapture,expected.preRevision+1,'PREREQUISITE_RAW_REVISION_ORACLE');
+    assert.equal(engine.recordValue(reservation,'RESERVATION_REVISION'),expected.preRevision+1,'PREREQUISITE_RESERVATION_REVISION_ORACLE');
+    assert.equal(engine.recordValue(reservation,'STATUS'),'ACCEPTED','PREREQUISITE_RESERVATION_ACCEPTED_ORACLE');
+    for(const key of ['packageId','operationReservationId','challengeNonce'])assert.equal(envelope[key],prompt[key],'PREREQUISITE_ISSUED_ECHO_ORACLE: '+key);
+    assert.equal(raw.transport.operationReservationId,prompt.operationReservationId,'PREREQUISITE_TRANSPORT_RESERVATION_ORACLE');
+    assert.equal(change.contextSignature,prompt.contextSignature,'PREREQUISITE_ACCEPTED_CONTEXT_ORACLE');
+    assert(validation&&proposal&&proposal.rawResponseId===raw.rawResponseId,'PREREQUISITE_VALIDATION_PROPOSAL_ORACLE');
+    assert(prefix.projectData.extractionManifests.some(row=>row.rawResponseId===raw.rawResponseId&&row.acceptedChangeId===change.changeId),'PREREQUISITE_EXTRACTION_ORACLE');
+    assert(prefix.projectData.outputReceipts.some(row=>row.rawResponseId===raw.rawResponseId&&row.acceptedCanonicalChangeId===change.changeId),'PREREQUISITE_OUTPUT_RECEIPT_ORACLE');
+  }
+  // Use the existing owning Stage19 setup for its required scope; the early
+  // accepted prefix above does not independently create later execution identities.
+  const reviewProject=project('JOB-INGESTION-PREREQUISITE-REVIEW'),reviewPrompt=savePrompt(reviewProject,19),binding=reviewPrompt.contextManifest.semanticReviewBinding;
+  assert.equal(binding.bindingStatus,'BOUND','PREREQUISITE_STAGE19_BINDING_ORACLE');
+  assert.equal(engine.semanticReviewIndependence(reviewProject,binding).determination,'APPLICATION_ESTABLISHED','PREREQUISITE_STAGE19_INDEPENDENCE_ORACLE');
+  for(const author of binding.authorProvenance){assert(author.operationReservationId&&author.rawResponseId&&author.contextId,'PREREQUISITE_AUTHOR_PROVENANCE_ORACLE');assert.notEqual(author.contextId,binding.reviewerContextId,'PREREQUISITE_DISTINCT_CONTEXT_ORACLE');assert(engine.records(reviewProject,'freshContexts',{active:false}).some(row=>engine.recordId(row,'freshContexts')===author.contextId),'PREREQUISITE_CONTEXT_RECORD_ORACLE');}
+  const missing=engine.clone(reviewProject),author=binding.authorProvenance[0],change=missing.projectData.acceptedChanges.find(row=>row.changeId===author.changeId),prompt=missing.projectData.generatedPrompts.find(row=>row.instructionId===change.promptId);delete prompt.operationReservationId;
+  assert.throws(()=>savePrompt(missing,19),error=>error.code==='SEMANTIC_REVIEW_INDEPENDENCE_NOT_ESTABLISHED','PREREQUISITE_MISSING_AUTHOR_RESERVATION_ORACLE');
+  return {issuedReservations:issued.length,authorCount:binding.authorProvenance.length,synthetic:true,actualAuthoritativeFile:false,actualProviderIndependence:false};
+}
+const prerequisiteReservationProvenance=verifyPrerequisiteReservationProvenance();
 
 const allStages=[];
 for(let stage=1;stage<=30;stage++){
@@ -208,15 +274,17 @@ for(let stage=1;stage<=30;stage++){
     allStages.push({stage,applicationControlled:true});
     continue;
   }
+  const acceptedBefore=engine.clone(p.projectData.acceptedChanges);
   const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(envelope),promptRecord});
   if(!prepared.validation.valid)throw new Error(`Stage ${stage} valid response rejected: ${JSON.stringify(prepared.validation.issues)}`);
   if(!prepared.proposal||prepared.proposal.status!=='PENDING_OPERATOR_REVIEW')throw new Error(`Stage ${stage} did not create a pending proposal.`);
-  if(prepared.project.projectData.acceptedChanges.length)throw new Error(`Stage ${stage} mutated canonical state before operator acceptance.`);
+  assert.deepEqual(prepared.project.projectData.acceptedChanges,acceptedBefore,`Stage ${stage} mutated canonical state before operator acceptance.`);
   // This loop isolates ingestion; re-establish its synthetic prerequisites after gate recalculation. Complete journeys are tested separately.
   preparePromptPrerequisites(prepared.project,stage);
+  assert.deepEqual(prepared.project.projectData.acceptedChanges,acceptedBefore,`Stage ${stage} prerequisite repair changed accepted state while the target proposal was pending.`);
   const committed=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'VERIFICATION_OPERATOR',reviewNote:'Controlled test acceptance.'});
   p=committed.project;
-  if(!p.projectData.acceptedChanges.length)throw new Error(`Stage ${stage} did not create an accepted canonical change.`);
+  if(p.projectData.acceptedChanges.length!==acceptedBefore.length+1||committed.acceptedChange?.proposalId!==prepared.proposal.proposalId)throw new Error(`Stage ${stage} did not create exactly its target accepted canonical change.`);
   if(!p.projectData.extractionManifests.length)throw new Error(`Stage ${stage} did not create an extraction manifest.`);
   const receipt=p.projectData.outputReceipts.at(-1);
   if(receipt.acceptedCanonicalChangeId==='NONE'||receipt.extractionManifestId==='NONE')throw new Error(`Stage ${stage} receipt was not linked through canonical acceptance.`);
@@ -224,6 +292,16 @@ for(let stage=1;stage<=30;stage++){
   if(reloaded.projectData.rawResponses.at(-1)?.completeRawResponse!==JSON.stringify(envelope))throw new Error(`Stage ${stage} raw response did not survive reload.`);
   if(stage<30){const nextStage=stage+1;preparePromptPrerequisites(reloaded,nextStage);if(nextStage===4)prepareStage4Upstream(reloaded);const nextOperation=fixturePromptOperation(nextStage);if(nextOperation){const nextOptions=fixturePromptOptions(nextStage,nextOperation),nextPrompt=fixtureBuildPrompt(nextStage,reloaded,nextOptions).prompt,isolated=[11,12,23,24].includes(nextStage);if(!nextPrompt.includes(`JOB_ID: ${p.job.JOB_ID}`))throw new Error(`Stage ${nextStage} prompt lost JOB_ID isolation.`);if(isolated&&nextPrompt.includes('PRIOR STAGE DECISION AND ACCEPTED DATA'))throw new Error(`Stage ${nextStage} isolation prompt leaked generic prior-stage context.`);if(!isolated&&!nextPrompt.includes('PRIOR STAGE DECISION AND ACCEPTED DATA'))throw new Error(`Stage ${nextStage} prompt did not consume accepted prior-stage context.`);}else{let blocked=false;try{prompts.buildPromptRecord(nextStage,reloaded,{operation:schema.STAGE_CONTRACTS[nextStage].operations[0]});}catch(error){blocked=error?.code==='NON_EXTERNAL_OPERATION';}if(!blocked)throw new Error(`Stage ${nextStage} application-only control unexpectedly exposed an external prompt.`);}}
   allStages.push({stage,proposal:prepared.proposal.proposalId,accepted:p.projectData.acceptedChanges.at(-1).changeId});
+}
+
+// Independent final-review contexts must come from the owning application
+// preparation path; a generic prior fixture context remains inadmissible.
+for(const stage of [23,24]){
+  const p=project('JOB-FINAL-REVIEW-CONTROL-'+stage),prompt=fixtureBuildPrompt(stage,p,{operation:'COMPLETE'}),context=engine.records(p,'freshContexts').find(row=>engine.recordId(row,'freshContexts')===prompt.scope.contextId);
+  assert.equal(context.stage,stage);assert.equal(context.source,'APPLICATION_REVIEWER_CONTEXT');
+  const bad=project('JOB-FINAL-REVIEW-INVALID-'+stage),id=engine.allocateId(bad,'freshContexts'),record={id,stage:0,active:true,source:'SYNTHETIC_INGESTION_SCOPE',fields:{CONTEXT_ID:id},CONTEXT_ID:id};
+  engine.refreshRecordHashes(record,'freshContexts');bad.projectData.freshContexts.push(record);
+  assert.throws(()=>fixtureBuildPrompt(stage,bad,{operation:'COMPLETE',scope:{contextId:id}}),error=>error.code==='INVALID_SCOPE_REFERENCE','FINAL_REVIEW_CONTEXT_ORACLE: generic fixture context must remain rejected');
 }
 
 let negativeCount=0;const scopeChecks=[],negativeObservations=[];
@@ -234,12 +312,12 @@ function negativeAt(name,stage,mutate,expectedCode){
   const prepared=ingestion.prepare(p,{stage,text,promptRecord});
   if(prepared.validation.valid)throw new Error(`${name}: invalid response was accepted.`);
   if(expectedCode&&!prepared.validation.issues.some(issue=>issue.code===expectedCode))throw new Error(`${name}: expected ${expectedCode}; got ${prepared.validation.issues.map(x=>x.code).join(', ')}.`);
-  if(prepared.project.projectData.acceptedChanges.length)throw new Error(`${name}: canonical state changed on validation failure.`);
+  assert.deepEqual(prepared.project.projectData.acceptedChanges,acceptedFixtureBaseline(p),`${name}: canonical state changed on validation failure.`);
   if(!prepared.project.projectData.rawResponses.length||!prepared.project.projectData.responseValidations.length)throw new Error(`${name}: failed raw response/validation was not preserved.`);
-  negativeObservations.push({checkId:'ingestion.invalid.'+name.replaceAll(' ','-'),name,stage,expectedCode,observedCodes:prepared.validation.issues.map(issue=>issue.code),accepted:prepared.validation.valid,acceptedChanges:prepared.project.projectData.acceptedChanges.length});
+  negativeObservations.push({checkId:'ingestion.invalid.'+name.replaceAll(' ','-'),name,stage,expectedCode,observedCodes:prepared.validation.issues.map(issue=>issue.code),accepted:prepared.validation.valid,acceptedChanges:prepared.project.projectData.acceptedChanges.length-acceptedFixtureBaseline(p).length,acceptedPrefixChanges:acceptedFixtureBaseline(p).length});
   negativeCount++;
 }
-function scopeNegative(name,stage,key){const p=project(`JOB-SCOPE-${name.replace(/[^A-Z0-9]/gi,'').toUpperCase()}`),pr=savePrompt(p,stage),e=blockedEnvelope(p,stage,pr);const control=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});assert.equal(control.validation.valid,true,`SCOPE_CURRENT_CONTROL: ${name}`);e.scope[key]=key==='projectRevision'?e.scope[key]+1:`STALE-${key}`;const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});assert.equal(prepared.validation.issues.some(i=>i.code==='WRONG_VALUE_TYPE'&&i.path===`/scope/${key}`),false,`SCOPE_TYPED_STALE_CONTROL: ${name}`);if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code==='STALE_SCOPE'&&i.path===`/scope/${key}`))throw new Error(`${name}: stale ${key} was not rejected.`);if(prepared.project.projectData.acceptedChanges.length)throw new Error(`${name}: stale scope mutated canonical state.`);scopeChecks.push({checkId:`scope.${stage}.${key}.${name.replaceAll(' ','-')}`,stage,key,expected:'STALE_SCOPE',code:prepared.validation.issues.find(i=>i.code==='STALE_SCOPE'&&i.path===`/scope/${key}`).code,currentControlAccepted:control.validation.valid,staleValueTypeConforming:!prepared.validation.issues.some(i=>i.code==='WRONG_VALUE_TYPE'&&i.path===`/scope/${key}`),accepted:prepared.validation.valid,acceptedChanges:prepared.project.projectData.acceptedChanges.length});negativeCount++;}
+function scopeNegative(name,stage,key){const p=project(`JOB-SCOPE-${name.replace(/[^A-Z0-9]/gi,'').toUpperCase()}`),pr=savePrompt(p,stage),e=blockedEnvelope(p,stage,pr);const control=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});assert.equal(control.validation.valid,true,`SCOPE_CURRENT_CONTROL: ${name}`);e.scope[key]=key==='projectRevision'?e.scope[key]+1:`STALE-${key}`;const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});assert.equal(prepared.validation.issues.some(i=>i.code==='WRONG_VALUE_TYPE'&&i.path===`/scope/${key}`),false,`SCOPE_TYPED_STALE_CONTROL: ${name}`);if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code==='STALE_SCOPE'&&i.path===`/scope/${key}`))throw new Error(`${name}: stale ${key} was not rejected.`);assert.deepEqual(prepared.project.projectData.acceptedChanges,acceptedFixtureBaseline(p),`${name}: stale scope mutated canonical state.`);scopeChecks.push({checkId:`scope.${stage}.${key}.${name.replaceAll(' ','-')}`,stage,key,expected:'STALE_SCOPE',code:prepared.validation.issues.find(i=>i.code==='STALE_SCOPE'&&i.path===`/scope/${key}`).code,currentControlAccepted:control.validation.valid,staleValueTypeConforming:!prepared.validation.issues.some(i=>i.code==='WRONG_VALUE_TYPE'&&i.path===`/scope/${key}`),accepted:prepared.validation.valid,acceptedChanges:prepared.project.projectData.acceptedChanges.length-acceptedFixtureBaseline(p).length,acceptedPrefixChanges:acceptedFixtureBaseline(p).length});negativeCount++;}
 const negative=(name,mutate,expectedCode)=>negativeAt(name,2,mutate,expectedCode);
 
 // The envelope must obey the same STRING and closed-reference contracts as
@@ -250,7 +328,7 @@ const closedEnvelopeObservations=[];
   const failures=[];
   const check=async(name,work)=>{try{await work();closedEnvelopeObservations.push({name,result:'PASS'});}catch(error){closedEnvelopeObservations.push({name,result:'FAIL',message:error.message});failures.push(error);}};
   const setup=name=>{const p=project('JOB-ENVELOPE-'+name),pr=savePrompt(p,1),envelope=validEnvelope(p,1,pr),control=ingestion.prepare(p,{stage:1,text:JSON.stringify(envelope),promptRecord:pr});assert.equal(control.validation.valid,true,'CLOSED_ENVELOPE_SETUP_ORACLE: '+JSON.stringify(control.validation.issues));assert.ok(control.proposal);return {p,pr,envelope,control};};
-  const rejected=(name,prepared,code,path)=>{assert.equal(prepared.validation.valid,false,name+': the single contract violation was accepted');assert.ok(prepared.validation.issues.some(issue=>issue.code===code&&issue.path===path),name+': rejection did not identify the intended violation: '+JSON.stringify(prepared.validation.issues));assert.equal(prepared.proposal,null,name+': rejected work must not create a proposal');assert.equal(prepared.project.projectData.acceptedChanges.length,0,name+': rejection must not accept work');};
+  const rejected=(name,p,prepare,code,path)=>{const acceptedBefore=JSON.parse(JSON.stringify(p.projectData.acceptedChanges)),prepared=prepare();assert.equal(prepared.validation.valid,false,name+': the single contract violation was accepted');assert.ok(prepared.validation.issues.some(issue=>issue.code===code&&issue.path===path),name+': rejection did not identify the intended violation: '+JSON.stringify(prepared.validation.issues));assert.equal(prepared.proposal,null,name+': rejected work must not create a proposal');assert.deepEqual(prepared.project.projectData.acceptedChanges,acceptedBefore,name+': rejection must preserve accepted history');return prepared;};
   await check('RESERVED_TARGET_STRING_SHAPE_ORACLE',()=>{
     const p=project('JOB-RESERVED-TARGET-STRING-SHAPE'),first=fixtureBuildPrompt(11,p),run=engine.records(p,'runs').find(row=>engine.recordId(row,'runs')===first.scope.runId);
     run.scope={...first.scope};run.fields.CONTEXT_ID=run.CONTEXT_ID=first.scope.contextId;engine.refreshRecordHashes(run,'runs');
@@ -258,7 +336,7 @@ const closedEnvelopeObservations=[];
     const envelope=validEnvelope(p,11,pr),definition=schema.RECORD_SCHEMAS.runs,fields={};for(const key of definition.required)if(definition.fieldDefinitions[key].producer===schema.PRODUCER.AGENT)fields[key]=valueForDefinition(definition.fieldDefinitions[key]);
     envelope.stageData={};envelope.records={runs:[{targetId:pr.scope.runId,fields,relationships:{},evidenceRefs:['evidence-1']}]};
     const control=ingestion.prepare(p,{stage:11,text:JSON.stringify(envelope),promptRecord:pr});assert.equal(control.validation.valid,true,'RESERVED_TARGET_SETUP_ORACLE: '+JSON.stringify(control.validation.issues));assert.equal(control.proposal.canonicalRecords.runs[0].id,pr.scope.runId);
-    for(const malformed of [{targetId:[pr.scope.runId]},{targetId:{id:pr.scope.runId}},{targetId:pr.scope.runId,tempKey:null},{targetId:pr.scope.runId,tempKey:''}]){const changed=engine.clone(envelope);Object.assign(changed.records.runs[0],malformed);rejected('RESERVED_TARGET_STRING_SHAPE_ORACLE',ingestion.prepare(p,{stage:11,text:JSON.stringify(changed),promptRecord:pr}),'INVALID_RECORD_IDENTITY','/records/runs/0');}
+    for(const malformed of [{targetId:[pr.scope.runId]},{targetId:{id:pr.scope.runId}},{targetId:pr.scope.runId,tempKey:null},{targetId:pr.scope.runId,tempKey:''}]){const changed=engine.clone(envelope);Object.assign(changed.records.runs[0],malformed);rejected('RESERVED_TARGET_STRING_SHAPE_ORACLE',p,()=>ingestion.prepare(p,{stage:11,text:JSON.stringify(changed),promptRecord:pr}),'INVALID_RECORD_IDENTITY','/records/runs/0');}
   });
   await check('EVIDENCE_OPTIONAL_AUTHORITY_TYPE_CONTROL',()=>{
     const {p,pr,envelope,control}=setup('AUTHORITY-CONTROL');
@@ -268,25 +346,35 @@ const closedEnvelopeObservations=[];
   });
   for(const field of ['kind','description','location','content','authorityType'])await check('EVIDENCE_STRING_TYPE_ORACLE:'+field,()=>{
     const {p,pr,envelope}=setup('TYPE-'+field.toUpperCase());envelope.evidence[0][field]={claimed:'An object cannot satisfy this evidence STRING field.'};
-    const prepared=ingestion.prepare(p,{stage:1,text:JSON.stringify(envelope),promptRecord:pr});
-    rejected('EVIDENCE_STRING_TYPE_ORACLE:'+field,prepared,'WRONG_VALUE_TYPE','/evidence/0/'+field);
+    rejected('EVIDENCE_STRING_TYPE_ORACLE:'+field,p,()=>ingestion.prepare(p,{stage:1,text:JSON.stringify(envelope),promptRecord:pr}),'WRONG_VALUE_TYPE','/evidence/0/'+field);
   });
   await check('TEMPORARY_KEY_BOUNDARY_ORACLE',()=>{
     const {p,pr,envelope}=setup('KEY-BOUNDARY');envelope.evidence[0].temporaryKey='E'+'x'.repeat(119);
     const maximum=ingestion.prepare(p,{stage:1,text:JSON.stringify(envelope),promptRecord:pr});assert.equal(maximum.validation.valid,true,'The supported 120-character key was rejected: '+JSON.stringify(maximum.validation.issues));
-    envelope.evidence[0].temporaryKey+='x';const oversized=ingestion.prepare(p,{stage:1,text:JSON.stringify(envelope),promptRecord:pr});rejected('TEMPORARY_KEY_BOUNDARY_ORACLE',oversized,'INVALID_TEMPORARY_KEY','/evidence/0/temporaryKey');
+    envelope.evidence[0].temporaryKey+='x';const oversized=rejected('TEMPORARY_KEY_BOUNDARY_ORACLE',p,()=>ingestion.prepare(p,{stage:1,text:JSON.stringify(envelope),promptRecord:pr}),'INVALID_TEMPORARY_KEY','/evidence/0/temporaryKey');
     assert.ok(oversized.validation.issues.find(issue=>issue.code==='INVALID_TEMPORARY_KEY').message.includes('120'),'TEMPORARY_KEY_BOUNDARY_ORACLE: length failure must explain the actual maximum');
   });
-  await check('TEMPORARY_KEY_STRING_TYPE_ORACLE',()=>{const {p,pr,envelope}=setup('KEY-TYPE');envelope.evidence[0].temporaryKey=true;rejected('TEMPORARY_KEY_STRING_TYPE_ORACLE',ingestion.prepare(p,{stage:1,text:JSON.stringify(envelope),promptRecord:pr}),'WRONG_VALUE_TYPE','/evidence/0/temporaryKey');});
+  await check('TEMPORARY_KEY_STRING_TYPE_ORACLE',()=>{const {p,pr,envelope}=setup('KEY-TYPE');envelope.evidence[0].temporaryKey=true;rejected('TEMPORARY_KEY_STRING_TYPE_ORACLE',p,()=>ingestion.prepare(p,{stage:1,text:JSON.stringify(envelope),promptRecord:pr}),'WRONG_VALUE_TYPE','/evidence/0/temporaryKey');});
   await check('TEMPORARY_KEY_EXACT_IDENTITY_ORACLE',()=>{
     const p=project('JOB-KEY-EXACT-IDENTITY'),pr=savePrompt(p,2),envelope=validEnvelope(p,2,pr);envelope.records={sources:[sourceProposal('source-key-control')]};
     const control=ingestion.prepare(p,{stage:2,text:JSON.stringify(envelope),promptRecord:pr});assert.equal(control.validation.valid,true,'KEY_IDENTITY_SETUP_ORACLE: '+JSON.stringify(control.validation.issues));assert.equal(control.proposal.canonicalRecords.sources[0].evidenceRefs.length,1,'KEY_IDENTITY_SETUP_ORACLE: conforming source must retain its evidence relationship');
     envelope.evidence[0].temporaryKey=' '+envelope.evidence[0].temporaryKey+' ';
-    rejected('TEMPORARY_KEY_EXACT_IDENTITY_ORACLE',ingestion.prepare(p,{stage:2,text:JSON.stringify(envelope),promptRecord:pr}),'INVALID_TEMPORARY_KEY','/evidence/0/temporaryKey');
+    rejected('TEMPORARY_KEY_EXACT_IDENTITY_ORACLE',p,()=>ingestion.prepare(p,{stage:2,text:JSON.stringify(envelope),promptRecord:pr}),'INVALID_TEMPORARY_KEY','/evidence/0/temporaryKey');
   });
   await check('TEMPORARY_KEY_SHARED_NAMESPACE_ORACLE',()=>{
     const {p,pr,envelope}=setup('KEY-NAMESPACE');envelope.humanAuthorityCandidates=[{temporaryKey:envelope.evidence[0].temporaryKey,label:'Synthetic ordinary human-answer claim',value:false,authorityClass:'HUMAN',claimedConversationBasis:'Synthetic fixture only; no actual human action is asserted.',externalResponsePointer:'synthetic-message',affectedStageFields:['EXACT_DELIVERABLE_REQUESTED'],affectedRecords:[]}];
-    rejected('TEMPORARY_KEY_SHARED_NAMESPACE_ORACLE',ingestion.prepare(p,{stage:1,text:JSON.stringify(envelope),promptRecord:pr}),'DUPLICATE_TEMPORARY_KEY','/humanAuthorityCandidates/0/temporaryKey');
+    rejected('TEMPORARY_KEY_SHARED_NAMESPACE_ORACLE',p,()=>ingestion.prepare(p,{stage:1,text:JSON.stringify(envelope),promptRecord:pr}),'DUPLICATE_TEMPORARY_KEY','/humanAuthorityCandidates/0/temporaryKey');
+  });
+  await check('REJECTED_ACCEPTED_HISTORY_SIDE_EFFECT_ORACLE',()=>{
+    let p=project('JOB-REJECTED-HISTORY-SIDE-EFFECT'),pr=savePrompt(p,2),envelope=validEnvelope(p,2,pr);
+    const valid=ingestion.prepare(p,{stage:2,text:JSON.stringify(envelope),promptRecord:pr});assert.equal(valid.validation.valid,true,'REJECTED_HISTORY_VALID_SETUP_ORACLE');
+    const priorAccepted=JSON.parse(JSON.stringify(p.projectData.acceptedChanges));p=ingestion.commit(valid.project,valid.proposal.proposalId,{operator:'VERIFICATION_OPERATOR'}).project;
+    assert.equal(p.projectData.acceptedChanges.length,priorAccepted.length+1,'REJECTED_HISTORY_VALID_COMMIT_ORACLE');
+    pr=savePrompt(p,2);envelope=validEnvelope(p,2,pr);envelope.evidence[0].temporaryKey=true;
+    const text=JSON.stringify(envelope),acceptedBefore=JSON.parse(JSON.stringify(p.projectData.acceptedChanges));
+    rejected('REJECTED_HISTORY_RETAINED_VALID_CONTROL',p,()=>ingestion.prepare(p,{stage:2,text,promptRecord:pr}),'WRONG_VALUE_TYPE','/evidence/0/temporaryKey');
+    assert.throws(()=>rejected('REJECTED_HISTORY_INTENDED_SIDE_EFFECT',p,()=>{const out=ingestion.prepare(p,{stage:2,text,promptRecord:pr});out.project.projectData.acceptedChanges.push(JSON.parse(JSON.stringify(acceptedBefore[0])));return out;},'WRONG_VALUE_TYPE','/evidence/0/temporaryKey'),error=>error.code==='ERR_ASSERTION'&&error.message.includes('rejection must preserve accepted history'),'REJECTED_ACCEPTED_HISTORY_SIDE_EFFECT_ORACLE');
+    assert.deepEqual(p.projectData.acceptedChanges,acceptedBefore,'REJECTED_HISTORY_INPUT_PRESERVED_ORACLE');
   });
   await check('ATTACHMENT_REF_CLOSED_KEYS_ORACLE',async()=>{
     const r=projectStoreRuntime(),{core,engine,prompts,store,ingestion,copy,runtime}=r,p=core.createBlankState('JOB-CLOSED-ATTACHMENT-REF');engine.ensureShape(p);engine.recalculate(p);
@@ -317,11 +405,11 @@ const closedEnvelopeObservations=[];
     }
     smart+=c;
   }
-  const prepared=ingestion.prepare(p,{stage,text:smart,promptRecord});
+  const acceptedBefore=JSON.parse(JSON.stringify(p.projectData.acceptedChanges)),prepared=ingestion.prepare(p,{stage,text:smart,promptRecord});
   if(prepared.validation.valid)throw new Error('Smart-quoted authoritative JSON was accepted.');
   if(!prepared.validation.issues.some(issue=>issue.code==='UNSAFE_SMART_QUOTES'&&issue.severity==='ERROR'))throw new Error(`Smart-quote rejection code missing: ${JSON.stringify(prepared.validation.issues)}`);
   if(prepared.rawRecord.completeRawResponse!==smart)throw new Error('Exact smart-quoted raw response was not preserved unchanged.');
-  if(prepared.project.projectData.acceptedChanges.length)throw new Error('Smart-quoted response changed canonical state despite rejection.');
+  assert.deepEqual(prepared.project.projectData.acceptedChanges,acceptedBefore,'Smart-quoted response changed canonical state despite rejection.');
 }
 negative('empty response',()=>'', 'EMPTY_RESPONSE');
 negative('malformed JSON',()=>'{"schema":}','MALFORMED_JSON');
@@ -330,8 +418,21 @@ negative('markdown wrapped',(e)=>'```json\n'+JSON.stringify(e)+'\n```','NON_JSON
 negative('duplicate JSON member',(e)=>JSON.stringify(e).replace('"stage":2','"stage":2,"stage":3'),'DUPLICATE_JSON_MEMBER');
 negative('wrong root type',()=> '[]','INVALID_ROOT');
 negative('unknown top-level property',(e)=>{e.unexpected='forbidden';},'UNKNOWN_PROPERTY');
-negative('oversized response',()=> 'x'.repeat(schema.DEFAULT_RESOURCE_LIMITS.maxRawResponseBytes+1),'OVERSIZED_RESPONSE');
-negative('excessive nesting',()=> '['.repeat(schema.DEFAULT_RESOURCE_LIMITS.maxJsonDepth+1)+'0'+']'.repeat(schema.DEFAULT_RESOURCE_LIMITS.maxJsonDepth+1),'EXCESSIVE_JSON_DEPTH');
+negative('response acceptance-mode override',(e)=>{e.acceptanceMode='VALIDATED_AUTO_COMMIT';},'UNKNOWN_PROPERTY');
+// Stage2 COMPLETE replaces the complete governing-source set (Section36);
+// independently exercise its declared 64 MiB response bound, not the ordinary
+// operation budget. The separate Stage1 owner covers actual staged-file custody.
+negative('oversized response',()=> 'x'.repeat(67108865),'OVERSIZED_RESPONSE');
+// Exercise depth through a permitted OBJECT field in a valid root envelope.
+// A top-level array is already rejected by the separate root-type control.
+negativeAt('excessive nesting',6,e=>{let nested={};for(let n=0;n<=schema.DEFAULT_RESOURCE_LIMITS.maxJsonDepth;n++)nested={nested};e.records.tests[0].fields.EXECUTABLE_INPUT_BINDINGS=nested;},'EXCESSIVE_JSON_DEPTH');
+{
+  const p=project('JOB-DEPTH-CONFORMING'),promptRecord=savePrompt(p,6),e=validEnvelope(p,6,promptRecord);
+  e.records.tests[0].fields.EXECUTABLE_INPUT_BINDINGS={};
+  const text=JSON.stringify(e),prepared=ingestion.prepare(p,{stage:6,text,promptRecord});
+  assert.equal(prepared.validation.valid,true,JSON.stringify(prepared.validation.issues));assert.ok(prepared.proposal);
+  assert.equal(prepared.rawRecord.completeRawResponse,text);assert.deepEqual(prepared.project.projectData.acceptedChanges,acceptedFixtureBaseline(p));
+}
 negative('wrong schema',(e)=>{e.schema='closed-loop-stage-response/999';},'WRONG_SCHEMA');
 negative('wrong job',(e)=>{e.jobId='JOB-OTHER';},'WRONG_JOB_ID');
 negative('wrong stage',(e)=>{e.stage=3;},'WRONG_STAGE');
@@ -363,7 +464,20 @@ negative('agent human field',(e)=>{e.records.blockers=[{tempKey:'blocker-1',fiel
 {const currentPatentForms=schema.sourceClassificationIssues({TITLE:'Current application forms and filing instructions',ISSUING_ORGANIZATION_OR_AUTHOR:'Independent Patent Office',SOURCE_TYPE:'OFFICIAL ADMINISTRATIVE SOURCE',PUBLICATION_ORIGIN:'Independent official website',URL_REFERENCE:'https://example.gov/current-application-forms',AUTHORITY_LEVEL:'OFFICIAL',AUTHORITY_ROLE:'OPERATIONAL GUIDANCE',RELEVANCE:'Current application forms for an external filing process',APPLICABLE_PORTIONS:'Current application forms',INSPECTION_STATUS:'INSPECTED',CURRENCY_STATUS:'CURRENT',SUPERSESSION_STATUS:'NOT SUPERSEDED',CONTROLLING_STATE:'GOVERNING WHERE APPLICABLE'});if(currentPatentForms.length)throw new Error(`Legitimate external source containing the phrase current application was rejected: ${currentPatentForms.join(' | ')}`);}
 negative('target product source',(e)=>{e.stageData={};e.records={sources:[sourceProposal('source-target',{TITLE:'Current application repository',ISSUING_ORGANIZATION_OR_AUTHOR:'Project repository',SOURCE_TYPE:'repository source code',PUBLICATION_ORIGIN:'current application',URL_REFERENCE:'https://github.com/sjonesjones917/closed-loop-tracker',AUTHORITY_LEVEL:'PRIMARY',AUTHORITY_ROLE:'GOVERNING',RELEVANCE:'target product',APPLICABLE_PORTIONS:'app-core.js',CONTROLLING_STATE:'CONTROLLING'})]};},'INVALID_EXTERNAL_SOURCE');
 negative('duplicate temp key',(e)=>{e.stageData={};e.records={sources:[sourceProposal('dup'),sourceProposal('dup',{TITLE:'Second source'})]};},'DUPLICATE_TEMPORARY_KEY');
-negative('unknown record field',(e)=>{e.stageData={};e.records={sources:[sourceProposal('source-unknown',{UNKNOWN_FIELD:'forbidden'})]};},'UNKNOWN_RECORD_FIELD');
+{
+  const p=project('JOB-UNKNOWN-RECORD-FIELD-CONTROL'),promptRecord=savePrompt(p,2),e=validEnvelope(p,2,promptRecord);
+  e.stageData={};e.records={sources:[sourceProposal('source-unknown')]};
+  const control=ingestion.prepare(p,{stage:2,text:JSON.stringify(e),promptRecord});assert.equal(control.validation.valid,true,JSON.stringify(control.validation.issues));assert.ok(control.proposal);
+  e.records.sources[0].fields.UNKNOWN_FIELD='forbidden';
+  // The closed-schema token scan rejects the exact member before semantic
+  // validation. Independently retain the later semantic field guard as well.
+  const rejected=ingestion.prepare(p,{stage:2,text:JSON.stringify(e),promptRecord});
+  assert.equal(rejected.validation.valid,false);assert.equal(rejected.proposal,null);assert.deepEqual(rejected.project.projectData.acceptedChanges,acceptedFixtureBaseline(p));
+  assert.ok(rejected.validation.issues.some(row=>row.code==='UNKNOWN_PROPERTY'&&row.path==='/records/sources/0/fields/UNKNOWN_FIELD'));
+  const semantic=ingestion.validateEnvelope(p,e,{stage:2,promptRecord,rawSha256:globalThis.closedLoopHash.sha256Text(JSON.stringify(e))});
+  assert.equal(semantic.valid,false);assert.ok(semantic.issues.some(row=>row.code==='UNKNOWN_RECORD_FIELD'&&row.path==='/records/sources/0/fields/UNKNOWN_FIELD'));
+}
+negative('unknown record field',(e)=>{e.stageData={};e.records={sources:[sourceProposal('source-unknown',{UNKNOWN_FIELD:'forbidden'})]};},'UNKNOWN_PROPERTY');
 negative('wrong value type',(e)=>{e.stageData={};const r=sourceProposal('source-type');r.fields.TITLE=42;e.records={sources:[r]};},'WRONG_VALUE_TYPE');
 negative('prohibited null',(e)=>{e.stageData={};const r=sourceProposal('source-null');r.fields.TITLE=null;e.records={sources:[r]};},'PROHIBITED_NULL');
 negative('empty required string',(e)=>{e.stageData={};const r=sourceProposal('source-empty');r.fields.TITLE='';e.records={sources:[r]};},'EMPTY_REQUIRED_STRING');
@@ -381,9 +495,10 @@ negative('unresolved evidence attachment',(e)=>{e.evidence[0].attachmentRef={rec
 // agent or complete lifecycle claim. Existing response-local attachment controls
 // below separately exercise the supported returned-file lane.
 {
- const p=project('EVIDENCE-REFERENCE-SCOPE');p.job.CURRENT_SOURCE_SET_VERSION='SOURCE-CURRENT';
- const sourceId=engine.allocateId(p,'sources'),fields={SOURCE_ID:sourceId,...sourceProposal().fields},source={id:sourceId,stage:2,active:true,scope:{inputVersion:p.job.CURRENT_INPUT_VERSION,sourceSetVersion:p.job.CURRENT_SOURCE_SET_VERSION},fields,...fields};
- engine.refreshRecordHashes(source,'sources');p.projectData.sources.push(source);
+ let p=project('EVIDENCE-REFERENCE-SCOPE');p.job.CURRENT_SOURCE_SET_VERSION='SOURCE-CURRENT';
+ p=stage02AcceptanceFixture({core,schema,engine,prompts,ingestion},p.job.JOB_ID,{project:p,sources:[sourceProposal()]});
+ assert.equal(engine.sourceApplicabilityState(p).determination,'APPLICABLE_SOURCES_ESTABLISHED','EVIDENCE-SOURCE-ACCEPTED-PREFIX: current source reference requires an actually accepted applicable inventory');
+ const acceptedSources=engine.recordsForCurrentScope(p,'sources');assert.equal(acceptedSources.length,1);const sourceId=engine.recordId(acceptedSources[0],'sources');
  const pr=savePrompt(p,3),base=validEnvelope(p,3,pr);base.evidence[0].sourceRef={recordId:sourceId};
  const current=ingestion.prepare(p,{stage:3,promptRecord:pr,text:JSON.stringify(base)});
  assert.equal(current.validation.valid,true,'EVIDENCE-SOURCE-CURRENT: a conforming current source reference must validate');
@@ -405,7 +520,7 @@ negative('unresolved evidence attachment',(e)=>{e.evidence[0].attachmentRef={rec
  assert.equal(engine.evaluateEvidenceContract(null,{scope:pr.scope},[historyEvidence],historical).sufficient,false,'EVIDENCE-SOURCE-CURRENT-CONSUMER: current evidence cannot use the stale source');
  assert.equal(engine.evaluateEvidenceContract(null,historyResult,[historyEvidence],historical).sufficient,true,'EVIDENCE-SOURCE-HISTORY: exact compatible historical execution evidence remains inspectable');
  const operationContextResult=await verifyIngestionContextReferences({report:false}),operationContext=operationContextResult.verificationObservations[0].observed;
- console.log(JSON.stringify({evidenceSourceScopeAuthority:true,operationContextCases:operationContextResult.observations,operationContextSourceHashes:operationContextResult.sourceHashes,verificationObservations:[{checkId:'EVIDENCE-SOURCE-SCOPE-AUTHORITY',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:141','specification/closed-loop-reliability-controlling-implementation-specification.txt:1250','specification/closed-loop-reliability-controlling-implementation-specification.txt:129','specification/closed-loop-reliability-controlling-implementation-specification.txt:733','specification/closed-loop-reliability-controlling-implementation-specification.txt:2466','specification/closed-loop-reliability-controlling-implementation-specification.txt:1502'],boundary:'Production response prepare, operator commit preconditions, canonical evidence consumption, plus exact reserved ZIP/file/capture/operator/storage context controls; isolated synthetic project under transaction adapter, not browser or external-agent execution',expected:{currentAccepted:true,invalidAdmissionRejected:5,invalidPrecommitRejected:5,rawAndPendingStatePreserved:true,optionalOmissionAccepted:true,historicalExecutionEvidenceRetained:true,operationContext:{currentUnprovidedRejected:2,preFixEquivalentFalseAdmissions:2,legacyPendingCommitRejected:2,conformingControlsCommitted:5}},observed:{currentAccepted:true,invalidAdmissionRejected:5,invalidPrecommitRejected:5,rawAndPendingStatePreserved:true,optionalOmissionAccepted:true,historicalExecutionEvidenceRetained:true,operationContext},passed:true}],synthetic:true,actualBrowser:false}));
+ console.log(JSON.stringify({evidenceSourceScopeAuthority:true,operationContextCases:operationContextResult.observations,operationContextSourceHashes:operationContextResult.sourceHashes,evidenceExtractionMappings:operationContextResult.evidenceExtractionMappings,verificationObservations:[{checkId:'EVIDENCE-SOURCE-SCOPE-AUTHORITY',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:141','specification/closed-loop-reliability-controlling-implementation-specification.txt:1250','specification/closed-loop-reliability-controlling-implementation-specification.txt:129','specification/closed-loop-reliability-controlling-implementation-specification.txt:733','specification/closed-loop-reliability-controlling-implementation-specification.txt:2466','specification/closed-loop-reliability-controlling-implementation-specification.txt:1502'],boundary:'Production response prepare, operator commit preconditions, canonical evidence consumption, plus exact reserved ZIP/file/capture/operator/storage context controls; isolated synthetic project under transaction adapter, not browser or external-agent execution',expected:{currentAccepted:true,invalidAdmissionRejected:5,invalidPrecommitRejected:5,rawAndPendingStatePreserved:true,optionalOmissionAccepted:true,historicalExecutionEvidenceRetained:true,operationContext:{currentUnprovidedRejected:2,preFixEquivalentFalseAdmissions:2,legacyPendingCommitRejected:2,conformingControlsCommitted:5}},observed:{currentAccepted:true,invalidAdmissionRejected:5,invalidPrecommitRejected:5,rawAndPendingStatePreserved:true,optionalOmissionAccepted:true,historicalExecutionEvidenceRetained:true,operationContext},passed:true}],synthetic:true,actualBrowser:false}));
  negativeCount+=5;
 }
 {
@@ -444,6 +559,7 @@ console.log(JSON.stringify(await verifyHumanJobAuthority()));
 await verifyHumanDecisionCandidateTargets();
 await verifyExternalResponseIdentityShape();
 console.log(JSON.stringify(await verifyNestedResponseTypeSafety()));
+console.log(JSON.stringify(await verifyExternalNativeReceiptAdmission()));
 console.log(JSON.stringify(await verifyResponseTypeBoundaries()));
 console.log(JSON.stringify(await verifyStage01CaptureCacheCompatibility()));
 console.log(JSON.stringify(await verifyResponseIdentityUiBoundary()));
@@ -453,6 +569,8 @@ console.log(JSON.stringify(await verifyObligationDispositionTypes()));
 console.log(JSON.stringify(await verifyRepresentationObservationTypes()));
 await verifyCanonicalResponseRecovery();
 await verifySemanticResponseRetryPreservation();
+await verifyCanonicalRetryResponseTypePopulation();
+await verifyResponsePendingAuthorityControls();
 await verifyNonfiniteResponseNumbers();
 await verifyResponseCanonicalValueBoundaries();
 console.log(JSON.stringify(await verifySyntaxTransportStage1()));
@@ -463,26 +581,35 @@ negative('invalid record identity',(e)=>{e.stageData={};const r=sourceProposal('
 // counterexamples free of an unrelated type error that stops before lookup.
 negativeAt('unresolved relationship',3,(e)=>{e.stageData={};e.records={research:[{tempKey:'research-1',fields:{PASS_NUMBER:'1',EXACT_PORTION_EXAMINED:'Controlled source portion',FINDING_CLASSIFICATION:'FACT',SOURCE_EVIDENCE:'Controlled evidence'},relationships:{SOURCE_ID:{recordId:'SOURCE-DOES-NOT-EXIST'}},evidenceRefs:['evidence-1']}]};},'UNRESOLVED_RELATIONSHIP');
 negativeAt('wrong relationship type',14,(e)=>{e.stageData={};e.records={rootCauses:[{tempKey:'wrong-type',fields:{CATEGORY:'INSTRUCTION',LAYER_TRACE:'trace',EARLIEST_DEFECTIVE_LAYER:'INSTRUCTION',ROOT_CAUSE:'cause',EVIDENCE:'evidence',DOWNSTREAM_INVALIDATION:'downstream'},relationships:{DEFECT_ID:{tempKey:'wrong-type'}},evidenceRefs:['evidence-1']}]};},'WRONG_RELATIONSHIP_TYPE');
-negativeAt('wrong relationship cardinality',3,(e)=>{e.stageData={};e.records={research:[{tempKey:'research-cardinality',fields:{PASS_NUMBER:'1',EXACT_PORTION_EXAMINED:'Controlled source portion',FINDING_CLASSIFICATION:'FACT',SOURCE_EVIDENCE:'Controlled evidence'},relationships:{SOURCE_ID:[{recordId:'SOURCE-A'},{recordId:'SOURCE-B'}]},evidenceRefs:['evidence-1']}]};},'INVALID_RELATIONSHIP_REFERENCE');
+negativeAt('wrong relationship cardinality',3,(e)=>{e.stageData={};e.records={research:[{tempKey:'research-cardinality',fields:{PASS_NUMBER:'1',EXACT_PORTION_EXAMINED:'Controlled source portion',FINDING_CLASSIFICATION:'FACT',SOURCE_EVIDENCE:'Controlled evidence'},relationships:{SOURCE_ID:[{recordId:'SOURCE-A'},{recordId:'SOURCE-B'}]},evidenceRefs:['evidence-1']}]};},'WRONG_VALUE_TYPE');
 negative('mixed human input response',(e)=>{e.responseType='HUMAN_INPUT_REQUIRED';e.humanInputRequests=[{temporaryKey:'q',question:'Need input?',whyRequired:'Human authority required.',affectedStageFields:[],affectedRecords:[],answerType:'TEXT',allowedValues:[],blocking:true}];},'MIXED_RESPONSE_TYPE');
 negative('mixed blocked response',(e)=>{e.responseType='BLOCKED';e.unresolved=[{temporaryKey:'u',kind:'MISSING_AUTHORITY',description:'Missing authority',whyBlocking:'Cannot proceed',affectedStageFields:[],affectedRecords:[],blocking:true}];},'MIXED_RESPONSE_TYPE');
 negative('mixed execution failed response',(e)=>{e.responseType='EXECUTION_FAILED';e.unresolved=[{temporaryKey:'u',kind:'EXECUTION_FAILURE',description:'Execution failed',whyBlocking:'Cannot proceed',affectedStageFields:[],affectedRecords:[],blocking:true}];},'MIXED_RESPONSE_TYPE');
 negative('empty data proposal',(e)=>{e.stageData={};e.records={};},'EMPTY_DATA_PROPOSAL');
-negative('evidence resource limit',(e)=>{const max=schema.STAGE_CONTRACTS[2].resourceLimits.maxEvidenceRecords;e.evidence=Array.from({length:max+1},(_,i)=>({temporaryKey:`e-${i}`,kind:'WORKFLOW_EVIDENCE',description:'e',location:'fixture',content:'e'}));},'RESOURCE_LIMIT_EXCEEDED');
+// The physical-capacity owner imported above independently checks the actual
+// evidence ceiling plus one and raw-byte rejection. The old ordinary500 limit
+// must not reject this within-budget complete-replacement response.
+{
+  const p=project('JOB-EVIDENCE-501-COMPLETE'),promptRecord=savePrompt(p,2),e=validEnvelope(p,2,promptRecord);
+  e.evidence=Array.from({length:501},(_,i)=>({temporaryKey:`e-${i}`,kind:'WORKFLOW_EVIDENCE',description:'e',location:'fixture',content:'e'}));
+  const text=JSON.stringify(e),prepared=ingestion.prepare(p,{stage:2,text,promptRecord});
+  assert.equal(prepared.validation.valid,true,JSON.stringify(prepared.validation.issues));assert.ok(prepared.proposal);
+  assert.equal(prepared.rawRecord.completeRawResponse,text);assert.deepEqual(prepared.project.projectData.acceptedChanges,acceptedFixtureBaseline(p));
+}
 
 // Attachment declarations are claims; only application-hashed supplied bytes may satisfy them.
 {
   const attachmentBlob=new Blob([new Uint8Array(48203).fill(65)],{type:'application/pdf'}),exactFile={artifactId:'ARTIFACT-ATTACHMENT-1',name:'result.pdf',type:'application/pdf',size:attachmentBlob.size,sha256:await globalThis.closedLoopHash.sha256Bytes(attachmentBlob)};
   const make=(job='JOB-ATTACHMENT')=>{const p=project(job),stage=2,pr=saveAttachmentPrompt(p,stage),e=validEnvelope(p,stage,pr);e.attachments=[{temporaryKey:'attachment-1',filename:'result.pdf',mediaType:'application/pdf',byteSize:exactFile.size,sha256:exactFile.sha256,required:true}];issuedDeclarations(pr,e);e.evidence[0].attachmentRef={tempKey:'attachment-1'};return {p,stage,pr,e,exactFile:{...exactFile,artifactId:artifactFixtureId(engine,p,'ATTACHMENT-FILE')}};};
   {const {p,stage,pr,e,exactFile}=make('JOB-ATTACHMENT-VALID'),files=[{...exactFile,attachmentSlotId:ingestion.attachmentSlotPlan(p,e,pr)[0].attachmentSlotId}],options={...returnedTransport(pr),stage,text:JSON.stringify(e),promptRecord:pr,files};
-   const unverified=ingestion.prepare(p,options);assert.equal(unverified.validation.valid,false,'RETURNED_FILE_CUSTODY_ORACLE: selected metadata without stored bytes must be rejected');assert.ok(unverified.validation.issues.some(item=>item.code==='RETURNED_ARTIFACT_BYTES_UNVERIFIED'));assert.equal(unverified.proposal,null);assert.equal(unverified.project.projectData.artifacts.length,0);assert.equal(unverified.project.projectData.acceptedChanges.length,0);
-   await retainReturnedFixture(p,exactFile,attachmentBlob);const prepared=ingestion.prepare(p,options);if(!prepared.validation.valid)throw new Error(`Valid verified attachment rejected: ${JSON.stringify(prepared.validation.issues)}`);if(prepared.proposal.tempToCanonical['attachment-1']?.id!==exactFile.artifactId||prepared.proposal.evidence[0].ATTACHMENT_ID!==exactFile.artifactId)throw new Error('Verified attachment temporary key did not resolve to the canonical artifact ID.');assert.equal(prepared.project.projectData.artifacts.length,0);assert.equal(prepared.project.projectData.acceptedChanges.length,0);}
+   const unverified=ingestion.prepare(p,options);assert.equal(unverified.validation.valid,false,'RETURNED_FILE_CUSTODY_ORACLE: selected metadata without stored bytes must be rejected');assert.ok(unverified.validation.issues.some(item=>item.code==='RETURNED_ARTIFACT_BYTES_UNVERIFIED'));assert.equal(unverified.proposal,null);assert.equal(unverified.project.projectData.artifacts.length,0);assert.deepEqual(unverified.project.projectData.acceptedChanges,acceptedFixtureBaseline(p));
+   await retainReturnedFixture(p,exactFile,attachmentBlob);const prepared=ingestion.prepare(p,options);if(!prepared.validation.valid)throw new Error(`Valid verified attachment rejected: ${JSON.stringify(prepared.validation.issues)}`);if(prepared.proposal.tempToCanonical['attachment-1']?.id!==exactFile.artifactId||prepared.proposal.evidence[0].ATTACHMENT_ID!==exactFile.artifactId)throw new Error('Verified attachment temporary key did not resolve to the canonical artifact ID.');assert.equal(prepared.project.projectData.artifacts.length,0);assert.deepEqual(prepared.project.projectData.acceptedChanges,acceptedFixtureBaseline(p));}
   for(const [name,files,mutate,code] of [
     ['missing required attachment',[],()=>{},'MISSING_REQUIRED_ATTACHMENT'],
     ['wrong attachment filename',[exactFile],e=>{e.attachments[0].filename='other.pdf';},'ATTACHMENT_FILENAME_MISMATCH'],
     ['wrong attachment byte size',[exactFile],e=>{e.attachments[0].byteSize=48204;},'ATTACHMENT_BYTE_SIZE_MISMATCH'],
     ['wrong attachment hash',[exactFile],e=>{e.attachments[0].sha256='b'.repeat(64);},'ATTACHMENT_SHA256_MISMATCH']
-  ]){const {p,stage,pr,e}=make(`JOB-${name.replace(/[^A-Z0-9]/gi,'').toUpperCase()}`);mutate(e);const mapped=files.map(file=>({...file,artifactId:artifactFixtureId(engine,p,'ATTACHMENT-FILE'),attachmentSlotId:ingestion.attachmentSlotPlan(p,e,pr)[0].attachmentSlotId}));for(const file of mapped)await retainReturnedFixture(p,file,attachmentBlob);const prepared=ingestion.prepare(p,{...returnedTransport(pr),stage,text:JSON.stringify(e),promptRecord:pr,files:mapped});if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code===code))throw new Error(`${name}: expected ${code}; got ${prepared.validation.issues.map(i=>i.code).join(', ')}.`);if(prepared.project.projectData.acceptedChanges.length)throw new Error(`${name}: canonical state changed.`);negativeCount++;}
+  ]){const {p,stage,pr,e}=make(`JOB-${name.replace(/[^A-Z0-9]/gi,'').toUpperCase()}`);mutate(e);const mapped=files.map(file=>({...file,artifactId:artifactFixtureId(engine,p,'ATTACHMENT-FILE'),attachmentSlotId:ingestion.attachmentSlotPlan(p,e,pr)[0].attachmentSlotId}));for(const file of mapped)await retainReturnedFixture(p,file,attachmentBlob);const prepared=ingestion.prepare(p,{...returnedTransport(pr),stage,text:JSON.stringify(e),promptRecord:pr,files:mapped});if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code===code))throw new Error(`${name}: expected ${code}; got ${prepared.validation.issues.map(i=>i.code).join(', ')}.`);assert.deepEqual(prepared.project.projectData.acceptedChanges,acceptedFixtureBaseline(p),`${name}: canonical state changed.`);negativeCount++;}
 }
 
 // Duplicate response is semantic, not whitespace-sensitive.
@@ -535,16 +662,21 @@ console.log(JSON.stringify({stagesExercised:allStages.length,responseSchema:sche
 {let p=project('JOB-PR3-QUESTION'),stage=1,pr=savePrompt(p,stage);const e={schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:p.job.JOB_ID,stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'HUMAN_INPUT_REQUIRED',humanInputRequests:[{temporaryKey:'q1',question:'Need number?',whyRequired:'Human-only value.',affectedStageFields:['EXACT_DELIVERABLE_REQUESTED'],affectedRecords:[],answerType:'NUMBER',allowedValues:[],blocking:true}],stageData:{},records:{},evidence:[],unresolved:[],warnings:[],attachments:[]};const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});const control=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'VERIFY'});p=control.project;if(p.projectData.acceptedChanges.length)throw new Error('Question set counted as accepted DATA change.');const q=p.projectData.humanInputRequests.at(-1);let bad=false;try{ingestion.answerHumanInput(p,{[q.requestId]:'3'},{operator:'VERIFY'});}catch{bad=true;}if(!bad)throw new Error('NUMBER answer accepted a string.');const oldPrompt=pr.instructionId;const answered=ingestion.answerHumanInput(p,{[q.requestId]:3},{operator:'VERIFY'});p=answered.project;if(p.projectData.generatedPrompts.find(x=>(x.instructionId||x.promptId)===oldPrompt)?.invalidatedBy==null)throw new Error('Clarification did not invalidate prior prompt.');if(!answered.generatedPromptIds[0]||answered.generatedPromptIds[0]===oldPrompt)throw new Error('Clarification did not regenerate the stage prompt.');}
 {let p=project('JOB-PR3-REJECT'),stage=2,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr),prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});p=ingestion.reject(prepared.project,prepared.proposal.proposalId,{operator:'VERIFY',reason:'Controlled rejection.'}).project;let blocked=false;try{ingestion.commit(p,prepared.proposal.proposalId,{operator:'VERIFY'});}catch(error){blocked=error.code==='PROPOSAL_NOT_ACCEPTABLE';}if(!blocked)throw new Error('Acceptance after rejection was not prohibited.');negativeCount++;}
 {let p=project('JOB-PR3-STALE-REVISION'),stage=2,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr),prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});p=prepared.project;p.revision=Number(p.revision||0)+1;let stale=false;try{ingestion.commit(p,prepared.proposal.proposalId,{operator:'VERIFY'});}catch(error){stale=error.code==='STALE_PROPOSAL';}if(!stale)throw new Error('Proposal stale after project revision change was accepted.');negativeCount++;}
-{let p=project('JOB-PR3-STALE-PROMPT-ENGINE'),stage=2,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr);pr.promptEngineVersion='closed-loop-prompt-engine/obsolete';const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code==='STALE_PROMPT_ENGINE_VERSION'))throw new Error('Response to an obsolete prompt-engine instruction was accepted.');if(prepared.project.projectData.acceptedChanges.length)throw new Error('Obsolete prompt-engine response mutated canonical state.');negativeCount++;}
-{let p=project('JOB-PR3-STALE-PROPOSAL-ENGINE'),stage=2,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr),prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});const proposal=prepared.project.projectData.responseProposals.find(x=>x.proposalId===prepared.proposal.proposalId);proposal.preconditions.promptEngineVersion='closed-loop-prompt-engine/obsolete';let stale=false;try{ingestion.commit(prepared.project,proposal.proposalId,{operator:'VERIFY'});}catch(error){stale=error.code==='STALE_PROPOSAL';}if(!stale)throw new Error('Proposal created under an obsolete prompt engine was accepted.');if(prepared.project.projectData.acceptedChanges.length)throw new Error('Obsolete prompt-engine proposal mutated canonical state.');negativeCount++;}
+{let p=project('JOB-PR3-STALE-PROMPT-ENGINE'),stage=2,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr);pr.promptEngineVersion='closed-loop-prompt-engine/obsolete';const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code==='STALE_PROMPT_ENGINE_VERSION'))throw new Error('Response to an obsolete prompt-engine instruction was accepted.');assert.deepEqual(prepared.project.projectData.acceptedChanges,acceptedFixtureBaseline(p),'Obsolete prompt-engine response mutated canonical state.');negativeCount++;}
+{let p=project('JOB-PR3-STALE-PROPOSAL-ENGINE'),stage=2,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr),prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});const proposal=prepared.project.projectData.responseProposals.find(x=>x.proposalId===prepared.proposal.proposalId);proposal.preconditions.promptEngineVersion='closed-loop-prompt-engine/obsolete';let stale=false;try{ingestion.commit(prepared.project,proposal.proposalId,{operator:'VERIFY'});}catch(error){stale=error.code==='STALE_PROPOSAL';}if(!stale)throw new Error('Proposal created under an obsolete prompt engine was accepted.');assert.deepEqual(prepared.project.projectData.acceptedChanges,acceptedFixtureBaseline(p),'Obsolete prompt-engine proposal mutated canonical state.');negativeCount++;}
 console.log(JSON.stringify({pr3Dispositions:true,preconditions:true,promptEnginePreconditions:true,idempotentAcceptance:true,canonicalEnvelopeIdempotency:true,typedHumanAnswers:true,clarificationPromptInvalidation:true,exactManifestPointers:true,acceptanceAfterRejectionBlocked:true,staleProjectRevisionBlocked:true,totalNegativeCases:negativeCount},null,2));
 // Rejected output refinement becomes explicit controlling prompt context.
 {let p=project('JOB-REFINEMENT-LOOP'),stage=2,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr),prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});preparePromptPrerequisites(prepared.project,stage);const result=ingestion.reject(prepared.project,prepared.proposal.proposalId,{operator:'VERIFY',reason:'Add the missing controlling-source rationale and make the result more complete.',requestCorrection:true});p=result.project;const old=p.projectData.generatedPrompts.find(x=>(x.instructionId||x.promptId)===pr.instructionId),replacement=p.projectData.generatedPrompts.filter(x=>Number(x.stage)===stage&&!x.invalidatedBy).at(-1);if(!old?.invalidatedBy||!replacement||replacement.instructionId===pr.instructionId||!replacement.prompt.includes('Add the missing controlling-source rationale and make the result more complete.'))throw new Error('Correction request was not bound into a replacement prompt.');}
 // EXECUTION_FAILED is fail-closed and a successful exact-scope replacement resolves it.
 {let p=project('JOB-EXECUTION-FAIL-CLOSED'),stage=1,pr=savePrompt(p,stage);const fail={schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:p.job.JOB_ID,stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'EXECUTION_FAILED',humanInputRequests:[],stageData:{},records:{},evidence:[],unresolved:[{temporaryKey:'failure-1',kind:'TOOL_FAILURE',description:'Required tool failed.',whyBlocking:'The operation could not be executed.',affectedStageFields:[],affectedRecords:[],blocking:true}],warnings:[],attachments:[]};let prepared=ingestion.prepare(p,{stage,text:JSON.stringify(fail),promptRecord:pr});p=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'VERIFY'}).project;if(p.stages[stage].status!=='BLOCKED'||!engine.gate(stage,p).reasons.some(x=>x.includes('execution failure')))throw new Error('Accepted execution failure did not fail closed.');const replacement=validEnvelope(p,stage,pr);prepared=ingestion.prepare(p,{stage,text:JSON.stringify(replacement),promptRecord:pr});p=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'VERIFY'}).project;if(p.projectData.executionFailures.some(x=>Number(x.stage)===stage&&!x.resolvedBy&&!x.invalidatedBy))throw new Error('Successful replacement did not resolve execution failure.');}
 
-{let p=project('JOB-PARALLEL-PROMPT-VALIDATION'),stage=17;p.revision=0;const a={...fixtureBuildPrompt(stage,{...p,revision:1},{operation:'EXECUTE_RUN',scope:{runId:'RUN-A',contextId:'CTX-A'}}),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(a);const b={...fixtureBuildPrompt(stage,{...p,revision:1},{operation:'EXECUTE_RUN',scope:{runId:'RUN-B',contextId:'CTX-B'}}),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(b);const q={schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:p.job.JOB_ID,stage,operation:a.operation,promptIdentity:{instructionId:a.instructionId,bodySha256:a.bodySha256,contractSha256:a.contractSha256,contextSignature:a.contextSignature},scope:a.scope,responseType:'HUMAN_INPUT_REQUIRED',humanInputRequests:[{temporaryKey:'parallel-q',question:'Provide the missing run-specific value.',whyRequired:'The selected run cannot continue without it.',affectedStageFields:[],affectedRecords:[],answerType:'TEXT',allowedValues:[],blocking:true}],stageData:{},records:{},evidence:[],unresolved:[],warnings:[],attachments:[]};const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(q),promptRecord:a});if(!prepared.validation.valid)throw new Error('Unrelated newer run prompt incorrectly staled the controlling run prompt: '+JSON.stringify(prepared.validation.issues));}
-{let p=project('JOB-SCOPED-CLARIFICATION'),stage=17;p.revision=0;const pr={...fixtureBuildPrompt(stage,{...p,revision:1},{operation:'EXECUTE_RUN',scope:{runId:'RUN-CLARIFY',contextId:'CTX-CLARIFY'}}),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(pr);const q={schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:p.job.JOB_ID,stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'HUMAN_INPUT_REQUIRED',humanInputRequests:[{temporaryKey:'scoped-q',question:'Provide the run-specific missing input.',whyRequired:'This exact run is missing required human authority.',affectedStageFields:[],affectedRecords:[],answerType:'TEXT',allowedValues:[],blocking:true}],stageData:{},records:{},evidence:[],unresolved:[],warnings:[],attachments:[]};let prepared=ingestion.prepare(p,{stage,text:JSON.stringify(q),promptRecord:pr});if(!prepared.validation.valid)throw new Error('Scoped clarification response invalid: '+JSON.stringify(prepared.validation.issues));p=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'VERIFY'}).project;const request=p.projectData.humanInputRequests.at(-1);preparePromptPrerequisites(p,stage);p=ingestion.answerHumanInput(p,{[request.requestId]:'Exact run-specific answer'},{operator:'VERIFY'}).project;const active=p.projectData.generatedPrompts.filter(x=>Number(x.stage)===stage&&!x.invalidatedBy);if(!active.some(x=>x.operation==='EXECUTE_RUN'&&x.scope?.runId===pr.scope.runId&&x.scope?.contextId===pr.scope.contextId))throw new Error('Scoped clarification did not regenerate the exact operation/run prompt.');if(active.some(x=>x.operation==='FREEZE'))throw new Error('Scoped clarification incorrectly regenerated the stage default operation.');}
+{let p=project('JOB-PARALLEL-PROMPT-VALIDATION'),stage=17;p.revision=0;const a={...fixtureBuildPrompt(stage,p,{operation:'EXECUTE_RUN',scope:{runId:'RUN-A',contextId:'CTX-A'}}),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(a);const b={...fixtureBuildPrompt(stage,p,{operation:'EXECUTE_RUN',scope:{runId:'RUN-B',contextId:'CTX-B'}}),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(b);assert.equal(a.scope.iterationId,engine.currentScope(p).iterationId,'PROMPT_SCOPE_CURRENT_PARENT_ORACLE');assert.equal(b.scope.iterationId,a.scope.iterationId,'PROMPT_SCOPE_SAME_ITERATION_ORACLE');assert.notEqual(b.scope.runId,a.scope.runId,'PROMPT_SCOPE_DISTINCT_RUN_ORACLE');assert.notEqual(b.scope.contextId,a.scope.contextId,'PROMPT_SCOPE_DISTINCT_CONTEXT_ORACLE');const q={schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:p.job.JOB_ID,stage,operation:a.operation,promptIdentity:{instructionId:a.instructionId,bodySha256:a.bodySha256,contractSha256:a.contractSha256,contextSignature:a.contextSignature},scope:a.scope,responseType:'HUMAN_INPUT_REQUIRED',humanInputRequests:[{temporaryKey:'parallel-q',question:'Provide the missing run-specific value.',whyRequired:'The selected run cannot continue without it.',affectedStageFields:[],affectedRecords:[],answerType:'TEXT',allowedValues:[],blocking:true}],stageData:{},records:{},evidence:[],unresolved:[],warnings:[],attachments:[]};const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(q),promptRecord:a});if(!prepared.validation.valid)throw new Error('Unrelated newer run prompt incorrectly staled the controlling run prompt: '+JSON.stringify(prepared.validation.issues));
+ // Component identity control only: these are generated prompt records, not
+ // concurrent external-operation reservations under Section 35.6.
+ const acceptedBefore=engine.clone(p.projectData.acceptedChanges),sameTarget=engine.clone(p),replacement=prompts.reserveAndBuildPromptRecord(sameTarget,stage,{operation:a.operation,scope:Object.fromEntries(Object.entries(a.scope).filter(([key])=>key!=='projectRevision'))}).prompt;assert.equal(sameTarget.projectData.generatedPrompts.filter(x=>x.instructionId===replacement.instructionId).length,1,'PROMPT_SCOPE_SINGLE_REPLACEMENT_ORACLE');assert.equal(sameTarget.projectData.operationReservations.filter(x=>engine.recordId(x,'operationReservations')===replacement.operationReservationId).length,1,'PROMPT_SCOPE_SINGLE_RESERVATION_ORACLE');
+ assert.notEqual(replacement.instructionId,a.instructionId);const reservation=sameTarget.projectData.operationReservations.find(x=>engine.recordId(x,'operationReservations')===replacement.operationReservationId);assert.equal(engine.recordValue(reservation,'PROMPT_ID'),replacement.instructionId);assert.deepEqual(engine.recordValue(reservation,'SCOPE'),replacement.scope);const superseded=ingestion.prepare(sameTarget,{stage,text:JSON.stringify(q),promptRecord:a});assert.equal(superseded.proposal,null,'PROMPT_SCOPE_INVALID_NO_PROPOSAL_ORACLE');assert.deepEqual(superseded.project.projectData.responseProposals,sameTarget.projectData.responseProposals,'PROMPT_SCOPE_INVALID_PROPOSALS_PRESERVED_ORACLE');assert.equal(superseded.validation.valid,false,'PROMPT_SCOPE_SUPERSEDED_REJECTION_ORACLE');assert(superseded.validation.issues.some(x=>x.code==='STALE_PROMPT_IDENTITY'),'PROMPT_SCOPE_SUPERSEDED_REASON_ORACLE');assert.deepEqual(superseded.project.projectData.acceptedChanges,acceptedBefore,'PROMPT_SCOPE_REJECTION_PRESERVATION_ORACLE');
+ const missingIteration=engine.clone(p);missingIteration.projectData.iterations=[];missingIteration.job.CURRENT_ITERATION='NOT APPLICABLE';const stale=ingestion.prepare(missingIteration,{stage,text:JSON.stringify(q),promptRecord:a});assert.equal(stale.proposal,null,'PROMPT_SCOPE_INVALID_NO_PROPOSAL_ORACLE');assert.deepEqual(stale.project.projectData.responseProposals,missingIteration.projectData.responseProposals,'PROMPT_SCOPE_INVALID_PROPOSALS_PRESERVED_ORACLE');assert.equal(stale.validation.valid,false,'PROMPT_SCOPE_MISSING_ITERATION_REJECTION_ORACLE');assert(stale.validation.issues.some(x=>x.code==='STALE_SCOPE'),'PROMPT_SCOPE_MISSING_ITERATION_REASON_ORACLE');assert.deepEqual(stale.project.projectData.acceptedChanges,acceptedBefore,'PROMPT_SCOPE_STALE_PRESERVATION_ORACLE');}
+{let p=project('JOB-SCOPED-CLARIFICATION'),stage=17;p.revision=0;const pr={...fixtureBuildPrompt(stage,p,{operation:'EXECUTE_RUN',scope:{runId:'RUN-CLARIFY',contextId:'CTX-CLARIFY'}}),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(pr);const q={schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:p.job.JOB_ID,stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'HUMAN_INPUT_REQUIRED',humanInputRequests:[{temporaryKey:'scoped-q',question:'Provide the run-specific missing input.',whyRequired:'This exact run is missing required human authority.',affectedStageFields:[],affectedRecords:[],answerType:'TEXT',allowedValues:[],blocking:true}],stageData:{},records:{},evidence:[],unresolved:[],warnings:[],attachments:[]};let prepared=ingestion.prepare(p,{stage,text:JSON.stringify(q),promptRecord:pr});if(!prepared.validation.valid)throw new Error('Scoped clarification response invalid: '+JSON.stringify(prepared.validation.issues));p=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'VERIFY'}).project;const request=p.projectData.humanInputRequests.at(-1);preparePromptPrerequisites(p,stage);const answered=ingestion.answerHumanInput(p,{[request.requestId]:'Exact run-specific answer'},{operator:'VERIFY'});p=answered.project;const storedRequest=p.projectData.humanInputRequests.find(x=>x.requestId===request.requestId),answer=p.projectData.humanInputAnswers.find(x=>x.requestId===request.requestId),clarification=p.projectData.userEntered.clarifications.find(x=>x.requestId===request.requestId);assert.equal(storedRequest.promptId,pr.instructionId);assert.equal(storedRequest.question,'Provide the run-specific missing input.');assert.equal(storedRequest.operation,'EXECUTE_RUN');assert.equal(storedRequest.scope.runId,pr.scope.runId);assert.equal(storedRequest.scope.contextId,pr.scope.contextId);assert.equal(storedRequest.status,'ANSWERED','SCOPED_CLARIFICATION_REQUEST_ORACLE');assert.equal(storedRequest.answerId,answer.answerId);for(const row of [answer,clarification]){assert.equal(row.answer,'Exact run-specific answer','SCOPED_CLARIFICATION_EXACT_ANSWER_ORACLE');assert.equal(row.operation,'EXECUTE_RUN');assert.equal(row.scope.runId,pr.scope.runId);assert.equal(row.scope.contextId,pr.scope.contextId);}assert.equal(answer.inputVersion,p.job.CURRENT_INPUT_VERSION);assert(p.projectData.generatedPrompts.find(x=>x.instructionId===pr.instructionId).invalidatedBy,'SCOPED_CLARIFICATION_PRIOR_INVALIDATION_ORACLE');assert.equal(answered.generatedPromptIds.length,1);assert.notEqual(answered.generatedPromptIds[0],pr.instructionId);const returnedPrompt=p.projectData.generatedPrompts.find(x=>x.instructionId===answered.generatedPromptIds[0]);assert(returnedPrompt&&!returnedPrompt.invalidatedBy,'SCOPED_CLARIFICATION_RETURNED_ID_ORACLE');assert.equal(returnedPrompt.operation,'EXECUTE_RUN');assert.equal(returnedPrompt.scope.runId,pr.scope.runId);assert.equal(returnedPrompt.scope.contextId,pr.scope.contextId);const active=p.projectData.generatedPrompts.filter(x=>Number(x.stage)===stage&&!x.invalidatedBy);assert.equal(active.length,1,'SCOPED_CLARIFICATION_SINGLE_ACTIVE_PROMPT_ORACLE');if(!active.some(x=>x.operation==='EXECUTE_RUN'&&x.scope?.runId===pr.scope.runId&&x.scope?.contextId===pr.scope.contextId))throw new Error('Scoped clarification did not regenerate the exact operation/run prompt.');if(active.some(x=>x.operation==='FREEZE'))throw new Error('Scoped clarification incorrectly regenerated the stage default operation.');}
 
 
 // Raw capture audit scope must be controlled by the persisted prompt, not a caller-supplied context hint.
@@ -598,6 +730,10 @@ console.log(JSON.stringify({pr3Dispositions:true,preconditions:true,promptEngine
   const arrayIssues=[];
   ingestion.validateValue({valueType:'REFERENCE_ARRAY',nullable:false,enumValues:[]},['REQ-1',2],'/refs',arrayIssues);
   if(!arrayIssues.some(x=>x.code==='WRONG_VALUE_TYPE'))throw new Error('Mixed REFERENCE_ARRAY escaped item validation.');
+  console.log(JSON.stringify({primitiveReferenceTypes:true,cases:[
+    {caseId:'scalar-reference-number',issueCodes:issues.map(row=>row.code)},
+    {caseId:'reference-array-mixed-item',issueCodes:arrayIssues.map(row=>row.code)}
+  ]}));
 }
 {
   const p=project('JOB-BLOCKED-SEMANTICS'),stage=1,pr={...fixtureBuildPrompt(stage,p),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(pr);
@@ -618,7 +754,7 @@ console.log(JSON.stringify({pr3Dispositions:true,preconditions:true,promptEngine
   let p=project('JOB-NEG-OPERATION-STAGEDATA'),stage=17;const pr={...fixtureBuildPrompt(stage,p,{operation:'EXECUTE_RUN',scope:{runId:'RUN-OP-1',contextId:'CTX-OP-1'}}),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(pr);const e={schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:p.job.JOB_ID,stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{VERIFY_COMPLETED:'TRUE'},records:{},evidence:[{temporaryKey:'op-evidence',kind:'WORKFLOW_EVIDENCE',description:'operation isolation',location:'fixture',content:'operation isolation'}],unresolved:[],warnings:[],attachments:[]};const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code==='FIELD_OWNERSHIP_VIOLATION'))throw new Error('EXECUTE_RUN accepted application-owned VERIFY stageData.');negativeCount++;
 }
 {
-  const p=project('JOB-NEG-NONRESERVED-TARGET'),stage=2,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr);e.stageData={};e.records={sources:[sourceProposal('source-policy')]};delete e.records.sources[0].tempKey;e.records.sources[0].targetId='SOURCE-000001';const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code==='INVALID_RECORD_IDENTITY'))throw new Error('Non-reserved collection accepted targetId update semantics.');negativeObservations.push({checkId:'ingestion.invalid.append-only-targetId',name:'append-only targetId update',stage,expectedCode:'INVALID_RECORD_IDENTITY',observedCodes:prepared.validation.issues.map(issue=>issue.code),accepted:prepared.validation.valid,acceptedChanges:prepared.project.projectData.acceptedChanges.length});negativeCount++;
+  const p=project('JOB-NEG-NONRESERVED-TARGET'),stage=2,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr);e.stageData={};e.records={sources:[sourceProposal('source-policy')]};delete e.records.sources[0].tempKey;e.records.sources[0].targetId='SOURCE-000001';const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code==='INVALID_RECORD_IDENTITY'))throw new Error('Non-reserved collection accepted targetId update semantics.');negativeObservations.push({checkId:'ingestion.invalid.append-only-targetId',name:'append-only targetId update',stage,expectedCode:'INVALID_RECORD_IDENTITY',observedCodes:prepared.validation.issues.map(issue=>issue.code),accepted:prepared.validation.valid,acceptedChanges:prepared.project.projectData.acceptedChanges.length-acceptedFixtureBaseline(p).length,acceptedPrefixChanges:acceptedFixtureBaseline(p).length});negativeCount++;
 }
 function completeFields(collection){const definition=schema.RECORD_SCHEMAS[collection],fields={};for(const name of definition.required)if(definition.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)fields[name]=valueForDefinition(definition.fieldDefinitions[name]);return fields;}
 function proposalEnvelope(p,stage,pr,records){return {schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:p.job.JOB_ID,stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{},records,evidence:[{temporaryKey:'policy-evidence',kind:'WORKFLOW_EVIDENCE',description:'record identity policy',location:'fixture',content:'record identity policy'}],unresolved:[],warnings:[],attachments:[]};}
@@ -626,10 +762,10 @@ function proposalEnvelope(p,stage,pr,records){return {schema:schema.RESPONSE_SCH
   let p=project('JOB-NEG-RESERVED-TEMPKEY'),stage=21;p.job.CURRENT_BASELINE_ID='BASELINE-000001';p.job.CURRENT_PRODUCT_ID='PRODUCT-000001';const pr={...fixtureBuildPrompt(stage,p),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(pr);const e=proposalEnvelope(p,stage,pr,{products:[{tempKey:'new-product',fields:completeFields('products'),relationships:{},evidenceRefs:['policy-evidence']}]});const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code==='INVALID_RECORD_IDENTITY'))throw new Error('Application-reserved collection accepted tempKey creation.');negativeCount++;
 }
 {
-  let p=project('JOB-NEG-COMPLETED-TARGET'),stage=21,productId='PRODUCT-000001';p.job.CURRENT_BASELINE_ID='BASELINE-000001';p.job.CURRENT_PRODUCT_ID=productId;p.projectData.products.push({id:productId,stage,active:true,status:'COMPLETED',scope:{baselineId:'BASELINE-000001',productId},fields:{PRODUCT_ID:productId,BASELINE_ID:'BASELINE-000001',STATUS:'RESERVED'},PRODUCT_ID:productId,BASELINE_ID:'BASELINE-000001',STATUS:'RESERVED'});const pr={...fixtureBuildPrompt(stage,p),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(pr);const e=proposalEnvelope(p,stage,pr,{products:[{targetId:productId,fields:completeFields('products'),relationships:{},evidenceRefs:['policy-evidence']}]});const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code==='INVALID_RESERVED_TARGET'))throw new Error('Completed reserved target was agent-completable a second time.');negativeCount++;
+  let p=project('JOB-NEG-COMPLETED-TARGET'),stage=21,productId='PRODUCT-000001';preparePromptPrerequisites(p,stage);p.job.CURRENT_BASELINE_ID='BASELINE-000001';p.job.CURRENT_PRODUCT_ID=productId;p.projectData.products.push({id:productId,stage,active:true,status:'COMPLETED',scope:{baselineId:'BASELINE-000001',productId},fields:{PRODUCT_ID:productId,BASELINE_ID:'BASELINE-000001',STATUS:'RESERVED'},PRODUCT_ID:productId,BASELINE_ID:'BASELINE-000001',STATUS:'RESERVED'});const pr={...fixtureBuildPrompt(stage,p),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(pr);assert(engine.records(p,'products').some(row=>engine.recordId(row,'products')===productId&&engine.isActiveRecord(row)&&row.status==='COMPLETED'),'COMPLETED_TARGET_ACTIVE_PRECONDITION_ORACLE');const e=proposalEnvelope(p,stage,pr,{products:[{targetId:productId,fields:completeFields('products'),relationships:{},evidenceRefs:['policy-evidence']}]});const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code==='INVALID_RESERVED_TARGET'))throw new Error('Completed reserved target was agent-completable a second time.');negativeCount++;
 }
 {
-  let p=project('JOB-NEG-TARGET-SCOPE'),stage=11,runId='RUN-SCOPE-B';p.projectData.runs.push({id:runId,stage,active:true,status:'RESERVED',scope:{},fields:{RUN_ID:runId,CONTEXT_ID:'CTX-SCOPE-B'},RUN_ID:runId,CONTEXT_ID:'CTX-SCOPE-B'});const pr={...fixtureBuildPrompt(stage,p,{scope:{runId:'RUN-SCOPE-A',contextId:'CTX-SCOPE-A'}}),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(pr);const e=proposalEnvelope(p,stage,pr,{runs:[{targetId:runId,fields:completeFields('runs'),relationships:{},evidenceRefs:['policy-evidence']}]});const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code==='TARGET_SCOPE_MISMATCH'))throw new Error('Reserved target outside the controlling run/context scope was accepted.');negativeCount++;
+  let p=project('JOB-NEG-TARGET-SCOPE'),stage=11,runId='RUN-SCOPE-B';preparePromptPrerequisites(p,stage);p.projectData.runs.push({id:runId,stage,active:true,status:'RESERVED',scope:{},fields:{RUN_ID:runId,CONTEXT_ID:'CTX-SCOPE-B'},RUN_ID:runId,CONTEXT_ID:'CTX-SCOPE-B'});const pr={...fixtureBuildPrompt(stage,p,{scope:{runId:'RUN-SCOPE-A',contextId:'CTX-SCOPE-A'}}),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(pr);assert(engine.records(p,'runs').some(row=>engine.recordId(row,'runs')===runId&&engine.isActiveRecord(row)),'TARGET_SCOPE_ACTIVE_WRONG_TARGET_ORACLE');assert.notEqual(pr.scope.runId,runId,'TARGET_SCOPE_DISTINCT_TARGET_ORACLE');const e=proposalEnvelope(p,stage,pr,{runs:[{targetId:runId,fields:completeFields('runs'),relationships:{},evidenceRefs:['policy-evidence']}]});const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code==='TARGET_SCOPE_MISMATCH'))throw new Error('Reserved target outside the controlling run/context scope was accepted.');negativeCount++;
 }
 console.log(JSON.stringify({operationStageDataIsolation:true,reservedTargetPolicy:true,completedReservedTargetBlocked:true,targetScopeIsolation:true,negativeObservations,totalNegativeCases:negativeCount},null,2));
 
@@ -755,7 +891,7 @@ negativeAt('regression definition execution-truth injection',15,(e)=>{
     ['duplicate-slot',[...mapped,mapped[0]]],['missing-slot',[mapped[0]]],
     ['wrong-hash',[{...mapped[0],sha256:'0'.repeat(64)},mapped[1]]],
     ['stale-slot',[{...mapped[0],attachmentSlotId:'ATTACHMENT-SLOT-STALE'},mapped[1]]]
-  ]){const result=check(selected);if(result.validation.valid)throw new Error(`Attachment-slot mutation accepted: ${name}`);if(result.project.projectData.acceptedChanges.length||result.project.projectData.artifacts.length)throw new Error('Rejected returned files mutated canonical records.');negativeCount++;}
+  ]){const result=check(selected);if(result.validation.valid)throw new Error(`Attachment-slot mutation accepted: ${name}`);assert.deepEqual(result.project.projectData.acceptedChanges,acceptedFixtureBaseline(p),'Rejected returned files mutated canonical accepted records.');if(result.project.projectData.artifacts.length)throw new Error('Rejected returned files mutated canonical artifacts.');negativeCount++;}
   const valid=check([...mapped].reverse());if(!valid.validation.valid)throw new Error(`Explicit reverse-order slot mapping rejected: ${JSON.stringify(valid.validation.issues)}`);
   const captured=ingestion.captureRaw(p,{...returnedTransport(pr),stage,text:JSON.stringify(e),promptRecord:pr});
   const failed=ingestion.prepareCaptured(captured.project,{rawResponseId:captured.rawRecord.rawResponseId});
@@ -813,6 +949,12 @@ negativeAt('regression definition execution-truth injection',15,(e)=>{
   console.log(JSON.stringify({acceptedPropositionPersistence:true,pendingProofCannotComplete:true,invalidProofReferencesRejected:true,typedHumanDecisionsValidated:true}));
 }
 
+// Keep authored append-only definitions and both source-set authoring paths
+// at their existing production admission/canonical storage owner.
+const schemaAppendOnlyDefinitionPersistence=await verifySchemaPolicyRuntime({projectStoreRuntime,canonicalFixtureRecord});
+const schemaCurrentSourceSetPolicy=await verifySchemaCurrentSourceSetPolicy({projectStoreRuntime,stage02AcceptanceFixture,acceptPrerequisite,boundedSearchProposal});
+console.log(JSON.stringify({schemaAppendOnlyDefinitionPersistence,schemaCurrentSourceSetPolicy}));
+
 // Exact optional inbound archive assertions retain their own transport boundary.
 const inboundResponseArchive=await verifyInboundResponseArchive(),inboundResponseArchiveFaults=[];
 for(const [name,oracle]of [["trust-member-digest", "INBOUND_ARCHIVE_NEGATIVE_ORACLE: INBOUND_ARCHIVE_MEMBER_BYTES_MISMATCH"], ["omit-manifest-binding", "INBOUND_ARCHIVE_NEGATIVE_ORACLE: INBOUND_ARCHIVE_TRANSPORT_MISMATCH"], ["separate-files-only-prose", "INBOUND_ARCHIVE_MANDATORY_PROSE_ORACLE"]]){
@@ -820,3 +962,12 @@ for(const [name,oracle]of [["trust-member-digest", "INBOUND_ARCHIVE_NEGATIVE_ORA
  inboundResponseArchiveFaults.push({name,oracle,detected:true});
 }
 console.log(JSON.stringify({inboundResponseArchive:'PASS',...inboundResponseArchive,faults:inboundResponseArchiveFaults}));
+
+// Scoped Section 35.5 extraction-manifest carrier. This executes the actual
+// response/storage owner under the existing transaction adapter and retains
+// its partial boundary; it does not establish Stage 04 or native/browser import.
+const extractionManifestBackupPersistence=await verifyExtractionManifestBackupPersistence();
+console.log(JSON.stringify({extractionManifestBackupPersistence}));
+
+// Exact finite Section38 relationship admission controls; runtime eligibility remains separate.
+await verifySchemaReferenceAdmission();

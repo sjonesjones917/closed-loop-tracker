@@ -41,7 +41,7 @@ function legacyPacketControls(f){
  assert.equal(source.split(roleAnchor).length,2,'VERIFIER_LEGACY_ROLE_ANCHOR');assert.equal(source.split(tagAnchor).length,2,'VERIFIER_LEGACY_TAG_ANCHOR');
  // This documented pre-projection equivalent changes only the former missing
  // secondary-carrier policy and its producer epoch/tag, not saved packet bytes.
- const legacySource=source.replace(roleAnchor,'const runRole=null;').replace(tagAnchor,'').replace("const INDEPENDENT_RUN_PROMPT_VERSION='closed-loop-prompt-engine/94';","const INDEPENDENT_RUN_PROMPT_VERSION='closed-loop-prompt-engine/93';");
+ const legacySource=source.replace(roleAnchor,'const runRole=null;').replace(tagAnchor,'').replace("const INDEPENDENT_RUN_PROMPT_VERSION='closed-loop-prompt-engine/95';","const INDEPENDENT_RUN_PROMPT_VERSION='closed-loop-prompt-engine/93';");
  function historical({contaminated=false}={}){
   const p=engine.clone(f.p),scope=engine.scopeForIteration(p,f.iid);
   if(contaminated)p.projectData.observationRecords.push(record('observationRecords',f.stage,{SUBJECT_ID:'TEST-RELATION',OBSERVATION_ORIGIN:'AGENT_SEMANTIC_OBSERVATION',EXTERNAL_OR_AGENT_OBSERVED_VALUE:'PRIOR_VERIFIER_FINDING_'+f.stage,CURRENT_SCOPE:{...scope,runId:f.slots[1].runId}},'OBSERVATION-LEGACY',scope));

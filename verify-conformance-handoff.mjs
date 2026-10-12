@@ -53,6 +53,25 @@ export function verifyRunnerDescendantConsumerControls(){
  return {passed:true,cases,caseCount:cases.length,syntheticReportFixture:true,actualRunnerExecuted:false,actualAutomaticExecutionHere:false,currentReceiptCreated:false};
 }
 
+
+const CONFORMANCE_IMPORTED_HELPER_SOURCES=Object.freeze(['test-primary-guidance-current-run.mjs','test-history-static-read.mjs']);
+export function validateConformanceImportedHelperSources(sourcePaths){
+ assert(Array.isArray(sourcePaths)&&sourcePaths.every(name=>typeof name==='string'),'CONFORMANCE_IMPORTED_HELPER_SOURCE_SHAPE_ORACLE');
+ assert.equal(new Set(sourcePaths).size,sourcePaths.length,'CONFORMANCE_IMPORTED_HELPER_SOURCE_UNIQUENESS_ORACLE');
+ for(const name of CONFORMANCE_IMPORTED_HELPER_SOURCES)assert.equal(sourcePaths.filter(value=>value===name).length,1,'CONFORMANCE_IMPORTED_HELPER_SOURCE_MEMBERSHIP_ORACLE: '+name);
+ return {required:[...CONFORMANCE_IMPORTED_HELPER_SOURCES],sourceCount:sourcePaths.length};
+}
+export function verifyConformanceImportedHelperSourceControls(){
+ const sourcePaths=conformanceSources(),cases=[];
+ validateConformanceImportedHelperSources(sourcePaths);cases.push('valid-current-source-population');
+ for(const name of CONFORMANCE_IMPORTED_HELPER_SOURCES){
+  const missing=sourcePaths.filter(value=>value!==name);assert.throws(()=>validateConformanceImportedHelperSources(missing),error=>error.code==='ERR_ASSERTION'&&String(error.message).includes(name),'CONFORMANCE_IMPORTED_HELPER_MISSING_MUTATION_ORACLE: '+name);cases.push('missing-rejected:'+name);
+  const duplicate=[...sourcePaths,name];assert.throws(()=>validateConformanceImportedHelperSources(duplicate),error=>error.code==='ERR_ASSERTION'&&String(error.message).includes('UNIQUENESS'),'CONFORMANCE_IMPORTED_HELPER_DUPLICATE_MUTATION_ORACLE: '+name);cases.push('duplicate-rejected:'+name);
+ }
+ validateConformanceImportedHelperSources(sourcePaths);cases.push('restored-valid');
+ return {passed:true,cases,caseCount:cases.length,required:[...CONFORMANCE_IMPORTED_HELPER_SOURCES],actualGroupExecuted:false,currentReceiptCreated:false};
+}
+
 export function validateConformanceReports(reports,{sourceCommit,sourceFiles}){
  assert.deepEqual(Object.keys(conformanceGroups),groups,'CONFORMANCE_GROUP_AUTHORITY_ORACLE');
  assert.deepEqual(Object.keys(reports).sort(),[...groups].sort(),'CONFORMANCE_GROUP_POPULATION_ORACLE');
@@ -107,8 +126,8 @@ export function verifyConformanceHandoffControls(){
  const runnerDescendantAggregateCases=[];
  const aggregateMutations=[['controlled-trigger-undisclosed',r=>delete r.cases.find(x=>x.case==='timed-out-child-descendants-stop-before-return').timeoutTrigger],['controlled-mode-overclaimed',r=>r.cases.find(x=>x.case==='timed-out-child-descendants-stop-before-return').timeoutTrigger='AUTOMATIC_350_FROM_PROCESS_LAUNCH'],['controlled-no-work',r=>{const row=r.cases.find(x=>x.case==='timed-out-child-descendants-stop-before-return');row.bytesBefore=row.bytesAfter=0;}],['controlled-continues-work',r=>r.cases.find(x=>x.case==='timed-out-child-descendants-stop-before-return').bytesAfter++],['automatic-stalled-omitted',r=>r.cases=r.cases.filter(x=>x.suite!=='stalled')],['automatic-nested-omitted',r=>r.cases.find(x=>x.case==='nested-descendants-stop-before-return').cases=r.cases.find(x=>x.case==='nested-descendants-stop-before-return').cases.filter(x=>x.case!=='timeout')],['automatic-nested-cleanup-fails',r=>r.cases.find(x=>x.case==='nested-descendants-stop-before-return').cases.find(x=>x.case==='timeout').bytesAfter++],['restored-readiness-omitted',r=>delete r.restored.cases.find(x=>x.case==='timed-out-child-descendants-stop-before-return').executionReadyAt]];
  for(const [name,mutate]of aggregateMutations){const bad=structuredClone(reports),result=bad.core.results[0],nested=JSON.parse(result.stdout);mutate(nested);result.stdout=JSON.stringify(nested);result.stdoutSha256=sha(result.stdout);assert.throws(()=>validateConformanceReports(bad,expected),error=>error.code==='ERR_ASSERTION','CONFORMANCE_RUNNER_AGGREGATE_MUTATION_ORACLE: '+name);runnerDescendantAggregateCases.push(name);}
- const runnerDescendantConsumers=verifyRunnerDescendantConsumerControls();
- return {conformanceHandoffControls:'PASS',negativeCases:mutations.map(([name])=>name),runnerDescendantConsumers,runnerDescendantAggregateCases,restored:true,synthetic:true,executionEstablished:false};
+ const runnerDescendantConsumers=verifyRunnerDescendantConsumerControls(),conformanceImportedHelperSourceControls=verifyConformanceImportedHelperSourceControls();
+ return {conformanceHandoffControls:'PASS',negativeCases:mutations.map(([name])=>name),runnerDescendantConsumers,runnerDescendantAggregateCases,conformanceImportedHelperSourceControls,restored:true,synthetic:true,executionEstablished:false};
 }
 export function currentConformanceHandoff(directory='.ci-conformance-handoff'){
  const sourceCommit=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();

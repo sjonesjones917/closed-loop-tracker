@@ -6,29 +6,29 @@ import assert from 'node:assert/strict';
 import {webcrypto,createHash} from 'node:crypto';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import {projectStoreRuntime} from './test-project-store-runtime.mjs';
-import {deferredDefinitionRestorationFixture} from './test-fixtures.mjs';
+import {testIrAuthorPrerequisite} from './test-test-ir-author-prerequisite.mjs';
 const plain=value=>JSON.parse(JSON.stringify(value));
 const digest=bytes=>createHash('sha256').update(bytes).digest('hex');
 const operationNames=['LOAD_ARTIFACT','READ_BYTES','DECODE_UTF8','PARSE_JSON','PARSE_CSV','PARSE_XML','SELECT_JSON_PATH','SELECT_XML','COUNT','SUM','MIN','MAX','SORT','UNIQUE','HASH_SHA256','REGEX','COMPARE','ASSERT_EQ','ASSERT_GT','ASSERT_GTE','ASSERT_LT','ASSERT_LTE','ASSERT_MATCH','ASSERT_CONTAINS','ASSERT_NOT_CONTAINS','ASSERT_SET_EQUAL','BYTE_COMPARE'];
 const inheritedNames=['constructor','__defineGetter__','__defineSetter__','hasOwnProperty','__lookupGetter__','__lookupSetter__','isPrototypeOf','propertyIsEnumerable','toString','valueOf','__proto__','toLocaleString'];
 const malformedValues=[null,false,0,[],['LOAD_ARTIFACT'],{},{toString:'LOAD_ARTIFACT'},{toString:null,valueOf:null}];
-function load(source,{schema=false}={}){
+function load(source,{schema=false,schemaSource=null}={}){
  const context={console,crypto:webcrypto,TextEncoder,TextDecoder,Uint8Array,ArrayBuffer,DataView,URL,setTimeout,clearTimeout,Date,Math,Promise,Event,EventTarget};context.globalThis=context;context.dispatchEvent=()=>true;context.addEventListener=()=>{};context.removeEventListener=()=>{};createVerifierRuntime(context);
  if(schema)vm.runInContext(fs.readFileSync(new URL('./workbook.js',import.meta.url),'utf8'),context,{filename:'workbook.js'});
  vm.runInContext(fs.readFileSync(new URL('./hash.js',import.meta.url),'utf8'),context,{filename:'hash.js'});vm.runInContext(source,context,{filename:'test-runtime.js'});
- if(schema)vm.runInContext(fs.readFileSync(new URL('./workflow-schema.js',import.meta.url),'utf8'),context,{filename:'workflow-schema.js'});
+ if(schema)vm.runInContext(schemaSource??fs.readFileSync(new URL('./workflow-schema.js',import.meta.url),'utf8'),context,{filename:'workflow-schema.js'});
  return context;
 }
 const previousGuards=[
- ["const definition=typeof step.op==='string'&&hasOwn(OP_DEFINITIONS,step.op)?OP_DEFINITIONS[step.op]:null;if(!definition)return [`Step ${index} uses unknown operation ${typeof step.op==='string'?step.op:'<non-string>'}.`];","const definition=OP_DEFINITIONS[step.op];if(!definition)return [`Step ${index} uses unknown operation ${String(step.op)}.`];"],
- ["const contract=typeof step.op==='string'&&hasOwn(PORT_CONTRACTS,step.op)?PORT_CONTRACTS[step.op]:null;if(!contract){issues.push(`Step ${index} uses unknown operation ${typeof step.op==='string'?step.op:'<non-string>'}.`);continue;}","const contract=PORT_CONTRACTS[step.op];if(!contract){issues.push(`Step ${index} uses unknown operation ${String(step.op)}.`);continue;}"],
- ["if(typeof step?.op==='string'&&!hasOwn(PORT_CONTRACTS,step.op))issues.push(`Legacy authoring operation ${step.op} cannot compile to the canonical closed operation registry.`);","if(step?.op&&!PORT_CONTRACTS[step.op])issues.push(`Legacy authoring operation ${step.op} cannot compile to the canonical closed operation registry.`);"]
+ ["const definition=typeof step.op==='string'&&hasOwn(OP_DEFINITIONS,step.op)?OP_DEFINITIONS[step.op]:null;if(!definition)return [`Step ${index} uses unknown operation ${diagnosticLabel(step.op)}.`];","const definition=OP_DEFINITIONS[step.op];if(!definition)return [`Step ${index} uses unknown operation ${String(step.op)}.`];"],
+ ["const contract=typeof step.op==='string'&&hasOwn(PORT_CONTRACTS,step.op)?PORT_CONTRACTS[step.op]:null;if(!contract){issues.push(`Step ${index} uses unknown operation ${diagnosticLabel(step.op)}.`);continue;}","const contract=PORT_CONTRACTS[step.op];if(!contract){issues.push(`Step ${index} uses unknown operation ${String(step.op)}.`);continue;}"],
+ ["if(typeof step?.op==='string'&&!hasOwn(PORT_CONTRACTS,step.op))issues.push(`Legacy authoring operation ${diagnosticLabel(step.op)} cannot compile to the canonical closed operation registry.`);","if(step?.op&&!PORT_CONTRACTS[step.op])issues.push(`Legacy authoring operation ${step.op} cannot compile to the canonical closed operation registry.`);"]
 ,
- ["const diagnosticLabel=value=>typeof value==='string'?value:'<non-string>';\n",''],
  ["${diagnosticLabel(spec.version)}","${String(spec.version)}",2],
  ["${diagnosticLabel(spec.languageVersion)}","${String(spec.languageVersion)}"],
  ["${diagnosticLabel(spec.operationRegistryVersion)}","${String(spec.operationRegistryVersion)}"],
  ["if(Array.isArray(spec.steps)&&spec.steps.length>LIMITS.maxSteps)","if((spec.steps?.length||0)>LIMITS.maxSteps)",2],
+ ["const allowed=[...contract.requiredInputs,...contract.optionalInputs];for(const key of Object.keys(step.inputs))if(!allowed.includes(key))return {valid:false,issues:[...issues,`Step ${index} operation ${diagnosticLabel(step.op)} contains unknown input port ${diagnosticLabel(key)}.`]};","const allowed=[...contract.requiredInputs,...contract.optionalInputs];for(const key of Object.keys(step.inputs))if(!allowed.includes(key))issues.push(`Step ${index} operation ${step.op} contains unknown input port ${key}.`);"],
  ["      if(!allowed.includes(name))continue;\n",''],
  ["else if(typeof spec.result.stepRef!=='string'||!prior.has(spec.result.stepRef))issues.push(`Test IR result references missing step ${diagnosticLabel(spec.result.stepRef)}.`);","else if(!prior.has(spec.result.stepRef))issues.push(`Test IR result references missing step ${String(spec.result.stepRef)}.`);"],
  ["if(typeof spec.result.output!=='string'||!hasOwn(contract.outputs,spec.result.output))issues.push(`Test IR result references unknown output ${diagnosticLabel(spec.result.output)}.`);","if(!hasOwn(contract.outputs,spec.result.output))issues.push(`Test IR result references unknown output ${String(spec.result.output)}.`);"]
@@ -40,12 +40,15 @@ const previousGuards=[
 async function verifyOperationIngestion(source,previousSource){
  const results=[];
  for(const [mode,implementationSource]of [['CURRENT',source],['PRE_FIX_EQUIVALENT',previousSource]]){
-  const r=projectStoreRuntime({sourceOverrides:{'test-runtime.js':implementationSource}}),e=r.engine,h=r.runtime.closedLoopHash,restored=await deferredDefinitionRestorationFixture(r,{family:'failureTests'}),p=restored.p;
+  const r=projectStoreRuntime({sourceOverrides:{'test-runtime.js':implementationSource}}),e=r.engine,h=r.runtime.closedLoopHash,restored=await testIrAuthorPrerequisite(r),p=restored.p;
   for(let stage=1;stage<=5;stage++)assert.equal(e.gate(stage,p).complete,true,'OPERATION_INGESTION_ACTUAL_PREREQUISITE_ORACLE');
   const selected=e.acceptedChanges(p,6).find(row=>row.operation==='COMPLETE'),original=p.projectData.rawResponses.find(row=>row.rawResponseId===selected.rawResponseId).completeRawResponse;
   e.invalidateAcceptedResponse(p,{stage:6,rawResponseId:selected.rawResponseId,reason:'Synthetic malformed-operation regression author refinement',operatorLabel:'SYNTHETIC_OPERATOR'});p.activeStage=6;
   const prompt=r.prompts.reserveAndBuildPromptRecord(p,6,{operation:'COMPLETE'}).prompt,manifest=r.prompts.promptFileManifest(prompt),envelope=JSON.parse(original);
   Object.assign(envelope,{promptIdentity:manifest.promptIdentity,packageId:manifest.packageId,operationReservationId:manifest.operationReservationId,challengeNonce:manifest.challengeNonce,scope:manifest.scope});
+  // The synthetic author resubmits a new current specification; retained
+  // accepted records, raw responses and prior executable hashes stay untouched.
+  for(const row of envelope.records.tests||[])if(row.fields?.EXECUTABLE_SPEC?.languageVersion)row.fields.EXECUTABLE_SPEC.operationRegistrySha256=r.runtime.closedLoopTestRuntime.OPERATION_REGISTRY_SHA256;
   const index=envelope.records.tests.findIndex(row=>row.tempKey==='compat-native-failureTests');assert(index>=0);assert.equal(envelope.records.tests[index].fields.EXECUTABLE_SPEC.steps[0].op,'COMPARE');
   const validate=value=>r.ingestion.validateEnvelope(p,r.copy(value),{stage:6,promptRecord:prompt,rawSha256:h.rawResponseSha256(JSON.stringify(value))}),before=h.sha256Value(p),rawBefore=p.projectData.rawResponses.map(row=>[row.rawResponseId,row.completeRawResponse]);
   assert.deepEqual(plain(validate(envelope).issues),[],'OPERATION_INGESTION_CONFORMING_CONTROL_ORACLE');assert.equal(validate(envelope).valid,true);
@@ -143,4 +146,73 @@ export async function verifyOperationRegistryAdmission(source,runtime){
  const ingestion=await verifyOperationIngestion(source,previousSource);
  assert.equal(fs.readFileSync(new URL('./test-runtime.js',import.meta.url),'utf8'),source,'OPERATION_REGISTRY_SOURCE_PRESERVATION_ORACLE');
  return {schema:'closed-loop-runtime-operation-admission-controls/1',ingestion,boundary:'Actual runtime validation, schema adapter, normalization, capability, pre-worker refusal and execution; no project response commit or release claim',pinnedBeforeRepairSourceSha256:'eb535ccb07485ae4919b941e1a522ca7db985eced07ef93968debe4a5befc146',preFixEquivalentSourceSha256:digest(previousSource),currentRuntimeSourceSha256:digest(source),negativeCases:negatives,capabilityCases,labelCases:labelCases.map(({candidate,...row})=>({...row,result:'REJECTED_INVALID'})),preFixLabelExceptionCount:labelCases.filter(row=>row.preFixException).length,preFixMalformedResultCompletedExecution:1,preFixExceptionCases:prefixedExceptions,preFixCoercedCapabilityAdmissions:1,preFixCoercedOperationCompletedExecutions:0,registeredOperationIds:operationNames,registeredOperationExecutionCount:operationNames.length,executionTraceUnchanged:true,normalizedSpecUnchanged:true,registryIdentityUnchanged:true,registeredErrorCodesUnchanged:errorControls.map(row=>row[0]),workerLaunches,result:'PASS'};
+}
+
+// Resource violations and closed-shape errors have bounded diagnostic output.
+// These are helper/schema boundaries; they do not claim response persistence,
+// browser responsiveness, worker execution, or a completed application stage.
+export function verifyTestIrDiagnosticBounds(source,runtime){
+ const context=load(source,{schema:true}),schema=context.closedLoopWorkflowSchema;
+ const legacy={version:'closed-loop-test-spec/1',steps:[{op:'LOAD_ARTIFACT',binding:'VALUE'},{op:'ASSERT_EQ',value:true}]},dag=runtime.normalizeSpec(legacy),bindings={VALUE:{kind:'CANONICAL_VALUE',canonicalKey:'VALUE'}};
+ const count=150000,unknown=Object.fromEntries(Array.from({length:count},(_,index)=>['unknown'+index,true]));
+ const cases=[];
+ const reject=(caseId,validate,input,expected)=>{
+  const before=digest(JSON.stringify(input));let checked;
+  assert.doesNotThrow(()=>{checked=validate(input);},'TEST_IR_BOUNDED_DIAGNOSTIC_NO_EXCEPTION_ORACLE: '+caseId);
+  assert.deepEqual(plain(checked),{valid:false,issues:expected},'TEST_IR_BOUNDED_DIAGNOSTIC_EXACT_ORACLE: '+caseId);
+  assert.equal(digest(JSON.stringify(input)),before,'TEST_IR_BOUNDED_DIAGNOSTIC_SOURCE_ORACLE: '+caseId);
+  cases.push({caseId,valid:false,issueCount:checked.issues.length,maxIssueCodeUnits:Math.max(...checked.issues.map(issue=>issue.length)),sourceUnchanged:true});
+ };
+ for(const [form,control]of [['legacy',legacy],['dag',dag]]){
+  const atLimit=form==='legacy'?{...legacy,steps:[...Array.from({length:127},()=>({op:'LOAD_ARTIFACT',binding:'VALUE'})),{op:'ASSERT_EQ',value:true}]}:{...dag,steps:Array.from({length:128},(_,index)=>({stepId:'S'+String(index+1).padStart(3,'0'),op:'ASSERT_EQ',inputs:{actual:{literal:true},expected:{literal:true}}})),result:{stepRef:'S128',output:'assertion'}};
+  assert.deepEqual(plain(runtime.validateSpec(atLimit,bindings)),{valid:true,issues:[]},'TEST_IR_BOUNDED_DIAGNOSTIC_EXACT_LIMIT_CONTROL_ORACLE');
+  cases.push({caseId:form+'-128-valid',valid:true,issueCount:0,sourceUnchanged:true});
+  reject(form+'-129-steps',value=>runtime.validateSpec(value),{...atLimit,steps:[...atLimit.steps,null]},['Test IR exceeds the 128-step limit.']);
+  reject(form+'-150000-invalid-steps',value=>runtime.validateSpec(value),{...control,steps:Array(count).fill(null)},['Test IR exceeds the 128-step limit.']);
+  reject(form+'-150000-root-keys',value=>runtime.validateSpec(value),{...control,...unknown},[`${form==='legacy'?'Legacy Test IR authoring form':'Test IR'} contains unknown root property unknown0.`]);
+ }
+ reject('legacy-150000-step-keys',value=>runtime.validateSpec(value),{...legacy,steps:[{...legacy.steps[0],...unknown},legacy.steps[1]]},['Step 0 operation LOAD_ARTIFACT contains unknown property unknown0.']);
+ reject('dag-150000-step-keys',value=>runtime.validateSpec(value),{...dag,steps:[{...dag.steps[0],...unknown},dag.steps[1]]},['Step 0 contains unknown property unknown0.']);
+ reject('dag-150000-input-keys',value=>runtime.validateSpec(value),{...dag,steps:[{...dag.steps[0],inputs:{...dag.steps[0].inputs,...unknown}},dag.steps[1]]},['Step 0 operation LOAD_ARTIFACT contains unknown input port unknown0.']);
+ reject('150000-invalid-binding-names',runtime.validateBindings,unknown,['Invalid Test IR binding name unknown0.']);
+ reject('150000-invalid-binding-values',runtime.validateBindings,Object.fromEntries(Array.from({length:count},(_,index)=>['B'+index,null])),['Binding B0 must be an artifact ID string or a closed binding object.']);
+ reject('150000-binding-properties',runtime.validateBindings,{VALUE:{artifactId:'ARTIFACT-1',...unknown}},['Binding VALUE contains unknown property unknown0.']);
+ const long='P'.repeat(255)+'🙂'.repeat(1000),preview='P'.repeat(255)+'… [2255 UTF-16 code units; complete value retained in source]';
+ reject('surrogate-safe-root-label',runtime.validateSpec,{...dag,[long]:true},['Test IR contains unknown root property '+preview+'.']);
+ reject('surrogate-safe-operation-label',runtime.validateSpec,{...dag,steps:[{...dag.steps[0],op:long},dag.steps[1]]},['Step 0 uses unknown operation '+preview+'.','Step 1 has a forward, missing, or cyclic reference to S001.']);
+ reject('surrogate-safe-binding-label',runtime.validateBindings,{[long]:null},['Invalid Test IR binding name '+preview+'.']);
+ assert.deepEqual(plain(runtime.authoringContract().diagnostics),{mode:'FAIL_FAST_CLOSED_SHAPE_OR_RESOURCE_BOUND',maxValuePreviewCodeUnits:256,retainedSource:'Complete submitted values remain in the original response; diagnostic previews do not transform accepted data.'},'TEST_IR_DIAGNOSTIC_PUBLISHED_POLICY_ORACLE');
+ const published=runtime.authoringContract();published.diagnostics.maxValuePreviewCodeUnits=1;assert.equal(runtime.authoringContract().diagnostics.maxValuePreviewCodeUnits,256);
+ // The schema is a consumer of the runtime grammar, never a second weaker
+ // validator when a supported runtime has not finished loading.
+ const malformed={...legacy,steps:{}},closedInvalid={...legacy,steps:[{...legacy.steps[0],unknown:true},legacy.steps[1]]},badBinding={VALUE:{artifactId:123}};
+ const loadedRuntime=context.closedLoopTestRuntime;context.closedLoopTestRuntime=undefined;
+ for(const [caseId,validate,input,message]of [
+  ['schema-unavailable-valid',schema.validateTestIRSpec,legacy,'Test IR validation is unavailable because the application runtime has not loaded. Reload the application before submitting executable tests.'],
+  ['schema-unavailable-malformed-steps',schema.validateTestIRSpec,malformed,'Test IR validation is unavailable because the application runtime has not loaded. Reload the application before submitting executable tests.'],
+  ['schema-unavailable-closed-shape',schema.validateTestIRSpec,closedInvalid,'Test IR validation is unavailable because the application runtime has not loaded. Reload the application before submitting executable tests.'],
+  ['schema-unavailable-bindings',schema.validateTestIRBindings,badBinding,'Test IR binding validation is unavailable because the application runtime has not loaded. Reload the application before submitting executable tests.']
+ ])reject(caseId,validate,input,[message]);
+ context.closedLoopTestRuntime=loadedRuntime;
+ assert.deepEqual(plain(schema.validateTestIRSpec(legacy)),{valid:true,issues:[]});assert.deepEqual(plain(schema.validateTestIRBindings(bindings)),{valid:true,issues:[]});
+ reject('schema-delegates-malformed-steps',schema.validateTestIRSpec,malformed,['Test IR requires a nonempty steps array.']);
+ reject('schema-delegates-closed-shape',schema.validateTestIRSpec,closedInvalid,['Step 0 operation LOAD_ARTIFACT contains unknown property unknown.']);
+ reject('schema-delegates-invalid-bindings',schema.validateTestIRBindings,badBinding,['Binding VALUE artifactId must be a nonempty STRING when present.','Binding VALUE does not identify an artifact.']);
+ const faults=[];
+ const fault=(faultId,anchor,replacement,evaluate,expected,count=1)=>{
+  assert.equal(source.split(anchor).length,count+1,'TEST_IR_DIAGNOSTIC_FAULT_ANCHOR_ORACLE: '+faultId);
+  const changed=source.replaceAll(anchor,replacement),candidate=load(changed).closedLoopTestRuntime;let actual;
+  assert.doesNotThrow(()=>{actual=plain(evaluate(candidate));},'TEST_IR_DIAGNOSTIC_FAULT_INTENDED_BOUNDARY_ORACLE: '+faultId);
+  assert.notDeepEqual(actual,expected,'TEST_IR_DIAGNOSTIC_FAULT_DETECTED_ORACLE: '+faultId);
+  faults.push({faultId,intendedFailureDetected:true,unrelatedException:false});
+ };
+ fault('step-limit-traversal',"if(Array.isArray(spec.steps)&&spec.steps.length>LIMITS.maxSteps)return {valid:false,issues:[`Test IR exceeds the ${LIMITS.maxSteps}-step limit.`]};",'',candidate=>candidate.validateSpec({...dag,steps:Array(129).fill(null)}),{valid:false,issues:['Test IR exceeds the 128-step limit.']},2);
+ fault('legacy-closed-step-output',"for(const key of Object.keys(step))if(!allowed.has(key))return [`Step ${index} operation ${diagnosticLabel(step.op)} contains unknown property ${diagnosticLabel(key)}.`];","for(const key of Object.keys(step))if(!allowed.has(key))issues.push(`Step ${index} operation ${diagnosticLabel(step.op)} contains unknown property ${diagnosticLabel(key)}.`);",candidate=>candidate.validateSpec({...legacy,steps:[{...legacy.steps[0],first:true,second:true},legacy.steps[1]]}),{valid:false,issues:['Step 0 operation LOAD_ARTIFACT contains unknown property first.']});
+ fault('binding-name-output',"if(!new RegExp(INPUT_BINDING_CONTRACT.bindingName.pattern).test(name))return {valid:false,issues:[`Invalid Test IR binding name ${diagnosticLabel(name)}.`]};","if(!new RegExp(INPUT_BINDING_CONTRACT.bindingName.pattern).test(name))issues.push(`Invalid Test IR binding name ${diagnosticLabel(name)}.`);",candidate=>candidate.validateBindings({first:'ARTIFACT-1',second:'ARTIFACT-1'}),{valid:false,issues:['Invalid Test IR binding name first.']});
+ fault('label-preview',"maxValuePreviewCodeUnits:256","maxValuePreviewCodeUnits:4096",candidate=>candidate.validateSpec({...dag,[long]:true}),{valid:false,issues:['Test IR contains unknown root property '+preview+'.']});
+ const schemaSource=fs.readFileSync(new URL('./workflow-schema.js',import.meta.url),'utf8'),unavailable="{valid:false,issues:['Test IR validation is unavailable because the application runtime has not loaded. Reload the application before submitting executable tests.']}";
+ assert.equal(schemaSource.split(unavailable).length,2,'TEST_IR_DIAGNOSTIC_SCHEMA_FAULT_ANCHOR_ORACLE');
+ const broken=load(source,{schema:true,schemaSource:schemaSource.replace(unavailable,'{valid:true,issues:[]}')});broken.closedLoopTestRuntime=undefined;
+ assert.equal(broken.closedLoopWorkflowSchema.validateTestIRSpec(closedInvalid).valid,true,'TEST_IR_DIAGNOSTIC_SCHEMA_FAULT_DETECTED_ORACLE');faults.push({faultId:'schema-unavailable-admission',intendedFailureDetected:true,unrelatedException:false});
+ return {checkId:'test-ir.bounded-diagnostics',passed:true,synthetic:true,actualBrowser:false,actualWorker:false,boundary:'Runtime validation and actual schema adapter; no project acceptance or persistence claim',population:count,previewCodeUnits:256,cases,faults,sourceSha256:digest(source),schemaRuntimeDelegation:true,unavailableRuntimeFailsClosed:true,validBoundaryPreserved:true,publishedPolicyDetached:true};
 }
