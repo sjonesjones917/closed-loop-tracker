@@ -506,6 +506,19 @@ await storageRegression('import:replay-saved-projections-without-fabricating-gat
   assert(displayed.job.CURRENT_STAGE==='STAGE 01'&&displayed.stages[1].status!=='COMPLETE','Restored cached completion fabricated a passed stage.');
   assert(displayed.projectData.rawResponses.at(-1).completeRawResponse.endsWith('é🙂 EXACT-TAIL'),'Restoring a saved projection lost exact raw history.');
 });
+await storageRegression('integrity:stale-genuine-release-is-reported-by-its-gate-while-a-lying-release-is-corrupt',async()=>{
+  // A real application-derived release bound to evidence that has since changed (for example after a history restore
+  // changes the authority) is stale: the Stage 27 gate reports it. A record that disagrees with the very evidence it
+  // claims is corrupt. The forged-record regression above remains the owner of records with no derivation provenance.
+  const saved=await storageRuntime.makeStored('RELEASE-STALENESS'),engine=storageRuntime.closedLoopWorkflowEngine;
+  const baseline=storageRead(saved);delete baseline.projectSha256;
+  const current=engine.releaseBinding(baseline),other=current.determination==='ACCEPTED'?'BLOCKED':'ACCEPTED';
+  const withRelease=(digest,determination)=>{const project=storageRead(baseline),fields={RELEASE_ID:'RELEASE-DERIVED',DETERMINATION:determination,CONTROLLING_EVIDENCE:digest};project.projectData.releaseRecords.push(storageRead({id:'RELEASE-DERIVED',active:true,source:'APPLICATION_DERIVATION',derivationKey:'stage27.release',releaseEvidenceSha256:digest,fields,...fields}));project.job.CURRENT_RELEASE_ID='RELEASE-DERIVED';return project;};
+  const reports=project=>storageRuntime.projectStore.validateProjectIntegrity(project).issues.some(issue=>issue.includes('release determination'));
+  assert(reports(withRelease('f'.repeat(64),other))===false,'RELEASE_STALE_GENUINE_ORACLE: a genuine release bound to superseded evidence must be left to its Stage 27 gate, not treated as corruption.');
+  assert(reports(withRelease(current.evidenceDigest,other))===true,'RELEASE_LYING_RECORD_ORACLE: a release that contradicts the evidence it claims must remain an integrity failure.');
+  assert(reports(withRelease(current.evidenceDigest,current.determination))===false,'RELEASE_CURRENT_RECORD_ORACLE: a release that matches its current evidence must remain valid.');
+});
 await storageRegression('import:saved-projection-does-not-bypass-record-or-release-checks',async()=>{
   const saved=await storageRuntime.makeStored('IMPORT-PROJECTION-NEGATIVES');
   // A retained release record must be reachable from the Job's established
