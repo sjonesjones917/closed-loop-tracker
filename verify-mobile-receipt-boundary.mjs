@@ -66,7 +66,8 @@ try{
  if(originalSha===undefined)delete process.env.GITHUB_SHA;else process.env.GITHUB_SHA=originalSha;
 }
 const source=fs.readFileSync('verify-mobile-acceptance-evidence.mjs','utf8');
-const fault=source.replace("new URL('.',import.meta.url)",'new URL('+JSON.stringify(new URL('.',import.meta.url).href)+')').split('\n').filter(line=>!line.includes("issue(errors,'RECEIPT_OBSERVATION_REQUIRED'")&&!line.includes("issue(errors,'RECEIPT_OPERATION_EVIDENCE_INVALID'")).join('\n');
+// A data: module has no base URL, so every relative import of the faulted source is made absolute.
+const fault=source.replace("from './verifier-runtime.mjs'",'from '+JSON.stringify(new URL('./verifier-runtime.mjs',import.meta.url).href)).replace("new URL('.',import.meta.url)",'new URL('+JSON.stringify(new URL('.',import.meta.url).href)+')').split('\n').filter(line=>!line.includes("issue(errors,'RECEIPT_OBSERVATION_REQUIRED'")&&!line.includes("issue(errors,'RECEIPT_OPERATION_EVIDENCE_INVALID'")).join('\n');
 assert.notEqual(fault,source,'Observation-validation fault was not applied.');
 const mutant=await import('data:text/javascript;base64,'+Buffer.from(fault).toString('base64'));
 const broken=structuredClone(evidence);delete broken.operationReceipts[0].observation;

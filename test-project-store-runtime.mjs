@@ -101,8 +101,10 @@ vm.runInContext(extract('async function reverifyReturnedFiles(','async function 
 
 // Fault injection locates the persisted payload, not the occurrence metadata.
 // Expected semantic outcomes stay in each independent owning regression.
-export function storedArtifactBody(r,artifactId){
- const row=r.rows.get('artifacts')?.get(artifactId);if(!row)throw new Error('Artifact fault target is missing: '+artifactId);
+// A recoverable project removal deletes the active occurrence row but keeps its payload in the
+// recovery checkpoint; a caller that captured the occurrence earlier may pass it as the locator.
+export function storedArtifactBody(r,artifactId,{row:retained=null}={}){
+ const row=r.rows.get('artifacts')?.get(artifactId)||retained;if(!row)throw new Error('Artifact fault target is missing: '+artifactId);
  if(!row.byteReference)return row;
  const reference=row.byteReference,key='recovery:'+reference.jobId+':bytes:'+reference.sha256,body=r.rows.get('meta')?.get(key)?.value;
  if(!body)throw new Error('Artifact byte fault target is missing: '+artifactId);return body;

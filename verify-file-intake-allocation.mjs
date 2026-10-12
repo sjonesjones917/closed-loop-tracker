@@ -24,9 +24,10 @@ assert.equal(accepted.projectData.allocationReceipts.filter(row=>row.resultingId
 
 // The free-text inventory is optional. Actual retained input custody, rather
 // than that text or an arbitrary view entry, must drive the one-time file hint.
-const markupStart=app.indexOf('function artifactControlMarkup('),markupEnd=app.indexOf('function runBatchMarkup(',markupStart);
+// The file panel includes its Stage 01 input-correction disclosure, defined just before it.
+const markupStart=app.indexOf('function stageOneInputCorrectionMarkup('),markupEnd=app.indexOf('function runBatchMarkup(',markupStart);
 assert.ok(markupStart>=0&&markupEnd>markupStart,'Actual file-panel presentation owner is required.');
-Object.assign(runtime,{safe:engine.safe,details:()=>'',displayedStageAction:()=>({expectedReturnFiles:[]}),currentStageProduct:()=>null});
+Object.assign(runtime,{safe:engine.safe,esc:value=>String(value).replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char])),details:()=>'',displayedStageAction:()=>({expectedReturnFiles:[]}),currentStageProduct:()=>null});
 vm.runInContext(app.slice(markupStart,markupEnd),runtime,{filename:'app-core.js:artifactControlMarkup'});
 const guidance=project=>{runtime.current=project;return runtime.artifactControlMarkup(1,false);};
 assert.equal(String(accepted.job.SUPPLIED_MATERIALS_INVENTORY||'').trim(),'');

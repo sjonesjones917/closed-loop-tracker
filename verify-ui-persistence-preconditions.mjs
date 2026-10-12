@@ -29,6 +29,19 @@ Object.assign(runtime,{core,engine,schema:runtime.closedLoopWorkflowSchema,safe:
 runtime.reportActionFailure=error=>runtime.failures.push(String(error?.message||error));
 vm.runInContext(artifactIdFor+'\n'+['logicalFilePath','storeArtifactFile','registerStageFiles'].map(appFunction).join('\n')+'\nglobalThis.intake=registerStageFiles;',runtime);
 const intakeProject=async jobId=>{let project=core.createBlankState(jobId);engine.ensureShape(project);engine.recalculate(project);project=await store.writeProject(project,{expectedProjectRevision:0,incrementRevision:false,createOnly:true});runtime.current=project;runtime.projects=[project];runtime.failures=[];return project;};
+// A returned file is mapped only into a slot issued by the saved instruction, so the fixture
+// preserves a real response awaiting that file instead of naming an invented slot.
+const issuedSlots=new Map();
+function issuedReturnedResponse(jobId){
+ const schema=runtime.closedLoopWorkflowSchema,project=core.createBlankState(jobId);project.job.EXACT_USER_OBJECTIVE_VERBATIM='Preserve returned files in their issued slots.';engine.ensureShape(project);engine.recalculate(project);
+ const {prompt}=prompts.reserveAndBuildPromptRecord(project,1,{operation:'COMPLETE'}),manifest=prompts.promptFileManifest(prompt),slot=(manifest.attachmentSlots||[]).find(row=>row.role!=='STRUCTURED_RESPONSE');
+ assert.ok(slot,'ISSUED_RETURNED_SLOT_FIXTURE_ORACLE: the saved instruction must issue a returned-file slot');
+ const declaration={temporaryKey:'returned-file',attachmentSlotId:slot.attachmentSlotId,role:slot.role,filename:'observations.txt',mediaType:'text/plain',byteSize:12,sha256:'a'.repeat(64)};
+ const envelope={schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId,stage:1,operation:prompt.operation,promptIdentity:manifest.promptIdentity,packageId:manifest.packageId,operationReservationId:manifest.operationReservationId,challengeNonce:manifest.challengeNonce,scope:manifest.scope,responseType:'BLOCKED',humanInputRequests:[],stageData:{},records:{},evidence:[],unresolved:[{temporaryKey:'unavailable',kind:'MISSING_CAPABILITY',description:'Synthetic UI fixture preserves a response awaiting its returned file.',whyBlocking:'No result is claimed by this fixture.',affectedStageFields:[],affectedRecords:[],blocking:true}],warnings:[],attachments:[declaration]};
+ const prepared=ingestion.prepare(project,{stage:1,text:JSON.stringify(envelope),promptRecord:prompt,files:[],transport:{authority:'AUTHORITATIVE_RESPONSE_FILE',packageId:prompt.packageId,operationReservationId:prompt.operationReservationId,challengeNonce:prompt.challengeNonce}});
+ assert.equal(prepared.project.projectData.rawResponses.at(-1)?.status,'VALIDATION_FAILED','ISSUED_RETURNED_SLOT_FIXTURE_ORACLE: the response must remain preserved and unaccepted');
+ issuedSlots.set(jobId,slot.attachmentSlotId);return prepared.project;
+}
 const inputFile=name=>{const blob=new Blob(['Exact retained input bytes é🙂'],{type:'text/plain'});Object.defineProperty(blob,'name',{value:name});return blob;};
 const faultProject=await intakeProject('UI-POST-COMMIT-FILE');await runtime.intake([inputFile('fault.txt')]);
 const faultRow=rows.get('projects').get(faultProject.job.JOB_ID)?.project,linkedId=faultRow?.projectData?.artifacts?.at(-1)?.id;
@@ -42,18 +55,18 @@ let widgetError=null;try{await runtime.persist(widgetFaultCandidate);}catch(erro
 const widgetObservation={committed:(await store.readProject(widgetProject.job.JOB_ID)).job.JOB_TITLE==='Committed despite broken warning widget',reportedFailure:Boolean(widgetError),warningVisible:!recoveryReport.hidden&&recoveryReport.classes.has('warn')};
 runtime.paintOperationStatus=()=>{};
 cases.push({name:'A warning-widget failure cannot change a committed transaction result',observation:widgetObservation});
-// This synthetic slot isolates UI cleanup after a returned-file mapping commit.
-// It does not establish a valid issued slot or proposal acceptance. The real
-// slot-contract path remains covered by verify-returned-slot-authority.mjs.
+// This fixture isolates UI cleanup after a returned-file mapping commit. Its slot is issued by a
+// real saved instruction; it does not accept a proposal. The full slot contract remains covered
+// by verify-returned-slot-authority.mjs.
 vm.runInContext(appFunction('selectReturnedSlotFile')+'\nglobalThis.mapReturnedFile=selectReturnedSlotFile;',runtime);
-runtime.ingestion={...ingestion,findRaw:(project,id)=>project.projectData.rawResponses.find(row=>row.rawResponseId===id),bindAttachmentSlots:(project,{rawResponseId,files})=>{const next=copy(project);next.projectData.rawResponses.find(row=>row.rawResponseId===rawResponseId).files=files;return {project:next};}};
+runtime.ingestion=ingestion;
 runtime.pendingReturnedResponse=()=>runtime.current.projectData.rawResponses.at(-1);
 runtime.reportResponseFailure=(message,error)=>runtime.failures.push(message+' '+String(error?.message||error));
-let returned=core.createBlankState('UI-POST-COMMIT-RETURNED');engine.ensureShape(returned);returned.projectData.rawResponses.push(copy({rawResponseId:'RAW-RETURNED',stage:1,status:'PRESERVED',files:[]}));engine.recalculate(returned);
+let returned=issuedReturnedResponse('UI-POST-COMMIT-RETURNED');
 returned=await store.writeProject(returned,{expectedProjectRevision:0,incrementRevision:false,createOnly:true});runtime.current=returned;runtime.projects=[returned];runtime.failures=[];
-await runtime.mapReturnedFile('ISSUED-SLOT-1',inputFile('returned.txt'));
+await runtime.mapReturnedFile(issuedSlots.get('UI-POST-COMMIT-RETURNED'),inputFile('returned.txt'));
 const returnedRaw=(await store.readProject(returned.job.JOB_ID))?.projectData?.rawResponses?.at(-1),returnedId=returnedRaw?.files?.[0]?.artifactId;
-const returnedObservation={slotBound:returnedRaw?.files?.[0]?.attachmentSlotId==='ISSUED-SLOT-1',bytesPresent:Boolean(returnedId&&await store.getArtifact(returnedId)),reportedFailure:runtime.failures.length>0};
+const returnedObservation={slotBound:returnedRaw?.files?.[0]?.attachmentSlotId===issuedSlots.get('UI-POST-COMMIT-RETURNED'),bytesPresent:Boolean(returnedId&&await store.getArtifact(returnedId)),reportedFailure:runtime.failures.length>0};
 cases.push({name:'Post-commit History refresh cannot remove committed returned-slot bytes',observation:returnedObservation});
 const noopBoundaryProject=await intakeProject('UI-NOOP-BOUNDARY');recoveryReport.hidden=true;recoveryReport.classes.clear();
 let noopBoundaryError=null;try{await runtime.persist(copy(noopBoundaryProject),{operational:true});}catch(error){noopBoundaryError=error;}
@@ -94,15 +107,15 @@ cases.push({name:'Uncommitted final view failure remains a failure',result:'PASS
 // their normal render path, rather than asserting only a mocked catch argument.
 vm.runInContext(source.slice(source.indexOf('let actionFailureNotice=null;'),source.indexOf('const storageActivities=new Map();'))+appFunction('reportResponseFailure'),runtime);
 runtime.captureCurrentView=async()=>{};
-const mappedProject=async jobId=>{let project=core.createBlankState(jobId);engine.ensureShape(project);project.projectData.rawResponses.push(copy({rawResponseId:'RAW-RETURNED',stage:1,status:'PRESERVED',files:[]}));engine.recalculate(project);project=await store.writeProject(project,{expectedProjectRevision:0,incrementRevision:false,createOnly:true});runtime.current=project;runtime.projects=[project];return project;};
+const mappedProject=async jobId=>{let project=issuedReturnedResponse(jobId);project=await store.writeProject(project,{expectedProjectRevision:0,incrementRevision:false,createOnly:true});runtime.current=project;runtime.projects=[project];return project;};
 const mappedFaultProject=await mappedProject('UI-POST-COMMIT-SLOT-RENDER');let slotRenderCalls=0,renderedResponseMessage='';
 runtime.render=()=>{if(++slotRenderCalls===1)throw new Error('Controlled slot display failure');renderedResponseMessage=runtime.responseActionFailure?.message||'';};
-await runtime.runOperator('Mapping returned file',()=>runtime.mapReturnedFile('ISSUED-SLOT-1',inputFile('render-fault.txt')));
+await runtime.runOperator('Mapping returned file',()=>runtime.mapReturnedFile(issuedSlots.get('UI-POST-COMMIT-SLOT-RENDER'),inputFile('render-fault.txt')));
 const mappedFaultRaw=(await store.readProject(mappedFaultProject.job.JOB_ID)).projectData.rawResponses.at(-1),mappedFaultId=mappedFaultRaw.files?.[0]?.artifactId;
-const mappedFaultObservation={slotBound:mappedFaultRaw.files?.[0]?.attachmentSlotId==='ISSUED-SLOT-1',bytesPresent:Boolean(mappedFaultId&&await store.getArtifact(mappedFaultId)),reportedSaved:renderedResponseMessage.includes('was saved'),reportedIncomplete:renderedResponseMessage.includes('did not finish'),claimedUnchanged:/unchanged/i.test(renderedResponseMessage),outcome:operatorOutcomes.at(-1)};
+const mappedFaultObservation={slotBound:mappedFaultRaw.files?.[0]?.attachmentSlotId===issuedSlots.get('UI-POST-COMMIT-SLOT-RENDER'),bytesPresent:Boolean(mappedFaultId&&await store.getArtifact(mappedFaultId)),reportedSaved:renderedResponseMessage.includes('was saved'),reportedIncomplete:renderedResponseMessage.includes('did not finish'),claimedUnchanged:/unchanged/i.test(renderedResponseMessage),outcome:operatorOutcomes.at(-1)};
 cases.push({name:'Post-commit returned-slot display failure reports saved mapping and unfinished action',observation:mappedFaultObservation});
 const mappedControlProject=await mappedProject('UI-POST-COMMIT-SLOT-CONTROL');runtime.render=()=>{};runtime.responseActionFailure=null;
-await runtime.runOperator('Mapping returned file',()=>runtime.mapReturnedFile('ISSUED-SLOT-1',inputFile('control-returned.txt')));
+await runtime.runOperator('Mapping returned file',()=>runtime.mapReturnedFile(issuedSlots.get('UI-POST-COMMIT-SLOT-CONTROL'),inputFile('control-returned.txt')));
 const mappedControlRaw=(await store.readProject(mappedControlProject.job.JOB_ID)).projectData.rawResponses.at(-1),mappedControlId=mappedControlRaw.files?.[0]?.artifactId;
 assert.ok(mappedControlId&&await store.getArtifact(mappedControlId),'POST_COMMIT_SLOT_CONTROL: valid returned-slot UI mapping lost bytes.');
 assert.equal(runtime.responseActionFailure,null,'POST_COMMIT_SLOT_CONTROL: valid returned-slot UI mapping reported failure.');

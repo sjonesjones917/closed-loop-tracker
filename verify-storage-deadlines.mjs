@@ -157,7 +157,10 @@ await check('IO-CUSTODY-DELETION-NOTIFICATION','Removing actual stored bytes inf
 await check('IO-CUSTODY-INTERRUPTED-READ','A file read invalidated by another context cannot restore stale verified custody when its hash finishes later.',async()=>{
  const network=storageBroadcastNetwork(),r=projectStoreRuntime({sourceOverrides:{'project-store.js':source},environment:{BroadcastChannel:network.Channel}});
  let held=false,release,started;const entered=new Promise(resolve=>started=resolve),wait=new Promise(resolve=>release=resolve);
- class DelayedBlob extends Blob{slice(...args){const part=super.slice(...args),read=part.arrayBuffer.bind(part);part.arrayBuffer=async()=>{if(held){started();await wait;}return read();};return part;}}
+ // The store retypes retained bytes with Blob.slice before hashing them, so every derived
+ // slice must keep the same deliberate read delay; otherwise the retyped view bypasses it.
+ const delay=part=>{const read=part.arrayBuffer.bind(part),narrow=part.slice.bind(part);part.arrayBuffer=async()=>{if(held){started();await wait;}return read();};part.slice=(...args)=>delay(narrow(...args));return part;};
+ class DelayedBlob extends Blob{slice(...args){return delay(super.slice(...args));}}
  const row=await r.store.putArtifact({artifactId:'IN-FLIGHT',jobId:'CHANGED',filename:'file.txt',blob:new DelayedBlob(['bytes'])}),identity={jobId:row.jobId,artifactId:row.artifactId,filename:row.filename,byteSize:row.byteSize,sha256:row.sha256};
  held=true;const reading=r.store.getArtifact(row.artifactId);await entered;
  // One deliberate external storage transition, after the read began.

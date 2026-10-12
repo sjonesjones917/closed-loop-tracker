@@ -322,7 +322,9 @@ let priorTransportObservation;
   // before isolating the unrelated sourceRef rejection.
   const stagedReturned=await store.getArtifact(artifactId);assert.equal(stagedReturned.jobId,p.job.JOB_ID);assert.equal(stagedReturned.filename,file.name);assert.equal(stagedReturned.mediaType,file.type);assert.equal(stagedReturned.blob.size,file.size);assert.equal(await runtime.closedLoopHash.sha256Bytes(stagedReturned.blob),file.sha256);
   const failure=ingestion.prepareCaptured(p,{rawResponseId:captured.rawRecord.rawResponseId,promptRecord:first,expectedCommittedRevision:p.revision});
-  assert.deepEqual(Array.from(failure.validation.issues,row=>row.code),['INVALID_EVIDENCE_SOURCE_REF']);
+  // A null sourceRef is rejected twice by the production validators: null is prohibited for any
+  // non-nullable field (PROHIBITED_NULL), and it is not a valid evidence source reference.
+  assert.deepEqual(Array.from(failure.validation.issues,row=>row.code),['PROHIBITED_NULL','INVALID_EVIDENCE_SOURCE_REF']);
   p=await store.writeProject(failure.project,{expectedProjectRevision:p.revision,expectedStateSha256:p.projectSha256,operational:true});draft=copy(p);
   const continuation=ingestion.prepareStageContinuation(draft,{stage:1,owningTabInstance:'PRIOR-WORK-REGRESSION'});assert.equal(continuation.created,true);
   p=await store.writeProject(draft,{expectedProjectRevision:p.revision});p=await store.readProject(p.job.JOB_ID);

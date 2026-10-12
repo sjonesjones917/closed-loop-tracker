@@ -5,8 +5,13 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import {projectStoreRuntime} from './test-project-store-runtime.mjs';
 import {readStoreArchive} from './test-zip.mjs';
-const faultName=process.argv.find(arg=>arg.startsWith('--fault='))?.slice(8),fault=faultName==='handoff-race'?{file:'project-store.js',id:faultName,before:'if(!currentProject||currentProject.projectSha256!==activeProject.projectSha256||Number(currentProject.revision||0)!==Number(activeProject.revision||0)||(currentProject.historyActivationId||null)!==(activeProject.historyActivationId||null))',after:'if(false)'}:null;
-const r=projectStoreRuntime({fault}),{core,engine,store,prompts,copy}=r,hash=r.runtime.closedLoopHash,cases=[],note=name=>cases.push({name,result:'PASS'});
+const faultName=process.argv.find(arg=>arg.startsWith('--fault='))?.slice(8);
+// Handoff assembly is guarded twice: after members and authorization are assembled, and again
+// after the archive bytes exist. The injected fault removes both, so only a real race guard remains.
+const staleGuard=name=>`if(!${name}||${name}.projectSha256!==activeProject.projectSha256||Number(${name}.revision||0)!==Number(activeProject.revision||0)||(${name}.historyActivationId||null)!==(activeProject.historyActivationId||null))`;
+const handoffRaceSource=()=>{let source=fs.readFileSync('project-store.js','utf8');for(const name of ['currentProject','afterArchive']){const guard=staleGuard(name);if(source.split(guard).length!==2)throw new Error('Fault anchor missing: handoff-race '+name);source=source.replace(guard,'if(false)');}return source;};
+const sourceOverrides=faultName==='handoff-race'?{'project-store.js':handoffRaceSource()}:{};
+const r=projectStoreRuntime({sourceOverrides}),{core,engine,store,prompts,copy}=r,hash=r.runtime.closedLoopHash,cases=[],note=name=>cases.push({name,result:'PASS'});
 let app=fs.readFileSync('app-core.js','utf8');if(faultName==='stored-byte-comparison')app=app.replace('if(stored.size!==digest.size||stored.sha256.toLowerCase()!==digest.sha256.toLowerCase())','if(false)');const start=app.indexOf('function logicalFilePath('),end=app.indexOf('\n',start);vm.runInContext(app.slice(start,end)+'\nglobalThis.logicalPath=logicalFilePath;',r.runtime);
 for(const filename of ['/secret.txt','C:/secret.txt','folder//file.txt','../secret.txt','bad\u0085name.txt'])assert.throws(()=>r.runtime.logicalPath({name:filename}),/UNSAFE_FILENAME/,'PICKER_PATH_ORACLE');
 assert.equal(r.runtime.logicalPath({name:'résumé.txt',webkitRelativePath:'selected-folder/資料/re\u0301sume\u0301.txt'}),'資料/re\u0301sume\u0301.txt');note('Picker path handling rejects unsafe paths before changing them and retains valid relative-path spelling');

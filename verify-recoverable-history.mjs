@@ -76,7 +76,7 @@ for(const interruption of [false,true]){
  assert(original&&writes[0].byteSize===original.byteSize+1,'CONTEXT_FAULT_INJECTION_ORACLE: the negative case must contain exactly one byte-size violation');
  if(!interruption)assert(!error,'CONTEXT_FAULT_LIFECYCLE_ORACLE: the valid negative test must finish and preserve recovery: '+String(error?.code||error));
  const finalWrite=writes.at(-1);
- assert(writes.length===2&&JSON.stringify({...finalWrite,blob:null})===JSON.stringify({...original,blob:null})&&await storedArtifactBody(r,original.artifactId).blob.text()===await originalBlob.text(),'CONTEXT_FAULT_RESTORATION_ORACLE: restore the exact faulted row, including when an observation throws');
+ assert(writes.length===2&&JSON.stringify({...finalWrite,blob:null})===JSON.stringify({...original,blob:null})&&await storedArtifactBody(r,original.artifactId,{row:original}).blob.text()===await originalBlob.text(),'CONTEXT_FAULT_RESTORATION_ORACLE: restore the exact faulted row, including when an observation throws');
  const jobId=original.jobId;
  if(interruption){
   assert.equal(error?.code,'CONTROLLED_CONTEXT_OBSERVATION_FAILURE','The original observation error must remain visible');
@@ -96,7 +96,8 @@ for(const interruption of [false,true]){
    r.rows.get('artifacts').set(file.artifactId,corrupt);
    try{
     await assert.rejects(r.store.removeProject(jobId,{expectedProjectRevision:project.revision}),cause=>cause.code==='HISTORY_FILE_INTEGRITY_FAILED','CONTEXT_REMOVAL_INTEGRITY_ORACLE: corrupt custody must block recoverable removal');
-    assert.deepEqual(await r.store.readProject(jobId),project);assert.deepEqual(await r.store.historyList(jobId),retained);assert.deepEqual(await r.store.getArtifact(file.artifactId),corrupt,'Rejected removal changed current file custody');
+    assert.deepEqual(await r.store.readProject(jobId),project);assert.deepEqual(await r.store.historyList(jobId),retained);// Corrupt inline custody is a legacy row; the reader now refuses it, so inspect the stored row itself.
+   assert.deepEqual(r.rows.get('artifacts').get(file.artifactId),corrupt,'Rejected removal changed current file custody');
    }finally{r.rows.get('artifacts').set(file.artifactId,r.copy(file));}
   }
   await r.store.removeProject(jobId,{expectedProjectRevision:project.revision});assert.equal(await r.store.readProject(jobId),null,'Corrected custody must permit removal');
