@@ -776,6 +776,17 @@ if(process.argv.includes('--creation-matrix-contract-only')){
   if(report.sourceChangedDuringRun){report.outcome='FAIL';process.stderr.write('Verification sources changed during this run.\n');}
   saveReport(reportFile,report);console.log(JSON.stringify(report,null,2));
   if(report.outcome!=='PASS')process.exitCode=report.outcome==='TIMEOUT'?124:1;
+  // Hosted logs and uploaded reports can be unreadable to a reviewer, while check-run annotations are
+  // not. In the workflow-invoked group run only, name the first non-passing suite once, with its outcome
+  // and a bounded diagnostic tail. This observes the finished report; it never changes a result,
+  // an exit code or a saved byte, and nested runner contract fixtures never reach this branch.
+  if(report.outcome!=='PASS'&&process.env.GITHUB_ACTIONS==='true'){
+   try{
+    const failed=report.results.find(row=>row.outcome!=='PASS'),escape=value=>String(value).replace(/%/g,'%25').replace(/\r/g,'%0D').replace(/\n/g,'%0A');
+    const tail=failed?String(failed.stderr||'').slice(-900):'',detail=failed?`${failed.outcome} exit=${failed.exitCode??failed.signal??failed.reason} reason=${failed.reason||failed.reportError||failed.error?.code||'none'}`:`${report.outcome} ${report.interruption||report.running?.suite||'no suite result'}`;
+    process.stderr.write('\n::error title='+escape(`Conformance ${selected.group} group failed: ${failed?.suite||report.running?.suite||'runner'}`)+'::'+escape(`${detail} | stderr tail: ${tail}`)+'\n');
+   }catch{}
+  }
  }
 }
 
