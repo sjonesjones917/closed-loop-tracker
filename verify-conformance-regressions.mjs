@@ -365,7 +365,7 @@ console.log(JSON.stringify({faults:timingInjectedFaults,positiveTrace,recoverySt
 }
 // The settlement bound applies after a stop is requested: cancellation is immediate, and a
 // timeout case adds only its own declared budget, which has to elapse before the stop begins.
-const NESTED_SETTLEMENT_MS=2500,NESTED_TIMEOUT_CASE_MS=5000;
+const NESTED_SETTLEMENT_MS=2500,NESTED_TIMEOUT_CASE_MS=1500;
 export async function verifyNestedChildCleanup(directory){
  const cases=[];
  for(const [name,depth,blocked,earlyExit,timeout]of [
@@ -466,7 +466,7 @@ async function verifyRunnerContract(){
    ['null-report',"console.log('null')",'FAIL'],
    ['stalled',"console.log('last-phase');process.on('SIGTERM',()=>{});setInterval(()=>{},1000)",'TIMEOUT']
   ]){
-   const result=await executeGate(gate(name,code),{directory,timeoutMs:name==='stalled'?1500:15000,killGraceMs:50});
+   const result=await executeGate(gate(name,code),{directory,timeoutMs:name==='stalled'?250:15000,killGraceMs:50});
    assert.equal(result.outcome,expected,'RUNNER_OUTCOME_ORACLE: '+name);
    assert.equal(fs.readFileSync(result.stdoutPath,'utf8'),result.stdout,'RUNNER_RAW_OUTPUT_ORACLE');
    assert.equal(sha(result.stdout),result.stdoutSha256,'RUNNER_RAW_HASH_ORACLE');
