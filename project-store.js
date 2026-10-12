@@ -368,7 +368,11 @@ async function metaPut(key,value,tx=null){
  try{
   let saved=value;if(String(key).startsWith('stage30MobileAcceptance.v1:')){const prior=(await request(store.get(key)))?.value;assertMobileAcceptanceSessionWrite(key,value,prior);saved=mergeMobileAcceptanceSession(prior,value);}
   store.put({key,value:String(key).startsWith('responseStaging:')&&saved?.blob instanceof Blob?await sharedByteRecord(own,saved):saved,updatedAt:now()});if(!tx)await complete(own);return saved;
- }catch(error){try{own.abort();}catch{}throw error;}
+ }catch(error){
+  // A storage deadline has already aborted this transaction; aborting it again would only repeat that call.
+  if(!/^STORAGE_[A-Z]+_TIMEOUT$/.test(String(error?.code||''))){try{own.abort();}catch{}}
+  throw error;
+ }
 }
 async function metaGet(key){const tx=await openTransaction(META,'readonly');const row=await request(tx.objectStore(META).get(key)),value=String(key).startsWith('responseStaging:')?await hydrateByteRecord(tx,row?.value):row?.value;await complete(tx);return value;}
 // Operational response work is owned by META and bound to one canonical row.
