@@ -11,7 +11,13 @@ const suite=path.basename(process.argv[1]||'');
 // downloaded. It only observes (uncaughtExceptionMonitor and a bounded stderr
 // tail), never changes output bytes, exit codes or receipts, and does nothing
 // outside GitHub Actions.
-const failureVisibility=process.env.GITHUB_ACTIONS==='true'&&!process.execArgv.includes('--check');
+// Only the outermost Node process (the one the workflow invokes) annotates; it
+// marks its environment so every descendant stays byte-for-byte unchanged.
+// Verifiers spawn controlled failing children and assert their exact stderr,
+// so a descendant must never append an annotation to its own output.
+const failureAnnotationNested=process.env.CLOSED_LOOP_FAILURE_ANNOTATION_OWNER==='1';
+if(process.env.GITHUB_ACTIONS==='true')process.env.CLOSED_LOOP_FAILURE_ANNOTATION_OWNER='1';
+const failureVisibility=process.env.GITHUB_ACTIONS==='true'&&!failureAnnotationNested&&!process.execArgv.includes('--check');
 const failureTail=[];let failureTailBytes=0,failureError='';
 if(failureVisibility){
   const rawStderrWrite=process.stderr.write;
