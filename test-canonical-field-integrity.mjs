@@ -23,8 +23,12 @@ export async function verifyCanonicalFieldIntegrity({sourceOverrides={}}={}){
  partial.job.EXACT_USER_OBJECTIVE_VERBATIM='<value>';partial.job.EXPLICIT_USER_REQUIREMENTS='x'.repeat(200001);
  const producerIssues=[];r.ingestion.validateValue(schema.STAGE_FIELDS[1].ASSUMPTIONS,'<value>','/stageData/ASSUMPTIONS',producerIssues);assert(producerIssues.some(issue=>issue.code==='PLACEHOLDER_VALUE'),'CANONICAL_FIELD_PRODUCER_PLACEHOLDER_ORACLE');
  partial.vendorExtension=copy({opaque:{CURRENT_STAGE:['vendor literal'],unknown:null}});partial.stages[30].humanData.vendorExtension=copy({opaque:['retained']});
- assert.equal(store.validateProjectIntegrity(partial,{verifyDerived:false}).valid,true,'CANONICAL_FIELD_PARTIAL_CONTROL_ORACLE');
+ // This diagnostic fixture intentionally retains its pre-mutation projection;
+ // isolate field shape here, then require the real write to rederive and validate it.
+ const stalePartial=store.validateProjectIntegrity(partial,{verifyDerived:false});assert.equal(stalePartial.valid,false,'CANONICAL_FIELD_PARTIAL_STALE_PROJECTION_ORACLE');assert.deepEqual(Array.from(stalePartial.issues),['Application projection receipt is invalid: STALE_DERIVATION_RECEIPT The retained derivation canonicalInputSha256 does not match the current registered calculation and its actual inputs/output.'],'CANONICAL_FIELD_PARTIAL_STALE_PROJECTION_DIAGNOSTIC_ORACLE');
+ assert.equal(store.validateProjectIntegrity(partial,{verifyDerived:false,verifyProjection:false}).valid,true,'CANONICAL_FIELD_PARTIAL_CONTROL_ORACLE');
  saved=await store.writeProject(partial,{expectedProjectRevision:saved.revision});
+ assert.equal(store.validateProjectIntegrity(saved).valid,true,'CANONICAL_FIELD_PARTIAL_RECALCULATED_PROJECTION_ORACLE');
  const baseline=await store.readProject(saved.job.JOB_ID),history=await store.historyList(saved.job.JOB_ID),writeCases=[];
  const cases=[['job','EXACT_USER_OBJECTIVE_VERBATIM',{opaque:'wrong object'}],['job','DESIRED_SOURCE_COUNT',['3']],['job','EXACT_USER_OBJECTIVE_VERBATIM',{toString:null,valueOf:null}],['job','JOB_ID',{toString:null,valueOf:null}],['job','JOB_OWNER',['wrong owner']],['job','ASSUMPTIONS',{wrong:'claim'}],['stage','agentData','ASSUMPTIONS',{wrong:'claim'}],['stage','humanData','JOB_TITLE',['wrong title']],['stage','acceptedData','ASSUMPTIONS',{wrong:'claim'}],['stage','derivedData','STATUS_EVIDENCE',['wrong evidence']]];
  for(const [kind,a,b,c]of cases){const candidate=copy(saved);const path=kind==='job'?'/job/'+a:'/stages/1/'+a+'/'+b;if(kind==='job')candidate.job[a]=copy(b);else candidate.stages[1][a][b]=copy(c);
