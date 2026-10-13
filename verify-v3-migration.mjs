@@ -185,8 +185,8 @@ const setPath=(object,path,value)=>{let target=object;for(const key of path.slic
 let structuralShapeCases=0;const structuralWriteCases=[];
 for(const entry of structuralPaths)for(const wrong of [null,'wrong type',entry.type==='object'?[]:{}]){
   const candidate=stored.copy(current);setPath(candidate,entry.path,stored.copy(wrong));const before=stored.copy(candidate),label=entry.path.join('.');
-  assert.equal(owner.validateProjectIntegrity(candidate,{verifyDerived:false}).valid,false,'MIGRATION_STRUCTURAL_SHAPE_ORACLE: '+label);
   assert.throws(()=>e.ensureShape(candidate),error=>error.code==='PROJECT_INTEGRITY_FAILED','MIGRATION_STRUCTURAL_DEFAULT_ORACLE: '+label);assert.deepEqual(candidate,before);structuralShapeCases++;
+  assert.equal(owner.validateProjectIntegrity(candidate,{verifyDerived:false}).valid,false,'MIGRATION_STRUCTURAL_SHAPE_ORACLE: '+label);
   if(wrong==='wrong type'&&(entry.path[0]!=='stages'||['1','30'].includes(entry.path[1]))){await assert.rejects(owner.writeProject(candidate,{expectedProjectRevision:current.revision}),error=>error.code==='PROJECT_INTEGRITY_FAILED'||label==='job'&&error.message==='A project without a JOB_ID cannot be committed.','MIGRATION_STRUCTURAL_WRITE_ORACLE: '+label);structuralWriteCases.push(label);}
 }
 for(const [path,value] of [[['projectData','eventSequence'],'1'],[['projectData','eventSequence'],null],[['stages','1','draftRecord'],false],[['stages','30','number'],29]]){
