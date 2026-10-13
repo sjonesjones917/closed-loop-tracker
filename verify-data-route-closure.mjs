@@ -1,5 +1,5 @@
 import {createVerifierRuntime} from './verifier-runtime.mjs';
-import {routeProjectionFixtureFields,deferredDefinitionRestorationFixture} from './test-fixtures.mjs';
+import {routeProjectionFixtureFields,deferredDefinitionRestorationFixture,acceptPrerequisite,boundedSearchProposal,recordProposal,registerFixtureSourceSearchCapability,stage01AcceptanceFixture} from './test-fixtures.mjs';
 import {projectStoreRuntime} from './test-project-store-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
@@ -15,7 +15,7 @@ const prompts=globalThis.closedLoopPromptEngine;
 const ingestion=globalThis.closedLoopResponseIngestion;
 assert(core&&schema&&engine&&prompts&&ingestion,'Data-route audit runtime failed to load.');
 
-const state=core.createBlankState('JOB-DATA-ROUTE-CLOSURE');
+let state=core.createBlankState('JOB-DATA-ROUTE-CLOSURE');
 Object.assign(state.job,{
   JOB_ID:'JOB-DATA-ROUTE-CLOSURE',
   JOB_TITLE:'Data route closure fixture',
@@ -41,10 +41,19 @@ state.stages[1].agentData={
   INPUT_SET_CONTENTS:JSON.stringify({schema:'closed-loop-stage01-capture/2',inputVersion:intake.inputVersion,manifestSha256:intake.manifestSha256,pass1Completed:true,pass2OmissionChallenge:{completed:true,checkedCategories:['QUALIFIERS','EXCEPTIONS','DEPENDENCIES','NEGATIVE_REQUIREMENTS','DO_NOT_CHANGE','VISUAL_CONSTRAINTS','TEMPORAL_CONSTRAINTS','ACCEPTANCE_CONDITIONS','AUTHORITY_STATEMENTS','TOOL_RESTRICTIONS','FILE_REFERENCES','OUTPUT_FORMAT_REQUIREMENTS','CORRECTIONS','LATER_OVERRIDES'],omissionsFound:[],omissionsResolved:true},units:intake.units.map((u,i)=>({sourceUnitId:u.unitId,sourceRawValueSha256:u.rawValueSha256,disposition:'RETAINED_AS_CONTEXT',reason:'route closure fixture',externalInspectionClaimed:u.kind==='SUPPLIED_MATERIAL'&&Number(u.byteSize||0)>0?true:undefined,extractedStatements:[{statementKey:`S${i+1}`,text:u.rawValueText||u.label||u.unitId,statementClass:'CONTEXT',sourceLocation:u.kind==='SUPPLIED_MATERIAL'?u.sourceLocation:undefined}]}))})
 };
 }
-bindIntake();
-state.stages[1].status='COMPLETE';state.stages[1].gate={complete:true,blocked:false,reasons:[]};
-state.stages[2].agentData={SOURCE_APPLICABILITY_DETERMINATION:'NO_APPLICABLE_EXTERNAL_SOURCE'};state.stages[2].status='COMPLETE';state.stages[2].gate={complete:true,blocked:false,reasons:[]};
-state.stages[3].agentData={ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED:true,SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED:true,NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS:false};state.stages[3].status='COMPLETE';state.stages[3].gate={complete:true,blocked:false,reasons:[]};
+const runtime={core,schema,engine,prompts,ingestion};
+const source=n=>recordProposal(schema,'sources',{tempKey:`route-source-${n}`,overrides:{TITLE:`Data route closure source ${n}`,ISSUING_ORGANIZATION_OR_AUTHOR:`Independent synthetic fixture authority ${n}`,SOURCE_TYPE:'OFFICIAL_STANDARD',PUBLICATION_ORIGIN:'Independent synthetic fixture publication',URL_REFERENCE:`https://example.invalid/data-route-closure-${n}`,AUTHORITY_LEVEL:'PRIMARY',AUTHORITY_ROLE:'GOVERNING',RELEVANCE:'Supplies the controlled data-route source relationship.',APPLICABLE_PORTIONS:'Complete controlled source',INSPECTION_STATUS:'INSPECTED',CURRENCY_STATUS:'CURRENT',SUPERSESSION_STATUS:'NOT_SUPERSEDED',CONTROLLING_STATE:'CONTROLLING'}});
+state=stage01AcceptanceFixture(runtime,state.job.JOB_ID,{project:state});
+state=acceptPrerequisite(runtime,state,2,{stageData:{AUTHORITY_HIERARCHY:'The two declared independent synthetic authorities are reconciled for the closed fixture.',KNOWN_CONTROLLING_SOURCES_EXAMINED:'The bounded search inspected both declared synthetic authorities and retained their resolved relationship.'},records:{sources:[source(1),source(2)],sourceConflicts:[recordProposal(schema,'sourceConflicts',{tempKey:'route-source-conflict',relationships:{SOURCE_A:{tempKey:'route-source-1'},SOURCE_B:{tempKey:'route-source-2'}},overrides:{CONFLICTING_PROPOSITION:'The two synthetic authorities use distinct labels for the same route obligation.',SOURCE_A_AUTHORITY:'Independent synthetic fixture authority 1',SOURCE_B_AUTHORITY:'Independent synthetic fixture authority 2',AUTHORITY_RESOLUTION_RULE:'The more specific route statement controls within this closed fixture.',CONTROLLING_SOURCE_OBJECTIVELY_ESTABLISHED:'TRUE',RESOLUTION:'Both statements are compatible after applying the declared specific-over-general rule.',RESOLUTION_STATUS:'RESOLVED',AFFECTED_WORK:'The controlled data-route source relationship.',EVIDENCE:'Exact synthetic source statements and their resolved relationship are retained.'}})],sourceSearchContracts:[boundedSearchProposal(schema)]}}).project;
+registerFixtureSourceSearchCapability(runtime,state);
+state=acceptPrerequisite(runtime,state,2,{operation:'SEARCH_ADEQUACY_REVIEW',records:{semanticReviews:[recordProposal(schema,'semanticReviews',{tempKey:'route-search-review',overrides:{REVIEW_QUESTION:'Was the bounded fixture search and conflict disposition executed adequately?',FINDING:'The closed fixture input universe is exhausted and its retained source relationship is resolved.',REASONING:'Compared the declared source classes, locations, executed query evidence, stopping criteria, source dispositions, exclusions and residual risk with the controlled fixture scope.',RESULT:'ACCEPTED'}})]}}).project;
+const acceptedSourceIds=engine.recordsForCurrentScope(state,'sources').map(row=>engine.recordId(row,'sources'));
+assert(acceptedSourceIds.length===2&&engine.sourceSearchAdequacyState(state).complete,'Data-route fixture failed to establish its accepted Stage 02 source-search prerequisite.');
+state=acceptPrerequisite(runtime,state,3,{stageData:{EXCEPTIONS_AND_EDGE_CONDITIONS:'NONE',CONFLICTING_OR_INVALIDATING_MATERIAL:'NONE',RESEARCH_GAPS_AND_BLOCKERS:'NONE',SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED:true,LATEST_PASS_NUMBER:2,NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS:false},records:{research:acceptedSourceIds.map((sourceId,index)=>recordProposal(schema,'research',{tempKey:`route-research-${index+1}`,relationships:{SOURCE_ID:{recordId:sourceId}},overrides:{PASS_NUMBER:'2',EXACT_PORTION_EXAMINED:'Complete controlled source',FINDING_CLASSIFICATION:'CONTROLLING_ROUTE_INPUT',SOURCE_EVIDENCE:'Exact synthetic source statement retained in the accepted Stage 02 inventory.',SATURATION_STATUS:'SATURATED'}}))}}).project;
+assert(engine.gate(3,state).complete,'Data-route fixture failed to establish accepted Stage 03 coverage of its current Stage 02 sources.');
+const prerequisiteRows=Object.fromEntries(['sources','sourceConflicts','research','freshContexts','evidenceRecords','operationReservations','humanDecisions','sourceSearchContracts','semanticReviews','environmentManifests','externalCapabilities'].map(collection=>[collection,engine.clone(state.projectData[collection]||[])]));
+const acceptedSearchReviewId=engine.recordId(prerequisiteRows.semanticReviews.find(row=>Number(row.stage)===2),'semanticReviews');
+assert(acceptedSearchReviewId,'Data-route fixture lost its accepted Stage 02 search-adequacy review while establishing Stage 03 coverage.');
 for(let stage=1;stage<30;stage++){state.stages[stage].status='COMPLETE';state.stages[stage].gate={complete:true,blocked:false,reasons:[]};}
 
 const versionScopeFor=collection=>{
@@ -58,6 +67,7 @@ const versionScopeFor=collection=>{
   return scope;
 };
 const staleScopeFor=collection=>{const scope=versionScopeFor(collection);const key=Object.keys(scope)[0];scope[key]=`STALE-${scope[key]}`;return scope;};
+const varianceFixtureFields=(id,testId,scope,variant)=>{const normalized={dimensions:['requirement-truth'],allowedVariance:'No correctness-affecting variance is allowed in the controlled route projection.',rationale:`${variant} controlled route projection contract.`};return{VARIANCE_CONTRACT_ID:id,DIMENSIONS:normalized.dimensions,RATIONALE:normalized.rationale,ALLOWED_VARIANCE:normalized.allowedVariance,TEST_ID:testId,NORMALIZED_CONTRACT:normalized,FROZEN_AT:'2026-10-12T00:00:00.000Z',SCOPE:scope,CONTRACT_SHA256:globalThis.closedLoopHash.sha256Value(normalized),STATUS:'FROZEN'};};
 
 const collectionSentinels={};
 for(const [collection,recordSchema] of Object.entries(schema.RECORD_SCHEMAS)){
@@ -69,18 +79,30 @@ for(const [collection,recordSchema] of Object.entries(schema.RECORD_SCHEMAS)){
   if(agentField){fields[agentField]=`CURRENT-SENTINEL-${collection}`;staleFields[agentField]=`STALE-SENTINEL-${collection}`;}
   if(collection==='defects'){fields.EXPECTED_CONDITION='Expected fixture condition';staleFields.EXPECTED_CONDITION='Stale fixture condition';}
   Object.assign(fields,routeProjectionFixtureFields(collection,{idPrefix:'ROUTE',variant:'CURRENT',marker:`CURRENT-SENTINEL-${collection}`}));
+  if(['research','requirements','evidenceRecords'].includes(collection))fields.SOURCE_ID=acceptedSourceIds[0];
   Object.assign(staleFields,routeProjectionFixtureFields(collection,{idPrefix:'ROUTE',variant:'STALE',marker:`STALE-SENTINEL-${collection}`}));
-  const current={stage:recordSchema.stage||1,fields,scope:versionScopeFor(collection),active:true,validity:'CURRENT'};
-  const stale={stage:recordSchema.stage||1,fields:staleFields,scope:staleScopeFor(collection),active:true,validity:'CURRENT'};
+  const currentScope=versionScopeFor(collection),staleScope=staleScopeFor(collection);
+  if(collection==='expectedVarianceContracts'){
+    assert(collectionSentinels.tests?.currentId&&collectionSentinels.tests?.staleId,'Expected-variance route controls require current and stale Test identities.');
+    Object.assign(fields,varianceFixtureFields(currentId,collectionSentinels.tests.currentId,currentScope,'Current'));
+    Object.assign(staleFields,varianceFixtureFields(staleId,collectionSentinels.tests.staleId,staleScope,'Stale'));
+  }
+  const relationships=collection==='expectedVarianceContracts'?{TEST_ID:collectionSentinels.tests.currentId}:{};
+  const staleRelationships=collection==='expectedVarianceContracts'?{TEST_ID:collectionSentinels.tests.staleId}:{};
+  const current={stage:recordSchema.stage||1,fields,scope:currentScope,relationships,active:true,validity:'CURRENT'};
+  const stale={stage:recordSchema.stage||1,fields:staleFields,scope:staleScope,relationships:staleRelationships,active:true,validity:'CURRENT'};
   engine.refreshRecordHashes(current,collection);engine.refreshRecordHashes(stale,collection);
-  state.projectData[collection]=[stale,current];
-  collectionSentinels[collection]={currentId,staleId,currentText:`CURRENT-SENTINEL-${collection}`,staleText:`STALE-SENTINEL-${collection}`};
+  const retained=prerequisiteRows[collection]||[],routeSentinel=retained.length&&!['sources','sourceConflicts','sourceSearchContracts'].includes(collection)?current:null,selectedCurrent=routeSentinel||retained.at(-1)||current;
+  state.projectData[collection]=[stale,...(retained.length?retained:[current]),...(routeSentinel?[routeSentinel]:[])];
+  const selectedCurrentId=engine.recordId(selectedCurrent,collection),selectedFields=selectedCurrent.fields||fields;
+  collectionSentinels[collection]={currentId:selectedCurrentId,staleId,currentText:typeof selectedFields[agentField]==='string'?selectedFields[agentField]:selectedCurrentId,staleText:`STALE-SENTINEL-${collection}`};
   const selected=engine.recordsForCurrentScope(state,collection);
-  assert(selected.some(record=>engine.recordId(record,collection)===currentId),`${collection}: current-scope selector omitted current record.`);
+  assert(selected.some(record=>engine.recordId(record,collection)===selectedCurrentId),`${collection}: current-scope selector omitted current record.`);
   assert(!selected.some(record=>engine.recordId(record,collection)===staleId),`${collection}: current-scope selector admitted stale record.`);
 }
 
 bindIntake();
+assert(engine.sourceSearchAdequacyState(state).complete&&collectionSentinels.semanticReviews.currentId!==acceptedSearchReviewId&&engine.recordsForCurrentScope(state,'semanticReviews').some(row=>engine.recordId(row,'semanticReviews')===acceptedSearchReviewId),'Data-route projection must retain the accepted Stage 02 adequacy review separately from the unbound semantic-review route sentinel.');
 
 const forbiddenReads={
   '11:EXECUTE_RUN':['verification','comparisons','defects','rootCauses','changes','meaningResults','adversarialResults'],
@@ -98,6 +120,14 @@ const unboundSecondaryWithheld={23:['observationRecords','entailmentReviews','se
 const independentRunRoles=['11:EXECUTE_RUN','12:VERIFY','17:EXECUTE_RUN','17:VERIFY','19:EXECUTE_RUN','19:VERIFY'];
 const independentRunSecondaryFamilies=['observationRecords','entailmentReviews','semanticReviews'];
 const independentRunUnboundContextObservations=[];
+// NREQ-15bcea4db7a052db7fc4f619dac3acae, NREQ-1126421373496db4a5b96b755fb2b49c,
+// and the Section 26.5 review contract permit only these COMPARE operations to
+// consume their separately authored independent materiality review in the same
+// registered operation. Every other write still requires a downstream reader.
+const sameOperationReviewRoutes=new Set(['13:COMPARE:materialityReviews','17:COMPARE:materialityReviews','19:COMPARE:materialityReviews']);
+const sameOperationReviewContractValid=(op,collection)=>Boolean(op&&op.readCollections.includes(collection)&&op.agentWritableCollections.includes(collection)&&op.agentWritableCollections.includes('semanticReviews'));
+const sameOperationReviewSupported=(producer,consumers,{routes=sameOperationReviewRoutes,contractFor=(stage,operation)=>schema.operationContract(stage,operation)}={})=>routes.has(`${producer.stage}:${producer.operation}:${producer.collection}`)&&sameOperationReviewContractValid(contractFor(producer.stage,producer.operation),producer.collection)&&consumers.some(consumer=>consumer.stage===producer.stage&&consumer.operation===producer.operation);
+for(const key of sameOperationReviewRoutes){const [stageText,operation,collection]=key.split(':'),op=schema.operationContract(Number(stageText),operation);assert(sameOperationReviewContractValid(op,collection),`Registered same-operation review route is incomplete: ${key}.`);}
 
 
 let operationsChecked=0,readEdgesChecked=0,writableCollectionsChecked=0,writableFieldsChecked=0,relationshipDefinitionsChecked=0;
@@ -170,7 +200,8 @@ for(const [collection,producers] of writeProducers){
   const consumers=readConsumers.get(collection)||[];
   for(const producer of producers){
     const later=consumers.some(c=>c.stage>producer.stage||(c.stage===producer.stage&&c.operation!==producer.operation));
-    assert(later||producer.stage===30,`${collection} written at Stage ${producer.stage}/${producer.operation} has no downstream retrieval path.`);
+    const sameOperationReview=sameOperationReviewSupported({...producer,collection},consumers);
+    assert(later||sameOperationReview||producer.stage===30,`${collection} written at Stage ${producer.stage}/${producer.operation} has no downstream retrieval or registered same-operation independent review path.`);
   }
 }
 
