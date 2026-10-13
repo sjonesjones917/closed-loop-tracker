@@ -162,6 +162,13 @@ assert.equal(exportedRevisitedSearch.fields.SCOPE.inputVersion,revisitedSearch.p
 assert.equal(exportedRevisitedSearch.fields.SCOPE.sourceSetVersion,revisitedSearch.prompt.scope.sourceSetVersion,'The Stage 02 review binding lost its prompt-authorized source set.');
 assert.equal(revisitedSearchFinding.fields.SCOPE.researchVersion,null,'The Stage 02 review carried a Stage 03 research identity into its review-stage binding.');
 
+const expectedStage2PromptEngineVersion=r.prompts.versionFor(2,'COMPLETE');
+assert.equal(expectedStage2PromptEngineVersion,'closed-loop-prompt-engine/source-applicability-20261011','The governing Stage 02 source-applicability prompt epoch changed without updating this independent control.');
+let stage2=stage01AcceptanceFixture(runtime,'JOB-STAGE02-BROWSER-SELECTOR');
+stage2=await r.store.writeProject(stage2,{createOnly:true,expectedProjectRevision:0,incrementRevision:false});
+const stage2Draft=r.copy(stage2),stage2Prompt=r.prompts.reserveAndBuildPromptRecord(stage2Draft,2,{operation:'COMPLETE'}).prompt;
+stage2=await r.store.writeProject(stage2Draft,{expectedProjectRevision:stage2.revision,expectedStateSha256:stage2.projectSha256});
+
 // A saved /90 Stage 01 review packet lacked the target. Preserve its exact
 // bytes and accepted author work, reject its stale response, and replace only
 // this operation's unsubmitted reservation. Stage 04 remains on /90.
@@ -176,6 +183,8 @@ assert.equal(oldExport.prompt.promptEngineVersion,'closed-loop-prompt-engine/90'
 assert.equal(subjectFor(oldExport),undefined,'The controlled old packet unexpectedly contained the accepted author content.');
 const preservedAuthor=r.runtime.closedLoopHash.sha256Value(oldExport.project.projectData.acceptedChanges),oldBytes=oldExport.prompt.prompt;
 r.runtime.closedLoopPromptEngine=currentProducer;r.prompts=currentProducer;
+assert.equal(r.prompts.versionFor(2,'COMPLETE'),expectedStage2PromptEngineVersion,'The controlled Stage 01 producer fault changed the governing Stage 02 source-applicability epoch.');
+assert.equal(stage2Prompt.promptEngineVersion,expectedStage2PromptEngineVersion,'The saved pre-fault Stage 02 prompt did not retain its governing source-applicability epoch after restoring the current producer.');
 assert.equal(r.prompts.versionFor(4,'DISPOSITION_CHALLENGE'),stage4Export.prompt.promptEngineVersion,'Unchanged Stage 04 packets were globally invalidated.');
 await assert.rejects(()=>r.store.createExecutionPackage({jobId:oldExport.project.job.JOB_ID,stage:1,operation:'SEMANTIC_CHALLENGE',instructionId:oldExport.prompt.instructionId}),error=>error.code==='EXECUTION_PACKAGE_CURRENT_PROMPT_REQUIRED','The old Stage 01 review ZIP remained exportable after its contract changed.');
 const oldEnvelope={schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:oldExport.project.job.JOB_ID,stage:1,operation:'SEMANTIC_CHALLENGE',promptIdentity:r.prompts.promptFileManifest(oldExport.prompt).promptIdentity,packageId:oldExport.prompt.packageId,operationReservationId:oldExport.prompt.operationReservationId,challengeNonce:oldExport.prompt.challengeNonce,scope:oldExport.prompt.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],humanAuthorityCandidates:[],stageData:{},records:{semanticChallenges:[recordProposal(schema,'semanticChallenges',{tempKey:'old-blind-review',overrides:{FINDINGS:'The omitted author proposal cannot be reviewed.',DISPOSITION:'UNKNOWN',REASONING:'The exported packet lacks the accepted Stage 01 author capture.'}})]},evidence:[evidence('old-blind-review')],unresolved:[],warnings:[],attachments:[]};
@@ -217,10 +226,9 @@ assert.match(stage3Export.instruction,/first independent extraction does not rec
 
 // The browser verifier waits for the saved current prompt. Its old global
 // version comparison falsely timed out on the Stage 01/03 scoped review epoch.
-let stage2=stage01AcceptanceFixture(runtime,'JOB-STAGE02-BROWSER-SELECTOR');
-stage2=await r.store.writeProject(stage2,{createOnly:true,expectedProjectRevision:0,incrementRevision:false});
-const stage2Draft=r.copy(stage2),stage2Prompt=r.prompts.reserveAndBuildPromptRecord(stage2Draft,2,{operation:'COMPLETE'}).prompt;
-stage2=await r.store.writeProject(stage2Draft,{expectedProjectRevision:stage2.revision,expectedStateSha256:stage2.projectSha256});
+const staleStage2=r.copy(stage2),staleStage2Prompt=staleStage2.projectData.generatedPrompts.find(record=>record.instructionId===stage2Prompt.instructionId);
+assert(staleStage2Prompt,'The Stage 02 stale-generation control lost the saved prompt it must mutate.');
+staleStage2Prompt.promptEngineVersion='closed-loop-prompt-engine/90';
 const selectorAnchor='record.promptEngineVersion===(closedLoopPromptEngine.versionFor?.(record.stage,record.operation)||closedLoopPromptEngine.version)';
 const operationAnchor="record.operation===document.querySelector('#operation-picker')?.value&&";
 for(const filename of ['verify-browser.mjs','verify-browser-extra.mjs']){
@@ -230,10 +238,11 @@ for(const filename of ['verify-browser.mjs','verify-browser-extra.mjs']){
   assert(match[1].includes(operationAnchor),filename+' omitted the selected operation from the saved-prompt wait.');
   const evaluate=(expression,project,stage,operation)=>createVerifierRuntime.loadScript(createVerifierRuntime({document:{querySelector:selector=>selector==='#current-project-summary'?{dataset:{projectId:project.job.JOB_ID}}:selector==='#stage-picker'?{value:String(stage)}:selector==='#operation-picker'?{value:operation}:null},closedLoopProjectStore:{readProject:async()=>project},closedLoopPromptEngine:r.prompts}),expression);
   assert.equal(await evaluate(match[1],challenge.project,1,'SEMANTIC_CHALLENGE'),true,filename+' falsely rejects the saved Stage 01 /91 review prompt.');
-  assert.equal(await evaluate(match[1],stage2,2,'COMPLETE'),true,filename+' falsely rejects the saved Stage 02 /90 prompt.');
+  assert.equal(await evaluate(match[1],stage2,2,'COMPLETE'),true,filename+' falsely rejects the saved Stage 02 source-applicability prompt.');
+  assert.equal(await evaluate(match[1],staleStage2,2,'COMPLETE'),false,filename+' accepts a stale Stage 02 /90 prompt as current.');
   assert.equal(await evaluate(match[1],challenge.project,1,'RECONCILE_INTAKE'),false,filename+' matched another current prompt in the selected stage.');
   assert.equal(await evaluate(match[1].replace(operationAnchor,''),challenge.project,1,'RECONCILE_INTAKE'),true,filename+' missing-operation fault did not reproduce the false match.');
   assert.equal(await evaluate(match[1].replace(selectorAnchor,'record.promptEngineVersion===closedLoopPromptEngine.version'),challenge.project,1,'SEMANTIC_CHALLENGE'),false,filename+' global-version fault did not reproduce the Stage 01 selector failure.');
-  assert.equal(stage2Prompt.promptEngineVersion,'closed-loop-prompt-engine/90','The Stage 02 control did not retain the unchanged prompt epoch.');
+  assert.equal(stage2Prompt.promptEngineVersion,expectedStage2PromptEngineVersion,'The Stage 02 control did not retain the governing source-applicability prompt epoch.');
 }
 console.log(JSON.stringify({stage01ReviewSubject:'PASS',stage04Control:'PASS',stage03BlindCarrier:'PASS',browserSavedPromptSelectors:'PASS',exportedOperations:['SEMANTIC_CHALLENGE','RECONCILE_INTAKE','SEMANTIC_CHALLENGE'],acceptedChallengeAndReconciliation:true,gateAfterReload:true,oldStage01PacketRejectedAndReplaced:true,unaffectedStage04PacketRetained:true,syntheticExternalActor:true,realHumanOrAgentActionEstablished:false}));
