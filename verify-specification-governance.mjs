@@ -25,6 +25,7 @@ const sourceCommit=String(process.env.SOURCE_COMMIT||committedSpec.sourceCommit|
 
 const sourceText=validateSpecificationSource(sourceBytes,committedSpec,sourceCommit);
 (await checkedVerifier(process.execPath,['test-specification-source-adoption.mjs'],{stdio:'pipe'}));
+(await checkedVerifier(process.execPath,['test-specification-source-classifications.mjs'],{stdio:'pipe'}));
 
 async function verifySourceCommit(){
   if(process.env.GITHUB_ACTIONS!=='true')return {checked:false};

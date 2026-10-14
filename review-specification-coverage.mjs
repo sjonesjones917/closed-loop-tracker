@@ -24,6 +24,48 @@ return sourceText;
 }
 
 
+
+// An independently reviewed exclusion is an exact source-evidence tuple, never
+// a heuristic permission to omit a historical section or a mandatory clause.
+export function validateMechanicalCandidateExclusions(lines,sourceSha256,semanticReview,reconciliation){
+  const exclusions=reconciliation.mechanicalCandidateExclusions||[];
+  const descriptor=reconciliation.mechanicalCandidateExclusionEvidence;
+  if(!descriptor){assert(exclusions.length===0,'Reviewed mechanical exclusion evidence is missing.');return {exclusions:[],mandatoryPreservedLines:[]};}
+  const load=(record,base='.')=>{
+    assert(record&&typeof record.path==='string'&&/^[0-9a-f]{64}$/.test(record.sha256),'Reviewed mechanical exclusion evidence identity is missing.');
+    const file=path.resolve(base,record.path),bytes=fs.readFileSync(file);
+    assert(sha256(bytes)===record.sha256,'Reviewed mechanical exclusion evidence digest mismatch.');
+    return {file,value:JSON.parse(bytes)};
+  };
+  const evidence=load(descriptor),review=evidence.value;
+  assert(review.schema==='closed-loop-independent-exclusion-evidence/1'&&review.specificationSha256===sourceSha256,'Reviewed mechanical exclusion source mismatch.');
+  assert(JSON.stringify(exclusions)===JSON.stringify(review.mechanicalCandidateExclusions),'Reviewed mechanical exclusion inventory mismatch.');
+  const originalB=load(review.independentReview,path.dirname(evidence.file)).value;
+  const originalA=load(review.independentExtractorA,path.dirname(evidence.file)).value;
+  assert(originalB.source?.sha256===sourceSha256&&originalB.complete_independent_pass===true&&originalB.independence?.other_extractions_read===false&&originalB.independence?.repository_implementation_read===false,'Reviewed mechanical exclusion independent B basis mismatch.');
+  assert(semanticReview.normalizationProvenance?.frozenSourceReviewSha256===review.independentReview.sha256&&semanticReview.normalizationProvenance?.semanticContentChanged===false,'Reviewed mechanical exclusion normalized review mismatch.');
+  assert(originalA.source_identity?.sha256===sourceSha256&&originalA.source_reading_finished_before_repository_inspection===true&&originalA.repository_or_other_worker_outputs_read_during_independent_phase===false,'Reviewed mechanical exclusion independent A basis mismatch.');
+  const pointer=(value,location)=>{
+    assert(typeof location==='string'&&location.startsWith('/'),'Reviewed mechanical exclusion pointer is missing.');
+    for(const token of location.slice(1).split('/')){const key=token.replace(/~1/g,'/').replace(/~0/g,'~');assert(value!=null&&Object.hasOwn(value,key),'Reviewed mechanical exclusion pointer does not resolve.');value=value[key];}
+    return value;
+  };
+  const seen=new Set,mandatory=new Set(review.mandatoryPreservedLines||[]);
+  assert(mandatory.size>0,'Reviewed mechanical exclusion mandatory preservation controls are missing.');
+  for(const row of exclusions){
+    assert(Number.isInteger(row.line)&&row.line>0&&row.line<lines.length&&!seen.has(row.line)&&!mandatory.has(row.line),'Reviewed mechanical exclusion overlaps or removes a mandatory line.');seen.add(row.line);
+    assert(row.sectionId==='51'&&row.classification==='NONNORMATIVE_HISTORICAL_EVIDENCE'&&row.text===lines[row.line-1]&&row.sourceLineSha256===sha256(Buffer.from(lines[row.line-1]))&&row.reason,'Reviewed mechanical exclusion exact source mismatch.');
+    const refs=row.independentReviewPointers,classification=pointer(originalB,refs?.classification),exception=pointer(originalB,refs?.exception),block=pointer(originalB,refs?.exactSourceBlock),unit=pointer(originalA,row.extractorAUnitPointer);
+    assert(typeof classification==='string'&&classification.length>0&&typeof exception==='string'&&exception.length>0,'Reviewed mechanical exclusion independent classification is missing.');
+    assert(block.section==='51'&&Number.isInteger(block.start_line)&&Number.isInteger(block.end_line)&&row.line>=block.start_line&&row.line<=block.end_line,'Reviewed mechanical exclusion is outside its independent source block.');
+    const raw=lines.slice(block.start_line-1,block.end_line).join('\n');
+    assert(block.verbatim===raw&&block.source_sha256===sha256(Buffer.from(raw+'\n')),'Reviewed mechanical exclusion independent source block mismatch.');
+    assert(row.extractorAUnitPointer==='/source_units/'+row.extractorAUnitIndex&&unit.source_anchor==='B:L'+row.line&&unit.text===row.text&&unit.line_sha256===sha256(Buffer.from(row.text+'\n'))&&unit.classification===row.extractorAClassification&&unit.classification==='HISTORICAL_NONNORMATIVE_EVIDENCE','Reviewed mechanical exclusion independent source unit mismatch.');
+  }
+  for(const line of mandatory)assert(Number.isInteger(line)&&line>0&&line<lines.length&&!seen.has(line),'Reviewed mechanical exclusion mandatory preservation line is invalid.');
+  return {exclusions,mandatoryPreservedLines:[...mandatory]};
+}
+
 function reviewSpecificationCoverage(SPEC_PATH){
 const bytes=fs.readFileSync(SPEC_PATH);
 const text=new TextDecoder('utf-8',{fatal:true}).decode(bytes);

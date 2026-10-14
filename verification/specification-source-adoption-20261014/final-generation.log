@@ -1,0 +1,18 @@
+(node:104) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "sourceCommit": "ebf6a930d1e5ef2f9afaaf68631a318facee5181",
+  "specificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+  "specificationByteLength": 309482,
+  "sectionCount": 253,
+  "topLevelSectionCount": 53,
+  "normativeRequirementCount": 4198,
+  "conformantRequirementCount": 0,
+  "specificationManifestSha256": "b2288f2931540d0c61860ebee33dc6e14b05e688d3be8b02cca1a430840165d0",
+  "normativeRequirementManifestSha256": "91273f790154c8cdeb2dda046d292a3a6bd2d70a52df3d2e4d01cd02dbd45f75",
+  "independentReviewStatus": "SEMANTIC_SOURCE_PASS",
+  "reconciliationStatus": "ACCEPTED",
+  "semanticSourceCoverageEstablished": true,
+  "atomicRequirementCompletenessEstablished": false,
+  "sourceTraceScope": "Existing manifest source-clause coverage only. A source line can contain several conjunctive obligations; trace count is not a count of independently proved atomic obligations or a completion percentage. The generated one authoritative manifest and registry proofs still require their own current acceptance relationships."
+}
