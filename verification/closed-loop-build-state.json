@@ -1758,28 +1758,30 @@
       {
         "id": "revise_minimal_contract_amendment",
         "owner": "/root/revise_minimal_contract_amendment",
-        "state": "RUNNING",
+        "state": "BLOCKED",
         "scope": "Bounded exact proposal revision for six missing observable contracts; no source or runtime edits",
         "host": "dot cloud workspace",
         "writeScope": "Own isolated evidence only",
-        "lastInspectedAt": "2026-10-14T04:56:42Z",
+        "lastInspectedAt": "2026-10-14T05:01:57Z",
         "inputSpecificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
         "returnTo": "/root",
         "concurrencyAllocation": 1,
-        "dependencies": []
+        "dependencies": [],
+        "evidence": "Independent ACCEPT_AS_PROPOSAL; presented exact v2, awaiting human source amendment approval."
       },
       {
         "id": "review_atomic_manifest_implementation",
         "owner": "/root/review_atomic_manifest_implementation",
-        "state": "RUNNING",
+        "state": "IN_REVIEW",
         "scope": "Independent review against frozen pre-inspection expectations; awaiting author commit",
         "host": "dot cloud workspace",
         "writeScope": "Own isolated evidence only",
-        "lastInspectedAt": "2026-10-14T04:56:42Z",
+        "lastInspectedAt": "2026-10-14T05:01:57Z",
         "inputSpecificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
         "returnTo": "/root",
         "concurrencyAllocation": 1,
-        "dependencies": []
+        "dependencies": [],
+        "evidence": "Independent challenge reproduced two defects in e311c47f: new context-only atom rejected by generator; partial span accepted as full proof. Author corrections running; not accepted."
       }
     ],
     "resources": {
@@ -1876,6 +1878,16 @@
       "mobileChallengeExpiry": "IMPLEMENTATION_CHOICE_NOT_NORMATIVE_AMENDMENT",
       "proposalApproved": false,
       "evidencePath": "verification/clrt-contract-amendment-necessity-review.txt"
+    },
+    "pendingContractAmendment": {
+      "status": "AWAITING_USER_APPROVAL",
+      "proposalSha256": "2316404a6382c431f43603cc6b5998f45439c61ea4d41664c04856be782c4755",
+      "independentReviewSha256": "733f73f29e52f7975709dc5512360de2dc205e05f9a9f4cadfcfa41302dee169",
+      "reviewDisposition": "ACCEPT_AS_PROPOSAL_ONLY",
+      "approvalRequestMessageId": "Sentinel_78aeb6be9c448191882016a5672dbae7",
+      "libraryFileId": "libfile_ebff86a6d5bc8191b18b3e0b9c8ec15b",
+      "requestedAt": "2026-10-14T05:01:57Z",
+      "sourceApplied": false
     }
   }
 }
