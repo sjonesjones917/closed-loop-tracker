@@ -617,6 +617,7 @@ export async function verifyAcceptedGoverningRefutation({sourceProject,artifacts
   const prop=propositionId,test=ne.records(adverse,'tests').find(row=>row.id===testId),req=ne.recordValue(test,'REQ_ID');
   const convergenceRecordId=ne.recordsForCurrentScope(adverse,'convergenceRecords').at(-1).id;
   const receiptBefore=JSON.stringify(adverse.projectData.convergenceRecords.find(row=>row.id===convergenceRecordId).derivationReceipt);
+  const iteration19=ne.records(adverse,'iterations').filter(row=>Number(row.stage)===19).at(-1);assert(iteration19);assert.equal(ne.recordsForIteration(adverse,'runs',iteration19.id).length,0,'GOVERNED_BRANCH_REQUIRES_EMPTY19');assert.equal(ne.gate(18,adverse).complete,true);assert.equal(ne.stageEntryState(adverse,19).allowed,true);
   const capture=async label=>{if(onCheckpoint)await onCheckpoint({label,r:negativeRuntime,p:adverse,sources,snapshot:snapshot(negativeRuntime,adverse,sources)});};
   const schedule=ne.deriveLeafTimingSchedule(adverse,prop);
   assert.equal(schedule.resolved,true);assert.equal(schedule.entries.length,1);assert.equal(schedule.entries[0].SOURCE_ID,testId);assert.equal(ne.testDueState(adverse,test,18,{perRunOnly:true}).dueNow,true);
@@ -628,6 +629,7 @@ export async function verifyAcceptedGoverningRefutation({sourceProject,artifacts
       adverse=result.p;
       const run=ne.records(adverse,'runs').find(row=>ne.recordValue(row,'COMPLETE_OUTPUT')===output);assert(run);outputRows.push({run,output});
     }
+    assert.equal(ne.recordsForIteration(adverse,'runs',iteration19.id).length,2,'GOVERNED_BRANCH_EXACT_TWO_RUNS');
     await capture('governed19-before-accepted-observations');
     for(const [index,{run,output}] of outputRows.entries()){
       const supported=output.startsWith('complete-output-');assert.equal(supported,index===0);
@@ -641,6 +643,7 @@ export async function verifyAcceptedGoverningRefutation({sourceProject,artifacts
     }
     const closure=ne.currentIterationRefutationSources(adverse,[prop],18);
     assert.equal(closure.length,1,'ITERATION_LATER_ACTUALLY_ACCEPTED_REFUTATION');
+    assert.equal(Number(closure[0].review.stage),19,'GOVERNED_CURRENT19_REFUTATION');assert.equal(closure[0].review.scope.iterationId,iteration19.id);
     assert.equal(ne.entailmentMetadataCurrent(adverse,closure[0].review),true,'ITERATION_REFUTATION_ACCEPTED_TRANSPORT_CURRENT');
     const old=adverse.projectData.convergenceRecords.find(row=>row.id===convergenceRecordId),oldReceipt=JSON.stringify(old.derivationReceipt);
     assert.equal(ne.convergenceRecordCurrent(adverse,old),false,'ITERATION_LATER_REFUTATION_STALES_OLD_RECEIPT');
