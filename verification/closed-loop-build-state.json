@@ -1394,7 +1394,7 @@
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "dot",
-    "lastInspectedAt": "2026-10-14T16:02:57.167823Z",
+    "lastInspectedAt": "2026-10-14T16:19:01.866964Z",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -2050,7 +2050,7 @@
     },
     "scheduleState": "FORECAST_NOT_ESTABLISHED",
     "forecast": null,
-    "nextAction": "Validate preserved actual bounded checkpoint and exact VM clone setup correction, then execute24\u201327 with durable stage/custody captures to establish release self-binding cause. Primary draft remains under independent review; no secondary implementation authorized yet.",
+    "nextAction": "Execute reviewed ordinary blocked-state release recalculation r6 and independently compare actual pre/post source binding; only then authorize any secondary preimage correction. Finish primary general due-proof tests and freeze registered contracts together.",
     "deploymentObservation": {
       "sourceCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
       "runId": "36958910363",
@@ -2636,7 +2636,15 @@
         "lastObservedStage": 18,
         "verifiedAt": "2026-10-14T16:01:54Z",
         "evidence": "Session41725 Unknown process id, no node process, no exit/end/failure/boundary captures. Do not infer product failure or success. Original source/evidence preserved.",
-        "nextAction": "Use earlier genuine bounded-r3 Stage23/before24 custody if independently valid, with reviewed structuredClone=r.copy VM setup correction; otherwise verifiedafter22. Capture eachstage and before/afterrelease; no fullprefixrestart."
+        "nextAction": "Use earlier genuine bounded-r3 Stage23/before24 custody if independently valid, with reviewed structuredClone=r.copy VM setup correction; otherwise verifiedafter22. Capture eachstage and before/afterrelease; no fullprefixrestart.",
+        "boundedRecovery": {
+          "r4": "Actual24 response/integrity passed; later host literal allocator failed strict VM realm. Preserved.",
+          "r5": "VM-native continuation completed deferred24, accepted25 and passed integrity. Complete25 blocked after actual unchanged source-search capability expired16:13:02.513Z; no product defect or expiry renewal inferred.",
+          "accepted25CaptureSha256": "35704c9d16c4a52fd6bf586b2d166d4d6dac0c7f5e79c7e5dee5f9ca494fed9b",
+          "accepted25Custody": "11 exact sources,23 original artifacts,93 original prompt contexts; captured16:13:16.549\u201316:13:19.419Z",
+          "r6": "Independent driver3ad2b90db09021dda8e7500648538be089ef8ef96a5b6da1d6de2a0da9b6ef41 approved: ordinary unconditional Release Recalculate on actual blocked25 after strict public save/cold validation; genuine pre/post capture; expectedBLOCKED; normal persistence attempt.",
+          "scope": "Self-binding diagnosis only; no accepted release/live readiness/completedprefix/migration claim, no clock or evidence-expiry changes."
+        }
       }
     }
   }
