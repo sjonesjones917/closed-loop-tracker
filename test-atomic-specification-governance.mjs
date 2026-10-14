@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {atomicContributorIdentity,atomicEvidenceReferences,isAtomicEvidencePath,readAtomicEvidenceBytes,atomicObligationSha256,validateAtomicRequirementRows,validateAtomicLineMembership,validateAtomicIdentityCrosswalk,loadReviewedAtomicExtraction} from './review-specification-coverage.mjs';
+import {validateAtomicSectionCoverage,loadAtomicComponentReconciliation,validateAtomicGoverningOccurrences,atomicContributorIdentity,atomicEvidenceReferences,isAtomicEvidencePath,readAtomicEvidenceBytes,atomicObligationSha256,validateAtomicRequirementRows,validateAtomicLineMembership,validateAtomicIdentityCrosswalk,loadReviewedAtomicExtraction} from './review-specification-coverage.mjs';
 import {evaluateFullRequirementProof,coverageDeclarationSha256,sha,SPECIFICATION_PATH} from './verification-evidence.mjs';
 import {verificationCatalog} from './verification-evidence-catalog.mjs';
 const root=path.dirname(fileURLToPath(import.meta.url)),hash=globalThis.closedLoopHash.sha256Value,copy=structuredClone;
@@ -311,6 +311,7 @@ try{
   ['multi-contributor-blind-received-draft',({originals})=>originals[2].original.draftManifestReceived=true,/blind isolation false/],
   ['multi-contributor-stale-source',({originals})=>originals[0].original.specificationSha256='0'.repeat(64),/identity\/source\/actual inputs mismatch/],
   ['multi-contributor-hidden-actual-inputs',({originals})=>originals[0].original.inputs.push({path:'verification/other.json',sha256:'0'.repeat(64)}),/identity\/source\/actual inputs mismatch/],
+  ['multi-contributor-invented-source-range',({d})=>d.propositions[1].sourceRange=[1,5],/original source range changed/],
   ['multi-contributor-invented-original-classification',({d})=>d.propositions[1].classification='HISTORICAL_NONNORMATIVE_CONTEXT',/original classification changed/],
   ['multi-contributor-rewritten-statement',({d})=>d.propositions[1].statement='Synthetic weakened normalized statement',/projected proposition changed/],
   ['multi-contributor-dropped-qualifier',({d})=>d.propositions[1].contextSourceLocations=[],/qualifier\/context membership changed/],
@@ -320,10 +321,11 @@ try{
  assert.throws(()=>invoke(fixture(({originals})=>originals[0].original.mechanicalProjection={schema:'closed-loop-evidence-projection/1',constituents:[]})),/nested projection/);cases.push('multi-contributor-nested-projection-rejected');
  const missing=fixture();missing.files.delete('verification/synthetic-draft-constituent-0.json');assert.throws(()=>invoke(missing));cases.push('multi-contributor-missing-file');
  const tampered=fixture();tampered.files.set('verification/synthetic-review-constituent-0.json',Buffer.from('{}'));assert.throws(()=>invoke(tampered),/digest mismatch/);assert.throws(()=>atomicEvidenceReferences(tampered.descriptor,tampered.options.readFile),/dependency digest mismatch/);cases.push('multi-contributor-tampered-file-and-receipt');
- const withAttestation=(alter=()=>{})=>fixture(({originals,files})=>{
+ const withAttestation=(alter=()=>{})=>fixture(({originals,files,r})=>{
   const item=originals[2],old=copy(item.original),actor='/root/synthetic-original-blind';
   for(const key of Object.keys(item.original))delete item.original[key];
   Object.assign(item.original,{artifact_kind:'independent-source-only-candidate-review',source:{sha256:specificationSha256},candidates:old.propositions.map(p=>({proposition:p.statement,source_lines:[p.primarySourceLine,p.primarySourceLine],supporting_context_lines:p.contextSourceLocations.map(c=>[c.startLine,c.startLine]),...(p.classification?{classification:p.classification}:{})}))});
+  for(const p of old.propositions)r.propositions.find(row=>row.propositionId===p.propositionId).sourceRange=[p.primarySourceLine,p.primarySourceLine];
   const attestation={attestation_kind:'original_reviewer_provenance_attestation',attestor:{actual_canonical_task_name:actor},normative_source_input:{sha256:specificationSha256},frozen_review_artifact:{sha256:sha(JSON.stringify(item.original))},other_original_file_inputs:[{path:'SYNTHETIC own prior helper',historical_hash:null}],limitations:['SYNTHETIC actual unknown historical hash remains unknown.']};alter(attestation);
   const bytes=Buffer.from(JSON.stringify(attestation)),path='verification/synthetic-original-blind-attestation.json';files.set(path,bytes);
   Object.assign(item.member,{actorId:actor,contextId:actor,memberCollectionPointer:'/candidates',declaredInputs:copy(attestation),identityEvidence:{path,sha256:sha(bytes),actorIdentityPointer:'/attestor/actual_canonical_task_name',contextIdentityPointer:'/attestor/actual_canonical_task_name',sourceIdentityPointer:'/normative_source_input/sha256',artifactSha256Pointer:'/frozen_review_artifact/sha256',declaredInputsPointer:''},members:old.propositions.map((p,i)=>({originalPointer:'/candidates/'+i,normalizedPropositionId:p.propositionId,statementPointer:'/proposition',primarySourceLinePointer:'/source_lines/0'}))});
@@ -415,6 +417,65 @@ try{
  oneCheck(one);cases.push('changed-scope-two-old-one-current-needs-one-delta');const noDelta=copy(one);noDelta.scopeChange.contextChanges=[];assert.throws(()=>oneCheck(noDelta),/context difference unresolved/);cases.push('changed-scope-multiplicity-cannot-collapse-silently');
  const paired=copy(one);paired.scopeChange.contextRetentions=[{priorContextSourceLocation:second,currentContextSourceLocation:copy(oldContext),reason:'Synthetic explicit retained occurrence relocation.'}];paired.scopeChange.contextChanges[0].priorContextSourceLocation=copy(oldContext);oneCheck(paired);cases.push('changed-scope-explicit-retained-occurrence-pairing');paired.scopeChange.contextRetentions.push({priorContextSourceLocation:copy(oldContext),currentContextSourceLocation:copy(oldContext),reason:'Invalid repeated current match.'});assert.throws(()=>oneCheck(paired),/retention pairing invalid/);cases.push('changed-scope-retention-pair-cannot-reuse-occurrence');
 
+}
+
+// Section coverage references preserve the original anchor and range; source
+// headings do not force invented requirements or fictional nonnormative prose.
+{
+ const bytes=Buffer.from('1. Parent\n\n1.1 Lead\nA range begins here\n1.2 Detail\nand MUST preserve alpha.\n1.3 Condition\nWhen approved:\n1.4 Action\nWorker MUST perform beta.\n'),ls=bytes.toString().split('\n'),sections=[{sectionId:'1',startLine:1,endLine:2},{sectionId:'1.1',startLine:3,endLine:4},{sectionId:'1.2',startLine:5,endLine:6},{sectionId:'1.3',startLine:7,endLine:8},{sectionId:'1.4',startLine:9,endLine:10}],ps=[{propositionId:'crossing',primarySourceLine:4,sourceRange:[4,6],contextSourceLocations:[]},{propositionId:'conditioned',primarySourceLine:10,contextSourceLocations:[{startLine:8}]}],record={sections:sections.map((section,i)=>({...section,reason:'Synthetic actual source scope classification.',propositionIds:i===1?['crossing']:i===4?['conditioned']:[],disposition:i===0?'SOURCE_CONTEXT_ONLY':'COVERED',...(i===0?{sourceContext:{classification:'SECTION_HEADING',sourceLine:1,sourceLineSha256:sha(ls[0])},governedSectionIds:['1.1','1.2','1.3','1.4']}:{}),...(i===2?{coverageReferences:[{propositionId:'crossing',sourceRanges:[[6,6]],reason:'Original authored source range crosses subsection boundary.'}]}:{}),...(i===3?{coverageReferences:[{propositionId:'conditioned',sourceRanges:[[8,8]],reason:'Actual source condition qualifies later anchored duty.'}]}:{})}))};
+ const check=(r=record,p=ps)=>validateAtomicSectionCoverage(r,new Map(p.map(v=>[v.propositionId,v])),sections,bytes,'propositionId','propositionIds');
+ check();cases.push('section-cross-boundary-original-range-and-context-positive');
+ for(const [name,edit,pattern] of [
+  ['section-unreviewed-subsection-not-filled',r=>delete r.sections[2].coverageReferences,/disposition unresolved/],
+  ['section-fake-primary-not-permitted',r=>{r.sections[2].coverageReferences=[];r.sections[2].propositionIds=['crossing'];},/member missing, duplicate or misanchored/],
+  ['section-reference-unrelated-occurrence',r=>r.sections[2].coverageReferences[0].propositionId='conditioned',/lacks original source occurrence/],
+  ['section-reference-outside-subsection',r=>r.sections[2].coverageReferences[0].sourceRanges=[[4,6]],/outside covered subsection/],
+  ['section-reference-unknown-proposition',r=>r.sections[2].coverageReferences[0].propositionId='invented',/reference missing or duplicated/],
+  ['section-reference-duplicate',r=>r.sections[2].coverageReferences.push(copy(r.sections[2].coverageReferences[0])),/reference missing or duplicated/],
+  ['section-heading-only-child-omitted',r=>r.sections[0].governedSectionIds.pop(),/child section coverage incomplete/],
+  ['section-heading-only-stale-source',r=>r.sections[0].sourceContext.sourceLineSha256='0'.repeat(64),/heading identity missing/],
+  ['section-substantive-content-falsely-heading-only',r=>{r.sections[2].disposition='SOURCE_CONTEXT_ONLY';r.sections[2].coverageReferences=[];},/contains unreviewed substantive source/],
+ ]){const r=copy(record);edit(r);assert.throws(()=>check(r),pattern);cases.push(name);}
+ const noRange=copy(ps);delete noRange[0].sourceRange;assert.throws(()=>check(record,noRange),/lacks original source occurrence/);cases.push('section-original-range-absent-not-inferred');
+}
+
+// Typed source-occurrence edges preserve an indivisible signature and a
+// transitive template fragment, rather than fabricating primary requirements.
+{
+ const bytes=Buffer.from('The API MUST implement the complete signature.\nparameter alpha\nSignature close:\nOuter template label:\nInner template fragment:\n'),ls=bytes.toString().split('\n'),sh=sha(bytes),loc=n=>({path:SPECIFICATION_PATH,startLine:n,endLine:n,lineSha256:sha(ls[n-1])}),anchor=n=>({...loc(n),controllingText:ls[n-1]}),scope={key:'synthetic.complete-signature',statement:ls[0],sourceSpans:[{startByte:0,endByte:Buffer.byteLength(ls[0]),text:ls[0],sha256:sha(ls[0])}],contextSourceLocations:[2,3,4,5].map(anchor)};scope.sha256=atomicObligationSha256(scope);
+ const atom={normativeRequirementId:'NREQ-'+'d'.repeat(32),entryKind:'ATOMIC_OBLIGATION',sourceLocation:loc(1),controllingText:ls[0],atomicObligation:scope},snapshot={atomicKey:scope.key,primarySourceLine:1,statement:scope.statement,scopeSha256:scope.sha256,sourceSpans:scope.sourceSpans,exactSupportingContextSourceLocations:scope.contextSourceLocations},sourceRef={path:SPECIFICATION_PATH,sha256:sh};
+ const componentRecord={schema:'closed-loop-normative-component-reconciliation/1',status:'BOUNDED_SOURCE_RELATIONSHIP_REVIEW_COMPLETE_NOT_ACCEPTANCE',actorId:'SYNTHETIC-COMPONENT-RECONCILER',contextId:'SYNTHETIC-COMPONENT-RECONCILER-CONTEXT',specificationSha256:sh,inputs:[sourceRef],unresolvedDisagreements:[],reviewedSourceLines:[2],selectedAtomicScopeSnapshots:[snapshot],mappings:[{sourceLine:2,relation:'EXISTING_CONTRACT_COMPONENT',targetAtomicKeys:[scope.key],reason:'Synthetic parameter belongs to the indivisible complete signature.',normativeOccurrenceRetained:true,unresolved:false,exactSourceAnchors:[{startLine:2,endLine:2,exactText:ls[1],sha256Utf8WithoutTrailingLf:sha(ls[1])}],selectedScopeEvidence:[{atomicKey:scope.key,scopeSha256:scope.sha256}],scopeTextChanges:[]}]};
+ const componentBytes=Buffer.from(JSON.stringify(componentRecord)),ref={path:'verification/synthetic-component-review.json',sha256:sha(componentBytes),inputs:[sourceRef]},files=new Map([[ref.path,componentBytes],[sourceRef.path,bytes]]),options={readFile:p=>files.get(p),sourceBytes:bytes,specificationPath:SPECIFICATION_PATH,contributors:[{actorId:'SYNTHETIC-AUTHOR',contextId:'SYNTHETIC-AUTHOR-CONTEXT'}]},reviewed=loadAtomicComponentReconciliation(ref,options);
+ const bind=(line,relationship,extra={})=>({sourceLine:line,sourceLineSha256:loc(line).lineSha256,normativeRequirementId:atom.normativeRequirementId,currentAtomicObligationSha256:scope.sha256,relationship,reason:'Synthetic exact occurrence-to-contract relationship.',...extra});
+ const contextRow=(line,ranges,bindings=[])=>({normativeRequirementId:'NREQ-'+String(line).repeat(32),entryKind:'SOURCE_CONTEXT',sourceLocation:loc(line),controllingText:ls[line-1],contextClassification:{classification:'STRUCTURAL_REQUIREMENT_CONTEXT',reason:'Synthetic independently resolved governor.',governingSourceRanges:ranges,governingNormativeRequirementIds:[atom.normativeRequirementId],...(bindings.length?{governingOccurrenceBindings:bindings}:{})}});
+ const rows=[atom,contextRow(3,[[2,2]],[bind(2,'CONTRACT_COMPONENT')]),contextRow(4,[[5,5]],[bind(5,'CONTEXT_CHAIN',{viaSourceLines:[5,1],terminalRelationship:'PRIMARY_SOURCE'})]),contextRow(5,[[1,1]])],contextResolution={mappings:new Map(rows.slice(1).map(row=>[row.sourceLocation.startLine,{resolvedClassification:'STRUCTURAL_REQUIREMENT_CONTEXT',governingSourceRanges:row.contextClassification.governingSourceRanges}]))},reconciliation={requirementIdentityCrosswalk:[]};
+ const check=(r=rows,cr=contextResolution,co=reviewed,rec=reconciliation)=>{validateAtomicRequirementRows(bytes,r,SPECIFICATION_PATH);validateAtomicGoverningOccurrences(r,{contextResolution:cr,componentResolution:co,reconciliation:rec});};
+ check();cases.push('typed-component-and-transitive-governor-positive');
+ const dualRole=copy(rows);dualRole[1].sourceLocation=loc(1);dualRole[1].controllingText=ls[0];const dualContext=copy(contextResolution);dualContext.mappings.set(1,dualContext.mappings.get(3));dualContext.mappings.delete(3);check(dualRole,dualContext);cases.push('governor-source-retained-as-exact-atom-primary-dual-role');
+ for(const [name,edit,pattern] of [
+  ['governor-component-wrong-target-key',(r,c,co)=>{co.mappings.get(2).targetAtomicKeys=['unrelated.key'];},/lacks pinned component review/],
+  ['governor-component-wrong-source-occurrence',r=>r[1].contextClassification.governingOccurrenceBindings[0].sourceLine=1,/scope\/source binding invalid/],
+  ['governor-component-stale-scope-hash',r=>r[1].contextClassification.governingOccurrenceBindings[0].currentAtomicObligationSha256='0'.repeat(64),/scope\/source binding invalid/],
+  ['governor-component-stale-source-hash',r=>r[1].contextClassification.governingOccurrenceBindings[0].sourceLineSha256='0'.repeat(64),/scope\/source binding invalid/],
+  ['governor-chain-unreviewed-edge',(r,c)=>c.mappings.get(5).governingSourceRanges=[[2,2]],/lacks reviewed governing edge/],
+  ['governor-chain-cyclic-path',r=>r[2].contextClassification.governingOccurrenceBindings[0].viaSourceLines=[5,5,1],/path invalid/],
+  ['governor-chain-untyped-terminal',r=>r[2].contextClassification.governingOccurrenceBindings[0].terminalRelationship='UNION_OF_CONTEXT',/relationship invalid/],
+  ['governor-component-duplicate-edge',r=>r[1].contextClassification.governingOccurrenceBindings.push(copy(r[1].contextClassification.governingOccurrenceBindings[0])),/edge duplicated/],
+  ['governor-component-target-scope-loses-source',r=>{r[0].atomicObligation.contextSourceLocations=r[0].atomicObligation.contextSourceLocations.filter(c=>c.startLine!==2);r[0].atomicObligation.sha256=atomicObligationSha256(r[0].atomicObligation);for(const row of r.slice(1))for(const b of row.contextClassification.governingOccurrenceBindings??[])b.currentAtomicObligationSha256=r[0].atomicObligation.sha256;},/reviewed scope changed|source lost|path invalid/],
+ ]){const r=copy(rows),c=copy(contextResolution),co=copy(reviewed);edit(r,c,co);assert.throws(()=>check(r,c,co),pattern,name);cases.push(name);}
+ assert.throws(()=>check(rows,contextResolution,null),/lacks pinned component review/);cases.push('governor-component-unpinned-review');
+ const omitted=copy(rows);delete omitted[1].contextClassification.governingOccurrenceBindings;assert.throws(()=>validateAtomicGoverningOccurrences(omitted,{contextResolution,componentResolution:reviewed,reconciliation}),/coverage incomplete/);cases.push('governor-omitted-off-primary-occurrence-not-hidden');
+ const historicalRows=copy(rows),oldId='NREQ-'+'e'.repeat(32);historicalRows[1].contextClassification.governingOccurrenceBindings[0]={...bind(2,'HISTORICAL_OCCURRENCE'),priorNormativeRequirementId:oldId};const historical={requirementIdentityCrosswalk:[{priorNormativeRequirementId:oldId,relation:'MERGED_EQUIVALENT',priorSourceLocation:loc(2),currentNormativeRequirementIds:[atom.normativeRequirementId]}]};check(historicalRows,contextResolution,null,historical);cases.push('governor-exact-historical-occurrence-positive');historicalRows[1].contextClassification.governingOccurrenceBindings[0].priorNormativeRequirementId='NREQ-'+'f'.repeat(32);assert.throws(()=>check(historicalRows,contextResolution,null,historical),/lacks reviewed historical edge/);cases.push('governor-forged-historical-occurrence');
+ const load=(mutate)=>{const record=copy(componentRecord);mutate(record);const b=Buffer.from(JSON.stringify(record)),f=new Map(files);f.set(ref.path,b);return loadAtomicComponentReconciliation({...ref,sha256:sha(b)},{...options,readFile:p=>f.get(p)});};
+ for(const [name,mutate,pattern] of [
+  ['component-review-unresolved',r=>r.unresolvedDisagreements.push('Unresolved synthetic issue'),/unresolved/],
+  ['component-review-self-authored',r=>r.contextId='SYNTHETIC-AUTHOR-CONTEXT',/independence invalid/],
+  ['component-review-stale-source-anchor',r=>r.mappings[0].exactSourceAnchors[0].sha256Utf8WithoutTrailingLf='0'.repeat(64),/anchor bytes mismatch/],
+  ['component-review-stale-snapshot',r=>r.selectedAtomicScopeSnapshots[0].scopeSha256='0'.repeat(64),/snapshot scope digest mismatch/],
+  ['component-review-omitted-occurrence',r=>r.reviewedSourceLines=[],/source universe incomplete/],
+  ['component-review-unpinned-original-input',r=>r.inputs[0].sha256='0'.repeat(64),/original input identity mismatch/]
+ ]){assert.throws(()=>load(mutate),pattern,name);cases.push(name);}
+ const e=evidence(),rec=JSON.parse(e.files.get(e.descriptor.reconciliation.path));rec.componentReconciliation=ref;rec.inputs.push(ref);Object.assign(e.descriptor.reconciliation,pinExtra(e,e.descriptor.reconciliation.path,rec));for(const [p,b] of files)e.files.set(p,b);assert(atomicEvidenceReferences(e.descriptor,e.options.readFile).some(r=>r.path===ref.path));cases.push('component-review-and-original-input-fingerprint');
 }
 
 console.log(JSON.stringify({schema:'closed-loop-atomic-governance-format-regression/1',passed:true,syntheticFixture:true,atomicCompletenessEstablished:false,implementationConformanceEstablished:false,caseCount:cases.length,cases},null,2));
