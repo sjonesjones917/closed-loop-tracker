@@ -1394,7 +1394,7 @@
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "dot",
-    "lastInspectedAt": "2026-10-14T15:15:38.563833Z",
+    "lastInspectedAt": "2026-10-14T15:38:33.968173Z",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -2616,7 +2616,24 @@
       },
       "primary": "Governed fullowner release incorrectly blocks satisfied preproductonlymandatoryrequirement because oldreleaseMetrics requiresfinaltests for allrequirements. Allmandatoryrequirements retained; source-general existingstageprooftrace releaseclassification authorized, independentreview/cases pending.",
       "secondary": "Both originaldefault andgovernedfixtures fail releasebinding. Qualifiedcounterfactual linksnewrelease scope toproofobligationhashes; genuinebefore/aftercapture pending, no secondarycodefixauthorized.",
-      "constraints": "No phase-specific fallback, no DEFERRED-as-success, preserve ANY_OF/K logic and independent duefinaltests/regressions/matrix; direct sufficientdueREFUTES precedence including activatedconditional requirements."
+      "constraints": "No phase-specific fallback, no DEFERRED-as-success, preserve ANY_OF/K logic and independent duefinaltests/regressions/matrix; direct sufficientdueREFUTES precedence including activatedconditional requirements.",
+      "primaryAuthorizedScope": "Reuse existing stageProofTruth optional trace and one requirement classifier for allcurrentapplicablemandatory requirements, including activatedconditional; exactlyonecurrentprimary/expression/obligation/review; allindependentduefinaltests/regressions/matrix/bytes/freshness/independence preserved; currentdueREFUTES controls evenpositiveproofmissing; futurevalidscheduled leaves neveraffirmative, dueunknownblocks, ANY_OF/K semantics preserved.",
+      "additionalBoundedScope": [
+        "Release-only evaluationStage27 optional existingphase-selection parameter; originalstage22/23/24defaults unchanged; due25\u201327controls required.",
+        "Registeredfuture diagnostic projection retains allauthoredtiming/identity/scheduledstate but omits liveavailability only for validnot-yet-due leaves; due/invalidunknownavailability unchanged.",
+        "ExistingCONTROLLING_REASON accurately distinguishes dueproof from future scheduled; bound disjointcountpartition required."
+      ],
+      "reviewState": "Primarydraft eightactual-source missing/staleproof negatives pass; notfrozen/accepted. Exactcontract/version consequences pendingsecondaryevidence.",
+      "secondaryCapture": {
+        "state": "FULL_ORIGINAL_OWNER_RUNNING",
+        "source": "cd56dd97509f0c6c96e2f6e9055c97b4b65452a0",
+        "startedAt": "2026-10-14T15:38:05Z",
+        "instrumentedOwnerSha256": "073e90f8faed4432f65a5cc3d46fed3845af2a55ba44b1e70db40750e0555c11",
+        "scope": "Originalcompleteowner closures/assertions unchanged; only before/after release inertrawcustodycaptures, separate directory, original optionalcapturesdisabled.",
+        "directory": "/workspace/shared/clrt-iteration-repair-evidence/frozen-cd56dd97-full-release-capture",
+        "partialDriverFailures": "Preserved setup failures: missing privatecontextaftercopy, originalregressionIDlookup, hostVMstructuredClone. Redirected to completeoriginalowner toavoid serialclosure setup errors.",
+        "secondaryRuntimeEditsAuthorized": false
+      }
     }
   }
 }
