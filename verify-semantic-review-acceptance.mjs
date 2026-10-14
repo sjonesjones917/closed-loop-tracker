@@ -29,7 +29,7 @@ async function verifySourceApplicabilityCalculation(){
   assert.equal(typeof engine.sourceApplicabilityState,'function','SOURCE_APPLICABILITY_OWNER_ORACLE: application calculation owner is missing.');
   // Sections13.2/34.3 require activation into the current registered owner.
   // Keep a literal expected identity so silently retaining a legacy receipt fails.
-  const currentProjectionId='closed-loop-derivation/project-current-projection/12';
+  const currentProjectionId='closed-loop-derivation/project-current-projection/13';
   assert.equal(schema.PROJECT_PROJECTION_DERIVATION_CONTRACT.id,currentProjectionId,'SOURCE_APPLICABILITY_CURRENT_REGISTRY_ORACLE');
   const results=[],base=stage01AcceptanceFixture(runtime,'JOB-SOURCE-APPLICABILITY-CALCULATION');
   const stageData={AUTHORITY_HIERARCHY:'The complete controlled hermetic fixture and its declared independent synthetic authorities.',KNOWN_CONTROLLING_SOURCES_EXAMINED:'All declared source classes, supplied references, locations and final query rounds were inspected.'};

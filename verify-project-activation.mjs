@@ -7,7 +7,7 @@ import {projectStoreRuntime,bindAcceptanceUi,bindProjectActivationUi} from './te
 import {artifactFixtureId} from './test-artifact-fixtures.mjs';
 import {readStoreArchive} from './test-zip.mjs';
 import {verifyStartupActivationReuse,verifyLegacy5ProjectionActivation,verifyStage19ProjectionActivationOrdering} from './test-startup-activation-reuse.mjs';
-import {verifyProjectionVersion12ActivationContract,verifyProjectionVersion12IterationActivation} from './test-derivation-receipt-contract.mjs';
+import {verifyProjectionVersion13ActivationContract,verifyProjectionVersion13IterationActivation} from './test-derivation-receipt-contract.mjs';
 
 const app=fs.readFileSync(process.env.APP_SOURCE||'app-core.js','utf8'),digest=bytes=>createHash('sha256').update(bytes).digest('hex');
 const observations=[];
@@ -153,12 +153,12 @@ observations.push({id:'PROJECT_ACTIVATION_CALLERS',result:'PASS',callers:callerR
  r.rows.get('projects').get(p.job.JOB_ID).project.job.JOB_TITLE='Corrupt bytes under unchanged digest';await assert.rejects(()=>r.store.readProject(p.job.JOB_ID,{refreshProjection:true}),error=>error.code==='PROJECT_HASH_MISMATCH','ACTIVATION_COMBINED_COLD_INTEGRITY_ORACLE');
  observations.push({id:'PROJECT_ACTIVATION_COMBINED_COLD_READ',result:'PASS',coldReads:1,sameCurrentResult:true,staleExplicitPredicateRejected:true,corruptColdSourceRejected:true});
 }
-const projection5Activation12=await verifyLegacy5ProjectionActivation();
-observations.push({id:'PROJECT_PROJECTION5_ACTIVATION12',...projection5Activation12});
-const projectionVersion12IterationActivation=await verifyProjectionVersion12IterationActivation();
-observations.push({...projectionVersion12IterationActivation,id:'PROJECT_PROJECTION7_ITERATION4_ACTIVATION12'});
-const projectionVersion7Activation=await verifyProjectionVersion12ActivationContract();
-observations.push({id:'PROJECT_PROJECTION6_ACTIVATION12',...projectionVersion7Activation});
+const projection5Activation13=await verifyLegacy5ProjectionActivation();
+observations.push({id:'PROJECT_PROJECTION5_ACTIVATION13',...projection5Activation13});
+const projectionVersion13IterationActivation=await verifyProjectionVersion13IterationActivation();
+observations.push({...projectionVersion13IterationActivation,id:'PROJECT_PROJECTION7_ITERATION4_ACTIVATION13'});
+const projectionVersion7Activation=await verifyProjectionVersion13ActivationContract();
+observations.push({id:'PROJECT_PROJECTION6_ACTIVATION13',...projectionVersion7Activation});
 const stage19ProjectionActivationOrdering=await verifyStage19ProjectionActivationOrdering();
 observations.push({id:'PROJECT_STAGE19_PROJECTION_ACTIVATION_ORDERING',...stage19ProjectionActivationOrdering});
 const startupActivationReuse=await verifyStartupActivationReuse({source:app});

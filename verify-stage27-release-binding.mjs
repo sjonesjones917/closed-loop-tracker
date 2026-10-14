@@ -59,7 +59,7 @@ function injectRelease(p,{determination='ACCEPTED',releaseEvidenceSha256='fabric
   // source whose aggregate disposition remained BLOCKED.
   assert.equal(binding.canonicalInput.calculation,'stage27.release/4');
   assert.equal(binding.canonicalInput.derivationId,'closed-loop-derivation/stage27-release/4');
-  assert.equal(binding.canonicalInput.sourceBinding.projection,'CANONICAL_RECORD');
+  assert.equal(binding.canonicalInput.sourceBinding.projection,'REGISTERED_RELEASE_SOURCE/1');
   assert.equal(binding.evidenceDigest,hash.sha256Value(binding.canonicalInput),'Release evidence digest does not bind the retained canonical calculation input.');
   for(const family of ['processAudits','productAudits'])for(const audit of engine.recordsForCurrentScope(p,family)){
     const source=binding.canonicalInput.sourceBinding.records.find(row=>row.family===family&&row.id===engine.recordId(audit,family));
