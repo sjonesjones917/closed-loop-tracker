@@ -1390,11 +1390,11 @@
     "startingSourceCommit": "7df5f46e9a7e54da09622387a978badb39916c09",
     "startingMainCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
     "integrationBranch": "dot/published-execution-20261014",
-    "integrationCommit": "aaf1154b7e6b05c1e2e3efaffa22135eec80d106",
+    "integrationCommit": "a2be11cdf4834f3916c43511918318f451ca7dd2",
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "/root/repair_iteration_receipt_dependencies",
-    "lastInspectedAt": "2026-10-14T21:05:49Z",
+    "lastInspectedAt": "2026-10-14T21:22:02Z",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -2094,7 +2094,7 @@
     },
     "scheduleState": "FORECAST_NOT_ESTABLISHED",
     "forecast": null,
-    "nextAction": "Monitor owning session61315 to its actual terminal. Normal13-to15 public activation has passed; original Stage27 command and remaining27-30 controls are running on c3033739. Independent migration waits for the single heavy slot. Do not restart the prefix, renew expiry, integrate an unreviewed candidate, or infer full-owner PASS.",
+    "nextAction": "Continue actual owning session61315 to terminal on frozen c3033739. At21:21:56 real positive chain currentness and governing mutation/add-remove/scope controls returned; original checkpoint/Stage29/30 assertions remain in progress. Then run independently reviewed exact command/retry/public-save/cold replay before original21:35:46.722Z expiry; blocked legacy migration follows. No partial full-owner receipt.",
     "deploymentObservation": {
       "sourceCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
       "runId": "36958910363",
@@ -3108,6 +3108,18 @@
       }
     ],
     "currentInstructionMessageId": "Sentinel_4171a7d9ba308191850ae105fcaa1639",
-    "integrationCommitObservation": "Exact controlled branch HEAD immediately before this management-only checkpoint; chain15 candidate is not integrated."
+    "integrationCommitObservation": "Exact controlled branch HEAD immediately before this management-only checkpoint; chain15 candidate is not integrated.",
+    "chain15LatestActualObservation": {
+      "observedAt": "2026-10-14T21:21:56.918Z",
+      "sessionId": 61315,
+      "status": "RUNNING",
+      "phase": "chain-actual-binding-controls-complete",
+      "canonicalProjectSha256": "0b32812b5e610a39bdffe70d24ec06aa22b541036db76c98df71250a36cd2aee",
+      "adapterRevision": 2,
+      "sourceCommit": "c3033739cf64eab98b371b9fe53c6da312976273",
+      "originalAuthorityExpiresAt": "2026-10-14T21:35:46.722Z",
+      "fullJourneyExecution": false,
+      "independentNextDriverSha256": "e46f84ed6ba462ff8e214e3169732ec15bacac83f95be9d0b6726fbf18302e5b"
+    }
   }
 }
