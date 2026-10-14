@@ -94,7 +94,7 @@ export function validateAtomicLineMembership(requirements,coverage,sourceBytes,s
   }
   return result;
 }
-export const isAtomicEvidencePath=value=>typeof value==='string'&&/^(?:verification|specification)\/(?:[a-zA-Z0-9_-]+\/)*[a-zA-Z0-9_.-]+\.json$/.test(value)&&path.posix.normalize(value)===value;
+export const isAtomicEvidencePath=value=>typeof value==='string'&&/^(?:verification|specification)\/(?:[a-zA-Z0-9_-]+\/)*[a-zA-Z0-9_.-]+\.(?:json|txt)$/.test(value)&&path.posix.normalize(value)===value;
 export function readAtomicEvidenceBytes(file,cwd=process.cwd()){
   assert(isAtomicEvidencePath(file),'Atomic evidence file path invalid');
   const root=fs.realpathSync(cwd)+path.sep,target=fs.realpathSync(path.resolve(cwd,file));
@@ -102,10 +102,10 @@ export function readAtomicEvidenceBytes(file,cwd=process.cwd()){
   return fs.readFileSync(target);
 }
 function atomicEvidenceFile(ref,readFile){
-  assert(ref&&isAtomicEvidencePath(ref.path)&&atomicDigest(ref.sha256),'Atomic evidence file identity invalid');
+  assert(ref&&isAtomicEvidencePath(ref.path)&&ref.path.endsWith('.json')&&atomicDigest(ref.sha256),'Atomic evidence file identity invalid');
   const bytes=readFile(ref.path);assert(sha256(bytes)===ref.sha256,'Atomic evidence file digest mismatch');return JSON.parse(bytes);
 }
-export function validateAtomicIdentityCrosswalk(crosswalk,prior,priorRef,requirements,decisions,sourceBytes,relocations=null){
+export function validateAtomicIdentityCrosswalk(crosswalk,prior,priorRef,requirements,decisions,sourceBytes,relocations=null,priorSourceBytes=null){
   const active=new Map(requirements.map(row=>[row.normativeRequirementId,row])),old=new Map(prior.requirements.map(row=>[row.normativeRequirementId,row])),seen=new Set();
   assert(old.size===prior.requirements.length&&Array.isArray(crosswalk)&&crosswalk.length===old.size,'Atomic crosswalk predecessor universe incomplete');
   for(const row of crosswalk){
@@ -113,6 +113,7 @@ export function validateAtomicIdentityCrosswalk(crosswalk,prior,priorRef,require
     assert(before&&!seen.has(row.priorNormativeRequirementId),'Atomic crosswalk predecessor missing or duplicated');seen.add(row.priorNormativeRequirementId);
     assert(row.priorManifestSha256===priorRef.sha256&&row.priorSpecificationSha256===prior.specificationSha256&&atomicEqual(row.priorSourceLocation,before.sourceLocation),'Atomic crosswalk historical identity stale');
     assert(atomicText(row.reason)&&decision&&targets.every(id=>active.has(id)&&decision.currentNormativeRequirementIds.includes(id)),'Atomic crosswalk unresolved or unknown target');
+    if(decision.scopeChange)assert(row.relation==='CHANGED_SINGLETON_SCOPE','Atomic changed scope cannot be labeled unchanged, split, merged or removed');
     if(targets.length){
       const relocated=relocations?.get(row.priorNormativeRequirementId),expectedLine=relocated?.targetSourceLine??before.sourceLocation.startLine;
       for(const id of targets){const target=active.get(id);assert([target.sourceLocation,...(target.atomicObligation?.contextSourceLocations||[])].some(location=>location.startLine===expectedLine&&location.lineSha256===before.sourceLocation.lineSha256),'Atomic crosswalk target lost predecessor source anchor');}
@@ -120,6 +121,33 @@ export function validateAtomicIdentityCrosswalk(crosswalk,prior,priorRef,require
     if(row.relation==='UNCHANGED_ATOMIC'){
       assert(targets.length===1&&targets[0]===row.priorNormativeRequirementId&&active.get(targets[0]).entryKind==='ATOMIC_OBLIGATION','Atomic unchanged crosswalk identity invalid');
       assert(before.entryKind==='ATOMIC_OBLIGATION'?before.atomicObligation.sha256===active.get(targets[0]).atomicObligation.sha256:decision.priorWasSingleObligation===true,'Atomic legacy singleton equivalence not reviewed');
+    }else if(row.relation==='CHANGED_SINGLETON_SCOPE'){
+      assert(targets.length===1&&!active.has(row.priorNormativeRequirementId)&&!old.has(targets[0])&&active.get(targets[0]).entryKind==='ATOMIC_OBLIGATION','Atomic changed singleton must retire its predecessor and allocate one fresh atom');
+      assert(!Object.hasOwn(active.get(targets[0]),'executedEvidence')&&!Object.hasOwn(active.get(targets[0]),'fullCoverage'),'Atomic changed singleton cannot inherit predecessor proof');
+      const target=active.get(targets[0]),change=decision.scopeChange,currentSha256=sha256(sourceBytes),currentLines=sourceBytes.toString('utf8').split('\n');
+      assert(Buffer.isBuffer(priorSourceBytes)&&sha256(priorSourceBytes)===prior.specificationSha256,'Atomic changed singleton exact historical source bytes required');
+      const priorLines=new TextDecoder('utf-8',{fatal:true}).decode(priorSourceBytes).split('\n');
+      assert(decision.priorWasSingleObligation===true&&change&&change.priorNormativeRequirementId===row.priorNormativeRequirementId&&change.currentNormativeRequirementId===targets[0]&&atomicText(change.priorStatement)&&change.currentStatement===target.atomicObligation.statement&&change.currentAtomicObligationSha256===target.atomicObligation.sha256&&atomicText(change.reason),'Atomic changed singleton scope review incomplete');
+      assert(change.authority?.kind==='CONTROLLING_SOURCE_REPLACEMENT'&&change.authority.priorSpecificationSha256===prior.specificationSha256&&change.authority.currentSpecificationSha256===currentSha256&&prior.specificationSha256!==currentSha256&&atomicText(change.authority.reason),'Atomic changed singleton source authority mismatch');
+      assert(Array.isArray(change.priorContextSourceLocations)&&atomicEqual(change.currentContextSourceLocations,target.atomicObligation.contextSourceLocations),'Atomic changed singleton context inventory incomplete');
+      const priorContexts=new Map(),currentContexts=new Map(),contextKey=location=>atomicHash({lineSha256:location.lineSha256,controllingText:location.controllingText});
+      for(const context of change.priorContextSourceLocations){
+        const n=context.startLine;assert(context.path===before.sourceLocation.path&&Number.isSafeInteger(n)&&n>0&&n<=priorLines.length&&context.endLine===n&&context.lineSha256===sha256(Buffer.from(priorLines[n-1]))&&context.controllingText===priorLines[n-1].trim(),'Atomic changed singleton historical context not in pinned predecessor source');
+        const key=contextKey(context);assert(!priorContexts.has(key),'Atomic changed singleton historical context duplicated');priorContexts.set(key,context);
+      }
+      for(const context of change.currentContextSourceLocations){const n=context.startLine;assert(context.path===target.sourceLocation.path&&Number.isSafeInteger(n)&&n>0&&n<=currentLines.length&&context.endLine===n&&context.lineSha256===sha256(Buffer.from(currentLines[n-1]))&&context.controllingText===currentLines[n-1].trim(),'Atomic changed singleton current context source mismatch');const key=contextKey(context);assert(!currentContexts.has(key),'Atomic changed singleton current context duplicated');currentContexts.set(key,context);}
+      if(before.entryKind==='ATOMIC_OBLIGATION')assert(change.priorStatement===before.atomicObligation.statement&&atomicEqual(change.priorContextSourceLocations,before.atomicObligation.contextSourceLocations),'Atomic changed singleton prior reviewed scope mismatch');
+      const expectedRemoved=[...priorContexts.keys()].filter(key=>!currentContexts.has(key)),expectedAdded=[...currentContexts.keys()].filter(key=>!priorContexts.has(key));
+      assert(expectedRemoved.length+expectedAdded.length>0&&Array.isArray(change.contextChanges),'Atomic changed singleton has no documented semantic context change');
+      const removed=new Set(),added=new Set();
+      for(const delta of change.contextChanges){
+        assert(atomicText(delta.reason)&&['REMOVED','ADDED','REPLACED'].includes(delta.kind),'Atomic changed singleton context change reason absent');
+        if(delta.kind!=='ADDED'){const key=contextKey(delta.priorContextSourceLocation||{});assert(expectedRemoved.includes(key)&&!removed.has(key)&&atomicEqual(delta.priorContextSourceLocation,priorContexts.get(key)),'Atomic changed singleton removed context missing or duplicated');removed.add(key);if(delta.kind==='REMOVED')assert(!currentLines.some(line=>line.trim()===delta.priorContextSourceLocation.controllingText),'Atomic changed singleton removed context remains controlling source text');}
+        else assert(!Object.hasOwn(delta,'priorContextSourceLocation'),'Atomic added context carries a prior context');
+        if(delta.kind!=='REMOVED'){const key=contextKey(delta.currentContextSourceLocation||{});assert(expectedAdded.includes(key)&&!added.has(key)&&atomicEqual(delta.currentContextSourceLocation,currentContexts.get(key)),'Atomic changed singleton added context missing or duplicated');added.add(key);}
+        else assert(!Object.hasOwn(delta,'currentContextSourceLocation'),'Atomic removed context carries a current context');
+      }
+      assert(removed.size===expectedRemoved.length&&added.size===expectedAdded.length,'Atomic changed singleton context difference unresolved');
     }else if(row.relation==='SPLIT_COMPOUND')assert(targets.length>=2&&!active.has(row.priorNormativeRequirementId)&&targets.every(id=>active.get(id).entryKind==='ATOMIC_OBLIGATION'&&!old.has(id)),'Atomic compound ancestor reused or double counted');
     else if(row.relation==='RETAINED_CONTEXT')assert(targets.length===1&&targets[0]===row.priorNormativeRequirementId&&active.get(targets[0]).entryKind==='SOURCE_CONTEXT','Atomic retained context identity invalid');
     else if(row.relation==='MERGED_EQUIVALENT'){
@@ -173,6 +201,8 @@ export function loadReviewedAtomicExtraction(descriptor,{sourceBytes,specificati
   for(const ref of [descriptor.draft,descriptor.independentReview,reconciliation.priorManifest])assert(ref&&reconciliation.inputs.some(input=>input.path===ref.path&&input.sha256===ref.sha256),'Atomic reconciliation input lineage incomplete');
   const prior=atomicEvidenceFile(reconciliation.priorManifest,readFile);
   assert(prior.schema==='closed-loop-normative-requirements/1'&&Array.isArray(prior.requirements),'Atomic pinned predecessor manifest invalid');
+  let priorSourceBytes=null;
+  if(reconciliation.priorSpecificationSource){const ref=reconciliation.priorSpecificationSource;assert(isAtomicEvidencePath(ref.path)&&ref.path.endsWith('.txt')&&ref.sha256===prior.specificationSha256&&reconciliation.inputs.some(input=>input.path===ref.path&&input.sha256===ref.sha256),'Atomic historical specification source input identity mismatch');priorSourceBytes=readFile(ref.path);assert(sha256(priorSourceBytes)===ref.sha256,'Atomic historical specification source bytes mismatch');}
   const sourcePrior=reconciliation.sourceTraceManifest?atomicEvidenceFile(reconciliation.sourceTraceManifest,readFile):prior;
   if(reconciliation.sourceTraceManifest)assert(reconciliation.inputs.some(input=>input.path===reconciliation.sourceTraceManifest.path&&input.sha256===reconciliation.sourceTraceManifest.sha256),'Atomic source trace predecessor input missing');
   assert(sourcePrior.schema==='closed-loop-normative-requirements/1'&&sourcePrior.specificationSha256===sourceSha256&&Array.isArray(sourcePrior.requirements),'Atomic source trace predecessor differs from current source');
@@ -218,7 +248,7 @@ export function loadReviewedAtomicExtraction(descriptor,{sourceBytes,specificati
     assert(atomicEqual(decision.currentAtomicScopeSha256,digests),'Atomic reconciliation scope digest mismatch');
   }
   assert(resolved.every((set,i)=>set.size===extracts[i].size)&&mapped.size===entries.length,'Atomic proposition reconciliation or active entry coverage incomplete');
-  validateAtomicIdentityCrosswalk(reconciliation.requirementIdentityCrosswalk,prior,reconciliation.priorManifest,entries,decisions,sourceBytes,relocations);
+  validateAtomicIdentityCrosswalk(reconciliation.requirementIdentityCrosswalk,prior,reconciliation.priorManifest,entries,decisions,sourceBytes,relocations,priorSourceBytes);
   return {established:true,descriptor,entries,requirementIdentityCrosswalk:reconciliation.requirementIdentityCrosswalk,reconciliation,prior,sourcePrior};
 }
 
