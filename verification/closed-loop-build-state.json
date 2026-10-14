@@ -2894,7 +2894,29 @@
         ],
         "originalAuthorityExpiresAt": "2026-10-14T21:35:46.722Z",
         "directory": "/workspace/shared/clrt-iteration-repair-evidence/frozen-53e02e32-governed-continuation",
-        "terminal": "PENDING"
+        "terminal": "PENDING",
+        "lastCompletedStage": 27,
+        "latestDurableBoundary": "release-persistence-all-assertions-complete",
+        "latestBoundaryCompressedSha256": "dc469f0ec30af0e574be69825afc677985a5b4325fdfe1f5ca57ee0e320208be",
+        "latestBoundaryCanonicalProjectSha256": "29b4cc07dfc75f028cef13e51f693a23ad448c78ae45d7882551037987cf2878",
+        "actualReleasePersistence": {
+          "result": "PASS",
+          "basis": "Actual accepted synthetic lifecycle release command and original byte/context custody; isolated existing transaction adapter, not browser execution.",
+          "releaseId": "RELEASE-8u3jk3aj93t18r9bv3tqajhnulibp9dn",
+          "sourceProjectSha256": "29b4cc07dfc75f028cef13e51f693a23ad448c78ae45d7882551037987cf2878",
+          "savedProjectSha256": "f3de6c8b8dd350a057b914de2150328e92f253b03016866da13b6cafe1e8dcc8",
+          "revision": 0,
+          "cases": [
+            "exact-current-release-command",
+            "exact-retry-project-stability",
+            "public-save-and-cold-integrity",
+            "retained-release-raw-history-bytes",
+            "current-release-and-gate-after-cold-read"
+          ],
+          "callerPointerAssertion": "RELEASE_ISOLATED_STORE_PRESERVES_CALLER",
+          "callerPointerAssertionResult": "PASS"
+        },
+        "lastObservedAt": "2026-10-14T20:28:25Z"
       }
     },
     "continuationAmendmentV2": {
@@ -2948,6 +2970,16 @@
         "currentCatalogState": "COMPLETED_ACCEPTED_INTEGRATED",
         "readyParallelCodeTasks": 0,
         "parallelismReason": "Only ready-state Stage29 causal evidence is pending on frozen shared runtime; production repair and nineteen review renewals depend on it. Catalog implementation/review finished; no duplicate heavy owner."
+      },
+      "reclaimedCheckout": {
+        "path": "/workspace/shared/clrt-align-release4-project13",
+        "commit": "d6c7d33be916991cf3098fe202f46919e77120d7",
+        "ownerAndReviewerReleased": true,
+        "trackedClean": true,
+        "untrackedOrIgnoredFiles": 0,
+        "externalEvidenceFilesPreservedAndRehashed": 15,
+        "receiptPath": "/workspace/shared/clrt-iteration-repair-evidence/catalog13-worktree-reclamation.json",
+        "freeSpaceAfter": "1.3GiB"
       }
     }
   }
