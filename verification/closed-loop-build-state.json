@@ -2575,7 +2575,7 @@
       "finding": "Aggregate repeats full source extraction; safe reuse would require fresh per-boundary identities and independent review. No measured seconds-saving benchmark; keep current proof checks unchanged."
     },
     "release27Repair": {
-      "state": "COMBINED_PRIMARY_SECONDARY_IMPLEMENTATION_AUTHORIZED_PENDING_FROZEN_REVIEW",
+      "state": "FROZEN_CANDIDATE_FOCUSED_PASS_PARTIAL_ACTUAL_BOUNDARY_PENDING_PERSISTENCE_AND_INDEPENDENT_REVIEW",
       "owner": "/root/repair_iteration_receipt_dependencies",
       "reviewer": "/root/review_release_scope_binding",
       "defaultOwner": {
@@ -2615,7 +2615,7 @@
         "terminalSha256": "f08d8b59553d8934089f0f3e2fb7d70cbe44d5679202e4806d2a88e653db247d"
       },
       "primary": "Governed fullowner release incorrectly blocks satisfied preproductonlymandatoryrequirement because oldreleaseMetrics requiresfinaltests for allrequirements. Allmandatoryrequirements retained; source-general existingstageprooftrace releaseclassification authorized, independentreview/cases pending.",
-      "secondary": "Both originaldefault andgovernedfixtures fail releasebinding. Qualifiedcounterfactual linksnewrelease scope toproofobligationhashes; genuinebefore/aftercapture pending, no secondarycodefixauthorized.",
+      "secondary": "Actual r7 before/after independently confirmed one self-dependent proof-obligation summary among 255 bound records. Release-specific registered projection implemented in frozen candidate; independent actual persistence and legacy activation verification pending.",
       "constraints": "No phase-specific fallback, no DEFERRED-as-success, preserve ANY_OF/K logic and independent duefinaltests/regressions/matrix; direct sufficientdueREFUTES precedence including activatedconditional requirements.",
       "primaryAuthorizedScope": "Reuse existing stageProofTruth optional trace and one requirement classifier for allcurrentapplicablemandatory requirements, including activatedconditional; exactlyonecurrentprimary/expression/obligation/review; allindependentduefinaltests/regressions/matrix/bytes/freshness/independence preserved; currentdueREFUTES controls evenpositiveproofmissing; futurevalidscheduled leaves neveraffirmative, dueunknownblocks, ANY_OF/K semantics preserved.",
       "additionalBoundedScope": [
@@ -2623,7 +2623,7 @@
         "Registeredfuture diagnostic projection retains allauthoredtiming/identity/scheduledstate but omits liveavailability only for validnot-yet-due leaves; due/invalidunknownavailability unchanged.",
         "ExistingCONTROLLING_REASON accurately distinguishes dueproof from future scheduled; bound disjointcountpartition required."
       ],
-      "reviewState": "Primarydraft eightactual-source missing/staleproof negatives pass; notfrozen/accepted. Exactcontract/version consequences pendingsecondaryevidence.",
+      "reviewState": "Independent source review clear for focused verification; no final integration acceptance.",
       "secondaryCapture": {
         "state": "LOST_EXECUTOR_OUTCOME_NO_TERMINAL",
         "source": "cd56dd97509f0c6c96e2f6e9055c97b4b65452a0",
@@ -2664,7 +2664,44 @@
           }
         }
       },
-      "secondaryAuthorizedScope": "Release-specific registered proofObligation preimage excluding only observed self-dependent CURRENT_SCOPE_HASH/PROOF_OBLIGATION_SET_HASH aliases and derived digest/update bookkeeping; all substantive obligation fields/records and material source bindings preserved. Governing mutations/add-remove negatives required."
+      "secondaryAuthorizedScope": "Release-specific registered proofObligation preimage excluding only observed self-dependent CURRENT_SCOPE_HASH/PROOF_OBLIGATION_SET_HASH aliases and derived digest/update bookkeeping; all substantive obligation fields/records and material source bindings preserved. Governing mutations/add-remove negatives required.",
+      "frozenCandidate": {
+        "runtimeCommit": "086f2b2ecc271013ebc90a7694350ffd2eee6102",
+        "ownerWiringCommit": "cc6b6806",
+        "projectionContract": 13,
+        "releaseContract": 4,
+        "engineSha256": "bf9076eaadef45baba900b389d01305be052ac8bc2f3964c7ba842910cfbfd12",
+        "storeSha256": "530047847aafb62755c7f5e768f5ca1cac86bf767e678e74bf0d6dd3e1a64143",
+        "integrated": false
+      },
+      "positiveBoundary": {
+        "state": "PARTIAL_COMMAND_CAPTURE_NO_TERMINAL_OR_PERSISTENCE_RESULT",
+        "startedAt": "2026-10-14T16:45:14Z",
+        "verifiedAt": "2026-10-14T17:00:25Z",
+        "releaseRecordedAt": "2026-10-14T16:48:29.609Z",
+        "observedDisposition": "ACCEPTED",
+        "gate27": "COMPLETE reported by author; independent review pending",
+        "captureStartedAt": "2026-10-14T16:48:46.582Z",
+        "captureCompletedAt": "2026-10-14T16:48:49.387Z",
+        "captureSha256": "4f17517ecaac316837e6ea308493456a006518dc54afceade1d1a17518608bfd",
+        "candidateProjectSha256": "1257a9d2aa06140adda9a803818d2b1a006b043589217771672c48c21bf3ffde",
+        "adapterProjectSha256": "232ec330ca04b7e156d36ba74ccc758ad90b82db5d934f04ff0f13dec1f0353b",
+        "originalCapabilityExpiry": "2026-10-14T16:50:04.370Z",
+        "retryAndSaveColdRead": "UNESTABLISHED",
+        "owningSession": "40847 unknown on resume; no durable exit/result",
+        "nextAction": "Independent r6 legacy blocked activation and reproof, then reviewed fresh governed owner with durable boundary captures. No historical authority renewal."
+      },
+      "focusedStage27": {
+        "source": "cc6b6806",
+        "exitCode": 0,
+        "stdoutSha256": "a500b84bb9e17c6e191d27e689010c2423b868b62d901250368f9c70708a2997",
+        "scope": "Focused release binding, precedence, idempotency and receipt controls; not full lifecycle acceptance."
+      },
+      "nextActions": [
+        "Independent genuine r6 projection12/release3 blocked activation to13 and normal release4 reproof with preservation, rollback and forgery controls.",
+        "Fresh governed full owner on frozen reviewed runtime with durable checkpoints and actual release retry/public save/cold verification.",
+        "Only after accepted runtime boundary, renew dependent catalog and coverage owner identities; independently review and run affected tests before integration."
+      ]
     }
   }
 }
