@@ -1,9 +1,30 @@
 import fs from 'node:fs';
 import crypto from 'node:crypto';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
 
-const SPEC_PATH=process.argv[2]||'specification/closed-loop-reliability-controlling-implementation-specification.txt';
 const REVIEWER_VERSION='closed-loop-independent-section-review/1';
 const sha256=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
+const assert=(condition,message)=>{if(!condition)throw new Error(message);};
+
+// Source identity only: this does not establish coverage, provenance reachability, or conformance.
+export function validateSpecificationSource(sourceBytes,committedSpec,sourceCommit){
+assert(/^[0-9a-f]{40}$/.test(sourceCommit),'Exact specification source commit is unavailable.');
+assert(!sourceBytes.subarray(0,3).equals(Buffer.from([0xef,0xbb,0xbf])),'Specification BOM is prohibited.');
+const sourceText=new TextDecoder('utf-8',{fatal:true}).decode(sourceBytes);
+assert(!sourceText.includes('\r'),'Specification contains CR or CRLF bytes.');
+assert(!sourceText.startsWith('\n'),'Specification has a leading blank line.');
+assert(sourceText.endsWith('\n\n')&&!sourceText.endsWith('\n\n\n'),'Specification must preserve the supplied two final LF bytes.');
+assert(sourceText.startsWith('The one\n\nClosed-Loop Reliability Application\nZero-Loss Controlling Implementation Specification\n'),'Specification start boundary is wrong.');
+assert(sourceText.endsWith('Completion additionally requires the current exact deployed origin and bytes and the pinned actual physical-iPhone Safari operator path.\n\n'),'Specification end boundary is wrong.');
+assert(committedSpec.sha256===sha256(sourceBytes),'Committed specification manifest does not bind the exact source bytes.');
+assert(committedSpec.byteLength===sourceBytes.length,'Committed specification manifest byte length is wrong.');
+assert(committedSpec.sourceCommit===sourceCommit,'Committed specification source commit is wrong.');
+return sourceText;
+}
+
+
+function reviewSpecificationCoverage(SPEC_PATH){
 const bytes=fs.readFileSync(SPEC_PATH);
 const text=new TextDecoder('utf-8',{fatal:true}).decode(bytes);
 const lines=text.split('\n');
@@ -80,3 +101,7 @@ const result={
   status:'COMPLETE'
 };
 process.stdout.write(`${JSON.stringify(result)}\n`);
+
+}
+
+if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url))reviewSpecificationCoverage(process.argv[2]||'specification/closed-loop-reliability-controlling-implementation-specification.txt');

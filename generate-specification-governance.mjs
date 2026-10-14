@@ -7,6 +7,8 @@ const sourceCommit=commit();if(!/^[0-9a-f]{40}$/.test(sourceCommit))throw Error(
 // Approved clarifications bind existing mandatory IDs. Removing their exact bytes
 // must reconstruct the pinned base; unrelated edits cannot retain those identities.
 const evidencePath='specification/requirement-evidence-bindings.json',evidence=JSON.parse(fs.readFileSync(evidencePath,'utf8'));
+// Bind evidence to the current source before interpreting any historical amendment range.
+if(evidence.schema!=='closed-loop-requirement-evidence-bindings/1'||evidence.specificationSha256!==sourceSha256)throw Error('Requirement evidence bindings do not match the controlling specification');
 const clarifications=evidence.approvedClarifications||[],amendments=evidence.approvedAmendments||[],clarificationLines=new Map,amendmentLines=new Map,amendmentSourceReviews=new Map,approvedRanges=[...clarifications,...amendments];let identitySourceSha256=sourceSha256;
 if(approvedRanges.length){
  const bases=new Set(approvedRanges.map(c=>c.baseSpecificationSha256));if(bases.size!==1)throw Error('Approved source ranges do not share the pinned requirement identity base');
@@ -90,7 +92,6 @@ const req=[...by.values()].filter(x=>!clarificationLines.has(x.line)&&(!amendmen
 // Keep reviewed implementation/evidence bindings separate from mechanical
 // extraction. Regeneration must neither erase them nor invent completed proof.
 
-if(evidence.schema!=='closed-loop-requirement-evidence-bindings/1'||evidence.specificationSha256!==sourceSha256)throw Error('Requirement evidence bindings do not match the controlling specification');
 const bound=new Set,allowedBindings=new Set(['productionOwners','executedEvidence','unresolvedRequirements','currentDisposition','currentDispositionReason','responsibleImplementationOwner','deterministicTestIds','mutationTestIds','observableExpectedBehavior','requiredEvidence','applicableStagesAndOperations']);
 for(const binding of evidence.requirements){if(binding.fields?.currentDisposition==='CONFORMANT_PROVEN')throw Error('Source declarations cannot establish current conformance; use independently reviewed full coverage and current executed receipts');const row=req.find(r=>r.normativeRequirementId===binding.normativeRequirementId);if(!row||bound.has(binding.normativeRequirementId)||row.sourceLocation.lineSha256!==binding.sourceLineSha256||Object.keys(binding.fields).some(key=>!allowedBindings.has(key)))throw Error('Invalid requirement evidence binding');for(const item of binding.fields.executedEvidence||[])if(!fs.existsSync(item.path))throw Error('Requirement evidence artifact is missing: '+item.path);bound.add(binding.normativeRequirementId);Object.assign(row,binding.fields);}
 

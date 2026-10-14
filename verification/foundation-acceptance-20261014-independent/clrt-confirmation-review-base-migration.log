@@ -1,0 +1,29 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: SOURCE_APPLICABILITY_NAMED_ACTIVATION_ORACLE
++ actual - expected
+
++ 'closed-loop-derivation/project-current-projection/7'
+- 'closed-loop-derivation/project-current-projection/5'
+
+    at verifySourceApplicabilityCalculation (file:///tmp/clrt-confirmation-base/verify-semantic-review-acceptance.mjs:164:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async file:///tmp/clrt-confirmation-base/verify-semantic-review-acceptance.mjs:188:95 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 'closed-loop-derivation/project-current-projection/7',
+  expected: 'closed-loop-derivation/project-current-projection/5',
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v22.23.3
+
+real	0m5.061s
+user	0m6.869s
+sys	0m0.258s
+EXIT=1

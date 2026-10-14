@@ -1,0 +1,23 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Missing expected rejection.
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async file:///tmp/clrt-confirmation-base/verify-semantic-review-acceptance.mjs:671:3 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: undefined,
+  expected: /BROWSER_ACCEPTANCE_CONFIRMATION_ORACLE/,
+  operator: 'rejects',
+  diff: 'simple'
+}
+
+Node.js v22.23.3
+
+real	0m26.585s
+user	0m29.306s
+sys	0m1.246s
+EXIT=1

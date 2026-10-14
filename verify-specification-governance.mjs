@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import cp from 'node:child_process';
+import {validateSpecificationSource} from './review-specification-coverage.mjs';
 
 const SPEC_PATH='specification/closed-loop-reliability-controlling-implementation-specification.txt';
 const SPEC_MANIFEST_PATH='specification/closed-loop-specification-manifest.json';
@@ -17,22 +18,13 @@ const readJson=file=>JSON.parse(fs.readFileSync(file,'utf8'));
 
 for(const file of [SPEC_PATH,SPEC_MANIFEST_PATH,NORMATIVE_MANIFEST_PATH,CORE_PATH])assert(fs.existsSync(file),`Required governance input missing: ${file}`);
 const sourceBytes=fs.readFileSync(SPEC_PATH);
-const sourceText=new TextDecoder('utf-8',{fatal:true}).decode(sourceBytes);
 const committedSpecBytes=fs.readFileSync(SPEC_MANIFEST_PATH);
 const committedNormativeBytes=fs.readFileSync(NORMATIVE_MANIFEST_PATH);
 const committedSpec=JSON.parse(committedSpecBytes.toString('utf8'));
 const sourceCommit=String(process.env.SOURCE_COMMIT||committedSpec.sourceCommit||'').toLowerCase();
 
-assert(/^[0-9a-f]{40}$/.test(sourceCommit),'Exact specification source commit is unavailable.');
-assert(!sourceBytes.subarray(0,3).equals(Buffer.from([0xef,0xbb,0xbf])),'Specification BOM is prohibited.');
-assert(!sourceText.includes('\r'),'Specification contains CR or CRLF bytes.');
-assert(!sourceText.startsWith('\n'),'Specification has a leading blank line.');
-assert(sourceText.endsWith('\n')&&!sourceText.endsWith('\n\n'),'Specification must end with exactly one LF.');
-assert(sourceText.startsWith('Closed-Loop Reliability Application\nZero-Loss Controlling Implementation Specification\n'),'Specification start boundary is wrong.');
-assert(sourceText.endsWith('Completion additionally requires the current exact deployed origin and bytes and the pinned actual physical-iPhone Safari operator path.\n'),'Specification end boundary is wrong.');
-assert(committedSpec.sha256===sha256(sourceBytes),'Committed specification manifest does not bind the exact source bytes.');
-assert(committedSpec.byteLength===sourceBytes.length,'Committed specification manifest byte length is wrong.');
-assert(committedSpec.sourceCommit===sourceCommit,'Committed specification source commit is wrong.');
+const sourceText=validateSpecificationSource(sourceBytes,committedSpec,sourceCommit);
+(await checkedVerifier(process.execPath,['test-specification-source-adoption.mjs'],{stdio:'pipe'}));
 
 async function verifySourceCommit(){
   if(process.env.GITHUB_ACTIONS!=='true')return {checked:false};

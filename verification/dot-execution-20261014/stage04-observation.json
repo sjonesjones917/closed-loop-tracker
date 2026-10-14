@@ -1,0 +1,19 @@
+{
+  "scope": "Diagnostic execution of next foundation owner on unchanged runtime/test inputs. Not final target-specification acceptance or a workflow receipt.",
+  "command": "node verify-zero-loss-accounting.mjs",
+  "nodeVersion": "22.23.3",
+  "startedAt": "2026-10-14T03:44:20Z",
+  "completedBy": "2026-10-14T03:45:15Z",
+  "exitCode": 0,
+  "runtimeBaseCommit": "7df5f46e9a7e54da09622387a978badb39916c09",
+  "initialCheckoutCommit": "df4aaa40",
+  "finalCheckoutCommit": "fac6654dcd766e8659164c14002501f9ed9d3409",
+  "duringExecutionChanges": "Only separately reviewed repository management metadata was cherry-picked during this diagnostic run; runtime and owning test inputs unchanged. No exact immutable-whole-source execution receipt claimed.",
+  "observed": [
+    "Stage01/04 zero-loss accounting passed",
+    "Incomplete intake and obligation accounting rejected",
+    "251-item complete file response accepted and reloaded while independent atomicity review remained required"
+  ],
+  "logPath": "verification/dot-execution-20261014/clrt-stage04-next-owner.log",
+  "logSha256": "193c7d3a06c5f840e029fbcd3e3a34235e7c3dda7266b3115cae315e8e23836d"
+}

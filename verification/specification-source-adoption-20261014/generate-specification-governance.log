@@ -1,0 +1,11 @@
+(node:54) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+file:///workspace/shared/clrt-spec-adoption/generate-specification-governance.mjs:11
+if(evidence.schema!=='closed-loop-requirement-evidence-bindings/1'||evidence.specificationSha256!==sourceSha256)throw Error('Requirement evidence bindings do not match the controlling specification');
+                                                                                                                      ^
+
+Error: Requirement evidence bindings do not match the controlling specification
+    at file:///workspace/shared/clrt-spec-adoption/generate-specification-governance.mjs:11:119
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+Node.js v22.23.3

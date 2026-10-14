@@ -56,7 +56,7 @@ reject('duplicate-id',(_,n)=>{n.requirements.push(structuredClone(n.requirements
 reject('missing-test-trace',(_,n)=>{n.requirements[0].deterministicTestIds=[]},/test trace missing/);
 reject('source-conflict',(_,n)=>{n.requirements[0].sourceLocation.lineSha256='0'.repeat(64)},/source-location conflict/);
 reject('runtime-copy',()=>{},/Specification text leaked into runtime/,{'workbook.js':'Closed-Loop Reliability Application\nZero-Loss Controlling Implementation Specification'});
-reject('approved-clarification-omission',(_,n)=>{n.sourceLineCoverage.find(c=>c.status==='NORMATIVE_CLARIFICATION').normativeRequirementIds=[]},/Approved clarification mapping missing/);
+if(governanceDeclaration.approvedClarifications?.length)reject('approved-clarification-omission',(_,n)=>{n.sourceLineCoverage.find(c=>c.status==='NORMATIVE_CLARIFICATION').normativeRequirementIds=[]},/Approved clarification mapping missing/);
 if(declaredAmendments.length){
  reject('approved-amendment-inventory-omission',(_,n)=>{n.approvedAmendments=[]},/Approved amendment inventory mismatch/);
  reject('approved-amendment-obligation-omission',(s,n)=>{const row=n.requirements.find(r=>r.approvedAmendmentId),id=row.normativeRequirementId;n.requirements=n.requirements.filter(r=>r!==row);for(const section of s.sectionInventory)section.normativeRequirementIds=section.normativeRequirementIds.filter(value=>value!==id);const coverage=n.sourceLineCoverage[row.sourceLocation.startLine-1];coverage.status='UNRESOLVED_CONTEXT';coverage.normativeRequirementIds=[];coverage.reason='Deliberate approved obligation omission';},/Approved amendment required source line omitted/);
