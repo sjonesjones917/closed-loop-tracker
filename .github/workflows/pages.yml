@@ -393,7 +393,6 @@ jobs:
           node verify-independent-preflight.mjs
           node verify-external-result-determination.mjs
           node verify-stage28-artifact-delivery-intent.mjs
-          node verify-stage29-evidence-chain-checkpoint.mjs
           node verify-production-baseline-authority.mjs
           node verify-definition-of-done.mjs --owner-receipt-controls
           node verify-definition-of-done.mjs
@@ -656,9 +655,11 @@ jobs:
         if: steps.reuse.outputs.reused != 'true'
         run: |
           set -euo pipefail
+          export CLRT_STAGE29_FIXTURE_PATH="$(mktemp)"
           export CLRT_STAGE30_FIXTURE_PATH="$(mktemp)"
           node verify-full-cycle.mjs | tee /tmp/full-cycle-proof.json
           node --input-type=module -e "import fs from 'node:fs'; JSON.parse(fs.readFileSync('/tmp/full-cycle-proof.json','utf8'));"
+          node verify-stage29-evidence-chain-checkpoint.mjs
           node verify-stage30-terminal-mobile-boundary.mjs
 
       - name: Complete current non-browser assertion evidence

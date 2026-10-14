@@ -1,6 +1,8 @@
 import {createVerifierRuntime} from './verifier-runtime.mjs';
+import {checkedVerifier} from './verify-conformance-regressions.mjs';
+import {projectStoreRuntime,restoreArtifactFixture} from './test-project-store-runtime.mjs';
 import fs from 'node:fs';
-import vm from 'node:vm';
+import path from 'node:path';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {recordProposal,canonicalFixtureRecord} from './test-fixtures.mjs';
@@ -8,11 +10,9 @@ import {recordProposal,canonicalFixtureRecord} from './test-fixtures.mjs';
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
 for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js']){
-  createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
+ createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
 }
-const core=globalThis.closedLoopCore;
-const schema=globalThis.closedLoopWorkflowSchema;
-const engine=globalThis.closedLoopWorkflowEngine;
+const core=globalThis.closedLoopCore,schema=globalThis.closedLoopWorkflowSchema,engine=globalThis.closedLoopWorkflowEngine;
 assert(core&&schema&&engine,'Stage 29 verifier requires production runtime modules.');
 assert.equal(schema.operationContract(29,'CALCULATE_EVIDENCE_CHAINS')?.executorClass,'APPLICATION','Stage 29 calculation must remain application-owned.');
 assert.equal(schema.operationContract(29,'CALCULATE_EVIDENCE_CHAINS')?.retryRule,'IDEMPOTENT_COMMAND','Stage 29 calculation must use the closed idempotent command contract.');
@@ -24,14 +24,14 @@ assert.equal(typeof engine.recordPreDeliveryCheckpointExport,'function','Product
 
 const scope={inputVersion:'INPUT-v001',sourceSetVersion:'SOURCE-v001',requirementsVersion:'REQ-v001',testSuiteVersion:'TEST-v001',instructionVersion:'INSTR-v001',iterationId:'ITER-1',candidateId:'CAND-1',baselineId:'BASE-1',productId:'PROD-1',productVersion:'1.0.0',deliveryCandidateSetId:'SET-1'};
 const record=(family,fields,id,sc=scope)=>{const def=schema.RECORD_SCHEMAS[family]; return {id,active:true,fields:{...fields,[def.idField]:id},...fields,[def.idField]:id,scope:sc};};
-const makeProject=({releaseId='REL-1',productId='PROD-1',baselineId='BASE-1',hashReviewId='HASH_REVIEW-'+ '7'.repeat(64),chainReleaseId='REL-1',status='COMPLETE',missingLinks=[]}={})=>{
+const makeProject=({releaseId='REL-1',productId='PROD-1',baselineId='BASE-1',hashReviewId='HASH_REVIEW-'+ '7'.repeat(64),chainReleaseId='REL-1',status='INCOMPLETE',missingLinks=[]}={})=>{
   const p=core.createBlankState('VERIFY-STAGE29');
   engine.ensureShape(p);
   Object.assign(p.job,{JOB_ID:'JOB-STAGE29',CURRENT_INPUT_VERSION:'INPUT-v001',CURRENT_SOURCE_SET_VERSION:'SOURCE-v001',CURRENT_REQUIREMENTS_VERSION:'REQ-v001',CURRENT_TEST_SUITE_VERSION:'TEST-v001',CURRENT_INSTRUCTION_VERSION:'INSTR-v001',CURRENT_ITERATION:'ITER-1',CURRENT_CANDIDATE_ID:'CAND-1',CURRENT_BASELINE_ID:baselineId,CURRENT_PRODUCT_ID:productId,CURRENT_PRODUCT_VERSION:'1.0.0',CURRENT_DELIVERY_CANDIDATE_SET_ID:'SET-1',CURRENT_RELEASE_ID:releaseId,CURRENT_HASH_REVIEW_ID:hashReviewId,CURRENT_EVIDENCE_CHAIN_VERSION:null});
   const requirement=record('requirements',{REQ_ID:'REQ-1',SOURCE_ID:'SRC-1',USER_INPUT_RELATIONSHIP:'CURRENT_USER_INPUT',MANDATORY_OPTIONAL_STATUS:'MANDATORY',STATUS:'ACTIVE'},'REQ-1',scope);
   const source=record('sources',{SOURCE_ID:'SRC-1',SOURCE_TYPE:'APPLICATION',STATUS:'CURRENT',AUTHORITY_LEVEL:'AUTHORITATIVE'},'SRC-1',scope);
   const product=record('products',{PRODUCT_ID:productId,PRODUCT_VERSION:'1.0.0',BASELINE_ID:baselineId,EXECUTION_ID:'EXEC-1',STATUS:'COMPLETED'},'PROD-1',scope);
-  const release=record('releaseRecords',{RELEASE_ID:releaseId,PRODUCT_ID:productId,BASELINE_ID:baselineId,HASH_REVIEW_ID:hashReviewId,DETERMINATION:'ACCEPTED',CONTROLLING_EVIDENCE:'EVIDENCE-REL-1'},'REL-1',scope);
+  const release=record('releaseRecords',{RELEASE_ID:releaseId,PRODUCT_ID:productId,BASELINE_ID:baselineId,HASH_REVIEW_ID:hashReviewId,DETERMINATION:'BLOCKED',CONTROLLING_EVIDENCE:'EVIDENCE-REL-1'},'REL-1',scope);
   const evidence=record('evidenceRecords',{APPLICATION_EVIDENCE_KIND:'TEST_OUTPUT',APPLICATION_EVIDENCE_CONTENT:'Evidence for requirement REQ-1 is complete and bound to the current release/product/baseline.',SHA256:'0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',STATUS:'CURRENT'},'EVID-1',scope);
   evidence.source='APPLICATION_TEST_RUNTIME';
   const instruction=record('instructions',{INSTRUCTION_ID:'INSTR-1',STATUS:'CURRENT',INSTRUCTION_TEXT:'Execute the Stage 29 requirement evidence validation.'},'INSTR-1',scope);
@@ -59,53 +59,133 @@ const makeProject=({releaseId='REL-1',productId='PROD-1',baselineId='BASE-1',has
   return p;
 };
 
+// Lightweight custody-only fixture: no accepted release or complete chain is claimed.
+const makeCustodyProject=()=>{
+ const p=core.createBlankState('DISPOSABLE-CUSTODY-CONTROLS');engine.ensureShape(p);
+ Object.assign(p.job,{JOB_ID:'JOB-CUSTODY-CONTROLS',CURRENT_INPUT_VERSION:scope.inputVersion,CURRENT_SOURCE_SET_VERSION:scope.sourceSetVersion,CURRENT_REQUIREMENTS_VERSION:scope.requirementsVersion,CURRENT_TEST_SUITE_VERSION:scope.testSuiteVersion,CURRENT_INSTRUCTION_VERSION:scope.instructionVersion,CURRENT_ITERATION:scope.iterationId,CURRENT_CANDIDATE_ID:scope.candidateId,CURRENT_BASELINE_ID:scope.baselineId,CURRENT_PRODUCT_ID:scope.productId,CURRENT_PRODUCT_VERSION:scope.productVersion,CURRENT_DELIVERY_CANDIDATE_SET_ID:scope.deliveryCandidateSetId,CURRENT_RELEASE_ID:'REL-1',CURRENT_HASH_REVIEW_ID:'HASH_REVIEW-'+'7'.repeat(64),CURRENT_EVIDENCE_CHAIN_VERSION:'EVIDENCE-CHAIN-CUSTODY-ONLY'});
+ const evidence=record('evidenceRecords',{APPLICATION_EVIDENCE_KIND:'TEST_OUTPUT',APPLICATION_EVIDENCE_CONTENT:'Synthetic generic test-output evidence; no backup export observation.',SHA256:'9'.repeat(64),STATUS:'CURRENT'},'EVID-1',engine.currentScope(p));evidence.source='APPLICATION_TEST_RUNTIME';p.projectData.evidenceRecords.push(evidence);return p;
+};
+
 // Empty and incomplete binding universes cannot obtain completion from missing data.
 const emptyProject=core.createBlankState('DISPOSABLE-EMPTY-EVIDENCE-UNIVERSE');engine.ensureShape(emptyProject);
 assert.equal(engine.currentEvidenceChainSet(emptyProject).complete,false,'An unreviewed empty mandatory universe must not pass Stage 29.');
 assert.equal(engine.calculateEvidenceChains(emptyProject).complete,false,'The direct calculation must preserve the unknown empty universe.');
 engine.recalculate(emptyProject);
 assert.equal(emptyProject.stages[29].derivedData.MANDATORY_EVIDENCE_CHAIN_COVERAGE,null,'An unreviewed empty denominator must remain unknown, not 100%.');
+// A supplied prerequisite is mandatory when named. Never fall back from a missing,
+// stale-source or expired input to renewed capability claims or a historical clock.
+const sharedFixturePath=process.env.CLRT_STAGE29_FIXTURE_PATH;
+const fixturePath=sharedFixturePath||path.join(process.cwd(),`.stage29-prerequisite-${process.pid}.json`);
+if(!sharedFixturePath){
+ const fullCycleSource=fs.readFileSync('verify-full-cycle.mjs','utf8'),anchor='await captureStage29Prerequisite();';
+ assert.equal(fullCycleSource.split(anchor).length,2,'The normal producer must expose exactly one Stage 29 prerequisite boundary.');
+ const instrumentedPath=path.join(process.cwd(),`.stage29-prerequisite-producer-${process.pid}.mjs`),marker='STAGE29_PREREQUISITE_CAPTURED_NOT_FULL_OWNER_RECEIPT';
+ fs.writeFileSync(instrumentedPath,fullCycleSource.replace(anchor,anchor+`console.log(${JSON.stringify(marker)});process.exit(0);`));
+ try{const output=await checkedVerifier(process.execPath,[instrumentedPath],{encoding:'utf8',timeout:1800000,maxBuffer:64*1024*1024,env:{...process.env,CLRT_STAGE29_FIXTURE_PATH:fixturePath}});assert.match(output,new RegExp(marker));}
+ finally{fs.rmSync(instrumentedPath,{force:true});}
+}
+assert(fs.existsSync(fixturePath),'STAGE29_PREREQUISITE_MISSING: the supplied fresh prerequisite does not exist.');
+const captured=JSON.parse(fs.readFileSync(fixturePath,'utf8'));
+assert.equal(captured.schema,'closed-loop-stage29-prerequisite-fixture/1','STAGE29_PREREQUISITE_SCHEMA');
+assert.equal(captured.captureKind,'FRESH_SYNTHETIC_LIFECYCLE_PREREQUISITE_NOT_FULL_OWNER_RECEIPT','STAGE29_PREREQUISITE_PROVENANCE');
+assert.equal(captured.boundary,'after-stage28-before-first-evidence-chain-command','STAGE29_PREREQUISITE_BOUNDARY');
+assert(Number.isFinite(Date.parse(captured.capturedAt))&&Date.parse(captured.capturedAt)<=Date.now(),'STAGE29_PREREQUISITE_REAL_CLOCK');
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js','verifier-runtime.mjs','verify-full-cycle.mjs','test-fixtures.mjs','test-derivation-receipt-contract.mjs','test-accepted-run-correction-journey.mjs','test-release-semantic-fixture.mjs','test-project-store-runtime.mjs','test-stage29-investigation.mjs','test-exact-verification-tuples.mjs','full-cycle-prerequisite.mjs','operator-journey-fixtures.mjs','specification/closed-loop-reliability-controlling-implementation-specification.txt','stage-projection-verification.mjs','test-app-markup.mjs','test-artifact-fixtures.mjs','test-handoff-authorization.mjs','test-history-source-fallback.mjs','test-import-inspection-pure-work.mjs','test-mixed-history-inspection.mjs','test-mixed-history-recovery.mjs','test-reservation-scope-fixture.mjs','test-stage05-review-projection.mjs','test-worker.js','test-zip.mjs','verify-conformance-regressions.mjs','verify-product-attachment-journey.mjs'])assert.equal(captured.sourceHashes?.[file],createHash('sha256').update(fs.readFileSync(file,'utf8')).digest('hex'),'STAGE29_PREREQUISITE_SOURCE_MISMATCH: '+file);
+const originalProducer=fs.readFileSync('verify-full-cycle.mjs','utf8'),producerAnchor='await captureStage29Prerequisite();',producerAppend='console.log("STAGE29_PREREQUISITE_CAPTURED_NOT_FULL_OWNER_RECEIPT");process.exit(0);';
+assert.equal(captured.producer?.originalSourceSha256,captured.sourceHashes['verify-full-cycle.mjs'],'STAGE29_PREREQUISITE_ORIGINAL_PRODUCER_IDENTITY');
+assert.equal(originalProducer.split(producerAnchor).length,2,'STAGE29_PREREQUISITE_SINGLE_CAPTURE_ANCHOR');
+assert(['ORDINARY_FULL_CYCLE_PRODUCER','STANDALONE_PREREQUISITE_PREFIX'].includes(captured.producer?.mode),'STAGE29_PREREQUISITE_PRODUCER_MODE');
+const ordinaryProducer=captured.producer.mode==='ORDINARY_FULL_CYCLE_PRODUCER',expectedProducer=ordinaryProducer?originalProducer:originalProducer.replace(producerAnchor,producerAnchor+producerAppend);
+assert.deepEqual(captured.producer.transform,ordinaryProducer?null:{anchor:producerAnchor,append:producerAppend,occurrences:1},'STAGE29_PREREQUISITE_EXACT_PRODUCER_TRANSFORM');
+assert.equal(captured.producer.executedScriptSha256,createHash('sha256').update(expectedProducer,'utf8').digest('hex'),'STAGE29_PREREQUISITE_EXECUTED_SCRIPT_IDENTITY');
+assert.equal(typeof captured.projectJson,'string','STAGE29_PREREQUISITE_PROJECT_BYTES');
+assert.equal(createHash('sha256').update(captured.projectJson,'utf8').digest('hex'),captured.projectSha256,'STAGE29_PREREQUISITE_PROJECT_BYTE_IDENTITY');
+const runtime=projectStoreRuntime();await runtime.store.ready;
+const sourceEngine=runtime.engine,prompts=runtime.prompts;
+const sourceProject=runtime.copy(JSON.parse(captured.projectJson)),evidenceHash=runtime.runtime.closedLoopHash;
+assert.equal(evidenceHash.sha256Value(sourceProject),captured.canonicalProjectSha256,'STAGE29_PREREQUISITE_CANONICAL_IDENTITY');
+const sourcePrompts=sourceProject.projectData.generatedPrompts;
+assert(Array.isArray(captured.promptContextFiles)&&captured.promptContextFiles.length===sourcePrompts.length,'STAGE29_PREREQUISITE_EXACT_PROMPT_MEMBERSHIP');
+for(const prompt of sourcePrompts){
+ const entries=captured.promptContextFiles.filter(entry=>entry.instructionId===(prompt.instructionId||prompt.promptId));
+ assert.equal(entries.length,1,'STAGE29_PREREQUISITE_EXACT_INSTRUCTION_ID');
+ prompts.retainPromptContextFiles(prompt,runtime.copy(entries[0].files));
+ prompts.materializePromptContextFiles(prompt); // Exact retained bytes only; no state-based reconstruction.
+ await runtime.store.persistPromptContextFiles(prompt,sourceProject);
+}
+await restoreArtifactFixture(runtime.store,captured.artifacts); // Public reads reobserve the exact stored bytes.
+assert.equal(evidenceHash.sha256Value(sourceProject),captured.canonicalProjectSha256,'STAGE29_PREREQUISITE_RESTORATION_PRESERVES_SOURCE');
+const sourceContracts=sourceEngine.recordsForCurrentScope(sourceProject,'sourceSearchContracts');
+assert(sourceContracts.length>0,'STAGE29_PREREQUISITE_MISSING_SOURCE_CAPABILITY');
+for(const contract of sourceContracts)assert.equal(sourceEngine.sourceSearchCapabilityState(sourceProject,contract).complete,true,'STAGE29_PREREQUISITE_EXPIRED_OR_INVALID_SOURCE: current real-clock capability evidence is required.');
+const sourceIntegrity=runtime.store.validateProjectIntegrity(sourceProject);
+assert.equal(sourceIntegrity.valid,true,'STAGE29_PREREQUISITE_RESTORED_PROJECT_INTEGRITY: '+JSON.stringify(sourceIntegrity.errors||sourceIntegrity.issues||[]));
+const sourceRelease=sourceEngine.recordsForCurrentScope(sourceProject,'releaseRecords').find(row=>sourceEngine.recordId(row,'releaseRecords')===sourceProject.job.CURRENT_RELEASE_ID);
+assert(sourceRelease&&sourceEngine.recordValue(sourceRelease,'DETERMINATION')==='ACCEPTED','STAGE29_PREREQUISITE_ACCEPTED_RELEASE');
+assert.equal(sourceEngine.releaseRecordMatchesBinding(sourceRelease,sourceEngine.releaseBinding(sourceProject)),true,'STAGE29_PREREQUISITE_CURRENT_RELEASE_IDENTITY');
+assert.equal(sourceEngine.gate(28,sourceProject).complete,true,'STAGE29_PREREQUISITE_CURRENT_ARTIFACT_IDENTITY');
+assert.equal(sourceEngine.recordsForCurrentScope(sourceProject,'evidenceChains').length,0,'STAGE29_PREREQUISITE_BEFORE_FIRST_POSITIVE_COMMAND');
+assert.equal(sourceProject.projectData.commandReceipts.filter(row=>row.COMMAND_ID==='CALCULATE_EVIDENCE_CHAINS').length,0,'STAGE29_PREREQUISITE_NO_PRIOR_CHAIN_RECEIPT');
+assert.equal(evidenceHash.sha256Value(sourceProject),captured.canonicalProjectSha256,'STAGE29_PREREQUISITE_CHECKS_PRESERVE_SOURCE');
+// Producer-declared authored slots form the independent population oracle. Check
+// their retained accepted rows before comparing either production selector.
+assert(['original-final-product-only','governed-preproduct-and-separate-final-product'].includes(captured.fixtureVariant),'STAGE29_PREREQUISITE_FIXTURE_VARIANT');
+const authoredRequirements=captured.authoredRequirements,expectedSlots=captured.fixtureVariant==='original-final-product-only'?['req']:['req','preproduct-req'];
+assert(Array.isArray(authoredRequirements),'STAGE29_PREREQUISITE_AUTHORED_REQUIREMENT_DECLARATION');
+assert.deepEqual(authoredRequirements.map(row=>row.temporaryKey),expectedSlots,'STAGE29_PREREQUISITE_AUTHORED_REQUIREMENT_SLOTS');
+const requirementIds=runtime.copy(authoredRequirements.map(row=>row.requirementId));
+assert(requirementIds.every(id=>typeof id==='string'&&id.length>0)&&new Set(requirementIds).size===expectedSlots.length,'STAGE29_PREREQUISITE_DISTINCT_AUTHORED_REQUIREMENTS');
+for(const declared of authoredRequirements){
+ const rows=sourceProject.projectData.requirements.filter(row=>row.id===declared.requirementId);
+ assert.equal(rows.length,1,'STAGE29_PREREQUISITE_EXACT_AUTHORED_REQUIREMENT_ROW');
+ const row=rows[0];assert(row.fields.REQ_ID===declared.requirementId&&row.temporaryKey===declared.temporaryKey&&row.stage===4&&row.active!==false&&!row.invalidatedBy&&row.fields.MANDATORY_OPTIONAL_STATUS==='MANDATORY','STAGE29_PREREQUISITE_CURRENT_AUTHORED_REQUIREMENT');
+ const changes=sourceProject.projectData.acceptedChanges.filter(change=>change.stage===4&&change.operation==='COMPLETE'&&change.status==='COMMITTED'&&!change.invalidatedBy&&change.jobId===sourceProject.job.JOB_ID&&change.rawResponseId===row.rawResponseId&&change.proposalId===row.sourceProposalId&&change.canonicalRecordIds.includes(declared.requirementId));
+ assert.equal(changes.length,1,'STAGE29_PREREQUISITE_AUTHORED_REQUIREMENT_COMMITTED_ACCEPTANCE');
+}
+const observedMandatoryIds=sourceEngine.mandatoryRequirements(sourceProject).map(row=>sourceEngine.recordId(row,'requirements'));
+assert.deepEqual([...observedMandatoryIds].sort(),[...requirementIds].sort(),'STAGE29_INDEPENDENT_MANDATORY_REQUIREMENT_POPULATION');
+const validProject=sourceEngine.clone(sourceProject),validSet=sourceEngine.currentEvidenceChainSet(validProject);
+assert(requirementIds.length>0,'A mandatory requirement must be present in the current scope.');
+assert.deepEqual([...validSet.requirementIds].sort(),[...requirementIds].sort(),'The current mandatory universe must match the independently declared authored prerequisite.');
+assert.equal(validSet.complete,false,'A prerequisite without calculated chains cannot claim Stage 29 completion.');
+const receiptCount=validProject.projectData.commandReceipts.length;
+const validResult=sourceEngine.calculateEvidenceChains(validProject);
+assert.equal(validResult.complete,true,'The application command must compute a complete current evidence-chain set.');
+assert.equal(sourceEngine.currentEvidenceChainSet(validProject).complete,true,'The exact current product, release, baseline, and hash-review binding should complete the Stage 29 set.');
+assert.equal(validResult.version,validProject.job.CURRENT_EVIDENCE_CHAIN_VERSION,'The current version must match the authoritative calculated set.');
+assert.equal(validProject.projectData.commandReceipts.length,receiptCount+1,'The command must be logged as a single idempotent receipt.');
+const beforeRetrySha256=evidenceHash.sha256Value(validProject),idempotentRetry=sourceEngine.calculateEvidenceChains(validProject);
+assert.equal(evidenceHash.sha256Value(validProject),beforeRetrySha256,'STAGE29_EXACT_RETRY_PRESERVES_CANONICAL_PROJECT');
+assert.equal(idempotentRetry.version,validResult.version,'Idempotent retry must return the same current evidence-chain version.');
+assert.equal(validProject.projectData.commandReceipts.length,receiptCount+1,'An idempotent retry must not duplicate the authoritative evidence-chain receipt.');
+
 for(const missing of ['RELEASE_DECISION_ID','HASH_REVIEW_ID','PRODUCT_ELEMENT','BASELINE_ID']){
- const project=makeProject(),chain=project.projectData.evidenceChains[0];delete chain[missing];delete chain.fields[missing];if(chain.relationships)delete chain.relationships[missing];
- const set=engine.currentEvidenceChainSet(project);project.job.CURRENT_EVIDENCE_CHAIN_VERSION=set.expectedVersion;
- assert.equal(engine.currentEvidenceChainSet(project).complete,false,'Missing '+missing+' must not satisfy current evidence closure.');
+ const project=sourceEngine.clone(validProject),chain=project.projectData.evidenceChains.find(row=>row.id===validResult.chainIds[0]);delete chain[missing];delete chain.fields[missing];if(chain.relationships)delete chain.relationships[missing];sourceEngine.refreshRecordHashes(chain,'evidenceChains');
+ const set=sourceEngine.currentEvidenceChainSet(project);project.job.CURRENT_EVIDENCE_CHAIN_VERSION=set.expectedVersion;
+ assert.equal(sourceEngine.currentEvidenceChainSet(project).complete,false,'Missing '+missing+' must not satisfy current evidence closure.');
 }
 for(const dimension of ['inputVersion','requirementsVersion','testSuiteVersion','instructionVersion','productId','baselineId']){
- const project=makeProject();project.projectData.evidenceChains[0].scope={...scope,[dimension]:'HISTORICAL'};
- project.job.CURRENT_EVIDENCE_CHAIN_VERSION=engine.currentEvidenceChainSet(project).expectedVersion;
- assert.equal(engine.currentEvidenceChainSet(project).complete,false,'Historical '+dimension+' evidence was accepted.');
+ const project=sourceEngine.clone(validProject),chain=project.projectData.evidenceChains.find(row=>row.id===validResult.chainIds[0]);chain.scope=runtime.copy({...chain.scope,[dimension]:'HISTORICAL'});sourceEngine.refreshRecordHashes(chain,'evidenceChains');
+ project.job.CURRENT_EVIDENCE_CHAIN_VERSION=sourceEngine.currentEvidenceChainSet(project).expectedVersion;
+ assert.equal(sourceEngine.currentEvidenceChainSet(project).complete,false,'Historical '+dimension+' evidence was accepted.');
 }
-
-const validProject=makeProject();
-const validSet=engine.currentEvidenceChainSet(validProject);
-assert.equal(validSet.requirementIds.includes('REQ-1'),true,'A mandatory requirement must be present in the current scope.');
-validProject.job.CURRENT_EVIDENCE_CHAIN_VERSION=validSet.expectedVersion;
-assert.equal(engine.currentEvidenceChainSet(validProject).complete,true,'The exact current product, release, baseline, and hash-review binding should complete the Stage 29 set.');
-const validResult=engine.calculateEvidenceChains(validProject);
-assert.equal(validResult.complete,true,'The application command must compute a complete current evidence-chain set.');
-assert.equal(validResult.version,validProject.job.CURRENT_EVIDENCE_CHAIN_VERSION,'The current version must match the authoritative calculated set.');
-assert.equal(validProject.projectData.commandReceipts.length,1,'The command must be logged as a single idempotent receipt.');
-const idempotentRetry=engine.calculateEvidenceChains(validProject);
-assert.equal(idempotentRetry.version,validResult.version,'Idempotent retry must return the same current evidence-chain version.');
-assert.equal(validProject.projectData.commandReceipts.length,1,'An idempotent retry must not duplicate the authoritative evidence-chain receipt.');
 
 // Independent §34.1/§36.6 oracle: exact canonical records and registered set
 // membership, with only the declared self-dependent/audit omissions. This does
 // not use the production evidenceChainSetPreimage/hash construction path.
-const evidenceHash=globalThis.closedLoopHash;
-const oracleScope={...engine.currentScope(validProject)};delete oracleScope.projectRevision;delete oracleScope.evidenceChainVersion;
-const oracleChains=structuredClone(engine.currentEvidenceChainSet(validProject).records);
+const oracleScope={...sourceEngine.currentScope(validProject)};delete oracleScope.projectRevision;delete oracleScope.evidenceChainVersion;
+const oracleChains=structuredClone(sourceEngine.currentEvidenceChainSet(validProject).records);
 for(const record of oracleChains){for(const key of ['recordSha256','sha256','contentSha256','createdAt','updatedAt','eventSequence','EVIDENCE_CHAIN_VERSION'])delete record[key];delete record.fields.EVIDENCE_CHAIN_VERSION;delete record.scope.evidenceChainVersion;delete record.scope.projectRevision;}
 const compareBytes=(a,b)=>Buffer.compare(Buffer.from(a),Buffer.from(b));oracleChains.sort((a,b)=>compareBytes(evidenceHash.stableStringify(a.id),evidenceHash.stableStringify(b.id)));
-const expectedSubject={jobId:String(validProject.job.JOB_ID),scope:oracleScope,requirementIds:['REQ-1'],chainRecords:oracleChains},expectedSetSha256=createHash('sha256').update(evidenceHash.stableStringify(expectedSubject),'utf8').digest('hex');
+const expectedSubject={jobId:String(validProject.job.JOB_ID),scope:oracleScope,requirementIds,chainRecords:oracleChains},expectedSetSha256=createHash('sha256').update(evidenceHash.stableStringify(runtime.copy(expectedSubject)),'utf8').digest('hex');
 assert.equal(validResult.setHash,expectedSetSha256,'EXACT_CHAIN_SHA_ORACLE: the full SHA-256 must bind the independently reconstructed complete chain subject.');assert.equal(validResult.setHash.length,64);
 const linkChanges=[];
 for(const key of ['AUTHORITY_ID','INSTRUCTION_ID','EXECUTION_ID','TEST_ID','TEST_RESULT_ID','EVIDENCE_ID','ARTIFACT_HASH_IDENTITY']){
- const changed=structuredClone(validProject),record=changed.projectData.evidenceChains.find(row=>row.id===validResult.chainIds[0]),old=record.fields[key],value=Array.isArray(old)?[...old,'CONTROLLED_DIFFERENT_LINK']:String(old)+'-CONTROLLED_DIFFERENT_LINK';record.fields[key]=value;record[key]=value;engine.refreshRecordHashes(record,'evidenceChains');const actual=engine.currentEvidenceChainSet(changed);
- assert.notEqual(actual.setHash,expectedSetSha256,'EXACT_CHAIN_LINK_ORACLE: '+key+' must be part of the complete canonical subject.');assert.equal(actual.complete,false,'EXACT_CHAIN_LINK_ORACLE: previous version must become stale after '+key+' changes.');linkChanges.push(key);
+ const changed=sourceEngine.clone(validProject),record=changed.projectData.evidenceChains.find(row=>row.id===validResult.chainIds[0]),old=record.fields[key],value=Array.isArray(old)?[...old,'CONTROLLED_DIFFERENT_LINK']:String(old)+'-CONTROLLED_DIFFERENT_LINK';record.fields[key]=runtime.copy(value);record[key]=record.fields[key];sourceEngine.refreshRecordHashes(record,'evidenceChains');const changedChains=validResult.chainIds.map(id=>changed.projectData.evidenceChains.find(row=>row.id===id)),changedDigest=sourceEngine.evidenceChainSetHash(changed,changedChains),actual=sourceEngine.currentEvidenceChainSet(changed);
+ assert.match(changedDigest,/^[0-9a-f]{64}$/,'EXACT_CHAIN_LINK_ORACLE: direct canonical digest must remain non-null.');assert.notEqual(changedDigest,expectedSetSha256,'EXACT_CHAIN_LINK_ORACLE: '+key+' must be part of the complete canonical subject.');assert.equal(actual.complete,false,'EXACT_CHAIN_LINK_ORACLE: previous version must become stale after '+key+' changes.');linkChanges.push(key);
 }
-const oldSummaryDigest=evidenceHash.sha256Value(engine.currentEvidenceChainSet(validProject).records.map(record=>({reqId:String(engine.recordValue(record,'REQ_ID')),chainId:record.id,status:String(engine.recordValue(record,'STATUS')),releaseId:String(engine.recordValue(record,'RELEASE_DECISION_ID')),productId:String(engine.recordValue(record,'PRODUCT_ELEMENT')),baselineId:String(engine.recordValue(record,'BASELINE_ID')),hashReviewId:String(engine.recordValue(record,'HASH_REVIEW_ID'))}))).slice(0,32),oldSummaryProject=structuredClone(validProject);oldSummaryProject.job.CURRENT_EVIDENCE_CHAIN_VERSION='EVIDENCE-CHAIN-'+oldSummaryDigest.toUpperCase();assert.equal(engine.currentEvidenceChainSet(oldSummaryProject).complete,false,'EXACT_CHAIN_SHA_ORACLE: the original truncated summary version must not establish current completion.');
-const verificationObservations=[{checkId:'evidence-chain-full-canonical-sha256',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:3033','specification/closed-loop-reliability-controlling-implementation-specification.txt:3282-3236'],boundary:'actual Stage29 command/current-set/checkpoint owner',expected:{setSha256:expectedSetSha256,digestLength:64,materialLinksBound:linkChanges},observed:{setSha256:validResult.setHash,digestLength:validResult.setHash.length,materialLinksBound:linkChanges},passed:true},{checkId:'evidence-chain-old-summary-rejected',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:3033'],boundary:'actual current evidence-chain set gate',expected:{complete:false,digestLength:32},observed:{complete:engine.currentEvidenceChainSet(oldSummaryProject).complete,digestLength:oldSummaryDigest.length},violation:'truncated chain summary substitutes for full canonical chain',accepted:false,passed:true}];
+const oldSummaryDigest=evidenceHash.sha256Value(runtime.copy(sourceEngine.currentEvidenceChainSet(validProject).records.map(record=>({reqId:String(sourceEngine.recordValue(record,'REQ_ID')),chainId:record.id,status:String(sourceEngine.recordValue(record,'STATUS')),releaseId:String(sourceEngine.recordValue(record,'RELEASE_DECISION_ID')),productId:String(sourceEngine.recordValue(record,'PRODUCT_ELEMENT')),baselineId:String(sourceEngine.recordValue(record,'BASELINE_ID')),hashReviewId:String(sourceEngine.recordValue(record,'HASH_REVIEW_ID'))})))).slice(0,32),oldSummaryProject=sourceEngine.clone(validProject);oldSummaryProject.job.CURRENT_EVIDENCE_CHAIN_VERSION='EVIDENCE-CHAIN-'+oldSummaryDigest.toUpperCase();assert.equal(sourceEngine.currentEvidenceChainSet(oldSummaryProject).complete,false,'EXACT_CHAIN_SHA_ORACLE: the original truncated summary version must not establish current completion.');
+const verificationObservations=[{checkId:'evidence-chain-full-canonical-sha256',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:3033','specification/closed-loop-reliability-controlling-implementation-specification.txt:3282-3236'],boundary:'actual Stage29 command/current-set/checkpoint owner',expected:{setSha256:expectedSetSha256,digestLength:64,materialLinksBound:linkChanges},observed:{setSha256:validResult.setHash,digestLength:validResult.setHash.length,materialLinksBound:linkChanges},passed:true},{checkId:'evidence-chain-old-summary-rejected',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:3033'],boundary:'actual current evidence-chain set gate',expected:{complete:false,digestLength:32},observed:{complete:sourceEngine.currentEvidenceChainSet(oldSummaryProject).complete,digestLength:oldSummaryDigest.length},violation:'truncated chain summary substitutes for full canonical chain',accepted:false,passed:true}];
 
 // Section37 Stage29 construction is separate from validating a preseeded
 // chain. The literal expected identities come from makeProject's declared
@@ -116,61 +196,65 @@ const verificationObservations=[{checkId:'evidence-chain-full-canonical-sha256',
  assert.equal(unbuilt.projectData.evidenceChains.length,0,'STAGE29_CONSTRUCTION_EMPTY_START_ORACLE');
  const result=engine.calculateEvidenceChains(unbuilt),created=engine.recordsForCurrentScope(unbuilt,'evidenceChains').find(row=>engine.recordValue(row,'REQ_ID')==='REQ-1');
  assert(created,'STAGE29_APPLICATION_CONSTRUCTION_ORACLE: no current chain was constructed');
+ assert.equal(result.complete,false,'STAGE29_STRUCTURAL_FIXTURE_CANNOT_CLAIM_COMPLETION');
  const expected={stage:29,source:'APPLICATION_DERIVATION',derivationKey:'stage29.evidenceChains',requirementId:'REQ-1',authorityId:'SRC-1',instructionId:'INSTR-1',executionId:'EXEC-1',productId:'PROD-1'};
  const observed={stage:created.stage,source:created.source,derivationKey:created.derivationKey,requirementId:engine.recordValue(created,'REQ_ID'),authorityId:engine.recordValue(created,'AUTHORITY_ID'),instructionId:engine.recordValue(created,'INSTRUCTION_ID'),executionId:engine.recordValue(created,'EXECUTION_ID'),productId:engine.recordValue(created,'PRODUCT_ELEMENT')};
  assert.deepEqual(observed,expected,'STAGE29_APPLICATION_CONSTRUCTION_ORACLE');assert.notEqual(observed.executionId,observed.productId,'STAGE29_DISTINCT_EXECUTION_PRODUCT_ORACLE');assert(result.chainIds.includes(created.id),'STAGE29_CONSTRUCTION_RETURN_ORACLE');
  verificationObservations.push({checkId:'stage29.application-construction-from-empty',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:3648'],boundary:'Actual CALCULATE_EVIDENCE_CHAINS command from zero chain records -> application canonical chain creation',expected,observed,passed:true,scopeLimit:'Explicit synthetic canonical source/requirement/trace/product/result fixture; no prior-stage completion or physical/external action claimed; structural chain creation does not imply sufficient evidence or completed Stage29.'});
 }
 
-const staleProject=makeProject({releaseId:'REL-2',chainReleaseId:'REL-1'});
-const staleSet=engine.currentEvidenceChainSet(staleProject);
+const staleProject=sourceEngine.clone(validProject),staleChain=staleProject.projectData.evidenceChains.find(row=>row.id===validResult.chainIds[0]);staleChain.fields.RELEASE_DECISION_ID=staleChain.RELEASE_DECISION_ID='CONTROLLED-OTHER-RELEASE';sourceEngine.refreshRecordHashes(staleChain,'evidenceChains');
+const staleSet=sourceEngine.currentEvidenceChainSet(staleProject);
 assert.equal(staleSet.complete,false,'Releasing a stale evidence chain must reopen Stage 29.');
-assert.ok(staleSet.unknown.includes('REQ-1'),'A stale release binding must leave the requirement in the unknown set.');
+assert.ok(staleSet.unknown.includes(sourceEngine.recordValue(staleChain,'REQ_ID')),'A stale release binding must leave the requirement in the unknown set.');
 
-const weakProject=makeProject({missingLinks:['MISSING-EVIDENCE-LINK']});
-const weakSet=engine.currentEvidenceChainSet(weakProject);
+const weakProject=sourceEngine.clone(validProject),weakChain=weakProject.projectData.evidenceChains.find(row=>row.id===validResult.chainIds[0]);weakChain.fields.MISSING_LINKS=weakChain.MISSING_LINKS=runtime.copy(['MISSING-EVIDENCE-LINK']);sourceEngine.refreshRecordHashes(weakChain,'evidenceChains');
+const weakSet=sourceEngine.currentEvidenceChainSet(weakProject);
 assert.equal(weakSet.complete,false,'Weak or missing evidence links must leave the chain incomplete.');
-assert.ok(weakSet.unknown.includes('REQ-1')||weakSet.missing.includes('REQ-1'),'Weak evidence must be rejected as incomplete.');
+assert.ok(weakSet.unknown.includes(sourceEngine.recordValue(weakChain,'REQ_ID'))||weakSet.missing.includes(sourceEngine.recordValue(weakChain,'REQ_ID')),'Weak evidence must be rejected as incomplete.');
 
 // Invalid checkpoint evidence must be rejected through the real production transition.
-const nonexistentEvidenceProject=makeProject();
-engine.calculateEvidenceChains(nonexistentEvidenceProject);
+const nonexistentEvidenceProject=makeCustodyProject();
 const nonexistentCheckpoint=engine.createPreDeliveryCheckpoint(nonexistentEvidenceProject,{packageId:'PKG-NONE',packageSha256:'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',artifactManifestSha256:'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'});
 const nonexistentCount=nonexistentEvidenceProject.projectData.backupCheckpoints.length;
 assert.throws(()=>engine.recordPreDeliveryCheckpointExport(nonexistentEvidenceProject,{checkpointId:nonexistentCheckpoint.CHECKPOINT_ID,exportEvidenceIds:['EVID-NOT-EXIST']}),/evidence|export|custody/i,'A nonexistent evidence ID must not manufacture BACKUP_EXPORT_ACTION_COMPLETED.');
 assert.equal(nonexistentEvidenceProject.projectData.backupCheckpoints.length,nonexistentCount,'Rejected export evidence must not mutate checkpoint state.');
 
-const genericEvidenceProject=makeProject();
-engine.calculateEvidenceChains(genericEvidenceProject);
+const genericEvidenceProject=makeCustodyProject();
 const genericCheckpoint=engine.createPreDeliveryCheckpoint(genericEvidenceProject,{packageId:'PKG-GENERIC',packageSha256:'cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',artifactManifestSha256:'dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd'});
 const genericCount=genericEvidenceProject.projectData.backupCheckpoints.length;
 assert.throws(()=>engine.recordPreDeliveryCheckpointExport(genericEvidenceProject,{checkpointId:genericCheckpoint.CHECKPOINT_ID,exportEvidenceIds:['EVID-1']}),/evidence|export|custody/i,'Generic application test-output evidence must not prove a backup export action.');
 assert.equal(genericEvidenceProject.projectData.backupCheckpoints.length,genericCount,'Rejected generic evidence must not mutate checkpoint state.');
 
-const fabricatedProject=makeProject();
-engine.calculateEvidenceChains(fabricatedProject);
+const fabricatedProject=makeCustodyProject();
 fabricatedProject.projectData.backupCheckpoints.push(record('backupCheckpoints',{CHECKPOINT_ID:'CHECK-FAB',PACKAGE_ID:'PKG-FAB',PACKAGE_SHA256:'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',CUSTODY_STATE:'BACKUP_EXPORT_ACTION_COMPLETED',EXTERNAL_EVIDENCE_IDS:['EVID-1'],STATUS:'CURRENT'},'CHECK-FAB',{}));
 assert.equal(engine.currentPreDeliveryCheckpoint(fabricatedProject),null,'A manually fabricated exported checkpoint with missing current scope bindings must not satisfy the terminal prerequisite.');
 const fabricatedTerminal=engine.terminalPrerequisites(fabricatedProject);
 assert.equal(fabricatedTerminal.preDeliveryCheckpoint,null,'Terminal prerequisites must not expose a manually fabricated exported checkpoint as current.');
 assert.ok(fabricatedTerminal.reasons.some(reason=>reason.includes('BACKUP_EXPORT_ACTION_COMPLETED')),'Terminal prerequisites must preserve the pre-delivery checkpoint blocker when exported custody is fabricated.');
 
-const checkpointProject=makeProject();
-const calculated=engine.calculateEvidenceChains(checkpointProject);
+const checkpointProject=sourceEngine.clone(validProject);
+const calculated=sourceEngine.calculateEvidenceChains(checkpointProject);
 assert.equal(calculated.complete,true,'Checkpoint proof requires the exact current evidence-chain calculation first.');
-const checkpoint=engine.createPreDeliveryCheckpoint(checkpointProject,{packageId:'PKG-1',packageSha256:'abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789',artifactManifestSha256:'0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'});
+const checkpoint=sourceEngine.createPreDeliveryCheckpoint(checkpointProject,{packageId:'PKG-1',packageSha256:'abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789',artifactManifestSha256:'0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'});
 assert.equal(checkpoint.CUSTODY_STATE,'BACKUP_PACKAGE_GENERATED','The real checkpoint creation path must begin as generated package custody.');
-assert.equal(engine.currentPreDeliveryCheckpoint(checkpointProject),null,'Generated-only backup custody must not satisfy the terminal pre-delivery gate.');
-const exportEvidence=record('evidenceRecords',{APPLICATION_EVIDENCE_KIND:'BACKUP_EXPORT_ACTION_COMPLETED',APPLICATION_EVIDENCE_CONTENT:JSON.stringify({checkpointId:checkpoint.CHECKPOINT_ID,packageId:checkpoint.PACKAGE_ID,packageSha256:checkpoint.PACKAGE_SHA256}),SHA256:'9999999999999999999999999999999999999999999999999999999999999999',STATUS:'CURRENT'},'EVID-EXPORT-1',{...scope,releaseId:'REL-1',hashReviewId:'HASH_REVIEW-'+ '7'.repeat(64),evidenceChainVersion:checkpointProject.job.CURRENT_EVIDENCE_CHAIN_VERSION});
+assert.equal(sourceEngine.currentPreDeliveryCheckpoint(checkpointProject),null,'Generated-only backup custody must not satisfy the terminal pre-delivery gate.');
+const exportEvidence=runtime.copy(record('evidenceRecords',{APPLICATION_EVIDENCE_KIND:'BACKUP_EXPORT_ACTION_COMPLETED',APPLICATION_EVIDENCE_CONTENT:JSON.stringify({checkpointId:checkpoint.CHECKPOINT_ID,packageId:checkpoint.PACKAGE_ID,packageSha256:checkpoint.PACKAGE_SHA256}),SHA256:'9999999999999999999999999999999999999999999999999999999999999999',STATUS:'CURRENT'},'EVID-EXPORT-1',sourceEngine.currentScope(checkpointProject)));
 exportEvidence.source='OPERATOR_ACTION';
 checkpointProject.projectData.evidenceRecords.push(exportEvidence);
-const exported=engine.recordPreDeliveryCheckpointExport(checkpointProject,{checkpointId:checkpoint.CHECKPOINT_ID,exportEvidenceIds:['EVID-EXPORT-1']});
+const exported=sourceEngine.recordPreDeliveryCheckpointExport(checkpointProject,{checkpointId:checkpoint.CHECKPOINT_ID,exportEvidenceIds:['EVID-EXPORT-1']});
 assert.equal(exported.CUSTODY_STATE,'BACKUP_EXPORT_ACTION_COMPLETED','The terminal checkpoint must transition through a bound actual export-custody action.');
-assert.equal(engine.currentPreDeliveryCheckpoint(checkpointProject)?.CUSTODY_STATE,'BACKUP_EXPORT_ACTION_COMPLETED','Only a current exactly-bound export-custody state can satisfy the terminal gate.');
+assert.equal(sourceEngine.currentPreDeliveryCheckpoint(checkpointProject)?.CUSTODY_STATE,'BACKUP_EXPORT_ACTION_COMPLETED','Only a current exactly-bound export-custody state can satisfy the terminal gate.');
 
 // §35.9 / §41 item207: rank evidence-supported custody, never copied labels.
 // These disposable records exercise evidence admissibility only; no actual
 // external destination, disaster-recovery copy or exported-byte restore is claimed.
+{
+const checkpointProject=makeCustodyProject();
+assert.equal(engine.currentEvidenceChainSet(checkpointProject).complete,false,'Maturity controls use a custody-only fixture, never Stage 29 completion.');
+const checkpoint=engine.createPreDeliveryCheckpoint(checkpointProject,{packageId:'PKG-1',packageSha256:'abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789',artifactManifestSha256:'0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'});
+const exportEvidence=record('evidenceRecords',{APPLICATION_EVIDENCE_KIND:'BACKUP_EXPORT_ACTION_COMPLETED',APPLICATION_EVIDENCE_CONTENT:JSON.stringify({checkpointId:checkpoint.CHECKPOINT_ID,packageId:checkpoint.PACKAGE_ID,packageSha256:checkpoint.PACKAGE_SHA256}),SHA256:'9'.repeat(64),STATUS:'CURRENT'},'EVID-EXPORT-1',engine.currentScope(checkpointProject));exportEvidence.source='OPERATOR_ACTION';checkpointProject.projectData.evidenceRecords.push(exportEvidence);
+const exported=engine.recordPreDeliveryCheckpointExport(checkpointProject,{checkpointId:checkpoint.CHECKPOINT_ID,exportEvidenceIds:['EVID-EXPORT-1']});
 const custodyMaturityCases=[];
 const custodyCheck=(name,run)=>{try{run();custodyMaturityCases.push({name,passed:true});}catch(error){custodyMaturityCases.push({name,passed:false,message:error.message});}};
 const setCustodyField=(row,key,value)=>{row.fields[key]=value;row[key]=value;};
@@ -218,6 +302,8 @@ verificationObservations.push({checkId:'backup-custody-evidence-supported-maturi
 console.log(JSON.stringify({custodyMaturityCases}));
 assert(custodyMaturityCases.every(row=>row.passed),'Evidence-supported custody maturity controls must all pass.');
 
+}
+
 // Actual existing application observation route; future delivery outputs must
 // not stale the preauthorization minimum. Custody-only fixture never authorizes.
 {
@@ -255,4 +341,5 @@ console.log(JSON.stringify({scope:beforeScope,witness:{id:eid,source:witness.sou
 verificationObservations.push({checkId:'backup-export-native-observation-scope-output-boundary',requirementRefs:['NREQ-a855fdffbf43ae80dc0d26784d1e8980','NREQ-f7d22bdd8375c681a04c18d4c237b459'],boundary:'recordCheckpointExportAction -> currentPreDeliveryCheckpoint -> actual blocked terminal output/retry',cases:results,passed:results.every(row=>row.passed),scopeLimit:'Existing observation writer under disposable Node fixture; no browser download or external-copy/restore maturity performed.'});
 }
 
-console.log(JSON.stringify({stage29ApplicationCommand:true,stage29CurrentSetValidated:true,stage29IdempotentRetry:true,preDeliveryCheckpointExportCustody:true,staleAndWeakEvidenceRejected:true,nonexistentExportEvidenceRejected:true,genericExportEvidenceRejected:true,fabricatedCheckpointRejected:true,terminalRejectsFabricatedCheckpoint:true,verificationObservations}));
+if(!sharedFixturePath)fs.rmSync(fixturePath,{force:true});
+console.log(JSON.stringify({stage29Prerequisite:{schema:captured.schema,sourceProjectSha256:captured.canonicalProjectSha256,producer:captured.producer,capturedAt:captured.capturedAt,basis:captured.captureKind},stage29ApplicationCommand:true,stage29CurrentSetValidated:true,stage29IdempotentRetry:true,preDeliveryCheckpointExportCustody:true,staleAndWeakEvidenceRejected:true,nonexistentExportEvidenceRejected:true,genericExportEvidenceRejected:true,fabricatedCheckpointRejected:true,terminalRejectsFabricatedCheckpoint:true,verificationObservations}));
