@@ -13,6 +13,7 @@ import {verifyStageFieldInventory,verifyCompletedStageProjection} from './stage-
 import {verifyStage05ReviewProjection} from './test-stage05-review-projection.mjs';
 import {gzipSync} from 'node:zlib';
 import fs from 'node:fs';import vm from 'node:vm';import {recordProposal,evidence,reviewProofFixture,canonicalFixtureRecord,boundedSearchProposal,registerFixtureSourceSearchCapability,deferredDefinitionResponseFixture} from './test-fixtures.mjs';
+const ownerCaptureState={caseArrays:{},completedControls:{}};
 const governedPreproductFixture=process.argv.includes('--governed-preproduct');
 const preproductRequirementText='Each preproduction execution output must begin with the exact literal complete-output-.';
 let preproductReqId=null,preproductPropId=null;
@@ -30,6 +31,7 @@ const timingFaultName=process.argv.find(value=>value.startsWith('--timing-fault=
 if(timingFaultName&&!timingFault)throw new Error('Unknown timing fault.');
 function timingFaultSource(source){for(const [before,after]of timingFault?.edits||[]){if(!source.includes(before))throw new Error('Timing fault anchor missing: '+timingFault.id);source=source.replace(before,after);}return source;}
 const timingInjectedFaults=[];
+Object.assign(ownerCaptureState.caseArrays,{timingInjectedFaults});
 if(!timingFault&&(!process.argv.includes('--timing-only')||process.argv.includes('--timing-fault-matrix'))){
  const original=fs.readFileSync('workflow-engine.js','utf8'),directory='conformance-regression-evidence/timing-faults';fs.mkdirSync(directory,{recursive:true});
  for(const fault of timingFaultDefinitions){
@@ -55,7 +57,7 @@ const assert=(v,m)=>{if(!v)throw new Error(m)};assert(schema.RECORD_SCHEMAS.evid
 // Optional durable diagnostics use actual retained bytes only; no resume route or state edit.
 const iterationBoundaryDirectory=process.argv.find(value=>value.startsWith('--iteration-boundary-directory='))?.slice('--iteration-boundary-directory='.length);
 if(governedPreproductFixture&&!process.argv.includes('--timing-only'))assert(iterationBoundaryDirectory,'Governed full-cycle acceptance requires durable boundary capture directory.');
-const iterationBoundarySources=iterationBoundaryDirectory?Object.fromEntries(['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js','verify-full-cycle.mjs','test-derivation-receipt-contract.mjs','test-accepted-run-correction-journey.mjs','test-release-semantic-fixture.mjs','test-project-store-runtime.mjs'].map(file=>[file,fs.readFileSync(file,'utf8')])):null;
+const iterationBoundarySources=iterationBoundaryDirectory?Object.fromEntries(['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js','verify-full-cycle.mjs','test-derivation-receipt-contract.mjs','test-accepted-run-correction-journey.mjs','test-release-semantic-fixture.mjs','test-project-store-runtime.mjs','test-stage29-investigation.mjs','test-exact-verification-tuples.mjs'].map(file=>[file,fs.readFileSync(file,'utf8')])):null;
 async function captureIterationBoundary(label){
  if(!iterationBoundaryDirectory)return;
  const before=hash.sha256Value(p),project=engine.clone(p);
@@ -65,7 +67,7 @@ async function captureIterationBoundary(label){
  assert(hash.sha256Value(p)===before,'ITERATION_BOUNDARY_CAPTURE_MUTATED_PROJECT');
  fs.mkdirSync(iterationBoundaryDirectory,{recursive:true});
  fs.writeFileSync(iterationBoundaryDirectory+'/producer-sources.json',JSON.stringify(iterationBoundarySources));
- fs.writeFileSync(iterationBoundaryDirectory+'/'+label+'.json.gz',gzipSync(JSON.stringify({schema:'closed-loop-iteration-boundary-diagnostic/1',label,project,projectSha256:before,artifacts,promptContextFiles,sourceHashes})));
+ fs.writeFileSync(iterationBoundaryDirectory+'/'+label+'.json.gz',gzipSync(JSON.stringify({schema:'closed-loop-iteration-boundary-diagnostic/1',label,project,projectSha256:before,artifacts,promptContextFiles,sourceHashes,ownerCaptureState})));
  process.stderr.write(JSON.stringify({phase:'iteration-boundary-captured',label,projectSha256:before})+'\n');
 }
 async function captureGovernedStoreBoundary({label,snapshot,sources,r,p:branch}){
@@ -85,6 +87,7 @@ async function captureGovernedStoreBoundary({label,snapshot,sources,r,p:branch})
 const failureFixturePath=process.argv.find(value=>value.startsWith('--failure-fixture='))?.slice('--failure-fixture='.length);
 if(failureFixturePath)process.on('uncaughtException',async error=>{try{fs.writeFileSync(failureFixturePath,JSON.stringify({schema:'closed-loop-verifier-failure-fixture/1',project:p,artifacts:await captureArtifactFixture(byteStore,p.job.JOB_ID),sourceHashes:Object.fromEntries(['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'].map(file=>[file,hash.sha256Text(fs.readFileSync(file,'utf8'))])),error:{message:error.message,stack:error.stack}}));}catch(captureError){console.error('Failure fixture capture failed: '+captureError.message);}console.error(error.stack||error);process.exit(1);});
 const workflowPresentationCases=[],presentedOperations=new Set();
+Object.assign(ownerCaptureState.caseArrays,{workflowPresentationCases});
 function prompt(stage,operation='COMPLETE',scope={}){
   const key=stage+':'+operation;
   if(!presentedOperations.has(key)){
@@ -98,6 +101,7 @@ function prompt(stage,operation='COMPLETE',scope={}){
 
 let stage6AuthorInput=null;
 const artifactBatchEquivalence=[],stageProjectionCases=[];verifyStageFieldInventory(schema);
+Object.assign(ownerCaptureState.caseArrays,{artifactBatchEquivalence,stageProjectionCases});
 // Compare the new bounded registration owner with the retained serial API on
 // real full-cycle snapshots. A fixed clock permits exact canonical/hash equality;
 // the fixture itself keeps its real event ordering and is never mutated here.
@@ -123,6 +127,7 @@ function verifyArtifactRegistrationBatch(label,stage,lineage={}){
 }
 verifyArtifactRegistrationBatch('initial-intake',1);
 const productAttachmentCases=[],confirmationContractCases=[];let stage24ReceiptBeforeCandidate=null;
+Object.assign(ownerCaptureState.caseArrays,{productAttachmentCases,confirmationContractCases});
 function assertStage24CandidateTransition(){
  const current=engine.deferredExecutionPlan(p,24).items.find(row=>row.subjectId===scheduledFailureId),later=engine.deferredExecutionPlan(p,25).items.find(row=>row.subjectId===scheduledFailureId);
  assert(stage24ReceiptBeforeCandidate?.completed&&current?.completed&&later?.completed&&current.bindingSha256===stage24ReceiptBeforeCandidate.bindingSha256&&hash.stableStringify(current.receipts)===hash.stableStringify(stage24ReceiptBeforeCandidate.receipts)&&hash.stableStringify(later.receipts)===hash.stableStringify(current.receipts)&&engine.gate(24,p).complete&&p.stages[24].status==='COMPLETE'&&!engine.gate(25,p).reasons.some(reason=>reason.includes('Scheduled failureTests '+scheduledFailureId)),'DEFERRED_LATER_CANDIDATE_SCOPE_ORACLE: freezing the Stage 25 delivery set invalidated an unchanged accepted Stage 24 receipt.');
@@ -202,6 +207,7 @@ function data(stage,{operation,stageData={},records={},scope={},inspectPrepared=
  }
  const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr,files,transport});assert(prepared.validation.valid,`Stage ${stage} ${pr.operation} invalid: ${JSON.stringify(prepared.validation.issues)}`);assert(prepared.project.projectData.acceptedChanges.length===before,`Stage ${stage} mutated before acceptance`);const pendingAction=engine.operationalNextAction(prepared.project,stage);assert(pendingAction.actionType==='REVIEW_PROPOSAL'&&pendingAction.operation===pr.operation,`Stage ${stage} ${pr.operation} lost its operation while awaiting proposal acceptance: ${JSON.stringify(pendingAction)}`);const impact=ingestion.acceptanceImpact(prepared.project,prepared.proposal.proposalId);if(inspectPrepared)inspectPrepared(prepared,impact);if(impact.requiresConfirmation){let rejected=false;try{ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'FULL_CYCLE'});}catch(error){rejected=error.code==='REPLACEMENT_CONFIRMATION_REQUIRED';}assert(rejected,'Replacing accepted work did not require explicit confirmation.');}const committed=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'FULL_CYCLE',replacementConfirmation:impact});p=committed.project;if(!p.stages[stage].gate.complete&&Number(String(p.job.CURRENT_STAGE).match(/\d+/)?.[0])===stage&&['EXTERNAL_AGENT_TOOL','AI_REVIEW','SELECT_RESPONSE_JSON_FILE'].includes(p.job.NEXT_REQUIRED_ACTION.actionType)){const next=ingestion.prepareStageContinuation(structuredClone(p),{stage});assert(next?.prompt,`Stage ${stage} ${pr.operation} left incomplete external work without a saved continuation.`);assert(next.prompt.stage===stage,'Continuation changed the responsible stage.');if(next.prompt.operation==='EXECUTE_RUN')assert(!engine.acceptedChanges(p,stage).some(change=>change.operation==='EXECUTE_RUN'&&change.scope?.runId===next.prompt.scope.runId),'Continuation repeated a completed run.');}const integrity=globalThis.closedLoopProjectStore.validateProjectIntegrity(p);assert(integrity.valid,`Stage ${stage} ${pr.operation} cannot be persisted: ${integrity.issues.join(' | ')}`);assert(p.projectData.acceptedChanges.length===before+1,`Stage ${stage} did not accept`);assert(p.projectData.rawResponses.at(-1)?.completeRawResponse===JSON.stringify(e),`Stage ${stage} raw response missing`);return committed;}
 const comparisonReplacementCases=[],partialVerificationCases=[],atomicDefectHandoffCases=[];
+Object.assign(ownerCaptureState.caseArrays,{comparisonReplacementCases,partialVerificationCases,atomicDefectHandoffCases});
 function assertIndependentRefinement(project,stage,changes,selectedRawResponseId,runtime={closedLoopWorkflowEngine:engine,closedLoopHash:hash}){
  const owner=runtime.closedLoopWorkflowEngine,ownerHash=runtime.closedLoopHash,next=owner.clone(project),otherChanges=changes.filter(change=>change.rawResponseId!==selectedRawResponseId),otherIds=otherChanges.map(change=>change.changeId),otherRecords=owner.records(next,'verification',{stage}).filter(row=>otherChanges.some(change=>change.canonicalRecordIds.includes(owner.recordId(row,'verification')))),otherBytes=ownerHash.sha256Value(otherRecords);
  const otherProposalIds=new Set(otherChanges.map(change=>change.proposalId)),otherPromptIds=new Set(otherChanges.map(change=>change.promptId));
@@ -230,6 +236,7 @@ function verifyComparisonReplacement(stage){
 // The same complete saved version is checked with shared adjudication and
 // independent stage calls at each distinct lifecycle boundary in this journey.
 const recoveryCompatibilityCases=[];
+Object.assign(ownerCaptureState.caseArrays,{recoveryCompatibilityCases});
 function verifyRecoveryCompatibility(stage){
   const originalDigest=hash.sha256Value(p),shared=engine.clone(p),separate=engine.clone(p);
   const projectionIntegrity=closedLoopProjectStore.validateProjectIntegrity(p);
@@ -265,6 +272,7 @@ function verifyRecoveryCompatibility(stage){
   recoveryCompatibilityCases.push({caseId:'HISTORY-FULL-CYCLE-COMPATIBILITY-'+stage,stage,result:'PASS',independentStageEvaluationMatched:true,canonicalStateMatched:true,projectionIntegrityVerified:true,changedResultRejected});
 }
 const iterationComparisonGateCases=[];
+Object.assign(ownerCaptureState.caseArrays,{iterationComparisonGateCases});
 function verifyIterationComparisonGate(stage){
   const expectedStage=stage===13?10:stage,iteration=engine.records(p,'iterations').filter(row=>Number(row.stage)===expectedStage).at(-1),iterationId=engine.recordId(iteration,'iterations'),original=hash.sha256Value(p);
   assert(engine.evaluateCrossRunComparison(p,iterationId).clean,'Current full-cycle comparison must be clean before its negative controls.');
@@ -324,6 +332,7 @@ function assertCurrentLeafSchedule(project,oracle){
 assertCurrentLeafSchedule(p,'TIMING_DECLARATION_ORACLE');
 if(governedPreproductFixture){const expression=engine.recordsForCurrentScope(p,'proofExpressions').find(row=>engine.recordValue(row,'TARGET_PROPOSITION_ID')===preproductPropId),node=engine.recordValue(expression,'NORMALIZED_EXPRESSION'),schedule=engine.deriveLeafTimingSchedule(p,preproductPropId);assert(node.type==='LEAF'&&node.testId===testId&&schedule.resolved&&schedule.entries.length===1&&schedule.entries[0].VERIFICATION_PHASE==='PREPRODUCT_ITERATION'&&schedule.entries[0].REQUIRED_BY_STAGE===12,'GOVERNED_PREPRODUCT_REVIEWED_SINGLE_LEAF');}
 const mixedTimingCases=[];
+Object.assign(ownerCaptureState.caseArrays,{mixedTimingCases});
 {
  const original=p,source=JSON.parse(p.projectData.rawResponses.find(row=>row.stage===6&&JSON.parse(row.completeRawResponse).operation==='COMPLETE').completeRawResponse).records;
  const testLeaf=tempKey=>({type:'LEAF',testId:{tempKey},requiredDisposition:'SATISFIED',truthExtraction:'ACCEPTED_ENTAILMENT',evidenceClasses:['OBSERVATION_RECORD','ACCEPTED_ENTAILMENT'],scopeBinding:'CURRENT'});
@@ -378,6 +387,7 @@ const mixedTimingCases=[];
 // application allocation. This Stage06 branch has no completed product and does
 // not claim that delivery target availability changed or release was accepted.
 const releaseFutureTimingCases=[];
+Object.assign(ownerCaptureState.caseArrays,{releaseFutureTimingCases});
 {
  const original=p,source=JSON.parse(p.projectData.rawResponses.find(row=>row.stage===6&&JSON.parse(row.completeRawResponse).operation==='COMPLETE').completeRawResponse).records;
  try{
@@ -405,6 +415,7 @@ const releaseFutureTimingCases=[];
 // The applicability alternative is true; unavailable independently due tests
 // still block. These isolated design branches claim no final execution.
 const releaseDeadlineCases=[];
+Object.assign(ownerCaptureState.caseArrays,{releaseDeadlineCases});
 {
  const original=p,source=JSON.parse(p.projectData.rawResponses.find(row=>row.stage===6&&JSON.parse(row.completeRawResponse).operation==='COMPLETE').completeRawResponse).records;
  try{for(const deadline of [25,26,27,28]){
@@ -423,6 +434,7 @@ const releaseDeadlineCases=[];
 }
 
 const prerequisiteTimingCases=[];
+Object.assign(ownerCaptureState.caseArrays,{prerequisiteTimingCases});
 {
  const q=engine.clone(p),runtime={engine,schema,prompts,ingestion},record=(family,fields,options={})=>canonicalFixtureRecord(runtime,q,family,fields,options);
  const child=record('propositions',{REQUIREMENT_ID:reqId,PROPOSITION_TEXT:'The independently reviewed prerequisite is established.',STATUS:'CURRENT'},{relationships:{REQUIREMENT_ID:reqId}});
@@ -455,6 +467,7 @@ const prerequisiteTimingCases=[];
 const activationDescriptor=prompts.responseContractDescriptor(schema.RECORD_SCHEMAS.applicabilityRecords.stage,'COMPLETE');
 assert(activationDescriptor.proofExpressionContract?.schema===engine.PROOF_EXPRESSION_CONTRACT.schema&&activationDescriptor.activationTimingRule?.includes('PROPOSED_ACTIVATION_EXPRESSION'),'ACTIVATION_PROMPT_CONTRACT_ORACLE: the owning activation operation does not publish its closed expression and timing contract.');
 const activationTimingCases=[];
+Object.assign(ownerCaptureState.caseArrays,{activationTimingCases});
 {
  const original=p,author=JSON.parse(p.projectData.rawResponses.find(row=>row.stage===4&&JSON.parse(row.completeRawResponse).operation==='COMPLETE').completeRawResponse);
  try{
@@ -484,6 +497,7 @@ const activationTimingCases=[];
 }
 
 const deferredExecutionTimingCases=[];
+Object.assign(ownerCaptureState.caseArrays,{deferredExecutionTimingCases});
 // This external author interpretation binds a preserved product-copy literal
 // to the existing reviewed omission attack. It is supported author meaning,
 // not a native observation, future execution or changed proof-test contract.
@@ -669,17 +683,21 @@ assert(hash.stableStringify(stage24ReceiptBeforeCandidate.compatibility.binding.
 assert(engine.currentScope(p).productVersion===engine.recordValue(completedProduct,'PRODUCT_VERSION')&&engine.scopeForStageBinding(p,21).productVersion===engine.recordValue(completedProduct,'PRODUCT_VERSION'),'DEFERRED_STAGE21_PRODUCT_VERSION_ORACLE: an allocated Stage 21 product version was treated as future scope.');
 const deliverySelection=engine.recordRegisteredHumanDecision(p,{stage:25,purpose:'CANDIDATE_COMPONENT_SELECTION',targetFamily:'artifacts',targetId:hash.sha256Value([artifactFixtureId(engine,p,'PRODUCT-OUTPUT')]),value:[artifactFixtureId(engine,p,'PRODUCT-OUTPUT')],operatorLabel:'FULL_CYCLE'}),deliveryCandidate=engine.freezeDeliveryCandidate(p,{artifactIds:[artifactFixtureId(engine,p,'PRODUCT-OUTPUT')],selectionDecisionId:engine.recordId(deliverySelection,'humanDecisions'),operatorLabel:'FULL_CYCLE'});data(25,{operation:'COMPLETE',scope:{deliveryCandidateSetId:engine.recordId(deliveryCandidate,'deliveryCandidateSets')},records:{representationInspections:[recordProposal(schema,'representationInspections',{tempKey:'inspect',relationships:{ARTIFACT_ID:{recordId:artifactFixtureId(engine,p,'PRODUCT-OUTPUT')}},overrides:{REQUIRED_BY_TRACE:'Requirement delivery representation',TRANSFORMATION_CHAIN:'Direct product bytes',TRANSFORMATION_TOOLS_VERSIONS:'NONE',RENDERING_OPENING_EVIDENCE:'Opened successfully',OBSERVATIONS:JSON.stringify({requiredPageOrViewIds:[],inspectedPageOrViewIds:[],requiredPackagedFileIds:[],openedOrTestedPackagedFileIds:[],requiredTransformationIds:['DIRECT_PRODUCT_BYTES'],inspectedTransformationIds:['DIRECT_PRODUCT_BYTES'],observation:'No defects'}),DETERMINATION:'SATISFIED',EVIDENCE:'Representation evidence'}})]}});complete(25);
 data(26,{records:{processAudits:[recordProposal(schema,'processAudits',{tempKey:'pa',overrides:{APPROVED_INPUTS_VS_ACTUAL:'MATCH',APPROVED_INSTRUCTION_VS_ACTUAL:'MATCH',APPROVED_TOOLS_VS_ACTUAL:'MATCH',REQUIRED_TESTS_VS_EXECUTED:'MATCH',UNAUTHORIZED_MODIFICATION:'NONE',AUTHORIZED_CHANGES:'CONTROLLED',CHAIN_OF_CUSTODY:'COMPLETE',PROCESS_DEFECTS:'NONE',BLOCKERS:'NONE',PROCESS_DETERMINATION:'SATISFIED',PROCESS_EVIDENCE:'Process audit evidence'}})],productAudits:[recordProposal(schema,'productAudits',{tempKey:'pda',overrides:{VALIDATOR_RESULTS:'SATISFIED',MEANING_VERIFICATION_RESULTS:'SATISFIED',PRODUCT_DEFECTS:'NONE',BLOCKERS:'NONE',PRODUCT_DETERMINATION:'SATISFIED',PRODUCT_EVIDENCE:'Product audit evidence'}})]}});assert(!engine.gate(26,p).complete,'SEMANTIC_AUDIT_REVIEW_ORACLE: authored audits completed Stage26 without independent review.');data(26,{operation:'SEMANTIC_REVIEW',records:{semanticReviews:[recordProposal(schema,'semanticReviews',{tempKey:'audit-review',overrides:{REVIEW_QUESTION:'Do the distinct process and product audits support progression?',FINDING:'Both current audit bodies are supported without unresolved discrepancy.',REASONING:'Independent review compared the exact audit targets and governing current evidence.',RESULT:'ACCEPTED'}})]}});complete(26);await captureReleaseCommandBoundary('stage26-completed-raw');
-const actualReleaseProofControls=verifyActualReleaseProofControls({engine,hash},p);await captureIterationBoundary('before-stage27-release');
+const actualReleaseProofControls=verifyActualReleaseProofControls({engine,hash},p);ownerCaptureState.completedControls.actualReleaseProofControls=actualReleaseProofControls;await captureIterationBoundary('before-stage27-release');
 data(27,{operation:'ADVISORY_REVIEW',records:{releaseGateReviews:[recordProposal(schema,'releaseGateReviews',{tempKey:'review'})]}});await captureIterationBoundary('before-stage27-release-command');await captureReleaseCommandBoundary('before-release-command-raw');const release=engine.recordReleaseDetermination(p);await captureReleaseCommandBoundary('after-release-command-raw');await captureIterationBoundary('after-stage27-release-command');assert(engine.recordValue(release,'DETERMINATION')==='ACCEPTED',`Release ${engine.recordValue(release,'DETERMINATION')}: ${JSON.stringify(engine.gate(27,p).reasons)}`);const wordingOnly=engine.clone(p),wordingOnlyRequirement=wordingOnly.projectData.requirements.find(r=>engine.recordId(r,'requirements')===reqId);wordingOnlyRequirement.fields.INTENDED_VERIFICATION_METHOD='DETERMINISTIC';wordingOnlyRequirement.INTENDED_VERIFICATION_METHOD='DETERMINISTIC';for(const result of wordingOnly.projectData.meaningResults){result.active=false;result.invalidatedBy='CONTROLLED-MISSING-MEANING';}const wordingOnlyMetrics=engine.releaseMetrics(wordingOnly);assert(wordingOnlyMetrics.determination==='BLOCKED'&&wordingOnlyMetrics.undetermined===1,'Release aggregation let requirement prose erase a required Stage 6 meaning test.');complete(27);
+ownerCaptureState.completedControls.releasePersistenceCaller={status:'RUNNING',canonicalProjectSha256:hash.sha256Value(p),revision:p.revision};
 const actualReleasePersistence=await verifyActualReleasePersistence({sourceProject:p,sourcePrompts:prompts,artifacts:await originalReleaseArtifacts(releaseCaptureRuntime,p.job.JOB_ID,hash),onCheckpoint:({label,r,project,captureKind})=>captureReleaseCommandBoundary(label,{runtime:r,project,contextOwner:r.prompts,hashOwner:r.runtime.closedLoopHash,captureKind})});
+ownerCaptureState.completedControls.releasePersistenceCaller.status='PASS';ownerCaptureState.completedControls.actualReleasePersistence={...actualReleasePersistence,callerPointerAssertion:'RELEASE_ISOLATED_STORE_PRESERVES_CALLER',callerPointerAssertionResult:'PASS'};await captureReleaseCommandBoundary('release-persistence-all-assertions-complete');
 assert(!Object.hasOwn(p.stages[28].derivedData,'HASH_REVIEW_ID')&&!engine.gate(28,p).complete,'STAGE28_PENDING_IDENTITY_ORACLE: an absent byte review must remain pending without a fabricated canonical ID.');
 assert(globalThis.closedLoopProjectStore.validateProjectIntegrity(p).valid,'STAGE27_STORE_PROJECTION_ORACLE: the completed release must be valid before the identity review.');
 engine.verifyArtifactIdentity(p,[{artifactId:artifactFixtureId(engine,p,'PRODUCT-OUTPUT'),name:'product.bin',size:productBytes.byteLength,sha256:productSha,byteVerificationReceipt:{source:'APPLICATION_BYTE_REHASH',receiptId:'TEST-RECEIPT',artifactId:artifactFixtureId(engine,p,'PRODUCT-OUTPUT'),byteSize:productBytes.byteLength,sha256:productSha}}],[{artifactId:artifactFixtureId(engine,p,'PRODUCT-OUTPUT'),name:'product.bin',size:productBytes.byteLength,sha256:productSha,byteVerificationReceipt:{source:'APPLICATION_BYTE_REHASH',receiptId:'TEST-RECEIPT',artifactId:artifactFixtureId(engine,p,'PRODUCT-OUTPUT'),byteSize:productBytes.byteLength,sha256:productSha}}]);const deliveryIntent=engine.captureDeliveryIntent(p,{value:{authorized:true,deliveryCandidateSetId:engine.recordId(deliveryCandidate,'deliveryCandidateSets'),releaseId:engine.recordId(release,'releaseRecords'),artifactIds:[artifactFixtureId(engine,p,'PRODUCT-OUTPUT')],authorizedFilenames:{[artifactFixtureId(engine,p,'PRODUCT-OUTPUT')]:'product.bin'},recipientOrClass:'FULL_CYCLE_RECIPIENT',destination:'FULL_CYCLE_DESTINATION',transferPurpose:'DELIVER_FINAL_ARTIFACTS',transferChannel:'BROWSER_DOWNLOAD',disclosureClassification:'CONFIDENTIAL',disclosureAuthorization:true,permittedTransferCount:1},operatorLabel:'FULL_CYCLE'});assert(deliveryIntent,'Stage 28 did not capture the exact current delivery intent.');complete(28);
 const stage28ReviewId=p.stages[28].derivedData.HASH_REVIEW_ID;
 assert(/^HASH_REVIEW-[A-F0-9]{64}$/.test(stage28ReviewId)&&stage28ReviewId===p.job.CURRENT_HASH_REVIEW_ID,'STAGE28_CURRENT_IDENTITY_ORACLE: a verified exact-byte review must have its real canonical identity.');
+ownerCaptureState.completedControls.investigationCaller={status:'RUNNING',canonicalProjectSha256:hash.sha256Value(p),revision:p.revision};
 const stage29InvestigationEvidence=await verifyStage29Investigation({runtime:{engine,prompts,ingestion,schema,hash},project:p,byteStore,basis:'ACTUAL_ACCEPTED_SYNTHETIC_FULL_CYCLE_PREFIX_THROUGH_STAGE28',requireCompletePrefix:true});
+ownerCaptureState.completedControls.investigationCaller.status='PASS';ownerCaptureState.completedControls.stage29InvestigationEvidence=stage29InvestigationEvidence;await captureReleaseCommandBoundary('stage29-investigation-all-assertions-complete');
 const requirementTrace=engine.recordsForCurrentScope(p,'instructionTraces').find(record=>String(engine.recordValue(record,'REQ_ID'))===reqId);const tracedInstructionId=String(engine.recordValue(requirementTrace,'INSTRUCTION_ID')||requirementTrace?.relationships?.INSTRUCTION_ID||'');assert(tracedInstructionId,'Fixture instruction trace lost its canonical instruction identity.');const tracedInstruction=engine.recordsForCurrentScope(p,'instructions').find(record=>engine.recordId(record,'instructions')===tracedInstructionId);assert(tracedInstruction,'Fixture traced instruction is missing.');const decoyInstruction=JSON.parse(JSON.stringify(tracedInstruction));decoyInstruction.id='PRODUCTION-INSTRUCTION-DECOY';decoyInstruction.recordId='PRODUCTION-INSTRUCTION-DECOY';decoyInstruction.fields={...(decoyInstruction.fields||{}),INSTRUCTION_ID:'PRODUCTION-INSTRUCTION-DECOY'};decoyInstruction.INSTRUCTION_ID='PRODUCTION-INSTRUCTION-DECOY';decoyInstruction.createdAt='9999-12-31T23:59:59.999Z';decoyInstruction.updatedAt=decoyInstruction.createdAt;decoyInstruction.contentSha256=hash.contentRecordSha256(decoyInstruction,'INSTRUCTION_ID');decoyInstruction.recordSha256=hash.recordSha256(decoyInstruction);decoyInstruction.sha256=decoyInstruction.recordSha256;p.projectData.instructions.push(decoyInstruction);
-engine.constructEvidenceChains(p);const evidenceChain=engine.recordsForCurrentScope(p,'evidenceChains').find(r=>String(engine.recordValue(r,'REQ_ID'))===reqId);assert(Array.isArray(engine.recordValue(evidenceChain,'TEST_ID'))&&engine.recordValue(evidenceChain,'TEST_ID').includes(governedPreproductFixture?finalDeterministicTestId:testId),'Evidence chain did not preserve the applicable test set.');assert(Array.isArray(engine.recordValue(evidenceChain,'TEST_RESULT_ID'))&&engine.recordValue(evidenceChain,'TEST_RESULT_ID').includes(deterministicResultId),'Evidence chain ignored deterministic TEST_ID -> REQ_ID evidence.');if(governedPreproductFixture){const prefixChain=engine.recordsForCurrentScope(p,'evidenceChains').find(row=>engine.recordValue(row,'REQ_ID')===preproductReqId);assert(prefixChain&&engine.recordValue(prefixChain,'TEST_ID').includes(testId)&&!engine.recordValue(prefixChain,'TEST_ID').includes(finalDeterministicTestId),'GOVERNED_SEPARATE_REQUIREMENT_EVIDENCE_CHAIN');}const productionExecutionId=String(engine.recordValue(product,'EXECUTION_ID')||'');assert(engine.recordValue(evidenceChain,'INSTRUCTION_ID')===tracedInstructionId,'Stage 29 ignored the requirement trace and selected a different instruction.');assert(engine.recordValue(evidenceChain,'INSTRUCTION_ID')!=='PRODUCTION-INSTRUCTION-DECOY','Stage 29 selected the latest instruction instead of the traced instruction.');assert(engine.recordValue(evidenceChain,'EXECUTION_ID')===productionExecutionId,'Stage 29 substituted the product ID for the production execution ID.');assert(engine.recordValue(evidenceChain,'PRODUCT_ELEMENT')===productId,'Stage 29 lost the exact product identity.');assert(productionExecutionId&&productionExecutionId!==productId,'Fixture must prove production execution ID and product ID are distinct.');const checkpoint=engine.createPreDeliveryCheckpoint(p,{packageId:'FULL-CYCLE-BACKUP',packageSha256:'a'.repeat(64),artifactManifestSha256:'b'.repeat(64)}),exportEvidence={id:'EVID-FULL-CYCLE-EXPORT',active:true,source:'OPERATOR_ACTION',fields:{APPLICATION_EVIDENCE_KIND:'BACKUP_EXPORT_ACTION_COMPLETED',APPLICATION_EVIDENCE_CONTENT:JSON.stringify({checkpointId:checkpoint.CHECKPOINT_ID,packageId:checkpoint.PACKAGE_ID,packageSha256:checkpoint.PACKAGE_SHA256}),SHA256:'c'.repeat(64),STATUS:'CURRENT',EVIDENCE_ID:'EVID-FULL-CYCLE-EXPORT'},APPLICATION_EVIDENCE_KIND:'BACKUP_EXPORT_ACTION_COMPLETED',APPLICATION_EVIDENCE_CONTENT:JSON.stringify({checkpointId:checkpoint.CHECKPOINT_ID,packageId:checkpoint.PACKAGE_ID,packageSha256:checkpoint.PACKAGE_SHA256}),SHA256:'c'.repeat(64),STATUS:'CURRENT',EVIDENCE_ID:'EVID-FULL-CYCLE-EXPORT',scope:engine.currentScope(p)};p.projectData.evidenceRecords.push(exportEvidence);engine.recordPreDeliveryCheckpointExport(p,{checkpointId:checkpoint.CHECKPOINT_ID,exportEvidenceIds:['EVID-FULL-CYCLE-EXPORT']});complete(29);
+await captureReleaseCommandBoundary('before-evidence-chain-command',{details:iterationBoundaryDirectory?evidenceChainDiagnostic():null});engine.constructEvidenceChains(p);await captureReleaseCommandBoundary('after-evidence-chain-command-before-assertions',{details:iterationBoundaryDirectory?evidenceChainDiagnostic():null});const evidenceChain=engine.recordsForCurrentScope(p,'evidenceChains').find(r=>String(engine.recordValue(r,'REQ_ID'))===reqId);assert(Array.isArray(engine.recordValue(evidenceChain,'TEST_ID'))&&engine.recordValue(evidenceChain,'TEST_ID').includes(governedPreproductFixture?finalDeterministicTestId:testId),'Evidence chain did not preserve the applicable test set.');assert(Array.isArray(engine.recordValue(evidenceChain,'TEST_RESULT_ID'))&&engine.recordValue(evidenceChain,'TEST_RESULT_ID').includes(deterministicResultId),'Evidence chain ignored deterministic TEST_ID -> REQ_ID evidence.');if(governedPreproductFixture){const prefixChain=engine.recordsForCurrentScope(p,'evidenceChains').find(row=>engine.recordValue(row,'REQ_ID')===preproductReqId);assert(prefixChain&&engine.recordValue(prefixChain,'TEST_ID').includes(testId)&&!engine.recordValue(prefixChain,'TEST_ID').includes(finalDeterministicTestId),'GOVERNED_SEPARATE_REQUIREMENT_EVIDENCE_CHAIN');}const productionExecutionId=String(engine.recordValue(product,'EXECUTION_ID')||'');assert(engine.recordValue(evidenceChain,'INSTRUCTION_ID')===tracedInstructionId,'Stage 29 ignored the requirement trace and selected a different instruction.');assert(engine.recordValue(evidenceChain,'INSTRUCTION_ID')!=='PRODUCTION-INSTRUCTION-DECOY','Stage 29 selected the latest instruction instead of the traced instruction.');assert(engine.recordValue(evidenceChain,'EXECUTION_ID')===productionExecutionId,'Stage 29 substituted the product ID for the production execution ID.');assert(engine.recordValue(evidenceChain,'PRODUCT_ELEMENT')===productId,'Stage 29 lost the exact product identity.');assert(productionExecutionId&&productionExecutionId!==productId,'Fixture must prove production execution ID and product ID are distinct.');const checkpoint=engine.createPreDeliveryCheckpoint(p,{packageId:'FULL-CYCLE-BACKUP',packageSha256:'a'.repeat(64),artifactManifestSha256:'b'.repeat(64)}),exportEvidence={id:'EVID-FULL-CYCLE-EXPORT',active:true,source:'OPERATOR_ACTION',fields:{APPLICATION_EVIDENCE_KIND:'BACKUP_EXPORT_ACTION_COMPLETED',APPLICATION_EVIDENCE_CONTENT:JSON.stringify({checkpointId:checkpoint.CHECKPOINT_ID,packageId:checkpoint.PACKAGE_ID,packageSha256:checkpoint.PACKAGE_SHA256}),SHA256:'c'.repeat(64),STATUS:'CURRENT',EVIDENCE_ID:'EVID-FULL-CYCLE-EXPORT'},APPLICATION_EVIDENCE_KIND:'BACKUP_EXPORT_ACTION_COMPLETED',APPLICATION_EVIDENCE_CONTENT:JSON.stringify({checkpointId:checkpoint.CHECKPOINT_ID,packageId:checkpoint.PACKAGE_ID,packageSha256:checkpoint.PACKAGE_SHA256}),SHA256:'c'.repeat(64),STATUS:'CURRENT',EVIDENCE_ID:'EVID-FULL-CYCLE-EXPORT',scope:engine.currentScope(p)};p.projectData.evidenceRecords.push(exportEvidence);engine.recordPreDeliveryCheckpointExport(p,{checkpointId:checkpoint.CHECKPOINT_ID,exportEvidenceIds:['EVID-FULL-CYCLE-EXPORT']});complete(29);
 const stage30=engine.terminalPrerequisites(p);const terminal=engine.calculateTerminal(p,{expectedRevision:Number(p.revision||0)});assert(engine.recordValue(terminal,'DELIVERY_STATE')==='AUTHORIZED',`Application-owned Stage 30 terminal calculation did not authorize the complete project: ${stage30.reasons.join(' | ')}`);
 if(process.env.CLRT_STAGE30_FIXTURE_PATH){
  const sourceFiles=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','verify-full-cycle.mjs'];
@@ -689,6 +707,7 @@ engine.recordDeliveryAttempt(p,{deliveryId:engine.recordId(terminal,'deliveryRec
 const timingPhaseEvidencePath=process.argv.find(arg=>arg.startsWith('--timing-phase-evidence='))?.slice('--timing-phase-evidence='.length);
 if(timingPhaseEvidencePath){const artifacts=await captureArtifactFixture(byteStore,p.job.JOB_ID);fs.writeFileSync(timingPhaseEvidencePath,JSON.stringify({project:p,artifacts,sourceHashes:Object.fromEntries(['workflow-schema.js','workflow-engine.js','project-store.js'].map(file=>[file,hash.sha256Text(fs.readFileSync(file,'utf8'))]))}));}
 const phaseAvailabilityCases=[];
+Object.assign(ownerCaptureState.caseArrays,{phaseAvailabilityCases});
 for(const phase of schema.VERIFICATION_PHASE_VALUES){const actual=engine.verificationPhaseTargetAvailability(p,phase,{PER_RUN_REQUIRED:phase==='PREPRODUCT_ITERATION'});assert(actual==='TRUE','PHASE_TARGET_IDENTITY_ORACLE: complete canonical '+phase+' target was not available; actual '+actual);phaseAvailabilityCases.push({phase,actual,result:'PASS'});}
 const serialized=JSON.stringify(p),reloaded=JSON.parse(serialized);engine.ensureShape(reloaded);engine.recalculate(reloaded);assert(Object.values(reloaded.stages).every(s=>s.status==='COMPLETE'),'Reload lost completed stages');assert(reloaded.projectData.rawResponses.length>0&&reloaded.projectData.outputReceipts.length>0&&reloaded.projectData.extractionManifests.length>0,'Traceability records missing');
 verifyArtifactRegistrationBatch('authorized-terminal',21,{productId});
@@ -732,6 +751,7 @@ fullCycleReport.iterationProductTransition=iterationProductTransition;
 fullCycleReport.iterationLaterEvidence=iterationLaterEvidence;
 fullCycleReport.actualReleaseProofControls=actualReleaseProofControls;
 fullCycleReport.actualReleasePersistence=actualReleasePersistence;
+ownerCaptureState.completedControls.fullCycleReport=fullCycleReport;await captureReleaseCommandBoundary('full-owner-terminal-after-all-assertions');
 console.log(JSON.stringify(fullCycleReport,null,2));
 
 // Diagnostic-only exact original custody capture; no store reads/recalculation.
@@ -742,13 +762,18 @@ async function originalReleaseArtifacts(runtime,jobId,hashOwner){
   assert(bytes.length===row.byteSize&&await hashOwner.sha256Bytes(bytes)===row.sha256,'RELEASE_CAPTURE_ORIGINAL_ARTIFACT_IDENTITY');artifacts.push({...row,blob:undefined,bytesBase64:Buffer.from(bytes).toString('base64')});
  }return artifacts;
 }
-async function captureReleaseCommandBoundary(label,{runtime=releaseCaptureRuntime,project=p,contextOwner=prompts,hashOwner=hash,captureKind='ORIGINAL_FULL_OWNER_IN_MEMORY_COMMAND_BOUNDARY'}={}){
+async function captureReleaseCommandBoundary(label,{runtime=releaseCaptureRuntime,project=p,contextOwner=prompts,hashOwner=hash,captureKind='ORIGINAL_FULL_OWNER_IN_MEMORY_COMMAND_BOUNDARY',details=null}={}){
  if(!iterationBoundaryDirectory)return;
  fs.mkdirSync(iterationBoundaryDirectory,{recursive:true});
  const captureStartedAt=new Date().toISOString(),before=hashOwner.sha256Value(project),promptContextFiles=project.projectData.generatedPrompts.map(record=>({instructionId:record.instructionId||record.promptId,files:contextOwner.materializePromptContextFiles(record)})),artifacts=await originalReleaseArtifacts(runtime,project.job.JOB_ID,hashOwner);
  const sourceHashes=Object.fromEntries(Object.entries(iterationBoundarySources).map(([file,source])=>{assert(fs.readFileSync(file,'utf8')===source,'RELEASE_CAPTURE_IMMUTABLE_SOURCE');return[file,hash.sha256Text(source)];}));
  async function encode(value){if(value instanceof Blob)return {__retainedBlob:true,type:value.type,base64:Buffer.from(await value.arrayBuffer()).toString('base64')};if(Array.isArray(value))return Promise.all(value.map(encode));if(value&&typeof value==='object')return Object.fromEntries(await Promise.all(Object.entries(value).map(async([key,item])=>[key,await encode(item)])));return value;}
  const adapterRow=runtime.rows.get('projects').get(project.job.JOB_ID),adapterIdentity={revision:adapterRow?.revision??null,projectSha256:adapterRow?.projectSha256??null};
- const captured=await encode({schema:'closed-loop-release-command-diagnostic/1',captureKind,label,captureStartedAt,project,projectSha256:before,adapterIdentity,promptContextFiles,artifacts,stores:[...runtime.rows].map(([name,rows])=>[name,[...rows]]),sourceHashes,ownerSha256:hash.sha256Text(fs.readFileSync(import.meta.filename,'utf8'))});
+ const captured=await encode({schema:'closed-loop-release-command-diagnostic/1',captureKind,label,captureStartedAt,ownerCaptureState,details,project,projectSha256:before,adapterIdentity,promptContextFiles,artifacts,stores:[...runtime.rows].map(([name,rows])=>[name,[...rows]]),sourceHashes,ownerSha256:hash.sha256Text(fs.readFileSync(import.meta.filename,'utf8'))});
  captured.captureCompletedAt=new Date().toISOString();fs.writeFileSync(iterationBoundaryDirectory+'/'+label+'.json.gz',gzipSync(JSON.stringify(captured)));assert(hashOwner.sha256Value(project)===before,'RELEASE_CAPTURE_PRESERVES_PROJECT');process.stderr.write(JSON.stringify({phase:'release-command-boundary-captured',label,projectSha256:before})+'\n');
+}
+
+function evidenceChainDiagnostic(){
+ const before=hash.sha256Value(p),calculations=engine.recordsForCurrentScope(p,'requirements').map(requirement=>({requirementId:engine.recordId(requirement,'requirements'),calculation:engine.evidenceChainCalculation(p,requirement)})),set=engine.validatedEvidenceChainSet(p);
+ assert(hash.sha256Value(p)===before,'CHAIN_DIAGNOSTIC_PRESERVES_PROJECT');return {observedAt:new Date().toISOString(),calculations,set};
 }
