@@ -1394,7 +1394,7 @@
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "dot",
-    "lastInspectedAt": "2026-10-14T07:22:25.290738Z",
+    "lastInspectedAt": "2026-10-14T07:24:35.335019Z",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -1974,7 +1974,7 @@
     },
     "scheduleState": "FORECAST_NOT_ESTABLISHED",
     "forecast": null,
-    "nextAction": "Finish integrated Stage11 boundary; review source-backed iteration receipt repair and binding fixture correction; compose only accepted canonical proofs after migration; collect current frozen evidence; publication remains pending explicit platform approval.",
+    "nextAction": "Review iteration receipt dependency repair and complete historical binding fixture migration; compose14 accepted canonical proof declarations and collect current frozen evidence. Repository evidence publication awaits pending approval.",
     "deploymentObservation": {
       "sourceCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
       "runId": "36958910363",
@@ -2130,7 +2130,7 @@
         "state": "INTEGRATED_BOUNDED_REVIEW_ACCEPT",
         "negativePreserved": true,
         "integrationCommit": "39a968f8",
-        "rootCombinedBoundary": "RUNNING",
+        "rootCombinedBoundary": "PASS_13_CASES_ON_COMBINED_RUNTIME",
         "requiredCompleteOwner": "FAILED_PREEXISTING_STAGE19_TAIL"
       },
       "candidateHash": {
