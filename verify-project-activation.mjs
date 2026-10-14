@@ -153,8 +153,8 @@ observations.push({id:'PROJECT_ACTIVATION_CALLERS',result:'PASS',callers:callerR
  r.rows.get('projects').get(p.job.JOB_ID).project.job.JOB_TITLE='Corrupt bytes under unchanged digest';await assert.rejects(()=>r.store.readProject(p.job.JOB_ID,{refreshProjection:true}),error=>error.code==='PROJECT_HASH_MISMATCH','ACTIVATION_COMBINED_COLD_INTEGRITY_ORACLE');
  observations.push({id:'PROJECT_ACTIVATION_COMBINED_COLD_READ',result:'PASS',coldReads:1,sameCurrentResult:true,staleExplicitPredicateRejected:true,corruptColdSourceRejected:true});
 }
-const projection5Activation9=await verifyLegacy5ProjectionActivation();
-observations.push({id:'PROJECT_PROJECTION5_ACTIVATION10',...projection5Activation9});
+const projection5Activation10=await verifyLegacy5ProjectionActivation();
+observations.push({id:'PROJECT_PROJECTION5_ACTIVATION10',...projection5Activation10});
 const projectionVersion10IterationActivation=await verifyProjectionVersion10IterationActivation();
 observations.push({...projectionVersion10IterationActivation,id:'PROJECT_PROJECTION7_ITERATION4_ACTIVATION10'});
 const projectionVersion7Activation=await verifyProjectionVersion10ActivationContract();

@@ -85,7 +85,7 @@ export async function verifyLegacy5ProjectionActivation({sourceOverrides={},fixt
  assert.equal(current.projectData.applicationProjection.receipt.derivationVersion,10);assert.equal(current.projectData.applicationProjection.receipt.registryEntrySha256,r.runtime.closedLoopHash.sha256Value(schema.PROJECT_PROJECTION_DERIVATION_CONTRACT),'PROJECTION7_CURRENT_REGISTRY_RECEIPT_ORACLE');assert.notEqual(current.projectData.applicationProjection.observedAt,source.projectData.applicationProjection.observedAt,'PROJECTION7_FRESH_OBSERVATION_ORACLE');
  const activations=current.projectData.history.filter(row=>row.type==='APPLICATION_PROJECTION_DERIVATION_ACTIVATED');assert.equal(activations.length,1,'PROJECTION7_SINGLE_ACTIVATION_ORACLE');
  assert.equal(activations[0].previousDerivationId,'closed-loop-derivation/project-current-projection/5');assert.equal(activations[0].derivationId,'closed-loop-derivation/project-current-projection/10');assert.equal(activations[0].sourceProjectSha256,source.projectSha256);assert.equal(activations[0].historicalProvenanceClaimed,false);
- add('legacy5-to9-actual-atomic-read-activation',{oldRevision:source.revision,currentRevision:current.revision,sourceProjectSha256:source.projectSha256,currentProjectSha256:current.projectSha256});
+ add('legacy5-to10-actual-atomic-read-activation',{oldRevision:source.revision,currentRevision:current.revision,sourceProjectSha256:source.projectSha256,currentProjectSha256:current.projectSha256});
  await retained(r);assert.deepEqual(await encodeIdentity(originalStored),sourceIdentity,'PROJECTION7_ISOLATED_ORIGINAL_SOURCE_ORACLE');
  const history=await r.store.historyList(fixture.jobId);assert(Array.isArray(history.entries),'PROJECTION7_HISTORY_LIST_OBJECT_ENTRIES_ORACLE');assert(history.entries.some(row=>row.projectSha256===source.projectSha256),'PROJECTION7_ORIGINAL_HISTORY_ENTRY_ORACLE');
  const oldSnapshot=fixture.snapshots.find(row=>row.projectSha256===source.projectSha256),oldBlob=r.rows.get('meta').get(oldSnapshot.key).value.blob;
@@ -109,7 +109,7 @@ export async function verifyLegacy5ProjectionActivation({sourceOverrides={},fixt
  for(const phase of ['before-project-transaction','before-transaction-commit']){
   const failed=await make(),before=await rowsIdentity(failed);failed.runtime.__closedLoopStorageFault=phase;
   await assert.rejects(()=>failed.store.readProject(fixture.jobId),error=>error.code==='INJECTED_STORAGE_FAILURE','PROJECTION7_ATOMIC_FAILURE_ORACLE: '+phase);assert.equal(await rowsIdentity(failed),before,'PROJECTION7_ABORT_ALL_ROWS_UNCHANGED_ORACLE: '+phase);await retained(failed);delete failed.runtime.__closedLoopStorageFault;
-  const recovered=await failed.store.readProject(fixture.jobId);assert.equal(recovered.projectData.applicationProjection.receipt.derivationId,'closed-loop-derivation/project-current-projection/10');assert.equal(failed.store.validateProjectIntegrity(recovered).valid,true);add('legacy5-activation-'+phase+'-abort-and-retry',{phase,code:'INJECTED_STORAGE_FAILURE',allRowsPreserved:true,retryActivated9:true});
+  const recovered=await failed.store.readProject(fixture.jobId);assert.equal(recovered.projectData.applicationProjection.receipt.derivationId,'closed-loop-derivation/project-current-projection/10');assert.equal(failed.store.validateProjectIntegrity(recovered).valid,true);add('legacy5-activation-'+phase+'-abort-and-retry',{phase,code:'INJECTED_STORAGE_FAILURE',allRowsPreserved:true,retryActivated10:true});
  }
  {
   const expectedConcurrentIdentity=await rowsIdentity({rows:new Map(fixture.concurrent.rows.map(store=>[store.store,new Map(store.entries.map(entry=>[entry.key,decode(entry.row)]))]))});
@@ -119,7 +119,7 @@ export async function verifyLegacy5ProjectionActivation({sourceOverrides={},fixt
   const row=raced.rows.get('projects').get(fixture.jobId);assert.equal(row.revision,fixture.concurrent.revision);assert.equal(row.projectSha256,fixture.concurrent.projectSha256);assert.equal(raced.engine.validateLegacyApplicationProjection(sourceProject(raced)).valid,true,'PROJECTION7_CONCURRENT_LAST_VALID_LEGACY_SOURCE_ORACLE');await retained(raced);
   const retry=await raced.store.readProject(fixture.jobId);assert.equal(retry.revision,fixture.concurrent.revision+1);assert.equal(retry.projectData.applicationProjection.receipt.derivationId,'closed-loop-derivation/project-current-projection/10');assert.equal(raced.store.validateProjectIntegrity(retry).valid,true);add('legacy5-activation-concurrent-cas-rejected-and-current-source-retried',{code:'STALE_PROJECT_REVISION',lastValidConcurrentSha256:fixture.concurrent.projectSha256,retryRevision:retry.revision});
  }
- return {projection5Activation9:'PASS',cases,fixtureSha256:digest(bytes),fixtureByteSize:bytes.length,generationSourceSha256:fixture.generationSourceSha256,synthetic:true,actualBrowser:false,nativeIndexedDB:false,transactionAdapter:true,wholeClauseProof:false,elapsedMs:performance.now()-start,boundary:'Actual production read/receipt validation/atomic activation/history and write CAS through Node Map transaction adapter. Retained /1–4 definitions/registry unchanged; only an actual /5 receipt is executed. Fixture was generated by guarded old production create/save; no gate or receipt renaming.'};
+ return {projection5Activation10:'PASS',cases,fixtureSha256:digest(bytes),fixtureByteSize:bytes.length,generationSourceSha256:fixture.generationSourceSha256,synthetic:true,actualBrowser:false,nativeIndexedDB:false,transactionAdapter:true,wholeClauseProof:false,elapsedMs:performance.now()-start,boundary:'Actual production read/receipt validation/atomic activation/history and write CAS through Node Map transaction adapter. Retained /1–4 definitions/registry unchanged; only an actual /5 receipt is executed. Fixture was generated by guarded old production create/save; no gate or receipt renaming.'};
 }
 
 const defaultFixturePath = new URL('./verification/stage19-precomparison-prerequisite-20261010.json.gz', import.meta.url);
@@ -342,7 +342,7 @@ assert.equal(e.jobPointerIntegrityIssues(adjacent).length, 0);
 markPhase('adjacentStage6');
 
 const result = {
-  schema: 'stage19-projection9-activation-order-control/1',
+  schema: 'stage19-projection10-activation-order-control/1',
   result: 'PASS',
   sourceSha256,
   implementation: {
