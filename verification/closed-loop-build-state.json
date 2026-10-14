@@ -1378,7 +1378,7 @@
     "suppliedSpecification": {
       "sha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
       "byteLength": 309482,
-      "status": "EXACT_SOURCE_ADOPTED_LOCALLY_PIPELINE_RECONCILIATION_IN_PROGRESS",
+      "status": "EXACT_SOURCE_AND_SOURCE_ONLY_PIPELINE_INTEGRATED_LOCALLY_ATOMIC_COMPLETENESS_BLOCKED",
       "repositorySourcePreservedAt": "7df5f46e9a7e54da09622387a978badb39916c09",
       "repositorySpecificationSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
       "repositorySpecificationByteLength": 342110
@@ -1389,12 +1389,12 @@
     "clockBasis": "First observed resource-discovery operation under the newly submitted execution assignment. Earlier fourteen-day kickoff not recovered from bounded history search; historical application development predates this assignment. Do not reset this clock.",
     "startingSourceCommit": "7df5f46e9a7e54da09622387a978badb39916c09",
     "startingMainCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
-    "integrationBranch": "dot/execution-20261014",
-    "integrationCommit": "be045d4bbb7635ad513d2cac1f9468be2f813b90",
+    "integrationBranch": "dot/published-execution-20261014",
+    "integrationCommit": "e8e716459550cdba11297cf75db48b18d8fafee0",
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "dot",
-    "lastInspectedAt": "2026-10-14T03:47:44Z",
+    "lastInspectedAt": "2026-10-14T04:43:27Z",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -1407,14 +1407,14 @@
       {
         "id": "source-extraction-20261014",
         "owner": "/root/extract_complete_specification",
-        "state": "IN_REVIEW",
+        "state": "VERIFIED",
         "scope": "Complete independent source extraction and existing manifest comparison",
         "baseCommit": "7df5f46e9a7e54da09622387a978badb39916c09",
         "writeScope": "Isolated reconciliation artifacts only",
         "dependencies": [],
-        "evidence": "Complete source pass; frozen source-only extraction SHA2569d83aa1151250f17273d4c06ea7503e08d6ba70d0f95c427bef7a0dd559f6b36; reconciliation pending",
+        "evidence": "Complete source-only coverage accepted through distinct reconciliation. Does not establish distinct atomic obligation completeness.",
         "host": "dot cloud workspace /workspace/shared",
-        "lastInspectedAt": "2026-10-14T03:47:44Z",
+        "lastInspectedAt": "2026-10-14T04:43:27Z",
         "inputSpecificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
         "returnTo": "/root",
         "concurrencyAllocation": 1
@@ -1422,14 +1422,14 @@
       {
         "id": "blind-coverage-20261014",
         "owner": "/root/challenge_specification_coverage",
-        "state": "IN_REVIEW",
+        "state": "VERIFIED",
         "scope": "Blind complete-source coverage pass",
         "baseCommit": "7df5f46e9a7e54da09622387a978badb39916c09",
         "writeScope": "Isolated reconciliation artifacts only",
         "dependencies": [],
-        "evidence": "Complete independent source pass; SHA2566f86d1fbf57b42cb0ea68787b035b8b06f957d8bf94260d35a3bb013d1921bdf; reconciliation pending",
+        "evidence": "Complete source-only coverage accepted through distinct reconciliation. Does not establish distinct atomic obligation completeness.",
         "host": "dot cloud workspace /workspace/shared",
-        "lastInspectedAt": "2026-10-14T03:47:44Z",
+        "lastInspectedAt": "2026-10-14T04:43:27Z",
         "inputSpecificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
         "returnTo": "/root",
         "concurrencyAllocation": 1
@@ -1444,7 +1444,7 @@
         "dependencies": [],
         "evidence": "Stage01 diagnostic path passed, six exact1280x800 visual captures; ordinary native window minimum CSSwidth500 prevents393/320 captures. DevTools denied and not bypassed.",
         "host": "dot cloud workspace /workspace/shared",
-        "lastInspectedAt": "2026-10-14T03:47:44Z",
+        "lastInspectedAt": "2026-10-14T04:43:27Z",
         "inputSpecificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
         "returnTo": "/root",
         "concurrencyAllocation": 1,
@@ -1461,7 +1461,7 @@
         "writeScope": "Isolated report only",
         "dependencies": [],
         "host": "dot cloud workspace /workspace/shared",
-        "lastInspectedAt": "2026-10-14T03:47:44Z",
+        "lastInspectedAt": "2026-10-14T04:43:27Z",
         "inputSpecificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
         "returnTo": "/root",
         "concurrencyAllocation": 1
@@ -1482,7 +1482,7 @@
         "commit": "5e587742daaabf265ae284d3733d571d9f7e293e",
         "evidence": "Independent ACCEPT for verifier-only commit5e587742; review SHA256c6c8cabe7f754395a0de91d1bb648d9fcc06fb73cf612cce334a1c05e5e445f1; six executed controls. No overall acceptance or deployment claim.",
         "host": "dot cloud workspace /workspace/shared",
-        "lastInspectedAt": "2026-10-14T03:47:44Z",
+        "lastInspectedAt": "2026-10-14T04:43:27Z",
         "inputSpecificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
         "returnTo": "/root",
         "concurrencyAllocation": 1
@@ -1499,7 +1499,7 @@
         ],
         "evidence": "Independent ACCEPT for verifier-only commit5e587742; review SHA256c6c8cabe7f754395a0de91d1bb648d9fcc06fb73cf612cce334a1c05e5e445f1; six executed controls. No overall acceptance or deployment claim.",
         "host": "dot cloud workspace /workspace/shared",
-        "lastInspectedAt": "2026-10-14T03:47:44Z",
+        "lastInspectedAt": "2026-10-14T04:43:27Z",
         "inputSpecificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
         "returnTo": "/root",
         "concurrencyAllocation": 1
@@ -1507,7 +1507,7 @@
       {
         "id": "source-reconciliation-20261014",
         "owner": "/root/reconcile_independent_source_coverage",
-        "state": "RUNNING",
+        "state": "VERIFIED",
         "scope": "Distinct source reconciliation and genuine normalized pipeline evidence",
         "writeScope": "Isolated evidence artifacts only",
         "dependencies": [
@@ -1515,15 +1515,16 @@
           "blind-coverage-20261014"
         ],
         "host": "dot cloud workspace /workspace/shared",
-        "lastInspectedAt": "2026-10-14T03:47:44Z",
+        "lastInspectedAt": "2026-10-14T04:43:27Z",
         "inputSpecificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
         "returnTo": "/root",
-        "concurrencyAllocation": 1
+        "concurrencyAllocation": 1,
+        "evidence": "Complete source-only coverage accepted through distinct reconciliation. Does not establish distinct atomic obligation completeness."
       },
       {
         "id": "exact-source-adoption-20261014",
         "owner": "/root/adopt_exact_specification_source",
-        "state": "RUNNING",
+        "state": "INTEGRATED",
         "scope": "Exact supplied source adoption and existing pipeline compatibility",
         "baseCommit": "7df5f46e9a7e54da09622387a978badb39916c09",
         "branch": "dot/spec-source-20261014",
@@ -1533,10 +1534,12 @@
         ],
         "checkpointCommit": "ebf6a930d1e5ef2f9afaaf68631a318facee5181",
         "host": "dot cloud workspace /workspace/shared",
-        "lastInspectedAt": "2026-10-14T03:47:44Z",
+        "lastInspectedAt": "2026-10-14T04:43:27Z",
         "inputSpecificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
         "returnTo": "/root",
-        "concurrencyAllocation": 1
+        "concurrencyAllocation": 1,
+        "commit": "46a3c55ec5a2776f1ca6dd921aa41d54677c4633",
+        "evidence": "Independent adoption/pipeline/necessity-correction ACCEPT, exact source retained; current generator bound to reachable remote source b2f06cde. Full governance intentionally exits1 on atomic completeness."
       },
       {
         "id": "management-review-20261014",
@@ -1546,7 +1549,7 @@
         "writeScope": "Isolated review/preparation artifacts only",
         "dependencies": [],
         "host": "dot cloud workspace /workspace/shared",
-        "lastInspectedAt": "2026-10-14T03:47:44Z",
+        "lastInspectedAt": "2026-10-14T04:43:27Z",
         "inputSpecificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
         "returnTo": "/root",
         "concurrencyAllocation": 1,
@@ -1561,7 +1564,7 @@
         "writeScope": "Isolated review/preparation artifacts only",
         "dependencies": [],
         "host": "dot cloud workspace /workspace/shared",
-        "lastInspectedAt": "2026-10-14T03:47:44Z",
+        "lastInspectedAt": "2026-10-14T04:43:27Z",
         "inputSpecificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
         "returnTo": "/root",
         "concurrencyAllocation": 1,
@@ -1576,7 +1579,7 @@
         "writeScope": "Isolated review/preparation artifacts only",
         "dependencies": [],
         "host": "dot cloud workspace /workspace/shared",
-        "lastInspectedAt": "2026-10-14T03:47:44Z",
+        "lastInspectedAt": "2026-10-14T04:43:27Z",
         "inputSpecificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
         "returnTo": "/root",
         "concurrencyAllocation": 1,
@@ -1587,30 +1590,146 @@
       {
         "id": "atomic-mapping-design-20261014",
         "owner": "/root/design_atomic_requirement_mapping",
-        "state": "RUNNING",
+        "state": "VERIFIED",
         "scope": "Minimal existing-manifest distinct-obligation representation and consumer analysis",
         "baseCommit": "ebf6a930d1e5ef2f9afaaf68631a318facee5181",
         "writeScope": "Isolated review/design artifacts only",
         "dependencies": [],
         "host": "dot cloud workspace /workspace/shared",
-        "lastInspectedAt": "2026-10-14T03:47:44Z",
+        "lastInspectedAt": "2026-10-14T04:43:27Z",
         "inputSpecificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
         "returnTo": "/root",
-        "concurrencyAllocation": 1
+        "concurrencyAllocation": 1,
+        "evidencePath": "/workspace/shared/clrt-atomic-mapping-design.txt",
+        "evidence": "Bounded schema/consumer design complete, no implementation claim."
       },
       {
         "id": "source-adoption-review-20261014",
         "owner": "/root/review_exact_source_adoption",
-        "state": "RUNNING",
+        "state": "VERIFIED",
         "scope": "Independent review of frozen exact-source adoption delta",
         "baseCommit": "ebf6a930d1e5ef2f9afaaf68631a318facee5181",
         "writeScope": "Isolated review/design artifacts only",
         "dependencies": [],
         "host": "dot cloud workspace /workspace/shared",
-        "lastInspectedAt": "2026-10-14T03:47:44Z",
+        "lastInspectedAt": "2026-10-14T04:43:27Z",
         "inputSpecificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
         "returnTo": "/root",
-        "concurrencyAllocation": 1
+        "concurrencyAllocation": 1,
+        "evidencePath": "verification/dot-execution-20261014/source-review/",
+        "evidence": "Three independently scoped ACCEPT reports retained. No application acceptance."
+      },
+      {
+        "id": "draft-atomic-prefix",
+        "owner": "/root/extract_distinct_normative_obligations",
+        "state": "BLOCKED",
+        "scope": "Partial draft sections0\u201314 retained; remaining ranges assigned separately",
+        "evidencePath": "/workspace/shared/clrt-atomic-draft-coverage-report.txt",
+        "host": "dot cloud workspace",
+        "lastInspectedAt": "2026-10-14T04:43:27Z",
+        "inputSpecificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+        "returnTo": "/root",
+        "concurrencyAllocation": 1,
+        "writeScope": "Own isolated artifacts or assigned atomic implementation worktree; no root ledger writes",
+        "dependencies": []
+      },
+      {
+        "id": "blind-atomic-prefix",
+        "owner": "/root/challenge_distinct_obligation_coverage",
+        "state": "BLOCKED",
+        "scope": "Partial blind coverage through36 retained; tail assigned separately",
+        "evidencePath": "/workspace/shared/clrt-atomic-blind-review.json",
+        "host": "dot cloud workspace",
+        "lastInspectedAt": "2026-10-14T04:43:27Z",
+        "inputSpecificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+        "returnTo": "/root",
+        "concurrencyAllocation": 1,
+        "writeScope": "Own isolated artifacts or assigned atomic implementation worktree; no root ledger writes",
+        "dependencies": []
+      },
+      {
+        "id": "extract_obligations_sections_15_36",
+        "owner": "/root/extract_obligations_sections_15_36",
+        "state": "RUNNING",
+        "scope": "Draft source obligations15\u201336",
+        "evidencePath": null,
+        "host": "dot cloud workspace",
+        "lastInspectedAt": "2026-10-14T04:43:27Z",
+        "inputSpecificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+        "returnTo": "/root",
+        "concurrencyAllocation": 1,
+        "writeScope": "Own isolated artifacts or assigned atomic implementation worktree; no root ledger writes",
+        "dependencies": []
+      },
+      {
+        "id": "extract_obligations_sections_37_52",
+        "owner": "/root/extract_obligations_sections_37_52",
+        "state": "RUNNING",
+        "scope": "Draft source obligations37\u201352",
+        "evidencePath": null,
+        "host": "dot cloud workspace",
+        "lastInspectedAt": "2026-10-14T04:43:27Z",
+        "inputSpecificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+        "returnTo": "/root",
+        "concurrencyAllocation": 1,
+        "writeScope": "Own isolated artifacts or assigned atomic implementation worktree; no root ledger writes",
+        "dependencies": []
+      },
+      {
+        "id": "complete_blind_atomic_review",
+        "owner": "/root/complete_blind_atomic_review",
+        "state": "RUNNING",
+        "scope": "Complete independent blind source coverage37\u201352",
+        "evidencePath": null,
+        "host": "dot cloud workspace",
+        "lastInspectedAt": "2026-10-14T04:43:27Z",
+        "inputSpecificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+        "returnTo": "/root",
+        "concurrencyAllocation": 1,
+        "writeScope": "Own isolated artifacts or assigned atomic implementation worktree; no root ledger writes",
+        "dependencies": []
+      },
+      {
+        "id": "implement_atomic_manifest_support",
+        "owner": "/root/implement_atomic_manifest_support",
+        "state": "RUNNING",
+        "scope": "Existing governance/proof-consumer support for same-line atomic obligations; no runtime changes",
+        "evidencePath": null,
+        "host": "dot cloud workspace",
+        "lastInspectedAt": "2026-10-14T04:43:27Z",
+        "inputSpecificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+        "returnTo": "/root",
+        "concurrencyAllocation": 1,
+        "writeScope": "Own isolated artifacts or assigned atomic implementation worktree; no root ledger writes",
+        "dependencies": []
+      },
+      {
+        "id": "reconcile_atomic_requirement_entries",
+        "owner": "/root/reconcile_atomic_requirement_entries",
+        "state": "RUNNING",
+        "scope": "Distinct proposition reconciliation, starting completed0\u201314 prefix",
+        "evidencePath": null,
+        "host": "dot cloud workspace",
+        "lastInspectedAt": "2026-10-14T04:43:27Z",
+        "inputSpecificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+        "returnTo": "/root",
+        "concurrencyAllocation": 1,
+        "writeScope": "Own isolated artifacts or assigned atomic implementation worktree; no root ledger writes",
+        "dependencies": []
+      },
+      {
+        "id": "prepare_minimal_contract_amendment",
+        "owner": "/root/prepare_minimal_contract_amendment",
+        "state": "RUNNING",
+        "scope": "Prepare only missing observable semantic choices, excluding routine implementation decisions",
+        "evidencePath": null,
+        "host": "dot cloud workspace",
+        "lastInspectedAt": "2026-10-14T04:43:27Z",
+        "inputSpecificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+        "returnTo": "/root",
+        "concurrencyAllocation": 1,
+        "writeScope": "Own isolated artifacts or assigned atomic implementation worktree; no root ledger writes",
+        "dependencies": []
       }
     ],
     "resources": {
@@ -1630,7 +1749,9 @@
       "cloudChromiumDevTools": "BLOCKED_PERMISSION",
       "ordinaryWindowResize": "AVAILABLE_VERIFIED_CONTROL_EXECUTION_PENDING",
       "requiredNarrowVisualViewports": "BLOCKED_CAPABILITY_NATIVE_WINDOW_MINIMUM_500_CSS_PIXELS",
-      "freeWorkspaceObservedGiB": 29
+      "freeWorkspaceObservedGiB": 29,
+      "githubConnectorWrite": "AVAILABLE_VERIFIED",
+      "remoteBranchPublication": "AVAILABLE_VERIFIED"
     },
     "branchRules": {
       "rulesetId": 21578362,
@@ -1670,7 +1791,7 @@
     },
     "scheduleState": "FORECAST_NOT_ESTABLISHED",
     "forecast": null,
-    "nextAction": "Complete truthful source reconciliation/pipeline changes, then independently review exact adoption batch and close atomic coverage and stale proof. Continue ordinary-window visual capture and genuine project preparation.",
+    "nextAction": "Complete atomic extraction tails and distinct reconciliation, implement and independently review existing manifest support; finish narrow source-amendment proposal for any genuine human decision; preserve pending real-project authorization.",
     "deploymentObservation": {
       "sourceCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
       "runId": "36958910363",
@@ -1686,7 +1807,7 @@
       "Required visual viewport captures and authentic frozen-baseline approval remain incomplete.",
       "Physical iPhone performer/capability and real-project objective remain unestablished."
     ],
-    "managementRecordWriteRoot": "controlled integration branch dot/execution-20261014; earlier management worktree retained as reviewed checkpoint",
+    "managementRecordWriteRoot": "Controlled integration worktree /workspace/shared/clrt-integration, branch dot/published-execution-20261014, parent sole writer",
     "pendingHumanDecisions": [
       {
         "messageId": "Sentinel_0b8f49c5ca508191981a995478ac7408",
@@ -1694,6 +1815,17 @@
         "status": "AWAITING_REPLY"
       }
     ],
-    "diagnosticStage04Evidence": "verification/dot-execution-20261014/stage04-observation.json"
+    "diagnosticStage04Evidence": "verification/dot-execution-20261014/stage04-observation.json",
+    "remoteWorkingBranch": "dot/execution-20261014",
+    "remoteCheckpointCommit": "b2f06cdec1a8185714fe3e01ac2a5d1e92aa348f",
+    "remoteCheckpointTree": "09d93b4ba46302f7d452ed8efd9871694e852891",
+    "remoteCheckpointVerifiedAt": "2026-10-14T04:38:16Z",
+    "sourceContractFindings": {
+      "remainingGroups": 5,
+      "status": "UNRESOLVED_NARROW_CONTRACT_COMPONENTS",
+      "mobileChallengeExpiry": "IMPLEMENTATION_CHOICE_NOT_NORMATIVE_AMENDMENT",
+      "proposalApproved": false,
+      "evidencePath": "verification/clrt-contract-amendment-necessity-review.txt"
+    }
   }
 }
