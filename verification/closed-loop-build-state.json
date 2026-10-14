@@ -2940,7 +2940,7 @@
           "prepare_chain14_continuation: final15 external driver only"
         ],
         "independentReviewer": "review_release_scope_binding",
-        "heavyProcess": "NONE; final driver review pending",
+        "heavyProcess": "session61315: reviewed normal13-to15 bounded27-30 continuation",
         "sourceHashes": {
           "workflow-engine.js": "1a0e0789abcb829c79dec4748dbaa0e90d2989d6d263ac3e6b6e1fcf26377d1f",
           "workflow-schema.js": "626e51a6590e1bb19e6c4478a2531326daddceffabdb8ced225dbb4aa81deb1b",
@@ -2948,6 +2948,27 @@
         },
         "existingOwnerFailure": "verify-stage29-evidence-chain-checkpoint.mjs line83 synthetic positive has no registered chain receipt; exact53 baseline and current draft both exit1. Preserved, not weakened or counted passing.",
         "diskFreeObserved": "1.3 GiB; source input18 MiB compressed; monitor terminal capture headroom"
+      },
+      "chain15Continuation": {
+        "status": "RUNNING",
+        "startedAt": "2026-10-14T21:00:08Z",
+        "sessionId": 61315,
+        "candidateCommit": "c3033739cf64eab98b371b9fe53c6da312976273",
+        "driverSha256": "19c0e20031b08c85a061368ddd142b41a3d602d491cc206131e5ac50bf8a3c69",
+        "sourcePinsSha256": "0b2c7d207a4aa202ce463ff1a0da08370e18f2b186c6d487a938f506ead38f9a",
+        "wrapperSha256": "df09c1abb43b437c85d53649bc8c157b8efae017f3bb467a9b98e173836af229",
+        "directory": "/workspace/shared/clrt-iteration-repair-evidence/chain15-governed-continuation",
+        "terminalDirectory": "/workspace/shared/clrt-iteration-repair-evidence/chain15-governed-checks",
+        "fullJourneyExecution": false,
+        "unavailableReportObjects": [
+          "governedIterationRefutation original scalar report; separate genuine branch proof retained"
+        ],
+        "authorityExpiresAt": "2026-10-14T21:35:46.722Z",
+        "scope": "Normal original13 save/cold, current15 activation, ordinary27/28 reproof then exact original29/30 assertions, reviewed decoy negative and actual governing-input controls. Seventeen genuine prefix arrays and three saved scalars retained.",
+        "independentReview": "review_release_scope_binding final driver approval21:00:02Z",
+        "latestActualPhase": "validate-original-producer-command",
+        "latestObservedAt": "2026-10-14T21:00:09.247Z",
+        "terminal": "PENDING"
       }
     },
     "continuationAmendmentV2": {
