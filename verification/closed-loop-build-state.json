@@ -1394,7 +1394,7 @@
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "/root/repair_iteration_receipt_dependencies",
-    "lastInspectedAt": "2026-10-14T18:59:45.084635+00:00",
+    "lastInspectedAt": "2026-10-14T19:11:45.643435+00:00",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -2050,7 +2050,7 @@
     },
     "scheduleState": "FORECAST_NOT_ESTABLISHED",
     "forecast": null,
-    "nextAction": "Retrieve actual79312 terminal and independent disposition; align current13 catalog in isolated worker, integrate only reviewed source with affected checks. Preserve pending publication/human approvals.",
+    "nextAction": "Retrieve2233 actual terminal; obtain independent narrow integration disposition, then integrate reviewed runtime/owner/catalog changes and execute affected combined checks. All full-owner and human/publication obligations remain open.",
     "deploymentObservation": {
       "sourceCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
       "runId": "36958910363",
@@ -2777,7 +2777,7 @@
         }
       },
       "boundedTail28": {
-        "state": "RUNNING",
+        "state": "TERMINAL_FAILED_TEST_HELPER_PERSISTENCE",
         "source": "445fe4da9688cc68a59406376ffef0e06cae9f2c",
         "driverSha256": "8682bc24bbaeffceed5a6a7bba5973ab6a18355b8df617e872e7cc0722cfcfca",
         "session": 79312,
@@ -2789,7 +2789,29 @@
           "Prefix presentation aggregate UNESTABLISHED",
           "Prefix attachment aggregate NOT EXECUTED",
           "Original helper caller-pointer preservation UNESTABLISHED"
-        ]
+        ],
+        "exitCode": 1,
+        "endedAt": "2026-10-14T19:01:21Z",
+        "lastCompletedStage": 28,
+        "failure": "RESPONSE_STAGE_PROMPT_UNAVAILABLE: investigation test helper reserved prompt only in memory; production saved-instruction lookup correctly rejected it."
+      },
+      "stage29SetupCorrection": {
+        "commit": "700c48b56359fd52289dd3097457d8cdc5aa03ea",
+        "scope": "Test helper isolated ordinary base save, reserve, expected-revision/state prompt save and exact original custody; all original negative/semantic/raw/retry/caller isolation assertions retained. Also current13 derivationVersion assertion corrected12\u219213. No runtime changes.",
+        "reviewSha256": "2fddbab722ec527d0066bbcdf19e48a3f475c3ba6b6ade2be32dc9570e311e29",
+        "state": "IN_REVIEW_ACTUAL_EXECUTION_PENDING"
+      },
+      "boundedTail29": {
+        "state": "RUNNING",
+        "session": 2233,
+        "source": "700c48b56359fd52289dd3097457d8cdc5aa03ea",
+        "driverSha256": "d00f52389fd1ff9884dac90a8726db04f29cbfd7ddf9f9b11fe533e3d94a0197",
+        "startedAt": "2026-10-14T19:09:13Z",
+        "sourceCheckpointCompressedSha256": "8a2f6d43cb9e9f9c503802c8c294f8c2c96f403aa1e09a7b48c0c5dff3a319b2",
+        "sourceCanonicalProjectSha256": "0ecdf798bce7a46cc18d142ece1c4db0ae62b4f5fe069a55a8684d4c2fbcc065",
+        "originalCapabilityExpiresAt": "2026-10-14T19:20:11.524Z",
+        "scope": "Remaining28 identity assertion and actual29\u201330 only; no repeated successful prefix or renewed authority.",
+        "fullOwnerAcceptance": false
       }
     },
     "continuationAmendmentV2": {
@@ -2837,7 +2859,10 @@
         "activeImplementationWorkers": 2,
         "activeIndependentReviewers": 1,
         "heavyProcessLimit": 1,
-        "currentHeavySession": 79312
+        "currentHeavySession": 2233,
+        "catalogCommit": "d6c7d33be916991cf3098fe202f46919e77120d7",
+        "catalogReviewer": "/root/repair_iteration_receipt_dependencies/review_catalog13_alignment",
+        "currentCatalogState": "AUTHOR_COMPLETE_INDEPENDENT_REVIEW_RUNNING"
       }
     }
   }
