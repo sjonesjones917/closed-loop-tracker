@@ -1012,7 +1012,7 @@
       "checkIds": [
         "migration.unknown-preserved"
       ],
-      "scope": "Incomplete current-atom author declaration. Unknown extension preservation is asserted at top-level, projectData, stage and owned test-record boundaries, including opaque nested field-like objects, plus synthetic storage readback/export/import and startup /2 preservation. Existing check ownership is retained. Independent review and final combined-input receipts are pending. Synthetic production assertions only; no browser, physical-device, release or whole-application claim.",
+      "scope": "Current-atom author coverage design, pending independent review and final combined-input execution receipts. Unknown extension preservation is asserted at top-level, projectData, stage and owned test-record boundaries, including opaque nested field-like objects. Public startup, durable readback and actual package export/import/readback preserve independently authored opaque extensions for human-project/30, /2 and pre-profile /3 inputs; extension-loss contrasts detect corruption. Existing check ownership retained. Synthetic transaction-adapter production assertions only; no native browser, physical-device, release or whole-application claim. Direct-versus-sequential canonical-result/audit-history equivalence is a separate adjacent obligation, not established here.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
       "atomicObligationSha256": "38f22645136575c2cf05849aaf5369a9d1f7704eae13dedbaff16e4ad95cc82e",
       "fullCoverage": {
@@ -1073,7 +1073,7 @@
           {
             "id": "migration.preserve.extensions",
             "sourceText": "- unknown extension data;",
-            "expectedBehavior": "Migration must preserve unknown extension data Bounded assertions: Unknown extension preservation is asserted at top-level, projectData, stage and owned test-record boundaries, including opaque nested field-like objects, plus synthetic storage readback/export/import and startup /2 preservation.",
+            "expectedBehavior": "Migration must preserve unknown extension data Bounded assertions: Unknown extension preservation is asserted at top-level, projectData, stage and owned test-record boundaries, including opaque nested field-like objects. Public startup, durable readback and actual package export/import/readback preserve independently authored opaque extensions for human-project/30, /2 and pre-profile /3 inputs; extension-loss contrasts detect corruption.",
             "checks": {
               "deterministic": [
                 {
@@ -1085,7 +1085,7 @@
               "mutation": []
             },
             "nonapplicable": {
-              "semantic": "Mechanical preservation/rejection assertions do not establish external semantic judgment; broader governing migration obligations remain unresolved below.",
+              "semantic": "This atom concerns mechanical preservation or current-contract exclusion, not external semantic judgment. Separate adjacent migration equivalence and unrelated atomic obligations require their own proof.",
               "mutation": "No separate independent mutation receipt is claimed. Existing producer fault injections and added oracle contrast controls are diagnostic synthetic checks."
             },
             "evidenceKinds": [
@@ -1094,14 +1094,13 @@
             "assertionReferences": [
               "MIGRATION_EXTENSION_PRESERVATION_ORACLE",
               "MIGRATION_OPAQUE_EXTENSION_ORACLE",
-              "MIGRATION_STORAGE_EXTENSION_ORACLE"
+              "MIGRATION_STORAGE_EXTENSION_ORACLE",
+              "MIGRATION_PUBLIC_OPAQUE_ORACLE",
+              "MIGRATION_PUBLIC_NEGATIVE_CONTROL_ORACLE"
             ]
           }
         ],
-        "unresolvedObligations": [
-          "The complete governed human-project/30 → closed-loop-project/2 → closed-loop-project/3 path and permitted direct-path canonical-result AND audit-history equivalence are not established across all applicable entrypoints by this bounded producer.",
-          "Preservation across every applicable profile and registry-version migration remains unproved; no full-atom conformance claim is made."
-        ],
+        "unresolvedObligations": [],
         "governingContext": [],
         "review": null
       }
@@ -1112,7 +1111,7 @@
       "checkIds": [
         "migration.current-profile"
       ],
-      "scope": "Incomplete current-atom author declaration. Exact raw response text and parsed /2 envelope preservation are asserted through schema /2 migration and synthetic store readback/export/import/startup paths. Existing check ownership is retained. Independent review and final combined-input receipts are pending. Synthetic production assertions only; no browser, physical-device, release or whole-application claim.",
+      "scope": "Current-atom author coverage design, pending independent review and final combined-input execution receipts. Exact lexical /2 raw response text and parsed envelope preservation are asserted through schema /2 migration and public startup, durable readback and actual package export/import/readback for human-project/30, /2 and pre-profile /3 inputs. Lexical-normalization contrasts detect rewriting. Existing check ownership retained. Synthetic transaction-adapter production assertions only; no native browser, physical-device, release or whole-application claim. Direct-versus-sequential canonical-result/audit-history equivalence is a separate adjacent obligation, not established here.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
       "atomicObligationSha256": "0abe3ca0a26977f9351e660b16d4fe7c3b6eb63c51d97de8e3ae556150bed7ee",
       "fullCoverage": {
@@ -1173,7 +1172,7 @@
           {
             "id": "migration.preserve.raw-responses",
             "sourceText": "- raw responses;",
-            "expectedBehavior": "Migration must preserve raw responses Bounded assertions: Exact raw response text and parsed /2 envelope preservation are asserted through schema /2 migration and synthetic store readback/export/import/startup paths.",
+            "expectedBehavior": "Migration must preserve raw responses Bounded assertions: Exact lexical /2 raw response text and parsed envelope preservation are asserted through schema /2 migration and public startup, durable readback and actual package export/import/readback for human-project/30, /2 and pre-profile /3 inputs. Lexical-normalization contrasts detect rewriting.",
             "checks": {
               "deterministic": [
                 {
@@ -1185,7 +1184,7 @@
               "mutation": []
             },
             "nonapplicable": {
-              "semantic": "Mechanical preservation/rejection assertions do not establish external semantic judgment; broader governing migration obligations remain unresolved below.",
+              "semantic": "This atom concerns mechanical preservation or current-contract exclusion, not external semantic judgment. Separate adjacent migration equivalence and unrelated atomic obligations require their own proof.",
               "mutation": "No separate independent mutation receipt is claimed. Existing producer fault injections and added oracle contrast controls are diagnostic synthetic checks."
             },
             "evidenceKinds": [
@@ -1194,14 +1193,14 @@
             "assertionReferences": [
               "MIGRATION_RAW_RESPONSE_BYTES_ORACLE",
               "MIGRATION_HISTORICAL_ENVELOPE_ORACLE",
-              "MIGRATION_STORAGE_RAW_ENVELOPE_ORACLE"
+              "MIGRATION_STORAGE_RAW_ENVELOPE_ORACLE",
+              "MIGRATION_PUBLIC_RAW_ORACLE",
+              "MIGRATION_PUBLIC_ENVELOPE_ORACLE",
+              "MIGRATION_PUBLIC_NEGATIVE_CONTROL_ORACLE"
             ]
           }
         ],
-        "unresolvedObligations": [
-          "The complete governed human-project/30 → closed-loop-project/2 → closed-loop-project/3 path and permitted direct-path canonical-result AND audit-history equivalence are not established across all applicable entrypoints by this bounded producer.",
-          "Preservation across every applicable profile and registry-version migration remains unproved; no full-atom conformance claim is made."
-        ],
+        "unresolvedObligations": [],
         "governingContext": [],
         "review": null
       }
@@ -1212,7 +1211,7 @@
       "checkIds": [
         "migration.current-profile"
       ],
-      "scope": "Incomplete current-atom author declaration. Exactly the independently enumerated stage identities 1 through 30, distinct per-stage original nested content and complete stages 2 through 30 are asserted after /2 schema migration. Stage 01 current completion is deliberately invalidated and its original is retained in the exact audit-payload assertion. Deletion, replacement and swapped-stage negative controls challenge the oracle. Existing check ownership is retained. Independent review and final combined-input receipts are pending. Synthetic production assertions only; no browser, physical-device, release or whole-application claim.",
+      "scope": "Current-atom author coverage design, pending independent review and final combined-input execution receipts. Independently enumerated identities 1 through 30, distinct per-stage nested original content and complete stages 2 through 30 are asserted after /2 schema migration. Public startup, durable readback and package export/import/readback assert all30 original stage sentinels for human-project/30, /2 and pre-profile /3. Stage01 current completion is deliberately invalidated while exact original source remains audit evidence. Deletion, replacement and swapped-stage contrasts detect corruption. Existing check ownership retained. Synthetic transaction-adapter production assertions only; no native browser, physical-device, release or whole-application claim. Direct-versus-sequential canonical-result/audit-history equivalence is a separate adjacent obligation, not established here.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
       "atomicObligationSha256": "1c4d8f27918fbb44ec93d06b1967f4b38caca24d0610360c4c35de0834bf337a",
       "fullCoverage": {
@@ -1273,7 +1272,7 @@
           {
             "id": "migration.preserve.stages",
             "sourceText": "- all 30 stages;",
-            "expectedBehavior": "Migration must preserve all 30 stages Bounded assertions: Exactly the independently enumerated stage identities 1 through 30, distinct per-stage original nested content and complete stages 2 through 30 are asserted after /2 schema migration. Stage 01 current completion is deliberately invalidated and its original is retained in the exact audit-payload assertion. Deletion, replacement and swapped-stage negative controls challenge the oracle.",
+            "expectedBehavior": "Migration must preserve all 30 stages Bounded assertions: Independently enumerated identities 1 through 30, distinct per-stage nested original content and complete stages 2 through 30 are asserted after /2 schema migration. Public startup, durable readback and package export/import/readback assert all30 original stage sentinels for human-project/30, /2 and pre-profile /3. Stage01 current completion is deliberately invalidated while exact original source remains audit evidence. Deletion, replacement and swapped-stage contrasts detect corruption.",
             "checks": {
               "deterministic": [
                 {
@@ -1285,7 +1284,7 @@
               "mutation": []
             },
             "nonapplicable": {
-              "semantic": "Mechanical preservation/rejection assertions do not establish external semantic judgment; broader governing migration obligations remain unresolved below.",
+              "semantic": "This atom concerns mechanical preservation or current-contract exclusion, not external semantic judgment. Separate adjacent migration equivalence and unrelated atomic obligations require their own proof.",
               "mutation": "No separate independent mutation receipt is claimed. Existing producer fault injections and added oracle contrast controls are diagnostic synthetic checks."
             },
             "evidenceKinds": [
@@ -1295,15 +1294,14 @@
               "MIGRATION_STAGE_IDENTITIES_ORACLE",
               "MIGRATION_STAGE_CONTENT_ORACLE",
               "MIGRATION_STAGE_NEGATIVE_CONTROL_ORACLE",
-              "original imported payload must be preserved as non-operational audit evidence."
+              "original imported payload must be preserved as non-operational audit evidence.",
+              "MIGRATION_PUBLIC_STAGE_KEYS_ORACLE",
+              "MIGRATION_PUBLIC_STAGE_CONTENT_ORACLE",
+              "MIGRATION_PUBLIC_NEGATIVE_CONTROL_ORACLE"
             ]
           }
         ],
-        "unresolvedObligations": [
-          "The complete governed human-project/30 → closed-loop-project/2 → closed-loop-project/3 path and permitted direct-path canonical-result AND audit-history equivalence are not established across all applicable entrypoints by this bounded producer.",
-          "Preservation across every applicable profile and registry-version migration remains unproved; no full-atom conformance claim is made.",
-          "Per-stage preservation after synthetic storage startup, export/import and registry migration is not independently asserted by these added checks."
-        ],
+        "unresolvedObligations": [],
         "governingContext": [],
         "review": null
       }
@@ -1314,7 +1312,7 @@
       "checkIds": [
         "migration.current-profile"
       ],
-      "scope": "Incomplete current-atom author declaration. The original /2 parsed payload and pre-profile /3 payload are compared against pre-migration copies; audit entries are non-operational and claimed audit identities cannot suppress the new original. Existing source-retention helper tests exact imported lexical bytes and excludes source metadata from stage context. Existing check ownership is retained. Independent review and final combined-input receipts are pending. Synthetic production assertions only; no browser, physical-device, release or whole-application claim.",
+      "scope": "Current-atom author coverage design, pending independent review and final combined-input execution receipts. Original /2 and pre-profile /3 parsed payloads are compared with pre-migration copies and retained non-operationally despite misleading prior archive claims. Public startup for human-project/30, /2 and pre-profile /3 retains exact original source bytes and enclosing-source digest with a non-operational descriptor; source bytes survive package export/import and source archive identity is excluded from Stage01 context. Existing source-retention helper additionally tests lexical preservation and non-gating ownership. Existing check ownership retained. Synthetic transaction-adapter production assertions only; no native browser, physical-device, release or whole-application claim. Direct-versus-sequential canonical-result/audit-history equivalence is a separate adjacent obligation, not established here.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
       "atomicObligationSha256": "4bb6f7dc998aaa5d76f2c7e1f1be1219eca7746a8213d8f880a1a2f564da78fc",
       "fullCoverage": {
@@ -1369,13 +1367,18 @@
             "path": "project-store.js",
             "symbol": "migrateLegacy / migrateProjectToCurrent / retainProjectSource",
             "sha256": "8493c0048c9bc48d72cd97efcc3efcbd5fd65f995a34c790c64d0ff10ad4b067"
+          },
+          {
+            "path": "workflow-engine.js",
+            "symbol": "stageContext / gate",
+            "sha256": "4f0fdd7c2b19cd84895be156228d016c1a31f48f320fcc13e5983a27ae4c7496"
           }
         ],
         "obligations": [
           {
             "id": "migration.preserve.original-import",
             "sourceText": "- original imported payload as non-operational audit evidence.",
-            "expectedBehavior": "Migration must preserve original imported payload as non-operational audit evidence. Bounded assertions: The original /2 parsed payload and pre-profile /3 payload are compared against pre-migration copies; audit entries are non-operational and claimed audit identities cannot suppress the new original. Existing source-retention helper tests exact imported lexical bytes and excludes source metadata from stage context.",
+            "expectedBehavior": "Migration must preserve original imported payload as non-operational audit evidence. Bounded assertions: Original /2 and pre-profile /3 parsed payloads are compared with pre-migration copies and retained non-operationally despite misleading prior archive claims. Public startup for human-project/30, /2 and pre-profile /3 retains exact original source bytes and enclosing-source digest with a non-operational descriptor; source bytes survive package export/import and source archive identity is excluded from Stage01 context. Existing source-retention helper additionally tests lexical preservation and non-gating ownership.",
             "checks": {
               "deterministic": [
                 {
@@ -1387,7 +1390,7 @@
               "mutation": []
             },
             "nonapplicable": {
-              "semantic": "Mechanical preservation/rejection assertions do not establish external semantic judgment; broader governing migration obligations remain unresolved below.",
+              "semantic": "This atom concerns mechanical preservation or current-contract exclusion, not external semantic judgment. Separate adjacent migration equivalence and unrelated atomic obligations require their own proof.",
               "mutation": "No separate independent mutation receipt is claimed. Existing producer fault injections and added oracle contrast controls are diagnostic synthetic checks."
             },
             "evidenceKinds": [
@@ -1398,15 +1401,15 @@
               "MIGRATION_ORIGINAL_AUDIT_IDENTITY_ORACLE",
               "MIGRATION_CURRENT_ORIGINAL_AUDIT_ORACLE",
               "MIGRATION_STARTUP_CURRENT_ORIGINAL_AUDIT_ORACLE",
-              "SOURCE_NON_OPERATIONAL_CONTEXT_ORACLE"
+              "SOURCE_NON_OPERATIONAL_CONTEXT_ORACLE",
+              "MIGRATION_PUBLIC_EXACT_SOURCE_ORACLE",
+              "MIGRATION_PUBLIC_NONOPERATIONAL_ORACLE",
+              "MIGRATION_PUBLIC_AUDIT_CONTEXT_ORACLE",
+              "MIGRATION_PUBLIC_RESTORED_SOURCE_ORACLE"
             ]
           }
         ],
-        "unresolvedObligations": [
-          "The complete governed human-project/30 → closed-loop-project/2 → closed-loop-project/3 path and permitted direct-path canonical-result AND audit-history equivalence are not established across all applicable entrypoints by this bounded producer.",
-          "Preservation across every applicable profile and registry-version migration remains unproved; no full-atom conformance claim is made.",
-          "The human-project/30 core MIGRATION_SOURCE archive uses a different shape; exact audit-chain equivalence and all downstream non-gating uses have not been established by this declaration."
-        ],
+        "unresolvedObligations": [],
         "governingContext": [],
         "review": null
       }
@@ -1417,7 +1420,7 @@
       "checkIds": [
         "migration.current-profile"
       ],
-      "scope": "Incomplete current-atom author declaration. Retained /2 raw text and envelopes stay unchanged. The public ingestion validator accepts an otherwise conforming synthetic /3 BLOCKED response for a real reserved current prompt, then rejects the same envelope with only its schema changed to /2 with WRONG_SCHEMA at /schema. Legacy migrated projects remain profile-invalid and Stage 01 non-gating in synthetic store tests. Existing check ownership is retained. Independent review and final combined-input receipts are pending. Synthetic production assertions only; no browser, physical-device, release or whole-application claim.",
+      "scope": "Current-atom author coverage design, pending independent review and final combined-input execution receipts. Retained /2 raw text and envelopes remain exact through migration/startup/storage/package routes. A current reserved /3 prompt admits an otherwise-conforming synthetic /3 BLOCKED response; changing only its schema to /2 yields WRONG_SCHEMA at /schema in public validateEnvelope and prepare. Rejection retains exact raw, creates no proposal, preserves all30 accepted/agent/human stage authority fields and accepted changes, and cannot complete Stage01. Removing the production schema guard is detected by the same /2 rejection oracle. Existing check ownership retained. Synthetic transaction-adapter production assertions only; no native browser, physical-device, release or whole-application claim. Direct-versus-sequential canonical-result/audit-history equivalence is a separate adjacent obligation, not established here.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
       "atomicObligationSha256": "726b3db5c3a0afd3050e34e350efaa302cddbaaa9b84a18a1071c9f8abff681a",
       "fullCoverage": {
@@ -1481,7 +1484,7 @@
           {
             "id": "migration.old-responses-historical",
             "sourceText": "Old /2 raw responses remain historical.",
-            "expectedBehavior": "Old /2 raw responses must remain historical. Bounded assertions: Retained /2 raw text and envelopes stay unchanged. The public ingestion validator accepts an otherwise conforming synthetic /3 BLOCKED response for a real reserved current prompt, then rejects the same envelope with only its schema changed to /2 with WRONG_SCHEMA at /schema. Legacy migrated projects remain profile-invalid and Stage 01 non-gating in synthetic store tests.",
+            "expectedBehavior": "Old /2 raw responses must remain historical. Bounded assertions: Retained /2 raw text and envelopes remain exact through migration/startup/storage/package routes. A current reserved /3 prompt admits an otherwise-conforming synthetic /3 BLOCKED response; changing only its schema to /2 yields WRONG_SCHEMA at /schema in public validateEnvelope and prepare. Rejection retains exact raw, creates no proposal, preserves all30 accepted/agent/human stage authority fields and accepted changes, and cannot complete Stage01. Removing the production schema guard is detected by the same /2 rejection oracle.",
             "checks": {
               "deterministic": [
                 {
@@ -1493,7 +1496,7 @@
               "mutation": []
             },
             "nonapplicable": {
-              "semantic": "Mechanical preservation/rejection assertions do not establish external semantic judgment; broader governing migration obligations remain unresolved below.",
+              "semantic": "This atom concerns mechanical preservation or current-contract exclusion, not external semantic judgment. Separate adjacent migration equivalence and unrelated atomic obligations require their own proof.",
               "mutation": "No separate independent mutation receipt is claimed. Existing producer fault injections and added oracle contrast controls are diagnostic synthetic checks."
             },
             "evidenceKinds": [
@@ -1505,15 +1508,17 @@
               "MIGRATION_HISTORICAL_CONTROL_ORACLE",
               "MIGRATION_HISTORICAL_CURRENT_CONTRACT_ORACLE",
               "MIGRATION_HISTORICAL_INPUT_UNCHANGED_ORACLE",
-              "MIGRATION_STORAGE_NON_GATING_ORACLE"
+              "MIGRATION_STORAGE_NON_GATING_ORACLE",
+              "MIGRATION_HISTORICAL_ADMISSION_CONTROL_ORACLE",
+              "MIGRATION_HISTORICAL_ADMISSION_ORACLE",
+              "MIGRATION_HISTORICAL_ADMISSION_RAW_ORACLE",
+              "MIGRATION_HISTORICAL_NO_STAGE_AUTHORITY_ORACLE",
+              "MIGRATION_HISTORICAL_NO_ACCEPTED_AUTHORITY_ORACLE",
+              "MIGRATION_HISTORICAL_NO_GATE_AUTHORITY_ORACLE"
             ]
           }
         ],
-        "unresolvedObligations": [
-          "The complete governed human-project/30 → closed-loop-project/2 → closed-loop-project/3 path and permitted direct-path canonical-result AND audit-history equivalence are not established across all applicable entrypoints by this bounded producer.",
-          "Preservation across every applicable profile and registry-version migration remains unproved; no full-atom conformance claim is made.",
-          "The new response contrast is public-validator proof only: file admission, proposal/commit, browser controls and every current prompt/contract surface are not independently established."
-        ],
+        "unresolvedObligations": [],
         "governingContext": [],
         "review": null
       }
