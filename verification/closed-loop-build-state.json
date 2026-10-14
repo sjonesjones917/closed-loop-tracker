@@ -2875,6 +2875,26 @@
         "historicalRetiredDeclarationsPreserved": 164,
         "reason": "Reviewed input identity changed with accepted runtime/schema/store/catalog. No restamping; independent semantic re-review and genuine current producer execution required.",
         "producerNodeObservation": "Local Node24.19.0; CI pins22.23.3. Receipts not interchangeable."
+      },
+      "readyChainContinuation": {
+        "state": "RUNNING",
+        "session": 17118,
+        "startedAt": "2026-10-14T20:06:18Z",
+        "sourceCommit": "53e02e32437ada21e6f14d20f1ec7eced5425427",
+        "driverSha256": "f3f44a4662892bdee879e8d44637a5694e69251f4362839fc70cdd3e6b834e49",
+        "generatedBodySha256": "64500d550f811809f52f891168cd9663943196a048e74b6fba97dd3d694ade86",
+        "wrapperSha256": "0dfb79d6e584eb140576354d0c05c5b6ac2ed9fb9ede406479e195b6962526bc",
+        "sourceCheckpointCompressedSha256": "558e48b0e39b790abd89cbf5905028a9b78ba4f52c6b70229fc7979c2ccc6b90",
+        "sourceCheckpointCanonicalSha256": "99c6ea909b5f4f1eeff40a67bf90846a921e5dc34ed2c872915c0ca59e6d7b73",
+        "checkpointIndependentReviewSha256": "f7db33c2e18cd42ae08d64bbe5cabd7a85557e83a56469ee1e2569c5ccc8e0a8",
+        "scope": "Original remaining post21 controls and22\u201330 in original VM realm. Exact17 captured prefix arrays restored; all original final presentation/attachment/type/hash/timing assertions retained. Every capture labeled partial continuation.",
+        "fullJourneyExecution": false,
+        "unavailableReportObjects": [
+          "governedIterationRefutation original scalar report; separate real branch proof retained"
+        ],
+        "originalAuthorityExpiresAt": "2026-10-14T21:35:46.722Z",
+        "directory": "/workspace/shared/clrt-iteration-repair-evidence/frozen-53e02e32-governed-continuation",
+        "terminal": "PENDING"
       }
     },
     "continuationAmendmentV2": {
@@ -2922,7 +2942,7 @@
         "activeImplementationWorkers": 1,
         "activeIndependentReviewers": 1,
         "heavyProcessLimit": 1,
-        "currentHeavySession": null,
+        "currentHeavySession": 17118,
         "catalogCommit": "d6c7d33be916991cf3098fe202f46919e77120d7",
         "catalogReviewer": "/root/repair_iteration_receipt_dependencies/review_catalog13_alignment",
         "currentCatalogState": "COMPLETED_ACCEPTED_INTEGRATED",
