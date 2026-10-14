@@ -7,7 +7,7 @@ import {projectStoreRuntime,bindAcceptanceUi,bindProjectActivationUi} from './te
 import {artifactFixtureId} from './test-artifact-fixtures.mjs';
 import {readStoreArchive} from './test-zip.mjs';
 import {verifyStartupActivationReuse,verifyLegacy5ProjectionActivation,verifyStage19ProjectionActivationOrdering} from './test-startup-activation-reuse.mjs';
-import {verifyProjectionVersion9ActivationContract,verifyProjectionVersion9IterationActivation} from './test-derivation-receipt-contract.mjs';
+import {verifyProjectionVersion10ActivationContract,verifyProjectionVersion10IterationActivation} from './test-derivation-receipt-contract.mjs';
 
 const app=fs.readFileSync(process.env.APP_SOURCE||'app-core.js','utf8'),digest=bytes=>createHash('sha256').update(bytes).digest('hex');
 const observations=[];
@@ -154,11 +154,11 @@ observations.push({id:'PROJECT_ACTIVATION_CALLERS',result:'PASS',callers:callerR
  observations.push({id:'PROJECT_ACTIVATION_COMBINED_COLD_READ',result:'PASS',coldReads:1,sameCurrentResult:true,staleExplicitPredicateRejected:true,corruptColdSourceRejected:true});
 }
 const projection5Activation9=await verifyLegacy5ProjectionActivation();
-observations.push({id:'PROJECT_PROJECTION5_ACTIVATION9',...projection5Activation9});
-const projectionVersion9IterationActivation=await verifyProjectionVersion9IterationActivation();
-observations.push({...projectionVersion9IterationActivation,id:'PROJECT_PROJECTION7_ITERATION4_ACTIVATION9'});
-const projectionVersion7Activation=await verifyProjectionVersion9ActivationContract();
-observations.push({id:'PROJECT_PROJECTION6_ACTIVATION9',...projectionVersion7Activation});
+observations.push({id:'PROJECT_PROJECTION5_ACTIVATION10',...projection5Activation9});
+const projectionVersion10IterationActivation=await verifyProjectionVersion10IterationActivation();
+observations.push({...projectionVersion10IterationActivation,id:'PROJECT_PROJECTION7_ITERATION4_ACTIVATION10'});
+const projectionVersion7Activation=await verifyProjectionVersion10ActivationContract();
+observations.push({id:'PROJECT_PROJECTION6_ACTIVATION10',...projectionVersion7Activation});
 const stage19ProjectionActivationOrdering=await verifyStage19ProjectionActivationOrdering();
 observations.push({id:'PROJECT_STAGE19_PROJECTION_ACTIVATION_ORDERING',...stage19ProjectionActivationOrdering});
 const startupActivationReuse=await verifyStartupActivationReuse({source:app});
