@@ -1,0 +1,199 @@
+{
+  "candidate": "a38727e1",
+  "bindingCount": 358,
+  "fullCoverageCount": 19,
+  "allReviewedPinsValid": true,
+  "unsupportedCanonicalClaimsAbsent": true,
+  "results": [
+    {
+      "id": "NREQ-a1bafeb7c6f6f12bf0c7b0f6fcadaab9",
+      "review": {
+        "path": "verification/requirement-coverage-NREQ-a1bafeb7c6f6f12bf0c7b0f6fcadaab9-20261014-migration-projection12-independent.json",
+        "sha256": "a736e85debf60f7302e781f520967d0dec1439f2c34549f2bd15321c7bc53585"
+      },
+      "ownerAndInputPinsValid": true,
+      "declarationDigestValid": true,
+      "emptyReceiptDisposition": "UNKNOWN"
+    },
+    {
+      "id": "NREQ-f41a79c58369bd76c58ad7e831e953ce",
+      "review": {
+        "path": "verification/requirement-coverage-NREQ-f41a79c58369bd76c58ad7e831e953ce-20261014-migration-projection12-independent.json",
+        "sha256": "320a777df7489f8cce98cc07de5ab72a1a37b87f290afa60370a8c3ff71c75a1"
+      },
+      "ownerAndInputPinsValid": true,
+      "declarationDigestValid": true,
+      "emptyReceiptDisposition": "UNKNOWN"
+    },
+    {
+      "id": "NREQ-5811c65fa83521ee7afeedd602cec806",
+      "review": {
+        "path": "verification/requirement-coverage-NREQ-5811c65fa83521ee7afeedd602cec806-20261014-migration-projection12-independent.json",
+        "sha256": "1519dc8b2071c442f3691b166c6cc5688d5f89a1b8f587b8602e7fcc6b27da8e"
+      },
+      "ownerAndInputPinsValid": true,
+      "declarationDigestValid": true,
+      "emptyReceiptDisposition": "UNKNOWN"
+    },
+    {
+      "id": "NREQ-2046e21dd63ad76f992233d5582c716d",
+      "review": {
+        "path": "verification/requirement-coverage-NREQ-2046e21dd63ad76f992233d5582c716d-20261014-migration-projection12-independent.json",
+        "sha256": "d22e952a2855d7bfa7fdcbbc637626e01d1812632b65fc14f8ba768de56c4eca"
+      },
+      "ownerAndInputPinsValid": true,
+      "declarationDigestValid": true,
+      "emptyReceiptDisposition": "UNKNOWN"
+    },
+    {
+      "id": "NREQ-1b07d67693ef773b4800dc6e06626b5b",
+      "review": {
+        "path": "verification/requirement-coverage-NREQ-1b07d67693ef773b4800dc6e06626b5b-20261014-migration-projection12-independent.json",
+        "sha256": "0029c8a208987adb70112eceb62ceb7c31cce9e204894e9821d2a35f88d0b898"
+      },
+      "ownerAndInputPinsValid": true,
+      "declarationDigestValid": true,
+      "emptyReceiptDisposition": "UNKNOWN"
+    },
+    {
+      "id": "NREQ-47111062e64d0d3b30e6cc9e1826cfc3",
+      "review": {
+        "path": "verification/requirement-coverage-NREQ-47111062e64d0d3b30e6cc9e1826cfc3-20261014-canonical-projection12-c0c20749.json",
+        "sha256": "4508b4a53e9f4f87ab1f0fd678f7f37967a82f482220e4f24795e520078801ac"
+      },
+      "ownerAndInputPinsValid": true,
+      "declarationDigestValid": true,
+      "emptyReceiptDisposition": "UNKNOWN"
+    },
+    {
+      "id": "NREQ-f25aa7572d552a605b446c527f7ffb29",
+      "review": {
+        "path": "verification/requirement-coverage-NREQ-f25aa7572d552a605b446c527f7ffb29-20261014-canonical-projection12-c0c20749.json",
+        "sha256": "f598e0df640c59c3f4f7e0470de232d72c498625fbbb3a2f5ec2e58b5f192c3d"
+      },
+      "ownerAndInputPinsValid": true,
+      "declarationDigestValid": true,
+      "emptyReceiptDisposition": "UNKNOWN"
+    },
+    {
+      "id": "NREQ-51ce4098cc4744b966dc6d89fc7d5621",
+      "review": {
+        "path": "verification/requirement-coverage-NREQ-51ce4098cc4744b966dc6d89fc7d5621-20261014-canonical-projection12-c0c20749.json",
+        "sha256": "99635c8649c072be4687529d210078079b31972882b03df8a1ff2f47126211dd"
+      },
+      "ownerAndInputPinsValid": true,
+      "declarationDigestValid": true,
+      "emptyReceiptDisposition": "UNKNOWN"
+    },
+    {
+      "id": "NREQ-eb942909863b29d2c26fd0ae5480625f",
+      "review": {
+        "path": "verification/requirement-coverage-NREQ-eb942909863b29d2c26fd0ae5480625f-20261014-canonical-projection12-c0c20749.json",
+        "sha256": "34792fb207d72ab0484c7ba2a3163f869c5343707ccb1bbb86b937faabc1440a"
+      },
+      "ownerAndInputPinsValid": true,
+      "declarationDigestValid": true,
+      "emptyReceiptDisposition": "UNKNOWN"
+    },
+    {
+      "id": "NREQ-662eca90789c91ae31177173980783dd",
+      "review": {
+        "path": "verification/requirement-coverage-NREQ-662eca90789c91ae31177173980783dd-20261014-canonical-projection12-c0c20749.json",
+        "sha256": "39560032ae38d819b9d3e5ba77c3bd8c17ff28e0b9c429ccb0e3d4594a3f7d23"
+      },
+      "ownerAndInputPinsValid": true,
+      "declarationDigestValid": true,
+      "emptyReceiptDisposition": "UNKNOWN"
+    },
+    {
+      "id": "NREQ-b7e22bb7fad4a45b444f988e4eabca55",
+      "review": {
+        "path": "verification/requirement-coverage-NREQ-b7e22bb7fad4a45b444f988e4eabca55-20261014-canonical-projection12-c0c20749.json",
+        "sha256": "1aa02edbb4dfaaac7745e2c6afb0dfd6febfe39247143a9dfa3b1b89b3a237c0"
+      },
+      "ownerAndInputPinsValid": true,
+      "declarationDigestValid": true,
+      "emptyReceiptDisposition": "UNKNOWN"
+    },
+    {
+      "id": "NREQ-5d8520fcb9a6a88eae542e3a1f2fcfb9",
+      "review": {
+        "path": "verification/requirement-coverage-NREQ-5d8520fcb9a6a88eae542e3a1f2fcfb9-20261014-canonical-projection12-c0c20749.json",
+        "sha256": "4b8d8d49599e88a14b56cc28a879952c47fee5ecc36091ecaf3f3cf52af64891"
+      },
+      "ownerAndInputPinsValid": true,
+      "declarationDigestValid": true,
+      "emptyReceiptDisposition": "UNKNOWN"
+    },
+    {
+      "id": "NREQ-046cf426431e0493fe8fc1b75d803617",
+      "review": {
+        "path": "verification/requirement-coverage-NREQ-046cf426431e0493fe8fc1b75d803617-20261014-canonical-projection12-c0c20749.json",
+        "sha256": "d7618557c81d8242d4374a69b3443b10aa9baa875ef94b1fadb3423c10b67fe9"
+      },
+      "ownerAndInputPinsValid": true,
+      "declarationDigestValid": true,
+      "emptyReceiptDisposition": "UNKNOWN"
+    },
+    {
+      "id": "NREQ-853a934199459ed6bf419687ca08ba34",
+      "review": {
+        "path": "verification/requirement-coverage-NREQ-853a934199459ed6bf419687ca08ba34-20261014-canonical-projection12-c0c20749.json",
+        "sha256": "a34a9aa1112c45bde1443208d0d2fd0fde848a4a4c4d663740af48639b0d3dba"
+      },
+      "ownerAndInputPinsValid": true,
+      "declarationDigestValid": true,
+      "emptyReceiptDisposition": "UNKNOWN"
+    },
+    {
+      "id": "NREQ-636ebdfdf26f0c6df9d969321a522f19",
+      "review": {
+        "path": "verification/requirement-coverage-NREQ-636ebdfdf26f0c6df9d969321a522f19-20261014-canonical-projection12-c0c20749.json",
+        "sha256": "fd399a045ee96636fe5b14bbbaa557247024b7d3ed5e5f03407ddb72e2e40d1f"
+      },
+      "ownerAndInputPinsValid": true,
+      "declarationDigestValid": true,
+      "emptyReceiptDisposition": "UNKNOWN"
+    },
+    {
+      "id": "NREQ-eecb88f846482530ebd5e963183f2711",
+      "review": {
+        "path": "verification/requirement-coverage-NREQ-eecb88f846482530ebd5e963183f2711-20261014-canonical-projection12-c0c20749.json",
+        "sha256": "b24660c1a6abc1a70871d714409872087e886750bcc7d2236d4a5def84956954"
+      },
+      "ownerAndInputPinsValid": true,
+      "declarationDigestValid": true,
+      "emptyReceiptDisposition": "UNKNOWN"
+    },
+    {
+      "id": "NREQ-dba22c5f93e4359c4b7d4ebdd9799dbf",
+      "review": {
+        "path": "verification/requirement-coverage-NREQ-dba22c5f93e4359c4b7d4ebdd9799dbf-20261014-canonical-projection12-c0c20749.json",
+        "sha256": "bcca1792258b670f96ac04ae523dd96544e04fad6461f217f5690fcd43fab752"
+      },
+      "ownerAndInputPinsValid": true,
+      "declarationDigestValid": true,
+      "emptyReceiptDisposition": "UNKNOWN"
+    },
+    {
+      "id": "NREQ-27f437fe3040767de849d06a48cdb3c3",
+      "review": {
+        "path": "verification/requirement-coverage-NREQ-27f437fe3040767de849d06a48cdb3c3-20261014-canonical-projection12-c0c20749.json",
+        "sha256": "dafe0a948f9ee674ad1b308a0045a126181c16be99796963784b2d50347272cb"
+      },
+      "ownerAndInputPinsValid": true,
+      "declarationDigestValid": true,
+      "emptyReceiptDisposition": "UNKNOWN"
+    },
+    {
+      "id": "NREQ-be0ecfa19d607c0df242b048d6ef63bf",
+      "review": {
+        "path": "verification/requirement-coverage-NREQ-be0ecfa19d607c0df242b048d6ef63bf-20261014-canonical-projection12-c0c20749.json",
+        "sha256": "872e6a5b9536ed0da4a74953723e9bdd808dd40a584f81df8c38bb392d7e95ef"
+      },
+      "ownerAndInputPinsValid": true,
+      "declarationDigestValid": true,
+      "emptyReceiptDisposition": "UNKNOWN"
+    }
+  ]
+}

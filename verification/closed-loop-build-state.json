@@ -1394,7 +1394,7 @@
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "dot",
-    "lastInspectedAt": "2026-10-14T14:47:50.249283Z",
+    "lastInspectedAt": "2026-10-14T15:02:07.460600Z",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -2050,7 +2050,7 @@
     },
     "scheduleState": "FORECAST_NOT_ESTABLISHED",
     "forecast": null,
-    "nextAction": "Independently diagnose exact Stage27 release-calculation binding mismatch; determine whether separate from reviewed earlier runtime scope. Preserve failing fullowner, authorize only minimal source-backed correction after evidence, and integrate only independently accepted scope with affected checks.",
+    "nextAction": "Continue fresh default lifecycle on cd56 while independently resolving source-general Stage27 mandatory due-proof aggregation and obtaining genuine before/after release binding evidence; preserve exact legacycontracts and authorize minimal reviewed fixes only.",
     "deploymentObservation": {
       "sourceCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
       "runId": "36958910363",
@@ -2220,7 +2220,7 @@
         "oldCorrectedIterationRun": "LOST_EXECUTOR_OUTCOME_NO_PASS_OR_FAILURE_INFERRED"
       },
       "iterationReceiptDependencies": {
-        "state": "BOUNDED_RUNTIME_ACCEPTED_PENDING_FINAL_FULL_OWNERS_AND_INTEGRATION",
+        "state": "REVIEWED_BOUNDED_SCOPE_INTEGRATED_AFFECTED_CHECKS_PASS_RELEASE27_SEPARATE_BLOCKER",
         "owner": "/root/repair_iteration_receipt_dependencies",
         "reviewer": "/root/review_iteration_receipt_repair",
         "baseCommit": "39a968f8c3cf6af9c5745a891a4c6ecd9209b6ec",
@@ -2434,6 +2434,16 @@
           "terminalEvidenceSha256": "8f90c53f2c07039a04e1356b1abf280bfac749cda2174f9e01f6837ab7d0b8da",
           "sourceFailure": "verify-full-cycle.mjs605",
           "earlierControls": "Fresh actual governed support/refutation, positive19,21to22 save/cold/repeatedepoch, accepted22 futureevidence and receipt preservation all passed."
+        },
+        "integrationCommit": "c0978ecd",
+        "integrationVerification": {
+          "sourceCommit": "a38727e130d8cbfb932293fe7dd6ee574354af39",
+          "hashProducer": "PASS",
+          "operationProperties": "PASS",
+          "fullCatalogConsumerWrapper": "PASS_EXIT0",
+          "independent19CoverageComposition": "PASS_SOURCE_AND_OWNER_BINDINGS_UNKNOWN_WITHOUT_RECEIPTS",
+          "evidencePath": "verification/dot-execution-20261014/integrated-projection12",
+          "appAcceptance": false
         }
       }
     },
@@ -2555,7 +2565,7 @@
         "ownerMetadataLeaves": 15,
         "coverageDesigns": 19,
         "currentExecutionReceipts": "NOT_COLLECTED",
-        "integration": "PENDING",
+        "integration": "INTEGRATED_a38727e1_AFFECTED_CONSUMER_PASS",
         "readOnlyMergePreflight": "Clean merge tree d63fba808f10a870854921ac51ad89ce366ebc3d,358bindingrows19claims,rootoperationpropertyverifier retained,buildstate unchanged"
       }
     },
