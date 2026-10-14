@@ -1394,7 +1394,7 @@
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "dot",
-    "lastInspectedAt": "2026-10-14T14:06:40.316444Z",
+    "lastInspectedAt": "2026-10-14T14:28:07.962274Z",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -2393,6 +2393,14 @@
           "fullFreshLifecycle": "NOT_YET_RUN",
           "browserAndDeviceAcceptance": false,
           "integration": "NOT_YET_INTEGRATED"
+        },
+        "freshFinalGovernedOwner": {
+          "sourceCommit": "cd56dd97509f0c6c96e2f6e9055c97b4b65452a0",
+          "startedAt": "2026-10-14T14:11:33Z",
+          "state": "RUNNING",
+          "lastDurableBoundary": "stage19-before-verification; actual isolated governing refutation controls complete revision24",
+          "evidenceDirectory": "/workspace/shared/clrt-iteration-repair-evidence/frozen-cd56dd97-governed",
+          "fullLifecycleOutcome": "PENDING"
         }
       }
     },
@@ -2504,7 +2512,19 @@
         "correctionScope": "Future-only nongoverning refutation preserves earlier proof; explicitly not governing-negative coverage",
         "fullWrapper": "NOT_RUN"
       },
-      "renewalSequencing": "Hold additional owner-hash/review renewal until actual Stage21 runtime boundary stabilizes; existing projection10 reviews remain preserved with original scope."
+      "renewalSequencing": "Hold additional owner-hash/review renewal until actual Stage21 runtime boundary stabilizes; existing projection10 reviews remain preserved with original scope.",
+      "finalProjection12": {
+        "catalogCommit": "c0c20749c4f1b4fe1c7b3b05eb7b7822021303b0",
+        "catalogIndependentFocused": "ACCEPT actual60receipt/60omissions,27hashes57sourcenegatives188aggregateomissions; current90 handofflabel collateral defect restored exactactualowner",
+        "canonicalReviewCommit": "847ebdaebb01fbdf20520af87905841e424470be",
+        "migrationReviewCommit": "560e9797931707521b700596722d459b4cecf3d2",
+        "parentOwnerProposalSha256": "0e178efd58599bae09fcd44a34b2c51e39fbb75b0eb8f9ac63b8739f47ea0577",
+        "ownerMetadataLeaves": 15,
+        "coverageDesigns": 19,
+        "currentExecutionReceipts": "NOT_COLLECTED",
+        "integration": "PENDING",
+        "readOnlyMergePreflight": "Clean merge tree d63fba808f10a870854921ac51ad89ce366ebc3d,358bindingrows19claims,rootoperationpropertyverifier retained,buildstate unchanged"
+      }
     },
     "verificationEfficiencyAssessment": {
       "status": "READ_ONLY_ASSESSED_PATCH_DEFERRED",
