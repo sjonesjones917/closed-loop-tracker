@@ -4,11 +4,24 @@ import {recordProposal} from './test-fixtures.mjs';
 // This function is also called at the genuine full-cycle Stage29 entry. The
 // focused caller declares synthetic prerequisites and never claims that entry.
 export async function verifyStage29Investigation({runtime,project,byteStore,basis,requireCompletePrefix=false}){
- const {engine,prompts,ingestion,schema}=runtime,hash=runtime.hash||runtime.runtime?.closedLoopHash||globalThis.closedLoopHash;
- const original=hash.sha256Value(project),q=engine.clone(project),stage=29,operation='INVESTIGATE_MISSING_EVIDENCE';
+ const sourceHash=runtime.hash||runtime.runtime?.closedLoopHash||globalThis.closedLoopHash,original=sourceHash.sha256Value(project);
+ const {projectStoreRuntime,captureArtifactFixture,restoreArtifactFixture}=await import('./test-project-store-runtime.mjs'),isolated=projectStoreRuntime({storageWorker:false});
+ await restoreArtifactFixture(isolated.store,await captureArtifactFixture(byteStore,project.job.JOB_ID));
+ const originalContexts=project.projectData.generatedPrompts.map(row=>({instructionId:row.instructionId||row.promptId,files:runtime.prompts.materializePromptContextFiles(row)}));
+ const {engine,prompts,ingestion}=isolated,schema=isolated.runtime.closedLoopWorkflowSchema,hash=isolated.runtime.closedLoopHash,stage=29,operation='INVESTIGATE_MISSING_EVIDENCE';let q=isolated.copy(project);
+ for(const entry of originalContexts){const row=q.projectData.generatedPrompts.find(row=>(row.instructionId||row.promptId)===entry.instructionId);assert(row);prompts.retainPromptContextFiles(row,isolated.copy(entry.files));prompts.materializePromptContextFiles(row);await isolated.store.persistPromptContextFiles(row,q);}
+ assert.equal(hash.sha256Value(q),original,'STAGE29_INVESTIGATION_EXACT_SOURCE_CUSTODY_ORACLE');
+ byteStore=isolated.store;
+ const savedBase=await byteStore.writeProject(q,{createOnly:true,expectedProjectRevision:0,incrementRevision:false});
+ for(const entry of originalContexts){const row=savedBase.projectData.generatedPrompts.find(row=>(row.instructionId||row.promptId)===entry.instructionId);assert(row);prompts.retainPromptContextFiles(row,isolated.copy(entry.files));prompts.materializePromptContextFiles(row);}
+ q=engine.clone(savedBase);
  if(requireCompletePrefix)for(let prior=1;prior<=28;prior++)assert.equal(engine.gate(prior,q).complete,true,'STAGE29_INVESTIGATION_GENUINE_PREFIX_ORACLE: '+prior);
  const req=engine.recordsForCurrentScope(q,'requirements')[0];assert(req,'STAGE29_INVESTIGATION_REQUIREMENT_ORACLE');const reqId=engine.recordId(req,'requirements');
- const {prompt}=prompts.reserveAndBuildPromptRecord(q,stage,{operation}),manifest=prompts.promptFileManifest(prompt),contextFiles=prompts.materializePromptContextFiles(prompt,q);
+ let {prompt}=prompts.reserveAndBuildPromptRecord(q,stage,{operation});const manifest=prompts.promptFileManifest(prompt),contextFiles=prompts.materializePromptContextFiles(prompt,q);
+ await byteStore.persistPromptContextFiles(prompt,q);
+ q=await byteStore.writeProject(q,{expectedProjectRevision:savedBase.revision,expectedStateSha256:savedBase.projectSha256});
+ const savedCanonical=hash.sha256Value(q);for(const entry of originalContexts){const row=q.projectData.generatedPrompts.find(row=>(row.instructionId||row.promptId)===entry.instructionId);assert(row);prompts.retainPromptContextFiles(row,isolated.copy(entry.files));prompts.materializePromptContextFiles(row);}assert.equal(hash.sha256Value(q),savedCanonical,'STAGE29_INVESTIGATION_SAVED_CONTEXT_CUSTODY_ORACLE');
+ prompt=q.projectData.generatedPrompts.find(row=>(row.instructionId||row.promptId)===manifest.promptIdentity.instructionId);assert(prompt,'STAGE29_INVESTIGATION_SAVED_INSTRUCTION_ORACLE');prompts.retainPromptContextFiles(prompt,isolated.copy(contextFiles));prompts.materializePromptContextFiles(prompt);
  const descriptor=prompts.responseContractDescriptor(stage,operation);
  assert.equal(Object.hasOwn(descriptor.records,'evidenceChains'),false,'STAGE29_INVESTIGATION_WRITER_AUTHORITY_ORACLE');
  assert.deepEqual(Object.keys(descriptor.records).sort(),['entailmentReviews','evidenceInvestigations','observationRecords'],'STAGE29_INVESTIGATION_WRITER_AUTHORITY_ORACLE');
@@ -38,6 +51,6 @@ export async function verifyStage29Investigation({runtime,project,byteStore,basi
  assert.equal(engine.gate(29,accepted).complete,false,'STAGE29_INVESTIGATION_NO_FALSE_COMPLETION_ORACLE');
  assert.equal(ingestion.findRaw(accepted,captured.rawRecord.rawResponseId).completeRawResponse,raw,'STAGE29_INVESTIGATION_RAW_RETENTION_ORACLE');
  const retry=ingestion.commit(accepted,prepared.proposal.proposalId,{operator:'SYNTHETIC_STAGE29_INVESTIGATOR'});assert.equal(retry.idempotent,true);assert.equal(hash.sha256Value(retry.project),hash.sha256Value(accepted),'STAGE29_INVESTIGATION_IDEMPOTENT_ORACLE');
- assert.equal(hash.sha256Value(project),original,'STAGE29_INVESTIGATION_DISPOSABLE_ISOLATION_ORACLE');
+ assert.equal(sourceHash.sha256Value(project),original,'STAGE29_INVESTIGATION_DISPOSABLE_ISOLATION_ORACLE');
  return {checkId:'stage29.investigation.admission-and-authority',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:3649'],basis,boundary:'Actual generated instruction/manifest/materialized context -> stored and rehashed response Blob -> capture/prepareCaptured -> pending proposal -> operator commit -> exact retry',expected:{operation,admitted:true,retainedRawBytes:true,canonicalInvestigation:true,agentChainWriteRejected:true,stageComplete:false,idempotent:true},observed:{operation:committed.acceptedChange.operation,admitted:prepared.validation.valid,retainedRawBytes:ingestion.findRaw(accepted,captured.rawRecord.rawResponseId).completeRawResponse===raw,canonicalInvestigation:Boolean(record),agentChainWriteRejected:true,stageComplete:engine.gate(29,accepted).complete,idempotent:retry.idempotent},rawSha256:file.sha256,responseByteSize:file.byteSize,instructionSha256:manifest.instruction.sha256,contextFileCount:contextFiles.length,prior28GatesExecuted:requireCompletePrefix,actualBrowser:false,actualExternalOrPhysicalObservation:false,canonicalProjectStoreReload:false,passed:true};
 }
