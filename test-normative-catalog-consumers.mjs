@@ -1434,7 +1434,7 @@ export function verifyProjection7ActivationCatalogConsumers(){
  return {passed:true,cases,caseCount:cases.length,consumerOnly:true,syntheticReportFixture:true,actualProducerExecuted:false,actualActivationReexecuted:false,eligibleReceiptCreated:false,actualBrowser:false,wholeClausePASS:false};
 }
 
-export function verifyMigrationPreservationCatalogConsumers(){
+export function verifyMigrationPreservationCatalogConsumers({executedReports=null}={}){
  // Independently authored report fixture. This tests consumers only, never
  // substitutes for production migration or a current execution receipt.
  const keys=Array.from({length:30},(_,i)=>String(i+1)),routeFlags=['startup','readback','packageImportReadback','exactSourceBytes','nonOperationalSource','auditContextExcluded','opaqueExtensions','envelopeExact','all30StageSentinels','rawResponseExact'],historicalFlags=['currentValidatorAccepted','currentPrepareAdmitted','historicalValidatorRejected','historicalPrepareRejected','rawExact','noProposal','stageAuthorityUnchanged','acceptedChangesUnchanged','gateIncomplete'];
@@ -1453,7 +1453,18 @@ export function verifyMigrationPreservationCatalogConsumers(){
   for(const [label,change]of changes){const bad=structuredClone(report);change(bad);assert.equal(admit(bad),false,'MIGRATION_PRESERVATION_CATALOG_REJECTION: '+id+':'+label);cases.push(id+':'+label);}
   if(id==='migration.unknown-preserved'){const bad=structuredClone(report);bad.unknownExtensionsPreserved='true';assert.equal(admit(bad),false);cases.push(id+':coerced-legacy-boolean');}
  }
- return {passed:true,cases,syntheticConsumerOnly:true,actualMigrationExecuted:false,eligibleReceiptCreated:false,actualBrowser:false};
+ // The receipt validator compares recomputed observations with JSON-persisted
+ // observations. A condition-only check still needs a declared expectation:
+ // an own expected:undefined is dropped by JSON and cannot round-trip exactly.
+ const suite='verify-v3-migration.mjs',current=verificationCatalog[suite].checks.find(row=>row.id==='migration.current-profile');
+ assert.equal(current.expected,undefined);assert.equal(current.expectedDescription,'Exactly the human-project/30, closed-loop-project/2 and closed-loop-project/3 public startup/readback/package-import routes retain exact nonoperational source bytes, exclude original audit context from current authority, and preserve opaque extensions, response envelopes and all30 stage sentinels. Stage01 is audited; current /3 responses are admitted and historical /2 responses rejected without proposal or stage-authority changes; all six named intended-failure oracles are detected. Synthetic Map transaction-adapter boundary; no browser or whole-clause claim.','MIGRATION_DECLARED_EXPECTATION_ORACLE');
+ const reports=executedReports||[report],observations=observationsFromReports(suite,reports),selected=observations.filter(row=>row.checkId==='migration.current-profile');
+ assert.equal(observations.length,8,'MIGRATION_RECEIPT_OBSERVATION_POPULATION_ORACLE');assert.equal(selected.length,1);assert.equal(selected[0].passed,true);assert.equal(Object.hasOwn(selected[0],'expected'),true);assert.equal(selected[0].expected,current.expectedDescription);
+ const persisted=JSON.parse(JSON.stringify({reports,observations})),recomputed=observationsFromReports(suite,persisted.reports);
+ assert.deepEqual(persisted.observations,recomputed,'MIGRATION_RECEIPT_JSON_ROUND_TRIP_ORACLE');assert.deepEqual(persisted.observations,observations,'MIGRATION_DECLARED_EXPECTATION_JSON_STABILITY_ORACLE');
+ if(executedReports!==null)assert(observations.every(row=>row.passed),'MIGRATION_RETAINED_EMITTED_REPORT_ORACLE');
+ const receiptExpectation={jsonStable:true,observationCount:observations.length,retainedEmittedReportsChecked:executedReports!==null,allRetainedObservationsPassed:executedReports!==null?observations.every(row=>row.passed):null,receiptCreated:false};
+ return {passed:true,cases,receiptExpectation,syntheticConsumerOnly:true,actualMigrationExecuted:false,eligibleReceiptCreated:false,actualBrowser:false};
 }
 
 const historicalDerivationSourceBinding8CaseIds=["registered-family-qualified-canonical-relationship","transport-added-reservation-scope-closure","changed-transitive-source-rehashed","actual-raw-bytes-not-digest-label","missing-transitive-reference-blocks","declared-reference-sentinel-control","explicit-own-output-exclusion-retained","missing-confirmation-prerequisite-noncurrent"];
