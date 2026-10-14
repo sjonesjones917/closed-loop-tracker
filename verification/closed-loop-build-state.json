@@ -1394,7 +1394,7 @@
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "dot",
-    "lastInspectedAt": "2026-10-14T12:33:39.804129Z",
+    "lastInspectedAt": "2026-10-14T12:39:48.734187Z",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -2050,7 +2050,7 @@
     },
     "scheduleState": "FORECAST_NOT_ESTABLISHED",
     "forecast": null,
-    "nextAction": "Diagnose actual Stage21 deterministic mismatch from saved pre21/attempted state; independently review minimal source-backed correction, then execute exact boundary/negative controls before resuming final full lifecycle and integration.",
+    "nextAction": "Finish independently justified narrow Stage19 nested-input correction; verify existing activation and genuine authorized reproof/Stage21 boundary before final source freeze, catalog renewal, affected owners and reviewed integration.",
     "deploymentObservation": {
       "sourceCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
       "runId": "36958910363",
@@ -2302,7 +2302,27 @@
           "persistenceIntegrity": "PASS",
           "stage20": "PASS"
         },
-        "stage21Diagnosis": "Pending bounded independent causal comparison of exact pre21 vs attempted COMPLETE canonical input/output/proof scope; full failure state and producer identities retained.",
+        "stage21Diagnosis": {
+          "state": "INDEPENDENT_CAUSE_CONFIRMED_MINIMAL_REPAIR_AUTHORIZED",
+          "cause": "Six canonical-input differences only in requirementDiscovery.basis.targets final-product proposition nested record derived reasons, timestamp and digests; existing sourceBinding unchanged. Nested raw record bypasses registered per-family source preimage.",
+          "reviewCurrentness": "All accepted review bytes, target collection/id/hash and completion true/reasons empty unchanged across frontier21/22/fallback19.",
+          "reviewSha256": "99887af91653c5679072e505fa1d25f84cd762c241d06e2f310e9ba7f817e74e",
+          "authorizedCorrection": "Stage19/8 normalize only nested target.record through existing registered per-family preimage; preserve target and accepted-review/provenance/completion fields. Existing projection11 activation preserves frozen19/7 and projection10; Stage18/6 unchanged.",
+          "requiredChecks": [
+            "Independent frozen patch review",
+            "Actual valid pre21 projection10 activation and exact historical receipt/raw preservation",
+            "Normal authorized fresh19/8 reproof route, including stale-positive contradiction handling",
+            "Actual Stage21 public lifecycle with original new prompt contexts and adapter rows captured before assertions",
+            "Governing authored/reviewed/evidence negative controls"
+          ],
+          "custodyLimitation": "Failed21 attempt lacks original latest prompt context files; readonly causal diagnostic only. Valid before21 originals complete and independently saved/cold-read.",
+          "evidenceHashes": {
+            "26371531-stage21-proof-diff-r2.json": "4fabc35d4a200b2ecec0af4100ecc5cd636e1c527064426b799a4b536c0cba97",
+            "26371531-save-before21.stdout.json": "4648f4e06c7cc483e394a3b2ee501b97e49e841350b6d34eafd2684340547d7b"
+          },
+          "validLegacyProjectSha256": "b3790e340ef25de77d1b26181f0348896e50a396e99375a38b061ad1a580bed9",
+          "validLegacyAdapterSha256": "2dece48014f197c04883a2288dd361ee9d61bfb03be1b998cd7324728e676826"
+        },
         "prior6c1FullRun": "Intentionally superseded exit130 before positive cohort for independently reviewed test-only VM realm normalization; no product failure or full-owner success inferred."
       }
     },
@@ -2413,7 +2433,8 @@
         "correctionNegativeControls": 54,
         "correctionScope": "Future-only nongoverning refutation preserves earlier proof; explicitly not governing-negative coverage",
         "fullWrapper": "NOT_RUN"
-      }
+      },
+      "renewalSequencing": "Hold additional owner-hash/review renewal until actual Stage21 runtime boundary stabilizes; existing projection10 reviews remain preserved with original scope."
     },
     "verificationEfficiencyAssessment": {
       "status": "READ_ONLY_ASSESSED_PATCH_DEFERRED",
