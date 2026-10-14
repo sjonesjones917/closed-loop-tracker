@@ -615,7 +615,7 @@ export async function verifyAcceptedGoverningRefutation({sourceProject,artifacts
   adverse=await negativeRuntime.store.writeProject(adverse,{createOnly:true,expectedProjectRevision:0,incrementRevision:false});
   adverse=await negativeRuntime.store.readProject(adverse.job.JOB_ID);
   const prop=propositionId,test=ne.records(adverse,'tests').find(row=>row.id===testId),req=ne.recordValue(test,'REQ_ID');
-  const convergenceRecordId=ne.recordsForCurrentScope(adverse,'convergenceRecords').at(-1).id;
+  const governingConvergence=ne.recordsForScope(adverse,'convergenceRecords',ne.convergenceCalculation(adverse).scope).at(-1);assert(governingConvergence&&ne.convergenceRecordCurrent(adverse,governingConvergence),'GOVERNED_CURRENT_SOURCE_CONVERGENCE');const convergenceRecordId=governingConvergence.id;
   const receiptBefore=JSON.stringify(adverse.projectData.convergenceRecords.find(row=>row.id===convergenceRecordId).derivationReceipt);
   const iteration19=ne.records(adverse,'iterations').filter(row=>Number(row.stage)===19).at(-1);assert(iteration19);assert.equal(ne.recordsForIteration(adverse,'runs',iteration19.id).length,0,'GOVERNED_BRANCH_REQUIRES_EMPTY19');assert.equal(ne.gate(18,adverse).complete,true);assert.equal(ne.stageEntryState(adverse,19).allowed,true);
   const capture=async label=>{if(onCheckpoint)await onCheckpoint({label,r:negativeRuntime,p:adverse,sources,snapshot:snapshot(negativeRuntime,adverse,sources)});};

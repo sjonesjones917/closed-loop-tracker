@@ -547,7 +547,7 @@ export async function verifyIterationProductTransition({beforeProduct,afterProdu
  assert.equal(before.job.CURRENT_STAGE,'STAGE 21','ITERATION_PRODUCT_BEFORE_FRONTIER');
  assert.equal(after.job.CURRENT_STAGE,'STAGE 22','ITERATION_PRODUCT_AFTER_FRONTIER');
  const check=(state,boundary)=>{
-  const convergence=e.recordsForCurrentScope(state,'convergenceRecords').at(-1),confirmation=e.recordsForCurrentScope(state,'confirmationRecords').at(-1);
+  const convergence=e.recordsForScope(state,'convergenceRecords',e.convergenceCalculation(state).scope).at(-1),confirmation=e.recordsForCurrentScope(state,'confirmationRecords').at(-1);
   assert(convergence&&confirmation,'ITERATION_PRODUCT_RETAINED_RECEIPTS: '+boundary);
   assert.equal(e.convergenceRecordCurrent(state,convergence),true,'ITERATION_PRODUCT_CONVERGENCE_CURRENT: '+boundary);
   assert.equal(e.confirmationRecordCurrent(state,confirmation),true,'ITERATION_PRODUCT_CONFIRMATION_CURRENT: '+boundary);
@@ -587,7 +587,7 @@ export function verifyIterationLaterEvidence({engine:e,beforeProduct,afterEviden
   assert.equal(e.testDueState(afterEvidence,test,18,{perRunOnly:true}).dueNow,false,'ITERATION_FUTURE_SUBJECT_NOT_GOVERNING_EARLIER_PROOF');
  }
  for(const [family,current]of [['convergenceRecords','convergenceRecordCurrent'],['confirmationRecords','confirmationRecordCurrent']]){
-  const before=e.recordsForCurrentScope(beforeProduct,family).at(-1),after=afterEvidence.projectData[family].find(row=>row.id===before.id);
+  const before=(family==='convergenceRecords'?e.recordsForScope(beforeProduct,family,e.convergenceCalculation(beforeProduct).scope):e.recordsForCurrentScope(beforeProduct,family)).at(-1);assert(before,'ITERATION_NONGOVERNING_RETAINED_SOURCE_RECEIPT: '+family);const after=afterEvidence.projectData[family].find(row=>row.id===before.id);
   assert.equal(e[current](afterEvidence,after),true,'ITERATION_ACCEPTED_NONGOVERNING_EVIDENCE_PRESERVES_RECEIPT: '+family);
   assert.equal(JSON.stringify(after.derivationReceipt),JSON.stringify(before.derivationReceipt),'ITERATION_NONGOVERNING_EVIDENCE_NO_RESTAMP: '+family);
  }
