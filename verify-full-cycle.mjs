@@ -54,7 +54,7 @@ async function captureIterationBoundary(label){
  if(!iterationBoundaryDirectory)return;
  const before=hash.sha256Value(p),project=engine.clone(p);
  for(const[file,source]of Object.entries(iterationBoundarySources))assert(fs.readFileSync(file,'utf8')===source,'ITERATION_BOUNDARY_SOURCE_CHANGED: '+file);
- const promptContextFiles=project.projectData.generatedPrompts.map(record=>({instructionId:record.instructionId||record.promptId,files:prompts.materializePromptContextFiles(record,project)}));
+ const promptContextFiles=project.projectData.generatedPrompts.map(record=>({instructionId:record.instructionId||record.promptId,files:prompts.materializePromptContextFiles(record)}));
  const artifacts=await captureArtifactFixture(byteStore,p.job.JOB_ID),sourceHashes=Object.fromEntries(Object.entries(iterationBoundarySources).map(([file,source])=>[file,hash.sha256Text(source)]));
  assert(hash.sha256Value(p)===before,'ITERATION_BOUNDARY_CAPTURE_MUTATED_PROJECT');
  fs.mkdirSync(iterationBoundaryDirectory,{recursive:true});
