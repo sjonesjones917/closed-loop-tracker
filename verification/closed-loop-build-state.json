@@ -2672,7 +2672,8 @@
         "releaseContract": 4,
         "engineSha256": "bf9076eaadef45baba900b389d01305be052ac8bc2f3964c7ba842910cfbfd12",
         "storeSha256": "530047847aafb62755c7f5e768f5ca1cac86bf767e678e74bf0d6dd3e1a64143",
-        "integrated": false
+        "integrated": true,
+        "integrationRuntimeCommit": "d9d6ab45"
       },
       "positiveBoundary": {
         "state": "PARTIAL_COMMAND_CAPTURE_NO_TERMINAL_OR_PERSISTENCE_RESULT",
@@ -2698,9 +2699,8 @@
         "scope": "Focused release binding, precedence, idempotency and receipt controls; not full lifecycle acceptance."
       },
       "nextActions": [
-        "Independent genuine r6 projection12/release3 blocked activation to13 and normal release4 reproof with preservation, rollback and forgery controls.",
-        "Fresh governed full owner on frozen reviewed runtime with durable checkpoints and actual release retry/public save/cold verification.",
-        "Only after accepted runtime boundary, renew dependent catalog and coverage owner identities; independently review and run affected tests before integration."
+        "Localize actual downstream evidence-chain completeness failure from preserved source/custody without renewing expired authority; preserve original before-expiry failure.",
+        "Run remaining affected required owners and renew coverage review identities; outstanding full-owner/prefix aggregate and caller-pointer evidence gaps remain."
       ],
       "independentLegacyMigration": {
         "state": "PASS_EXPIRED_AUTHORITY_BLOCKED_RELEASE",
@@ -2799,10 +2799,10 @@
         "commit": "700c48b56359fd52289dd3097457d8cdc5aa03ea",
         "scope": "Test helper isolated ordinary base save, reserve, expected-revision/state prompt save and exact original custody; all original negative/semantic/raw/retry/caller isolation assertions retained. Also current13 derivationVersion assertion corrected12\u219213. No runtime changes.",
         "reviewSha256": "2fddbab722ec527d0066bbcdf19e48a3f475c3ba6b6ade2be32dc9570e311e29",
-        "state": "IN_REVIEW_ACTUAL_EXECUTION_PENDING"
+        "state": "INDEPENDENT_SOURCE_REVIEW_ACCEPTED_HELPER_RETURN_OBSERVED"
       },
       "boundedTail29": {
-        "state": "RUNNING",
+        "state": "TERMINAL_FAILED_EVIDENCE_CHAIN_COMPLETENESS",
         "session": 2233,
         "source": "700c48b56359fd52289dd3097457d8cdc5aa03ea",
         "driverSha256": "d00f52389fd1ff9884dac90a8726db04f29cbfd7ddf9f9b11fe533e3d94a0197",
@@ -2811,7 +2811,22 @@
         "sourceCanonicalProjectSha256": "0ecdf798bce7a46cc18d142ece1c4db0ae62b4f5fe069a55a8684d4c2fbcc065",
         "originalCapabilityExpiresAt": "2026-10-14T19:20:11.524Z",
         "scope": "Remaining28 identity assertion and actual29\u201330 only; no repeated successful prefix or renewed authority.",
-        "fullOwnerAcceptance": false
+        "fullOwnerAcceptance": false,
+        "exitCode": 1,
+        "endedAt": "2026-10-14T19:17:20Z",
+        "failure": "createPreDeliveryCheckpoint: The current evidence-chain set must be complete before creating a pre-delivery checkpoint.",
+        "beforeOriginalAuthorityExpiry": true,
+        "lastCompletedStage": 28,
+        "stage29Investigation": "Helper returned; structured report not emitted before later checkpoint failure",
+        "stage30": "NOT EXECUTED",
+        "failureEvidenceDirectory": "/workspace/shared/clrt-iteration-repair-evidence/frozen-700c48b5-governed-tail29"
+      },
+      "integration": {
+        "head": "60b70c6ac19f30e169f7103176be481740894e0c",
+        "independentDispositionSha256": "6946ebc7f4d92396d63de7765e47443786ed94d86608e5c78c9422e68558d0f4",
+        "scope": "Narrow release4/project13 repairs and reviewed owner/catalog wiring; application/full-owner acceptance remains pending",
+        "combinedLightChecks": "PASS exit0: receipt47, projection60, metadata354 with negatives, definitions8",
+        "combinedCatalogChecks": "PASS exit0: twelve focused consumers, actual current writer admission and wrong-writer rejection"
       }
     },
     "continuationAmendmentV2": {
@@ -2856,13 +2871,13 @@
           "verification-evidence-catalog.mjs",
           "test-normative-catalog-consumers.mjs"
         ],
-        "activeImplementationWorkers": 2,
+        "activeImplementationWorkers": 1,
         "activeIndependentReviewers": 1,
         "heavyProcessLimit": 1,
-        "currentHeavySession": 2233,
+        "currentHeavySession": null,
         "catalogCommit": "d6c7d33be916991cf3098fe202f46919e77120d7",
         "catalogReviewer": "/root/repair_iteration_receipt_dependencies/review_catalog13_alignment",
-        "currentCatalogState": "AUTHOR_COMPLETE_INDEPENDENT_REVIEW_RUNNING"
+        "currentCatalogState": "INDEPENDENTLY_ACCEPTED_INTEGRATED_60b70c6a"
       }
     }
   }
