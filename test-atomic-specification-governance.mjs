@@ -351,8 +351,10 @@ try{
  assert.throws(()=>oldCrosswalk(cw,p,ref,rows,ds,bytes),/target double counted/);check();cases.push('mixed-split-component-convergence-before-after');
  const synchronize=dec=>{const g=copy(dec.get('component-0').componentConvergenceGroups[0]);g.componentSha256ByPriorId=Object.fromEntries([...dec.values()].map(d=>{const part=d.componentPartitions[0];return [part.priorNormativeRequirementId,hash(part.components.find(c=>c.currentNormativeRequirementId===g.currentNormativeRequirementId))];}));for(const d of dec.values())d.componentConvergenceGroups=[copy(g)];};
  for(const [name,edit,pattern] of [
-  ['component-convergence-no-group',(c,r,d)=>{for(const v of d.values())delete v.componentConvergenceGroups;},/target double counted/],
-  ['component-convergence-one-sided-group',(c,r,d)=>delete d.get('component-1').componentConvergenceGroups,/group incomplete/],
+  ['component-convergence-orphan-group',(c,r,d)=>d.get('component-0').componentConvergenceGroups.push({...copy(group),currentNormativeRequirementId:'NREQ-'+'f'.repeat(32)}),/no actual decision edge/],
+  ['component-convergence-orphan-partition',(c,r,d)=>d.get('component-0').componentPartitions.push({...copy(parts[0]),priorNormativeRequirementId:'NREQ-'+'f'.repeat(32)}),/no actual convergence edge/],
+  ['component-convergence-no-group',(c,r,d)=>{for(const v of d.values())delete v.componentConvergenceGroups;},/no actual convergence edge|target double counted/],
+  ['component-convergence-one-sided-group',(c,r,d)=>delete d.get('component-1').componentConvergenceGroups,/no actual convergence edge|group incomplete/],
   ['component-convergence-missing-partition',(c,r,d)=>d.get('component-0').componentPartitions=[],/one reviewed partition/],
   ['component-convergence-missing-split-child',(c,r,d)=>d.get('component-0').componentPartitions[0].components.shift(),/target universe incomplete/],
   ['component-convergence-stale-old-span',(c,r,d)=>d.get('component-0').componentPartitions[0].components[1].sourceSpans[0].sha256='0'.repeat(64),/source bytes\/hash mismatch/],
@@ -373,6 +375,8 @@ try{
  const containedDs=new Map(containedParts.map((part,i)=>['component-'+i,{decisionId:'component-'+i,currentNormativeRequirementIds:[target],priorWasSingleObligation:true,containmentReason:'Synthetic explicit containment review.',componentPartitions:[part],componentConvergenceGroups:[copy(containedGroup)]}])),containedCw=cw.map((row,i)=>({...row,relation:i?'COMPONENT_OF_CONTRACT':'UNCHANGED_ATOMIC',currentNormativeRequirementIds:[target]}));
  check(containedCw,[contract],containedDs);cases.push('contained-component-retired-whole-contract-id-retained');
  for(const [name,edit,pattern] of [
+  ['contained-component-orphan-group',(c,r,d)=>d.get('component-0').componentConvergenceGroups.push({...copy(containedGroup),currentNormativeRequirementId:'NREQ-'+'f'.repeat(32)}),/no actual decision edge/],
+  ['contained-component-orphan-partition',(c,r,d)=>d.get('component-0').componentPartitions.push({...copy(containedParts[0]),priorNormativeRequirementId:'NREQ-'+'f'.repeat(32)}),/no actual convergence edge/],
   ['contained-component-no-reviewed-group',(c,r,d)=>delete d.get('component-1').componentConvergenceGroups,/retirement\/review incomplete/],
   ['contained-component-false-whole-equivalence',(c,r,d)=>d.get('component-1').componentPartitions[0].components[0].relationship='EQUIVALENT_COMPONENT',/scope binding incomplete/],
   ['contained-component-missing-containment-reason',(c,r,d)=>delete d.get('component-1').containmentReason,/retirement\/review incomplete/],

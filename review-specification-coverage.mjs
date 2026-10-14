@@ -189,6 +189,15 @@ export function validateAtomicIdentityCrosswalk(crosswalk,prior,priorRef,require
     else assert(false,'Atomic crosswalk relation invalid');
   }
   const incoming=new Map();for(const row of crosswalk)for(const id of row.currentNormativeRequirementIds){if(!incoming.has(id))incoming.set(id,[]);incoming.get(id).push(row);}
+  for(const decision of decisions.values()){
+    scopeChangeFor(decision,'');
+    const related=crosswalk.filter(row=>row.reconciliationDecisionId===decision.decisionId),groups=decision.componentConvergenceGroups??[],partitions=decision.componentPartitions??[];
+    assert(Array.isArray(groups)&&Array.isArray(partitions)&&new Set(groups.map(group=>group.currentNormativeRequirementId)).size===groups.length&&new Set(partitions.map(part=>part.priorNormativeRequirementId)).size===partitions.length,'Atomic component declaration inventory duplicated');
+    for(const group of groups)assert(decision.currentNormativeRequirementIds.includes(group.currentNormativeRequirementId)&&related.some(row=>row.currentNormativeRequirementIds.includes(group.currentNormativeRequirementId)),'Atomic component convergence group has no actual decision edge');
+    for(const part of partitions)assert(related.some(row=>row.priorNormativeRequirementId===part.priorNormativeRequirementId&&row.currentNormativeRequirementIds.some(id=>groups.some(group=>group.currentNormativeRequirementId===id))),'Atomic component partition has no actual convergence edge');
+    const changed=decision.changedDuplicateGroups??(decision.changedDuplicateGroup?[decision.changedDuplicateGroup]:[]);
+    assert(Array.isArray(changed)&&!(decision.changedDuplicateGroups&&decision.changedDuplicateGroup)&&new Set(changed.map(group=>group.currentNormativeRequirementId)).size===changed.length&&changed.every(group=>decision.currentNormativeRequirementIds.includes(group.currentNormativeRequirementId)&&related.some(row=>row.relation==='CHANGED_SINGLETON_SCOPE'&&row.currentNormativeRequirementIds.includes(group.currentNormativeRequirementId))),'Atomic changed-duplicate target groups duplicated, unrelated or ambiguous');
+  }
   const validateComponentPartition=(row,targetId,groupKind)=>{
     const decision=decisions.get(row.reconciliationDecisionId),partitions=(decision.componentPartitions??[]).filter(p=>p.priorNormativeRequirementId===row.priorNormativeRequirementId),before=old.get(row.priorNormativeRequirementId);
     assert(historicalSourceValid&&partitions.length===1,'Atomic component partition requires exact historical source and one reviewed partition');
