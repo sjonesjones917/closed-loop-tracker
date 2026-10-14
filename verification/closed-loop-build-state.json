@@ -1394,7 +1394,7 @@
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "dot",
-    "lastInspectedAt": "2026-10-14T11:02:27.699720Z",
+    "lastInspectedAt": "2026-10-14T11:14:53.011749Z",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -2050,7 +2050,7 @@
     },
     "scheduleState": "FORECAST_NOT_ESTABLISHED",
     "forecast": null,
-    "nextAction": "Complete independent bounded branch precondition corrections using exact captured state, obtain actual governed refutation/coexistence proof, then one fresh immutable full governed owner; no new resume architecture. Integrate only after independent runtime acceptance.",
+    "nextAction": "Finish fresh immutable governed full owner including Stage21-to22 and independent final runtime review, then merge only reviewed changes, compose nineteen reviewed coverage designs with358 bindings and run affected exact-source owners plus one full catalog wrapper.",
     "deploymentObservation": {
       "sourceCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
       "runId": "36958910363",
@@ -2103,7 +2103,7 @@
       "sourceApplied": false
     },
     "currentCriticalPath": [
-      "Complete independently reviewed governed-preproduct full-cycle and actual refutation/Stage21-to22 evidence, then integrate reviewed source",
+      "Complete fresh governed full owner and Stage21-to22 proof, obtain final independent runtime acceptance, then integrate reviewed source",
       "Publish reviewed integration checkpoint with immutable atomic evidence",
       "Resolve pending source-contract approval before full governance acceptance",
       "Renew genuine current implementation coverage/context proof and run required integrated acceptance",
@@ -2220,7 +2220,7 @@
         "oldCorrectedIterationRun": "LOST_EXECUTOR_OUTCOME_NO_PASS_OR_FAILURE_INFERRED"
       },
       "iterationReceiptDependencies": {
-        "state": "IN_REVIEW_GENUINE_ADVERSE_BRANCH_FIXTURE_BOUNDARIES",
+        "state": "ACTUAL_GOVERNING_REFUTATION_ACCEPTED_FINAL_FULL_OWNER_PENDING",
         "owner": "/root/repair_iteration_receipt_dependencies",
         "reviewer": "/root/review_iteration_receipt_repair",
         "baseCommit": "39a968f8c3cf6af9c5745a891a4c6ecd9209b6ec",
@@ -2229,7 +2229,7 @@
         "authorObservedTip": "fbc3ac40a96b5482bafb6968bb6df9130ab2e5ee",
         "fullOwner": "FAILED_HISTORY_VERSION_INCOMPATIBLE_AFTER_STAGE18",
         "requiredMigration": "Actual saved projection7/convergence4 refresh failed on candidate; independently reproduced; versioned activation extension authorized with forged-state and rollback negatives",
-        "currentJourney": "Fresh cd3c full governed source reached accepted17/18/empty19; isolated copy failed missing historical prompt-context custody. Strict exact-byte transfer fix independently accepted. Bounded branch now accepted two actual runs, then fixture row-count assumption failed because ordinary reservation created ten slots (two completed,eight reserved). Exact failure state gzip retained; reviewer checking precise expected counts.",
+        "currentJourney": "Fresh immutable d143 governed full owner authorized after independent bounded refutation acceptance; final21-to22 and complete owner outcome still pending.",
         "independentFocused": "PASS precise preimages, versioned /7-to-/8 activation, raw preservation, forgery rejection, atomic rollback, eight timing faults and current carrier metadata negatives",
         "currentConsumerCorrection": {
           "commit": "2853596656e211952c65acdb0d82b6b3e68d467f",
@@ -2269,6 +2269,16 @@
           "correction": "Exact initial-character procedure matches source text requirement; evidence guard unchanged. Fresh source/review/cohorts running, prior accepted test hashes and failure preserved.",
           "historicalContextTransfer": "Existing public persistPromptContextFiles for exact retained originals incl invalidated; missing/tampered originals reject, canonical project unchanged; no reconstruction or runtime change",
           "remaining": "Actual accepted support/refutation and coexistence, unchanged genuine full-owner final rerun through21-to22; all defaults/negative checks preserved"
+        },
+        "actualGoverningRefutation": {
+          "source": "d143a21f",
+          "independentOutcome": "PASS exit0",
+          "savedRevision": 24,
+          "snapshotSha256Prefix": "818d7bc3",
+          "actualInputs": "Two genuine opposite run outputs; independently accepted ESTABLISHES and REFUTES for same due18 proposition, both current",
+          "checks": "Original18 receipt stale, fresh convergence false, failure displayed, fresh19 undetermined; original receipt/history/store unchanged",
+          "corruptionControls": 5,
+          "fullLifecycleExecution": false
         }
       }
     },
