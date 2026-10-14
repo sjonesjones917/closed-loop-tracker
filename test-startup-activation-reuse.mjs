@@ -64,7 +64,7 @@ export async function verifyLegacy5ProjectionActivation({sourceOverrides={},fixt
  const quarantinedIdentity=async(r,expected)=>{assert.equal(r.rows.get('projects').has(fixture.jobId),false,'PROJECTION7_DAMAGED_SOURCE_NOT_ACTIVE_ORACLE');const entries=await r.store.listQuarantinedProjects(),entry=entries.find(row=>row.jobId===fixture.jobId);assert(entry,'PROJECTION7_EXACT_QUARANTINE_ENTRY_ORACLE');const saved=await r.store.metaGet(entry.key);assert.equal(saved.schema,'closed-loop-quarantine/1');assert.deepEqual(await encodeIdentity(saved.row),expected,'PROJECTION7_EXACT_QUARANTINED_SOURCE_ORACLE');await retained(r);};
  const add=(caseId,detail={})=>cases.push({caseId,status:'PASS',...detail});
  const r=await make(),schema=r.runtime.closedLoopWorkflowSchema,source=sourceProject(r),originalStored=r.copy(r.rows.get('projects').get(fixture.jobId));
- assert.equal(schema.PROJECT_PROJECTION_DERIVATION_CONTRACT.id,'closed-loop-derivation/project-current-projection/8','PROJECTION7_DISTINCT_VERSION_BOUNDARY_ORACLE');
+ assert.equal(schema.PROJECT_PROJECTION_DERIVATION_CONTRACT.id,'closed-loop-derivation/project-current-projection/9','PROJECTION7_DISTINCT_VERSION_BOUNDARY_ORACLE');
  assert.equal(schema.PROJECT_PROJECTION_DERIVATION_CONTRACT.version,7,'PROJECTION7_DISTINCT_VERSION_BOUNDARY_ORACLE');
  assert.equal(schema.PROJECT_SCHEMA,fixture.projectSchema,'PROJECTION7_PROJECT_SCHEMA_UNCHANGED_ORACLE');
  for(const [key,definition]of Object.entries(fixture.legacyDefinitions)){
@@ -80,11 +80,11 @@ export async function verifyLegacy5ProjectionActivation({sourceOverrides={},fixt
  const current=await r.store.readProject(fixture.jobId);
  assert.equal(current.revision,source.revision+1,'PROJECTION7_FRESH_REVISION_ORACLE');
  assert.notEqual(current.projectSha256,source.projectSha256,'PROJECTION7_FRESH_PROJECT_SHA_ORACLE');
- assert.equal(current.projectData.applicationProjection.receipt.derivationId,'closed-loop-derivation/project-current-projection/8','PROJECTION7_ACTUAL_READ_ACTIVATION_ORACLE');
+ assert.equal(current.projectData.applicationProjection.receipt.derivationId,'closed-loop-derivation/project-current-projection/9','PROJECTION7_ACTUAL_READ_ACTIVATION_ORACLE');
  assert.equal(r.store.validateProjectIntegrity(current).valid,true,'PROJECTION7_CURRENT_RECEIPT_AND_INTEGRITY_ORACLE');
  assert.equal(current.projectData.applicationProjection.receipt.derivationVersion,7);assert.equal(current.projectData.applicationProjection.receipt.registryEntrySha256,r.runtime.closedLoopHash.sha256Value(schema.PROJECT_PROJECTION_DERIVATION_CONTRACT),'PROJECTION7_CURRENT_REGISTRY_RECEIPT_ORACLE');assert.notEqual(current.projectData.applicationProjection.observedAt,source.projectData.applicationProjection.observedAt,'PROJECTION7_FRESH_OBSERVATION_ORACLE');
  const activations=current.projectData.history.filter(row=>row.type==='APPLICATION_PROJECTION_DERIVATION_ACTIVATED');assert.equal(activations.length,1,'PROJECTION7_SINGLE_ACTIVATION_ORACLE');
- assert.equal(activations[0].previousDerivationId,'closed-loop-derivation/project-current-projection/5');assert.equal(activations[0].derivationId,'closed-loop-derivation/project-current-projection/8');assert.equal(activations[0].sourceProjectSha256,source.projectSha256);assert.equal(activations[0].historicalProvenanceClaimed,false);
+ assert.equal(activations[0].previousDerivationId,'closed-loop-derivation/project-current-projection/5');assert.equal(activations[0].derivationId,'closed-loop-derivation/project-current-projection/9');assert.equal(activations[0].sourceProjectSha256,source.projectSha256);assert.equal(activations[0].historicalProvenanceClaimed,false);
  add('legacy5-to8-actual-atomic-read-activation',{oldRevision:source.revision,currentRevision:current.revision,sourceProjectSha256:source.projectSha256,currentProjectSha256:current.projectSha256});
  await retained(r);assert.deepEqual(await encodeIdentity(originalStored),sourceIdentity,'PROJECTION7_ISOLATED_ORIGINAL_SOURCE_ORACLE');
  const history=await r.store.historyList(fixture.jobId);assert(Array.isArray(history.entries),'PROJECTION7_HISTORY_LIST_OBJECT_ENTRIES_ORACLE');assert(history.entries.some(row=>row.projectSha256===source.projectSha256),'PROJECTION7_ORIGINAL_HISTORY_ENTRY_ORACLE');
@@ -92,7 +92,7 @@ export async function verifyLegacy5ProjectionActivation({sourceOverrides={},fixt
  const originalBody=JSON.parse(await new Response(oldBlob.stream().pipeThrough(new DecompressionStream('gzip'))).text());assert.equal(originalBody.projectSha256,source.projectSha256,'PROJECTION7_OLD_BODY_SOURCE_SHA_ORACLE');assert.deepEqual(await encodeIdentity(originalBody.project.projectData.applicationProjection),await encodeIdentity(source.projectData.applicationProjection),'PROJECTION7_OLD_RECEIPT_NOT_REWRITTEN_ORACLE');
  add('legacy5-original-source-and-history-bytes-preserved',{originalSnapshots:fixture.snapshots.length});
  const beforeCold=await rowsIdentity(r),cold=await r.store.readProject(fixture.jobId);assert.equal(cold.revision,current.revision,'PROJECTION7_SECOND_COLD_REVISION_ORACLE');assert.equal(cold.projectSha256,current.projectSha256,'PROJECTION7_SECOND_COLD_SHA_ORACLE');assert.equal(await rowsIdentity(r),beforeCold,'PROJECTION7_SECOND_COLD_NO_WRITE_ORACLE');
- add('current8-second-cold-read-idempotent');
+ add('current9-second-cold-read-idempotent');
  for(const [caseId,mutation,code,refreshedDigest]of [
   ['legacy5-bad-output-receipt-rejected',p=>p.projectData.applicationProjection.receipt.outputSha256='0'.repeat(64),'PROJECT_INTEGRITY_FAILED',true],
   ['legacy5-changed-source-stale-receipt-rejected',p=>p.job.JOB_TITLE='Controlled changed source without receipt','PROJECT_INTEGRITY_FAILED',true],
@@ -104,12 +104,12 @@ export async function verifyLegacy5ProjectionActivation({sourceOverrides={},fixt
  }
  const changed=await make();for(const [store,rows]of r.rows){changed.rows.get(store).clear();for(const [key,row]of rows)changed.rows.get(store).set(key,changed.copy(row));}
  const changedRow=changed.rows.get('projects').get(fixture.jobId);changedRow.project.job.JOB_TITLE='Controlled current source without a new receipt';changedRow.projectSha256=changed.store.projectSha256(changedRow.project);const changedIdentity=await encodeIdentity(changedRow);
- await assert.rejects(()=>changed.store.readProject(fixture.jobId),error=>error.code==='PROJECT_INTEGRITY_FAILED','PROJECTION7_CURRENT_SOURCE_REJECT_ORACLE');await quarantinedIdentity(changed,changedIdentity);add('current8-source-mutation-stale-receipt-rejected',{code:'PROJECT_INTEGRITY_FAILED'});
- const beforeCas=await rowsIdentity(r);await assert.rejects(()=>r.store.writeProject(r.copy(current),{expectedProjectRevision:source.revision,expectedStateSha256:source.projectSha256}),error=>error.code==='STALE_PROJECT_REVISION','PROJECTION7_OLD_CAS_REJECT_ORACLE');assert.equal(await rowsIdentity(r),beforeCas,'PROJECTION7_OLD_CAS_LAST_VALID_STATE_ORACLE');add('current8-stale-write-cas-last-valid-state-preserved',{code:'STALE_PROJECT_REVISION'});
+ await assert.rejects(()=>changed.store.readProject(fixture.jobId),error=>error.code==='PROJECT_INTEGRITY_FAILED','PROJECTION7_CURRENT_SOURCE_REJECT_ORACLE');await quarantinedIdentity(changed,changedIdentity);add('current9-source-mutation-stale-receipt-rejected',{code:'PROJECT_INTEGRITY_FAILED'});
+ const beforeCas=await rowsIdentity(r);await assert.rejects(()=>r.store.writeProject(r.copy(current),{expectedProjectRevision:source.revision,expectedStateSha256:source.projectSha256}),error=>error.code==='STALE_PROJECT_REVISION','PROJECTION7_OLD_CAS_REJECT_ORACLE');assert.equal(await rowsIdentity(r),beforeCas,'PROJECTION7_OLD_CAS_LAST_VALID_STATE_ORACLE');add('current9-stale-write-cas-last-valid-state-preserved',{code:'STALE_PROJECT_REVISION'});
  for(const phase of ['before-project-transaction','before-transaction-commit']){
   const failed=await make(),before=await rowsIdentity(failed);failed.runtime.__closedLoopStorageFault=phase;
   await assert.rejects(()=>failed.store.readProject(fixture.jobId),error=>error.code==='INJECTED_STORAGE_FAILURE','PROJECTION7_ATOMIC_FAILURE_ORACLE: '+phase);assert.equal(await rowsIdentity(failed),before,'PROJECTION7_ABORT_ALL_ROWS_UNCHANGED_ORACLE: '+phase);await retained(failed);delete failed.runtime.__closedLoopStorageFault;
-  const recovered=await failed.store.readProject(fixture.jobId);assert.equal(recovered.projectData.applicationProjection.receipt.derivationId,'closed-loop-derivation/project-current-projection/8');assert.equal(failed.store.validateProjectIntegrity(recovered).valid,true);add('legacy5-activation-'+phase+'-abort-and-retry',{phase,code:'INJECTED_STORAGE_FAILURE',allRowsPreserved:true,retryActivated8:true});
+  const recovered=await failed.store.readProject(fixture.jobId);assert.equal(recovered.projectData.applicationProjection.receipt.derivationId,'closed-loop-derivation/project-current-projection/9');assert.equal(failed.store.validateProjectIntegrity(recovered).valid,true);add('legacy5-activation-'+phase+'-abort-and-retry',{phase,code:'INJECTED_STORAGE_FAILURE',allRowsPreserved:true,retryActivated8:true});
  }
  {
   const expectedConcurrentIdentity=await rowsIdentity({rows:new Map(fixture.concurrent.rows.map(store=>[store.store,new Map(store.entries.map(entry=>[entry.key,decode(entry.row)]))]))});
@@ -117,7 +117,7 @@ export async function verifyLegacy5ProjectionActivation({sourceOverrides={},fixt
   raced.runtime.openStorageTransaction=async(names,mode)=>{if(!injected&&mode==='readwrite'&&(Array.isArray(names)?names:[names]).includes('projects')){install(raced,fixture.concurrent.rows);injected=true;}return open(names,mode);};
   await assert.rejects(()=>raced.store.readProject(fixture.jobId),error=>error.code==='STALE_PROJECT_REVISION','PROJECTION7_ACTIVATION_CONCURRENT_CAS_ORACLE');assert.equal(injected,true);assert.equal(await rowsIdentity(raced),expectedConcurrentIdentity,'PROJECTION7_CONCURRENT_ALL_LAST_VALID_ROWS_ORACLE');
   const row=raced.rows.get('projects').get(fixture.jobId);assert.equal(row.revision,fixture.concurrent.revision);assert.equal(row.projectSha256,fixture.concurrent.projectSha256);assert.equal(raced.engine.validateLegacyApplicationProjection(sourceProject(raced)).valid,true,'PROJECTION7_CONCURRENT_LAST_VALID_LEGACY_SOURCE_ORACLE');await retained(raced);
-  const retry=await raced.store.readProject(fixture.jobId);assert.equal(retry.revision,fixture.concurrent.revision+1);assert.equal(retry.projectData.applicationProjection.receipt.derivationId,'closed-loop-derivation/project-current-projection/8');assert.equal(raced.store.validateProjectIntegrity(retry).valid,true);add('legacy5-activation-concurrent-cas-rejected-and-current-source-retried',{code:'STALE_PROJECT_REVISION',lastValidConcurrentSha256:fixture.concurrent.projectSha256,retryRevision:retry.revision});
+  const retry=await raced.store.readProject(fixture.jobId);assert.equal(retry.revision,fixture.concurrent.revision+1);assert.equal(retry.projectData.applicationProjection.receipt.derivationId,'closed-loop-derivation/project-current-projection/9');assert.equal(raced.store.validateProjectIntegrity(retry).valid,true);add('legacy5-activation-concurrent-cas-rejected-and-current-source-retried',{code:'STALE_PROJECT_REVISION',lastValidConcurrentSha256:fixture.concurrent.projectSha256,retryRevision:retry.revision});
  }
  return {projection5Activation8:'PASS',cases,fixtureSha256:digest(bytes),fixtureByteSize:bytes.length,generationSourceSha256:fixture.generationSourceSha256,synthetic:true,actualBrowser:false,nativeIndexedDB:false,transactionAdapter:true,wholeClauseProof:false,elapsedMs:performance.now()-start,boundary:'Actual production read/receipt validation/atomic activation/history and write CAS through Node Map transaction adapter. Retained /1–4 definitions/registry unchanged; only an actual /5 receipt is executed. Fixture was generated by guarded old production create/save; no gate or receipt renaming.'};
 }
@@ -228,14 +228,14 @@ r.rows.get('projects').set(stored.job.JOB_ID, {
 
 const activated = await r.store.readProject(stored.job.JOB_ID);
 assert.equal(activated.revision, expected.sourceRevision + 1, 'STAGE19_PROJECTION7_ACTIVATION_REVISION');
-assert.equal(activated.projectData.applicationProjection.receipt.derivationId, 'closed-loop-derivation/project-current-projection/8');
+assert.equal(activated.projectData.applicationProjection.receipt.derivationId, 'closed-loop-derivation/project-current-projection/9');
 assert.equal(r.store.validateProjectIntegrity(activated).valid, true, 'STAGE19_PROJECTION7_ACTIVATION_INTEGRITY');
 const activationEvents = activated.projectData.history.filter(row => row.type === 'APPLICATION_PROJECTION_DERIVATION_ACTIVATED');
 assert.equal(activationEvents.length, sourceHistory.filter(row => row.type === 'APPLICATION_PROJECTION_DERIVATION_ACTIVATED').length + 1);
 const activation = activationEvents.at(-1);
 assert.equal(activation.sourceProjectSha256, sourceProjectSha256);
 assert.equal(activation.previousDerivationId, 'closed-loop-derivation/project-current-projection/3');
-assert.equal(activation.derivationId, 'closed-loop-derivation/project-current-projection/8');
+assert.equal(activation.derivationId, 'closed-loop-derivation/project-current-projection/9');
 assert.deepEqual(plain(activated.projectData.history.slice(0, sourceHistory.length)), sourceHistory, 'STAGE19_SOURCE_HISTORY_PREFIX_PRESERVED');
 assert.deepEqual(retainedCohort(activated), sourceCohort, 'STAGE19_ACTIVATION_PRESERVES_COHORT');
 assert.equal(await mapIdentity('artifacts'), sourceArtifactRowsSha256, 'STAGE19_ACTIVATION_PRESERVES_ARTIFACT_BYTES');
@@ -263,7 +263,7 @@ assert.equal(await mapIdentity('projects'), rowsBeforeCurrentRead, 'STAGE19_CURR
 
 const convergenceDraft = r.copy(activated);
 const currentConvergence = e.recordConvergence(convergenceDraft);
-assert.equal(currentConvergence.derivationReceipt.derivationId, 'closed-loop-derivation/stage18-convergence/5');
+assert.equal(currentConvergence.derivationReceipt.derivationId, 'closed-loop-derivation/stage18-convergence/6');
 assert.equal(e.convergenceRecordCurrent(convergenceDraft, currentConvergence), true);
 assert.equal(e.gate(18, convergenceDraft).complete, true);
 assert.deepEqual(retainedCohort(convergenceDraft), sourceCohort, 'STAGE19_CALCULATE_CONVERGENCE_PRESERVES_COHORT');
@@ -273,7 +273,7 @@ assert.equal(convergenceImpact.stage, 18);
 const saved = await r.store.writeProject(convergenceDraft, {expectedProjectRevision: activated.revision, expectedStateSha256: activated.projectSha256, mutationConfirmation: convergenceImpact});
 const reloaded = await r.store.readProject(saved.job.JOB_ID);
 assert.equal(r.store.validateProjectIntegrity(reloaded).valid, true);
-assert.equal(reloaded.projectData.applicationProjection.receipt.derivationId, 'closed-loop-derivation/project-current-projection/8');
+assert.equal(reloaded.projectData.applicationProjection.receipt.derivationId, 'closed-loop-derivation/project-current-projection/9');
 assert.equal(e.gate(17, reloaded).complete, true);
 assert.equal(e.gate(18, reloaded).complete, true);
 const activeConvergences = e.records(reloaded, 'convergenceRecords').filter(row => row.active !== false && !row.invalidatedBy);
@@ -342,7 +342,7 @@ assert.equal(e.jobPointerIntegrityIssues(adjacent).length, 0);
 markPhase('adjacentStage6');
 
 const result = {
-  schema: 'stage19-projection8-activation-order-control/1',
+  schema: 'stage19-projection9-activation-order-control/1',
   result: 'PASS',
   sourceSha256,
   implementation: {
@@ -383,7 +383,7 @@ const result = {
     sourceAndActivatedHistoryBodiesRetained: true,
     artifactBytesPreserved: true
   },
-  current8Control: {
+  current9Control: {
     secondReadNoPersistence: true,
     proofRowsStableAcrossRecalculate: true,
     projectionOutputStableAcrossRecalculate: true,

@@ -73,7 +73,7 @@ function snapshot(r, p, sources) {
 function assertConvergenceCurrent(r, p, recordId, boundary) {
   const record = r.engine.records(p, 'convergenceRecords').find(row => row.id === recordId);
   assert(record, 'CONVERGENCE_RETAINED_RECORD ' + boundary);
-  assert.equal(record.derivationReceipt?.derivationId, 'closed-loop-derivation/stage18-convergence/5', 'CONVERGENCE_REGISTERED_SOURCE_CONTRACT ' + boundary);
+  assert.equal(record.derivationReceipt?.derivationId, 'closed-loop-derivation/stage18-convergence/6', 'CONVERGENCE_REGISTERED_SOURCE_CONTRACT ' + boundary);
   assert.equal(r.engine.convergenceRecordCurrent(p, record), true, 'CONVERGENCE_PERMITTED_DOWNSTREAM_STABILITY ' + boundary);
   assert.equal(r.engine.gate(18, p).complete, true, 'CONVERGENCE_DOWNSTREAM_GATE ' + boundary);
 }
