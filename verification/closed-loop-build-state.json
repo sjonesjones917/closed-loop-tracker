@@ -2877,7 +2877,7 @@
         "producerNodeObservation": "Local Node24.19.0; CI pins22.23.3. Receipts not interchangeable."
       },
       "readyChainContinuation": {
-        "state": "RUNNING",
+        "state": "TERMINAL_FAILED_CHAIN_CHECKPOINT_WITH_GENUINE_READY_CAPTURES",
         "session": 17118,
         "startedAt": "2026-10-14T20:06:18Z",
         "sourceCommit": "53e02e32437ada21e6f14d20f1ec7eced5425427",
@@ -2895,7 +2895,7 @@
         "originalAuthorityExpiresAt": "2026-10-14T21:35:46.722Z",
         "directory": "/workspace/shared/clrt-iteration-repair-evidence/frozen-53e02e32-governed-continuation",
         "terminal": "PENDING",
-        "lastCompletedStage": 27,
+        "lastCompletedStage": 28,
         "latestDurableBoundary": "release-persistence-all-assertions-complete",
         "latestBoundaryCompressedSha256": "dc469f0ec30af0e574be69825afc677985a5b4325fdfe1f5ca57ee0e320208be",
         "latestBoundaryCanonicalProjectSha256": "29b4cc07dfc75f028cef13e51f693a23ad448c78ae45d7882551037987cf2878",
@@ -2916,7 +2916,13 @@
           "callerPointerAssertion": "RELEASE_ISOLATED_STORE_PRESERVES_CALLER",
           "callerPointerAssertionResult": "PASS"
         },
-        "lastObservedAt": "2026-10-14T20:28:25Z"
+        "lastObservedAt": "2026-10-14T20:28:25Z",
+        "exitCode": 1,
+        "endedAt": "2026-10-14T20:36:23Z",
+        "failure": "The current evidence-chain set must be complete before creating a pre-delivery checkpoint.",
+        "authorityStillValidAtFailure": true,
+        "originalAssertions": "Completed investigation helper and original chain-link assertions reached checkpoint; Stage30 not executed",
+        "newEvidence": "Original pre-decoy, pre-chain and post-chain captures. Independent232-source comparison: two proof obligations change only eight scope-summary/digest/update paths, satisfaction unchanged SATISFIED. Distinct post-chain gate27 stale release under independent fresh-binding investigation; no runtime omission yet."
       }
     },
     "continuationAmendmentV2": {
@@ -2964,12 +2970,13 @@
         "activeImplementationWorkers": 1,
         "activeIndependentReviewers": 1,
         "heavyProcessLimit": 1,
-        "currentHeavySession": 17118,
+        "currentHeavySession": null,
         "catalogCommit": "d6c7d33be916991cf3098fe202f46919e77120d7",
         "catalogReviewer": "/root/repair_iteration_receipt_dependencies/review_catalog13_alignment",
         "currentCatalogState": "COMPLETED_ACCEPTED_INTEGRATED",
         "readyParallelCodeTasks": 0,
-        "parallelismReason": "Only ready-state Stage29 causal evidence is pending on frozen shared runtime; production repair and nineteen review renewals depend on it. Catalog implementation/review finished; no duplicate heavy owner."
+        "parallelismReason": "Only ready-state Stage29 causal evidence is pending on frozen shared runtime; production repair and nineteen review renewals depend on it. Catalog implementation/review finished; no duplicate heavy owner.",
+        "criticalPath": "Independent fresh release/decoy binding comparison before chain repair scope freeze"
       },
       "reclaimedCheckout": {
         "path": "/workspace/shared/clrt-align-release4-project13",
