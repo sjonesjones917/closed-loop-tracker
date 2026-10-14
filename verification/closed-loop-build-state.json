@@ -2827,6 +2827,41 @@
         "scope": "Narrow release4/project13 repairs and reviewed owner/catalog wiring; application/full-owner acceptance remains pending",
         "combinedLightChecks": "PASS exit0: receipt47, projection60, metadata354 with negatives, definitions8",
         "combinedCatalogChecks": "PASS exit0: twelve focused consumers, actual current writer admission and wrong-writer rejection"
+      },
+      "chainDiagnostics": {
+        "originalFailureAt": "2026-10-14T19:17:20Z",
+        "reviewSha256": "a8b3994f36ef0ae748e2c8d311c4dccea0398179796fd1af2d31199667a4dff6",
+        "expiredControls": {
+          "ordinary": "COMPLETE_CURRENT_CHAIN_SET",
+          "exactDecoy": "COMPLETE_CURRENT_CHAIN_SET",
+          "explicitObligationOwner": "CHAINS_NONCURRENT_WITH_SATISFACTION_AND_SUMMARY_CHANGES",
+          "noChainRepeat": "PASS",
+          "qualification": "Expired capability blocks Stage2. Explicit obligation invocation changes satisfaction as well as scope summaries; no narrow omission justified and no original-ready failure reconstruction.",
+          "reviewSha256": "cce71304dda347a934a77153c9f795c462a2805e0fd44f08d0d7e0add7c67fb3"
+        }
+      },
+      "freshReadyChainOwner": {
+        "state": "RUNNING",
+        "session": 20032,
+        "sourceCommit": "53e02e32437ada21e6f14d20f1ec7eced5425427",
+        "runtimeCommit": "086f2b2ecc271013ebc90a7694350ffd2eee6102",
+        "startedAt": "2026-10-14T19:34:07Z",
+        "ownerSha256": "7930e9a10c9db3b9adc93be1e38ac11448027724e93f0df459eba1b29ceb8c78",
+        "wrapperSha256": "fd533473034d68f1e035790fcbe713b881c922715e2a55b6a502037a89e5944e",
+        "directory": "/workspace/shared/clrt-iteration-repair-evidence/frozen-53e02e32-governed",
+        "reviewedCaptureDiffSha256": "19ce041c869ed4ed3cdc3f6453656cbd38f6a9e099113db8aa9cfaad66d8cc8b",
+        "captureScope": "All18 original report arrays, actual helper caller identities and completion outcomes, exact raw pre/post chain calculations, final report after original assertions. No prefix outcome inferred.",
+        "terminal": "PENDING"
+      },
+      "coverageRenewal": {
+        "state": "ON_HOLD_UNTIL_RUNTIME_STABLE",
+        "activeFullCoverageReviewsStale": 19,
+        "staleProductionOwnerClaims": 7,
+        "changedOwnerHashLeaves": 14,
+        "unchangedBindings": 358,
+        "historicalRetiredDeclarationsPreserved": 164,
+        "reason": "Reviewed input identity changed with accepted runtime/schema/store/catalog. No restamping; independent semantic re-review and genuine current producer execution required.",
+        "producerNodeObservation": "Local Node24.19.0; CI pins22.23.3. Receipts not interchangeable."
       }
     },
     "continuationAmendmentV2": {
@@ -2874,10 +2909,12 @@
         "activeImplementationWorkers": 1,
         "activeIndependentReviewers": 1,
         "heavyProcessLimit": 1,
-        "currentHeavySession": null,
+        "currentHeavySession": 20032,
         "catalogCommit": "d6c7d33be916991cf3098fe202f46919e77120d7",
         "catalogReviewer": "/root/repair_iteration_receipt_dependencies/review_catalog13_alignment",
-        "currentCatalogState": "INDEPENDENTLY_ACCEPTED_INTEGRATED_60b70c6a"
+        "currentCatalogState": "COMPLETED_ACCEPTED_INTEGRATED",
+        "readyParallelCodeTasks": 0,
+        "parallelismReason": "Only ready-state Stage29 causal evidence is pending on frozen shared runtime; production repair and nineteen review renewals depend on it. Catalog implementation/review finished; no duplicate heavy owner."
       }
     }
   }
