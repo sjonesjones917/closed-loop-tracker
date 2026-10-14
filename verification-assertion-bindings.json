@@ -3402,8 +3402,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-47111062e64d0d3b30e6cc9e1826cfc3-20261014-canonical-chain15-49446c0c.json",
-          "sha256": "2d9e5b0d1cff94510865e4d48c7c531b551fce48bbb3e2a1ff4f54cb809265b2"
+          "path": "verification/requirement-coverage-NREQ-47111062e64d0d3b30e6cc9e1826cfc3-20261014-canonical-expectation-cdc4614f.json",
+          "sha256": "f017fccb20e051bc77b5438e610d4679f8c0ca963a0742e30f56233f6e560e8e"
         }
       }
     },
@@ -3485,8 +3485,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-f25aa7572d552a605b446c527f7ffb29-20261014-canonical-chain15-49446c0c.json",
-          "sha256": "5c04282a3ee67c6f6f10e135a261bdd93a0e35938dc38f83a7c068121b67c08f"
+          "path": "verification/requirement-coverage-NREQ-f25aa7572d552a605b446c527f7ffb29-20261014-canonical-expectation-cdc4614f.json",
+          "sha256": "1e919f3f52cf2479d6537854329e9cec73d6d97c262158a883f1bf19818729eb"
         }
       }
     },
@@ -3563,8 +3563,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-51ce4098cc4744b966dc6d89fc7d5621-20261014-canonical-chain15-49446c0c.json",
-          "sha256": "1906c86eda9d3a147d21f922218f63522fce5ce25224e980c58841dd74888d95"
+          "path": "verification/requirement-coverage-NREQ-51ce4098cc4744b966dc6d89fc7d5621-20261014-canonical-expectation-cdc4614f.json",
+          "sha256": "6aed82f65707ca5870b60bca17b256016fda80371c57f1e40d48b444b73911d3"
         }
       }
     },
@@ -3641,8 +3641,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-eb942909863b29d2c26fd0ae5480625f-20261014-canonical-chain15-49446c0c.json",
-          "sha256": "3d246440e35a613720f992b5b07d7764053358aa10a5a11fdad4a710fe0af75e"
+          "path": "verification/requirement-coverage-NREQ-eb942909863b29d2c26fd0ae5480625f-20261014-canonical-expectation-cdc4614f.json",
+          "sha256": "7472383bf6d1557964169f524a1f98ddf456824f2082767877aed8bee72ce178"
         }
       }
     },
@@ -3719,8 +3719,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-662eca90789c91ae31177173980783dd-20261014-canonical-chain15-49446c0c.json",
-          "sha256": "9d5b6fefa523796c53d9683cf72bb9ace67d954469c255a6d0b9de049a4518ce"
+          "path": "verification/requirement-coverage-NREQ-662eca90789c91ae31177173980783dd-20261014-canonical-expectation-cdc4614f.json",
+          "sha256": "d3cc62461941a23ecaba6163d995ec9150c0626bc84ee34dacd31032e697d2f4"
         }
       }
     },
@@ -3797,8 +3797,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-b7e22bb7fad4a45b444f988e4eabca55-20261014-canonical-chain15-49446c0c.json",
-          "sha256": "a22280cabdf99c9a7c3c359d2349c0f754e42c3c2d5c99677de866b64ff3b193"
+          "path": "verification/requirement-coverage-NREQ-b7e22bb7fad4a45b444f988e4eabca55-20261014-canonical-expectation-cdc4614f.json",
+          "sha256": "da0a5c1386c91241d3221b4a7a6c484b640919b89b4a4dbcbe6856429f252fc4"
         }
       }
     },
@@ -3875,8 +3875,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-5d8520fcb9a6a88eae542e3a1f2fcfb9-20261014-canonical-chain15-49446c0c.json",
-          "sha256": "d18612cd47e05aad024ea8b3189f1c7489453f5a58d8f140873be185b314000d"
+          "path": "verification/requirement-coverage-NREQ-5d8520fcb9a6a88eae542e3a1f2fcfb9-20261014-canonical-expectation-cdc4614f.json",
+          "sha256": "5dc1afe50643377cb45698af85915c2f5592565df42d3f4ad43d530e3fa75da2"
         }
       }
     },
@@ -3953,8 +3953,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-046cf426431e0493fe8fc1b75d803617-20261014-canonical-chain15-49446c0c.json",
-          "sha256": "2bd340924149838c8d869ff6cf4b9f44a380005116507e0b18102152fb5be8ce"
+          "path": "verification/requirement-coverage-NREQ-046cf426431e0493fe8fc1b75d803617-20261014-canonical-expectation-cdc4614f.json",
+          "sha256": "26684a093ba5879b693cb11d8797a6d1479ea6960fc2070717650b23dd5a0b68"
         }
       }
     },
@@ -4031,8 +4031,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-853a934199459ed6bf419687ca08ba34-20261014-canonical-chain15-49446c0c.json",
-          "sha256": "7971bc0434e431fde6e38d8063d8a030268b82386b2b7c6837b74a46405fbc84"
+          "path": "verification/requirement-coverage-NREQ-853a934199459ed6bf419687ca08ba34-20261014-canonical-expectation-cdc4614f.json",
+          "sha256": "04194fcaf57cc37735a33d8ac686443af52d97f8691101104ff73de0d5f53b6a"
         }
       }
     },
@@ -4109,8 +4109,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-636ebdfdf26f0c6df9d969321a522f19-20261014-canonical-chain15-49446c0c.json",
-          "sha256": "1a5e14aff3d5fcbd92cfa46a82ffc2827a8e1a44b06291a1e9d647ee765bf9a3"
+          "path": "verification/requirement-coverage-NREQ-636ebdfdf26f0c6df9d969321a522f19-20261014-canonical-expectation-cdc4614f.json",
+          "sha256": "d42d4894e10c741794ab9ea21149217715faa22b531f7b6cb46aec91bde68b12"
         }
       }
     },
@@ -4187,8 +4187,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-eecb88f846482530ebd5e963183f2711-20261014-canonical-chain15-49446c0c.json",
-          "sha256": "2c431f057e1de711d0efc579d8f177966c1aa247b9aa5f56e072648cd44f55b8"
+          "path": "verification/requirement-coverage-NREQ-eecb88f846482530ebd5e963183f2711-20261014-canonical-expectation-cdc4614f.json",
+          "sha256": "2c6b94f735574453f89db0c3f2bca928a620d967aa2af8a13f2aab24971fdd0b"
         }
       }
     },
@@ -4265,8 +4265,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-dba22c5f93e4359c4b7d4ebdd9799dbf-20261014-canonical-chain15-49446c0c.json",
-          "sha256": "93cbf48663cb9db54d94a64a1cd9f5647be76675592b2dce596068e5cb73e6f3"
+          "path": "verification/requirement-coverage-NREQ-dba22c5f93e4359c4b7d4ebdd9799dbf-20261014-canonical-expectation-cdc4614f.json",
+          "sha256": "561e37309421c099373f8613911f6811e48843a25370b868c8e6dc050d29038d"
         }
       }
     },
@@ -4343,8 +4343,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-27f437fe3040767de849d06a48cdb3c3-20261014-canonical-chain15-49446c0c.json",
-          "sha256": "8e4d71f7bb547b51802336b994052768ac0b3ce8547aff12efe20c3c4a86e80f"
+          "path": "verification/requirement-coverage-NREQ-27f437fe3040767de849d06a48cdb3c3-20261014-canonical-expectation-cdc4614f.json",
+          "sha256": "af99522d5cb431674b5dd1d69d15e0d6d59e3a26d7ac12133e9e4f0e5b22cbe2"
         }
       }
     },
@@ -4421,8 +4421,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-be0ecfa19d607c0df242b048d6ef63bf-20261014-canonical-chain15-49446c0c.json",
-          "sha256": "c1e8ac16ede452cea3ab2bc8d4f59c570f1ea0109349ffe9a276412fb1a1c9d9"
+          "path": "verification/requirement-coverage-NREQ-be0ecfa19d607c0df242b048d6ef63bf-20261014-canonical-expectation-cdc4614f.json",
+          "sha256": "4e1e5a8c9c29c69377a7b4e5404e292d443394f06547bb95062160f36f242f4f"
         }
       }
     },
