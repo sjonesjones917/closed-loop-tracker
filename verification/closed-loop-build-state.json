@@ -1394,7 +1394,7 @@
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "/root/repair_iteration_receipt_dependencies",
-    "lastInspectedAt": "2026-10-14T21:22:02Z",
+    "lastInspectedAt": "2026-10-14T21:34:13Z",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -2094,7 +2094,7 @@
     },
     "scheduleState": "FORECAST_NOT_ESTABLISHED",
     "forecast": null,
-    "nextAction": "Continue actual owning session61315 to terminal on frozen c3033739. At21:21:56 real positive chain currentness and governing mutation/add-remove/scope controls returned; original checkpoint/Stage29/30 assertions remain in progress. Then run independently reviewed exact command/retry/public-save/cold replay before original21:35:46.722Z expiry; blocked legacy migration follows. No partial full-owner receipt.",
+    "nextAction": "Retrieve actual61315 terminal after original Stage30 complete21:32:05; final reload/aggregate assertions still running. Original authority expires21:35:46.722Z. Independent normal chain command/retry/public-cold proof remains pending and must refuse expired authority. Then run genuine blocked legacy migration; review/freeze fresh prerequisite owner3a11d6c7 for later fresh execution.",
     "deploymentObservation": {
       "sourceCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
       "runId": "36958910363",
@@ -3110,16 +3110,19 @@
     "currentInstructionMessageId": "Sentinel_4171a7d9ba308191850ae105fcaa1639",
     "integrationCommitObservation": "Exact controlled branch HEAD immediately before this management-only checkpoint; chain15 candidate is not integrated.",
     "chain15LatestActualObservation": {
-      "observedAt": "2026-10-14T21:21:56.918Z",
+      "observedAt": "2026-10-14T21:32:05.746Z",
       "sessionId": 61315,
       "status": "RUNNING",
-      "phase": "chain-actual-binding-controls-complete",
-      "canonicalProjectSha256": "0b32812b5e610a39bdffe70d24ec06aa22b541036db76c98df71250a36cd2aee",
+      "phase": "stage-30-completed-final-assertions-pending",
+      "canonicalProjectSha256": "86720f78a6dedc5bdf5816fb0cbbad811546bd8d562643543079ac37ae43f8b2",
       "adapterRevision": 2,
       "sourceCommit": "c3033739cf64eab98b371b9fe53c6da312976273",
       "originalAuthorityExpiresAt": "2026-10-14T21:35:46.722Z",
       "fullJourneyExecution": false,
-      "independentNextDriverSha256": "e46f84ed6ba462ff8e214e3169732ec15bacac83f95be9d0b6726fbf18302e5b"
+      "independentNextDriverSha256": "e46f84ed6ba462ff8e214e3169732ec15bacac83f95be9d0b6726fbf18302e5b",
+      "candidateRevision": 3,
+      "requiredStage29FixtureCommit": "3a11d6c7b025661dc161f2228d2bf41c6ba88945",
+      "fixturePositiveExecution": "PENDING"
     }
   }
 }
