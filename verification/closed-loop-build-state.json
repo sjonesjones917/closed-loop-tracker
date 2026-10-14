@@ -1390,11 +1390,11 @@
     "startingSourceCommit": "7df5f46e9a7e54da09622387a978badb39916c09",
     "startingMainCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
     "integrationBranch": "dot/published-execution-20261014",
-    "integrationCommit": "4ef945c09e334ee05322ffeeefeefee2c3e9495b",
+    "integrationCommit": "39a968f8c3cf6af9c5745a891a4c6ecd9209b6ec",
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "dot",
-    "lastInspectedAt": "2026-10-14T06:52:08.337887Z",
+    "lastInspectedAt": "2026-10-14T07:22:25.290738Z",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -1849,24 +1849,70 @@
       {
         "id": "publish_reviewed_evidence_blobs",
         "owner": "/root/publish_reviewed_evidence_blobs",
-        "state": "RUNNING",
+        "state": "BLOCKED",
         "scope": "Immutable reviewed repository evidence blobs only; no tree, commit, branch or deployment writes",
         "host": "dot cloud workspace",
-        "lastInspectedAt": "2026-10-14T06:49:25.113704Z",
+        "lastInspectedAt": "2026-10-14T07:22:25.290738Z",
         "returnTo": "/root",
         "concurrencyAllocation": 1,
-        "dependencies": []
+        "dependencies": [],
+        "evidence": "Checkpoint12 verified mappings; approval pending, one unconfirmed write observed404, no retry"
       },
       {
         "id": "map_current_proof_dependencies",
         "owner": "/root/map_current_proof_dependencies",
-        "state": "RUNNING",
+        "state": "VERIFIED",
         "scope": "Read-only current implementation proof dependency audit",
         "host": "dot cloud workspace",
-        "lastInspectedAt": "2026-10-14T06:49:25.113704Z",
+        "lastInspectedAt": "2026-10-14T07:22:25.290738Z",
         "returnTo": "/root",
         "concurrencyAllocation": 1,
-        "dependencies": []
+        "dependencies": [],
+        "evidence": "375 old bindings,164 obsolete fullCoverage records; bounded canonical JSON batch and conservative identity migration assigned"
+      },
+      {
+        "id": "repair_iteration_receipt_dependencies",
+        "owner": "/root/repair_iteration_receipt_dependencies",
+        "state": "RUNNING",
+        "scope": "Bounded actual Stage19/21 receipt dependency repair",
+        "lastInspectedAt": "2026-10-14T07:22:25.290738Z",
+        "returnTo": "/root",
+        "host": "dot cloud workspace",
+        "dependencies": [],
+        "concurrencyAllocation": 1
+      },
+      {
+        "id": "review_iteration_receipt_repair",
+        "owner": "/root/review_iteration_receipt_repair",
+        "state": "RUNNING",
+        "scope": "Independent source, mutation and boundary review of receipt dependency repair",
+        "lastInspectedAt": "2026-10-14T07:22:25.290738Z",
+        "returnTo": "/root",
+        "host": "dot cloud workspace",
+        "dependencies": [],
+        "concurrencyAllocation": 1
+      },
+      {
+        "id": "migrate_current_assertion_bindings",
+        "owner": "/root/migrate_current_assertion_bindings",
+        "state": "RUNNING",
+        "scope": "Conservative current-source identity mapping and separately reviewed historical consumer fixture correction",
+        "lastInspectedAt": "2026-10-14T07:22:25.290738Z",
+        "returnTo": "/root",
+        "host": "dot cloud workspace",
+        "dependencies": [],
+        "concurrencyAllocation": 1
+      },
+      {
+        "id": "review_canonical_json_proofs",
+        "owner": "/root/review_canonical_json_proofs",
+        "state": "RUNNING",
+        "scope": "Independent14 canonical coverage-design reviews and binding migration/fixture review",
+        "lastInspectedAt": "2026-10-14T07:22:25.290738Z",
+        "returnTo": "/root",
+        "host": "dot cloud workspace",
+        "dependencies": [],
+        "concurrencyAllocation": 1
       }
     ],
     "resources": {
@@ -1928,7 +1974,7 @@
     },
     "scheduleState": "FORECAST_NOT_ESTABLISHED",
     "forecast": null,
-    "nextAction": "Finish reporting regeneration; retrieve Stage05 full-owner and candidate-hash review outcomes; integrate only accepted exact bytes with affected tests; publish checkpoint via verified Git blobs; continue independent proof dependency work.",
+    "nextAction": "Finish integrated Stage11 boundary; review source-backed iteration receipt repair and binding fixture correction; compose only accepted canonical proofs after migration; collect current frozen evidence; publication remains pending explicit platform approval.",
     "deploymentObservation": {
       "sourceCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
       "runId": "36958910363",
@@ -2072,19 +2118,66 @@
     "runtimeRepairCandidates": {
       "stage05": {
         "commit": "1d2de39141cac48af71873baa0ec1c6599720e92",
-        "state": "IN_REVIEW_CAUSAL_ATTRIBUTION_PENDING",
-        "fullOwner": "FAILED_STAGE21_PERSISTENCE_AFTER_STAGES1_TO20"
+        "state": "INTEGRATED_BOUNDED_REVIEW_ACCEPT",
+        "fullOwner": "FAILED_STAGE21_PERSISTENCE_AFTER_STAGES1_TO20",
+        "integrationCommit": "25fd6ca1",
+        "rootContextBoundary": "PASS",
+        "rootContextProvenance": "PASS",
+        "independentReview": "verification/dot-execution-20261014/stage05-runtime-review/stage05-bounded-accept.md"
       },
       "stage11Fixture": {
         "commit": "8f3d23214cbaf0820e47472ddb252bfa460fca97",
-        "state": "BLOCKED_ACTUAL_CANDIDATE_HASH_DEFECT",
-        "negativePreserved": true
+        "state": "INTEGRATED_BOUNDED_REVIEW_ACCEPT",
+        "negativePreserved": true,
+        "integrationCommit": "39a968f8",
+        "rootCombinedBoundary": "RUNNING",
+        "requiredCompleteOwner": "FAILED_PREEXISTING_STAGE19_TAIL"
       },
       "candidateHash": {
         "owner": "/root/test_integrated_runtime_baseline/repair_candidate_hash_validation",
+        "state": "INTEGRATED_BOUNDED_REVIEW_ACCEPT",
+        "scope": "Central retained candidate component manifest/hash validity, existing gates/reservation/evaluation and public-store regression",
+        "authorCommit": "a3e363737aa88c7eabcd0ebb0acd883c54d4143f",
+        "integrationCommit": "bbfd8570",
+        "rootFreezeOwner": "PASS",
+        "rootReservationOwner": "PASS"
+      },
+      "iterationReceiptDependencies": {
         "state": "RUNNING",
-        "scope": "Central retained candidate component manifest/hash validity, existing gates/reservation/evaluation and public-store regression"
+        "owner": "/root/repair_iteration_receipt_dependencies",
+        "reviewer": "/root/review_iteration_receipt_repair",
+        "baseCommit": "39a968f8c3cf6af9c5745a891a4c6ecd9209b6ec",
+        "scope": "Existing versioned Stage18/19 source dependency contracts; preserve actual scoped semantic evidence and material contradiction invalidation",
+        "diagnosticSha256": "9022ce705d5ef91e07b3207d6fd11d7d374ca60d9e1f51f13fc15f8e0fb740c1"
       }
+    },
+    "evidencePublication": {
+      "state": "BLOCKED_APPROVAL_AND_UNCONFIRMED_WRITE",
+      "receiptPath": "/workspace/shared/clrt-atomic-remote-blob-receipts.json",
+      "verifiedMappings": 12,
+      "uploadedBlobs": 9,
+      "existingBlobs": 3,
+      "blockedDuplicatePaths": 2,
+      "unconfirmedBlobOID": "d1b9ec095799c5e646fff8d84403c8cca8510112",
+      "unconfirmedPath": "verification/atomic-extraction-20261014/reviewed/clrt-normative-component-reconciliation.json",
+      "lastRead": "404 after interrupted create_blob; no retry",
+      "referencesChanged": false
+    },
+    "proofRenewal": {
+      "canonicalCandidate": "7083bb05432d7847221e5680c80d87c8026cbd6e",
+      "canonicalReviewCommit": "7699ded6def9bb39ec70d3ff05beb0df9d0d9330",
+      "coverageDesignAcceptedAtoms": 14,
+      "arrayOrder": "REJECTED_FULL_COVERAGE",
+      "implementationObjects": "BLOCKED",
+      "currentProofReceipts": "NOT_COLLECTED",
+      "migrationCandidate": "d8a8df7c",
+      "migrationReview": "fb517b517c47b1fae36276dc93ef759537ddf89b",
+      "migrationDisposition": "DATA_ACCEPT_PENDING_AFFECTED_FIXTURE_CORRECTIONS",
+      "originalBindingsConserved": 375,
+      "scopedBindingsRetained": 243,
+      "unqualifiedBindingsRetired": 132,
+      "historicalFullCoverageRetired": 164,
+      "emptyReceiptConformanceNumerator": 0
     }
   }
 }
