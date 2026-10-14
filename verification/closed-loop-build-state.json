@@ -1394,7 +1394,7 @@
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "dot",
-    "lastInspectedAt": "2026-10-14T05:09:23Z",
+    "lastInspectedAt": "2026-10-14T05:11:39Z",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -1785,6 +1785,36 @@
         "evidence": "Bounded code ACCEPT, not app acceptance. Independent15atom/context+8path+53focused+24external-proof controls; runtime unchanged.",
         "evidencePath": "verification/dot-execution-20261014/atomic-review/final-review.txt",
         "evidenceSha256": "3f748b44b274c21cfa3ea19f9c7484c8a524ad3e16e6ebccee621ba844b408bc"
+      },
+      {
+        "id": "classify_source_context_author",
+        "owner": "/root/classify_source_context_author",
+        "state": "RUNNING",
+        "scope": "Independent exact-source classification of neutral 670-line context/primary review inventory; no implementation or other pass access",
+        "host": "dot cloud workspace",
+        "writeScope": "Own isolated source-only classification evidence",
+        "dependencies": [
+          "reconcile_atomic_requirement_entries"
+        ],
+        "lastInspectedAt": "2026-10-14T05:11:39Z",
+        "inputSpecificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+        "returnTo": "/root",
+        "concurrencyAllocation": 1
+      },
+      {
+        "id": "classify_source_context_blind",
+        "owner": "/root/classify_source_context_blind",
+        "state": "RUNNING",
+        "scope": "Independent exact-source classification of neutral 670-line context/primary review inventory; no implementation or other pass access",
+        "host": "dot cloud workspace",
+        "writeScope": "Own isolated source-only classification evidence",
+        "dependencies": [
+          "reconcile_atomic_requirement_entries"
+        ],
+        "lastInspectedAt": "2026-10-14T05:11:39Z",
+        "inputSpecificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+        "returnTo": "/root",
+        "concurrencyAllocation": 1
       }
     ],
     "resources": {
@@ -1891,6 +1921,13 @@
       "libraryFileId": "libfile_ebff86a6d5bc8191b18b3e0b9c8ec15b",
       "requestedAt": "2026-10-14T05:01:57Z",
       "sourceApplied": false
-    }
+    },
+    "currentCriticalPath": [
+      "Finish independent context classification and global atomic identity/equivalence reconciliation",
+      "Generate and validate actual atomic manifest without inheriting historical proof",
+      "Complete genuine independent coverage/context reviews and bind actual scoped tests",
+      "Run integrated proof producers and required acceptance pipeline",
+      "Verify authorized final deployment, physical-device and real-project maturity evidence"
+    ]
   }
 }
