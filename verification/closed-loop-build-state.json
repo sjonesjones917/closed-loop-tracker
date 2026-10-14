@@ -1394,7 +1394,7 @@
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "dot",
-    "lastInspectedAt": "2026-10-14T15:02:07.460600Z",
+    "lastInspectedAt": "2026-10-14T15:15:38.563833Z",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -2050,7 +2050,7 @@
     },
     "scheduleState": "FORECAST_NOT_ESTABLISHED",
     "forecast": null,
-    "nextAction": "Continue fresh default lifecycle on cd56 while independently resolving source-general Stage27 mandatory due-proof aggregation and obtaining genuine before/after release binding evidence; preserve exact legacycontracts and authorize minimal reviewed fixes only.",
+    "nextAction": "Run independently inspected genuine23\u201327 boundary capture, finalize exact source-general primary release classifier/tests and independently review secondary self-binding evidence before scoped versioned correction; prior integrated18\u201322 scope remains verified.",
     "deploymentObservation": {
       "sourceCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
       "runId": "36958910363",
@@ -2573,6 +2573,50 @@
       "status": "READ_ONLY_ASSESSED_PATCH_DEFERRED",
       "atomicDependencyBytes": 321767484,
       "finding": "Aggregate repeats full source extraction; safe reuse would require fresh per-boundary identities and independent review. No measured seconds-saving benchmark; keep current proof checks unchanged."
+    },
+    "release27Repair": {
+      "state": "PRIMARY_SOURCE_GENERAL_DRAFT_UNDER_REVIEW_SECONDARY_CAPTURE_PENDING",
+      "owner": "/root/repair_iteration_receipt_dependencies",
+      "reviewer": "/root/review_release_scope_binding",
+      "defaultOwner": {
+        "source": "cd56dd97509f0c6c96e2f6e9055c97b4b65452a0",
+        "completedAt": "2026-10-14T15:14:43Z",
+        "exitCode": 1,
+        "completedStages": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26
+        ],
+        "releaseDisposition": "ACCEPTED",
+        "failure": "complete27 exact release binding gate",
+        "terminalSha256": "f08d8b59553d8934089f0f3e2fb7d70cbe44d5679202e4806d2a88e653db247d"
+      },
+      "primary": "Governed fullowner release incorrectly blocks satisfied preproductonlymandatoryrequirement because oldreleaseMetrics requiresfinaltests for allrequirements. Allmandatoryrequirements retained; source-general existingstageprooftrace releaseclassification authorized, independentreview/cases pending.",
+      "secondary": "Both originaldefault andgovernedfixtures fail releasebinding. Qualifiedcounterfactual linksnewrelease scope toproofobligationhashes; genuinebefore/aftercapture pending, no secondarycodefixauthorized.",
+      "constraints": "No phase-specific fallback, no DEFERRED-as-success, preserve ANY_OF/K logic and independent duefinaltests/regressions/matrix; direct sufficientdueREFUTES precedence including activatedconditional requirements."
     }
   }
 }
