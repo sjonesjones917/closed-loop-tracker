@@ -2841,7 +2841,7 @@
         }
       },
       "freshReadyChainOwner": {
-        "state": "RUNNING",
+        "state": "LOST_EXECUTOR_AFTER_ACTUAL_STAGE21_CAPTURE",
         "session": 20032,
         "sourceCommit": "53e02e32437ada21e6f14d20f1ec7eced5425427",
         "runtimeCommit": "086f2b2ecc271013ebc90a7694350ffd2eee6102",
@@ -2851,7 +2851,20 @@
         "directory": "/workspace/shared/clrt-iteration-repair-evidence/frozen-53e02e32-governed",
         "reviewedCaptureDiffSha256": "19ce041c869ed4ed3cdc3f6453656cbd38f6a9e099113db8aa9cfaad66d8cc8b",
         "captureScope": "All18 original report arrays, actual helper caller identities and completion outcomes, exact raw pre/post chain calculations, final report after original assertions. No prefix outcome inferred.",
-        "terminal": "PENDING"
+        "terminal": "PENDING",
+        "owningSessionResult": "Unknown process id20032 at20:01:42Z; wait cell121 not found; no durable terminal",
+        "lastCompletedStage": 21,
+        "lastCapture": {
+          "compressedFileSha256": "558e48b0e39b790abd89cbf5905028a9b78ba4f52c6b70229fc7979c2ccc6b90",
+          "canonicalProjectSha256": "99c6ea909b5f4f1eeff40a67bf90846a921e5dc34ed2c872915c0ca59e6d7b73",
+          "originalCapabilityExpiresAt": "2026-10-14T21:35:46.722Z",
+          "caseArrays": 17,
+          "presentationRows": 27,
+          "attachmentCases": 6,
+          "projectionCases": 25,
+          "captureTimestamp": "NOT_RECORDED_IN_ITERATION_SNAPSHOT"
+        },
+        "nextAction": "Reviewed VM-native remaining post21 and22\u201330 continuation with original arrays/custody; no prefix repeat. Missing governing-refutation scalar report remains qualified."
       },
       "coverageRenewal": {
         "state": "ON_HOLD_UNTIL_RUNTIME_STABLE",
@@ -2909,7 +2922,7 @@
         "activeImplementationWorkers": 1,
         "activeIndependentReviewers": 1,
         "heavyProcessLimit": 1,
-        "currentHeavySession": 20032,
+        "currentHeavySession": null,
         "catalogCommit": "d6c7d33be916991cf3098fe202f46919e77120d7",
         "catalogReviewer": "/root/repair_iteration_receipt_dependencies/review_catalog13_alignment",
         "currentCatalogState": "COMPLETED_ACCEPTED_INTEGRATED",
