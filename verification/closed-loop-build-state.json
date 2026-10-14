@@ -1394,7 +1394,7 @@
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "dot",
-    "lastInspectedAt": "2026-10-14T06:20:43Z",
+    "lastInspectedAt": "2026-10-14T06:36:04Z",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -2003,6 +2003,24 @@
       "sourceSuites": "PASS",
       "appAcceptance": false,
       "remaining": "Actual final combined atomic reconciliation integration and proof migration"
+    },
+    "atomicInventoryIntegration": {
+      "state": "GENERATED_EXACT_FINAL_EVIDENCE",
+      "sourceCommit": "b2f06cdec1a8185714fe3e01ac2a5d1e92aa348f",
+      "finalReconciliationSha256": "1cc93c4e49e3e5530ee2a802314617f3aa07d5c72282ded6cd1da68570dac280",
+      "descriptorSha256": "76fc076afcab78d75fe699f5a8fde26e74be37a7929a35fcf74e4f09288f977b",
+      "dependencyFiles": 37,
+      "dependencyBytes": 321767484,
+      "manifestEntries": 7486,
+      "atomicObligations": 7195,
+      "sourceContexts": 291,
+      "reviewedSections": 253,
+      "generation": "PASS",
+      "runtimeBundleResources": 13,
+      "repositoryEvidenceExcludedFromRuntime": true,
+      "fullGovernance": "RUNNING",
+      "implementationConformance": "NOT_ESTABLISHED",
+      "currentConsumerReview": "Entry-count versus behavioral atomic denominator and context-proof treatment under investigation; no percentage claimed"
     }
   }
 }
