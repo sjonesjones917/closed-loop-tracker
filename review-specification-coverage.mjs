@@ -207,13 +207,14 @@ export function atomicContributorIdentity(role,constituents){
 }
 export function validateAtomicProjection(record,{readFile,sourceBytes,reconciler}){
   const projection=record.mechanicalProjection;
-  if(!projection)return [{actorId:record.actorId,contextId:record.contextId}];
+  if(!projection){assert(![record.actorId,record.contextId].some(value=>typeof value==='string'&&/^CONTRIBUTOR-(?:CONTEXT-)?SET:/.test(value)),'Atomic aggregate identity lacks constituent projection');return [{actorId:record.actorId,contextId:record.contextId}];}
   assert(projection.schema==='closed-loop-evidence-projection/1'&&projection.semanticContribution===false&&projection.adapter?.actorId===reconciler.actorId&&projection.adapter?.contextId===reconciler.contextId,'Atomic mechanical projection adapter or semantic contribution invalid');
   assert(['DRAFT','INDEPENDENT_REVIEW'].includes(record.role)&&Array.isArray(projection.constituents)&&projection.constituents.length>0&&Array.isArray(projection.normalizations),'Atomic projection constituents absent');
   const sourceSha256=sha256(sourceBytes),lines=sourceBytes.toString('utf8').split('\n'),seenFiles=new Set(),seenMembers=new Set(),propositions=new Map(record.propositions.map(p=>[p.propositionId,p]));
   for(const constituent of projection.constituents){
     assert(constituent.role===record.role&&!seenFiles.has(constituent.path),'Atomic constituent role invalid or duplicated');seenFiles.add(constituent.path);
     const original=atomicEvidenceFile(constituent,readFile),identity=constituent.identityEvidence?atomicEvidenceFile(constituent.identityEvidence,readFile):original,binding=constituent.identityEvidence??constituent;
+    assert(!original.mechanicalProjection&&![constituent.actorId,constituent.contextId].some(value=>typeof value==='string'&&/^CONTRIBUTOR-(?:CONTEXT-)?SET:/.test(value)),'Atomic nested projection is not an original source contributor');
     if(constituent.identityEvidence)assert(atomicPointer(identity,binding.artifactSha256Pointer)===constituent.sha256&&binding.declaredInputsPointer==='','Atomic constituent provenance does not bind frozen artifact/full disclosures');
     assert(atomicText(constituent.actorId)&&atomicText(constituent.contextId)&&atomicPointer(identity,binding.actorIdentityPointer)===constituent.actorId&&atomicPointer(identity,binding.contextIdentityPointer)===constituent.contextId&&atomicPointer(identity,binding.sourceIdentityPointer)===sourceSha256&&atomicEqual(constituent.declaredInputs,atomicPointer(identity,binding.declaredInputsPointer)),'Atomic constituent identity/source/actual inputs mismatch');
     assert(constituent.actorId!==projection.adapter.actorId&&constituent.contextId!==projection.adapter.contextId,'Atomic projection adapter counted as source contributor');

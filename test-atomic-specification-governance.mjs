@@ -301,6 +301,8 @@ try{
   ['multi-contributor-dropped-qualifier',({d})=>d.propositions[1].contextSourceLocations=[],/qualifier\/context membership changed/],
   ['multi-contributor-new-semantic-contribution',({d})=>d.mechanicalProjection.semanticContribution=true,/adapter or semantic contribution invalid/],
  ]){assert.throws(()=>invoke(fixture(mutate)),pattern);cases.push(name);}
+ const stripped=fixture(),strippedDraft=JSON.parse(stripped.files.get(stripped.descriptor.draft.path));delete strippedDraft.mechanicalProjection;const strippedBytes=Buffer.from(JSON.stringify(strippedDraft));stripped.files.set(stripped.descriptor.draft.path,strippedBytes);stripped.descriptor.draft.sha256=sha(strippedBytes);assert.throws(()=>invoke(stripped),/aggregate identity lacks constituent projection/);cases.push('multi-contributor-stripped-projection-reserved-alias');
+ assert.throws(()=>invoke(fixture(({originals})=>originals[0].original.mechanicalProjection={schema:'closed-loop-evidence-projection/1',constituents:[]})),/nested projection/);cases.push('multi-contributor-nested-projection-rejected');
  const missing=fixture();missing.files.delete('verification/synthetic-draft-constituent-0.json');assert.throws(()=>invoke(missing));cases.push('multi-contributor-missing-file');
  const tampered=fixture();tampered.files.set('verification/synthetic-review-constituent-0.json',Buffer.from('{}'));assert.throws(()=>invoke(tampered),/digest mismatch/);assert.throws(()=>atomicEvidenceReferences(tampered.descriptor,tampered.options.readFile),/dependency digest mismatch/);cases.push('multi-contributor-tampered-file-and-receipt');
  const withAttestation=(alter=()=>{})=>fixture(({originals,files})=>{
