@@ -1056,7 +1056,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "migrateProjectToCurrent / markLegacyNonGating / normalizeTestRecords",
-            "sha256": "12c397f735f7e7154581131a79e19be2ef1f6bf374985dba4af5e445370812e6"
+            "sha256": "e117c3c8d2d82cfbfe4e35fe09d81ca6f4dc0193c26adbbb3125b077a7548efe"
           },
           {
             "path": "workbook.js",
@@ -1066,7 +1066,7 @@
           {
             "path": "project-store.js",
             "symbol": "migrateLegacy / migrateProjectToCurrent / retainProjectSource",
-            "sha256": "8493c0048c9bc48d72cd97efcc3efcbd5fd65f995a34c790c64d0ff10ad4b067"
+            "sha256": "0cf767f94c9517a92622a7ca466a4939e5f71c13a0b5a058047a47a4fee9f364"
           }
         ],
         "obligations": [
@@ -1155,7 +1155,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "migrateProjectToCurrent / markLegacyNonGating / normalizeTestRecords",
-            "sha256": "12c397f735f7e7154581131a79e19be2ef1f6bf374985dba4af5e445370812e6"
+            "sha256": "e117c3c8d2d82cfbfe4e35fe09d81ca6f4dc0193c26adbbb3125b077a7548efe"
           },
           {
             "path": "workbook.js",
@@ -1165,7 +1165,7 @@
           {
             "path": "project-store.js",
             "symbol": "migrateLegacy / migrateProjectToCurrent / retainProjectSource",
-            "sha256": "8493c0048c9bc48d72cd97efcc3efcbd5fd65f995a34c790c64d0ff10ad4b067"
+            "sha256": "0cf767f94c9517a92622a7ca466a4939e5f71c13a0b5a058047a47a4fee9f364"
           }
         ],
         "obligations": [
@@ -1255,7 +1255,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "migrateProjectToCurrent / markLegacyNonGating / normalizeTestRecords",
-            "sha256": "12c397f735f7e7154581131a79e19be2ef1f6bf374985dba4af5e445370812e6"
+            "sha256": "e117c3c8d2d82cfbfe4e35fe09d81ca6f4dc0193c26adbbb3125b077a7548efe"
           },
           {
             "path": "workbook.js",
@@ -1265,7 +1265,7 @@
           {
             "path": "project-store.js",
             "symbol": "migrateLegacy / migrateProjectToCurrent / retainProjectSource",
-            "sha256": "8493c0048c9bc48d72cd97efcc3efcbd5fd65f995a34c790c64d0ff10ad4b067"
+            "sha256": "0cf767f94c9517a92622a7ca466a4939e5f71c13a0b5a058047a47a4fee9f364"
           }
         ],
         "obligations": [
@@ -1356,7 +1356,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "migrateProjectToCurrent / markLegacyNonGating / normalizeTestRecords",
-            "sha256": "12c397f735f7e7154581131a79e19be2ef1f6bf374985dba4af5e445370812e6"
+            "sha256": "e117c3c8d2d82cfbfe4e35fe09d81ca6f4dc0193c26adbbb3125b077a7548efe"
           },
           {
             "path": "workbook.js",
@@ -1366,12 +1366,12 @@
           {
             "path": "project-store.js",
             "symbol": "migrateLegacy / migrateProjectToCurrent / retainProjectSource",
-            "sha256": "8493c0048c9bc48d72cd97efcc3efcbd5fd65f995a34c790c64d0ff10ad4b067"
+            "sha256": "0cf767f94c9517a92622a7ca466a4939e5f71c13a0b5a058047a47a4fee9f364"
           },
           {
             "path": "workflow-engine.js",
             "symbol": "stageContext / gate",
-            "sha256": "4f0fdd7c2b19cd84895be156228d016c1a31f48f320fcc13e5983a27ae4c7496"
+            "sha256": "b349951e1ce02d23737202375c27faae0774006987a9420773c45ac07f9bdbf9"
           }
         ],
         "obligations": [
@@ -1457,7 +1457,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "migrateProjectToCurrent / markLegacyNonGating / normalizeTestRecords",
-            "sha256": "12c397f735f7e7154581131a79e19be2ef1f6bf374985dba4af5e445370812e6"
+            "sha256": "e117c3c8d2d82cfbfe4e35fe09d81ca6f4dc0193c26adbbb3125b077a7548efe"
           },
           {
             "path": "workbook.js",
@@ -1467,7 +1467,7 @@
           {
             "path": "project-store.js",
             "symbol": "migrateLegacy / migrateProjectToCurrent / retainProjectSource",
-            "sha256": "8493c0048c9bc48d72cd97efcc3efcbd5fd65f995a34c790c64d0ff10ad4b067"
+            "sha256": "0cf767f94c9517a92622a7ca466a4939e5f71c13a0b5a058047a47a4fee9f364"
           },
           {
             "path": "response-ingestion.js",
@@ -1477,7 +1477,7 @@
           {
             "path": "workflow-engine.js",
             "symbol": "gate / stageContext",
-            "sha256": "4f0fdd7c2b19cd84895be156228d016c1a31f48f320fcc13e5983a27ae4c7496"
+            "sha256": "b349951e1ce02d23737202375c27faae0774006987a9420773c45ac07f9bdbf9"
           }
         ],
         "obligations": [
