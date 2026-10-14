@@ -197,6 +197,109 @@ export function validateAtomicIdentityCrosswalk(crosswalk,prior,priorRef,require
 }
 // Returns no active replacement until the complete independent challenge and
 // distinct reconciliation are present. Source-only booleans are never inputs.
+function atomicPointer(value,pointer){
+  assert(typeof pointer==='string'&&(pointer===''||pointer.startsWith('/')),'Atomic projection JSON pointer invalid');
+  for(const part of pointer===''?[]:pointer.slice(1).split('/').map(v=>v.replace(/~1/g,'/').replace(/~0/g,'~'))){assert(value!==null&&typeof value==='object'&&Object.hasOwn(value,part),'Atomic projection JSON pointer missing');value=value[part];}return value;
+}
+export function atomicContributorIdentity(role,constituents){
+  const contributors=[...new Map(constituents.map(c=>[`${c.actorId}\0${c.contextId}`,{actorId:c.actorId,contextId:c.contextId}])).values()].sort((a,b)=>a.actorId.localeCompare(b.actorId)||a.contextId.localeCompare(b.contextId)),digest=atomicHash({role,contributors});
+  return {actorId:`CONTRIBUTOR-SET:${role}:${digest}`,contextId:`CONTRIBUTOR-CONTEXT-SET:${role}:${digest}`};
+}
+export function validateAtomicProjection(record,{readFile,sourceBytes,reconciler}){
+  const projection=record.mechanicalProjection;
+  if(!projection)return [{actorId:record.actorId,contextId:record.contextId}];
+  assert(projection.schema==='closed-loop-evidence-projection/1'&&projection.semanticContribution===false&&projection.adapter?.actorId===reconciler.actorId&&projection.adapter?.contextId===reconciler.contextId,'Atomic mechanical projection adapter or semantic contribution invalid');
+  assert(['DRAFT','INDEPENDENT_REVIEW'].includes(record.role)&&Array.isArray(projection.constituents)&&projection.constituents.length>0&&Array.isArray(projection.normalizations),'Atomic projection constituents absent');
+  const sourceSha256=sha256(sourceBytes),lines=sourceBytes.toString('utf8').split('\n'),seenFiles=new Set(),seenMembers=new Set(),propositions=new Map(record.propositions.map(p=>[p.propositionId,p]));
+  for(const constituent of projection.constituents){
+    assert(constituent.role===record.role&&!seenFiles.has(constituent.path),'Atomic constituent role invalid or duplicated');seenFiles.add(constituent.path);
+    const original=atomicEvidenceFile(constituent,readFile),identity=constituent.identityEvidence?atomicEvidenceFile(constituent.identityEvidence,readFile):original,binding=constituent.identityEvidence??constituent;
+    if(constituent.identityEvidence)assert(atomicPointer(identity,binding.artifactSha256Pointer)===constituent.sha256&&binding.declaredInputsPointer==='','Atomic constituent provenance does not bind frozen artifact/full disclosures');
+    assert(atomicText(constituent.actorId)&&atomicText(constituent.contextId)&&atomicPointer(identity,binding.actorIdentityPointer)===constituent.actorId&&atomicPointer(identity,binding.contextIdentityPointer)===constituent.contextId&&atomicPointer(identity,binding.sourceIdentityPointer)===sourceSha256&&atomicEqual(constituent.declaredInputs,atomicPointer(identity,binding.declaredInputsPointer)),'Atomic constituent identity/source/actual inputs mismatch');
+    assert(constituent.actorId!==projection.adapter.actorId&&constituent.contextId!==projection.adapter.contextId,'Atomic projection adapter counted as source contributor');
+    if(constituent.identityEvidence){
+      const prefix=identity.attestation_kind==='original_reviewer_provenance_attestation',tail=identity.artifact_kind==='source_only_review_provenance_attestation';
+      assert(prefix||tail,'Atomic constituent identity attestation kind invalid');
+      const actorPointer=prefix?'/attestor/actual_canonical_task_name':'/attesting_task';
+      assert(binding.actorIdentityPointer===actorPointer&&binding.contextIdentityPointer===actorPointer&&binding.sourceIdentityPointer===(prefix?'/normative_source_input/sha256':'/source_input/sha256')&&binding.artifactSha256Pointer===(prefix?'/frozen_review_artifact/sha256':'/frozen_artifact/sha256'),'Atomic constituent attestation pointer aliases actual identity');
+    }else assert(binding.actorIdentityPointer==='/actorId'&&binding.contextIdentityPointer===(original.contextId?'/contextId':'/actorId')&&(original.contextId||original.actorId?.startsWith('/root/'))&&binding.sourceIdentityPointer===(original.source?'/source/sha256':'/specificationSha256')&&binding.declaredInputsPointer==='/inputs','Atomic constituent pointer aliases actual identity/inputs');
+    const kind=constituent.memberCollectionPointer;
+    let statementPointer,linePointer,classificationPointer=null,role;
+    if(kind==='/requirements'&&original.schema==='closed-loop-atomic-extraction-draft/1'&&original.role==='SOURCE_ONLY_DRAFT_EVIDENCE_NOT_AUTHORITATIVE_MANIFEST'){role='DRAFT';statementPointer='/atomicObligation/statement';linePointer='/sourceLocation/startLine';assert(original.source?.sha256===sourceSha256,'Atomic constituent draft source mismatch');}
+    else if(kind==='/candidates'&&['independent-source-only-candidate-review','independent-source-only-candidate-review-tail'].includes(original.artifact_kind)){role='INDEPENDENT_REVIEW';statementPointer='/proposition';linePointer='/source_lines/0';assert(original.source?.sha256===sourceSha256&&constituent.identityEvidence,'Atomic constituent blind provenance/source absent');}
+    else if(kind==='/classifications'&&['DRAFT_CONTEXT','INDEPENDENT_CONTEXT_REVIEW'].includes(original.role)){role=original.role==='DRAFT_CONTEXT'?'DRAFT':'INDEPENDENT_REVIEW';statementPointer='/reason';linePointer='/line';classificationPointer='/classification';assert(original.specificationSha256===sourceSha256,'Atomic constituent context source mismatch');}
+    else if(kind==='/propositions'&&original.schema==='closed-loop-atomic-extraction-evidence/1'){role=original.role;statementPointer='/statement';linePointer='/primarySourceLine';classificationPointer=null;}
+    assert(role===record.role,'Atomic frozen constituent role mismatch');
+    if(record.role==='INDEPENDENT_REVIEW')assert(original.draftManifestReceived!==true&&original.implementationRead!==true&&identity.draftManifestReceived!==true&&identity.implementationRead!==true,'Atomic constituent blind isolation false');
+    const members=atomicPointer(original,kind);assert(Array.isArray(members)&&members.length>0&&Array.isArray(constituent.members)&&constituent.members.length===members.length,'Atomic constituent source membership incomplete');
+    const originalMembers=new Set();
+    for(const member of constituent.members){
+      assert(member.statementPointer===statementPointer&&member.primarySourceLinePointer===linePointer&&(!classificationPointer||member.classificationPointer===classificationPointer),'Atomic member semantic pointer invalid');
+      const match=new RegExp('^'+kind+'/([0-9]+)$').exec(member.originalPointer??''),index=match?Number(match[1]):-1;
+      assert(index>=0&&index<members.length&&!originalMembers.has(index)&&!seenMembers.has(member.normalizedPropositionId),'Atomic constituent member missing or duplicated');originalMembers.add(index);seenMembers.add(member.normalizedPropositionId);
+      const source=members[index],normalized=propositions.get(member.normalizedPropositionId),line=atomicPointer(source,linePointer);
+      assert(normalized&&normalized.statement===atomicPointer(source,statementPointer)&&normalized.primarySourceLine===line,'Atomic projected proposition changed or misattributed');
+      if(classificationPointer)assert(normalized.classification===atomicPointer(source,classificationPointer),'Atomic projected original classification changed');
+      else if(source.classification!==undefined)assert(normalized.classification===source.classification,'Atomic projected original classification changed');
+      let contextLines=[];
+      if(kind==='/requirements')contextLines=source.atomicObligation.contextSourceLocations.map(c=>c.startLine);
+      else if(kind==='/candidates')for(const [a,b] of source.supporting_context_lines??[]){assert(Number.isSafeInteger(a)&&Number.isSafeInteger(b)&&a>0&&b>=a&&b<=lines.length,'Atomic constituent context range invalid');for(let n=a;n<=b;n++)if(lines[n-1].trim())contextLines.push(n);}
+      else contextLines=(source.contextSourceLocations??[]).map(c=>typeof c==='number'?c:c.startLine);
+      const expected=[...new Set(contextLines.filter(n=>n!==line))].sort((a,b)=>a-b),actual=normalized.contextSourceLocations.map(c=>c.startLine);
+      assert(atomicEqual(expected,actual),'Atomic projected qualifier/context membership changed');
+    }
+  }
+  assert(seenMembers.size===propositions.size,'Atomic projected proposition lacks frozen constituent');
+  const identity=atomicContributorIdentity(record.role,projection.constituents);assert(record.actorId===identity.actorId&&record.contextId===identity.contextId,'Atomic composite contributor-set identity invalid');
+  for(const change of projection.normalizations)assert(atomicText(change.reason)&&atomicText(change.field)&&atomicText(change.originalPointer)&&Object.hasOwn(change,'before')&&Object.hasOwn(change,'after'),'Atomic mechanical normalization provenance incomplete');
+  return projection.constituents.map(({actorId,contextId})=>({actorId,contextId}));
+}
+
+export function atomicEvidenceReferences(descriptor,readFile=readAtomicEvidenceBytes){
+  if(descriptor?.status!=='RECONCILED')return [];
+  const refs=[descriptor.draft,descriptor.independentReview,descriptor.reconciliation],records=refs.map(ref=>atomicEvidenceFile(ref,readFile)),reconciliation=records[2];
+  refs.push(...[reconciliation.priorManifest,reconciliation.sourceTraceManifest,reconciliation.historicalSourceRelocationCrosswalk,reconciliation.priorSpecificationSource].filter(Boolean));
+  for(const record of records)for(const constituent of record.mechanicalProjection?.constituents??[])refs.push(constituent,...(constituent.identityEvidence?[constituent.identityEvidence]:[]));
+  if(reconciliation.contextReconciliation){const context=reconciliation.contextReconciliation;refs.push(context,context.author,context.independentReview);}
+  const unique=new Map();
+  for(const ref of refs){assert(ref&&isAtomicEvidencePath(ref.path)&&atomicDigest(ref.sha256),'Atomic evidence dependency identity invalid');assert(!unique.has(ref.path)||unique.get(ref.path).sha256===ref.sha256,'Atomic evidence dependency has conflicting hashes');assert(sha256(readFile(ref.path))===ref.sha256,'Atomic evidence dependency digest mismatch');unique.set(ref.path,ref);}
+  return [...unique.values()];
+}
+
+// Original context passes may disagree. Only a separately pinned, distinct
+// source-grounded reconciliation can resolve them; normalization is not review.
+export function loadAtomicContextReconciliation(ref,{readFile,sourceBytes}){
+  if(!ref)return null;
+  const record=atomicEvidenceFile(ref,readFile),author=atomicEvidenceFile(ref.author,readFile),review=atomicEvidenceFile(ref.independentReview,readFile),sourceSha256=sha256(sourceBytes),lines=sourceBytes.toString('utf8').split('\n');
+  assert(record.schema==='closed-loop-source-context-reconciliation/1'&&record.role==='DISTINCT_SOURCE_ONLY_RECONCILIATION'&&author.role==='DRAFT_CONTEXT'&&review.role==='INDEPENDENT_CONTEXT_REVIEW','Atomic context reconciliation roles invalid');
+  const passes=[author,review,record];
+  assert(passes.every(p=>atomicText(p.actorId)&&atomicText(p.contextId)&&p.specificationSha256===sourceSha256)&&new Set(passes.map(p=>p.actorId)).size===3&&new Set(passes.map(p=>p.contextId)).size===3,'Atomic context reconciliation independence missing');
+  assert(review.draftManifestReceived===false&&review.implementationRead===false&&record.method?.sourceOnly===true&&record.method.implementationInspected===false&&record.method.originalInputsModified===false,'Atomic context reconciliation source isolation false');
+  assert(Array.isArray(record.inputs)&&[ref.author,ref.independentReview].every(r=>record.inputs.some(i=>i.path===(r.originalPath??r.path)&&i.sha256===r.sha256))&&record.inputs.some(i=>i.sha256===sourceSha256),'Atomic context reconciliation input lineage incomplete');
+  const sourceInputs=record.inputs.filter(input=>input.sha256===sourceSha256);
+  assert([author,review].every(pass=>Array.isArray(pass.inputs)&&pass.inputs.length===1&&sourceInputs.some(input=>typeof pass.inputs[0]==='string'?pass.inputs[0]===input.path:pass.inputs[0].path===input.path&&pass.inputs[0].sha256===sourceSha256)),'Atomic original context source inputs differ');
+  assert(Array.isArray(record.unresolvedDisagreements)&&record.unresolvedDisagreements.length===0&&Array.isArray(record.mappings),'Atomic context disagreement unresolved');
+  const classifications=passes.slice(0,2).map(p=>{assert(Array.isArray(p.classifications),'Atomic original context classifications absent');const m=new Map();for(const row of p.classifications){assert(!m.has(row.line),'Atomic original context duplicated');m.set(row.line,row);}return m;});
+  const mappings=new Map();
+  for(const row of record.mappings){
+    const line=row.line,originals=classifications.map(m=>m.get(line));
+    assert(Number.isSafeInteger(line)&&line>0&&line<=lines.length&&!mappings.has(line)&&row.sourceLineSha256===sha256(Buffer.from(lines[line-1]))&&row.rawSourceText===lines[line-1]&&atomicText(row.reason)&&row.unresolved===false&&row.normativeForcePreserved===(row.resolvedClassification!=='HISTORICAL_NONNORMATIVE_CONTEXT'),'Atomic resolved context source or decision invalid');
+    for(const [i,original] of originals.entries()){
+      const prefix=i?'Review':'Author';
+      assert(original&&original.sourceLineSha256===row.sourceLineSha256&&(original.rawSourceText??original.rawLine)===lines[line-1]&&atomicText(original.reason)&&row[i?'reviewClassification':'authorClassification']===original.classification&&atomicEqual(row[`original${prefix}GoverningSourceRanges`],original.governingSourceRanges??[])&&atomicEqual(row[`original${prefix}ContextSourceLocations`],original.contextSourceLocations??[]),'Atomic original context decision changed');
+    }
+    assert(['NORMATIVE_PROPOSITION','STRUCTURAL_REQUIREMENT_CONTEXT','HISTORICAL_NONNORMATIVE_CONTEXT'].includes(row.resolvedClassification)&&atomicText(row.resolutionMode)&&Array.isArray(row.governingSourceRanges)&&Array.isArray(row.additionalSupportingSourceRanges),'Atomic resolved context classification/ranges absent');
+    let last=0;for(const range of row.governingSourceRanges){assert(Array.isArray(range)&&range.length===2&&Number.isSafeInteger(range[0])&&Number.isSafeInteger(range[1])&&range[0]>last&&range[1]>=range[0]&&range[1]<=lines.length,'Atomic resolved governing range invalid');last=range[1];}
+    assert(Array.isArray(row.exactSourceAnchors)&&row.exactSourceAnchors.some(a=>a.startLine<=line&&a.endLine>=line),'Atomic context source anchors absent');
+    for(const anchor of row.exactSourceAnchors){const {startLine:a,endLine:b}=anchor;assert(Number.isSafeInteger(a)&&Number.isSafeInteger(b)&&a>0&&b>=a&&b<=lines.length,'Atomic context source anchor invalid');const text=lines.slice(a-1,b).join('\n');assert(anchor.exactText===text&&anchor.sha256Utf8WithoutTrailingLf===sha256(Buffer.from(text)),'Atomic context source anchor bytes mismatch');}
+    for(const anchor of row.governedRangeEvidence??[]){const {startLine:a,endLine:b}=anchor;assert(Number.isSafeInteger(a)&&Number.isSafeInteger(b)&&a>0&&b>=a&&b<=lines.length&&anchor.sha256Utf8WithoutTrailingLf===sha256(Buffer.from(lines.slice(a-1,b).join('\n')))&&anchor.firstLineText===lines[a-1]&&anchor.lastLineText===lines[b-1],'Atomic context governed range bytes mismatch');}
+    for(const [a,b] of [...row.governingSourceRanges,...row.additionalSupportingSourceRanges])assert([...row.exactSourceAnchors,...row.governedRangeEvidence??[]].some(anchor=>anchor.startLine<=a&&anchor.endLine>=b),'Atomic context governing/support range lacks source anchor');
+    mappings.set(line,row);
+  }
+  assert(classifications.every(m=>m.size===mappings.size&&[...m.keys()].every(line=>mappings.has(line))),'Atomic context reconciliation original universe incomplete');
+  return {record,author,review,mappings,refs:[ref,ref.author,ref.independentReview]};
+}
+
 export function loadReviewedAtomicExtraction(descriptor,{sourceBytes,specificationPath,sections,priorRequirements=null,readFile=readAtomicEvidenceBytes}={}){
   if(!descriptor||descriptor.status==='PENDING')return {established:false,descriptor:descriptor||{status:'PENDING'}};
   assert(descriptor.status==='RECONCILED','Atomic extraction status invalid');
@@ -209,6 +312,8 @@ export function loadReviewedAtomicExtraction(descriptor,{sourceBytes,specificati
     assert(Array.isArray(record.inputs)&&record.inputs.some(input=>input.path===specificationPath&&input.sha256===sourceSha256),'Atomic authored evidence source input absent');
   }
   assert(review.draftManifestReceived===false&&review.inputs.length===1,'Atomic independent reviewer input isolation false');
+  const contributors=[draft,review,reconciliation].map(record=>validateAtomicProjection(record,{readFile,sourceBytes,reconciler:reconciliation}));
+  for(let i=0;i<contributors.length;i++)for(let j=i+1;j<contributors.length;j++)assert(!contributors[i].some(a=>contributors[j].some(b=>a.actorId===b.actorId||a.contextId===b.contextId)),'Atomic actual contributor roles are not independent');
   const validateSections=(record,rows,idKey,memberKey)=>{
     assert(Array.isArray(record.sections)&&record.sections.length===sections.length,'Atomic section coverage incomplete');
     const members=new Set();
@@ -256,6 +361,11 @@ export function loadReviewedAtomicExtraction(descriptor,{sourceBytes,specificati
     }
   }
 
+  const contextResolution=loadAtomicContextReconciliation(reconciliation.contextReconciliation,{readFile,sourceBytes});
+  if(contextResolution){
+    assert(reconciliation.inputs.some(input=>input.path===reconciliation.contextReconciliation.path&&input.sha256===reconciliation.contextReconciliation.sha256),'Atomic context reconciliation input missing');
+    assert(!contributors.slice(0,2).flat().some(c=>c.actorId===contextResolution.record.actorId||c.contextId===contextResolution.record.contextId),'Atomic context reconciler reuses an extraction contributor');
+  }
   const entries=reconciliation.entries,{byId,membership}=validateAtomicRequirementRows(sourceBytes,entries,specificationPath,sections);
   for(const row of sourcePrior.requirements)assert(membership.has(row.sourceLocation.startLine),'Atomic reviewed source-trace obligation/context omitted');
   validateSections(reconciliation,byId,'normativeRequirementId','normativeRequirementIds');
@@ -273,13 +383,19 @@ export function loadReviewedAtomicExtraction(descriptor,{sourceBytes,specificati
       const propositions=sourceIds.flatMap((ids,i)=>ids.map(id=>extracts[i].get(id)));
       assert(propositions.some(p=>p.primarySourceLine===row.sourceLocation.startLine),'Atomic decision target lacks primary source support');
       if(row.entryKind==='ATOMIC_OBLIGATION')for(const proposition of propositions.filter(p=>p.primarySourceLine===row.sourceLocation.startLine))for(const context of proposition.contextSourceLocations)assert(row.atomicObligation.contextSourceLocations.some(current=>atomicEqual(current,context)),'Atomic reviewed qualifier/context omitted');
-      if(row.entryKind==='SOURCE_CONTEXT')assert(sourceIds.every(ids=>ids.length>0)&&propositions.every(p=>p.classification===row.contextClassification.classification&&atomicText(p.reason)),'Atomic context lacks current independent classification');
+      if(row.entryKind==='SOURCE_CONTEXT'){
+        const resolution=contextResolution?.mappings.get(row.sourceLocation.startLine);
+        if(resolution){
+          assert(resolution.resolvedClassification===row.contextClassification.classification&&atomicEqual(resolution.governingSourceRanges,row.contextClassification.governingSourceRanges??[]),'Atomic current context differs from resolved decision');
+          for(let i=0;i<2;i++)assert(sourceIds[i].some(id=>{const p=extracts[i].get(id);return p.primarySourceLine===row.sourceLocation.startLine&&p.classification===resolution[i?'reviewClassification':'authorClassification']&&atomicText(p.reason); }),'Atomic original context classification omitted or rewritten');
+        }else assert(sourceIds.every(ids=>ids.length>0)&&propositions.every(p=>p.classification===row.contextClassification.classification&&atomicText(p.reason)),'Atomic context lacks current independent classification');
+      }
     }
     assert(atomicEqual(decision.currentAtomicScopeSha256,digests),'Atomic reconciliation scope digest mismatch');
   }
   assert(resolved.every((set,i)=>set.size===extracts[i].size)&&mapped.size===entries.length,'Atomic proposition reconciliation or active entry coverage incomplete');
   validateAtomicIdentityCrosswalk(reconciliation.requirementIdentityCrosswalk,prior,reconciliation.priorManifest,entries,decisions,sourceBytes,relocations,priorSourceBytes);
-  return {established:true,descriptor,entries,requirementIdentityCrosswalk:reconciliation.requirementIdentityCrosswalk,reconciliation,prior,sourcePrior};
+  return {established:true,descriptor,entries,requirementIdentityCrosswalk:reconciliation.requirementIdentityCrosswalk,reconciliation,prior,sourcePrior,contextResolution};
 }
 
 // Source identity only: this does not establish coverage, provenance reachability, or conformance.

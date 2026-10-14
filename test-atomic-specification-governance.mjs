@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {isAtomicEvidencePath,readAtomicEvidenceBytes,atomicObligationSha256,validateAtomicRequirementRows,validateAtomicLineMembership,validateAtomicIdentityCrosswalk,loadReviewedAtomicExtraction} from './review-specification-coverage.mjs';
+import {atomicContributorIdentity,atomicEvidenceReferences,isAtomicEvidencePath,readAtomicEvidenceBytes,atomicObligationSha256,validateAtomicRequirementRows,validateAtomicLineMembership,validateAtomicIdentityCrosswalk,loadReviewedAtomicExtraction} from './review-specification-coverage.mjs';
 import {evaluateFullRequirementProof,coverageDeclarationSha256,sha,SPECIFICATION_PATH} from './verification-evidence.mjs';
 import {verificationCatalog} from './verification-evidence-catalog.mjs';
 const root=path.dirname(fileURLToPath(import.meta.url)),hash=globalThis.closedLoopHash.sha256Value,copy=structuredClone;
@@ -233,4 +233,89 @@ try{
  const {isDeepStrictEqual}=await import('node:util');const oldEvaluate=new Function('isDeepStrictEqual','plain','nonempty','readJson','coverageDeclarationSha256','SPECIFICATION_PATH','verificationCatalog','browserVerificationCatalog',body+'; return evaluateFullRequirementProof;')(isDeepStrictEqual,v=>v!==null&&typeof v==='object'&&!Array.isArray(v),v=>typeof v==='string'&&v.trim().length>0,file=>JSON.parse(fs.readFileSync(file)),coverageDeclarationSha256,SPECIFICATION_PATH,verificationCatalog,{});
  bindReview(row,binding);const before=oldEvaluate(row,[binding],observations,fingerprint);assert(before.reasons.includes('INCOMPLETE_SOURCE_OBLIGATION_DECOMPOSITION'));assert.equal(evaluateFullRequirementProof(row,[binding],observations,fingerprint).disposition,'CONFORMANT_PROVEN');cases.push('executed-pre-correction-whole-line-proof-regression');
 }finally{process.chdir(cwd);fs.rmSync(directory,{recursive:true,force:true});}
+// Disagreement is retained verbatim and resolved by a third pinned source pass.
+{
+ const d=copy(draft),r=copy(review);d.propositions[0].classification='NORMATIVE_PROPOSITION';
+ assert.throws(()=>run(d,r),/context lacks current independent classification/);cases.push('context-disagreement-before-distinct-resolution');
+ const author={actorId:'SYNTHETIC-CONTEXT-AUTHOR',contextId:'SYNTHETIC-CONTEXT-AUTHOR-PASS',role:'DRAFT_CONTEXT',specificationSha256,inputs:[sourceInput],classifications:[{line:3,sourceLineSha256:context.lineSha256,rawLine:lines[2],classification:'NORMATIVE_PROPOSITION',reason:'Synthetic original author predicate interpretation.',contextSourceLocations:[]}]};
+ const blind={actorId:'SYNTHETIC-CONTEXT-BLIND',contextId:'SYNTHETIC-CONTEXT-BLIND-PASS',role:'INDEPENDENT_CONTEXT_REVIEW',specificationSha256,inputs:[sourceInput],draftManifestReceived:false,implementationRead:false,classifications:[{line:3,sourceLineSha256:context.lineSha256,rawSourceText:lines[2],classification:'STRUCTURAL_REQUIREMENT_CONTEXT',reason:'Synthetic original blind governing condition interpretation.',contextSourceLocations:[],governingSourceRanges:[[4,4]]}]};
+ const resolved={schema:'closed-loop-source-context-reconciliation/1',actorId:'SYNTHETIC-DISTINCT-CONTEXT-RECONCILER',contextId:'SYNTHETIC-DISTINCT-CONTEXT-RECONCILER-PASS',role:'DISTINCT_SOURCE_ONLY_RECONCILIATION',specificationSha256,method:{sourceOnly:true,implementationInspected:false,originalInputsModified:false},unresolvedDisagreements:[],mappings:[{line:3,sourceLineSha256:context.lineSha256,rawSourceText:lines[2],authorClassification:'NORMATIVE_PROPOSITION',reviewClassification:'STRUCTURAL_REQUIREMENT_CONTEXT',resolvedClassification:'STRUCTURAL_REQUIREMENT_CONTEXT',reason:'Synthetic distinct source reconciliation preserves the condition in both child duties.',governingSourceRanges:[[4,4]],additionalSupportingSourceRanges:[],originalAuthorGoverningSourceRanges:[],originalReviewGoverningSourceRanges:[[4,4]],originalAuthorContextSourceLocations:[],originalReviewContextSourceLocations:[],resolutionMode:'SOURCE_CLASSIFICATION_RECONCILIATION',unresolved:false,normativeForcePreserved:true,exactSourceAnchors:[{startLine:3,endLine:4,exactText:lines.slice(2,4).join('\n'),sha256Utf8WithoutTrailingLf:sha(lines.slice(2,4).join('\n'))}]}]};
+ const fixture=(mutate=()=>{})=>{
+  const e=evidence(d,r),a=copy(author),b=copy(blind),z=copy(resolved),c=JSON.parse(e.files.get(e.descriptor.reconciliation.path));mutate({a,b,z,c});
+  const pin=(name,value)=>{const bytes=Buffer.from(JSON.stringify(value)),path='verification/'+name+'.json';e.files.set(path,bytes);return {path,sha256:sha(bytes)};};
+  const ar=pin('synthetic-context-author',a),br=pin('synthetic-context-blind',b);z.inputs=[sourceInput,ar,br];const zr=pin('synthetic-context-resolution',z);c.contextReconciliation={...zr,author:ar,independentReview:br};c.inputs.push(zr);e.descriptor.reconciliation={...e.descriptor.reconciliation,...pin('synthetic-reconciliation',c)};return e;
+ };
+ const invoke=e=>loadReviewedAtomicExtraction(e.descriptor,e.options);
+ assert.equal(invoke(fixture()).established,true);cases.push('context-disagreement-distinct-source-resolution');
+ for(const [name,mutate,pattern] of [
+  ['context-resolution-unresolved',({z})=>z.mappings[0].unresolved=true,/source or decision invalid/],
+  ['context-resolution-unresolved-list',({z})=>z.unresolvedDisagreements.push('Synthetic unresolved'),/disagreement unresolved/],
+  ['context-resolution-self-reconciled',({a,z})=>z.contextId=a.contextId,/independence missing/],
+  ['context-resolution-original-rewritten',({z})=>z.mappings[0].authorClassification='STRUCTURAL_REQUIREMENT_CONTEXT',/original context decision changed/],
+  ['context-resolution-wrong-governing-range',({z})=>z.mappings[0].governingSourceRanges=[[3,4]],/current context differs/],
+  ['context-resolution-stale-anchor',({z})=>z.mappings[0].exactSourceAnchors[0].sha256Utf8WithoutTrailingLf='0'.repeat(64),/anchor bytes mismatch/],
+  ['context-resolution-missing-original-member',({a})=>a.classifications=[],/original context decision changed/],
+ ]){assert.throws(()=>invoke(fixture(mutate)),pattern);cases.push(name);}
+ const missing=fixture();missing.files.delete('verification/synthetic-context-author.json');assert.throws(()=>invoke(missing));cases.push('context-resolution-unpinned-original');
+ const stale=fixture();stale.files.set('verification/synthetic-context-resolution.json',Buffer.from('{}'));assert.throws(()=>invoke(stale),/digest mismatch/);cases.push('context-resolution-stale-input-hash');
+ const deps=atomicEvidenceReferences(fixture().descriptor,fixture().options.readFile);assert(deps.some(ref=>ref.path==='verification/synthetic-context-author.json')&&deps.some(ref=>ref.path==='verification/synthetic-context-blind.json'));cases.push('context-resolution-fingerprint-dependencies');
+}
+
+// Multiple real contributor contexts are represented by a set, never an alias
+// purporting to be one new author. These authored passes are entirely synthetic.
+{
+ const fixture=(mutate=()=>{})=>{
+  const d=copy(draft),r=copy(review),c=copy(reconciliation),files=new Map();
+  const pin=(name,value)=>{const bytes=Buffer.from(JSON.stringify(value)),path='verification/'+name+'.json';files.set(path,bytes);return {path,sha256:sha(bytes)};};
+  const originals=[];
+  for(const [record,label] of [[d,'DRAFT'],[r,'REVIEW']]){
+   const constituents=[];
+   for(let i=0;i<2;i++){
+    const original={schema:'closed-loop-atomic-extraction-evidence/1',role:record.role,actorId:`SYNTHETIC-${label}-CONTRIBUTOR-${i}`,contextId:`SYNTHETIC-${label}-ACTUAL-CONTEXT-${i}`,specificationSha256,inputs:[sourceInput],...(label==='REVIEW'?{draftManifestReceived:false}:{}),propositions:copy(i?record.propositions.slice(1):record.propositions.slice(0,1))};
+    const name=`synthetic-${label.toLowerCase()}-constituent-${i}`,ref=pin(name,original),member={...ref,role:record.role,actorId:original.actorId,contextId:original.contextId,actorIdentityPointer:'/actorId',contextIdentityPointer:'/contextId',sourceIdentityPointer:'/specificationSha256',declaredInputsPointer:'/inputs',declaredInputs:copy(original.inputs),memberCollectionPointer:'/propositions',members:original.propositions.map((p,j)=>({originalPointer:'/propositions/'+j,normalizedPropositionId:p.propositionId,statementPointer:'/statement',primarySourceLinePointer:'/primarySourceLine'}))};
+    originals.push({original,member,name});constituents.push(member);
+   }
+   record.mechanicalProjection={schema:'closed-loop-evidence-projection/1',semanticContribution:false,adapter:{actorId:c.actorId,contextId:c.contextId},constituents,normalizations:[]};
+  }
+  mutate({d,r,c,originals,files});
+  for(const {original,member,name} of originals)Object.assign(member,pin(name,original));
+  for(const record of [d,r])Object.assign(record,atomicContributorIdentity(record.role,record.mechanicalProjection.constituents));
+  const e=evidence(d,r,c);for(const [p,b] of files)e.files.set(p,b);return e;
+ };
+ const invoke=e=>loadReviewedAtomicExtraction(e.descriptor,e.options);
+ assert.equal(invoke(fixture()).established,true);cases.push('multi-contributor-disjoint-real-contexts');
+ for(const [name,mutate,pattern] of [
+  ['multi-contributor-cross-role-hidden-context',({originals})=>{originals[2].original.contextId=originals[0].original.contextId;originals[2].member.contextId=originals[0].member.contextId;},/actual contributor roles are not independent/],
+  ['multi-contributor-reconciler-reuses-draft-context',({originals,c})=>{originals[0].original.contextId=c.contextId;originals[0].member.contextId=c.contextId;},/adapter counted/],
+  ['multi-contributor-pointer-alias',({originals})=>{const {original,member}=originals[0];original.alias='FAKE-CONTEXT';member.contextId='FAKE-CONTEXT';member.contextIdentityPointer='/alias';},/pointer aliases actual/],
+  ['multi-contributor-missing-member',({originals})=>originals[1].member.members.pop(),/source membership incomplete/],
+  ['multi-contributor-duplicate-member',({originals})=>originals[1].member.members[1]=copy(originals[1].member.members[0]),/member missing or duplicated/],
+  ['multi-contributor-missing-constituent',({d})=>d.mechanicalProjection.constituents.pop(),/lacks frozen constituent/],
+  ['multi-contributor-duplicate-constituent',({d})=>d.mechanicalProjection.constituents.push(copy(d.mechanicalProjection.constituents[0])),/role invalid or duplicated/],
+  ['multi-contributor-wrong-frozen-role',({originals})=>originals[0].original.role='INDEPENDENT_REVIEW',/frozen constituent role mismatch/],
+  ['multi-contributor-wrong-declared-role',({originals})=>originals[0].member.role='INDEPENDENT_REVIEW',/constituent role invalid/],
+  ['multi-contributor-blind-received-draft',({originals})=>originals[2].original.draftManifestReceived=true,/blind isolation false/],
+  ['multi-contributor-stale-source',({originals})=>originals[0].original.specificationSha256='0'.repeat(64),/identity\/source\/actual inputs mismatch/],
+  ['multi-contributor-hidden-actual-inputs',({originals})=>originals[0].original.inputs.push({path:'verification/other.json',sha256:'0'.repeat(64)}),/identity\/source\/actual inputs mismatch/],
+  ['multi-contributor-rewritten-statement',({d})=>d.propositions[1].statement='Synthetic weakened normalized statement',/projected proposition changed/],
+  ['multi-contributor-dropped-qualifier',({d})=>d.propositions[1].contextSourceLocations=[],/qualifier\/context membership changed/],
+  ['multi-contributor-new-semantic-contribution',({d})=>d.mechanicalProjection.semanticContribution=true,/adapter or semantic contribution invalid/],
+ ]){assert.throws(()=>invoke(fixture(mutate)),pattern);cases.push(name);}
+ const missing=fixture();missing.files.delete('verification/synthetic-draft-constituent-0.json');assert.throws(()=>invoke(missing));cases.push('multi-contributor-missing-file');
+ const tampered=fixture();tampered.files.set('verification/synthetic-review-constituent-0.json',Buffer.from('{}'));assert.throws(()=>invoke(tampered),/digest mismatch/);assert.throws(()=>atomicEvidenceReferences(tampered.descriptor,tampered.options.readFile),/dependency digest mismatch/);cases.push('multi-contributor-tampered-file-and-receipt');
+ const withAttestation=(alter=()=>{})=>fixture(({originals,files})=>{
+  const item=originals[2],old=copy(item.original),actor='/root/synthetic-original-blind';
+  for(const key of Object.keys(item.original))delete item.original[key];
+  Object.assign(item.original,{artifact_kind:'independent-source-only-candidate-review',source:{sha256:specificationSha256},candidates:old.propositions.map(p=>({proposition:p.statement,source_lines:[p.primarySourceLine,p.primarySourceLine],supporting_context_lines:p.contextSourceLocations.map(c=>[c.startLine,c.startLine]),...(p.classification?{classification:p.classification}:{})}))});
+  const attestation={attestation_kind:'original_reviewer_provenance_attestation',attestor:{actual_canonical_task_name:actor},normative_source_input:{sha256:specificationSha256},frozen_review_artifact:{sha256:sha(JSON.stringify(item.original))},other_original_file_inputs:[{path:'SYNTHETIC own prior helper',historical_hash:null}],limitations:['SYNTHETIC actual unknown historical hash remains unknown.']};alter(attestation);
+  const bytes=Buffer.from(JSON.stringify(attestation)),path='verification/synthetic-original-blind-attestation.json';files.set(path,bytes);
+  Object.assign(item.member,{actorId:actor,contextId:actor,memberCollectionPointer:'/candidates',declaredInputs:copy(attestation),identityEvidence:{path,sha256:sha(bytes),actorIdentityPointer:'/attestor/actual_canonical_task_name',contextIdentityPointer:'/attestor/actual_canonical_task_name',sourceIdentityPointer:'/normative_source_input/sha256',artifactSha256Pointer:'/frozen_review_artifact/sha256',declaredInputsPointer:''},members:old.propositions.map((p,i)=>({originalPointer:'/candidates/'+i,normalizedPropositionId:p.propositionId,statementPointer:'/proposition',primarySourceLinePointer:'/source_lines/0'}))});
+ });
+ assert.equal(invoke(withAttestation()).established,true);cases.push('multi-contributor-genuine-identity-attestation-disclosures');
+ assert.throws(()=>invoke(withAttestation(a=>a.frozen_review_artifact.sha256='0'.repeat(64))),/provenance does not bind/);cases.push('multi-contributor-attestation-wrong-frozen-artifact');
+ const attested=withAttestation();assert(atomicEvidenceReferences(attested.descriptor,attested.options.readFile).some(r=>r.path==='verification/synthetic-original-blind-attestation.json'));cases.push('multi-contributor-attestation-fingerprint');
+ attested.files.set('verification/synthetic-original-blind-attestation.json',Buffer.from('{}'));assert.throws(()=>invoke(attested),/digest mismatch/);cases.push('multi-contributor-tampered-attestation');
+ const valid=fixture(),deps=atomicEvidenceReferences(valid.descriptor,valid.options.readFile);assert.equal(deps.filter(ref=>ref.path.includes('-constituent-')).length,4);cases.push('multi-contributor-fingerprint-all-constituents');
+}
+
 console.log(JSON.stringify({schema:'closed-loop-atomic-governance-format-regression/1',passed:true,syntheticFixture:true,atomicCompletenessEstablished:false,implementationConformanceEstablished:false,caseCount:cases.length,cases},null,2));
