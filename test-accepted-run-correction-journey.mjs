@@ -121,6 +121,35 @@ async function restoreStage12AfterRuntimeUpdate(prefix, producerSources, sources
   return {r, p};
 }
 
+// Diagnostic continuation from an actual source-bound completed Stage17 capture.
+// The original owner validates its exact saved rows first; the current owner then
+// uses ordinary activation. No receipt, field, history body or gate is rewritten.
+async function restoreStage17AfterRuntimeUpdate(prefix, producerSources, sources) {
+  assert.equal(prefix.label, 'stage17-complete', 'ACCEPTED_RUN_EXACT_STAGE17_BOUNDARY');
+  const original = await restore(prefix, producerSources), old = original.p;
+  assert.equal(original.r.engine.gate(17, old).complete, true, 'ACCEPTED_RUN_ORIGINAL_STAGE17_COMPLETE');
+  assert.equal(original.r.engine.gate(18, old).complete, false, 'ACCEPTED_RUN_STAGE17_PRECEDES_CONVERGENCE');
+  assert.equal(original.r.engine.records(old, 'iterations').filter(row => Number(row.stage) === 19).length, 0, 'ACCEPTED_RUN_NO_REUSED_CONFIRMATION');
+  const preserved = Object.fromEntries(['rawResponses','acceptedChanges','outputReceipts','runs','verification','observationRecords','entailmentReviews','convergenceRecords','history'].map(key => [key, plain(old.projectData[key])]));
+  const r = runtime(sources); r.rows.clear();
+  for (const [name, rows] of prefix.stores) r.rows.set(name, new Map(rows.map(([key, value]) => [key, r.copy(value)])));
+  const p = await r.store.readProject(prefix.jobId);
+  assert.equal(r.store.validateProjectIntegrity(p).valid, true, 'ACCEPTED_RUN_STAGE17_CURRENT_COLD_INTEGRITY');
+  assert.equal(p.projectData.applicationProjection.receipt.derivationId, 'closed-loop-derivation/project-current-projection/9');
+  for (const [key, value] of Object.entries(preserved)) {
+    const actual = key === 'history' ? p.projectData[key].slice(0, value.length) : p.projectData[key];
+    assert.deepEqual(plain(actual), value, 'ACCEPTED_RUN_STAGE17_ACTIVATION_PRESERVES_' + key);
+  }
+  if (p.projectSha256 !== prefix.projectSha256) {
+    assert(p.revision > prefix.revision);
+    assert(p.projectData.history.some(event => event.type === 'APPLICATION_PROJECTION_DERIVATION_ACTIVATED' && event.sourceProjectSha256 === prefix.projectSha256), 'ACCEPTED_RUN_STAGE17_NORMAL_ACTIVATION');
+  }
+  assert.equal(r.engine.gate(17, p).complete, true);
+  assert.equal(r.engine.gate(18, p).complete, false);
+  assert.equal(r.engine.stageEntryState(p, 18).allowed, true);
+  return {r, p};
+}
+
 async function save(r, previous, next) {
   return r.store.writeProject(next, {expectedProjectRevision: previous.revision, expectedStateSha256: previous.projectSha256, mutationConfirmation: r.store.mutationImpact(previous, next)});
 }
@@ -321,13 +350,18 @@ export async function verifyStage11AcceptedBoundary() {
   return {passed: true, synthetic: true, actualBrowser: false, physicalDeviceAcceptance: false, earlierCompleteFlagsForced: false, prerequisiteSha256, decodedPrerequisiteSha256, sourceSha256: Object.fromEntries(Object.entries(sources).map(([file, source]) => [file, sha(source)])), cleanRawSha256: clean.rawSha256, cases};
 }
 
-export async function verifyAcceptedRunCorrectionJourney({sourceOverrides = {}, retainedNineRunPrefix = null, retainedStage12Prefix = null, retainedProducerSources = null, onCheckpoint = null, onProgress = () => {}} = {}) {
+export async function verifyAcceptedRunCorrectionJourney({sourceOverrides = {}, retainedNineRunPrefix = null, retainedStage12Prefix = null, retainedStage17Prefix = null, retainedProducerSources = null, onCheckpoint = null, onProgress = () => {}} = {}) {
   const startedAt = new Date().toISOString(), started = performance.now();
   const sources = Object.fromEntries(runtimeFiles.map(file => [file, sourceOverrides[file] ?? fs.readFileSync(file, 'utf8')]));
   const sourceSha256 = Object.fromEntries(Object.entries(sources).map(([file, source]) => [file, sha(source)]));
   let r, p, prerequisiteSha256, decodedPrerequisiteSha256;
-  assert(!(retainedNineRunPrefix && retainedStage12Prefix), 'ACCEPTED_RUN_ONE_RETAINED_BOUNDARY');
-  if (retainedStage12Prefix) {
+  assert([retainedNineRunPrefix, retainedStage12Prefix, retainedStage17Prefix].filter(Boolean).length <= 1, 'ACCEPTED_RUN_ONE_RETAINED_BOUNDARY');
+  if (retainedStage17Prefix) {
+    assert(retainedProducerSources, 'ACCEPTED_RUN_RETAINED_PRODUCER_SOURCE_REQUIRED');
+    ({r, p} = await restoreStage17AfterRuntimeUpdate(retainedStage17Prefix, retainedProducerSources, sources));
+    const carrierBytes = fs.readFileSync(prerequisitePath), carrier = JSON.parse(carrierBytes);
+    prerequisiteSha256 = sha(carrierBytes); decodedPrerequisiteSha256 = carrier.decodedSha256;
+  } else if (retainedStage12Prefix) {
     assert(retainedProducerSources, 'ACCEPTED_RUN_RETAINED_PRODUCER_SOURCE_REQUIRED');
     ({r, p} = await restoreStage12AfterRuntimeUpdate(retainedStage12Prefix, retainedProducerSources, sources));
     const carrierBytes = fs.readFileSync(prerequisitePath), carrier = JSON.parse(carrierBytes);
@@ -356,7 +390,7 @@ export async function verifyAcceptedRunCorrectionJourney({sourceOverrides = {}, 
   } else ({r, p, prerequisiteSha256, decodedPrerequisiteSha256} = await prerequisite(sources));
   const checkpoint = async (label, retainedSnapshot = null) => { if (onCheckpoint) await onCheckpoint({label, r, p, sources, snapshot: retainedSnapshot || snapshot(r, p, sources)}); onProgress({label, revision: p.revision}); };
   const cases = [];
-  if (!retainedStage12Prefix) {
+  if (!retainedStage12Prefix && !retainedStage17Prefix) {
   for (let index = retainedNineRunPrefix ? 9 : 0; index < 9; index++) {
     ({p} = await submit(r, p, 11, 'EXECUTE_RUN', runRecords(r, 'NONE')));
     onProgress({label: 'initial-run', accepted: index + 1});
@@ -404,6 +438,7 @@ export async function verifyAcceptedRunCorrectionJourney({sourceOverrides = {}, 
   const initialRuns = e.recordsForIteration(p, 'runs', initialIterationId), affected = initialRuns.find(row => e.recordValue(row, 'CONTAMINATION_CHECK') === 'CONTAMINATED');
   assert(affected);
   const initialRaw = plain(p.projectData.rawResponses.filter(row => row.stage === 11).map(row => ({rawResponseId: row.rawResponseId, sha256: row.sha256, text: row.completeRawResponse})));
+  if (!retainedStage17Prefix) {
   assert.equal(e.initialRunDiagnosticState(p).determination, 'VIOLATED');
   assert.deepEqual(Array.from(e.initialRunDiagnosticState(p).affectedRunIds), [affected.id], 'ACCEPTED_RUN_AFFECTED_REFERENCE_PUBLISHED');
   assert.equal(e.stageEntryState(p, 18).allowed, false, 'ACCEPTED_RUN_NO_PREMATURE_CONVERGENCE');
@@ -444,6 +479,7 @@ export async function verifyAcceptedRunCorrectionJourney({sourceOverrides = {}, 
   assert(exposed.affectedRunIds.includes(cleanRun.id), 'ACCEPTED_RUN_RESERVED_ROW_RETAINED_PACKET_BINDING');
   assert(exposed.reasons.some(reason => reason.includes('operatorCorrectionRequests')), 'ACCEPTED_RUN_INTENDED_PACKET_FAILURE');
   cases.push({caseId: 'retained-packet-provenance', faultInjected: true, reservedRunWithoutDirectRaw: !cleanRun.rawResponseId, affectedRunId: cleanRun.id, prohibitedCarrierDetected: true});
+  }
   const req = e.recordsForCurrentScope(p, 'requirements')[0].id, prop = e.recordsForCurrentScope(p, 'propositions')[0].id;
   const test = e.recordsForCurrentScope(p, 'tests').find(row => e.testDueState(p, row, 12, {perRunOnly: true}).dueNow).id;
   const complete = stage => assert.equal(e.gate(stage, p).complete, true, 'ACCEPTED_RUN_STAGE_COMPLETE ' + stage + ' ' + JSON.stringify(e.gate(stage, p).reasons));
@@ -467,11 +503,13 @@ export async function verifyAcceptedRunCorrectionJourney({sourceOverrides = {}, 
       onProgress({label: 'verify', stage, runId: run.id});
     }
   }
+  const comparison = failed => recordProposal(schema, 'comparisons', {tempKey: 'comparison', relationships: {REQ_ID: {recordId: req}}, overrides: {RUN_DETERMINATIONS: 'The ten complete output strings each match the exact reviewed literal.', INTERPRETATION_VARIANCE: 'NONE', OUTPUT_VARIANCE: 'NONE', AUTHORIZED_VARIANCE: 'TRUE', INCONCLUSIVE_TESTS: 'NONE', REPEATED_FAILURE_PATTERNS: 'NONE', UNIQUE_FAILURES: failed ? 'The accepted initial run explicitly reports a contaminated context.' : 'NONE', CORRECTNESS_AFFECTING_VARIANCE: failed ? 'TRUE' : 'FALSE', DEFECT_IDS: 'NONE', EVIDENCE: 'Current independently accepted output observations and preserved run independence facts.'}});
+  let correctedIterationId, correctedCandidateId, validationResultPreservation = null;
+  if (!retainedStage17Prefix) {
   if (!retainedStage12Prefix) await verify(12, initialRuns);
   complete(12); await checkpoint('stage12-complete');
-  const comparison = failed => recordProposal(schema, 'comparisons', {tempKey: 'comparison', relationships: {REQ_ID: {recordId: req}}, overrides: {RUN_DETERMINATIONS: 'The ten complete output strings each match the exact reviewed literal.', INTERPRETATION_VARIANCE: 'NONE', OUTPUT_VARIANCE: 'NONE', AUTHORIZED_VARIANCE: 'TRUE', INCONCLUSIVE_TESTS: 'NONE', REPEATED_FAILURE_PATTERNS: 'NONE', UNIQUE_FAILURES: failed ? 'The accepted initial run explicitly reports a contaminated context.' : 'NONE', CORRECTNESS_AFFECTING_VARIANCE: failed ? 'TRUE' : 'FALSE', DEFECT_IDS: 'NONE', EVIDENCE: 'Current independently accepted output observations and preserved run independence facts.'}});
   const comparisonSubmission = await submit(r, p, 13, 'COMPARE', {comparisons: [comparison(true)], defects: [recordProposal(schema, 'defects', {tempKey: 'independence-defect', relationships: {REQ_ID: {recordId: req}, RUN_ID: {recordId: affected.id}}, overrides: {OBSERVED_FAILURE: 'The accepted run explicitly reports CONTAMINATED, preserved in its actual response.', EXPECTED_CONDITION: 'All ten accepted runs have uncontaminated fresh contexts.', EVIDENCE: 'The affected RUN_ID and its unchanged accepted raw response.', SEVERITY: 'MAJOR', STATUS: 'CONFIRMED'}})]});
-  p=comparisonSubmission.p;const validationResultPreservation=comparisonSubmission.validationResultPreservation;
+  p=comparisonSubmission.p;validationResultPreservation=comparisonSubmission.validationResultPreservation;
   complete(13); const defect = latest('defects');
   ({p} = await submit(r, p, 14, 'ROOT_CAUSE', {rootCauses: [recordProposal(schema, 'rootCauses', {tempKey: 'root-cause', relationships: {DEFECT_ID: {recordId: defect}}, overrides: {CATEGORY: 'EXECUTION', LAYER_TRACE: 'Frozen candidate -> external execution context -> accepted output.', EARLIEST_DEFECTIVE_LAYER: 'EXECUTION', ROOT_CAUSE: 'The synthetic initial execution reports a contaminated context; correct candidate bytes do not repair that execution.', EVIDENCE: 'Accepted run declaration and preserved response bytes.', DOWNSTREAM_INVALIDATION: 'Require a permanent regression and a distinct corrected ten-run iteration.'}})]}));
   complete(14); await checkpoint('stage14-complete');
@@ -483,7 +521,7 @@ export async function verifyAcceptedRunCorrectionJourney({sourceOverrides = {}, 
   const draft = r.copy(p), componentIds = e.recordValue(e.records(draft, 'candidateFreezes').find(row => row.id === initialCandidateId), 'COMPONENT_MANIFEST').map(row => row.artifactId);
   const selection = e.recordRegisteredHumanDecision(draft, {stage: 17, purpose: 'CANDIDATE_COMPONENT_SELECTION', targetFamily: 'artifacts', targetId: r.runtime.closedLoopHash.sha256Value(r.copy(componentIds)), value: r.copy(componentIds), operatorLabel: 'SYNTHETIC_CORRECTION_OPERATOR'});
   const frozen = e.freezeCandidate(draft, {stage: 17, artifactIds: componentIds, selectionDecisionId: selection.id, operatorLabel: 'SYNTHETIC_CORRECTION_OPERATOR'});
-  const correctedIterationId = frozen.iteration.id, correctedCandidateId = frozen.candidate.id;
+  correctedIterationId = frozen.iteration.id; correctedCandidateId = frozen.candidate.id;
   assert.notEqual(correctedIterationId, initialIterationId); assert.notEqual(correctedCandidateId, initialCandidateId);
   p = await save(r, p, draft);
   for (let index = 0; index < 10; index++) { ({p} = await submit(r, p, 17, 'EXECUTE_RUN', runRecords(r, 'NONE'))); onProgress({label: 'corrected-run', accepted: index + 1}); }
@@ -491,6 +529,13 @@ export async function verifyAcceptedRunCorrectionJourney({sourceOverrides = {}, 
   ({p} = await submit(r, p, 17, 'COMPARE', {comparisons: [comparison(false)]}));
   assert.equal(e.evaluateIteration(p, correctedIterationId, 'CORRECTED').independence.determination, 'APPLICATION_ESTABLISHED');
   ({p} = await submit(r, p, 17, 'REGRESSION', {regressionExecutions: [recordProposal(schema, 'regressionExecutions', {tempKey: 'post-correction', relationships: {REG_ID: {recordId: regression}, ITERATION_ID: {recordId: correctedIterationId}, CANDIDATE_ID: {recordId: correctedCandidateId}}, overrides: {PHASE: 'POST_CORRECTION', RESULT: 'SATISFIED'}})]}));
+  } else {
+    const corrected = e.records(p, 'iterations').filter(row => Number(row.stage) === 17 && row.active !== false && !row.invalidatedBy).at(-1);
+    correctedIterationId = corrected.id; correctedCandidateId = e.recordValue(corrected, 'CANDIDATE_ID');
+    assert.notEqual(correctedIterationId, initialIterationId); assert.notEqual(correctedCandidateId, initialCandidateId);
+    assert.equal(e.recordsForIteration(p, 'runs', correctedIterationId).length, 10);
+    assert.equal(e.verificationMatrix(p, correctedIterationId).expected.length, 10);
+  }
   complete(17); await checkpoint('stage17-complete'); assert.equal(e.gate(11, p).complete, false, 'ACCEPTED_RUN_ORIGINAL_FAILURE_PRESERVED');
   assert.equal(e.stageEntryState(p, 18).allowed, true, 'ACCEPTED_RUN_VERIFIED_CORRECTED_DESCENDANT');
   const beforeConvergence = r.copy(p), convergence = r.copy(p);
@@ -568,7 +613,7 @@ export async function verifyAcceptedRunCorrectionJourney({sourceOverrides = {}, 
   assert.equal(e.gate(19, p).complete, false, 'ACCEPTED_RUN_CONFIRMATION_PENDING_COMPARISON_IS_NOT_COMPLETE');
   await checkpoint('stage19-before-comparison');
   const failedConfirmationReturn = await verifyFailedConfirmationReturn({r, p, onProgress});
-  return {validationResultPreservation, failedConfirmationReturn, passed: true, synthetic: true, actualBrowser: false, physicalDeviceAcceptance: false, earlierCompleteFlagsForced: false, canonicalRunMutation: false, startedAt, finishedAt: new Date().toISOString(), elapsedMs: performance.now() - started, sourceSha256, retainedPreparationSourceSha256: retainedProducerSources ? Object.fromEntries(Object.entries(retainedProducerSources).map(([file, source]) => [file, sha(source)])) : null, retainedBoundary: retainedStage12Prefix ? 'stage12-complete' : retainedNineRunPrefix ? 'nine-initial-runs' : null, prerequisiteSha256, decodedPrerequisiteSha256, cases, initialIterationId, correctedIterationId, confirmationIterationId, initialCandidateId, correctedCandidateId, stages12Through18: [12, 13, 14, 15, 16, 17, 18].map(stage => ({stage, complete: e.gate(stage, p).complete})), stage11Complete: false, stage19EntryAllowed: true, confirmationRuns: 10, confirmationVerifications: 10, confirmationComparisonPending: true, convergenceDerivationTransition, convergenceSurvivesFirstConfirmationRun: true, convergenceSurvivesFirstConfirmationVerification: true, actualAdapterSaveReload: true, originalRawPreserved: true, boundary: 'Retained original Stage1–10 operator prerequisite and, where explicitly identified, actual previously completed source-bound diagnostic prefix. Actual saved ZIP, staged response, admission, explicit acceptance, transaction-adapter save/reload through the corrected and unchanged-confirmation cohorts. Synthetic external actors; no browser or physical-device acceptance claim.'};
+  return {validationResultPreservation, failedConfirmationReturn, passed: true, synthetic: true, actualBrowser: false, physicalDeviceAcceptance: false, earlierCompleteFlagsForced: false, canonicalRunMutation: false, startedAt, finishedAt: new Date().toISOString(), elapsedMs: performance.now() - started, sourceSha256, retainedPreparationSourceSha256: retainedProducerSources ? Object.fromEntries(Object.entries(retainedProducerSources).map(([file, source]) => [file, sha(source)])) : null, executedBoundary: retainedStage17Prefix ? 'stage17-to-stage19-and-failed-confirmation-return' : 'existing-owner-journey', excludedRetainedPrefix: retainedStage17Prefix ? 'Stages1–17 execution and prefix-only fault controls are retained prerequisites, not executed by this run.' : null, fullJourneyExecution: !retainedStage17Prefix && !retainedStage12Prefix && !retainedNineRunPrefix, retainedBoundary: retainedStage17Prefix ? 'stage17-complete' : retainedStage12Prefix ? 'stage12-complete' : retainedNineRunPrefix ? 'nine-initial-runs' : null, prerequisiteSha256, decodedPrerequisiteSha256, cases, initialIterationId, correctedIterationId, confirmationIterationId, initialCandidateId, correctedCandidateId, stages12Through18: [12, 13, 14, 15, 16, 17, 18].map(stage => ({stage, complete: e.gate(stage, p).complete})), stage11Complete: false, stage19EntryAllowed: true, confirmationRuns: 10, confirmationVerifications: 10, confirmationComparisonPending: true, convergenceDerivationTransition, convergenceSurvivesFirstConfirmationRun: true, convergenceSurvivesFirstConfirmationVerification: true, actualAdapterSaveReload: true, originalRawPreserved: true, boundary: 'Retained original Stage1–10 operator prerequisite and, where explicitly identified, actual previously completed source-bound diagnostic prefix. Actual saved ZIP, staged response, admission, explicit acceptance, transaction-adapter save/reload through the corrected and unchanged-confirmation cohorts. Synthetic external actors; no browser or physical-device acceptance claim.'};
 }
 
 // Reuse the owning journey's actual completed confirmation cohort. This tests
