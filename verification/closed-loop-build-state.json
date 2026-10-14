@@ -1390,11 +1390,11 @@
     "startingSourceCommit": "7df5f46e9a7e54da09622387a978badb39916c09",
     "startingMainCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
     "integrationBranch": "dot/published-execution-20261014",
-    "integrationCommit": "8eb3a65273a1c1c4a3e78e6a3068c0d7047744cf",
+    "integrationCommit": "15a71be64ac46a90a21e9fea20bee91893d513dd",
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "dot",
-    "lastInspectedAt": "2026-10-14T05:47:34Z",
+    "lastInspectedAt": "2026-10-14T05:54:21Z",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -1948,6 +1948,16 @@
       "sourceSuites": "PASS",
       "appAcceptance": false,
       "remaining": "Component convergence, contained contracts, section coverage and final real atomic reconciliation"
+    },
+    "atomicComponentFollowup": {
+      "authorCommit": "4635b6af0e71b84875a61d51e4e6fe7ecbc24bbf",
+      "state": "INTEGRATED",
+      "independentReviewSha256": "765d34d08e546a540145b74d2b71c19cef30146a591de074c7826aff2f530f58",
+      "evidencePath": "verification/dot-execution-20261014/component-review/final-review.txt",
+      "integratedControls": 160,
+      "sourceSuites": "PASS",
+      "appAcceptance": false,
+      "remaining": "Section coverage, typed component-governor scope, actual final extraction/reconciliation integration"
     }
   }
 }
