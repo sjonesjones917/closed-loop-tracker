@@ -1,0 +1,37 @@
+{
+  "reviewerContext": "/root/review_canonical_json_proofs",
+  "candidateCommit": "c450e1e67f6530f8aaf7e0bc62a4923791d2449a",
+  "decision": "ACCEPT_BOUNDED_SCOPED_SEMANTIC_REBINDING_AND_FIXTURES",
+  "exactProposalBindingsAdded": 13,
+  "originalScopedRowsPreserved": 243,
+  "totalScopedBindings": 256,
+  "unboundSiblingAtoms": 17,
+  "fullCoverage": 0,
+  "actualFullWrapperExitCode": 0,
+  "actualFullWrapperPassed": true,
+  "stderrByteCount": 0,
+  "actualWrapperCounts": {
+    "pendingAuthority": 40,
+    "acceptedMetric": 47,
+    "recordedMetric": 102,
+    "dependency": 42
+  },
+  "registeredPredicateAdmission": "All predicates targeting normativeCatalogConsumers.* pass with actual wrapper output and synthetic outer report; not final-acceptance execution or receipt.",
+  "actualActiveMappingMutationsRejected": 39,
+  "reviewedFiles": [
+    {
+      "path": "test-normative-catalog-consumers.mjs",
+      "sha256": "9198d7cbdcf04c263f455d058a3eabfd8458237088041f99a487f7ae60776bd8"
+    },
+    {
+      "path": "verification-assertion-bindings.json",
+      "sha256": "e7737acba378a2e376149859253fb3122f48853bd312161285b4d3ab9e239f3e"
+    },
+    {
+      "path": "verification-evidence-catalog.mjs",
+      "sha256": "d585909462997cc0276d7469a5948901fd17e66336828af3654923a077abda95"
+    }
+  ],
+  "newApplicationProofEstablished": false,
+  "canonicalComposition": "Verified exact256-row starting digest, append14 unchanged accepted declarations/reviews,270 total; no rejected/blocked fullCoverage. Separate final catalog repair will require fresh independent review records before admission."
+}
