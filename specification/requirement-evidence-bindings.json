@@ -8,7 +8,7 @@
     "sourceReviewPath": "verification/independent-source-review-20261014.json",
     "sourceReviewSha256": "e5821fbce9dc82ebf31cfde0767bb869c26c6ecd30c86fbd55d543eb8a94f429",
     "reconciliationPath": "verification/independent-source-reconciliation-20261014.json",
-    "reconciliationSha256": "2f60522376fbfa691c272d1b43ed9792eb781700f2226dcdb9dcc4c612a6dad5"
+    "reconciliationSha256": "b3addac3e66cf726d842a675de83ad640f872e8da6ccc22510c6aac6b5352264"
   },
   "historicalEvidence": {
     "status": "HISTORICAL_NOT_CURRENT_SOURCE_PROOF",

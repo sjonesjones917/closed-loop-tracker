@@ -231692,7 +231692,9 @@
         ],
         "blockedAcceptanceScope": "Raw-unitization registry acceptance and current-profile intake coverage depending on that algorithm; unrelated custody/UI work continues.",
         "proposedAmendmentSubject": "contracts.rawUnitization",
-        "approvalStatus": "NOT_REQUESTED_OR_GRANTED_BY_THIS_WORKER"
+        "approvalStatus": "NOT_REQUESTED_OR_GRANTED_BY_THIS_WORKER",
+        "necessityReviewDisposition": "REQUIRED_AMENDMENT_ONLY_FOR_UNIT_BOUNDARIES_ORDER_AND_DEDUP_ALGORITHM",
+        "amendmentScopeLimit": "Do not reapprove existing canonical-ID rules, required inaccessible/content preservation, supported-adapter routing or threshold values. Exact proposed segmentation remains a candidate requiring compatibility review."
       },
       {
         "reconciliationId": "R02",
@@ -231721,7 +231723,9 @@
         ],
         "blockedAcceptanceScope": "Closed external-operation registry/input-admissibility acceptance; cannot assert stronger input possession from hashes alone.",
         "proposedAmendmentSubject": "contracts.minimumInputBindingBasis",
-        "approvalStatus": "NOT_REQUESTED_OR_GRANTED_BY_THIS_WORKER"
+        "approvalStatus": "NOT_REQUESTED_OR_GRANTED_BY_THIS_WORKER",
+        "necessityReviewDisposition": "REQUIRED_AMENDMENT_FOR_PER_OPERATION_MINIMUM_ASSIGNMENT",
+        "amendmentScopeLimit": "The proposed common EXTERNALLY_SUPPORTED minimum is an admissibility choice, not uniquely derived from the weakest nonprohibited enum. Publish the exact operation/minimum mapping and retain stronger proof-specific and independence requirements."
       },
       {
         "reconciliationId": "R05",
@@ -231754,7 +231758,9 @@
         ],
         "blockedAcceptanceScope": "Closed current-language/operation/parser/selector/regex/numeric registry acceptance, Stage06 native definitions and any dependent native proof.",
         "proposedAmendmentSubject": "contracts.testIR",
-        "approvalStatus": "NOT_REQUESTED_OR_GRANTED_BY_THIS_WORKER"
+        "approvalStatus": "NOT_REQUESTED_OR_GRANTED_BY_THIS_WORKER",
+        "necessityReviewDisposition": "REQUIRED_AMENDMENT_ONLY_FOR_UNCOVERED_OBSERVABLE_SEMANTICS",
+        "amendmentScopeLimit": "Identify result-bearing choices not already specified: text COUNT unit, absent selector result, equality/UNIQUE order, SORT defaults, accepted numeric spelling and comparable uncovered port/default/error semantics. Do not treat the whole runtime descriptor, delegated resource limits, allowed decimal/external-routing choices, equivalent diagnostics or existing primitive inventory as new approval scope."
       },
       {
         "reconciliationId": "R06",
@@ -231791,7 +231797,9 @@
         ],
         "blockedAcceptanceScope": "Acceptance of the affected closed nested-field registries and operations consuming them; not a mandate to remodel the Job or rewrite preserved data.",
         "proposedAmendmentSubject": "contracts.humanInputRequests and contracts.targetAvailabilityCondition",
-        "approvalStatus": "NOT_REQUESTED_OR_GRANTED_BY_THIS_WORKER"
+        "approvalStatus": "NOT_REQUESTED_OR_GRANTED_BY_THIS_WORKER",
+        "necessityReviewDisposition": "REQUIRED_AMENDMENT_FOR_HUMAN_INPUT_ITEM_CONTRACT; TARGET_REPRESENTATION_REUSE_MUST_BE_CHECKED",
+        "amendmentScopeLimit": "humanInputRequests requires the exact closed known-key/value/default contract, especially omitted blocking. Due timing, truth tables, missing-data and currentness are already defined. Before proposing a new target-condition language, establish whether an exact reference to an existing accepted proof contract is sufficient and all field properties are uniquely derivable. The new six-variant grammar is only a candidate and is not an unavoidable source requirement."
       },
       {
         "reconciliationId": "R07",
@@ -231827,36 +231835,9 @@
         ],
         "blockedAcceptanceScope": "Expected-variance schema/normalizer acceptance and affected Stage06/13/18/19 proof; no requirement to replace semantic review with numerical automation.",
         "proposedAmendmentSubject": "contracts.expectedVariance",
-        "approvalStatus": "NOT_REQUESTED_OR_GRANTED_BY_THIS_WORKER"
-      },
-      {
-        "reconciliationId": "R10",
-        "extractionFindings": [
-          "A-GAP-07",
-          "B-C10"
-        ],
-        "disposition": "PARTIALLY_RESOLVED_WITH_UNDEFINED_DERIVATION",
-        "affectedSourceRanges": [
-          [
-            1503,
-            1509
-          ],
-          [
-            2984,
-            3004
-          ],
-          [
-            3200,
-            3214
-          ],
-          [
-            4876,
-            4924
-          ]
-        ],
-        "blockedAcceptanceScope": "Physical-acceptance expiry contract only; device preparation/probes and non-expiry bindings can proceed without claiming final acceptance.",
-        "proposedAmendmentSubject": "contracts.mobileChallengeExpiry",
-        "approvalStatus": "NOT_REQUESTED_OR_GRANTED_BY_THIS_WORKER"
+        "approvalStatus": "NOT_REQUESTED_OR_GRANTED_BY_THIS_WORKER",
+        "necessityReviewDisposition": "REQUIRED_AMENDMENT_ONLY_FOR_CLOSED_NORMALIZED_REPRESENTATION",
+        "amendmentScopeLimit": "Close normalized input/output shapes, requiredness/defaults, exact normalization and hash inclusion. Agent-authored project variance meaning, independent materiality review and existing stage/metric consequences are already defined and do not require new blanket approval."
       }
     ],
     "contractAcceptanceStatus": "BLOCKED_UNDEFINED_CONTRACTS",
@@ -231875,7 +231856,7 @@
       "sourceReviewPath": "verification/independent-source-review-20261014.json",
       "sourceReviewSha256": "e5821fbce9dc82ebf31cfde0767bb869c26c6ecd30c86fbd55d543eb8a94f429",
       "reconciliationPath": "verification/independent-source-reconciliation-20261014.json",
-      "reconciliationSha256": "2f60522376fbfa691c272d1b43ed9792eb781700f2226dcdb9dcc4c612a6dad5",
+      "reconciliationSha256": "b3addac3e66cf726d842a675de83ad640f872e8da6ccc22510c6aac6b5352264",
       "sectionCoverageCount": 54,
       "observationCount": 226,
       "additiveRequirementCount": 351,
@@ -233586,5 +233567,5 @@
       "status": "ACCEPTED"
     }
   },
-  "manifestSha256": "9951a90e96f05f3eb522cdbaf0af584ac2f60cad392716204c867d05d7245a81"
+  "manifestSha256": "9735d914ca9c9168ae598f12de6b05ce208a0c856d9741d5972e407a21810e08"
 }

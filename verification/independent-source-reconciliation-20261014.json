@@ -116533,7 +116533,9 @@
       "existingImplementationSupport": "workflow-schema.js:1858 declares physical lines and fallback; workflow-engine.js:1793-1805,1836-1868 supplies concrete rules. These are useful existing choices, not proof the source itself adopted every algorithm edge.",
       "implementationConformanceClaim": false,
       "proposedAmendmentSubject": "contracts.rawUnitization",
-      "blockedAcceptanceScope": "Raw-unitization registry acceptance and current-profile intake coverage depending on that algorithm; unrelated custody/UI work continues."
+      "blockedAcceptanceScope": "Raw-unitization registry acceptance and current-profile intake coverage depending on that algorithm; unrelated custody/UI work continues.",
+      "necessityReviewDisposition": "REQUIRED_AMENDMENT_ONLY_FOR_UNIT_BOUNDARIES_ORDER_AND_DEDUP_ALGORITHM",
+      "amendmentScopeLimit": "Do not reapprove existing canonical-ID rules, required inaccessible/content preservation, supported-adapter routing or threshold values. Exact proposed segmentation remains a candidate requiring compatibility review."
     },
     {
       "reconciliationId": "R02",
@@ -116565,7 +116567,9 @@
       "existingImplementationSupport": "workflow-schema.js:1679 and1911 publish EXTERNALLY_SUPPORTED for external operations. This is a concrete candidate assignment, not independent proof of authority or possession.",
       "implementationConformanceClaim": false,
       "proposedAmendmentSubject": "contracts.minimumInputBindingBasis",
-      "blockedAcceptanceScope": "Closed external-operation registry/input-admissibility acceptance; cannot assert stronger input possession from hashes alone."
+      "blockedAcceptanceScope": "Closed external-operation registry/input-admissibility acceptance; cannot assert stronger input possession from hashes alone.",
+      "necessityReviewDisposition": "REQUIRED_AMENDMENT_FOR_PER_OPERATION_MINIMUM_ASSIGNMENT",
+      "amendmentScopeLimit": "The proposed common EXTERNALLY_SUPPORTED minimum is an admissibility choice, not uniquely derived from the weakest nonprohibited enum. Publish the exact operation/minimum mapping and retain stronger proof-specific and independence requirements."
     },
     {
       "reconciliationId": "R03",
@@ -116681,7 +116685,9 @@
       "existingImplementationSupport": "The existing read-only published authoringContract was captured from exact commit7df5f46e9a7e54da09622387a978badb39916c09. test-runtime.js SHAa9eadc5db096997c51540068fecddaa71dca221b7342eac703d243438a9d1c23 contains the concrete ports and semantics. Descriptor inspection is not behavioral validation.",
       "implementationConformanceClaim": false,
       "proposedAmendmentSubject": "contracts.testIR",
-      "blockedAcceptanceScope": "Closed current-language/operation/parser/selector/regex/numeric registry acceptance, Stage06 native definitions and any dependent native proof."
+      "blockedAcceptanceScope": "Closed current-language/operation/parser/selector/regex/numeric registry acceptance, Stage06 native definitions and any dependent native proof.",
+      "necessityReviewDisposition": "REQUIRED_AMENDMENT_ONLY_FOR_UNCOVERED_OBSERVABLE_SEMANTICS",
+      "amendmentScopeLimit": "Identify result-bearing choices not already specified: text COUNT unit, absent selector result, equality/UNIQUE order, SORT defaults, accepted numeric spelling and comparable uncovered port/default/error semantics. Do not treat the whole runtime descriptor, delegated resource limits, allowed decimal/external-routing choices, equivalent diagnostics or existing primitive inventory as new approval scope."
     },
     {
       "reconciliationId": "R06",
@@ -116721,7 +116727,9 @@
       "existingImplementationSupport": "The existing fallback uses temporaryKey/question/whyRequired/affectedStageFields/affectedRecords/answerType/allowedValues/optional blocking. The existing target grammar is PHASE_TARGET,CURRENT_RECORD,VERIFIED_ARTIFACT_BYTES and the three Section29.13 aggregators. Earlier target-source amendments are not silently renewed.",
       "implementationConformanceClaim": false,
       "proposedAmendmentSubject": "contracts.humanInputRequests and contracts.targetAvailabilityCondition",
-      "blockedAcceptanceScope": "Acceptance of the affected closed nested-field registries and operations consuming them; not a mandate to remodel the Job or rewrite preserved data."
+      "blockedAcceptanceScope": "Acceptance of the affected closed nested-field registries and operations consuming them; not a mandate to remodel the Job or rewrite preserved data.",
+      "necessityReviewDisposition": "REQUIRED_AMENDMENT_FOR_HUMAN_INPUT_ITEM_CONTRACT; TARGET_REPRESENTATION_REUSE_MUST_BE_CHECKED",
+      "amendmentScopeLimit": "humanInputRequests requires the exact closed known-key/value/default contract, especially omitted blocking. Due timing, truth tables, missing-data and currentness are already defined. Before proposing a new target-condition language, establish whether an exact reference to an existing accepted proof contract is sufficient and all field properties are uniquely derivable. The new six-variant grammar is only a candidate and is not an unavoidable source requirement."
     },
     {
       "reconciliationId": "R07",
@@ -116760,7 +116768,9 @@
       "existingImplementationSupport": "Existing EXPECTED_VARIANCE_CONTRACT and COMPARISON_MATERIALITY_CONTRACT preserve authored meaning and bind canonical counterparts/current independent review. The prepared supplement adopts the explicit descriptor and semantic-versus-derived boundary, not arbitrary prose evaluation.",
       "implementationConformanceClaim": false,
       "proposedAmendmentSubject": "contracts.expectedVariance",
-      "blockedAcceptanceScope": "Expected-variance schema/normalizer acceptance and affected Stage06/13/18/19 proof; no requirement to replace semantic review with numerical automation."
+      "blockedAcceptanceScope": "Expected-variance schema/normalizer acceptance and affected Stage06/13/18/19 proof; no requirement to replace semantic review with numerical automation.",
+      "necessityReviewDisposition": "REQUIRED_AMENDMENT_ONLY_FOR_CLOSED_NORMALIZED_REPRESENTATION",
+      "amendmentScopeLimit": "Close normalized input/output shapes, requiredness/defaults, exact normalization and hash inclusion. Agent-authored project variance meaning, independent materiality review and existing stage/metric consequences are already defined and do not require new blanket approval."
     },
     {
       "reconciliationId": "R08",
@@ -116834,7 +116844,7 @@
         "A-GAP-07",
         "B-C10"
       ],
-      "disposition": "PARTIALLY_RESOLVED_WITH_UNDEFINED_DERIVATION",
+      "disposition": "RESOLVED_AS_IMPLEMENTATION_CHOICE_WITH_EXISTING_SOURCE_CONSTRAINTS",
       "sourceRanges": [
         [
           1503,
@@ -116853,12 +116863,21 @@
           4924
         ]
       ],
-      "summary": "Do not demand arbitrary universal lifetimes; define only the missing mobile challenge-expiry rule.",
-      "reason": "Reservation expiry is already scope-based. Delivery real-time validity is optional but, when used, must obey the authorization and trusted-time contract. Tombstone retention expiry is required metadata; no source clause authorizes deleting the receipt and breaking exact retries at an arbitrary age, so absence of a prescribed duration alone is not a release blocker. Physical challenge rejection nevertheless needs a frozen lifetime and governing acceptance time basis, which45.2 does not define. Keep single-use, supersession and build/target bindings regardless.",
-      "existingImplementationSupport": "generate-mobile-acceptance-target.mjs currently accepts60..86400seconds, default3600; verify-mobile-acceptance-evidence.mjs compares verificationTime to challengeExpiresAt. The proposed clause makes this narrow controller policy explicit without elevating device time. project-store.js records30-day retentionExpiry but this review found no authority to make it a deletion gate.",
+      "summary": "The acceptance controller can choose and freeze challenge lifetime; no normative duration amendment is required.",
+      "reason": "Section45.2 assigns challenge creation and verification to CI or the authorized acceptance controller, with single use, exact bindings and expired-evidence rejection. Sections17.11 and29.14 constrain clock evidence and unknown freshness. Selecting and freezing a practical bounded lifetime for that procedure is a delegated acceptance-management choice. The existing60..86400second bounds/default3600 are not source-mandated and need not be adopted as new restrictions. Scope-based reservation expiry, optional delivery trusted-time rules and permanent retry history retain their explicit requirements.",
+      "existingImplementationSupport": "Existing controller bounds/default and verification-time comparison were observed as implementation behavior only. They are not source-mandated restrictions and are not promoted into approved semantics.",
       "implementationConformanceClaim": false,
-      "proposedAmendmentSubject": "contracts.mobileChallengeExpiry",
-      "blockedAcceptanceScope": "Physical-acceptance expiry contract only; device preparation/probes and non-expiry bindings can proceed without claiming final acceptance."
+      "proposedAmendmentSubject": null,
+      "blockedAcceptanceScope": "No additional source-amendment blocker. Actual expiry rejection, accepted clock basis, exact evidence binding and physical acceptance still require their existing proof.",
+      "independentNecessityChallenge": {
+        "status": "RESOLVED",
+        "reviewerTask": "/root/challenge_contract_amendment_necessity",
+        "reviewPath": "clrt-contract-amendment-necessity-review.txt",
+        "reviewSha256": "ced7c525bfd3e6a10b6579f25e373ee8ced422737e307ccc30f09401525370ad",
+        "requiredAmendmentEstablished": false,
+        "proposedRestrictionsAccepted": false
+      },
+      "necessityReviewDisposition": "IMPLEMENTATION_CHOICE; VALIDITY_AND_REJECTION_ALREADY_DEFINED"
     },
     {
       "reconciliationId": "R11",
@@ -116927,7 +116946,9 @@
       ],
       "blockedAcceptanceScope": "Raw-unitization registry acceptance and current-profile intake coverage depending on that algorithm; unrelated custody/UI work continues.",
       "proposedAmendmentSubject": "contracts.rawUnitization",
-      "approvalStatus": "NOT_REQUESTED_OR_GRANTED_BY_THIS_WORKER"
+      "approvalStatus": "NOT_REQUESTED_OR_GRANTED_BY_THIS_WORKER",
+      "necessityReviewDisposition": "REQUIRED_AMENDMENT_ONLY_FOR_UNIT_BOUNDARIES_ORDER_AND_DEDUP_ALGORITHM",
+      "amendmentScopeLimit": "Do not reapprove existing canonical-ID rules, required inaccessible/content preservation, supported-adapter routing or threshold values. Exact proposed segmentation remains a candidate requiring compatibility review."
     },
     {
       "reconciliationId": "R02",
@@ -116956,7 +116977,9 @@
       ],
       "blockedAcceptanceScope": "Closed external-operation registry/input-admissibility acceptance; cannot assert stronger input possession from hashes alone.",
       "proposedAmendmentSubject": "contracts.minimumInputBindingBasis",
-      "approvalStatus": "NOT_REQUESTED_OR_GRANTED_BY_THIS_WORKER"
+      "approvalStatus": "NOT_REQUESTED_OR_GRANTED_BY_THIS_WORKER",
+      "necessityReviewDisposition": "REQUIRED_AMENDMENT_FOR_PER_OPERATION_MINIMUM_ASSIGNMENT",
+      "amendmentScopeLimit": "The proposed common EXTERNALLY_SUPPORTED minimum is an admissibility choice, not uniquely derived from the weakest nonprohibited enum. Publish the exact operation/minimum mapping and retain stronger proof-specific and independence requirements."
     },
     {
       "reconciliationId": "R05",
@@ -116989,7 +117012,9 @@
       ],
       "blockedAcceptanceScope": "Closed current-language/operation/parser/selector/regex/numeric registry acceptance, Stage06 native definitions and any dependent native proof.",
       "proposedAmendmentSubject": "contracts.testIR",
-      "approvalStatus": "NOT_REQUESTED_OR_GRANTED_BY_THIS_WORKER"
+      "approvalStatus": "NOT_REQUESTED_OR_GRANTED_BY_THIS_WORKER",
+      "necessityReviewDisposition": "REQUIRED_AMENDMENT_ONLY_FOR_UNCOVERED_OBSERVABLE_SEMANTICS",
+      "amendmentScopeLimit": "Identify result-bearing choices not already specified: text COUNT unit, absent selector result, equality/UNIQUE order, SORT defaults, accepted numeric spelling and comparable uncovered port/default/error semantics. Do not treat the whole runtime descriptor, delegated resource limits, allowed decimal/external-routing choices, equivalent diagnostics or existing primitive inventory as new approval scope."
     },
     {
       "reconciliationId": "R06",
@@ -117026,7 +117051,9 @@
       ],
       "blockedAcceptanceScope": "Acceptance of the affected closed nested-field registries and operations consuming them; not a mandate to remodel the Job or rewrite preserved data.",
       "proposedAmendmentSubject": "contracts.humanInputRequests and contracts.targetAvailabilityCondition",
-      "approvalStatus": "NOT_REQUESTED_OR_GRANTED_BY_THIS_WORKER"
+      "approvalStatus": "NOT_REQUESTED_OR_GRANTED_BY_THIS_WORKER",
+      "necessityReviewDisposition": "REQUIRED_AMENDMENT_FOR_HUMAN_INPUT_ITEM_CONTRACT; TARGET_REPRESENTATION_REUSE_MUST_BE_CHECKED",
+      "amendmentScopeLimit": "humanInputRequests requires the exact closed known-key/value/default contract, especially omitted blocking. Due timing, truth tables, missing-data and currentness are already defined. Before proposing a new target-condition language, establish whether an exact reference to an existing accepted proof contract is sufficient and all field properties are uniquely derivable. The new six-variant grammar is only a candidate and is not an unavoidable source requirement."
     },
     {
       "reconciliationId": "R07",
@@ -117062,43 +117089,16 @@
       ],
       "blockedAcceptanceScope": "Expected-variance schema/normalizer acceptance and affected Stage06/13/18/19 proof; no requirement to replace semantic review with numerical automation.",
       "proposedAmendmentSubject": "contracts.expectedVariance",
-      "approvalStatus": "NOT_REQUESTED_OR_GRANTED_BY_THIS_WORKER"
-    },
-    {
-      "reconciliationId": "R10",
-      "extractionFindings": [
-        "A-GAP-07",
-        "B-C10"
-      ],
-      "disposition": "PARTIALLY_RESOLVED_WITH_UNDEFINED_DERIVATION",
-      "affectedSourceRanges": [
-        [
-          1503,
-          1509
-        ],
-        [
-          2984,
-          3004
-        ],
-        [
-          3200,
-          3214
-        ],
-        [
-          4876,
-          4924
-        ]
-      ],
-      "blockedAcceptanceScope": "Physical-acceptance expiry contract only; device preparation/probes and non-expiry bindings can proceed without claiming final acceptance.",
-      "proposedAmendmentSubject": "contracts.mobileChallengeExpiry",
-      "approvalStatus": "NOT_REQUESTED_OR_GRANTED_BY_THIS_WORKER"
+      "approvalStatus": "NOT_REQUESTED_OR_GRANTED_BY_THIS_WORKER",
+      "necessityReviewDisposition": "REQUIRED_AMENDMENT_ONLY_FOR_CLOSED_NORMALIZED_REPRESENTATION",
+      "amendmentScopeLimit": "Close normalized input/output shapes, requiredness/defaults, exact normalization and hash inclusion. Agent-authored project variance meaning, independent materiality review and existing stage/metric consequences are already defined and do not require new blanket approval."
     }
   ],
   "integrationConditions": [
     "Preserve the exact full target bytes and actual source commit.",
     "Use the9 evidence-bound NONNORMATIVE exclusions; preserve mandatory Section51 restrictions.",
     "Do not retain the36 old-amendment-only source clauses, old approval ranges, or old source-bound proof as current target evidence. This does not authorize deletion of working runtime behavior.",
-    "Keep all unresolved contract findings BLOCKED under their exact UNDEFINED_* rule; source coverage acceptance is not contract acceptance.",
+    "Keep only substantiated unresolved contract acceptance scopes explicit under their controlling UNDEFINED_* rules. Candidate interpretations under distinct challenge, including R10, impose no new source-amendment requirement. Source coverage acceptance is not contract acceptance.",
     "Do not create a competing normative manifest. Run the existing generator/verifier only after integrating actual bound evidence and narrow classification support."
   ],
   "contractAcceptanceStatus": "BLOCKED_UNDEFINED_CONTRACTS",
@@ -117129,13 +117129,36 @@
     "runtimeDisablementRequired": false
   },
   "proposedContractAmendment": {
-    "status": "PROPOSED_NOT_APPROVED_NOT_APPLIED",
+    "status": "SUPERSEDED_PROVISIONAL_DRAFT_REQUIRES_NARROWING_NOT_APPROVED_NOT_APPLIED",
     "path": "clrt-proposed-contract-closure-amendment.txt",
     "sha256": "e7e38de4064aab5f139ca29c7e9dedb57ef0a0a42afc8e568e06c0f6930ee1cc",
     "supplementPath": "clrt-proposed-contract-closure-supplement.json",
     "supplementSha256": "64820cb3e0b6da931c8c7541520897582127d175496e387cf2a13be36daafe0b",
     "supplementByteLength": 95065,
-    "requiresSeparateIndependentReview": true
+    "requiresSeparateIndependentReview": true,
+    "challengedSubject": "The entire seven-subject package is overbroad as an undifferentiated approval request; remove mobile lifetime and already-defined/delegated details, and check target representation reuse.",
+    "requiredScopeEstablished": false,
+    "necessityReviewPath": "clrt-contract-amendment-necessity-review.txt",
+    "necessityReviewSha256": "ced7c525bfd3e6a10b6579f25e373ee8ced422737e307ccc30f09401525370ad"
   },
-  "finalReviewBoundary": "ACCEPTED_SOURCE_COVERAGE_ONLY means every extraction difference and line disposition has a source-grounded reconciliation. The independently agreed source-closure questions remain explicit UNDEFINED_* acceptance blockers; they are not approved product semantics. Registry/atomic-manifest/implementation/live/device/maturity acceptance remain unestablished."
+  "finalReviewBoundary": "ACCEPTED_SOURCE_COVERAGE_ONLY means extraction differences and line dispositions have source-grounded reconciliation. A distinct necessity review narrows the remaining closed-contract findings and resolves R10 expiry lifetime as a permitted controller choice. The original seven-subject supplement is a superseded provisional draft, not final amendment scope or approved semantics. Target-condition language necessity requires checking accepted proof-contract reuse. Registry/atomic-manifest/implementation/live/device/maturity acceptance remain unestablished.",
+  "pendingSourceInterpretationChallenges": [],
+  "revisionHistory": [
+    {
+      "previousFileSha256": "2f60522376fbfa691c272d1b43ed9792eb781700f2226dcdb9dcc4c612a6dad5",
+      "change": "R10 necessity challenged: downgrade required expiry amendment to candidate pending distinct challenge. No source coverage, ID, exclusion or independent provenance change."
+    },
+    {
+      "change": "Apply completed distinct contract-necessity challenge: narrow R01/R02/R05/R06/R07 and resolve R10 as implementation choice. No source coverage, ID, exclusion or independent provenance change.",
+      "reviewSha256": "ced7c525bfd3e6a10b6579f25e373ee8ced422737e307ccc30f09401525370ad"
+    }
+  ],
+  "necessityReview": {
+    "path": "clrt-contract-amendment-necessity-review.txt",
+    "sha256": "ced7c525bfd3e6a10b6579f25e373ee8ced422737e307ccc30f09401525370ad",
+    "status": "DISTINCT_REVIEW_APPLIED_TO_SOURCE_INTERPRETATIONS_ONLY",
+    "fullSupplementAccepted": false,
+    "implementationConformanceClaim": false,
+    "remainingSubjects": "Six narrowed components in five findings; target-condition new-grammar necessity is conditional on checking reuse of existing accepted proof contracts."
+  }
 }

@@ -1,4 +1,4 @@
-(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(node:27) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
 (Use `node --trace-warnings ...` to show where the warning was created)
 {
   "specificationSourcePresent": true,
@@ -22,7 +22,7 @@
   "independentSemanticSourceReviewPath": "verification/independent-source-review-20261014.json",
   "independentSemanticSourceReviewSha256": "e5821fbce9dc82ebf31cfde0767bb869c26c6ecd30c86fbd55d543eb8a94f429",
   "independentSemanticReconciliationPath": "verification/independent-source-reconciliation-20261014.json",
-  "independentSemanticReconciliationSha256": "2f60522376fbfa691c272d1b43ed9792eb781700f2226dcdb9dcc4c612a6dad5",
+  "independentSemanticReconciliationSha256": "b3addac3e66cf726d842a675de83ad640f872e8da6ccc22510c6aac6b5352264",
   "sourceReviewAddedRequirementCount": 351,
   "reconciliationComplete": true,
   "runtimeSpecificationCopies": 0,
@@ -52,7 +52,7 @@
   "intentionalUncoveredSectionMutationRejected": true,
   "allNormativeRequirementsConformant": false,
   "semanticSourceCoverageEstablished": true,
-  "unresolvedSourceContractFindingCount": 6,
+  "unresolvedSourceContractFindingCount": 5,
   "atomicRequirementCompletenessEstablished": false,
   "specificationTraceIntegrity": "BLOCKED_ATOMIC_REQUIREMENT_COMPLETENESS"
 }
@@ -63,5 +63,6 @@ await import('./hash.js');const H=globalThis.closedLoopHash,SP='specification/cl
 Error: Atomic normative-requirement completeness remains unproven: source-line coverage is not distinct-obligation coverage under Section 2.2.
     at A (file:///workspace/shared/clrt-spec-adoption/specification-governance-core.mjs:4:465)
     at file:///workspace/shared/clrt-spec-adoption/specification-governance-core.mjs:91:1
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
 
 Node.js v22.23.3

@@ -6713,16 +6713,16 @@
   ],
   "contractProfileId": "closed-loop-completion-profile/1",
   "normativeRequirementManifestIdentity": "NRM-fde1b4c0ab59b61ccda25e11237a2061",
-  "normativeRequirementManifestSha256": "91273f790154c8cdeb2dda046d292a3a6bd2d70a52df3d2e4d01cd02dbd45f75",
-  "normativeRequirementManifestCanonicalSha256": "9951a90e96f05f3eb522cdbaf0af584ac2f60cad392716204c867d05d7245a81",
+  "normativeRequirementManifestSha256": "d257088a4de8fa76357a8b83065cff64dd6d12f966bb6f5d92dc3b050dad7b2b",
+  "normativeRequirementManifestCanonicalSha256": "9735d914ca9c9168ae598f12de6b05ce208a0c856d9741d5972e407a21810e08",
   "normativeRequirementManifestPath": "specification/closed-loop-normative-requirements.json",
   "normativeRequirementCount": 4198,
   "challengeAndReconciliation": {
     "independentReviewerIdentity": "e5821fbce9dc82ebf31cfde0767bb869c26c6ecd30c86fbd55d543eb8a94f429",
-    "independentReconciliationIdentity": "2f60522376fbfa691c272d1b43ed9792eb781700f2226dcdb9dcc4c612a6dad5",
+    "independentReconciliationIdentity": "b3addac3e66cf726d842a675de83ad640f872e8da6ccc22510c6aac6b5352264",
     "sourceCoverageOnly": true,
     "atomicRequirementCompletenessEstablished": false,
     "status": "ACCEPTED"
   },
-  "manifestSha256": "5dcb2f962976624633c34b7942a0e6f9662d7e2b8829fb8c7dca2f8a56af2192"
+  "manifestSha256": "45c9e510e02cf038521f07d91b45cf2744729b009b9e724b5d01cccd57bef833"
 }

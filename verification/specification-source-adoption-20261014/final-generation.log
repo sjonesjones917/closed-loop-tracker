@@ -1,4 +1,4 @@
-(node:104) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(node:10) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
 (Use `node --trace-warnings ...` to show where the warning was created)
 {
   "sourceCommit": "ebf6a930d1e5ef2f9afaaf68631a318facee5181",
@@ -8,8 +8,8 @@
   "topLevelSectionCount": 53,
   "normativeRequirementCount": 4198,
   "conformantRequirementCount": 0,
-  "specificationManifestSha256": "b2288f2931540d0c61860ebee33dc6e14b05e688d3be8b02cca1a430840165d0",
-  "normativeRequirementManifestSha256": "91273f790154c8cdeb2dda046d292a3a6bd2d70a52df3d2e4d01cd02dbd45f75",
+  "specificationManifestSha256": "3a551ed1997737df6e09a8361204604dfd7c424e2d8eecaafebcd2a4e4b8b8ef",
+  "normativeRequirementManifestSha256": "d257088a4de8fa76357a8b83065cff64dd6d12f966bb6f5d92dc3b050dad7b2b",
   "independentReviewStatus": "SEMANTIC_SOURCE_PASS",
   "reconciliationStatus": "ACCEPTED",
   "semanticSourceCoverageEstablished": true,
