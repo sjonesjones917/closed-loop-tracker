@@ -2894,11 +2894,11 @@
         ],
         "originalAuthorityExpiresAt": "2026-10-14T21:35:46.722Z",
         "directory": "/workspace/shared/clrt-iteration-repair-evidence/frozen-53e02e32-governed-continuation",
-        "terminal": "PENDING",
+        "terminal": "FAILED",
         "lastCompletedStage": 28,
-        "latestDurableBoundary": "release-persistence-all-assertions-complete",
-        "latestBoundaryCompressedSha256": "dc469f0ec30af0e574be69825afc677985a5b4325fdfe1f5ca57ee0e320208be",
-        "latestBoundaryCanonicalProjectSha256": "29b4cc07dfc75f028cef13e51f693a23ad448c78ae45d7882551037987cf2878",
+        "latestDurableBoundary": "after-evidence-chain-command-before-assertions",
+        "latestBoundaryCompressedSha256": "eb17850167cffb8c85ff94bf50cf14b0ef4d9c2d3a0c1da404b3e16d39200ab2",
+        "latestBoundaryCanonicalProjectSha256": "2f1b68a2dddc796d9bbaf913513fcef5a10d94c10cbb5af26138df94d4bf8b97",
         "actualReleasePersistence": {
           "result": "PASS",
           "basis": "Actual accepted synthetic lifecycle release command and original byte/context custody; isolated existing transaction adapter, not browser execution.",
@@ -2916,13 +2916,31 @@
           "callerPointerAssertion": "RELEASE_ISOLATED_STORE_PRESERVES_CALLER",
           "callerPointerAssertionResult": "PASS"
         },
-        "lastObservedAt": "2026-10-14T20:28:25Z",
+        "lastObservedAt": "2026-10-14T20:50:12Z",
         "exitCode": 1,
         "endedAt": "2026-10-14T20:36:23Z",
         "failure": "The current evidence-chain set must be complete before creating a pre-delivery checkpoint.",
         "authorityStillValidAtFailure": true,
         "originalAssertions": "Completed investigation helper and original chain-link assertions reached checkpoint; Stage30 not executed",
         "newEvidence": "Original pre-decoy, pre-chain and post-chain captures. Independent232-source comparison: two proof obligations change only eight scope-summary/digest/update paths, satisfaction unchanged SATISFIED. Distinct post-chain gate27 stale release under independent fresh-binding investigation; no runtime omission yet."
+      },
+      "chainRepairDraft": {
+        "observedAt": "2026-10-14T20:50:12Z",
+        "authorCommit": "fa877e53c4c0a556dfb5563945235e6c385f11d8",
+        "runtimeDraftCommit": "03021c73",
+        "status": "IMPLEMENTED_NOT_ACCEPTED",
+        "scope": "Chain-specific exact eight-path proof-obligation preimage, chain4/project14 existing activation, frozen3/13 preserved. Separate reviewed clone-only instruction-decoy test isolation.",
+        "independentScopeReviewSha256": "61bc8f3933ebda1a32b03434d5f0e6e7af4bc3ed404b7ce28223c8a1333ed374",
+        "focused": "Source-binding12 cases, receipt47 and metadata354 passed; actual activation/chain/current-release/retry/persistence/legacy controls pending.",
+        "qualifiedDiagnostic": "Direct13-to14 source substitution legitimately changes proposition DERIVATION_OR_REVIEW_IDS, so cannot establish stable14 chain outcome. No additional preimage omission authorized.",
+        "next": "Prepare normal public13-to14 activation from genuine before-release53 source, ordinary27/28 reproof, then actual chain4 and decoy stale-release challenge.",
+        "authorityExpiresAt": "2026-10-14T21:35:46.722Z",
+        "activeImplementationWorkers": [
+          "repair_iteration_receipt_dependencies: runtime/tests/integration lease",
+          "prepare_chain14_continuation: external driver only"
+        ],
+        "independentReviewer": "review_release_scope_binding",
+        "heavyProcess": "NONE"
       }
     },
     "continuationAmendmentV2": {
