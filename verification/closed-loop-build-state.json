@@ -1394,7 +1394,7 @@
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "dot",
-    "lastInspectedAt": "2026-10-14T15:38:33.968173Z",
+    "lastInspectedAt": "2026-10-14T16:02:57.167823Z",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -2050,7 +2050,7 @@
     },
     "scheduleState": "FORECAST_NOT_ESTABLISHED",
     "forecast": null,
-    "nextAction": "Run independently inspected genuine23\u201327 boundary capture, finalize exact source-general primary release classifier/tests and independently review secondary self-binding evidence before scoped versioned correction; prior integrated18\u201322 scope remains verified.",
+    "nextAction": "Validate preserved actual bounded checkpoint and exact VM clone setup correction, then execute24\u201327 with durable stage/custody captures to establish release self-binding cause. Primary draft remains under independent review; no secondary implementation authorized yet.",
     "deploymentObservation": {
       "sourceCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
       "runId": "36958910363",
@@ -2625,14 +2625,18 @@
       ],
       "reviewState": "Primarydraft eightactual-source missing/staleproof negatives pass; notfrozen/accepted. Exactcontract/version consequences pendingsecondaryevidence.",
       "secondaryCapture": {
-        "state": "FULL_ORIGINAL_OWNER_RUNNING",
+        "state": "LOST_EXECUTOR_OUTCOME_NO_TERMINAL",
         "source": "cd56dd97509f0c6c96e2f6e9055c97b4b65452a0",
         "startedAt": "2026-10-14T15:38:05Z",
         "instrumentedOwnerSha256": "073e90f8faed4432f65a5cc3d46fed3845af2a55ba44b1e70db40750e0555c11",
         "scope": "Originalcompleteowner closures/assertions unchanged; only before/after release inertrawcustodycaptures, separate directory, original optionalcapturesdisabled.",
         "directory": "/workspace/shared/clrt-iteration-repair-evidence/frozen-cd56dd97-full-release-capture",
         "partialDriverFailures": "Preserved setup failures: missing privatecontextaftercopy, originalregressionIDlookup, hostVMstructuredClone. Redirected to completeoriginalowner toavoid serialclosure setup errors.",
-        "secondaryRuntimeEditsAuthorized": false
+        "secondaryRuntimeEditsAuthorized": false,
+        "lastObservedStage": 18,
+        "verifiedAt": "2026-10-14T16:01:54Z",
+        "evidence": "Session41725 Unknown process id, no node process, no exit/end/failure/boundary captures. Do not infer product failure or success. Original source/evidence preserved.",
+        "nextAction": "Use earlier genuine bounded-r3 Stage23/before24 custody if independently valid, with reviewed structuredClone=r.copy VM setup correction; otherwise verifiedafter22. Capture eachstage and before/afterrelease; no fullprefixrestart."
       }
     }
   }
