@@ -2841,6 +2841,1108 @@
       "scope": "Scoped Stage22 canonical ownership only: independent literal producer/authorization/descriptor assertions plus synthetic application normalization/planner/raw-preservation/currentness/refusal and reader contrasts. The positive normalization candidate is uncommitted; no reserved/accepted external or native execution, durable late-stage journey, whole-clause proof or fullCoverage claim.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
       "atomicObligationSha256": "ca076488ee41d2402df1d3a56da854884a0d4c3dc1cc63b90959246e3aed7e82"
+    },
+    {
+      "normativeRequirementId": "NREQ-47111062e64d0d3b30e6cc9e1826cfc3",
+      "sourceLineSha256": "e17eda37620c3017ac470eaf42989140e74944e89206e2c9ecf51fb78bb872a2",
+      "atomicObligationSha256": "6ca31c2241e232a2553b37aa8130887082611878bc7e2ec87c025842e8bffc74",
+      "checkIds": [
+        "canonical.safe-integer-and-typed-string"
+      ],
+      "scope": "Current-atom author declaration for Other exact numbers use typed canonical strings under closed-loop-canonical-json/1. Production hash.js canonical APIs and literal expected text/byte/rejection assertions in the normal verify-hash.mjs producer. Independent review and new frozen-input execution receipts are pending; no browser, storage, application-wide semantic-hash callsite, physical-device or release claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "fullCoverage": {
+        "schema": "closed-loop-full-requirement-coverage/1",
+        "sourceLineSha256": "e17eda37620c3017ac470eaf42989140e74944e89206e2c9ecf51fb78bb872a2",
+        "atomicObligationSha256": "6ca31c2241e232a2553b37aa8130887082611878bc7e2ec87c025842e8bffc74",
+        "reviewedAtomicStatement": "Other exact numbers use typed canonical strings under closed-loop-canonical-json/1.",
+        "sourceSpans": [
+          {
+            "startByte": 150920,
+            "endByte": 151007,
+            "text": "- safe-integer-only JSON numbers, with typed canonical strings for other exact numbers;",
+            "sha256": "e17eda37620c3017ac470eaf42989140e74944e89206e2c9ecf51fb78bb872a2"
+          }
+        ],
+        "contextSourceLocations": [
+          {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 2869,
+            "endLine": 2869,
+            "lineSha256": "774e4e8f76194d802466c7325360169af41c413cc053a82d83c1e1c9d69d8d40",
+            "controllingText": "34.1 Canonical serialization portability"
+          },
+          {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 2871,
+            "endLine": 2871,
+            "lineSha256": "15968ab6cfcb305b94e767f60e01fa39420bae94e6ae1edb6cfe288d3e347103",
+            "controllingText": "All canonical semantic hashes use closed-loop-canonical-json/1. Its implementation contract fixes:"
+          }
+        ],
+        "schemaOrRegistryEntry": "SPECIFICATION_SECTION_34.1",
+        "productionOwners": [
+          {
+            "path": "hash.js",
+            "symbol": "canonicalChunks / stableStringify / sha256ValueCold / sha256Chunks / hashRegistered / createSha256.updateText",
+            "sha256": "bc1c486855fa2096623b560cfc44b7c5d9e263040546921eb00f54e7f38b7420"
+          },
+          {
+            "path": "workflow-schema.js",
+            "symbol": "canonicalDecimal / reducedNumber / isCanonicalNumber",
+            "sha256": "12c397f735f7e7154581131a79e19be2ef1f6bf374985dba4af5e445370812e6"
+          }
+        ],
+        "obligations": [
+          {
+            "id": "draft.canonical-json.numbers.exact-other",
+            "sourceText": "- safe-integer-only JSON numbers, with typed canonical strings for other exact numbers;",
+            "expectedBehavior": "Other exact numbers use typed canonical strings under closed-loop-canonical-json/1.",
+            "checks": {
+              "deterministic": [
+                {
+                  "suite": "verify-hash.mjs",
+                  "checkId": "canonical.safe-integer-and-typed-string"
+                }
+              ],
+              "semantic": [],
+              "mutation": []
+            },
+            "nonapplicable": {
+              "semantic": "This atom defines mechanical serialization behavior, not an external actor meaning judgment. Governing canonical-json/1 context remains attached; other atomic behavior and application-wide usage require their own proof.",
+              "mutation": "This atom does not independently mandate a mutation-test role. Existing diagnostic fault controls are not relabeled as an independent mutation receipt."
+            },
+            "evidenceKinds": [
+              "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+            ]
+          }
+        ],
+        "unresolvedObligations": [],
+        "governingContext": [],
+        "review": {
+          "path": "verification/requirement-coverage-NREQ-47111062e64d0d3b30e6cc9e1826cfc3-20261014-canonical-current-7083.json",
+          "sha256": "6bce303c240373e34c7aa700bbf6388c8bad981f3793b6bce187954843066597"
+        }
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-f25aa7572d552a605b446c527f7ffb29",
+      "sourceLineSha256": "e17eda37620c3017ac470eaf42989140e74944e89206e2c9ecf51fb78bb872a2",
+      "atomicObligationSha256": "60f149524693e256528bff37a8b37dec2d02c67c7816a09efc00302f50f73057",
+      "checkIds": [
+        "canonical.safe-integer-and-typed-string"
+      ],
+      "scope": "Current-atom author declaration for closed-loop-canonical-json/1 JSON numbers are safe-integer-only. Production hash.js canonical APIs and literal expected text/byte/rejection assertions in the normal verify-hash.mjs producer. Independent review and new frozen-input execution receipts are pending; no browser, storage, application-wide semantic-hash callsite, physical-device or release claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "fullCoverage": {
+        "schema": "closed-loop-full-requirement-coverage/1",
+        "sourceLineSha256": "e17eda37620c3017ac470eaf42989140e74944e89206e2c9ecf51fb78bb872a2",
+        "atomicObligationSha256": "60f149524693e256528bff37a8b37dec2d02c67c7816a09efc00302f50f73057",
+        "reviewedAtomicStatement": "closed-loop-canonical-json/1 JSON numbers are safe-integer-only.",
+        "sourceSpans": [
+          {
+            "startByte": 150920,
+            "endByte": 151007,
+            "text": "- safe-integer-only JSON numbers, with typed canonical strings for other exact numbers;",
+            "sha256": "e17eda37620c3017ac470eaf42989140e74944e89206e2c9ecf51fb78bb872a2"
+          }
+        ],
+        "contextSourceLocations": [
+          {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 2869,
+            "endLine": 2869,
+            "lineSha256": "774e4e8f76194d802466c7325360169af41c413cc053a82d83c1e1c9d69d8d40",
+            "controllingText": "34.1 Canonical serialization portability"
+          },
+          {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 2871,
+            "endLine": 2871,
+            "lineSha256": "15968ab6cfcb305b94e767f60e01fa39420bae94e6ae1edb6cfe288d3e347103",
+            "controllingText": "All canonical semantic hashes use closed-loop-canonical-json/1. Its implementation contract fixes:"
+          }
+        ],
+        "schemaOrRegistryEntry": "SPECIFICATION_SECTION_34.1",
+        "productionOwners": [
+          {
+            "path": "hash.js",
+            "symbol": "canonicalChunks / stableStringify / sha256ValueCold / sha256Chunks / hashRegistered / createSha256.updateText",
+            "sha256": "bc1c486855fa2096623b560cfc44b7c5d9e263040546921eb00f54e7f38b7420"
+          },
+          {
+            "path": "workflow-schema.js",
+            "symbol": "canonicalDecimal / reducedNumber / isCanonicalNumber",
+            "sha256": "12c397f735f7e7154581131a79e19be2ef1f6bf374985dba4af5e445370812e6"
+          }
+        ],
+        "obligations": [
+          {
+            "id": "draft.canonical-json.numbers.safe-integer",
+            "sourceText": "- safe-integer-only JSON numbers, with typed canonical strings for other exact numbers;",
+            "expectedBehavior": "closed-loop-canonical-json/1 JSON numbers are safe-integer-only.",
+            "checks": {
+              "deterministic": [
+                {
+                  "suite": "verify-hash.mjs",
+                  "checkId": "canonical.safe-integer-and-typed-string"
+                }
+              ],
+              "semantic": [],
+              "mutation": []
+            },
+            "nonapplicable": {
+              "semantic": "This atom defines mechanical serialization behavior, not an external actor meaning judgment. Governing canonical-json/1 context remains attached; other atomic behavior and application-wide usage require their own proof.",
+              "mutation": "This atom does not independently mandate a mutation-test role. Existing diagnostic fault controls are not relabeled as an independent mutation receipt."
+            },
+            "evidenceKinds": [
+              "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+            ]
+          }
+        ],
+        "unresolvedObligations": [],
+        "governingContext": [],
+        "review": {
+          "path": "verification/requirement-coverage-NREQ-f25aa7572d552a605b446c527f7ffb29-20261014-canonical-current-7083.json",
+          "sha256": "660c51d0a3d210a2a6edf7694e26f62143ecaf10f300b705afe236c220807715"
+        }
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-51ce4098cc4744b966dc6d89fc7d5621",
+      "sourceLineSha256": "3d14033f2bcab6a74bb1206dc1ffc21a22450ac131f2d2fdb084c28d43c05623",
+      "atomicObligationSha256": "ca0ebfa619b46ed5b341b803f41875d8a326fcb176e20df248e6cf7a3ea64dc2",
+      "checkIds": [
+        "canonical.prohibited-values-rejected"
+      ],
+      "scope": "Current-atom author declaration for closed-loop-canonical-json/1 rejects cyclic values. Production hash.js canonical APIs and literal expected text/byte/rejection assertions in the normal verify-hash.mjs producer. Independent review and new frozen-input execution receipts are pending; no browser, storage, application-wide semantic-hash callsite, physical-device or release claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "fullCoverage": {
+        "schema": "closed-loop-full-requirement-coverage/1",
+        "sourceLineSha256": "3d14033f2bcab6a74bb1206dc1ffc21a22450ac131f2d2fdb084c28d43c05623",
+        "atomicObligationSha256": "ca0ebfa619b46ed5b341b803f41875d8a326fcb176e20df248e6cf7a3ea64dc2",
+        "reviewedAtomicStatement": "closed-loop-canonical-json/1 rejects cyclic values.",
+        "sourceSpans": [
+          {
+            "startByte": 151391,
+            "endByte": 151503,
+            "text": "- rejection of negative zero, NaN, Infinity, undefined, sparse holes, cyclic values, and implementation objects.",
+            "sha256": "3d14033f2bcab6a74bb1206dc1ffc21a22450ac131f2d2fdb084c28d43c05623"
+          }
+        ],
+        "contextSourceLocations": [
+          {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 2869,
+            "endLine": 2869,
+            "lineSha256": "774e4e8f76194d802466c7325360169af41c413cc053a82d83c1e1c9d69d8d40",
+            "controllingText": "34.1 Canonical serialization portability"
+          },
+          {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 2871,
+            "endLine": 2871,
+            "lineSha256": "15968ab6cfcb305b94e767f60e01fa39420bae94e6ae1edb6cfe288d3e347103",
+            "controllingText": "All canonical semantic hashes use closed-loop-canonical-json/1. Its implementation contract fixes:"
+          }
+        ],
+        "schemaOrRegistryEntry": "SPECIFICATION_SECTION_34.1",
+        "productionOwners": [
+          {
+            "path": "hash.js",
+            "symbol": "canonicalChunks / stableStringify / sha256ValueCold / sha256Chunks / hashRegistered / createSha256.updateText",
+            "sha256": "bc1c486855fa2096623b560cfc44b7c5d9e263040546921eb00f54e7f38b7420"
+          }
+        ],
+        "obligations": [
+          {
+            "id": "draft.canonical-json.reject-value.cyclic-values",
+            "sourceText": "- rejection of negative zero, NaN, Infinity, undefined, sparse holes, cyclic values, and implementation objects.",
+            "expectedBehavior": "closed-loop-canonical-json/1 rejects cyclic values.",
+            "checks": {
+              "deterministic": [
+                {
+                  "suite": "verify-hash.mjs",
+                  "checkId": "canonical.prohibited-values-rejected"
+                }
+              ],
+              "semantic": [],
+              "mutation": []
+            },
+            "nonapplicable": {
+              "semantic": "This atom defines mechanical serialization behavior, not an external actor meaning judgment. Governing canonical-json/1 context remains attached; other atomic behavior and application-wide usage require their own proof.",
+              "mutation": "This atom does not independently mandate a mutation-test role. Existing diagnostic fault controls are not relabeled as an independent mutation receipt."
+            },
+            "evidenceKinds": [
+              "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+            ]
+          }
+        ],
+        "unresolvedObligations": [],
+        "governingContext": [],
+        "review": {
+          "path": "verification/requirement-coverage-NREQ-51ce4098cc4744b966dc6d89fc7d5621-20261014-canonical-current-7083.json",
+          "sha256": "dc575478b0275dda79fb038f80fc9745ea002c0510ef506c509b3f5becccd8fc"
+        }
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-eb942909863b29d2c26fd0ae5480625f",
+      "sourceLineSha256": "3d14033f2bcab6a74bb1206dc1ffc21a22450ac131f2d2fdb084c28d43c05623",
+      "atomicObligationSha256": "17d20d863e199b9566a6acd7bc3b16e7262b4d81d57db3519d9bf98625c34ddf",
+      "checkIds": [
+        "canonical.prohibited-values-rejected"
+      ],
+      "scope": "Current-atom author declaration for closed-loop-canonical-json/1 rejects Infinity. Production hash.js canonical APIs and literal expected text/byte/rejection assertions in the normal verify-hash.mjs producer. Independent review and new frozen-input execution receipts are pending; no browser, storage, application-wide semantic-hash callsite, physical-device or release claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "fullCoverage": {
+        "schema": "closed-loop-full-requirement-coverage/1",
+        "sourceLineSha256": "3d14033f2bcab6a74bb1206dc1ffc21a22450ac131f2d2fdb084c28d43c05623",
+        "atomicObligationSha256": "17d20d863e199b9566a6acd7bc3b16e7262b4d81d57db3519d9bf98625c34ddf",
+        "reviewedAtomicStatement": "closed-loop-canonical-json/1 rejects Infinity.",
+        "sourceSpans": [
+          {
+            "startByte": 151391,
+            "endByte": 151503,
+            "text": "- rejection of negative zero, NaN, Infinity, undefined, sparse holes, cyclic values, and implementation objects.",
+            "sha256": "3d14033f2bcab6a74bb1206dc1ffc21a22450ac131f2d2fdb084c28d43c05623"
+          }
+        ],
+        "contextSourceLocations": [
+          {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 2869,
+            "endLine": 2869,
+            "lineSha256": "774e4e8f76194d802466c7325360169af41c413cc053a82d83c1e1c9d69d8d40",
+            "controllingText": "34.1 Canonical serialization portability"
+          },
+          {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 2871,
+            "endLine": 2871,
+            "lineSha256": "15968ab6cfcb305b94e767f60e01fa39420bae94e6ae1edb6cfe288d3e347103",
+            "controllingText": "All canonical semantic hashes use closed-loop-canonical-json/1. Its implementation contract fixes:"
+          }
+        ],
+        "schemaOrRegistryEntry": "SPECIFICATION_SECTION_34.1",
+        "productionOwners": [
+          {
+            "path": "hash.js",
+            "symbol": "canonicalChunks / stableStringify / sha256ValueCold / sha256Chunks / hashRegistered / createSha256.updateText",
+            "sha256": "bc1c486855fa2096623b560cfc44b7c5d9e263040546921eb00f54e7f38b7420"
+          }
+        ],
+        "obligations": [
+          {
+            "id": "draft.canonical-json.reject-value.infinity",
+            "sourceText": "- rejection of negative zero, NaN, Infinity, undefined, sparse holes, cyclic values, and implementation objects.",
+            "expectedBehavior": "closed-loop-canonical-json/1 rejects Infinity.",
+            "checks": {
+              "deterministic": [
+                {
+                  "suite": "verify-hash.mjs",
+                  "checkId": "canonical.prohibited-values-rejected"
+                }
+              ],
+              "semantic": [],
+              "mutation": []
+            },
+            "nonapplicable": {
+              "semantic": "This atom defines mechanical serialization behavior, not an external actor meaning judgment. Governing canonical-json/1 context remains attached; other atomic behavior and application-wide usage require their own proof.",
+              "mutation": "This atom does not independently mandate a mutation-test role. Existing diagnostic fault controls are not relabeled as an independent mutation receipt."
+            },
+            "evidenceKinds": [
+              "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+            ]
+          }
+        ],
+        "unresolvedObligations": [],
+        "governingContext": [],
+        "review": {
+          "path": "verification/requirement-coverage-NREQ-eb942909863b29d2c26fd0ae5480625f-20261014-canonical-current-7083.json",
+          "sha256": "08dacfdd7f95b5c4624986a1f6050248f2580019da4a9b8bffbdd5358f278254"
+        }
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-662eca90789c91ae31177173980783dd",
+      "sourceLineSha256": "3d14033f2bcab6a74bb1206dc1ffc21a22450ac131f2d2fdb084c28d43c05623",
+      "atomicObligationSha256": "2946275137fc001ad9b6d69c45ff23ce5ce0c423cdf67695e3453e2a54f043ed",
+      "checkIds": [
+        "canonical.prohibited-values-rejected"
+      ],
+      "scope": "Current-atom author declaration for closed-loop-canonical-json/1 rejects NaN. Production hash.js canonical APIs and literal expected text/byte/rejection assertions in the normal verify-hash.mjs producer. Independent review and new frozen-input execution receipts are pending; no browser, storage, application-wide semantic-hash callsite, physical-device or release claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "fullCoverage": {
+        "schema": "closed-loop-full-requirement-coverage/1",
+        "sourceLineSha256": "3d14033f2bcab6a74bb1206dc1ffc21a22450ac131f2d2fdb084c28d43c05623",
+        "atomicObligationSha256": "2946275137fc001ad9b6d69c45ff23ce5ce0c423cdf67695e3453e2a54f043ed",
+        "reviewedAtomicStatement": "closed-loop-canonical-json/1 rejects NaN.",
+        "sourceSpans": [
+          {
+            "startByte": 151391,
+            "endByte": 151503,
+            "text": "- rejection of negative zero, NaN, Infinity, undefined, sparse holes, cyclic values, and implementation objects.",
+            "sha256": "3d14033f2bcab6a74bb1206dc1ffc21a22450ac131f2d2fdb084c28d43c05623"
+          }
+        ],
+        "contextSourceLocations": [
+          {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 2869,
+            "endLine": 2869,
+            "lineSha256": "774e4e8f76194d802466c7325360169af41c413cc053a82d83c1e1c9d69d8d40",
+            "controllingText": "34.1 Canonical serialization portability"
+          },
+          {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 2871,
+            "endLine": 2871,
+            "lineSha256": "15968ab6cfcb305b94e767f60e01fa39420bae94e6ae1edb6cfe288d3e347103",
+            "controllingText": "All canonical semantic hashes use closed-loop-canonical-json/1. Its implementation contract fixes:"
+          }
+        ],
+        "schemaOrRegistryEntry": "SPECIFICATION_SECTION_34.1",
+        "productionOwners": [
+          {
+            "path": "hash.js",
+            "symbol": "canonicalChunks / stableStringify / sha256ValueCold / sha256Chunks / hashRegistered / createSha256.updateText",
+            "sha256": "bc1c486855fa2096623b560cfc44b7c5d9e263040546921eb00f54e7f38b7420"
+          }
+        ],
+        "obligations": [
+          {
+            "id": "draft.canonical-json.reject-value.nan",
+            "sourceText": "- rejection of negative zero, NaN, Infinity, undefined, sparse holes, cyclic values, and implementation objects.",
+            "expectedBehavior": "closed-loop-canonical-json/1 rejects NaN.",
+            "checks": {
+              "deterministic": [
+                {
+                  "suite": "verify-hash.mjs",
+                  "checkId": "canonical.prohibited-values-rejected"
+                }
+              ],
+              "semantic": [],
+              "mutation": []
+            },
+            "nonapplicable": {
+              "semantic": "This atom defines mechanical serialization behavior, not an external actor meaning judgment. Governing canonical-json/1 context remains attached; other atomic behavior and application-wide usage require their own proof.",
+              "mutation": "This atom does not independently mandate a mutation-test role. Existing diagnostic fault controls are not relabeled as an independent mutation receipt."
+            },
+            "evidenceKinds": [
+              "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+            ]
+          }
+        ],
+        "unresolvedObligations": [],
+        "governingContext": [],
+        "review": {
+          "path": "verification/requirement-coverage-NREQ-662eca90789c91ae31177173980783dd-20261014-canonical-current-7083.json",
+          "sha256": "4c7ba59121e6470929094477d0c59ae370efa88deaf7ca48166e8056a70d273f"
+        }
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-b7e22bb7fad4a45b444f988e4eabca55",
+      "sourceLineSha256": "3d14033f2bcab6a74bb1206dc1ffc21a22450ac131f2d2fdb084c28d43c05623",
+      "atomicObligationSha256": "e796bf2def4ac2874865fd0c8d209e36a6844dbda2763430c479b94d5e9e99d8",
+      "checkIds": [
+        "canonical.prohibited-values-rejected"
+      ],
+      "scope": "Current-atom author declaration for closed-loop-canonical-json/1 rejects negative zero. Production hash.js canonical APIs and literal expected text/byte/rejection assertions in the normal verify-hash.mjs producer. Independent review and new frozen-input execution receipts are pending; no browser, storage, application-wide semantic-hash callsite, physical-device or release claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "fullCoverage": {
+        "schema": "closed-loop-full-requirement-coverage/1",
+        "sourceLineSha256": "3d14033f2bcab6a74bb1206dc1ffc21a22450ac131f2d2fdb084c28d43c05623",
+        "atomicObligationSha256": "e796bf2def4ac2874865fd0c8d209e36a6844dbda2763430c479b94d5e9e99d8",
+        "reviewedAtomicStatement": "closed-loop-canonical-json/1 rejects negative zero.",
+        "sourceSpans": [
+          {
+            "startByte": 151391,
+            "endByte": 151503,
+            "text": "- rejection of negative zero, NaN, Infinity, undefined, sparse holes, cyclic values, and implementation objects.",
+            "sha256": "3d14033f2bcab6a74bb1206dc1ffc21a22450ac131f2d2fdb084c28d43c05623"
+          }
+        ],
+        "contextSourceLocations": [
+          {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 2869,
+            "endLine": 2869,
+            "lineSha256": "774e4e8f76194d802466c7325360169af41c413cc053a82d83c1e1c9d69d8d40",
+            "controllingText": "34.1 Canonical serialization portability"
+          },
+          {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 2871,
+            "endLine": 2871,
+            "lineSha256": "15968ab6cfcb305b94e767f60e01fa39420bae94e6ae1edb6cfe288d3e347103",
+            "controllingText": "All canonical semantic hashes use closed-loop-canonical-json/1. Its implementation contract fixes:"
+          }
+        ],
+        "schemaOrRegistryEntry": "SPECIFICATION_SECTION_34.1",
+        "productionOwners": [
+          {
+            "path": "hash.js",
+            "symbol": "canonicalChunks / stableStringify / sha256ValueCold / sha256Chunks / hashRegistered / createSha256.updateText",
+            "sha256": "bc1c486855fa2096623b560cfc44b7c5d9e263040546921eb00f54e7f38b7420"
+          }
+        ],
+        "obligations": [
+          {
+            "id": "draft.canonical-json.reject-value.negative-zero",
+            "sourceText": "- rejection of negative zero, NaN, Infinity, undefined, sparse holes, cyclic values, and implementation objects.",
+            "expectedBehavior": "closed-loop-canonical-json/1 rejects negative zero.",
+            "checks": {
+              "deterministic": [
+                {
+                  "suite": "verify-hash.mjs",
+                  "checkId": "canonical.prohibited-values-rejected"
+                }
+              ],
+              "semantic": [],
+              "mutation": []
+            },
+            "nonapplicable": {
+              "semantic": "This atom defines mechanical serialization behavior, not an external actor meaning judgment. Governing canonical-json/1 context remains attached; other atomic behavior and application-wide usage require their own proof.",
+              "mutation": "This atom does not independently mandate a mutation-test role. Existing diagnostic fault controls are not relabeled as an independent mutation receipt."
+            },
+            "evidenceKinds": [
+              "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+            ]
+          }
+        ],
+        "unresolvedObligations": [],
+        "governingContext": [],
+        "review": {
+          "path": "verification/requirement-coverage-NREQ-b7e22bb7fad4a45b444f988e4eabca55-20261014-canonical-current-7083.json",
+          "sha256": "d14e860f10b6e21b9dbc252830cf954d722b0df12509a092b35a143ff870082e"
+        }
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-5d8520fcb9a6a88eae542e3a1f2fcfb9",
+      "sourceLineSha256": "3d14033f2bcab6a74bb1206dc1ffc21a22450ac131f2d2fdb084c28d43c05623",
+      "atomicObligationSha256": "a8ccfbdaead435c37418583bb5edbffdd25fc1c1c490249eeeef11cb4d5a03cd",
+      "checkIds": [
+        "canonical.prohibited-values-rejected"
+      ],
+      "scope": "Current-atom author declaration for closed-loop-canonical-json/1 rejects sparse holes. Production hash.js canonical APIs and literal expected text/byte/rejection assertions in the normal verify-hash.mjs producer. Independent review and new frozen-input execution receipts are pending; no browser, storage, application-wide semantic-hash callsite, physical-device or release claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "fullCoverage": {
+        "schema": "closed-loop-full-requirement-coverage/1",
+        "sourceLineSha256": "3d14033f2bcab6a74bb1206dc1ffc21a22450ac131f2d2fdb084c28d43c05623",
+        "atomicObligationSha256": "a8ccfbdaead435c37418583bb5edbffdd25fc1c1c490249eeeef11cb4d5a03cd",
+        "reviewedAtomicStatement": "closed-loop-canonical-json/1 rejects sparse holes.",
+        "sourceSpans": [
+          {
+            "startByte": 151391,
+            "endByte": 151503,
+            "text": "- rejection of negative zero, NaN, Infinity, undefined, sparse holes, cyclic values, and implementation objects.",
+            "sha256": "3d14033f2bcab6a74bb1206dc1ffc21a22450ac131f2d2fdb084c28d43c05623"
+          }
+        ],
+        "contextSourceLocations": [
+          {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 2869,
+            "endLine": 2869,
+            "lineSha256": "774e4e8f76194d802466c7325360169af41c413cc053a82d83c1e1c9d69d8d40",
+            "controllingText": "34.1 Canonical serialization portability"
+          },
+          {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 2871,
+            "endLine": 2871,
+            "lineSha256": "15968ab6cfcb305b94e767f60e01fa39420bae94e6ae1edb6cfe288d3e347103",
+            "controllingText": "All canonical semantic hashes use closed-loop-canonical-json/1. Its implementation contract fixes:"
+          }
+        ],
+        "schemaOrRegistryEntry": "SPECIFICATION_SECTION_34.1",
+        "productionOwners": [
+          {
+            "path": "hash.js",
+            "symbol": "canonicalChunks / stableStringify / sha256ValueCold / sha256Chunks / hashRegistered / createSha256.updateText",
+            "sha256": "bc1c486855fa2096623b560cfc44b7c5d9e263040546921eb00f54e7f38b7420"
+          }
+        ],
+        "obligations": [
+          {
+            "id": "draft.canonical-json.reject-value.sparse-holes",
+            "sourceText": "- rejection of negative zero, NaN, Infinity, undefined, sparse holes, cyclic values, and implementation objects.",
+            "expectedBehavior": "closed-loop-canonical-json/1 rejects sparse holes.",
+            "checks": {
+              "deterministic": [
+                {
+                  "suite": "verify-hash.mjs",
+                  "checkId": "canonical.prohibited-values-rejected"
+                }
+              ],
+              "semantic": [],
+              "mutation": []
+            },
+            "nonapplicable": {
+              "semantic": "This atom defines mechanical serialization behavior, not an external actor meaning judgment. Governing canonical-json/1 context remains attached; other atomic behavior and application-wide usage require their own proof.",
+              "mutation": "This atom does not independently mandate a mutation-test role. Existing diagnostic fault controls are not relabeled as an independent mutation receipt."
+            },
+            "evidenceKinds": [
+              "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+            ]
+          }
+        ],
+        "unresolvedObligations": [],
+        "governingContext": [],
+        "review": {
+          "path": "verification/requirement-coverage-NREQ-5d8520fcb9a6a88eae542e3a1f2fcfb9-20261014-canonical-current-7083.json",
+          "sha256": "24aa43a9f16129954b25200a60a64c158d0f17b537e98eaffd411574a13b4228"
+        }
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-046cf426431e0493fe8fc1b75d803617",
+      "sourceLineSha256": "3d14033f2bcab6a74bb1206dc1ffc21a22450ac131f2d2fdb084c28d43c05623",
+      "atomicObligationSha256": "569a2a80e5dc59b27a1eabc46834afc166a4f029f09d1a9ad5a7d6b05bcb1aab",
+      "checkIds": [
+        "canonical.prohibited-values-rejected"
+      ],
+      "scope": "Current-atom author declaration for closed-loop-canonical-json/1 rejects undefined. Production hash.js canonical APIs and literal expected text/byte/rejection assertions in the normal verify-hash.mjs producer. Independent review and new frozen-input execution receipts are pending; no browser, storage, application-wide semantic-hash callsite, physical-device or release claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "fullCoverage": {
+        "schema": "closed-loop-full-requirement-coverage/1",
+        "sourceLineSha256": "3d14033f2bcab6a74bb1206dc1ffc21a22450ac131f2d2fdb084c28d43c05623",
+        "atomicObligationSha256": "569a2a80e5dc59b27a1eabc46834afc166a4f029f09d1a9ad5a7d6b05bcb1aab",
+        "reviewedAtomicStatement": "closed-loop-canonical-json/1 rejects undefined.",
+        "sourceSpans": [
+          {
+            "startByte": 151391,
+            "endByte": 151503,
+            "text": "- rejection of negative zero, NaN, Infinity, undefined, sparse holes, cyclic values, and implementation objects.",
+            "sha256": "3d14033f2bcab6a74bb1206dc1ffc21a22450ac131f2d2fdb084c28d43c05623"
+          }
+        ],
+        "contextSourceLocations": [
+          {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 2869,
+            "endLine": 2869,
+            "lineSha256": "774e4e8f76194d802466c7325360169af41c413cc053a82d83c1e1c9d69d8d40",
+            "controllingText": "34.1 Canonical serialization portability"
+          },
+          {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 2871,
+            "endLine": 2871,
+            "lineSha256": "15968ab6cfcb305b94e767f60e01fa39420bae94e6ae1edb6cfe288d3e347103",
+            "controllingText": "All canonical semantic hashes use closed-loop-canonical-json/1. Its implementation contract fixes:"
+          }
+        ],
+        "schemaOrRegistryEntry": "SPECIFICATION_SECTION_34.1",
+        "productionOwners": [
+          {
+            "path": "hash.js",
+            "symbol": "canonicalChunks / stableStringify / sha256ValueCold / sha256Chunks / hashRegistered / createSha256.updateText",
+            "sha256": "bc1c486855fa2096623b560cfc44b7c5d9e263040546921eb00f54e7f38b7420"
+          }
+        ],
+        "obligations": [
+          {
+            "id": "draft.canonical-json.reject-value.undefined",
+            "sourceText": "- rejection of negative zero, NaN, Infinity, undefined, sparse holes, cyclic values, and implementation objects.",
+            "expectedBehavior": "closed-loop-canonical-json/1 rejects undefined.",
+            "checks": {
+              "deterministic": [
+                {
+                  "suite": "verify-hash.mjs",
+                  "checkId": "canonical.prohibited-values-rejected"
+                }
+              ],
+              "semantic": [],
+              "mutation": []
+            },
+            "nonapplicable": {
+              "semantic": "This atom defines mechanical serialization behavior, not an external actor meaning judgment. Governing canonical-json/1 context remains attached; other atomic behavior and application-wide usage require their own proof.",
+              "mutation": "This atom does not independently mandate a mutation-test role. Existing diagnostic fault controls are not relabeled as an independent mutation receipt."
+            },
+            "evidenceKinds": [
+              "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+            ]
+          }
+        ],
+        "unresolvedObligations": [],
+        "governingContext": [],
+        "review": {
+          "path": "verification/requirement-coverage-NREQ-046cf426431e0493fe8fc1b75d803617-20261014-canonical-current-7083.json",
+          "sha256": "923104597a9037bdaf9955f031d8142ecd75e504758de52b1d8b7b8c20e1676c"
+        }
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-853a934199459ed6bf419687ca08ba34",
+      "sourceLineSha256": "6cd002e410cce68e03f5b46b09436696f71111cd2df5ad887d8476e0083c3775",
+      "atomicObligationSha256": "45a921d85ea609e391338904d01f50bd4abd9c3734e138e6a16b5e26a891dfbb",
+      "checkIds": [
+        "canonical.unsigned-scalar-key-order"
+      ],
+      "scope": "Current-atom author declaration for closed-loop-canonical-json/1 fixes object-key ordering by unsigned Unicode scalar sequence. Production hash.js canonical APIs and literal expected text/byte/rejection assertions in the normal verify-hash.mjs producer. Independent review and new frozen-input execution receipts are pending; no browser, storage, application-wide semantic-hash callsite, physical-device or release claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "fullCoverage": {
+        "schema": "closed-loop-full-requirement-coverage/1",
+        "sourceLineSha256": "6cd002e410cce68e03f5b46b09436696f71111cd2df5ad887d8476e0083c3775",
+        "atomicObligationSha256": "45a921d85ea609e391338904d01f50bd4abd9c3734e138e6a16b5e26a891dfbb",
+        "reviewedAtomicStatement": "closed-loop-canonical-json/1 fixes object-key ordering by unsigned Unicode scalar sequence.",
+        "sourceSpans": [
+          {
+            "startByte": 151008,
+            "endByte": 151066,
+            "text": "- object-key ordering by unsigned Unicode scalar sequence;",
+            "sha256": "6cd002e410cce68e03f5b46b09436696f71111cd2df5ad887d8476e0083c3775"
+          }
+        ],
+        "contextSourceLocations": [
+          {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 2869,
+            "endLine": 2869,
+            "lineSha256": "774e4e8f76194d802466c7325360169af41c413cc053a82d83c1e1c9d69d8d40",
+            "controllingText": "34.1 Canonical serialization portability"
+          },
+          {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 2871,
+            "endLine": 2871,
+            "lineSha256": "15968ab6cfcb305b94e767f60e01fa39420bae94e6ae1edb6cfe288d3e347103",
+            "controllingText": "All canonical semantic hashes use closed-loop-canonical-json/1. Its implementation contract fixes:"
+          }
+        ],
+        "schemaOrRegistryEntry": "SPECIFICATION_SECTION_34.1",
+        "productionOwners": [
+          {
+            "path": "hash.js",
+            "symbol": "canonicalChunks / stableStringify / sha256ValueCold / sha256Chunks / hashRegistered / createSha256.updateText",
+            "sha256": "bc1c486855fa2096623b560cfc44b7c5d9e263040546921eb00f54e7f38b7420"
+          }
+        ],
+        "obligations": [
+          {
+            "id": "draft.canonical-json.object-key-ordering-by-unsigned-unicode-scalar-sequence",
+            "sourceText": "- object-key ordering by unsigned Unicode scalar sequence;",
+            "expectedBehavior": "closed-loop-canonical-json/1 fixes object-key ordering by unsigned Unicode scalar sequence.",
+            "checks": {
+              "deterministic": [
+                {
+                  "suite": "verify-hash.mjs",
+                  "checkId": "canonical.unsigned-scalar-key-order"
+                }
+              ],
+              "semantic": [],
+              "mutation": []
+            },
+            "nonapplicable": {
+              "semantic": "This atom defines mechanical serialization behavior, not an external actor meaning judgment. Governing canonical-json/1 context remains attached; other atomic behavior and application-wide usage require their own proof.",
+              "mutation": "This atom does not independently mandate a mutation-test role. Existing diagnostic fault controls are not relabeled as an independent mutation receipt."
+            },
+            "evidenceKinds": [
+              "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+            ]
+          }
+        ],
+        "unresolvedObligations": [],
+        "governingContext": [],
+        "review": {
+          "path": "verification/requirement-coverage-NREQ-853a934199459ed6bf419687ca08ba34-20261014-canonical-current-7083.json",
+          "sha256": "c7283fd0f75ab654580881826c04df77e5e4b307c2752da5aa86486e7e80520d"
+        }
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-636ebdfdf26f0c6df9d969321a522f19",
+      "sourceLineSha256": "03cb01d5ae34c69335090d3607bb7f3380f6e4eba8070ee4ffa5cba9cb32d751",
+      "atomicObligationSha256": "fbe803fbd0bf71ce716cfa90321650923c683fa6de87a264fb1b2085c566fc62",
+      "checkIds": [
+        "canonical.exact-string-scalars-and-lines"
+      ],
+      "scope": "Current-atom author declaration for closed-loop-canonical-json/1 exactly preserves string line endings. Production hash.js canonical APIs and literal expected text/byte/rejection assertions in the normal verify-hash.mjs producer. Independent review and new frozen-input execution receipts are pending; no browser, storage, application-wide semantic-hash callsite, physical-device or release claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "fullCoverage": {
+        "schema": "closed-loop-full-requirement-coverage/1",
+        "sourceLineSha256": "03cb01d5ae34c69335090d3607bb7f3380f6e4eba8070ee4ffa5cba9cb32d751",
+        "atomicObligationSha256": "fbe803fbd0bf71ce716cfa90321650923c683fa6de87a264fb1b2085c566fc62",
+        "reviewedAtomicStatement": "closed-loop-canonical-json/1 exactly preserves string line endings.",
+        "sourceSpans": [
+          {
+            "startByte": 151161,
+            "endByte": 151207,
+            "text": "- exact string scalar values and line endings;",
+            "sha256": "03cb01d5ae34c69335090d3607bb7f3380f6e4eba8070ee4ffa5cba9cb32d751"
+          }
+        ],
+        "contextSourceLocations": [
+          {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 2869,
+            "endLine": 2869,
+            "lineSha256": "774e4e8f76194d802466c7325360169af41c413cc053a82d83c1e1c9d69d8d40",
+            "controllingText": "34.1 Canonical serialization portability"
+          },
+          {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 2871,
+            "endLine": 2871,
+            "lineSha256": "15968ab6cfcb305b94e767f60e01fa39420bae94e6ae1edb6cfe288d3e347103",
+            "controllingText": "All canonical semantic hashes use closed-loop-canonical-json/1. Its implementation contract fixes:"
+          }
+        ],
+        "schemaOrRegistryEntry": "SPECIFICATION_SECTION_34.1",
+        "productionOwners": [
+          {
+            "path": "hash.js",
+            "symbol": "canonicalChunks / stableStringify / sha256ValueCold / sha256Chunks / hashRegistered / createSha256.updateText",
+            "sha256": "bc1c486855fa2096623b560cfc44b7c5d9e263040546921eb00f54e7f38b7420"
+          }
+        ],
+        "obligations": [
+          {
+            "id": "draft.canonical-json.strings.line-endings",
+            "sourceText": "- exact string scalar values and line endings;",
+            "expectedBehavior": "closed-loop-canonical-json/1 exactly preserves string line endings.",
+            "checks": {
+              "deterministic": [
+                {
+                  "suite": "verify-hash.mjs",
+                  "checkId": "canonical.exact-string-scalars-and-lines"
+                }
+              ],
+              "semantic": [],
+              "mutation": []
+            },
+            "nonapplicable": {
+              "semantic": "This atom defines mechanical serialization behavior, not an external actor meaning judgment. Governing canonical-json/1 context remains attached; other atomic behavior and application-wide usage require their own proof.",
+              "mutation": "This atom does not independently mandate a mutation-test role. Existing diagnostic fault controls are not relabeled as an independent mutation receipt."
+            },
+            "evidenceKinds": [
+              "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+            ]
+          }
+        ],
+        "unresolvedObligations": [],
+        "governingContext": [],
+        "review": {
+          "path": "verification/requirement-coverage-NREQ-636ebdfdf26f0c6df9d969321a522f19-20261014-canonical-current-7083.json",
+          "sha256": "caf90e1f05b6752f4a009402cce6e2feacc64efda5fab574f757c521e405adb7"
+        }
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-eecb88f846482530ebd5e963183f2711",
+      "sourceLineSha256": "03cb01d5ae34c69335090d3607bb7f3380f6e4eba8070ee4ffa5cba9cb32d751",
+      "atomicObligationSha256": "a02bbeb662b003f1aa2e9fcec1891aa13261483319d4ef33e92352ab9d6cfedb",
+      "checkIds": [
+        "canonical.exact-string-scalars-and-lines"
+      ],
+      "scope": "Current-atom author declaration for closed-loop-canonical-json/1 exactly preserves string scalar values. Production hash.js canonical APIs and literal expected text/byte/rejection assertions in the normal verify-hash.mjs producer. Independent review and new frozen-input execution receipts are pending; no browser, storage, application-wide semantic-hash callsite, physical-device or release claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "fullCoverage": {
+        "schema": "closed-loop-full-requirement-coverage/1",
+        "sourceLineSha256": "03cb01d5ae34c69335090d3607bb7f3380f6e4eba8070ee4ffa5cba9cb32d751",
+        "atomicObligationSha256": "a02bbeb662b003f1aa2e9fcec1891aa13261483319d4ef33e92352ab9d6cfedb",
+        "reviewedAtomicStatement": "closed-loop-canonical-json/1 exactly preserves string scalar values.",
+        "sourceSpans": [
+          {
+            "startByte": 151161,
+            "endByte": 151207,
+            "text": "- exact string scalar values and line endings;",
+            "sha256": "03cb01d5ae34c69335090d3607bb7f3380f6e4eba8070ee4ffa5cba9cb32d751"
+          }
+        ],
+        "contextSourceLocations": [
+          {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 2869,
+            "endLine": 2869,
+            "lineSha256": "774e4e8f76194d802466c7325360169af41c413cc053a82d83c1e1c9d69d8d40",
+            "controllingText": "34.1 Canonical serialization portability"
+          },
+          {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 2871,
+            "endLine": 2871,
+            "lineSha256": "15968ab6cfcb305b94e767f60e01fa39420bae94e6ae1edb6cfe288d3e347103",
+            "controllingText": "All canonical semantic hashes use closed-loop-canonical-json/1. Its implementation contract fixes:"
+          }
+        ],
+        "schemaOrRegistryEntry": "SPECIFICATION_SECTION_34.1",
+        "productionOwners": [
+          {
+            "path": "hash.js",
+            "symbol": "canonicalChunks / stableStringify / sha256ValueCold / sha256Chunks / hashRegistered / createSha256.updateText",
+            "sha256": "bc1c486855fa2096623b560cfc44b7c5d9e263040546921eb00f54e7f38b7420"
+          }
+        ],
+        "obligations": [
+          {
+            "id": "draft.canonical-json.strings.scalars",
+            "sourceText": "- exact string scalar values and line endings;",
+            "expectedBehavior": "closed-loop-canonical-json/1 exactly preserves string scalar values.",
+            "checks": {
+              "deterministic": [
+                {
+                  "suite": "verify-hash.mjs",
+                  "checkId": "canonical.exact-string-scalars-and-lines"
+                }
+              ],
+              "semantic": [],
+              "mutation": []
+            },
+            "nonapplicable": {
+              "semantic": "This atom defines mechanical serialization behavior, not an external actor meaning judgment. Governing canonical-json/1 context remains attached; other atomic behavior and application-wide usage require their own proof.",
+              "mutation": "This atom does not independently mandate a mutation-test role. Existing diagnostic fault controls are not relabeled as an independent mutation receipt."
+            },
+            "evidenceKinds": [
+              "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+            ]
+          }
+        ],
+        "unresolvedObligations": [],
+        "governingContext": [],
+        "review": {
+          "path": "verification/requirement-coverage-NREQ-eecb88f846482530ebd5e963183f2711-20261014-canonical-current-7083.json",
+          "sha256": "fbe565e2a692c4c9dd4ae64b3c698d8b56333ad6c60a43fde0119e88273f8553"
+        }
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-dba22c5f93e4359c4b7d4ebdd9799dbf",
+      "sourceLineSha256": "6ceea161cf4fc12d52f66189110a6aae635278efe3442751a653794c8e81c68f",
+      "atomicObligationSha256": "76a5c483081ff3243f1bb69a83b3e3ee597dafabcd34adda7b25fcc861df7a42",
+      "checkIds": [
+        "canonical.exact-json-escapes"
+      ],
+      "scope": "Current-atom author declaration for closed-loop-canonical-json/1 fixes JSON escapes `\\\"`, `\\\\`, `\\b`, `\\f`, `\\n`, `\\r`, and `\\t`, with every other U+0000 through U+001F emitted as lowercase `\\u00xx`. Production hash.js canonical APIs and literal expected text/byte/rejection assertions in the normal verify-hash.mjs producer. Independent review and new frozen-input execution receipts are pending; no browser, storage, application-wide semantic-hash callsite, physical-device or release claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "fullCoverage": {
+        "schema": "closed-loop-full-requirement-coverage/1",
+        "sourceLineSha256": "6ceea161cf4fc12d52f66189110a6aae635278efe3442751a653794c8e81c68f",
+        "atomicObligationSha256": "76a5c483081ff3243f1bb69a83b3e3ee597dafabcd34adda7b25fcc861df7a42",
+        "reviewedAtomicStatement": "closed-loop-canonical-json/1 fixes JSON escapes `\\\"`, `\\\\`, `\\b`, `\\f`, `\\n`, `\\r`, and `\\t`, with every other U+0000 through U+001F emitted as lowercase `\\u00xx`.",
+        "sourceSpans": [
+          {
+            "startByte": 151208,
+            "endByte": 151338,
+            "text": "- JSON escapes `\\\"`, `\\\\`, `\\b`, `\\f`, `\\n`, `\\r`, and `\\t`, with every other U+0000 through U+001F emitted as lowercase `\\u00xx`;",
+            "sha256": "6ceea161cf4fc12d52f66189110a6aae635278efe3442751a653794c8e81c68f"
+          }
+        ],
+        "contextSourceLocations": [
+          {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 2869,
+            "endLine": 2869,
+            "lineSha256": "774e4e8f76194d802466c7325360169af41c413cc053a82d83c1e1c9d69d8d40",
+            "controllingText": "34.1 Canonical serialization portability"
+          },
+          {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 2871,
+            "endLine": 2871,
+            "lineSha256": "15968ab6cfcb305b94e767f60e01fa39420bae94e6ae1edb6cfe288d3e347103",
+            "controllingText": "All canonical semantic hashes use closed-loop-canonical-json/1. Its implementation contract fixes:"
+          }
+        ],
+        "schemaOrRegistryEntry": "SPECIFICATION_SECTION_34.1",
+        "productionOwners": [
+          {
+            "path": "hash.js",
+            "symbol": "canonicalChunks / stableStringify / sha256ValueCold / sha256Chunks / hashRegistered / createSha256.updateText",
+            "sha256": "bc1c486855fa2096623b560cfc44b7c5d9e263040546921eb00f54e7f38b7420"
+          }
+        ],
+        "obligations": [
+          {
+            "id": "draft.canonical-json.json-escapes-b-f-n-r-and-t-with-every-other-u-0000-through-u-001f-emitted-as-lowercase-u00xx",
+            "sourceText": "- JSON escapes `\\\"`, `\\\\`, `\\b`, `\\f`, `\\n`, `\\r`, and `\\t`, with every other U+0000 through U+001F emitted as lowercase `\\u00xx`;",
+            "expectedBehavior": "closed-loop-canonical-json/1 fixes JSON escapes `\\\"`, `\\\\`, `\\b`, `\\f`, `\\n`, `\\r`, and `\\t`, with every other U+0000 through U+001F emitted as lowercase `\\u00xx`.",
+            "checks": {
+              "deterministic": [
+                {
+                  "suite": "verify-hash.mjs",
+                  "checkId": "canonical.exact-json-escapes"
+                }
+              ],
+              "semantic": [],
+              "mutation": []
+            },
+            "nonapplicable": {
+              "semantic": "This atom defines mechanical serialization behavior, not an external actor meaning judgment. Governing canonical-json/1 context remains attached; other atomic behavior and application-wide usage require their own proof.",
+              "mutation": "This atom does not independently mandate a mutation-test role. Existing diagnostic fault controls are not relabeled as an independent mutation receipt."
+            },
+            "evidenceKinds": [
+              "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+            ]
+          }
+        ],
+        "unresolvedObligations": [],
+        "governingContext": [],
+        "review": {
+          "path": "verification/requirement-coverage-NREQ-dba22c5f93e4359c4b7d4ebdd9799dbf-20261014-canonical-current-7083.json",
+          "sha256": "b088ccd7eefb41015d75110a74cd2434a5c744a02b64de4f6f43497dda000f08"
+        }
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-27f437fe3040767de849d06a48cdb3c3",
+      "sourceLineSha256": "4055a25ae67a9030286ac3c68bbfcee52e77841001c6782c34eb9b62fdfff8c3",
+      "atomicObligationSha256": "212e2123130c73ee6e2b5a456a95c6b1b27c9dac76f4048f1b5f93648ddc2be9",
+      "checkIds": [
+        "canonical.printable-nonascii-unescaped"
+      ],
+      "scope": "Current-atom author declaration for closed-loop-canonical-json/1 fixes no escaping of printable non-ASCII scalar values. Production hash.js canonical APIs and literal expected text/byte/rejection assertions in the normal verify-hash.mjs producer. Independent review and new frozen-input execution receipts are pending; no browser, storage, application-wide semantic-hash callsite, physical-device or release claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "fullCoverage": {
+        "schema": "closed-loop-full-requirement-coverage/1",
+        "sourceLineSha256": "4055a25ae67a9030286ac3c68bbfcee52e77841001c6782c34eb9b62fdfff8c3",
+        "atomicObligationSha256": "212e2123130c73ee6e2b5a456a95c6b1b27c9dac76f4048f1b5f93648ddc2be9",
+        "reviewedAtomicStatement": "closed-loop-canonical-json/1 fixes no escaping of printable non-ASCII scalar values.",
+        "sourceSpans": [
+          {
+            "startByte": 151339,
+            "endByte": 151390,
+            "text": "- no escaping of printable non-ASCII scalar values;",
+            "sha256": "4055a25ae67a9030286ac3c68bbfcee52e77841001c6782c34eb9b62fdfff8c3"
+          }
+        ],
+        "contextSourceLocations": [
+          {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 2869,
+            "endLine": 2869,
+            "lineSha256": "774e4e8f76194d802466c7325360169af41c413cc053a82d83c1e1c9d69d8d40",
+            "controllingText": "34.1 Canonical serialization portability"
+          },
+          {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 2871,
+            "endLine": 2871,
+            "lineSha256": "15968ab6cfcb305b94e767f60e01fa39420bae94e6ae1edb6cfe288d3e347103",
+            "controllingText": "All canonical semantic hashes use closed-loop-canonical-json/1. Its implementation contract fixes:"
+          }
+        ],
+        "schemaOrRegistryEntry": "SPECIFICATION_SECTION_34.1",
+        "productionOwners": [
+          {
+            "path": "hash.js",
+            "symbol": "canonicalChunks / stableStringify / sha256ValueCold / sha256Chunks / hashRegistered / createSha256.updateText",
+            "sha256": "bc1c486855fa2096623b560cfc44b7c5d9e263040546921eb00f54e7f38b7420"
+          }
+        ],
+        "obligations": [
+          {
+            "id": "draft.canonical-json.no-escaping-of-printable-non-ascii-scalar-values",
+            "sourceText": "- no escaping of printable non-ASCII scalar values;",
+            "expectedBehavior": "closed-loop-canonical-json/1 fixes no escaping of printable non-ASCII scalar values.",
+            "checks": {
+              "deterministic": [
+                {
+                  "suite": "verify-hash.mjs",
+                  "checkId": "canonical.printable-nonascii-unescaped"
+                }
+              ],
+              "semantic": [],
+              "mutation": []
+            },
+            "nonapplicable": {
+              "semantic": "This atom defines mechanical serialization behavior, not an external actor meaning judgment. Governing canonical-json/1 context remains attached; other atomic behavior and application-wide usage require their own proof.",
+              "mutation": "This atom does not independently mandate a mutation-test role. Existing diagnostic fault controls are not relabeled as an independent mutation receipt."
+            },
+            "evidenceKinds": [
+              "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+            ]
+          }
+        ],
+        "unresolvedObligations": [],
+        "governingContext": [],
+        "review": {
+          "path": "verification/requirement-coverage-NREQ-27f437fe3040767de849d06a48cdb3c3-20261014-canonical-current-7083.json",
+          "sha256": "b15c3f57e6961ac8468ee3a4dd0a34e9a12bcb979df413a53c6ead4b698926a8"
+        }
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-be0ecfa19d607c0df242b048d6ef63bf",
+      "sourceLineSha256": "0b0f1de963804c1eeb888da7a2b2e1b818c703823a3e117b4eccd6ed3f8f3a07",
+      "atomicObligationSha256": "b718ee00fc5e2f56622c8ee675e00e0151c8323bd9a30d38aa1f58b20b1e42c8",
+      "checkIds": [
+        "canonical.utf8-no-bom-byte-routes"
+      ],
+      "scope": "Current-atom author declaration for closed-loop-canonical-json/1 fixes UTF-8 without BOM. Production hash.js canonical APIs and literal expected text/byte/rejection assertions in the normal verify-hash.mjs producer. Independent review and new frozen-input execution receipts are pending; no browser, storage, application-wide semantic-hash callsite, physical-device or release claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "fullCoverage": {
+        "schema": "closed-loop-full-requirement-coverage/1",
+        "sourceLineSha256": "0b0f1de963804c1eeb888da7a2b2e1b818c703823a3e117b4eccd6ed3f8f3a07",
+        "atomicObligationSha256": "b718ee00fc5e2f56622c8ee675e00e0151c8323bd9a30d38aa1f58b20b1e42c8",
+        "reviewedAtomicStatement": "closed-loop-canonical-json/1 fixes UTF-8 without BOM.",
+        "sourceSpans": [
+          {
+            "startByte": 150836,
+            "endByte": 150856,
+            "text": "- UTF-8 without BOM;",
+            "sha256": "0b0f1de963804c1eeb888da7a2b2e1b818c703823a3e117b4eccd6ed3f8f3a07"
+          }
+        ],
+        "contextSourceLocations": [
+          {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 2869,
+            "endLine": 2869,
+            "lineSha256": "774e4e8f76194d802466c7325360169af41c413cc053a82d83c1e1c9d69d8d40",
+            "controllingText": "34.1 Canonical serialization portability"
+          },
+          {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 2871,
+            "endLine": 2871,
+            "lineSha256": "15968ab6cfcb305b94e767f60e01fa39420bae94e6ae1edb6cfe288d3e347103",
+            "controllingText": "All canonical semantic hashes use closed-loop-canonical-json/1. Its implementation contract fixes:"
+          }
+        ],
+        "schemaOrRegistryEntry": "SPECIFICATION_SECTION_34.1",
+        "productionOwners": [
+          {
+            "path": "hash.js",
+            "symbol": "canonicalChunks / stableStringify / sha256ValueCold / sha256Chunks / hashRegistered / createSha256.updateText",
+            "sha256": "bc1c486855fa2096623b560cfc44b7c5d9e263040546921eb00f54e7f38b7420"
+          }
+        ],
+        "obligations": [
+          {
+            "id": "draft.canonical-json.utf-8-without-bom",
+            "sourceText": "- UTF-8 without BOM;",
+            "expectedBehavior": "closed-loop-canonical-json/1 fixes UTF-8 without BOM.",
+            "checks": {
+              "deterministic": [
+                {
+                  "suite": "verify-hash.mjs",
+                  "checkId": "canonical.utf8-no-bom-byte-routes"
+                }
+              ],
+              "semantic": [],
+              "mutation": []
+            },
+            "nonapplicable": {
+              "semantic": "This atom defines mechanical serialization behavior, not an external actor meaning judgment. Governing canonical-json/1 context remains attached; other atomic behavior and application-wide usage require their own proof.",
+              "mutation": "This atom does not independently mandate a mutation-test role. Existing diagnostic fault controls are not relabeled as an independent mutation receipt."
+            },
+            "evidenceKinds": [
+              "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+            ]
+          }
+        ],
+        "unresolvedObligations": [],
+        "governingContext": [],
+        "review": {
+          "path": "verification/requirement-coverage-NREQ-be0ecfa19d607c0df242b048d6ef63bf-20261014-canonical-current-7083.json",
+          "sha256": "0a3c337258c7b981b128551ba4e66b16f98e9c489b56eaa66ff2c48836eace1d"
+        }
+      }
     }
   ],
   "contractRefs": [
