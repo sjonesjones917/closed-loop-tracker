@@ -1394,7 +1394,7 @@
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "/root/repair_iteration_receipt_dependencies",
-    "lastInspectedAt": "2026-10-14T22:13:52Z",
+    "lastInspectedAt": "2026-10-14T22:28:04Z",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -3185,18 +3185,35 @@
       "outputDirectory": "/workspace/shared/clrt-iteration-repair-evidence/resume197-default-after-stage12-r2",
       "checksDirectory": "/workspace/shared/clrt-iteration-repair-evidence/resume197-default-checks-r2",
       "originalExpiry": "2026-10-14T23:51:57.972Z",
-      "latestBoundary": "initial-restored-public-cold-before-stage13",
-      "canonicalProjectSha256": "cab39f7eaa7a085421c4ac549fb34bccf77c33e5453ec27e9bd672351a81d1ec",
+      "latestBoundary": "before-stage21-product",
+      "canonicalProjectSha256": "0ddb6fc77407b9f69bb0cac85b8d95aa4b19dbf76625ef75702762c8a307c60b",
       "newIsolatedAdapterRevision": 0,
       "newIsolatedAdapterProjectSha256": "131df8763ea36fcd6a0ae5aa25e72acaf1c5454fb4beaed24911f4abc4f10931",
       "fullJourneyExecution": false,
       "initialWrapperFailure": "Preserved exit1 before lifecycle: missing --approved-pins-sha. Corrected only wrapper argument/new output paths.",
-      "formalSharedStage29": "PENDING; optional original producer guard remains unchanged and output disabled for partial continuation."
+      "formalSharedStage29": "PENDING; optional original producer guard remains unchanged and output disabled for partial continuation.",
+      "latestBoundaryAt": "2026-10-14T22:27:39.821Z",
+      "actualCompletedResumedStages": [
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      ]
     },
     "pendingReviewedCommits": {
       "catalog15": "5a4d515554c148d984afb3dad95972ede39b8aa6",
       "stage05DiagnosticStream": "ccf15814dc47c1b34d258e3e98efea55b3f1fefe",
       "status": "Independent static/targeted review accepted; isolated pending coherent integration and genuine owner outputs."
+    },
+    "reproducibleProjection12CheckoutReclamation": {
+      "manifest": "/workspace/shared/clrt-iteration-repair-evidence/reclaim-projection12-checkout-20261014-2221.json",
+      "removedBytes": 525355149,
+      "uniqueEvidencePreserved": true,
+      "ownerReleaseConfirmedBy": "align_projection_catalog_consumers via root22:19"
     }
   }
 }
