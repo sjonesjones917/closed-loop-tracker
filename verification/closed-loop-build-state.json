@@ -1390,11 +1390,11 @@
     "startingSourceCommit": "7df5f46e9a7e54da09622387a978badb39916c09",
     "startingMainCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
     "integrationBranch": "dot/published-execution-20261014",
-    "integrationCommit": "a3003e453e01ef566715b462ae9ae673572cc8b2",
+    "integrationCommit": "54cd9edbb8dc05b19a3cff4563457fd6244bff80",
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "dot",
-    "lastInspectedAt": "2026-10-14T04:56:42Z",
+    "lastInspectedAt": "2026-10-14T05:09:23Z",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -1698,17 +1698,18 @@
       {
         "id": "implement_atomic_manifest_support",
         "owner": "/root/implement_atomic_manifest_support",
-        "state": "RUNNING",
+        "state": "INTEGRATED",
         "scope": "Existing governance/proof-consumer support for same-line atomic obligations; no runtime changes",
         "evidencePath": null,
         "host": "dot cloud workspace",
-        "lastInspectedAt": "2026-10-14T04:56:42Z",
+        "lastInspectedAt": "2026-10-14T05:09:23Z",
         "inputSpecificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
         "returnTo": "/root",
         "concurrencyAllocation": 1,
         "writeScope": "Own isolated artifacts or assigned atomic implementation worktree; no root ledger writes",
         "dependencies": [],
-        "evidence": "Author reports 40 focused controls passing; 19 unchanged base governance controls. Frozen commit and independent review pending; stale evidence remains invalid."
+        "evidence": "Independent ACCEPT after three reproduced defects corrected; integrated53focused controls and source suites PASS, source-only generation /11; full governance still rejects incomplete atomic reconciliation.",
+        "commit": "b2875a65bde4d1aec37b5b35108a4281ecf3a326"
       },
       {
         "id": "reconcile_atomic_requirement_entries",
@@ -1772,16 +1773,18 @@
       {
         "id": "review_atomic_manifest_implementation",
         "owner": "/root/review_atomic_manifest_implementation",
-        "state": "IN_REVIEW",
+        "state": "VERIFIED",
         "scope": "Independent review against frozen pre-inspection expectations; awaiting author commit",
         "host": "dot cloud workspace",
         "writeScope": "Own isolated evidence only",
-        "lastInspectedAt": "2026-10-14T05:01:57Z",
+        "lastInspectedAt": "2026-10-14T05:09:23Z",
         "inputSpecificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
         "returnTo": "/root",
         "concurrencyAllocation": 1,
         "dependencies": [],
-        "evidence": "Independent challenge reproduced two defects in e311c47f: new context-only atom rejected by generator; partial span accepted as full proof. Author corrections running; not accepted."
+        "evidence": "Bounded code ACCEPT, not app acceptance. Independent15atom/context+8path+53focused+24external-proof controls; runtime unchanged.",
+        "evidencePath": "verification/dot-execution-20261014/atomic-review/final-review.txt",
+        "evidenceSha256": "3f748b44b274c21cfa3ea19f9c7484c8a524ad3e16e6ebccee621ba844b408bc"
       }
     ],
     "resources": {

@@ -1,7 +1,7 @@
 {
   "schema": "closed-loop-normative-requirements/1",
-  "manifestIdentity": "NRM-fde1b4c0ab59b61ccda25e11237a2061",
-  "generatorVersion": "closed-loop-governance-generator/10",
+  "manifestIdentity": "NRM-ade192b9c558a2af3daeee288bb6be39",
+  "generatorVersion": "closed-loop-governance-generator/11",
   "contractProfileId": "closed-loop-completion-profile/1",
   "sourceCommit": "b2f06cdec1a8185714fe3e01ac2a5d1e92aa348f",
   "specificationPath": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
@@ -231667,6 +231667,9 @@
     }
   ],
   "omissionChallenge": {
+    "atomicExtraction": {
+      "status": "PENDING"
+    },
     "sourceTraceScope": "Existing manifest source-clause coverage only. A source line can contain several conjunctive obligations; trace count is not a count of independently proved atomic obligations or a completion percentage. The generated one authoritative manifest and registry proofs still require their own current acceptance relationships.",
     "unresolvedContractFindings": [
       {
@@ -231845,7 +231848,7 @@
     "independentReviewStatus": "SEMANTIC_SOURCE_PASS",
     "reconciliationStatus": "ACCEPTED",
     "independentReviewerIdentity": "e5821fbce9dc82ebf31cfde0767bb869c26c6ecd30c86fbd55d543eb8a94f429",
-    "mechanicalReviewerIdentity": "d92a68cf3610fcf15c2db6874ffb78a4f4cfcc67b22f20cba9e9f47d1fda82e6",
+    "mechanicalReviewerIdentity": "6a7fab5e3b8303f8dfa63133f9a92e9dcfd7b307443256deb13c6f39e42b3eb5",
     "sourceClauseReview": {
       "path": "specification/source-clause-review.json",
       "sha256": "3d1cf70901cfa3882756b5e9c47083c0c271d54c040b2b012d1cd639ee148473",
@@ -233567,5 +233570,5 @@
       "status": "ACCEPTED"
     }
   },
-  "manifestSha256": "ba4b980bab0993d6fce6ff5c6f1380c28bb46430e20f8e312908bfc33d3af9de"
+  "manifestSha256": "27e4d92422c6411e1bb891da20dfe726f2f8bff8b9d55eaa6d469c6ad56bbd0e"
 }
