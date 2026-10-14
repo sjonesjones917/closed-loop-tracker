@@ -1,0 +1,11 @@
+[
+  {
+    "at": "2026-10-14T11:43:06.871498+00:00",
+    "path": "/workspace/shared/clrt-review-receipt-label",
+    "commit": "2853596656e211952c65acdb0d82b6b3e68d467f",
+    "status": "CLEAN_INACTIVE_CONFIRMED_BY_OWNER",
+    "reviewEvidenceCommit": "1cb5f2d9197732c85b98fe26c283ffb39121b1d0",
+    "uniqueEvidenceOutsideCheckout": true,
+    "restoreCommand": "git worktree add --detach /workspace/shared/clrt-review-receipt-label 2853596656e211952c65acdb0d82b6b3e68d467f"
+  }
+]
