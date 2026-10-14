@@ -1378,7 +1378,7 @@
     "suppliedSpecification": {
       "sha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
       "byteLength": 309482,
-      "status": "EXACT_SOURCE_AND_SOURCE_ONLY_PIPELINE_INTEGRATED_LOCALLY_ATOMIC_COMPLETENESS_BLOCKED",
+      "status": "EXACT_SOURCE_WITH_RECONCILED_ATOMIC_INVENTORY_INTEGRATED_LOCALLY",
       "repositorySourcePreservedAt": "7df5f46e9a7e54da09622387a978badb39916c09",
       "repositorySpecificationSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
       "repositorySpecificationByteLength": 342110
@@ -1390,11 +1390,11 @@
     "startingSourceCommit": "7df5f46e9a7e54da09622387a978badb39916c09",
     "startingMainCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
     "integrationBranch": "dot/published-execution-20261014",
-    "integrationCommit": "182db45517d46f7e11e15cff1cfdc41ec001a1a1",
+    "integrationCommit": "4ef945c09e334ee05322ffeeefeefee2c3e9495b",
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "dot",
-    "lastInspectedAt": "2026-10-14T06:36:04Z",
+    "lastInspectedAt": "2026-10-14T06:52:08.337887Z",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -1622,77 +1622,79 @@
       {
         "id": "draft-atomic-prefix",
         "owner": "/root/extract_distinct_normative_obligations",
-        "state": "BLOCKED",
+        "state": "VERIFIED",
         "scope": "Partial draft sections0\u201314 retained; remaining ranges assigned separately",
-        "evidencePath": "/workspace/shared/clrt-atomic-draft-coverage-report.txt",
+        "evidencePath": "verification/dot-execution-20261014/atomic-final/clrt-atomic-final-evidence-replay.json",
         "host": "dot cloud workspace",
-        "lastInspectedAt": "2026-10-14T04:43:27Z",
-        "inputSpecificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
-        "returnTo": "/root",
-        "concurrencyAllocation": 1,
-        "writeScope": "Own isolated artifacts or assigned atomic implementation worktree; no root ledger writes",
-        "dependencies": []
-      },
-      {
-        "id": "blind-atomic-prefix",
-        "owner": "/root/challenge_distinct_obligation_coverage",
-        "state": "BLOCKED",
-        "scope": "Partial blind coverage through36 retained; tail assigned separately",
-        "evidencePath": "/workspace/shared/clrt-atomic-blind-review.json",
-        "host": "dot cloud workspace",
-        "lastInspectedAt": "2026-10-14T04:43:27Z",
-        "inputSpecificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
-        "returnTo": "/root",
-        "concurrencyAllocation": 1,
-        "writeScope": "Own isolated artifacts or assigned atomic implementation worktree; no root ledger writes",
-        "dependencies": []
-      },
-      {
-        "id": "extract_obligations_sections_15_36",
-        "owner": "/root/extract_obligations_sections_15_36",
-        "state": "IN_REVIEW",
-        "scope": "Draft source obligations15\u201336",
-        "evidencePath": "/workspace/shared/clrt-atomic-draft-sections-15-36.json",
-        "host": "dot cloud workspace",
-        "lastInspectedAt": "2026-10-14T04:56:42Z",
+        "lastInspectedAt": "2026-10-14T06:49:25.113704Z",
         "inputSpecificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
         "returnTo": "/root",
         "concurrencyAllocation": 1,
         "writeScope": "Own isolated artifacts or assigned atomic implementation worktree; no root ledger writes",
         "dependencies": [],
-        "evidence": "Frozen 2022 provisional propositions; all assigned lines read. Semantic reconciliation pending.",
+        "evidence": "Actual final source-only extraction and distinct reconciliation dependency closure verified and integrated at7897aafd. No implementation conformance inferred."
+      },
+      {
+        "id": "blind-atomic-prefix",
+        "owner": "/root/challenge_distinct_obligation_coverage",
+        "state": "VERIFIED",
+        "scope": "Partial blind coverage through36 retained; tail assigned separately",
+        "evidencePath": "verification/dot-execution-20261014/atomic-final/clrt-atomic-final-evidence-replay.json",
+        "host": "dot cloud workspace",
+        "lastInspectedAt": "2026-10-14T06:49:25.113704Z",
+        "inputSpecificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+        "returnTo": "/root",
+        "concurrencyAllocation": 1,
+        "writeScope": "Own isolated artifacts or assigned atomic implementation worktree; no root ledger writes",
+        "dependencies": [],
+        "evidence": "Actual final source-only extraction and distinct reconciliation dependency closure verified and integrated at7897aafd. No implementation conformance inferred."
+      },
+      {
+        "id": "extract_obligations_sections_15_36",
+        "owner": "/root/extract_obligations_sections_15_36",
+        "state": "VERIFIED",
+        "scope": "Draft source obligations15\u201336",
+        "evidencePath": "verification/dot-execution-20261014/atomic-final/clrt-atomic-final-evidence-replay.json",
+        "host": "dot cloud workspace",
+        "lastInspectedAt": "2026-10-14T06:49:25.113704Z",
+        "inputSpecificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+        "returnTo": "/root",
+        "concurrencyAllocation": 1,
+        "writeScope": "Own isolated artifacts or assigned atomic implementation worktree; no root ledger writes",
+        "dependencies": [],
+        "evidence": "Actual final source-only extraction and distinct reconciliation dependency closure verified and integrated at7897aafd. No implementation conformance inferred.",
         "evidenceSha256": "5a679b8d00fe7de43db7573bd343f98ef5a6607cc9221d1ed1f54cb4dfab40c2"
       },
       {
         "id": "extract_obligations_sections_37_52",
         "owner": "/root/extract_obligations_sections_37_52",
-        "state": "IN_REVIEW",
+        "state": "VERIFIED",
         "scope": "Draft source obligations37\u201352",
-        "evidencePath": "/workspace/shared/clrt-atomic-draft-sections-37-52.json",
+        "evidencePath": "verification/dot-execution-20261014/atomic-final/clrt-atomic-final-evidence-replay.json",
         "host": "dot cloud workspace",
-        "lastInspectedAt": "2026-10-14T04:56:42Z",
+        "lastInspectedAt": "2026-10-14T06:49:25.113704Z",
         "inputSpecificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
         "returnTo": "/root",
         "concurrencyAllocation": 1,
         "writeScope": "Own isolated artifacts or assigned atomic implementation worktree; no root ledger writes",
         "dependencies": [],
-        "evidence": "Frozen 3726 provisional candidates; whole assigned source read. Semantic reconciliation pending.",
+        "evidence": "Actual final source-only extraction and distinct reconciliation dependency closure verified and integrated at7897aafd. No implementation conformance inferred.",
         "evidenceSha256": "c17f52accfc98ebb7b1bfaebc14b13b768e2d953842c22765ec72bfaa82c72b6"
       },
       {
         "id": "complete_blind_atomic_review",
         "owner": "/root/complete_blind_atomic_review",
-        "state": "IN_REVIEW",
+        "state": "VERIFIED",
         "scope": "Complete independent blind source coverage37\u201352",
-        "evidencePath": "/workspace/shared/clrt-atomic-blind-review-tail.json",
+        "evidencePath": "verification/dot-execution-20261014/atomic-final/clrt-atomic-final-evidence-replay.json",
         "host": "dot cloud workspace",
-        "lastInspectedAt": "2026-10-14T04:56:42Z",
+        "lastInspectedAt": "2026-10-14T06:49:25.113704Z",
         "inputSpecificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
         "returnTo": "/root",
         "concurrencyAllocation": 1,
         "writeScope": "Own isolated artifacts or assigned atomic implementation worktree; no root ledger writes",
         "dependencies": [],
-        "evidence": "Frozen 2940 candidate occurrences; independent tail pass complete. Reconciliation pending.",
+        "evidence": "Actual final source-only extraction and distinct reconciliation dependency closure verified and integrated at7897aafd. No implementation conformance inferred.",
         "evidenceSha256": "232ab7a16ccb4464251e9bb48b0ca2d6f61837fe3705daf1c2da79cce089e37a"
       },
       {
@@ -1714,17 +1716,17 @@
       {
         "id": "reconcile_atomic_requirement_entries",
         "owner": "/root/reconcile_atomic_requirement_entries",
-        "state": "RUNNING",
+        "state": "VERIFIED",
         "scope": "Distinct proposition reconciliation, starting completed0\u201314 prefix",
-        "evidencePath": "/workspace/shared/clrt-atomic-reconciliation-prefix.json",
+        "evidencePath": "verification/dot-execution-20261014/atomic-final/clrt-atomic-final-evidence-replay.json",
         "host": "dot cloud workspace",
-        "lastInspectedAt": "2026-10-14T04:56:42Z",
+        "lastInspectedAt": "2026-10-14T06:49:25.113704Z",
         "inputSpecificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
         "returnTo": "/root",
         "concurrencyAllocation": 1,
         "writeScope": "Own isolated artifacts or assigned atomic implementation worktree; no root ledger writes",
         "dependencies": [],
-        "evidence": "Prefix mapped provisionally, whole-source closure pending. Middle comparison ongoing; tail parallelized separately.",
+        "evidence": "Actual final source-only extraction and distinct reconciliation dependency closure verified and integrated at7897aafd. No implementation conformance inferred.",
         "evidenceSha256": "acf4843784d05ec32b3c1db234dd196adec996e6d736ed2251c584ae2c3cf25b"
       },
       {
@@ -1746,15 +1748,17 @@
       {
         "id": "reconcile_tail_requirement_entries",
         "owner": "/root/reconcile_tail_requirement_entries",
-        "state": "RUNNING",
+        "state": "VERIFIED",
         "scope": "Source-only reconciliation sections 37\u201352, final cross-section closure owned by primary reconciler",
         "host": "dot cloud workspace",
         "writeScope": "Own isolated evidence only",
-        "lastInspectedAt": "2026-10-14T04:56:42Z",
+        "lastInspectedAt": "2026-10-14T06:49:25.113704Z",
         "inputSpecificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
         "returnTo": "/root",
         "concurrencyAllocation": 1,
-        "dependencies": []
+        "dependencies": [],
+        "evidence": "Actual final source-only extraction and distinct reconciliation dependency closure verified and integrated at7897aafd. No implementation conformance inferred.",
+        "evidencePath": "verification/dot-execution-20261014/atomic-final/clrt-atomic-final-evidence-replay.json"
       },
       {
         "id": "revise_minimal_contract_amendment",
@@ -1820,12 +1824,12 @@
         "id": "test_integrated_runtime_baseline",
         "owner": "/root/test_integrated_runtime_baseline",
         "state": "RUNNING",
-        "scope": "Pinned required CI runtime diagnostics; bounded verify-complete Stage11 fixture provenance correction if demonstrated",
+        "scope": "Actual required CI runtime diagnostics, real-lifecycle Stage11 fixture correction, bounded Stage05 derived-reference projection and central candidate hash validity repairs with separate independent review",
         "baseCommit": "eb3e7804a23b1738eed523beffd8603b51d89b6d",
-        "writeScope": "Own isolated worktree; fixture-only author change or independent evidence; no runtime/source/ledger mutation",
+        "writeScope": "Own isolated assigned runtime/helper/verifier scope; no source, root integration or ledger writes",
         "dependencies": [],
         "host": "dot cloud workspace",
-        "lastInspectedAt": "2026-10-14T06:13:10Z",
+        "lastInspectedAt": "2026-10-14T06:49:25.113704Z",
         "returnTo": "/root",
         "concurrencyAllocation": 1
       },
@@ -1833,14 +1837,36 @@
         "id": "review_runtime_fixture_correction",
         "owner": "/root/review_runtime_fixture_correction",
         "state": "RUNNING",
-        "scope": "Independent pre-patch expectations and review of actual accepted synthetic fixture lifecycle",
+        "scope": "Actual required CI runtime diagnostics, real-lifecycle Stage11 fixture correction, bounded Stage05 derived-reference projection and central candidate hash validity repairs with separate independent review",
         "baseCommit": "eb3e7804a23b1738eed523beffd8603b51d89b6d",
-        "writeScope": "Own isolated worktree; fixture-only author change or independent evidence; no runtime/source/ledger mutation",
+        "writeScope": "Own isolated assigned runtime/helper/verifier scope; no source, root integration or ledger writes",
         "dependencies": [],
         "host": "dot cloud workspace",
-        "lastInspectedAt": "2026-10-14T06:13:10Z",
+        "lastInspectedAt": "2026-10-14T06:49:25.113704Z",
         "returnTo": "/root",
         "concurrencyAllocation": 1
+      },
+      {
+        "id": "publish_reviewed_evidence_blobs",
+        "owner": "/root/publish_reviewed_evidence_blobs",
+        "state": "RUNNING",
+        "scope": "Immutable reviewed repository evidence blobs only; no tree, commit, branch or deployment writes",
+        "host": "dot cloud workspace",
+        "lastInspectedAt": "2026-10-14T06:49:25.113704Z",
+        "returnTo": "/root",
+        "concurrencyAllocation": 1,
+        "dependencies": []
+      },
+      {
+        "id": "map_current_proof_dependencies",
+        "owner": "/root/map_current_proof_dependencies",
+        "state": "RUNNING",
+        "scope": "Read-only current implementation proof dependency audit",
+        "host": "dot cloud workspace",
+        "lastInspectedAt": "2026-10-14T06:49:25.113704Z",
+        "returnTo": "/root",
+        "concurrencyAllocation": 1,
+        "dependencies": []
       }
     ],
     "resources": {
@@ -1902,7 +1928,7 @@
     },
     "scheduleState": "FORECAST_NOT_ESTABLISHED",
     "forecast": null,
-    "nextAction": "Complete atomic extraction tails and distinct reconciliation, implement and independently review existing manifest support; finish narrow source-amendment proposal for any genuine human decision; preserve pending real-project authorization.",
+    "nextAction": "Finish reporting regeneration; retrieve Stage05 full-owner and candidate-hash review outcomes; integrate only accepted exact bytes with affected tests; publish checkpoint via verified Git blobs; continue independent proof dependency work.",
     "deploymentObservation": {
       "sourceCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
       "runId": "36958910363",
@@ -1913,7 +1939,7 @@
       "limits": "HTTP manifest agreement and bounded disposable browser baseline, not full application acceptance."
     },
     "mandatoryOpenProof": [
-      "Distinct atomic requirement completeness remains unestablished; source-line coverage alone does not prove it.",
+      "Atomic source inventory is established; implementation satisfaction for7195obligations requires current executed evidence and independent review.",
       "Old normative context and full coverage proof require current-target review or reexecution.",
       "Required visual viewport captures and authentic frozen-baseline approval remain incomplete.",
       "Physical iPhone performer/capability and real-project objective remain unestablished."
@@ -1924,6 +1950,12 @@
         "messageId": "Sentinel_0b8f49c5ca508191981a995478ac7408",
         "purpose": "Useful real-project objective and bounded private delivery authorization",
         "status": "AWAITING_REPLY"
+      },
+      {
+        "messageId": "Sentinel_7553ffc071b08191ae2289483ea97f6d",
+        "purpose": "Publish blocked archival context extraction evidence to repository through platform approval",
+        "status": "AWAITING_REPLY",
+        "elicitationRequestId": "manager:a3b98b379959406fbb0c97ebc4616d9e:1"
       }
     ],
     "diagnosticStage04Evidence": "verification/dot-execution-20261014/stage04-observation.json",
@@ -1949,11 +1981,11 @@
       "sourceApplied": false
     },
     "currentCriticalPath": [
-      "Finish independent context classification and global atomic identity/equivalence reconciliation",
-      "Generate and validate actual atomic manifest without inheriting historical proof",
-      "Complete genuine independent coverage/context reviews and bind actual scoped tests",
-      "Run integrated proof producers and required acceptance pipeline",
-      "Verify authorized final deployment, physical-device and real-project maturity evidence"
+      "Complete independently reviewed runtime repairs and rerun affected required owners",
+      "Publish reviewed integration checkpoint with immutable atomic evidence",
+      "Resolve pending source-contract approval before full governance acceptance",
+      "Renew genuine current implementation coverage/context proof and run required integrated acceptance",
+      "Verify final deployment, physical device and authorized real-project maturity evidence"
     ],
     "atomicIdentityFollowup": {
       "authorCommit": "fe006bd2f7ecf4a117f305c9cb2592900a9ef0b1",
@@ -2018,9 +2050,41 @@
       "generation": "PASS",
       "runtimeBundleResources": 13,
       "repositoryEvidenceExcludedFromRuntime": true,
-      "fullGovernance": "RUNNING",
+      "fullGovernance": "BLOCKED_UNRESOLVED_SOURCE_CONTRACT_FINDINGS",
       "implementationConformance": "NOT_ESTABLISHED",
-      "currentConsumerReview": "Entry-count versus behavioral atomic denominator and context-proof treatment under investigation; no percentage claimed"
+      "currentConsumerReview": "Bounded reporting correction independently accepted; context exclusions and actual proof qualification preserved",
+      "governanceDiagnostic": "verification/dot-execution-20261014/atomic-final/governance-diagnostic.log",
+      "governanceExitCode": 1,
+      "specificationManifestSha256": "145100b0400cec823dca8ee8ee1678e6f9b58034e57e1894d2949308a82a8424",
+      "normativeManifestSha256": "4773f157f198781918b0fb9f20a696ad9d2b09dbea0120a9407ce0d24c96df5c"
+    },
+    "atomicReportingCorrection": {
+      "authorCommit": "36a4518f2f6c048db596a22cf6c7c2eb5a3a26e0",
+      "state": "VERIFIED_INTEGRATED",
+      "independentReviewSha256": "fe09a424f5e9771d9eec6a4b2140cd23a3c9afcd2219766e2e0c6bfe49e7e195",
+      "evidencePath": "verification/dot-execution-20261014/reporting-review/final-review.txt",
+      "independentControls": 11,
+      "focusedControls": 223,
+      "appAcceptance": false,
+      "rootFocusedAndSourceSuites": "PASS",
+      "actualGeneration": "PASS"
+    },
+    "runtimeRepairCandidates": {
+      "stage05": {
+        "commit": "1d2de39141cac48af71873baa0ec1c6599720e92",
+        "state": "IN_REVIEW_CAUSAL_ATTRIBUTION_PENDING",
+        "fullOwner": "FAILED_STAGE21_PERSISTENCE_AFTER_STAGES1_TO20"
+      },
+      "stage11Fixture": {
+        "commit": "8f3d23214cbaf0820e47472ddb252bfa460fca97",
+        "state": "BLOCKED_ACTUAL_CANDIDATE_HASH_DEFECT",
+        "negativePreserved": true
+      },
+      "candidateHash": {
+        "owner": "/root/test_integrated_runtime_baseline/repair_candidate_hash_validation",
+        "state": "RUNNING",
+        "scope": "Central retained candidate component manifest/hash validity, existing gates/reservation/evaluation and public-store regression"
+      }
     }
   }
 }

@@ -1,4 +1,10 @@
 {
+  "normativeRequirementCount": 7486,
+  "normativeRequirementCountDefinition": "Compatibility alias for manifestEntryCount; includes retained source contexts.",
+  "manifestEntryCount": 7486,
+  "sourceContextEntryCount": 291,
+  "behavioralAtomicRequirementCount": 7195,
+  "behavioralRequirementCount": 7195,
   "schema": "closed-loop-normative-requirements/1",
   "manifestIdentity": "NRM-ade192b9c558a2af3daeee288bb6be39",
   "generatorVersion": "closed-loop-governance-generator/11",
@@ -1088015,7 +1088021,7 @@
         "specificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883"
       }
     },
-    "sourceTraceScope": "Existing manifest source-clause coverage only. A source line can contain several conjunctive obligations; trace count is not a count of independently proved atomic obligations or a completion percentage. The generated one authoritative manifest and registry proofs still require their own current acceptance relationships.",
+    "sourceTraceScope": "Reviewed distinct atomic obligations with retained source-context qualifiers; implementation conformance requires current executed proof.",
     "unresolvedContractFindings": [
       {
         "reconciliationId": "R01",
@@ -1088193,7 +1088199,7 @@
     "independentReviewStatus": "SEMANTIC_SOURCE_PASS",
     "reconciliationStatus": "ACCEPTED",
     "independentReviewerIdentity": "e5821fbce9dc82ebf31cfde0767bb869c26c6ecd30c86fbd55d543eb8a94f429",
-    "mechanicalReviewerIdentity": "a664e96565ea2fc5e652d19a37087cabef15323076eaa86a6c3b6cc6e7ad1a06",
+    "mechanicalReviewerIdentity": "fb836dd5c25049e6bd55677f7b5dfec5f4f4aea16679506b39754235421b066a",
     "sourceClauseReview": {
       "path": "specification/source-clause-review.json",
       "sha256": "3d1cf70901cfa3882756b5e9c47083c0c271d54c040b2b012d1cd639ee148473",
@@ -1089682,5 +1089688,5 @@
       "status": "ACCEPTED"
     }
   },
-  "manifestSha256": "d73972c41722906a7ead293b11ab01e41f86eb523046800bd49c021dd124e297"
+  "manifestSha256": "bdf57070a7cece2467bf6b61eafa81d90087ef58a77b6c5d6e55ced2b6090eb9"
 }
