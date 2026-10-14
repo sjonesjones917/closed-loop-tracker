@@ -1390,11 +1390,11 @@
     "startingSourceCommit": "7df5f46e9a7e54da09622387a978badb39916c09",
     "startingMainCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
     "integrationBranch": "dot/published-execution-20261014",
-    "integrationCommit": "39a968f8c3cf6af9c5745a891a4c6ecd9209b6ec",
+    "integrationCommit": "5d1389b6ff1205edc2771ca1bdebdd76da28a3e7",
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "dot",
-    "lastInspectedAt": "2026-10-14T07:24:35.335019Z",
+    "lastInspectedAt": "2026-10-14T08:00:21.637434Z",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -1823,28 +1823,30 @@
       {
         "id": "test_integrated_runtime_baseline",
         "owner": "/root/test_integrated_runtime_baseline",
-        "state": "RUNNING",
+        "state": "VERIFIED",
         "scope": "Actual required CI runtime diagnostics, real-lifecycle Stage11 fixture correction, bounded Stage05 derived-reference projection and central candidate hash validity repairs with separate independent review",
         "baseCommit": "eb3e7804a23b1738eed523beffd8603b51d89b6d",
         "writeScope": "Own isolated assigned runtime/helper/verifier scope; no source, root integration or ledger writes",
         "dependencies": [],
         "host": "dot cloud workspace",
-        "lastInspectedAt": "2026-10-14T06:49:25.113704Z",
+        "lastInspectedAt": "2026-10-14T08:00:21.637434Z",
         "returnTo": "/root",
-        "concurrencyAllocation": 1
+        "concurrencyAllocation": 1,
+        "evidence": "Bounded runtime/fixture changes independently accepted and integrated; separate Stage19/21 issue assigned and remains open"
       },
       {
         "id": "review_runtime_fixture_correction",
         "owner": "/root/review_runtime_fixture_correction",
-        "state": "RUNNING",
+        "state": "VERIFIED",
         "scope": "Actual required CI runtime diagnostics, real-lifecycle Stage11 fixture correction, bounded Stage05 derived-reference projection and central candidate hash validity repairs with separate independent review",
         "baseCommit": "eb3e7804a23b1738eed523beffd8603b51d89b6d",
         "writeScope": "Own isolated assigned runtime/helper/verifier scope; no source, root integration or ledger writes",
         "dependencies": [],
         "host": "dot cloud workspace",
-        "lastInspectedAt": "2026-10-14T06:49:25.113704Z",
+        "lastInspectedAt": "2026-10-14T08:00:21.637434Z",
         "returnTo": "/root",
-        "concurrencyAllocation": 1
+        "concurrencyAllocation": 1,
+        "evidence": "Bounded runtime/fixture changes independently accepted and integrated; separate Stage19/21 issue assigned and remains open"
       },
       {
         "id": "publish_reviewed_evidence_blobs",
@@ -1895,22 +1897,45 @@
       {
         "id": "migrate_current_assertion_bindings",
         "owner": "/root/migrate_current_assertion_bindings",
-        "state": "RUNNING",
+        "state": "VERIFIED",
         "scope": "Conservative current-source identity mapping and separately reviewed historical consumer fixture correction",
-        "lastInspectedAt": "2026-10-14T07:22:25.290738Z",
+        "lastInspectedAt": "2026-10-14T08:00:21.637434Z",
+        "returnTo": "/root",
+        "host": "dot cloud workspace",
+        "dependencies": [],
+        "concurrencyAllocation": 1,
+        "evidence": "Reviewed migration plus13 partial semantic mappings and current fixture corrections integrated; root hash and full catalog consumers pass. No current execution proof receipt yet."
+      },
+      {
+        "id": "review_canonical_json_proofs",
+        "owner": "/root/review_canonical_json_proofs",
+        "state": "RUNNING",
+        "scope": "Accepted current migration and14 canonical design records; await final receipt catalog for genuine input re-review",
+        "lastInspectedAt": "2026-10-14T08:00:21.637434Z",
         "returnTo": "/root",
         "host": "dot cloud workspace",
         "dependencies": [],
         "concurrencyAllocation": 1
       },
       {
-        "id": "review_canonical_json_proofs",
-        "owner": "/root/review_canonical_json_proofs",
+        "id": "bind_migration_preservation_proofs",
+        "owner": "/root/bind_migration_preservation_proofs",
         "state": "RUNNING",
-        "scope": "Independent14 canonical coverage-design reviews and binding migration/fixture review",
-        "lastInspectedAt": "2026-10-14T07:22:25.290738Z",
-        "returnTo": "/root",
+        "scope": "Five current migration preservation atoms; scoped declarations and minimal actual verifier assertions",
+        "lastInspectedAt": "2026-10-14T08:00:21.637434Z",
         "host": "dot cloud workspace",
+        "returnTo": "/root",
+        "dependencies": [],
+        "concurrencyAllocation": 1
+      },
+      {
+        "id": "review_migration_preservation_proofs",
+        "owner": "/root/review_migration_preservation_proofs",
+        "state": "RUNNING",
+        "scope": "Independent review of exact preservation source, current owner assertions and evidence gaps",
+        "lastInspectedAt": "2026-10-14T08:00:21.637434Z",
+        "host": "dot cloud workspace",
+        "returnTo": "/root",
         "dependencies": [],
         "concurrencyAllocation": 1
       }
@@ -1932,7 +1957,7 @@
       "cloudChromiumDevTools": "BLOCKED_PERMISSION",
       "ordinaryWindowResize": "AVAILABLE_VERIFIED_1280x800_CAPTURED",
       "requiredNarrowVisualViewports": "BLOCKED_CAPABILITY_NATIVE_WINDOW_MINIMUM_500_CSS_PIXELS",
-      "freeWorkspaceObservedGiB": 29,
+      "freeWorkspaceObservedGiB": 21,
       "githubConnectorWrite": "AVAILABLE_VERIFIED",
       "remoteBranchPublication": "AVAILABLE_VERIFIED"
     },
@@ -1974,7 +1999,7 @@
     },
     "scheduleState": "FORECAST_NOT_ESTABLISHED",
     "forecast": null,
-    "nextAction": "Review iteration receipt dependency repair and complete historical binding fixture migration; compose14 accepted canonical proof declarations and collect current frozen evidence. Repository evidence publication awaits pending approval.",
+    "nextAction": "Finish independently reviewed iteration receipt and legacy activation repair on frozen source, rerun required owners sequentially; refresh14 canonical reviews for final catalog, review migration preservation checks, then collect exact current receipts. Publication and source amendment approvals remain pending.",
     "deploymentObservation": {
       "sourceCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
       "runId": "36958910363",
@@ -2140,15 +2165,19 @@
         "authorCommit": "a3e363737aa88c7eabcd0ebb0acd883c54d4143f",
         "integrationCommit": "bbfd8570",
         "rootFreezeOwner": "PASS",
-        "rootReservationOwner": "PASS"
+        "rootReservationOwner": "PASS",
+        "oldCorrectedIterationRun": "LOST_EXECUTOR_OUTCOME_NO_PASS_OR_FAILURE_INFERRED"
       },
       "iterationReceiptDependencies": {
-        "state": "RUNNING",
+        "state": "IN_REVIEW_WITH_REQUIRED_LEGACY_ACTIVATION_EXTENSION",
         "owner": "/root/repair_iteration_receipt_dependencies",
         "reviewer": "/root/review_iteration_receipt_repair",
         "baseCommit": "39a968f8c3cf6af9c5745a891a4c6ecd9209b6ec",
-        "scope": "Existing versioned Stage18/19 source dependency contracts; preserve actual scoped semantic evidence and material contradiction invalidation",
-        "diagnosticSha256": "9022ce705d5ef91e07b3207d6fd11d7d374ca60d9e1f51f13fc15f8e0fb740c1"
+        "scope": "Existing precise Stage18/19 source contracts, admissible later governing refutation closure, consistent calculation/display condition; versioned projection7-to8 activation through existing validated migration owner",
+        "diagnosticSha256": "9022ce705d5ef91e07b3207d6fd11d7d374ca60d9e1f51f13fc15f8e0fb740c1",
+        "authorObservedTip": "6dbf58d3",
+        "fullOwner": "TERMINATED_EXIT137_CAUSE_UNVERIFIED",
+        "requiredMigration": "Actual saved projection7/convergence4 refresh failed on candidate; independently reproduced; versioned activation extension authorized with forged-state and rollback negatives"
       }
     },
     "evidencePublication": {
@@ -2169,15 +2198,28 @@
       "coverageDesignAcceptedAtoms": 14,
       "arrayOrder": "REJECTED_FULL_COVERAGE",
       "implementationObjects": "BLOCKED",
-      "currentProofReceipts": "NOT_COLLECTED",
+      "currentProofReceipts": "NOT_COLLECTED_PENDING_FINAL_CATALOG_AND_FROZEN_SOURCE",
       "migrationCandidate": "d8a8df7c",
       "migrationReview": "fb517b517c47b1fae36276dc93ef759537ddf89b",
-      "migrationDisposition": "DATA_ACCEPT_PENDING_AFFECTED_FIXTURE_CORRECTIONS",
+      "migrationDisposition": "INTEGRATED_WITH_AFFECTED_CONSUMER_SUITE_PASS",
       "originalBindingsConserved": 375,
       "scopedBindingsRetained": 243,
       "unqualifiedBindingsRetired": 132,
       "historicalFullCoverageRetired": 164,
-      "emptyReceiptConformanceNumerator": 0
+      "emptyReceiptConformanceNumerator": 0,
+      "activeScopedBindingRows": 270,
+      "currentScopedIdentityRows": 256,
+      "rootHashProducer": "PASS",
+      "rootFullCatalogConsumer": "PASS",
+      "rootCombinedBindingSha256": "7cd36c8544a66d2063f1f5553146e06f7a9f0b16726bfa0bc95ebc23e27a6aad",
+      "semanticMappings": 13,
+      "unboundSiblingAtoms": 17,
+      "independentFinalReview": "0c48df0e870d6be69a2ff32510986fdb8d56173b"
+    },
+    "verificationEfficiencyAssessment": {
+      "status": "READ_ONLY_ASSESSED_PATCH_DEFERRED",
+      "atomicDependencyBytes": 321767484,
+      "finding": "Aggregate repeats full source extraction; safe reuse would require fresh per-boundary identities and independent review. No measured seconds-saving benchmark; keep current proof checks unchanged."
     }
   }
 }
