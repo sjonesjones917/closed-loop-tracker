@@ -691,3 +691,13 @@ process.stdout.write(`${JSON.stringify(result)}\n`);
 }
 
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url))reviewSpecificationCoverage(process.argv[2]||'specification/closed-loop-reliability-controlling-implementation-specification.txt');
+
+// Reporting only. Classification/exclusion authority remains the pinned review
+// and current proof collector; these counts never establish conformance.
+export function sourceInventorySummary(requirements){
+  const contexts=requirements.filter(row=>row.entryKind==='SOURCE_CONTEXT');
+  return {normativeRequirementCount:requirements.length,normativeRequirementCountDefinition:'Compatibility alias for manifestEntryCount; includes retained source contexts.',manifestEntryCount:requirements.length,sourceContextEntryCount:contexts.length,behavioralAtomicRequirementCount:requirements.filter(row=>row.entryKind==='ATOMIC_OBLIGATION').length,behavioralRequirementCount:requirements.length-contexts.length};
+}
+export function sourceTraceScopeDescription(established,legacyScope){
+  return established?'Reviewed distinct atomic obligations with retained source-context qualifiers; implementation conformance requires current executed proof.':legacyScope||'Source-line coverage only';
+}
