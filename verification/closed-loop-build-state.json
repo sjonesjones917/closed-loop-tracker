@@ -1394,7 +1394,7 @@
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "/root/repair_iteration_receipt_dependencies",
-    "lastInspectedAt": "2026-10-14T21:39:07Z",
+    "lastInspectedAt": "2026-10-14T21:50:52Z",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -2094,7 +2094,7 @@
     },
     "scheduleState": "FORECAST_NOT_ESTABLISHED",
     "forecast": null,
-    "nextAction": "Independent blocked legacy chain3/projection13\u2192chain5/projection15 archive, forgery and rollback controls now running in reviewer session61746. Actual bounded27\u201330 terminal61315 exit0 is durable; current-time public command/retry/save/cold was not run before original authority expired. Prepare a fresh3a11d6c7 producer/required-owner prerequisite for that remaining positive proof, preserving all original assertions and partial-run limits.",
+    "nextAction": "Monitor exact original fresh default owner1974345d session74837 to actual terminal and subsequent unchanged required Stage29/Stage30 consumers. Durable full case arrays/scalars and byte/context captures are enabled. Independent legacy chain3/13\u21925/15 archive, forgery and rollback controls all passed; current-time positive public command/retry/save/cold awaits this fresh prerequisite. No duplicate prefix or publication.",
     "deploymentObservation": {
       "sourceCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
       "runId": "36958910363",
@@ -3132,7 +3132,8 @@
       "positivePublicCold": "NOT_EXECUTED_BEFORE_ORIGINAL_AUTHORITY_EXPIRY",
       "independentLegacySession": 83264,
       "legacySeedStatus": "GENUINE_OLD13_CHAIN3_INCOMPLETE_PUBLIC_COLD_PASS",
-      "legacySeedCompressedSha256": "8afcdbdc75094a3adeefa8d410c904871bb3b20cc56d5b5921bc083dc3aa65a1"
+      "legacySeedCompressedSha256": "8afcdbdc75094a3adeefa8d410c904871bb3b20cc56d5b5921bc083dc3aa65a1",
+      "independentLegacyControls": "ALL_PASS: genuine seed, activation, archived original bytes, incomplete5 reproof/exact retry/public cold, forgery refusal, both all-row/Blob rollback injections"
     },
     "reproducibleCheckoutReclamation2138": {
       "manifest": "/workspace/shared/clrt-iteration-repair-evidence/reclaim-inactive-migration-checkouts-20261014-2138.json",
@@ -3140,6 +3141,23 @@
       "remainingDiskGiB": 2.2,
       "allUniqueEvidencePreserved": true,
       "ownerReleaseConfirmedBy": "/root/review_migration_preservation_proofs via parent"
+    },
+    "freshDefault197Owner": {
+      "status": "RUNNING",
+      "startedAt": "2026-10-14T21:50:27Z",
+      "owningSession": 74837,
+      "sourceCommit": "1974345d6176c655da101a92dcd273e8fbfacae4",
+      "wrapperSha256": "0d169e665110424970ca37601a841556fa4c3f5fffe595fefc604ed90bb2dff6",
+      "sourcePinsSha256": "db76f6146752b35e1e6db762120f793c9a29f47daec8b633f5a1a0891da35b67",
+      "outputDirectory": "/workspace/shared/clrt-iteration-repair-evidence/frozen-1974345d-default",
+      "originalScriptsUnmodified": true,
+      "owners": [
+        "verify-full-cycle.mjs",
+        "verify-stage29-evidence-chain-checkpoint.mjs",
+        "verify-stage30-terminal-mobile-boundary.mjs"
+      ],
+      "currentClaim": "Source/pins/clean checkout verified; no owner completion yet.",
+      "oneHeavyProcess": true
     }
   }
 }
