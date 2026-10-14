@@ -206,6 +206,13 @@ for(const [name,mutate,pattern] of [
  ['changed-shared-decision-singular-array-ambiguous',d=>d.get('changed').scopeChange=copy(d.get('changed').scopeChanges[0]),/duplicated or ambiguous/]
 ]){const d=copy(sharedChangedDs);mutate(d);assert.throws(()=>duplicateCheck(sharedChangedCw,d),pattern);cases.push(name);}
 
+const pluralChangedDs=copy(sharedChangedDs);pluralChangedDs.get('changed').changedDuplicateGroups=[pluralChangedDs.get('changed').changedDuplicateGroup];delete pluralChangedDs.get('changed').changedDuplicateGroup;duplicateCheck(sharedChangedCw,pluralChangedDs);cases.push('changed-duplicates-per-target-group-array');
+for(const [name,mutate] of [
+ ['changed-group-array-duplicate-target',d=>d.get('changed').changedDuplicateGroups.push(copy(d.get('changed').changedDuplicateGroups[0]))],
+ ['changed-group-array-unrelated-target',d=>d.get('changed').changedDuplicateGroups[0].currentNormativeRequirementId='NREQ-'+'f'.repeat(32)],
+ ['changed-group-array-singular-ambiguous',d=>d.get('changed').changedDuplicateGroup=copy(d.get('changed').changedDuplicateGroups[0])]
+]){const d=copy(pluralChangedDs);mutate(d);assert.throws(()=>duplicateCheck(sharedChangedCw,d),/groups duplicated, unrelated or ambiguous/);cases.push(name);}
+
 const directory=fs.mkdtempSync(path.join(os.tmpdir(),'atomic-proof-fixture-')),cwd=process.cwd(),reviewPath='verification/synthetic-atomic-proof.json',suite='verify-test-runtime-v3.mjs',checkId='test-ir.unknown-operation';
 try{
  fs.mkdirSync(path.join(directory,'specification'));fs.mkdirSync(path.join(directory,'verification'));fs.writeFileSync(path.join(directory,SPECIFICATION_PATH),source);

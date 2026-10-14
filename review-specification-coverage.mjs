@@ -209,7 +209,11 @@ export function validateAtomicIdentityCrosswalk(crosswalk,prior,priorRef,require
     return partition.components.find(c=>c.currentNormativeRequirementId===targetId);
   };
   for(const [targetId,rows] of incoming){
-    const groups=rows.map(row=>decisions.get(row.reconciliationDecisionId)?.changedDuplicateGroup);
+    const groups=rows.map(row=>{
+      const decision=decisions.get(row.reconciliationDecisionId),values=decision.changedDuplicateGroups??(decision.changedDuplicateGroup?[decision.changedDuplicateGroup]:[]);
+      assert(Array.isArray(values)&&!(decision.changedDuplicateGroups&&decision.changedDuplicateGroup)&&new Set(values.map(group=>group.currentNormativeRequirementId)).size===values.length&&values.every(group=>decision.currentNormativeRequirementIds.includes(group.currentNormativeRequirementId)),'Atomic changed-duplicate target groups duplicated, unrelated or ambiguous');
+      return values.find(group=>group.currentNormativeRequirementId===targetId);
+    });
     if(groups.some(Boolean)){
       const group=groups[0],priorIds=rows.map(row=>row.priorNormativeRequirementId).sort(),scopeDigests=Object.fromEntries(rows.map(row=>[row.priorNormativeRequirementId,atomicHash(scopeChangeFor(decisions.get(row.reconciliationDecisionId),row.priorNormativeRequirementId)??null)]));
       assert(rows.length>=2&&rows.every(row=>row.relation==='CHANGED_SINGLETON_SCOPE')&&group&&atomicText(group.groupId)&&atomicText(group.priorEquivalenceReason)&&group.currentNormativeRequirementId===targetId&&groups.every(value=>value&&atomicEqual(value,group))&&atomicEqual(group.priorNormativeRequirementIds,priorIds)&&atomicEqual(group.scopeChangeSha256ByPriorId,scopeDigests),'Atomic changed-duplicate equivalence group incomplete or stale');
