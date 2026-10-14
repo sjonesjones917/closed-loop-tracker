@@ -1394,7 +1394,7 @@
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "dot",
-    "lastInspectedAt": "2026-10-14T13:31:41.731724Z",
+    "lastInspectedAt": "2026-10-14T13:47:55.237352Z",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -2050,7 +2050,7 @@
     },
     "scheduleState": "FORECAST_NOT_ESTABLISHED",
     "forecast": null,
-    "nextAction": "Restore existing author/reviewer execution; independently isolate exact repeatedprojection difference on638 durable full-custody snapshot, then minimal reviewed correction and actual affected checks. No runtime integration yet.",
+    "nextAction": "Complete and independently review confirmed Stage22 constructor representation fix, execute actual bounded normalization/history/persistence plus agent-key negatives, then freeze runtime for current catalog and affected full owners.",
     "deploymentObservation": {
       "sourceCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
       "runId": "36958910363",
@@ -2341,7 +2341,25 @@
             "638ee980-failure.json": "9abf7a4a2f1535178a47f32c9178d934495d8b4a6ffd23b0a46eb16dbe850b80",
             "638ee980-driver-provenance.json": "023f3df90e72112a24deeb8a7ea870183ffbd0f8cac9e52950c7a9c2bb6cf0f6"
           },
-          "processStatus": "No live nodeprocess found13:19; terminal result recovered from durable exit/failure. Author/reviewer pending_init after environment restart; interrupted/reissued same tasks13:31, actual resumption unconfirmed."
+          "processStatus": "Existing author/reviewer execution restored13:31; both independently verified durable results.",
+          "repeatedProjectionCause": "Independent same-observedAt output equality PASS; freshclock changes checkedAt. Test-only c9bc5c3a pins existing recorded epoch and preserves full comparison; changedepoch input/output negative passes. Custodyloss hypothesis disproved."
+        },
+        "stage22IngestionDiagnosis": {
+          "state": "ACTUAL_CAUSE_INDEPENDENTLY_ACCEPTED_NARROW_FIX_AUTHORIZED",
+          "source": "c9bc5c3a (runtime638ee980)",
+          "actualFailure": "Cannot canonically hash undefined at $[88].changes[20].temporaryResponseKey",
+          "capturedPlanSha256": "200e96026a678a7539b9a569f78c98ab1748771a46fbde9bcb17976e0c05509c",
+          "cause": "Only malformed planned change is APPLICATION_ID_ALLOCATION for application-synthesized deterministicResults RESULT_ID. Constructor omits temporaryKey; generic history writer reads undefined. Agent observation/review temporary keys remain exact.",
+          "authorizedScope": "Constructor-only temporaryKey:null before refreshRecordHashes, precise actual ingestion writer registration, focused existing owner regression. Generic writer, external agent-key validation and strict canonicalizer unchanged.",
+          "requiredControls": [
+            "Own application-generated temporaryKey exactly null",
+            "All planned history changes canonically hash",
+            "Actual agent keys preserved",
+            "Missing/invalid actual agent keys rejected",
+            "Actual Stage22 plan/acceptance/public save and cold-read",
+            "Independent frozen patch review"
+          ],
+          "actualBoundary": "c9 passed earlier Stage21 acceptance/publicsave/coldread and corrected repeatedprojection; Stage22 normalization failed before final evidence accepted. No full lifecycle acceptance."
         }
       }
     },
