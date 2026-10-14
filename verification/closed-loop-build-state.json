@@ -1394,7 +1394,7 @@
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "/root/repair_iteration_receipt_dependencies",
-    "lastInspectedAt": "2026-10-14T22:55:24Z",
+    "lastInspectedAt": "2026-10-14T23:03:02Z",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -2094,7 +2094,7 @@
     },
     "scheduleState": "FORECAST_NOT_ESTABLISHED",
     "forecast": null,
-    "nextAction": "Retrieve actual75575 through original Stage29 investigation and reviewed sequential isolated positive chain application-command/retry/public-save/cold, then all remaining29\u201330 assertions. Stage28 and release public-cold/caller-preservation passed. Preserve original23:51:57.972 expiry, actual arrays/scalars and partial-run qualification; do not restart the prefix.",
+    "nextAction": "Reviewer prepares exact retained after-command resume with one-line realm normalization for remaining currentness/retry/public save/cold, preserving original command and23:51:57.972 expiry. Worker prepares original remaining29\u201330 tail from untouched pre-chain caller with saved arrays/scalars and actual verified helper-result handoff. No prefix or successful application-command replay; review exact recovery drivers before launch.",
     "deploymentObservation": {
       "sourceCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
       "runId": "36958910363",
@@ -2147,7 +2147,7 @@
       "sourceApplied": false
     },
     "currentCriticalPath": [
-      "Retrieve actual75575 through original Stage29 investigation and reviewed sequential isolated positive chain application-command/retry/public-save/cold, then all remaining29\u201330 assertions. Stage28 and release public-cold/caller-preservation passed. Preserve original23:51:57.972 expiry, actual arrays/scalars and partial-run qualification; do not restart the prefix.",
+      "Reviewer prepares exact retained after-command resume with one-line realm normalization for remaining currentness/retry/public save/cold, preserving original command and23:51:57.972 expiry. Worker prepares original remaining29\u201330 tail from untouched pre-chain caller with saved arrays/scalars and actual verified helper-result handoff. No prefix or successful application-command replay; review exact recovery drivers before launch.",
       "Independent chain5 ready-state/stale-release/mutation and legacy archive/forgery/rollback controls passed, including explicit blocked new5 public-cold receipt currentness. Positive current-time application-command/public persistence remains pending in active continuation. Integrate only independently accepted exact candidate.",
       "Repair the pre-existing Stage29 required-owner unsupported synthetic-positive fixture without weakening provenance, then run affected mandatory owners on frozen integrated source",
       "Renew current catalog source maps and all19 stale independent coverage reviews, collect genuine current producer receipts and execute required integrated acceptance",
@@ -3175,7 +3175,7 @@
       "latestCanonicalProjectSha256": "b19f509cb23f2a016aa29eb696ba8f1f926558bb447b565f78a6da88e9ece482"
     },
     "resume197Default": {
-      "status": "RUNNING",
+      "status": "TERMINAL_SETUP_FAILURE",
       "owningSession": 75575,
       "sourceCommit": "1974345d6176c655da101a92dcd273e8fbfacae4",
       "driverSha256": "d07c0a670ec05feed47481963c9e455fb57397697e627800452b85c96c8f5310",
@@ -3185,7 +3185,7 @@
       "outputDirectory": "/workspace/shared/clrt-iteration-repair-evidence/resume197-default-after-stage12-r2",
       "checksDirectory": "/workspace/shared/clrt-iteration-repair-evidence/resume197-default-checks-r2",
       "originalExpiry": "2026-10-14T23:51:57.972Z",
-      "latestBoundary": "stage-28-all-completion-assertions-passed",
+      "latestBoundary": "isolated-chain-command-return-before-currentness-assertion",
       "canonicalProjectSha256": "63a6f46f4fbab10a73eefd6ec13f0db085a3a9fcfcdeaa79788bc847c3066fba",
       "newIsolatedAdapterRevision": 0,
       "newIsolatedAdapterProjectSha256": "131df8763ea36fcd6a0ae5aa25e72acaf1c5454fb4beaed24911f4abc4f10931",
@@ -3219,6 +3219,21 @@
         "callerCanonicalProjectSha256": "78a14e102c7770f960a5a74eebc91bcebf3576a33a2da38dae897048cfea8975",
         "savedAdapterRevision": 0,
         "savedAdapterProjectSha256": "54a589f2db395bdb9c2e0c2ca6702a5c9b1a6d92e408afcd1d10c2bab341dd9f"
+      },
+      "exitCode": 1,
+      "endedAt": "2026-10-14T23:02:09Z",
+      "failure": "Host deepStrictEqual on VM chains.map array; identical authored requirement ID, prototype mismatch. Exact original helper8b99 preserved. No retry or public chain save/cold executed.",
+      "actualInvestigationCompletedAt": "2026-10-14T22:58:19.052Z",
+      "actualChainCommandObservation": {
+        "at": "2026-10-14T23:02:02.435Z",
+        "sha256": "d17d37b1c5f82745b2eccd08a5085fe84d71e8bdab8476ccce81d0f3e6ea572a",
+        "chainCount": 1,
+        "status": "COMPLETE",
+        "current": true,
+        "storedFreshInputEqual": true,
+        "setComplete": true,
+        "gate29Complete": true,
+        "qualification": "Captured before failed test equality; retry/persistence unexecuted."
       }
     },
     "pendingReviewedCommits": {
