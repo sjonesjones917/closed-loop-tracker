@@ -263,7 +263,7 @@ assert.equal(await mapIdentity('projects'), rowsBeforeCurrentRead, 'STAGE19_CURR
 
 const convergenceDraft = r.copy(activated);
 const currentConvergence = e.recordConvergence(convergenceDraft);
-assert.equal(currentConvergence.derivationReceipt.derivationId, 'closed-loop-derivation/stage18-convergence/4');
+assert.equal(currentConvergence.derivationReceipt.derivationId, 'closed-loop-derivation/stage18-convergence/5');
 assert.equal(e.convergenceRecordCurrent(convergenceDraft, currentConvergence), true);
 assert.equal(e.gate(18, convergenceDraft).complete, true);
 assert.deepEqual(retainedCohort(convergenceDraft), sourceCohort, 'STAGE19_CALCULATE_CONVERGENCE_PRESERVES_COHORT');

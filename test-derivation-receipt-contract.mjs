@@ -6,7 +6,7 @@ import {createHash} from 'node:crypto';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {gzipSync,gunzipSync} from 'node:zlib';
-import {projectStoreRuntime} from './test-project-store-runtime.mjs';
+import {projectStoreRuntime,restoreArtifactFixture} from './test-project-store-runtime.mjs';
 import {artifactFixtureId} from './test-artifact-fixtures.mjs';
 
 // Section34.3: an installed registered definition change makes retained values
@@ -19,14 +19,14 @@ export async function verifyConvergenceRegisteredDefinitionChange(){
  const plain=value=>JSON.parse(JSON.stringify(value)),digest=value=>createHash('sha256').update(value).digest('hex');
  const contractLine=sources['workflow-schema.js'].split('\n').find(line=>line.startsWith('"stage18.convergence":'));
  assert(contractLine,'CONVERGENCE_DEFINITION_CHANGE_EXACT_CONTRACT_SOURCE');
- const priorBuild='"buildIdentity":"stage18.convergence/4"',changedBuild='"buildIdentity":"stage18.convergence/4/REV59_CONTROLLED_BUILD_CHANGE"';
+ const priorBuild='"buildIdentity":"stage18.convergence/5"',changedBuild='"buildIdentity":"stage18.convergence/5/REV59_CONTROLLED_BUILD_CHANGE"';
  assert.equal(contractLine.split(priorBuild).length,2,'CONVERGENCE_DEFINITION_CHANGE_SINGLE_BUILD_SOURCE');
  const changedLine=contractLine.replace(priorBuild,changedBuild),changedSchema=sources['workflow-schema.js'].replace(contractLine,changedLine);
  const realm=schemaSource=>{const context=createVerifierRuntime({Event:class Event{},dispatchEvent(){}});for(const file of files)createVerifierRuntime.loadScript(context,file==='workflow-schema.js'?schemaSource:sources[file],{filename:file});return {context,engine:context.closedLoopWorkflowEngine,schema:context.closedLoopWorkflowSchema,copy:value=>vm.runInContext('JSON.parse('+JSON.stringify(JSON.stringify(value))+')',context)};};
- const original=realm(sources['workflow-schema.js']),changed=realm(changedSchema),key='stage18.convergence',id='closed-loop-derivation/stage18-convergence/4';
+ const original=realm(sources['workflow-schema.js']),changed=realm(changedSchema),key='stage18.convergence',id='closed-loop-derivation/stage18-convergence/5';
  const oldContract=plain(original.schema.applicationDerivationContract(key)),newContract=plain(changed.schema.applicationDerivationContract(key));
- assert.equal(oldContract.id,id);assert.equal(oldContract.version,4);assert.equal(oldContract.buildIdentity,'stage18.convergence/4');assert.equal(oldContract.implementationFunction,'convergenceCalculation');
- assert.deepEqual(newContract,{...oldContract,buildIdentity:'stage18.convergence/4/REV59_CONTROLLED_BUILD_CHANGE'},'CONVERGENCE_DEFINITION_CHANGE_ONLY_REGISTERED_BUILD');
+ assert.equal(oldContract.id,id);assert.equal(oldContract.version,5);assert.equal(oldContract.buildIdentity,'stage18.convergence/5');assert.equal(oldContract.implementationFunction,'convergenceCalculation');
+ assert.deepEqual(newContract,{...oldContract,buildIdentity:'stage18.convergence/5/REV59_CONTROLLED_BUILD_CHANGE'},'CONVERGENCE_DEFINITION_CHANGE_ONLY_REGISTERED_BUILD');
  const project=original.context.closedLoopCore.createBlankState('JOB-REV59-DEFINITION-CHANGE');original.engine.ensureShape(project);
  const iterationId=original.engine.allocateId(project,'iterations'),scope={...original.engine.currentScope(project),iterationId};
  const iteration=original.copy({id:iterationId,stage:17,active:true,source:'SYNTHETIC_REGISTERED_DEFINITION_CONTROL',scope,fields:{ITERATION_ID:iterationId,STATUS:'FROZEN'}});
@@ -57,7 +57,7 @@ export async function verifyConvergenceRegisteredDefinitionChange(){
 // snapshots. The caller performs each command/save/cold-read; this helper adds
 // isolated receipt/source negatives without replaying that completed prefix.
 export function verifyConvergenceDerivationTransition({r,beforeConvergence,afterConvergence,afterConfirmationPreparation}){
- const e=r.engine,cases=[],p=afterConvergence,id='closed-loop-derivation/stage18-convergence/4';
+ const e=r.engine,cases=[],p=afterConvergence,id='closed-loop-derivation/stage18-convergence/5';
  assert.equal(e.gate(17,beforeConvergence).complete,true,'CONVERGENCE_ACTUAL_CURRENT_STAGE17_PREREQUISITE');
  assert.equal(e.stageEntryState(beforeConvergence,18).allowed,true);
  assert.equal(e.gate(18,beforeConvergence).complete,false);
@@ -86,20 +86,56 @@ export function verifyConvergenceDerivationTransition({r,beforeConvergence,after
   assert.equal(e.convergenceRecordCurrent(changed,changed.projectData.convergenceRecords.find(item=>item.id===record.id)),false,'CONVERGENCE_GOVERNING_SOURCE_ORACLE');
   cases.push('changed-governing-source-invalidates-convergence');
  }
- for(const [field,value]of [['SATISFACTION_STATE','VIOLATED'],['TIMING_SCHEDULE_SHA256','f'.repeat(64)]]){
+ for(const [field,value]of [['TIMING_SCHEDULE_SHA256','f'.repeat(64)]]){
   const changed=r.copy(p),row=changed.projectData.proofObligations.find(item=>item.active!==false&&!item.invalidatedBy);
   assert(row,'CONVERGENCE_PROOF_SOURCE_FIXTURE_ORACLE');assert.notEqual(row.fields[field],value,'CONVERGENCE_SOURCE_MUTATION_ORACLE: '+field);
   row.fields[field]=value;row[field]=value;e.refreshRecordHashes(row,'proofObligations');
   assert.equal(e.convergenceRecordCurrent(changed,changed.projectData.convergenceRecords.find(item=>item.id===record.id)),false,'CONVERGENCE_SEMANTIC_PROOF_SOURCE_RETAINED: '+field);
   cases.push('changed-'+field.toLowerCase()+'-still-invalidates');
  }
+ // Sections16/29.11–14: SATISFACTION_STATE is a current-frontier output,
+ // so its old direct-input negative is replaced with actual governing inputs.
+ // A forged cache still fails the unchanged project-projection integrity owner.
+ {
+  const changed=r.copy(p),row=e.recordsForCurrentScope(changed,'proofObligations')[0];
+  row.fields.SATISFACTION_STATE=row.SATISFACTION_STATE='VIOLATED';e.refreshRecordHashes(row,'proofObligations');
+  assert.equal(e.validateApplicationProjection(changed,changed).valid,false,'CONVERGENCE_FORGED_SUMMARY_PROJECT_RECEIPT_REJECTED');
+  assert.equal(r.store.validateProjectIntegrity(changed).valid,false,'CONVERGENCE_FORGED_SUMMARY_STORE_REJECTED');
+  cases.push('forged-frontier-summary-still-rejected-by-projection-and-store');
+ }
+ const bound=calculation.sourceBinding.records;
+ const mutateInput=(name,family,edit)=>{
+  const changed=r.copy(p),ids=new Set(bound.filter(row=>row.family===family).map(row=>row.id)),row=changed.projectData[family].find(row=>ids.has(row.id)&&row.active!==false&&!row.invalidatedBy);
+  assert(row,'CONVERGENCE_ACTUAL_INPUT_FIXTURE: '+name);edit(row,changed);e.refreshRecordHashes(row,family);
+  const retained=changed.projectData.convergenceRecords.find(row=>row.id===record.id);
+  assert.equal(e.convergenceRecordCurrent(changed,retained),false,'CONVERGENCE_REAL_GOVERNING_INPUT_INVALIDATES: '+name);cases.push(name);
+ };
+ const field=(name,value)=>(row)=>{row.fields[name]=r.copy(value);row[name]=r.copy(value);};
+ mutateInput('changed-authored-proposition','propositions',field('PROPOSITION_TEXT','Changed governing proposition semantics.'));
+ mutateInput('changed-reviewed-expression','proofExpressions',field('NORMALIZED_EXPRESSION',{type:'ALL_OF',children:[]}));
+ mutateInput('changed-required-test-membership','proofObligations',field('REQUIRED_TEST_IDS',[]));
+ mutateInput('changed-governing-scope','propositions',row=>{row.scope.requirementsVersion='CHANGED-GOVERNING-VERSION';});
+ mutateInput('changed-governing-test-timing','tests',field('PER_RUN_REQUIRED',false));
+ mutateInput('changed-due-observation','observationRecords',field('EXTERNAL_OR_AGENT_OBSERVED_VALUE','Changed observed result.'));
+ mutateInput('removed-due-observation','observationRecords',(row,state)=>{state.projectData.observationRecords=state.projectData.observationRecords.filter(item=>item.id!==row.id);});
+ mutateInput('changed-accepted-entailment','entailmentReviews',field('ACCEPTED_RELATION','CONTEXT_ONLY'));
+ mutateInput('removed-accepted-entailment','entailmentReviews',(row,state)=>{state.projectData.entailmentReviews=state.projectData.entailmentReviews.filter(item=>item.id!==row.id);});
+ mutateInput('changed-governing-evidence','evidenceRecords',field('CONTENT','Changed governing evidence bytes.'));
+ const transport=calculation.sourceBinding.transport.find(row=>row.rawResponses.length&&row.proposals.length&&row.receipts.length);
+ assert(transport,'CONVERGENCE_ACTUAL_ACCEPTED_TRANSPORT_FIXTURE');
+ for(const [name,edit]of [
+  ['changed-accepted-raw',state=>{state.projectData.rawResponses.find(row=>row.rawResponseId===transport.rawResponses[0].rawResponseId).completeRawResponse+=' ';}],
+  ['removed-accepted-proposal',state=>{state.projectData.responseProposals=state.projectData.responseProposals.filter(row=>row.proposalId!==transport.proposals[0].proposalId);}],
+  ['removed-accepted-receipt',state=>{state.projectData.outputReceipts=state.projectData.outputReceipts.filter(row=>row.receiptId!==transport.receipts[0].receiptId);}]
+ ]){const changed=r.copy(p);edit(changed);assert.equal(e.convergenceRecordCurrent(changed,changed.projectData.convergenceRecords.find(row=>row.id===record.id)),false,'CONVERGENCE_ACCEPTED_TRANSPORT_INVALIDATES: '+name);cases.push(name);}
  const downstreamRecord=afterConfirmationPreparation.projectData.convergenceRecords.find(row=>row.id===record.id);
  assert(downstreamRecord,'CONVERGENCE_DOWNSTREAM_RETAINED_RECORD_ORACLE');
  assert.equal(e.convergenceRecordCurrent(afterConfirmationPreparation,downstreamRecord),true,'CONVERGENCE_DOWNSTREAM_PREPARATION_STABILITY');
  assert.equal(e.gate(18,afterConfirmationPreparation).complete,true);
  assert.notEqual(afterConfirmationPreparation.job.CURRENT_ITERATION,p.job.CURRENT_ITERATION,'CONVERGENCE_NEW_CONFIRMATION_ITERATION_ORACLE');
  assert(afterConfirmationPreparation.revision>p.revision,'CONVERGENCE_DOWNSTREAM_COMMITTED_REVISION_ORACLE');
- cases.push('actual-unchanged-confirmation-preparation-save-reload-preserves-convergence');
+ assert.equal(e.gate(19,afterConfirmationPreparation).complete,false,'CONVERGENCE_EMPTY_CONFIRMATION_REMAINS_INCOMPLETE');
+ cases.push('actual-unchanged-confirmation-preparation-save-reload-preserves-convergence','empty-confirmation-remains-incomplete');
  return {convergenceDerivationTransition:'PASS',synthetic:true,actualBrowser:false,derivationId:id,boundary:'Assertions over the owning production journey’s command/save/cold-read snapshots and isolated source/receipt mutations; no additional prefix producer, external agent, or physical acceptance claim.',cases};
 }
 
@@ -107,18 +143,18 @@ export function verifyConvergenceDerivationTransition({r,beforeConvergence,after
 // This checks the schema boundary, not Stage19 evidence sufficiency or a browser.
 export function verifyDerivationReceiptContract(schema,toRealm=value=>value){
  const create=value=>schema.createApplicationDerivationReceipt(toRealm(value)),validate=(receipt,expected)=>schema.validateApplicationDerivationReceipt(toRealm(receipt),toRealm(expected));
- const key='stage19.confirmation',id='closed-loop-derivation/stage19-confirmation/4',inputKeys=['calculation','derivationId','sourceBinding','sourceIterationId','confirmationIterationId','candidateId','candidateIdentity','sourceScope','confirmationScope','versionMatch','independence','matrix','regressionFailures','comparisonFailures','newDefects','newVariance','determination','requirementDiscovery'],outputKeys=['SOURCE_ITERATION_ID','CONFIRMATION_ITERATION_ID','ZERO_MATERIAL_CHANGES','VERSION_HASH_COMPARISON','TEN_NEW_CONTEXTS','COMPLETE_TEST_RESULTS','REGRESSION_RESULTS','COMPARISON_RESULTS','NEW_DEFECTS','NEW_REQUIREMENTS','NEW_FAILURE_CASES','NEW_VARIANCE','DETERMINATION','EVIDENCE'];
+ const key='stage19.confirmation',id='closed-loop-derivation/stage19-confirmation/5',inputKeys=['calculation','derivationId','sourceBinding','sourceIterationId','confirmationIterationId','candidateId','candidateIdentity','sourceScope','confirmationScope','versionMatch','independence','matrix','regressionFailures','comparisonFailures','newDefects','newVariance','determination','requirementDiscovery'],outputKeys=['SOURCE_ITERATION_ID','CONFIRMATION_ITERATION_ID','ZERO_MATERIAL_CHANGES','VERSION_HASH_COMPARISON','TEN_NEW_CONTEXTS','COMPLETE_TEST_RESULTS','REGRESSION_RESULTS','COMPARISON_RESULTS','NEW_DEFECTS','NEW_REQUIREMENTS','NEW_FAILURE_CASES','NEW_VARIANCE','DETERMINATION','EVIDENCE'];
  assert.equal(typeof schema.applicationDerivationContract,'function','DERIVATION_REGISTRY_ORACLE: actual calculation must have a registered contract.');
  const contract=schema.applicationDerivationContract(key);assert(contract,'DERIVATION_REGISTRY_ORACLE: unchanged confirmation algorithm is unregistered.');
- assert.equal(contract.id,id);assert.equal(contract.version,4);assert.equal(contract.algorithmVersion,'stage19.confirmation/4');assert.equal(contract.implementationOwner,'workflow-engine.js');assert.equal(contract.implementationFunction,'unchangedConfirmationCalculation');assert.deepEqual([...contract.specificationSections],['29','30','31','34.3','36.2','37']);assert.deepEqual([...contract.canonicalInputContract.requiredProperties],inputKeys);assert.deepEqual([...contract.outputContract.fields],outputKeys);assert.equal(contract.buildIdentity,'stage19.confirmation/4');assert.equal(contract.outputContract.family,'confirmationRecords');assert(contract.invalidationConsequences.current.includes('baseline freeze'));assert(contract.invalidationConsequences.historical.includes('historical evidence'));assert(contract.invalidationConsequences.historical.includes('They do not establish current'));assert(contract.invalidationConsequences.historical.includes('never automatically restamped'));assert.equal(schema.derivationRegistry.entries[id],contract);
+ assert.equal(contract.id,id);assert.equal(contract.version,5);assert.equal(contract.algorithmVersion,'stage19.confirmation/5');assert.equal(contract.implementationOwner,'workflow-engine.js');assert.equal(contract.implementationFunction,'unchangedConfirmationCalculation');assert.deepEqual([...contract.specificationSections],['16','16.1','29','30','31','34.3','36.2','37']);assert.deepEqual([...contract.canonicalInputContract.requiredProperties],inputKeys);assert.deepEqual([...contract.outputContract.fields],outputKeys);assert.equal(contract.buildIdentity,'stage19.confirmation/5');assert.equal(contract.outputContract.family,'confirmationRecords');assert(contract.invalidationConsequences.current.includes('baseline freeze'));assert(contract.invalidationConsequences.historical.includes('historical evidence'));assert(contract.invalidationConsequences.historical.includes('They do not establish current'));assert(contract.invalidationConsequences.historical.includes('never automatically restamped'));assert.equal(schema.derivationRegistry.entries[id],contract);
  for(const field of outputKeys)assert.equal(schema.FIELD_REGISTRY['RECORD.confirmationRecords.'+field].derivationIdentity,id,'DERIVATION_OUTPUT_REGISTRY_ORACLE: '+field);
  assert.equal(schema.applicationDerivationContract('unknown'),null);assert.equal(schema.applicationDerivationContract([key]),null);assert(Object.isFrozen(contract)&&Object.isFrozen(contract.canonicalInputContract.requiredProperties));
  const clone=value=>JSON.parse(JSON.stringify(value)),canonical=value=>Array.isArray(value)?'['+value.map(canonical).join(',')+']':value&&typeof value==='object'?'{'+Object.keys(value).sort().map(k=>JSON.stringify(k)+':'+canonical(value[k])).join(',')+'}':JSON.stringify(value),sha=value=>createHash('sha256').update(canonical(value)).digest('hex');
  const sources=[{family:'iterations',id:'ITERATION-synthetic-source',sha256:'1'.repeat(64)},{family:'candidateFreezes',id:'CANDIDATE-synthetic',sha256:'2'.repeat(64)}];
- const input={calculation:'stage19.confirmation/4',derivationId:id,sourceBinding:{schema:'closed-loop-confirmation-sources/2',projection:'REGISTERED_ITERATION_SOURCES/1',records:sources,complete:false,issues:['Synthetic absent required transport remains explicit.'],transportProjection:'closed-loop-confirmation-provenance/1',transport:[]},sourceIterationId:'ITERATION-synthetic-source',confirmationIterationId:'ITERATION-synthetic-confirmation',candidateId:'CANDIDATE-synthetic',candidateIdentity:true,sourceScope:{inputVersion:'INPUT-1'},confirmationScope:{inputVersion:'INPUT-1'},versionMatch:true,independence:'UNKNOWN',matrix:{expected:10,missing:['synthetic-missing-tuple'],duplicates:[],invalid:[]},regressionFailures:[],comparisonFailures:[],newDefects:[],newVariance:[],determination:{determination:'UNDETERMINED',reasons:['Synthetic missing required source.']},requirementDiscovery:{complete:false,reviews:[],basis:null}};
+ const input={calculation:'stage19.confirmation/5',derivationId:id,sourceBinding:{schema:'closed-loop-confirmation-sources/3',projection:'REGISTERED_ITERATION_SOURCES/2',records:sources,complete:false,issues:['Synthetic absent required transport remains explicit.'],transportProjection:'closed-loop-confirmation-provenance/1',transport:[]},sourceIterationId:'ITERATION-synthetic-source',confirmationIterationId:'ITERATION-synthetic-confirmation',candidateId:'CANDIDATE-synthetic',candidateIdentity:true,sourceScope:{inputVersion:'INPUT-1'},confirmationScope:{inputVersion:'INPUT-1'},versionMatch:true,independence:'UNKNOWN',matrix:{expected:10,missing:['synthetic-missing-tuple'],duplicates:[],invalid:[]},regressionFailures:[],comparisonFailures:[],newDefects:[],newVariance:[],determination:{determination:'UNDETERMINED',reasons:['Synthetic missing required source.']},requirementDiscovery:{complete:false,reviews:[],basis:null}};
  const output={SOURCE_ITERATION_ID:'ITERATION-synthetic-source',CONFIRMATION_ITERATION_ID:'ITERATION-synthetic-confirmation',ZERO_MATERIAL_CHANGES:'TRUE',VERSION_HASH_COMPARISON:'MATCH',TEN_NEW_CONTEXTS:'FALSE',COMPLETE_TEST_RESULTS:'UNDETERMINED',REGRESSION_RESULTS:'UNDETERMINED',COMPARISON_RESULTS:'UNDETERMINED',NEW_DEFECTS:'NONE',NEW_REQUIREMENTS:'REQUIREMENT DISCOVERY IS NOT ESTABLISHED OR CURRENT REQUIREMENT VERSION DIFFERS FROM SOURCE',NEW_FAILURE_CASES:'NONE',NEW_VARIANCE:'NONE',DETERMINATION:'UNDETERMINED',EVIDENCE:JSON.stringify(input)};
  const argumentsFor=(canonicalInput=input,sourceRecordHashes=sources,derivedOutput=output)=>({derivationKey:key,canonicalInput,sourceRecordHashes,output:derivedOutput}),receipt=create(argumentsFor());
- const expected={schema:'closed-loop-derivation-receipt/1',derivationId:id,derivationVersion:4,registryEntrySha256:sha(contract),canonicalInputSha256:sha(input),sourceRecordHashes:[sources[1],sources[0]],outputSha256:sha(output)};
+ const expected={schema:'closed-loop-derivation-receipt/1',derivationId:id,derivationVersion:5,registryEntrySha256:sha(contract),canonicalInputSha256:sha(input),sourceRecordHashes:[sources[1],sources[0]],outputSha256:sha(output)};
  assert.deepEqual(clone(receipt),expected,'DERIVATION_RECEIPT_INDEPENDENT_HASH_ORACLE');assert.equal(validate(receipt,argumentsFor()).valid,true,'DERIVATION_NEGATIVE_RESULT_RECORDABLE_ORACLE');
  const cases=['exact-registry-contract','literal-output-field-bindings','independent-input-output-entry-hashes','canonical-source-order','incomplete-negative-derivation-recordable'];
  const invalid=(name,change)=>{const changed=clone(receipt);change(changed);assert.equal(validate(changed,argumentsFor()).valid,false,'DERIVATION_RECEIPT_REJECTION_ORACLE: '+name);cases.push(name);};
@@ -482,4 +518,39 @@ export async function verifyProjectionVersion3ActivationContract({sourceOverride
  const corrupt=projectStoreRuntime({storageWorker:false,sourceOverrides});copyRows(corrupt);const row=corrupt.rows.get('projects').get(old.job.JOB_ID);row.project.projectData.applicationProjection.receipt.outputSha256='f'.repeat(64);row.projectSha256=corrupt.store.projectSha256(row.project);await assert.rejects(corrupt.store.readProject(old.job.JOB_ID),error=>error.code==='PROJECT_INTEGRITY_FAILED','PROJECTION_LEGACY2_CORRUPTION_NOT_ACTIVATION_ORACLE');cases.push('present-corrupt-legacy2-quarantined-not-upgraded');
  const backup=await oldRuntime.store.exportPackage(old.job.JOB_ID),destination=projectStoreRuntime({storageWorker:false,sourceOverrides}),imported=await destination.store.importPackage(backup);assert.equal(imported.projectData.applicationProjection.receipt.derivationId,'closed-loop-derivation/project-current-projection/7');assert.equal(imported.projectData.propositions[0].fields.EPISTEMIC_BASIS,'NONE');assert.equal((await destination.store.readProject(old.job.JOB_ID)).projectSha256,imported.projectSha256);const retained=destination.rows.get('meta').get(snapshotKey);assert.deepEqual(new Uint8Array(await retained.value.blob.arrayBuffer()),new Uint8Array(await snapshot.value.blob.arrayBuffer()));cases.push('legacy2-backup-import-preserves-source-and-activates-current7');
  return {projectionVersion3ActivationContract:'PASS',sourceSha256,cases,boundary:'Populated legacy /2 producer equivalent preserves its exact registered source/output contract and omits the five new annotations, then actual atomic read/import activation and reload preserve the original History bytes. Corrupt legacy receipt is rejected. Isolated storage adapter; no browser, agent review or favorable gate claim.'};
+}
+
+// Real full-cycle Stage21 acceptance is the producer. This owns only its
+// receipt stability and public transaction-adapter cold-read boundary.
+export async function verifyIterationProductTransition({beforeProduct,afterProduct,artifacts,sourcePrompts}){
+ const r=projectStoreRuntime({storageWorker:false}),e=r.engine,cases=[],before=r.copy(beforeProduct),after=r.copy(afterProduct);
+ await restoreArtifactFixture(r.store,artifacts);
+ // Transfer actual retained prompt files across verifier realms with the
+ // production identity-checking retain API; never rebuild historical context.
+ for(const original of afterProduct.projectData.generatedPrompts){
+  const files=sourcePrompts.materializePromptContextFiles(original,afterProduct),id=original.instructionId||original.promptId;
+  for(const target of [before,after]){const row=target.projectData.generatedPrompts.find(row=>(row.instructionId||row.promptId)===id);if(row)r.prompts.retainPromptContextFiles(row,r.copy(files));}
+ }
+ assert.equal(before.job.CURRENT_STAGE,'STAGE 21','ITERATION_PRODUCT_BEFORE_FRONTIER');
+ assert.equal(after.job.CURRENT_STAGE,'STAGE 22','ITERATION_PRODUCT_AFTER_FRONTIER');
+ const check=(state,boundary)=>{
+  const convergence=e.recordsForCurrentScope(state,'convergenceRecords').at(-1),confirmation=e.recordsForCurrentScope(state,'confirmationRecords').at(-1);
+  assert(convergence&&confirmation,'ITERATION_PRODUCT_RETAINED_RECEIPTS: '+boundary);
+  assert.equal(e.convergenceRecordCurrent(state,convergence),true,'ITERATION_PRODUCT_CONVERGENCE_CURRENT: '+boundary);
+  assert.equal(e.confirmationRecordCurrent(state,confirmation),true,'ITERATION_PRODUCT_CONFIRMATION_CURRENT: '+boundary);
+  assert.equal(e.gate(18,state).complete,true,'ITERATION_PRODUCT_STAGE18: '+boundary);
+  assert.equal(e.gate(19,state).complete,true,'ITERATION_PRODUCT_STAGE19: '+boundary);
+  return [convergence,confirmation].map(row=>JSON.stringify(row.derivationReceipt));
+ };
+ const receipts=check(before,'before-product');assert.deepEqual(check(after,'after-product'),receipts,'ITERATION_PRODUCT_RECEIPTS_UNCHANGED');
+ const raw=JSON.stringify(after.projectData.rawResponses);
+ const saved=await r.store.writeProject(after,{createOnly:true,expectedProjectRevision:0,incrementRevision:false}),loaded=await r.store.readProject(saved.job.JOB_ID);
+ assert.deepEqual(check(loaded,'public-cold-read'),receipts);
+ assert.equal(r.store.validateProjectIntegrity(loaded).valid,true,'ITERATION_PRODUCT_PUBLIC_COLD_INTEGRITY');
+ assert.equal(JSON.stringify(loaded.projectData.rawResponses),raw,'ITERATION_PRODUCT_RAW_HISTORY_PRESERVED');
+ assert.equal(loaded.job.CURRENT_STAGE,'STAGE 22','ITERATION_PRODUCT_COLD_FRONTIER_STABLE');
+ const again=r.copy(loaded);e.recalculate(again);
+ assert.equal(r.runtime.closedLoopHash.stableStringify(e.applicationProjectionOutput(loaded)),r.runtime.closedLoopHash.stableStringify(e.applicationProjectionOutput(again)),'ITERATION_PRODUCT_REPEATED_PROJECTION_STABLE');
+ cases.push('actual21-to22-frontier','earlier-convergence-and-confirmation-current','original-receipts-unchanged','public-save-cold-read-integrity','raw-history-preserved','repeated-calculation-stable');
+ return {iterationProductTransition:'PASS',cases,synthetic:true,actualBrowser:false,actualStore:true,boundary:'Actual full-cycle accepted product and retained preproduct proof; public transaction adapter, not browser IndexedDB or external-actor acceptance.'};
 }

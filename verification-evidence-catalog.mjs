@@ -2344,19 +2344,21 @@ verificationCatalog['verify-complete.mjs'].checks.push(check(
   'acceptedRunCorrectionJourney','acceptedRunCorrectionJourney',undefined,
   'Actual accepted contaminated cohort, authorized correction, and unchanged confirmation through ten runs and ten verifications',
   {basis:'EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS',
-   expectedDescription:'Full default owner: 26 exact cohort/receipt/provenance cases, complete stages12–18, eight exact convergence derivation controls, ten Stage19 runs/verifications with comparison still pending, and failed-confirmation correction through one new independent Stage17 run and verifier carrier. Synthetic external actors and transaction adapter; no browser/device or completed Stage19 claim.',
+   expectedDescription:'Full default owner: 27 exact cohort/receipt/provenance cases, complete stages12–18, 22 exact convergence derivation controls and an actually accepted later refutation branch, ten Stage19 runs/verifications with comparison still pending, and failed-confirmation correction through one new independent Stage17 run and verifier carrier. Synthetic external actors and transaction adapter; no browser/device or completed Stage19 claim.',
    condition:value=>{
     const digest=value=>typeof value==='string'&&/^[a-f0-9]{64}$/.test(value);
     const positive=['clean-current-cohort','accepted-contaminated-current-cohort'];
     const cleanFaults=['clean-missing-accepted-proposal','clean-canonical-raw-disagreement','clean-raw-envelope-disagreement'];
     const diagnosticFaults=['missing-accepted-change','duplicate-accepted-change','missing-raw','duplicate-raw','missing-accepted-proposal','duplicate-accepted-proposal','wrong-proposal-status','wrong-proposal-envelope','canonical-raw-disagreement','missing-output-receipt','duplicate-output-receipt','wrong-receipt-jobId','wrong-receipt-stage','wrong-receipt-runId','wrong-receipt-iteration','wrong-receipt-contextId','wrong-receipt-rawResponseSha256','wrong-receipt-promptInstructionId','wrong-receipt-parsedProposalId','unresolved-other-failure'];
-    const convergenceCases=['genuine-stage17-prefix-current-storage-restoration','actual-positive-calculation-receipt','actual-command-save-reload-current-receipt','tampered-convergence-receipt-blocks-current-gate','changed-governing-source-invalidates-convergence','changed-satisfaction_state-still-invalidates','changed-timing_schedule_sha256-still-invalidates','actual-unchanged-confirmation-preparation-save-reload-preserves-convergence'];
+    const convergenceCases=['genuine-stage17-prefix-current-storage-restoration','actual-positive-calculation-receipt','actual-command-save-reload-current-receipt','tampered-convergence-receipt-blocks-current-gate','changed-governing-source-invalidates-convergence','changed-timing_schedule_sha256-still-invalidates','forged-frontier-summary-still-rejected-by-projection-and-store','changed-authored-proposition','changed-reviewed-expression','changed-required-test-membership','changed-governing-scope','changed-governing-test-timing','changed-due-observation','removed-due-observation','changed-accepted-entailment','removed-accepted-entailment','changed-governing-evidence','changed-accepted-raw','removed-accepted-proposal','removed-accepted-receipt','actual-unchanged-confirmation-preparation-save-reload-preserves-convergence','empty-confirmation-remains-incomplete'];
     if(!value||value.passed!==true||value.synthetic!==true||value.actualBrowser!==false||value.physicalDeviceAcceptance!==false||value.earlierCompleteFlagsForced!==false||value.canonicalRunMutation!==false||value.retainedBoundary!==null||value.retainedPreparationSourceSha256!==null)return false;
-    if(!exactNamedCases(value.cases?.map(row=>row.caseId),[...positive,...cleanFaults,...diagnosticFaults,'retained-packet-provenance']))return false;
+    if(!exactNamedCases(value.cases?.map(row=>row.caseId),[...positive,...cleanFaults,...diagnosticFaults,'retained-packet-provenance','later-accepted-refutation-stales-and-blocks-fresh-calculations']))return false;
     const row=id=>value.cases.find(item=>item.caseId===id);
     if(!positive.every(id=>{const item=row(id);return item.stage11Complete===(id==='clean-current-cohort')&&item.stage12EntryAllowed===true&&item.actualStagedResponse===true&&item.actualPackage===true&&item.actualCommitReload===true&&digest(item.rawSha256);}))return false;
     if(!cleanFaults.every(id=>{const item=row(id);return item.faultInjected===true&&item.stage11Complete===false&&item.stage12EntryAllowed===false;}))return false;
     if(!diagnosticFaults.every(id=>{const item=row(id);return item.faultInjected===true&&item.diagnosticAbsent===true&&item.stage12EntryAllowed===false;}))return false;
+    const refutation=row('later-accepted-refutation-stales-and-blocks-fresh-calculations');
+    if(!refutation||!['passed','actualAcceptedResponse','actualSaveColdRead','synthetic'].every(key=>refutation[key]===true))return false;
     const packet=row('retained-packet-provenance');
     if(packet.faultInjected!==true||packet.reservedRunWithoutDirectRaw!==true||packet.prohibitedCarrierDetected!==true||!nonemptyString(packet.affectedRunId))return false;
     if(!exactNamedCases(value.stages12Through18?.map(item=>item.stage),[12,13,14,15,16,17,18])||!value.stages12Through18.every(item=>item.complete===true))return false;
@@ -2368,7 +2370,7 @@ verificationCatalog['verify-complete.mjs'].checks.push(check(
     if(!correction||!['passed','synthetic','rawHistoryPreserved','stage14PackageAndAcceptance','stage15RegressionAndAcceptance','stage16CorrectionAndAcceptance','stage17NewDescendant','independentRunAndVerifierCarriersWithholdPriorConclusions'].every(key=>correction[key]===true)||!['actualBrowser','acceptedRunMutation','completedNewCohort'].every(key=>correction[key]===false))return false;
     if(correction.newCorrectedRuns!==1||correction.newCorrectedVerifications!==0||!exactNamedCases(correction.provenanceNegativeCases,['missing-raw','changed-raw','wrong-accepted-scope']))return false;
     const transition=value.convergenceDerivationTransition;
-    return transition?.convergenceDerivationTransition==='PASS'&&transition.synthetic===true&&transition.actualBrowser===false&&transition.derivationId==='closed-loop-derivation/stage18-convergence/4'&&exactNamedCases(transition.cases,convergenceCases);
+    return transition?.convergenceDerivationTransition==='PASS'&&transition.synthetic===true&&transition.actualBrowser===false&&transition.derivationId==='closed-loop-derivation/stage18-convergence/5'&&exactNamedCases(transition.cases,convergenceCases);
    }
   }
 ));

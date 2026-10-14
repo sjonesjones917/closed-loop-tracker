@@ -73,7 +73,7 @@ function snapshot(r, p, sources) {
 function assertConvergenceCurrent(r, p, recordId, boundary) {
   const record = r.engine.records(p, 'convergenceRecords').find(row => row.id === recordId);
   assert(record, 'CONVERGENCE_RETAINED_RECORD ' + boundary);
-  assert.equal(record.derivationReceipt?.derivationId, 'closed-loop-derivation/stage18-convergence/4', 'CONVERGENCE_REGISTERED_SOURCE_CONTRACT ' + boundary);
+  assert.equal(record.derivationReceipt?.derivationId, 'closed-loop-derivation/stage18-convergence/5', 'CONVERGENCE_REGISTERED_SOURCE_CONTRACT ' + boundary);
   assert.equal(r.engine.convergenceRecordCurrent(p, record), true, 'CONVERGENCE_PERMITTED_DOWNSTREAM_STABILITY ' + boundary);
   assert.equal(r.engine.gate(18, p).complete, true, 'CONVERGENCE_DOWNSTREAM_GATE ' + boundary);
 }
@@ -519,6 +519,44 @@ export async function verifyAcceptedRunCorrectionJourney({sourceOverrides = {}, 
     if (index === 0) assertConvergenceCurrent(r, p, convergenceRecordId, 'first-confirmation-run-save-reload');
     onProgress({label: 'confirmation-run', accepted: index + 1});
     if (index === 8) await checkpoint('nine-confirmation-runs');
+  }
+  // The positive branch below accepts later ESTABLISHES without changing the
+  // prior receipt. This isolated accepted-response branch supplies the opposite
+  // semantic result through the same real public transport, never a forged row.
+  {
+    const prefix=snapshot(r,p,sources),{r:negativeRuntime,p:negativeProject}=await restore(prefix,sources),ne=negativeRuntime.engine;
+    const run=ne.recordsForIteration(negativeProject,'runs',confirmationIterationId)[0];
+    const accepted=await submit(negativeRuntime,negativeProject,19,'VERIFY',prompt=>({
+      verification:[recordProposal(schema,'verification',{tempKey:'verification',relationships:{REQ_ID:{recordId:req},RUN_ID:{recordId:run.id},TEST_ID:{recordId:test}},overrides:{VERIFIER:'Synthetic independent adverse verifier',VERIFIER_CONTEXT_ID:prompt.scope.contextId,INPUTS:'Current run output under the reviewed literal comparison.',PROCEDURE:'Report a controlled contrary observation in the negative branch.',EXPECTED_RESULT:'VERIFIED\n',OBSERVED_RESULT:'CONTROLLED FAILURE\n',EXACT_EVIDENCE:'The synthetic adverse observation differs from the required literal.',DETERMINATION:'VIOLATED'}})],
+      observationRecords:[recordProposal(schema,'observationRecords',{tempKey:'observation',relationships:{SUBJECT_ID:{recordId:test}},overrides:{EXTERNAL_OR_AGENT_OBSERVED_VALUE:'CONTROLLED FAILURE\n'}})],
+      entailmentReviews:[recordProposal(schema,'entailmentReviews',{tempKey:'entailment',relationships:{OBSERVATION_ID:{tempKey:'observation'},TARGET_PROPOSITION_ID:{recordId:prop}},overrides:{ENTAILMENT_FINDING:'REFUTES',REASONING:'The controlled current observation does not meet the required literal.'}})]
+    }),{runId:run.id});
+    const adverse=accepted.p,closure=ne.currentIterationRefutationSources(adverse,[prop],18);
+    assert.equal(closure.length,1,'ITERATION_LATER_ACTUALLY_ACCEPTED_REFUTATION');
+    assert.equal(ne.entailmentMetadataCurrent(adverse,closure[0].review),true,'ITERATION_REFUTATION_ACCEPTED_TRANSPORT_CURRENT');
+    const old=adverse.projectData.convergenceRecords.find(row=>row.id===convergenceRecordId),oldReceipt=JSON.stringify(old.derivationReceipt);
+    assert.equal(ne.convergenceRecordCurrent(adverse,old),false,'ITERATION_LATER_REFUTATION_STALES_OLD_RECEIPT');
+    assert.equal(ne.gate(18,adverse).complete,false,'ITERATION_LATER_REFUTATION_BLOCKS_STAGE18');
+    const calculated=ne.convergenceCalculation(adverse);
+    assert.equal(calculated.fields.CONVERGED,'FALSE','ITERATION_REFUTATION_FRESH_CALCULATION_NEGATIVE');
+    assert(calculated.failedConditions.includes('MANDATORY_PROPOSITION_REFUTATION'));
+    const derived=ne.deriveStageData(adverse,18);
+    assert.equal(derived.ALL_CONDITIONS_SIMULTANEOUSLY_TRUE,false,'ITERATION_REFUTATION_DISPLAY_MATCHES_CANONICAL');
+    assert(String(derived.FAILED_CONDITIONS).includes('MANDATORY_PROPOSITION_REFUTATION'));
+    const recalculated=negativeRuntime.copy(adverse),fresh=ne.recordConvergence(recalculated);
+    assert.equal(fresh.fields.CONVERGED,'FALSE','ITERATION_REFUTATION_NORMAL_RERECORD_NEGATIVE');
+    assert.equal(JSON.stringify(recalculated.projectData.convergenceRecords.find(row=>row.id===old.id).derivationReceipt),oldReceipt,'ITERATION_REFUTATION_HISTORY_RECEIPT_PRESERVED');
+    assert.equal(ne.gate(18,recalculated).complete,false);
+    const freshConfirmation=ne.recordUnchangedConfirmation(negativeRuntime.copy(adverse));
+    assert.equal(freshConfirmation.fields.DETERMINATION,'UNDETERMINED','ITERATION_REFUTATION_NORMAL_RECONFIRM_NEGATIVE');
+    for(const [name,edit]of [
+      ['unaccepted-proposal',state=>{state.projectData.responseProposals=state.projectData.responseProposals.filter(row=>row.proposalId!==closure[0].review.sourceProposalId);}],
+      ['missing-raw',state=>{state.projectData.rawResponses=state.projectData.rawResponses.filter(row=>row.rawResponseId!==closure[0].review.rawResponseId);}],
+      ['expired-observation',state=>{const row=state.projectData.observationRecords.find(row=>row.id===closure[0].observation.id);row.fields.FRESHNESS_STATUS=row.FRESHNESS_STATUS='EXPIRED';ne.refreshRecordHashes(row,'observationRecords');}],
+      ['foreign-candidate',state=>{state.projectData.entailmentReviews.find(row=>row.id===closure[0].review.id).scope.candidateId='FOREIGN-CANDIDATE';}]
+    ]){const changed=negativeRuntime.copy(adverse);edit(changed);assert.equal(ne.currentIterationRefutationSources(changed,[prop],18).length,0,'ITERATION_UNADMITTED_REFUTATION_NOT_TRUTH: '+name);assert.equal(ne.gate(19,changed).complete,false,'ITERATION_MISSING_REQUIRED_PROOF_STILL_BLOCKS: '+name);}
+    if(onCheckpoint)await onCheckpoint({label:'stage19-accepted-refutation',r:negativeRuntime,p:adverse,sources,snapshot:snapshot(negativeRuntime,adverse,sources)});
+    cases.push({caseId:'later-accepted-refutation-stales-and-blocks-fresh-calculations',passed:true,actualAcceptedResponse:true,actualSaveColdRead:true,synthetic:true});
   }
   await verify(19, e.recordsForIteration(p, 'runs', confirmationIterationId));
   const matrix = e.verificationMatrix(p, confirmationIterationId);
