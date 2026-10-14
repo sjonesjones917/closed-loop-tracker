@@ -541,8 +541,8 @@ export async function verifyIterationProductTransition({beforeProduct,afterProdu
  // Transfer actual retained prompt files across verifier realms with the
  // production identity-checking retain API; never rebuild historical context.
  for(const original of afterProduct.projectData.generatedPrompts){
-  const files=sourcePrompts.materializePromptContextFiles(original,afterProduct),id=original.instructionId||original.promptId;
-  for(const target of [before,after]){const row=target.projectData.generatedPrompts.find(row=>(row.instructionId||row.promptId)===id);if(row)r.prompts.retainPromptContextFiles(row,r.copy(files));}
+  const files=sourcePrompts.materializePromptContextFiles(original),id=original.instructionId||original.promptId;
+  for(const target of [before,after]){const row=target.projectData.generatedPrompts.find(row=>(row.instructionId||row.promptId)===id);if(row){r.prompts.retainPromptContextFiles(row,r.copy(files));await r.store.persistPromptContextFiles(row,target);}}
  }
  assert.equal(before.job.CURRENT_STAGE,'STAGE 21','ITERATION_PRODUCT_BEFORE_FRONTIER');
  assert.equal(after.job.CURRENT_STAGE,'STAGE 22','ITERATION_PRODUCT_AFTER_FRONTIER');
