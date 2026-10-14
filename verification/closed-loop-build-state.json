@@ -1394,7 +1394,7 @@
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "/root/repair_iteration_receipt_dependencies",
-    "lastInspectedAt": "2026-10-14T21:36:00Z",
+    "lastInspectedAt": "2026-10-14T21:39:07Z",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -3130,7 +3130,16 @@
         "governedIterationRefutation"
       ],
       "positivePublicCold": "NOT_EXECUTED_BEFORE_ORIGINAL_AUTHORITY_EXPIRY",
-      "independentLegacySession": 61746
+      "independentLegacySession": 83264,
+      "legacySeedStatus": "GENUINE_OLD13_CHAIN3_INCOMPLETE_PUBLIC_COLD_PASS",
+      "legacySeedCompressedSha256": "8afcdbdc75094a3adeefa8d410c904871bb3b20cc56d5b5921bc083dc3aa65a1"
+    },
+    "reproducibleCheckoutReclamation2138": {
+      "manifest": "/workspace/shared/clrt-iteration-repair-evidence/reclaim-inactive-migration-checkouts-20261014-2138.json",
+      "removedBytes": 1576066239,
+      "remainingDiskGiB": 2.2,
+      "allUniqueEvidencePreserved": true,
+      "ownerReleaseConfirmedBy": "/root/review_migration_preservation_proofs via parent"
     }
   }
 }
