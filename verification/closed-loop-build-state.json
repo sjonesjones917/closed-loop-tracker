@@ -1394,7 +1394,7 @@
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "dot",
-    "lastInspectedAt": "2026-10-14T06:02:11Z",
+    "lastInspectedAt": "2026-10-14T06:13:10Z",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -1813,6 +1813,32 @@
         ],
         "lastInspectedAt": "2026-10-14T05:31:59Z",
         "inputSpecificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+        "returnTo": "/root",
+        "concurrencyAllocation": 1
+      },
+      {
+        "id": "test_integrated_runtime_baseline",
+        "owner": "/root/test_integrated_runtime_baseline",
+        "state": "RUNNING",
+        "scope": "Pinned required CI runtime diagnostics; bounded verify-complete Stage11 fixture provenance correction if demonstrated",
+        "baseCommit": "eb3e7804a23b1738eed523beffd8603b51d89b6d",
+        "writeScope": "Own isolated worktree; fixture-only author change or independent evidence; no runtime/source/ledger mutation",
+        "dependencies": [],
+        "host": "dot cloud workspace",
+        "lastInspectedAt": "2026-10-14T06:13:10Z",
+        "returnTo": "/root",
+        "concurrencyAllocation": 1
+      },
+      {
+        "id": "review_runtime_fixture_correction",
+        "owner": "/root/review_runtime_fixture_correction",
+        "state": "RUNNING",
+        "scope": "Independent pre-patch expectations and review of actual accepted synthetic fixture lifecycle",
+        "baseCommit": "eb3e7804a23b1738eed523beffd8603b51d89b6d",
+        "writeScope": "Own isolated worktree; fixture-only author change or independent evidence; no runtime/source/ledger mutation",
+        "dependencies": [],
+        "host": "dot cloud workspace",
+        "lastInspectedAt": "2026-10-14T06:13:10Z",
         "returnTo": "/root",
         "concurrencyAllocation": 1
       }
