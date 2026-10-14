@@ -537,13 +537,14 @@ export async function verifyProjectionVersion3ActivationContract({sourceOverride
 // receipt stability and public transaction-adapter cold-read boundary.
 export async function verifyIterationProductTransition({beforeProduct,afterProduct,artifacts,sourcePrompts}){
  const r=projectStoreRuntime({storageWorker:false}),e=r.engine,cases=[],before=r.copy(beforeProduct),after=r.copy(afterProduct);
- await restoreArtifactFixture(r.store,artifacts);
+ await restoreArtifactFixture(r.store,artifacts);const originalCanonicalHashes=[before,after].map(state=>r.runtime.closedLoopHash.sha256Value(state));
  // Transfer actual retained prompt files across verifier realms with the
  // production identity-checking retain API; never rebuild historical context.
  for(const original of afterProduct.projectData.generatedPrompts){
   const files=sourcePrompts.materializePromptContextFiles(original),id=original.instructionId||original.promptId;
   for(const target of [before,after]){const row=target.projectData.generatedPrompts.find(row=>(row.instructionId||row.promptId)===id);if(row){r.prompts.retainPromptContextFiles(row,r.copy(files));await r.store.persistPromptContextFiles(row,target);}}
  }
+ assert.deepEqual([before,after].map(state=>r.runtime.closedLoopHash.sha256Value(state)),originalCanonicalHashes,'ITERATION_CONTEXT_PERSISTENCE_PRESERVES_PROJECT');
  assert.equal(before.job.CURRENT_STAGE,'STAGE 21','ITERATION_PRODUCT_BEFORE_FRONTIER');
  assert.equal(after.job.CURRENT_STAGE,'STAGE 22','ITERATION_PRODUCT_AFTER_FRONTIER');
  const check=(state,boundary)=>{

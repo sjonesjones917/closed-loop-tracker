@@ -610,8 +610,9 @@ export async function verifyAcceptedGoverningRefutation({sourceProject,artifacts
   const sources=Object.fromEntries([...runtimeFiles,'verify-full-cycle.mjs','test-accepted-run-correction-journey.mjs'].map(file=>[file,fs.readFileSync(file,'utf8')]));
   const negativeRuntime=projectStoreRuntime({storageWorker:false}),ne=negativeRuntime.engine,schema=negativeRuntime.runtime.closedLoopWorkflowSchema;
   await restoreArtifactFixture(negativeRuntime.store,artifacts);
-  let adverse=negativeRuntime.copy(sourceProject);
+  let adverse=negativeRuntime.copy(sourceProject);const originalCanonicalSha=negativeRuntime.runtime.closedLoopHash.sha256Value(adverse);
   for(const original of sourceProject.projectData.generatedPrompts){const row=adverse.projectData.generatedPrompts.find(row=>row.instructionId===original.instructionId);negativeRuntime.prompts.retainPromptContextFiles(row,negativeRuntime.copy(sourcePrompts.materializePromptContextFiles(original)));await negativeRuntime.store.persistPromptContextFiles(row,adverse);}
+  assert.equal(negativeRuntime.runtime.closedLoopHash.sha256Value(adverse),originalCanonicalSha,'GOVERNED_CONTEXT_PERSISTENCE_PRESERVES_PROJECT');
   adverse=await negativeRuntime.store.writeProject(adverse,{createOnly:true,expectedProjectRevision:0,incrementRevision:false});
   adverse=await negativeRuntime.store.readProject(adverse.job.JOB_ID);
   const prop=propositionId,test=ne.records(adverse,'tests').find(row=>row.id===testId),req=ne.recordValue(test,'REQ_ID');
