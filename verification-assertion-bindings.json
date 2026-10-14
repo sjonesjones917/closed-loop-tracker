@@ -1056,7 +1056,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "migrateProjectToCurrent / markLegacyNonGating / normalizeTestRecords",
-            "sha256": "3e11c7233449bbd3e2efb48e543f9e94e372c137c88d98ea29efbba25775000e"
+            "sha256": "626e51a6590e1bb19e6c4478a2531326daddceffabdb8ced225dbb4aa81deb1b"
           },
           {
             "path": "workbook.js",
@@ -1066,7 +1066,7 @@
           {
             "path": "project-store.js",
             "symbol": "migrateLegacy / migrateProjectToCurrent / retainProjectSource",
-            "sha256": "935761d3de772a00b1da1da48a6e29a7abeb16b3cc121f379ae87829addad281"
+            "sha256": "be8a5b5f9a2ca7caa42024f2831447c38947fe099198c3303e7eb83e410965d0"
           }
         ],
         "obligations": [
@@ -1103,8 +1103,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-a1bafeb7c6f6f12bf0c7b0f6fcadaab9-20261014-migration-projection12-independent.json",
-          "sha256": "a736e85debf60f7302e781f520967d0dec1439f2c34549f2bd15321c7bc53585"
+          "path": "verification/requirement-coverage-NREQ-a1bafeb7c6f6f12bf0c7b0f6fcadaab9-20261014-migration-projection15-independent.json",
+          "sha256": "12496444ea902fa65ed67cf056d91349483e54d3d4750745e4d6f15312f26384"
         }
       }
     },
@@ -1158,7 +1158,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "migrateProjectToCurrent / markLegacyNonGating / normalizeTestRecords",
-            "sha256": "3e11c7233449bbd3e2efb48e543f9e94e372c137c88d98ea29efbba25775000e"
+            "sha256": "626e51a6590e1bb19e6c4478a2531326daddceffabdb8ced225dbb4aa81deb1b"
           },
           {
             "path": "workbook.js",
@@ -1168,7 +1168,7 @@
           {
             "path": "project-store.js",
             "symbol": "migrateLegacy / migrateProjectToCurrent / retainProjectSource",
-            "sha256": "935761d3de772a00b1da1da48a6e29a7abeb16b3cc121f379ae87829addad281"
+            "sha256": "be8a5b5f9a2ca7caa42024f2831447c38947fe099198c3303e7eb83e410965d0"
           }
         ],
         "obligations": [
@@ -1206,8 +1206,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-f41a79c58369bd76c58ad7e831e953ce-20261014-migration-projection12-independent.json",
-          "sha256": "320a777df7489f8cce98cc07de5ab72a1a37b87f290afa60370a8c3ff71c75a1"
+          "path": "verification/requirement-coverage-NREQ-f41a79c58369bd76c58ad7e831e953ce-20261014-migration-projection15-independent.json",
+          "sha256": "db21f3e5c002aa1ba924fb3d7484ca70a921f84af64ceb16ca496b6ab7f92e48"
         }
       }
     },
@@ -1261,7 +1261,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "migrateProjectToCurrent / markLegacyNonGating / normalizeTestRecords",
-            "sha256": "3e11c7233449bbd3e2efb48e543f9e94e372c137c88d98ea29efbba25775000e"
+            "sha256": "626e51a6590e1bb19e6c4478a2531326daddceffabdb8ced225dbb4aa81deb1b"
           },
           {
             "path": "workbook.js",
@@ -1271,7 +1271,7 @@
           {
             "path": "project-store.js",
             "symbol": "migrateLegacy / migrateProjectToCurrent / retainProjectSource",
-            "sha256": "935761d3de772a00b1da1da48a6e29a7abeb16b3cc121f379ae87829addad281"
+            "sha256": "be8a5b5f9a2ca7caa42024f2831447c38947fe099198c3303e7eb83e410965d0"
           }
         ],
         "obligations": [
@@ -1310,8 +1310,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-5811c65fa83521ee7afeedd602cec806-20261014-migration-projection12-independent.json",
-          "sha256": "1519dc8b2071c442f3691b166c6cc5688d5f89a1b8f587b8602e7fcc6b27da8e"
+          "path": "verification/requirement-coverage-NREQ-5811c65fa83521ee7afeedd602cec806-20261014-migration-projection15-independent.json",
+          "sha256": "ac6f311b8604106eae97c23974e46eeff0d276910d163308416b6430c00ee0aa"
         }
       }
     },
@@ -1365,7 +1365,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "migrateProjectToCurrent / markLegacyNonGating / normalizeTestRecords",
-            "sha256": "3e11c7233449bbd3e2efb48e543f9e94e372c137c88d98ea29efbba25775000e"
+            "sha256": "626e51a6590e1bb19e6c4478a2531326daddceffabdb8ced225dbb4aa81deb1b"
           },
           {
             "path": "workbook.js",
@@ -1375,12 +1375,12 @@
           {
             "path": "project-store.js",
             "symbol": "migrateLegacy / migrateProjectToCurrent / retainProjectSource",
-            "sha256": "935761d3de772a00b1da1da48a6e29a7abeb16b3cc121f379ae87829addad281"
+            "sha256": "be8a5b5f9a2ca7caa42024f2831447c38947fe099198c3303e7eb83e410965d0"
           },
           {
             "path": "workflow-engine.js",
             "symbol": "stageContext / gate",
-            "sha256": "d4e8b297f504dea6e56bf7975f6e0deb196563172d9df6e56125fb90fd207927"
+            "sha256": "1a0e0789abcb829c79dec4748dbaa0e90d2989d6d263ac3e6b6e1fcf26377d1f"
           }
         ],
         "obligations": [
@@ -1421,8 +1421,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-2046e21dd63ad76f992233d5582c716d-20261014-migration-projection12-independent.json",
-          "sha256": "d22e952a2855d7bfa7fdcbbc637626e01d1812632b65fc14f8ba768de56c4eca"
+          "path": "verification/requirement-coverage-NREQ-2046e21dd63ad76f992233d5582c716d-20261014-migration-projection15-independent.json",
+          "sha256": "9052d6fccc28fb3ec83c082b7e9566368ce909d6b368abf063978d203d7f20a7"
         }
       }
     },
@@ -1469,7 +1469,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "migrateProjectToCurrent / markLegacyNonGating / normalizeTestRecords",
-            "sha256": "3e11c7233449bbd3e2efb48e543f9e94e372c137c88d98ea29efbba25775000e"
+            "sha256": "626e51a6590e1bb19e6c4478a2531326daddceffabdb8ced225dbb4aa81deb1b"
           },
           {
             "path": "workbook.js",
@@ -1479,7 +1479,7 @@
           {
             "path": "project-store.js",
             "symbol": "migrateLegacy / migrateProjectToCurrent / retainProjectSource",
-            "sha256": "935761d3de772a00b1da1da48a6e29a7abeb16b3cc121f379ae87829addad281"
+            "sha256": "be8a5b5f9a2ca7caa42024f2831447c38947fe099198c3303e7eb83e410965d0"
           },
           {
             "path": "response-ingestion.js",
@@ -1489,7 +1489,7 @@
           {
             "path": "workflow-engine.js",
             "symbol": "gate / stageContext",
-            "sha256": "d4e8b297f504dea6e56bf7975f6e0deb196563172d9df6e56125fb90fd207927"
+            "sha256": "1a0e0789abcb829c79dec4748dbaa0e90d2989d6d263ac3e6b6e1fcf26377d1f"
           }
         ],
         "obligations": [
@@ -1533,8 +1533,8 @@
         "unresolvedObligations": [],
         "governingContext": [],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-1b07d67693ef773b4800dc6e06626b5b-20261014-migration-projection12-independent.json",
-          "sha256": "0029c8a208987adb70112eceb62ceb7c31cce9e204894e9821d2a35f88d0b898"
+          "path": "verification/requirement-coverage-NREQ-1b07d67693ef773b4800dc6e06626b5b-20261014-migration-projection15-independent.json",
+          "sha256": "6440a8227c7cd3faff77c03a865c377993641074a5737a32b6fe7f971de5eeb7"
         }
       }
     },
