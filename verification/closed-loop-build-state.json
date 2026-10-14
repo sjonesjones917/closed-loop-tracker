@@ -1394,7 +1394,7 @@
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "dot",
-    "lastInspectedAt": "2026-10-14T16:19:01.866964Z",
+    "lastInspectedAt": "2026-10-14T16:36:34.933859Z",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -2050,7 +2050,7 @@
     },
     "scheduleState": "FORECAST_NOT_ESTABLISHED",
     "forecast": null,
-    "nextAction": "Execute reviewed ordinary blocked-state release recalculation r6 and independently compare actual pre/post source binding; only then authorize any secondary preimage correction. Finish primary general due-proof tests and freeze registered contracts together.",
+    "nextAction": "Freeze combined source-general release4/projection13 repair with exact legacy3/12 preserved; independently review mutations, required deadlines, future scheduling and actual command/store stability before integration.",
     "deploymentObservation": {
       "sourceCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
       "runId": "36958910363",
@@ -2575,7 +2575,7 @@
       "finding": "Aggregate repeats full source extraction; safe reuse would require fresh per-boundary identities and independent review. No measured seconds-saving benchmark; keep current proof checks unchanged."
     },
     "release27Repair": {
-      "state": "PRIMARY_SOURCE_GENERAL_DRAFT_UNDER_REVIEW_SECONDARY_CAPTURE_PENDING",
+      "state": "COMBINED_PRIMARY_SECONDARY_IMPLEMENTATION_AUTHORIZED_PENDING_FROZEN_REVIEW",
       "owner": "/root/repair_iteration_receipt_dependencies",
       "reviewer": "/root/review_release_scope_binding",
       "defaultOwner": {
@@ -2644,8 +2644,27 @@
           "accepted25Custody": "11 exact sources,23 original artifacts,93 original prompt contexts; captured16:13:16.549\u201316:13:19.419Z",
           "r6": "Independent driver3ad2b90db09021dda8e7500648538be089ef8ef96a5b6da1d6de2a0da9b6ef41 approved: ordinary unconditional Release Recalculate on actual blocked25 after strict public save/cold validation; genuine pre/post capture; expectedBLOCKED; normal persistence attempt.",
           "scope": "Self-binding diagnosis only; no accepted release/live readiness/completedprefix/migration claim, no clock or evidence-expiry changes."
+        },
+        "genuineR7": {
+          "state": "ACTUAL_BEFORE_AFTER_CAUSE_INDEPENDENTLY_CONFIRMED",
+          "terminalExitCode": 1,
+          "dispositionBeforeFailure": "ACCEPTED",
+          "beforeCapture": "2026-10-14T16:34:22.624Z/2026-10-14T16:34:25.511Z",
+          "afterCapture": "2026-10-14T16:34:45.544Z/2026-10-14T16:34:48.481Z",
+          "capabilityValidUntil": "2026-10-14T16:50:04.370Z",
+          "boundSourceCount": 255,
+          "changedSources": 1,
+          "unchangedSources": 254,
+          "changedSource": "proofObligations/PROOF-OBLIGATION-c15afvu00al4un09vg9ocgdfc0ecgq2u",
+          "cause": "CURRENT_RELEASE_ID allocation changes only releaseId in currentScope, reflected in proof obligation scope/set summary hashes, aliases and digest/update bookkeeping. Exact original rows independently rehashed.",
+          "evidenceHashes": {
+            "driver-provenance.json": "a82d2990850167f513906d0bd483318ffebe857ebfd4618229480ca58799f39d",
+            "direct-observed-release-source-diff.json": "1e967b0d515d19a2565e0466ea564bd278db425f281b3c04968604f054bbff54",
+            "failure.json": "7ab12ea1a0246519002e9a00ecaf247fda03a72c9858a36e18a4bb1b58febdb5"
+          }
         }
-      }
+      },
+      "secondaryAuthorizedScope": "Release-specific registered proofObligation preimage excluding only observed self-dependent CURRENT_SCOPE_HASH/PROOF_OBLIGATION_SET_HASH aliases and derived digest/update bookkeeping; all substantive obligation fields/records and material source bindings preserved. Governing mutations/add-remove negatives required."
     }
   }
 }
