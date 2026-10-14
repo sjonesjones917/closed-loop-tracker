@@ -2741,6 +2741,30 @@
           "captureCompletedAt": "2026-10-14T17:44:23.694Z"
         },
         "nextAction": "Independently validate exact raw custody and reviewed VM continuation of original445 stages23-30, retaining all assertions and original capability expiry. Do not repeat completed prefix or infer terminal success."
+      },
+      "boundedGovernedContinuation": {
+        "state": "RUNNING_PARTIAL_DIAGNOSTIC",
+        "source": "445fe4da9688cc68a59406376ffef0e06cae9f2c",
+        "startedAt": "2026-10-14T18:11:21Z",
+        "session": 81088,
+        "driverSha256": "21419a1f017c0b69d3db5df56218ecb971840f357f392c56b446fe554b0e496f",
+        "reviewSha256": "321e31120e616a7a8f3204f997f5917e63d1fc499fb0bb065944e066c1b8a24c",
+        "checkpointReviewSha256": "6da8a1c653f2721c055fe9bfe4a28f332224e2d4f98ba350a9c452924badda97",
+        "originalCapabilityExpiresAt": "2026-10-14T19:20:11.524Z",
+        "scope": "Original executable23\u201330 checks including exact release retry/public save/cold, retained original custody, newly executed presentation assertions. No regenerated prefix pass arrays.",
+        "outstandingVerificationObligations": [
+          {
+            "name": "prefix workflowPresentationCases aggregate",
+            "status": "UNESTABLISHED",
+            "reason": "Original prefix collection catches FAIL; array was not captured; Stage22 is not evidence of pass"
+          },
+          {
+            "name": "assertProductAttachmentJourney final aggregate",
+            "status": "NOT EXECUTED",
+            "reason": "Prefix-only report array unavailable; no PASS population reconstructed"
+          }
+        ],
+        "fullOwnerAcceptance": false
       }
     }
   }
