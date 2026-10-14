@@ -978,7 +978,7 @@ function planProposal(project,envelope,{rawRecord,promptRecord,validationRecord,
     for(const [testId,group]of groups){
       const calculation=workflow.externalProductResultCalculation(projected,{test:group.test,observations:group.observations,entailments:workflow.recordsForCurrentScope(projected,'entailmentReviews'),scope:promptRecord.scope,promptRecord,rawRecord,tempToCanonical}),key='external-result:'+testId,id=allocate('deterministicResults',key,{testId,observationIds:calculation.canonicalInput.observationIds,scope:promptRecord.scope},{application:true});applicationAllocations[key]={collection:'deterministicResults',id};
       const fields={RESULT_ID:id,...calculation.fields};
-      const row={id,stage:22,createdAt:validationRecord.createdAt,active:true,scope:clone(promptRecord.scope),fields,...fields,relationships:{PRODUCT_ID:calculation.productId,TEST_ID:testId},evidenceRefs:calculation.evidenceIds,sourceProposalId:proposalId,rawResponseId:rawRecord.rawResponseId,source:'APPLICATION_EXTERNAL_RESULT_NORMALIZATION',derivationKey:'stage22.externalResult',derivationInput:calculation.canonicalInput,derivationReceipt:calculation.derivationReceipt};
+      const row={id,stage:22,createdAt:validationRecord.createdAt,active:true,scope:clone(promptRecord.scope),fields,...fields,relationships:{PRODUCT_ID:calculation.productId,TEST_ID:testId},evidenceRefs:calculation.evidenceIds,sourceProposalId:proposalId,rawResponseId:rawRecord.rawResponseId,temporaryKey:null,source:'APPLICATION_EXTERNAL_RESULT_NORMALIZATION',derivationKey:'stage22.externalResult',derivationInput:calculation.canonicalInput,derivationReceipt:calculation.derivationReceipt};
       canonicalRecords.deterministicResults.push(row);externalProductDerivations.set(id,row);
     }
   }
