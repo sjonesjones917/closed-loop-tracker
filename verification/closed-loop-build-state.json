@@ -1390,11 +1390,11 @@
     "startingSourceCommit": "7df5f46e9a7e54da09622387a978badb39916c09",
     "startingMainCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
     "integrationBranch": "dot/published-execution-20261014",
-    "integrationCommit": "5d1389b6ff1205edc2771ca1bdebdd76da28a3e7",
+    "integrationCommit": "8ba27aaff1e61b3aa8afc0bc4e089e45bc1769df",
     "prNumber": 1248,
     "managementOwner": "dot",
-    "technicalWriteOwner": "dot",
-    "lastInspectedAt": "2026-10-14T16:36:34.933859Z",
+    "technicalWriteOwner": "/root/repair_iteration_receipt_dependencies",
+    "lastInspectedAt": "2026-10-14T18:59:45.084635+00:00",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -2050,7 +2050,7 @@
     },
     "scheduleState": "FORECAST_NOT_ESTABLISHED",
     "forecast": null,
-    "nextAction": "Freeze combined source-general release4/projection13 repair with exact legacy3/12 preserved; independently review mutations, required deadlines, future scheduling and actual command/store stability before integration.",
+    "nextAction": "Retrieve actual79312 terminal and independent disposition; align current13 catalog in isolated worker, integrate only reviewed source with affected checks. Preserve pending publication/human approvals.",
     "deploymentObservation": {
       "sourceCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
       "runId": "36958910363",
@@ -2743,7 +2743,7 @@
         "nextAction": "Independently validate exact raw custody and reviewed VM continuation of original445 stages23-30, retaining all assertions and original capability expiry. Do not repeat completed prefix or infer terminal success."
       },
       "boundedGovernedContinuation": {
-        "state": "RUNNING_PARTIAL_DIAGNOSTIC",
+        "state": "LOST_EXECUTOR_AFTER_ACTUAL_PUBLIC_COLD_CAPTURE",
         "source": "445fe4da9688cc68a59406376ffef0e06cae9f2c",
         "startedAt": "2026-10-14T18:11:21Z",
         "session": 81088,
@@ -2764,7 +2764,80 @@
             "reason": "Prefix-only report array unavailable; no PASS population reconstructed"
           }
         ],
-        "fullOwnerAcceptance": false
+        "fullOwnerAcceptance": false,
+        "owningSessionResult": "81088 Unknown process id, no terminal/result/failure",
+        "postColdIndependentVerification": {
+          "result": "PASS",
+          "completedAt": "2026-10-14T18:55:55Z",
+          "reviewSha256": "2f596ec6a1559f242c422d83cb09f5430739b4607b57808f9186eaea7eda8a21",
+          "compressedFileSha256": "80d5166700ba5e22fd43575a4f5cf6ebb74eabc36bb05c1435d5d874f1800935",
+          "canonicalProjectSha256": "85bd8c8576bb4753abbdcca00f1f6247e219f3ab7b923f055edddac4fb1ceec6",
+          "storedAdapterProjectSha256": "63be42b1faf0573949e77b231b5a20242764c7bad19419bcd72efcf4715ffc12",
+          "scope": "Strict public cold integrity, current ACCEPTED release4/gate27 and exact prior release/raw/history/authority preservation. Original helper caller-pointer postcondition remains unobserved."
+        }
+      },
+      "boundedTail28": {
+        "state": "RUNNING",
+        "source": "445fe4da9688cc68a59406376ffef0e06cae9f2c",
+        "driverSha256": "8682bc24bbaeffceed5a6a7bba5973ab6a18355b8df617e872e7cc0722cfcfca",
+        "session": 79312,
+        "startedAt": "2026-10-14T18:57:50Z",
+        "scope": "Actual saved isolated revision0 seed, original post-cold checks then literal28\u201330; original caller revision7 separately identified. Retained23\u201327 arrays carried; no repeated prefix.",
+        "fullOwnerAcceptance": false,
+        "originalCapabilityExpiresAt": "2026-10-14T19:20:11.524Z",
+        "outstanding": [
+          "Prefix presentation aggregate UNESTABLISHED",
+          "Prefix attachment aggregate NOT EXECUTED",
+          "Original helper caller-pointer preservation UNESTABLISHED"
+        ]
+      }
+    },
+    "continuationAmendmentV2": {
+      "messageId": "Sentinel_4171a7d9ba308191850ae105fcaa1639",
+      "combinedPromptSha256": "c7e6ee932442288544353dbec5bbe90ae9f0e2eea98921bb9afac9ba3f99c116",
+      "instructionPath": "verification/dot-execution-instructions-v2-20261014.txt",
+      "partASha256": "b8f2040d3792d93ab80c8e9d75082429906ac7ed5b601eb387863e9bc2f2832e",
+      "partBUnchanged": true,
+      "receivedByLead": true,
+      "receivedByReviewer": true,
+      "projectClockReset": false,
+      "lease": {
+        "owner": "/root/repair_iteration_receipt_dependencies",
+        "scope": "Exclusive integration and existing shared build-state writer",
+        "baseCommit": "8ba27aaff1e61b3aa8afc0bc4e089e45bc1769df",
+        "status": "ACTIVE",
+        "rootWrites": "Paused until explicit handback"
+      },
+      "resourceObservation": {
+        "at": "2026-10-14T18:56:14Z",
+        "reportedBy": "/root",
+        "connectedComputers": 0,
+        "savedCodingEnvironments": 0,
+        "codexExecutable": "/opt/codex/bin/codex",
+        "claudeExecutable": "UNAVAILABLE",
+        "claudeRoute": "NOT_VERIFIED",
+        "nativeWorkers": "AVAILABLE_VERIFIED",
+        "modelConfiguration": "UNOBSERVED"
+      },
+      "scheduleReceipt": {
+        "automationId": "6acef453722c8191a261c21dcc55a36f",
+        "updatedAt": "2026-10-14T18:57:57Z",
+        "enabled": true,
+        "dtstart": "UNCHANGED",
+        "instruction": "v2 M03A; successful update reported by root after verified-unsaved initial error"
+      },
+      "workerState": {
+        "implementationLead": "/root/repair_iteration_receipt_dependencies",
+        "independentReviewer": "/root/review_release_scope_binding",
+        "currentCatalogWorker": "/root/repair_iteration_receipt_dependencies/align_release_catalog13",
+        "currentCatalogScope": [
+          "verification-evidence-catalog.mjs",
+          "test-normative-catalog-consumers.mjs"
+        ],
+        "activeImplementationWorkers": 2,
+        "activeIndependentReviewers": 1,
+        "heavyProcessLimit": 1,
+        "currentHeavySession": 79312
       }
     }
   }
