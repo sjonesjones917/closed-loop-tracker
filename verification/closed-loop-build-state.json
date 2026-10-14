@@ -2725,12 +2725,22 @@
       "freshGovernedOwner": {
         "source": "445fe4da9688cc68a59406376ffef0e06cae9f2c",
         "runtime": "086f2b2ecc271013ebc90a7694350ffd2eee6102",
-        "state": "RUNNING",
+        "state": "LOST_EXECUTOR_NO_TERMINAL_PRESERVED_STAGE22_CUSTODY",
         "startedAt": "2026-10-14T17:18:29Z",
         "session": 59258,
         "wrapperSha256": "02fdae0582030b1d36786f96538e9dad0497326316598c582ce6d7a4f4c5bd0b",
         "evidenceDirectory": "/workspace/shared/clrt-iteration-repair-evidence/frozen-445fe4da-governed",
-        "scope": "Original full governed lifecycle plus independently reviewed inert checkpoints and unconditional exact release retry/public save/cold checks. No terminal yet."
+        "scope": "Original full governed lifecycle plus independently reviewed inert checkpoints and unconditional exact release retry/public save/cold checks. No terminal yet.",
+        "verifiedAt": "2026-10-14T18:02:32Z",
+        "lastLoggedCompletedStage": 23,
+        "owningSessionResult": "Unknown process id; no exit-code.txt or ended-at.txt",
+        "lastCompleteCustody": {
+          "filename": "stage22-completed-raw.json.gz",
+          "compressedFileSha256": "03ae59ca9efac9c35e71a34bf1448b0377e3adf27b4e669d122340afdc24644e",
+          "canonicalProjectSha256": "31dd2b4cbd7f722cbc9edd73fccaa4f6f981afa91d2982bd5f86251294cb7b95",
+          "captureCompletedAt": "2026-10-14T17:44:23.694Z"
+        },
+        "nextAction": "Independently validate exact raw custody and reviewed VM continuation of original445 stages23-30, retaining all assertions and original capability expiry. Do not repeat completed prefix or infer terminal success."
       }
     }
   }
