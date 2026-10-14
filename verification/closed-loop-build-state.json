@@ -1394,7 +1394,7 @@
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "dot",
-    "lastInspectedAt": "2026-10-14T08:00:21.637434Z",
+    "lastInspectedAt": "2026-10-14T08:23:57.850692Z",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -1931,13 +1931,14 @@
       {
         "id": "review_migration_preservation_proofs",
         "owner": "/root/review_migration_preservation_proofs",
-        "state": "RUNNING",
+        "state": "VERIFIED",
         "scope": "Independent review of exact preservation source, current owner assertions and evidence gaps",
-        "lastInspectedAt": "2026-10-14T08:00:21.637434Z",
+        "lastInspectedAt": "2026-10-14T08:23:57.850692Z",
         "host": "dot cloud workspace",
         "returnTo": "/root",
         "dependencies": [],
-        "concurrencyAllocation": 1
+        "concurrencyAllocation": 1,
+        "evidence": "Five coverage designs accepted at9cdf47b4; current integration receipts still required"
       }
     ],
     "resources": {
@@ -1999,7 +2000,7 @@
     },
     "scheduleState": "FORECAST_NOT_ESTABLISHED",
     "forecast": null,
-    "nextAction": "Finish independently reviewed iteration receipt and legacy activation repair on frozen source, rerun required owners sequentially; refresh14 canonical reviews for final catalog, review migration preservation checks, then collect exact current receipts. Publication and source amendment approvals remain pending.",
+    "nextAction": "Obtain actual Stage19 and Stage21-to22 frozen runtime boundary outcomes and independent acceptance; compose accepted runtime and five migration plus fourteen canonical review records; execute source-bound owners and full catalog on frozen combined source. Publication and source-amendment approvals remain pending.",
     "deploymentObservation": {
       "sourceCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
       "runId": "36958910363",
@@ -2169,15 +2170,22 @@
         "oldCorrectedIterationRun": "LOST_EXECUTOR_OUTCOME_NO_PASS_OR_FAILURE_INFERRED"
       },
       "iterationReceiptDependencies": {
-        "state": "IN_REVIEW_WITH_REQUIRED_LEGACY_ACTIVATION_EXTENSION",
+        "state": "AWAITING_ACTUAL_STAGE19_AND_STAGE21_BOUNDARY_REPLAY",
         "owner": "/root/repair_iteration_receipt_dependencies",
         "reviewer": "/root/review_iteration_receipt_repair",
         "baseCommit": "39a968f8c3cf6af9c5745a891a4c6ecd9209b6ec",
         "scope": "Existing precise Stage18/19 source contracts, admissible later governing refutation closure, consistent calculation/display condition; versioned projection7-to8 activation through existing validated migration owner",
         "diagnosticSha256": "9022ce705d5ef91e07b3207d6fd11d7d374ca60d9e1f51f13fc15f8e0fb740c1",
-        "authorObservedTip": "6dbf58d3",
+        "authorObservedTip": "fbc3ac40a96b5482bafb6968bb6df9130ab2e5ee",
         "fullOwner": "TERMINATED_EXIT137_CAUSE_UNVERIFIED",
-        "requiredMigration": "Actual saved projection7/convergence4 refresh failed on candidate; independently reproduced; versioned activation extension authorized with forged-state and rollback negatives"
+        "requiredMigration": "Actual saved projection7/convergence4 refresh failed on candidate; independently reproduced; versioned activation extension authorized with forged-state and rollback negatives",
+        "currentJourney": "Immutable fbc Stage12 resume reached Stage17 with five corrected runs actually accepted; no terminal outcome",
+        "independentFocused": "PASS precise preimages, versioned /7-to-/8 activation, raw preservation, forgery rejection, atomic rollback, eight timing faults and current carrier metadata negatives",
+        "currentConsumerCorrection": {
+          "commit": "2853596656e211952c65acdb0d82b6b3e68d467f",
+          "state": "AWAITING_INDEPENDENT_REVIEW",
+          "scope": "Test-only current8 labels with historical60 payload retained; catalog unchanged"
+        }
       }
     },
     "evidencePublication": {
@@ -2207,14 +2215,49 @@
       "unqualifiedBindingsRetired": 132,
       "historicalFullCoverageRetired": 164,
       "emptyReceiptConformanceNumerator": 0,
-      "activeScopedBindingRows": 270,
+      "activeScopedBindingRows": 358,
       "currentScopedIdentityRows": 256,
       "rootHashProducer": "PASS",
       "rootFullCatalogConsumer": "PASS",
       "rootCombinedBindingSha256": "7cd36c8544a66d2063f1f5553146e06f7a9f0b16726bfa0bc95ebc23e27a6aad",
       "semanticMappings": 13,
       "unboundSiblingAtoms": 17,
-      "independentFinalReview": "0c48df0e870d6be69a2ff32510986fdb8d56173b"
+      "independentFinalReview": "0c48df0e870d6be69a2ff32510986fdb8d56173b",
+      "jobDeclarationBindings": {
+        "state": "REVIEWED_INTEGRATED_FOCUSED_PASS",
+        "authorCommit": "597226a22066c667f9e19590df6f5b9d89383c87",
+        "integrationCommit": "35ffdea1",
+        "addedPartialRows": 88,
+        "independentReviewSha256": "c48473c150fde817c5f3f6febd3897160b193004de1cdaf35090ce61539e6fc1",
+        "rootFocused": {
+          "passed": true,
+          "sourceTuples": 44,
+          "mutationControls": 266
+        },
+        "fullCoverageAdded": 0,
+        "evidencePath": "verification/dot-execution-20261014/job-registry-review"
+      },
+      "freshCanonicalReview": {
+        "state": "ACCEPTED_DESIGN_PENDING_RUNTIME_INTEGRATION",
+        "sourceCommit": "28601d57a5b01268b90203808733cd00062ec1ad",
+        "reviewCommit": "a29cf397dd718bb3fa221892d83e4e17df2e9f43",
+        "acceptedAtoms": 14,
+        "executionReceiptsCollected": false
+      },
+      "migrationPreservationReview": {
+        "state": "ACCEPTED_DESIGN_PENDING_RUNTIME_INTEGRATION",
+        "sourceCommit": "28601d57a5b01268b90203808733cd00062ec1ad",
+        "reviewCommit": "9cdf47b415dbe4eb6160a689eba51052ff261c61",
+        "acceptedAtoms": 5,
+        "producerFaults": 26,
+        "publicRoutes": 3,
+        "actualCatalogChecks": 8,
+        "focusedConsumerControls": [
+          379,
+          22
+        ],
+        "executionReceiptsCollected": false
+      }
     },
     "verificationEfficiencyAssessment": {
       "status": "READ_ONLY_ASSESSED_PATCH_DEFERRED",
