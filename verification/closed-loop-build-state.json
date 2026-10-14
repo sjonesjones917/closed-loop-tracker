@@ -1394,7 +1394,7 @@
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "/root/repair_iteration_receipt_dependencies",
-    "lastInspectedAt": "2026-10-14T23:03:02Z",
+    "lastInspectedAt": "2026-10-14T23:14:16Z",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -2094,7 +2094,7 @@
     },
     "scheduleState": "FORECAST_NOT_ESTABLISHED",
     "forecast": null,
-    "nextAction": "Reviewer prepares exact retained after-command resume with one-line realm normalization for remaining currentness/retry/public save/cold, preserving original command and23:51:57.972 expiry. Worker prepares original remaining29\u201330 tail from untouched pre-chain caller with saved arrays/scalars and actual verified helper-result handoff. No prefix or successful application-command replay; review exact recovery drivers before launch.",
+    "nextAction": "Monitor actual38795 reviewed remaining29\u201330 tail to terminal with all16 original assertions and saved arrays/scalars. Positive chain command/retry/public-cold now passed and chain5 runtime integrated with independent narrow acceptance. Complete affected integrated checks, then genuine formal owner/shared Stage29 and current coverage review renewal; preserve original23:51:57.972 expiry and partial-run qualification.",
     "deploymentObservation": {
       "sourceCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
       "runId": "36958910363",
@@ -2147,8 +2147,8 @@
       "sourceApplied": false
     },
     "currentCriticalPath": [
-      "Reviewer prepares exact retained after-command resume with one-line realm normalization for remaining currentness/retry/public save/cold, preserving original command and23:51:57.972 expiry. Worker prepares original remaining29\u201330 tail from untouched pre-chain caller with saved arrays/scalars and actual verified helper-result handoff. No prefix or successful application-command replay; review exact recovery drivers before launch.",
-      "Independent chain5 ready-state/stale-release/mutation and legacy archive/forgery/rollback controls passed, including explicit blocked new5 public-cold receipt currentness. Positive current-time application-command/public persistence remains pending in active continuation. Integrate only independently accepted exact candidate.",
+      "Monitor actual38795 reviewed remaining29\u201330 tail to terminal with all16 original assertions and saved arrays/scalars. Positive chain command/retry/public-cold now passed and chain5 runtime integrated with independent narrow acceptance. Complete affected integrated checks, then genuine formal owner/shared Stage29 and current coverage review renewal; preserve original23:51:57.972 expiry and partial-run qualification.",
+      "Narrow chain5/project15 runtime acceptance and integration complete; formal original owner/shared Stage29 and broader acceptance remain pending. Current integrated49446c0c light receipt/projection/metadata/source checks running.",
       "Repair the pre-existing Stage29 required-owner unsupported synthetic-positive fixture without weakening provenance, then run affected mandatory owners on frozen integrated source",
       "Renew current catalog source maps and all19 stale independent coverage reviews, collect genuine current producer receipts and execute required integrated acceptance",
       "Resolve preserved source-contract/human/publication approvals, then verify authorized deployment, physical-device and real-project maturity evidence"
@@ -3263,6 +3263,45 @@
       "bytesReclaimed": 525307175,
       "checks": "Owner release and repeated exact HEAD/empty tracked-untracked-ignored checks, retained branch; normal worktree remove. External evidence preserved.",
       "availableAfter": "1.6GiB"
+    },
+    "chain5Integration": {
+      "status": "NARROW_REVIEWED_RUNTIME_INTEGRATED",
+      "commit": "b30e7941",
+      "reviewDisposition": "/workspace/shared/clrt-iteration-repair-evidence/independent-release-review-20261014/chain5-integration-disposition.json",
+      "reviewSha256": "64d6a8decb8f84459a655d6c905f8fe9d04f708bfd8509d436b644793e35ee77",
+      "method": "Exact11-file53e02e32..1974345d delta applied to byte-identical integrated base; all resulting bytes compared with197.",
+      "catalogCommit": "49446c0c",
+      "reportRoutingCommit": "6940c2ee",
+      "qualification": "Formal original full-owner, shared Stage29 producer/consumer and broad acceptance remain pending; current coverage reviews remain stale."
+    },
+    "chain197PositivePublicCold": {
+      "status": "PASS",
+      "reviewerSession": 17031,
+      "completedAt": "2026-10-14T23:11:15.565Z",
+      "resultSha256": "50f9fb9f20a2d109dbb037b3933091bb0b20d7361cc6eabfa7782ea90f430ec9",
+      "handoffSha256": "2c75f29accc3dccffde98f4e1db7bf35d80715b8a4370cd2942ed5184b57a186",
+      "originalCommandRepeated": false,
+      "exactRetry": true,
+      "publicCAS": "0-to-1",
+      "coldIntegrity": true,
+      "currentCompleteChain": true,
+      "storedFreshOriginalInputEqual": true
+    },
+    "resume197FinalTail": {
+      "status": "RUNNING",
+      "owningSession": 38795,
+      "startedAt": "2026-10-14T23:13:03Z",
+      "driverSha256": "f22fe60ba1eb30a42f17ce11632ea344da7ab1b410e692c36d88d9dd9e6cad5e",
+      "pinsSha256": "bafa08cc0c1fc6e2f047d00769142f777d196cb20ed1711a5899600c095f88f3",
+      "wrapperSha256": "ded2e3bca3a456d3f19a0270095116a35f4bf706a7d8528cc0b846ef704981c4",
+      "outputDirectory": "/workspace/shared/clrt-iteration-repair-evidence/resume197-positive-chain29-tail",
+      "checksDirectory": "/workspace/shared/clrt-iteration-repair-evidence/resume197-positive-chain29-tail-checks",
+      "fullJourneyExecution": false,
+      "originalExpiry": "2026-10-14T23:51:57.972Z",
+      "remainingOriginalAssertions": 16,
+      "preservedCaseArrays": 17,
+      "preservedScalars": 36,
+      "lostOriginalPointerReturn": "UNESTABLISHED; new exact restored-caller/handoff identity separately observed."
     }
   }
 }
