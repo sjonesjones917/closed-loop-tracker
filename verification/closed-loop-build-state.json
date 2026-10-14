@@ -2680,7 +2680,7 @@
         "verifiedAt": "2026-10-14T17:00:25Z",
         "releaseRecordedAt": "2026-10-14T16:48:29.609Z",
         "observedDisposition": "ACCEPTED",
-        "gate27": "COMPLETE reported by author; independent review pending",
+        "gate27": "COMPLETE independently verified at2026-10-14T16:48:29.618Z; persistence remains unestablished",
         "captureStartedAt": "2026-10-14T16:48:46.582Z",
         "captureCompletedAt": "2026-10-14T16:48:49.387Z",
         "captureSha256": "4f17517ecaac316837e6ea308493456a006518dc54afceade1d1a17518608bfd",
@@ -2701,7 +2701,37 @@
         "Independent genuine r6 projection12/release3 blocked activation to13 and normal release4 reproof with preservation, rollback and forgery controls.",
         "Fresh governed full owner on frozen reviewed runtime with durable checkpoints and actual release retry/public save/cold verification.",
         "Only after accepted runtime boundary, renew dependent catalog and coverage owner identities; independently review and run affected tests before integration."
-      ]
+      ],
+      "independentLegacyMigration": {
+        "state": "PASS_EXPIRED_AUTHORITY_BLOCKED_RELEASE",
+        "runtime": "086f2b2ecc271013ebc90a7694350ffd2eee6102",
+        "completedAt": "2026-10-14T17:18:14Z",
+        "exitCode": 0,
+        "oldProjection": 12,
+        "currentProjection": 13,
+        "oldRelease": 3,
+        "currentRelease": 4,
+        "reviewSha256": "308d5e7910e542d06b667fec2409c5ac4aaaf39c6e9f608acf92db328bacd20d",
+        "manifestSha256": "ac85993f7585a0a1c0011f0cfd0750e44711570718fe7bba9b90f94c7643b2aa",
+        "rootManifestFilesVerified": 21,
+        "controls": [
+          "Original release/raw/History/expired authority preserved",
+          "Current BLOCKED release4 exact retry and public save/cold read",
+          "Forged legacy receipt rejected despite recomputed outer digest",
+          "Both injected activation rollback points preserved all rows and Blobs; ordinary retries passed"
+        ],
+        "syntheticOperatorReview": "Initial mutation confirmation rejection preserved; disposable diagnostic explicitly reviewed exact single retained release supersession through actual mutationImpact. No production/user acceptance."
+      },
+      "freshGovernedOwner": {
+        "source": "445fe4da9688cc68a59406376ffef0e06cae9f2c",
+        "runtime": "086f2b2ecc271013ebc90a7694350ffd2eee6102",
+        "state": "RUNNING",
+        "startedAt": "2026-10-14T17:18:29Z",
+        "session": 59258,
+        "wrapperSha256": "02fdae0582030b1d36786f96538e9dad0497326316598c582ce6d7a4f4c5bd0b",
+        "evidenceDirectory": "/workspace/shared/clrt-iteration-repair-evidence/frozen-445fe4da-governed",
+        "scope": "Original full governed lifecycle plus independently reviewed inert checkpoints and unconditional exact release retry/public save/cold checks. No terminal yet."
+      }
     }
   }
 }
