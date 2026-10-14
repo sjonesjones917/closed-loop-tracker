@@ -1394,7 +1394,7 @@
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "dot",
-    "lastInspectedAt": "2026-10-14T11:42:00.587818Z",
+    "lastInspectedAt": "2026-10-14T11:53:37.754799Z",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -2008,7 +2008,7 @@
       "cloudChromiumDevTools": "BLOCKED_PERMISSION",
       "ordinaryWindowResize": "AVAILABLE_VERIFIED_1280x800_CAPTURED",
       "requiredNarrowVisualViewports": "BLOCKED_CAPABILITY_NATIVE_WINDOW_MINIMUM_500_CSS_PIXELS",
-      "freeWorkspaceObservedGiB": 21,
+      "freeWorkspaceObservedGiB": 8.1,
       "githubConnectorWrite": "AVAILABLE_VERIFIED",
       "remoteBranchPublication": "AVAILABLE_VERIFIED"
     },
@@ -2050,7 +2050,7 @@
     },
     "scheduleState": "FORECAST_NOT_ESTABLISHED",
     "forecast": null,
-    "nextAction": "Review bounded Stage19 reference output and genuine9-to10 migration, replay exact oversized positive calculation with strict persistence checks, then final full governed lifecycle and21-to22 boundary. Renew source-pinned proof reviews only on final frozen source.",
+    "nextAction": "Run immutable6c1 fresh governed full lifecycle after bounded reference/migration acceptance; verify completed19 persistence,21-to22 and unaffected later evidence. Obtain final independent runtime acceptance, compose reviewed source and19 proof designs, then run exact integrated owners/catalog.",
     "deploymentObservation": {
       "sourceCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
       "runId": "36958910363",
@@ -2220,7 +2220,7 @@
         "oldCorrectedIterationRun": "LOST_EXECUTOR_OUTCOME_NO_PASS_OR_FAILURE_INFERRED"
       },
       "iterationReceiptDependencies": {
-        "state": "IN_REVIEW_STAGE19_BOUNDED_EVIDENCE_OUTPUT_REPAIR",
+        "state": "BOUNDED_REFERENCE_AND_MIGRATION_ACCEPTED_FRESH_FULL_OWNER_PENDING",
         "owner": "/root/repair_iteration_receipt_dependencies",
         "reviewer": "/root/review_iteration_receipt_repair",
         "baseCommit": "39a968f8c3cf6af9c5745a891a4c6ecd9209b6ec",
@@ -2287,7 +2287,12 @@
           "requirementDiscoveryChars": 76016,
           "authorizedScope": "Only Stage19 output becomes registered bounded derivation-ID/input-SHA reference; complete canonical input/currentness/source hashes unchanged and reproducible from retained sources. Stage18/6 unchanged, Stage19/7 and projection10 through existing dispatch.",
           "legacyPreservation": "Freeze exact Stage19/6 and projection9, no invalid oversized record used as migration input, no truncation or limit increase",
-          "independentValidLegacyControl": "Actual adverse24 old-runtime normal confirmation6 UNDETERMINED156701 chars saved/cold-read revision25, captureSHA b25a5716d4db47a43d79b6ce0fef2450b96e337d6d531dd0ffdb400b1b7c8441"
+          "independentValidLegacyControl": "Actual adverse24 old-runtime normal confirmation6 UNDETERMINED156701 chars saved/cold-read revision25, captureSHA b25a5716d4db47a43d79b6ce0fef2450b96e337d6d531dd0ffdb400b1b7c8441",
+          "authorCommit": "6c1fd0ae384ce6e74e4364ea54221a498580cb9a",
+          "boundedReferenceChars": 154,
+          "fullCanonicalInputChars": 208423,
+          "sourceRecordHashes": 346,
+          "independentOutcome": "ACCEPT valid old confirmation6/project9 migration, current Stage18/6 preservation, nine reference/source negatives, forged output rejection and atomic rollback"
         }
       }
     },
@@ -2341,16 +2346,16 @@
         "evidencePath": "verification/dot-execution-20261014/job-registry-review"
       },
       "freshCanonicalReview": {
-        "state": "ACCEPTED_ON_PROJECTION9_PENDING_INTEGRATION_AND_CURRENT_RECEIPTS",
-        "sourceCommit": "520202354e760b97a50502cff6d5f6d41728d16e",
-        "reviewCommit": "95f6cab1327e1a2d4af90878cc157800cca7c65e",
+        "state": "ACCEPTED_ON_PROJECTION10_PENDING_INTEGRATION_AND_CURRENT_RECEIPTS",
+        "sourceCommit": "c98639f677f18c401a0f400af640ccff2fba0cba",
+        "reviewCommit": "f6144cd6d41d779f3e81a589cf7fe8d3cae2c2f5",
         "acceptedAtoms": 14,
         "executionReceiptsCollected": false
       },
       "migrationPreservationReview": {
-        "state": "ACCEPTED_ON_PROJECTION9_PENDING_INTEGRATION_AND_CURRENT_RECEIPTS",
-        "sourceCommit": "520202354e760b97a50502cff6d5f6d41728d16e",
-        "reviewCommit": "070692b2bd27e7c4cf12a8db622b6ab2d2c0cc08",
+        "state": "ACCEPTED_ON_PROJECTION10_PENDING_INTEGRATION_AND_CURRENT_RECEIPTS",
+        "sourceCommit": "c98639f677f18c401a0f400af640ccff2fba0cba",
+        "reviewCommit": "992a7c0f0c7ec6457a8360589547933672627ea8",
         "acceptedAtoms": 5,
         "producerFaults": 26,
         "publicRoutes": 3,
@@ -2387,6 +2392,17 @@
         "fullWrapper": "NOT_RUN",
         "sourceMapControls": 27,
         "wrongMissingHistoricalSourceNegatives": 9
+      },
+      "currentProjection10Catalog": {
+        "candidate": "c98639f677f18c401a0f400af640ccff2fba0cba",
+        "state": "INDEPENDENTLY_ACCEPTED_FOCUSED_PENDING_RUNTIME_INTEGRATION",
+        "actualReceiptCases": 60,
+        "sourceMapControls": 27,
+        "sourceNegativeControls": 9,
+        "aggregateActivationControls": 188,
+        "correctionNegativeControls": 54,
+        "correctionScope": "Future-only nongoverning refutation preserves earlier proof; explicitly not governing-negative coverage",
+        "fullWrapper": "NOT_RUN"
       }
     },
     "verificationEfficiencyAssessment": {
