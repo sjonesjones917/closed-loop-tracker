@@ -1,0 +1,44 @@
+# Bounded atomic governance support
+
+Scope: Part B §2.2, exact source SHA-256 `8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883`; base `46a3c55ec5a2776f1ca6dd921aa41d54677c4633`. This changes repository-only generation, validation and proof consumption. No runtime, UI, workflow, controlling source or build-state edits.
+
+## Current disposition
+
+Source-only generation remains supported, with generator version `/11` and the existing manifest schemas `/1`. Its entries remain explicitly source-only, with `omissionChallenge.atomicExtraction.status=PENDING` and atomic completeness false. It does not falsely label unreviewed compound source lines as atoms or nonbehavioral context. Full governance remains `BLOCKED_ATOMIC_REQUIREMENT_COMPLETENESS`. Existing assertion/context declarations remain historical and have not been renewed.
+
+Actual complete source extraction, blind challenge, distinct reconciliation, historical singleton/split/merge review, and scoped proof declaration migration remain integration dependencies. No provisional extraction artifacts were used to generate or accept atoms.
+
+## Active atomic contract
+
+`requirement-evidence-bindings.json.atomicExtraction` optionally supplies the agreed `draft`, `independentReview`, `reconciliation` file descriptors (`path`, raw file `sha256`, `actorId`, `contextId`, `specificationSha256`), plus `status`. The reviewer descriptor has `draftManifestReceived:false`. Only `RECONCILED` activates replacement entries; missing or `PENDING` stays blocked. Actors and contexts are distinct. All evidence is repository-relative JSON under `verification/` or `specification/`.
+
+Draft and blind review records use `closed-loop-atomic-extraction-evidence/1`, `role:DRAFT|INDEPENDENT_REVIEW`, matching actor/context/source identity, `complete:true`, exact declared `inputs`, `propositions`, and complete ordered `sections`. The review has `draftManifestReceived:false` and only the source input. Each proposition has `propositionId`, `statement`, `primarySourceLine`, raw `sourceLineSha256`, and exact `contextSourceLocations`. Each section uses the mechanical heading inventory's exact `sectionId/startLine/endLine`, `disposition:COVERED|NONNORMATIVE`, `propositionIds`, and reason. Preamble propositions remain source anchored outside heading ranges. Structural/historical context propositions in both passes must explicitly provide the matching `classification` and reason.
+
+Reconciliation uses `closed-loop-atomic-reconciliation/1`, matching identity, `complete:true`, `status:RECONCILED`, `inputs`, `priorManifest:{path,sha256}`, `entries`, `requirementIdentityCrosswalk`, `decisions`, `unresolvedMaterialDisagreements:[]`, and complete `sections` using `normativeRequirementIds`. It must resolve every proposition exactly once and map every active entry. Each decision has `decisionId`, reason, `disposition:MAPPED|NONNORMATIVE`, draft/reviewer proposition IDs, current IDs, and exact `currentAtomicScopeSha256` map. Real semantic differences must actually be reviewed; valid structure is not an independent semantic oracle.
+
+Entries carry the agreed `entryKind:ATOMIC_OBLIGATION|SOURCE_CONTEXT`, source identity, and atomic scope when applicable. Atomic scope is exactly `{key,statement,sourceSpans,contextSourceLocations,sha256}`. Its hash uses `closed-loop-canonical-json/1` over the first four fields. Source spans are ordered absolute UTF-8 half-open offsets within the primary raw line, without LF, with exact text and raw byte hash. Context line hashes also use raw bytes without LF; `controllingText` uses the exact trimmed line. Duplicate IDs, keys, scopes, malformed offsets, UTF-8 splits, incorrect section anchors, stale context and missing reverse memberships fail closed. Coverage is the sorted, deduplicated union of all primary and context links for the line.
+
+Fresh atoms have `birthIdentity:{sourceSha256,sourceAnchor:{line,lineSha256},atomicKey}` and ID `NREQ-` plus its canonical hash's first 32 hex characters. Historical IDs need an explicit crosswalk. The crosswalk covers every pinned predecessor ID exactly once and enforces agreed cardinalities. Old compound IDs cannot remain active as narrower children or extra counted ancestors. Legacy singleton retention needs a distinct decision with `priorWasSingleObligation:true`; merging requires `equivalenceReason` and preservation of source anchors. Removal requires `removalAuthority` and absent controlling text. Same-target mappings are allowed only as explicitly reconciled equivalent merges.
+
+When predecessor source differs, reconciliation also pins `sourceTraceManifest` (historical current-source line trace) and `historicalSourceRelocationCrosswalk` (existing accepted `closed-loop-source-relocation-crosswalk/1`). They are explicit inputs. Raw relocation/trace identity is checked, never treated as semantic equivalence or proof renewal. Every current reviewed source-trace line must remain active as a primary or context anchor. These archived artifacts are provenance; `requirements[]` remains the sole active universe.
+
+`SOURCE_CONTEXT.contextClassification` contains classification `STRUCTURAL_REQUIREMENT_CONTEXT|HISTORICAL_NONNORMATIVE_CONTEXT`, reason and governing IDs. Structural context also requires ordered `governingSourceRanges`; membership includes every atomic primary entry within those ranges and every governed atom must carry the context anchor. Both authored passes must independently classify context before its exclusion from the behavioral denominator.
+
+Generation supplies only candidate owner/test defaults from source traces; it never inherits parent proof. Atomic requirement evidence bindings and assertion bindings need `atomicObligationSha256`. Full coverage additionally carries the exact `reviewedAtomicStatement`, `sourceSpans`, `contextSourceLocations`, and scope digest. Its independent coverage-review record binds the same digest, statement and context, besides all existing declaration/input/owner/receipt checks. Legacy full-line proof remains unchanged. Atomic proof source annotations must belong to this atom's exact spans; a source-line hash alone cannot bind siblings. All atomic source/reconciliation/predecessor inputs enter receipt fingerprints.
+
+## Reproduction and evidence
+
+Use Node 22.23.3. The focused regression is `node test-atomic-specification-governance.mjs`; it is also invoked by the core governance verifier. Its 43 explicitly synthetic controls cover sibling omission, same-line cardinality, byte/span/key/scope errors, context omission, independent context classification, stale/duplicate/double-counted crosswalks, historical relocation, copied parent/sibling proof, changed qualifiers and fake completeness. The pinned historical row validator and proof evaluator in `atomic-proof-regression-baseline-20261014.json` reproduce both pre-correction failures. Their exact historical source/function hashes are checked; CI does not depend on fetching that old commit.
+
+Other executed checks:
+- `node test-specification-source-adoption.mjs`: PASS.
+- `node test-specification-source-classifications.mjs`: PASS.
+- `node specification-governance-core.mjs`: expected exit 1 after all 19 current historical governance mutation controls and 43 atomic controls; explicit atomic-completeness blocker, not a conformance pass.
+- `node verify-specification-governance.mjs`: expected BLOCKED at the same core gate; downstream migration/deployment acceptance is not claimed.
+- Imported `createNormativeProofFixture()` and `verifyExternalNormativeProof(fixture)`: PASS, 24 synthetic external-proof controls, including actual Test IR producer execution. The disposable singleton helper uses only the accepted exact historical relocation for its one known source clause and copies both deterministic/browser declared fixture inputs. No real declaration or coverage review is renewed.
+- Imported `verifyNormativeCatalogConsumers()`: unchanged failure on both base and candidate: assertion bindings use a different controlling specification.
+- Imported `verifyNormativeContextApplicability()`: unchanged failure on both base and candidate: stale or invalid reviewed context applicability.
+- `build-static-site.mjs` into fresh disposable directories on base and candidate, with identical explicit source/run identities: both PASS; recursive byte comparison PASS. All runtime resources and deployment manifest are byte-identical; no governance files enter the generated runtime.
+- Syntax checks and `git diff --check`: PASS.
+
+Generated manifests are deliberately excluded from this code change. The integration owner must regenerate them on the reviewed integrated source, using the actual reachable source commit. No push, merge or deployment was performed.

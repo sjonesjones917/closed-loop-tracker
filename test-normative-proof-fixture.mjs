@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import cp from 'node:child_process';
 import assert from 'node:assert/strict';
-import {verificationCatalog} from './verification-evidence-catalog.mjs';
+import {verificationCatalog,browserVerificationCatalog} from './verification-evidence-catalog.mjs';
 import {SPECIFICATION_PATH,sha,evidenceFingerprint,coverageDeclarationSha256,createExecutionReceipt,aggregateExecutedEvidence,readExecutedEvidence} from './verification-evidence.mjs';
 export function createNormativeProofFixture(){
   const original=process.cwd(),directory=fs.mkdtempSync(path.join(os.tmpdir(),'closed-loop-normative-proof-'));
@@ -14,11 +14,22 @@ export function createNormativeProofFixture(){
   try{
     for(const name of fs.readdirSync(original))if(/\.(?:m?js|html|css|json)$/.test(name)&&name!=='TEST_PROJECT.json')copy(name);
     const governance=JSON.parse(fs.readFileSync('specification/requirement-evidence-bindings.json','utf8'));
-    for(const file of [...new Set([SPECIFICATION_PATH,normativePath,'specification/closed-loop-specification-manifest.json','specification/requirement-evidence-bindings.json',...governance.approvedAmendments.flatMap(row=>[row.sourceReviewPath,row.approvedProposalPath]),...Object.values(governance.independentSourceReview).filter(value=>typeof value==='string'&&value.startsWith('verification/')),...Object.values(verificationCatalog).flatMap(row=>row.sourceInputs||[])])])copy(file);
+    for(const file of [...new Set([SPECIFICATION_PATH,normativePath,'specification/closed-loop-specification-manifest.json','specification/requirement-evidence-bindings.json',...governance.approvedAmendments.flatMap(row=>[row.sourceReviewPath,row.approvedProposalPath]),...Object.values(governance.independentSourceReview).filter(value=>typeof value==='string'&&value.startsWith('verification/')),...[...Object.values(verificationCatalog),...Object.values(browserVerificationCatalog)].flatMap(row=>row.sourceInputs||[])])])copy(file);
     // This intentionally one-row consumer universe excludes the real67-row
     // context classification; it cannot claim real-manifest completeness.
     const isolatedGovernance={...governance};delete isolatedGovernance.contextApplicabilityReview;fs.writeFileSync(path.join(directory,'specification/requirement-evidence-bindings.json'),JSON.stringify(isolatedGovernance,null,2)+'\n');
-    const normative=JSON.parse(fs.readFileSync(path.join(directory,normativePath),'utf8')),requirement=normative.requirements.find(row=>row.normativeRequirementId==='NREQ-318da161cc5f30f33449238ba3870773');
+    const normative=JSON.parse(fs.readFileSync(path.join(directory,normativePath),'utf8')),historicalId='NREQ-318da161cc5f30f33449238ba3870773';
+    let requirement=normative.requirements.find(row=>row.normativeRequirementId===historicalId);
+    if(!requirement){
+      // Relocate only this deliberately synthetic singleton fixture through the
+      // accepted byte/source crosswalk. No real declaration or proof is renewed.
+      const relocation=JSON.parse(fs.readFileSync(path.join(original,'verification/historical-source-relocation-crosswalk-20261014.json'),'utf8')),mapping=relocation.crosswalk.filter(row=>row.priorNormativeRequirementId===historicalId);
+      assert.equal(relocation.targetSpecificationSha256,normative.specificationSha256,'NORMATIVE_PROOF_FIXTURE_RELOCATION_SOURCE_ORACLE');
+      assert.equal(mapping.length,1,'NORMATIVE_PROOF_FIXTURE_RELOCATION_ID_ORACLE');
+      const row=mapping[0];assert.equal(row.relation,'EXACT_SOURCE_LINE_RELOCATION');assert.equal(row.targetSourceTraceIds.length,1);assert.equal(row.priorControllingText,'- unknown operation is rejected;');
+      requirement=normative.requirements.find(value=>value.normativeRequirementId===row.targetSourceTraceIds[0]);
+      assert(requirement&&requirement.sourceLocation.startLine===row.targetSourceLine&&requirement.sourceLocation.lineSha256===row.targetRawLineSha256,'NORMATIVE_PROOF_FIXTURE_RELOCATION_ANCHOR_ORACLE');
+    }
     assert(requirement&&requirement.controllingText==='- unknown operation is rejected;','NORMATIVE_PROOF_FIXTURE_SOURCE_ORACLE');
     assert.equal(requirement.requiredBrowserOrPhysicalDeviceProof.length,0);
     normative.requirements=[requirement];normative.fixtureBoundary='One independently selected source clause for proof-consumer controls; not the actual full normative universe.';
