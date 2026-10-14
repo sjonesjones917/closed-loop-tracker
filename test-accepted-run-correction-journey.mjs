@@ -610,11 +610,12 @@ export async function verifyAcceptedGoverningRefutation({sourceProject,artifacts
   const sources=Object.fromEntries([...runtimeFiles,'verify-full-cycle.mjs','test-accepted-run-correction-journey.mjs'].map(file=>[file,fs.readFileSync(file,'utf8')]));
   const negativeRuntime=projectStoreRuntime({storageWorker:false}),ne=negativeRuntime.engine,schema=negativeRuntime.runtime.closedLoopWorkflowSchema;
   await restoreArtifactFixture(negativeRuntime.store,artifacts);
-  let adverse=negativeRuntime.copy(sourceProject);const originalCanonicalSha=negativeRuntime.runtime.closedLoopHash.sha256Value(adverse);
+  let adverse=negativeRuntime.copy(sourceProject);const originalCanonicalSha=negativeRuntime.runtime.closedLoopHash.sha256Value(adverse),originalRaw=plain(adverse.projectData.rawResponses),originalConvergence=plain(adverse.projectData.convergenceRecords),originalHistory=plain(adverse.projectData.history);
   for(const original of sourceProject.projectData.generatedPrompts){const row=adverse.projectData.generatedPrompts.find(row=>row.instructionId===original.instructionId);negativeRuntime.prompts.retainPromptContextFiles(row,negativeRuntime.copy(sourcePrompts.materializePromptContextFiles(original)));await negativeRuntime.store.persistPromptContextFiles(row,adverse);}
   assert.equal(negativeRuntime.runtime.closedLoopHash.sha256Value(adverse),originalCanonicalSha,'GOVERNED_CONTEXT_PERSISTENCE_PRESERVES_PROJECT');
   adverse=await negativeRuntime.store.writeProject(adverse,{createOnly:true,expectedProjectRevision:0,incrementRevision:false});
   adverse=await negativeRuntime.store.readProject(adverse.job.JOB_ID);
+  assert.equal(negativeRuntime.store.validateProjectIntegrity(adverse).valid,true,'GOVERNED_INITIAL_PUBLIC_SAVE_INTEGRITY');assert.deepEqual(plain(adverse.projectData.rawResponses),originalRaw,'GOVERNED_INITIAL_SAVE_PRESERVES_RAW');assert.deepEqual(plain(adverse.projectData.convergenceRecords),originalConvergence,'GOVERNED_INITIAL_SAVE_PRESERVES_PRIOR_PROOF');assert.deepEqual(plain(adverse.projectData.history.slice(0,originalHistory.length)),originalHistory,'GOVERNED_INITIAL_SAVE_PRESERVES_HISTORY');
   const prop=propositionId,test=ne.records(adverse,'tests').find(row=>row.id===testId),req=ne.recordValue(test,'REQ_ID');
   const governingConvergence=ne.recordsForScope(adverse,'convergenceRecords',ne.convergenceCalculation(adverse).scope).at(-1);assert(governingConvergence&&ne.convergenceRecordCurrent(adverse,governingConvergence),'GOVERNED_CURRENT_SOURCE_CONVERGENCE');const convergenceRecordId=governingConvergence.id;
   const receiptBefore=JSON.stringify(adverse.projectData.convergenceRecords.find(row=>row.id===convergenceRecordId).derivationReceipt);
