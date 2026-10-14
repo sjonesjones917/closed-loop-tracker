@@ -1,0 +1,35 @@
+{
+  "decision": "ACCEPT_BOUNDED_RUNTIME_BOUNDARIES",
+  "commit": "1045c016bb3876d9d9b6ee706108a7bf4e827cac",
+  "scope": [
+    "Stage18/19 precise dependency and material refutation handling",
+    "Stage19 bounded canonical evidence reference and nested source projection",
+    "Existing version activation and ordinary stale confirmation reproof",
+    "Actual21\u219222 and accepted nongoverning future evidence with public save/cold read",
+    "Application-generated22 allocation key correction"
+  ],
+  "independentLatestEvidence": [
+    "1045-stage22-null-r2.stdout.json",
+    "1045-cold22.stdout.json",
+    "c9-stage22-producer-diagnosis.json",
+    "638ee980-repeated-projection-r3.json",
+    "638ee980-migration-reproof-renew.stdout.json"
+  ],
+  "finalAdapterSha256": "e25b1591c90b4d01016a67d5f0466f6db7b034dd97cb3851298d970ee145aace",
+  "finalProjectSha256": "c501eb1f6286267f5b191229eb75b3db2bf543e7af5faae0f3886d1a1fd707bd",
+  "limits": [
+    "Full fresh lifecycle not completed on1045",
+    "Full final required owner/catalog closure remains parent-coordinated",
+    "Actual20 baseline renewal used synthetic fixture authorization, not live owner approval",
+    "Transaction-adapter validation is not browser/native-device proof"
+  ],
+  "preservedFailures": [
+    "Original Stage19/21 stale dependency failures",
+    "Oversized19 EVIDENCE",
+    "Invalid nongoverning-refutation fixture expectation",
+    "Unpinned repeated projection clock comparison",
+    "Undefined22 application allocation key",
+    "Wrong candidate-revision CAS in bounded driver",
+    "Older baseline read invalidated latest product byte observation; exact public reread restored original custody"
+  ]
+}
