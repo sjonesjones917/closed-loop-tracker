@@ -396,6 +396,7 @@ const expectedActiveFixtureInputs=[
   'verification/handoff-producer89-source-fixture-20261005.json',
   'verification/manifest-stage01-legacy-writer-20261011.json.gz',
   'verification/project-projection5-activation-fixture.json',
+  'verification/projection7-iteration4-activation-prerequisite-20261014.json.gz',
   'verification/source-applicability-legacy4-20261011.json.gz',
   'verification/stage01-retained-capture-legacy-fixture-20261005.json',
   'verification/stage15-author-prerequisite-20261012.json.gz',
