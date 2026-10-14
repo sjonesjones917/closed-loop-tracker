@@ -114,6 +114,12 @@ export function validateAtomicIdentityCrosswalk(crosswalk,prior,priorRef,require
     for(const range of before.clarificationSourceLocations||[]){const end=range.endLine??range.startLine+range.lineCount-1;assert(historicalSourceValid&&range.path===before.sourceLocation.path&&Number.isSafeInteger(range.startLine)&&Number.isSafeInteger(end)&&range.startLine>0&&end>=range.startLine&&end<=historicalSourceLines.length&&sha256(Buffer.from(historicalSourceLines.slice(range.startLine-1,end).join('\n')+'\n'))===range.textSha256,'Atomic prior clarification context differs from exact historical source');for(let line=range.startLine;line<=end;line++)if(historicalSourceLines[line-1].trim())contexts.push({path:range.path,startLine:line,endLine:line,lineSha256:sha256(Buffer.from(historicalSourceLines[line-1])),controllingText:historicalSourceLines[line-1].trim()});}
     return contexts;
   };
+  const scopeChangeFor=(decision,id)=>{
+    const changes=decision.scopeChanges??(decision.scopeChange?[decision.scopeChange]:[]);
+    assert(Array.isArray(changes)&&!(decision.scopeChanges&&decision.scopeChange)&&new Set(changes.map(c=>c.priorNormativeRequirementId)).size===changes.length,'Atomic per-predecessor scope changes duplicated or ambiguous');
+    for(const change of changes)assert(crosswalk.some(row=>row.priorNormativeRequirementId===change.priorNormativeRequirementId&&row.reconciliationDecisionId===decision.decisionId&&row.relation==='CHANGED_SINGLETON_SCOPE'),'Atomic changed scope cannot be labeled without matching predecessor decision');
+    return changes.find(change=>change.priorNormativeRequirementId===id);
+  };
   assert(old.size===prior.requirements.length&&Array.isArray(crosswalk)&&crosswalk.length===old.size,'Atomic crosswalk predecessor universe incomplete');
   for(const row of crosswalk){
     const before=old.get(row.priorNormativeRequirementId),decision=decisions.get(row.reconciliationDecisionId),targets=atomicList(row.currentNormativeRequirementIds,'crosswalk targets');
@@ -121,7 +127,7 @@ export function validateAtomicIdentityCrosswalk(crosswalk,prior,priorRef,require
     if(historicalSourceValid)verifyPriorContext({...before.sourceLocation,controllingText:before.controllingText});
     assert(row.priorManifestSha256===priorRef.sha256&&row.priorSpecificationSha256===prior.specificationSha256&&atomicEqual(row.priorSourceLocation,before.sourceLocation),'Atomic crosswalk historical identity stale');
     assert(atomicText(row.reason)&&decision&&targets.every(id=>active.has(id)&&decision.currentNormativeRequirementIds.includes(id)),'Atomic crosswalk unresolved or unknown target');
-    if(decision.scopeChange)assert(row.relation==='CHANGED_SINGLETON_SCOPE','Atomic changed scope cannot be labeled unchanged, split, merged or removed');
+    if(scopeChangeFor(decision,row.priorNormativeRequirementId))assert(row.relation==='CHANGED_SINGLETON_SCOPE','Atomic changed scope cannot be labeled unchanged, split, merged or removed');
     if(targets.length){
       const relocated=relocations?.get(row.priorNormativeRequirementId),expectedLine=relocated?.targetSourceLine??before.sourceLocation.startLine;
       for(const id of targets){const target=active.get(id);assert([target.sourceLocation,...(target.atomicObligation?.contextSourceLocations||[])].some(location=>location.startLine===expectedLine&&location.lineSha256===before.sourceLocation.lineSha256),'Atomic crosswalk target lost predecessor source anchor');}
@@ -147,7 +153,7 @@ export function validateAtomicIdentityCrosswalk(crosswalk,prior,priorRef,require
     }else if(row.relation==='CHANGED_SINGLETON_SCOPE'){
       assert(targets.length===1&&!active.has(row.priorNormativeRequirementId)&&!old.has(targets[0])&&active.get(targets[0]).entryKind==='ATOMIC_OBLIGATION','Atomic changed singleton must retire its predecessor and allocate one fresh atom');
       assert(!Object.hasOwn(active.get(targets[0]),'executedEvidence')&&!Object.hasOwn(active.get(targets[0]),'fullCoverage'),'Atomic changed singleton cannot inherit predecessor proof');
-      const target=active.get(targets[0]),change=decision.scopeChange,currentSha256=sha256(sourceBytes),currentLines=sourceBytes.toString('utf8').split('\n');
+      const target=active.get(targets[0]),change=scopeChangeFor(decision,row.priorNormativeRequirementId),currentSha256=sha256(sourceBytes),currentLines=sourceBytes.toString('utf8').split('\n');
       assert(Buffer.isBuffer(priorSourceBytes)&&sha256(priorSourceBytes)===prior.specificationSha256,'Atomic changed singleton exact historical source bytes required');
       const priorLines=new TextDecoder('utf-8',{fatal:true}).decode(priorSourceBytes).split('\n');
       assert(decision.priorWasSingleObligation===true&&change&&change.priorNormativeRequirementId===row.priorNormativeRequirementId&&change.currentNormativeRequirementId===targets[0]&&atomicText(change.priorStatement)&&change.currentStatement===target.atomicObligation.statement&&change.currentAtomicObligationSha256===target.atomicObligation.sha256&&atomicText(change.reason),'Atomic changed singleton scope review incomplete');
@@ -177,15 +183,42 @@ export function validateAtomicIdentityCrosswalk(crosswalk,prior,priorRef,require
     else if(row.relation==='MERGED_EQUIVALENT'){
       assert(targets.length===1&&atomicText(decision.equivalenceReason),'Atomic many-to-one equivalence not reviewed');
       const target=active.get(targets[0]);assert(target.entryKind==='ATOMIC_OBLIGATION'&&[target.sourceLocation,...target.atomicObligation.contextSourceLocations].some(location=>location.lineSha256===before.sourceLocation.lineSha256),'Atomic merged predecessor source context lost');
+    }else if(row.relation==='COMPONENT_OF_CONTRACT'){
+      assert(targets.length>0&&!active.has(row.priorNormativeRequirementId)&&atomicText(decision.containmentReason)&&targets.every(id=>active.get(id).entryKind==='ATOMIC_OBLIGATION'&&(decision.componentConvergenceGroups??[]).some(group=>group.kind==='CONTRACT_COMPONENTS'&&group.currentNormativeRequirementId===id)),'Atomic contained component retirement/review incomplete');
     }else if(row.relation==='REMOVED_FROM_CONTROLLING_SOURCE')assert(targets.length===0&&!active.has(row.priorNormativeRequirementId)&&atomicText(decision.removalAuthority)&&!sourceBytes.toString('utf8').split('\n').some(line=>line.trim()===before.controllingText),'Atomic current source obligation improperly removed');
     else assert(false,'Atomic crosswalk relation invalid');
   }
   const incoming=new Map();for(const row of crosswalk)for(const id of row.currentNormativeRequirementIds){if(!incoming.has(id))incoming.set(id,[]);incoming.get(id).push(row);}
+  const validateComponentPartition=(row,targetId,groupKind)=>{
+    const decision=decisions.get(row.reconciliationDecisionId),partitions=(decision.componentPartitions??[]).filter(p=>p.priorNormativeRequirementId===row.priorNormativeRequirementId),before=old.get(row.priorNormativeRequirementId);
+    assert(historicalSourceValid&&partitions.length===1,'Atomic component partition requires exact historical source and one reviewed partition');
+    const partition=partitions[0];
+    assert(partition.priorSpecificationSha256===prior.specificationSha256&&partition.currentSpecificationSha256===currentSourceSha256&&atomicEqual(partition.priorSourceLocation,before.sourceLocation)&&partition.complete===true&&atomicText(partition.reason)&&Array.isArray(partition.components),'Atomic component partition source or completeness invalid');
+    const targets=partition.components.map(c=>c.currentNormativeRequirementId);assert(new Set(targets).size===targets.length&&atomicEqual([...targets].sort(),[...row.currentNormativeRequirementIds].sort()),'Atomic component partition target universe incomplete or duplicated');
+    const start=historicalSourceLines.slice(0,before.sourceLocation.startLine-1).reduce((n,line)=>n+Buffer.byteLength(line)+1,0),end=start+Buffer.byteLength(historicalSourceLines[before.sourceLocation.startLine-1]),signatures=new Set();
+    for(const component of partition.components){
+      const target=active.get(component.currentNormativeRequirementId);
+      assert(target?.entryKind==='ATOMIC_OBLIGATION'&&(groupKind==='CONTRACT_COMPONENTS'||!old.has(target.normativeRequirementId))&&component.currentAtomicObligationSha256===target.atomicObligation.sha256&&atomicText(component.priorStatement)&&(row.relation==='COMPONENT_OF_CONTRACT'?component.relationship==='CONTAINED_COMPONENT'&&atomicText(component.containmentReason):component.relationship==='EQUIVALENT_COMPONENT'&&atomicText(component.equivalenceReason))&&Array.isArray(component.sourceSpans)&&component.sourceSpans.length>0&&Array.isArray(component.priorContextSourceLocations)&&atomicEqual(component.currentContextSourceLocations,target.atomicObligation.contextSourceLocations),'Atomic component scope binding incomplete or ancestor reused');
+      assert(!Object.hasOwn(target,'executedEvidence')&&!Object.hasOwn(target,'fullCoverage'),'Atomic converged component cannot inherit predecessor proof');
+      let last=start;for(const span of component.sourceSpans){assert(Number.isSafeInteger(span.startByte)&&Number.isSafeInteger(span.endByte)&&span.startByte>=last&&span.endByte>span.startByte&&span.endByte<=end&&atomicText(span.text),'Atomic prior component span outside primary source or overlapping');const bytes=historicalBytes.subarray(span.startByte,span.endByte);assert(new TextDecoder('utf-8',{fatal:true}).decode(bytes)===span.text&&sha256(bytes)===span.sha256,'Atomic prior component source bytes/hash mismatch');last=span.endByte;}
+      for(const context of component.priorContextSourceLocations){verifyPriorContext(context);assert([{...target.sourceLocation,controllingText:target.controllingText},...component.currentContextSourceLocations].some(current=>current.lineSha256===context.lineSha256&&current.controllingText===context.controllingText),'Atomic converged component lost predecessor scope context');}
+      for(const context of knownPriorContexts(before))assert(component.priorContextSourceLocations.some(c=>atomicEqual(c,context)),'Atomic prior component omitted recorded context');
+      if(before.entryKind==='ATOMIC_OBLIGATION')assert(partition.components.length===1&&component.priorStatement===before.atomicObligation.statement&&atomicEqual(component.sourceSpans,before.atomicObligation.sourceSpans),'Atomic existing atom cannot be silently decomposed or reinterpreted');
+      const signature=atomicHash({statement:component.priorStatement,sourceSpans:component.sourceSpans});assert(row.relation==='COMPONENT_OF_CONTRACT'||!signatures.has(signature),'Atomic component partition double counts one predicate');signatures.add(signature);
+    }
+    return partition.components.find(c=>c.currentNormativeRequirementId===targetId);
+  };
   for(const [targetId,rows] of incoming){
     const groups=rows.map(row=>decisions.get(row.reconciliationDecisionId)?.changedDuplicateGroup);
     if(groups.some(Boolean)){
-      const group=groups[0],priorIds=rows.map(row=>row.priorNormativeRequirementId).sort(),scopeDigests=Object.fromEntries(rows.map(row=>[row.priorNormativeRequirementId,atomicHash(decisions.get(row.reconciliationDecisionId).scopeChange??null)]));
+      const group=groups[0],priorIds=rows.map(row=>row.priorNormativeRequirementId).sort(),scopeDigests=Object.fromEntries(rows.map(row=>[row.priorNormativeRequirementId,atomicHash(scopeChangeFor(decisions.get(row.reconciliationDecisionId),row.priorNormativeRequirementId)??null)]));
       assert(rows.length>=2&&rows.every(row=>row.relation==='CHANGED_SINGLETON_SCOPE')&&group&&atomicText(group.groupId)&&atomicText(group.priorEquivalenceReason)&&group.currentNormativeRequirementId===targetId&&groups.every(value=>value&&atomicEqual(value,group))&&atomicEqual(group.priorNormativeRequirementIds,priorIds)&&atomicEqual(group.scopeChangeSha256ByPriorId,scopeDigests),'Atomic changed-duplicate equivalence group incomplete or stale');
+    }else if(rows.some(row=>(decisions.get(row.reconciliationDecisionId)?.componentConvergenceGroups??[]).some(group=>group.currentNormativeRequirementId===targetId))){
+      const declarations=rows.map(row=>(decisions.get(row.reconciliationDecisionId).componentConvergenceGroups??[]).filter(group=>group.currentNormativeRequirementId===targetId)),group=declarations[0][0],target=active.get(targetId),priorIds=rows.map(row=>row.priorNormativeRequirementId).sort();
+      const equivalent=group?.kind==='EQUIVALENT_COMPONENTS'&&rows.length>=2&&rows.some(row=>row.relation==='SPLIT_COMPOUND')&&rows.every(row=>['SPLIT_COMPOUND','MERGED_EQUIVALENT'].includes(row.relation)),contained=group?.kind==='CONTRACT_COMPONENTS'&&rows.some(row=>row.relation==='COMPONENT_OF_CONTRACT')&&rows.every(row=>['COMPONENT_OF_CONTRACT','UNCHANGED_ATOMIC','MERGED_EQUIVALENT','SPLIT_COMPOUND'].includes(row.relation))&&rows.filter(row=>row.relation==='UNCHANGED_ATOMIC').length<=1;
+      assert((equivalent||contained)&&declarations.every(values=>values.length===1&&atomicEqual(values[0],group))&&atomicText(group?.groupId)&&atomicText(group?.reason)&&group.complete===true&&group.currentAtomicObligationSha256===target.atomicObligation.sha256&&atomicEqual(group.priorNormativeRequirementIds,priorIds),'Atomic component convergence group incomplete, unsupported or stale');
+      const digests=Object.fromEntries(rows.map(row=>[row.priorNormativeRequirementId,atomicHash(validateComponentPartition(row,targetId,group.kind))]));
+      assert(atomicEqual(group.componentSha256ByPriorId,digests),'Atomic component convergence source/scope binding mismatch');
     }else if(rows.length>1)assert(rows.every(row=>row.relation==='MERGED_EQUIVALENT'&&row.reconciliationDecisionId===rows[0].reconciliationDecisionId),'Atomic crosswalk target double counted');
   }
   for(const entry of requirements){
