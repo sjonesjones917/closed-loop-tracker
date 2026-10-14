@@ -84,7 +84,7 @@
       "checkIds": [
         "store.backup-import-failure-state-preservation"
       ],
-      "scope": "Three synthetic Map-adapter failed imports against one existing project: a rehashed normal manifest missing the independently known active member, a rehashed manifest with that member SHA wrong, and an injected before-import-commit storage failure. Each rejection is followed by deep equality of canonical project and History; the two manifest failures also preserve exact imported artifact bytes and pending staging identity, while the injected abort retains the staged identity. Adjacent corruption/replacement controls and two intended source faults protect report integrity. No native IndexedDB, browser UI, physical-device or complete §35.5 claim.",
+      "scope": "Three synthetic Map-adapter failed imports against one existing project: a rehashed normal manifest missing the independently known active member, a rehashed manifest with that member SHA wrong, and an injected before-import-commit storage failure. Each rejection is followed by deep equality of canonical project and History; the two manifest failures also preserve exact imported artifact bytes and pending staging identity, while the injected abort retains the staged identity. Adjacent corruption/replacement controls and two intended source faults protect report integrity. No native IndexedDB, browser UI, physical-device or complete \u00a735.5 claim.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
       "independentExpectedBasis": "The missing member name and correct SHA-256 are independently computed from the pre-import active project and Node crypto, then the malformed packages are rehashed so outer package integrity passes. The exact expected result is rejection before commit with byte-for-byte project, History, artifact and staging preservation. The storage-failure case independently expects INJECTED_STORAGE_FAILURE and unchanged project/History with the selected staged input retained.",
       "coverageClassification": "PARTIAL_EXECUTED_BOUNDARY_EVIDENCE",
@@ -165,7 +165,7 @@
         "response.validation-result-success-persistence",
         "response.validation-result-blind-warning-persistence"
       ],
-      "scope": "Corrected returned-file validation preserves the original MISSING_REQUIRED_ATTACHMENT validation as history. Separately qualified subset: Finite rejection persistence subset: three missing-field error submissions and seven unsupported canonical response-file cases preserve exact authoritative raw bytes and failed validation/disposition through operational save/reload. Isolated old undefined-diagnostic/canonical-guard equivalents fail only for the intended canonical error while retaining staged bytes and the last valid project. Synthetic actor and native Node transaction adapter only; no actual human/browser/physical action, all-stage combinations, general fault-injection population or whole-clause conformance claim. Separately scoped §17.6 complete validation-result subset: existing file-bound INVALID_REPORT planner failure, existing SATISFIED pending and accepted no-warning result, and designated Stage13 COMPARE actual BLIND_ALIAS_REMAPPED warning retain independently literal issues/count/status and unique raw/prompt/proposal-or-disposition/receipt links through actual operational save/reload. Pending returned bytes retain strict stale refusal and normal UI byte re-verification. Existing owning populations and old checkIds remain required. Focused retained diagnostics are not eligible current receipts; current registered due/complete producer evidence is required. No full-clause, all-stage, browser, external-provider or physical-device proof claim.",
+      "scope": "Corrected returned-file validation preserves the original MISSING_REQUIRED_ATTACHMENT validation as history. Separately qualified subset: Finite rejection persistence subset: three missing-field error submissions and seven unsupported canonical response-file cases preserve exact authoritative raw bytes and failed validation/disposition through operational save/reload. Isolated old undefined-diagnostic/canonical-guard equivalents fail only for the intended canonical error while retaining staged bytes and the last valid project. Synthetic actor and native Node transaction adapter only; no actual human/browser/physical action, all-stage combinations, general fault-injection population or whole-clause conformance claim. Separately scoped \u00a717.6 complete validation-result subset: existing file-bound INVALID_REPORT planner failure, existing SATISFIED pending and accepted no-warning result, and designated Stage13 COMPARE actual BLIND_ALIAS_REMAPPED warning retain independently literal issues/count/status and unique raw/prompt/proposal-or-disposition/receipt links through actual operational save/reload. Pending returned bytes retain strict stale refusal and normal UI byte re-verification. Existing owning populations and old checkIds remain required. Focused retained diagnostics are not eligible current receipts; current registered due/complete producer evidence is required. No full-clause, all-stage, browser, external-provider or physical-device proof claim.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
       "atomicObligationSha256": "0ee94e344da50731f8594753015adb0406c31d136e6f69f1bde25cbc7999cf1e"
     },
@@ -393,7 +393,7 @@
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
       "independentExpectedBasis": "Independent exact project JOB_ID versus explicit different required identity; externally observable stage/family/owner/outcome values and UNDETERMINED after controlled semantic mutation; original Stage22-only dispatcher fails persisted-result oracle.",
       "suite": "verify-verification-routing.mjs",
-      "boundary": "Actual UI runner → isolated Test IR worker → application result/proof observation → production CAS storage reload",
+      "boundary": "Actual UI runner \u2192 isolated Test IR worker \u2192 application result/proof observation \u2192 production CAS storage reload",
       "sourceLocation": {
         "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
         "startLine": 3922,
@@ -1056,7 +1056,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "migrateProjectToCurrent / markLegacyNonGating / normalizeTestRecords",
-            "sha256": "e117c3c8d2d82cfbfe4e35fe09d81ca6f4dc0193c26adbbb3125b077a7548efe"
+            "sha256": "3e11c7233449bbd3e2efb48e543f9e94e372c137c88d98ea29efbba25775000e"
           },
           {
             "path": "workbook.js",
@@ -1066,7 +1066,7 @@
           {
             "path": "project-store.js",
             "symbol": "migrateLegacy / migrateProjectToCurrent / retainProjectSource",
-            "sha256": "0cf767f94c9517a92622a7ca466a4939e5f71c13a0b5a058047a47a4fee9f364"
+            "sha256": "935761d3de772a00b1da1da48a6e29a7abeb16b3cc121f379ae87829addad281"
           }
         ],
         "obligations": [
@@ -1102,7 +1102,10 @@
         ],
         "unresolvedObligations": [],
         "governingContext": [],
-        "review": null
+        "review": {
+          "path": "verification/requirement-coverage-NREQ-a1bafeb7c6f6f12bf0c7b0f6fcadaab9-20261014-migration-projection12-independent.json",
+          "sha256": "a736e85debf60f7302e781f520967d0dec1439f2c34549f2bd15321c7bc53585"
+        }
       }
     },
     {
@@ -1155,7 +1158,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "migrateProjectToCurrent / markLegacyNonGating / normalizeTestRecords",
-            "sha256": "e117c3c8d2d82cfbfe4e35fe09d81ca6f4dc0193c26adbbb3125b077a7548efe"
+            "sha256": "3e11c7233449bbd3e2efb48e543f9e94e372c137c88d98ea29efbba25775000e"
           },
           {
             "path": "workbook.js",
@@ -1165,7 +1168,7 @@
           {
             "path": "project-store.js",
             "symbol": "migrateLegacy / migrateProjectToCurrent / retainProjectSource",
-            "sha256": "0cf767f94c9517a92622a7ca466a4939e5f71c13a0b5a058047a47a4fee9f364"
+            "sha256": "935761d3de772a00b1da1da48a6e29a7abeb16b3cc121f379ae87829addad281"
           }
         ],
         "obligations": [
@@ -1202,7 +1205,10 @@
         ],
         "unresolvedObligations": [],
         "governingContext": [],
-        "review": null
+        "review": {
+          "path": "verification/requirement-coverage-NREQ-f41a79c58369bd76c58ad7e831e953ce-20261014-migration-projection12-independent.json",
+          "sha256": "320a777df7489f8cce98cc07de5ab72a1a37b87f290afa60370a8c3ff71c75a1"
+        }
       }
     },
     {
@@ -1255,7 +1261,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "migrateProjectToCurrent / markLegacyNonGating / normalizeTestRecords",
-            "sha256": "e117c3c8d2d82cfbfe4e35fe09d81ca6f4dc0193c26adbbb3125b077a7548efe"
+            "sha256": "3e11c7233449bbd3e2efb48e543f9e94e372c137c88d98ea29efbba25775000e"
           },
           {
             "path": "workbook.js",
@@ -1265,7 +1271,7 @@
           {
             "path": "project-store.js",
             "symbol": "migrateLegacy / migrateProjectToCurrent / retainProjectSource",
-            "sha256": "0cf767f94c9517a92622a7ca466a4939e5f71c13a0b5a058047a47a4fee9f364"
+            "sha256": "935761d3de772a00b1da1da48a6e29a7abeb16b3cc121f379ae87829addad281"
           }
         ],
         "obligations": [
@@ -1303,7 +1309,10 @@
         ],
         "unresolvedObligations": [],
         "governingContext": [],
-        "review": null
+        "review": {
+          "path": "verification/requirement-coverage-NREQ-5811c65fa83521ee7afeedd602cec806-20261014-migration-projection12-independent.json",
+          "sha256": "1519dc8b2071c442f3691b166c6cc5688d5f89a1b8f587b8602e7fcc6b27da8e"
+        }
       }
     },
     {
@@ -1356,7 +1365,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "migrateProjectToCurrent / markLegacyNonGating / normalizeTestRecords",
-            "sha256": "e117c3c8d2d82cfbfe4e35fe09d81ca6f4dc0193c26adbbb3125b077a7548efe"
+            "sha256": "3e11c7233449bbd3e2efb48e543f9e94e372c137c88d98ea29efbba25775000e"
           },
           {
             "path": "workbook.js",
@@ -1366,12 +1375,12 @@
           {
             "path": "project-store.js",
             "symbol": "migrateLegacy / migrateProjectToCurrent / retainProjectSource",
-            "sha256": "0cf767f94c9517a92622a7ca466a4939e5f71c13a0b5a058047a47a4fee9f364"
+            "sha256": "935761d3de772a00b1da1da48a6e29a7abeb16b3cc121f379ae87829addad281"
           },
           {
             "path": "workflow-engine.js",
             "symbol": "stageContext / gate",
-            "sha256": "b349951e1ce02d23737202375c27faae0774006987a9420773c45ac07f9bdbf9"
+            "sha256": "d4e8b297f504dea6e56bf7975f6e0deb196563172d9df6e56125fb90fd207927"
           }
         ],
         "obligations": [
@@ -1411,7 +1420,10 @@
         ],
         "unresolvedObligations": [],
         "governingContext": [],
-        "review": null
+        "review": {
+          "path": "verification/requirement-coverage-NREQ-2046e21dd63ad76f992233d5582c716d-20261014-migration-projection12-independent.json",
+          "sha256": "d22e952a2855d7bfa7fdcbbc637626e01d1812632b65fc14f8ba768de56c4eca"
+        }
       }
     },
     {
@@ -1457,7 +1469,7 @@
           {
             "path": "workflow-schema.js",
             "symbol": "migrateProjectToCurrent / markLegacyNonGating / normalizeTestRecords",
-            "sha256": "e117c3c8d2d82cfbfe4e35fe09d81ca6f4dc0193c26adbbb3125b077a7548efe"
+            "sha256": "3e11c7233449bbd3e2efb48e543f9e94e372c137c88d98ea29efbba25775000e"
           },
           {
             "path": "workbook.js",
@@ -1467,17 +1479,17 @@
           {
             "path": "project-store.js",
             "symbol": "migrateLegacy / migrateProjectToCurrent / retainProjectSource",
-            "sha256": "0cf767f94c9517a92622a7ca466a4939e5f71c13a0b5a058047a47a4fee9f364"
+            "sha256": "935761d3de772a00b1da1da48a6e29a7abeb16b3cc121f379ae87829addad281"
           },
           {
             "path": "response-ingestion.js",
             "symbol": "validateEnvelope / validateEnvelopeWithDiagnostics",
-            "sha256": "01372de4f5f54a480d8ec8a14b21ae595e5d27486add7c882d944b59497ddd21"
+            "sha256": "ea0c6d1798dfd3a5711bf96550b7a7d085d8374fdfdfaf5e694ee84b39ad28f9"
           },
           {
             "path": "workflow-engine.js",
             "symbol": "gate / stageContext",
-            "sha256": "b349951e1ce02d23737202375c27faae0774006987a9420773c45ac07f9bdbf9"
+            "sha256": "d4e8b297f504dea6e56bf7975f6e0deb196563172d9df6e56125fb90fd207927"
           }
         ],
         "obligations": [
@@ -1520,7 +1532,10 @@
         ],
         "unresolvedObligations": [],
         "governingContext": [],
-        "review": null
+        "review": {
+          "path": "verification/requirement-coverage-NREQ-1b07d67693ef773b4800dc6e06626b5b-20261014-migration-projection12-independent.json",
+          "sha256": "0029c8a208987adb70112eceb62ceb7c31cce9e204894e9821d2a35f88d0b898"
+        }
       }
     },
     {
@@ -2714,7 +2729,7 @@
       "checkIds": [
         "handoff.shared-object-consumer-controls"
       ],
-      "scope": "§24 two shared transfer consumer clauses only. Synthetic engine-owned object and isolated stage entry, actual generated prompt and extracted UI owner/details; no completed stage, DOM/browser, export/ingestion, physical possession or external-transfer claim. External transfer conformity and semantic independence remain UNKNOWN; no whole-clause or evidence-authentication acceptance.",
+      "scope": "\u00a724 two shared transfer consumer clauses only. Synthetic engine-owned object and isolated stage entry, actual generated prompt and extracted UI owner/details; no completed stage, DOM/browser, export/ingestion, physical possession or external-transfer claim. External transfer conformity and semantic independence remain UNKNOWN; no whole-clause or evidence-authentication acceptance.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
       "atomicObligationSha256": "e59876aa6c846ae5c094b79238c10b2a07235be6999f2ebebb1235dcccc0d699"
     },
@@ -2724,7 +2739,7 @@
       "checkIds": [
         "handoff.shared-object-consumer-controls"
       ],
-      "scope": "§24 two shared transfer consumer clauses only. Synthetic engine-owned object and isolated stage entry, actual generated prompt and extracted UI owner/details; no completed stage, DOM/browser, export/ingestion, physical possession or external-transfer claim. External transfer conformity and semantic independence remain UNKNOWN; no whole-clause or evidence-authentication acceptance.",
+      "scope": "\u00a724 two shared transfer consumer clauses only. Synthetic engine-owned object and isolated stage entry, actual generated prompt and extracted UI owner/details; no completed stage, DOM/browser, export/ingestion, physical possession or external-transfer claim. External transfer conformity and semantic independence remain UNKNOWN; no whole-clause or evidence-authentication acceptance.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
       "atomicObligationSha256": "423fd2857fad1529845618fe54d2b865e51e4f274c87438d75cee3a408a19914"
     },
@@ -2804,7 +2819,7 @@
       "checkIds": [
         "evidence.api-current-artifact-contract"
       ],
-      "scope": "Unchanged exported evaluator and production storage/readback through existing transaction adapter. executionPlan call acceptance only: §29 lists it but does not specify distinct influence or supplied-plan validation rules. No browser/external reviewer/whole clause claim. executionPlan influence remains unspecified; only optional argument acceptance is covered.",
+      "scope": "Unchanged exported evaluator and production storage/readback through existing transaction adapter. executionPlan call acceptance only: \u00a729 lists it but does not specify distinct influence or supplied-plan validation rules. No browser/external reviewer/whole clause claim. executionPlan influence remains unspecified; only optional argument acceptance is covered.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
       "atomicObligationSha256": "3dccd0627a663384c9a38f09c170a1e4d2fe4a6583dfd51dd68af2b2101b9deb"
     },
@@ -2814,7 +2829,7 @@
       "checkIds": [
         "evidence.api-current-artifact-contract"
       ],
-      "scope": "Unchanged exported evaluator and production storage/readback through existing transaction adapter. executionPlan call acceptance only: §29 lists it but does not specify distinct influence or supplied-plan validation rules. No browser/external reviewer/whole clause claim. executionPlan influence remains unspecified; only optional argument acceptance is covered.",
+      "scope": "Unchanged exported evaluator and production storage/readback through existing transaction adapter. executionPlan call acceptance only: \u00a729 lists it but does not specify distinct influence or supplied-plan validation rules. No browser/external reviewer/whole clause claim. executionPlan influence remains unspecified; only optional argument acceptance is covered.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
       "atomicObligationSha256": "603175d7663c4321d3cc1846a320c4a0a1be66e290ab2ea3f830a888cc369082"
     },
@@ -2835,7 +2850,7 @@
       "checkIds": [
         "metrics.unproved-observation-protection"
       ],
-      "scope": "Two §31 unknown observation populations and already suppressed zero-failure bound only; actual command/migration writers and extracted overview, no closed observation universe or whole-metric conformance. Eight exact owning controls and three intended-oracle mutations protect UNKNOWN/null disposition; §31.1 metric-universe completion and exact observation attribution remain unproved.",
+      "scope": "Two \u00a731 unknown observation populations and already suppressed zero-failure bound only; actual command/migration writers and extracted overview, no closed observation universe or whole-metric conformance. Eight exact owning controls and three intended-oracle mutations protect UNKNOWN/null disposition; \u00a731.1 metric-universe completion and exact observation attribution remain unproved.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
       "atomicObligationSha256": "41bcff171fbdbdf25f8240458f12b7e42fcef8cbc05e23e9f7d1106935e25374"
     },
@@ -2845,7 +2860,7 @@
       "checkIds": [
         "metrics.unproved-observation-protection"
       ],
-      "scope": "Two §31 unknown observation populations and already suppressed zero-failure bound only; actual command/migration writers and extracted overview, no closed observation universe or whole-metric conformance. Eight exact owning controls and three intended-oracle mutations protect UNKNOWN/null disposition; §31.1 metric-universe completion and exact observation attribution remain unproved.",
+      "scope": "Two \u00a731 unknown observation populations and already suppressed zero-failure bound only; actual command/migration writers and extracted overview, no closed observation universe or whole-metric conformance. Eight exact owning controls and three intended-oracle mutations protect UNKNOWN/null disposition; \u00a731.1 metric-universe completion and exact observation attribution remain unproved.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
       "atomicObligationSha256": "4bdea55bb31d5b3ded4e20ff7a558441343e4114d0f4bf67c994d0d2d1cfaa02"
     },
@@ -2855,7 +2870,7 @@
       "checkIds": [
         "metrics.response-writer-subset-carriers"
       ],
-      "scope": "Exact retained operator-rejection/proposal-staleness/recorded external-execution-failure subset observations, eight actual writer cases plus26 controls. Broader required-category totals remain null/UNKNOWN. §31.1 carrier publication only; no complete universe, current global/full-clause/native/external actor acceptance.",
+      "scope": "Exact retained operator-rejection/proposal-staleness/recorded external-execution-failure subset observations, eight actual writer cases plus26 controls. Broader required-category totals remain null/UNKNOWN. \u00a731.1 carrier publication only; no complete universe, current global/full-clause/native/external actor acceptance.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
       "atomicObligationSha256": "5fff84aab999ba5b75b32936c1185df81225deb7b6391b32e086c1cd916fe270"
     },
@@ -2865,7 +2880,7 @@
       "checkIds": [
         "metrics.response-writer-subset-carriers"
       ],
-      "scope": "Exact retained operator-rejection/proposal-staleness/recorded external-execution-failure subset observations, eight actual writer cases plus26 controls. Broader required-category totals remain null/UNKNOWN. §31.1 carrier publication only; no complete universe, current global/full-clause/native/external actor acceptance.",
+      "scope": "Exact retained operator-rejection/proposal-staleness/recorded external-execution-failure subset observations, eight actual writer cases plus26 controls. Broader required-category totals remain null/UNKNOWN. \u00a731.1 carrier publication only; no complete universe, current global/full-clause/native/external actor acceptance.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
       "atomicObligationSha256": "f330ad7bcdefbd0b40039e479b727f5ec3eb9ca9fd5be49522dbe7e3b5001262"
     },
@@ -2875,7 +2890,7 @@
       "checkIds": [
         "metrics.response-writer-subset-carriers"
       ],
-      "scope": "Exact retained operator-rejection/proposal-staleness/recorded external-execution-failure subset observations, eight actual writer cases plus26 controls. Broader required-category totals remain null/UNKNOWN. §31.1 carrier publication only; no complete universe, current global/full-clause/native/external actor acceptance.",
+      "scope": "Exact retained operator-rejection/proposal-staleness/recorded external-execution-failure subset observations, eight actual writer cases plus26 controls. Broader required-category totals remain null/UNKNOWN. \u00a731.1 carrier publication only; no complete universe, current global/full-clause/native/external actor acceptance.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
       "atomicObligationSha256": "fc4767db1eeb4bd71300b12b88abf90dc6d2e644788dd05b8c6ecfb08de5f2ff"
     },
@@ -3191,7 +3206,7 @@
         "store.backup-extension-binding-integrity-controls",
         "verify-browser.backup-extension-native"
       ],
-      "scope": "Five exact-retention and twelve descriptor-binding synthetic Map-adapter normal-package cases establish exact uncompressed UTF-8 lexical retention for unknown root, packageManifest and packageManifest.artifacts-member extensions through direct and staged import, an owning before-import-commit abort with same-selection retry, History source-archive readback, export/reload, duplicate-member classification, anchor/occurrence/job/disclosure bindings, validator mutation isolation, and scaled retained-file capacity refusal before the designated import write transaction. Three actual Chromium native IndexedDB page-owner cases add final-transaction abort preservation, exact pending input retention, fresh-document staged resume, cold read and recovery export of the exact retained source fragments under current source guards. Known project/artifact bytes remain intact and extension sentinels remain absent from the canonical project, Stage 1 context and artifact metadata while the reduced gate decision matches baseline. Storage-worker, operator UI, physical-device, protected-export, unscaled production-capacity acceptance, arbitrary source encodings, prompt/handoff exclusion, non-executability and complete §35.10 conformance remain unproved.",
+      "scope": "Five exact-retention and twelve descriptor-binding synthetic Map-adapter normal-package cases establish exact uncompressed UTF-8 lexical retention for unknown root, packageManifest and packageManifest.artifacts-member extensions through direct and staged import, an owning before-import-commit abort with same-selection retry, History source-archive readback, export/reload, duplicate-member classification, anchor/occurrence/job/disclosure bindings, validator mutation isolation, and scaled retained-file capacity refusal before the designated import write transaction. Three actual Chromium native IndexedDB page-owner cases add final-transaction abort preservation, exact pending input retention, fresh-document staged resume, cold read and recovery export of the exact retained source fragments under current source guards. Known project/artifact bytes remain intact and extension sentinels remain absent from the canonical project, Stage 1 context and artifact metadata while the reduced gate decision matches baseline. Storage-worker, operator UI, physical-device, protected-export, unscaled production-capacity acceptance, arbitrary source encodings, prompt/handoff exclusion, non-executability and complete \u00a735.10 conformance remain unproved.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
       "independentExpectedBasis": "The retention test fixes three noncanonical lexical UTF-8 fragments and their SHA-256 values independently with node:crypto, recomputes valid package digests with a test-owned canonical encoder, and requires exact source-archive bytes through historyList/readOriginalSourceArchive. The binding-control test independently fixes root, duplicate-root and superseded-manifest literals; it requires exact descriptor roles, ordinals, shared anchor, byte hashes and known-only absence. Extension-bearing invalid staged inputs and a validator-mutation control preserve the complete observed durable state and exact pending Blob. A separate fresh known-only control first proves the designated import-transaction fault is live under the identical scaled source configuration; only then does the exact-limit extension attempt establish that HISTORY_LIMIT_REACHED wins before that transaction boundary while preserving all prior state and the staged Blob. The native page owner fixes the same root/manifest/member lexical fragments and independently hashes exact gzip/source bytes with Web Crypto; it snapshots every native object store before the injected final-transaction failure, then requires byte-identical physical state and pending input. Fresh documents require exact two-descriptor source readback, independently known root digest, a shared binding anchor, nonoperational isolation and exact recovery-export fragments while all eight served production inputs and both owning tests are bound to current bytes.",
       "coverageClassification": "PARTIAL_EXECUTED_BOUNDARY_EVIDENCE",
@@ -3205,7 +3220,7 @@
         "store.backup-extension-binding-integrity-controls",
         "verify-browser.backup-extension-native"
       ],
-      "scope": "Five exact-retention and twelve descriptor-binding synthetic Map-adapter normal-package cases establish exact uncompressed UTF-8 lexical retention for unknown root, packageManifest and packageManifest.artifacts-member extensions through direct and staged import, an owning before-import-commit abort with same-selection retry, History source-archive readback, export/reload, duplicate-member classification, anchor/occurrence/job/disclosure bindings, validator mutation isolation, and scaled retained-file capacity refusal before the designated import write transaction. Three actual Chromium native IndexedDB page-owner cases add final-transaction abort preservation, exact pending input retention, fresh-document staged resume, cold read and recovery export of the exact retained source fragments under current source guards. Known project/artifact bytes remain intact and extension sentinels remain absent from the canonical project, Stage 1 context and artifact metadata while the reduced gate decision matches baseline. Storage-worker, operator UI, physical-device, protected-export, unscaled production-capacity acceptance, arbitrary source encodings, prompt/handoff exclusion, non-executability and complete §35.10 conformance remain unproved.",
+      "scope": "Five exact-retention and twelve descriptor-binding synthetic Map-adapter normal-package cases establish exact uncompressed UTF-8 lexical retention for unknown root, packageManifest and packageManifest.artifacts-member extensions through direct and staged import, an owning before-import-commit abort with same-selection retry, History source-archive readback, export/reload, duplicate-member classification, anchor/occurrence/job/disclosure bindings, validator mutation isolation, and scaled retained-file capacity refusal before the designated import write transaction. Three actual Chromium native IndexedDB page-owner cases add final-transaction abort preservation, exact pending input retention, fresh-document staged resume, cold read and recovery export of the exact retained source fragments under current source guards. Known project/artifact bytes remain intact and extension sentinels remain absent from the canonical project, Stage 1 context and artifact metadata while the reduced gate decision matches baseline. Storage-worker, operator UI, physical-device, protected-export, unscaled production-capacity acceptance, arbitrary source encodings, prompt/handoff exclusion, non-executability and complete \u00a735.10 conformance remain unproved.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
       "independentExpectedBasis": "The retention test fixes three noncanonical lexical UTF-8 fragments and their SHA-256 values independently with node:crypto, recomputes valid package digests with a test-owned canonical encoder, and requires exact source-archive bytes through historyList/readOriginalSourceArchive. The binding-control test independently fixes root, duplicate-root and superseded-manifest literals; it requires exact descriptor roles, ordinals, shared anchor, byte hashes and known-only absence. Extension-bearing invalid staged inputs and a validator-mutation control preserve the complete observed durable state and exact pending Blob. A separate fresh known-only control first proves the designated import-transaction fault is live under the identical scaled source configuration; only then does the exact-limit extension attempt establish that HISTORY_LIMIT_REACHED wins before that transaction boundary while preserving all prior state and the staged Blob. The native page owner fixes the same root/manifest/member lexical fragments and independently hashes exact gzip/source bytes with Web Crypto; it snapshots every native object store before the injected final-transaction failure, then requires byte-identical physical state and pending input. Fresh documents require exact two-descriptor source readback, independently known root digest, a shared binding anchor, nonoperational isolation and exact recovery-export fragments while all eight served production inputs and both owning tests are bound to current bytes.",
       "coverageClassification": "PARTIAL_EXECUTED_BOUNDARY_EVIDENCE",
@@ -5491,7 +5506,7 @@
       "checkIds": [
         "activation.exported-owned-instruction"
       ],
-      "scope": "Direct New→reservation/store save→ZIP export asserts new JOB_ID appears in literal Stage01 COMPLETE body and exported bytes equal its retrievable committed instruction. Other scope dimensions are not independently proved by this check.",
+      "scope": "Direct New\u2192reservation/store save\u2192ZIP export asserts new JOB_ID appears in literal Stage01 COMPLETE body and exported bytes equal its retrievable committed instruction. Other scope dimensions are not independently proved by this check.",
       "basis": "Exact four PROJECT_ACTIVATION_* rows from verify-project-activation.mjs; real application/store handlers and independent ZIP parser, synthetic DOM/history and transaction adapter. This amendment is absent from the indexed main-spec NREQ inventory; no synthetic NREQ or full-clause compliance asserted.",
       "source": {
         "path": "specification/recovery-amendment-20260914.txt",
