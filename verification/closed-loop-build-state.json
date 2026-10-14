@@ -1394,7 +1394,7 @@
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "dot",
-    "lastInspectedAt": "2026-10-14T12:55:43.810744Z",
+    "lastInspectedAt": "2026-10-14T13:31:41.731724Z",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -2050,7 +2050,7 @@
     },
     "scheduleState": "FORECAST_NOT_ESTABLISHED",
     "forecast": null,
-    "nextAction": "Verify existing normal Stage20 baseline renewal after fresh19/8 proof, preserve original history, then actual bounded Stage21 lifecycle/cold-read and governing negatives before final source freeze/reviewed integration.",
+    "nextAction": "Restore existing author/reviewer execution; independently isolate exact repeatedprojection difference on638 durable full-custody snapshot, then minimal reviewed correction and actual affected checks. No runtime integration yet.",
     "deploymentObservation": {
       "sourceCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
       "runId": "36958910363",
@@ -2326,15 +2326,22 @@
         "prior6c1FullRun": "Intentionally superseded exit130 before positive cohort for independently reviewed test-only VM realm normalization; no product failure or full-owner success inferred.",
         "stage21RecoveryProgress": {
           "source": "638ee980",
-          "state": "PUBLIC_REPROOF_PASSED_BASELINE_RENEWAL_PENDING",
+          "state": "BOUNDARY_SAVE_COLD_READ_PASSED_REPEATED_PROJECTION_FAILED",
           "projectionVersion": 12,
           "confirmationVersion": 8,
           "routingCorrection": "Existing Stage19 readiness SATISFIED calculation action includes absent or registered noncurrent confirmation. Other prerequisites unchanged.",
           "normalReproof": "Independent normal action, fresh confirmation8, public write/cold integrity PASS; gates18 and19 complete/current.",
           "stage20": "Correctly stale because baseline still bound to old confirmation7. Existing enabled Freeze selected baseline UI path found; diagnostic fixture authorization and ordinary freeze/persistence renewal pending. No baseline restamping.",
-          "stage21": "Not yet replayed on this source; requires valid renewed baseline and original prompt/adapter custody.",
+          "stage21": "Actual21acceptance and integrity/gate PASS. Existing helper publicwrite/read currentreceipts/integrity/raw/frontier22 assertions passed; terminal exit1 at subsequent repeatedprojection comparison line582. Stage22 futureevidence not executed.",
           "versionChoice": "Preserved exact final2be projection11 and new12 conservatively; unpublished diagnostic snapshots are not promoted as supported fixtures.",
-          "reviews": "Independent frozen patch, history preservation and actual boundary review ongoing"
+          "reviews": "Independent frozen patch, history preservation and actual boundary review ongoing",
+          "baselineRenewal": "Independent existing enabled20 freeze with synthetic fixture authorization/public save cold read PASS, oldbaseline/raw/receipt preserved;21entryallowed.",
+          "failure": "ITERATION_PRODUCT_REPEATED_PROJECTION_STABLE",
+          "evidenceHashes": {
+            "638ee980-failure.json": "9abf7a4a2f1535178a47f32c9178d934495d8b4a6ffd23b0a46eb16dbe850b80",
+            "638ee980-driver-provenance.json": "023f3df90e72112a24deeb8a7ea870183ffbd0f8cac9e52950c7a9c2bb6cf0f6"
+          },
+          "processStatus": "No live nodeprocess found13:19; terminal result recovered from durable exit/failure. Author/reviewer pending_init after environment restart; interrupted/reissued same tasks13:31, actual resumption unconfirmed."
         }
       }
     },
