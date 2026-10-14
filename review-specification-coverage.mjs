@@ -315,6 +315,7 @@ export function validateAtomicProjection(record,{readFile,sourceBytes,reconciler
 export function atomicEvidenceReferences(descriptor,readFile=readAtomicEvidenceBytes){
   if(descriptor?.status!=='RECONCILED')return [];
   const refs=[descriptor.draft,descriptor.independentReview,descriptor.reconciliation],records=refs.map(ref=>atomicEvidenceFile(ref,readFile)),reconciliation=records[2];
+  refs.push(...records.flatMap(record=>record.inputs??[]));
   refs.push(...[reconciliation.priorManifest,reconciliation.sourceTraceManifest,reconciliation.historicalSourceRelocationCrosswalk,reconciliation.priorSpecificationSource].filter(Boolean));
   for(const record of records)for(const constituent of record.mechanicalProjection?.constituents??[])refs.push(constituent,...(constituent.identityEvidence?[constituent.identityEvidence]:[]));
   if(reconciliation.contextReconciliation){const context=reconciliation.contextReconciliation;refs.push(context,context.author,context.independentReview);}
@@ -390,7 +391,10 @@ export function validateAtomicGoverningOccurrences(entries,{contextResolution,co
   const add=(map,line,id)=>{if(!map.has(line))map.set(line,new Set());map.get(line).add(id);};
   for(const atom of atoms){add(primary,atom.sourceLocation.startLine,atom.normativeRequirementId);if(!byKey.has(atom.atomicObligation.key))byKey.set(atom.atomicObligation.key,[]);byKey.get(atom.atomicObligation.key).push(atom);}
   for(const edge of reconciliation.requirementIdentityCrosswalk??[]){const line=relocations?.get(edge.priorNormativeRequirementId)?.targetSourceLine??edge.priorSourceLocation.startLine;for(const id of edge.currentNormativeRequirementIds)if(byId.has(id)){assert(['UNCHANGED_ATOMIC','CHANGED_SINGLETON_SCOPE','SPLIT_COMPOUND','MERGED_EQUIVALENT','COMPONENT_OF_CONTRACT'].includes(edge.relation),'Atomic historical occurrence relation unsupported');add(historical,line,id);}}
-  for(const [line,mapping] of componentResolution?.mappings??[])for(const key of mapping.targetAtomicKeys){const targets=byKey.get(key)??[];assert(targets.length<=1,'Atomic component target key is ambiguous across source anchors');if(targets[0])add(components,line,targets[0].normativeRequirementId);}
+  for(const [line,mapping] of componentResolution?.mappings??[])for(const key of mapping.targetAtomicKeys){const targets=byKey.get(key)??[];assert(targets.length===1,'Atomic component target key missing or ambiguous across source anchors');add(components,line,targets[0].normativeRequirementId);}
+  for(const [line,mapping] of componentResolution?.mappings??[])if(mapping.relation==='NEW_DISTINCT_SCOPE')for(const proposed of mapping.proposedNewScopes){
+    const targets=byKey.get(proposed.proposedAtomicKey)??[];assert(targets.length===1&&targets[0].sourceLocation.startLine===line&&targets[0].atomicObligation.statement===proposed.statement,'Atomic independently reviewed new scope missing or changed');add(components,line,targets[0].normativeRequirementId);
+  }
   const rangesFor=line=>contextResolution?.mappings.get(line)?.resolvedClassification==='STRUCTURAL_REQUIREMENT_CONTEXT'?contextResolution.mappings.get(line).governingSourceRanges:[];
   const inRanges=(line,ranges)=>ranges.some(([a,b])=>line>=a&&line<=b);
   const reachable=ranges=>{const found=new Set(),seen=new Set(),queue=[];for(const [a,b] of ranges)for(let n=a;n<=b;n++)queue.push(n);for(let i=0;i<queue.length;i++){const line=queue[i];if(seen.has(line))continue;seen.add(line);for(const map of [primary,historical,components])for(const id of map.get(line)??[])found.add(id);for(const [a,b] of rangesFor(line))for(let n=a;n<=b;n++)if(!seen.has(n))queue.push(n);}return found;};
@@ -423,6 +427,10 @@ export function validateAtomicGoverningOccurrences(entries,{contextResolution,co
   }
 }
 
+export function projectAtomicSectionInventory(sections,reviewedSections){
+  assert(Array.isArray(reviewedSections)&&reviewedSections.length===sections.length,'Atomic reviewed section inventory incomplete');
+  return sections.map((section,index)=>{const reviewed=reviewedSections[index];assert(reviewed.sectionId===section.sectionId&&reviewed.startLine===section.startLine&&reviewed.endLine===section.endLine,'Atomic reviewed section source identity changed');return {...reviewed,sectionId:section.sectionId,...(section.title!==undefined?{title:section.title}:{}),startLine:section.startLine,endLine:section.endLine,nonnormativeReason:reviewed.disposition==='NONNORMATIVE'?reviewed.reason:null};});
+}
 export function validateAtomicSectionCoverage(record,rows,sections,sourceBytes,idKey,memberKey){
   assert(Array.isArray(record.sections)&&record.sections.length===sections.length,'Atomic section coverage incomplete');
   const members=new Set(),lines=sourceBytes.toString('utf8').split('\n');
@@ -434,7 +442,7 @@ export function validateAtomicSectionCoverage(record,rows,sections,sourceBytes,i
     for(const reference of references){
       const id=reference[idKey],row=rows.get(id),primary=row?.primarySourceLine??row?.sourceLocation?.startLine,contexts=row?.contextSourceLocations??row?.atomicObligation?.contextSourceLocations??[],range=row?.sourceRange??[primary,primary];
       assert(row&&!referenced.has(id)&&atomicText(reference.reason)&&Array.isArray(reference.sourceRanges)&&reference.sourceRanges.length>0,'Atomic section coverage reference missing or duplicated');referenced.add(id);
-      assert(reference.sourceRanges.some(([a,b])=>lines.slice(Math.max(a,section.startLine+1)-1,b).some(line=>line.trim())),'Atomic section reference covers no substantive source occurrence');
+      assert(reference.sourceRanges.some(([a,b])=>lines.slice(a-1,b).some(line=>line.trim())),'Atomic section reference covers no substantive source occurrence');
       let last=0;for(const [a,b] of reference.sourceRanges){assert(Number.isSafeInteger(a)&&Number.isSafeInteger(b)&&a>=section.startLine&&b<=section.endLine&&a>last&&b>=a,'Atomic section reference outside covered subsection');last=b;for(let n=a;n<=b;n++)assert((n>=range[0]&&n<=range[1])||contexts.some(context=>context.startLine===n),'Atomic section reference lacks original source occurrence');}
     }
     assert(['COVERED','NONNORMATIVE','SOURCE_CONTEXT_ONLY'].includes(actual.disposition),'Atomic section disposition unresolved');
@@ -444,7 +452,7 @@ export function validateAtomicSectionCoverage(record,rows,sections,sourceBytes,i
       assert(ids.length===0&&references.length===0&&lines.slice(section.startLine,section.endLine).every(line=>!line.trim()),'Atomic context-only section contains unreviewed substantive source');
       assert(actual.sourceContext?.classification==='SECTION_HEADING'&&actual.sourceContext.sourceLine===section.startLine&&actual.sourceContext.sourceLineSha256===sha256(Buffer.from(lines[section.startLine-1])),'Atomic context-only heading identity missing');
       const children=sections.filter(child=>child.sectionId.startsWith(section.sectionId+'.')).map(child=>child.sectionId);
-      assert(atomicEqual(atomicList(actual.governedSectionIds,'context-only governed sections'),children),'Atomic context-only child section coverage incomplete');
+      assert(children.length>0&&atomicEqual(atomicList(actual.governedSectionIds,'context-only governed sections'),children),'Atomic context-only child section coverage incomplete');
     }
     for(const id of ids){const row=rows.get(id),line=row?.primarySourceLine??row?.sourceLocation?.startLine;assert(row&&!members.has(id)&&line>=section.startLine&&line<=section.endLine,'Atomic section member missing, duplicate or misanchored');members.add(id);}
   }
@@ -538,6 +546,8 @@ export function loadReviewedAtomicExtraction(descriptor,{sourceBytes,specificati
   assert(resolved.every((set,i)=>set.size===extracts[i].size)&&mapped.size===entries.length,'Atomic proposition reconciliation or active entry coverage incomplete');
   validateAtomicIdentityCrosswalk(reconciliation.requirementIdentityCrosswalk,prior,reconciliation.priorManifest,entries,decisions,sourceBytes,relocations,priorSourceBytes);
   validateAtomicGoverningOccurrences(entries,{contextResolution,componentResolution,reconciliation,relocations});
+  for(const ref of reconciliation.reviewedSemanticEvidence??[])assert(reconciliation.inputs.some(input=>input.path===ref.path&&input.sha256===ref.sha256),'Atomic reviewed semantic input not declared');
+  atomicEvidenceReferences(descriptor,readFile);
   return {established:true,descriptor,entries,requirementIdentityCrosswalk:reconciliation.requirementIdentityCrosswalk,reconciliation,prior,sourcePrior,contextResolution};
 }
 

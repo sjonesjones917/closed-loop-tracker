@@ -1,4 +1,4 @@
-import {validateMechanicalCandidateExclusions,loadReviewedAtomicExtraction,validateAtomicLineMembership} from './review-specification-coverage.mjs';
+import {projectAtomicSectionInventory,validateAtomicSectionCoverage,validateMechanicalCandidateExclusions,loadReviewedAtomicExtraction,validateAtomicLineMembership} from './review-specification-coverage.mjs';
 import {checkedVerifier} from './verify-conformance-regressions.mjs';
 import fs from'node:fs';import crypto from'node:crypto';import cp from'node:child_process';
 await import('./hash.js');const H=globalThis.closedLoopHash,SP='specification/closed-loop-reliability-controlling-implementation-specification.txt',SMP='specification/closed-loop-specification-manifest.json',NMP='specification/closed-loop-normative-requirements.json',RP='review-specification-coverage.mjs',allowed=new Set(['CONFORMANT_PROVEN','IMPLEMENTED_UNPROVEN','MISSING','CONTRADICTED','BLOCKED_HUMAN','BLOCKED_ENVIRONMENT','UNKNOWN']),A=(x,m)=>{if(!x)throw Error(m)},sh=b=>crypto.createHash('sha256').update(b).digest('hex');
@@ -32,7 +32,9 @@ const validate=(sm,nm,virtual={},skipDigest=false,sourceProvenanceOnly=false)=>{
    A(Array.isArray(row.deterministicTestIds)&&row.deterministicTestIds.length&&row.deterministicTestIds.every(id=>fs.existsSync(id.split('#')[0]))&&Array.isArray(row.semanticTestIds)&&Array.isArray(row.mutationTestIds)&&Array.isArray(row.requiredBrowserOrPhysicalDeviceProof),'Atomic deterministic/semantic/mutation/browser trace missing');
    A(allowed.has(row.currentDisposition)&&row.currentDisposition!=='CONFORMANT_PROVEN','Atomic source declarations cannot establish executed conformance');
   }
-  for(const section of sm.sectionInventory){const expected=nm.requirements.filter(row=>row.sectionId===section.sectionId).map(row=>row.normativeRequirementId);A(H.stableStringify(section.normativeRequirementIds)===H.stableStringify(expected),'Atomic section membership incomplete');A(expected.length||section.disposition==='NONNORMATIVE'&&section.nonnormativeReason,'Uncovered specification section '+section.sectionId);}
+  const expectedSections=projectAtomicSectionInventory(sm.sectionInventory,atomicEvidence.reconciliation.sections);
+  A(H.stableStringify(sm.sectionInventory)===H.stableStringify(expectedSections)&&H.stableStringify(nm.sectionInventory)===H.stableStringify(expectedSections),'Atomic generated section coverage differs from reviewed reconciliation');
+  validateAtomicSectionCoverage({sections:sm.sectionInventory},new Map(nm.requirements.map(row=>[row.normativeRequirementId,row])),sm.sectionInventory,source,'normativeRequirementId','normativeRequirementIds');
   // The pinned predecessor is historical source-review provenance, not an
   // additional active requirement universe. Replay existing source-only
   // controls against those exact bytes after validating all active atoms.
