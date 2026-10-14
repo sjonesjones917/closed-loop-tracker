@@ -2925,22 +2925,29 @@
         "newEvidence": "Original pre-decoy, pre-chain and post-chain captures. Independent232-source comparison: two proof obligations change only eight scope-summary/digest/update paths, satisfaction unchanged SATISFIED. Distinct post-chain gate27 stale release under independent fresh-binding investigation; no runtime omission yet."
       },
       "chainRepairDraft": {
-        "observedAt": "2026-10-14T20:50:12Z",
-        "authorCommit": "fa877e53c4c0a556dfb5563945235e6c385f11d8",
-        "runtimeDraftCommit": "03021c73",
-        "status": "IMPLEMENTED_NOT_ACCEPTED",
-        "scope": "Chain-specific exact eight-path proof-obligation preimage, chain4/project14 existing activation, frozen3/13 preserved. Separate reviewed clone-only instruction-decoy test isolation.",
+        "observedAt": "2026-10-14T20:58:31Z",
+        "authorCommit": "c3033739cf64eab98b371b9fe53c6da312976273",
+        "runtimeDraftCommit": "c0d44224612556a0878f72740dc57919786686aa",
+        "status": "STATIC_REVIEW_ACCEPTED_EXECUTION_PENDING",
+        "scope": "Reviewed chain-specific eight-path proof-obligation preimage plus existing exact release-currentness predicate. Current chain5/project15, frozen chain3/4 and projection13/14 definitions retained; normal activation only. Separate original decoy clone isolation and actual stale-release/governing-source negatives preserved.",
         "independentScopeReviewSha256": "61bc8f3933ebda1a32b03434d5f0e6e7af4bc3ed404b7ce28223c8a1333ed374",
-        "focused": "Source-binding12 cases, receipt47 and metadata354 passed; actual activation/chain/current-release/retry/persistence/legacy controls pending.",
+        "focused": "Source-binding12 cases, receipt47, projection60 and metadata354 passed. Actual public activation/currentness/persistence and legacy controls pending.",
         "qualifiedDiagnostic": "Direct13-to14 source substitution legitimately changes proposition DERIVATION_OR_REVIEW_IDS, so cannot establish stable14 chain outcome. No additional preimage omission authorized.",
-        "next": "Prepare normal public13-to14 activation from genuine before-release53 source, ordinary27/28 reproof, then actual chain4 and decoy stale-release challenge.",
+        "next": "Reviewed external normal13-to15 activation from genuine before-release53 source, ordinary27/28 reproof, exact original29/30 assertions and diagnostic captures.",
         "authorityExpiresAt": "2026-10-14T21:35:46.722Z",
         "activeImplementationWorkers": [
           "repair_iteration_receipt_dependencies: runtime/tests/integration lease",
-          "prepare_chain14_continuation: external driver only"
+          "prepare_chain14_continuation: final15 external driver only"
         ],
         "independentReviewer": "review_release_scope_binding",
-        "heavyProcess": "NONE"
+        "heavyProcess": "NONE; final driver review pending",
+        "sourceHashes": {
+          "workflow-engine.js": "1a0e0789abcb829c79dec4748dbaa0e90d2989d6d263ac3e6b6e1fcf26377d1f",
+          "workflow-schema.js": "626e51a6590e1bb19e6c4478a2531326daddceffabdb8ced225dbb4aa81deb1b",
+          "project-store.js": "be8a5b5f9a2ca7caa42024f2831447c38947fe099198c3303e7eb83e410965d0"
+        },
+        "existingOwnerFailure": "verify-stage29-evidence-chain-checkpoint.mjs line83 synthetic positive has no registered chain receipt; exact53 baseline and current draft both exit1. Preserved, not weakened or counted passing.",
+        "diskFreeObserved": "1.3 GiB; source input18 MiB compressed; monitor terminal capture headroom"
       }
     },
     "continuationAmendmentV2": {
