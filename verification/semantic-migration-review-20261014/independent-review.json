@@ -33,5 +33,14 @@
     }
   ],
   "newApplicationProofEstablished": false,
-  "canonicalComposition": "Verified exact256-row starting digest, append14 unchanged accepted declarations/reviews,270 total; no rejected/blocked fullCoverage. Separate final catalog repair will require fresh independent review records before admission."
+  "canonicalComposition": "Verified exact256-row starting digest, append14 unchanged accepted declarations/reviews,270 total; no rejected/blocked fullCoverage. Separate final catalog repair will require fresh independent review records before admission.",
+  "actualCommand": "node --input-type=module with stdin: import {verifyNormativeCatalogConsumers} from './test-normative-catalog-consumers.mjs'; console.log(JSON.stringify(await verifyNormativeCatalogConsumers()));",
+  "actualCommandWorkingDirectory": "/workspace/shared/clrt-review-migration",
+  "wrapperReportSha256": "dbd24763d3ac8a2144354d36d0f148a99d23ee642da1a344c20f58d000a62783",
+  "limits": [
+    "Scoped binding data and synthetic report consumer verification only; no new application execution receipt or fullCoverage.",
+    "Stage16 shared five-way outcome atom retains automatic-only/unavailable-capability gaps.",
+    "All17 sibling obligations remain unbound/unproven; scoped mappings do not alter the normative denominator.",
+    "Old14 canonical review records remain valid only against their pinned catalog bytes; future catalog changes require fresh review."
+  ]
 }
