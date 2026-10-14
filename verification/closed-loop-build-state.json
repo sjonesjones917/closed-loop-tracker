@@ -1390,11 +1390,11 @@
     "startingSourceCommit": "7df5f46e9a7e54da09622387a978badb39916c09",
     "startingMainCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
     "integrationBranch": "dot/published-execution-20261014",
-    "integrationCommit": "526f2a4e",
+    "integrationCommit": "8eb3a65273a1c1c4a3e78e6a3068c0d7047744cf",
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "dot",
-    "lastInspectedAt": "2026-10-14T05:31:59Z",
+    "lastInspectedAt": "2026-10-14T05:47:34Z",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -1938,6 +1938,16 @@
       "sourceSuites": "PASS",
       "appAcceptance": false,
       "remaining": "Composite contributor provenance and resolved context support; global atomic reconciliation and actual proof migration"
+    },
+    "atomicProvenanceFollowup": {
+      "authorCommit": "a35c4cb14ba097622888e36f3946ff90dbb5342d",
+      "state": "INTEGRATED",
+      "independentReviewSha256": "72fcae24bea7c774b4e87c4b2c8837f5ac500631e882c82b5594b9a6c2a773b8",
+      "evidencePath": "verification/dot-execution-20261014/provenance-review/final-review.txt",
+      "integratedControls": 125,
+      "sourceSuites": "PASS",
+      "appAcceptance": false,
+      "remaining": "Component convergence, contained contracts, section coverage and final real atomic reconciliation"
     }
   }
 }
