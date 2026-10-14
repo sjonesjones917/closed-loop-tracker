@@ -21,7 +21,8 @@ function loadSchema(source=fs.readFileSync('workflow-schema.js','utf8'),onContex
 
 const REQUIRED_OPERATION_PROPERTIES=Object.freeze([
   'stage','operation','executorClass','acceptsExternalResponse','responseTypes','acceptanceMode','reservationRequired','scope',
-  'readCollections','writableCollections','agentWritableCollections','allowedStageData','scopeRequirements','applicationCollections','completionPredicate','retryRule','minimumInputBindingBasis'
+  'readCollections','writableCollections','agentWritableCollections','allowedStageData','scopeRequirements','applicationCollections','completionPredicate','retryRule','minimumInputBindingBasis',
+  'targetSlotRule','requiredInputFamilies','writableFieldsRule','independenceRequired'
 ]);
 const REQUIRED_FIELD_PROPERTIES=Object.freeze([
   'path','producer','valueType','enumValues','nullable','cardinality','requiredAtStage','requiredness','writableOperation','classification',
@@ -68,7 +69,12 @@ function verify(source){
   assert.deepEqual(Object.keys(schema.RECORD_SCHEMAS).sort(),Object.keys(schema.DURABLE_OBJECT_REGISTRY).sort(),'Every canonical family must have exactly one durable-object contract.');
 
   for(const [key,contract] of Object.entries(schema.STAGE_OPERATION_REGISTRY)){
-    for(const property of REQUIRED_OPERATION_PROPERTIES)assert.ok(Object.prototype.hasOwnProperty.call(contract,property),`${key} missing operation property ${property}.`);
+    for(const property of REQUIRED_OPERATION_PROPERTIES)assert.ok(Object.prototype.hasOwnProperty.call(contract,property),`OPERATION_REGISTRY_PROPERTY_ORACLE: ${key} missing operation property ${property}.`);
+    // Section 14.6 requires these declarations for every operation. Shape is
+    // necessary, but does not prove the declared rule or family set is correct.
+    for(const property of ['targetSlotRule','writableFieldsRule'])assert.ok(typeof contract[property]==='string'&&contract[property].trim().length>0,`OPERATION_REGISTRY_PROPERTY_SHAPE_ORACLE: ${key}.${property} must be a nonempty rule identity.`);
+    assert.ok(Array.isArray(contract.requiredInputFamilies)&&[...contract.requiredInputFamilies].every(family=>typeof family==='string'&&family.trim().length>0),`OPERATION_REGISTRY_PROPERTY_SHAPE_ORACLE: ${key}.requiredInputFamilies must be an array of nonempty family names.`);
+    assert.equal(typeof contract.independenceRequired,'boolean',`OPERATION_REGISTRY_PROPERTY_SHAPE_ORACLE: ${key}.independenceRequired must be a boolean.`);
     assert.equal(contract.scope,schema.STAGE_OPERATION_SCOPE_MATRIX[key],`${key} must reference its exact scope contract.`);
     assert.deepEqual([...contract.scopeRequirements],[...contract.scope.requiredDimensions],`${key} scope requirements must equal the scope matrix.`);
   }
@@ -179,8 +185,35 @@ function verify(source){
   }};
 }
 
+function verifyOperationRegistryPropertyFaults(source){
+  const faults=[];
+  // Mutate all operation declarations together: a shared omission must not
+  // pass merely because every registry entry still agrees with its peers.
+  for(const [property,invalidValues] of [
+    ['targetSlotRule',['null','42',"''","'   '"]],
+    ['requiredInputFamilies',['null',"'requirements'",'[null]',"['']","['   ']",'Array(1)']],
+    ['writableFieldsRule',['null','42',"''","'   '"]],
+    ['independenceRequired',['null',"'false'",'0']]
+  ])for(const [fault,value]of [['missing',null],...invalidValues.map(value=>['invalid-shape',value])]){
+    const mutation=fault==='missing'?`delete contract[${JSON.stringify(property)}];`:`contract[${JSON.stringify(property)}]=${value};`;
+    const faultSource=source+`\n;(()=>{const s=globalThis.closedLoopWorkflowSchema,entries={};for(const [key,original] of Object.entries(s.STAGE_OPERATION_REGISTRY)){const contract={...original};${mutation}entries[key]=Object.freeze(contract);}globalThis.closedLoopWorkflowSchema=Object.freeze({...s,STAGE_OPERATION_REGISTRY:Object.freeze(entries)});})();`;
+    const oracle=fault==='missing'?'OPERATION_REGISTRY_PROPERTY_ORACLE':'OPERATION_REGISTRY_PROPERTY_SHAPE_ORACLE';
+    let rejected=null;try{verify(faultSource);}catch(error){rejected=error;}
+    assert.ok(rejected?.message.startsWith(oracle)&&rejected.message.includes(property),`OPERATION_REGISTRY_PROPERTY_FAULT_ORACLE: ${property}/${fault}/${value} must fail its intended invariant; actual ${rejected?.message||'PASS'}.`);
+    faults.push({property,fault,...(fault==='invalid-shape'?{value}:{}),oracle,result:'DETECTED',diagnostic:rejected.message});
+  }
+  return {scope:'Required presence and basic value shapes for four Section 14.6 operation-registry declarations only; not per-operation semantic correctness or runtime enforcement.',faults};
+}
+
 const source=fs.readFileSync('workflow-schema.js','utf8');
 const result=verify(source);
+const operationRegistryPropertyFaults=verifyOperationRegistryPropertyFaults(source);
+if(process.argv.includes('--operation-registry-properties-only')){
+  assert.equal(fs.readFileSync('workflow-schema.js','utf8'),source,'OPERATION_REGISTRY_PROPERTY_SOURCE_UNCHANGED_ORACLE');
+  assert.deepEqual(verify(source),result,'OPERATION_REGISTRY_PROPERTY_RESTORED_ORACLE');
+  console.log(JSON.stringify({operationRegistryProperties:'PASS',stageOperations:result.stageOperations,operationRegistryPropertyFaults,sourceSha256:createHash('sha256').update(source).digest('hex'),sourceRestored:true}));
+  process.exit(0);
+}
 const expectedVarianceContract=await verifyExpectedVarianceContract({sourceOverrides:{'workflow-schema.js':source}});
 let derivationRealmParse;const derivationSchema=loadSchema(source,context=>{derivationRealmParse=vm.runInContext('(text)=>JSON.parse(text)',context);});
 const derivationReceiptContract=verifyDerivationReceiptContract(derivationSchema,value=>derivationRealmParse(JSON.stringify(value)));
@@ -259,4 +292,4 @@ for(const [field,omittedValue] of [['SOURCE_KIND','PROOF_OBLIGATION'],['VERIFICA
 assert.equal(fs.readFileSync('workflow-schema.js','utf8'),source,'FIELD_REGISTRY_SOURCE_UNCHANGED_ORACLE');
 const restored=verify(source);
 assert.deepEqual(restored,result,'FIELD_REGISTRY_RESTORED_ORACLE');
-console.log(JSON.stringify({...result,expectedVarianceContract,derivationReceiptContract,convergenceRegisteredDefinitionChange,projectProjectionReceiptContract,projectProjectionStoreContract,carrierDerivationMetadata,uiAcceptanceRegistry,uiAcceptancePresentation,specificationJobFields,specificationJobFieldMutants,specificationCarrierFields,specificationCarrierFieldMutants,conditionalDeferredManifestCarrier,recoverySourceReferenceCarrier,backupImportStagingCarrier,responseStagingRecoveryCarriers,jobPointerTargets,mobileAcceptanceSessionCarriers,mobileAcceptanceSessionMerge,artifactByteReferenceCarrier,registryFaults,receiptContractFaults,timingContractFaults,timingEnumContractFaults,sourceSha256:createHash('sha256').update(source).digest('hex'),sourceRestored:true,restored:'PASS'}));
+console.log(JSON.stringify({...result,operationRegistryPropertyFaults,expectedVarianceContract,derivationReceiptContract,convergenceRegisteredDefinitionChange,projectProjectionReceiptContract,projectProjectionStoreContract,carrierDerivationMetadata,uiAcceptanceRegistry,uiAcceptancePresentation,specificationJobFields,specificationJobFieldMutants,specificationCarrierFields,specificationCarrierFieldMutants,conditionalDeferredManifestCarrier,recoverySourceReferenceCarrier,backupImportStagingCarrier,responseStagingRecoveryCarriers,jobPointerTargets,mobileAcceptanceSessionCarriers,mobileAcceptanceSessionMerge,artifactByteReferenceCarrier,registryFaults,receiptContractFaults,timingContractFaults,timingEnumContractFaults,sourceSha256:createHash('sha256').update(source).digest('hex'),sourceRestored:true,restored:'PASS'}));
