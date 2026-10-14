@@ -554,3 +554,20 @@ export async function verifyIterationProductTransition({beforeProduct,afterProdu
  cases.push('actual21-to22-frontier','earlier-convergence-and-confirmation-current','original-receipts-unchanged','public-save-cold-read-integrity','raw-history-preserved','repeated-calculation-stable');
  return {iterationProductTransition:'PASS',cases,synthetic:true,actualBrowser:false,actualStore:true,boundary:'Actual full-cycle accepted product and retained preproduct proof; public transaction adapter, not browser IndexedDB or external-actor acceptance.'};
 }
+
+export function verifyIterationLaterEvidence({engine:e,beforeProduct,afterEvidence}){
+ const reviews=e.recordsForCurrentScope(afterEvidence,'entailmentReviews').filter(row=>Number(row.stage)===22&&e.recordValue(row,'ACCEPTED_RELATION')==='ESTABLISHES');
+ assert(reviews.length,'ITERATION_ACTUAL_FUTURE_EVIDENCE_PRESENT');
+ for(const review of reviews){
+  assert.equal(e.entailmentMetadataCurrent(afterEvidence,review),true,'ITERATION_FUTURE_EVIDENCE_ACCEPTED_PROVENANCE');
+  const observation=e.recordsForCurrentScope(afterEvidence,'observationRecords').find(row=>row.id===e.recordValue(review,'OBSERVATION_ID'));
+  const test=e.recordsForCurrentScope(afterEvidence,'tests').find(row=>row.id===e.recordValue(observation,'SUBJECT_ID'));
+  assert.equal(e.testDueState(afterEvidence,test,18,{perRunOnly:true}).dueNow,false,'ITERATION_FUTURE_SUBJECT_NOT_GOVERNING_EARLIER_PROOF');
+ }
+ for(const [family,current]of [['convergenceRecords','convergenceRecordCurrent'],['confirmationRecords','confirmationRecordCurrent']]){
+  const before=e.recordsForCurrentScope(beforeProduct,family).at(-1),after=afterEvidence.projectData[family].find(row=>row.id===before.id);
+  assert.equal(e[current](afterEvidence,after),true,'ITERATION_ACCEPTED_NONGOVERNING_EVIDENCE_PRESERVES_RECEIPT: '+family);
+  assert.equal(JSON.stringify(after.derivationReceipt),JSON.stringify(before.derivationReceipt),'ITERATION_NONGOVERNING_EVIDENCE_NO_RESTAMP: '+family);
+ }
+ return {iterationLaterEvidence:'PASS',acceptedReviewIds:reviews.map(row=>row.id),rawResponseIds:reviews.map(row=>row.rawResponseId),synthetic:true,boundary:'Actual accepted Stage22 final-product evidence is not due preproduct input; original Stage18/19 receipts remain current unchanged.'};
+}
