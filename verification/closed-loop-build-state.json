@@ -1394,7 +1394,7 @@
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "dot",
-    "lastInspectedAt": "2026-10-14T08:23:57.850692Z",
+    "lastInspectedAt": "2026-10-14T08:30:37.092220Z",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -1939,6 +1939,54 @@
         "dependencies": [],
         "concurrencyAllocation": 1,
         "evidence": "Five coverage designs accepted at9cdf47b4; current integration receipts still required"
+      },
+      {
+        "id": "bind_job_registry_declarations",
+        "owner": "/root/bind_job_registry_declarations",
+        "state": "VERIFIED",
+        "scope": "88 partial job producer/type bindings",
+        "evidence": "35ffdea1 integrated; root focused44/266 pass",
+        "lastInspectedAt": "2026-10-14T08:30:37.092220Z",
+        "returnTo": "/root",
+        "host": "dot cloud workspace",
+        "dependencies": [],
+        "concurrencyAllocation": 0
+      },
+      {
+        "id": "review_job_registry_declarations",
+        "owner": "/root/review_job_registry_declarations",
+        "state": "VERIFIED",
+        "scope": "Independent source-first review of88 partial declarations",
+        "evidence": "c48473c150fde817c5f3f6febd3897160b193004de1cdaf35090ce61539e6fc1",
+        "lastInspectedAt": "2026-10-14T08:30:37.092220Z",
+        "returnTo": "/root",
+        "host": "dot cloud workspace",
+        "dependencies": [],
+        "concurrencyAllocation": 0
+      },
+      {
+        "id": "verify_operation_registry_properties",
+        "owner": "/root/verify_operation_registry_properties",
+        "state": "VERIFIED",
+        "scope": "Four existing operation property presence/basic shapes",
+        "evidence": "2c44b2a9 integrated;104 operations/21 negatives pass",
+        "lastInspectedAt": "2026-10-14T08:30:37.092220Z",
+        "returnTo": "/root",
+        "host": "dot cloud workspace",
+        "dependencies": [],
+        "concurrencyAllocation": 0
+      },
+      {
+        "id": "review_operation_registry_properties",
+        "owner": "/root/review_operation_registry_properties",
+        "state": "VERIFIED",
+        "scope": "Independent required operation property verifier review",
+        "evidence": "2d046ee7af7bf2bb72fbdc354a2eea4e1994aa766c2cea4cab7b0099f5ecc388",
+        "lastInspectedAt": "2026-10-14T08:30:37.092220Z",
+        "returnTo": "/root",
+        "host": "dot cloud workspace",
+        "dependencies": [],
+        "concurrencyAllocation": 0
       }
     ],
     "resources": {
@@ -2257,6 +2305,19 @@
           22
         ],
         "executionReceiptsCollected": false
+      },
+      "operationPropertyVerifier": {
+        "state": "INDEPENDENTLY_ACCEPTED_INTEGRATED_FOCUSED_PASS",
+        "authorCommit": "342b89b013477abe68dfae5967845358438a3e47",
+        "integrationCommit": "2c44b2a9",
+        "scope": "Four existing required operation declaration properties: presence/basic shapes only",
+        "operations": 104,
+        "negativeControls": 21,
+        "baselineEscapesIndependentlyReproduced": 8,
+        "reviewSha256": "2d046ee7af7bf2bb72fbdc354a2eea4e1994aa766c2cea4cab7b0099f5ecc388",
+        "evidencePath": "verification/dot-execution-20261014/operation-properties-review",
+        "focusedOutputCannotSatisfyFullOwnerReceipt": true,
+        "fullOwnerOnOldRuntime": "PREEXISTING_CARRIER_DERIVATION_SOURCE_ORACLE_FAILURE_PRESERVED"
       }
     },
     "verificationEfficiencyAssessment": {
