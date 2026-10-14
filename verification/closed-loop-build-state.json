@@ -1394,7 +1394,7 @@
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "dot",
-    "lastInspectedAt": "2026-10-14T10:07:07.637046Z",
+    "lastInspectedAt": "2026-10-14T10:35:03.035702Z",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -2050,7 +2050,7 @@
     },
     "scheduleState": "FORECAST_NOT_ESTABLISHED",
     "forecast": null,
-    "nextAction": "Establish source-correct actual governing preproduct refutation fixture and independent test review; preserve ten-run failure, replay bounded accepted adverse evidence with durable capture; continue legitimate confirmation and21-to22 proof before runtime integration.",
+    "nextAction": "Execute one immutable independently reviewed governed-preproduct full-cycle with durable gzip phase captures, accepted support/refutation coexistence checks, Stage21-to22 save/cold-read and future-evidence stability; obtain independent actual runtime acceptance before composition.",
     "deploymentObservation": {
       "sourceCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
       "runId": "36958910363",
@@ -2103,7 +2103,7 @@
       "sourceApplied": false
     },
     "currentCriticalPath": [
-      "Establish valid governing-refutation test evidence, finish final confirmation and Stage21-to22 outcomes, obtain independent runtime acceptance, then integrate reviewed source",
+      "Complete independently reviewed governed-preproduct full-cycle and actual refutation/Stage21-to22 evidence, then integrate reviewed source",
       "Publish reviewed integration checkpoint with immutable atomic evidence",
       "Resolve pending source-contract approval before full governance acceptance",
       "Renew genuine current implementation coverage/context proof and run required integrated acceptance",
@@ -2220,7 +2220,7 @@
         "oldCorrectedIterationRun": "LOST_EXECUTOR_OUTCOME_NO_PASS_OR_FAILURE_INFERRED"
       },
       "iterationReceiptDependencies": {
-        "state": "BLOCKED_GENUINE_GOVERNING_REFUTATION_FIXTURE_EVIDENCE",
+        "state": "REVIEWED_SOURCE_CORRECT_FIXTURE_AWAITING_ACTUAL_GOVERNED_LIFECYCLE",
         "owner": "/root/repair_iteration_receipt_dependencies",
         "reviewer": "/root/review_iteration_receipt_repair",
         "baseCommit": "39a968f8c3cf6af9c5745a891a4c6ecd9209b6ec",
@@ -2255,7 +2255,17 @@
         "resumedPrefixCountsAsFreshExecution": false,
         "finalResumedOwner": "FAILED_ITERATION_LATER_ACTUALLY_ACCEPTED_REFUTATION",
         "refutationDiagnosis": "Independent exact saved-state review: chosen proposition accepted expression only final-product due22 test; adverse preproduct due12 test is standalone, not reviewed proposition leaf. Exclusion from due18 is correct; no selector expansion or passing claim authorized.",
-        "nextBoundaryAction": "Find genuine already accepted due18 proposition or source-correct fixture through real accepted operations; retain nongoverning evidence control and failed owner. Capture adverse state before assertions on next execution."
+        "nextBoundaryAction": "Find genuine already accepted due18 proposition or source-correct fixture through real accepted operations; retain nongoverning evidence control and failed owner. Capture adverse state before assertions on next execution.",
+        "governedFixture": {
+          "commit": "768759c9",
+          "scope": "Separate explicit source-backed preproduct requirement/proposition and single reviewed leaf; original final-product-only fixture preserved",
+          "invocation": "verify-full-cycle.mjs --governed-preproduct",
+          "independentPreflight": "ACCEPT exact source/proof/20-cell two-requirement matrix and branch operation authority; all8 original timing-fault oracles pass",
+          "branch": "Separate public-store copy from empty19, two actual authorized outputs with corresponding accepted support and refutation; positive ten-run cohort stays separate",
+          "receiptSelection": "Test helpers use actual convergenceCalculation governing source17 scope rather than current stage19 scope",
+          "productionRuntimeChanged": false,
+          "runtimeAcceptance": "NOT_ESTABLISHED"
+        }
       }
     },
     "evidencePublication": {
