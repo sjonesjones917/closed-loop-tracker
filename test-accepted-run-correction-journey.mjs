@@ -576,7 +576,9 @@ export async function verifyAcceptedRunCorrectionJourney({sourceOverrides = {}, 
       observationRecords:[recordProposal(schema,'observationRecords',{tempKey:'observation',relationships:{SUBJECT_ID:{recordId:test}},overrides:{EXTERNAL_OR_AGENT_OBSERVED_VALUE:'CONTROLLED FAILURE\n'}})],
       entailmentReviews:[recordProposal(schema,'entailmentReviews',{tempKey:'entailment',relationships:{OBSERVATION_ID:{tempKey:'observation'},TARGET_PROPOSITION_ID:{recordId:prop}},overrides:{ENTAILMENT_FINDING:'REFUTES',REASONING:'The controlled current observation does not meet the required literal.'}})]
     }),{runId:run.id});
-    const adverse=accepted.p,closure=ne.currentIterationRefutationSources(adverse,[prop],18);
+    const adverse=accepted.p;
+    if(onCheckpoint)await onCheckpoint({label:'stage19-adverse-accepted-before-assertion',r:negativeRuntime,p:adverse,sources,snapshot:snapshot(negativeRuntime,adverse,sources)});
+    const closure=ne.currentIterationRefutationSources(adverse,[prop],18);
     assert.equal(closure.length,1,'ITERATION_LATER_ACTUALLY_ACCEPTED_REFUTATION');
     assert.equal(ne.entailmentMetadataCurrent(adverse,closure[0].review),true,'ITERATION_REFUTATION_ACCEPTED_TRANSPORT_CURRENT');
     const old=adverse.projectData.convergenceRecords.find(row=>row.id===convergenceRecordId),oldReceipt=JSON.stringify(old.derivationReceipt);
