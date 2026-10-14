@@ -2,7 +2,7 @@
   "schema": "closed-loop-specification-manifest/1",
   "manifestIdentity": "SPEC-MANIFEST-fde1b4c0ab59b61ccda25e11237a2061",
   "generatorVersion": "closed-loop-governance-generator/10",
-  "sourceCommit": "ebf6a930d1e5ef2f9afaaf68631a318facee5181",
+  "sourceCommit": "b2f06cdec1a8185714fe3e01ac2a5d1e92aa348f",
   "repositoryPath": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
   "artifactFilename": "closed-loop-reliability-controlling-implementation-specification.txt",
   "byteLength": 309482,
@@ -6713,8 +6713,8 @@
   ],
   "contractProfileId": "closed-loop-completion-profile/1",
   "normativeRequirementManifestIdentity": "NRM-fde1b4c0ab59b61ccda25e11237a2061",
-  "normativeRequirementManifestSha256": "d257088a4de8fa76357a8b83065cff64dd6d12f966bb6f5d92dc3b050dad7b2b",
-  "normativeRequirementManifestCanonicalSha256": "9735d914ca9c9168ae598f12de6b05ce208a0c856d9741d5972e407a21810e08",
+  "normativeRequirementManifestSha256": "4b9947c1f5ca9ccf8bc8a149e4aabc76cac11f05e9d578c868c46b2c0f48bd08",
+  "normativeRequirementManifestCanonicalSha256": "ba4b980bab0993d6fce6ff5c6f1380c28bb46430e20f8e312908bfc33d3af9de",
   "normativeRequirementManifestPath": "specification/closed-loop-normative-requirements.json",
   "normativeRequirementCount": 4198,
   "challengeAndReconciliation": {
@@ -6724,5 +6724,5 @@
     "atomicRequirementCompletenessEstablished": false,
     "status": "ACCEPTED"
   },
-  "manifestSha256": "45c9e510e02cf038521f07d91b45cf2744729b009b9e724b5d01cccd57bef833"
+  "manifestSha256": "1742857db30524e824b12e3d33fc718977a8b90d2201ee557830d042ebea7f37"
 }
