@@ -7,7 +7,7 @@ import {projectStoreRuntime,bindAcceptanceUi,bindProjectActivationUi} from './te
 import {artifactFixtureId} from './test-artifact-fixtures.mjs';
 import {readStoreArchive} from './test-zip.mjs';
 import {verifyStartupActivationReuse,verifyLegacy5ProjectionActivation,verifyStage19ProjectionActivationOrdering} from './test-startup-activation-reuse.mjs';
-import {verifyProjectionVersion7ActivationContract} from './test-derivation-receipt-contract.mjs';
+import {verifyProjectionVersion7ActivationContract,verifyProjectionVersion8IterationActivation} from './test-derivation-receipt-contract.mjs';
 
 const app=fs.readFileSync(process.env.APP_SOURCE||'app-core.js','utf8'),digest=bytes=>createHash('sha256').update(bytes).digest('hex');
 const observations=[];
@@ -155,6 +155,8 @@ observations.push({id:'PROJECT_ACTIVATION_CALLERS',result:'PASS',callers:callerR
 }
 const projection5Activation7=await verifyLegacy5ProjectionActivation();
 observations.push({id:'PROJECT_PROJECTION5_ACTIVATION7',...projection5Activation7});
+const projectionVersion8IterationActivation=await verifyProjectionVersion8IterationActivation();
+observations.push({...projectionVersion8IterationActivation,id:'PROJECT_PROJECTION7_ITERATION4_ACTIVATION8'});
 const projectionVersion7Activation=await verifyProjectionVersion7ActivationContract();
 observations.push({id:'PROJECT_PROJECTION6_ACTIVATION7',...projectionVersion7Activation});
 const stage19ProjectionActivationOrdering=await verifyStage19ProjectionActivationOrdering();

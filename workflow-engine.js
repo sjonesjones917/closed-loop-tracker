@@ -4469,7 +4469,7 @@ function validateApplicationProjection(p,expected,{useRetainedObservations=false
 }
 
 function validateLegacyApplicationProjection(p){
- const retained=p.projectData?.applicationProjection,id=retained?.receipt?.derivationId,key=id===schema.LEGACY_PROJECT_PROJECTION_DERIVATION_CONTRACT.id?'project.legacyProjection1':id===schema.LEGACY_PROJECT_PROJECTION2_DERIVATION_CONTRACT.id?'project.legacyProjection2':id===schema.LEGACY_PROJECT_PROJECTION3_DERIVATION_CONTRACT.id?'project.legacyProjection3':id===schema.LEGACY_PROJECT_PROJECTION4_DERIVATION_CONTRACT.id?'project.legacyProjection4':id===schema.LEGACY_PROJECT_PROJECTION5_DERIVATION_CONTRACT.id?'project.legacyProjection5':id===schema.LEGACY_PROJECT_PROJECTION6_DERIVATION_CONTRACT.id?'project.legacyProjection6':null;if(!key)return null;
+ const retained=p.projectData?.applicationProjection,id=retained?.receipt?.derivationId,key=id===schema.LEGACY_PROJECT_PROJECTION_DERIVATION_CONTRACT.id?'project.legacyProjection1':id===schema.LEGACY_PROJECT_PROJECTION2_DERIVATION_CONTRACT.id?'project.legacyProjection2':id===schema.LEGACY_PROJECT_PROJECTION3_DERIVATION_CONTRACT.id?'project.legacyProjection3':id===schema.LEGACY_PROJECT_PROJECTION4_DERIVATION_CONTRACT.id?'project.legacyProjection4':id===schema.LEGACY_PROJECT_PROJECTION5_DERIVATION_CONTRACT.id?'project.legacyProjection5':id===schema.LEGACY_PROJECT_PROJECTION6_DERIVATION_CONTRACT.id?'project.legacyProjection6':id===schema.LEGACY_PROJECT_PROJECTION7_DERIVATION_CONTRACT.id?'project.legacyProjection7':null;if(!key)return null;
  return validateApplicationProjection(p,p,{useRetainedObservations:true,derivationKey:key});
 }
 function recalc(p){return e0.withReadinessEvaluationEpoch(()=>withProofReviewSnapshot(p,()=>recalculateProofProject(p)));}
