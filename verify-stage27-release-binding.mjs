@@ -57,8 +57,8 @@ function injectRelease(p,{determination='ACCEPTED',releaseEvidenceSha256='fabric
   // Section34.3 binds actual canonical inputs, not just aggregate counts and
   // record IDs. The previous ad-hoc digest oracle could not detect a changed
   // source whose aggregate disposition remained BLOCKED.
-  assert.equal(binding.canonicalInput.calculation,'stage27.release/3');
-  assert.equal(binding.canonicalInput.derivationId,'closed-loop-derivation/stage27-release/3');
+  assert.equal(binding.canonicalInput.calculation,'stage27.release/4');
+  assert.equal(binding.canonicalInput.derivationId,'closed-loop-derivation/stage27-release/4');
   assert.equal(binding.canonicalInput.sourceBinding.projection,'CANONICAL_RECORD');
   assert.equal(binding.evidenceDigest,hash.sha256Value(binding.canonicalInput),'Release evidence digest does not bind the retained canonical calculation input.');
   for(const family of ['processAudits','productAudits'])for(const audit of engine.recordsForCurrentScope(p,family)){
@@ -160,4 +160,17 @@ assert.equal(engine.selectReleaseDisposition({refutedMandatoryCount:1,blockingCo
 assert.equal(engine.selectReleaseDisposition({refutedMandatoryCount:0,blockingConditionCount:1}),'BLOCKED');
 assert.equal(engine.selectReleaseDisposition({refutedMandatoryCount:0,blockingConditionCount:0}),'ACCEPTED');
 
-console.log(JSON.stringify({stage27ReleaseBinding:'PASS',invalidFixtures:2,repairedFixtures:2,releasePrecedence:'PASS',idempotency:'PASS',optionalAdvisoryNonGating:'PASS',truthfulOperatorText:'PASS',applicationOwnedActionText:'PASS',structuredActionPurity:'PASS',registeredDerivationReceipt:'PASS',selectedCanonicalSourceIdentity:'PASS',missingReceiptRejected:'PASS',historyOnlyChangeCurrent:'PASS',sameAggregateSourceChangeStale:'PASS',derivationCases:['registered-contract-and-selected-audits','missing-receipt','history-only-stability','same-aggregate-source-change'],digest:hash.sha256Value('stage27-release-binding-v6')}));
+// Isolated declaration-shape controls do not manufacture affirmative evidence.
+// The full-cycle owner separately exercises real accepted release proof inputs.
+const releaseProofShapeCases=[];
+for(const normativeClass of ['MANDATORY','CONDITIONAL','UNKNOWN']){
+ const p=core.createBlankState('JOB-RELEASE-PROOF-SHAPE-'+normativeClass);engine.ensureShape(p);
+ const fields={REQ_ID:'REQ-DECLARATION-CONTROL',MANDATORY_OPTIONAL_STATUS:normativeClass},requirement=engine.clone({id:fields.REQ_ID,fields,...fields});
+ const proof=engine.releaseRequirementProof(p,requirement,27);
+ assert.equal(proof.classification,'UNDETERMINED','RELEASE_MISSING_PRIMARY_SHAPE_ORACLE');
+ assert.equal(proof.reasons.some(reason=>reason.includes('normative class')),normativeClass==='UNKNOWN','RELEASE_ACTIVATED_CONDITIONAL_CLASS_ORACLE');
+ assert(proof.reasons.includes('Exactly one current primary proposition is required.'));
+ releaseProofShapeCases.push({caseId:'RELEASE-PROOF-DECLARATION-'+normativeClass,result:'PASS',affirmativeEvidence:false});
+}
+
+console.log(JSON.stringify({stage27ReleaseBinding:'PASS',releaseProofShapeCases,invalidFixtures:2,repairedFixtures:2,releasePrecedence:'PASS',idempotency:'PASS',optionalAdvisoryNonGating:'PASS',truthfulOperatorText:'PASS',applicationOwnedActionText:'PASS',structuredActionPurity:'PASS',registeredDerivationReceipt:'PASS',selectedCanonicalSourceIdentity:'PASS',missingReceiptRejected:'PASS',historyOnlyChangeCurrent:'PASS',sameAggregateSourceChangeStale:'PASS',derivationCases:['registered-contract-and-selected-audits','missing-receipt','history-only-stability','same-aggregate-source-change'],digest:hash.sha256Value('stage27-release-binding-v6')}));
