@@ -3077,16 +3077,37 @@ function operationState(project,stage,completeWorkflow=false){
 const CONTEXT_INFRA_ID_FIELDS=Object.freeze({inputVersions:'inputVersionId',rawResponses:'rawResponseId',responseProposals:'proposalId',responseValidations:'validationId',acceptedChanges:'changeId',rejectedResponses:'rejectedResponseId',extractionManifests:'manifestId',humanInputRequests:'requestId',humanInputAnswers:'answerId',humanAuthorityConfirmations:'confirmationId',humanDecisions:'decisionId',stageConfirmations:'confirmationId',artifactVersions:'versionId',generatedPrompts:'instructionId',generatedOutputs:'outputId',outputReceipts:'receiptId',history:'eventId',newJobResets:'resetId',reviews:'reviewId',responseDispositions:'dispositionId',executionFailures:'failureId',intakeCoverageManifests:'manifestId',obligationManifests:'manifestId',promptContextManifests:'manifestId',blindAliasMaps:'blindMapId',nativeExecutionEvents:'eventId'});
 const contextRecordId=(record,family)=>recordId(record,family)||record?.[CONTEXT_INFRA_ID_FIELDS[family]]||record?.promptId||'';
 const stageContextProjections=new WeakMap(),stageContextOrigins=new WeakMap();
+const CONTEXT_PROPOSITION_EVIDENCE_FIELDS=Object.freeze({TRUTH_VALUE:'truthValue',STATUS:'status',CONTRADICTION_STATUS:'contradictionStatus',CURRENT_SCOPE_STATUS:'currentScopeStatus',EPISTEMIC_BASIS:'epistemicBasis',FRESHNESS_STATUS:'freshnessStatus',REASONS:'reasons',SUPPORTING_EVIDENCE_IDS:'supportingEvidenceIds',DERIVATION_OR_REVIEW_IDS:'derivationOrReviewIds'});
 function stageContext(project,stage){
   const number=Number(stage);if(!Number.isInteger(number)||!schema.STAGE_CONTRACTS[number])throw new Error('A registered stage is required for context selection.');
   if(stageContextProjections.get(project)===number)return project;
   const correction=[14,15,16,17,18].includes(number)?confirmationCorrectionDependencies(project):null,correctionIds=correction?.ids||new Set();
   const owner=(record,family)=>{const value=record?.stage??record?.STAGE??record?.fields?.STAGE??record?.lineage?.stage??schema.RECORD_SCHEMAS[family]?.stage;const parsed=Number(String(value??'').replace(/^STAGE\s+/i,''));return Number.isInteger(parsed)&&parsed>0?parsed:null;};
+  const laterIds=new Set(),projectedPropositions=new WeakSet();
+  for(const [family,rows] of Object.entries(project.projectData||{}))if(Array.isArray(rows))for(const record of rows){const id=contextRecordId(record,family);if(id&&owner(record,family)>number&&!correctionIds.has(String(id)))laterIds.add(String(id));}
   // A later-derived field is not an authored dependency of its earlier record.
   // Remove unavailable application projections before tracing copied content.
+  // Proposition evidence is mixed-stage: keep current references, but withhold
+  // the coupled summary until its existing owner evaluates the visible inputs.
+  const propositionEvidenceProjection=(record,family)=>{
+    if(family!=='propositions')return record;
+    let projected=record;
+    for(const name of ['SUPPORTING_EVIDENCE_IDS','DERIVATION_OR_REVIEW_IDS']){
+      if(schema.RECORD_SCHEMAS[family]?.fieldDefinitions?.[name]?.producer!==schema.PRODUCER.APPLICATION)continue;
+      for(const nested of [false,true]){const source=nested?record.fields:record,values=source?.[name];if(!Array.isArray(values)||!values.some(value=>laterIds.has(value)))continue;
+        if(projected===record)projected={...record,fields:{...record.fields}};
+        (nested?projected.fields:projected)[name]=values.filter(value=>!laterIds.has(value));
+      }
+    }
+    if(projected!==record){
+      projectedPropositions.add(projected);
+      for(const name of Object.keys(CONTEXT_PROPOSITION_EVIDENCE_FIELDS))if(!['SUPPORTING_EVIDENCE_IDS','DERIVATION_OR_REVIEW_IDS'].includes(name)&&schema.RECORD_SCHEMAS[family]?.fieldDefinitions?.[name]?.producer===schema.PRODUCER.APPLICATION){delete projected[name];delete projected.fields[name];}
+    }
+    return projected;
+  };
   const visibleData=Object.fromEntries(Object.entries(project.projectData||{}).map(([family,rows])=>[family,Array.isArray(rows)?rows.map(record=>{
     const hidden=Object.entries(schema.RECORD_SCHEMAS[family]?.fieldDefinitions||{}).filter(([,definition])=>definition.producer===schema.PRODUCER.APPLICATION&&definition.availableFromStage>number).map(([name])=>name);
-    if(!hidden.length)return record;const projected={...record,fields:{...record.fields}};for(const name of hidden){delete projected[name];delete projected.fields[name];}return projected;
+    record=propositionEvidenceProjection(record,family);if(!hidden.length)return record;const projected={...record,fields:{...record.fields}};if(projectedPropositions.has(record))projectedPropositions.add(projected);for(const name of hidden){delete projected[name];delete projected.fields[name];}return projected;
   }):rows]));
   const blockedIds=new Set(),all=[];
   for(const [family,rows] of Object.entries(visibleData))if(Array.isArray(rows))for(const record of rows){const id=contextRecordId(record,family);all.push({family,record,id});if(owner(record,family)>number&&id&&!correctionIds.has(String(id)))blockedIds.add(String(id));}
@@ -3127,7 +3148,15 @@ function stageContext(project,stage){
   context.job.CURRENT_BASELINE_ID=currentBaseline?recordId(currentBaseline,'baselines'):null;
   context.job.CURRENT_STAGE=`STAGE ${String(number).padStart(2,'0')}`;
   delete context.job.NEXT_REQUIRED_ACTION;delete context.job.CURRENT_BLOCKERS;delete context.job.STATUS_EVIDENCE;
-  stageContextProjections.set(context,number);stageContextOrigins.set(context,stageContextOrigins.get(project)||project);return context;
+  stageContextProjections.set(context,number);stageContextOrigins.set(context,stageContextOrigins.get(project)||project);
+  for(const record of safe(context.projectData.propositions))if(projectedPropositions.has(record)){
+    const state=globalThis.closedLoopWorkflowEngine.evaluatePropositionState(context,record);
+    for(const [name,key] of Object.entries(CONTEXT_PROPOSITION_EVIDENCE_FIELDS))if(schema.RECORD_SCHEMAS.propositions.fieldDefinitions[name]?.producer===schema.PRODUCER.APPLICATION){
+      const value=['SUPPORTING_EVIDENCE_IDS','DERIVATION_OR_REVIEW_IDS'].includes(name)?[...new Set([...safe(recordValue(record,name)).filter(value=>state[key].includes(value)),...state[key]])]:state[key];
+      record[name]=clone(value);record.fields[name]=clone(value);
+    }
+  }
+  return context;
 }
 
 function executionHandoff(project,{stage=Number(project.activeStage||0),operation=null,testIds=null,runIds=null,scope=null,comparisonMaterialityBinding=null}={}){

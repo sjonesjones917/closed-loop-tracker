@@ -7,6 +7,7 @@ import {artifactFixtureId} from './test-artifact-fixtures.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import {appMarkup,observeWorkflowMarkup,assertWorkflowPresentation} from './test-app-markup.mjs';
 import {verifyStageFieldInventory,verifyCompletedStageProjection} from './stage-projection-verification.mjs';
+import {verifyStage05ReviewProjection} from './test-stage05-review-projection.mjs';
 import fs from 'node:fs';import vm from 'node:vm';import {recordProposal,evidence,reviewProofFixture,canonicalFixtureRecord,boundedSearchProposal,registerFixtureSourceSearchCapability,deferredDefinitionResponseFixture} from './test-fixtures.mjs';
 const timingFaultDefinitions=[
  {id:'premature-failure-execution',oracle:'DEFERRED_FAILURE_TIMING_ORACLE',edits:[["const declared=schema.TIMING_FIELDS.some(name=>recordValue(record,name)!==undefined);","const declared=false;"]]},
@@ -440,6 +441,7 @@ const authoredVerificationVersions={requirementsVersion:p.job.CURRENT_REQUIREMEN
 
 }
 
+verifyStage05ReviewProjection(p);
 // Reopening an upstream review after test design must not bind that review to
 // the downstream suite it may invalidate and rebuild.
 {
