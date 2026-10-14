@@ -71,26 +71,6 @@ const migrated=fault==='foreign-observation'?migrationResult:structuredClone(mig
 assert.equal(migrated.schema,'closed-loop-project/3');
 assert.equal(Object.keys(migrated.stages).length,30,'migration must preserve exactly 30 stages');
 assert.deepEqual(migrated.unknownTopLevelExtension,{preserve:'exactly'},'MIGRATION_EXTENSION_PRESERVATION_ORACLE');
-const expectedStageKeys=Array.from({length:30},(_,index)=>String(index+1));
-const assertPreservedStages=value=>{
-  assert.deepEqual(Object.keys(value.stages),expectedStageKeys,'MIGRATION_STAGE_IDENTITIES_ORACLE');
-  for(const key of expectedStageKeys){
-    assert.equal(value.stages[key].stage,Number(key),'MIGRATION_STAGE_IDENTITIES_ORACLE: '+key);
-    assert.deepEqual(value.stages[key].migrationSentinel,original.stages[key].migrationSentinel,'MIGRATION_STAGE_CONTENT_ORACLE: '+key);
-    // Stage 01 is deliberately invalidated; its exact original must remain in audit.
-    if(key!=='1')assert.deepEqual(value.stages[key],original.stages[key],'MIGRATION_STAGE_CONTENT_ORACLE: '+key);
-  }
-};
-assertPreservedStages(migrated);
-for(const change of ['delete','replace','swap']){
-  const challenged=structuredClone(migrated);
-  if(change==='delete')delete challenged.stages['30'];
-  if(change==='replace')challenged.stages['19'].migrationSentinel={stage:19,text:'replacement'};
-  if(change==='swap')[challenged.stages['18'],challenged.stages['19']]=[challenged.stages['19'],challenged.stages['18']];
-  assert.throws(()=>assertPreservedStages(challenged),error=>error.code==='ERR_ASSERTION'&&/MIGRATION_STAGE_(IDENTITIES|CONTENT)_ORACLE/.test(error.message),'MIGRATION_STAGE_NEGATIVE_CONTROL_ORACLE: '+change);
-}
-
-
 assert.deepEqual(migrated.projectData.unknownProjectDataExtension,{preserve:42});
 assert.deepEqual(migrated.stages[7].unknownStageExtension,{preserve:true});
 assert.deepEqual(migrated.projectData.collections.tests[0].unknownRecordExtension,{keep:true});
@@ -120,6 +100,27 @@ for(const variant of ['same-label-wrong-payload','claimed-migration-status']){
 assert.equal(audit.payload.job.EXACT_USER_OBJECTIVE_VERBATIM,'Preserved migration objective','legacy human authority must remain preserved as historical evidence while not being promoted to current agent semantics');
 for(const key of ['intakeCoverageManifests','obligationManifests','promptContextManifests','blindAliasMaps','nativeExecutionEvents'])assert.ok(Array.isArray(migrated.projectData[key]),`migration default missing: ${key}`);
 assert.deepEqual(previous,original,'migration must not mutate the imported object');
+const expectedStageKeys=Array.from({length:30},(_,index)=>String(index+1));
+const assertPreservedStages=value=>{
+  assert.deepEqual(Object.keys(value.stages),expectedStageKeys,'MIGRATION_STAGE_IDENTITIES_ORACLE');
+  for(const key of expectedStageKeys){
+    assert.equal(value.stages[key].stage,Number(key),'MIGRATION_STAGE_IDENTITIES_ORACLE: '+key);
+    assert.deepEqual(value.stages[key].migrationSentinel,original.stages[key].migrationSentinel,'MIGRATION_STAGE_CONTENT_ORACLE: '+key);
+    // Stage 01 is deliberately invalidated; its exact original must remain in audit.
+    if(key!=='1')assert.deepEqual(value.stages[key],original.stages[key],'MIGRATION_STAGE_CONTENT_ORACLE: '+key);
+  }
+};
+assertPreservedStages(migrated);
+for(const change of ['delete','replace','swap']){
+  const challenged=structuredClone(migrated);
+  if(change==='delete')delete challenged.stages['30'];
+  if(change==='replace')challenged.stages['19'].migrationSentinel={stage:19,text:'replacement'};
+  if(change==='swap')[challenged.stages['18'],challenged.stages['19']]=[challenged.stages['19'],challenged.stages['18']];
+  assert.throws(()=>assertPreservedStages(challenged),error=>error.code==='ERR_ASSERTION'&&/MIGRATION_STAGE_(IDENTITIES|CONTENT)_ORACLE/.test(error.message),'MIGRATION_STAGE_NEGATIVE_CONTROL_ORACLE: '+change);
+}
+
+
+
 assert.equal(String(migrated.stages[1].agentData.INPUT_SET_CONTENTS||''),'','/2 -> /3 migration must not fabricate current agent-owned Stage 01 semantic intake from preserved human authority');
 assert.equal(migrated.job.CONTRACT_PROFILE_ID,undefined,'legacy /2 migration must not acquire current profile without complete profile proof');
 assert.equal(migrated.job.CURRENT_STATE,'BLOCKED');assert.equal(migrated.job.JOB_RECORD_STATUS,'INCOMPLETE');assert.equal(migrated.projectData.contractProfileMigration.status,'LEGACY_NON_GATING');assert.equal(schema.validateContractProfile(migrated).valid,false);
