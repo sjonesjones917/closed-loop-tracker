@@ -1394,7 +1394,7 @@
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "/root/repair_iteration_receipt_dependencies",
-    "lastInspectedAt": "2026-10-14T22:43:36Z",
+    "lastInspectedAt": "2026-10-14T22:55:24Z",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -2094,7 +2094,7 @@
     },
     "scheduleState": "FORECAST_NOT_ESTABLISHED",
     "forecast": null,
-    "nextAction": "Monitor actual session75575 through Stage27 and the reviewed isolated positive chain application-command, exact retry and normal public save/cold boundary, then every remaining original assertion through30. Latest actual Stage26 completion/custody passed. Preserve original23:51:57.972 expiry, saved arrays/scalars and partial-run qualification; no duplicate prefix.",
+    "nextAction": "Retrieve actual75575 through original Stage29 investigation and reviewed sequential isolated positive chain application-command/retry/public-save/cold, then all remaining29\u201330 assertions. Stage28 and release public-cold/caller-preservation passed. Preserve original23:51:57.972 expiry, actual arrays/scalars and partial-run qualification; do not restart the prefix.",
     "deploymentObservation": {
       "sourceCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
       "runId": "36958910363",
@@ -2147,7 +2147,7 @@
       "sourceApplied": false
     },
     "currentCriticalPath": [
-      "Monitor actual session75575 through Stage27 and the reviewed isolated positive chain application-command, exact retry and normal public save/cold boundary, then every remaining original assertion through30. Latest actual Stage26 completion/custody passed. Preserve original23:51:57.972 expiry, saved arrays/scalars and partial-run qualification; no duplicate prefix.",
+      "Retrieve actual75575 through original Stage29 investigation and reviewed sequential isolated positive chain application-command/retry/public-save/cold, then all remaining29\u201330 assertions. Stage28 and release public-cold/caller-preservation passed. Preserve original23:51:57.972 expiry, actual arrays/scalars and partial-run qualification; do not restart the prefix.",
       "Independent chain5 ready-state/stale-release/mutation and legacy archive/forgery/rollback controls passed, including explicit blocked new5 public-cold receipt currentness. Positive current-time application-command/public persistence remains pending in active continuation. Integrate only independently accepted exact candidate.",
       "Repair the pre-existing Stage29 required-owner unsupported synthetic-positive fixture without weakening provenance, then run affected mandatory owners on frozen integrated source",
       "Renew current catalog source maps and all19 stale independent coverage reviews, collect genuine current producer receipts and execute required integrated acceptance",
@@ -3185,14 +3185,14 @@
       "outputDirectory": "/workspace/shared/clrt-iteration-repair-evidence/resume197-default-after-stage12-r2",
       "checksDirectory": "/workspace/shared/clrt-iteration-repair-evidence/resume197-default-checks-r2",
       "originalExpiry": "2026-10-14T23:51:57.972Z",
-      "latestBoundary": "stage26-completed-raw",
-      "canonicalProjectSha256": "f16d63255c382553e336e22ad2f3b3b6959a93da7b0f44086f4a943bf3867845",
+      "latestBoundary": "stage-28-all-completion-assertions-passed",
+      "canonicalProjectSha256": "63a6f46f4fbab10a73eefd6ec13f0db085a3a9fcfcdeaa79788bc847c3066fba",
       "newIsolatedAdapterRevision": 0,
       "newIsolatedAdapterProjectSha256": "131df8763ea36fcd6a0ae5aa25e72acaf1c5454fb4beaed24911f4abc4f10931",
       "fullJourneyExecution": false,
       "initialWrapperFailure": "Preserved exit1 before lifecycle: missing --approved-pins-sha. Corrected only wrapper argument/new output paths.",
       "formalSharedStage29": "PENDING; optional original producer guard remains unchanged and output disabled for partial continuation.",
-      "latestBoundaryAt": "2026-10-14T22:43:32.905Z",
+      "latestBoundaryAt": "2026-10-14T22:52:57.430Z",
       "actualCompletedResumedStages": [
         13,
         14,
@@ -3207,8 +3207,19 @@
         23,
         24,
         25,
-        26
-      ]
+        26,
+        27,
+        28
+      ],
+      "releasePersistence": {
+        "status": "PASS",
+        "returnedAt": "2026-10-14T22:51:05.796Z",
+        "publicSavedAt": "2026-10-14T22:50:16.205Z",
+        "publicColdAt": "2026-10-14T22:50:28.745Z",
+        "callerCanonicalProjectSha256": "78a14e102c7770f960a5a74eebc91bcebf3576a33a2da38dae897048cfea8975",
+        "savedAdapterRevision": 0,
+        "savedAdapterProjectSha256": "54a589f2db395bdb9c2e0c2ca6702a5c9b1a6d92e408afcd1d10c2bab341dd9f"
+      }
     },
     "pendingReviewedCommits": {
       "catalog15": "5a4d515554c148d984afb3dad95972ede39b8aa6",
@@ -3229,6 +3240,14 @@
       "checks": "Owner release, exact retained commit, tracked/untracked/ignored clean; normal worktree removal only. All external evidence preserved.",
       "remainingApprovedStandby": "/workspace/shared/clrt-align-projection10",
       "observedAvailable": "1.4GiB at22:43:36"
+    },
+    "capacityReclamation2255": {
+      "manifest": "/workspace/shared/clrt-iteration-repair-evidence/reclaim-projection10-checkout-20261014-2255.json",
+      "path": "/workspace/shared/clrt-align-projection10",
+      "commit": "c98639f677f18c401a0f400af640ccff2fba0cba",
+      "bytesReclaimed": 525307175,
+      "checks": "Owner release and repeated exact HEAD/empty tracked-untracked-ignored checks, retained branch; normal worktree remove. External evidence preserved.",
+      "availableAfter": "1.6GiB"
     }
   }
 }
