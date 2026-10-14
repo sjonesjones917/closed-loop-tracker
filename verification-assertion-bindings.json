@@ -1012,9 +1012,99 @@
       "checkIds": [
         "migration.unknown-preserved"
       ],
-      "scope": "Complete proposed coverage of this exact small source clause only; its surrounding section and other clauses remain separately accounted.",
+      "scope": "Incomplete current-atom author declaration. Unknown extension preservation is asserted at top-level, projectData, stage and owned test-record boundaries, including opaque nested field-like objects, plus synthetic storage readback/export/import and startup /2 preservation. Existing check ownership is retained. Independent review and final combined-input receipts are pending. Synthetic production assertions only; no browser, physical-device, release or whole-application claim.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
-      "atomicObligationSha256": "38f22645136575c2cf05849aaf5369a9d1f7704eae13dedbaff16e4ad95cc82e"
+      "atomicObligationSha256": "38f22645136575c2cf05849aaf5369a9d1f7704eae13dedbaff16e4ad95cc82e",
+      "fullCoverage": {
+        "schema": "closed-loop-full-requirement-coverage/1",
+        "sourceLineSha256": "824d490be3d365319470880cd0b72d13491e6484edacaa5b2b8a579d6d2c86a6",
+        "atomicObligationSha256": "38f22645136575c2cf05849aaf5369a9d1f7704eae13dedbaff16e4ad95cc82e",
+        "reviewedAtomicStatement": "Migration must preserve unknown extension data",
+        "sourceSpans": [
+          {
+            "startByte": 51125,
+            "endByte": 51150,
+            "text": "- unknown extension data;",
+            "sha256": "824d490be3d365319470880cd0b72d13491e6484edacaa5b2b8a579d6d2c86a6"
+          }
+        ],
+        "contextSourceLocations": [
+          {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 890,
+            "endLine": 890,
+            "lineSha256": "e96c43aa289f86b71534dd8a41c056540526c02165152b449a78f95b0832ae0d",
+            "controllingText": "13. Versioning and migration"
+          },
+          {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 903,
+            "endLine": 903,
+            "lineSha256": "723dc3394231ba706fadc3108c5b671094ccc912859c27c4246b7f5e216896df",
+            "controllingText": "Required deterministic migration:"
+          },
+          {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 910,
+            "endLine": 910,
+            "lineSha256": "22185e72883762d43c34947ab5a29b1b5c2a53f76b577c55a753f854e8e1fb6e",
+            "controllingText": "Migration MUST preserve:"
+          }
+        ],
+        "schemaOrRegistryEntry": "SPECIFICATION_SECTION_13",
+        "productionOwners": [
+          {
+            "path": "workflow-schema.js",
+            "symbol": "migrateProjectToCurrent / markLegacyNonGating / normalizeTestRecords",
+            "sha256": "12c397f735f7e7154581131a79e19be2ef1f6bf374985dba4af5e445370812e6"
+          },
+          {
+            "path": "workbook.js",
+            "symbol": "migrateState",
+            "sha256": "11eff4fea42e47a5a70eafdc6b985d064ea2cdfe9a6feb72be6a74ec54c4b062"
+          },
+          {
+            "path": "project-store.js",
+            "symbol": "migrateLegacy / migrateProjectToCurrent / retainProjectSource",
+            "sha256": "8493c0048c9bc48d72cd97efcc3efcbd5fd65f995a34c790c64d0ff10ad4b067"
+          }
+        ],
+        "obligations": [
+          {
+            "id": "migration.preserve.extensions",
+            "sourceText": "- unknown extension data;",
+            "expectedBehavior": "Migration must preserve unknown extension data Bounded assertions: Unknown extension preservation is asserted at top-level, projectData, stage and owned test-record boundaries, including opaque nested field-like objects, plus synthetic storage readback/export/import and startup /2 preservation.",
+            "checks": {
+              "deterministic": [
+                {
+                  "suite": "verify-v3-migration.mjs",
+                  "checkId": "migration.unknown-preserved"
+                }
+              ],
+              "semantic": [],
+              "mutation": []
+            },
+            "nonapplicable": {
+              "semantic": "Mechanical preservation/rejection assertions do not establish external semantic judgment; broader governing migration obligations remain unresolved below.",
+              "mutation": "No separate independent mutation receipt is claimed. Existing producer fault injections and added oracle contrast controls are diagnostic synthetic checks."
+            },
+            "evidenceKinds": [
+              "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+            ],
+            "assertionReferences": [
+              "MIGRATION_EXTENSION_PRESERVATION_ORACLE",
+              "MIGRATION_OPAQUE_EXTENSION_ORACLE",
+              "MIGRATION_STORAGE_EXTENSION_ORACLE"
+            ]
+          }
+        ],
+        "unresolvedObligations": [
+          "The complete governed human-project/30 → closed-loop-project/2 → closed-loop-project/3 path and permitted direct-path canonical-result AND audit-history equivalence are not established across all applicable entrypoints by this bounded producer.",
+          "Preservation across every applicable profile and registry-version migration remains unproved; no full-atom conformance claim is made."
+        ],
+        "governingContext": [],
+        "review": null
+      }
     },
     {
       "normativeRequirementId": "NREQ-f41a79c58369bd76c58ad7e831e953ce",
@@ -1022,9 +1112,99 @@
       "checkIds": [
         "migration.current-profile"
       ],
-      "scope": "Complete proposed coverage of this exact small source clause only; its surrounding section and other clauses remain separately accounted.",
+      "scope": "Incomplete current-atom author declaration. Exact raw response text and parsed /2 envelope preservation are asserted through schema /2 migration and synthetic store readback/export/import/startup paths. Existing check ownership is retained. Independent review and final combined-input receipts are pending. Synthetic production assertions only; no browser, physical-device, release or whole-application claim.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
-      "atomicObligationSha256": "0abe3ca0a26977f9351e660b16d4fe7c3b6eb63c51d97de8e3ae556150bed7ee"
+      "atomicObligationSha256": "0abe3ca0a26977f9351e660b16d4fe7c3b6eb63c51d97de8e3ae556150bed7ee",
+      "fullCoverage": {
+        "schema": "closed-loop-full-requirement-coverage/1",
+        "sourceLineSha256": "a02328586134010a1600d6a9dffcb8bcc89e74222a1ae8e45bf866a710a20910",
+        "atomicObligationSha256": "0abe3ca0a26977f9351e660b16d4fe7c3b6eb63c51d97de8e3ae556150bed7ee",
+        "reviewedAtomicStatement": "Migration must preserve raw responses",
+        "sourceSpans": [
+          {
+            "startByte": 51151,
+            "endByte": 51167,
+            "text": "- raw responses;",
+            "sha256": "a02328586134010a1600d6a9dffcb8bcc89e74222a1ae8e45bf866a710a20910"
+          }
+        ],
+        "contextSourceLocations": [
+          {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 890,
+            "endLine": 890,
+            "lineSha256": "e96c43aa289f86b71534dd8a41c056540526c02165152b449a78f95b0832ae0d",
+            "controllingText": "13. Versioning and migration"
+          },
+          {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 903,
+            "endLine": 903,
+            "lineSha256": "723dc3394231ba706fadc3108c5b671094ccc912859c27c4246b7f5e216896df",
+            "controllingText": "Required deterministic migration:"
+          },
+          {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 910,
+            "endLine": 910,
+            "lineSha256": "22185e72883762d43c34947ab5a29b1b5c2a53f76b577c55a753f854e8e1fb6e",
+            "controllingText": "Migration MUST preserve:"
+          }
+        ],
+        "schemaOrRegistryEntry": "SPECIFICATION_SECTION_13",
+        "productionOwners": [
+          {
+            "path": "workflow-schema.js",
+            "symbol": "migrateProjectToCurrent / markLegacyNonGating / normalizeTestRecords",
+            "sha256": "12c397f735f7e7154581131a79e19be2ef1f6bf374985dba4af5e445370812e6"
+          },
+          {
+            "path": "workbook.js",
+            "symbol": "migrateState",
+            "sha256": "11eff4fea42e47a5a70eafdc6b985d064ea2cdfe9a6feb72be6a74ec54c4b062"
+          },
+          {
+            "path": "project-store.js",
+            "symbol": "migrateLegacy / migrateProjectToCurrent / retainProjectSource",
+            "sha256": "8493c0048c9bc48d72cd97efcc3efcbd5fd65f995a34c790c64d0ff10ad4b067"
+          }
+        ],
+        "obligations": [
+          {
+            "id": "migration.preserve.raw-responses",
+            "sourceText": "- raw responses;",
+            "expectedBehavior": "Migration must preserve raw responses Bounded assertions: Exact raw response text and parsed /2 envelope preservation are asserted through schema /2 migration and synthetic store readback/export/import/startup paths.",
+            "checks": {
+              "deterministic": [
+                {
+                  "suite": "verify-v3-migration.mjs",
+                  "checkId": "migration.current-profile"
+                }
+              ],
+              "semantic": [],
+              "mutation": []
+            },
+            "nonapplicable": {
+              "semantic": "Mechanical preservation/rejection assertions do not establish external semantic judgment; broader governing migration obligations remain unresolved below.",
+              "mutation": "No separate independent mutation receipt is claimed. Existing producer fault injections and added oracle contrast controls are diagnostic synthetic checks."
+            },
+            "evidenceKinds": [
+              "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+            ],
+            "assertionReferences": [
+              "MIGRATION_RAW_RESPONSE_BYTES_ORACLE",
+              "MIGRATION_HISTORICAL_ENVELOPE_ORACLE",
+              "MIGRATION_STORAGE_RAW_ENVELOPE_ORACLE"
+            ]
+          }
+        ],
+        "unresolvedObligations": [
+          "The complete governed human-project/30 → closed-loop-project/2 → closed-loop-project/3 path and permitted direct-path canonical-result AND audit-history equivalence are not established across all applicable entrypoints by this bounded producer.",
+          "Preservation across every applicable profile and registry-version migration remains unproved; no full-atom conformance claim is made."
+        ],
+        "governingContext": [],
+        "review": null
+      }
     },
     {
       "normativeRequirementId": "NREQ-5811c65fa83521ee7afeedd602cec806",
@@ -1032,9 +1212,101 @@
       "checkIds": [
         "migration.current-profile"
       ],
-      "scope": "Complete proposed coverage of this exact small source clause only; its surrounding section and other clauses remain separately accounted.",
+      "scope": "Incomplete current-atom author declaration. Exactly the independently enumerated stage identities 1 through 30, distinct per-stage original nested content and complete stages 2 through 30 are asserted after /2 schema migration. Stage 01 current completion is deliberately invalidated and its original is retained in the exact audit-payload assertion. Deletion, replacement and swapped-stage negative controls challenge the oracle. Existing check ownership is retained. Independent review and final combined-input receipts are pending. Synthetic production assertions only; no browser, physical-device, release or whole-application claim.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
-      "atomicObligationSha256": "1c4d8f27918fbb44ec93d06b1967f4b38caca24d0610360c4c35de0834bf337a"
+      "atomicObligationSha256": "1c4d8f27918fbb44ec93d06b1967f4b38caca24d0610360c4c35de0834bf337a",
+      "fullCoverage": {
+        "schema": "closed-loop-full-requirement-coverage/1",
+        "sourceLineSha256": "18224b9976a791263c28459c906bb3d02f552f2a08271c984890d13a137175c6",
+        "atomicObligationSha256": "1c4d8f27918fbb44ec93d06b1967f4b38caca24d0610360c4c35de0834bf337a",
+        "reviewedAtomicStatement": "Migration must preserve all 30 stages",
+        "sourceSpans": [
+          {
+            "startByte": 51447,
+            "endByte": 51463,
+            "text": "- all 30 stages;",
+            "sha256": "18224b9976a791263c28459c906bb3d02f552f2a08271c984890d13a137175c6"
+          }
+        ],
+        "contextSourceLocations": [
+          {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 890,
+            "endLine": 890,
+            "lineSha256": "e96c43aa289f86b71534dd8a41c056540526c02165152b449a78f95b0832ae0d",
+            "controllingText": "13. Versioning and migration"
+          },
+          {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 903,
+            "endLine": 903,
+            "lineSha256": "723dc3394231ba706fadc3108c5b671094ccc912859c27c4246b7f5e216896df",
+            "controllingText": "Required deterministic migration:"
+          },
+          {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 910,
+            "endLine": 910,
+            "lineSha256": "22185e72883762d43c34947ab5a29b1b5c2a53f76b577c55a753f854e8e1fb6e",
+            "controllingText": "Migration MUST preserve:"
+          }
+        ],
+        "schemaOrRegistryEntry": "SPECIFICATION_SECTION_13",
+        "productionOwners": [
+          {
+            "path": "workflow-schema.js",
+            "symbol": "migrateProjectToCurrent / markLegacyNonGating / normalizeTestRecords",
+            "sha256": "12c397f735f7e7154581131a79e19be2ef1f6bf374985dba4af5e445370812e6"
+          },
+          {
+            "path": "workbook.js",
+            "symbol": "migrateState",
+            "sha256": "11eff4fea42e47a5a70eafdc6b985d064ea2cdfe9a6feb72be6a74ec54c4b062"
+          },
+          {
+            "path": "project-store.js",
+            "symbol": "migrateLegacy / migrateProjectToCurrent / retainProjectSource",
+            "sha256": "8493c0048c9bc48d72cd97efcc3efcbd5fd65f995a34c790c64d0ff10ad4b067"
+          }
+        ],
+        "obligations": [
+          {
+            "id": "migration.preserve.stages",
+            "sourceText": "- all 30 stages;",
+            "expectedBehavior": "Migration must preserve all 30 stages Bounded assertions: Exactly the independently enumerated stage identities 1 through 30, distinct per-stage original nested content and complete stages 2 through 30 are asserted after /2 schema migration. Stage 01 current completion is deliberately invalidated and its original is retained in the exact audit-payload assertion. Deletion, replacement and swapped-stage negative controls challenge the oracle.",
+            "checks": {
+              "deterministic": [
+                {
+                  "suite": "verify-v3-migration.mjs",
+                  "checkId": "migration.current-profile"
+                }
+              ],
+              "semantic": [],
+              "mutation": []
+            },
+            "nonapplicable": {
+              "semantic": "Mechanical preservation/rejection assertions do not establish external semantic judgment; broader governing migration obligations remain unresolved below.",
+              "mutation": "No separate independent mutation receipt is claimed. Existing producer fault injections and added oracle contrast controls are diagnostic synthetic checks."
+            },
+            "evidenceKinds": [
+              "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+            ],
+            "assertionReferences": [
+              "MIGRATION_STAGE_IDENTITIES_ORACLE",
+              "MIGRATION_STAGE_CONTENT_ORACLE",
+              "MIGRATION_STAGE_NEGATIVE_CONTROL_ORACLE",
+              "original imported payload must be preserved as non-operational audit evidence."
+            ]
+          }
+        ],
+        "unresolvedObligations": [
+          "The complete governed human-project/30 → closed-loop-project/2 → closed-loop-project/3 path and permitted direct-path canonical-result AND audit-history equivalence are not established across all applicable entrypoints by this bounded producer.",
+          "Preservation across every applicable profile and registry-version migration remains unproved; no full-atom conformance claim is made.",
+          "Per-stage preservation after synthetic storage startup, export/import and registry migration is not independently asserted by these added checks."
+        ],
+        "governingContext": [],
+        "review": null
+      }
     },
     {
       "normativeRequirementId": "NREQ-2046e21dd63ad76f992233d5582c716d",
@@ -1042,9 +1314,102 @@
       "checkIds": [
         "migration.current-profile"
       ],
-      "scope": "Complete proposed coverage of this exact small source clause only; its surrounding section and other clauses remain separately accounted.",
+      "scope": "Incomplete current-atom author declaration. The original /2 parsed payload and pre-profile /3 payload are compared against pre-migration copies; audit entries are non-operational and claimed audit identities cannot suppress the new original. Existing source-retention helper tests exact imported lexical bytes and excludes source metadata from stage context. Existing check ownership is retained. Independent review and final combined-input receipts are pending. Synthetic production assertions only; no browser, physical-device, release or whole-application claim.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
-      "atomicObligationSha256": "4bb6f7dc998aaa5d76f2c7e1f1be1219eca7746a8213d8f880a1a2f564da78fc"
+      "atomicObligationSha256": "4bb6f7dc998aaa5d76f2c7e1f1be1219eca7746a8213d8f880a1a2f564da78fc",
+      "fullCoverage": {
+        "schema": "closed-loop-full-requirement-coverage/1",
+        "sourceLineSha256": "730baae6d2c704c8e272f02dd3e4deb547307888f11a599969d005a8e5b893a2",
+        "atomicObligationSha256": "4bb6f7dc998aaa5d76f2c7e1f1be1219eca7746a8213d8f880a1a2f564da78fc",
+        "reviewedAtomicStatement": "Migration must preserve original imported payload as non-operational audit evidence.",
+        "sourceSpans": [
+          {
+            "startByte": 51487,
+            "endByte": 51549,
+            "text": "- original imported payload as non-operational audit evidence.",
+            "sha256": "730baae6d2c704c8e272f02dd3e4deb547307888f11a599969d005a8e5b893a2"
+          }
+        ],
+        "contextSourceLocations": [
+          {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 890,
+            "endLine": 890,
+            "lineSha256": "e96c43aa289f86b71534dd8a41c056540526c02165152b449a78f95b0832ae0d",
+            "controllingText": "13. Versioning and migration"
+          },
+          {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 903,
+            "endLine": 903,
+            "lineSha256": "723dc3394231ba706fadc3108c5b671094ccc912859c27c4246b7f5e216896df",
+            "controllingText": "Required deterministic migration:"
+          },
+          {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 910,
+            "endLine": 910,
+            "lineSha256": "22185e72883762d43c34947ab5a29b1b5c2a53f76b577c55a753f854e8e1fb6e",
+            "controllingText": "Migration MUST preserve:"
+          }
+        ],
+        "schemaOrRegistryEntry": "SPECIFICATION_SECTION_13",
+        "productionOwners": [
+          {
+            "path": "workflow-schema.js",
+            "symbol": "migrateProjectToCurrent / markLegacyNonGating / normalizeTestRecords",
+            "sha256": "12c397f735f7e7154581131a79e19be2ef1f6bf374985dba4af5e445370812e6"
+          },
+          {
+            "path": "workbook.js",
+            "symbol": "migrateState",
+            "sha256": "11eff4fea42e47a5a70eafdc6b985d064ea2cdfe9a6feb72be6a74ec54c4b062"
+          },
+          {
+            "path": "project-store.js",
+            "symbol": "migrateLegacy / migrateProjectToCurrent / retainProjectSource",
+            "sha256": "8493c0048c9bc48d72cd97efcc3efcbd5fd65f995a34c790c64d0ff10ad4b067"
+          }
+        ],
+        "obligations": [
+          {
+            "id": "migration.preserve.original-import",
+            "sourceText": "- original imported payload as non-operational audit evidence.",
+            "expectedBehavior": "Migration must preserve original imported payload as non-operational audit evidence. Bounded assertions: The original /2 parsed payload and pre-profile /3 payload are compared against pre-migration copies; audit entries are non-operational and claimed audit identities cannot suppress the new original. Existing source-retention helper tests exact imported lexical bytes and excludes source metadata from stage context.",
+            "checks": {
+              "deterministic": [
+                {
+                  "suite": "verify-v3-migration.mjs",
+                  "checkId": "migration.current-profile"
+                }
+              ],
+              "semantic": [],
+              "mutation": []
+            },
+            "nonapplicable": {
+              "semantic": "Mechanical preservation/rejection assertions do not establish external semantic judgment; broader governing migration obligations remain unresolved below.",
+              "mutation": "No separate independent mutation receipt is claimed. Existing producer fault injections and added oracle contrast controls are diagnostic synthetic checks."
+            },
+            "evidenceKinds": [
+              "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+            ],
+            "assertionReferences": [
+              "original imported payload must be preserved as non-operational audit evidence",
+              "MIGRATION_ORIGINAL_AUDIT_IDENTITY_ORACLE",
+              "MIGRATION_CURRENT_ORIGINAL_AUDIT_ORACLE",
+              "MIGRATION_STARTUP_CURRENT_ORIGINAL_AUDIT_ORACLE",
+              "SOURCE_NON_OPERATIONAL_CONTEXT_ORACLE"
+            ]
+          }
+        ],
+        "unresolvedObligations": [
+          "The complete governed human-project/30 → closed-loop-project/2 → closed-loop-project/3 path and permitted direct-path canonical-result AND audit-history equivalence are not established across all applicable entrypoints by this bounded producer.",
+          "Preservation across every applicable profile and registry-version migration remains unproved; no full-atom conformance claim is made.",
+          "The human-project/30 core MIGRATION_SOURCE archive uses a different shape; exact audit-chain equivalence and all downstream non-gating uses have not been established by this declaration."
+        ],
+        "governingContext": [],
+        "review": null
+      }
     },
     {
       "normativeRequirementId": "NREQ-1b07d67693ef773b4800dc6e06626b5b",
@@ -1052,9 +1417,106 @@
       "checkIds": [
         "migration.current-profile"
       ],
-      "scope": "Complete proposed coverage of this exact small source clause only; its surrounding section and other clauses remain separately accounted.",
+      "scope": "Incomplete current-atom author declaration. Retained /2 raw text and envelopes stay unchanged. The public ingestion validator accepts an otherwise conforming synthetic /3 BLOCKED response for a real reserved current prompt, then rejects the same envelope with only its schema changed to /2 with WRONG_SCHEMA at /schema. Legacy migrated projects remain profile-invalid and Stage 01 non-gating in synthetic store tests. Existing check ownership is retained. Independent review and final combined-input receipts are pending. Synthetic production assertions only; no browser, physical-device, release or whole-application claim.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
-      "atomicObligationSha256": "726b3db5c3a0afd3050e34e350efaa302cddbaaa9b84a18a1071c9f8abff681a"
+      "atomicObligationSha256": "726b3db5c3a0afd3050e34e350efaa302cddbaaa9b84a18a1071c9f8abff681a",
+      "fullCoverage": {
+        "schema": "closed-loop-full-requirement-coverage/1",
+        "sourceLineSha256": "c5f15276fa30b518a2ec561e8392a49a9e74d692adc91e4558eadfdb64fb64ae",
+        "atomicObligationSha256": "726b3db5c3a0afd3050e34e350efaa302cddbaaa9b84a18a1071c9f8abff681a",
+        "reviewedAtomicStatement": "Old /2 raw responses must remain historical.",
+        "sourceSpans": [
+          {
+            "startByte": 51551,
+            "endByte": 51590,
+            "text": "Old /2 raw responses remain historical.",
+            "sha256": "c5f15276fa30b518a2ec561e8392a49a9e74d692adc91e4558eadfdb64fb64ae"
+          }
+        ],
+        "contextSourceLocations": [
+          {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 890,
+            "endLine": 890,
+            "lineSha256": "e96c43aa289f86b71534dd8a41c056540526c02165152b449a78f95b0832ae0d",
+            "controllingText": "13. Versioning and migration"
+          },
+          {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 929,
+            "endLine": 929,
+            "lineSha256": "30376b098a4b98f58d7ab6d16384f897ac627f0c016fe19eeac80880169a7f68",
+            "controllingText": "They MUST NOT satisfy a current /3 prompt or contract."
+          }
+        ],
+        "schemaOrRegistryEntry": "SPECIFICATION_SECTION_13",
+        "productionOwners": [
+          {
+            "path": "workflow-schema.js",
+            "symbol": "migrateProjectToCurrent / markLegacyNonGating / normalizeTestRecords",
+            "sha256": "12c397f735f7e7154581131a79e19be2ef1f6bf374985dba4af5e445370812e6"
+          },
+          {
+            "path": "workbook.js",
+            "symbol": "migrateState",
+            "sha256": "11eff4fea42e47a5a70eafdc6b985d064ea2cdfe9a6feb72be6a74ec54c4b062"
+          },
+          {
+            "path": "project-store.js",
+            "symbol": "migrateLegacy / migrateProjectToCurrent / retainProjectSource",
+            "sha256": "8493c0048c9bc48d72cd97efcc3efcbd5fd65f995a34c790c64d0ff10ad4b067"
+          },
+          {
+            "path": "response-ingestion.js",
+            "symbol": "validateEnvelope / validateEnvelopeWithDiagnostics",
+            "sha256": "01372de4f5f54a480d8ec8a14b21ae595e5d27486add7c882d944b59497ddd21"
+          },
+          {
+            "path": "workflow-engine.js",
+            "symbol": "gate / stageContext",
+            "sha256": "4f0fdd7c2b19cd84895be156228d016c1a31f48f320fcc13e5983a27ae4c7496"
+          }
+        ],
+        "obligations": [
+          {
+            "id": "migration.old-responses-historical",
+            "sourceText": "Old /2 raw responses remain historical.",
+            "expectedBehavior": "Old /2 raw responses must remain historical. Bounded assertions: Retained /2 raw text and envelopes stay unchanged. The public ingestion validator accepts an otherwise conforming synthetic /3 BLOCKED response for a real reserved current prompt, then rejects the same envelope with only its schema changed to /2 with WRONG_SCHEMA at /schema. Legacy migrated projects remain profile-invalid and Stage 01 non-gating in synthetic store tests.",
+            "checks": {
+              "deterministic": [
+                {
+                  "suite": "verify-v3-migration.mjs",
+                  "checkId": "migration.current-profile"
+                }
+              ],
+              "semantic": [],
+              "mutation": []
+            },
+            "nonapplicable": {
+              "semantic": "Mechanical preservation/rejection assertions do not establish external semantic judgment; broader governing migration obligations remain unresolved below.",
+              "mutation": "No separate independent mutation receipt is claimed. Existing producer fault injections and added oracle contrast controls are diagnostic synthetic checks."
+            },
+            "evidenceKinds": [
+              "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+            ],
+            "assertionReferences": [
+              "MIGRATION_HISTORICAL_ENVELOPE_ORACLE",
+              "MIGRATION_RAW_RESPONSE_BYTES_ORACLE",
+              "MIGRATION_HISTORICAL_CONTROL_ORACLE",
+              "MIGRATION_HISTORICAL_CURRENT_CONTRACT_ORACLE",
+              "MIGRATION_HISTORICAL_INPUT_UNCHANGED_ORACLE",
+              "MIGRATION_STORAGE_NON_GATING_ORACLE"
+            ]
+          }
+        ],
+        "unresolvedObligations": [
+          "The complete governed human-project/30 → closed-loop-project/2 → closed-loop-project/3 path and permitted direct-path canonical-result AND audit-history equivalence are not established across all applicable entrypoints by this bounded producer.",
+          "Preservation across every applicable profile and registry-version migration remains unproved; no full-atom conformance claim is made.",
+          "The new response contrast is public-validator proof only: file admission, proposal/commit, browser controls and every current prompt/contract surface are not independently established."
+        ],
+        "governingContext": [],
+        "review": null
+      }
     },
     {
       "normativeRequirementId": "NREQ-72ba9c97f91e20a56d469fe3d4acf669",

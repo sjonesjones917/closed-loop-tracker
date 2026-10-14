@@ -60,6 +60,8 @@ previous.projectData.tests=[{fields:{TEST_ID:'DIRECT-LEGACY-TEST',EXECUTABLE_KIN
 previous.vendorExtension=structuredClone(opaqueExtension);previous.projectData.vendorExtension=structuredClone(opaqueExtension);previous.stages[7].vendorExtension=structuredClone(opaqueExtension);previous.projectData.collections.tests[0].vendorExtension=structuredClone(opaqueExtension);
 previous.projectData.rawResponses[0].envelope.records=[{collection:'tests',fields:{TEST_ID:'HISTORICAL-ONLY',EXECUTABLE_KIND:'CUSTOM_PIPELINE',EXECUTABLE_SPEC_VERSION:'vendor-spec/7',EXECUTABLE_SPEC:{opaque:true}}}];
 previous.projectData.rawResponses[0].rawText=JSON.stringify(previous.projectData.rawResponses[0].envelope);
+// Distinct original stage data makes loss, replacement, and identity swaps visible.
+for(let stage=1;stage<=30;stage++)previous.stages[stage].migrationSentinel={stage,text:`original stage ${stage}`,nested:{keep:[stage,`stage-${stage}`]}};
 const original=structuredClone(previous);
 // The production migration executes in its browser-like VM realm. Observe its
 // result in the assertion realm without JSON normalization or loss of undefined
@@ -69,6 +71,26 @@ const migrated=fault==='foreign-observation'?migrationResult:structuredClone(mig
 assert.equal(migrated.schema,'closed-loop-project/3');
 assert.equal(Object.keys(migrated.stages).length,30,'migration must preserve exactly 30 stages');
 assert.deepEqual(migrated.unknownTopLevelExtension,{preserve:'exactly'},'MIGRATION_EXTENSION_PRESERVATION_ORACLE');
+const expectedStageKeys=Array.from({length:30},(_,index)=>String(index+1));
+const assertPreservedStages=value=>{
+  assert.deepEqual(Object.keys(value.stages),expectedStageKeys,'MIGRATION_STAGE_IDENTITIES_ORACLE');
+  for(const key of expectedStageKeys){
+    assert.equal(value.stages[key].stage,Number(key),'MIGRATION_STAGE_IDENTITIES_ORACLE: '+key);
+    assert.deepEqual(value.stages[key].migrationSentinel,original.stages[key].migrationSentinel,'MIGRATION_STAGE_CONTENT_ORACLE: '+key);
+    // Stage 01 is deliberately invalidated; its exact original must remain in audit.
+    if(key!=='1')assert.deepEqual(value.stages[key],original.stages[key],'MIGRATION_STAGE_CONTENT_ORACLE: '+key);
+  }
+};
+assertPreservedStages(migrated);
+for(const change of ['delete','replace','swap']){
+  const challenged=structuredClone(migrated);
+  if(change==='delete')delete challenged.stages['30'];
+  if(change==='replace')challenged.stages['19'].migrationSentinel={stage:19,text:'replacement'};
+  if(change==='swap')[challenged.stages['18'],challenged.stages['19']]=[challenged.stages['19'],challenged.stages['18']];
+  assert.throws(()=>assertPreservedStages(challenged),error=>error.code==='ERR_ASSERTION'&&/MIGRATION_STAGE_(IDENTITIES|CONTENT)_ORACLE/.test(error.message),'MIGRATION_STAGE_NEGATIVE_CONTROL_ORACLE: '+change);
+}
+
+
 assert.deepEqual(migrated.projectData.unknownProjectDataExtension,{preserve:42});
 assert.deepEqual(migrated.stages[7].unknownStageExtension,{preserve:true});
 assert.deepEqual(migrated.projectData.collections.tests[0].unknownRecordExtension,{keep:true});
@@ -163,6 +185,19 @@ if(fault==='structural-defaults'){
 }
 const stored=projectStoreRuntime({sourceOverrides:storageOverrides}),e=stored.engine,h=stored.runtime.closedLoopHash,owner=stored.store;
 let current=await owner.createProject({commandId:'SYNTHETIC-MIGRATION-STORAGE'});const opaqueBytes=new Blob([Uint8Array.of(0,13,10,255,65)]),artifactId=e.allocateId(current,'artifacts'),digest=await h.sha256Bytes(opaqueBytes);await owner.putArtifact({artifactId,jobId:current.job.JOB_ID,blob:opaqueBytes,filename:'opaque.bin',mediaType:'application/octet-stream'});e.registerArtifactBytes(current,stored.copy({stage:1,artifactId,filename:'opaque.bin',mediaType:'application/octet-stream',byteSize:opaqueBytes.size,sha256:digest}));
+// Contrast one otherwise-conforming current response with only its schema
+// changed to /2. This exercises the public validator, not file/UI acceptance.
+{
+  const r=projectStoreRuntime(),p=r.core.createBlankState('JOB-HISTORICAL-RESPONSE-CONTRAST');r.engine.ensureShape(p);r.engine.recalculate(p);
+  const pr=r.prompts.reserveAndBuildPromptRecord(p,1,{operation:'COMPLETE'},{owningTabInstance:'SYNTHETIC-MIGRATION-HISTORY'}).prompt,manifest=r.prompts.promptFileManifest(pr);
+  const envelope={schema:'closed-loop-stage-response/3',contractProfileId:'closed-loop-completion-profile/1',jobId:p.job.JOB_ID,stage:1,operation:pr.operation,promptIdentity:manifest.promptIdentity,packageId:pr.packageId,operationReservationId:pr.operationReservationId,challengeNonce:pr.challengeNonce,scope:manifest.scope,responseType:'BLOCKED',humanInputRequests:[],humanAuthorityCandidates:[],stageData:{},records:{},evidence:[],unresolved:[{temporaryKey:'missing-context',kind:'MISSING_APPLICATION_CONTEXT',description:'Synthetic migration contrast lacks required application context.',whyBlocking:'No external completion is asserted.',affectedStageFields:[],affectedRecords:[],blocking:true}],warnings:[],attachments:[]};
+  const validate=value=>r.ingestion.validateEnvelope(r.copy(p),r.copy(value),{stage:1,promptRecord:pr,rawSha256:r.runtime.closedLoopHash.rawResponseSha256(JSON.stringify(value))});
+  const control=validate(envelope);assert.equal(control.valid,true,'MIGRATION_HISTORICAL_CONTROL_ORACLE: '+JSON.stringify(control.issues));
+  const historical={...envelope,schema:'closed-loop-stage-response/2'},before=JSON.stringify(historical),rejected=validate(historical);
+  assert.equal(rejected.valid,false,'MIGRATION_HISTORICAL_CURRENT_CONTRACT_ORACLE');
+  assert.ok(rejected.issues.some(issue=>issue.code==='WRONG_SCHEMA'&&issue.path==='/schema'),'MIGRATION_HISTORICAL_CURRENT_CONTRACT_ORACLE');
+  assert.equal(JSON.stringify(historical),before,'MIGRATION_HISTORICAL_INPUT_UNCHANGED_ORACLE');
+}
 const shapeCases=[];for(const collection of e.ALL_COLLECTIONS)for(const value of [null,{},'invalid collection']){const candidate=stored.copy(current);candidate.projectData[collection]=stored.copy(value);const checked=owner.validateProjectIntegrity(candidate,{verifyDerived:false});assert.equal(checked.valid,false,'MIGRATION_COLLECTION_TYPE_ORACLE: '+collection);assert.deepEqual(Array.from(checked.issues),[collection+' is not an array.'],'MIGRATION_COLLECTION_DIAGNOSTIC_ORACLE: '+collection);shapeCases.push({collection,valueType:value===null?'null':typeof value,rejected:true});}
 const beforeInvalidWrite=await owner.readProject(current.job.JOB_ID),beforeInvalidHistory=await owner.historyList(current.job.JOB_ID);
 const invalidCurrent=stored.copy(current);invalidCurrent.projectData.intakeCoverageManifests='invalid current collection';const unhealed=owner.migrateProjectToCurrent(invalidCurrent);assert.deepEqual(unhealed,invalidCurrent,'MIGRATION_INVALID_CURRENT_PRESERVED_ORACLE');assert.equal(owner.validateProjectIntegrity(unhealed).valid,false,'MIGRATION_INVALID_CURRENT_INTEGRITY_ORACLE');await assert.rejects(owner.writeProject(unhealed,{expectedProjectRevision:current.revision}),error=>error.code==='PROJECT_INTEGRITY_FAILED','MIGRATION_INVALID_CURRENT_WRITE_ORACLE');await assert.rejects(owner.writeProject(unhealed,{operational:true,expectedProjectRevision:current.revision,expectedStateSha256:beforeInvalidWrite.projectSha256}),error=>error.code==='PROJECT_INTEGRITY_FAILED','MIGRATION_INVALID_CURRENT_OPERATIONAL_WRITE_ORACLE');assert.deepEqual(await owner.readProject(current.job.JOB_ID),beforeInvalidWrite,'MIGRATION_INVALID_CURRENT_STATE_PRESERVED_ORACLE');assert.deepEqual(await owner.historyList(current.job.JOB_ID),beforeInvalidHistory,'MIGRATION_INVALID_CURRENT_HISTORY_PRESERVED_ORACLE');
