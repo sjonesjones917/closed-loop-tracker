@@ -4129,14 +4129,18 @@ function logic(op,v,k){const t=v.filter(x=>x==='TRUE').length,f=v.filter(x=>x===
 // belong to this late-evidence closure. Earlier governing rows are selected by
 // iterationDerivationSourceBinding; unrelated later support is not imported.
 function currentIterationRefutationSources(p,propositionIds,stage){
- const selected=[];
+ const selected=[],candidates=scoped(p,'entailmentReviews').filter(row=>up(fv(row,'ACCEPTED_RELATION'))==='REFUTES'&&up(fv(row,'ACCEPTED_STATUS'))==='ACCEPTED');
+ // No adverse path means there is no timing or evidence claim to qualify.
+ // Do not repeatedly rebuild reviewed schedules for ordinary later support.
+ if(!candidates.length)return selected;
  for(const pid of propositionIds){
+  const reviews=candidates.filter(row=>String(fv(row,'TARGET_PROPOSITION_ID'))===pid);if(!reviews.length)continue;
   const proposition=props(p).find(row=>rid(row,'propositions')===pid),requirement=proposition&&old(p,'requirements').find(row=>rid(row,'requirements')===String(fv(proposition,'REQUIREMENT_ID')));
   if(!proposition||normative(fv(requirement,'MANDATORY_OPTIONAL_STATUS'))==='OPTIONAL'||applicability(p,pid)!=='APPLICABLE')continue;
   const schedule=deriveLeafTimingSchedule(p,pid);
   if(!schedule.resolved||!schedule.entries.some(entry=>e0.testDueState(p,{fields:entry},stage,{perRunOnly:true}).dueNow))continue;
   const sourceCache=new Map();
-  for(const review of scoped(p,'entailmentReviews').filter(row=>String(fv(row,'TARGET_PROPOSITION_ID'))===pid&&up(fv(row,'ACCEPTED_RELATION'))==='REFUTES'&&up(fv(row,'ACCEPTED_STATUS'))==='ACCEPTED')){
+  for(const review of reviews){
    if(review.source!=='APPLICATION_TEST_RUNTIME'&&!e0.entailmentMetadataCurrent(p,review,sourceCache))continue;
    const observation=obs(p,fv(review,'OBSERVATION_ID'));
    if(observation)selected.push({review,observation});
