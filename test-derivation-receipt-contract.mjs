@@ -556,6 +556,15 @@ export async function verifyIterationProductTransition({beforeProduct,afterProdu
   return [convergence,confirmation].map(row=>JSON.stringify(row.derivationReceipt));
  };
  const receipts=check(before,'before-product');assert.deepEqual(check(after,'after-product'),receipts,'ITERATION_PRODUCT_RECEIPTS_UNCHANGED');
+ // The same canonical-string invariant applies to the actual completed19 proof.
+ const h=r.runtime.closedLoopHash,confirmationCalculation=e.unchangedConfirmationCalculation(after),ordered=r.copy(JSON.parse(h.stableStringify(after)));
+ r.prompts.copyRetainedPromptContextFiles(after,ordered);
+ assert.equal(confirmationCalculation.fields.EVIDENCE,h.stableStringify(confirmationCalculation.canonicalInput),'CONFIRMATION_EVIDENCE_REGISTERED_SERIALIZATION');
+ assert.equal(e.unchangedConfirmationCalculation(ordered).fields.EVIDENCE,confirmationCalculation.fields.EVIDENCE,'CONFIRMATION_OBJECT_INSERTION_ORDER_STABLE');
+ for(const [name,edit]of [['semantic-value',input=>{input.versionMatch=!input.versionMatch;}],['ordered-array',input=>{assert(input.sourceBinding.records.length>1);input.sourceBinding.records.reverse();}]]){
+  const changed=r.copy(confirmationCalculation.canonicalInput);edit(changed);
+  assert.equal(r.runtime.closedLoopWorkflowSchema.validateApplicationDerivationReceipt(confirmationCalculation.derivationReceipt,{derivationKey:'stage19.confirmation',canonicalInput:confirmationCalculation.canonicalInput,sourceRecordHashes:confirmationCalculation.canonicalInput.sourceBinding.records,output:{...confirmationCalculation.fields,EVIDENCE:h.stableStringify(changed)}}).valid,false,'CONFIRMATION_CANONICAL_EVIDENCE_CHANGE_REJECTED '+name);
+ }
  const raw=JSON.stringify(after.projectData.rawResponses);
  const saved=await r.store.writeProject(after,{createOnly:true,expectedProjectRevision:0,incrementRevision:false}),loaded=await r.store.readProject(saved.job.JOB_ID);
  assert.deepEqual(check(loaded,'public-cold-read'),receipts);
