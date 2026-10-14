@@ -2,7 +2,7 @@ import {runVerifier,assertDetectedFault} from './verify-conformance-regressions.
 import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
-import {webcrypto} from 'node:crypto';
+import {webcrypto,createHash} from 'node:crypto';
 import {gunzipSync} from 'node:zlib';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import {projectStoreRuntime} from './test-project-store-runtime.mjs';
@@ -12,7 +12,7 @@ import {verifyCanonicalFieldIntegrity} from './test-canonical-field-integrity.mj
 import {verifyAgentJobDefaultMigration} from './test-agent-job-default-migration.mjs';
 
 const fault=process.argv.find(arg=>arg.startsWith('--fault='))?.slice(8)||null;
-assert.ok(!fault||['foreign-observation','lost-extension','rewritten-raw-response','recursive-normalization','current-profile-default-rewrite','collection-shape-guard','v2-delegation','worker-migration-receipt','claimed-audit-identity','current-startup-shape','structural-defaults','current-audit-identity','parse-failure-receipt','core-current-archive','current-legacy-container-shape','current-archive-undefined'].includes(fault),'Unknown migration fault');
+assert.ok(!fault||['foreign-observation','lost-extension','rewritten-raw-response','recursive-normalization','current-profile-default-rewrite','collection-shape-guard','v2-delegation','worker-migration-receipt','claimed-audit-identity','current-startup-shape','structural-defaults','current-audit-identity','parse-failure-receipt','core-current-archive','current-legacy-container-shape','current-archive-undefined','historical-response-promotion'].includes(fault),'Unknown migration fault');
 
 const priorCurrentCoreMigration="  if(p.schema===PROJECT_SCHEMA&&p.workflow===WORKFLOW_ID&&Number(p.stageCount)===STAGE_COUNT){\n    const migrated=JSON.parse(JSON.stringify(p));\n    if(p.job?.CONTRACT_PROFILE_ID===CONTRACT_PROFILE_ID)return migrated;\n    migrated.projectData=migrated.projectData&&typeof migrated.projectData==='object'?migrated.projectData:{};\n    if(migrated?.job?.CONTRACT_PROFILE_ID!==CONTRACT_PROFILE_ID){\n      migrated.projectData.migrationArchives=Array.isArray(migrated.projectData.migrationArchives)?migrated.projectData.migrationArchives:[];\n      const alreadyLegacy=migrated.projectData.contractProfileMigration?.status==='LEGACY_NON_GATING';\n      if(!alreadyLegacy&&!migrated.projectData.migrationArchives.some(x=>x?.kind==='PRE_PROFILE_V3_SOURCE'&&x?.revision===Number(p.revision||0)))migrated.projectData.migrationArchives.push({kind:'PRE_PROFILE_V3_SOURCE',schema:PROJECT_SCHEMA,revision:Number(p.revision||0),payload:JSON.parse(JSON.stringify(p))});\n      migrated.projectData.contractProfileMigration={status:'LEGACY_NON_GATING',sourceSchema:alreadyLegacy?String(migrated.projectData.contractProfileMigration.sourceSchema||PROJECT_SCHEMA):PROJECT_SCHEMA,targetProfile:CONTRACT_PROFILE_ID,semanticProofMigrated:false};\n      migrated.job=migrated.job&&typeof migrated.job==='object'?migrated.job:{};delete migrated.job.CONTRACT_PROFILE_ID;\n      migrated.job.CURRENT_STATE='BLOCKED';migrated.job.JOB_RECORD_STATUS='INCOMPLETE';migrated.job.CURRENT_STAGE='STAGE 01';\n      migrated.job.CURRENT_BLOCKERS=[...new Set([...(Array.isArray(migrated.job.CURRENT_BLOCKERS)?migrated.job.CURRENT_BLOCKERS:[]),'CONTRACT_PROFILE_MIGRATION_REQUIRED'])];\n      const stage01=migrated?.stages?.['1']||migrated?.stages?.[1];if(stage01){stage01.status='NOT STARTED';stage01.decision='';stage01.decisionEvidence='';stage01.agentData={};stage01.acceptedData={};stage01.gate={satisfied:false,reasons:['Legacy/pre-profile data cannot satisfy current-profile Stage 01.']};}\n      migrated.activeStage=1;return migrated;\n    }\n    migrated.projectData.migrationArchives=Array.isArray(migrated.projectData.migrationArchives)?migrated.projectData.migrationArchives:[];\n    migrated.projectData.historicalImportRecords=Array.isArray(migrated.projectData.historicalImportRecords)?migrated.projectData.historicalImportRecords:[];\n    if(migrated.projectData.stageRecords&&Object.keys(migrated.projectData.stageRecords).length){migrated.projectData.historicalImportRecords.push({kind:'LEGACY_STAGE_RECORDS',schema:PROJECT_SCHEMA,records:JSON.parse(JSON.stringify(migrated.projectData.stageRecords))});migrated.projectData.stageRecords={};}\n    if(migrated.projectData.fullProject&&Object.keys(migrated.projectData.fullProject).length){migrated.projectData.migrationArchives.push({kind:'LEGACY_NESTED_PROJECT',schema:PROJECT_SCHEMA,preservedAt:new Date().toISOString(),payload:JSON.parse(JSON.stringify(migrated.projectData.fullProject))});delete migrated.projectData.fullProject;}\n    return migrated;\n  }\n";
 class Event { constructor(type){ this.type=type; } }
@@ -60,6 +60,8 @@ previous.projectData.tests=[{fields:{TEST_ID:'DIRECT-LEGACY-TEST',EXECUTABLE_KIN
 previous.vendorExtension=structuredClone(opaqueExtension);previous.projectData.vendorExtension=structuredClone(opaqueExtension);previous.stages[7].vendorExtension=structuredClone(opaqueExtension);previous.projectData.collections.tests[0].vendorExtension=structuredClone(opaqueExtension);
 previous.projectData.rawResponses[0].envelope.records=[{collection:'tests',fields:{TEST_ID:'HISTORICAL-ONLY',EXECUTABLE_KIND:'CUSTOM_PIPELINE',EXECUTABLE_SPEC_VERSION:'vendor-spec/7',EXECUTABLE_SPEC:{opaque:true}}}];
 previous.projectData.rawResponses[0].rawText=JSON.stringify(previous.projectData.rawResponses[0].envelope);
+// Distinct original stage data makes loss, replacement, and identity swaps visible.
+for(let stage=1;stage<=30;stage++)previous.stages[stage].migrationSentinel={stage,text:`original stage ${stage}`,nested:{keep:[stage,`stage-${stage}`]}};
 const original=structuredClone(previous);
 // The production migration executes in its browser-like VM realm. Observe its
 // result in the assertion realm without JSON normalization or loss of undefined
@@ -98,6 +100,27 @@ for(const variant of ['same-label-wrong-payload','claimed-migration-status']){
 assert.equal(audit.payload.job.EXACT_USER_OBJECTIVE_VERBATIM,'Preserved migration objective','legacy human authority must remain preserved as historical evidence while not being promoted to current agent semantics');
 for(const key of ['intakeCoverageManifests','obligationManifests','promptContextManifests','blindAliasMaps','nativeExecutionEvents'])assert.ok(Array.isArray(migrated.projectData[key]),`migration default missing: ${key}`);
 assert.deepEqual(previous,original,'migration must not mutate the imported object');
+const expectedStageKeys=Array.from({length:30},(_,index)=>String(index+1));
+const assertPreservedStages=value=>{
+  assert.deepEqual(Object.keys(value.stages),expectedStageKeys,'MIGRATION_STAGE_IDENTITIES_ORACLE');
+  for(const key of expectedStageKeys){
+    assert.equal(value.stages[key].stage,Number(key),'MIGRATION_STAGE_IDENTITIES_ORACLE: '+key);
+    assert.deepEqual(value.stages[key].migrationSentinel,original.stages[key].migrationSentinel,'MIGRATION_STAGE_CONTENT_ORACLE: '+key);
+    // Stage 01 is deliberately invalidated; its exact original must remain in audit.
+    if(key!=='1')assert.deepEqual(value.stages[key],original.stages[key],'MIGRATION_STAGE_CONTENT_ORACLE: '+key);
+  }
+};
+assertPreservedStages(migrated);
+for(const change of ['delete','replace','swap']){
+  const challenged=structuredClone(migrated);
+  if(change==='delete')delete challenged.stages['30'];
+  if(change==='replace')challenged.stages['19'].migrationSentinel={stage:19,text:'replacement'};
+  if(change==='swap')[challenged.stages['18'],challenged.stages['19']]=[challenged.stages['19'],challenged.stages['18']];
+  assert.throws(()=>assertPreservedStages(challenged),error=>error.code==='ERR_ASSERTION'&&/MIGRATION_STAGE_(IDENTITIES|CONTENT)_ORACLE/.test(error.message),'MIGRATION_STAGE_NEGATIVE_CONTROL_ORACLE: '+change);
+}
+
+
+
 assert.equal(String(migrated.stages[1].agentData.INPUT_SET_CONTENTS||''),'','/2 -> /3 migration must not fabricate current agent-owned Stage 01 semantic intake from preserved human authority');
 assert.equal(migrated.job.CONTRACT_PROFILE_ID,undefined,'legacy /2 migration must not acquire current profile without complete profile proof');
 assert.equal(migrated.job.CURRENT_STATE,'BLOCKED');assert.equal(migrated.job.JOB_RECORD_STATUS,'INCOMPLETE');assert.equal(migrated.projectData.contractProfileMigration.status,'LEGACY_NON_GATING');assert.equal(schema.validateContractProfile(migrated).valid,false);
@@ -163,6 +186,37 @@ if(fault==='structural-defaults'){
 }
 const stored=projectStoreRuntime({sourceOverrides:storageOverrides}),e=stored.engine,h=stored.runtime.closedLoopHash,owner=stored.store;
 let current=await owner.createProject({commandId:'SYNTHETIC-MIGRATION-STORAGE'});const opaqueBytes=new Blob([Uint8Array.of(0,13,10,255,65)]),artifactId=e.allocateId(current,'artifacts'),digest=await h.sha256Bytes(opaqueBytes);await owner.putArtifact({artifactId,jobId:current.job.JOB_ID,blob:opaqueBytes,filename:'opaque.bin',mediaType:'application/octet-stream'});e.registerArtifactBytes(current,stored.copy({stage:1,artifactId,filename:'opaque.bin',mediaType:'application/octet-stream',byteSize:opaqueBytes.size,sha256:digest}));
+// Contrast one otherwise-conforming current response with only its schema
+// changed to /2. This exercises the public validator and prepare, not file/UI acceptance.
+let historicalResponseExclusion=null;
+{
+  const sourceOverrides={};
+  if(fault==='historical-response-promotion'){
+    const source=fs.readFileSync('response-ingestion.js','utf8'),anchor="  if(envelope.schema!==schema.RESPONSE_SCHEMA)issues.push(issue('WRONG_SCHEMA','/schema',`Expected ${schema.RESPONSE_SCHEMA}.`));";
+    assert.equal(source.split(anchor).length,2);sourceOverrides['response-ingestion.js']=source.replace(anchor,'');
+  }
+  const r=projectStoreRuntime({sourceOverrides}),p=r.core.createBlankState('JOB-HISTORICAL-RESPONSE-CONTRAST');r.engine.ensureShape(p);r.engine.recalculate(p);
+  const pr=r.prompts.reserveAndBuildPromptRecord(p,1,{operation:'COMPLETE'},{owningTabInstance:'SYNTHETIC-MIGRATION-HISTORY'}).prompt,manifest=r.prompts.promptFileManifest(pr);
+  const envelope={schema:'closed-loop-stage-response/3',contractProfileId:'closed-loop-completion-profile/1',jobId:p.job.JOB_ID,stage:1,operation:pr.operation,promptIdentity:manifest.promptIdentity,packageId:pr.packageId,operationReservationId:pr.operationReservationId,challengeNonce:pr.challengeNonce,scope:manifest.scope,responseType:'BLOCKED',humanInputRequests:[],humanAuthorityCandidates:[],stageData:{},records:{},evidence:[],unresolved:[{temporaryKey:'missing-context',kind:'MISSING_APPLICATION_CONTEXT',description:'Synthetic migration contrast lacks required application context.',whyBlocking:'No external completion is asserted.',affectedStageFields:[],affectedRecords:[],blocking:true}],warnings:[],attachments:[]};
+  const validate=value=>r.ingestion.validateEnvelope(r.copy(p),r.copy(value),{stage:1,promptRecord:pr,rawSha256:r.runtime.closedLoopHash.rawResponseSha256(JSON.stringify(value))});
+  const control=validate(envelope);assert.equal(control.valid,true,'MIGRATION_HISTORICAL_CONTROL_ORACLE: '+JSON.stringify(control.issues));
+  const historical={...envelope,schema:'closed-loop-stage-response/2'},before=JSON.stringify(historical),rejected=validate(historical);
+  assert.equal(rejected.valid,false,'MIGRATION_HISTORICAL_CURRENT_CONTRACT_ORACLE');
+  assert.ok(rejected.issues.some(issue=>issue.code==='WRONG_SCHEMA'&&issue.path==='/schema'),'MIGRATION_HISTORICAL_CURRENT_CONTRACT_ORACLE');
+  assert.equal(JSON.stringify(historical),before,'MIGRATION_HISTORICAL_INPUT_UNCHANGED_ORACLE');
+  const transport={authority:'AUTHORITATIVE_RESPONSE_FILE',packageId:pr.packageId,operationReservationId:pr.operationReservationId,challengeNonce:pr.challengeNonce};
+  const admitted=r.ingestion.prepare(r.copy(p),{stage:1,text:JSON.stringify(envelope),promptRecord:pr,transport});
+  assert.equal(admitted.validation.valid,true,'MIGRATION_HISTORICAL_ADMISSION_CONTROL_ORACLE: '+JSON.stringify(admitted.validation.issues));assert.ok(admitted.proposal,'MIGRATION_HISTORICAL_ADMISSION_CONTROL_ORACLE');
+  const denied=r.ingestion.prepare(r.copy(p),{stage:1,text:before,promptRecord:pr,transport});
+  assert.equal(denied.validation.valid,false,'MIGRATION_HISTORICAL_ADMISSION_ORACLE');assert.equal(denied.proposal,null,'MIGRATION_HISTORICAL_ADMISSION_ORACLE');
+  assert.ok(denied.validation.issues.some(issue=>issue.code==='WRONG_SCHEMA'&&issue.path==='/schema'),'MIGRATION_HISTORICAL_ADMISSION_ORACLE');
+  assert.equal(denied.rawRecord.completeRawResponse,before,'MIGRATION_HISTORICAL_ADMISSION_RAW_ORACLE');
+  for(let stage=1;stage<=30;stage++)for(const field of ['agentData','humanData','acceptedData','acceptedResponseIds','acceptedDataChangeIds','acceptedControlEventIds'])assert.deepEqual(structuredClone(denied.project.stages[stage][field]),structuredClone(p.stages[stage][field]),'MIGRATION_HISTORICAL_NO_STAGE_AUTHORITY_ORACLE: '+stage+'.'+field);
+  assert.equal(r.engine.gate(1,denied.project).complete,false,'MIGRATION_HISTORICAL_NO_GATE_AUTHORITY_ORACLE');
+  assert.deepEqual(structuredClone(denied.project.projectData.acceptedChanges),structuredClone(p.projectData.acceptedChanges),'MIGRATION_HISTORICAL_NO_ACCEPTED_AUTHORITY_ORACLE');
+  historicalResponseExclusion={currentSchema:'closed-loop-stage-response/3',historicalSchema:'closed-loop-stage-response/2',currentValidatorAccepted:true,currentPrepareAdmitted:true,historicalValidatorRejected:true,historicalPrepareRejected:true,code:'WRONG_SCHEMA',path:'/schema',rawExact:true,noProposal:true,stageAuthorityUnchanged:true,acceptedChangesUnchanged:true,gateIncomplete:true,stageKeys:[...expectedStageKeys]};
+
+}
 const shapeCases=[];for(const collection of e.ALL_COLLECTIONS)for(const value of [null,{},'invalid collection']){const candidate=stored.copy(current);candidate.projectData[collection]=stored.copy(value);const checked=owner.validateProjectIntegrity(candidate,{verifyDerived:false});assert.equal(checked.valid,false,'MIGRATION_COLLECTION_TYPE_ORACLE: '+collection);assert.deepEqual(Array.from(checked.issues),[collection+' is not an array.'],'MIGRATION_COLLECTION_DIAGNOSTIC_ORACLE: '+collection);shapeCases.push({collection,valueType:value===null?'null':typeof value,rejected:true});}
 const beforeInvalidWrite=await owner.readProject(current.job.JOB_ID),beforeInvalidHistory=await owner.historyList(current.job.JOB_ID);
 const invalidCurrent=stored.copy(current);invalidCurrent.projectData.intakeCoverageManifests='invalid current collection';const unhealed=owner.migrateProjectToCurrent(invalidCurrent);assert.deepEqual(unhealed,invalidCurrent,'MIGRATION_INVALID_CURRENT_PRESERVED_ORACLE');assert.equal(owner.validateProjectIntegrity(unhealed).valid,false,'MIGRATION_INVALID_CURRENT_INTEGRITY_ORACLE');await assert.rejects(owner.writeProject(unhealed,{expectedProjectRevision:current.revision}),error=>error.code==='PROJECT_INTEGRITY_FAILED','MIGRATION_INVALID_CURRENT_WRITE_ORACLE');await assert.rejects(owner.writeProject(unhealed,{operational:true,expectedProjectRevision:current.revision,expectedStateSha256:beforeInvalidWrite.projectSha256}),error=>error.code==='PROJECT_INTEGRITY_FAILED','MIGRATION_INVALID_CURRENT_OPERATIONAL_WRITE_ORACLE');assert.deepEqual(await owner.readProject(current.job.JOB_ID),beforeInvalidWrite,'MIGRATION_INVALID_CURRENT_STATE_PRESERVED_ORACLE');assert.deepEqual(await owner.historyList(current.job.JOB_ID),beforeInvalidHistory,'MIGRATION_INVALID_CURRENT_HISTORY_PRESERVED_ORACLE');
@@ -244,6 +298,37 @@ await assert.rejects(failedParse.store.importPackage(protectedRecovery,{passphra
 await assert.rejects(projectStoreRuntime().store.exportLegacyMigrationData({passphrase}),error=>error.code==='NO_LEGACY_MIGRATION_DATA');
 if(process.env.CLRT_MIGRATION_FIXTURE_DIRECTORY)fs.writeFileSync(process.env.CLRT_MIGRATION_FIXTURE_DIRECTORY+'/startup-legacy-v2.json',legacyText);
 
+// Public startup is the supported legacy entrypoint. Direct schema helpers do
+// not promise to accept human-project/30. Preserve independently authored data
+// through startup, durable readback, actual package bytes and import/readback.
+const publicPreservationRoutes=[];
+if(!fault)for(const sourceSchema of ['human-project/30','closed-loop-project/2','closed-loop-project/3']){
+  const r=projectStoreRuntime(),p=structuredClone(r.core.createBlankState('JOB-PUBLIC-MIGRATION-'+sourceSchema.split('/').at(-1)));p.schema=sourceSchema;delete p.job.CONTRACT_PROFILE_ID;
+  const opaque={text:'\r\n𐀀\u0000',fields:{TEST_ID:'OPAQUE',EXECUTABLE_KIND:'CUSTOM_PIPELINE'},nested:{vendor:[1,false,null,'\\u0061']}};
+  p.vendor=structuredClone(opaque);p.projectData.vendor=structuredClone(opaque);
+  const raw=' { "schema" : "closed-loop-stage-response/2", "x":1.000e0, "literal":"\\u0061" }\r\n';p.projectData.rawResponses=[{rawText:raw,envelope:JSON.parse(raw)}];
+  for(let stage=1;stage<=30;stage++)p.stages[stage].vendor={id:stage,raw:'Stage '+stage,opaque:structuredClone(opaque)};
+  const input=JSON.stringify(p),source=' \r\n'+input+'\r\n ',key=r.store.LEGACY_KEYS[0];r.runtime.localStorage.setItem(key,source);
+  const check=project=>{
+    assert.deepEqual(structuredClone(project.vendor),opaque,'MIGRATION_PUBLIC_OPAQUE_ORACLE');assert.deepEqual(structuredClone(project.projectData.vendor),opaque,'MIGRATION_PUBLIC_OPAQUE_ORACLE');
+    assert.equal(project.projectData.rawResponses[0].rawText,raw,'MIGRATION_PUBLIC_RAW_ORACLE');assert.deepEqual(structuredClone(project.projectData.rawResponses[0].envelope),JSON.parse(raw),'MIGRATION_PUBLIC_ENVELOPE_ORACLE');
+    assert.deepEqual(Object.keys(project.stages),expectedStageKeys,'MIGRATION_PUBLIC_STAGE_KEYS_ORACLE');for(let stage=1;stage<=30;stage++)assert.deepEqual(structuredClone(project.stages[stage].vendor),p.stages[stage].vendor,'MIGRATION_PUBLIC_STAGE_CONTENT_ORACLE: '+stage);
+  };
+  const all=await r.store.readAll();assert.equal(all.length,1,'MIGRATION_PUBLIC_STARTUP_ORACLE');const out=all[0];check(out);check(await r.store.readProject(out.job.JOB_ID));
+  const sourceRows=(await r.store.listArtifacts(out.job.JOB_ID)).filter(row=>row.lineage?.originalProjectSource);assert.equal(sourceRows.length,1);
+  const bytes=Buffer.from(await sourceRows[0].blob.arrayBuffer()),digest=createHash('sha256').update(bytes).digest('hex');
+  assert.equal(bytes.toString('utf16le'),input,'MIGRATION_PUBLIC_EXACT_SOURCE_ORACLE');
+  const descriptor=out.projectData.migrationArchives.find(row=>row.kind==='ORIGINAL_PROJECT_SOURCE');assert.equal(descriptor.operational,false,'MIGRATION_PUBLIC_NONOPERATIONAL_ORACLE');assert.equal(descriptor.sha256,digest);assert.equal(descriptor.sourceSha256,createHash('sha256').update(Buffer.from(source,'utf16le')).digest('hex'));
+  assert.equal(r.runtime.closedLoopWorkflowSchema.validateContractProfile(out).valid,false);assert.equal(r.engine.gate(1,out).complete,false);
+  assert.ok(!JSON.stringify(r.engine.stageContext(out,1)).includes(sourceRows[0].artifactId),'MIGRATION_PUBLIC_AUDIT_CONTEXT_ORACLE');
+  const destination=projectStoreRuntime(),restored=await destination.store.importPackage(await r.store.exportPackage(out.job.JOB_ID));check(restored);check(await destination.store.readProject(restored.job.JOB_ID));
+  const restoredSource=await destination.store.getArtifact(sourceRows[0].artifactId,{jobId:restored.job.JOB_ID});assert.deepEqual(Buffer.from(await restoredSource.blob.arrayBuffer()),bytes,'MIGRATION_PUBLIC_RESTORED_SOURCE_ORACLE');
+  for(const [label,mutate]of [['lost-stage',value=>delete value.stages[30]],['swap-stage',value=>{[value.stages[29],value.stages[30]]=[value.stages[30],value.stages[29]];}],['extension-loss',value=>delete value.vendor],['raw-rewrite',value=>value.projectData.rawResponses[0].rawText=JSON.stringify(value.projectData.rawResponses[0].envelope)]]){
+    const bad=structuredClone(out);mutate(bad);assert.throws(()=>check(bad),error=>error.code==='ERR_ASSERTION'&&error.message.includes('MIGRATION_PUBLIC_'),'MIGRATION_PUBLIC_NEGATIVE_CONTROL_ORACLE: '+label);
+  }
+  publicPreservationRoutes.push({sourceSchema,startup:true,readback:true,packageImportReadback:true,exactSourceBytes:true,nonOperationalSource:true,auditContextExcluded:true,opaqueExtensions:true,envelopeExact:true,all30StageSentinels:true,rawResponseExact:true,negativeControls:['lost-stage','swap-stage','extension-loss','raw-rewrite']});
+}
+
 const canonicalFieldIntegrity=!fault?await verifyCanonicalFieldIntegrity():null;
 const sourceBytePreservation=!fault?await verifyMigrationSourceRetention({fixtureDirectory:process.env.CLRT_SOURCE_FIXTURE_DIRECTORY||null}):null;
 const backupCapacityRoundtrip=!fault?await verifyBackupCapacityRoundtrip():null;
@@ -254,7 +339,7 @@ if(!fault){
 if(!fault)for(const [injected,oracle]of [['source-legacy-loss','SOURCE_LEGACY_EXACT_SPAN_ORACLE'],['source-package-loss','SOURCE_PACKAGE_EXACT_SPAN_ORACLE'],['source-payload-binding','SOURCE_PAYLOAD_BINDING_ORACLE'],['source-cache-binding','SOURCE_PAYLOAD_BINDING_ORACLE'],['source-write-downgrade','SOURCE_WRITE_IMMUTABLE_ORACLE'],['source-new-write-binding','SOURCE_NEW_WRITE_BINDING_ORACLE']]){
  const run=await runVerifier(process.execPath,['test-migration-source-retention.mjs','--fault='+injected],{encoding:'utf8',timeout:60000,killSignal:'SIGKILL',maxBuffer:1024*1024});assert.equal(run.error,null);assertDetectedFault(run,oracle,'Undetected original-source fault: '+injected);faults.push({fault:injected,oracle,result:'DETECTED',exitCode:run.status,stdout:run.stdout,stderr:run.stderr});
 }
-if(!fault)for(const [injected,oracle] of [['foreign-observation','MIGRATION_EXTENSION_PRESERVATION_ORACLE'],['lost-extension','MIGRATION_EXTENSION_PRESERVATION_ORACLE'],['rewritten-raw-response','MIGRATION_RAW_RESPONSE_BYTES_ORACLE'],['recursive-normalization','MIGRATION_OPAQUE_EXTENSION_ORACLE'],['current-profile-default-rewrite','MIGRATION_CURRENT_NO_SILENT_REWRITE_ORACLE'],['collection-shape-guard','MIGRATION_INVALID_CURRENT_WRITE_ORACLE'],['v2-delegation','MIGRATION_V2_STARTUP_ORACLE'],['worker-migration-receipt','MIGRATION_DOCUMENT_RECEIPT_OWNER_ORACLE'],['claimed-audit-identity','MIGRATION_ORIGINAL_AUDIT_IDENTITY_ORACLE'],['current-startup-shape','MIGRATION_CURRENT_STARTUP_REJECTION_ORACLE'],['structural-defaults','MIGRATION_STRUCTURAL_DEFAULT_ORACLE'],['current-audit-identity','MIGRATION_CURRENT_ORIGINAL_AUDIT_ORACLE'],['parse-failure-receipt','MIGRATION_PARSE_FAILURE_RECEIPT_ORACLE'],['core-current-archive','MIGRATION_CORE_CURRENT_ORIGINAL_AUDIT_ORACLE'],['current-legacy-container-shape','MIGRATION_CURRENT_INVALID_LEGACY_CONTAINER_ORACLE'],['current-archive-undefined','MIGRATION_PRESENT_UNDEFINED_ARCHIVE_ORACLE']]){
+if(!fault)for(const [injected,oracle] of [['historical-response-promotion','MIGRATION_HISTORICAL_CURRENT_CONTRACT_ORACLE'],['foreign-observation','MIGRATION_EXTENSION_PRESERVATION_ORACLE'],['lost-extension','MIGRATION_EXTENSION_PRESERVATION_ORACLE'],['rewritten-raw-response','MIGRATION_RAW_RESPONSE_BYTES_ORACLE'],['recursive-normalization','MIGRATION_OPAQUE_EXTENSION_ORACLE'],['current-profile-default-rewrite','MIGRATION_CURRENT_NO_SILENT_REWRITE_ORACLE'],['collection-shape-guard','MIGRATION_INVALID_CURRENT_WRITE_ORACLE'],['v2-delegation','MIGRATION_V2_STARTUP_ORACLE'],['worker-migration-receipt','MIGRATION_DOCUMENT_RECEIPT_OWNER_ORACLE'],['claimed-audit-identity','MIGRATION_ORIGINAL_AUDIT_IDENTITY_ORACLE'],['current-startup-shape','MIGRATION_CURRENT_STARTUP_REJECTION_ORACLE'],['structural-defaults','MIGRATION_STRUCTURAL_DEFAULT_ORACLE'],['current-audit-identity','MIGRATION_CURRENT_ORIGINAL_AUDIT_ORACLE'],['parse-failure-receipt','MIGRATION_PARSE_FAILURE_RECEIPT_ORACLE'],['core-current-archive','MIGRATION_CORE_CURRENT_ORIGINAL_AUDIT_ORACLE'],['current-legacy-container-shape','MIGRATION_CURRENT_INVALID_LEGACY_CONTAINER_ORACLE'],['current-archive-undefined','MIGRATION_PRESENT_UNDEFINED_ARCHIVE_ORACLE']]){
   const run=(await runVerifier(process.execPath,[import.meta.filename,'--fault='+injected],{encoding:'utf8',timeout:60000,killSignal:'SIGKILL',maxBuffer:1024*1024}));
   assert.equal(run.error,null,'Migration fault gate timed out or could not execute');
   assertDetectedFault(run,oracle,'Undetected migration fault: '+injected);
@@ -265,4 +350,5 @@ const agentJobDefaultMigration=!fault?await verifyAgentJobDefaultMigration():nul
 if(!fault)for(const [injected,oracle]of [['defaults-retained','AGENT_DEFAULT_MIGRATION_ABSENCE_ORACLE'],['accepted-values-erased','AGENT_DEFAULT_MIGRATION_AUTHORITY_PRESERVED_ORACLE']]){
  const run=await runVerifier(process.execPath,['test-agent-job-default-migration.mjs','--fault='+injected],{encoding:'utf8',timeout:60000,killSignal:'SIGKILL',maxBuffer:1024*1024});assert.equal(run.error,null);assertDetectedFault(run,oracle,'Undetected historical Job default migration fault: '+injected);faults.push({fault:injected,oracle,result:'DETECTED',exitCode:run.status,stdout:run.stdout,stderr:run.stderr});
 }
-console.log(JSON.stringify({faults,sourceBytePreservation,backupCapacityRoundtrip,canonicalFieldIntegrity,agentJobDefaultMigration,verifyV3Migration:'PASS',from:'closed-loop-project/2',to:'closed-loop-project/3',stages:30,unknownExtensionsPreserved:true,rawV2ResponsePreserved:true,originalPayloadPreserved:true,opaqueExtensionsPreserved:true,historicalEnvelopesPreserved:true,currentV3NoSilentRewrite:true,migrationStorageReadbackImport:true,normalV2StartupMigration:true,unsupportedFutureStartupPreserved:true,documentMigrationReceiptPreserved:true,collectionShapeCases:shapeCases,structuralShapeCases,structuralWriteCases,omittedDefaultsRemainSupported:true,claimedAuditCannotSuppressOriginal:true,currentStartupInvalidStatePreserved:true,protectedExactLegacyRecovery:true,idempotent:true,legacyStage01SemanticFabricationRejected:true,currentV3NoSilentHeal:true}));
+const migrationPreservation={schema:'closed-loop-migration-preservation-observations/1',synthetic:true,actualBrowser:false,transactionAdapter:true,routes:publicPreservationRoutes,stages:{keys:expectedStageKeys,identityAndContentPreserved:true,originalStage01Audited:true,negativeControls:['delete','replace','swap']},historical:historicalResponseExclusion};
+console.log(JSON.stringify({faults,migrationPreservation,publicPreservationRoutes,sourceBytePreservation,backupCapacityRoundtrip,canonicalFieldIntegrity,agentJobDefaultMigration,verifyV3Migration:'PASS',from:'closed-loop-project/2',to:'closed-loop-project/3',stages:30,unknownExtensionsPreserved:true,rawV2ResponsePreserved:true,originalPayloadPreserved:true,opaqueExtensionsPreserved:true,historicalEnvelopesPreserved:true,currentV3NoSilentRewrite:true,migrationStorageReadbackImport:true,normalV2StartupMigration:true,unsupportedFutureStartupPreserved:true,documentMigrationReceiptPreserved:true,collectionShapeCases:shapeCases,structuralShapeCases,structuralWriteCases,omittedDefaultsRemainSupported:true,claimedAuditCannotSuppressOriginal:true,currentStartupInvalidStatePreserved:true,protectedExactLegacyRecovery:true,idempotent:true,legacyStage01SemanticFabricationRejected:true,currentV3NoSilentHeal:true}));
