@@ -1372,9 +1372,9 @@
   },
   "dotManagement": {
     "assignmentMessageId": "Sentinel_1ac34bdeac8481919be897c0eee48408",
-    "instructionPath": "verification/dot-execution-instructions-20261014.txt",
-    "instructionSha256": "98fd6e7799cb7ab004ac1c4a33e5671b165aff2fe171bfdcd5b6627970c65bfe",
-    "suppliedCombinedPromptSha256": "aeb17eaaf77b5c89aa8337fe8288571a497f02b8f422fe282c228bef9ce083db",
+    "instructionPath": "verification/dot-execution-instructions-v2-20261014.txt",
+    "instructionSha256": "b8f2040d3792d93ab80c8e9d75082429906ac7ed5b601eb387863e9bc2f2832e",
+    "suppliedCombinedPromptSha256": "c7e6ee932442288544353dbec5bbe90ae9f0e2eea98921bb9afac9ba3f99c116",
     "suppliedSpecification": {
       "sha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
       "byteLength": 309482,
@@ -1390,11 +1390,11 @@
     "startingSourceCommit": "7df5f46e9a7e54da09622387a978badb39916c09",
     "startingMainCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
     "integrationBranch": "dot/published-execution-20261014",
-    "integrationCommit": "8ba27aaff1e61b3aa8afc0bc4e089e45bc1769df",
+    "integrationCommit": "aaf1154b7e6b05c1e2e3efaffa22135eec80d106",
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "/root/repair_iteration_receipt_dependencies",
-    "lastInspectedAt": "2026-10-14T19:11:45.643435+00:00",
+    "lastInspectedAt": "2026-10-14T21:05:49Z",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -1876,25 +1876,25 @@
         "id": "repair_iteration_receipt_dependencies",
         "owner": "/root/repair_iteration_receipt_dependencies",
         "state": "RUNNING",
-        "scope": "Bounded actual Stage19/21 receipt dependency repair",
-        "lastInspectedAt": "2026-10-14T09:01:29.278378Z",
+        "scope": "Engineering lead: accepted iteration/release repair integration, current chain5/projection15 correctness and required-owner closure",
+        "lastInspectedAt": "2026-10-14T21:05:49Z",
         "returnTo": "/root",
         "host": "dot cloud workspace",
         "dependencies": [],
         "concurrencyAllocation": 1,
-        "evidence": "Actual final tail exit1 history-save incompatibility retained; ordinary18-to19 independent replay passed. Localizing retained checkpoint difference without prefix replay."
+        "evidence": "Earlier Stage18/19/21/22 and release4 repairs independently accepted and integrated. Current c3033739 chain5 candidate static-reviewed, normal13-to15 activation passed; session61315 actual27-30 and subsequent migration/owner controls pending."
       },
       {
         "id": "review_iteration_receipt_repair",
         "owner": "/root/review_iteration_receipt_repair",
-        "state": "RUNNING",
+        "state": "VERIFIED",
         "scope": "Independent source, mutation and boundary review of receipt dependency repair",
-        "lastInspectedAt": "2026-10-14T09:01:29.278378Z",
+        "lastInspectedAt": "2026-10-14T21:05:49Z",
         "returnTo": "/root",
         "host": "dot cloud workspace",
         "dependencies": [],
         "concurrencyAllocation": 1,
-        "evidence": "Actual final tail exit1 history-save incompatibility retained; ordinary18-to19 independent replay passed. Localizing retained checkpoint difference without prefix replay."
+        "evidence": "Bounded iteration and actual18/19/21/22 source/currentness/persistence review completed and integrated; original failures retained. Later release/chain review is owned by review_release_scope_binding."
       },
       {
         "id": "migrate_current_assertion_bindings",
@@ -1911,24 +1911,26 @@
       {
         "id": "review_canonical_json_proofs",
         "owner": "/root/review_canonical_json_proofs",
-        "state": "RUNNING",
+        "state": "BLOCKED",
         "scope": "Accepted current migration and14 canonical design records; await final receipt catalog for genuine input re-review",
-        "lastInspectedAt": "2026-10-14T08:00:21.637434Z",
+        "lastInspectedAt": "2026-10-14T21:05:49Z",
         "returnTo": "/root",
         "host": "dot cloud workspace",
         "dependencies": [],
-        "concurrencyAllocation": 1
+        "concurrencyAllocation": 1,
+        "evidence": "Prior independently accepted design/source work retained and integrated within its original scope. Current review/source metadata is stale after later runtime versions; renewal and genuine current producer receipts await final chain runtime/catalog freeze. No active execution is implied."
       },
       {
         "id": "bind_migration_preservation_proofs",
         "owner": "/root/bind_migration_preservation_proofs",
-        "state": "RUNNING",
+        "state": "BLOCKED",
         "scope": "Five current migration preservation atoms; scoped declarations and minimal actual verifier assertions",
-        "lastInspectedAt": "2026-10-14T08:00:21.637434Z",
+        "lastInspectedAt": "2026-10-14T21:05:49Z",
         "host": "dot cloud workspace",
         "returnTo": "/root",
         "dependencies": [],
-        "concurrencyAllocation": 1
+        "concurrencyAllocation": 1,
+        "evidence": "Prior independently accepted design/source work retained and integrated within its original scope. Current review/source metadata is stale after later runtime versions; renewal and genuine current producer receipts await final chain runtime/catalog freeze. No active execution is implied."
       },
       {
         "id": "review_migration_preservation_proofs",
@@ -1989,6 +1991,45 @@
         "host": "dot cloud workspace",
         "dependencies": [],
         "concurrencyAllocation": 0
+      },
+      {
+        "id": "review_release_scope_binding",
+        "owner": "/root/review_release_scope_binding",
+        "state": "RUNNING",
+        "scope": "Independent accepted release4 review and current chain5 source, actual boundary and legacy migration review",
+        "writeScope": "External independent review/diagnostic evidence only",
+        "dependencies": [
+          "repair_iteration_receipt_dependencies"
+        ],
+        "evidence": "Release4 narrow ACCEPT integrated; chain5 static scope ACCEPT, actual continuation/migration acceptance pending.",
+        "concurrencyAllocation": 1,
+        "lastInspectedAt": "2026-10-14T21:05:49Z"
+      },
+      {
+        "id": "prepare_chain15_continuation",
+        "owner": "/root/repair_iteration_receipt_dependencies/prepare_chain14_continuation",
+        "state": "VERIFIED",
+        "scope": "External source-pinned normal13-to15 plus original27-30 continuation preparation only",
+        "writeScope": "Disposable external driver and static review artifacts",
+        "dependencies": [
+          "repair_iteration_receipt_dependencies"
+        ],
+        "evidence": "Driver19c0e200 and manifest0b2c7d20 independently approved; lead owns active61315 execution.",
+        "concurrencyAllocation": 0,
+        "lastInspectedAt": "2026-10-14T21:05:49Z"
+      },
+      {
+        "id": "audit_stage29_fixture_blocker",
+        "owner": "/root/repair_iteration_receipt_dependencies/audit_stage29_fixture_blocker",
+        "state": "VERIFIED",
+        "scope": "Read-only existing required Stage29 owner fixture/assertion and expiry feasibility audit",
+        "writeScope": "No repository edits or heavy execution",
+        "dependencies": [
+          "repair_iteration_receipt_dependencies"
+        ],
+        "evidence": "Old53/currentc303 line83 failure confirmed; exact assertion inventory and genuine-source fixture proposal delivered, implementation remains pending. Historical replay cannot silently substitute for fresh mutating commands.",
+        "concurrencyAllocation": 0,
+        "lastInspectedAt": "2026-10-14T21:05:49Z"
       }
     ],
     "resources": {
@@ -2008,9 +2049,12 @@
       "cloudChromiumDevTools": "BLOCKED_PERMISSION",
       "ordinaryWindowResize": "AVAILABLE_VERIFIED_1280x800_CAPTURED",
       "requiredNarrowVisualViewports": "BLOCKED_CAPABILITY_NATIVE_WINDOW_MINIMUM_500_CSS_PIXELS",
-      "freeWorkspaceObservedGiB": 8.1,
+      "freeWorkspaceObservedGiB": 1.2,
       "githubConnectorWrite": "AVAILABLE_VERIFIED",
-      "remoteBranchPublication": "AVAILABLE_VERIFIED"
+      "remoteBranchPublication": "AVAILABLE_VERIFIED",
+      "freeWorkspaceObservedAt": "2026-10-14T21:05:11Z",
+      "memoryAvailableObservedGiB": 6.2,
+      "memoryAvailableObservedAt": "2026-10-14T21:03:31Z"
     },
     "branchRules": {
       "rulesetId": 21578362,
@@ -2050,7 +2094,7 @@
     },
     "scheduleState": "FORECAST_NOT_ESTABLISHED",
     "forecast": null,
-    "nextAction": "Retrieve2233 actual terminal; obtain independent narrow integration disposition, then integrate reviewed runtime/owner/catalog changes and execute affected combined checks. All full-owner and human/publication obligations remain open.",
+    "nextAction": "Monitor owning session61315 to its actual terminal. Normal13-to15 public activation has passed; original Stage27 command and remaining27-30 controls are running on c3033739. Independent migration waits for the single heavy slot. Do not restart the prefix, renew expiry, integrate an unreviewed candidate, or infer full-owner PASS.",
     "deploymentObservation": {
       "sourceCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
       "runId": "36958910363",
@@ -2103,11 +2147,11 @@
       "sourceApplied": false
     },
     "currentCriticalPath": [
-      "Resolve actual Stage21 COMPLETE deterministic mismatch and verify21-to22 save/cold-read with independent review before integration",
-      "Publish reviewed integration checkpoint with immutable atomic evidence",
-      "Resolve pending source-contract approval before full governance acceptance",
-      "Renew genuine current implementation coverage/context proof and run required integrated acceptance",
-      "Verify final deployment, physical device and authorized real-project maturity evidence"
+      "Retrieve actual session61315 normal13-to15 activation/reproof and Stage29/30 terminal with original authority expiry21:35:46.722 unchanged; preserve all captured assertions/custody and distinguish partial continuation from full-owner acceptance",
+      "Complete independent chain5 currentness, stale-release, retry/persistence and blocked legacy3 archival activation/forgery/rollback controls; integrate only independently accepted exact candidate",
+      "Repair the pre-existing Stage29 required-owner unsupported synthetic-positive fixture without weakening provenance, then run affected mandatory owners on frozen integrated source",
+      "Renew current catalog source maps and all19 stale independent coverage reviews, collect genuine current producer receipts and execute required integrated acceptance",
+      "Resolve preserved source-contract/human/publication approvals, then verify authorized deployment, physical-device and real-project maturity evidence"
     ],
     "atomicIdentityFollowup": {
       "authorCommit": "fe006bd2f7ecf4a117f305c9cb2592900a9ef0b1",
@@ -2555,7 +2599,7 @@
         "correctionScope": "Future-only nongoverning refutation preserves earlier proof; explicitly not governing-negative coverage",
         "fullWrapper": "NOT_RUN"
       },
-      "renewalSequencing": "Hold additional owner-hash/review renewal until actual Stage21 runtime boundary stabilizes; existing projection10 reviews remain preserved with original scope.",
+      "renewalSequencing": "Earlier Stage21 runtime boundary resolved and integrated. Hold renewed current source maps/reviews/receipts until current chain5/projection15 actual boundary and independent acceptance stabilize; retain all historical review identities.",
       "finalProjection12": {
         "catalogCommit": "c0c20749c4f1b4fe1c7b3b05eb7b7822021303b0",
         "catalogIndependentFocused": "ACCEPT actual60receipt/60omissions,27hashes57sourcenegatives188aggregateomissions; current90 handofflabel collateral defect restored exactactualowner",
@@ -2966,9 +3010,13 @@
         "authorityExpiresAt": "2026-10-14T21:35:46.722Z",
         "scope": "Normal original13 save/cold, current15 activation, ordinary27/28 reproof then exact original29/30 assertions, reviewed decoy negative and actual governing-input controls. Seventeen genuine prefix arrays and three saved scalars retained.",
         "independentReview": "review_release_scope_binding final driver approval21:00:02Z",
-        "latestActualPhase": "validate-original-producer-command",
-        "latestObservedAt": "2026-10-14T21:00:09.247Z",
-        "terminal": "PENDING"
+        "latestActualPhase": "before-stage27-release-command",
+        "latestObservedAt": "2026-10-14T21:05:10.822Z",
+        "terminal": "PENDING",
+        "normalActivation": "PASS_NORMAL_PUBLIC_13_TO_15",
+        "activatedStoredProjectSha256": "4f15f89aecb53962eb4763b0befdb409b4d0ff5f1e17c6782e35267850a15b3e",
+        "activatedRevision": 2,
+        "activatedFullCanonicalSha256": "8fd70a9dc1ec55610b09de5eef6f2511f59fca9b1a2acb39c277a4388122a37b"
       }
     },
     "continuationAmendmentV2": {
@@ -3008,7 +3056,7 @@
       "workerState": {
         "implementationLead": "/root/repair_iteration_receipt_dependencies",
         "independentReviewer": "/root/review_release_scope_binding",
-        "currentCatalogWorker": "/root/repair_iteration_receipt_dependencies/align_release_catalog13",
+        "currentCatalogWorker": "NONE_ACTIVE_PENDING_RUNTIME_FREEZE",
         "currentCatalogScope": [
           "verification-evidence-catalog.mjs",
           "test-normative-catalog-consumers.mjs"
@@ -3022,7 +3070,12 @@
         "currentCatalogState": "COMPLETED_ACCEPTED_INTEGRATED",
         "readyParallelCodeTasks": 0,
         "parallelismReason": "Only ready-state Stage29 causal evidence is pending on frozen shared runtime; production repair and nineteen review renewals depend on it. Catalog implementation/review finished; no duplicate heavy owner.",
-        "criticalPath": "Independent fresh release/decoy binding comparison before chain repair scope freeze"
+        "criticalPath": "Independent fresh release/decoy binding comparison before chain repair scope freeze",
+        "observedAt": "2026-10-14T21:05:49Z",
+        "activeHeavySession": 61315,
+        "activeHeavyOwner": "engineering lead",
+        "currentImplementationCandidate": "c3033739cf64eab98b371b9fe53c6da312976273",
+        "implementationWorkers": "Driver and current-owner wiring preparation completed; lead runs immutable candidate, separate read-only fixture audit completed. Runtime edits frozen during execution."
       },
       "reclaimedCheckout": {
         "path": "/workspace/shared/clrt-align-release4-project13",
@@ -3034,6 +3087,27 @@
         "receiptPath": "/workspace/shared/clrt-iteration-repair-evidence/catalog13-worktree-reclamation.json",
         "freeSpaceAfter": "1.3GiB"
       }
-    }
+    },
+    "historicalManagementSummaries": [
+      {
+        "supersededAt": "2026-10-14T21:05:49Z",
+        "lastInspectedAt": "2026-10-14T19:11:45.643435+00:00",
+        "currentCriticalPath": [
+          "Resolve actual Stage21 COMPLETE deterministic mismatch and verify21-to22 save/cold-read with independent review before integration",
+          "Publish reviewed integration checkpoint with immutable atomic evidence",
+          "Resolve pending source-contract approval before full governance acceptance",
+          "Renew genuine current implementation coverage/context proof and run required integrated acceptance",
+          "Verify final deployment, physical device and authorized real-project maturity evidence"
+        ],
+        "nextAction": "Retrieve2233 actual terminal; obtain independent narrow integration disposition, then integrate reviewed runtime/owner/catalog changes and execute affected combined checks. All full-owner and human/publication obligations remain open.",
+        "integrationCommit": "8ba27aaff1e61b3aa8afc0bc4e089e45bc1769df",
+        "instructionPath": "verification/dot-execution-instructions-20261014.txt",
+        "instructionSha256": "98fd6e7799cb7ab004ac1c4a33e5671b165aff2fe171bfdcd5b6627970c65bfe",
+        "suppliedCombinedPromptSha256": "aeb17eaaf77b5c89aa8337fe8288571a497f02b8f422fe282c228bef9ce083db",
+        "reason": "Reconcile authoritative summary with accepted release integration and active chain15 continuation; historical evidence remains unchanged."
+      }
+    ],
+    "currentInstructionMessageId": "Sentinel_4171a7d9ba308191850ae105fcaa1639",
+    "integrationCommitObservation": "Exact controlled branch HEAD immediately before this management-only checkpoint; chain15 candidate is not integrated."
   }
 }
