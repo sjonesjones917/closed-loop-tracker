@@ -1394,7 +1394,7 @@
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "dot",
-    "lastInspectedAt": "2026-10-14T09:29:44.461290Z",
+    "lastInspectedAt": "2026-10-14T09:35:40.338558Z",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -2103,7 +2103,7 @@
       "sourceApplied": false
     },
     "currentCriticalPath": [
-      "Resolve actual post-Stage18 history-save incompatibility, independently replay governing-input/refutation and Stage21-to22 boundaries, then integrate reviewed runtime",
+      "Finish actual final Stage19 adverse-evidence/confirmation and Stage21-to22 boundary outcomes, obtain independent runtime acceptance, and integrate reviewed source",
       "Publish reviewed integration checkpoint with immutable atomic evidence",
       "Resolve pending source-contract approval before full governance acceptance",
       "Renew genuine current implementation coverage/context proof and run required integrated acceptance",
@@ -2220,7 +2220,7 @@
         "oldCorrectedIterationRun": "LOST_EXECUTOR_OUTCOME_NO_PASS_OR_FAILURE_INFERRED"
       },
       "iterationReceiptDependencies": {
-        "state": "IN_REVIEW_CANONICAL_EVIDENCE_SERIALIZATION_CORRECTION",
+        "state": "IN_REVIEW_FINAL_FIRST_STAGE19_SAVE_PASS_REMAINING_TAIL_PENDING",
         "owner": "/root/repair_iteration_receipt_dependencies",
         "reviewer": "/root/review_iteration_receipt_repair",
         "baseCommit": "39a968f8c3cf6af9c5745a891a4c6ecd9209b6ec",
@@ -2229,7 +2229,7 @@
         "authorObservedTip": "fbc3ac40a96b5482bafb6968bb6df9130ab2e5ee",
         "fullOwner": "FAILED_HISTORY_VERSION_INCOMPATIBLE_AFTER_STAGE18",
         "requiredMigration": "Actual saved projection7/convergence4 refresh failed on candidate; independently reproduced; versioned activation extension authorized with forged-state and rollback negatives",
-        "currentJourney": "Final frozen fbc resumed corrected journey accepted all ten corrected runs and verifications, Stage17 revision271 and Stage18 revision272; terminal exit1 HISTORY_VERSION_INCOMPATIBLE while preparing later history commit",
+        "currentJourney": "Final frozen retainedStage17 continuation validated original input, activated9, calculated6 convergence and accepted first Stage19 run with save/cold-read; remaining confirmations/adverse evidence and21-to22 not complete",
         "independentFocused": "PASS precise preimages, versioned /7-to-/8 activation, raw preservation, forgery rejection, atomic rollback, eight timing faults and current carrier metadata negatives",
         "currentConsumerCorrection": {
           "commit": "2853596656e211952c65acdb0d82b6b3e68d467f",
@@ -2248,7 +2248,11 @@
           "priorRejectedCandidate": "210e6455 missing exact legacy5 registration; corrected6cbd745a and independently verified",
           "status": "ACTUAL_FAILING_OPERATION_PASSED_DIAGNOSTIC_ON210_FINAL_SOURCE_REPLAY_PENDING"
         },
-        "independentOldProjection8Activation": "PASS on6cbd: original saved18 raw/receipts/history unchanged, old5 noncurrent, gates18/19 blocked, second refresh idempotent; further forgery/rollback checks in progress"
+        "independentOldProjection8Activation": "PASS on6cbd: original saved18 raw/receipts/history unchanged, old5 noncurrent, gates18/19 blocked, second refresh idempotent; further forgery/rollback checks in progress",
+        "finalFrozenJourneySource": "ec99782e1435abe421937ac633770cc6a74fba30",
+        "finalTimingControls": "PASS all8 original injected faults",
+        "finalCarrierMetadata": "PASS46groups354entries and2 negatives",
+        "resumedPrefixCountsAsFreshExecution": false
       }
     },
     "evidencePublication": {
@@ -2301,16 +2305,16 @@
         "evidencePath": "verification/dot-execution-20261014/job-registry-review"
       },
       "freshCanonicalReview": {
-        "state": "PRESERVED_PRIOR_CANDIDATE_REVIEW_RENEWAL_REQUIRED_FOR_PROJECTION9",
-        "sourceCommit": "28601d57a5b01268b90203808733cd00062ec1ad",
-        "reviewCommit": "a29cf397dd718bb3fa221892d83e4e17df2e9f43",
+        "state": "ACCEPTED_ON_PROJECTION9_PENDING_INTEGRATION_AND_CURRENT_RECEIPTS",
+        "sourceCommit": "520202354e760b97a50502cff6d5f6d41728d16e",
+        "reviewCommit": "95f6cab1327e1a2d4af90878cc157800cca7c65e",
         "acceptedAtoms": 14,
         "executionReceiptsCollected": false
       },
       "migrationPreservationReview": {
-        "state": "PRESERVED_PRIOR_CANDIDATE_REVIEW_RENEWAL_REQUIRED_FOR_PROJECTION9",
-        "sourceCommit": "28601d57a5b01268b90203808733cd00062ec1ad",
-        "reviewCommit": "9cdf47b415dbe4eb6160a689eba51052ff261c61",
+        "state": "ACCEPTED_ON_PROJECTION9_PENDING_INTEGRATION_AND_CURRENT_RECEIPTS",
+        "sourceCommit": "520202354e760b97a50502cff6d5f6d41728d16e",
+        "reviewCommit": "070692b2bd27e7c4cf12a8db622b6ab2d2c0cc08",
         "acceptedAtoms": 5,
         "producerFaults": 26,
         "publicRoutes": 3,
@@ -2319,7 +2323,8 @@
           379,
           22
         ],
-        "executionReceiptsCollected": false
+        "executionReceiptsCollected": false,
+        "reviewedOwnerMetadataLeaves": 12
       },
       "operationPropertyVerifier": {
         "state": "INDEPENDENTLY_ACCEPTED_INTEGRATED_FOCUSED_PASS",
@@ -2335,15 +2340,17 @@
         "fullOwnerOnOldRuntime": "PREEXISTING_CARRIER_DERIVATION_SOURCE_ORACLE_FAILURE_PRESERVED"
       },
       "currentProjection9Catalog": {
-        "candidate": "5732b26d3927f545f297a0240955a16688dac443",
+        "candidate": "520202354e760b97a50502cff6d5f6d41728d16e",
         "base": "dcbc24e7a3467f2f3319c4d9583f11fd941fe08d",
-        "state": "AWAITING_INDEPENDENT_REVIEW",
+        "state": "INDEPENDENTLY_ACCEPTED_FOCUSED_PENDING_RUNTIME_INTEGRATION",
         "actualReceiptCases": 60,
         "receiptOmissionsRejected": 60,
         "directActivationControls": 187,
         "aggregateActivationControls": 188,
         "migrationControls": 379,
-        "fullWrapper": "NOT_RUN"
+        "fullWrapper": "NOT_RUN",
+        "sourceMapControls": 27,
+        "wrongMissingHistoricalSourceNegatives": 9
       }
     },
     "verificationEfficiencyAssessment": {
