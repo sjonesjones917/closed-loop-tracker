@@ -1394,7 +1394,7 @@
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "/root/repair_iteration_receipt_dependencies",
-    "lastInspectedAt": "2026-10-14T23:51:49Z",
+    "lastInspectedAt": "2026-10-14T23:53:50Z",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -2094,7 +2094,7 @@
     },
     "scheduleState": "FORECAST_NOT_ESTABLISHED",
     "forecast": null,
-    "nextAction": "Retrieve actual60159 short migration receipt and bounded65659/root73329 survival observations. No duplicate original100eb long prefix:14240 is Unknown with no positive checkpoint/receipt. Supported environment catalog empty; existing Pages PR route requires still-pending publication approval. Preserve schedule unchanged pending user response; collect useful short genuine frozen-source receipts and diagnose execution survival without new orchestration.",
+    "nextAction": "Finish bounded root/lead survival comparison; long original owner remains blocked by session loss with no positive checkpoint. Review sole missing migration catalog expectation descriptor without weakening receipt/serialization, then collect fresh short receipts on exact successor. Frozen100eb actual hash receipt independently proves14canonical atoms only; migration receipt inadmissible and formal full-owner/sharedStage29/global acceptance pending. Publication approval and user schedule-pause request remain unresolved; no external action or schedule change.",
     "deploymentObservation": {
       "sourceCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
       "runId": "36958910363",
@@ -2147,7 +2147,7 @@
       "sourceApplied": false
     },
     "currentCriticalPath": [
-      "Retrieve actual60159 short migration receipt and bounded65659/root73329 survival observations. No duplicate original100eb long prefix:14240 is Unknown with no positive checkpoint/receipt. Supported environment catalog empty; existing Pages PR route requires still-pending publication approval. Preserve schedule unchanged pending user response; collect useful short genuine frozen-source receipts and diagnose execution survival without new orchestration.",
+      "Finish bounded root/lead survival comparison; long original owner remains blocked by session loss with no positive checkpoint. Review sole missing migration catalog expectation descriptor without weakening receipt/serialization, then collect fresh short receipts on exact successor. Frozen100eb actual hash receipt independently proves14canonical atoms only; migration receipt inadmissible and formal full-owner/sharedStage29/global acceptance pending. Publication approval and user schedule-pause request remain unresolved; no external action or schedule change.",
       "Collect genuine current required producer receipts and validate19 current independently reviewed coverage declarations; source reviews are no longer stale.",
       "Complete integrated broad conformance and required governed/default/browser acceptance with truthful partial-run limits.",
       "Resolve preserved source-contract/human/publication approvals, then verify authorized deployment, physical-device and real-project maturity evidence"
@@ -3356,13 +3356,29 @@
         "status": "PASS_VALIDATED",
         "observations": 19,
         "receiptSha256": "d51cd73fbe7c4c8b077dfafb15d03c105ca4f1d7d53a7bf87510a21d73879e54",
-        "directory": "/workspace/shared/clrt-iteration-repair-evidence/frozen-100eb46d-short-receipts"
+        "directory": "/workspace/shared/clrt-iteration-repair-evidence/frozen-100eb46d-short-receipts",
+        "coverageEvaluation": {
+          "status": "CONFORMANT_PROVEN",
+          "canonicalAtoms": 14,
+          "sourceCommit": "100eb46d637bb1cb27e72eebe0f6840f81f0df1e",
+          "evidence": "/workspace/shared/canonical15-actual-receipt-evaluation.json",
+          "remainingCanonicalOwners": [],
+          "unsupportedAtoms": "Array-normalizer and implementation-object atoms remain UNKNOWN with no reviewed full coverage declaration.",
+          "promotion": "None; no claim against management successor/global acceptance."
+        }
       },
       "migration": {
-        "status": "RUNNING",
+        "status": "BODY_PASS_PERSISTED_RECEIPT_REJECTED",
         "owningSession": 60159,
         "startedAt": "2026-10-14T23:51:20Z",
-        "directory": "/workspace/shared/clrt-iteration-repair-evidence/frozen-100eb46d-migration-receipt"
+        "directory": "/workspace/shared/clrt-iteration-repair-evidence/frozen-100eb46d-migration-receipt",
+        "wrapperExitCode": 1,
+        "bodyExitCode": 0,
+        "endedAt": "2026-10-14T23:52:40Z",
+        "receiptSha256": "4e1362d9622b3d54f36d966c256b4138f738a6d0c7fc8654012e25fd7f6826bd",
+        "passingObservations": 8,
+        "reason": "migration.current-profile catalog entry has no expected/expectedDescription. Fresh recomputed observation owns expected:undefined; JSON-persisted observation omits it. Strict receipt validator correctly rejects; no receipt admission or rewriting.",
+        "next": "Independent narrow explicit catalog expectation-description proposal and serialized-observation regression; fresh producer required after reviewed freeze."
       }
     },
     "executionSurvivalComparison": {
