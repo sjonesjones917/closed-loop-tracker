@@ -1,0 +1,40 @@
+{
+  "subject": "4635b6af0e71b84875a61d51e4e6fe7ecbc24bbf",
+  "synthetic": true,
+  "independentlyAuthored": true,
+  "results": [
+    {
+      "name": "duplicate-text-distinct-occurrences-positive",
+      "result": "FAIL",
+      "message": "Atomic changed singleton historical context duplicated"
+    },
+    {
+      "name": "two-old-to-one-current-without-delta",
+      "result": "PASS"
+    },
+    {
+      "name": "duplicate-exact-old-anchor",
+      "result": "PASS"
+    },
+    {
+      "name": "retention-reuses-current-anchor",
+      "result": "PASS"
+    },
+    {
+      "name": "surviving-text-without-occurrence-review",
+      "result": "PASS"
+    },
+    {
+      "name": "remove-retained-occurrence",
+      "result": "PASS"
+    },
+    {
+      "name": "duplicate-removal-delta",
+      "result": "PASS"
+    },
+    {
+      "name": "stale-prior-context-bytes",
+      "result": "PASS"
+    }
+  ]
+}

@@ -1390,11 +1390,11 @@
     "startingSourceCommit": "7df5f46e9a7e54da09622387a978badb39916c09",
     "startingMainCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
     "integrationBranch": "dot/published-execution-20261014",
-    "integrationCommit": "15a71be64ac46a90a21e9fea20bee91893d513dd",
+    "integrationCommit": "8a21c78187bf2af6ab669f9bae053858659e1932",
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "dot",
-    "lastInspectedAt": "2026-10-14T05:54:21Z",
+    "lastInspectedAt": "2026-10-14T06:02:11Z",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -1958,6 +1958,15 @@
       "sourceSuites": "PASS",
       "appAcceptance": false,
       "remaining": "Section coverage, typed component-governor scope, actual final extraction/reconciliation integration"
+    },
+    "atomicRepeatedContextFollowup": {
+      "authorCommit": "14880c1f13fd4addc23b62136f23337c81f05ce5",
+      "state": "INTEGRATED",
+      "independentReviewSha256": "e4122ed3e40933f97f200fce01c81697bf365977cc02cdd2a2764592a13426b2",
+      "evidencePath": "verification/dot-execution-20261014/repeated-context-review/final-review.txt",
+      "integratedControls": 170,
+      "sourceSuites": "PASS",
+      "appAcceptance": false
     }
   }
 }
