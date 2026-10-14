@@ -615,14 +615,15 @@ export async function verifyAcceptedGoverningRefutation({sourceProject,artifacts
   assert.equal(negativeRuntime.runtime.closedLoopHash.sha256Value(adverse),originalCanonicalSha,'GOVERNED_CONTEXT_PERSISTENCE_PRESERVES_PROJECT');
   adverse=await negativeRuntime.store.writeProject(adverse,{createOnly:true,expectedProjectRevision:0,incrementRevision:false});
   adverse=await negativeRuntime.store.readProject(adverse.job.JOB_ID);
+  const capture=async label=>{if(onCheckpoint)await onCheckpoint({label,r:negativeRuntime,p:adverse,sources,snapshot:snapshot(negativeRuntime,adverse,sources)});};
+  await capture('governed19-initial-public-save');
   assert.equal(negativeRuntime.store.validateProjectIntegrity(adverse).valid,true,'GOVERNED_INITIAL_PUBLIC_SAVE_INTEGRITY');assert.deepEqual(plain(adverse.projectData.rawResponses),originalRaw,'GOVERNED_INITIAL_SAVE_PRESERVES_RAW');assert.deepEqual(plain(adverse.projectData.convergenceRecords),originalConvergence,'GOVERNED_INITIAL_SAVE_PRESERVES_PRIOR_PROOF');assert.deepEqual(plain(adverse.projectData.history.slice(0,originalHistory.length)),originalHistory,'GOVERNED_INITIAL_SAVE_PRESERVES_HISTORY');
   const prop=propositionId,test=ne.records(adverse,'tests').find(row=>row.id===testId),req=ne.recordValue(test,'REQ_ID');
   const governingConvergence=ne.recordsForScope(adverse,'convergenceRecords',ne.convergenceCalculation(adverse).scope).at(-1);assert(governingConvergence&&ne.convergenceRecordCurrent(adverse,governingConvergence),'GOVERNED_CURRENT_SOURCE_CONVERGENCE');const convergenceRecordId=governingConvergence.id;
   const receiptBefore=JSON.stringify(adverse.projectData.convergenceRecords.find(row=>row.id===convergenceRecordId).derivationReceipt);
   const iteration19=ne.records(adverse,'iterations').filter(row=>Number(row.stage)===19).at(-1);assert(iteration19);assert.equal(ne.recordsForIteration(adverse,'runs',iteration19.id).length,0,'GOVERNED_BRANCH_REQUIRES_EMPTY19');assert.equal(ne.gate(18,adverse).complete,true);assert.equal(ne.stageEntryState(adverse,19).allowed,true);
-  const capture=async label=>{if(onCheckpoint)await onCheckpoint({label,r:negativeRuntime,p:adverse,sources,snapshot:snapshot(negativeRuntime,adverse,sources)});};
   const schedule=ne.deriveLeafTimingSchedule(adverse,prop);
-  assert.equal(schedule.resolved,true);assert.equal(schedule.entries.length,1);assert.equal(schedule.entries[0].SOURCE_ID,testId);assert.equal(ne.testDueState(adverse,test,18,{perRunOnly:true}).dueNow,true);
+  assert.equal(schedule.resolved,true);assert.equal(schedule.entries.length,1);assert.equal(schedule.entries[0].SOURCE_ID,testId);const pendingDue=ne.testDueState(adverse,test,18,{perRunOnly:true});assert.equal(pendingDue.valid,true);assert.equal(pendingDue.phaseEligible,true);assert(pendingDue.requiredByStage<=18);assert.equal(pendingDue.targetAvailability,'FALSE');assert.equal(pendingDue.dueNow,false);
   try {
     await capture('governed19-before-isolated-runs');
     const outputRows=[];
@@ -631,7 +632,7 @@ export async function verifyAcceptedGoverningRefutation({sourceProject,artifacts
       adverse=result.p;
       const run=ne.records(adverse,'runs').find(row=>ne.recordValue(row,'COMPLETE_OUTPUT')===output);assert(run);outputRows.push({run,output});
     }
-    assert.equal(ne.recordsForIteration(adverse,'runs',iteration19.id).length,2,'GOVERNED_BRANCH_EXACT_TWO_RUNS');
+    assert.equal(ne.recordsForIteration(adverse,'runs',iteration19.id).length,2,'GOVERNED_BRANCH_EXACT_TWO_RUNS');assert.equal(ne.testDueState(adverse,test,18,{perRunOnly:true}).dueNow,true,'GOVERNED_DUE_AFTER_ACTUAL_RUN_TARGET');
     await capture('governed19-before-accepted-observations');
     for(const [index,{run,output}] of outputRows.entries()){
       const supported=output.startsWith('complete-output-');assert.equal(supported,index===0);
