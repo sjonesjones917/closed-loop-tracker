@@ -7,5 +7,41 @@
     "reviewEvidenceCommit": "1cb5f2d9197732c85b98fe26c283ffb39121b1d0",
     "uniqueEvidenceOutsideCheckout": true,
     "restoreCommand": "git worktree add --detach /workspace/shared/clrt-review-receipt-label 2853596656e211952c65acdb0d82b6b3e68d467f"
+  },
+  {
+    "at": "2026-10-14T11:44:14.551700+00:00",
+    "path": "/workspace/shared/clrt-iteration-frozen-06fd2215",
+    "commit": "06fd2215756a06b9e201db27db68ac5dd5e3e459",
+    "status": "CLEAN_INACTIVE_CONFIRMED_BY_OWNER_AND_VERIFIED",
+    "uniqueEvidenceOutsideCheckout": true,
+    "restoreCommand": "git worktree add --detach /workspace/shared/clrt-iteration-frozen-06fd2215 06fd2215756a06b9e201db27db68ac5dd5e3e459",
+    "removalConfirmed": true
+  },
+  {
+    "at": "2026-10-14T11:44:14.595391+00:00",
+    "path": "/workspace/shared/clrt-iteration-frozen-1a2992f2",
+    "commit": "1a2992f2a2bbe8d99b954fb9bc3aed2f30bb51a1",
+    "status": "CLEAN_INACTIVE_CONFIRMED_BY_OWNER_AND_VERIFIED",
+    "uniqueEvidenceOutsideCheckout": true,
+    "restoreCommand": "git worktree add --detach /workspace/shared/clrt-iteration-frozen-1a2992f2 1a2992f2a2bbe8d99b954fb9bc3aed2f30bb51a1",
+    "removalConfirmed": true
+  },
+  {
+    "at": "2026-10-14T11:44:14.645926+00:00",
+    "path": "/workspace/shared/clrt-iteration-frozen-28535966",
+    "commit": "2853596656e211952c65acdb0d82b6b3e68d467f",
+    "status": "CLEAN_INACTIVE_CONFIRMED_BY_OWNER_AND_VERIFIED",
+    "uniqueEvidenceOutsideCheckout": true,
+    "restoreCommand": "git worktree add --detach /workspace/shared/clrt-iteration-frozen-28535966 2853596656e211952c65acdb0d82b6b3e68d467f",
+    "removalConfirmed": true
+  },
+  {
+    "at": "2026-10-14T11:44:14.689767+00:00",
+    "path": "/workspace/shared/clrt-iteration-frozen-a0330391",
+    "commit": "a03303913dff88ac855ae9e96765852ebb6e6ba9",
+    "status": "CLEAN_INACTIVE_CONFIRMED_BY_OWNER_AND_VERIFIED",
+    "uniqueEvidenceOutsideCheckout": true,
+    "restoreCommand": "git worktree add --detach /workspace/shared/clrt-iteration-frozen-a0330391 a03303913dff88ac855ae9e96765852ebb6e6ba9",
+    "removalConfirmed": true
   }
 ]
