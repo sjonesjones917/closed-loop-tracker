@@ -252,6 +252,75 @@ function runRecords(r, contamination) {
   return prompt => ({runs: [recordProposal(r.runtime.closedLoopWorkflowSchema, 'runs', {targetId: prompt.scope.runId, overrides: {FRESH_CONTEXT_RECORD: prompt.scope.contextId, CONTAMINATION_CHECK: contamination, TOOL_CONFIGURATION: 'Synthetic isolated executor, no real external actor', EXECUTION_STATUS: 'COMPLETED', COMPLETE_OUTPUT: 'VERIFIED\n'}})]});
 }
 
+// Bounded Stage11/12 boundary owner. Reuse the exact retained prerequisite and
+// production package/staging/acceptance/store path without the later correction
+// journey. Retained history is input only; every gate is checked on this runtime.
+export async function verifyStage11AcceptedBoundary() {
+  const sources = Object.fromEntries(runtimeFiles.map(file => [file, fs.readFileSync(file, 'utf8')]));
+  let {r, p, prerequisiteSha256, decodedPrerequisiteSha256} = await prerequisite(sources);
+  const cases = [];
+  for (let index = 0; index < 9; index++) ({p} = await submit(r, p, 11, 'EXECUTE_RUN', runRecords(r, 'NONE')));
+  assert.equal(r.engine.acceptedChanges(p, 11).length, 9);
+  assert.equal(r.engine.gate(11, p).complete, false, 'STAGE11_BOUNDARY_NINE_BLOCKED');
+  assert.equal(r.engine.stageEntryState(p, 12).allowed, false, 'STAGE11_BOUNDARY_NINE_NO_ENTRY');
+  cases.push({caseId: 'nine-accepted-runs', stage11Complete: false, stage12EntryAllowed: false});
+  const nine = snapshot(r, p, sources);
+  const clean = await submit(r, p, 11, 'EXECUTE_RUN', runRecords(r, 'NONE'));
+  p = clean.p;
+  const e = r.engine, iterationId = clean.prompt.scope.iterationId;
+  const runs = e.recordsForIteration(p, 'runs', iterationId), runId = clean.prompt.scope.runId;
+  const change = e.acceptedChanges(p, 11).find(row => row.scope.runId === runId);
+  assert.equal(runs.length, 10);
+  assert.equal(e.gate(11, p).complete, true, 'STAGE11_BOUNDARY_TEN_COMPLETE');
+  const stage12 = e.gate(12, p), matrix = e.verificationMatrix(p, iterationId);
+  assert.equal(stage12.complete, false, 'STAGE11_BOUNDARY_STAGE12_STILL_INCOMPLETE');
+  assert(matrix.expected.length > 0 && matrix.missing.length > 0, 'STAGE11_BOUNDARY_DUE_MATRIX_MISSING');
+  assert(stage12.reasons.some(reason => /REQ × RUN × TEST|coverage/i.test(reason)), 'STAGE11_BOUNDARY_MATRIX_GATE_REASON');
+  cases.push({caseId: 'ten-clean-accepted-runs-without-stage12-results', stage11Complete: true, stage12Complete: false, expectedVerificationCount: matrix.expected.length, missingVerificationCount: matrix.missing.length, actualPackage: true, actualStagedResponse: true, actualCommitReload: true});
+  const run = state => state.projectData.runs.find(row => row.id === runId);
+  const raw = state => state.projectData.rawResponses.find(row => row.rawResponseId === change.rawResponseId);
+  const receipt = state => state.projectData.outputReceipts.find(row => row.acceptedCanonicalChangeId === change.changeId);
+  const set = (row, field, value, family) => { row.fields[field] = row[field] = r.copy(value); e.refreshRecordHashes(row, family); };
+  const faults = [
+    ['missing-accepted-proposal', state => { state.projectData.responseProposals = state.projectData.responseProposals.filter(row => row.proposalId !== change.proposalId); }, true],
+    ['missing-output-receipt', state => { state.projectData.outputReceipts = state.projectData.outputReceipts.filter(row => row.acceptedCanonicalChangeId !== change.changeId); }, true],
+    ['misbound-output-receipt', state => { receipt(state).runId = runs[0].id; }, true],
+    ['missing-original-bytes', state => { delete raw(state).completeRawResponse; }, true],
+    ['tampered-original-bytes', state => { raw(state).completeRawResponse += ' '; }, true],
+    ['canonical-submitted-field-disagreement', state => set(run(state), 'COMPLETE_OUTPUT', 'ALTERED', 'runs'), true],
+    ['duplicate-context', state => {
+      const contexts = runs.slice(0, 2).map(row => state.projectData.freshContexts.find(context => context.id === e.recordValue(row, 'CONTEXT_ID')));
+      for (const context of contexts) set(context, 'EXTERNAL_CONTEXT_IDENTIFIER', 'SYNTHETIC-SAME-EXTERNAL-CONTEXT', 'freshContexts');
+    }, false],
+    ['missing-tenth-run', state => { state.projectData.runs = state.projectData.runs.filter(row => row.id !== runId); }, false],
+    ['candidate-mismatch', state => set(run(state), 'CANDIDATE_ID', 'FOREIGN-CANDIDATE', 'runs'), false],
+    ['candidate-hash-set-missing', state => {
+      const candidate = state.projectData.candidateFreezes.find(row => row.id === clean.prompt.scope.candidateId);
+      set(candidate, 'COMPONENT_HASHES', {}, 'candidateFreezes');
+    }, false]
+  ];
+  for (const [caseId, inject, provenanceFault] of faults) {
+    const state = r.copy(p); inject(state);
+    e.recalculate(state);
+    assert.equal(e.gate(11, state).complete, false, 'STAGE11_BOUNDARY_NEGATIVE ' + caseId);
+    if (provenanceFault) {
+      assert.equal(e.evaluateIteration(state, iterationId, 'INITIAL').executionEvidenceComplete, false, 'STAGE11_BOUNDARY_PROVENANCE ' + caseId);
+      assert.equal(e.stageEntryState(state, 12).allowed, false, 'STAGE11_BOUNDARY_NO_FALSE_DIAGNOSTIC_ENTRY ' + caseId);
+    }
+    cases.push({caseId, faultInjected: true, stage11Complete: false, provenanceFault, boundary: 'Isolated copy of accepted clean cohort; no corrupt persistence claim.'});
+  }
+  // A real accepted contamination response is distinct from broken provenance:
+  // it blocks completion but retains the existing diagnostic Stage12 entry.
+  ({r, p} = await restore(nine, sources));
+  const contaminated = await submit(r, p, 11, 'EXECUTE_RUN', runRecords(r, 'CONTAMINATED'));
+  p = contaminated.p;
+  assert.equal(r.engine.gate(11, p).complete, false, 'STAGE11_BOUNDARY_CONTAMINATION_BLOCKED');
+  assert.equal(r.engine.stageEntryState(p, 12).allowed, true, 'STAGE11_BOUNDARY_CONTAMINATION_DIAGNOSTIC_ENTRY');
+  assert.equal(JSON.parse(r.ingestion.findRaw(p, contaminated.rawResponseId).completeRawResponse).records.runs[0].fields.CONTAMINATION_CHECK, 'CONTAMINATED');
+  cases.push({caseId: 'actual-accepted-contamination', stage11Complete: false, stage12EntryAllowed: true, rawSha256: contaminated.rawSha256});
+  return {passed: true, synthetic: true, actualBrowser: false, physicalDeviceAcceptance: false, earlierCompleteFlagsForced: false, prerequisiteSha256, decodedPrerequisiteSha256, sourceSha256: Object.fromEntries(Object.entries(sources).map(([file, source]) => [file, sha(source)])), cleanRawSha256: clean.rawSha256, cases};
+}
+
 export async function verifyAcceptedRunCorrectionJourney({sourceOverrides = {}, retainedNineRunPrefix = null, retainedStage12Prefix = null, retainedProducerSources = null, onCheckpoint = null, onProgress = () => {}} = {}) {
   const startedAt = new Date().toISOString(), started = performance.now();
   const sources = Object.fromEntries(runtimeFiles.map(file => [file, sourceOverrides[file] ?? fs.readFileSync(file, 'utf8')]));

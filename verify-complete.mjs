@@ -1,3 +1,4 @@
+import {verifyStage11AcceptedBoundary} from './test-accepted-run-correction-journey.mjs';
 import {verifyOperationalResponseMetricControls} from './test-operational-response-metrics.mjs';
 import {verifyAcceptedExternalResponseMetrics} from './test-accepted-external-response-metrics.mjs';
 import {projectStoreRuntime,bindArtifactFixture} from './test-project-store-runtime.mjs';
@@ -242,7 +243,8 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
 }
 
 
-// Stage 11 initial execution completion does not depend on Stage 12 verification triples.
+// The former hand-seeded purported positive is counterfeit provenance and must
+// remain rejected; actual accepted Stage11/12 boundary coverage follows.
 {
   const p=project('JOB-STAGE11-BOUNDARY');
   p.job.CURRENT_ITERATION='ITERATION-STAGE11';p.stages[10].status='COMPLETE';
@@ -255,9 +257,13 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
     p.projectData.acceptedChanges.push({changeId:`CHANGE-STAGE11-${i}`,stage:11,status:'COMMITTED',responseType:'DATA_PROPOSAL',operation:'EXECUTE_RUN',rawResponseId:`RAW-STAGE11-${i}`,scope:{iterationId:'ITERATION-STAGE11',candidateId:'CANDIDATE-STAGE11',runId:`RUN-STAGE11-${i}`,contextId:`CONTEXT-STAGE11-${i}`}});
     p.projectData.rawResponses.push({rawResponseId:`RAW-STAGE11-${i}`,stage:11});p.projectData.outputReceipts.push({receiptId:`RECEIPT-STAGE11-${i}`,rawResponseId:`RAW-STAGE11-${i}`,stage:11,iteration:'ITERATION-STAGE11',runId:`RUN-STAGE11-${i}`,contextId:`CONTEXT-STAGE11-${i}`});
   }
-  const stage11=engine.gate(11,p);assert(stage11.complete,`Stage 11 incorrectly depends on Stage 12 verification data: ${stage11.reasons.join('; ')}`);
-  const stage12=engine.gate(12,p);assert(!stage12.complete&&stage12.reasons.some(r=>/REQ × RUN × TEST|coverage/i.test(r)),'Stage 12 completed without verification triples.');
+  const stage11=engine.gate(11,p);
+  assert(!stage11.complete&&stage11.reasons.some(reason=>reason.includes('exact accepted proposal')),'STAGE11_COUNTERFEIT_PROVENANCE_REJECTED_ORACLE');
 }
+
+// Stage11 completion uses actual accepted provenance without subsequent Stage12 results.
+const stage11AcceptedBoundary = await verifyStage11AcceptedBoundary();
+console.log(JSON.stringify({stage11AcceptedBoundary}));
 
 // Current-scope selection excludes historical scoped records.
 {
