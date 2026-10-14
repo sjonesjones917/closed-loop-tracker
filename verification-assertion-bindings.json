@@ -3943,6 +3943,1062 @@
           "sha256": "0a3c337258c7b981b128551ba4e66b16f98e9c489b56eaa66ff2c48836eace1d"
         }
       }
+    },
+    {
+      "normativeRequirementId": "NREQ-53d93ea3ee22ca715e8d76bf01e625ad",
+      "sourceLineSha256": "6283c8567ee690f47f1e60c3fa196a4f96030e2f665ed70fd10256018da07e40",
+      "atomicObligationSha256": "555887c23f5de345124a141544df6cb2762d51882e5a63794d497c731734cf18",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 JOB_TITLE.producer declaration only: independently transcribed source tuple checks both JOB_FIELDS.JOB_TITLE and FIELD_REGISTRY[\"JOB.JOB_TITLE\"]; a coherent two-declaration producer mutation is rejected by SPECIFICATION_JOB_PRODUCER_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for JOB_TITLE is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1180 specifies HUMAN_DECISION. Actual HUMAN_DECISION writer authority and rejection of wrong-producer writes at the owning command/response acceptance and persistence boundaries for JOB_TITLE are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-5a8b1e352093cd2533dee2ea6c5d5d9c",
+      "sourceLineSha256": "6283c8567ee690f47f1e60c3fa196a4f96030e2f665ed70fd10256018da07e40",
+      "atomicObligationSha256": "3bbdcdfcff4000645de3011da4d4aa2807a734bdc5409eeb807e82d461cd3fcd",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 JOB_TITLE.valueType declaration only: independently transcribed source tuple checks both JOB_FIELDS.JOB_TITLE and FIELD_REGISTRY[\"JOB.JOB_TITLE\"]; a coherent two-declaration valueType mutation is rejected by SPECIFICATION_JOB_TYPE_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for JOB_TITLE is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1180 specifies String. Actual String value admission and rejection at the owning canonical write/load boundary for JOB_TITLE are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-35e2199daae8019bd9a15d729dc29b2c",
+      "sourceLineSha256": "2e649b521e6ca2fc4ef26c22825f90363ae7019c8397152e0a12cf9f3f3f9993",
+      "atomicObligationSha256": "b1487f8dd96d41cef9f2412fd2d3146bc20b7986d2532c728a1d2374e8b54b2e",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 JOB_OWNER.producer declaration only: independently transcribed source tuple checks both JOB_FIELDS.JOB_OWNER and FIELD_REGISTRY[\"JOB.JOB_OWNER\"]; a coherent two-declaration producer mutation is rejected by SPECIFICATION_JOB_PRODUCER_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for JOB_OWNER is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1181 specifies HUMAN_DECISION. Actual HUMAN_DECISION writer authority and rejection of wrong-producer writes at the owning command/response acceptance and persistence boundaries for JOB_OWNER are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-dd8850c5c6fdbcd343859f0d7240ba5c",
+      "sourceLineSha256": "2e649b521e6ca2fc4ef26c22825f90363ae7019c8397152e0a12cf9f3f3f9993",
+      "atomicObligationSha256": "24e171d84b3a75025da780f71c0d416b9d904030c9582843035f851c5781bd5c",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 JOB_OWNER.valueType declaration only: independently transcribed source tuple checks both JOB_FIELDS.JOB_OWNER and FIELD_REGISTRY[\"JOB.JOB_OWNER\"]; a coherent two-declaration valueType mutation is rejected by SPECIFICATION_JOB_TYPE_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for JOB_OWNER is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1181 specifies String. Actual String value admission and rejection at the owning canonical write/load boundary for JOB_OWNER are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-37b7248bf58abcd833f5e08f897a6efc",
+      "sourceLineSha256": "e531b3e3d3c68f2bfdf89a7945345561e47349cb6a145f5f3fae011242bf3e72",
+      "atomicObligationSha256": "003b70be27661a718f91606081f951e1ec570770ed03a6641ddebc1b0386bf76",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 EXACT_USER_OBJECTIVE_VERBATIM.producer declaration only: independently transcribed source tuple checks both JOB_FIELDS.EXACT_USER_OBJECTIVE_VERBATIM and FIELD_REGISTRY[\"JOB.EXACT_USER_OBJECTIVE_VERBATIM\"]; a coherent two-declaration producer mutation is rejected by SPECIFICATION_JOB_PRODUCER_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for EXACT_USER_OBJECTIVE_VERBATIM is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1182 specifies HUMAN. Actual HUMAN writer authority and rejection of wrong-producer writes at the owning command/response acceptance and persistence boundaries for EXACT_USER_OBJECTIVE_VERBATIM are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-b073a07ed47193c168b5ce272830f612",
+      "sourceLineSha256": "e531b3e3d3c68f2bfdf89a7945345561e47349cb6a145f5f3fae011242bf3e72",
+      "atomicObligationSha256": "7cdd6abca08de194e050d7f3c932e22c23840052ccee3e1f4c28dd99f462936e",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 EXACT_USER_OBJECTIVE_VERBATIM.valueType declaration only: independently transcribed source tuple checks both JOB_FIELDS.EXACT_USER_OBJECTIVE_VERBATIM and FIELD_REGISTRY[\"JOB.EXACT_USER_OBJECTIVE_VERBATIM\"]; a coherent two-declaration valueType mutation is rejected by SPECIFICATION_JOB_TYPE_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for EXACT_USER_OBJECTIVE_VERBATIM is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1182 specifies String. Actual String value admission and rejection at the owning canonical write/load boundary for EXACT_USER_OBJECTIVE_VERBATIM are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-e691e1685f937f46500c976dc1a1e80a",
+      "sourceLineSha256": "e633ea1b80345fbef1532b6265b76d81a93f837e964ac4a20427500a9aef676f",
+      "atomicObligationSha256": "986cea4728620d587641fa9a7c9f6def225e04bfeeec85dd6da015989d2c7ace",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 SUPPLIED_MATERIALS_INVENTORY.producer declaration only: independently transcribed source tuple checks both JOB_FIELDS.SUPPLIED_MATERIALS_INVENTORY and FIELD_REGISTRY[\"JOB.SUPPLIED_MATERIALS_INVENTORY\"]; a coherent two-declaration producer mutation is rejected by SPECIFICATION_JOB_PRODUCER_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for SUPPLIED_MATERIALS_INVENTORY is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1183 specifies HUMAN. Actual HUMAN writer authority and rejection of wrong-producer writes at the owning command/response acceptance and persistence boundaries for SUPPLIED_MATERIALS_INVENTORY are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-298cdfd70b3f6ed6360fb6ee8758bb6b",
+      "sourceLineSha256": "e633ea1b80345fbef1532b6265b76d81a93f837e964ac4a20427500a9aef676f",
+      "atomicObligationSha256": "9c170cc03946be2b67d2768b5591338b163a7eb641e2e829851b1b2c109bb048",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 SUPPLIED_MATERIALS_INVENTORY.valueType declaration only: independently transcribed source tuple checks both JOB_FIELDS.SUPPLIED_MATERIALS_INVENTORY and FIELD_REGISTRY[\"JOB.SUPPLIED_MATERIALS_INVENTORY\"]; a coherent two-declaration valueType mutation is rejected by SPECIFICATION_JOB_TYPE_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for SUPPLIED_MATERIALS_INVENTORY is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1183 specifies String. Actual String value admission and rejection at the owning canonical write/load boundary for SUPPLIED_MATERIALS_INVENTORY are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-0b7ec930d6e8e91daf2e12bd19dfee35",
+      "sourceLineSha256": "b73ec7aba437efeca1a7c3df1884fa22c4fc5583f05e345f2e7f7c33152ce30f",
+      "atomicObligationSha256": "0716968067134b9b88432acd6b960ad7afbcc9484417a9d1853298bdc839ba68",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 REQUIRED_OUTPUT_FORMAT.producer declaration only: independently transcribed source tuple checks both JOB_FIELDS.REQUIRED_OUTPUT_FORMAT and FIELD_REGISTRY[\"JOB.REQUIRED_OUTPUT_FORMAT\"]; a coherent two-declaration producer mutation is rejected by SPECIFICATION_JOB_PRODUCER_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for REQUIRED_OUTPUT_FORMAT is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1184 specifies HUMAN. Actual HUMAN writer authority and rejection of wrong-producer writes at the owning command/response acceptance and persistence boundaries for REQUIRED_OUTPUT_FORMAT are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-74e593d46dc502ee53f72201f4d67e6b",
+      "sourceLineSha256": "b73ec7aba437efeca1a7c3df1884fa22c4fc5583f05e345f2e7f7c33152ce30f",
+      "atomicObligationSha256": "8ecd442f60437bf96085260f09a7f6b0eb1016b821eaddf707da9bd4925c212e",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 REQUIRED_OUTPUT_FORMAT.valueType declaration only: independently transcribed source tuple checks both JOB_FIELDS.REQUIRED_OUTPUT_FORMAT and FIELD_REGISTRY[\"JOB.REQUIRED_OUTPUT_FORMAT\"]; a coherent two-declaration valueType mutation is rejected by SPECIFICATION_JOB_TYPE_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for REQUIRED_OUTPUT_FORMAT is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1184 specifies String. Actual String value admission and rejection at the owning canonical write/load boundary for REQUIRED_OUTPUT_FORMAT are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-2321a166fde654359d136ee8db39fa30",
+      "sourceLineSha256": "d6abde11d1f825d5c0fa02251e64c836029555f49e5388935c3c687050eff1e0",
+      "atomicObligationSha256": "956628c7a471f894e1f3cea5e838eea15fcd573dba9e3ea14f7ce2dc64a43c4f",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 DEADLINE_OR_TEMPORAL_SCOPE.producer declaration only: independently transcribed source tuple checks both JOB_FIELDS.DEADLINE_OR_TEMPORAL_SCOPE and FIELD_REGISTRY[\"JOB.DEADLINE_OR_TEMPORAL_SCOPE\"]; a coherent two-declaration producer mutation is rejected by SPECIFICATION_JOB_PRODUCER_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for DEADLINE_OR_TEMPORAL_SCOPE is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1185 specifies HUMAN. Actual HUMAN writer authority and rejection of wrong-producer writes at the owning command/response acceptance and persistence boundaries for DEADLINE_OR_TEMPORAL_SCOPE are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-cb77a52a184c2de39c30d70b5f5a0e78",
+      "sourceLineSha256": "d6abde11d1f825d5c0fa02251e64c836029555f49e5388935c3c687050eff1e0",
+      "atomicObligationSha256": "ff9df696266e76e9ad99cd0b3d96bb244674d3dc56f4a5005c617700438bcff7",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 DEADLINE_OR_TEMPORAL_SCOPE.valueType declaration only: independently transcribed source tuple checks both JOB_FIELDS.DEADLINE_OR_TEMPORAL_SCOPE and FIELD_REGISTRY[\"JOB.DEADLINE_OR_TEMPORAL_SCOPE\"]; a coherent two-declaration valueType mutation is rejected by SPECIFICATION_JOB_TYPE_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for DEADLINE_OR_TEMPORAL_SCOPE is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1185 specifies String. Actual String value admission and rejection at the owning canonical write/load boundary for DEADLINE_OR_TEMPORAL_SCOPE are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-b4a2ee6276009442fe36628db93f902a",
+      "sourceLineSha256": "ff2d07812d75cbe1dfa194e42a5dfdb7dc29c64b68ff02c702d98069f29d5ee9",
+      "atomicObligationSha256": "100749bf95bc22f40f1f3fdb9e54bc2866c81b34be1fd608db7e5e26318fbc43",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 DESIRED_SOURCE_COUNT.producer declaration only: independently transcribed source tuple checks both JOB_FIELDS.DESIRED_SOURCE_COUNT and FIELD_REGISTRY[\"JOB.DESIRED_SOURCE_COUNT\"]; a coherent two-declaration producer mutation is rejected by SPECIFICATION_JOB_PRODUCER_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for DESIRED_SOURCE_COUNT is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1186 specifies HUMAN. Actual HUMAN writer authority and rejection of wrong-producer writes at the owning command/response acceptance and persistence boundaries for DESIRED_SOURCE_COUNT are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-c836a30a608bbe5d034ecf1a9a81ddc8",
+      "sourceLineSha256": "ff2d07812d75cbe1dfa194e42a5dfdb7dc29c64b68ff02c702d98069f29d5ee9",
+      "atomicObligationSha256": "35a0adffc5591ac9f5a95929636158ddb5610cb35ce60a66f2b9a7d0c929fb8e",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 DESIRED_SOURCE_COUNT.valueType declaration only: independently transcribed source tuple checks both JOB_FIELDS.DESIRED_SOURCE_COUNT and FIELD_REGISTRY[\"JOB.DESIRED_SOURCE_COUNT\"]; a coherent two-declaration valueType mutation is rejected by SPECIFICATION_JOB_TYPE_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for DESIRED_SOURCE_COUNT is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1186 specifies Integer. Actual Integer value admission and rejection at the owning canonical write/load boundary for DESIRED_SOURCE_COUNT are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-8af8ef3ce1e9dfb16670dd23180bd4aa",
+      "sourceLineSha256": "b87fa7c45f0204c448c9bccb67bcd8f10ae635607a62577076e635d3e792da4d",
+      "atomicObligationSha256": "cbfb2fa086f27750b17d271c7ed1c12e47df7e3d4fec8ecf09e48f4fd0e31c07",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 KNOWN_AUTHORITATIVE_SOURCES.producer declaration only: independently transcribed source tuple checks both JOB_FIELDS.KNOWN_AUTHORITATIVE_SOURCES and FIELD_REGISTRY[\"JOB.KNOWN_AUTHORITATIVE_SOURCES\"]; a coherent two-declaration producer mutation is rejected by SPECIFICATION_JOB_PRODUCER_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for KNOWN_AUTHORITATIVE_SOURCES is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1187 specifies HUMAN. Actual HUMAN writer authority and rejection of wrong-producer writes at the owning command/response acceptance and persistence boundaries for KNOWN_AUTHORITATIVE_SOURCES are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-40277e6b19e216862cbcb5397a7c76bb",
+      "sourceLineSha256": "b87fa7c45f0204c448c9bccb67bcd8f10ae635607a62577076e635d3e792da4d",
+      "atomicObligationSha256": "8a88ef1629df7ec7fa8f5b46a6f1d675b58c0d880f7b7caa0be7c03d03551707",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 KNOWN_AUTHORITATIVE_SOURCES.valueType declaration only: independently transcribed source tuple checks both JOB_FIELDS.KNOWN_AUTHORITATIVE_SOURCES and FIELD_REGISTRY[\"JOB.KNOWN_AUTHORITATIVE_SOURCES\"]; a coherent two-declaration valueType mutation is rejected by SPECIFICATION_JOB_TYPE_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for KNOWN_AUTHORITATIVE_SOURCES is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1187 specifies String. Actual String value admission and rejection at the owning canonical write/load boundary for KNOWN_AUTHORITATIVE_SOURCES are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-8d4c93dfd33825095cc8360dff1550ae",
+      "sourceLineSha256": "aa56fcfc367dc5bb95d0acb7c6845b05ba3c53c80090b60ca137275a4cd7beab",
+      "atomicObligationSha256": "32eedc91ec084bcdb8ff6ddc640683921a0c2122cb1031306c218d611925bea5",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 AVAILABLE_TOOLS.producer declaration only: independently transcribed source tuple checks both JOB_FIELDS.AVAILABLE_TOOLS and FIELD_REGISTRY[\"JOB.AVAILABLE_TOOLS\"]; a coherent two-declaration producer mutation is rejected by SPECIFICATION_JOB_PRODUCER_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for AVAILABLE_TOOLS is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1188 specifies HUMAN. Actual HUMAN writer authority and rejection of wrong-producer writes at the owning command/response acceptance and persistence boundaries for AVAILABLE_TOOLS are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-51d84b17cf06231927797f0f08432e6a",
+      "sourceLineSha256": "aa56fcfc367dc5bb95d0acb7c6845b05ba3c53c80090b60ca137275a4cd7beab",
+      "atomicObligationSha256": "25278b2b196094ff4d44c6363973602d4a5d8d979180ab8a806e96f287f9402b",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 AVAILABLE_TOOLS.valueType declaration only: independently transcribed source tuple checks both JOB_FIELDS.AVAILABLE_TOOLS and FIELD_REGISTRY[\"JOB.AVAILABLE_TOOLS\"]; a coherent two-declaration valueType mutation is rejected by SPECIFICATION_JOB_TYPE_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for AVAILABLE_TOOLS is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1188 specifies String. Actual String value admission and rejection at the owning canonical write/load boundary for AVAILABLE_TOOLS are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-2c9fcb21f6dd3e54a0bae4eab0829af9",
+      "sourceLineSha256": "b6cf6dedfd65e561b19214b06fce0d687f06e543ea9684b74e745ed9b6519397",
+      "atomicObligationSha256": "480ef3d6ce0c0f93c57271d8b73f97e7c0d04f8e529dc87306e75c40baee6cea",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 PROHIBITED_ACTIONS.producer declaration only: independently transcribed source tuple checks both JOB_FIELDS.PROHIBITED_ACTIONS and FIELD_REGISTRY[\"JOB.PROHIBITED_ACTIONS\"]; a coherent two-declaration producer mutation is rejected by SPECIFICATION_JOB_PRODUCER_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for PROHIBITED_ACTIONS is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1189 specifies HUMAN. Actual HUMAN writer authority and rejection of wrong-producer writes at the owning command/response acceptance and persistence boundaries for PROHIBITED_ACTIONS are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-96c33cc1ecc84e0bc9b1a05c27a43249",
+      "sourceLineSha256": "b6cf6dedfd65e561b19214b06fce0d687f06e543ea9684b74e745ed9b6519397",
+      "atomicObligationSha256": "ef6cb92253ef9003f2812375ea83f46f19ad64c28c5d7bf51b5a360254b404c2",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 PROHIBITED_ACTIONS.valueType declaration only: independently transcribed source tuple checks both JOB_FIELDS.PROHIBITED_ACTIONS and FIELD_REGISTRY[\"JOB.PROHIBITED_ACTIONS\"]; a coherent two-declaration valueType mutation is rejected by SPECIFICATION_JOB_TYPE_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for PROHIBITED_ACTIONS is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1189 specifies String. Actual String value admission and rejection at the owning canonical write/load boundary for PROHIBITED_ACTIONS are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-be918a59d1c2c31f125d35d927eac645",
+      "sourceLineSha256": "61591148c2221ab067ae1fe51203e7fc9b10904b465c1ba3d8b44aafe418bab8",
+      "atomicObligationSha256": "8bc17f40420c21a83256ce1c599f7cadb9e1d9d34f5452d12e03d18d1d67b606",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 EXPLICIT_USER_REQUIREMENTS.producer declaration only: independently transcribed source tuple checks both JOB_FIELDS.EXPLICIT_USER_REQUIREMENTS and FIELD_REGISTRY[\"JOB.EXPLICIT_USER_REQUIREMENTS\"]; a coherent two-declaration producer mutation is rejected by SPECIFICATION_JOB_PRODUCER_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for EXPLICIT_USER_REQUIREMENTS is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1190 specifies HUMAN. Actual HUMAN writer authority and rejection of wrong-producer writes at the owning command/response acceptance and persistence boundaries for EXPLICIT_USER_REQUIREMENTS are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-558b6326b6a66da7200ae6ed76c7b7ac",
+      "sourceLineSha256": "61591148c2221ab067ae1fe51203e7fc9b10904b465c1ba3d8b44aafe418bab8",
+      "atomicObligationSha256": "e6e8147f05eeae78dc142d1f7d448fa37effafa51aab220d791a6e492fe89e7d",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 EXPLICIT_USER_REQUIREMENTS.valueType declaration only: independently transcribed source tuple checks both JOB_FIELDS.EXPLICIT_USER_REQUIREMENTS and FIELD_REGISTRY[\"JOB.EXPLICIT_USER_REQUIREMENTS\"]; a coherent two-declaration valueType mutation is rejected by SPECIFICATION_JOB_TYPE_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for EXPLICIT_USER_REQUIREMENTS is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1190 specifies String. Actual String value admission and rejection at the owning canonical write/load boundary for EXPLICIT_USER_REQUIREMENTS are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-97eceee98f70106655b1d3c2f69206bf",
+      "sourceLineSha256": "006bf45ce4a58427d65c90a4aaf0deb27ebecc53aa2db3d633ed4a1790a1c506",
+      "atomicObligationSha256": "57e1cc1d0be2829719d76fd6c94535f8978e29bb5c079e56cafff11790399f10",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 JOB_ID.producer declaration only: independently transcribed source tuple checks both JOB_FIELDS.JOB_ID and FIELD_REGISTRY[\"JOB.JOB_ID\"]; a coherent two-declaration producer mutation is rejected by SPECIFICATION_JOB_PRODUCER_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for JOB_ID is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1191 specifies APPLICATION. Actual APPLICATION writer authority and rejection of wrong-producer writes at the owning command/response acceptance and persistence boundaries for JOB_ID are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-ca2dabdf294db7c7b4361c1a35152658",
+      "sourceLineSha256": "006bf45ce4a58427d65c90a4aaf0deb27ebecc53aa2db3d633ed4a1790a1c506",
+      "atomicObligationSha256": "2a46ea60ae99764eea5ccdc9bc84a5bdca55815698d86acd7c0f4aee72ae971e",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 JOB_ID.valueType declaration only: independently transcribed source tuple checks both JOB_FIELDS.JOB_ID and FIELD_REGISTRY[\"JOB.JOB_ID\"]; a coherent two-declaration valueType mutation is rejected by SPECIFICATION_JOB_TYPE_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for JOB_ID is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1191 specifies String. Actual String value admission and rejection at the owning canonical write/load boundary for JOB_ID are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-4255df2ccfd510ddf32d46cbd5ac7b54",
+      "sourceLineSha256": "deaf861d3dae0a1b619d5c28b82359d9ec7521b2b2bc2bace3b2cc4c44587426",
+      "atomicObligationSha256": "2daeef9ae043e697ef4b29f7b267b3ecd5a85b91861029ec2531ee14c8adaa77",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 CONTRACT_PROFILE_ID.producer declaration only: independently transcribed source tuple checks both JOB_FIELDS.CONTRACT_PROFILE_ID and FIELD_REGISTRY[\"JOB.CONTRACT_PROFILE_ID\"]; a coherent two-declaration producer mutation is rejected by SPECIFICATION_JOB_PRODUCER_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for CONTRACT_PROFILE_ID is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1192 specifies APPLICATION. Actual APPLICATION writer authority and rejection of wrong-producer writes at the owning command/response acceptance and persistence boundaries for CONTRACT_PROFILE_ID are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-dbb4b2b439a2419e2e2fb091c7efff60",
+      "sourceLineSha256": "deaf861d3dae0a1b619d5c28b82359d9ec7521b2b2bc2bace3b2cc4c44587426",
+      "atomicObligationSha256": "11640dd709fbc0bc94012d483898ea6f5fd288f7c8fd51db98f8129c22b79238",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 CONTRACT_PROFILE_ID.valueType declaration only: independently transcribed source tuple checks both JOB_FIELDS.CONTRACT_PROFILE_ID and FIELD_REGISTRY[\"JOB.CONTRACT_PROFILE_ID\"]; a coherent two-declaration valueType mutation is rejected by SPECIFICATION_JOB_TYPE_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for CONTRACT_PROFILE_ID is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1192 specifies String. Actual String value admission and rejection at the owning canonical write/load boundary for CONTRACT_PROFILE_ID are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-e7097619359ad3c6ca54ac037ece19a1",
+      "sourceLineSha256": "9c74eab84fe252403fe2102aa13120cf3b668a030d6b3be3db705230c8624a65",
+      "atomicObligationSha256": "1c8e298a183f3e369a77ff57b5197877a9b3a598bf3ba1b4ff217616bbc76c6d",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 DATE_OPENED.producer declaration only: independently transcribed source tuple checks both JOB_FIELDS.DATE_OPENED and FIELD_REGISTRY[\"JOB.DATE_OPENED\"]; a coherent two-declaration producer mutation is rejected by SPECIFICATION_JOB_PRODUCER_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for DATE_OPENED is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1193 specifies APPLICATION. Actual APPLICATION writer authority and rejection of wrong-producer writes at the owning command/response acceptance and persistence boundaries for DATE_OPENED are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-4833308a7ee0ae8cc76ab6087c7e2ac3",
+      "sourceLineSha256": "9c74eab84fe252403fe2102aa13120cf3b668a030d6b3be3db705230c8624a65",
+      "atomicObligationSha256": "265de3aa8951efa1200aa387680ccd4a7a5a9d280360939714db49bf4292e1e0",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 DATE_OPENED.valueType declaration only: independently transcribed source tuple checks both JOB_FIELDS.DATE_OPENED and FIELD_REGISTRY[\"JOB.DATE_OPENED\"]; a coherent two-declaration valueType mutation is rejected by SPECIFICATION_JOB_TYPE_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for DATE_OPENED is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1193 specifies String. Actual String value admission and rejection at the owning canonical write/load boundary for DATE_OPENED are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-be0d96de9262d5c0c0b417b261118721",
+      "sourceLineSha256": "1347d5f75c3bb693a525eeab5f1b3b8bb36fb56bdd695f0518ca146624cc7a43",
+      "atomicObligationSha256": "a406a5929d41da87c931f6e5aa26b0601295880e152f5c9ea76417bd01c47294",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 CURRENT_ITERATION.producer declaration only: independently transcribed source tuple checks both JOB_FIELDS.CURRENT_ITERATION and FIELD_REGISTRY[\"JOB.CURRENT_ITERATION\"]; a coherent two-declaration producer mutation is rejected by SPECIFICATION_JOB_PRODUCER_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for CURRENT_ITERATION is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1194 specifies APPLICATION. Actual APPLICATION writer authority and rejection of wrong-producer writes at the owning command/response acceptance and persistence boundaries for CURRENT_ITERATION are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-b134ff25da7263cc16f69761f537037f",
+      "sourceLineSha256": "1347d5f75c3bb693a525eeab5f1b3b8bb36fb56bdd695f0518ca146624cc7a43",
+      "atomicObligationSha256": "123ab851e4b7db1db621721f94bac4bcb39b93e55f08b7b7a8766c638e0b70ab",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 CURRENT_ITERATION.valueType declaration only: independently transcribed source tuple checks both JOB_FIELDS.CURRENT_ITERATION and FIELD_REGISTRY[\"JOB.CURRENT_ITERATION\"]; a coherent two-declaration valueType mutation is rejected by SPECIFICATION_JOB_TYPE_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for CURRENT_ITERATION is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1194 specifies String. Actual String value admission and rejection at the owning canonical write/load boundary for CURRENT_ITERATION are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-2a9a1ee19dbec5e00e768bc395f291a8",
+      "sourceLineSha256": "133b14c10c2fd064c58328bc0aac53c42df8a9900f0cc2a045eef975c7804f74",
+      "atomicObligationSha256": "8113805062635a0390b10256b5260038087ddcb265f4a90724d42f99082fc99d",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 CURRENT_STAGE.producer declaration only: independently transcribed source tuple checks both JOB_FIELDS.CURRENT_STAGE and FIELD_REGISTRY[\"JOB.CURRENT_STAGE\"]; a coherent two-declaration producer mutation is rejected by SPECIFICATION_JOB_PRODUCER_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for CURRENT_STAGE is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1195 specifies APPLICATION. Actual APPLICATION writer authority and rejection of wrong-producer writes at the owning command/response acceptance and persistence boundaries for CURRENT_STAGE are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-f3f94d700c2dfbf337546ab00b846f22",
+      "sourceLineSha256": "133b14c10c2fd064c58328bc0aac53c42df8a9900f0cc2a045eef975c7804f74",
+      "atomicObligationSha256": "6a8026f56a37eb81ddc8a6c034e17cde7a807bcc95881e7f0757fd8f5bdd1641",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 CURRENT_STAGE.valueType declaration only: independently transcribed source tuple checks both JOB_FIELDS.CURRENT_STAGE and FIELD_REGISTRY[\"JOB.CURRENT_STAGE\"]; a coherent two-declaration valueType mutation is rejected by SPECIFICATION_JOB_TYPE_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for CURRENT_STAGE is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1195 specifies String. Actual String value admission and rejection at the owning canonical write/load boundary for CURRENT_STAGE are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-ddd7ce7c1fae2d550fd76ae2892c68c5",
+      "sourceLineSha256": "0a1d1e56f4bddcabbfb41ec9cb8abf2c124e884798840fd18bf65ff08de99c5f",
+      "atomicObligationSha256": "ec4c949fd0d698795643e73f0b84c702e3eaaf37ca29852a694bef03e510ac08",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 CURRENT_STATE.producer declaration only: independently transcribed source tuple checks both JOB_FIELDS.CURRENT_STATE and FIELD_REGISTRY[\"JOB.CURRENT_STATE\"]; a coherent two-declaration producer mutation is rejected by SPECIFICATION_JOB_PRODUCER_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for CURRENT_STATE is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1196 specifies APPLICATION. Actual APPLICATION writer authority and rejection of wrong-producer writes at the owning command/response acceptance and persistence boundaries for CURRENT_STATE are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-bac769d0a58e5269431001b0ee0d3001",
+      "sourceLineSha256": "0a1d1e56f4bddcabbfb41ec9cb8abf2c124e884798840fd18bf65ff08de99c5f",
+      "atomicObligationSha256": "55fabccc6c18df7d2642d7f994c3b95687c279394c68bdd1082990fb5ca3cd29",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 CURRENT_STATE.valueType declaration only: independently transcribed source tuple checks both JOB_FIELDS.CURRENT_STATE and FIELD_REGISTRY[\"JOB.CURRENT_STATE\"]; a coherent two-declaration valueType mutation is rejected by SPECIFICATION_JOB_TYPE_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for CURRENT_STATE is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1196 specifies String. Actual String value admission and rejection at the owning canonical write/load boundary for CURRENT_STATE are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-0ea7885fc648ffa1239f418603048e39",
+      "sourceLineSha256": "0e6215b98219665ac39f9d704ee53974519775b129055e6fc8b1332563d9c798",
+      "atomicObligationSha256": "530eb1bcd4cc33c1882b7f08596c956dcb82fa25b31140719522d8c0adcbf4e3",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 CURRENT_INPUT_VERSION.producer declaration only: independently transcribed source tuple checks both JOB_FIELDS.CURRENT_INPUT_VERSION and FIELD_REGISTRY[\"JOB.CURRENT_INPUT_VERSION\"]; a coherent two-declaration producer mutation is rejected by SPECIFICATION_JOB_PRODUCER_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for CURRENT_INPUT_VERSION is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1197 specifies APPLICATION. Actual APPLICATION writer authority and rejection of wrong-producer writes at the owning command/response acceptance and persistence boundaries for CURRENT_INPUT_VERSION are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-5543cba8efee07717d5ef2a50e8df7b4",
+      "sourceLineSha256": "0e6215b98219665ac39f9d704ee53974519775b129055e6fc8b1332563d9c798",
+      "atomicObligationSha256": "ff2bcda72acc9c2c0b0e8dec8be41eff0c08607e16903b129f93783681bf3c4e",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 CURRENT_INPUT_VERSION.valueType declaration only: independently transcribed source tuple checks both JOB_FIELDS.CURRENT_INPUT_VERSION and FIELD_REGISTRY[\"JOB.CURRENT_INPUT_VERSION\"]; a coherent two-declaration valueType mutation is rejected by SPECIFICATION_JOB_TYPE_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for CURRENT_INPUT_VERSION is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1197 specifies String. Actual String value admission and rejection at the owning canonical write/load boundary for CURRENT_INPUT_VERSION are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-f52cebf736a1cc1379033214fd51ab0f",
+      "sourceLineSha256": "f0e0b2d2f2137caec57a38cd25bf0c1387fdbb0bc7dc7b1cd7a6e7de61a771de",
+      "atomicObligationSha256": "64ba2fb0e69280bf411ca011107b648bad570cf46a21abc27a25e3c94c9351fe",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 CURRENT_SOURCE_SET_VERSION.producer declaration only: independently transcribed source tuple checks both JOB_FIELDS.CURRENT_SOURCE_SET_VERSION and FIELD_REGISTRY[\"JOB.CURRENT_SOURCE_SET_VERSION\"]; a coherent two-declaration producer mutation is rejected by SPECIFICATION_JOB_PRODUCER_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for CURRENT_SOURCE_SET_VERSION is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1198 specifies APPLICATION. Actual APPLICATION writer authority and rejection of wrong-producer writes at the owning command/response acceptance and persistence boundaries for CURRENT_SOURCE_SET_VERSION are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-c75f19b1079b6aa3045337825b376b21",
+      "sourceLineSha256": "f0e0b2d2f2137caec57a38cd25bf0c1387fdbb0bc7dc7b1cd7a6e7de61a771de",
+      "atomicObligationSha256": "67121b8443d6e0a965f50620d40fffab800de934f54c373ca663332689b03a55",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 CURRENT_SOURCE_SET_VERSION.valueType declaration only: independently transcribed source tuple checks both JOB_FIELDS.CURRENT_SOURCE_SET_VERSION and FIELD_REGISTRY[\"JOB.CURRENT_SOURCE_SET_VERSION\"]; a coherent two-declaration valueType mutation is rejected by SPECIFICATION_JOB_TYPE_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for CURRENT_SOURCE_SET_VERSION is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1198 specifies String. Actual String value admission and rejection at the owning canonical write/load boundary for CURRENT_SOURCE_SET_VERSION are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-e286cf53c33cf8c6cefbdd41f4eb548e",
+      "sourceLineSha256": "a67543c63ab2599757156e6632743902a5d57ce919a9d7b635fdbc6596970162",
+      "atomicObligationSha256": "b4e9a4110da574f5716797575092c92f48a95a5f302e933d05b5fc254a542bc8",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 CURRENT_RESEARCH_VERSION.producer declaration only: independently transcribed source tuple checks both JOB_FIELDS.CURRENT_RESEARCH_VERSION and FIELD_REGISTRY[\"JOB.CURRENT_RESEARCH_VERSION\"]; a coherent two-declaration producer mutation is rejected by SPECIFICATION_JOB_PRODUCER_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for CURRENT_RESEARCH_VERSION is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1199 specifies APPLICATION. Actual APPLICATION writer authority and rejection of wrong-producer writes at the owning command/response acceptance and persistence boundaries for CURRENT_RESEARCH_VERSION are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-8042be8665fcac366f7ebd9498fb7891",
+      "sourceLineSha256": "a67543c63ab2599757156e6632743902a5d57ce919a9d7b635fdbc6596970162",
+      "atomicObligationSha256": "e23d204cf4eb6b3db1f11543e42c0cb5c38a5770636bb9924291dd3ba70edf59",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 CURRENT_RESEARCH_VERSION.valueType declaration only: independently transcribed source tuple checks both JOB_FIELDS.CURRENT_RESEARCH_VERSION and FIELD_REGISTRY[\"JOB.CURRENT_RESEARCH_VERSION\"]; a coherent two-declaration valueType mutation is rejected by SPECIFICATION_JOB_TYPE_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for CURRENT_RESEARCH_VERSION is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1199 specifies String. Actual String value admission and rejection at the owning canonical write/load boundary for CURRENT_RESEARCH_VERSION are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-7cde52fd302c75a81cec85fea3b12bfb",
+      "sourceLineSha256": "61203eedf5de168e7b1b4e66625c71dc901adeb380ea06e608a7775c804e5c2c",
+      "atomicObligationSha256": "8f8bb377a2852328d1dd22bb2d8719db1b631614ed0b4e92bb3fe55708149f17",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 CURRENT_REQUIREMENTS_VERSION.producer declaration only: independently transcribed source tuple checks both JOB_FIELDS.CURRENT_REQUIREMENTS_VERSION and FIELD_REGISTRY[\"JOB.CURRENT_REQUIREMENTS_VERSION\"]; a coherent two-declaration producer mutation is rejected by SPECIFICATION_JOB_PRODUCER_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for CURRENT_REQUIREMENTS_VERSION is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1200 specifies APPLICATION. Actual APPLICATION writer authority and rejection of wrong-producer writes at the owning command/response acceptance and persistence boundaries for CURRENT_REQUIREMENTS_VERSION are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-6f2fec52418f113298ca1eb7cb310f04",
+      "sourceLineSha256": "61203eedf5de168e7b1b4e66625c71dc901adeb380ea06e608a7775c804e5c2c",
+      "atomicObligationSha256": "e7ef7ccbbcad2ac8800f17034e92d55702a035d74eda16c5361b3add5c5dffd1",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 CURRENT_REQUIREMENTS_VERSION.valueType declaration only: independently transcribed source tuple checks both JOB_FIELDS.CURRENT_REQUIREMENTS_VERSION and FIELD_REGISTRY[\"JOB.CURRENT_REQUIREMENTS_VERSION\"]; a coherent two-declaration valueType mutation is rejected by SPECIFICATION_JOB_TYPE_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for CURRENT_REQUIREMENTS_VERSION is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1200 specifies String. Actual String value admission and rejection at the owning canonical write/load boundary for CURRENT_REQUIREMENTS_VERSION are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-86584a4f6f0052d8e9b57dda1ca5ef2a",
+      "sourceLineSha256": "6eb35b75af402265cfdcbbfe48dca74cb4c8e309d7c04b783b79f5cfccc66e5b",
+      "atomicObligationSha256": "b0a6184a52ffdcf81e034db65546440f889023448a9a179b7d2a1cbc32b81b2f",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 CURRENT_TEST_SUITE_VERSION.producer declaration only: independently transcribed source tuple checks both JOB_FIELDS.CURRENT_TEST_SUITE_VERSION and FIELD_REGISTRY[\"JOB.CURRENT_TEST_SUITE_VERSION\"]; a coherent two-declaration producer mutation is rejected by SPECIFICATION_JOB_PRODUCER_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for CURRENT_TEST_SUITE_VERSION is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1201 specifies APPLICATION. Actual APPLICATION writer authority and rejection of wrong-producer writes at the owning command/response acceptance and persistence boundaries for CURRENT_TEST_SUITE_VERSION are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-2513b0f915915d1759189ffe46ba0719",
+      "sourceLineSha256": "6eb35b75af402265cfdcbbfe48dca74cb4c8e309d7c04b783b79f5cfccc66e5b",
+      "atomicObligationSha256": "0fd1d36da839d53251c277339d273f1aae4562c140de8660a4023a6863699a1e",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 CURRENT_TEST_SUITE_VERSION.valueType declaration only: independently transcribed source tuple checks both JOB_FIELDS.CURRENT_TEST_SUITE_VERSION and FIELD_REGISTRY[\"JOB.CURRENT_TEST_SUITE_VERSION\"]; a coherent two-declaration valueType mutation is rejected by SPECIFICATION_JOB_TYPE_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for CURRENT_TEST_SUITE_VERSION is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1201 specifies String. Actual String value admission and rejection at the owning canonical write/load boundary for CURRENT_TEST_SUITE_VERSION are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-e06ef451a3ddd0461e161e346f5a0253",
+      "sourceLineSha256": "80d724847e5e424ae26852022f3a1657609e14ea418d91a6b073e253d0ca6386",
+      "atomicObligationSha256": "cc9c9fc1dc28ada6eb17bb9fd8e69c8c3d229037736c6d5bfcc4f2fb23ab7714",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 CURRENT_INSTRUCTION_VERSION.producer declaration only: independently transcribed source tuple checks both JOB_FIELDS.CURRENT_INSTRUCTION_VERSION and FIELD_REGISTRY[\"JOB.CURRENT_INSTRUCTION_VERSION\"]; a coherent two-declaration producer mutation is rejected by SPECIFICATION_JOB_PRODUCER_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for CURRENT_INSTRUCTION_VERSION is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1202 specifies APPLICATION. Actual APPLICATION writer authority and rejection of wrong-producer writes at the owning command/response acceptance and persistence boundaries for CURRENT_INSTRUCTION_VERSION are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-6a9acc98724c139bb2f0da0d79255b09",
+      "sourceLineSha256": "80d724847e5e424ae26852022f3a1657609e14ea418d91a6b073e253d0ca6386",
+      "atomicObligationSha256": "fb91caf0d390caea7479a5de46eeb0962a00824a7ca3a67983c6af98e3ea6819",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 CURRENT_INSTRUCTION_VERSION.valueType declaration only: independently transcribed source tuple checks both JOB_FIELDS.CURRENT_INSTRUCTION_VERSION and FIELD_REGISTRY[\"JOB.CURRENT_INSTRUCTION_VERSION\"]; a coherent two-declaration valueType mutation is rejected by SPECIFICATION_JOB_TYPE_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for CURRENT_INSTRUCTION_VERSION is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1202 specifies String. Actual String value admission and rejection at the owning canonical write/load boundary for CURRENT_INSTRUCTION_VERSION are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-733c9d9c8055badb51c6e0e0d051d32b",
+      "sourceLineSha256": "772081e2efbec95c5f47098ad0aead8b1f099bf8a7b24a91c450d97c33d80096",
+      "atomicObligationSha256": "28d4c6616002b4a4891c4b4060933b00998c741f8408d551921dd1621f70afa1",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 CURRENT_CANDIDATE_ID.producer declaration only: independently transcribed source tuple checks both JOB_FIELDS.CURRENT_CANDIDATE_ID and FIELD_REGISTRY[\"JOB.CURRENT_CANDIDATE_ID\"]; a coherent two-declaration producer mutation is rejected by SPECIFICATION_JOB_PRODUCER_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for CURRENT_CANDIDATE_ID is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1203 specifies APPLICATION. Actual APPLICATION writer authority and rejection of wrong-producer writes at the owning command/response acceptance and persistence boundaries for CURRENT_CANDIDATE_ID are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-92b0d20deab881a917e7ce3a5c6b7146",
+      "sourceLineSha256": "772081e2efbec95c5f47098ad0aead8b1f099bf8a7b24a91c450d97c33d80096",
+      "atomicObligationSha256": "05f3dbe2f6914d660b47562c058ef92e24473fdc5759f0487e3692faf693751c",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 CURRENT_CANDIDATE_ID.valueType declaration only: independently transcribed source tuple checks both JOB_FIELDS.CURRENT_CANDIDATE_ID and FIELD_REGISTRY[\"JOB.CURRENT_CANDIDATE_ID\"]; a coherent two-declaration valueType mutation is rejected by SPECIFICATION_JOB_TYPE_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for CURRENT_CANDIDATE_ID is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1203 specifies String. Actual String value admission and rejection at the owning canonical write/load boundary for CURRENT_CANDIDATE_ID are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-1e15e7f3e7041949208f4fca48dd9de2",
+      "sourceLineSha256": "dec1f00967b653abd66481fa838c83ed6438c9af9802ce1feaaf17498e8a3305",
+      "atomicObligationSha256": "9d179974ab502b9aa482fd55bfaab0efb791ea5592474568cb1beeb23937e4f1",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 CURRENT_BASELINE_ID.producer declaration only: independently transcribed source tuple checks both JOB_FIELDS.CURRENT_BASELINE_ID and FIELD_REGISTRY[\"JOB.CURRENT_BASELINE_ID\"]; a coherent two-declaration producer mutation is rejected by SPECIFICATION_JOB_PRODUCER_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for CURRENT_BASELINE_ID is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1204 specifies APPLICATION. Actual APPLICATION writer authority and rejection of wrong-producer writes at the owning command/response acceptance and persistence boundaries for CURRENT_BASELINE_ID are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-18c08eb3e9e6ccd8d8de9538ac715dcd",
+      "sourceLineSha256": "dec1f00967b653abd66481fa838c83ed6438c9af9802ce1feaaf17498e8a3305",
+      "atomicObligationSha256": "17b63daeae658b6bb96690b7d26fb3b45e7f1d6564c1d0f24f3a62e4841dae64",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 CURRENT_BASELINE_ID.valueType declaration only: independently transcribed source tuple checks both JOB_FIELDS.CURRENT_BASELINE_ID and FIELD_REGISTRY[\"JOB.CURRENT_BASELINE_ID\"]; a coherent two-declaration valueType mutation is rejected by SPECIFICATION_JOB_TYPE_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for CURRENT_BASELINE_ID is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1204 specifies String. Actual String value admission and rejection at the owning canonical write/load boundary for CURRENT_BASELINE_ID are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-73e15d23f0abf9343eadf2017df393cd",
+      "sourceLineSha256": "6c55d56ba67027b38b8e975c4703aff4aaf1c48bffeb280b49200420bd74d31d",
+      "atomicObligationSha256": "cb1e6b818f546ff77446b5fd255cf8e0b082f2b9d6fa958f43dd8ce4e9b3dd3c",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 CURRENT_PRODUCT_ID.producer declaration only: independently transcribed source tuple checks both JOB_FIELDS.CURRENT_PRODUCT_ID and FIELD_REGISTRY[\"JOB.CURRENT_PRODUCT_ID\"]; a coherent two-declaration producer mutation is rejected by SPECIFICATION_JOB_PRODUCER_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for CURRENT_PRODUCT_ID is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1205 specifies APPLICATION. Actual APPLICATION writer authority and rejection of wrong-producer writes at the owning command/response acceptance and persistence boundaries for CURRENT_PRODUCT_ID are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-f1063968f77bb94e913832b36f0487e4",
+      "sourceLineSha256": "6c55d56ba67027b38b8e975c4703aff4aaf1c48bffeb280b49200420bd74d31d",
+      "atomicObligationSha256": "d6f60d4ca4a02af9e290154cff3e436bee2b905f462feb452905df8e366a17a3",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 CURRENT_PRODUCT_ID.valueType declaration only: independently transcribed source tuple checks both JOB_FIELDS.CURRENT_PRODUCT_ID and FIELD_REGISTRY[\"JOB.CURRENT_PRODUCT_ID\"]; a coherent two-declaration valueType mutation is rejected by SPECIFICATION_JOB_TYPE_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for CURRENT_PRODUCT_ID is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1205 specifies String. Actual String value admission and rejection at the owning canonical write/load boundary for CURRENT_PRODUCT_ID are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-b54247bc3e42dd59433b7a7dfffad66f",
+      "sourceLineSha256": "e83a02d586e9de1143338ac21d416219373e607cfba76c30950d5db9c391df26",
+      "atomicObligationSha256": "eb41609c07793daf6e48f2f42321fb9f2040748e50917b63b780c407ce48b154",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 CURRENT_PRODUCT_VERSION.producer declaration only: independently transcribed source tuple checks both JOB_FIELDS.CURRENT_PRODUCT_VERSION and FIELD_REGISTRY[\"JOB.CURRENT_PRODUCT_VERSION\"]; a coherent two-declaration producer mutation is rejected by SPECIFICATION_JOB_PRODUCER_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for CURRENT_PRODUCT_VERSION is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1206 specifies APPLICATION. Actual APPLICATION writer authority and rejection of wrong-producer writes at the owning command/response acceptance and persistence boundaries for CURRENT_PRODUCT_VERSION are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-04b63fbda9a698c16282b506c237da92",
+      "sourceLineSha256": "e83a02d586e9de1143338ac21d416219373e607cfba76c30950d5db9c391df26",
+      "atomicObligationSha256": "f34cd2c49d46f79e41c565b72a1f4d2bbc47d6817ddb9449ce856c9568eee668",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 CURRENT_PRODUCT_VERSION.valueType declaration only: independently transcribed source tuple checks both JOB_FIELDS.CURRENT_PRODUCT_VERSION and FIELD_REGISTRY[\"JOB.CURRENT_PRODUCT_VERSION\"]; a coherent two-declaration valueType mutation is rejected by SPECIFICATION_JOB_TYPE_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for CURRENT_PRODUCT_VERSION is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1206 specifies String. Actual String value admission and rejection at the owning canonical write/load boundary for CURRENT_PRODUCT_VERSION are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-2547e70f7c84844abc9b93f1336323a1",
+      "sourceLineSha256": "3c0ee46db4b8501930fb3b024e8364f101db977abace223c75a4335b90e15055",
+      "atomicObligationSha256": "0cdef65292c260579bc8ab6c4048867906f26d997a763d886f8237ee70102fef",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 CURRENT_DELIVERY_CANDIDATE_SET_ID.producer declaration only: independently transcribed source tuple checks both JOB_FIELDS.CURRENT_DELIVERY_CANDIDATE_SET_ID and FIELD_REGISTRY[\"JOB.CURRENT_DELIVERY_CANDIDATE_SET_ID\"]; a coherent two-declaration producer mutation is rejected by SPECIFICATION_JOB_PRODUCER_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for CURRENT_DELIVERY_CANDIDATE_SET_ID is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1207 specifies APPLICATION. Actual APPLICATION writer authority and rejection of wrong-producer writes at the owning command/response acceptance and persistence boundaries for CURRENT_DELIVERY_CANDIDATE_SET_ID are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-51ce248b1a17469cff6064a0b9d9b87a",
+      "sourceLineSha256": "3c0ee46db4b8501930fb3b024e8364f101db977abace223c75a4335b90e15055",
+      "atomicObligationSha256": "ff553f650f62b89ee2550b36c90a08a26bc965328f2ba64c69212bc7910d1f56",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 CURRENT_DELIVERY_CANDIDATE_SET_ID.valueType declaration only: independently transcribed source tuple checks both JOB_FIELDS.CURRENT_DELIVERY_CANDIDATE_SET_ID and FIELD_REGISTRY[\"JOB.CURRENT_DELIVERY_CANDIDATE_SET_ID\"]; a coherent two-declaration valueType mutation is rejected by SPECIFICATION_JOB_TYPE_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for CURRENT_DELIVERY_CANDIDATE_SET_ID is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1207 specifies String. Actual String value admission and rejection at the owning canonical write/load boundary for CURRENT_DELIVERY_CANDIDATE_SET_ID are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-f87833fb49fce403c56810ab788b64c1",
+      "sourceLineSha256": "2002f880fee0fc98c2eb542c53f9ad775c2a37e221eee4eb0a1c495ffb43f55c",
+      "atomicObligationSha256": "6b2c72eda8dbd2b6432afce8321f77b1c21ff9e37ab22489fd12187034765d22",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 CURRENT_REVIEW_VERSION.producer declaration only: independently transcribed source tuple checks both JOB_FIELDS.CURRENT_REVIEW_VERSION and FIELD_REGISTRY[\"JOB.CURRENT_REVIEW_VERSION\"]; a coherent two-declaration producer mutation is rejected by SPECIFICATION_JOB_PRODUCER_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for CURRENT_REVIEW_VERSION is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1208 specifies APPLICATION. Actual APPLICATION writer authority and rejection of wrong-producer writes at the owning command/response acceptance and persistence boundaries for CURRENT_REVIEW_VERSION are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-9e0abd5250cb42b04c72673f7588d6b0",
+      "sourceLineSha256": "2002f880fee0fc98c2eb542c53f9ad775c2a37e221eee4eb0a1c495ffb43f55c",
+      "atomicObligationSha256": "66a60c4849f02c032a7dcc8a852741ca8b1409684807cdb9d59f2b73a0880279",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 CURRENT_REVIEW_VERSION.valueType declaration only: independently transcribed source tuple checks both JOB_FIELDS.CURRENT_REVIEW_VERSION and FIELD_REGISTRY[\"JOB.CURRENT_REVIEW_VERSION\"]; a coherent two-declaration valueType mutation is rejected by SPECIFICATION_JOB_TYPE_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for CURRENT_REVIEW_VERSION is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1208 specifies String. Actual String value admission and rejection at the owning canonical write/load boundary for CURRENT_REVIEW_VERSION are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-f90bfda3090da0946beaede1750a8f88",
+      "sourceLineSha256": "05454a4e1c627e73a2a39b089f9d97f73b9ce808482608bec338df7b6b7d0d9e",
+      "atomicObligationSha256": "fe9dc08c0ad998b66dedbee9bf196d2a67e4b6b2a23b40c85558661c4413cebb",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 CURRENT_RECONCILED_REVIEW_VERSION.producer declaration only: independently transcribed source tuple checks both JOB_FIELDS.CURRENT_RECONCILED_REVIEW_VERSION and FIELD_REGISTRY[\"JOB.CURRENT_RECONCILED_REVIEW_VERSION\"]; a coherent two-declaration producer mutation is rejected by SPECIFICATION_JOB_PRODUCER_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for CURRENT_RECONCILED_REVIEW_VERSION is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1209 specifies APPLICATION. Actual APPLICATION writer authority and rejection of wrong-producer writes at the owning command/response acceptance and persistence boundaries for CURRENT_RECONCILED_REVIEW_VERSION are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-85c7b1f05a9b67050a7a52a50cc75f3a",
+      "sourceLineSha256": "05454a4e1c627e73a2a39b089f9d97f73b9ce808482608bec338df7b6b7d0d9e",
+      "atomicObligationSha256": "6aa48c691edf93c2990f890305035f3901db63d77e7b8f631e157aedca918d25",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 CURRENT_RECONCILED_REVIEW_VERSION.valueType declaration only: independently transcribed source tuple checks both JOB_FIELDS.CURRENT_RECONCILED_REVIEW_VERSION and FIELD_REGISTRY[\"JOB.CURRENT_RECONCILED_REVIEW_VERSION\"]; a coherent two-declaration valueType mutation is rejected by SPECIFICATION_JOB_TYPE_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for CURRENT_RECONCILED_REVIEW_VERSION is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1209 specifies String. Actual String value admission and rejection at the owning canonical write/load boundary for CURRENT_RECONCILED_REVIEW_VERSION are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-5989ff619eef63ccb38535582525dc92",
+      "sourceLineSha256": "1873531dcab8dae7098650c91df9850c9f2f908d7770e7dc843ca6da283d8767",
+      "atomicObligationSha256": "f8122c973cbd397800ff27a6aa8d415f6803bdc8c481ca88e5fde4a4da78710c",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 CURRENT_RELEASE_ID.producer declaration only: independently transcribed source tuple checks both JOB_FIELDS.CURRENT_RELEASE_ID and FIELD_REGISTRY[\"JOB.CURRENT_RELEASE_ID\"]; a coherent two-declaration producer mutation is rejected by SPECIFICATION_JOB_PRODUCER_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for CURRENT_RELEASE_ID is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1210 specifies APPLICATION. Actual APPLICATION writer authority and rejection of wrong-producer writes at the owning command/response acceptance and persistence boundaries for CURRENT_RELEASE_ID are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-db2d036de54308b8ccf1966bf64a9f2c",
+      "sourceLineSha256": "1873531dcab8dae7098650c91df9850c9f2f908d7770e7dc843ca6da283d8767",
+      "atomicObligationSha256": "5e2e1b40507a08fbbecd9a991e6829b34310c43e5eeeaf2366df71301b95742c",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 CURRENT_RELEASE_ID.valueType declaration only: independently transcribed source tuple checks both JOB_FIELDS.CURRENT_RELEASE_ID and FIELD_REGISTRY[\"JOB.CURRENT_RELEASE_ID\"]; a coherent two-declaration valueType mutation is rejected by SPECIFICATION_JOB_TYPE_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for CURRENT_RELEASE_ID is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1210 specifies String. Actual String value admission and rejection at the owning canonical write/load boundary for CURRENT_RELEASE_ID are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-2cd2b937240e1b8116a7077e5630a24a",
+      "sourceLineSha256": "2a679d22d703b6a22fefd9adf952fb3fbba46ad7460d770bfa18eeaffd6fb6b6",
+      "atomicObligationSha256": "fcc44d173c1f72b2b21fa7052494b948ceaf61631e9bcea5ac7659158959ecba",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 CURRENT_HASH_REVIEW_ID.producer declaration only: independently transcribed source tuple checks both JOB_FIELDS.CURRENT_HASH_REVIEW_ID and FIELD_REGISTRY[\"JOB.CURRENT_HASH_REVIEW_ID\"]; a coherent two-declaration producer mutation is rejected by SPECIFICATION_JOB_PRODUCER_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for CURRENT_HASH_REVIEW_ID is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1211 specifies APPLICATION. Actual APPLICATION writer authority and rejection of wrong-producer writes at the owning command/response acceptance and persistence boundaries for CURRENT_HASH_REVIEW_ID are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-638c1df4652b215aa090a08bdee1c68b",
+      "sourceLineSha256": "2a679d22d703b6a22fefd9adf952fb3fbba46ad7460d770bfa18eeaffd6fb6b6",
+      "atomicObligationSha256": "376eb5b4de30e098c42c096720120fa6d79e97e57401b83de520f80b2da4e374",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 CURRENT_HASH_REVIEW_ID.valueType declaration only: independently transcribed source tuple checks both JOB_FIELDS.CURRENT_HASH_REVIEW_ID and FIELD_REGISTRY[\"JOB.CURRENT_HASH_REVIEW_ID\"]; a coherent two-declaration valueType mutation is rejected by SPECIFICATION_JOB_TYPE_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for CURRENT_HASH_REVIEW_ID is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1211 specifies String. Actual String value admission and rejection at the owning canonical write/load boundary for CURRENT_HASH_REVIEW_ID are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-4f0781ecc04b8f37c27814296336914b",
+      "sourceLineSha256": "8cda94b31a60c0cb206ff04b7a55b6f5b9f635a0af9697a49da410e1f6949266",
+      "atomicObligationSha256": "de1c25ece088cf00a7cc2b5d88cb76e0fa31a338ecd4d0e4c9f7b57073fdd1dc",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 CURRENT_EVIDENCE_CHAIN_VERSION.producer declaration only: independently transcribed source tuple checks both JOB_FIELDS.CURRENT_EVIDENCE_CHAIN_VERSION and FIELD_REGISTRY[\"JOB.CURRENT_EVIDENCE_CHAIN_VERSION\"]; a coherent two-declaration producer mutation is rejected by SPECIFICATION_JOB_PRODUCER_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for CURRENT_EVIDENCE_CHAIN_VERSION is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1212 specifies APPLICATION. Actual APPLICATION writer authority and rejection of wrong-producer writes at the owning command/response acceptance and persistence boundaries for CURRENT_EVIDENCE_CHAIN_VERSION are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-51bdd1afc031bc7bc861970f0a1fbabc",
+      "sourceLineSha256": "8cda94b31a60c0cb206ff04b7a55b6f5b9f635a0af9697a49da410e1f6949266",
+      "atomicObligationSha256": "e38e26e8e92de3cbdfad2509f9ce120225dacaf4c16fb4063a6d6d0efabdda2a",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 CURRENT_EVIDENCE_CHAIN_VERSION.valueType declaration only: independently transcribed source tuple checks both JOB_FIELDS.CURRENT_EVIDENCE_CHAIN_VERSION and FIELD_REGISTRY[\"JOB.CURRENT_EVIDENCE_CHAIN_VERSION\"]; a coherent two-declaration valueType mutation is rejected by SPECIFICATION_JOB_TYPE_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for CURRENT_EVIDENCE_CHAIN_VERSION is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1212 specifies String. Actual String value admission and rejection at the owning canonical write/load boundary for CURRENT_EVIDENCE_CHAIN_VERSION are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-98a66bdcc28de599b7de1e2c43a65bfd",
+      "sourceLineSha256": "f32d0601cb8e0541c9997063c8a406e6d602b3a79bda5eb062dac1c7c9211885",
+      "atomicObligationSha256": "44a805f70493a63bc920ae724de0ad1b626a6b3292fc0505367f1947a3007f82",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 CURRENT_DELIVERY_ID.producer declaration only: independently transcribed source tuple checks both JOB_FIELDS.CURRENT_DELIVERY_ID and FIELD_REGISTRY[\"JOB.CURRENT_DELIVERY_ID\"]; a coherent two-declaration producer mutation is rejected by SPECIFICATION_JOB_PRODUCER_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for CURRENT_DELIVERY_ID is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1213 specifies APPLICATION. Actual APPLICATION writer authority and rejection of wrong-producer writes at the owning command/response acceptance and persistence boundaries for CURRENT_DELIVERY_ID are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-908d7323f2396bb2ea8430e2b3520880",
+      "sourceLineSha256": "f32d0601cb8e0541c9997063c8a406e6d602b3a79bda5eb062dac1c7c9211885",
+      "atomicObligationSha256": "e53193e349b59530dd39f95a8ebcca79d8912be99ae5a7de04dfd07324bca66d",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 CURRENT_DELIVERY_ID.valueType declaration only: independently transcribed source tuple checks both JOB_FIELDS.CURRENT_DELIVERY_ID and FIELD_REGISTRY[\"JOB.CURRENT_DELIVERY_ID\"]; a coherent two-declaration valueType mutation is rejected by SPECIFICATION_JOB_TYPE_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for CURRENT_DELIVERY_ID is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1213 specifies String. Actual String value admission and rejection at the owning canonical write/load boundary for CURRENT_DELIVERY_ID are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-7c1cb285498296a15faac1809b424b4d",
+      "sourceLineSha256": "6ce3624099f269b22c18204a66b9b04d796952adb2f404da80ec764c04101f06",
+      "atomicObligationSha256": "7432fae47cac62f803e30c8db4b0cdf5ce52f585d3e18fc7544deb64e1b2f48d",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 CURRENT_BLOCKERS.producer declaration only: independently transcribed source tuple checks both JOB_FIELDS.CURRENT_BLOCKERS and FIELD_REGISTRY[\"JOB.CURRENT_BLOCKERS\"]; a coherent two-declaration producer mutation is rejected by SPECIFICATION_JOB_PRODUCER_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for CURRENT_BLOCKERS is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1214 specifies APPLICATION. Actual APPLICATION writer authority and rejection of wrong-producer writes at the owning command/response acceptance and persistence boundaries for CURRENT_BLOCKERS are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-e45d2e98144d811751b9d5b0e5e93d09",
+      "sourceLineSha256": "6ce3624099f269b22c18204a66b9b04d796952adb2f404da80ec764c04101f06",
+      "atomicObligationSha256": "eec44904d3a9f8520f2dd79f422cbaf65fbd454ed1dae7ec06c2b85ecc87cd53",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 CURRENT_BLOCKERS.valueType declaration only: independently transcribed source tuple checks both JOB_FIELDS.CURRENT_BLOCKERS and FIELD_REGISTRY[\"JOB.CURRENT_BLOCKERS\"]; a coherent two-declaration valueType mutation is rejected by SPECIFICATION_JOB_TYPE_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for CURRENT_BLOCKERS is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1214 specifies Structured value. Actual Structured value value admission and rejection at the owning canonical write/load boundary for CURRENT_BLOCKERS are not exercised by these declaration helpers. The source permits Structured value; this batch preserves the existing OBJECT/OBJECT_ARRAY/STRING_ARRAY/REFERENCE_ARRAY/JSON declaration abstraction and does not prescribe a new runtime representation."
+    },
+    {
+      "normativeRequirementId": "NREQ-478234127620baaac4254804fd6e20d3",
+      "sourceLineSha256": "2cf8efed8715988a95ef7ec377932b0ccbfbd50f3b221c7d1f96d845b8469070",
+      "atomicObligationSha256": "1b8a3ee785d4001cfd723bb0c1170dfeb25ff21a0867298ca09278b13d71e2f5",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 NEXT_REQUIRED_ACTION.producer declaration only: independently transcribed source tuple checks both JOB_FIELDS.NEXT_REQUIRED_ACTION and FIELD_REGISTRY[\"JOB.NEXT_REQUIRED_ACTION\"]; a coherent two-declaration producer mutation is rejected by SPECIFICATION_JOB_PRODUCER_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for NEXT_REQUIRED_ACTION is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1215 specifies APPLICATION. Actual APPLICATION writer authority and rejection of wrong-producer writes at the owning command/response acceptance and persistence boundaries for NEXT_REQUIRED_ACTION are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-121b5294e5514215c53d3f3210383c32",
+      "sourceLineSha256": "2cf8efed8715988a95ef7ec377932b0ccbfbd50f3b221c7d1f96d845b8469070",
+      "atomicObligationSha256": "8023637b579cc423e38c07937ef5fac03107804f867cceaa4c4f6e1be3726189",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 NEXT_REQUIRED_ACTION.valueType declaration only: independently transcribed source tuple checks both JOB_FIELDS.NEXT_REQUIRED_ACTION and FIELD_REGISTRY[\"JOB.NEXT_REQUIRED_ACTION\"]; a coherent two-declaration valueType mutation is rejected by SPECIFICATION_JOB_TYPE_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for NEXT_REQUIRED_ACTION is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1215 specifies Structured action. Actual Structured action value admission and rejection at the owning canonical write/load boundary for NEXT_REQUIRED_ACTION are not exercised by these declaration helpers. The OBJECT declaration alone does not prove the closed structured-action contract or operationalNextAction() derivation."
+    },
+    {
+      "normativeRequirementId": "NREQ-d0a4bb3b7b4de1d6f6507a26e293ae39",
+      "sourceLineSha256": "87140b9ec1ab0f72557d86857dcc0f76280fb7553995ddb7f00e6da36a089248",
+      "atomicObligationSha256": "0867d6aaae3cd13febb6be8524ff2f5d723cb97df306a6070928f495a15dc1e9",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 LATEST_EVIDENCE_REFERENCE.producer declaration only: independently transcribed source tuple checks both JOB_FIELDS.LATEST_EVIDENCE_REFERENCE and FIELD_REGISTRY[\"JOB.LATEST_EVIDENCE_REFERENCE\"]; a coherent two-declaration producer mutation is rejected by SPECIFICATION_JOB_PRODUCER_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for LATEST_EVIDENCE_REFERENCE is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1216 specifies APPLICATION. Actual APPLICATION writer authority and rejection of wrong-producer writes at the owning command/response acceptance and persistence boundaries for LATEST_EVIDENCE_REFERENCE are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-8f20926e0d2990459bedc3567d0a1740",
+      "sourceLineSha256": "87140b9ec1ab0f72557d86857dcc0f76280fb7553995ddb7f00e6da36a089248",
+      "atomicObligationSha256": "5122f6bd50dd460d22c6aaf19da588faeacff29807ac6cd0220622e8422e48fd",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 LATEST_EVIDENCE_REFERENCE.valueType declaration only: independently transcribed source tuple checks both JOB_FIELDS.LATEST_EVIDENCE_REFERENCE and FIELD_REGISTRY[\"JOB.LATEST_EVIDENCE_REFERENCE\"]; a coherent two-declaration valueType mutation is rejected by SPECIFICATION_JOB_TYPE_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for LATEST_EVIDENCE_REFERENCE is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1216 specifies String. Actual String value admission and rejection at the owning canonical write/load boundary for LATEST_EVIDENCE_REFERENCE are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-91071046419b861c7e6e65188f16258b",
+      "sourceLineSha256": "780dd69637705910cb70868e557df7cd63684e1a1a04bc3d57b0e967e7f21944",
+      "atomicObligationSha256": "0d34d0afa336208b7d1f1bbd3fa8077e6127afb7999e5009332793f2c3a0b12d",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 INPUT_SET_HASH_OR_MANIFEST.producer declaration only: independently transcribed source tuple checks both JOB_FIELDS.INPUT_SET_HASH_OR_MANIFEST and FIELD_REGISTRY[\"JOB.INPUT_SET_HASH_OR_MANIFEST\"]; a coherent two-declaration producer mutation is rejected by SPECIFICATION_JOB_PRODUCER_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for INPUT_SET_HASH_OR_MANIFEST is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1217 specifies APPLICATION. Actual APPLICATION writer authority and rejection of wrong-producer writes at the owning command/response acceptance and persistence boundaries for INPUT_SET_HASH_OR_MANIFEST are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-c802558dbdae1de24d91f9510e62a50c",
+      "sourceLineSha256": "780dd69637705910cb70868e557df7cd63684e1a1a04bc3d57b0e967e7f21944",
+      "atomicObligationSha256": "d27b544d9aa79efd39350300e9988baa404332b2bcacb847ffa02d1699da1f8a",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 INPUT_SET_HASH_OR_MANIFEST.valueType declaration only: independently transcribed source tuple checks both JOB_FIELDS.INPUT_SET_HASH_OR_MANIFEST and FIELD_REGISTRY[\"JOB.INPUT_SET_HASH_OR_MANIFEST\"]; a coherent two-declaration valueType mutation is rejected by SPECIFICATION_JOB_TYPE_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for INPUT_SET_HASH_OR_MANIFEST is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1217 specifies String. Actual String value admission and rejection at the owning canonical write/load boundary for INPUT_SET_HASH_OR_MANIFEST are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-b7d2b99e2d64a8e4f74fc9c83158e203",
+      "sourceLineSha256": "5865b168d43de8f075712e926709f05d39f8cd4f2b3814c184ae34137662a4ab",
+      "atomicObligationSha256": "8ffd400957599b5814b68382196a6a183149364a3398410d3678c3f9c85a7f6e",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 JOB_RECORD_STATUS.producer declaration only: independently transcribed source tuple checks both JOB_FIELDS.JOB_RECORD_STATUS and FIELD_REGISTRY[\"JOB.JOB_RECORD_STATUS\"]; a coherent two-declaration producer mutation is rejected by SPECIFICATION_JOB_PRODUCER_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for JOB_RECORD_STATUS is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1218 specifies APPLICATION. Actual APPLICATION writer authority and rejection of wrong-producer writes at the owning command/response acceptance and persistence boundaries for JOB_RECORD_STATUS are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-03b586be0843ea7d0a33f618bdbffc0f",
+      "sourceLineSha256": "5865b168d43de8f075712e926709f05d39f8cd4f2b3814c184ae34137662a4ab",
+      "atomicObligationSha256": "29b5bcd9a230304b2dcd9d7a305ca027b60db11b138f8c7c327c81fbecabcc3d",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 JOB_RECORD_STATUS.valueType declaration only: independently transcribed source tuple checks both JOB_FIELDS.JOB_RECORD_STATUS and FIELD_REGISTRY[\"JOB.JOB_RECORD_STATUS\"]; a coherent two-declaration valueType mutation is rejected by SPECIFICATION_JOB_TYPE_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for JOB_RECORD_STATUS is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1218 specifies String. Actual String value admission and rejection at the owning canonical write/load boundary for JOB_RECORD_STATUS are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-aa657f271994c22512bfaba78b7a08c9",
+      "sourceLineSha256": "fed8124cfe3d657055502a36ea9351db8ed436a8d9d755dcee9290c5b516320e",
+      "atomicObligationSha256": "17e42690f0bf6e96f8418de385008a008fb82cd6d96323b2131edab5b2bf262e",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 STATUS_EVIDENCE.producer declaration only: independently transcribed source tuple checks both JOB_FIELDS.STATUS_EVIDENCE and FIELD_REGISTRY[\"JOB.STATUS_EVIDENCE\"]; a coherent two-declaration producer mutation is rejected by SPECIFICATION_JOB_PRODUCER_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for STATUS_EVIDENCE is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1219 specifies APPLICATION. Actual APPLICATION writer authority and rejection of wrong-producer writes at the owning command/response acceptance and persistence boundaries for STATUS_EVIDENCE are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-6eabbeada442318bb9aee9b7d0c8a46e",
+      "sourceLineSha256": "fed8124cfe3d657055502a36ea9351db8ed436a8d9d755dcee9290c5b516320e",
+      "atomicObligationSha256": "e3125c4f54945d7b3d18dbdfbfd3455101a4fe049eb77a2131b67ae1d4bbc985",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 STATUS_EVIDENCE.valueType declaration only: independently transcribed source tuple checks both JOB_FIELDS.STATUS_EVIDENCE and FIELD_REGISTRY[\"JOB.STATUS_EVIDENCE\"]; a coherent two-declaration valueType mutation is rejected by SPECIFICATION_JOB_TYPE_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for STATUS_EVIDENCE is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1219 specifies String. Actual String value admission and rejection at the owning canonical write/load boundary for STATUS_EVIDENCE are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-6a9c989afcda6d352ccda89dea703076",
+      "sourceLineSha256": "f91148e151011c5be4552da5e5a572928c5714ed99255b6099821161390aace1",
+      "atomicObligationSha256": "82de69f184613e9963d00a2e980c072132e206f33a49dd87e3af9a3c6fdc4050",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 EXACT_DELIVERABLE_REQUESTED.producer declaration only: independently transcribed source tuple checks both JOB_FIELDS.EXACT_DELIVERABLE_REQUESTED and FIELD_REGISTRY[\"JOB.EXACT_DELIVERABLE_REQUESTED\"]; a coherent two-declaration producer mutation is rejected by SPECIFICATION_JOB_PRODUCER_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for EXACT_DELIVERABLE_REQUESTED is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1220 specifies AGENT. Actual AGENT writer authority and rejection of wrong-producer writes at the owning command/response acceptance and persistence boundaries for EXACT_DELIVERABLE_REQUESTED are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-7b88f1f086b724cbe366878e9ae495b0",
+      "sourceLineSha256": "f91148e151011c5be4552da5e5a572928c5714ed99255b6099821161390aace1",
+      "atomicObligationSha256": "c372ffb4d59ac9fcbaf11c6d340568ece787e1a5c5127df284d081ab3a5f004c",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 EXACT_DELIVERABLE_REQUESTED.valueType declaration only: independently transcribed source tuple checks both JOB_FIELDS.EXACT_DELIVERABLE_REQUESTED and FIELD_REGISTRY[\"JOB.EXACT_DELIVERABLE_REQUESTED\"]; a coherent two-declaration valueType mutation is rejected by SPECIFICATION_JOB_TYPE_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for EXACT_DELIVERABLE_REQUESTED is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1220 specifies String. Actual String value admission and rejection at the owning canonical write/load boundary for EXACT_DELIVERABLE_REQUESTED are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-21ff2f4c25a72917fe238efe691f0f6b",
+      "sourceLineSha256": "c20478eeb019fef3f52c54c5851bf77df910d690823593690edd21be4cbbdf26",
+      "atomicObligationSha256": "a8827da465098df19527eae089bc6be4e495f4d9d8d088477252e0a2cd3a57c4",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 ASSUMPTIONS.producer declaration only: independently transcribed source tuple checks both JOB_FIELDS.ASSUMPTIONS and FIELD_REGISTRY[\"JOB.ASSUMPTIONS\"]; a coherent two-declaration producer mutation is rejected by SPECIFICATION_JOB_PRODUCER_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for ASSUMPTIONS is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1221 specifies AGENT. Actual AGENT writer authority and rejection of wrong-producer writes at the owning command/response acceptance and persistence boundaries for ASSUMPTIONS are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-827de09c1a8c0261d72d484752edc5f9",
+      "sourceLineSha256": "c20478eeb019fef3f52c54c5851bf77df910d690823593690edd21be4cbbdf26",
+      "atomicObligationSha256": "613762ff83956ae3a3ffc079a482e5d8a69f12f22c705fa8c6078818d8374616",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 ASSUMPTIONS.valueType declaration only: independently transcribed source tuple checks both JOB_FIELDS.ASSUMPTIONS and FIELD_REGISTRY[\"JOB.ASSUMPTIONS\"]; a coherent two-declaration valueType mutation is rejected by SPECIFICATION_JOB_TYPE_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for ASSUMPTIONS is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1221 specifies String. Actual String value admission and rejection at the owning canonical write/load boundary for ASSUMPTIONS are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-fb8dd28e8b44077063f2e65859b02dfa",
+      "sourceLineSha256": "0c88ea84de3da1f0fbdef677cd448265c0b996e1bd41213c7af1a5a095c2ebb0",
+      "atomicObligationSha256": "efc7959dfc66505745accd99006b2558f6de05bfa36becdddb22f9cb49ae813d",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 UNKNOWN_INFORMATION.producer declaration only: independently transcribed source tuple checks both JOB_FIELDS.UNKNOWN_INFORMATION and FIELD_REGISTRY[\"JOB.UNKNOWN_INFORMATION\"]; a coherent two-declaration producer mutation is rejected by SPECIFICATION_JOB_PRODUCER_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for UNKNOWN_INFORMATION is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1222 specifies AGENT. Actual AGENT writer authority and rejection of wrong-producer writes at the owning command/response acceptance and persistence boundaries for UNKNOWN_INFORMATION are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-0bf10c958814c2727e73498a4477c40d",
+      "sourceLineSha256": "0c88ea84de3da1f0fbdef677cd448265c0b996e1bd41213c7af1a5a095c2ebb0",
+      "atomicObligationSha256": "a74e19564eecb940e9d737c98bd2a755d26690a248c31afba59ee81b1934e1fa",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 UNKNOWN_INFORMATION.valueType declaration only: independently transcribed source tuple checks both JOB_FIELDS.UNKNOWN_INFORMATION and FIELD_REGISTRY[\"JOB.UNKNOWN_INFORMATION\"]; a coherent two-declaration valueType mutation is rejected by SPECIFICATION_JOB_TYPE_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for UNKNOWN_INFORMATION is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1222 specifies String. Actual String value admission and rejection at the owning canonical write/load boundary for UNKNOWN_INFORMATION are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-1eb66080b7f0fea9b9860200cfc0c83e",
+      "sourceLineSha256": "333f4c22c27c2b4f6151d8c0f0595945e126b8ef513a46d997bc810392e0b1dc",
+      "atomicObligationSha256": "b61116657c0a9cb7eae9a20319d7e09ec1c158dd7925aaf60fa90522488c17a9",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 INPUT_SET_CONTENTS.producer declaration only: independently transcribed source tuple checks both JOB_FIELDS.INPUT_SET_CONTENTS and FIELD_REGISTRY[\"JOB.INPUT_SET_CONTENTS\"]; a coherent two-declaration producer mutation is rejected by SPECIFICATION_JOB_PRODUCER_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for INPUT_SET_CONTENTS is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1223 specifies AGENT. Actual AGENT writer authority and rejection of wrong-producer writes at the owning command/response acceptance and persistence boundaries for INPUT_SET_CONTENTS are not exercised by these declaration helpers."
+    },
+    {
+      "normativeRequirementId": "NREQ-3e3e7a9b84d6522725aa68b92ac6be10",
+      "sourceLineSha256": "333f4c22c27c2b4f6151d8c0f0595945e126b8ef513a46d997bc810392e0b1dc",
+      "atomicObligationSha256": "ae160a98e2eac6672676f5b6eead9f227922975850321a48bbb47e1e6716bda8",
+      "checkIds": [
+        "registry.specified-job-tuples",
+        "registry.specified-job-mutations"
+      ],
+      "scope": "Current Section 15 INPUT_SET_CONTENTS.valueType declaration only: independently transcribed source tuple checks both JOB_FIELDS.INPUT_SET_CONTENTS and FIELD_REGISTRY[\"JOB.INPUT_SET_CONTENTS\"]; a coherent two-declaration valueType mutation is rejected by SPECIFICATION_JOB_TYPE_ORACLE. The exact atom retains its Section 15 value/nullability rules and governing registry context; declaration equality is partial evidence only. No writer authority, runtime admission, derivation, stage creation, pointer lifecycle, persistence, or full atomic coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The existing SPECIFICATION_JOB_FIELDS literal for INPUT_SET_CONTENTS is source-independent of production JOB_FIELDS and FIELD_REGISTRY; source row 1223 specifies String. Actual String value admission and rejection at the owning canonical write/load boundary for INPUT_SET_CONTENTS are not exercised by these declaration helpers."
     }
   ],
   "contractRefs": [
