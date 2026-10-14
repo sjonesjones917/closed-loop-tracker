@@ -297,6 +297,7 @@ try{
   ['multi-contributor-blind-received-draft',({originals})=>originals[2].original.draftManifestReceived=true,/blind isolation false/],
   ['multi-contributor-stale-source',({originals})=>originals[0].original.specificationSha256='0'.repeat(64),/identity\/source\/actual inputs mismatch/],
   ['multi-contributor-hidden-actual-inputs',({originals})=>originals[0].original.inputs.push({path:'verification/other.json',sha256:'0'.repeat(64)}),/identity\/source\/actual inputs mismatch/],
+  ['multi-contributor-invented-original-classification',({d})=>d.propositions[1].classification='HISTORICAL_NONNORMATIVE_CONTEXT',/original classification changed/],
   ['multi-contributor-rewritten-statement',({d})=>d.propositions[1].statement='Synthetic weakened normalized statement',/projected proposition changed/],
   ['multi-contributor-dropped-qualifier',({d})=>d.propositions[1].contextSourceLocations=[],/qualifier\/context membership changed/],
   ['multi-contributor-new-semantic-contribution',({d})=>d.mechanicalProjection.semanticContribution=true,/adapter or semantic contribution invalid/],

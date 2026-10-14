@@ -241,7 +241,7 @@ export function validateAtomicProjection(record,{readFile,sourceBytes,reconciler
       const source=members[index],normalized=propositions.get(member.normalizedPropositionId),line=atomicPointer(source,linePointer);
       assert(normalized&&normalized.statement===atomicPointer(source,statementPointer)&&normalized.primarySourceLine===line,'Atomic projected proposition changed or misattributed');
       if(classificationPointer)assert(normalized.classification===atomicPointer(source,classificationPointer),'Atomic projected original classification changed');
-      else if(source.classification!==undefined)assert(normalized.classification===source.classification,'Atomic projected original classification changed');
+      else assert(Object.hasOwn(normalized,'classification')===Object.hasOwn(source,'classification')&&normalized.classification===source.classification,'Atomic projected original classification changed');
       let contextLines=[];
       if(kind==='/requirements')contextLines=source.atomicObligation.contextSourceLocations.map(c=>c.startLine);
       else if(kind==='/candidates')for(const [a,b] of source.supporting_context_lines??[]){assert(Number.isSafeInteger(a)&&Number.isSafeInteger(b)&&a>0&&b>=a&&b<=lines.length,'Atomic constituent context range invalid');for(let n=a;n<=b;n++)if(lines[n-1].trim())contextLines.push(n);}
