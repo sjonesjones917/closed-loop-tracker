@@ -540,3 +540,106 @@ export async function verifyFailedConfirmationReturn({r, p, alreadyCompared = fa
   assert.equal(r.store.validateProjectIntegrity(p).valid, true); await checkpoint('confirmation-return-new-stage17-run');
   return {passed: true, synthetic: true, actualBrowser: false, sourceIterationId: iterationId, correctedIterationId: frozen.iteration.id, defectId: defect, acceptedRunMutation: false, rawHistoryPreserved: true, stage14PackageAndAcceptance: true, stage15RegressionAndAcceptance: true, stage16CorrectionAndAcceptance: true, stage17NewDescendant: true, independentRunAndVerifierCarriersWithholdPriorConclusions: true, newCorrectedRuns: 1, newCorrectedVerifications: 0, completedNewCohort: false, provenanceNegativeCases: ['missing-raw', 'changed-raw', 'wrong-accepted-scope'], boundary: 'Saved file package, staged response, admission, explicit acceptance, transaction-adapter save/cold-read for corrective return; one new synthetic run and first verifier carrier. Remaining ten-run completion stays required.'};
 }
+
+// The real accepted Stage1–10 prerequisite is allowed to retain malformed
+// historical evidence, but no public write/read/import may promote it to a
+// valid frozen package. This does not claim an operator command makes corruption.
+export async function verifyCandidateHashAdmissionControls({sourceOverrides = {}, onlyEmptyMap = false, verifyOwnerRemoval = true, onProgress = () => {}} = {}) {
+  const sources = Object.fromEntries(runtimeFiles.map(file => [file, sourceOverrides[file] ?? fs.readFileSync(file, 'utf8')]));
+  const initial = await prerequisite(sources), prefix = snapshot(initial.r, initial.p, sources);
+  const candidateId = initial.p.job.CURRENT_CANDIDATE_ID, iterationId = initial.p.job.CURRENT_ITERATION;
+  const originalRaw = plain(initial.p.projectData.rawResponses), originalReceipts = plain(initial.p.projectData.outputReceipts);
+  const originalCandidate = initial.r.engine.records(initial.p, 'candidateFreezes').find(row => row.id === candidateId);
+  const originalManifest = plain(initial.r.engine.recordValue(originalCandidate, 'COMPONENT_MANIFEST'));
+  const artifactId = originalManifest[0].artifactId, originalDigest = originalManifest[0].sha256;
+  const changedDigest = (originalDigest[0] === '0' ? '1' : '0') + originalDigest.slice(1);
+  const put = (record, name, value) => {record.fields[name] = record[name] = value;};
+  const remove = (record, name) => {delete record.fields[name]; delete record[name];};
+  const variants = [
+    ['empty-map', (c, i, r) => put(c, 'COMPONENT_HASHES', r.copy({}))],
+    ['absent-map', c => remove(c, 'COMPONENT_HASHES')],
+    ['null-map', c => put(c, 'COMPONENT_HASHES', null)],
+    ['array-map', (c, i, r) => put(c, 'COMPONENT_HASHES', r.copy([]))],
+    ['string-map', c => put(c, 'COMPONENT_HASHES', originalDigest)],
+    ['missing-hash-key', c => {delete c.fields.COMPONENT_HASHES[artifactId];}],
+    ['extra-hash-key', c => {c.fields.COMPONENT_HASHES['UNSELECTED-ARTIFACT'] = originalDigest;}],
+    ['malformed-short-digest', c => {c.fields.COMPONENT_HASHES[artifactId] = 'a';}],
+    ['malformed-nonhex-digest', c => {c.fields.COMPONENT_HASHES[artifactId] = 'z'.repeat(64);}],
+    ['changed-digest', c => {c.fields.COMPONENT_HASHES[artifactId] = changedDigest;}],
+    ['absent-manifest', c => remove(c, 'COMPONENT_MANIFEST')],
+    ['null-manifest', c => put(c, 'COMPONENT_MANIFEST', null)],
+    ['nonarray-manifest', (c, i, r) => put(c, 'COMPONENT_MANIFEST', r.copy({}))],
+    ['missing-manifest-entry', (c, i, r) => put(c, 'COMPONENT_MANIFEST', r.copy(originalManifest.slice(1)))],
+    ['duplicate-manifest-entry', (c, i, r) => {c.fields.COMPONENT_MANIFEST.push(r.copy(c.fields.COMPONENT_MANIFEST[0]));}],
+    ['null-manifest-entry', c => {c.fields.COMPONENT_MANIFEST[0] = null;}],
+    ['missing-manifest-artifact', c => {delete c.fields.COMPONENT_MANIFEST[0].artifactId;}],
+    ['changed-matching-digests', c => {c.fields.COMPONENT_HASHES[artifactId] = changedDigest; c.fields.COMPONENT_MANIFEST[0].sha256 = changedDigest;}],
+    ['changed-manifest-subject', c => {c.fields.COMPONENT_MANIFEST[0].filename += '.changed';}],
+    ['missing-source-iteration', c => remove(c, 'ITERATION_ID')],
+    ['wrong-source-candidate', (c, i) => put(i, 'CANDIDATE_ID', 'UNRELATED-CANDIDATE')],
+    ['changed-freeze-lineage', (c, i) => put(i, 'LINEAGE', changedDigest)]
+  ];
+  const checked = [];
+  const assertClosed = (r, p, caseId, boundary) => {
+    const e = r.engine, oracle = 'CANDIDATE_HASH_ADMISSION_ORACLE ' + caseId + ' ' + boundary;
+    assert.doesNotThrow(() => e.recalculate(p), oracle + ' deterministic recalculation');
+    assert.equal(e.gate(10, p).complete, false, oracle);
+    for (const name of ['ALL_REQUIRED_COMPONENTS_PRESENT', 'ALL_RUNS_WILL_RECEIVE_IDENTICAL_FROZEN_MATERIALS', 'HASHES_RECORDED_WHERE_PRACTICAL', 'ALL_FROZEN_COMPONENT_BYTES_HASHED']) assert.equal(p.stages[10].derivedData[name], false, oracle + ' ' + name);
+    const evaluation = e.evaluateIteration(p, iterationId, 'INITIAL');
+    assert.equal(evaluation.candidateIdentity, '', oracle + ' identity');
+    assert.equal(evaluation.executionEvidenceComplete, false, oracle + ' execution');
+    assert.equal(evaluation.complete, false, oracle + ' evaluation');
+    assert.equal(e.gate(11, p).complete, false, oracle + ' stage11');
+    assert.equal(e.gate(11, p).diagnosticContinuation ?? null, null, oracle + ' diagnostic');
+    const draft = r.copy(p), before = JSON.stringify(draft);
+    assert.throws(() => e.reserveRunBatch(draft, {stage: 11, iterationId, candidateId}), /frozen candidate|component hashes|current iteration/i, oracle + ' reservation');
+    assert.equal(JSON.stringify(draft), before, oracle + ' no partial reservation');
+    assert.deepEqual(plain(p.projectData.rawResponses), originalRaw, oracle + ' raw preservation');
+    assert.deepEqual(plain(p.projectData.outputReceipts), originalReceipts, oracle + ' receipt preservation');
+  };
+  // Positive state uses the original freeze/bytes. JSON object key ordering does
+  // not change the retained manifest or component identity.
+  const positive = initial.r.copy(initial.p), candidate = positive.projectData.candidateFreezes.find(row => row.id === candidateId);
+  put(candidate, 'COMPONENT_HASHES', initial.r.copy(Object.fromEntries(Object.entries(candidate.fields.COMPONENT_HASHES).reverse())));
+  put(candidate, 'COMPONENT_MANIFEST', initial.r.copy(candidate.fields.COMPONENT_MANIFEST.map(row => Object.fromEntries(Object.entries(row).reverse()))));
+  initial.r.engine.refreshRecordHashes(candidate, 'candidateFreezes'); initial.r.engine.recalculate(positive);
+  assert.equal(initial.r.engine.gate(10, positive).complete, true, 'CANDIDATE_HASH_ORDER_STABLE_GATE');
+  assert.equal(initial.r.engine.evaluateIteration(positive, iterationId).candidateIdentity, initial.r.engine.evaluateIteration(initial.p, iterationId).candidateIdentity, 'CANDIDATE_HASH_ORDER_STABLE_IDENTITY');
+  assert.equal(initial.r.engine.reserveRunBatch(positive, {stage: 11, iterationId, candidateId}).length, 10, 'CANDIDATE_HASH_VALID_RESERVATION');
+  for (const [caseId, mutate] of onlyEmptyMap ? variants.slice(0, 1) : variants) {
+    let {r, p} = await restore(prefix, sources);
+    const draft = r.copy(p), c = draft.projectData.candidateFreezes.find(row => row.id === candidateId), i = draft.projectData.iterations.find(row => row.id === iterationId);
+    mutate(c, i, r);
+    // Mirrored canonical carriers remain coherent; the invalidity is solely the
+    // frozen package, not a stale record digest or fabricated completion flag.
+    for (const key of ['COMPONENT_HASHES', 'COMPONENT_MANIFEST']) if (Object.hasOwn(c.fields, key)) c[key] = c.fields[key];
+    r.engine.refreshRecordHashes(c, 'candidateFreezes'); r.engine.refreshRecordHashes(i, 'iterations'); r.engine.recalculate(draft);
+    let disposition = 'REJECTED', rejectionCode = null;
+    try {p = await save(r, p, draft);} catch (error) {
+      assert(['PROJECT_INTEGRITY_FAILED', 'PROJECT_SCHEMA_INVALID'].includes(error.code), 'CANDIDATE_HASH_UNEXPECTED_STORAGE_REJECTION ' + caseId + ': ' + error.message);
+      rejectionCode = error.code;
+    }
+    if (!rejectionCode) {
+      p = await r.store.readProject(p.job.JOB_ID);
+      assert.equal(r.store.validateProjectIntegrity(p).valid, true, 'CANDIDATE_HASH_RETAINED_INCOMPLETE_INTEGRITY ' + caseId);
+      assertClosed(r, p, caseId, 'public-cold-read'); disposition = 'RETAINED_INCOMPLETE';
+      if (caseId === 'empty-map' || caseId === 'changed-matching-digests') {
+        const backup = await r.store.exportPackage(p.job.JOB_ID), fresh = runtime(sources);
+        await fresh.store.ready;
+        const imported = await fresh.store.importPackage(backup);
+        assertClosed(fresh, imported, caseId, 'export-import');
+      }
+    }
+    assertClosed(r, draft, caseId, 'recalculated');
+    checked.push({caseId, passed: true, disposition, rejectionCode}); onProgress(checked.at(-1));
+  }
+  let ownerRemoval = null;
+  if (verifyOwnerRemoval) {
+    const source = sources['workflow-engine.js'], start = source.indexOf('function candidateComponentIdentity('), end = source.indexOf('\nfunction evaluateCorrectedIterationLineage(', start);
+    assert(start >= 0 && end > start, 'CANDIDATE_HASH_OWNER_REMOVAL_ANCHOR');
+    const removed = source.slice(0, start) + "function candidateComponentIdentity(project,candidateId){const c=records(project,'candidateFreezes').find(r=>recordId(r,'candidateFreezes')===String(candidateId||''));return c?hash.sha256Value(recordValue(c,'COMPONENT_HASHES')||{}):'';}" + source.slice(end);
+    await assert.rejects(() => verifyCandidateHashAdmissionControls({sourceOverrides: {...sourceOverrides, 'workflow-engine.js': removed}, onlyEmptyMap: true, verifyOwnerRemoval: false}), error => error.code === 'ERR_ASSERTION' && error.message.includes('CANDIDATE_HASH_ADMISSION_ORACLE empty-map public-cold-read'), 'CANDIDATE_HASH_OWNER_REMOVAL_MUST_RECREATE_DURABLE_FAILURE');
+    ownerRemoval = {detected: true, oracle: 'CANDIDATE_HASH_ADMISSION_ORACLE empty-map public-cold-read', actualAcceptedPrerequisite: true};
+  }
+  return {passed: true, synthetic: true, actualBrowser: false, actualAcceptedPrerequisite: true, prerequisiteSha256: initial.prerequisiteSha256, decodedPrerequisiteSha256: initial.decodedPrerequisiteSha256, originalRawAndReceiptsPreserved: true, validReservationSlots: 10, keyOrderingPreserved: true, cases: checked, ownerRemoval, boundary: 'Actual retained Stage1–10 prerequisite; production public write, cold read, export/import with existing transaction adapter. No normal operator corruption path or browser claim.'};
+}
