@@ -1390,11 +1390,11 @@
     "startingSourceCommit": "7df5f46e9a7e54da09622387a978badb39916c09",
     "startingMainCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
     "integrationBranch": "dot/published-execution-20261014",
-    "integrationCommit": "8a21c78187bf2af6ab669f9bae053858659e1932",
+    "integrationCommit": "182db45517d46f7e11e15cff1cfdc41ec001a1a1",
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "dot",
-    "lastInspectedAt": "2026-10-14T06:13:10Z",
+    "lastInspectedAt": "2026-10-14T06:20:43Z",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -1993,6 +1993,16 @@
       "integratedControls": 170,
       "sourceSuites": "PASS",
       "appAcceptance": false
+    },
+    "atomicSectionFollowup": {
+      "authorCommit": "f62eaac1f0c04d6386147e209a8f8039bcfa237a",
+      "state": "INTEGRATED",
+      "independentReviewSha256": "e24b98d5ed3aa60a4130d4a364a634764be106771a379ab05e1250b2032156d6",
+      "evidencePath": "verification/dot-execution-20261014/section-review/final-review.txt",
+      "integratedControls": 218,
+      "sourceSuites": "PASS",
+      "appAcceptance": false,
+      "remaining": "Actual final combined atomic reconciliation integration and proof migration"
     }
   }
 }
