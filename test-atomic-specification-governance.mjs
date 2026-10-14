@@ -163,6 +163,42 @@ for(const [name,edit,pattern] of [
 assert.throws(()=>validateAtomicIdentityCrosswalk(changedCrosswalk,changedPrior,changedPriorRef,[changedAtom],changedDecisions,changedSource),/exact historical source bytes required/);cases.push('changed-singleton-historical-source-archive-missing');
 assert.throws(()=>validateAtomicIdentityCrosswalk(changedCrosswalk,changedPrior,changedPriorRef,[changedAtom],changedDecisions,changedSource,null,Buffer.from('tampered source')),/exact historical source bytes required/);cases.push('changed-singleton-historical-source-archive-tampered');
 
+// Cross-source legacy identity is never inferred from primary bytes alone.
+for(const relation of ['UNCHANGED_ATOMIC','MERGED_EQUIVALENT']){
+ const cw=copy(changedCrosswalk),rows=copy([changedAtom]),ds=copy(changedDecisions);delete ds.get('changed').scopeChange;cw[0].relation=relation;ds.get('changed').equivalenceReason='Synthetic equivalence claim cannot replace scoped review.';
+ if(relation==='UNCHANGED_ATOMIC'){rows[0].normativeRequirementId=oldDutyId;cw[0].currentNormativeRequirementIds=[oldDutyId];ds.get('changed').currentNormativeRequirementIds=[oldDutyId];}
+ assert.throws(()=>changedCheck(cw,rows,ds),/cross-source scope equivalence review required/);cases.push('unannotated-cross-source-'+relation+'-requires-scoped-equivalence');
+}
+const equivalentPrior={...changedPrior,requirements:[changedPrior.requirements[0]]},equivalentPriorRef={sha256:sha(JSON.stringify(equivalentPrior))};
+for(const relation of ['UNCHANGED_ATOMIC','MERGED_EQUIVALENT']){
+ const rows=copy([changedAtom]);if(relation==='UNCHANGED_ATOMIC')rows[0].normativeRequirementId=oldDutyId;
+ const target=rows[0],equivalence={priorNormativeRequirementId:oldDutyId,currentNormativeRequirementId:target.normativeRequirementId,priorSpecificationSha256:oldSha,currentSpecificationSha256:changedSha,priorStatement:target.atomicObligation.statement,currentStatement:target.atomicObligation.statement,currentAtomicObligationSha256:target.atomicObligation.sha256,priorContextSourceLocations:[],currentContextSourceLocations:[],reason:'Synthetic reviewed unchanged scope with unrelated removed source text.'};
+ const d={decisionId:'equivalent',currentNormativeRequirementIds:[target.normativeRequirementId],priorWasSingleObligation:true,equivalenceReason:'Synthetic scoped equivalence reviewed.',scopeEquivalences:[equivalence]},cw=[{...changedCrosswalk[0],priorManifestSha256:equivalentPriorRef.sha256,relation,currentNormativeRequirementIds:[target.normativeRequirementId],reconciliationDecisionId:d.decisionId}];
+ validateAtomicIdentityCrosswalk(cw,equivalentPrior,equivalentPriorRef,rows,new Map([[d.decisionId,d]]),changedSource,null,oldSource);cases.push('genuine-scoped-cross-source-'+relation+'-positive');
+ const forgedPrior=copy(equivalentPrior);forgedPrior.requirements[0].sourceLocation.startLine=99;forgedPrior.requirements[0].sourceLocation.endLine=99;const forgedCw=copy(cw);forgedCw[0].priorSourceLocation=forgedPrior.requirements[0].sourceLocation;
+ assert.throws(()=>validateAtomicIdentityCrosswalk(forgedCw,forgedPrior,equivalentPriorRef,rows,new Map([[d.decisionId,d]]),changedSource,new Map([[oldDutyId,{targetSourceLine:1}]]),oldSource),/exact historical source/);cases.push('forged-historical-primary-'+relation+'-rejected');
+}
+const annotatedPrior=copy(changedPrior);annotatedPrior.requirements[0].clarificationSourceLocations=[{path:SPECIFICATION_PATH,startLine:2,endLine:2,textSha256:sha(oldContext.controllingText+'\n')}];
+const annotatedRef={sha256:sha(JSON.stringify(annotatedPrior))},annotatedCw=copy(changedCrosswalk);for(const row of annotatedCw)row.priorManifestSha256=annotatedRef.sha256;
+for(const relation of ['UNCHANGED_ATOMIC','MERGED_EQUIVALENT']){const cw=copy(annotatedCw),rows=copy([changedAtom]),ds=copy(changedDecisions);delete ds.get('changed').scopeChange;cw[0].relation=relation;ds.get('changed').equivalenceReason='Counterfeit';if(relation==='UNCHANGED_ATOMIC'){rows[0].normativeRequirementId=oldDutyId;cw[0].currentNormativeRequirementIds=[oldDutyId];ds.get('changed').currentNormativeRequirementIds=[oldDutyId];}assert.throws(()=>validateAtomicIdentityCrosswalk(cw,annotatedPrior,annotatedRef,rows,ds,changedSource,null,oldSource),/lost predecessor context/);cases.push('recorded-context-'+relation+'-cannot-be-erased');}
+
+// Two explicitly reviewed duplicate historical predicates may both change
+// into one fresh atom; neither ancestor becomes an extra proof denominator row.
+const duplicatePrior=copy(changedPrior),duplicateOldId='NREQ-'+'c'.repeat(32);duplicatePrior.requirements.push({...copy(duplicatePrior.requirements[0]),normativeRequirementId:duplicateOldId});const duplicateRef={sha256:sha(JSON.stringify(duplicatePrior))},duplicateCw=copy(changedCrosswalk),duplicateDecisions=copy(changedDecisions);
+for(const row of duplicateCw)row.priorManifestSha256=duplicateRef.sha256;
+const secondDecision=copy(duplicateDecisions.get('changed'));secondDecision.decisionId='changed-duplicate';secondDecision.scopeChange.priorNormativeRequirementId=duplicateOldId;duplicateDecisions.set(secondDecision.decisionId,secondDecision);duplicateCw.push({...copy(duplicateCw[0]),priorNormativeRequirementId:duplicateOldId,reconciliationDecisionId:secondDecision.decisionId});
+const duplicateGroup={groupId:'synthetic-changed-duplicate-group',priorEquivalenceReason:'Synthetic explicit review establishes equivalent old predicates before applying their same withdrawn-context change.',currentNormativeRequirementId:changedId,priorNormativeRequirementIds:[oldDutyId,duplicateOldId].sort(),scopeChangeSha256ByPriorId:{[oldDutyId]:hash(duplicateDecisions.get('changed').scopeChange),[duplicateOldId]:hash(secondDecision.scopeChange)}};
+for(const id of ['changed','changed-duplicate'])duplicateDecisions.get(id).changedDuplicateGroup=copy(duplicateGroup);
+const duplicateCheck=(cw=duplicateCw,ds=duplicateDecisions)=>validateAtomicIdentityCrosswalk(cw,duplicatePrior,duplicateRef,[changedAtom],ds,changedSource,null,oldSource);
+duplicateCheck();cases.push('explicit-changed-duplicate-convergence-positive');
+for(const [name,edit] of [
+ ['changed-duplicate-group-missing',ds=>{for(const id of ['changed','changed-duplicate'])delete ds.get(id).changedDuplicateGroup;}],
+ ['changed-duplicate-one-group-missing',ds=>delete ds.get('changed-duplicate').changedDuplicateGroup],
+ ['changed-duplicate-group-member-omitted',ds=>{for(const id of ['changed','changed-duplicate'])ds.get(id).changedDuplicateGroup.priorNormativeRequirementIds.pop();}],
+ ['changed-duplicate-group-stale-scope',ds=>{for(const id of ['changed','changed-duplicate'])ds.get(id).changedDuplicateGroup.scopeChangeSha256ByPriorId[oldDutyId]='0'.repeat(64);}],
+ ['changed-duplicate-unreviewed-equivalence',ds=>{for(const id of ['changed','changed-duplicate'])ds.get(id).changedDuplicateGroup.priorEquivalenceReason='';}]
+]){const ds=copy(duplicateDecisions);edit(ds);assert.throws(()=>duplicateCheck(duplicateCw,ds),/double counted|group incomplete or stale/,name);duplicateCheck();cases.push(name);}
+
 const directory=fs.mkdtempSync(path.join(os.tmpdir(),'atomic-proof-fixture-')),cwd=process.cwd(),reviewPath='verification/synthetic-atomic-proof.json',suite='verify-test-runtime-v3.mjs',checkId='test-ir.unknown-operation';
 try{
  fs.mkdirSync(path.join(directory,'specification'));fs.mkdirSync(path.join(directory,'verification'));fs.writeFileSync(path.join(directory,SPECIFICATION_PATH),source);
