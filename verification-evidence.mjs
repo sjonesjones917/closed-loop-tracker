@@ -1,6 +1,6 @@
 // Repository verification evidence. This module is never shipped to the app.
 import fs from 'node:fs';
-import {atomicObligationSha256,validateAtomicRequirementRows,validateAtomicLineMembership,loadReviewedAtomicExtraction} from './review-specification-coverage.mjs';
+import {isAtomicEvidencePath,readAtomicEvidenceBytes,atomicObligationSha256,validateAtomicRequirementRows,validateAtomicLineMembership,loadReviewedAtomicExtraction} from './review-specification-coverage.mjs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import {execFileSync} from 'node:child_process';
@@ -115,7 +115,7 @@ export function evaluateFullRequirementProof(requirement,bindings,observations,f
     }
   }
   const obligations=coverage.obligations;
-  if(!Array.isArray(obligations)||!obligations.length||obligations.some(obligation=>!plain(obligation)||!nonempty(obligation.id)||!nonempty(obligation.sourceText)||!nonempty(obligation.expectedBehavior))||new Set(obligations.map(obligation=>obligation.id)).size!==obligations.length||(atomic?obligations.some(obligation=>!requirement.atomicObligation.sourceSpans.some(span=>span.text.includes(obligation.sourceText))):obligations.map(obligation=>obligation.sourceText).join('')!==requirement.controllingText)){reject('INCOMPLETE_SOURCE_OBLIGATION_DECOMPOSITION');return result;}
+  if(!Array.isArray(obligations)||!obligations.length||obligations.some(obligation=>!plain(obligation)||!nonempty(obligation.id)||!nonempty(obligation.sourceText)||!nonempty(obligation.expectedBehavior))||new Set(obligations.map(obligation=>obligation.id)).size!==obligations.length||obligations.map(obligation=>obligation.sourceText).join('')!==(atomic?requirement.atomicObligation.sourceSpans.map(span=>span.text).join(''):requirement.controllingText)){reject('INCOMPLETE_SOURCE_OBLIGATION_DECOMPOSITION');return result;}
   const requiredExternal=requirement.requiredBrowserOrPhysicalDeviceProof||[],externalScopes=new Set();
   const references=[];
   for(const obligation of obligations){
@@ -177,11 +177,12 @@ export function evidenceFingerprint(cwd=process.cwd()){
   const governance=fs.existsSync(declaration)?JSON.parse(fs.readFileSync(declaration,'utf8')):{},amendments=governance.approvedAmendments||[],independentSourceReview=governance.independentSourceReview;
   const assertionPath=path.join(cwd,'verification-assertion-bindings.json'),fullCoverageReviewPaths=fs.existsSync(assertionPath)?(JSON.parse(fs.readFileSync(assertionPath,'utf8')).bindings||[]).flatMap(binding=>binding.fullCoverage?.review?.path?[binding.fullCoverage.review.path]:[]):[];
   const atomicRefs=governance.atomicExtraction?.status==='RECONCILED'?[governance.atomicExtraction.draft,governance.atomicExtraction.independentReview,governance.atomicExtraction.reconciliation]:[];
-  if(atomicRefs.length){const ref=governance.atomicExtraction.reconciliation;requireEvidence(ref?.path&&sha(fs.readFileSync(path.join(cwd,ref.path)))===ref.sha256,'atomic reconciliation input is stale');const record=JSON.parse(fs.readFileSync(path.join(cwd,ref.path),'utf8'));atomicRefs.push(...[record.priorManifest,record.sourceTraceManifest,record.historicalSourceRelocationCrosswalk].filter(Boolean));}
+  if(atomicRefs.length){const ref=governance.atomicExtraction.reconciliation,bytes=readAtomicEvidenceBytes(ref?.path,cwd);requireEvidence(sha(bytes)===ref.sha256,'atomic reconciliation input is stale');const record=JSON.parse(bytes);atomicRefs.push(...[record.priorManifest,record.sourceTraceManifest,record.historicalSourceRelocationCrosswalk].filter(Boolean));}
+  const atomicPaths=new Set(atomicRefs.map(ref=>ref?.path));
   const governed=[...atomicRefs.map(ref=>ref.path),...(governance.contextApplicabilityReview?[governance.contextApplicabilityReview.path]:[]),...fullCoverageReviewPaths,...(independentSourceReview?[independentSourceReview.sourceReviewPath,independentSourceReview.reconciliationPath]:[]),...amendments.flatMap(amendment=>['sourceReviewPath','approvedProposalPath'].map(key=>amendment[key])),...[...Object.values(verificationCatalog),...Object.values(browserVerificationCatalog)].flatMap(suite=>suite.sourceInputs||[])];
   const sourceRoot=fs.realpathSync(cwd)+path.sep;
   for(const name of governed){
-    requireEvidence(typeof name==='string'&&/^(?:(?:verification|specification)\/[^/\\]+\.(?:json(?:\.gz)?|md)|[\w-]+\.m?js|test-backup-extension-native\.html|test-retained-root-native\.html|test-human-combined-(?:native|cold|ui-seed)\.html|verification-assertion-bindings\.json|TEST_PROJECT\.json)$/.test(name)&&path.posix.normalize(name)===name,'declared governance or verifier input must be an exact first-party verification path');
+    requireEvidence(typeof name==='string'&&((atomicPaths.has(name)&&isAtomicEvidencePath(name))||/^(?:(?:verification|specification)\/[^/\\]+\.(?:json(?:\.gz)?|md)|[\w-]+\.m?js|test-backup-extension-native\.html|test-retained-root-native\.html|test-human-combined-(?:native|cold|ui-seed)\.html|verification-assertion-bindings\.json|TEST_PROJECT\.json)$/.test(name))&&path.posix.normalize(name)===name,'declared governance or verifier input must be an exact first-party verification path');
     requireEvidence(fs.realpathSync(path.join(cwd,name)).startsWith(sourceRoot),'declared governance or verifier input is outside the first-party source root');
   }
   const inputs=[...new Set([...tracked,...governed,...fs.readdirSync(cwd).filter(name=>!name.startsWith('.')&&/\.(?:m?js|html|css)$/.test(name)),...['verification-assertion-bindings.json','verification-negative-populations.json'].filter(name=>fs.existsSync(path.join(cwd,name)))])];

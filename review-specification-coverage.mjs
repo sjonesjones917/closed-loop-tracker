@@ -94,8 +94,15 @@ export function validateAtomicLineMembership(requirements,coverage,sourceBytes,s
   }
   return result;
 }
+export const isAtomicEvidencePath=value=>typeof value==='string'&&/^(?:verification|specification)\/(?:[a-zA-Z0-9_-]+\/)*[a-zA-Z0-9_.-]+\.json$/.test(value)&&path.posix.normalize(value)===value;
+export function readAtomicEvidenceBytes(file,cwd=process.cwd()){
+  assert(isAtomicEvidencePath(file),'Atomic evidence file path invalid');
+  const root=fs.realpathSync(cwd)+path.sep,target=fs.realpathSync(path.resolve(cwd,file));
+  assert(target.startsWith(root),'Atomic evidence file escapes first-party source root');
+  return fs.readFileSync(target);
+}
 function atomicEvidenceFile(ref,readFile){
-  assert(ref&&typeof ref.path==='string'&&/^(?:verification|specification)\/[a-zA-Z0-9_./-]+\.json$/.test(ref.path)&&!ref.path.split('/').includes('..')&&atomicDigest(ref.sha256),'Atomic evidence file identity invalid');
+  assert(ref&&isAtomicEvidencePath(ref.path)&&atomicDigest(ref.sha256),'Atomic evidence file identity invalid');
   const bytes=readFile(ref.path);assert(sha256(bytes)===ref.sha256,'Atomic evidence file digest mismatch');return JSON.parse(bytes);
 }
 export function validateAtomicIdentityCrosswalk(crosswalk,prior,priorRef,requirements,decisions,sourceBytes,relocations=null){
@@ -132,7 +139,7 @@ export function validateAtomicIdentityCrosswalk(crosswalk,prior,priorRef,require
 }
 // Returns no active replacement until the complete independent challenge and
 // distinct reconciliation are present. Source-only booleans are never inputs.
-export function loadReviewedAtomicExtraction(descriptor,{sourceBytes,specificationPath,sections,priorRequirements=null,readFile=file=>fs.readFileSync(file)}={}){
+export function loadReviewedAtomicExtraction(descriptor,{sourceBytes,specificationPath,sections,priorRequirements=null,readFile=readAtomicEvidenceBytes}={}){
   if(!descriptor||descriptor.status==='PENDING')return {established:false,descriptor:descriptor||{status:'PENDING'}};
   assert(descriptor.status==='RECONCILED','Atomic extraction status invalid');
   const sourceSha256=sha256(sourceBytes),refs=[descriptor.draft,descriptor.independentReview,descriptor.reconciliation];

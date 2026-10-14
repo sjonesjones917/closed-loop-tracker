@@ -42,3 +42,13 @@ Other executed checks:
 - Syntax checks and `git diff --check`: PASS.
 
 Generated manifests are deliberately excluded from this code change. The integration owner must regenerate them on the reviewed integrated source, using the actual reachable source commit. No push, merge or deployment was performed.
+
+## Independent-review corrections
+
+The independent implementation review rejected three activated-path defects in initial commit `e311c47f78b92547faec5bfc53887abb7e70ec96`. This corrective revision preserves that failure history and repairs them:
+
+1. A reviewed new atom may have a primary source line absent from the historical line-level inventory. The generator now uses its existing candidate owner/registry/test defaults for that atom, preserving the independently reviewed identity and scope. Disposition remains UNKNOWN; neither ownership nor proof is asserted as established. The regression executes the exact earlier production mapper to reproduce its rejection before checking the corrected mapper.
+2. Atomic proof source annotations must exactly concatenate every ordered declared source span. Arbitrary substrings, omitted span text and duplicate text coverage are rejected. Multiple spans and legitimate subdivision of their complete text are supported. The existing digest, statement, context, independent review, owner, receipt and check-universe gates remain mandatory.
+3. Nested atomic JSON evidence paths are supported consistently by loading and receipt fingerprinting. Both use the same path predicate; traversal, noncanonical paths and realpath/symlink escapes are rejected. The reconciliation pre-read also uses this containment check.
+
+The expanded focused regression passes 53 synthetic controls. The independent nested-path reproducer was replayed against the corrected code and both loader and fingerprint accepted its valid fixture. Source-only completeness remains BLOCKED; no real declarations were renewed.

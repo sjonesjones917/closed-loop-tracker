@@ -116,8 +116,17 @@ atomicCompletenessEstablished=atomic.established;
 if(atomic.established){
  const sourceRows=new Map(req.map(row=>[row.sourceLocation.startLine,row]));
  req=atomic.entries.map(entry=>{
-  const candidate=sourceRows.get(entry.sourceLocation.startLine);
-  if(!candidate)throw Error('Atomic primary anchor has no independently reviewed source trace');
+  const statement=entry.atomicObligation?.statement||entry.controllingText;
+  const candidateOwner=owner(statement,entry.sectionId);
+  // Independent extraction may discover a duty on a line previously recorded
+  // only as context. Historical primary membership is not a completeness oracle.
+  const candidate=sourceRows.get(entry.sourceLocation.startLine)||{
+   responsibleImplementationOwner:candidateOwner,schemaOrRegistryEntry:registry(statement,entry.sectionId),
+   requirementClass:/\bMUST NOT\b|\bPROHIBITED\b|\bNEVER\b|\bCANNOT\b|\bMAY NOT\b/i.test(statement)?'PROHIBITION':/100%|\s=\s0\s*$/.test(statement)?'DEFINITION_OF_DONE_METRIC':'REQUIREMENT',
+   deterministicTestIds:tests(candidateOwner),semanticTestIds:/semantic|meaning|interpret|reviewer|research/i.test(statement)?['verify-semantic-invariant.mjs']:[],mutationTestIds:[],
+   candidateGovernanceMutationTestIds:mutations,testTraceStatus:'CANDIDATE_FILE_MAPPING',productionOwnerStatus:'CANDIDATE_MODULE_MAPPING',
+   observableExpectedBehavior:statement,requiredBrowserOrPhysicalDeviceProof:/iPhone|physical device/i.test(statement)?['ACTUAL_IPHONE_SAFARI']:/browser|viewport|operator|UI\b/i.test(statement)?['LOCAL_AND_DEPLOYED_BROWSER']:[]
+  };
   // Old line-level declarations are provenance, never inherited child proof.
   const row={...candidate,...entry,extractionOrigins:['REVIEWED_ATOMIC_RECONCILIATION'],reconciliationStatus:'RECONCILED',acceptanceReportField:`normativeRequirementTrace.${entry.normativeRequirementId}`,currentDisposition:'UNKNOWN',currentDispositionReason:'Reviewed atomic scope; no current requirement-specific executed proof is established by generation.'};
   delete row.sourceReviewAdded;delete row.approvedAmendmentId;
