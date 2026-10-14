@@ -2693,6 +2693,154 @@
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
       "coverageClassification": "PARTIAL_EXECUTED_BOUNDARY_EVIDENCE",
       "atomicObligationSha256": "6deeec187c92c4a949da01a83dd6b0504807268ec671fbcbbccf1fdf5369ff92"
+    },
+    {
+      "normativeRequirementId": "NREQ-8b4e4766609f47fbd274a2b126e68ebb",
+      "sourceLineSha256": "8802fa993d4dd6f512d95fab1e89600e1918fece75f2b27e8f31365bc3000c46",
+      "checkIds": [
+        "test-ir.native-canonical-identity"
+      ],
+      "scope": "Partial native input/runtime recording evidence: original six Stage22/24 canonical-input identity cases and guard controls, plus fourteen heterogeneous UTF-8/binary and canonical-value loader/worker/native-command/Map-adapter cases with four specifically detected recording faults and an order-equivalent control. Synthetic accepted test/product setup; no normally reviewed Stage06 journey, native IndexedDB/storage-worker, deferred stored-version or whole-clause conformance claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "coverageClassification": "PARTIAL_EXECUTED_BOUNDARY_EVIDENCE",
+      "atomicObligationSha256": "622492fff673116bdc1ab900de56a908c62e95582fcbeb5d9e10c25196a8923f"
+    },
+    {
+      "normativeRequirementId": "NREQ-075fd51f95d3df67edd23c51d325154b",
+      "sourceLineSha256": "8802fa993d4dd6f512d95fab1e89600e1918fece75f2b27e8f31365bc3000c46",
+      "checkIds": [
+        "test-ir.native-canonical-identity"
+      ],
+      "scope": "Partial native input/runtime recording evidence: original six Stage22/24 canonical-input identity cases and guard controls, plus fourteen heterogeneous UTF-8/binary and canonical-value loader/worker/native-command/Map-adapter cases with four specifically detected recording faults and an order-equivalent control. Synthetic accepted test/product setup; no normally reviewed Stage06 journey, native IndexedDB/storage-worker, deferred stored-version or whole-clause conformance claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "coverageClassification": "PARTIAL_EXECUTED_BOUNDARY_EVIDENCE",
+      "atomicObligationSha256": "f74fc5591f82341006075da9f62bdf3660672720861018d9c3c47842fa7ded83"
+    },
+    {
+      "normativeRequirementId": "NREQ-11653c23ebc288f46eb77a40d05ed2e0",
+      "sourceLineSha256": "f26b6320858ddb23e5e792e64b9e34eb1be607e6bc4197cfe9ee2659c73a1697",
+      "checkIds": [
+        "store.backup-extension-exact-utf8-retention",
+        "store.backup-extension-binding-integrity-controls",
+        "verify-browser.backup-extension-native"
+      ],
+      "scope": "Five exact-retention and twelve descriptor-binding synthetic Map-adapter normal-package cases establish exact uncompressed UTF-8 lexical retention for unknown root, packageManifest and packageManifest.artifacts-member extensions through direct and staged import, an owning before-import-commit abort with same-selection retry, History source-archive readback, export/reload, duplicate-member classification, anchor/occurrence/job/disclosure bindings, validator mutation isolation, and scaled retained-file capacity refusal before the designated import write transaction. Three actual Chromium native IndexedDB page-owner cases add final-transaction abort preservation, exact pending input retention, fresh-document staged resume, cold read and recovery export of the exact retained source fragments under current source guards. Known project/artifact bytes remain intact and extension sentinels remain absent from the canonical project, Stage 1 context and artifact metadata while the reduced gate decision matches baseline. Storage-worker, operator UI, physical-device, protected-export, unscaled production-capacity acceptance, arbitrary source encodings, prompt/handoff exclusion, non-executability and complete §35.10 conformance remain unproved.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The retention test fixes three noncanonical lexical UTF-8 fragments and their SHA-256 values independently with node:crypto, recomputes valid package digests with a test-owned canonical encoder, and requires exact source-archive bytes through historyList/readOriginalSourceArchive. The binding-control test independently fixes root, duplicate-root and superseded-manifest literals; it requires exact descriptor roles, ordinals, shared anchor, byte hashes and known-only absence. Extension-bearing invalid staged inputs and a validator-mutation control preserve the complete observed durable state and exact pending Blob. A separate fresh known-only control first proves the designated import-transaction fault is live under the identical scaled source configuration; only then does the exact-limit extension attempt establish that HISTORY_LIMIT_REACHED wins before that transaction boundary while preserving all prior state and the staged Blob. The native page owner fixes the same root/manifest/member lexical fragments and independently hashes exact gzip/source bytes with Web Crypto; it snapshots every native object store before the injected final-transaction failure, then requires byte-identical physical state and pending input. Fresh documents require exact two-descriptor source readback, independently known root digest, a shared binding anchor, nonoperational isolation and exact recovery-export fragments while all eight served production inputs and both owning tests are bound to current bytes.",
+      "coverageClassification": "PARTIAL_EXECUTED_BOUNDARY_EVIDENCE",
+      "atomicObligationSha256": "2544207df54b714ef1f9aae498ea9b4e1b5fcdde41619dda72ee392ab76d935f"
+    },
+    {
+      "normativeRequirementId": "NREQ-4b229054068c2b9cba885a3c6692d855",
+      "sourceLineSha256": "f26b6320858ddb23e5e792e64b9e34eb1be607e6bc4197cfe9ee2659c73a1697",
+      "checkIds": [
+        "store.backup-extension-exact-utf8-retention",
+        "store.backup-extension-binding-integrity-controls",
+        "verify-browser.backup-extension-native"
+      ],
+      "scope": "Five exact-retention and twelve descriptor-binding synthetic Map-adapter normal-package cases establish exact uncompressed UTF-8 lexical retention for unknown root, packageManifest and packageManifest.artifacts-member extensions through direct and staged import, an owning before-import-commit abort with same-selection retry, History source-archive readback, export/reload, duplicate-member classification, anchor/occurrence/job/disclosure bindings, validator mutation isolation, and scaled retained-file capacity refusal before the designated import write transaction. Three actual Chromium native IndexedDB page-owner cases add final-transaction abort preservation, exact pending input retention, fresh-document staged resume, cold read and recovery export of the exact retained source fragments under current source guards. Known project/artifact bytes remain intact and extension sentinels remain absent from the canonical project, Stage 1 context and artifact metadata while the reduced gate decision matches baseline. Storage-worker, operator UI, physical-device, protected-export, unscaled production-capacity acceptance, arbitrary source encodings, prompt/handoff exclusion, non-executability and complete §35.10 conformance remain unproved.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "independentExpectedBasis": "The retention test fixes three noncanonical lexical UTF-8 fragments and their SHA-256 values independently with node:crypto, recomputes valid package digests with a test-owned canonical encoder, and requires exact source-archive bytes through historyList/readOriginalSourceArchive. The binding-control test independently fixes root, duplicate-root and superseded-manifest literals; it requires exact descriptor roles, ordinals, shared anchor, byte hashes and known-only absence. Extension-bearing invalid staged inputs and a validator-mutation control preserve the complete observed durable state and exact pending Blob. A separate fresh known-only control first proves the designated import-transaction fault is live under the identical scaled source configuration; only then does the exact-limit extension attempt establish that HISTORY_LIMIT_REACHED wins before that transaction boundary while preserving all prior state and the staged Blob. The native page owner fixes the same root/manifest/member lexical fragments and independently hashes exact gzip/source bytes with Web Crypto; it snapshots every native object store before the injected final-transaction failure, then requires byte-identical physical state and pending input. Fresh documents require exact two-descriptor source readback, independently known root digest, a shared binding anchor, nonoperational isolation and exact recovery-export fragments while all eight served production inputs and both owning tests are bound to current bytes.",
+      "coverageClassification": "PARTIAL_EXECUTED_BOUNDARY_EVIDENCE",
+      "atomicObligationSha256": "26606c074f53e849a66276e9571bd38e4ad38bf532245197e4ed8035d94cc990"
+    },
+    {
+      "normativeRequirementId": "NREQ-89327bc392b2dbb4f44696ae45041fbb",
+      "sourceLineSha256": "5510734a4c63c1cb850dc14189f6d6b0a1b5ae017d6124a66edda4670e347b3b",
+      "checkIds": [
+        "workflow.proof-obligation-dependency-recalculation"
+      ],
+      "scope": "One current application-derived Stage 6 proof obligation is recalculated in memory as one targeted environment dependency is added and deactivated: the obligation identity remains stable, unrelated dependencies stay excluded, exact dependency membership changes, and the independently compared obligation-set hash changes then restores. Synthetic fixture only; no persistence, browser, arbitrary dependency family, Stage 6 completion or whole-clause proof.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "coverageClassification": "PARTIAL_EXECUTED_BOUNDARY_EVIDENCE",
+      "atomicObligationSha256": "e706df634a3e216af3558f7dc1f370708a1f129aa28bfff6313a8c75e275779e"
+    },
+    {
+      "normativeRequirementId": "NREQ-5613daddef07c70470dfea6e3c4cbba0",
+      "sourceLineSha256": "5510734a4c63c1cb850dc14189f6d6b0a1b5ae017d6124a66edda4670e347b3b",
+      "checkIds": [
+        "workflow.proof-obligation-dependency-recalculation"
+      ],
+      "scope": "One current application-derived Stage 6 proof obligation is recalculated in memory as one targeted environment dependency is added and deactivated: the obligation identity remains stable, unrelated dependencies stay excluded, exact dependency membership changes, and the independently compared obligation-set hash changes then restores. Synthetic fixture only; no persistence, browser, arbitrary dependency family, Stage 6 completion or whole-clause proof.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "coverageClassification": "PARTIAL_EXECUTED_BOUNDARY_EVIDENCE",
+      "atomicObligationSha256": "172d70e9ed39b62b0393cd7452725412da019884ceb10f7b99cc4634749c207e"
+    },
+    {
+      "normativeRequirementId": "NREQ-dcec51f0ed0117a6b78e6055cc962c2f",
+      "sourceLineSha256": "06449562e380b2ffd5f824f7e134f8246fccdc00ac398b14e2c28fd7d5eb1889",
+      "checkIds": [
+        "ingestion.canonical-retry-four-response-types"
+      ],
+      "scope": "Across the exact four schema response types, formatting-only retries before and after acceptance reuse the original proposal, receipt and disposition identities, retain exact raw retry audit after reload, and create no duplicate canonical, allocation or accepted-control state. Direct reaccept is idempotent and one independently valid changed payload per type creates a distinct unaccepted proposal. Synthetic actor and transaction adapter; no browser, external agent, default-owner receipt or whole-clause claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "coverageClassification": "PARTIAL_EXECUTED_BOUNDARY_EVIDENCE",
+      "atomicObligationSha256": "404233852c4b52b898128b56ebcba0ef71563e756a013c82e3f2251cd56a2733"
+    },
+    {
+      "normativeRequirementId": "NREQ-440234c09eee79fd0d3fe843d9801dbe",
+      "sourceLineSha256": "06449562e380b2ffd5f824f7e134f8246fccdc00ac398b14e2c28fd7d5eb1889",
+      "checkIds": [
+        "ingestion.canonical-retry-four-response-types"
+      ],
+      "scope": "Across the exact four schema response types, formatting-only retries before and after acceptance reuse the original proposal, receipt and disposition identities, retain exact raw retry audit after reload, and create no duplicate canonical, allocation or accepted-control state. Direct reaccept is idempotent and one independently valid changed payload per type creates a distinct unaccepted proposal. Synthetic actor and transaction adapter; no browser, external agent, default-owner receipt or whole-clause claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "coverageClassification": "PARTIAL_EXECUTED_BOUNDARY_EVIDENCE",
+      "atomicObligationSha256": "d36a3bcbeeb582b7b757d189ab09e2af735db8335b2813316ac3975f196a7497"
+    },
+    {
+      "normativeRequirementId": "NREQ-f5c52c1c9a8ce3988d00901fe91576a1",
+      "sourceLineSha256": "06449562e380b2ffd5f824f7e134f8246fccdc00ac398b14e2c28fd7d5eb1889",
+      "checkIds": [
+        "ingestion.canonical-retry-four-response-types"
+      ],
+      "scope": "Across the exact four schema response types, formatting-only retries before and after acceptance reuse the original proposal, receipt and disposition identities, retain exact raw retry audit after reload, and create no duplicate canonical, allocation or accepted-control state. Direct reaccept is idempotent and one independently valid changed payload per type creates a distinct unaccepted proposal. Synthetic actor and transaction adapter; no browser, external agent, default-owner receipt or whole-clause claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "coverageClassification": "PARTIAL_EXECUTED_BOUNDARY_EVIDENCE",
+      "atomicObligationSha256": "3a2dc4de05c0f74343417281a6e0dc80b9c5fd18c94952d8e14702c7bc36d5a4"
+    },
+    {
+      "normativeRequirementId": "NREQ-fd9a86945c15e9f00566de3c0367d4b5",
+      "sourceLineSha256": "d86ea3bf924e784fe2103c3582bcc201210aa18e0fd57c17bb5c58094c329d48",
+      "checkIds": [
+        "correction.stage16.rendered-operator-actions"
+      ],
+      "scope": "Seven production Stage16 plan/action and extracted markup/detail unit cases with eight independent observation mutants; synthetic RCA/authority/proposal/question fixtures. No actual stage entry, acceptance, transaction lifetime, external/human execution or full-clause proof; automatic-only correction applicability remains unresolved.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "atomicObligationSha256": "046f6434c27180c53ee69d83aaaa10a7fb676c91c94ece3d551282f14f6855c7"
+    },
+    {
+      "normativeRequirementId": "NREQ-4607730f4d187c887c8d74035ad3fc0c",
+      "sourceLineSha256": "44e235a990a223e093e31d176d0f4737830002eeb0b0c0c092df10f5b3df84ca",
+      "checkIds": [
+        "stage22.external-result-normalization",
+        "schema.product-observation-ownership"
+      ],
+      "scope": "Scoped Stage22 canonical ownership only: independent literal producer/authorization/descriptor assertions plus synthetic application normalization/planner/raw-preservation/currentness/refusal and reader contrasts. The positive normalization candidate is uncommitted; no reserved/accepted external or native execution, durable late-stage journey, whole-clause proof or fullCoverage claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "atomicObligationSha256": "02c925b1f825479c8cdb12cc84e06510cec75496e844028f49f5f2d19e097e3a"
+    },
+    {
+      "normativeRequirementId": "NREQ-b221990823d8a59e135ccf00015d66e4",
+      "sourceLineSha256": "44e235a990a223e093e31d176d0f4737830002eeb0b0c0c092df10f5b3df84ca",
+      "checkIds": [
+        "stage22.external-result-normalization",
+        "schema.product-observation-ownership"
+      ],
+      "scope": "Scoped Stage22 canonical ownership only: independent literal producer/authorization/descriptor assertions plus synthetic application normalization/planner/raw-preservation/currentness/refusal and reader contrasts. The positive normalization candidate is uncommitted; no reserved/accepted external or native execution, durable late-stage journey, whole-clause proof or fullCoverage claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "atomicObligationSha256": "af56b8c9a457eb5fb23fdca20a404e4189c2a2a3ba12dadbeebca7cbf8197606"
+    },
+    {
+      "normativeRequirementId": "NREQ-6770dd9fc11a3a823620bb0727f021b6",
+      "sourceLineSha256": "44e235a990a223e093e31d176d0f4737830002eeb0b0c0c092df10f5b3df84ca",
+      "checkIds": [
+        "stage22.external-result-normalization",
+        "schema.product-observation-ownership"
+      ],
+      "scope": "Scoped Stage22 canonical ownership only: independent literal producer/authorization/descriptor assertions plus synthetic application normalization/planner/raw-preservation/currentness/refusal and reader contrasts. The positive normalization candidate is uncommitted; no reserved/accepted external or native execution, durable late-stage journey, whole-clause proof or fullCoverage claim.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
+      "atomicObligationSha256": "ca076488ee41d2402df1d3a56da854884a0d4c3dc1cc63b90959246e3aed7e82"
     }
   ],
   "contractRefs": [
