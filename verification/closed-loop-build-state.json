@@ -1394,7 +1394,7 @@
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "dot",
-    "lastInspectedAt": "2026-10-14T13:47:55.237352Z",
+    "lastInspectedAt": "2026-10-14T14:01:23.265210Z",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -2050,7 +2050,7 @@
     },
     "scheduleState": "FORECAST_NOT_ESTABLISHED",
     "forecast": null,
-    "nextAction": "Complete and independently review confirmed Stage22 constructor representation fix, execute actual bounded normalization/history/persistence plus agent-key negatives, then freeze runtime for current catalog and affected full owners.",
+    "nextAction": "Finish actual Stage22 public persistence with exact stored revision/custody, independently verify terminal boundary, then freeze current runtime for catalog renewal and affected full verification owners.",
     "deploymentObservation": {
       "sourceCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
       "runId": "36958910363",
@@ -2345,7 +2345,7 @@
           "repeatedProjectionCause": "Independent same-observedAt output equality PASS; freshclock changes checkedAt. Test-only c9bc5c3a pins existing recorded epoch and preserves full comparison; changedepoch input/output negative passes. Custodyloss hypothesis disproved."
         },
         "stage22IngestionDiagnosis": {
-          "state": "ACTUAL_CAUSE_INDEPENDENTLY_ACCEPTED_NARROW_FIX_AUTHORIZED",
+          "state": "SCOPED_FIX_INDEPENDENTLY_ACCEPTED_ACTUAL22_ACCEPTANCE_PASSED_FINAL_PERSISTENCE_PENDING",
           "source": "c9bc5c3a (runtime638ee980)",
           "actualFailure": "Cannot canonically hash undefined at $[88].changes[20].temporaryResponseKey",
           "capturedPlanSha256": "200e96026a678a7539b9a569f78c98ab1748771a46fbde9bcb17976e0c05509c",
@@ -2359,7 +2359,16 @@
             "Actual Stage22 plan/acceptance/public save and cold-read",
             "Independent frozen patch review"
           ],
-          "actualBoundary": "c9 passed earlier Stage21 acceptance/publicsave/coldread and corrected repeatedprojection; Stage22 normalization failed before final evidence accepted. No full lifecycle acceptance."
+          "actualBoundary": "c9 passed earlier Stage21 acceptance/publicsave/coldread and corrected repeatedprojection; Stage22 normalization failed before final evidence accepted. No full lifecycle acceptance.",
+          "authorCommit": "1045c016",
+          "focusedOwnerCases": 87,
+          "independentWriterMetadataEntries": 354,
+          "actual22": "Normal acceptance, gate22 and future-evidence/earlier-receipt stability passed; final public persistence/cold-read not yet verified.",
+          "diagnosticPersistenceFailures": [
+            "Initial driver expected command revision4 rather than actual stored3; strict CAS correctly rejected. Candidate accepted22 revision5 preserved unchanged.",
+            "Subsequent diagnostic read of older baseline cleared newer job artifact observations; candidate integrity valid before baseline read, fails after. Exact public artifact reobservation/ordering under review; no runtime edits or skipped integrity checks."
+          ],
+          "nextBoundary": "Verify actual prior stored3/faf00 identity, restore custody only by reading exact artifact bytes through public store, retain prewrite integrity, normal CAS write unchanged candidate, final coldread/repeatedproof checks."
         }
       }
     },
