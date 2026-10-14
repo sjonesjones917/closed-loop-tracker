@@ -1394,7 +1394,7 @@
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "/root/repair_iteration_receipt_dependencies",
-    "lastInspectedAt": "2026-10-14T21:34:13Z",
+    "lastInspectedAt": "2026-10-14T21:36:00Z",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -2094,7 +2094,7 @@
     },
     "scheduleState": "FORECAST_NOT_ESTABLISHED",
     "forecast": null,
-    "nextAction": "Retrieve actual61315 terminal after original Stage30 complete21:32:05; final reload/aggregate assertions still running. Original authority expires21:35:46.722Z. Independent normal chain command/retry/public-cold proof remains pending and must refuse expired authority. Then run genuine blocked legacy migration; review/freeze fresh prerequisite owner3a11d6c7 for later fresh execution.",
+    "nextAction": "Independent blocked legacy chain3/projection13\u2192chain5/projection15 archive, forgery and rollback controls now running in reviewer session61746. Actual bounded27\u201330 terminal61315 exit0 is durable; current-time public command/retry/save/cold was not run before original authority expired. Prepare a fresh3a11d6c7 producer/required-owner prerequisite for that remaining positive proof, preserving all original assertions and partial-run limits.",
     "deploymentObservation": {
       "sourceCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
       "runId": "36958910363",
@@ -3110,10 +3110,10 @@
     "currentInstructionMessageId": "Sentinel_4171a7d9ba308191850ae105fcaa1639",
     "integrationCommitObservation": "Exact controlled branch HEAD immediately before this management-only checkpoint; chain15 candidate is not integrated.",
     "chain15LatestActualObservation": {
-      "observedAt": "2026-10-14T21:32:05.746Z",
+      "observedAt": "2026-10-14T21:35:29.848Z",
       "sessionId": 61315,
-      "status": "RUNNING",
-      "phase": "stage-30-completed-final-assertions-pending",
+      "status": "TERMINAL_PASS_PARTIAL",
+      "phase": "all-original-tail-assertions-complete",
       "canonicalProjectSha256": "86720f78a6dedc5bdf5816fb0cbbad811546bd8d562643543079ac37ae43f8b2",
       "adapterRevision": 2,
       "sourceCommit": "c3033739cf64eab98b371b9fe53c6da312976273",
@@ -3122,7 +3122,15 @@
       "independentNextDriverSha256": "e46f84ed6ba462ff8e214e3169732ec15bacac83f95be9d0b6726fbf18302e5b",
       "candidateRevision": 3,
       "requiredStage29FixtureCommit": "3a11d6c7b025661dc161f2228d2bf41c6ba88945",
-      "fixturePositiveExecution": "PENDING"
+      "fixturePositiveExecution": "PENDING",
+      "terminalExit": 0,
+      "resultSha256": "2520d849fd40434494c792fbe16f1f6464940fcdaefd8d3439d5cebb70dd07e9",
+      "terminalCaptureSha256": "0260a475aa0203bead81528312603e9eccc6a4713cb04f39cb03f2aa528d1f0c",
+      "unavailableReportObjects": [
+        "governedIterationRefutation"
+      ],
+      "positivePublicCold": "NOT_EXECUTED_BEFORE_ORIGINAL_AUTHORITY_EXPIRY",
+      "independentLegacySession": 61746
     }
   }
 }
