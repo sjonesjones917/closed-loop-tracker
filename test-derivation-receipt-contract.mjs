@@ -578,8 +578,13 @@ export async function verifyIterationProductTransition({beforeProduct,afterProdu
  assert.equal(r.store.validateProjectIntegrity(loaded).valid,true,'ITERATION_PRODUCT_PUBLIC_COLD_INTEGRITY');
  assert.equal(JSON.stringify(loaded.projectData.rawResponses),raw,'ITERATION_PRODUCT_RAW_HISTORY_PRESERVED');
  assert.equal(loaded.job.CURRENT_STAGE,'STAGE 22','ITERATION_PRODUCT_COLD_FRONTIER_STABLE');
- const again=r.copy(loaded);e.recalculate(again);
+ const again=r.copy(loaded),observedAt=loaded.projectData.applicationProjection.observedAt;e.withReadinessEvaluationEpoch(()=>e.recalculate(again),{observedAt});
  assert.equal(r.runtime.closedLoopHash.stableStringify(e.applicationProjectionOutput(loaded)),r.runtime.closedLoopHash.stableStringify(e.applicationProjectionOutput(again)),'ITERATION_PRODUCT_REPEATED_PROJECTION_STABLE');
+ const laterEpoch=new Date(Date.parse(observedAt)+1000).toISOString(),later=r.copy(loaded);e.withReadinessEvaluationEpoch(()=>e.recalculate(later),{observedAt:laterEpoch});
+ assert.equal(later.projectData.applicationProjection.observedAt,laterEpoch,'ITERATION_PRODUCT_OBSERVATION_EPOCH_BOUND');
+ assert.notEqual(later.projectData.applicationProjection.receipt.canonicalInputSha256,loaded.projectData.applicationProjection.receipt.canonicalInputSha256,'ITERATION_PRODUCT_CHANGED_EPOCH_CHANGES_INPUT');
+ assert.equal(later.stages[22].gate.checkedAt,laterEpoch,'ITERATION_PRODUCT_CHANGED_EPOCH_RETAINED_IN_OUTPUT');
+ assert.notEqual(h.stableStringify(e.applicationProjectionOutput(later)),h.stableStringify(e.applicationProjectionOutput(loaded)),'ITERATION_PRODUCT_CHANGED_EPOCH_NOT_IGNORED');
  cases.push('actual21-to22-frontier','earlier-convergence-and-confirmation-current','original-receipts-unchanged','public-save-cold-read-integrity','raw-history-preserved','repeated-calculation-stable');
  return {iterationProductTransition:'PASS',cases,synthetic:true,actualBrowser:false,actualStore:true,boundary:'Actual full-cycle accepted product and retained preproduct proof; public transaction adapter, not browser IndexedDB or external-actor acceptance.'};
 }
