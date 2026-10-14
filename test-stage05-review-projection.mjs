@@ -100,7 +100,7 @@ export function verifyStage05ReviewProjection(project,runtime=globalThis){
  const mutant=createVerifierRuntime({Event:globalThis.Event,dispatchEvent:()=>true});for(const file of files)createVerifierRuntime.loadScript(mutant,file==='workflow-engine.js'?source.replace(anchor,''):fs.readFileSync(file,'utf8'),{filename:file});
  assert.throws(()=>assert.equal(mutant.closedLoopWorkflowEngine.stageContext(mutant.structuredClone(project),5).job.CURRENT_REQUIREMENTS_VERSION,requirementsVersion,'STAGE05_ACCEPTED_VERSION_PROJECTION_ORACLE'),/STAGE05_ACCEPTED_VERSION_PROJECTION_ORACLE/);
  cases.push('removed-new-projection-owner-detected-on-actual-accepted-state');
- console.log(JSON.stringify({case:'stage05-calculated-evidence-projection',status:'PASS',cases,fixture:'Actual accepted Stage01–06 for scope/review/mutation controls; explicitly synthetic evidence rows for selection and refutation controls.'},null,2));
+ console.error(JSON.stringify({case:'stage05-calculated-evidence-projection',status:'PASS',cases,fixture:'Actual accepted Stage01–06 for scope/review/mutation controls; explicitly synthetic evidence rows for selection and refutation controls.'},null,2));
 }
 
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
