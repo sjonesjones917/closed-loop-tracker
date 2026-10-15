@@ -1394,7 +1394,7 @@
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "/root/repair_iteration_receipt_dependencies",
-    "lastInspectedAt": "2026-10-14T23:53:50Z",
+    "lastInspectedAt": "2026-10-15T00:02:10.676590+00:00",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -2094,7 +2094,7 @@
     },
     "scheduleState": "FORECAST_NOT_ESTABLISHED",
     "forecast": null,
-    "nextAction": "Finish bounded root/lead survival comparison; long original owner remains blocked by session loss with no positive checkpoint. Review sole missing migration catalog expectation descriptor without weakening receipt/serialization, then collect fresh short receipts on exact successor. Frozen100eb actual hash receipt independently proves14canonical atoms only; migration receipt inadmissible and formal full-owner/sharedStage29/global acceptance pending. Publication approval and user schedule-pause request remain unresolved; no external action or schedule change.",
+    "nextAction": "Compose five migration review renewals with integrated fourteen canonical review renewals, freeze exact successor, then run genuine default hash and migration short producers with unchanged receipt validation. Continue bounded survival probes to their natural terminal; no repeated long prefix or unapproved publication.",
     "deploymentObservation": {
       "sourceCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
       "runId": "36958910363",
@@ -2147,8 +2147,8 @@
       "sourceApplied": false
     },
     "currentCriticalPath": [
-      "Finish bounded root/lead survival comparison; long original owner remains blocked by session loss with no positive checkpoint. Review sole missing migration catalog expectation descriptor without weakening receipt/serialization, then collect fresh short receipts on exact successor. Frozen100eb actual hash receipt independently proves14canonical atoms only; migration receipt inadmissible and formal full-owner/sharedStage29/global acceptance pending. Publication approval and user schedule-pause request remain unresolved; no external action or schedule change.",
-      "Collect genuine current required producer receipts and validate19 current independently reviewed coverage declarations; source reviews are no longer stale.",
+      "Compose five migration review renewals with integrated fourteen canonical review renewals, freeze exact successor, then run genuine default hash and migration short producers with unchanged receipt validation. Continue bounded survival probes to their natural terminal; no repeated long prefix or unapproved publication.",
+      "Validate new exact-source receipts against nineteen renewed coverage declarations. Frozen100eb fourteen canonical proofs remain scoped to that source; successor evidence is pending.",
       "Complete integrated broad conformance and required governed/default/browser acceptance with truthful partial-run limits.",
       "Resolve preserved source-contract/human/publication approvals, then verify authorized deployment, physical-device and real-project maturity evidence"
     ],
@@ -3118,7 +3118,11 @@
       }
     ],
     "currentInstructionMessageId": "Sentinel_4171a7d9ba308191850ae105fcaa1639",
-    "integrationCommitObservation": "Exact controlled branch HEAD immediately before this management-only checkpoint; chain15 candidate is not integrated.",
+    "integrationCommitObservation": {
+      "commit": "573f51ac52510bbfe1ff9a602ef6c33d8de9103a",
+      "observedAt": "2026-10-15T00:02:10.676590+00:00",
+      "qualification": "Observed before this management checkpoint commit"
+    },
     "chain15LatestActualObservation": {
       "observedAt": "2026-10-14T21:35:29.848Z",
       "sessionId": 61315,
@@ -3387,7 +3391,15 @@
       "leadDirectory": "/workspace/shared/clrt-iteration-repair-evidence/execution-survival-lead-20261014-2351",
       "rootSession": 73329,
       "rootOutput": "/workspace/shared/clrt-executor-survival-20261014/root.jsonl",
-      "scope": "Timestamp-only10-second observations through next ordinary recovery or20minutes; no source/schedule/lifecycle changes and no guaranteed durability claim."
+      "scope": "Timestamp-only10-second observations through next ordinary recovery or20minutes; no source/schedule/lifecycle changes and no guaranteed durability claim.",
+      "latestObservation": {
+        "at": "2026-10-15T00:02:10.676590+00:00",
+        "leadSession": 65659,
+        "status": "RUNNING_AFTER_CONTEXT_RECOVERY",
+        "latestDurableSample": "2026-10-15T00:00:51Z",
+        "rootReportedStatus": "73329 running with contiguous timestamps through00:01:04Z",
+        "inference": "This recovery did not terminate either bounded timestamp process. Prior lifecycle loss cause remains unestablished."
+      }
     },
     "capacityReclamation2329": {
       "reviewCopyBytes": 502987219,
@@ -3398,6 +3410,19 @@
         "/workspace/shared/clrt-iteration-repair-evidence/reclaim-operation-properties-author-20261014-2331.json"
       ],
       "preserved": "All Git commits and entire original author/independent external evidence; both owner releases and repeated clean checks recorded."
+    },
+    "migrationReceiptExpectationCorrection": {
+      "sourceCommit": "7fdebef7c697b9cd238f37d3c480877398f0d460",
+      "integratedCommit": "cdc4614f86d65d1b278008b60e668ab630f08b86",
+      "status": "INDEPENDENTLY_REVIEWED_INTEGRATED",
+      "scope": "One explicit catalog expectedDescription; original predicate, receipt validator and serializer unchanged. Existing owner regression now checks exact eight-observation JSON stability.",
+      "reviewEvidence": "/workspace/shared/clrt-migration-expectation-independent-review/result.json",
+      "originalReceipt": "4e1362d9622b3d54f36d966c256b4138f738a6d0c7fc8654012e25fd7f6826bd",
+      "originalReceiptDisposition": "PRESERVED_INADMISSIBLE",
+      "successorReceipt": "PENDING",
+      "canonicalRenewalCommit": "190298ffad7ac89056036ba6517abef7dd2b3912",
+      "canonicalIntegratedCommit": "573f51ac52510bbfe1ff9a602ef6c33d8de9103a",
+      "migrationFiveRenewal": "PENDING"
     }
   }
 }
