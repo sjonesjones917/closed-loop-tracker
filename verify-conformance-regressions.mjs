@@ -283,11 +283,11 @@ async function runSequence(gates,{directory,reportFile,report={},timeoutMs=AGGRE
 export async function verifyLifecycleFaultDispatch(directory){
  const {healthyFullCyclePrerequisiteSource}=await import('./full-cycle-prerequisite.mjs');
  const source=fs.readFileSync('verify-full-cycle.mjs','utf8');
- const start=source.indexOf('const timingFaultDefinitions='),end=source.indexOf('globalThis.Event=',start);
+ const start=source.indexOf('const ownerCaptureState='),end=source.indexOf('globalThis.Event=',start);
  assert.ok(start>=0&&end>start,'FAULT_EXECUTION_OWNER_FIXTURE_ORACLE');
  const prelude=source.slice(start,end),results=[],prerequisiteResults=[],prerequisiteSource=healthyFullCyclePrerequisiteSource(source);
  const expectedFaultIds=['premature-failure-execution','unreviewed-expression-identity','retained-version-alias','future-leaf-truth','dropped-timing-leaf','unreviewed-leaf-schedule','prerequisite-path-loss','activation-review-bypass'];
- const prerequisitePrelude=prerequisiteSource.slice(prerequisiteSource.indexOf('const timingFaultDefinitions='),prerequisiteSource.indexOf('globalThis.Event='));
+ const prerequisitePrelude=prerequisiteSource.slice(prerequisiteSource.indexOf('const ownerCaptureState='),prerequisiteSource.indexOf('globalThis.Event='));
  const dispatchAnchors=["if(!timingFault&&(!process.argv.includes('--timing-only')||process.argv.includes('--timing-fault-matrix'))){",'if([3,12,19,26,27,29,30].includes(stage))verifyRecoveryCompatibility(stage);','if([13,17,19].includes(stage))verifyIterationComparisonGate(stage);'];
  const refinementDispatchAnchor='assertIndependentRefinement(p,stage,changes,changes[0].rawResponseId);';
  dispatchAnchors.push(...[13,17,19].map(stage=>`verifyComparisonReplacement(${stage});`),refinementDispatchAnchor);
