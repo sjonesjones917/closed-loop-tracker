@@ -1394,7 +1394,7 @@
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "/root/repair_iteration_receipt_dependencies",
-    "lastInspectedAt": "2026-10-15T01:27:03.248632+00:00",
+    "lastInspectedAt": "2026-10-15T01:57:41.086174+00:00",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -2098,7 +2098,7 @@
       "reason": "Observed formal-proof admission rate does not substantiate original target; current broad owner acceptance, publication/deployment/device/real-project obligations remain open. Linear rate is not a reliable forecast.",
       "originalTargetUnchanged": true
     },
-    "nextAction": "Continue actual original9093 session48870 unchanged through terminal. Aggregate reconciliation confirms15 proven and7180UNKNOWN of7195atoms; four migration context declarations require source-grounded author correction and independent review. Preserve all prior receipt/evaluator evidence and source qualification; no promotion to future metadata successor.",
+    "nextAction": "Verify exact surviving 9093 post-release custody and expiry, then review the smallest continuation without claiming an original-owner receipt. Prepare independently reviewed 23-atom ingestion coverage in parallel; integrate accepted four-context metadata only with explicit fresh aggregate proof qualification.",
     "deploymentObservation": {
       "sourceCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
       "runId": "36958910363",
@@ -2151,8 +2151,8 @@
       "sourceApplied": false
     },
     "currentCriticalPath": [
-      "Continue actual original9093 session48870 unchanged through terminal. Aggregate reconciliation confirms15 proven and7180UNKNOWN of7195atoms; four migration context declarations require source-grounded author correction and independent review. Preserve all prior receipt/evaluator evidence and source qualification; no promotion to future metadata successor.",
-      "Retain exact nineteen scoped proof receipts while closing remaining required owner, browser, deployment, physical-device and real-project obligations; do not promote receipts across source fingerprints.",
+      "Verify exact surviving 9093 post-release custody and expiry, then review the smallest continuation without claiming an original-owner receipt. Prepare independently reviewed 23-atom ingestion coverage in parallel; integrate accepted four-context metadata only with explicit fresh aggregate proof qualification.",
+      "Retain 15 aggregate-proven atomic obligations on frozen 9093; four additional migration declarations have accepted context corrections on pending 1684 and await current proof. Preserve prior mistaken nineteen claim as historical evidence only.",
       "Complete integrated broad conformance and required governed/default/browser acceptance with truthful partial-run limits.",
       "Resolve preserved source-contract/human/publication approvals, then verify authorized deployment, physical-device and real-project maturity evidence"
     ],
@@ -3579,7 +3579,7 @@
       "sourceReceiptsRetained": "All exact2b8dc1e6 receipts and independent evaluations remain external; checkout recreation command and commit retained."
     },
     "originalOwner9093": {
-      "status": "RUNNING",
+      "status": "EXECUTION_SESSION_LOST_AFTER_RELEASE_COMMAND",
       "session": 48870,
       "startedAt": "2026-10-15T01:16:00Z",
       "sourceCommit": "9093fbdc8f4c6563028c2c41d5478067a51a803b",
@@ -3599,11 +3599,24 @@
       "heapMiB": 4096,
       "testDeadlinesChanged": false,
       "receiptValidation": "ORIGINAL_VALIDATOR_AFTER_ACTUAL_DEFAULT_OWNER_EXIT_ZERO",
-      "terminal": "PENDING",
-      "priorHeavyLossCause": "UNESTABLISHED"
+      "terminal": "UNOBSERVED",
+      "priorHeavyLossCause": "UNESTABLISHED",
+      "sessionLossObservedAt": "2026-10-15T01:57:41.086174+00:00",
+      "sessionPollResult": "Unknown process id 48870",
+      "lastCapturedCanonicalProject": "df355b77eee38a03fdb0d0158c65a990d2233d14c6ea7c38a9b871aaf482f97d",
+      "lastCompletedStageObserved": 26,
+      "originalReceipt": "MISSING",
+      "lastTelemetry": {
+        "utc": "2026-10-15T01:42:20Z",
+        "freeBytes": 1389793280,
+        "memAvailableKiB": 4918988,
+        "oomDelta": 0,
+        "sampledHighWaterKiB": 3841500
+      },
+      "lossCause": "UNESTABLISHED"
     },
     "currentShortReceipts9093": {
-      "status": "NINETEEN_SCOPED_DECLARATIONS_CONFORMANT_PROVEN",
+      "status": "FIFTEEN_AGGREGATE_PROVEN_FOUR_CONTEXT_BLOCKED",
       "sourceCommit": "9093fbdc8f4c6563028c2c41d5478067a51a803b",
       "session": 62828,
       "exitCode": 0,
@@ -3613,16 +3626,21 @@
       "independentEvidenceSha256": "251e552a7fde554ec14e6115ed5dd293225ee272055f8131fd94e88867106224",
       "fullOwnerAcceptance": false,
       "wholeApplicationAcceptance": false,
-      "aggregateAdmissionQualification": "Prior direct evaluation omitted governingContext. Do not use nineteen-declaration aggregate claim; exact corrected dispositions pending. Original evaluation evidence preserved."
+      "aggregateAdmissionQualification": "Confirmed exact aggregate-equivalent result: 15 CONFORMANT_PROVEN and 7180 UNKNOWN of 7195 atomic obligations. Four migration declarations are blocked by GOVERNING_SOURCE_CONTEXT_NOT_ACCOUNTED.",
+      "historicalOmittedContextClaim": {
+        "status": "NINETEEN_SCOPED_DECLARATIONS_CONFORMANT_PROVEN",
+        "evidence": "/workspace/shared/canonical-migration-9093fbdc-actual-evaluation.json",
+        "qualification": "Direct evaluation omitted the aggregate governingContext argument; withdrawn as aggregate admission."
+      }
     },
     "governingContextAdmissionCorrection": {
       "status": "CONFIRMED_AGGREGATE_CORRECTION",
       "reportedAt": "2026-10-15T01:19:01Z",
       "reviewer": "/root/review_canonical_json_proofs",
-      "finding": "Prior direct nineteen-declaration evaluations omitted the aggregate separately supplied governingContext argument. Four migration declarations may lack required context linkage. Canonical14 unaffected; exact full aggregate reconciliation pending.",
-      "priorNineteenAggregateClaim": "WITHDRAWN_PENDING_CORRECT_ARGUMENT_RECHECK",
+      "finding": "Confirmed exact aggregate-equivalent result: 15 CONFORMANT_PROVEN and 7180 UNKNOWN of 7195 atomic obligations. Four migration declarations are blocked by GOVERNING_SOURCE_CONTEXT_NOT_ACCOUNTED.",
+      "priorNineteenAggregateClaim": "WITHDRAWN_CONFIRMED_ARGUMENT_OMISSION",
       "actualReceiptValidity": "Unchanged genuine producer receipts remain preserved; receipt validity alone does not establish aggregate coverage admission.",
-      "activeOriginalOwner": "9093 session48870 continues unchanged; no source edits/restart",
+      "activeOriginalOwner": "9093 session 48870 lost; original terminal and receipt missing; exact surviving custody under review.",
       "sourceCommit": "9093fbdc8f4c6563028c2c41d5478067a51a803b",
       "totalAtoms": 7195,
       "conformantProven": 15,
@@ -3640,7 +3658,9 @@
       "evidencePath": "/workspace/shared/9093-coverage-ledger-reconciliation.json",
       "evidenceSha256": "0eb56e2f20e74160690adc4ae9449c59eec7d82c7d36ecf8add6e6d30a482356",
       "author": "/root/bind_migration_preservation_proofs",
-      "repairStatus": "SOURCE_GROUNDED_PROPOSAL_PENDING_INDEPENDENT_REVIEW"
+      "repairStatus": "PENDING_BRANCH_INDEPENDENT_COMPOSITION_ACCEPTED_AWAITING_CURRENT_PROOF",
+      "pendingCommit": "1684d2ac14d3a675c899599f855a43353662290a",
+      "compositionReview": "/workspace/shared/clrt-migration-context-independent-review/composition-result.json"
     },
     "observedFormalProofRate20261015": {
       "basis": "15 aggregate-admitted atomic proofs after approximately22 elapsed hours, among7195 obligations",
