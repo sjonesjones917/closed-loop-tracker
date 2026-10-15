@@ -1,2 +1,0 @@
-27f5c39ef32271dcea13e1fa22b4e2cdcff23abdcfa901a81ccd03f0926361e0  specification/closed-loop-normative-requirements.json
-662878856d7a246122c2a5ce809e776cb382797b137607daa4351a8306022133  specification/closed-loop-specification-manifest.json
