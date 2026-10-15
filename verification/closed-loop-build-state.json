@@ -1394,7 +1394,7 @@
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "/root/repair_iteration_receipt_dependencies",
-    "lastInspectedAt": "2026-10-15T03:54:50.449634+00:00",
+    "lastInspectedAt": "2026-10-15T04:38:51.186297+00:00",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -2098,7 +2098,7 @@
       "reason": "Observed formal-proof admission rate does not substantiate original target; current broad owner acceptance, publication/deployment/device/real-project obligations remain open. Linear rate is not a reliable forecast.",
       "originalTargetUnchanged": true
     },
-    "nextAction": "Profile the unchanged current context-validation owner under the reviewed120-second diagnostic envelope, identify its computational hotspot, and preserve both timeout failures. Keep provisional cd59 unaccepted until affected tests pass; current formal proof remains30/7195 on exact acac source.",
+    "nextAction": "Prepare independently reviewed capsule/singleton provisional successor and serial affected tests; retain parity overlay focused PASS pending current same-receipt aggregate controls. Check exact published browser-confirmation CI repair evidence in parallel.",
     "deploymentObservation": {
       "sourceCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
       "runId": "36958910363",
@@ -2151,7 +2151,7 @@
       "sourceApplied": false
     },
     "currentCriticalPath": [
-      "Profile the unchanged current context-validation owner under the reviewed120-second diagnostic envelope, identify its computational hotspot, and preserve both timeout failures. Keep provisional cd59 unaccepted until affected tests pass; current formal proof remains30/7195 on exact acac source.",
+      "Context fixture and per-invocation equality repair accepted at cca87 after complete affected helper and exact composition tests. Resolve separate singleton historical fixture closure, then complete context-rich same-receipt parity and required final-owner execution; current proof remains30/7195 on exact acac.",
       "Current full proof evidence is30 CONFORMANT_PROVEN and7165 UNKNOWN of7195 atoms on frozen acac8f85; source successors need their own qualified admission, with historical9093 corrected15 retained.",
       "Resolve demonstrated final-owner historical fixture closure failure without weakening original controls; retain19-to15 regression and require explicit authoritative context for targeted proof.",
       "Establish complete required original owner/sharedStage29 and broader application acceptance; conditional publication still requires all checks and separate tool approval."
@@ -3823,7 +3823,7 @@
     },
     "proofContextParityWork": {
       "task": "repair_coverage_context_parity",
-      "status": "FOCUSED_PARITY_PASSES_FULL_OWNER_BLOCKED_BY_PROVISIONAL_FIXTURE_COST",
+      "status": "CONTEXT_FIXTURE_EQUALITY_ACCEPTED_PARITY_OVERLAY_FOCUSED_PASS_FULL_PARITY_PENDING",
       "focusedCases": 248,
       "newContextHistoryControls": 25,
       "unchangedPrerequisiteExitCode": 1,
@@ -3832,12 +3832,17 @@
       "integration": "NOT_INTEGRATED",
       "contextFixtureCandidate": "cd59ee6ce18ff2aba7fa502ec9e4142dad8a2f31",
       "contextFixtureBranch": "candidate/context-fixture-cd59ee6c",
-      "candidateAccepted": false,
+      "candidateAccepted": true,
       "wholeHelperDiagnostic": {
-        "session": 62779,
-        "exit": 124,
-        "seconds": 1200.04059,
-        "reviewSha256": "9708447ffc33ca14da88f100c1d2c7f1879377effb87d128d897a4f11f3dcdea"
+        "source": "54a342f6d2c8d33d111c4ca06a6f1da463e0629a",
+        "session": 51812,
+        "exit": 0,
+        "seconds": 113.65991096000653,
+        "legacyControls": 16,
+        "currentRefusalRestorationControls": 4,
+        "contextIds": 291,
+        "atomicIds": 7195,
+        "reviewSha256": "af2c58a17108ffed7e554ed80fe83c5aacf230ac52ff6c5a151cbe30dbefc086"
       },
       "historicalPhase": {
         "exit": 0,
@@ -3855,8 +3860,29 @@
         "latestRead": "context-reconciliation JSON",
         "peakChildRssKiB": 751448
       },
-      "next": "Source-pinned bounded native CPU profile; no caching or predicate change authorized yet",
-      "budgetQualification": "20minute and120second bounds are external diagnostic envelopes, not normative deadlines"
+      "next": "Historical capsule/singleton affected tests and separately reviewed current same-receipt parity",
+      "budgetQualification": "20minute and120second bounds are external diagnostic envelopes, not normative deadlines",
+      "historicalWholeHelperTimeout": {
+        "session": 62779,
+        "exit": 124,
+        "seconds": 1200.04059,
+        "reviewSha256": "9708447ffc33ca14da88f100c1d2c7f1879377effb87d128d897a4f11f3dcdea"
+      },
+      "contextFixtureAcceptedCommit": "cca87f3eb28e73511e657d042e60989f3318e0ca",
+      "composition": {
+        "source": "cca87f3eb28e73511e657d042e60989f3318e0ca",
+        "session": 91314,
+        "exit": 0,
+        "atomicControls": 250,
+        "consumerRefusals": 783,
+        "reviewSha256": "6f27e75b025b47381ba4c487051708e123a95e83a84093f294ddeaf3333483af"
+      },
+      "parityOverlay": {
+        "patchPrefix": "c0959e51",
+        "focusedControls": 275,
+        "exit": 0,
+        "integration": "NOT_INTEGRATED_PENDING_SAME_RECEIPT_CONTEXT_RICH_PARITY"
+      }
     },
     "scopePreservationTestWork": {
       "task": "author_ingestion_coverage_batch",
@@ -3893,8 +3919,16 @@
       "defaultOwnerExecuted": false,
       "eligibleReceipt": false,
       "newProven": 0,
-      "declarations": "FOUR_CONDITIONAL_BLUEPRINTS_NOT_INSTALLED",
-      "runtimeChanged": false
+      "declarations": "27_NARROW_DESIGNS_ACCEPTED_TRUSTED_REVIEWS_AND_DEFAULT_RECEIPT_PENDING_COHERENT_FREEZE",
+      "runtimeChanged": false,
+      "declarationDesignReviewSha256": "8f5dffcdb94d28dcac734bdaa822994df944c9120891333aeda6d48572a974ff"
+    },
+    "singletonFixtureRepair": {
+      "task": "repair_singleton_proof_fixture",
+      "status": "SIX_MEMBER_CAPSULE_SOURCE_ACCEPTED_EXECUTION_PENDING",
+      "sourceReviewSha256": "fb0ce1f3d0760086642076fa14715083f0ad3628f55d0ec9768470629b1703a4",
+      "originalFailure": "Missing atomic closure before producer; singleton narrowing also incompatible with active atomic universe",
+      "currentPositiveParity": "PENDING_SEPARATE_GENUINE_RECEIPT_AGGREGATE_COMPARISON"
     }
   }
 }
