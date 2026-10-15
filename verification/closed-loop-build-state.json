@@ -1394,7 +1394,7 @@
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "/root/repair_iteration_receipt_dependencies",
-    "lastInspectedAt": "2026-10-15T02:01:14.379955+00:00",
+    "lastInspectedAt": "2026-10-15T02:14:55.882540+00:00",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -2098,7 +2098,7 @@
       "reason": "Observed formal-proof admission rate does not substantiate original target; current broad owner acceptance, publication/deployment/device/real-project obligations remain open. Linear rate is not a reliable forecast.",
       "originalTargetUnchanged": true
     },
-    "nextAction": "Verify exact surviving 9093 post-release custody and expiry, then review the smallest continuation without claiming an original-owner receipt. Prepare independently reviewed 23-atom ingestion coverage in parallel; integrate accepted four-context metadata only with explicit fresh aggregate proof qualification.",
+    "nextAction": "Monitor actual bounded post-release continuation session8609 through terminal with original expiry and assertions. Preserve missing original9093 receipt. In parallel independently review the minimal seven-case ingestion dependency relocation; no parallel heavy producer.",
     "deploymentObservation": {
       "sourceCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
       "runId": "36958910363",
@@ -2151,7 +2151,7 @@
       "sourceApplied": false
     },
     "currentCriticalPath": [
-      "Verify exact surviving 9093 post-release custody and expiry, then review the smallest continuation without claiming an original-owner receipt. Prepare independently reviewed 23-atom ingestion coverage in parallel; integrate accepted four-context metadata only with explicit fresh aggregate proof qualification.",
+      "Monitor actual bounded post-release continuation session8609 through terminal with original expiry and assertions. Preserve missing original9093 receipt. In parallel independently review the minimal seven-case ingestion dependency relocation; no parallel heavy producer.",
       "Retain 15 aggregate-proven atomic obligations on frozen 9093; four additional migration declarations have accepted context corrections on pending 1684 and await current proof. Preserve prior mistaken nineteen claim as historical evidence only.",
       "Complete integrated broad conformance and required governed/default/browser acceptance with truthful partial-run limits.",
       "Resolve preserved source-contract/human/publication approvals, then verify authorized deployment, physical-device and real-project maturity evidence"
@@ -3711,6 +3711,24 @@
       "designEvidence": "/workspace/shared/clrt-ingestion-independent-review-9093fbdc/result.json",
       "reviewedCandidateAtoms": 11,
       "trustedCoverageReviewsIssued": 0
+    },
+    "postRelease9093Continuation": {
+      "status": "RUNNING",
+      "session": 8609,
+      "startedAt": "2026-10-15T02:14:28Z",
+      "sourceCommit": "9093fbdc8f4c6563028c2c41d5478067a51a803b",
+      "driverSha256": "f3d3db388f9225131a01ebdd39c4f95045d32831aca8e449f42a33f4bceead28",
+      "pinsSha256": "ce668aa5d83bde4e9ee9b408807473d1a1cad51baea4cd1cd9fb06acf1392aac",
+      "wrapperSha256": "0426fda7f7284d94879a414af762de92dbd7316dac5154f008000e990f94a022",
+      "originalAssertionsRetained": 37,
+      "plannedCaptures": 32,
+      "outputDirectory": "/workspace/shared/clrt-iteration-repair-evidence/resume9093-after-release-tail",
+      "checksDirectory": "/workspace/shared/clrt-iteration-repair-evidence/resume9093-after-release-tail-checks",
+      "originalAuthorityExpiresAt": "2026-10-15T03:17:35.102Z",
+      "formalStage29Capture": "DISABLED_PARTIAL_PRODUCER_NOT_SUPPORTED",
+      "fullOriginalOwnerReceipt": "MISSING",
+      "sourcePrefixReplayed": false,
+      "releaseCommandReplayed": false
     }
   }
 }
