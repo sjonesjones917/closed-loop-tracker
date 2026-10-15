@@ -1394,7 +1394,7 @@
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "/root/repair_iteration_receipt_dependencies",
-    "lastInspectedAt": "2026-10-15T01:20:36.880123+00:00",
+    "lastInspectedAt": "2026-10-15T01:27:03.248632+00:00",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -2092,8 +2092,12 @@
       "publication": "NOT_PERFORMED",
       "releaseTag": "NOT_CREATED"
     },
-    "scheduleState": "FORECAST_NOT_ESTABLISHED",
-    "forecast": null,
+    "scheduleState": "AT_RISK",
+    "forecast": {
+      "status": "UNESTABLISHED_AT_RISK",
+      "reason": "Observed formal-proof admission rate does not substantiate original target; current broad owner acceptance, publication/deployment/device/real-project obligations remain open. Linear rate is not a reliable forecast.",
+      "originalTargetUnchanged": true
+    },
     "nextAction": "Continue actual original9093 session48870 unchanged through terminal. Aggregate reconciliation confirms15 proven and7180UNKNOWN of7195atoms; four migration context declarations require source-grounded author correction and independent review. Preserve all prior receipt/evaluator evidence and source qualification; no promotion to future metadata successor.",
     "deploymentObservation": {
       "sourceCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
@@ -3637,6 +3641,17 @@
       "evidenceSha256": "0eb56e2f20e74160690adc4ae9449c59eec7d82c7d36ecf8add6e6d30a482356",
       "author": "/root/bind_migration_preservation_proofs",
       "repairStatus": "SOURCE_GROUNDED_PROPOSAL_PENDING_INDEPENDENT_REVIEW"
+    },
+    "observedFormalProofRate20261015": {
+      "basis": "15 aggregate-admitted atomic proofs after approximately22 elapsed hours, among7195 obligations",
+      "linearObservedProofsPerHour": 0.68,
+      "linearTotalDaysAtThatRate": 440,
+      "remainingUnknown": 7180,
+      "approximateRequiredProofsPerHourForOriginalTarget": 23,
+      "approximateRequiredRateMultiplier": 34,
+      "qualification": "Linear arithmetic illustration only, not a reliable delivery forecast or implementation-completion measure. Proof work can batch; present observed rate does not support the original two-week target.",
+      "originalTargetUnchanged": true,
+      "nextPlanningStep": "After current original execution, identify source-grounded dependency-ready proof batches and mandatory critical-path work using actual producer/control populations; no waived obligations or inflated proof admission."
     }
   }
 }
