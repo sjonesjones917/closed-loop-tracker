@@ -1394,7 +1394,7 @@
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "/root/repair_iteration_receipt_dependencies",
-    "lastInspectedAt": "2026-10-15T00:08:01.724199+00:00",
+    "lastInspectedAt": "2026-10-15T00:12:10.434123+00:00",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -2094,7 +2094,7 @@
     },
     "scheduleState": "FORECAST_NOT_ESTABLISHED",
     "forecast": null,
-    "nextAction": "Finish bounded execution-survival probes and execute reviewed short Pages closure owners on frozen2b8dc1e6. Nineteen declared canonical/migration atoms are independently proven on that source. Formal uninterrupted full-owner/sharedStage29 and broad acceptance remain open; publication and schedule-pause approvals remain unresolved.",
+    "nextAction": "Independent read-only diagnosis of heavy session loss before another long original owner. Preserve nineteen scoped proven declarations and validated operation-registry receipt on frozen2b8dc1e6. Broader contract-closure and stage-contract owners are not established short; complete prescribed full-owner/sharedStage29, broad/browser/deployment/device/real-project proof remains pending.",
     "deploymentObservation": {
       "sourceCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
       "runId": "36958910363",
@@ -2147,7 +2147,7 @@
       "sourceApplied": false
     },
     "currentCriticalPath": [
-      "Finish bounded execution-survival probes and execute reviewed short Pages closure owners on frozen2b8dc1e6. Nineteen declared canonical/migration atoms are independently proven on that source. Formal uninterrupted full-owner/sharedStage29 and broad acceptance remain open; publication and schedule-pause approvals remain unresolved.",
+      "Independent read-only diagnosis of heavy session loss before another long original owner. Preserve nineteen scoped proven declarations and validated operation-registry receipt on frozen2b8dc1e6. Broader contract-closure and stage-contract owners are not established short; complete prescribed full-owner/sharedStage29, broad/browser/deployment/device/real-project proof remains pending.",
       "Retain exact nineteen scoped proof receipts while closing remaining required owner, browser, deployment, physical-device and real-project obligations; do not promote receipts across source fingerprints.",
       "Complete integrated broad conformance and required governed/default/browser acceptance with truthful partial-run limits.",
       "Resolve preserved source-contract/human/publication approvals, then verify authorized deployment, physical-device and real-project maturity evidence"
@@ -3386,7 +3386,7 @@
       }
     },
     "executionSurvivalComparison": {
-      "status": "RUNNING_BOUNDED_DIAGNOSTIC",
+      "status": "BOTH_TIMESTAMP_PROBES_NATURAL_EXIT_ZERO",
       "leadSession": 65659,
       "leadDirectory": "/workspace/shared/clrt-iteration-repair-evidence/execution-survival-lead-20261014-2351",
       "rootSession": 73329,
@@ -3399,7 +3399,49 @@
         "latestDurableSample": "2026-10-15T00:00:51Z",
         "rootReportedStatus": "73329 running with contiguous timestamps through00:01:04Z",
         "inference": "This recovery did not terminate either bounded timestamp process. Prior lifecycle loss cause remains unestablished."
-      }
+      },
+      "leadTerminal": {
+        "status": "PASS_BOUNDED_SURVIVAL_ONLY",
+        "session": 65659,
+        "exitCode": 0,
+        "startedAt": "2026-10-14T23:51:31Z",
+        "endedAt": "2026-10-15T00:11:32Z",
+        "sampleCount": 120,
+        "minimumGapSeconds": 10.0,
+        "maximumGapSeconds": 11.0,
+        "evidence": [
+          {
+            "path": "/workspace/shared/clrt-iteration-repair-evidence/execution-survival-lead-20261014-2351/probe.sh",
+            "sha256": "14b75877f297996e1b0021a115af27050d19e87cf5d490fa9061e3b4cdf8f219"
+          },
+          {
+            "path": "/workspace/shared/clrt-iteration-repair-evidence/execution-survival-lead-20261014-2351/heartbeats.log",
+            "sha256": "bdd5d1f9427270ccde2e98546a79adb8d0b917651b849f51716a8e6ddbd62844"
+          },
+          {
+            "path": "/workspace/shared/clrt-iteration-repair-evidence/execution-survival-lead-20261014-2351/exit.txt",
+            "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+          },
+          {
+            "path": "/workspace/shared/clrt-iteration-repair-evidence/execution-survival-lead-20261014-2351/started-at.txt",
+            "sha256": "1fcbbcffd72fb1cebf9514e286fa8364b463f327ed482fb98667f40fd93042f1"
+          },
+          {
+            "path": "/workspace/shared/clrt-iteration-repair-evidence/execution-survival-lead-20261014-2351/ended-at.txt",
+            "sha256": "8dc9f0b5c048d50815b482e16967e1c3484683c4553544d653a86ae5cfb20d67"
+          }
+        ],
+        "conclusion": "Timestamp-only process survived observed context recoveries and ordinary hourly automation arrival. This does not establish heavy-owner durability or identify prior session-loss cause."
+      },
+      "leadTerminalReviewSha256": "28d00ed317b821702fcb9db221e7d0fce54bc97b4d721d71f401500cd7d73adb",
+      "rootTerminal": {
+        "session": 73329,
+        "exitCode": 0,
+        "reportedAt": "2026-10-15T00:11:24.410807Z",
+        "elapsedSeconds": 1200.034,
+        "evidencePath": "/workspace/shared/clrt-executor-survival-20261014/root.jsonl"
+      },
+      "conclusion": "Observed recoveries and hourly automation arrival did not terminate these lightweight processes. Prior heavy-owner loss cause and long-run durability remain unestablished."
     },
     "capacityReclamation2329": {
       "reviewCopyBytes": 502987219,
@@ -3446,6 +3488,37 @@
       "fullOwnerAcceptance": false,
       "wholeApplicationAcceptance": false,
       "qualification": "Exact frozen source only; future source fingerprints require their own receipts. Unsupported array/object full claims remain UNKNOWN."
+    },
+    "operationRegistryReceipt2b8": {
+      "sourceCommit": "2b8dc1e61ff9663dfd299fe8faed34dde524e80c",
+      "session": 85780,
+      "exitCode": 0,
+      "validation": {
+        "status": "PASS",
+        "mode": "receipt",
+        "sourceCommit": "2b8dc1e61ff9663dfd299fe8faed34dde524e80c",
+        "sourceTree": "795eaf9cbf1cfd5979f4ff877e84deef9ac4b270",
+        "sourceInputsSha256": "32c882bfc53f2b5b6da0ec2b5a58d7fe4e9e65615df6dccd9712360f59ee3174",
+        "inputCount": 1613,
+        "runtime": {
+          "node": "v24.19.0",
+          "platform": "linux",
+          "architecture": "x64"
+        },
+        "checkedAt": "2026-10-15T00:09:32.412Z",
+        "suite": "verify-stage-operation-registry.mjs",
+        "receiptPath": "/workspace/shared/clrt-iteration-repair-evidence/frozen-2b8dc1e6-operation-registry-receipt/receipts/verify-stage-operation-registry.mjs.json",
+        "receiptFileSha256": "a98f6a3deed4914a705b32f563e72720968ffda57ed3f3b460802c3f5a8f2804",
+        "receiptSha256": "437a81fd7e8ea02ea291df22bdfd9ea2e79541a325cca0bb10f218b5f9fca3cc",
+        "command": [
+          "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node",
+          "/workspace/shared/clrt-short-receipt-2b8dc1e6/verify-stage-operation-registry.mjs"
+        ],
+        "complete": true,
+        "observationCount": 60
+      },
+      "validationFileSha256": "fcb17efc9bab12c6cf4e8d375c849137520785984c592b2f386ce6cbbf7272ac",
+      "fullPrescribedCiSequence": false
     }
   }
 }
