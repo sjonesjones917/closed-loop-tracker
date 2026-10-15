@@ -1394,7 +1394,7 @@
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "/root/repair_iteration_receipt_dependencies",
-    "lastInspectedAt": "2026-10-15T03:07:17.182979+00:00",
+    "lastInspectedAt": "2026-10-15T03:54:50.449634+00:00",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -2098,7 +2098,7 @@
       "reason": "Observed formal-proof admission rate does not substantiate original target; current broad owner acceptance, publication/deployment/device/real-project obligations remain open. Linear rate is not a reliable forecast.",
       "originalTargetUnchanged": true
     },
-    "nextAction": "Complete independently reviewed parity prerequisite fixture correction and bounded scope-test validation, then integrate only reviewed successor bytes. Preserve actual acac30 full proofs and missing original full-owner/sharedStage29 receipts; do not repeat a healthy or lost prefix without a justified recovery path.",
+    "nextAction": "Profile the unchanged current context-validation owner under the reviewed120-second diagnostic envelope, identify its computational hotspot, and preserve both timeout failures. Keep provisional cd59 unaccepted until affected tests pass; current formal proof remains30/7195 on exact acac source.",
     "deploymentObservation": {
       "sourceCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
       "runId": "36958910363",
@@ -2151,7 +2151,7 @@
       "sourceApplied": false
     },
     "currentCriticalPath": [
-      "Complete independently reviewed parity prerequisite fixture correction and bounded scope-test validation, then integrate only reviewed successor bytes. Preserve actual acac30 full proofs and missing original full-owner/sharedStage29 receipts; do not repeat a healthy or lost prefix without a justified recovery path.",
+      "Profile the unchanged current context-validation owner under the reviewed120-second diagnostic envelope, identify its computational hotspot, and preserve both timeout failures. Keep provisional cd59 unaccepted until affected tests pass; current formal proof remains30/7195 on exact acac source.",
       "Current full proof evidence is30 CONFORMANT_PROVEN and7165 UNKNOWN of7195 atoms on frozen acac8f85; source successors need their own qualified admission, with historical9093 corrected15 retained.",
       "Resolve demonstrated final-owner historical fixture closure failure without weakening original controls; retain19-to15 regression and require explicit authoritative context for targeted proof.",
       "Establish complete required original owner/sharedStage29 and broader application acceptance; conditional publication still requires all checks and separate tool approval."
@@ -3155,7 +3155,7 @@
       }
     ],
     "currentInstructionMessageId": "Sentinel_4171a7d9ba308191850ae105fcaa1639",
-    "integrationCommitObservation": "acac8f858df0f142d538c2c79217e84e3a700aaf",
+    "integrationCommitObservation": "4fa94ff841f6a4950b230cfd7d99ec0214c2523e",
     "chain15LatestActualObservation": {
       "observedAt": "2026-10-14T21:35:29.848Z",
       "sessionId": 61315,
@@ -3823,25 +3823,78 @@
     },
     "proofContextParityWork": {
       "task": "repair_coverage_context_parity",
-      "status": "SOURCE_AND_FOCUSED_CONTROLS_REVIEWED_PREREQUISITE_REPAIR_PENDING",
+      "status": "FOCUSED_PARITY_PASSES_FULL_OWNER_BLOCKED_BY_PROVISIONAL_FIXTURE_COST",
       "focusedCases": 248,
       "newContextHistoryControls": 25,
       "unchangedPrerequisiteExitCode": 1,
       "actualFailure": "ENOENT specification/closed-loop-specification-manifest.json in historical context helper",
       "runtimeChange": false,
-      "integration": "NOT_INTEGRATED"
+      "integration": "NOT_INTEGRATED",
+      "contextFixtureCandidate": "cd59ee6ce18ff2aba7fa502ec9e4142dad8a2f31",
+      "contextFixtureBranch": "candidate/context-fixture-cd59ee6c",
+      "candidateAccepted": false,
+      "wholeHelperDiagnostic": {
+        "session": 62779,
+        "exit": 124,
+        "seconds": 1200.04059,
+        "reviewSha256": "9708447ffc33ca14da88f100c1d2c7f1879377effb87d128d897a4f11f3dcdea"
+      },
+      "historicalPhase": {
+        "exit": 0,
+        "cases": 16,
+        "calls": 33,
+        "elapsedSeconds": 1.1623,
+        "reviewSha256": "483f0a47"
+      },
+      "oneCurrentPositive": {
+        "session": 75827,
+        "exit": 124,
+        "seconds": 120.0367,
+        "fingerprintSeconds": 2.4098,
+        "ownerReturned": false,
+        "latestRead": "context-reconciliation JSON",
+        "peakChildRssKiB": 751448
+      },
+      "next": "Source-pinned bounded native CPU profile; no caching or predicate change authorized yet",
+      "budgetQualification": "20minute and120second bounds are external diagnostic envelopes, not normative deadlines"
     },
     "scopePreservationTestWork": {
       "task": "author_ingestion_coverage_batch",
       "reviewer": "review_ingestion_coverage_batch",
       "branch": "test/scope-reserved-acac8f85",
       "patchSha256": "a7fa6dce25bbda03c0b6361ada98335a15725d4f110a68d92a19090cd73615b5",
-      "status": "SOURCE_REVIEWED_BOUNDED_TESTS_PASSED_FINAL_OUTCOME_REVIEW_PENDING",
+      "status": "INTEGRATED_AFTER_INDEPENDENT_AFFECTED_TEST_REVIEW",
       "actualStage2Pairs": 4,
       "corruptionControls": 13,
       "remainingPairsUnexecuted": 19,
       "fullCoverageAdded": false,
-      "integration": "NOT_INTEGRATED"
+      "integration": "3782ef4c064db857ee7eccc96e78fd6ae5bd0126",
+      "sourceCustodyIntegration": "be4d2d42746e591d168e28d55ced143bc6cbea6c",
+      "independentReviewSha256": "9faf68fe53bf5d7bf478061e1ed4f4bff0488a75ef50b86c26cb77de3a5c4093",
+      "custodyReviewSha256": "e37ae03fb8aa24ab3bbef0fac78088c61fb402aa379bec89f77af4aa7cef28ab"
+    },
+    "testIrSupportTestRepair": {
+      "status": "INTEGRATED_AFTER_INDEPENDENT_AFFECTED_TEST_REVIEW",
+      "commit": "4fa94ff841f6a4950b230cfd7d99ec0214c2523e",
+      "author": "author_test_ir_coverage",
+      "reviewer": "review_test_ir_coverage",
+      "patchSha256": "2dc61df22e853b7e2df0bd6d1acd5caea2b43da5e0b68b25271cade87c8e4d86",
+      "independentDispositionSha256": "57112a024edcff4047987406b7753cc7c0721bb1774f716f5ca8afd4a8846cc1",
+      "supportCases": 70,
+      "consumerNegatives": 783,
+      "intendedMutantRejections": 11,
+      "originalRegistryPopulations": [
+        41,
+        65,
+        27,
+        14
+      ],
+      "invalidWorkerLaunches": 0,
+      "defaultOwnerExecuted": false,
+      "eligibleReceipt": false,
+      "newProven": 0,
+      "declarations": "FOUR_CONDITIONAL_BLUEPRINTS_NOT_INSTALLED",
+      "runtimeChanged": false
     }
   }
 }
