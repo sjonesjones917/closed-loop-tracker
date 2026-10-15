@@ -2140,7 +2140,121 @@
       ],
       "scope": "Using a real new Stage1 project, current input version, application-owned reservation, saved instruction and actual exported ZIP package, the invalid response must be rejected with its literal expected diagnostic and no proposal. Preparation and actual operational save/reload preserve the whole canonical project snapshot: every Job field except CURRENT_STATE/NEXT_REQUIRED_ACTION, all registered and nonregistry canonical values, all stage values except gate/status/derivedData/responseDraft, the selected reservation binding/contentSha256 and all other reservations, canonical revision, identities, versions, pointers and root metadata. Exact operational raw/audit collections and recomputed projectSha256 are excluded from that snapshot comparison, while all preexisting audit prefixes remain byte/value-equivalent. The original input object remains unchanged. These are synthetic controlled actor inputs under the production storage owner with an isolated transaction adapter; no browser, external actor, authenticated human decision, stage completion or acceptance is claimed. The maintained assertions require three directly exercised conforming response-file controls to remain valid pending proposals, retain exact raw bytes, and commit no canonical changes.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
-      "atomicObligationSha256": "728481b54082c68aa5f3db629dbf68b7dfdefedb50578c3bd7bd9c382378dcf0"
+      "atomicObligationSha256": "728481b54082c68aa5f3db629dbf68b7dfdefedb50578c3bd7bd9c382378dcf0",
+    "fullCoverage": {
+      "schema": "closed-loop-full-requirement-coverage/1",
+      "sourceLineSha256": "89af7e3ffb6168d966b07568ede7d292cf9e3d346e92d61f5d51c1ded9c4d468",
+      "atomicObligationSha256": "728481b54082c68aa5f3db629dbf68b7dfdefedb50578c3bd7bd9c382378dcf0",
+      "reviewedAtomicStatement": "The single ingestion path rejects before canonical mutation: malformed JSON.",
+      "sourceSpans": [
+        {
+          "startByte": 83141,
+          "endByte": 83158,
+          "text": "- malformed JSON;",
+          "sha256": "89af7e3ffb6168d966b07568ede7d292cf9e3d346e92d61f5d51c1ded9c4d468"
+        }
+      ],
+      "contextSourceLocations": [
+        {
+          "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+          "startLine": 1357,
+          "endLine": 1357,
+          "lineSha256": "a8a298876c99dfea0ed6a1c39c7a06c729213341e056ac22e85dc6ce6f53a8b0",
+          "controllingText": "17.5 Closed-schema rejection"
+        },
+        {
+          "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+          "startLine": 1359,
+          "endLine": 1359,
+          "lineSha256": "d79d136180581dd41050286f4f83801fb731c7b2ceb4857985c292a1293a0f44",
+          "controllingText": "The single ingestion path rejects before canonical mutation:"
+        }
+      ],
+      "schemaOrRegistryEntry": "SPECIFICATION_SECTION_17.5",
+      "productionOwners": [
+        {
+          "path": "response-ingestion.js",
+          "symbol": "hasUnsafeSmartJsonDelimiter / scanJsonAmbiguity / strictParse / validateEnvelopeWithDiagnostics / captureRaw / prepareCaptured",
+          "sha256": "ea0c6d1798dfd3a5711bf96550b7a7d085d8374fdfdfaf5e694ee84b39ad28f9"
+        },
+        {
+          "path": "project-store.js",
+          "symbol": "stageResponseFile / readStagedResponseFile / writeOperationalProject / assertOperationalChange / readProject",
+          "sha256": "be8a5b5f9a2ca7caa42024f2831447c38947fe099198c3303e7eb83e410965d0"
+        },
+        {
+          "path": "workflow-engine.js",
+          "symbol": "transitionOperationReservation / recalculate / applicationProjectionInput",
+          "sha256": "1a0e0789abcb829c79dec4748dbaa0e90d2989d6d263ac3e6b6e1fcf26377d1f"
+        },
+        {
+          "path": "workflow-schema.js",
+          "symbol": "responseResourceLimitsForPrompt / PROJECT_PROJECTION_DERIVATION_CONTRACT",
+          "sha256": "626e51a6590e1bb19e6c4478a2531326daddceffabdb8ced225dbb4aa81deb1b"
+        },
+        {
+          "path": "prompt-engine.js",
+          "symbol": "reserveAndBuildPromptRecord / promptFileManifest",
+          "sha256": "5d67f8096f91a1efc17ad6ce367dfa43ab5990ecaede9b52c9f12dcc34b41d20"
+        }
+      ],
+      "obligations": [
+        {
+          "id": "draft.ingestion.reject.malformed-json",
+          "sourceText": "- malformed JSON;",
+          "expectedBehavior": "The production Stage1 reserved-package response-file path rejects before canonical mutation. Independent literal invalid inputs must yield the named diagnostic, invalid validation and no proposal. Before preparation and after actual production operational save/readback, the test compares the whole project except only the declared operational raw/audit collections, projectSha256, independently verified applicationProjection, Job CURRENT_STATE/NEXT_REQUIRED_ACTION, stage gate/status/derivedData/responseDraft, and selected reservation STATUS/fields.STATUS/updatedAt/recordSha256/sha256. Its canonical contentSha256, binding and all other reservations remain compared. All Job identities/pointers/versions, accepted changes, canonical revision, root metadata and canonical collections remain protected. Separate comparisons retain all prior audit prefixes and stage gate/status/decision/decisionEvidence except checkedAt. Independent Node SHA-256 verifies actual projection source hashes and registry/input/output receipt bindings. Original input remains unchanged. Selected reservation reaches REJECTED for parse/validation rejections. Exact raw text survives capture and readback with valid project integrity. Three literal conforming controls remain required: ASCII escaped string data, valid Unicode quotation data, and exactly 67108864 UTF-8 bytes. They are valid and create pending proposals at preparation while raw text, canonical state, audit prefixes and gate outcomes survive operational save/readback without canonical acceptance. Pending-proposal identity/status after readback is not separately asserted by these controls and is not claimed here. Literal clause cases: malformed JSON => MALFORMED_JSON. Synthetic controlled inputs exercise unchanged production owners under the isolated transaction adapter. No browser, physical device, real external agent, authenticated human authority, accepted canonical change, whole-application conformance, or separate mutation-suite proof is claimed. Current owning verify-ingestion execution and independent review remain required; this declaration is source/design evidence only.",
+          "checks": {
+            "deterministic": [
+              {
+                "suite": "verify-ingestion.mjs",
+                "checkId": "ingestion.syntax.malformed-json"
+              }
+            ],
+            "semantic": [],
+            "mutation": []
+          },
+          "nonapplicable": {
+            "semantic": "This atom is mechanical JSON/identity rejection before canonical mutation; external semantic judgment is not required. Independent source/assertion review and actual deterministic receipt remain required.",
+            "mutation": "No separate mutation-suite receipt is claimed. The owning helper includes scanner source-fault diagnostics but this declaration relies on its exact invalid/conforming production cases and state-preservation assertions."
+          },
+          "evidenceKinds": [
+            "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+          ],
+          "assertionReferences": [
+            "SYNTAX_STAGE1_REJECT",
+            "SYNTAX_STAGE1_NO_PROPOSAL",
+            "SYNTAX_STAGE1_EXPECTED_CODE",
+            "SYNTAX_STAGE1_REJECTION_PRESERVATION",
+            "SYNTAX_STAGE1_GATE_OUTCOME_PRESERVATION",
+            "SYNTAX_STAGE1_INPUT_UNCHANGED",
+            "SYNTAX_STAGE1_RETAINED_AUDIT_PREFIX",
+            "SYNTAX_STAGE1_RELOAD_INTEGRITY",
+            "SYNTAX_STAGE1_RELOAD_PRESERVATION",
+            "SYNTAX_STAGE1_EXACT_RAW_RELOAD",
+            "SYNTAX_STAGE1_RELOAD_GATE_OUTCOME_PRESERVATION",
+            "SYNTAX_STAGE1_REJECTED_RESERVATION",
+            "SYNTAX_STAGE1_PROJECTION_RECEIPT_ORACLE",
+            "SYNTAX_STAGE1_CONFORMING",
+            "SYNTAX_STAGE1_VALID_NOT_ACCEPTED",
+            "SYNTAX_STAGE1_VALID_GATE_OUTCOME_PRESERVATION",
+            "SYNTAX_STAGE1_EXACT_PARSE_CODE"
+          ]
+        }
+      ],
+      "unresolvedObligations": [],
+      "governingContext": [
+        {
+          "normativeRequirementId": "NREQ-6c392009e2925e9e3e3baaf1e42cbc93",
+          "sourceLineSha256": "a8a298876c99dfea0ed6a1c39c7a06c729213341e056ac22e85dc6ce6f53a8b0",
+          "controllingText": "17.5 Closed-schema rejection"
+        },
+        {
+          "normativeRequirementId": "NREQ-f3c76d5b2691175b5c4f18f5b12f2892",
+          "sourceLineSha256": "d79d136180581dd41050286f4f83801fb731c7b2ceb4857985c292a1293a0f44",
+          "controllingText": "The single ingestion path rejects before canonical mutation:"
+        }
+      ]
+    }
     },
     {
       "normativeRequirementId": "NREQ-4bb86ccfacff0ea8bbbc59df67b0ca4f",
@@ -2150,7 +2264,121 @@
       ],
       "scope": "Using a real new Stage1 project, current input version, application-owned reservation, saved instruction and actual exported ZIP package, the invalid response must be rejected with its literal expected diagnostic and no proposal. Preparation and actual operational save/reload preserve the whole canonical project snapshot: every Job field except CURRENT_STATE/NEXT_REQUIRED_ACTION, all registered and nonregistry canonical values, all stage values except gate/status/derivedData/responseDraft, the selected reservation binding/contentSha256 and all other reservations, canonical revision, identities, versions, pointers and root metadata. Exact operational raw/audit collections and recomputed projectSha256 are excluded from that snapshot comparison, while all preexisting audit prefixes remain byte/value-equivalent. The original input object remains unchanged. These are synthetic controlled actor inputs under the production storage owner with an isolated transaction adapter; no browser, external actor, authenticated human decision, stage completion or acceptance is claimed. The maintained assertions require three directly exercised conforming response-file controls to remain valid pending proposals, retain exact raw bytes, and commit no canonical changes.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
-      "atomicObligationSha256": "b5f2834ee163fe1a85829a32518a6c0638969a1306a846c28b530370cefdeac3"
+      "atomicObligationSha256": "b5f2834ee163fe1a85829a32518a6c0638969a1306a846c28b530370cefdeac3",
+    "fullCoverage": {
+      "schema": "closed-loop-full-requirement-coverage/1",
+      "sourceLineSha256": "09e17204b42dbb8cd59e88b06533986100f2bce3180c9746b79edb50f66c3bfe",
+      "atomicObligationSha256": "b5f2834ee163fe1a85829a32518a6c0638969a1306a846c28b530370cefdeac3",
+      "reviewedAtomicStatement": "The single ingestion path rejects before canonical mutation: truncated JSON.",
+      "sourceSpans": [
+        {
+          "startByte": 83159,
+          "endByte": 83176,
+          "text": "- truncated JSON;",
+          "sha256": "09e17204b42dbb8cd59e88b06533986100f2bce3180c9746b79edb50f66c3bfe"
+        }
+      ],
+      "contextSourceLocations": [
+        {
+          "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+          "startLine": 1357,
+          "endLine": 1357,
+          "lineSha256": "a8a298876c99dfea0ed6a1c39c7a06c729213341e056ac22e85dc6ce6f53a8b0",
+          "controllingText": "17.5 Closed-schema rejection"
+        },
+        {
+          "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+          "startLine": 1359,
+          "endLine": 1359,
+          "lineSha256": "d79d136180581dd41050286f4f83801fb731c7b2ceb4857985c292a1293a0f44",
+          "controllingText": "The single ingestion path rejects before canonical mutation:"
+        }
+      ],
+      "schemaOrRegistryEntry": "SPECIFICATION_SECTION_17.5",
+      "productionOwners": [
+        {
+          "path": "response-ingestion.js",
+          "symbol": "hasUnsafeSmartJsonDelimiter / scanJsonAmbiguity / strictParse / validateEnvelopeWithDiagnostics / captureRaw / prepareCaptured",
+          "sha256": "ea0c6d1798dfd3a5711bf96550b7a7d085d8374fdfdfaf5e694ee84b39ad28f9"
+        },
+        {
+          "path": "project-store.js",
+          "symbol": "stageResponseFile / readStagedResponseFile / writeOperationalProject / assertOperationalChange / readProject",
+          "sha256": "be8a5b5f9a2ca7caa42024f2831447c38947fe099198c3303e7eb83e410965d0"
+        },
+        {
+          "path": "workflow-engine.js",
+          "symbol": "transitionOperationReservation / recalculate / applicationProjectionInput",
+          "sha256": "1a0e0789abcb829c79dec4748dbaa0e90d2989d6d263ac3e6b6e1fcf26377d1f"
+        },
+        {
+          "path": "workflow-schema.js",
+          "symbol": "responseResourceLimitsForPrompt / PROJECT_PROJECTION_DERIVATION_CONTRACT",
+          "sha256": "626e51a6590e1bb19e6c4478a2531326daddceffabdb8ced225dbb4aa81deb1b"
+        },
+        {
+          "path": "prompt-engine.js",
+          "symbol": "reserveAndBuildPromptRecord / promptFileManifest",
+          "sha256": "5d67f8096f91a1efc17ad6ce367dfa43ab5990ecaede9b52c9f12dcc34b41d20"
+        }
+      ],
+      "obligations": [
+        {
+          "id": "draft.ingestion.reject.truncated-json",
+          "sourceText": "- truncated JSON;",
+          "expectedBehavior": "The production Stage1 reserved-package response-file path rejects before canonical mutation. Independent literal invalid inputs must yield the named diagnostic, invalid validation and no proposal. Before preparation and after actual production operational save/readback, the test compares the whole project except only the declared operational raw/audit collections, projectSha256, independently verified applicationProjection, Job CURRENT_STATE/NEXT_REQUIRED_ACTION, stage gate/status/derivedData/responseDraft, and selected reservation STATUS/fields.STATUS/updatedAt/recordSha256/sha256. Its canonical contentSha256, binding and all other reservations remain compared. All Job identities/pointers/versions, accepted changes, canonical revision, root metadata and canonical collections remain protected. Separate comparisons retain all prior audit prefixes and stage gate/status/decision/decisionEvidence except checkedAt. Independent Node SHA-256 verifies actual projection source hashes and registry/input/output receipt bindings. Original input remains unchanged. Selected reservation reaches REJECTED for parse/validation rejections. Exact raw text survives capture and readback with valid project integrity. Three literal conforming controls remain required: ASCII escaped string data, valid Unicode quotation data, and exactly 67108864 UTF-8 bytes. They are valid and create pending proposals at preparation while raw text, canonical state, audit prefixes and gate outcomes survive operational save/readback without canonical acceptance. Pending-proposal identity/status after readback is not separately asserted by these controls and is not claimed here. Literal clause cases: truncated JSON => TRUNCATED_RESPONSE. Synthetic controlled inputs exercise unchanged production owners under the isolated transaction adapter. No browser, physical device, real external agent, authenticated human authority, accepted canonical change, whole-application conformance, or separate mutation-suite proof is claimed. Current owning verify-ingestion execution and independent review remain required; this declaration is source/design evidence only.",
+          "checks": {
+            "deterministic": [
+              {
+                "suite": "verify-ingestion.mjs",
+                "checkId": "ingestion.syntax.truncated-json"
+              }
+            ],
+            "semantic": [],
+            "mutation": []
+          },
+          "nonapplicable": {
+            "semantic": "This atom is mechanical JSON/identity rejection before canonical mutation; external semantic judgment is not required. Independent source/assertion review and actual deterministic receipt remain required.",
+            "mutation": "No separate mutation-suite receipt is claimed. The owning helper includes scanner source-fault diagnostics but this declaration relies on its exact invalid/conforming production cases and state-preservation assertions."
+          },
+          "evidenceKinds": [
+            "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+          ],
+          "assertionReferences": [
+            "SYNTAX_STAGE1_REJECT",
+            "SYNTAX_STAGE1_NO_PROPOSAL",
+            "SYNTAX_STAGE1_EXPECTED_CODE",
+            "SYNTAX_STAGE1_REJECTION_PRESERVATION",
+            "SYNTAX_STAGE1_GATE_OUTCOME_PRESERVATION",
+            "SYNTAX_STAGE1_INPUT_UNCHANGED",
+            "SYNTAX_STAGE1_RETAINED_AUDIT_PREFIX",
+            "SYNTAX_STAGE1_RELOAD_INTEGRITY",
+            "SYNTAX_STAGE1_RELOAD_PRESERVATION",
+            "SYNTAX_STAGE1_EXACT_RAW_RELOAD",
+            "SYNTAX_STAGE1_RELOAD_GATE_OUTCOME_PRESERVATION",
+            "SYNTAX_STAGE1_REJECTED_RESERVATION",
+            "SYNTAX_STAGE1_PROJECTION_RECEIPT_ORACLE",
+            "SYNTAX_STAGE1_CONFORMING",
+            "SYNTAX_STAGE1_VALID_NOT_ACCEPTED",
+            "SYNTAX_STAGE1_VALID_GATE_OUTCOME_PRESERVATION",
+            "SYNTAX_STAGE1_EXACT_PARSE_CODE"
+          ]
+        }
+      ],
+      "unresolvedObligations": [],
+      "governingContext": [
+        {
+          "normativeRequirementId": "NREQ-6c392009e2925e9e3e3baaf1e42cbc93",
+          "sourceLineSha256": "a8a298876c99dfea0ed6a1c39c7a06c729213341e056ac22e85dc6ce6f53a8b0",
+          "controllingText": "17.5 Closed-schema rejection"
+        },
+        {
+          "normativeRequirementId": "NREQ-f3c76d5b2691175b5c4f18f5b12f2892",
+          "sourceLineSha256": "d79d136180581dd41050286f4f83801fb731c7b2ceb4857985c292a1293a0f44",
+          "controllingText": "The single ingestion path rejects before canonical mutation:"
+        }
+      ]
+    }
     },
     {
       "normativeRequirementId": "NREQ-768d67996244254c83c0d11796f63912",
@@ -2160,7 +2388,121 @@
       ],
       "scope": "Using a real new Stage1 project, current input version, application-owned reservation, saved instruction and actual exported ZIP package, the invalid response must be rejected with its literal expected diagnostic and no proposal. Preparation and actual operational save/reload preserve the whole canonical project snapshot: every Job field except CURRENT_STATE/NEXT_REQUIRED_ACTION, all registered and nonregistry canonical values, all stage values except gate/status/derivedData/responseDraft, the selected reservation binding/contentSha256 and all other reservations, canonical revision, identities, versions, pointers and root metadata. Exact operational raw/audit collections and recomputed projectSha256 are excluded from that snapshot comparison, while all preexisting audit prefixes remain byte/value-equivalent. The original input object remains unchanged. These are synthetic controlled actor inputs under the production storage owner with an isolated transaction adapter; no browser, external actor, authenticated human decision, stage completion or acceptance is claimed. The maintained assertions require three directly exercised conforming response-file controls to remain valid pending proposals, retain exact raw bytes, and commit no canonical changes.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
-      "atomicObligationSha256": "4b20a31aea945f13ac596aae681ad3f0373403063575128cdf6d8f21286e0f60"
+      "atomicObligationSha256": "4b20a31aea945f13ac596aae681ad3f0373403063575128cdf6d8f21286e0f60",
+    "fullCoverage": {
+      "schema": "closed-loop-full-requirement-coverage/1",
+      "sourceLineSha256": "db64c2b69f90715f643b80468a2f5ed0a5853c0eec261205e23aece559c0ac9b",
+      "atomicObligationSha256": "4b20a31aea945f13ac596aae681ad3f0373403063575128cdf6d8f21286e0f60",
+      "reviewedAtomicStatement": "The single ingestion path rejects before canonical mutation: Markdown-wrapped JSON.",
+      "sourceSpans": [
+        {
+          "startByte": 83177,
+          "endByte": 83201,
+          "text": "- Markdown-wrapped JSON;",
+          "sha256": "db64c2b69f90715f643b80468a2f5ed0a5853c0eec261205e23aece559c0ac9b"
+        }
+      ],
+      "contextSourceLocations": [
+        {
+          "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+          "startLine": 1357,
+          "endLine": 1357,
+          "lineSha256": "a8a298876c99dfea0ed6a1c39c7a06c729213341e056ac22e85dc6ce6f53a8b0",
+          "controllingText": "17.5 Closed-schema rejection"
+        },
+        {
+          "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+          "startLine": 1359,
+          "endLine": 1359,
+          "lineSha256": "d79d136180581dd41050286f4f83801fb731c7b2ceb4857985c292a1293a0f44",
+          "controllingText": "The single ingestion path rejects before canonical mutation:"
+        }
+      ],
+      "schemaOrRegistryEntry": "SPECIFICATION_SECTION_17.5",
+      "productionOwners": [
+        {
+          "path": "response-ingestion.js",
+          "symbol": "hasUnsafeSmartJsonDelimiter / scanJsonAmbiguity / strictParse / validateEnvelopeWithDiagnostics / captureRaw / prepareCaptured",
+          "sha256": "ea0c6d1798dfd3a5711bf96550b7a7d085d8374fdfdfaf5e694ee84b39ad28f9"
+        },
+        {
+          "path": "project-store.js",
+          "symbol": "stageResponseFile / readStagedResponseFile / writeOperationalProject / assertOperationalChange / readProject",
+          "sha256": "be8a5b5f9a2ca7caa42024f2831447c38947fe099198c3303e7eb83e410965d0"
+        },
+        {
+          "path": "workflow-engine.js",
+          "symbol": "transitionOperationReservation / recalculate / applicationProjectionInput",
+          "sha256": "1a0e0789abcb829c79dec4748dbaa0e90d2989d6d263ac3e6b6e1fcf26377d1f"
+        },
+        {
+          "path": "workflow-schema.js",
+          "symbol": "responseResourceLimitsForPrompt / PROJECT_PROJECTION_DERIVATION_CONTRACT",
+          "sha256": "626e51a6590e1bb19e6c4478a2531326daddceffabdb8ced225dbb4aa81deb1b"
+        },
+        {
+          "path": "prompt-engine.js",
+          "symbol": "reserveAndBuildPromptRecord / promptFileManifest",
+          "sha256": "5d67f8096f91a1efc17ad6ce367dfa43ab5990ecaede9b52c9f12dcc34b41d20"
+        }
+      ],
+      "obligations": [
+        {
+          "id": "draft.ingestion.reject.markdown-wrapped-json",
+          "sourceText": "- Markdown-wrapped JSON;",
+          "expectedBehavior": "The production Stage1 reserved-package response-file path rejects before canonical mutation. Independent literal invalid inputs must yield the named diagnostic, invalid validation and no proposal. Before preparation and after actual production operational save/readback, the test compares the whole project except only the declared operational raw/audit collections, projectSha256, independently verified applicationProjection, Job CURRENT_STATE/NEXT_REQUIRED_ACTION, stage gate/status/derivedData/responseDraft, and selected reservation STATUS/fields.STATUS/updatedAt/recordSha256/sha256. Its canonical contentSha256, binding and all other reservations remain compared. All Job identities/pointers/versions, accepted changes, canonical revision, root metadata and canonical collections remain protected. Separate comparisons retain all prior audit prefixes and stage gate/status/decision/decisionEvidence except checkedAt. Independent Node SHA-256 verifies actual projection source hashes and registry/input/output receipt bindings. Original input remains unchanged. Selected reservation reaches REJECTED for parse/validation rejections. Exact raw text survives capture and readback with valid project integrity. Three literal conforming controls remain required: ASCII escaped string data, valid Unicode quotation data, and exactly 67108864 UTF-8 bytes. They are valid and create pending proposals at preparation while raw text, canonical state, audit prefixes and gate outcomes survive operational save/readback without canonical acceptance. Pending-proposal identity/status after readback is not separately asserted by these controls and is not claimed here. Literal clause cases: markdown wrapped => NON_JSON_WRAPPER. Synthetic controlled inputs exercise unchanged production owners under the isolated transaction adapter. No browser, physical device, real external agent, authenticated human authority, accepted canonical change, whole-application conformance, or separate mutation-suite proof is claimed. Current owning verify-ingestion execution and independent review remain required; this declaration is source/design evidence only.",
+          "checks": {
+            "deterministic": [
+              {
+                "suite": "verify-ingestion.mjs",
+                "checkId": "ingestion.syntax.markdown-wrapper"
+              }
+            ],
+            "semantic": [],
+            "mutation": []
+          },
+          "nonapplicable": {
+            "semantic": "This atom is mechanical JSON/identity rejection before canonical mutation; external semantic judgment is not required. Independent source/assertion review and actual deterministic receipt remain required.",
+            "mutation": "No separate mutation-suite receipt is claimed. The owning helper includes scanner source-fault diagnostics but this declaration relies on its exact invalid/conforming production cases and state-preservation assertions."
+          },
+          "evidenceKinds": [
+            "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+          ],
+          "assertionReferences": [
+            "SYNTAX_STAGE1_REJECT",
+            "SYNTAX_STAGE1_NO_PROPOSAL",
+            "SYNTAX_STAGE1_EXPECTED_CODE",
+            "SYNTAX_STAGE1_REJECTION_PRESERVATION",
+            "SYNTAX_STAGE1_GATE_OUTCOME_PRESERVATION",
+            "SYNTAX_STAGE1_INPUT_UNCHANGED",
+            "SYNTAX_STAGE1_RETAINED_AUDIT_PREFIX",
+            "SYNTAX_STAGE1_RELOAD_INTEGRITY",
+            "SYNTAX_STAGE1_RELOAD_PRESERVATION",
+            "SYNTAX_STAGE1_EXACT_RAW_RELOAD",
+            "SYNTAX_STAGE1_RELOAD_GATE_OUTCOME_PRESERVATION",
+            "SYNTAX_STAGE1_REJECTED_RESERVATION",
+            "SYNTAX_STAGE1_PROJECTION_RECEIPT_ORACLE",
+            "SYNTAX_STAGE1_CONFORMING",
+            "SYNTAX_STAGE1_VALID_NOT_ACCEPTED",
+            "SYNTAX_STAGE1_VALID_GATE_OUTCOME_PRESERVATION",
+            "SYNTAX_STAGE1_EXACT_PARSE_CODE"
+          ]
+        }
+      ],
+      "unresolvedObligations": [],
+      "governingContext": [
+        {
+          "normativeRequirementId": "NREQ-6c392009e2925e9e3e3baaf1e42cbc93",
+          "sourceLineSha256": "a8a298876c99dfea0ed6a1c39c7a06c729213341e056ac22e85dc6ce6f53a8b0",
+          "controllingText": "17.5 Closed-schema rejection"
+        },
+        {
+          "normativeRequirementId": "NREQ-f3c76d5b2691175b5c4f18f5b12f2892",
+          "sourceLineSha256": "d79d136180581dd41050286f4f83801fb731c7b2ceb4857985c292a1293a0f44",
+          "controllingText": "The single ingestion path rejects before canonical mutation:"
+        }
+      ]
+    }
     },
     {
       "normativeRequirementId": "NREQ-59d5854af99ac5a566eb61e978519b21",
@@ -2170,7 +2512,114 @@
       ],
       "scope": "Using a real new Stage1 project, current input version, application-owned reservation, saved instruction and actual exported ZIP package, the invalid response must be rejected with its literal expected diagnostic and no proposal. Staged-read rejection and the subsequent canonical project reload preserve the whole canonical project snapshot: every Job field except CURRENT_STATE/NEXT_REQUIRED_ACTION, all registered and nonregistry canonical values, all stage values except gate/status/derivedData/responseDraft, the selected reservation binding/contentSha256 and all other reservations, canonical revision, identities, versions, pointers and root metadata. Exact operational raw/audit collections and recomputed projectSha256 are excluded from that snapshot comparison, while all preexisting audit prefixes remain byte/value-equivalent. The original input object remains unchanged. These are synthetic controlled actor inputs under the production storage owner with an isolated transaction adapter; no browser, external actor, authenticated human decision, stage completion or acceptance is claimed. The maintained assertions require three directly exercised conforming response-file controls to remain valid pending proposals, retain exact raw bytes, and commit no canonical changes. The published STRUCTURED_RESPONSE maximumSize is independently asserted as1048576 bytes. A valid JSON document padded to1048577 bytes must be refused by the actual staged-read guard with OVERSIZED_RESPONSE before parsing/raw-response metadata creation; the original Blob/hash and rejection receipt remain recoverable. The otherwise conforming1048576-byte document must stage, validate and reload as a pending proposal.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
-      "atomicObligationSha256": "d6406cb9445419bd47150ff364302b002a87ce6bf6aefbd1fa9166281f2135b0"
+      "atomicObligationSha256": "d6406cb9445419bd47150ff364302b002a87ce6bf6aefbd1fa9166281f2135b0",
+    "fullCoverage": {
+      "schema": "closed-loop-full-requirement-coverage/1",
+      "sourceLineSha256": "a2dbce8b467827a0a515845181d9a0f4dd8dbc6d4ffc47e582dec4eaab4e28f0",
+      "atomicObligationSha256": "d6406cb9445419bd47150ff364302b002a87ce6bf6aefbd1fa9166281f2135b0",
+      "reviewedAtomicStatement": "The single ingestion path rejects before canonical mutation: oversized JSON.",
+      "sourceSpans": [
+        {
+          "startByte": 83202,
+          "endByte": 83219,
+          "text": "- oversized JSON;",
+          "sha256": "a2dbce8b467827a0a515845181d9a0f4dd8dbc6d4ffc47e582dec4eaab4e28f0"
+        }
+      ],
+      "contextSourceLocations": [
+        {
+          "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+          "startLine": 1357,
+          "endLine": 1357,
+          "lineSha256": "a8a298876c99dfea0ed6a1c39c7a06c729213341e056ac22e85dc6ce6f53a8b0",
+          "controllingText": "17.5 Closed-schema rejection"
+        },
+        {
+          "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+          "startLine": 1359,
+          "endLine": 1359,
+          "lineSha256": "d79d136180581dd41050286f4f83801fb731c7b2ceb4857985c292a1293a0f44",
+          "controllingText": "The single ingestion path rejects before canonical mutation:"
+        }
+      ],
+      "schemaOrRegistryEntry": "SPECIFICATION_SECTION_17.5",
+      "productionOwners": [
+        {
+          "path": "response-ingestion.js",
+          "symbol": "hasUnsafeSmartJsonDelimiter / scanJsonAmbiguity / strictParse / validateEnvelopeWithDiagnostics / captureRaw / prepareCaptured",
+          "sha256": "ea0c6d1798dfd3a5711bf96550b7a7d085d8374fdfdfaf5e694ee84b39ad28f9"
+        },
+        {
+          "path": "project-store.js",
+          "symbol": "stageResponseFile / readStagedResponseFile / writeOperationalProject / assertOperationalChange / readProject",
+          "sha256": "be8a5b5f9a2ca7caa42024f2831447c38947fe099198c3303e7eb83e410965d0"
+        },
+        {
+          "path": "workflow-engine.js",
+          "symbol": "transitionOperationReservation / recalculate / applicationProjectionInput",
+          "sha256": "1a0e0789abcb829c79dec4748dbaa0e90d2989d6d263ac3e6b6e1fcf26377d1f"
+        },
+        {
+          "path": "workflow-schema.js",
+          "symbol": "responseResourceLimitsForPrompt / PROJECT_PROJECTION_DERIVATION_CONTRACT",
+          "sha256": "626e51a6590e1bb19e6c4478a2531326daddceffabdb8ced225dbb4aa81deb1b"
+        },
+        {
+          "path": "prompt-engine.js",
+          "symbol": "reserveAndBuildPromptRecord / promptFileManifest",
+          "sha256": "5d67f8096f91a1efc17ad6ce367dfa43ab5990ecaede9b52c9f12dcc34b41d20"
+        }
+      ],
+      "obligations": [
+        {
+          "id": "draft.ingestion.reject.oversized-json",
+          "sourceText": "- oversized JSON;",
+          "expectedBehavior": "The Stage1 STRUCTURED_RESPONSE slot publishes a literal 67108864-byte allowance. A 67108865-byte staged Blob is rejected by production readStagedResponseFile with OVERSIZED_RESPONSE before parser/raw-record/proposal creation. The same ordinary ingestion route retains exact original Blob text, size and independently computed byte hash, plus its metadata-store rejection receipt. Reloaded project canonical state, selected reservation binding/content hash and every other reservation, prior audit prefixes and original input remain unchanged under the same protectedState/projection-receipt oracle. No rawResponses, responseValidations or responseProposals are created for this guard rejection. This early guard does not claim a captured raw-response record or a REJECTED reservation transition. Three literal conforming controls remain required: ASCII escaped string data, valid Unicode quotation data, and exactly 67108864 UTF-8 bytes. They are valid and create pending proposals at preparation while raw text, canonical state, audit prefixes and gate outcomes survive operational save/readback without canonical acceptance. Pending-proposal identity/status after readback is not separately asserted by these controls and is not claimed here. Synthetic controlled inputs exercise unchanged production owners under the isolated transaction adapter. No browser, physical device, real external agent, authenticated human authority, accepted canonical change, whole-application conformance, or separate mutation-suite proof is claimed. Current owning verify-ingestion execution and independent review remain required; this declaration is source/design evidence only.",
+          "checks": {
+            "deterministic": [
+              {
+                "suite": "verify-ingestion.mjs",
+                "checkId": "ingestion.syntax.oversized-json"
+              }
+            ],
+            "semantic": [],
+            "mutation": []
+          },
+          "nonapplicable": {
+            "semantic": "This atom is mechanical JSON/identity rejection before canonical mutation; external semantic judgment is not required. Independent source/assertion review and actual deterministic receipt remain required.",
+            "mutation": "No separate mutation-suite receipt is claimed. The owning helper includes scanner source-fault diagnostics but this declaration relies on its exact invalid/conforming production cases and state-preservation assertions."
+          },
+          "evidenceKinds": [
+            "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+          ],
+          "assertionReferences": [
+            "SYNTAX_PUBLISHED_RESPONSE_BUDGET",
+            "SYNTAX_STAGE1_OVERSIZE_GUARD",
+            "SYNTAX_STAGE1_OVERSIZE_INPUT_UNCHANGED",
+            "SYNTAX_STAGE1_RETAINED_AUDIT_PREFIX",
+            "SYNTAX_STAGE1_PROJECTION_RECEIPT_ORACLE",
+            "test-ingestion-syntax-transport.mjs:166 retained rejection, byteSize, Blob text and independent SHA-256 equality",
+            "test-ingestion-syntax-transport.mjs:167 protectedState equality and zero proposals/rawResponses/responseValidations",
+            "SYNTAX_STAGE1_CONFORMING",
+            "SYNTAX_STAGE1_VALID_NOT_ACCEPTED",
+            "SYNTAX_STAGE1_VALID_GATE_OUTCOME_PRESERVATION"
+          ]
+        }
+      ],
+      "unresolvedObligations": [],
+      "governingContext": [
+        {
+          "normativeRequirementId": "NREQ-6c392009e2925e9e3e3baaf1e42cbc93",
+          "sourceLineSha256": "a8a298876c99dfea0ed6a1c39c7a06c729213341e056ac22e85dc6ce6f53a8b0",
+          "controllingText": "17.5 Closed-schema rejection"
+        },
+        {
+          "normativeRequirementId": "NREQ-f3c76d5b2691175b5c4f18f5b12f2892",
+          "sourceLineSha256": "d79d136180581dd41050286f4f83801fb731c7b2ceb4857985c292a1293a0f44",
+          "controllingText": "The single ingestion path rejects before canonical mutation:"
+        }
+      ]
+    }
     },
     {
       "normativeRequirementId": "NREQ-75b670fc6ea047b7452b4148f12a30ba",
@@ -2180,7 +2629,121 @@
       ],
       "scope": "Using a real new Stage1 project, current input version, application-owned reservation, saved instruction and actual exported ZIP package, the invalid response must be rejected with its literal expected diagnostic and no proposal. Preparation and actual operational save/reload preserve the whole canonical project snapshot: every Job field except CURRENT_STATE/NEXT_REQUIRED_ACTION, all registered and nonregistry canonical values, all stage values except gate/status/derivedData/responseDraft, the selected reservation binding/contentSha256 and all other reservations, canonical revision, identities, versions, pointers and root metadata. Exact operational raw/audit collections and recomputed projectSha256 are excluded from that snapshot comparison, while all preexisting audit prefixes remain byte/value-equivalent. The original input object remains unchanged. These are synthetic controlled actor inputs under the production storage owner with an isolated transaction adapter; no browser, external actor, authenticated human decision, stage completion or acceptance is claimed. The maintained assertions require three directly exercised conforming response-file controls to remain valid pending proposals, retain exact raw bytes, and commit no canonical changes. Duplicate root, nested object, object inside array, and escaped-equivalent root/nested member names each require the sole DUPLICATE_JSON_MEMBER error.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
-      "atomicObligationSha256": "caa9ba8b9cf7ddc6e2fcf427a86550804aa0abce71e13e059e2f1eb1fdd0898a"
+      "atomicObligationSha256": "caa9ba8b9cf7ddc6e2fcf427a86550804aa0abce71e13e059e2f1eb1fdd0898a",
+    "fullCoverage": {
+      "schema": "closed-loop-full-requirement-coverage/1",
+      "sourceLineSha256": "d7307bac047e7a507188e96dfe7e2fdf3ca2a443fa42811991f52185d967505b",
+      "atomicObligationSha256": "caa9ba8b9cf7ddc6e2fcf427a86550804aa0abce71e13e059e2f1eb1fdd0898a",
+      "reviewedAtomicStatement": "The single ingestion path rejects before canonical mutation: duplicate member names.",
+      "sourceSpans": [
+        {
+          "startByte": 83220,
+          "endByte": 83245,
+          "text": "- duplicate member names;",
+          "sha256": "d7307bac047e7a507188e96dfe7e2fdf3ca2a443fa42811991f52185d967505b"
+        }
+      ],
+      "contextSourceLocations": [
+        {
+          "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+          "startLine": 1357,
+          "endLine": 1357,
+          "lineSha256": "a8a298876c99dfea0ed6a1c39c7a06c729213341e056ac22e85dc6ce6f53a8b0",
+          "controllingText": "17.5 Closed-schema rejection"
+        },
+        {
+          "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+          "startLine": 1359,
+          "endLine": 1359,
+          "lineSha256": "d79d136180581dd41050286f4f83801fb731c7b2ceb4857985c292a1293a0f44",
+          "controllingText": "The single ingestion path rejects before canonical mutation:"
+        }
+      ],
+      "schemaOrRegistryEntry": "SPECIFICATION_SECTION_17.5",
+      "productionOwners": [
+        {
+          "path": "response-ingestion.js",
+          "symbol": "hasUnsafeSmartJsonDelimiter / scanJsonAmbiguity / strictParse / validateEnvelopeWithDiagnostics / captureRaw / prepareCaptured",
+          "sha256": "ea0c6d1798dfd3a5711bf96550b7a7d085d8374fdfdfaf5e694ee84b39ad28f9"
+        },
+        {
+          "path": "project-store.js",
+          "symbol": "stageResponseFile / readStagedResponseFile / writeOperationalProject / assertOperationalChange / readProject",
+          "sha256": "be8a5b5f9a2ca7caa42024f2831447c38947fe099198c3303e7eb83e410965d0"
+        },
+        {
+          "path": "workflow-engine.js",
+          "symbol": "transitionOperationReservation / recalculate / applicationProjectionInput",
+          "sha256": "1a0e0789abcb829c79dec4748dbaa0e90d2989d6d263ac3e6b6e1fcf26377d1f"
+        },
+        {
+          "path": "workflow-schema.js",
+          "symbol": "responseResourceLimitsForPrompt / PROJECT_PROJECTION_DERIVATION_CONTRACT",
+          "sha256": "626e51a6590e1bb19e6c4478a2531326daddceffabdb8ced225dbb4aa81deb1b"
+        },
+        {
+          "path": "prompt-engine.js",
+          "symbol": "reserveAndBuildPromptRecord / promptFileManifest",
+          "sha256": "5d67f8096f91a1efc17ad6ce367dfa43ab5990ecaede9b52c9f12dcc34b41d20"
+        }
+      ],
+      "obligations": [
+        {
+          "id": "draft.ingestion.reject.duplicate-member-names",
+          "sourceText": "- duplicate member names;",
+          "expectedBehavior": "The production Stage1 reserved-package response-file path rejects before canonical mutation. Independent literal invalid inputs must yield the named diagnostic, invalid validation and no proposal. Before preparation and after actual production operational save/readback, the test compares the whole project except only the declared operational raw/audit collections, projectSha256, independently verified applicationProjection, Job CURRENT_STATE/NEXT_REQUIRED_ACTION, stage gate/status/derivedData/responseDraft, and selected reservation STATUS/fields.STATUS/updatedAt/recordSha256/sha256. Its canonical contentSha256, binding and all other reservations remain compared. All Job identities/pointers/versions, accepted changes, canonical revision, root metadata and canonical collections remain protected. Separate comparisons retain all prior audit prefixes and stage gate/status/decision/decisionEvidence except checkedAt. Independent Node SHA-256 verifies actual projection source hashes and registry/input/output receipt bindings. Original input remains unchanged. Selected reservation reaches REJECTED for parse/validation rejections. Exact raw text survives capture and readback with valid project integrity. Three literal conforming controls remain required: ASCII escaped string data, valid Unicode quotation data, and exactly 67108864 UTF-8 bytes. They are valid and create pending proposals at preparation while raw text, canonical state, audit prefixes and gate outcomes survive operational save/readback without canonical acceptance. Pending-proposal identity/status after readback is not separately asserted by these controls and is not claimed here. Literal clause cases: duplicate JSON member => DUPLICATE_JSON_MEMBER; nested duplicate JSON member => DUPLICATE_JSON_MEMBER; array nested duplicate JSON member => DUPLICATE_JSON_MEMBER; escaped equivalent duplicate JSON member => DUPLICATE_JSON_MEMBER; nested escaped equivalent duplicate JSON member => DUPLICATE_JSON_MEMBER. Synthetic controlled inputs exercise unchanged production owners under the isolated transaction adapter. No browser, physical device, real external agent, authenticated human authority, accepted canonical change, whole-application conformance, or separate mutation-suite proof is claimed. Current owning verify-ingestion execution and independent review remain required; this declaration is source/design evidence only.",
+          "checks": {
+            "deterministic": [
+              {
+                "suite": "verify-ingestion.mjs",
+                "checkId": "ingestion.syntax.duplicate-members"
+              }
+            ],
+            "semantic": [],
+            "mutation": []
+          },
+          "nonapplicable": {
+            "semantic": "This atom is mechanical JSON/identity rejection before canonical mutation; external semantic judgment is not required. Independent source/assertion review and actual deterministic receipt remain required.",
+            "mutation": "No separate mutation-suite receipt is claimed. The owning helper includes scanner source-fault diagnostics but this declaration relies on its exact invalid/conforming production cases and state-preservation assertions."
+          },
+          "evidenceKinds": [
+            "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+          ],
+          "assertionReferences": [
+            "SYNTAX_STAGE1_REJECT",
+            "SYNTAX_STAGE1_NO_PROPOSAL",
+            "SYNTAX_STAGE1_EXPECTED_CODE",
+            "SYNTAX_STAGE1_REJECTION_PRESERVATION",
+            "SYNTAX_STAGE1_GATE_OUTCOME_PRESERVATION",
+            "SYNTAX_STAGE1_INPUT_UNCHANGED",
+            "SYNTAX_STAGE1_RETAINED_AUDIT_PREFIX",
+            "SYNTAX_STAGE1_RELOAD_INTEGRITY",
+            "SYNTAX_STAGE1_RELOAD_PRESERVATION",
+            "SYNTAX_STAGE1_EXACT_RAW_RELOAD",
+            "SYNTAX_STAGE1_RELOAD_GATE_OUTCOME_PRESERVATION",
+            "SYNTAX_STAGE1_REJECTED_RESERVATION",
+            "SYNTAX_STAGE1_PROJECTION_RECEIPT_ORACLE",
+            "SYNTAX_STAGE1_CONFORMING",
+            "SYNTAX_STAGE1_VALID_NOT_ACCEPTED",
+            "SYNTAX_STAGE1_VALID_GATE_OUTCOME_PRESERVATION",
+            "SYNTAX_STAGE1_EXACT_PARSE_CODE"
+          ]
+        }
+      ],
+      "unresolvedObligations": [],
+      "governingContext": [
+        {
+          "normativeRequirementId": "NREQ-6c392009e2925e9e3e3baaf1e42cbc93",
+          "sourceLineSha256": "a8a298876c99dfea0ed6a1c39c7a06c729213341e056ac22e85dc6ce6f53a8b0",
+          "controllingText": "17.5 Closed-schema rejection"
+        },
+        {
+          "normativeRequirementId": "NREQ-f3c76d5b2691175b5c4f18f5b12f2892",
+          "sourceLineSha256": "d79d136180581dd41050286f4f83801fb731c7b2ceb4857985c292a1293a0f44",
+          "controllingText": "The single ingestion path rejects before canonical mutation:"
+        }
+      ]
+    }
     },
     {
       "normativeRequirementId": "NREQ-86651d173d1583e48cf6c03f9d486f4f",
@@ -2190,7 +2753,121 @@
       ],
       "scope": "Using a real new Stage1 project, current input version, application-owned reservation, saved instruction and actual exported ZIP package, the invalid response must be rejected with its literal expected diagnostic and no proposal. Preparation and actual operational save/reload preserve the whole canonical project snapshot: every Job field except CURRENT_STATE/NEXT_REQUIRED_ACTION, all registered and nonregistry canonical values, all stage values except gate/status/derivedData/responseDraft, the selected reservation binding/contentSha256 and all other reservations, canonical revision, identities, versions, pointers and root metadata. Exact operational raw/audit collections and recomputed projectSha256 are excluded from that snapshot comparison, while all preexisting audit prefixes remain byte/value-equivalent. The original input object remains unchanged. These are synthetic controlled actor inputs under the production storage owner with an isolated transaction adapter; no browser, external actor, authenticated human decision, stage completion or acceptance is claimed. The maintained assertions require three directly exercised conforming response-file controls to remain valid pending proposals, retain exact raw bytes, and commit no canonical changes. Curly quotation characters used as authoritative JSON delimiters must produce the sole UNSAFE_SMART_QUOTES error; correctly ASCII-delimited JSON containing escaped or Unicode quotation data remains valid.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
-      "atomicObligationSha256": "188a13f8457e8e821670ae716d47f902eb27fd3f2c4eeca1d36a766162ef01e4"
+      "atomicObligationSha256": "188a13f8457e8e821670ae716d47f902eb27fd3f2c4eeca1d36a766162ef01e4",
+    "fullCoverage": {
+      "schema": "closed-loop-full-requirement-coverage/1",
+      "sourceLineSha256": "73d12df9f851dd4e9e1c1bba38e49d28adb7d882b5d311872c735f0acc4e107c",
+      "atomicObligationSha256": "188a13f8457e8e821670ae716d47f902eb27fd3f2c4eeca1d36a766162ef01e4",
+      "reviewedAtomicStatement": "The single ingestion path rejects before canonical mutation: unsafe smart or curly quotation output.",
+      "sourceSpans": [
+        {
+          "startByte": 83246,
+          "endByte": 83287,
+          "text": "- unsafe smart or curly quotation output;",
+          "sha256": "73d12df9f851dd4e9e1c1bba38e49d28adb7d882b5d311872c735f0acc4e107c"
+        }
+      ],
+      "contextSourceLocations": [
+        {
+          "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+          "startLine": 1357,
+          "endLine": 1357,
+          "lineSha256": "a8a298876c99dfea0ed6a1c39c7a06c729213341e056ac22e85dc6ce6f53a8b0",
+          "controllingText": "17.5 Closed-schema rejection"
+        },
+        {
+          "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+          "startLine": 1359,
+          "endLine": 1359,
+          "lineSha256": "d79d136180581dd41050286f4f83801fb731c7b2ceb4857985c292a1293a0f44",
+          "controllingText": "The single ingestion path rejects before canonical mutation:"
+        }
+      ],
+      "schemaOrRegistryEntry": "SPECIFICATION_SECTION_17.5",
+      "productionOwners": [
+        {
+          "path": "response-ingestion.js",
+          "symbol": "hasUnsafeSmartJsonDelimiter / scanJsonAmbiguity / strictParse / validateEnvelopeWithDiagnostics / captureRaw / prepareCaptured",
+          "sha256": "ea0c6d1798dfd3a5711bf96550b7a7d085d8374fdfdfaf5e694ee84b39ad28f9"
+        },
+        {
+          "path": "project-store.js",
+          "symbol": "stageResponseFile / readStagedResponseFile / writeOperationalProject / assertOperationalChange / readProject",
+          "sha256": "be8a5b5f9a2ca7caa42024f2831447c38947fe099198c3303e7eb83e410965d0"
+        },
+        {
+          "path": "workflow-engine.js",
+          "symbol": "transitionOperationReservation / recalculate / applicationProjectionInput",
+          "sha256": "1a0e0789abcb829c79dec4748dbaa0e90d2989d6d263ac3e6b6e1fcf26377d1f"
+        },
+        {
+          "path": "workflow-schema.js",
+          "symbol": "responseResourceLimitsForPrompt / PROJECT_PROJECTION_DERIVATION_CONTRACT",
+          "sha256": "626e51a6590e1bb19e6c4478a2531326daddceffabdb8ced225dbb4aa81deb1b"
+        },
+        {
+          "path": "prompt-engine.js",
+          "symbol": "reserveAndBuildPromptRecord / promptFileManifest",
+          "sha256": "5d67f8096f91a1efc17ad6ce367dfa43ab5990ecaede9b52c9f12dcc34b41d20"
+        }
+      ],
+      "obligations": [
+        {
+          "id": "draft.ingestion.reject.unsafe-smart-or-curly-quotation-output",
+          "sourceText": "- unsafe smart or curly quotation output;",
+          "expectedBehavior": "The production Stage1 reserved-package response-file path rejects before canonical mutation. Independent literal invalid inputs must yield the named diagnostic, invalid validation and no proposal. Before preparation and after actual production operational save/readback, the test compares the whole project except only the declared operational raw/audit collections, projectSha256, independently verified applicationProjection, Job CURRENT_STATE/NEXT_REQUIRED_ACTION, stage gate/status/derivedData/responseDraft, and selected reservation STATUS/fields.STATUS/updatedAt/recordSha256/sha256. Its canonical contentSha256, binding and all other reservations remain compared. All Job identities/pointers/versions, accepted changes, canonical revision, root metadata and canonical collections remain protected. Separate comparisons retain all prior audit prefixes and stage gate/status/decision/decisionEvidence except checkedAt. Independent Node SHA-256 verifies actual projection source hashes and registry/input/output receipt bindings. Original input remains unchanged. Selected reservation reaches REJECTED for parse/validation rejections. Exact raw text survives capture and readback with valid project integrity. Three literal conforming controls remain required: ASCII escaped string data, valid Unicode quotation data, and exactly 67108864 UTF-8 bytes. They are valid and create pending proposals at preparation while raw text, canonical state, audit prefixes and gate outcomes survive operational save/readback without canonical acceptance. Pending-proposal identity/status after readback is not separately asserted by these controls and is not claimed here. Literal clause cases: curly-delimiters => UNSAFE_SMART_QUOTES. Synthetic controlled inputs exercise unchanged production owners under the isolated transaction adapter. No browser, physical device, real external agent, authenticated human authority, accepted canonical change, whole-application conformance, or separate mutation-suite proof is claimed. Current owning verify-ingestion execution and independent review remain required; this declaration is source/design evidence only.",
+          "checks": {
+            "deterministic": [
+              {
+                "suite": "verify-ingestion.mjs",
+                "checkId": "ingestion.syntax.unsafe-smart-quotes"
+              }
+            ],
+            "semantic": [],
+            "mutation": []
+          },
+          "nonapplicable": {
+            "semantic": "This atom is mechanical JSON/identity rejection before canonical mutation; external semantic judgment is not required. Independent source/assertion review and actual deterministic receipt remain required.",
+            "mutation": "No separate mutation-suite receipt is claimed. The owning helper includes scanner source-fault diagnostics but this declaration relies on its exact invalid/conforming production cases and state-preservation assertions."
+          },
+          "evidenceKinds": [
+            "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+          ],
+          "assertionReferences": [
+            "SYNTAX_STAGE1_REJECT",
+            "SYNTAX_STAGE1_NO_PROPOSAL",
+            "SYNTAX_STAGE1_EXPECTED_CODE",
+            "SYNTAX_STAGE1_REJECTION_PRESERVATION",
+            "SYNTAX_STAGE1_GATE_OUTCOME_PRESERVATION",
+            "SYNTAX_STAGE1_INPUT_UNCHANGED",
+            "SYNTAX_STAGE1_RETAINED_AUDIT_PREFIX",
+            "SYNTAX_STAGE1_RELOAD_INTEGRITY",
+            "SYNTAX_STAGE1_RELOAD_PRESERVATION",
+            "SYNTAX_STAGE1_EXACT_RAW_RELOAD",
+            "SYNTAX_STAGE1_RELOAD_GATE_OUTCOME_PRESERVATION",
+            "SYNTAX_STAGE1_REJECTED_RESERVATION",
+            "SYNTAX_STAGE1_PROJECTION_RECEIPT_ORACLE",
+            "SYNTAX_STAGE1_CONFORMING",
+            "SYNTAX_STAGE1_VALID_NOT_ACCEPTED",
+            "SYNTAX_STAGE1_VALID_GATE_OUTCOME_PRESERVATION",
+            "SYNTAX_STAGE1_EXACT_PARSE_CODE"
+          ]
+        }
+      ],
+      "unresolvedObligations": [],
+      "governingContext": [
+        {
+          "normativeRequirementId": "NREQ-6c392009e2925e9e3e3baaf1e42cbc93",
+          "sourceLineSha256": "a8a298876c99dfea0ed6a1c39c7a06c729213341e056ac22e85dc6ce6f53a8b0",
+          "controllingText": "17.5 Closed-schema rejection"
+        },
+        {
+          "normativeRequirementId": "NREQ-f3c76d5b2691175b5c4f18f5b12f2892",
+          "sourceLineSha256": "d79d136180581dd41050286f4f83801fb731c7b2ceb4857985c292a1293a0f44",
+          "controllingText": "The single ingestion path rejects before canonical mutation:"
+        }
+      ]
+    }
     },
     {
       "normativeRequirementId": "NREQ-1576e27fba46e1d68631bb2ade2e37f4",
@@ -2200,7 +2877,121 @@
       ],
       "scope": "Using a real new Stage1 project, current input version, application-owned reservation, saved instruction and actual exported ZIP package, the invalid response must be rejected with its literal expected diagnostic and no proposal. Preparation and actual operational save/reload preserve the whole canonical project snapshot: every Job field except CURRENT_STATE/NEXT_REQUIRED_ACTION, all registered and nonregistry canonical values, all stage values except gate/status/derivedData/responseDraft, the selected reservation binding/contentSha256 and all other reservations, canonical revision, identities, versions, pointers and root metadata. Exact operational raw/audit collections and recomputed projectSha256 are excluded from that snapshot comparison, while all preexisting audit prefixes remain byte/value-equivalent. The original input object remains unchanged. These are synthetic controlled actor inputs under the production storage owner with an isolated transaction adapter; no browser, external actor, authenticated human decision, stage completion or acceptance is claimed. The maintained assertions require three directly exercised conforming response-file controls to remain valid pending proposals, retain exact raw bytes, and commit no canonical changes. The finite wrong-root population independently includes array, null, string, number, true and false JSON roots, each with sole INVALID_ROOT.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
-      "atomicObligationSha256": "61edf4c2765a8ce7e01446c3f027529c585009043fd1b8bbcb948b208327258d"
+      "atomicObligationSha256": "61edf4c2765a8ce7e01446c3f027529c585009043fd1b8bbcb948b208327258d",
+    "fullCoverage": {
+      "schema": "closed-loop-full-requirement-coverage/1",
+      "sourceLineSha256": "34d21a8d47ac34454516030c062acf0b4c5f0b0484b52cfff8b77162709a694c",
+      "atomicObligationSha256": "61edf4c2765a8ce7e01446c3f027529c585009043fd1b8bbcb948b208327258d",
+      "reviewedAtomicStatement": "The single ingestion path rejects before canonical mutation: wrong root type.",
+      "sourceSpans": [
+        {
+          "startByte": 83288,
+          "endByte": 83306,
+          "text": "- wrong root type;",
+          "sha256": "34d21a8d47ac34454516030c062acf0b4c5f0b0484b52cfff8b77162709a694c"
+        }
+      ],
+      "contextSourceLocations": [
+        {
+          "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+          "startLine": 1357,
+          "endLine": 1357,
+          "lineSha256": "a8a298876c99dfea0ed6a1c39c7a06c729213341e056ac22e85dc6ce6f53a8b0",
+          "controllingText": "17.5 Closed-schema rejection"
+        },
+        {
+          "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+          "startLine": 1359,
+          "endLine": 1359,
+          "lineSha256": "d79d136180581dd41050286f4f83801fb731c7b2ceb4857985c292a1293a0f44",
+          "controllingText": "The single ingestion path rejects before canonical mutation:"
+        }
+      ],
+      "schemaOrRegistryEntry": "SPECIFICATION_SECTION_17.5",
+      "productionOwners": [
+        {
+          "path": "response-ingestion.js",
+          "symbol": "hasUnsafeSmartJsonDelimiter / scanJsonAmbiguity / strictParse / validateEnvelopeWithDiagnostics / captureRaw / prepareCaptured",
+          "sha256": "ea0c6d1798dfd3a5711bf96550b7a7d085d8374fdfdfaf5e694ee84b39ad28f9"
+        },
+        {
+          "path": "project-store.js",
+          "symbol": "stageResponseFile / readStagedResponseFile / writeOperationalProject / assertOperationalChange / readProject",
+          "sha256": "be8a5b5f9a2ca7caa42024f2831447c38947fe099198c3303e7eb83e410965d0"
+        },
+        {
+          "path": "workflow-engine.js",
+          "symbol": "transitionOperationReservation / recalculate / applicationProjectionInput",
+          "sha256": "1a0e0789abcb829c79dec4748dbaa0e90d2989d6d263ac3e6b6e1fcf26377d1f"
+        },
+        {
+          "path": "workflow-schema.js",
+          "symbol": "responseResourceLimitsForPrompt / PROJECT_PROJECTION_DERIVATION_CONTRACT",
+          "sha256": "626e51a6590e1bb19e6c4478a2531326daddceffabdb8ced225dbb4aa81deb1b"
+        },
+        {
+          "path": "prompt-engine.js",
+          "symbol": "reserveAndBuildPromptRecord / promptFileManifest",
+          "sha256": "5d67f8096f91a1efc17ad6ce367dfa43ab5990ecaede9b52c9f12dcc34b41d20"
+        }
+      ],
+      "obligations": [
+        {
+          "id": "draft.ingestion.reject.wrong-root-type",
+          "sourceText": "- wrong root type;",
+          "expectedBehavior": "The production Stage1 reserved-package response-file path rejects before canonical mutation. Independent literal invalid inputs must yield the named diagnostic, invalid validation and no proposal. Before preparation and after actual production operational save/readback, the test compares the whole project except only the declared operational raw/audit collections, projectSha256, independently verified applicationProjection, Job CURRENT_STATE/NEXT_REQUIRED_ACTION, stage gate/status/derivedData/responseDraft, and selected reservation STATUS/fields.STATUS/updatedAt/recordSha256/sha256. Its canonical contentSha256, binding and all other reservations remain compared. All Job identities/pointers/versions, accepted changes, canonical revision, root metadata and canonical collections remain protected. Separate comparisons retain all prior audit prefixes and stage gate/status/decision/decisionEvidence except checkedAt. Independent Node SHA-256 verifies actual projection source hashes and registry/input/output receipt bindings. Original input remains unchanged. Selected reservation reaches REJECTED for parse/validation rejections. Exact raw text survives capture and readback with valid project integrity. Three literal conforming controls remain required: ASCII escaped string data, valid Unicode quotation data, and exactly 67108864 UTF-8 bytes. They are valid and create pending proposals at preparation while raw text, canonical state, audit prefixes and gate outcomes survive operational save/readback without canonical acceptance. Pending-proposal identity/status after readback is not separately asserted by these controls and is not claimed here. Literal clause cases: wrong root type => INVALID_ROOT; null root type => INVALID_ROOT; string root type => INVALID_ROOT; number root type => INVALID_ROOT; true root type => INVALID_ROOT; false root type => INVALID_ROOT. Synthetic controlled inputs exercise unchanged production owners under the isolated transaction adapter. No browser, physical device, real external agent, authenticated human authority, accepted canonical change, whole-application conformance, or separate mutation-suite proof is claimed. Current owning verify-ingestion execution and independent review remain required; this declaration is source/design evidence only.",
+          "checks": {
+            "deterministic": [
+              {
+                "suite": "verify-ingestion.mjs",
+                "checkId": "ingestion.syntax.root-object"
+              }
+            ],
+            "semantic": [],
+            "mutation": []
+          },
+          "nonapplicable": {
+            "semantic": "This atom is mechanical JSON/identity rejection before canonical mutation; external semantic judgment is not required. Independent source/assertion review and actual deterministic receipt remain required.",
+            "mutation": "No separate mutation-suite receipt is claimed. The owning helper includes scanner source-fault diagnostics but this declaration relies on its exact invalid/conforming production cases and state-preservation assertions."
+          },
+          "evidenceKinds": [
+            "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+          ],
+          "assertionReferences": [
+            "SYNTAX_STAGE1_REJECT",
+            "SYNTAX_STAGE1_NO_PROPOSAL",
+            "SYNTAX_STAGE1_EXPECTED_CODE",
+            "SYNTAX_STAGE1_REJECTION_PRESERVATION",
+            "SYNTAX_STAGE1_GATE_OUTCOME_PRESERVATION",
+            "SYNTAX_STAGE1_INPUT_UNCHANGED",
+            "SYNTAX_STAGE1_RETAINED_AUDIT_PREFIX",
+            "SYNTAX_STAGE1_RELOAD_INTEGRITY",
+            "SYNTAX_STAGE1_RELOAD_PRESERVATION",
+            "SYNTAX_STAGE1_EXACT_RAW_RELOAD",
+            "SYNTAX_STAGE1_RELOAD_GATE_OUTCOME_PRESERVATION",
+            "SYNTAX_STAGE1_REJECTED_RESERVATION",
+            "SYNTAX_STAGE1_PROJECTION_RECEIPT_ORACLE",
+            "SYNTAX_STAGE1_CONFORMING",
+            "SYNTAX_STAGE1_VALID_NOT_ACCEPTED",
+            "SYNTAX_STAGE1_VALID_GATE_OUTCOME_PRESERVATION",
+            "SYNTAX_STAGE1_EXACT_PARSE_CODE"
+          ]
+        }
+      ],
+      "unresolvedObligations": [],
+      "governingContext": [
+        {
+          "normativeRequirementId": "NREQ-6c392009e2925e9e3e3baaf1e42cbc93",
+          "sourceLineSha256": "a8a298876c99dfea0ed6a1c39c7a06c729213341e056ac22e85dc6ce6f53a8b0",
+          "controllingText": "17.5 Closed-schema rejection"
+        },
+        {
+          "normativeRequirementId": "NREQ-f3c76d5b2691175b5c4f18f5b12f2892",
+          "sourceLineSha256": "d79d136180581dd41050286f4f83801fb731c7b2ceb4857985c292a1293a0f44",
+          "controllingText": "The single ingestion path rejects before canonical mutation:"
+        }
+      ]
+    }
     },
     {
       "normativeRequirementId": "NREQ-cf25cf824db06866df51c0e538fcbc03",
@@ -2210,7 +3001,120 @@
       ],
       "scope": "Using a real new Stage1 project, current input version, application-owned reservation, saved instruction and actual exported ZIP package, the invalid response must be rejected with its literal expected diagnostic and no proposal. Preparation and actual operational save/reload preserve the whole canonical project snapshot: every Job field except CURRENT_STATE/NEXT_REQUIRED_ACTION, all registered and nonregistry canonical values, all stage values except gate/status/derivedData/responseDraft, the selected reservation binding/contentSha256 and all other reservations, canonical revision, identities, versions, pointers and root metadata. Exact operational raw/audit collections and recomputed projectSha256 are excluded from that snapshot comparison, while all preexisting audit prefixes remain byte/value-equivalent. The original input object remains unchanged. These are synthetic controlled actor inputs under the production storage owner with an isolated transaction adapter; no browser, external actor, authenticated human decision, stage completion or acceptance is claimed. The maintained assertions require three directly exercised conforming response-file controls to remain valid pending proposals, retain exact raw bytes, and commit no canonical changes.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
-      "atomicObligationSha256": "9e32a5001727e15e687269d31ea5e52584730d21ed8e844e9baf1725aa4d9838"
+      "atomicObligationSha256": "9e32a5001727e15e687269d31ea5e52584730d21ed8e844e9baf1725aa4d9838",
+    "fullCoverage": {
+      "schema": "closed-loop-full-requirement-coverage/1",
+      "sourceLineSha256": "c5b9ff0268b8d71bc6d5a0703eca52f282ecc77f070becceb716394375783225",
+      "atomicObligationSha256": "9e32a5001727e15e687269d31ea5e52584730d21ed8e844e9baf1725aa4d9838",
+      "reviewedAtomicStatement": "The single ingestion path rejects before canonical mutation: wrong stage.",
+      "sourceSpans": [
+        {
+          "startByte": 83349,
+          "endByte": 83363,
+          "text": "- wrong stage;",
+          "sha256": "c5b9ff0268b8d71bc6d5a0703eca52f282ecc77f070becceb716394375783225"
+        }
+      ],
+      "contextSourceLocations": [
+        {
+          "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+          "startLine": 1357,
+          "endLine": 1357,
+          "lineSha256": "a8a298876c99dfea0ed6a1c39c7a06c729213341e056ac22e85dc6ce6f53a8b0",
+          "controllingText": "17.5 Closed-schema rejection"
+        },
+        {
+          "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+          "startLine": 1359,
+          "endLine": 1359,
+          "lineSha256": "d79d136180581dd41050286f4f83801fb731c7b2ceb4857985c292a1293a0f44",
+          "controllingText": "The single ingestion path rejects before canonical mutation:"
+        }
+      ],
+      "schemaOrRegistryEntry": "SPECIFICATION_SECTION_17.5",
+      "productionOwners": [
+        {
+          "path": "response-ingestion.js",
+          "symbol": "hasUnsafeSmartJsonDelimiter / scanJsonAmbiguity / strictParse / validateEnvelopeWithDiagnostics / captureRaw / prepareCaptured",
+          "sha256": "ea0c6d1798dfd3a5711bf96550b7a7d085d8374fdfdfaf5e694ee84b39ad28f9"
+        },
+        {
+          "path": "project-store.js",
+          "symbol": "stageResponseFile / readStagedResponseFile / writeOperationalProject / assertOperationalChange / readProject",
+          "sha256": "be8a5b5f9a2ca7caa42024f2831447c38947fe099198c3303e7eb83e410965d0"
+        },
+        {
+          "path": "workflow-engine.js",
+          "symbol": "transitionOperationReservation / recalculate / applicationProjectionInput",
+          "sha256": "1a0e0789abcb829c79dec4748dbaa0e90d2989d6d263ac3e6b6e1fcf26377d1f"
+        },
+        {
+          "path": "workflow-schema.js",
+          "symbol": "responseResourceLimitsForPrompt / PROJECT_PROJECTION_DERIVATION_CONTRACT",
+          "sha256": "626e51a6590e1bb19e6c4478a2531326daddceffabdb8ced225dbb4aa81deb1b"
+        },
+        {
+          "path": "prompt-engine.js",
+          "symbol": "reserveAndBuildPromptRecord / promptFileManifest",
+          "sha256": "5d67f8096f91a1efc17ad6ce367dfa43ab5990ecaede9b52c9f12dcc34b41d20"
+        }
+      ],
+      "obligations": [
+        {
+          "id": "draft.ingestion.reject.wrong-stage",
+          "sourceText": "- wrong stage;",
+          "expectedBehavior": "The production Stage1 reserved-package response-file path rejects before canonical mutation. Independent literal invalid inputs must yield the named diagnostic, invalid validation and no proposal. Before preparation and after actual production operational save/readback, the test compares the whole project except only the declared operational raw/audit collections, projectSha256, independently verified applicationProjection, Job CURRENT_STATE/NEXT_REQUIRED_ACTION, stage gate/status/derivedData/responseDraft, and selected reservation STATUS/fields.STATUS/updatedAt/recordSha256/sha256. Its canonical contentSha256, binding and all other reservations remain compared. All Job identities/pointers/versions, accepted changes, canonical revision, root metadata and canonical collections remain protected. Separate comparisons retain all prior audit prefixes and stage gate/status/decision/decisionEvidence except checkedAt. Independent Node SHA-256 verifies actual projection source hashes and registry/input/output receipt bindings. Original input remains unchanged. Selected reservation reaches REJECTED for parse/validation rejections. Exact raw text survives capture and readback with valid project integrity. Three literal conforming controls remain required: ASCII escaped string data, valid Unicode quotation data, and exactly 67108864 UTF-8 bytes. They are valid and create pending proposals at preparation while raw text, canonical state, audit prefixes and gate outcomes survive operational save/readback without canonical acceptance. Pending-proposal identity/status after readback is not separately asserted by these controls and is not claimed here. Literal clause cases: wrong stage => WRONG_STAGE. Synthetic controlled inputs exercise unchanged production owners under the isolated transaction adapter. No browser, physical device, real external agent, authenticated human authority, accepted canonical change, whole-application conformance, or separate mutation-suite proof is claimed. Current owning verify-ingestion execution and independent review remain required; this declaration is source/design evidence only.",
+          "checks": {
+            "deterministic": [
+              {
+                "suite": "verify-ingestion.mjs",
+                "checkId": "ingestion.transport.stage"
+              }
+            ],
+            "semantic": [],
+            "mutation": []
+          },
+          "nonapplicable": {
+            "semantic": "This atom is mechanical JSON/identity rejection before canonical mutation; external semantic judgment is not required. Independent source/assertion review and actual deterministic receipt remain required.",
+            "mutation": "No separate mutation-suite receipt is claimed. The owning helper includes scanner source-fault diagnostics but this declaration relies on its exact invalid/conforming production cases and state-preservation assertions."
+          },
+          "evidenceKinds": [
+            "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+          ],
+          "assertionReferences": [
+            "SYNTAX_STAGE1_REJECT",
+            "SYNTAX_STAGE1_NO_PROPOSAL",
+            "SYNTAX_STAGE1_EXPECTED_CODE",
+            "SYNTAX_STAGE1_REJECTION_PRESERVATION",
+            "SYNTAX_STAGE1_GATE_OUTCOME_PRESERVATION",
+            "SYNTAX_STAGE1_INPUT_UNCHANGED",
+            "SYNTAX_STAGE1_RETAINED_AUDIT_PREFIX",
+            "SYNTAX_STAGE1_RELOAD_INTEGRITY",
+            "SYNTAX_STAGE1_RELOAD_PRESERVATION",
+            "SYNTAX_STAGE1_EXACT_RAW_RELOAD",
+            "SYNTAX_STAGE1_RELOAD_GATE_OUTCOME_PRESERVATION",
+            "SYNTAX_STAGE1_REJECTED_RESERVATION",
+            "SYNTAX_STAGE1_PROJECTION_RECEIPT_ORACLE",
+            "SYNTAX_STAGE1_CONFORMING",
+            "SYNTAX_STAGE1_VALID_NOT_ACCEPTED",
+            "SYNTAX_STAGE1_VALID_GATE_OUTCOME_PRESERVATION"
+          ]
+        }
+      ],
+      "unresolvedObligations": [],
+      "governingContext": [
+        {
+          "normativeRequirementId": "NREQ-6c392009e2925e9e3e3baaf1e42cbc93",
+          "sourceLineSha256": "a8a298876c99dfea0ed6a1c39c7a06c729213341e056ac22e85dc6ce6f53a8b0",
+          "controllingText": "17.5 Closed-schema rejection"
+        },
+        {
+          "normativeRequirementId": "NREQ-f3c76d5b2691175b5c4f18f5b12f2892",
+          "sourceLineSha256": "d79d136180581dd41050286f4f83801fb731c7b2ceb4857985c292a1293a0f44",
+          "controllingText": "The single ingestion path rejects before canonical mutation:"
+        }
+      ]
+    }
     },
     {
       "normativeRequirementId": "NREQ-41ab1c200b4ce5c9d1d96613a3e5b264",
@@ -2220,7 +3124,120 @@
       ],
       "scope": "Using a real new Stage1 project, current input version, application-owned reservation, saved instruction and actual exported ZIP package, the invalid response must be rejected with its literal expected diagnostic and no proposal. Preparation and actual operational save/reload preserve the whole canonical project snapshot: every Job field except CURRENT_STATE/NEXT_REQUIRED_ACTION, all registered and nonregistry canonical values, all stage values except gate/status/derivedData/responseDraft, the selected reservation binding/contentSha256 and all other reservations, canonical revision, identities, versions, pointers and root metadata. Exact operational raw/audit collections and recomputed projectSha256 are excluded from that snapshot comparison, while all preexisting audit prefixes remain byte/value-equivalent. The original input object remains unchanged. These are synthetic controlled actor inputs under the production storage owner with an isolated transaction adapter; no browser, external actor, authenticated human decision, stage completion or acceptance is claimed. The maintained assertions require three directly exercised conforming response-file controls to remain valid pending proposals, retain exact raw bytes, and commit no canonical changes.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
-      "atomicObligationSha256": "af37340a559b1aee5c9b1bd0ca2d1a90278a386735062e9007be49a7aa2607c6"
+      "atomicObligationSha256": "af37340a559b1aee5c9b1bd0ca2d1a90278a386735062e9007be49a7aa2607c6",
+    "fullCoverage": {
+      "schema": "closed-loop-full-requirement-coverage/1",
+      "sourceLineSha256": "f22a760170b132ac24eed090d31ddb96763c226be9df46441403e6688f934886",
+      "atomicObligationSha256": "af37340a559b1aee5c9b1bd0ca2d1a90278a386735062e9007be49a7aa2607c6",
+      "reviewedAtomicStatement": "The single ingestion path rejects before canonical mutation: wrong operation.",
+      "sourceSpans": [
+        {
+          "startByte": 83364,
+          "endByte": 83382,
+          "text": "- wrong operation;",
+          "sha256": "f22a760170b132ac24eed090d31ddb96763c226be9df46441403e6688f934886"
+        }
+      ],
+      "contextSourceLocations": [
+        {
+          "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+          "startLine": 1357,
+          "endLine": 1357,
+          "lineSha256": "a8a298876c99dfea0ed6a1c39c7a06c729213341e056ac22e85dc6ce6f53a8b0",
+          "controllingText": "17.5 Closed-schema rejection"
+        },
+        {
+          "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+          "startLine": 1359,
+          "endLine": 1359,
+          "lineSha256": "d79d136180581dd41050286f4f83801fb731c7b2ceb4857985c292a1293a0f44",
+          "controllingText": "The single ingestion path rejects before canonical mutation:"
+        }
+      ],
+      "schemaOrRegistryEntry": "SPECIFICATION_SECTION_17.5",
+      "productionOwners": [
+        {
+          "path": "response-ingestion.js",
+          "symbol": "hasUnsafeSmartJsonDelimiter / scanJsonAmbiguity / strictParse / validateEnvelopeWithDiagnostics / captureRaw / prepareCaptured",
+          "sha256": "ea0c6d1798dfd3a5711bf96550b7a7d085d8374fdfdfaf5e694ee84b39ad28f9"
+        },
+        {
+          "path": "project-store.js",
+          "symbol": "stageResponseFile / readStagedResponseFile / writeOperationalProject / assertOperationalChange / readProject",
+          "sha256": "be8a5b5f9a2ca7caa42024f2831447c38947fe099198c3303e7eb83e410965d0"
+        },
+        {
+          "path": "workflow-engine.js",
+          "symbol": "transitionOperationReservation / recalculate / applicationProjectionInput",
+          "sha256": "1a0e0789abcb829c79dec4748dbaa0e90d2989d6d263ac3e6b6e1fcf26377d1f"
+        },
+        {
+          "path": "workflow-schema.js",
+          "symbol": "responseResourceLimitsForPrompt / PROJECT_PROJECTION_DERIVATION_CONTRACT",
+          "sha256": "626e51a6590e1bb19e6c4478a2531326daddceffabdb8ced225dbb4aa81deb1b"
+        },
+        {
+          "path": "prompt-engine.js",
+          "symbol": "reserveAndBuildPromptRecord / promptFileManifest",
+          "sha256": "5d67f8096f91a1efc17ad6ce367dfa43ab5990ecaede9b52c9f12dcc34b41d20"
+        }
+      ],
+      "obligations": [
+        {
+          "id": "draft.ingestion.reject.wrong-operation",
+          "sourceText": "- wrong operation;",
+          "expectedBehavior": "The production Stage1 reserved-package response-file path rejects before canonical mutation. Independent literal invalid inputs must yield the named diagnostic, invalid validation and no proposal. Before preparation and after actual production operational save/readback, the test compares the whole project except only the declared operational raw/audit collections, projectSha256, independently verified applicationProjection, Job CURRENT_STATE/NEXT_REQUIRED_ACTION, stage gate/status/derivedData/responseDraft, and selected reservation STATUS/fields.STATUS/updatedAt/recordSha256/sha256. Its canonical contentSha256, binding and all other reservations remain compared. All Job identities/pointers/versions, accepted changes, canonical revision, root metadata and canonical collections remain protected. Separate comparisons retain all prior audit prefixes and stage gate/status/decision/decisionEvidence except checkedAt. Independent Node SHA-256 verifies actual projection source hashes and registry/input/output receipt bindings. Original input remains unchanged. Selected reservation reaches REJECTED for parse/validation rejections. Exact raw text survives capture and readback with valid project integrity. Three literal conforming controls remain required: ASCII escaped string data, valid Unicode quotation data, and exactly 67108864 UTF-8 bytes. They are valid and create pending proposals at preparation while raw text, canonical state, audit prefixes and gate outcomes survive operational save/readback without canonical acceptance. Pending-proposal identity/status after readback is not separately asserted by these controls and is not claimed here. Literal clause cases: wrong operation => WRONG_OPERATION. Synthetic controlled inputs exercise unchanged production owners under the isolated transaction adapter. No browser, physical device, real external agent, authenticated human authority, accepted canonical change, whole-application conformance, or separate mutation-suite proof is claimed. Current owning verify-ingestion execution and independent review remain required; this declaration is source/design evidence only.",
+          "checks": {
+            "deterministic": [
+              {
+                "suite": "verify-ingestion.mjs",
+                "checkId": "ingestion.transport.operation"
+              }
+            ],
+            "semantic": [],
+            "mutation": []
+          },
+          "nonapplicable": {
+            "semantic": "This atom is mechanical JSON/identity rejection before canonical mutation; external semantic judgment is not required. Independent source/assertion review and actual deterministic receipt remain required.",
+            "mutation": "No separate mutation-suite receipt is claimed. The owning helper includes scanner source-fault diagnostics but this declaration relies on its exact invalid/conforming production cases and state-preservation assertions."
+          },
+          "evidenceKinds": [
+            "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+          ],
+          "assertionReferences": [
+            "SYNTAX_STAGE1_REJECT",
+            "SYNTAX_STAGE1_NO_PROPOSAL",
+            "SYNTAX_STAGE1_EXPECTED_CODE",
+            "SYNTAX_STAGE1_REJECTION_PRESERVATION",
+            "SYNTAX_STAGE1_GATE_OUTCOME_PRESERVATION",
+            "SYNTAX_STAGE1_INPUT_UNCHANGED",
+            "SYNTAX_STAGE1_RETAINED_AUDIT_PREFIX",
+            "SYNTAX_STAGE1_RELOAD_INTEGRITY",
+            "SYNTAX_STAGE1_RELOAD_PRESERVATION",
+            "SYNTAX_STAGE1_EXACT_RAW_RELOAD",
+            "SYNTAX_STAGE1_RELOAD_GATE_OUTCOME_PRESERVATION",
+            "SYNTAX_STAGE1_REJECTED_RESERVATION",
+            "SYNTAX_STAGE1_PROJECTION_RECEIPT_ORACLE",
+            "SYNTAX_STAGE1_CONFORMING",
+            "SYNTAX_STAGE1_VALID_NOT_ACCEPTED",
+            "SYNTAX_STAGE1_VALID_GATE_OUTCOME_PRESERVATION"
+          ]
+        }
+      ],
+      "unresolvedObligations": [],
+      "governingContext": [
+        {
+          "normativeRequirementId": "NREQ-6c392009e2925e9e3e3baaf1e42cbc93",
+          "sourceLineSha256": "a8a298876c99dfea0ed6a1c39c7a06c729213341e056ac22e85dc6ce6f53a8b0",
+          "controllingText": "17.5 Closed-schema rejection"
+        },
+        {
+          "normativeRequirementId": "NREQ-f3c76d5b2691175b5c4f18f5b12f2892",
+          "sourceLineSha256": "d79d136180581dd41050286f4f83801fb731c7b2ceb4857985c292a1293a0f44",
+          "controllingText": "The single ingestion path rejects before canonical mutation:"
+        }
+      ]
+    }
     },
     {
       "normativeRequirementId": "NREQ-0c973b955d61ee36887734df0ade5e69",
@@ -2230,7 +3247,120 @@
       ],
       "scope": "Using a real new Stage1 project, current input version, application-owned reservation, saved instruction and actual exported ZIP package, the invalid response must be rejected with its literal expected diagnostic and no proposal. Preparation and actual operational save/reload preserve the whole canonical project snapshot: every Job field except CURRENT_STATE/NEXT_REQUIRED_ACTION, all registered and nonregistry canonical values, all stage values except gate/status/derivedData/responseDraft, the selected reservation binding/contentSha256 and all other reservations, canonical revision, identities, versions, pointers and root metadata. Exact operational raw/audit collections and recomputed projectSha256 are excluded from that snapshot comparison, while all preexisting audit prefixes remain byte/value-equivalent. The original input object remains unchanged. These are synthetic controlled actor inputs under the production storage owner with an isolated transaction adapter; no browser, external actor, authenticated human decision, stage completion or acceptance is claimed. The maintained assertions require three directly exercised conforming response-file controls to remain valid pending proposals, retain exact raw bytes, and commit no canonical changes. All four current prompt-identity components are tested independently: instructionId, bodySha256, contractSha256 and contextSignature.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
-      "atomicObligationSha256": "ad5ac7d37189597ea81de4f506e6b9cc8182144b81765e23bcb4b68c74ceb0d7"
+      "atomicObligationSha256": "ad5ac7d37189597ea81de4f506e6b9cc8182144b81765e23bcb4b68c74ceb0d7",
+    "fullCoverage": {
+      "schema": "closed-loop-full-requirement-coverage/1",
+      "sourceLineSha256": "63ae465edda4818ed6b0b93d17c83773bfd235057037d2cffc1a2315b1f99868",
+      "atomicObligationSha256": "ad5ac7d37189597ea81de4f506e6b9cc8182144b81765e23bcb4b68c74ceb0d7",
+      "reviewedAtomicStatement": "The single ingestion path rejects before canonical mutation: wrong prompt identity.",
+      "sourceSpans": [
+        {
+          "startByte": 83383,
+          "endByte": 83407,
+          "text": "- wrong prompt identity;",
+          "sha256": "63ae465edda4818ed6b0b93d17c83773bfd235057037d2cffc1a2315b1f99868"
+        }
+      ],
+      "contextSourceLocations": [
+        {
+          "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+          "startLine": 1357,
+          "endLine": 1357,
+          "lineSha256": "a8a298876c99dfea0ed6a1c39c7a06c729213341e056ac22e85dc6ce6f53a8b0",
+          "controllingText": "17.5 Closed-schema rejection"
+        },
+        {
+          "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+          "startLine": 1359,
+          "endLine": 1359,
+          "lineSha256": "d79d136180581dd41050286f4f83801fb731c7b2ceb4857985c292a1293a0f44",
+          "controllingText": "The single ingestion path rejects before canonical mutation:"
+        }
+      ],
+      "schemaOrRegistryEntry": "SPECIFICATION_SECTION_17.5",
+      "productionOwners": [
+        {
+          "path": "response-ingestion.js",
+          "symbol": "hasUnsafeSmartJsonDelimiter / scanJsonAmbiguity / strictParse / validateEnvelopeWithDiagnostics / captureRaw / prepareCaptured",
+          "sha256": "ea0c6d1798dfd3a5711bf96550b7a7d085d8374fdfdfaf5e694ee84b39ad28f9"
+        },
+        {
+          "path": "project-store.js",
+          "symbol": "stageResponseFile / readStagedResponseFile / writeOperationalProject / assertOperationalChange / readProject",
+          "sha256": "be8a5b5f9a2ca7caa42024f2831447c38947fe099198c3303e7eb83e410965d0"
+        },
+        {
+          "path": "workflow-engine.js",
+          "symbol": "transitionOperationReservation / recalculate / applicationProjectionInput",
+          "sha256": "1a0e0789abcb829c79dec4748dbaa0e90d2989d6d263ac3e6b6e1fcf26377d1f"
+        },
+        {
+          "path": "workflow-schema.js",
+          "symbol": "responseResourceLimitsForPrompt / PROJECT_PROJECTION_DERIVATION_CONTRACT",
+          "sha256": "626e51a6590e1bb19e6c4478a2531326daddceffabdb8ced225dbb4aa81deb1b"
+        },
+        {
+          "path": "prompt-engine.js",
+          "symbol": "reserveAndBuildPromptRecord / promptFileManifest",
+          "sha256": "5d67f8096f91a1efc17ad6ce367dfa43ab5990ecaede9b52c9f12dcc34b41d20"
+        }
+      ],
+      "obligations": [
+        {
+          "id": "draft.ingestion.reject.wrong-prompt-identity",
+          "sourceText": "- wrong prompt identity;",
+          "expectedBehavior": "The production Stage1 reserved-package response-file path rejects before canonical mutation. Independent literal invalid inputs must yield the named diagnostic, invalid validation and no proposal. Before preparation and after actual production operational save/readback, the test compares the whole project except only the declared operational raw/audit collections, projectSha256, independently verified applicationProjection, Job CURRENT_STATE/NEXT_REQUIRED_ACTION, stage gate/status/derivedData/responseDraft, and selected reservation STATUS/fields.STATUS/updatedAt/recordSha256/sha256. Its canonical contentSha256, binding and all other reservations remain compared. All Job identities/pointers/versions, accepted changes, canonical revision, root metadata and canonical collections remain protected. Separate comparisons retain all prior audit prefixes and stage gate/status/decision/decisionEvidence except checkedAt. Independent Node SHA-256 verifies actual projection source hashes and registry/input/output receipt bindings. Original input remains unchanged. Selected reservation reaches REJECTED for parse/validation rejections. Exact raw text survives capture and readback with valid project integrity. Three literal conforming controls remain required: ASCII escaped string data, valid Unicode quotation data, and exactly 67108864 UTF-8 bytes. They are valid and create pending proposals at preparation while raw text, canonical state, audit prefixes and gate outcomes survive operational save/readback without canonical acceptance. Pending-proposal identity/status after readback is not separately asserted by these controls and is not claimed here. Literal clause cases: stale prompt id => STALE_PROMPT_IDENTITY; stale prompt hash => STALE_PROMPT_HASH; stale contract hash => STALE_CONTRACT_HASH; stale context signature => STALE_CONTEXT_SIGNATURE. Synthetic controlled inputs exercise unchanged production owners under the isolated transaction adapter. No browser, physical device, real external agent, authenticated human authority, accepted canonical change, whole-application conformance, or separate mutation-suite proof is claimed. Current owning verify-ingestion execution and independent review remain required; this declaration is source/design evidence only.",
+          "checks": {
+            "deterministic": [
+              {
+                "suite": "verify-ingestion.mjs",
+                "checkId": "ingestion.transport.prompt-identity"
+              }
+            ],
+            "semantic": [],
+            "mutation": []
+          },
+          "nonapplicable": {
+            "semantic": "This atom is mechanical JSON/identity rejection before canonical mutation; external semantic judgment is not required. Independent source/assertion review and actual deterministic receipt remain required.",
+            "mutation": "No separate mutation-suite receipt is claimed. The owning helper includes scanner source-fault diagnostics but this declaration relies on its exact invalid/conforming production cases and state-preservation assertions."
+          },
+          "evidenceKinds": [
+            "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+          ],
+          "assertionReferences": [
+            "SYNTAX_STAGE1_REJECT",
+            "SYNTAX_STAGE1_NO_PROPOSAL",
+            "SYNTAX_STAGE1_EXPECTED_CODE",
+            "SYNTAX_STAGE1_REJECTION_PRESERVATION",
+            "SYNTAX_STAGE1_GATE_OUTCOME_PRESERVATION",
+            "SYNTAX_STAGE1_INPUT_UNCHANGED",
+            "SYNTAX_STAGE1_RETAINED_AUDIT_PREFIX",
+            "SYNTAX_STAGE1_RELOAD_INTEGRITY",
+            "SYNTAX_STAGE1_RELOAD_PRESERVATION",
+            "SYNTAX_STAGE1_EXACT_RAW_RELOAD",
+            "SYNTAX_STAGE1_RELOAD_GATE_OUTCOME_PRESERVATION",
+            "SYNTAX_STAGE1_REJECTED_RESERVATION",
+            "SYNTAX_STAGE1_PROJECTION_RECEIPT_ORACLE",
+            "SYNTAX_STAGE1_CONFORMING",
+            "SYNTAX_STAGE1_VALID_NOT_ACCEPTED",
+            "SYNTAX_STAGE1_VALID_GATE_OUTCOME_PRESERVATION"
+          ]
+        }
+      ],
+      "unresolvedObligations": [],
+      "governingContext": [
+        {
+          "normativeRequirementId": "NREQ-6c392009e2925e9e3e3baaf1e42cbc93",
+          "sourceLineSha256": "a8a298876c99dfea0ed6a1c39c7a06c729213341e056ac22e85dc6ce6f53a8b0",
+          "controllingText": "17.5 Closed-schema rejection"
+        },
+        {
+          "normativeRequirementId": "NREQ-f3c76d5b2691175b5c4f18f5b12f2892",
+          "sourceLineSha256": "d79d136180581dd41050286f4f83801fb731c7b2ceb4857985c292a1293a0f44",
+          "controllingText": "The single ingestion path rejects before canonical mutation:"
+        }
+      ]
+    }
     },
     {
       "normativeRequirementId": "NREQ-971af7158d193e9b1d780c13b6c8e0ec",
@@ -2240,7 +3370,120 @@
       ],
       "scope": "Using a real new Stage1 project, current input version, application-owned reservation, saved instruction and actual exported ZIP package, the invalid response must be rejected with its literal expected diagnostic and no proposal. Preparation and actual operational save/reload preserve the whole canonical project snapshot: every Job field except CURRENT_STATE/NEXT_REQUIRED_ACTION, all registered and nonregistry canonical values, all stage values except gate/status/derivedData/responseDraft, the selected reservation binding/contentSha256 and all other reservations, canonical revision, identities, versions, pointers and root metadata. Exact operational raw/audit collections and recomputed projectSha256 are excluded from that snapshot comparison, while all preexisting audit prefixes remain byte/value-equivalent. The original input object remains unchanged. These are synthetic controlled actor inputs under the production storage owner with an isolated transaction adapter; no browser, external actor, authenticated human decision, stage completion or acceptance is claimed. The maintained assertions require three directly exercised conforming response-file controls to remain valid pending proposals, retain exact raw bytes, and commit no canonical changes.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
-      "atomicObligationSha256": "2630d7786c628f0c573752967016fb6ba245dac357de1c63db127beab965b374"
+      "atomicObligationSha256": "2630d7786c628f0c573752967016fb6ba245dac357de1c63db127beab965b374",
+    "fullCoverage": {
+      "schema": "closed-loop-full-requirement-coverage/1",
+      "sourceLineSha256": "726c761ed6f54f1ec9a7d8ab6654f5e07507036d4e8070023fd5c5681d494a31",
+      "atomicObligationSha256": "2630d7786c628f0c573752967016fb6ba245dac357de1c63db127beab965b374",
+      "reviewedAtomicStatement": "The single ingestion path rejects before canonical mutation: wrong context signature.",
+      "sourceSpans": [
+        {
+          "startByte": 83435,
+          "endByte": 83461,
+          "text": "- wrong context signature;",
+          "sha256": "726c761ed6f54f1ec9a7d8ab6654f5e07507036d4e8070023fd5c5681d494a31"
+        }
+      ],
+      "contextSourceLocations": [
+        {
+          "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+          "startLine": 1357,
+          "endLine": 1357,
+          "lineSha256": "a8a298876c99dfea0ed6a1c39c7a06c729213341e056ac22e85dc6ce6f53a8b0",
+          "controllingText": "17.5 Closed-schema rejection"
+        },
+        {
+          "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+          "startLine": 1359,
+          "endLine": 1359,
+          "lineSha256": "d79d136180581dd41050286f4f83801fb731c7b2ceb4857985c292a1293a0f44",
+          "controllingText": "The single ingestion path rejects before canonical mutation:"
+        }
+      ],
+      "schemaOrRegistryEntry": "SPECIFICATION_SECTION_17.5",
+      "productionOwners": [
+        {
+          "path": "response-ingestion.js",
+          "symbol": "hasUnsafeSmartJsonDelimiter / scanJsonAmbiguity / strictParse / validateEnvelopeWithDiagnostics / captureRaw / prepareCaptured",
+          "sha256": "ea0c6d1798dfd3a5711bf96550b7a7d085d8374fdfdfaf5e694ee84b39ad28f9"
+        },
+        {
+          "path": "project-store.js",
+          "symbol": "stageResponseFile / readStagedResponseFile / writeOperationalProject / assertOperationalChange / readProject",
+          "sha256": "be8a5b5f9a2ca7caa42024f2831447c38947fe099198c3303e7eb83e410965d0"
+        },
+        {
+          "path": "workflow-engine.js",
+          "symbol": "transitionOperationReservation / recalculate / applicationProjectionInput",
+          "sha256": "1a0e0789abcb829c79dec4748dbaa0e90d2989d6d263ac3e6b6e1fcf26377d1f"
+        },
+        {
+          "path": "workflow-schema.js",
+          "symbol": "responseResourceLimitsForPrompt / PROJECT_PROJECTION_DERIVATION_CONTRACT",
+          "sha256": "626e51a6590e1bb19e6c4478a2531326daddceffabdb8ced225dbb4aa81deb1b"
+        },
+        {
+          "path": "prompt-engine.js",
+          "symbol": "reserveAndBuildPromptRecord / promptFileManifest",
+          "sha256": "5d67f8096f91a1efc17ad6ce367dfa43ab5990ecaede9b52c9f12dcc34b41d20"
+        }
+      ],
+      "obligations": [
+        {
+          "id": "draft.ingestion.reject.wrong-context-signature",
+          "sourceText": "- wrong context signature;",
+          "expectedBehavior": "The production Stage1 reserved-package response-file path rejects before canonical mutation. Independent literal invalid inputs must yield the named diagnostic, invalid validation and no proposal. Before preparation and after actual production operational save/readback, the test compares the whole project except only the declared operational raw/audit collections, projectSha256, independently verified applicationProjection, Job CURRENT_STATE/NEXT_REQUIRED_ACTION, stage gate/status/derivedData/responseDraft, and selected reservation STATUS/fields.STATUS/updatedAt/recordSha256/sha256. Its canonical contentSha256, binding and all other reservations remain compared. All Job identities/pointers/versions, accepted changes, canonical revision, root metadata and canonical collections remain protected. Separate comparisons retain all prior audit prefixes and stage gate/status/decision/decisionEvidence except checkedAt. Independent Node SHA-256 verifies actual projection source hashes and registry/input/output receipt bindings. Original input remains unchanged. Selected reservation reaches REJECTED for parse/validation rejections. Exact raw text survives capture and readback with valid project integrity. Three literal conforming controls remain required: ASCII escaped string data, valid Unicode quotation data, and exactly 67108864 UTF-8 bytes. They are valid and create pending proposals at preparation while raw text, canonical state, audit prefixes and gate outcomes survive operational save/readback without canonical acceptance. Pending-proposal identity/status after readback is not separately asserted by these controls and is not claimed here. Literal clause cases: stale context signature => STALE_CONTEXT_SIGNATURE. Synthetic controlled inputs exercise unchanged production owners under the isolated transaction adapter. No browser, physical device, real external agent, authenticated human authority, accepted canonical change, whole-application conformance, or separate mutation-suite proof is claimed. Current owning verify-ingestion execution and independent review remain required; this declaration is source/design evidence only.",
+          "checks": {
+            "deterministic": [
+              {
+                "suite": "verify-ingestion.mjs",
+                "checkId": "ingestion.transport.context-signature"
+              }
+            ],
+            "semantic": [],
+            "mutation": []
+          },
+          "nonapplicable": {
+            "semantic": "This atom is mechanical JSON/identity rejection before canonical mutation; external semantic judgment is not required. Independent source/assertion review and actual deterministic receipt remain required.",
+            "mutation": "No separate mutation-suite receipt is claimed. The owning helper includes scanner source-fault diagnostics but this declaration relies on its exact invalid/conforming production cases and state-preservation assertions."
+          },
+          "evidenceKinds": [
+            "EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS"
+          ],
+          "assertionReferences": [
+            "SYNTAX_STAGE1_REJECT",
+            "SYNTAX_STAGE1_NO_PROPOSAL",
+            "SYNTAX_STAGE1_EXPECTED_CODE",
+            "SYNTAX_STAGE1_REJECTION_PRESERVATION",
+            "SYNTAX_STAGE1_GATE_OUTCOME_PRESERVATION",
+            "SYNTAX_STAGE1_INPUT_UNCHANGED",
+            "SYNTAX_STAGE1_RETAINED_AUDIT_PREFIX",
+            "SYNTAX_STAGE1_RELOAD_INTEGRITY",
+            "SYNTAX_STAGE1_RELOAD_PRESERVATION",
+            "SYNTAX_STAGE1_EXACT_RAW_RELOAD",
+            "SYNTAX_STAGE1_RELOAD_GATE_OUTCOME_PRESERVATION",
+            "SYNTAX_STAGE1_REJECTED_RESERVATION",
+            "SYNTAX_STAGE1_PROJECTION_RECEIPT_ORACLE",
+            "SYNTAX_STAGE1_CONFORMING",
+            "SYNTAX_STAGE1_VALID_NOT_ACCEPTED",
+            "SYNTAX_STAGE1_VALID_GATE_OUTCOME_PRESERVATION"
+          ]
+        }
+      ],
+      "unresolvedObligations": [],
+      "governingContext": [
+        {
+          "normativeRequirementId": "NREQ-6c392009e2925e9e3e3baaf1e42cbc93",
+          "sourceLineSha256": "a8a298876c99dfea0ed6a1c39c7a06c729213341e056ac22e85dc6ce6f53a8b0",
+          "controllingText": "17.5 Closed-schema rejection"
+        },
+        {
+          "normativeRequirementId": "NREQ-f3c76d5b2691175b5c4f18f5b12f2892",
+          "sourceLineSha256": "d79d136180581dd41050286f4f83801fb731c7b2ceb4857985c292a1293a0f44",
+          "controllingText": "The single ingestion path rejects before canonical mutation:"
+        }
+      ]
+    }
     },
     {
       "normativeRequirementId": "NREQ-7801905b4b71b2b6605a2e7a117b5a39",
