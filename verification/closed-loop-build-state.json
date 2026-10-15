@@ -1394,7 +1394,7 @@
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "/root/repair_iteration_receipt_dependencies",
-    "lastInspectedAt": "2026-10-15T01:19:30.418248+00:00",
+    "lastInspectedAt": "2026-10-15T01:20:36.880123+00:00",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -2094,7 +2094,7 @@
     },
     "scheduleState": "FORECAST_NOT_ESTABLISHED",
     "forecast": null,
-    "nextAction": "Continue actual original9093 session48870 through terminal with unchanged source/receipt contracts. Independently reconcile aggregate governing-context admission: prior unqualified nineteen-proof claim is withdrawn pending corrected arguments; canonical14 unaffected. Prepare source-grounded declaration repair only after exact independent diagnosis, without altering active frozen run.",
+    "nextAction": "Continue actual original9093 session48870 unchanged through terminal. Aggregate reconciliation confirms15 proven and7180UNKNOWN of7195atoms; four migration context declarations require source-grounded author correction and independent review. Preserve all prior receipt/evaluator evidence and source qualification; no promotion to future metadata successor.",
     "deploymentObservation": {
       "sourceCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
       "runId": "36958910363",
@@ -2147,7 +2147,7 @@
       "sourceApplied": false
     },
     "currentCriticalPath": [
-      "Continue actual original9093 session48870 through terminal with unchanged source/receipt contracts. Independently reconcile aggregate governing-context admission: prior unqualified nineteen-proof claim is withdrawn pending corrected arguments; canonical14 unaffected. Prepare source-grounded declaration repair only after exact independent diagnosis, without altering active frozen run.",
+      "Continue actual original9093 session48870 unchanged through terminal. Aggregate reconciliation confirms15 proven and7180UNKNOWN of7195atoms; four migration context declarations require source-grounded author correction and independent review. Preserve all prior receipt/evaluator evidence and source qualification; no promotion to future metadata successor.",
       "Retain exact nineteen scoped proof receipts while closing remaining required owner, browser, deployment, physical-device and real-project obligations; do not promote receipts across source fingerprints.",
       "Complete integrated broad conformance and required governed/default/browser acceptance with truthful partial-run limits.",
       "Resolve preserved source-contract/human/publication approvals, then verify authorized deployment, physical-device and real-project maturity evidence"
@@ -3612,13 +3612,31 @@
       "aggregateAdmissionQualification": "Prior direct evaluation omitted governingContext. Do not use nineteen-declaration aggregate claim; exact corrected dispositions pending. Original evaluation evidence preserved."
     },
     "governingContextAdmissionCorrection": {
-      "status": "URGENT_AGGREGATE_RECHECK_PENDING",
+      "status": "CONFIRMED_AGGREGATE_CORRECTION",
       "reportedAt": "2026-10-15T01:19:01Z",
       "reviewer": "/root/review_canonical_json_proofs",
       "finding": "Prior direct nineteen-declaration evaluations omitted the aggregate separately supplied governingContext argument. Four migration declarations may lack required context linkage. Canonical14 unaffected; exact full aggregate reconciliation pending.",
       "priorNineteenAggregateClaim": "WITHDRAWN_PENDING_CORRECT_ARGUMENT_RECHECK",
       "actualReceiptValidity": "Unchanged genuine producer receipts remain preserved; receipt validity alone does not establish aggregate coverage admission.",
-      "activeOriginalOwner": "9093 session48870 continues unchanged; no source edits/restart"
+      "activeOriginalOwner": "9093 session48870 continues unchanged; no source edits/restart",
+      "sourceCommit": "9093fbdc8f4c6563028c2c41d5478067a51a803b",
+      "totalAtoms": 7195,
+      "conformantProven": 15,
+      "unknown": 7180,
+      "previousScopedNineteenQualification": "Four direct evaluations omitted required governingContext and therefore cannot establish aggregate conformance. Original evidence and erroneous claim provenance retained.",
+      "blockingReason": "GOVERNING_SOURCE_CONTEXT_NOT_ACCOUNTED",
+      "affectedIds": [
+        "NREQ-a1bafeb7c6f6f12bf0c7b0f6fcadaab9",
+        "NREQ-f41a79c58369bd76c58ad7e831e953ce",
+        "NREQ-5811c65fa83521ee7afeedd602cec806",
+        "NREQ-2046e21dd63ad76f992233d5582c716d"
+      ],
+      "governingContextId": "NREQ-0bc67ce8ed80f63db07b9d448539ab87",
+      "governingText": "Migration MUST preserve:",
+      "evidencePath": "/workspace/shared/9093-coverage-ledger-reconciliation.json",
+      "evidenceSha256": "0eb56e2f20e74160690adc4ae9449c59eec7d82c7d36ecf8add6e6d30a482356",
+      "author": "/root/bind_migration_preservation_proofs",
+      "repairStatus": "SOURCE_GROUNDED_PROPOSAL_PENDING_INDEPENDENT_REVIEW"
     }
   }
 }
