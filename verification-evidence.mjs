@@ -166,6 +166,13 @@ export function validateFinalNormativeProof(report,evidence){
   return true;
 }
 
+export function amendmentEvidencePaths(governance){
+  // Insertion amendments are exact source ranges; their custody is validated
+  // by atomicEvidenceReferences through the pinned continuation descriptor.
+  if(governance.atomicExtraction?.schema==='closed-loop-approved-insertion-atomic-extraction/1')return [];
+  return (governance.approvedAmendments||[]).flatMap(amendment=>['sourceReviewPath','approvedProposalPath'].map(key=>amendment[key]));
+}
+
 export function evidenceFingerprint(cwd=process.cwd()){
   // Generated retained fixtures and progress/artifact directories are excluded
   // unless their exact paths are declared as active verifier source inputs.
@@ -176,11 +183,11 @@ export function evidenceFingerprint(cwd=process.cwd()){
   // governance inputs, including before their new files have been committed.
   // Ordinary Markdown documentation is outside this execution-input policy.
   const declaration=path.join(cwd,'specification/requirement-evidence-bindings.json');
-  const governance=fs.existsSync(declaration)?JSON.parse(fs.readFileSync(declaration,'utf8')):{},amendments=governance.approvedAmendments||[],independentSourceReview=governance.independentSourceReview;
+  const governance=fs.existsSync(declaration)?JSON.parse(fs.readFileSync(declaration,'utf8')):{},independentSourceReview=governance.independentSourceReview;
   const assertionPath=path.join(cwd,'verification-assertion-bindings.json'),fullCoverageReviewPaths=fs.existsSync(assertionPath)?(JSON.parse(fs.readFileSync(assertionPath,'utf8')).bindings||[]).flatMap(binding=>binding.fullCoverage?.review?.path?[binding.fullCoverage.review.path]:[]):[];
   const atomicRefs=atomicEvidenceReferences(governance.atomicExtraction,file=>readAtomicEvidenceBytes(file,cwd));
   const atomicPaths=new Set(atomicRefs.map(ref=>ref?.path));
-  const governed=[...atomicRefs.map(ref=>ref.path),...(governance.contextApplicabilityReview?[governance.contextApplicabilityReview.path]:[]),...fullCoverageReviewPaths,...(independentSourceReview?[independentSourceReview.sourceReviewPath,independentSourceReview.reconciliationPath]:[]),...amendments.flatMap(amendment=>['sourceReviewPath','approvedProposalPath'].map(key=>amendment[key])),...[...Object.values(verificationCatalog),...Object.values(browserVerificationCatalog)].flatMap(suite=>suite.sourceInputs||[])];
+  const governed=[...atomicRefs.map(ref=>ref.path),...(governance.contextApplicabilityReview?[governance.contextApplicabilityReview.path]:[]),...fullCoverageReviewPaths,...(independentSourceReview?[independentSourceReview.sourceReviewPath,independentSourceReview.reconciliationPath]:[]),...amendmentEvidencePaths(governance),...[...Object.values(verificationCatalog),...Object.values(browserVerificationCatalog)].flatMap(suite=>suite.sourceInputs||[])];
   const sourceRoot=fs.realpathSync(cwd)+path.sep;
   for(const name of governed){
     requireEvidence(typeof name==='string'&&((atomicPaths.has(name)&&isAtomicEvidencePath(name))||/^(?:(?:verification|specification)\/[^/\\]+\.(?:json(?:\.gz)?|md)|[\w-]+\.m?js|test-backup-extension-native\.html|test-retained-root-native\.html|test-human-combined-(?:native|cold|ui-seed)\.html|verification-assertion-bindings\.json|TEST_PROJECT\.json)$/.test(name))&&path.posix.normalize(name)===name,'declared governance or verifier input must be an exact first-party verification path');

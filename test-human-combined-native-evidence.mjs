@@ -1,3 +1,4 @@
+import {isAtomicEvidencePath} from './review-specification-coverage.mjs';
 import {independentHumanCombinedUiFixture} from './test-human-combined-ui-evidence.mjs';
 import assert from 'node:assert/strict';import fs from 'node:fs';import path from 'node:path';import {createHash} from 'node:crypto';
 import {browserVerificationCatalog} from './verification-evidence-catalog.mjs';
@@ -39,8 +40,8 @@ export function verifyHumanCombinedNativeEvidenceConsumers({directory}={}){
  assert.equal(assertHumanCombinedNativeSourceInputs(good,fingerprint),good);pass('exact-source-input-fingerprint');
  for(const name of HUMAN_COMBINED_RUNTIME_SOURCES)detect('wrong-runtime-'+name,()=>{const changed=structuredClone(fingerprint);changed.inputSha256[name]=digest('different '+name);assert.throws(()=>assertHumanCombinedNativeSourceInputs(good,changed),/original source differs/);});
  for(const name of HUMAN_COMBINED_TEST_SOURCES)for(const kind of ['missing','wrong'])detect(kind+'-owning-'+name,()=>{const changed=structuredClone(fingerprint);if(kind==='missing')delete changed.inputSha256[name];else changed.inputSha256[name]=digest('different '+name);assert.throws(()=>assertHumanCombinedNativeSourceInputs(good,changed),/owning input differs/);});
- const source=evidenceFingerprint.toString(),begin=source.indexOf('  const sourceRoot='),end=source.indexOf('  const inputs=',begin),checkPaths=new Function('cwd','governed','fs','path','requireEvidence',source.slice(begin,end)),requireEvidence=(ok,m)=>{if(!ok)throw Error(m);};
- for(const name of ['test-human-combined-native.html','test-human-combined-cold.html']){fs.writeFileSync(path.join(directory,name),'literal declared fixture');checkPaths(directory,[name],fs,path,requireEvidence);pass('declared-path-'+name);detect('path-traversal-'+name,()=>assert.throws(()=>checkPaths(directory,['../'+name],fs,path,requireEvidence),/exact first-party verification path/));}
+ const source=evidenceFingerprint.toString(),begin=source.indexOf('  const sourceRoot='),end=source.indexOf('  const inputs=',begin),checkPaths=new Function('cwd','governed','fs','path','requireEvidence','atomicPaths','isAtomicEvidencePath',source.slice(begin,end)),requireEvidence=(ok,m)=>{if(!ok)throw Error(m);};
+ for(const name of ['test-human-combined-native.html','test-human-combined-cold.html']){fs.writeFileSync(path.join(directory,name),'literal declared fixture');checkPaths(directory,[name],fs,path,requireEvidence,new Set(),isAtomicEvidencePath);pass('declared-path-'+name);detect('path-traversal-'+name,()=>assert.throws(()=>checkPaths(directory,['../'+name],fs,path,requireEvidence,new Set(),isAtomicEvidencePath),/exact first-party verification path/));}
  // Execute the actual receipt validator's two native owning calls after its
  // separately retained main-browser carrier checks; do not mint a fake receipt.
  const receiptSource=validateExecutionReceipt.toString(),nativeBegin=receiptSource.indexOf("if(suite==='verify-browser.mjs'){"),nativeEnd=receiptSource.indexOf('\n  }',nativeBegin);assert(nativeBegin>0&&nativeEnd>nativeBegin);

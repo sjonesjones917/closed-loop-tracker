@@ -2634,7 +2634,7 @@ browserVerificationCatalog['verify-browser.mjs'].checks.push(check('verify-brows
  expectedDescription:'Exactly23 owned cases; cold certificate and two warm view saves retain byte work/current validation; every refusal preserves last valid rows/actual bytes and publishes neither checkpoint nor proof. Public cold and current-definition equality assertions remain owned by the bound fixture.',
  condition:completeRetainedRootNative
 }));
-verificationCatalog['verify-executed-evidence.mjs'].sourceInputs=[...new Set([...(verificationCatalog['verify-executed-evidence.mjs'].sourceInputs||[]),'test-retained-root-native-evidence.mjs'])];
+verificationCatalog['verify-executed-evidence.mjs'].sourceInputs=[...new Set([...(verificationCatalog['verify-executed-evidence.mjs'].sourceInputs||[]),'test-retained-root-native-evidence.mjs','test-amendment-evidence-paths.mjs'])];
 
 // Additive ownership of nested controls; the existing17/22/9 checks remain intact.
 const importPureWorkCaseIds=['valid-import-pure-reuse','invalid-root-child-observations','mutable-static-after-await','mutable-derived-after-await','mutable-definition-after-await','injected-write-failure-last-valid','default-inspection-remains-cold','warm-inspection-current-semantics','same-label-part-byte-replacement','same-label-root-byte-replacement','wrong-snapshot-identity','wrong-project-scope','mutated-cached-contents-cold-fallback','mutated-cached-shape-cold-fallback','getter-cached-contents-cold-fallback','cached-source-never-exposed-to-prompt-hook','current-validator-after-warm','forwarding-encoder-after-warm','changed-encoder-after-warm','concurrent-head-change-at-import-commit'];

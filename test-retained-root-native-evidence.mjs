@@ -1,3 +1,5 @@
+import {verifyAmendmentEvidencePaths} from './test-amendment-evidence-paths.mjs';
+import {isAtomicEvidencePath} from './review-specification-coverage.mjs';
 import {independentHumanCombinedUiFixture} from './test-human-combined-ui-evidence.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -19,6 +21,7 @@ const fixture=()=>({
  fixture:{name:'test-retained-root-native.html',bytes:1,sha256:digest('independent fixture')},observerAnchors:Array.from({length:15},(_,index)=>'independent anchor '+index),requiredObserverAnchorsAllMatchedOnce:true,existingBrowserReused:true,isolatedTargetAndOrigin:true
 });
 export function verifyRetainedRootNativeEvidenceConsumers({directory}={}){
+ assert.equal(verifyAmendmentEvidencePaths().amendmentEvidencePaths,'PASS');
  assert.equal(typeof directory,'string','NATIVE_EVIDENCE_PRIVATE_DIRECTORY_ORACLE');
  const cases=[],good=fixture(),catalog=browserVerificationCatalog['verify-browser.mjs'],fullChecks=catalog.checks;
  const ownedMarkers=['browserVerified','retainedRootNative','humanCombinedNative','humanCombinedUi'],checks=fullChecks.filter(row=>ownedMarkers.includes(row.marker));
@@ -100,11 +103,11 @@ export function verifyRetainedRootNativeEvidenceConsumers({directory}={}){
  // This preserves its real normalization, realpath and symlink checks.
  const source=evidenceFingerprint.toString(),start=source.indexOf('  const sourceRoot='),end=source.indexOf('  const inputs=',start);
  assert(start>=0&&end>start,'NATIVE_EVIDENCE_DECLARED_PATH_EXTRACTION_ORACLE');
- const validatePaths=new Function('cwd','governed','fs','path','requireEvidence',source.slice(start,end));
+ const validatePaths=new Function('cwd','governed','fs','path','requireEvidence','atomicPaths','isAtomicEvidencePath',source.slice(start,end));
  const requireEvidence=(ok,message)=>{if(!ok)throw Error(message);};
  const root=path.join(directory,'declared-inputs');fs.mkdirSync(root,{recursive:true});
  fs.writeFileSync(path.join(root,'test-retained-root-native.html'),'independent html');fs.writeFileSync(path.join(root,'test-retained-root-native.mjs'),'independent module');
- const validate=files=>validatePaths(root,files,fs,path,requireEvidence);
+ const validate=files=>validatePaths(root,files,fs,path,requireEvidence,new Set(),isAtomicEvidencePath);
  validate(['test-retained-root-native.mjs','test-retained-root-native.html']);cases.push({caseId:'actual-declared-html-path-loop-control',result:'PASS'});
  for(const name of ['verification/../test-retained-root-native.html','../test-retained-root-native.html','/test-retained-root-native.html','test-retained-root-native.HTML','other.html','UNKNOWN_PROJECT.json','TEST_PROJECT.json.gz','verification/fixture.zip'])detect('invalid-path-'+name,()=>assert.throws(()=>validate([name]),/exact first-party verification path/));
  fs.unlinkSync(path.join(root,'test-retained-root-native.html'));detect('missing-declared-html-file',()=>assert.throws(()=>validate(['test-retained-root-native.html']),/ENOENT/));
