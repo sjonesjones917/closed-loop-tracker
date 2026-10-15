@@ -1,0 +1,97 @@
+{
+  "schema": "closed-loop-stage7-execution-evidence-transfer/1",
+  "baseCommit": "2933fd05538a3663769f27ad08e70d0f9520e910",
+  "artifact": {
+    "filename": "native-stage7-run2-evidence.tar.gz",
+    "bytes": 48296,
+    "sha256": "5afb31299e4f2d8150f1fcc04042ed1e2d5eb4dc7d64121df2132cb9c47a0009"
+  },
+  "base64": {
+    "filename": "native-stage7-run2-evidence.tar.gz.b64",
+    "bytes": 65244,
+    "sha256": "aabd62f33f67b2f562c6d8d0fb5dc7b376a628b328e73ecca13a08438ce291bd",
+    "decodeVerified": true
+  },
+  "files": [
+    {
+      "path": "terminal.txt",
+      "bytes": 416,
+      "sha256": "1460b64bfe9966f1c620446a2879822ce112dc21e15e4ea4edee3c05ef368632"
+    },
+    {
+      "path": "stage7.log",
+      "bytes": 59724,
+      "sha256": "3f2785eafa846392e1870cbacbeb56fbd2f8291666c5b32138434f07a8fd5763"
+    },
+    {
+      "path": "postflight.json",
+      "bytes": 181,
+      "sha256": "2d52600e6d777eee235ad94a88dd6c8f10d957363a0cd64b2b4e0e0b62204da4"
+    },
+    {
+      "path": "translated-input-manifest.json",
+      "bytes": 60305,
+      "sha256": "82e1254c74878097ebd3b1689a55cf6fb8a029071c4af18a912a1fbbb36501d4"
+    },
+    {
+      "path": "preflight.log",
+      "bytes": 60,
+      "sha256": "702e5f963355b461ff179786aa296148562b3183feabae4003eb5cdd874eab66"
+    },
+    {
+      "path": "runtime-resources.log",
+      "bytes": 482,
+      "sha256": "84902e8299df83b7401ff4d3ac96c0fdd1dfe5f3cd1663e91e5d1b80100a71d3"
+    },
+    {
+      "path": "diagnosis.json",
+      "bytes": 757,
+      "sha256": "516510d5031fe28bbba19cf5e23f5c9d3ad58ef9d065ef50ce294ebd04879342"
+    },
+    {
+      "path": "run-cloud-run2.sh",
+      "bytes": 3359,
+      "sha256": "9ec442a66265f001d17e20910fea0ea94ddeddbbf2809d4cb220c8424abeaadb"
+    },
+    {
+      "path": "invocation.json",
+      "bytes": 692,
+      "sha256": "deaf928e31a0876ab1c22b950a9481f6411c2d4f47898fd8a45a3afe022f1ef9"
+    },
+    {
+      "path": "transfer-closure-run2.json",
+      "bytes": 43805,
+      "sha256": "354717835ed4a15f347211a8b1016e9317504fc43ad683e623327d5bce1ef5b6"
+    },
+    {
+      "path": "identity.json",
+      "bytes": 1008,
+      "sha256": "d6328601ec574d47a5606c87b0422c7c280282548e39d4ee3c00061c899851c7"
+    }
+  ],
+  "privacyInspection": {
+    "credentialPatternsFound": false,
+    "rawLogEmailMatches": 0,
+    "rawLogUrlHosts": [],
+    "onlyAuthorizedProjectEvidence": true
+  },
+  "result": {
+    "childExit": 1,
+    "postflightExit": 0,
+    "checkedInputs": 393,
+    "unchanged": true
+  },
+  "identity": {
+    "compositionBase": "2933fd05538a3663769f27ad08e70d0f9520e910",
+    "compositionBaseTree": "7a1453515c29bd81058cb63fbd14791d2e1297c4",
+    "sourcePatchSha256": "4116f0f094797707b02004e6478c4c7ae16f3f453aae02bcf8082ff199d573f9",
+    "incrementalTestPatchSha256": "33c0ec501d173833ab55040ce0865b2e4bbfb78d209b665cbedc58d7a110e5d0",
+    "testSha256": "c5d2bd10ac1a69d06c78ee0f6dbb91b65a462b3fcd39aac6c962d89e44ab2778",
+    "transferClosureSha256": "354717835ed4a15f347211a8b1016e9317504fc43ad683e623327d5bce1ef5b6",
+    "wrapperSha256": "9ec442a66265f001d17e20910fea0ea94ddeddbbf2809d4cb220c8424abeaadb",
+    "nodeVersion": "v22.23.3",
+    "nodeSha256": "fde6a4bf8d0562f7751d1a2d6cb9b417c4cfe107bbcb0aa3e9a24e125e348f48",
+    "boundary": "Isolated synthetic Stage7 tranche; corrected denial control passed, UI dispatch reached, canonical command-receipt identity error prevented full completion. No browser/full journey/governance acceptance.",
+    "scope": "Execution evidence only; no application candidate implementation."
+  }
+}
