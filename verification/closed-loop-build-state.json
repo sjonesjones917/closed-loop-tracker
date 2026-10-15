@@ -1394,7 +1394,7 @@
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "/root/repair_iteration_receipt_dependencies",
-    "lastInspectedAt": "2026-10-15T01:04:39.013769+00:00",
+    "lastInspectedAt": "2026-10-15T01:06:54.089618+00:00",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -2094,7 +2094,7 @@
     },
     "scheduleState": "FORECAST_NOT_ESTABLISHED",
     "forecast": null,
-    "nextAction": "Secure disk headroom using only released clean reproducible checkout copies, then independently review the existing original default-owner wrapper with bounded resource observation and unchanged tests/heap/deadlines/receipts. Existing runner fixture fix69df is integrated. Full original owner/sharedStage29/broad acceptance remain unproven; conditional publication requires all checks and separate tool approval.",
+    "nextAction": "Freeze clean complete source after reviewed runner-fixture repair and restored lead lease; independently review passive same-namespace resource telemetry around unchanged original default full-owner then sharedStage29/30 commands. Reclaimed only released reproducible copies; verify headroom after checkout. Full-owner and broad acceptance remain pending, nineteen proofs remain scoped2b8.",
     "deploymentObservation": {
       "sourceCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
       "runId": "36958910363",
@@ -2147,7 +2147,7 @@
       "sourceApplied": false
     },
     "currentCriticalPath": [
-      "Secure disk headroom using only released clean reproducible checkout copies, then independently review the existing original default-owner wrapper with bounded resource observation and unchanged tests/heap/deadlines/receipts. Existing runner fixture fix69df is integrated. Full original owner/sharedStage29/broad acceptance remain unproven; conditional publication requires all checks and separate tool approval.",
+      "Freeze clean complete source after reviewed runner-fixture repair and restored lead lease; independently review passive same-namespace resource telemetry around unchanged original default full-owner then sharedStage29/30 commands. Reclaimed only released reproducible copies; verify headroom after checkout. Full-owner and broad acceptance remain pending, nineteen proofs remain scoped2b8.",
       "Retain exact nineteen scoped proof receipts while closing remaining required owner, browser, deployment, physical-device and real-project obligations; do not promote receipts across source fingerprints.",
       "Complete integrated broad conformance and required governed/default/browser acceptance with truthful partial-run limits.",
       "Resolve preserved source-contract/human/publication approvals, then verify authorized deployment, physical-device and real-project maturity evidence"
@@ -3565,6 +3565,13 @@
       "leaseReturnedAt": "2026-10-15T01:03:45Z",
       "leaseBase": "90fd8e7ac19f2cbcc6db99ba83fe88c0f9146e5f",
       "writer": "/root/repair_iteration_receipt_dependencies"
+    },
+    "capacityReclamation20261015_0106": {
+      "manifestPath": "/workspace/shared/clrt-iteration-repair-evidence/reclaim-canonical-short-checkouts-20261015-0106.json",
+      "manifestSha256": "a41e71e54af2bedff1dc72958a22bd05532581467936b2ff68b1d70acc80e61d",
+      "directoryBytesReclaimed": 1030081153,
+      "uniqueEvidenceRemoved": false,
+      "sourceReceiptsRetained": "All exact2b8dc1e6 receipts and independent evaluations remain external; checkout recreation command and commit retained."
     }
   }
 }
