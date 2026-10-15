@@ -1393,8 +1393,8 @@
     "integrationCommit": "a2be11cdf4834f3916c43511918318f451ca7dd2",
     "prNumber": 1248,
     "managementOwner": "dot",
-    "technicalWriteOwner": "/root",
-    "lastInspectedAt": "2026-10-15T00:12:10.434123+00:00",
+    "technicalWriteOwner": "/root/repair_iteration_receipt_dependencies",
+    "lastInspectedAt": "2026-10-15T01:04:39.013769+00:00",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -2094,7 +2094,7 @@
     },
     "scheduleState": "FORECAST_NOT_ESTABLISHED",
     "forecast": null,
-    "nextAction": "Recover verified included engineering capacity without bypass or purchases. Root holds temporary sole integration/shared-record lease after lead error; reviewed runner-fixture correction69df8baf is integrated with exact tested bytes. Long original owner remains blocked by unexplained session loss and low disk headroom; publication, specification amendment, physical-device and real-project approvals/evidence remain pending. Preserve nineteen scoped proven outcomes on2b8dc1e6 without promoting to successors.",
+    "nextAction": "Secure disk headroom using only released clean reproducible checkout copies, then independently review the existing original default-owner wrapper with bounded resource observation and unchanged tests/heap/deadlines/receipts. Existing runner fixture fix69df is integrated. Full original owner/sharedStage29/broad acceptance remain unproven; conditional publication requires all checks and separate tool approval.",
     "deploymentObservation": {
       "sourceCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
       "runId": "36958910363",
@@ -2147,7 +2147,7 @@
       "sourceApplied": false
     },
     "currentCriticalPath": [
-      "Recover verified included engineering capacity without bypass or purchases. Root holds temporary sole integration/shared-record lease after lead error; reviewed runner-fixture correction69df8baf is integrated with exact tested bytes. Long original owner remains blocked by unexplained session loss and low disk headroom; publication, specification amendment, physical-device and real-project approvals/evidence remain pending. Preserve nineteen scoped proven outcomes on2b8dc1e6 without promoting to successors.",
+      "Secure disk headroom using only released clean reproducible checkout copies, then independently review the existing original default-owner wrapper with bounded resource observation and unchanged tests/heap/deadlines/receipts. Existing runner fixture fix69df is integrated. Full original owner/sharedStage29/broad acceptance remain unproven; conditional publication requires all checks and separate tool approval.",
       "Retain exact nineteen scoped proof receipts while closing remaining required owner, browser, deployment, physical-device and real-project obligations; do not promote receipts across source fingerprints.",
       "Complete integrated broad conformance and required governed/default/browser acceptance with truthful partial-run limits.",
       "Resolve preserved source-contract/human/publication approvals, then verify authorized deployment, physical-device and real-project maturity evidence"
@@ -3551,6 +3551,20 @@
         "postIntegrationSyntaxExitCode": 0
       },
       "scope": "Two extraction anchors only; all original assertions retained. No full-owner proof or prior session-loss cause established."
+    },
+    "sameAgentRecovery20261015": {
+      "observedAt": "2026-10-15T01:03:31Z",
+      "status": "READ_ONLY_EXECUTION_SUCCEEDED",
+      "sameAgent": true,
+      "configurationChanged": false,
+      "purchases": false,
+      "accountChanged": false,
+      "modelChanged": false,
+      "quotaOrModelMetadata": "NOT_EXPOSED",
+      "priorPreviewLimitCause": "UNESTABLISHED",
+      "leaseReturnedAt": "2026-10-15T01:03:45Z",
+      "leaseBase": "90fd8e7ac19f2cbcc6db99ba83fe88c0f9146e5f",
+      "writer": "/root/repair_iteration_receipt_dependencies"
     }
   }
 }
