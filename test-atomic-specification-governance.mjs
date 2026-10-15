@@ -516,4 +516,56 @@ try{
  assert.match(sourceTraceScopeDescription(true,'Source-line coverage only'),/distinct atomic obligations/);assert.match(sourceTraceScopeDescription(true),/requires current executed proof/);assert.equal(sourceTraceScopeDescription(false,'Original source-only scope'),'Original source-only scope');assert.equal(sourceInventorySummary([{normativeRequirementId:'legacy'}]).behavioralRequirementCount,1);assert.equal(sourceInventorySummary([{normativeRequirementId:'legacy'}]).behavioralAtomicRequirementCount,0);cases.push('activated-scope-reporting-and-legacy-source-pipeline-distinguished');
 }
 
-console.log(JSON.stringify({schema:'closed-loop-atomic-governance-format-regression/1',passed:true,syntheticFixture:true,atomicCompletenessEstablished:false,implementationConformanceEstablished:false,caseCount:cases.length,cases},null,2));
+// Exact private-factory differential controls. The production cache is confined
+// to parser-owned, unchanged values within one load; no reuse crosses calls.
+const contextEqualityControlReport={cases:[],referenceCanonicalizerCalls:0,optimizedCanonicalizerCalls:0,retainedObjectEntries:0,retainedCanonicalUtf8Bytes:0,retainedCanonicalUtf16CodeUnits:0};
+{
+ const moduleSource=fs.readFileSync(path.join(root,'review-specification-coverage.mjs'),'utf8'),start=moduleSource.indexOf('function createAtomicContextEquality('),end=moduleSource.indexOf('\nconst atomicText=',start);
+ assert(start>=0&&end>start,'PRIVATE_CONTEXT_EQUALITY_SOURCE_ORACLE');
+ const factorySource=moduleSource.slice(start,end),factory=Function(factorySource+';return createAtomicContextEquality;')(),canonicalize=globalThis.closedLoopHash.stableStringify;
+ contextEqualityControlReport.factorySha256=sha(factorySource);
+ const anchor=(line=3,extra={})=>({...copy(context),startLine:line,endLine:line,...extra});
+ const execute=(make,optimized)=>{
+  const steps=make(),visits=[],results=[],statistics={canonicalizerCalls:0,retainedObjectEntries:0,retainedCanonicalUtf8Bytes:0,retainedCanonicalUtf16CodeUnits:0};
+  const canonical=value=>{statistics.canonicalizerCalls++;const text=canonicalize(value);if(optimized&&value!==null&&typeof value==='object'){statistics.retainedObjectEntries++;statistics.retainedCanonicalUtf8Bytes+=Buffer.byteLength(text);statistics.retainedCanonicalUtf16CodeUnits+=text.length;}return text;};
+  const equal=optimized?factory(canonical):(left,right)=>canonical(left)===canonical(right);
+  let error=null;try{for(const [step,{candidates,needle}] of steps.entries())results.push(candidates.some((candidate,index)=>{visits.push([step,index]);return equal(candidate,needle);}));}catch(thrown){error={name:thrown.name,message:thrown.message};}
+  return {outcome:{results,visits,error},statistics};
+ };
+ const scenarios=[
+  ['repeated-private-anchors',()=>{const a=anchor(),b=anchor(5),needle=anchor();return [{candidates:[b,a,a],needle},{candidates:[a,b],needle},{candidates:[b,a],needle}];}],
+  ['missing-qualifier',()=>[{candidates:[anchor(5)],needle:anchor()}]],
+  ['duplicate-candidates',()=>{const a=anchor();return [{candidates:[a,a,anchor()],needle:anchor()}];}],
+  ['reordered-candidates',()=>[{candidates:[anchor(7),anchor(5),anchor()],needle:anchor(5)}]],
+  ['canonical-key-order',()=>[{candidates:[anchor()],needle:Object.fromEntries(Object.entries(anchor()).reverse())}]],
+  ['unknown-extension-equal',()=>[{candidates:[anchor(3,{extra:{a:1,b:[true,null]}})],needle:anchor(3,{extra:{b:[true,null],a:1}})}]],
+  ['unknown-extension-different',()=>[{candidates:[anchor(3,{extra:'left'})],needle:anchor(3,{extra:'right'})}]],
+  ['nested-extension-order',()=>[{candidates:[anchor(3,{extra:[1,2]})],needle:anchor(3,{extra:[2,1]})}]],
+  ['empty-skips-invalid-needle',()=>[{candidates:[],needle:anchor(3,{extra:-0})}]],
+  ['early-match-skips-invalid-tail',()=>[{candidates:[anchor(),anchor(3,{extra:-0})],needle:anchor()}]],
+  ['left-throws-before-right',()=>[{candidates:[anchor(3,{extra:-0})],needle:anchor(3,{extra:undefined})}]],
+  ['right-throws-after-left',()=>[{candidates:[anchor()],needle:anchor(3,{extra:-0})}]],
+  ['unsafe-integer',()=>[{candidates:[anchor(3,{extra:Number.MAX_SAFE_INTEGER+1})],needle:anchor()}]],
+  ['lone-surrogate',()=>[{candidates:[anchor()],needle:anchor(3,{extra:'\ud800'})}]],
+  ['accessor-rejected-without-invocation',()=>{const bad=anchor();Object.defineProperty(bad,'extra',{enumerable:true,get(){throw Error('ACCESSOR_MUST_NOT_EXECUTE');}});return [{candidates:[bad],needle:anchor()}];}],
+  ['symbol-key-rejected',()=>{const bad=anchor();bad[Symbol('extra')]=1;return [{candidates:[bad],needle:anchor()}];}],
+  ['cycle-rejected',()=>{const bad=anchor();bad.extra=bad;return [{candidates:[bad],needle:anchor()}];}],
+  ['array-extra-rejected',()=>{const extra=[1];extra.other=2;return [{candidates:[anchor(3,{extra})],needle:anchor()}];}],
+  ['primitive-fallback',()=>[{candidates:[null,1,true,'value'],needle:'value'}]],
+  ['primitive-undefined-fallback',()=>[{candidates:[undefined],needle:null}]]
+ ];
+ for(const [name,make] of scenarios){const reference=execute(make,false),optimized=execute(make,true);assert.deepEqual(optimized.outcome,reference.outcome,name);contextEqualityControlReport.referenceCanonicalizerCalls+=reference.statistics.canonicalizerCalls;contextEqualityControlReport.optimizedCanonicalizerCalls+=optimized.statistics.canonicalizerCalls;for(const key of ['retainedObjectEntries','retainedCanonicalUtf8Bytes','retainedCanonicalUtf16CodeUnits'])contextEqualityControlReport[key]+=optimized.statistics[key];contextEqualityControlReport.cases.push({name,reference:reference.statistics,optimized:optimized.statistics,outcome:optimized.outcome});cases.push('context-equality-differential-'+name);}
+ assert(contextEqualityControlReport.optimizedCanonicalizerCalls<contextEqualityControlReport.referenceCanonicalizerCalls);
+ let failures=0;const invalid=anchor(3,{extra:-0}),equal=factory(value=>{failures++;return canonicalize(value);});for(let i=0;i<2;i++)assert.throws(()=>equal(invalid,anchor()),{name:'TypeError',message:'Cannot canonically hash non-safe-integer JSON number at $.extra.'});assert.equal(failures,2);cases.push('context-equality-errors-never-cached');
+ const mutable=anchor(),before=factory(canonicalize);assert(before(mutable,anchor()));mutable.extra='changed';const next=factory(canonicalize);assert.equal(next(mutable,anchor()),false);assert(next(mutable,anchor(3,{extra:'changed'})));cases.push('context-equality-new-invocation-observes-mutated-object');
+}
+{
+ const e=evidence(),invoke=()=>loadReviewedAtomicExtraction(e.descriptor,e.options),positive=invoke(),reviewFile=e.descriptor.independentReview.path,saved=e.files.get(reviewFile);
+ e.files.set(reviewFile,Buffer.from('{}'));assert.throws(invoke,/evidence file digest mismatch/);e.files.set(reviewFile,saved);assert.deepEqual(invoke(),positive);cases.push('context-equality-loader-stale-context-between-calls');
+ const savedSource=e.options.sourceBytes;e.options.sourceBytes=Buffer.from(savedSource);e.options.sourceBytes[0]^=1;assert.throws(invoke,/independence missing/);e.options.sourceBytes=savedSource;assert.deepEqual(invoke(),positive);cases.push('context-equality-loader-changed-source-between-calls');
+ const changed=copy(review);changed.propositions[1].contextSourceLocations[0].extra='Unreviewed extension';assert.throws(()=>run(draft,changed),/reviewed qualifier\/context omitted/);assert.equal(run().established,true);cases.push('context-equality-loader-repinned-context-between-calls');
+ const noncanonical=copy(review);noncanonical.propositions[1].contextSourceLocations[0].extra=Number.MAX_SAFE_INTEGER+1;assert.throws(()=>run(draft,noncanonical),/non-safe-integer JSON number at \$\.extra/);assert.equal(run().established,true);cases.push('context-equality-loader-repinned-noncanonical-context');
+ const duplicate=copy(review);duplicate.propositions[1].contextSourceLocations.push(copy(duplicate.propositions[1].contextSourceLocations[0]));assert.equal(run(draft,duplicate).established,true);assert.equal(run().established,true);cases.push('context-equality-loader-original-duplicate-membership-semantics');
+}
+
+console.log(JSON.stringify({schema:'closed-loop-atomic-governance-format-regression/1',passed:true,syntheticFixture:true,atomicCompletenessEstablished:false,implementationConformanceEstablished:false,caseCount:cases.length,cases,contextEqualityControlReport},null,2));

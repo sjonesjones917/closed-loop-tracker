@@ -12,6 +12,17 @@ const assert=(condition,message)=>{if(!condition)throw new Error(message);};
 // mechanical line scanner below remains an omission challenge, not an atomizer.
 const atomicHash=value=>globalThis.closedLoopHash.sha256Value(value);
 const atomicEqual=(a,b)=>globalThis.closedLoopHash.stableStringify(a)===globalThis.closedLoopHash.stableStringify(b);
+// Only for unchanged parser-owned context anchors during one loader call.
+// Keep lazy left/right evaluation and never retain a failed canonicalization.
+function createAtomicContextEquality(canonicalize){
+  const values=new WeakMap();
+  const canonical=value=>{
+    if(value===null||typeof value!=='object')return canonicalize(value);
+    if(values.has(value))return values.get(value);
+    const text=canonicalize(value);values.set(value,text);return text;
+  };
+  return (left,right)=>canonical(left)===canonical(right);
+}
 const atomicText=value=>typeof value==='string'&&value.trim().length>0;
 const atomicDigest=value=>typeof value==='string'&&/^[0-9a-f]{64}$/.test(value);
 const atomicList=(values,label)=>{assert(Array.isArray(values)&&new Set(values).size===values.length,`Atomic ${label} absent or duplicated`);return values;};
@@ -519,6 +530,7 @@ export function loadReviewedAtomicExtraction(descriptor,{sourceBytes,specificati
   const entries=reconciliation.entries,{byId,membership}=validateAtomicRequirementRows(sourceBytes,entries,specificationPath,sections);
   for(const row of sourcePrior.requirements)assert(membership.has(row.sourceLocation.startLine),'Atomic reviewed source-trace obligation/context omitted');
   validateSections(reconciliation,byId,'normativeRequirementId','normativeRequirementIds');
+  const contextEqual=createAtomicContextEquality(globalThis.closedLoopHash.stableStringify);
   const decisions=new Map(),resolved=[new Set(),new Set()],mapped=new Set();
   assert(Array.isArray(reconciliation.decisions)&&reconciliation.decisions.length>0,'Atomic reconciliation decisions absent');
   for(const decision of reconciliation.decisions){
@@ -532,7 +544,7 @@ export function loadReviewedAtomicExtraction(descriptor,{sourceBytes,specificati
     for(const id of targets){const row=byId.get(id);assert(row,'Atomic decision target absent');mapped.add(id);if(row.entryKind==='ATOMIC_OBLIGATION')digests[id]=row.atomicObligation.sha256;
       const propositions=sourceIds.flatMap((ids,i)=>ids.map(id=>extracts[i].get(id)));
       assert(propositions.some(p=>p.primarySourceLine===row.sourceLocation.startLine),'Atomic decision target lacks primary source support');
-      if(row.entryKind==='ATOMIC_OBLIGATION')for(const proposition of propositions.filter(p=>p.primarySourceLine===row.sourceLocation.startLine))for(const context of proposition.contextSourceLocations)assert(row.atomicObligation.contextSourceLocations.some(current=>atomicEqual(current,context)),'Atomic reviewed qualifier/context omitted');
+      if(row.entryKind==='ATOMIC_OBLIGATION')for(const proposition of propositions.filter(p=>p.primarySourceLine===row.sourceLocation.startLine))for(const context of proposition.contextSourceLocations)assert(row.atomicObligation.contextSourceLocations.some(current=>contextEqual(current,context)),'Atomic reviewed qualifier/context omitted');
       if(row.entryKind==='SOURCE_CONTEXT'){
         const resolution=contextResolution?.mappings.get(row.sourceLocation.startLine);
         if(resolution){
