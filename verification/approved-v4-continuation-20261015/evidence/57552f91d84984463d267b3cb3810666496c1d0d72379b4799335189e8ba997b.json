@@ -1,0 +1,2873 @@
+[
+  {
+    "predecessorIndex": 39,
+    "predecessorId": "NREQ-e7d3fc8975861fde24f986c985b4ea3d",
+    "originalStatement": "Execution must be application-native and deterministic wherever the proposition can be faithfully represented.",
+    "independentMechanismClass": "XML_ROUTE_SUPPORT_AND_RESULTS",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base21/1681/1836 and current D require faithful native support and actual current semantics. Technical33 supplies the SELECT_XML invocation-root behavior that determines faithful representability and its actual normalized result. For1015/1016/1019 this only determines the existing native/application versus external/proposal route; it changes no fixed response permission or acceptance-mode rule once the route is chosen. Other native operations and exact stage ordering remain unchanged.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 40,
+    "predecessorId": "NREQ-bc41b536e04f294d00ee4b2e36b33763",
+    "originalStatement": "When a proposition cannot be faithfully represented through application-native deterministic execution, it must be routed exactly to an independent AI reviewer, capable external tool, human inspection, or external system.",
+    "independentMechanismClass": "XML_ROUTE_SUPPORT_AND_RESULTS",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base21/1681/1836 and current D require faithful native support and actual current semantics. Technical33 supplies the SELECT_XML invocation-root behavior that determines faithful representability and its actual normalized result. For1015/1016/1019 this only determines the existing native/application versus external/proposal route; it changes no fixed response permission or acceptance-mode rule once the route is chosen. Other native operations and exact stage ordering remain unchanged.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1015,
+    "predecessorId": "NREQ-5cbac73f2daead859a3cdf149dc12e60",
+    "originalStatement": "For every operation, executor class must come from Section 14.6.",
+    "independentMechanismClass": "XML_ROUTE_SUPPORT_AND_RESULTS",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This atom fixes an operation class/permission/family/independence mapping or native Test IR syntax/version/DAG admission. Technical25–29 supplies F1 execution-readiness/compatibility/history duties, not a new definition of that fixed mapping or native syntax. Preserve those separate F1 execution obligations without making this qualifier an effective governor.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      },
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base21/1681/1836 and current D require faithful native support and actual current semantics. Technical33 supplies the SELECT_XML invocation-root behavior that determines faithful representability and its actual normalized result. For1015/1016/1019 this only determines the existing native/application versus external/proposal route; it changes no fixed response permission or acceptance-mode rule once the route is chosen. Other native operations and exact stage ordering remain unchanged.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1016,
+    "predecessorId": "NREQ-5eff1d72d3ea62f565f02156caf8d405",
+    "originalStatement": "For every operation, response permissions must come from Section 14.6.",
+    "independentMechanismClass": "XML_ROUTE_SUPPORT_AND_RESULTS",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This atom fixes an operation class/permission/family/independence mapping or native Test IR syntax/version/DAG admission. Technical25–29 supplies F1 execution-readiness/compatibility/history duties, not a new definition of that fixed mapping or native syntax. Preserve those separate F1 execution obligations without making this qualifier an effective governor.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      },
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base21/1681/1836 and current D require faithful native support and actual current semantics. Technical33 supplies the SELECT_XML invocation-root behavior that determines faithful representability and its actual normalized result. For1015/1016/1019 this only determines the existing native/application versus external/proposal route; it changes no fixed response permission or acceptance-mode rule once the route is chosen. Other native operations and exact stage ordering remain unchanged.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1017,
+    "predecessorId": "NREQ-b482f61fe607d996499ae3cbf446aa6b",
+    "originalStatement": "For every operation, writable-family constraints must come from Section 14.6.",
+    "independentMechanismClass": "DIAGNOSTIC_FIXED_SCOPE_AUTHORITY",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This atom fixes an operation class/permission/family/independence mapping or native Test IR syntax/version/DAG admission. Technical25–29 supplies F1 execution-readiness/compatibility/history duties, not a new definition of that fixed mapping or native syntax. Preserve those separate F1 execution obligations without making this qualifier an effective governor.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      },
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "The atom selects fixed writer families, stage-scope dimensions or independence authority. Technical33 preserves those registries and does not introduce any field, writer, dimension or role rule. Separate native execution/routing duties retain their actual XML dependencies.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1018,
+    "predecessorId": "NREQ-eb47a928e5014327e0ecc696082886b7",
+    "originalStatement": "For every operation, required scope must come from Section 14.7.",
+    "independentMechanismClass": "DIAGNOSTIC_FIXED_SCOPE_AUTHORITY",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base1074/14.7 current scope and owning-stage completion consume the accepted compatible F1 definition/test/fixture/target/outcome and selected current stage/operation/scope/history relationship. Technical25–29 supplies that bounded retained relationship and receipt-only completion, under current B proofExpressions precedence. It supplies no new writer/executor or independent phase-table authority.",
+        "effectiveBranchCondition": "Only the already-adopted F1 conditional receipt routes and their source-required current scope/completion relationship.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      },
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "The atom selects fixed writer families, stage-scope dimensions or independence authority. Technical33 preserves those registries and does not introduce any field, writer, dimension or role rule. Separate native execution/routing duties retain their actual XML dependencies.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1019,
+    "predecessorId": "NREQ-a8c837f03845bcc13fce6b11558d645b",
+    "originalStatement": "For every operation, acceptance mode must come from Section 17.12.",
+    "independentMechanismClass": "XML_ROUTE_SUPPORT_AND_RESULTS",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "Base1074 explicitly selects acceptance MODE from17.12. Base1513–1517 defines HUMAN_ACCEPTANCE_REQUIRED versus VALIDATED_AUTO_COMMIT from human authority, replaced-current records and agent-owned reserved-slot conditions; application commands bypass proposal acceptance. F1 technical25–29 preserves specialized execution readiness/receipt binding and adds no mode. Therefore the F1 edge is diagnostic. The separately decided XML edge concerns only faithful native-versus-external routing and whether proposal acceptance applies, not a changed mode rule.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "CORRECTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      },
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base21/1681/1836 and current D require faithful native support and actual current semantics. Technical33 supplies the SELECT_XML invocation-root behavior that determines faithful representability and its actual normalized result. For1015/1016/1019 this only determines the existing native/application versus external/proposal route; it changes no fixed response permission or acceptance-mode rule once the route is chosen. Other native operations and exact stage ordering remain unchanged.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1020,
+    "predecessorId": "NREQ-67758895442ef76133f8f4df3c09df79",
+    "originalStatement": "For every operation, writable families must be exactly the Section 38 families whose records the operation's Section 37 description and Section 14.6 contract create or complete.",
+    "independentMechanismClass": "DIAGNOSTIC_FIXED_SCOPE_AUTHORITY",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This atom fixes an operation class/permission/family/independence mapping or native Test IR syntax/version/DAG admission. Technical25–29 supplies F1 execution-readiness/compatibility/history duties, not a new definition of that fixed mapping or native syntax. Preserve those separate F1 execution obligations without making this qualifier an effective governor.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      },
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "The atom selects fixed writer families, stage-scope dimensions or independence authority. Technical33 preserves those registries and does not introduce any field, writer, dimension or role rule. Separate native execution/routing duties retain their actual XML dependencies.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1022,
+    "predecessorId": "NREQ-55624173a7190b0153efcfa6ca2c513a",
+    "originalStatement": "For every operation, the completion predicate must be the owning stage's Section 37 Completion clause.",
+    "independentMechanismClass": "XML_ACTUAL_COMPLETION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base1074/14.7 current scope and owning-stage completion consume the accepted compatible F1 definition/test/fixture/target/outcome and selected current stage/operation/scope/history relationship. Technical25–29 supplies that bounded retained relationship and receipt-only completion, under current B proofExpressions precedence. It supplies no new writer/executor or independent phase-table authority.",
+        "effectiveBranchCondition": "Only the already-adopted F1 conditional receipt routes and their source-required current scope/completion relationship.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      },
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "The registry’s completion predicate references the owning current stage contract. Where that predicate requires current faithful native tests/results, it must use supplied-node SELECT_XML semantics, without treating a different ambient-root result as current completion. This adds no stage completion requirement beyond the source.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1025,
+    "predecessorId": "NREQ-b9410a00b1276547354b171fa56835ab",
+    "originalStatement": "For every operation, independence requirements must be exactly those imposed by Sections 26.1–26.6 on the operation's role.",
+    "independentMechanismClass": "DIAGNOSTIC_FIXED_SCOPE_AUTHORITY",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This atom fixes an operation class/permission/family/independence mapping or native Test IR syntax/version/DAG admission. Technical25–29 supplies F1 execution-readiness/compatibility/history duties, not a new definition of that fixed mapping or native syntax. Preserve those separate F1 execution obligations without making this qualifier an effective governor.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      },
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "The atom selects fixed writer families, stage-scope dimensions or independence authority. Technical33 preserves those registries and does not introduce any field, writer, dimension or role rule. Separate native execution/routing duties retain their actual XML dependencies.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1731,
+    "predecessorId": "NREQ-6cfce256a9198eaf5d9fb27a84b6576c",
+    "originalStatement": "The single ingestion path rejects before canonical mutation: unknown Test IR version.",
+    "independentMechanismClass": "XML_AFFECTED_SEMANTIC_IDENTITIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base1921–1930 and2023 bind actual language/operation/used-selector semantics and normalized IR/result identities. Technical33 supplies current SELECT_XML meaning, so affected XML/language/operation identity and canonical executable normalization must include it. This is not a requirement to change an unrelated registry or endorse an existing digest; historical evidence cannot inherit materially changed semantics.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      },
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This atom fixes an operation class/permission/family/independence mapping or native Test IR syntax/version/DAG admission. Technical25–29 supplies F1 execution-readiness/compatibility/history duties, not a new definition of that fixed mapping or native syntax. Preserve those separate F1 execution obligations without making this qualifier an effective governor.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1733,
+    "predecessorId": "NREQ-7eb84037fed3455d846ff41687ecf413",
+    "originalStatement": "The single ingestion path rejects before canonical mutation: invalid operation arguments.",
+    "independentMechanismClass": "DIAGNOSTIC_FIXED_GRAMMAR",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "Technical33 expressly preserves selector grammar, node shape and explicit extraction. This atom concerns invalid argument shape, JSON selector syntax or grammar publication, not the XML query root or evaluated result. Close the broad qualifier without weakening actual XML semantic validation elsewhere.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      },
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This atom fixes an operation class/permission/family/independence mapping or native Test IR syntax/version/DAG admission. Technical25–29 supplies F1 execution-readiness/compatibility/history duties, not a new definition of that fixed mapping or native syntax. Preserve those separate F1 execution obligations without making this qualifier an effective governor.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1734,
+    "predecessorId": "NREQ-9049f8d065edf3281d25cf8bbd8633ef",
+    "originalStatement": "The single ingestion path rejects before canonical mutation: invalid Test IR binding.",
+    "independentMechanismClass": "XML_EXPLICIT_NODE_BINDING",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base1714/2025 requires an explicit current DAG binding. Technical33 forbids recovering ambient ancestors/original roots and requires explicitly passing the earlier parsed root when intended. That semantic meaning of the eligible supplied node is part of actual native binding validation/publication; shape, one-node input and same-execution provenance are preserved.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      },
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This atom fixes an operation class/permission/family/independence mapping or native Test IR syntax/version/DAG admission. Technical25–29 supplies F1 execution-readiness/compatibility/history duties, not a new definition of that fixed mapping or native syntax. Preserve those separate F1 execution obligations without making this qualifier an effective governor.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 2003,
+    "predecessorId": "NREQ-eb4682550012a9e005312539983200d9",
+    "originalStatement": "The application executes every faithfully expressible mechanical test.",
+    "independentMechanismClass": "XML_ROUTE_SUPPORT_AND_RESULTS",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base21/1681/1836 and current D require faithful native support and actual current semantics. Technical33 supplies the SELECT_XML invocation-root behavior that determines faithful representability and its actual normalized result. For1015/1016/1019 this only determines the existing native/application versus external/proposal route; it changes no fixed response permission or acceptance-mode rule once the route is chosen. Other native operations and exact stage ordering remain unchanged.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 2005,
+    "predecessorId": "NREQ-29001be5c7e377e867e814e1f503dc03",
+    "originalStatement": "The application validates the test.",
+    "independentMechanismClass": "XML_ROUTE_SUPPORT_AND_RESULTS",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base21/1681/1836 and current D require faithful native support and actual current semantics. Technical33 supplies the SELECT_XML invocation-root behavior that determines faithful representability and its actual normalized result. For1015/1016/1019 this only determines the existing native/application versus external/proposal route; it changes no fixed response permission or acceptance-mode rule once the route is chosen. Other native operations and exact stage ordering remain unchanged.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 2013,
+    "predecessorId": "NREQ-5930e2002cf0063f192c9a8da089ac73",
+    "originalStatement": "EXECUTABLE_SPEC has contract: Canonical normalized composable Test IR.",
+    "independentMechanismClass": "XML_AFFECTED_SEMANTIC_IDENTITIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base1921–1930 and2023 bind actual language/operation/used-selector semantics and normalized IR/result identities. Technical33 supplies current SELECT_XML meaning, so affected XML/language/operation identity and canonical executable normalization must include it. This is not a requirement to change an unrelated registry or endorse an existing digest; historical evidence cannot inherit materially changed semantics.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 2017,
+    "predecessorId": "NREQ-1483b28da6ff112dc9123e8455005fe9",
+    "originalStatement": "Canonical Test IR hash has contract: Calculated from normalized executable specification.",
+    "independentMechanismClass": "XML_AFFECTED_SEMANTIC_IDENTITIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base1921–1930 and2023 bind actual language/operation/used-selector semantics and normalized IR/result identities. Technical33 supplies current SELECT_XML meaning, so affected XML/language/operation identity and canonical executable normalization must include it. This is not a requirement to change an unrelated registry or endorse an existing digest; historical evidence cannot inherit materially changed semantics.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 2019,
+    "predecessorId": "NREQ-7b5bab2e0dcf4ec2334d3a67f20fda46",
+    "originalStatement": "Authoring shortcuts may exist only when they compile to the exact canonical primitive IR before acceptance.",
+    "independentMechanismClass": "XML_AFFECTED_SEMANTIC_IDENTITIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base1921–1930 and2023 bind actual language/operation/used-selector semantics and normalized IR/result identities. Technical33 supplies current SELECT_XML meaning, so affected XML/language/operation identity and canonical executable normalization must include it. This is not a requirement to change an unrelated registry or endorse an existing digest; historical evidence cannot inherit materially changed semantics.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 2035,
+    "predecessorId": "NREQ-3b5c1dfc4e08f9d8c4954687efb2c7ad",
+    "originalStatement": "Errors propagate as typed execution failure.",
+    "independentMechanismClass": "DIAGNOSTIC_PORTS_AND_TERMINAL_PROPAGATION",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "Base1778 and D115/141/147 fix named ports, arity/types and propagation of an already determined terminal state without partial output. Technical33 preserves those contracts. Which value or terminal state a SELECT_XML evaluation produces remains separately governed; the fixed propagation/port predicate itself acquires no root interpretation.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 2036,
+    "predecessorId": "NREQ-92504288bda87a9fefb0df89b76c3e97",
+    "originalStatement": "Every registered operation declares cardinalities.",
+    "independentMechanismClass": "DIAGNOSTIC_PORTS_AND_TERMINAL_PROPAGATION",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "Base1778 and D115/141/147 fix named ports, arity/types and propagation of an already determined terminal state without partial output. Technical33 preserves those contracts. Which value or terminal state a SELECT_XML evaluation produces remains separately governed; the fixed propagation/port predicate itself acquires no root interpretation.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 2037,
+    "predecessorId": "NREQ-8cbdc3375fc6ba6265abdd1b7f8b0f96",
+    "originalStatement": "Every registered operation declares deterministic error codes.",
+    "independentMechanismClass": "DIAGNOSTIC_PORTS_AND_TERMINAL_PROPAGATION",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "Base1778 and D115/141/147 fix named ports, arity/types and propagation of an already determined terminal state without partial output. Technical33 preserves those contracts. Which value or terminal state a SELECT_XML evaluation produces remains separately governed; the fixed propagation/port predicate itself acquires no root interpretation.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 2038,
+    "predecessorId": "NREQ-2aa07f3667203ceafddcc26a105de8d1",
+    "originalStatement": "Every registered operation declares error propagation.",
+    "independentMechanismClass": "DIAGNOSTIC_PORTS_AND_TERMINAL_PROPAGATION",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "Base1778 and D115/141/147 fix named ports, arity/types and propagation of an already determined terminal state without partial output. Technical33 preserves those contracts. Which value or terminal state a SELECT_XML evaluation produces remains separately governed; the fixed propagation/port predicate itself acquires no root interpretation.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 2039,
+    "predecessorId": "NREQ-07b9b03b9b6eca4492d1b55f34a50b69",
+    "originalStatement": "Every registered operation declares exact types.",
+    "independentMechanismClass": "DIAGNOSTIC_PORTS_AND_TERMINAL_PROPAGATION",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "Base1778 and D115/141/147 fix named ports, arity/types and propagation of an already determined terminal state without partial output. Technical33 preserves those contracts. Which value or terminal state a SELECT_XML evaluation produces remains separately governed; the fixed propagation/port predicate itself acquires no root interpretation.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 2041,
+    "predecessorId": "NREQ-d54b17468bfda1e04e9914fa2cad07cb",
+    "originalStatement": "Every registered operation declares one normalized output type.",
+    "independentMechanismClass": "DIAGNOSTIC_PORTS_AND_TERMINAL_PROPAGATION",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "Base1778 and D115/141/147 fix named ports, arity/types and propagation of an already determined terminal state without partial output. Technical33 preserves those contracts. Which value or terminal state a SELECT_XML evaluation produces remains separately governed; the fixed propagation/port predicate itself acquires no root interpretation.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 2164,
+    "predecessorId": "NREQ-c5c388faca4975e21b73c14bffbcd6a0",
+    "originalStatement": "Every Test IR specification and every result binds TEST_IR_LANGUAGE_VERSION.",
+    "independentMechanismClass": "XML_AFFECTED_SEMANTIC_IDENTITIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base1921–1930 and2023 bind actual language/operation/used-selector semantics and normalized IR/result identities. Technical33 supplies current SELECT_XML meaning, so affected XML/language/operation identity and canonical executable normalization must include it. This is not a requirement to change an unrelated registry or endorse an existing digest; historical evidence cannot inherit materially changed semantics.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 2165,
+    "predecessorId": "NREQ-e6083926e57a07795024b2e33f1fbc2a",
+    "originalStatement": "Every Test IR specification and every result binds OPERATION_REGISTRY_VERSION.",
+    "independentMechanismClass": "XML_AFFECTED_SEMANTIC_IDENTITIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base1921–1930 and2023 bind actual language/operation/used-selector semantics and normalized IR/result identities. Technical33 supplies current SELECT_XML meaning, so affected XML/language/operation identity and canonical executable normalization must include it. This is not a requirement to change an unrelated registry or endorse an existing digest; historical evidence cannot inherit materially changed semantics.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 2166,
+    "predecessorId": "NREQ-6edd4c40bb7da31835669f3284130824",
+    "originalStatement": "Every Test IR specification and every result binds OPERATION_REGISTRY_SHA256.",
+    "independentMechanismClass": "XML_AFFECTED_SEMANTIC_IDENTITIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base1921–1930 and2023 bind actual language/operation/used-selector semantics and normalized IR/result identities. Technical33 supplies current SELECT_XML meaning, so affected XML/language/operation identity and canonical executable normalization must include it. This is not a requirement to change an unrelated registry or endorse an existing digest; historical evidence cannot inherit materially changed semantics.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 2167,
+    "predecessorId": "NREQ-e5aab51a6523837453f78f1b00d2869b",
+    "originalStatement": "Every Test IR specification and result binds the JSON selector registry digest when used.",
+    "independentMechanismClass": "DIAGNOSTIC_OTHER_REGISTRIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This atom names JSON-selector, regex or parser registry identities actually used. The accepted interpretation changes SELECT_XML invocation-root semantics, not PARSE_XML node production, JSON selection or regex. Shared paragraph context is insufficient to attach an XML-selector governor to these other registries.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 2168,
+    "predecessorId": "NREQ-f79a94066212fafb15c5f1e114bbd4d2",
+    "originalStatement": "Every Test IR specification and result binds JSON_SELECTOR_REGISTRY_VERSION when used.",
+    "independentMechanismClass": "DIAGNOSTIC_OTHER_REGISTRIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This atom names JSON-selector, regex or parser registry identities actually used. The accepted interpretation changes SELECT_XML invocation-root semantics, not PARSE_XML node production, JSON selection or regex. Shared paragraph context is insufficient to attach an XML-selector governor to these other registries.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 2169,
+    "predecessorId": "NREQ-49f0556d922e1d1fbb0cc9c4ac552d4c",
+    "originalStatement": "Every Test IR specification and result binds the XML selector registry digest when used.",
+    "independentMechanismClass": "XML_AFFECTED_SEMANTIC_IDENTITIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base1921–1930 and2023 bind actual language/operation/used-selector semantics and normalized IR/result identities. Technical33 supplies current SELECT_XML meaning, so affected XML/language/operation identity and canonical executable normalization must include it. This is not a requirement to change an unrelated registry or endorse an existing digest; historical evidence cannot inherit materially changed semantics.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 2170,
+    "predecessorId": "NREQ-c634bed4a8810b999ab1fea64320328f",
+    "originalStatement": "Every Test IR specification and result binds XML_SELECTOR_REGISTRY_VERSION when used.",
+    "independentMechanismClass": "XML_AFFECTED_SEMANTIC_IDENTITIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base1921–1930 and2023 bind actual language/operation/used-selector semantics and normalized IR/result identities. Technical33 supplies current SELECT_XML meaning, so affected XML/language/operation identity and canonical executable normalization must include it. This is not a requirement to change an unrelated registry or endorse an existing digest; historical evidence cannot inherit materially changed semantics.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 2171,
+    "predecessorId": "NREQ-6f8fce1475b2ff5e51b6dd0d254b0ce4",
+    "originalStatement": "Every Test IR specification and result binds the regex registry digest when used.",
+    "independentMechanismClass": "DIAGNOSTIC_OTHER_REGISTRIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This atom names JSON-selector, regex or parser registry identities actually used. The accepted interpretation changes SELECT_XML invocation-root semantics, not PARSE_XML node production, JSON selection or regex. Shared paragraph context is insufficient to attach an XML-selector governor to these other registries.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 2172,
+    "predecessorId": "NREQ-2028af7e99139ce9e0c7b699a795bc07",
+    "originalStatement": "Every Test IR specification and result binds REGEX_REGISTRY_VERSION when used.",
+    "independentMechanismClass": "DIAGNOSTIC_OTHER_REGISTRIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This atom names JSON-selector, regex or parser registry identities actually used. The accepted interpretation changes SELECT_XML invocation-root semantics, not PARSE_XML node production, JSON selection or regex. Shared paragraph context is insufficient to attach an XML-selector governor to these other registries.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 2173,
+    "predecessorId": "NREQ-16220cbed6692640830203fac95cc7ef",
+    "originalStatement": "Every Test IR specification and every result binds parser registry identities used by the execution.",
+    "independentMechanismClass": "DIAGNOSTIC_OTHER_REGISTRIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This atom names JSON-selector, regex or parser registry identities actually used. The accepted interpretation changes SELECT_XML invocation-root semantics, not PARSE_XML node production, JSON selection or regex. Shared paragraph context is insufficient to attach an XML-selector governor to these other registries.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 2185,
+    "predecessorId": "NREQ-0eb58d64d361b868248f233161b67034",
+    "originalStatement": "test-runtime.js exposes behavior equivalent to supports(test).",
+    "independentMechanismClass": "XML_ROUTE_SUPPORT_AND_RESULTS",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base21/1681/1836 and current D require faithful native support and actual current semantics. Technical33 supplies the SELECT_XML invocation-root behavior that determines faithful representability and its actual normalized result. For1015/1016/1019 this only determines the existing native/application versus external/proposal route; it changes no fixed response permission or acceptance-mode rule once the route is chosen. Other native operations and exact stage ordering remain unchanged.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 2186,
+    "predecessorId": "NREQ-c432b9f661c75f4012337ff92e757b84",
+    "originalStatement": "test-runtime.js exposes behavior equivalent to capabilities().",
+    "independentMechanismClass": "XML_ROUTE_SUPPORT_AND_RESULTS",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base21/1681/1836 and current D require faithful native support and actual current semantics. Technical33 supplies the SELECT_XML invocation-root behavior that determines faithful representability and its actual normalized result. For1015/1016/1019 this only determines the existing native/application versus external/proposal route; it changes no fixed response permission or acceptance-mode rule once the route is chosen. Other native operations and exact stage ordering remain unchanged.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 2187,
+    "predecessorId": "NREQ-b65e5a6d0780e2ce8b959637c7e7b16e",
+    "originalStatement": "test-runtime.js exposes behavior equivalent to validateSpec(spec, bindings).",
+    "independentMechanismClass": "XML_ROUTE_SUPPORT_AND_RESULTS",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base21/1681/1836 and current D require faithful native support and actual current semantics. Technical33 supplies the SELECT_XML invocation-root behavior that determines faithful representability and its actual normalized result. For1015/1016/1019 this only determines the existing native/application versus external/proposal route; it changes no fixed response permission or acceptance-mode rule once the route is chosen. Other native operations and exact stage ordering remain unchanged.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 2188,
+    "predecessorId": "NREQ-f07846e5cf196b0158b842b9ed75f07d",
+    "originalStatement": "test-runtime.js exposes behavior equivalent to executeTest(test, artifacts, canonicalBindings).",
+    "independentMechanismClass": "XML_ROUTE_SUPPORT_AND_RESULTS",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base21/1681/1836 and current D require faithful native support and actual current semantics. Technical33 supplies the SELECT_XML invocation-root behavior that determines faithful representability and its actual normalized result. For1015/1016/1019 this only determines the existing native/application versus external/proposal route; it changes no fixed response permission or acceptance-mode rule once the route is chosen. Other native operations and exact stage ordering remain unchanged.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 2200,
+    "predecessorId": "NREQ-810c651c993343aa7342f925f00b7819",
+    "originalStatement": "The test worker returns a deterministic normalized result.",
+    "independentMechanismClass": "XML_ROUTE_SUPPORT_AND_RESULTS",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base21/1681/1836 and current D require faithful native support and actual current semantics. Technical33 supplies the SELECT_XML invocation-root behavior that determines faithful representability and its actual normalized result. For1015/1016/1019 this only determines the existing native/application versus external/proposal route; it changes no fixed response permission or acceptance-mode rule once the route is chosen. Other native operations and exact stage ordering remain unchanged.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 2239,
+    "predecessorId": "NREQ-3dc1974e1789d51020c7c86c9686bc53",
+    "originalStatement": "Every native execution result additionally records every parser/selector/regex registry identity actually used.",
+    "independentMechanismClass": "XML_AFFECTED_SEMANTIC_IDENTITIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base1921–1930 and2023 bind actual language/operation/used-selector semantics and normalized IR/result identities. Technical33 supplies current SELECT_XML meaning, so affected XML/language/operation identity and canonical executable normalization must include it. This is not a requirement to change an unrelated registry or endorse an existing digest; historical evidence cannot inherit materially changed semantics.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 2240,
+    "predecessorId": "NREQ-0c16cb96e8920f76d0e4374ab5bee666",
+    "originalStatement": "Every native execution result additionally records exact output port selected as result.",
+    "independentMechanismClass": "DIAGNOSTIC_RESULT_PORT_RECORDING",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "Recording the exact selected result port preserves a named-port provenance fact. Technical33 changes SELECT_XML values within an invocation but neither selects a different port nor changes this recording predicate. Actual output meaning and used semantic identities remain separately governed.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 2241,
+    "predecessorId": "NREQ-4095c61fcc3cd83a15b1b241b1b36efd",
+    "originalStatement": "Every native execution result additionally records normalized DAG hash.",
+    "independentMechanismClass": "XML_AFFECTED_SEMANTIC_IDENTITIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base1921–1930 and2023 bind actual language/operation/used-selector semantics and normalized IR/result identities. Technical33 supplies current SELECT_XML meaning, so affected XML/language/operation identity and canonical executable normalization must include it. This is not a requirement to change an unrelated registry or endorse an existing digest; historical evidence cannot inherit materially changed semantics.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 2242,
+    "predecessorId": "NREQ-9f4521b548d636d3d3868564cf7ae707",
+    "originalStatement": "Every native execution result additionally records OPERATION_REGISTRY_SHA256.",
+    "independentMechanismClass": "XML_AFFECTED_SEMANTIC_IDENTITIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base1921–1930 and2023 bind actual language/operation/used-selector semantics and normalized IR/result identities. Technical33 supplies current SELECT_XML meaning, so affected XML/language/operation identity and canonical executable normalization must include it. This is not a requirement to change an unrelated registry or endorse an existing digest; historical evidence cannot inherit materially changed semantics.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 2243,
+    "predecessorId": "NREQ-93e6b58ee7412967c7579e2e7071923d",
+    "originalStatement": "Every native execution result additionally records OPERATION_REGISTRY_VERSION.",
+    "independentMechanismClass": "XML_AFFECTED_SEMANTIC_IDENTITIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base1921–1930 and2023 bind actual language/operation/used-selector semantics and normalized IR/result identities. Technical33 supplies current SELECT_XML meaning, so affected XML/language/operation identity and canonical executable normalization must include it. This is not a requirement to change an unrelated registry or endorse an existing digest; historical evidence cannot inherit materially changed semantics.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 2245,
+    "predecessorId": "NREQ-c38171e8e3f7b4248d131f78cd46c67e",
+    "originalStatement": "Every native execution result additionally records TEST_IR_LANGUAGE_VERSION.",
+    "independentMechanismClass": "XML_AFFECTED_SEMANTIC_IDENTITIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base1921–1930 and2023 bind actual language/operation/used-selector semantics and normalized IR/result identities. Technical33 supplies current SELECT_XML meaning, so affected XML/language/operation identity and canonical executable normalization must include it. This is not a requirement to change an unrelated registry or endorse an existing digest; historical evidence cannot inherit materially changed semantics.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 2253,
+    "predecessorId": "NREQ-5260760096a13fda7a4aa72d5047b696",
+    "originalStatement": "The worker executes only the validated explicit DAG.",
+    "independentMechanismClass": "XML_ROUTE_SUPPORT_AND_RESULTS",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base21/1681/1836 and current D require faithful native support and actual current semantics. Technical33 supplies the SELECT_XML invocation-root behavior that determines faithful representability and its actual normalized result. For1015/1016/1019 this only determines the existing native/application versus external/proposal route; it changes no fixed response permission or acceptance-mode rule once the route is chosen. Other native operations and exact stage ordering remain unchanged.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 2650,
+    "predecessorId": "NREQ-5c77b853196b19a60ba095e169856d48",
+    "originalStatement": "Each LEAF declares its truth extraction.",
+    "independentMechanismClass": "DIAGNOSTIC_DECLARED_TRUTH_EXTRACTION",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "Base2576 requires each leaf to declare its truth extraction. D120/147 distinguishes selected assertion disposition from Boolean data and fixed terminal states. Technical33 may affect the upstream XML test result but does not alter this declaration or truth-extraction mapping. Do not equate consuming a result with redefining the extraction rule.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 3255,
+    "predecessorId": "NREQ-d63cb207877f3b346fa6384b42499a26",
+    "originalStatement": "The single ingestion path rejects before canonical mutation an unsupported Test IR construct.",
+    "independentMechanismClass": "XML_ROUTE_SUPPORT_AND_RESULTS",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base21/1681/1836 and current D require faithful native support and actual current semantics. Technical33 supplies the SELECT_XML invocation-root behavior that determines faithful representability and its actual normalized result. For1015/1016/1019 this only determines the existing native/application versus external/proposal route; it changes no fixed response permission or acceptance-mode rule once the route is chosen. Other native operations and exact stage ordering remain unchanged.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      },
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This atom fixes an operation class/permission/family/independence mapping or native Test IR syntax/version/DAG admission. Technical25–29 supplies F1 execution-readiness/compatibility/history duties, not a new definition of that fixed mapping or native syntax. Preserve those separate F1 execution obligations without making this qualifier an effective governor.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 3256,
+    "predecessorId": "NREQ-7e1c7e725ae7c4ecca2b5963852c3715",
+    "originalStatement": "The single ingestion path rejects before canonical mutation an unsafe Test IR construct.",
+    "independentMechanismClass": "XML_ROUTE_SUPPORT_AND_RESULTS",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base21/1681/1836 and current D require faithful native support and actual current semantics. Technical33 supplies the SELECT_XML invocation-root behavior that determines faithful representability and its actual normalized result. For1015/1016/1019 this only determines the existing native/application versus external/proposal route; it changes no fixed response permission or acceptance-mode rule once the route is chosen. Other native operations and exact stage ordering remain unchanged.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      },
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This atom fixes an operation class/permission/family/independence mapping or native Test IR syntax/version/DAG admission. Technical25–29 supplies F1 execution-readiness/compatibility/history duties, not a new definition of that fixed mapping or native syntax. Preserve those separate F1 execution obligations without making this qualifier an effective governor.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 3302,
+    "predecessorId": "NREQ-0aa2b3acc9475e826a64a653a162c43c",
+    "originalStatement": "Every registered operation declares exact input arity.",
+    "independentMechanismClass": "DIAGNOSTIC_PORTS_AND_TERMINAL_PROPAGATION",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "Base1778 and D115/141/147 fix named ports, arity/types and propagation of an already determined terminal state without partial output. Technical33 preserves those contracts. Which value or terminal state a SELECT_XML evaluation produces remains separately governed; the fixed propagation/port predicate itself acquires no root interpretation.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 3303,
+    "predecessorId": "NREQ-cf898ecc8c2b43f60605db7700411b82",
+    "originalStatement": "Every registered operation declares exact input types.",
+    "independentMechanismClass": "DIAGNOSTIC_PORTS_AND_TERMINAL_PROPAGATION",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "Base1778 and D115/141/147 fix named ports, arity/types and propagation of an already determined terminal state without partial output. Technical33 preserves those contracts. Which value or terminal state a SELECT_XML evaluation produces remains separately governed; the fixed propagation/port predicate itself acquires no root interpretation.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 3309,
+    "predecessorId": "NREQ-fd9e63248644c5fc262e4b7dbd7773b6",
+    "originalStatement": "A failed or unknown predecessor propagates the registered terminal disposition.",
+    "independentMechanismClass": "DIAGNOSTIC_PORTS_AND_TERMINAL_PROPAGATION",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "Base1778 and D115/141/147 fix named ports, arity/types and propagation of an already determined terminal state without partial output. Technical33 preserves those contracts. Which value or terminal state a SELECT_XML evaluation produces remains separately governed; the fixed propagation/port predicate itself acquires no root interpretation.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 3311,
+    "predecessorId": "NREQ-f65a7f93aa5f71df587b4b4fa9671c5e",
+    "originalStatement": "SELECT_JSON_PATH uses a restricted application-owned selector contract.",
+    "independentMechanismClass": "DIAGNOSTIC_FIXED_GRAMMAR",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "Technical33 expressly preserves selector grammar, node shape and explicit extraction. This atom concerns invalid argument shape, JSON selector syntax or grammar publication, not the XML query root or evaluated result. Close the broad qualifier without weakening actual XML semantic validation elsewhere.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 3312,
+    "predecessorId": "NREQ-053e0651066eb067a25c2b786bce5d0c",
+    "originalStatement": "SELECT_XML uses a restricted application-owned selector contract.",
+    "independentMechanismClass": "XML_ACTUAL_SELECTOR_CONTRACT",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "This predicate directly publishes/requires the actual restricted SELECT_XML operation or its semantic argument contract. Current D134/141 plus technical33–35 makes the one eligible supplied node the invocation root. The first absolute segment matches it at position1 and later traversal stays within its subtree. Fixed syntax and node shape do not remove this actual semantic dependency.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 3313,
+    "predecessorId": "NREQ-96563f384707e84e3870e03154ed0e96",
+    "originalStatement": "Unknown selector syntax fails Stage 06 ingestion.",
+    "independentMechanismClass": "DIAGNOSTIC_FIXED_GRAMMAR",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "Technical33 expressly preserves selector grammar, node shape and explicit extraction. This atom concerns invalid argument shape, JSON selector syntax or grammar publication, not the XML query root or evaluated result. Close the broad qualifier without weakening actual XML semantic validation elsewhere.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 3314,
+    "predecessorId": "NREQ-093c36174d5ee478ad9b54c2c8857ea3",
+    "originalStatement": "Unsupported selector syntax fails Stage 06 ingestion.",
+    "independentMechanismClass": "DIAGNOSTIC_FIXED_GRAMMAR",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "Technical33 expressly preserves selector grammar, node shape and explicit extraction. This atom concerns invalid argument shape, JSON selector syntax or grammar publication, not the XML query root or evaluated result. Close the broad qualifier without weakening actual XML semantic validation elsewhere.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 3601,
+    "predecessorId": "NREQ-df144f7172903577a99dd753b6cc49ad",
+    "originalStatement": "The Stage 06 prompt must dynamically publish Test IR version",
+    "independentMechanismClass": "XML_AFFECTED_SEMANTIC_IDENTITIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base1921–1930 and2023 bind actual language/operation/used-selector semantics and normalized IR/result identities. Technical33 supplies current SELECT_XML meaning, so affected XML/language/operation identity and canonical executable normalization must include it. This is not a requirement to change an unrelated registry or endorse an existing digest; historical evidence cannot inherit materially changed semantics.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 3602,
+    "predecessorId": "NREQ-660ddf778897eaa4db6a425c84138183",
+    "originalStatement": "The Stage 06 prompt must dynamically publish registered operations",
+    "independentMechanismClass": "XML_AFFECTED_SEMANTIC_IDENTITIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base1921–1930 and2023 bind actual language/operation/used-selector semantics and normalized IR/result identities. Technical33 supplies current SELECT_XML meaning, so affected XML/language/operation identity and canonical executable normalization must include it. This is not a requirement to change an unrelated registry or endorse an existing digest; historical evidence cannot inherit materially changed semantics.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 3603,
+    "predecessorId": "NREQ-966ea487724da1acef761947bfe304be",
+    "originalStatement": "The Stage 06 prompt must dynamically publish argument contracts",
+    "independentMechanismClass": "XML_ACTUAL_SELECTOR_CONTRACT",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "This predicate directly publishes/requires the actual restricted SELECT_XML operation or its semantic argument contract. Current D134/141 plus technical33–35 makes the one eligible supplied node the invocation root. The first absolute segment matches it at position1 and later traversal stays within its subtree. Fixed syntax and node shape do not remove this actual semantic dependency.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 3604,
+    "predecessorId": "NREQ-9576819f1e3fb55f40809cb4443da2a2",
+    "originalStatement": "The Stage 06 prompt must dynamically publish available bindings",
+    "independentMechanismClass": "XML_EXPLICIT_NODE_BINDING",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base1714/2025 requires an explicit current DAG binding. Technical33 forbids recovering ambient ancestors/original roots and requires explicitly passing the earlier parsed root when intended. That semantic meaning of the eligible supplied node is part of actual native binding validation/publication; shape, one-node input and same-execution provenance are preserved.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 3607,
+    "predecessorId": "NREQ-d2aa6c1021f4d78478919d484b1ae853",
+    "originalStatement": "Stage 06: For every mandatory requirement, the prompt must first determine whether the proposition can be faithfully represented in Test IR.",
+    "independentMechanismClass": "XML_ROUTE_SUPPORT_AND_RESULTS",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base21/1681/1836 and current D require faithful native support and actual current semantics. Technical33 supplies the SELECT_XML invocation-root behavior that determines faithful representability and its actual normalized result. For1015/1016/1019 this only determines the existing native/application versus external/proposal route; it changes no fixed response permission or acceptance-mode rule once the route is chosen. Other native operations and exact stage ordering remain unchanged.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 3617,
+    "predecessorId": "NREQ-d3f1e78242eacf5562b5842419493f1a",
+    "originalStatement": "Stage 06: Native tests must use the current supported registry identities.",
+    "independentMechanismClass": "XML_AFFECTED_SEMANTIC_IDENTITIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base1921–1930 and2023 bind actual language/operation/used-selector semantics and normalized IR/result identities. Technical33 supplies current SELECT_XML meaning, so affected XML/language/operation identity and canonical executable normalization must include it. This is not a requirement to change an unrelated registry or endorse an existing digest; historical evidence cannot inherit materially changed semantics.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 3618,
+    "predecessorId": "NREQ-e874ecbab768a48af63ae2810c105792",
+    "originalStatement": "Stage 06: Native tests must use the current supported Test IR language.",
+    "independentMechanismClass": "XML_AFFECTED_SEMANTIC_IDENTITIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base1921–1930 and2023 bind actual language/operation/used-selector semantics and normalized IR/result identities. Technical33 supplies current SELECT_XML meaning, so affected XML/language/operation identity and canonical executable normalization must include it. This is not a requirement to change an unrelated registry or endorse an existing digest; historical evidence cannot inherit materially changed semantics.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 4407,
+    "predecessorId": "NREQ-3db19367b5d63b2f37e975dcb38a9f0d",
+    "originalStatement": "tests: Native route is valid only when every operation is registered.",
+    "independentMechanismClass": "XML_ROUTE_SUPPORT_AND_RESULTS",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base21/1681/1836 and current D require faithful native support and actual current semantics. Technical33 supplies the SELECT_XML invocation-root behavior that determines faithful representability and its actual normalized result. For1015/1016/1019 this only determines the existing native/application versus external/proposal route; it changes no fixed response permission or acceptance-mode rule once the route is chosen. Other native operations and exact stage ordering remain unchanged.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5397,
+    "predecessorId": "NREQ-53b8f1d4937c9991d46f73c77849cede",
+    "originalStatement": "The mandatory deterministic and behavioral suite must verify: Registered native test → no external action.",
+    "independentMechanismClass": "XML_ROUTE_SUPPORT_AND_RESULTS",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base21/1681/1836 and current D require faithful native support and actual current semantics. Technical33 supplies the SELECT_XML invocation-root behavior that determines faithful representability and its actual normalized result. For1015/1016/1019 this only determines the existing native/application versus external/proposal route; it changes no fixed response permission or acceptance-mode rule once the route is chosen. Other native operations and exact stage ordering remain unchanged.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5398,
+    "predecessorId": "NREQ-e7c3c9a6418856ef4454ce54bde0f159",
+    "originalStatement": "The mandatory deterministic and behavioral suite must verify: Unsupported native test → blocked.",
+    "independentMechanismClass": "XML_ROUTE_SUPPORT_AND_RESULTS",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base21/1681/1836 and current D require faithful native support and actual current semantics. Technical33 supplies the SELECT_XML invocation-root behavior that determines faithful representability and its actual normalized result. For1015/1016/1019 this only determines the existing native/application versus external/proposal route; it changes no fixed response permission or acceptance-mode rule once the route is chosen. Other native operations and exact stage ordering remain unchanged.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5669,
+    "predecessorId": "NREQ-dcb50923f27fa69b6d5db7319bc39ea2",
+    "originalStatement": "The mandatory suite must verify: Test IR rejects wrong port",
+    "independentMechanismClass": "DIAGNOSTIC_PORTS_AND_TERMINAL_PROPAGATION",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "Base1778 and D115/141/147 fix named ports, arity/types and propagation of an already determined terminal state without partial output. Technical33 preserves those contracts. Which value or terminal state a SELECT_XML evaluation produces remains separately governed; the fixed propagation/port predicate itself acquires no root interpretation.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5670,
+    "predecessorId": "NREQ-329f3296c24fc0f4a7012ed7c5d794d3",
+    "originalStatement": "The mandatory suite must verify: Test IR rejects wrong port type",
+    "independentMechanismClass": "DIAGNOSTIC_PORTS_AND_TERMINAL_PROPAGATION",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "Base1778 and D115/141/147 fix named ports, arity/types and propagation of an already determined terminal state without partial output. Technical33 preserves those contracts. Which value or terminal state a SELECT_XML evaluation produces remains separately governed; the fixed propagation/port predicate itself acquires no root interpretation.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5673,
+    "predecessorId": "NREQ-9c9657db0c7b16deb3721a16217859a8",
+    "originalStatement": "The mandatory suite must verify: A predecessor error creates no partial result.",
+    "independentMechanismClass": "DIAGNOSTIC_PORTS_AND_TERMINAL_PROPAGATION",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "Base1778 and D115/141/147 fix named ports, arity/types and propagation of an already determined terminal state without partial output. Technical33 preserves those contracts. Which value or terminal state a SELECT_XML evaluation produces remains separately governed; the fixed propagation/port predicate itself acquires no root interpretation.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5674,
+    "predecessorId": "NREQ-9c4b198c61ce9a0f66509356168972b1",
+    "originalStatement": "The mandatory suite must verify: A predecessor error deterministically prevents dependent execution.",
+    "independentMechanismClass": "DIAGNOSTIC_PORTS_AND_TERMINAL_PROPAGATION",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "Base1778 and D115/141/147 fix named ports, arity/types and propagation of an already determined terminal state without partial output. Technical33 preserves those contracts. Which value or terminal state a SELECT_XML evaluation produces remains separately governed; the fixed propagation/port predicate itself acquires no root interpretation.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5899,
+    "predecessorId": "NREQ-2d95768d72a88357a0d9c865b52a2aa5",
+    "originalStatement": "The mandatory suite must verify: Test IR suite covers rejection of extra ports",
+    "independentMechanismClass": "DIAGNOSTIC_PORTS_AND_TERMINAL_PROPAGATION",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "Base1778 and D115/141/147 fix named ports, arity/types and propagation of an already determined terminal state without partial output. Technical33 preserves those contracts. Which value or terminal state a SELECT_XML evaluation produces remains separately governed; the fixed propagation/port predicate itself acquires no root interpretation.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5900,
+    "predecessorId": "NREQ-6ac7c367b33705a6b1f279a6f3752116",
+    "originalStatement": "The mandatory suite must verify: Test IR suite covers rejection of missing ports",
+    "independentMechanismClass": "DIAGNOSTIC_PORTS_AND_TERMINAL_PROPAGATION",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "Base1778 and D115/141/147 fix named ports, arity/types and propagation of an already determined terminal state without partial output. Technical33 preserves those contracts. Which value or terminal state a SELECT_XML evaluation produces remains separately governed; the fixed propagation/port predicate itself acquires no root interpretation.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5905,
+    "predecessorId": "NREQ-210a90fc03afaa1602a2f298c6fd935c",
+    "originalStatement": "The mandatory Test IR suite must cover deterministic predecessor-error propagation",
+    "independentMechanismClass": "DIAGNOSTIC_PORTS_AND_TERMINAL_PROPAGATION",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "Base1778 and D115/141/147 fix named ports, arity/types and propagation of an already determined terminal state without partial output. Technical33 preserves those contracts. Which value or terminal state a SELECT_XML evaluation produces remains separately governed; the fixed propagation/port predicate itself acquires no root interpretation.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6053,
+    "predecessorId": "NREQ-69da627da2711417750b1358ddfc61b2",
+    "originalStatement": "The negative matrix must cover: Test IR negative case: wrong port",
+    "independentMechanismClass": "DIAGNOSTIC_PORTS_AND_TERMINAL_PROPAGATION",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "Base1778 and D115/141/147 fix named ports, arity/types and propagation of an already determined terminal state without partial output. Technical33 preserves those contracts. Which value or terminal state a SELECT_XML evaluation produces remains separately governed; the fixed propagation/port predicate itself acquires no root interpretation.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6433,
+    "predecessorId": "NREQ-12fc6783d9db5ade5ea38f681d67614e",
+    "originalStatement": "workflow-schema.js must add migration-aware Test IR fields",
+    "independentMechanismClass": "DIAGNOSTIC_FIELD_SCHEMA_MODEL",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This atom requires closed/migration-aware IR or application-owned result fields/model in the stated sequence. Technical33 preserves canonical node shape and adds no property, writer or result category. Semantic identity values and actual execution within those fields have separate governing predicates.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6434,
+    "predecessorId": "NREQ-8c5dfaf755361923878ba6decd4d777a",
+    "originalStatement": "workflow-schema.js must add closed Test IR schemas",
+    "independentMechanismClass": "DIAGNOSTIC_FIELD_SCHEMA_MODEL",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This atom requires closed/migration-aware IR or application-owned result fields/model in the stated sequence. Technical33 preserves canonical node shape and adds no property, writer or result category. Semantic identity values and actual execution within those fields have separate governing predicates.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6435,
+    "predecessorId": "NREQ-5f23179aa619ae73eb7e54f4d2d1a736",
+    "originalStatement": "workflow-schema.js must add application-owned native-result fields",
+    "independentMechanismClass": "DIAGNOSTIC_FIELD_SCHEMA_MODEL",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This atom requires closed/migration-aware IR or application-owned result fields/model in the stated sequence. Technical33 preserves canonical node shape and adds no property, writer or result category. Semantic identity values and actual execution within those fields have separate governing predicates.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6444,
+    "predecessorId": "NREQ-7d68a63868fa4bd77be1afeee8dcefa0",
+    "originalStatement": "workflow-schema.js must reject unsafe IR",
+    "independentMechanismClass": "XML_ROUTE_SUPPORT_AND_RESULTS",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base21/1681/1836 and current D require faithful native support and actual current semantics. Technical33 supplies the SELECT_XML invocation-root behavior that determines faithful representability and its actual normalized result. For1015/1016/1019 this only determines the existing native/application versus external/proposal route; it changes no fixed response permission or acceptance-mode rule once the route is chosen. Other native operations and exact stage ordering remain unchanged.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6445,
+    "predecessorId": "NREQ-3066b18c346d562bc6c9a490fdd25e72",
+    "originalStatement": "workflow-schema.js must reject unsupported IR",
+    "independentMechanismClass": "XML_ROUTE_SUPPORT_AND_RESULTS",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base21/1681/1836 and current D require faithful native support and actual current semantics. Technical33 supplies the SELECT_XML invocation-root behavior that determines faithful representability and its actual normalized result. For1015/1016/1019 this only determines the existing native/application versus external/proposal route; it changes no fixed response permission or acceptance-mode rule once the route is chosen. Other native operations and exact stage ordering remain unchanged.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6446,
+    "predecessorId": "NREQ-9051a34f7c55273b63263fef142c91eb",
+    "originalStatement": "test-runtime.js must be created as the single runtime authority containing the declared responsibilities.",
+    "independentMechanismClass": "XML_COMPLETE_NATIVE_RESPONSIBILITY",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "This complete native-runtime responsibility or test-coverage duty includes actual registered operation behavior rather than only a file name, owner or sequence. SELECT_XML supplied-root meaning is part of that complete current responsibility. The source duty remains a duty; no implementation or test result is read or accepted.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6447,
+    "predecessorId": "NREQ-835ddefda2586dff8235da0b4328c0f7",
+    "originalStatement": "test-runtime.js must contain the Test IR language identity",
+    "independentMechanismClass": "XML_AFFECTED_SEMANTIC_IDENTITIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base1921–1930 and2023 bind actual language/operation/used-selector semantics and normalized IR/result identities. Technical33 supplies current SELECT_XML meaning, so affected XML/language/operation identity and canonical executable normalization must include it. This is not a requirement to change an unrelated registry or endorse an existing digest; historical evidence cannot inherit materially changed semantics.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6448,
+    "predecessorId": "NREQ-406c88b1f462e769824f47e3cb8dd302",
+    "originalStatement": "test-runtime.js must contain the Test IR operation-registry identity",
+    "independentMechanismClass": "XML_AFFECTED_SEMANTIC_IDENTITIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base1921–1930 and2023 bind actual language/operation/used-selector semantics and normalized IR/result identities. Technical33 supplies current SELECT_XML meaning, so affected XML/language/operation identity and canonical executable normalization must include it. This is not a requirement to change an unrelated registry or endorse an existing digest; historical evidence cannot inherit materially changed semantics.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6449,
+    "predecessorId": "NREQ-5aab953542da261c815f756ef4422cf0",
+    "originalStatement": "test-runtime.js must contain Test IR registry",
+    "independentMechanismClass": "XML_AFFECTED_SEMANTIC_IDENTITIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base1921–1930 and2023 bind actual language/operation/used-selector semantics and normalized IR/result identities. Technical33 supplies current SELECT_XML meaning, so affected XML/language/operation identity and canonical executable normalization must include it. This is not a requirement to change an unrelated registry or endorse an existing digest; historical evidence cannot inherit materially changed semantics.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6450,
+    "predecessorId": "NREQ-b77b98f54543b24053f7b3bdcde0bd63",
+    "originalStatement": "test-runtime.js must contain validation",
+    "independentMechanismClass": "XML_ROUTE_SUPPORT_AND_RESULTS",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base21/1681/1836 and current D require faithful native support and actual current semantics. Technical33 supplies the SELECT_XML invocation-root behavior that determines faithful representability and its actual normalized result. For1015/1016/1019 this only determines the existing native/application versus external/proposal route; it changes no fixed response permission or acceptance-mode rule once the route is chosen. Other native operations and exact stage ordering remain unchanged.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6451,
+    "predecessorId": "NREQ-e667e3f662841656a6dd8463b088f3df",
+    "originalStatement": "test-runtime.js must contain capabilities",
+    "independentMechanismClass": "XML_ROUTE_SUPPORT_AND_RESULTS",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base21/1681/1836 and current D require faithful native support and actual current semantics. Technical33 supplies the SELECT_XML invocation-root behavior that determines faithful representability and its actual normalized result. For1015/1016/1019 this only determines the existing native/application versus external/proposal route; it changes no fixed response permission or acceptance-mode rule once the route is chosen. Other native operations and exact stage ordering remain unchanged.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6452,
+    "predecessorId": "NREQ-b1c5c0bfd1438f22fff6660bbf0be747",
+    "originalStatement": "test-runtime.js must contain normalization",
+    "independentMechanismClass": "XML_AFFECTED_SEMANTIC_IDENTITIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base1921–1930 and2023 bind actual language/operation/used-selector semantics and normalized IR/result identities. Technical33 supplies current SELECT_XML meaning, so affected XML/language/operation identity and canonical executable normalization must include it. This is not a requirement to change an unrelated registry or endorse an existing digest; historical evidence cannot inherit materially changed semantics.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6453,
+    "predecessorId": "NREQ-17f81625d61a1c522a1998d002b0174d",
+    "originalStatement": "test-runtime.js must contain operation semantics",
+    "independentMechanismClass": "XML_ROUTE_SUPPORT_AND_RESULTS",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base21/1681/1836 and current D require faithful native support and actual current semantics. Technical33 supplies the SELECT_XML invocation-root behavior that determines faithful representability and its actual normalized result. For1015/1016/1019 this only determines the existing native/application versus external/proposal route; it changes no fixed response permission or acceptance-mode rule once the route is chosen. Other native operations and exact stage ordering remain unchanged.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6456,
+    "predecessorId": "NREQ-7f176af2f996ee05f812021a9e1b7d46",
+    "originalStatement": "test-runtime.js must contain normalized deterministic results.",
+    "independentMechanismClass": "XML_ROUTE_SUPPORT_AND_RESULTS",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base21/1681/1836 and current D require faithful native support and actual current semantics. Technical33 supplies the SELECT_XML invocation-root behavior that determines faithful representability and its actual normalized result. For1015/1016/1019 this only determines the existing native/application versus external/proposal route; it changes no fixed response permission or acceptance-mode rule once the route is chosen. Other native operations and exact stage ordering remain unchanged.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6492,
+    "predecessorId": "NREQ-5d8aa570e1c7f66aee51baaec7c09204",
+    "originalStatement": "prompt-engine.js must dynamically publish in Stage 06 the Test IR capabilities",
+    "independentMechanismClass": "XML_ROUTE_SUPPORT_AND_RESULTS",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base21/1681/1836 and current D require faithful native support and actual current semantics. Technical33 supplies the SELECT_XML invocation-root behavior that determines faithful representability and its actual normalized result. For1015/1016/1019 this only determines the existing native/application versus external/proposal route; it changes no fixed response permission or acceptance-mode rule once the route is chosen. Other native operations and exact stage ordering remain unchanged.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6493,
+    "predecessorId": "NREQ-4986e4b549bba524349118037a9a9b4b",
+    "originalStatement": "prompt-engine.js must dynamically publish in Stage 06 the Test IR grammar",
+    "independentMechanismClass": "DIAGNOSTIC_FIXED_GRAMMAR",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "Technical33 expressly preserves selector grammar, node shape and explicit extraction. This atom concerns invalid argument shape, JSON selector syntax or grammar publication, not the XML query root or evaluated result. Close the broad qualifier without weakening actual XML semantic validation elsewhere.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6507,
+    "predecessorId": "NREQ-f69d55fe2f3552d62e3de3f7378033f4",
+    "originalStatement": "response-ingestion.js must validate before accepting Stage 06 proposals the Test IR",
+    "independentMechanismClass": "XML_ROUTE_SUPPORT_AND_RESULTS",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base21/1681/1836 and current D require faithful native support and actual current semantics. Technical33 supplies the SELECT_XML invocation-root behavior that determines faithful representability and its actual normalized result. For1015/1016/1019 this only determines the existing native/application versus external/proposal route; it changes no fixed response permission or acceptance-mode rule once the route is chosen. Other native operations and exact stage ordering remain unchanged.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6575,
+    "predecessorId": "NREQ-2d667c330e72176ef6b66aa9b87370f7",
+    "originalStatement": ".github/workflows/pages.yml must run Test IR tests",
+    "independentMechanismClass": "XML_COMPLETE_NATIVE_RESPONSIBILITY",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "This complete native-runtime responsibility or test-coverage duty includes actual registered operation behavior rather than only a file name, owner or sequence. SELECT_XML supplied-root meaning is part of that complete current responsibility. The source duty remains a duty; no implementation or test result is read or accepted.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6597,
+    "predecessorId": "NREQ-41f18c283baccaefdb397173924c285b",
+    "originalStatement": "test-runtime.js and test-worker.js must implement deterministic predecessor-error propagation",
+    "independentMechanismClass": "DIAGNOSTIC_PORTS_AND_TERMINAL_PROPAGATION",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "Base1778 and D115/141/147 fix named ports, arity/types and propagation of an already determined terminal state without partial output. Technical33 preserves those contracts. Which value or terminal state a SELECT_XML evaluation produces remains separately governed; the fixed propagation/port predicate itself acquires no root interpretation.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6601,
+    "predecessorId": "NREQ-8ab1f70f786a30a1584e47d4ce8b410c",
+    "originalStatement": "test-runtime.js and test-worker.js must implement language identities",
+    "independentMechanismClass": "XML_AFFECTED_SEMANTIC_IDENTITIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base1921–1930 and2023 bind actual language/operation/used-selector semantics and normalized IR/result identities. Technical33 supplies current SELECT_XML meaning, so affected XML/language/operation identity and canonical executable normalization must include it. This is not a requirement to change an unrelated registry or endorse an existing digest; historical evidence cannot inherit materially changed semantics.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6602,
+    "predecessorId": "NREQ-4258d7c477fe54771b8afcec4c9f0aee",
+    "originalStatement": "test-runtime.js and test-worker.js must implement named ports",
+    "independentMechanismClass": "DIAGNOSTIC_PORTS_AND_TERMINAL_PROPAGATION",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "Base1778 and D115/141/147 fix named ports, arity/types and propagation of an already determined terminal state without partial output. Technical33 preserves those contracts. Which value or terminal state a SELECT_XML evaluation produces remains separately governed; the fixed propagation/port predicate itself acquires no root interpretation.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6603,
+    "predecessorId": "NREQ-f1d9e46059ac0cf2d57e760f6cf1a66f",
+    "originalStatement": "test-runtime.js and test-worker.js must implement operation-registry identities",
+    "independentMechanismClass": "XML_AFFECTED_SEMANTIC_IDENTITIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base1921–1930 and2023 bind actual language/operation/used-selector semantics and normalized IR/result identities. Technical33 supplies current SELECT_XML meaning, so affected XML/language/operation identity and canonical executable normalization must include it. This is not a requirement to change an unrelated registry or endorse an existing digest; historical evidence cannot inherit materially changed semantics.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6698,
+    "predecessorId": "NREQ-d950c692e8303bf1c8356054e9f3436a",
+    "originalStatement": "Phase 3 — introduce /3: Add Test IR fields. This step follows the declared preceding steps in this required sequence.",
+    "independentMechanismClass": "DIAGNOSTIC_FIELD_SCHEMA_MODEL",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This atom requires closed/migration-aware IR or application-owned result fields/model in the stated sequence. Technical33 preserves canonical node shape and adds no property, writer or result category. Semantic identity values and actual execution within those fields have separate governing predicates.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6699,
+    "predecessorId": "NREQ-eda5472f7990e8d62e9f11e129f8e9a8",
+    "originalStatement": "Phase 3 — introduce /3: Add application-owned deterministic-result model. This step follows the declared preceding steps in this required sequence.",
+    "independentMechanismClass": "DIAGNOSTIC_FIELD_SCHEMA_MODEL",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This atom requires closed/migration-aware IR or application-owned result fields/model in the stated sequence. Technical33 preserves canonical node shape and adds no property, writer or result category. Semantic identity values and actual execution within those fields have separate governing predicates.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6700,
+    "predecessorId": "NREQ-4d725a18055e888d5d672d7a8718dd74",
+    "originalStatement": "Phase 3 — introduce /3: Add Test IR ingestion validation. This step follows the declared preceding steps in this required sequence.",
+    "independentMechanismClass": "XML_ROUTE_SUPPORT_AND_RESULTS",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base21/1681/1836 and current D require faithful native support and actual current semantics. Technical33 supplies the SELECT_XML invocation-root behavior that determines faithful representability and its actual normalized result. For1015/1016/1019 this only determines the existing native/application versus external/proposal route; it changes no fixed response permission or acceptance-mode rule once the route is chosen. Other native operations and exact stage ordering remain unchanged.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6705,
+    "predecessorId": "NREQ-12366d80943ccc83a9057c237ff51cf8",
+    "originalStatement": "Phase 4 — deterministic runtime: Register exact Version 1 primitives. This step follows the declared preceding steps in this required sequence.",
+    "independentMechanismClass": "XML_ROUTE_SUPPORT_AND_RESULTS",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base21/1681/1836 and current D require faithful native support and actual current semantics. Technical33 supplies the SELECT_XML invocation-root behavior that determines faithful representability and its actual normalized result. For1015/1016/1019 this only determines the existing native/application versus external/proposal route; it changes no fixed response permission or acceptance-mode rule once the route is chosen. Other native operations and exact stage ordering remain unchanged.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6708,
+    "predecessorId": "NREQ-f660db6d2fbd3c34cffb4c1f380b100e",
+    "originalStatement": "Phase 4 — deterministic runtime: Add runtime tests. This step follows the declared preceding steps in this required sequence.",
+    "independentMechanismClass": "XML_COMPLETE_NATIVE_RESPONSIBILITY",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "This complete native-runtime responsibility or test-coverage duty includes actual registered operation behavior rather than only a file name, owner or sequence. SELECT_XML supplied-root meaning is part of that complete current responsibility. The source duty remains a duty; no implementation or test result is read or accepted.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6709,
+    "predecessorId": "NREQ-2b75bbc03a7ad8a4eb5a96e401bc8bd8",
+    "originalStatement": "Phase 4 — deterministic runtime: Expose runtime capabilities to the engine. Retain the stated implementation ordering.",
+    "independentMechanismClass": "XML_ROUTE_SUPPORT_AND_RESULTS",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base21/1681/1836 and current D require faithful native support and actual current semantics. Technical33 supplies the SELECT_XML invocation-root behavior that determines faithful representability and its actual normalized result. For1015/1016/1019 this only determines the existing native/application versus external/proposal route; it changes no fixed response permission or acceptance-mode rule once the route is chosen. Other native operations and exact stage ordering remain unchanged.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6710,
+    "predecessorId": "NREQ-0b09040c9824634ec03cecaa9776b64f",
+    "originalStatement": "Phase 4 — deterministic runtime: Expose runtime capabilities to the prompt. Retain the stated implementation ordering.",
+    "independentMechanismClass": "XML_ROUTE_SUPPORT_AND_RESULTS",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base21/1681/1836 and current D require faithful native support and actual current semantics. Technical33 supplies the SELECT_XML invocation-root behavior that determines faithful representability and its actual normalized result. For1015/1016/1019 this only determines the existing native/application versus external/proposal route; it changes no fixed response permission or acceptance-mode rule once the route is chosen. Other native operations and exact stage ordering remain unchanged.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6811,
+    "predecessorId": "NREQ-352dcc4d8e3ef11e080b14d896e926c9",
+    "originalStatement": "The exact deployed commit must prove Test IR DAG and registry-identity coverage = 100% under the applicable closed metric universe and independently reviewed empty-universe rule.",
+    "independentMechanismClass": "XML_AFFECTED_SEMANTIC_IDENTITIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base1921–1930 and2023 bind actual language/operation/used-selector semantics and normalized IR/result identities. Technical33 supplies current SELECT_XML meaning, so affected XML/language/operation identity and canonical executable normalization must include it. This is not a requirement to change an unrelated registry or endorse an existing digest; historical evidence cannot inherit materially changed semantics.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6828,
+    "predecessorId": "NREQ-6d8b716a92c04e37e2c30a4dced5f91d",
+    "originalStatement": "The exact deployed commit must prove Unsupported Test IR treated as executable = 0 within the applicable current scope.",
+    "independentMechanismClass": "XML_ROUTE_SUPPORT_AND_RESULTS",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base21/1681/1836 and current D require faithful native support and actual current semantics. Technical33 supplies the SELECT_XML invocation-root behavior that determines faithful representability and its actual normalized result. For1015/1016/1019 this only determines the existing native/application versus external/proposal route; it changes no fixed response permission or acceptance-mode rule once the route is chosen. Other native operations and exact stage ordering remain unchanged.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 7049,
+    "predecessorId": "NREQ-a2ac22a5c5a1b3e21c3aa278e9f78685",
+    "originalStatement": "The application must determine deterministic computation",
+    "independentMechanismClass": "XML_ROUTE_SUPPORT_AND_RESULTS",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Base21/1681/1836 and current D require faithful native support and actual current semantics. Technical33 supplies the SELECT_XML invocation-root behavior that determines faithful representability and its actual normalized result. For1015/1016/1019 this only determines the existing native/application versus external/proposal route; it changes no fixed response permission or acceptance-mode rule once the route is chosen. Other native operations and exact stage ordering remain unchanged.",
+        "effectiveBranchCondition": "Only when this exact current predicate actually uses SELECT_XML support, binding, result or affected semantic identity; no universal XML execution requirement.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  }
+]

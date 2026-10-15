@@ -1,0 +1,28 @@
+{
+  "schema": "closed-loop-incremental-retained-impact-freeze/1",
+  "status": "FROZEN_PENDING_DISTINCT_RECONCILIATION",
+  "batchId": "RETAINED-IMPACT-BATCH-001",
+  "files": [
+    {
+      "path": "/workspace/shared/clrt-v4-retained-impact-review/batch-001/mechanism-review.json",
+      "sha256": "a5f0dfaff4637f029b16ff41d97e0e590a8a151b84e0d8ea402db75a69aa0d3f",
+      "byteLength": 102275
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-retained-impact-review/batch-001/per-id-decisions.json",
+      "sha256": "4c3b7ffeaf0ea561f526320f00691eaa5621bfc239edeb4f2d4c7857ee6c8928",
+      "byteLength": 9727416
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-retained-impact-review/batch-001/actual-read-inventory.json",
+      "sha256": "e99f655799a644e3083dc44b891520a4d7bfd01f0f456e2f1c33df42238e09ea",
+      "byteLength": 23722
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-retained-impact-review/batch-001/summary.json",
+      "sha256": "8a12a2211348d67a90700b42bc533452e51d7b5d7f61811ac9256ba533c44b5f",
+      "byteLength": 15029
+    }
+  ],
+  "generatorSha256": "e6881bb211d1965c45a6006051a20c2a363a632da6a10561905e41b9d4d869c0"
+}

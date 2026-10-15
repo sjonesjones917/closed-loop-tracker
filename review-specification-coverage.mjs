@@ -1,3 +1,4 @@
+import {loadInsertionAtomicExtraction,insertionAtomicEvidenceReferences} from './approved-source-continuation.mjs';
 import fs from 'node:fs';
 import './hash.js';
 import crypto from 'node:crypto';
@@ -324,6 +325,7 @@ export function validateAtomicProjection(record,{readFile,sourceBytes,reconciler
 }
 
 export function atomicEvidenceReferences(descriptor,readFile=readAtomicEvidenceBytes){
+  if(descriptor?.schema==='closed-loop-approved-insertion-atomic-extraction/1')return insertionAtomicEvidenceReferences(descriptor,{readFile});
   if(descriptor?.status!=='RECONCILED')return [];
   const refs=[descriptor.draft,descriptor.independentReview,descriptor.reconciliation],records=refs.map(ref=>atomicEvidenceFile(ref,readFile)),reconciliation=records[2];
   refs.push(...records.flatMap(record=>record.inputs??[]));
@@ -471,6 +473,7 @@ export function validateAtomicSectionCoverage(record,rows,sections,sourceBytes,i
 }
 
 export function loadReviewedAtomicExtraction(descriptor,{sourceBytes,specificationPath,sections,priorRequirements=null,readFile=readAtomicEvidenceBytes}={}){
+  if(descriptor?.schema==='closed-loop-approved-insertion-atomic-extraction/1')return loadInsertionAtomicExtraction(descriptor,{sourceBytes,specificationPath,sections,priorRequirements,readFile});
   if(!descriptor||descriptor.status==='PENDING')return {established:false,descriptor:descriptor||{status:'PENDING'}};
   assert(descriptor.status==='RECONCILED','Atomic extraction status invalid');
   const sourceSha256=sha256(sourceBytes),refs=[descriptor.draft,descriptor.independentReview,descriptor.reconciliation];
@@ -583,14 +586,15 @@ return sourceText;
 
 // An independently reviewed exclusion is an exact source-evidence tuple, never
 // a heuristic permission to omit a historical section or a mandatory clause.
-export function validateMechanicalCandidateExclusions(lines,sourceSha256,semanticReview,reconciliation){
+export function validateMechanicalCandidateExclusions(lines,sourceSha256,semanticReview,reconciliation,{readFile=fs.readFileSync,onRead=()=>{}}={}){
   const exclusions=reconciliation.mechanicalCandidateExclusions||[];
   const descriptor=reconciliation.mechanicalCandidateExclusionEvidence;
   if(!descriptor){assert(exclusions.length===0,'Reviewed mechanical exclusion evidence is missing.');return {exclusions:[],mandatoryPreservedLines:[]};}
   const load=(record,base='.')=>{
     assert(record&&typeof record.path==='string'&&/^[0-9a-f]{64}$/.test(record.sha256),'Reviewed mechanical exclusion evidence identity is missing.');
-    const file=path.resolve(base,record.path),bytes=fs.readFileSync(file);
+    const file=path.resolve(base,record.path),bytes=readFile(file);
     assert(sha256(bytes)===record.sha256,'Reviewed mechanical exclusion evidence digest mismatch.');
+    onRead({path:file,sha256:record.sha256});
     return {file,value:JSON.parse(bytes)};
   };
   const evidence=load(descriptor),review=evidence.value;
@@ -622,8 +626,7 @@ export function validateMechanicalCandidateExclusions(lines,sourceSha256,semanti
   return {exclusions,mandatoryPreservedLines:[...mandatory]};
 }
 
-function reviewSpecificationCoverage(SPEC_PATH){
-const bytes=fs.readFileSync(SPEC_PATH);
+export function reviewSpecificationCoverageBytes(bytes,SPEC_PATH,readReviewerSource=()=>null){
 const text=new TextDecoder('utf-8',{fatal:true}).decode(bytes);
 const lines=text.split('\n');
 
@@ -683,11 +686,11 @@ for(let index=0;index<lines.length;index++){
   }
 }
 
-const reviewerSourceBytes=fs.readFileSync(new URL(import.meta.url));
+const reviewerSourceBytes=readReviewerSource();
 const result={
   schema:'closed-loop-independent-specification-review/1',
   reviewerVersion:REVIEWER_VERSION,
-  reviewerIdentitySha256:sha256(reviewerSourceBytes),
+  reviewerIdentitySha256:reviewerSourceBytes===null?null:sha256(reviewerSourceBytes),
   reviewedSourcePath:SPEC_PATH,
   reviewedSourceSha256:sha256(bytes),
   reviewedSourceByteLength:bytes.length,
@@ -698,11 +701,14 @@ const result={
   lineCoverage,
   status:'COMPLETE'
 };
-process.stdout.write(`${JSON.stringify(result)}\n`);
-
+return result;
 }
 
-if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url))reviewSpecificationCoverage(process.argv[2]||'specification/closed-loop-reliability-controlling-implementation-specification.txt');
+if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url)){
+ const SPEC_PATH=process.argv[2]||'specification/closed-loop-reliability-controlling-implementation-specification.txt';
+ const bytes=fs.readFileSync(SPEC_PATH);
+ process.stdout.write(`${JSON.stringify(reviewSpecificationCoverageBytes(bytes,SPEC_PATH,()=>fs.readFileSync(new URL(import.meta.url))))}\n`);
+}
 
 // Reporting only. Classification/exclusion authority remains the pinned review
 // and current proof collector; these counts never establish conformance.
@@ -712,4 +718,112 @@ export function sourceInventorySummary(requirements){
 }
 export function sourceTraceScopeDescription(established,legacyScope){
   return established?'Reviewed distinct atomic obligations with retained source-context qualifiers; implementation conformance requires current executed proof.':legacyScope||'Source-line coverage only';
+}
+
+// Shared original generator predicates; callers supply exact source state.
+export function generatorMechanicalCandidates(lines,start,at){
+ const H=globalThis.closedLoopHash,sh=sha256;
+const norm=/\b(MUST(?:\s+NOT)?|SHALL(?:\s+NOT)?|REQUIRED|PROHIBITED|REJECT(?:S|ED|ION)?|BLOCKS?|CANNOT|CAN NEVER|NEVER|EXACTLY|ONLY WHEN|COMPLETION|DEFINITION OF DONE|FAILS? CLOSED|DO NOT|MAY NOT)\b/i,imp=/^(?:[-*]\s*)?(?:implement|preserve|reject|require|verify|record|create|store|calculate|derive|enforce|prevent|keep|run|execute|inspect|bind|route|expose|render|use|remove|add|generate|publish|freeze|invalidate|migrate|support|permit|do not|must|never|return|select|capture|assign|retain|compare|include|exclude)\b/i,shape=/^(?:[-*]\s+|\d+\.\s+|Stage\s+\d+\s+—|Role:|Operations:|Completion:|Fields:|[A-Z][A-Z0-9_./-]{2,}(?:\s|$))/,metric=/\s=\s(?:100%|0|1\.0|TRUE|FALSE|ACCEPTED|REJECTED|BLOCKED)\s*$/;
+const A=[];for(let i=0;i<lines.length;i++){const line=i+1,s=at[line],raw=lines[i],t=raw.trim();if(!s||!t||t==='⸻')continue;const heading=start.has(line),top=Number(s.sectionId.split('.')[0]),candidate=heading?(norm.test(s.title)||imp.test(s.title)||['1.1','1.2','1.3','1.4'].includes(s.sectionId)):(norm.test(t)||imp.test(t)||shape.test(t)||metric.test(t)||t.includes('→')||(top>=40&&top<=50));if(candidate)A.push({line,sectionId:s.sectionId,text:t,lineSha256:sh(Buffer.from(raw)),origin:'EXTRACTOR_A'})}
+
+ return A;
+}
+
+// Shared original generator predicates; callers supply exact source state.
+export function mergeGeneratorMechanicalCandidates(A,B){
+ const H=globalThis.closedLoopHash,sh=sha256;
+const by=new Map;for(const x of A)by.set(x.line,{...x,origins:['EXTRACTOR_A']});for(const x of B.candidateLines){const y=by.get(x.line);if(y){if(y.lineSha256!==x.textSha256||y.sectionId!==x.sectionId)throw Error(`Material disagreement line ${x.line}`);y.origins.push('INDEPENDENT_REVIEWER_B')}else by.set(x.line,{line:x.line,sectionId:x.sectionId,text:x.text,lineSha256:x.textSha256,origins:['INDEPENDENT_REVIEWER_B']})}
+
+ return by;
+}
+
+// Shared original generator predicates; callers supply exact source state.
+export function applyGeneratorSourceClauses(clauseReview,sourceSha256,lines,at,by){
+ const H=globalThis.closedLoopHash,sh=sha256;
+if(clauseReview.schema!=='closed-loop-source-clause-review/1'||clauseReview.specificationSha256!==sourceSha256)throw Error('Source clause review does not match the controlling specification');
+const reviewedLines=new Set;
+for(const clause of clauseReview.clauses){
+ const line=clause.line,raw=lines[line-1],section=at[line];
+ if(reviewedLines.has(line)||clause.classification!=='MANDATORY'||!section||clause.sectionId!==section.sectionId||clause.sourceLineSha256!==sh(Buffer.from(raw))||clause.text!==raw.trim()||!clause.reason)throw Error('Invalid source-reviewed clause at line '+line);
+ reviewedLines.add(line);const existing=by.get(line);if(existing)existing.origins.push('CONTINUATION_SOURCE_REVIEW');else by.set(line,{line,sectionId:section.sectionId,text:clause.text,lineSha256:clause.sourceLineSha256,origins:['CONTINUATION_SOURCE_REVIEW']});
+}
+
+ return reviewedLines;
+}
+
+// Shared original generator predicates; callers supply exact source state.
+export function applyGeneratorSourceSemantics({semanticReview,semanticReconciliation,independentDeclaration,sourceSha256,bytes,lines,by,clarificationLines,amendmentLines,approvedAmendmentClassification,requirementIdentity,reviewedLines,at,exclusionOptions}){
+ const H=globalThis.closedLoopHash,sh=sha256;
+if(semanticReview.atomic_requirement_completeness_established===true||semanticReconciliation.atomicManifestCompletenessClaim===true)throw Error('Source-only review cannot claim atomic completeness');
+if(semanticReview.schema!=='independent-source-semantic-review/1'||semanticReview.source?.sha256!==sourceSha256||semanticReview.source?.byte_length!==bytes.length||semanticReview.source?.line_count!==lines.length-1||semanticReview.complete!==true||semanticReview.independence?.draft_manifest_received!==false||semanticReview.independence?.implementation_inspected!==false||semanticReview.acceptance_claim!==false||semanticReview.implementation_conformance_claim!==false||semanticReview.conflicts?.length!==0)throw Error('Independent semantic source review isolation or source mismatch');
+if(semanticReconciliation.schema!=='closed-loop-independent-source-reconciliation/1'||semanticReconciliation.specificationSha256!==sourceSha256||semanticReconciliation.sourceReviewSha256!==independentDeclaration.sourceReviewSha256||semanticReconciliation.sourceReviewCompletedBeforeReconciliation!==true||semanticReconciliation.status!=='ACCEPTED_SOURCE_COVERAGE_ONLY'||semanticReconciliation.materialDisagreements?.length!==0||semanticReconciliation.unresolvedObservationIds?.length!==0||semanticReconciliation.unresolvedSourceLines?.length!==0||semanticReconciliation.implementationConformanceClaim!==false||semanticReconciliation.releaseAcceptanceClaim!==false)throw Error('Independent semantic source reconciliation not complete');
+let nextSourceLine=1;const independentObservations=new Map;
+for(const section of semanticReview.sections){
+ if(section.start_line!==nextSourceLine||section.end_line<section.start_line||section.end_line>lines.length-1)throw Error('Independent semantic source section coverage gap');
+ nextSourceLine=section.end_line+1;
+ for(const observation of section.observations){if(independentObservations.has(observation.observation_id)||!observation.obligation||observation.lines.length!==2||observation.lines[0]<section.start_line||observation.lines[1]>section.end_line||observation.lines[1]<observation.lines[0])throw Error('Independent semantic source observation invalid');independentObservations.set(observation.observation_id,observation);}
+}
+if(nextSourceLine!==lines.length)throw Error('Independent semantic source review incomplete');
+const observationResolutions=new Map;
+for(const resolution of semanticReconciliation.observationResolutions){const observation=independentObservations.get(resolution.observationId);if(!observation||observationResolutions.has(resolution.observationId)||H.stableStringify(resolution.sourceLines)!==H.stableStringify(observation.lines)||!resolution.reason||!['COVERED_BY_REQUIREMENT_ENTRIES','NONNORMATIVE_ILLUSTRATIVE_EXAMPLE'].includes(resolution.disposition)||!resolution.normativeRequirementIds?.length)throw Error('Independent semantic observation not reconciled');observationResolutions.set(resolution.observationId,resolution);}
+if(observationResolutions.size!==independentObservations.size)throw Error('Independent semantic source observation omitted');
+const semanticSourceLines=new Map,sourceReviewAddedLines=new Set;
+for(const classification of semanticReconciliation.resolvedSourceLines){if(semanticSourceLines.has(classification.line)||classification.lineSha256!==sh(Buffer.from(lines[classification.line-1]||''))||!classification.reason||!['NORMATIVE_REQUIREMENT','NORMATIVE_CONTEXT','NONNORMATIVE'].includes(classification.status)||classification.independentObservationIds.some(id=>!independentObservations.has(id)))throw Error('Independent semantic source classification invalid');semanticSourceLines.set(classification.line,classification);}
+const priorRequirements=[...by.values()].filter(x=>!clarificationLines.has(x.line)&&(!amendmentLines.has(x.line)||approvedAmendmentClassification(x.line)?.classification==='NORMATIVE'));
+if(priorRequirements.length!==semanticReconciliation.priorRequirementCount||sh(Buffer.from(priorRequirements.map(requirementIdentity).sort().join('\n')+'\n'))!==semanticReconciliation.priorRequirementIdsSha256)throw Error('Independent semantic reconciliation prior identity mismatch');
+const reviewedExclusions=validateMechanicalCandidateExclusions(lines,sourceSha256,semanticReview,semanticReconciliation,exclusionOptions),excludedCandidateLines=new Set;
+for(const exclusion of reviewedExclusions.exclusions){
+ const row=by.get(exclusion.line),classification=semanticSourceLines.get(exclusion.line);
+ if(!row||reviewedLines.has(exclusion.line)||requirementIdentity(row)!==exclusion.normativeRequirementId||classification?.status!=='NONNORMATIVE'||classification.normativeRequirementIds?.length!==0)throw Error('Reviewed mechanical exclusion conflicts with a mandatory source clause or classification');
+ excludedCandidateLines.add(exclusion.line);by.delete(exclusion.line);
+}
+for(const row of priorRequirements)if(semanticSourceLines.get(row.line)?.status==='NONNORMATIVE'&&!excludedCandidateLines.has(row.line))throw Error('Reviewed mechanical exclusion evidence is missing for a nonnormative candidate');
+for(const addition of semanticReconciliation.additions){
+ const raw=lines[addition.line-1],section=at[addition.line],classification=semanticSourceLines.get(addition.line);
+ if(by.has(addition.line)||sourceReviewAddedLines.has(addition.line)||addition.sourceLineSha256!==sh(Buffer.from(raw))||addition.text!==raw.trim()||addition.sectionId!==(section?.sectionId||'preamble')||addition.normativeRequirementId!==requirementIdentity({line:addition.line,lineSha256:addition.sourceLineSha256})||classification?.status!=='NORMATIVE_REQUIREMENT'||classification.normativeRequirementIds?.length!==1||classification.normativeRequirementIds[0]!==addition.normativeRequirementId||!addition.independentObservationIds?.length||addition.independentObservationIds.some(id=>{const observation=independentObservations.get(id);return !observation||addition.line<observation.lines[0]||addition.line>observation.lines[1]}))throw Error('Independent semantic source addition invalid');
+ sourceReviewAddedLines.add(addition.line);by.set(addition.line,{line:addition.line,sectionId:addition.sectionId,text:addition.text,lineSha256:addition.sourceLineSha256,origins:['INDEPENDENT_SEMANTIC_SOURCE_RECONCILIATION']});
+}
+
+ return {independentObservations,observationResolutions,semanticSourceLines,sourceReviewAddedLines,reviewedExclusions,excludedCandidateLines};
+}
+
+// Shared original generator predicates; callers supply exact source state.
+export function materializeGeneratorSourceCoverage({req,lines,at,start,clarificationLines,amendmentLines,approvedAmendmentClassification,semanticSourceLines,independentDeclaration,existingReqLine}){
+ const H=globalThis.closedLoopHash,sh=sha256;
+const reqLine=existingReqLine??new Map;for(const r of req){if(!reqLine.has(r.sourceLocation.startLine))reqLine.set(r.sourceLocation.startLine,[]);reqLine.get(r.sourceLocation.startLine).push(r);}const coverage=lines.map((raw,i)=>{const line=i+1,t=raw.trim(),s=at[line],r=reqLine.get(line),clarification=clarificationLines.get(line);if(clarification)return{line,sectionId:s?.sectionId||null,status:'NORMATIVE_CLARIFICATION',normativeRequirementIds:clarification.normativeRequirementIds,lineSha256:sh(Buffer.from(raw)),reason:'Operator-approved clarification of existing mandatory requirements; no additional row or executed evidence.'};if(r)return{line,sectionId:r[0].sectionId,status:'NORMATIVE_REQUIREMENT',normativeRequirementIds:r.map(row=>row.normativeRequirementId).sort(),lineSha256:sh(Buffer.from(raw))};const amendment=amendmentLines.get(line);if(amendment){const classification=approvedAmendmentClassification(line);if(classification?.classification==='NORMATIVE')throw Error('Approved amendment normative obligation omitted');return{line,sectionId:s?.sectionId||null,status:t?'NONNORMATIVE':'BLANK',normativeRequirementIds:[],lineSha256:sh(Buffer.from(raw)),approvedAmendmentId:amendment.amendmentId,reason:classification?'Exact approved source-only classification: '+classification.classification:'Closing formatting blank before unchanged following section'};}const semanticClassification=semanticSourceLines.get(line);if(semanticClassification)return{...semanticClassification,sectionId:s?.sectionId||null,sourceReviewPath:independentDeclaration.sourceReviewPath,reconciliationPath:independentDeclaration.reconciliationPath};if(start.has(line))return{line,sectionId:start.get(line).sectionId,status:'SECTION_HEADING',normativeRequirementIds:[],lineSha256:sh(Buffer.from(raw)),reason:'Structural heading'};if(!t)return{line,sectionId:s?.sectionId||null,status:'BLANK',normativeRequirementIds:[],lineSha256:sh(Buffer.from(raw)),reason:'Formatting blank'};if(t==='⸻')return{line,sectionId:s?.sectionId||null,status:'NONNORMATIVE',normativeRequirementIds:[],lineSha256:sh(Buffer.from(raw)),reason:'Decorative separator'};return{line,sectionId:s?.sectionId||null,status:'UNRESOLVED_CONTEXT',normativeRequirementIds:[],lineSha256:sh(Buffer.from(raw)),reason:'Keyword extraction alone cannot establish that this nonempty source line is nonnormative. Semantic classification remains open.'}});
+
+ return {reqLine,coverage};
+}
+
+// Shared original generator predicates; callers supply exact source state.
+export function materializeGeneratorAtomicMembership(req,coverage,bytes,SP,sections,reqLine){
+ const H=globalThis.closedLoopHash,sh=sha256;
+ const membership=new Map;
+ for(const row of req)for(const location of [row.sourceLocation,...(row.atomicObligation?.contextSourceLocations||[])]){if(!membership.has(location.startLine))membership.set(location.startLine,new Set());membership.get(location.startLine).add(row.normativeRequirementId);}
+ for(const row of coverage){row.normativeRequirementIds=[...(membership.get(row.line)||[])].sort();if(row.normativeRequirementIds.length)row.status=reqLine.has(row.line)?'NORMATIVE_REQUIREMENT':'NORMATIVE_CONTEXT';else if(['NORMATIVE_REQUIREMENT','NORMATIVE_CONTEXT','NORMATIVE_CLARIFICATION'].includes(row.status)){row.status='NONNORMATIVE';row.reason='Distinct atomic reconciliation classifies this retained source line as nonnormative; see pinned decisions.';}}
+ validateAtomicLineMembership(req,coverage,bytes,SP,sections);
+ return coverage;
+}
+
+// Shared original generator predicates; callers supply exact source state.
+export function validateGeneratorMandatorySourceTraces(req,reviewedExclusions,semanticReconciliation){
+ const H=globalThis.closedLoopHash,sh=sha256;
+for(const line of reviewedExclusions.mandatoryPreservedLines)if(!req.some(row=>row.sourceLocation.startLine===line))throw Error('Reviewed mandatory historical-evidence limitation omitted');
+if(Number.isInteger(semanticReconciliation.expectedReconciledSourceTraceCount)&&req.length!==semanticReconciliation.expectedReconciledSourceTraceCount)throw Error('Reviewed reconciled source-trace count mismatch');
+
+ return true;
+}
+
+// Shared original generator predicates; callers supply exact source state.
+export function validateGeneratorSemanticTraceReferences(ids,observationResolutions,semanticSourceLines){
+ const H=globalThis.closedLoopHash,sh=sha256;
+for(const resolution of observationResolutions.values())if(resolution.normativeRequirementIds.some(id=>!ids.has(id)))throw Error('Independent semantic observation references missing requirement');
+for(const classification of semanticSourceLines.values())if(classification.normativeRequirementIds.some(id=>!ids.has(id))||(classification.status==='NORMATIVE_CONTEXT'&&!classification.normativeRequirementIds.length))throw Error('Independent semantic source context references missing requirement');
+
+ return true;
+}
+
+export function validateGeneratorResolvedSourceCoverage(coverage){
+ if(coverage.some(row=>row.status==='UNRESOLVED_CONTEXT'))throw Error('Independent semantic source reconciliation leaves unresolved context');
+ return true;
 }

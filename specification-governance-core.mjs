@@ -1,8 +1,85 @@
-import {sourceInventorySummary,sourceTraceScopeDescription,projectAtomicSectionInventory,validateAtomicSectionCoverage,validateMechanicalCandidateExclusions,loadReviewedAtomicExtraction,validateAtomicLineMembership} from './review-specification-coverage.mjs';
+import {decodeNormativeManifest} from './normative-manifest-storage.mjs';
+import {validateAtomicRequirementRows,sourceInventorySummary,sourceTraceScopeDescription,projectAtomicSectionInventory,validateAtomicSectionCoverage,validateMechanicalCandidateExclusions,loadReviewedAtomicExtraction,validateAtomicLineMembership} from './review-specification-coverage.mjs';
 import {checkedVerifier} from './verify-conformance-regressions.mjs';
 import fs from'node:fs';import crypto from'node:crypto';import cp from'node:child_process';
 await import('./hash.js');const H=globalThis.closedLoopHash,SP='specification/closed-loop-reliability-controlling-implementation-specification.txt',SMP='specification/closed-loop-specification-manifest.json',NMP='specification/closed-loop-normative-requirements.json',RP='review-specification-coverage.mjs',allowed=new Set(['CONFORMANT_PROVEN','IMPLEMENTED_UNPROVEN','MISSING','CONTRADICTED','BLOCKED_HUMAN','BLOCKED_ENVIRONMENT','UNKNOWN']),A=(x,m)=>{if(!x)throw Error(m)},sh=b=>crypto.createHash('sha256').update(b).digest('hex');
 const governanceDeclaration=JSON.parse(fs.readFileSync('specification/requirement-evidence-bindings.json','utf8')),declaredAmendments=governanceDeclaration.approvedAmendments||[],independentDeclaration=governanceDeclaration.independentSourceReview;
+if(governanceDeclaration.atomicExtraction?.schema==='closed-loop-approved-insertion-atomic-extraction/1'){
+ const source=fs.readFileSync(SP),committedSpec=JSON.parse(fs.readFileSync(SMP)),sourceCommit=process.env.SOURCE_COMMIT||committedSpec.sourceCommit;
+ A(/^[0-9a-f]{40}$/.test(sourceCommit),'Exact source commit absent');
+ (await checkedVerifier(process.execPath,['generate-specification-governance.mjs'],{stdio:'pipe',env:{...process.env,SOURCE_COMMIT:sourceCommit}}));
+ const spec=JSON.parse(fs.readFileSync(SMP)),norm=JSON.parse(fs.readFileSync(NMP));
+ const atomicEvidence=loadReviewedAtomicExtraction(governanceDeclaration.atomicExtraction,{sourceBytes:source,specificationPath:SP,sections:spec.sectionInventory});
+ const data=atomicEvidence.continuation.data,atomicCompletenessEstablished=atomicEvidence.established;
+ const independentReconciliation={unresolvedContractFindings:data.sourceMeaning.status==='REVIEWED_BOUNDED_SOURCE_MEANINGS'?[]:data.originalContractFindings};
+ const equal=(a,b)=>H.stableStringify(a)===H.stableStringify(b),byId=new Map(atomicEvidence.entries.map(row=>[row.normativeRequirementId,row]));
+ const runtimePaths=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','test-worker.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js','index.html','TEST_PROJECT.json'];
+ const validate=(sm,nm,{skipDigest=false,virtual={}}={})=>{
+  A(sm.schema==='closed-loop-specification-manifest/1'&&nm.schema==='closed-loop-normative-requirements/1','Wrong governance manifest schema');
+  A(sm.generatorVersion==='closed-loop-governance-generator/11'&&nm.generatorVersion===sm.generatorVersion,'Wrong governance generator identity');
+  A(sm.contractProfileId==='closed-loop-completion-profile/1'&&nm.contractProfileId===sm.contractProfileId,'Wrong contract profile');
+  A(sm.sourceCommit===sourceCommit&&nm.sourceCommit===sourceCommit&&sm.repositoryPath===SP&&nm.specificationPath===SP,'Source commit/path mismatch');
+  A(sm.byteLength===source.length&&nm.specificationByteLength===source.length&&sm.sha256===sh(source)&&nm.specificationSha256===sh(source),'Specification digest mismatch');
+  if(!skipDigest){const ncopy={...nm},scopy={...sm};delete ncopy.manifestSha256;delete scopy.manifestSha256;A(nm.manifestSha256===H.sha256Value(ncopy)&&sm.manifestSha256===H.sha256Value(scopy),'Governance canonical digest mismatch');A(sm.normativeRequirementManifestSha256===sh(fs.readFileSync(NMP))&&sm.normativeRequirementManifestCanonicalSha256===nm.manifestSha256,'Normative file/canonical binding mismatch');}
+  A(equal(nm.approvedAmendments,declaredAmendments),'Approved amendment inventory mismatch');
+  A(Array.isArray(nm.requirements)&&new Set(nm.requirements.map(row=>row.normativeRequirementId)).size===nm.requirements.length,'Missing or duplicate requirement ID');
+  A(nm.requirements.length===byId.size&&sm.normativeRequirementCount===byId.size,'Atomic reviewed sibling omitted');
+  nm=decodeNormativeManifest(nm,{verifyDigest:!skipDigest});
+  validateAtomicRequirementRows(source,nm.requirements,SP,sm.sectionInventory);
+  for(const row of nm.requirements){
+   const reviewed=byId.get(row.normativeRequirementId);A(reviewed&&Object.entries(reviewed).every(([key,value])=>equal(row[key],value)),'Atomic reviewed entry/scope changed');
+   A(row.responsibleImplementationOwner&&row.schemaOrRegistryEntry&&row.acceptanceReportField==='normativeRequirementTrace.'+row.normativeRequirementId,'Atomic implementation/acceptance trace missing');
+   A(Array.isArray(row.deterministicTestIds)&&row.deterministicTestIds.length&&row.deterministicTestIds.every(id=>fs.existsSync(id.split('#')[0]))&&Array.isArray(row.semanticTestIds)&&Array.isArray(row.mutationTestIds)&&Array.isArray(row.requiredBrowserOrPhysicalDeviceProof),'Atomic deterministic/semantic/mutation/browser trace missing');
+   A(allowed.has(row.currentDisposition)&&row.currentDisposition!=='CONFORMANT_PROVEN'&&!Object.hasOwn(row,'executedEvidence')&&!Object.hasOwn(row,'fullCoverage'),'Source declaration has no current executed conformance evidence');
+  }
+  A(equal(nm.requirementIdentityCrosswalk,atomicEvidence.requirementIdentityCrosswalk),'Atomic crosswalk differs from reviewed continuation');
+  A(equal(sm.sectionInventory,data.reviewedSections)&&equal(nm.sectionInventory,data.reviewedSections),'Atomic generated section coverage differs from reviewed continuation');
+  validateAtomicSectionCoverage({sections:sm.sectionInventory},new Map(nm.requirements.map(row=>[row.normativeRequirementId,row])),sm.sectionInventory,source,'normativeRequirementId','normativeRequirementIds');
+  validateAtomicLineMembership(nm.requirements,nm.sourceLineCoverage,source,SP,sm.sectionInventory);
+  A(equal(nm.sourceLineCoverage,data.sourceLineCoverage),'Current source line classification/membership changed');
+  const omission=nm.omissionChallenge,continuation=omission?.sourceContinuation;
+  A(equal(omission?.atomicExtraction,atomicEvidence.descriptor)&&equal(continuation?.descriptor,atomicEvidence.descriptor.continuation),'Atomic extraction evidence descriptor changed');
+  A(equal(continuation?.sourceTrace,data.sourceTrace),'Current source trace omitted or changed');
+  A(equal(continuation?.contextGraph,data.contextGraph),'Current typed context graph omitted or changed');
+  A(equal(continuation?.dependencyIdentity,atomicEvidence.continuation.dependencyIdentity),'Current immutable dependency graph omitted or changed');
+  A(equal(omission?.historicalSourceContractFindings,data.originalContractFindings),'Historical source-contract findings omitted or changed');
+  A(equal(omission?.unresolvedContractFindings,independentReconciliation.unresolvedContractFindings)&&equal(omission?.contractMeaningResolution,data.sourceMeaning),'Current source-contract meaning resolution omitted or changed');
+  A(equal(omission?.historicalIndependentSourceReview,independentDeclaration),'Historical source review declaration changed');
+  A(omission?.independentReviewStatus==='COMPOSED_REVIEWED_SOURCE_PASS'&&omission?.reconciliationStatus==='ACCEPTED'&&omission?.independentReviewEvidence?.evidenceBasis==='VALIDATED_IMMUTABLE_BASE_AND_INDEPENDENT_APPROVED_SOURCE_DELTA'&&omission?.reconciliationEvidence?.status==='ACCEPTED'&&equal(omission?.reconciliationEvidence?.materialDisagreements,[])&&equal(omission?.reconciliationEvidence?.missingReviewerCandidateLines,[])&&equal(omission?.reconciliationEvidence?.sourcePopulationCounts,data.predecessorDispositionCounts),'Current composition report status differs');
+  A(sm.challengeAndReconciliation?.independentReviewerIdentity===atomicEvidence.continuation.sourceReviewReference.sha256&&sm.challengeAndReconciliation?.independentReconciliationIdentity===atomicEvidence.continuation.sourceReconciliationReference.sha256&&sm.challengeAndReconciliation?.originalReviewsRelabeled===false&&sm.challengeAndReconciliation?.status==='ACCEPTED','Current composition reviewer/reconciler identities differ');
+
+  A(omission?.independentReviewEvidence?.originalReviewsRelabeled===false&&omission.independentReviewEvidence.reviewedSourceSha256===sh(source)&&omission.independentReviewEvidence.implementationConformance===false,'Current composition provenance or proof boundary differs');
+  A(omission.independentReviewEvidence.semanticSourceCoverageEstablished===true&&omission.independentReviewEvidence.atomicRequirementCompletenessEstablished===atomicCompletenessEstablished&&omission.independentReviewEvidence.semanticCompletenessEstablished===atomicCompletenessEstablished&&sm.challengeAndReconciliation?.atomicRequirementCompletenessEstablished===atomicCompletenessEstablished,'Atomic normative-requirement completeness overclaimed or mismatched');
+  for(const [key,value] of Object.entries(sourceInventorySummary(nm.requirements)))A(sm[key]===value&&nm[key]===value,'Source inventory reporting mismatch: '+key);
+  for(const file of runtimePaths){const body=virtual[file]??(fs.existsSync(file)?fs.readFileSync(file,'utf8'):'');A(!body.includes('Closed-Loop Reliability Application\nZero-Loss Controlling Implementation Specification')&&!body.includes('closed-loop-monotonic-build-controller/1')&&!body.includes('closed-loop-monotonic-build-controller/2')&&!body.includes('specification/closed-loop-reliability-controlling-implementation-specification.txt')&&!body.includes('closed-loop-normative-requirements/1')&&!body.includes('closed-loop-specification-manifest/1'),'Specification text leaked into runtime '+file);}
+ };
+ validate(spec,norm);
+ const mutations=[];
+ const reject=(name,edit,pattern,virtual={})=>{const sm=structuredClone(spec),nm=structuredClone(norm);edit(sm,nm);let error;try{validate(sm,nm,{skipDigest:true,virtual});}catch(e){error=e;}A(error&&pattern.test(String(error.message)),name+' mutation not rejected for correct reason: '+(error?.message||'accepted'));mutations.push(name);};
+ reject('continuation-missing-atom',(_,n)=>{n.requirements.pop();},/Atomic reviewed sibling omitted/);
+ reject('continuation-duplicate-id',(_,n)=>{n.requirements[1].normativeRequirementId=n.requirements[0].normativeRequirementId;},/duplicate requirement ID/);
+ reject('continuation-missing-test-trace',(_,n)=>{n.requirements[0].deterministicTestIds=[];},/trace missing/);
+ reject('continuation-source-conflict',(_,n)=>{n.requirements[0].sourceLocation.lineSha256='0'.repeat(64);},/source anchor bytes mismatch/);
+ reject('continuation-uncovered-section',(s)=>{s.sectionInventory[0].normativeRequirementIds=[];s.sectionInventory[0].reason='Deliberate omission';},/section coverage differs/);
+ reject('continuation-current-scope',(s,n)=>{const row=n.requirements.find(row=>row.atomicObligation);row.atomicObligation.statement+=' omitted scope';},/scope digest mismatch|scope hash|scope digest|scope changed/);
+ reject('continuation-identity-crosswalk',(_,n)=>{n.requirementIdentityCrosswalk.pop();},/crosswalk differs/);
+ reject('continuation-source-trace',(_,n)=>{n.omissionChallenge.sourceContinuation.sourceTrace.pop();},/source trace omitted/);
+ reject('continuation-context-graph',(_,n)=>{n.omissionChallenge.sourceContinuation.contextGraph=[];},/context graph omitted/);
+ reject('continuation-dependency-closure',(_,n)=>{n.omissionChallenge.sourceContinuation.dependencyIdentity.delta.pop();},/dependency graph omitted/);
+ reject('continuation-approved-amendment',(_,n)=>{n.approvedAmendments=[];},/amendment inventory mismatch/);
+ reject('continuation-history-retention',(_,n)=>{n.omissionChallenge.historicalSourceContractFindings=[];},/Historical source-contract findings omitted/);
+ reject('continuation-meaning-record',(_,n)=>{n.omissionChallenge.contractMeaningResolution.resolvedMeanings=[];},/meaning resolution omitted/);
+ reject('continuation-invented-current-finding-clearance',(_,n)=>{n.omissionChallenge.unresolvedContractFindings=[{id:'INVENTED'}];},/meaning resolution omitted/);
+ reject('continuation-unproven-conformance',(_,n)=>{n.requirements[0].currentDisposition='CONFORMANT_PROVEN';},/no current executed conformance/);
+ reject('continuation-relabel-old-review',(_,n)=>{n.omissionChallenge.independentReviewEvidence.originalReviewsRelabeled=true;},/composition provenance/);
+ reject('continuation-completeness-overclaim',(s,n)=>{n.omissionChallenge.independentReviewEvidence.atomicRequirementCompletenessEstablished=false;},/completeness overclaimed/);
+ reject('continuation-runtime-copy',()=>{},/Specification text leaked/,{'workbook.js':'Closed-Loop Reliability Application\nZero-Loss Controlling Implementation Specification'});
+ const atomicFormatRegression=JSON.parse((await checkedVerifier(process.execPath,['test-atomic-specification-governance.mjs'],{encoding:'utf8',maxBuffer:16*1024*1024})));
+ A(atomicFormatRegression.passed===true&&atomicFormatRegression.syntheticFixture===true&&atomicFormatRegression.atomicCompletenessEstablished===false,'Atomic format regression failed or overclaimed completeness');
+ console.log(JSON.stringify({specificationSourcePresent:true,sourceCommit,sourceSha256:sh(source),...sourceInventorySummary(norm.requirements),atomicRequirementCompletenessEstablished:atomicCompletenessEstablished,unresolvedSourceContractFindingCount:independentReconciliation.unresolvedContractFindings.length,semanticSourceCoverageEstablished:true,mutations,mutationCount:mutations.length,atomicFormatRegression,allNormativeRequirementsConformant:false,originalReviewsRelabeled:false},null,2));
+ A(atomicCompletenessEstablished,'Atomic normative-requirement completeness remains unproven: source-line coverage is not distinct-obligation coverage under Section 2.2.');
+ A((independentReconciliation.unresolvedContractFindings||[]).length===0,'Source-contract acceptance remains blocked by unresolved UNDEFINED_* findings in the independent reconciliation.');
+}else{
 A(independentDeclaration,'Independent semantic review declaration absent');
 const independentReviewBytes=fs.readFileSync(independentDeclaration.sourceReviewPath),independentReconciliationBytes=fs.readFileSync(independentDeclaration.reconciliationPath),independentSourceReview=JSON.parse(independentReviewBytes),independentReconciliation=JSON.parse(independentReconciliationBytes);
 A(sh(independentReviewBytes)===independentDeclaration.sourceReviewSha256&&sh(independentReconciliationBytes)===independentDeclaration.reconciliationSha256,'Independent semantic source evidence digest mismatch');
@@ -126,3 +203,5 @@ const counts=Object.fromEntries([...allowed].map(x=>[x,norm.requirements.filter(
 
 A(atomicCompletenessEstablished,'Atomic normative-requirement completeness remains unproven: source-line coverage is not distinct-obligation coverage under Section 2.2.');
 A((independentReconciliation.unresolvedContractFindings||[]).length===0,'Source-contract acceptance remains blocked by unresolved UNDEFINED_* findings in the independent reconciliation.');
+
+}

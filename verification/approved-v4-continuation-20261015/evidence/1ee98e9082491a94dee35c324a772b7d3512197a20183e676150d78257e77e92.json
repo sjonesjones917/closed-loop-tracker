@@ -1,0 +1,75 @@
+{
+  "schema": "closed-loop-additive-predecessor-technical-reference-resolution/1",
+  "status": "FROZEN_DISTINCT_QUALIFIER_LINKAGE_RECONCILIATION_003",
+  "records": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-003/per-entry-reconciliation.json",
+    "sha256": "83c69f771c4ba63b45f987d645ad022e3e4acda96c75db23a883d38564176529",
+    "byteLength": 711841
+  },
+  "exactEvidence": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-003/source-evidence.json",
+    "sha256": "25c32590e9c8aecba10ac28fa166096ed3d55704111988b23a29da8850791d8d",
+    "byteLength": 202829
+  },
+  "independentScopeDecisions": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-003/independent-scope-decisions.json",
+    "sha256": "57552f91d84984463d267b3cb3810666496c1d0d72379b4799335189e8ba997b",
+    "byteLength": 187674
+  },
+  "requiredTypedGovernors": {
+    "SRC-AMBIGUITY-XML-SUBNODE-ROOT": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-003/xml-effective-governor-link.json",
+      "sha256": "101e96ba58a52e2ce03fd48725753f225eb8b022bebc8dbb7b103ce598c10d7a",
+      "byteLength": 9047
+    },
+    "SRC-GAP-DEFERRED-BINDING": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-003/deferred-effective-governor-link.json",
+      "sha256": "51d16460052de0641646c9089a2bd2ea8ab52e2b883b3cae5172fd10b82fe362",
+      "byteLength": 10995
+    }
+  },
+  "requiredTypedComposite": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-003/completion-composite-governor-link.json",
+    "sha256": "ccf9f6cd3ab66373cd14b941c0f0fc1d1c401f03649f7e1f3a4cc956f25d99fe",
+    "byteLength": 2012
+  },
+  "validation": {
+    "entryCount": 106,
+    "edgeCount": 119,
+    "actualEffectiveEdges": 68,
+    "diagnosticOnlyEdges": 51,
+    "freshCurrentIdentityCount": 67,
+    "retainedCurrentIdentityCount": 39,
+    "proposalAdjudication": {
+      "acceptedEdges": 118,
+      "correctedEdges": 1,
+      "blockedEdges": 0
+    },
+    "verifiedOriginalOccurrenceBindings": 1362,
+    "uniqueOriginalOccurrences": 306,
+    "preservedOriginalIndentationQualifications": 88,
+    "originalPredecessorDenominator": 7486,
+    "predecessorPopulationAfter": {
+      "RETAINED": 5964,
+      "CHANGED": 1522,
+      "BLOCKED": 0
+    },
+    "newDutyPopulation": 712,
+    "remainingQualifierRows": 969,
+    "remainingQualifierEdges": 2017,
+    "explicitCompositeGovernorRows": [
+      1022
+    ],
+    "compositeConsumerSupportNotClaimed": true,
+    "proofPromoted": false
+  },
+  "sourceAuthorProposalManifest": {
+    "path": "/tmp/clrt-current-qualifier-linkage-proposals-003/finalized/manifest.json",
+    "sha256": "3e26e030ee1c6ecb6b52cefed15ed78f6d98ae5077122116e1d26f823bcf148c",
+    "byteLength": 2780
+  },
+  "mergeRule": "Require exact original ID/index/hash and prior current ID/row evidence. Preserve original proposition, occurrence set, current source governors and historical qualifiers. Apply each exact per-issue decision.67 rows gain fresh identity;39 retain issued identity with no effective governor.1019 F1 edge is diagnostic, preserving its actual XML route edge.1022 has a distinct typed composite with both XML and F1 components; do not disguise or flatten it into the singular governor schema. Current issue arrays become explicitly empty for these106 rows only; no original disposition/denominator/proof state changes.",
+  "consumerCompatibilityBoundary": "Single-issue rows use existing singular custody-link schema.1022 requires explicit independently reviewed support for closed-loop-attributed-composite-source-resolution-custody-link/1 before application; source meaning is determinate, consumer support is not claimed.",
+  "sourceLedgerActivated": false,
+  "proofPromoted": false
+}

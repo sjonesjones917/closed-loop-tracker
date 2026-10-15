@@ -1,9 +1,129 @@
 {
   "schema": "closed-loop-requirement-evidence-bindings/1",
-  "specificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+  "specificationSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
   "requirements": [],
   "approvedClarifications": [],
-  "approvedAmendments": [],
+  "approvedAmendments": [
+    {
+      "clause": "C_C1",
+      "amendmentId": "APPROVED-OWNER-DECISIONS-V4-20261015-C_C1",
+      "sectionId": "6.5A",
+      "approvedProposalSourceStartLine": 39,
+      "approvedProposalSourceEndLine": 111,
+      "insertBeforeBaseLine": 422,
+      "insertBeforeBaseByte": 25996,
+      "startLine": 422,
+      "lineCount": 74,
+      "endLine": 495,
+      "textSha256": "127946d9ff0901fbb32eebb3464c2126a8cfc7f2429a7ac650f7795c05714168",
+      "byteLength": 27488,
+      "baseSpecificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "previousSpecificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "successorAfterThisInsertionSha256": "db282e8c4ad994ac579af6c1a7b83f27fc77493ca137bedf3753dc11cfa73300"
+    },
+    {
+      "clause": "F_F1",
+      "amendmentId": "APPROVED-OWNER-DECISIONS-V4-20261015-F_F1",
+      "sectionId": "14.6",
+      "approvedProposalSourceStartLine": 161,
+      "approvedProposalSourceEndLine": 175,
+      "insertBeforeBaseLine": 1113,
+      "insertBeforeBaseByte": 60770,
+      "startLine": 1187,
+      "lineCount": 16,
+      "endLine": 1202,
+      "textSha256": "5c56b939e7834605b79b6485c3e72d42992780e92abdd90791792a1ed75f85c3",
+      "byteLength": 3196,
+      "baseSpecificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "previousSpecificationSha256": "db282e8c4ad994ac579af6c1a7b83f27fc77493ca137bedf3753dc11cfa73300",
+      "successorAfterThisInsertionSha256": "c9b1744e23a33cadaa374ce4143bf02fec40e691dcc2eba7ed004027a61e9b1a"
+    },
+    {
+      "clause": "A",
+      "amendmentId": "APPROVED-OWNER-DECISIONS-V4-20261015-A",
+      "sectionId": "18",
+      "approvedProposalSourceStartLine": 13,
+      "approvedProposalSourceEndLine": 26,
+      "insertBeforeBaseLine": 1547,
+      "insertBeforeBaseByte": 92117,
+      "startLine": 1637,
+      "lineCount": 15,
+      "endLine": 1651,
+      "textSha256": "72ddbce7b01252d3b36bc20a9ba181f0f3040c63f57f89c75ef4439a8c7c3643",
+      "byteLength": 3561,
+      "baseSpecificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "previousSpecificationSha256": "c9b1744e23a33cadaa374ce4143bf02fec40e691dcc2eba7ed004027a61e9b1a",
+      "successorAfterThisInsertionSha256": "2941ba45d74efb7c556a99a7c89be3e953aeb7bf7b68e3a3dc2c8c2cb9f4b772"
+    },
+    {
+      "clause": "B",
+      "amendmentId": "APPROVED-OWNER-DECISIONS-V4-20261015-B",
+      "sectionId": "21.17",
+      "approvedProposalSourceStartLine": 28,
+      "approvedProposalSourceEndLine": 37,
+      "insertBeforeBaseLine": 1936,
+      "insertBeforeBaseByte": 111266,
+      "startLine": 2041,
+      "lineCount": 11,
+      "endLine": 2051,
+      "textSha256": "8759a4ea425f8a0128fcb4f4bde318fa0bc68cbc87bcf203bb68774e227d986a",
+      "byteLength": 4130,
+      "baseSpecificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "previousSpecificationSha256": "2941ba45d74efb7c556a99a7c89be3e953aeb7bf7b68e3a3dc2c8c2cb9f4b772",
+      "successorAfterThisInsertionSha256": "de05830c14f9056fb652c92992ae7aa423b55a865a23288e90027edfe2673363"
+    },
+    {
+      "clause": "D",
+      "amendmentId": "APPROVED-OWNER-DECISIONS-V4-20261015-D",
+      "sectionId": "21.17",
+      "approvedProposalSourceStartLine": 113,
+      "approvedProposalSourceEndLine": 147,
+      "insertBeforeBaseLine": 1936,
+      "insertBeforeBaseByte": 111266,
+      "startLine": 2052,
+      "lineCount": 36,
+      "endLine": 2087,
+      "textSha256": "fae6d458e246fea60b71610142f47172cb0bef14155d25fa92d707c92e9d785e",
+      "byteLength": 14381,
+      "baseSpecificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "previousSpecificationSha256": "de05830c14f9056fb652c92992ae7aa423b55a865a23288e90027edfe2673363",
+      "successorAfterThisInsertionSha256": "f2119ce09b9d2d8413014ccf026e650d75b5f374f8ca637df2fef7f5848cda8b"
+    },
+    {
+      "clause": "F2",
+      "amendmentId": "APPROVED-OWNER-DECISIONS-V4-20261015-F2",
+      "sectionId": "26.6",
+      "approvedProposalSourceStartLine": 177,
+      "approvedProposalSourceEndLine": 204,
+      "insertBeforeBaseLine": 2372,
+      "insertBeforeBaseByte": 129098,
+      "startLine": 2524,
+      "lineCount": 29,
+      "endLine": 2552,
+      "textSha256": "17d97ac0b9bc29a8f533ba163b66558a7a83f1d6aaad8ea53f3c35e6d33c2765",
+      "byteLength": 3694,
+      "baseSpecificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "previousSpecificationSha256": "f2119ce09b9d2d8413014ccf026e650d75b5f374f8ca637df2fef7f5848cda8b",
+      "successorAfterThisInsertionSha256": "70f968a25968611ec174bb7a9bc4c03eb8aecb4c4890784ce002eeb3921b0a6d"
+    },
+    {
+      "clause": "E",
+      "amendmentId": "APPROVED-OWNER-DECISIONS-V4-20261015-E",
+      "sectionId": "38.1",
+      "approvedProposalSourceStartLine": 149,
+      "approvedProposalSourceEndLine": 159,
+      "insertBeforeBaseLine": 3874,
+      "insertBeforeBaseByte": 218308,
+      "startLine": 4055,
+      "lineCount": 12,
+      "endLine": 4066,
+      "textSha256": "a68cbba0b5227198852dbdba70f9ab3653c753b7a06f98273b9c92d459af4f40",
+      "byteLength": 3969,
+      "baseSpecificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "previousSpecificationSha256": "70f968a25968611ec174bb7a9bc4c03eb8aecb4c4890784ce002eeb3921b0a6d",
+      "successorAfterThisInsertionSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9"
+    }
+  ],
   "independentSourceReview": {
     "sourceReviewPath": "verification/independent-source-review-20261014.json",
     "sourceReviewSha256": "e5821fbce9dc82ebf31cfde0767bb869c26c6ecd30c86fbd55d543eb8a94f429",
@@ -21,28 +141,11 @@
     "reason": "Previous requirement-specific traces, executed evidence and context-applicability review remain in the recorded Git history. No ID crosswalk, independent implementation review or executed proof was renewed by source adoption."
   },
   "atomicExtraction": {
+    "schema": "closed-loop-approved-insertion-atomic-extraction/1",
     "status": "RECONCILED",
-    "draft": {
-      "path": "verification/atomic-extraction-20261014/normalized-draft.json",
-      "sha256": "fe596c6b5d330d801f86d0bccc52029e7de5bf7af33af2e9015f01ce312a2f77",
-      "actorId": "CONTRIBUTOR-SET:DRAFT:c27ae142b80cee8fb1e5811549e23bb69344bf3f0878f733b5b102792640e1d5",
-      "contextId": "CONTRIBUTOR-CONTEXT-SET:DRAFT:c27ae142b80cee8fb1e5811549e23bb69344bf3f0878f733b5b102792640e1d5",
-      "specificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883"
-    },
-    "independentReview": {
-      "path": "verification/atomic-extraction-20261014/normalized-independent-review.json",
-      "sha256": "6ce4af4fae4b9bbff17beab046760ac1864ce4412767c3279edfb6dfcf3e3303",
-      "actorId": "CONTRIBUTOR-SET:INDEPENDENT_REVIEW:acb56c64fadda483f676ba93a7afdc97a485049c87d4cb1040fcdfc12df7ee34",
-      "contextId": "CONTRIBUTOR-CONTEXT-SET:INDEPENDENT_REVIEW:acb56c64fadda483f676ba93a7afdc97a485049c87d4cb1040fcdfc12df7ee34",
-      "specificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
-      "draftManifestReceived": false
-    },
-    "reconciliation": {
-      "path": "verification/atomic-extraction-20261014/reconciliation.json",
-      "sha256": "1cc93c4e49e3e5530ee2a802314617f3aa07d5c72282ded6cd1da68570dac280",
-      "actorId": "distinct-prefix-reconciler",
-      "contextId": "/root/reconcile_atomic_requirement_entries",
-      "specificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883"
+    "continuation": {
+      "path": "verification/approved-v4-continuation-20261015/continuation.json",
+      "sha256": "74efeb2ea135d6a3f94c1ecb19f4172b18d8bf9786d5cf060519f243ef2bb432"
     }
   }
 }

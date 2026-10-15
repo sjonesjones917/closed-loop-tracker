@@ -1,0 +1,45 @@
+{
+  "schema": "closed-loop-attributed-composite-source-resolution-custody-link/1",
+  "id": "V4-QUALIFIER-LINKAGE-010-COMPOSITE-2819",
+  "status": "LINKED_IN_ADDITIVE_CANDIDATE_SOURCE_GOVERNOR_SET_PENDING_EXPLICIT_COMPOSITE_CONSUMER_SUPPORT",
+  "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+  "governedPredecessorIndexes": [
+    2819
+  ],
+  "componentGovernors": [
+    {
+      "issueId": "SRC-GAP-DECODER-SUBSET",
+      "governorLink": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-010/decoder-effective-governor-link.json",
+        "sha256": "ecc963bcabdf9c56ee2671d5aa3fae80d4dbb740dcf7430cea81cac3fc8967b3",
+        "byteLength": 13678
+      }
+    },
+    {
+      "issueId": "SRC-GAP-DEFERRED-BINDING",
+      "governorLink": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-010/deferred-effective-governor-link.json",
+        "sha256": "acf663c0d84f15344e627f30ecbc2832f09baa91fb2492b707df75d180c71d07",
+        "byteLength": 12458
+      }
+    },
+    {
+      "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+      "governorLink": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-010/xml-effective-governor-link.json",
+        "sha256": "8100546578dd36f2b4a2c3292b0bca8a9abb0be4b1fc2242d01cbd99d2a052e5",
+        "byteLength": 9859
+      }
+    }
+  ],
+  "individualEffectiveScopeDecisions": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-010/independent-scope-decisions.json",
+    "sha256": "99b0d31bdf4e89a2aa1119559e48b968c7f78d72e8f627c454f02e0cb61d465e",
+    "byteLength": 930989
+  },
+  "scopeRule": "Conjoin exactly the independently scoped actual issue edges for this predecessor. Neither substitutes for another, expands ordinary routes, or grants writer/executor authority.",
+  "identityRule": "The exact composite bytes and all pinned components are effective scope inputs. Never flatten into a singular issue or current source line.",
+  "sourceLedgerActivated": false,
+  "implementationAcceptance": false,
+  "proofPromoted": false
+}

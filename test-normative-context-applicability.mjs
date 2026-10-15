@@ -1,5 +1,7 @@
+import {decodeNormativeManifest} from './normative-manifest-storage.mjs';
 // Source-context consumer controls; no implementation conformance is asserted.
 import assert from 'node:assert/strict';
+import {loadReviewedAtomicExtraction} from './review-specification-coverage.mjs';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -42,14 +44,25 @@ function verifyHistoricalNormativeContextApplicability(){
 }
 
 function verifyCurrentAtomicContextApplicability(){
- const normative=JSON.parse(fs.readFileSync('specification/closed-loop-normative-requirements.json')),fingerprint=evidenceFingerprint(),governance=JSON.parse(fs.readFileSync('specification/requirement-evidence-bindings.json'));
+ const normative=decodeNormativeManifest(JSON.parse(fs.readFileSync('specification/closed-loop-normative-requirements.json'))),fingerprint=evidenceFingerprint(),governance=JSON.parse(fs.readFileSync('specification/requirement-evidence-bindings.json'));
  const contextRows=normative.requirements.filter(row=>row.entryKind==='SOURCE_CONTEXT'),atomicRows=normative.requirements.filter(row=>row.entryKind==='ATOMIC_OBLIGATION');
  const contextIds=contextRows.map(row=>row.normativeRequirementId),atomicIds=atomicRows.map(row=>row.normativeRequirementId);
+ const continuation=governance.atomicExtraction?.schema==='closed-loop-approved-insertion-atomic-extraction/1';
+ if(continuation){
+  const checked=loadReviewedAtomicExtraction(governance.atomicExtraction,{sourceBytes:fs.readFileSync(SPECIFICATION_PATH),specificationPath:SPECIFICATION_PATH,sections:JSON.parse(fs.readFileSync('specification/closed-loop-specification-manifest.json')).sectionInventory});
+  assert.equal(checked.established,true,'CURRENT_CONTINUATION_SOURCE_UNIVERSE_ORACLE');
+  const base=checked.continuation.data.originalBasePopulation;
+  assert.equal(base.entryCount,7486,'ORIGINAL_CONTEXT_RETAINED_SOURCE_UNIVERSE_ORACLE');assert.equal(base.contextCount,291,'ORIGINAL_CONTEXT_COUNT_ORACLE');assert.equal(base.atomicCount,7195,'ORIGINAL_ATOMIC_COUNT_ORACLE');assert.equal(base.structuralContextCount,282);assert.equal(base.historicalContextCount,9);
+  assert.deepEqual(contextIds,checked.entries.filter(row=>row.entryKind==='SOURCE_CONTEXT').map(row=>row.normativeRequirementId),'CURRENT_CONTEXT_REVIEWED_ID_UNIVERSE_ORACLE');
+  assert.deepEqual(atomicIds,checked.entries.filter(row=>row.entryKind==='ATOMIC_OBLIGATION').map(row=>row.normativeRequirementId),'CURRENT_ATOMIC_REVIEWED_ID_UNIVERSE_ORACLE');
+  assert.equal(new Set([...contextIds,...atomicIds]).size,checked.entries.length,'CURRENT_CONTEXT_STABLE_ID_UNIVERSE_ORACLE');
+ }else{
  assert.equal(normative.requirements.length,7486,'CURRENT_CONTEXT_RETAINED_SOURCE_UNIVERSE_ORACLE');
  assert.equal(new Set([...contextIds,...atomicIds]).size,7486,'CURRENT_CONTEXT_STABLE_ID_UNIVERSE_ORACLE');
  assert.equal(contextRows.length,291,'CURRENT_CONTEXT_COUNT_ORACLE');assert.equal(atomicRows.length,7195,'CURRENT_ATOMIC_COUNT_ORACLE');
  assert.equal(contextRows.filter(row=>row.contextClassification.classification==='STRUCTURAL_REQUIREMENT_CONTEXT').length,282);
  assert.equal(contextRows.filter(row=>row.contextClassification.classification==='HISTORICAL_NONNORMATIVE_CONTEXT').length,9);
+ }
  const run=(manifest=normative,identity=fingerprint)=>reviewedContextApplicability(manifest,identity);
  const restored=()=>{
   const contexts=run();assert.deepEqual([...contexts.keys()],contextIds,'CURRENT_CONTEXT_EXACT_IDS_ORACLE');
@@ -66,8 +79,8 @@ function verifyCurrentAtomicContextApplicability(){
  restored();
  const context=contextRows.find(row=>row.contextClassification.classification==='STRUCTURAL_REQUIREMENT_CONTEXT'&&row.contextClassification.governingNormativeRequirementIds.length);
  assert(context,'CURRENT_CONTEXT_GOVERNOR_CONTROL_ORACLE');
- const changeContext=change=>({...normative,requirements:normative.requirements.map(row=>row===context?{...row,contextClassification:{...row.contextClassification,...change}}:row)}),atomicPath=governance.atomicExtraction.draft.path,cases=[];
- assert.equal(fingerprint.inputSha256[atomicPath],governance.atomicExtraction.draft.sha256,'CURRENT_CONTEXT_ATOMIC_FINGERPRINT_CONTROL_ORACLE');
+ const changeContext=change=>({...normative,requirements:normative.requirements.map(row=>row===context?{...row,contextClassification:{...row.contextClassification,...change}}:row)}),atomicRef=continuation?governance.atomicExtraction.continuation:governance.atomicExtraction.draft,atomicPath=atomicRef.path,cases=[];
+ assert.equal(fingerprint.inputSha256[atomicPath],atomicRef.sha256,'CURRENT_CONTEXT_ATOMIC_FINGERPRINT_CONTROL_ORACLE');
  // All mutations are shallow and in memory. Each refusal and recovery passes
  // through the unchanged owner, including its full reviewed atomic evidence.
  for(const [name,changed,expected] of [
@@ -76,7 +89,7 @@ function verifyCurrentAtomicContextApplicability(){
   ['altered-current-context-classification',()=>[changeContext({classification:'HISTORICAL_NONNORMATIVE_CONTEXT'}),fingerprint],/EXECUTED_EVIDENCE_ORACLE: atomic context universe differs from reviewed entries/],
   ['stale-current-atomic-evidence-fingerprint',()=>[normative,{...fingerprint,inputSha256:{...fingerprint.inputSha256,[atomicPath]:'0'.repeat(64)}}],/EXECUTED_EVIDENCE_ORACLE: atomic context evidence fingerprint mismatch/]
  ]){assert.throws(()=>run(...changed()),expected,'CURRENT_CONTEXT_APPLICABILITY_ORACLE: '+name);restored();cases.push({name,rejected:true,recovery:true});}
- return {passed:true,sourceUniverse:'CURRENT_REVIEWED_ATOMIC',specificationSha256:fingerprint.specificationSha256,retainedSourceIds:normative.requirements.length,contextRows:contextIds.length,structuralContextRows:282,historicalContextRows:9,mandatoryAtomicRows:atomicIds.length,contextRequirementIds:contextIds,mandatoryAtomicRequirementIds:atomicIds,cases,syntheticConsumerControls:true,implementationConformanceEstablished:false};
+ return {passed:true,sourceUniverse:'CURRENT_REVIEWED_ATOMIC',specificationSha256:fingerprint.specificationSha256,retainedSourceIds:normative.requirements.length,contextRows:contextIds.length,structuralContextRows:contextRows.filter(row=>row.contextClassification.classification==='STRUCTURAL_REQUIREMENT_CONTEXT').length,historicalContextRows:contextRows.filter(row=>row.contextClassification.classification==='HISTORICAL_NONNORMATIVE_CONTEXT').length,mandatoryAtomicRows:atomicIds.length,contextRequirementIds:contextIds,mandatoryAtomicRequirementIds:atomicIds,cases,syntheticConsumerControls:true,implementationConformanceEstablished:false};
 }
 export function verifyNormativeContextApplicability(){
  // The historical object graph and temporary files leave scope before the

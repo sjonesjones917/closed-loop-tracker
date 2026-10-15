@@ -1,0 +1,65 @@
+[
+  {
+    "schema": "closed-loop-attributed-technical-source-impact-reconciliation/1",
+    "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+    "predecessorId": "NREQ-5ad9f8e779b15e02b947f0660ea681a7",
+    "predecessorIndex": 3818,
+    "predecessorEntrySha256": "2cf0381f17a5dbf3dc41f8410296cd31845e4f460f944c2b1ec7d34d6aca5bc1",
+    "originalStatement": "Stage 14 must include the UNDETERMINED_ROOT_CAUSES field under the specification-controlled FIELD_REGISTRY contract; ownership, requiredness and value semantics follow the applicable explicit contract or ordered closed defaults, not an implementation-selected interpretation.",
+    "priorDisposition": "BLOCKED",
+    "successorDisposition": "CHANGED",
+    "successorNormativeRequirementId": "NREQ-270de76f63dff78dc0918737ba20e34c",
+    "identityStatus": "FRESH_ATTRIBUTED_CANDIDATE_IDENTITY_CONDITIONAL_ON_LINKED_GOVERNOR_PENDING_SOURCE_ADOPTION",
+    "effectiveGovernorLink": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/stage14-reviewed-resolution-successor/effective-governor-link.json",
+      "sha256": "c9e10ce00b5030e24d28ddab4f6d405f881e9fb9e5bfc936c33a71c15e0dd1f1",
+      "byteLength": 5418
+    },
+    "independentReason": "The reviewed explicit choice counts distinct current material defect IDs lacking an admissibly established, evidence-supported known earliest-layer RCA, including missing/stale/rejected/inadmissible/semantic-UNKNOWN cases and allowing blocked-analysis overlap. This resolves the previous counting-unit ambiguity only under the attributed linked governor. F2 changes current RCA admission, so effective source context is CHANGED. Neither a missing RCA nor a favorable record selection may clear the defect; no RCA rows, review records, authority, partition equation, threshold or proof are fabricated.",
+    "identityPreimage": {
+      "schema": "closed-loop-attributed-source-impact-identity/1",
+      "successorSourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "predecessorId": "NREQ-5ad9f8e779b15e02b947f0660ea681a7",
+      "predecessorEntrySha256": "2cf0381f17a5dbf3dc41f8410296cd31845e4f460f944c2b1ec7d34d6aca5bc1",
+      "statement": "Stage 14 must include the UNDETERMINED_ROOT_CAUSES field under the specification-controlled FIELD_REGISTRY contract; ownership, requiredness and value semantics follow the applicable explicit contract or ordered closed defaults, not an implementation-selected interpretation.",
+      "explicitTechnicalGovernor": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/stage14-reviewed-resolution-successor/effective-governor-link.json",
+        "sha256": "c9e10ce00b5030e24d28ddab4f6d405f881e9fb9e5bfc936c33a71c15e0dd1f1",
+        "byteLength": 5418
+      },
+      "governingF2Span": {
+        "sourceRole": "SUCCESSOR",
+        "startLine": 2524,
+        "endLine": 2551,
+        "startByte": 181854,
+        "endByte": 185547,
+        "sha256": "d64000e5157c61f1e96a5ae2527f294cfb8ba9273b336a0af55e73da6a46d8fc",
+        "text": "F2. Insert after §26.6: closed-loop-external-input-binding-minima/1\n\nMINIMUM_INPUT_BINDING_BASIS is EXTERNALLY_SUPPORTED for the external route of each pair in the following closed mapping:\n01 COMPLETE, SEMANTIC_CHALLENGE, RECONCILE_INTAKE;\n02 COMPLETE, SEARCH_ADEQUACY_REVIEW, RECONCILE_SOURCE_SEARCH;\n03 COMPLETE, SEMANTIC_CHALLENGE, RECONCILE_RESEARCH;\n04 COMPLETE, DISPOSITION_CHALLENGE, ATOMICITY_CHALLENGE, RECONCILE_REQUIREMENTS;\n05 COMPLETE, SEMANTIC_REVIEW, RECONCILE_REQUIREMENT_SET;\n06 COMPLETE, PROOF_REVIEW, RECONCILE_VERIFICATION_SUITE;\n07 COMPLETE, EXECUTE_FAILURE_TEST when externally routed;\n08 COMPLETE; 09 COMPLETE; 11 EXECUTE_RUN; 12 VERIFY; 13 COMPARE; 14 ROOT_CAUSE;\n15 COMPLETE, EXECUTE_REGRESSION when externally routed;\n16 CORRECT;\n17 EXECUTE_RUN, VERIFY, COMPARE, ROOT_CAUSE, REGRESSION, CORRECT;\n19 EXECUTE_RUN, VERIFY, COMPARE (always external);\n19 REGRESSION_VERIFY only when externally routed;\n21 COMPLETE; 22 EXECUTE_EXTERNAL_TEST; 23 COMPLETE; 24 COMPLETE; 25 COMPLETE;\n26 COMPLETE, SEMANTIC_REVIEW, RECONCILE;\n27 ADVISORY_REVIEW; 29 INVESTIGATE_MISSING_EVIDENCE;\nand, only when externally routed, every one of the 38 exact conditional pairs listed in F1.\n\nThe mapping has 88 external routes: 50 from the original §14.6 list plus 23 later failure-test and 15 later regression routes. F1's closed lists, not a wildcard allowing arbitrary operation names or stages, determine the additional pairs. The minimum does not grant operation availability or new writer authority. ADVISORY_REVIEW remains optional and non-gating.\n\nFor the conditional native route of 07 EXECUTE_FAILURE_TEST, 15 EXECUTE_REGRESSION, 19 REGRESSION_VERIFY, and the 38 F1 pairs, the input-binding minimum is APPLICATION_OBSERVED. The application establishes that basis from actual custody and verification of each required exact input, its current identity/hash and scope, before execution may start. This is not a requirement that execution has already succeeded: execution outcome, isolation, provenance, disposition and evidence sufficiency are separately determined from the actual execution. An absent or mismatched required input blocks native execution; a download, actor echo or route label does not satisfy this native minimum. This clause does not change the execution mode or permit an unapproved fallback to a different executor. Existing application, human-decision and operator commands outside these conditional pairs retain their existing source contracts; no external evidence minimum is assigned to them by this amendment.\n\nFor an external route, exact attributable echoes of the application-issued package/manifest identity and each required member identity/digest may establish EXTERNALLY_SUPPORTED under the existing input-binding contract; missing or mismatched echoes cannot. A package download, filename, provider label or unbound assertion is insufficient. Echoes never become APPLICATION_OBSERVED external possession, VERIFIED_EXTERNAL attestation, or proof of hidden provider independence. Recording that the application supplied bytes does not prove that an external recipient independently possessed or executed them.\n\nIf the applicable proof obligation, evidence contract or dimensioned-independence contract requires a stronger or distinct basis, that requirement also must be met. This generic minimum cannot weaken it, convert SUPPORTS_ONLY into ESTABLISHES, remove a required accepted review, waive unknown freshness/independence, or supply a successful result. §29.14's registered attestation-verification contract remains necessary for VERIFIED_EXTERNAL. Actual basis and its supporting observations remain recorded and evaluated by the existing gates.\n",
+        "includesFinalLineTerminator": true
+      },
+      "decision": "The reviewed explicit choice counts distinct current material defect IDs lacking an admissibly established, evidence-supported known earliest-layer RCA, including missing/stale/rejected/inadmissible/semantic-UNKNOWN cases and allowing blocked-analysis overlap. This resolves the previous counting-unit ambiguity only under the attributed linked governor. F2 changes current RCA admission, so effective source context is CHANGED. Neither a missing RCA nor a favorable record selection may clear the defect; no RCA rows, review records, authority, partition equation, threshold or proof are fabricated."
+    },
+    "identityPreimageSha256": "270de76f63dff78dc0918737ba20e34cb60b9acedac44c7a8a4c5072aa629673",
+    "exactOriginalOccurrenceSetReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/3818/originalOccurrenceBindings"
+    },
+    "exactOriginalTransport": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-occurrence-transport.json",
+      "sha256": "4157cda2f60669a2feba4c3021aa212f5bee00f4456a4e7a59d8e86da08a02d4",
+      "byteLength": 6309790
+    },
+    "verifiedOriginalOccurrenceBindings": 24,
+    "originalOccurrenceSetUnchanged": true,
+    "oldAmbiguityAndBlockedHistoryPreserved": true,
+    "technicalReviewAccepted": true,
+    "implementationStatus": "UNKNOWN",
+    "testConformance": "UNKNOWN",
+    "proofInheritance": false,
+    "implementationAcceptance": false
+  }
+]

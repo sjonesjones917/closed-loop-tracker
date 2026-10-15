@@ -1,0 +1,26 @@
+{
+  "schema": "closed-loop-attributed-population-resolution-reconciliation/1",
+  "status": "FROZEN_ADDITIVE_LINKED_TECHNICAL_GOVERNOR_AND_CONDITIONAL_CHANGED_IDENTITY",
+  "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+  "record": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/stage14-reviewed-resolution-successor/per-id-reconciliation.json",
+    "sha256": "6a7f43d2740a59a2444f64ca644a6024ce9643c2d1dd4a29700a7ba6eab5fb48",
+    "byteLength": 8541
+  },
+  "effectiveGovernorLink": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/stage14-reviewed-resolution-successor/effective-governor-link.json",
+    "sha256": "c9e10ce00b5030e24d28ddab4f6d405f881e9fb9e5bfc936c33a71c15e0dd1f1",
+    "byteLength": 5418
+  },
+  "verifiedSourceSpans": 17,
+  "verifiedOriginalOccurrenceBindings": 24,
+  "combinedCounts": {
+    "RETAINED": 2993,
+    "CHANGED": 808,
+    "BLOCKED": 3685
+  },
+  "remainingUnexaminedEntries": 3678,
+  "remainingOriginalXmlAmbiguityEntries": 7,
+  "sourceLedgerActivated": false,
+  "proofPromoted": false
+}

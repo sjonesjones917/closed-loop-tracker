@@ -5,13 +5,17 @@ import os from 'node:os';
 import path from 'node:path';
 import cp from 'node:child_process';
 import {fileURLToPath} from 'node:url';
+import {createApprovedInsertionMap,readInsertionAtomicDescriptor} from './approved-source-continuation.mjs';
 import {validateSpecificationSource} from './review-specification-coverage.mjs';
 
 const root=path.dirname(fileURLToPath(import.meta.url));
 const specificationPath='specification/closed-loop-reliability-controlling-implementation-specification.txt';
 const expectedSha256='8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883';
 const sha256=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
-const source=fs.readFileSync(path.join(root,specificationPath));
+const currentSource=fs.readFileSync(path.join(root,specificationPath)),governance=JSON.parse(fs.readFileSync(path.join(root,'specification/requirement-evidence-bindings.json')));
+const continuation=governance.atomicExtraction?.schema==='closed-loop-approved-insertion-atomic-extraction/1'?readInsertionAtomicDescriptor(governance.atomicExtraction).continuation:null;
+const fixtureSourcePath=continuation?continuation.base.view.find(row=>row.logicalPath===specificationPath).storagePath:specificationPath;
+const source=fs.readFileSync(path.join(root,fixtureSourcePath));
 assert.equal(source.length,309482,'The regression must exercise the exact supplied target.');
 assert.equal(sha256(source),expectedSha256,'The regression fixture cannot silently follow a changed source.');
 // This isolated identity fixture is not a generated governance manifest or a
@@ -50,7 +54,7 @@ const originalFiles=[specificationPath,'specification/closed-loop-specification-
 const before=new Map(originalFiles.map(file=>[file,fs.readFileSync(path.join(root,file))]));
 const run=(script,args=[],cwd=root)=>cp.spawnSync(process.execPath,[path.join(root,script),...args],{cwd,encoding:'utf8',timeout:120000,maxBuffer:32*1024*1024,env:{...process.env,GITHUB_ACTIONS:'false',SOURCE_COMMIT:fixtureCommit}});
 try{
-  const review=run('review-specification-coverage.mjs',[path.join(root,specificationPath)]);
+  const review=run('review-specification-coverage.mjs',[path.join(root,fixtureSourcePath)]);
   assert.equal(review.status,0,review.stderr);
   const inventory=JSON.parse(review.stdout);
   assert.equal(inventory.reviewedSourceSha256,expectedSha256);
@@ -83,6 +87,19 @@ try{
   assert.ok(!fs.existsSync(path.join(temporaryRoot,'specification/closed-loop-specification-manifest.json')));
   assert.ok(!fs.existsSync(path.join(temporaryRoot,'specification/closed-loop-normative-requirements.json')));
   mutations.push('historical evidence source tuple');
+  if(continuation){
+    const read=ref=>{const item=continuation.view.find(row=>row.provenancePath===ref.path);assert(item&&item.sha256===ref.sha256,'CURRENT_ADOPTION_CUSTODY_ORACLE');const bytes=fs.readFileSync(path.join(root,item.storagePath));assert.equal(sha256(bytes),ref.sha256,'CURRENT_ADOPTION_BYTES_ORACLE');return bytes;};
+    const proposalBytes=read(continuation.proposal),currentBytes=read(continuation.source),declared=JSON.parse(read(continuation.insertionMap));
+    assert.deepEqual(currentBytes,currentSource,'CURRENT_ADOPTION_ACTUAL_SOURCE_ORACLE');
+    const args={baseBytes:source,currentBytes,proposalBytes,baseSha256:expectedSha256,currentSha256:sha256(currentSource),proposalSha256:continuation.proposal.sha256,specificationPath,ranges:declared.ranges};
+    const acceptedCurrent=createApprovedInsertionMap(args);assert.equal(acceptedCurrent.currentSha256,sha256(currentSource));
+    for(const [name,change,pattern]of [
+      ['changed-current-source',value=>{value.currentBytes=Buffer.from(value.currentBytes);value.currentBytes[100]^=1;},/INSERTION_CURRENT_HASH/],
+      ['amendment-omission',value=>value.ranges.pop(),/INSERTION_RECONSTRUCTION/],
+      ['amendment-predecessor',value=>value.ranges[0].previousSpecificationSha256='0'.repeat(64),/INSERTION_PREDECESSOR/],
+      ['amendment-proposal-range',value=>value.ranges[0].approvedProposalSourceStartLine++,/INSERTION_RANGE_COORDINATES|INSERTION_RANGE_BYTES/]
+    ]){const value={...args,ranges:structuredClone(args.ranges)};change(value);assert.throws(()=>createApprovedInsertionMap(value),pattern,name);assert.equal(createApprovedInsertionMap(args).currentSha256,sha256(currentSource));mutations.push(name);}
+  }
   console.log(JSON.stringify({
     test:'test-specification-source-adoption',result:'PASS',scope:'EXACT_SOURCE_BYTE_VALIDATION_AND_MECHANICAL_SECTION_CONTROLS_ONLY',
     sourceByteLength:source.length,sourceSha256:sha256(source),topLevelSectionCount:53,sectionCount:inventory.sectionInventory.length,

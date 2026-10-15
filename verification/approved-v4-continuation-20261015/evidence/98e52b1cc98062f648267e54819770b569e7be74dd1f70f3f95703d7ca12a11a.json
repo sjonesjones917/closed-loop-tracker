@@ -1,0 +1,37 @@
+{
+  "schema": "closed-loop-source-citation-only-addendum/1",
+  "status": "FROZEN_COUNT_CAPTION_CLARIFICATION",
+  "preservedOriginalManifest": {
+    "path": "/tmp/clrt-source-final-archives/qualifier-linkage-reconciliation-009-deliverable-manifest.json",
+    "sha256": "bc7902bb0d86d5b8e183412e2d4912a64cd6d1cc4d80215c8ffae14d49ea785c"
+  },
+  "exactJsonPointerCorrections": [
+    {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-009/read-inventory.json",
+        "sha256": "b2f86b96a4fb0eed0be7152e602f4d9e4f1082f6eca06b6be3276f2a0bb84237",
+        "byteLength": 104441
+      },
+      "jsonPointer": "/sourceReadReview",
+      "oldValueSha256": "69d7b029699830ae9ef991e201be43702bc7a9be1c4d6ff9a59c809f709405ef",
+      "oldValue": "All45 exact predicates and15 current mechanisms read;50 unique original context occurrences examined including15 newly displayed versus prior001–008. Exact durable declaration/cardinality/hash-rule exceptions separated from actual handoff/provenance/input/security/storage dependencies. Stage01 handoff retains decoder alone; XML storage edge is diagnostic.",
+      "replacementValue": "All45 exact predicates and13 current mechanisms read;50 unique original context occurrences examined including15 newly displayed versus prior001–008. Exact durable declaration/cardinality/hash-rule exceptions separated from actual handoff/provenance/input/security/storage dependencies. Stage01 handoff retains decoder alone; XML storage edge is diagnostic.",
+      "newValueSha256": "af0a6bc420367d4f3925c4e3308ac243fb02f7e7b38b0d6cc839fd318de13a4f"
+    },
+    {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-009/independent-config.json",
+        "sha256": "9b8e14b5b3dd61831bf26964de905f3edd9c907f0fdab6a883b70e3febdaa23b",
+        "byteLength": 10884
+      },
+      "jsonPointer": "/reviewAttestation",
+      "oldValueSha256": "69d7b029699830ae9ef991e201be43702bc7a9be1c4d6ff9a59c809f709405ef",
+      "oldValue": "All45 exact predicates and15 current mechanisms read;50 unique original context occurrences examined including15 newly displayed versus prior001–008. Exact durable declaration/cardinality/hash-rule exceptions separated from actual handoff/provenance/input/security/storage dependencies. Stage01 handoff retains decoder alone; XML storage edge is diagnostic.",
+      "replacementValue": "All45 exact predicates and13 current mechanisms read;50 unique original context occurrences examined including15 newly displayed versus prior001–008. Exact durable declaration/cardinality/hash-rule exceptions separated from actual handoff/provenance/input/security/storage dependencies. Stage01 handoff retains decoder alone; XML storage edge is diagnostic.",
+      "newValueSha256": "af0a6bc420367d4f3925c4e3308ac243fb02f7e7b38b0d6cc839fd318de13a4f"
+    }
+  ],
+  "reason": "The measured validation currentMechanismCount is correctly13. Two prose captions mistakenly say15. All45 predicates and all13 unique current mechanisms were examined. No decision, source span, governor, identity preimage, population or disposition changes.",
+  "semanticChange": false,
+  "proofPromoted": false
+}

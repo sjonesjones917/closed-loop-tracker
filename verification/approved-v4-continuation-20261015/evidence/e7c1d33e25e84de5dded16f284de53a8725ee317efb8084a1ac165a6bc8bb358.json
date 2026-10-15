@@ -1,0 +1,845 @@
+[
+  {
+    "schema": "closed-loop-attributed-technical-source-impact-reconciliation/1",
+    "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+    "predecessorId": "NREQ-c0a2fa84e2aafe674742a0bb98c40e02",
+    "predecessorIndex": 2051,
+    "predecessorEntrySha256": "83f45d5275a6eaef3a6336285521a33f80565c8e93d75fa25f164c6770ba6a91",
+    "originalStatement": "Test IR version 1 supports SELECT_XML.",
+    "priorDisposition": "BLOCKED",
+    "successorDisposition": "CHANGED",
+    "successorNormativeRequirementId": "NREQ-85fa0a7b7c1ce1c53e9215deb04f8d5e",
+    "identityStatus": "FRESH_ATTRIBUTED_CANDIDATE_IDENTITY_CONDITIONAL_ON_LINKED_GOVERNOR_PENDING_SOURCE_ADOPTION",
+    "effectiveGovernorLink": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/xml-reviewed-resolution-successor/effective-governor-link.json",
+      "sha256": "20dfd446263cdffd35a8b12b70844cad851cf7abb5ad059548bbb5f088c5875c",
+      "byteLength": 7671
+    },
+    "governingAddedSpans": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "startLine": 2073,
+        "endLine": 2073,
+        "startByte": 156581,
+        "endByte": 157422,
+        "sha256": "716f74d1c330a23d7f2f70d7900eef3e7acc01577fc5ef064adf55767e6945ca",
+        "text": "XML selectors start with exactly one slash, then child-element segments named [A-Za-z_][A-Za-z0-9_.:-]* or *, optionally followed by [positive safe integer]. The first segment matches the document element at position 1; later positions apply within each parent's matching child elements. Only the final segment may be @name or text(). Element results are arrays of the canonical element-node values defined in D4; attribute results are arrays of existing exact attribute strings; text() returns one string per selected element, concatenating descendant text/CDATA in document order and excluding comments. A wholly empty selection at any segment, including a final attribute selection, is UNDETERMINED. A selected element with no text yields the known empty string, not a missing selection. Other selector syntax is invalid before execution."
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "startLine": 2080,
+        "endLine": 2080,
+        "startByte": 160637,
+        "endByte": 161297,
+        "sha256": "d009130c570490da8892ab9bcbb88919dc23e706aba30c5b47ce96edec15ebf8",
+        "text": "These canonical node values may be consumed by canonical equality, UNIQUE, ASSERT_SET_EQUAL and SELECT_JSON_PATH without opaque host-object behavior. For JSON-path traversal their object keys, including attributes, use §34.1 key order; XML traversal uses children/content source order. SELECT_XML requires a parsed node value from PARSE_XML or a node selected from that parsed value in the same execution; a lookalike authored JSON object does not acquire XML-node provenance. Provenance does not affect canonical equality. Its input is one node, not an implicitly unwrapped array; extraction from an element-result array is explicit through SELECT_JSON_PATH."
+      }
+    ],
+    "independentReason": "The supported SELECT_XML operation now has D exact syntax/value/provenance and an explicit supplied-node invocation-root interpretation. Support must implement that bounded behavior, not original-tree ambient access or selected-subnode rejection.",
+    "identityPreimage": {
+      "schema": "closed-loop-attributed-source-impact-identity/1",
+      "successorSourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "predecessorId": "NREQ-c0a2fa84e2aafe674742a0bb98c40e02",
+      "predecessorEntrySha256": "83f45d5275a6eaef3a6336285521a33f80565c8e93d75fa25f164c6770ba6a91",
+      "statement": "Test IR version 1 supports SELECT_XML.",
+      "governingSourceSpans": [
+        {
+          "role": "SUCCESSOR_SOURCE",
+          "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+          "startLine": 2073,
+          "endLine": 2073,
+          "startByte": 156581,
+          "endByte": 157422,
+          "sha256": "716f74d1c330a23d7f2f70d7900eef3e7acc01577fc5ef064adf55767e6945ca",
+          "text": "XML selectors start with exactly one slash, then child-element segments named [A-Za-z_][A-Za-z0-9_.:-]* or *, optionally followed by [positive safe integer]. The first segment matches the document element at position 1; later positions apply within each parent's matching child elements. Only the final segment may be @name or text(). Element results are arrays of the canonical element-node values defined in D4; attribute results are arrays of existing exact attribute strings; text() returns one string per selected element, concatenating descendant text/CDATA in document order and excluding comments. A wholly empty selection at any segment, including a final attribute selection, is UNDETERMINED. A selected element with no text yields the known empty string, not a missing selection. Other selector syntax is invalid before execution."
+        },
+        {
+          "role": "SUCCESSOR_SOURCE",
+          "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+          "startLine": 2080,
+          "endLine": 2080,
+          "startByte": 160637,
+          "endByte": 161297,
+          "sha256": "d009130c570490da8892ab9bcbb88919dc23e706aba30c5b47ce96edec15ebf8",
+          "text": "These canonical node values may be consumed by canonical equality, UNIQUE, ASSERT_SET_EQUAL and SELECT_JSON_PATH without opaque host-object behavior. For JSON-path traversal their object keys, including attributes, use §34.1 key order; XML traversal uses children/content source order. SELECT_XML requires a parsed node value from PARSE_XML or a node selected from that parsed value in the same execution; a lookalike authored JSON object does not acquire XML-node provenance. Provenance does not affect canonical equality. Its input is one node, not an implicitly unwrapped array; extraction from an element-result array is explicit through SELECT_JSON_PATH."
+        }
+      ],
+      "explicitTechnicalGovernor": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/xml-reviewed-resolution-successor/effective-governor-link.json",
+        "sha256": "20dfd446263cdffd35a8b12b70844cad851cf7abb5ad059548bbb5f088c5875c",
+        "byteLength": 7671
+      },
+      "sourceDecision": "The supported SELECT_XML operation now has D exact syntax/value/provenance and an explicit supplied-node invocation-root interpretation. Support must implement that bounded behavior, not original-tree ambient access or selected-subnode rejection."
+    },
+    "identityPreimageSha256": "85fa0a7b7c1ce1c53e9215deb04f8d5e5ef45d67b80b3a29004eb4f1f16d1e5c",
+    "originalOccurrenceSetReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/2051/originalOccurrenceBindings"
+    },
+    "originalOccurrenceTransport": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-occurrence-transport.json",
+      "sha256": "4157cda2f60669a2feba4c3021aa212f5bee00f4456a4e7a59d8e86da08a02d4",
+      "byteLength": 6309790
+    },
+    "verifiedOriginalOccurrenceBindingCount": 4,
+    "originalSourcePassages": [
+      {
+        "role": "BASE_SOURCE",
+        "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+        "startLine": 1790,
+        "endLine": 1790,
+        "startByte": 104922,
+        "endByte": 104934,
+        "sha256": "d93d5d677093ae2552d1f9de9c5298f7976a46600f5617096eb8d1adbb81f74d",
+        "text": "- SELECT_XML"
+      },
+      {
+        "role": "BASE_SOURCE",
+        "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+        "startLine": 1780,
+        "endLine": 1780,
+        "startByte": 104777,
+        "endByte": 104801,
+        "sha256": "e6081e1fc0a5cdd4edf6d99920c352c45cd10859b8a8c6458c3c752855e6d1db",
+        "text": "21.4 Required primitives"
+      },
+      {
+        "role": "BASE_SOURCE",
+        "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+        "startLine": 1782,
+        "endLine": 1782,
+        "startByte": 104803,
+        "endByte": 104822,
+        "sha256": "88a889a3ec2740eb8764ce1bdf9024467d675b894c20858d82ecdccbab2ee087",
+        "text": "Version 1 supports:"
+      }
+    ],
+    "resolvedPriorBlocker": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+    "sourceOnlyAmbiguityHistoryPreserved": true,
+    "currentMeaningStatus": "RESOLVED_WITH_EXPLICIT_TECHNICAL_GOVERNOR",
+    "implementationStatus": "UNKNOWN",
+    "testConformance": "UNKNOWN",
+    "proofInheritance": false,
+    "implementationAcceptance": false
+  },
+  {
+    "schema": "closed-loop-attributed-technical-source-impact-reconciliation/1",
+    "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+    "predecessorId": "NREQ-1d38d63af6b54ccbd3b493fd1710aa31",
+    "predecessorIndex": 2097,
+    "predecessorEntrySha256": "f03376047d0600fd3ea75ba5546591c32225c93918c2bab7c684c348fba01f26",
+    "originalStatement": "closed-loop-xml-selector/1 MUST support at least 1-based positional index predicates.",
+    "priorDisposition": "BLOCKED",
+    "successorDisposition": "CHANGED",
+    "successorNormativeRequirementId": "NREQ-98c0ef169caf2ae6e95178e3d43e2ea9",
+    "identityStatus": "FRESH_ATTRIBUTED_CANDIDATE_IDENTITY_CONDITIONAL_ON_LINKED_GOVERNOR_PENDING_SOURCE_ADOPTION",
+    "effectiveGovernorLink": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/xml-reviewed-resolution-successor/effective-governor-link.json",
+      "sha256": "20dfd446263cdffd35a8b12b70844cad851cf7abb5ad059548bbb5f088c5875c",
+      "byteLength": 7671
+    },
+    "governingAddedSpans": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "startLine": 2073,
+        "endLine": 2073,
+        "startByte": 156581,
+        "endByte": 157422,
+        "sha256": "716f74d1c330a23d7f2f70d7900eef3e7acc01577fc5ef064adf55767e6945ca",
+        "text": "XML selectors start with exactly one slash, then child-element segments named [A-Za-z_][A-Za-z0-9_.:-]* or *, optionally followed by [positive safe integer]. The first segment matches the document element at position 1; later positions apply within each parent's matching child elements. Only the final segment may be @name or text(). Element results are arrays of the canonical element-node values defined in D4; attribute results are arrays of existing exact attribute strings; text() returns one string per selected element, concatenating descendant text/CDATA in document order and excluding comments. A wholly empty selection at any segment, including a final attribute selection, is UNDETERMINED. A selected element with no text yields the known empty string, not a missing selection. Other selector syntax is invalid before execution."
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "startLine": 2080,
+        "endLine": 2080,
+        "startByte": 160637,
+        "endByte": 161297,
+        "sha256": "d009130c570490da8892ab9bcbb88919dc23e706aba30c5b47ce96edec15ebf8",
+        "text": "These canonical node values may be consumed by canonical equality, UNIQUE, ASSERT_SET_EQUAL and SELECT_JSON_PATH without opaque host-object behavior. For JSON-path traversal their object keys, including attributes, use §34.1 key order; XML traversal uses children/content source order. SELECT_XML requires a parsed node value from PARSE_XML or a node selected from that parsed value in the same execution; a lookalike authored JSON object does not acquire XML-node provenance. Provenance does not affect canonical equality. Its input is one node, not an implicitly unwrapped array; extraction from an element-result array is explicit through SELECT_JSON_PATH."
+      }
+    ],
+    "independentReason": "The first absolute segment tests the supplied invocation root at position1; later positional predicates apply within each selected parent’s matching children. This changes effective supported positional semantics for selected nonroot inputs while preserving positive safe-integer syntax.",
+    "identityPreimage": {
+      "schema": "closed-loop-attributed-source-impact-identity/1",
+      "successorSourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "predecessorId": "NREQ-1d38d63af6b54ccbd3b493fd1710aa31",
+      "predecessorEntrySha256": "f03376047d0600fd3ea75ba5546591c32225c93918c2bab7c684c348fba01f26",
+      "statement": "closed-loop-xml-selector/1 MUST support at least 1-based positional index predicates.",
+      "governingSourceSpans": [
+        {
+          "role": "SUCCESSOR_SOURCE",
+          "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+          "startLine": 2073,
+          "endLine": 2073,
+          "startByte": 156581,
+          "endByte": 157422,
+          "sha256": "716f74d1c330a23d7f2f70d7900eef3e7acc01577fc5ef064adf55767e6945ca",
+          "text": "XML selectors start with exactly one slash, then child-element segments named [A-Za-z_][A-Za-z0-9_.:-]* or *, optionally followed by [positive safe integer]. The first segment matches the document element at position 1; later positions apply within each parent's matching child elements. Only the final segment may be @name or text(). Element results are arrays of the canonical element-node values defined in D4; attribute results are arrays of existing exact attribute strings; text() returns one string per selected element, concatenating descendant text/CDATA in document order and excluding comments. A wholly empty selection at any segment, including a final attribute selection, is UNDETERMINED. A selected element with no text yields the known empty string, not a missing selection. Other selector syntax is invalid before execution."
+        },
+        {
+          "role": "SUCCESSOR_SOURCE",
+          "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+          "startLine": 2080,
+          "endLine": 2080,
+          "startByte": 160637,
+          "endByte": 161297,
+          "sha256": "d009130c570490da8892ab9bcbb88919dc23e706aba30c5b47ce96edec15ebf8",
+          "text": "These canonical node values may be consumed by canonical equality, UNIQUE, ASSERT_SET_EQUAL and SELECT_JSON_PATH without opaque host-object behavior. For JSON-path traversal their object keys, including attributes, use §34.1 key order; XML traversal uses children/content source order. SELECT_XML requires a parsed node value from PARSE_XML or a node selected from that parsed value in the same execution; a lookalike authored JSON object does not acquire XML-node provenance. Provenance does not affect canonical equality. Its input is one node, not an implicitly unwrapped array; extraction from an element-result array is explicit through SELECT_JSON_PATH."
+        }
+      ],
+      "explicitTechnicalGovernor": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/xml-reviewed-resolution-successor/effective-governor-link.json",
+        "sha256": "20dfd446263cdffd35a8b12b70844cad851cf7abb5ad059548bbb5f088c5875c",
+        "byteLength": 7671
+      },
+      "sourceDecision": "The first absolute segment tests the supplied invocation root at position1; later positional predicates apply within each selected parent’s matching children. This changes effective supported positional semantics for selected nonroot inputs while preserving positive safe-integer syntax."
+    },
+    "identityPreimageSha256": "98c0ef169caf2ae6e95178e3d43e2ea94d0472215e33a8ee2aa506fde7ed369e",
+    "originalOccurrenceSetReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/2097/originalOccurrenceBindings"
+    },
+    "originalOccurrenceTransport": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-occurrence-transport.json",
+      "sha256": "4157cda2f60669a2feba4c3021aa212f5bee00f4456a4e7a59d8e86da08a02d4",
+      "byteLength": 6309790
+    },
+    "verifiedOriginalOccurrenceBindingCount": 3,
+    "originalSourcePassages": [
+      {
+        "role": "BASE_SOURCE",
+        "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+        "startLine": 1836,
+        "endLine": 1836,
+        "startByte": 106080,
+        "endByte": 106943,
+        "sha256": "bf1b2d21ee7bb26371cc1747b2476f9c0198145c804f75b4a65db4bbda18c6ca",
+        "text": "The current registries are closed-loop-json-selector/1 and closed-loop-xml-selector/1. closed-loop-json-selector/1 MUST support at least: the root `$`; child access by identifier name and by single-quoted bracket name; nonnegative array index; and the wildcard `*` over object values and array elements. Selection order is document order. Recursive descent, filters, unions, slices, and script expressions are excluded from version 1. closed-loop-xml-selector/1 MUST support at least: absolute child-element paths from the document root; the element wildcard `*`; 1-based positional index predicates; attribute access `@name`; and `text()` value extraction. All other axes, predicates, and functions are excluded from version 1. A proposition that cannot be faithfully expressed within these registered subsets is not natively representable and routes externally."
+      },
+      {
+        "role": "BASE_SOURCE",
+        "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+        "startLine": 1830,
+        "endLine": 1830,
+        "startByte": 105734,
+        "endByte": 105759,
+        "sha256": "63869991713660770a2c440eb3640005d7fe89f3dbf0600bb510e1c674441339",
+        "text": "21.6 Restricted selectors"
+      }
+    ],
+    "resolvedPriorBlocker": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+    "sourceOnlyAmbiguityHistoryPreserved": true,
+    "currentMeaningStatus": "RESOLVED_WITH_EXPLICIT_TECHNICAL_GOVERNOR",
+    "implementationStatus": "UNKNOWN",
+    "testConformance": "UNKNOWN",
+    "proofInheritance": false,
+    "implementationAcceptance": false
+  },
+  {
+    "schema": "closed-loop-attributed-technical-source-impact-reconciliation/1",
+    "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+    "predecessorId": "NREQ-e884202d174fe47a8627a7e666bc0428",
+    "predecessorIndex": 2098,
+    "predecessorEntrySha256": "f8c9cc9eefe5a9ac7e7b92cb4c32961e6bb61c8c8f883735f3f14d36bc499e45",
+    "originalStatement": "closed-loop-xml-selector/1 MUST support at least absolute child-element paths from the document root.",
+    "priorDisposition": "BLOCKED",
+    "successorDisposition": "CHANGED",
+    "successorNormativeRequirementId": "NREQ-c10710af44c28997cedb05ef67fa89f2",
+    "identityStatus": "FRESH_ATTRIBUTED_CANDIDATE_IDENTITY_CONDITIONAL_ON_LINKED_GOVERNOR_PENDING_SOURCE_ADOPTION",
+    "effectiveGovernorLink": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/xml-reviewed-resolution-successor/effective-governor-link.json",
+      "sha256": "20dfd446263cdffd35a8b12b70844cad851cf7abb5ad059548bbb5f088c5875c",
+      "byteLength": 7671
+    },
+    "governingAddedSpans": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "startLine": 2073,
+        "endLine": 2073,
+        "startByte": 156581,
+        "endByte": 157422,
+        "sha256": "716f74d1c330a23d7f2f70d7900eef3e7acc01577fc5ef064adf55767e6945ca",
+        "text": "XML selectors start with exactly one slash, then child-element segments named [A-Za-z_][A-Za-z0-9_.:-]* or *, optionally followed by [positive safe integer]. The first segment matches the document element at position 1; later positions apply within each parent's matching child elements. Only the final segment may be @name or text(). Element results are arrays of the canonical element-node values defined in D4; attribute results are arrays of existing exact attribute strings; text() returns one string per selected element, concatenating descendant text/CDATA in document order and excluding comments. A wholly empty selection at any segment, including a final attribute selection, is UNDETERMINED. A selected element with no text yields the known empty string, not a missing selection. Other selector syntax is invalid before execution."
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "startLine": 2080,
+        "endLine": 2080,
+        "startByte": 160637,
+        "endByte": 161297,
+        "sha256": "d009130c570490da8892ab9bcbb88919dc23e706aba30c5b47ce96edec15ebf8",
+        "text": "These canonical node values may be consumed by canonical equality, UNIQUE, ASSERT_SET_EQUAL and SELECT_JSON_PATH without opaque host-object behavior. For JSON-path traversal their object keys, including attributes, use §34.1 key order; XML traversal uses children/content source order. SELECT_XML requires a parsed node value from PARSE_XML or a node selected from that parsed value in the same execution; a lookalike authored JSON object does not acquire XML-node provenance. Provenance does not affect canonical equality. Its input is one node, not an implicitly unwrapped array; extraction from an element-result array is explicit through SELECT_JSON_PATH."
+      }
+    ],
+    "independentReason": "Absolute child-element paths are rooted at the single eligible supplied invocation node, including selected nonroot nodes. Original-root access requires explicitly passing that original parsed value through the same execution DAG; there is no ambient ancestor access.",
+    "identityPreimage": {
+      "schema": "closed-loop-attributed-source-impact-identity/1",
+      "successorSourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "predecessorId": "NREQ-e884202d174fe47a8627a7e666bc0428",
+      "predecessorEntrySha256": "f8c9cc9eefe5a9ac7e7b92cb4c32961e6bb61c8c8f883735f3f14d36bc499e45",
+      "statement": "closed-loop-xml-selector/1 MUST support at least absolute child-element paths from the document root.",
+      "governingSourceSpans": [
+        {
+          "role": "SUCCESSOR_SOURCE",
+          "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+          "startLine": 2073,
+          "endLine": 2073,
+          "startByte": 156581,
+          "endByte": 157422,
+          "sha256": "716f74d1c330a23d7f2f70d7900eef3e7acc01577fc5ef064adf55767e6945ca",
+          "text": "XML selectors start with exactly one slash, then child-element segments named [A-Za-z_][A-Za-z0-9_.:-]* or *, optionally followed by [positive safe integer]. The first segment matches the document element at position 1; later positions apply within each parent's matching child elements. Only the final segment may be @name or text(). Element results are arrays of the canonical element-node values defined in D4; attribute results are arrays of existing exact attribute strings; text() returns one string per selected element, concatenating descendant text/CDATA in document order and excluding comments. A wholly empty selection at any segment, including a final attribute selection, is UNDETERMINED. A selected element with no text yields the known empty string, not a missing selection. Other selector syntax is invalid before execution."
+        },
+        {
+          "role": "SUCCESSOR_SOURCE",
+          "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+          "startLine": 2080,
+          "endLine": 2080,
+          "startByte": 160637,
+          "endByte": 161297,
+          "sha256": "d009130c570490da8892ab9bcbb88919dc23e706aba30c5b47ce96edec15ebf8",
+          "text": "These canonical node values may be consumed by canonical equality, UNIQUE, ASSERT_SET_EQUAL and SELECT_JSON_PATH without opaque host-object behavior. For JSON-path traversal their object keys, including attributes, use §34.1 key order; XML traversal uses children/content source order. SELECT_XML requires a parsed node value from PARSE_XML or a node selected from that parsed value in the same execution; a lookalike authored JSON object does not acquire XML-node provenance. Provenance does not affect canonical equality. Its input is one node, not an implicitly unwrapped array; extraction from an element-result array is explicit through SELECT_JSON_PATH."
+        }
+      ],
+      "explicitTechnicalGovernor": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/xml-reviewed-resolution-successor/effective-governor-link.json",
+        "sha256": "20dfd446263cdffd35a8b12b70844cad851cf7abb5ad059548bbb5f088c5875c",
+        "byteLength": 7671
+      },
+      "sourceDecision": "Absolute child-element paths are rooted at the single eligible supplied invocation node, including selected nonroot nodes. Original-root access requires explicitly passing that original parsed value through the same execution DAG; there is no ambient ancestor access."
+    },
+    "identityPreimageSha256": "c10710af44c28997cedb05ef67fa89f2139373c6faf4f5799c5a83d5a699c111",
+    "originalOccurrenceSetReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/2098/originalOccurrenceBindings"
+    },
+    "originalOccurrenceTransport": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-occurrence-transport.json",
+      "sha256": "4157cda2f60669a2feba4c3021aa212f5bee00f4456a4e7a59d8e86da08a02d4",
+      "byteLength": 6309790
+    },
+    "verifiedOriginalOccurrenceBindingCount": 3,
+    "originalSourcePassages": [
+      {
+        "role": "BASE_SOURCE",
+        "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+        "startLine": 1836,
+        "endLine": 1836,
+        "startByte": 106080,
+        "endByte": 106943,
+        "sha256": "bf1b2d21ee7bb26371cc1747b2476f9c0198145c804f75b4a65db4bbda18c6ca",
+        "text": "The current registries are closed-loop-json-selector/1 and closed-loop-xml-selector/1. closed-loop-json-selector/1 MUST support at least: the root `$`; child access by identifier name and by single-quoted bracket name; nonnegative array index; and the wildcard `*` over object values and array elements. Selection order is document order. Recursive descent, filters, unions, slices, and script expressions are excluded from version 1. closed-loop-xml-selector/1 MUST support at least: absolute child-element paths from the document root; the element wildcard `*`; 1-based positional index predicates; attribute access `@name`; and `text()` value extraction. All other axes, predicates, and functions are excluded from version 1. A proposition that cannot be faithfully expressed within these registered subsets is not natively representable and routes externally."
+      },
+      {
+        "role": "BASE_SOURCE",
+        "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+        "startLine": 1830,
+        "endLine": 1830,
+        "startByte": 105734,
+        "endByte": 105759,
+        "sha256": "63869991713660770a2c440eb3640005d7fe89f3dbf0600bb510e1c674441339",
+        "text": "21.6 Restricted selectors"
+      }
+    ],
+    "resolvedPriorBlocker": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+    "sourceOnlyAmbiguityHistoryPreserved": true,
+    "currentMeaningStatus": "RESOLVED_WITH_EXPLICIT_TECHNICAL_GOVERNOR",
+    "implementationStatus": "UNKNOWN",
+    "testConformance": "UNKNOWN",
+    "proofInheritance": false,
+    "implementationAcceptance": false
+  },
+  {
+    "schema": "closed-loop-attributed-technical-source-impact-reconciliation/1",
+    "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+    "predecessorId": "NREQ-bc228ccef26a4be8f45f955182946def",
+    "predecessorIndex": 2099,
+    "predecessorEntrySha256": "f5cf5cd94d77d00ca38fd33e8e6fbf47d7b9567ee045f38d4bb1e25026774c9f",
+    "originalStatement": "closed-loop-xml-selector/1 MUST support at least attribute access @name.",
+    "priorDisposition": "BLOCKED",
+    "successorDisposition": "CHANGED",
+    "successorNormativeRequirementId": "NREQ-75ef70adf08a273c0fa5551f4fa274f0",
+    "identityStatus": "FRESH_ATTRIBUTED_CANDIDATE_IDENTITY_CONDITIONAL_ON_LINKED_GOVERNOR_PENDING_SOURCE_ADOPTION",
+    "effectiveGovernorLink": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/xml-reviewed-resolution-successor/effective-governor-link.json",
+      "sha256": "20dfd446263cdffd35a8b12b70844cad851cf7abb5ad059548bbb5f088c5875c",
+      "byteLength": 7671
+    },
+    "governingAddedSpans": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "startLine": 2073,
+        "endLine": 2073,
+        "startByte": 156581,
+        "endByte": 157422,
+        "sha256": "716f74d1c330a23d7f2f70d7900eef3e7acc01577fc5ef064adf55767e6945ca",
+        "text": "XML selectors start with exactly one slash, then child-element segments named [A-Za-z_][A-Za-z0-9_.:-]* or *, optionally followed by [positive safe integer]. The first segment matches the document element at position 1; later positions apply within each parent's matching child elements. Only the final segment may be @name or text(). Element results are arrays of the canonical element-node values defined in D4; attribute results are arrays of existing exact attribute strings; text() returns one string per selected element, concatenating descendant text/CDATA in document order and excluding comments. A wholly empty selection at any segment, including a final attribute selection, is UNDETERMINED. A selected element with no text yields the known empty string, not a missing selection. Other selector syntax is invalid before execution."
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "startLine": 2080,
+        "endLine": 2080,
+        "startByte": 160637,
+        "endByte": 161297,
+        "sha256": "d009130c570490da8892ab9bcbb88919dc23e706aba30c5b47ce96edec15ebf8",
+        "text": "These canonical node values may be consumed by canonical equality, UNIQUE, ASSERT_SET_EQUAL and SELECT_JSON_PATH without opaque host-object behavior. For JSON-path traversal their object keys, including attributes, use §34.1 key order; XML traversal uses children/content source order. SELECT_XML requires a parsed node value from PARSE_XML or a node selected from that parsed value in the same execution; a lookalike authored JSON object does not acquire XML-node provenance. Provenance does not affect canonical equality. Its input is one node, not an implicitly unwrapped array; extraction from an element-result array is explicit through SELECT_JSON_PATH."
+      }
+    ],
+    "independentReason": "Final @name selection is evaluated on elements selected within the supplied invocation-root subtree; exact existing attribute strings and D empty-selection UNDETERMINED behavior remain. The rooting ambiguity no longer leaves attribute results indeterminate as a source-contract question.",
+    "identityPreimage": {
+      "schema": "closed-loop-attributed-source-impact-identity/1",
+      "successorSourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "predecessorId": "NREQ-bc228ccef26a4be8f45f955182946def",
+      "predecessorEntrySha256": "f5cf5cd94d77d00ca38fd33e8e6fbf47d7b9567ee045f38d4bb1e25026774c9f",
+      "statement": "closed-loop-xml-selector/1 MUST support at least attribute access @name.",
+      "governingSourceSpans": [
+        {
+          "role": "SUCCESSOR_SOURCE",
+          "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+          "startLine": 2073,
+          "endLine": 2073,
+          "startByte": 156581,
+          "endByte": 157422,
+          "sha256": "716f74d1c330a23d7f2f70d7900eef3e7acc01577fc5ef064adf55767e6945ca",
+          "text": "XML selectors start with exactly one slash, then child-element segments named [A-Za-z_][A-Za-z0-9_.:-]* or *, optionally followed by [positive safe integer]. The first segment matches the document element at position 1; later positions apply within each parent's matching child elements. Only the final segment may be @name or text(). Element results are arrays of the canonical element-node values defined in D4; attribute results are arrays of existing exact attribute strings; text() returns one string per selected element, concatenating descendant text/CDATA in document order and excluding comments. A wholly empty selection at any segment, including a final attribute selection, is UNDETERMINED. A selected element with no text yields the known empty string, not a missing selection. Other selector syntax is invalid before execution."
+        },
+        {
+          "role": "SUCCESSOR_SOURCE",
+          "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+          "startLine": 2080,
+          "endLine": 2080,
+          "startByte": 160637,
+          "endByte": 161297,
+          "sha256": "d009130c570490da8892ab9bcbb88919dc23e706aba30c5b47ce96edec15ebf8",
+          "text": "These canonical node values may be consumed by canonical equality, UNIQUE, ASSERT_SET_EQUAL and SELECT_JSON_PATH without opaque host-object behavior. For JSON-path traversal their object keys, including attributes, use §34.1 key order; XML traversal uses children/content source order. SELECT_XML requires a parsed node value from PARSE_XML or a node selected from that parsed value in the same execution; a lookalike authored JSON object does not acquire XML-node provenance. Provenance does not affect canonical equality. Its input is one node, not an implicitly unwrapped array; extraction from an element-result array is explicit through SELECT_JSON_PATH."
+        }
+      ],
+      "explicitTechnicalGovernor": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/xml-reviewed-resolution-successor/effective-governor-link.json",
+        "sha256": "20dfd446263cdffd35a8b12b70844cad851cf7abb5ad059548bbb5f088c5875c",
+        "byteLength": 7671
+      },
+      "sourceDecision": "Final @name selection is evaluated on elements selected within the supplied invocation-root subtree; exact existing attribute strings and D empty-selection UNDETERMINED behavior remain. The rooting ambiguity no longer leaves attribute results indeterminate as a source-contract question."
+    },
+    "identityPreimageSha256": "75ef70adf08a273c0fa5551f4fa274f055aad0e803d9046296a29e6c7cf5c030",
+    "originalOccurrenceSetReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/2099/originalOccurrenceBindings"
+    },
+    "originalOccurrenceTransport": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-occurrence-transport.json",
+      "sha256": "4157cda2f60669a2feba4c3021aa212f5bee00f4456a4e7a59d8e86da08a02d4",
+      "byteLength": 6309790
+    },
+    "verifiedOriginalOccurrenceBindingCount": 3,
+    "originalSourcePassages": [
+      {
+        "role": "BASE_SOURCE",
+        "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+        "startLine": 1836,
+        "endLine": 1836,
+        "startByte": 106080,
+        "endByte": 106943,
+        "sha256": "bf1b2d21ee7bb26371cc1747b2476f9c0198145c804f75b4a65db4bbda18c6ca",
+        "text": "The current registries are closed-loop-json-selector/1 and closed-loop-xml-selector/1. closed-loop-json-selector/1 MUST support at least: the root `$`; child access by identifier name and by single-quoted bracket name; nonnegative array index; and the wildcard `*` over object values and array elements. Selection order is document order. Recursive descent, filters, unions, slices, and script expressions are excluded from version 1. closed-loop-xml-selector/1 MUST support at least: absolute child-element paths from the document root; the element wildcard `*`; 1-based positional index predicates; attribute access `@name`; and `text()` value extraction. All other axes, predicates, and functions are excluded from version 1. A proposition that cannot be faithfully expressed within these registered subsets is not natively representable and routes externally."
+      },
+      {
+        "role": "BASE_SOURCE",
+        "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+        "startLine": 1830,
+        "endLine": 1830,
+        "startByte": 105734,
+        "endByte": 105759,
+        "sha256": "63869991713660770a2c440eb3640005d7fe89f3dbf0600bb510e1c674441339",
+        "text": "21.6 Restricted selectors"
+      }
+    ],
+    "resolvedPriorBlocker": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+    "sourceOnlyAmbiguityHistoryPreserved": true,
+    "currentMeaningStatus": "RESOLVED_WITH_EXPLICIT_TECHNICAL_GOVERNOR",
+    "implementationStatus": "UNKNOWN",
+    "testConformance": "UNKNOWN",
+    "proofInheritance": false,
+    "implementationAcceptance": false
+  },
+  {
+    "schema": "closed-loop-attributed-technical-source-impact-reconciliation/1",
+    "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+    "predecessorId": "NREQ-d23cb763a799dfed6fefce0b7bc11867",
+    "predecessorIndex": 2100,
+    "predecessorEntrySha256": "b361e203651dc0687a1fe409f6fbd883cb049559f43adbacfb4d60da77df2800",
+    "originalStatement": "closed-loop-xml-selector/1 MUST support at least element wildcard *.",
+    "priorDisposition": "BLOCKED",
+    "successorDisposition": "CHANGED",
+    "successorNormativeRequirementId": "NREQ-e928649e5b19fef64b69080205effeda",
+    "identityStatus": "FRESH_ATTRIBUTED_CANDIDATE_IDENTITY_CONDITIONAL_ON_LINKED_GOVERNOR_PENDING_SOURCE_ADOPTION",
+    "effectiveGovernorLink": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/xml-reviewed-resolution-successor/effective-governor-link.json",
+      "sha256": "20dfd446263cdffd35a8b12b70844cad851cf7abb5ad059548bbb5f088c5875c",
+      "byteLength": 7671
+    },
+    "governingAddedSpans": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "startLine": 2073,
+        "endLine": 2073,
+        "startByte": 156581,
+        "endByte": 157422,
+        "sha256": "716f74d1c330a23d7f2f70d7900eef3e7acc01577fc5ef064adf55767e6945ca",
+        "text": "XML selectors start with exactly one slash, then child-element segments named [A-Za-z_][A-Za-z0-9_.:-]* or *, optionally followed by [positive safe integer]. The first segment matches the document element at position 1; later positions apply within each parent's matching child elements. Only the final segment may be @name or text(). Element results are arrays of the canonical element-node values defined in D4; attribute results are arrays of existing exact attribute strings; text() returns one string per selected element, concatenating descendant text/CDATA in document order and excluding comments. A wholly empty selection at any segment, including a final attribute selection, is UNDETERMINED. A selected element with no text yields the known empty string, not a missing selection. Other selector syntax is invalid before execution."
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "startLine": 2080,
+        "endLine": 2080,
+        "startByte": 160637,
+        "endByte": 161297,
+        "sha256": "d009130c570490da8892ab9bcbb88919dc23e706aba30c5b47ce96edec15ebf8",
+        "text": "These canonical node values may be consumed by canonical equality, UNIQUE, ASSERT_SET_EQUAL and SELECT_JSON_PATH without opaque host-object behavior. For JSON-path traversal their object keys, including attributes, use §34.1 key order; XML traversal uses children/content source order. SELECT_XML requires a parsed node value from PARSE_XML or a node selected from that parsed value in the same execution; a lookalike authored JSON object does not acquire XML-node provenance. Provenance does not affect canonical equality. Its input is one node, not an implicitly unwrapped array; extraction from an element-result array is explicit through SELECT_JSON_PATH."
+      }
+    ],
+    "independentReason": "Element wildcard selection follows the explicit supplied invocation root at first position and subsequent source-ordered child traversal within that subtree. The interpretation adds no XPath syntax or outside-sibling access.",
+    "identityPreimage": {
+      "schema": "closed-loop-attributed-source-impact-identity/1",
+      "successorSourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "predecessorId": "NREQ-d23cb763a799dfed6fefce0b7bc11867",
+      "predecessorEntrySha256": "b361e203651dc0687a1fe409f6fbd883cb049559f43adbacfb4d60da77df2800",
+      "statement": "closed-loop-xml-selector/1 MUST support at least element wildcard *.",
+      "governingSourceSpans": [
+        {
+          "role": "SUCCESSOR_SOURCE",
+          "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+          "startLine": 2073,
+          "endLine": 2073,
+          "startByte": 156581,
+          "endByte": 157422,
+          "sha256": "716f74d1c330a23d7f2f70d7900eef3e7acc01577fc5ef064adf55767e6945ca",
+          "text": "XML selectors start with exactly one slash, then child-element segments named [A-Za-z_][A-Za-z0-9_.:-]* or *, optionally followed by [positive safe integer]. The first segment matches the document element at position 1; later positions apply within each parent's matching child elements. Only the final segment may be @name or text(). Element results are arrays of the canonical element-node values defined in D4; attribute results are arrays of existing exact attribute strings; text() returns one string per selected element, concatenating descendant text/CDATA in document order and excluding comments. A wholly empty selection at any segment, including a final attribute selection, is UNDETERMINED. A selected element with no text yields the known empty string, not a missing selection. Other selector syntax is invalid before execution."
+        },
+        {
+          "role": "SUCCESSOR_SOURCE",
+          "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+          "startLine": 2080,
+          "endLine": 2080,
+          "startByte": 160637,
+          "endByte": 161297,
+          "sha256": "d009130c570490da8892ab9bcbb88919dc23e706aba30c5b47ce96edec15ebf8",
+          "text": "These canonical node values may be consumed by canonical equality, UNIQUE, ASSERT_SET_EQUAL and SELECT_JSON_PATH without opaque host-object behavior. For JSON-path traversal their object keys, including attributes, use §34.1 key order; XML traversal uses children/content source order. SELECT_XML requires a parsed node value from PARSE_XML or a node selected from that parsed value in the same execution; a lookalike authored JSON object does not acquire XML-node provenance. Provenance does not affect canonical equality. Its input is one node, not an implicitly unwrapped array; extraction from an element-result array is explicit through SELECT_JSON_PATH."
+        }
+      ],
+      "explicitTechnicalGovernor": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/xml-reviewed-resolution-successor/effective-governor-link.json",
+        "sha256": "20dfd446263cdffd35a8b12b70844cad851cf7abb5ad059548bbb5f088c5875c",
+        "byteLength": 7671
+      },
+      "sourceDecision": "Element wildcard selection follows the explicit supplied invocation root at first position and subsequent source-ordered child traversal within that subtree. The interpretation adds no XPath syntax or outside-sibling access."
+    },
+    "identityPreimageSha256": "e928649e5b19fef64b69080205effeda8551dba410e20ef6f06c3605ef2c176a",
+    "originalOccurrenceSetReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/2100/originalOccurrenceBindings"
+    },
+    "originalOccurrenceTransport": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-occurrence-transport.json",
+      "sha256": "4157cda2f60669a2feba4c3021aa212f5bee00f4456a4e7a59d8e86da08a02d4",
+      "byteLength": 6309790
+    },
+    "verifiedOriginalOccurrenceBindingCount": 3,
+    "originalSourcePassages": [
+      {
+        "role": "BASE_SOURCE",
+        "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+        "startLine": 1836,
+        "endLine": 1836,
+        "startByte": 106080,
+        "endByte": 106943,
+        "sha256": "bf1b2d21ee7bb26371cc1747b2476f9c0198145c804f75b4a65db4bbda18c6ca",
+        "text": "The current registries are closed-loop-json-selector/1 and closed-loop-xml-selector/1. closed-loop-json-selector/1 MUST support at least: the root `$`; child access by identifier name and by single-quoted bracket name; nonnegative array index; and the wildcard `*` over object values and array elements. Selection order is document order. Recursive descent, filters, unions, slices, and script expressions are excluded from version 1. closed-loop-xml-selector/1 MUST support at least: absolute child-element paths from the document root; the element wildcard `*`; 1-based positional index predicates; attribute access `@name`; and `text()` value extraction. All other axes, predicates, and functions are excluded from version 1. A proposition that cannot be faithfully expressed within these registered subsets is not natively representable and routes externally."
+      },
+      {
+        "role": "BASE_SOURCE",
+        "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+        "startLine": 1830,
+        "endLine": 1830,
+        "startByte": 105734,
+        "endByte": 105759,
+        "sha256": "63869991713660770a2c440eb3640005d7fe89f3dbf0600bb510e1c674441339",
+        "text": "21.6 Restricted selectors"
+      }
+    ],
+    "resolvedPriorBlocker": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+    "sourceOnlyAmbiguityHistoryPreserved": true,
+    "currentMeaningStatus": "RESOLVED_WITH_EXPLICIT_TECHNICAL_GOVERNOR",
+    "implementationStatus": "UNKNOWN",
+    "testConformance": "UNKNOWN",
+    "proofInheritance": false,
+    "implementationAcceptance": false
+  },
+  {
+    "schema": "closed-loop-attributed-technical-source-impact-reconciliation/1",
+    "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+    "predecessorId": "NREQ-ea225a5482fb0bf87e4c39973d85e801",
+    "predecessorIndex": 2101,
+    "predecessorEntrySha256": "442d1e743a622069890d4da65367bed17ef820af23d7fc83acaee04c56910e2f",
+    "originalStatement": "closed-loop-xml-selector/1 MUST support at least text() value extraction.",
+    "priorDisposition": "BLOCKED",
+    "successorDisposition": "CHANGED",
+    "successorNormativeRequirementId": "NREQ-ae095992721b327f67fc1945c8948a8d",
+    "identityStatus": "FRESH_ATTRIBUTED_CANDIDATE_IDENTITY_CONDITIONAL_ON_LINKED_GOVERNOR_PENDING_SOURCE_ADOPTION",
+    "effectiveGovernorLink": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/xml-reviewed-resolution-successor/effective-governor-link.json",
+      "sha256": "20dfd446263cdffd35a8b12b70844cad851cf7abb5ad059548bbb5f088c5875c",
+      "byteLength": 7671
+    },
+    "governingAddedSpans": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "startLine": 2073,
+        "endLine": 2073,
+        "startByte": 156581,
+        "endByte": 157422,
+        "sha256": "716f74d1c330a23d7f2f70d7900eef3e7acc01577fc5ef064adf55767e6945ca",
+        "text": "XML selectors start with exactly one slash, then child-element segments named [A-Za-z_][A-Za-z0-9_.:-]* or *, optionally followed by [positive safe integer]. The first segment matches the document element at position 1; later positions apply within each parent's matching child elements. Only the final segment may be @name or text(). Element results are arrays of the canonical element-node values defined in D4; attribute results are arrays of existing exact attribute strings; text() returns one string per selected element, concatenating descendant text/CDATA in document order and excluding comments. A wholly empty selection at any segment, including a final attribute selection, is UNDETERMINED. A selected element with no text yields the known empty string, not a missing selection. Other selector syntax is invalid before execution."
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "startLine": 2080,
+        "endLine": 2080,
+        "startByte": 160637,
+        "endByte": 161297,
+        "sha256": "d009130c570490da8892ab9bcbb88919dc23e706aba30c5b47ce96edec15ebf8",
+        "text": "These canonical node values may be consumed by canonical equality, UNIQUE, ASSERT_SET_EQUAL and SELECT_JSON_PATH without opaque host-object behavior. For JSON-path traversal their object keys, including attributes, use §34.1 key order; XML traversal uses children/content source order. SELECT_XML requires a parsed node value from PARSE_XML or a node selected from that parsed value in the same execution; a lookalike authored JSON object does not acquire XML-node provenance. Provenance does not affect canonical equality. Its input is one node, not an implicitly unwrapped array; extraction from an element-result array is explicit through SELECT_JSON_PATH."
+      }
+    ],
+    "independentReason": "Final text() extracts descendant text/CDATA of selected elements within the invocation subtree, in document order and excluding comments. A selected empty-text element produces known empty string; an empty selection remains UNDETERMINED. Rooting is now explicit.",
+    "identityPreimage": {
+      "schema": "closed-loop-attributed-source-impact-identity/1",
+      "successorSourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "predecessorId": "NREQ-ea225a5482fb0bf87e4c39973d85e801",
+      "predecessorEntrySha256": "442d1e743a622069890d4da65367bed17ef820af23d7fc83acaee04c56910e2f",
+      "statement": "closed-loop-xml-selector/1 MUST support at least text() value extraction.",
+      "governingSourceSpans": [
+        {
+          "role": "SUCCESSOR_SOURCE",
+          "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+          "startLine": 2073,
+          "endLine": 2073,
+          "startByte": 156581,
+          "endByte": 157422,
+          "sha256": "716f74d1c330a23d7f2f70d7900eef3e7acc01577fc5ef064adf55767e6945ca",
+          "text": "XML selectors start with exactly one slash, then child-element segments named [A-Za-z_][A-Za-z0-9_.:-]* or *, optionally followed by [positive safe integer]. The first segment matches the document element at position 1; later positions apply within each parent's matching child elements. Only the final segment may be @name or text(). Element results are arrays of the canonical element-node values defined in D4; attribute results are arrays of existing exact attribute strings; text() returns one string per selected element, concatenating descendant text/CDATA in document order and excluding comments. A wholly empty selection at any segment, including a final attribute selection, is UNDETERMINED. A selected element with no text yields the known empty string, not a missing selection. Other selector syntax is invalid before execution."
+        },
+        {
+          "role": "SUCCESSOR_SOURCE",
+          "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+          "startLine": 2080,
+          "endLine": 2080,
+          "startByte": 160637,
+          "endByte": 161297,
+          "sha256": "d009130c570490da8892ab9bcbb88919dc23e706aba30c5b47ce96edec15ebf8",
+          "text": "These canonical node values may be consumed by canonical equality, UNIQUE, ASSERT_SET_EQUAL and SELECT_JSON_PATH without opaque host-object behavior. For JSON-path traversal their object keys, including attributes, use §34.1 key order; XML traversal uses children/content source order. SELECT_XML requires a parsed node value from PARSE_XML or a node selected from that parsed value in the same execution; a lookalike authored JSON object does not acquire XML-node provenance. Provenance does not affect canonical equality. Its input is one node, not an implicitly unwrapped array; extraction from an element-result array is explicit through SELECT_JSON_PATH."
+        }
+      ],
+      "explicitTechnicalGovernor": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/xml-reviewed-resolution-successor/effective-governor-link.json",
+        "sha256": "20dfd446263cdffd35a8b12b70844cad851cf7abb5ad059548bbb5f088c5875c",
+        "byteLength": 7671
+      },
+      "sourceDecision": "Final text() extracts descendant text/CDATA of selected elements within the invocation subtree, in document order and excluding comments. A selected empty-text element produces known empty string; an empty selection remains UNDETERMINED. Rooting is now explicit."
+    },
+    "identityPreimageSha256": "ae095992721b327f67fc1945c8948a8d7fd987e1932b33f7a5ec9f5a6b763574",
+    "originalOccurrenceSetReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/2101/originalOccurrenceBindings"
+    },
+    "originalOccurrenceTransport": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-occurrence-transport.json",
+      "sha256": "4157cda2f60669a2feba4c3021aa212f5bee00f4456a4e7a59d8e86da08a02d4",
+      "byteLength": 6309790
+    },
+    "verifiedOriginalOccurrenceBindingCount": 3,
+    "originalSourcePassages": [
+      {
+        "role": "BASE_SOURCE",
+        "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+        "startLine": 1836,
+        "endLine": 1836,
+        "startByte": 106080,
+        "endByte": 106943,
+        "sha256": "bf1b2d21ee7bb26371cc1747b2476f9c0198145c804f75b4a65db4bbda18c6ca",
+        "text": "The current registries are closed-loop-json-selector/1 and closed-loop-xml-selector/1. closed-loop-json-selector/1 MUST support at least: the root `$`; child access by identifier name and by single-quoted bracket name; nonnegative array index; and the wildcard `*` over object values and array elements. Selection order is document order. Recursive descent, filters, unions, slices, and script expressions are excluded from version 1. closed-loop-xml-selector/1 MUST support at least: absolute child-element paths from the document root; the element wildcard `*`; 1-based positional index predicates; attribute access `@name`; and `text()` value extraction. All other axes, predicates, and functions are excluded from version 1. A proposition that cannot be faithfully expressed within these registered subsets is not natively representable and routes externally."
+      },
+      {
+        "role": "BASE_SOURCE",
+        "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+        "startLine": 1830,
+        "endLine": 1830,
+        "startByte": 105734,
+        "endByte": 105759,
+        "sha256": "63869991713660770a2c440eb3640005d7fe89f3dbf0600bb510e1c674441339",
+        "text": "21.6 Restricted selectors"
+      }
+    ],
+    "resolvedPriorBlocker": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+    "sourceOnlyAmbiguityHistoryPreserved": true,
+    "currentMeaningStatus": "RESOLVED_WITH_EXPLICIT_TECHNICAL_GOVERNOR",
+    "implementationStatus": "UNKNOWN",
+    "testConformance": "UNKNOWN",
+    "proofInheritance": false,
+    "implementationAcceptance": false
+  },
+  {
+    "schema": "closed-loop-attributed-technical-source-impact-reconciliation/1",
+    "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+    "predecessorId": "NREQ-a5b5a48eee5274111eb40dbcf6123f3f",
+    "predecessorIndex": 3316,
+    "predecessorEntrySha256": "fb9a9ffc219e8b45cb35172adbca4d05650ae9709993960762b62de02cf28998",
+    "originalStatement": "The current XML selector registry is closed-loop-xml-selector/1.",
+    "priorDisposition": "BLOCKED",
+    "successorDisposition": "CHANGED",
+    "successorNormativeRequirementId": "NREQ-5d65539e51b219cb7beba461a7b521f2",
+    "identityStatus": "FRESH_ATTRIBUTED_CANDIDATE_IDENTITY_CONDITIONAL_ON_LINKED_GOVERNOR_PENDING_SOURCE_ADOPTION",
+    "effectiveGovernorLink": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/xml-reviewed-resolution-successor/effective-governor-link.json",
+      "sha256": "20dfd446263cdffd35a8b12b70844cad851cf7abb5ad059548bbb5f088c5875c",
+      "byteLength": 7671
+    },
+    "governingAddedSpans": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "startLine": 2073,
+        "endLine": 2073,
+        "startByte": 156581,
+        "endByte": 157422,
+        "sha256": "716f74d1c330a23d7f2f70d7900eef3e7acc01577fc5ef064adf55767e6945ca",
+        "text": "XML selectors start with exactly one slash, then child-element segments named [A-Za-z_][A-Za-z0-9_.:-]* or *, optionally followed by [positive safe integer]. The first segment matches the document element at position 1; later positions apply within each parent's matching child elements. Only the final segment may be @name or text(). Element results are arrays of the canonical element-node values defined in D4; attribute results are arrays of existing exact attribute strings; text() returns one string per selected element, concatenating descendant text/CDATA in document order and excluding comments. A wholly empty selection at any segment, including a final attribute selection, is UNDETERMINED. A selected element with no text yields the known empty string, not a missing selection. Other selector syntax is invalid before execution."
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "startLine": 2080,
+        "endLine": 2080,
+        "startByte": 160637,
+        "endByte": 161297,
+        "sha256": "d009130c570490da8892ab9bcbb88919dc23e706aba30c5b47ce96edec15ebf8",
+        "text": "These canonical node values may be consumed by canonical equality, UNIQUE, ASSERT_SET_EQUAL and SELECT_JSON_PATH without opaque host-object behavior. For JSON-path traversal their object keys, including attributes, use §34.1 key order; XML traversal uses children/content source order. SELECT_XML requires a parsed node value from PARSE_XML or a node selected from that parsed value in the same execution; a lookalike authored JSON object does not acquire XML-node provenance. Provenance does not affect canonical equality. Its input is one node, not an implicitly unwrapped array; extraction from an element-result array is explicit through SELECT_JSON_PATH."
+      }
+    ],
+    "independentReason": "The XML selector registry label remains closed-loop-xml-selector/1, but its actual effective semantics include D and the attributed supplied-node-root interpretation. Preserve the original label as source text while issuing fresh requirement/effective-scope identity; old selector evidence cannot prove the clarified semantics.",
+    "identityPreimage": {
+      "schema": "closed-loop-attributed-source-impact-identity/1",
+      "successorSourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "predecessorId": "NREQ-a5b5a48eee5274111eb40dbcf6123f3f",
+      "predecessorEntrySha256": "fb9a9ffc219e8b45cb35172adbca4d05650ae9709993960762b62de02cf28998",
+      "statement": "The current XML selector registry is closed-loop-xml-selector/1.",
+      "governingSourceSpans": [
+        {
+          "role": "SUCCESSOR_SOURCE",
+          "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+          "startLine": 2073,
+          "endLine": 2073,
+          "startByte": 156581,
+          "endByte": 157422,
+          "sha256": "716f74d1c330a23d7f2f70d7900eef3e7acc01577fc5ef064adf55767e6945ca",
+          "text": "XML selectors start with exactly one slash, then child-element segments named [A-Za-z_][A-Za-z0-9_.:-]* or *, optionally followed by [positive safe integer]. The first segment matches the document element at position 1; later positions apply within each parent's matching child elements. Only the final segment may be @name or text(). Element results are arrays of the canonical element-node values defined in D4; attribute results are arrays of existing exact attribute strings; text() returns one string per selected element, concatenating descendant text/CDATA in document order and excluding comments. A wholly empty selection at any segment, including a final attribute selection, is UNDETERMINED. A selected element with no text yields the known empty string, not a missing selection. Other selector syntax is invalid before execution."
+        },
+        {
+          "role": "SUCCESSOR_SOURCE",
+          "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+          "startLine": 2080,
+          "endLine": 2080,
+          "startByte": 160637,
+          "endByte": 161297,
+          "sha256": "d009130c570490da8892ab9bcbb88919dc23e706aba30c5b47ce96edec15ebf8",
+          "text": "These canonical node values may be consumed by canonical equality, UNIQUE, ASSERT_SET_EQUAL and SELECT_JSON_PATH without opaque host-object behavior. For JSON-path traversal their object keys, including attributes, use §34.1 key order; XML traversal uses children/content source order. SELECT_XML requires a parsed node value from PARSE_XML or a node selected from that parsed value in the same execution; a lookalike authored JSON object does not acquire XML-node provenance. Provenance does not affect canonical equality. Its input is one node, not an implicitly unwrapped array; extraction from an element-result array is explicit through SELECT_JSON_PATH."
+        }
+      ],
+      "explicitTechnicalGovernor": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/xml-reviewed-resolution-successor/effective-governor-link.json",
+        "sha256": "20dfd446263cdffd35a8b12b70844cad851cf7abb5ad059548bbb5f088c5875c",
+        "byteLength": 7671
+      },
+      "sourceDecision": "The XML selector registry label remains closed-loop-xml-selector/1, but its actual effective semantics include D and the attributed supplied-node-root interpretation. Preserve the original label as source text while issuing fresh requirement/effective-scope identity; old selector evidence cannot prove the clarified semantics."
+    },
+    "identityPreimageSha256": "5d65539e51b219cb7beba461a7b521f2d0b09a3dcf815bab1cc1dc85c53619dd",
+    "originalOccurrenceSetReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/3316/originalOccurrenceBindings"
+    },
+    "originalOccurrenceTransport": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-occurrence-transport.json",
+      "sha256": "4157cda2f60669a2feba4c3021aa212f5bee00f4456a4e7a59d8e86da08a02d4",
+      "byteLength": 6309790
+    },
+    "verifiedOriginalOccurrenceBindingCount": 3,
+    "originalSourcePassages": [
+      {
+        "role": "BASE_SOURCE",
+        "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+        "startLine": 1836,
+        "endLine": 1836,
+        "startByte": 106080,
+        "endByte": 106943,
+        "sha256": "bf1b2d21ee7bb26371cc1747b2476f9c0198145c804f75b4a65db4bbda18c6ca",
+        "text": "The current registries are closed-loop-json-selector/1 and closed-loop-xml-selector/1. closed-loop-json-selector/1 MUST support at least: the root `$`; child access by identifier name and by single-quoted bracket name; nonnegative array index; and the wildcard `*` over object values and array elements. Selection order is document order. Recursive descent, filters, unions, slices, and script expressions are excluded from version 1. closed-loop-xml-selector/1 MUST support at least: absolute child-element paths from the document root; the element wildcard `*`; 1-based positional index predicates; attribute access `@name`; and `text()` value extraction. All other axes, predicates, and functions are excluded from version 1. A proposition that cannot be faithfully expressed within these registered subsets is not natively representable and routes externally."
+      },
+      {
+        "role": "BASE_SOURCE",
+        "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+        "startLine": 1830,
+        "endLine": 1830,
+        "startByte": 105734,
+        "endByte": 105759,
+        "sha256": "63869991713660770a2c440eb3640005d7fe89f3dbf0600bb510e1c674441339",
+        "text": "21.6 Restricted selectors"
+      }
+    ],
+    "resolvedPriorBlocker": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+    "sourceOnlyAmbiguityHistoryPreserved": true,
+    "currentMeaningStatus": "RESOLVED_WITH_EXPLICIT_TECHNICAL_GOVERNOR",
+    "implementationStatus": "UNKNOWN",
+    "testConformance": "UNKNOWN",
+    "proofInheritance": false,
+    "implementationAcceptance": false
+  }
+]

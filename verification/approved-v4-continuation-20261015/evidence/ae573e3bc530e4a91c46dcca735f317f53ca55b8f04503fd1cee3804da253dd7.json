@@ -1,0 +1,61 @@
+{
+  "schema": "closed-loop-additive-predecessor-technical-reference-resolution/1",
+  "status": "FROZEN_DISTINCT_QUALIFIER_LINKAGE_RECONCILIATION_002",
+  "records": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-002/per-entry-reconciliation.json",
+    "sha256": "f9df6a00fae80b5bc4dc2b467f80a6798643fc7e5007e921584cb932d59c9ddc",
+    "byteLength": 371695
+  },
+  "exactEvidence": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-002/source-evidence.json",
+    "sha256": "69e651b3f2c5726e868ee4141830e1995a772bca5ba344124213471cbbd45aaa",
+    "byteLength": 83606
+  },
+  "requiredTypedGovernor": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-002/effective-governor-link.json",
+    "sha256": "2a99deda8b0fe212dc838120e9da2f06fad85a9d5cd99928d190b5e80da4d480",
+    "byteLength": 16854
+  },
+  "validation": {
+    "entryCount": 46,
+    "edgeCount": 46,
+    "freshCurrentIdentityCount": 44,
+    "retainedCurrentIdentityCount": 2,
+    "proposalCounts": {
+      "accepted": 46,
+      "corrected": 0,
+      "blocked": 0
+    },
+    "verifiedOriginalOccurrenceBindings": 271,
+    "uniqueOriginalOccurrences": 101,
+    "predecessorPopulationBefore": {
+      "RETAINED": 5964,
+      "CHANGED": 1522,
+      "BLOCKED": 0
+    },
+    "predecessorPopulationAfter": {
+      "RETAINED": 5964,
+      "CHANGED": 1522,
+      "BLOCKED": 0
+    },
+    "originalPredecessorDenominator": 7486,
+    "newDutyPopulation": 712,
+    "otherHistoricalQualifierEdgesUnchanged": true,
+    "remainingQualifierRows": 1075,
+    "remainingQualifierEdges": 2136,
+    "proofPromoted": false
+  },
+  "sourceAuthorProposalManifest": {
+    "path": "/tmp/clrt-current-qualifier-linkage-proposals-002/finalized/manifest.json",
+    "sha256": "192862d22bb59e8ac47a77d636f9cf33da4904c031d309e466fc4e0f45a258a3",
+    "byteLength": 2275
+  },
+  "priorCoherentChain": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/composition-consumer-chain-023-v1/consumer-chain.json",
+    "sha256": "92416a99c204f305c59296c8e3c32f57f63b495f0ba226fa045e7cc5aa4a6e3b",
+    "byteLength": 129136
+  },
+  "mergeRule": "After declared impact chain and explicit predecessor overlays, require each original index/id/hash and prior current ID/row hash. Preserve exact original proposition, ordered occurrence set, prior current source governors and historical qualifier object. Install the exact typed conditional-ZIP-input-domain governor and fresh preimage identity for44 explicit rows;280/281 retain their current identities and add no effective governor. Current effects become explicitly empty for only these46 rows; all others remain as before. No original disposition/denominator or implementation/proof state changes.",
+  "sourceLedgerActivated": false,
+  "proofPromoted": false
+}

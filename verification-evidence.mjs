@@ -1,3 +1,4 @@
+import {decodeNormativeManifest} from './normative-manifest-storage.mjs';
 // Repository verification evidence. This module is never shipped to the app.
 import fs from 'node:fs';
 import {atomicEvidenceReferences,isAtomicEvidencePath,readAtomicEvidenceBytes,atomicObligationSha256,validateAtomicRequirementRows,validateAtomicLineMembership,loadReviewedAtomicExtraction} from './review-specification-coverage.mjs';
@@ -40,6 +41,7 @@ export function coverageDeclarationSha256(coverage){const declaration={...covera
 // reviewed set is excluded from the independent behavior denominator; their
 // governing clauses and modifiers remain mandatory.
 export function reviewedContextApplicability(normative,fingerprint){
+  normative=decodeNormativeManifest(normative);
   if(normative.requirements.some(row=>row.entryKind)){
     const governance=readJson('specification/requirement-evidence-bindings.json'),source=fs.readFileSync(SPECIFICATION_PATH),sections=readJson(specificationManifestPath).sectionInventory;
     const atomic=loadReviewedAtomicExtraction(governance.atomicExtraction,{sourceBytes:source,specificationPath:SPECIFICATION_PATH,sections});
@@ -49,7 +51,7 @@ export function reviewedContextApplicability(normative,fingerprint){
     for(const ref of atomicEvidenceReferences(atomic.descriptor))requireEvidence(fingerprint.inputSha256[ref.path]===ref.sha256,'atomic context evidence fingerprint mismatch');
     const contexts=new Map();for(const row of normative.requirements.filter(row=>row.entryKind==='SOURCE_CONTEXT')){
       const reviewed=atomic.entries.find(entry=>entry.normativeRequirementId===row.normativeRequirementId);requireEvidence(reviewed&&isDeepStrictEqual(reviewed.contextClassification,row.contextClassification),'atomic context classification differs from reviewed scope');
-      const c=row.contextClassification;contexts.set(row.normativeRequirementId,{...row,existingReconciledClassification:c.classification,reviewedDisposition:c.classification==='STRUCTURAL_REQUIREMENT_CONTEXT'?'CONTEXT_GOVERNED_BY_LINKED_CLAUSES':'HISTORICAL_CONTEXT_NOT_CURRENT_OBLIGATION',exclusionReason:c.reason,governingNormativeRequirementIds:c.governingNormativeRequirementIds,review:atomic.descriptor.reconciliation});
+      const c=row.contextClassification;contexts.set(row.normativeRequirementId,{...row,existingReconciledClassification:c.classification,reviewedDisposition:c.classification==='STRUCTURAL_REQUIREMENT_CONTEXT'?'CONTEXT_GOVERNED_BY_LINKED_CLAUSES':'HISTORICAL_CONTEXT_NOT_CURRENT_OBLIGATION',exclusionReason:c.reason,governingNormativeRequirementIds:c.governingNormativeRequirementIds,review:atomic.continuation?{kind:'APPROVED_INSERTION_SOURCE_CONTINUATION',...atomic.descriptor.continuation}:atomic.descriptor.reconciliation});
     }return contexts;
   }
   if(!fingerprint.inputSha256[contextApplicabilityPath])return new Map();
@@ -368,7 +370,7 @@ export function aggregateExecutedEvidence(receipts,fingerprint,{mobile=null}={})
     zeroCounts[name]=missing.length?null:observed.filter(row=>row.accepted!==false).length;
     negativePopulations[name]={populationDefinition:definition.populationDefinition,includedIds:expected,excludedIds:definition.excludedIds||[],observedIds:observed.map(row=>row.checkId),missingIds:missing,acceptedViolationIds:observed.filter(row=>row.accepted!==false).map(row=>row.checkId),count:zeroCounts[name],evidenceReferences:observed.map(row=>`${row.suite}.json#${row.checkId}`),scopeHash:sha({fingerprint,expected}),scopeLimit:definition.scopeLimit};
   }
-  const normative=readJson(SPECIFICATION_PATH.replace('closed-loop-reliability-controlling-implementation-specification.txt','closed-loop-normative-requirements.json'));
+  const normative=decodeNormativeManifest(readJson(SPECIFICATION_PATH.replace('closed-loop-reliability-controlling-implementation-specification.txt','closed-loop-normative-requirements.json')));
   const assertionBindings=fs.existsSync('verification-assertion-bindings.json')?readJson('verification-assertion-bindings.json'):{schema:'closed-loop-verification-assertion-bindings/1',specificationSha256:normative.specificationSha256,bindings:[]};
   requireEvidence(assertionBindings.schema==='closed-loop-verification-assertion-bindings/1'&&assertionBindings.specificationSha256===fingerprint.specificationSha256,'assertion bindings use a different controlling specification');
   requireEvidence(sha(fs.readFileSync('verification-assertion-bindings.json'))===fingerprint.inputSha256['verification-assertion-bindings.json'],'normative assertion declarations are not current source inputs');

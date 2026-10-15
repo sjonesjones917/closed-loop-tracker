@@ -1,0 +1,135 @@
+{
+  "schema": "closed-loop-source-edge-reconciliation-freeze/1",
+  "status": "FROZEN",
+  "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+  "inputs": [
+    {
+      "role": "ORIGINAL_FREEZE",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/freeze-manifest.json",
+      "sha256": "49580d98e96917aaa6cad169c29930005682fed83beaa0591437f97b5cb5cecc",
+      "byteLength": 12165,
+      "semanticReadScope": "ENTIRE_SOURCE_ONLY_ARTIFACT",
+      "hashValidation": "ENTIRE_EXACT_BYTES"
+    },
+    {
+      "role": "ORIGINAL_NEW_DUTIES",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/new-amendment-obligations.json",
+      "sha256": "529ab908025aa47387337eae07de480d3cf09d9af952945d21f5dfc3cbc25eca",
+      "byteLength": 11169039,
+      "semanticReadScope": [
+        "/434",
+        "/487",
+        "/490",
+        "ALL_IDS_FOR_UNIQUENESS"
+      ],
+      "hashValidation": "ENTIRE_EXACT_BYTES"
+    },
+    {
+      "role": "SUCCESSOR_SOURCE",
+      "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "byteLength": 369901,
+      "semanticReadScope": "EXACT_PER_ENTRY_PRIMARY_SPANS_AND_ALL_CONTEXTS",
+      "hashValidation": "ENTIRE_EXACT_BYTES"
+    },
+    {
+      "role": "EXISTING_XML_GOVERNOR",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/xml-reviewed-resolution-successor/effective-governor-link.json",
+      "sha256": "20dfd446263cdffd35a8b12b70844cad851cf7abb5ad059548bbb5f088c5875c",
+      "byteLength": 7671,
+      "semanticReadScope": "ENTIRE_SOURCE_ONLY_ARTIFACT",
+      "hashValidation": "ENTIRE_EXACT_BYTES"
+    },
+    {
+      "role": "EXPLICIT_DEPENDENCY_EDGES",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/xml-reviewed-resolution-successor/remaining-explicit-xml-dependency-edges.json",
+      "sha256": "361154a7dfaa2fe3949de8e823a51ac79b55f99fde83788369dd34f42a046aa7",
+      "byteLength": 300349,
+      "semanticReadScope": [
+        "/edges/422",
+        "/edges/423",
+        "/edges/424",
+        "/edgeCount"
+      ],
+      "hashValidation": "ENTIRE_EXACT_BYTES"
+    },
+    {
+      "role": "TECHNICAL_INTERPRETATION",
+      "path": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+      "sha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+      "byteLength": 10634,
+      "semanticReadScope": "LINES31–35_BYTES9341:10421_ONLY",
+      "hashValidation": "ENTIRE_EXACT_BYTES"
+    },
+    {
+      "role": "ACCEPTED_TECHNICAL_WRAPPER",
+      "path": "/workspace/shared/clrt-v4-technical-reference-adoption-input-2933-v2/approved-v4-technical-reference-input-20261015.json",
+      "sha256": "62460d5001962238d5f09499545d5bf8bec7d0cac0948a057e7174d327ed6092",
+      "byteLength": 29468,
+      "semanticReadScope": [
+        "/issueBindings/2",
+        "APPROVAL_AND_ATTRIBUTION_METADATA"
+      ],
+      "hashValidation": "ENTIRE_EXACT_BYTES"
+    },
+    {
+      "role": "TECHNICAL_REVIEW",
+      "path": "/workspace/shared/clrt-iteration-repair-evidence/independent-release-review-20261014/approved-v4-reference-resolution-precedence-successor-review.json",
+      "sha256": "0131a25605ac81d6ac53407252fd2cf7196a9075a1a1ae928806c021b577348b",
+      "byteLength": 4088,
+      "semanticReadScope": [
+        "/schema",
+        "/status",
+        "/proposalSha256",
+        "/freezeSha256",
+        "/newOwnerDecisionRequiredWithinScope",
+        "/nextGate"
+      ],
+      "hashValidation": "ENTIRE_EXACT_BYTES"
+    },
+    {
+      "role": "WRAPPER_ACCEPTANCE",
+      "path": "/workspace/shared/clrt-iteration-repair-evidence/independent-release-review-20261014/approved-v4-technical-reference-input-and-current-composition-review.json",
+      "sha256": "fb3e9239516cb6c452466286c245fca7e512955a5f806fc10cd6670bae8a342a",
+      "byteLength": 11236,
+      "semanticReadScope": [
+        "/schema",
+        "/status",
+        "/recordSha256"
+      ],
+      "hashValidation": "ENTIRE_EXACT_BYTES"
+    }
+  ],
+  "outputs": [
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/xml-amendment-edge-successor-001/actual-read-inventory.json",
+      "sha256": "b58015b9c78d6a25e59dda54e34b5a7139f4443d7203bf5f51537802e9c52221",
+      "byteLength": 4766
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/xml-amendment-edge-successor-001/per-entry-reconciliation.json",
+      "sha256": "efe78313f39e1343ce4fa793977b1c345b4b68107c014b0deda1f9b669f70753",
+      "byteLength": 12220
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/xml-amendment-edge-successor-001/reconcile.py",
+      "sha256": "d8cddf3469e0d941dc1eab6e3d5bd623bbdc7b2b7310250ddaec44ffee60d28f",
+      "byteLength": 12998
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/xml-amendment-edge-successor-001/reconciliation.json",
+      "sha256": "0899824a00e0b6a7836dcd5307235835974db4c94e5898c204f4143e02aa3c2c",
+      "byteLength": 2277
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/xml-amendment-edge-successor-001/source-evidence.json",
+      "sha256": "340476496bbbca666d1211415eb5559d8c4f73f22ea0a3751c7a25254a906ddd",
+      "byteLength": 18417
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/xml-amendment-edge-successor-001/validation.json",
+      "sha256": "476cafbe37db4931ee93490538510a2630a176133007c85ca2d8482900605a6a",
+      "byteLength": 512
+    }
+  ]
+}

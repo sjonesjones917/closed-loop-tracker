@@ -1,0 +1,1298 @@
+[
+  {
+    "schema": "closed-loop-attributed-predecessor-edge-reconciliation/1",
+    "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+    "predecessorIndex": 353,
+    "predecessorNormativeRequirementId": "NREQ-0968b8696a16681a08ad775a4f1417cf",
+    "predecessorEntrySha256": "75621c21cd34b7ed6105a491b3d1036c7eefe3fa7c1e8867901bce94a9e89d91",
+    "priorCurrentNormativeRequirementId": "NREQ-4b94b483b2bbd3191e6ea1ec16ff7cd7",
+    "priorCurrentEntryEvidence": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/353",
+      "entrySha256": "2e3c1b87fdd20078d9a734cfbe80ae2b30df80edf8baef2a34f1c84ed050ba43"
+    },
+    "originalStatement": "Raw-input accounting must use one versioned RAW_UNITIZATION_VERSION, currently closed-loop-raw-units/1.",
+    "originalOccurrenceSetReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/353/originalOccurrenceBindings",
+      "sha256": "7718705771aa9cadc812415ae3deff31ba4262de2657ca840c4ab3b39c54d77b"
+    },
+    "originalOccurrenceTransport": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-occurrence-transport.json",
+      "sha256": "4157cda2f60669a2feba4c3021aa212f5bee00f4456a4e7a59d8e86da08a02d4",
+      "byteLength": 6309790
+    },
+    "verifiedOriginalOccurrenceBindingCount": 5,
+    "originalAddedGovernorReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/353/newGoverningSourceRanges",
+      "sha256": "9cbb26b788d552cf8044a1f59d20e5a895f6c44c2564924d63699ed02f50b6c1"
+    },
+    "historicalUnresolvedSourceEffects": [
+      "SRC-GAP-DECODER-SUBSET"
+    ],
+    "currentUnresolvedSourceEffects": [],
+    "currentBlockedInheritedReferenceDetails": [],
+    "edgeDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+    "edgeSuccessorDisposition": "CHANGED",
+    "successorDisposition": "CHANGED",
+    "independentReason": "The named current raw-unit algorithm includes its authorized C1 structural ZIP mapping. The accepted external clarification fixes the inherited decoder denotation that conditions that algorithm; linking it is effective only for C1 structural decoding, not a new media parser or canonical ID scheme.",
+    "effectiveGovernorLink": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/original-decoder-edge-successor-002/effective-governor-link.json",
+      "sha256": "67b3ebd38914df4b7b055e238fc0f2bed4ac195c1a83dadcec7cab9eb6302d13",
+      "byteLength": 11967
+    },
+    "resolutionEvidenceReference": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/original-decoder-edge-successor-002/effective-governor-link.json",
+      "sha256": "67b3ebd38914df4b7b055e238fc0f2bed4ac195c1a83dadcec7cab9eb6302d13",
+      "byteLength": 11967
+    },
+    "currentMeaningStatus": "RESOLVED_WITH_ATTRIBUTED_REFERENCE_LINK",
+    "originalReviewInheritance": false,
+    "proofInheritance": false,
+    "implementationStatus": "UNKNOWN",
+    "testConformance": "UNKNOWN",
+    "sourceLedgerActivated": false,
+    "identityPreimage": {
+      "schema": "closed-loop-attributed-predecessor-edge-identity/1",
+      "successorSourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "predecessorId": "NREQ-0968b8696a16681a08ad775a4f1417cf",
+      "predecessorEntrySha256": "75621c21cd34b7ed6105a491b3d1036c7eefe3fa7c1e8867901bce94a9e89d91",
+      "priorCurrentId": "NREQ-4b94b483b2bbd3191e6ea1ec16ff7cd7",
+      "priorCurrentEntrySha256": "2e3c1b87fdd20078d9a734cfbe80ae2b30df80edf8baef2a34f1c84ed050ba43",
+      "statement": "Raw-input accounting must use one versioned RAW_UNITIZATION_VERSION, currently closed-loop-raw-units/1.",
+      "retainedAddedGovernorSetSha256": "9cbb26b788d552cf8044a1f59d20e5a895f6c44c2564924d63699ed02f50b6c1",
+      "typedEffectiveGovernor": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/original-decoder-edge-successor-002/effective-governor-link.json",
+        "sha256": "67b3ebd38914df4b7b055e238fc0f2bed4ac195c1a83dadcec7cab9eb6302d13",
+        "byteLength": 11967
+      },
+      "scopeDecision": "The named current raw-unit algorithm includes its authorized C1 structural ZIP mapping. The accepted external clarification fixes the inherited decoder denotation that conditions that algorithm; linking it is effective only for C1 structural decoding, not a new media parser or canonical ID scheme."
+    },
+    "identityPreimageSha256": "d6108eaae85efef95309c16719c205b7554cefab18deb98b6f40ee6807507e3f",
+    "successorNormativeRequirementId": "NREQ-d6108eaae85efef95309c16719c205b7",
+    "identityStatus": "FRESH_ATTRIBUTED_CANDIDATE_IDENTITY_CONDITIONAL_ON_LINKED_GOVERNOR_PENDING_SOURCE_ADOPTION"
+  },
+  {
+    "schema": "closed-loop-attributed-predecessor-edge-reconciliation/1",
+    "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+    "predecessorIndex": 354,
+    "predecessorNormativeRequirementId": "NREQ-2d7fbe6bf8f03db16f6f3d349db9875d",
+    "predecessorEntrySha256": "573902e0daf9bb2fca67f078435820e0a55b937115d32c0594ed2381a84c5126",
+    "priorCurrentNormativeRequirementId": "NREQ-7786bc1858af57fa7e7c001ec6c6bc40",
+    "priorCurrentEntryEvidence": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/354",
+      "entrySha256": "25498ad9eed54ec9db87c07b30b2decad4899855b2f00e2a24d7f97444d7912e"
+    },
+    "originalStatement": "Raw-input accounting must use deterministic media-specific unit rules.",
+    "originalOccurrenceSetReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/354/originalOccurrenceBindings",
+      "sha256": "7718705771aa9cadc812415ae3deff31ba4262de2657ca840c4ab3b39c54d77b"
+    },
+    "originalOccurrenceTransport": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-occurrence-transport.json",
+      "sha256": "4157cda2f60669a2feba4c3021aa212f5bee00f4456a4e7a59d8e86da08a02d4",
+      "byteLength": 6309790
+    },
+    "verifiedOriginalOccurrenceBindingCount": 5,
+    "originalAddedGovernorReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/354/newGoverningSourceRanges",
+      "sha256": "9cbb26b788d552cf8044a1f59d20e5a895f6c44c2564924d63699ed02f50b6c1"
+    },
+    "historicalUnresolvedSourceEffects": [
+      "SRC-GAP-DECODER-SUBSET"
+    ],
+    "currentUnresolvedSourceEffects": [],
+    "currentBlockedInheritedReferenceDetails": [],
+    "edgeDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+    "edgeSuccessorDisposition": "CHANGED",
+    "successorDisposition": "CHANGED",
+    "independentReason": "Deterministic media-specific rules include C1 ZIP structural decoding and supported-subset eligibility. The explicit accepted preservation targets resolve that inherited dependency without treating arbitrary implementation output as normative or adding another mapping.",
+    "effectiveGovernorLink": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/original-decoder-edge-successor-002/effective-governor-link.json",
+      "sha256": "67b3ebd38914df4b7b055e238fc0f2bed4ac195c1a83dadcec7cab9eb6302d13",
+      "byteLength": 11967
+    },
+    "resolutionEvidenceReference": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/original-decoder-edge-successor-002/effective-governor-link.json",
+      "sha256": "67b3ebd38914df4b7b055e238fc0f2bed4ac195c1a83dadcec7cab9eb6302d13",
+      "byteLength": 11967
+    },
+    "currentMeaningStatus": "RESOLVED_WITH_ATTRIBUTED_REFERENCE_LINK",
+    "originalReviewInheritance": false,
+    "proofInheritance": false,
+    "implementationStatus": "UNKNOWN",
+    "testConformance": "UNKNOWN",
+    "sourceLedgerActivated": false,
+    "identityPreimage": {
+      "schema": "closed-loop-attributed-predecessor-edge-identity/1",
+      "successorSourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "predecessorId": "NREQ-2d7fbe6bf8f03db16f6f3d349db9875d",
+      "predecessorEntrySha256": "573902e0daf9bb2fca67f078435820e0a55b937115d32c0594ed2381a84c5126",
+      "priorCurrentId": "NREQ-7786bc1858af57fa7e7c001ec6c6bc40",
+      "priorCurrentEntrySha256": "25498ad9eed54ec9db87c07b30b2decad4899855b2f00e2a24d7f97444d7912e",
+      "statement": "Raw-input accounting must use deterministic media-specific unit rules.",
+      "retainedAddedGovernorSetSha256": "9cbb26b788d552cf8044a1f59d20e5a895f6c44c2564924d63699ed02f50b6c1",
+      "typedEffectiveGovernor": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/original-decoder-edge-successor-002/effective-governor-link.json",
+        "sha256": "67b3ebd38914df4b7b055e238fc0f2bed4ac195c1a83dadcec7cab9eb6302d13",
+        "byteLength": 11967
+      },
+      "scopeDecision": "Deterministic media-specific rules include C1 ZIP structural decoding and supported-subset eligibility. The explicit accepted preservation targets resolve that inherited dependency without treating arbitrary implementation output as normative or adding another mapping."
+    },
+    "identityPreimageSha256": "8e6ee5217965c46ad61905ef448ab556eea474b5996955beac7e423ae57f5a75",
+    "successorNormativeRequirementId": "NREQ-8e6ee5217965c46ad61905ef448ab556",
+    "identityStatus": "FRESH_ATTRIBUTED_CANDIDATE_IDENTITY_CONDITIONAL_ON_LINKED_GOVERNOR_PENDING_SOURCE_ADOPTION"
+  },
+  {
+    "schema": "closed-loop-attributed-predecessor-edge-reconciliation/1",
+    "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+    "predecessorIndex": 355,
+    "predecessorNormativeRequirementId": "NREQ-441cf69ea12fdecf7e4df438dc7d5289",
+    "predecessorEntrySha256": "11b3c841bebf15ce8a4fb29c32cbeab7760ab9bd69f6d3d71b05ad5d0754cfa3",
+    "priorCurrentNormativeRequirementId": "NREQ-aa4dae7d6845b489ea899a6df5bde640",
+    "priorCurrentEntryEvidence": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/355",
+      "entrySha256": "0129fdb8354339aceb410b0504e8b8c46a7d701497aac6daf703ebf5c1e239c5"
+    },
+    "originalStatement": "Text-message boundaries must receive stable application-owned raw-unit identities.",
+    "originalOccurrenceSetReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/355/originalOccurrenceBindings",
+      "sha256": "7718705771aa9cadc812415ae3deff31ba4262de2657ca840c4ab3b39c54d77b"
+    },
+    "originalOccurrenceTransport": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-occurrence-transport.json",
+      "sha256": "4157cda2f60669a2feba4c3021aa212f5bee00f4456a4e7a59d8e86da08a02d4",
+      "byteLength": 6309790
+    },
+    "verifiedOriginalOccurrenceBindingCount": 5,
+    "originalAddedGovernorReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/355/newGoverningSourceRanges",
+      "sha256": "9cbb26b788d552cf8044a1f59d20e5a895f6c44c2564924d63699ed02f50b6c1"
+    },
+    "historicalUnresolvedSourceEffects": [
+      "SRC-GAP-DECODER-SUBSET"
+    ],
+    "currentUnresolvedSourceEffects": [],
+    "currentBlockedInheritedReferenceDetails": [],
+    "edgeDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+    "edgeSuccessorDisposition": "RETAINED",
+    "successorDisposition": "CHANGED",
+    "independentReason": "This atom concerns text-message boundary identity under common C426/442. It does not depend on the ZIP decoder supported subset. The issue came from the shared whole-line/algorithm context; close the qualifier diagnostically while preserving the already-issued current identity and all common-C governors.",
+    "effectiveGovernorLink": null,
+    "resolutionEvidenceReference": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/original-decoder-edge-successor-002/effective-governor-link.json",
+      "sha256": "67b3ebd38914df4b7b055e238fc0f2bed4ac195c1a83dadcec7cab9eb6302d13",
+      "byteLength": 11967
+    },
+    "currentMeaningStatus": "RESOLVED_DIAGNOSTIC_REFERENCE_NO_GOVERNOR",
+    "originalReviewInheritance": false,
+    "proofInheritance": false,
+    "implementationStatus": "UNKNOWN",
+    "testConformance": "UNKNOWN",
+    "sourceLedgerActivated": false,
+    "successorNormativeRequirementId": "NREQ-aa4dae7d6845b489ea899a6df5bde640",
+    "identityStatus": "CURRENT_ISSUED_SOURCE_IDENTITY_RETAINED_DIAGNOSTIC_EDGE_CLOSED"
+  },
+  {
+    "schema": "closed-loop-attributed-predecessor-edge-reconciliation/1",
+    "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+    "predecessorIndex": 356,
+    "predecessorNormativeRequirementId": "NREQ-9b059ed4ad52b2a7909da43ad8856c59",
+    "predecessorEntrySha256": "a498ebdc7e997fcc3b5aef4ad57a04eee9c4b75ace9dd1a35ade1dcf0dd7fb72",
+    "priorCurrentNormativeRequirementId": "NREQ-bb15dce38f9317bba6425ea2281b8567",
+    "priorCurrentEntryEvidence": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/356",
+      "entrySha256": "51dd1a72d0122518a2a248d82d465a9be26a69f543504be0c6a2b3666dd413c5"
+    },
+    "originalStatement": "Structured text units must receive stable application-owned raw-unit identities.",
+    "originalOccurrenceSetReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/356/originalOccurrenceBindings",
+      "sha256": "7718705771aa9cadc812415ae3deff31ba4262de2657ca840c4ab3b39c54d77b"
+    },
+    "originalOccurrenceTransport": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-occurrence-transport.json",
+      "sha256": "4157cda2f60669a2feba4c3021aa212f5bee00f4456a4e7a59d8e86da08a02d4",
+      "byteLength": 6309790
+    },
+    "verifiedOriginalOccurrenceBindingCount": 5,
+    "originalAddedGovernorReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/356/newGoverningSourceRanges",
+      "sha256": "9cbb26b788d552cf8044a1f59d20e5a895f6c44c2564924d63699ed02f50b6c1"
+    },
+    "historicalUnresolvedSourceEffects": [
+      "SRC-GAP-DECODER-SUBSET"
+    ],
+    "currentUnresolvedSourceEffects": [],
+    "currentBlockedInheritedReferenceDetails": [],
+    "edgeDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+    "edgeSuccessorDisposition": "RETAINED",
+    "successorDisposition": "CHANGED",
+    "independentReason": "Structured human/text units use common C426/434–442 and retain exact scalar/type/occurrence identity. No ZIP decoder behavior determines this text-unit identity. The broad shared ZIP reference needs no effective governor on this atom; retain its already-issued current identity.",
+    "effectiveGovernorLink": null,
+    "resolutionEvidenceReference": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/original-decoder-edge-successor-002/effective-governor-link.json",
+      "sha256": "67b3ebd38914df4b7b055e238fc0f2bed4ac195c1a83dadcec7cab9eb6302d13",
+      "byteLength": 11967
+    },
+    "currentMeaningStatus": "RESOLVED_DIAGNOSTIC_REFERENCE_NO_GOVERNOR",
+    "originalReviewInheritance": false,
+    "proofInheritance": false,
+    "implementationStatus": "UNKNOWN",
+    "testConformance": "UNKNOWN",
+    "sourceLedgerActivated": false,
+    "successorNormativeRequirementId": "NREQ-bb15dce38f9317bba6425ea2281b8567",
+    "identityStatus": "CURRENT_ISSUED_SOURCE_IDENTITY_RETAINED_DIAGNOSTIC_EDGE_CLOSED"
+  },
+  {
+    "schema": "closed-loop-attributed-predecessor-edge-reconciliation/1",
+    "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+    "predecessorIndex": 357,
+    "predecessorNormativeRequirementId": "NREQ-cf75776eeca958e2c2b31f3b54164f80",
+    "predecessorEntrySha256": "ca6e6c014dc9e3ece830ece8ff4d02bf1ddb4fc06db3dcfd264a224c8436478a",
+    "priorCurrentNormativeRequirementId": "NREQ-103f993934e6ba1f124d600b62c8fe92",
+    "priorCurrentEntryEvidence": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/357",
+      "entrySha256": "b117fea6d71d6bdc67fcd89448a100682a924b712cf2f18750937f78435c4db6"
+    },
+    "originalStatement": "Document pages and sections where mechanically available must receive stable application-owned raw-unit identities.",
+    "originalOccurrenceSetReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/357/originalOccurrenceBindings",
+      "sha256": "7718705771aa9cadc812415ae3deff31ba4262de2657ca840c4ab3b39c54d77b"
+    },
+    "originalOccurrenceTransport": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-occurrence-transport.json",
+      "sha256": "4157cda2f60669a2feba4c3021aa212f5bee00f4456a4e7a59d8e86da08a02d4",
+      "byteLength": 6309790
+    },
+    "verifiedOriginalOccurrenceBindingCount": 5,
+    "originalAddedGovernorReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/357/newGoverningSourceRanges",
+      "sha256": "9cbb26b788d552cf8044a1f59d20e5a895f6c44c2564924d63699ed02f50b6c1"
+    },
+    "historicalUnresolvedSourceEffects": [
+      "SRC-GAP-DECODER-SUBSET"
+    ],
+    "currentUnresolvedSourceEffects": [],
+    "currentBlockedInheritedReferenceDetails": [],
+    "edgeDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+    "edgeSuccessorDisposition": "RETAINED",
+    "successorDisposition": "CHANGED",
+    "independentReason": "Document page/section identities require their own mechanically available authorized mapping under C430/444. C1 475/478 expressly creates no semantic Office/XML/PDF subdivision. Its decoder denotation supplies no page/section semantics, so this historical context qualifier closes diagnostically without adding a ZIP governor.",
+    "effectiveGovernorLink": null,
+    "resolutionEvidenceReference": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/original-decoder-edge-successor-002/effective-governor-link.json",
+      "sha256": "67b3ebd38914df4b7b055e238fc0f2bed4ac195c1a83dadcec7cab9eb6302d13",
+      "byteLength": 11967
+    },
+    "currentMeaningStatus": "RESOLVED_DIAGNOSTIC_REFERENCE_NO_GOVERNOR",
+    "originalReviewInheritance": false,
+    "proofInheritance": false,
+    "implementationStatus": "UNKNOWN",
+    "testConformance": "UNKNOWN",
+    "sourceLedgerActivated": false,
+    "successorNormativeRequirementId": "NREQ-103f993934e6ba1f124d600b62c8fe92",
+    "identityStatus": "CURRENT_ISSUED_SOURCE_IDENTITY_RETAINED_DIAGNOSTIC_EDGE_CLOSED"
+  },
+  {
+    "schema": "closed-loop-attributed-predecessor-edge-reconciliation/1",
+    "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+    "predecessorIndex": 358,
+    "predecessorNormativeRequirementId": "NREQ-64ffab172f1a18b94c6bff9bd31d4398",
+    "predecessorEntrySha256": "ea6c71e64457df96c9108425a910c01627d9c62b47dfa85fd626ff40a54f81d7",
+    "priorCurrentNormativeRequirementId": "NREQ-180f1247a07e2398cf0c9141abf404d7",
+    "priorCurrentEntryEvidence": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/358",
+      "entrySha256": "79f488b68b5374a32c15ec5fd875ea5bf6efa0866fb98f3deffecc4948ba6eb5"
+    },
+    "originalStatement": "Archive members must receive stable application-owned raw-unit identities.",
+    "originalOccurrenceSetReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/358/originalOccurrenceBindings",
+      "sha256": "7718705771aa9cadc812415ae3deff31ba4262de2657ca840c4ab3b39c54d77b"
+    },
+    "originalOccurrenceTransport": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-occurrence-transport.json",
+      "sha256": "4157cda2f60669a2feba4c3021aa212f5bee00f4456a4e7a59d8e86da08a02d4",
+      "byteLength": 6309790
+    },
+    "verifiedOriginalOccurrenceBindingCount": 5,
+    "originalAddedGovernorReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/358/newGoverningSourceRanges",
+      "sha256": "9cbb26b788d552cf8044a1f59d20e5a895f6c44c2564924d63699ed02f50b6c1"
+    },
+    "historicalUnresolvedSourceEffects": [
+      "SRC-GAP-DECODER-SUBSET"
+    ],
+    "currentUnresolvedSourceEffects": [],
+    "currentBlockedInheritedReferenceDetails": [],
+    "edgeDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+    "edgeSuccessorDisposition": "CHANGED",
+    "successorDisposition": "CHANGED",
+    "independentReason": "Archive-member unit identity depends on actual exposed/verified C1 member occurrences, central-directory order, exact locators and bounded decoder admission. The explicit preservation targets therefore govern the inherited decoder dependency, while separate blocked exposed members and inventories remain preserved.",
+    "effectiveGovernorLink": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/original-decoder-edge-successor-002/effective-governor-link.json",
+      "sha256": "67b3ebd38914df4b7b055e238fc0f2bed4ac195c1a83dadcec7cab9eb6302d13",
+      "byteLength": 11967
+    },
+    "resolutionEvidenceReference": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/original-decoder-edge-successor-002/effective-governor-link.json",
+      "sha256": "67b3ebd38914df4b7b055e238fc0f2bed4ac195c1a83dadcec7cab9eb6302d13",
+      "byteLength": 11967
+    },
+    "currentMeaningStatus": "RESOLVED_WITH_ATTRIBUTED_REFERENCE_LINK",
+    "originalReviewInheritance": false,
+    "proofInheritance": false,
+    "implementationStatus": "UNKNOWN",
+    "testConformance": "UNKNOWN",
+    "sourceLedgerActivated": false,
+    "identityPreimage": {
+      "schema": "closed-loop-attributed-predecessor-edge-identity/1",
+      "successorSourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "predecessorId": "NREQ-64ffab172f1a18b94c6bff9bd31d4398",
+      "predecessorEntrySha256": "ea6c71e64457df96c9108425a910c01627d9c62b47dfa85fd626ff40a54f81d7",
+      "priorCurrentId": "NREQ-180f1247a07e2398cf0c9141abf404d7",
+      "priorCurrentEntrySha256": "79f488b68b5374a32c15ec5fd875ea5bf6efa0866fb98f3deffecc4948ba6eb5",
+      "statement": "Archive members must receive stable application-owned raw-unit identities.",
+      "retainedAddedGovernorSetSha256": "9cbb26b788d552cf8044a1f59d20e5a895f6c44c2564924d63699ed02f50b6c1",
+      "typedEffectiveGovernor": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/original-decoder-edge-successor-002/effective-governor-link.json",
+        "sha256": "67b3ebd38914df4b7b055e238fc0f2bed4ac195c1a83dadcec7cab9eb6302d13",
+        "byteLength": 11967
+      },
+      "scopeDecision": "Archive-member unit identity depends on actual exposed/verified C1 member occurrences, central-directory order, exact locators and bounded decoder admission. The explicit preservation targets therefore govern the inherited decoder dependency, while separate blocked exposed members and inventories remain preserved."
+    },
+    "identityPreimageSha256": "3461193fbc82de1e11294083f203ae15ff7c08275603d9ecadc98b36bc780bab",
+    "successorNormativeRequirementId": "NREQ-3461193fbc82de1e11294083f203ae15",
+    "identityStatus": "FRESH_ATTRIBUTED_CANDIDATE_IDENTITY_CONDITIONAL_ON_LINKED_GOVERNOR_PENDING_SOURCE_ADOPTION"
+  },
+  {
+    "schema": "closed-loop-attributed-predecessor-edge-reconciliation/1",
+    "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+    "predecessorIndex": 359,
+    "predecessorNormativeRequirementId": "NREQ-d29d68c7d28bbdf74543ec1b588305d0",
+    "predecessorEntrySha256": "bb7a1bb2c93f2ebddc139ee0e44423f4a234b14084b9def7dc78b19f06151c42",
+    "priorCurrentNormativeRequirementId": "NREQ-91922226611262762ea2b021db97ca54",
+    "priorCurrentEntryEvidence": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/359",
+      "entrySha256": "3a910b084f502d65897a14cda1083743c2ab8c5a6597805d7866a593ef63c322"
+    },
+    "originalStatement": "Embedded documents must receive stable application-owned raw-unit identities.",
+    "originalOccurrenceSetReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/359/originalOccurrenceBindings",
+      "sha256": "7718705771aa9cadc812415ae3deff31ba4262de2657ca840c4ab3b39c54d77b"
+    },
+    "originalOccurrenceTransport": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-occurrence-transport.json",
+      "sha256": "4157cda2f60669a2feba4c3021aa212f5bee00f4456a4e7a59d8e86da08a02d4",
+      "byteLength": 6309790
+    },
+    "verifiedOriginalOccurrenceBindingCount": 5,
+    "originalAddedGovernorReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/359/newGoverningSourceRanges",
+      "sha256": "9cbb26b788d552cf8044a1f59d20e5a895f6c44c2564924d63699ed02f50b6c1"
+    },
+    "historicalUnresolvedSourceEffects": [
+      "SRC-GAP-DECODER-SUBSET"
+    ],
+    "currentUnresolvedSourceEffects": [],
+    "currentBlockedInheritedReferenceDetails": [],
+    "edgeDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+    "edgeSuccessorDisposition": "CHANGED",
+    "successorDisposition": "CHANGED",
+    "independentReason": "For an embedded child-file occurrence exposed through the C1 mapping, unit identity depends on the exact bounded decoder-derived member occurrence and verified child bytes; recursive ZIP children retain the same supplied occurrence lineage. Link the accepted decoder meaning only for that actual ZIP route, without inventing semantic Office/document parsing or authority for other media.",
+    "effectiveGovernorLink": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/original-decoder-edge-successor-002/effective-governor-link.json",
+      "sha256": "67b3ebd38914df4b7b055e238fc0f2bed4ac195c1a83dadcec7cab9eb6302d13",
+      "byteLength": 11967
+    },
+    "resolutionEvidenceReference": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/original-decoder-edge-successor-002/effective-governor-link.json",
+      "sha256": "67b3ebd38914df4b7b055e238fc0f2bed4ac195c1a83dadcec7cab9eb6302d13",
+      "byteLength": 11967
+    },
+    "currentMeaningStatus": "RESOLVED_WITH_ATTRIBUTED_REFERENCE_LINK",
+    "originalReviewInheritance": false,
+    "proofInheritance": false,
+    "implementationStatus": "UNKNOWN",
+    "testConformance": "UNKNOWN",
+    "sourceLedgerActivated": false,
+    "identityPreimage": {
+      "schema": "closed-loop-attributed-predecessor-edge-identity/1",
+      "successorSourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "predecessorId": "NREQ-d29d68c7d28bbdf74543ec1b588305d0",
+      "predecessorEntrySha256": "bb7a1bb2c93f2ebddc139ee0e44423f4a234b14084b9def7dc78b19f06151c42",
+      "priorCurrentId": "NREQ-91922226611262762ea2b021db97ca54",
+      "priorCurrentEntrySha256": "3a910b084f502d65897a14cda1083743c2ab8c5a6597805d7866a593ef63c322",
+      "statement": "Embedded documents must receive stable application-owned raw-unit identities.",
+      "retainedAddedGovernorSetSha256": "9cbb26b788d552cf8044a1f59d20e5a895f6c44c2564924d63699ed02f50b6c1",
+      "typedEffectiveGovernor": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/original-decoder-edge-successor-002/effective-governor-link.json",
+        "sha256": "67b3ebd38914df4b7b055e238fc0f2bed4ac195c1a83dadcec7cab9eb6302d13",
+        "byteLength": 11967
+      },
+      "scopeDecision": "For an embedded child-file occurrence exposed through the C1 mapping, unit identity depends on the exact bounded decoder-derived member occurrence and verified child bytes; recursive ZIP children retain the same supplied occurrence lineage. Link the accepted decoder meaning only for that actual ZIP route, without inventing semantic Office/document parsing or authority for other media."
+    },
+    "identityPreimageSha256": "310c9937334bdbe781ba709f066c0154a52c0e65fa46128f2baff17c1b76ba7b",
+    "successorNormativeRequirementId": "NREQ-310c9937334bdbe781ba709f066c0154",
+    "identityStatus": "FRESH_ATTRIBUTED_CANDIDATE_IDENTITY_CONDITIONAL_ON_LINKED_GOVERNOR_PENDING_SOURCE_ADOPTION"
+  },
+  {
+    "schema": "closed-loop-attributed-predecessor-edge-reconciliation/1",
+    "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+    "predecessorIndex": 360,
+    "predecessorNormativeRequirementId": "NREQ-03bc1a5f0dbb76602ba42f23c2e70fc9",
+    "predecessorEntrySha256": "839437cca40a929420a4844d09bf060c5a9ed7e5ac0ea21e08f0d78208dbce91",
+    "priorCurrentNormativeRequirementId": "NREQ-e1ff5f4a1eaf3be73b66fedfcbe46590",
+    "priorCurrentEntryEvidence": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/360",
+      "entrySha256": "abe83ae147e26e1f29e3cf15bdf1bbc489a427cffbe18137e60291d00e4ab514"
+    },
+    "originalStatement": "Native images and media must receive stable application-owned raw-unit identities.",
+    "originalOccurrenceSetReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/360/originalOccurrenceBindings",
+      "sha256": "7718705771aa9cadc812415ae3deff31ba4262de2657ca840c4ab3b39c54d77b"
+    },
+    "originalOccurrenceTransport": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-occurrence-transport.json",
+      "sha256": "4157cda2f60669a2feba4c3021aa212f5bee00f4456a4e7a59d8e86da08a02d4",
+      "byteLength": 6309790
+    },
+    "verifiedOriginalOccurrenceBindingCount": 5,
+    "originalAddedGovernorReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/360/newGoverningSourceRanges",
+      "sha256": "9cbb26b788d552cf8044a1f59d20e5a895f6c44c2564924d63699ed02f50b6c1"
+    },
+    "historicalUnresolvedSourceEffects": [
+      "SRC-GAP-DECODER-SUBSET"
+    ],
+    "currentUnresolvedSourceEffects": [],
+    "currentBlockedInheritedReferenceDetails": [],
+    "edgeDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+    "edgeSuccessorDisposition": "RETAINED",
+    "successorDisposition": "CHANGED",
+    "independentReason": "Native image/media whole-occurrence identity follows common C437/442/444 with retained bytes and unsupported-subdivision basis. A ZIP subset interpretation does not define image/media semantics or a finer native mapping. Preserve the already-issued identity and close the broad shared qualifier diagnostically.",
+    "effectiveGovernorLink": null,
+    "resolutionEvidenceReference": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/original-decoder-edge-successor-002/effective-governor-link.json",
+      "sha256": "67b3ebd38914df4b7b055e238fc0f2bed4ac195c1a83dadcec7cab9eb6302d13",
+      "byteLength": 11967
+    },
+    "currentMeaningStatus": "RESOLVED_DIAGNOSTIC_REFERENCE_NO_GOVERNOR",
+    "originalReviewInheritance": false,
+    "proofInheritance": false,
+    "implementationStatus": "UNKNOWN",
+    "testConformance": "UNKNOWN",
+    "sourceLedgerActivated": false,
+    "successorNormativeRequirementId": "NREQ-e1ff5f4a1eaf3be73b66fedfcbe46590",
+    "identityStatus": "CURRENT_ISSUED_SOURCE_IDENTITY_RETAINED_DIAGNOSTIC_EDGE_CLOSED"
+  },
+  {
+    "schema": "closed-loop-attributed-predecessor-edge-reconciliation/1",
+    "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+    "predecessorIndex": 361,
+    "predecessorNormativeRequirementId": "NREQ-5e724165ebc3ee7393506ac49155ee50",
+    "predecessorEntrySha256": "b993e55d2d439b4644abb275ddee0e63dfc73e512980fa237bd8e745b8217601",
+    "priorCurrentNormativeRequirementId": "NREQ-85aedc20138c1c5ce5762a63da87b435",
+    "priorCurrentEntryEvidence": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/361",
+      "entrySha256": "ccc94078d4259bf773b203fe7132dac79d15d87d6fb622d9653395f92da2b919"
+    },
+    "originalStatement": "Unsupported-format whole-file fallbacks must receive stable application-owned raw-unit identities.",
+    "originalOccurrenceSetReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/361/originalOccurrenceBindings",
+      "sha256": "7718705771aa9cadc812415ae3deff31ba4262de2657ca840c4ab3b39c54d77b"
+    },
+    "originalOccurrenceTransport": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-occurrence-transport.json",
+      "sha256": "4157cda2f60669a2feba4c3021aa212f5bee00f4456a4e7a59d8e86da08a02d4",
+      "byteLength": 6309790
+    },
+    "verifiedOriginalOccurrenceBindingCount": 5,
+    "originalAddedGovernorReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/361/newGoverningSourceRanges",
+      "sha256": "9cbb26b788d552cf8044a1f59d20e5a895f6c44c2564924d63699ed02f50b6c1"
+    },
+    "historicalUnresolvedSourceEffects": [
+      "SRC-GAP-DECODER-SUBSET"
+    ],
+    "currentUnresolvedSourceEffects": [],
+    "currentBlockedInheritedReferenceDetails": [],
+    "edgeDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+    "edgeSuccessorDisposition": "CHANGED",
+    "successorDisposition": "CHANGED",
+    "independentReason": "Unsupported whole-file fallback is conditioned by C444 and C1 recognition/failure distinctions. The accepted decoder denotation matters to deciding genuinely unsupported structural features versus corruption, unsafe paths, resource/platform failure or blocked detailed decoding. Link that narrow dependency; never downgrade a recognized blocked ZIP to a favorable opaque fallback.",
+    "effectiveGovernorLink": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/original-decoder-edge-successor-002/effective-governor-link.json",
+      "sha256": "67b3ebd38914df4b7b055e238fc0f2bed4ac195c1a83dadcec7cab9eb6302d13",
+      "byteLength": 11967
+    },
+    "resolutionEvidenceReference": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/original-decoder-edge-successor-002/effective-governor-link.json",
+      "sha256": "67b3ebd38914df4b7b055e238fc0f2bed4ac195c1a83dadcec7cab9eb6302d13",
+      "byteLength": 11967
+    },
+    "currentMeaningStatus": "RESOLVED_WITH_ATTRIBUTED_REFERENCE_LINK",
+    "originalReviewInheritance": false,
+    "proofInheritance": false,
+    "implementationStatus": "UNKNOWN",
+    "testConformance": "UNKNOWN",
+    "sourceLedgerActivated": false,
+    "identityPreimage": {
+      "schema": "closed-loop-attributed-predecessor-edge-identity/1",
+      "successorSourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "predecessorId": "NREQ-5e724165ebc3ee7393506ac49155ee50",
+      "predecessorEntrySha256": "b993e55d2d439b4644abb275ddee0e63dfc73e512980fa237bd8e745b8217601",
+      "priorCurrentId": "NREQ-85aedc20138c1c5ce5762a63da87b435",
+      "priorCurrentEntrySha256": "ccc94078d4259bf773b203fe7132dac79d15d87d6fb622d9653395f92da2b919",
+      "statement": "Unsupported-format whole-file fallbacks must receive stable application-owned raw-unit identities.",
+      "retainedAddedGovernorSetSha256": "9cbb26b788d552cf8044a1f59d20e5a895f6c44c2564924d63699ed02f50b6c1",
+      "typedEffectiveGovernor": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/original-decoder-edge-successor-002/effective-governor-link.json",
+        "sha256": "67b3ebd38914df4b7b055e238fc0f2bed4ac195c1a83dadcec7cab9eb6302d13",
+        "byteLength": 11967
+      },
+      "scopeDecision": "Unsupported whole-file fallback is conditioned by C444 and C1 recognition/failure distinctions. The accepted decoder denotation matters to deciding genuinely unsupported structural features versus corruption, unsafe paths, resource/platform failure or blocked detailed decoding. Link that narrow dependency; never downgrade a recognized blocked ZIP to a favorable opaque fallback."
+    },
+    "identityPreimageSha256": "3b4fb7bfd9a0f270ca3b0abcfe99cd4c90dd67b4ee18011a26f53ee99201ba87",
+    "successorNormativeRequirementId": "NREQ-3b4fb7bfd9a0f270ca3b0abcfe99cd4c",
+    "identityStatus": "FRESH_ATTRIBUTED_CANDIDATE_IDENTITY_CONDITIONAL_ON_LINKED_GOVERNOR_PENDING_SOURCE_ADOPTION"
+  },
+  {
+    "schema": "closed-loop-attributed-predecessor-edge-reconciliation/1",
+    "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+    "predecessorIndex": 362,
+    "predecessorNormativeRequirementId": "NREQ-4aa2a550c4217fea85f99ec08e4d6c50",
+    "predecessorEntrySha256": "5b5ff151ae3c7946eda9827da761fe447fff0cecfb1911c4855e1d9fb9d8db78",
+    "priorCurrentNormativeRequirementId": "NREQ-80de5e77b9c7c7fd30b05136f579fa25",
+    "priorCurrentEntryEvidence": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/362",
+      "entrySha256": "e6df7a25e037c4049bc97569570481f3e83974e7308c1b695521d9cbd660243f"
+    },
+    "originalStatement": "Source locations must receive stable application-owned raw-unit identities.",
+    "originalOccurrenceSetReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/362/originalOccurrenceBindings",
+      "sha256": "7718705771aa9cadc812415ae3deff31ba4262de2657ca840c4ab3b39c54d77b"
+    },
+    "originalOccurrenceTransport": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-occurrence-transport.json",
+      "sha256": "4157cda2f60669a2feba4c3021aa212f5bee00f4456a4e7a59d8e86da08a02d4",
+      "byteLength": 6309790
+    },
+    "verifiedOriginalOccurrenceBindingCount": 5,
+    "originalAddedGovernorReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/362/newGoverningSourceRanges",
+      "sha256": "9cbb26b788d552cf8044a1f59d20e5a895f6c44c2564924d63699ed02f50b6c1"
+    },
+    "historicalUnresolvedSourceEffects": [
+      "SRC-GAP-DECODER-SUBSET"
+    ],
+    "currentUnresolvedSourceEffects": [],
+    "currentBlockedInheritedReferenceDetails": [],
+    "edgeDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+    "edgeSuccessorDisposition": "CHANGED",
+    "successorDisposition": "CHANGED",
+    "independentReason": "The full raw-unit source-location contract includes actual C1 exposed archive/member/metadata/comment locators. Which exact structural occurrences are safely established depends on the accepted decoder preservation targets, so link that conditional ZIP dependency while retaining common human/physical locators unchanged.",
+    "effectiveGovernorLink": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/original-decoder-edge-successor-002/effective-governor-link.json",
+      "sha256": "67b3ebd38914df4b7b055e238fc0f2bed4ac195c1a83dadcec7cab9eb6302d13",
+      "byteLength": 11967
+    },
+    "resolutionEvidenceReference": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/original-decoder-edge-successor-002/effective-governor-link.json",
+      "sha256": "67b3ebd38914df4b7b055e238fc0f2bed4ac195c1a83dadcec7cab9eb6302d13",
+      "byteLength": 11967
+    },
+    "currentMeaningStatus": "RESOLVED_WITH_ATTRIBUTED_REFERENCE_LINK",
+    "originalReviewInheritance": false,
+    "proofInheritance": false,
+    "implementationStatus": "UNKNOWN",
+    "testConformance": "UNKNOWN",
+    "sourceLedgerActivated": false,
+    "identityPreimage": {
+      "schema": "closed-loop-attributed-predecessor-edge-identity/1",
+      "successorSourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "predecessorId": "NREQ-4aa2a550c4217fea85f99ec08e4d6c50",
+      "predecessorEntrySha256": "5b5ff151ae3c7946eda9827da761fe447fff0cecfb1911c4855e1d9fb9d8db78",
+      "priorCurrentId": "NREQ-80de5e77b9c7c7fd30b05136f579fa25",
+      "priorCurrentEntrySha256": "e6df7a25e037c4049bc97569570481f3e83974e7308c1b695521d9cbd660243f",
+      "statement": "Source locations must receive stable application-owned raw-unit identities.",
+      "retainedAddedGovernorSetSha256": "9cbb26b788d552cf8044a1f59d20e5a895f6c44c2564924d63699ed02f50b6c1",
+      "typedEffectiveGovernor": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/original-decoder-edge-successor-002/effective-governor-link.json",
+        "sha256": "67b3ebd38914df4b7b055e238fc0f2bed4ac195c1a83dadcec7cab9eb6302d13",
+        "byteLength": 11967
+      },
+      "scopeDecision": "The full raw-unit source-location contract includes actual C1 exposed archive/member/metadata/comment locators. Which exact structural occurrences are safely established depends on the accepted decoder preservation targets, so link that conditional ZIP dependency while retaining common human/physical locators unchanged."
+    },
+    "identityPreimageSha256": "75ed29e7906cc4049ada2852cc7554dbf1d3ad35951c6eca71d69d3dfa8c22c3",
+    "successorNormativeRequirementId": "NREQ-75ed29e7906cc4049ada2852cc7554db",
+    "identityStatus": "FRESH_ATTRIBUTED_CANDIDATE_IDENTITY_CONDITIONAL_ON_LINKED_GOVERNOR_PENDING_SOURCE_ADOPTION"
+  },
+  {
+    "schema": "closed-loop-attributed-predecessor-edge-reconciliation/1",
+    "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+    "predecessorIndex": 1980,
+    "predecessorNormativeRequirementId": "NREQ-5ae776ec3c2dd0b5420c7b85d8460dae",
+    "predecessorEntrySha256": "205bb3b0c34a18ca869afb55d58d0c999cfacade2ae4e4bece4db334bdac7ba6",
+    "priorCurrentNormativeRequirementId": "NREQ-6796e6321dcd875c058a2b07f0998809",
+    "priorCurrentEntryEvidence": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/1980",
+      "entrySha256": "66ce897b81ac9e27636f7a0707fc9207ce2553d0dd50e035ac9e03f9bcac7417"
+    },
+    "originalStatement": "Archive intake and export fail closed on excessive compression ratio.",
+    "originalOccurrenceSetReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/1980/originalOccurrenceBindings",
+      "sha256": "a4688e08f87f84ae799cb987fa32e749ed97092bc1a8a32ead9901a450d38c6d"
+    },
+    "originalOccurrenceTransport": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-occurrence-transport.json",
+      "sha256": "4157cda2f60669a2feba4c3021aa212f5bee00f4456a4e7a59d8e86da08a02d4",
+      "byteLength": 6309790
+    },
+    "verifiedOriginalOccurrenceBindingCount": 3,
+    "originalAddedGovernorReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/1980/newGoverningSourceRanges",
+      "sha256": "e5d01f05301e24db397c7092ed5df08ab2ee40f4b9fa5c08fbaacc9079e2752d"
+    },
+    "historicalUnresolvedSourceEffects": [
+      "SRC-GAP-DECODER-SUBSET"
+    ],
+    "currentUnresolvedSourceEffects": [],
+    "currentBlockedInheritedReferenceDetails": [],
+    "edgeDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+    "edgeSuccessorDisposition": "RETAINED",
+    "successorDisposition": "CHANGED",
+    "independentReason": "This atom is the exact fail-closed excessive-compression ratio guard at base1655. Its current C1 459 pass-wide profile fixes intake bounds and480/486/492 retain blocked outcomes; the technical clarification19 explicitly preserves that profile and existing lower actual limits. Decoder format details11–18 do not change this guard. Retain the already-issued current source identity and close the qualifier diagnostically; transport/export policy remains distinct and no bound is loosened.",
+    "effectiveGovernorLink": null,
+    "resolutionEvidenceReference": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/original-decoder-edge-successor-002/effective-governor-link.json",
+      "sha256": "67b3ebd38914df4b7b055e238fc0f2bed4ac195c1a83dadcec7cab9eb6302d13",
+      "byteLength": 11967
+    },
+    "currentMeaningStatus": "RESOLVED_DIAGNOSTIC_REFERENCE_NO_GOVERNOR",
+    "originalReviewInheritance": false,
+    "proofInheritance": false,
+    "implementationStatus": "UNKNOWN",
+    "testConformance": "UNKNOWN",
+    "sourceLedgerActivated": false,
+    "successorNormativeRequirementId": "NREQ-6796e6321dcd875c058a2b07f0998809",
+    "identityStatus": "CURRENT_ISSUED_SOURCE_IDENTITY_RETAINED_DIAGNOSTIC_EDGE_CLOSED"
+  },
+  {
+    "schema": "closed-loop-attributed-predecessor-edge-reconciliation/1",
+    "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+    "predecessorIndex": 1981,
+    "predecessorNormativeRequirementId": "NREQ-088457499dd1cf85726d21d3b72879d5",
+    "predecessorEntrySha256": "0f79283ea39476ec01d6df337a39724c557f6d3dc72047043db59826bc46916e",
+    "priorCurrentNormativeRequirementId": "NREQ-9d365c3bca06f262174411bb324df253",
+    "priorCurrentEntryEvidence": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/1981",
+      "entrySha256": "f751de2f01762f59c9f1b4dedd56048f803bbe0de1a11eb57777dd3e8f5416fd"
+    },
+    "originalStatement": "Archive intake and export fail closed on excessive entry count.",
+    "originalOccurrenceSetReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/1981/originalOccurrenceBindings",
+      "sha256": "a4688e08f87f84ae799cb987fa32e749ed97092bc1a8a32ead9901a450d38c6d"
+    },
+    "originalOccurrenceTransport": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-occurrence-transport.json",
+      "sha256": "4157cda2f60669a2feba4c3021aa212f5bee00f4456a4e7a59d8e86da08a02d4",
+      "byteLength": 6309790
+    },
+    "verifiedOriginalOccurrenceBindingCount": 3,
+    "originalAddedGovernorReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/1981/newGoverningSourceRanges",
+      "sha256": "e5d01f05301e24db397c7092ed5df08ab2ee40f4b9fa5c08fbaacc9079e2752d"
+    },
+    "historicalUnresolvedSourceEffects": [
+      "SRC-GAP-DECODER-SUBSET"
+    ],
+    "currentUnresolvedSourceEffects": [],
+    "currentBlockedInheritedReferenceDetails": [],
+    "edgeDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+    "edgeSuccessorDisposition": "RETAINED",
+    "successorDisposition": "CHANGED",
+    "independentReason": "This atom is the exact fail-closed excessive-entry count guard at base1655. Its current C1 459 pass-wide profile fixes intake bounds and480/486/492 retain blocked outcomes; the technical clarification19 explicitly preserves that profile and existing lower actual limits. Decoder format details11–18 do not change this guard. Retain the already-issued current source identity and close the qualifier diagnostically; transport/export policy remains distinct and no bound is loosened.",
+    "effectiveGovernorLink": null,
+    "resolutionEvidenceReference": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/original-decoder-edge-successor-002/effective-governor-link.json",
+      "sha256": "67b3ebd38914df4b7b055e238fc0f2bed4ac195c1a83dadcec7cab9eb6302d13",
+      "byteLength": 11967
+    },
+    "currentMeaningStatus": "RESOLVED_DIAGNOSTIC_REFERENCE_NO_GOVERNOR",
+    "originalReviewInheritance": false,
+    "proofInheritance": false,
+    "implementationStatus": "UNKNOWN",
+    "testConformance": "UNKNOWN",
+    "sourceLedgerActivated": false,
+    "successorNormativeRequirementId": "NREQ-9d365c3bca06f262174411bb324df253",
+    "identityStatus": "CURRENT_ISSUED_SOURCE_IDENTITY_RETAINED_DIAGNOSTIC_EDGE_CLOSED"
+  },
+  {
+    "schema": "closed-loop-attributed-predecessor-edge-reconciliation/1",
+    "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+    "predecessorIndex": 1982,
+    "predecessorNormativeRequirementId": "NREQ-096391cf046565a588c174038186e511",
+    "predecessorEntrySha256": "06adbed119b304fccd9bb62fe0bcc757a84cf4260dd6d92f7e422b87b9b92cd6",
+    "priorCurrentNormativeRequirementId": "NREQ-1f842fe86f0aa72a910dd7f8535cd405",
+    "priorCurrentEntryEvidence": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/1982",
+      "entrySha256": "d8c40220f61183188983479cc2c65fb90431ec37d1ae43fe2c3edcfb88b18e0d"
+    },
+    "originalStatement": "Archive intake and export fail closed on excessive filename length.",
+    "originalOccurrenceSetReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/1982/originalOccurrenceBindings",
+      "sha256": "a4688e08f87f84ae799cb987fa32e749ed97092bc1a8a32ead9901a450d38c6d"
+    },
+    "originalOccurrenceTransport": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-occurrence-transport.json",
+      "sha256": "4157cda2f60669a2feba4c3021aa212f5bee00f4456a4e7a59d8e86da08a02d4",
+      "byteLength": 6309790
+    },
+    "verifiedOriginalOccurrenceBindingCount": 3,
+    "originalAddedGovernorReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/1982/newGoverningSourceRanges",
+      "sha256": "e5d01f05301e24db397c7092ed5df08ab2ee40f4b9fa5c08fbaacc9079e2752d"
+    },
+    "historicalUnresolvedSourceEffects": [
+      "SRC-GAP-DECODER-SUBSET"
+    ],
+    "currentUnresolvedSourceEffects": [],
+    "currentBlockedInheritedReferenceDetails": [],
+    "edgeDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+    "edgeSuccessorDisposition": "RETAINED",
+    "successorDisposition": "CHANGED",
+    "independentReason": "This atom is the exact fail-closed excessive-filename length guard at base1655. Its current C1 459 pass-wide profile fixes intake bounds and480/486/492 retain blocked outcomes; the technical clarification19 explicitly preserves that profile and existing lower actual limits. Decoder format details11–18 do not change this guard. Retain the already-issued current source identity and close the qualifier diagnostically; transport/export policy remains distinct and no bound is loosened.",
+    "effectiveGovernorLink": null,
+    "resolutionEvidenceReference": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/original-decoder-edge-successor-002/effective-governor-link.json",
+      "sha256": "67b3ebd38914df4b7b055e238fc0f2bed4ac195c1a83dadcec7cab9eb6302d13",
+      "byteLength": 11967
+    },
+    "currentMeaningStatus": "RESOLVED_DIAGNOSTIC_REFERENCE_NO_GOVERNOR",
+    "originalReviewInheritance": false,
+    "proofInheritance": false,
+    "implementationStatus": "UNKNOWN",
+    "testConformance": "UNKNOWN",
+    "sourceLedgerActivated": false,
+    "successorNormativeRequirementId": "NREQ-1f842fe86f0aa72a910dd7f8535cd405",
+    "identityStatus": "CURRENT_ISSUED_SOURCE_IDENTITY_RETAINED_DIAGNOSTIC_EDGE_CLOSED"
+  },
+  {
+    "schema": "closed-loop-attributed-predecessor-edge-reconciliation/1",
+    "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+    "predecessorIndex": 1983,
+    "predecessorNormativeRequirementId": "NREQ-3003144b1aaec5e7b54f43771f6bd3ad",
+    "predecessorEntrySha256": "05e66a7c803de878d0a9445cb37d5f16450b364b880a333a4aa084f36358eb7f",
+    "priorCurrentNormativeRequirementId": "NREQ-abc24b7c7d442cdcdafc78fcbb9faa76",
+    "priorCurrentEntryEvidence": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/1983",
+      "entrySha256": "4a679572132a116e57a867971e3f9b487b1c23fc367054942e97e5b27ceee5bb"
+    },
+    "originalStatement": "Archive intake and export fail closed on excessive nesting.",
+    "originalOccurrenceSetReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/1983/originalOccurrenceBindings",
+      "sha256": "a4688e08f87f84ae799cb987fa32e749ed97092bc1a8a32ead9901a450d38c6d"
+    },
+    "originalOccurrenceTransport": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-occurrence-transport.json",
+      "sha256": "4157cda2f60669a2feba4c3021aa212f5bee00f4456a4e7a59d8e86da08a02d4",
+      "byteLength": 6309790
+    },
+    "verifiedOriginalOccurrenceBindingCount": 3,
+    "originalAddedGovernorReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/1983/newGoverningSourceRanges",
+      "sha256": "e5d01f05301e24db397c7092ed5df08ab2ee40f4b9fa5c08fbaacc9079e2752d"
+    },
+    "historicalUnresolvedSourceEffects": [
+      "SRC-GAP-DECODER-SUBSET"
+    ],
+    "currentUnresolvedSourceEffects": [],
+    "currentBlockedInheritedReferenceDetails": [],
+    "edgeDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+    "edgeSuccessorDisposition": "RETAINED",
+    "successorDisposition": "CHANGED",
+    "independentReason": "This atom is the exact fail-closed excessive-nesting guard at base1655. Its current C1 459 pass-wide profile fixes intake bounds and480/486/492 retain blocked outcomes; the technical clarification19 explicitly preserves that profile and existing lower actual limits. Decoder format details11–18 do not change this guard. Retain the already-issued current source identity and close the qualifier diagnostically; transport/export policy remains distinct and no bound is loosened.",
+    "effectiveGovernorLink": null,
+    "resolutionEvidenceReference": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/original-decoder-edge-successor-002/effective-governor-link.json",
+      "sha256": "67b3ebd38914df4b7b055e238fc0f2bed4ac195c1a83dadcec7cab9eb6302d13",
+      "byteLength": 11967
+    },
+    "currentMeaningStatus": "RESOLVED_DIAGNOSTIC_REFERENCE_NO_GOVERNOR",
+    "originalReviewInheritance": false,
+    "proofInheritance": false,
+    "implementationStatus": "UNKNOWN",
+    "testConformance": "UNKNOWN",
+    "sourceLedgerActivated": false,
+    "successorNormativeRequirementId": "NREQ-abc24b7c7d442cdcdafc78fcbb9faa76",
+    "identityStatus": "CURRENT_ISSUED_SOURCE_IDENTITY_RETAINED_DIAGNOSTIC_EDGE_CLOSED"
+  },
+  {
+    "schema": "closed-loop-attributed-predecessor-edge-reconciliation/1",
+    "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+    "predecessorIndex": 1984,
+    "predecessorNormativeRequirementId": "NREQ-78b755bccf38e423a12139df7d01f743",
+    "predecessorEntrySha256": "4c65f7b17599f60b7cc2e31e93ff60c59c93141e4f6092eb0ac876eacc649f74",
+    "priorCurrentNormativeRequirementId": "NREQ-bb3aa057fa9c566db25aca9ec931453d",
+    "priorCurrentEntryEvidence": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/1984",
+      "entrySha256": "39d022e6f67866d97ed5cc7ba4420afc1fdc9ed8f6fb393fe7a472e232b6bde8"
+    },
+    "originalStatement": "Archive intake and export fail closed on excessive path depth.",
+    "originalOccurrenceSetReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/1984/originalOccurrenceBindings",
+      "sha256": "a4688e08f87f84ae799cb987fa32e749ed97092bc1a8a32ead9901a450d38c6d"
+    },
+    "originalOccurrenceTransport": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-occurrence-transport.json",
+      "sha256": "4157cda2f60669a2feba4c3021aa212f5bee00f4456a4e7a59d8e86da08a02d4",
+      "byteLength": 6309790
+    },
+    "verifiedOriginalOccurrenceBindingCount": 3,
+    "originalAddedGovernorReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/1984/newGoverningSourceRanges",
+      "sha256": "e5d01f05301e24db397c7092ed5df08ab2ee40f4b9fa5c08fbaacc9079e2752d"
+    },
+    "historicalUnresolvedSourceEffects": [
+      "SRC-GAP-DECODER-SUBSET"
+    ],
+    "currentUnresolvedSourceEffects": [],
+    "currentBlockedInheritedReferenceDetails": [],
+    "edgeDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+    "edgeSuccessorDisposition": "RETAINED",
+    "successorDisposition": "CHANGED",
+    "independentReason": "This atom is the exact fail-closed excessive-path depth guard at base1655. Its current C1 459 pass-wide profile fixes intake bounds and480/486/492 retain blocked outcomes; the technical clarification19 explicitly preserves that profile and existing lower actual limits. Decoder format details11–18 do not change this guard. Retain the already-issued current source identity and close the qualifier diagnostically; transport/export policy remains distinct and no bound is loosened.",
+    "effectiveGovernorLink": null,
+    "resolutionEvidenceReference": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/original-decoder-edge-successor-002/effective-governor-link.json",
+      "sha256": "67b3ebd38914df4b7b055e238fc0f2bed4ac195c1a83dadcec7cab9eb6302d13",
+      "byteLength": 11967
+    },
+    "currentMeaningStatus": "RESOLVED_DIAGNOSTIC_REFERENCE_NO_GOVERNOR",
+    "originalReviewInheritance": false,
+    "proofInheritance": false,
+    "implementationStatus": "UNKNOWN",
+    "testConformance": "UNKNOWN",
+    "sourceLedgerActivated": false,
+    "successorNormativeRequirementId": "NREQ-bb3aa057fa9c566db25aca9ec931453d",
+    "identityStatus": "CURRENT_ISSUED_SOURCE_IDENTITY_RETAINED_DIAGNOSTIC_EDGE_CLOSED"
+  },
+  {
+    "schema": "closed-loop-attributed-predecessor-edge-reconciliation/1",
+    "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+    "predecessorIndex": 1985,
+    "predecessorNormativeRequirementId": "NREQ-cd823f300c16b3ea7d4cf967ef874106",
+    "predecessorEntrySha256": "93a047f1703a25826307c764749619c17f0d28c3dcf69604fbe2069974f4287d",
+    "priorCurrentNormativeRequirementId": "NREQ-b8e0d61557f8417f82fa004f5cb53e38",
+    "priorCurrentEntryEvidence": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/1985",
+      "entrySha256": "44f1f905ddb7ee4604bf909102fe351a5f0b32e2a3e69c9e3241b7ee579e2155"
+    },
+    "originalStatement": "Archive intake and export fail closed on excessive per-entry size.",
+    "originalOccurrenceSetReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/1985/originalOccurrenceBindings",
+      "sha256": "a4688e08f87f84ae799cb987fa32e749ed97092bc1a8a32ead9901a450d38c6d"
+    },
+    "originalOccurrenceTransport": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-occurrence-transport.json",
+      "sha256": "4157cda2f60669a2feba4c3021aa212f5bee00f4456a4e7a59d8e86da08a02d4",
+      "byteLength": 6309790
+    },
+    "verifiedOriginalOccurrenceBindingCount": 3,
+    "originalAddedGovernorReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/1985/newGoverningSourceRanges",
+      "sha256": "e5d01f05301e24db397c7092ed5df08ab2ee40f4b9fa5c08fbaacc9079e2752d"
+    },
+    "historicalUnresolvedSourceEffects": [
+      "SRC-GAP-DECODER-SUBSET"
+    ],
+    "currentUnresolvedSourceEffects": [],
+    "currentBlockedInheritedReferenceDetails": [],
+    "edgeDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+    "edgeSuccessorDisposition": "RETAINED",
+    "successorDisposition": "CHANGED",
+    "independentReason": "This atom is the exact fail-closed excessive-per-entry size guard at base1655. Its current C1 459 pass-wide profile fixes intake bounds and480/486/492 retain blocked outcomes; the technical clarification19 explicitly preserves that profile and existing lower actual limits. Decoder format details11–18 do not change this guard. Retain the already-issued current source identity and close the qualifier diagnostically; transport/export policy remains distinct and no bound is loosened.",
+    "effectiveGovernorLink": null,
+    "resolutionEvidenceReference": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/original-decoder-edge-successor-002/effective-governor-link.json",
+      "sha256": "67b3ebd38914df4b7b055e238fc0f2bed4ac195c1a83dadcec7cab9eb6302d13",
+      "byteLength": 11967
+    },
+    "currentMeaningStatus": "RESOLVED_DIAGNOSTIC_REFERENCE_NO_GOVERNOR",
+    "originalReviewInheritance": false,
+    "proofInheritance": false,
+    "implementationStatus": "UNKNOWN",
+    "testConformance": "UNKNOWN",
+    "sourceLedgerActivated": false,
+    "successorNormativeRequirementId": "NREQ-b8e0d61557f8417f82fa004f5cb53e38",
+    "identityStatus": "CURRENT_ISSUED_SOURCE_IDENTITY_RETAINED_DIAGNOSTIC_EDGE_CLOSED"
+  },
+  {
+    "schema": "closed-loop-attributed-predecessor-edge-reconciliation/1",
+    "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+    "predecessorIndex": 3300,
+    "predecessorNormativeRequirementId": "NREQ-31c9e71d2d2684a88c86ecb252119520",
+    "predecessorEntrySha256": "e41c8f1385c0be3653be9e671a1fbdfe625ed2b8ab991fd85aa685e88905882f",
+    "priorCurrentNormativeRequirementId": "NREQ-50022f3bc2d55cf24ef6d3cc62cb2685",
+    "priorCurrentEntryEvidence": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/3300",
+      "entrySha256": "699f9106550a92b27ad0bc6b45d39eb34b4d19b0cb27f83fbba97b765b4af1bc"
+    },
+    "originalStatement": "Archive intake and export fail closed on excessive total compressed size.",
+    "originalOccurrenceSetReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/3300/originalOccurrenceBindings",
+      "sha256": "a4688e08f87f84ae799cb987fa32e749ed97092bc1a8a32ead9901a450d38c6d"
+    },
+    "originalOccurrenceTransport": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-occurrence-transport.json",
+      "sha256": "4157cda2f60669a2feba4c3021aa212f5bee00f4456a4e7a59d8e86da08a02d4",
+      "byteLength": 6309790
+    },
+    "verifiedOriginalOccurrenceBindingCount": 3,
+    "originalAddedGovernorReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/3300/newGoverningSourceRanges",
+      "sha256": "e5d01f05301e24db397c7092ed5df08ab2ee40f4b9fa5c08fbaacc9079e2752d"
+    },
+    "historicalUnresolvedSourceEffects": [
+      "SRC-GAP-DECODER-SUBSET"
+    ],
+    "currentUnresolvedSourceEffects": [],
+    "currentBlockedInheritedReferenceDetails": [],
+    "edgeDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+    "edgeSuccessorDisposition": "RETAINED",
+    "successorDisposition": "CHANGED",
+    "independentReason": "This atom is the exact fail-closed excessive-total compressed size guard at base1655. Its current C1 459 pass-wide profile fixes intake bounds and480/486/492 retain blocked outcomes; the technical clarification19 explicitly preserves that profile and existing lower actual limits. Decoder format details11–18 do not change this guard. Retain the already-issued current source identity and close the qualifier diagnostically; transport/export policy remains distinct and no bound is loosened.",
+    "effectiveGovernorLink": null,
+    "resolutionEvidenceReference": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/original-decoder-edge-successor-002/effective-governor-link.json",
+      "sha256": "67b3ebd38914df4b7b055e238fc0f2bed4ac195c1a83dadcec7cab9eb6302d13",
+      "byteLength": 11967
+    },
+    "currentMeaningStatus": "RESOLVED_DIAGNOSTIC_REFERENCE_NO_GOVERNOR",
+    "originalReviewInheritance": false,
+    "proofInheritance": false,
+    "implementationStatus": "UNKNOWN",
+    "testConformance": "UNKNOWN",
+    "sourceLedgerActivated": false,
+    "successorNormativeRequirementId": "NREQ-50022f3bc2d55cf24ef6d3cc62cb2685",
+    "identityStatus": "CURRENT_ISSUED_SOURCE_IDENTITY_RETAINED_DIAGNOSTIC_EDGE_CLOSED"
+  },
+  {
+    "schema": "closed-loop-attributed-predecessor-edge-reconciliation/1",
+    "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+    "predecessorIndex": 3301,
+    "predecessorNormativeRequirementId": "NREQ-1439aa59ee2806a7c8f1360a9d7610c9",
+    "predecessorEntrySha256": "b848ff229f352facb96e64f4ab90c78a37d6056ef948b3442b858a89d42d23c4",
+    "priorCurrentNormativeRequirementId": "NREQ-38cd2444c03e17ea65982e17949dfe4b",
+    "priorCurrentEntryEvidence": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/3301",
+      "entrySha256": "5eb26ec696361b96faea150d9cb9f6a1537f9b0c0f4fc00dedfd03ec6f9f6bbb"
+    },
+    "originalStatement": "Archive intake and export fail closed on excessive total expanded size.",
+    "originalOccurrenceSetReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/3301/originalOccurrenceBindings",
+      "sha256": "a4688e08f87f84ae799cb987fa32e749ed97092bc1a8a32ead9901a450d38c6d"
+    },
+    "originalOccurrenceTransport": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-occurrence-transport.json",
+      "sha256": "4157cda2f60669a2feba4c3021aa212f5bee00f4456a4e7a59d8e86da08a02d4",
+      "byteLength": 6309790
+    },
+    "verifiedOriginalOccurrenceBindingCount": 3,
+    "originalAddedGovernorReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/3301/newGoverningSourceRanges",
+      "sha256": "e5d01f05301e24db397c7092ed5df08ab2ee40f4b9fa5c08fbaacc9079e2752d"
+    },
+    "historicalUnresolvedSourceEffects": [
+      "SRC-GAP-DECODER-SUBSET"
+    ],
+    "currentUnresolvedSourceEffects": [],
+    "currentBlockedInheritedReferenceDetails": [],
+    "edgeDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+    "edgeSuccessorDisposition": "RETAINED",
+    "successorDisposition": "CHANGED",
+    "independentReason": "This atom is the exact fail-closed excessive-total expanded size guard at base1655. Its current C1 459 pass-wide profile fixes intake bounds and480/486/492 retain blocked outcomes; the technical clarification19 explicitly preserves that profile and existing lower actual limits. Decoder format details11–18 do not change this guard. Retain the already-issued current source identity and close the qualifier diagnostically; transport/export policy remains distinct and no bound is loosened.",
+    "effectiveGovernorLink": null,
+    "resolutionEvidenceReference": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/original-decoder-edge-successor-002/effective-governor-link.json",
+      "sha256": "67b3ebd38914df4b7b055e238fc0f2bed4ac195c1a83dadcec7cab9eb6302d13",
+      "byteLength": 11967
+    },
+    "currentMeaningStatus": "RESOLVED_DIAGNOSTIC_REFERENCE_NO_GOVERNOR",
+    "originalReviewInheritance": false,
+    "proofInheritance": false,
+    "implementationStatus": "UNKNOWN",
+    "testConformance": "UNKNOWN",
+    "sourceLedgerActivated": false,
+    "successorNormativeRequirementId": "NREQ-38cd2444c03e17ea65982e17949dfe4b",
+    "identityStatus": "CURRENT_ISSUED_SOURCE_IDENTITY_RETAINED_DIAGNOSTIC_EDGE_CLOSED"
+  }
+]
