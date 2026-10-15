@@ -1,3 +1,4 @@
+import {createReservedScopeRejectionProof} from './test-scope-rejection-preservation.mjs';
 import {verifyActualReleaseProofControls,verifyActualReleasePersistence} from './test-release-semantic-fixture.mjs';
 import {verifyAcceptedGoverningRefutation} from './test-accepted-run-correction-journey.mjs';
 import {verifyIterationProductTransition,verifyIterationLaterEvidence} from './test-derivation-receipt-contract.mjs';
@@ -14,6 +15,8 @@ import {verifyStage05ReviewProjection} from './test-stage05-review-projection.mj
 import {gzipSync} from 'node:zlib';
 import fs from 'node:fs';import vm from 'node:vm';import {recordProposal,evidence,reviewProofFixture,canonicalFixtureRecord,boundedSearchProposal,registerFixtureSourceSearchCapability,deferredDefinitionResponseFixture} from './test-fixtures.mjs';
 const ownerCaptureState={caseArrays:{},completedControls:{}};
+const reservedScopeProof=createReservedScopeRejectionProof();
+Object.assign(ownerCaptureState.caseArrays,{reservedScopeCases:reservedScopeProof.observations,reservedScopeFaults:reservedScopeProof.faults});
 const governedPreproductFixture=process.argv.includes('--governed-preproduct');
 const preproductRequirementText='Each preproduction execution output must begin with the exact literal complete-output-.';
 let preproductReqId=null,preproductPropId=null;
@@ -98,7 +101,12 @@ function prompt(stage,operation='COMPLETE',scope={}){
     try{assert(rendered.selectedOperation===operation&&rendered.displayedOperation===operation&&(!rendered.html.includes('id="next-export-prompt-file"')||rendered.html.match(/id="next-export-prompt-file" data-operation="([^"]+)"/)?.[1]===operation),'SELECTED_OPERATION_HANDOFF_ORACLE: '+caseId+' exported another operation');workflowPresentationCases.push({stage,operation,...assertWorkflowPresentation(observation,{instruction:rendered.instruction,caseId})});}
     catch(error){workflowPresentationCases.push({caseId,stage,operation,result:'FAIL',handoffControlCount:observation.handoffControlCount,separateControlCount:observation.separateControlCount,error:error.message});}
   }
-  return prompts.reserveAndBuildPromptRecord(p,stage,{operation,scope}).prompt;
+  const record=prompts.reserveAndBuildPromptRecord(p,stage,{operation,scope}).prompt;
+  // Existing recognized timing-source mutants must still reach their original
+  // intended oracles. Ordinary/default execution has no such mutant and owns
+  // all23 reserved scope cases; timing-only output is never this full report.
+  if(!timingFault)reservedScopeProof.observe({engine,prompts,ingestion,schema,hash},p,record);
+  return record;
 }
 
 let stage6AuthorInput=null;
@@ -696,7 +704,7 @@ engine.verifyArtifactIdentity(p,[{artifactId:artifactFixtureId(engine,p,'PRODUCT
 const stage28ReviewId=p.stages[28].derivedData.HASH_REVIEW_ID;
 assert(/^HASH_REVIEW-[A-F0-9]{64}$/.test(stage28ReviewId)&&stage28ReviewId===p.job.CURRENT_HASH_REVIEW_ID,'STAGE28_CURRENT_IDENTITY_ORACLE: a verified exact-byte review must have its real canonical identity.');
 ownerCaptureState.completedControls.investigationCaller={status:'RUNNING',canonicalProjectSha256:hash.sha256Value(p),revision:p.revision};
-const stage29InvestigationEvidence=await verifyStage29Investigation({runtime:{engine,prompts,ingestion,schema,hash},project:p,byteStore,basis:'ACTUAL_ACCEPTED_SYNTHETIC_FULL_CYCLE_PREFIX_THROUGH_STAGE28',requireCompletePrefix:true});
+const stage29InvestigationEvidence=await verifyStage29Investigation({runtime:{engine,prompts,ingestion,schema,hash},project:p,byteStore,basis:'ACTUAL_ACCEPTED_SYNTHETIC_FULL_CYCLE_PREFIX_THROUGH_STAGE28',requireCompletePrefix:true,onReservedPrompt:(runtime,project,prompt)=>reservedScopeProof.observe(runtime,project,prompt)});
 ownerCaptureState.completedControls.investigationCaller.status='PASS';ownerCaptureState.completedControls.stage29InvestigationEvidence=stage29InvestigationEvidence;await captureReleaseCommandBoundary('stage29-investigation-all-assertions-complete');
 // The adversarial instruction is a material release input; isolate its chain-selection oracle.
 const evidenceChainCaller=p,evidenceChainCallerSha256=hash.sha256Value(p);
@@ -777,6 +785,7 @@ fullCycleReport.iterationProductTransition=iterationProductTransition;
 fullCycleReport.iterationLaterEvidence=iterationLaterEvidence;
 fullCycleReport.actualReleaseProofControls=actualReleaseProofControls;
 fullCycleReport.actualReleasePersistence=actualReleasePersistence;
+fullCycleReport.reservedScopeRejections=reservedScopeProof.finish();
 ownerCaptureState.completedControls.fullCycleReport=fullCycleReport;await captureReleaseCommandBoundary('full-owner-terminal-after-all-assertions');
 console.log(JSON.stringify(fullCycleReport,null,2));
 

@@ -1684,7 +1684,8 @@
       "normativeRequirementId": "NREQ-360281bfdd66bed29237ed7202962808",
       "sourceLineSha256": "4eee45e24bab664e676d384235a50103eafab394c1df5f9129f21bb92a201a39",
       "checkIds": [
-        "ingestion.scope-negative-population"
+        "ingestion.scope-negative-population",
+        "lifecycle.scope-rejection-before-canonical-mutation"
       ],
       "scope": "At the one response ingestion boundary, a response changing projectRevision away from the controlling current prompt scope is rejected with STALE_SCOPE at that exact /scope path before any accepted canonical change. The owning verifier independently supplies the stale identity and checks zero accepted changes; its conforming all-stage response controls remain required. This is transport-scope rejection, not proof that every downstream reference family or gate is correct.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
@@ -1694,7 +1695,8 @@
       "normativeRequirementId": "NREQ-a0db6ddcb33d9af123b08d4d481c8ebd",
       "sourceLineSha256": "70f4b6671f6c017103a2142290638178e175c2ed9d5eafc5475c0ea4699fbc52",
       "checkIds": [
-        "ingestion.scope-negative-population"
+        "ingestion.scope-negative-population",
+        "lifecycle.scope-rejection-before-canonical-mutation"
       ],
       "scope": "At the single response-ingestion transport boundary,23 independently literal stage/dimension pairs span all22 current scope keys: projectRevision and the complete registered required-dimension union. Each starts with an accepted conforming current control, then rejects a type-conforming changed identity with STALE_SCOPE at the exact /scope path and zero accepted canonical changes. The additional Stage2 baseline and evidenceChainVersion cases are prohibited-extra negatives; evidenceChainVersion has no external-agent operation. This establishes transport-scope rejection, not every downstream reference family, stage gate, storage transaction or external-agent behavior.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
@@ -1704,7 +1706,8 @@
       "normativeRequirementId": "NREQ-baa1c33b2e2490264f91881b06ff9da8",
       "sourceLineSha256": "6cb6b8c354d4b13589af9a1c1a6fc548f1b9e5afe66b0b87cd574a60aeeb2f85",
       "checkIds": [
-        "ingestion.scope-negative-population"
+        "ingestion.scope-negative-population",
+        "lifecycle.scope-rejection-before-canonical-mutation"
       ],
       "scope": "At the one response ingestion boundary, a response changing inputVersion away from the controlling current prompt scope is rejected with STALE_SCOPE at that exact /scope path before any accepted canonical change. The owning verifier independently supplies the stale identity and checks zero accepted changes; its conforming all-stage response controls remain required. This is transport-scope rejection, not proof that every downstream reference family or gate is correct.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
@@ -1714,7 +1717,8 @@
       "normativeRequirementId": "NREQ-f1919b51ebfc8561d0140c02cbf08abd",
       "sourceLineSha256": "ebd74bcf005b2a0c89075ca98dd714a1a38dbc5ea1deb7c466cb23eb3702907a",
       "checkIds": [
-        "ingestion.scope-negative-population"
+        "ingestion.scope-negative-population",
+        "lifecycle.scope-rejection-before-canonical-mutation"
       ],
       "scope": "At the one response ingestion boundary, a response changing sourceSetVersion away from the controlling current prompt scope is rejected with STALE_SCOPE at that exact /scope path before any accepted canonical change. The owning verifier independently supplies the stale identity and checks zero accepted changes; its conforming all-stage response controls remain required. This is transport-scope rejection, not proof that every downstream reference family or gate is correct.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
@@ -1724,7 +1728,8 @@
       "normativeRequirementId": "NREQ-4b27c9f604f44c29404eacc12a59fd68",
       "sourceLineSha256": "4d6460629a7f5a659aed7cb82fd965a3b877e83d5ae6f5687fe1222674193fcc",
       "checkIds": [
-        "ingestion.scope-negative-population"
+        "ingestion.scope-negative-population",
+        "lifecycle.scope-rejection-before-canonical-mutation"
       ],
       "scope": "At the one response ingestion boundary, a response changing requirementsVersion away from the controlling current prompt scope is rejected with STALE_SCOPE at that exact /scope path before any accepted canonical change. The owning verifier independently supplies the stale identity and checks zero accepted changes; its conforming all-stage response controls remain required. This is transport-scope rejection, not proof that every downstream reference family or gate is correct.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
@@ -1734,7 +1739,8 @@
       "normativeRequirementId": "NREQ-71896faa31bc64e94d98bc976e1e6f1d",
       "sourceLineSha256": "71d5929243ca73b348f5fdfd49c833d1b1cbb218c632294347e84ef9ce043e2a",
       "checkIds": [
-        "ingestion.scope-negative-population"
+        "ingestion.scope-negative-population",
+        "lifecycle.scope-rejection-before-canonical-mutation"
       ],
       "scope": "At the one response ingestion boundary, a response changing testSuiteVersion away from the controlling current prompt scope is rejected with STALE_SCOPE at that exact /scope path before any accepted canonical change. The owning verifier independently supplies the stale identity and checks zero accepted changes; its conforming all-stage response controls remain required. This is transport-scope rejection, not proof that every downstream reference family or gate is correct.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
@@ -1744,7 +1750,8 @@
       "normativeRequirementId": "NREQ-78fef21919bbd7bb3bafba6f62210631",
       "sourceLineSha256": "afe8e5e1791e8b593d9677fcdbfbca6fcd149e46191e8cf93700b76a913d5c7f",
       "checkIds": [
-        "ingestion.scope-negative-population"
+        "ingestion.scope-negative-population",
+        "lifecycle.scope-rejection-before-canonical-mutation"
       ],
       "scope": "At the one response ingestion boundary, a response changing instructionVersion away from the controlling current prompt scope is rejected with STALE_SCOPE at that exact /scope path before any accepted canonical change. The owning verifier independently supplies the stale identity and checks zero accepted changes; its conforming all-stage response controls remain required. This is transport-scope rejection, not proof that every downstream reference family or gate is correct.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
@@ -1754,7 +1761,8 @@
       "normativeRequirementId": "NREQ-72aa03a305fb8893a65d384f41d86aeb",
       "sourceLineSha256": "8ededc0484506b379333087aa41def4dc7f1fb6168b5f52ea3c4cf5079b26041",
       "checkIds": [
-        "ingestion.scope-negative-population"
+        "ingestion.scope-negative-population",
+        "lifecycle.scope-rejection-before-canonical-mutation"
       ],
       "scope": "At the one response ingestion boundary, a response changing iterationId away from the controlling current prompt scope is rejected with STALE_SCOPE at that exact /scope path before any accepted canonical change. The owning verifier independently supplies the stale identity and checks zero accepted changes; its conforming all-stage response controls remain required. This is transport-scope rejection, not proof that every downstream reference family or gate is correct.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
@@ -1764,7 +1772,8 @@
       "normativeRequirementId": "NREQ-848909d4b95219bdb481803a4b1b91c2",
       "sourceLineSha256": "2a54949f9093970314415d2a1939761bd3d43abf008a075723cd3c1c5aec3de9",
       "checkIds": [
-        "ingestion.scope-negative-population"
+        "ingestion.scope-negative-population",
+        "lifecycle.scope-rejection-before-canonical-mutation"
       ],
       "scope": "At the one response ingestion boundary, a response changing candidateId away from the controlling current prompt scope is rejected with STALE_SCOPE at that exact /scope path before any accepted canonical change. The owning verifier independently supplies the stale identity and checks zero accepted changes; its conforming all-stage response controls remain required. This is transport-scope rejection, not proof that every downstream reference family or gate is correct.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
@@ -1774,7 +1783,8 @@
       "normativeRequirementId": "NREQ-601ec85ffefcffd713520f4067f7529c",
       "sourceLineSha256": "fc21d8ad8a0258d3eda21e4f343205d3e7d0dbfa37f19000d8d9db078c141f08",
       "checkIds": [
-        "ingestion.scope-negative-population"
+        "ingestion.scope-negative-population",
+        "lifecycle.scope-rejection-before-canonical-mutation"
       ],
       "scope": "At the one response ingestion boundary, a response changing runId away from the controlling current prompt scope is rejected with STALE_SCOPE at that exact /scope path before any accepted canonical change. The owning verifier independently supplies the stale identity and checks zero accepted changes; its conforming all-stage response controls remain required. This is transport-scope rejection, not proof that every downstream reference family or gate is correct.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
@@ -1784,7 +1794,8 @@
       "normativeRequirementId": "NREQ-c0080ab56f40757c88225dc35a1f98f0",
       "sourceLineSha256": "cf196230c36da48915e53125569a9657e84f5b95c12975c65c5036ddf36e05a6",
       "checkIds": [
-        "ingestion.scope-negative-population"
+        "ingestion.scope-negative-population",
+        "lifecycle.scope-rejection-before-canonical-mutation"
       ],
       "scope": "At the one response ingestion boundary, a response changing baselineId away from the controlling current prompt scope is rejected with STALE_SCOPE at that exact /scope path before any accepted canonical change. The owning verifier independently supplies the stale identity and checks zero accepted changes; its conforming all-stage response controls remain required. This is transport-scope rejection, not proof that every downstream reference family or gate is correct.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
@@ -1794,7 +1805,8 @@
       "normativeRequirementId": "NREQ-a42ec803577aa8ccbe176ed8e20a8595",
       "sourceLineSha256": "b7a19e1900427ee504aee023c168ebf7eb410410ad40effbc7861f09ab84d579",
       "checkIds": [
-        "ingestion.scope-negative-population"
+        "ingestion.scope-negative-population",
+        "lifecycle.scope-rejection-before-canonical-mutation"
       ],
       "scope": "At the one response ingestion boundary, a response changing productId away from the controlling current prompt scope is rejected with STALE_SCOPE at that exact /scope path before any accepted canonical change. The owning verifier independently supplies the stale identity and checks zero accepted changes; its conforming all-stage response controls remain required. This is transport-scope rejection, not proof that every downstream reference family or gate is correct.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",

@@ -3,7 +3,8 @@ import {recordProposal} from './test-fixtures.mjs';
 
 // This function is also called at the genuine full-cycle Stage29 entry. The
 // focused caller declares synthetic prerequisites and never claims that entry.
-export async function verifyStage29Investigation({runtime,project,byteStore,basis,requireCompletePrefix=false}){
+export async function verifyStage29Investigation({runtime,project,byteStore,basis,requireCompletePrefix=false,onReservedPrompt=null}){
+ if(onReservedPrompt!==null){assert.equal(requireCompletePrefix,true,'STAGE29_SCOPE_CALLBACK_GENUINE_PREFIX_ORACLE');assert.equal(typeof onReservedPrompt,'function','STAGE29_SCOPE_CALLBACK_TYPE_ORACLE');}
  const sourceHash=runtime.hash||runtime.runtime?.closedLoopHash||globalThis.closedLoopHash,original=sourceHash.sha256Value(project);
  const {projectStoreRuntime,captureArtifactFixture,restoreArtifactFixture}=await import('./test-project-store-runtime.mjs'),isolated=projectStoreRuntime({storageWorker:false});
  await restoreArtifactFixture(isolated.store,await captureArtifactFixture(byteStore,project.job.JOB_ID));
@@ -22,6 +23,7 @@ export async function verifyStage29Investigation({runtime,project,byteStore,basi
  q=await byteStore.writeProject(q,{expectedProjectRevision:savedBase.revision,expectedStateSha256:savedBase.projectSha256});
  const savedCanonical=hash.sha256Value(q);for(const entry of originalContexts){const row=q.projectData.generatedPrompts.find(row=>(row.instructionId||row.promptId)===entry.instructionId);assert(row);prompts.retainPromptContextFiles(row,isolated.copy(entry.files));prompts.materializePromptContextFiles(row);}assert.equal(hash.sha256Value(q),savedCanonical,'STAGE29_INVESTIGATION_SAVED_CONTEXT_CUSTODY_ORACLE');
  prompt=q.projectData.generatedPrompts.find(row=>(row.instructionId||row.promptId)===manifest.promptIdentity.instructionId);assert(prompt,'STAGE29_INVESTIGATION_SAVED_INSTRUCTION_ORACLE');prompts.retainPromptContextFiles(prompt,isolated.copy(contextFiles));prompts.materializePromptContextFiles(prompt);
+ if(onReservedPrompt){const beforeScopeControl=hash.sha256Value(q);onReservedPrompt({engine,prompts,ingestion,schema,hash},q,prompt);assert.equal(hash.sha256Value(q),beforeScopeControl,'STAGE29_SCOPE_CALLBACK_PRESERVES_RESERVED_PROJECT_ORACLE');assert.equal(sourceHash.sha256Value(project),original,'STAGE29_SCOPE_CALLBACK_PRESERVES_LIFECYCLE_ORACLE');}
  const descriptor=prompts.responseContractDescriptor(stage,operation);
  assert.equal(Object.hasOwn(descriptor.records,'evidenceChains'),false,'STAGE29_INVESTIGATION_WRITER_AUTHORITY_ORACLE');
  assert.deepEqual(Object.keys(descriptor.records).sort(),['entailmentReviews','evidenceInvestigations','observationRecords'],'STAGE29_INVESTIGATION_WRITER_AUTHORITY_ORACLE');
