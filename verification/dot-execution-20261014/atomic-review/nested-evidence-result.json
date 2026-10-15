@@ -1,6 +1,0 @@
-{
-  "challenge": "nested-valid-atomic-evidence-path",
-  "loadReviewedAtomicExtraction": "ACCEPTED",
-  "evidenceFingerprint": "EXECUTED_EVIDENCE_ORACLE: declared governance or verifier input must be an exact first-party verification path",
-  "synthetic": true
-}

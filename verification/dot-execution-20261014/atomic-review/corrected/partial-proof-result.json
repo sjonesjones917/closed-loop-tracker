@@ -1,3 +1,0 @@
-(node:6) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
-(Use `node --trace-warnings ...` to show where the warning was created)
-{"independentChallenge":"single-token-source-decomposition","sourceSpan":"The worker MUST preserve α","declaredProofSourceText":"MUST","result":{"normativeRequirementId":"NREQ-c087002b580d4c83667b4c8c1e8c98e9","sourceLineSha256":"1b92cb18d8c2deddc77ca75f3e246d9462e3064dca4d234897cc9f941af215b9","disposition":"UNKNOWN","reasons":["INCOMPLETE_SOURCE_OBLIGATION_DECOMPOSITION"],"executedAssertions":[],"atomicObligationSha256":"0ae9a3a69d6d55228478c02b374c465f6855106e2f4a35f467a98fb8bbe779eb"}}
