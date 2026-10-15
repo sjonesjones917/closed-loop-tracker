@@ -1394,7 +1394,7 @@
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "/root/repair_iteration_receipt_dependencies",
-    "lastInspectedAt": "2026-10-15T01:57:41.086174+00:00",
+    "lastInspectedAt": "2026-10-15T02:01:14.379955+00:00",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -3613,7 +3613,27 @@
         "oomDelta": 0,
         "sampledHighWaterKiB": 3841500
       },
-      "lossCause": "UNESTABLISHED"
+      "lossCause": "UNESTABLISHED",
+      "sessionLossManifest": "/workspace/shared/clrt-iteration-repair-evidence/owner9093-session-loss-20261015-0156.json",
+      "sessionLossManifestSha256": "237f50d921aaa9cbeb9cab49a1bbd789b65c2ae1c1a9575753b6491d87536895",
+      "custodyReview": {
+        "path": "/workspace/shared/clrt-iteration-repair-evidence/independent-release-review-20261014/owner9093-after-release-custody-review.json",
+        "sha256": "67f76c88c570c256e2069d683e93f787cba7894cc21ee53ef24484362e6a70e3",
+        "decision": "ACCEPT_BOUNDED_CONTINUATION_CUSTODY",
+        "authorityExpiresAt": "2026-10-15T03:17:35.102Z",
+        "candidateRevision": 96,
+        "savedAdapterProjectCount": 0,
+        "formalStage29Capture": "DISABLED_UNSUPPORTED_PARTIAL_PRODUCER"
+      },
+      "resourceReview": {
+        "sha256": "1e7be41933410692c8da95daca5c779af277f8fc9ebc75e95c45771e4f29dd8b",
+        "samples": 790,
+        "peakSummedRssKiB": 3720280,
+        "peakHwmKiB": 3841500,
+        "minimumMemAvailableKiB": 4075788,
+        "oomDelta": 0,
+        "lossCause": "UNESTABLISHED"
+      }
     },
     "currentShortReceipts9093": {
       "status": "FIFTEEN_AGGREGATE_PROVEN_FOUR_CONTEXT_BLOCKED",
@@ -3672,6 +3692,21 @@
       "qualification": "Linear arithmetic illustration only, not a reliable delivery forecast or implementation-completion measure. Proof work can batch; present observed rate does not support the original two-week target.",
       "originalTargetUnchanged": true,
       "nextPlanningStep": "After current original execution, identify source-grounded dependency-ready proof batches and mandatory critical-path work using actual producer/control populations; no waived obligations or inflated proof admission."
+    },
+    "ingestionCoverageCalibration": {
+      "status": "AUTHOR_AND_INDEPENDENT_REVIEW_ACTIVE",
+      "sourceCommit": "9093fbdc8f4c6563028c2c41d5478067a51a803b",
+      "candidateAtoms": 23,
+      "newProvenAtoms": 0,
+      "author": "/root/repair_iteration_receipt_dependencies/author_ingestion_coverage_batch",
+      "reviewer": "/root/repair_iteration_receipt_dependencies/review_ingestion_coverage_batch",
+      "findings": [
+        "Twelve scope atoms lack whole canonical/reservation/raw/audit preservation assertions; fullCoverage withheld pending reviewed test strengthening.",
+        "Eleven syntax/transport atoms require explicit saved proposal identity/status/equality assertions before relying on pendingProposalSavedAndReloaded."
+      ],
+      "runtimeChangesAuthorized": false,
+      "heavyExecution": "QUEUED_AFTER_RECOVERY_SLOT",
+      "governingContext": "Both structural heading and before-canonical-mutation lead-in must be accounted for explicitly."
     }
   }
 }
