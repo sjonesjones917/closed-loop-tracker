@@ -1,0 +1,113 @@
+{
+  "schema": "closed-loop-stage7-execution-evidence-transfer/1",
+  "baseCommit": "2933fd05538a3663769f27ad08e70d0f9520e910",
+  "artifact": {
+    "filename": "native-stage7-run4-evidence.tar.gz",
+    "bytes": 50093,
+    "sha256": "1b975b390b51539d8c5ace96a96ecb4d712a25ed816dc7853554b66f9446661e"
+  },
+  "base64": {
+    "filename": "native-stage7-run4-evidence.tar.gz.b64",
+    "bytes": 67671,
+    "sha256": "0f2251c0b2f58f38c846f57c57b81bd032ae6509146d604e34bbda3c4c1b9242",
+    "decodeVerified": true
+  },
+  "files": [
+    {
+      "path": "terminal.txt",
+      "bytes": 416,
+      "sha256": "e7934515f2d5d56e3c789d443a5322f5df9a54b0878887a69a5761189decec51"
+    },
+    {
+      "path": "stage7.log",
+      "bytes": 63912,
+      "sha256": "cd8a5de6bf9ee225620c857ce341de246a6176bf268bc75664da046e84214223"
+    },
+    {
+      "path": "postflight.json",
+      "bytes": 181,
+      "sha256": "5c4a0e92b4098f1f4f3ba19b7395199befc8949fac5aca7e28623651ed7c9fbe"
+    },
+    {
+      "path": "translated-input-manifest.json",
+      "bytes": 60780,
+      "sha256": "898cd72f1c65264c53b4e402ec7777af6bdb518393c466fd90296bd814ed7f4b"
+    },
+    {
+      "path": "preflight.log",
+      "bytes": 60,
+      "sha256": "1d69a32f75f788dd8345f446ccee7e8de608ea9415c97c5fe5bafa713504f37d"
+    },
+    {
+      "path": "runtime-resources.log",
+      "bytes": 482,
+      "sha256": "b3db8dd7bc0ef80918695cbdc40949f5354b63f5de6a8502532bf1bfe1b9b663"
+    },
+    {
+      "path": "diagnosis.json",
+      "bytes": 874,
+      "sha256": "b866dbeb685fb0368569d4594a9f5f9464bea4619cfad385721bb0924d7fdbdf"
+    },
+    {
+      "path": "run-cloud.sh",
+      "bytes": 3413,
+      "sha256": "29f58e1125fabe5bfd0251edd9ac91ea84ec875ce150dc28b7bffbf62f5f5d4e"
+    },
+    {
+      "path": "invocation.json",
+      "bytes": 710,
+      "sha256": "a7dcefd3feb830b791247f5e3e40a55b15d1abe35d53bf017a2b5baab63696c3"
+    },
+    {
+      "path": "transfer-closure.json",
+      "bytes": 44932,
+      "sha256": "d102ca7858a1ac1d16d6a185cfdbd04b0121d8a4578c8e389004080188fa5db1"
+    },
+    {
+      "path": "setup-preflight.json",
+      "bytes": 442,
+      "sha256": "c8747c0a1e9d491cf5e8eddddb06b0b42c255072ab29eec64657429b4c5db6be"
+    },
+    {
+      "path": "identity.json",
+      "bytes": 786,
+      "sha256": "24f02793d80825c0006f194d7a2b41e11c6b136b9754011b5175f5d809803989"
+    }
+  ],
+  "privacyInspection": {
+    "credentialPatternsFound": false,
+    "rawLogEmailMatches": 0,
+    "rawLogUrlHosts": [],
+    "onlyAuthorizedProjectEvidence": true
+  },
+  "result": {
+    "result": "SCOPED_TRANCHE_PASS",
+    "childExit": 0,
+    "postflightExit": 0,
+    "checkedInputs": 396,
+    "unchanged": true,
+    "owningTestSha256": "0ce421d1f25e84af9f47053d94703d34a19ae62417cf4e906d2feaf43bb1e5da",
+    "negativeControlsPassed": 15,
+    "actualIsolatedWorker": true,
+    "actualUiDispatch": true,
+    "actualStoreCommandAndReload": true,
+    "coldReloadCurrent": true,
+    "gateAfterComplete": false,
+    "gateAfterReason": "Second admitted subject intentionally remains unexecuted; gate correctly remains blocked for it.",
+    "boundary": "Archived synthetic prior stages, actual new accepted Stage6 author and synthetic semantic review through admission helpers, plus Stage7 definition, production isolated worker/UI adapter/store/reload. No real external actor or complete journey/proof coverage claim.",
+    "noApplicationAcceptanceClaim": true,
+    "noPRorMainWrite": true
+  },
+  "identity": {
+    "compositionBase": "2933fd05538a3663769f27ad08e70d0f9520e910",
+    "compositionBaseTree": "7a1453515c29bd81058cb63fbd14791d2e1297c4",
+    "transportCommit": "8d6ccbfd9608b14b8c8fce8130a92aeb9cccc388",
+    "incrementalPatchSha256": "e6f600bcc477aeef2b42e71e09e238b5bc5d40cac6b04a26b0db465bb08b9afc",
+    "transferClosureSha256": "d102ca7858a1ac1d16d6a185cfdbd04b0121d8a4578c8e389004080188fa5db1",
+    "wrapperSha256": "29f58e1125fabe5bfd0251edd9ac91ea84ec875ce150dc28b7bffbf62f5f5d4e",
+    "owningTestSha256": "0ce421d1f25e84af9f47053d94703d34a19ae62417cf4e906d2feaf43bb1e5da",
+    "nodeVersion": "v22.23.3",
+    "nodeSha256": "fde6a4bf8d0562f7751d1a2d6cb9b417c4cfe107bbcb0aa3e9a24e125e348f48",
+    "scope": "Synthetic isolated run4 execution evidence only; no candidate application implementation"
+  }
+}
