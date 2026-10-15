@@ -1393,7 +1393,7 @@
     "integrationCommit": "a2be11cdf4834f3916c43511918318f451ca7dd2",
     "prNumber": 1248,
     "managementOwner": "dot",
-    "technicalWriteOwner": "/root/repair_iteration_receipt_dependencies",
+    "technicalWriteOwner": "/root",
     "lastInspectedAt": "2026-10-15T00:12:10.434123+00:00",
     "taskStates": [
       "READY",
@@ -2094,7 +2094,7 @@
     },
     "scheduleState": "FORECAST_NOT_ESTABLISHED",
     "forecast": null,
-    "nextAction": "Independent read-only diagnosis of heavy session loss before another long original owner. Preserve nineteen scoped proven declarations and validated operation-registry receipt on frozen2b8dc1e6. Broader contract-closure and stage-contract owners are not established short; complete prescribed full-owner/sharedStage29, broad/browser/deployment/device/real-project proof remains pending.",
+    "nextAction": "Recover verified included engineering capacity without bypass or purchases. Root holds temporary sole integration/shared-record lease after lead error; reviewed runner-fixture correction69df8baf is integrated with exact tested bytes. Long original owner remains blocked by unexplained session loss and low disk headroom; publication, specification amendment, physical-device and real-project approvals/evidence remain pending. Preserve nineteen scoped proven outcomes on2b8dc1e6 without promoting to successors.",
     "deploymentObservation": {
       "sourceCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
       "runId": "36958910363",
@@ -2147,7 +2147,7 @@
       "sourceApplied": false
     },
     "currentCriticalPath": [
-      "Independent read-only diagnosis of heavy session loss before another long original owner. Preserve nineteen scoped proven declarations and validated operation-registry receipt on frozen2b8dc1e6. Broader contract-closure and stage-contract owners are not established short; complete prescribed full-owner/sharedStage29, broad/browser/deployment/device/real-project proof remains pending.",
+      "Recover verified included engineering capacity without bypass or purchases. Root holds temporary sole integration/shared-record lease after lead error; reviewed runner-fixture correction69df8baf is integrated with exact tested bytes. Long original owner remains blocked by unexplained session loss and low disk headroom; publication, specification amendment, physical-device and real-project approvals/evidence remain pending. Preserve nineteen scoped proven outcomes on2b8dc1e6 without promoting to successors.",
       "Retain exact nineteen scoped proof receipts while closing remaining required owner, browser, deployment, physical-device and real-project obligations; do not promote receipts across source fingerprints.",
       "Complete integrated broad conformance and required governed/default/browser acceptance with truthful partial-run limits.",
       "Resolve preserved source-contract/human/publication approvals, then verify authorized deployment, physical-device and real-project maturity evidence"
@@ -3519,6 +3519,38 @@
       },
       "validationFileSha256": "fcb17efc9bab12c6cf4e8d375c849137520785984c592b2f386ce6cbbf7272ac",
       "fullPrescribedCiSequence": false
+    },
+    "engineeringCapacityRecovery": {
+      "observedAt": "2026-10-15T00:58:30Z",
+      "formerLead": "/root/repair_iteration_receipt_dependencies",
+      "formerLeadStatus": "ERRORED_PREVIEW_LIMIT",
+      "reportedError": "You\u2019ve hit the preview limit. Try again at Nov 14th, 2026 12:23 AM.",
+      "model": "UNOBSERVED",
+      "quotaScope": "UNESTABLISHED; not evidence all account capacity is exhausted",
+      "availableRegisteredEnvironments": [],
+      "availableSavedCodingEnvironments": [],
+      "temporaryIntegrationOwner": "/root",
+      "temporarySharedRecordWriter": "/root",
+      "noReplacementOrPaidCapacityCreated": true,
+      "scheduleUnchanged": true,
+      "pauseQuestionPreviouslyAskedUnanswered": true
+    },
+    "runnerFixtureClosureIntegration": {
+      "commit": "69df8bafdc46ecb7a616a42e6799105c78e7cfa6",
+      "status": "INDEPENDENTLY_REVIEWED_AND_FAST_FORWARD_INTEGRATED",
+      "base": "3a21c88f62d7a638cf85befa582d14273cf73c31",
+      "reviewPath": "/workspace/shared/clrt-iteration-repair-evidence/independent-release-review-20261014/runner-capture-closure-terminal-review.json",
+      "reviewSha256": "fdf08a8e5b138e67c15d404a4cf1aaa38cca4fdda53879bf10b1e66703b8a06f",
+      "candidateSha256": "2117c526b9670de97b41c2103dfe6329302b36f48e6ca61261bd052c467846c1",
+      "actualAffectedTests": {
+        "runnerContractExitCode": 0,
+        "runnerCases": 22,
+        "runnerMutants": 23,
+        "endedAt": "2026-10-15T00:32:51Z",
+        "exactTestedCommitIntegrated": true,
+        "postIntegrationSyntaxExitCode": 0
+      },
+      "scope": "Two extraction anchors only; all original assertions retained. No full-owner proof or prior session-loss cause established."
     }
   }
 }
