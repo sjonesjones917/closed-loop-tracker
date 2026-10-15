@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import {readHistoricalNormativeFixtureInputs} from './historical-normative-fixture-inputs.mjs';
 import {reviewedContextApplicability,evidenceFingerprint,sha,SPECIFICATION_PATH} from './verification-evidence.mjs';
 // The retained 67-row controls belong to the exact historical source universe.
 // The current atomic universe is validated separately below, without a reduced
@@ -18,8 +19,9 @@ const historicalInputs=[
 function verifyHistoricalNormativeContextApplicability(){
  const cwd=process.cwd(),directory=fs.mkdtempSync(path.join(os.tmpdir(),'normative-context-')),file='verification/normative-context-applicability-20261005.json',inputSha256={};
  try{
+  const historicalBytes=readHistoricalNormativeFixtureInputs(cwd),capsuleInputs=new Map([[historicalInputs[0][0],historicalBytes.get('contextSource')],[historicalInputs[1][0],historicalBytes.get('contextManifest')],[historicalInputs[2][0],historicalBytes.get('contextApplicabilityReview')]]);
   for(const [source,target,digest] of historicalInputs){
-   const bytes=fs.readFileSync(source);assert.equal(sha(bytes),digest,'HISTORICAL_CONTEXT_INPUT_IDENTITY_ORACLE: '+source);
+   const bytes=capsuleInputs.get(source)||fs.readFileSync(source);assert.equal(sha(bytes),digest,'HISTORICAL_CONTEXT_INPUT_IDENTITY_ORACLE: '+source);
    const destination=path.join(directory,target);fs.mkdirSync(path.dirname(destination),{recursive:true});fs.writeFileSync(destination,bytes);inputSha256[target]=digest;
   }
   const source=JSON.parse(fs.readFileSync(path.join(directory,file))),normative=JSON.parse(fs.readFileSync(path.join(directory,'specification/closed-loop-normative-requirements.json'))),governance=JSON.parse(fs.readFileSync(path.join(directory,'specification/requirement-evidence-bindings.json')));
