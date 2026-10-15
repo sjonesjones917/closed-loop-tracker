@@ -1,7 +1,0 @@
-{
-  "observedAt": "2026-10-14T17:12:06.115Z",
-  "message": "Review the correction and affected work before saving.",
-  "code": "MUTATION_CONFIRMATION_REQUIRED",
-  "stack": "Error: Review the correction and affected work before saving.\n    at storageError (project-store.js:153:50)\n    at assertMutationConfirmation (project-store.js:1940:103)\n    at prepareProjectWrite (project-store.js:2002:80)\n    at async Object.writeProject (project-store.js:2018:18)\n    at async Object.normal (file:///workspace/shared/clrt-release-independent-review/r6-migration.mjs:61:14)\n    at async file:///workspace/shared/clrt-release-independent-review/r6-migration.mjs:70:18",
-  "driverSha256": "a1641294ebec83d8fa2c1cd961200bca264441a38118661b5c5f0fb8eb320c3f"
-}
