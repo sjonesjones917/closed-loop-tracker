@@ -1,0 +1,125 @@
+{
+  "schema": "closed-loop-stage7-execution-evidence-transfer/1",
+  "baseCommit": "2933fd05538a3663769f27ad08e70d0f9520e910",
+  "artifact": {
+    "filename": "native-stage7-run3-evidence.tar.gz",
+    "bytes": 49055,
+    "sha256": "bf64f3de78ccc293fabbf627604a9bdb83abf17dd7a3023196afc75d2ba74ead"
+  },
+  "base64": {
+    "filename": "native-stage7-run3-evidence.tar.gz.b64",
+    "bytes": 66269,
+    "sha256": "753a85c9b5b3c548477e10d51f434af05b667678ca031106982534305a155ae6",
+    "decodeVerified": true
+  },
+  "files": [
+    {
+      "path": "terminal.txt",
+      "bytes": 416,
+      "sha256": "4c47d3213573606529fa1bc1ec0de705762c17ed1a199f6ea830d972c6175ebe"
+    },
+    {
+      "path": "stage7.log",
+      "bytes": 59267,
+      "sha256": "946f56929c5097a086614ef61a4465b5b133df02cdb583ca677d115396648012"
+    },
+    {
+      "path": "postflight.json",
+      "bytes": 181,
+      "sha256": "e23aa2764728d0effe58a97b0763b6e5f6377f77b53db03b4f16f41183e123a7"
+    },
+    {
+      "path": "translated-input-manifest.json",
+      "bytes": 60628,
+      "sha256": "5aa64a96b68a2f6797f454bf79ef86ced66f180d9ed688f11dddeb51d24eaa39"
+    },
+    {
+      "path": "preflight.log",
+      "bytes": 60,
+      "sha256": "a31c99a0845f78ea129bb6b4d9b1d927d4927a9bdd9832f8647559a179ea5c4b"
+    },
+    {
+      "path": "runtime-resources.log",
+      "bytes": 482,
+      "sha256": "01a24817de0365106a3b652ae04194eebfbb5d192b1681603318f1947aba1b6c"
+    },
+    {
+      "path": "diagnosis.json",
+      "bytes": 1602,
+      "sha256": "dc0e708fa3684338d63485cafac341c2b967cabf68fde874dc77b2c1e620ad6e"
+    },
+    {
+      "path": "run-cloud.sh",
+      "bytes": 3413,
+      "sha256": "5c2d1952dafd211fbaea431fc86b5aede672f0be739d19000072b39f8fd498de"
+    },
+    {
+      "path": "invocation.json",
+      "bytes": 710,
+      "sha256": "1b74eb4f2f69361d7741761dac40fedf99002cce7bb2d5d04e4e383c7c7e4b83"
+    },
+    {
+      "path": "transfer-closure.json",
+      "bytes": 44937,
+      "sha256": "14826eb1ff3b6b8a31143e4afab5bced671a061e33c4dd09a02d6ece37ebcffd"
+    },
+    {
+      "path": "setup-preflight.json",
+      "bytes": 528,
+      "sha256": "94bfef2cc4f205f6f2257604c0d93b522d6213201bc581b97a8a254f2f50e914"
+    },
+    {
+      "path": "identity.json",
+      "bytes": 696,
+      "sha256": "4617fb14cd33a8ddaf7aaad5eef389b724212944d0bfe7518698bacbf7923486"
+    }
+  ],
+  "privacyInspection": {
+    "credentialPatternsFound": false,
+    "rawLogEmailMatches": 0,
+    "rawLogUrlHosts": [],
+    "onlyAuthorizedProjectEvidence": true
+  },
+  "result": {
+    "result": "FAIL",
+    "childExit": 1,
+    "postflightExit": 0,
+    "checkedInputs": 395,
+    "unchanged": true,
+    "failureLocation": "test-owned-native-routes.mjs:85:238",
+    "failureOracle": "OWNED_NATIVE_UNQUALIFIED_VISIBILITY_ORACLE wrong-contract",
+    "mutation": "Coherently rehashed report.binding.contractVersion changed to closed-loop-owned-native-execution/0",
+    "passedBeforeFailure": [
+      "prompt native handoff denial",
+      "actual UI dispatch and local-store command",
+      "native worker result SATISFIED and receipt determination",
+      "reload and selection advancement",
+      "unchanged definition and raw source identities",
+      "no fabricated accepted change or proof observation",
+      "canonical command receipt identity/allocation/result identities",
+      "full-state exact command retry",
+      "old-revision changed-body rejection",
+      "cold reload integrity and current receipt",
+      "fresh observed command and caller source label rejection",
+      "gate consumer leaves nonselected subject blocker",
+      "wrong-contract predicate not SATISFIED",
+      "wrong-contract plan not completed"
+    ],
+    "failureMeaning": "After rejection as sufficient execution proof, mutated receipt remains visible in stageContext(candidate,7) with REG_EXEC_ID. Visibility qualification assertion fails. Subsequent receipt mutations did not execute.",
+    "boundary": "Synthetic archived prerequisites and semantic review, actual current admission/native worker/UI/local-store and cold read; no browser/full journey/governance acceptance.",
+    "noRetry": true,
+    "noSourceRepair": true,
+    "noPRorMainWrite": true
+  },
+  "identity": {
+    "compositionBase": "2933fd05538a3663769f27ad08e70d0f9520e910",
+    "compositionBaseTree": "7a1453515c29bd81058cb63fbd14791d2e1297c4",
+    "transportCommit": "d9b0afcd8dbf5c6d7033536aa098f49369455316",
+    "incrementalPatchSha256": "90921277e227ff1ea873e3bf4d69fd84bd9dabe8f644ffdd9d0bb36f5bdb03fe",
+    "transferClosureSha256": "14826eb1ff3b6b8a31143e4afab5bced671a061e33c4dd09a02d6ece37ebcffd",
+    "wrapperSha256": "5c2d1952dafd211fbaea431fc86b5aede672f0be739d19000072b39f8fd498de",
+    "nodeVersion": "v22.23.3",
+    "nodeSha256": "fde6a4bf8d0562f7751d1a2d6cb9b417c4cfe107bbcb0aa3e9a24e125e348f48",
+    "scope": "Synthetic isolated run3 execution evidence only; no candidate application implementation"
+  }
+}
