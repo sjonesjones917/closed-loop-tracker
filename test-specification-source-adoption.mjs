@@ -1,3 +1,4 @@
+import {verifySpecificationSourceHistoryRegressions} from './test-specification-source-history.mjs';
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
@@ -100,7 +101,9 @@ try{
       ['amendment-proposal-range',value=>value.ranges[0].approvedProposalSourceStartLine++,/INSERTION_RANGE_COORDINATES|INSERTION_RANGE_BYTES/]
     ]){const value={...args,ranges:structuredClone(args.ranges)};change(value);assert.throws(()=>createApprovedInsertionMap(value),pattern,name);assert.equal(createApprovedInsertionMap(args).currentSha256,sha256(currentSource));mutations.push(name);}
   }
+  const sourceHistoryRegression=await verifySpecificationSourceHistoryRegressions({cwd:root});
   console.log(JSON.stringify({
+    sourceHistoryRegression,
     test:'test-specification-source-adoption',result:'PASS',scope:'EXACT_SOURCE_BYTE_VALIDATION_AND_MECHANICAL_SECTION_CONTROLS_ONLY',
     sourceByteLength:source.length,sourceSha256:sha256(source),topLevelSectionCount:53,sectionCount:inventory.sectionInventory.length,
     exactSourceAccepted:true,mutationCount:mutations.length,mutations,

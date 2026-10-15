@@ -1,3 +1,4 @@
+import {verifySpecificationSourceCommit} from './specification-source-history.mjs';
 import {runVerifier,checkedVerifier} from './verify-conformance-regressions.mjs';
 import {currentOwnerReport} from './verification-evidence.mjs';
 import fs from 'node:fs';
@@ -27,32 +28,7 @@ const sourceText=validateSpecificationSource(sourceBytes,committedSpec,sourceCom
 (await checkedVerifier(process.execPath,['test-specification-source-adoption.mjs'],{stdio:'pipe'}));
 (await checkedVerifier(process.execPath,['test-specification-source-classifications.mjs'],{stdio:'pipe'}));
 
-async function verifySourceCommit(){
-  if(process.env.GITHUB_ACTIONS!=='true')return {checked:false};
-  const shallow=cp.execFileSync('git',['rev-parse','--is-shallow-repository'],{timeout:30000,killSignal:'SIGKILL',encoding:'utf8'}).trim()==='true';
-  const fetchArgs=shallow?['fetch','--no-tags','--unshallow','origin','main']:['fetch','--no-tags','origin','main'];
-  const fetched=(await runVerifier('git',fetchArgs,{encoding:'utf8',timeout:120000}));
-  assert(fetched.status===0&&!fetched.error&&!fetched.signal,'Unable to fetch complete canonical main history. '+fetched.stderr);
-  assert(cp.spawnSync('git',['merge-base','--is-ancestor',sourceCommit,'HEAD'],{timeout:30000,killSignal:'SIGKILL',stdio:'ignore'}).status===0,'Specification source commit is not reachable from current canonical main.');
-  const shown=cp.spawnSync('git',['show',`${sourceCommit}:${SPEC_PATH}`],{timeout:30000,killSignal:'SIGKILL',encoding:null,maxBuffer:64*1024*1024});
-  assert(shown.status===0,'Specification is absent from the recorded source commit.');
-  if(Buffer.compare(Buffer.from(shown.stdout),sourceBytes)===0)return {checked:true,basis:'EXACT_CURRENT_SPECIFICATION_BYTES'};
-  const approved=readJson('specification/requirement-evidence-bindings.json');
-  const clarifications=[...(approved.approvedClarifications||[]),...(approved.approvedAmendments||[])];
-  let pinnedBytes=sourceBytes;
-  if(clarifications.length){
-    const lines=sourceText.split('\n'),excluded=new Set();
-    for(const c of clarifications){
-      assert(c.approval&&sha256(Buffer.from(lines.slice(c.startLine-1,c.startLine-1+c.lineCount).join('\n')+'\n'))===c.textSha256,'Approved source amendment bytes differ.');
-      for(let i=c.startLine-1;i<c.startLine-1+c.lineCount;i++){assert(!excluded.has(i),'Approved source amendments overlap.');excluded.add(i);}
-    }
-    pinnedBytes=Buffer.from(lines.filter((_,i)=>!excluded.has(i)).join('\n'));
-    assert(clarifications.every(c=>sha256(pinnedBytes)===c.baseSpecificationSha256),'Approved source amendment changes unrelated controlling text.');
-  }
-  assert(Buffer.compare(Buffer.from(shown.stdout),pinnedBytes)===0,'Recorded source commit does not contain the exact pinned base specification bytes.');
-  return {checked:true,basis:'APPROVED_PINNED_BASE_RECONSTRUCTION'};
-}
-const sourceCommitEvidence=(await verifySourceCommit());
+const sourceCommitEvidence=await verifySpecificationSourceCommit({sourceBytes,sourceCommit,specificationPath:SPEC_PATH});
 
 for(const runtimePath of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','test-worker.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js','index.html','TEST_PROJECT.json']){
   if(!fs.existsSync(runtimePath))continue;
