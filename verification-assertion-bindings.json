@@ -215,7 +215,8 @@
       "checkIds": [
         "native.foreign-receipt-rejected",
         "native-external-admission.authority",
-        "native-external-admission.report-consumers"
+        "native-external-admission.report-consumers",
+        "acceptance.external-native-binding-consumers"
       ],
       "scope": "Reuse CI-owned actual native receipt mismatched testId/testSpecSha256/inputArtifactSha256Values rejection controls; no new receipt population. Additional partial ingress evidence: Actual reserved Stage1 response file staging/read/raw capture/admission:13 counterfeit receipt/result shapes reject with exact ownership/shape diagnostics; conforming response and native-looking AGENT_CLAIM remain valid without native result/application evidence/event creation. Original native fields are preserved; Stage1 scope additionally rejects result-family writes. Synthetic actor and Map transaction adapter; in-memory claim commit. No Stage22 same-family admission, native-worker execution, native IndexedDB, late-stage readiness, release or full-clause proof. Independent literal report/selector/scoped-binding/default-discovery controls are consumer evidence only.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY",
