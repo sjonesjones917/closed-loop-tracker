@@ -1394,7 +1394,7 @@
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "/root/repair_iteration_receipt_dependencies",
-    "lastInspectedAt": "2026-10-15T01:06:54.089618+00:00",
+    "lastInspectedAt": "2026-10-15T01:16:39.926136+00:00",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -2094,7 +2094,7 @@
     },
     "scheduleState": "FORECAST_NOT_ESTABLISHED",
     "forecast": null,
-    "nextAction": "Freeze clean complete source after reviewed runner-fixture repair and restored lead lease; independently review passive same-namespace resource telemetry around unchanged original default full-owner then sharedStage29/30 commands. Reclaimed only released reproducible copies; verify headroom after checkout. Full-owner and broad acceptance remain pending, nineteen proofs remain scoped2b8.",
+    "nextAction": "Monitor actual original9093 owning session48870 and durable resource/owner results through default full-cycle then sharedStage29/30 terminal. Preserve all assertions, receipts and exact source; no parallel heavy owner or completion inference. Nineteen scoped declarations are independently proven on9093. Broader/deployment/device/real-project obligations and conditional publication gates remain open.",
     "deploymentObservation": {
       "sourceCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
       "runId": "36958910363",
@@ -2147,7 +2147,7 @@
       "sourceApplied": false
     },
     "currentCriticalPath": [
-      "Freeze clean complete source after reviewed runner-fixture repair and restored lead lease; independently review passive same-namespace resource telemetry around unchanged original default full-owner then sharedStage29/30 commands. Reclaimed only released reproducible copies; verify headroom after checkout. Full-owner and broad acceptance remain pending, nineteen proofs remain scoped2b8.",
+      "Monitor actual original9093 owning session48870 and durable resource/owner results through default full-cycle then sharedStage29/30 terminal. Preserve all assertions, receipts and exact source; no parallel heavy owner or completion inference. Nineteen scoped declarations are independently proven on9093. Broader/deployment/device/real-project obligations and conditional publication gates remain open.",
       "Retain exact nineteen scoped proof receipts while closing remaining required owner, browser, deployment, physical-device and real-project obligations; do not promote receipts across source fingerprints.",
       "Complete integrated broad conformance and required governed/default/browser acceptance with truthful partial-run limits.",
       "Resolve preserved source-contract/human/publication approvals, then verify authorized deployment, physical-device and real-project maturity evidence"
@@ -3572,6 +3572,42 @@
       "directoryBytesReclaimed": 1030081153,
       "uniqueEvidenceRemoved": false,
       "sourceReceiptsRetained": "All exact2b8dc1e6 receipts and independent evaluations remain external; checkout recreation command and commit retained."
+    },
+    "originalOwner9093": {
+      "status": "RUNNING",
+      "session": 48870,
+      "startedAt": "2026-10-15T01:16:00Z",
+      "sourceCommit": "9093fbdc8f4c6563028c2c41d5478067a51a803b",
+      "worktree": "/workspace/shared/clrt-owner-receipt-9093fbdc",
+      "outputDirectory": "/workspace/shared/clrt-iteration-repair-evidence/frozen-9093fbdc-default-shared29-30",
+      "wrapperSha256": "cabc29077e11c571405ed87b0f8f3ec806131fe28e3fb7236b7a458d816533ac",
+      "pinsSha256": "e88a5b2a4da5a4ca132435232ba1b2d71e4f5b5e5f02af1c935da3c13a57d3f0",
+      "sourceInputsSha256": "5a3102b09095e72b6c35f249bea04944a148053300a234c0ec487aa5fcc64a24",
+      "defaultSequence": [
+        "verify-full-cycle.mjs",
+        "verify-stage29-evidence-chain-checkpoint.mjs",
+        "verify-stage30-terminal-mobile-boundary.mjs"
+      ],
+      "sampler": "PASSIVE_SAME_NAMESPACE_READY",
+      "minimumFreeBytesBeforeLaunch": 1342177280,
+      "actualFreeBytesBeforeLaunch": 1501601792,
+      "heapMiB": 4096,
+      "testDeadlinesChanged": false,
+      "receiptValidation": "ORIGINAL_VALIDATOR_AFTER_ACTUAL_DEFAULT_OWNER_EXIT_ZERO",
+      "terminal": "PENDING",
+      "priorHeavyLossCause": "UNESTABLISHED"
+    },
+    "currentShortReceipts9093": {
+      "status": "NINETEEN_SCOPED_DECLARATIONS_CONFORMANT_PROVEN",
+      "sourceCommit": "9093fbdc8f4c6563028c2c41d5478067a51a803b",
+      "session": 62828,
+      "exitCode": 0,
+      "hashReceiptSha256": "bcf54bfc545ee632e1818ddf12218048526782e4a983d7a8739d2182ede253bd",
+      "migrationReceiptSha256": "ef7c8ade17436b2940db10f8d29d526b9f844f1578ddf5363946bff5abdcd916",
+      "independentEvidence": "/workspace/shared/canonical-migration-9093fbdc-actual-evaluation.json",
+      "independentEvidenceSha256": "251e552a7fde554ec14e6115ed5dd293225ee272055f8131fd94e88867106224",
+      "fullOwnerAcceptance": false,
+      "wholeApplicationAcceptance": false
     }
   }
 }
