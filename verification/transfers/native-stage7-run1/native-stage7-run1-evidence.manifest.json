@@ -1,0 +1,89 @@
+{
+  "schema": "closed-loop-stage7-execution-evidence-transfer/1",
+  "baseCommit": "2933fd05538a3663769f27ad08e70d0f9520e910",
+  "artifact": {
+    "filename": "native-stage7-run1-evidence.tar.gz",
+    "bytes": 28228,
+    "sha256": "53b822b716fc17d0749cd15e1b5e7fe60406930fa124ad382adb3a646272b302"
+  },
+  "files": [
+    {
+      "path": "terminal.txt",
+      "bytes": 416,
+      "sha256": "25aa993e161e2ba36d9810b098ad0433d865bdc365498aef37eda328f6f15a36"
+    },
+    {
+      "path": "stage7.log",
+      "bytes": 59799,
+      "sha256": "fd92db0a07dfa5358d16c31dd4cec4c38d4b156137bfbfae325388d39c15191b"
+    },
+    {
+      "path": "postflight.json",
+      "bytes": 181,
+      "sha256": "6f4118eec6d6bf7726c54d8ee1b5feaa03d474498bca1196cc1e74e5f47d0f6a"
+    },
+    {
+      "path": "translated-input-manifest.json",
+      "bytes": 60305,
+      "sha256": "b56c6ee5672a0eebae6dda61e1f8864a399964528f99276ff834949f0350c8e2"
+    },
+    {
+      "path": "preflight.log",
+      "bytes": 60,
+      "sha256": "702e5f963355b461ff179786aa296148562b3183feabae4003eb5cdd874eab66"
+    },
+    {
+      "path": "runtime-resources.log",
+      "bytes": 482,
+      "sha256": "a5b62148933903fe1772df23e59d34f00d179e22311df4050b3229a8978fb02b"
+    },
+    {
+      "path": "diagnosis.json",
+      "bytes": 644,
+      "sha256": "82851ef4c38d3be43e5c1a38ef7e7f98e0cc713bfb13cf86431b65c8cd445276"
+    },
+    {
+      "path": "run-cloud.sh",
+      "bytes": 3359,
+      "sha256": "2fcaf2d9ee19423ac3720fe122fde4d1c431ba6d750e9484619d3dfdf140492b"
+    },
+    {
+      "path": "invocation.json",
+      "bytes": 682,
+      "sha256": "b439eff2fbc05da6a32937ca409da20b0cd8bafb30d3921df04baee6f992ed76"
+    },
+    {
+      "path": "setup-preflight.json",
+      "bytes": 430,
+      "sha256": "d67495c1194781a7403fd4e438d983b16a7efebf5fec0a5072c9e0bda13eb412"
+    },
+    {
+      "path": "identity.json",
+      "bytes": 798,
+      "sha256": "6e0036b9dcf865192a86628d6b8f12c6a8873e68cd1bff8ef6248ed3450e0901"
+    }
+  ],
+  "privacyInspection": {
+    "credentialPatternsFound": false,
+    "rawLogEmailMatches": 0,
+    "rawLogUrlHosts": [],
+    "onlyAuthorizedProjectEvidence": true
+  },
+  "result": {
+    "childExit": 1,
+    "postflightExit": 0,
+    "checkedInputs": 393,
+    "unchanged": true
+  },
+  "identity": {
+    "compositionBase": "2933fd05538a3663769f27ad08e70d0f9520e910",
+    "compositionBaseTree": "7a1453515c29bd81058cb63fbd14791d2e1297c4",
+    "sourcePatchSha256": "fce75f38db0493fda0c05b1935907d356e41c1cc8dcfb85d0b29f16c18089a0e",
+    "transferClosureSha256": "7434030eeb6269edd769fc678e781fd82cbd683ea013526653a49cbccc57785b",
+    "wrapperSha256": "2fcaf2d9ee19423ac3720fe122fde4d1c431ba6d750e9484619d3dfdf140492b",
+    "nodeVersion": "v22.23.3",
+    "nodeSha256": "fde6a4bf8d0562f7751d1a2d6cb9b417c4cfe107bbcb0aa3e9a24e125e348f48",
+    "boundary": "Isolated synthetic archived prerequisites and semantic review; failure occurred before subsequent UI dispatch/native-worker execution. No browser/full journey/governance acceptance.",
+    "scope": "Evidence transfer only; no candidate implementation included."
+  }
+}
