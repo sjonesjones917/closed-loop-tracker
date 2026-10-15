@@ -1394,7 +1394,7 @@
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "/root/repair_iteration_receipt_dependencies",
-    "lastInspectedAt": "2026-10-15T01:16:39.926136+00:00",
+    "lastInspectedAt": "2026-10-15T01:19:30.418248+00:00",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -2094,7 +2094,7 @@
     },
     "scheduleState": "FORECAST_NOT_ESTABLISHED",
     "forecast": null,
-    "nextAction": "Monitor actual original9093 owning session48870 and durable resource/owner results through default full-cycle then sharedStage29/30 terminal. Preserve all assertions, receipts and exact source; no parallel heavy owner or completion inference. Nineteen scoped declarations are independently proven on9093. Broader/deployment/device/real-project obligations and conditional publication gates remain open.",
+    "nextAction": "Continue actual original9093 session48870 through terminal with unchanged source/receipt contracts. Independently reconcile aggregate governing-context admission: prior unqualified nineteen-proof claim is withdrawn pending corrected arguments; canonical14 unaffected. Prepare source-grounded declaration repair only after exact independent diagnosis, without altering active frozen run.",
     "deploymentObservation": {
       "sourceCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
       "runId": "36958910363",
@@ -2147,7 +2147,7 @@
       "sourceApplied": false
     },
     "currentCriticalPath": [
-      "Monitor actual original9093 owning session48870 and durable resource/owner results through default full-cycle then sharedStage29/30 terminal. Preserve all assertions, receipts and exact source; no parallel heavy owner or completion inference. Nineteen scoped declarations are independently proven on9093. Broader/deployment/device/real-project obligations and conditional publication gates remain open.",
+      "Continue actual original9093 session48870 through terminal with unchanged source/receipt contracts. Independently reconcile aggregate governing-context admission: prior unqualified nineteen-proof claim is withdrawn pending corrected arguments; canonical14 unaffected. Prepare source-grounded declaration repair only after exact independent diagnosis, without altering active frozen run.",
       "Retain exact nineteen scoped proof receipts while closing remaining required owner, browser, deployment, physical-device and real-project obligations; do not promote receipts across source fingerprints.",
       "Complete integrated broad conformance and required governed/default/browser acceptance with truthful partial-run limits.",
       "Resolve preserved source-contract/human/publication approvals, then verify authorized deployment, physical-device and real-project maturity evidence"
@@ -3487,7 +3487,8 @@
       "summarySha256": "412adcd00ccbe4420596d13fd5927317b3a0c41c7ba3c4a165a958eafbe8ceaf",
       "fullOwnerAcceptance": false,
       "wholeApplicationAcceptance": false,
-      "qualification": "Exact frozen source only; future source fingerprints require their own receipts. Unsupported array/object full claims remain UNKNOWN."
+      "qualification": "Exact frozen source only; future source fingerprints require their own receipts. Unsupported array/object full claims remain UNKNOWN.",
+      "aggregateAdmissionQualification": "Prior direct evaluation omitted governingContext. Do not use nineteen-declaration aggregate claim; exact corrected dispositions pending. Original evaluation evidence preserved."
     },
     "operationRegistryReceipt2b8": {
       "sourceCommit": "2b8dc1e61ff9663dfd299fe8faed34dde524e80c",
@@ -3607,7 +3608,17 @@
       "independentEvidence": "/workspace/shared/canonical-migration-9093fbdc-actual-evaluation.json",
       "independentEvidenceSha256": "251e552a7fde554ec14e6115ed5dd293225ee272055f8131fd94e88867106224",
       "fullOwnerAcceptance": false,
-      "wholeApplicationAcceptance": false
+      "wholeApplicationAcceptance": false,
+      "aggregateAdmissionQualification": "Prior direct evaluation omitted governingContext. Do not use nineteen-declaration aggregate claim; exact corrected dispositions pending. Original evaluation evidence preserved."
+    },
+    "governingContextAdmissionCorrection": {
+      "status": "URGENT_AGGREGATE_RECHECK_PENDING",
+      "reportedAt": "2026-10-15T01:19:01Z",
+      "reviewer": "/root/review_canonical_json_proofs",
+      "finding": "Prior direct nineteen-declaration evaluations omitted the aggregate separately supplied governingContext argument. Four migration declarations may lack required context linkage. Canonical14 unaffected; exact full aggregate reconciliation pending.",
+      "priorNineteenAggregateClaim": "WITHDRAWN_PENDING_CORRECT_ARGUMENT_RECHECK",
+      "actualReceiptValidity": "Unchanged genuine producer receipts remain preserved; receipt validity alone does not establish aggregate coverage admission.",
+      "activeOriginalOwner": "9093 session48870 continues unchanged; no source edits/restart"
     }
   }
 }
