@@ -1102,10 +1102,16 @@
           }
         ],
         "unresolvedObligations": [],
-        "governingContext": [],
+        "governingContext": [
+          {
+            "normativeRequirementId": "NREQ-0bc67ce8ed80f63db07b9d448539ab87",
+            "sourceLineSha256": "22185e72883762d43c34947ab5a29b1b5c2a53f76b577c55a753f854e8e1fb6e",
+            "controllingText": "Migration MUST preserve:"
+          }
+        ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-a1bafeb7c6f6f12bf0c7b0f6fcadaab9-20261015-migration-expectation-independent.json",
-          "sha256": "95b7b6632ffe0fbcc2fb4704043893a022ccdb75ab6117c06f519b30e21f2cd8"
+          "path": "verification/requirement-coverage-NREQ-a1bafeb7c6f6f12bf0c7b0f6fcadaab9-20261015-migration-governor-independent.json",
+          "sha256": "73e5a924e65079ef78d0ed46e32386001374b31f9cf98edf98e34d415cff0165"
         }
       }
     },
@@ -1205,10 +1211,16 @@
           }
         ],
         "unresolvedObligations": [],
-        "governingContext": [],
+        "governingContext": [
+          {
+            "normativeRequirementId": "NREQ-0bc67ce8ed80f63db07b9d448539ab87",
+            "sourceLineSha256": "22185e72883762d43c34947ab5a29b1b5c2a53f76b577c55a753f854e8e1fb6e",
+            "controllingText": "Migration MUST preserve:"
+          }
+        ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-f41a79c58369bd76c58ad7e831e953ce-20261015-migration-expectation-independent.json",
-          "sha256": "8512566630b9e0fc39e15a71c63170b72c869ae4fb2c20c2d694463b738ab9e9"
+          "path": "verification/requirement-coverage-NREQ-f41a79c58369bd76c58ad7e831e953ce-20261015-migration-governor-independent.json",
+          "sha256": "ab050068ce90a7e3842b9286a8119f6191d96aae4b7addbb1fc24710e94faa0d"
         }
       }
     },
@@ -1309,10 +1321,16 @@
           }
         ],
         "unresolvedObligations": [],
-        "governingContext": [],
+        "governingContext": [
+          {
+            "normativeRequirementId": "NREQ-0bc67ce8ed80f63db07b9d448539ab87",
+            "sourceLineSha256": "22185e72883762d43c34947ab5a29b1b5c2a53f76b577c55a753f854e8e1fb6e",
+            "controllingText": "Migration MUST preserve:"
+          }
+        ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-5811c65fa83521ee7afeedd602cec806-20261015-migration-expectation-independent.json",
-          "sha256": "81b77f093bb7052d1f8070e5e9ae348049ab7d383cca2dcb19bb892bf0c49dbd"
+          "path": "verification/requirement-coverage-NREQ-5811c65fa83521ee7afeedd602cec806-20261015-migration-governor-independent.json",
+          "sha256": "b99a9d6d0018a92976950ee6a6031700a64b3e2dac84e67cce70302297bdfde7"
         }
       }
     },
@@ -1420,10 +1438,16 @@
           }
         ],
         "unresolvedObligations": [],
-        "governingContext": [],
+        "governingContext": [
+          {
+            "normativeRequirementId": "NREQ-0bc67ce8ed80f63db07b9d448539ab87",
+            "sourceLineSha256": "22185e72883762d43c34947ab5a29b1b5c2a53f76b577c55a753f854e8e1fb6e",
+            "controllingText": "Migration MUST preserve:"
+          }
+        ],
         "review": {
-          "path": "verification/requirement-coverage-NREQ-2046e21dd63ad76f992233d5582c716d-20261015-migration-expectation-independent.json",
-          "sha256": "2c68d1628e1fec77062c61df9a8bb00b8c59567885480f265688d33b9082b3f9"
+          "path": "verification/requirement-coverage-NREQ-2046e21dd63ad76f992233d5582c716d-20261015-migration-governor-independent.json",
+          "sha256": "5b15cdfb195a2c02e23b44129d2e93e91be31c4e66b27e11c658ab90287d8bd9"
         }
       }
     },
