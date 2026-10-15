@@ -3694,7 +3694,7 @@
       "nextPlanningStep": "After current original execution, identify source-grounded dependency-ready proof batches and mandatory critical-path work using actual producer/control populations; no waived obligations or inflated proof admission."
     },
     "ingestionCoverageCalibration": {
-      "status": "AUTHOR_AND_INDEPENDENT_REVIEW_ACTIVE",
+      "status": "ELEVEN_DESIGNS_REVIEWED_ADMISSION_BLOCKED_BY_REAL_INPUT_CYCLE",
       "sourceCommit": "9093fbdc8f4c6563028c2c41d5478067a51a803b",
       "candidateAtoms": 23,
       "newProvenAtoms": 0,
@@ -3702,11 +3702,15 @@
       "reviewer": "/root/repair_iteration_receipt_dependencies/review_ingestion_coverage_batch",
       "findings": [
         "Twelve scope atoms lack whole canonical/reservation/raw/audit preservation assertions; fullCoverage withheld pending reviewed test strengthening.",
-        "Eleven syntax/transport atoms require explicit saved proposal identity/status/equality assertions before relying on pendingProposalSavedAndReloaded."
+        "Eleven syntax/transport atoms require explicit saved proposal identity/status/equality assertions before relying on pendingProposalSavedAndReloaded.",
+        "Actual native receipt report controls read one bindings row and six mutations. Raw reviewed-input hashing creates a review-to-bindings digest cycle; deleting the true dependency is prohibited. Source-governed owner/projection alternatives under design review only."
       ],
       "runtimeChangesAuthorized": false,
       "heavyExecution": "QUEUED_AFTER_RECOVERY_SLOT",
-      "governingContext": "Both structural heading and before-canonical-mutation lead-in must be accounted for explicitly."
+      "governingContext": "Both structural heading and before-canonical-mutation lead-in must be accounted for explicitly.",
+      "designEvidence": "/workspace/shared/clrt-ingestion-independent-review-9093fbdc/result.json",
+      "reviewedCandidateAtoms": 11,
+      "trustedCoverageReviewsIssued": 0
     }
   }
 }
