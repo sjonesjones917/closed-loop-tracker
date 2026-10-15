@@ -1394,7 +1394,7 @@
     "prNumber": 1248,
     "managementOwner": "dot",
     "technicalWriteOwner": "/root/repair_iteration_receipt_dependencies",
-    "lastInspectedAt": "2026-10-15T02:14:55.882540+00:00",
+    "lastInspectedAt": "2026-10-15T03:07:17.182979+00:00",
     "taskStates": [
       "READY",
       "RUNNING",
@@ -2098,7 +2098,7 @@
       "reason": "Observed formal-proof admission rate does not substantiate original target; current broad owner acceptance, publication/deployment/device/real-project obligations remain open. Linear rate is not a reliable forecast.",
       "originalTargetUnchanged": true
     },
-    "nextAction": "Monitor actual bounded post-release continuation session8609 through terminal with original expiry and assertions. Preserve missing original9093 receipt. In parallel independently review the minimal seven-case ingestion dependency relocation; no parallel heavy producer.",
+    "nextAction": "Complete independently reviewed parity prerequisite fixture correction and bounded scope-test validation, then integrate only reviewed successor bytes. Preserve actual acac30 full proofs and missing original full-owner/sharedStage29 receipts; do not repeat a healthy or lost prefix without a justified recovery path.",
     "deploymentObservation": {
       "sourceCommit": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
       "runId": "36958910363",
@@ -2151,10 +2151,10 @@
       "sourceApplied": false
     },
     "currentCriticalPath": [
-      "Monitor actual bounded post-release continuation session8609 through terminal with original expiry and assertions. Preserve missing original9093 receipt. In parallel independently review the minimal seven-case ingestion dependency relocation; no parallel heavy producer.",
-      "Retain 15 aggregate-proven atomic obligations on frozen 9093; four additional migration declarations have accepted context corrections on pending 1684 and await current proof. Preserve prior mistaken nineteen claim as historical evidence only.",
-      "Complete integrated broad conformance and required governed/default/browser acceptance with truthful partial-run limits.",
-      "Resolve preserved source-contract/human/publication approvals, then verify authorized deployment, physical-device and real-project maturity evidence"
+      "Complete independently reviewed parity prerequisite fixture correction and bounded scope-test validation, then integrate only reviewed successor bytes. Preserve actual acac30 full proofs and missing original full-owner/sharedStage29 receipts; do not repeat a healthy or lost prefix without a justified recovery path.",
+      "Current full proof evidence is30 CONFORMANT_PROVEN and7165 UNKNOWN of7195 atoms on frozen acac8f85; source successors need their own qualified admission, with historical9093 corrected15 retained.",
+      "Resolve demonstrated final-owner historical fixture closure failure without weakening original controls; retain19-to15 regression and require explicit authoritative context for targeted proof.",
+      "Establish complete required original owner/sharedStage29 and broader application acceptance; conditional publication still requires all checks and separate tool approval."
     ],
     "atomicIdentityFollowup": {
       "authorCommit": "fe006bd2f7ecf4a117f305c9cb2592900a9ef0b1",
@@ -3119,14 +3119,43 @@
           "Resolve preserved source-contract/human/publication approvals, then verify authorized deployment, physical-device and real-project maturity evidence"
         ],
         "reason": "61315 actual partial terminal0 preserved; subsequent fresh197 session74837 lost after Stage16 log, latest full custody12."
+      },
+      {
+        "archivedAt": "2026-10-15T03:07:17.182979+00:00",
+        "reason": "Actual frozen acac full aggregate and bounded9093 terminal supersede pending status",
+        "summary": {
+          "lastInspectedAt": "2026-10-15T02:14:55.882540+00:00",
+          "nextAction": "Monitor actual bounded post-release continuation session8609 through terminal with original expiry and assertions. Preserve missing original9093 receipt. In parallel independently review the minimal seven-case ingestion dependency relocation; no parallel heavy producer.",
+          "currentCriticalPath": [
+            "Monitor actual bounded post-release continuation session8609 through terminal with original expiry and assertions. Preserve missing original9093 receipt. In parallel independently review the minimal seven-case ingestion dependency relocation; no parallel heavy producer.",
+            "Retain 15 aggregate-proven atomic obligations on frozen 9093; four additional migration declarations have accepted context corrections on pending 1684 and await current proof. Preserve prior mistaken nineteen claim as historical evidence only.",
+            "Complete integrated broad conformance and required governed/default/browser acceptance with truthful partial-run limits.",
+            "Resolve preserved source-contract/human/publication approvals, then verify authorized deployment, physical-device and real-project maturity evidence"
+          ],
+          "ingestionCoverageCalibration": {
+            "status": "ELEVEN_SYNTAX_TRANSPORT_FULL_PROOFS_ON_ACAC_TWELVE_SCOPE_PARTIAL",
+            "sourceCommit": "acac8f858df0f142d538c2c79217e84e3a700aaf",
+            "candidateAtoms": 23,
+            "newProvenAtoms": 11,
+            "author": "/root/repair_iteration_receipt_dependencies/author_ingestion_coverage_batch",
+            "reviewer": "/root/repair_iteration_receipt_dependencies/review_ingestion_coverage_batch",
+            "findings": [
+              "Seven native binding controls relocated to required final owner, preserving all predicates and global raw binding fingerprint.",
+              "Eleven syntax/transport declarations passed the existing authoritative full aggregate with both governing contexts.",
+              "Twelve scope declarations remain partial; new genuine reserved Stage2 four-pair/13-corruption controls passed, remaining19 pairs and full producer remain unexecuted."
+            ],
+            "runtimeChangesAuthorized": false,
+            "heavyExecution": "DEFAULT_VERIFY_INGESTION_EXIT_0_RECEIPT_VALIDATED",
+            "governingContext": "Both structural heading and before-canonical-mutation lead-in must be accounted for explicitly.",
+            "designEvidence": "/workspace/shared/clrt-ingestion-independent-review-9093fbdc/result.json",
+            "reviewedCandidateAtoms": 11,
+            "trustedCoverageReviewsIssued": 11
+          }
+        }
       }
     ],
     "currentInstructionMessageId": "Sentinel_4171a7d9ba308191850ae105fcaa1639",
-    "integrationCommitObservation": {
-      "commit": "573f51ac52510bbfe1ff9a602ef6c33d8de9103a",
-      "observedAt": "2026-10-15T00:02:10.676590+00:00",
-      "qualification": "Observed before this management checkpoint commit"
-    },
+    "integrationCommitObservation": "acac8f858df0f142d538c2c79217e84e3a700aaf",
     "chain15LatestActualObservation": {
       "observedAt": "2026-10-14T21:35:29.848Z",
       "sessionId": 61315,
@@ -3660,7 +3689,7 @@
       "finding": "Confirmed exact aggregate-equivalent result: 15 CONFORMANT_PROVEN and 7180 UNKNOWN of 7195 atomic obligations. Four migration declarations are blocked by GOVERNING_SOURCE_CONTEXT_NOT_ACCOUNTED.",
       "priorNineteenAggregateClaim": "WITHDRAWN_CONFIRMED_ARGUMENT_OMISSION",
       "actualReceiptValidity": "Unchanged genuine producer receipts remain preserved; receipt validity alone does not establish aggregate coverage admission.",
-      "activeOriginalOwner": "9093 session 48870 lost; original terminal and receipt missing; exact surviving custody under review.",
+      "activeOriginalOwner": "Original9093 session48870 lost; bounded8609 tail passed with no original owner receipt.",
       "sourceCommit": "9093fbdc8f4c6563028c2c41d5478067a51a803b",
       "totalAtoms": 7195,
       "conformantProven": 15,
@@ -3678,9 +3707,36 @@
       "evidencePath": "/workspace/shared/9093-coverage-ledger-reconciliation.json",
       "evidenceSha256": "0eb56e2f20e74160690adc4ae9449c59eec7d82c7d36ecf8add6e6d30a482356",
       "author": "/root/bind_migration_preservation_proofs",
-      "repairStatus": "PENDING_BRANCH_INDEPENDENT_COMPOSITION_ACCEPTED_AWAITING_CURRENT_PROOF",
+      "repairStatus": "CORRECTED_DECLARATIONS_CURRENT_FULL_AGGREGATE_PROVEN_ON_ACAC",
       "pendingCommit": "1684d2ac14d3a675c899599f855a43353662290a",
-      "compositionReview": "/workspace/shared/clrt-migration-context-independent-review/composition-result.json"
+      "compositionReview": "/workspace/shared/clrt-migration-context-independent-review/composition-result.json",
+      "historicalSourceQualification": "The15/7180 fields above remain the corrected frozen9093 result; the prior19 claim is preserved as withdrawn.",
+      "successorProof": {
+        "sourceCommit": "acac8f858df0f142d538c2c79217e84e3a700aaf",
+        "status": "THIRTY_AGGREGATE_CONFORMANT_PROVEN",
+        "atomicObligationCount": 7195,
+        "contextCount": 291,
+        "conformantProven": 30,
+        "unknown": 7165,
+        "scopedTraces": 62,
+        "designGroups": {
+          "canonical": 14,
+          "migration": 5,
+          "ingestionSyntaxTransport": 11
+        },
+        "sequenceSession": 76779,
+        "sequenceExitCode": 0,
+        "aggregateSession": 88651,
+        "aggregateExitCode": 0,
+        "aggregateStartedAt": "2026-10-15T02:56:16.572Z",
+        "aggregateCompletedAt": "2026-10-15T03:02:15.269Z",
+        "summaryPath": "/workspace/shared/clrt-iteration-repair-evidence/acac8f85-authoritative-aggregate/summary.json",
+        "summarySha256": "39d36b207d91ee02043f8cc8619c596c297773f65bbbfcd5008910a505db59e0",
+        "independentReviewSha256": "73a355cf6cc4c681b1bbdfa78030cf91e6844587196fb21f389704caaf5eeea4",
+        "wholeApplicationAcceptance": false,
+        "implementationPercentage": null,
+        "forecast": "UNESTABLISHED_AT_RISK"
+      }
     },
     "observedFormalProofRate20261015": {
       "basis": "15 aggregate-admitted atomic proofs after approximately22 elapsed hours, among7195 obligations",
@@ -3694,26 +3750,26 @@
       "nextPlanningStep": "After current original execution, identify source-grounded dependency-ready proof batches and mandatory critical-path work using actual producer/control populations; no waived obligations or inflated proof admission."
     },
     "ingestionCoverageCalibration": {
-      "status": "ELEVEN_DESIGNS_REVIEWED_ADMISSION_BLOCKED_BY_REAL_INPUT_CYCLE",
-      "sourceCommit": "9093fbdc8f4c6563028c2c41d5478067a51a803b",
+      "status": "ELEVEN_SYNTAX_TRANSPORT_FULL_PROOFS_ON_ACAC_TWELVE_SCOPE_PARTIAL",
+      "sourceCommit": "acac8f858df0f142d538c2c79217e84e3a700aaf",
       "candidateAtoms": 23,
-      "newProvenAtoms": 0,
+      "newProvenAtoms": 11,
       "author": "/root/repair_iteration_receipt_dependencies/author_ingestion_coverage_batch",
       "reviewer": "/root/repair_iteration_receipt_dependencies/review_ingestion_coverage_batch",
       "findings": [
-        "Twelve scope atoms lack whole canonical/reservation/raw/audit preservation assertions; fullCoverage withheld pending reviewed test strengthening.",
-        "Eleven syntax/transport atoms require explicit saved proposal identity/status/equality assertions before relying on pendingProposalSavedAndReloaded.",
-        "Actual native receipt report controls read one bindings row and six mutations. Raw reviewed-input hashing creates a review-to-bindings digest cycle; deleting the true dependency is prohibited. Source-governed owner/projection alternatives under design review only."
+        "Seven native binding controls relocated to required final owner, preserving all predicates and global raw binding fingerprint.",
+        "Eleven syntax/transport declarations passed the existing authoritative full aggregate with both governing contexts.",
+        "Twelve scope declarations remain partial; new genuine reserved Stage2 four-pair/13-corruption controls passed, remaining19 pairs and full producer remain unexecuted."
       ],
       "runtimeChangesAuthorized": false,
-      "heavyExecution": "QUEUED_AFTER_RECOVERY_SLOT",
+      "heavyExecution": "DEFAULT_VERIFY_INGESTION_EXIT_0_RECEIPT_VALIDATED",
       "governingContext": "Both structural heading and before-canonical-mutation lead-in must be accounted for explicitly.",
       "designEvidence": "/workspace/shared/clrt-ingestion-independent-review-9093fbdc/result.json",
       "reviewedCandidateAtoms": 11,
-      "trustedCoverageReviewsIssued": 0
+      "trustedCoverageReviewsIssued": 11
     },
     "postRelease9093Continuation": {
-      "status": "RUNNING",
+      "status": "BOUNDED_TAIL_EXIT_0_INDEPENDENTLY_VERIFIED",
       "session": 8609,
       "startedAt": "2026-10-15T02:14:28Z",
       "sourceCommit": "9093fbdc8f4c6563028c2c41d5478067a51a803b",
@@ -3728,7 +3784,64 @@
       "formalStage29Capture": "DISABLED_PARTIAL_PRODUCER_NOT_SUPPORTED",
       "fullOriginalOwnerReceipt": "MISSING",
       "sourcePrefixReplayed": false,
-      "releaseCommandReplayed": false
+      "releaseCommandReplayed": false,
+      "exitCode": 0,
+      "endedAt": "2026-10-15T02:40:33Z",
+      "resultSha256": "8e3c26211928c91340bca31a6397cc1955fc4adee72714577b4716d14b370643",
+      "finalCaptureSha256": "3e6df08109058b7aab3cf22c5d5923954443ee68d45e60dff0a51226d149da46",
+      "independentReviewSha256": "772885b8c3e7cb8e09a3f3c252079f9de011ff099adcf0fc31ea763eb1f7e05e",
+      "fullJourneyExecution": false,
+      "terminalPublicPersistence": false,
+      "mainAdapter": "EMPTY",
+      "candidateRevision": 97
+    },
+    "currentAuthoritativeProof": {
+      "sourceCommit": "acac8f858df0f142d538c2c79217e84e3a700aaf",
+      "status": "THIRTY_AGGREGATE_CONFORMANT_PROVEN",
+      "atomicObligationCount": 7195,
+      "contextCount": 291,
+      "conformantProven": 30,
+      "unknown": 7165,
+      "scopedTraces": 62,
+      "designGroups": {
+        "canonical": 14,
+        "migration": 5,
+        "ingestionSyntaxTransport": 11
+      },
+      "sequenceSession": 76779,
+      "sequenceExitCode": 0,
+      "aggregateSession": 88651,
+      "aggregateExitCode": 0,
+      "aggregateStartedAt": "2026-10-15T02:56:16.572Z",
+      "aggregateCompletedAt": "2026-10-15T03:02:15.269Z",
+      "summaryPath": "/workspace/shared/clrt-iteration-repair-evidence/acac8f85-authoritative-aggregate/summary.json",
+      "summarySha256": "39d36b207d91ee02043f8cc8619c596c297773f65bbbfcd5008910a505db59e0",
+      "independentReviewSha256": "73a355cf6cc4c681b1bbdfa78030cf91e6844587196fb21f389704caaf5eeea4",
+      "wholeApplicationAcceptance": false,
+      "implementationPercentage": null,
+      "forecast": "UNESTABLISHED_AT_RISK"
+    },
+    "proofContextParityWork": {
+      "task": "repair_coverage_context_parity",
+      "status": "SOURCE_AND_FOCUSED_CONTROLS_REVIEWED_PREREQUISITE_REPAIR_PENDING",
+      "focusedCases": 248,
+      "newContextHistoryControls": 25,
+      "unchangedPrerequisiteExitCode": 1,
+      "actualFailure": "ENOENT specification/closed-loop-specification-manifest.json in historical context helper",
+      "runtimeChange": false,
+      "integration": "NOT_INTEGRATED"
+    },
+    "scopePreservationTestWork": {
+      "task": "author_ingestion_coverage_batch",
+      "reviewer": "review_ingestion_coverage_batch",
+      "branch": "test/scope-reserved-acac8f85",
+      "patchSha256": "a7fa6dce25bbda03c0b6361ada98335a15725d4f110a68d92a19090cd73615b5",
+      "status": "SOURCE_REVIEWED_BOUNDED_TESTS_PASSED_FINAL_OUTCOME_REVIEW_PENDING",
+      "actualStage2Pairs": 4,
+      "corruptionControls": 13,
+      "remainingPairsUnexecuted": 19,
+      "fullCoverageAdded": false,
+      "integration": "NOT_INTEGRATED"
     }
   }
 }
