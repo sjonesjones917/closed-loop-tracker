@@ -7,7 +7,7 @@ import vm from 'node:vm';
 import {createHash} from 'node:crypto';
 import {scalarFor,recordProposal,acceptPrerequisite,stage01AcceptanceFixture,boundedSearchProposal,registerFixtureSourceSearchCapability,stage04AcceptanceFixture,evidence,accumulatedStage04Fixture,stage04AcceptanceFixtureSource} from './test-fixtures.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
-import {projectStoreRuntime,storageBroadcastNetwork,bindProjectActivationUi} from './test-project-store-runtime.mjs';
+import {projectStoreRuntime,storageBroadcastNetwork,bindProjectActivationUi,adaptProjectStoreSource} from './test-project-store-runtime.mjs';
 // These focused fixtures exercise ordinary projects outside device acceptance mode.
 // History is exercised by verify-recoverable-history and the browser recovery gate.
 const inactiveMobileAcceptance={captureCurrentView:async()=>{},captureView:()=>null,recordCommittedBoundary:async()=>{},APPLICATION_SESSION_ID:'LIFECYCLE-TEST',initializeHistoryNavigation:async()=>{},focusAfterAction:node=>node?.focus(),mobileSessionCurrent:()=>false,recordMobileExport:async()=>{},recordMobileOperation:async()=>{},recordMobileValidation:async()=>{},mobileBackupSelection:async()=>null,recordMobileBackupRestore:async()=>{}};
@@ -473,10 +473,8 @@ for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js
   }
   vm.runInContext(source,storageRuntime,{filename:file});
 }
-const storageSource=store.replace('globalThis.closedLoopProjectStore=','globalThis.decodePackageForTest=readPackageJson;globalThis.packageChunksForTest=packageJsonChunks;globalThis.closedLoopProjectStore=')
-  .replace(/const request=req=>[^\n]+/, 'const request=req=>Promise.resolve(req.result);')
-  .replace(/const complete=tx=>[^\n]+/, 'const complete=async tx=>tx.commit();')
-  .replace(/async function openTransaction\([\s\S]*?\n}\n/, 'async function openTransaction(stores,mode="readonly"){return openStorageTransaction(stores,mode);}\n');
+// Use the maintained Map adapter's checkpoint completion bridge in both contexts.
+const storageSource=adaptProjectStoreSource(store.replace('globalThis.closedLoopProjectStore=','globalThis.decodePackageForTest=readPackageJson;globalThis.packageChunksForTest=packageJsonChunks;globalThis.closedLoopProjectStore='));
 vm.runInContext(storageSource,storageRuntime);
 vm.runInContext(`globalThis.core=closedLoopCore;globalThis.ingestion=closedLoopResponseIngestion;globalThis.stageContinuationErrors=new Map();globalThis.operationSelection={};globalThis.TAB_INSTANCE_ID='TAB-LIFECYCLE';globalThis.engine=closedLoopWorkflowEngine;globalThis.schema=closedLoopWorkflowSchema;globalThis.projectStore=closedLoopProjectStore;globalThis.withStorageActivity=async(_label,operation)=>operation();globalThis.clone=value=>JSON.parse(JSON.stringify(value));globalThis.safe=value=>Array.isArray(value)?value:[];globalThis.views=['Overview','Project','Workflow'];globalThis.projects=[];globalThis.current=null;globalThis.projectUi={};globalThis.jobFields=[['JOB_TITLE'],['EXACT_USER_OBJECTIVE_VERBATIM']];globalThis.announce=()=>{};globalThis.render=()=>{};globalThis.refreshProjectStorage=async()=>{};globalThis.failures=[];globalThis.reportActionFailure=message=>failures.push(String(message));globalThis.elements={};globalThis.$=selector=>elements[selector]??=( {click(){}} );`,storageRuntime);
 const appFunction=name=>{
