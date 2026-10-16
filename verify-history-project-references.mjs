@@ -38,7 +38,7 @@ const make=()=>{
  const withBytes=withCompatibility.replace(inputAnchor,inputAnchor+'globalThis.__archiveImportByteObjects?.push(artifactBlob);');
  const hashSource=fs.readFileSync('hash.js','utf8'),hashAnchor='async function sha256Bytes(bytes){';
  assert.equal(hashSource.split(hashAnchor).length-1,1);
- const traversalAnchor='const frame=stack.at(-1),input=frame.value,path=frame.path;';assert.equal(hashSource.split(traversalAnchor).length-1,1);
+ const traversalAnchor='const frame=stack.at(-1),input=frame.value;diagnosticFrame=frame;';assert.equal(hashSource.split(traversalAnchor).length-1,1);
  const observedHash=hashSource.replace(hashAnchor,hashAnchor+'globalThis.__historyBlobHashes?.push(bytes);').replace(traversalAnchor,traversalAnchor+"if(frame.kind==='value'&&input===globalThis.__historyDigestWatch?.data)globalThis.__historyDigestWatch.visits++;");
  return projectStoreRuntime({fault:faults[mode],sourceOverrides:{'project-store.js':withBytes.replace('function historyProjectDigests(project){','globalThis.__historyProjectDigests=historyProjectDigests;function historyProjectDigests(project){'),'hash.js':observedHash}});
 };
