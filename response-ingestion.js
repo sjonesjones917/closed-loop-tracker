@@ -865,6 +865,9 @@ function planProposal(project,envelope,{rawRecord,promptRecord,validationRecord,
     if(evidenceRecord.sourceReference&&(evidenceRecord.fields.SOURCE_ID==='UNKNOWN'||evidenceRecord.fields.SOURCE_ID===null))throw new Error('Validated evidence source failed canonical resolution.');if(evidenceRecord.attachmentReference&&(evidenceRecord.fields.ATTACHMENT_ID==='UNKNOWN'||evidenceRecord.fields.ATTACHMENT_ID===null))throw new Error('Validated evidence attachment failed canonical resolution.');
     evidenceRecord.fields.SHA256=evidenceRecord.SHA256=hash.sha256Text(String(evidenceRecord.CONTENT||''));evidenceRecord.sha256=hash.sha256Value(evidenceRecord.fields);
   }
+  // Source-bound derivations must see the final canonical evidence preimage,
+  // including its content digest, before any receipt captures that source.
+  for(const record of evidence)workflow.refreshRecordHashes(record,'evidenceRecords');
   if(['failureTests','regressions'].some(family=>safe(canonicalRecords[family]).length)){
     const projected=promoteVerifiedReturnedArtifacts(cloneProject(project),{stage:Number(envelope.stage),rawRecord,scope:envelope.scope||{}});
     const correctionTarget=promptRecord.contextManifest?.deferredDefinitionCorrectionTarget;

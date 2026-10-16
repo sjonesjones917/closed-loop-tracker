@@ -5,12 +5,19 @@ import {projectStoreRuntime} from './test-project-store-runtime.mjs';
 import {routingFixture} from './test-verification-routing-fixtures.mjs';
 import {recordProposal,evidence} from './test-fixtures.mjs';
 
-// This fault is the exact former favorable fallback after the four external
-// result branches. It is loaded in an isolated VM; repository source is intact.
+// Stages 12/23/24 remove the exact external-claim completion guard. Stage 22
+// instead injects a compound fault: restore a favorable observed-text fallback
+// in its application-normalized reader AND remove that completion guard. This
+// is an explicit counterfactual, not an unchanged historical reproduction. All
+// faults run in isolated VMs; repository production source remains intact.
 const source=fs.readFileSync('workflow-engine.js','utf8');
 const guard="  const completionPolicy=schema.EXTERNAL_RESULT_COMPLETION_POLICY;\n  if(completionPolicy.collections.includes(collection)&&determination===completionPolicy.completionValue&&claimed!==completionPolicy.completionValue){\n    determination=completionPolicy.unresolvedDisposition;\n    reasons.push(completionPolicy.determinationField+' must explicitly be '+completionPolicy.completionValue+' for a favorable external result; use '+completionPolicy.normalizedOutcomes.join(', ')+' to report the supported outcome.');\n  }\n";
 assert.equal(source.split(guard).length,2,'The old favorable-fallback fault anchor must be exact.');
 const faultSource=source.replace(guard,'');
+const normalizedReaderAnchor="determination=claimed;if(reasons.length&&determination==='SATISFIED')determination='UNDETERMINED';}";
+assert.equal(source.split(normalizedReaderAnchor).length,2,'The application-normalized reader fault anchor must be exact.');
+const normalizedReaderFaultSource=faultSource.replace(normalizedReaderAnchor,"determination=claimed==='UNDETERMINED'?(controlledOutcome(recordValue(record,'ACTUAL_RESULT'))||claimed):claimed;if(reasons.length&&determination==='SATISFIED')determination='UNDETERMINED';}");
+const faultIds={12:'EXTERNAL_CLAIM_COMPLETION_GUARD_REMOVED',22:'APPLICATION_NORMALIZED_READER_TEXT_FALLBACK_AND_COMPLETION_GUARD_REMOVED',23:'EXTERNAL_CLAIM_COMPLETION_GUARD_REMOVED',24:'EXTERNAL_CLAIM_COMPLETION_GUARD_REMOVED'};
 const families={12:'verification',22:'deterministicResults',23:'meaningResults',24:'adversarialResults'};
 const operations={12:'VERIFY',22:'EXECUTE_EXTERNAL_TEST',23:'COMPLETE',24:'COMPLETE'};
 const stages=[12,22,23,24];
@@ -47,8 +54,8 @@ function producerContractControls(){
 }
 
 
-function runtime(fault=false){
-  const r=projectStoreRuntime({sourceOverrides:fault?{'workflow-engine.js':faultSource}:{}});
+function runtime(fault=false,stage=null){
+  const r=projectStoreRuntime({sourceOverrides:fault?{'workflow-engine.js':stage===22?normalizedReaderFaultSource:faultSource}:{}});
   vm.runInContext(routingFixture.toString(),r.runtime);
   return r;
 }
@@ -75,7 +82,7 @@ function assertPublished(r,stage,operation,prompt=null){
 // fixture establishes a distinct run/verifier and canonical sufficient evidence;
 // its prior-stage freeze is not a real accepted ten-run journey.
 function perRunCase(fault){
-  const r=runtime(fault),e=r.engine,s=r.runtime.closedLoopWorkflowSchema,f=r.runtime.routingFixture('INDEPENDENT_AGENT_REVIEW'),p=f.p;
+  const r=runtime(fault,12),e=r.engine,s=r.runtime.closedLoopWorkflowSchema,f=r.runtime.routingFixture('INDEPENDENT_AGENT_REVIEW'),p=f.p;
   Object.assign(f.test.fields,{TEST_TYPE:'DETERMINISTIC',VERIFICATION_PHASE:'PREPRODUCT_ITERATION',EARLIEST_EXECUTABLE_STAGE:12,REQUIRED_BY_STAGE:12,PER_RUN_REQUIRED:true,FINAL_PRODUCT_REQUIRED:false,EXPECTED_RESULT:'SATISFIED',ARTIFACT_REQUIREMENTS:'NONE'});
   Object.assign(f.test,f.test.fields);e.refreshRecordHashes(f.test,'tests');
   const iteration=add(r,p,'iterations',{STATUS:'ACTIVE'},10),generator=e.registerFreshContext(p,{stage:11,externalContextIdentifier:'SYNTHETIC-RUN-GENERATOR',purpose:'GENERAL'});
@@ -94,8 +101,22 @@ function perRunCase(fault){
   }};
 }
 
+function assertFinalEvidenceBindings(r,project){
+ const e=r.engine,h=r.runtime.closedLoopHash;
+ for(const family of ['entailmentReviews','deterministicResults'])for(const record of e.recordsForCurrentScope(project,family)){
+  const bindings=record.derivationInput?.sourceBinding?.records?.filter(row=>row.family==='evidenceRecords');
+  assert(bindings?.length,'EXTERNAL_RESULT_FINAL_EVIDENCE_PREIMAGE_ORACLE: source-bound evidence must be present.');
+  for(const binding of bindings){
+   const evidenceRow=e.recordsForCurrentScope(project,'evidenceRecords').find(row=>row.id===binding.id);
+   assert(evidenceRow,'EXTERNAL_RESULT_FINAL_EVIDENCE_PREIMAGE_ORACLE: exact source evidence must remain current.');
+   assert.equal(evidenceRow.contentSha256,h.contentRecordSha256(evidenceRow,'EVIDENCE_ID'),'EXTERNAL_RESULT_FINAL_EVIDENCE_PREIMAGE_ORACLE: evidence content identity must already be finalized.');
+   assert.equal(binding.sha256,h.recordSha256(evidenceRow),'EXTERNAL_RESULT_FINAL_EVIDENCE_PREIMAGE_ORACLE: receipt must bind the complete final canonical evidence record.');
+  }
+ }
+}
+
 function finalStageCase(stage,fault){
-  const r=runtime(fault),e=r.engine,s=r.runtime.closedLoopWorkflowSchema,f=r.runtime.routingFixture('INDEPENDENT_AGENT_REVIEW'),p=f.p,family=families[stage],operation=operations[stage],hash=r.runtime.closedLoopHash;
+  const r=runtime(fault,stage),e=r.engine,s=r.runtime.closedLoopWorkflowSchema,f=r.runtime.routingFixture('INDEPENDENT_AGENT_REVIEW'),p=f.p,family=families[stage],operation=operations[stage],hash=r.runtime.closedLoopHash;
   p.activeStage=stage;
   const phase={22:'FINAL_PRODUCT_DETERMINISTIC',23:'FINAL_PRODUCT_MEANING',24:'FINAL_PRODUCT_ADVERSARIAL'}[stage];
   for(const [key,value] of Object.entries({TEST_TYPE:{22:'DETERMINISTIC',23:'MEANING',24:'ADVERSARIAL'}[stage],VERIFICATION_PHASE:phase,EARLIEST_EXECUTABLE_STAGE:stage,REQUIRED_BY_STAGE:stage,EXECUTION_MODE:'INDEPENDENT_AGENT_REVIEW',REQUIRED_CAPABILITY:'independent test review',EXPECTED_RESULT:'PASS'})){f.test.fields[key]=f.test[key]=value;}
@@ -115,6 +136,9 @@ function finalStageCase(stage,fault){
     const resultProposition=add(r,p,'propositions',{REQUIREMENT_ID:p.projectData.requirements[0].id,PROPOSITION_TEXT:'Synthetic exact product content is present.',STATUS:'CURRENT'},4,{...e.currentScope(p),productId:null});
     if(stage===22){f.test.fields.TARGET_PROPOSITION_IDS=f.test.TARGET_PROPOSITION_IDS=r.copy([resultProposition.id]);e.refreshRecordHashes(f.test,'tests');}
     let reviewer=null;if(stage!==22)reviewer=e.registerFreshContext(p,{stage,externalContextIdentifier:`SYNTHETIC-STAGE${stage}-REVIEWER`,purpose:'REVIEWER'});
+    // Settle application-owned test review/release fields before the first
+    // source-bound proposal; replay must observe the same canonical preimage.
+    e.recalculate(p);
     // Existing synthetic setup, not proof of prior stages. This late-stage
     // control still requires replacement by an actual prepared prefix before
     // claiming a legitimate complete operator journey. The private producer
@@ -148,6 +172,7 @@ function finalStageCase(stage,fault){
        const partial=response('SATISFIED');delete partial.records.entailmentReviews[0].fields.ENTAILMENT_FINDING;
        const pending=r.ingestion.prepare(p,{stage,text:JSON.stringify(partial),promptRecord:prompt,transport});assert.equal(pending.validation.valid,true,JSON.stringify(pending.validation.issues));
        const accepted=r.ingestion.commit(pending.project,pending.proposal.proposalId,{operator:'SYNTHETIC_OPERATOR'}).project,result=e.recordsForCurrentScope(accepted,'deterministicResults').at(-1),review=e.recordsForCurrentScope(accepted,'entailmentReviews').find(row=>row.temporaryKey==='external-entailment');
+       assertFinalEvidenceBindings(r,accepted);
        assert.equal(Object.hasOwn(review.fields,'ENTAILMENT_FINDING'),false);assert.equal(e.recordValue(review,'ACCEPTED_RELATION'),'UNKNOWN');assert.equal(e.recordValue(result,'DETERMINATION'),'UNDETERMINED');assert.equal(e.gate(22,accepted).complete,false);
       }
       return ['missing','wrong-type'];
@@ -156,7 +181,15 @@ function finalStageCase(stage,fault){
       assert.equal(prepared.validation.valid,true,JSON.stringify(prepared.validation.issues));
       const committed=r.ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'SYNTHETIC_OPERATOR'}).project,row=e.recordsForCurrentScope(committed,family).at(-1);
       assert(row,'Accepted external result must reach canonical records.');if(stage===22){assert.equal(e.recordValue(row,'DETERMINATION'),stage22OutcomeCases.find(item=>item.reported===value).canonical,'Application canonical determination must match the independent expected relation outcome.');const observed=e.recordsForCurrentScope(committed,'observationRecords').find(item=>item.temporaryKey==='external-observation'),review=e.recordsForCurrentScope(committed,'entailmentReviews').find(item=>item.temporaryKey==='external-entailment');assert.equal(e.recordValue(observed,'EXTERNAL_OR_AGENT_OBSERVED_VALUE'),'PASS');assert(e.recordValue(review,'REASONING').includes('original reported outcome '+value+'.'));}else assert.equal(e.recordValue(row,'DETERMINATION'),value,'Accepted raw determination must be preserved.');
-      const decision=e.evaluateResultConsistency(family,row,f.test,committed),gate=e.gate(stage,committed);
+      if(stage===22)assertFinalEvidenceBindings(r,committed);
+      const currentTest=e.recordsForCurrentScope(committed,'tests').find(test=>test.id===f.test.id);
+      assert(currentTest,'External result adjudication requires its actual current canonical test.');
+      const decision=e.evaluateResultConsistency(family,row,currentTest,committed),gate=e.gate(stage,committed);
+      if(stage===22&&value==='SATISFIED'){
+       const changed=r.copy(committed),changedResult=e.recordsForCurrentScope(changed,family).find(item=>item.id===row.id),changedTest=e.recordsForCurrentScope(changed,'tests').find(item=>item.id===currentTest.id),sourceId=row.derivationInput.sourceBinding.records.find(item=>item.family==='evidenceRecords').id,changedEvidence=e.recordsForCurrentScope(changed,'evidenceRecords').find(item=>item.id===sourceId);
+       changedEvidence.contentSha256='0'.repeat(64);
+       assert.equal(e.externalProductResultCurrent(changed,changedResult,changedTest),false,'EXTERNAL_RESULT_CHANGED_EVIDENCE_CURRENTNESS_ORACLE: an altered canonical source preimage must revoke normalization authority.');
+      }
       assert.equal(decision.evidence.sufficient,true,JSON.stringify(decision.reasons));
       return {actual:value,effective:decision.determination,reasons:decision.reasons,gateReasons:gate.reasons,gateComplete:gate.complete};
     }};
@@ -191,13 +224,24 @@ for(const stage of stages){
   for(const value of admittedValues.slice(1)){
     const result=current.evaluate(value),expected=value==='VIOLATED'?'VIOLATED':'UNDETERMINED';
     assert.equal(result.effective,expected,`Stage ${stage}: ${value} cannot become a favorable determination.`);
-    if(value!=='VIOLATED')assert(result.reasons.some(reason=>reason.includes('DETERMINATION must explicitly be SATISFIED')),`Stage ${stage}: ${value} needs actionable producer feedback.`);
-    if(stage!==12&&value!=='VIOLATED')assert(result.gateReasons.some(reason=>reason.includes('DETERMINATION must explicitly be SATISFIED')),`Stage ${stage}: ${value} must reach the stage gate.`);
+    if(stage===22){
+      // The application owns this canonical determination. Its current reader
+      // must not invent the old raw-actor completion-policy diagnostic.
+      assert.deepEqual(plain(result.reasons),[],'Stage 22: normalized non-favorable results have no legacy actor-field diagnostic.');
+      assert.equal(result.gateComplete,false,'Stage 22: every non-favorable normalized result must block progression.');
+      for(const reason of ['A deterministic finished-product verification is violated or undetermined.','deterministicResults contains a non-satisfied effective result.'])assert(result.gateReasons.includes(reason),'Stage 22: current normalized outcome must reach the stage gate.');
+      const contract=current.r.runtime.closedLoopWorkflowSchema.EXTERNAL_PRODUCT_RESULT_CONTRACT;
+      assert(contract.finding.includes('ESTABLISHES supports SATISFIED')&&contract.finding.includes('REFUTES supports VIOLATED')&&contract.finding.includes('missing support remain UNDETERMINED'),'Stage 22: producer feedback must explain the actual relation outcomes.');
+      assert(contract.partial.includes('Complete current evidence and the applicable accepted relation are required for progression.'),'Stage 22: producer feedback must explain how to resolve partial work.');
+    }else{
+      if(value!=='VIOLATED')assert(result.reasons.some(reason=>reason.includes('DETERMINATION must explicitly be SATISFIED')),`Stage ${stage}: ${value} needs actionable producer feedback.`);
+      if(stage!==12&&value!=='VIOLATED')assert(result.gateReasons.some(reason=>reason.includes('DETERMINATION must explicitly be SATISFIED')),`Stage ${stage}: ${value} must reach the stage gate.`);
+    }
     negatives.push({value,effective:result.effective});
   }
   const former=old.evaluate('UNKNOWN');
-  assert.equal(former.effective,'SATISFIED',`Stage ${stage}: former fallback must reproduce the intended false-positive target.`);
-  observations.push({stage,family:families[stage],boundary:current.boundary,conforming:'SATISFIED',negative:negatives,admissionNegatives,formerUnknown:'SATISFIED',currentUnknown:'UNDETERMINED',evidenceSufficient:true,producerDescriptorPublished:true});
+  assert.equal(former.effective,'SATISFIED',`Stage ${stage}: isolated fault must reproduce the intended false-positive target.`);
+  observations.push({stage,family:families[stage],boundary:current.boundary,faultId:faultIds[stage],conforming:'SATISFIED',negative:negatives,admissionNegatives,formerUnknown:'SATISFIED',currentUnknown:'UNDETERMINED',evidenceSufficient:true,producerDescriptorPublished:true});
   if(stage===22)observations.push({stage,caseId:'stale-external-result-prompt-recovery',...(await stalePackageControl(current))});
 }
 console.log(JSON.stringify({schema:'closed-loop-external-result-determination-regression/1',observations,producerContracts}));
