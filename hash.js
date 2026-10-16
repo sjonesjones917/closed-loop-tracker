@@ -113,13 +113,14 @@ function* canonicalChunks(value){
       else{
         const key=frame.keys[frame.index++],descriptor=Object.getOwnPropertyDescriptor(input,key);
         if(!descriptor||!Object.prototype.hasOwnProperty.call(descriptor,'value'))throw new TypeError(`Cannot canonically hash accessor property at ${path}.${key}.`);
-        if(frame.index>1)pending+=',';pending+='"';
-        stack.push({kind:'value',value:descriptor.value,path:`${path}.${key}`},{kind:'colon'},{kind:'string',value:key,index:0,path:`${path} object key`});
+        if(frame.index>1)pending+=',';
+        if(key.length<=16384){pending+=JSON.stringify(assertUnicodeScalars(key,`${path} object key`))+':';stack.push({kind:'value',value:descriptor.value,path:`${path}.${key}`});}
+        else{pending+='"';stack.push({kind:'value',value:descriptor.value,path:`${path}.${key}`},{kind:'colon'},{kind:'string',value:key,index:0,path:`${path} object key`});}
       }
     }else{
       stack.pop();
       if(input===null)pending+='null';
-      else if(typeof input==='string'){pending+='"';stack.push({kind:'string',value:input,index:0,path});}
+      else if(typeof input==='string'){if(input.length<=16384)pending+=JSON.stringify(assertUnicodeScalars(input,path));else{pending+='"';stack.push({kind:'string',value:input,index:0,path});}}
       else if(typeof input==='boolean')pending+=input?'true':'false';
       else if(typeof input==='number'){
         if(!Number.isFinite(input)||Object.is(input,-0)||!Number.isSafeInteger(input)||input<MIN_SAFE_INTEGER||input>MAX_SAFE_INTEGER)throw new TypeError(`Cannot canonically hash non-safe-integer JSON number at ${path}.`);
