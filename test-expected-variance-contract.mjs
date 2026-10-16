@@ -52,7 +52,7 @@ export async function stageExpectedVarianceResponse(h,{mutate=()=>{},persist=fal
 }
 
 const LITERAL_NESTED={dimensions:['requirement-truth'],allowedVariance:'No variance in requirement truth.'};
-function verifyNormalizer(r){
+export function verifyExpectedVarianceNormalizer(r){
  const s=r.runtime.closedLoopWorkflowSchema,normalize=s.normalizeExpectedVarianceContract;
  assert.equal(typeof normalize,'function','EXPECTED_VARIANCE_NORMALIZER_OWNER_ORACLE');
  const positive=[
@@ -75,6 +75,17 @@ function verifyNormalizer(r){
   {id:'null-rationale',input:{...LITERAL_NESTED,rationale:null}},
   {id:'unknown-source-form',form:'UNKNOWN',input:LITERAL_NESTED}
  ];
+ // Source insertion A defines blank using exactly U+0009–000D and U+0020.
+ // Unicode whitespace outside that set is meaningful and must survive both forms.
+ for(const character of ['\u0085','\u00a0','\u1680','\u2000','\u2001','\u2002','\u2003','\u2004','\u2005','\u2006','\u2007','\u2008','\u2009','\u200a','\u2028','\u2029','\u202f','\u205f','\u3000','\ufeff']){
+  const expected={dimensions:[character,' '+character+' ',character],allowedVariance:character,rationale:''},id=character.codePointAt(0).toString(16);
+  positive.push({id:'ascii-nonblank-embedded-'+id,input:expected,expected});
+  positive.push({id:'ascii-nonblank-direct-'+id,form:'CANONICAL_FIELDS',input:{DIMENSIONS:expected.dimensions,ALLOWED_VARIANCE:character,RATIONALE:''},expected});
+ }
+ for(const blank of ['', '\t','\n','\v','\f','\r',' ',' \t\n\v\f\r '])for(const form of ['EMBEDDED','CANONICAL_FIELDS']){
+  negative.push({id:'ascii-blank-dimension-'+form+'-'+JSON.stringify(blank),form,input:form==='EMBEDDED'?{dimensions:[blank],allowedVariance:'NONE'}:{DIMENSIONS:[blank],ALLOWED_VARIANCE:'NONE'}});
+  negative.push({id:'ascii-blank-variance-'+form+'-'+JSON.stringify(blank),form,input:form==='EMBEDDED'?{dimensions:['bytes'],allowedVariance:blank}:{DIMENSIONS:['bytes'],ALLOWED_VARIANCE:blank}});
+ }
  const cases=[];
  for(const t of positive){const result=normalize(r.copy(t.input),{form:t.form||'EMBEDDED'});assert.equal(result.valid,true,'EXPECTED_VARIANCE_NORMALIZATION_POSITIVE_ORACLE '+t.id);assert.deepEqual(JSON.parse(JSON.stringify(result.normalized)),t.expected,'EXPECTED_VARIANCE_LOSSLESS_NORMALIZATION_ORACLE '+t.id);if(!Object.hasOwn(t.expected,'rationale'))assert.equal(Object.hasOwn(result.normalized,'rationale'),false,'EXPECTED_VARIANCE_NO_INVENTED_RATIONALE_ORACLE');cases.push({id:t.id,expected:'VALID_EXACT_NORMALIZED',result:'PASS'});}
  for(const t of negative){const result=normalize(r.copy(t.input),{form:t.form||'EMBEDDED'});assert.equal(result.valid,false,'EXPECTED_VARIANCE_NORMALIZATION_NEGATIVE_ORACLE '+t.id);assert.equal(result.normalized,null,'EXPECTED_VARIANCE_NO_INVALID_NORMALIZATION_ORACLE '+t.id);assert(result.issues.length,'EXPECTED_VARIANCE_DIAGNOSTIC_ORACLE '+t.id);cases.push({id:t.id,expected:'INVALID_WITH_DIAGNOSTIC',result:'PASS'});}
@@ -135,13 +146,15 @@ async function acceptIndependentVarianceProofReview(h,authorResult){
  return result;
 }
 export async function verifyExpectedVarianceContract({sourceOverrides={},report=false,onProgress=null,onlyCases=null}={}){
- const startedAt=new Date().toISOString(),started=performance.now(),h=await prepareExpectedVarianceAuthor({sourceOverrides}),normalization=verifyNormalizer(h.isolated().r),cases=[{id:'retained-completed-six-compatibility',expected:'NAMED_COLD_ACTIVATION_CURRENT_COMPLETE',activation:h.baseline.activation,rawPreserved:true,acceptedHistoryUnchanged:true,boundary:'transaction-adapter-save/cold-read/named-activation/gate',result:'PASS'}];
+ const startedAt=new Date().toISOString(),started=performance.now(),h=await prepareExpectedVarianceAuthor({sourceOverrides}),normalization=verifyExpectedVarianceNormalizer(h.isolated().r),cases=[{id:'retained-completed-six-compatibility',expected:'NAMED_COLD_ACTIVATION_CURRENT_COMPLETE',activation:h.baseline.activation,rawPreserved:true,acceptedHistoryUnchanged:true,boundary:'transaction-adapter-save/cold-read/named-activation/gate',result:'PASS'}];
  const selected=id=>onlyCases===null||onlyCases.includes(id),requiresStoredControl=onlyCases===null||onlyCases.some(id=>['direct-retained-current-test-set','sparse-stage6-retains-contract-bindings','tampered-normalized-contract','tampered-contract-hash','tampered-freeze-time','stale-freeze-scope','changed-authored-source'].includes(id));
  const recordCase=entry=>{cases.push(entry);onProgress?.({completedCases:cases.length,...entry});};onProgress?.({completedCases:1,...cases[0]});
  recordCase({id:'exported-producer-contract',expected:'EXACT_TYPED_SOURCE_AND_OUTPUT_RULES_PUBLISHED',boundary:'actual-saved-execution-ZIP/instruction/manifest',result:'PASS'});
  const positives=[
   {id:'nested-author-normalized-stored',expected:LITERAL_NESTED,mutate:()=>{}},
   {id:'nested-extension-preserved',expected:{...LITERAL_NESTED,extension:{label:'λ😀',values:[false,0,null,' exact ']}},mutate:envelope=>{perRun(envelope).fields.EXPECTED_VARIANCE_CONTRACT={...LITERAL_NESTED,extension:{label:'λ😀',values:[false,0,null,' exact ']}};}},
+  {id:'ascii-nonblank-nested-stored',expected:{dimensions:['\u00a0','\u2003','\ufeff'],allowedVariance:'\u00a0',rationale:''},mutate:envelope=>{perRun(envelope).fields.EXPECTED_VARIANCE_CONTRACT={dimensions:['\u00a0','\u2003','\ufeff'],allowedVariance:'\u00a0',rationale:''};}},
+  {id:'ascii-nonblank-direct-stored',direct:true,expected:{dimensions:['\u00a0','\u2003','\ufeff'],allowedVariance:'\u00a0',rationale:''},mutate:envelope=>{const test=perRun(envelope);delete test.fields.EXPECTED_VARIANCE_CONTRACT;const row=directFor(test,envelope);Object.assign(row.fields,{DIMENSIONS:['\u00a0','\u2003','\ufeff'],ALLOWED_VARIANCE:'\u00a0',RATIONALE:''});envelope.records.expectedVarianceContracts=[row];}},
   {id:'direct-typed-author-normalized-stored',direct:true,expected:LITERAL_NESTED,mutate:envelope=>{const test=perRun(envelope);delete test.fields.EXPECTED_VARIANCE_CONTRACT;envelope.records.expectedVarianceContracts=[directFor(test,envelope)];}},
   {id:'matching-nested-direct-single-contract',direct:true,expected:LITERAL_NESTED,mutate:envelope=>{envelope.records.expectedVarianceContracts=[directFor(perRun(envelope),envelope)];}}
  ];
@@ -157,6 +170,8 @@ export async function verifyExpectedVarianceContract({sourceOverrides={},report=
   {id:'empty-dimensions',code:'INVALID_EXPECTED_VARIANCE_CONTRACT',mutate:envelope=>{perRun(envelope).fields.EXPECTED_VARIANCE_CONTRACT={dimensions:[],allowedVariance:'NONE'};}},
   {id:'wrong-nested-dimensions-type',code:'INVALID_EXPECTED_VARIANCE_CONTRACT',mutate:envelope=>{perRun(envelope).fields.EXPECTED_VARIANCE_CONTRACT={dimensions:'bytes',allowedVariance:'NONE'};}},
   {id:'blank-allowed-variance',code:'INVALID_EXPECTED_VARIANCE_CONTRACT',mutate:envelope=>{perRun(envelope).fields.EXPECTED_VARIANCE_CONTRACT={dimensions:['bytes'],allowedVariance:' '};}},
+  {id:'ascii-blank-direct-variance',code:'INVALID_EXPECTED_VARIANCE_CONTRACT',mutate:envelope=>{const row=directFor(perRun(envelope),envelope);row.fields.ALLOWED_VARIANCE=' \t\n\r\v\f ';envelope.records.expectedVarianceContracts=[row];}},
+  {id:'ascii-blank-direct-dimension',code:'INVALID_EXPECTED_VARIANCE_CONTRACT',mutate:envelope=>{const row=directFor(perRun(envelope),envelope);row.fields.DIMENSIONS=[' \t\n\r\v\f '];envelope.records.expectedVarianceContracts=[row];}},
   {id:'application-field-injection',expectedPath:'/records/expectedVarianceContracts/0/fields/NORMALIZED_CONTRACT',mutate:envelope=>{const row=directFor(perRun(envelope),envelope);row.fields.NORMALIZED_CONTRACT=LITERAL_NESTED;envelope.records.expectedVarianceContracts=[row];}}
  ];
  for(const testCase of negatives.filter(row=>selected(row.id))){const result=await stageExpectedVarianceResponse(h,{mutate:testCase.mutate,persist:testCase.id==='empty-dimensions'});assert.equal(result.prepared.validation.valid,false,'EXPECTED_VARIANCE_INVALID_AUTHOR_REJECTED_ORACLE '+testCase.id);assert.equal(Boolean(result.prepared.proposal),false,'EXPECTED_VARIANCE_INVALID_NO_PROPOSAL_ORACLE '+testCase.id);const issues=result.prepared.validation.issues;if(testCase.code)assert(issues.some(item=>item.code===testCase.code),'EXPECTED_VARIANCE_INTENDED_DIAGNOSTIC_ORACLE '+testCase.id+' '+JSON.stringify(issues));if(testCase.expectedPath)assert(issues.some(item=>item.path?.startsWith(testCase.expectedPath)),'EXPECTED_VARIANCE_TYPED_DIAGNOSTIC_PATH_ORACLE '+testCase.id+' '+JSON.stringify(issues));recordCase({id:testCase.id,expected:'REJECTED_NO_PROPOSAL',codes:issues.map(item=>item.code),rawPreserved:testCase.id==='empty-dimensions',boundary:testCase.id==='empty-dimensions'?'staged-response/admission/transaction-adapter-save-reload':'staged-response/admission',result:'PASS'});}
