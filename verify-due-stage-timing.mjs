@@ -12,7 +12,7 @@ import {storedArtifactBody,projectStoreRuntime,captureArtifactFixture,restoreArt
 import {appMarkup} from './test-app-markup.mjs';
 import {createVerifierRuntime,isolatedVerifierWorkerClass} from './verifier-runtime.mjs';
 import {testIrManifestedEnvironment} from './test-test-ir-native-identity.mjs';
-import {authorizeFixtureHandoff,recordProposal,canonicalFixtureRecord,reviewProofFixture,deferredDefinitionResponseFixture,deferredCompatibilityFixtureValues,deferredDefinitionRestorationFixture,deferredDefinitionAdmissionFixture,deferredReviewedPrerequisiteFixture,deferredFailureExecutionResponseFixture} from './test-fixtures.mjs';
+import {authorizeFixtureHandoff,recordProposal,canonicalFixtureRecord,reviewProofFixture,deferredDefinitionResponseFixture,deferredCompatibilityFixtureValues,deferredDefinitionRestorationFixture,deferredDefinitionAdmissionFixture,deferredReviewedPrerequisiteFixture,deferredFailureExecutionResponseFixture,activateRetainedFixtureVariance} from './test-fixtures.mjs';
 import {DEFERRED_LEGACY_FIXTURE_MAX_OUTPUT_BYTES,readDeferredDefinitionLegacyFixture,currentRetainedFixtureProject,readCurrentDeferredPrerequisiteFixture} from './test-fixtures.mjs';
 import {verifyDeferredHandoffMaterialContract,verifyDeferredProducerContracts,verifyDeferredByteCarrierContracts,verifyDeferredIndependentRetryContracts} from './test-deferred-producer-contracts.mjs';
 
@@ -892,13 +892,14 @@ async function stageSixNativeBindingRestoration(sources={}) {
  const r=runtime(sources),e=r.engine,h=r.runtime.closedLoopHash,prefix=deferredReviewedPrerequisiteFixture(r,'nativeStage7');
  replayArchivedDeferredFixtureAtRecordedTime(r,prefix);
  let p=r.copy(prefix.project);await restoreArtifactFixture(r.store,prefix.artifacts);await hydrateRetainedPromptContexts(r,p,prefix.contextFiles);
+ p=await activateRetainedFixtureVariance(r,p);
  for(let stage=1;stage<=6;stage++)assert.equal(e.gate(stage,p).complete,true,'STAGE6_NATIVE_REVIEWED_PREREQUISITE_ORACLE: '+stage);
  const selected=e.acceptedChanges(p,6).find(row=>row.operation==='COMPLETE'&&row.reservedTargetSnapshots?.some(item=>item.collection==='artifacts'));
  assert(selected,'STAGE6_NATIVE_ACTUAL_MEMBERSHIP_SNAPSHOT_ORACLE');
  const snapshot=selected.reservedTargetSnapshots.find(item=>item.collection==='artifacts'),artifactId=snapshot.id,raws=p.projectData.rawResponses.map(row=>({id:row.rawResponseId,text:row.completeRawResponse})),snapshotBefore=JSON.stringify(snapshot),oldArtifact=e.records(p,'artifacts').find(row=>row.id===artifactId),oldScope=r.copy(oldArtifact.scope);
  const typed=e.recordsForCurrentScope(p,'tests').find(row=>row.temporaryKey==='compat-due-native-failureTests');assert.equal(e.resolveNativeTestBinding(typed,'FIXTURE',e.recordValue(typed,'EXECUTABLE_INPUT_BINDINGS').FIXTURE,p).id,artifactId);
- p=await r.store.writeProject(p,{createOnly:true,incrementRevision:false});
  const draft=r.copy(p);e.invalidateAcceptedResponse(draft,{stage:6,rawResponseId:selected.rawResponseId,reason:'Synthetic normal accepted-author refinement',operatorLabel:'SYNTHETIC_OPERATOR'});
+ assert.equal(e.records(draft,'artifacts').find(row=>row.id===artifactId).scope.testSuiteVersion,null,'STAGE6_NATIVE_RESTORATION_ORACLE: invalidation must restore the legitimate input before storage admission');
  const impact=r.store.mutationImpact(p,draft);p=await r.store.writeProject(draft,{expectedProjectRevision:p.revision,expectedStateSha256:p.projectSha256,...(impact.requiresConfirmation?{mutationConfirmation:impact}:{})});p=await r.store.readProject(p.job.JOB_ID);
  const restored=e.records(p,'artifacts').find(row=>row.id===artifactId);
  assert.equal(restored.scope.testSuiteVersion,null,'STAGE6_NATIVE_RESTORATION_ORACLE: a retained input was restored into a retired suite');
@@ -917,6 +918,13 @@ async function stageSixNativeBindingRestoration(sources={}) {
  const boundTest=envelope.records.tests.find(row=>row.tempKey==='compat-due-native-failureTests');boundTest.fields.EXECUTABLE_INPUT_BINDINGS.SUITE={kind:'CANONICAL_VALUE',canonicalKey:'JOB.CURRENT_TEST_SUITE_VERSION',valueSha256:suiteEntry.valueSha256};
 
  Object.assign(envelope,{promptIdentity:packet.manifest.promptIdentity,packageId:packet.manifest.packageId,operationReservationId:packet.manifest.operationReservationId,challengeNonce:packet.manifest.challengeNonce,scope:packet.manifest.scope});
+ const staleAuthor=r.ingestion.validateEnvelope(r.copy(packet.p),r.copy(envelope),{stage:6,promptRecord:packet.prompt,rawSha256:h.rawResponseSha256(JSON.stringify(envelope))});
+ assert.equal(staleAuthor.valid,false,'STAGE6_NATIVE_REAUTHOR_PRIOR_REGISTRY_REJECTION_ORACLE');assert(staleAuthor.issues.some(issue=>issue.code==='INVALID_TEST_IR'&&issue.message==='Operation registry digest does not match the current registered semantics.'),'STAGE6_NATIVE_REAUTHOR_PRIOR_REGISTRY_DIAGNOSTIC_ORACLE');
+ // This is a new author submission under the current published contract. The
+ // retained accepted definition and its complete original raw remain unchanged.
+ const currentRegistry=r.runtime.closedLoopTestRuntime.OPERATION_REGISTRY_SHA256;
+ assert(members.includes(currentRegistry),'STAGE6_NATIVE_REAUTHOR_PUBLISHED_REGISTRY_ORACLE');
+ for(const row of envelope.records.tests||[])if(row.fields?.EXECUTABLE_SPEC?.languageVersion)row.fields.EXECUTABLE_SPEC.operationRegistrySha256=currentRegistry;
  const done=await submitDefinitionCompatibilityFile(r,packet,envelope,{accept:true});
  const freshTest=e.recordsForCurrentScope(done.p,'tests').find(row=>row.temporaryKey==='compat-due-native-failureTests');
  assert.equal(e.resolveNativeTestBinding(freshTest,'FIXTURE',e.recordValue(freshTest,'EXECUTABLE_INPUT_BINDINGS').FIXTURE,done.p).id,artifactId,'STAGE6_NATIVE_CURRENT_BINDING_ORACLE');
@@ -928,7 +936,7 @@ async function stageSixNativeBindingRestoration(sources={}) {
  return {case:'STAGE6_NATIVE_BINDING_RESTORATION',archivedFixtureClockUtc:prefix.archivedFixtureClockUtc,actualNextZipSuppliesInput:true,acceptedRefinement:true,freshIndependentReview:true,storedCurrentBindingResolves:true,publishedReservedCanonicalBindingAccepted:true,artifactId,unchangedArtifactSha256:e.recordValue(oldArtifact,'SHA256'),rawResponsesPreserved:raws.length,historicalSnapshotUnchanged:true,otherScopeDimensionsRetained:true,synthetic:true,actualBrowser:false};
 }
 async function stageEightConditionalVersionOwnership(sources={}) {
- const r=runtime(sources),e=r.engine,restored=await deferredDefinitionRestorationFixture(r,{family:'failureTests',executionStage:8});
+ const r=runtime(sources),e=r.engine,restored=await deferredDefinitionRestorationFixture(r,{family:'failureTests',executionStage:8,activateCurrentVariance:true});
  let p=restored.p;for(let stage=1;stage<=7;stage++)assert.equal(e.gate(stage,p).complete,true,'STAGE8_VERSION_PREREQUISITE_ORACLE: '+stage);
  const instructionVersion=p.job.CURRENT_INSTRUCTION_VERSION,versions=JSON.stringify(p.projectData.artifactVersions.filter(row=>row.stage===8)),instructionCount=e.records(p,'instructions').length;
  const packet=await reserveDefinitionCompatibilityPacket(r,p,8,'EXECUTE_FAILURE_TEST'),returned=await deferredFailureExecutionResponseFixture({schema:r.runtime.closedLoopWorkflowSchema,hash:r.runtime.closedLoopHash},packet.manifest,packet.prompt.contextManifest.deferredExecutionBinding),done=await submitDefinitionCompatibilityFile(r,packet,returned.envelope,{accept:true,returnedAttachments:returned.returnedAttachments});

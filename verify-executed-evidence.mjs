@@ -391,6 +391,7 @@ const expectedActiveFixtureInputs=[
   'verification/accepted-run-stage10-prerequisite-20261007.json',
   'verification/deferred-definition-compatibility-legacy-fixture-20261005.json',
   'verification/deferred-definition-current-prerequisite-fixture-20261007.json',
+  'verification/deferred-definition-current-prerequisite-fixture-20261016.json',
   'verification/handoff-producer88-runtime-owner-fixture-20261011.json.gz',
   'verification/handoff-producer88-source-fixture-20261005.json',
   'verification/handoff-producer89-source-fixture-20261005.json',

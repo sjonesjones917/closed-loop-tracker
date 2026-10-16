@@ -74,7 +74,7 @@ export async function verifyDeferredByteCarrierContracts(){
 }
 
 async function conditionalCase(spec,sourceOverrides={}){
- const r=producerRuntime({sourceOverrides}),{p}=await deferredDefinitionRestorationFixture(r,{family:spec.family,executionStage:spec.stage});
+ const r=producerRuntime({sourceOverrides}),{p}=await deferredDefinitionRestorationFixture(r,{family:spec.family,executionStage:spec.stage,activateCurrentVariance:spec.stage===8});
  if(spec.stage===8)for(let prior=1;prior<=7;prior++)assert.equal(r.engine.gate(prior,p).complete,true,'DEFERRED_PRODUCER_GENUINE_PREFIX_ORACLE');
  return packageCarrierContract(r,await buildPacket(r,p,spec.stage,spec.operation,{projectPrerequisite:spec.stage!==8}),spec);
 }
@@ -221,7 +221,7 @@ async function capture(r,p){const contextFiles=[],seen=new Set();for(const promp
 async function restore(snapshot,sources){const r=producerRuntime({sourceOverrides:sources});r.runtime.Date=class extends Date{constructor(...args){super(...(args.length?args:[snapshot.recordedAt]));}static now(){return Date.parse(snapshot.recordedAt);}};await restoreArtifactFixture(r.store,snapshot.artifacts);let p=r.copy(snapshot.project);await hydrateRetainedPromptContexts(r,p,snapshot.contextFiles);p=await r.store.writeProject(p,{createOnly:true,expectedProjectRevision:0,incrementRevision:false});return {r,p};}
 async function accept(r,submitted){const impact=r.ingestion.acceptanceImpact(submitted.p,submitted.proposalId),failures=bindAcceptanceUi(r,submitted.p,submitted.proposalId);await r.runtime.accept();if(r.runtime.replacementReview)await r.runtime.confirm();assert.equal(failures.length,0,'HISTORICAL_DEFERRED_OPERATOR_ACCEPTANCE_ORACLE '+failures.map(e=>e.message).join(';'));return {p:await r.store.readProject(submitted.p.job.JOB_ID),impact};}
 function selected(r,p,subjectId){return r.engine.deferredExecutionPlan(p,stage,{operation}).items.find(row=>row.subjectId===subjectId);}
-const seed=producerRuntime({sourceOverrides:legacy}),restored=await deferredDefinitionRestorationFixture(seed,{family:'failureTests',executionStage:8});let p=restored.p;
+const seed=producerRuntime({sourceOverrides:legacy}),restored=await deferredDefinitionRestorationFixture(seed,{family:'failureTests',executionStage:8,activateCurrentVariance:true});let p=restored.p;
 for(let n=1;n<stage;n++)assert.equal(seed.engine.gate(n,p).complete,true,'HISTORICAL_DEFERRED_ACTUAL_PREFIX_ORACLE '+n);
 assert.equal(seed.prompts.deferredExecutionContextPolicy(p,stage,operation).independentReview,true);const first=await buildPacket(seed,p,stage,operation);p=await seed.store.readProject(p.job.JOB_ID);const proposed=await submit(seed,p,first),rejection=seed.ingestion.reject(proposed.p,proposed.proposalId,{operator:'SYNTHETIC_HISTORICAL_REVIEW_OPERATOR',reason:marker+' Earlier reviewer proposed a substantive correction.',requestCorrection:true});p=await seed.store.writeProject(rejection.project,{expectedProjectRevision:proposed.p.revision,expectedStateSha256:proposed.p.projectSha256,mutationConfirmation:seed.store.mutationImpact(proposed.p,rejection.project)});assert(seed.ingestion.findRaw(p,proposed.rawId).completeRawResponse===proposed.text);const base=await capture(seed,p);
 for(const [kind,sources]of [['exposed',legacy],['clean',current]]){
