@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import {createHash} from 'node:crypto';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
+import {projectStoreRuntime} from './test-project-store-runtime.mjs';
 
 const source=fs.readFileSync(process.env.APP_SOURCE||'app-core.js','utf8'),frames=[],calls=[],nodes=new Map(),cases=[];let humanFields=[];
 function element(id,rect={top:120,bottom:164,left:0,right:300,width:300,height:44}){return {id,tagName:'BUTTON',disabled:false,hidden:false,textContent:'',isConnected:true,parentElement:null,attrs:{},className:'',classList:{add(){},remove(){},contains(){return false;}},getBoundingClientRect:()=>rect,focus(options){calls.push({type:'focus',id,options,disabled:this.disabled});},scrollIntoView(options){calls.push({type:'scroll',id,options});},setAttribute(k,v){this.attrs[k]=v;},getAttribute(k){return this.attrs[k];},removeAttribute(k){delete this.attrs[k];},querySelector(){return null;}};}
@@ -11,13 +12,13 @@ nodes.get('#operation-error').tagName='DIV';nodes.get('#operation-error').hidden
 const c=createVerifierRuntime({console,Event,dispatchEvent(){},URL,URLSearchParams,Blob,TextEncoder,TextDecoder,crypto:globalThis.crypto,structuredClone,setTimeout,clearTimeout,queueMicrotask,requestAnimationFrame:fn=>frames.push(fn),innerHeight:852,innerWidth:393,window:{innerHeight:852,innerWidth:393,scrollX:0,scrollY:0},CSS:{escape:value=>value},document:{currentScript:null,querySelector:s=>nodes.get(s)||null,querySelectorAll:s=>s==='[data-human-answer]'?humanFields:[...nodes.values()].filter(x=>x.tagName==='BUTTON'),dispatchEvent(){}}});
 vm.runInContext(source.slice(0,source.indexOf('globalThis.closedLoopAppReady=false;'))+`globalThis.ui={native:async fixture=>{
  const previous={current,engine,schema,nativeProductTests,nativeTestInputs,persistReplacement,render,runtime:globalThis.closedLoopTestRuntime};
- current=fixture.project;engine=fixture.engine;schema=globalThis.closedLoopWorkflowSchema;nativeProductTests=fixture.select;nativeTestInputs=fixture.inputs;persistReplacement=async next=>{await fixture.commit(next);current=next;};render=fixture.render;globalThis.closedLoopTestRuntime=fixture.runtime;
+ current=fixture.project;engine=fixture.engine;schema=globalThis.closedLoopWorkflowSchema;nativeProductTests=fixture.select;nativeTestInputs=fixture.inputs;persistReplacement=async (next,options)=>{await fixture.commit(next,options);current=next;};render=fixture.render;globalThis.closedLoopTestRuntime=fixture.runtime;
  try{return await runOperatorAction('Running registered application tests',()=>runNativeProductTests(Number(current.activeStage)));}finally{({current,engine,schema,nativeProductTests,nativeTestInputs,persistReplacement,render}=previous);globalThis.closedLoopTestRuntime=previous.runtime;}
 },preDelivery:async fixture=>{
  const previous={current,engine,projectStore,persistReplacement,downloadBlob,recordMobileExport,render};
  current=fixture.project;engine=fixture.engine;projectStore=fixture.store;persistReplacement=async next=>{await fixture.commit(next);current=next;};downloadBlob=fixture.download;recordMobileExport=fixture.mobile;render=fixture.render;
  try{return await runOperatorAction('Preparing and exporting pre-delivery backup',exportPreDeliveryCheckpoint);}finally{({current,engine,projectStore,persistReplacement,downloadBlob,recordMobileExport,render}=previous);}
-},answers:async()=>{const previous={current,ingestion};current={projectData:{humanInputRequests:[]}};ingestion={answerHumanInput(){throw Object.assign(new Error('Correct the required answer.'),{requestId:'REQUIRED-ANSWER'});}};try{await saveHumanAnswers();}finally{({current,ingestion}=previous);}},capture:fn=>{captureCurrentView=fn;},storage:withStorageActivity,focus:focusAfterAction,prompt:setPromptExpanded,run:runOperatorAction,fail:reportActionFailure,announce,retry:async()=>{const previous={current,savePromptRecord,render,selectedOperation};current={job:{JOB_ID:'FOCUS-DISPOSABLE'},activeStage:1};savePromptRecord=async()=>{};render=()=>{};selectedOperation=()=> 'COMPLETE';try{await prepareReplacementAttempt();await Promise.resolve();}finally{({current,savePromptRecord,render,selectedOperation}=previous);}},accept:async()=>{const previous={current,recordMobileOperation,render,replacementReview};current={job:{JOB_ID:'FOCUS-ACCEPT',CURRENT_STAGE:'STAGE 01'},activeStage:1,activeView:'Workflow',projectData:{generatedPrompts:[]},stages:{1:{gate:{complete:false}}}};recordMobileOperation=async()=>{};render=()=>{};replacementReview={};try{await finishAcceptedProposal({proposalId:'P1',rawResponseId:'R1',stage:1,continuationInstructionId:null});}finally{({current,recordMobileOperation,render,replacementReview}=previous);}}};})();`,c,{filename:'app-core.js'});
+},answers:async()=>{const previous={current,ingestion};current={projectData:{humanInputRequests:[]}};ingestion={answerHumanInput(){throw Object.assign(new Error('Correct the required answer.'),{requestId:'REQUIRED-ANSWER'});}};try{await saveHumanAnswers();}finally{({current,ingestion}=previous);}},capture:fn=>{captureCurrentView=fn;},storage:withStorageActivity,focus:focusAfterAction,prompt:setPromptExpanded,run:runOperatorAction,fail:reportActionFailure,announce,retry:async()=>{const previous={current,savePromptRecord,render,selectedOperation};current={job:{JOB_ID:'FOCUS-DISPOSABLE'},activeStage:1};savePromptRecord=async()=>{};render=()=>{};selectedOperation=()=> 'COMPLETE';try{await prepareReplacementAttempt();await Promise.resolve();}finally{({current,savePromptRecord,render,selectedOperation}=previous);}},accept:async fixture=>{const previous={current,engine,recordMobileOperation,render,replacementReview};current=fixture.project;engine=fixture.engine;recordMobileOperation=async()=>{};render=()=>{};replacementReview={};try{await finishAcceptedProposal({proposalId:'P1',rawResponseId:'R1',stage:1,continuationInstructionId:null});}finally{({current,engine,recordMobileOperation,render,replacementReview}=previous);}}};})();`,c,{filename:'app-core.js'});
 async function paint(){for(let i=0;i<3;i++){frames.splice(0).forEach(fn=>fn());await Promise.resolve();}}
 const target=element('visible-next-control');c.ui.focus(target);
 assert.deepEqual(calls.filter(x=>x.type==='scroll'),[],'FOCUS_VISIBLE_ORACLE: an already visible next action must not scroll.');
@@ -101,10 +102,12 @@ assert.ok(lateRect.bottom<=c.innerHeight,'FOCUS_LAYOUT_QUIESCENCE_ORACLE: a late
 assert.ok(calls.some(call=>call.type==='residual-scroll'&&call.id===late.id&&call.options.top>0),'FOCUS_LAYOUT_QUIESCENCE_DIRECTION_ORACLE: late-layout correction must move forward, never upward');
 cases.push({caseId:'FOCUS-LAYOUT-QUIESCENCE-AFTER-LATE-FRAME',result:'PASS',bottomAfterCorrection:lateRect.bottom,viewportHeight:c.innerHeight});calls.length=0;delete c.window.scrollBy;
 const forwardAbove=element('forward-above',{top:-220,bottom:-176,left:0,right:300,width:300,height:44});c.ui.focus(forwardAbove);assert.equal(calls.some(x=>x.type==='scroll'),false,'FOCUS_FORWARD_UP_ORACLE: ordinary forward progress must not auto-scroll upward.');cases.push({caseId:'FOCUS-NO-UPWARD-SCROLL-FOR-FORWARD-PROGRESS',result:'PASS'});calls.length=0;
+// Use the current production stage owner and authoritative blank-state shape.
+const acceptanceRuntime=projectStoreRuntime({storageWorker:false});
 // UX-003: acceptance is forward progress, not an operator-requested return.
 // The real browser journey separately requires the sticky action to be visible.
 for(const [caseId,rect] of [['FOCUS-ACCEPTANCE-VISIBLE',{top:100,bottom:253,width:347,height:153}],['FOCUS-ACCEPTANCE-NO-UPWARD-RETURN',{top:-3412.875,bottom:-3259.875,width:347,height:153}]] ){
- const acceptedNext=element('next-required-action',rect);nodes.set('#next-required-action',acceptedNext);await c.ui.accept();
+ const acceptedNext=element('next-required-action',rect);nodes.set('#next-required-action',acceptedNext);await c.ui.accept({project:acceptanceRuntime.core.createBlankState('FOCUS-ACCEPT-'+caseId),engine:acceptanceRuntime.engine});
  assert.equal(calls.some(call=>call.type==='scroll'||call.type==='residual-scroll'),false,'FOCUS_ACCEPTANCE_DIRECTION_ORACLE: forward acceptance was relabeled as an explicit return.');
  assert.equal(calls.find(call=>call.type==='focus'&&call.id===acceptedNext.id)?.options.preventScroll,true,'FOCUS_ACCEPTANCE_TARGET_ORACLE: the next required action did not receive non-scrolling focus.');
  cases.push({caseId,result:'PASS'});calls.length=0;nodes.delete('#next-required-action');
@@ -217,16 +220,19 @@ for(const outcome of ['success-clipped','success-visible','first-commit-failure'
  }catch(error){retryFailures.push(String(error.stack||error));cases.push({caseId:'FOCUS-PREDELIVERY-CHECKPOINT-COMPLETION',outcome,result:'FAIL',commits,downloads,exports,renders,finalCaptures,error:String(error.stack||error)});}
  finally{releaseExport();releaseFirst();releaseSecond();releaseFinal();c.ui.capture(async()=>{});frames.length=0;calls.length=0;nodes.delete('#next-required-action');delete c.window.scrollBy;}
 }
+// The held commit receives the real UI command shape. A thrown worker error
+// exercises the precommit failure path; completed inconclusive runtime results
+// remain persistable under the native storage owner and are not this fault.
 for(const stage of [22,24])for(const count of [1,3])for(const outcome of ['success','runtime-failure','commit-failure']){
  frames.length=0;calls.length=0;
  const project=c.closedLoopCore.createBlankState('NATIVE-FOCUS-'+stage+'-'+count+'-'+outcome);project.activeStage=stage;project.job.CURRENT_STAGE='STAGE '+stage;
  const rect={top:920,bottom:1121,width:373,height:201},next=element('next-required-action',rect);next.tagName='DIV';nodes.set('#next-required-action',next);
  next.scrollIntoView=options=>{calls.push({type:'scroll',id:next.id,options});const distance=Math.max(0,rect.bottom-c.innerHeight);rect.top-=distance;rect.bottom-=distance;};
  c.window.scrollBy=options=>{calls.push({type:'residual-scroll',id:next.id,options});rect.top-=options.top;rect.bottom-=options.top;};
- let releaseWorker,releaseCommit,executed=0,commits=0,renders=0,recorded=0;
+ let releaseWorker,releaseCommit,executed=0,commits=0,renders=0,submittedResults=0;
  const worker=new Promise(resolve=>releaseWorker=resolve),commit=new Promise(resolve=>releaseCommit=resolve);
  const items=Array.from({length:count},(_,i)=>({testId:'NATIVE-'+i}));
- const fixture={project,select(selectedStage){assert.equal(selectedStage,stage);return items;},engine:{records:()=>items,recordId:item=>item.testId,recordApplicationNativeProductResult(_project,input){assert.equal(input.stage,stage);recorded++;}},inputs:async()=>({artifactPayload:{},canonicalPayload:{},identities:[]}),runtime:{async executeTest(){executed++;await worker;return outcome==='runtime-failure'?{status:'EXECUTION_FAILED',failure:{message:'Injected runtime failure'}}:{status:'COMPLETE',determination:'SATISFIED'};}},async commit(){commits++;await commit;if(outcome==='commit-failure')throw new Error('Injected checkpoint failure');},render(){renders++;}};
+ const fixture={project,select(selectedStage){assert.equal(selectedStage,stage);return items;},engine:{records:()=>items,recordId:item=>item.testId},inputs:async()=>({artifactPayload:{},canonicalPayload:{},identities:[]}),runtime:{async executeTest(){executed++;await worker;if(outcome==='runtime-failure')throw new Error('Injected runtime failure');return {status:'COMPLETE',determination:'SATISFIED'};}},async commit(_project,options){commits++;const command=options.nativeProductResults;assert.equal(command.stage,stage);assert.deepEqual(Array.from(command.results,row=>row.testId),items.map(item=>item.testId));assert(command.results.every(row=>row.runtimeResult.status==='COMPLETE'&&row.runtimeResult.determination==='SATISFIED'));submittedResults+=command.results.length;await commit;if(outcome==='commit-failure')throw new Error('Injected checkpoint failure');},render(){renders++;}};
  try{
   c.ui.capture(async()=>{});
   const operation=c.ui.native(fixture);await paint();
@@ -237,7 +243,7 @@ for(const stage of [22,24])for(const count of [1,3])for(const outcome of ['succe
   if(outcome==='success'){
    // Geometry changes after the first post-completion placement frame.
    frames.splice(0).forEach(fn=>fn());await Promise.resolve();rect.top=651.21875;rect.bottom=852.21875;await paint();
-   assert.equal(renders,1);assert.equal(commits,1);assert.equal(recorded,count);assert.equal(executed,count);
+   assert.equal(renders,1);assert.equal(commits,1);assert.equal(submittedResults,count);assert.equal(executed,count);
    assert.equal(calls.filter(x=>x.type==='focus').at(-1)?.id,next.id,'NATIVE_RESULT_NEXT_ACTION_ORACLE: committed native results must expose the required next action.');
    assert.ok(rect.top>=0&&rect.bottom<=c.innerHeight,'NATIVE_RESULT_NEXT_ACTION_ORACLE: the next action must remain visible after layout settles.');
    assert.ok(calls.filter(x=>x.type==='residual-scroll').every(x=>x.options.top>=0),'Native-result forward progress cannot move upward.');
@@ -245,7 +251,7 @@ for(const stage of [22,24])for(const count of [1,3])for(const outcome of ['succe
    await paint();assert.equal(renders,0);assert.equal(calls.filter(x=>x.type==='focus').at(-1)?.id,'operation-error','A failed native operation must expose recovery, not successful next-action feedback.');
    assert.equal(commits,outcome==='runtime-failure'?0:1);
    assert.equal(executed,outcome==='runtime-failure'?1:count,'The failure oracle must reach the intended runtime or commit boundary.');
-   assert.equal(recorded,outcome==='runtime-failure'?0:count,'No partial runtime result may be staged after execution failure.');
+   assert.equal(submittedResults,outcome==='runtime-failure'?0:count,'No partial runtime command may be submitted after an execution exception.');
    assert.match(nodes.get('#operation-error').textContent,outcome==='runtime-failure'?/Injected runtime failure/:/Injected checkpoint failure/,'The failure must report the injected boundary, not a fixture setup error.');
   }
   cases.push({caseId:'FOCUS-NATIVE-RESULT-COMPLETION',stage,count,outcome,result:'PASS',actualBrowser:false,executed,commits,renders});
