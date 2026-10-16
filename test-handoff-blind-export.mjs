@@ -1,12 +1,16 @@
 import assert from 'node:assert/strict';import {projectStoreRuntime,restoreArtifactFixture,hydrateRetainedPromptContexts} from './test-project-store-runtime.mjs';import {deferredReviewedPrerequisiteFixture,currentRetainedFixtureProject} from './test-fixtures.mjs';import {authorizeSyntheticHandoff} from './test-handoff-authorization.mjs';import {readStoreArchive} from './test-zip.mjs';
 export async function verifyBlindHandoffDisclosure({sourceOverrides={}}={}){
 const r=projectStoreRuntime({sourceOverrides}),prefix=deferredReviewedPrerequisiteFixture(r,'nativeStage15'),instant=prefix.archivedFixtureClockUtc;assert(instant);r.runtime.Date=class extends Date{constructor(...args){super(...(args.length?args:[instant]));}static now(){return Date.parse(instant);}};await restoreArtifactFixture(r.store,prefix.artifacts);let p=currentRetainedFixtureProject(r,prefix.project);await hydrateRetainedPromptContexts(r,p,prefix.contextFiles||[]);p=await r.store.writeProject(p,{expectedProjectRevision:0,incrementRevision:false,createOnly:true});for(let n=1;n<=12;n++)assert.equal(r.engine.gate(n,p).complete,true,'Retained genuine precursor '+n);
-// This archived fixture already accepted COMPARE. Replaying its old command
-// after fresh-store fixture seeding correctly finds an expired receipt; that
-// is not a new operator request and must not become a valid package.
+// This retained fixture already accepted COMPARE. Replay its exact expired
+// instruction at the real disclosure boundaries; a new allocation request
+// is a different action and must not stand in for retained-instruction replay.
 const unchanged=r.copy(p),before={revision:p.revision,raw:JSON.stringify(p.projectData.rawResponses),accepted:JSON.stringify(p.projectData.acceptedChanges),history:JSON.stringify(p.projectData.history)},oldPromptIds=new Set(p.projectData.generatedPrompts.map(row=>row.instructionId)),oldReservations=r.engine.records(p,'operationReservations').map(row=>({id:r.engine.recordId(row,'operationReservations'),status:r.engine.recordValue(row,'STATUS')}));
 assert(oldReservations.some(row=>row.status==='EXPIRED_BY_SCOPE'),'BLIND_RETAINED_REPLAY_SETUP_ORACLE');
-assert.throws(()=>r.prompts.reserveAndBuildPromptRecord(unchanged,13,{operation:'COMPARE'}),error=>error.message==='The authoritative external instruction was not atomically bound to its application-owned reservation transaction.','BLIND_RETAINED_REPLAY_REJECTION_ORACLE');
+const expiredComparisons=r.engine.records(p,'operationReservations').filter(row=>Number(r.engine.recordValue(row,'STAGE'))===13&&r.engine.recordValue(row,'OPERATION')==='COMPARE'&&r.engine.recordValue(row,'STATUS')==='EXPIRED_BY_SCOPE');assert.equal(expiredComparisons.length,1,'BLIND_RETAINED_REPLAY_SETUP_ORACLE');
+const expired=expiredComparisons[0],oldPrompt=p.projectData.generatedPrompts.find(row=>row.operationReservationId===r.engine.recordId(expired,'operationReservations'));assert(oldPrompt&&Number(oldPrompt.stage)===13&&oldPrompt.operation==='COMPARE'&&oldPromptIds.has(oldPrompt.instructionId),'BLIND_RETAINED_REPLAY_SETUP_ORACLE');
+assert.equal(r.prompts.promptTransportBinding(p,13,'COMPARE',oldPrompt.instructionId,oldPrompt.scope),null,'BLIND_RETAINED_REPLAY_REJECTION_ORACLE');
+const replayRequest={project:p,stage:13,operation:'COMPARE',instructionId:oldPrompt.instructionId};for(const attempt of [()=>r.store.prepareExecutionPackageReview(replayRequest),()=>r.store.createExecutionPackage(replayRequest),()=>r.store.readAuthorizedHandoffMember({...replayRequest,canonicalPath:'instruction.txt'})])await assert.rejects(attempt,error=>error.code==='EXECUTION_PACKAGE_CURRENT_PROMPT_REQUIRED','BLIND_RETAINED_REPLAY_REJECTION_ORACLE');
+assert.equal(JSON.stringify(p),JSON.stringify(unchanged),'BLIND_REPLAY_PRESERVES_SOURCE_ORACLE');
 assert.equal(p.revision,before.revision);assert.equal(JSON.stringify(p.projectData.history),before.history,'BLIND_REPLAY_PRESERVES_SOURCE_ORACLE');
 // Model the existing Refine accepted result action (app-core.js) using its
 // owning history command and exact accepted subject. This is synthetic
