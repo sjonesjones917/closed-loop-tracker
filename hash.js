@@ -66,9 +66,9 @@ function assertUnicodeScalars(value,path){
     const unit=value.charCodeAt(i);
     if(unit>=0xD800&&unit<=0xDBFF){
       const next=value.charCodeAt(i+1);
-      if(!(next>=0xDC00&&next<=0xDFFF))throw new TypeError(`Cannot canonically hash unpaired UTF-16 high surrogate at ${path}.`);
+      if(!(next>=0xDC00&&next<=0xDFFF))throw new TypeError(`Cannot canonically hash unpaired UTF-16 high surrogate at ${typeof path==='function'?path():path}.`);
       i++;
-    }else if(unit>=0xDC00&&unit<=0xDFFF)throw new TypeError(`Cannot canonically hash unpaired UTF-16 low surrogate at ${path}.`);
+    }else if(unit>=0xDC00&&unit<=0xDFFF)throw new TypeError(`Cannot canonically hash unpaired UTF-16 low surrogate at ${typeof path==='function'?path():path}.`);
   }
   return value;
 }
@@ -94,52 +94,82 @@ function canonicalDataArrayPrototype(value){
   return !!owner&&owner.value===prototype&&owner.writable===false&&owner.configurable===false&&canonicalReflectApply(canonicalFunctionToString,constructor.value,[])===canonicalNativeArraySource;
 }
 function* canonicalChunks(value){
-  // Traverse once and yield only bounded output, rather than suspending a
-  // nested generator for every delimiter at every level of accumulated data.
-  const seen=new WeakSet(),stack=[{kind:'value',value,path:'$'}];let pending='';
+  // Frames retain only structural ancestry. Diagnostic paths are materialized
+  // on refusal; successful canonical bytes never depend on a path string.
+  // Child edges snapshot the original selected local before any later mutation
+  // of an externally retained Object.keys/sort result can change diagnostics.
+  const root={kind:'value',value,parent:null,index:0,keys:null,objectKey:false,edge:null,arrayEdge:false};
+  const seen=new WeakSet(),stack=[root];let pending='',spareFrame=null,diagnosticFrame=root;
+  const diagnosticPath=()=>{
+    let frame=diagnosticFrame,suffix='';
+    while(frame.parent){
+      const parent=frame.parent;
+      suffix=(frame.objectKey?' object key':frame.arrayEdge?`[${frame.edge}]`:`.${frame.edge}`)+suffix;
+      frame=parent;
+    }
+    return '$'+suffix;
+  };
+  const diagnosticObjectKeyPath=()=>diagnosticPath()+' object key';
   while(stack.length){
-    const frame=stack.at(-1),input=frame.value,path=frame.path;
+    const frame=stack.at(-1),input=frame.value;diagnosticFrame=frame;
     if(frame.kind==='string'){
       let end=Math.min(frame.index+16384,input.length);
       if(end<input.length&&input.charCodeAt(end-1)>=0xD800&&input.charCodeAt(end-1)<=0xDBFF)end--;
-      pending+=JSON.stringify(assertUnicodeScalars(input.slice(frame.index,end),path)).slice(1,-1);frame.index=end;
-      if(end===input.length){pending+='"';stack.pop();}
-    }else if(frame.kind==='colon'){pending+=':';stack.pop();}
+      pending+=JSON.stringify(assertUnicodeScalars(input.slice(frame.index,end),diagnosticPath)).slice(1,-1);frame.index=end;
+      if(end===input.length){pending+='"';stack.pop();spareFrame=frame;}
+    }else if(frame.kind==='colon'){pending+=':';stack.pop();spareFrame=frame;}
     else if(frame.kind==='array'){
-      if(frame.index===input.length){pending+=']';seen.delete(input);stack.pop();}
-      else{const index=frame.index++,descriptor=Object.getOwnPropertyDescriptor(input,String(index));if(!descriptor||!Object.prototype.hasOwnProperty.call(descriptor,'value'))throw new TypeError(`Cannot canonically hash accessor property at ${path}[${index}].`);if(index)pending+=',';stack.push({kind:'value',value:descriptor.value,path:`${path}[${index}]`});}
+      if(frame.index===input.length){pending+=']';seen.delete(input);stack.pop();spareFrame=frame;}
+      else{
+        const index=frame.index++,descriptor=Object.getOwnPropertyDescriptor(input,String(index));
+        if(!descriptor||!Object.prototype.hasOwnProperty.call(descriptor,'value'))throw new TypeError(`Cannot canonically hash accessor property at ${diagnosticPath()}[${index}].`);
+        if(index)pending+=',';
+        const child=spareFrame||{kind:'value',value:null,parent:null,index:0,keys:null,objectKey:false,edge:null,arrayEdge:false};spareFrame=null;
+        child.kind='value';child.value=descriptor.value;child.parent=frame;child.objectKey=false;child.edge=index;child.arrayEdge=true;stack.push(child);
+      }
     }else if(frame.kind==='object'){
-      if(frame.index===frame.keys.length){pending+='}';seen.delete(input);stack.pop();}
+      if(frame.index===frame.keys.length){pending+='}';seen.delete(input);stack.pop();spareFrame=frame;}
       else{
         const key=frame.keys[frame.index++],descriptor=Object.getOwnPropertyDescriptor(input,key);
-        if(!descriptor||!Object.prototype.hasOwnProperty.call(descriptor,'value'))throw new TypeError(`Cannot canonically hash accessor property at ${path}.${key}.`);
+        if(!descriptor||!Object.prototype.hasOwnProperty.call(descriptor,'value'))throw new TypeError(`Cannot canonically hash accessor property at ${diagnosticPath()}.${key}.`);
         if(frame.index>1)pending+=',';
-        if(key.length<=16384){pending+=JSON.stringify(assertUnicodeScalars(key,`${path} object key`))+':';stack.push({kind:'value',value:descriptor.value,path:`${path}.${key}`});}
-        else{pending+='"';stack.push({kind:'value',value:descriptor.value,path:`${path}.${key}`},{kind:'colon'},{kind:'string',value:key,index:0,path:`${path} object key`});}
+        if(key.length<=16384){
+          pending+=JSON.stringify(assertUnicodeScalars(key,diagnosticObjectKeyPath))+':';
+          const child=spareFrame||{kind:'value',value:null,parent:null,index:0,keys:null,objectKey:false,edge:null,arrayEdge:false};spareFrame=null;
+          child.kind='value';child.value=descriptor.value;child.parent=frame;child.objectKey=false;child.edge=`${key}`;child.arrayEdge=false;stack.push(child);
+        }else{
+          pending+='"';
+          const child=spareFrame||{kind:'value',value:null,parent:null,index:0,keys:null,objectKey:false,edge:null,arrayEdge:false};spareFrame=null;
+          child.kind='value';child.value=descriptor.value;child.parent=frame;child.objectKey=false;child.edge=`${key}`;child.arrayEdge=false;
+          stack.push(child,{kind:'colon',value:null,parent:null,index:0,keys:null,objectKey:false,edge:null,arrayEdge:false},{kind:'string',value:key,parent:frame,index:0,keys:null,objectKey:true,edge:null,arrayEdge:false});
+        }
       }
     }else{
       stack.pop();
-      if(input===null)pending+='null';
-      else if(typeof input==='string'){if(input.length<=16384)pending+=JSON.stringify(assertUnicodeScalars(input,path));else{pending+='"';stack.push({kind:'string',value:input,index:0,path});}}
-      else if(typeof input==='boolean')pending+=input?'true':'false';
+      if(input===null){pending+='null';spareFrame=frame;}
+      else if(typeof input==='string'){
+        if(input.length<=16384){pending+=JSON.stringify(assertUnicodeScalars(input,diagnosticPath));spareFrame=frame;}
+        else{pending+='"';frame.kind='string';frame.index=0;stack.push(frame);}
+      }
+      else if(typeof input==='boolean'){pending+=input?'true':'false';spareFrame=frame;}
       else if(typeof input==='number'){
-        if(!Number.isFinite(input)||Object.is(input,-0)||!Number.isSafeInteger(input)||input<MIN_SAFE_INTEGER||input>MAX_SAFE_INTEGER)throw new TypeError(`Cannot canonically hash non-safe-integer JSON number at ${path}.`);
-        pending+=String(input);
+        if(!Number.isFinite(input)||Object.is(input,-0)||!Number.isSafeInteger(input)||input<MIN_SAFE_INTEGER||input>MAX_SAFE_INTEGER)throw new TypeError(`Cannot canonically hash non-safe-integer JSON number at ${diagnosticPath()}.`);
+        pending+=String(input);spareFrame=frame;
       }else{
-        if(typeof input!=='object')throw new TypeError(`Cannot canonically hash ${typeof input} at ${path}.`);
-        if(seen.has(input))throw new TypeError(`Cannot hash a cyclic value at ${path}.`);
+        if(typeof input!=='object')throw new TypeError(`Cannot canonically hash ${typeof input} at ${diagnosticPath()}.`);
+        if(seen.has(input))throw new TypeError(`Cannot hash a cyclic value at ${diagnosticPath()}.`);
         seen.add(input);const keys=Object.keys(input);
-        if(Object.getOwnPropertySymbols(input).length)throw new TypeError(`Cannot canonically hash symbol-keyed properties at ${path}.`);
+        if(Object.getOwnPropertySymbols(input).length)throw new TypeError(`Cannot canonically hash symbol-keyed properties at ${diagnosticPath()}.`);
         if(Array.isArray(input)){
-          if(!canonicalDataArrayPrototype(input))throw new TypeError(`Cannot canonically hash nonstandard array prototype at ${path}.`);
-          for(let index=0;index<input.length;index++)if(!Object.prototype.hasOwnProperty.call(input,index))throw new TypeError(`Cannot canonically hash sparse array at ${path}.`);
-          if(keys.some(key=>!/^(?:0|[1-9]\d*)$/.test(key)||Number(key)>=input.length))throw new TypeError(`Cannot canonically hash array with extra properties at ${path}.`);
-          pending+='[';stack.push({kind:'array',value:input,index:0,path});
+          if(!canonicalDataArrayPrototype(input))throw new TypeError(`Cannot canonically hash nonstandard array prototype at ${diagnosticPath()}.`);
+          for(let index=0;index<input.length;index++)if(!Object.prototype.hasOwnProperty.call(input,index))throw new TypeError(`Cannot canonically hash sparse array at ${diagnosticPath()}.`);
+          if(keys.some(key=>!/^(?:0|[1-9]\d*)$/.test(key)||Number(key)>=input.length))throw new TypeError(`Cannot canonically hash array with extra properties at ${diagnosticPath()}.`);
+          pending+='[';frame.kind='array';frame.index=0;frame.keys=null;stack.push(frame);
         }else{
           const prototype=Object.getPrototypeOf(input);
-          if(prototype!==Object.prototype&&prototype!==null)throw new TypeError(`Cannot canonically hash non-plain object at ${path}.`);
-          for(const key of keys)assertUnicodeScalars(key,`${path} object key`);keys.sort(keys.some(key=>/[\uD800-\uDBFF]/.test(key))?compareUnicodeScalarSequence:undefined);
-          pending+='{';stack.push({kind:'object',value:input,index:0,keys,path});
+          if(prototype!==Object.prototype&&prototype!==null)throw new TypeError(`Cannot canonically hash non-plain object at ${diagnosticPath()}.`);
+          for(const key of keys)assertUnicodeScalars(key,diagnosticObjectKeyPath);keys.sort(keys.some(key=>/[\uD800-\uDBFF]/.test(key))?compareUnicodeScalarSequence:undefined);
+          pending+='{';frame.kind='object';frame.index=0;frame.keys=keys;stack.push(frame);
         }
       }
     }

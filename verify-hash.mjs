@@ -165,6 +165,51 @@ const reject=(name,make)=>{let ok=false;try{h.stableStringify(make());}catch(e){
   finally{String.prototype.charCodeAt=original;}
   assert(inspected<=65536,`The first canonical chunk scanned ${inspected} code units of an accumulated response before yielding.`);
 }
+// A hook may retain the array returned by Object.keys. Once a property is
+// selected, its diagnostic path must use that key even if a later descriptor
+// trap or a caller between canonical chunks mutates the retained key array.
+{
+  const context=createVerifierRuntime({TextEncoder,TextDecoder,Uint8Array,Uint32Array,ArrayBuffer,DataView,Blob});
+  vm.runInContext(fs.readFileSync('hash.js','utf8'),context,{filename:'hash.js:traversal-path'});
+  const observed=vm.runInContext(`(()=>{
+    const hash=closedLoopHash,original=Object.keys;
+    let retained;
+    const subject=new Proxy({bad:undefined},{getOwnPropertyDescriptor(target,key){
+      if(retained&&key==='bad')retained[0]='changed-after-key-selection';
+      return Reflect.getOwnPropertyDescriptor(target,key);
+    }});
+    Object.keys=function(value){const keys=original(value);if(value===subject)retained=keys;return keys;};
+    let descriptorError;
+    try{Array.from(hash.canonicalChunks(subject));}
+    catch(error){descriptorError={name:error.name,message:error.message};}
+    finally{Object.keys=original;}
+    const key='k'.repeat(16381),second={[key]:undefined};
+    retained=null;
+    Object.keys=function(value){const keys=original(value);if(value===second)retained=keys;return keys;};
+    let pausedError,first;
+    try{
+      const iterator=hash.canonicalChunks(second);
+      first=iterator.next();
+      retained[0]='changed-after-canonical-yield';
+      try{Array.from(iterator);}
+      catch(error){pausedError={name:error.name,message:error.message};}
+    }finally{Object.keys=original;}
+    const boxedKey=new String(key),third={[key]:undefined};
+    Object.keys=function(value){return value===third?[boxedKey]:original(value);};
+    let boxedError,boxedFirst;
+    try{
+      const iterator=hash.canonicalChunks(third);
+      boxedFirst=iterator.next();
+      boxedKey.toString=()=> 'changed-boxed-key-after-selection';
+      try{Array.from(iterator);}
+      catch(error){boxedError={name:error.name,message:error.message};}
+    }finally{Object.keys=original;}
+    return {descriptorError,pausedError,boxedError,expectedPaused:'Cannot canonically hash undefined at $.'+key+'.',yielded:first?.done===false,boxedYielded:boxedFirst?.done===false};
+  })()`,context);
+  assert(observed.descriptorError?.name==='TypeError'&&observed.descriptorError.message==='Cannot canonically hash undefined at $.bad.','Canonical refusal path changed after descriptor key selection.');
+  assert(observed.yielded&&observed.pausedError?.name==='TypeError'&&observed.pausedError.message===observed.expectedPaused,'Canonical refusal path changed after a caller mutated the selected key across a chunk yield.');
+  assert(observed.boxedYielded&&observed.boxedError?.name==='TypeError'&&observed.boxedError.message===observed.expectedPaused,'Canonical refusal path changed after a selected boxed key changed its string coercion across a chunk yield.');
+}
 assert(h.sha256Text('')==='e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855','empty SHA-256 vector failed');
 assert(h.sha256Text('abc')==='ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad','abc SHA-256 vector failed');
 // The package compressor and digest consume the same already-encoded bytes.
