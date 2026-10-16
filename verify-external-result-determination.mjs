@@ -5,12 +5,19 @@ import {projectStoreRuntime} from './test-project-store-runtime.mjs';
 import {routingFixture} from './test-verification-routing-fixtures.mjs';
 import {recordProposal,evidence} from './test-fixtures.mjs';
 
-// This fault is the exact former favorable fallback after the four external
-// result branches. It is loaded in an isolated VM; repository source is intact.
+// Stages 12/23/24 remove the exact external-claim completion guard. Stage 22
+// instead injects a compound fault: restore a favorable observed-text fallback
+// in its application-normalized reader AND remove that completion guard. This
+// is an explicit counterfactual, not an unchanged historical reproduction. All
+// faults run in isolated VMs; repository production source remains intact.
 const source=fs.readFileSync('workflow-engine.js','utf8');
 const guard="  const completionPolicy=schema.EXTERNAL_RESULT_COMPLETION_POLICY;\n  if(completionPolicy.collections.includes(collection)&&determination===completionPolicy.completionValue&&claimed!==completionPolicy.completionValue){\n    determination=completionPolicy.unresolvedDisposition;\n    reasons.push(completionPolicy.determinationField+' must explicitly be '+completionPolicy.completionValue+' for a favorable external result; use '+completionPolicy.normalizedOutcomes.join(', ')+' to report the supported outcome.');\n  }\n";
 assert.equal(source.split(guard).length,2,'The old favorable-fallback fault anchor must be exact.');
 const faultSource=source.replace(guard,'');
+const normalizedReaderAnchor="determination=claimed;if(reasons.length&&determination==='SATISFIED')determination='UNDETERMINED';}";
+assert.equal(source.split(normalizedReaderAnchor).length,2,'The application-normalized reader fault anchor must be exact.');
+const normalizedReaderFaultSource=faultSource.replace(normalizedReaderAnchor,"determination=claimed==='UNDETERMINED'?(controlledOutcome(recordValue(record,'ACTUAL_RESULT'))||claimed):claimed;if(reasons.length&&determination==='SATISFIED')determination='UNDETERMINED';}");
+const faultIds={12:'EXTERNAL_CLAIM_COMPLETION_GUARD_REMOVED',22:'APPLICATION_NORMALIZED_READER_TEXT_FALLBACK_AND_COMPLETION_GUARD_REMOVED',23:'EXTERNAL_CLAIM_COMPLETION_GUARD_REMOVED',24:'EXTERNAL_CLAIM_COMPLETION_GUARD_REMOVED'};
 const families={12:'verification',22:'deterministicResults',23:'meaningResults',24:'adversarialResults'};
 const operations={12:'VERIFY',22:'EXECUTE_EXTERNAL_TEST',23:'COMPLETE',24:'COMPLETE'};
 const stages=[12,22,23,24];
@@ -47,8 +54,8 @@ function producerContractControls(){
 }
 
 
-function runtime(fault=false){
-  const r=projectStoreRuntime({sourceOverrides:fault?{'workflow-engine.js':faultSource}:{}});
+function runtime(fault=false,stage=null){
+  const r=projectStoreRuntime({sourceOverrides:fault?{'workflow-engine.js':stage===22?normalizedReaderFaultSource:faultSource}:{}});
   vm.runInContext(routingFixture.toString(),r.runtime);
   return r;
 }
@@ -75,7 +82,7 @@ function assertPublished(r,stage,operation,prompt=null){
 // fixture establishes a distinct run/verifier and canonical sufficient evidence;
 // its prior-stage freeze is not a real accepted ten-run journey.
 function perRunCase(fault){
-  const r=runtime(fault),e=r.engine,s=r.runtime.closedLoopWorkflowSchema,f=r.runtime.routingFixture('INDEPENDENT_AGENT_REVIEW'),p=f.p;
+  const r=runtime(fault,12),e=r.engine,s=r.runtime.closedLoopWorkflowSchema,f=r.runtime.routingFixture('INDEPENDENT_AGENT_REVIEW'),p=f.p;
   Object.assign(f.test.fields,{TEST_TYPE:'DETERMINISTIC',VERIFICATION_PHASE:'PREPRODUCT_ITERATION',EARLIEST_EXECUTABLE_STAGE:12,REQUIRED_BY_STAGE:12,PER_RUN_REQUIRED:true,FINAL_PRODUCT_REQUIRED:false,EXPECTED_RESULT:'SATISFIED',ARTIFACT_REQUIREMENTS:'NONE'});
   Object.assign(f.test,f.test.fields);e.refreshRecordHashes(f.test,'tests');
   const iteration=add(r,p,'iterations',{STATUS:'ACTIVE'},10),generator=e.registerFreshContext(p,{stage:11,externalContextIdentifier:'SYNTHETIC-RUN-GENERATOR',purpose:'GENERAL'});
@@ -109,7 +116,7 @@ function assertFinalEvidenceBindings(r,project){
 }
 
 function finalStageCase(stage,fault){
-  const r=runtime(fault),e=r.engine,s=r.runtime.closedLoopWorkflowSchema,f=r.runtime.routingFixture('INDEPENDENT_AGENT_REVIEW'),p=f.p,family=families[stage],operation=operations[stage],hash=r.runtime.closedLoopHash;
+  const r=runtime(fault,stage),e=r.engine,s=r.runtime.closedLoopWorkflowSchema,f=r.runtime.routingFixture('INDEPENDENT_AGENT_REVIEW'),p=f.p,family=families[stage],operation=operations[stage],hash=r.runtime.closedLoopHash;
   p.activeStage=stage;
   const phase={22:'FINAL_PRODUCT_DETERMINISTIC',23:'FINAL_PRODUCT_MEANING',24:'FINAL_PRODUCT_ADVERSARIAL'}[stage];
   for(const [key,value] of Object.entries({TEST_TYPE:{22:'DETERMINISTIC',23:'MEANING',24:'ADVERSARIAL'}[stage],VERIFICATION_PHASE:phase,EARLIEST_EXECUTABLE_STAGE:stage,REQUIRED_BY_STAGE:stage,EXECUTION_MODE:'INDEPENDENT_AGENT_REVIEW',REQUIRED_CAPABILITY:'independent test review',EXPECTED_RESULT:'PASS'})){f.test.fields[key]=f.test[key]=value;}
@@ -217,13 +224,24 @@ for(const stage of stages){
   for(const value of admittedValues.slice(1)){
     const result=current.evaluate(value),expected=value==='VIOLATED'?'VIOLATED':'UNDETERMINED';
     assert.equal(result.effective,expected,`Stage ${stage}: ${value} cannot become a favorable determination.`);
-    if(value!=='VIOLATED')assert(result.reasons.some(reason=>reason.includes('DETERMINATION must explicitly be SATISFIED')),`Stage ${stage}: ${value} needs actionable producer feedback.`);
-    if(stage!==12&&value!=='VIOLATED')assert(result.gateReasons.some(reason=>reason.includes('DETERMINATION must explicitly be SATISFIED')),`Stage ${stage}: ${value} must reach the stage gate.`);
+    if(stage===22){
+      // The application owns this canonical determination. Its current reader
+      // must not invent the old raw-actor completion-policy diagnostic.
+      assert.deepEqual(plain(result.reasons),[],'Stage 22: normalized non-favorable results have no legacy actor-field diagnostic.');
+      assert.equal(result.gateComplete,false,'Stage 22: every non-favorable normalized result must block progression.');
+      for(const reason of ['A deterministic finished-product verification is violated or undetermined.','deterministicResults contains a non-satisfied effective result.'])assert(result.gateReasons.includes(reason),'Stage 22: current normalized outcome must reach the stage gate.');
+      const contract=current.r.runtime.closedLoopWorkflowSchema.EXTERNAL_PRODUCT_RESULT_CONTRACT;
+      assert(contract.finding.includes('ESTABLISHES supports SATISFIED')&&contract.finding.includes('REFUTES supports VIOLATED')&&contract.finding.includes('missing support remain UNDETERMINED'),'Stage 22: producer feedback must explain the actual relation outcomes.');
+      assert(contract.partial.includes('Complete current evidence and the applicable accepted relation are required for progression.'),'Stage 22: producer feedback must explain how to resolve partial work.');
+    }else{
+      if(value!=='VIOLATED')assert(result.reasons.some(reason=>reason.includes('DETERMINATION must explicitly be SATISFIED')),`Stage ${stage}: ${value} needs actionable producer feedback.`);
+      if(stage!==12&&value!=='VIOLATED')assert(result.gateReasons.some(reason=>reason.includes('DETERMINATION must explicitly be SATISFIED')),`Stage ${stage}: ${value} must reach the stage gate.`);
+    }
     negatives.push({value,effective:result.effective});
   }
   const former=old.evaluate('UNKNOWN');
-  assert.equal(former.effective,'SATISFIED',`Stage ${stage}: former fallback must reproduce the intended false-positive target.`);
-  observations.push({stage,family:families[stage],boundary:current.boundary,conforming:'SATISFIED',negative:negatives,admissionNegatives,formerUnknown:'SATISFIED',currentUnknown:'UNDETERMINED',evidenceSufficient:true,producerDescriptorPublished:true});
+  assert.equal(former.effective,'SATISFIED',`Stage ${stage}: isolated fault must reproduce the intended false-positive target.`);
+  observations.push({stage,family:families[stage],boundary:current.boundary,faultId:faultIds[stage],conforming:'SATISFIED',negative:negatives,admissionNegatives,formerUnknown:'SATISFIED',currentUnknown:'UNDETERMINED',evidenceSufficient:true,producerDescriptorPublished:true});
   if(stage===22)observations.push({stage,caseId:'stale-external-result-prompt-recovery',...(await stalePackageControl(current))});
 }
 console.log(JSON.stringify({schema:'closed-loop-external-result-determination-regression/1',observations,producerContracts}));
