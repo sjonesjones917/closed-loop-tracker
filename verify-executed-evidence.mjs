@@ -611,7 +611,11 @@ stage03ChildConstructionControl.counterexamplesDetected.push('missing-copied-hel
     fs.writeFileSync(target,bytes);
     execFileSync('git',['add',file],{cwd:fixture});
     validateExecutionReceipt(persistedOwnReceipt,suite,evidenceFingerprint(fixture));
-    (activeFixtureInputs.includes(file)?activeFixtureSourceCases:activeHelperInputs.includes(file)?activeHelperSourceCases:governanceSourceCases).push({file,actualByteHashBound:true,changedBytesRejectActualReceipt:true,missingBytesFailHonestly:true,untrackedBytesBound:true,untrackedMutationRejectsActualReceipt:true,exactRestoreAdmitsActualReceipt:true});
+    const sourceCase={file,actualByteHashBound:true,changedBytesRejectActualReceipt:true,missingBytesFailHonestly:true,untrackedBytesBound:true,untrackedMutationRejectsActualReceipt:true,exactRestoreAdmitsActualReceipt:true};
+    // One executed byte/refusal control may support multiple declared input populations.
+    if(governedApprovalInputs.includes(file))governanceSourceCases.push({...sourceCase});
+    if(activeFixtureInputs.includes(file))activeFixtureSourceCases.push({...sourceCase});
+    if(activeHelperInputs.includes(file))activeHelperSourceCases.push({...sourceCase});
   }
   const proposalPath=governedApprovalInputs.find(file=>file.endsWith('.md'));
   assert(proposalPath,'GOVERNANCE_INPUT_ORACLE: exact approved Markdown proposal is absent.');

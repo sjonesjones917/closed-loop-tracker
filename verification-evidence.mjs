@@ -194,7 +194,16 @@ export function evidenceFingerprint(cwd=process.cwd()){
     requireEvidence(fs.realpathSync(path.join(cwd,name)).startsWith(sourceRoot),'declared governance or verifier input is outside the first-party source root');
   }
   const inputs=[...new Set([...tracked,...governed,...fs.readdirSync(cwd).filter(name=>!name.startsWith('.')&&/\.(?:m?js|html|css)$/.test(name)),...['verification-assertion-bindings.json','verification-negative-populations.json'].filter(name=>fs.existsSync(path.join(cwd,name)))])];
-  const inputSha256=Object.fromEntries(inputs.sort().map(name=>[name,sha(fs.readFileSync(path.join(cwd,name)))]));
+  // Read every selected input through EOF on every invocation; only the working
+  // byte buffer is reused. No prior digest, metadata or validation is reused.
+  const inputBuffer=Buffer.alloc(1024*1024);
+  const inputSha256=Object.fromEntries(inputs.sort().map(name=>{
+    const digest=crypto.createHash('sha256'),descriptor=fs.openSync(path.join(cwd,name),'r');
+    try{
+      for(;;){const count=fs.readSync(descriptor,inputBuffer,0,inputBuffer.length,null);if(count===0)break;digest.update(inputBuffer.subarray(0,count));}
+    }finally{fs.closeSync(descriptor);}
+    return [name,digest.digest('hex')];
+  }));
   return {sourceCommit:git(cwd,'rev-parse','HEAD'),sourceTree:git(cwd,'rev-parse','HEAD^{tree}'),sourceInputsSha256:sha(inputSha256),inputSha256,specificationSha256:inputSha256[SPECIFICATION_PATH],runtime:{node:process.version,platform:process.platform,architecture:process.arch},catalogSha256:inputSha256['verification-evidence-catalog.mjs']};
 }
 export function executionReports(stdout){
