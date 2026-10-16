@@ -2611,12 +2611,14 @@ const EXPECTED_VARIANCE_CONTRACT=freeze({
  buildIdentity:'expectedVarianceContract/1',invalidationConsequences:{current:'Missing, duplicate, mismatched test membership, source provenance, current material scope, normalized bytes or receipt makes the contract unavailable to completion/comparison. Exact lossless counterpart does not introduce a new semantic review target; direct authored contract retains its target.',historical:'Preserve original responses, records and prior checkpoints. Named activation may materialize absent legacy counterparts from verified accepted exact source without inventing historical freeze time or rationale; never repair present corrupt/stale rows as absence.'}
 });
 function normalizeExpectedVarianceContract(value,{form='EMBEDDED'}={}){
+ // The source defines nonblank by ASCII whitespace, not JavaScript trim().
+ const nonblank=v=>typeof v==='string'&&/[^\u0009-\u000d\u0020]/u.test(v);
  const issues=[];let normalized;
  if(!['EMBEDDED','CANONICAL_FIELDS'].includes(form))return {valid:false,normalized:null,issues:['Unknown expected-variance source form.']};
  if(!plain(value))return {valid:false,normalized:null,issues:['Expected variance contract must be an object.']};
  try{normalized=form==='EMBEDDED'?clone(value):{dimensions:clone(value.DIMENSIONS),allowedVariance:clone(value.ALLOWED_VARIANCE),...(Object.hasOwn(value,'RATIONALE')?{rationale:clone(value.RATIONALE)}:{})};}catch{return {valid:false,normalized:null,issues:['Expected variance contract must contain canonical JSON and its required declared fields.']};}
- if(!Array.isArray(normalized.dimensions)||!normalized.dimensions.length||normalized.dimensions.some(v=>!text(v)))issues.push('dimensions must be a nonempty array of nonempty strings.');
- if(!text(normalized.allowedVariance))issues.push('allowedVariance must be nonempty text.');
+ if(!Array.isArray(normalized.dimensions)||!normalized.dimensions.length||normalized.dimensions.some(v=>!nonblank(v)))issues.push('dimensions must be a nonempty array of nonempty strings.');
+ if(!nonblank(normalized.allowedVariance))issues.push('allowedVariance must be nonempty text.');
  if(Object.hasOwn(normalized,'rationale')&&typeof normalized.rationale!=='string')issues.push('rationale must be text when supplied.');
  return {valid:issues.length===0,normalized:issues.length?null:normalized,issues};
 }
