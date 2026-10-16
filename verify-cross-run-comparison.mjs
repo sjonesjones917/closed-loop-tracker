@@ -120,7 +120,14 @@ const comparisonMaterialityVarianceContract={dimensions:['output-result'],allowe
 
 function comparisonPhysicalManifest(){
  const files=execFileSync('git',['ls-files','-z'],{encoding:'utf8'}).split(String.fromCharCode(0)).filter(Boolean);
- return Object.fromEntries(files.map(name=>{const bytes=fs.readFileSync(name);return [name,{bytes:bytes.length,sha256:comparisonDigest(bytes),executable:Boolean(fs.statSync(name).mode&0o111)}];}));
+ const buffer=Buffer.alloc(1024*1024);
+ return Object.fromEntries(files.map(name=>{
+  const digest=createHash('sha256');let bytes=0;const descriptor=fs.openSync(name,'r');
+  try{
+   for(;;){const count=fs.readSync(descriptor,buffer,0,buffer.length,null);if(count===0)break;digest.update(buffer.subarray(0,count));bytes+=count;}
+  }finally{fs.closeSync(descriptor);}
+  return [name,{bytes,sha256:digest.digest('hex'),executable:Boolean(fs.statSync(name).mode&0o111)}];
+ }));
 }
 function comparisonSourceIdentity(){return {commit:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),tree:execFileSync('git',['rev-parse','HEAD^{tree}'],{encoding:'utf8'}).trim()};}
 function readComparisonInvocationSetup(descriptor){
