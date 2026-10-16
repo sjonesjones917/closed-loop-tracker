@@ -6,7 +6,10 @@ import {reviewProofFixture,reviewApplicabilityFixture,recordProposal,evidence} f
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {runVerifier,assertDetectedFault} from './verify-conformance-regressions.mjs';
-import {createHash} from 'node:crypto';
+import {createHash,randomUUID} from 'node:crypto';
+import {execFileSync} from 'node:child_process';
+import os from 'node:os';
+import path from 'node:path';
 
 if(process.argv.includes('--materiality-stage19-only')){const {verifyComparisonMaterialityStage19}=await import('./test-comparison-materiality-stage19.mjs');console.log(JSON.stringify(await verifyComparisonMaterialityStage19()));process.exit(0);}
 if(process.argv.includes('--materiality-retry-package-only')){const {verifyComparisonMaterialityPackage}=await import('./test-comparison-materiality-package.mjs');console.log(JSON.stringify(await verifyComparisonMaterialityPackage({stopAfterRetry:true})));process.exit(0);}
@@ -16,46 +19,53 @@ if(process.argv.includes('--projection-recovery-only')){const {verifyStage13Proj
 // Inject one fault into an in-memory module copy, never into retained source.
 // Children execute this same existing gate with hard bounds and named oracles.
 const comparisonFaults=[
- {id:'COMPARISON-MATERIALITY-ROLE-CONTRACT',file:'prompt-engine.js',from:"comparisonMode==='AUTHOR'?modeContract.collectionsByStage[Number(stage)]:modeContract.collections",to:"comparisonMode==='AUTHOR'?op.agentWritableCollections:modeContract.collections",oracle:'MATERIALITY_AUTHOR_PUBLISHED_COLLECTIONS_ORACLE',materiality:true},
- {id:'COMPARISON-MATERIALITY-UI-STALE',file:'app-core.js',from:"if(record.contextManifest?.comparisonMaterialityBinding&&!engine.comparisonMaterialityBindingCurrent(current,record.contextManifest.comparisonMaterialityBinding))return false;",to:'',oracle:'MATERIALITY_UI_STALE_PROMPT_ORACLE',materiality:true},
- {id:'COMPARISON-MATERIALITY-RETRY',file:'prompt-engine.js',from:"if([13,17,19].includes(Number(stage))&&operation==='COMPARE'&&['MATERIALITY_REVIEW','MATERIALITY_RECONCILE'].includes(comparisonMaterialityBinding?.mode)){const context=",to:'if(false){const context=',oracle:'MATERIALITY_REVIEW_RETRY_INPUT_ISOLATION_ORACLE',materiality:true},
- {id:'COMPARISON-REQUIRED-FILE-SELECTION',file:'workflow-engine.js',from:"if([13,17,19].includes(Number(stage))&&op==='COMPARE'){",to:'if(false){',oracle:'COMPARISON_AUTHOR_REQUIRED_FILES_ORACLE',artifacts:true},
- {id:'COMPARISON-MATERIALITY-SELF-EXEMPT',file:'workflow-engine.js',from:'if(materiality&&!materiality.complete)reasons.push(...materiality.reasons);',to:'if(false)reasons.push(...materiality.reasons);',oracle:'COMPARISON_AUTHOR_CANNOT_EXEMPT_ORACLE',materiality:true},
- {id:'COMPARISON-MATERIALITY-DISAGREEMENT',file:'workflow-engine.js',from:'requiresReconciliation=disagreed&&!resolved;',to:'requiresReconciliation=false;',oracle:'MATERIALITY_DISAGREEMENT_RECONCILIATION_ORACLE',materiality:true},
- {id:'COMPARISON-MATERIALITY-BINDING',file:'workflow-engine.js',from:'function comparisonMaterialityBindingCurrent(project,binding){',to:'function comparisonMaterialityBindingCurrent(project,binding){return true;',oracle:'MATERIALITY_BINDING_ORACLE',materiality:true},
- {id:'COMPARISON-MATERIALITY-AUTHOR-MODE',file:'response-ingestion.js',from:"else if(safe(envelope.records?.materialityReviews).length||stageNumber!==19&&safe(envelope.records?.semanticReviews).length)issues.push(issue('COMPARISON_MATERIALITY_MODE_REQUIRED'",to:"else if(false)issues.push(issue('COMPARISON_MATERIALITY_MODE_REQUIRED'",oracle:'COMPARISON_AUTHOR_MODE_ORACLE',materiality:true},
- {id:'ITERATION-STAGE13-ALL-MANDATORY',file:'workflow-engine.js',from:'case 13:requireAccepted();break;',to:"case 13:requireAccepted();if(mandatoryRequirements(project).some(req=>!evaluateCrossRunComparison(project).dueRequirementIds.includes(requirementId(req))))reasons.push('Controlled former all-mandatory Stage13 comparison.');break;",oracle:'STAGE13_FUTURE_GATE_ORACLE',scheduled:true},
- {id:'ITERATION-MATRIX-FIXED12',file:'workflow-engine.js',from:'const timing=testDueState(project,test,evaluationStage,{perRunOnly:true,iterationId});',to:'const timing=testDueState(project,test,12,{perRunOnly:true,iterationId});',oracle:'ITERATION_DUE_STAGE_MATRIX_ORACLE',scheduled:true},
- {id:'ITERATION-CORRECTED-ALL-MANDATORY',file:'workflow-engine.js',from:"if(mode==='CORRECTED'){",to:"if(mode==='CORRECTED'){for(const requirement of mandatoryRequirements(project,scope))if(!comparisons.some(row=>recordValue(row,'REQ_ID')===requirementId(requirement)))reasons.push('Controlled former all-mandatory comparison requirement.');",oracle:'ITERATION_FUTURE_GATE_ORACLE',scheduled:true},
- {id:'ITERATION-NO-DEFECT-ALL-MANDATORY',file:'workflow-engine.js',from:"if(comparison.clean&&defects.length===0)out.add('ROOT_CAUSE');",to:"if(comparison.clean&&comparison.dueRequirementIds.length===mandatoryRequirements(project,scopeForIteration(project,iterationId)).length&&defects.length===0)out.add('ROOT_CAUSE');",oracle:'ITERATION_FUTURE_NO_DEFECT_CONTINUATION_ORACLE',scheduled:true},
- {id:'ITERATION-CONFIRMATION-ALL-MANDATORY',file:'workflow-engine.js',from:"const ev=evaluateIteration(project,iterationId,'UNCHANGED_CONFIRMATION');",to:"for(const requirement of mandatoryRequirements(project,scopeForIteration(project,iterationId)))if(!evaluateCrossRunComparison(project,iterationId).dueRequirementIds.includes(requirementId(requirement)))reasons.push('Controlled former all-mandatory confirmation comparison.');const ev=evaluateIteration(project,iterationId,'UNCHANGED_CONFIRMATION');",oracle:'CONFIRMATION_FUTURE_GATE_ORACLE',scheduled:true},
- {id:'ITERATION-CONFIRMATION-ALL-REGRESSIONS',file:'workflow-engine.js',from:'regressions=regressionSelection.tests,regExec=currentRegressionExecutions(project,confirmationIterationId)',to:'regressions=activeRegressions(project),regExec=currentRegressionExecutions(project,confirmationIterationId)',oracle:'CONFIRMATION_FUTURE_SUMMARY_ORACLE',scheduled:true},
- {id:'ITERATION-CONVERGENCE-EARLY-FRONTIER',file:'workflow-engine.js',from:'coverage=coverageMetrics(project,iterationId,{stage:18}),material=',to:'coverage=coverageMetrics(project,iterationId),material=',oracle:'ITERATION_CONVERGENCE_FRONTIER_ORACLE',scheduled:true},
- {id:'STABILITY-REPEATED-GROUP-MAPPING',file:'workflow-engine.js',from:'REPEATED_FAILURE_GROUPS:stability.repeatedFailureGroupCount',to:'REPEATED_FAILURE_GROUPS:stability.repeatedDefectCount',oracle:'STABILITY_DEFECT_AGGREGATE_ORACLE'},
- {id:'COMPARISON-ATOMIC-DEFECT-BINDING',file:'workflow-engine.js',from:'const defectIds=sorted([...explicitDefectIds,...coacceptedDefectIds]);',to:'const defectIds=sorted(explicitDefectIds);',oracle:'COMPARISON_ATOMIC_DEFECT_HANDOFF_ORACLE'},
- {id:'COMPARISON-ATOMIC-DEFECT-MEMBERSHIP',file:'workflow-engine.js',from:"safe(change.canonicalRecordIds).includes(recordId(defect,'defects'))",to:'true',oracle:'COMPARISON_ATOMIC_HANDOFF_BINDING_ORACLE'},
- {id:'COMPARISON-ATOMIC-DEFECT-PROVENANCE',file:'workflow-engine.js',from:'change.proposalId===defect.sourceProposalId',to:'true',oracle:'COMPARISON_ATOMIC_HANDOFF_BINDING_ORACLE'},
- {id:'COMPARISON-CORRECTED-DEFECT-AUTHORING',file:'workflow-schema.js',from:"agentWritableCollections:['comparisons','defects'],allowedStageData:[]",to:"agentWritableCollections:['comparisons'],allowedStageData:[]",expectedMatches:2,oracle:'COMPARISON_ATOMIC_DEFECT_CONTRACT_ORACLE'},
- {id:'COMPARISON-PRODUCTION-BINDING',file:'workflow-engine.js',from:'evaluateCrossRunComparison,__stage13CrossRunClosureVersion:',to:'__stage13CrossRunClosureVersion:',oracle:'PRODUCTION_COMPARISON_BINDING_ORACLE'},
- {id:'COMPARISON-MISSING-TUPLE',file:'workflow-engine.js',from:"if(count!==1)reasons.push('Exactly one current verification record is required for '",to:"if(false)reasons.push('Exactly one current verification record is required for '",oracle:'Missing required run verification was not rejected.'},
- {id:'COMPARISON-MISSING-CONTRACT',file:'workflow-engine.js',from:"if(!contracts[testId])reasons.push('Test '",to:"if(false)reasons.push('Test '",oracle:'Missing frozen expected-variance contract was not rejected.'},
- {id:'COMPARISON-UNKNOWN-AUTHORIZATION',file:'workflow-engine.js',from:"if(authorizedVariance==='UNKNOWN')reasons.push('Comparison '",to:"if(false)reasons.push('Comparison '",oracle:'UNKNOWN variance authorization did not block Stage 13.'},
- {id:'COMPARISON-NONRESOLVING-DEFECT',file:'workflow-engine.js',from:"if(!supportedDefect(id,reqId))reasons.push('Comparison '",to:"if(false)reasons.push('Comparison '",oracle:'A nonexistent defect marker authorized prohibited variance.'},
- {id:'COMPARISON-MUTATING-READ',file:'workflow-engine.js',from:"const version='closed-loop-cross-run-comparison/2',reasons=[]",to:"const mutated=project.projectData.comparisons[0];if(mutated)mutated.fields.__injectedReadCount=(mutated.fields.__injectedReadCount||0)+1;const version='closed-loop-cross-run-comparison/2',reasons=[]",oracle:'Comparison evaluation rewrote an accepted record.'},
- {id:'COMPARISON-SUPERSESSION',file:'response-ingestion.js',from:"if(!schema.RECORD_SCHEMAS[item.kind])continue;",to:"if(item.kind==='comparisons'||!schema.RECORD_SCHEMAS[item.kind])continue;",oracle:'COMPARISON_REPLACEMENT_CURRENT_ORACLE'},
- {id:'VERIFICATION-INDEPENDENT-BATCH',file:'response-ingestion.js',from:"if(fieldsReplaced&&(recordsReplaced||!entries.length&&sameLane))",to:"if(operation==='VERIFY'&&sameLane||fieldsReplaced&&(recordsReplaced||!entries.length&&sameLane))",oracle:'VERIFICATION_PARTIAL_BATCH_IMPACT_ORACLE'},
- {id:'VERIFICATION-SCOPED-REFINEMENT',file:'workflow-engine.js',from:'const affected=scoped?[selected]:current.filter(sameLane),dependentWork=',to:'const affected=current.filter(sameLane),dependentWork=',oracle:'VERIFICATION_SCOPED_REFINEMENT_ORACLE'},
- {id:'VERIFICATION-INDEPENDENT-PROMPT',file:'workflow-engine.js',from:'&&(!scoped||!retainedPromptIds.has(item.instructionId||item.promptId))',to:'',oracle:'VERIFICATION_INDEPENDENT_PROVENANCE_ORACLE'},
- {id:'VERIFICATION-INDEPENDENT-PROPOSAL',file:'workflow-engine.js',from:"||!scoped&&pending.status==='ACCEPTED'",to:"||pending.status==='ACCEPTED'",oracle:'VERIFICATION_INDEPENDENT_PROVENANCE_ORACLE'},
- {id:'VERIFICATION-INTRA-STAGE-DEPENDENCY',file:'workflow-engine.js',from:'if(!changed.size||start<0)return [];',to:'if(true)return [];',oracle:'VERIFICATION_SAME_STAGE_DEPENDENCY_ORACLE'},
- {id:'COMPARISON-UNCONFIRMED-ACCEPTANCE',file:'response-ingestion.js',from:'if(impact.requiresConfirmation&&confirmation?.confirmationKey!==impact.confirmationKey)',to:'if(false)',oracle:'COMPARISON_UNCONFIRMED_ORACLE'},
- {id:'UI-ADDITIONAL-BATCH-MISLABEL',file:'app-core.js',from:"impact.replaces.length?'This will replace selected accepted work.':'This will add the proposed records.'",to:"'This will replace selected accepted work.'",oracle:'ADDITIONAL_BATCH_CONFIRMATION_ORACLE'},
- {id:'UI-SAME-STAGE-DEPENDENCY',file:'app-core.js',from:'names=impact.affected.map',to:'names=impact.affected.filter(item=>item.stage!==acceptanceStage).map',oracle:'SAME_STAGE_CONFIRMATION_ORACLE'},
- {id:'SCOPED-BATCH-DUPLICATE',file:'response-ingestion.js',from:'if(target&&seen.has(target))issues.push',to:'if(false)issues.push',oracle:'SCOPED_BATCH_DUPLICATE_ORACLE'},
+ {"id":"COMPARISON-MATERIALITY-ROLE-CONTRACT","file":"prompt-engine.js","from":"comparisonMode==='AUTHOR'?modeContract.collectionsByStage[Number(stage)]:modeContract.collections","to":"comparisonMode==='AUTHOR'?op.agentWritableCollections:modeContract.collections","oracle":"MATERIALITY_AUTHOR_PUBLISHED_COLLECTIONS_ORACLE","materiality":true},
+ {"id":"COMPARISON-MATERIALITY-UI-STALE","file":"app-core.js","from":"if(record.contextManifest?.comparisonMaterialityBinding&&!engine.comparisonMaterialityBindingCurrent(current,record.contextManifest.comparisonMaterialityBinding))return false;","to":"","oracle":"MATERIALITY_UI_STALE_PROMPT_ORACLE","materiality":true},
+ {"id":"COMPARISON-MATERIALITY-RETRY","file":"prompt-engine.js","from":"if([13,17,19].includes(Number(stage))&&operation==='COMPARE'&&['MATERIALITY_REVIEW','MATERIALITY_RECONCILE'].includes(comparisonMaterialityBinding?.mode)){const context=","to":"if(false){const context=","oracle":"MATERIALITY_REVIEW_RETRY_INPUT_ISOLATION_ORACLE","materiality":true},
+ {"id":"COMPARISON-REQUIRED-FILE-SELECTION","file":"workflow-engine.js","from":"if([13,17,19].includes(Number(stage))&&op==='COMPARE'){","to":"if(false){","oracle":"COMPARISON_AUTHOR_REQUIRED_FILES_ORACLE","artifacts":true},
+ {"id":"COMPARISON-MATERIALITY-SELF-EXEMPT","file":"workflow-engine.js","from":"if(materiality&&!materiality.complete)reasons.push(...materiality.reasons);","to":"if(false)reasons.push(...materiality.reasons);","oracle":"COMPARISON_AUTHOR_CANNOT_EXEMPT_ORACLE","materiality":true},
+ {"id":"COMPARISON-MATERIALITY-DISAGREEMENT","file":"workflow-engine.js","from":"requiresReconciliation=disagreed&&!resolved;","to":"requiresReconciliation=false;","oracle":"MATERIALITY_DISAGREEMENT_RECONCILIATION_ORACLE","materiality":true},
+ {"id":"COMPARISON-MATERIALITY-BINDING","file":"workflow-engine.js","from":"function comparisonMaterialityBindingCurrent(project,binding){","to":"function comparisonMaterialityBindingCurrent(project,binding){return true;","oracle":"MATERIALITY_BINDING_ORACLE","materiality":true},
+ {"id":"COMPARISON-MATERIALITY-AUTHOR-MODE","file":"response-ingestion.js","from":"else if(safe(envelope.records?.materialityReviews).length||stageNumber!==19&&safe(envelope.records?.semanticReviews).length)issues.push(issue('COMPARISON_MATERIALITY_MODE_REQUIRED'","to":"else if(false)issues.push(issue('COMPARISON_MATERIALITY_MODE_REQUIRED'","oracle":"COMPARISON_AUTHOR_MODE_ORACLE","materiality":true},
+ {"id":"ITERATION-STAGE13-ALL-MANDATORY","file":"workflow-engine.js","from":"case 13:{\n      requireAccepted();\n      const diagnostic=initialRunDiagnosticState(project);","to":"case 13:{\n      requireAccepted();\n      if(mandatoryRequirements(project).some(req=>!evaluateCrossRunComparison(project).dueRequirementIds.includes(requirementId(req))))reasons.push('Controlled former all-mandatory Stage13 comparison.');\n      const diagnostic=initialRunDiagnosticState(project);","oracle":"STAGE13_FUTURE_GATE_ORACLE","scheduled":true},
+ {"id":"ITERATION-MATRIX-FIXED12","file":"workflow-engine.js","from":"const timing=testDueState(project,test,evaluationStage,{perRunOnly:true,iterationId});","to":"const timing=testDueState(project,test,12,{perRunOnly:true,iterationId});","oracle":"ITERATION_DUE_STAGE_MATRIX_ORACLE","scheduled":true},
+ {"id":"ITERATION-CORRECTED-ALL-MANDATORY","file":"workflow-engine.js","from":"if(mode==='CORRECTED'){","to":"if(mode==='CORRECTED'){for(const requirement of mandatoryRequirements(project,scope))if(!comparisons.some(row=>recordValue(row,'REQ_ID')===requirementId(requirement)))reasons.push('Controlled former all-mandatory comparison requirement.');","oracle":"ITERATION_FUTURE_GATE_ORACLE","scheduled":true},
+ {"id":"ITERATION-NO-DEFECT-ALL-MANDATORY","file":"workflow-engine.js","from":"if(comparison.clean&&defects.length===0)out.add('ROOT_CAUSE');","to":"if(comparison.clean&&comparison.dueRequirementIds.length===mandatoryRequirements(project,scopeForIteration(project,iterationId)).length&&defects.length===0)out.add('ROOT_CAUSE');","oracle":"ITERATION_FUTURE_NO_DEFECT_CONTINUATION_ORACLE","scheduled":true},
+ {"id":"ITERATION-CONFIRMATION-ALL-MANDATORY","file":"workflow-engine.js","from":"const ev=evaluateIteration(project,iterationId,'UNCHANGED_CONFIRMATION');","to":"for(const requirement of mandatoryRequirements(project,scopeForIteration(project,iterationId)))if(!evaluateCrossRunComparison(project,iterationId).dueRequirementIds.includes(requirementId(requirement)))reasons.push('Controlled former all-mandatory confirmation comparison.');const ev=evaluateIteration(project,iterationId,'UNCHANGED_CONFIRMATION');","oracle":"CONFIRMATION_FUTURE_GATE_ORACLE","scheduled":true},
+ {"id":"ITERATION-CONFIRMATION-ALL-REGRESSIONS","file":"workflow-engine.js","from":"regressions=regressionSelection.tests,regExec=currentRegressionExecutions(project,confirmationIterationId)","to":"regressions=activeRegressions(project),regExec=currentRegressionExecutions(project,confirmationIterationId)","oracle":"CONFIRMATION_FUTURE_SUMMARY_ORACLE","scheduled":true},
+ {"id":"ITERATION-CONVERGENCE-EARLY-FRONTIER","file":"workflow-engine.js","from":"coverage=coverageMetrics(project,iterationId,{stage:18}),material=","to":"coverage=coverageMetrics(project,iterationId),material=","oracle":"ITERATION_CONVERGENCE_FRONTIER_ORACLE","scheduled":true},
+ {"id":"STABILITY-REPEATED-GROUP-MAPPING","file":"workflow-engine.js","from":"REPEATED_FAILURE_GROUPS:stability.repeatedFailureGroupCount","to":"REPEATED_FAILURE_GROUPS:stability.repeatedDefectCount","oracle":"STABILITY_DEFECT_AGGREGATE_ORACLE"},
+ {"id":"COMPARISON-ATOMIC-DEFECT-BINDING","file":"workflow-engine.js","from":"const defectIds=sorted([...explicitDefectIds,...coacceptedDefectIds]);","to":"const defectIds=sorted(explicitDefectIds);","oracle":"COMPARISON_ATOMIC_DEFECT_HANDOFF_ORACLE"},
+ {"id":"COMPARISON-ATOMIC-DEFECT-MEMBERSHIP","file":"workflow-engine.js","from":"    const coacceptedDefectIds=defects.filter(defect=>String(recordValue(defect,'REQ_ID')||defect.relationships?.REQ_ID||'')===reqId&&receipts.some(change=>change.proposalId===defect.sourceProposalId&&change.rawResponseId===defect.rawResponseId&&safe(change.canonicalRecordIds).includes(recordId(defect,'defects')))).map(defect=>recordId(defect,'defects'));","to":"    const coacceptedDefectIds=defects.filter(defect=>String(recordValue(defect,'REQ_ID')||defect.relationships?.REQ_ID||'')===reqId&&receipts.some(change=>change.proposalId===defect.sourceProposalId&&change.rawResponseId===defect.rawResponseId&&true)).map(defect=>recordId(defect,'defects'));","oracle":"COMPARISON_ATOMIC_HANDOFF_BINDING_ORACLE"},
+ {"id":"COMPARISON-ATOMIC-DEFECT-PROVENANCE","file":"workflow-engine.js","from":"    const coacceptedDefectIds=defects.filter(defect=>String(recordValue(defect,'REQ_ID')||defect.relationships?.REQ_ID||'')===reqId&&receipts.some(change=>change.proposalId===defect.sourceProposalId&&change.rawResponseId===defect.rawResponseId&&safe(change.canonicalRecordIds).includes(recordId(defect,'defects')))).map(defect=>recordId(defect,'defects'));","to":"    const coacceptedDefectIds=defects.filter(defect=>String(recordValue(defect,'REQ_ID')||defect.relationships?.REQ_ID||'')===reqId&&receipts.some(change=>true&&change.rawResponseId===defect.rawResponseId&&safe(change.canonicalRecordIds).includes(recordId(defect,'defects')))).map(defect=>recordId(defect,'defects'));","oracle":"COMPARISON_ATOMIC_HANDOFF_BINDING_ORACLE"},
+ {"id":"COMPARISON-CORRECTED-DEFECT-AUTHORING","file":"workflow-schema.js","from":"agentWritableCollections:['comparisons','defects'],allowedStageData:[]","to":"agentWritableCollections:['comparisons'],allowedStageData:[]","expectedMatches":2,"oracle":"COMPARISON_ATOMIC_DEFECT_CONTRACT_ORACLE"},
+ {"id":"COMPARISON-PRODUCTION-BINDING","file":"workflow-engine.js","from":"evaluateCrossRunComparison,__stage13CrossRunClosureVersion:","to":"__stage13CrossRunClosureVersion:","oracle":"PRODUCTION_COMPARISON_BINDING_ORACLE"},
+ {"id":"COMPARISON-MISSING-TUPLE","file":"workflow-engine.js","from":"if(count!==1)reasons.push('Exactly one current verification record is required for '","to":"if(false)reasons.push('Exactly one current verification record is required for '","oracle":"Missing required run verification was not rejected."},
+ {"id":"COMPARISON-MISSING-CONTRACT","file":"workflow-engine.js","from":"if(!contracts[testId])reasons.push('Test '","to":"if(false)reasons.push('Test '","oracle":"Missing frozen expected-variance contract was not rejected."},
+ {"id":"COMPARISON-UNKNOWN-AUTHORIZATION","file":"workflow-engine.js","from":"if(authorizedVariance==='UNKNOWN')reasons.push('Comparison '","to":"if(false)reasons.push('Comparison '","oracle":"UNKNOWN variance authorization did not block Stage 13."},
+ {"id":"COMPARISON-NONRESOLVING-DEFECT","file":"workflow-engine.js","from":"if(!supportedDefect(id,reqId))reasons.push('Comparison '","to":"if(false)reasons.push('Comparison '","oracle":"A nonexistent defect marker authorized prohibited variance."},
+ {"id":"COMPARISON-MUTATING-READ","file":"workflow-engine.js","from":"const version='closed-loop-cross-run-comparison/2',reasons=[]","to":"const mutated=project.projectData.comparisons[0];if(mutated)mutated.fields.__injectedReadCount=(mutated.fields.__injectedReadCount||0)+1;const version='closed-loop-cross-run-comparison/2',reasons=[]","oracle":"Comparison evaluation rewrote an accepted record."},
+ {"id":"COMPARISON-SUPERSESSION","file":"response-ingestion.js","from":"if(!schema.RECORD_SCHEMAS[item.kind])continue;","to":"if(item.kind==='comparisons'||!schema.RECORD_SCHEMAS[item.kind])continue;","oracle":"COMPARISON_REPLACEMENT_CURRENT_ORACLE"},
+ {"id":"VERIFICATION-INDEPENDENT-BATCH","file":"response-ingestion.js","from":"if(fieldsReplaced&&(recordsReplaced||!entries.length&&sameLane))","to":"if(operation==='VERIFY'&&sameLane||fieldsReplaced&&(recordsReplaced||!entries.length&&sameLane))","oracle":"VERIFICATION_PARTIAL_BATCH_IMPACT_ORACLE"},
+ {"id":"VERIFICATION-SCOPED-REFINEMENT","file":"workflow-engine.js","from":"const affected=scoped?[selected]:current.filter(sameLane),dependentWork=","to":"const affected=current.filter(sameLane),dependentWork=","oracle":"VERIFICATION_SCOPED_REFINEMENT_ORACLE"},
+ {"id":"VERIFICATION-INDEPENDENT-PROMPT","file":"workflow-engine.js","from":"&&(!scoped||!retainedPromptIds.has(item.instructionId||item.promptId))","to":"","oracle":"VERIFICATION_INDEPENDENT_PROVENANCE_ORACLE"},
+ {"id":"VERIFICATION-INDEPENDENT-PROPOSAL","file":"workflow-engine.js","from":"||!scoped&&pending.status==='ACCEPTED'","to":"||pending.status==='ACCEPTED'","oracle":"VERIFICATION_INDEPENDENT_PROVENANCE_ORACLE"},
+ {"id":"VERIFICATION-INTRA-STAGE-DEPENDENCY","file":"workflow-engine.js","from":"if(!changed.size||start<0)return [];","to":"if(true)return [];","oracle":"VERIFICATION_SAME_STAGE_DEPENDENCY_ORACLE"},
+ {"id":"COMPARISON-UNCONFIRMED-ACCEPTANCE","file":"response-ingestion.js","from":"if(impact.requiresConfirmation&&confirmation?.confirmationKey!==impact.confirmationKey)","to":"if(false)","oracle":"COMPARISON_UNCONFIRMED_ORACLE"},
+ {"id":"UI-ADDITIONAL-BATCH-MISLABEL","file":"app-core.js","from":"impact.replaces.length?'This will replace selected accepted work.':'This will add the proposed records.'","to":"'This will replace selected accepted work.'","oracle":"ADDITIONAL_BATCH_CONFIRMATION_ORACLE"},
+ {"id":"UI-SAME-STAGE-DEPENDENCY","file":"app-core.js","from":"names=impact.affected.map","to":"names=impact.affected.filter(item=>item.stage!==acceptanceStage).map","oracle":"SAME_STAGE_CONFIRMATION_ORACLE"},
+ {"id":"SCOPED-BATCH-DUPLICATE","file":"response-ingestion.js","from":"if(target&&seen.has(target))issues.push","to":"if(false)issues.push","oracle":"SCOPED_BATCH_DUPLICATE_ORACLE"}
 ];
 const selectedComparisonFault=process.argv.find(arg=>arg.startsWith('--comparison-fault='))?.split('=')[1];
 const injectedComparisonFault=selectedComparisonFault&&comparisonFaults.find(fault=>fault.id===selectedComparisonFault);
 if(selectedComparisonFault&&!injectedComparisonFault)throw new Error('Unknown comparison fault.');
+const explicitOwnerArgument=process.argv.find(arg=>arg.startsWith('--comparison-owner='))?.split('=')[1];
+const independentFaultOwnerMap={"COMPARISON-MATERIALITY-ROLE-CONTRACT":"materiality13","COMPARISON-MATERIALITY-UI-STALE":"materiality13","COMPARISON-MATERIALITY-RETRY":"materiality13","COMPARISON-REQUIRED-FILE-SELECTION":"artifacts","COMPARISON-MATERIALITY-SELF-EXEMPT":"materiality13","COMPARISON-MATERIALITY-DISAGREEMENT":"materiality13","COMPARISON-MATERIALITY-BINDING":"materiality13","COMPARISON-MATERIALITY-AUTHOR-MODE":"materiality13","ITERATION-STAGE13-ALL-MANDATORY":"scheduled","ITERATION-MATRIX-FIXED12":"scheduled","ITERATION-CORRECTED-ALL-MANDATORY":"scheduled","ITERATION-NO-DEFECT-ALL-MANDATORY":"scheduled","ITERATION-CONFIRMATION-ALL-MANDATORY":"scheduled","ITERATION-CONFIRMATION-ALL-REGRESSIONS":"scheduled","ITERATION-CONVERGENCE-EARLY-FRONTIER":"scheduled","STABILITY-REPEATED-GROUP-MAPPING":"core-model","COMPARISON-ATOMIC-DEFECT-BINDING":"core-atomic","COMPARISON-ATOMIC-DEFECT-MEMBERSHIP":"core-atomic","COMPARISON-ATOMIC-DEFECT-PROVENANCE":"core-atomic","COMPARISON-CORRECTED-DEFECT-AUTHORING":"core-atomic","COMPARISON-PRODUCTION-BINDING":"core-model","COMPARISON-MISSING-TUPLE":"core-model","COMPARISON-MISSING-CONTRACT":"core-model","COMPARISON-UNKNOWN-AUTHORIZATION":"core-model","COMPARISON-NONRESOLVING-DEFECT":"core-model","COMPARISON-MUTATING-READ":"core-model","COMPARISON-SUPERSESSION":"core-replacement","VERIFICATION-INDEPENDENT-BATCH":"core-verification","VERIFICATION-SCOPED-REFINEMENT":"core-verification","VERIFICATION-INDEPENDENT-PROMPT":"core-verification","VERIFICATION-INDEPENDENT-PROPOSAL":"core-verification","VERIFICATION-INTRA-STAGE-DEPENDENCY":"core-verification","COMPARISON-UNCONFIRMED-ACCEPTANCE":"core-replacement","UI-ADDITIONAL-BATCH-MISLABEL":"core-verification","UI-SAME-STAGE-DEPENDENCY":"core-verification","SCOPED-BATCH-DUPLICATE":"core-duplicate"};
+const faultOwner=injectedComparisonFault?independentFaultOwnerMap[injectedComparisonFault.id]:null;
+const explicitOwner=explicitOwnerArgument||faultOwner;
+if(explicitOwner&&!['materiality13','materiality17','artifacts','scheduled','core-model','core-verification','core-replacement','core-duplicate','core-atomic'].includes(explicitOwner))throw new Error('COMPARISON_OWNER_SELECTION_ORACLE');
+if(faultOwner&&explicitOwner!==faultOwner)throw new Error('COMPARISON_FAULT_OWNER_BINDING_ORACLE');
+
 const comparisonSourceHashes={},comparisonDigest=source=>createHash('sha256').update(source).digest('hex');
 function assertSourceAnchor(source,anchor){if(source.split(anchor).length!==2)throw new Error('COMPARISON_OWNER_EXPOSURE_ORACLE: exact unchanged closure anchor required.');}
 function comparisonModuleSource(file){
@@ -95,8 +105,44 @@ function assertClosedStabilityUniverse(stability,{requirementId,scheduledRequire
  assert(stability.requirementsWithCompleteAgreement===complete.length&&stability.requirementsWithDisagreement===disagreement.length&&sameIds(stability.completeAgreementRequirementIds,complete)&&sameIds(stability.disagreementRequirementIds,disagreement),'CLOSED_STABILITY_UNIVERSE_ORACLE: exact complete-agreement and disagreement populations required.');
 }
 const comparisonMaterialityVarianceContract={dimensions:['output-result'],allowedVariance:'Whitespace-only presentation differences which cannot change proposition truth.'};
-const comparisonVarianceBase=await prepareComparisonVariancePrerequisite({sourceOverrides:comparisonRuntimeSources}),comparisonVarianceAdditionalBase=await prepareComparisonVariancePrerequisite({sourceOverrides:comparisonRuntimeSources,additionalTest:true}),comparisonVarianceMaterialityBase=await prepareComparisonVariancePrerequisite({sourceOverrides:comparisonRuntimeSources,varianceContract:comparisonMaterialityVarianceContract}),comparisonVarianceScheduledBases={};
+
+function comparisonPhysicalManifest(){
+ const files=execFileSync('git',['ls-files','-z'],{encoding:'utf8'}).split(String.fromCharCode(0)).filter(Boolean);
+ return Object.fromEntries(files.map(name=>{const bytes=fs.readFileSync(name);return [name,{bytes:bytes.length,sha256:comparisonDigest(bytes),executable:Boolean(fs.statSync(name).mode&0o111)}];}));
+}
+function comparisonSourceIdentity(){return {commit:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),tree:execFileSync('git',['rev-parse','HEAD^{tree}'],{encoding:'utf8'}).trim()};}
+function readComparisonInvocationSetup(descriptor){
+ const exactKeys=(value,keys)=>value&&typeof value==='object'&&!Array.isArray(value)&&JSON.stringify(Object.keys(value).sort())===JSON.stringify([...keys].sort()),digest=value=>typeof value==='string'&&/^[a-f0-9]{64}$/.test(value),uuid=value=>typeof value==='string'&&/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(value);
+ assert(exactKeys(descriptor,['schema','invocationId','path','bytes','sha256','sourceIdentity','physicalManifestSha256'])&&descriptor.schema==='closed-loop-comparison-invocation-setup/1'&&uuid(descriptor.invocationId)&&Number.isSafeInteger(descriptor.bytes)&&descriptor.bytes>0&&digest(descriptor.sha256)&&digest(descriptor.physicalManifestSha256),'COMPARISON_SHARED_SETUP_DESCRIPTOR_ORACLE');
+ assert(exactKeys(descriptor.sourceIdentity,['commit','tree'])&&Object.values(descriptor.sourceIdentity).every(value=>typeof value==='string'&&/^[a-f0-9]{40}$/.test(value)),'COMPARISON_SHARED_SETUP_IDENTITY_ORACLE');
+ assert(typeof descriptor.path==='string'&&path.isAbsolute(descriptor.path)&&path.resolve(descriptor.path)===descriptor.path&&path.basename(descriptor.path)==='invocation-setup.json'&&path.basename(path.dirname(descriptor.path)).startsWith('closed-loop-comparison-'),'COMPARISON_SHARED_SETUP_PATH_ORACLE');
+ const file=fs.lstatSync(descriptor.path),folder=fs.lstatSync(path.dirname(descriptor.path));
+ assert(file.isFile()&&!file.isSymbolicLink()&&folder.isDirectory()&&!folder.isSymbolicLink()&&(file.mode&0o777)===0o600&&(folder.mode&0o777)===0o700,'COMPARISON_SHARED_SETUP_MODE_ORACLE');
+ const bytes=fs.readFileSync(descriptor.path);assert(bytes.length===descriptor.bytes&&comparisonDigest(bytes)===descriptor.sha256,'COMPARISON_SHARED_SETUP_BYTES_ORACLE');
+ const payload=JSON.parse(bytes);
+ assert(exactKeys(payload,['schema','invocationId','sourceIdentity','physicalSourceManifest','scope','setups'])&&payload.schema===descriptor.schema&&uuid(payload.invocationId)&&payload.invocationId===descriptor.invocationId&&JSON.stringify(payload.sourceIdentity)===JSON.stringify(descriptor.sourceIdentity)&&JSON.stringify(payload.sourceIdentity)===JSON.stringify(comparisonSourceIdentity()),'COMPARISON_SHARED_SETUP_IDENTITY_ORACLE');
+ assert(comparisonDigest(JSON.stringify(payload.physicalSourceManifest))===descriptor.physicalManifestSha256&&JSON.stringify(payload.physicalSourceManifest)===JSON.stringify(comparisonPhysicalManifest()),'COMPARISON_SHARED_SETUP_SOURCE_ORACLE');
+ assert(exactKeys(payload.setups,['base','additional','materiality','scheduled'])&&payload.setups.base&&payload.setups.additional&&payload.setups.materiality&&exactKeys(payload.setups.scheduled,['13','17','18','19','25']),'COMPARISON_SHARED_SETUP_POPULATION_ORACLE');
+ return payload;
+}
+
+const sharedSetupDescriptor=process.env.CLOSED_LOOP_COMPARISON_SETUP?JSON.parse(process.env.CLOSED_LOOP_COMPARISON_SETUP):null;
+let comparisonVarianceBase,comparisonVarianceAdditionalBase,comparisonVarianceMaterialityBase,comparisonVarianceScheduledBases;
+if(sharedSetupDescriptor){
+ assert(Boolean(explicitOwner),'COMPARISON_SHARED_SETUP_OWNER_ORACLE');
+ const payload=readComparisonInvocationSetup(sharedSetupDescriptor);
+ ({base:comparisonVarianceBase,additional:comparisonVarianceAdditionalBase,materiality:comparisonVarianceMaterialityBase,scheduled:comparisonVarianceScheduledBases}=payload.setups);
+}else{
+comparisonVarianceBase=await prepareComparisonVariancePrerequisite({sourceOverrides:comparisonRuntimeSources}),comparisonVarianceAdditionalBase=await prepareComparisonVariancePrerequisite({sourceOverrides:comparisonRuntimeSources,additionalTest:true}),comparisonVarianceMaterialityBase=await prepareComparisonVariancePrerequisite({sourceOverrides:comparisonRuntimeSources,varianceContract:comparisonMaterialityVarianceContract}),comparisonVarianceScheduledBases={};
 for(const requiredByStage of [13,17,18,19,25])comparisonVarianceScheduledBases[requiredByStage]=await prepareComparisonVariancePrerequisite({sourceOverrides:comparisonRuntimeSources,scheduledRequirement:requiredByStage===25?{VERIFICATION_PHASE:'FINAL_REPRESENTATION',EARLIEST_EXECUTABLE_STAGE:25,REQUIRED_BY_STAGE:25,PER_RUN_REQUIRED:false,FINAL_PRODUCT_REQUIRED:true,DELIVERY_REQUIRED:false}:{VERIFICATION_PHASE:'PREPRODUCT_ITERATION',EARLIEST_EXECUTABLE_STAGE:requiredByStage,REQUIRED_BY_STAGE:requiredByStage,PER_RUN_REQUIRED:true,FINAL_PRODUCT_REQUIRED:false,DELIVERY_REQUIRED:false}});
+
+}
+function createComparisonInvocationSetup(){
+ const strip=({engine,hash,schema,runtime,...value})=>value,invocationId=randomUUID(),schema='closed-loop-comparison-invocation-setup/1';
+ const payload={schema,invocationId,sourceIdentity:comparisonSourceIdentity(),physicalSourceManifest:comparisonPhysicalManifest(),scope:'Fresh baseline prerequisite state only; selected mutated owners execute their actual assertions; no mutated prerequisite admission or cold lifecycle claim.',setups:{base:strip(comparisonVarianceBase),additional:strip(comparisonVarianceAdditionalBase),materiality:strip(comparisonVarianceMaterialityBase),scheduled:Object.fromEntries(Object.entries(comparisonVarianceScheduledBases).map(([stage,value])=>[stage,strip(value)]))}};
+ const bytes=Buffer.from(JSON.stringify(payload)),folder=fs.mkdtempSync(path.join(os.tmpdir(),'closed-loop-comparison-')),file=path.join(folder,'invocation-setup.json');try{fs.writeFileSync(file,bytes,{mode:0o600});}catch(error){fs.rmSync(folder,{recursive:true,force:true});throw error;}
+ return {schema,invocationId,path:file,bytes:bytes.length,sha256:comparisonDigest(bytes),sourceIdentity:payload.sourceIdentity,physicalManifestSha256:comparisonDigest(JSON.stringify(payload.physicalSourceManifest))};
+}
 function fixture({iterationStage=10,additionalTest=false,scheduledRequirement=null,varianceContract=null,missingVarianceContractBeforeFreeze=false}={}){
  const source=scheduledRequirement?comparisonVarianceScheduledBases[scheduledRequirement.REQUIRED_BY_STAGE]:additionalTest?comparisonVarianceAdditionalBase:varianceContract!==null?comparisonVarianceMaterialityBase:comparisonVarianceBase;assert(source,'COMPARISON_VARIANCE_SCHEDULED_BASE_ORACLE');const p=engine.clone(source.p),freezeStage=iterationStage===19?17:iterationStage,runStage=iterationStage===10?11:iterationStage,verificationStage=iterationStage===10?12:iterationStage,comparisonStage=iterationStage===10?13:iterationStage,requirementId=source.requirementId,mainTestId=source.testId,additionalTestId=source.additionalTestId,test=engine.recordsForCurrentScope(p,'tests').find(row=>engine.recordId(row,'tests')===mainTestId),req=engine.recordsForCurrentScope(p,'requirements').find(row=>engine.recordId(row,'requirements')===requirementId),prop=engine.recordsForCurrentScope(p,'propositions').find(row=>engine.recordId(row,'propositions')===source.propositionId);
  assert(test&&req&&prop&&engine.expectedVarianceContractState(p,test).complete,'COMPARISON_VARIANCE_FIXTURE_CURRENT_ORACLE');
@@ -123,11 +169,13 @@ if(process.argv.includes('--variance-prerequisite-only')){
  console.log(JSON.stringify({comparisonVariancePrerequisite:true,synthetic:true,actualBrowser:false,actualExternalActor:false,fullComparisonExecuted:false,cases}));process.exit(0);
 }
 
+if(!explicitOwner){
 const tenRunPopulationFixture=await prepareTenRunPopulationFixture();
 const tenRunPopulation=verifyTenRunPopulation({fixture:()=>tenRunPopulationFixture,engine:tenRunPopulationFixture.engine,hash:tenRunPopulationFixture.hash});
 console.log(JSON.stringify({tenRunPopulation}));
 if(process.argv.includes('--ten-run-population-only'))process.exit(0);
 
+}
 // These controls exercise the real calculation/command owners using the
 // existing declared canonical comparison fixture. They do not claim that its
 // missing raw-run receipts or prior stage lineage were established by actors.
@@ -158,10 +206,25 @@ function scheduledIterationControls(){
   }
   const baseline=engine.evaluateIteration(base.p,base.iterationId,mode),evaluation=engine.evaluateIteration(f.p,f.iterationId,mode);
   assert(JSON.stringify(evaluation.reasons)===JSON.stringify(baseline.reasons),'ITERATION_FUTURE_GATE_ORACLE: a future-only requirement added an early iteration blocker.');
+  // Both genuine admitted prerequisites include the separately scheduled requirement.
+  // Their differential equality alone cannot detect a blocker shared by both copies.
+  // Pin only this fixture's real missing actor receipts/operations/correction lineage;
+  // no future-only requirement may introduce a sixth (or fourth) reason.
+  const expectedFixtureReasons=value=>[
+   'Every current run requires exactly one accepted run-bound raw response and receipt: '+value.runs.join(', ')+'.',
+   'Required stage operations are missing: '+(stage===17?'EXECUTE_RUN, VERIFY, REGRESSION, CORRECT.':'EXECUTE_RUN, VERIFY, REGRESSION_VERIFY.'),
+   ...(stage===17?['The corrected iteration must bind one distinct current prior Stage 10/17 iteration or the declared failed Stage 19 confirmation.','The corrected iteration is not bound to a current responsible correction changeset from Stage 16/17.']:[]),
+   'Every current run must retain the exact accepted proposal, original response bytes, output receipt, and matching canonical submitted fields: '+value.runs.join(', ')+'.'
+  ];
+  assert(JSON.stringify(baseline.reasons)===JSON.stringify(expectedFixtureReasons(baseline))&&JSON.stringify(evaluation.reasons)===JSON.stringify(expectedFixtureReasons(evaluation)),'ITERATION_FUTURE_GATE_ORACLE: only the explicitly declared canonical fixture limitations may block this iteration.');
+
   assert(evaluation.complete===false&&evaluation.reasons.some(reason=>reason.includes('accepted run-bound raw response')),'ITERATION_FIXTURE_LIMIT_ORACLE: canonical setup must not masquerade as an accepted actor journey.');
   if(stage===19){
    const baselineDetermination=owners.confirmationDetermination(base.p,{CONFIRMATION_ITERATION_ID:base.iterationId}),determination=owners.confirmationDetermination(f.p,{CONFIRMATION_ITERATION_ID:f.iterationId});
    assert(JSON.stringify(determination.reasons)===JSON.stringify(baselineDetermination.reasons),'CONFIRMATION_FUTURE_GATE_ORACLE');
+   const expectedConfirmationReasons=value=>[...expectedFixtureReasons(value),'Stage 19 requires a current independently bound requirement-discovery challenge.'];
+   assert(baselineDetermination.determination==='UNDETERMINED'&&determination.determination==='UNDETERMINED'&&JSON.stringify(baselineDetermination.reasons)===JSON.stringify(expectedConfirmationReasons(baseline))&&JSON.stringify(determination.reasons)===JSON.stringify(expectedConfirmationReasons(evaluation)),'CONFIRMATION_FUTURE_GATE_ORACLE: only the declared fixture and missing independent challenge may block confirmation.');
+
    const reg=record('regressions',15,{...recordProposal(schema,'regressions').fields,...future,ACTIVE_RETIRED_STATE:'ACTIVE'},'REG-SCHEDULED',engine.currentScope(f.p));f.p.projectData.regressions.push(reg);
    const regBefore=hash.sha256Value(reg),selection=engine.regressionExecutionSelection(f.p,19,{iterationId:f.iterationId,perRunOnly:true});
    assert(selection.tests.length===0&&selection.future.some(row=>row.id===reg.id),'CONFIRMATION_SCHEDULED_FIXTURE_ORACLE');
@@ -199,22 +262,25 @@ function scheduledIterationControls(){
  }
  return {scheduledIterationControls:'PASS',boundary:'actual shared matrix/comparison/gate/iteration/confirmation owners with declared canonical fixtures; no actor lifecycle, browser or durable-store claim',observations,unknownIterationOwnerControls:4,futureRegistrationsNotCountedAsSuccessful:true,sourceHashes:{...comparisonSourceHashes}};
 }
-const scheduledIterationReport=!injectedComparisonFault||injectedComparisonFault.scheduled?scheduledIterationControls():null;
+const scheduledIterationReport=(!explicitOwner||explicitOwner==='scheduled')&&(!injectedComparisonFault||injectedComparisonFault.scheduled)?scheduledIterationControls():null;
 if(scheduledIterationReport)console.log(JSON.stringify(scheduledIterationReport));
-if(process.argv.includes('--scheduled-iteration-controls')||injectedComparisonFault?.scheduled)process.exit(0);
+if(process.argv.includes('--scheduled-iteration-controls')||injectedComparisonFault?.scheduled||explicitOwner==='scheduled')process.exit(0);
 
 const {verifyComparisonMateriality}=await import('./test-comparison-materiality.mjs');
-const comparisonMateriality=!selectedComparisonFault||injectedComparisonFault.materiality?verifyComparisonMateriality({fixture,engine,prompts:globalThis.closedLoopPromptEngine,ingestion:globalThis.closedLoopResponseIngestion,schema,hash,recordProposal,evidence,appSource:comparisonModuleSource('app-core.js')}):null;
+const comparisonMateriality=(!explicitOwner||explicitOwner.startsWith('materiality'))&&(!selectedComparisonFault||injectedComparisonFault.materiality)?verifyComparisonMateriality({fixture,engine,prompts:globalThis.closedLoopPromptEngine,ingestion:globalThis.closedLoopResponseIngestion,schema,hash,recordProposal,evidence,appSource:comparisonModuleSource('app-core.js'),stageSelection:explicitOwner==='materiality13'?13:explicitOwner==='materiality17'?17:null}):null;
 if(comparisonMateriality)console.log(JSON.stringify(comparisonMateriality));
-if(!selectedComparisonFault||injectedComparisonFault?.artifacts){const {verifyComparisonArtifactInputs}=await import('./test-comparison-artifact-inputs.mjs');console.log(JSON.stringify(verifyComparisonArtifactInputs({fixture,engine,prompts:globalThis.closedLoopPromptEngine,record,hash})));}
-if(process.argv.includes('--materiality-only'))process.exit(0);
+if(explicitOwner?.startsWith('materiality'))process.exit(0);
+if((!explicitOwner||explicitOwner==='artifacts')&&(!selectedComparisonFault||injectedComparisonFault?.artifacts)){const {verifyComparisonArtifactInputs}=await import('./test-comparison-artifact-inputs.mjs');console.log(JSON.stringify(verifyComparisonArtifactInputs({fixture,engine,prompts:globalThis.closedLoopPromptEngine,record,hash})));}
+if(process.argv.includes('--materiality-only')||explicitOwner==='artifacts')process.exit(0);
+if(!explicitOwner||explicitOwner==='core-model'){
 const base=fixture();let model=engine.evaluateCrossRunComparison(base.p);assert(model.reasons.length===0,`Positive Stage 13 model failed: ${model.reasons.join(' | ')}`);assert(model.runIds.length===10&&model.requiredTupleCount===10,'Stage 13 did not derive exactly ten required run tuples.');assert(model.facts[base.requirementId].ALL_TEN_SATISFIED===true&&model.facts[base.requirementId].SATISFIED_COUNT===10,'Application did not derive all-ten satisfaction.');assert(model.facts[base.requirementId].EXPECTED_VARIANCE_CONTRACT_SHA256.length===1,'Frozen expected-variance contract hash was not bound to the comparison model.');let gate=engine.gate(13,base.p);assert(gate.complete,`Positive Stage 13 gate failed: ${gate.reasons.join(' | ')}`);const storedBefore=hash.sha256Value(base.comparison);engine.evaluateCrossRunComparison(base.p);assert(hash.sha256Value(base.comparison)===storedBefore,'Comparison evaluation rewrote an accepted record.');let derived=engine.deriveStageData(base.p,13);assert(derived.REQUIREMENTS_SATISFIED_BY_ALL_TEN.length===1&&derived.PROHIBITED_OUTPUT_VARIANCES.length===0&&derived.REQUIRED_VERIFICATION_TUPLE_COUNT===10,'Stage 13 derived data does not represent the proven ten-run comparison.');const baseStability=engine.executionStability(base.p,base.iterationId),baseReqStability=baseStability.requirementStability[base.requirementId],baseTestStability=baseStability.testStability[base.testId];assert(baseStability.runCount===10,'Shared stability evaluator did not use exactly ten current runs.');assert(baseReqStability.satisfied===10&&baseReqStability.violated===0&&baseReqStability.undetermined===0&&baseReqStability.agreementRate===1,'Ten identical requirement determinations did not produce exact 1.0 agreement.');assert(baseTestStability.satisfied===10&&baseTestStability.violated===0&&baseTestStability.undetermined===0&&baseTestStability.agreementRate===1,'Ten identical test determinations did not produce exact 1.0 agreement.');assertClosedStabilityUniverse(baseStability,base);
 
 // The defect aggregates are application calculations over an explicit
 // population, not values copied from the authored comparison prose.
-const stabilityAggregateObservations=[];
+const stabilityAggregateObservations=[],stabilityAggregateRunIds=[];
 {
  const {p,iterationId,requirementId}=fixture(),runs=engine.recordsForIteration(p,'runs',iterationId).map(row=>engine.recordId(row,'runs'));
+ stabilityAggregateRunIds.push(...runs);
  assert(runs.length===10,'STABILITY_DEFECT_FIXTURE_ORACLE');
  const empty=engine.executionStability(p,iterationId);assert(empty.totalDistinctDefects===0&&empty.repeatedDefectCount===0&&empty.repeatedFailureGroupCount===0&&empty.uniqueDefectCount===0&&Object.keys(empty.newDefectsByRun).length===0,'STABILITY_EMPTY_DEFECT_AGGREGATE_ORACLE');
  const scope=engine.scopeForIteration(p,iterationId),add=(id,runId,failure,expectation,other={})=>{const row=record('defects',13,{REQ_ID:requirementId,RUN_ID:runId,OBSERVED_FAILURE:failure,EXPECTED_CONDITION:expectation,SEVERITY:'MAJOR',STATUS:'CONFIRMED'},id,other.scope||scope);if(other.active===false)row.active=false;p.projectData.defects.push(row);return row;};
@@ -231,7 +297,7 @@ const stabilityAggregateObservations=[];
  assert(derived.STABILITY_SUMMARY.totalDistinctDefects===4&&derived.STABILITY_SUMMARY.repeatedDefectCount===2&&!Object.hasOwn(derived.STABILITY_SUMMARY,'repeatedFailureGroupCount')&&derived.STABILITY_SUMMARY.uniqueDefectCount===2,'STABILITY_DERIVED_DEFECT_SUMMARY_ORACLE');
  stabilityAggregateObservations.push({checkId:'stage13.application-defect-stability-aggregates',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:3509'],boundary:'Actual executionStability and deriveStageData from independently declared current defect population',expected,observed,passed:true,scopeLimit:'Current canonical defect population deliberately seeded; initial application freeze/reservation and shared computation are real; no external actor, prior-stage lifecycle or defect semantic confirmation claimed.'});
 }
-if(process.argv.includes('--stability-aggregate-control')){console.log(JSON.stringify({stage13StabilityAggregates:'PASS',verificationObservations:stabilityAggregateObservations}));process.exit(0);}
+if(process.argv.includes('--stability-aggregate-control')){console.log(JSON.stringify({stage13StabilityAggregates:'PASS',verificationObservations:stabilityAggregateObservations,stabilityAggregateRunIds}));process.exit(0);}
 
 {const {p}=fixture();p.projectData.verification.pop();const m=engine.evaluateCrossRunComparison(p);assert(m.reasons.some(reason=>reason.includes('found 0')),'Missing required run verification was not rejected.');}
 {const {p}=fixture();const duplicate=JSON.parse(JSON.stringify(p.projectData.verification[0]));duplicate.id='VERIFY-STAGE17-DUPLICATE';duplicate.fields.VERIFICATION_ID=duplicate.VERIFICATION_ID='VERIFY-STAGE17-DUPLICATE';p.projectData.verification.push(duplicate);const m=engine.evaluateCrossRunComparison(p);assert(m.reasons.some(reason=>reason.includes('found 2')),'Duplicate required run verification was not rejected.');}
@@ -241,7 +307,7 @@ if(process.argv.includes('--stability-aggregate-control')){console.log(JSON.stri
 {const {p,iterationId,testId,requirementId,scheduledRequirementId,scheduledTestId}=fixture();const row=p.projectData.verification[0];row.fields.OBSERVED_RESULT=row.OBSERVED_RESULT='VIOLATED';row.fields.DETERMINATION=row.DETERMINATION='VIOLATED';engine.refreshRecordHashes(row,'verification');const g=engine.gate(13,p),m=engine.evaluateCrossRunComparison(p),stability=engine.executionStability(p,iterationId),req=stability.requirementStability[requirementId],test=stability.testStability[testId];assert(m.facts[requirementId].ANY_VIOLATION===true,'Application did not derive a violated run.');assert(!g.reasons.some(reason=>reason.includes('Derived comparison contains a violation')),'Legacy Stage 13 logic still blocks any violated run instead of routing it forward.');assert(req.satisfied===9&&req.violated===1&&req.undetermined===0&&req.agreementRate===0.9,'Nine-of-ten requirement agreement with one violation did not produce exact 0.9 agreement.');assert(test.satisfied===9&&test.violated===1&&test.undetermined===0&&test.agreementRate===0.9,'Nine-of-ten test agreement with one violation did not produce exact 0.9 agreement.');assertClosedStabilityUniverse(stability,{requirementId,scheduledRequirementId,scheduledTestId},true);}
 {const {p,iterationId,testId,requirementId,scheduledRequirementId,scheduledTestId}=fixture();const row=p.projectData.verification[0];row.fields.OBSERVED_RESULT=row.OBSERVED_RESULT='UNDETERMINED';row.fields.DETERMINATION=row.DETERMINATION='UNDETERMINED';engine.refreshRecordHashes(row,'verification');const g=engine.gate(13,p),stability=engine.executionStability(p,iterationId),req=stability.requirementStability[requirementId],test=stability.testStability[testId];assert(!g.complete&&g.blocked&&g.reasons.some(reason=>reason.includes('application-derived UNDETERMINED')),'UNDETERMINED run truth did not fail closed at Stage 13.');assert(req.satisfied===9&&req.violated===0&&req.undetermined===1&&req.agreementRate===0.9,'Nine-of-ten requirement agreement with one undetermined result did not produce exact 0.9 agreement.');assert(test.satisfied===9&&test.violated===0&&test.undetermined===1&&test.agreementRate===0.9,'Nine-of-ten test agreement with one undetermined result did not produce exact 0.9 agreement.');assertClosedStabilityUniverse(stability,{requirementId,scheduledRequirementId,scheduledTestId},true);}
 
-console.log(JSON.stringify({controllerStage:'17',applicationStage:'13',crossRunComparison:'PASS',requiredRunCount:10,requiredTupleCount:10,expectedVarianceContractBound:true,applicationOwnedAggregateFacts:true,verificationObservations:stabilityAggregateObservations,stabilityArithmetic:{tenOfTen:1,nineOfTen:0.9,violationCountExact:true,undeterminedCountExact:true,closedAgreementUniverse:true},prohibitedVarianceDefectHandoffEnforced:true,unknownVarianceBlocked:true,undeterminedTruthBlocked:true,violatedTruthRoutedForward:true,noRunOrEvidenceDiscarded:true,isolatedDisposableProject:true,closureVersion:engine.__stage13CrossRunClosureVersion}));
+console.log(JSON.stringify({controllerStage:'17',applicationStage:'13',crossRunComparison:'PASS',requiredRunCount:10,requiredTupleCount:10,expectedVarianceContractBound:true,applicationOwnedAggregateFacts:true,verificationObservations:stabilityAggregateObservations,stabilityAggregateRunIds,stabilityArithmetic:{tenOfTen:1,nineOfTen:0.9,violationCountExact:true,undeterminedCountExact:true,closedAgreementUniverse:true},prohibitedVarianceDefectHandoffEnforced:true,unknownVarianceBlocked:true,undeterminedTruthBlocked:true,violatedTruthRoutedForward:true,noRunOrEvidenceDiscarded:true,isolatedDisposableProject:true,closureVersion:engine.__stage13CrossRunClosureVersion}));
 
 
 // These fixtures use the production freeze/reservation builders for each
@@ -273,6 +339,7 @@ console.log(JSON.stringify({caseId:'COMPARISON-ITERATION-POLICY',result:'PASS',s
 // Scope-level acceptance must replace only the same logical observation while
 // retaining accepted independent cells. Exercise real response preparation and
 // commit, not an assignment that bypasses the transaction boundary.
+}
 const ingestion=globalThis.closedLoopResponseIngestion,prompts=globalThis.closedLoopPromptEngine;
 function prepareObservation(project,{stage,operation,collection,rows,label,scope={},expectValid=true,additionalRecords={}}){
  const context=engine.preparePromptContext(project,stage,{operation,scope}),prompt=prompts.buildPromptRecord(stage,project,context.options);project.projectData.generatedPrompts.push(prompt);
@@ -283,6 +350,7 @@ function prepareObservation(project,{stage,operation,collection,rows,label,scope
 function comparisonProposal(label,authorized='TRUE',requirementId){
  return recordProposal(schema,'comparisons',{tempKey:label,relationships:{REQ_ID:{recordId:requirementId}},overrides:{RUN_DETERMINATIONS:'All ten current runs SATISFIED.',INTERPRETATION_VARIANCE:'NONE',OUTPUT_VARIANCE:'NONE',AUTHORIZED_VARIANCE:authorized,INCONCLUSIVE_TESTS:'NONE',REPEATED_FAILURE_PATTERNS:'NONE',UNIQUE_FAILURES:'NONE',CORRECTNESS_AFFECTING_VARIANCE:'FALSE',EVIDENCE:'All ten preserved current verification observations: '+label}});
 }
+if(!explicitOwner||explicitOwner==='core-verification'){
 for(const iterationStage of [10,17,19]){
  const f=fixture({additionalTest:true,iterationStage}),stage=iterationStage===10?12:iterationStage;let p=f.p;
  for(let number=1;number<stage;number++){p.stages[number].status='COMPLETE';p.stages[number].gate={complete:true,blocked:false,reasons:[]};}
@@ -329,6 +397,8 @@ for(const iterationStage of [10,17,19]){
  }
  console.log(JSON.stringify({caseId:'VERIFICATION-INDEPENDENT-PARTIAL-BATCHES',iterationStage,stage,result:'PASS',synthetic:true,actualBrowser:false}));
 }
+}
+if(!explicitOwner||explicitOwner==='core-replacement'){
 for(const iterationStage of [10,17,19]){
  const f=fixture({iterationStage}),stage=f.comparisonStage;let p=f.p;
  for(let number=1;number<stage;number++){p.stages[number].status='COMPLETE';p.stages[number].gate={complete:true,blocked:false,reasons:[]};}
@@ -352,6 +422,8 @@ for(const iterationStage of [10,17,19]){
  console.log(JSON.stringify({caseId:'COMPARISON-REPLACEMENT-ACCEPTANCE',iterationStage,stage,result:'PASS',synthetic:true,actualBrowser:false}));
 }
 
+}
+if(!explicitOwner||explicitOwner==='core-duplicate'){
 {
  const f=fixture();f.p.projectData.comparisons=[];f.p.projectData.acceptedChanges=f.p.projectData.acceptedChanges.filter(change=>change.changeId!=='CHANGE-STAGE17-COMPARE');
  const duplicate=prepareObservation(f.p,{stage:f.comparisonStage,operation:'COMPARE',collection:'comparisons',rows:[comparisonProposal('duplicate-one','TRUE',f.requirementId),comparisonProposal('duplicate-two','TRUE',f.requirementId)],label:'duplicate-targets',expectValid:false});
@@ -361,6 +433,8 @@ for(const iterationStage of [10,17,19]){
  console.log(JSON.stringify({caseId:'SCOPED-BATCH-DUPLICATE',result:'PASS',synthetic:true,actualBrowser:false}));
 }
 
+}
+if(!explicitOwner||explicitOwner==='core-atomic'){
 // A newly reported defect has no canonical ID before response allocation.
 // Its exact atomic acceptance is the relationship authority, not a guessed ID.
 for(const iterationStage of [10,17,19]){
@@ -389,25 +463,27 @@ for(const iterationStage of [10,17,19]){
  console.log(JSON.stringify({caseId:'COMPARISON-ATOMIC-DEFECT-HANDOFF',iterationStage,stage,result:'PASS',synthetic:true,actualBrowser:false,acceptedDefectId:canonicalId,notClean:true,authoredFieldsPreserved:true}));
 }
 
+}
+if(explicitOwner?.startsWith('core-'))process.exit(0);
+
 if(!selectedComparisonFault&&!process.argv.includes('--comparison-control')){
- const rawRuns=[],faultResults=[],started=Date.now(),suiteBoundMs=180000;
- const execute=async args=>{
-  const remaining=suiteBoundMs-(Date.now()-started);
-  assert(remaining>0,'COMPARISON_FAULT_SUITE_DEADLINE_ORACLE: fault matrix exceeded its hard bound.');
-  const child=(await runVerifier(process.execPath,['verify-cross-run-comparison.mjs',...args],{encoding:'utf8',timeout:Math.min(15000,remaining),maxBuffer:16*1024*1024,killSignal:'SIGKILL'}));
-  const run={command:[process.execPath,'verify-cross-run-comparison.mjs',...args],exitCode:child.status,signal:child.signal,error:child.error?String(child.error):null,stdout:child.stdout||'',stderr:child.stderr||''};rawRuns.push(run);
-  assert(!run.error&&!run.signal,'COMPARISON_FAULT_EXECUTION_ORACLE: a timeout or execution failure is not fault detection.');return run;
+ const setup=createComparisonInvocationSetup(),rawRuns=[],faultResults=[],restoredOwners=['materiality13','materiality17','artifacts','scheduled','core-model','core-verification','core-replacement','core-duplicate','core-atomic'],started=Date.now(),suiteBoundMs=180000;
+ const execute=async(args,operationOwner,index)=>{
+  const remaining=suiteBoundMs-(Date.now()-started);assert(remaining>0,'COMPARISON_FAULT_SUITE_DEADLINE_ORACLE: fault matrix exceeded its hard bound.');
+  const child=await runVerifier(process.execPath,['verify-cross-run-comparison.mjs',...args],{timeout:Math.min(15000,remaining),maxBuffer:16*1024*1024,env:{CLOSED_LOOP_COMPARISON_SETUP:JSON.stringify(setup)}});
+  const run={command:[process.execPath,'verify-cross-run-comparison.mjs',...args],operationOwner,setupSha256:setup.sha256,exitCode:child.status,signal:child.signal,error:child.error?String(child.error):null,stdout:child.stdout||'',stderr:child.stderr||''};rawRuns[index]=run;
+  assert(!run.error&&!run.signal&&child.outcome!=='TIMEOUT','COMPARISON_FAULT_EXECUTION_ORACLE: a timeout or execution failure is not fault detection.');return run;
  };
  try{
-  for(const fault of comparisonFaults){
-   const run=(await execute(['--comparison-fault='+fault.id]));
-   assertDetectedFault(run,fault.oracle,'COMPARISON_FAULT_DETECTION_ORACLE: '+fault.id+' did not fail at its intended invariant.');
-   faultResults.push({faultId:fault.id,owner:'production',file:fault.file,originalSha256:comparisonSourceHashes[fault.file],injectedSha256:comparisonDigest(fs.readFileSync(fault.file,'utf8').replace(fault.from,fault.to)),caughtBy:fault.oracle,result:'PASS'});
-  }
-  const restored=(await execute(['--comparison-control']));assert(restored.exitCode===0,'COMPARISON_RESTORED_CONTROL_ORACLE: unchanged implementation did not return to green.');
-  for(const [file,digest] of Object.entries(comparisonSourceHashes))assert(comparisonDigest(fs.readFileSync(file,'utf8'))===digest,'COMPARISON_SOURCE_RESTORED_ORACLE: retained source changed during fault injection.');
-  console.log(JSON.stringify({caseId:'COMPARISON-IMPLEMENTATION-FAULTS',result:'PASS',synthetic:true,actualBrowser:false,childBoundSeconds:15,suiteBoundSeconds:180,faults:faultResults,rawRuns,sourceRestored:true}));
- }catch(error){console.log(JSON.stringify({caseId:'COMPARISON-IMPLEMENTATION-FAULTS',result:'FAIL',faults:faultResults,rawRuns,failure:String(error.stack||error)}));throw error;}
+  async function phase(entries,offset,work,concurrency=2){let next=0,failure=null;await Promise.allSettled(Array.from({length:concurrency},async()=>{while(!failure&&next<entries.length){const local=next++;try{await work(entries[local],offset+local);}catch(error){failure=error;}}}));if(failure)throw failure;}
+  await phase(comparisonFaults,0,async(fault,index)=>{const operationOwner=independentFaultOwnerMap[fault.id],run=await execute(['--comparison-fault='+fault.id],operationOwner,index);assertDetectedFault(run,fault.oracle,'COMPARISON_FAULT_DETECTION_ORACLE: '+fault.id+' did not fail at its intended invariant.');faultResults[index]={faultId:fault.id,owner:'production',operationOwner,file:fault.file,originalSha256:comparisonSourceHashes[fault.file],injectedSha256:comparisonDigest(fs.readFileSync(fault.file,'utf8').replace(fault.from,fault.to)),caughtBy:fault.oracle,result:'PASS'};});
+  await phase(restoredOwners,comparisonFaults.length,async(owner,index)=>{const restored=await execute(['--comparison-control','--comparison-owner='+owner],owner,index);assert(restored.exitCode===0,'COMPARISON_RESTORED_CONTROL_ORACLE: '+owner+' did not return to green.');},1);
+  for(const[file,digest]of Object.entries(comparisonSourceHashes))assert(comparisonDigest(fs.readFileSync(file,'utf8'))===digest,'COMPARISON_SOURCE_RESTORED_ORACLE: retained source changed during fault injection.');
+  readComparisonInvocationSetup(setup);fs.rmSync(path.dirname(setup.path),{recursive:true,force:true});
+  assert(rawRuns.length===45&&Date.now()-started<=suiteBoundMs,'COMPARISON_COMPLETE_MATRIX_ORACLE');
+  console.log(JSON.stringify({caseId:'COMPARISON-IMPLEMENTATION-FAULTS',result:'PASS',synthetic:true,actualBrowser:false,childBoundSeconds:15,suiteBoundSeconds:180,elapsedMs:Date.now()-started,maxConcurrentChildren:2,restoredConcurrency:1,temporarySetupRemoved:true,faults:faultResults,rawRuns,restoredOwners,setup,sourceRestored:true}));
+ }catch(error){console.log(JSON.stringify({caseId:'COMPARISON-IMPLEMENTATION-FAULTS',result:'FAIL',faults:faultResults,rawRuns,setup,failure:String(error.stack||error)}));throw error;}
+ finally{fs.rmSync(path.dirname(setup.path),{recursive:true,force:true});}
 }
 
 // Recovery runs once in the default parent, never in each injected-fault child.
