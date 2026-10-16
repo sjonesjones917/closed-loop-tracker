@@ -1617,7 +1617,13 @@ function historicalProjectionConsistent(project,error){
  if(typeof saved!=='number')return false;
  const engine=globalThis.closedLoopWorkflowEngine,iterationId=engine.evaluateCrossRunComparison(project).iterationId,stability=engine.executionStability(project,iterationId);
  if(saved!==stability.repeatedDefectCount||saved===stability.repeatedFailureGroupCount)return false;
+ const retained=project.projectData?.applicationProjection;
+ if(retained?.receipt?.derivationId!==globalThis.closedLoopWorkflowSchema.PROJECT_PROJECTION_DERIVATION_CONTRACT.id||!validateProjectIntegrity(project,{verifyDerived:false}).valid)return false;
  const corrected=clone(project);corrected.stages[13].derivedData.REPEATED_FAILURE_GROUPS=stability.repeatedFailureGroupCount;
+ // Bind only this counterfactual clone's one corrected output to its retained
+ // observation epoch. The original receipt and stored project remain unchanged.
+ const canonicalInput=engine.applicationProjectionInput(corrected,retained.observedAt,{observations:retained.inputObservations});
+ corrected.projectData.applicationProjection.receipt=globalThis.closedLoopWorkflowSchema.createApplicationDerivationReceipt({derivationKey:'project.currentProjection',canonicalInput,sourceRecordHashes:canonicalInput.sourceBinding.records,output:engine.applicationProjectionOutput(corrected)});
  return validateProjectIntegrity(corrected).valid||(observedAt!==null&&validateProjectIntegrity(corrected,{projectionObservedAt:observedAt}).valid);
 }
 function assertRecoveryCompatibility(project){return withImportDigestScope(project,()=>assertRecoveryCompatibilityCurrent(project));}
