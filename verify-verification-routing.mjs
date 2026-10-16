@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {projectStoreRuntime,bindAcceptanceUi,bindHandoffReviewUiState} from './test-project-store-runtime.mjs';
 import {routingFixture,completedReport} from './test-verification-routing-fixtures.mjs';
 import {testIrManifestedEnvironment} from './test-test-ir-native-identity.mjs';
+import {testIrAuthorPrerequisite} from './test-test-ir-author-prerequisite.mjs';
 import {isolatedVerifierWorkerClass} from './verifier-runtime.mjs';
 import {scalarFor,recordProposal,canonicalFixtureRecord,reviewApplicabilityFixture,reviewProofFixture,evidence,acceptPrerequisite,stage01AcceptanceFixture,boundedSearchProposal,registerFixtureSourceSearchCapability,stage04AcceptanceFixture} from './test-fixtures.mjs';
 
@@ -294,11 +295,31 @@ await check('Stage 22 UI executes every ready native test once and excludes futu
 });
 await check('Stage 24 UI executes actual adversarial Test IR and owns only Stage 24 results and observations',async()=>{
  for(const outcome of ['SATISFIED','VIOLATED']){
-  const f=t.routingFixture();f.p.activeStage=24;
+  let f=t.routingFixture();
+  let proofSubject=null,restoreClock=null;
+  if(outcome==='VIOLATED'){
+   // Use the maintained accepted Stage1–5 source, not forced completed gates.
+   // Its exact proposition concerns the delivered VERIFIED file, so the proof
+   // control executes that proposition's native file assertion.
+   restoreClock=t.Date;const retained=await testIrAuthorPrerequisite(r),p=retained.p,schema=t.closedLoopWorkflowSchema,runtime={engine:e,schema,prompts:r.prompts,ingestion:r.ingestion};
+   proofSubject=e.recordsForCurrentScope(p,'propositions')[0];assert(proofSubject,'NATIVE_STAGE24_CANONICAL_PROPOSITION_ORACLE');
+   for(const family of ['tests','proofExpressions'])for(const row of e.recordsForCurrentScope(p,family)){row.active=false;e.refreshRecordHashes(row,family);}
+   const fields={...f.test.fields,REQ_ID:e.recordValue(proofSubject,'REQUIREMENT_ID'),EXECUTABLE_SPEC:{version:'closed-loop-test-spec/1',steps:[{op:'LOAD_ARTIFACT',binding:'FILE'},{op:'READ_BYTES'},{op:'DECODE_UTF8'},{op:'ASSERT_EQ',value:'VERIFIED\n'}]},EXECUTABLE_INPUT_BINDINGS:{FILE:{kind:'ARTIFACT',filename:'result.txt'}},TARGET_PROPOSITION_IDS:[proofSubject.id],TEST_ROLE:'REQUIRED_PROOF',TEST_PROPOSITION_TEXT:e.recordValue(proofSubject,'PROPOSITION_TEXT'),SEMANTIC_COVERAGE_DISPOSITION:'EQUIVALENT'};
+   const test=canonicalFixtureRecord(runtime,p,'tests',fields,{stage:6,scope:{instructionVersion:null,productId:null,productVersion:null},relationships:{REQ_ID:fields.REQ_ID}});f={p,test,product:null};
+  }
+  f.p.activeStage=24;
   for(const [key,value]of Object.entries({TEST_TYPE:'ADVERSARIAL',VERIFICATION_PHASE:'FINAL_PRODUCT_ADVERSARIAL',EARLIEST_EXECUTABLE_STAGE:24,REQUIRED_BY_STAGE:24})) {f.test.fields[key]=value;f.test[key]=value;}
-  if(outcome==='VIOLATED'){f.test.fields.EXECUTABLE_SPEC.steps[1].value='CONTROLLED_DIFFERENT_PROJECT_ID';f.test.EXECUTABLE_SPEC=f.test.fields.EXECUTABLE_SPEC;}
   f.test.fields.EXECUTABLE_SPEC_SHA256=f.test.EXECUTABLE_SPEC_SHA256=h.sha256Value(rt.normalizeSpec(f.test.fields.EXECUTABLE_SPEC));
-  e.refreshRecordHashes(f.test,'tests');await registerBytes(f.p,'Actual final product bytes','product.json',{productId:f.product.id});
+  e.refreshRecordHashes(f.test,'tests');
+  // Import an actual independent review of the exact current test/expression.
+  if(proofSubject){
+   const schema=t.closedLoopWorkflowSchema,runtime={engine:e,schema,prompts:r.prompts,ingestion:r.ingestion},scope={...e.currentScope(f.p),instructionVersion:null,productId:null,productVersion:null},node={type:'LEAF',testId:f.test.id,requiredDisposition:'SATISFIED',truthExtraction:'ACCEPTED_ENTAILMENT',evidenceClasses:['OBSERVATION_RECORD','ACCEPTED_ENTAILMENT'],scopeBinding:'CURRENT'};
+   canonicalFixtureRecord(runtime,f.p,'proofExpressions',{TARGET_PROPOSITION_ID:proofSubject.id,PROPOSED_EXPRESSION:node,NORMALIZED_EXPRESSION:node,SEMANTIC_RATIONALE:'The exact delivered-file bytes are the controlling proposition.'},{scope,relationships:{TARGET_PROPOSITION_ID:proofSubject.id}});
+   reviewProofFixture(runtime,f.p);
+   f.product=canonicalFixtureRecord(runtime,f.p,'products',{PRODUCT_VERSION:'PRODUCT-V1',STATUS:'COMPLETED'},{stage:21});f.product.completionState='COMPLETED';e.refreshRecordHashes(f.product,'products');
+   f.p.job.CURRENT_PRODUCT_ID=f.product.id;f.p.job.CURRENT_PRODUCT_VERSION='PRODUCT-V1';
+  }
+  await registerBytes(f.p,'Actual final product bytes',proofSubject?'result.txt':'product.json',{productId:f.product.id});
   const initial=await r.store.writeProject(f.p,copy({expectedProjectRevision:0,createOnly:true,incrementRevision:false}));t.current=initial;t.projects=copy([initial]);
   assert.equal(t.nativeProductTests(24).length,1,'NATIVE_STAGE24_ROUTE_ORACLE: the declared native adversarial operation must have one runnable test.');
   const worker=t.Worker;const {isolatedVerifierWorkerClass}=await import('./verifier-runtime.mjs');const NativeWorker=isolatedVerifierWorkerClass();t.Worker=class extends NativeWorker{set onmessage(handler){this.receive=handler;}get onmessage(){return event=>this.receive?.({data:copy(event.data)});}};
@@ -312,25 +333,25 @@ await check('Stage 24 UI executes actual adversarial Test IR and owns only Stage
   const saved=await r.store.readProject(t.current.job.JOB_ID),result=saved.projectData.adversarialResults.at(-1),observation=saved.projectData.observationRecords.at(-1),binding=JSON.parse(e.recordValue(observation,'RAW_OR_NATIVE_PROVENANCE'));
   assert(result,'NATIVE_STAGE24_RESULT_ORACLE: the UI must persist an actual adversarial result.');assert.equal(result.stage,24);assert.equal(e.recordValue(result,'APPLICATION_DETERMINATION'),outcome);assert.equal(e.effectiveDetermination('adversarialResults',result,f.test,saved),outcome);const gate=e.gate(24,saved);assert.equal(gate.reasons.some(reason=>/Adversarial reviewer independence is not established|accepted response is required|Adversarial verification found/.test(reason)),outcome==='VIOLATED','NATIVE_STAGE24_GATE_ORACLE: native results must use their actual outcome and current application provenance.');
   assert.equal(saved.projectData.deterministicResults.length,0);assert.equal(observation.stage,24);assert.equal(binding.stage,24);assert.equal(binding.resultCollection,'adversarialResults');assert.equal(binding.resultId,result.id);
-  let currentProofStatus=null,changedTestProofStatus=null;if(outcome==='VIOLATED'){const proofSubject=copy({id:'SYNTHETIC-NATIVE-PROOF-CONSUMER'}),consumer=copy({id:'SYNTHETIC-NATIVE-ENTAILMENT',stage:24,active:true,scope:e.currentScope(saved),fields:{TARGET_PROPOSITION_ID:proofSubject.id,OBSERVATION_ID:observation.id,ACCEPTED_STATUS:'ACCEPTED',ACCEPTED_RELATION:'REFUTES'}});saved.projectData.entailmentReviews.push(consumer);currentProofStatus=e.propositionState(saved,proofSubject).status;assert.equal(currentProofStatus,'VIOLATED');const altered=copy(saved);altered.projectData.tests[0].fields.EXECUTABLE_SPEC.steps[1].value='A_CHANGED_TEST';altered.projectData.tests[0].EXECUTABLE_SPEC=altered.projectData.tests[0].fields.EXECUTABLE_SPEC;e.refreshRecordHashes(altered.projectData.tests[0],'tests');changedTestProofStatus=e.propositionState(altered,proofSubject).status;assert.equal(changedTestProofStatus,'UNDETERMINED','NATIVE_STAGE24_CURRENTNESS_ORACLE: changed executable semantics must revoke proof consumer authority.');}
-  nativeProductObservations.push({checkId:'native-stage24-'+outcome.toLowerCase(),requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:3603'],boundary:'actual UI runner → isolated Test IR worker → application result/proof observation → project storage reload',expected:{stage:24,resultCollection:'adversarialResults',determination:outcome,deterministicResultCount:0,currentProofStatus:outcome==='VIOLATED'?'VIOLATED':null,changedTestProofStatus:outcome==='VIOLATED'?'UNDETERMINED':null},observed:{stage:result.stage,resultCollection:binding.resultCollection,determination:e.recordValue(result,'APPLICATION_DETERMINATION'),deterministicResultCount:saved.projectData.deterministicResults.length,currentProofStatus,changedTestProofStatus},passed:true,...(outcome==='VIOLATED'?{violation:'exact project identity assertion',accepted:false}:{})});
+  let currentProofStatus=null,changedTestProofStatus=null;if(outcome==='VIOLATED'){assert(saved.projectData.entailmentReviews.some(row=>row.source==='APPLICATION_TEST_RUNTIME'&&e.recordValue(row,'TARGET_PROPOSITION_ID')===proofSubject.id&&e.recordValue(row,'OBSERVATION_ID')===observation.id),'NATIVE_STAGE24_PROOF_AUTHORITY_ORACLE: actual native execution must derive its reviewed entailment.');currentProofStatus=e.propositionState(saved,proofSubject).status;assert.equal(currentProofStatus,'VIOLATED');const altered=copy(saved);const changedTest=altered.projectData.tests.find(row=>row.id===f.test.id);changedTest.fields.EXECUTABLE_SPEC.steps.find(step=>step.op==='ASSERT_EQ').value='A_CHANGED_TEST';changedTest.EXECUTABLE_SPEC=changedTest.fields.EXECUTABLE_SPEC;e.refreshRecordHashes(changedTest,'tests');changedTestProofStatus=e.propositionState(altered,proofSubject).status;assert.equal(changedTestProofStatus,'UNDETERMINED','NATIVE_STAGE24_CURRENTNESS_ORACLE: changed executable semantics must revoke proof consumer authority.');}
+  nativeProductObservations.push({checkId:'native-stage24-'+outcome.toLowerCase(),requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:3603'],boundary:'actual UI runner → isolated Test IR worker → application result/proof observation → project storage reload',expected:{stage:24,resultCollection:'adversarialResults',determination:outcome,deterministicResultCount:0,currentProofStatus:outcome==='VIOLATED'?'VIOLATED':null,changedTestProofStatus:outcome==='VIOLATED'?'UNDETERMINED':null},observed:{stage:result.stage,resultCollection:binding.resultCollection,determination:e.recordValue(result,'APPLICATION_DETERMINATION'),deterministicResultCount:saved.projectData.deterministicResults.length,currentProofStatus,changedTestProofStatus},passed:true,...(outcome==='VIOLATED'?{violation:'exact delivered-file assertion',accepted:false}:{})});
+  if(restoreClock)t.Date=restoreClock;
  }
 });
-// Reuse the existing Stage 06 response fixture and unchanged ingestion owners.
-// This verifies canonical input import; the separately quoted import failure
-// cannot be identified from an audit excerpt that omits its reproduction.
-const ingestionSource=fs.readFileSync('verify-ingestion.mjs','utf8');t.prompts=r.prompts;
-vm.runInContext([scalarFor,recordProposal].map(fn=>fn.toString()).join('\n')+ingestionSource.slice(ingestionSource.indexOf('function prepareStage4Upstream('),ingestionSource.indexOf('// Cross-field timing')),t);
-await check('Canonical-value bindings survive response validation and commit',()=>{
- const result=vm.runInContext(`(()=>{
-  const p=project('JOB-CANONICAL-IMPORT'),pr=saveAttachmentPrompt(p,6),envelope=validEnvelope(p,6,pr),entry=engine.canonicalTestBindingCatalog(p)['JOB.JOB_ID'];
-  envelope.stageData={};envelope.records={tests:[recordProposal(schema,'tests',{tempKey:'canonical',overrides:{EXECUTION_MODE:'APPLICATION_DETERMINISTIC',REQUIRED_CAPABILITY:'CLOSED_LOOP_TEST_IR',EXECUTABLE_KIND:'TEST_IR',EXECUTABLE_SPEC_VERSION:'closed-loop-test-spec/1',EXECUTABLE_INPUT_BINDINGS:{JOB:{kind:'CANONICAL_VALUE',canonicalKey:'JOB.JOB_ID',valueSha256:entry.valueSha256}},EXECUTABLE_SPEC:{version:'closed-loop-test-spec/1',steps:[{op:'LOAD_ARTIFACT',binding:'JOB'},{op:'ASSERT_EQ',value:p.job.JOB_ID}]},ARTIFACT_REQUIREMENTS:'NONE'}})]};
-  const prepared=ingestion.prepare(p,{...returnedTransport(pr),stage:6,text:JSON.stringify(envelope),promptRecord:pr});if(!prepared.validation.valid)throw new Error(JSON.stringify(prepared.validation.issues));
-  const committed=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'SYNTHETIC_IMPORT_OPERATOR'}),test=committed.project.projectData.tests.at(-1);
+// Reuse the maintained accepted prerequisite and current ingestion owners.
+// Keep this canonical-input import fixture independent of unrelated verifier
+// module bodies and their evolving imports.
+await check('Canonical-value bindings survive response validation and commit',async()=>{
+ const priorClock=t.Date,{p}=await testIrAuthorPrerequisite(r),schema=t.closedLoopWorkflowSchema;
+ try{
+  const pr=r.prompts.reserveAndBuildPromptRecord(p,6,{operation:'COMPLETE'}).prompt,entry=e.canonicalTestBindingCatalog(p)['JOB.JOB_ID'];
+  const envelope={schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:p.job.JOB_ID,stage:6,operation:'COMPLETE',promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,packageId:pr.packageId,operationReservationId:pr.operationReservationId,challengeNonce:pr.challengeNonce,responseType:'DATA_PROPOSAL',humanInputRequests:[],humanAuthorityCandidates:[],stageData:{},records:{tests:[recordProposal(schema,'tests',{tempKey:'canonical',overrides:{EXECUTION_MODE:'APPLICATION_DETERMINISTIC',REQUIRED_CAPABILITY:'CLOSED_LOOP_TEST_IR',EXECUTABLE_KIND:'TEST_IR',EXECUTABLE_SPEC_VERSION:'closed-loop-test-spec/1',EXECUTABLE_INPUT_BINDINGS:{JOB:{kind:'CANONICAL_VALUE',canonicalKey:'JOB.JOB_ID',valueSha256:entry.valueSha256}},EXECUTABLE_SPEC:{version:'closed-loop-test-spec/1',steps:[{op:'LOAD_ARTIFACT',binding:'JOB'},{op:'ASSERT_EQ',value:p.job.JOB_ID}]},ARTIFACT_REQUIREMENTS:'NONE'}})]},evidence:[evidence('canonical-input-fixture')],unresolved:[],warnings:[],attachments:[]};
+  const options={stage:6,promptRecord:pr,transport:copy({authority:'AUTHORITATIVE_RESPONSE_FILE',packageId:pr.packageId,operationReservationId:pr.operationReservationId,challengeNonce:pr.challengeNonce})},prepared=r.ingestion.prepare(p,{...options,text:JSON.stringify(envelope)});
+  assert.equal(prepared.validation.valid,true,JSON.stringify(prepared.validation.issues));
+  const committed=r.ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'SYNTHETIC_IMPORT_OPERATOR',replacementConfirmation:r.ingestion.acceptanceImpact(prepared.project,prepared.proposal.proposalId)}),test=committed.project.projectData.tests.at(-1),binding=e.recordValue(test,'EXECUTABLE_INPUT_BINDINGS').JOB;
   envelope.records.externalCapabilities=[{tempKey:'forged',fields:{CAPABILITY_CLAIM:'CAD_TOOL',AUTHORIZED:true,PERMISSIONS_READY:true,INPUTS_TRANSFERABLE:true,ROUTE_USABLE:true,EVIDENCE_OBTAINABLE:true},relationships:{},evidenceRefs:[]}];
-  const forged=ingestion.prepare(p,{...returnedTransport(pr),stage:6,text:JSON.stringify(envelope),promptRecord:pr});
-  return {binding:engine.recordValue(test,'EXECUTABLE_INPUT_BINDINGS').JOB,expectedSha256:entry.valueSha256,forgedValid:forged.validation.valid,forgedIssues:forged.validation.issues};
- })()`,t);
- assert.equal(result.binding.kind,'CANONICAL_VALUE');assert.equal(result.binding.valueSha256,result.expectedSha256);assert.equal(result.forgedValid,false);assert(result.forgedIssues.some(issue=>issue.path.includes('externalCapabilities')));
+  const forged=r.ingestion.prepare(p,{...options,text:JSON.stringify(envelope)});
+  assert.equal(binding.kind,'CANONICAL_VALUE');assert.equal(binding.valueSha256,entry.valueSha256);assert.equal(forged.validation.valid,false);assert(forged.validation.issues.some(issue=>issue.path.includes('externalCapabilities')));
+ }finally{t.Date=priorClock;}
 });
 console.log(JSON.stringify({verificationRouting:'PASS',unsupportedNativePlanner,focusedNativeProductControls:nativeProductControlsOnly,verificationObservations:[...verificationObservations,...nativeProductObservations],checks:checks.length,results:checks,actualStorageAdapter:true,actualStorageWorker:false,basis:'ISOLATED_PRODUCTION_ROUTING_RUNTIME_UI_COMMANDS_AND_STORAGE_ADAPTER'}));
