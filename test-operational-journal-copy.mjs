@@ -86,6 +86,28 @@ export async function verifyCanonicalReadProof(options={}){
  const sourceOverrides={...Object.fromEntries(['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'].map(file=>[file,fs.readFileSync(file,'utf8')])),...(options.sourceOverrides||{})};
  const result=await verifyPrivateReadProof({...options,sourceOverrides,commands:['canonical']}),extra=await verifyCanonicalPreparedProof({...options,sourceOverrides});result.cases.push(...extra);result.caseCount=result.cases.length;return result;
 }
+// The complete storage command below retains every corruption/no-overwrite
+// check. Its decoder independently rejects bad bytes even if this earlier
+// preparer hash is omitted. Exercise this exact private owner separately;
+// this is a Node function boundary, never a corrupt-command admission claim.
+async function verifyRetainedPartHashOwner(source,r,fixture,caseId){
+ const begin='  async function retainValue(sha256,blob){',end='\n  const unusableRoots=',start=source.indexOf(begin),finish=source.indexOf(end,start);
+ assert(start>=0&&finish>start&&source.indexOf(begin,start+1)<0,'PRIVATE_RETAINED_HASH_SOURCE_BOUNDARY_ORACLE');
+ const body=source.slice(start,finish),historyKeyLine=source.match(/^const historyKey=.*;$/m)?.[0],historyFileKeyLine=source.match(/^const historyFileKey=.*;$/m)?.[0],storageErrorLine=source.match(/^const storageError=.*;$/m)?.[0];
+ assert(historyKeyLine&&historyFileKeyLine&&storageErrorLine,'PRIVATE_RETAINED_HASH_DEPENDENCY_SOURCE_ORACLE');
+ const create=new Function('hash','Blob','state','newFiles','retainedFiles','metaGet','verifiedValues','jobId',historyKeyLine+'\n'+historyFileKeyLine+'\n'+storageErrorLine+'\n'+body+'\nreturn retainValue;');
+ assert.equal(fixture.originalBlob.size,fixture.byteSize,'PRIVATE_RETAINED_HASH_VALID_SIZE_ORACLE');assert.equal(await r.runtime.closedLoopHash.sha256Bytes(fixture.originalBlob),fixture.sha256,'PRIVATE_RETAINED_HASH_VALID_DIGEST_ORACLE');
+ const controls=[];
+ for(const name of ['valid','missing-blob','wrong-size','same-size-corrupt']){
+  const row={sha256:fixture.sha256,...(name==='missing-blob'?{}:{blob:name==='valid'?fixture.originalBlob:name==='wrong-size'?new Blob(['X']):fixture.corruptBlob})};
+  if(name==='wrong-size')assert.notEqual(row.blob.size,fixture.byteSize,'PRIVATE_RETAINED_HASH_WRONG_SIZE_PREREQUISITE');
+  if(name==='same-size-corrupt'){assert.equal(row.blob.size,fixture.byteSize);assert.notEqual(await r.runtime.closedLoopHash.sha256Bytes(row.blob),fixture.sha256);}
+  const state={files:{[fixture.sha256]:{byteSize:fixture.byteSize}}},values=new Set(),read=async key=>{assert.equal(key,'recovery:'+fixture.jobId+':bytes:'+fixture.sha256);return row;},owner=create(r.runtime.closedLoopHash,Blob,state,[],[],read,values,fixture.jobId);
+  if(name==='valid'){await owner(fixture.sha256,null);assert.equal(values.has(fixture.sha256),true);controls.push({caseId:name,result:'PASS',accepted:true});}
+  else{await assert.rejects(()=>owner(fixture.sha256,null),error=>error.code==='HISTORY_FILE_INTEGRITY_FAILED','PRIVATE_READ_REJECTION_ORACLE '+caseId+' private retainValue '+name);assert.equal(values.size,0);controls.push({caseId:name,result:'PASS',error:'HISTORY_FILE_INTEGRITY_FAILED'});}
+ }
+ return {caseId,boundary:'EXACT_PRIVATE_RETAIN_VALUE_NODE_FUNCTION',sourceSha256:createHash('sha256').update(source).digest('hex'),functionSha256:createHash('sha256').update(body).digest('hex'),actualCommandCorruptionRejected:true,actualCommandRowsPreserved:true,corruptCommandAdmissionClaimed:false,controls};
+}
 async function verifyPrivateReadProof({sourceOverrides={},fault=null,caseFilter=null,commands}={}){
  const runtimeFiles=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
  sourceOverrides={...Object.fromEntries(runtimeFiles.map(file=>[file,fs.readFileSync(file,'utf8')])),...sourceOverrides};
@@ -93,7 +115,7 @@ async function verifyPrivateReadProof({sourceOverrides={},fault=null,caseFilter=
  if(fault==='omit-retained-prompt-context-copy'){const source=sourceOverrides['project-store.js'],anchor='globalThis.closedLoopPromptEngine?.copyRetainedPromptContextFiles?.(candidate,next);';assert.equal(source.split(anchor).length,2,'CANONICAL_RETAINED_CONTEXT_FAULT_ANCHOR_ORACLE');sourceOverrides={...sourceOverrides,'project-store.js':source.replace(anchor,'')};}
  if(fault==='omit-retained-part-rehash'){const source=sourceOverrides['project-store.js']??fs.readFileSync('project-store.js','utf8'),anchor='await hash.sha256Bytes(retained.blob)!==sha256';assert.equal(source.split(anchor).length,2,'PRIVATE_READ_RETAINED_FAULT_ANCHOR_ORACLE');sourceOverrides={...sourceOverrides,'project-store.js':source.replace(anchor,'false')};}
  const {seed,project,text,copy}=await operationalProofSeed(sourceOverrides,{retainedContext:commands.includes('canonical')});
- const frozenRows=new Map([...seed.rows].map(([name,rows])=>[name,new Map([...rows].map(([key,row])=>[key,copy(row)]))])),jobId=project.job.JOB_ID,journalKey='responseOperations:'+jobId,results=[];
+ const frozenRows=new Map([...seed.rows].map(([name,rows])=>[name,new Map([...rows].map(([key,row])=>[key,copy(row)]))])),jobId=project.job.JOB_ID,journalKey='responseOperations:'+jobId,results=[],retainedHashOwners=[];
  const scenarios=['valid-control','equivalent-alias-topology','same-digest-canonical-payload','same-digest-journal-payload','same-digest-alias-subbranch','cyclic-canonical-payload','concurrent-canonical','concurrent-journal','corrupt-retained-project-part'];
  for(const command of commands)for(const scenario of scenarios){
   if(caseFilter&&!caseFilter.includes(command+':'+scenario))continue;
@@ -101,12 +123,12 @@ async function verifyPrivateReadProof({sourceOverrides={},fault=null,caseFilter=
   for(const [name,rows]of frozenRows)r.rows.set(name,new Map([...rows].map(([key,row])=>[key,copy(row)])));
   const current=await store.readProject(jobId),beforeRevision=current.revision,beforeHash=current.projectSha256,historyBefore=await store.historyList(jobId);
   const reservation=r.rows.get('projects').get(jobId).project.projectData.operationReservations.at(-1);assert.ok(reservation?.SCOPE&&reservation.fields.SCOPE===reservation.SCOPE,'PRIVATE_READ_CANONICAL_ALIAS_PREREQUISITE');
-  let injected=false,expectedStorage=null;
+  let injected=false,expectedStorage=null,retainedPartFixture=null;
   const storageSnapshot=()=>new Map([...r.rows].map(([name,rows])=>[name,new Map([...rows].map(([key,row])=>[key,copy(row)]))]));
   if(scenario==='corrupt-retained-project-part'){
    const entry=historyBefore.entries.findLast(row=>row.projectSha256===beforeHash&&row.projectParts?.entries?.length),part=entry?.projectParts.entries.find(row=>row.path.includes('rawResponses')&&row.path.at(-1)==='completeRawResponse');assert.ok(part,'PRIVATE_READ_RETAINED_PART_PREREQUISITE');
    const row=r.rows.get('meta').get('recovery:'+jobId+':bytes:'+part.sha256);assert.ok(row?.value?.blob instanceof Blob,'PRIVATE_READ_RETAINED_PART_BYTES_PREREQUISITE');
-   row.value.blob=new Blob(['X'.repeat(row.value.blob.size)]);injected=true;expectedStorage=storageSnapshot();
+   const originalBlob=row.value.blob;row.value.blob=new Blob(['X'.repeat(row.value.blob.size)]);retainedPartFixture={jobId,sha256:part.sha256,byteSize:part.byteSize,originalBlob,corruptBlob:row.value.blob};injected=true;expectedStorage=storageSnapshot();
   }
   const open=runtime.openStorageTransaction;let armed=scenario!=='valid-control'&&scenario!=='corrupt-retained-project-part';
   runtime.openStorageTransaction=async(names,mode)=>{
@@ -134,10 +156,11 @@ async function verifyPrivateReadProof({sourceOverrides={},fault=null,caseFilter=
    results.push({caseId:command+':'+scenario,result:'PASS',exactRawBytes:true,changedViewRetained:true,...(command==='canonical'?{retainedPromptContextBytes:true}:{}),...(scenario==='equivalent-alias-topology'?{aliasTopologyChanged:true}:{})});
   }else{
    await assert.rejects(execute,error=>error.code===code,'PRIVATE_READ_REJECTION_ORACLE '+command+':'+scenario);assert.equal(injected,true,'PRIVATE_READ_INJECTION_REACHED_ORACLE');assert.deepEqual(r.rows,expectedStorage,'PRIVATE_READ_NO_OVERWRITE_ORACLE '+command+':'+scenario);
+   if(scenario==='corrupt-retained-project-part')retainedHashOwners.push(await verifyRetainedPartHashOwner(sourceOverrides['project-store.js'],r,retainedPartFixture,command+':'+scenario));
    results.push({caseId:command+':'+scenario,result:'PASS',error:code,injected:true,failedWritePreservedState:true});
   }
  }
- return {result:'PASS',sourceSha256:Object.fromEntries(runtimeFiles.map(file=>[file,createHash('sha256').update(sourceOverrides[file]).digest('hex')])),boundary:'Actual production store commands and recovery bytes in isolated Node transaction adapter; not IndexedDB/browser proof',prerequisite:'One production saved reservation and exact captured response; complete immutable stores cold-copied for each case',caseCount:results.length,cases:results};
+ return {result:'PASS',sourceSha256:Object.fromEntries(runtimeFiles.map(file=>[file,createHash('sha256').update(sourceOverrides[file]).digest('hex')])),boundary:'Actual production store commands and recovery bytes in isolated Node transaction adapter; not IndexedDB/browser proof',prerequisite:'One production saved reservation and exact captured response; complete immutable stores cold-copied for each case',caseCount:results.length,cases:results,retainedHashOwners};
 }
 
 async function operationalProofSeed(sourceOverrides,{retainedContext=false}={}){
