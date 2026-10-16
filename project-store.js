@@ -31,13 +31,13 @@ let custodyEpoch=0;
 const custodyInvalidations=new Map();
 const custodyKey=(jobId,artifactId)=>JSON.stringify([String(jobId),String(artifactId)]);
 function forgetArtifactCustody(jobId,artifactId=null){custodyInvalidations.set(String(jobId),++custodyEpoch);for(const [key,value] of artifactCustody)if(value.jobId===String(jobId)&&(artifactId===null||value.artifactId===String(artifactId)))artifactCustody.delete(key);}
-async function observeArtifactCustody(row,observedEpoch=custodyEpoch){
- const key=custodyKey(row.jobId,row.artifactId);artifactCustody.delete(key);
+async function observeArtifactCustody(row,observedEpoch=custodyEpoch,publishCustody=true){
+ const key=custodyKey(row.jobId,row.artifactId);if(publishCustody)artifactCustody.delete(key);
  if(!(row.blob instanceof Blob))return;
  const sha256=await hash.sha256Bytes(row.blob);
  if(row.blob.size!==row.byteSize||sha256!==row.sha256)return;
  artifactReadObservations.set(row,{blob:row.blob,sha256,byteSize:row.blob.size});
- if((custodyInvalidations.get(String(row.jobId))||0)>observedEpoch)return;
+ if(!publishCustody||(custodyInvalidations.get(String(row.jobId))||0)>observedEpoch)return;
  artifactCustody.set(key,{jobId:String(row.jobId),artifactId:String(row.artifactId),filename:row.filename,byteSize:row.blob.size,sha256});
 }
 async function observedArtifactDigest(row){
@@ -1453,7 +1453,7 @@ async function prepareHistoryCommit(next,prior,{label=null,view=null,preserveAct
     }else preservedPriorView=clone(view);
   }
   const retainedRedo=clone(state.redo||[]),viewOnly=prior&&digest(next)===digest(prior);
-  let files=artifactRows;try{files=files||await listArtifacts(jobId);}catch(error){if(!['ARTIFACT_BYTE_REFERENCE_INVALID','ARTIFACT_BYTES_UNAVAILABLE','ARTIFACT_LEGACY_BYTES_INVALID'].includes(error.code))throw error;throw storageError('Cannot preserve History: a stored file is missing or corrupt.','HISTORY_FILE_INTEGRITY_FAILED');}const expectedGeneration=Number(state.generation||0),newFiles=[],snapshots=[];
+  let files=artifactRows;try{files=files||await readJobArtifactRows(jobId,false);}catch(error){if(!['ARTIFACT_BYTE_REFERENCE_INVALID','ARTIFACT_BYTES_UNAVAILABLE','ARTIFACT_LEGACY_BYTES_INVALID'].includes(error.code))throw error;throw storageError('Cannot preserve History: a stored file is missing or corrupt.','HISTORY_FILE_INTEGRITY_FAILED');}const expectedGeneration=Number(state.generation||0),newFiles=[],snapshots=[];
   for(const row of files){
     if(!(row.blob instanceof Blob)||row.blob.size!==Number(row.byteSize)||await hash.sha256Bytes(row.blob)!==row.sha256)throw storageError(`Cannot preserve history: stored file ${row.filename} is missing or corrupt.`,'HISTORY_FILE_INTEGRITY_FAILED');
     if(!state.files[row.sha256]){newFiles.push({sha256:row.sha256,blob:row.blob});state.files[row.sha256]={byteSize:row.blob.size};state.retainedFileBytes+=row.blob.size;}
@@ -2307,10 +2307,14 @@ async function deleteArtifact(artifactId,jobId){
  const id=String(artifactId),owner=String(jobId||''),tx=await openTransaction([ARTIFACTS,META],'readwrite'),store=tx.objectStore(ARTIFACTS);
  try{const row=await request(store.get(id));if(!row){await complete(tx);return false;}if(owner&&String(row.jobId)!==owner)throw storageError(`Artifact ${id} belongs to another project and was not deleted.`,'CROSS_PROJECT_ARTIFACT_DELETE');store.delete(id);await discardUnretainedArtifactBody(tx,row);await complete(tx);forgetArtifactCustody(row.jobId,id);notifyProjectChange({job:{JOB_ID:row.jobId}},{artifactId:id});return true;}catch(error){try{tx.abort();}catch{}throw error;}
 }
-async function listArtifacts(jobId){
- forgetArtifactCustody(jobId);const observedEpoch=custodyEpoch,tx=await openTransaction([ARTIFACTS,META],'readonly'),stored=await request(tx.objectStore(ARTIFACTS).index('jobId').getAll(String(jobId))),rows=await hydrateArtifactRows(tx,stored);await complete(tx);
- await migrateInlineArtifacts(stored);for(const row of rows)await observeArtifactCustody(row,observedEpoch);return rows;
+// History verifies every retained byte without publishing unrelated files as
+// current project custody after the canonical projection has been prepared.
+// This selector is private; ordinary list/read callers retain their refresh.
+async function readJobArtifactRows(jobId,publishCustody){
+ if(publishCustody)forgetArtifactCustody(jobId);const observedEpoch=custodyEpoch,tx=await openTransaction([ARTIFACTS,META],'readonly'),stored=await request(tx.objectStore(ARTIFACTS).index('jobId').getAll(String(jobId))),rows=await hydrateArtifactRows(tx,stored);await complete(tx);
+ await migrateInlineArtifacts(stored);for(const row of rows)await observeArtifactCustody(row,observedEpoch,publishCustody);return rows;
 }
+async function listArtifacts(jobId){return readJobArtifactRows(jobId,true);}
 async function verifyProjectArtifacts(jobId){
   const id=String(jobId||'').trim();if(!id)throw storageError('JOB_ID is required for artifact verification.','ARTIFACT_VERIFY_JOB_ID_REQUIRED');const project=await readProject(id);if(!project)throw storageError(`Project ${id} is not stored.`,'ARTIFACT_VERIFY_PROJECT_MISSING');const rows=await listArtifacts(id),rowById=new Map(rows.map(row=>[String(row.artifactId),row])),expected=requiredProjectArtifactBytes(project),expectedById=new Map(expected.map(record=>[record.artifactId,record])),results=[];let byteSize=0;
   for(const record of expected){const {artifactId}=record,row=rowById.get(artifactId),canonicalFilename=String(record.filename||''),canonicalSize=Number(record.byteSize),canonicalSha256=String(record.sha256||'');if(!row){results.push({artifactId,filename:canonicalFilename,storedByteSize:null,actualByteSize:null,storedSha256:null,actualSha256:null,verified:false,issue:'MISSING_STORED_BLOB'});continue;}const actualSize=row.blob.size,actualSha256=await hash.sha256Bytes(row.blob);byteSize+=actualSize;const verified=String(row.jobId)===id&&String(row.filename)===canonicalFilename&&Number(row.byteSize)===canonicalSize&&String(row.sha256)===canonicalSha256&&actualSize===canonicalSize&&actualSha256===canonicalSha256;results.push({artifactId,filename:canonicalFilename,storedByteSize:Number(row.byteSize),actualByteSize:actualSize,storedSha256:String(row.sha256||''),actualSha256,verified,issue:verified?null:'CANONICAL_BLOB_IDENTITY_MISMATCH'});}
