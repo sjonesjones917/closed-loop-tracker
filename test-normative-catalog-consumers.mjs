@@ -1427,12 +1427,14 @@ export function verifyProjection7ActivationCatalogConsumers(){
  try{owner.checks=[stage19Check];delete negativePopulationCatalog[suite];assert.deepEqual(observationsFromReports(suite,[stage19Report]).map(row=>[row.checkId,row.passed]),[['activation.stage19-projection15-ordering',true]]);cases.push('stage19-ordering:actual-selector-valid');const bad=copy(stage19Report);stage19Body(bad).claims.wholeClausePass=true;assert.deepEqual(observationsFromReports(suite,[bad]).map(row=>row.passed),[false]);cases.push('stage19-ordering:actual-selector-invalid');for(const [name,reports]of [['missing',[]],['duplicate',[stage19Report,copy(stage19Report)]],['wrong-owner',[{other:'PASS'}]]]){assert.throws(()=>observationsFromReports(suite,reports),/expected exactly one report marker/);cases.push('stage19-ordering:actual-selector-'+name);}}finally{owner.checks=oldChecks;if(oldPopulation===undefined)delete negativePopulationCatalog[suite];else negativePopulationCatalog[suite]=oldPopulation;}
  const expectedFixtures=[
   'verification/accepted-run-stage10-prerequisite-20261007.json',
+  'verification/approved-deferred-compatibility-proposal-20261005.md',
   'verification/deferred-definition-compatibility-legacy-fixture-20261005.json',
   'verification/deferred-definition-current-prerequisite-fixture-20261007.json',
   'verification/deferred-definition-current-prerequisite-fixture-20261016.json',
   'verification/handoff-producer88-runtime-owner-fixture-20261011.json.gz',
   'verification/handoff-producer88-source-fixture-20261005.json',
   'verification/handoff-producer89-source-fixture-20261005.json',
+  'verification/historical-context-assertion-inputs-7df-20261015.json.gz',
   'verification/historical-normative-fixture-inputs-20261015.json.gz',
   'verification/historical-source-relocation-crosswalk-20261014.json',
   'verification/independent-source-reconciliation-20261005.json',
@@ -1450,7 +1452,7 @@ export function verifyProjection7ActivationCatalogConsumers(){
 ];
  const declaredFixtures=[...new Set([...Object.values(verificationCatalog),...Object.values(browserVerificationCatalog)].flatMap(row=>row.sourceInputs||[]))].filter(path=>path.startsWith('verification/')).sort();assert.deepEqual(declaredFixtures,expectedFixtures,'PROJECTION7_ACTIVE_FIXTURE_POPULATION12_ORACLE');cases.push('active-fixture-population13-valid');
  const receiptSource=fs.readFileSync(new URL('./verify-executed-evidence.mjs',import.meta.url),'utf8'),first=receiptSource.indexOf('const stage15AuthorFixtureInput='),last=receiptSource.indexOf('const producerFixtureInputs=',first);assert(first>=0&&last>first,'PROJECTION7_EXISTING_RECEIPT_GUARD_OWNER');
- const actualGuard=new Function('assert','activeFixtureInputs','verificationCatalog',receiptSource.slice(first,last)+'return fixtureCatalogMutations;'),guardedMutants=actualGuard(assert,declaredFixtures,verificationCatalog);assert.equal(guardedMutants.length,22);for(const mutant of guardedMutants)cases.push('actual-fixture-guard:'+mutant.file+':'+mutant.mutation);for(const name of ['valid','missing-rejected','duplicate-rejected','wrong-path-rejected','wrong-owner-rejected'])cases.push('actual-fixture-stage15-owner-declaration:'+name);
+ const actualGuard=new Function('assert','activeFixtureInputs','verificationCatalog',receiptSource.slice(first,last)+'return fixtureCatalogMutations;'),guardedMutants=actualGuard(assert,declaredFixtures,verificationCatalog);assert.equal(guardedMutants.length,24);for(const mutant of guardedMutants)cases.push('actual-fixture-guard:'+mutant.file+':'+mutant.mutation);for(const name of ['valid','missing-rejected','duplicate-rejected','wrong-path-rejected','wrong-owner-rejected'])cases.push('actual-fixture-stage15-owner-declaration:'+name);
  assert.throws(()=>actualGuard(assert,declaredFixtures.filter(path=>path!=='verification/project-projection5-activation-fixture.json'),verificationCatalog),/FIXTURE_INPUT_ORACLE/);cases.push('actual-fixture-guard-new-path-omission-rejected');
  // Closed aggregation fixture only: these literal flags do not create or reuse
  // a real Stage03 receipt. Its owning producer remains separately required.
