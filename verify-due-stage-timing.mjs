@@ -633,8 +633,18 @@ function deferredReviewProvenance(r){
  for(const [family,label,display]of [['preflightRecords','Preflight','PREFLIGHT_REVIEWER_ID'],['meaningResults','Meaning','EVALUATOR_ID'],['adversarialResults','Adversarial','REVIEWER_ID']]){
   const stage=s.RECORD_SCHEMAS[family].stage,p=r.core.createBlankState('JOB-REVIEW-PROVENANCE-'+family);e.ensureShape(p);
   const reviewer=e.registerFreshContext(p,{stage,externalContextIdentifier:'reviewer-'+family,operatorLabel:'SYNTHETIC_VERIFIER',purpose:'REVIEWER'}),reviewerId=e.recordId(reviewer,'freshContexts');
-  canonical(r,p,'products',{...recordProposal(s,'products').fields,PRODUCT_VERSION:'PRODUCT-v001',PRODUCTION_CONTEXT_ID:'distinct-production-context'});
-  const review=canonical(r,p,family,recordProposal(s,family).fields),change={changeId:'FIXTURE-ACCEPTED-'+family,stage,status:'COMMITTED',responseType:'DATA_PROPOSAL',operation:'COMPLETE',canonicalRecordIds:[review.id],scope:{contextId:reviewerId},source:'CONTROLLED_PROVENANCE_FIXTURE'};
+  const product=canonical(r,p,'products',{...recordProposal(s,'products').fields,PRODUCT_VERSION:'PRODUCT-v001',PRODUCTION_CONTEXT_ID:'distinct-production-context'});
+  let prompt=null;
+  if([23,24].includes(stage)){
+   // Only this disposable instruction-building copy supplies synthetic prior
+   // stage/scope prerequisites. No preceding execution or full gate is claimed.
+   const projected=r.copy(p);projected.stages[stage-1].status='COMPLETE';projected.stages[stage-1].gate=r.copy({complete:true,blocked:false,reasons:[]});
+   const prepared=e.preparePromptContext(projected,stage,{operation:'COMPLETE',scope:{contextId:reviewerId,productId:product.id,baselineId:'SYNTHETIC-BASELINE',requirementsVersion:'SYNTHETIC-REQUIREMENTS',testSuiteVersion:'SYNTHETIC-TESTS'}});
+   prompt=r.prompts.buildPromptRecord(stage,projected,prepared.options);r.prompts.materializePromptContextFiles(prompt,projected);
+   assert.equal(prompt.scope.contextId,reviewerId,'DEFERRED_REVIEW_PROVENANCE_CONTEXT_BINDING_ORACLE');p.projectData.generatedPrompts.push(prompt);
+   assert.equal(r.prompts.independentPromptContextIsolation(p,prompt).determination,'CURRENT','DEFERRED_REVIEW_PROVENANCE_CURRENT_INSTRUCTION_ORACLE');
+  }
+  const review=canonical(r,p,family,recordProposal(s,family).fields),change={changeId:'FIXTURE-ACCEPTED-'+family,stage,status:'COMMITTED',responseType:'DATA_PROPOSAL',operation:'COMPLETE',...(prompt?{promptId:prompt.instructionId}:{}),canonicalRecordIds:[review.id],scope:prompt?r.copy(prompt.scope):{contextId:reviewerId},source:'CONTROLLED_PROVENANCE_FIXTURE'};
   p.projectData.acceptedChanges.push(change);
   const reasons=()=>e.gate(stage,p).reasons.filter(reason=>reason.startsWith(label+' reviewer independence'));
   assert.equal(reasons().length,0,'DEFERRED_REVIEW_PROVENANCE_ORACLE: controlling review fixture lacks its accepted context.');
@@ -643,7 +653,7 @@ function deferredReviewProvenance(r){
   assert.equal(e.deriveStageData(p,stage)[display],reviewerId,'DEFERRED_REVIEW_DISPLAY_ORACLE: displayed reviewer differs from accepted review authority.');
   change.scope.contextId='';assert(reasons().length,'DEFERRED_REVIEW_PROVENANCE_ORACLE: missing actual reviewer authority was accepted.');
   change.scope.contextId=reviewerId;assert.equal(reasons().length,0,'DEFERRED_REVIEW_PROVENANCE_ORACLE: restored controlling authority did not recover.');
-  results.push({case:'DEFERRED_REVIEW_PROVENANCE_CLASS',family,stage,scope:'reviewer independence and derived identity only',unrelatedReceiptPreservedReview:true,missingActualAuthorityRejected:true});
+  results.push({case:'DEFERRED_REVIEW_PROVENANCE_CLASS',family,stage,scope:'reviewer independence and derived identity only',retainedCurrentInstruction:Boolean(prompt),syntheticPromptPrerequisite:prompt?stage-1:null,actualExternalActor:false,unrelatedReceiptPreservedReview:true,missingActualAuthorityRejected:true});
  }
 }
 async function deferredArtifactOwnership(r){

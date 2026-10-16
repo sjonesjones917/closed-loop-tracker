@@ -1016,6 +1016,7 @@ function planProposal(project,envelope,{rawRecord,promptRecord,validationRecord,
     if(contracts.length)canonicalRecords.expectedVarianceContracts=contracts;
   }
   for(const [collection,items] of Object.entries(canonicalRecords))for(const record of items){const def=schema.RECORD_SCHEMAS[collection];record.contentSha256=hash.contentRecordSha256(record,def.idField);record.recordSha256=hash.recordSha256(record);record.sha256=record.recordSha256;}
+  for(const record of evidence)workflow.refreshRecordHashes(record,'evidenceRecords');
 
   const proposedStageData=clone(envelope.stageData||{});
   const changes=[];
