@@ -1,4 +1,5 @@
 import {performance} from 'node:perf_hooks';
+import {auditCatalogExpectationRoundTrips} from './test-comparison-receipt-roundtrip.mjs';
 import {runHistoricalContextLedger} from './historical-context-ledger-adapter.mjs';
 import {atomicEvidenceReferences} from './review-specification-coverage.mjs';
 import {verifyRetainedRootNativeEvidenceConsumers} from './test-retained-root-native-evidence.mjs';
@@ -21,6 +22,7 @@ import {assertWorkflowPreloadBoundaries} from './verified-site.mjs';
 
 // Native process entry time includes module startup; historical setup and cleanup share this original owner budget.
 const originalLedgerOwnerStartedAtUnixMs=performance.timeOrigin;
+auditCatalogExpectationRoundTrips();
 const COPY_ROOT_ORACLE='EXECUTED_EVIDENCE_COPY_ROOT_ORACLE';
 const EXECUTED_EVIDENCE_SPLIT_REQUIREMENTS=Object.freeze({
   primaryAvailableBytes:268574720n,
