@@ -94,6 +94,20 @@ function perRunCase(fault){
   }};
 }
 
+function assertFinalEvidenceBindings(r,project){
+ const e=r.engine,h=r.runtime.closedLoopHash;
+ for(const family of ['entailmentReviews','deterministicResults'])for(const record of e.recordsForCurrentScope(project,family)){
+  const bindings=record.derivationInput?.sourceBinding?.records?.filter(row=>row.family==='evidenceRecords');
+  assert(bindings?.length,'EXTERNAL_RESULT_FINAL_EVIDENCE_PREIMAGE_ORACLE: source-bound evidence must be present.');
+  for(const binding of bindings){
+   const evidenceRow=e.recordsForCurrentScope(project,'evidenceRecords').find(row=>row.id===binding.id);
+   assert(evidenceRow,'EXTERNAL_RESULT_FINAL_EVIDENCE_PREIMAGE_ORACLE: exact source evidence must remain current.');
+   assert.equal(evidenceRow.contentSha256,h.contentRecordSha256(evidenceRow,'EVIDENCE_ID'),'EXTERNAL_RESULT_FINAL_EVIDENCE_PREIMAGE_ORACLE: evidence content identity must already be finalized.');
+   assert.equal(binding.sha256,h.recordSha256(evidenceRow),'EXTERNAL_RESULT_FINAL_EVIDENCE_PREIMAGE_ORACLE: receipt must bind the complete final canonical evidence record.');
+  }
+ }
+}
+
 function finalStageCase(stage,fault){
   const r=runtime(fault),e=r.engine,s=r.runtime.closedLoopWorkflowSchema,f=r.runtime.routingFixture('INDEPENDENT_AGENT_REVIEW'),p=f.p,family=families[stage],operation=operations[stage],hash=r.runtime.closedLoopHash;
   p.activeStage=stage;
@@ -115,6 +129,9 @@ function finalStageCase(stage,fault){
     const resultProposition=add(r,p,'propositions',{REQUIREMENT_ID:p.projectData.requirements[0].id,PROPOSITION_TEXT:'Synthetic exact product content is present.',STATUS:'CURRENT'},4,{...e.currentScope(p),productId:null});
     if(stage===22){f.test.fields.TARGET_PROPOSITION_IDS=f.test.TARGET_PROPOSITION_IDS=r.copy([resultProposition.id]);e.refreshRecordHashes(f.test,'tests');}
     let reviewer=null;if(stage!==22)reviewer=e.registerFreshContext(p,{stage,externalContextIdentifier:`SYNTHETIC-STAGE${stage}-REVIEWER`,purpose:'REVIEWER'});
+    // Settle application-owned test review/release fields before the first
+    // source-bound proposal; replay must observe the same canonical preimage.
+    e.recalculate(p);
     // Existing synthetic setup, not proof of prior stages. This late-stage
     // control still requires replacement by an actual prepared prefix before
     // claiming a legitimate complete operator journey. The private producer
@@ -148,6 +165,7 @@ function finalStageCase(stage,fault){
        const partial=response('SATISFIED');delete partial.records.entailmentReviews[0].fields.ENTAILMENT_FINDING;
        const pending=r.ingestion.prepare(p,{stage,text:JSON.stringify(partial),promptRecord:prompt,transport});assert.equal(pending.validation.valid,true,JSON.stringify(pending.validation.issues));
        const accepted=r.ingestion.commit(pending.project,pending.proposal.proposalId,{operator:'SYNTHETIC_OPERATOR'}).project,result=e.recordsForCurrentScope(accepted,'deterministicResults').at(-1),review=e.recordsForCurrentScope(accepted,'entailmentReviews').find(row=>row.temporaryKey==='external-entailment');
+       assertFinalEvidenceBindings(r,accepted);
        assert.equal(Object.hasOwn(review.fields,'ENTAILMENT_FINDING'),false);assert.equal(e.recordValue(review,'ACCEPTED_RELATION'),'UNKNOWN');assert.equal(e.recordValue(result,'DETERMINATION'),'UNDETERMINED');assert.equal(e.gate(22,accepted).complete,false);
       }
       return ['missing','wrong-type'];
@@ -156,7 +174,15 @@ function finalStageCase(stage,fault){
       assert.equal(prepared.validation.valid,true,JSON.stringify(prepared.validation.issues));
       const committed=r.ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'SYNTHETIC_OPERATOR'}).project,row=e.recordsForCurrentScope(committed,family).at(-1);
       assert(row,'Accepted external result must reach canonical records.');if(stage===22){assert.equal(e.recordValue(row,'DETERMINATION'),stage22OutcomeCases.find(item=>item.reported===value).canonical,'Application canonical determination must match the independent expected relation outcome.');const observed=e.recordsForCurrentScope(committed,'observationRecords').find(item=>item.temporaryKey==='external-observation'),review=e.recordsForCurrentScope(committed,'entailmentReviews').find(item=>item.temporaryKey==='external-entailment');assert.equal(e.recordValue(observed,'EXTERNAL_OR_AGENT_OBSERVED_VALUE'),'PASS');assert(e.recordValue(review,'REASONING').includes('original reported outcome '+value+'.'));}else assert.equal(e.recordValue(row,'DETERMINATION'),value,'Accepted raw determination must be preserved.');
-      const decision=e.evaluateResultConsistency(family,row,f.test,committed),gate=e.gate(stage,committed);
+      if(stage===22)assertFinalEvidenceBindings(r,committed);
+      const currentTest=e.recordsForCurrentScope(committed,'tests').find(test=>test.id===f.test.id);
+      assert(currentTest,'External result adjudication requires its actual current canonical test.');
+      const decision=e.evaluateResultConsistency(family,row,currentTest,committed),gate=e.gate(stage,committed);
+      if(stage===22&&value==='SATISFIED'){
+       const changed=r.copy(committed),changedResult=e.recordsForCurrentScope(changed,family).find(item=>item.id===row.id),changedTest=e.recordsForCurrentScope(changed,'tests').find(item=>item.id===currentTest.id),sourceId=row.derivationInput.sourceBinding.records.find(item=>item.family==='evidenceRecords').id,changedEvidence=e.recordsForCurrentScope(changed,'evidenceRecords').find(item=>item.id===sourceId);
+       changedEvidence.contentSha256='0'.repeat(64);
+       assert.equal(e.externalProductResultCurrent(changed,changedResult,changedTest),false,'EXTERNAL_RESULT_CHANGED_EVIDENCE_CURRENTNESS_ORACLE: an altered canonical source preimage must revoke normalization authority.');
+      }
       assert.equal(decision.evidence.sufficient,true,JSON.stringify(decision.reasons));
       return {actual:value,effective:decision.determination,reasons:decision.reasons,gateReasons:gate.reasons,gateComplete:gate.complete};
     }};
