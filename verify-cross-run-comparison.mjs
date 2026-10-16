@@ -16,6 +16,18 @@ if(process.argv.includes('--materiality-retry-package-only')){const {verifyCompa
 if(process.argv.includes('--materiality-package-only')){const {verifyComparisonMaterialityPackage}=await import('./test-comparison-materiality-package.mjs');console.log(JSON.stringify(await verifyComparisonMaterialityPackage()));process.exit(0);}
 if(process.argv.includes('--projection-recovery-only')){const {verifyStage13ProjectionRecovery}=await import('./test-stage13-projection-recovery.mjs');console.log(JSON.stringify(await verifyStage13ProjectionRecovery()));process.exit(0);}
 
+// The complete package journey has a distinct checked producer. Its default
+// receipt must exist before this bounded comparison owner starts. Focused
+// mutation/restoration populations never consume or replace that prerequisite.
+const focusedComparisonInvocation=process.argv.slice(2).some(argument=>argument.startsWith('--comparison-fault=')||['--comparison-control','--stability-aggregate-control','--scheduled-iteration-controls','--materiality-only','--variance-prerequisite-only','--ten-run-population-only'].includes(argument));
+let packageProofModule,packageProof;
+if(!focusedComparisonInvocation){
+ packageProofModule=await import('./comparison-materiality-package-proof.mjs');
+ packageProof=packageProofModule.readCurrentComparisonPackageProof();
+ console.log(JSON.stringify(packageProofModule.verifyComparisonPackageProofControls(packageProof.receipt,packageProof.fingerprint)));
+ console.log(JSON.stringify(await packageProofModule.verifyComparisonPackagePreparationRouting()));
+}
+
 // Inject one fault into an in-memory module copy, never into retained source.
 // Children execute this same existing gate with hard bounds and named oracles.
 const comparisonFaults=[
@@ -489,6 +501,11 @@ if(!selectedComparisonFault&&!process.argv.includes('--comparison-control')){
 // Recovery runs once in the default parent, never in each injected-fault child.
 if(!selectedComparisonFault&&!process.argv.includes('--comparison-control')){const {verifyStage13ProjectionRecovery}=await import('./test-stage13-projection-recovery.mjs');console.log(JSON.stringify(await verifyStage13ProjectionRecovery()));}
 
-if(!selectedComparisonFault&&!process.argv.includes('--comparison-control')){const {verifyComparisonMaterialityPackage}=await import('./test-comparison-materiality-package.mjs');console.log(JSON.stringify(await verifyComparisonMaterialityPackage()));}
+if(!selectedComparisonFault&&!process.argv.includes('--comparison-control')){
+ const current=packageProofModule.readCurrentComparisonPackageProof();
+ if(current.provenance.receiptSha256!==packageProof.provenance.receiptSha256)throw new Error('MATERIALITY_PACKAGE_OWNER_RECEIPT_ORACLE: prerequisite changed during comparison execution.');
+ console.log(JSON.stringify(current.report));
+ console.log(JSON.stringify({comparisonMaterialityPackagePrerequisite:current.provenance,comparisonPackageCurrentBinding:current.currentBinding}));
+}
 
 if(!selectedComparisonFault&&!process.argv.includes('--comparison-control')){const {verifyComparisonMaterialityStage19}=await import('./test-comparison-materiality-stage19.mjs');console.log(JSON.stringify(await verifyComparisonMaterialityStage19()));}

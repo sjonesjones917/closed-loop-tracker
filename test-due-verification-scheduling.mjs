@@ -18,14 +18,15 @@ async function verifyCheckedProducerScheduling(directory,suite,caseId){
   'node collect-verification-evidence.mjs --export-owner=verify-mobile-release-governance.mjs --report-marker=mobileReleaseGovernance > /tmp/mobile-governance.json'
  ])assert(workflow.includes(command),'PUBLICATION_EXPORT_COMMAND_ORACLE: missing '+command);
  assert.equal(dispatch.length,1,'DUE_RECEIPT_SCHEDULING_OWNER_ORACLE: complete deferred matrix must use its own checked child.');
- const timeout=due?330*60*1000:AGGREGATE_TIMEOUT_MS;
+ const timeout=due?330*60*1000:20*60*1000;
  if(due){
   assert.match(owner,/const DEFERRED_MATRIX_TIMEOUT_MS=330\*60\*1000;/,'DUE_RECEIPT_SCHEDULING_BUDGET_ORACLE: the deferred producer must fit within the hosted job bound.');
   assert.match(dispatch[0],/^if\(!currentDeferredMatrixReceipt\(\)\)await checkedVerifier\(/,'DUE_RECEIPT_SCHEDULING_REUSE_ORACLE: only a current validated receipt may skip the producer.');
   assert.match(dispatch[0],/stdio:'inherit',timeout:DEFERRED_MATRIX_TIMEOUT_MS/,'DUE_RECEIPT_SCHEDULING_BUDGET_ORACLE: retain output and the dedicated deferred budget.');
  }else{
   assert.match(dispatch[0],/^await checkedVerifier\(/,'CROSS_RUN_SCHEDULING_OWNER_ORACLE: cross-run producer must remain checked.');
-  assert.match(dispatch[0],/stdio:'inherit',timeout:AGGREGATE_TIMEOUT_MS/,'CROSS_RUN_SCHEDULING_BUDGET_ORACLE: retain output and the composite budget.');
+  assert.match(owner,/const CROSS_RUN_OWNER_TIMEOUT_MS=20\*60\*1000;/,'CROSS_RUN_SCHEDULING_BUDGET_ORACLE: preserve the twenty-minute comparison owner bound.');
+  assert.match(dispatch[0],/stdio:'inherit',timeout:CROSS_RUN_OWNER_TIMEOUT_MS/,'CROSS_RUN_SCHEDULING_BUDGET_ORACLE: retain output and the twenty-minute owner budget.');
  }
  assert(!owner.includes("await import('./"+suite+"');"),'DUE_RECEIPT_SCHEDULING_OWNER_ORACLE: duplicate in-process execution remains.');
  const copied=['normative-manifest-storage.mjs','approved-source-continuation.mjs','review-specification-coverage.mjs','verify-conformance-regressions.mjs','operator-journey-fixtures.mjs','test-fixtures.mjs','test-handoff-authorization.mjs','test-zip.mjs','test-project-store-runtime.mjs','verifier-runtime.mjs','hash.js','verification-evidence-preload.mjs','verification-evidence.mjs','human-combined-ui-evidence-contract.mjs','native-human-combined-evidence-contract.mjs','deployment-contract-identities.mjs','browser-execution-evidence.mjs','evaluate-mobile-acceptance-submission.mjs','verify-mobile-acceptance-evidence.mjs','collect-verification-evidence.mjs'],results=[];
@@ -50,7 +51,7 @@ async function verifyCheckedProducerScheduling(directory,suite,caseId){
   if(mode==='late-invalidation')fs.writeFileSync(path.join(cwd,'verify-late-invalidation.mjs'),`import fs from 'node:fs';fs.writeFileSync('receipts/${wrapper}.json','{}');console.log(JSON.stringify({lateInvalidation:true,synthetic:true}));\n`);
   if(mode==='unrelated-missing')fs.writeFileSync(path.join(cwd,'verify-unrelated.mjs'),`import fs from 'node:fs';fs.appendFileSync('unrelated.log','unrelated\\n');console.log(JSON.stringify({unrelatedCompleted:true,synthetic:true}));\n`);
   const selected=mode==='former-import'?"await import('./"+suite+"');":dispatch[0].replace(/^if\(!currentDeferredMatrixReceipt\(\)\)/,'');
-  fs.writeFileSync(path.join(cwd,wrapper),`import {checkedVerifier,AGGREGATE_TIMEOUT_MS} from './verify-conformance-regressions.mjs';\nimport {fileURLToPath} from 'node:url';\nconst DEFERRED_MATRIX_TIMEOUT_MS=330*60*1000;\n${selected}\nconsole.log(JSON.stringify({schedulingWrapper:true,synthetic:true,actualDeferredMatrix:false}));\n`);
+  fs.writeFileSync(path.join(cwd,wrapper),`import {checkedVerifier,AGGREGATE_TIMEOUT_MS} from './verify-conformance-regressions.mjs';\nimport {fileURLToPath} from 'node:url';\nconst DEFERRED_MATRIX_TIMEOUT_MS=330*60*1000;\nconst CROSS_RUN_OWNER_TIMEOUT_MS=20*60*1000;\n${selected}\nconsole.log(JSON.stringify({schedulingWrapper:true,synthetic:true,actualDeferredMatrix:false}));\n`);
   execFileSync('git',['init','--quiet'],{cwd});execFileSync('git',['add','.'],{cwd});execFileSync('git',['-c','user.name=Synthetic scheduling fixture','-c','user.email=fixture@localhost','commit','--quiet','-m','Bounded scheduling fixture'],{cwd});
   const receipts=path.join(cwd,'receipts'),env={...process.env,NODE_OPTIONS:'--import '+JSON.stringify(path.join(cwd,'verification-evidence-preload.mjs')),CLOSED_LOOP_VERIFICATION_SOURCE_ROOT:cwd,CLOSED_LOOP_VERIFICATION_RECEIPTS:receipts,SCHEDULING_FIXTURE_MODE:mode,VERIFIER_CHILD_EVIDENCE_DIRECTORY:path.join(cwd,'nested-runner')};
   const count=()=>fs.readFileSync(path.join(cwd,'invocations.log'),'utf8').trim().split('\n').length;

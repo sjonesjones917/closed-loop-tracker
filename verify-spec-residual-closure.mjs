@@ -5,12 +5,14 @@ import fs from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
+import {withPreparedComparisonPackageProof} from './comparison-materiality-package-proof.mjs';
 
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
 for(const file of ['workbook.js','hash.js','workflow-schema.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
 const schema=globalThis.closedLoopWorkflowSchema;
 const DEFERRED_MATRIX_TIMEOUT_MS=330*60*1000;
+const CROSS_RUN_OWNER_TIMEOUT_MS=20*60*1000;
 assert(schema,'workflow schema did not load');
 const source=fs.readFileSync('workflow-schema.js','utf8');
 assert.doesNotMatch(source,/HASHES_RECORDED_WHERE_PRACTICAL/,'Obsolete Stage 10 best-effort hashing contract must not exist.');
@@ -30,7 +32,12 @@ console.log(JSON.stringify({specResidualClosure:'PASS',testIrOperations:controll
 if(!currentDeferredMatrixReceipt())await checkedVerifier(process.execPath,[fileURLToPath(new URL('./verify-due-stage-timing.mjs',import.meta.url))],{stdio:'inherit',timeout:DEFERRED_MATRIX_TIMEOUT_MS});
 await import('./verify-ten-independent-runs.mjs');
 await checkedVerifier(process.execPath,[fileURLToPath(new URL('./verify-independent-run-verification.mjs',import.meta.url))],{stdio:'inherit',timeout:AGGREGATE_TIMEOUT_MS});
-await checkedVerifier(process.execPath,[fileURLToPath(new URL('./verify-cross-run-comparison.mjs',import.meta.url))],{stdio:'inherit',timeout:AGGREGATE_TIMEOUT_MS});
+// Prepare the complete package producer outside the comparison owner's own
+// unchanged twenty-minute budget. The enclosing residual/CI budget is unchanged.
+// Existing invalid receipts refuse admission; only an absent receipt executes.
+await withPreparedComparisonPackageProof(async()=>{
+await checkedVerifier(process.execPath,[fileURLToPath(new URL('./verify-cross-run-comparison.mjs',import.meta.url))],{stdio:'inherit',timeout:CROSS_RUN_OWNER_TIMEOUT_MS});
+});
 await import('./verify-root-cause-regressions.mjs');
 await import('./verify-root-cause-correction.mjs');
 await import('./verify-corrected-iteration.mjs');
