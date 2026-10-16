@@ -8,7 +8,7 @@ import {createStageOneIngestionFixture as seed,stageOneResponseEnvelope} from '.
 const plain=value=>JSON.parse(JSON.stringify(value)),sha=value=>createHash('sha256').update(value).digest('hex');
 export async function verifyStartupStorageBoundaries({ownerSource=null,fault=null}={}){
  let source=fs.readFileSync(ownerSource||'project-store.js','utf8');
- if(fault){const mutations={'omit-boundary-scan':[' await recoverStorageBoundaries(artifacts,stagedRows,retirements,recoveryReceipts,projects,recovered);',''],'retain-canonical-blocker':["if(invalid||previous?.outcome==='BLOCKED')await record",'if(invalid)await record'],'trust-meta-source-digest':['else if(await hash.sha256Bytes(artifact.blob)!==descriptor.sha256)','else if(false)']},[before,after]=mutations[fault]||[];assert(before&&source.split(before).length===2,'STARTUP_BOUNDARY_FAULT_ANCHOR');source=source.replace(before,after);}
+ if(fault){const mutations={'omit-boundary-scan':[' await recoverStorageBoundaries(artifacts,stagedRows,retirements,recoveryReceipts,projects,recovered,readRecoveryProject);',''],'retain-canonical-blocker':["if(invalid||previous?.outcome==='BLOCKED')await record",'if(invalid)await record'],'trust-meta-source-digest':['else if(await hash.sha256Bytes(artifact.blob)!==descriptor.sha256)','else if(false)']},[before,after]=mutations[fault]||[];assert(before&&source.split(before).length===2,'STARTUP_BOUNDARY_FAULT_ANCHOR');source=source.replace(before,after);}
  const fresh=()=>projectStoreRuntime({sourceOverrides:{'project-store.js':source}}),cases=[];
  const scan=async r=>{await r.store.recoverResponseStaging();};
  for(const missing of ['archive','staged-blob']){
