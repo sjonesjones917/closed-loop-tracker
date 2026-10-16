@@ -80,6 +80,14 @@ async function observeProjectArtifactCustody(project){
  // an objective correction. Reuse the intake owner rather than requiring its
  // immutable original input scope to change or a manual file read to restore it.
  for(const artifact of engine.currentAuthorizedInputArtifacts(project))artifactIds.add(engine.recordId(artifact,'artifacts'));
+ // A withdrawn supplied original is retained privately by its exact typed
+ // correction and owning history event. Reverify those bytes on both sides of
+ // the save; observing the prior revision must not change next-state custody.
+ for(const change of project.projectData?.userEntered?.suppliedInputChanges||[]){
+  if(change?.schema!=='closed-loop-supplied-input-change/1'||change.action!=='WITHDRAW'||typeof change.artifactId!=='string'||!/^[a-f0-9]{64}$/.test(change.sha256||''))continue;
+  const originals=(project.projectData.artifacts||[]).filter(row=>engine.recordId(row,'artifacts')===change.artifactId&&Number(row.stage)===1&&engine.recordValue(row,'FILENAME')===change.filename&&engine.recordValue(row,'SHA256')===change.sha256),events=(project.projectData.history||[]).filter(event=>event.eventId===change.historyEventId&&event.type==='STAGE_ONE_SUPPLIED_INPUT_WITHDRAWN'&&Number(event.stage)===1&&event.artifactId===change.artifactId&&event.replacementArtifactId===change.replacementArtifactId&&event.reason===change.reason&&event.operatorLabel===change.operatorLabel);
+  if(originals.length===1&&events.length===1&&typeof change.reason==='string'&&change.reason.trim()&&typeof change.operatorLabel==='string'&&change.operatorLabel.trim())artifactIds.add(change.artifactId);
+ }
  for(const evidence of engine.records(project,'evidenceRecords')){
    const scope=evidence.scope,evidenceId=engine.recordId(evidence,'evidenceRecords');
    if(!scope||!Object.keys(scope).length||engine.timingCurrentRecord(project,'evidenceRecords',evidenceId,scope).truth!=='TRUE')continue;
