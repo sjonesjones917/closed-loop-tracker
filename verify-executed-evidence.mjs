@@ -1,3 +1,4 @@
+import {atomicEvidenceReferences} from './review-specification-coverage.mjs';
 import {verifyRetainedRootNativeEvidenceConsumers} from './test-retained-root-native-evidence.mjs';
 import {verifyHumanCombinedNativeEvidenceConsumers} from './test-human-combined-native-evidence.mjs';
 import {verifyHumanCombinedUiEvidenceConsumers} from './test-human-combined-ui-evidence.mjs';
@@ -374,7 +375,15 @@ const preload=path.resolve('verification-evidence-preload.mjs');
 const producerControls=[];
 const deferredCatalogConsumerControl=verifyDueEvidenceConsumers();
 const governanceDeclaration='specification/requirement-evidence-bindings.json';
-const governance=JSON.parse(fs.readFileSync(governanceDeclaration,'utf8'));
+const currentGovernance=JSON.parse(fs.readFileSync(governanceDeclaration,'utf8'));
+// Preserve the legacy mutable-Markdown receipt regression on its exact archived
+// governance input. Current insertion custody is tested separately below.
+const legacyGovernanceBytes=fs.readFileSync('verification/normative-context-legacy-governance-7df5f46e.json');
+assert.equal(legacyGovernanceBytes.length,112646,'GOVERNANCE_LEGACY_FIXTURE_SIZE_ORACLE');
+assert.equal(sha(legacyGovernanceBytes),'9c4631c86ccd2d8234f23469ffc7e11374bcda51eb4bb1f27c1f4a97ade7b72e','GOVERNANCE_LEGACY_FIXTURE_DIGEST_ORACLE');
+const governance=JSON.parse(legacyGovernanceBytes);
+assert.equal(governance.atomicExtraction,undefined,'GOVERNANCE_LEGACY_FIXTURE_ORACLE');
+assert(governance.approvedAmendments.some(row=>row.approvedProposalPath?.endsWith('.md')&&row.sourceReviewPath),'GOVERNANCE_LEGACY_MARKDOWN_FIXTURE_ORACLE');
 const fullCoverageReviewInputs=(JSON.parse(fs.readFileSync('verification-assertion-bindings.json','utf8')).bindings||[]).flatMap(binding=>binding.fullCoverage?.review?.path?[binding.fullCoverage.review.path]:[]);
 const governedApprovalInputs=[...new Set([...fullCoverageReviewInputs,...(governance.contextApplicabilityReview?[governance.contextApplicabilityReview.path]:[]),...(governance.approvedAmendments||[]).flatMap(amendment=>[amendment.sourceReviewPath,amendment.approvedProposalPath]),...(governance.independentSourceReview?[governance.independentSourceReview.sourceReviewPath,governance.independentSourceReview.reconciliationPath]:[])])].sort();
 const declaredVerifierInputs=[...new Set([...Object.values(verificationCatalog),...Object.values(browserVerificationCatalog)].flatMap(suite=>suite.sourceInputs||[]))].sort();
@@ -458,6 +467,7 @@ stage03ChildConstructionControl.counterexamplesDetected.push('missing-copied-hel
     assert.equal(after.status,0,'COLD_CHECKOUT_ORACLE: actual checkout environment rejected a cold workspace.');
     const actionReport=JSON.parse(after.stdout);assert.equal(actionReport.actionBodyExecuted,true);
     for(const file of producerFixtureInputs){fs.mkdirSync(path.dirname(path.join(workspace,file)),{recursive:true});fs.copyFileSync(file,path.join(workspace,file));}
+    fs.writeFileSync(path.join(workspace,governanceDeclaration),legacyGovernanceBytes);
     execFileSync('git',['init','--quiet'],{cwd:workspace});execFileSync('git',['add','.'],{cwd:workspace});execFileSync('git',['-c','user.name=Cold checkout fixture','-c','user.email=fixture@localhost','commit','--quiet','-m','Checked-out real producer fixture'],{cwd:workspace});
     const receiptDirectory=path.join(workspace,'receipts');
     // No explicit --import: the workflow's unchanged post-checkout job options
@@ -490,6 +500,43 @@ stage03ChildConstructionControl.counterexamplesDetected.push('missing-copied-hel
   assert.equal(good.result.status,0,'Conforming actual Stage 03 producer failed before receipt controls.');
   validateExecutionReceipt(good.receipt,suite,evidenceFingerprint());
   assert(good.receipt.observations.some(row=>row.checkId==='stage03.canonical-recordId-accepted'&&row.observed===true));
+  // A real current producer receipt must remain unusable after any pinned
+  // custody defect. These bytes must fail before a replacement fingerprint
+  // exists; the legacy mutable-proposal test below has different semantics.
+  const currentCustodyRoot=path.join(directory,'current-insertion-custody');
+  const currentCustodyCases=[];
+  execFileSync('git',['worktree','add','--detach','--quiet',currentCustodyRoot,'HEAD']);
+  try{
+    const originalFingerprint=evidenceFingerprint();
+    for(const [file,digest]of Object.entries(originalFingerprint.inputSha256)){
+      const target=path.join(currentCustodyRoot,file);
+      if(!fs.existsSync(target)||sha(fs.readFileSync(target))!==digest){fs.mkdirSync(path.dirname(target),{recursive:true});fs.copyFileSync(file,target);}
+    }
+    assert.deepEqual(evidenceFingerprint(currentCustodyRoot),originalFingerprint,'CURRENT_CUSTODY_MATCHING_SOURCE_ORACLE');
+    validateExecutionReceipt(good.receipt,suite,evidenceFingerprint(currentCustodyRoot));
+    const refs=atomicEvidenceReferences(currentGovernance.atomicExtraction);
+    assert(refs.length>0,'CURRENT_CUSTODY_DEPENDENCY_POPULATION_ORACLE');
+    const dependency=refs.find(ref=>ref.path!==currentGovernance.atomicExtraction.continuation.path);
+    assert(dependency,'CURRENT_CUSTODY_DEPENDENCY_ORACLE');
+    const target=path.join(currentCustodyRoot,dependency.path),bytes=fs.readFileSync(target);
+    for(const kind of ['changed-bytes','missing-file']){
+      try{
+        if(kind==='changed-bytes')fs.appendFileSync(target,'\n');else fs.unlinkSync(target);
+        assert.throws(()=>validateExecutionReceipt(good.receipt,suite,evidenceFingerprint(currentCustodyRoot)),error=>error.code===(kind==='missing-file'?'ENOENT':'INSERTION_PRODUCTION_HASH'),'CURRENT_CUSTODY_REFUSAL_ORACLE: '+kind);
+      }finally{fs.writeFileSync(target,bytes);}
+      validateExecutionReceipt(good.receipt,suite,evidenceFingerprint(currentCustodyRoot));
+      currentCustodyCases.push({caseId:kind,result:'DETECTED',exactRestorationAdmitsOriginalReceipt:true});
+    }
+    const declarationTarget=path.join(currentCustodyRoot,governanceDeclaration),declarationBytes=fs.readFileSync(declarationTarget);
+    try{
+      const bad=JSON.parse(declarationBytes);bad.atomicExtraction.continuation.sha256='0'.repeat(64);fs.writeFileSync(declarationTarget,JSON.stringify(bad));
+      assert.throws(()=>validateExecutionReceipt(good.receipt,suite,evidenceFingerprint(currentCustodyRoot)),error=>error.code==='INSERTION_PRODUCTION_HASH','CURRENT_CUSTODY_DESCRIPTOR_REFUSAL_ORACLE');
+    }finally{fs.writeFileSync(declarationTarget,declarationBytes);}
+    validateExecutionReceipt(good.receipt,suite,evidenceFingerprint(currentCustodyRoot));
+    currentCustodyCases.push({caseId:'descriptor-hash',result:'DETECTED',exactRestorationAdmitsOriginalReceipt:true});
+  }finally{execFileSync('git',['worktree','remove','--force',currentCustodyRoot]);}
+  const currentInsertionCustodyControl={result:'PASS',actualCurrentProducerReceiptReused:true,dependencyCount:atomicEvidenceReferences(currentGovernance.atomicExtraction).length,cases:currentCustodyCases,scope:'Current insertion custody rejects invalid pinned bytes before fingerprint/receipt admission; separate archived mutable-Markdown controls do not establish current application acceptance.'};
+
   // Real inherited descendant output bypasses the producer's stdout.write
   // capture. Keep it in runner diagnostics without reparsing it as the parent's
   // JSON report or replacing the parent's actual stderr with an empty string.
@@ -497,6 +544,7 @@ stage03ChildConstructionControl.counterexamplesDetected.push('missing-copied-hel
   for(const file of producerFixtureInputs){
     fs.mkdirSync(path.dirname(path.join(fixture,file)),{recursive:true});fs.copyFileSync(file,path.join(fixture,file));
   }
+  fs.writeFileSync(path.join(fixture,governanceDeclaration),legacyGovernanceBytes);
   const nestedProgress='COLLECTOR_INHERITED_CHILD_PROGRESS\n';
   // These exact plain diagnostic lines contaminated the completed production
   // report stream. Keep the JSON-only contract and capture their actual bytes
@@ -535,7 +583,7 @@ stage03ChildConstructionControl.counterexamplesDetected.push('missing-copied-hel
   const governanceSourceCases=[],activeFixtureSourceCases=[],activeHelperSourceCases=[],governanceBaseline=evidenceFingerprint(fixture);
   verifyDeclaredInputPathPolicy(fixture);
   assert(governedApprovalInputs.length>=2,'GOVERNANCE_INPUT_ORACLE: active approved proposal/review pair is missing.');
-  for(const file of [...governedApprovalInputs,...declaredVerifierInputs]){
+  for(const file of new Set([...governedApprovalInputs,...declaredVerifierInputs])){
     const target=path.join(fixture,file),bytes=fs.readFileSync(target);
     assert.equal(governanceBaseline.inputSha256[file],sha(bytes),'GOVERNANCE_INPUT_ORACLE: actual declared governance bytes are absent from execution identity.');
     fs.appendFileSync(target,'\n');
@@ -577,7 +625,7 @@ stage03ChildConstructionControl.counterexamplesDetected.push('missing-copied-hel
   fs.writeFileSync(legacyFixtureTarget,legacyFixtureBytes);execFileSync('git',['add',legacyFixturePath],{cwd:fixture});validateExecutionReceipt(persistedOwnReceipt,suite,evidenceFingerprint(fixture));
   const activeHelperFingerprintControl={result:'PASS',boundary:'Exact registered first-party assertion helper bytes in the existing receipt fingerprint and freshness validator',actualProducerReceiptReused:true,declaredSourcePaths:activeHelperInputs,sourceCases:activeHelperSourceCases};
   const activeFixtureFingerprintControl={result:'PASS',boundary:'Existing actual Stage03 producer receipt and production source fingerprint/receipt consumer; isolated Git/filesystem, no added child',actualProducerReceiptReused:true,declaredSourcePaths:activeFixtureInputs,sourceCases:activeFixtureSourceCases,fixtureCatalogMutations,formerUntrackedFixtureOmissionReproduced:true};
-  const governanceFingerprintControl={result:'PASS',boundary:'Existing actual Stage03 producer receipt, isolated Git checkout and production fingerprint/receipt consumer; no new producer execution',declaredSourcePaths:governedApprovalInputs,actualProducerReceiptReused:true,formerMarkdownOmissionReproduced:true,sourceCases:governanceSourceCases};
+  const governanceFingerprintControl={result:'PASS',legacyGovernanceFixture:'7df5f46e9a7e54da09622387a978badb39916c09',currentInsertionCustodyControl,boundary:'Actual current Stage03 receipt under pinned insertion custody, plus separate exact archived legacy governance fixture receipt under mutable-Markdown controls; no application acceptance claim',declaredSourcePaths:governedApprovalInputs,actualProducerReceiptReused:true,formerMarkdownOmissionReproduced:true,sourceCases:governanceSourceCases};
   for(const [name,text,diagnostic] of [
     ['producer-progress-on-stdout',source+`\nprocess.stdout.write(${JSON.stringify(producerProgress)});\n`,'Unexpected non-whitespace character after JSON'],
     ['foreign-failed-observation',source+`\nconsole.log(JSON.stringify({foreignImportedReport:true,verificationObservations:[{checkId:'foreign.failed-assertion',boundary:'controlled imported report',expected:true,observed:false,passed:false}]}));\n`,'failed or missing required assertion foreign.failed-assertion'],
