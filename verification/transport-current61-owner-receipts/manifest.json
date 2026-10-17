@@ -1,0 +1,32 @@
+{
+  "createdAt": "2026-10-17T03:49:45.012586+00:00",
+  "sourceCommit": "61f30b450b4a1049a11f4f59b52f6dd47e5bb33b",
+  "sourceTree": "4b7a18f87774feaec869dfe6584ae37fdf21b75c",
+  "files": [
+    {
+      "sourceFile": "/workspace/current-worker-recovery-5289880f-20261016/ci-parity-61f30b45/receipts/verify-ingestion.mjs.json",
+      "path": "verification/transport-current61-owner-receipts/verify-ingestion.mjs.json",
+      "bytes": 2207894,
+      "sha256": "a619862884be1c7e610fd371245a43585eceb835ccae60644dec6c279103bba5",
+      "suite": "verify-ingestion.mjs",
+      "receiptSha256": "eab98fc0c09467881882fa11a5161a6eed9e6f8213a92e37ed2f26d594be9f0c"
+    },
+    {
+      "sourceFile": "/workspace/current-worker-recovery-5289880f-20261016/ci61-slices/response-authority-remaining-61/receipts/verify-response-authority-integrity.mjs.json",
+      "path": "verification/transport-current61-owner-receipts/verify-response-authority-integrity.mjs.json",
+      "bytes": 629710,
+      "sha256": "ddf3ffb425a17d9cd2d894f0450458cf6d4f0f2ab34411935124926ba692aceb",
+      "suite": "verify-response-authority-integrity.mjs",
+      "receiptSha256": "53bfbb48ec4ce0978f5d19d61808e0326c9476e225f63ac50e9d0b60b4a5532f"
+    },
+    {
+      "sourceFile": "/workspace/current-worker-recovery-5289880f-20261016/ci61-slices/response-authority-remaining-61/receipts/verify-returned-slot-authority.mjs.json",
+      "path": "verification/transport-current61-owner-receipts/verify-returned-slot-authority.mjs.json",
+      "bytes": 501522,
+      "sha256": "baed1bebc0e10c9c6f732fc863b951120afa5fc9e5b79673140172fa04aab03e",
+      "suite": "verify-returned-slot-authority.mjs",
+      "receiptSha256": "f5074267e3d106408d77fdfad443ca3e5ab2fb378b1409f5ab74962cfe1ef8be"
+    }
+  ],
+  "consumerGuidance": "Fetch transport ref without checkout; git show commit:path into consumer-owned receipt directory, verify each bytes/SHA, then use unchanged strict validator on exact61/Node22 environment. Transportcommit is not an application candidate. Original source receipt bytes/command/fingerprints unchanged."
+}
