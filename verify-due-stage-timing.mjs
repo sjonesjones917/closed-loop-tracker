@@ -8,7 +8,7 @@ import {createHash} from 'node:crypto';
 import {readStoreArchive} from './test-zip.mjs';
 import {responseFixture} from './operator-journey-fixtures.mjs';
 import {execFileSync} from 'node:child_process';
-import {storedArtifactBody,projectStoreRuntime,captureArtifactFixture,restoreArtifactFixture,hydrateRetainedPromptContexts,bindAcceptanceUi} from './test-project-store-runtime.mjs';
+import {storedArtifactBody,projectStoreRuntime,captureArtifactFixture,restoreArtifactFixture,hydrateRetainedPromptContexts,bindAcceptanceUi,reverifyFixtureReturnedFiles} from './test-project-store-runtime.mjs';
 import {appMarkup} from './test-app-markup.mjs';
 import {createVerifierRuntime,isolatedVerifierWorkerClass} from './verifier-runtime.mjs';
 import {testIrManifestedEnvironment} from './test-test-ir-native-identity.mjs';
@@ -1141,8 +1141,8 @@ async function verifyUnresolvedThenSatisfiedRetry(r,input,stage=8,{existingPromp
  const received=r.copy(saved),artifactId=e.allocateId(received,'artifacts',r.copy({targetSlot:slot.attachmentSlotId,payload:{stage,filename:'synthetic-retry-execution.json',mediaType:'application/json',byteSize:blob.size,sha256:sha}})),stored=await r.store.putArtifact({artifactId,jobId:saved.job.JOB_ID,blob,filename:'synthetic-retry-execution.json',mediaType:'application/json',expectedSha256:sha}),text=JSON.stringify(envelope);
  const staged=await r.store.stageResponseFile({jobId:saved.job.JOB_ID,stage,blob:new Blob([text],{type:'application/json'}),rawFilename:'response.json',mediaType:'application/json',promptIdentity:manifest.promptIdentity,packageId:manifest.packageId,operationReservationId:manifest.operationReservationId,challengeNonce:manifest.challengeNonce}),file=await r.store.readStagedResponseFile({jobId:saved.job.JOB_ID,stagingId:staged.stagingId});
  const captured=i.captureRaw(received,{stage,text:new TextDecoder('utf-8',{fatal:true}).decode(file.bytes),promptRecord:prompt,files:[{artifactId,name:stored.filename,type:stored.mediaType,size:stored.byteSize,sha256:stored.sha256,attachmentSlotId:slot.attachmentSlotId}],transport:r.copy({authority:'AUTHORITATIVE_RESPONSE_FILE',stagingId:staged.stagingId,rawFilename:'response.json',mediaType:'application/json',status:file.status,sha256:file.sha256,byteSize:file.byteSize,promptIdentity:manifest.promptIdentity,packageId:manifest.packageId,operationReservationId:manifest.operationReservationId,challengeNonce:manifest.challengeNonce})});
- saved=await r.store.writeProject(captured.project,{operational:true,expectedProjectRevision:saved.revision,expectedStateSha256:saved.projectSha256});const prepared=i.prepareCaptured(saved,{rawResponseId:captured.rawRecord.rawResponseId});assert.equal(prepared.validation.valid,true,'DEFERRED_VALID_RETRY_ADMISSION_ORACLE: '+JSON.stringify(prepared.validation.issues));
- saved=await r.store.writeProject(prepared.project,{operational:true,expectedProjectRevision:saved.revision,expectedStateSha256:saved.projectSha256});const confirmation=i.acceptanceImpact(saved,prepared.proposal.proposalId);assert.equal(confirmation.replaces.some(row=>row.kind==='regressionExecutions'),requireReplacement,'DEFERRED_VALID_RETRY_REPLACEMENT_CONFIRMATION_ORACLE');if(requireReplacement)assert.throws(()=>i.commit(saved,prepared.proposal.proposalId,{operator:'SYNTHETIC_MISSING_REPLACEMENT_CONFIRMATION'}),error=>error.code==='REPLACEMENT_CONFIRMATION_REQUIRED','DEFERRED_REPLACEMENT_REQUIRES_HUMAN_CONFIRMATION_ORACLE');const committed=i.commit(saved,prepared.proposal.proposalId,{operator:'SYNTHETIC_VALID_RETRY',replacementConfirmation:confirmation}),impact=r.store.mutationImpact(saved,committed.project);
+ saved=await r.store.writeProject(captured.project,{operational:true,expectedProjectRevision:saved.revision,expectedStateSha256:saved.projectSha256});await reverifyFixtureReturnedFiles(r,saved,captured.rawRecord.rawResponseId);const prepared=i.prepareCaptured(saved,{rawResponseId:captured.rawRecord.rawResponseId});assert.equal(prepared.validation.valid,true,'DEFERRED_VALID_RETRY_ADMISSION_ORACLE: '+JSON.stringify(prepared.validation.issues));
+ saved=await r.store.writeProject(prepared.project,{operational:true,expectedProjectRevision:saved.revision,expectedStateSha256:saved.projectSha256});await reverifyFixtureReturnedFiles(r,saved,captured.rawRecord.rawResponseId);const confirmation=i.acceptanceImpact(saved,prepared.proposal.proposalId);assert.equal(confirmation.replaces.some(row=>row.kind==='regressionExecutions'),requireReplacement,'DEFERRED_VALID_RETRY_REPLACEMENT_CONFIRMATION_ORACLE');if(requireReplacement)assert.throws(()=>i.commit(saved,prepared.proposal.proposalId,{operator:'SYNTHETIC_MISSING_REPLACEMENT_CONFIRMATION'}),error=>error.code==='REPLACEMENT_CONFIRMATION_REQUIRED','DEFERRED_REPLACEMENT_REQUIRES_HUMAN_CONFIRMATION_ORACLE');const committed=i.commit(saved,prepared.proposal.proposalId,{operator:'SYNTHETIC_VALID_RETRY',replacementConfirmation:confirmation}),impact=r.store.mutationImpact(saved,committed.project);
  saved=await r.store.writeProject(committed.project,{expectedProjectRevision:saved.revision,expectedStateSha256:saved.projectSha256,...(impact.requiresConfirmation?{mutationConfirmation:impact}:{})});saved=await r.store.readProject(saved.job.JOB_ID);
  const state=e.currentDeferredExecution(saved,stage,'EXECUTE_FAILURE_TEST',{subjectId:binding.subjectId,allowCompleted:true}),receipts=e.records(saved,'regressionExecutions').filter(row=>e.recordValue(row,'MUTATION_ID')===binding.subjectId);
  fs.writeFileSync(proofRecovery+'/stage'+stage+'-unresolved-then-satisfied.json',JSON.stringify({baseSourceSha:'88220df8cee15ffed5b7d6bc948cb5ca80e6abc4',project:saved,artifacts:await captureArtifactFixture(r.store,saved.job.JOB_ID),state,receipts,manifest,instructionUtf8:Buffer.from(members.find(row=>row.canonicalPath==='instruction.txt').bytes).toString('utf8'),executionPackageBase64:Buffer.from(await pkg.blob.arrayBuffer()).toString('base64'),responseText:text,rawAttachmentText:raw,synthetic:true,actualBrowser:false}));
@@ -1199,6 +1199,16 @@ for(const caseId of caseIds) {
  const transport={authority:'AUTHORITATIVE_RESPONSE_FILE',stagingId:staged.stagingId,rawFilename:'response.json',mediaType:'application/json',status:file.status,sha256:file.sha256,byteSize:file.byteSize,promptIdentity:manifest.promptIdentity,packageId:manifest.packageId,operationReservationId:manifest.operationReservationId,challengeNonce:manifest.challengeNonce};
  const captured=i.captureRaw(received,{stage:8,text,promptRecord:prompt,files:r.copy(files),transport:r.copy(transport)});
  saved=await r.store.writeProject(captured.project,{operational:true,expectedProjectRevision:saved.revision,expectedStateSha256:saved.projectSha256});
+ // Operational persistence invalidates pending byte observations. Omission
+ // must still fail closed; corrupt stored bytes must fail the actual UI reader.
+ const beforeOmission=JSON.stringify(saved),omission=i.validateEnvelope(saved,r.copy(envelope),{stage:8,promptRecord:prompt,rawSha256:file.sha256,rawResponseId:captured.rawRecord.rawResponseId,files:r.copy(files)});
+ assert.equal(omission.valid,false,'DEFERRED_RETURNED_REVERIFY_OMISSION_ORACLE');assert(omission.issues.some(row=>row.code==='RETURNED_ARTIFACT_BYTES_UNVERIFIED'),'DEFERRED_RETURNED_REVERIFY_OMISSION_ORACLE');assert.equal(JSON.stringify(saved),beforeOmission,'DEFERRED_RETURNED_OMISSION_STATE_PRESERVATION_ORACLE');
+ if(caseId==='SATISFIED'){
+  const before=JSON.stringify(saved),body=storedArtifactBody(r,artifactId),original=body.blob;body.blob=new Blob([new Uint8Array(original.size)],{type:stored.mediaType});
+  try{await assert.rejects(()=>reverifyFixtureReturnedFiles(r,saved,captured.rawRecord.rawResponseId),error=>error.message===`Returned file ${stored.filename} is missing or changed. Select the original bytes in its named slot.`,'DEFERRED_RETURNED_CORRUPTION_REVERIFY_ORACLE');}finally{body.blob=original;}
+  assert.equal(JSON.stringify(saved),before,'DEFERRED_RETURNED_CORRUPTION_STATE_PRESERVATION_ORACLE');
+ }
+ await reverifyFixtureReturnedFiles(r,saved,captured.rawRecord.rawResponseId);
  const admission=i.validateEnvelope(saved,r.copy(envelope),{stage:8,promptRecord:prompt,rawSha256:file.sha256,rawResponseId:captured.rawRecord.rawResponseId,files:r.copy(files)});
  assert.equal(admission.valid,true,'LEGITIMATE_CONDITIONAL_PUBLISHED_ADMISSION_ORACLE: '+JSON.stringify(admission.issues));
  fs.writeFileSync(proofRecovery+'/stage8-preplanning-'+caseId.toLowerCase()+'.json',JSON.stringify({baseSourceSha:'88220df8cee15ffed5b7d6bc948cb5ca80e6abc4',sourceFingerprints:Object.fromEntries(['workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'].map(name=>[name,h.sha256Text(sourceOverrides[name]||fs.readFileSync(name,'utf8'))])),executionPackageBase64:Buffer.from(await exported.blob.arrayBuffer()).toString('base64'),project:saved,artifacts:await captureArtifactFixture(r.store,saved.job.JOB_ID),manifest,exportedInstructionUtf8:instructionBytes.toString('utf8'),responseText:text,rawAttachmentText:raw,files,admission,synthetic:true,actualBrowser:false}));
@@ -1223,7 +1233,7 @@ for(const caseId of caseIds) {
   bindAcceptanceUi(r,pendingRead,prepared.proposal.proposalId);await r.runtime.reverifyReturnedFiles(i.findRaw(pendingRead,captured.rawRecord.rawResponseId));
   assert.equal(r.store.artifactCustodyState(identity),'TRUE','VALIDATION_RESULT_PENDING_BYTE_REVERIFY_ORACLE');
   validationResultPreservation.recoveredPendingByteReverification={initiallyUnverified:true,strictCommitRefusal:true,noMutation:true,actualUiReverify:true,custodyTrue:true};
- }
+ }else await reverifyFixtureReturnedFiles(r,saved,captured.rawRecord.rawResponseId);
  const committed=i.commit(saved,prepared.proposal.proposalId,{operator:'SYNTHETIC_CONDITIONAL_OWNER_CONTROL',replacementConfirmation:i.acceptanceImpact(saved,prepared.proposal.proposalId)}),impact=r.store.mutationImpact(saved,committed.project);
  saved=await r.store.writeProject(committed.project,{expectedProjectRevision:saved.revision,expectedStateSha256:saved.projectSha256,...(impact.requiresConfirmation?{mutationConfirmation:impact}:{})});
  const reloaded=await r.store.readProject(saved.job.JOB_ID),receipt=e.records(reloaded,'regressionExecutions').find(row=>e.recordValue(row,'MUTATION_ID')===binding.subjectId);assert(receipt);assert.equal(e.recordValue(receipt,'RESULT'),result);
@@ -1421,6 +1431,15 @@ for(const status of ['RESERVED','EXPORTED']){
  return {case:'LEGITIMATE_DEFERRED_CACHED_PACKAGE_REFRESH',results,synthetic:true,actualBrowser:false};
 }
 
+// Focused replay remains a component report, never a full deferred-matrix receipt.
+if(process.argv.includes('--returned-file-admission')){
+ const prefixPath=process.argv.find(arg=>arg.startsWith('--returned-file-prefix='))?.slice('--returned-file-prefix='.length);
+ const generated=prefixPath?{prefix:JSON.parse(fs.readFileSync(prefixPath,'utf8'))}:generateLegitimateDeferredPrefix();
+ const expectedSources=['app-core.js','operator-journey-fixtures.mjs','project-store.js','prompt-engine.js','response-ingestion.js','test-fixtures.mjs','verify-operator-counterpart.mjs','workflow-engine.js','workflow-schema.js'];
+ assert.deepEqual(Object.keys(generated.prefix.sourceFingerprints||{}).sort(),expectedSources,'DEFERRED_RETURNED_FOCUS_SOURCE_UNIVERSE_ORACLE');
+ for(const[file,sha]of Object.entries(generated.prefix.sourceFingerprints))assert.equal(createHash('sha256').update(fs.readFileSync(file)).digest('hex'),sha,'DEFERRED_RETURNED_FOCUS_SOURCE_IDENTITY_ORACLE:'+file);
+ console.log(JSON.stringify({returnedFileAdmissionFocus:'PASS',componentOnly:true,fullDeferredMatrixProven:false,result:await legitimateDeferredReturnedJourney(generated.prefix)}));process.exit(0);
+}
 if(process.argv.includes('--recorded-execution-metrics-only')){console.log(JSON.stringify({status:'PASS',recordedExecutionMetrics:recordedDeferredMetricControls(runtime()),faultControls:recordedDeferredMetricFaultControls()}));process.exit(0);}
 
 if(process.argv.includes('--deferred-cache-only')){const generated=generateLegitimateDeferredPrefix();console.log(JSON.stringify({deferredCachedPackages:'PASS',setup:generated.setup,control:await verifyLegitimateDeferredCachedPackages(generated.prefix)}));process.exit(0);}

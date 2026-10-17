@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
+const returnedFileUiSources=new WeakMap();
 
 // Broadcast delivery is separate from the transaction/worker reply. Tests may
 // hold that queue to exercise either ordering without timers or guessed delays.
@@ -58,7 +59,7 @@ export function projectStoreRuntime({fault=null,sourceOverrides={},environment={
   if(first<0||last<first)throw new Error('The actual persistence UI dependency is unavailable: '+start);
   vm.runInContext(uiSource.slice(first,last),runtime,{filename:'app-core.js:persistence-ui-dependencies'});
  }
- return {runtime,rows,copy,store:runtime.closedLoopProjectStore,engine:runtime.closedLoopWorkflowEngine,core:runtime.closedLoopCore,ingestion:runtime.closedLoopResponseIngestion,prompts:runtime.closedLoopPromptEngine};
+ const result={runtime,rows,copy,store:runtime.closedLoopProjectStore,engine:runtime.closedLoopWorkflowEngine,core:runtime.closedLoopCore,ingestion:runtime.closedLoopResponseIngestion,prompts:runtime.closedLoopPromptEngine};returnedFileUiSources.set(result,uiSource);return result;
 }
 
 // UI-only initial state plus the actual scope matcher. These are not sharing
@@ -102,6 +103,20 @@ runtime.captureCurrentView=async()=>store.saveCheckpoint(runtime.current.job.JOB
 let source=providedSource??fs.readFileSync('app-core.js','utf8');if(skipConfirmation){for(const before of ['if(impact?.requiresConfirmation&&mutationConfirmation?.confirmationKey!==impact.confirmationKey)','if(semanticImpact?.requiresConfirmation){']){assert(source.includes(before));source=source.replace(before,before.endsWith('{')?'if(false){':'if(false)');}}const extract=(start,end)=>{const a=source.indexOf(start);assert(a>=0);return source.slice(a,source.indexOf(end,a+start.length));};
 vm.runInContext(extract('async function reverifyReturnedFiles(','async function validateReturnedResponse(')+extract('async function persistReplacement(','async function save(')+extract('function humanAuthorityConfirmationValues(','async function rejectPendingProposal(')+'\nglobalThis.accept=acceptPendingProposal;globalThis.confirm=confirmReplacement;',runtime);
  return failures;
+}
+
+// Replaying storage/History reads never grants pending returned-file custody.
+// Run the exact UI byte reader in an isolated context; do not replace the
+// caller's acceptance UI, canonical state, metadata or production guards.
+export async function reverifyFixtureReturnedFiles(r,project,rawResponseId){
+ const source=returnedFileUiSources.get(r);assert.equal(typeof source,'string','RETURNED_FILE_FIXTURE_SELECTED_UI_SOURCE_ORACLE');
+ const raw=r.ingestion.findRaw(project,rawResponseId);assert(raw,'RETURNED_FILE_FIXTURE_RAW_IDENTITY_ORACLE');
+ const files=r.engine.safe(raw.files).filter(file=>file.attachmentSlotId);if(!files.length)return {verifiedFiles:0,actualUiOwner:true};
+ const begin=source.indexOf('async function reverifyReturnedFiles('),end=source.indexOf('async function validateReturnedResponse(',begin);
+ assert(begin>=0&&end>begin,'RETURNED_FILE_FIXTURE_ACTUAL_UI_OWNER_ORACLE');
+ const context=createVerifierRuntime({safe:r.engine.safe,projectStore:r.store,current:project,closedLoopHash:r.runtime.closedLoopHash});
+ vm.runInContext(source.slice(begin,end)+';globalThis.verifyActualReturnedFiles=reverifyReturnedFiles;',context,{filename:'app-core.js:actual-returned-file-reverification'});
+ await context.verifyActualReturnedFiles(raw);return {verifiedFiles:files.length,actualUiOwner:true};
 }
 
 // Fault injection locates the persisted payload, not the occurrence metadata.

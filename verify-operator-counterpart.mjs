@@ -1,4 +1,4 @@
-import {bindArtifactFixture,projectStoreRuntime as baseProjectStoreRuntime,captureArtifactFixture,restoreArtifactFixture,bindAcceptanceUi,storageBroadcastNetwork,hydrateRetainedPromptContexts} from './test-project-store-runtime.mjs';
+import {bindArtifactFixture,projectStoreRuntime as baseProjectStoreRuntime,captureArtifactFixture,restoreArtifactFixture,bindAcceptanceUi,storageBroadcastNetwork,hydrateRetainedPromptContexts,reverifyFixtureReturnedFiles} from './test-project-store-runtime.mjs';
 import {artifactFixtureId} from './test-artifact-fixtures.mjs';
 import {createVerifierRuntime,isolatedVerifierWorkerClass} from './verifier-runtime.mjs';
 import {testIrManifestedEnvironment} from './test-test-ir-native-identity.mjs';
@@ -475,10 +475,12 @@ async function verifyStage17FailureCorrection() {
     assert.equal(new TextDecoder('utf-8',{fatal:true}).decode(file.bytes),text);
     const before=saved.projectData.acceptedChanges.length,captured=i.captureRaw(received,{stage,text,promptRecord:prompt,files,transport:{authority:'AUTHORITATIVE_RESPONSE_FILE',stagingId:staged.stagingId,rawFilename:'response.json',mediaType:'application/json',status:file.status,sha256:file.sha256,byteSize:file.byteSize,promptIdentity:manifest.promptIdentity,packageId:manifest.packageId,operationReservationId:manifest.operationReservationId,challengeNonce:manifest.challengeNonce}});
     saved=await store.writeProject(captured.project,{operational:true,expectedProjectRevision:saved.revision,expectedStateSha256:saved.projectSha256});
+    await reverifyFixtureReturnedFiles(r,saved,captured.rawRecord.rawResponseId);
     const prepared=i.prepareCaptured(saved,{rawResponseId:captured.rawRecord.rawResponseId});
     assert.equal(prepared.validation.valid,true,'STAGE17_ADMISSION_ORACLE '+operation+': '+JSON.stringify(prepared.validation.issues));
     assert.equal(prepared.proposal.status,'PENDING_OPERATOR_REVIEW');assert.equal(prepared.project.projectData.acceptedChanges.length,before);
     saved=await store.writeProject(prepared.project,{operational:true,expectedProjectRevision:saved.revision,expectedStateSha256:saved.projectSha256});
+    await reverifyFixtureReturnedFiles(r,saved,captured.rawRecord.rawResponseId);
     const committed=i.commit(saved,prepared.proposal.proposalId,{operator:'SYNTHETIC_STAGE17_OPERATOR'});await persist(committed.project);
     saved=await store.readProject(saved.job.JOB_ID);
     assert.equal(store.validateProjectIntegrity(saved).valid,true);
