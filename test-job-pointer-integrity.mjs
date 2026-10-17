@@ -25,7 +25,15 @@ export async function verifyJobPointerIntegrity({sourceOverrides={}}={}){
  }
  const importBad=copy(blank);delete importBad.projectSha256;importBad.job.CURRENT_PRODUCT_ID='NONEXISTENT-PRODUCT';
  const importBody={schema:'closed-loop-project-package/1',projectSchema:importBad.schema,workflow:importBad.workflow,responseSchema:schema.RESPONSE_SCHEMA,project:importBad,artifacts:[],packageManifest:{jobId:importBad.job.JOB_ID,projectSha256:store.projectSha256(importBad),artifactCount:0,artifacts:[]},exportedAt:new Date().toISOString()},importBytes=new Blob([gzipSync(Buffer.from(JSON.stringify({...importBody,packageSha256:hash.sha256Value(copy(importBody))})))]);
- await assert.rejects(projectStoreRuntime({sourceOverrides}).store.importPackage(importBytes),error=>error.code==='PROJECT_INTEGRITY_FAILED'&&error.message.includes('/job/CURRENT_PRODUCT_ID'),'JOB_POINTER_IMPORT_REJECTION_ORACLE');
+ const importDestination=projectStoreRuntime({sourceOverrides});
+ await importDestination.store.createProject({commandId:'SYNTHETIC-JOB-POINTER-IMPORT-RETAINED'});
+ const importSnapshot=async()=>{
+  const visit=async value=>{if(value instanceof Blob)return {type:value.type,bytes:Buffer.from(await value.arrayBuffer()).toString('base64')};if(Array.isArray(value))return Promise.all(value.map(visit));if(value&&typeof value==='object')return Object.fromEntries(await Promise.all(Object.entries(value).map(async([key,item])=>[key,await visit(item)])));return value;};
+  return visit([...importDestination.rows].map(([name,rows])=>[name,[...rows]]));
+ };
+ const beforeRejectedImport=await importSnapshot();
+ await assert.rejects(importDestination.store.importPackage(importBytes),error=>error.code==='HISTORY_VERSION_INCOMPATIBLE'&&error.existingProjectsUnchanged===true&&error.issues?.length===1&&error.issues[0]==='/job/CURRENT_PRODUCT_ID: identity does not resolve to its owning retained family or version registry.','JOB_POINTER_IMPORT_REJECTION_ORACLE');
+ assert.deepEqual(await importSnapshot(),beforeRejectedImport,'JOB_POINTER_IMPORT_ATOMIC_STORE_ORACLE');
  let admitted;const fixtureIngestion={...r.ingestion,commit(project,proposalId,options){admitted={project:copy(project),proposalId};return r.ingestion.commit(project,proposalId,options);}};
  let p=stage01AcceptanceFixture({...r,schema,ingestion:fixtureIngestion},'SYNTHETIC-LATEST-EVIDENCE-RETENTION');
  const acceptedProjection=r.ingestion.prepareAcceptanceCandidate(admitted.project,admitted.proposalId,{operator:'SYNTHETIC'});assert.equal(engine.jobPointerIntegrityIssues(acceptedProjection.project).length,0,'JOB_POINTER_ADMISSION_VALID_CONTROL_ORACLE');
