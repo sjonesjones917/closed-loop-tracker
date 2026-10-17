@@ -99,10 +99,18 @@ export async function verifyLegacyJobPointerRecovery({sourceOverrides={}}={}){
   .replace('function jobPointerIntegrityIssues(project,{prior=null}={}){','function jobPointerIntegrityIssues(project,{prior=null}={}){return [];')
   .replace('function jobPointerProjectionRepairs(project){','function jobPointerProjectionRepairs(project){return [];')
   .replace("recordId(records(project,'evidenceRecords',{active:false}).at(-1),'evidenceRecords')||null","recordId(recordsForCurrentScope(project,'evidenceRecords').at(-1),'evidenceRecords')||null");
- const old=projectStoreRuntime({sourceOverrides:{...sourceOverrides,'workflow-engine.js':legacy}}),id='SYNTHETIC-LEGACY-POINTER-RECOVERY';
+ // Produce the historical state under an actual registered /6 definition.
+ // A modified writer must not label its old calculation as current /15.
+ const schemaSource=sourceOverrides['workflow-schema.js']||fs.readFileSync('workflow-schema.js','utf8'),schemaAnchor=schemaSource.match(/const PROJECT_PROJECTION_DERIVATION_CONTRACT=freeze\((\{[^\n]+\})\);/);
+ assert(schemaAnchor,'JOB_POINTER_LEGACY_DECLARATION_ANCHOR_ORACLE');
+ const legacyMap=":id===schema.LEGACY_PROJECT_PROJECTION6_DERIVATION_CONTRACT.id?'project.legacyProjection6'",activationAnchor='function projectionActivationRequired(project){',storeSource=sourceOverrides['project-store.js']||fs.readFileSync('project-store.js','utf8');
+ assert.equal(legacy.split(legacyMap).length,2,'JOB_POINTER_LEGACY_VALIDATOR_ANCHOR_ORACLE');assert.equal(storeSource.split(activationAnchor).length,2,'JOB_POINTER_LEGACY_ACTIVATION_ANCHOR_ORACLE');
+ const historicalSources={...sourceOverrides,'workflow-schema.js':schemaSource.replace(schemaAnchor[0],'const PROJECT_PROJECTION_DERIVATION_CONTRACT=LEGACY_PROJECT_PROJECTION6_DERIVATION_CONTRACT;'),'workflow-engine.js':legacy.replace(legacyMap,''),'project-store.js':storeSource.replace(activationAnchor,activationAnchor+'return false;')};
+ const old=projectStoreRuntime({sourceOverrides:historicalSources}),id='SYNTHETIC-LEGACY-POINTER-RECOVERY';
  let prior=stage01AcceptanceFixture({...old,schema:old.runtime.closedLoopWorkflowSchema},id);prior=await old.store.writeProject(prior,{expectedProjectRevision:0,createOnly:true,incrementRevision:false});const evidenceId=prior.job.LATEST_EVIDENCE_REFERENCE;
  const invalidated=old.copy(prior);old.engine.invalidateStageForAuthorityChange(invalidated,{stage:1,reason:'Synthetic pre-fix pointer loss',operatorLabel:'SYNTHETIC'});prior=await old.store.writeProject(invalidated,{expectedProjectRevision:prior.revision,mutationConfirmation:old.store.mutationImpact(prior,invalidated)});
  assert.equal(prior.job.LATEST_EVIDENCE_REFERENCE,null,'JOB_POINTER_LEGACY_CONTROL_ORACLE');assert.equal(old.store.projectSha256(prior),prior.projectSha256);
+ assert.equal(prior.projectData.applicationProjection.receipt.derivationId,'closed-loop-derivation/project-current-projection/6','JOB_POINTER_LEGACY_REGISTERED_DEFINITION_ORACLE');assert.equal(old.engine.validateApplicationProjection(prior,prior).valid,true,'JOB_POINTER_LEGACY_ORIGINAL_RECEIPT_ORACLE');
  const backup=await old.store.exportPackage(id),backupText=gunzipSync(Buffer.from(await backup.arrayBuffer())).toString('utf8'),priorHistory=await old.store.historyList(id);
  // Capture the exact exported object span independently of the application
  // parser/encoder: braces inside JSON strings cannot end the root member.
@@ -110,9 +118,36 @@ export async function verifyLegacyJobPointerRecovery({sourceOverrides={}}={}){
  for(;end<backupText.length;end++){const c=backupText[end];if(inString){if(escaped)escaped=false;else if(c==='\\')escaped=true;else if(c==='\"')inString=false;}else if(c==='\"')inString=true;else if(c==='{')depth++;else if(c==='}'&&!--depth){end++;break;}}
  const exactProjectSource=backupText.slice(start,end);assert.equal(JSON.parse(exactProjectSource).job.LATEST_EVIDENCE_REFERENCE,null);
 
- const fresh=()=>{const r=projectStoreRuntime({sourceOverrides});for(const [name,rows]of old.rows)r.rows.set(name,new Map([...rows].map(([key,row])=>[key,r.copy(row)])));return r;};
+ const fresh=(producer=old)=>{const r=projectStoreRuntime({sourceOverrides});for(const [name,rows]of producer.rows)r.rows.set(name,new Map([...rows].map(([key,row])=>[key,r.copy(row)])));return r;};
  const snapshot=async r=>{const visit=async value=>{if(value instanceof Blob)return {type:value.type,bytes:Buffer.from(await value.arrayBuffer()).toString('base64')};if(Array.isArray(value))return Promise.all(value.map(visit));if(value&&typeof value==='object')return Object.fromEntries(await Promise.all(Object.entries(value).map(async([key,item])=>[key,await visit(item)])));return value;};return visit([...r.rows].map(([name,rows])=>[name,[...rows]]));};
+ // The former fixture falsely issued a current /15 receipt from a changed
+ // calculation. Preserve that specimen as a refusal control, not legacy proof.
+ const mislabeled=projectStoreRuntime({sourceOverrides:{...sourceOverrides,'workflow-engine.js':legacy}}),mislabeledId='SYNTHETIC-MISLABELED-POINTER-RECOVERY';
+ let mislabeledProject=stage01AcceptanceFixture({...mislabeled,schema:mislabeled.runtime.closedLoopWorkflowSchema},mislabeledId);
+ mislabeledProject=await mislabeled.store.writeProject(mislabeledProject,{expectedProjectRevision:0,createOnly:true,incrementRevision:false});
+ const mislabeledNext=mislabeled.copy(mislabeledProject);mislabeled.engine.invalidateStageForAuthorityChange(mislabeledNext,{stage:1,reason:'Synthetic falsely current pointer writer',operatorLabel:'SYNTHETIC'});
+ await mislabeled.store.writeProject(mislabeledNext,{expectedProjectRevision:mislabeledProject.revision,mutationConfirmation:mislabeled.store.mutationImpact(mislabeledProject,mislabeledNext)});
+ const legacyRefusals=[];
+ for(const mode of ['current-definition-mislabel','wrong-version','tampered-output','observation-clock-mismatch','malformed-stage','malformed-record']){
+  const rejected=fresh(mode==='current-definition-mislabel'?mislabeled:old),jobId=mode==='current-definition-mislabel'?mislabeledId:id,row=rejected.rows.get('projects').get(jobId);
+  if(mode==='wrong-version')row.project.projectData.applicationProjection.receipt.derivationVersion=7;
+  if(mode==='tampered-output')row.project.projectData.applicationProjection.receipt.outputSha256='f'.repeat(64);
+  if(mode==='observation-clock-mismatch'){
+   row.project.stages[1].gate.checkedAt='2030-01-01T00:00:00.000Z';
+   const retained=row.project.projectData.applicationProjection,derivationKey='project.legacyProjection6',canonicalInput=rejected.engine.applicationProjectionInput(row.project,retained.observedAt,{observations:retained.inputObservations,derivationKey});
+   retained.receipt=rejected.runtime.closedLoopWorkflowSchema.createApplicationDerivationReceipt({derivationKey,canonicalInput,sourceRecordHashes:canonicalInput.sourceBinding.records,output:rejected.engine.applicationProjectionOutput(row.project,{derivationKey})});
+   assert.equal(rejected.engine.validateLegacyApplicationProjection(row.project).valid,true,'JOB_POINTER_CLOCK_VALID_RECEIPT_CONTROL_ORACLE');
+  }
+  if(mode==='malformed-stage')row.project.stages[2]=null;
+  if(mode==='malformed-record')row.project.projectData.artifacts.push(rejected.copy({fields:{}}));
+  row.projectSha256=rejected.store.projectSha256(row.project);const exactRow=rejected.copy(row);
+  await assert.rejects(rejected.store.readProject(jobId),error=>error.code==='PROJECT_INTEGRITY_FAILED','JOB_POINTER_LEGACY_PROOF_REFUSAL_ORACLE: '+mode);
+  const quarantine=(await rejected.store.listQuarantinedProjects()).find(entry=>entry.jobId===jobId);assert(quarantine?.completeSnapshot,'JOB_POINTER_LEGACY_PROOF_QUARANTINE_ORACLE: '+mode);
+  assert.deepEqual((await rejected.store.metaGet(quarantine.key)).row,exactRow,'JOB_POINTER_LEGACY_PROOF_BYTES_ORACLE: '+mode);legacyRefusals.push(mode);
+ }
  const loaded=fresh(),retainedBefore=await snapshot(loaded),repaired=await loaded.store.readProject(id),newHistory=await loaded.store.historyList(id);
+ assert.equal(repaired.projectData.applicationProjection.receipt.derivationId,loaded.runtime.closedLoopWorkflowSchema.PROJECT_PROJECTION_DERIVATION_CONTRACT.id,'JOB_POINTER_EXPLICIT_CURRENT_ACTIVATION_ORACLE');
+ const activation=repaired.projectData.history.find(row=>row.type==='APPLICATION_PROJECTION_DERIVATION_ACTIVATED');assert.equal(activation.previousDerivationId,prior.projectData.applicationProjection.receipt.derivationId);assert.equal(activation.sourceProjectSha256,prior.projectSha256);assert.equal(activation.historicalProvenanceClaimed,false);
  assert.equal(repaired.revision,prior.revision+1,'JOB_POINTER_LEGACY_REVISION_ORACLE');assert.equal(repaired.job.LATEST_EVIDENCE_REFERENCE,evidenceId,'JOB_POINTER_LEGACY_REPAIR_ORACLE');assert.equal(loaded.engine.gate(1,repaired).complete,false);
  for(const entry of priorHistory.entries){assert.deepEqual(JSON.parse(JSON.stringify(newHistory.entries.find(row=>row.id===entry.id))),JSON.parse(JSON.stringify(entry)),'JOB_POINTER_LEGACY_HISTORY_IDENTITY_ORACLE');const key=[...loaded.rows.get('meta').keys()].find(value=>value.endsWith(':snapshot:'+entry.id));assert.equal(Buffer.compare(Buffer.from(await loaded.rows.get('meta').get(key).value.blob.arrayBuffer()),Buffer.from(await old.rows.get('meta').get(key).value.blob.arrayBuffer())),0,'JOB_POINTER_LEGACY_SNAPSHOT_BYTES_ORACLE');}
  const event=repaired.projectData.history.find(row=>row.type==='JOB_POINTER_PROJECTION_REPAIRED');assert.equal(event.sourceProjectSha256,prior.projectSha256);assert.deepEqual(JSON.parse(JSON.stringify(event.repairs)),[{field:'LATEST_EVIDENCE_REFERENCE',from:null,to:evidenceId}]);
@@ -140,7 +175,7 @@ export async function verifyLegacyJobPointerRecovery({sourceOverrides={}}={}){
  const savedSeed=await seedRuntime.store.writeProject(seed,{expectedProjectRevision:0,incrementRevision:false,createOnly:true});assert.equal((await seedRuntime.store.readProject(seed.job.JOB_ID)).projectSha256,savedSeed.projectSha256,'JOB_POINTER_BUNDLED_SEED_DURABLE_ORACLE');
  await seedRuntime.store.saveCheckpoint(savedSeed.job.JOB_ID,{expectedProjectRevision:savedSeed.revision});const ordinary=await seedRuntime.store.createProject();assert.notEqual(ordinary.job.JOB_ID,savedSeed.job.JOB_ID);assert(await seedRuntime.store.readProject(ordinary.job.JOB_ID));assert(await seedRuntime.store.readProject(savedSeed.job.JOB_ID),'JOB_POINTER_BUNDLED_DEPARTURE_HISTORY_ORACLE');
  assert(seed.projectData.migrationArchives.some(row=>row.kind==='ORIGINAL_IMPORT_PAYLOAD'&&JSON.stringify(row.payload)===JSON.stringify(rawSeed)),'JOB_POINTER_BUNDLED_SOURCE_ARCHIVE_ORACLE');
- const oldSeedRuntime=projectStoreRuntime({sourceOverrides:{...sourceOverrides,'workflow-engine.js':legacy}});Object.assign(oldSeedRuntime.runtime,{core:oldSeedRuntime.core,engine:oldSeedRuntime.engine,projectStore:oldSeedRuntime.store,schema:oldSeedRuntime.runtime.closedLoopWorkflowSchema,safe:oldSeedRuntime.engine.safe,clone:oldSeedRuntime.copy,views:['Overview','Project','Workflow','Records','Files','Release']});
+ const oldSeedRuntime=projectStoreRuntime({sourceOverrides:historicalSources});Object.assign(oldSeedRuntime.runtime,{core:oldSeedRuntime.core,engine:oldSeedRuntime.engine,projectStore:oldSeedRuntime.store,schema:oldSeedRuntime.runtime.closedLoopWorkflowSchema,safe:oldSeedRuntime.engine.safe,clone:oldSeedRuntime.copy,views:['Overview','Project','Workflow','Records','Files','Release']});
  vm.runInContext(app.split('\n').filter(line=>line.startsWith('const stageRecordText=')||line.startsWith('const stageOutputText=')).join('\n')+'\n'+app.slice(app.indexOf('function blankStage('),app.indexOf('function normalize(')),oldSeedRuntime.runtime);
  const oldSeed=oldSeedRuntime.runtime.importSeed(oldSeedRuntime.copy(rawSeed));Object.assign(oldSeed.job,{CURRENT_SOURCE_SET_VERSION:rawSeed.currentVersions?.sources||'NOT APPLICABLE',CURRENT_REQUIREMENTS_VERSION:rawSeed.currentVersions?.requirements||'NOT APPLICABLE',CURRENT_TEST_SUITE_VERSION:rawSeed.currentVersions?.tests||'NOT APPLICABLE',CURRENT_INSTRUCTION_VERSION:rawSeed.currentVersions?.instruction||'NOT APPLICABLE',CURRENT_BASELINE_ID:rawSeed.baseline?.baselineId||'NONE',CURRENT_PRODUCT_ID:rawSeed.product?.productId||'NONE'});
  const oldSeedSaved=await oldSeedRuntime.store.writeProject(oldSeed,{expectedProjectRevision:0,incrementRevision:false,createOnly:true}),oldSeedBackup=await oldSeedRuntime.store.exportPackage(oldSeed.job.JOB_ID),seedReload=projectStoreRuntime({sourceOverrides});for(const [name,rows]of oldSeedRuntime.rows)seedReload.rows.set(name,new Map([...rows].map(([key,row])=>[key,seedReload.copy(row)])));

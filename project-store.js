@@ -862,11 +862,28 @@ function legacyJobPointerProjection(project,{verifyDerived=true,verifyProjection
   for(const {field,to}of engine.jobPointerProjectionRepairs(corrected)){changed.set(field,{field,from:project.job[field]??null,to});corrected.job[field]=to;}
   const repairs=[...changed.values()];
   const bound=recoveryProjectionBounds.get(project);if(bound)recoveryProjectionBounds.set(corrected,bound);
-  const checked=validateProjectIntegrity(corrected,{verifyDerived,verifyProjection});
-  if(!checked.valid&&(!verifyDerived||!historicalProjectionConsistent(corrected,{code:'PROJECT_INTEGRITY_FAILED',issues:checked.issues})))return null;
-  return {project:corrected,repairs};
+  let checked;try{checked=validateProjectIntegrity(corrected,{verifyDerived,verifyProjection});}catch{return null;}
+  let requiresProjectionActivation=false;
+  if(!checked.valid&&(!verifyDerived||!historicalProjectionConsistent(corrected,{code:'PROJECT_INTEGRITY_FAILED',issues:checked.issues}))){
+    // Authenticate the registered historical output BEFORE pointer repair.
+    // The existing atomic activation, never a receipt restamp, owns new output.
+    // Reject malformed canonical data before walking its historical proof.
+    let canonical,legacyProjection;
+    try{
+      canonical=validateProjectIntegrity(corrected,{verifyDerived,verifyProjection:false});
+      if(!canonical.valid)return null;
+      legacyProjection=verifyProjection&&projectionActivationRequired(project)?engine.validateLegacyApplicationProjection(project):null;
+    }catch{return null;}
+    const observationsMatch=legacyProjection?.valid&&Object.values(project.stages||{}).every(state=>!Object.hasOwn(state?.gate||{},'checkedAt')||state.gate.checkedAt===project.projectData.applicationProjection.observedAt);
+    // Only projection proof is deferred: raw legacy proof was authenticated and
+    // all corrected canonical structure/pointer checks passed above.
+    if(!observationsMatch)return null;
+    requiresProjectionActivation=true;
+  }
+  return {project:corrected,repairs,requiresProjectionActivation};
 }
-async function migrateJobPointerProjection(prior,{project:next,repairs,projectionActivation=false,varianceActivation=false,historyLabel=null},verifiedRead){
+async function migrateJobPointerProjection(prior,{project:next,repairs,projectionActivation=false,requiresProjectionActivation=false,varianceActivation=false,historyLabel=null},verifiedRead){
+  if(requiresProjectionActivation&&!projectionActivation)throw storageError('Authenticated historical pointer repair requires explicit current projection activation.','PROJECT_INTEGRITY_FAILED');
   const engine=globalThis.closedLoopWorkflowEngine,archivedDefaults=archiveUnacceptedAgentJobDefaults(next,{sourceProjectSha256:prior.projectSha256});delete next.projectSha256;next.revision=Number(prior.revision)+1;
   await observeProjectArtifactCustody(next);engine.reconcileReservationRevisions(next);if(repairs.length)engine.addHistory(next,'JOB_POINTER_PROJECTION_REPAIRED',{sourceProjectSha256:prior.projectSha256,repairs});if(projectionActivation)recordProjectionActivation(next,prior.projectSha256);if(varianceActivation)activateLegacyExpectedVarianceContracts(next,prior.projectSha256);engine.recalculate(next);assertProjectIntegrity(next,{prior});
   const {projectSha256:digest,workSha256}=historyProjectDigests(next),integrity=verifiedProjectIntegrity(next,digest),preparedProof={read:verifiedRead,integrity,digest};
