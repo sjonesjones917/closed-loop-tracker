@@ -322,7 +322,7 @@ export async function verifyLifecycleFaultDispatch(directory){
  async function execute(label,body,imported,completion=defaultCompletion,auxiliary=defaultAuxiliary){
   const folder=path.join(directory,label);fs.mkdirSync(folder,{recursive:true});
   const owner=path.join(folder,'renamed-lifecycle.mjs'),launcher=path.join(folder,'importing-verifier.mjs'),trace=path.join(folder,'caller-entries.log');
-  fs.writeFileSync(owner,`import fs from 'node:fs';\nimport assert from 'node:assert/strict';\nimport {runVerifier,detectedFault} from ${JSON.stringify(import.meta.url)};\n`+body.replace("'conformance-regression-evidence/timing-faults'",JSON.stringify(path.join(folder,'faults')))+`\nif(timingFault)throw new Error(timingFault.oracle);
+  fs.writeFileSync(owner,`import fs from 'node:fs';\nimport assert from 'node:assert/strict';\nimport {runVerifier,detectedFault} from ${JSON.stringify(import.meta.url)};\nimport {createReservedScopeRejectionProof} from ${JSON.stringify(new URL('./test-scope-rejection-preservation.mjs',import.meta.url).href)};\n`+body.replace("'conformance-regression-evidence/timing-faults'",JSON.stringify(path.join(folder,'faults')))+`\nif(timingFault)throw new Error(timingFault.oracle);
 const positiveTrace=[],recoveryStages=[],comparisonStages=[],replacementStages=[],refinementStages=[],continuationStages=[],stageProjectionCases=[],schema={};
 const p={stages:Object.fromEntries(Array.from({length:30},(_,i)=>[i+1,{status:'COMPLETE'}]))};
 const engine={recalculate:()=>positiveTrace.push('recalculate'),gate:stage=>{positiveTrace.push('gate:'+stage);return {complete:true,reasons:[]};}};
@@ -726,7 +726,7 @@ async function verifyRunnerFaults(){
  // Preserve the shared fixture authority when the supervisor owner is copied
  // into a disposable module outside the repository for fault injection.
  const fixtureUrl=new URL('./operator-journey-fixtures.mjs',import.meta.url).href;
- const serializedImplementation=implementation.replace("from './operator-journey-fixtures.mjs'","from "+JSON.stringify(fixtureUrl)).replace("import('./full-cycle-prerequisite.mjs')","import("+JSON.stringify(new URL('./full-cycle-prerequisite.mjs',import.meta.url).href)+")").replace("new URL('./operator-journey-fixtures.mjs',import.meta.url).href",JSON.stringify(fixtureUrl));
+ const serializedImplementation=implementation.replace("from './operator-journey-fixtures.mjs'","from "+JSON.stringify(fixtureUrl)).replace("import('./full-cycle-prerequisite.mjs')","import("+JSON.stringify(new URL('./full-cycle-prerequisite.mjs',import.meta.url).href)+")").replace("new URL('./operator-journey-fixtures.mjs',import.meta.url).href",JSON.stringify(fixtureUrl)).replace("new URL('./test-scope-rejection-preservation.mjs',import.meta.url).href",JSON.stringify(new URL('./test-scope-rejection-preservation.mjs',import.meta.url).href));
  try{
   for(const [name,before,after,oracle]of mutations){
    assert.equal(implementation.split(before).length,2,'Unique runner fault anchor required: '+name);
