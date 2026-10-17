@@ -6,7 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import cp from 'node:child_process';
 import assert from 'node:assert/strict';
-import {readHistoricalNormativeFixtureInputs} from './historical-normative-fixture-inputs.mjs';
+import {readHistoricalNormativeFixtureInputs,readHistoricalNormativeProofSource} from './historical-normative-fixture-inputs.mjs';
 import {verificationCatalog,browserVerificationCatalog} from './verification-evidence-catalog.mjs';
 import {SPECIFICATION_PATH,sha,evidenceFingerprint,coverageDeclarationSha256,createExecutionReceipt,aggregateExecutedEvidence,readExecutedEvidence} from './verification-evidence.mjs';
 export function createNormativeProofFixture(){
@@ -27,7 +27,7 @@ export function createNormativeProofFixture(){
       ['verification/independent-source-reconciliation-20261014.json','b3addac3e66cf726d842a675de83ad640f872e8da6ccc22510c6aac6b5352264'],
       ['verification/historical-source-relocation-crosswalk-20261014.json','922915515fdfee3a97642d943320daa68b3d5ba568cddebc7b13cc087572be1a']
     ];
-    for(const [relative,digest] of historicalInputs){const bytes=fs.readFileSync(path.join(original,relative));assert.equal(sha(bytes),digest,'NORMATIVE_PROOF_HISTORICAL_INPUT_ORACLE: '+relative);copy(relative);}
+    for(const [relative,digest] of historicalInputs){const bytes=relative===SPECIFICATION_PATH?readHistoricalNormativeProofSource(original):fs.readFileSync(path.join(original,relative));assert.equal(sha(bytes),digest,'NORMATIVE_PROOF_HISTORICAL_INPUT_ORACLE: '+relative);const target=path.join(directory,relative);fs.mkdirSync(path.dirname(target),{recursive:true});fs.writeFileSync(target,bytes);}
     for(const [member,target] of [['proofManifest',normativePath],['proofSpecificationManifest','specification/closed-loop-specification-manifest.json'],['proofGovernance','specification/requirement-evidence-bindings.json']]){const file=path.join(directory,target);fs.mkdirSync(path.dirname(file),{recursive:true});fs.writeFileSync(file,historical.get(member));}
     const normative=JSON.parse(fs.readFileSync(path.join(directory,normativePath),'utf8')),historicalId='NREQ-318da161cc5f30f33449238ba3870773';
     let requirement=normative.requirements.find(row=>row.normativeRequirementId===historicalId);

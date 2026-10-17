@@ -9,6 +9,7 @@ import {verifyNormativeCatalogConsumers} from './test-normative-catalog-consumer
 import {verifyExternalNormativeProof} from './test-external-normative-proof.mjs';
 import {verifyNormativeContextApplicability} from './test-normative-context-applicability.mjs';
 import {createNormativeProofFixture} from './test-normative-proof-fixture.mjs';
+import {verifyHistoricalNormativeProofSource} from './test-normative-proof-source.mjs';
 import {applyExecutedEvidence,evaluateFullRequirementProof,coverageDeclarationSha256,validateFinalNormativeProof,readExecutedEvidence,validateExecutionReceipt,aggregateExecutedEvidence,readExecutionReceipts,evidenceFingerprint,observationsFromReports,sha} from './verification-evidence.mjs';
 import {runtimePaths} from './verified-site.mjs';
 import {evaluateFinalAcceptance,CORE_COVERAGE_KEYS,SECTION49_COVERAGE_KEYS,CORE_ZERO_KEYS,SECTION49_ZERO_KEYS} from './final-acceptance.mjs';
@@ -16,6 +17,7 @@ import {evaluateFinalAcceptance,CORE_COVERAGE_KEYS,SECTION49_COVERAGE_KEYS,CORE_
 const normativeContextApplicability=verifyNormativeContextApplicability();
 const normativeFixture=createNormativeProofFixture();
 process.on('exit',()=>normativeFixture.dispose());
+const historicalProofSourceControls=verifyHistoricalNormativeProofSource(normativeFixture);
 // Reuse this fixture's actual producer report. Mutations below test only its
 // finite evidence consumer; they do not stand for additional runtime runs.
 const runtimeAdmissionConsumerControls=[];
@@ -314,4 +316,4 @@ for(const prefix of ['deployed','reverified-deployed']){
 }
 const normativeCatalogConsumers=await verifyNormativeCatalogConsumers();
 const externalNormativeProof=await verifyExternalNormativeProof(normativeFixture);
-console.log(JSON.stringify({finalAcceptanceGate:'PASS',normativeProofFixture:{sourceUniverse:normativeFixture.sourceUniverse,currentAtomicProof:normativeFixture.currentAtomicProof,syntheticConsumerControls:true},specificationIdentityCases,deploymentContractIdentityCases,normativeCatalogConsumers,externalNormativeProof,normativeContextApplicability,normativeProofCases,runtimeAdmissionConsumerControls,coverageMetrics:35,zeroInvariants:38,mutationsDetected,metricMasksRejected:true,missingProofRejected:true,deviceAndVisualAuthorityRequired:true,repairedFixtureAccepted:true,intakeMetricCases,intakeMetricFaults,staticEvidenceFaults,artifactFaults,regressionEvidenceFaults,artifactEvidenceLimit:'Wiring and report-derivation regression only; underlying intake behavior, actual deployed artifact publication and byte verification execute separately.'}));
+console.log(JSON.stringify({finalAcceptanceGate:'PASS',historicalProofSourceControls,normativeProofFixture:{sourceUniverse:normativeFixture.sourceUniverse,currentAtomicProof:normativeFixture.currentAtomicProof,syntheticConsumerControls:true},specificationIdentityCases,deploymentContractIdentityCases,normativeCatalogConsumers,externalNormativeProof,normativeContextApplicability,normativeProofCases,runtimeAdmissionConsumerControls,coverageMetrics:35,zeroInvariants:38,mutationsDetected,metricMasksRejected:true,missingProofRejected:true,deviceAndVisualAuthorityRequired:true,repairedFixtureAccepted:true,intakeMetricCases,intakeMetricFaults,staticEvidenceFaults,artifactFaults,regressionEvidenceFaults,artifactEvidenceLimit:'Wiring and report-derivation regression only; underlying intake behavior, actual deployed artifact publication and byte verification execute separately.'}));
