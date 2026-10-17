@@ -17,6 +17,8 @@ export async function verifyJobPointerIntegrity({sourceOverrides={}}={}){
  assert.equal(store.validateProjectIntegrity(blank).valid,true,'JOB_POINTER_EMPTY_CONTROL_ORACLE');
  for(const name of POINTERS){
   const bad=copy(blank);bad.job[name]='UNALLOCATED-IDENTITY';
+  // Exercise the pointer owner directly so another integrity guard cannot mask its removal.
+  assert(engine.jobPointerIntegrityIssues(bad).some(value=>value.includes('/job/'+name)),'JOB_POINTER_UNKNOWN_ID_ORACLE: '+name);
   const checked=store.validateProjectIntegrity(bad,{verifyDerived:false});
   assert.equal(checked.valid,false,'JOB_POINTER_UNKNOWN_ID_ORACLE: '+name);
   assert(checked.issues.some(value=>value.includes('/job/'+name)),'JOB_POINTER_DIAGNOSTIC_ORACLE: '+name);
@@ -187,7 +189,7 @@ export async function verifyLegacyJobPointerRecovery({sourceOverrides={}}={}){
 
 
  assert.notDeepEqual(await snapshot(loaded),retainedBefore);
- return {status:'PASS',legacyFixture:'Documented equivalent pre-fix writer through actual acceptance/invalidation/store',checks:['cold-IDB-read','exact-old-checkpoint-bytes','repair-history-provenance','revision-and-idempotency','no-fabricated-raw-source','two-atomic-aborts-and-retry','concurrent-history-CAS','cold-export','native-backup-import-exact-source','old-checkpoint-restore','operational-journal-and-recoverable-raw-preserved','bundled-legacy-seed-durable-departure','existing-legacy-sentinel-seed-reload-and-import'],boundary:'Actual storage and backup owners with isolated transaction adapter; no native-browser or physical-device claim.'};
+ return {status:'PASS',legacyFixture:'Registered legacy /6 producer through actual acceptance/invalidation/store; controlled historical calculation, no historical execution claim',legacyRefusals,projectionActivation:{previousDerivationId:activation.previousDerivationId,derivationId:activation.derivationId,sourceProjectSha256:activation.sourceProjectSha256,historicalProvenanceClaimed:activation.historicalProvenanceClaimed},checks:['cold-IDB-read','exact-old-checkpoint-bytes','repair-history-provenance','revision-and-idempotency','no-fabricated-raw-source','two-atomic-aborts-and-retry','concurrent-history-CAS','cold-export','native-backup-import-exact-source','old-checkpoint-restore','operational-journal-and-recoverable-raw-preserved','bundled-legacy-seed-durable-departure','existing-legacy-sentinel-seed-reload-and-import'],boundary:'Actual storage and backup owners with isolated transaction adapter; no native-browser or physical-device claim.'};
 }
 export async function verifyJobPointerIntegrityFaults(){
  const source=fs.readFileSync('workflow-engine.js','utf8'),faults=[
