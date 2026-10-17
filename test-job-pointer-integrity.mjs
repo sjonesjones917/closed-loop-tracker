@@ -74,8 +74,8 @@ export async function verifyJobPointerIntegrity({sourceOverrides={}}={}){
  // Literal late-stage identity cohorts isolate retention during recalculation.
  // They are intentionally insufficient for any corresponding completion gate.
  const late=copy(blank),review='REVIEW-v001',chain='EVIDENCE-CHAIN-'+('A'.repeat(64)),digest='b'.repeat(64),deliveryId=engine.allocateId(late,'deliveryRecords');
- late.projectData.artifactVersions.push({stage:26,kind:'REVIEW',version:review});late.job.CURRENT_REVIEW_VERSION=review;late.job.CURRENT_RECONCILED_REVIEW_VERSION=review;
- late.projectData.commandReceipts.push({COMMAND_RECEIPT_ID:engine.allocateId(late,'commandReceipts'),COMMAND_ID:'CALCULATE_EVIDENCE_CHAINS',result:{complete:true,version:chain}});late.job.CURRENT_EVIDENCE_CHAIN_VERSION=chain;
+ late.projectData.artifactVersions.push(copy({stage:26,kind:'REVIEW',version:review}));late.job.CURRENT_REVIEW_VERSION=review;late.job.CURRENT_RECONCILED_REVIEW_VERSION=review;
+ late.projectData.commandReceipts.push(copy({COMMAND_RECEIPT_ID:engine.allocateId(late,'commandReceipts'),COMMAND_ID:'CALCULATE_EVIDENCE_CHAINS',result:{complete:true,version:chain}}));late.job.CURRENT_EVIDENCE_CHAIN_VERSION=chain;
  const deliveryCandidateId=engine.allocateId(late,'deliveryCandidateSets');late.projectData.deliveryCandidateSets.push(copy({id:deliveryCandidateId,active:false,fields:{DELIVERY_CANDIDATE_SET_ID:deliveryCandidateId,ARTIFACT_IDS:['SYNTHETIC-RETAINED-ARTIFACT']}}));late.job.CURRENT_DELIVERY_CANDIDATE_SET_ID=deliveryCandidateId;
  late.projectData.artifactIdentities.push(copy({id:engine.allocateId(late,'artifactIdentities'),stage:28,identityEvidenceSha256:digest,active:false,scope:{deliveryCandidateSetId:deliveryCandidateId},fields:{ARTIFACT_ID:'SYNTHETIC-RETAINED-ARTIFACT',EXACT_HASH_MATCH:true,EXACT_SIZE_MATCH:true}}));late.job.CURRENT_HASH_REVIEW_ID='HASH_REVIEW-'+digest.toUpperCase();
  late.job.CURRENT_DELIVERY_ID=deliveryId;late.projectData.deliveryRecords.push(copy({id:deliveryId,stage:30,active:true,scope:engine.currentScope(late),terminalFingerprint:'STALE-SYNTHETIC-TERMINAL',fields:{DELIVERY_ID:deliveryId,DELIVERY_STATE:'AUTHORIZED'}}));
