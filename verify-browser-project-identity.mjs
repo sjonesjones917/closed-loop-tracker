@@ -1,0 +1,16 @@
+import fs from 'node:fs';
+import vm from 'node:vm';
+import assert from 'node:assert/strict';
+const source=fs.readFileSync(new URL('./verify-browser.mjs',import.meta.url),'utf8');
+const start=source.indexOf('function assertRetainedAndSyntheticUnique('),end=source.indexOf('async function prepareSyntheticCurrentIntake(',start);
+assert(start>=0&&end>start);
+assert(source.includes('assertRetainedAndSyntheticUnique(await allProjects(cdp),syntheticJobId);'),'Full browser path must execute the tested comparison.');
+const code=source.slice(start,end),check=vm.runInNewContext('('+code.trim()+')',{assert:(value,message)=>assert(value,message)});
+const retained={job:{JOB_ID:'JOB-20260823144121'}},syntheticJobId='JOB-generated-current-identity',synthetic={job:{JOB_ID:syntheticJobId}},user={job:{JOB_ID:'JOB-BROWSER-LEGITIMATE'}};
+check([retained,synthetic,user],syntheticJobId);
+for(const rows of [[retained,user],[retained,synthetic,synthetic,user],[synthetic,user],[retained,retained,synthetic,user]])assert.throws(()=>check(rows,syntheticJobId),/missing or duplicated/);
+assert.throws(()=>check([retained,user],retained.job.JOB_ID),/identities must differ/);
+const mutant=code.replace('===syntheticJobId',"==='${syntheticJobId}'");assert.notEqual(mutant,code);
+const faulty=vm.runInNewContext('('+mutant.trim()+')',{assert:(value,message)=>assert(value,message)});
+assert.throws(()=>faulty([retained,synthetic,user],syntheticJobId),/Synthetic project missing/);
+console.log(JSON.stringify({browserProjectIdentity:'PASS',cases:7,literalIdMutationDetected:true,actualFullBrowserComparisonExercised:true}));
