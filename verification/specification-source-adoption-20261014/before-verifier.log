@@ -1,0 +1,12 @@
+(node:13) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+file:///tmp/clrt-source-before.Bfx5ja/verify-specification-governance.mjs:15
+const assert=(condition,message)=>{if(!condition)throw new Error(message);};
+                                                       ^
+
+Error: Specification must end with exactly one LF.
+    at assert (file:///tmp/clrt-source-before.Bfx5ja/verify-specification-governance.mjs:15:56)
+    at file:///tmp/clrt-source-before.Bfx5ja/verify-specification-governance.mjs:30:1
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+Node.js v22.23.3

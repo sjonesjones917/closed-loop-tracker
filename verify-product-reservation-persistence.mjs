@@ -1,9 +1,10 @@
+import {authorizeSyntheticHandoff} from './test-handoff-authorization.mjs';
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {readStoreArchive} from './test-zip.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
-import {projectStoreRuntime,bindAcceptanceUi} from './test-project-store-runtime.mjs';
+import {projectStoreRuntime,bindAcceptanceUi,bindHandoffReviewUiState} from './test-project-store-runtime.mjs';
 import {responseFixture,OUTPUT} from './operator-journey-fixtures.mjs';
 import {createWorkflowObservation} from './operator-browser-driver.mjs';
 globalThis.dispatchEvent=()=>true;
@@ -68,10 +69,11 @@ report.durableCases=['Persist the baseline before product reservation','Persist 
   console.error(JSON.stringify({caseId:'HANDOFF-COMMITTED-CURRENT',operation:options.operation,selectedOptions:options,savedScope:record?.scope,currentScope:scope,revision:runtime.current.revision,error:String(error.message||error)}));
   assert.fail('HANDOFF_COMMITTED_CURRENT_ORACLE: a generated handoff must remain current and exportable after its normal durable commit: '+String(error.message||error));
  }
- const committed=runtime.currentPromptRecord(21);assert.ok(committed?.transportBindingRequired,'HANDOFF_COMMITTED_CURRENT_ORACLE');
+ let committed=runtime.currentPromptRecord(21);assert.ok(committed?.transportBindingRequired,'HANDOFF_COMMITTED_CURRENT_ORACLE');
  runtime.current=await durableStore.readProject(saved.job.JOB_ID);
  assert.equal(runtime.currentPromptRecord(21)?.instructionId,committed.instructionId,'HANDOFF_RELOAD_CURRENT_ORACLE');
- const bundle=await durableStore.createExecutionPackage({jobId:saved.job.JOB_ID,stage:21,operation:committed.operation,instructionId:committed.instructionId});
+ const authorized=await authorizeSyntheticHandoff(durable,{project:runtime.current,prompt:committed,action:durable.copy({target:'Disposable Stage21 product-reservation fixture',riskClasses:['READ_ONLY','REVERSIBLE'],expectedEffect:'Read the synthetic supplied context and write only response.json and result.txt in the disposable verifier location.',reversibility:'Discard this isolated verifier project and output files.',maximumCost:'No paid services or external tool calls.',authority:'Explicit synthetic operator decision for this fixture only.',containment:'No real user projects, network resources, credentials, or production systems.',stopCondition:'Stop if a requested action exceeds this disposable fixture.',responsibleActor:'SYNTHETIC_TEST_OPERATOR and deterministic fixture counterpart'})});runtime.current=authorized.project;runtime.projects=[runtime.current];committed=authorized.prompt;
+ const bundle=await durableStore.createExecutionPackage(authorized.request);
  assert.equal(bundle.manifest.promptIdentity.bodySha256,committed.bodySha256,'HANDOFF_EXPORT_IDENTITY_ORACLE');
  assert.equal(bundle.manifest.scope.productId,committed.scope.productId,'HANDOFF_EXPORT_TARGET_ORACLE');
  const members=new Map(readStoreArchive(new Uint8Array(await bundle.blob.arrayBuffer())).map(entry=>[entry.canonicalPath,entry.bytes]));
@@ -81,6 +83,7 @@ report.durableCases=['Persist the baseline before product reservation','Persist 
  assert.equal(exportedManifest.scope.productId,committed.scope.productId,'HANDOFF_EXPORTED_TARGET_ORACLE');
  // Execute the real stage export owner, including its durable receipt. A
  // duplicate activation must still deliver one archive containing exact bytes.
+ bindHandoffReviewUiState(runtime,{source});
  const downloads=[];
  Object.assign(runtime,{stagePlanItems:(stage,operation)=>uiEngine.stageTestExecutionPlan(runtime.current,{stage,operation}).items,displayedStageAction:stage=>uiEngine.operationalNextAction(runtime.current,stage),document:{querySelectorAll:()=>[]},$:()=>null,announce:()=>{},reportActionFailure:error=>{throw error;},downloadBlob:(blob,filename)=>downloads.push({blob,filename})});
  const functionSource=name=>{const start=source.search(new RegExp('(?:async )?function '+name+'\\('));assert.ok(start>=0);const next=source.slice(start+1).search(/\n(?:async )?function /);assert.ok(next>=0);return source.slice(start,start+1+next);};
@@ -133,7 +136,9 @@ report.durableCases=['Persist the baseline before product reservation','Persist 
  };
  // Replay the same valid, bounded case in an isolated shared runtime with one
  // implementation fault. The production files and healthy store stay intact.
- const productionSource=fs.readFileSync('project-store.js','utf8'),faulted=projectStoreRuntime({fault:{id:'omit-candidate-byte-verification',file:'project-store.js',before:'  await observeProjectArtifactCustody(next);',after:'  // Injected fault: derive the new version using only prior-version custody.'}});
+ const productionSource=fs.readFileSync('project-store.js','utf8'),candidateCustodyAnchor='  await observeProjectArtifactCustody(next);\n  engine.recalculate(next);';
+ assert.equal(productionSource.split(candidateCustodyAnchor).length-1,1,'PRODUCT_ACCEPTANCE_CUSTODY_FAULT_ANCHOR_ORACLE: the fault must bind to candidate preparation before recalculation.');
+ const faulted=projectStoreRuntime({fault:{id:'omit-candidate-byte-verification',file:'project-store.js',before:candidateCustodyAnchor,after:'  // Injected fault: derive the new version using only prior-version custody.\n  engine.recalculate(next);'}});
  for(const [name,rows] of durable.rows)faulted.rows.set(name,new Map([...rows].map(([key,row])=>[key,faulted.copy(row)])));
  const faultFailures=bindAcceptanceUi(faulted,faulted.copy(staged),prepared.proposal.proposalId);
  await faulted.runtime.accept();if(faulted.runtime.replacementReview)await faulted.runtime.confirm();

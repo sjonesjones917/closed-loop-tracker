@@ -1,0 +1,21 @@
+{
+  "passed": true,
+  "consumerOnly": true,
+  "actualProducerReexecuted": false,
+  "results": [
+    {
+      "id": "handoff.producer-epoch-compatibility",
+      "caseCount": 5,
+      "exactOriginalPopulation": true,
+      "actualSourceCurrent90": true,
+      "projectionNumericContaminationRejected": true
+    },
+    {
+      "id": "handoff.deterministic-structured-context",
+      "caseCount": 6,
+      "exactOriginalPopulation": true,
+      "actualSourceCurrent90": true,
+      "projectionNumericContaminationRejected": true
+    }
+  ]
+}

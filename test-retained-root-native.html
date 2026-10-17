@@ -1,0 +1,78 @@
+<!doctype html><meta charset="utf-8"><pre id="result">PENDING</pre>
+<script>globalThis.Worker=undefined;globalThis.__rootObservation={restore:0,digest:0,static:0,derived:0,bytes:0,actualHashes:0,owner:0,publish:0};</script>
+<script src="/workbook.js"></script><script src="/hash.js"></script><script src="/workflow-schema.js"></script><script src="/test-runtime.js"></script><script src="/workflow-engine.js"></script><script src="/prompt-engine.js"></script><script src="/response-ingestion.js"></script><script src="/project-store.js"></script>
+<script>
+(async()=>{
+const store=closedLoopProjectStore,engine=closedLoopWorkflowEngine,hash=closedLoopHash,checks=[];
+const assert=(value,message)=>{if(!value)throw Error(message);};
+const req=r=>new Promise((resolve,reject)=>{r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});
+const done=tx=>new Promise((resolve,reject)=>{tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);tx.onerror=()=>reject(tx.error);});
+const bytes=async blob=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',await blob.arrayBuffer()))].map(n=>n.toString(16).padStart(2,'0')).join('');
+const snapshot=async jobId=>{
+ const db=await store.openDatabase(),tx=db.transaction(['projects','artifacts','meta'],'readonly'),finished=done(tx),rows=await Promise.all(['projects','artifacts','meta'].map(name=>req(tx.objectStore(name).getAll())));await finished;
+ const values=[];
+ for(let i=0;i<rows.length;i++)for(const row of rows[i]){
+   if(i===0&&row.jobId!==jobId||i===1&&row.jobId!==jobId||i===2&&!row.key.startsWith('recovery:'+jobId)&&!row.key.startsWith('responseOperations:'+jobId))continue;
+   const visit=async value=>{if(value instanceof Blob)return {actualByteSha256:await bytes(value),byteSize:value.size,type:value.type};if(Array.isArray(value))return Promise.all(value.map(visit));if(value&&typeof value==='object'){const out={};for(const key of Object.keys(value).sort())out[key]=await visit(value[key]);return out;}return value;};
+   values.push([i,await visit(row)]);
+ }
+ return JSON.stringify(values);
+};
+const view=activeView=>({activeStage:1,activeView,drafts:{'#exact':{value:activeView+' exact retained draft'}},scrollX:0,scrollY:7});
+async function fixture(label){
+ let p=await store.createProject({commandId:'PRIVATE-NATIVE-ROOT-'+label});p.job.JOB_TITLE='Private bounded retained root '+label+' '+ 'exact retained value '.repeat(350);engine.recalculate(p);p=await store.writeProject(p,{expectedProjectRevision:p.revision});
+ await store.putArtifact({artifactId:'PRIVATE-FILE-'+p.job.JOB_ID,jobId:p.job.JOB_ID,blob:new Blob(['exact native artifact bytes '+label]),filename:'private.txt',mediaType:'text/plain'});
+ await store.readProject(p.job.JOB_ID);return p;
+}
+async function save(p,activeView){return store.saveCheckpoint(p.job.JOB_ID,{expectedProjectRevision:p.revision,expectedStateSha256:p.projectSha256,view:view(activeView)});}
+const p=await fixture('positive');const readings=[];
+for(const activeView of ['Project','Workflow','Records']){
+ const before={...__rootObservation},id=await save(p,activeView),counts=Object.fromEntries(Object.entries(__rootObservation).map(([k,v])=>[k,v-before[k]]));
+ readings.push({activeView,id,counts});
+ assert(counts.owner===1&&counts.publish===1,'Actual production transaction owner and publication used');
+ if(activeView==='Project')assert(counts.restore===1&&counts.digest===1,'First certificate follows full cold materialization and dual digest');
+ else assert(counts.restore===0&&counts.digest===0&&counts.static>=1&&counts.derived>=1&&counts.actualHashes>=5,'Warm saves skip only materialization/dual digests while validation and byte work run');
+}
+const coldBefore={...__rootObservation};await store.readHistoryView(p.job.JOB_ID,readings.at(-1).id);assert(__rootObservation.restore>coldBefore.restore&&__rootObservation.digest>coldBefore.digest,'Public read stays cold');
+checks.push({mode:'three-view-saves-and-public-cold',readings});
+for(const mode of ['same-label-root','same-label-part','changed-project-row','changed-journal','changed-history-generation','candidate-after-await','primitive-after-await','encoder-after-await','definition-after-await','prepared-state-after-validator','new-file-after-await','artifact-same-label','artifact-metadata','artifact-reference','hash-reject','timeout','late-hash-after-timeout','abort','write-failure']){
+ const q=await fixture(mode);await save(q,'Project');let boundary=false;
+ __beforeRootTransaction=async prepared=>{
+  boundary=true;delete globalThis.__beforeRootTransaction;
+  if(mode==='timeout'||mode==='late-hash-after-timeout'){globalThis.__holdRootHash=mode==='timeout';globalThis.__delayRootHash=mode==='late-hash-after-timeout'?50:0;globalThis.__rootTransactionTimeout=20;return;}
+  if(mode==='write-failure'){globalThis.__closedLoopStorageFault='during-history-write';return;}
+  if(['candidate-after-await','primitive-after-await','encoder-after-await','definition-after-await','prepared-state-after-validator','new-file-after-await','hash-reject','abort'].includes(mode))return;
+  const db=await store.openDatabase(),tx=db.transaction(['projects','artifacts','meta'],'readwrite'),finished=done(tx),meta=tx.objectStore('meta'),root=prepared.retainedRoot.descriptor;
+  if(mode.startsWith('same-label')){const key=mode==='same-label-root'?'recovery:'+q.job.JOB_ID+':snapshot:'+root.id:'recovery:'+q.job.JOB_ID+':bytes:'+root.projectParts.entries[0].sha256,row=await req(meta.get(key));assert(row,'Independent tamper target exists');row.value.blob=new Blob(['X'.repeat(row.value.blob.size)]);meta.put(row);}
+  if(mode==='changed-project-row'){const row=await req(tx.objectStore('projects').get(q.job.JOB_ID));row.project.job.JOB_TITLE='Same label concurrent row mutation';tx.objectStore('projects').put(row);}
+  if(mode==='changed-journal')meta.put({key:'responseOperations:'+q.job.JOB_ID,value:{sha256:'unchanged-label',patches:[{value:'different operational source'}]}});
+  if(mode==='changed-history-generation'){const row=await req(meta.get('recovery:'+q.job.JOB_ID+''));assert(row,'Independent history target exists');row.value.generation++;meta.put(row);}
+  if(mode==='artifact-same-label'){const key='recovery:'+q.job.JOB_ID+':bytes:'+prepared.retainedRoot.files[0].sha256,row=await req(meta.get(key));row.value.blob=new Blob(['X'.repeat(row.value.blob.size)]);meta.put(row);}
+  if(mode==='artifact-metadata'||mode==='artifact-reference'){const art=tx.objectStore('artifacts'),row=await req(art.get('PRIVATE-FILE-'+q.job.JOB_ID));if(mode==='artifact-metadata')row.filename='different filename';else row.byteReference.jobId='DIFFERENT-OWNER';art.put(row);}
+  await finished;
+ };
+ const originalEngine=closedLoopWorkflowEngine,encoderDispatch=Object.getOwnPropertyDescriptor(TextEncoder.prototype,'encode');
+ __afterRootHash=(root,tx,prepared)=>{if(mode==='encoder-after-await')Object.defineProperty(TextEncoder.prototype,'encode',{...encoderDispatch,value:function(text){return encoderDispatch.value.call(this,text);}});if(mode==='definition-after-await')globalThis.closedLoopWorkflowEngine=Object.freeze({...engine,validateApplicationProjection:()=>({valid:false,issues:[{code:'CONTROL_CURRENT_DEFINITION',message:'Independent current definition refusal'}]})});if(mode==='new-file-after-await'){prepared.newFiles.push({sha256:'0'.repeat(64),blob:new Blob(['must not be committed'])});}if(mode==='prepared-state-after-validator'){globalThis.__afterRootValidation=()=>{prepared.state.title='Mutation from consuming validator';delete globalThis.__afterRootValidation;};}if(mode==='candidate-after-await'){root.project.job.JOB_TITLE='Mutated owned value';delete globalThis.__afterRootHash;}if(mode==='primitive-after-await'){hash.canonicalChunks.extra='changed primitive metadata';delete globalThis.__afterRootHash;}if(mode==='hash-reject'){delete globalThis.__afterRootHash;throw Object.assign(Error('Independent injected hash rejection'),{code:'CONTROL_HASH_REJECT'});}if(mode==='abort'){delete globalThis.__afterRootHash;tx.abort();}};
+ let before;
+ __atRootTransaction=async()=>{before=await snapshot(q.job.JOB_ID);};
+ const publications=__rootObservation.publish;let returned,error;
+ try{returned=await save(q,'Workflow');}catch(e){error={code:e.code,name:e.name,message:e.message};}
+ if(mode==='encoder-after-await')Object.defineProperty(TextEncoder.prototype,'encode',encoderDispatch);
+ delete globalThis.__closedLoopStorageFault;delete hash.canonicalChunks.extra;delete globalThis.__holdRootHash;delete globalThis.__delayRootHash;delete globalThis.__rootTransactionTimeout;delete globalThis.__afterRootHash;delete globalThis.__atRootTransaction;
+ assert(boundary,'Control reached actual production certificate transaction boundary');
+ assert(!returned&&error&&__rootObservation.publish===publications,'Failure refuses checkpoint and publishes no new proof: '+mode);
+ if(mode==='definition-after-await'){let coldReturned,coldError;try{coldReturned=await store.readHistoryView(q.job.JOB_ID);}catch(e){coldError=e.code;}assert(!coldReturned&&coldError===error.code,'Same current definition is independently rejected by public cold decision');globalThis.closedLoopWorkflowEngine=originalEngine;}
+ if(mode==='late-hash-after-timeout'){await new Promise(resolve=>setTimeout(resolve,80));assert(__rootObservation.publish===publications,'Late digest cannot publish a proof');}
+ assert(before===await snapshot(q.job.JOB_ID),'Exact last valid rows/actual bytes preserved after injected boundary state: '+mode);
+ assert(__rootOwnerCleanup?.gates===0&&__rootOwnerCleanup?.ready===0,'Transaction owner releases external gates and callbacks');
+ checks.push({mode,error,cleanup:__rootOwnerCleanup,noCheckpointReturned:true,noProofPublished:true,exactStatePreserved:true});
+}
+for(const mode of ['root-mutation-during-preparation','source-mutation-during-preparation','primitive-mutation-during-preparation']){
+ const q=await fixture(mode);await save(q,'Project');const before=await snapshot(q.job.JOB_ID),published=__rootObservation.publish;let reached=false;
+ globalThis.__mutateRootPreparation=(root,sourceProject)=>{reached=true;delete globalThis.__mutateRootPreparation;if(mode==='root-mutation-during-preparation')root.job.JOB_TITLE='Changed deferred root';if(mode==='source-mutation-during-preparation')sourceProject.job.JOB_TITLE='Changed current source';if(mode==='primitive-mutation-during-preparation')hash.canonicalChunks.extra='changed during preparation';};
+ let returned,error;try{returned=await save(q,'Workflow');}catch(e){error={code:e.code,message:e.message};}delete hash.canonicalChunks.extra;
+ assert(reached&&!returned&&error?.code==='HISTORY_VERSION_MISMATCH'&&__rootObservation.publish===published,'Deferred eligibility failure rejects before fallback commit');assert(before===await snapshot(q.job.JOB_ID),'Preparation rejection preserves exact state');checks.push({mode,error,noCheckpointReturned:true,noProofPublished:true,exactStatePreserved:true});
+}
+document.querySelector('#result').textContent=JSON.stringify({status:'PASS',checks,boundary:'Small actual copied production store on native IndexedDB; exact independently hashed preservation; no large journey or latency claim'});
+})().catch(error=>document.querySelector('#result').textContent=JSON.stringify({status:'FAIL',error:String(error.stack||error),observation:__rootObservation,eligibility:globalThis.__rootEligibility,guardFailure:globalThis.__guardFailure}));
+</script>

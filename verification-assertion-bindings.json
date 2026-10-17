@@ -1,0 +1,35 @@
+{
+  "schema": "closed-loop-verification-assertion-bindings/1",
+  "specificationSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+  "bindings": [
+    {
+      "normativeRequirementId": "NREQ-7f4177f55e785aab7b5d6299625ddb31",
+      "sourceLineSha256": "e4f0738b7c6be20d6fcf48cab76f41d604c2099d91bb776f34a352af1192bc88",
+      "atomicObligationSha256": "ffabe34346774fb1a000f174093e61b8bb08ea1fd070856b7c4b509bf837b858",
+      "checkIds": [
+        "PRODUCER-TIMING-REJECT-VERIFICATION_PHASE",
+        "PRODUCER-TIMING-REJECT-EARLIEST_EXECUTABLE_STAGE",
+        "PRODUCER-TIMING-REJECT-REQUIRED_BY_STAGE",
+        "PRODUCER-TIMING-REJECT-PER_RUN_REQUIRED",
+        "PRODUCER-TIMING-REJECT-FINAL_PRODUCT_REQUIRED",
+        "PRODUCER-TIMING-REJECT-DELIVERY_REQUIRED",
+        "PRODUCER-TIMING-REJECT-TARGET_AVAILABILITY_CONDITION",
+        "PRODUCER-TIMING-REJECT-TIMING_ENTRIES",
+        "PRODUCER-TIMING-REJECT-TIMING_SCHEDULE_SHA256"
+      ],
+      "scope": "Current synthetic Node VM Stage04 proposition response admission rejects each of the nine named application-owned timing fields: validation fails with an owning field issue, no proposal is created, exact raw response is retained with VALIDATION_FAILED, and canonical propositions, accepted changes and source project hash remain unchanged. This establishes only these proposition timing rejection boundaries; no other fields or stages, storage/browser behavior, actual external actor, or full requirement coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-e9ee7497bb9d7e5d687f2bd0e17654b3",
+      "sourceLineSha256": "24f24da03f3e5ac99590339843699e6cae1224bafc301f01be7bc47850a1721a",
+      "atomicObligationSha256": "b9a50a19cee4701763beecce077906a008a5c26266f6463268e178104f59334e",
+      "checkIds": [
+        "CURRENT-SUPPLIED-INPUT-CUSTODY"
+      ],
+      "scope": "Current synthetic Node VM production-store intake retains an explicitly authorized supplied Blob across an input-version correction and actual staged response acceptance, reload, checkpoint restore and fresh-store package import, without requiring a manual byte read. The linked check includes the omitted-input-observer refusal and five missing, metadata-only, corrupt, different-job and unselected-old custody refusals, and rejects unrelated historical-scope authorization. This is scoped fixture evidence, not browser or external-actor proof, all file/input/retention behavior, independent store-once or canonical-occurrence deduplication proof, or full requirement coverage.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    }
+  ],
+  "contractRefs": []
+}

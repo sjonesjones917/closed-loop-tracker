@@ -1,0 +1,104 @@
+{
+  "qualification": "Direct original observed snapshots only. No recalculation, clock pin, source mutation or reconstructed precondition.",
+  "beforeCaptureSha256": "6ff20ab32cf8ba73b40f9a6f63a0d8496790375b3e0bce68df9229cefced82b8",
+  "afterCaptureSha256": "e8730965e092f0b1aadddba7cef8a223ba71582b3c6c53ba8da16b99eb88a1bd",
+  "beforeObservedTimes": [
+    "2026-10-14T16:34:22.624Z",
+    "2026-10-14T16:34:25.511Z"
+  ],
+  "afterObservedTimes": [
+    "2026-10-14T16:34:45.544Z",
+    "2026-10-14T16:34:48.481Z"
+  ],
+  "sourceHashesMatch": true,
+  "beforeProjectSha256": "88d98465555fedea7c9af616d75b8d1e84ba0ad9ee9f246e12061d2b83632e2a",
+  "afterProjectSha256": "741aff4be247e95ae7dc99ceb64837d508ce85eb31fbc0fb87c84eb71a020ef3",
+  "releaseId": "RELEASE-lj8iinqh23jcpk60d0t2bh5q42vud5c2",
+  "storedInputSha256": "0b670200e1dd70be79fb4cfb6ca8f3474a5d5996077f1abe71d91221bf3cc580",
+  "actualInputSha256": "0b670200e1dd70be79fb4cfb6ca8f3474a5d5996077f1abe71d91221bf3cc580",
+  "allStoredSourcesMatchActualBefore": true,
+  "mismatchedBefore": [],
+  "changedSources": [
+    {
+      "family": "proofObligations",
+      "id": "PROOF-OBLIGATION-c15afvu00al4un09vg9ocgdfc0ecgq2u",
+      "sha256": "92e18e4fc96511e9ea19a2e8d77686e726bbe3f28d7f85d46b58d84c7e79454e",
+      "actualBeforeSha256": "92e18e4fc96511e9ea19a2e8d77686e726bbe3f28d7f85d46b58d84c7e79454e",
+      "actualAfterSha256": "aed4754f7f9ecba9923aa8ff0e62ebed69dbfd93297e35a806ca83f26ab296cf",
+      "differences": [
+        {
+          "path": "/updatedAt",
+          "before": "2026-10-14T16:30:05.407Z",
+          "after": "2026-10-14T16:34:30.335Z"
+        },
+        {
+          "path": "/fields/CURRENT_SCOPE_HASH",
+          "before": "43f4bc73e199df6781f2305932d43acbbf40e938d59e96804b9771468aa04798",
+          "after": "20aaa8a53bbad17e678b1070b3f34ef08ff037010a89c5df3acb4e81b1e55af5"
+        },
+        {
+          "path": "/fields/PROOF_OBLIGATION_SET_HASH",
+          "before": "d3d9d5db184cc7da165c112107082c668548c0aa7761ef408c3666b7bc8b2108",
+          "after": "7f6630c25c5e554e9c2cf1b9390c1fa672f861f156ff8cae6fbe4745291a34c0"
+        },
+        {
+          "path": "/CURRENT_SCOPE_HASH",
+          "before": "43f4bc73e199df6781f2305932d43acbbf40e938d59e96804b9771468aa04798",
+          "after": "20aaa8a53bbad17e678b1070b3f34ef08ff037010a89c5df3acb4e81b1e55af5"
+        },
+        {
+          "path": "/PROOF_OBLIGATION_SET_HASH",
+          "before": "d3d9d5db184cc7da165c112107082c668548c0aa7761ef408c3666b7bc8b2108",
+          "after": "7f6630c25c5e554e9c2cf1b9390c1fa672f861f156ff8cae6fbe4745291a34c0"
+        },
+        {
+          "path": "/contentSha256",
+          "before": "a72c3d1a98f80e325ce17dff303eb5d53d6fed4e4008d431f5d6a83c1b45feae",
+          "after": "dd1a00342a1acfd6f4a013c73536af3eeeae0127f792d140e2ece4a2913ef3ca"
+        },
+        {
+          "path": "/recordSha256",
+          "before": "92e18e4fc96511e9ea19a2e8d77686e726bbe3f28d7f85d46b58d84c7e79454e",
+          "after": "aed4754f7f9ecba9923aa8ff0e62ebed69dbfd93297e35a806ca83f26ab296cf"
+        },
+        {
+          "path": "/sha256",
+          "before": "92e18e4fc96511e9ea19a2e8d77686e726bbe3f28d7f85d46b58d84c7e79454e",
+          "after": "aed4754f7f9ecba9923aa8ff0e62ebed69dbfd93297e35a806ca83f26ab296cf"
+        }
+      ]
+    }
+  ],
+  "sourceCount": 255,
+  "jobDifferences": [
+    {
+      "path": "/CURRENT_RELEASE_ID",
+      "before": null,
+      "after": "RELEASE-lj8iinqh23jcpk60d0t2bh5q42vud5c2"
+    },
+    {
+      "path": "/NEXT_REQUIRED_ACTION/actionType",
+      "before": "CALCULATE_RELEASE",
+      "after": "SELECT_RESPONSE_JSON_FILE"
+    },
+    {
+      "path": "/NEXT_REQUIRED_ACTION/heading",
+      "before": "Calculate the release determination",
+      "after": "Select the final response JSON file"
+    },
+    {
+      "path": "/NEXT_REQUIRED_ACTION/explanation",
+      "before": "Release calculation is application-owned; the optional Stage 27 advisory review is not required and is non-gating. No agent or human may select the release state. The application must now evaluate the complete current release evidence, blockers, violations, unknowns, contradictions, baseline identity, product identity, and evidence sufficiency and record exactly one idempotent ACCEPTED, REJECTED, or BLOCKED determination.",
+      "after": "Use the current Stage 27 instruction. Continue the external work or conversation until the executor returns one authoritative response.json file and any required returned files. Select that exact JSON file in the application; pasted text is nonauthoritative."
+    },
+    {
+      "path": "/NEXT_REQUIRED_ACTION/primaryButton",
+      "before": "Calculate release",
+      "after": "Select response JSON file"
+    },
+    {
+      "path": "/NEXT_REQUIRED_ACTION/operation",
+      "after": "ADVISORY_REVIEW"
+    }
+  ]
+}

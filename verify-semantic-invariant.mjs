@@ -1,12 +1,110 @@
 import {reviewProofFixture,canonicalFixtureRecord} from './test-fixtures.mjs';
+import {verifyExternalSystemSupport} from './test-external-system-support.mjs';
+import {verifyStage22ExternalResultNormalization} from './test-stage22-external-result-normalization.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
+import {projectStoreRuntime,bindArtifactFixture} from './test-project-store-runtime.mjs';
+import {artifactFixtureId} from './test-artifact-fixtures.mjs';
+import strictAssert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
+// Exact §29 evidence API key contract. This is synthetic evaluator/storage
+// coverage and does not establish an external semantic review or release.
+async function verifyEvidenceApiContractControls(source=fs.readFileSync('workflow-engine.js','utf8')){
+ const r=projectStoreRuntime({sourceOverrides:{'workflow-engine.js':source},storageWorker:false}),e=r.engine,h=r.runtime.closedLoopHash,p=r.core.createBlankState('JOB-EVIDENCE-API-CONTRACT');
+ e.ensureShape(p);Object.assign(p.job,{CURRENT_INPUT_VERSION:'INPUT-API-1',CURRENT_REQUIREMENTS_VERSION:'REQ-API-1',CURRENT_TEST_SUITE_VERSION:'SUITE-API-1'});p.activeStage=29;
+ const scope=e.currentScope(p),row=(id,fields,stage=22)=>r.copy({id,stage,active:true,scope,fields});
+ const req=row('REQ-API',{REQ_ID:'REQ-API',MANDATORY_OPTIONAL_STATUS:'MANDATORY'},4),test=row('TEST-API',{TEST_ID:'TEST-API',REQ_ID:'REQ-API',TEST_TYPE:'BYTE_IDENTITY',EXECUTION_MODE:'INDEPENDENT_AGENT_REVIEW',REQUIRED_CAPABILITY:'byte inspection',ARTIFACT_REQUIREMENTS:'exact current bytes'},6);
+ p.projectData.requirements.push(req);p.projectData.tests.push(test);
+ const artifactId=artifactFixtureId(e,p,'API-CONTRACT'),blob=new Blob(['Independently expected API bytes'],{type:'application/octet-stream'}),digest=await h.sha256Bytes(blob);
+ e.registerArtifactBytes(p,r.copy({stage:22,artifactId,filename:'api-contract.bin',mediaType:blob.type,byteSize:blob.size,sha256:digest}));
+ const ev=row('EVIDENCE-API',{EVIDENCE_ID:'EVIDENCE-API',KIND:'BYTE_HASH',AUTHORITY_TYPE:'APPLICATION',CONTENT:'Exact controlled byte observation.',ATTACHMENT_ID:artifactId});ev.relationships=r.copy({ATTACHMENT_ID:artifactId});p.projectData.evidenceRecords.push(ev);
+ const result=row('RESULT-API',{TEST_ID:'TEST-API',REQ_ID:'REQ-API',EXACT_EVIDENCE:'EVIDENCE-API'});result.evidenceRefs=r.copy(['EVIDENCE-API']);
+ const actualPlan=e.testExecutionPlan(p),cases=[],failures=[];
+ const equal=(a,b,label)=>{if(JSON.stringify(a)!==JSON.stringify(b))throw new Error(label+': expected '+JSON.stringify(b)+' observed '+JSON.stringify(a));};
+ const run=(name,fn)=>{try{fn();cases.push({caseId:name,outcome:'PASS'});}catch(error){failures.push({caseId:name,outcome:'FAIL',assertion:error.message});}};
+ const evaluate=(q=p,res=result,executionPlan=actualPlan)=>e.evaluateEvidenceSufficiency(q,{requirement:req,test,result:res,executionPlan});
+ run('execution-plan-accepted-with-no-canonical-mutation',()=>{const before=JSON.stringify(p),without=e.evaluateEvidenceSufficiency(p,{requirement:req,test,result}),withPlan=evaluate();equal(withPlan,without,'OPTIONAL_PLAN_CALL_ACCEPTANCE');equal(JSON.stringify(p),before,'EVALUATION_CANONICAL_STATE_UNCHANGED');});
+ run('present-evidence-exact-and-deduplicated',()=>{const res=e.clone(result);res.evidenceRefs=r.copy(['EVIDENCE-API','EVIDENCE-API','EVIDENCE-MISSING']);equal(evaluate(p,res).presentEvidenceIds,['EVIDENCE-API'],'PRESENT_EVIDENCE_CANONICAL_IDS');});
+ run('present-evidence-missing-reference-empty',()=>{const res=e.clone(result);res.evidenceRefs=r.copy(['EVIDENCE-MISSING']);res.fields.EXACT_EVIDENCE='EVIDENCE-MISSING';equal(evaluate(p,res).presentEvidenceIds,[],'PRESENT_EVIDENCE_MISSING');});
+ run('current-artifact-metadata-only-rejected',()=>{const value=evaluate();equal(value.sufficient,false,'METADATA_ONLY_NOT_SUFFICIENT');equal(value.currentArtifactIds,[],'CURRENT_ARTIFACTS_METADATA_ONLY');});
+ await r.store.putArtifact({artifactId,jobId:p.job.JOB_ID,filename:'api-contract.bin',mediaType:blob.type,blob});const stored=await r.store.getArtifact(artifactId);equal(stored.jobId,p.job.JOB_ID,'ACTUAL_STORE_JOB_ID');equal(stored.byteSize,blob.size,'ACTUAL_STORE_SIZE');equal(await h.sha256Bytes(stored.blob),digest,'ACTUAL_STORE_HASH');
+ run('current-artifact-real-readback-valid',()=>{const value=evaluate();equal(value.sufficient,true,'READBACK_BYTE_SUFFICIENCY');equal(value.currentArtifactIds,[artifactId],'CURRENT_ARTIFACTS_VERIFIED_ID');equal(value.presentEvidenceIds,['EVIDENCE-API'],'CURRENT_ARTIFACT_EVIDENCE_ID');equal(value.verifiedArtifactIds,[artifactId],'LEGACY_VERIFIED_ARTIFACT_COMPATIBILITY');});
+ run('current-artifact-wrong-sha-rejected',()=>{const q=e.clone(p);q.projectData.artifacts.find(x=>x.id===artifactId).fields.SHA256='b'.repeat(64);const value=evaluate(q);equal(value.sufficient,false,'WRONG_BYTE_SHA_NOT_SUFFICIENT');equal(value.currentArtifactIds,[],'CURRENT_ARTIFACTS_WRONG_SHA');});
+ run('current-artifact-stale-scope-rejected',()=>{const q=e.clone(p);q.projectData.artifacts.find(x=>x.id===artifactId).scope.requirementsVersion='REQ-OLD';const value=evaluate(q);equal(value.sufficient,false,'STALE_ARTIFACT_NOT_SUFFICIENT');equal(value.currentArtifactIds,[],'CURRENT_ARTIFACTS_STALE_SCOPE');});
+ return {passed:failures.length===0,cases,failures,boundary:'Unchanged exported evaluator and production storage/readback through existing transaction adapter. executionPlan call acceptance only: §29 lists it but does not specify distinct influence or supplied-plan validation rules. No browser/external reviewer/whole clause claim.'};
+}
+async function verifyEvidenceApiContractFaultControls(source=fs.readFileSync('workflow-engine.js','utf8')){
+ const controls=[];
+ for(const [name,before,after,expected]of[
+  ['missing-current-artifact-key','currentArtifactIds:verifiedArtifacts.filter','incorrectArtifactIds:verifiedArtifacts.filter','current-artifact-real-readback-valid'],
+  ['fabricated-present-evidence',"presentEvidenceIds:[...new Set(evidence.map(e=>recordId(e,'evidenceRecords')).filter(Boolean))]","presentEvidenceIds:['EVIDENCE-FABRICATED']",'present-evidence-exact-and-deduplicated'],
+  ['metadata-as-current-artifact',"currentArtifactIds:verifiedArtifacts.filter(a=>currentArtifactIdSet.has(recordId(a,'artifacts'))).map(a=>recordId(a,'artifacts'))","currentArtifactIds:records(project,'artifacts').map(a=>recordId(a,'artifacts'))",'current-artifact-metadata-only-rejected']
+ ]){
+  if(source.split(before).length!==2)throw new Error('EVIDENCE_API_FAULT_ANCHOR: '+name);
+  const result=await verifyEvidenceApiContractControls(source.replace(before,after));
+  if(!result.failures.some(row=>row.caseId===expected))throw new Error('EVIDENCE_API_FAULT_NOT_DETECTED: '+name);
+  controls.push({name,expectedCaseId:expected,detectedFailures:result.failures.map(row=>row.caseId),outcome:'DETECTED'});
+ }
+ return controls;
+}
+async function evidenceApiContractReport(){const report=await verifyEvidenceApiContractControls();if(report.passed)report.owningFaults=await verifyEvidenceApiContractFaultControls();return report;}
+if(process.argv.includes('--external-system-support-only')){const report=await verifyExternalSystemSupport();console.log(JSON.stringify({externalSystemSupportControls:report.status,externalSystemSupport:report},null,2));process.exit(report.status==='PASS'?0:1);}
+if(process.argv.includes('--evidence-api-contract-only')){const report=await evidenceApiContractReport();console.log(JSON.stringify({evidenceApiContractControls:report.passed?'PASS':'FAIL',synthetic:true,actualBrowser:false,evidenceApiContract:report},null,2));process.exit(report.passed?0:1);}
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
 for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
 const core=globalThis.closedLoopCore,engine=globalThis.closedLoopWorkflowEngine,hash=globalThis.closedLoopHash;
 const assert=(value,message)=>{if(!value)throw new Error(message);};
+// §30.4–30.5: independently specified reducer controls. Duplicate current
+// artifact claims are deliberate defense-in-depth fault fixtures, not admitted
+// canonical projects. No byte custody, storage acceptance or release is claimed.
+function canonicalContradictionOracle(runtime){
+ const e=runtime.closedLoopWorkflowEngine,c=runtime.closedLoopCore,observations=[];
+ const currentScope={inputVersion:'INPUT-CURRENT',sourceSetVersion:'SOURCES-CURRENT',requirementsVersion:'REQS-CURRENT',testSuiteVersion:'TESTS-CURRENT',instructionVersion:'INSTRUCTION-CURRENT'};
+ const blank=()=>{const project=c.createBlankState('JOB-CANONICAL-CONTRADICTIONS');Object.assign(project.job,{CURRENT_INPUT_VERSION:'INPUT-CURRENT',CURRENT_SOURCE_SET_VERSION:'SOURCES-CURRENT',CURRENT_REQUIREMENTS_VERSION:'REQS-CURRENT',CURRENT_TEST_SUITE_VERSION:'TESTS-CURRENT',CURRENT_INSTRUCTION_VERSION:'INSTRUCTION-CURRENT'});e.ensureShape(project);return project;};
+ const artifact=(id='ART-CURRENT',version='VERSION-1',lineage={rawResponseId:'RAW-1',attachmentSlotId:'SLOT-1'})=>({id,stage:8,active:true,scope:{...currentScope},source:'APPLICATION_BYTES_VERIFIED',fields:{ARTIFACT_ID:id,FILENAME:'output.txt',TYPE:'text/plain',VERSION:version,BYTE_SIZE:3,SHA256:'a'.repeat(64),ROLE:'RETURNED_ATTACHMENT',STORAGE_REFERENCE:'indexeddb:'+id,AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED',NOTES:JSON.stringify(lineage)}});
+ const baseline=(id,scope=currentScope)=>({id,stage:20,active:true,scope:{...scope,baselineId:id},source:'CONTROLLED_CANONICAL_TARGET_FIXTURE',fields:{BASELINE_ID:id,STATUS:'FROZEN'}});
+ const product=(id,baselineId,scope=currentScope)=>({id,stage:21,active:true,completionState:'COMPLETED',scope:{...scope,baselineId,productId:id,productVersion:'PRODUCT-VERSION-1'},source:'CONTROLLED_CANONICAL_TARGET_FIXTURE',fields:{PRODUCT_ID:id,PRODUCT_VERSION:'PRODUCT-VERSION-1',BASELINE_ID:baselineId,STATUS:'COMPLETED',FAILURES:'NONE',DEVIATIONS:'NONE'}});
+ const observe=(caseId,project,expectedTypes,expectedSelected)=>{
+  const selected={artifacts:e.recordsForCurrentScope(project,'artifacts').length,baselines:e.recordsForCurrentScope(project,'baselines').length,products:e.recordsForCurrentScope(project,'products').length};
+  strictAssert.deepEqual(selected,expectedSelected,'CANONICAL_CONTRADICTION_SCOPE_ORACLE: '+caseId);
+  const all=e.detectCurrentContradictions(project),observedTypes=all.filter(row=>['ARTIFACT_IDENTITY_CONFLICT','PRODUCT_BASELINE_CONFLICT'].includes(row.type)).map(row=>row.type).sort();
+  observations.push({caseId,expectedTypes,observedTypes,selected,otherContradictionTypes:all.filter(row=>!['ARTIFACT_IDENTITY_CONFLICT','PRODUCT_BASELINE_CONFLICT'].includes(row.type)).map(row=>row.type),status:JSON.stringify(observedTypes)===JSON.stringify(expectedTypes)?'PASS':'FAIL'});
+ };
+ const artifactCase=(id,rows,expectedTypes,selected=rows.length)=>{const project=blank();project.projectData.artifacts.push(...rows);observe(id,project,expectedTypes,{artifacts:selected,baselines:0,products:0});};
+ artifactCase('coherent-current-artifact',[artifact()],[]);
+ artifactCase('equivalent-current-lineage-key-order',[artifact(),artifact('ART-CURRENT','VERSION-1',{attachmentSlotId:'SLOT-1',rawResponseId:'RAW-1'})],[]);
+ artifactCase('incompatible-current-artifact-lineage',[artifact(),artifact('ART-CURRENT','VERSION-1',{rawResponseId:'RAW-OTHER',attachmentSlotId:'SLOT-1'})],['ARTIFACT_IDENTITY_CONFLICT']);
+ artifactCase('incompatible-current-artifact-version',[artifact(),artifact('ART-CURRENT','VERSION-2')],['ARTIFACT_IDENTITY_CONFLICT']);
+ // Unknown/malformed lineage is compared as a distinct claim, never repaired
+ // into an empty lineage or credited as established ancestry by this reducer.
+ const missing=artifact();delete missing.fields.NOTES;
+ artifactCase('missing-versus-current-lineage',[artifact(),missing],['ARTIFACT_IDENTITY_CONFLICT']);
+ const malformed=artifact();malformed.fields.NOTES='{not-json';
+ artifactCase('malformed-versus-empty-lineage',[artifact('ART-CURRENT','VERSION-1',{}),malformed],['ARTIFACT_IDENTITY_CONFLICT']);
+ artifactCase('nonobject-versus-empty-lineage',[artifact('ART-CURRENT','VERSION-1',{}),artifact('ART-CURRENT','VERSION-1','claimed lineage')],['ARTIFACT_IDENTITY_CONFLICT']);
+ artifactCase('coherent-empty-application-lineage',[artifact('ART-CURRENT','VERSION-1',{}),artifact('ART-CURRENT','VERSION-1',{})],[]);
+ const old=artifact('ART-HISTORICAL','VERSION-0',{rawResponseId:'RAW-OLD',attachmentSlotId:'SLOT-OLD'});old.scope.inputVersion='INPUT-HISTORICAL';old.fields.SHA256='b'.repeat(64);old.fields.BYTE_SIZE=4;
+ artifactCase('historical-different-scope-version-and-lineage',[old,artifact()],[],1);
+ const retired=artifact('ART-RETIRED','VERSION-0',{rawResponseId:'RAW-OLD',attachmentSlotId:'SLOT-OLD'});retired.active=false;
+ artifactCase('retired-historical-version',[retired,artifact()],[],1);
+ artifactCase('distinct-current-artifact-occurrences',[artifact(),artifact('ART-SECOND','VERSION-2',{rawResponseId:'RAW-2',attachmentSlotId:'SLOT-2'})],[]);
+ const matching=blank();matching.projectData.baselines.push(baseline('BASELINE-CURRENT'));matching.projectData.products.push(product('PRODUCT-CURRENT','BASELINE-CURRENT'));Object.assign(matching.job,{CURRENT_BASELINE_ID:'BASELINE-CURRENT',CURRENT_PRODUCT_ID:'PRODUCT-CURRENT'});
+ observe('product-matches-current-lineage-baseline',matching,[],{artifacts:0,baselines:1,products:1});
+ const mismatch=blank();mismatch.projectData.baselines.push(baseline('BASELINE-CURRENT'));const claimed=product('PRODUCT-CURRENT','BASELINE-CURRENT');claimed.fields.BASELINE_ID='BASELINE-OTHER';mismatch.projectData.products.push(claimed);Object.assign(mismatch.job,{CURRENT_BASELINE_ID:'BASELINE-CURRENT',CURRENT_PRODUCT_ID:'PRODUCT-CURRENT'});
+ observe('product-claims-different-current-baseline',mismatch,['PRODUCT_BASELINE_CONFLICT'],{artifacts:0,baselines:1,products:1});
+ const historical=blank(),oldScope={...currentScope,inputVersion:'INPUT-HISTORICAL'};historical.projectData.baselines.push(baseline('BASELINE-HISTORICAL',oldScope),baseline('BASELINE-CURRENT'));historical.projectData.products.push(product('PRODUCT-HISTORICAL','BASELINE-HISTORICAL',oldScope),product('PRODUCT-CURRENT','BASELINE-CURRENT'));Object.assign(historical.job,{CURRENT_BASELINE_ID:'BASELINE-CURRENT',CURRENT_PRODUCT_ID:'PRODUCT-CURRENT'});
+ observe('historical-product-baseline-does-not-conflict',historical,[],{artifacts:0,baselines:1,products:1});
+ return {scope:'Current-canonical contradiction reducer on explicit synthetic records; current duplicate artifact claims are injected corruption, not admitted storage or release proof',syntheticCanonicalFaultFixtures:true,actualAdmission:false,actualStorage:false,actualRelease:false,wholeClauseProof:false,cases:observations};
+}
+const canonicalContradictions=canonicalContradictionOracle(globalThis);
+if(process.argv.includes('--canonical-contradictions-only')){
+ console.log(JSON.stringify({canonicalContradictions},null,2));
+ strictAssert(canonicalContradictions.cases.every(row=>row.status==='PASS'),'CANONICAL_CONTRADICTION_ORACLE: '+canonicalContradictions.cases.filter(row=>row.status!=='PASS').map(row=>row.caseId).join(', '));
+ process.exit(0);
+}
+strictAssert(canonicalContradictions.cases.every(row=>row.status==='PASS'),'CANONICAL_CONTRADICTION_ORACLE: '+canonicalContradictions.cases.filter(row=>row.status!=='PASS').map(row=>row.caseId).join(', '));
+
 const scope={inputVersion:'INPUT-v001',sourceSetVersion:'SOURCE-SET-v001',requirementsVersion:'REQUIREMENTS-v001',testSuiteVersion:'TEST-SUITE-v001',instructionVersion:'INSTRUCTION-v001',iterationId:'ITER-1',candidateId:'CAND-1'};
 const p=core.createBlankState('JOB-ADJUDICATION-INVARIANT');Object.assign(p.job,{CURRENT_INPUT_VERSION:scope.inputVersion,CURRENT_SOURCE_SET_VERSION:scope.sourceSetVersion,CURRENT_REQUIREMENTS_VERSION:scope.requirementsVersion,CURRENT_TEST_SUITE_VERSION:scope.testSuiteVersion,CURRENT_INSTRUCTION_VERSION:scope.instructionVersion,CURRENT_ITERATION:scope.iterationId});engine.ensureShape(p);
 p.projectData.requirements.push({id:'REQ-1',stage:4,active:true,scope,fields:{REQ_ID:'REQ-1',MANDATORY_OPTIONAL_STATUS:'MANDATORY',STATUS:'ACTIVE'}});
@@ -33,21 +131,35 @@ for(const [collection,row] of cases)notSatisfied(collection,row,collection==='pr
 // Claimed success can expose a contradiction, but can never establish success without the application's evidence contract.
 for(const [collection,row] of cases){if(collection==='products'||collection==='regressionExecutions'||collection==='failureTests')continue;const claim=collection==='processAudits'?row.fields.PROCESS_DETERMINATION:collection==='productAudits'?row.fields.PRODUCT_DETERMINATION:row.fields.DETERMINATION;if(String(claim||'').toUpperCase()==='SATISFIED'){const contradictions=engine.detectCurrentContradictions({...p,projectData:{...p.projectData,[collection]:[row]}});assert(Array.isArray(contradictions),`${collection} contradiction scan failed`);}}
 
-// Stage 25 uses one strict structured coverage semantics for both aggregate coverage and effective determination.
-{
- const representationScope={...scope,productId:'PRODUCT-REP'};
- p.job.CURRENT_PRODUCT_ID='PRODUCT-REP';
- p.projectData.artifacts.push({id:'ART-REP',stage:25,active:true,scope:representationScope,fields:{ARTIFACT_ID:'ART-REP',FILENAME:'delivery.pdf',SHA256:'b'.repeat(64),AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'}});
- p.projectData.evidenceRecords.push({id:'EVIDENCE-REP',stage:25,active:true,scope:representationScope,fields:{EVIDENCE_ID:'EVIDENCE-REP',KIND:'REPRESENTATION_INSPECTION',AUTHORITY_TYPE:'INDEPENDENT_REVIEWER',DESCRIPTION:'Representation opened and inspected.',CONTENT:'All contracted views and packaged files were inspected.'}});
- const structuredObservation=JSON.stringify({requiredPageOrViewIds:['VIEW-1'],inspectedPageOrViewIds:['VIEW-1'],requiredPackagedFileIds:['FILE-1'],openedOrTestedPackagedFileIds:['FILE-1'],requiredTransformationIds:['TRANSFORM-1'],inspectedTransformationIds:['TRANSFORM-1'],observation:'No material representation defect observed.'});
- const good=record('representationInspections',{ARTIFACT_ID:'ART-REP',OBSERVATIONS:structuredObservation,RENDERING_OPENING_EVIDENCE:'EVIDENCE-REP',DETERMINATION:'SATISFIED'},{stage:25,scope:{productId:'PRODUCT-REP'},evidenceRefs:['EVIDENCE-REP']});
- good.id='INSPECTION-REP-GOOD';good.relationships={ARTIFACT_ID:'ART-REP'};p.projectData.representationInspections.push(good);
- const effective=engine.evaluateResultConsistency('representationInspections',good,null,p);assert(effective.determination==='SATISFIED','Strict Stage 25 coverage JSON was not accepted by effective determination');
- const aggregate=engine.representationInspectionCoverage(p);assert(aggregate.complete,'Strict Stage 25 coverage JSON was not accepted by aggregate coverage');
- good.fields.OBSERVATIONS=JSON.stringify({...JSON.parse(structuredObservation),inspectedPageOrViewIds:[]});
- const broken=engine.evaluateResultConsistency('representationInspections',good,null,p);assert(broken.determination!=='SATISFIED','Incomplete Stage 25 structured coverage was accepted by effective determination');
- p.projectData.representationInspections.pop();p.projectData.evidenceRecords.pop();p.projectData.artifacts.pop();delete p.job.CURRENT_PRODUCT_ID;
+// Stage 25 requires explicit coverage inventories even when a class is empty.
+// The same actual shared parser owns effective determination and stage totals.
+function representationCoverageOracle(runtime){
+ const e=runtime.closedLoopWorkflowEngine,c=runtime.closedLoopCore,h=runtime.closedLoopHash,s=runtime.closedLoopWorkflowSchema,scope={inputVersion:'INPUT-REP',sourceSetVersion:'SOURCE-REP',requirementsVersion:'REQUIREMENTS-REP',testSuiteVersion:'TESTS-REP',instructionVersion:'INSTRUCTION-REP',iterationId:'ITER-REP',productId:'PRODUCT-REP'};
+ const project=c.createBlankState('JOB-REPRESENTATION-INVENTORIES');Object.assign(project.job,{CURRENT_INPUT_VERSION:scope.inputVersion,CURRENT_SOURCE_SET_VERSION:scope.sourceSetVersion,CURRENT_REQUIREMENTS_VERSION:scope.requirementsVersion,CURRENT_TEST_SUITE_VERSION:scope.testSuiteVersion,CURRENT_INSTRUCTION_VERSION:scope.instructionVersion,CURRENT_ITERATION:scope.iterationId,CURRENT_PRODUCT_ID:scope.productId});e.ensureShape(project);
+ const fixture={engine:e,schema:s},artifact=canonicalFixtureRecord(fixture,project,'artifacts',{FILENAME:'delivery.txt',SHA256:h.sha256Text('controlled product'),BYTE_SIZE:18,AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'},{stage:21,scope}),artifactId=e.recordId(artifact,'artifacts'),evidenceRow=canonicalFixtureRecord(fixture,project,'evidenceRecords',{KIND:'REPRESENTATION_INSPECTION',AUTHORITY_TYPE:'INDEPENDENT_REVIEWER',DESCRIPTION:'Controlled maintained synthetic representation inspection.',CONTENT:'Controlled inspection evidence; no physical observation claimed.'},{stage:25,scope}),evidenceId=e.recordId(evidenceRow,'evidenceRecords');
+ const full={requiredPageOrViewIds:['VIEW-1'],inspectedPageOrViewIds:['VIEW-1'],requiredPackagedFileIds:['FILE-1'],openedOrTestedPackagedFileIds:['FILE-1'],requiredTransformationIds:['TRANSFORM-1'],inspectedTransformationIds:['TRANSFORM-1'],observation:'Controlled representation observation.'},keys=Object.keys(full).filter(key=>key!=='observation'),empty={...Object.fromEntries(keys.map(key=>[key,[]])),observation:full.observation};
+ const row=canonicalFixtureRecord(fixture,project,'representationInspections',{ARTIFACT_ID:artifactId,REQUIRED_BY_TRACE:'Controlled representation coverage',TRANSFORMATION_CHAIN:'Controlled transformation',TRANSFORMATION_TOOLS_VERSIONS:'NONE',RENDERING_OPENING_EVIDENCE:evidenceId,OBSERVATIONS:JSON.stringify(full),DETERMINATION:'SATISFIED',EVIDENCE:evidenceId},{stage:25,scope,relationships:{ARTIFACT_ID:artifactId},evidenceRefs:[evidenceId]}),observations=[];
+ const exercise=(caseId,payload,valid,field=null)=>{
+  row.fields.OBSERVATIONS=row.OBSERVATIONS=JSON.stringify(payload);e.refreshRecordHashes(row,'representationInspections');const effective=e.evaluateResultConsistency('representationInspections',row,null,project),aggregate=e.representationInspectionCoverage(project);
+  strictAssert.equal(effective.determination,valid?'SATISFIED':'UNDETERMINED','STAGE25_INVENTORY_ORACLE: '+caseId+' effective determination.');strictAssert.equal(aggregate.complete,valid,'STAGE25_INVENTORY_ORACLE: '+caseId+' aggregate completion.');
+  if(field){const expected='OBSERVATIONS.'+field+' must be an explicitly provided array.';strictAssert(effective.reasons.includes(expected),'STAGE25_INVENTORY_ORACLE: '+caseId+' did not cite its inventory violation.');strictAssert(aggregate.reasons.some(reason=>reason.endsWith(expected)),'STAGE25_INVENTORY_ORACLE: '+caseId+' aggregate did not cite its inventory violation.');}
+  observations.push({caseId,expectedValid:valid,effectiveDetermination:effective.determination,aggregateComplete:aggregate.complete,reasons:effective.reasons});
+ };
+ exercise('explicit-full-coverage',full,true);exercise('explicit-empty-classes',empty,true);
+ exercise('all-inventories-omitted',{observation:full.observation},false,keys[0]);
+ for(const key of keys){const absent={...empty};delete absent[key];exercise('missing-'+key,absent,false,key);for(const [kind,value]of [['string','NONE'],['null',null],['object',{}]])exercise(kind+'-'+key,{...empty,[key]:value},false,key);}
+ exercise('required-view-uninspected',{...full,inspectedPageOrViewIds:[]},false);exercise('observation-missing',Object.fromEntries(keys.map(key=>[key,[]])),false);
+ for(const key of keys)for(const [kind,value]of [['nested-array',['VIEW-1']],['object',{toString:null,valueOf:null}],['number',7],['null',null],['blank',' ']]){exercise(kind+'-item-'+key,{...full,[key]:[value]},false);strictAssert(observations.at(-1).reasons.some(reason=>reason.includes('OBSERVATIONS.'+key+' items must be nonempty STRING')),'STAGE25_ITEM_TYPE_DIAGNOSTIC_ORACLE');}
+ for(const [caseId,observation]of [['object-observation',{invented:'not text'}],['throwing-observation',{toString:null,valueOf:null}],['array-observation',['text']],['null-observation',null]]){exercise(caseId,{...full,observation},false);strictAssert(observations.at(-1).reasons.includes('OBSERVATIONS.observation must be a STRING.'),'STAGE25_OBSERVATION_TYPE_DIAGNOSTIC_ORACLE');}
+ exercise('matching-nested-identities',{...full,requiredPageOrViewIds:[['VIEW-1']],inspectedPageOrViewIds:[['VIEW-1']]},false);
+ return observations;
 }
+const representationInventories=representationCoverageOracle(globalThis);
+const representationGuardFault=projectStoreRuntime({fault:{id:'stage25-required-inventory-guard-bypass',file:'workflow-engine.js',before:"const shapeIssues=schema.representationObservationShapeIssues(payload);",after:"const shapeIssues=[];"}});
+strictAssert.throws(()=>representationCoverageOracle(representationGuardFault.runtime),/STAGE25_INVENTORY_ORACLE: all-inventories-omitted effective determination/,'The inventory guard fault must fail its coverage oracle after valid control setup.');
+const representationVerificationObservation={checkId:'stage25.observation-effective-types',boundary:'Shared representation parser through effective determination and current inventory aggregate on declared synthetic records; no admission, real rendering or release claim',caseIds:representationInventories.map(row=>row.caseId),expected:{cases:64,satisfiedControls:2,undeterminedNegatives:62,inventoryGuardFaultDetected:true},observed:{cases:representationInventories.length,satisfiedControls:representationInventories.filter(row=>row.effectiveDetermination==='SATISFIED'&&row.aggregateComplete).length,undeterminedNegatives:representationInventories.filter(row=>row.effectiveDetermination==='UNDETERMINED'&&!row.aggregateComplete).length,inventoryGuardFaultDetected:true},passed:true};
+strictAssert.deepEqual(representationVerificationObservation.observed,representationVerificationObservation.expected);strictAssert.equal(new Set(representationVerificationObservation.caseIds).size,64);console.log(JSON.stringify({verificationObservations:[representationVerificationObservation]}));
+if(process.argv.includes('--representation-coverage-only')){console.log(JSON.stringify({representationInventories:'PASS',observations:representationInventories,inventoryGuardFaultDetected:true,basis:'MAINTAINED_SYNTHETIC_SCHEMA_FIXTURE_REAL_SHARED_COVERAGE_PARSER'},null,2));process.exit(0);}
 
 // Trace integrity is fail-closed: missing evidence/identity/layer linkage cannot pass RCA or changeset validation.
 const badRca=record('rootCauses',{DEFECT_ID:'DEFECT-X',LAYER_TRACE:'x',EARLIEST_DEFECTIVE_LAYER:'INSTRUCTION',ROOT_CAUSE:'claim',DOWNSTREAM_INVALIDATION:'17+'});assert(!engine.validateTraceIntegrity('RCA',badRca,p).valid,'Unresolved RCA trace passed');
@@ -64,9 +176,16 @@ const nakedVerification=record('verification',{REQ_ID:'REQ-1',RUN_ID:'RUN-X',TES
  const proseOnlyByte=record('verification',{EXACT_EVIDENCE:'An agent claims the byte hash matches.'});
  let byteEvidence=engine.evaluateEvidenceSufficiency(p,{requirement:req,test:byteTest,result:proseOnlyByte});
  assert(!byteEvidence.sufficient&&byteEvidence.requiredEvidenceClasses.includes('APPLICATION_VERIFIED_BYTES'),'Prose or a claimed hash satisfied a byte-authority proposition');
- p.projectData.artifacts.push({id:'ART-BYTE',stage:22,active:true,scope:{...scope},fields:{ARTIFACT_ID:'ART-BYTE',FILENAME:'product.bin',SHA256:'a'.repeat(64),AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'}});
- p.projectData.evidenceRecords.push({id:'EVIDENCE-BYTE',stage:22,active:true,scope:{...scope},fields:{EVIDENCE_ID:'EVIDENCE-BYTE',KIND:'BYTE_HASH',AUTHORITY_TYPE:'APPLICATION',DESCRIPTION:'Application-computed byte identity.',CONTENT:'Verified exact bytes and SHA-256.',ATTACHMENT_ID:'ART-BYTE'},relationships:{ATTACHMENT_ID:'ART-BYTE'}});
+ // This fixture is synthetic evidence. Its byte-authority control must still
+ // cross the actual storage/readback boundary; a metadata availability claim
+ // cannot stand in for the application-observed custody required by §§17.6,25.
+ const byteBlob=new Blob(['Controlled exact product bytes'],{type:'application/octet-stream'}),artifactId=artifactFixtureId(engine,p,'BYTE-AUTHORITY'),digest=await hash.sha256Bytes(byteBlob);
+ engine.registerArtifactBytes(p,{stage:22,artifactId,filename:'product.bin',mediaType:byteBlob.type,byteSize:byteBlob.size,sha256:digest});
+ p.projectData.evidenceRecords.push({id:'EVIDENCE-BYTE',stage:22,active:true,scope:{...scope},fields:{EVIDENCE_ID:'EVIDENCE-BYTE',KIND:'BYTE_HASH',AUTHORITY_TYPE:'APPLICATION',DESCRIPTION:'Synthetic application-computed byte identity fixture.',CONTENT:'Verified exact bytes and SHA-256.',ATTACHMENT_ID:artifactId},relationships:{ATTACHMENT_ID:artifactId}});
  const verifiedByte=record('verification',{EXACT_EVIDENCE:'EVIDENCE-BYTE'},{evidenceRefs:['EVIDENCE-BYTE']});
+ assert(!engine.evaluateEvidenceSufficiency(p,{requirement:req,test:byteTest,result:verifiedByte}).sufficient,'Metadata-only byte availability satisfied a byte-authority proposition');
+ const byteStore=await bindArtifactFixture([]);await byteStore.putArtifact({artifactId,jobId:p.job.JOB_ID,filename:'product.bin',mediaType:byteBlob.type,blob:byteBlob});
+ const stored=await byteStore.getArtifact(artifactId);strictAssert.equal(stored.jobId,p.job.JOB_ID);strictAssert.equal(stored.byteSize,byteBlob.size);strictAssert.equal(await hash.sha256Bytes(stored.blob),digest);
  byteEvidence=engine.evaluateEvidenceSufficiency(p,{requirement:req,test:byteTest,result:verifiedByte});
  assert(byteEvidence.sufficient,'Application-verified byte evidence did not repair byte-authority sufficiency');
 
@@ -101,7 +220,7 @@ assert(adjudicationHotPath.includes('projectData:{...(project?.projectData||{})}
 assert(adjudicationHotPath.includes('map(record=>clone(record))'),'Gate adjudication does not isolate only conclusion-bearing records before rewriting effective determinations');
 for(const unrelated of ['rawResponses','generatedPrompts','history','responseProposals'])assert(!adjudicationHotPath.includes('copy.projectData['+JSON.stringify(unrelated)+']'),'Gate adjudication clones unrelated large provenance collection '+unrelated);
 
-const proof={semanticFalseAcceptanceInvariant:true,conclusionBearingCollections:cases.length,releaseGradeIndependence:true,traceIntegrity:true,centralAdjudication:true,byteAuthorityEvidenceRegression:true,meaningEvidenceRegression:true,humanInspectionEvidenceRegression:true};
+const proof={canonicalContradictions,representationInventories,inventoryGuardFaultDetected:true,semanticFalseAcceptanceInvariant:true,conclusionBearingCollections:cases.length,releaseGradeIndependence:true,traceIntegrity:true,centralAdjudication:true,byteAuthorityEvidenceRegression:true,meaningEvidenceRegression:true,humanInspectionEvidenceRegression:true};
 
 // Capability names and human prose are claims, not capability readiness. A current canonical capability record repairs routing.
 {
@@ -157,3 +276,9 @@ for(const node of [{type:'LEAF',artifactId:'ARTIFACT-1'},{type:'LEAF',dependency
  const obligation=record('proofObligations',{PROPOSITION_ID:single.parentId}),prerequisite={type:'LEAF',proofObligationId:obligation.id,truthExtraction:'PROOF_OBLIGATION',evidenceClasses:['ACCEPTED_PROOF_REVIEW'],scopeBinding:'CURRENT'};assert(!engine.validateProofExpression(prerequisite,{project:q,targetPropositionId:single.parentId}).valid,'Circular prerequisite proof was accepted.');
  console.log(JSON.stringify({closedProofTruthTables:true,vectors:vectors.length,currentEvidenceRequired:true,reviewedTimingRequired:true,proofCyclesAndResourceBounds:true}));
 }
+
+const evidenceApiContract=await evidenceApiContractReport();assert(evidenceApiContract.passed,'EVIDENCE_API_CONTRACT_OWNING_CONTROLS_ORACLE');console.log(JSON.stringify({evidenceApiContractControls:'PASS',synthetic:true,actualBrowser:false,evidenceApiContract}));
+
+const externalSystemSupport=await verifyExternalSystemSupport();console.log(JSON.stringify({externalSystemSupportControls:externalSystemSupport.status,externalSystemSupport}));strictAssert.equal(externalSystemSupport.status,'PASS','EXTERNAL_SYSTEM_SUPPORT_OWNING_ORACLE');
+
+const stage22ExternalResultNormalization=verifyStage22ExternalResultNormalization({engine,core,schema:closedLoopWorkflowSchema,hash:closedLoopHash,ingestion:closedLoopResponseIngestion,prompts:closedLoopPromptEngine});console.log(JSON.stringify({stage22ExternalResultNormalization}));strictAssert.equal(stage22ExternalResultNormalization.stage22ExternalResultNormalization,'PASS','STAGE22_EXTERNAL_NORMALIZATION_OWNING_ORACLE');

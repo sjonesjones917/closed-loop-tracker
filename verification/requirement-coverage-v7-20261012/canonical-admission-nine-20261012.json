@@ -1,0 +1,257 @@
+{
+  "allSuiteCollectorExecuted": false,
+  "capturedResultSha256": "b8eaaaeae8a7a72a1bc9e223340b6e8a928345db9ff118246077599c677c8a50",
+  "capturedSource": {
+    "commit": "427b1010707ff4566a54b2acb0392e9e702b14d9",
+    "evidenceSha256": "73cd64f4f088f2c317d03da1bd136ad3229df1dbf46633f5a8df8d6f929c843a",
+    "fingerprintSha256": "374743b2fb612d125be4cb9cbb97b8f4a6cc2eb2264e37896c594e298be2b5d2",
+    "sourceInputsSha256": "78baf85d2fac65ff4d789106fb6d045e5c71211a54f9532f9f034c55a3651ca9"
+  },
+  "disposition": "VALIDATED_PARTIAL_CANONICAL_ADMISSION",
+  "globalProven": 9,
+  "overallReleaseEstablished": false,
+  "preservation": "Earlier uploaded six-proof snapshot and its separate seven-proof snapshot remain unchanged; this is a later nine-ID source-bound run record, not a replacement or restamp.",
+  "receiptIdentities": [
+    {
+      "receiptSha256": "aad52dcf3f50c6709c190fd0fc7e99bc5f5463c989fc4575f27556c769bd5bbf",
+      "suite": "verify-stage-operation-registry.mjs"
+    },
+    {
+      "receiptSha256": "993c6413f1ff911918fc8b6a6b610a1ba279f28bc2cab2d4378096c5f75a56d3",
+      "suite": "verify-stage-contract-closure.mjs"
+    },
+    {
+      "receiptSha256": "99190c194f30b643908175f29f129bf2d13fa3c61ae07d4ad3bd4cad1052d15b",
+      "suite": "verify-hash.mjs"
+    }
+  ],
+  "runFinishedUtc": "2026-10-12T14:14:24.647Z",
+  "runStartedUtc": "2026-10-12T14:14:20.146Z",
+  "schema": "v7-source-bound-nine-clause-admission-summary/1",
+  "sourceBindingLimit": "This is the exact result of its captured run on local commit 427b1010707ff4566a54b2acb0392e9e702b14d9. It is not the published 75bcc721 tree, is not asserted as current after later private changes, and does not establish release or all-suite completion.",
+  "targetedNreqCount": 9,
+  "targetedNreqIds": [
+    "NREQ-5fd38e249cabfceace66e3488d9bef39",
+    "NREQ-7b1cd2debadb570b49fe041bd444592f",
+    "NREQ-be0ecfa19d607c0df242b048d6ef63bf",
+    "NREQ-ab9ab7c7ba110dfd3e0a5f8f5c9908cb",
+    "NREQ-853a934199459ed6bf419687ca08ba34",
+    "NREQ-d6f8519fc2d36e59e4eba26af0442d14",
+    "NREQ-dba22c5f93e4359c4b7d4ebdd9799dbf",
+    "NREQ-e74693ce28b14adb92ef359ccec7bb2b",
+    "NREQ-00589ac7ea403394eff5f3f58cd27738"
+  ],
+  "targets": [
+    {
+      "declarationSha256": "11cb48da64ff4b36ee7ac55cb430e2490cec26e62452dd7cb4d5e8f06fcf849e",
+      "disposition": "CONFORMANT_PROVEN",
+      "executedAssertions": [
+        {
+          "checkId": "declaration.proposal-acceptance-modes",
+          "obligationId": "source-line-1575-exact-one-proposal-acceptance-mode",
+          "receiptSha256": "aad52dcf3f50c6709c190fd0fc7e99bc5f5463c989fc4575f27556c769bd5bbf",
+          "role": "deterministic",
+          "suite": "verify-stage-operation-registry.mjs"
+        },
+        {
+          "checkId": "declaration.proposal-acceptance-modes",
+          "obligationId": "source-line-1575-exact-one-proposal-acceptance-mode",
+          "receiptSha256": "aad52dcf3f50c6709c190fd0fc7e99bc5f5463c989fc4575f27556c769bd5bbf",
+          "role": "mutation",
+          "suite": "verify-stage-operation-registry.mjs"
+        }
+      ],
+      "normativeRequirementId": "NREQ-5fd38e249cabfceace66e3488d9bef39",
+      "productionOwnerStatus": "VERIFIED_PRODUCTION_OWNER",
+      "review": {
+        "path": "verification/requirement-coverage-NREQ-5fd38e249cabfceace66e3488d9bef39-20261012-current-projection7-4c557dc39d9f-declaration-corrected.json",
+        "sha256": "96637710b544034ee2c20e7aa4f28f8025f1d0cd0741aff019fa12074380969a"
+      },
+      "sourceLineSha256": "8434ed441c97f0dfabb16604a746a937730696f98ba749272589a92d86a1b0a6",
+      "testTraceStatus": "EXECUTED_REQUIREMENT_CASES"
+    },
+    {
+      "declarationSha256": "b1e982626ffc3c5a425a9a55a9c1add2be47f4d069030df0bb514930214a7d02",
+      "disposition": "CONFORMANT_PROVEN",
+      "executedAssertions": [
+        {
+          "checkId": "canonical.content-complete-record-distinction",
+          "obligationId": "source-line-3014",
+          "receiptSha256": "99190c194f30b643908175f29f129bf2d13fa3c61ae07d4ad3bd4cad1052d15b",
+          "role": "deterministic",
+          "suite": "verify-hash.mjs"
+        },
+        {
+          "checkId": "canonical.source-family-content-complete-distinction",
+          "obligationId": "source-line-3014",
+          "receiptSha256": "99190c194f30b643908175f29f129bf2d13fa3c61ae07d4ad3bd4cad1052d15b",
+          "role": "deterministic",
+          "suite": "verify-hash.mjs"
+        },
+        {
+          "checkId": "canonical.complete-record-carrier-shapes",
+          "obligationId": "source-line-3014",
+          "receiptSha256": "99190c194f30b643908175f29f129bf2d13fa3c61ae07d4ad3bd4cad1052d15b",
+          "role": "deterministic",
+          "suite": "verify-hash.mjs"
+        }
+      ],
+      "normativeRequirementId": "NREQ-7b1cd2debadb570b49fe041bd444592f",
+      "productionOwnerStatus": "VERIFIED_PRODUCTION_OWNER",
+      "review": {
+        "path": "verification/requirement-coverage-NREQ-7b1cd2debadb570b49fe041bd444592f-20261012-current-projection7-4c557dc39d9f.json",
+        "sha256": "b795d0501d9a887ac2dfb1362c5c4df942410650515b38d3b5c1870dd9947d02"
+      },
+      "sourceLineSha256": "b6dc4278eba0b77d47190a27e473be50c1bd1a29c7282aa3cebbe93f6fcd964f",
+      "testTraceStatus": "EXECUTED_REQUIREMENT_CASES"
+    },
+    {
+      "declarationSha256": "c7eeab08aa59840503b49dd8a215298c2d15828f7dc43b87d242f09eb11f8408",
+      "disposition": "CONFORMANT_PROVEN",
+      "executedAssertions": [
+        {
+          "checkId": "canonical.utf8-no-bom-byte-routes",
+          "obligationId": "source-line-3021",
+          "receiptSha256": "99190c194f30b643908175f29f129bf2d13fa3c61ae07d4ad3bd4cad1052d15b",
+          "role": "deterministic",
+          "suite": "verify-hash.mjs"
+        }
+      ],
+      "normativeRequirementId": "NREQ-be0ecfa19d607c0df242b048d6ef63bf",
+      "productionOwnerStatus": "VERIFIED_PRODUCTION_OWNER",
+      "review": {
+        "path": "verification/requirement-coverage-NREQ-be0ecfa19d607c0df242b048d6ef63bf-20261012-current-projection7-4c557dc39d9f.json",
+        "sha256": "1fe7532673f8cc5bbf6444fb67b09d82c28108b359e7ccd2a46cb7281e8ce7b5"
+      },
+      "sourceLineSha256": "0b0f1de963804c1eeb888da7a2b2e1b818c703823a3e117b4eccd6ed3f8f3a07",
+      "testTraceStatus": "EXECUTED_REQUIREMENT_CASES"
+    },
+    {
+      "declarationSha256": "8ea76aa3d2ebd675304948157615cd1bd401c15428ec0a62bb57fd83cd264554",
+      "disposition": "CONFORMANT_PROVEN",
+      "executedAssertions": [
+        {
+          "checkId": "canonical.safe-integer-and-typed-string",
+          "obligationId": "source-line-3023",
+          "receiptSha256": "99190c194f30b643908175f29f129bf2d13fa3c61ae07d4ad3bd4cad1052d15b",
+          "role": "deterministic",
+          "suite": "verify-hash.mjs"
+        }
+      ],
+      "normativeRequirementId": "NREQ-ab9ab7c7ba110dfd3e0a5f8f5c9908cb",
+      "productionOwnerStatus": "VERIFIED_PRODUCTION_OWNER",
+      "review": {
+        "path": "verification/requirement-coverage-NREQ-ab9ab7c7ba110dfd3e0a5f8f5c9908cb-20261012-current-projection7-4c557dc39d9f-declaration-corrected.json",
+        "sha256": "abf0244849d555800b8aec7b9601e3bf62259de38e850125deff3e48e49cf657"
+      },
+      "sourceLineSha256": "e17eda37620c3017ac470eaf42989140e74944e89206e2c9ecf51fb78bb872a2",
+      "testTraceStatus": "EXECUTED_REQUIREMENT_CASES"
+    },
+    {
+      "declarationSha256": "be68f6c196ff9b59d8fcfa8aa3f250e59b47a75addb0b95ad3a3b765254cc2a5",
+      "disposition": "CONFORMANT_PROVEN",
+      "executedAssertions": [
+        {
+          "checkId": "canonical.unsigned-scalar-key-order",
+          "obligationId": "source-line-3024",
+          "receiptSha256": "99190c194f30b643908175f29f129bf2d13fa3c61ae07d4ad3bd4cad1052d15b",
+          "role": "deterministic",
+          "suite": "verify-hash.mjs"
+        }
+      ],
+      "normativeRequirementId": "NREQ-853a934199459ed6bf419687ca08ba34",
+      "productionOwnerStatus": "VERIFIED_PRODUCTION_OWNER",
+      "review": {
+        "path": "verification/requirement-coverage-NREQ-853a934199459ed6bf419687ca08ba34-20261012-current-projection7-4c557dc39d9f.json",
+        "sha256": "5680ce27e22665d54f76d7bef04a02809f9849756ba74bc512346688aff6480c"
+      },
+      "sourceLineSha256": "6cd002e410cce68e03f5b46b09436696f71111cd2df5ad887d8476e0083c3775",
+      "testTraceStatus": "EXECUTED_REQUIREMENT_CASES"
+    },
+    {
+      "declarationSha256": "06c07aa58be76608f04c24252a278351d458e2ade67dd8a6e5fa81df83ce33c6",
+      "disposition": "CONFORMANT_PROVEN",
+      "executedAssertions": [
+        {
+          "checkId": "canonical.exact-string-scalars-and-lines",
+          "obligationId": "source-line-3026",
+          "receiptSha256": "99190c194f30b643908175f29f129bf2d13fa3c61ae07d4ad3bd4cad1052d15b",
+          "role": "deterministic",
+          "suite": "verify-hash.mjs"
+        }
+      ],
+      "normativeRequirementId": "NREQ-d6f8519fc2d36e59e4eba26af0442d14",
+      "productionOwnerStatus": "VERIFIED_PRODUCTION_OWNER",
+      "review": {
+        "path": "verification/requirement-coverage-NREQ-d6f8519fc2d36e59e4eba26af0442d14-20261012-current-projection7-4c557dc39d9f.json",
+        "sha256": "b084a051aa1092899017cd700bc79e70e1093449cebbcf613e8e8042d451c0d2"
+      },
+      "sourceLineSha256": "03cb01d5ae34c69335090d3607bb7f3380f6e4eba8070ee4ffa5cba9cb32d751",
+      "testTraceStatus": "EXECUTED_REQUIREMENT_CASES"
+    },
+    {
+      "declarationSha256": "7471d9e1e71bbb79ff3ec3249da7105ca0d46368c99a9a62733922ebcd67a615",
+      "disposition": "CONFORMANT_PROVEN",
+      "executedAssertions": [
+        {
+          "checkId": "canonical.exact-json-escapes",
+          "obligationId": "source-line-3027",
+          "receiptSha256": "99190c194f30b643908175f29f129bf2d13fa3c61ae07d4ad3bd4cad1052d15b",
+          "role": "deterministic",
+          "suite": "verify-hash.mjs"
+        }
+      ],
+      "normativeRequirementId": "NREQ-dba22c5f93e4359c4b7d4ebdd9799dbf",
+      "productionOwnerStatus": "VERIFIED_PRODUCTION_OWNER",
+      "review": {
+        "path": "verification/requirement-coverage-NREQ-dba22c5f93e4359c4b7d4ebdd9799dbf-20261012-current-projection7-4c557dc39d9f.json",
+        "sha256": "2a86e283b2f07325d87d0341147f0dda245a1179e35437f7f4bbaf8acc85c6b0"
+      },
+      "sourceLineSha256": "6ceea161cf4fc12d52f66189110a6aae635278efe3442751a653794c8e81c68f",
+      "testTraceStatus": "EXECUTED_REQUIREMENT_CASES"
+    },
+    {
+      "declarationSha256": "b4a6810f69fbd47af425f8d4d23aa28766c1a914d844ad2b0c6c6def07c2292c",
+      "disposition": "CONFORMANT_PROVEN",
+      "executedAssertions": [
+        {
+          "checkId": "canonical.id-literal-payload-and-sha160",
+          "obligationId": "source-line-3039",
+          "receiptSha256": "99190c194f30b643908175f29f129bf2d13fa3c61ae07d4ad3bd4cad1052d15b",
+          "role": "deterministic",
+          "suite": "verify-hash.mjs"
+        }
+      ],
+      "normativeRequirementId": "NREQ-e74693ce28b14adb92ef359ccec7bb2b",
+      "productionOwnerStatus": "VERIFIED_PRODUCTION_OWNER",
+      "review": {
+        "path": "verification/requirement-coverage-NREQ-e74693ce28b14adb92ef359ccec7bb2b-20261012-current-projection7-4c557dc39d9f.json",
+        "sha256": "d79f7caecfaeaf2d49b445e6c28596095da7b785345d372f5165e15fc0ac88de"
+      },
+      "sourceLineSha256": "cc1adfaf4adf818c9ef8ac1a6d1680bf2070cd2176b6a3cffbe40312d1e01cde",
+      "testTraceStatus": "EXECUTED_REQUIREMENT_CASES"
+    },
+    {
+      "declarationSha256": "c158bbdbfdc5cb3528dee10e5958fb6f1d1ac829ed267f5f09fe0c78667139d9",
+      "disposition": "CONFORMANT_PROVEN",
+      "executedAssertions": [
+        {
+          "checkId": "declaration.stage01.role",
+          "obligationId": "exact-stage01-role-declaration-and-publication",
+          "receiptSha256": "993c6413f1ff911918fc8b6a6b610a1ba279f28bc2cab2d4378096c5f75a56d3",
+          "role": "deterministic",
+          "suite": "verify-stage-contract-closure.mjs"
+        }
+      ],
+      "normativeRequirementId": "NREQ-00589ac7ea403394eff5f3f58cd27738",
+      "productionOwnerStatus": "VERIFIED_PRODUCTION_OWNER",
+      "review": {
+        "path": "verification/requirement-coverage-NREQ-00589ac7ea403394eff5f3f58cd27738-20261012-current-projection7-4c557dc39d9f-declaration-corrected.json",
+        "sha256": "a3df269303d871e1a35845831a63a027941d8262ff337798a7e51f1507a65cc4"
+      },
+      "sourceLineSha256": "7081fe0685baf1aad5e34f729f3f463d3860f2d2a0c1593b9a4bcc96ea7c53c4",
+      "testTraceStatus": "EXECUTED_REQUIREMENT_CASES"
+    }
+  ],
+  "totalSubstantive": 3999
+}

@@ -1,0 +1,508 @@
+{
+  "schema": "closed-loop-changed-singleton-source-review/1",
+  "status": "PENDING_GLOBAL_ADOPTION",
+  "reviewFile": {
+    "path": "/workspace/shared/clrt-atomic-historical-identity-tail.json",
+    "sha256": "ffaa2be916f2fc1f016b9c143504efa792b2949da713d24e66ffc17f55ab413f"
+  },
+  "historicalSourceSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
+  "currentSourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+  "deletedHistoricalContext": [
+    {
+      "line": 2872,
+      "text": "32.4A Deferred execution operations and receipts",
+      "lineSha256": "2b5dea0542b6e7eb5316b1f8d733fd6807b72293eb2f86f181fb14556026be73"
+    },
+    {
+      "line": 2874,
+      "text": "As an explicit extension of the closed stage-operation set in Section 14.6, an existing stage may expose EXECUTE_FAILURE_TEST or EXECUTE_REGRESSION for a current accepted failure-test or regression definition when that stage is later than the definition's owning stage, its EARLIEST_EXECUTABLE_STAGE has been reached, and its current target-availability condition and mandatory phase targets are TRUE. The stage is the selected execution stage in the active project version. This extension does not make subsequent-stage material available to an earlier-stage handoff. The registry contains these conditional combinations; it does not accept arbitrary operation names or infer permissions from a response.",
+      "lineSha256": "65a7cca4a01012776ccc8d17242ebf39e76c99f1a62edb4845a832321358ddcf"
+    }
+  ],
+  "currentAdoptionEvidence": "Accepted source relocation establishes old §32.4A absent or changed; exact historical/current diff deletes old lines2871–2957 before current line2809. This file independently reviews the changed operation-set meaning, not only that mechanical relocation.",
+  "decisions": [
+    {
+      "priorNormativeRequirementId": "NREQ-f0d3896f2d4c46e85ce52981147764ef",
+      "oldPrimaryAnchor": {
+        "line": 3459,
+        "lineSha256": "11c31c8283cc32f61135d9e9867331fe491e1ada0b134e3bfd5cee09190307ba",
+        "text": "Operations: COMPLETE"
+      },
+      "currentPrimaryAnchor": {
+        "line": 3310,
+        "lineSha256": "11c31c8283cc32f61135d9e9867331fe491e1ada0b134e3bfd5cee09190307ba",
+        "text": "Operations: COMPLETE"
+      },
+      "currentAtomicKeys": [
+        "s37.stage-08.operations"
+      ],
+      "currentScopeStatements": {
+        "s37.stage-08.operations": "The exact permitted operation set for Stage 08 is COMPLETE."
+      },
+      "sourceSemanticChange": "The current row is a closed stage-operation set, but the original controlling context explicitly added conditional deferred EXECUTE_FAILURE_TEST/EXECUTE_REGRESSION combinations at later stages via historical §32.4A. That amendment is absent from the current source.",
+      "requestedIdentityTreatment": "Retire old scope identity; allocate fresh current scope identity through the global changed-singleton relation, never UNCHANGED_ATOMIC. No historical proof inherited."
+    },
+    {
+      "priorNormativeRequirementId": "NREQ-a8822e7da5b9525a6c3e097b71e59183",
+      "oldPrimaryAnchor": {
+        "line": 3468,
+        "lineSha256": "11c31c8283cc32f61135d9e9867331fe491e1ada0b134e3bfd5cee09190307ba",
+        "text": "Operations: COMPLETE"
+      },
+      "currentPrimaryAnchor": {
+        "line": 3319,
+        "lineSha256": "11c31c8283cc32f61135d9e9867331fe491e1ada0b134e3bfd5cee09190307ba",
+        "text": "Operations: COMPLETE"
+      },
+      "currentAtomicKeys": [
+        "s37.stage-09.operations"
+      ],
+      "currentScopeStatements": {
+        "s37.stage-09.operations": "The exact permitted operation set for Stage 09 is COMPLETE."
+      },
+      "sourceSemanticChange": "The current row is a closed stage-operation set, but the original controlling context explicitly added conditional deferred EXECUTE_FAILURE_TEST/EXECUTE_REGRESSION combinations at later stages via historical §32.4A. That amendment is absent from the current source.",
+      "requestedIdentityTreatment": "Retire old scope identity; allocate fresh current scope identity through the global changed-singleton relation, never UNCHANGED_ATOMIC. No historical proof inherited."
+    },
+    {
+      "priorNormativeRequirementId": "NREQ-8c2bdedb1f707a1a97695f7b0745365c",
+      "oldPrimaryAnchor": {
+        "line": 3478,
+        "lineSha256": "ebf3f9bdb819e502addc0311ad8d75f5c6d25c378660d289d2c1aa742b75d374",
+        "text": "Operations: FREEZE"
+      },
+      "currentPrimaryAnchor": {
+        "line": 3329,
+        "lineSha256": "ebf3f9bdb819e502addc0311ad8d75f5c6d25c378660d289d2c1aa742b75d374",
+        "text": "Operations: FREEZE"
+      },
+      "currentAtomicKeys": [
+        "s37.stage-10.operations"
+      ],
+      "currentScopeStatements": {
+        "s37.stage-10.operations": "The exact permitted operation set for Stage 10 is FREEZE."
+      },
+      "sourceSemanticChange": "The current row is a closed stage-operation set, but the original controlling context explicitly added conditional deferred EXECUTE_FAILURE_TEST/EXECUTE_REGRESSION combinations at later stages via historical §32.4A. That amendment is absent from the current source.",
+      "requestedIdentityTreatment": "Retire old scope identity; allocate fresh current scope identity through the global changed-singleton relation, never UNCHANGED_ATOMIC. No historical proof inherited."
+    },
+    {
+      "priorNormativeRequirementId": "NREQ-a9ef7326ce64b6049b07bdddd8d9d024",
+      "oldPrimaryAnchor": {
+        "line": 3488,
+        "lineSha256": "f58ed2528e41d253813a31507f021b662b9e1c8ea584f0b31cf0f7aae0090cb1",
+        "text": "Operations: EXECUTE_RUN"
+      },
+      "currentPrimaryAnchor": {
+        "line": 3339,
+        "lineSha256": "f58ed2528e41d253813a31507f021b662b9e1c8ea584f0b31cf0f7aae0090cb1",
+        "text": "Operations: EXECUTE_RUN"
+      },
+      "currentAtomicKeys": [
+        "s37.stage-11.operations"
+      ],
+      "currentScopeStatements": {
+        "s37.stage-11.operations": "The exact permitted operation set for Stage 11 is EXECUTE_RUN."
+      },
+      "sourceSemanticChange": "The current row is a closed stage-operation set, but the original controlling context explicitly added conditional deferred EXECUTE_FAILURE_TEST/EXECUTE_REGRESSION combinations at later stages via historical §32.4A. That amendment is absent from the current source.",
+      "requestedIdentityTreatment": "Retire old scope identity; allocate fresh current scope identity through the global changed-singleton relation, never UNCHANGED_ATOMIC. No historical proof inherited."
+    },
+    {
+      "priorNormativeRequirementId": "NREQ-f50ee5baca83ff85d962de77d313fda6",
+      "oldPrimaryAnchor": {
+        "line": 3498,
+        "lineSha256": "222940792c8b920c5a4c6e43425e0a94ee95f2b040827d393c853f48fdb70503",
+        "text": "Operations: VERIFY"
+      },
+      "currentPrimaryAnchor": {
+        "line": 3349,
+        "lineSha256": "222940792c8b920c5a4c6e43425e0a94ee95f2b040827d393c853f48fdb70503",
+        "text": "Operations: VERIFY"
+      },
+      "currentAtomicKeys": [
+        "s37.stage-12.operations"
+      ],
+      "currentScopeStatements": {
+        "s37.stage-12.operations": "The exact permitted operation set for Stage 12 is VERIFY."
+      },
+      "sourceSemanticChange": "The current row is a closed stage-operation set, but the original controlling context explicitly added conditional deferred EXECUTE_FAILURE_TEST/EXECUTE_REGRESSION combinations at later stages via historical §32.4A. That amendment is absent from the current source.",
+      "requestedIdentityTreatment": "Retire old scope identity; allocate fresh current scope identity through the global changed-singleton relation, never UNCHANGED_ATOMIC. No historical proof inherited."
+    },
+    {
+      "priorNormativeRequirementId": "NREQ-7d91a0dd124e5a78fc01449f23a3e8fa",
+      "oldPrimaryAnchor": {
+        "line": 3507,
+        "lineSha256": "d3c5d2691cd62f28016af20a198b44f40ea575b76211bd7d1a1ee2ae6348f4a4",
+        "text": "Operations: COMPARE"
+      },
+      "currentPrimaryAnchor": {
+        "line": 3358,
+        "lineSha256": "d3c5d2691cd62f28016af20a198b44f40ea575b76211bd7d1a1ee2ae6348f4a4",
+        "text": "Operations: COMPARE"
+      },
+      "currentAtomicKeys": [
+        "s37.stage-13.operations"
+      ],
+      "currentScopeStatements": {
+        "s37.stage-13.operations": "The exact permitted operation set for Stage 13 is COMPARE."
+      },
+      "sourceSemanticChange": "The current row is a closed stage-operation set, but the original controlling context explicitly added conditional deferred EXECUTE_FAILURE_TEST/EXECUTE_REGRESSION combinations at later stages via historical §32.4A. That amendment is absent from the current source.",
+      "requestedIdentityTreatment": "Retire old scope identity; allocate fresh current scope identity through the global changed-singleton relation, never UNCHANGED_ATOMIC. No historical proof inherited."
+    },
+    {
+      "priorNormativeRequirementId": "NREQ-f9c8f3d1723060ee3fd3fa87ba2a4d75",
+      "oldPrimaryAnchor": {
+        "line": 3516,
+        "lineSha256": "750f389fff784575685100c1a042d607451a8038847ccfa15609d3933cbe9423",
+        "text": "Operations: ROOT_CAUSE"
+      },
+      "currentPrimaryAnchor": {
+        "line": 3367,
+        "lineSha256": "750f389fff784575685100c1a042d607451a8038847ccfa15609d3933cbe9423",
+        "text": "Operations: ROOT_CAUSE"
+      },
+      "currentAtomicKeys": [
+        "s37.stage-14.operations"
+      ],
+      "currentScopeStatements": {
+        "s37.stage-14.operations": "The exact permitted operation set for Stage 14 is ROOT_CAUSE."
+      },
+      "sourceSemanticChange": "The current row is a closed stage-operation set, but the original controlling context explicitly added conditional deferred EXECUTE_FAILURE_TEST/EXECUTE_REGRESSION combinations at later stages via historical §32.4A. That amendment is absent from the current source.",
+      "requestedIdentityTreatment": "Retire old scope identity; allocate fresh current scope identity through the global changed-singleton relation, never UNCHANGED_ATOMIC. No historical proof inherited."
+    },
+    {
+      "priorNormativeRequirementId": "NREQ-925405b741265dbbc292d4f3a74c2bd6",
+      "oldPrimaryAnchor": {
+        "line": 3524,
+        "lineSha256": "aa49709e1c8ca4a24412ad9ebbfe664d58d1c8b52166be6f6f8025c63ad7be38",
+        "text": "Operations: COMPLETE, EXECUTE_REGRESSION"
+      },
+      "currentPrimaryAnchor": {
+        "line": 3375,
+        "lineSha256": "aa49709e1c8ca4a24412ad9ebbfe664d58d1c8b52166be6f6f8025c63ad7be38",
+        "text": "Operations: COMPLETE, EXECUTE_REGRESSION"
+      },
+      "currentAtomicKeys": [
+        "s37.stage-15.operations"
+      ],
+      "currentScopeStatements": {
+        "s37.stage-15.operations": "The exact permitted operation set for Stage 15 is COMPLETE, EXECUTE_REGRESSION."
+      },
+      "sourceSemanticChange": "The current row is a closed stage-operation set, but the original controlling context explicitly added conditional deferred EXECUTE_FAILURE_TEST/EXECUTE_REGRESSION combinations at later stages via historical §32.4A. That amendment is absent from the current source.",
+      "requestedIdentityTreatment": "Retire old scope identity; allocate fresh current scope identity through the global changed-singleton relation, never UNCHANGED_ATOMIC. No historical proof inherited."
+    },
+    {
+      "priorNormativeRequirementId": "NREQ-4363c0420b1bd921591c1f2446cfb8eb",
+      "oldPrimaryAnchor": {
+        "line": 3532,
+        "lineSha256": "1872def365eecb692a3de9decead370ec25cdaf766c19f39b89360c0a1b6297a",
+        "text": "Operations: CORRECT"
+      },
+      "currentPrimaryAnchor": {
+        "line": 3383,
+        "lineSha256": "1872def365eecb692a3de9decead370ec25cdaf766c19f39b89360c0a1b6297a",
+        "text": "Operations: CORRECT"
+      },
+      "currentAtomicKeys": [
+        "s37.stage-16.operations"
+      ],
+      "currentScopeStatements": {
+        "s37.stage-16.operations": "The exact permitted operation set for Stage 16 is CORRECT."
+      },
+      "sourceSemanticChange": "The current row is a closed stage-operation set, but the original controlling context explicitly added conditional deferred EXECUTE_FAILURE_TEST/EXECUTE_REGRESSION combinations at later stages via historical §32.4A. That amendment is absent from the current source.",
+      "requestedIdentityTreatment": "Retire old scope identity; allocate fresh current scope identity through the global changed-singleton relation, never UNCHANGED_ATOMIC. No historical proof inherited."
+    },
+    {
+      "priorNormativeRequirementId": "NREQ-2174af2894ceaa1acb9a032113db659d",
+      "oldPrimaryAnchor": {
+        "line": 3541,
+        "lineSha256": "87d45fd4730217a1c534b8a848d517d2070113d7ee8c06d5833ee978db4f1c5d",
+        "text": "Operations: FREEZE, EXECUTE_RUN, VERIFY, COMPARE, ROOT_CAUSE, REGRESSION, CORRECT"
+      },
+      "currentPrimaryAnchor": {
+        "line": 3392,
+        "lineSha256": "87d45fd4730217a1c534b8a848d517d2070113d7ee8c06d5833ee978db4f1c5d",
+        "text": "Operations: FREEZE, EXECUTE_RUN, VERIFY, COMPARE, ROOT_CAUSE, REGRESSION, CORRECT"
+      },
+      "currentAtomicKeys": [
+        "s37.stage-17.operations"
+      ],
+      "currentScopeStatements": {
+        "s37.stage-17.operations": "The exact permitted operation set for Stage 17 is FREEZE, EXECUTE_RUN, VERIFY, COMPARE, ROOT_CAUSE, REGRESSION, CORRECT."
+      },
+      "sourceSemanticChange": "The current row is a closed stage-operation set, but the original controlling context explicitly added conditional deferred EXECUTE_FAILURE_TEST/EXECUTE_REGRESSION combinations at later stages via historical §32.4A. That amendment is absent from the current source.",
+      "requestedIdentityTreatment": "Retire old scope identity; allocate fresh current scope identity through the global changed-singleton relation, never UNCHANGED_ATOMIC. No historical proof inherited."
+    },
+    {
+      "priorNormativeRequirementId": "NREQ-a12012292224d4b4a0a9b1088c8c49d0",
+      "oldPrimaryAnchor": {
+        "line": 3549,
+        "lineSha256": "11c31c8283cc32f61135d9e9867331fe491e1ada0b134e3bfd5cee09190307ba",
+        "text": "Operations: COMPLETE"
+      },
+      "currentPrimaryAnchor": {
+        "line": 3400,
+        "lineSha256": "11c31c8283cc32f61135d9e9867331fe491e1ada0b134e3bfd5cee09190307ba",
+        "text": "Operations: COMPLETE"
+      },
+      "currentAtomicKeys": [
+        "s37.stage-18.operations"
+      ],
+      "currentScopeStatements": {
+        "s37.stage-18.operations": "The exact permitted operation set for Stage 18 is COMPLETE."
+      },
+      "sourceSemanticChange": "The current row is a closed stage-operation set, but the original controlling context explicitly added conditional deferred EXECUTE_FAILURE_TEST/EXECUTE_REGRESSION combinations at later stages via historical §32.4A. That amendment is absent from the current source.",
+      "requestedIdentityTreatment": "Retire old scope identity; allocate fresh current scope identity through the global changed-singleton relation, never UNCHANGED_ATOMIC. No historical proof inherited."
+    },
+    {
+      "priorNormativeRequirementId": "NREQ-255fe5112069486751f53087b1ab699e",
+      "oldPrimaryAnchor": {
+        "line": 3557,
+        "lineSha256": "1ce1d2e19428e789714b199045293724cffc122c81ad031dd5d18a0cd43bd32a",
+        "text": "Operations: CONFIRM_FREEZE, EXECUTE_RUN, VERIFY, COMPARE, REGRESSION_VERIFY, CONFIRM"
+      },
+      "currentPrimaryAnchor": {
+        "line": 3408,
+        "lineSha256": "1ce1d2e19428e789714b199045293724cffc122c81ad031dd5d18a0cd43bd32a",
+        "text": "Operations: CONFIRM_FREEZE, EXECUTE_RUN, VERIFY, COMPARE, REGRESSION_VERIFY, CONFIRM"
+      },
+      "currentAtomicKeys": [
+        "s37.stage-19.operations"
+      ],
+      "currentScopeStatements": {
+        "s37.stage-19.operations": "The exact permitted operation set for Stage 19 is CONFIRM_FREEZE, EXECUTE_RUN, VERIFY, COMPARE, REGRESSION_VERIFY, CONFIRM."
+      },
+      "sourceSemanticChange": "The current row is a closed stage-operation set, but the original controlling context explicitly added conditional deferred EXECUTE_FAILURE_TEST/EXECUTE_REGRESSION combinations at later stages via historical §32.4A. That amendment is absent from the current source.",
+      "requestedIdentityTreatment": "Retire old scope identity; allocate fresh current scope identity through the global changed-singleton relation, never UNCHANGED_ATOMIC. No historical proof inherited."
+    },
+    {
+      "priorNormativeRequirementId": "NREQ-6fe30b5cb969bf2fb9daaabc3422ac38",
+      "oldPrimaryAnchor": {
+        "line": 3566,
+        "lineSha256": "b0b1e4d4914e8dfde5bbf44c1f0862cf76e14e19f256071f6f28b0b4ada00553",
+        "text": "Operations: FREEZE_BASELINE"
+      },
+      "currentPrimaryAnchor": {
+        "line": 3417,
+        "lineSha256": "b0b1e4d4914e8dfde5bbf44c1f0862cf76e14e19f256071f6f28b0b4ada00553",
+        "text": "Operations: FREEZE_BASELINE"
+      },
+      "currentAtomicKeys": [
+        "s37.stage-20.operations"
+      ],
+      "currentScopeStatements": {
+        "s37.stage-20.operations": "The exact permitted operation set for Stage 20 is FREEZE_BASELINE."
+      },
+      "sourceSemanticChange": "The current row is a closed stage-operation set, but the original controlling context explicitly added conditional deferred EXECUTE_FAILURE_TEST/EXECUTE_REGRESSION combinations at later stages via historical §32.4A. That amendment is absent from the current source.",
+      "requestedIdentityTreatment": "Retire old scope identity; allocate fresh current scope identity through the global changed-singleton relation, never UNCHANGED_ATOMIC. No historical proof inherited."
+    },
+    {
+      "priorNormativeRequirementId": "NREQ-229f56cf458329f04d589d3aa92b95e5",
+      "oldPrimaryAnchor": {
+        "line": 3575,
+        "lineSha256": "11c31c8283cc32f61135d9e9867331fe491e1ada0b134e3bfd5cee09190307ba",
+        "text": "Operations: COMPLETE"
+      },
+      "currentPrimaryAnchor": {
+        "line": 3426,
+        "lineSha256": "11c31c8283cc32f61135d9e9867331fe491e1ada0b134e3bfd5cee09190307ba",
+        "text": "Operations: COMPLETE"
+      },
+      "currentAtomicKeys": [
+        "s37.stage-21.operations"
+      ],
+      "currentScopeStatements": {
+        "s37.stage-21.operations": "The exact permitted operation set for Stage 21 is COMPLETE."
+      },
+      "sourceSemanticChange": "The current row is a closed stage-operation set, but the original controlling context explicitly added conditional deferred EXECUTE_FAILURE_TEST/EXECUTE_REGRESSION combinations at later stages via historical §32.4A. That amendment is absent from the current source.",
+      "requestedIdentityTreatment": "Retire old scope identity; allocate fresh current scope identity through the global changed-singleton relation, never UNCHANGED_ATOMIC. No historical proof inherited."
+    },
+    {
+      "priorNormativeRequirementId": "NREQ-4d7b09d088c999d3c6e91a968cbe1a02",
+      "oldPrimaryAnchor": {
+        "line": 3584,
+        "lineSha256": "9c8dd667577f28494e0500f52d688c68c4731a650b2b3df2f9b22f95540a0774",
+        "text": "Operations: RUN_NATIVE_TESTS, EXECUTE_EXTERNAL_TEST"
+      },
+      "currentPrimaryAnchor": {
+        "line": 3435,
+        "lineSha256": "9c8dd667577f28494e0500f52d688c68c4731a650b2b3df2f9b22f95540a0774",
+        "text": "Operations: RUN_NATIVE_TESTS, EXECUTE_EXTERNAL_TEST"
+      },
+      "currentAtomicKeys": [
+        "s37.stage-22.operations"
+      ],
+      "currentScopeStatements": {
+        "s37.stage-22.operations": "The exact permitted operation set for Stage 22 is RUN_NATIVE_TESTS, EXECUTE_EXTERNAL_TEST."
+      },
+      "sourceSemanticChange": "The current row is a closed stage-operation set, but the original controlling context explicitly added conditional deferred EXECUTE_FAILURE_TEST/EXECUTE_REGRESSION combinations at later stages via historical §32.4A. That amendment is absent from the current source.",
+      "requestedIdentityTreatment": "Retire old scope identity; allocate fresh current scope identity through the global changed-singleton relation, never UNCHANGED_ATOMIC. No historical proof inherited."
+    },
+    {
+      "priorNormativeRequirementId": "NREQ-55dce831e47c4a26e093cc6134572e8f",
+      "oldPrimaryAnchor": {
+        "line": 3594,
+        "lineSha256": "11c31c8283cc32f61135d9e9867331fe491e1ada0b134e3bfd5cee09190307ba",
+        "text": "Operations: COMPLETE"
+      },
+      "currentPrimaryAnchor": {
+        "line": 3445,
+        "lineSha256": "11c31c8283cc32f61135d9e9867331fe491e1ada0b134e3bfd5cee09190307ba",
+        "text": "Operations: COMPLETE"
+      },
+      "currentAtomicKeys": [
+        "s37.stage-23.operations"
+      ],
+      "currentScopeStatements": {
+        "s37.stage-23.operations": "The exact permitted operation set for Stage 23 is COMPLETE."
+      },
+      "sourceSemanticChange": "The current row is a closed stage-operation set, but the original controlling context explicitly added conditional deferred EXECUTE_FAILURE_TEST/EXECUTE_REGRESSION combinations at later stages via historical §32.4A. That amendment is absent from the current source.",
+      "requestedIdentityTreatment": "Retire old scope identity; allocate fresh current scope identity through the global changed-singleton relation, never UNCHANGED_ATOMIC. No historical proof inherited."
+    },
+    {
+      "priorNormativeRequirementId": "NREQ-2b6bba4196d8c4cd91c7630369be0b33",
+      "oldPrimaryAnchor": {
+        "line": 3603,
+        "lineSha256": "ebaa859527849f7774c10b1120e0bea8fb34ad383fe69773877b92d2748f35c9",
+        "text": "Operations: RUN_NATIVE_ATTACKS, COMPLETE"
+      },
+      "currentPrimaryAnchor": {
+        "line": 3454,
+        "lineSha256": "ebaa859527849f7774c10b1120e0bea8fb34ad383fe69773877b92d2748f35c9",
+        "text": "Operations: RUN_NATIVE_ATTACKS, COMPLETE"
+      },
+      "currentAtomicKeys": [
+        "s37.stage-24.operations"
+      ],
+      "currentScopeStatements": {
+        "s37.stage-24.operations": "The exact permitted operation set for Stage 24 is RUN_NATIVE_ATTACKS, COMPLETE."
+      },
+      "sourceSemanticChange": "The current row is a closed stage-operation set, but the original controlling context explicitly added conditional deferred EXECUTE_FAILURE_TEST/EXECUTE_REGRESSION combinations at later stages via historical §32.4A. That amendment is absent from the current source.",
+      "requestedIdentityTreatment": "Retire old scope identity; allocate fresh current scope identity through the global changed-singleton relation, never UNCHANGED_ATOMIC. No historical proof inherited."
+    },
+    {
+      "priorNormativeRequirementId": "NREQ-7542acad543ceb37f7fb325baac0d9d0",
+      "oldPrimaryAnchor": {
+        "line": 3611,
+        "lineSha256": "076ba2f3d3e21bf7527a8d2166f530b5df85ff424aa392a08f198c9d74bf8ac4",
+        "text": "Operations: FREEZE_DELIVERY_CANDIDATE, COMPLETE"
+      },
+      "currentPrimaryAnchor": {
+        "line": 3462,
+        "lineSha256": "076ba2f3d3e21bf7527a8d2166f530b5df85ff424aa392a08f198c9d74bf8ac4",
+        "text": "Operations: FREEZE_DELIVERY_CANDIDATE, COMPLETE"
+      },
+      "currentAtomicKeys": [
+        "s37.stage-25.operations"
+      ],
+      "currentScopeStatements": {
+        "s37.stage-25.operations": "The exact permitted operation set for Stage 25 is FREEZE_DELIVERY_CANDIDATE, COMPLETE."
+      },
+      "sourceSemanticChange": "The current row is a closed stage-operation set, but the original controlling context explicitly added conditional deferred EXECUTE_FAILURE_TEST/EXECUTE_REGRESSION combinations at later stages via historical §32.4A. That amendment is absent from the current source.",
+      "requestedIdentityTreatment": "Retire old scope identity; allocate fresh current scope identity through the global changed-singleton relation, never UNCHANGED_ATOMIC. No historical proof inherited."
+    },
+    {
+      "priorNormativeRequirementId": "NREQ-292af594522de75d72b35851b9befed4",
+      "oldPrimaryAnchor": {
+        "line": 3620,
+        "lineSha256": "4689989e341e6149b58040d0ed5ccf02fd4037e3cccfb21f85fdb8193e0eed93",
+        "text": "Operations: COMPLETE, SEMANTIC_REVIEW, RECONCILE"
+      },
+      "currentPrimaryAnchor": {
+        "line": 3471,
+        "lineSha256": "4689989e341e6149b58040d0ed5ccf02fd4037e3cccfb21f85fdb8193e0eed93",
+        "text": "Operations: COMPLETE, SEMANTIC_REVIEW, RECONCILE"
+      },
+      "currentAtomicKeys": [
+        "s37.stage-26.operations"
+      ],
+      "currentScopeStatements": {
+        "s37.stage-26.operations": "The exact permitted operation set for Stage 26 is COMPLETE, SEMANTIC_REVIEW, RECONCILE."
+      },
+      "sourceSemanticChange": "The current row is a closed stage-operation set, but the original controlling context explicitly added conditional deferred EXECUTE_FAILURE_TEST/EXECUTE_REGRESSION combinations at later stages via historical §32.4A. That amendment is absent from the current source.",
+      "requestedIdentityTreatment": "Retire old scope identity; allocate fresh current scope identity through the global changed-singleton relation, never UNCHANGED_ATOMIC. No historical proof inherited."
+    },
+    {
+      "priorNormativeRequirementId": "NREQ-f295ec535d0d117429de1cced6886a6e",
+      "oldPrimaryAnchor": {
+        "line": 3628,
+        "lineSha256": "afb6ecbfdae534a5737c540e64e6a1ee05d7459da9c34079c9e92794288350af",
+        "text": "Operations: CALCULATE_RELEASE, ADVISORY_REVIEW"
+      },
+      "currentPrimaryAnchor": {
+        "line": 3479,
+        "lineSha256": "afb6ecbfdae534a5737c540e64e6a1ee05d7459da9c34079c9e92794288350af",
+        "text": "Operations: CALCULATE_RELEASE, ADVISORY_REVIEW"
+      },
+      "currentAtomicKeys": [
+        "s37.stage-27.operations"
+      ],
+      "currentScopeStatements": {
+        "s37.stage-27.operations": "The exact permitted operation set for Stage 27 is CALCULATE_RELEASE, ADVISORY_REVIEW."
+      },
+      "sourceSemanticChange": "The current row is a closed stage-operation set, but the original controlling context explicitly added conditional deferred EXECUTE_FAILURE_TEST/EXECUTE_REGRESSION combinations at later stages via historical §32.4A. That amendment is absent from the current source.",
+      "requestedIdentityTreatment": "Retire old scope identity; allocate fresh current scope identity through the global changed-singleton relation, never UNCHANGED_ATOMIC. No historical proof inherited."
+    },
+    {
+      "priorNormativeRequirementId": "NREQ-9b21240c5c27ee356dec92b459a0fcb9",
+      "oldPrimaryAnchor": {
+        "line": 3638,
+        "lineSha256": "a6b0337af793ad6aca6f86dfea7a18cd92f00f1c93b238831e8b5e2d9f11648f",
+        "text": "Operations: VERIFY_IDENTITY, CAPTURE_DELIVERY_INTENT"
+      },
+      "currentPrimaryAnchor": {
+        "line": 3489,
+        "lineSha256": "a6b0337af793ad6aca6f86dfea7a18cd92f00f1c93b238831e8b5e2d9f11648f",
+        "text": "Operations: VERIFY_IDENTITY, CAPTURE_DELIVERY_INTENT"
+      },
+      "currentAtomicKeys": [
+        "s37.stage-28.operations"
+      ],
+      "currentScopeStatements": {
+        "s37.stage-28.operations": "The exact permitted operation set for Stage 28 is VERIFY_IDENTITY, CAPTURE_DELIVERY_INTENT."
+      },
+      "sourceSemanticChange": "The current row is a closed stage-operation set, but the original controlling context explicitly added conditional deferred EXECUTE_FAILURE_TEST/EXECUTE_REGRESSION combinations at later stages via historical §32.4A. That amendment is absent from the current source.",
+      "requestedIdentityTreatment": "Retire old scope identity; allocate fresh current scope identity through the global changed-singleton relation, never UNCHANGED_ATOMIC. No historical proof inherited."
+    },
+    {
+      "priorNormativeRequirementId": "NREQ-0774fcb2b6e2510d755133d371474ec8",
+      "oldPrimaryAnchor": {
+        "line": 3646,
+        "lineSha256": "3c0475216073f6142533a1c0d6076bf0a1c42dd8f0ca92a91e83ebe1f7bd4e84",
+        "text": "Operations: CALCULATE_EVIDENCE_CHAINS, INVESTIGATE_MISSING_EVIDENCE"
+      },
+      "currentPrimaryAnchor": {
+        "line": 3497,
+        "lineSha256": "3c0475216073f6142533a1c0d6076bf0a1c42dd8f0ca92a91e83ebe1f7bd4e84",
+        "text": "Operations: CALCULATE_EVIDENCE_CHAINS, INVESTIGATE_MISSING_EVIDENCE"
+      },
+      "currentAtomicKeys": [
+        "s37.stage-29.operations"
+      ],
+      "currentScopeStatements": {
+        "s37.stage-29.operations": "The exact permitted operation set for Stage 29 is CALCULATE_EVIDENCE_CHAINS, INVESTIGATE_MISSING_EVIDENCE."
+      },
+      "sourceSemanticChange": "The current row is a closed stage-operation set, but the original controlling context explicitly added conditional deferred EXECUTE_FAILURE_TEST/EXECUTE_REGRESSION combinations at later stages via historical §32.4A. That amendment is absent from the current source.",
+      "requestedIdentityTreatment": "Retire old scope identity; allocate fresh current scope identity through the global changed-singleton relation, never UNCHANGED_ATOMIC. No historical proof inherited."
+    },
+    {
+      "priorNormativeRequirementId": "NREQ-a5e73329c9ae93f23b01a42d43179133",
+      "oldPrimaryAnchor": {
+        "line": 3656,
+        "lineSha256": "2f7efb075331cf6fb4a0e9f974d739af14e7f4abd18fbe69df96a48336b363c8",
+        "text": "Operations: CALCULATE_TERMINAL, EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS, RECORD_DELIVERY_EVIDENCE"
+      },
+      "currentPrimaryAnchor": {
+        "line": 3507,
+        "lineSha256": "2f7efb075331cf6fb4a0e9f974d739af14e7f4abd18fbe69df96a48336b363c8",
+        "text": "Operations: CALCULATE_TERMINAL, EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS, RECORD_DELIVERY_EVIDENCE"
+      },
+      "currentAtomicKeys": [
+        "s37.stage-30.operations"
+      ],
+      "currentScopeStatements": {
+        "s37.stage-30.operations": "The exact permitted operation set for Stage 30 is CALCULATE_TERMINAL, EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS, RECORD_DELIVERY_EVIDENCE."
+      },
+      "sourceSemanticChange": "The current row is a closed stage-operation set, but the original controlling context explicitly added conditional deferred EXECUTE_FAILURE_TEST/EXECUTE_REGRESSION combinations at later stages via historical §32.4A. That amendment is absent from the current source.",
+      "requestedIdentityTreatment": "Retire old scope identity; allocate fresh current scope identity through the global changed-singleton relation, never UNCHANGED_ATOMIC. No historical proof inherited."
+    }
+  ]
+}

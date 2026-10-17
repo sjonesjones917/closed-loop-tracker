@@ -1,0 +1,240 @@
+{
+  "results": [
+    {
+      "family": "native-input-runtime",
+      "id": "NREQ-8b4e4766609f47fbd274a2b126e68ebb",
+      "fault": "missing-row",
+      "rejected": true
+    },
+    {
+      "family": "native-input-runtime",
+      "id": "NREQ-8b4e4766609f47fbd274a2b126e68ebb",
+      "fault": "wrong-digest",
+      "rejected": true
+    },
+    {
+      "family": "native-input-runtime",
+      "id": "NREQ-8b4e4766609f47fbd274a2b126e68ebb",
+      "fault": "fullCoverage-promotion",
+      "rejected": true
+    },
+    {
+      "family": "native-input-runtime",
+      "id": "NREQ-075fd51f95d3df67edd23c51d325154b",
+      "fault": "missing-row",
+      "rejected": true
+    },
+    {
+      "family": "native-input-runtime",
+      "id": "NREQ-075fd51f95d3df67edd23c51d325154b",
+      "fault": "wrong-digest",
+      "rejected": true
+    },
+    {
+      "family": "native-input-runtime",
+      "id": "NREQ-075fd51f95d3df67edd23c51d325154b",
+      "fault": "fullCoverage-promotion",
+      "rejected": true
+    },
+    {
+      "family": "backup-extension",
+      "id": "NREQ-11653c23ebc288f46eb77a40d05ed2e0",
+      "fault": "missing-row",
+      "rejected": true
+    },
+    {
+      "family": "backup-extension",
+      "id": "NREQ-11653c23ebc288f46eb77a40d05ed2e0",
+      "fault": "wrong-digest",
+      "rejected": true
+    },
+    {
+      "family": "backup-extension",
+      "id": "NREQ-11653c23ebc288f46eb77a40d05ed2e0",
+      "fault": "fullCoverage-promotion",
+      "rejected": true
+    },
+    {
+      "family": "backup-extension",
+      "id": "NREQ-4b229054068c2b9cba885a3c6692d855",
+      "fault": "missing-row",
+      "rejected": true
+    },
+    {
+      "family": "backup-extension",
+      "id": "NREQ-4b229054068c2b9cba885a3c6692d855",
+      "fault": "wrong-digest",
+      "rejected": true
+    },
+    {
+      "family": "backup-extension",
+      "id": "NREQ-4b229054068c2b9cba885a3c6692d855",
+      "fault": "fullCoverage-promotion",
+      "rejected": true
+    },
+    {
+      "family": "proof-obligation-dependencies",
+      "id": "NREQ-89327bc392b2dbb4f44696ae45041fbb",
+      "fault": "missing-row",
+      "rejected": true
+    },
+    {
+      "family": "proof-obligation-dependencies",
+      "id": "NREQ-89327bc392b2dbb4f44696ae45041fbb",
+      "fault": "wrong-digest",
+      "rejected": true
+    },
+    {
+      "family": "proof-obligation-dependencies",
+      "id": "NREQ-89327bc392b2dbb4f44696ae45041fbb",
+      "fault": "fullCoverage-promotion",
+      "rejected": true
+    },
+    {
+      "family": "proof-obligation-dependencies",
+      "id": "NREQ-5613daddef07c70470dfea6e3c4cbba0",
+      "fault": "missing-row",
+      "rejected": true
+    },
+    {
+      "family": "proof-obligation-dependencies",
+      "id": "NREQ-5613daddef07c70470dfea6e3c4cbba0",
+      "fault": "wrong-digest",
+      "rejected": true
+    },
+    {
+      "family": "proof-obligation-dependencies",
+      "id": "NREQ-5613daddef07c70470dfea6e3c4cbba0",
+      "fault": "fullCoverage-promotion",
+      "rejected": true
+    },
+    {
+      "family": "canonical-response-retries",
+      "id": "NREQ-dcec51f0ed0117a6b78e6055cc962c2f",
+      "fault": "missing-row",
+      "rejected": true
+    },
+    {
+      "family": "canonical-response-retries",
+      "id": "NREQ-dcec51f0ed0117a6b78e6055cc962c2f",
+      "fault": "wrong-digest",
+      "rejected": true
+    },
+    {
+      "family": "canonical-response-retries",
+      "id": "NREQ-dcec51f0ed0117a6b78e6055cc962c2f",
+      "fault": "fullCoverage-promotion",
+      "rejected": true
+    },
+    {
+      "family": "canonical-response-retries",
+      "id": "NREQ-440234c09eee79fd0d3fe843d9801dbe",
+      "fault": "missing-row",
+      "rejected": true
+    },
+    {
+      "family": "canonical-response-retries",
+      "id": "NREQ-440234c09eee79fd0d3fe843d9801dbe",
+      "fault": "wrong-digest",
+      "rejected": true
+    },
+    {
+      "family": "canonical-response-retries",
+      "id": "NREQ-440234c09eee79fd0d3fe843d9801dbe",
+      "fault": "fullCoverage-promotion",
+      "rejected": true
+    },
+    {
+      "family": "canonical-response-retries",
+      "id": "NREQ-f5c52c1c9a8ce3988d00901fe91576a1",
+      "fault": "missing-row",
+      "rejected": true
+    },
+    {
+      "family": "canonical-response-retries",
+      "id": "NREQ-f5c52c1c9a8ce3988d00901fe91576a1",
+      "fault": "wrong-digest",
+      "rejected": true
+    },
+    {
+      "family": "canonical-response-retries",
+      "id": "NREQ-f5c52c1c9a8ce3988d00901fe91576a1",
+      "fault": "fullCoverage-promotion",
+      "rejected": true
+    },
+    {
+      "family": "stage16-operator-outcomes",
+      "id": "NREQ-fd9a86945c15e9f00566de3c0367d4b5",
+      "fault": "missing-row",
+      "rejected": true
+    },
+    {
+      "family": "stage16-operator-outcomes",
+      "id": "NREQ-fd9a86945c15e9f00566de3c0367d4b5",
+      "fault": "wrong-digest",
+      "rejected": true
+    },
+    {
+      "family": "stage16-operator-outcomes",
+      "id": "NREQ-fd9a86945c15e9f00566de3c0367d4b5",
+      "fault": "fullCoverage-promotion",
+      "rejected": true
+    },
+    {
+      "family": "stage22-canonical-owner",
+      "id": "NREQ-4607730f4d187c887c8d74035ad3fc0c",
+      "fault": "missing-row",
+      "rejected": true
+    },
+    {
+      "family": "stage22-canonical-owner",
+      "id": "NREQ-4607730f4d187c887c8d74035ad3fc0c",
+      "fault": "wrong-digest",
+      "rejected": true
+    },
+    {
+      "family": "stage22-canonical-owner",
+      "id": "NREQ-4607730f4d187c887c8d74035ad3fc0c",
+      "fault": "fullCoverage-promotion",
+      "rejected": true
+    },
+    {
+      "family": "stage22-canonical-owner",
+      "id": "NREQ-b221990823d8a59e135ccf00015d66e4",
+      "fault": "missing-row",
+      "rejected": true
+    },
+    {
+      "family": "stage22-canonical-owner",
+      "id": "NREQ-b221990823d8a59e135ccf00015d66e4",
+      "fault": "wrong-digest",
+      "rejected": true
+    },
+    {
+      "family": "stage22-canonical-owner",
+      "id": "NREQ-b221990823d8a59e135ccf00015d66e4",
+      "fault": "fullCoverage-promotion",
+      "rejected": true
+    },
+    {
+      "family": "stage22-canonical-owner",
+      "id": "NREQ-6770dd9fc11a3a823620bb0727f021b6",
+      "fault": "missing-row",
+      "rejected": true
+    },
+    {
+      "family": "stage22-canonical-owner",
+      "id": "NREQ-6770dd9fc11a3a823620bb0727f021b6",
+      "fault": "wrong-digest",
+      "rejected": true
+    },
+    {
+      "family": "stage22-canonical-owner",
+      "id": "NREQ-6770dd9fc11a3a823620bb0727f021b6",
+      "fault": "fullCoverage-promotion",
+      "rejected": true
+    }
+  ],
+  "restoredExact": true,
+  "scope": "Independent mutation of active scoped mappings; no application proof."
+}

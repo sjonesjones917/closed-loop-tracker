@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {execFileSync} from 'node:child_process';
-import {projectStoreRuntime} from './test-project-store-runtime.mjs';
+import {projectStoreRuntime,bindProjectActivationUi} from './test-project-store-runtime.mjs';
 
 const revision=execFileSync('git',['rev-parse','HEAD'],{timeout:30000,killSignal:'SIGKILL',encoding:'utf8'}).trim();
 const app=fs.readFileSync(process.env.APP_SOURCE||'app-core.js','utf8'),r=projectStoreRuntime(),{runtime,store,engine,copy}=r;
@@ -18,6 +18,7 @@ for(const name of ['blankStage','ensureState','createUniqueJobId']){
 }
 vm.runInContext(app.split('\n').find(line=>line.startsWith('const jobFields=')),runtime,{filename:'app-core.js:jobFields'});
 vm.runInContext(app.slice(app.indexOf('async function persistNewProject('),app.indexOf('async function persistReplacement(')),runtime,{filename:'app-core.js:persistNewProject'});
+bindProjectActivationUi(r,{source:app});
 vm.runInContext(app.slice(app.indexOf('async function duplicateCurrentProject('),app.indexOf('function selectStageContinuation('))+'\nglobalThis.copyProject=duplicateCurrentProject;',runtime,{filename:'app-core.js:duplicateCurrentProject'});
 await runtime.copyProject({commandId:'COPY-OPERATOR-COMMAND'});
 const copied=await store.readProject(runtime.current.job.JOB_ID);

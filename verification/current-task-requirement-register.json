@@ -122708,7 +122708,7 @@
           "verify-history-project-references.mjs:HISTORY-IMPORT-COMPATIBILITY-COST / FRESHNESS / INVENTORIES",
           "verify-history-project-sharing-faults.mjs: repeat, cross-inventory and retained-import projection faults",
           "verify-operator-action-lifecycle.mjs: FINAL-BACKUP-OBSERVATION",
-          "verify-io-boundary-faults.mjs: VER-MUT-ACCUMULATED-FINAL-BACKUP",
+          "verify-io-boundary-faults.mjs: VER-MUT-LOST-FINAL-HISTORY / LOST-HISTORY-PREFIX / LOST-HISTORY-SESSION / LOST-HISTORY-EXPORT-BYTES / LOST-HISTORY-RESTORE-BYTES",
           "Existing integrity, recovery, persistence, lifecycle and browser journeys at the published revision"
         ],
         "status": "UNVERIFIED"
@@ -123223,7 +123223,7 @@
           "verify-history-project-references.mjs:HISTORY-IMPORT-COMPATIBILITY-COST / FRESHNESS / INVENTORIES",
           "verify-history-project-sharing-faults.mjs: repeat, cross-inventory and retained-import projection faults",
           "verify-operator-action-lifecycle.mjs: FINAL-BACKUP-OBSERVATION",
-          "verify-io-boundary-faults.mjs: VER-MUT-ACCUMULATED-FINAL-BACKUP",
+          "verify-io-boundary-faults.mjs: VER-MUT-LOST-FINAL-HISTORY / LOST-HISTORY-PREFIX / LOST-HISTORY-SESSION / LOST-HISTORY-EXPORT-BYTES / LOST-HISTORY-RESTORE-BYTES",
           "Existing integrity, recovery, persistence, lifecycle and browser journeys at the published revision"
         ],
         "status": "UNVERIFIED"
@@ -123310,7 +123310,7 @@
           "verify-history-project-references.mjs:HISTORY-IMPORT-COMPATIBILITY-COST / FRESHNESS / INVENTORIES",
           "verify-history-project-sharing-faults.mjs: repeat, cross-inventory and retained-import projection faults",
           "verify-operator-action-lifecycle.mjs: FINAL-BACKUP-OBSERVATION",
-          "verify-io-boundary-faults.mjs: VER-MUT-ACCUMULATED-FINAL-BACKUP",
+          "verify-io-boundary-faults.mjs: VER-MUT-LOST-FINAL-HISTORY / LOST-HISTORY-PREFIX / LOST-HISTORY-SESSION / LOST-HISTORY-EXPORT-BYTES / LOST-HISTORY-RESTORE-BYTES",
           "Existing integrity, recovery, persistence, lifecycle and browser journeys at the published revision"
         ],
         "status": "UNVERIFIED"

@@ -1,0 +1,73 @@
+{
+  "schema": "closed-loop-distinct-retained-impact-mechanism-review/1",
+  "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+  "method": "Every individual effective proposition and its original context reviewed against exact pinned source; original entry/occurrence hashes, physical coordinates and successor fragments independently verified. Shared mechanism reasoning does not replace per-entry disposition.",
+  "classes": {
+    "EXACT_UI_OR_ACCEPTANCE_CAPTION": "This caption bounds the same exact original list and qualifies its members. No amendment inserts a new child in that list or changes its viewport/zoom/list-governor meaning. Retaining the caption does not retain changed child semantics; each child has its own disposition and original occurrence set.",
+    "MEASURABLE_UI_OR_ACCESSIBILITY": "This exact geometry, font, wrapping, event-to-focus destination, announcement, keyboard/accessibility or measurable-registry rule is unchanged. A adds specific fallback answer admission rules, separately changing the invalid-answer trigger; it does not change these numeric limits, destinations, event labels or accessible-name/state/error requirements. New responses remain subject to the same universal UI invariant.",
+    "UNTRUSTED_RENDERING_AND_URL_BOUNDARY": "This exact safe-rendering, forbidden API/injection, separately validated link/filename, closed external-URL scheme or permanent regression rule remains. A and E add structured text and D parses XML values, but none grants untrusted data DOM/CSS/navigation authority or changes https/mailto restrictions. The rule remains universal over all untrusted values; no parser or source hash proves safe rendering.",
+    "BROWSER_PATH_OR_TRANSPORT_INVARIANT": "This named browser path, presentation, persistence, logical package transport, identity, conflict/retry or timeout invariant is unchanged. The amendment separately changes raw-input accounting, fallback answer admission, Stage02 ingestion, nested multi-record admission and native execution. It does not change this specific path or transport predicate. Current implementations still require evidence; no old browser proof is reused.",
+    "PINNED_PHYSICAL_DEVICE_AND_CAPABILITY": "This exact physical target fact, observation/currentness, capability, logical export, persistence or result-blocking condition remains. The target stays actual iPhone Safari; only the explicitly named hardware-model/WebKit facts may be UNKNOWN. F2 does not replace this physical evidence contract; C1 cannot make optional archives mandatory. No current physical execution or proof is asserted.",
+    "PHYSICAL_EVIDENCE_CHALLENGE_BINDING": "The exact pre-run challenge timing, random-bit minimum, tuple binding, single-use rejection, authenticated/committed evidence path, submitter attribution and physical-fact epistemic boundary remain. A–F2 neither replace the recorded performer observation nor turn it into application proof. Every mechanical binding remains required before acceptance.",
+    "DEPLOYMENT_BYTE_AND_SUPPLY_CHAIN_INVARIANT": "The exact manifest field, runtime resource closure, byte/digest rule, cache/profile/build binding, redirect rejection, clean-build reproducibility qualification and immutable dependency/action pin remains. D may change current registry bytes/identities, but it does not change how every current resource and registry identity is traced, checked or reported UNKNOWN. No deployed or supply-chain evidence is inferred.",
+    "INVALID_HUMAN_ANSWER_TRIGGER": "A closes the exact missing/valid answer predicate that triggers the original first-invalid-control focus action. Optional unanswered input, canonical rational numbers, exact choice/date and current same-project artifact validation now govern that trigger. The focus destination and existing lifecycle remain; fresh effective context is necessary.",
+    "RAW_HUMAN_ACCOUNTING": "The human-origin raw-input acceptance path now receives C structural physical-line/scalar accounting, preserving original text, typed values, occurrence order and byte authority. The path must demonstrate the current accounting rather than assume old text processing is equivalent. This row is human input, not a claim to resolve inherited archive decoder details.",
+    "CLARIFICATION_FALLBACK_CONTRACT": "The Stage01 clarification path retains ordinary conversation and acquires A’s closed final structured fallback contract when used. Required properties, exact key uniqueness, allowed-values and blocking-default rules, HUMAN answer authority, lifecycle and answer domain now govern acceptance.",
+    "TYPED_HUMAN_ANSWER_CONTRACT": "A supplies exact current admission semantics for all eight typed answer controls and missing answers. The browser case must use those representations and optionality while preserving existing SAVE_HUMAN_INPUT replacement/invalidation consequences. This requires fresh context, not a new control or inferred default.",
+    "STAGE02_RESPONSE_ADMISSION": "The canonical Stage02 ingestion path now requires A’s non-null humanInputRequests array and F2’s Stage02 EXTERNALLY_SUPPORTED route minimum, with all stronger evidence and authority limits preserved. The accepted-source inventory/search mechanism itself remains as originally specified.",
+    "MULTIRECORD_NESTED_RELATIONSHIPS": "A introduces response-wide temporary-key uniqueness; B fixes current nested proofExpressions relationships; E fixes embedded/direct same-test variance normalization and collision handling. Those new admission governors affect the multi-record browser case. The owning operation still limits which families may appear; current referential shape does not establish due work or favorable proof.",
+    "CURRENT_NATIVE_EXECUTION": "D supplies current worker primitive/parser/selector outputs, errors, assertion termination and fresh language identities; B supplies current accepted target-availability references where required. The browser native execution case must cover those semantics. XML selection from a nonroot parsed node retains the original unresolved rooting qualifier.",
+    "PHYSICAL_DEVICE_RAW_INTAKE": "C/C1 add exact additive inventory/physical/structural units, original bytes, archive/child counting and blocker accounting to the actual-phone intake path. The unresolved inherited decoder denotation remains conditional; no partial intake or local hash proves complete reading.",
+    "PHYSICAL_DEVICE_DIRECT_INGESTION": "The physical direct-ingestion path acquires A/B/D/E current authored-form validation, nested references, exact native-definition admission, and variance normalization through the existing single response path. Selecting the file remains a separate unchanged action. XML selected-node rooting stays unresolved where semantic validation depends on it."
+  },
+  "specificRetainedDecisions": {
+    "6107": "Stage03 coverage is over the accepted current external Stage02 source set under base588–616; C is raw human-origin structural accounting and does not replace external-source research or the omission challenge. F2 preserves the Stage03 external basis. The coverage predicate stays exhaustive over that accepted set.",
+    "6108": "Stage04 still receives the complete union of accepted Stage01 and Stage03 data from the application, without repeated intent entry (base624–637). A/C change upstream captured/admitted content, not this data-transfer union or authority. This retained entry cannot certify the new upstream values.",
+    "6196": "This is the physical execution of the proposal-acceptance action where the existing operation requires it. A/B/E change the separately reviewed admission content, but do not add or remove the proposal acceptance mode, operator action or physical path. No successful acceptance of a particular new response is claimed.",
+    "6197": "This is the physical proposal-review action where the existing operation requires it; its performer/action boundary stays intact. New content must still receive its applicable semantic review and is not certified by retaining this action requirement."
+  },
+  "correction": {
+    "predecessorId": "NREQ-74e6ea08a4d4b4f80c7cbbd9ecbba2da",
+    "sourceDecision": "The proposal retains actual-iPhone proof of required focus behavior while correctly changing the specific invalid-human-answer focus trigger. Base4910 expressly requires the current required focus behavior, including base4159. A changes the exact valid/missing answer predicate governing that trigger. Therefore the phone focus proof scope gains A as a governor and needs a fresh context identity. The physical-device requirement, focus destination, text sizes, touch dimensions and live-region obligations remain unchanged.",
+    "baseReferences": [
+      {
+        "role": "BASE_SOURCE",
+        "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+        "startLine": 4154,
+        "endLine": 4161,
+        "startByte": 227324,
+        "endByte": 227741,
+        "sha256": "bf3c0dfc13306af000649e965a95b62a043f67abd2122eb7f6145103c8f40663",
+        "text": "Focus behavior:\n- validation failure → validation report heading;\n- execution blocker → blocker heading;\n- proposal ready → proposal heading;\n- native result ready → result heading;\n- invalid human answer → first invalid control;\n- collapsed content → focus returns to its toggle;\n- newly expanded content → the toggle and expanded heading remain visible without leaving the user at the document bottom."
+      },
+      {
+        "role": "BASE_SOURCE",
+        "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+        "startLine": 4910,
+        "endLine": 4910,
+        "startByte": 271488,
+        "endByte": 271551,
+        "sha256": "df2d1b79ac2762b082fcb4b87e2876835efce2f41d369cc8082deda92754e5c9",
+        "text": "- required text, touch-target, focus, and live-region behavior;"
+      }
+    ],
+    "newGovernor": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 1637,
+      "endLine": 1651,
+      "startByte": 122801,
+      "endByte": 126361,
+      "sha256": "1f02226ccf6e99fe0c9d31d773dd69ef747d08978cbf7a7a6b5cbcf3730bb190",
+      "text": "A. Insert after §18's unknown-key sentence: closed-loop-human-input-fallback/1\n\nhumanInputRequests is a required, non-null ordered array, empty allowed. Each item is a closed object with exactly these required properties: temporaryKey, question, whyRequired, affectedStageFields, affectedRecords, answerType, allowedValues; its only optional property is blocking. No item property is nullable. All strings preserve their supplied scalar values; nonblank means containing at least one character outside U+0009–U+000D and U+0020.\n\n- temporaryKey is a string matching ^[A-Za-z][A-Za-z0-9._:-]{0,119}$, unique across response record tempKey values and temporaryKey values in attachments, evidence, humanInputRequests and humanAuthorityCandidates. It is a response-local reference, not a canonical identity.\n- question and whyRequired are nonblank strings.\n- affectedStageFields is an ordered array of strings naming registered fields of this response's stage; affectedRecords is an ordered array of strings naming canonical families in this operation's registered read, agent-writable or application-owned set. Both arrays may be empty. These names identify affected context, not authority to write the named fields or families.\n- answerType is exactly one of the eight controls already listed in this section.\n- allowedValues is an ordered array of strings. CHOICE and MULTI_CHOICE require one or more unique nonblank strings, compared exactly. For other controls the array may be empty; its values have no answer-validation effect.\n- blocking is Boolean; absence normalizes to true. No other absent property receives a default. False only makes this particular fallback request optional and cannot waive any governing requirement, human authority, missing evidence or unresolved material uncertainty.\n\nAll item content is an AGENT proposal admitted only through the owning registered external operation. The APPLICATION owns canonical request identity, envelope-derived job/stage/operation/scope, currentness and lifecycle. Answers remain HUMAN values written only by SAVE_HUMAN_INPUT. These proposal fields share the envelope's §14.7 scope, have no migration default other than the expressly stated blocking default for an otherwise valid request, and are invalidated by the owning input/prompt lifecycle under §18; references above point from the request to its affected stage fields/families and grant no reverse ownership.\n\nFor SAVE_HUMAN_INPUT, an absent/null/empty-string answer, or an empty MULTI_CHOICE array, is unanswered; a blocking request rejects it. A nonmissing TEXT or LONG_TEXT answer is a nonblank string; BOOLEAN is Boolean; NUMBER is either a JSON safe integer other than negative zero, or a string rational:N/D where N is a nonzero signed base-10 integer with no plus or leading zeros, D is a positive base-10 integer with no leading zeros, and gcd(abs(N),D)=1. D=1 is permitted only when N is outside the JSON safe-integer range. Zero is represented only by JSON integer 0. Other strings and typed objects are rejected; saving preserves this canonical representation; CHOICE is one exact allowed string; MULTI_CHOICE is an ordered duplicate-free array of exact allowed strings; DATE is a valid Gregorian calendar date in four-digit YYYY-MM-DD form with year 0001–9999, validated without time-zone conversion; FILE_REFERENCE is one current canonical artifact ID in the same project. Optional unanswered requests confer no factual assertion. Successful saving has precisely the existing §18 invalidation and replacement consequences.\n"
+    }
+  },
+  "preservedBoundaries": [
+    "Actual physical iPhone Safari, target currentness and missing-capability BLOCKED are preserved.",
+    "Challenge is pre-run, at least128 random bits, exact tuple-bound and single-use; human physical observation is not application-proven.",
+    "Safe text rendering and closed URL allowlist remain universal, including new A/E data and D XML text.",
+    "Deployed exact bytes, authorized origin/resource graph and immutable supply-chain identities remain required."
+  ],
+  "technicalReferenceCandidateRead": false,
+  "proofOrRuntimeClaims": false
+}

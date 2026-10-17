@@ -1,0 +1,132 @@
+{
+  "schema": "closed-loop-requirement-coverage-review/1",
+  "normativeRequirementId": "NREQ-dba22c5f93e4359c4b7d4ebdd9799dbf",
+  "sourceLineSha256": "6ceea161cf4fc12d52f66189110a6aae635278efe3442751a653794c8e81c68f",
+  "specificationSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
+  "declarationSha256": "20dec9a14f416180adbd898d15f22a03537283cf03a9d1867b190d08cc95d989",
+  "decision": "COMPLETE_COVERAGE",
+  "evidenceBasis": "EXTERNALLY_SUPPORTED",
+  "method": "The exact narrow controlling clause and unchanged proof decomposition were independently reviewed in the embedded original semantic assessment. Current production, verifier, fixture and catalog deltas were separately reviewed in the referenced source-delta review bundle. This is coverage-design evidence only: current frozen-source executed receipts remain independently required, and unsupported clauses are not promoted.",
+  "author": {
+    "actor": "Codex coordinated exact-clause renewal proposer",
+    "contextId": "/root/normative_review"
+  },
+  "reviewer": {
+    "actor": "Codex independent narrow declaration reviewer",
+    "contextId": "/root"
+  },
+  "reviewedInputs": [
+    {
+      "declarationSha256": "20dec9a14f416180adbd898d15f22a03537283cf03a9d1867b190d08cc95d989"
+    },
+    {
+      "path": "hash.js",
+      "sha256": "a13cf57bd7c7414bc801f511d5937f80eaf7fd675c0e6c2b5a92b365df16e4d7"
+    },
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d"
+    },
+    {
+      "path": "verification-evidence-catalog.mjs",
+      "sha256": "570fcea534cac49e62a5f062d7f44757e7123309595d61150e6b02229a7b5796"
+    },
+    {
+      "path": "verification/current-source-delta-review-20261007.json",
+      "sha256": "3fad9eab08ffad0ce72f8d64771514793b2a282bde132fbc7c036202239b0a73"
+    },
+    {
+      "path": "verification/normative-context-applicability-20261005.json",
+      "sha256": "7cd05ff0028578a1ca1c2560533519a602ce6a974c240ee11dbbd272524cf656"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-dba22c5f93e4359c4b7d4ebdd9799dbf-20261005.json",
+      "sha256": "ebe1fff387234103bae7651ee9833d149cbc07b3a5e39dc0a35b30d060c53a86"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-dba22c5f93e4359c4b7d4ebdd9799dbf-20261006-followup-1d5b52212a4c.json",
+      "sha256": "28360f7e6581df145fe288073e639dc6680468396d6c4d4de248fedb1902a976"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-dba22c5f93e4359c4b7d4ebdd9799dbf-20261006.json",
+      "sha256": "9f45f8a6984d6744031b529926cadc09c4eff0eee74af88d0c8e6837d6891a26"
+    },
+    {
+      "path": "verifier-runtime.mjs",
+      "sha256": "8a4c9058b6c72a5aa8dd68809e3cbfd8e5c217b358c41970347443a338f83933"
+    },
+    {
+      "path": "verify-hash.mjs",
+      "sha256": "05e6cf685433a3314c777aa7734017e6e9d885779fb88b1fd920430f0c10a136"
+    },
+    {
+      "path": "workbook.js",
+      "sha256": "3a8098a9bb4ea108eadaa9bec90c76a1522f57f6465f45341cedf60937ddd008"
+    },
+    {
+      "path": "workflow-schema.js",
+      "sha256": "656e9e632cea3a60e1c7e0fb486e6630d205011d7db32d9674ac5e88593d24f1"
+    }
+  ],
+  "findings": [],
+  "reviewPerformed": true,
+  "sourceLocation": {
+    "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+    "startLine": 3027,
+    "endLine": 3027,
+    "lineSha256": "6ceea161cf4fc12d52f66189110a6aae635278efe3442751a653794c8e81c68f"
+  },
+  "controllingText": "- JSON escapes `\\\"`, `\\\\`, `\\b`, `\\f`, `\\n`, `\\r`, and `\\t`, with every other U+0000 through U+001F emitted as lowercase `\\u00xx`;",
+  "governingContext": [],
+  "additionalControllingContext": [],
+  "reviewedChecks": [
+    {
+      "suite": "verify-hash.mjs",
+      "checkId": "canonical.exact-serialization-controls"
+    }
+  ],
+  "scopeLimit": "The named serialization clause; Unicode normalization tables, all hash preimages and ID allocation remain separate obligations.",
+  "independentSemanticAssessment": {
+    "path": "/workspace/scratch/normative-review/root-37-semantic-review.json",
+    "sha256": "c2bcfc442003d363c9a1abb2430eaa67d8182d55a87c5c89288b36cf35f06c28",
+    "row": {
+      "normativeRequirementId": "NREQ-dba22c5f93e4359c4b7d4ebdd9799dbf",
+      "sourceLocation": {
+        "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "startLine": 3027,
+        "endLine": 3027,
+        "lineSha256": "6ceea161cf4fc12d52f66189110a6aae635278efe3442751a653794c8e81c68f"
+      },
+      "controllingText": "- JSON escapes `\\\"`, `\\\\`, `\\b`, `\\f`, `\\n`, `\\r`, and `\\t`, with every other U+0000 through U+001F emitted as lowercase `\\u00xx`;",
+      "activeDeclarationReview": {
+        "path": "verification/requirement-coverage-NREQ-dba22c5f93e4359c4b7d4ebdd9799dbf-20261006-followup-1d5b52212a4c.json",
+        "sha256": "28360f7e6581df145fe288073e639dc6680468396d6c4d4de248fedb1902a976"
+      },
+      "decision": "DESIGN_ADEQUATE_FOR_EXACT_NARROW_CLAUSE",
+      "basis": "Reviewed hash.canonicalChunks and registeredSetSemantics ownership with verify-hash exact source-line observations. Literal independent object scalar ordering, array order/duplicates, CR/LF and composed/decomposed strings, every U+0000..001F escape, printable nonASCII, safe integer/tagged rational paths and prohibited values are checked. Set normalization requires named registration; no general array sorting inferred. Bounds/memory checks do not establish browser responsiveness.",
+      "executionStatus": "CURRENT_CANDIDATE_OWNING_RECEIPT_PENDING",
+      "findings": []
+    }
+  },
+  "priorReview": {
+    "path": "verification/requirement-coverage-NREQ-dba22c5f93e4359c4b7d4ebdd9799dbf-20261006-followup-1d5b52212a4c.json",
+    "sha256": "28360f7e6581df145fe288073e639dc6680468396d6c4d4de248fedb1902a976",
+    "author": {
+      "actor": "Codex follow-up source-qualified renewal author",
+      "contextId": "/root/ci_delivery_audit"
+    },
+    "reviewer": {
+      "actor": "Codex independent declaration dependency reviewer",
+      "contextId": "/root/stage_contract_audit/late_stage_audit"
+    },
+    "reviewCompletedAt": "2026-10-06T21:54:02.366377+00:00"
+  },
+  "reviewerPriorContributionDisclosure": "Actual reviewer contribution and boundary are retained in the embedded assessment. For the five custody clauses, this reviewer authored strengthened tests; parent and separate PR inventory reviewer independently inspected the delta and intended oracle. This does not establish external-agent context independence.",
+  "currentExecutionRequired": true,
+  "applicationConformanceClaim": false,
+  "reviewCompletedAt": "2026-10-07T01:21:18.248Z",
+  "currentDependencyDeltaReview": {
+    "path": "verification/current-source-delta-review-20261007.json",
+    "sha256": "3fad9eab08ffad0ce72f8d64771514793b2a282bde132fbc7c036202239b0a73"
+  }
+}

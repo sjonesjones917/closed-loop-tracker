@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 import {createOperatorBrowser,digest} from './operator-browser-driver.mjs';
 import {readStoreArchive} from './test-zip.mjs';
 import {OBJECTIVE,responseFixture} from './operator-journey-fixtures.mjs';
+import {downloadSyntheticHandoff} from './test-browser-handoff-authorization.mjs';
 
 // Controlling specification 39.11/39.12 and operator UX-001/002/003/013.
 // Synthetic external counterpart, actual application controls and file bytes.
@@ -34,7 +35,7 @@ async function observe(browser,row,label){
  return value;
 }
 async function instruction(browser){
- const [archive]=await browser.download('#next-export-prompt-file'),members=readStoreArchive(archive.bytes);
+ const [archive]=await downloadSyntheticHandoff(browser,'#next-export-prompt-file',{syntheticProject:true}),members=readStoreArchive(archive.bytes);
  const bytes=name=>Buffer.from(members.find(m=>m.canonicalPath===name)?.bytes||[]);
  const manifest=JSON.parse(bytes('manifest.json').toString()),instructionBytes=bytes('instruction.txt');
  assert.equal(digest(instructionBytes),manifest.instruction.bodySha256,'Downloaded instruction bytes disagree with manifest');
@@ -107,7 +108,14 @@ try{
     await browser.evaluate(`(()=>{for(const [node,value]of [[document.body,${JSON.stringify(originalBody)}],[document.querySelector('#screen'),${JSON.stringify(originalScreen)}]]){if(value===null)node.removeAttribute('style');else node.setAttribute('style',value);}dispatchEvent(new Event('scroll'));})()`);
    }
    assert.equal(browser.exceptions().length,0,'Runtime exception or browser dialog');
-  }catch(error){row.failures.push(String(error.stack||error));}
+  }catch(error){
+   row.failures.push(String(error.stack||error));
+   if(browser){
+    row.runtimeExceptions=browser.exceptions();
+    try{row.failureUi=await browser.evaluate(`({url:location.href,ready:globalThis.closedLoopAppReady===true,handoffReview:document.querySelector('#handoff-review')?.innerText||null,operationError:document.querySelector('#operation-error')?.hidden===false?document.querySelector('#operation-error').innerText:null,nextAction:document.querySelector('#next-required-action')?.innerText||null})`);}
+    catch(captureError){row.failureUiCaptureError=String(captureError.message);}
+   }
+  }
   finally{if(browser){row.events=browser.events;try{await browser.inspect(Number(await browser.evaluate(`document.querySelector('#stage-picker')?.value||1`)));}catch(error){row.captureFailure=String(error.message);}await browser.close();}row.status=row.failures.length?'FAIL':'PASS';persist();console.log(JSON.stringify(row));}
  }
  report.complete=report.cases.every(row=>row.status==='PASS');process.exitCode=report.complete?0:1;

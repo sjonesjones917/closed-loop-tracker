@@ -1,0 +1,41 @@
+{
+  "schema": "closed-loop-independent-stage14-population-resolution-review/1",
+  "reviewedAt": "2026-10-15T10:25:34.589192+00:00",
+  "reviewer": "/root/review_release_scope_binding",
+  "status": "ACCEPT_NARROW_ATTRIBUTED_TECHNICAL_RESOLUTION_INPUT",
+  "record": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/stage14-population-resolution-input/proposed-population-resolution.json",
+    "sha256": "db589552eca3753f84e6cde9171984cdde30a1bfd647c16a3e193256d636e47c"
+  },
+  "freezeSha256": "e6ab71f31878f280b619d90c95310ad5ff046646ad64617f71ed4ed4ae555558",
+  "sourceJudgmentSha256": "98ab88d761758370d59d5e78a1c3915343f3bfb9341b56171e9fb5a2961c2744",
+  "scope": {
+    "predecessorId": "NREQ-5ad9f8e779b15e02b947f0660ea681a7",
+    "field": "UNDETERMINED_ROOT_CAUSES",
+    "stage": 14
+  },
+  "verified": {
+    "frozenArtifactAndUnchangedHistoryPins": 6,
+    "exactBaseSuccessorSourceSpans": 17,
+    "eightTransportedPassagesByteIdentical": true,
+    "predecessorIdentityStatementAndPriorAmbiguityMatchPinnedSourceJudgment": true
+  },
+  "decision": "The chosen unit is the distinct canonical ID of each current material defect in existing Stage14 scope. A defect remains counted until a current admissibly established, evidence-supported RCA establishes a known cause at the required earliest defective layer. Missing, stale, rejected, inadmissible and semantic-UNKNOWN analyses remain counted; contradictory sufficient evidence cannot be selected away. Overlap with BLOCKED_ANALYSES is allowed. This is an explicit delegated technical population choice, not a claim that the old source uniquely selected it.",
+  "preserved": [
+    "Every current material defect still requires the original one evidence-supported RCA completion duty; this projection does not replace completion or duplicate/conflict checks.",
+    "Canonical records, existing substantive agent ownership and application identity/relationship/currentness authority remain controlling. Missing analysis never fabricates an RCA or UNKNOWN-review record.",
+    "Current proof, accepted review, source hashes, F2 input basis, contradiction and UNKNOWN rules remain. Counts do not establish favorable proof.",
+    "The source-only ambiguity report and original five-finding meaning maps remain immutable.",
+    "No disjoint count partition, complement equation, new writer/family/operation, materiality rule or release threshold is introduced. Existing empty-universe and scope requirements remain."
+  ],
+  "nextSourceStep": "Formally link this exact reviewed technical-resolution record into current controlling source/delta custody and its source-reviewed effective governor set. Only then record the conditional CHANGED relation and allocate fresh successor identity without inherited proof; preserve the previous BLOCKED history. This review does not itself mutate the source ledger or active gates.",
+  "authority": "Lead/root reports delegated user intent authority already established for intent-consistent technical choices. This review accepts that narrow attributed technical choice, adds no new user approval claim and requires no additional owner question.",
+  "notEstablished": [
+    "Formal adoption/current source activation",
+    "Full successor identity completeness",
+    "Implementation conformance",
+    "Executed tests or proof"
+  ],
+  "runtimeExecuted": false,
+  "integrationWritten": false
+}

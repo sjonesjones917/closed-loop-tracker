@@ -1,0 +1,2278 @@
+{
+  "schema": "closed-loop-tail-atomicity-supplement/1",
+  "status": "PENDING_GLOBAL_ADOPTION",
+  "inputTailSha256": "20d437a1e012df7d81df83121398789aaa0def5a110a3bb1676330ecf8f64750",
+  "inputIdentityReviewSha256": "ffaa2be916f2fc1f016b9c143504efa792b2949da713d24e66ffc17f55ab413f",
+  "proposals": [
+    {
+      "priorNormativeRequirementId": "NREQ-90831968d27fc5d13a7e9eac24db7e4b",
+      "sourceLine": 3787,
+      "replaceAtomicKey": "s38.family.freshcontexts.human-may-supply-an-external-context-identifier-and-actual-authorized-input-facts",
+      "replacementEntries": [
+        {
+          "entryKind": "ATOMIC_OBLIGATION",
+          "sourceLocation": {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 3787,
+            "endLine": 3787,
+            "lineSha256": "6d851b7d9529430a6d5a59e4b423d0737b3dece74a70c791ac793bfbc8cddfcd"
+          },
+          "controllingText": "- Human may supply an external context identifier and actual authorized-input facts.",
+          "atomicObligation": {
+            "key": "s38.family.freshcontexts.human-may-supply-an-external-context-identifier-and-actual-authorized-input-facts.component-1",
+            "statement": "Human may supply an external context identifier.",
+            "sourceSpans": [
+              {
+                "startByte": 214361,
+                "endByte": 214445,
+                "text": "- Human may supply an external context identifier and actual authorized-input facts.",
+                "sha256": "6d851b7d9529430a6d5a59e4b423d0737b3dece74a70c791ac793bfbc8cddfcd"
+              }
+            ],
+            "contextSourceLocations": [
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 1047,
+                "endLine": 1047,
+                "lineSha256": "e41bb8f3aff8227ca6cedc91fdee53e2377804ac618e0f3689c0006c991b1324",
+                "controllingText": "workflow-schema.js MUST expose one closed FIELD_REGISTRY covering every job field, stage field, canonical-record field, nested durable-object field, relationship, prompt field, package field, result field, receipt field, and terminal field. Every field appears exactly once and declares:"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 1064,
+                "endLine": 1064,
+                "lineSha256": "06c684945157fefb168d52e86c24c0b4d880568b4d45af0add4786b99b506fb2",
+                "controllingText": "Registry completeness is specification-controlled, not implementation-chosen. Every field named anywhere in this specification receives its complete FIELD_REGISTRY contract either from an explicit statement of this specification or from these closed default rules, applied in order:"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 1072,
+                "endLine": 1072,
+                "lineSha256": "98968946a61348b7b55d642aca710b1fd5fb6cc4cf8e241dcdced93927c9c762",
+                "controllingText": "A field whose contract is neither explicitly specified nor uniquely produced by these rules is UNDEFINED_FIELD_CONTRACT and blocks specification acceptance; the resolution is a specification change, never an implementation choice."
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 1166,
+                "endLine": 1166,
+                "lineSha256": "9f17c9ed52cdf954526c0eaf20c02170ead62ce057357d34d0aa505ebb1be380",
+                "controllingText": "Every durable object required by this specification is either a top-level canonical family listed in Section 38 or a closed nested object registered under exactly one such family. The DURABLE_OBJECT_REGISTRY declares identity, parent family if nested, producer partitions, lifecycle policy, scope, relationships, hash inclusion set, migration behavior, and gate use. No release-bearing search contract, challenge, semantic review, human decision, disclosure authorization, proof obligation, observation, entailment review, expected-variance contract, environment manifest, capability record, backup record, materiality review, derivation record, operation reservation, delivery candidate, delivery record, or delivery-attempt record may exist only as an untyped stageData blob."
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 3514,
+                "endLine": 3514,
+                "lineSha256": "b6cfc27a9fefff0da434c5012e9e13a0d94978060072e4f77d10cc49bbe1ee3c",
+                "controllingText": "38. Canonical record families and target ownership"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 3516,
+                "endLine": 3516,
+                "lineSha256": "6eefafe2a56cfb38068aed723de8761dc4896733ce5c0cb0be1e6f87b09a3889",
+                "controllingText": "The following record families remain the target model."
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 3783,
+                "endLine": 3783,
+                "lineSha256": "589d2d931ad94bd785fe75137222f290a7e17fcfb508b5a114151cbfa91d91e2",
+                "controllingText": "freshContexts"
+              }
+            ],
+            "sha256": "bf02a909b496aa5c441d03ce49fd517469665a900ddc77583b79bb8cfed45ef6"
+          },
+          "candidateClass": "RECORD_FAMILY_CONTRACT",
+          "reviewStatus": "TAIL_SOURCE_RECONCILED_PROVISIONAL_IDENTITY",
+          "normativeStrength": "PERMISSION_OR_EXCEPTION",
+          "provisionalBirthIdentity": {
+            "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+            "sourceAnchor": {
+              "line": 3787,
+              "lineSha256": "6d851b7d9529430a6d5a59e4b423d0737b3dece74a70c791ac793bfbc8cddfcd"
+            },
+            "atomicKey": "s38.family.freshcontexts.human-may-supply-an-external-context-identifier-and-actual-authorized-input-facts.component-1"
+          },
+          "provisionalNormativeRequirementId": "NREQ-7ac01a62efae7241e18a5e3b03593fc3",
+          "identityStatus": "PROPOSED_SPLIT_PENDING_GLOBAL_RECONCILIATION",
+          "proofDisposition": "UNKNOWN",
+          "sectionId": "38"
+        },
+        {
+          "entryKind": "ATOMIC_OBLIGATION",
+          "sourceLocation": {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 3787,
+            "endLine": 3787,
+            "lineSha256": "6d851b7d9529430a6d5a59e4b423d0737b3dece74a70c791ac793bfbc8cddfcd"
+          },
+          "controllingText": "- Human may supply an external context identifier and actual authorized-input facts.",
+          "atomicObligation": {
+            "key": "s38.family.freshcontexts.human-may-supply-an-external-context-identifier-and-actual-authorized-input-facts.component-2",
+            "statement": "Human may supply actual authorized-input facts.",
+            "sourceSpans": [
+              {
+                "startByte": 214361,
+                "endByte": 214445,
+                "text": "- Human may supply an external context identifier and actual authorized-input facts.",
+                "sha256": "6d851b7d9529430a6d5a59e4b423d0737b3dece74a70c791ac793bfbc8cddfcd"
+              }
+            ],
+            "contextSourceLocations": [
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 1047,
+                "endLine": 1047,
+                "lineSha256": "e41bb8f3aff8227ca6cedc91fdee53e2377804ac618e0f3689c0006c991b1324",
+                "controllingText": "workflow-schema.js MUST expose one closed FIELD_REGISTRY covering every job field, stage field, canonical-record field, nested durable-object field, relationship, prompt field, package field, result field, receipt field, and terminal field. Every field appears exactly once and declares:"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 1064,
+                "endLine": 1064,
+                "lineSha256": "06c684945157fefb168d52e86c24c0b4d880568b4d45af0add4786b99b506fb2",
+                "controllingText": "Registry completeness is specification-controlled, not implementation-chosen. Every field named anywhere in this specification receives its complete FIELD_REGISTRY contract either from an explicit statement of this specification or from these closed default rules, applied in order:"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 1072,
+                "endLine": 1072,
+                "lineSha256": "98968946a61348b7b55d642aca710b1fd5fb6cc4cf8e241dcdced93927c9c762",
+                "controllingText": "A field whose contract is neither explicitly specified nor uniquely produced by these rules is UNDEFINED_FIELD_CONTRACT and blocks specification acceptance; the resolution is a specification change, never an implementation choice."
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 1166,
+                "endLine": 1166,
+                "lineSha256": "9f17c9ed52cdf954526c0eaf20c02170ead62ce057357d34d0aa505ebb1be380",
+                "controllingText": "Every durable object required by this specification is either a top-level canonical family listed in Section 38 or a closed nested object registered under exactly one such family. The DURABLE_OBJECT_REGISTRY declares identity, parent family if nested, producer partitions, lifecycle policy, scope, relationships, hash inclusion set, migration behavior, and gate use. No release-bearing search contract, challenge, semantic review, human decision, disclosure authorization, proof obligation, observation, entailment review, expected-variance contract, environment manifest, capability record, backup record, materiality review, derivation record, operation reservation, delivery candidate, delivery record, or delivery-attempt record may exist only as an untyped stageData blob."
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 3514,
+                "endLine": 3514,
+                "lineSha256": "b6cfc27a9fefff0da434c5012e9e13a0d94978060072e4f77d10cc49bbe1ee3c",
+                "controllingText": "38. Canonical record families and target ownership"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 3516,
+                "endLine": 3516,
+                "lineSha256": "6eefafe2a56cfb38068aed723de8761dc4896733ce5c0cb0be1e6f87b09a3889",
+                "controllingText": "The following record families remain the target model."
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 3783,
+                "endLine": 3783,
+                "lineSha256": "589d2d931ad94bd785fe75137222f290a7e17fcfb508b5a114151cbfa91d91e2",
+                "controllingText": "freshContexts"
+              }
+            ],
+            "sha256": "1cde2e8a88e905cd2e0605f52a6bf12e556f56d88ce75cc02620e37c8c9819f1"
+          },
+          "candidateClass": "RECORD_FAMILY_CONTRACT",
+          "reviewStatus": "TAIL_SOURCE_RECONCILED_PROVISIONAL_IDENTITY",
+          "normativeStrength": "PERMISSION_OR_EXCEPTION",
+          "provisionalBirthIdentity": {
+            "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+            "sourceAnchor": {
+              "line": 3787,
+              "lineSha256": "6d851b7d9529430a6d5a59e4b423d0737b3dece74a70c791ac793bfbc8cddfcd"
+            },
+            "atomicKey": "s38.family.freshcontexts.human-may-supply-an-external-context-identifier-and-actual-authorized-input-facts.component-2"
+          },
+          "provisionalNormativeRequirementId": "NREQ-6ea220a2dfe198c9cac0cf7922f58852",
+          "identityStatus": "PROPOSED_SPLIT_PENDING_GLOBAL_RECONCILIATION",
+          "proofDisposition": "UNKNOWN",
+          "sectionId": "38"
+        }
+      ],
+      "reason": "Actual source conjunction contains separately satisfiable duties despite one current primary scope; a one-primary shape cannot establish semantic singleton identity.",
+      "mappingInstruction": "Replace any candidate mapping to the old compound scope with both child keys unless the original candidate expressly covers only one child; preserve its exact source qualification."
+    },
+    {
+      "priorNormativeRequirementId": "NREQ-018a05fce60fd4f6dc71dbea85ba4f44",
+      "sourceLine": 3852,
+      "replaceAtomicKey": "s38.family.proofobligations.stage",
+      "replacementEntries": [
+        {
+          "entryKind": "ATOMIC_OBLIGATION",
+          "sourceLocation": {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 3852,
+            "endLine": 3852,
+            "lineSha256": "5510734a4c63c1cb850dc14189f6d6b0a1b5ae017d6124a66edda4670e347b3b"
+          },
+          "controllingText": "- Stage: 6 and recalculated as dependencies change",
+          "atomicObligation": {
+            "key": "s38.family.proofobligations.stage.component-1",
+            "statement": "proofObligations belongs to Stage 6.",
+            "sourceSpans": [
+              {
+                "startByte": 217235,
+                "endByte": 217285,
+                "text": "- Stage: 6 and recalculated as dependencies change",
+                "sha256": "5510734a4c63c1cb850dc14189f6d6b0a1b5ae017d6124a66edda4670e347b3b"
+              }
+            ],
+            "contextSourceLocations": [
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 1047,
+                "endLine": 1047,
+                "lineSha256": "e41bb8f3aff8227ca6cedc91fdee53e2377804ac618e0f3689c0006c991b1324",
+                "controllingText": "workflow-schema.js MUST expose one closed FIELD_REGISTRY covering every job field, stage field, canonical-record field, nested durable-object field, relationship, prompt field, package field, result field, receipt field, and terminal field. Every field appears exactly once and declares:"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 1064,
+                "endLine": 1064,
+                "lineSha256": "06c684945157fefb168d52e86c24c0b4d880568b4d45af0add4786b99b506fb2",
+                "controllingText": "Registry completeness is specification-controlled, not implementation-chosen. Every field named anywhere in this specification receives its complete FIELD_REGISTRY contract either from an explicit statement of this specification or from these closed default rules, applied in order:"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 1072,
+                "endLine": 1072,
+                "lineSha256": "98968946a61348b7b55d642aca710b1fd5fb6cc4cf8e241dcdced93927c9c762",
+                "controllingText": "A field whose contract is neither explicitly specified nor uniquely produced by these rules is UNDEFINED_FIELD_CONTRACT and blocks specification acceptance; the resolution is a specification change, never an implementation choice."
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 1166,
+                "endLine": 1166,
+                "lineSha256": "9f17c9ed52cdf954526c0eaf20c02170ead62ce057357d34d0aa505ebb1be380",
+                "controllingText": "Every durable object required by this specification is either a top-level canonical family listed in Section 38 or a closed nested object registered under exactly one such family. The DURABLE_OBJECT_REGISTRY declares identity, parent family if nested, producer partitions, lifecycle policy, scope, relationships, hash inclusion set, migration behavior, and gate use. No release-bearing search contract, challenge, semantic review, human decision, disclosure authorization, proof obligation, observation, entailment review, expected-variance contract, environment manifest, capability record, backup record, materiality review, derivation record, operation reservation, delivery candidate, delivery record, or delivery-attempt record may exist only as an untyped stageData blob."
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 3514,
+                "endLine": 3514,
+                "lineSha256": "b6cfc27a9fefff0da434c5012e9e13a0d94978060072e4f77d10cc49bbe1ee3c",
+                "controllingText": "38. Canonical record families and target ownership"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 3516,
+                "endLine": 3516,
+                "lineSha256": "6eefafe2a56cfb38068aed723de8761dc4896733ce5c0cb0be1e6f87b09a3889",
+                "controllingText": "The following record families remain the target model."
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 3805,
+                "endLine": 3805,
+                "lineSha256": "a49f05cd8f9ca97725e34c36bf6c827c47cce622f4b6710dc3b2ea56e7646459",
+                "controllingText": "38.1 Additional required canonical families"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 3850,
+                "endLine": 3850,
+                "lineSha256": "2016bb98d2826222bf0220df753b974dd8962a18fd011249ef972358972f5f19",
+                "controllingText": "proofObligations"
+              }
+            ],
+            "sha256": "e706df634a3e216af3558f7dc1f370708a1f129aa28bfff6313a8c75e275779e"
+          },
+          "candidateClass": "RECORD_FAMILY_CONTRACT",
+          "reviewStatus": "TAIL_SOURCE_RECONCILED_PROVISIONAL_IDENTITY",
+          "normativeStrength": "MUST",
+          "provisionalBirthIdentity": {
+            "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+            "sourceAnchor": {
+              "line": 3852,
+              "lineSha256": "5510734a4c63c1cb850dc14189f6d6b0a1b5ae017d6124a66edda4670e347b3b"
+            },
+            "atomicKey": "s38.family.proofobligations.stage.component-1"
+          },
+          "provisionalNormativeRequirementId": "NREQ-89327bc392b2dbb4f44696ae45041fbb",
+          "identityStatus": "PROPOSED_SPLIT_PENDING_GLOBAL_RECONCILIATION",
+          "proofDisposition": "UNKNOWN",
+          "sectionId": "38.1"
+        },
+        {
+          "entryKind": "ATOMIC_OBLIGATION",
+          "sourceLocation": {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 3852,
+            "endLine": 3852,
+            "lineSha256": "5510734a4c63c1cb850dc14189f6d6b0a1b5ae017d6124a66edda4670e347b3b"
+          },
+          "controllingText": "- Stage: 6 and recalculated as dependencies change",
+          "atomicObligation": {
+            "key": "s38.family.proofobligations.stage.component-2",
+            "statement": "proofObligations is recalculated when dependencies change.",
+            "sourceSpans": [
+              {
+                "startByte": 217235,
+                "endByte": 217285,
+                "text": "- Stage: 6 and recalculated as dependencies change",
+                "sha256": "5510734a4c63c1cb850dc14189f6d6b0a1b5ae017d6124a66edda4670e347b3b"
+              }
+            ],
+            "contextSourceLocations": [
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 1047,
+                "endLine": 1047,
+                "lineSha256": "e41bb8f3aff8227ca6cedc91fdee53e2377804ac618e0f3689c0006c991b1324",
+                "controllingText": "workflow-schema.js MUST expose one closed FIELD_REGISTRY covering every job field, stage field, canonical-record field, nested durable-object field, relationship, prompt field, package field, result field, receipt field, and terminal field. Every field appears exactly once and declares:"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 1064,
+                "endLine": 1064,
+                "lineSha256": "06c684945157fefb168d52e86c24c0b4d880568b4d45af0add4786b99b506fb2",
+                "controllingText": "Registry completeness is specification-controlled, not implementation-chosen. Every field named anywhere in this specification receives its complete FIELD_REGISTRY contract either from an explicit statement of this specification or from these closed default rules, applied in order:"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 1072,
+                "endLine": 1072,
+                "lineSha256": "98968946a61348b7b55d642aca710b1fd5fb6cc4cf8e241dcdced93927c9c762",
+                "controllingText": "A field whose contract is neither explicitly specified nor uniquely produced by these rules is UNDEFINED_FIELD_CONTRACT and blocks specification acceptance; the resolution is a specification change, never an implementation choice."
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 1166,
+                "endLine": 1166,
+                "lineSha256": "9f17c9ed52cdf954526c0eaf20c02170ead62ce057357d34d0aa505ebb1be380",
+                "controllingText": "Every durable object required by this specification is either a top-level canonical family listed in Section 38 or a closed nested object registered under exactly one such family. The DURABLE_OBJECT_REGISTRY declares identity, parent family if nested, producer partitions, lifecycle policy, scope, relationships, hash inclusion set, migration behavior, and gate use. No release-bearing search contract, challenge, semantic review, human decision, disclosure authorization, proof obligation, observation, entailment review, expected-variance contract, environment manifest, capability record, backup record, materiality review, derivation record, operation reservation, delivery candidate, delivery record, or delivery-attempt record may exist only as an untyped stageData blob."
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 3514,
+                "endLine": 3514,
+                "lineSha256": "b6cfc27a9fefff0da434c5012e9e13a0d94978060072e4f77d10cc49bbe1ee3c",
+                "controllingText": "38. Canonical record families and target ownership"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 3516,
+                "endLine": 3516,
+                "lineSha256": "6eefafe2a56cfb38068aed723de8761dc4896733ce5c0cb0be1e6f87b09a3889",
+                "controllingText": "The following record families remain the target model."
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 3805,
+                "endLine": 3805,
+                "lineSha256": "a49f05cd8f9ca97725e34c36bf6c827c47cce622f4b6710dc3b2ea56e7646459",
+                "controllingText": "38.1 Additional required canonical families"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 3850,
+                "endLine": 3850,
+                "lineSha256": "2016bb98d2826222bf0220df753b974dd8962a18fd011249ef972358972f5f19",
+                "controllingText": "proofObligations"
+              }
+            ],
+            "sha256": "172d70e9ed39b62b0393cd7452725412da019884ceb10f7b99cc4634749c207e"
+          },
+          "candidateClass": "RECORD_FAMILY_CONTRACT",
+          "reviewStatus": "TAIL_SOURCE_RECONCILED_PROVISIONAL_IDENTITY",
+          "normativeStrength": "MUST",
+          "provisionalBirthIdentity": {
+            "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+            "sourceAnchor": {
+              "line": 3852,
+              "lineSha256": "5510734a4c63c1cb850dc14189f6d6b0a1b5ae017d6124a66edda4670e347b3b"
+            },
+            "atomicKey": "s38.family.proofobligations.stage.component-2"
+          },
+          "provisionalNormativeRequirementId": "NREQ-5613daddef07c70470dfea6e3c4cbba0",
+          "identityStatus": "PROPOSED_SPLIT_PENDING_GLOBAL_RECONCILIATION",
+          "proofDisposition": "UNKNOWN",
+          "sectionId": "38.1"
+        }
+      ],
+      "reason": "Actual source conjunction contains separately satisfiable duties despite one current primary scope; a one-primary shape cannot establish semantic singleton identity.",
+      "mappingInstruction": "Replace any candidate mapping to the old compound scope with both child keys unless the original candidate expressly covers only one child; preserve its exact source qualification."
+    },
+    {
+      "priorNormativeRequirementId": "NREQ-cb7faea33fabe86bb96fe466a4d96580",
+      "sourceLine": 4036,
+      "replaceAtomicKey": "s39.native-experience.no-external-prompt-or-json-handoff",
+      "replacementEntries": [
+        {
+          "entryKind": "ATOMIC_OBLIGATION",
+          "sourceLocation": {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 4036,
+            "endLine": 4036,
+            "lineSha256": "11b81eb27ade1cd662db15157abb694bdb2d17fdf6c096e0f219834d0590cfd5"
+          },
+          "controllingText": "No external prompt or JSON handoff.",
+          "atomicObligation": {
+            "key": "s39.native-experience.no-external-prompt-or-json-handoff.component-1",
+            "statement": "Native application tests require no external prompt.",
+            "sourceSpans": [
+              {
+                "startByte": 223743,
+                "endByte": 223778,
+                "text": "No external prompt or JSON handoff.",
+                "sha256": "11b81eb27ade1cd662db15157abb694bdb2d17fdf6c096e0f219834d0590cfd5"
+              }
+            ],
+            "contextSourceLocations": [
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 3974,
+                "endLine": 3974,
+                "lineSha256": "1ab01ae83cd78704e028de0d1f6b8d07adaa063cf2d71a22aa4eb657b9514bd9",
+                "controllingText": "39. Operator interface"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 4031,
+                "endLine": 4031,
+                "lineSha256": "5536772862ff68c85795b77f241c1ab0e681bae9757e0deff73d20b8b4921e4b",
+                "controllingText": "39.3 Primary experiences"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 4033,
+                "endLine": 4033,
+                "lineSha256": "a49dd01c80b2101631fb5c445abe56f7f2b0a0a1ba43c679a86a80aa1364b6db",
+                "controllingText": "Native application test"
+              }
+            ],
+            "sha256": "9f3b6984f30e92ed5160718cef5973268dd2322f7e8c5d7753d50d2812f9bf61"
+          },
+          "candidateClass": "NORMATIVE_REQUIREMENT",
+          "reviewStatus": "TAIL_SOURCE_RECONCILED_PROVISIONAL_IDENTITY",
+          "normativeStrength": "MUST",
+          "provisionalBirthIdentity": {
+            "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+            "sourceAnchor": {
+              "line": 4036,
+              "lineSha256": "11b81eb27ade1cd662db15157abb694bdb2d17fdf6c096e0f219834d0590cfd5"
+            },
+            "atomicKey": "s39.native-experience.no-external-prompt-or-json-handoff.component-1"
+          },
+          "provisionalNormativeRequirementId": "NREQ-dddba146bbea6a9d85d66c01cac190b8",
+          "identityStatus": "PROPOSED_SPLIT_PENDING_GLOBAL_RECONCILIATION",
+          "proofDisposition": "UNKNOWN",
+          "sectionId": "39.3"
+        },
+        {
+          "entryKind": "ATOMIC_OBLIGATION",
+          "sourceLocation": {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 4036,
+            "endLine": 4036,
+            "lineSha256": "11b81eb27ade1cd662db15157abb694bdb2d17fdf6c096e0f219834d0590cfd5"
+          },
+          "controllingText": "No external prompt or JSON handoff.",
+          "atomicObligation": {
+            "key": "s39.native-experience.no-external-prompt-or-json-handoff.component-2",
+            "statement": "Native application tests require no external JSON handoff.",
+            "sourceSpans": [
+              {
+                "startByte": 223743,
+                "endByte": 223778,
+                "text": "No external prompt or JSON handoff.",
+                "sha256": "11b81eb27ade1cd662db15157abb694bdb2d17fdf6c096e0f219834d0590cfd5"
+              }
+            ],
+            "contextSourceLocations": [
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 3974,
+                "endLine": 3974,
+                "lineSha256": "1ab01ae83cd78704e028de0d1f6b8d07adaa063cf2d71a22aa4eb657b9514bd9",
+                "controllingText": "39. Operator interface"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 4031,
+                "endLine": 4031,
+                "lineSha256": "5536772862ff68c85795b77f241c1ab0e681bae9757e0deff73d20b8b4921e4b",
+                "controllingText": "39.3 Primary experiences"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 4033,
+                "endLine": 4033,
+                "lineSha256": "a49dd01c80b2101631fb5c445abe56f7f2b0a0a1ba43c679a86a80aa1364b6db",
+                "controllingText": "Native application test"
+              }
+            ],
+            "sha256": "1bb05276cc7b95bfb18cc2fb6e0fc590dbcb557317439429c8f35beb1d844915"
+          },
+          "candidateClass": "NORMATIVE_REQUIREMENT",
+          "reviewStatus": "TAIL_SOURCE_RECONCILED_PROVISIONAL_IDENTITY",
+          "normativeStrength": "MUST",
+          "provisionalBirthIdentity": {
+            "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+            "sourceAnchor": {
+              "line": 4036,
+              "lineSha256": "11b81eb27ade1cd662db15157abb694bdb2d17fdf6c096e0f219834d0590cfd5"
+            },
+            "atomicKey": "s39.native-experience.no-external-prompt-or-json-handoff.component-2"
+          },
+          "provisionalNormativeRequirementId": "NREQ-09824a2fff61a75ed426f30dc6ee5d05",
+          "identityStatus": "PROPOSED_SPLIT_PENDING_GLOBAL_RECONCILIATION",
+          "proofDisposition": "UNKNOWN",
+          "sectionId": "39.3"
+        }
+      ],
+      "reason": "Actual source conjunction contains separately satisfiable duties despite one current primary scope; a one-primary shape cannot establish semantic singleton identity.",
+      "mappingInstruction": "Replace any candidate mapping to the old compound scope with both child keys unless the original candidate expressly covers only one child; preserve its exact source qualification."
+    },
+    {
+      "priorNormativeRequirementId": "NREQ-4aae0077aad1d830f9ba34acf39506ea",
+      "sourceLine": 4041,
+      "replaceAtomicKey": "s39.ai-experience.select-the-returned-response-json-file-and-required-returned-files",
+      "replacementEntries": [
+        {
+          "entryKind": "ATOMIC_OBLIGATION",
+          "sourceLocation": {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 4041,
+            "endLine": 4041,
+            "lineSha256": "59819ae77f704f25984585e9e06aa96bca375273ee1d10a2a4759993615ed9a3"
+          },
+          "controllingText": "→ select the returned response JSON file and required returned files",
+          "atomicObligation": {
+            "key": "s39.ai-experience.select-the-returned-response-json-file-and-required-returned-files.component-1",
+            "statement": "AI verification selects the returned response JSON file.",
+            "sourceSpans": [
+              {
+                "startByte": 223851,
+                "endByte": 223921,
+                "text": "→ select the returned response JSON file and required returned files",
+                "sha256": "59819ae77f704f25984585e9e06aa96bca375273ee1d10a2a4759993615ed9a3"
+              }
+            ],
+            "contextSourceLocations": [
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 3974,
+                "endLine": 3974,
+                "lineSha256": "1ab01ae83cd78704e028de0d1f6b8d07adaa063cf2d71a22aa4eb657b9514bd9",
+                "controllingText": "39. Operator interface"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 4031,
+                "endLine": 4031,
+                "lineSha256": "5536772862ff68c85795b77f241c1ab0e681bae9757e0deff73d20b8b4921e4b",
+                "controllingText": "39.3 Primary experiences"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 4038,
+                "endLine": 4038,
+                "lineSha256": "8fe5cc2b44f0a3218ae4dcb1626b4e377af3a62429c11d28e6c1c8245ed0a329",
+                "controllingText": "AI verification"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 4039,
+                "endLine": 4039,
+                "lineSha256": "c86798fc61aee603e5d9110f3a1a9e1a0d1b0a4b6f34c4ccfde35dde495723a2",
+                "controllingText": "Prepare package"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 4040,
+                "endLine": 4040,
+                "lineSha256": "39be999290e8e6743cae6fe486b37602c7fcd33a615b53cca3f84dad97e20772",
+                "controllingText": "→ send to fresh independent reviewer"
+              }
+            ],
+            "sha256": "f534aaad70d8abd4bb3903a59b64c464c1ba79a385a2c5864e0cb06a773e5820"
+          },
+          "candidateClass": "NORMATIVE_REQUIREMENT",
+          "reviewStatus": "TAIL_SOURCE_RECONCILED_PROVISIONAL_IDENTITY",
+          "normativeStrength": "MUST",
+          "provisionalBirthIdentity": {
+            "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+            "sourceAnchor": {
+              "line": 4041,
+              "lineSha256": "59819ae77f704f25984585e9e06aa96bca375273ee1d10a2a4759993615ed9a3"
+            },
+            "atomicKey": "s39.ai-experience.select-the-returned-response-json-file-and-required-returned-files.component-1"
+          },
+          "provisionalNormativeRequirementId": "NREQ-c9ec32724089fd95b31a7ab12e1ca813",
+          "identityStatus": "PROPOSED_SPLIT_PENDING_GLOBAL_RECONCILIATION",
+          "proofDisposition": "UNKNOWN",
+          "sectionId": "39.3"
+        },
+        {
+          "entryKind": "ATOMIC_OBLIGATION",
+          "sourceLocation": {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 4041,
+            "endLine": 4041,
+            "lineSha256": "59819ae77f704f25984585e9e06aa96bca375273ee1d10a2a4759993615ed9a3"
+          },
+          "controllingText": "→ select the returned response JSON file and required returned files",
+          "atomicObligation": {
+            "key": "s39.ai-experience.select-the-returned-response-json-file-and-required-returned-files.component-2",
+            "statement": "AI verification selects required returned files.",
+            "sourceSpans": [
+              {
+                "startByte": 223851,
+                "endByte": 223921,
+                "text": "→ select the returned response JSON file and required returned files",
+                "sha256": "59819ae77f704f25984585e9e06aa96bca375273ee1d10a2a4759993615ed9a3"
+              }
+            ],
+            "contextSourceLocations": [
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 3974,
+                "endLine": 3974,
+                "lineSha256": "1ab01ae83cd78704e028de0d1f6b8d07adaa063cf2d71a22aa4eb657b9514bd9",
+                "controllingText": "39. Operator interface"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 4031,
+                "endLine": 4031,
+                "lineSha256": "5536772862ff68c85795b77f241c1ab0e681bae9757e0deff73d20b8b4921e4b",
+                "controllingText": "39.3 Primary experiences"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 4038,
+                "endLine": 4038,
+                "lineSha256": "8fe5cc2b44f0a3218ae4dcb1626b4e377af3a62429c11d28e6c1c8245ed0a329",
+                "controllingText": "AI verification"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 4039,
+                "endLine": 4039,
+                "lineSha256": "c86798fc61aee603e5d9110f3a1a9e1a0d1b0a4b6f34c4ccfde35dde495723a2",
+                "controllingText": "Prepare package"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 4040,
+                "endLine": 4040,
+                "lineSha256": "39be999290e8e6743cae6fe486b37602c7fcd33a615b53cca3f84dad97e20772",
+                "controllingText": "→ send to fresh independent reviewer"
+              }
+            ],
+            "sha256": "ed068cb23a8a687d028ab7e901e2fd06061ef928e5f3dd0dbcc027fbdddf46e2"
+          },
+          "candidateClass": "NORMATIVE_REQUIREMENT",
+          "reviewStatus": "TAIL_SOURCE_RECONCILED_PROVISIONAL_IDENTITY",
+          "normativeStrength": "MUST",
+          "provisionalBirthIdentity": {
+            "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+            "sourceAnchor": {
+              "line": 4041,
+              "lineSha256": "59819ae77f704f25984585e9e06aa96bca375273ee1d10a2a4759993615ed9a3"
+            },
+            "atomicKey": "s39.ai-experience.select-the-returned-response-json-file-and-required-returned-files.component-2"
+          },
+          "provisionalNormativeRequirementId": "NREQ-9708b1995f480b016a2c3fa2056387a0",
+          "identityStatus": "PROPOSED_SPLIT_PENDING_GLOBAL_RECONCILIATION",
+          "proofDisposition": "UNKNOWN",
+          "sectionId": "39.3"
+        }
+      ],
+      "reason": "Actual source conjunction contains separately satisfiable duties despite one current primary scope; a one-primary shape cannot establish semantic singleton identity.",
+      "mappingInstruction": "Replace any candidate mapping to the old compound scope with both child keys unless the original candidate expressly covers only one child; preserve its exact source qualification."
+    },
+    {
+      "priorNormativeRequirementId": "NREQ-822c58f3002a6a5021346c3f5e4f7b4a",
+      "sourceLine": 4044,
+      "replaceAtomicKey": "s39.human-external-experience.prepare-exact-instructions-and-package",
+      "replacementEntries": [
+        {
+          "entryKind": "ATOMIC_OBLIGATION",
+          "sourceLocation": {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 4044,
+            "endLine": 4044,
+            "lineSha256": "4d45754dac79b2f826d1d23f637331790bac061d53a2581822567075f6627fa2"
+          },
+          "controllingText": "Prepare exact instructions and package",
+          "atomicObligation": {
+            "key": "s39.human-external-experience.prepare-exact-instructions-and-package.component-1",
+            "statement": "Human/external-system verification prepares exact instructions.",
+            "sourceSpans": [
+              {
+                "startByte": 223961,
+                "endByte": 223999,
+                "text": "Prepare exact instructions and package",
+                "sha256": "4d45754dac79b2f826d1d23f637331790bac061d53a2581822567075f6627fa2"
+              }
+            ],
+            "contextSourceLocations": [
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 3974,
+                "endLine": 3974,
+                "lineSha256": "1ab01ae83cd78704e028de0d1f6b8d07adaa063cf2d71a22aa4eb657b9514bd9",
+                "controllingText": "39. Operator interface"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 4031,
+                "endLine": 4031,
+                "lineSha256": "5536772862ff68c85795b77f241c1ab0e681bae9757e0deff73d20b8b4921e4b",
+                "controllingText": "39.3 Primary experiences"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 4043,
+                "endLine": 4043,
+                "lineSha256": "ef4a28bf2bfe2c19e8152b745acc6c671a0d3d5f63bf7d8da63a8462b9de5f17",
+                "controllingText": "Human or external-system verification"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 4045,
+                "endLine": 4045,
+                "lineSha256": "3f54017c4e2a6fc121e4cf665f12d948ddd53c61d2aca0e2ba983fc32c49092d",
+                "controllingText": "→ perform observation or system operation"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 4046,
+                "endLine": 4046,
+                "lineSha256": "8315cfd40981e505609dde877299931b08476960244586c2330704e0e77821b6",
+                "controllingText": "→ select the returned evidence/result files"
+              }
+            ],
+            "sha256": "ffb5d912a79b003506d83bbfd0b3090aa815fbfb7f95c37c141be5af7c468e92"
+          },
+          "candidateClass": "NORMATIVE_REQUIREMENT",
+          "reviewStatus": "TAIL_SOURCE_RECONCILED_PROVISIONAL_IDENTITY",
+          "normativeStrength": "MUST",
+          "provisionalBirthIdentity": {
+            "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+            "sourceAnchor": {
+              "line": 4044,
+              "lineSha256": "4d45754dac79b2f826d1d23f637331790bac061d53a2581822567075f6627fa2"
+            },
+            "atomicKey": "s39.human-external-experience.prepare-exact-instructions-and-package.component-1"
+          },
+          "provisionalNormativeRequirementId": "NREQ-ba82e9c80513c176895a59f1084b1d11",
+          "identityStatus": "PROPOSED_SPLIT_PENDING_GLOBAL_RECONCILIATION",
+          "proofDisposition": "UNKNOWN",
+          "sectionId": "39.3"
+        },
+        {
+          "entryKind": "ATOMIC_OBLIGATION",
+          "sourceLocation": {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 4044,
+            "endLine": 4044,
+            "lineSha256": "4d45754dac79b2f826d1d23f637331790bac061d53a2581822567075f6627fa2"
+          },
+          "controllingText": "Prepare exact instructions and package",
+          "atomicObligation": {
+            "key": "s39.human-external-experience.prepare-exact-instructions-and-package.component-2",
+            "statement": "Human/external-system verification prepares the exact package.",
+            "sourceSpans": [
+              {
+                "startByte": 223961,
+                "endByte": 223999,
+                "text": "Prepare exact instructions and package",
+                "sha256": "4d45754dac79b2f826d1d23f637331790bac061d53a2581822567075f6627fa2"
+              }
+            ],
+            "contextSourceLocations": [
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 3974,
+                "endLine": 3974,
+                "lineSha256": "1ab01ae83cd78704e028de0d1f6b8d07adaa063cf2d71a22aa4eb657b9514bd9",
+                "controllingText": "39. Operator interface"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 4031,
+                "endLine": 4031,
+                "lineSha256": "5536772862ff68c85795b77f241c1ab0e681bae9757e0deff73d20b8b4921e4b",
+                "controllingText": "39.3 Primary experiences"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 4043,
+                "endLine": 4043,
+                "lineSha256": "ef4a28bf2bfe2c19e8152b745acc6c671a0d3d5f63bf7d8da63a8462b9de5f17",
+                "controllingText": "Human or external-system verification"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 4045,
+                "endLine": 4045,
+                "lineSha256": "3f54017c4e2a6fc121e4cf665f12d948ddd53c61d2aca0e2ba983fc32c49092d",
+                "controllingText": "→ perform observation or system operation"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 4046,
+                "endLine": 4046,
+                "lineSha256": "8315cfd40981e505609dde877299931b08476960244586c2330704e0e77821b6",
+                "controllingText": "→ select the returned evidence/result files"
+              }
+            ],
+            "sha256": "9c63eddff92188e85e352cd1c2cfad53465d8d3613be79be1665235295c51544"
+          },
+          "candidateClass": "NORMATIVE_REQUIREMENT",
+          "reviewStatus": "TAIL_SOURCE_RECONCILED_PROVISIONAL_IDENTITY",
+          "normativeStrength": "MUST",
+          "provisionalBirthIdentity": {
+            "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+            "sourceAnchor": {
+              "line": 4044,
+              "lineSha256": "4d45754dac79b2f826d1d23f637331790bac061d53a2581822567075f6627fa2"
+            },
+            "atomicKey": "s39.human-external-experience.prepare-exact-instructions-and-package.component-2"
+          },
+          "provisionalNormativeRequirementId": "NREQ-aefbbda08672e98f5ebba19c46ec201c",
+          "identityStatus": "PROPOSED_SPLIT_PENDING_GLOBAL_RECONCILIATION",
+          "proofDisposition": "UNKNOWN",
+          "sectionId": "39.3"
+        }
+      ],
+      "reason": "Actual source conjunction contains separately satisfiable duties despite one current primary scope; a one-primary shape cannot establish semantic singleton identity.",
+      "mappingInstruction": "Replace any candidate mapping to the old compound scope with both child keys unless the original candidate expressly covers only one child; preserve its exact source qualification."
+    },
+    {
+      "priorNormativeRequirementId": "NREQ-1bd03af2b500d7b6de0c210ee40ca042",
+      "sourceLine": 4152,
+      "replaceAtomicKey": "s39.accessibility.current-state-and-primary-next-action-appear-before-long-detail-content-and-within-the-first-viewport-after-the-page-heading",
+      "replacementEntries": [
+        {
+          "entryKind": "ATOMIC_OBLIGATION",
+          "sourceLocation": {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 4152,
+            "endLine": 4152,
+            "lineSha256": "627990394c11973d7f67d12adfbab39aa1743974d90db498065757efadfd54f3"
+          },
+          "controllingText": "- current state and primary next action appear before long detail content and within the first viewport after the page heading.",
+          "atomicObligation": {
+            "key": "s39.accessibility.current-state-and-primary-next-action-appear-before-long-detail-content-and-within-the-first-viewport-after-the-page-heading.component-1",
+            "statement": "At 100% zoom current state and primary next action precede long detail content.",
+            "sourceSpans": [
+              {
+                "startByte": 227195,
+                "endByte": 227322,
+                "text": "- current state and primary next action appear before long detail content and within the first viewport after the page heading.",
+                "sha256": "627990394c11973d7f67d12adfbab39aa1743974d90db498065757efadfd54f3"
+              }
+            ],
+            "contextSourceLocations": [
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 3974,
+                "endLine": 3974,
+                "lineSha256": "1ab01ae83cd78704e028de0d1f6b8d07adaa063cf2d71a22aa4eb657b9514bd9",
+                "controllingText": "39. Operator interface"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 4138,
+                "endLine": 4138,
+                "lineSha256": "0d627e58aa8d4d479a3e0feb339bed7679580c5b9335f90511e1646287a7e020",
+                "controllingText": "39.12 Mobile and accessibility"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 4140,
+                "endLine": 4140,
+                "lineSha256": "be3ea505d14787390f46134d8dd985dd4e2185633e5339eeca349f1675f40213",
+                "controllingText": "Required viewport acceptance is:"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 4145,
+                "endLine": 4145,
+                "lineSha256": "5d6273a6bbae4b3bef0bd1fa01612416a79ca08ee8eaff149ad8dcfbda485c8f",
+                "controllingText": "At 100% browser zoom:"
+              }
+            ],
+            "sha256": "04ac79a5dd99acaed5fe19b49bfc6ca88f33a0d9023c8cb4b0aa0dc1a1521dcf"
+          },
+          "candidateClass": "NORMATIVE_REQUIREMENT",
+          "reviewStatus": "TAIL_SOURCE_RECONCILED_PROVISIONAL_IDENTITY",
+          "normativeStrength": "MUST",
+          "provisionalBirthIdentity": {
+            "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+            "sourceAnchor": {
+              "line": 4152,
+              "lineSha256": "627990394c11973d7f67d12adfbab39aa1743974d90db498065757efadfd54f3"
+            },
+            "atomicKey": "s39.accessibility.current-state-and-primary-next-action-appear-before-long-detail-content-and-within-the-first-viewport-after-the-page-heading.component-1"
+          },
+          "provisionalNormativeRequirementId": "NREQ-b9d90b4bdbf399873a0f8a15ac6fea37",
+          "identityStatus": "PROPOSED_SPLIT_PENDING_GLOBAL_RECONCILIATION",
+          "proofDisposition": "UNKNOWN",
+          "sectionId": "39.12"
+        },
+        {
+          "entryKind": "ATOMIC_OBLIGATION",
+          "sourceLocation": {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 4152,
+            "endLine": 4152,
+            "lineSha256": "627990394c11973d7f67d12adfbab39aa1743974d90db498065757efadfd54f3"
+          },
+          "controllingText": "- current state and primary next action appear before long detail content and within the first viewport after the page heading.",
+          "atomicObligation": {
+            "key": "s39.accessibility.current-state-and-primary-next-action-appear-before-long-detail-content-and-within-the-first-viewport-after-the-page-heading.component-2",
+            "statement": "At 100% zoom current state and primary next action are within the first viewport after the page heading.",
+            "sourceSpans": [
+              {
+                "startByte": 227195,
+                "endByte": 227322,
+                "text": "- current state and primary next action appear before long detail content and within the first viewport after the page heading.",
+                "sha256": "627990394c11973d7f67d12adfbab39aa1743974d90db498065757efadfd54f3"
+              }
+            ],
+            "contextSourceLocations": [
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 3974,
+                "endLine": 3974,
+                "lineSha256": "1ab01ae83cd78704e028de0d1f6b8d07adaa063cf2d71a22aa4eb657b9514bd9",
+                "controllingText": "39. Operator interface"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 4138,
+                "endLine": 4138,
+                "lineSha256": "0d627e58aa8d4d479a3e0feb339bed7679580c5b9335f90511e1646287a7e020",
+                "controllingText": "39.12 Mobile and accessibility"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 4140,
+                "endLine": 4140,
+                "lineSha256": "be3ea505d14787390f46134d8dd985dd4e2185633e5339eeca349f1675f40213",
+                "controllingText": "Required viewport acceptance is:"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 4145,
+                "endLine": 4145,
+                "lineSha256": "5d6273a6bbae4b3bef0bd1fa01612416a79ca08ee8eaff149ad8dcfbda485c8f",
+                "controllingText": "At 100% browser zoom:"
+              }
+            ],
+            "sha256": "93136f0efc7aa63f62a4110183161c561d992dd5a30a4636e70bc85b2dc83dc4"
+          },
+          "candidateClass": "NORMATIVE_REQUIREMENT",
+          "reviewStatus": "TAIL_SOURCE_RECONCILED_PROVISIONAL_IDENTITY",
+          "normativeStrength": "MUST",
+          "provisionalBirthIdentity": {
+            "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+            "sourceAnchor": {
+              "line": 4152,
+              "lineSha256": "627990394c11973d7f67d12adfbab39aa1743974d90db498065757efadfd54f3"
+            },
+            "atomicKey": "s39.accessibility.current-state-and-primary-next-action-appear-before-long-detail-content-and-within-the-first-viewport-after-the-page-heading.component-2"
+          },
+          "provisionalNormativeRequirementId": "NREQ-f175f9d03e289f5cc0b48cb062fcc492",
+          "identityStatus": "PROPOSED_SPLIT_PENDING_GLOBAL_RECONCILIATION",
+          "proofDisposition": "UNKNOWN",
+          "sectionId": "39.12"
+        }
+      ],
+      "reason": "Actual source conjunction contains separately satisfiable duties despite one current primary scope; a one-primary shape cannot establish semantic singleton identity.",
+      "mappingInstruction": "Replace any candidate mapping to the old compound scope with both child keys unless the original candidate expressly covers only one child; preserve its exact source qualification."
+    },
+    {
+      "priorNormativeRequirementId": "NREQ-1bf19d7a1d02ef36764e3f0911877fb6",
+      "sourceLine": 5174,
+      "replaceAtomicKey": "s47.file.github-workflows-pages-yml.run-worker-and-security-tests",
+      "replacementEntries": [
+        {
+          "entryKind": "ATOMIC_OBLIGATION",
+          "sourceLocation": {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 5174,
+            "endLine": 5174,
+            "lineSha256": "b3ea77c323dad92d7cb23813f18e3ac46ffc3fbb8afb08de4f8341d6663af178"
+          },
+          "controllingText": "- run worker and security tests;",
+          "atomicObligation": {
+            "key": "s47.file.github-workflows-pages-yml.run-worker-and-security-tests.component-1",
+            "statement": "pages.yml runs worker tests.",
+            "sourceSpans": [
+              {
+                "startByte": 285656,
+                "endByte": 285688,
+                "text": "- run worker and security tests;",
+                "sha256": "b3ea77c323dad92d7cb23813f18e3ac46ffc3fbb8afb08de4f8341d6663af178"
+              }
+            ],
+            "contextSourceLocations": [
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 5027,
+                "endLine": 5027,
+                "lineSha256": "06dbfe388b0523bfcef7caaf27e050019b906c705134d282aa7ea232d9420164",
+                "controllingText": "47. Required implementation changes by file"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 5169,
+                "endLine": 5169,
+                "lineSha256": "267452bb53d388a7b14551d9fc53a797edc124dc9085ecc79f5339277a1e53b5",
+                "controllingText": ".github/workflows/pages.yml"
+              }
+            ],
+            "sha256": "d99ecc1e22c6da0ab7f623336b0748ed000f288aafd451c883c6436cabe29d52"
+          },
+          "candidateClass": "IMPLEMENTATION_OBLIGATION",
+          "reviewStatus": "TAIL_SOURCE_RECONCILED_PROVISIONAL_IDENTITY",
+          "normativeStrength": "MUST",
+          "provisionalBirthIdentity": {
+            "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+            "sourceAnchor": {
+              "line": 5174,
+              "lineSha256": "b3ea77c323dad92d7cb23813f18e3ac46ffc3fbb8afb08de4f8341d6663af178"
+            },
+            "atomicKey": "s47.file.github-workflows-pages-yml.run-worker-and-security-tests.component-1"
+          },
+          "provisionalNormativeRequirementId": "NREQ-7b4d062761508e45884bc3e82b78491b",
+          "identityStatus": "PROPOSED_SPLIT_PENDING_GLOBAL_RECONCILIATION",
+          "proofDisposition": "UNKNOWN",
+          "sectionId": "47"
+        },
+        {
+          "entryKind": "ATOMIC_OBLIGATION",
+          "sourceLocation": {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 5174,
+            "endLine": 5174,
+            "lineSha256": "b3ea77c323dad92d7cb23813f18e3ac46ffc3fbb8afb08de4f8341d6663af178"
+          },
+          "controllingText": "- run worker and security tests;",
+          "atomicObligation": {
+            "key": "s47.file.github-workflows-pages-yml.run-worker-and-security-tests.component-2",
+            "statement": "pages.yml runs security tests.",
+            "sourceSpans": [
+              {
+                "startByte": 285656,
+                "endByte": 285688,
+                "text": "- run worker and security tests;",
+                "sha256": "b3ea77c323dad92d7cb23813f18e3ac46ffc3fbb8afb08de4f8341d6663af178"
+              }
+            ],
+            "contextSourceLocations": [
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 5027,
+                "endLine": 5027,
+                "lineSha256": "06dbfe388b0523bfcef7caaf27e050019b906c705134d282aa7ea232d9420164",
+                "controllingText": "47. Required implementation changes by file"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 5169,
+                "endLine": 5169,
+                "lineSha256": "267452bb53d388a7b14551d9fc53a797edc124dc9085ecc79f5339277a1e53b5",
+                "controllingText": ".github/workflows/pages.yml"
+              }
+            ],
+            "sha256": "285300b4908c6e2f5030e380b91db541ca087f5a4dc2dba420a0d8ac1ddfa1dd"
+          },
+          "candidateClass": "IMPLEMENTATION_OBLIGATION",
+          "reviewStatus": "TAIL_SOURCE_RECONCILED_PROVISIONAL_IDENTITY",
+          "normativeStrength": "MUST",
+          "provisionalBirthIdentity": {
+            "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+            "sourceAnchor": {
+              "line": 5174,
+              "lineSha256": "b3ea77c323dad92d7cb23813f18e3ac46ffc3fbb8afb08de4f8341d6663af178"
+            },
+            "atomicKey": "s47.file.github-workflows-pages-yml.run-worker-and-security-tests.component-2"
+          },
+          "provisionalNormativeRequirementId": "NREQ-809b23abcee9fee062b4d7513a802c8b",
+          "identityStatus": "PROPOSED_SPLIT_PENDING_GLOBAL_RECONCILIATION",
+          "proofDisposition": "UNKNOWN",
+          "sectionId": "47"
+        }
+      ],
+      "reason": "Actual source conjunction contains separately satisfiable duties despite one current primary scope; a one-primary shape cannot establish semantic singleton identity.",
+      "mappingInstruction": "Replace any candidate mapping to the old compound scope with both child keys unless the original candidate expressly covers only one child; preserve its exact source qualification."
+    },
+    {
+      "priorNormativeRequirementId": "NREQ-08632d6ee82baf63bd7ef42a44dee682",
+      "sourceLine": 5600,
+      "replaceAtomicKey": "s51.preserve-correct-behavior.an-existing-testexecutionplan",
+      "replacementEntries": [
+        {
+          "entryKind": "ATOMIC_OBLIGATION",
+          "sourceLocation": {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 5600,
+            "endLine": 5600,
+            "lineSha256": "649abefb8c6df4db7ff52d619ab7d0255fc5558c7ec22065ae9aceab98583694"
+          },
+          "controllingText": "- an existing testExecutionPlan();",
+          "atomicObligation": {
+            "key": "s51.preserve-correct-behavior.an-existing-testexecutionplan.inspect",
+            "statement": "The implementation must inspect an existing testExecutionPlan().",
+            "sourceSpans": [
+              {
+                "startByte": 305964,
+                "endByte": 305998,
+                "text": "- an existing testExecutionPlan();",
+                "sha256": "649abefb8c6df4db7ff52d619ab7d0255fc5558c7ec22065ae9aceab98583694"
+              }
+            ],
+            "contextSourceLocations": [
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 5562,
+                "endLine": 5562,
+                "lineSha256": "286aa5902f426cc6ed54696c73ef7ea350f808fbdc9392a728ea2a5f0acd5c8b",
+                "controllingText": "51. Supplied-unverified historical evidence"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 5599,
+                "endLine": 5599,
+                "lineSha256": "ec0bd826c1fdaac8d94d4fb4a4b9a4fd8603e7e0531b068c97ca044083895a77",
+                "controllingText": "Supplied current behaviors that must be inspected and preserved when genuinely correct include:"
+              }
+            ],
+            "sha256": "46bc9e35cb262095627160bc4657cb4d84d5ec5da5ac11ee9cac6f931a3aa951"
+          },
+          "candidateClass": "IMPLEMENTATION_OBLIGATION",
+          "reviewStatus": "TAIL_SOURCE_RECONCILED_PROVISIONAL_IDENTITY",
+          "normativeStrength": "MUST",
+          "provisionalBirthIdentity": {
+            "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+            "sourceAnchor": {
+              "line": 5600,
+              "lineSha256": "649abefb8c6df4db7ff52d619ab7d0255fc5558c7ec22065ae9aceab98583694"
+            },
+            "atomicKey": "s51.preserve-correct-behavior.an-existing-testexecutionplan.inspect"
+          },
+          "provisionalNormativeRequirementId": "NREQ-7c8a44674301d229db32e4848f2f27be",
+          "identityStatus": "PROPOSED_SPLIT_PENDING_GLOBAL_RECONCILIATION",
+          "proofDisposition": "UNKNOWN",
+          "sectionId": "51"
+        },
+        {
+          "entryKind": "ATOMIC_OBLIGATION",
+          "sourceLocation": {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 5600,
+            "endLine": 5600,
+            "lineSha256": "649abefb8c6df4db7ff52d619ab7d0255fc5558c7ec22065ae9aceab98583694"
+          },
+          "controllingText": "- an existing testExecutionPlan();",
+          "atomicObligation": {
+            "key": "s51.preserve-correct-behavior.an-existing-testexecutionplan.preserve-if-correct",
+            "statement": "When inspection establishes an existing testExecutionPlan() is genuinely correct, the implementation must preserve it.",
+            "sourceSpans": [
+              {
+                "startByte": 305964,
+                "endByte": 305998,
+                "text": "- an existing testExecutionPlan();",
+                "sha256": "649abefb8c6df4db7ff52d619ab7d0255fc5558c7ec22065ae9aceab98583694"
+              }
+            ],
+            "contextSourceLocations": [
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 5562,
+                "endLine": 5562,
+                "lineSha256": "286aa5902f426cc6ed54696c73ef7ea350f808fbdc9392a728ea2a5f0acd5c8b",
+                "controllingText": "51. Supplied-unverified historical evidence"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 5599,
+                "endLine": 5599,
+                "lineSha256": "ec0bd826c1fdaac8d94d4fb4a4b9a4fd8603e7e0531b068c97ca044083895a77",
+                "controllingText": "Supplied current behaviors that must be inspected and preserved when genuinely correct include:"
+              }
+            ],
+            "sha256": "f25487dec822c085bf0d42fab0f28b53290eec129bfe4a96d6860bb2f819bd5b"
+          },
+          "candidateClass": "IMPLEMENTATION_OBLIGATION",
+          "reviewStatus": "TAIL_SOURCE_RECONCILED_PROVISIONAL_IDENTITY",
+          "normativeStrength": "MUST",
+          "provisionalBirthIdentity": {
+            "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+            "sourceAnchor": {
+              "line": 5600,
+              "lineSha256": "649abefb8c6df4db7ff52d619ab7d0255fc5558c7ec22065ae9aceab98583694"
+            },
+            "atomicKey": "s51.preserve-correct-behavior.an-existing-testexecutionplan.preserve-if-correct"
+          },
+          "provisionalNormativeRequirementId": "NREQ-7feadf5df3b59ffb41586f960b9be34a",
+          "identityStatus": "PROPOSED_SPLIT_PENDING_GLOBAL_RECONCILIATION",
+          "proofDisposition": "UNKNOWN",
+          "sectionId": "51"
+        }
+      ],
+      "reason": "Actual source conjunction contains separately satisfiable duties despite one current primary scope; a one-primary shape cannot establish semantic singleton identity.",
+      "mappingInstruction": "Replace any candidate mapping to the old compound scope with both child keys unless the original candidate expressly covers only one child; preserve its exact source qualification."
+    },
+    {
+      "priorNormativeRequirementId": "NREQ-b55cebb604fc2b0daf07fa8694500f0b",
+      "sourceLine": 5601,
+      "replaceAtomicKey": "s51.preserve-correct-behavior.rejection-of-unsupported-application-deterministic",
+      "replacementEntries": [
+        {
+          "entryKind": "ATOMIC_OBLIGATION",
+          "sourceLocation": {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 5601,
+            "endLine": 5601,
+            "lineSha256": "9fa43f0aa6ae888262b2661523ddc15b1b862a1b980190596988b68cf2ce1be0"
+          },
+          "controllingText": "- rejection of unsupported APPLICATION_DETERMINISTIC;",
+          "atomicObligation": {
+            "key": "s51.preserve-correct-behavior.rejection-of-unsupported-application-deterministic.inspect",
+            "statement": "The implementation must inspect rejection of unsupported APPLICATION_DETERMINISTIC.",
+            "sourceSpans": [
+              {
+                "startByte": 305999,
+                "endByte": 306052,
+                "text": "- rejection of unsupported APPLICATION_DETERMINISTIC;",
+                "sha256": "9fa43f0aa6ae888262b2661523ddc15b1b862a1b980190596988b68cf2ce1be0"
+              }
+            ],
+            "contextSourceLocations": [
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 5562,
+                "endLine": 5562,
+                "lineSha256": "286aa5902f426cc6ed54696c73ef7ea350f808fbdc9392a728ea2a5f0acd5c8b",
+                "controllingText": "51. Supplied-unverified historical evidence"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 5599,
+                "endLine": 5599,
+                "lineSha256": "ec0bd826c1fdaac8d94d4fb4a4b9a4fd8603e7e0531b068c97ca044083895a77",
+                "controllingText": "Supplied current behaviors that must be inspected and preserved when genuinely correct include:"
+              }
+            ],
+            "sha256": "bbc98eae45afc1a53b10e503582af47124de2b5489fbcfffc916ce845c0da70f"
+          },
+          "candidateClass": "IMPLEMENTATION_OBLIGATION",
+          "reviewStatus": "TAIL_SOURCE_RECONCILED_PROVISIONAL_IDENTITY",
+          "normativeStrength": "MUST",
+          "provisionalBirthIdentity": {
+            "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+            "sourceAnchor": {
+              "line": 5601,
+              "lineSha256": "9fa43f0aa6ae888262b2661523ddc15b1b862a1b980190596988b68cf2ce1be0"
+            },
+            "atomicKey": "s51.preserve-correct-behavior.rejection-of-unsupported-application-deterministic.inspect"
+          },
+          "provisionalNormativeRequirementId": "NREQ-f8658efcaac80bdd3d37b0a78352c3d6",
+          "identityStatus": "PROPOSED_SPLIT_PENDING_GLOBAL_RECONCILIATION",
+          "proofDisposition": "UNKNOWN",
+          "sectionId": "51"
+        },
+        {
+          "entryKind": "ATOMIC_OBLIGATION",
+          "sourceLocation": {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 5601,
+            "endLine": 5601,
+            "lineSha256": "9fa43f0aa6ae888262b2661523ddc15b1b862a1b980190596988b68cf2ce1be0"
+          },
+          "controllingText": "- rejection of unsupported APPLICATION_DETERMINISTIC;",
+          "atomicObligation": {
+            "key": "s51.preserve-correct-behavior.rejection-of-unsupported-application-deterministic.preserve-if-correct",
+            "statement": "When inspection establishes rejection of unsupported APPLICATION_DETERMINISTIC is genuinely correct, the implementation must preserve it.",
+            "sourceSpans": [
+              {
+                "startByte": 305999,
+                "endByte": 306052,
+                "text": "- rejection of unsupported APPLICATION_DETERMINISTIC;",
+                "sha256": "9fa43f0aa6ae888262b2661523ddc15b1b862a1b980190596988b68cf2ce1be0"
+              }
+            ],
+            "contextSourceLocations": [
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 5562,
+                "endLine": 5562,
+                "lineSha256": "286aa5902f426cc6ed54696c73ef7ea350f808fbdc9392a728ea2a5f0acd5c8b",
+                "controllingText": "51. Supplied-unverified historical evidence"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 5599,
+                "endLine": 5599,
+                "lineSha256": "ec0bd826c1fdaac8d94d4fb4a4b9a4fd8603e7e0531b068c97ca044083895a77",
+                "controllingText": "Supplied current behaviors that must be inspected and preserved when genuinely correct include:"
+              }
+            ],
+            "sha256": "98824c27772466a40154de92bf0ff2568e42e924f098e51d940a6fc3f6cfdbfa"
+          },
+          "candidateClass": "IMPLEMENTATION_OBLIGATION",
+          "reviewStatus": "TAIL_SOURCE_RECONCILED_PROVISIONAL_IDENTITY",
+          "normativeStrength": "MUST",
+          "provisionalBirthIdentity": {
+            "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+            "sourceAnchor": {
+              "line": 5601,
+              "lineSha256": "9fa43f0aa6ae888262b2661523ddc15b1b862a1b980190596988b68cf2ce1be0"
+            },
+            "atomicKey": "s51.preserve-correct-behavior.rejection-of-unsupported-application-deterministic.preserve-if-correct"
+          },
+          "provisionalNormativeRequirementId": "NREQ-8727749f498be53fa72d245dbbf8d31f",
+          "identityStatus": "PROPOSED_SPLIT_PENDING_GLOBAL_RECONCILIATION",
+          "proofDisposition": "UNKNOWN",
+          "sectionId": "51"
+        }
+      ],
+      "reason": "Actual source conjunction contains separately satisfiable duties despite one current primary scope; a one-primary shape cannot establish semantic singleton identity.",
+      "mappingInstruction": "Replace any candidate mapping to the old compound scope with both child keys unless the original candidate expressly covers only one child; preserve its exact source qualification."
+    },
+    {
+      "priorNormativeRequirementId": "NREQ-caddd9d16fa6b32222c8f9a49ddbd1a3",
+      "sourceLine": 5602,
+      "replaceAtomicKey": "s51.preserve-correct-behavior.stage-06-failure-on-unavailable-mandatory-capability",
+      "replacementEntries": [
+        {
+          "entryKind": "ATOMIC_OBLIGATION",
+          "sourceLocation": {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 5602,
+            "endLine": 5602,
+            "lineSha256": "37b4a04dd63987bc0feb7699c1915485736ead8d9e41f3e84d69a47f6d98c13d"
+          },
+          "controllingText": "- Stage 06 failure on unavailable mandatory capability;",
+          "atomicObligation": {
+            "key": "s51.preserve-correct-behavior.stage-06-failure-on-unavailable-mandatory-capability.inspect",
+            "statement": "The implementation must inspect Stage 06 failure on unavailable mandatory capability.",
+            "sourceSpans": [
+              {
+                "startByte": 306053,
+                "endByte": 306108,
+                "text": "- Stage 06 failure on unavailable mandatory capability;",
+                "sha256": "37b4a04dd63987bc0feb7699c1915485736ead8d9e41f3e84d69a47f6d98c13d"
+              }
+            ],
+            "contextSourceLocations": [
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 5562,
+                "endLine": 5562,
+                "lineSha256": "286aa5902f426cc6ed54696c73ef7ea350f808fbdc9392a728ea2a5f0acd5c8b",
+                "controllingText": "51. Supplied-unverified historical evidence"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 5599,
+                "endLine": 5599,
+                "lineSha256": "ec0bd826c1fdaac8d94d4fb4a4b9a4fd8603e7e0531b068c97ca044083895a77",
+                "controllingText": "Supplied current behaviors that must be inspected and preserved when genuinely correct include:"
+              }
+            ],
+            "sha256": "645e0ded1f56551dd6f71f85f46cae29a5e14b320db6e687f8d91bb87cad20b3"
+          },
+          "candidateClass": "IMPLEMENTATION_OBLIGATION",
+          "reviewStatus": "TAIL_SOURCE_RECONCILED_PROVISIONAL_IDENTITY",
+          "normativeStrength": "MUST",
+          "provisionalBirthIdentity": {
+            "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+            "sourceAnchor": {
+              "line": 5602,
+              "lineSha256": "37b4a04dd63987bc0feb7699c1915485736ead8d9e41f3e84d69a47f6d98c13d"
+            },
+            "atomicKey": "s51.preserve-correct-behavior.stage-06-failure-on-unavailable-mandatory-capability.inspect"
+          },
+          "provisionalNormativeRequirementId": "NREQ-0fe50cba2ce95d132d0b77be101959a5",
+          "identityStatus": "PROPOSED_SPLIT_PENDING_GLOBAL_RECONCILIATION",
+          "proofDisposition": "UNKNOWN",
+          "sectionId": "51"
+        },
+        {
+          "entryKind": "ATOMIC_OBLIGATION",
+          "sourceLocation": {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 5602,
+            "endLine": 5602,
+            "lineSha256": "37b4a04dd63987bc0feb7699c1915485736ead8d9e41f3e84d69a47f6d98c13d"
+          },
+          "controllingText": "- Stage 06 failure on unavailable mandatory capability;",
+          "atomicObligation": {
+            "key": "s51.preserve-correct-behavior.stage-06-failure-on-unavailable-mandatory-capability.preserve-if-correct",
+            "statement": "When inspection establishes Stage 06 failure on unavailable mandatory capability is genuinely correct, the implementation must preserve it.",
+            "sourceSpans": [
+              {
+                "startByte": 306053,
+                "endByte": 306108,
+                "text": "- Stage 06 failure on unavailable mandatory capability;",
+                "sha256": "37b4a04dd63987bc0feb7699c1915485736ead8d9e41f3e84d69a47f6d98c13d"
+              }
+            ],
+            "contextSourceLocations": [
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 5562,
+                "endLine": 5562,
+                "lineSha256": "286aa5902f426cc6ed54696c73ef7ea350f808fbdc9392a728ea2a5f0acd5c8b",
+                "controllingText": "51. Supplied-unverified historical evidence"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 5599,
+                "endLine": 5599,
+                "lineSha256": "ec0bd826c1fdaac8d94d4fb4a4b9a4fd8603e7e0531b068c97ca044083895a77",
+                "controllingText": "Supplied current behaviors that must be inspected and preserved when genuinely correct include:"
+              }
+            ],
+            "sha256": "7f72c6e7001f8e2fb6aab3202112688e28f061ee35ec09535c8eab8b4443b5f4"
+          },
+          "candidateClass": "IMPLEMENTATION_OBLIGATION",
+          "reviewStatus": "TAIL_SOURCE_RECONCILED_PROVISIONAL_IDENTITY",
+          "normativeStrength": "MUST",
+          "provisionalBirthIdentity": {
+            "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+            "sourceAnchor": {
+              "line": 5602,
+              "lineSha256": "37b4a04dd63987bc0feb7699c1915485736ead8d9e41f3e84d69a47f6d98c13d"
+            },
+            "atomicKey": "s51.preserve-correct-behavior.stage-06-failure-on-unavailable-mandatory-capability.preserve-if-correct"
+          },
+          "provisionalNormativeRequirementId": "NREQ-ed6896c0cd6c06840bc767a00c9add3b",
+          "identityStatus": "PROPOSED_SPLIT_PENDING_GLOBAL_RECONCILIATION",
+          "proofDisposition": "UNKNOWN",
+          "sectionId": "51"
+        }
+      ],
+      "reason": "Actual source conjunction contains separately satisfiable duties despite one current primary scope; a one-primary shape cannot establish semantic singleton identity.",
+      "mappingInstruction": "Replace any candidate mapping to the old compound scope with both child keys unless the original candidate expressly covers only one child; preserve its exact source qualification."
+    },
+    {
+      "priorNormativeRequirementId": "NREQ-60ba6297c91b81ec4507af130648879e",
+      "sourceLine": 5603,
+      "replaceAtomicKey": "s51.preserve-correct-behavior.verified-artifact-custody-checks",
+      "replacementEntries": [
+        {
+          "entryKind": "ATOMIC_OBLIGATION",
+          "sourceLocation": {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 5603,
+            "endLine": 5603,
+            "lineSha256": "c83fb68ed25149cf9a857d2d2a5361af6eee2f58b4ef9c220a5b9c929a0e2a80"
+          },
+          "controllingText": "- verified artifact-custody checks;",
+          "atomicObligation": {
+            "key": "s51.preserve-correct-behavior.verified-artifact-custody-checks.inspect",
+            "statement": "The implementation must inspect verified artifact-custody checks.",
+            "sourceSpans": [
+              {
+                "startByte": 306109,
+                "endByte": 306144,
+                "text": "- verified artifact-custody checks;",
+                "sha256": "c83fb68ed25149cf9a857d2d2a5361af6eee2f58b4ef9c220a5b9c929a0e2a80"
+              }
+            ],
+            "contextSourceLocations": [
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 5562,
+                "endLine": 5562,
+                "lineSha256": "286aa5902f426cc6ed54696c73ef7ea350f808fbdc9392a728ea2a5f0acd5c8b",
+                "controllingText": "51. Supplied-unverified historical evidence"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 5599,
+                "endLine": 5599,
+                "lineSha256": "ec0bd826c1fdaac8d94d4fb4a4b9a4fd8603e7e0531b068c97ca044083895a77",
+                "controllingText": "Supplied current behaviors that must be inspected and preserved when genuinely correct include:"
+              }
+            ],
+            "sha256": "3ed21c038a34bd3a1af19d104b99ddff5379165c7d19e788d1877bdf80754b98"
+          },
+          "candidateClass": "IMPLEMENTATION_OBLIGATION",
+          "reviewStatus": "TAIL_SOURCE_RECONCILED_PROVISIONAL_IDENTITY",
+          "normativeStrength": "MUST",
+          "provisionalBirthIdentity": {
+            "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+            "sourceAnchor": {
+              "line": 5603,
+              "lineSha256": "c83fb68ed25149cf9a857d2d2a5361af6eee2f58b4ef9c220a5b9c929a0e2a80"
+            },
+            "atomicKey": "s51.preserve-correct-behavior.verified-artifact-custody-checks.inspect"
+          },
+          "provisionalNormativeRequirementId": "NREQ-9a8483d2138fb80ac89a606cf2948560",
+          "identityStatus": "PROPOSED_SPLIT_PENDING_GLOBAL_RECONCILIATION",
+          "proofDisposition": "UNKNOWN",
+          "sectionId": "51"
+        },
+        {
+          "entryKind": "ATOMIC_OBLIGATION",
+          "sourceLocation": {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 5603,
+            "endLine": 5603,
+            "lineSha256": "c83fb68ed25149cf9a857d2d2a5361af6eee2f58b4ef9c220a5b9c929a0e2a80"
+          },
+          "controllingText": "- verified artifact-custody checks;",
+          "atomicObligation": {
+            "key": "s51.preserve-correct-behavior.verified-artifact-custody-checks.preserve-if-correct",
+            "statement": "When inspection establishes verified artifact-custody checks is genuinely correct, the implementation must preserve it.",
+            "sourceSpans": [
+              {
+                "startByte": 306109,
+                "endByte": 306144,
+                "text": "- verified artifact-custody checks;",
+                "sha256": "c83fb68ed25149cf9a857d2d2a5361af6eee2f58b4ef9c220a5b9c929a0e2a80"
+              }
+            ],
+            "contextSourceLocations": [
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 5562,
+                "endLine": 5562,
+                "lineSha256": "286aa5902f426cc6ed54696c73ef7ea350f808fbdc9392a728ea2a5f0acd5c8b",
+                "controllingText": "51. Supplied-unverified historical evidence"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 5599,
+                "endLine": 5599,
+                "lineSha256": "ec0bd826c1fdaac8d94d4fb4a4b9a4fd8603e7e0531b068c97ca044083895a77",
+                "controllingText": "Supplied current behaviors that must be inspected and preserved when genuinely correct include:"
+              }
+            ],
+            "sha256": "7b7baf61e19ef8bcdaf6b73c4551f502bda4ac7a90a06448afe12eeb4b059d1e"
+          },
+          "candidateClass": "IMPLEMENTATION_OBLIGATION",
+          "reviewStatus": "TAIL_SOURCE_RECONCILED_PROVISIONAL_IDENTITY",
+          "normativeStrength": "MUST",
+          "provisionalBirthIdentity": {
+            "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+            "sourceAnchor": {
+              "line": 5603,
+              "lineSha256": "c83fb68ed25149cf9a857d2d2a5361af6eee2f58b4ef9c220a5b9c929a0e2a80"
+            },
+            "atomicKey": "s51.preserve-correct-behavior.verified-artifact-custody-checks.preserve-if-correct"
+          },
+          "provisionalNormativeRequirementId": "NREQ-efd905423579cd7c62d2b342acd88fb9",
+          "identityStatus": "PROPOSED_SPLIT_PENDING_GLOBAL_RECONCILIATION",
+          "proofDisposition": "UNKNOWN",
+          "sectionId": "51"
+        }
+      ],
+      "reason": "Actual source conjunction contains separately satisfiable duties despite one current primary scope; a one-primary shape cannot establish semantic singleton identity.",
+      "mappingInstruction": "Replace any candidate mapping to the old compound scope with both child keys unless the original candidate expressly covers only one child; preserve its exact source qualification."
+    },
+    {
+      "priorNormativeRequirementId": "NREQ-fdaad5b1244de56386110c3e31e6fe75",
+      "sourceLine": 5604,
+      "replaceAtomicKey": "s51.preserve-correct-behavior.run-contamination-prompt-rules",
+      "replacementEntries": [
+        {
+          "entryKind": "ATOMIC_OBLIGATION",
+          "sourceLocation": {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 5604,
+            "endLine": 5604,
+            "lineSha256": "2e5345d026e551d94b12f133db43359e2fa8a2baa4c48e52f3c2b620a6d28dfa"
+          },
+          "controllingText": "- run-contamination prompt rules;",
+          "atomicObligation": {
+            "key": "s51.preserve-correct-behavior.run-contamination-prompt-rules.inspect",
+            "statement": "The implementation must inspect run-contamination prompt rules.",
+            "sourceSpans": [
+              {
+                "startByte": 306145,
+                "endByte": 306178,
+                "text": "- run-contamination prompt rules;",
+                "sha256": "2e5345d026e551d94b12f133db43359e2fa8a2baa4c48e52f3c2b620a6d28dfa"
+              }
+            ],
+            "contextSourceLocations": [
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 5562,
+                "endLine": 5562,
+                "lineSha256": "286aa5902f426cc6ed54696c73ef7ea350f808fbdc9392a728ea2a5f0acd5c8b",
+                "controllingText": "51. Supplied-unverified historical evidence"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 5599,
+                "endLine": 5599,
+                "lineSha256": "ec0bd826c1fdaac8d94d4fb4a4b9a4fd8603e7e0531b068c97ca044083895a77",
+                "controllingText": "Supplied current behaviors that must be inspected and preserved when genuinely correct include:"
+              }
+            ],
+            "sha256": "2021e0214727fa07f9e83bb9ff49eeae21bdd018a8973da18e27efa27bb70a30"
+          },
+          "candidateClass": "IMPLEMENTATION_OBLIGATION",
+          "reviewStatus": "TAIL_SOURCE_RECONCILED_PROVISIONAL_IDENTITY",
+          "normativeStrength": "MUST",
+          "provisionalBirthIdentity": {
+            "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+            "sourceAnchor": {
+              "line": 5604,
+              "lineSha256": "2e5345d026e551d94b12f133db43359e2fa8a2baa4c48e52f3c2b620a6d28dfa"
+            },
+            "atomicKey": "s51.preserve-correct-behavior.run-contamination-prompt-rules.inspect"
+          },
+          "provisionalNormativeRequirementId": "NREQ-9174d390e3051dac23cf7e9eb24ca300",
+          "identityStatus": "PROPOSED_SPLIT_PENDING_GLOBAL_RECONCILIATION",
+          "proofDisposition": "UNKNOWN",
+          "sectionId": "51"
+        },
+        {
+          "entryKind": "ATOMIC_OBLIGATION",
+          "sourceLocation": {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 5604,
+            "endLine": 5604,
+            "lineSha256": "2e5345d026e551d94b12f133db43359e2fa8a2baa4c48e52f3c2b620a6d28dfa"
+          },
+          "controllingText": "- run-contamination prompt rules;",
+          "atomicObligation": {
+            "key": "s51.preserve-correct-behavior.run-contamination-prompt-rules.preserve-if-correct",
+            "statement": "When inspection establishes run-contamination prompt rules is genuinely correct, the implementation must preserve it.",
+            "sourceSpans": [
+              {
+                "startByte": 306145,
+                "endByte": 306178,
+                "text": "- run-contamination prompt rules;",
+                "sha256": "2e5345d026e551d94b12f133db43359e2fa8a2baa4c48e52f3c2b620a6d28dfa"
+              }
+            ],
+            "contextSourceLocations": [
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 5562,
+                "endLine": 5562,
+                "lineSha256": "286aa5902f426cc6ed54696c73ef7ea350f808fbdc9392a728ea2a5f0acd5c8b",
+                "controllingText": "51. Supplied-unverified historical evidence"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 5599,
+                "endLine": 5599,
+                "lineSha256": "ec0bd826c1fdaac8d94d4fb4a4b9a4fd8603e7e0531b068c97ca044083895a77",
+                "controllingText": "Supplied current behaviors that must be inspected and preserved when genuinely correct include:"
+              }
+            ],
+            "sha256": "ea836844c2b4ed42b91f5d1b6451da2bfd74d9e4bd3a05b9221a616e24c34639"
+          },
+          "candidateClass": "IMPLEMENTATION_OBLIGATION",
+          "reviewStatus": "TAIL_SOURCE_RECONCILED_PROVISIONAL_IDENTITY",
+          "normativeStrength": "MUST",
+          "provisionalBirthIdentity": {
+            "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+            "sourceAnchor": {
+              "line": 5604,
+              "lineSha256": "2e5345d026e551d94b12f133db43359e2fa8a2baa4c48e52f3c2b620a6d28dfa"
+            },
+            "atomicKey": "s51.preserve-correct-behavior.run-contamination-prompt-rules.preserve-if-correct"
+          },
+          "provisionalNormativeRequirementId": "NREQ-cd7dc9b49ddb5b18ed846930b1f5f0e5",
+          "identityStatus": "PROPOSED_SPLIT_PENDING_GLOBAL_RECONCILIATION",
+          "proofDisposition": "UNKNOWN",
+          "sectionId": "51"
+        }
+      ],
+      "reason": "Actual source conjunction contains separately satisfiable duties despite one current primary scope; a one-primary shape cannot establish semantic singleton identity.",
+      "mappingInstruction": "Replace any candidate mapping to the old compound scope with both child keys unless the original candidate expressly covers only one child; preserve its exact source qualification."
+    },
+    {
+      "priorNormativeRequirementId": "NREQ-9c8cf7d102548e374a570391feef101c",
+      "sourceLine": 5605,
+      "replaceAtomicKey": "s51.preserve-correct-behavior.stage-12-independence-rules",
+      "replacementEntries": [
+        {
+          "entryKind": "ATOMIC_OBLIGATION",
+          "sourceLocation": {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 5605,
+            "endLine": 5605,
+            "lineSha256": "35125c7609a97c68e1641fbd750bf6b6873d51f787810844f026405f02ea5fd0"
+          },
+          "controllingText": "- Stage 12 independence rules;",
+          "atomicObligation": {
+            "key": "s51.preserve-correct-behavior.stage-12-independence-rules.inspect",
+            "statement": "The implementation must inspect Stage 12 independence rules.",
+            "sourceSpans": [
+              {
+                "startByte": 306179,
+                "endByte": 306209,
+                "text": "- Stage 12 independence rules;",
+                "sha256": "35125c7609a97c68e1641fbd750bf6b6873d51f787810844f026405f02ea5fd0"
+              }
+            ],
+            "contextSourceLocations": [
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 5562,
+                "endLine": 5562,
+                "lineSha256": "286aa5902f426cc6ed54696c73ef7ea350f808fbdc9392a728ea2a5f0acd5c8b",
+                "controllingText": "51. Supplied-unverified historical evidence"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 5599,
+                "endLine": 5599,
+                "lineSha256": "ec0bd826c1fdaac8d94d4fb4a4b9a4fd8603e7e0531b068c97ca044083895a77",
+                "controllingText": "Supplied current behaviors that must be inspected and preserved when genuinely correct include:"
+              }
+            ],
+            "sha256": "bac3bd20e70128f64f0a3f609631c859cc81f29dd3d497047a452a9505288f20"
+          },
+          "candidateClass": "IMPLEMENTATION_OBLIGATION",
+          "reviewStatus": "TAIL_SOURCE_RECONCILED_PROVISIONAL_IDENTITY",
+          "normativeStrength": "MUST",
+          "provisionalBirthIdentity": {
+            "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+            "sourceAnchor": {
+              "line": 5605,
+              "lineSha256": "35125c7609a97c68e1641fbd750bf6b6873d51f787810844f026405f02ea5fd0"
+            },
+            "atomicKey": "s51.preserve-correct-behavior.stage-12-independence-rules.inspect"
+          },
+          "provisionalNormativeRequirementId": "NREQ-e26dd4f8e256025038c200ffeb0856ec",
+          "identityStatus": "PROPOSED_SPLIT_PENDING_GLOBAL_RECONCILIATION",
+          "proofDisposition": "UNKNOWN",
+          "sectionId": "51"
+        },
+        {
+          "entryKind": "ATOMIC_OBLIGATION",
+          "sourceLocation": {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 5605,
+            "endLine": 5605,
+            "lineSha256": "35125c7609a97c68e1641fbd750bf6b6873d51f787810844f026405f02ea5fd0"
+          },
+          "controllingText": "- Stage 12 independence rules;",
+          "atomicObligation": {
+            "key": "s51.preserve-correct-behavior.stage-12-independence-rules.preserve-if-correct",
+            "statement": "When inspection establishes Stage 12 independence rules is genuinely correct, the implementation must preserve it.",
+            "sourceSpans": [
+              {
+                "startByte": 306179,
+                "endByte": 306209,
+                "text": "- Stage 12 independence rules;",
+                "sha256": "35125c7609a97c68e1641fbd750bf6b6873d51f787810844f026405f02ea5fd0"
+              }
+            ],
+            "contextSourceLocations": [
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 5562,
+                "endLine": 5562,
+                "lineSha256": "286aa5902f426cc6ed54696c73ef7ea350f808fbdc9392a728ea2a5f0acd5c8b",
+                "controllingText": "51. Supplied-unverified historical evidence"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 5599,
+                "endLine": 5599,
+                "lineSha256": "ec0bd826c1fdaac8d94d4fb4a4b9a4fd8603e7e0531b068c97ca044083895a77",
+                "controllingText": "Supplied current behaviors that must be inspected and preserved when genuinely correct include:"
+              }
+            ],
+            "sha256": "7c8825050f2aaaa73440b252152de09ddc29638157ed043496d95e3cd999872b"
+          },
+          "candidateClass": "IMPLEMENTATION_OBLIGATION",
+          "reviewStatus": "TAIL_SOURCE_RECONCILED_PROVISIONAL_IDENTITY",
+          "normativeStrength": "MUST",
+          "provisionalBirthIdentity": {
+            "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+            "sourceAnchor": {
+              "line": 5605,
+              "lineSha256": "35125c7609a97c68e1641fbd750bf6b6873d51f787810844f026405f02ea5fd0"
+            },
+            "atomicKey": "s51.preserve-correct-behavior.stage-12-independence-rules.preserve-if-correct"
+          },
+          "provisionalNormativeRequirementId": "NREQ-1f33ecfb98e21dd8c422e014235d985b",
+          "identityStatus": "PROPOSED_SPLIT_PENDING_GLOBAL_RECONCILIATION",
+          "proofDisposition": "UNKNOWN",
+          "sectionId": "51"
+        }
+      ],
+      "reason": "Actual source conjunction contains separately satisfiable duties despite one current primary scope; a one-primary shape cannot establish semantic singleton identity.",
+      "mappingInstruction": "Replace any candidate mapping to the old compound scope with both child keys unless the original candidate expressly covers only one child; preserve its exact source qualification."
+    },
+    {
+      "priorNormativeRequirementId": "NREQ-15b6cf1047c4e4c23ca198152c69a37d",
+      "sourceLine": 5606,
+      "replaceAtomicKey": "s51.preserve-correct-behavior.raw-first-ingestion",
+      "replacementEntries": [
+        {
+          "entryKind": "ATOMIC_OBLIGATION",
+          "sourceLocation": {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 5606,
+            "endLine": 5606,
+            "lineSha256": "746c4dd7b630c03fa53a9d97df8e4768b98f008b632e4e0a6bcf018c207dd699"
+          },
+          "controllingText": "- raw-first ingestion;",
+          "atomicObligation": {
+            "key": "s51.preserve-correct-behavior.raw-first-ingestion.inspect",
+            "statement": "The implementation must inspect raw-first ingestion.",
+            "sourceSpans": [
+              {
+                "startByte": 306210,
+                "endByte": 306232,
+                "text": "- raw-first ingestion;",
+                "sha256": "746c4dd7b630c03fa53a9d97df8e4768b98f008b632e4e0a6bcf018c207dd699"
+              }
+            ],
+            "contextSourceLocations": [
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 5562,
+                "endLine": 5562,
+                "lineSha256": "286aa5902f426cc6ed54696c73ef7ea350f808fbdc9392a728ea2a5f0acd5c8b",
+                "controllingText": "51. Supplied-unverified historical evidence"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 5599,
+                "endLine": 5599,
+                "lineSha256": "ec0bd826c1fdaac8d94d4fb4a4b9a4fd8603e7e0531b068c97ca044083895a77",
+                "controllingText": "Supplied current behaviors that must be inspected and preserved when genuinely correct include:"
+              }
+            ],
+            "sha256": "fe06da4dee9799b1fe31c28e30d54aa667ee916efc171690bb360976cb1f2657"
+          },
+          "candidateClass": "IMPLEMENTATION_OBLIGATION",
+          "reviewStatus": "TAIL_SOURCE_RECONCILED_PROVISIONAL_IDENTITY",
+          "normativeStrength": "MUST",
+          "provisionalBirthIdentity": {
+            "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+            "sourceAnchor": {
+              "line": 5606,
+              "lineSha256": "746c4dd7b630c03fa53a9d97df8e4768b98f008b632e4e0a6bcf018c207dd699"
+            },
+            "atomicKey": "s51.preserve-correct-behavior.raw-first-ingestion.inspect"
+          },
+          "provisionalNormativeRequirementId": "NREQ-562188070f1dfd28720d5a6255fecf9e",
+          "identityStatus": "PROPOSED_SPLIT_PENDING_GLOBAL_RECONCILIATION",
+          "proofDisposition": "UNKNOWN",
+          "sectionId": "51"
+        },
+        {
+          "entryKind": "ATOMIC_OBLIGATION",
+          "sourceLocation": {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 5606,
+            "endLine": 5606,
+            "lineSha256": "746c4dd7b630c03fa53a9d97df8e4768b98f008b632e4e0a6bcf018c207dd699"
+          },
+          "controllingText": "- raw-first ingestion;",
+          "atomicObligation": {
+            "key": "s51.preserve-correct-behavior.raw-first-ingestion.preserve-if-correct",
+            "statement": "When inspection establishes raw-first ingestion is genuinely correct, the implementation must preserve it.",
+            "sourceSpans": [
+              {
+                "startByte": 306210,
+                "endByte": 306232,
+                "text": "- raw-first ingestion;",
+                "sha256": "746c4dd7b630c03fa53a9d97df8e4768b98f008b632e4e0a6bcf018c207dd699"
+              }
+            ],
+            "contextSourceLocations": [
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 5562,
+                "endLine": 5562,
+                "lineSha256": "286aa5902f426cc6ed54696c73ef7ea350f808fbdc9392a728ea2a5f0acd5c8b",
+                "controllingText": "51. Supplied-unverified historical evidence"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 5599,
+                "endLine": 5599,
+                "lineSha256": "ec0bd826c1fdaac8d94d4fb4a4b9a4fd8603e7e0531b068c97ca044083895a77",
+                "controllingText": "Supplied current behaviors that must be inspected and preserved when genuinely correct include:"
+              }
+            ],
+            "sha256": "7e702d663145a163cc57a1e3612c2e8a5c5a6923c64cd96466267cce03ce2dbb"
+          },
+          "candidateClass": "IMPLEMENTATION_OBLIGATION",
+          "reviewStatus": "TAIL_SOURCE_RECONCILED_PROVISIONAL_IDENTITY",
+          "normativeStrength": "MUST",
+          "provisionalBirthIdentity": {
+            "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+            "sourceAnchor": {
+              "line": 5606,
+              "lineSha256": "746c4dd7b630c03fa53a9d97df8e4768b98f008b632e4e0a6bcf018c207dd699"
+            },
+            "atomicKey": "s51.preserve-correct-behavior.raw-first-ingestion.preserve-if-correct"
+          },
+          "provisionalNormativeRequirementId": "NREQ-3d02e745ca11f7ebfc21d19039d5f8da",
+          "identityStatus": "PROPOSED_SPLIT_PENDING_GLOBAL_RECONCILIATION",
+          "proofDisposition": "UNKNOWN",
+          "sectionId": "51"
+        }
+      ],
+      "reason": "Actual source conjunction contains separately satisfiable duties despite one current primary scope; a one-primary shape cannot establish semantic singleton identity.",
+      "mappingInstruction": "Replace any candidate mapping to the old compound scope with both child keys unless the original candidate expressly covers only one child; preserve its exact source qualification."
+    },
+    {
+      "priorNormativeRequirementId": "NREQ-a0840bec264ad2f99a8dcc94e71a3e75",
+      "sourceLine": 5607,
+      "replaceAtomicKey": "s51.preserve-correct-behavior.existing-artifact-store",
+      "replacementEntries": [
+        {
+          "entryKind": "ATOMIC_OBLIGATION",
+          "sourceLocation": {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 5607,
+            "endLine": 5607,
+            "lineSha256": "9688aef068eaa99708a3e140f070495cc6dd11abc41b42e57deb35c95d8ee5d8"
+          },
+          "controllingText": "- existing artifact store;",
+          "atomicObligation": {
+            "key": "s51.preserve-correct-behavior.existing-artifact-store.inspect",
+            "statement": "The implementation must inspect existing artifact store.",
+            "sourceSpans": [
+              {
+                "startByte": 306233,
+                "endByte": 306259,
+                "text": "- existing artifact store;",
+                "sha256": "9688aef068eaa99708a3e140f070495cc6dd11abc41b42e57deb35c95d8ee5d8"
+              }
+            ],
+            "contextSourceLocations": [
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 5562,
+                "endLine": 5562,
+                "lineSha256": "286aa5902f426cc6ed54696c73ef7ea350f808fbdc9392a728ea2a5f0acd5c8b",
+                "controllingText": "51. Supplied-unverified historical evidence"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 5599,
+                "endLine": 5599,
+                "lineSha256": "ec0bd826c1fdaac8d94d4fb4a4b9a4fd8603e7e0531b068c97ca044083895a77",
+                "controllingText": "Supplied current behaviors that must be inspected and preserved when genuinely correct include:"
+              }
+            ],
+            "sha256": "9d4103320a8c41910e32279cceef2123e444d5b0fe42652d54e8a549deaa1bec"
+          },
+          "candidateClass": "IMPLEMENTATION_OBLIGATION",
+          "reviewStatus": "TAIL_SOURCE_RECONCILED_PROVISIONAL_IDENTITY",
+          "normativeStrength": "MUST",
+          "provisionalBirthIdentity": {
+            "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+            "sourceAnchor": {
+              "line": 5607,
+              "lineSha256": "9688aef068eaa99708a3e140f070495cc6dd11abc41b42e57deb35c95d8ee5d8"
+            },
+            "atomicKey": "s51.preserve-correct-behavior.existing-artifact-store.inspect"
+          },
+          "provisionalNormativeRequirementId": "NREQ-3c43b956a4f58db171e5019f5682633b",
+          "identityStatus": "PROPOSED_SPLIT_PENDING_GLOBAL_RECONCILIATION",
+          "proofDisposition": "UNKNOWN",
+          "sectionId": "51"
+        },
+        {
+          "entryKind": "ATOMIC_OBLIGATION",
+          "sourceLocation": {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 5607,
+            "endLine": 5607,
+            "lineSha256": "9688aef068eaa99708a3e140f070495cc6dd11abc41b42e57deb35c95d8ee5d8"
+          },
+          "controllingText": "- existing artifact store;",
+          "atomicObligation": {
+            "key": "s51.preserve-correct-behavior.existing-artifact-store.preserve-if-correct",
+            "statement": "When inspection establishes existing artifact store is genuinely correct, the implementation must preserve it.",
+            "sourceSpans": [
+              {
+                "startByte": 306233,
+                "endByte": 306259,
+                "text": "- existing artifact store;",
+                "sha256": "9688aef068eaa99708a3e140f070495cc6dd11abc41b42e57deb35c95d8ee5d8"
+              }
+            ],
+            "contextSourceLocations": [
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 5562,
+                "endLine": 5562,
+                "lineSha256": "286aa5902f426cc6ed54696c73ef7ea350f808fbdc9392a728ea2a5f0acd5c8b",
+                "controllingText": "51. Supplied-unverified historical evidence"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 5599,
+                "endLine": 5599,
+                "lineSha256": "ec0bd826c1fdaac8d94d4fb4a4b9a4fd8603e7e0531b068c97ca044083895a77",
+                "controllingText": "Supplied current behaviors that must be inspected and preserved when genuinely correct include:"
+              }
+            ],
+            "sha256": "fbc76296dd1a5eb8a615cbca4dc41d0f6763385274ec9d556c7eca496c7eeb49"
+          },
+          "candidateClass": "IMPLEMENTATION_OBLIGATION",
+          "reviewStatus": "TAIL_SOURCE_RECONCILED_PROVISIONAL_IDENTITY",
+          "normativeStrength": "MUST",
+          "provisionalBirthIdentity": {
+            "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+            "sourceAnchor": {
+              "line": 5607,
+              "lineSha256": "9688aef068eaa99708a3e140f070495cc6dd11abc41b42e57deb35c95d8ee5d8"
+            },
+            "atomicKey": "s51.preserve-correct-behavior.existing-artifact-store.preserve-if-correct"
+          },
+          "provisionalNormativeRequirementId": "NREQ-9c0146ea651ca638db4f4403078ec252",
+          "identityStatus": "PROPOSED_SPLIT_PENDING_GLOBAL_RECONCILIATION",
+          "proofDisposition": "UNKNOWN",
+          "sectionId": "51"
+        }
+      ],
+      "reason": "Actual source conjunction contains separately satisfiable duties despite one current primary scope; a one-primary shape cannot establish semantic singleton identity.",
+      "mappingInstruction": "Replace any candidate mapping to the old compound scope with both child keys unless the original candidate expressly covers only one child; preserve its exact source qualification."
+    },
+    {
+      "priorNormativeRequirementId": "NREQ-6549a2ce9ee4cb8ff764336926a7d879",
+      "sourceLine": 5608,
+      "replaceAtomicKey": "s51.preserve-correct-behavior.current-next-action-panel",
+      "replacementEntries": [
+        {
+          "entryKind": "ATOMIC_OBLIGATION",
+          "sourceLocation": {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 5608,
+            "endLine": 5608,
+            "lineSha256": "93ed782b4c454b095c8581aab2af22b35b6fe01c32a242f6e86c68e20ca3705f"
+          },
+          "controllingText": "- current next-action panel;",
+          "atomicObligation": {
+            "key": "s51.preserve-correct-behavior.current-next-action-panel.inspect",
+            "statement": "The implementation must inspect current next-action panel.",
+            "sourceSpans": [
+              {
+                "startByte": 306260,
+                "endByte": 306288,
+                "text": "- current next-action panel;",
+                "sha256": "93ed782b4c454b095c8581aab2af22b35b6fe01c32a242f6e86c68e20ca3705f"
+              }
+            ],
+            "contextSourceLocations": [
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 5562,
+                "endLine": 5562,
+                "lineSha256": "286aa5902f426cc6ed54696c73ef7ea350f808fbdc9392a728ea2a5f0acd5c8b",
+                "controllingText": "51. Supplied-unverified historical evidence"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 5599,
+                "endLine": 5599,
+                "lineSha256": "ec0bd826c1fdaac8d94d4fb4a4b9a4fd8603e7e0531b068c97ca044083895a77",
+                "controllingText": "Supplied current behaviors that must be inspected and preserved when genuinely correct include:"
+              }
+            ],
+            "sha256": "972ef63cfda761b9df6bbb2547ab5003371fd3c5d89bcdecbd99aae7c5a7ad79"
+          },
+          "candidateClass": "IMPLEMENTATION_OBLIGATION",
+          "reviewStatus": "TAIL_SOURCE_RECONCILED_PROVISIONAL_IDENTITY",
+          "normativeStrength": "MUST",
+          "provisionalBirthIdentity": {
+            "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+            "sourceAnchor": {
+              "line": 5608,
+              "lineSha256": "93ed782b4c454b095c8581aab2af22b35b6fe01c32a242f6e86c68e20ca3705f"
+            },
+            "atomicKey": "s51.preserve-correct-behavior.current-next-action-panel.inspect"
+          },
+          "provisionalNormativeRequirementId": "NREQ-8a4a46bec28fe185063be61fcbac41c0",
+          "identityStatus": "PROPOSED_SPLIT_PENDING_GLOBAL_RECONCILIATION",
+          "proofDisposition": "UNKNOWN",
+          "sectionId": "51"
+        },
+        {
+          "entryKind": "ATOMIC_OBLIGATION",
+          "sourceLocation": {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 5608,
+            "endLine": 5608,
+            "lineSha256": "93ed782b4c454b095c8581aab2af22b35b6fe01c32a242f6e86c68e20ca3705f"
+          },
+          "controllingText": "- current next-action panel;",
+          "atomicObligation": {
+            "key": "s51.preserve-correct-behavior.current-next-action-panel.preserve-if-correct",
+            "statement": "When inspection establishes current next-action panel is genuinely correct, the implementation must preserve it.",
+            "sourceSpans": [
+              {
+                "startByte": 306260,
+                "endByte": 306288,
+                "text": "- current next-action panel;",
+                "sha256": "93ed782b4c454b095c8581aab2af22b35b6fe01c32a242f6e86c68e20ca3705f"
+              }
+            ],
+            "contextSourceLocations": [
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 5562,
+                "endLine": 5562,
+                "lineSha256": "286aa5902f426cc6ed54696c73ef7ea350f808fbdc9392a728ea2a5f0acd5c8b",
+                "controllingText": "51. Supplied-unverified historical evidence"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 5599,
+                "endLine": 5599,
+                "lineSha256": "ec0bd826c1fdaac8d94d4fb4a4b9a4fd8603e7e0531b068c97ca044083895a77",
+                "controllingText": "Supplied current behaviors that must be inspected and preserved when genuinely correct include:"
+              }
+            ],
+            "sha256": "072102bf3140b763c944a177e48ef41def5d51d36c39d7ddafcba999565abc86"
+          },
+          "candidateClass": "IMPLEMENTATION_OBLIGATION",
+          "reviewStatus": "TAIL_SOURCE_RECONCILED_PROVISIONAL_IDENTITY",
+          "normativeStrength": "MUST",
+          "provisionalBirthIdentity": {
+            "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+            "sourceAnchor": {
+              "line": 5608,
+              "lineSha256": "93ed782b4c454b095c8581aab2af22b35b6fe01c32a242f6e86c68e20ca3705f"
+            },
+            "atomicKey": "s51.preserve-correct-behavior.current-next-action-panel.preserve-if-correct"
+          },
+          "provisionalNormativeRequirementId": "NREQ-1c37c3c73cfdbb2c0fffbbb47edd7b0e",
+          "identityStatus": "PROPOSED_SPLIT_PENDING_GLOBAL_RECONCILIATION",
+          "proofDisposition": "UNKNOWN",
+          "sectionId": "51"
+        }
+      ],
+      "reason": "Actual source conjunction contains separately satisfiable duties despite one current primary scope; a one-primary shape cannot establish semantic singleton identity.",
+      "mappingInstruction": "Replace any candidate mapping to the old compound scope with both child keys unless the original candidate expressly covers only one child; preserve its exact source qualification."
+    },
+    {
+      "priorNormativeRequirementId": "NREQ-b03b4eeba3b6ac72e2ce9d89cbbd08c3",
+      "sourceLine": 5609,
+      "replaceAtomicKey": "s51.preserve-correct-behavior.complete-synthetic-30-stage-lifecycle",
+      "replacementEntries": [
+        {
+          "entryKind": "ATOMIC_OBLIGATION",
+          "sourceLocation": {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 5609,
+            "endLine": 5609,
+            "lineSha256": "0cf56e72e6c980c72c636910493f43fe88f881c69e44bcd9cf73311414a39e31"
+          },
+          "controllingText": "- complete synthetic 30-stage lifecycle.",
+          "atomicObligation": {
+            "key": "s51.preserve-correct-behavior.complete-synthetic-30-stage-lifecycle.inspect",
+            "statement": "The implementation must inspect complete synthetic 30-stage lifecycle.",
+            "sourceSpans": [
+              {
+                "startByte": 306289,
+                "endByte": 306329,
+                "text": "- complete synthetic 30-stage lifecycle.",
+                "sha256": "0cf56e72e6c980c72c636910493f43fe88f881c69e44bcd9cf73311414a39e31"
+              }
+            ],
+            "contextSourceLocations": [
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 5562,
+                "endLine": 5562,
+                "lineSha256": "286aa5902f426cc6ed54696c73ef7ea350f808fbdc9392a728ea2a5f0acd5c8b",
+                "controllingText": "51. Supplied-unverified historical evidence"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 5599,
+                "endLine": 5599,
+                "lineSha256": "ec0bd826c1fdaac8d94d4fb4a4b9a4fd8603e7e0531b068c97ca044083895a77",
+                "controllingText": "Supplied current behaviors that must be inspected and preserved when genuinely correct include:"
+              }
+            ],
+            "sha256": "b8e62c40867abff718121ec54e90ac649b40248bcd6df65683388f71064f7113"
+          },
+          "candidateClass": "IMPLEMENTATION_OBLIGATION",
+          "reviewStatus": "TAIL_SOURCE_RECONCILED_PROVISIONAL_IDENTITY",
+          "normativeStrength": "MUST",
+          "provisionalBirthIdentity": {
+            "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+            "sourceAnchor": {
+              "line": 5609,
+              "lineSha256": "0cf56e72e6c980c72c636910493f43fe88f881c69e44bcd9cf73311414a39e31"
+            },
+            "atomicKey": "s51.preserve-correct-behavior.complete-synthetic-30-stage-lifecycle.inspect"
+          },
+          "provisionalNormativeRequirementId": "NREQ-053b45d1662d086c811776ec3eab881b",
+          "identityStatus": "PROPOSED_SPLIT_PENDING_GLOBAL_RECONCILIATION",
+          "proofDisposition": "UNKNOWN",
+          "sectionId": "51"
+        },
+        {
+          "entryKind": "ATOMIC_OBLIGATION",
+          "sourceLocation": {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 5609,
+            "endLine": 5609,
+            "lineSha256": "0cf56e72e6c980c72c636910493f43fe88f881c69e44bcd9cf73311414a39e31"
+          },
+          "controllingText": "- complete synthetic 30-stage lifecycle.",
+          "atomicObligation": {
+            "key": "s51.preserve-correct-behavior.complete-synthetic-30-stage-lifecycle.preserve-if-correct",
+            "statement": "When inspection establishes complete synthetic 30-stage lifecycle is genuinely correct, the implementation must preserve it.",
+            "sourceSpans": [
+              {
+                "startByte": 306289,
+                "endByte": 306329,
+                "text": "- complete synthetic 30-stage lifecycle.",
+                "sha256": "0cf56e72e6c980c72c636910493f43fe88f881c69e44bcd9cf73311414a39e31"
+              }
+            ],
+            "contextSourceLocations": [
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 5562,
+                "endLine": 5562,
+                "lineSha256": "286aa5902f426cc6ed54696c73ef7ea350f808fbdc9392a728ea2a5f0acd5c8b",
+                "controllingText": "51. Supplied-unverified historical evidence"
+              },
+              {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 5599,
+                "endLine": 5599,
+                "lineSha256": "ec0bd826c1fdaac8d94d4fb4a4b9a4fd8603e7e0531b068c97ca044083895a77",
+                "controllingText": "Supplied current behaviors that must be inspected and preserved when genuinely correct include:"
+              }
+            ],
+            "sha256": "63f0994f216c9fbc8cba328c1504308f7b7610c862514c228526657e8fa3928e"
+          },
+          "candidateClass": "IMPLEMENTATION_OBLIGATION",
+          "reviewStatus": "TAIL_SOURCE_RECONCILED_PROVISIONAL_IDENTITY",
+          "normativeStrength": "MUST",
+          "provisionalBirthIdentity": {
+            "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+            "sourceAnchor": {
+              "line": 5609,
+              "lineSha256": "0cf56e72e6c980c72c636910493f43fe88f881c69e44bcd9cf73311414a39e31"
+            },
+            "atomicKey": "s51.preserve-correct-behavior.complete-synthetic-30-stage-lifecycle.preserve-if-correct"
+          },
+          "provisionalNormativeRequirementId": "NREQ-e22d16107abf0d69c6bad0bfd70c6baf",
+          "identityStatus": "PROPOSED_SPLIT_PENDING_GLOBAL_RECONCILIATION",
+          "proofDisposition": "UNKNOWN",
+          "sectionId": "51"
+        }
+      ],
+      "reason": "Actual source conjunction contains separately satisfiable duties despite one current primary scope; a one-primary shape cannot establish semantic singleton identity.",
+      "mappingInstruction": "Replace any candidate mapping to the old compound scope with both child keys unless the original candidate expressly covers only one child; preserve its exact source qualification."
+    }
+  ],
+  "proofPromotion": false
+}

@@ -1,0 +1,911 @@
+{
+  "schema": "closed-loop-additive-source-reconciliation-freeze/1",
+  "status": "FROZEN",
+  "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+  "inputs": [
+    {
+      "role": "ORIGINAL_FREEZE",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/freeze-manifest.json",
+      "sha256": "49580d98e96917aaa6cad169c29930005682fed83beaa0591437f97b5cb5cecc",
+      "byteLength": 12165
+    },
+    {
+      "role": "ORIGINAL_RECONCILIATION",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/reconciliation.json",
+      "sha256": "68e43e1a4dace5980c54f9a5704638e2479d431e0096eb67540c351981843e92",
+      "byteLength": 19317
+    },
+    {
+      "role": "LEDGER",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+      "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+      "byteLength": 20401933
+    },
+    {
+      "role": "OCCURRENCES",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-occurrence-transport.json",
+      "sha256": "4157cda2f60669a2feba4c3021aa212f5bee00f4456a4e7a59d8e86da08a02d4",
+      "byteLength": 6309790
+    },
+    {
+      "role": "MAP",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/corrected-insertion-map.json",
+      "sha256": "b36a4e0746f749eb6fb1977dac4b1f91f47d73c74b04046687619e2b278fceca",
+      "byteLength": 7919
+    },
+    {
+      "role": "AMENDMENT",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/new-amendment-obligations.json",
+      "sha256": "529ab908025aa47387337eae07de480d3cf09d9af952945d21f5dfc3cbc25eca",
+      "byteLength": 11169039
+    },
+    {
+      "role": "ISSUES",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/unresolved-source-issues.json",
+      "sha256": "4fa1d3346256df3e0cddec2059d19afc49cd24f9e9f1c12e78e25bb7abfddff9",
+      "byteLength": 40545
+    },
+    {
+      "role": "IMPACTS",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-candidate-decisions.json",
+      "sha256": "0318663b9a3975baf2584973d2d86e8dee2d3277baf82a82d27ceb3702177853",
+      "byteLength": 417710
+    },
+    {
+      "role": "XREFS",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/cross-reference-candidate-decisions.json",
+      "sha256": "21d1550ddfacc472dda17ccc4149a30c1c7fb9fc4edf29c13e4d075760efc35b",
+      "byteLength": 1434799
+    },
+    {
+      "role": "ORIGINAL_BLOCKED_QUEUE",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/blocked-predecessor-review-queue.json",
+      "sha256": "6c8413d7c3f88d058c10caa441c262f4f07ec67a57cf7e7fd1a62e2ee94a6039",
+      "byteLength": 20602036
+    },
+    {
+      "role": "PREDECESSOR",
+      "path": "/workspace/shared/clrt-integration/verification/atomic-extraction-20261014/reconciliation.json",
+      "sha256": "1cc93c4e49e3e5530ee2a802314617f3aa07d5c72282ded6cd1da68570dac280",
+      "byteLength": 71701945
+    },
+    {
+      "role": "INPUT_MANIFEST",
+      "path": "/workspace/shared/clrt-v4-adoption-design-2933/source-only-input-manifest.json",
+      "sha256": "63a5426c7880fa594b4a4acfda247e32686bfcc57c9993f093c3f9d26829d66f",
+      "byteLength": 7500
+    },
+    {
+      "role": "BASE_SOURCE",
+      "path": "/workspace/shared/clrt-v4-adoption-design-2933/source-only/base-original-2933.txt",
+      "sha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "byteLength": 309482
+    },
+    {
+      "role": "SUCCESSOR_SOURCE",
+      "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "byteLength": 369901
+    },
+    {
+      "role": "EXACT_APPROVED_V4",
+      "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/verification/approved-owner-decisions-v4-20261015.txt",
+      "sha256": "aa966b7ac8f38f66b046ce796ab55de5c69dc3f8485f6bba499e32442e29476f",
+      "byteLength": 65481
+    },
+    {
+      "role": "APPROVAL_PROVENANCE",
+      "path": "/workspace/shared/clrt-v4-adoption-design-2933/source-only-approval-provenance.json",
+      "sha256": "87652453a6e2875bac77abbabfaed9e81b59c55ddeb66dcaf7a822634aad8fb2",
+      "byteLength": 1715
+    },
+    {
+      "role": "INSERTION_MAP",
+      "path": "/workspace/shared/clrt-v4-adoption-design-2933/source-only-insertion-map.json",
+      "sha256": "01c66373e254d319a6ae6f7a3292de55389eb363b84e5253199913b5496cef33",
+      "byteLength": 6936
+    },
+    {
+      "role": "PRIOR_COMPRESSED_MANIFEST_016",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-016-deliverable-manifest.json",
+      "sha256": "dd36cb06bf5bca6f1fc004c394a354bcf8a25ea4248b819c1e5a29cfa3aacbb7",
+      "byteLength": 5113
+    },
+    {
+      "role": "PRIOR_COMPRESSED_ARCHIVE_016",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-016-frozen-payloads.tar.gz",
+      "sha256": "4a223b1e41a70df8a72f90e658558c2ac82861389005d3dbb4362decd5955d8e",
+      "byteLength": 105409
+    },
+    {
+      "role": "PRIOR_COMPRESSED_MANIFEST_017",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-017-deliverable-manifest.json",
+      "sha256": "4dfc745e82b6f88678db46e62b3dcf4ca2da2a687b9f96c73776d25d70f69c4d",
+      "byteLength": 5112
+    },
+    {
+      "role": "PRIOR_COMPRESSED_ARCHIVE_017",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-017-frozen-payloads.tar.gz",
+      "sha256": "07679205c4a94f065f70f5dafc3655a639b0bd5219303d8662042f83f2e88490",
+      "byteLength": 95338
+    },
+    {
+      "role": "PRIOR_COMPRESSED_MANIFEST_018",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-018-deliverable-manifest.json",
+      "sha256": "23be2c765c67068bf73a3916bd061d5e38a265330d7e5a64285bf018b4878596",
+      "byteLength": 5115
+    },
+    {
+      "role": "PRIOR_COMPRESSED_ARCHIVE_018",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-018-frozen-payloads.tar.gz",
+      "sha256": "1d453391d5300b50c2d793ee2ae22f34a4219adf1f25079ec04bc7dd60b55d4f",
+      "byteLength": 110865
+    },
+    {
+      "role": "PRIOR_COMPRESSED_MANIFEST_019",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-019-deliverable-manifest.json",
+      "sha256": "21d809ca4a23f1a54c1e2e8217b542fd1ec5f74dcfeb4f960a0bc888c93976f3",
+      "byteLength": 5111
+    },
+    {
+      "role": "PRIOR_COMPRESSED_ARCHIVE_019",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-019-frozen-payloads.tar.gz",
+      "sha256": "176b0bbee13e570a8e100240ef037d3c9e808c882d42c2af5a6030fb3155ac70",
+      "byteLength": 96817
+    },
+    {
+      "role": "PRIOR_COMPRESSED_MANIFEST_020",
+      "path": "/tmp/clrt-source-final-archives/retained-impact-020-deliverable-manifest.json",
+      "sha256": "c98f161c251450d1464802f4b18de47dde6f02dc8676e9b2def7878d28710cf0",
+      "byteLength": 5098
+    },
+    {
+      "role": "PRIOR_COMPRESSED_ARCHIVE_020",
+      "path": "/tmp/clrt-source-final-archives/retained-impact-020-frozen-payloads.tar.gz",
+      "sha256": "afbd349f0aaf69f382c747d356d46a68285a7beb29d8c5c1da525fdb2ed0255a",
+      "byteLength": 121938
+    },
+    {
+      "role": "PRIOR_COMPRESSED_MANIFEST_021",
+      "path": "/tmp/clrt-source-final-archives/retained-impact-021-deliverable-manifest.json",
+      "sha256": "4979613b530c02b38a3b80a9973a74fbeb68dbdba20248ba7d8a98c4457d2590",
+      "byteLength": 5101
+    },
+    {
+      "role": "PRIOR_COMPRESSED_ARCHIVE_021",
+      "path": "/tmp/clrt-source-final-archives/retained-impact-021-frozen-payloads.tar.gz",
+      "sha256": "25318dc98628bebe9d14d40c762d7429d383d3bb1705821c25872e48bd79df09",
+      "byteLength": 152655
+    },
+    {
+      "role": "PRIOR_COMPRESSED_MANIFEST_022",
+      "path": "/tmp/clrt-source-final-archives/retained-impact-022-deliverable-manifest.json",
+      "sha256": "22ab0362a3bbe34dfdd3b6506f5e24f1cab7b53f040aedc91409d4c6824abc95",
+      "byteLength": 5099
+    },
+    {
+      "role": "PRIOR_COMPRESSED_ARCHIVE_022",
+      "path": "/tmp/clrt-source-final-archives/retained-impact-022-frozen-payloads.tar.gz",
+      "sha256": "5df1ab50a969c8be079748943696d9b45056371587a7b745ef179678fc9b7371",
+      "byteLength": 100340
+    },
+    {
+      "role": "retained-impact-001-002_FREEZE",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-001-002/freeze-manifest.json",
+      "sha256": "fdf0d35175f0cbe719f0ae16a40e95c9966da975e0197d8f1c1a9bdc370be618",
+      "byteLength": 9573
+    },
+    {
+      "role": "retained-impact-001-002_QUEUE",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-001-002/combined-queue-delta.json",
+      "sha256": "c9cb41273fd9cd03583bf414a352d0b4e1a6a867efac2b55c25e1d6737b5e21b",
+      "byteLength": 433425
+    },
+    {
+      "role": "retained-impact-003_FREEZE",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-003/freeze-manifest.json",
+      "sha256": "c10a6fb542e9d8b8d8ee102058b0c7a9b206934a80df51a22e442170f5ef00fd",
+      "byteLength": 8788
+    },
+    {
+      "role": "retained-impact-003_QUEUE",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-003/combined-queue-delta.json",
+      "sha256": "444caa6ac0d54001a20edd995f5719a1f9f0ef456d4cbd6af374a05fc4df5452",
+      "byteLength": 149955
+    },
+    {
+      "role": "retained-impact-004_FREEZE",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-004/freeze-manifest.json",
+      "sha256": "11d786352af32d9f650da2dda6f9abb7d603c21c615ec76769fe281b0f195a41",
+      "byteLength": 10384
+    },
+    {
+      "role": "retained-impact-004_QUEUE",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-004/combined-queue-delta.json",
+      "sha256": "3fac4b233ac5bc7c413bd58524ef4ae2ad21f4ac75b56410a396c184e3955e4d",
+      "byteLength": 201604
+    },
+    {
+      "role": "retained-impact-005_FREEZE",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-005/freeze-manifest.json",
+      "sha256": "6940ffa18e4f8e86eaafdfc39f4abf83e8a012e028fe3b5768fd76a76eff8f35",
+      "byteLength": 10975
+    },
+    {
+      "role": "retained-impact-005_QUEUE",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-005/combined-queue-delta.json",
+      "sha256": "38f77b15b63d91fe24eb45d1f94636594a191f28cb7bc5b30ee57b41b169cd88",
+      "byteLength": 137580
+    },
+    {
+      "role": "status-field-judgment-successor_FREEZE",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/status-field-judgment-successor/freeze-manifest.json",
+      "sha256": "11e15fc33838ef84a6e8d5d88574214f15d7059db4438e9c728a7acd4a1090cb",
+      "byteLength": 7172
+    },
+    {
+      "role": "status-field-judgment-successor_QUEUE",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/status-field-judgment-successor/combined-queue-delta.json",
+      "sha256": "456149f6aa55c8b9735ca9aef72f6062e382c6feebea5733eecd65315c6e3fe7",
+      "byteLength": 1680
+    },
+    {
+      "role": "retained-impact-006_FREEZE",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-006/freeze-manifest.json",
+      "sha256": "39f735bca5dee1d431790704691745de5d6f7bfe61f0fd1e2b06ca048ead35cc",
+      "byteLength": 12147
+    },
+    {
+      "role": "retained-impact-006_QUEUE",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-006/combined-queue-delta.json",
+      "sha256": "04ac6ea5a093fc3f9183d56254c2cc02c7faafec297625ff35d0d24470f2f953",
+      "byteLength": 134259
+    },
+    {
+      "role": "retained-impact-007_FREEZE",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-007/freeze-manifest.json",
+      "sha256": "e211e1dc466a22efb32fc713816bcf458655b0cc492bb5dcfa4757897a725f96",
+      "byteLength": 12707
+    },
+    {
+      "role": "retained-impact-007_QUEUE",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-007/combined-queue-delta.json",
+      "sha256": "d98b9d4c66b7e74ba49a86457434bdf6f6e3c323e7b1b33ab84d4158f2ed441e",
+      "byteLength": 96738
+    },
+    {
+      "role": "retained-impact-008_FREEZE",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-008/freeze-manifest.json",
+      "sha256": "d745a46ba3378f942c79c8d40cc7681bdbf61dfc94b01d0e43705b60426e9b18",
+      "byteLength": 13270
+    },
+    {
+      "role": "retained-impact-008_QUEUE",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-008/combined-queue-delta.json",
+      "sha256": "952cad350e39396b8d0cc64a6aaa650ca6a635ff1370001cdb0ed80ca6e08271",
+      "byteLength": 81017
+    },
+    {
+      "role": "stage14-reviewed-resolution-successor_FREEZE",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/stage14-reviewed-resolution-successor/freeze-manifest.json",
+      "sha256": "a4d783eec9aec094d1bfaa9e14bd85c7669b9e2e52ace418202f6876c37b5b94",
+      "byteLength": 9087
+    },
+    {
+      "role": "stage14-reviewed-resolution-successor_QUEUE",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/stage14-reviewed-resolution-successor/combined-queue-delta.json",
+      "sha256": "4b61dc584730cee9d65fa39cb08e60c9f4e8580c8fd8659f51738aedc4479f56",
+      "byteLength": 1463
+    },
+    {
+      "role": "retained-impact-009_FREEZE",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-009/freeze-manifest.json",
+      "sha256": "64210c9b4141cc4ccf01e3904548d9a141ad8ae17b9388b4c5aa66a4ff5ff753",
+      "byteLength": 14739
+    },
+    {
+      "role": "retained-impact-009_QUEUE",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-009/combined-queue-delta.json",
+      "sha256": "27fa2a321bf519169227b6989f89bd1303cda89e13eaca6d5309b32214d84204",
+      "byteLength": 86657
+    },
+    {
+      "role": "xml-reviewed-resolution-successor_FREEZE",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/xml-reviewed-resolution-successor/freeze-manifest.json",
+      "sha256": "5e0f1632b801e15e2987466c192a69bad7a70162b06b56279198c4ccd68c697c",
+      "byteLength": 12311
+    },
+    {
+      "role": "xml-reviewed-resolution-successor_QUEUE",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/xml-reviewed-resolution-successor/combined-queue-delta.json",
+      "sha256": "114a7b331a5725b2b5079f54804f80278e5cad9ae41609f237151f17a75e2bed",
+      "byteLength": 3525
+    },
+    {
+      "role": "retained-impact-010_FREEZE",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-010/freeze-manifest.json",
+      "sha256": "7607399193253aa4f432ec0097515cd640c14f67056371fe7978f715c56764de",
+      "byteLength": 15915
+    },
+    {
+      "role": "retained-impact-010_QUEUE",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-010/combined-queue-delta.json",
+      "sha256": "e07cc316711828956f7367f6aa12b6e72541a3b03d4ca8310dd875d93115d4c7",
+      "byteLength": 79614
+    },
+    {
+      "role": "retained-impact-011_FREEZE",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-011/freeze-manifest.json",
+      "sha256": "9f1cabd8abae6024c251414244c8301de4519f0877429a718ab5bf05d43ea0ee",
+      "byteLength": 16481
+    },
+    {
+      "role": "retained-impact-011_QUEUE",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-011/combined-queue-delta.json",
+      "sha256": "c3f37ae09e8df4cbeaaf0f6f28b9e348b2275b3b186714a13372d3a5dccd4cf4",
+      "byteLength": 97958
+    },
+    {
+      "role": "retained-impact-012_FREEZE",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-012/freeze-manifest.json",
+      "sha256": "99edc770348ec0b3cb3e7a22c1f52cf29290264528956ff37f0e65f90b985d71",
+      "byteLength": 23064
+    },
+    {
+      "role": "retained-impact-012_QUEUE",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-012/combined-queue-delta.json",
+      "sha256": "4bd539613eef617a86debbd60ea5b2f6172b37c8cb6b48481e96fe38048d7f64",
+      "byteLength": 85526
+    },
+    {
+      "role": "retained-impact-013_FREEZE",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-013/freeze-manifest.json",
+      "sha256": "755ffc3a6d2af321606fef7a10eb192a65ed08ba4f8d1c58a2b4d457e3383526",
+      "byteLength": 23346
+    },
+    {
+      "role": "retained-impact-013_QUEUE",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-013/combined-queue-delta.json",
+      "sha256": "e2af0c3e21678b9d5542ca5f021cefa0bd955a7d38a6009da721d8933725d32c",
+      "byteLength": 58286
+    },
+    {
+      "role": "retained-impact-014_FREEZE",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-014/freeze-manifest.json",
+      "sha256": "e88d53812473a34d840b0002a42a8480900c846b93e2921384c6ad89ff16479c",
+      "byteLength": 23908
+    },
+    {
+      "role": "retained-impact-014_QUEUE",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-014/combined-queue-delta.json",
+      "sha256": "37a3d89b18afb69b3769f64965dae0627f6449e632f193ad480604d306359295",
+      "byteLength": 81660
+    },
+    {
+      "role": "retained-impact-015_FREEZE",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-015/freeze-manifest.json",
+      "sha256": "d957db0983e5f22fd98dde0ade798142f853258de9a9c541f1e55e2adaea9931",
+      "byteLength": 24469
+    },
+    {
+      "role": "retained-impact-015_QUEUE",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-015/combined-queue-delta.json",
+      "sha256": "103459c964896e07fb610b5f18bd8737cdb0912949b50a3591e010324f397b4c",
+      "byteLength": 46151
+    },
+    {
+      "role": "retained-impact-016_FREEZE",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-016/freeze-manifest.json",
+      "sha256": "fb26335e0776fd7b1c1fd6294ce441f83b2f7b860460575e408ae27ffe4cd779",
+      "byteLength": 25032,
+      "archiveCustody": {
+        "archive": {
+          "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-016-frozen-payloads.tar.gz",
+          "sha256": "4a223b1e41a70df8a72f90e658558c2ac82861389005d3dbb4362decd5955d8e",
+          "byteLength": 105409
+        },
+        "archiveMember": "retained-impact-016/freeze-manifest.json",
+        "deliverableManifest": {
+          "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-016-deliverable-manifest.json",
+          "sha256": "dd36cb06bf5bca6f1fc004c394a354bcf8a25ea4248b819c1e5a29cfa3aacbb7",
+          "byteLength": 5113
+        }
+      }
+    },
+    {
+      "role": "retained-impact-016_QUEUE",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-016/combined-queue-delta.json",
+      "sha256": "8f1c080d7fe2309d6a592e9a83170cdf8c127684dfb5c62b5c59e85d3208d250",
+      "byteLength": 61792,
+      "archiveCustody": {
+        "archive": {
+          "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-016-frozen-payloads.tar.gz",
+          "sha256": "4a223b1e41a70df8a72f90e658558c2ac82861389005d3dbb4362decd5955d8e",
+          "byteLength": 105409
+        },
+        "archiveMember": "retained-impact-016/combined-queue-delta.json",
+        "deliverableManifest": {
+          "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-016-deliverable-manifest.json",
+          "sha256": "dd36cb06bf5bca6f1fc004c394a354bcf8a25ea4248b819c1e5a29cfa3aacbb7",
+          "byteLength": 5113
+        }
+      }
+    },
+    {
+      "role": "retained-impact-017_FREEZE",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-017/freeze-manifest.json",
+      "sha256": "0e817a23052d8c87c6e71664e8eae42e8b71da6b8d970c35df400022aa110a56",
+      "byteLength": 27477,
+      "archiveCustody": {
+        "archive": {
+          "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-017-frozen-payloads.tar.gz",
+          "sha256": "07679205c4a94f065f70f5dafc3655a639b0bd5219303d8662042f83f2e88490",
+          "byteLength": 95338
+        },
+        "archiveMember": "retained-impact-017/freeze-manifest.json",
+        "deliverableManifest": {
+          "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-017-deliverable-manifest.json",
+          "sha256": "4dfc745e82b6f88678db46e62b3dcf4ca2da2a687b9f96c73776d25d70f69c4d",
+          "byteLength": 5112
+        }
+      }
+    },
+    {
+      "role": "retained-impact-017_QUEUE",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-017/combined-queue-delta.json",
+      "sha256": "5b7c76fe2df5f1243a1110ac81926e8abb72ec85f37d04ee50373e99f6317a64",
+      "byteLength": 60389,
+      "archiveCustody": {
+        "archive": {
+          "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-017-frozen-payloads.tar.gz",
+          "sha256": "07679205c4a94f065f70f5dafc3655a639b0bd5219303d8662042f83f2e88490",
+          "byteLength": 95338
+        },
+        "archiveMember": "retained-impact-017/combined-queue-delta.json",
+        "deliverableManifest": {
+          "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-017-deliverable-manifest.json",
+          "sha256": "4dfc745e82b6f88678db46e62b3dcf4ca2da2a687b9f96c73776d25d70f69c4d",
+          "byteLength": 5112
+        }
+      }
+    },
+    {
+      "role": "retained-impact-018_FREEZE",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-018/freeze-manifest.json",
+      "sha256": "9a012159b25cfc3c2a546db9610bffadbe342114d9a53707f6fbb1c2261a2e24",
+      "byteLength": 29920,
+      "archiveCustody": {
+        "archive": {
+          "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-018-frozen-payloads.tar.gz",
+          "sha256": "1d453391d5300b50c2d793ee2ae22f34a4219adf1f25079ec04bc7dd60b55d4f",
+          "byteLength": 110865
+        },
+        "archiveMember": "retained-impact-018/freeze-manifest.json",
+        "deliverableManifest": {
+          "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-018-deliverable-manifest.json",
+          "sha256": "23be2c765c67068bf73a3916bd061d5e38a265330d7e5a64285bf018b4878596",
+          "byteLength": 5115
+        }
+      }
+    },
+    {
+      "role": "retained-impact-018_QUEUE",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-018/combined-queue-delta.json",
+      "sha256": "a742079f5fc05bde36268ce63aeda14ceacc4c19baf32423f5c9e50ea4bac920",
+      "byteLength": 71932,
+      "archiveCustody": {
+        "archive": {
+          "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-018-frozen-payloads.tar.gz",
+          "sha256": "1d453391d5300b50c2d793ee2ae22f34a4219adf1f25079ec04bc7dd60b55d4f",
+          "byteLength": 110865
+        },
+        "archiveMember": "retained-impact-018/combined-queue-delta.json",
+        "deliverableManifest": {
+          "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-018-deliverable-manifest.json",
+          "sha256": "23be2c765c67068bf73a3916bd061d5e38a265330d7e5a64285bf018b4878596",
+          "byteLength": 5115
+        }
+      }
+    },
+    {
+      "role": "retained-impact-019_FREEZE",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-019/freeze-manifest.json",
+      "sha256": "44e0f8717d1cb59b5837594d0fddd4f7b323ef72f8f7bddb2f15b72a156bf8e9",
+      "byteLength": 32364,
+      "archiveCustody": {
+        "archive": {
+          "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-019-frozen-payloads.tar.gz",
+          "sha256": "176b0bbee13e570a8e100240ef037d3c9e808c882d42c2af5a6030fb3155ac70",
+          "byteLength": 96817
+        },
+        "archiveMember": "retained-impact-019/freeze-manifest.json",
+        "deliverableManifest": {
+          "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-019-deliverable-manifest.json",
+          "sha256": "21d809ca4a23f1a54c1e2e8217b542fd1ec5f74dcfeb4f960a0bc888c93976f3",
+          "byteLength": 5111
+        }
+      }
+    },
+    {
+      "role": "retained-impact-019_QUEUE",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-019/combined-queue-delta.json",
+      "sha256": "6086293924ed0adc2d5f6b0cc1f26ae2badfb5cb8619691da04488ceea616f74",
+      "byteLength": 58316,
+      "archiveCustody": {
+        "archive": {
+          "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-019-frozen-payloads.tar.gz",
+          "sha256": "176b0bbee13e570a8e100240ef037d3c9e808c882d42c2af5a6030fb3155ac70",
+          "byteLength": 96817
+        },
+        "archiveMember": "retained-impact-019/combined-queue-delta.json",
+        "deliverableManifest": {
+          "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-019-deliverable-manifest.json",
+          "sha256": "21d809ca4a23f1a54c1e2e8217b542fd1ec5f74dcfeb4f960a0bc888c93976f3",
+          "byteLength": 5111
+        }
+      }
+    },
+    {
+      "role": "retained-impact-020_FREEZE",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-020/freeze-manifest.json",
+      "sha256": "a2e38ceb23e73574573c2b70077395ea3b96a49ef55c45e9d9cd0ee2b9a37e32",
+      "byteLength": 36807,
+      "archiveCustody": {
+        "archive": {
+          "path": "/tmp/clrt-source-final-archives/retained-impact-020-frozen-payloads.tar.gz",
+          "sha256": "afbd349f0aaf69f382c747d356d46a68285a7beb29d8c5c1da525fdb2ed0255a",
+          "byteLength": 121938
+        },
+        "archiveMember": "retained-impact-020/freeze-manifest.json",
+        "deliverableManifest": {
+          "path": "/tmp/clrt-source-final-archives/retained-impact-020-deliverable-manifest.json",
+          "sha256": "c98f161c251450d1464802f4b18de47dde6f02dc8676e9b2def7878d28710cf0",
+          "byteLength": 5098
+        }
+      }
+    },
+    {
+      "role": "retained-impact-020_QUEUE",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-020/combined-queue-delta.json",
+      "sha256": "03545947235df82ad71921554404a538edf4bed1cb0796e6b677c390c212c400",
+      "byteLength": 76931,
+      "archiveCustody": {
+        "archive": {
+          "path": "/tmp/clrt-source-final-archives/retained-impact-020-frozen-payloads.tar.gz",
+          "sha256": "afbd349f0aaf69f382c747d356d46a68285a7beb29d8c5c1da525fdb2ed0255a",
+          "byteLength": 121938
+        },
+        "archiveMember": "retained-impact-020/combined-queue-delta.json",
+        "deliverableManifest": {
+          "path": "/tmp/clrt-source-final-archives/retained-impact-020-deliverable-manifest.json",
+          "sha256": "c98f161c251450d1464802f4b18de47dde6f02dc8676e9b2def7878d28710cf0",
+          "byteLength": 5098
+        }
+      }
+    },
+    {
+      "role": "retained-impact-021_FREEZE",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-021/freeze-manifest.json",
+      "sha256": "5bdb3adb4772b0337845446dde18d18fc98c75dc3ede0766b11b623c343de95c",
+      "byteLength": 37740,
+      "archiveCustody": {
+        "archive": {
+          "path": "/tmp/clrt-source-final-archives/retained-impact-021-frozen-payloads.tar.gz",
+          "sha256": "25318dc98628bebe9d14d40c762d7429d383d3bb1705821c25872e48bd79df09",
+          "byteLength": 152655
+        },
+        "archiveMember": "retained-impact-021/freeze-manifest.json",
+        "deliverableManifest": {
+          "path": "/tmp/clrt-source-final-archives/retained-impact-021-deliverable-manifest.json",
+          "sha256": "4979613b530c02b38a3b80a9973a74fbeb68dbdba20248ba7d8a98c4457d2590",
+          "byteLength": 5101
+        }
+      }
+    },
+    {
+      "role": "retained-impact-021_QUEUE",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-021/combined-queue-delta.json",
+      "sha256": "da9dcd62b27d03d056203119baa5b8721a14d92de82c77dfa84feb6332426859",
+      "byteLength": 104166,
+      "archiveCustody": {
+        "archive": {
+          "path": "/tmp/clrt-source-final-archives/retained-impact-021-frozen-payloads.tar.gz",
+          "sha256": "25318dc98628bebe9d14d40c762d7429d383d3bb1705821c25872e48bd79df09",
+          "byteLength": 152655
+        },
+        "archiveMember": "retained-impact-021/combined-queue-delta.json",
+        "deliverableManifest": {
+          "path": "/tmp/clrt-source-final-archives/retained-impact-021-deliverable-manifest.json",
+          "sha256": "4979613b530c02b38a3b80a9973a74fbeb68dbdba20248ba7d8a98c4457d2590",
+          "byteLength": 5101
+        }
+      }
+    },
+    {
+      "role": "retained-impact-022_FREEZE",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-022/freeze-manifest.json",
+      "sha256": "b28aff93fa24d336d1f2608ecb47d88a31a3cc6f6df6722db2951ffd30a27ced",
+      "byteLength": 40053,
+      "archiveCustody": {
+        "archive": {
+          "path": "/tmp/clrt-source-final-archives/retained-impact-022-frozen-payloads.tar.gz",
+          "sha256": "5df1ab50a969c8be079748943696d9b45056371587a7b745ef179678fc9b7371",
+          "byteLength": 100340
+        },
+        "archiveMember": "retained-impact-022/freeze-manifest.json",
+        "deliverableManifest": {
+          "path": "/tmp/clrt-source-final-archives/retained-impact-022-deliverable-manifest.json",
+          "sha256": "22ab0362a3bbe34dfdd3b6506f5e24f1cab7b53f040aedc91409d4c6824abc95",
+          "byteLength": 5099
+        }
+      }
+    },
+    {
+      "role": "retained-impact-022_QUEUE",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-022/combined-queue-delta.json",
+      "sha256": "aff985b3c701c7d3ac3bff3f9d0eff65b4ac8394fce2a2d1d84c29e545beab3a",
+      "byteLength": 52645,
+      "archiveCustody": {
+        "archive": {
+          "path": "/tmp/clrt-source-final-archives/retained-impact-022-frozen-payloads.tar.gz",
+          "sha256": "5df1ab50a969c8be079748943696d9b45056371587a7b745ef179678fc9b7371",
+          "byteLength": 100340
+        },
+        "archiveMember": "retained-impact-022/combined-queue-delta.json",
+        "deliverableManifest": {
+          "path": "/tmp/clrt-source-final-archives/retained-impact-022-deliverable-manifest.json",
+          "sha256": "22ab0362a3bbe34dfdd3b6506f5e24f1cab7b53f040aedc91409d4c6824abc95",
+          "byteLength": 5099
+        }
+      }
+    },
+    {
+      "role": "PROPOSAL_DELIVERABLE",
+      "path": "/tmp/clrt-v4-retained-impact-review-batch-023/finalized/deliverable-manifest-023.json",
+      "sha256": "61ef288456a2257e68b4d287cc2a310558b21e58b4e6020581f544fc0f7b6e37",
+      "byteLength": 5463
+    },
+    {
+      "role": "PROPOSAL_DURABLE_ARCHIVE",
+      "path": "/workspace/shared/clrt-v4-retained-impact-review/batch-023-frozen-payloads.tar.gz",
+      "sha256": "5f12dd2098c2cb8151bb53b5328f4948a7c9afba98046faed549db7411979031",
+      "byteLength": 420134
+    },
+    {
+      "role": "PROPOSAL_PRIVATE_CUSTODY_RECEIPT",
+      "path": "/tmp/clrt-v4-retained-impact-review-batch-023/finalized/private-library-receipt.json",
+      "sha256": "6fc647956c4bb4542093b103391ef29142854c10f166d4b3693a676ee968dc1b",
+      "byteLength": 1452
+    },
+    {
+      "role": "REQUIRED_PRIOR_PROPOSAL_CORRECTION",
+      "path": "/workspace/shared/clrt-v4-retained-impact-review/batch-020-additive-001-manifest.json",
+      "sha256": "370058d38dc9778835a6b307fc76d4515dd533ca915e0e4ceb816a40b241df81",
+      "byteLength": 1871
+    },
+    {
+      "role": "PROPOSAL_FREEZE",
+      "path": "/workspace/shared/clrt-v4-retained-impact-review/batch-023/freeze-manifest.json",
+      "sha256": "4aadb66637c39df1bdd68cc5229d4b07c8118b8ffae7387c6e988e1c1005a235",
+      "byteLength": 2518,
+      "archiveCustody": {
+        "archive": {
+          "path": "/workspace/shared/clrt-v4-retained-impact-review/batch-023-frozen-payloads.tar.gz",
+          "sha256": "5f12dd2098c2cb8151bb53b5328f4948a7c9afba98046faed549db7411979031",
+          "byteLength": 420134
+        },
+        "archiveMember": "batch-023/freeze-manifest.json",
+        "deliverableManifest": {
+          "path": "/tmp/clrt-v4-retained-impact-review-batch-023/finalized/deliverable-manifest-023.json",
+          "sha256": "61ef288456a2257e68b4d287cc2a310558b21e58b4e6020581f544fc0f7b6e37",
+          "byteLength": 5463
+        }
+      }
+    },
+    {
+      "role": "PROPOSAL_MECHANISM-REVIEW",
+      "path": "/workspace/shared/clrt-v4-retained-impact-review/batch-023/mechanism-review.json",
+      "sha256": "b8a48eadfc9c09befccf780601908656407d3e2c3e2d8451481c4460193c37c0",
+      "byteLength": 42328,
+      "archiveCustody": {
+        "archive": {
+          "path": "/workspace/shared/clrt-v4-retained-impact-review/batch-023-frozen-payloads.tar.gz",
+          "sha256": "5f12dd2098c2cb8151bb53b5328f4948a7c9afba98046faed549db7411979031",
+          "byteLength": 420134
+        },
+        "archiveMember": "batch-023/mechanism-review.json",
+        "deliverableManifest": {
+          "path": "/tmp/clrt-v4-retained-impact-review-batch-023/finalized/deliverable-manifest-023.json",
+          "sha256": "61ef288456a2257e68b4d287cc2a310558b21e58b4e6020581f544fc0f7b6e37",
+          "byteLength": 5463
+        }
+      }
+    },
+    {
+      "role": "PROPOSAL_PER-ID-DECISIONS",
+      "path": "/workspace/shared/clrt-v4-retained-impact-review/batch-023/per-id-decisions.json",
+      "sha256": "3f2c3b72f97fbd6096b2068faca1d1dce56d65fb272031f1efd6e2dab3056b26",
+      "byteLength": 1429925,
+      "archiveCustody": {
+        "archive": {
+          "path": "/workspace/shared/clrt-v4-retained-impact-review/batch-023-frozen-payloads.tar.gz",
+          "sha256": "5f12dd2098c2cb8151bb53b5328f4948a7c9afba98046faed549db7411979031",
+          "byteLength": 420134
+        },
+        "archiveMember": "batch-023/per-id-decisions.json",
+        "deliverableManifest": {
+          "path": "/tmp/clrt-v4-retained-impact-review-batch-023/finalized/deliverable-manifest-023.json",
+          "sha256": "61ef288456a2257e68b4d287cc2a310558b21e58b4e6020581f544fc0f7b6e37",
+          "byteLength": 5463
+        }
+      }
+    },
+    {
+      "role": "PROPOSAL_SOURCE-REFERENCE-TABLE",
+      "path": "/workspace/shared/clrt-v4-retained-impact-review/batch-023/source-reference-table.json",
+      "sha256": "036f8973e8a285d64ac17a5d37e19e4a572a915cba1d5ab08bf71b2e95ba8e56",
+      "byteLength": 537066,
+      "archiveCustody": {
+        "archive": {
+          "path": "/workspace/shared/clrt-v4-retained-impact-review/batch-023-frozen-payloads.tar.gz",
+          "sha256": "5f12dd2098c2cb8151bb53b5328f4948a7c9afba98046faed549db7411979031",
+          "byteLength": 420134
+        },
+        "archiveMember": "batch-023/source-reference-table.json",
+        "deliverableManifest": {
+          "path": "/tmp/clrt-v4-retained-impact-review-batch-023/finalized/deliverable-manifest-023.json",
+          "sha256": "61ef288456a2257e68b4d287cc2a310558b21e58b4e6020581f544fc0f7b6e37",
+          "byteLength": 5463
+        }
+      }
+    },
+    {
+      "role": "PROPOSAL_ACTUAL-READ-INVENTORY",
+      "path": "/workspace/shared/clrt-v4-retained-impact-review/batch-023/actual-read-inventory.json",
+      "sha256": "c31052468b02d2076bfb2598a2faed1a198b57e5282e3b27d410f10bf1cbb8c8",
+      "byteLength": 23921,
+      "archiveCustody": {
+        "archive": {
+          "path": "/workspace/shared/clrt-v4-retained-impact-review/batch-023-frozen-payloads.tar.gz",
+          "sha256": "5f12dd2098c2cb8151bb53b5328f4948a7c9afba98046faed549db7411979031",
+          "byteLength": 420134
+        },
+        "archiveMember": "batch-023/actual-read-inventory.json",
+        "deliverableManifest": {
+          "path": "/tmp/clrt-v4-retained-impact-review-batch-023/finalized/deliverable-manifest-023.json",
+          "sha256": "61ef288456a2257e68b4d287cc2a310558b21e58b4e6020581f544fc0f7b6e37",
+          "byteLength": 5463
+        }
+      }
+    },
+    {
+      "role": "PROPOSAL_SUMMARY",
+      "path": "/workspace/shared/clrt-v4-retained-impact-review/batch-023/summary.json",
+      "sha256": "97745fc02d15c4d895393ad0866149ae7b54bd47a14f8340d37005c2de0f74f1",
+      "byteLength": 16219,
+      "archiveCustody": {
+        "archive": {
+          "path": "/workspace/shared/clrt-v4-retained-impact-review/batch-023-frozen-payloads.tar.gz",
+          "sha256": "5f12dd2098c2cb8151bb53b5328f4948a7c9afba98046faed549db7411979031",
+          "byteLength": 420134
+        },
+        "archiveMember": "batch-023/summary.json",
+        "deliverableManifest": {
+          "path": "/tmp/clrt-v4-retained-impact-review-batch-023/finalized/deliverable-manifest-023.json",
+          "sha256": "61ef288456a2257e68b4d287cc2a310558b21e58b4e6020581f544fc0f7b6e37",
+          "byteLength": 5463
+        }
+      }
+    },
+    {
+      "role": "PROPOSAL_REVIEW-READ-PACKET",
+      "path": "/workspace/shared/clrt-v4-retained-impact-review/batch-023/review-read-packet.json",
+      "sha256": "66693104eaa9a41f2174f9368c96c693dff84fbfdadd952baf8d98fe21d94fe4",
+      "byteLength": 222993,
+      "archiveCustody": {
+        "archive": {
+          "path": "/workspace/shared/clrt-v4-retained-impact-review/batch-023-frozen-payloads.tar.gz",
+          "sha256": "5f12dd2098c2cb8151bb53b5328f4948a7c9afba98046faed549db7411979031",
+          "byteLength": 420134
+        },
+        "archiveMember": "batch-023/review-read-packet.json",
+        "deliverableManifest": {
+          "path": "/tmp/clrt-v4-retained-impact-review-batch-023/finalized/deliverable-manifest-023.json",
+          "sha256": "61ef288456a2257e68b4d287cc2a310558b21e58b4e6020581f544fc0f7b6e37",
+          "byteLength": 5463
+        }
+      }
+    },
+    {
+      "role": "PROPOSAL_REVIEW-MEMBERS",
+      "path": "/workspace/shared/clrt-v4-retained-impact-review/batch-023/review-members.txt",
+      "sha256": "d36dbe559519a0f10695ced506a5507405eac14819f72b770001ecd5246a4fcc",
+      "byteLength": 53653,
+      "archiveCustody": {
+        "archive": {
+          "path": "/workspace/shared/clrt-v4-retained-impact-review/batch-023-frozen-payloads.tar.gz",
+          "sha256": "5f12dd2098c2cb8151bb53b5328f4948a7c9afba98046faed549db7411979031",
+          "byteLength": 420134
+        },
+        "archiveMember": "batch-023/review-members.txt",
+        "deliverableManifest": {
+          "path": "/tmp/clrt-v4-retained-impact-review-batch-023/finalized/deliverable-manifest-023.json",
+          "sha256": "61ef288456a2257e68b4d287cc2a310558b21e58b4e6020581f544fc0f7b6e37",
+          "byteLength": 5463
+        }
+      }
+    },
+    {
+      "role": "PROPOSAL_REVIEW-PROFILES",
+      "path": "/workspace/shared/clrt-v4-retained-impact-review/batch-023/review-profiles.txt",
+      "sha256": "27245b5ba9a21854466ff23d771ce5264b00422459cefbb3bf9cadf0c7bbf7eb",
+      "byteLength": 11706,
+      "archiveCustody": {
+        "archive": {
+          "path": "/workspace/shared/clrt-v4-retained-impact-review/batch-023-frozen-payloads.tar.gz",
+          "sha256": "5f12dd2098c2cb8151bb53b5328f4948a7c9afba98046faed549db7411979031",
+          "byteLength": 420134
+        },
+        "archiveMember": "batch-023/review-profiles.txt",
+        "deliverableManifest": {
+          "path": "/tmp/clrt-v4-retained-impact-review-batch-023/finalized/deliverable-manifest-023.json",
+          "sha256": "61ef288456a2257e68b4d287cc2a310558b21e58b4e6020581f544fc0f7b6e37",
+          "byteLength": 5463
+        }
+      }
+    }
+  ],
+  "outputs": [
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-023/shared-evidence.json",
+      "sha256": "bb6f241a1df71f9adfee62b7d09ca20b3083ea876d6507e15bd2f82c5db588a9",
+      "byteLength": 57581
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-023/batch-023-reconciliation.json",
+      "sha256": "9a61196c6b691cd6037db9d2e448a42c4d7ef03d8856ff8ef2613ddcd057d917",
+      "byteLength": 886958
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-023/mechanism-adjudication.json",
+      "sha256": "580f567fd65d6a15306b3641865f14dbcdb8574d233700643c31a12515626c70",
+      "byteLength": 53390
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-023/combined-queue-delta.json",
+      "sha256": "f48cf709b111f020ffd8e4ae2394f25d839c16cb4786d3b3d5583bbf377def76",
+      "byteLength": 92232
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-023/actual-read-inventory.json",
+      "sha256": "1d4235e81bd9d736b380aa98c99b19fad708a72523165463edf5af1a6ff9708a",
+      "byteLength": 42479
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-023/validation.json",
+      "sha256": "3043151efe56b13419e8d8034fd90b9c656612c878fa2f346315423bf35e76b8",
+      "byteLength": 873
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-023/reconciliation.json",
+      "sha256": "624fc4a0eee04602117d89ef85d68354a6c74755d8b308cc8b61e9cb4a6ef8af",
+      "byteLength": 2982
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-023/reconcile.py",
+      "sha256": "1d19311aea8bed860bf59b3701a255ec1e8a5c481589012f9d7bcc19b893ef50",
+      "byteLength": 60596
+    }
+  ],
+  "originalFreezePreserved": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/freeze-manifest.json",
+    "sha256": "49580d98e96917aaa6cad169c29930005682fed83beaa0591437f97b5cb5cecc",
+    "byteLength": 12165
+  },
+  "claims": {
+    "sourceOnly": true,
+    "denominatorReduced": false,
+    "proofPromoted": false,
+    "implementationAccepted": false
+  }
+}

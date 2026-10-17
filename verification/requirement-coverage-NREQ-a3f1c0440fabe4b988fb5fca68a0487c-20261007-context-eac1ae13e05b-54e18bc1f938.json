@@ -1,0 +1,253 @@
+{
+  "schema": "closed-loop-requirement-coverage-review/1",
+  "normativeRequirementId": "NREQ-a3f1c0440fabe4b988fb5fca68a0487c",
+  "sourceLineSha256": "3da0bbf78683079bff98b4ce248f2eda041de001477134329432122ba8efd95b",
+  "specificationSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
+  "declarationSha256": "eac1ae13e05b9dfaf467f056d9b407deae6191dacf0f2225447ee68070e61849",
+  "decision": "COMPLETE_COVERAGE",
+  "evidenceBasis": "EXTERNALLY_SUPPORTED",
+  "method": "The exact narrow controlling clause and unchanged proof decomposition were independently reviewed in the embedded original semantic assessment. Current production, verifier, fixture and catalog deltas were separately reviewed in the referenced source-delta review bundle. This is coverage-design evidence only: current frozen-source executed receipts remain independently required, and unsupported clauses are not promoted.",
+  "author": {
+    "actor": "Codex exact-source coverage renewal integrator",
+    "contextId": "/root"
+  },
+  "reviewer": {
+    "actor": "Codex independent verifier-context correction reviewer",
+    "contextId": "/root/pr_inventory_review"
+  },
+  "reviewedInputs": [
+    {
+      "declarationSha256": "eac1ae13e05b9dfaf467f056d9b407deae6191dacf0f2225447ee68070e61849"
+    },
+    {
+      "path": "app-core.js",
+      "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+    },
+    {
+      "path": "hash.js",
+      "sha256": "a13cf57bd7c7414bc801f511d5937f80eaf7fd675c0e6c2b5a92b365df16e4d7"
+    },
+    {
+      "path": "project-store.js",
+      "sha256": "4e8368f0d91eab0b937ee5c256a121c6ca2b3524e9d06ffc16c3f5637a05b060"
+    },
+    {
+      "path": "prompt-engine.js",
+      "sha256": "61e363381dfb88fcfd32a176066762e2a37cf7b14fb9d39bff4eacf7e6d5706f"
+    },
+    {
+      "path": "response-ingestion.js",
+      "sha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5"
+    },
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d"
+    },
+    {
+      "path": "test-handoff-authorization.mjs",
+      "sha256": "37bfb4e255afb6701fccaccdf055ee7961e838eaf03927c2963dfcf880cf82b6"
+    },
+    {
+      "path": "test-project-store-runtime.mjs",
+      "sha256": "743e74ce60e3f81f1601daf7a1bf589ac2a3b8600e275a5865c24fbd0f335f1b"
+    },
+    {
+      "path": "test-runtime.js",
+      "sha256": "e4e01a79c526592f9d044e2c104845e63c9aa341eb64837c138f5c3e3ecba353"
+    },
+    {
+      "path": "test-stage01-specification-controls.mjs",
+      "sha256": "3455469d384cd50cc4216ddd842d50c70ea088b3639b045ac9f5d82f4d73a2d3"
+    },
+    {
+      "path": "test-zip.mjs",
+      "sha256": "b5080a8e58eb7b13f421ecce5c63a3d95b765a5b021f5bd4543dce28d171e89d"
+    },
+    {
+      "path": "verification-evidence-catalog.mjs",
+      "sha256": "5d8e04d46601123d4552e796d0e69027f29774155d5309d5e1356c6456c53010"
+    },
+    {
+      "path": "verification/current-source-delta-review-20261007.json",
+      "sha256": "45cca5871ac89cf1583a3825aec5a7d488d4d40dc70afb51a8534470dececf09"
+    },
+    {
+      "path": "verification/normative-context-applicability-20261005.json",
+      "sha256": "7cd05ff0028578a1ca1c2560533519a602ce6a974c240ee11dbbd272524cf656"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-a3f1c0440fabe4b988fb5fca68a0487c-20261005.json",
+      "sha256": "863d309ecbeabb8f19849384926802fa418d39b232e2ba64fd47a09f5a4b5512"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-a3f1c0440fabe4b988fb5fca68a0487c-20261006-followup-4fca88bcf9d9.json",
+      "sha256": "effec5864edf3dc6629a78d8a4e3039711eb76c108dbb4073d3da4d37ae11626"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-a3f1c0440fabe4b988fb5fca68a0487c-20261006.json",
+      "sha256": "4e2a3fd7301303306a836ca6154907b9bd1eaa64d2d0489d560da1cc89a2e1ea"
+    },
+    {
+      "path": "verifier-runtime.mjs",
+      "sha256": "051318fc24ea587ced6268d4a60278e5155e3fee8ed26309b28b532c921277f9"
+    },
+    {
+      "path": "verify-stage01-agent-contract-alignment.mjs",
+      "sha256": "a3bb726418a565ea1a4f3d4853b4fdfbac423e8c8fa304e73ba4bd9fbbb4bec0"
+    },
+    {
+      "path": "workbook.js",
+      "sha256": "3a8098a9bb4ea108eadaa9bec90c76a1522f57f6465f45341cedf60937ddd008"
+    },
+    {
+      "path": "workflow-engine.js",
+      "sha256": "16c2a16d61d6a462ecebd25cd7d530a3cce46e11c1d9f88664c2e9a27cf61295"
+    },
+    {
+      "path": "workflow-schema.js",
+      "sha256": "656e9e632cea3a60e1c7e0fb486e6630d205011d7db32d9674ac5e88593d24f1"
+    },
+    {
+      "path": "test-fixtures.mjs",
+      "sha256": "666a66d54f5944eae28c608eb0d627aefe45972413b8f5ac004db306205f00c7"
+    },
+    {
+      "path": "verification/deferred-definition-current-prerequisite-fixture-20261007.json",
+      "sha256": "61966404f4bff8a74ad0f42ef8b8b6a04964f3e5630fddb8a0df33c09302ba2f"
+    },
+    {
+      "path": "verification/runtime-storage-independent-delta-review-20261010.json",
+      "sha256": "1aeddf08767ed1d3a70ff7d4f31d69a74cde85099cce89d8d7a0d0e97404542a"
+    },
+    {
+      "path": "verification/ci-group-handoff-independent-delta-review-20261010.json",
+      "sha256": "3b8b941ac5a47dec4bd681f3e4dbe939230db8875d40c62c17e862e912f04c4d"
+    }
+  ],
+  "findings": [],
+  "reviewPerformed": true,
+  "sourceLocation": {
+    "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+    "startLine": 563,
+    "endLine": 563,
+    "lineSha256": "3da0bbf78683079bff98b4ce248f2eda041de001477134329432122ba8efd95b"
+  },
+  "controllingText": "10. any human intent confirmation references the current input version and accepted change.",
+  "governingContext": [
+    {
+      "normativeRequirementId": "NREQ-72821c4baa97ffe3655ed990941c6bef",
+      "sourceLineSha256": "7541f0f8df7b05e0d5242e7e971067ffbf4f7b285cb6d664a92a5568ce4cfe3f",
+      "controllingText": "7.6 Stage 01 completion"
+    }
+  ],
+  "additionalControllingContext": [
+    {
+      "line": 552,
+      "text": "",
+      "normativeRequirementId": null
+    }
+  ],
+  "reviewedChecks": [
+    {
+      "suite": "verify-stage01-agent-contract-alignment.mjs",
+      "checkId": "STAGE01-SPECIFICATION-CONTRACT-CONTROLS"
+    }
+  ],
+  "scopeLimit": "Current executed receipts still required. No browser, physical-device, real human semantic confirmation, or arbitrary external actor truth inferred.",
+  "independentSemanticAssessment": {
+    "path": "/workspace/scratch/stage-review/32-stage1-freshness-declaration-review.json",
+    "sha256": "6245f19b3f1bdb320025cf07f86f1fa4055328974855b0fd072d1af27c61078a",
+    "row": {
+      "normativeRequirementId": "NREQ-a3f1c0440fabe4b988fb5fca68a0487c",
+      "sourceLocation": {
+        "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "startLine": 563,
+        "endLine": 563,
+        "lineSha256": "3da0bbf78683079bff98b4ce248f2eda041de001477134329432122ba8efd95b"
+      },
+      "controllingText": "10. any human intent confirmation references the current input version and accepted change.",
+      "activeReview": {
+        "path": "verification/requirement-coverage-NREQ-a3f1c0440fabe4b988fb5fca68a0487c-20261006-followup-4fca88bcf9d9.json",
+        "sha256": "effec5864edf3dc6629a78d8a4e3039711eb76c108dbb4073d3da4d37ae11626"
+      },
+      "scope": "An accepted Stage1 response remains incomplete before human confirmation and when confirmation references the wrong input version or accepted change. A current exact input/change-bound confirmation permits completion. The confirmations are synthetic operator test records, not real human semantic acceptance.",
+      "checkIds": [
+        "STAGE01-SPECIFICATION-CONTRACT-CONTROLS"
+      ],
+      "productionOwners": [
+        {
+          "path": "workflow-engine.js",
+          "symbol": "gate / evaluateIntakeAccounting / recordStageConfirmation",
+          "sha256": "b47195d41a130cb1b84425f5eb33bd8a163e1047c0e95e19eef59d47525e463d",
+          "currentSha256": "b47195d41a130cb1b84425f5eb33bd8a163e1047c0e95e19eef59d47525e463d",
+          "hashMatches": true
+        },
+        {
+          "path": "response-ingestion.js",
+          "symbol": "prepareCaptured / commit",
+          "sha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19",
+          "currentSha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19",
+          "hashMatches": true
+        }
+      ],
+      "decision": "COVERAGE_DESIGN_SUFFICIENT_FOR_EXACT_SPECIFIED_BOUNDARY",
+      "rationale": "A genuinely accepted synthetic response remains blocked before confirmation; an exact current inputVersion/acceptedChangeId confirmation permits completion. Mutation of either binding independently returns the specific human-confirmation gate reason. The authoritative rule and owner both bind the latest accepted change and current input version. This establishes deterministic binding semantics, not a real human semantic endorsement.",
+      "exactCases": [
+        "STAGE01_SPEC_CONFIRMATION_REQUIRED_ORACLE",
+        "missing-confirmation",
+        "wrong-confirmation-input",
+        "wrong-confirmation-change",
+        "conforming-current-intent"
+      ],
+      "evidence": {
+        "kind": "COVERAGE_DESIGN_SOURCE_REVIEW_ONLY_CURRENT_OWNER_EXECUTION_STILL_REQUIRED",
+        "owningCommand": "node verify-stage01-agent-contract-alignment.mjs",
+        "actualCurrentInitialPackage": "package-inspection-a194.json (only initial no-file COMPLETE carrier, not substituted for full owning test)",
+        "newOwnerRun": false
+      },
+      "mutationsQualification": "Named invalid-input controls and carrier mutations, not a claim all implementation mutants were executed.",
+      "semanticOrPhysicalNonapplicability": "Only the deterministic producer/accounting/identity clause is covered. Related actual semantic actor, browser, persistence, physical-device and full-stage obligations remain separately tracked.",
+      "unresolvedDesignIssues": []
+    }
+  },
+  "priorReview": {
+    "path": "verification/requirement-coverage-NREQ-a3f1c0440fabe4b988fb5fca68a0487c-20261007-f0b3c3a30e5c.json",
+    "sha256": "391e84b2fb16e663eaa2f8442f691929ebc69dda6423fb6510565877c3a39910",
+    "author": {
+      "actor": "Codex coordinated exact-clause renewal proposer",
+      "contextId": "/root"
+    },
+    "reviewer": {
+      "actor": "Codex independent narrow declaration reviewer",
+      "contextId": "/root/stage_contract_review"
+    },
+    "reviewCompletedAt": "2026-10-07T01:21:18.248Z"
+  },
+  "reviewerPriorContributionDisclosure": "Reviewer authored only the conformanceSources registration of test-verifier-context-ui.mjs and test-prompt-context-storage.mjs. CI owner independently reviewed those additive source-input registrations. No runtime repair or owning behavioral test was authored by this reviewer in this correction chain.",
+  "currentExecutionRequired": true,
+  "applicationConformanceClaim": false,
+  "reviewCompletedAt": "2026-10-07T05:10:44.883240+00:00",
+  "currentDependencyDeltaReview": {
+    "path": "verification/current-source-delta-review-20261007.json",
+    "sha256": "45cca5871ac89cf1583a3825aec5a7d488d4d40dc70afb51a8534470dececf09"
+  },
+  "supplementaryIndependentSourceDeltaReviews": [
+    {
+      "path": "verification/runtime-storage-independent-delta-review-20261010.json",
+      "sha256": "1aeddf08767ed1d3a70ff7d4f31d69a74cde85099cce89d8d7a0d0e97404542a",
+      "reviewedAtUtc": "2026-10-10T05:59:54.689Z",
+      "scope": "Exact reviewed dependency and owner source delta; prior semantic obligation/check decomposition unchanged."
+    },
+    {
+      "path": "verification/ci-group-handoff-independent-delta-review-20261010.json",
+      "sha256": "3b8b941ac5a47dec4bd681f3e4dbe939230db8875d40c62c17e862e912f04c4d",
+      "reviewedAtUtc": "2026-10-10T06:13:50.965Z",
+      "scope": "Exact reviewed dependency and owner source delta; prior semantic obligation/check decomposition unchanged."
+    }
+  ],
+  "reviewRenewedAt": "2026-10-10T06:13:50.965Z",
+  "renewalActor": {
+    "actor": "Codex CI repair integrator",
+    "contextId": "/root"
+  }
+}

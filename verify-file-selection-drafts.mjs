@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
-import {projectStoreRuntime} from './test-project-store-runtime.mjs';
+import {projectStoreRuntime,bindHandoffReviewUiState} from './test-project-store-runtime.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 
 const {runtime,store,copy}=projectStoreRuntime(),schema=runtime.closedLoopWorkflowSchema;
@@ -18,6 +18,7 @@ const resetNodes=()=>{nodes=new Map([
  ]);};
 resetNodes();
 Object.assign(runtime,{current:project,projectStore:store,clone:copy,history:{state:{entryId:'draft-entry'}},restoringHistory:false,fileSelectionDrafts:{},operationSelection:{},runSelection:{},replacementReview:null,APPLICATION_SESSION_ID:'FILE-SELECTION-DRAFT-SESSION',CSS:{escape:String},window:{scrollX:0,scrollY:0,scrollTo(){throw new Error('File selection must not restore an old scroll position.');}},document:{querySelectorAll:()=>[...nodes.values()].filter(n=>n.id),querySelector:s=>nodes.get(s)},$:s=>nodes.get(s),captureCurrentView:async()=>{},responseAttemptPrompt:()=>null,selectedOperation:()=> 'COMPLETE',artifactIdFor:jobId=>jobId+'-FILE-'+runtime.crypto.randomUUID(),logicalFilePath:file=>file.name,writeBrowserEntry(){},refreshHistory:async()=>{},announce(){},focusAfterAction(){},render:resetNodes});
+bindHandoffReviewUiState(runtime,{source});
 createVerifierRuntime.loadScript(runtime,extract('const VIEW_NAVIGATION_CONTROL_IDS=','function selectSavedView(').replace(/function replacementReviewFromSavedView\([\s\S]*$/,'' )+extract('function applySavedView(','function entryUrl(')+extract('function fileSelectionKey(','async function readFileSelection('));
 const cases=[];
 for(let stage=1;stage<=schema.STAGE_COUNT;stage++)for(const kind of ['response','audited','delivery']){

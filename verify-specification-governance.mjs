@@ -1,9 +1,12 @@
+import {verifySpecificationSourceCommit} from './specification-source-history.mjs';
 import {runVerifier,checkedVerifier} from './verify-conformance-regressions.mjs';
+import {currentOwnerReport} from './verification-evidence.mjs';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import cp from 'node:child_process';
+import {validateSpecificationSource} from './review-specification-coverage.mjs';
 
 const SPEC_PATH='specification/closed-loop-reliability-controlling-implementation-specification.txt';
 const SPEC_MANIFEST_PATH='specification/closed-loop-specification-manifest.json';
@@ -16,47 +19,16 @@ const readJson=file=>JSON.parse(fs.readFileSync(file,'utf8'));
 
 for(const file of [SPEC_PATH,SPEC_MANIFEST_PATH,NORMATIVE_MANIFEST_PATH,CORE_PATH])assert(fs.existsSync(file),`Required governance input missing: ${file}`);
 const sourceBytes=fs.readFileSync(SPEC_PATH);
-const sourceText=new TextDecoder('utf-8',{fatal:true}).decode(sourceBytes);
 const committedSpecBytes=fs.readFileSync(SPEC_MANIFEST_PATH);
 const committedNormativeBytes=fs.readFileSync(NORMATIVE_MANIFEST_PATH);
 const committedSpec=JSON.parse(committedSpecBytes.toString('utf8'));
 const sourceCommit=String(process.env.SOURCE_COMMIT||committedSpec.sourceCommit||'').toLowerCase();
 
-assert(/^[0-9a-f]{40}$/.test(sourceCommit),'Exact specification source commit is unavailable.');
-assert(!sourceBytes.subarray(0,3).equals(Buffer.from([0xef,0xbb,0xbf])),'Specification BOM is prohibited.');
-assert(!sourceText.includes('\r'),'Specification contains CR or CRLF bytes.');
-assert(!sourceText.startsWith('\n'),'Specification has a leading blank line.');
-assert(sourceText.endsWith('\n')&&!sourceText.endsWith('\n\n'),'Specification must end with exactly one LF.');
-assert(sourceText.startsWith('Closed-Loop Reliability Application\nZero-Loss Controlling Implementation Specification\n'),'Specification start boundary is wrong.');
-assert(sourceText.endsWith('Completion additionally requires the current exact deployed origin and bytes and the pinned actual physical-iPhone Safari operator path.\n'),'Specification end boundary is wrong.');
-assert(committedSpec.sha256===sha256(sourceBytes),'Committed specification manifest does not bind the exact source bytes.');
-assert(committedSpec.byteLength===sourceBytes.length,'Committed specification manifest byte length is wrong.');
-assert(committedSpec.sourceCommit===sourceCommit,'Committed specification source commit is wrong.');
+const sourceText=validateSpecificationSource(sourceBytes,committedSpec,sourceCommit);
+(await checkedVerifier(process.execPath,['test-specification-source-adoption.mjs'],{stdio:'pipe'}));
+(await checkedVerifier(process.execPath,['test-specification-source-classifications.mjs'],{stdio:'pipe'}));
 
-async function verifySourceCommit(){
-  if(process.env.GITHUB_ACTIONS!=='true')return {checked:false};
-  const shallow=cp.execFileSync('git',['rev-parse','--is-shallow-repository'],{timeout:30000,killSignal:'SIGKILL',encoding:'utf8'}).trim()==='true';
-  const fetchArgs=shallow?['fetch','--no-tags','--unshallow','origin','main']:['fetch','--no-tags','origin','main'];
-  const fetched=(await runVerifier('git',fetchArgs,{encoding:'utf8',timeout:120000}));
-  assert(fetched.status===0&&!fetched.error&&!fetched.signal,'Unable to fetch complete canonical main history. '+fetched.stderr);
-  assert(cp.spawnSync('git',['merge-base','--is-ancestor',sourceCommit,'HEAD'],{timeout:30000,killSignal:'SIGKILL',stdio:'ignore'}).status===0,'Specification source commit is not reachable from current canonical main.');
-  const shown=cp.spawnSync('git',['show',`${sourceCommit}:${SPEC_PATH}`],{timeout:30000,killSignal:'SIGKILL',encoding:null,maxBuffer:64*1024*1024});
-  assert(shown.status===0,'Specification is absent from the recorded source commit.');
-  const clarifications=readJson('specification/requirement-evidence-bindings.json').approvedClarifications||[];
-  let pinnedBytes=sourceBytes;
-  if(clarifications.length){
-    const lines=sourceText.split('\n'),excluded=new Set();
-    for(const c of clarifications){
-      assert(c.approval&&sha256(Buffer.from(lines.slice(c.startLine-1,c.startLine-1+c.lineCount).join('\n')+'\n'))===c.textSha256,'Approved source amendment bytes differ.');
-      for(let i=c.startLine-1;i<c.startLine-1+c.lineCount;i++){assert(!excluded.has(i),'Approved source amendments overlap.');excluded.add(i);}
-    }
-    pinnedBytes=Buffer.from(lines.filter((_,i)=>!excluded.has(i)).join('\n'));
-    assert(clarifications.every(c=>sha256(pinnedBytes)===c.baseSpecificationSha256),'Approved source amendment changes unrelated controlling text.');
-  }
-  assert(Buffer.compare(Buffer.from(shown.stdout),pinnedBytes)===0,'Recorded source commit does not contain the exact pinned base specification bytes.');
-  return {checked:true};
-}
-const sourceCommitEvidence=(await verifySourceCommit());
+const sourceCommitEvidence=await verifySpecificationSourceCommit({sourceBytes,sourceCommit,specificationPath:SPEC_PATH});
 
 for(const runtimePath of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','test-worker.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js','index.html','TEST_PROJECT.json']){
   if(!fs.existsSync(runtimePath))continue;
@@ -113,7 +85,8 @@ try{
   assert(mutationRejected,'Intentional committed-manifest mutation was not rejected.');
   assert(mutatedBytes.equals(mutationRun.beforeSpec),'Intentional mutation fixture changed before validation began.');
 
-  (await checkedVerifier(process.execPath,['verify-v3-migration.mjs'],{stdio:'pipe'}));
+  const migrationProof=await currentOwnerReport('verify-v3-migration.mjs','verifyV3Migration',{run:()=>checkedVerifier(process.execPath,['verify-v3-migration.mjs'],{encoding:'utf8'})});
+  assert(migrationProof.verifyV3Migration==='PASS','Current migration owner did not report PASS.');
   (await checkedVerifier(process.execPath,['verify-response-contract-profile.mjs'],{stdio:'pipe'}));
 
   const coreReport=JSON.parse((validation.result.stdout||'').trim());
@@ -121,6 +94,7 @@ try{
     ...coreReport,
     sourceCommit,
     sourceCommitReachabilityChecked:sourceCommitEvidence.checked,
+    sourceCommitSpecificationBasis:sourceCommitEvidence.basis||'LOCAL_SOURCE_REACHABILITY_NOT_RUN',
     committedManifestBytesValidated:true,
     independentRegenerationCompared:true,
     verifierDidNotRewriteCommittedManifests:true,
