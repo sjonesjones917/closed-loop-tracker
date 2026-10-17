@@ -16,6 +16,10 @@ const expected=[...chapter.matchAll(/^- ([A-Z][A-Z0-9_]*) — (HUMAN_DECISION|HU
 if(!expected.length)throw new Error('The controlling Job field table was not parsed.');
 const cases=expected.map(([text,name,producer,type,editable,nullable,required])=>{const d=schema.JOB_FIELDS[name],types={String:'STRING',Integer:'INTEGER'},want={producer,editable:editable==='Yes',nullable:nullable==='Yes',requiredAtStage:required==='—'?null:Number(required)},observed=d?Object.fromEntries(Object.keys(want).map(k=>[k,d[k]])):null,metadataMatches=JSON.stringify(want)===JSON.stringify(observed),typeMatches=types[type]?d?.valueType===types[type]:d?.valueType!=='STRING';return {caseId:'JOB-FIELD-'+name,sourceText:text,expected:{...want,type},actual:d||null,status:metadataMatches&&typeMatches?'PASS':'FAIL'};});
 cases.push({caseId:'CONFIRMATION-APPEND-CONTRACT',expected:'Specification section 38 requires APPEND_SCOPED independently of application-owned fields.',actual:{recordPolicy:schema.RECORD_SCHEMAS.confirmationRecords.commitPolicy,durablePolicy:schema.DURABLE_OBJECT_REGISTRY.confirmationRecords.policy},status:schema.RECORD_SCHEMAS.confirmationRecords.commitPolicy==='APPEND_SCOPED'&&schema.DURABLE_OBJECT_REGISTRY.confirmationRecords.policy==='APPEND_SCOPED'?'PASS':'FAIL'});
+// Report the owning declaration failure before a downstream projection guard
+// observes the same malformed field contract. Conforming declarations execute all owners below.
+const declarationFailures=cases.filter(row=>row.status==='FAIL');
+if(declarationFailures.length)throw new Error('JOB_CONTRACT_ORACLE: '+declarationFailures.map(row=>row.caseId).join(', '));
 // Use the loaded production export with its complete lexical dependencies.
 const validateValue=c.closedLoopResponseIngestion.validateValue;
 const project=c.closedLoopCore.createBlankState('JOB-DECLARED-TYPE-PROOF');c.closedLoopWorkflowEngine.recalculate(project);
