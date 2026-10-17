@@ -2,14 +2,13 @@ import {verifyCompleteRecordCarrierShapes} from './test-complete-record-carrier-
 import {verifyCanonicalPrefixSuppliers} from './test-canonical-prefix-supplier.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
-import vm from 'node:vm';
 import {createHash} from 'node:crypto';
 export function verifyCanonicalDigestScopeControls(source=fs.readFileSync('hash.js','utf8')){
  const strict=(ok,name)=>assert(ok,'IMPORT_DIGEST_SCOPE_ORACLE '+name),cases=[],note=name=>cases.push({name,passed:true});
  const digest=text=>createHash('sha256').update(text,'utf8').digest('hex');
  const Encoder=class extends TextEncoder{encode(value){return super.encode(value);}};
- const context=createVerifierRuntime({TextEncoder:Encoder,TextDecoder,Uint8Array,Uint32Array,ArrayBuffer,DataView,Blob});vm.runInContext(source,context);
- const run=code=>vm.runInContext(code,context),reject=(code,pattern)=>{let caught=false;try{run(code);}catch(error){caught=pattern.test(error.message);}strict(caught,code);};
+ const context=createVerifierRuntime({TextEncoder:Encoder,TextDecoder,Uint8Array,Uint32Array,ArrayBuffer,DataView,Blob});createVerifierRuntime.loadScript(context,source);
+ const run=code=>createVerifierRuntime.loadScript(context,code),reject=(code,pattern)=>{let caught=false;try{run(code);}catch(error){caught=pattern.test(error.message);}strict(caught,code);};
  run(`var hash=closedLoopHash,root={a:[null,true,7,'é🙂'],z:'x'},scope=hash.createCanonicalDigestScope(root);`);
  const expected=digest('{"a":[null,true,7,"é🙂"],"z":"x"}');strict(run('!!scope'),'data-only owned scope');
  strict(run('hash.withCanonicalDigestScope(scope,()=>hash.sha256Value(root))')===expected,'cold exact Unicode preimage');note('cold-exact-unicode');
@@ -43,8 +42,8 @@ export function verifyCanonicalDigestScopeControls(source=fs.readFileSync('hash.
 // Section34 distinguishes content identity from complete-record identity.
 // These exact preimages are independent literals, not production projections.
 export function verifyRecordHashDistinctionControls(source=fs.readFileSync('hash.js','utf8'),{detectCounterexamples=true}={}){
- const context=createVerifierRuntime({TextEncoder,TextDecoder,Uint8Array,Uint32Array,ArrayBuffer,DataView,Blob});vm.runInContext(source,context,{filename:'hash.js:record-distinction'});
- const run=code=>vm.runInContext(code,context),digest=text=>createHash('sha256').update(text,'utf8').digest('hex'),cases=[];
+ const context=createVerifierRuntime({TextEncoder,TextDecoder,Uint8Array,Uint32Array,ArrayBuffer,DataView,Blob});createVerifierRuntime.loadScript(context,source ,{filename:'hash.js:record-distinction'});
+ const run=code=>createVerifierRuntime.loadScript(context,code),digest=text=>createHash('sha256').update(text,'utf8').digest('hex'),cases=[];
  run(`var hash=closedLoopHash,base={active:true,fields:{REQ_ID:'REQ-1',OBLIGATION:'must hold',STATUS:'CURRENT',VERSION:'V1',CREATED_AT:'device-a',UPDATED_AT:'device-b'},relationships:{SOURCE_ID:'SOURCE-1'},evidenceRefs:['EVIDENCE-1'],scope:{inputVersion:'INPUT-v001'},recordSha256:'ignored',sha256:'ignored'};`);
  const contentText='{"evidenceRefs":["EVIDENCE-1"],"fields":{"OBLIGATION":"must hold"},"relationships":{"SOURCE_ID":"SOURCE-1"}}';
  const recordText='{"active":true,"evidenceRefs":["EVIDENCE-1"],"fields":{"CREATED_AT":"device-a","OBLIGATION":"must hold","REQ_ID":"REQ-1","STATUS":"CURRENT","UPDATED_AT":"device-b","VERSION":"V1"},"relationships":{"SOURCE_ID":"SOURCE-1"},"scope":{"inputVersion":"INPUT-v001"}}';
@@ -94,7 +93,7 @@ function primitiveResult(checkId,boundary,cases){
  const failed=cases.find(row=>!row.passed);if(failed)throw Object.assign(new Error('CANONICAL_PRIMITIVE_OBSERVATION_ORACLE: '+failed.name),{report});return report;
 }
 export function verifySourceFamilyRecordHashDistinction(source=fs.readFileSync('hash.js','utf8')){
- const context=createVerifierRuntime({TextEncoder,TextDecoder,Uint8Array,Uint32Array,ArrayBuffer,DataView,Blob});vm.runInContext(source,context,{filename:'hash.js:source-family-distinction'});
+ const context=createVerifierRuntime({TextEncoder,TextDecoder,Uint8Array,Uint32Array,ArrayBuffer,DataView,Blob});createVerifierRuntime.loadScript(context,source ,{filename:'hash.js:source-family-distinction'});
  const hash=context.closedLoopHash,cases=[],digest=text=>createHash('sha256').update(text,'utf8').digest('hex');
  for(const idField of primitiveContentIdFields){
   const input={fields:{[idField]:'IDENTITY-A',CREATED_AT:'device-a',UPDATED_AT:'device-b',VERSION:'V1',STATUS:'CURRENT',zzContent:'alpha'},relationships:{LINK:'SOURCE-1'},evidenceRefs:['EVIDENCE-1'],recordSha256:'ignored',sha256:'ignored'};
@@ -105,7 +104,7 @@ export function verifySourceFamilyRecordHashDistinction(source=fs.readFileSync('
    ['substantive-change',{...input,fields:{...input.fields,zzContent:'beta'}},primitiveContentText.replace('alpha','beta'),primitiveCompleteText(idField,'IDENTITY-A','CURRENT','V1','device-a','device-b','beta')],
    ['self-digest-change',{...input,recordSha256:'changed',sha256:'changed'},primitiveContentText,primitiveCompleteText(idField)]
   ];
-  for(const [name,value,contentText,completeText]of fixtures){context.input=JSON.stringify(value);const record=vm.runInContext('JSON.parse(input)',context),expected={content:digest(contentText),complete:digest(completeText)},observed={content:hash.contentRecordSha256(record,idField),complete:hash.recordSha256(record)};
+  for(const [name,value,contentText,completeText]of fixtures){context.input=JSON.stringify(value);const record=createVerifierRuntime.loadScript(context,'JSON.parse(input)'),expected={content:digest(contentText),complete:digest(completeText)},observed={content:hash.contentRecordSha256(record,idField),complete:hash.recordSha256(record)};
    cases.push({name:idField+':'+name,idField,contentText,completeText,expected,observed,passed:observed.content===expected.content&&observed.complete===expected.complete&&observed.content!==observed.complete});
   }
  }
@@ -115,8 +114,8 @@ const primitiveUtf8Literal="{\"a\":\"Aé中🙂\",\"b\":\"﻿\",\"c\":\"é\\r\\
 const primitiveUtf8Boundary='Production canonical text/value/registered/stream routes encode independently literal Unicode UTF8 bytes without a leading BOM; actual Node WebCrypto typed/offset/DataView and bounded Blob byte routes hash those same bytes. Interior U+FEFF is preserved. Synthetic nonbrowser primitive proof only; no storage, transport or deployment claim.';
 export async function verifyCanonicalUtf8ByteObservation(source=fs.readFileSync('hash.js','utf8')){
  const encoded=[];class ObservedEncoder extends TextEncoder{encode(value){const bytes=super.encode(value);encoded.push(Buffer.from(bytes));return bytes;}}
- const context=createVerifierRuntime({TextEncoder:ObservedEncoder,TextDecoder,Uint8Array,Uint32Array,ArrayBuffer,DataView,Blob,crypto:globalThis.crypto});vm.runInContext(source,context,{filename:'hash.js:utf8-observation'});
- const hash=context.closedLoopHash;context.utf8Fixture=JSON.stringify({a:'Aé中🙂',b:'\ufeff',c:'e\u0301\r\n'});vm.runInContext('var utf8Subject=JSON.parse(utf8Fixture);',context);const cases=[],bytes=Uint8Array.from(Buffer.from(primitiveUtf8Hex,'hex'));
+ const context=createVerifierRuntime({TextEncoder:ObservedEncoder,TextDecoder,Uint8Array,Uint32Array,ArrayBuffer,DataView,Blob,crypto:globalThis.crypto});createVerifierRuntime.loadScript(context,source ,{filename:'hash.js:utf8-observation'});
+ const hash=context.closedLoopHash;context.utf8Fixture=JSON.stringify({a:'Aé中🙂',b:'\ufeff',c:'e\u0301\r\n'});createVerifierRuntime.loadScript(context,'var utf8Subject=JSON.parse(utf8Fixture);');const cases=[],bytes=Uint8Array.from(Buffer.from(primitiveUtf8Hex,'hex'));
  const record=(name,expected,observed)=>cases.push({name,expected,observed,passed:JSON.stringify(expected)===JSON.stringify(observed)});
  record('canonical-literal',primitiveUtf8Literal,hash.stableStringify(context.utf8Subject));
  for(const [name,operation]of [['canonical-value',()=>hash.sha256Value(context.utf8Subject)],['canonical-text',()=>hash.sha256Text(primitiveUtf8Literal)],['canonical-stream',()=>hash.sha256Chunks(hash.canonicalChunks(context.utf8Subject))],['canonical-envelope',()=>hash.canonicalEnvelopeSha256(context.utf8Subject)]]){
@@ -132,9 +131,9 @@ export async function verifyCanonicalUtf8ByteObservation(source=fs.readFileSync(
 
 // §34.1: cache refusal is not rejection; canonical APIs own admission of data.
 export async function verifyCanonicalArrayImplementationControls(source=fs.readFileSync('hash.js','utf8'),{detectCounterexamples=true}={}){
- const strict=(ok,name)=>assert(ok,'CANONICAL_ARRAY_IMPLEMENTATION_ORACLE: '+name),context=createVerifierRuntime({TextEncoder,TextDecoder,Uint8Array,Uint32Array,ArrayBuffer,DataView,Blob});vm.runInContext(source,context,{filename:'hash.js:array-implementation'});
- const h=context.closedLoopHash,run=code=>vm.runInContext(code,context),digest=text=>createHash('sha256').update(text,'utf8').digest('hex'),cases=[];
- context.foreignArray=vm.runInNewContext('[1,null,"é🙂"]');context.foreignSubclass=vm.runInNewContext('new (class Implementation extends Array {})(1,null,"é🙂")');context.foreignArrayPrototype=vm.runInNewContext('Array.prototype');
+ const strict=(ok,name)=>assert(ok,'CANONICAL_ARRAY_IMPLEMENTATION_ORACLE: '+name),context=createVerifierRuntime({TextEncoder,TextDecoder,Uint8Array,Uint32Array,ArrayBuffer,DataView,Blob});createVerifierRuntime.loadScript(context,source ,{filename:'hash.js:array-implementation'});
+ const h=context.closedLoopHash,run=code=>createVerifierRuntime.loadScript(context,code),digest=text=>createHash('sha256').update(text,'utf8').digest('hex'),cases=[];
+ context.foreignArray=createVerifierRuntime.loadScript(createVerifierRuntime({}),'[1,null,"é🙂"]');context.foreignSubclass=createVerifierRuntime.loadScript(createVerifierRuntime({}),'new (class Implementation extends Array {})(1,null,"é🙂")');context.foreignArrayPrototype=createVerifierRuntime.loadScript(createVerifierRuntime({}),'Array.prototype');
  for(const [name,expression,text]of [['ordinary-dense-array','[1,null,"é🙂"]','[1,null,"é🙂"]'],['empty-array','[]','[]'],['foreign-native-array','foreignArray','[1,null,"é🙂"]'],['null-prototype-array','Object.setPrototypeOf([1,null,"é🙂"],null)','[1,null,"é🙂"]'],['null-prototype-object','Object.assign(Object.create(null),{a:[1,null,"é🙂"]})','{"a":[1,null,"é🙂"]}'],['frozen-array','Object.freeze([1,null,"é🙂"])','[1,null,"é🙂"]'],['shared-acyclic-arrays','(()=>{const leaf=[1,null,"é🙂"];return [leaf,leaf];})()','[[1,null,"é🙂"],[1,null,"é🙂"]]']]){
   const value=run(expression),expected=digest(text);strict(h.stableStringify(value)===text,'VALID_TEXT: '+name);strict(h.sha256Value(value)===expected,'VALID_DIGEST: '+name);strict(await h.sha256Chunks(h.canonicalChunks(value))===expected,'VALID_STREAM_DIGEST: '+name);strict(h.withCanonicalDigestScope(h.createCanonicalDigestScope(value),()=>h.sha256Value(value))===expected,'VALID_SCOPE_OR_COLD: '+name);cases.push({name,kind:'VALID_CONTROL',text,expectedSha256:expected,passed:true});
  }
@@ -170,8 +169,8 @@ const reject=(name,make)=>{let ok=false;try{h.stableStringify(make());}catch(e){
 // trap or a caller between canonical chunks mutates the retained key array.
 {
   const context=createVerifierRuntime({TextEncoder,TextDecoder,Uint8Array,Uint32Array,ArrayBuffer,DataView,Blob});
-  vm.runInContext(fs.readFileSync('hash.js','utf8'),context,{filename:'hash.js:traversal-path'});
-  const observed=vm.runInContext(`(()=>{
+  createVerifierRuntime.loadScript(context,fs.readFileSync('hash.js','utf8') ,{filename:'hash.js:traversal-path'});
+  const observed=createVerifierRuntime.loadScript(context,`(()=>{
     const hash=closedLoopHash,original=Object.keys;
     let retained;
     const subject=new Proxy({bad:undefined},{getOwnPropertyDescriptor(target,key){
@@ -205,7 +204,7 @@ const reject=(name,make)=>{let ok=false;try{h.stableStringify(make());}catch(e){
       catch(error){boxedError={name:error.name,message:error.message};}
     }finally{Object.keys=original;}
     return {descriptorError,pausedError,boxedError,expectedPaused:'Cannot canonically hash undefined at $.'+key+'.',yielded:first?.done===false,boxedYielded:boxedFirst?.done===false};
-  })()`,context);
+  })()`);
   assert(observed.descriptorError?.name==='TypeError'&&observed.descriptorError.message==='Cannot canonically hash undefined at $.bad.','Canonical refusal path changed after descriptor key selection.');
   assert(observed.yielded&&observed.pausedError?.name==='TypeError'&&observed.pausedError.message===observed.expectedPaused,'Canonical refusal path changed after a caller mutated the selected key across a chunk yield.');
   assert(observed.boxedYielded&&observed.boxedError?.name==='TypeError'&&observed.boxedError.message===observed.expectedPaused,'Canonical refusal path changed after a selected boxed key changed its string coercion across a chunk yield.');
