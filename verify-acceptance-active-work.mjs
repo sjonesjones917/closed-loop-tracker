@@ -50,9 +50,14 @@ const begin=browserSource.indexOf('const envelope='),end=browserSource.indexOf('
 runtime.retained=runtime.current;runtime.promptRecord=pr;
 // The extracted browser fixture uses its native module helper and live schema.
 // Preserve that dependency closure and create its records in the shared VM realm.
+runtime.syntheticJobId=runtime.current.job.JOB_ID;
 runtime.fixtureSchema=runtime.closedLoopWorkflowSchema;
 runtime.boundedSearchProposal=value=>copy(boundedSearchProposal(value));
 const envelope=vm.runInContext(browserSource.slice(begin,end)+'\nenvelope;',runtime);
+assert.equal(envelope.jobId,runtime.current.job.JOB_ID,'Extracted browser response must belong to the current synthetic project');
+// The reconciled retained project predates the job-level profile field; bind
+// this synthetic response to the live contract without rewriting that project.
+envelope.contractProfileId=runtime.closedLoopWorkflowSchema.CONTRACT_PROFILE_ID;
 const longStart=browserSource.indexOf('const longEnvelope=',end),longEnd=browserSource.indexOf('\n await selectResponseFile',longStart);
 const long=vm.runInContext(browserSource.slice(longStart,longEnd)+'\nlongEnvelope;',runtime);
 let staged=await stage(JSON.stringify(long),pr);assert.equal(staged.validation.valid,true,JSON.stringify(staged.validation.issues));

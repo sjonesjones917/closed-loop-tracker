@@ -1266,7 +1266,9 @@ for(const caseId of caseIds) {
  results.push({operationId:'8:EXECUTE_FAILURE_TEST',result,progressRetry,materialIdentity,validationResultPreservation,admitted:true,explicitOperatorCommit:true,storedAndReadBack:true,selectedSubjectCompleted:state.completed,ordinaryStage8Complete:false,rawResponseSha256:file.sha256,rawAttachmentSha256:rawSha,rawAttachmentBytes:blob.size,receiptId:e.recordId(receipt,'regressionExecutions'),definitionId:binding.subjectId,testId:binding.testId,missingAttachmentRejected:missingPrepared,staleFixtureBindingRejected:wrongPrepared,wrongSlotRejected:wrongSlotPrepared,wrongHashRejected:wrongHashPrepared,absentFileRejected:absentFilesPrepared,wrongFamilyRejected:wrongFamilyPrepared,missingByteCustodyRejected:missingBytesPrepared,staleCustodyCommitRejected:true,retryProof,synthetic:true,actualBrowser:false,externalActor:false});
  fs.writeFileSync(proofRecovery+'/retained-stage8-'+result.toLowerCase()+'.json',JSON.stringify({sourceSha:'88220df8cee15ffed5b7d6bc948cb5ca80e6abc4',project:reloaded,artifacts:await captureArtifactFixture(r.store,reloaded.job.JOB_ID),results:results.at(-1),synthetic:true,actualBrowser:false}));
 }
- return {case:'LEGITIMATE_DEFERRED_RETURNED_BYTES_AND_RETRY',setupSourceFingerprints:retained.sourceFingerprints,proofBoundary:'Accepted production Stage1-7 -> exact issued ZIP instruction/manifest/context -> staged response + verified returned bytes -> noncanonical proposal -> explicit operator commit -> production transaction adapter/readback -> deferred gate and corrected retry',results,actualBrowser:false,synthetic:true};
+ // The injected internal-error control is a separate report population. It
+ // must not duplicate the single successful returned-file validation owner.
+ return {case:expectedInternalFailure?'LEGITIMATE_DEFERRED_UNEXPECTED_INTERNAL_ERROR_PROPAGATION':'LEGITIMATE_DEFERRED_RETURNED_BYTES_AND_RETRY',setupSourceFingerprints:retained.sourceFingerprints,proofBoundary:'Accepted production Stage1-7 -> exact issued ZIP instruction/manifest/context -> staged response + verified returned bytes -> noncanonical proposal -> explicit operator commit -> production transaction adapter/readback -> deferred gate and corrected retry',results,actualBrowser:false,synthetic:true};
 }
 function generateLegitimateDeferredPrefix(){
  const outputDir=fs.mkdtempSync(path.join(os.tmpdir(),'clrt-accepted-deferred-prefix-')),hash=runtime().runtime.closedLoopHash;
@@ -1392,6 +1394,21 @@ function generateDefinitionCompatibilityPrefixes(generated){
  return {directory:generated.outputDir,setup:{case:'LEGITIMATE_DEFERRED_DEFINITION_AUTHOR_PREFIXES',deferredReceiptRegression,resumedFromStage8:true,entryStages:[7,15,17],childExitStatus:0,childStdoutSha256:hash.sha256Text(stdout),earlierCompleteFlagsForced:false,elapsedSeconds:(performance.now()-startedAt)/1000,historicalPredecessorResumeSeconds:716.058,historicalPredecessorBoundary:'Retained 8→14 continuation that failed at Stage15 admission; excludes current invocation Stage17 failed-iteration/RCA work.',childBudgetMilliseconds:continuationTimeoutMs,synthetic:true,actualBrowser:false}};
 }
 
+function deferredCacheCapabilityExpiryControls(retained){
+ const recordedInstant=derivedDiagnosticPrefixInstant(retained),r=projectStoreRuntime(),e=r.engine,p=r.copy(retained.project),before=JSON.stringify(p);
+ const contracts=e.recordsForCurrentScope(p,'sourceSearchContracts');assert.equal(contracts.length,1,'DEFERRED_CACHE_EXPIRY_SUBJECT_ORACLE');
+ const reports=e.recordsForCurrentScope(p,'environmentManifests').map(row=>e.recordValue(row,'EXTERNAL_CLAIMS')).filter(report=>report?.request?.targetFamily==='sourceSearchContracts');assert.equal(reports.length,1,'DEFERRED_CACHE_EXPIRY_REPORT_ORACLE');
+ const until=Date.parse(reports[0].validUntil);assert(Number.isFinite(until)&&Date.parse(recordedInstant)<until,'DEFERRED_CACHE_RECORDED_CLOCK_WITHIN_VALIDITY_ORACLE');
+ const boundaries=[];
+ for(const [name,offset,expectedComplete]of [['just-before',-1,true],['at-expiry',0,false],['just-after',1,false]]){
+  const instant=new Date(until+offset).toISOString();replayArchivedDeferredFixtureAtRecordedTime(r,{archivedFixtureClockUtc:instant});
+  const capability=e.sourceSearchCapabilityState(p,contracts[0]),gate=e.gate(2,p);
+  assert.equal(capability.complete,expectedComplete,'DEFERRED_CACHE_CAPABILITY_EXPIRY_BOUNDARY_ORACLE: '+name);assert.equal(gate.complete,expectedComplete,'DEFERRED_CACHE_PREREQUISITE_EXPIRY_BOUNDARY_ORACLE: '+name);
+  if(!expectedComplete)assert(capability.reasons.some(reason=>reason.includes('Register current source-search performer')),'DEFERRED_CACHE_ACTUAL_EXPIRY_REFUSAL_ORACLE: '+name);
+  assert.equal(JSON.stringify(p),before,'DEFERRED_CACHE_EXPIRY_CONTROL_PRESERVATION_ORACLE');boundaries.push({name,instantUtc:instant,capabilityComplete:capability.complete,stage2Complete:gate.complete});
+ }
+ return {recordedInstantUtc:recordedInstant,validUntilUtc:reports[0].validUntil,boundaries,productionExpiryGuardRetained:true,retainedReportAndProjectUnchanged:true,synthetic:true,actualBrowser:false};
+}
 async function verifyLegitimateDeferredCachedPackages(retained,{appSourceOverride}={}){
 const promptSource=fs.readFileSync('prompt-engine.js','utf8'),appSource=fs.readFileSync('app-core.js','utf8');
 const descriptor="...(op?.deferredSubjectFamily?{deferredExecutionEvidenceContract:schema.DEFERRED_EXECUTION_EVIDENCE}:{}),";
@@ -1403,9 +1420,9 @@ const legacy=promptSource.replace(/const PROMPT_ENGINE_VERSION='[^']+';/,"const 
 const uiSource=appSourceOverride??appSource;
 function uiOwner(name){const start=uiSource.search(new RegExp('(?:async )?function '+name+'\\(')),a=uiSource.indexOf('\nfunction ',start+1),b=uiSource.indexOf('\nasync function ',start+1),end=Math.min(...[a,b].filter(value=>value>=0));assert(start>=0&&end>start);return uiSource.slice(start,end);}
 const owners=['promptMatches','currentPromptEngineVersion','promptVersionCurrent','currentPromptRecord','savePromptRecord'].map(uiOwner).join('\n');
-const results=[];
+const expiryBoundaryControls=deferredCacheCapabilityExpiryControls(retained),results=[];
 for(const status of ['RESERVED','EXPORTED']){
- const r=projectStoreRuntime(),currentProducer=r.prompts,h=r.runtime.closedLoopHash,e=r.engine;await restoreArtifactFixture(r.store,retained.artifacts);const original=r.copy(retained.project);original.activeStage=8;await hydrateRetainedPromptContexts(r,original,retained.contextFiles);assert.equal(e.gate(7,original).complete,true);let p=await r.store.writeProject(original,{expectedProjectRevision:0,incrementRevision:false,createOnly:true});
+ const r=projectStoreRuntime(),currentProducer=r.prompts,h=r.runtime.closedLoopHash,e=r.engine;replayArchivedDeferredFixtureAtRecordedTime(r,{archivedFixtureClockUtc:derivedDiagnosticPrefixInstant(retained)});await restoreArtifactFixture(r.store,retained.artifacts);const original=r.copy(retained.project);original.activeStage=8;await hydrateRetainedPromptContexts(r,original,retained.contextFiles);assert.equal(e.gate(7,original).complete,true);let p=await r.store.writeProject(original,{expectedProjectRevision:0,incrementRevision:false,createOnly:true});assert.equal(e.gate(7,p).complete,true,'DEFERRED_CACHE_REPLAY_PREREQUISITE_ORACLE: '+JSON.stringify(e.gate(7,p).reasons));
  vm.runInContext(legacy,r.runtime,{filename:'prompt-engine.js:controlled-generation81-no-deferred-contract'});
  const oldProducer=r.runtime.closedLoopPromptEngine,draft=r.copy(p),currentVersion=currentProducer.versionFor(8,'EXECUTE_FAILURE_TEST');assert.notEqual(currentVersion,legacyVersion);assert.equal(oldProducer.versionFor(8,'EXECUTE_FAILURE_TEST'),legacyVersion,'DEFERRED_CACHE_LEGACY_VERSION_ORACLE');let old=oldProducer.reserveAndBuildPromptRecord(draft,8,{operation:'EXECUTE_FAILURE_TEST'}).prompt;assert.equal(old.promptEngineVersion,legacyVersion,'DEFERRED_CACHE_LEGACY_VERSION_ORACLE');
  if(status==='EXPORTED')e.transitionOperationReservation(draft.projectData.operationReservations.find(row=>e.recordId(row,'operationReservations')===old.operationReservationId),'EXPORTED');
@@ -1428,9 +1445,8 @@ for(const status of ['RESERVED','EXPORTED']){
  const revision=p.revision,promptCount=p.projectData.generatedPrompts.length,again=await r.runtime.deferredCacheUi.save();assert.equal(again.instructionId,fresh.instructionId);assert.equal(r.runtime.current.revision,revision);assert.equal(r.runtime.current.projectData.generatedPrompts.length,promptCount);
  results.push({status,oldGeneration:old.promptEngineVersion,currentGeneration:fresh.promptEngineVersion,oldPackageSha256:await h.sha256Bytes(oldPkg.blob),newPackageSha256:await h.sha256Bytes(pkg.blob),completeCurrentContractPublished:true,oldBytesRetained:true,acceptedWorkRawProposalsAndDefinitionUnchanged:true,exactSubjectBindingPreserved:true,newNativeTransportIdentities:true,unchangedSaveIdempotent:true,capturedResponsePreventsRefresh:true,exactCurrentVersionRequired:true,legacyAndArbitraryVersionsRejected:true,synthetic:true,actualBrowser:false});
 }
- return {case:'LEGITIMATE_DEFERRED_CACHED_PACKAGE_REFRESH',results,synthetic:true,actualBrowser:false};
+ return {case:'LEGITIMATE_DEFERRED_CACHED_PACKAGE_REFRESH',results,expiryBoundaryControls,synthetic:true,actualBrowser:false};
 }
-
 // Focused replay remains a component report, never a full deferred-matrix receipt.
 if(process.argv.includes('--returned-file-admission')){
  const prefixPath=process.argv.find(arg=>arg.startsWith('--returned-file-prefix='))?.slice('--returned-file-prefix='.length);
@@ -1526,7 +1542,7 @@ for(const [name,file,before,after,oracle,caseIds]of [
 {
  const file='workflow-engine.js',original=fs.readFileSync(file,'utf8'),anchor='function normalizeDeferredReceipt(p,stage,operation,record,evidence,{binding:expected,receivedAt}={}){';assert.equal(original.split(anchor).length-1,1);
  const mutation=original.replace(anchor,anchor+"throw Object.assign(new Error('Injected internal normalization bug.'),{code:'INJECTED_INTERNAL_NORMALIZATION_FAULT'});");
- const control=await legitimateDeferredReturnedJourney(generatedDeferredPrefix.prefix,{sourceOverrides:{[file]:mutation},caseIds:['SATISFIED'],expectedInternalFailure:true});assert.equal(control.results.length,1);assert.equal(control.results[0].case,'UNEXPECTED_INTERNAL_ERROR_PROPAGATES');results.push(control);faults.push({name:'deferred-unexpected-internal-error-stays-an-error',oracle:'DEFERRED_UNEXPECTED_INTERNAL_ERROR_ORACLE',detected:true,rawRecoveryVerified:true});assert.equal(fs.readFileSync(file,'utf8'),original);
+ const control=await legitimateDeferredReturnedJourney(generatedDeferredPrefix.prefix,{sourceOverrides:{[file]:mutation},caseIds:['SATISFIED'],expectedInternalFailure:true});assert.equal(control.case,'LEGITIMATE_DEFERRED_UNEXPECTED_INTERNAL_ERROR_PROPAGATION','DEFERRED_INTERNAL_ERROR_REPORT_IDENTITY_ORACLE');assert.equal(control.results.length,1);assert.equal(control.results[0].case,'UNEXPECTED_INTERNAL_ERROR_PROPAGATES');results.push(control);faults.push({name:'deferred-unexpected-internal-error-stays-an-error',oracle:'DEFERRED_UNEXPECTED_INTERNAL_ERROR_ORACLE',detected:true,rawRecoveryVerified:true});assert.equal(fs.readFileSync(file,'utf8'),original);
 }
 
 // A stale or arbitrary generation must not pass the actual UI freshness owner.

@@ -10,8 +10,13 @@ import {stage04AcceptanceFixture,stage04AcceptanceEnvelope} from './test-fixture
 const r=projectStoreRuntime(),{core,engine,prompts,ingestion,store,copy,runtime}=r;
 const fixture={core,engine,prompts,ingestion,schema:runtime.closedLoopWorkflowSchema};
 let project=stage04AcceptanceFixture(fixture,'PACKAGE-RESPONSE-IDENTITY');
+// Establish durable revision identity before reserving the exported instruction.
+project=await store.writeProject(project);
+const initialRevision=project.revision,initialStateSha256=project.projectSha256;
 let original=prompts.reserveAndBuildPromptRecord(project,4).prompt;
-project=await store.writeProject(project);({project,prompt:original}=await authorizeSyntheticHandoff(r,{project,prompt:original}));
+project=await store.writeProject(project,{expectedProjectRevision:initialRevision,expectedStateSha256:initialStateSha256});
+assert.equal(original.scope.projectRevision,project.revision);
+({project,prompt:original}=await authorizeSyntheticHandoff(r,{project,prompt:original}));
 const invalid=stage04AcceptanceEnvelope(fixture,project,original);
 invalid.records.propositions[0].fields.PROPOSITION_TEXT=123;
 const rejected=ingestion.prepare(project,{stage:4,text:JSON.stringify(invalid),promptRecord:original,expectedCommittedRevision:project.revision,transport:{authority:'AUTHORITATIVE_RESPONSE_FILE',packageId:original.packageId,operationReservationId:original.operationReservationId,challengeNonce:original.challengeNonce}});

@@ -2011,7 +2011,9 @@ function representationInspectionCoverage(project){
 
 const applicationadjudicationGate=gate;
 gate=function adjudicationGate(stage,project){
-  const adjudicated=stage===27?project:adjudicatedClone(project),base=applicationadjudicationGate(stage,adjudicated),reasons=[...base.reasons];
+  // Receipt-bound release and chain calculations must read canonical source records.
+  // Adjudication projections can add fields and change their dependency hashes.
+  const adjudicated=stage===27||stage===29?project:adjudicatedClone(project),base=applicationadjudicationGate(stage,adjudicated),reasons=[...base.reasons];
   const add=x=>{for(const r of safe(x))if(r&&!reasons.includes(r))reasons.push(r);};
   if(stage===1){const accounting=evaluateIntakeAccounting(project);if(!accounting.complete)add(accounting.reasons);}
   if(stage===4){const accounting=evaluateObligationAccounting(project);if(!accounting.complete)add(accounting.reasons);}

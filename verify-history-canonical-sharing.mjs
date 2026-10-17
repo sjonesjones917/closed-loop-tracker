@@ -12,12 +12,15 @@ const faultMode=process.argv.find(value=>value.startsWith('--fault='))?.slice(8)
 const faults={
  'duplicate-canonical-content':{before:'const contents=projectReference?null:await encodeHistoryProject(canonical,retainValue);',after:'const contents={project:canonical};'},
  'repeat-import-shared-content':{before:'const project=body.project; // verifiedParts belongs to this read/import only.',after:'const project=body.project;verifiedParts=new Map(); // disposable repeat-decoding fault'},
- // The size contract has two enforcing consumers. Mutating either alone is
- // behaviorally masked by the other; the fault removes that one contract at
- // both sites, while the disposable input contains only one size violation.
+ // A part's promised size must match the retained-file manifest, the actual
+ // import Blob and the decoded value. Remove only those import size checks:
+ // any surviving consumer masks this fault's single conflicting-size input.
+ // Keep file presence, Blob/hash/job identity, private cache-proof validation
+ // and the non-import Blob/decoded-value size checks intact.
  'skip-import-shared-size':{changes:[
-  {before:'entry.projectReference||entry.projectParts.entries.some(part=>state.files[part.sha256]?.byteSize!==part.byteSize)',after:'entry.projectReference'},
-  {before:'if(value.byteSize!==part.byteSize)',after:'if(false)'}
+  {before:'entry.projectReference||entry.projectParts.entries.some(part=>state.files[part.sha256]?.byteSize!==part.byteSize)',after:'entry.projectReference||entry.projectParts.entries.some(part=>!state.files[part.sha256])'},
+  {before:'if(verifiedByteDigests){\n      const file=await readFile(part.sha256);\n      if(!(file?.blob instanceof Blob)||file.blob.size!==part.byteSize||await historyBlobSha256(file.blob,verifiedByteDigests)!==part.sha256)',after:'if(verifiedByteDigests){\n      const file=await readFile(part.sha256);\n      if(!(file?.blob instanceof Blob)||await historyBlobSha256(file.blob,verifiedByteDigests)!==part.sha256)'},
+  {before:'if(value.byteSize!==part.byteSize)',after:'if(!verifiedByteDigests&&value.byteSize!==part.byteSize)'}
  ]}
 };
 const engineFaults={

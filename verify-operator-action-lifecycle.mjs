@@ -1,3 +1,5 @@
+import {recoveryScopeSelected,recoveryScopeReport,assertRecoveryScopeReport} from './recovery-scope-contract.mjs';
+const recoveryScope=recoveryScopeSelected(process.argv.slice(2));
 import {verifyBackupImportStaging} from './test-backup-import-staging.mjs';
 import {verifyBackupStagingStore} from './test-backup-staging-store.mjs';
 import {verifyBackupExtensionByteRetention} from './test-backup-extension-byte-retention.mjs';
@@ -473,7 +475,7 @@ for(const [actionType,primaryButton,id,stage]of primaryControls){
  assert.match(markup.slice(regionStart,control),/Who acts:/,'Actor must be adjacent to the primary control');
  for(const label of ['Canonical State Changed','Accepted Change','Downstream Invalidated','New Prompt Required'])assert.ok(markup.includes(label),`Required outcome accounting was removed: ${label}`);
  assert.ok(markup.includes('Advanced action details'),'Audit disclosure must be retained');
- cases.push({caseId:'UI-WORKFLOW-PRIMARY-'+actionType,stage,control:id,uniqueControl:true,beforeLongDetails:true,result:'PASS'});
+ cases.push({caseId:'UI-WORKFLOW-PRIMARY-'+actionType,stage,control:id,...(recoveryScope?{primaryButton}:{}),uniqueControl:true,beforeLongDetails:true,result:'PASS'});
 }
 // Conditional independent review is selected by the production route owner,
 // even though the registered operation has the generic execution name. Use the
@@ -569,6 +571,7 @@ for(const stage of [10,20,28]){
  assert.ok(match,'HUMAN_AUTHORITY_CONTROL_ID_ORACLE');assert.ok(html.includes('<label for="'+match[1]+'">Reported audience</label>'),'HUMAN_AUTHORITY_CONTROL_LABEL_ORACLE');
  cases.push({caseId:'UI-HUMAN-AUTHORITY-CONTROL-LABEL',result:'PASS',actualBrowser:false});
 }
+if(recoveryScope){console.log(JSON.stringify(assertRecoveryScopeReport(recoveryScopeReport(cases)),null,2));process.exit(0);}
 const backupImportStaging=await verifyBackupImportStaging({appSource:source}),backupStagingStore=await verifyBackupStagingStore(),backupExtensionByteRetention=await verifyBackupExtensionByteRetention(),backupExtensionBindingControls=await verifyBackupExtensionBindingControls(),responseStagingRecoveryUI=await verifyResponseStagingRecoveryUI({appSource:source}),operatorSafetyFeedback=await verifyOperatorSafetyFeedback({appSource:source}),backupStagingFaults=[],responseStagingUIFaults=[],operatorSafetyFeedbackFaults=[];
 for(const [script,fault,oracle]of [
  ['test-backup-import-staging.mjs','permanent-backup-history','BACKUP_UI_CAPACITY_ORACLE'],

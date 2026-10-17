@@ -80,10 +80,18 @@ const decoyPrompt=closedLoopPromptEngine.reserveAndBuildPromptRecord(decoyProjec
 const selector=".filter(record=>collection!=='instructions'||governingInstructionIds.has(rid(record,collection)))",selectionSource=fs.readFileSync('workflow-engine.js','utf8');assert.equal(selectionSource.split(selector).length-1,1);const broad=projectStoreRuntime({sourceOverrides:{'workflow-engine.js':selectionSource.replace(selector,'')}}),broadProject=broad.copy(decoyProject);assert.throws(()=>assert.equal(broad.engine.semanticReviewCompletion(broadProject,19).complete,true,'DISCOVERY_GOVERNING_INPUT_SCOPE_ORACLE: controlled overbroad instruction selection'),/DISCOVERY_GOVERNING_INPUT_SCOPE_ORACLE/);
 observations.push({checkId:'S19-GOVERNING-INSTRUCTION-SCOPE',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:3560','specification/closed-loop-reliability-controlling-implementation-specification.txt:3462'],boundary:'actual requirement instruction trace -> discovery target and exported context',expected:{currentChallengeAccepted:true,untracedInstructionExported:false,controlledOverbroadSelectionDetected:true},observed:{currentChallengeAccepted:engine.semanticReviewCompletion(decoyProject,19).complete,untracedInstructionExported:decoyPrompt.prompt.includes('UNTRACED-INSTRUCTION-DECOY'),controlledOverbroadSelectionDetected:true},passed:true});
 // Disable the missing-review guard only in an isolated executable runtime.
-// All other successful fixture obligations remain present; no broken code is committed.
+// Refresh confirmation through the defective runtime: removing its review changes
+// the derivation input, so the retained receipt must not mask this controlled fault.
 const absent=engine.clone(p);absent.projectData.semanticReviews.find(row=>row.id===review.id).active=false;
 const source=fs.readFileSync('workflow-engine.js','utf8'),anchor='function semanticReviewCompletion(p,stage){';assert.equal(source.split(anchor).length-1,1);
-const defective=projectStoreRuntime({sourceOverrides:{'workflow-engine.js':source.replace(anchor,anchor+"if(stage===19)return {complete:true,reasons:[],reviews:[],basis:null};")}}),counterexample=defective.copy(absent);
+const defective=projectStoreRuntime({sourceOverrides:{'workflow-engine.js':source.replace(anchor,anchor+"if(stage===19){globalThis.__discoveryBypassCalls=(globalThis.__discoveryBypassCalls||0)+1;return {complete:true,reasons:[],reviews:[],basis:null};}")}}),counterexample=defective.copy(absent);
+defective.engine.recordUnchangedConfirmation(counterexample);
+const bypassCallsBeforeGate=defective.runtime.__discoveryBypassCalls||0;
 assert.throws(()=>assert.equal(defective.engine.gate(19,counterexample).complete,false,'DISCOVERY_CHALLENGE_GATE_ORACLE: controlled former bypass'),/DISCOVERY_CHALLENGE_GATE_ORACLE/);
+assert.ok(defective.runtime.__discoveryBypassCalls>bypassCallsBeforeGate,'DISCOVERY_MUTATION_ACTIVATION_ORACLE: gate did not execute the injected bypass');
+const healthyCounterexample=engine.clone(counterexample),healthyChallenge=engine.semanticReviewCompletion(healthyCounterexample,19),healthyGate=engine.gate(19,healthyCounterexample);
+assert.equal(healthyChallenge.complete,false,'DISCOVERY_HEALTHY_CHALLENGE_ORACLE: refreshed deficient fixture accepted');
+assert.equal(healthyGate.complete,false,'DISCOVERY_HEALTHY_GATE_ORACLE: refreshed deficient fixture accepted');
+assert.ok(healthyGate.reasons.includes('Stage 19 requires a current independently bound requirement-discovery challenge.'),'DISCOVERY_HEALTHY_GATE_ORACLE: missing discovery reason');
 observations.push({checkId:'S19-CONTROLLED-MISSING-CHALLENGE-DETECTED',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:3560'],boundary:'controlled former acceptance -> actual confirmation gate oracle',expected:{violationDetected:true},observed:{violationDetected:true,defectiveGateComplete:true},passed:true});
 console.log(JSON.stringify({stage19DiscoveryChallenge:'PASS',syntheticExternalActor:true,verificationObservations:observations},null,2));

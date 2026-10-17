@@ -35,7 +35,24 @@ const bytes=new Blob([Uint8Array.of(0,13,10,255,65)]),file=await store.putArtifa
 let next=copy(p);next.job.JOB_TITLE='First continuation';engine.registerArtifactBytes(next,{stage:1,artifactId:file.artifactId,filename:file.filename,mediaType:file.mediaType,byteSize:file.byteSize,sha256:file.sha256});p=await store.writeProject(next,{expectedProjectRevision:p.revision});
 history=await store.historyList(id);const first=history.activeId,firstProject=copy(p);
 next=copy(p);next.job.JOB_TITLE='Second continuation';p=await store.writeProject(next,{expectedProjectRevision:p.revision});history=await store.historyList(id);const second=history.activeId;
-const restored=await store.restoreCheckpoint(id,first,{expectedProjectRevision:p.revision,mode:'UNDO'});p=restored.project;
+// The mixed-version fault now reaches the canonical projection guard before
+// activation. Require that exact rejection and unchanged retained/current work;
+// an arbitrary child exception is not evidence that the fault was detected.
+const mixedVersionBefore=mutation==='mixed-versions'?{project:copy(p),history:await store.historyList(id)}:null;
+if(mixedVersionBefore)assert.notDeepEqual(p.projectData,firstProject.projectData,'MIXED_VERSION_DISTINCT_INPUTS_ORACLE');
+let restored;
+try{restored=await store.restoreCheckpoint(id,first,{expectedProjectRevision:p.revision,mode:'UNDO'});}
+catch(error){
+ if(!mixedVersionBefore)throw error;
+ assert.equal(error.code,'PROJECT_INTEGRITY_FAILED','MIXED_VERSION_REJECTION_CODE_ORACLE');
+ assert.ok(Array.isArray(error.issues),'MIXED_VERSION_REJECTION_ISSUES_ORACLE');
+ for(const field of ['canonicalInputSha256','outputSha256'])assert.ok(error.issues.includes('Application projection receipt is invalid: STALE_DERIVATION_RECEIPT The retained derivation '+field+' does not match the current registered calculation and its actual inputs/output.'),'MIXED_VERSION_REJECTION_RECEIPT_ORACLE: '+field);
+ assert.deepEqual(await store.readProject(id),mixedVersionBefore.project,'MIXED_VERSION_CURRENT_STATE_PRESERVATION_ORACLE');
+ assert.deepEqual(await store.historyList(id),mixedVersionBefore.history,'MIXED_VERSION_RETAINED_STATE_PRESERVATION_ORACLE');
+ throw new Error('MIXED_VERSION_RESTORE_INTEGRITY_ORACLE: rejected mixed current projectData and saved checkpoint before activation; code='+error.code+'; issues='+JSON.stringify(error.issues));
+}
+if(mixedVersionBefore)assert.fail('MIXED_VERSION_RESTORE_REJECTION_REQUIRED_ORACLE');
+p=restored.project;
 assert.equal(p.job.JOB_TITLE,'First continuation');assert.equal((await store.getArtifact(file.artifactId,{jobId:id})).sha256,file.sha256);
 const currentBytes=await store.getArtifact(file.artifactId,{jobId:id});assert.deepEqual(new Uint8Array(await currentBytes.blob.arrayBuffer()),new Uint8Array(await bytes.arrayBuffer()));
 assert.deepEqual(p.projectData,firstProject.projectData);assert.deepEqual(p.stages,firstProject.stages);assert.ok(p.revision>firstProject.revision,'Restoration must preserve concurrency monotonicity.');

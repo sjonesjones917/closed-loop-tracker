@@ -12,7 +12,7 @@ export const COUNTERPART_FAULT_CASES=Object.freeze([
   ['missing-retained-prompt-context',22,'RETAINED_PROMPT_CONTEXT_CUSTODY_ORACLE'],
   ['missing-candidate-bytes',10,'COUNTERPART_RETAINED_ARTIFACT_CUSTODY_ORACLE'],
   ['missing-product-bytes',21,'COUNTERPART_RETURNED_ARTIFACT_CUSTODY_ORACLE'],
-  ['fractional-stability',12,'must remain persistable after every operation'],
+  ['fractional-stability',12,'COUNTERPART_FRACTIONAL_STABILITY_CANONICAL_REFUSAL_ORACLE'],
   ['missing-defect-gate',13,'An observed initial violation without an evidence-linked defect must be rejected'],
   ['unrelated-defect-reason',13,'COUNTERPART_DEFECT_REASON_ORACLE'],
   ['reopened-initial-root-cause-by-later-defect',17,'STAGE17_INITIAL_OWNER_ORACLE'],

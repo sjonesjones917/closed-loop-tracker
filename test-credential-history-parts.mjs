@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {gunzipSync} from 'node:zlib';
-import {projectStoreRuntime} from './test-project-store-runtime.mjs';
+import {projectStoreRuntime,storedArtifactBody} from './test-project-store-runtime.mjs';
 
 // §35.9 requires protection for classified backup material even after it leaves
 // current state. These are real store/History/package owners over the existing
@@ -63,7 +63,22 @@ export async function verifyCredentialHistoryParts({sourceOverrides={}}={}){
  await assert.rejects(packed.store.exportPackage(packed.jobId,{passphrase}),error=>error.code==='HISTORY_FILE_INTEGRITY_FAILED','PACKED_SECRET_MISSING_PART_ORACLE');
  rows.set(key,original);note('Missing referenced JSON bytes reject instead of bypassing the protection decision');
  rows.set(key,{...original,value:{...original.value,blob:new Blob(['X'.repeat(original.value.blob.size)])}});
- await assert.rejects(packed.store.exportPackage(packed.jobId,{passphrase}),error=>error.code==='ARTIFACT_INTEGRITY_MISMATCH','PACKED_SECRET_CORRUPT_PART_ORACLE');
+ // Ordinary export validates referenced History parts before assembling archive
+ // members. Separately exercise the member digest boundary with a current
+ // artifact so the earlier History guard cannot mask that independent check.
+ const priorExport=JSON.stringify(await packed.store.metaGet('lastVerifiedExport:'+packed.jobId)),priorHistory=JSON.stringify(await packed.store.historyList(packed.jobId));
+ await assert.rejects(packed.store.exportPackage(packed.jobId,{passphrase}),error=>error.code==='HISTORY_FILE_INTEGRITY_FAILED','PACKED_SECRET_CORRUPT_HISTORY_PART_ORACLE');
+ await assert.rejects(packed.store.exportPackage(packed.jobId,{passphrase,historyRecovery:true}),error=>error.code==='HISTORY_FILE_INTEGRITY_FAILED','PACKED_SECRET_CORRUPT_RECOVERY_PART_ORACLE');
+ const memberControl=await prepare('MEMBER',{value:'ordinary current artifact control'}),memberId='SYNTHETIC-CORRUPT-EXPORT-MEMBER';
+ await memberControl.store.putArtifact({artifactId:memberId,jobId:memberControl.jobId,blob:new Blob(['original member bytes']),filename:'member.txt'});
+ const memberBody=storedArtifactBody(memberControl.r,memberId),originalBlob=memberBody.blob;
+ memberBody.blob=new Blob(['X'.repeat(originalBlob.size)]);
+ await assert.rejects(memberControl.store.exportPackage(memberControl.jobId,{passphrase}),error=>error.code==='ARTIFACT_INTEGRITY_MISMATCH','PACKED_SECRET_CORRUPT_PART_ORACLE');
+ assert.equal(await memberControl.store.metaGet('lastVerifiedExport:'+memberControl.jobId),undefined,'CORRUPT_MEMBER_NO_EXPORT_RECEIPT_ORACLE');
+ memberBody.blob=originalBlob;
+ await assert.doesNotReject(memberControl.store.exportPackage(memberControl.jobId,{passphrase}),'RESTORED_MEMBER_EXPORT_ORACLE');
+ assert.equal(JSON.stringify(await packed.store.metaGet('lastVerifiedExport:'+packed.jobId)),priorExport,'PACKED_SECRET_CORRUPT_NO_EXPORT_RECEIPT_ORACLE');
+ assert.equal(JSON.stringify(await packed.store.historyList(packed.jobId)),priorHistory,'PACKED_SECRET_CORRUPT_HISTORY_UNCHANGED_ORACLE');
  rows.set(key,original);note('Same-size corrupt referenced JSON bytes reject at their byte-identity boundary');
  return {status:'PASS',synthetic:true,actualBrowser:false,boundary:'Production store/History/encrypted export/import/restore through existing transaction adapter',cases};
 }

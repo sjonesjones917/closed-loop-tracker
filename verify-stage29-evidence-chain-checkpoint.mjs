@@ -5,7 +5,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
+import {stage29CaseObservation,verifyStage29ObservationRefusals} from './test-stage29-observations.mjs';
 import {recordProposal,canonicalFixtureRecord} from './test-fixtures.mjs';
+
+verifyStage29ObservationRefusals();
 
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
@@ -298,7 +301,7 @@ for(const [name,mutate] of [
  ['stale export evidence',p=>{p.projectData.evidenceRecords.find(r=>r.id==='EVID-EXPORT-1').scope={...exportEvidence.scope,productId:'PROD-OTHER'};}],
  ['generated-only checkpoint',p=>{p.projectData.backupCheckpoints=p.projectData.backupCheckpoints.filter(r=>r.id!==exportId);}]
 ])custodyCheck(name+' blocks the terminal minimum',()=>{const p=structuredClone(checkpointProject);mutate(p);assert.equal(engine.currentPreDeliveryCheckpoint(p),null);assert.equal(engine.terminalPrerequisites(p).preDeliveryCheckpoint,null);});
-verificationObservations.push({checkId:'backup-custody-evidence-supported-maturity',requirementRefs:['NREQ-a855fdffbf43ae80dc0d26784d1e8980','NREQ-f7d22bdd8375c681a04c18d4c237b459'],boundary:'Actual checkpoint creation/export/selection -> terminalPrerequisites checkpoint field',cases:custodyMaturityCases,passed:custodyMaturityCases.every(row=>row.passed),scopeLimit:'Disposable Node canonical records, synthetic operator observations; no full Stage29/terminal completion, actual external-copy fact, physical-device or exported-byte restore maturity.'});
+verificationObservations.push(stage29CaseObservation({checkId:'backup-custody-evidence-supported-maturity',requirementRefs:['NREQ-a855fdffbf43ae80dc0d26784d1e8980','NREQ-f7d22bdd8375c681a04c18d4c237b459'],boundary:'Actual checkpoint creation/export/selection -> terminalPrerequisites checkpoint field',cases:custodyMaturityCases,passed:custodyMaturityCases.every(row=>row.passed),scopeLimit:'Disposable Node canonical records, synthetic operator observations; no full Stage29/terminal completion, actual external-copy fact, physical-device or exported-byte restore maturity.'}));
 console.log(JSON.stringify({custodyMaturityCases}));
 assert(custodyMaturityCases.every(row=>row.passed),'Evidence-supported custody maturity controls must all pass.');
 
@@ -338,7 +341,7 @@ for(const [name,mutate] of [
  ...['checkpointId','packageId','packageSha256'].map(key=>['changed witness '+key,r=>{const body=JSON.parse(engine.recordValue(r,'APPLICATION_EVIDENCE_CONTENT'));body[key]='CONTROLLED-UNRELATED';r.fields.APPLICATION_EVIDENCE_CONTENT=r.APPLICATION_EVIDENCE_CONTENT=JSON.stringify(body);}])
 ])run('native minimum rejects '+name,()=>{const p=structuredClone(checkpointProject),r=p.projectData.evidenceRecords.find(row=>engine.recordId(row,'evidenceRecords')===eid);mutate(r);engine.refreshRecordHashes(r,'evidenceRecords');assert.equal(engine.currentPreDeliveryCheckpoint(p),null);});
 console.log(JSON.stringify({scope:beforeScope,witness:{id:eid,source:witness.source,kind:engine.recordValue(witness,'APPLICATION_EVIDENCE_KIND'),content:observation},results},null,2));assert(results.every(r=>r.passed));
-verificationObservations.push({checkId:'backup-export-native-observation-scope-output-boundary',requirementRefs:['NREQ-a855fdffbf43ae80dc0d26784d1e8980','NREQ-f7d22bdd8375c681a04c18d4c237b459'],boundary:'recordCheckpointExportAction -> currentPreDeliveryCheckpoint -> actual blocked terminal output/retry',cases:results,passed:results.every(row=>row.passed),scopeLimit:'Existing observation writer under disposable Node fixture; no browser download or external-copy/restore maturity performed.'});
+verificationObservations.push(stage29CaseObservation({checkId:'backup-export-native-observation-scope-output-boundary',requirementRefs:['NREQ-a855fdffbf43ae80dc0d26784d1e8980','NREQ-f7d22bdd8375c681a04c18d4c237b459'],boundary:'recordCheckpointExportAction -> currentPreDeliveryCheckpoint -> actual blocked terminal output/retry',cases:results,passed:results.every(row=>row.passed),scopeLimit:'Existing observation writer under disposable Node fixture; no browser download or external-copy/restore maturity performed.'}));
 }
 
 if(!sharedFixturePath)fs.rmSync(fixturePath,{force:true});

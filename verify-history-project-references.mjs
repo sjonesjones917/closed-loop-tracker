@@ -8,7 +8,7 @@ import {verifyHistoryStaticRead,HISTORY_STATIC_READ_FAULTS} from './test-history
 const mode=process.argv.find(x=>x.startsWith('--fault='))?.slice(8),source=fs.readFileSync('project-store.js','utf8');
 const faults={
  ...HISTORY_STATIC_READ_FAULTS,
- 'repeat-import-compatibility':{id:'REPEAT_IMPORT_COMPATIBILITY',file:'project-store.js',before:'if(!validatedProjections?.has(projectionKey)){',after:'if(true){'},
+ 'repeat-import-compatibility':{id:'REPEAT_IMPORT_COMPATIBILITY',file:'project-store.js',before:'if(!deferCompatibility&&!validatedProjections?.has(projectionKey)){',after:'if(!deferCompatibility){'},
  'share-import-compatibility-inventory':{id:'SHARE_IMPORT_COMPATIBILITY_INVENTORY',file:'project-store.js',before:'JSON.stringify([body.projectSha256,historyArtifactsSha256(artifacts)])',after:'JSON.stringify([body.projectSha256])'},
  'retain-import-compatibility':{id:'RETAIN_IMPORT_COMPATIBILITY',file:'project-store.js',before:'validatedProjections=new Set();',after:'validatedProjections=(globalThis.__retainedImportProjections ||= new Set());'},
  'repeat-import-root-digest':{id:'REPEAT_IMPORT_ROOT_DIGEST',file:'project-store.js',before:'({projectSha256:verifiedProjectSha256,workSha256:verifiedWorkSha256}=historyProjectDigests(project));',after:'verifiedProjectSha256=projectSha256(project);verifiedWorkSha256=historyWorkSha256(project);'},
@@ -20,6 +20,7 @@ const faults={
  'skip-project-body-byte-check':{id:'SKIP_PROJECT_BODY_BYTE_CHECK',file:'project-store.js',before:"if(!entry?.blob||entry.blob.size!==Number(entry.byteSize)||await historyBlobSha256(entry.blob,verifiedByteDigests)!==entry.sha256)",after:"if(!entry?.blob||entry.blob.size!==Number(entry.byteSize))"}
 };
 if(mode&&!faults[mode])throw new Error('Unknown disposable implementation fault: '+mode);
+if(mode==='repeat-import-compatibility')assert.equal(source.split(faults[mode].before).length-1,1,'HISTORY_COMPATIBILITY_FAULT_SINGLE_ANCHOR_ORACLE');
 const cases=[],emit=(caseId,details={})=>cases.push({caseId,result:'PASS',...details});
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
 const validationAnchor='({projectSha256:verifiedProjectSha256,workSha256:verifiedWorkSha256}=historyProjectDigests(project));';

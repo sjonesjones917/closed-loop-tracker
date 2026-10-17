@@ -322,7 +322,7 @@ export async function verifyLifecycleFaultDispatch(directory){
  async function execute(label,body,imported,completion=defaultCompletion,auxiliary=defaultAuxiliary){
   const folder=path.join(directory,label);fs.mkdirSync(folder,{recursive:true});
   const owner=path.join(folder,'renamed-lifecycle.mjs'),launcher=path.join(folder,'importing-verifier.mjs'),trace=path.join(folder,'caller-entries.log');
-  fs.writeFileSync(owner,`import fs from 'node:fs';\nimport assert from 'node:assert/strict';\nimport {runVerifier,detectedFault} from ${JSON.stringify(import.meta.url)};\n`+body.replace("'conformance-regression-evidence/timing-faults'",JSON.stringify(path.join(folder,'faults')))+`\nif(timingFault)throw new Error(timingFault.oracle);
+  fs.writeFileSync(owner,`import fs from 'node:fs';\nimport assert from 'node:assert/strict';\nimport {runVerifier,detectedFault} from ${JSON.stringify(import.meta.url)};\nimport {createReservedScopeRejectionProof} from ${JSON.stringify(new URL('./test-scope-rejection-preservation.mjs',import.meta.url).href)};\n`+body.replace("'conformance-regression-evidence/timing-faults'",JSON.stringify(path.join(folder,'faults')))+`\nif(timingFault)throw new Error(timingFault.oracle);
 const positiveTrace=[],recoveryStages=[],comparisonStages=[],replacementStages=[],refinementStages=[],continuationStages=[],stageProjectionCases=[],schema={};
 const p={stages:Object.fromEntries(Array.from({length:30},(_,i)=>[i+1,{status:'COMPLETE'}]))};
 const engine={recalculate:()=>positiveTrace.push('recalculate'),gate:stage=>{positiveTrace.push('gate:'+stage);return {complete:true,reasons:[]};}};
@@ -450,10 +450,13 @@ function verifyConformanceGroups(){
  return {case:'closed-conformance-groups-and-finite-budgets',groups:conformanceGroups,fullSuitePopulation:suites,aggregateTimeoutMs:AGGREGATE_TIMEOUT_MS};
 }
 
-async function verifyRunnerContract(){
+async function verifyRunnerContract({counterpartBudgetOnly=false}={}){
  const directory=fs.mkdtempSync(path.join(os.tmpdir(),'clrt-runner-contract-')),cases=[];
  const gate=(name,code)=>({name,args:['--input-type=module','-e',code]});
  try{
+  // Budget mutations need the actual synthetic matrix, not every unrelated
+  // runner control first. Keep the same finite probe and matrix deadlines.
+  if(counterpartBudgetOnly)return {counterpartBudgetContract:'PASS',cases:[await verifyCounterpartRestoredBudget(directory)]};
   cases.push(verifyConformanceGroups());
   for(const [name,code,expected]of [
    ['valid',"console.log(JSON.stringify({case:'valid',result:'PASS'}))",'PASS'],
@@ -726,14 +729,16 @@ async function verifyRunnerFaults(){
  // Preserve the shared fixture authority when the supervisor owner is copied
  // into a disposable module outside the repository for fault injection.
  const fixtureUrl=new URL('./operator-journey-fixtures.mjs',import.meta.url).href;
- const serializedImplementation=implementation.replace("from './operator-journey-fixtures.mjs'","from "+JSON.stringify(fixtureUrl)).replace("import('./full-cycle-prerequisite.mjs')","import("+JSON.stringify(new URL('./full-cycle-prerequisite.mjs',import.meta.url).href)+")").replace("new URL('./operator-journey-fixtures.mjs',import.meta.url).href",JSON.stringify(fixtureUrl));
+ const serializedImplementation=implementation.replace("from './operator-journey-fixtures.mjs'","from "+JSON.stringify(fixtureUrl)).replace("import('./full-cycle-prerequisite.mjs')","import("+JSON.stringify(new URL('./full-cycle-prerequisite.mjs',import.meta.url).href)+")").replace("new URL('./operator-journey-fixtures.mjs',import.meta.url).href",JSON.stringify(fixtureUrl)).replace("new URL('./test-scope-rejection-preservation.mjs',import.meta.url).href",JSON.stringify(new URL('./test-scope-rejection-preservation.mjs',import.meta.url).href));
  try{
   for(const [name,before,after,oracle]of mutations){
    assert.equal(implementation.split(before).length,2,'Unique runner fault anchor required: '+name);
    // Exercise the mutated owner itself. An enclosing healthy owner's cleanup
    // must not mask this disposable supervisor fault.
    const mutant=path.join(directory,name+'.mjs');fs.writeFileSync(mutant,"if(path.resolve(process.argv[1]||'')===fileURLToPath(import.meta.url))delete process.env.CLOSED_LOOP_VERIFIER_OWNER_FD;\n"+serializedImplementation.replace(before,after)+original.slice(implementation.length));
-   const result=await executeGate({name,args:[mutant,'--runner-contract-only','--fault-probe']},{directory,timeoutMs:20000,killGraceMs:50});
+   const counterpartBudgetFault=['omit-current-counterpart-oracle','shorten-restored-counterpart-budget'].includes(name);
+   const args=counterpartBudgetFault?['--counterpart-budget-contract-only']:['--runner-contract-only','--fault-probe'];
+   const result=await executeGate({name,args:[mutant,...args]},{directory,timeoutMs:20000,killGraceMs:50});
    assert.equal(result.outcome,'FAIL','RUNNER_FAULT_DETECTION_ORACLE: '+name);
    assertDetectedFault(result,oracle,'RUNNER_FAULT_SPECIFICITY_ORACLE: '+name);
    faults.push({fault:name,oracle,result:'DETECTED',execution:result});
@@ -747,7 +752,9 @@ async function verifyRunnerFaults(){
  }finally{fs.rmSync(directory,{recursive:true,force:true});}
 }
 if(path.resolve(process.argv[1]||'')===fileURLToPath(import.meta.url)){
-if(process.argv.includes('--creation-matrix-contract-only')){
+if(process.argv.includes('--counterpart-budget-contract-only')){
+ console.log(JSON.stringify(await verifyRunnerContract({counterpartBudgetOnly:true}),null,2));
+}else if(process.argv.includes('--creation-matrix-contract-only')){
  console.log(JSON.stringify(await verifyCreationMatrixContract(),null,2));
 }else if(process.argv.includes('--runner-contract-only')){
  const contract=await verifyRunnerContract();

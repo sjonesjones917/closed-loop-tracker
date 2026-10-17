@@ -129,24 +129,34 @@ report.durableCases=['Persist the baseline before product reservation','Persist 
  const staged=await durableStore.writeProject(prepared.project,{operational:true,expectedProjectRevision:current.revision,expectedStateSha256:current.projectSha256});
  phase('valid-response-staged');
  const acceptedCount=staged.projectData.acceptedChanges.length;
+ const finalProductPhases=['FINAL_PRODUCT_DETERMINISTIC','FINAL_PRODUCT_MEANING','FINAL_PRODUCT_ADVERSARIAL'];
  const assertAccepted=(r,failures)=>{
   assert.equal(failures.length,0,'PRODUCT_ACCEPTANCE_PERSISTENCE_ORACLE: a valid response with verified product bytes failed to commit: '+failures.map(error=>error.message).join(' | '));
   assert.equal(r.runtime.current.projectData.acceptedChanges.length,acceptedCount+1,'PRODUCT_ACCEPTANCE_PERSISTENCE_ORACLE: acceptance did not commit exactly once.');
   assert.equal(r.engine.gate(21,r.runtime.current).complete,true,'PRODUCT_ACCEPTANCE_PERSISTENCE_ORACLE: the matching accepted product and bytes did not complete their stage.');
+  for(const phase of finalProductPhases)assert.equal(r.engine.verificationPhaseTargetAvailability(r.runtime.current,phase),'TRUE','PRODUCT_ACCEPTANCE_PERSISTENCE_ORACLE: accepted product bytes must be available before reload for '+phase);
  };
  // Replay the same valid, bounded case in an isolated shared runtime with one
  // implementation fault. The production files and healthy store stay intact.
  const productionSource=fs.readFileSync('project-store.js','utf8'),candidateCustodyAnchor='  await observeProjectArtifactCustody(next);\n  engine.recalculate(next);';
  assert.equal(productionSource.split(candidateCustodyAnchor).length-1,1,'PRODUCT_ACCEPTANCE_CUSTODY_FAULT_ANCHOR_ORACLE: the fault must bind to candidate preparation before recalculation.');
- const faulted=projectStoreRuntime({fault:{id:'omit-candidate-byte-verification',file:'project-store.js',before:candidateCustodyAnchor,after:'  // Injected fault: derive the new version using only prior-version custody.\n  engine.recalculate(next);'}});
+ const faulted=projectStoreRuntime({fault:{id:'omit-candidate-byte-verification',file:'project-store.js',before:candidateCustodyAnchor,after:'  // Injected fault: derive the new version using only prior-version custody.\n  globalThis.__candidateCustodyFaultExecutions=(globalThis.__candidateCustodyFaultExecutions||0)+1;\n  engine.recalculate(next);'}});
  for(const [name,rows] of durable.rows)faulted.rows.set(name,new Map([...rows].map(([key,row])=>[key,faulted.copy(row)])));
  const faultFailures=bindAcceptanceUi(faulted,faulted.copy(staged),prepared.proposal.proposalId);
  await faulted.runtime.accept();if(faulted.runtime.replacementReview)await faulted.runtime.confirm();
- assert.throws(()=>assertAccepted(faulted,faultFailures),/PRODUCT_ACCEPTANCE_PERSISTENCE_ORACLE/,'The normative acceptance oracle must detect omitted candidate-byte verification.');
- assert.ok(faultFailures.some(error=>error.code==='PROJECT_INTEGRITY_FAILED'&&/deterministic recalculation/.test(error.message)),'The injected fault must reproduce the classified save failure.');
- assert.equal((await faulted.store.readProject(staged.job.JOB_ID)).projectData.acceptedChanges.length,acceptedCount,'A rejected acceptance must preserve accepted work.');
+ assert.ok(faulted.runtime.__candidateCustodyFaultExecutions>0,'PRODUCT_ACCEPTANCE_CUSTODY_FAULT_ACTIVATION_ORACLE');
+ assert.throws(()=>assertAccepted(faulted,faultFailures),/PRODUCT_ACCEPTANCE_PERSISTENCE_ORACLE: accepted product bytes must be available before reload/,'The normative acceptance oracle must detect omitted candidate-byte verification.');
+ // History verifies its own bytes without publishing current custody. The
+ // omission now commits metadata but leaves final-product execution unavailable;
+ // observe that defect before a normal read can restore current byte custody.
+ assert.equal(faultFailures.length,0,'PRODUCT_ACCEPTANCE_CUSTODY_FAULT_ORACLE: the omission must reach the accepted state.');
+ const unavailablePhases=Object.fromEntries(finalProductPhases.map(phase=>[phase,faulted.engine.verificationPhaseTargetAvailability(faulted.runtime.current,phase)]));
+ for(const phase of finalProductPhases)assert.equal(unavailablePhases[phase],'UNKNOWN','PRODUCT_ACCEPTANCE_CUSTODY_FAULT_ORACLE: '+phase);
+ const faultReloaded=await faulted.store.readProject(staged.job.JOB_ID);
+ assert.equal(faultReloaded.projectData.acceptedChanges.length,acceptedCount+1,'The fault must exercise committed product acceptance.');
+ for(const phase of finalProductPhases)assert.equal(faulted.engine.verificationPhaseTargetAvailability(faultReloaded,phase),'TRUE','PRODUCT_ACCEPTANCE_CUSTODY_RELOAD_ORACLE: '+phase);
  assert.equal(fs.readFileSync('project-store.js','utf8'),productionSource,'The injected runtime fault must not change production source.');
- report.acceptanceFault={caseId:'omit-candidate-byte-verification',detectedBy:'PRODUCT_ACCEPTANCE_PERSISTENCE_ORACLE',errors:faultFailures.map(error=>({code:error.code,message:error.message})),sourceRestored:true,result:'PASS'};
+ report.acceptanceFault={caseId:'omit-candidate-byte-verification',detectedBy:'PRODUCT_ACCEPTANCE_PERSISTENCE_ORACLE',faultExecutions:faulted.runtime.__candidateCustodyFaultExecutions,unavailablePhases,restoredByRead:true,errors:faultFailures.map(error=>({code:error.code,message:error.message})),sourceRestored:true,result:'PASS'};
  phase('candidate-custody-fault-detected');
  const failures=bindAcceptanceUi(durable,staged,prepared.proposal.proposalId);
  await runtime.accept();if(runtime.replacementReview)await runtime.confirm();assertAccepted(durable,failures);

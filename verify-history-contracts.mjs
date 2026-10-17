@@ -90,8 +90,12 @@ async function exportedScopeOracle(r){
 await exportedScopeOracle(projectStoreRuntime());note('Consolidated stage export includes the same authoritative response scope and profile as its instruction manifest');
 const promptMetadataFault={id:'INHERIT-GLOBAL-PROMPT-ITERATION',file:'prompt-engine.js',before:"iteration:candidate.scope?.iterationId||'NOT APPLICABLE'",after:"iteration:metadata.iteration??state?.job?.CURRENT_ITERATION??'NOT APPLICABLE'"};await assert.rejects(exportedScopeOracle(projectStoreRuntime({fault:promptMetadataFault})),/PROMPT_METADATA_ORACLE/);await exportedScopeOracle(projectStoreRuntime());faults.push({id:promptMetadataFault.id,result:'DETECTED',restored:'PASS'});
 
-const confirmationFault={id:'SKIP-PERSISTENCE-CONFIRMATION',file:'project-store.js',before:'assertMutationConfirmation(prior,project,options.mutationConfirmation,next);',after:'/* deliberately bypassed gate */'};
-await assert.rejects(mutationOracle(projectStoreRuntime({fault:confirmationFault})),/CONFIRMATION_ORACLE/);await mutationOracle(projectStoreRuntime());faults.push({id:confirmationFault.id,result:'DETECTED',restored:'PASS'});
+const confirmationFault={id:'SKIP-PERSISTENCE-CONFIRMATION',file:'project-store.js',before:'assertMutationConfirmation(prior,candidate,options.mutationConfirmation,next,candidateProof);',after:'globalThis.__confirmationFaultVisits=(globalThis.__confirmationFaultVisits||0)+1;'};
+assert.equal(fs.readFileSync('project-store.js','utf8').split(confirmationFault.before).length-1,1,'CONFIRMATION_FAULT_SINGLE_ANCHOR_ORACLE');
+const confirmationFaultRuntime=projectStoreRuntime({fault:confirmationFault});
+await assert.rejects(mutationOracle(confirmationFaultRuntime),/CONFIRMATION_ORACLE/);
+assert.ok(confirmationFaultRuntime.runtime.__confirmationFaultVisits>0,'CONFIRMATION_FAULT_ACTIVATION_ORACLE');
+await mutationOracle(projectStoreRuntime());faults.push({id:confirmationFault.id,result:'DETECTED',restored:'PASS',mutationVisits:confirmationFaultRuntime.runtime.__confirmationFaultVisits});
 async function unfinishedIntakeProjectionRecovery(){
  const r=projectStoreRuntime(),{engine,core,store,copy}=r,h=r.runtime.closedLoopHash;
  let p=core.createBlankState('SYNTHETIC-UNFINISHED-INTAKE-HISTORY');engine.ensureShape(p);p.job.EXACT_USER_OBJECTIVE_VERBATIM='Preserve unfinished intake and its original history.';engine.recalculate(p);

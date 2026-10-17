@@ -1,7 +1,12 @@
+import {verifyStage29CurrentnessControls} from './test-counterpart-stage29-currentness.mjs';
 import {bindArtifactFixture,projectStoreRuntime as baseProjectStoreRuntime,captureArtifactFixture,restoreArtifactFixture,bindAcceptanceUi,storageBroadcastNetwork,hydrateRetainedPromptContexts,reverifyFixtureReturnedFiles} from './test-project-store-runtime.mjs';
 import {artifactFixtureId} from './test-artifact-fixtures.mjs';
 import {createVerifierRuntime,isolatedVerifierWorkerClass} from './verifier-runtime.mjs';
 import {testIrManifestedEnvironment} from './test-test-ir-native-identity.mjs';
+import {rethrowFractionalStabilityRefusal,verifyFractionalStabilityRefusalControls} from './test-counterpart-canonical-refusal.mjs';
+verifyFractionalStabilityRefusalControls();
+import {authoritySnapshot as snapshotAuthority,verifyAuthoritySnapshotControls} from './test-counterpart-authority-snapshot.mjs';
+import {nativeEvidencePayload,verifyNativeObserverControls} from './test-counterpart-native-observer.mjs';
 import fs from 'node:fs';
 import {readStoreArchive} from './test-zip.mjs';
 import vm from 'node:vm';
@@ -34,7 +39,10 @@ if(diagnosticUsesArchivedClock){
   globalThis.Date=DiagnosticFixtureDate;
 }
 const diagnosticClockMetadata=diagnosticUsesArchivedClock?{archivedFixtureClockUtc,clockBasis:'EXPLICIT_RECORDED_SYNTHETIC_FIXTURE_INSTANT; canonical reports and timestamps retained; not current browser or external evidence'}:{};
-function projectStoreRuntime(options={}){return baseProjectStoreRuntime({...options,environment:{...options.environment,...(DiagnosticFixtureDate?{Date:DiagnosticFixtureDate}:{})}});}
+// Capture one exact fixture build before any disposable loaded-source faults.
+// Live and restored runtimes must interpret retained native receipts identically.
+const nativeFixtureEnvironment=testIrManifestedEnvironment();
+function projectStoreRuntime(options={}){return baseProjectStoreRuntime({...options,environment:{...nativeFixtureEnvironment,...options.environment,...(DiagnosticFixtureDate?{Date:DiagnosticFixtureDate}:{})}});}
 
 const runtimeSources={};
 const initialOwnerFaults=['reopened-initial-root-cause-by-later-defect','reopened-initial-regression-by-later-defect','reopened-initial-correction-by-later-defect'];
@@ -64,8 +72,16 @@ for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js
   }
   runtimeSources[file]=source;
   // Real isolated Test IR execution under a source-bound synthetic fixture build.
-  if(file==='test-runtime.js')globalThis.document=testIrManifestedEnvironment(runtimeSources).document;
+  if(file==='test-runtime.js')globalThis.document=nativeFixtureEnvironment.document;
   createVerifierRuntime.loadScript(globalThis,source,{filename:file});
+  if(file==='hash.js'&&injectedFault==='fractional-stability'){
+    const canonicalHash=globalThis.closedLoopHash;
+    globalThis.closedLoopHash=Object.freeze({...canonicalHash,sha256Value(preimage,...args){
+      try{return canonicalHash.sha256Value(preimage,...args);}catch(error){
+        rethrowFractionalStabilityRefusal(error,preimage,{fault:injectedFault,currentRequirementIds:()=>closedLoopWorkflowEngine.recordsForCurrentScope(p,'requirements').map(row=>closedLoopWorkflowEngine.recordId(row,'requirements'))},{observe:refusal=>console.error(JSON.stringify({caseId:'fractional-stability-canonical-refusal',...refusal}))});
+      }
+    }});
+  }
 }
 const byteStore=await bindArtifactFixture([]);
 const engine=closedLoopWorkflowEngine,schema=closedLoopWorkflowSchema,prompts=closedLoopPromptEngine,ingestion=closedLoopResponseIngestion,hash=closedLoopHash;
@@ -643,7 +659,7 @@ for(let stage=diagnosticRecovered?Number(diagnosticRecovered.entryStage):1;stage
     else if(action.actionType==='FREEZE_DELIVERY_CANDIDATE'){const artifactIds=[artifactFixtureId(engine,p,'PRODUCT-FILE')],decision=engine.recordRegisteredHumanDecision(p,{stage,purpose:'CANDIDATE_COMPONENT_SELECTION',targetFamily:'artifacts',targetId:hash.sha256Value(artifactIds),value:artifactIds,operatorLabel:'SYNTHETIC'});engine.freezeDeliveryCandidate(p,{artifactIds,selectionDecisionId:id(decision,'humanDecisions')});}
     else if(action.actionType==='CALCULATE_RELEASE')engine.recordReleaseDetermination(p);
     else if(action.actionType==='CAPTURE_DELIVERY_INTENT')engine.captureDeliveryIntent(p,{value:{authorized:true,deliveryCandidateSetId:id(latest('deliveryCandidateSets'),'deliveryCandidateSets'),releaseId:id(latest('releaseRecords'),'releaseRecords'),artifactIds:[artifactFixtureId(engine,p,'PRODUCT-FILE')],authorizedFilenames:{[artifactFixtureId(engine,p,'PRODUCT-FILE')]:'result.txt'},recipientOrClass:'Synthetic operator',destination:'Synthetic directory',transferPurpose:'Fixture preflight',transferChannel:'BROWSER_DOWNLOAD',disclosureClassification:'PUBLIC',disclosureAuthorization:true,permittedTransferCount:1},operatorLabel:'SYNTHETIC'});
-    else if(action.actionType==='BUILD_EVIDENCE_CHAINS')engine.calculateEvidenceChains(p);
+    else if(action.actionType==='BUILD_EVIDENCE_CHAINS'){engine.calculateEvidenceChains(p);cases.push(verifyStage29CurrentnessControls(engine,p));}
     else if(action.actionType==='EXPORT_PRE_DELIVERY_CHECKPOINT'){const c=engine.createPreDeliveryCheckpoint(p,{packageId:'SYNTHETIC-PACKAGE',packageSha256:'a'.repeat(64)});engine.recordCheckpointExportAction(p,{checkpointId:id(c,'backupCheckpoints'),packageSha256:'a'.repeat(64),filename:'synthetic.gz'});}
     else if(action.actionType==='CALCULATE_TERMINAL')engine.calculateTerminal(p);
     else if(action.actionType==='EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS')engine.recordDeliveryAttempt(p,{deliveryId:id(latest('deliveryRecords'),'deliveryRecords'),result:'SUCCEEDED'});
@@ -695,11 +711,45 @@ for(let stage=diagnosticRecovered?Number(diagnosticRecovered.entryStage):1;stage
     // First response after application-owned verification, using the same
     // durable staging and acceptance controls as the browser journey. The
     // small actual files come from preceding fixture operations, not metadata.
+    verifyAuthoritySnapshotControls(hash);
+    const authoritySnapshot=project=>snapshotAuthority(hash,project);
+    const originalAuthority=authoritySnapshot(p),artifacts=await captureArtifactFixture(byteStore,p.job.JOB_ID);
+    const nativeState=(owner,project)=>owner.engine.recordsForCurrentScope(project,'deterministicResults').filter(row=>row.source==='APPLICATION_TEST_RUNTIME').map(row=>{
+      const e=owner.engine,test=owner.engine.records(project,'tests').find(test=>e.recordId(test,'tests')===e.recordValue(row,'TEST_ID'));
+      const evidence=e.recordsForCurrentScope(project,'evidenceRecords').find(item=>row.evidenceRefs.includes(e.recordId(item,'evidenceRecords'))),payload=nativeEvidencePayload(owner,e.recordValue(evidence,'APPLICATION_EVIDENCE_CONTENT'));
+      return {id:e.recordId(row,'deterministicResults'),identity:owner.runtime.closedLoopTestRuntime.nativeExecutionOutcomeCurrent(test,payload.nativeExecutionIdentity,payload),current:e.applicationNativeResultCurrent(project,'deterministicResults',row,test)};
+    });
+    const liveNative=nativeState({engine,runtime:globalThis},p);
+    assert(liveNative.length>0&&liveNative.every(row=>row.identity.valid&&row.identity.releaseBearing&&row.current),'COUNTERPART_RESTORED_NATIVE_LIVE_ORACLE');
+    // Exact pre-fix runtime, including real byte restoration and durable reads.
+    const unmanifested=baseProjectStoreRuntime();await restoreArtifactFixture(unmanifested.store,artifacts);
+    const negativeInput=unmanifested.copy(p);await hydrateRetainedPromptContexts(unmanifested,negativeInput,[...retainedContextFiles.values()]);
+    await unmanifested.store.writeProject(negativeInput,{expectedProjectRevision:0,incrementRevision:false,createOnly:true});
+    const negative=await unmanifested.store.readProject(p.job.JOB_ID),beforeReverify=unmanifested.engine.gate(22,negative);
+    assert.equal(authoritySnapshot(negative),originalAuthority,'COUNTERPART_RESTORED_NATIVE_PERSISTENCE_ORACLE');
+    const returned=negative.projectData.rawResponses.filter(raw=>Number(raw.stage)===21&&raw.files?.some(file=>file.attachmentSlotId));
+    assert(returned.length>0,'COUNTERPART_RESTORED_NATIVE_RETURNED_BYTES_ORACLE');
+    for(const raw of returned)await reverifyFixtureReturnedFiles(unmanifested,negative,raw.rawResponseId);
+    const rejectedNative=nativeState(unmanifested,negative),afterReverify=unmanifested.engine.gate(22,negative);
+    assert(rejectedNative.every(row=>!row.identity.valid&&!row.identity.releaseBearing&&!row.current&&row.identity.issues.some(issue=>issue.message.includes('runtimeBuildIdentity'))&&row.identity.issues.some(issue=>issue.message.includes('testWorkerSha256'))),'COUNTERPART_RESTORED_NATIVE_UNMANIFESTED_ORACLE');
+    assert.equal(beforeReverify.complete,false);assert.equal(afterReverify.complete,false,'COUNTERPART_RESTORED_NATIVE_BYTES_NOT_BUILD_AUTHORITY_ORACLE');
+    assert.throws(()=>unmanifested.prompts.buildPromptRecord(23,negative),error=>error.code==='UPSTREAM_STAGE_INCOMPLETE'&&error.upstreamStage===22,'COUNTERPART_RESTORED_NATIVE_PROMPT_GUARD_ORACLE');
+    assert.equal(authoritySnapshot(negative),originalAuthority,'COUNTERPART_RESTORED_NATIVE_REVERIFY_PRESERVES_AUTHORITY_ORACLE');
     const network=storageBroadcastNetwork(),r=projectStoreRuntime({environment:{BroadcastChannel:network.Channel}}),{runtime,store,copy}=r;
-    await restoreArtifactFixture(store,await captureArtifactFixture(byteStore,p.job.JOB_ID));
+    await restoreArtifactFixture(store,artifacts);
     const input=copy(p);await hydrateRetainedPromptContexts(r,input,[...retainedContextFiles.values()]);
     await store.writeProject(input,{expectedProjectRevision:0,incrementRevision:false,createOnly:true});
     const saved=await store.readProject(p.job.JOB_ID);saved.activeStage=stage+1;saved.activeView='Workflow';
+    assert.equal(authoritySnapshot(saved),originalAuthority,'COUNTERPART_RESTORED_NATIVE_PERSISTENCE_ORACLE');
+    const restoredNative=nativeState(r,saved),restoredGate=r.engine.gate(22,saved);
+    const observerRow=r.engine.recordsForCurrentScope(saved,'deterministicResults').find(row=>row.source==='APPLICATION_TEST_RUNTIME');
+    const observerTest=r.engine.records(saved,'tests').find(test=>r.engine.recordId(test,'tests')===r.engine.recordValue(observerRow,'TEST_ID'));
+    const observerEvidence=r.engine.recordsForCurrentScope(saved,'evidenceRecords').find(row=>observerRow.evidenceRefs.includes(r.engine.recordId(row,'evidenceRecords')));
+    verifyNativeObserverControls(r,observerTest,r.engine.recordValue(observerEvidence,'APPLICATION_EVIDENCE_CONTENT'));
+
+    assert(restoredNative.every(row=>row.identity.valid&&row.identity.releaseBearing&&row.current),'COUNTERPART_RESTORED_NATIVE_CURRENT_ORACLE');
+    assert.equal(restoredGate.complete,true,'COUNTERPART_RESTORED_NATIVE_STAGE22_ORACLE: '+JSON.stringify(restoredGate.reasons));
+    console.error(JSON.stringify({caseId:'stage22-restored-native-authority',originalAuthority,persistedAuthority:authoritySnapshot(saved),liveNative,rejectedNative,beforeReverify,afterReverify,restoredNative,restoredGate}));
     const failures=bindAcceptanceUi(r,saved,'NONE'),ui=fs.readFileSync('app-core.js','utf8');
     const extract=(start,end)=>{const a=ui.indexOf(start),b=ui.indexOf(end,a+start.length);assert.ok(a>=0&&b>a,'Actual response control owner must exist.');return ui.slice(a,b);};
     Object.assign(runtime,{recordValue:r.engine.recordValue,schema:runtime.closedLoopWorkflowSchema,recordMobileValidation:async()=>{},saveRequiredContinuation:async()=>null,selectStageContinuation:()=>{}});

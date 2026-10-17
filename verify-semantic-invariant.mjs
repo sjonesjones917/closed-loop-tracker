@@ -1,4 +1,4 @@
-import {reviewProofFixture,canonicalFixtureRecord} from './test-fixtures.mjs';
+import {reviewProofFixture,canonicalFixtureRecord,acceptPrerequisite,recordProposal} from './test-fixtures.mjs';
 import {verifyExternalSystemSupport} from './test-external-system-support.mjs';
 import {verifyStage22ExternalResultNormalization} from './test-stage22-external-result-normalization.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
@@ -247,10 +247,23 @@ for(const node of [{type:'LEAF',artifactId:'ARTIFACT-1'},{type:'LEAF',dependency
  const schema=closedLoopWorkflowSchema,runtime={engine,schema,prompts:closedLoopPromptEngine,ingestion:closedLoopResponseIngestion};
  const q=core.createBlankState('JOB-PROOF-TRUTH-TABLE');Object.assign(q.job,{CURRENT_INPUT_VERSION:scope.inputVersion,CURRENT_SOURCE_SET_VERSION:scope.sourceSetVersion,CURRENT_REQUIREMENTS_VERSION:scope.requirementsVersion,CURRENT_TEST_SUITE_VERSION:scope.testSuiteVersion});engine.ensureShape(q);
  const record=(family,fields,options={})=>canonicalFixtureRecord(runtime,q,family,fields,options),req=record('requirements',{MANDATORY_OPTIONAL_STATUS:'MANDATORY',STATUS:'ACTIVE'}),subjects={};
+ const observations={};
+ const admitObservation=(label,subjectId,relation)=>{
+  // Isolate the earlier-stage truth reducer; Stage 22 completion is a synthetic prerequisite, not tested here.
+  const priorStages=engine.clone(q.stages),priorCurrentStage=q.job.CURRENT_STAGE;q.stages[22].status='COMPLETE';q.stages[22].gate={complete:true};
+  const accepted=acceptPrerequisite(runtime,q,23,{records:{
+   observationRecords:[recordProposal(schema,'observationRecords',{tempKey:'truth-observation-'+label,overrides:{EXTERNAL_OR_AGENT_OBSERVED_VALUE:'Synthetic truth-table observation '+label}})],
+   entailmentReviews:[recordProposal(schema,'entailmentReviews',{tempKey:'truth-entailment-'+label,relationships:{OBSERVATION_ID:{tempKey:'truth-observation-'+label},TARGET_PROPOSITION_ID:{recordId:subjectId}},overrides:{ENTAILMENT_FINDING:relation}})]
+  }});Object.assign(q,accepted.project);q.stages=priorStages;q.job.CURRENT_STAGE=priorCurrentStage;
+  const observation=q.projectData.observationRecords.find(row=>row.temporaryKey==='truth-observation-'+label);
+  const review=q.projectData.entailmentReviews.find(row=>row.temporaryKey==='truth-entailment-'+label);
+  assert(engine.entailmentMetadataCurrent(q,review),'TRUTH_FIXTURE_ADMITTED_ENTAILMENT_ORACLE: '+label);
+  observations[label]=observation.id;
+ };
  const timing={VERIFICATION_PHASE:'PREPRODUCT_ITERATION',EARLIEST_EXECUTABLE_STAGE:6,REQUIRED_BY_STAGE:6,PER_RUN_REQUIRED:false,FINAL_PRODUCT_REQUIRED:false,DELIVERY_REQUIRED:false,TARGET_AVAILABILITY_CONDITION:{type:'PHASE_TARGET'}};
- for(const [label,relation]of [['TRUE','ESTABLISHES'],['FALSE','REFUTES'],['UNKNOWN',null]]){
+ // Evidence is admitted after the prerequisite proof review below.
+ for(const label of ['TRUE','FALSE','UNKNOWN']){
   const subject=record('propositions',{REQUIREMENT_ID:req.id,PROPOSITION_TEXT:label,STATUS:'CURRENT'},{relationships:{REQUIREMENT_ID:req.id}});subjects[label]=subject.id;
-  if(relation){const evidence=record('evidenceRecords',{STATUS:'PRESERVED'}),observation=record('observationRecords',{EPISTEMIC_BASIS:'EXTERNALLY_SUPPORTED',FRESHNESS_STATUS:'CURRENT',RAW_OR_NATIVE_PROVENANCE:'FIXTURE-OBSERVATION-'+label});observation.evidenceRefs=[evidence.id];engine.refreshRecordHashes(observation,'observationRecords');record('entailmentReviews',{OBSERVATION_ID:observation.id,TARGET_PROPOSITION_ID:subject.id,ACCEPTED_STATUS:'ACCEPTED',ACCEPTED_RELATION:relation});}
  }
  const leafFor=label=>({type:'LEAF',propositionId:subjects[label],truthExtraction:'ACCEPTED_ENTAILMENT',evidenceClasses:['OBSERVATION_RECORD','ACCEPTED_ENTAILMENT'],scopeBinding:'CURRENT',proposedTiming:timing}),vectors=[];
  const add=(node,expected,label)=>{const parent=record('propositions',{REQUIREMENT_ID:req.id,PROPOSITION_TEXT:label,STATUS:'CURRENT'},{relationships:{REQUIREMENT_ID:req.id}});record('proofExpressions',{TARGET_PROPOSITION_ID:parent.id,PROPOSED_EXPRESSION:node,NORMALIZED_EXPRESSION:node,SEMANTIC_RATIONALE:'The exact operator combines independently preserved observations.'},{relationships:{TARGET_PROPOSITION_ID:parent.id}});vectors.push({node,expected,label,parentId:parent.id});return vectors.at(-1);};
@@ -258,23 +271,49 @@ for(const node of [{type:'LEAF',artifactId:'ARTIFACT-1'},{type:'LEAF',dependency
  for(const [a,b,all,any]of pairs)for(const inputs of [[a,b],[b,a]])for(const [type,expected]of [['ALL_OF',all],['ANY_OF',any]])add({type,children:inputs.map(leafFor)},expected,type+' '+inputs);
  for(const [inputs,expected]of [[['TRUE','TRUE','UNKNOWN'],'TRUE'],[['TRUE','FALSE','FALSE'],'FALSE'],[['TRUE','UNKNOWN','FALSE'],'UNKNOWN'],[['UNKNOWN','UNKNOWN','UNKNOWN'],'UNKNOWN'],[['FALSE','FALSE','UNKNOWN'],'FALSE']])add({type:'AT_LEAST_K',k:2,children:inputs.map(leafFor)},expected,'Threshold '+inputs);
  const single=add(leafFor('TRUE'),'TRUE','Single current observation');
- for(let n=1;n<=5;n++){q.stages[n].status='COMPLETE';q.stages[n].gate={complete:true};}reviewProofFixture(runtime,q);q.job.CURRENT_STAGE='STAGE 06';
+ for(let n=1;n<=5;n++){q.stages[n].status='COMPLETE';q.stages[n].gate={complete:true};}reviewProofFixture(runtime,q);
+ // Synthetic downstream prerequisites only; no product execution or stage completion proof.
+ const baseline=record('baselines',{STATUS:'FROZEN'});q.job.CURRENT_BASELINE_ID=baseline.id;
+ const product=record('products',{BASELINE_ID:baseline.id,PRODUCT_VERSION:'TRUTH-PRODUCT-v1',STATUS:'COMPLETED'},{relationships:{BASELINE_ID:baseline.id}});q.job.CURRENT_PRODUCT_ID=product.id;q.job.CURRENT_PRODUCT_VERSION='TRUTH-PRODUCT-v1';
+ for(const [label,relation]of [['TRUE','ESTABLISHES'],['FALSE','REFUTES']])admitObservation(label,subjects[label],relation);
+ q.job.CURRENT_STAGE='STAGE 06';
  for(const v of vectors){assert(engine.deriveLeafTimingSchedule(q,v.parentId).resolved,'Truth table fixture omitted its reviewed timing.');assert(engine.evaluateProofExpression(q,v.parentId,v.node).truthValue===v.expected,v.label+' truth table failed.');}
+ // Remove one required admission/derivation component while keeping the reviewed timing intact.
+ // Restoring the exact original component must restore TRUE, without changing the production guard.
+ const admittedEntailmentControls=[];
+ const trueReview=q.projectData.entailmentReviews.find(row=>row.temporaryKey==='truth-entailment-TRUE');
+ for(const fault of ['accepted-change','raw-response','accepted-proposal','derivation-receipt']){
+  const altered=engine.clone(q),review=altered.projectData.entailmentReviews.find(row=>row.id===trueReview.id);
+  let restore;
+  if(fault==='derivation-receipt'){const saved=review.derivationReceipt;delete review.derivationReceipt;restore=()=>{review.derivationReceipt=saved;};}
+  else{const [family,key,id]=fault==='accepted-change'?['acceptedChanges','proposalId',review.sourceProposalId]:fault==='raw-response'?['rawResponses','rawResponseId',review.rawResponseId]:['responseProposals','proposalId',review.sourceProposalId],saved=altered.projectData[family];altered.projectData[family]=saved.filter(row=>row[key]!==id);restore=()=>{altered.projectData[family]=saved;};}
+  assert(engine.deriveLeafTimingSchedule(altered,single.parentId).resolved,'TRUTH_FIXTURE_FAULT_TIMING_UNCHANGED_ORACLE: '+fault);
+  assert(!engine.entailmentMetadataCurrent(altered,review),'TRUTH_FIXTURE_MISSING_PROVENANCE_ORACLE: '+fault);
+  assert(engine.evaluateProofExpression(altered,single.parentId,single.node).truthValue==='UNKNOWN','TRUTH_FIXTURE_UNADMITTED_UNKNOWN_ORACLE: '+fault);
+  restore();assert(engine.entailmentMetadataCurrent(altered,review),'TRUTH_FIXTURE_RESTORED_PROVENANCE_ORACLE: '+fault);
+  assert(engine.evaluateProofExpression(altered,single.parentId,single.node).truthValue==='TRUE','TRUTH_FIXTURE_RESTORED_TRUTH_ORACLE: '+fault);
+  admittedEntailmentControls.push({fault,without:'UNKNOWN',restored:'TRUE'});
+ }
  const reviewedAll=vectors.find(v=>v.node.type==='ALL_OF'&&v.expected==='FALSE'&&v.node.children.some(leaf=>leaf.propositionId===subjects.TRUE));
  const substituted={...reviewedAll.node,type:'ANY_OF'};
  assert(engine.evaluateProofExpression(q,reviewedAll.parentId,substituted).truthValue==='UNKNOWN','REVIEWED_EXPRESSION_IDENTITY_ORACLE: an unreviewed operator acquired the reviewed parent schedule.');
  assert(engine.evaluateStageProofTruth(q,reviewedAll.parentId,substituted,6)==='UNKNOWN','REVIEWED_EXPRESSION_IDENTITY_ORACLE: stage proof accepted an unreviewed operator.');
- const observation=q.projectData.observationRecords.find(row=>engine.recordValue(row,'RAW_OR_NATIVE_PROVENANCE')==='FIXTURE-OBSERVATION-TRUE');
+ const observation=q.projectData.observationRecords.find(row=>row.id===observations.TRUE);
  const expectUnknown=label=>assert(engine.evaluateProofExpression(q,single.parentId,single.node).truthValue==='UNKNOWN',label);
  observation.fields.FRESHNESS_STATUS='EXPIRED';expectUnknown('Expired observation supplied proof.');observation.fields.FRESHNESS_STATUS='CURRENT';
  observation.fields.EPISTEMIC_BASIS='SELF_ASSERTED';expectUnknown('Self-asserted observation supplied proof.');observation.fields.EPISTEMIC_BASIS='EXTERNALLY_SUPPORTED';
  const preserved=observation.evidenceRefs;observation.evidenceRefs=[];expectUnknown('Missing source evidence supplied proof.');observation.evidenceRefs=preserved;
  const provenance=observation.fields.RAW_OR_NATIVE_PROVENANCE;observation.fields.RAW_OR_NATIVE_PROVENANCE='';expectUnknown('Missing observation provenance supplied proof.');observation.fields.RAW_OR_NATIVE_PROVENANCE=provenance;
  assert(engine.evaluateProofExpression(q,single.parentId,single.node).truthValue==='TRUE','Restored valid current evidence did not restore proof.');
- record('entailmentReviews',{OBSERVATION_ID:observation.id,TARGET_PROPOSITION_ID:subjects.TRUE,ACCEPTED_STATUS:'ACCEPTED',ACCEPTED_RELATION:'REFUTES'});expectUnknown('Contradictory sufficient observations supplied proof.');
+ admitObservation('CONTRADICTION',subjects.TRUE,'REFUTES');
+ assert(engine.entailmentMetadataCurrent(q,q.projectData.entailmentReviews.find(row=>row.id===trueReview.id)),'TRUTH_FIXTURE_CONTRADICTION_PRIOR_SUPPORT_ORACLE');
+ assert(engine.deriveLeafTimingSchedule(q,single.parentId).resolved,'TRUTH_FIXTURE_CONTRADICTION_TIMING_ORACLE');
+ expectUnknown('Contradictory sufficient observations supplied proof.');
+ const withoutContradiction=engine.clone(q);withoutContradiction.projectData.entailmentReviews=withoutContradiction.projectData.entailmentReviews.filter(row=>row.temporaryKey!=='truth-entailment-CONTRADICTION');
+ assert(engine.evaluateProofExpression(withoutContradiction,single.parentId,single.node).truthValue==='TRUE','TRUTH_FIXTURE_CONTRADICTION_REMOVAL_RESTORES_TRUTH_ORACLE');
  const cycle={type:'ALL_OF',children:[]};cycle.children.push(cycle);assert(!engine.validateProofExpression(cycle).valid,'Cyclic object graph entered proof normalization.');let deep=leafFor('UNKNOWN');for(let i=0;i<34;i++)deep={type:'ALL_OF',children:[deep]};assert(!engine.validateProofExpression(deep).valid,'Proof depth limit was ignored.');
  const obligation=record('proofObligations',{PROPOSITION_ID:single.parentId}),prerequisite={type:'LEAF',proofObligationId:obligation.id,truthExtraction:'PROOF_OBLIGATION',evidenceClasses:['ACCEPTED_PROOF_REVIEW'],scopeBinding:'CURRENT'};assert(!engine.validateProofExpression(prerequisite,{project:q,targetPropositionId:single.parentId}).valid,'Circular prerequisite proof was accepted.');
- console.log(JSON.stringify({closedProofTruthTables:true,vectors:vectors.length,currentEvidenceRequired:true,reviewedTimingRequired:true,proofCyclesAndResourceBounds:true}));
+ console.log(JSON.stringify({closedProofTruthTables:true,vectors:vectors.length,currentEvidenceRequired:true,reviewedTimingRequired:true,proofCyclesAndResourceBounds:true,admittedEntailmentControls}));
 }
 
 const evidenceApiContract=await evidenceApiContractReport();assert(evidenceApiContract.passed,'EVIDENCE_API_CONTRACT_OWNING_CONTROLS_ORACLE');console.log(JSON.stringify({evidenceApiContractControls:'PASS',synthetic:true,actualBrowser:false,evidenceApiContract}));

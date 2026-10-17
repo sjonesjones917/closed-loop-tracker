@@ -1,4 +1,4 @@
-import {runVerifier} from './verify-conformance-regressions.mjs';
+import {runVerifier,assertDetectedFault} from './verify-conformance-regressions.mjs';
 import assert from 'node:assert/strict';
 import {spawnSync} from 'node:child_process';
 import fs from 'node:fs';
@@ -8,7 +8,7 @@ const execute=async (suite,args=[])=>{const started=Date.now(),result=(await run
 const run=async args=>(await execute('verify-recoverable-history.mjs',args));
 try{
  const base=(await run([]));assert.equal(base.status,0,base.stderr);
- for(const [name,reason]of [['mixed-versions',/AssertionError|HISTORY_VERSION_INCOMPATIBLE/],['mutate-retained',/HISTORY_SNAPSHOT_INTEGRITY_FAILED/],['import-projection',/IMPORT_PROJECTION_INTEGRITY_ORACLE/],['history-projection',/HISTORY_PROJECTION_INTEGRITY_ORACLE/]]){const fault=(await run(['--fault='+name]));assert.equal(fault.status,1,'Deliberate '+name+' must fail its assertion, not time out');assert.match(fault.stderr,reason,'The mutation failed for an unrelated reason');const restored=(await run([]));assert.equal(restored.status,0,restored.stderr);results.push({fault:name,result:'DETECTED',expectedFailure:reason.source,restoredImplementation:'PASS'});}
+ for(const [name,reason]of [['mixed-versions',/MIXED_VERSION_RESTORE_INTEGRITY_ORACLE/],['mutate-retained',/HISTORY_SNAPSHOT_INTEGRITY_FAILED/],['import-projection',/IMPORT_PROJECTION_INTEGRITY_ORACLE/],['history-projection',/HISTORY_PROJECTION_INTEGRITY_ORACLE/]]){const fault=(await run(['--fault='+name]));if(name==='mixed-versions')assertDetectedFault(fault,reason,name);else{assert.equal(fault.status,1,'Deliberate '+name+' must fail its assertion, not time out');assert.match(fault.stderr,reason,'The mutation failed for an unrelated reason');}const restored=(await run([]));assert.equal(restored.status,0,restored.stderr);results.push({fault:name,result:'DETECTED',expectedFailure:reason.source,restoredImplementation:'PASS'});}
  for(const [suite,fault,reason]of [
   ...['refuse-removed','skip-file-inventory'].map(fault=>['verify-history-project-lifecycle.mjs',fault,/MISSING_RETAINED_FILE_ORACLE/]),
   ...['skip-receipt-validation','skip-transaction-receipt-validation','skip-restored-receipt-validation'].map(fault=>['verify-history-project-lifecycle.mjs',fault,/COMMAND_RECEIPT_VALIDATION_ORACLE/]),

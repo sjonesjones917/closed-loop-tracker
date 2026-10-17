@@ -69,9 +69,17 @@ export function verifyDueEvidenceConsumers(){
  const returnedOwner=report=>report.results.find(row=>row.case==='LEGITIMATE_DEFERRED_RETURNED_BYTES_AND_RETRY');
  const plannerFact=report=>returnedOwner(report).results[0].retryProof.validationResultPreservation;
  const successFacts=report=>returnedOwner(report).results[1].validationResultPreservation;
+ // The complete producer emits its internal-error fault control alongside the
+ // real validation owner. This independent literal is consumer evidence only.
+ const internalErrorControl={case:'LEGITIMATE_DEFERRED_UNEXPECTED_INTERNAL_ERROR_PROPAGATION',synthetic:true,actualBrowser:false,results:[{case:'UNEXPECTED_INTERNAL_ERROR_PROPAGATES',code:'INJECTED_INTERNAL_NORMALIZATION_FAULT',rawPersisted:true,inputUnchanged:true,canonicalArtifactsUnchanged:true}]};
+ const withInternalError=structuredClone(fixture);withInternalError.results.push(structuredClone(internalErrorControl));
+ assert(preservesFixtureScope(result(withInternalError)),'DEFERRED_CATALOG_DISTINCT_INTERNAL_ERROR_SIBLING_ORACLE');
  for(const checkId of [planner,success]){
   reject(checkId+'-missing-owner',report=>report.results.pop(),checkId);
   reject(checkId+'-duplicate-owner',report=>report.results.push(structuredClone(returnedOwner(report))),checkId);
+  reject(checkId+'-internal-error-owner-collision',report=>report.results.push({...structuredClone(internalErrorControl),case:'LEGITIMATE_DEFERRED_RETURNED_BYTES_AND_RETRY'}),checkId);
+  reject(checkId+'-duplicate-real-owner-with-fault-sibling',report=>report.results.push(structuredClone(internalErrorControl),structuredClone(returnedOwner(report))),checkId);
+  reject(checkId+'-internal-error-cannot-replace-owner',report=>{report.results.pop();report.results.push(structuredClone(internalErrorControl));},checkId);
   reject(checkId+'-missing-source-restored',report=>delete report.sourceRestored,checkId);
   reject(checkId+'-false-browser-owner',report=>returnedOwner(report).actualBrowser=true,checkId);
  }
@@ -98,5 +106,5 @@ export function verifyDueEvidenceConsumers(){
   ['wrong-success-prompt-link',report=>successFacts(report).accepted.promptIdentityLinked=false]
  ])reject(name,change,success);
  const oldPartial={checkId:'DEFERRED-DEFINITION-COMPATIBILITY-ADMISSION',passed:true};assert.equal([oldPartial].some(row=>row.checkId===oldPartial.checkId&&row.passed===true),true);
- return {result:'PASS',consumerOnly:true,actualDefaultSuiteExecuted:false,conformingLiteralAccepted:true,negativeCases:cases.length,cases,formerMarkerOnlyAdmissionReproduced:true};
+ return {result:'PASS',consumerOnly:true,actualDefaultSuiteExecuted:false,conformingLiteralAccepted:true,distinctInternalErrorSiblingAccepted:true,negativeCases:cases.length,cases,formerMarkerOnlyAdmissionReproduced:true};
 }

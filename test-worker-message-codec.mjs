@@ -1,7 +1,7 @@
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {createHash} from 'node:crypto';
-import vm from 'node:vm';
 import {projectStoreRuntime} from './test-project-store-runtime.mjs';
 
 // Exact production codec functions plus native structuredClone. This is a
@@ -82,7 +82,7 @@ export async function verifyStorageWorkerStartup({sourceOverrides={},fault=null}
  for(const mode of ['main','main-recovery-failure','storage-worker','archive-worker']){
   const migration=deferred(),recovery=deferred(),events=[],workerMode=mode.endsWith('worker'),context={URL,crypto:globalThis.crypto,queueMicrotask,setTimeout,clearTimeout,indexedDB:{},STORE_WORKER:workerMode,ARCHIVE_PARSER_WORKER:mode==='archive-worker',STORE_SCRIPT_URL:'https://example.invalid/project-store.js?v=SYNTHETIC',STORE_CONTEXT_ID:'SYNTHETIC',STORE_BUILD_ID:'SYNTHETIC',STORAGE_WORKER_TIMEOUT_MS:30000,hash:{assertPinnedUnicodeHost(){events.push('unicode');}},console:{error(){events.push('diagnostic');}},async migrateLegacy(){events.push('migration:start');await migration.promise;events.push('migration:end');},async recoverResponseStaging(){events.push('recovery:start');await recovery.promise;events.push('recovery:end');},storageError:(message,code)=>Object.assign(new Error(message),{code}),packStorageWorkerValue:value=>({value}),unpackStorageWorkerValue:value=>value,projectIdentity:p=>p.job.JOB_ID,async clearWorkerCommit(){events.push('receipt:clear');},async observeProjectArtifactCustody(){events.push('custody');},recoverWorkerOperation:(pending,error)=>pending.reject(error)};
   context.Worker=class {constructor(){events.push('worker:construct');}postMessage(message){events.push('worker:post');queueMicrotask(()=>this.onmessage({data:{operationId:message.operationId,buildIdentity:message.buildIdentity,ok:true,checkpointId:'CHECKPOINT-SYNTHETIC'}}));}terminate(){events.push('worker:terminate');}};
-  vm.runInNewContext('let operationWorker=null;const workerRequests=new Map();\n'+command+startup+'\nglobalThis.owner={ready,request:requestStoreWorker,recover:recoverResponseStaging};',context);
+  createVerifierRuntime.loadScript(createVerifierRuntime(context),'let operationWorker=null;const workerRequests=new Map();\n'+command+startup+'\nglobalThis.owner={ready,request:requestStoreWorker,recover:recoverResponseStaging};');
   if(workerMode){assert.equal(events.includes('migration:start'),false,'WORKER_STARTUP_NO_DUPLICATE_MIGRATION_ORACLE '+mode);assert.equal(events.includes('recovery:start'),false,'WORKER_STARTUP_NO_DUPLICATE_RECOVERY_ORACLE '+mode);await context.owner.ready;cases.push({caseId:mode,result:'PASS',startupRecoveryCalls:0});continue;}
   const first=context.owner.request('SAVE_CHECKPOINT',['JOB',{}]),second=context.owner.request('SAVE_CHECKPOINT',['JOB',{}]);await flush();
   assert.equal(events.includes('worker:construct'),false,'WORKER_STARTUP_PARENT_BARRIER_ORACLE');assert.equal(events.filter(e=>e==='migration:start').length,1);assert.equal(events.includes('recovery:start'),false);
