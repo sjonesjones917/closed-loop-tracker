@@ -7,11 +7,10 @@ import {responseFixture} from './operator-journey-fixtures.mjs';
 import {readStoreArchive} from './test-zip.mjs';
 const publicationProjection='...(outcomeInterpretation?{outcomeInterpretation}:{})',promptSource=fs.readFileSync('prompt-engine.js','utf8'),publicationFault=process.argv.includes('--fault=audit-outcome-publication');
 if(publicationFault)assert.equal(promptSource.split(publicationProjection).length-1,1,'AUDIT_PUBLICATION_FAULT_SETUP_ORACLE');
-// This existing isolated fixture intentionally has no Stage1–25 bodies. Keep
-// only its declared Stage25 prerequisite projection stable during ordinary
-// saves. The Stage26 gate/review/authority functions are never replaced.
-const priorStageProjection=";(()=>{const e=globalThis.closedLoopWorkflowEngine;globalThis.closedLoopWorkflowEngine=Object.freeze({...e,recalculate(p,options){const out=e.recalculate(p,options);p.stages[25].status='COMPLETE';p.stages[25].gate={complete:true,blocked:false,reasons:[]};return out;}});})();";
-const isolatedEngineSource=fs.readFileSync('workflow-engine.js','utf8')+priorStageProjection;
+// Only prompt issuance is adapted for this exact isolated job/stage. Canonical
+// projections, receipts, storage and independent audit review remain native.
+const scopeIssuanceAdapter=";(()=>{const e=globalThis.closedLoopWorkflowEngine;globalThis.closedLoopWorkflowEngine=Object.freeze({...e,stageEntryState(p,stage,options){const entry=e.stageEntryState(p,stage,options);return globalThis.__auditScopeIssuance===true&&Number(stage)===26&&p.job.JOB_ID==='SYNTHETIC-SCOPE-26-COMPLETE'?{...entry,allowed:true}:entry;}});})();";
+const isolatedEngineSource=fs.readFileSync('workflow-engine.js','utf8')+scopeIssuanceAdapter;
 const r=projectStoreRuntime({sourceOverrides:{'workflow-engine.js':isolatedEngineSource,...(publicationFault?{'prompt-engine.js':promptSource.replace(publicationProjection,'...{}')}:{})}}),{engine,core,prompts,ingestion}=r,schema=r.runtime.closedLoopWorkflowSchema,hash=r.runtime.closedLoopHash;
 // Controlling field semantics and the approved bounded repair plan preserve an
 // open STRING observation. These literal oracles are independent of the runtime
@@ -52,11 +51,16 @@ for(const field of Object.keys(schema.JOB_POINTER_TARGETS))p.job[field]=null;
 for(const[key,field]of Object.entries({baselineId:'CURRENT_BASELINE_ID',productId:'CURRENT_PRODUCT_ID',productVersion:'CURRENT_PRODUCT_VERSION',deliveryCandidateSetId:'CURRENT_DELIVERY_CANDIDATE_SET_ID'}))if(fixture.scope[key])p.job[field]=fixture.scope[key];
 const scopedProduct=p.projectData.products[0];Object.assign(scopedProduct.fields,{BASELINE_ID:fixture.scope.baselineId,PRODUCT_VERSION:fixture.scope.productVersion});engine.refreshRecordHashes(scopedProduct,'products');
 assert.equal(engine.jobPointerIntegrityIssues(p).length,0,'S26_FIXTURE_POINTER_INTEGRITY_ORACLE');
+engine.recalculate(p);
+const refuseUpstream=project=>assert.throws(()=>prompts.reserveAndBuildPromptRecord(r.copy(project),26,{operation:'COMPLETE',scope:fixture.scope}),error=>error.code==='UPSTREAM_STAGE_INCOMPLETE'&&error.upstreamStage===25,'S26_UPSTREAM_PREREQUISITE_CONTROL');
+function withScopeIssuance(action){r.runtime.__auditScopeIssuance=true;try{return action();}finally{r.runtime.__auditScopeIssuance=false;}}
+refuseUpstream(p);
+withScopeIssuance(()=>{const unrelated=r.copy(p);unrelated.job.JOB_ID+='-UNRELATED';refuseUpstream(unrelated);assert.throws(()=>prompts.reserveAndBuildPromptRecord(r.copy(p),27,{operation:'COMPLETE'}),error=>error.code==='UPSTREAM_STAGE_INCOMPLETE'&&error.upstreamStage===26,'S26_SCOPE_ADAPTER_STAGE_CONTROL');});
 const authorBase=engine.clone(p);
-async function accept(operation,{reviewResult=null,fileFirst=false}={}){
+async function accept(operation,options={}){refuseUpstream(p);r.runtime.__auditScopeIssuance=true;try{return await acceptScoped(operation,options);}finally{r.runtime.__auditScopeIssuance=false;refuseUpstream(p);}}
+async function acceptScoped(operation,{reviewResult=null,fileFirst=false}={}){
  if(fileFirst){for(const record of p.projectData.generatedPrompts)if(!record.invalidatedBy)await r.store.persistPromptContextFiles(record,p);p=await r.store.writeProject(p,{expectedProjectRevision:0,createOnly:true});}
  const storedBaseRevision=fileFirst?p.revision:null;
- p.stages[25].status='COMPLETE';p.stages[25].gate=r.copy({complete:true,blocked:false,reasons:[]});
  let {prompt}=prompts.reserveAndBuildPromptRecord(p,26,{operation,scope:operation==='COMPLETE'?fixture.scope:{}});assertPublication(prompt);let envelope=responseFixture({schema,engine,prompt,manifest:prompts.promptFileManifest(prompt),instructionBytes:Buffer.from(prompt.prompt)});
  if(reviewResult)envelope.records.semanticReviews[0].fields.RESULT=reviewResult;
  if(fileFirst){
@@ -86,8 +90,7 @@ const author=await accept('COMPLETE'),authored=engine.clone(p);
 // Reconciliation publishes the same authoring contract without changing current
 // accepted work merely to inspect an instruction.
 const reconciliationProject=engine.clone(authored),reconciliationBefore=hash.sha256Value(r.copy({process:reconciliationProject.projectData.processAudits,product:reconciliationProject.projectData.productAudits}));
-reconciliationProject.stages[25].status='COMPLETE';reconciliationProject.stages[25].gate=r.copy({complete:true,blocked:false,reasons:[]});
-assertPublication(prompts.reserveAndBuildPromptRecord(reconciliationProject,26,{operation:'RECONCILE'}).prompt);
+assertPublication(withScopeIssuance(()=>prompts.reserveAndBuildPromptRecord(reconciliationProject,26,{operation:'RECONCILE'})).prompt);
 assert.equal(hash.sha256Value(r.copy({process:reconciliationProject.projectData.processAudits,product:reconciliationProject.projectData.productAudits})),reconciliationBefore,'AUDIT_RECONCILIATION_PUBLICATION_STATE_ORACLE: generating guidance replaced accepted audits.');
 // Exercise accepted observations, not an enum mock or policy self-comparison.
 // Evidence is synthetic and scoped; neither favorable tokens nor this isolated
@@ -105,8 +108,8 @@ for(const [collection,field,value,expected]of [
  ['productAudits','MEANING_VERIFICATION_RESULTS','MISMATCH','UNDETERMINED'],
  ['productAudits','MEANING_VERIFICATION_RESULTS','The observed product satisfies the required meaning','UNDETERMINED']
 ]){
- const q=engine.clone(authorBase);q.stages[25].status='COMPLETE';q.stages[25].gate=r.copy({complete:true,blocked:false,reasons:[]});
- const {prompt}=prompts.reserveAndBuildPromptRecord(q,26,{operation:'COMPLETE',scope:fixture.scope}),envelope=responseFixture({schema,engine,prompt,manifest:prompts.promptFileManifest(prompt),instructionBytes:Buffer.from(prompt.prompt)});envelope.records[collection][0].fields[field]=value;
+ const q=engine.clone(authorBase);
+ const {prompt}=withScopeIssuance(()=>prompts.reserveAndBuildPromptRecord(q,26,{operation:'COMPLETE',scope:fixture.scope})),envelope=responseFixture({schema,engine,prompt,manifest:prompts.promptFileManifest(prompt),instructionBytes:Buffer.from(prompt.prompt)});envelope.records[collection][0].fields[field]=value;
  const prepared=ingestion.prepare(q,{stage:26,text:JSON.stringify(envelope),promptRecord:prompt,transport:{packageId:prompt.packageId,operationReservationId:prompt.operationReservationId,challengeNonce:prompt.challengeNonce}});
  assert.equal(prepared.validation.valid,true,'AUDIT_STRING_OBSERVATION_ORACLE: valid open observation was rejected '+JSON.stringify(prepared.validation.issues));const impact=ingestion.acceptanceImpact(prepared.project,prepared.proposal.proposalId),accepted=ingestion.commit(prepared.project,prepared.proposal.proposalId,{replacementConfirmation:impact}).project,audit=engine.recordsForCurrentScope(accepted,collection).at(-1),evaluation=engine.evaluateResultConsistency(collection,audit,null,accepted);
  assert.equal(engine.recordValue(audit,field),value,'AUDIT_STORED_OBSERVATION_ORACLE: adjudication normalization changed authored observation.');assert.equal(evaluation.determination,expected,'AUDIT_OUTCOME_INTERPRETATION_ORACLE: '+collection+'.'+field+' '+value+' '+JSON.stringify(evaluation));if(expected==='UNDETERMINED')assert(evaluation.reasons.some(reason=>reason.includes(field)),'AUDIT_UNKNOWN_REASON_ORACLE: unrecognized outcome failed for an unrelated reason.');
@@ -169,6 +172,8 @@ const reconciliationOperationCases=[];
   const loaded=await r.store.readProject(p.job.JOB_ID);
   assert.deepEqual(r.copy(loaded.projectData),r.copy(p.projectData),'S26_RECONCILE_STORAGE_ORACLE');
   assert.equal(engine.semanticReviewCompletion(loaded,26).complete,true,'S26_RECONCILE_RELOAD_REVIEW_ORACLE');
+  assert.equal(loaded.stages[25].gate.complete,false,'S26_NO_UPSTREAM_COMPLETION_CONTROL');assert.equal(r.store.validateProjectIntegrity(loaded).valid,true,'S26_REGISTERED_PROJECTION_CONTROL');
+  const tampered=r.copy(loaded);tampered.stages[25].status='COMPLETE';tampered.stages[25].gate=r.copy({complete:true,blocked:false,reasons:[]});const invalid=r.store.validateProjectIntegrity(tampered);assert.equal(invalid.valid,false,'S26_FALSE_COMPLETION_REJECTION_CONTROL');assert(invalid.issues.some(issue=>issue.includes('STALE_DERIVATION_RECEIPT')),'S26_STALE_RECEIPT_DIAGNOSTIC_CONTROL');
   reconciliationOperationCases.push({operation:'RECONCILE',boundary:'actual reserve -> saved ZIP instruction/manifest/context bytes -> staged strict JSON Blob -> read/rehashed bytes -> capture/operational save -> prepareCaptured -> operator commit -> immediate store/read -> fresh review -> store/read',requiredStructuredResponseSlots:prompts.promptFileManifest(reconciliation).attachmentSlots.filter(row=>row.required&&row.role==='STRUCTURED_RESPONSE').length,requiredOtherReturnedAttachmentSlots:prompts.promptFileManifest(reconciliation).attachmentSlots.filter(row=>row.required&&row.role!=='STRUCTURED_RESPONSE').length,actualExportedZipInstructionManifestAndContext:true,authoritativeResponseBlobStagedAndRehashed:true,immediateReconcileCommitStoreReload:true,responseBytes:Buffer.byteLength(reconciliationRaw,'utf8'),responseSha256:hash.sha256Text(reconciliationRaw),retainedRawHistory:true,retainedAuthoredFieldsAndEvidence:true,acceptedChangeId:reconcileChange.changeId,proposalId:reconcileChange.proposalId,reconciliationReservationId:reconciliation.operationReservationId,priorUnknownReservationId:unknownReview.operationReservationId,freshReviewReservationId:nextReview.operationReservationId,actualBrowser:false,realExternalActor:false,priorStagesEstablished:false});
  }finally{p=retained;}
 }
@@ -177,4 +182,4 @@ const anchor='function semanticReviewCompletion(p,stage){',source=fs.readFileSyn
 const defective=projectStoreRuntime({sourceOverrides:{'workflow-engine.js':source.replace(anchor,anchor+"if(stage===26)return {complete:true,reasons:[],reviews:[],basis:null};")}}),counterexample=defective.copy(authored);
 assert.throws(()=>assert.equal(defective.engine.semanticReviewCompletion(counterexample,26).complete,false,'AUDIT_REVIEW_ORACLE: controlled author bypass'),/AUDIT_REVIEW_ORACLE/);
 verificationObservations.push({checkId:'S26-CONTROLLED-AUTHOR-BYPASS-DETECTED',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:2424'],boundary:'controlled former author-only approval -> independent boundary oracle',expected:{violationDetected:true},observed:{violationDetected:true,defectiveAccepted:true},passed:true});
-console.log(JSON.stringify({stage26IndependentReview:'PASS',isolatedScopeFixture:true,completeJourneyProven:false,priorStageExecutionClaimed:false,producerPrerequisiteProjection:{priorStage:25,appliesOnlyTo:['stages.25.status','stages.25.gate'],sourceOverride:priorStageProjection,sourceSha256:hash.sha256Text(isolatedEngineSource)},reconciliationOperationCases,verificationObservations,auditComparisonPublicationEvidence,interpretationCases},null,2));
+console.log(JSON.stringify({stage26IndependentReview:'PASS',isolatedScopeFixture:true,completeJourneyProven:false,priorStageExecutionClaimed:false,producerPrerequisiteProjection:{stage:26,jobId:'SYNTHETIC-SCOPE-26-COMPLETE',appliesOnlyTo:['transient exported stageEntryState for prompt issuance'],canonicalStagesAndReceiptsNative:true,sourceOverride:scopeIssuanceAdapter,sourceSha256:hash.sha256Text(isolatedEngineSource)},reconciliationOperationCases,verificationObservations,auditComparisonPublicationEvidence,interpretationCases},null,2));
