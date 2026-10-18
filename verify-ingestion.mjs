@@ -18,9 +18,12 @@ import {createHash} from 'node:crypto';
 import {verifySchemaPolicyRuntime,verifySchemaCurrentSourceSetPolicy} from './test-schema-policy-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
-import './verify-reservation-contract.mjs';
-import './verify-file-first-operator.mjs';
-import './verify-response-contract-profile.mjs';
+// These producers share this process and its CPU budget. Await each complete
+// owner before starting the next; static sibling imports overlap after an
+// async dependency yields and contend with its bounded component children.
+await import('./verify-reservation-contract.mjs');
+await import('./verify-file-first-operator.mjs');
+await import('./verify-response-contract-profile.mjs');
 
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
