@@ -1,3 +1,5 @@
+import {runVerifier} from './verify-conformance-regressions.mjs';
+import {runFileFirstComponents,FILE_FIRST_COMPONENT_BOUNDARY,validateFileFirstComponents,fileFirstComponentFailure,settleFileFirstComponent} from './test-file-first-components.mjs';
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
@@ -21,6 +23,10 @@ function bindAuthorizedCoordinatorFixture(runtime){
 }
 
 
+const componentArgument=process.argv.find(argument=>argument.startsWith('--file-first-component='));
+const component=componentArgument?.slice('--file-first-component='.length);
+assert.ok(component===undefined||component==='core'||component==='recovery'||component==='recovery-corruption','FILE_FIRST_COMPONENT_ARGUMENT_ORACLE');
+if(component==='core'){
 let app=fs.readFileSync(process.env.APP_SOURCE||'app-core.js','utf8');if(process.argv.includes('--fault=selected-operation')){const anchor='if(!registration||explicit===action.operation)return action;';assert.equal(app.split(anchor).length-1,1);app=app.replace(anchor,'if(true)return action;');}
 const ingestion=fs.readFileSync('response-ingestion.js','utf8');
 const store=fs.readFileSync('project-store.js','utf8');
@@ -81,8 +87,8 @@ function stage04SerializedFixture(runtime,fixtureRuntime,jobId){
 }
 
 // Exercise the application's one shared pending-action controller.
-await import('./verify-operator-action-lifecycle.mjs');
-await import('./verify-handoff-authorization-ui.mjs');
+process.stdout.write(FILE_FIRST_COMPONENT_BOUNDARY);
+// The coordinator retains the complete handoff owner as an independent component.
 
 // User input belongs to the project form; a successful save must lead to the
 // current workflow, including an unchanged save. Repeated clicks share one save.
@@ -479,18 +485,17 @@ console.log(JSON.stringify({fileFirstOperatorPath:'PASS',promptFileExport:true,r
   console.log(JSON.stringify({returnedFileRevisionRecovery:true,retainedBytesPreserved:true,newerWorkPreserved:true,correctionManifestExported:true}));
 }
 
+
+}else if(component==='recovery'){
 // Replay actual UI preparation/export and production backup restoration.
 {
 const r=projectStoreRuntime(),t=r.runtime,s=fs.readFileSync(process.env.APP_SOURCE||'app-core.js','utf8');
 const extract=(a,b)=>s.slice(s.indexOf(a),s.indexOf(b,s.indexOf(a)+a.length));
 t.fixtureRuntime={core:r.core,schema:t.closedLoopWorkflowSchema,engine:r.engine,prompts:r.prompts,ingestion:r.ingestion,store:r.store};
-await vm.runInContext(stage04AcceptanceFixtureSource()+'\n'+accumulatedStage04Fixture.toString()+'\n(async()=>{globalThis.fixture=await accumulatedStage04Fixture(fixtureRuntime,{jobId:"PROBE-5922",attempts:2,responseCharacters:128});})()',t);
-// The accumulated helper seeds historical reservations before entering the
-// store. Advance through ordinary saves to its existing revision frontier so
-// fresh authorization cannot reuse a historical expired reservation identity.
-const seededRevision=t.fixture.revision;
-let initial=await r.store.writeProject(t.fixture,{expectedProjectRevision:0,createOnly:true,incrementRevision:false});
-while(initial.revision<seededRevision)initial=await r.store.writeProject(initial,{expectedProjectRevision:initial.revision,skipUnchanged:false});
+await vm.runInContext(stage04AcceptanceFixtureSource()+'\n'+accumulatedStage04Fixture.toString()+'\n(async()=>{globalThis.fixture=await accumulatedStage04Fixture(fixtureRuntime,{jobId:"PROBE-5922",attempts:2,responseCharacters:128,persistTransitions:true});})()',t);
+// Accumulate through the same production persistence transitions instead of
+// replaying no-op writes solely to catch up to an in-memory revision frontier.
+let initial=await r.store.readProject(t.fixture.job.JOB_ID);
 const prepare=r.copy(initial),continuation=r.ingestion.prepareStageContinuation(prepare,{stage:4,owningTabInstance:'SYNTHETIC_AUTHORIZED_FILE_FIRST'}),issued=continuation.prompt;assert(issued,'The accumulated fixture must have a current instruction before permission setup.');initial=await r.store.writeProject(prepare,{expectedProjectRevision:initial.revision});
 const authorized=await authorizeSyntheticHandoff(r,{project:initial,prompt:issued});
 // One ordinary subsequent save reproduces the stale reservation that startup
@@ -520,6 +525,52 @@ snapshots.restored=await r.store.importPackage(backup);
  const accumulatedRoundTrip={...proof,handoffContextValid,instructionVerified:true,canonicalUnchanged:snapshots.backup.projectSha256===initial.projectSha256,tailPreserved:true,restoredDigest:true,singleStagePackage:true};
  try{createVerifierRuntime.loadScript(createVerifierRuntime({accumulatedRoundTrip,assert,JSON}),oracle);}catch(error){throw new Error('HANDOFF_BROWSER_VALID_TRANSITION_ORACLE: a valid current-instruction/export/restore sequence must pass the actual browser oracle: '+error.message);}
 
+ const corruptionInput={initial,backup:snapshots.backup,restored:snapshots.restored,accumulatedRoundTrip,oracle};
+ const serializedCorruption=JSON.stringify(corruptionInput);
+ assert.deepEqual(r.copy(JSON.parse(serializedCorruption)),r.copy(corruptionInput),'HANDOFF_CORRUPTION_TRANSPORT_ORACLE');
+ let settledCorruption;
+ const corruptionRun=settleFileFirstComponent(runVerifier(process.execPath,['verify-file-first-operator.mjs','--file-first-component=recovery-corruption'],{timeout:30000,maxBuffer:16*1024*1024,input:serializedCorruption})).then(result=>{settledCorruption=result;return result;});
+ const checkCorruption=()=>{if(settledCorruption&&(settledCorruption.outcome!=='PASS'||settledCorruption.status!==0||settledCorruption.error||settledCorruption.signal||settledCorruption.reason||settledCorruption.reportError))throw fileFirstComponentFailure(settledCorruption);};
+ // Join the isolated negative controls even when the linked large-context path fails.
+ let recoveryError;const recoveryOutput=[];
+ try{
+ recoveryOutput.push(JSON.stringify({caseId:'HANDOFF_BROWSER_VALID_TRANSITION',result:'PASS',actualBrowser:false,attempts:2,responseCharacters:128,beforePrompts:initial.projectData.generatedPrompts.length,afterPrompts:snapshots.backup.projectData.generatedPrompts.length,proof}));
+ t.current=await r.store.readProject(initial.job.JOB_ID);checkCorruption();await t.savePromptRecord(4);checkCorruption();
+ const cdp=null,evalValue=async(_cdp,expression)=>vm.runInContext(expression,t),fixtureFunctions=stage04AcceptanceFixtureSource()+'\n'+stage04AcceptanceEnvelope.toString(),runtimeBindings='const runtime=fixtureRuntime;';
+  console.error('nonbrowser:large-history-execution-package');
+  const executionContext=await evalValue(cdp,`(async()=>{${fixtureFunctions}\n${runtimeBindings}
+    const store=closedLoopProjectStore,p=await store.readProject('PROBE-5922'),prompt=p.projectData.generatedPrompts.filter(row=>row.stage===4&&!row.invalidatedBy).at(-1),manifest=runtime.prompts.promptFileManifest(prompt),text=JSON.stringify(stage04AcceptanceEnvelope(runtime,p,prompt));
+    const staged=await store.stageResponseFile({jobId:p.job.JOB_ID,stage:4,blob:new Blob([text],{type:'application/json'}),rawFilename:'response.json',promptIdentity:manifest.promptIdentity,packageId:manifest.packageId,operationReservationId:manifest.operationReservationId,challengeNonce:manifest.challengeNonce});
+    const prepared=runtime.ingestion.prepare(p,{stage:4,text,promptRecord:prompt,transport:staged});if(!prepared.validation.valid)throw new Error('Execution context fixture response failed: '+JSON.stringify(prepared.validation.issues));
+    const rejected=runtime.ingestion.reject(prepared.project,prepared.proposal.proposalId,{requestCorrection:true,reason:'é🙂'.repeat(70000)+'EXECUTION-CONTEXT-TAIL'}),replacement=rejected.project.projectData.generatedPrompts.find(row=>row.instructionId===rejected.replacementPromptId);
+    await store.persistPromptContextFiles(replacement,rejected.project);const mutationConfirmation=store.mutationImpact(p,rejected.project);if(mutationConfirmation.requiresConfirmation){let blocked=false;try{await store.writeProject(rejected.project,{expectedProjectRevision:p.revision,incrementRevision:true});}catch(error){blocked=error.code==='MUTATION_CONFIRMATION_REQUIRED';}if(!blocked||(await store.readProject(p.job.JOB_ID)).projectSha256!==p.projectSha256)throw new Error('HANDOFF_CORRECTION_CONFIRMATION_ORACLE: correction must preserve current work until exact impact confirmation.');}const saved=await store.writeProject(rejected.project,{expectedProjectRevision:p.revision,incrementRevision:true,mutationConfirmation}),file=await store.readPromptContextFile(replacement,p.job.JOB_ID);
+    return {contextBytes:file.byteSize,tailPreserved:(await file.blob.text()).includes('EXECUTION-CONTEXT-TAIL'),revision:saved.revision};
+  })()`);
+  checkCorruption();
+  assert(executionContext.contextBytes>262144&&executionContext.tailPreserved,'The accumulated execution fixture did not persist the exact large correction context: '+JSON.stringify(executionContext));
+  const beforeLarge=await r.store.readProject(initial.job.JOB_ID),largePrompt=beforeLarge.projectData.generatedPrompts.filter(row=>row.stage===4&&!row.invalidatedBy).at(-1);
+  checkCorruption();
+  const authorizedLarge=await authorizeSyntheticHandoff(r,{project:beforeLarge,prompt:largePrompt});checkCorruption();t.current=authorizedLarge.project;
+  const largeExecution=await evalValue(cdp,`(async()=>{const store=closedLoopProjectStore,hash=closedLoopHash,before=await store.readProject('PROBE-5922'),nativeRead=Blob.prototype.arrayBuffer;let sourceReadBytes=0,largestRead=0,result;Blob.prototype.arrayBuffer=function(){sourceReadBytes+=this.size;largestRead=Math.max(largestRead,this.size);return nativeRead.call(this);};try{result=await store.createExecutionPackage({jobId:before.job.JOB_ID,stage:4,operation:'COMPLETE'});}finally{Blob.prototype.arrayBuffer=nativeRead;}const archiveBytes=new Uint8Array(await result.blob.arrayBuffer()),members=(${readStoreArchive.toString()})(archiveBytes),files=new Map(members.map(member=>[member.canonicalPath,member.bytes])),manifest=JSON.parse(new TextDecoder().decode(files.get('manifest.json'))),{packageManifestSha256,...body}=manifest,sourceBytes=manifest.members.reduce((sum,file)=>sum+file.byteSize,0),after=await store.readProject(before.job.JOB_ID),contexts=manifest.members.filter(file=>file.role==='PROMPT_CONTEXT');return {packageVerified:hash.sha256Value(body)===packageManifestSha256&&await hash.sha256Bytes(archiveBytes)===result.packageSha256,instructionVerified:await hash.sha256Bytes(files.get('instruction.txt'))===manifest.instructionFullTextSha256,contextVerified:(await Promise.all(contexts.map(async file=>files.get(file.canonicalPath)?.byteLength===file.byteSize&&await hash.sha256Bytes(files.get(file.canonicalPath))===file.sha256))).every(Boolean),contextFiles:contexts.length,sourceBytes,sourceReadBytes,largestRead,canonicalUnchanged:after.projectSha256===before.projectSha256};})()`);
+  assert(largeExecution.packageVerified&&largeExecution.instructionVerified&&largeExecution.contextVerified&&largeExecution.contextFiles>0&&largeExecution.largestRead<=65536&&largeExecution.sourceReadBytes<=largeExecution.sourceBytes*4&&largeExecution.canonicalUnchanged,'Accumulated execution package changed exact bytes, canonical state, or reread its file sources: '+JSON.stringify(largeExecution));
+  recoveryOutput.push(JSON.stringify({largeExecutionPackage:{...largeExecution,fixture:executionContext}}));
+ }catch(error){recoveryError=error;}
+ const corruption=await corruptionRun;
+ if(corruption.stderr)process.stderr.write(corruption.stderr);
+ const success={outcome:'PASS',status:0};
+ const mainResult=recoveryError?{outcome:'FAIL',status:1,stderr:recoveryError.stack||String(recoveryError)}:success;
+ validateFileFirstComponents([mainResult,corruption,success,success]);
+ for(const line of recoveryOutput)console.log(line);
+
+
+
+}
+
+}else if(component==='recovery-corruption'){
+ const input=JSON.parse(fs.readFileSync(0,'utf8')),r=projectStoreRuntime(),t=r.runtime,hash=t.closedLoopHash;
+ const {initial,accumulatedRoundTrip,oracle,backup,restored}=r.copy(input),snapshots={backup,restored};
+ t.schema=t.closedLoopWorkflowSchema;
+ createVerifierRuntime.loadScript(createVerifierRuntime({accumulatedRoundTrip,assert,JSON}),oracle);
  assert(initial.projectData.humanDecisions.length>0,'HANDOFF_BROWSER_CORRUPTION_ORACLE: a retained decision is required for the negative control.');
  for(const [fault,violate]of [
   ['accepted-response-bytes',p=>{p.projectData.rawResponses[0].completeRawResponse+=' CORRUPTION';}],
@@ -545,24 +596,6 @@ snapshots.restored=await r.store.importPackage(backup);
   const bad={...accumulatedRoundTrip,...stageHandoffRecoveryProof(initial,exported,restored,hash,{validateProjection:p=>r.store.validateProjectIntegrity(p)})};
   assert.throws(()=>createVerifierRuntime.loadScript(createVerifierRuntime({accumulatedRoundTrip:bad,assert,JSON}),oracle),/changed exact retained data/,'HANDOFF_BROWSER_CORRUPTION_ORACLE: '+fault);
  }
- console.log(JSON.stringify({caseId:'HANDOFF_BROWSER_VALID_TRANSITION',result:'PASS',actualBrowser:false,attempts:2,responseCharacters:128,beforePrompts:initial.projectData.generatedPrompts.length,afterPrompts:snapshots.backup.projectData.generatedPrompts.length,proof}));
- t.current=await r.store.readProject(initial.job.JOB_ID);await t.savePromptRecord(4);
- const cdp=null,evalValue=async(_cdp,expression)=>vm.runInContext(expression,t),fixtureFunctions=stage04AcceptanceFixtureSource()+'\n'+stage04AcceptanceEnvelope.toString(),runtimeBindings='const runtime=fixtureRuntime;';
-  console.error('nonbrowser:large-history-execution-package');
-  const executionContext=await evalValue(cdp,`(async()=>{${fixtureFunctions}\n${runtimeBindings}
-    const store=closedLoopProjectStore,p=await store.readProject('PROBE-5922'),prompt=p.projectData.generatedPrompts.filter(row=>row.stage===4&&!row.invalidatedBy).at(-1),manifest=runtime.prompts.promptFileManifest(prompt),text=JSON.stringify(stage04AcceptanceEnvelope(runtime,p,prompt));
-    const staged=await store.stageResponseFile({jobId:p.job.JOB_ID,stage:4,blob:new Blob([text],{type:'application/json'}),rawFilename:'response.json',promptIdentity:manifest.promptIdentity,packageId:manifest.packageId,operationReservationId:manifest.operationReservationId,challengeNonce:manifest.challengeNonce});
-    const prepared=runtime.ingestion.prepare(p,{stage:4,text,promptRecord:prompt,transport:staged});if(!prepared.validation.valid)throw new Error('Execution context fixture response failed: '+JSON.stringify(prepared.validation.issues));
-    const rejected=runtime.ingestion.reject(prepared.project,prepared.proposal.proposalId,{requestCorrection:true,reason:'é🙂'.repeat(70000)+'EXECUTION-CONTEXT-TAIL'}),replacement=rejected.project.projectData.generatedPrompts.find(row=>row.instructionId===rejected.replacementPromptId);
-    await store.persistPromptContextFiles(replacement,rejected.project);const mutationConfirmation=store.mutationImpact(p,rejected.project);if(mutationConfirmation.requiresConfirmation){let blocked=false;try{await store.writeProject(rejected.project,{expectedProjectRevision:p.revision,incrementRevision:true});}catch(error){blocked=error.code==='MUTATION_CONFIRMATION_REQUIRED';}if(!blocked||(await store.readProject(p.job.JOB_ID)).projectSha256!==p.projectSha256)throw new Error('HANDOFF_CORRECTION_CONFIRMATION_ORACLE: correction must preserve current work until exact impact confirmation.');}const saved=await store.writeProject(rejected.project,{expectedProjectRevision:p.revision,incrementRevision:true,mutationConfirmation}),file=await store.readPromptContextFile(replacement,p.job.JOB_ID);
-    return {contextBytes:file.byteSize,tailPreserved:(await file.blob.text()).includes('EXECUTION-CONTEXT-TAIL'),revision:saved.revision};
-  })()`);
-  assert(executionContext.contextBytes>262144&&executionContext.tailPreserved,'The accumulated execution fixture did not persist the exact large correction context: '+JSON.stringify(executionContext));
-  const beforeLarge=await r.store.readProject(initial.job.JOB_ID),largePrompt=beforeLarge.projectData.generatedPrompts.filter(row=>row.stage===4&&!row.invalidatedBy).at(-1);
-  const authorizedLarge=await authorizeSyntheticHandoff(r,{project:beforeLarge,prompt:largePrompt});t.current=authorizedLarge.project;
-  const largeExecution=await evalValue(cdp,`(async()=>{const store=closedLoopProjectStore,hash=closedLoopHash,before=await store.readProject('PROBE-5922'),nativeRead=Blob.prototype.arrayBuffer;let sourceReadBytes=0,largestRead=0,result;Blob.prototype.arrayBuffer=function(){sourceReadBytes+=this.size;largestRead=Math.max(largestRead,this.size);return nativeRead.call(this);};try{result=await store.createExecutionPackage({jobId:before.job.JOB_ID,stage:4,operation:'COMPLETE'});}finally{Blob.prototype.arrayBuffer=nativeRead;}const archiveBytes=new Uint8Array(await result.blob.arrayBuffer()),members=(${readStoreArchive.toString()})(archiveBytes),files=new Map(members.map(member=>[member.canonicalPath,member.bytes])),manifest=JSON.parse(new TextDecoder().decode(files.get('manifest.json'))),{packageManifestSha256,...body}=manifest,sourceBytes=manifest.members.reduce((sum,file)=>sum+file.byteSize,0),after=await store.readProject(before.job.JOB_ID),contexts=manifest.members.filter(file=>file.role==='PROMPT_CONTEXT');return {packageVerified:hash.sha256Value(body)===packageManifestSha256&&await hash.sha256Bytes(archiveBytes)===result.packageSha256,instructionVerified:await hash.sha256Bytes(files.get('instruction.txt'))===manifest.instructionFullTextSha256,contextVerified:(await Promise.all(contexts.map(async file=>files.get(file.canonicalPath)?.byteLength===file.byteSize&&await hash.sha256Bytes(files.get(file.canonicalPath))===file.sha256))).every(Boolean),contextFiles:contexts.length,sourceBytes,sourceReadBytes,largestRead,canonicalUnchanged:after.projectSha256===before.projectSha256};})()`);
-  assert(largeExecution.packageVerified&&largeExecution.instructionVerified&&largeExecution.contextVerified&&largeExecution.contextFiles>0&&largeExecution.largestRead<=65536&&largeExecution.sourceReadBytes<=largeExecution.sourceBytes*4&&largeExecution.canonicalUnchanged,'Accumulated execution package changed exact bytes, canonical state, or reread its file sources: '+JSON.stringify(largeExecution));
-  console.log(JSON.stringify({largeExecutionPackage:{...largeExecution,fixture:executionContext}}));
-
-
+}else{
+ await runFileFirstComponents(process.argv.slice(2));
 }

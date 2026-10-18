@@ -1,11 +1,6 @@
+import {isComponentInfrastructureFailure,isComponentProcessingFailure,fileFirstComponentFailure,VerifierInfrastructureError} from './test-file-first-components.mjs';
 import {recoveryScopeSelected,recoveryScopeReport,assertRecoveryScopeReport} from './recovery-scope-contract.mjs';
 const recoveryScope=recoveryScopeSelected(process.argv.slice(2));
-import {verifyBackupImportStaging} from './test-backup-import-staging.mjs';
-import {verifyBackupStagingStore} from './test-backup-staging-store.mjs';
-import {verifyBackupExtensionByteRetention} from './test-backup-extension-byte-retention.mjs';
-import {verifyBackupExtensionBindingControls} from './test-backup-extension-binding-controls.mjs';
-import {verifyResponseStagingRecoveryUI} from './test-response-staging-recovery-ui.mjs';
-import {verifyOperatorSafetyFeedback} from './test-operator-safety-feedback.mjs';
 import {runVerifier,assertDetectedFault} from './verify-conformance-regressions.mjs';
 import {verifyRetainedHistoryOracles} from './verify-retained-history-oracles.mjs';
 import assert from 'node:assert/strict';
@@ -572,20 +567,61 @@ for(const stage of [10,20,28]){
  cases.push({caseId:'UI-HUMAN-AUTHORITY-CONTROL-LABEL',result:'PASS',actualBrowser:false});
 }
 if(recoveryScope){console.log(JSON.stringify(assertRecoveryScopeReport(recoveryScopeReport(cases)),null,2));process.exit(0);}
-const backupImportStaging=await verifyBackupImportStaging({appSource:source}),backupStagingStore=await verifyBackupStagingStore(),backupExtensionByteRetention=await verifyBackupExtensionByteRetention(),backupExtensionBindingControls=await verifyBackupExtensionBindingControls(),responseStagingRecoveryUI=await verifyResponseStagingRecoveryUI({appSource:source}),operatorSafetyFeedback=await verifyOperatorSafetyFeedback({appSource:source}),backupStagingFaults=[],responseStagingUIFaults=[],operatorSafetyFeedbackFaults=[];
+// Each helper owns its VM/storage fixtures. Run independent controls in bounded
+// processes while retaining the shared UI sequence and real threshold waits above.
+// Positive helpers receive the exact in-memory source, including local fault modes.
+const positiveControls=[
+ ['backupImportStaging','test-backup-import-staging.mjs','verifyBackupImportStaging',{appSource:source}],
+ ['backupStagingStore','test-backup-staging-store.mjs','verifyBackupStagingStore',{}],
+ ['backupExtensionByteRetention','test-backup-extension-byte-retention.mjs','verifyBackupExtensionByteRetention',{}],
+ ['backupExtensionBindingControls','test-backup-extension-binding-controls.mjs','verifyBackupExtensionBindingControls',{}],
+ ['responseStagingRecoveryUI','test-response-staging-recovery-ui.mjs','verifyResponseStagingRecoveryUI',{appSource:source}],
+ ['operatorSafetyFeedback','test-operator-safety-feedback.mjs','verifyOperatorSafetyFeedback',{appSource:source}]
+];
+const controlJobs=positiveControls.map(([name,script,entry,options])=>({name,script,entry,options}));
 for(const [script,fault,oracle]of [
  ['test-backup-import-staging.mjs','permanent-backup-history','BACKUP_UI_CAPACITY_ORACLE'],
  ['test-backup-import-staging.mjs','empty-staging-identity','BACKUP_EMPTY_STAGING_ID_RECOVERY_ORACLE'],
  ['test-backup-staging-store.mjs','retain-consumed-input','BACKUP_STAGE_ATOMIC_CONSUME_ORACLE'],
  ['test-backup-staging-store.mjs','trust-staging-digest','BACKUP_STAGE_REHASH_ORACLE']
-]){
- const run=await runVerifier(process.execPath,[script,'--fault='+fault],{encoding:'utf8',timeout:60000,maxBuffer:1024*1024});assertDetectedFault(run,oracle,'Backup import staging fault '+fault);backupStagingFaults.push({fault,oracle,result:'DETECTED',exitCode:run.status,evidencePath:run.evidencePath});
-}
-for(const [fault,oracle]of [['missing-diagnostics','RESPONSE_RECOVERY_RENDER_ORACLE'],['stale-project','RESPONSE_RECOVERY_STALE_PROJECT_ORACLE'],['all-files-as-response','RESPONSE_RECOVERY_TYPED_ROUTE_ORACLE:RETURNED_FILE'],['repeat-stale-response','RESPONSE_RECOVERY_STALE_ROUTE_ORACLE:RESPONSE_STAGE_PROMPT_IDENTITY_MISMATCH']]){
- const run=await runVerifier(process.execPath,['test-response-staging-recovery-ui.mjs','--fault='+fault],{encoding:'utf8',timeout:60000,maxBuffer:1024*1024});assertDetectedFault(run,oracle,'Response staging recovery UI fault '+fault);responseStagingUIFaults.push({fault,oracle,result:'DETECTED',exitCode:run.status,evidencePath:run.evidencePath});
-}
-for(const [fault,oracle]of [['generic-attachment-feedback','ATTACHMENT_LIVE_REGION_ORACLE'],['trust-release-label','RELEASE_RENDER_CONTRADICTION_ORACLE'],['untyped-independence-error','INDEPENDENCE_LIVE_REGION_ORACLE']]){
- const run=await runVerifier(process.execPath,['test-operator-safety-feedback.mjs','--fault='+fault],{encoding:'utf8',timeout:60000,maxBuffer:1024*1024});assertDetectedFault(run,oracle,'Operator safety feedback fault '+fault);operatorSafetyFeedbackFaults.push({fault,oracle,result:'DETECTED',exitCode:run.status,evidencePath:run.evidencePath});
-}
+])controlJobs.push({group:'backup',script,fault,oracle});
+for(const [fault,oracle]of [['missing-diagnostics','RESPONSE_RECOVERY_RENDER_ORACLE'],['stale-project','RESPONSE_RECOVERY_STALE_PROJECT_ORACLE'],['all-files-as-response','RESPONSE_RECOVERY_TYPED_ROUTE_ORACLE:RETURNED_FILE'],['repeat-stale-response','RESPONSE_RECOVERY_STALE_ROUTE_ORACLE:RESPONSE_STAGE_PROMPT_IDENTITY_MISMATCH']])controlJobs.push({group:'response',script:'test-response-staging-recovery-ui.mjs',fault,oracle});
+for(const [fault,oracle]of [['generic-attachment-feedback','ATTACHMENT_LIVE_REGION_ORACLE'],['trust-release-label','RELEASE_RENDER_CONTRADICTION_ORACLE'],['untyped-independence-error','INDEPENDENCE_LIVE_REGION_ORACLE']])controlJobs.push({group:'safety',script:'test-operator-safety-feedback.mjs',fault,oracle});
+const controlResults=new Array(controlJobs.length),controlErrors=new Array(controlJobs.length),controlRuns=new Array(controlJobs.length);
+const controlController=new AbortController(),cancelControls=signal=>controlController.abort(signal),onControlTerm=()=>cancelControls('SIGTERM'),onControlInt=()=>cancelControls('SIGINT');
+process.on('SIGTERM',onControlTerm);process.on('SIGINT',onControlInt);
+// Reduce lifecycle concurrency when running alongside the other file-first components.
+const controlWorkerCount=process.argv.includes('--file-first-lifecycle-two-workers')?2:4;
+let nextControl=0;
+try{await Promise.all(Array.from({length:controlWorkerCount},async()=>{
+ while(!controlController.signal.aborted&&nextControl<controlJobs.length){
+  const index=nextControl++,job=controlJobs[index];
+  try{
+   const args=job.entry?['test-lifecycle-control-worker.mjs',job.script,job.entry]:[job.script,'--fault='+job.fault];
+   const run=await runVerifier(process.execPath,args,{encoding:'utf8',timeout:60000,maxBuffer:1024*1024,signal:controlController.signal,...(job.entry?{input:JSON.stringify(job.options)}:{})});
+   controlRuns[index]=run;
+   if(job.entry){
+    assert.equal(run.error,null,'Lifecycle positive control must execute: '+job.name);
+    assert.equal(run.signal,null,'Lifecycle positive control must complete: '+job.name);
+    assert.equal(run.status,0,'Lifecycle positive control must pass: '+job.name+'\n'+run.stderr);
+    controlResults[index]=JSON.parse(run.stdout);
+   }else{
+    const label=job.group==='backup'?'Backup import staging fault ':job.group==='response'?'Response staging recovery UI fault ':'Operator safety feedback fault ';
+    assertDetectedFault(run,job.oracle,label+job.fault);
+    controlResults[index]={fault:job.fault,oracle:job.oracle,result:'DETECTED',exitCode:run.status,evidencePath:run.evidencePath};
+   }
+  }catch(error){controlErrors[index]=error;}
+ }
+}));}finally{process.removeListener('SIGTERM',onControlTerm);process.removeListener('SIGINT',onControlInt);}
+if(controlController.signal.aborted)throw new VerifierInfrastructureError('LIFECYCLE_CONTROL_CANCELLED');
+const infrastructureRun=controlRuns.find(run=>run&&isComponentInfrastructureFailure(run));
+if(infrastructureRun)throw fileFirstComponentFailure(infrastructureRun);
+if(controlErrors.some((error,index)=>isComponentProcessingFailure(error,controlRuns[index])))throw new VerifierInfrastructureError('LIFECYCLE_CONTROL_PROCESSING_FAILED');
+// Do not abandon live fault controls on the first assertion failure. All raw
+// child evidence is settled before the original-order failure is propagated.
+const controlError=controlErrors.find(Boolean);if(controlError)throw controlError;
+const [backupImportStaging,backupStagingStore,backupExtensionByteRetention,backupExtensionBindingControls,responseStagingRecoveryUI,operatorSafetyFeedback]=controlResults;
+const resultsFor=group=>controlResults.filter((_,index)=>controlJobs[index].group===group);
+const backupStagingFaults=resultsFor('backup'),responseStagingUIFaults=resultsFor('response'),operatorSafetyFeedbackFaults=resultsFor('safety');
 cases.push(...backupImportStaging.cases,...backupStagingStore.cases.map(row=>({...row,caseId:'STORE-BACKUP-STAGING-'+row.caseId,result:row.passed?'PASS':'FAIL'})),...responseStagingRecoveryUI.cases,...operatorSafetyFeedback.cases);
 console.log(JSON.stringify({schema:'closed-loop-executed-cases/1',synthetic:true,environment:'Node VM with delayed operation and frame boundary',scope:'Shared action binding and production workflow markup ownership; not browser layout or stage-by-stage file-transport acceptance.',backupImportStaging,backupStagingStore,backupExtensionByteRetention,backupExtensionBindingControls,backupStagingFaults,responseStagingRecoveryUI,responseStagingUIFaults,operatorSafetyFeedback,operatorSafetyFeedbackFaults,cases},null,2));

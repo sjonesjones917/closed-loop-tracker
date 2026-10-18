@@ -70,5 +70,5 @@ export async function observeStartupPickerFixture(){
  const corruptEntry=(await store.listQuarantinedProjects()).find(row=>row.jobId==='STARTUP-BROWSER-49'),corruptEvidence=corruptEntry&&await store.metaGet(corruptEntry.key);
  proof.corruptBlocked=code==='PROJECT_HASH_MISMATCH';
  proof.corruptQuarantined=corruptEvidence?.reason==='PROJECT_HASH_MISMATCH'&&JSON.stringify(corruptEvidence.row)===corrupted;
- return {proof,readCounts:{recovery:recovery.length,activation:activation.length}};
+ return {proof,readCounts:{recovery:recovery.length,activation:activation.length},readEvidence:{reads,summaryScans,sessionReads:observation.sessionReads.slice(),sessionKey:observation.sessionKey,ready:observation.ready,readyError:observation.readyError,recoveryErrorAtReady:observation.recoveryErrorAtReady}};
 }

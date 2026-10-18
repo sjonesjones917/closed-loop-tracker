@@ -1,5 +1,8 @@
+import {reviewedProjectHandoffBrowserExpression} from './reviewed-project-handoff.mjs';
 import {installStartupReadProbe,prepareStartupPickerFixture,observeStartupPickerFixture} from './test-browser-startup-recovery.mjs';
-import {createBrowserExecutionObserver} from './browser-execution-evidence.mjs';
+import {superviseBrowserExtra,browserExtraSourceFingerprint} from './browser-extra-aggregate.mjs';
+import {buildSourceBearingStage04Fixture,prepareMixedRecoveryFixture,collectMixedRecoverySnapshot,observeMixedRecoveryFixture,compareMixedRecoverySnapshots} from './browser-extra-mixed-recovery.mjs';
+import {createBrowserExecutionObserver,loadBrowserExpectedSite} from './browser-execution-evidence.mjs';
 import {routingFixture} from './test-verification-routing-fixtures.mjs';
 import {verifyTestIrNativeBrowserCommand} from './test-test-ir-native-identity.mjs';
 import {createBrowserReadiness,activateOperatorControl} from './operator-browser-driver.mjs';
@@ -15,13 +18,30 @@ import {scalarFor,recordProposal,evidence,acceptPrerequisite,stage01AcceptanceFi
 const browserExtraStartedAt=performance.now();
 const PAGE_URL=process.env.PAGE_URL||'http://127.0.0.1:4173/';
 const appCoreSource=fs.readFileSync('app-core.js','utf8');
-const promptStart=appCoreSource.indexOf('function currentStagePrompt'),promptEnd=appCoreSource.indexOf('function operationMarkup',promptStart),currentStagePromptSource=promptStart>=0&&promptEnd>promptStart?appCoreSource.slice(promptStart,promptEnd):'';
-if(!currentStagePromptSource||currentStagePromptSource.includes('clone(current)'))throw new Error('Workflow prompt preview must not deep-clone the complete project on stage navigation.');
-if(!appCoreSource.includes('currentSchema&&!legacyNested&&!legacyStageRecords?p:core.migrateState(p)'))throw new Error('Current-schema projects must bypass full migration cloning during startup.');
-const browser=process.env.BROWSER||['/usr/bin/google-chrome','/usr/bin/chromium','/usr/bin/chrome'].find(fs.existsSync);
-if(!browser)throw new Error('Chrome/Chromium was not found');
-const port=9700+Math.floor(Math.random()*200),profile=fs.mkdtempSync(path.join(os.tmpdir(),'closed-loop-browser-extra-'));
-const proc=spawn(browser,['--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage','--disable-background-networking','--no-first-run','--no-default-browser-check',`--remote-debugging-port=${port}`,`--user-data-dir=${profile}`,'about:blank'],{stdio:'ignore'});
+const laneId=process.env.CLOSED_LOOP_BROWSER_EXTRA_LANE||null;
+let port,profile,proc;
+async function launchBrowserExtra(){
+ const browser=process.env.BROWSER||['/usr/bin/google-chrome','/usr/bin/chromium','/usr/bin/chrome'].find(fs.existsSync);
+ if(!browser)throw new Error('Chrome/Chromium was not found');
+ profile=laneId?process.env.CLOSED_LOOP_BROWSER_EXTRA_PROFILE_PATH:fs.mkdtempSync(path.join(os.tmpdir(),'closed-loop-browser-extra-'));
+ assert(typeof profile==='string'&&path.isAbsolute(profile),'Missing supervised disposable browser profile');
+ fs.mkdirSync(profile,{recursive:true});
+ const stderrPath=laneId?process.env.CLOSED_LOOP_BROWSER_EXTRA_CHROMIUM_STDERR_PATH:path.join(profile,'chromium.stderr.log');
+ assert(typeof stderrPath==='string'&&path.isAbsolute(stderrPath),'Missing retained Chromium stderr path');
+ fs.writeFileSync(stderrPath,'');
+ let spawnError=null,lastPortError=null,stderrBytes=0,retainedBytes=0,stderrTail=Buffer.alloc(0),chromiumClosed=false;const maxRetainedBytes=1024*1024;
+ proc=spawn(browser,['--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage','--disable-background-networking','--no-first-run','--no-default-browser-check','--remote-debugging-port=0',`--user-data-dir=${profile}`,'about:blank'],{stdio:['ignore','ignore','pipe']});
+ proc.once('error',error=>{spawnError=error;});proc.once('close',()=>{chromiumClosed=true;});
+ proc.stderr.on('data',chunk=>{stderrBytes+=chunk.length;const remaining=maxRetainedBytes-retainedBytes;if(remaining>0){const retained=chunk.subarray(0,remaining);fs.appendFileSync(stderrPath,retained);retainedBytes+=retained.length;}stderrTail=Buffer.from(Buffer.concat([stderrTail,chunk]).subarray(-16384));});
+ const launchFailure=reason=>new Error('BROWSER_EXTRA_LAUNCH_ORACLE: '+JSON.stringify({reason,browser,pid:proc.pid??null,exitCode:proc.exitCode,signal:proc.signalCode,profile,profilePathBytes:Buffer.byteLength(profile),tmpdir:os.tmpdir(),stderrPath,stderrBytes,stderrTruncated:stderrBytes>retainedBytes,stderrTail:stderrTail.toString('utf8'),spawnError:spawnError?.message||null,lastPortError:lastPortError?.message||null}));
+ const deadline=Date.now()+20000;
+ while(Date.now()<deadline){
+  if(spawnError||proc.exitCode!==null||proc.signalCode!==null){while(!chromiumClosed&&Date.now()<deadline)await sleep(Math.min(10,Math.max(0,deadline-Date.now())));throw launchFailure(spawnError?'spawn failed':'Chromium exited before DevTools readiness');}
+  try{const value=Number(fs.readFileSync(path.join(profile,'DevToolsActivePort'),'utf8').split('\n')[0]);if(!Number.isInteger(value)||value<=0)throw Error('Invalid disposable Chromium port');port=value;return;}catch(error){lastPortError=error;}
+  await sleep(Math.min(100,Math.max(0,deadline-Date.now())));
+ }
+ throw launchFailure('DevTools readiness exceeded original 20000ms cap');
+}
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const assert=(v,m)=>{if(!v)throw new Error(m);};
 async function getJson(url,opts){const r=await fetch(url,opts);if(!r.ok)throw new Error(`${url} -> ${r.status}`);return r.json();}
@@ -192,11 +212,42 @@ let executionObserver;
 async function main(){
   await poll(()=>getJson(`http://127.0.0.1:${port}/json/version`),20000);
   const target=await getJson(`http://127.0.0.1:${port}/json/new?${encodeURIComponent('about:blank')}`,{method:'PUT'}),cdp=new CDP(target.webSocketDebuggerUrl);await cdp.ready;await cdp.send('Runtime.enable');await cdp.send('Page.enable');await cdp.send('Log.enable');
-  executionObserver=await createBrowserExecutionObserver({webSocketDebuggerUrl:target.webSocketDebuggerUrl,pageUrl:PAGE_URL});
+  executionObserver=await createBrowserExecutionObserver({webSocketDebuggerUrl:target.webSocketDebuggerUrl,pageUrl:PAGE_URL,suite:'verify-browser-extra.mjs'});
   await cdp.send('Page.navigate',{url:`${PAGE_URL}?browserExtra=${Date.now()}`});
   await waitExpr(cdp,`document.readyState==='complete'`);await waitExpr(cdp,`globalThis.closedLoopAppReady===true||Boolean(globalThis.closedLoopAppError)`,20000);assert(!(await evalValue(cdp,`globalThis.closedLoopAppError`)),await evalValue(cdp,`globalThis.closedLoopAppError`));
   await waitExpr(cdp,`document.querySelector('#project-picker')?.options.length>=1`,20000);
 
+  const scenarios=[];const finishScenario=(id,population)=>{assert(!scenarios.some(row=>row.id===id),'Duplicate browser-extra scenario completion '+id);scenarios.push({id,population,passed:true});};
+  const fixtureFunctions=stage04AcceptanceFixtureSource()+'\n'+stage04AcceptanceEnvelope.toString();
+  const runtimeBindings='const runtime={core:closedLoopCore,schema:closedLoopWorkflowSchema,engine:closedLoopWorkflowEngine,prompts:closedLoopPromptEngine,ingestion:closedLoopResponseIngestion};';
+  const registerBrowserSourceSearchCapability=async()=>{
+    const searchReport=await evalValue(cdp,`(()=>{${registerFixtureSourceSearchCapability.toString()}return registerFixtureSourceSearchCapability({engine:closedLoopWorkflowEngine},${JSON.stringify(await activeProject(cdp))},{register:false});})()`);
+    await evalValue(cdp,`(async()=>{const file=new File([${JSON.stringify(JSON.stringify(searchReport))}],'source-search-readiness.json',{type:'application/json'}),input=document.querySelector('#capability-evidence-file'),selection=new DataTransfer();selection.items.add(file);input.files=selection.files;await input.onchange({target:input});})()`);
+    await evalValue(cdp,`(()=>{document.querySelector('#capability-operator').value='SYNTHETIC_SEARCH_OPERATOR';document.querySelector('#capability-confirm').checked=true;})()`);await click(cdp,'#register-capability-evidence');
+  };
+  const proofResponse=async(stage,content,jobId='JOB-BROWSER-PROOF-PERSISTENCE')=>{
+    const selected=await evalValue(cdp,`({jobId:document.querySelector('#current-project-summary')?.dataset?.projectId,stage:Number(document.querySelector('#stage-picker')?.value),operation:document.querySelector('#operation-picker')?.value})`);
+    assert(selected.jobId===jobId&&selected.stage===Number(stage)&&selected.operation,'CURRENT_EXPORTED_PROOF_RESPONSE_ORACLE: response generation must belong to the selected project, stage and operation.');
+    // A displayed next operation can be an unsaved preview. Acquire its actual
+    // one-file handoff through the real controls, never a historical prompt.
+    const transfer=await exportStagePackage(cdp),manifest=transfer.manifest;
+    assert(manifest.jobId===jobId&&Number(manifest.stage)===Number(stage)&&manifest.operation===selected.operation,'CURRENT_EXPORTED_PROOF_RESPONSE_ORACLE: the exported handoff does not match the selected operation.');
+    assert(createHash('sha256').update(transfer.instruction).digest('hex')===manifest.promptIdentity.bodySha256,'CURRENT_EXPORTED_PROOF_RESPONSE_ORACLE: exported instruction bytes differ from their controlling identity.');
+    const capturedPackageDirectory=fs.mkdtempSync(path.join(os.tmpdir(),'closed-loop-proof-handoff-'));
+    fs.writeFileSync(path.join(capturedPackageDirectory,'stage-files.zip'),transfer.bytes);
+    return evalValue(cdp,`(async()=>{${fixtureFunctions}\n${runtimeBindings}
+      const {engine,schema,prompts}=runtime,manifest=${JSON.stringify(manifest)},p=await closedLoopProjectStore.readProject(${JSON.stringify(jobId)}),pr=p.projectData.generatedPrompts.find(record=>record.instructionId===manifest.promptIdentity.instructionId),propId=engine.recordId(engine.recordsForCurrentScope(p,'propositions')[0],'propositions'),reqId=engine.recordId(engine.recordsForCurrentScope(p,'requirements')[0],'requirements');
+      if(!pr||pr.operation!==manifest.operation||Number(pr.stage)!==Number(manifest.stage)||!prompts.promptTransportBinding(p,manifest.stage,manifest.operation,pr.instructionId,pr.scope))throw new Error('CURRENT_EXPORTED_PROOF_RESPONSE_ORACLE: the exact exported instruction is not the current live persisted request.');
+      engine.assertOperationScope(p,manifest.stage,manifest.operation,pr.scope);
+      if(!['instructionId','bodySha256','contractSha256','contextSignature'].every(key=>manifest.promptIdentity[key]===(key==='instructionId'?pr.instructionId:pr[key]))||!['packageId','operationReservationId','challengeNonce'].every(key=>manifest[key]===pr[key])||closedLoopHash.sha256Value(manifest.scope)!==closedLoopHash.sha256Value(pr.scope))throw new Error('CURRENT_EXPORTED_PROOF_RESPONSE_ORACLE: persisted and exported response bindings differ.');
+      if(document.querySelector('#current-project-summary')?.dataset?.projectId!==manifest.jobId||Number(document.querySelector('#stage-picker')?.value)!==Number(manifest.stage)||document.querySelector('#operation-picker')?.value!==manifest.operation)throw new Error('CURRENT_EXPORTED_PROOF_RESPONSE_ORACLE: operator selection changed while the package was prepared.');
+      return {schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:manifest.jobId,stage:manifest.stage,operation:manifest.operation,promptIdentity:manifest.promptIdentity,packageId:manifest.packageId,operationReservationId:manifest.operationReservationId,challengeNonce:manifest.challengeNonce,scope:manifest.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{},records:{},evidence:[evidence('browser-proof-review')],unresolved:[],warnings:[],attachments:[],...(${content})};
+    })()`);
+  };
+  const acceptProofResponse=async(response)=>{console.log(`extra:accepting-stage-${response.stage}-${response.operation}`);assert(await evalValue(cdp,`document.visibilityState==='visible'`),'Operator response acceptance must run in the visible tab.');await selectResponseFile(cdp,JSON.stringify(response));await click(cdp,'#process-response-file');await waitExpr(cdp,`Boolean(document.querySelector('#accept-proposal'))`,20000).catch(async error=>{const ui=await evalValue(cdp,`({stage:document.querySelector('#stage-picker')?.value,operation:document.querySelector('#operation-picker')?.value,validation:document.querySelector('#validation-report')?.textContent.slice(0,2000),notices:Array.from(document.querySelectorAll('#screen .notice')).slice(0,4).map(n=>n.textContent.slice(0,1000))})`);throw new Error(`Stage ${response.stage} ${response.operation} proposal unavailable: ${JSON.stringify(ui)}`,{cause:error});});await click(cdp,'#accept-proposal');if(await evalValue(cdp,`Boolean(document.querySelector('#accept-replacement'))`))await click(cdp,'#accept-replacement');await waitExpr(cdp,`closedLoopProjectStore.readProject(${JSON.stringify(response.jobId)}).then(p=>p.projectData.acceptedChanges.some(c=>c.promptId===${JSON.stringify(response.promptIdentity.instructionId)}))`,20000);console.log(`extra:accepted-stage-${response.stage}-${response.operation}`);};
+  const reviewRecords=`({records:{semanticReviews:[recordProposal(schema,'semanticReviews',{tempKey:'independent-review',overrides:{REVIEW_QUESTION:'Is the current proposal sufficient for its governing proposition?',FINDING:'The current proposal preserves the requirement and provides sufficient proof.',REASONING:'The exact current targets were independently reviewed; no weakened branch is accepted.',RESULT:'ACCEPTED'}})]}})`;
+  if(['lane3','lane4'].includes(laneId))await cdp.send('Emulation.setDeviceMetricsOverride',{width:393,height:852,deviceScaleFactor:1,mobile:true});
+  if(laneId==="lane1"||(!laneId&&process.argv.includes('--project-link-picker-only'))){
   console.log('extra:stage01-confirmation-deadlock');
   const currentConfirmationProject=await prepareImportedCurrentConfirmationFixture(cdp);
   const confirmationFixture=await evalValue(cdp,`(async()=>{const all=await globalThis.closedLoopProjectStore.readAll(),source=all.find(p=>p.job?.JOB_ID===${JSON.stringify(currentConfirmationProject.jobId)});if(!source)return {ok:false,reason:'missing project'};const p=structuredClone(source),confirmation=(p.projectData.stageConfirmations||[]).filter(item=>Number(item.stage)===1&&!item.invalidatedBy).at(-1);if(!confirmation)return {ok:false,reason:'missing Stage 01 confirmation'};confirmation.inputVersion='INPUT-vSTALE-BROWSER';globalThis.closedLoopWorkflowEngine.recalculate(p);const gate=globalThis.closedLoopWorkflowEngine.gate(1,p),action=globalThis.closedLoopWorkflowEngine.operationalNextAction(p,1);const saved=await globalThis.closedLoopProjectStore.writeProject(p,{expectedProjectRevision:Number(source.revision||0),incrementRevision:true,mutationConfirmation:closedLoopProjectStore.mutationImpact(source,p)});await globalThis.closedLoopProjectStore.metaPut('selectedProject',saved.job.JOB_ID);return {ok:true,jobId:saved.job.JOB_ID,gate:gate.reasons,actionType:action.actionType};})()`);assert(confirmationFixture.ok&&confirmationFixture.gate.includes('Human confirmation bound to the current accepted change and input version is required.')&&confirmationFixture.actionType==='CONFIRM_STAGE_ONE_INTENT',`Browser fixture did not reproduce the Stage 01 confirmation deadlock: ${JSON.stringify(confirmationFixture)}`);await openStoredFixture(cdp);await waitExpr(cdp,`globalThis.closedLoopAppReady===true`,20000);
@@ -206,6 +257,7 @@ async function main(){
   if(process.argv.includes('--project-link-picker-only')){assert(cdp.dialogs.length===0,'Unexpected browser dialogs during linked-project selection.');console.log(JSON.stringify({projectLinkPickerVerified:true}));cdp.close();return;}
   await openStage(cdp,1);const confirmationUi=await evalValue(cdp,`(()=>({imported:Boolean(document.querySelector('#current-project-summary')?.dataset?.projectId===${JSON.stringify(currentConfirmationProject.jobId)}),button:Boolean(document.querySelector('#confirm-stage-one')&&!document.querySelector('#confirm-stage-one').disabled),panel:Boolean(document.querySelector('#stage-one-confirmation-required')),nextAction:document.querySelector('#next-required-action')?.textContent||'',explanation:document.querySelector('#next-required-action')?.parentElement?.querySelector('.notice')?.textContent||'',body:document.body.innerText}))()`);assert(confirmationUi.imported&&confirmationUi.button&&confirmationUi.panel,'Required Stage 01 confirmation control is hidden on a retained/imported project.');assert(confirmationUi.nextAction.includes('Confirm the Stage 1 result')&&confirmationUi.explanation.includes('No retyping')&&!confirmationUi.nextAction.includes('Continue conversation'),'Stage 01 next action does not clearly route the human confirmation.');assert(confirmationUi.body.includes('Stage 01 is waiting for your confirmation.')&&confirmationUi.body.includes('No retyping or new agent response is required.'),'Accepted-stage status still presents human confirmation as a generic completion failure.');await click(cdp,'#confirm-stage-one');await waitExpr(cdp,`closedLoopProjectStore.readAll().then(all=>{const p=all.find(x=>x.job?.JOB_ID===${JSON.stringify(currentConfirmationProject.jobId)});if(!p)return false;const latest=(p.projectData.acceptedChanges||[]).filter(x=>Number(x.stage)===1&&x.status==='COMMITTED'&&x.responseType==='DATA_PROPOSAL'&&!x.invalidatedBy).at(-1),confirmation=(p.projectData.stageConfirmations||[]).find(x=>Number(x.stage)===1&&x.confirmed===true&&!x.invalidatedBy&&x.acceptedChangeId===latest?.changeId&&x.inputVersion===p.job.CURRENT_INPUT_VERSION);return p.stages?.[1]?.status==='COMPLETE'&&Boolean(confirmation);})`,12000);assert(!(await evalValue(cdp,`Boolean(document.querySelector('#confirm-stage-one'))`)),'Stage 01 confirmation control remained after the current confirmation completed the gate.');
 
+  finishScenario("stage01-confirmation-deadlock",{executions:1});
   console.log('extra:stage01-atomic-human-authority-self-staleness');
   const atomicStageOne=await evalValue(cdp,`(async()=>{const core=globalThis.closedLoopCore,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine,ingestion=globalThis.closedLoopResponseIngestion,store=globalThis.closedLoopProjectStore,jobId='JOB-BROWSER-STAGE01-ATOMIC',previousSelected=await store.metaGet('selectedProject');let p=core.createBlankState(jobId);Object.assign(p.job,{EXACT_USER_OBJECTIVE_VERBATIM:'Create a one-page checklist.',EXPLICIT_USER_REQUIREMENTS:'Use the audience selected by the human during Stage 01.',CURRENT_INPUT_VERSION:'INPUT-v001'});engine.ensureShape(p);engine.recalculate(p);const prompt={...prompts.buildPromptRecord(1,p,{operation:'COMPLETE'}),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(prompt);const manifest=prompt.contextManifest.intakeCoverageManifest,capture={schema:'closed-loop-stage01-capture/2',inputVersion:manifest.inputVersion,manifestSha256:manifest.manifestSha256,pass1Completed:true,pass2OmissionChallenge:{completed:true,checkedCategories:['QUALIFIERS','EXCEPTIONS','DEPENDENCIES','NEGATIVE_REQUIREMENTS','DO_NOT_CHANGE','VISUAL_CONSTRAINTS','TEMPORAL_CONSTRAINTS','ACCEPTANCE_CONDITIONS','AUTHORITY_STATEMENTS','TOOL_RESTRICTIONS','FILE_REFERENCES','OUTPUT_FORMAT_REQUIREMENTS','CORRECTIONS','LATER_OVERRIDES'],omissionsFound:[],omissionsResolved:true},units:manifest.units.map((unit,index)=>({sourceUnitId:unit.unitId,sourceRawValueSha256:unit.rawValueSha256,disposition:'EXTRACTED_RELEVANT_INFORMATION',reason:'Captured once.',extractedStatements:[{statementKey:'browser-'+index,text:unit.rawValueText||unit.label,statementClass:'CONTEXT'}]}))},envelope={schema:globalThis.closedLoopWorkflowSchema.RESPONSE_SCHEMA,contractProfileId:globalThis.closedLoopWorkflowSchema.CONTRACT_PROFILE_ID,jobId,stage:1,operation:'COMPLETE',promptIdentity:{instructionId:prompt.instructionId,bodySha256:prompt.bodySha256,contractSha256:prompt.contractSha256,contextSignature:prompt.contextSignature},scope:prompt.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],humanAuthorityCandidates:[{temporaryKey:'human-answer-browser',label:'Intended audience',value:'Field technicians',authorityClass:'HUMAN',claimedConversationBasis:'The human answered this question in the Stage 01 external conversation.',externalResponsePointer:'conversation-message-browser',affectedStageFields:['EXACT_DELIVERABLE_REQUESTED'],affectedRecords:[]}],stageData:{EXACT_DELIVERABLE_REQUESTED:'One-page checklist for field technicians',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',INPUT_SET_CONTENTS:JSON.stringify(capture)},records:{},evidence:[{temporaryKey:'evidence-browser',kind:'INTAKE',description:'Stage 01 semantic intake',authorityType:'AGENT_CLAIM',location:'response.json',content:'Complete intake including the reported human audience answer.'}],unresolved:[],warnings:[],attachments:[]},prepared=ingestion.prepare(p,{stage:1,text:JSON.stringify(envelope),promptRecord:prompt});if(!prepared.validation.valid)return {ok:false,phase:'prepare',issues:prepared.validation.issues};const committed=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'BROWSER',humanAuthorityConfirmations:{'human-answer-browser':'Field technicians'}}),live=engine.intakeCoverageManifest(committed.project),accounting=engine.evaluateIntakeAccounting(committed.project),action=engine.operationalNextAction(committed.project,1),saved=await store.writeProject(committed.project,{expectedProjectRevision:Number(committed.project.revision||0),incrementRevision:true});await store.metaPut('selectedProject',jobId);return {ok:true,jobId,liveChanged:live.manifestSha256!==manifest.manifestSha256,hasHumanAnswer:live.units.some(unit=>unit.kind==='HUMAN_ANSWER'),accountingComplete:accounting.complete,accountingReasons:accounting.reasons,actionType:action.actionType,savedRevision:saved.revision,previousSelected};})()`);
   assert(atomicStageOne?.ok&&atomicStageOne.liveChanged&&atomicStageOne.hasHumanAnswer,`Browser fixture did not reproduce the live-manifest delta caused by atomic human-answer confirmation: ${JSON.stringify(atomicStageOne)}`);
@@ -218,6 +270,7 @@ async function main(){
   await click(cdp,'#confirm-stage-one');await waitExpr(cdp,`closedLoopProjectStore.readAll().then(all=>{const p=all.find(x=>x.job?.JOB_ID==='JOB-BROWSER-STAGE01-ATOMIC');if(!p)return false;const latest=(p.projectData.acceptedChanges||[]).filter(x=>Number(x.stage)===1&&x.status==='COMMITTED'&&x.responseType==='DATA_PROPOSAL'&&!x.invalidatedBy).at(-1),confirmation=(p.projectData.stageConfirmations||[]).find(x=>Number(x.stage)===1&&x.confirmed===true&&!x.invalidatedBy&&x.acceptedChangeId===latest?.changeId&&x.inputVersion===p.job.CURRENT_INPUT_VERSION);return p.stages?.[1]?.status==='COMPLETE'&&Boolean(confirmation);})`,12000);
   assert(atomicStageOne.previousSelected,'Atomic Stage 01 browser fixture did not preserve the prior selected-project identity.');await evalValue(cdp,`closedLoopProjectStore.metaPut('selectedProject',${JSON.stringify(atomicStageOne.previousSelected)}).then(()=>true)`);await openStoredFixture(cdp);await waitExpr(cdp,`globalThis.closedLoopAppReady===true`,20000);await waitExpr(cdp,`(document.querySelector('#current-project-summary')?.dataset?.projectId===${JSON.stringify(atomicStageOne.previousSelected)})`,12000);
 
+  finishScenario("stage01-atomic-human-authority-self-staleness",{executions:1});
   console.log('extra:stage03-duplicate-response-recovery');
   // Continue the disposable project's actual accepted intake. A project fork
   // must never copy another job namespace's allocation receipts or force gates.
@@ -232,11 +285,6 @@ async function main(){
   const stageTwo=responseFor(await activeProject(cdp),2,{AUTHORITY_HIERARCHY:'The accepted operator input governs this disposable checklist.',KNOWN_CONTROLLING_SOURCES_EXAMINED:'The current checklist scope has no external factual or jurisdictional claim.'});
   stageTwo.records.sourceSearchContracts=[await evalValue(cdp,`(()=>{${scalarFor.toString()}\n${recordProposal.toString()}\nreturn recordProposal(closedLoopWorkflowSchema,'sourceSearchContracts',{tempKey:'retry-search',evidenceRef:'retry-evidence',overrides:{PROJECT_SCOPE:'The accepted one-page checklist scope.',JURISDICTION_OR_SYSTEM_SCOPE:'No jurisdiction-dependent factual proposition is requested.',SOURCE_CLASSES_CONSIDERED:['Accepted operator input','External factual authority'],LOCATIONS_AND_REPOSITORIES:['Current accepted input and intake'],QUERIES_OR_STRATEGIES:['Check for claims requiring external factual authority.'],DATE_OR_VERSION_CUTOFF:'Current accepted input version',EXCLUSIONS:['Unrelated factual topics'],ACCESS_LIMITATIONS:[],ADEQUACY_RATIONALE:'The requested checklist contains no claim requiring external authority.',UNRESOLVED_DISCOVERY_RISK:'NONE'}});})()`)];
   await selectResponseFile(cdp,JSON.stringify(stageTwo));await click(cdp,'#process-response-file');await waitExpr(cdp,`Boolean(document.querySelector('#accept-proposal'))`);await click(cdp,'#accept-proposal');
-  const registerBrowserSourceSearchCapability=async()=>{
-    const searchReport=await evalValue(cdp,`(()=>{${registerFixtureSourceSearchCapability.toString()}return registerFixtureSourceSearchCapability({engine:closedLoopWorkflowEngine},${JSON.stringify(await activeProject(cdp))},{register:false});})()`);
-    await evalValue(cdp,`(async()=>{const file=new File([${JSON.stringify(JSON.stringify(searchReport))}],'source-search-readiness.json',{type:'application/json'}),input=document.querySelector('#capability-evidence-file'),selection=new DataTransfer();selection.items.add(file);input.files=selection.files;await input.onchange({target:input});})()`);
-    await evalValue(cdp,`(()=>{document.querySelector('#capability-operator').value='SYNTHETIC_SEARCH_OPERATOR';document.querySelector('#capability-confirm').checked=true;})()`);await click(cdp,'#register-capability-evidence');
-  };
   await registerBrowserSourceSearchCapability();
   const stageTwoAccepted=await activeProject(cdp);
   if(stageTwoAccepted.stages[2].status!=='COMPLETE'){
@@ -288,6 +336,7 @@ async function main(){
   await selectProjectByJobId(cdp,atomicStageOne.previousSelected);
 
 
+  finishScenario("stage03-duplicate-response-recovery",{executions:1});
   console.log('extra:project-lifecycle-ui');
   await click(cdp,'[data-view="Project"]');
   const lifecycleUi=await evalValue(cdp,`(()=>{const management=document.querySelector('#project-management'),danger=document.querySelector('#project-danger-zone');return {management:Boolean(management),managementOpen:Boolean(management?.open),danger:Boolean(danger),dangerOpen:Boolean(danger?.open),deleteVisible:Boolean(document.querySelector('#delete-project')?.offsetParent),headerMenu:Boolean(document.querySelector('.project-action-menu')),text:management?.textContent||''};})()`);
@@ -297,6 +346,7 @@ async function main(){
   if(lifecycleUi.danger)assert(!lifecycleUi.dangerOpen&&!lifecycleUi.deleteVisible,'Permanent deletion must remain concealed until the operator deliberately opens the danger zone.');
   assert(lifecycleUi.text.includes('Start from copy')&&lifecycleUi.text.includes('Create backup now')&&lifecycleUi.text.includes('Verify stored files now'),'Project lifecycle options are incomplete.');
 
+  finishScenario("project-lifecycle-ui",{executions:1});
   console.log('extra:project-lifecycle-functional');
   await evalValue(cdp,`(()=>{const d=document.querySelector('#project-management');if(!d)return false;d.open=true;return true;})()`);
   await fill(cdp,'#project-display-name','Lifecycle functional proof');await click(cdp,'#rename-project');await waitExpr(cdp,`document.querySelector('#current-project-summary')?.textContent?.includes('Lifecycle functional proof')`);
@@ -309,11 +359,13 @@ async function main(){
   await evalValue(cdp,`(()=>{const d=document.querySelector('#project-management');if(!d)return false;d.open=true;const z=document.querySelector('#project-danger-zone');if(!z)return false;z.open=true;return true;})()`);await fill(cdp,'#delete-project-confirmation',copiedJob);await waitExpr(cdp,`document.querySelector('#delete-project')&&!document.querySelector('#delete-project').disabled`);await click(cdp,'#delete-project');await waitExpr(cdp,`closedLoopProjectStore.readAll().then(all=>!all.some(p=>p.job?.JOB_ID===${JSON.stringify(copiedJob)}))`,12000);assert(!(await evalValue(cdp,`closedLoopProjectStore.listArtifacts(${JSON.stringify(copiedJob)}).then(x=>x.length)`)),'Deleted project left artifact Blob rows behind.');
 
   await selectProjectByJobId(cdp,currentConfirmationProject.jobId);
+  finishScenario("project-lifecycle-functional",{executions:1});
   console.log('extra:closed-connection-stage-package-save');
   await openStage(cdp,2);await evalValue(cdp,`(async()=>{const db=await closedLoopProjectStore.openDatabase();db.close();return true;})()`);const stage02Package=await exportStagePackage(cdp);await waitForSavedPrompt(cdp);let retained=await activeProject(cdp);const pr=retained.projectData.generatedPrompts.filter(x=>Number(x.stage)===2).at(-1);assert(pr?.prompt&&pr?.instructionId&&pr?.sha256,'Stage 02 prompt was not saved after the cached IndexedDB connection was closed.');assert(pr?.transportBindingRequired===true&&pr?.packageId&&pr?.operationReservationId&&pr?.challengeNonce,'Stage 02 saved prompt is not reservation-bound.');
   assert(stage02Package.name.endsWith('.zip')&&stage02Package.type==='application/zip','Stage 02 did not export one mobile-safe ZIP package.');assert(stage02Package.instructionText===pr.prompt,'The consolidated package instruction bytes differ from the saved prompt.');assert(createHash('sha256').update(stage02Package.instruction).digest('hex')===pr.bodySha256,'Packaged instruction bytes do not match promptIdentity.bodySha256.');const exportedManifest=stage02Package.manifest;assert(exportedManifest.promptIdentity.bodySha256===pr.bodySha256&&(exportedManifest.instruction.bodySha256||exportedManifest.instruction.sha256)===pr.bodySha256,'Packaged manifest does not identify exact instruction bytes.');assert(await evalValue(cdp,`['export-prompt-file','export-prompt-manifest','export-prompt-context','export-stage-files'].every(id=>!document.getElementById(id))`),'Superseded export controls remain beside the consolidated package action.');
   if(process.argv.includes('--closed-connection-package-only')){assert(stage02Package.handoffDecisions.some(row=>row.syntheticHumanDecision&&row.actualExternalTransfer===false),'The closed-connection preflight did not use the rendered synthetic handoff authorization.');console.log(JSON.stringify({closedConnectionPackagePreflight:true,stage:exportedManifest.stage,operation:exportedManifest.operation,packageBytes:stage02Package.bytes.length,syntheticDecisions:stage02Package.handoffDecisions.length,savedPromptId:pr.instructionId}));cdp.close();return;}
 
+  finishScenario("closed-connection-stage-package-save",{executions:1});
   console.log('extra:proposal-reload');
   const envelope={schema:'closed-loop-stage-response/3',contractProfileId:retained.job.CONTRACT_PROFILE_ID,jobId:currentConfirmationProject.jobId,stage:2,operation:pr.operation||'COMPLETE',promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256||pr.sha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},packageId:pr.packageId,operationReservationId:pr.operationReservationId,challengeNonce:pr.challengeNonce,scope:pr.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{},records:{sources:[recordProposal(await evalValue(cdp,`closedLoopWorkflowSchema`),'sources',{tempKey:'source-extra',overrides:{TITLE:'Controlled returned-file source fixture',ISSUING_ORGANIZATION_OR_AUTHOR:'Synthetic CI authority',SOURCE_TYPE:'PUBLIC_WEBSITE',URL_REFERENCE:'https://example.invalid/controlled-source',RELEVANCE:'Controlled source record used only to exercise returned-file recovery.'}})]},evidence:[{temporaryKey:'evidence-extra',kind:'WORKFLOW_EVIDENCE',description:'Controlled extra browser verification evidence',location:'browser fixture',content:'source inspected'}],unresolved:[],warnings:[],attachments:[]};
   const returnedContent='Independent source inspection bytes.\n',returnedSha=createHash('sha256').update(returnedContent).digest('hex');
@@ -343,6 +395,7 @@ async function main(){
   const repairedRaw=(await activeProject(cdp)).projectData.rawResponses.at(-1);assert(originalRaw.rawResponseId===repairedRaw.rawResponseId&&originalRaw.sha256===repairedRaw.sha256,'Attachment recovery required recapturing or modifying the original response.');retained=await activeProject(cdp);const sourceCountBeforeAccept=retained.projectData.sources.length;assert(!retained.projectData.sources.some(row=>row.TITLE==='Controlled returned-file source fixture'&&!row.invalidatedBy),'Pending proposal mutated canonical state.');const pendingRaw=retained.projectData.rawResponses.at(-1);assert(pendingRaw.transport?.authority==='AUTHORITATIVE_RESPONSE_FILE'&&pendingRaw.responseFileStagingId,'Pending proposal is not bound to authoritative staged response-file bytes.');const pendingRevision=retained.revision;
   await navigateAndWait(cdp,'Page.reload');await waitExpr(cdp,`globalThis.closedLoopAppReady===true`,20000);await openStage(cdp,2);await waitExpr(cdp,`Boolean(document.querySelector('#proposal-heading'))`);retained=await activeProject(cdp);assert(Number(retained.revision)===Number(pendingRevision),'Reload changed the project revision and staled the pending proposal.');assert(retained.projectData.sources.length===sourceCountBeforeAccept&&retained.projectData.responseProposals.some(x=>x.status==='PENDING_OPERATOR_REVIEW'),'Pending proposal did not survive reload exactly.');assert(sourceCountBeforeAccept===0,'This path must exercise the first source acceptance.');await click(cdp,'#accept-proposal');await waitExpr(cdp,`!document.querySelector('#proposal-heading')||Boolean(document.querySelector('#replacement-confirmation'))`);assert(!await evalValue(cdp,`Boolean(document.querySelector('#replacement-confirmation'))`),'First source acceptance added an unnecessary replacement confirmation.');await waitExpr(cdp,`globalThis.closedLoopProjectStore.readAll().then(all=>all.some(p=>p.job?.JOB_ID===${JSON.stringify(currentConfirmationProject.jobId)}&&(p.projectData?.sources||[]).some(row=>row.TITLE==='Controlled returned-file source fixture'&&!row.invalidatedBy)))`,12000);retained=await activeProject(cdp);assert(retained.projectData.sources.length===sourceCountBeforeAccept+1,'Reloaded proposal could not be committed.');const acceptedReservation=retained.projectData.operationReservations.find(x=>(x.OPERATION_RESERVATION_ID||x.id)===pr.operationReservationId);assert((acceptedReservation?.STATUS||acceptedReservation?.status)==='ACCEPTED','Accepted returned-file proposal did not terminally accept its exact operation reservation.');
 
+  finishScenario("proposal-reload",{executions:1});
   console.log('extra:real-replacement-confirmation');
   await openStage(cdp,2);
   await evalValue(cdp,`(async()=>{const picker=document.querySelector('#operation-picker');if(picker){picker.value=${JSON.stringify(pr.operation)};await picker.onchange({target:picker});}return true;})()`);
@@ -362,6 +415,7 @@ async function main(){
   await waitExpr(cdp,`(async()=>{const project=await closedLoopProjectStore.readProject(await closedLoopProjectStore.metaGet('selectedProject'));return project.projectData.sources.some(row=>(row.TITLE||row.fields?.TITLE)==='Corrected returned-file source fixture'&&!row.invalidatedBy&&row.active!==false);})()`,12000);
   console.log(JSON.stringify({initialAcceptanceWithoutReplacement:true,realReplacementConfirmed:true,cancellationPreservedAcceptedSources:true}));
 
+  finishScenario("real-replacement-confirmation",{executions:1});
   console.log('extra:package-round-trip');
   const beforeNewIds=(await projects(cdp)).map(p=>p.job.JOB_ID);await click(cdp,'#new-project');await waitExpr(cdp,`(async()=>{const id=document.querySelector('#current-project-summary')?.dataset?.projectId;return Boolean(id&&!${JSON.stringify(beforeNewIds)}.includes(id)&&document.body.innerText.includes('Save User Job Input')&&(await closedLoopProjectStore.readProject(id)));})()`,20000);const newest=await activeProject(cdp);assert(!beforeNewIds.includes(newest.job.JOB_ID)&&(newest.projectData.sources||[]).length===0&&newest.job.CURRENT_STAGE==='STAGE 01','New job was not persisted with a unique identity and reset cleanly at Stage 01.');
   await evalValue(cdp,`(()=>{window.__exportBlob=null;window.__exportDownload='';URL.createObjectURL=b=>{window.__exportBlob=b;return 'blob:closed-loop-verify';};URL.revokeObjectURL=()=>{};HTMLAnchorElement.prototype.click=function(){window.__exportDownload=this.download;};return true})()`);await click(cdp,'#export-project');await waitExpr(cdp,`Boolean(window.__exportBlob)`,12000);const exportedSize=await evalValue(cdp,`window.__exportBlob.size`);assert(exportedSize>0,'Complete compressed project export was not generated.');
@@ -381,6 +435,7 @@ async function main(){
   // control before navigating to a tab that the open menu can cover.
   if(await evalValue(cdp,`Boolean(document.querySelector('.project-action-menu')?.open)`))await click(cdp,'#project-actions-toggle');
 
+  finishScenario("package-round-trip",{executions:1});
   console.log('extra:artifact-logical-paths');
   await openStage(cdp,1);
   const pathSelection=await evalValue(cdp,`(()=>{const input=document.querySelector('#stage-directory');if(!input)return {ok:false,reason:'missing directory input'};const dt=new DataTransfer();for(const [relative,content] of [['package/frontend/index.ts','front-tree'],['package/backend/index.ts','back-tree']]){const file=new File([content],'index.ts',{type:'text/plain'});Object.defineProperty(file,'webkitRelativePath',{value:relative,configurable:true});dt.items.add(file);}input.files=dt.files;input.dispatchEvent(new Event('change',{bubbles:true}));return {ok:true,paths:Array.from(input.files).map(f=>f.webkitRelativePath)};})()`);
@@ -389,12 +444,14 @@ async function main(){
   const treeProject=await activeProject(cdp),treeNames=(treeProject.projectData.artifacts||[]).map(a=>a.fields?.FILENAME||a.FILENAME).filter(Boolean);
   assert(treeNames.includes('frontend/index.ts')&&treeNames.includes('backend/index.ts'),'Structured package collapsed same-basename files and lost directory identity.');
 
+  finishScenario("artifact-logical-paths",{executions:1});
   console.log('extra:blob-persistence');
   const blobProof=await evalValue(cdp,`(async()=>{const store=globalThis.closedLoopProjectStore,hash=globalThis.closedLoopHash,jobId=${JSON.stringify(newest.job.JOB_ID)},artifactId='ARTIFACT-BROWSER-BLOB';const blob=new Blob([new TextEncoder().encode('blob-proof')],{type:'text/plain'});const saved=await store.putArtifact({artifactId,jobId,blob,filename:'blob-proof.txt',mediaType:'text/plain',lineage:{test:'browser-extra'}});const read=await store.getArtifact(artifactId),actual=await hash.sha256Bytes(await read.blob.arrayBuffer());return {byteSize:read.byteSize,stored:saved.sha256,actual,filename:read.filename};})()`);
   assert(blobProof?.byteSize===10&&blobProof.stored===blobProof.actual&&blobProof.filename==='blob-proof.txt','Actual IndexedDB Blob bytes did not survive read-back and rehash.');
   const artifactIdempotence=await evalValue(cdp,`(async()=>{const store=globalThis.closedLoopProjectStore,jobId=${JSON.stringify(newest.job.JOB_ID)},artifactId='ARTIFACT-BROWSER-BLOB',blob=new Blob([new TextEncoder().encode('blob-proof')],{type:'text/plain'});const again=await store.putArtifact({artifactId,jobId,blob,filename:'blob-proof.txt',mediaType:'text/plain',lineage:{test:'browser-extra-repeat'}});return {artifactId:again.artifactId,byteSize:again.byteSize,sha256:again.sha256};})()`);
   assert(artifactIdempotence?.artifactId==='ARTIFACT-BROWSER-BLOB'&&artifactIdempotence.byteSize===10&&artifactIdempotence.sha256===blobProof.stored,'Idempotent artifact registration did not return the verified existing artifact.');
 
+  finishScenario("blob-persistence",{executions:1});
   console.log('extra:two-tab-cas');
   const secondTarget=await getJson(`http://127.0.0.1:${port}/json/new?${encodeURIComponent(`${PAGE_URL}?browserExtraTab2=${Date.now()}`)}`,{method:'PUT'}),tab2=new CDP(secondTarget.webSocketDebuggerUrl);await tab2.ready;await tab2.send('Runtime.enable');await tab2.send('Page.enable');await waitExpr(tab2,`globalThis.closedLoopAppReady===true`,20000);
   const sharedJob=newest.job.JOB_ID;
@@ -411,31 +468,91 @@ async function main(){
   await waitExpr(cdp,`document.visibilityState==='visible'`);
   console.log(JSON.stringify({operatorTabRestored:true,beforeVisibility:beforeOperatorRestore,afterVisibility:await evalValue(cdp,`document.visibilityState`)}));
 
+  finishScenario("two-tab-cas",{executions:1});
   console.log('extra:storage-failure-rollback');
   const rollback=await evalValue(cdp,`(async()=>{const store=closedLoopProjectStore,jobId=${JSON.stringify(sharedJob)},before=(await store.readAll()).find(x=>x.job?.JOB_ID===jobId),revision=before.revision;const candidate=structuredClone(before);candidate.injectedFailureMarker='MUST_NOT_COMMIT';globalThis.__closedLoopStorageFault='during-project-write';let failed=false;try{await store.writeProject(candidate,{expectedProjectRevision:revision});}catch(e){failed=e.code==='INJECTED_STORAGE_FAILURE';}finally{delete globalThis.__closedLoopStorageFault;}const after=(await store.readAll()).find(x=>x.job?.JOB_ID===jobId);return {failed,revisionSame:after.revision===revision,markerAbsent:after.injectedFailureMarker===undefined};})()`);
   assert(rollback?.failed&&rollback.revisionSame&&rollback.markerAbsent,'Injected IndexedDB project-write failure produced a partial commit.');
 
+  finishScenario("storage-failure-rollback",{executions:1});
   console.log('extra:transaction-mutator-lifetime');
   const mutatorLifetime=await evalValue(cdp,`(async()=>{const store=closedLoopProjectStore,jobId=${JSON.stringify(sharedJob)},before=(await store.readAll()).find(x=>x.job?.JOB_ID===jobId),revision=before.revision;let asyncCode='';try{await store.transact(jobId,revision,async next=>{await Promise.resolve();next.asyncMutationMarker='MUST_NOT_COMMIT';});}catch(e){asyncCode=e.code||'';}const afterAsync=(await store.readAll()).find(x=>x.job?.JOB_ID===jobId);const syncResult=await store.transact(jobId,afterAsync.revision,next=>{next.syncMutationMarker='COMMITTED';return 'SYNC_OK';});const afterSync=(await store.readAll()).find(x=>x.job?.JOB_ID===jobId);return {asyncCode,asyncRevisionSame:afterAsync.revision===revision,asyncMarkerAbsent:afterAsync.asyncMutationMarker===undefined,syncResult:syncResult.result,syncRevisionAdvanced:afterSync.revision===revision+1,syncMarker:afterSync.syncMutationMarker};})()`);
   assert(mutatorLifetime?.asyncCode==='ASYNC_TRANSACTION_MUTATOR'&&mutatorLifetime.asyncRevisionSame&&mutatorLifetime.asyncMarkerAbsent,'Asynchronous canonical transaction mutator was not rejected without mutation.');
   assert(mutatorLifetime?.syncResult==='SYNC_OK'&&mutatorLifetime.syncRevisionAdvanced&&mutatorLifetime.syncMarker==='COMMITTED','Synchronous canonical transaction mutator did not commit atomically.');
   await openStoredFixture(cdp);await waitExpr(cdp,`globalThis.closedLoopAppReady===true`,20000);
 
+  finishScenario("transaction-mutator-lifetime",{executions:1});
   console.log('extra:canonical-write-integrity');
   const canonicalWrite=await evalValue(cdp,`(async()=>{const store=closedLoopProjectStore,jobId=${JSON.stringify(sharedJob)},before=(await store.readAll()).find(x=>x.job?.JOB_ID===jobId),revision=before.revision,candidate=structuredClone(before);candidate.stageCount=29;let code='';try{await store.writeProject(candidate,{expectedProjectRevision:revision});}catch(e){code=e.code||'';}const after=(await store.readAll()).find(x=>x.job?.JOB_ID===jobId);return {code,revisionSame:after.revision===revision,stageCount:after.stageCount};})()`);assert(canonicalWrite?.code==='PROJECT_INTEGRITY_FAILED'&&canonicalWrite.revisionSame&&canonicalWrite.stageCount===30,'Normal IndexedDB write accepted structurally invalid canonical state.');
 
+  finishScenario("canonical-write-integrity",{executions:1});
   console.log('extra:support-controls');
   await openStage(cdp,1);await fill(cdp,'#blocker-reason','Controlled missing human input');await click(cdp,'#add-blocker');let support=await activeProject(cdp);assert((support.projectData.blockers||[]).length>=1&&support.job.CURRENT_STATE==='BLOCKED','Universal blocker control did not gate the project.');await openStage(cdp,9);assert(await evalValue(cdp,`!document.querySelector('#add-fresh-context')&&!document.querySelector('#fresh-context-id')`),'Stage 09 must not ask for manual context registration.');
 
+  finishScenario("support-controls",{executions:1});
   console.log('extra:retained-project-delete-suppression');
   await click(cdp,'[data-view=\"Project\"]');
   const retainedOptions=await evalValue(cdp,`Array.from(document.querySelector('#project-picker')?.options||[]).map(o=>o.value)`);let retainedFound=false;for(const optionValue of retainedOptions){await evalValue(cdp,`(async()=>{const p=document.querySelector('#project-picker');p.value=${JSON.stringify(optionValue)};await p.onchange({target:p});return true;})()`);if((await evalValue(cdp,`document.querySelector('#current-project-summary')?.dataset?.projectId`))==='JOB-20260823144121'){retainedFound=true;break;}}assert(retainedFound,'Retained reference project was unavailable through the real project selector.');
   await click(cdp,'[data-view=\"Project\"]');await evalValue(cdp,`(()=>{const d=document.querySelector('#project-management');if(!d)return false;d.open=true;const z=document.querySelector('#project-danger-zone');if(!z)return false;z.open=true;return true;})()`);await fill(cdp,'#delete-project-confirmation','JOB-20260823144121');await waitExpr(cdp,`document.querySelector('#delete-project')&&!document.querySelector('#delete-project').disabled`);await click(cdp,'#delete-project');await waitExpr(cdp,`closedLoopProjectStore.readAll().then(all=>!all.some(p=>p.job?.JOB_ID==='JOB-20260823144121'))`,12000);
   await navigateAndWait(cdp,'Page.reload');await waitExpr(cdp,`globalThis.closedLoopAppReady===true`,20000);assert(!(await evalValue(cdp,`closedLoopProjectStore.readAll().then(all=>all.some(p=>p.job?.JOB_ID==='JOB-20260823144121'))`)),'Deleted retained project was re-injected after reload.');assert(await evalValue(cdp,`closedLoopProjectStore.metaGet('retainedProjectSuppressed').then(x=>x?.jobId==='JOB-20260823144121')`),'Retained-project suppression was not committed transactionally.');
 
+  finishScenario("retained-project-delete-suppression",{executions:1});
+  await cdp.send('Emulation.setDeviceMetricsOverride',{width:393,height:852,deviceScaleFactor:1,mobile:true});
+  console.log('extra:prompt-context-read-snapshot');
+  const contextReadProof=await evalValue(cdp,`(async()=>{
+    const store=closedLoopProjectStore,hash=closedLoopHash,jobId='CONTEXT-BROWSER-READS',files=[];
+    await store.writeProject(closedLoopCore.createBlankState(jobId),{expectedProjectRevision:0,createOnly:true,selectProject:false});
+    const db=await store.openDatabase(),seed=db.transaction('artifacts','readwrite');
+    const seeded=new Promise((resolve,reject)=>{seed.oncomplete=resolve;seed.onabort=seed.onerror=()=>reject(seed.error||new Error('Context fixture staging failed.'));});
+    for(let i=0;i<129;i++){
+      const text='Exact context '+i+' é🙂',blob=new Blob([text]),sha256=hash.sha256Text(text),artifactId='PROMPT-CONTEXT-'+hash.sha256Value({jobId,sha256});
+      const file={path:'context-'+i+'.json',filename:'context-'+i+'.json',mediaType:'application/json',sha256,byteSize:blob.size};files.push(file);
+      seed.objectStore('artifacts').put({artifactId,jobId,blob,...file});
+    }
+    await seeded;
+    const record={contextManifest:{promptContext:{attachments:[...files,...files]}}},project={job:{JOB_ID:jobId}},nativeGet=IDBObjectStore.prototype.get,nativeTransaction=IDBDatabase.prototype.transaction;
+    let reads=0,transactions=0,pending=0,maxPending=0;
+    IDBDatabase.prototype.transaction=function(names,mode,...rest){const tx=nativeTransaction.call(this,names,mode,...rest);if(mode==='readonly'&&tx.objectStoreNames.contains('artifacts'))transactions++;return tx;};
+    IDBObjectStore.prototype.get=function(key){const request=nativeGet.call(this,key);if(this.name==='artifacts'){reads++;maxPending=Math.max(maxPending,++pending);const done=()=>pending--;request.addEventListener('success',done,{once:true});request.addEventListener('error',done,{once:true});}return request;};
+    try{await store.persistPromptContextFiles(record,project);}finally{IDBObjectStore.prototype.get=nativeGet;IDBDatabase.prototype.transaction=nativeTransaction;}
+    // Abort after some requests have been queued. Every rejection must be
+    // handled; the same production preparation must reject before any write.
+    let abortReads=0,aborted=false;
+    IDBObjectStore.prototype.get=function(key){const request=nativeGet.call(this,key);if(this.name==='artifacts'&&++abortReads===17)this.transaction.abort();return request;};
+    try{await store.persistPromptContextFiles(record,project);}catch(error){aborted=true;}finally{IDBObjectStore.prototype.get=nativeGet;}
+    const available=(await store.listArtifacts(jobId)).length;
+    await store.removeProject(jobId);
+    return {references:record.contextManifest.promptContext.attachments.length,uniqueFiles:files.length,reads,transactions,maxPending,pending,aborted,available,abortAtRead:abortReads};
+  })()`);
+  assert(contextReadProof.reads===129&&contextReadProof.transactions===1&&contextReadProof.maxPending<=64&&contextReadProof.pending===0&&contextReadProof.aborted&&contextReadProof.available===129,'Prompt context reads lost bounded snapshot/error behavior: '+JSON.stringify(contextReadProof));
+  const contextSaveProof=await evalValue(cdp,`(async()=>{
+    const store=closedLoopProjectStore,engine=closedLoopWorkflowEngine,prompts=closedLoopPromptEngine,p=closedLoopCore.createBlankState('CONTEXT-BROWSER-SAVE');engine.ensureShape(p);engine.recalculate(p);
+    p.job.EXACT_USER_OBJECTIVE_VERBATIM='Preserve saved context. '.repeat(4000)+'é🙂 FINAL TAIL';
+    for(let i=0;i<16;i++)p.projectData.generatedPrompts.push(prompts.buildPromptRecord(1,p,{operation:'COMPLETE',scope:{projectRevision:i+1}}));
+    await store.persistPromptContextFiles(p.projectData.generatedPrompts[0],p);
+    const saved=await store.writeProject(p,{expectedProjectRevision:0,createOnly:true,selectProject:false}),actual=await store.readProject(p.job.JOB_ID),rows=await store.listArtifacts(p.job.JOB_ID);
+    const shared=rows.length===1,preserved=JSON.stringify(actual.projectData.generatedPrompts)===JSON.stringify(p.projectData.generatedPrompts),identity=saved.projectSha256===actual.projectSha256;
+    const historyBefore=JSON.stringify(await store.historyList(p.job.JOB_ID)),db=await store.openDatabase(),row=await new Promise((resolve,reject)=>{const read=db.transaction('artifacts','readonly').objectStore('artifacts').get(rows[0].artifactId);read.onsuccess=()=>resolve(read.result);read.onerror=()=>reject(read.error);}),damage=db.transaction('artifacts','readwrite'),damaged=new Promise((resolve,reject)=>{damage.oncomplete=resolve;damage.onabort=damage.onerror=()=>reject(damage.error);});damage.objectStore('artifacts').put({...row,byteSize:row.byteSize+1});await damaged;
+    let rejected=false,unchanged=false;
+    try{
+      try{await store.writeProject(actual,{expectedProjectRevision:actual.revision,selectProject:false});}catch(error){rejected=error.code==='PROMPT_CONTEXT_INTEGRITY_FAILED';}
+      unchanged=(await store.readProject(p.job.JOB_ID)).projectSha256===saved.projectSha256;
+    }finally{
+      // Removal promises recovery, so its checkpoint must see the original
+      // verified bytes after this disposable fault, even if an assertion fails.
+      const repair=db.transaction('artifacts','readwrite'),repaired=new Promise((resolve,reject)=>{repair.oncomplete=resolve;repair.onabort=repair.onerror=()=>reject(repair.error);});repair.objectStore('artifacts').put(row);await repaired;
+    }
+    const restored=await store.getArtifact(row.artifactId),faultRestored=restored?.byteSize===row.byteSize&&restored.sha256===row.sha256&&await closedLoopHash.sha256Bytes(restored.blob)===row.sha256;
+    const historyUnchanged=JSON.stringify(await store.historyList(p.job.JOB_ID))===historyBefore;
+    await store.removeProject(p.job.JOB_ID);
+    return {shared,preserved,identity,rejected,unchanged,faultRestored,historyUnchanged,savedPrompts:actual.projectData.generatedPrompts.length,sharedArtifacts:rows.length};
+  })()`);
+  assert(Object.values(contextSaveProof).every(Boolean),'Worker save reused context verification or changed historical bytes: '+JSON.stringify(contextSaveProof));
+  console.log(JSON.stringify({promptContextReadSnapshot:contextReadProof,promptContextWorkerSave:contextSaveProof}));
+
+  finishScenario("prompt-context-read-snapshot",{references:contextReadProof.references,uniqueFiles:contextReadProof.uniqueFiles,reads:contextReadProof.reads,transactions:contextReadProof.transactions,available:contextReadProof.available,savedPrompts:contextSaveProof.savedPrompts,sharedArtifacts:contextSaveProof.sharedArtifacts,abortAtRead:contextReadProof.abortAtRead});
+  }
+  if(laneId==="lane2"){
   console.log('extra:correction-instruction-to-accepted-proposition-persistence');
-  const fixtureFunctions=stage04AcceptanceFixtureSource()+'\n'+stage04AcceptanceEnvelope.toString();
-  const runtimeBindings='const runtime={core:closedLoopCore,schema:closedLoopWorkflowSchema,engine:closedLoopWorkflowEngine,prompts:closedLoopPromptEngine,ingestion:closedLoopResponseIngestion};';
   await evalValue(cdp,`(async()=>{${fixtureFunctions}\n${runtimeBindings}const p=stage04AcceptanceFixture(runtime);await closedLoopProjectStore.writeProject(p);})()`);
   await openStoredFixture(cdp);await waitExpr(cdp,`closedLoopAppReady===true`,30000);await openStage(cdp,4);
   await click(cdp,'#save-prompt');await waitForSavedPrompt(cdp);
@@ -487,6 +604,7 @@ async function main(){
   assert(!(await evalValue(cdp,`Boolean(document.querySelector('#returned-file-slots'))`)),'An older failed upload reappeared after accepting the current response.');
   console.log(JSON.stringify({responseRetriesInline:true,pendingReselectionPreserved:true,correctionInstructionRegenerated:true,correctionManifestVerified:true,correctionContextVerified:true,correctedResponsePersistence:proofPersistence}));
 
+  finishScenario("correction-instruction-to-accepted-proposition-persistence",{accepted:proofPersistence.accepted});
   console.log('extra:stage05-export-and-application-failures-inline');
   await cdp.send('Emulation.setDeviceMetricsOverride',{width:393,height:852,deviceScaleFactor:1,mobile:true});
   await openStage(cdp,5);
@@ -513,28 +631,8 @@ async function main(){
   assert(!automaticAuthor.projectData.history.some(r=>r.type==='FRESH_CONTEXT_REGISTERED'&&r.stage===5),'The app fabricated a human context-registration event.');
   console.log(JSON.stringify({stage05ExportAutomatic:true,stage05ManifestVerified:true,manualContextControls:0,projectAndStageFailuresInline:true,blockerError,renameError,nativePopups:0}));
 
+  finishScenario("stage05-export-and-application-failures-inline",{executions:1});
   console.log('extra:automatic-stage05-review-and-stage06-proof-review');
-  const proofResponse=async(stage,content,jobId='JOB-BROWSER-PROOF-PERSISTENCE')=>{
-    const selected=await evalValue(cdp,`({jobId:document.querySelector('#current-project-summary')?.dataset?.projectId,stage:Number(document.querySelector('#stage-picker')?.value),operation:document.querySelector('#operation-picker')?.value})`);
-    assert(selected.jobId===jobId&&selected.stage===Number(stage)&&selected.operation,'CURRENT_EXPORTED_PROOF_RESPONSE_ORACLE: response generation must belong to the selected project, stage and operation.');
-    // A displayed next operation can be an unsaved preview. Acquire its actual
-    // one-file handoff through the real controls, never a historical prompt.
-    const transfer=await exportStagePackage(cdp),manifest=transfer.manifest;
-    assert(manifest.jobId===jobId&&Number(manifest.stage)===Number(stage)&&manifest.operation===selected.operation,'CURRENT_EXPORTED_PROOF_RESPONSE_ORACLE: the exported handoff does not match the selected operation.');
-    assert(createHash('sha256').update(transfer.instruction).digest('hex')===manifest.promptIdentity.bodySha256,'CURRENT_EXPORTED_PROOF_RESPONSE_ORACLE: exported instruction bytes differ from their controlling identity.');
-    const capturedPackageDirectory=fs.mkdtempSync(path.join(os.tmpdir(),'closed-loop-proof-handoff-'));
-    fs.writeFileSync(path.join(capturedPackageDirectory,'stage-files.zip'),transfer.bytes);
-    return evalValue(cdp,`(async()=>{${fixtureFunctions}\n${runtimeBindings}
-      const {engine,schema,prompts}=runtime,manifest=${JSON.stringify(manifest)},p=await closedLoopProjectStore.readProject(${JSON.stringify(jobId)}),pr=p.projectData.generatedPrompts.find(record=>record.instructionId===manifest.promptIdentity.instructionId),propId=engine.recordId(engine.recordsForCurrentScope(p,'propositions')[0],'propositions'),reqId=engine.recordId(engine.recordsForCurrentScope(p,'requirements')[0],'requirements');
-      if(!pr||pr.operation!==manifest.operation||Number(pr.stage)!==Number(manifest.stage)||!prompts.promptTransportBinding(p,manifest.stage,manifest.operation,pr.instructionId,pr.scope))throw new Error('CURRENT_EXPORTED_PROOF_RESPONSE_ORACLE: the exact exported instruction is not the current live persisted request.');
-      engine.assertOperationScope(p,manifest.stage,manifest.operation,pr.scope);
-      if(!['instructionId','bodySha256','contractSha256','contextSignature'].every(key=>manifest.promptIdentity[key]===(key==='instructionId'?pr.instructionId:pr[key]))||!['packageId','operationReservationId','challengeNonce'].every(key=>manifest[key]===pr[key])||closedLoopHash.sha256Value(manifest.scope)!==closedLoopHash.sha256Value(pr.scope))throw new Error('CURRENT_EXPORTED_PROOF_RESPONSE_ORACLE: persisted and exported response bindings differ.');
-      if(document.querySelector('#current-project-summary')?.dataset?.projectId!==manifest.jobId||Number(document.querySelector('#stage-picker')?.value)!==Number(manifest.stage)||document.querySelector('#operation-picker')?.value!==manifest.operation)throw new Error('CURRENT_EXPORTED_PROOF_RESPONSE_ORACLE: operator selection changed while the package was prepared.');
-      return {schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:manifest.jobId,stage:manifest.stage,operation:manifest.operation,promptIdentity:manifest.promptIdentity,packageId:manifest.packageId,operationReservationId:manifest.operationReservationId,challengeNonce:manifest.challengeNonce,scope:manifest.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{},records:{},evidence:[evidence('browser-proof-review')],unresolved:[],warnings:[],attachments:[],...(${content})};
-    })()`);
-  };
-  const acceptProofResponse=async(response)=>{console.log(`extra:accepting-stage-${response.stage}-${response.operation}`);assert(await evalValue(cdp,`document.visibilityState==='visible'`),'Operator response acceptance must run in the visible tab.');await selectResponseFile(cdp,JSON.stringify(response));await click(cdp,'#process-response-file');await waitExpr(cdp,`Boolean(document.querySelector('#accept-proposal'))`,20000).catch(async error=>{const ui=await evalValue(cdp,`({stage:document.querySelector('#stage-picker')?.value,operation:document.querySelector('#operation-picker')?.value,validation:document.querySelector('#validation-report')?.textContent.slice(0,2000),notices:Array.from(document.querySelectorAll('#screen .notice')).slice(0,4).map(n=>n.textContent.slice(0,1000))})`);throw new Error(`Stage ${response.stage} ${response.operation} proposal unavailable: ${JSON.stringify(ui)}`,{cause:error});});await click(cdp,'#accept-proposal');if(await evalValue(cdp,`Boolean(document.querySelector('#accept-replacement'))`))await click(cdp,'#accept-replacement');await waitExpr(cdp,`closedLoopProjectStore.readProject(${JSON.stringify(response.jobId)}).then(p=>p.projectData.acceptedChanges.some(c=>c.promptId===${JSON.stringify(response.promptIdentity.instructionId)}))`,20000);console.log(`extra:accepted-stage-${response.stage}-${response.operation}`);};
-  const reviewRecords=`({records:{semanticReviews:[recordProposal(schema,'semanticReviews',{tempKey:'independent-review',overrides:{REVIEW_QUESTION:'Is the current proposal sufficient for its governing proposition?',FINDING:'The current proposal preserves the requirement and provides sufficient proof.',REASONING:'The exact current targets were independently reviewed; no weakened branch is accepted.',RESULT:'ACCEPTED'}})]}})`;
   await openStage(cdp,5);
   await acceptProofResponse(await proofResponse(5,`({stageData:{DUPLICATES_REMAINING:'NONE',IMPOSSIBLE_COMBINATIONS:'NONE',UNDEFINED_TERMS:'NONE',CIRCULAR_DEPENDENCIES:'NONE',UNSUPPORTED_REQUIREMENTS:'NONE',APPLICABILITY_UNDETERMINED:'NONE',REQUIREMENTS_WITHOUT_VERIFICATION_PATH:'NONE'},records:{applicabilityRecords:[recordProposal(schema,'applicabilityRecords',{tempKey:'applicability',relationships:{SUBJECT_ID:{recordId:propId}},overrides:{PROPOSED_APPLICABILITY:'APPLICABLE',REASONING:'The mandatory checklist requirement applies.'}})]}})`));
   await openStage(cdp,5);await waitExpr(cdp,`document.querySelector('#operation-picker')?.value==='SEMANTIC_REVIEW'`);await waitExpr(cdp,`closedLoopProjectStore.readProject('JOB-BROWSER-PROOF-PERSISTENCE').then(p=>p.projectData.generatedPrompts.some(r=>r.stage===5&&r.operation==='SEMANTIC_REVIEW'&&!r.invalidatedBy))`,20000);
@@ -575,6 +673,29 @@ async function main(){
   assert(proofReview.AUTHOR_CONTEXT_ID!==proofReview.REVIEWER_CONTEXT_ID&&proofReview.INDEPENDENCE_DETERMINATION==='APPLICATION_ESTABLISHED','Browser proof review lacks bound distinct contexts.');
   console.log(JSON.stringify({stage05AutomaticReviewAccepted:true,stage06AuthorCannotPass:true,stage06AutomaticProofReview:true,stage06ReviewedReloadPassed:true,manualReviewContextFields:0}));
 
+  finishScenario("automatic-stage05-review-and-stage06-proof-review",{executions:1});
+  await evalValue(cdp,`closedLoopProjectStore.metaPut('selectedProject',${JSON.stringify(reviewed.job.JOB_ID)})`);
+  // The original sequential suite restored this project after the cross-stage
+  // scenarios selected other owners. Lane2 already retains the real Stage06
+  // reload above; prove that exact current/retained handoff without a second
+  // setup-only document teardown. The original selection metadata write stays;
+  // no scenario reload or fault timing changes.
+  const reviewedProjectHandoff=await evalValue(cdp,reviewedProjectHandoffBrowserExpression({jobId:reviewed.job.JOB_ID,revision:reviewed.revision,projectSha256:reviewed.projectSha256}));
+  assert(reviewedProjectHandoff.retainedBytesVerified===true,'Reviewed project handoff did not verify retained bytes.');
+  console.log(JSON.stringify({reviewedProjectHandoff}));
+
+  console.log('extra:stale-new-project-and-atomic-bulk-write');
+  const staleCreateId=reviewed.job.JOB_ID;
+  await evalValue(cdp,`(async()=>{const p=await closedLoopProjectStore.readProject(${JSON.stringify(staleCreateId)});p.newerSavedWork='PRESERVE';await closedLoopProjectStore.writeProject(p,{expectedProjectRevision:p.revision});return true;})()`);
+  await click(cdp,'#new-project');
+  await waitExpr(cdp,`document.querySelector('#current-project-summary')?.dataset?.projectId!==${JSON.stringify(staleCreateId)}`);
+  const staleCreateProof=await evalValue(cdp,`(async()=>{const store=closedLoopProjectStore,p=await store.readProject(${JSON.stringify(staleCreateId)}),stale=structuredClone(p);p.secondWriter='PRESERVE';const winner=await store.writeProject(p,{expectedProjectRevision:p.revision}),fresh=closedLoopCore.createBlankState('BULK-BROWSER-MUST-ROLL-BACK');let code='';try{await store.writeAll([fresh,stale]);}catch(error){code=error.code;}const after=await store.readProject(p.job.JOB_ID);return {newProjectPreservedNewerWork:p.newerSavedWork==='PRESERVE',bulkConflict:code==='STALE_PROJECT_REVISION',bulkRollback:!(await store.readProject(fresh.job.JOB_ID)),winnerPreserved:after.revision===winner.revision&&after.secondWriter==='PRESERVE'};})()`);
+  assert(Object.values(staleCreateProof).every(Boolean),`Stale create/bulk write damaged project state: ${JSON.stringify(staleCreateProof)}`);
+
+  console.log(JSON.stringify({storageReliabilityStalePart:staleCreateProof}));
+  finishScenario("stale-new-project-and-atomic-bulk-write",{executions:1});
+  }
+  if(laneId==="lane3"){
   console.log('extra:cross-stage-review-correction');
   const reviewCarrier=(archive,sourceIdentity)=>{
     const instructionSha256=createHash('sha256').update(archive.instruction).digest('hex');
@@ -600,7 +721,9 @@ async function main(){
     assert(subject.acceptedChangeId===author.changeId&&subject.authorOperation===author.operation&&subject.inputVersion===project.job.CURRENT_INPUT_VERSION,'The Stage 01 reviewer received a stale author or input identity.');
     assert(subject.stageData?.INPUT_SET_CONTENTS===project.stages[1].agentData.INPUT_SET_CONTENTS&&subject.stageData?.EXACT_DELIVERABLE_REQUESTED===project.stages[1].agentData.EXACT_DELIVERABLE_REQUESTED,'The Stage 01 reviewer ZIP omitted the complete accepted author capture or deliverable.');
   };
+  const crossReviewStages=[];
   for(const stage of [2,1]){
+    crossReviewStages.push(stage);
     const jobId='JOB-BROWSER-REVIEW-CORRECTION-'+stage,reviewOperation=stage===2?'SEARCH_ADEQUACY_REVIEW':'SEMANTIC_CHALLENGE',reconcileOperation=stage===2?'RECONCILE_SOURCE_SEARCH':'RECONCILE_INTAKE';
     await evalValue(cdp,`(async()=>{${fixtureFunctions}\n${runtimeBindings}const p=stage04AcceptanceFixture(runtime,${JSON.stringify(jobId)});p.activeStage=${stage};await closedLoopProjectStore.writeProject(p);await closedLoopProjectStore.metaPut('selectedProject',p.job.JOB_ID);})()`);
     await openStoredFixture(cdp);await waitExpr(cdp,`closedLoopAppReady===true`,30000);await openStage(cdp,stage);await fill(cdp,'#operation-picker',reviewOperation);const reviewPackage=await exportStagePackage(cdp);await waitForSavedPrompt(cdp);
@@ -645,189 +768,8 @@ async function main(){
     }
   }
   console.log(JSON.stringify({stage01ChallengeFailsClosed:true,stage02ReviewFailsClosed:true,crossStageSavedCorrectionSelected:true,crossStageReloadIdempotent:true,sourceReconciliationCannotSelfApprove:true,sourceIndependentReviewCompletes:true}));
-  await evalValue(cdp,`closedLoopProjectStore.metaPut('selectedProject',${JSON.stringify(reviewed.job.JOB_ID)})`);await openStoredFixture(cdp);await waitExpr(cdp,`closedLoopAppReady===true`,30000);
 
-  console.log('extra:stale-new-project-and-atomic-bulk-write');
-  const staleCreateId=reviewed.job.JOB_ID;
-  await evalValue(cdp,`(async()=>{const p=await closedLoopProjectStore.readProject(${JSON.stringify(staleCreateId)});p.newerSavedWork='PRESERVE';await closedLoopProjectStore.writeProject(p,{expectedProjectRevision:p.revision});return true;})()`);
-  await click(cdp,'#new-project');
-  await waitExpr(cdp,`document.querySelector('#current-project-summary')?.dataset?.projectId!==${JSON.stringify(staleCreateId)}`);
-  const staleCreateProof=await evalValue(cdp,`(async()=>{const store=closedLoopProjectStore,p=await store.readProject(${JSON.stringify(staleCreateId)}),stale=structuredClone(p);p.secondWriter='PRESERVE';const winner=await store.writeProject(p,{expectedProjectRevision:p.revision}),fresh=closedLoopCore.createBlankState('BULK-BROWSER-MUST-ROLL-BACK');let code='';try{await store.writeAll([fresh,stale]);}catch(error){code=error.code;}const after=await store.readProject(p.job.JOB_ID);return {newProjectPreservedNewerWork:p.newerSavedWork==='PRESERVE',bulkConflict:code==='STALE_PROJECT_REVISION',bulkRollback:!(await store.readProject(fresh.job.JOB_ID)),winnerPreserved:after.revision===winner.revision&&after.secondWriter==='PRESERVE'};})()`);
-  assert(Object.values(staleCreateProof).every(Boolean),`Stale create/bulk write damaged project state: ${JSON.stringify(staleCreateProof)}`);
-
-  console.log('extra:file-intake-navigation-and-rollback');
-  for(const scenario of ['project','stage','revision','second-file-failure','batch-project','last-file-failure']){
-    // Browser coverage is deliberately fixed and small. Large batch/allocation
-    // behavior is covered by the non-browser intake regressions; this gate proves
-    // real controls, IndexedDB bytes, operation ownership and rollback.
-    const intakeId='INTAKE-BROWSER-'+scenario,otherId=intakeId+'-OTHER',fileCount=['batch-project','last-file-failure'].includes(scenario)?8:2,names=Array.from({length:fileCount},(_,i)=>i===0?'first':i===1?'second':'file-'+i),fails=['second-file-failure','last-file-failure'].includes(scenario);
-    await evalValue(cdp,`(async()=>{for(const id of ${JSON.stringify([intakeId,otherId])}){const p=closedLoopCore.createBlankState(id);p.job.JOB_TITLE=id;await closedLoopProjectStore.writeProject(p,{expectedProjectRevision:0,createOnly:true});}await closedLoopProjectStore.metaPut('selectedProject',${JSON.stringify(intakeId)});})()`);
-    await openStoredFixture(cdp);await waitExpr(cdp,`closedLoopAppReady===true`,30000);await openStage(cdp,1);
-    await evalValue(cdp,`(()=>{const input=document.querySelector('#stage-files'),dt=new DataTransfer();for(const name of ${JSON.stringify(names)})dt.items.add(new File([name+' exact navigation bytes é🙂'],name+'.txt',{type:'text/plain'}));const native=File.prototype.text;let count=0;globalThis.__intakeWaiting=false;globalThis.__intakeRelease=null;File.prototype.text=async function(){if(this.name==='first.txt'&&count++===0){__intakeWaiting=true;await new Promise(resolve=>__intakeRelease=resolve);}if(this.name===${JSON.stringify(names.at(-1)+'.txt')}&&${JSON.stringify(fails)})throw new Error('CONTROLLED_SECOND_FILE_FAILURE');return native.call(this);};globalThis.__restoreIntakeText=()=>{File.prototype.text=native;};input.files=dt.files;globalThis.__intakeDone=false;globalThis.__intakePending=Promise.resolve(input.onchange({target:input})).finally(()=>{__intakeDone=true;});})()`);
-    await waitExpr(cdp,`__intakeWaiting===true`);
-    let blockedNavigation=null;
-    if(scenario==='revision')await evalValue(cdp,`(async()=>{const p=await closedLoopProjectStore.readProject(${JSON.stringify(intakeId)});p.newerWork='PRESERVE';await closedLoopProjectStore.writeProject(p,{expectedProjectRevision:p.revision});})()`);
-    else if(scenario==='stage')blockedNavigation=await evalValue(cdp,`(()=>{const picker=document.querySelector('#stage-picker'),before=document.querySelector('#current-project-summary')?.dataset?.projectId;const disabled=picker.disabled;picker.value='2';globalThis.__blockedIntakeNavigation=picker.onchange({target:picker});return {disabled,before,currentStage:document.querySelector('#stage-picker')?.value,currentProject:document.querySelector('#current-project-summary')?.dataset?.projectId};})()`);
-    else if(['project','batch-project'].includes(scenario))blockedNavigation=await evalValue(cdp,`(()=>{const picker=document.querySelector('#project-picker'),option=Array.from(picker.options).find(o=>o.textContent===${JSON.stringify(otherId)});if(!option)throw new Error('Missing second project picker option');const disabled=picker.disabled,before=document.querySelector('#current-project-summary')?.dataset?.projectId;picker.value=option.value;globalThis.__blockedIntakeNavigation=picker.onchange({target:picker});return {disabled,before,currentProject:document.querySelector('#current-project-summary')?.dataset?.projectId};})()`);
-    if(blockedNavigation)assert(blockedNavigation.disabled&&blockedNavigation.before===intakeId&&blockedNavigation.currentProject===intakeId,`File intake did not retain exclusive UI ownership: ${JSON.stringify({scenario,blockedNavigation})}`);
-    await evalValue(cdp,`__intakeRelease()`);await waitExpr(cdp,`__intakeDone===true`,30000);if(blockedNavigation)await evalValue(cdp,`Promise.resolve(__blockedIntakeNavigation).then(()=>true)`);await evalValue(cdp,`__restoreIntakeText()`);
-    if(scenario==='stage')await fill(cdp,'#stage-picker','2');
-    else if(['project','batch-project'].includes(scenario))await selectProjectByJobId(cdp,otherId);
-    const proof=await evalValue(cdp,`(async()=>{const store=closedLoopProjectStore,a=await store.readProject(${JSON.stringify(intakeId)}),b=await store.readProject(${JSON.stringify(otherId)}),rows=await store.listArtifacts(a.job.JOB_ID),failed=${JSON.stringify(scenario==='revision'||fails)};return {originalOwner:a.projectData.artifacts.length===(failed?0:${fileCount}),otherProjectUnchanged:b.projectData.artifacts.length===0,cleanup:rows.length===(failed?0:${fileCount}),otherBytesAbsent:(await store.listArtifacts(b.job.JOB_ID)).length===0,originalStage:failed||a.stages[1].authorizedFiles.length===${fileCount},newerWork:${JSON.stringify(scenario)}!=='revision'||a.newerWork==='PRESERVE',selection:${JSON.stringify(['project','batch-project'].includes(scenario))}?(document.querySelector('#current-project-summary')?.dataset?.projectId===b.job.JOB_ID)&&(await store.metaGet('selectedProject'))===b.job.JOB_ID:${JSON.stringify(scenario)}!=='stage'||document.querySelector('#stage-picker')?.value==='2',text:failed||(await Promise.all(rows.map(async r=>a.projectData.userEntered.suppliedArtifactText[r.artifactId].text===await r.blob.text()))).every(Boolean)};})()`);
-    assert(Object.values(proof).every(Boolean),`Real IndexedDB file intake ${scenario} failed: ${JSON.stringify(proof)}`);
-    console.log(JSON.stringify({fileIntakeBrowser:scenario,files:fileCount,blockedNavigation,...proof}));
-  }
-
-  console.log('extra:complete-backup-custody-and-import-commit-boundary');
-  const packageCustodyProof=await evalValue(cdp,`(async()=>{const store=closedLoopProjectStore,engine=closedLoopWorkflowEngine;let p=closedLoopCore.createBlankState('BACKUP-BROWSER-CLOSURE');const fixtureId=engine.allocateId(p,'artifacts',{commandId:'BACKUP-BROWSER-FILE',idempotencyKey:'file'}),row=await store.putArtifact({artifactId:fixtureId,jobId:p.job.JOB_ID,filename:'required.txt',blob:new Blob(['exact required bytes'])});engine.registerArtifactBytes(p,{stage:1,artifactId:row.artifactId,filename:row.filename,byteSize:row.byteSize,sha256:row.sha256,mediaType:row.mediaType,lineage:row.lineage});p=await store.writeProject(p,{expectedProjectRevision:0,createOnly:true});globalThis.__completeBackup=await store.exportPackage(p.job.JOB_ID);const checkpoint=await store.metaGet('lastVerifiedExport:'+p.job.JOB_ID);await store.deleteArtifact(row.artifactId,p.job.JOB_ID);let code='';try{await store.exportPackage(p.job.JOB_ID);}catch(error){code=error.code;}const failedCheckpoint=await store.metaGet('lastVerifiedExport:'+p.job.JOB_ID);return {missingBytesBlocked:code==='PACKAGE_ARTIFACT_CUSTODY_MISMATCH',checkpointPreserved:JSON.stringify(checkpoint)===JSON.stringify(failedCheckpoint),revision:p.revision};})()`);
-  assert(packageCustodyProof.missingBytesBlocked&&packageCustodyProof.checkpointPreserved,`Incomplete backup was marked verified: ${JSON.stringify(packageCustodyProof)}`);
-  // The fault observes a matching successful import response and then fails the
-  // saved-view read. The real imported bytes and public recovery message are checked.
-  const importCommitProof=await evalValue(cdp,`(async()=>{const store=closedLoopProjectStore,input=document.querySelector('#import-file'),dt=new DataTransfer();dt.items.add(new File([__completeBackup],'verified.closed-loop.json.gz',{type:'application/gzip'}));input.files=dt.files;const fault=(${installPostImportRefreshFault.toString()})('BACKUP-BROWSER-CLOSURE');try{await input.onchange({target:input});}finally{fault.restore();}const notice=document.querySelector('#app-live-status')?.textContent||'',p=await store.readProject('BACKUP-BROWSER-CLOSURE'),row=(await store.listArtifacts(p.job.JOB_ID)).find(file=>file.filename==='required.txt');return {...fault.observation,commitAdvanced:p.revision>${packageCustodyProof.revision},bytesRestored:Boolean(row)&&await row.blob.text()==='exact required bytes',selectedCommittedProject:(document.querySelector('#current-project-summary')?.dataset?.projectId===p.job.JOB_ID),truthfulNotice:/imported and saved/.test(notice)&&/refresh/.test(notice)&&/Reload/.test(notice)&&!/rejected|unchanged|without changing|CONTROLLED_/i.test(notice),fileSelectionCleared:input.value===''};})()`);
-  assert(Object.values(importCommitProof).every(Boolean),`Import post-commit failure was misreported: ${JSON.stringify(importCommitProof)}`);
-  await assertInlineError(cdp,'Project package imported and saved');
-  await openStoredFixture(cdp);await waitExpr(cdp,`closedLoopAppReady===true`,30000);
-  assert((await activeProject(cdp)).job.JOB_ID==='BACKUP-BROWSER-CLOSURE','The committed import did not survive reload.');
-  console.log(JSON.stringify({storageReliabilityBrowser:true,...staleCreateProof,...packageCustodyProof,...importCommitProof,importSurvivedReload:true}));
-
-  console.log('extra:project-picker-startup-and-quarantine');
-  // §35.11 recovery scans every summary owner, including metadata without bytes;
-  // §35.2 quarantines any hash mismatch. Picker activation follows store.ready.
-  await evalValue(cdp,`(${prepareStartupPickerFixture.toString()})()`);
-  const startupProbe=await cdp.send('Page.addScriptToEvaluateOnNewDocument',{source:`(${installStartupReadProbe.toString()})()`});
-  await openStoredFixture(cdp);await waitExpr(cdp,`closedLoopAppReady===true`,30000);
-  const {proof:startupProof,readCounts:startupReadCounts}=await evalValue(cdp,`(${observeStartupPickerFixture.toString()})()`);
-  assert(Object.values(startupProof).every(Boolean),'Project picker startup/quarantine failed: '+JSON.stringify(startupProof));console.log(JSON.stringify({projectPickerStartup:startupProof,startupReadCounts}));await cdp.send('Page.removeScriptToEvaluateOnNewDocument',{identifier:startupProbe.identifier});
-
-  console.log('extra:nonblocking-storage-diagnostics');
-  for(const failHealth of [false,true]){
-    const probe=await cdp.send('Page.addScriptToEvaluateOnNewDocument',{source:`(()=>{const nativePersist=navigator.storage.persist.bind(navigator.storage),nativeGet=IDBObjectStore.prototype.get;globalThis.__diagnosticsCalls=0;navigator.storage.persist=async()=>{__diagnosticsCalls++;await new Promise(resolve=>globalThis.__releaseDiagnostics=resolve);return nativePersist();};IDBObjectStore.prototype.get=function(key,...rest){if(${failHealth}&&this.name==='meta'&&key==='lastCommittedRevision')throw new Error('CONTROLLED_HEALTH_METADATA_FAILURE');return nativeGet.call(this,key,...rest);};globalThis.__restoreDiagnostics=()=>{navigator.storage.persist=nativePersist;IDBObjectStore.prototype.get=nativeGet;};})()`});
-    await navigateAndWait(cdp,'Page.reload');await waitExpr(cdp,`closedLoopAppReady===true&&typeof __releaseDiagnostics==='function'`,30000);
-    // The actual complete-export and backup handlers must finish while the
-    // diagnostic persistence/estimate call is deliberately still unresolved.
-    await evalValue(cdp,`(()=>{const click=HTMLAnchorElement.prototype.click;globalThis.__diagnosticsDownloads=[];HTMLAnchorElement.prototype.click=function(){if(this.download)__diagnosticsDownloads.push(this.download);return click.call(this);};globalThis.__diagnosticsExportsDone=false;globalThis.__diagnosticsDuplicateIgnored=false;globalThis.__diagnosticsExportError=null;
-      (async()=>{
-        const first=document.querySelector('#export-project').onclick();
-        const duplicate=document.querySelector('#header-backup-project').onclick();
-        await Promise.all([first,duplicate]);
-        __diagnosticsDuplicateIgnored=__diagnosticsDownloads.length===1;
-        // A pending UI operation owns its controls. The second independent
-        // export begins only after it settles; optional health remains pending.
-        await document.querySelector('#header-backup-project').onclick();
-      })().catch(error=>{__diagnosticsExportError=String(error?.message||error);}).finally(()=>{HTMLAnchorElement.prototype.click=click;__diagnosticsExportsDone=true;});})()`);
-    await waitExpr(cdp,`__diagnosticsExportsDone===true`,30000);
-    assert(await evalValue(cdp,`__diagnosticsCalls===1&&__diagnosticsDuplicateIgnored===true&&__diagnosticsExportError===null&&__diagnosticsDownloads.length===2&&/complete project backup exported/.test(document.querySelector('#app-live-status').textContent)`),'DIAGNOSTICS_UI_SEQUENCE_ORACLE: pending diagnostics must not delay successive exports, repeat a pending UI operation, or report export failure.');
-    await click(cdp,'[data-view="Project"]');
-    await evalValue(cdp,`(async()=>{const input=document.querySelector('[data-job="JOB_TITLE"]');for(let parent=input.parentElement;parent;parent=parent.parentElement)if(parent.tagName==='DETAILS')parent.open=true;input.value='Unsaved diagnostic recovery draft';input.focus();input.setSelectionRange(3,11);globalThis.__diagnosticsInput=input;globalThis.__diagnosticsRenders=0;document.addEventListener('closed-loop-rendered',()=>__diagnosticsRenders++);globalThis.__diagnosticsProject=await closedLoopProjectStore.readProject('STARTUP-BROWSER-0');__releaseDiagnostics();})()`);
-    await waitExpr(cdp,failHealth?`document.querySelector('#storage-status').textContent==='Storage status unavailable.'`:`document.querySelector('#storage-status').textContent===(closedLoopStorageHealth?.persistent===true?'Persistent storage available.':closedLoopStorageHealth?.persistent===false?'Browser storage available. Keep an exported backup.':null)`,30000);
-    const proof=await evalValue(cdp,`(async()=>{const input=document.querySelector('[data-job="JOB_TITLE"]'),health=closedLoopStorageHealth,p=await closedLoopProjectStore.readProject('STARTUP-BROWSER-0'),values=Array.from(document.querySelectorAll('[data-storage-health]')).map(n=>n.textContent),expected=${failHealth}?['UNKNOWN','UNKNOWN','UNKNOWN']:[health.persistent?'PERSISTENT':'NOT PERSISTENT',String(health.usage??'UNKNOWN'),String(health.quota??'UNKNOWN')];return {ready:closedLoopAppReady===true,coalesced:__diagnosticsCalls===1,exports:__diagnosticsDownloads.length===2,formRetained:input===__diagnosticsInput&&input.value==='Unsaved diagnostic recovery draft',focusRetained:document.activeElement===input&&input.selectionStart===3&&input.selectionEnd===11,noRerender:__diagnosticsRenders===0,readings:JSON.stringify(values)===JSON.stringify(expected),canonicalUnchanged:p.projectSha256===__diagnosticsProject.projectSha256};})()`);
-    assert(Object.values(proof).every(Boolean),'Late storage diagnostics disturbed the operator: '+JSON.stringify({failHealth,...proof}));
-    await evalValue(cdp,`__restoreDiagnostics()`);await cdp.send('Page.removeScriptToEvaluateOnNewDocument',{identifier:probe.identifier});
-    console.log(JSON.stringify({nonblockingStorageDiagnostics:failHealth?'failed':'slow',...proof}));
-  }
-
-  console.log('extra:version-one-upgrade-and-blocked-tab-recovery');
-  const versionInfo=await getJson(`http://127.0.0.1:${port}/json/version`),browserCdp=new CDP(versionInfo.webSocketDebuggerUrl);await browserCdp.ready;
-  const upgradeRow=await evalValue(cdp,`(()=>{const p=closedLoopCore.createBlankState('UPGRADE-BROWSER');closedLoopWorkflowEngine.ensureShape(p);closedLoopWorkflowEngine.recalculate(p);return {jobId:p.job.JOB_ID,revision:p.revision||0,project:p,projectSha256:closedLoopProjectStore.projectSha256(p),updatedAt:'2026-09-12T00:00:00.000Z'};})()`);
-  // Version-one artifacts already carried byteSize and sha256. Build through
-  // the storage authority, then transport that exact row into the old schema.
-  // The temporary source row is removed even if fixture serialization fails.
-  const upgradeArtifact=await evalValue(cdp,`(async()=>{const store=closedLoopProjectStore,blob=new Blob(['exact version-one bytes'],{type:'text/plain'});try{const row=await store.putArtifact({artifactId:'UPGRADE-FILE',jobId:'UPGRADE-BROWSER',blob,filename:'old.txt'});return {...row,blob:undefined,bytes:Array.from(new Uint8Array(await row.blob.arrayBuffer()))};}finally{await store.deleteArtifact('UPGRADE-FILE','UPGRADE-BROWSER');}})()`);
-  for(const held of [false,true]){
-    const context=await browserCdp.send('Target.createBrowserContext'),created=await browserCdp.send('Target.createTarget',{url:'about:blank',browserContextId:context.browserContextId}),targets=await getJson(`http://127.0.0.1:${port}/json/list`),targetInfo=targets.find(item=>item.id===created.targetId),upgradeCdp=new CDP(targetInfo.webSocketDebuggerUrl);await upgradeCdp.ready;await upgradeCdp.send('Page.enable');
-    const injection=await upgradeCdp.send('Page.addScriptToEvaluateOnNewDocument',{source:`(()=>{const req=indexedDB.open('closed-loop-reliability',1);req.onupgradeneeded=()=>{const db=req.result;const projects=db.createObjectStore('projects',{keyPath:'jobId'});projects.put(${JSON.stringify(upgradeRow)});projects.put({jobId:'UPGRADE-CORRUPT',revision:0,project:null,projectSha256:'0'.repeat(64)});const artifacts=db.createObjectStore('artifacts',{keyPath:'artifactId'}),{bytes,...artifact}=${JSON.stringify(upgradeArtifact)};artifacts.put({...artifact,blob:new Blob([new Uint8Array(bytes)],{type:artifact.mediaType})});const meta=db.createObjectStore('meta',{keyPath:'key'});meta.put({key:'selectedProject',value:'UPGRADE-BROWSER'});meta.put({key:'retainedProjectSuppressed',value:true});};req.onsuccess=()=>{globalThis.__legacyUpgradeDb=req.result;if(!${held})req.result.onversionchange=()=>req.result.close();};})();`});
-    await navigateAndWait(upgradeCdp,'Page.navigate',{url:PAGE_URL},{allowStartupFailure:held,waitForInteractive:!held});await waitExpr(upgradeCdp,`closedLoopAppReady===true||Boolean(globalThis.closedLoopAppError)`,30000);
-    if(held){assert(await evalValue(upgradeCdp,`/blocked/i.test(closedLoopAppError||'')&&/close.*tabs.*reload/i.test(document.querySelector('#storage-status')?.textContent||'')`),'An older open tab did not report the blocked upgrade and recovery action.');await upgradeCdp.send('Page.removeScriptToEvaluateOnNewDocument',{identifier:injection.identifier});await evalValue(upgradeCdp,`__legacyUpgradeDb.close()`);await navigateAndWait(upgradeCdp,'Page.reload');await waitExpr(upgradeCdp,`closedLoopAppReady===true`,30000);}
-    const proof=await evalValue(upgradeCdp,`(async()=>{
-      const store=closedLoopProjectStore,db=await store.openDatabase(),p=await store.readProject('UPGRADE-BROWSER'),rows=await store.listArtifacts('UPGRADE-BROWSER'),history=await store.historyList(p.job.JOB_ID),summary=(await store.listProjectSummaries()).find(row=>row.job.JOB_ID===p.job.JOB_ID);
-      const quarantined=(await store.listQuarantinedProjects()).find(row=>row.jobId==='UPGRADE-CORRUPT'),preserved=quarantined&&await store.metaGet(quarantined.key);
-      return {
-        ready:closedLoopAppReady===true&&!globalThis.closedLoopAppError&&document.readyState==='complete'&&Boolean(document.querySelector('#app'))&&!document.querySelector('#app').hasAttribute('inert')&&document.querySelector('#app').getAttribute('aria-busy')!=='true',
-        corruptBlocked:Boolean(quarantined?.completeSnapshot&&preserved?.reason==='PROJECT_HASH_MISMATCH'&&preserved.row?.jobId==='UPGRADE-CORRUPT'&&preserved.row.project===null&&preserved.row.projectSha256==='0'.repeat(64)&&Array.isArray(preserved.artifacts)&&await store.readProject('UPGRADE-CORRUPT')===null),
-        version:db.version===2,projectHash:p.projectSha256===${JSON.stringify(upgradeRow.projectSha256)},picker:summary?.revision===p.revision,
-        sessionStart:history.entries.some(entry=>Object.values(history.sessions||{}).some(session=>session.checkpointId===entry.id)),
-        artifact:rows.length===1&&await rows[0].blob.text()==='exact version-one bytes'&&rows[0].byteSize===rows[0].blob.size&&rows[0].sha256===await closedLoopHash.sha256Bytes(rows[0].blob)
-      };
-    })()`);
-    assert(Object.values(proof).every(Boolean),'Version-one upgrade lost data: '+JSON.stringify({held,...proof}));console.log(JSON.stringify({indexedDbVersionOneUpgrade:true,blockedTabRecovery:held,...proof}));upgradeCdp.close();await browserCdp.send('Target.disposeBrowserContext',{browserContextId:context.browserContextId});
-  }
-  browserCdp.close();await cdp.send('Page.bringToFront');
-
-  console.log('extra:delayed-import-activity-preserves-layout');
-  await evalValue(cdp,`(async()=>{globalThis.__activityPackage=await closedLoopProjectStore.exportPackage('STARTUP-BROWSER-0');const node=document.querySelector('#storage-status'),box=node.getBoundingClientRect();globalThis.__activityBox={width:box.width,height:box.height};const original=Worker.prototype.postMessage;globalThis.__restoreActivityWorker=()=>{Worker.prototype.postMessage=original;};Worker.prototype.postMessage=function(message,...args){if(message.method==='IMPORT_PACKAGE'){const worker=this,receive=worker.onmessage;worker.onmessage=event=>{if(event.data?.operationId!==message.operationId||event.data?.buildIdentity!==message.buildIdentity)return receive.call(worker,event);worker.onmessage=receive;let released=false;globalThis.__releaseActivityReply=()=>{if(released)return;released=true;receive.call(worker,event);};};}return original.call(this,message,...args);};const input=document.querySelector('#import-file'),selection=new DataTransfer();selection.items.add(new File([__activityPackage],'activity-backup.closed-loop.json.gz',{type:__activityPackage.type}));input.files=selection.files;globalThis.__activityDone=false;globalThis.__activityImport=input.onchange({target:input}).finally(()=>{__activityDone=true;});})()`);
-  await waitExpr(cdp,`__activityDone===true||(typeof __releaseActivityReply==='function'&&document.querySelector('#storage-status')?.getAttribute('aria-busy')==='true')`,30000);
-  const activityBoundary=await evalValue(cdp,`({done:__activityDone,held:typeof __releaseActivityReply==='function',busy:document.querySelector('#storage-status')?.getAttribute('aria-busy'),notice:document.querySelector('#app-live-status')?.textContent})`);
-  assert(!activityBoundary.done&&activityBoundary.held&&activityBoundary.busy==='true','DELAYED_IMPORT_LOADING_ORACLE: the selected backup must reach a pending import with visible progress: '+JSON.stringify(activityBoundary));
-  const activityProof=await evalValue(cdp,`new Promise(resolve=>{let frames=0,stable=0,previous='';const sample=()=>{const node=document.querySelector('#storage-status'),box=node.getBoundingClientRect(),geometry=JSON.stringify([box.width,box.height]);stable=geometry===previous?stable+1:0;previous=geometry;frames++;if(frames>=4&&stable>=2||frames>=12){const status=document.querySelector('#app-operation-status'),style=getComputedStyle(status),rect=status.getBoundingClientRect();resolve({settled:frames>=4&&stable>=2,operation:node.getAttribute('data-operation')==='Importing and verifying package',width:Math.abs(box.width-__activityBox.width)<0.1,height:Math.abs(box.height-__activityBox.height)<0.1,pending:!__activityDone,locked:document.querySelector('#import-file').disabled,visible:!status.hidden&&style.display!=='none'&&style.visibility!=='hidden'&&rect.width>0&&rect.height>0});}else requestAnimationFrame(sample);};requestAnimationFrame(sample);})`);
-  assert(Object.values(activityProof).every(Boolean),'Delayed activity changed layout or misreported state: '+JSON.stringify(activityProof));await evalValue(cdp,`__restoreActivityWorker();__releaseActivityReply();`);await waitExpr(cdp,`__activityDone===true`,30000);assert(await evalValue(cdp,`!document.querySelector('#storage-status').hasAttribute('aria-busy')&&!document.querySelector('#storage-status').hasAttribute('data-operation')`),'Completed import left a busy signal behind.');console.log(JSON.stringify({delayedImportActivity:activityProof,clearedAfterCompletion:true}));
-
-  // Synthetic accepted-definition setup isolates the real worker transfer boundary; it is not Stage6 admission evidence.
-  console.log('extra:native-worker-owned-inputs');
-  const nativeWorkerProof=await evalValue(cdp,`(async()=>{const runtime=closedLoopTestRuntime,bytes=new TextEncoder().encode('{"records":[1,2]}'),test={TEST_ID:'NATIVE-BROWSER-TRANSFER',EXECUTION_MODE:'APPLICATION_DETERMINISTIC',REQUIRED_CAPABILITY:runtime.CAPABILITY,EXECUTABLE_KIND:'TEST_IR',EXECUTABLE_SPEC_VERSION:runtime.SPEC_VERSION,EXECUTABLE_INPUT_BINDINGS:{PRODUCT:'NATIVE-BROWSER-FILE'},EXECUTABLE_SPEC:{version:runtime.SPEC_VERSION,steps:[{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'DECODE_UTF8'},{op:'PARSE_JSON'},{op:'SELECT_JSON_PATH',path:'$.records'},{op:'COUNT'},{op:'ASSERT_EQ',value:2}]}},sha256=await closedLoopHash.sha256Bytes(bytes);test.source='SYNTHETIC_NATIVE_BROWSER_FIXTURE';test.EXECUTABLE_SPEC_SHA256=closedLoopHash.sha256Value(runtime.normalizeSpec(test.EXECUTABLE_SPEC));const result=await runtime.executeTest(test,{PRODUCT:{artifactId:'NATIVE-BROWSER-FILE',filename:'data.json',sha256,bytes}},{},{transferInputBuffers:true});const runtimeUrl=new URL(Array.from(document.scripts).find(script=>new URL(script.src||location.href).pathname.endsWith('/test-runtime.js')).src),expected=runtimeUrl.searchParams.get('workerSha256');return {detached:bytes.byteLength===0,complete:result.status==='COMPLETE',satisfied:result.determination==='SATISFIED',identity:expected?result.runtimeBuildIdentity===runtimeUrl.searchParams.get('v')&&result.testWorkerSha256===expected&&result.workerProtocolVersion==='closed-loop-test-worker-protocol/1':result.runtimeBuildIdentity==='UNMANIFESTED_LOCAL_RUNTIME',failure:result.failure||null};})()`);
-  assert(nativeWorkerProof.detached&&nativeWorkerProof.complete&&nativeWorkerProof.satisfied&&nativeWorkerProof.identity,'Native worker buffer transfer failed: '+JSON.stringify(nativeWorkerProof));console.log(JSON.stringify({nativeWorkerOwnedInput:nativeWorkerProof}));
-
-  const nativeBrowserCommand=await evalValue(cdp,`(${verifyTestIrNativeBrowserCommand.toString()})(${routingFixture.toString()})`);
-  assert(nativeBrowserCommand.passed,'Native browser command did not finish');console.log(JSON.stringify({nativeBrowserCommand}));
-
-  console.log('extra:worker-save-heartbeat-and-commit-recovery');
-  const workerProof=await evalValue(cdp,`(async()=>{const store=closedLoopProjectStore,engine=closedLoopWorkflowEngine,p=closedLoopCore.createBlankState('WORKER-BROWSER-PRESSURE');p.projectData.rawResponses=Array.from({length:100},(_,i)=>({rawResponseId:'WORKER-RAW-'+i,stage:1,status:'PRESERVED',rawText:'H'.repeat(80000)+'é🙂'}));engine.ensureShape(p);engine.recalculate(p);let ticks=0,maxGap=0,last=performance.now(),messages=0;const native=Worker.prototype.postMessage;Worker.prototype.postMessage=function(message,...rest){if(message.method==='WRITE_PROJECT')messages++;return native.call(this,message,...rest);};const timer=setInterval(()=>{const now=performance.now();ticks++;maxGap=Math.max(maxGap,now-last);last=now;},8);let saved;try{saved=await store.writeProject(p,{expectedProjectRevision:0,createOnly:true,selectProject:false});}finally{clearInterval(timer);Worker.prototype.postMessage=native;}const actual=await store.readProject(p.job.JOB_ID),sameDigest=saved.projectSha256===actual.projectSha256;await store.removeProject(p.job.JOB_ID);return {workerUsed:messages===1,uiHeartbeat:ticks>0,timerTicks:ticks,maxTimerGapMs:Math.round(maxGap),sameDigest};})()`);
-  assert(workerProof.workerUsed&&workerProof.uiHeartbeat&&workerProof.sameDigest,`Worker save did not preserve its identity and UI scheduling: ${JSON.stringify(workerProof)}`);
-  const workerRecovery=await evalValue(cdp,`(async()=>{const store=closedLoopProjectStore,native=Worker.prototype.postMessage;let dropped=false;Worker.prototype.postMessage=function(message,...rest){if(message.method==='WRITE_PROJECT'&&message.args[0]?.job?.JOB_ID==='WORKER-BROWSER-LOST'){this.onmessage=()=>{dropped=true;this.onerror({message:'CONTROLLED_LOST_WORKER_ACK'});};}return native.call(this,message,...rest);};let saved;try{saved=await store.writeProject(closedLoopCore.createBlankState('WORKER-BROWSER-LOST'),{expectedProjectRevision:0,createOnly:true,selectProject:false});}finally{Worker.prototype.postMessage=native;}const actual=await store.readProject(saved.job.JOB_ID);return {dropped,committedOnce:actual.revision===1&&saved.revision===1,sameDigest:actual.projectSha256===saved.projectSha256};})()`);
-  assert(Object.values(workerRecovery).every(Boolean),`Lost worker acknowledgement changed the commit outcome: ${JSON.stringify(workerRecovery)}`);
-  console.log(JSON.stringify({storageWorkerBrowser:true,...workerProof,...workerRecovery}));
-
-  console.log('extra:prompt-context-read-snapshot');
-  const contextReadProof=await evalValue(cdp,`(async()=>{
-    const store=closedLoopProjectStore,hash=closedLoopHash,jobId='CONTEXT-BROWSER-READS',files=[];
-    await store.writeProject(closedLoopCore.createBlankState(jobId),{expectedProjectRevision:0,createOnly:true,selectProject:false});
-    const db=await store.openDatabase(),seed=db.transaction('artifacts','readwrite');
-    const seeded=new Promise((resolve,reject)=>{seed.oncomplete=resolve;seed.onabort=seed.onerror=()=>reject(seed.error||new Error('Context fixture staging failed.'));});
-    for(let i=0;i<129;i++){
-      const text='Exact context '+i+' é🙂',blob=new Blob([text]),sha256=hash.sha256Text(text),artifactId='PROMPT-CONTEXT-'+hash.sha256Value({jobId,sha256});
-      const file={path:'context-'+i+'.json',filename:'context-'+i+'.json',mediaType:'application/json',sha256,byteSize:blob.size};files.push(file);
-      seed.objectStore('artifacts').put({artifactId,jobId,blob,...file});
-    }
-    await seeded;
-    const record={contextManifest:{promptContext:{attachments:[...files,...files]}}},project={job:{JOB_ID:jobId}},nativeGet=IDBObjectStore.prototype.get,nativeTransaction=IDBDatabase.prototype.transaction;
-    let reads=0,transactions=0,pending=0,maxPending=0;
-    IDBDatabase.prototype.transaction=function(names,mode,...rest){const tx=nativeTransaction.call(this,names,mode,...rest);if(mode==='readonly'&&tx.objectStoreNames.contains('artifacts'))transactions++;return tx;};
-    IDBObjectStore.prototype.get=function(key){const request=nativeGet.call(this,key);if(this.name==='artifacts'){reads++;maxPending=Math.max(maxPending,++pending);const done=()=>pending--;request.addEventListener('success',done,{once:true});request.addEventListener('error',done,{once:true});}return request;};
-    try{await store.persistPromptContextFiles(record,project);}finally{IDBObjectStore.prototype.get=nativeGet;IDBDatabase.prototype.transaction=nativeTransaction;}
-    // Abort after some requests have been queued. Every rejection must be
-    // handled; the same production preparation must reject before any write.
-    let abortReads=0,aborted=false;
-    IDBObjectStore.prototype.get=function(key){const request=nativeGet.call(this,key);if(this.name==='artifacts'&&++abortReads===17)this.transaction.abort();return request;};
-    try{await store.persistPromptContextFiles(record,project);}catch(error){aborted=true;}finally{IDBObjectStore.prototype.get=nativeGet;}
-    const available=(await store.listArtifacts(jobId)).length;
-    await store.removeProject(jobId);
-    return {references:258,uniqueFiles:129,reads,transactions,maxPending,pending,aborted,available};
-  })()`);
-  assert(contextReadProof.reads===129&&contextReadProof.transactions===1&&contextReadProof.maxPending<=64&&contextReadProof.pending===0&&contextReadProof.aborted&&contextReadProof.available===129,'Prompt context reads lost bounded snapshot/error behavior: '+JSON.stringify(contextReadProof));
-  const contextSaveProof=await evalValue(cdp,`(async()=>{
-    const store=closedLoopProjectStore,engine=closedLoopWorkflowEngine,prompts=closedLoopPromptEngine,p=closedLoopCore.createBlankState('CONTEXT-BROWSER-SAVE');engine.ensureShape(p);engine.recalculate(p);
-    p.job.EXACT_USER_OBJECTIVE_VERBATIM='Preserve saved context. '.repeat(4000)+'é🙂 FINAL TAIL';
-    for(let i=0;i<16;i++)p.projectData.generatedPrompts.push(prompts.buildPromptRecord(1,p,{operation:'COMPLETE',scope:{projectRevision:i+1}}));
-    await store.persistPromptContextFiles(p.projectData.generatedPrompts[0],p);
-    const saved=await store.writeProject(p,{expectedProjectRevision:0,createOnly:true,selectProject:false}),actual=await store.readProject(p.job.JOB_ID),rows=await store.listArtifacts(p.job.JOB_ID);
-    const shared=rows.length===1,preserved=JSON.stringify(actual.projectData.generatedPrompts)===JSON.stringify(p.projectData.generatedPrompts),identity=saved.projectSha256===actual.projectSha256;
-    const historyBefore=JSON.stringify(await store.historyList(p.job.JOB_ID)),db=await store.openDatabase(),row=await new Promise((resolve,reject)=>{const read=db.transaction('artifacts','readonly').objectStore('artifacts').get(rows[0].artifactId);read.onsuccess=()=>resolve(read.result);read.onerror=()=>reject(read.error);}),damage=db.transaction('artifacts','readwrite'),damaged=new Promise((resolve,reject)=>{damage.oncomplete=resolve;damage.onabort=damage.onerror=()=>reject(damage.error);});damage.objectStore('artifacts').put({...row,byteSize:row.byteSize+1});await damaged;
-    let rejected=false,unchanged=false;
-    try{
-      try{await store.writeProject(actual,{expectedProjectRevision:actual.revision,selectProject:false});}catch(error){rejected=error.code==='PROMPT_CONTEXT_INTEGRITY_FAILED';}
-      unchanged=(await store.readProject(p.job.JOB_ID)).projectSha256===saved.projectSha256;
-    }finally{
-      // Removal promises recovery, so its checkpoint must see the original
-      // verified bytes after this disposable fault, even if an assertion fails.
-      const repair=db.transaction('artifacts','readwrite'),repaired=new Promise((resolve,reject)=>{repair.oncomplete=resolve;repair.onabort=repair.onerror=()=>reject(repair.error);});repair.objectStore('artifacts').put(row);await repaired;
-    }
-    const restored=await store.getArtifact(row.artifactId),faultRestored=restored?.byteSize===row.byteSize&&restored.sha256===row.sha256&&await closedLoopHash.sha256Bytes(restored.blob)===row.sha256;
-    const historyUnchanged=JSON.stringify(await store.historyList(p.job.JOB_ID))===historyBefore;
-    await store.removeProject(p.job.JOB_ID);
-    return {shared,preserved,identity,rejected,unchanged,faultRestored,historyUnchanged};
-  })()`);
-  assert(Object.values(contextSaveProof).every(Boolean),'Worker save reused context verification or changed historical bytes: '+JSON.stringify(contextSaveProof));
-  console.log(JSON.stringify({promptContextReadSnapshot:contextReadProof,promptContextWorkerSave:contextSaveProof}));
-
+  finishScenario("cross-stage-review-correction",{stages:crossReviewStages});
   console.log('extra:accumulated-stage04-startup-views-and-exports');
   const accumulatedIdentity=await evalValue(cdp,`(async()=>{${fixtureFunctions}\n${accumulatedStage04Fixture.toString()}\n${runtimeBindings}runtime.store=closedLoopProjectStore;const saved=await accumulatedStage04Fixture(runtime,{jobId:'ACCUMULATED-BROWSER-STAGE4',attempts:2,responseCharacters:128,persistTransitions:true});return {sha256:saved.projectSha256,revision:saved.revision,project:saved};})()`);
   const accumulationProbe=await cdp.send('Page.addScriptToEvaluateOnNewDocument',{source:`(()=>{const Encoder=TextEncoder;let encodes=0,characters=0;globalThis.TextEncoder=class extends Encoder{encode(text){encodes++;characters+=String(text).length;return super.encode(text);}};document.addEventListener('closed-loop-rendered',()=>{globalThis.__accumulationStartup={milliseconds:performance.now(),encodes,characters};globalThis.TextEncoder=Encoder;},{once:true});})();`});
@@ -837,7 +779,8 @@ async function main(){
   assert(accumulatedStartup.encodes<=Math.ceil(accumulatedStartup.characters/1024)+1024,'Accumulated browser startup recreated fragment-sized buffers: '+JSON.stringify(accumulatedStartup));
   assert(accumulatedStartup.milliseconds<10000&&accumulatedStartup.previewCharacters<=65536,'Accumulated Chromium startup exceeded its 10-second regression ceiling or expanded the full instruction into the DOM: '+JSON.stringify(accumulatedStartup));
   await cdp.send('Page.removeScriptToEvaluateOnNewDocument',{identifier:accumulationProbe.identifier});
-  for(const view of ['Overview','Project','Records','Files','Release','Workflow']){await click(cdp,`#view-tabs [data-view="${view}"]`);assert(await evalValue(cdp,`document.querySelector('#screen').children.length>0`),`Accumulated ${view} view did not render.`);}
+  const accumulatedViews=[];
+  for(const view of ['Overview','Project','Records','Files','Release','Workflow']){await click(cdp,`#view-tabs [data-view="${view}"]`);assert(await evalValue(cdp,`document.querySelector('#screen').children.length>0`),`Accumulated ${view} view did not render.`);accumulatedViews.push(view);}
   await evalValue(cdp,`(()=>{globalThis.__accumulationDownloads=[];globalThis.__accumulationCreateUrl=URL.createObjectURL;URL.createObjectURL=blob=>{const url=__accumulationCreateUrl(blob);__accumulationDownloads.push(blob);return url;};})()`);
   const accumulatedHandoff=await exportStagePackage(cdp);assert(Number(accumulatedHandoff.manifest.stage)===4&&accumulatedHandoff.handoffDecisions.some(row=>row.purposes.includes('DISCLOSURE_AUTHORIZATION')),'Accumulated Stage 04 package lacked its exact synthetic disclosure decision.');await waitExpr(cdp,`__accumulationDownloads.length===1`,30000);
   await click(cdp,'#project-actions-toggle');await click(cdp,'#export-project');await waitExpr(cdp,`__accumulationDownloads.length===2`,30000);
@@ -845,6 +788,8 @@ async function main(){
   assert(accumulatedRoundTrip.instructionVerified&&accumulatedRoundTrip.acceptedDataUnchanged&&accumulatedRoundTrip.humanDecisionPrefixPreserved&&accumulatedRoundTrip.humanDecisionAppendAuthorized&&accumulatedRoundTrip.handoffContextValid&&accumulatedRoundTrip.authoredStagesUnchanged&&accumulatedRoundTrip.retainedPromptBytes&&accumulatedRoundTrip.historyPrefixPreserved&&accumulatedRoundTrip.allocationPrefixPreserved&&accumulatedRoundTrip.restoredProjectDataExact&&accumulatedRoundTrip.restoredAuthoredStagesExact&&accumulatedRoundTrip.tailPreserved&&accumulatedRoundTrip.restoredDigest,'Accumulated Stage 04 exports/restore changed exact retained data: '+JSON.stringify(accumulatedRoundTrip));
   console.log(JSON.stringify({accumulatedStage04:{startup:accumulatedStartup,roundTrip:accumulatedRoundTrip,views:6,failedAttempts:2,responseCharacters:128}}));
 
+  const accumulatedCounts=(()=>{const project=accumulatedIdentity.project;return project.projectData.rawResponses.map(row=>String(row.completeRawResponse||'')).filter(text=>/^Invalid response \d+: /.test(text)).map(text=>/^Invalid response \d+: (X*) é🙂 ACCUMULATION-TAIL-\d+$/.exec(text)?.[1].length);})();
+  finishScenario("accumulated-stage04-startup-views-and-exports",{attempts:accumulatedCounts.length,responseCharacters:accumulatedCounts,views:accumulatedViews.length});
   console.log('extra:large-response-history-handoff-and-ui-restore');
   const largeHistory=await evalValue(cdp,`(async()=>{${fixtureFunctions}\n${accumulatedStage04Fixture.toString()}\n${runtimeBindings}runtime.store=closedLoopProjectStore;const saved=await accumulatedStage04Fixture(runtime,{jobId:'LARGE-RESPONSE-HISTORY',attempts:3,responseCharacters:256,persistTransitions:true});return {project:saved,revision:saved.revision,rawResponses:saved.projectData.rawResponses.length,generatedPrompts:saved.projectData.generatedPrompts.length,rawCharacters:saved.projectData.rawResponses.reduce((n,r)=>n+String(r.completeRawResponse||'').length,0)};})()`);
   const largeProbe=await cdp.send('Page.addScriptToEvaluateOnNewDocument',{source:`document.addEventListener('closed-loop-rendered',()=>{globalThis.__largeHistoryReady=performance.now();},{once:true});`});
@@ -861,6 +806,8 @@ async function main(){
 
   // Large context assembly and read bounds execute in verify-project-lifecycle-full.mjs.
 
+  const largeCounts=(()=>{const project=largeHistory.project;return project.projectData.rawResponses.map(row=>String(row.completeRawResponse||'')).filter(text=>/^Invalid response \d+: /.test(text)).map(text=>/^Invalid response \d+: (X*) é🙂 ACCUMULATION-TAIL-\d+$/.exec(text)?.[1].length);})();
+  finishScenario("large-response-history-handoff-and-ui-restore",{attempts:largeCounts.length,responseCharacters:largeCounts});
   console.log('extra:backup-projection-validation-and-ui-restore');
   const projectionRestore=await evalValue(cdp,`(async()=>{
     const store=closedLoopProjectStore,p=closedLoopCore.createBlankState('SAVED-PROJECTION-BROWSER');
@@ -887,13 +834,173 @@ async function main(){
   assert(projectionRestore.restored&&projectionRestore.originalPreserved&&projectionRestore.currentStage==='STAGE 01'&&!projectionRestore.fabricatedCompletion&&projectionRestore.historyReadable&&projectionRestore.successVisible&&projectionRestore.progress==='0/30 complete'&&projectionRestore.selected&&projectionRestore.tailPreserved,'IMPORT_PROJECTION_RESTORE_ORACLE: compatible backup did not restore exact data and a usable view: '+JSON.stringify(projectionRestore));
   console.log(JSON.stringify({savedProjectionRestore:projectionRestore}));
 
+  finishScenario("backup-projection-validation-and-ui-restore",{executions:1});
+  }
+  if(laneId==="lane4"){
+  console.log('extra:file-intake-navigation-and-rollback');
+  const intakePopulations=[];
+  for(const scenario of ['project','stage','revision','second-file-failure','batch-project','last-file-failure']){
+    // Browser coverage is deliberately fixed and small. Large batch/allocation
+    // behavior is covered by the non-browser intake regressions; this gate proves
+    // real controls, IndexedDB bytes, operation ownership and rollback.
+    const intakeId='INTAKE-BROWSER-'+scenario,otherId=intakeId+'-OTHER',fileCount=['batch-project','last-file-failure'].includes(scenario)?8:2,names=Array.from({length:fileCount},(_,i)=>i===0?'first':i===1?'second':'file-'+i),fails=['second-file-failure','last-file-failure'].includes(scenario);
+    await evalValue(cdp,`(async()=>{for(const id of ${JSON.stringify([intakeId,otherId])}){const p=closedLoopCore.createBlankState(id);p.job.JOB_TITLE=id;await closedLoopProjectStore.writeProject(p,{expectedProjectRevision:0,createOnly:true});}await closedLoopProjectStore.metaPut('selectedProject',${JSON.stringify(intakeId)});})()`);
+    await openStoredFixture(cdp);await waitExpr(cdp,`closedLoopAppReady===true`,30000);await openStage(cdp,1);
+    await evalValue(cdp,`(()=>{const input=document.querySelector('#stage-files'),dt=new DataTransfer();for(const name of ${JSON.stringify(names)})dt.items.add(new File([name+' exact navigation bytes é🙂'],name+'.txt',{type:'text/plain'}));const native=File.prototype.text;let count=0;globalThis.__intakeWaiting=false;globalThis.__intakeRelease=null;File.prototype.text=async function(){if(this.name==='first.txt'&&count++===0){__intakeWaiting=true;await new Promise(resolve=>__intakeRelease=resolve);}if(this.name===${JSON.stringify(names.at(-1)+'.txt')}&&${JSON.stringify(fails)})throw new Error('CONTROLLED_SECOND_FILE_FAILURE');return native.call(this);};globalThis.__restoreIntakeText=()=>{File.prototype.text=native;};input.files=dt.files;globalThis.__intakeDone=false;globalThis.__intakePending=Promise.resolve(input.onchange({target:input})).finally(()=>{__intakeDone=true;});})()`);
+    await waitExpr(cdp,`__intakeWaiting===true`);
+    let blockedNavigation=null;
+    if(scenario==='revision')await evalValue(cdp,`(async()=>{const p=await closedLoopProjectStore.readProject(${JSON.stringify(intakeId)});p.newerWork='PRESERVE';await closedLoopProjectStore.writeProject(p,{expectedProjectRevision:p.revision});})()`);
+    else if(scenario==='stage')blockedNavigation=await evalValue(cdp,`(()=>{const picker=document.querySelector('#stage-picker'),before=document.querySelector('#current-project-summary')?.dataset?.projectId;const disabled=picker.disabled;picker.value='2';globalThis.__blockedIntakeNavigation=picker.onchange({target:picker});return {disabled,before,currentStage:document.querySelector('#stage-picker')?.value,currentProject:document.querySelector('#current-project-summary')?.dataset?.projectId};})()`);
+    else if(['project','batch-project'].includes(scenario))blockedNavigation=await evalValue(cdp,`(()=>{const picker=document.querySelector('#project-picker'),option=Array.from(picker.options).find(o=>o.textContent===${JSON.stringify(otherId)});if(!option)throw new Error('Missing second project picker option');const disabled=picker.disabled,before=document.querySelector('#current-project-summary')?.dataset?.projectId;picker.value=option.value;globalThis.__blockedIntakeNavigation=picker.onchange({target:picker});return {disabled,before,currentProject:document.querySelector('#current-project-summary')?.dataset?.projectId};})()`);
+    if(blockedNavigation)assert(blockedNavigation.disabled&&blockedNavigation.before===intakeId&&blockedNavigation.currentProject===intakeId,`File intake did not retain exclusive UI ownership: ${JSON.stringify({scenario,blockedNavigation})}`);
+    await evalValue(cdp,`__intakeRelease()`);await waitExpr(cdp,`__intakeDone===true`,30000);if(blockedNavigation)await evalValue(cdp,`Promise.resolve(__blockedIntakeNavigation).then(()=>true)`);await evalValue(cdp,`__restoreIntakeText()`);
+    if(scenario==='stage')await fill(cdp,'#stage-picker','2');
+    else if(['project','batch-project'].includes(scenario))await selectProjectByJobId(cdp,otherId);
+    const proof=await evalValue(cdp,`(async()=>{const store=closedLoopProjectStore,a=await store.readProject(${JSON.stringify(intakeId)}),b=await store.readProject(${JSON.stringify(otherId)}),rows=await store.listArtifacts(a.job.JOB_ID),failed=${JSON.stringify(scenario==='revision'||fails)};return {originalOwner:a.projectData.artifacts.length===(failed?0:${fileCount}),otherProjectUnchanged:b.projectData.artifacts.length===0,cleanup:rows.length===(failed?0:${fileCount}),otherBytesAbsent:(await store.listArtifacts(b.job.JOB_ID)).length===0,originalStage:failed||a.stages[1].authorizedFiles.length===${fileCount},newerWork:${JSON.stringify(scenario)}!=='revision'||a.newerWork==='PRESERVE',selection:${JSON.stringify(['project','batch-project'].includes(scenario))}?(document.querySelector('#current-project-summary')?.dataset?.projectId===b.job.JOB_ID)&&(await store.metaGet('selectedProject'))===b.job.JOB_ID:${JSON.stringify(scenario)}!=='stage'||document.querySelector('#stage-picker')?.value==='2',text:failed||(await Promise.all(rows.map(async r=>a.projectData.userEntered.suppliedArtifactText[r.artifactId].text===await r.blob.text()))).every(Boolean)};})()`);
+    assert(Object.values(proof).every(Boolean),`Real IndexedDB file intake ${scenario} failed: ${JSON.stringify(proof)}`);
+    intakePopulations.push({scenario,files:fileCount});
+    console.log(JSON.stringify({fileIntakeBrowser:scenario,files:fileCount,blockedNavigation,...proof}));
+  }
+
+  finishScenario("file-intake-navigation-and-rollback",{scenarios:intakePopulations.map(row=>row.scenario),files:intakePopulations.map(row=>row.files)});
+  console.log('extra:complete-backup-custody-and-import-commit-boundary');
+  const packageCustodyProof=await evalValue(cdp,`(async()=>{const store=closedLoopProjectStore,engine=closedLoopWorkflowEngine;let p=closedLoopCore.createBlankState('BACKUP-BROWSER-CLOSURE');const fixtureId=engine.allocateId(p,'artifacts',{commandId:'BACKUP-BROWSER-FILE',idempotencyKey:'file'}),row=await store.putArtifact({artifactId:fixtureId,jobId:p.job.JOB_ID,filename:'required.txt',blob:new Blob(['exact required bytes'])});engine.registerArtifactBytes(p,{stage:1,artifactId:row.artifactId,filename:row.filename,byteSize:row.byteSize,sha256:row.sha256,mediaType:row.mediaType,lineage:row.lineage});p=await store.writeProject(p,{expectedProjectRevision:0,createOnly:true});globalThis.__completeBackup=await store.exportPackage(p.job.JOB_ID);const checkpoint=await store.metaGet('lastVerifiedExport:'+p.job.JOB_ID);await store.deleteArtifact(row.artifactId,p.job.JOB_ID);let code='';try{await store.exportPackage(p.job.JOB_ID);}catch(error){code=error.code;}const failedCheckpoint=await store.metaGet('lastVerifiedExport:'+p.job.JOB_ID);return {missingBytesBlocked:code==='PACKAGE_ARTIFACT_CUSTODY_MISMATCH',checkpointPreserved:JSON.stringify(checkpoint)===JSON.stringify(failedCheckpoint),revision:p.revision};})()`);
+  assert(packageCustodyProof.missingBytesBlocked&&packageCustodyProof.checkpointPreserved,`Incomplete backup was marked verified: ${JSON.stringify(packageCustodyProof)}`);
+  // The fault observes a matching successful import response and then fails the
+  // saved-view read. The real imported bytes and public recovery message are checked.
+  const importCommitProof=await evalValue(cdp,`(async()=>{const store=closedLoopProjectStore,input=document.querySelector('#import-file'),dt=new DataTransfer();dt.items.add(new File([__completeBackup],'verified.closed-loop.json.gz',{type:'application/gzip'}));input.files=dt.files;const fault=(${installPostImportRefreshFault.toString()})('BACKUP-BROWSER-CLOSURE');try{await input.onchange({target:input});}finally{fault.restore();}const notice=document.querySelector('#app-live-status')?.textContent||'',p=await store.readProject('BACKUP-BROWSER-CLOSURE'),row=(await store.listArtifacts(p.job.JOB_ID)).find(file=>file.filename==='required.txt');return {...fault.observation,commitAdvanced:p.revision>${packageCustodyProof.revision},bytesRestored:Boolean(row)&&await row.blob.text()==='exact required bytes',selectedCommittedProject:(document.querySelector('#current-project-summary')?.dataset?.projectId===p.job.JOB_ID),truthfulNotice:/imported and saved/.test(notice)&&/refresh/.test(notice)&&/Reload/.test(notice)&&!/rejected|unchanged|without changing|CONTROLLED_/i.test(notice),fileSelectionCleared:input.value===''};})()`);
+  assert(Object.values(importCommitProof).every(Boolean),`Import post-commit failure was misreported: ${JSON.stringify(importCommitProof)}`);
+  await assertInlineError(cdp,'Project package imported and saved');
+  await openStoredFixture(cdp);await waitExpr(cdp,`closedLoopAppReady===true`,30000);
+  assert((await activeProject(cdp)).job.JOB_ID==='BACKUP-BROWSER-CLOSURE','The committed import did not survive reload.');
+  console.log(JSON.stringify({storageReliabilityBrowserPart:{packageCustodyProof,importCommitProof,importSurvivedReload:true}}));
+
+  finishScenario("complete-backup-custody-and-import-commit-boundary",{executions:1});
+  console.log('extra:project-picker-startup-and-quarantine');
+  // §35.11 recovery scans every summary owner, including metadata without bytes;
+  // §35.2 quarantines any hash mismatch. Picker activation follows store.ready.
+  const mixedDescriptor=await evalValue(cdp,`(async()=>{${fixtureFunctions}\n${runtimeBindings}return (${prepareMixedRecoveryFixture.toString()})(id=>stage04AcceptanceFixture(runtime,id), (project,prompt)=>stage04AcceptanceEnvelope(runtime,project,prompt),id=>(${buildSourceBearingStage04Fixture.toString()})(runtime,id,stage02AcceptanceFixture,recordProposal,acceptPrerequisite));})()`);
+  const mixedExpected=await evalValue(cdp,`(${collectMixedRecoverySnapshot.toString()})(${JSON.stringify(mixedDescriptor)})`);
+  await evalValue(cdp,`(${prepareStartupPickerFixture.toString()})()`);
+  const startupPopulation=await evalValue(cdp,`(async()=>{const summaries=await closedLoopProjectStore.listProjectSummaries(),large=await closedLoopProjectStore.readProject('STARTUP-BROWSER-49');return {validOwners:summaries.filter(row=>row.job.JOB_ID.startsWith('STARTUP-BROWSER-')).length,corruptOwners:summaries.filter(row=>row.job.JOB_ID==='STARTUP-RECOVERY-CORRUPT').length,archiveRows:large.projectData.rawResponses.length,archiveCodeUnits:large.projectData.rawResponses.map(row=>row.rawText.indexOf('é🙂TAIL'))};})()`);
+  const startupProbe=await cdp.send('Page.addScriptToEvaluateOnNewDocument',{source:`(${installStartupReadProbe.toString()})()`});
+  await openStoredFixture(cdp);await waitExpr(cdp,`closedLoopAppReady===true`,30000);
+  const startupPicker=await evalValue(cdp,`(${observeStartupPickerFixture.toString()})()`);const {proof:startupProof,readCounts:startupReadCounts}=startupPicker;
+  assert(Object.values(startupProof).every(Boolean),'Project picker startup/quarantine failed: '+JSON.stringify(startupProof));console.log(JSON.stringify({projectPickerStartup:startupProof,startupReadCounts}));await cdp.send('Page.removeScriptToEvaluateOnNewDocument',{identifier:startupProbe.identifier});
+  const mixedRecovery=await evalValue(cdp,`(${observeMixedRecoveryFixture.toString()})(${JSON.stringify(mixedExpected)},${collectMixedRecoverySnapshot.toString()},${compareMixedRecoverySnapshots.toString()},${JSON.stringify(startupPicker)})`);
+  assert(Object.values(mixedRecovery.proof).every(value=>value===true),'MIXED_RECOVERY_EQUIVALENCE_ORACLE: '+JSON.stringify(mixedRecovery));
+  console.log(JSON.stringify({mixedStoreRecovery:mixedRecovery}));
+
+  finishScenario("project-picker-startup-and-quarantine",{validOwners:startupPopulation.validOwners,corruptOwners:startupPopulation.corruptOwners,archiveRows:startupPopulation.archiveRows,archiveCodeUnits:startupPopulation.archiveCodeUnits.every(n=>n===80000)?startupPopulation.archiveCodeUnits[0]:null,postStartupCorruption:Number(startupPicker.proof.corruptBlocked&&startupPicker.proof.corruptQuarantined),...mixedRecovery.population});
+  console.log('extra:nonblocking-storage-diagnostics');
+  const diagnosticPopulations=[];
+  for(const failHealth of [false,true]){
+    const probe=await cdp.send('Page.addScriptToEvaluateOnNewDocument',{source:`(()=>{const nativePersist=navigator.storage.persist.bind(navigator.storage),nativeGet=IDBObjectStore.prototype.get;globalThis.__diagnosticsCalls=0;navigator.storage.persist=async()=>{__diagnosticsCalls++;await new Promise(resolve=>globalThis.__releaseDiagnostics=resolve);return nativePersist();};IDBObjectStore.prototype.get=function(key,...rest){if(${failHealth}&&this.name==='meta'&&key==='lastCommittedRevision')throw new Error('CONTROLLED_HEALTH_METADATA_FAILURE');return nativeGet.call(this,key,...rest);};globalThis.__restoreDiagnostics=()=>{navigator.storage.persist=nativePersist;IDBObjectStore.prototype.get=nativeGet;};})()`});
+    await navigateAndWait(cdp,'Page.reload');await waitExpr(cdp,`closedLoopAppReady===true&&typeof __releaseDiagnostics==='function'`,30000);
+    // The actual complete-export and backup handlers must finish while the
+    // diagnostic persistence/estimate call is deliberately still unresolved.
+    await evalValue(cdp,`(()=>{const click=HTMLAnchorElement.prototype.click;globalThis.__diagnosticsDownloads=[];HTMLAnchorElement.prototype.click=function(){if(this.download)__diagnosticsDownloads.push(this.download);return click.call(this);};globalThis.__diagnosticsExportsDone=false;globalThis.__diagnosticsDuplicateIgnored=false;globalThis.__diagnosticsExportError=null;
+      (async()=>{
+        const first=document.querySelector('#export-project').onclick();
+        const duplicate=document.querySelector('#header-backup-project').onclick();
+        await Promise.all([first,duplicate]);
+        __diagnosticsDuplicateIgnored=__diagnosticsDownloads.length===1;
+        // A pending UI operation owns its controls. The second independent
+        // export begins only after it settles; optional health remains pending.
+        await document.querySelector('#header-backup-project').onclick();
+      })().catch(error=>{__diagnosticsExportError=String(error?.message||error);}).finally(()=>{HTMLAnchorElement.prototype.click=click;__diagnosticsExportsDone=true;});})()`);
+    await waitExpr(cdp,`__diagnosticsExportsDone===true`,30000);
+    assert(await evalValue(cdp,`__diagnosticsCalls===1&&__diagnosticsDuplicateIgnored===true&&__diagnosticsExportError===null&&__diagnosticsDownloads.length===2&&/complete project backup exported/.test(document.querySelector('#app-live-status').textContent)`),'DIAGNOSTICS_UI_SEQUENCE_ORACLE: pending diagnostics must not delay successive exports, repeat a pending UI operation, or report export failure.');
+    await click(cdp,'[data-view="Project"]');
+    await evalValue(cdp,`(async()=>{const input=document.querySelector('[data-job="JOB_TITLE"]');for(let parent=input.parentElement;parent;parent=parent.parentElement)if(parent.tagName==='DETAILS')parent.open=true;input.value='Unsaved diagnostic recovery draft';input.focus();input.setSelectionRange(3,11);globalThis.__diagnosticsInput=input;globalThis.__diagnosticsRenders=0;document.addEventListener('closed-loop-rendered',()=>__diagnosticsRenders++);globalThis.__diagnosticsProject=await closedLoopProjectStore.readProject('STARTUP-BROWSER-0');__releaseDiagnostics();})()`);
+    await waitExpr(cdp,failHealth?`document.querySelector('#storage-status').textContent==='Storage status unavailable.'`:`document.querySelector('#storage-status').textContent===(closedLoopStorageHealth?.persistent===true?'Persistent storage available.':closedLoopStorageHealth?.persistent===false?'Browser storage available. Keep an exported backup.':null)`,30000);
+    const proof=await evalValue(cdp,`(async()=>{const input=document.querySelector('[data-job="JOB_TITLE"]'),health=closedLoopStorageHealth,p=await closedLoopProjectStore.readProject('STARTUP-BROWSER-0'),values=Array.from(document.querySelectorAll('[data-storage-health]')).map(n=>n.textContent),expected=${failHealth}?['UNKNOWN','UNKNOWN','UNKNOWN']:[health.persistent?'PERSISTENT':'NOT PERSISTENT',String(health.usage??'UNKNOWN'),String(health.quota??'UNKNOWN')];return {ready:closedLoopAppReady===true,coalesced:__diagnosticsCalls===1,exports:__diagnosticsDownloads.length===2,formRetained:input===__diagnosticsInput&&input.value==='Unsaved diagnostic recovery draft',focusRetained:document.activeElement===input&&input.selectionStart===3&&input.selectionEnd===11,noRerender:__diagnosticsRenders===0,readings:JSON.stringify(values)===JSON.stringify(expected),canonicalUnchanged:p.projectSha256===__diagnosticsProject.projectSha256};})()`);
+    assert(Object.values(proof).every(Boolean),'Late storage diagnostics disturbed the operator: '+JSON.stringify({failHealth,...proof}));
+    await evalValue(cdp,`__restoreDiagnostics()`);await cdp.send('Page.removeScriptToEvaluateOnNewDocument',{identifier:probe.identifier});
+    diagnosticPopulations.push({mode:failHealth?'failed':'slow',exports:await evalValue(cdp,`__diagnosticsDownloads.length`)});
+    console.log(JSON.stringify({nonblockingStorageDiagnostics:failHealth?'failed':'slow',...proof}));
+  }
+
+  finishScenario("nonblocking-storage-diagnostics",{modes:diagnosticPopulations.map(row=>row.mode),exports:diagnosticPopulations.map(row=>row.exports)});
+  console.log('extra:version-one-upgrade-and-blocked-tab-recovery');
+  const versionInfo=await getJson(`http://127.0.0.1:${port}/json/version`),browserCdp=new CDP(versionInfo.webSocketDebuggerUrl);await browserCdp.ready;
+  const upgradeRow=await evalValue(cdp,`(()=>{const p=closedLoopCore.createBlankState('UPGRADE-BROWSER');closedLoopWorkflowEngine.ensureShape(p);closedLoopWorkflowEngine.recalculate(p);return {jobId:p.job.JOB_ID,revision:p.revision||0,project:p,projectSha256:closedLoopProjectStore.projectSha256(p),updatedAt:'2026-09-12T00:00:00.000Z'};})()`);
+  // Version-one artifacts already carried byteSize and sha256. Build through
+  // the storage authority, then transport that exact row into the old schema.
+  // The temporary source row is removed even if fixture serialization fails.
+  const upgradeArtifact=await evalValue(cdp,`(async()=>{const store=closedLoopProjectStore,blob=new Blob(['exact version-one bytes'],{type:'text/plain'});try{const row=await store.putArtifact({artifactId:'UPGRADE-FILE',jobId:'UPGRADE-BROWSER',blob,filename:'old.txt'});return {...row,blob:undefined,bytes:Array.from(new Uint8Array(await row.blob.arrayBuffer()))};}finally{await store.deleteArtifact('UPGRADE-FILE','UPGRADE-BROWSER');}})()`);
+  const upgradeContexts=[];
+  for(const held of [false,true]){
+    upgradeContexts.push(held);
+    const context=await browserCdp.send('Target.createBrowserContext'),created=await browserCdp.send('Target.createTarget',{url:'about:blank',browserContextId:context.browserContextId}),targets=await getJson(`http://127.0.0.1:${port}/json/list`),targetInfo=targets.find(item=>item.id===created.targetId),upgradeCdp=new CDP(targetInfo.webSocketDebuggerUrl);await upgradeCdp.ready;await upgradeCdp.send('Page.enable');
+    const injection=await upgradeCdp.send('Page.addScriptToEvaluateOnNewDocument',{source:`(()=>{const req=indexedDB.open('closed-loop-reliability',1);req.onupgradeneeded=()=>{const db=req.result;const projects=db.createObjectStore('projects',{keyPath:'jobId'});projects.put(${JSON.stringify(upgradeRow)});projects.put({jobId:'UPGRADE-CORRUPT',revision:0,project:null,projectSha256:'0'.repeat(64)});const artifacts=db.createObjectStore('artifacts',{keyPath:'artifactId'}),{bytes,...artifact}=${JSON.stringify(upgradeArtifact)};artifacts.put({...artifact,blob:new Blob([new Uint8Array(bytes)],{type:artifact.mediaType})});const meta=db.createObjectStore('meta',{keyPath:'key'});meta.put({key:'selectedProject',value:'UPGRADE-BROWSER'});meta.put({key:'retainedProjectSuppressed',value:true});};req.onsuccess=()=>{globalThis.__legacyUpgradeDb=req.result;if(!${held})req.result.onversionchange=()=>req.result.close();};})();`});
+    await navigateAndWait(upgradeCdp,'Page.navigate',{url:PAGE_URL},{allowStartupFailure:held,waitForInteractive:!held});await waitExpr(upgradeCdp,`closedLoopAppReady===true||Boolean(globalThis.closedLoopAppError)`,30000);
+    if(held){assert(await evalValue(upgradeCdp,`/blocked/i.test(closedLoopAppError||'')&&/close.*tabs.*reload/i.test(document.querySelector('#storage-status')?.textContent||'')`),'An older open tab did not report the blocked upgrade and recovery action.');await upgradeCdp.send('Page.removeScriptToEvaluateOnNewDocument',{identifier:injection.identifier});await evalValue(upgradeCdp,`__legacyUpgradeDb.close()`);await navigateAndWait(upgradeCdp,'Page.reload');await waitExpr(upgradeCdp,`closedLoopAppReady===true`,30000);}
+    const proof=await evalValue(upgradeCdp,`(async()=>{
+      const store=closedLoopProjectStore,db=await store.openDatabase(),p=await store.readProject('UPGRADE-BROWSER'),rows=await store.listArtifacts('UPGRADE-BROWSER'),history=await store.historyList(p.job.JOB_ID),summary=(await store.listProjectSummaries()).find(row=>row.job.JOB_ID===p.job.JOB_ID);
+      const quarantined=(await store.listQuarantinedProjects()).find(row=>row.jobId==='UPGRADE-CORRUPT'),preserved=quarantined&&await store.metaGet(quarantined.key);
+      return {
+        ready:closedLoopAppReady===true&&!globalThis.closedLoopAppError&&document.readyState==='complete'&&Boolean(document.querySelector('#app'))&&!document.querySelector('#app').hasAttribute('inert')&&document.querySelector('#app').getAttribute('aria-busy')!=='true',
+        corruptBlocked:Boolean(quarantined?.completeSnapshot&&preserved?.reason==='PROJECT_HASH_MISMATCH'&&preserved.row?.jobId==='UPGRADE-CORRUPT'&&preserved.row.project===null&&preserved.row.projectSha256==='0'.repeat(64)&&Array.isArray(preserved.artifacts)&&await store.readProject('UPGRADE-CORRUPT')===null),
+        version:db.version===2,projectHash:p.projectSha256===${JSON.stringify(upgradeRow.projectSha256)},picker:summary?.revision===p.revision,
+        sessionStart:history.entries.some(entry=>Object.values(history.sessions||{}).some(session=>session.checkpointId===entry.id)),
+        artifact:rows.length===1&&await rows[0].blob.text()==='exact version-one bytes'&&rows[0].byteSize===rows[0].blob.size&&rows[0].sha256===await closedLoopHash.sha256Bytes(rows[0].blob)
+      };
+    })()`);
+    assert(Object.values(proof).every(Boolean),'Version-one upgrade lost data: '+JSON.stringify({held,...proof}));console.log(JSON.stringify({indexedDbVersionOneUpgrade:true,blockedTabRecovery:held,...proof}));upgradeCdp.close();await browserCdp.send('Target.disposeBrowserContext',{browserContextId:context.browserContextId});
+  }
+  browserCdp.close();await cdp.send('Page.bringToFront');
+
+  finishScenario("version-one-upgrade-and-blocked-tab-recovery",{held:upgradeContexts});
+  console.log('extra:delayed-import-activity-preserves-layout');
+  await evalValue(cdp,`(async()=>{globalThis.__activityPackage=await closedLoopProjectStore.exportPackage('STARTUP-BROWSER-0');const node=document.querySelector('#storage-status'),box=node.getBoundingClientRect();globalThis.__activityBox={width:box.width,height:box.height};const original=Worker.prototype.postMessage;globalThis.__restoreActivityWorker=()=>{Worker.prototype.postMessage=original;};Worker.prototype.postMessage=function(message,...args){if(message.method==='IMPORT_PACKAGE'){const worker=this,receive=worker.onmessage;worker.onmessage=event=>{if(event.data?.operationId!==message.operationId||event.data?.buildIdentity!==message.buildIdentity)return receive.call(worker,event);worker.onmessage=receive;let released=false;globalThis.__releaseActivityReply=()=>{if(released)return;released=true;receive.call(worker,event);};};}return original.call(this,message,...args);};const input=document.querySelector('#import-file'),selection=new DataTransfer();selection.items.add(new File([__activityPackage],'activity-backup.closed-loop.json.gz',{type:__activityPackage.type}));input.files=selection.files;globalThis.__activityDone=false;globalThis.__activityImport=input.onchange({target:input}).finally(()=>{__activityDone=true;});})()`);
+  await waitExpr(cdp,`__activityDone===true||(typeof __releaseActivityReply==='function'&&document.querySelector('#storage-status')?.getAttribute('aria-busy')==='true')`,30000);
+  const activityBoundary=await evalValue(cdp,`({done:__activityDone,held:typeof __releaseActivityReply==='function',busy:document.querySelector('#storage-status')?.getAttribute('aria-busy'),notice:document.querySelector('#app-live-status')?.textContent})`);
+  assert(!activityBoundary.done&&activityBoundary.held&&activityBoundary.busy==='true','DELAYED_IMPORT_LOADING_ORACLE: the selected backup must reach a pending import with visible progress: '+JSON.stringify(activityBoundary));
+  const activityProof=await evalValue(cdp,`new Promise(resolve=>{let frames=0,stable=0,previous='';const sample=()=>{const node=document.querySelector('#storage-status'),box=node.getBoundingClientRect(),geometry=JSON.stringify([box.width,box.height]);stable=geometry===previous?stable+1:0;previous=geometry;frames++;if(frames>=4&&stable>=2||frames>=12){const status=document.querySelector('#app-operation-status'),style=getComputedStyle(status),rect=status.getBoundingClientRect();resolve({settled:frames>=4&&stable>=2,operation:node.getAttribute('data-operation')==='Importing and verifying package',width:Math.abs(box.width-__activityBox.width)<0.1,height:Math.abs(box.height-__activityBox.height)<0.1,pending:!__activityDone,locked:document.querySelector('#import-file').disabled,visible:!status.hidden&&style.display!=='none'&&style.visibility!=='hidden'&&rect.width>0&&rect.height>0});}else requestAnimationFrame(sample);};requestAnimationFrame(sample);})`);
+  assert(Object.values(activityProof).every(Boolean),'Delayed activity changed layout or misreported state: '+JSON.stringify(activityProof));await evalValue(cdp,`__restoreActivityWorker();__releaseActivityReply();`);await waitExpr(cdp,`__activityDone===true`,30000);assert(await evalValue(cdp,`!document.querySelector('#storage-status').hasAttribute('aria-busy')&&!document.querySelector('#storage-status').hasAttribute('data-operation')`),'Completed import left a busy signal behind.');console.log(JSON.stringify({delayedImportActivity:activityProof,clearedAfterCompletion:true}));
+
+  // Synthetic accepted-definition setup isolates the real worker transfer boundary; it is not Stage6 admission evidence.
+  finishScenario("delayed-import-activity-preserves-layout",{executions:1});
+  console.log('extra:native-worker-owned-inputs');
+  const nativeWorkerProof=await evalValue(cdp,`(async()=>{const runtime=closedLoopTestRuntime,bytes=new TextEncoder().encode('{"records":[1,2]}'),test={TEST_ID:'NATIVE-BROWSER-TRANSFER',EXECUTION_MODE:'APPLICATION_DETERMINISTIC',REQUIRED_CAPABILITY:runtime.CAPABILITY,EXECUTABLE_KIND:'TEST_IR',EXECUTABLE_SPEC_VERSION:runtime.SPEC_VERSION,EXECUTABLE_INPUT_BINDINGS:{PRODUCT:'NATIVE-BROWSER-FILE'},EXECUTABLE_SPEC:{version:runtime.SPEC_VERSION,steps:[{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'DECODE_UTF8'},{op:'PARSE_JSON'},{op:'SELECT_JSON_PATH',path:'$.records'},{op:'COUNT'},{op:'ASSERT_EQ',value:2}]}},sha256=await closedLoopHash.sha256Bytes(bytes);test.source='SYNTHETIC_NATIVE_BROWSER_FIXTURE';test.EXECUTABLE_SPEC_SHA256=closedLoopHash.sha256Value(runtime.normalizeSpec(test.EXECUTABLE_SPEC));const result=await runtime.executeTest(test,{PRODUCT:{artifactId:'NATIVE-BROWSER-FILE',filename:'data.json',sha256,bytes}},{},{transferInputBuffers:true});const runtimeUrl=new URL(Array.from(document.scripts).find(script=>new URL(script.src||location.href).pathname.endsWith('/test-runtime.js')).src),expected=runtimeUrl.searchParams.get('workerSha256');return {detached:bytes.byteLength===0,complete:result.status==='COMPLETE',satisfied:result.determination==='SATISFIED',identity:expected?result.runtimeBuildIdentity===runtimeUrl.searchParams.get('v')&&result.testWorkerSha256===expected&&result.workerProtocolVersion==='closed-loop-test-worker-protocol/1':result.runtimeBuildIdentity==='UNMANIFESTED_LOCAL_RUNTIME',failure:result.failure||null};})()`);
+  assert(nativeWorkerProof.detached&&nativeWorkerProof.complete&&nativeWorkerProof.satisfied&&nativeWorkerProof.identity,'Native worker buffer transfer failed: '+JSON.stringify(nativeWorkerProof));console.log(JSON.stringify({nativeWorkerOwnedInput:nativeWorkerProof}));
+
+  const nativeBrowserCommand=await evalValue(cdp,`(${verifyTestIrNativeBrowserCommand.toString()})(${routingFixture.toString()})`);
+  assert(nativeBrowserCommand.passed,'Native browser command did not finish');console.log(JSON.stringify({nativeBrowserCommand}));
+
+  finishScenario("native-worker-owned-inputs",{stages:nativeBrowserCommand.cases.map(row=>row.stage),testWorkers:nativeBrowserCommand.cases.map(row=>row.nativeRequests),storeCommands:nativeBrowserCommand.cases.map(row=>row.storeCommands)});
+  console.log('extra:worker-save-heartbeat-and-commit-recovery');
+  const workerProof=await evalValue(cdp,`(async()=>{const store=closedLoopProjectStore,engine=closedLoopWorkflowEngine,p=closedLoopCore.createBlankState('WORKER-BROWSER-PRESSURE');p.projectData.rawResponses=Array.from({length:100},(_,i)=>({rawResponseId:'WORKER-RAW-'+i,stage:1,status:'PRESERVED',rawText:'H'.repeat(80000)+'é🙂'}));engine.ensureShape(p);engine.recalculate(p);let ticks=0,maxGap=0,last=performance.now(),messages=0;const native=Worker.prototype.postMessage;Worker.prototype.postMessage=function(message,...rest){if(message.method==='WRITE_PROJECT')messages++;return native.call(this,message,...rest);};const timer=setInterval(()=>{const now=performance.now();ticks++;maxGap=Math.max(maxGap,now-last);last=now;},8);let saved;try{saved=await store.writeProject(p,{expectedProjectRevision:0,createOnly:true,selectProject:false});}finally{clearInterval(timer);Worker.prototype.postMessage=native;}const actual=await store.readProject(p.job.JOB_ID),sameDigest=saved.projectSha256===actual.projectSha256;await store.removeProject(p.job.JOB_ID);return {workerUsed:messages===1,uiHeartbeat:ticks>0,timerTicks:ticks,maxTimerGapMs:Math.round(maxGap),sameDigest,rows:actual.projectData.rawResponses.length,rowCodeUnits:actual.projectData.rawResponses.map(row=>row.rawText.indexOf('é🙂'))};})()`);
+  assert(workerProof.workerUsed&&workerProof.uiHeartbeat&&workerProof.sameDigest,`Worker save did not preserve its identity and UI scheduling: ${JSON.stringify(workerProof)}`);
+  const workerRecovery=await evalValue(cdp,`(async()=>{const store=closedLoopProjectStore,native=Worker.prototype.postMessage;let dropped=false;Worker.prototype.postMessage=function(message,...rest){if(message.method==='WRITE_PROJECT'&&message.args[0]?.job?.JOB_ID==='WORKER-BROWSER-LOST'){this.onmessage=()=>{dropped=true;this.onerror({message:'CONTROLLED_LOST_WORKER_ACK'});};}return native.call(this,message,...rest);};let saved;try{saved=await store.writeProject(closedLoopCore.createBlankState('WORKER-BROWSER-LOST'),{expectedProjectRevision:0,createOnly:true,selectProject:false});}finally{Worker.prototype.postMessage=native;}const actual=await store.readProject(saved.job.JOB_ID);return {dropped,committedOnce:actual.revision===1&&saved.revision===1,sameDigest:actual.projectSha256===saved.projectSha256};})()`);
+  assert(Object.values(workerRecovery).every(Boolean),`Lost worker acknowledgement changed the commit outcome: ${JSON.stringify(workerRecovery)}`);
+  console.log(JSON.stringify({storageWorkerBrowser:true,...workerProof,...workerRecovery}));
+
+  finishScenario("worker-save-heartbeat-and-commit-recovery",{rows:workerProof.rows,rowCodeUnits:workerProof.rowCodeUnits.every(n=>n===80000)?workerProof.rowCodeUnits[0]:null,committedOnce:workerRecovery.committedOnce});
+  }
   assert(cdp.dialogs.length===0,`Unexpected browser dialogs: ${cdp.dialogs.join(' | ')}`);
   const errors=cdp.events.filter(e=>e.method==='Runtime.exceptionThrown'||(e.method==='Log.entryAdded'&&['error','assert'].includes(e.params?.entry?.level)));assert(errors.length===0,`Browser/runtime errors: ${errors.map(e=>JSON.stringify(e.params)).join('\n')}`);
-  console.log(JSON.stringify({browserExtraVerified:true,browserExecution:await executionObserver?.finish(),exactPromptCopy:true,pendingProposalReload:true,successfulExport:true,successfulImport:true,canonicalDataRoundTrip:true,retainedNotDuplicated:true,retainedDeleteSuppression:true,projectLifecycleFunctional:true,blockerControl:true,freshContextControlContextual:true,blobPersistence:true,artifactIdempotence:true,twoTabConflict:true,storageFailureRollback:true,transactionMutatorLifetime:true,closedConnectionPromptSave:true,runtimeErrors:0},null,2));cdp.close();
+  const browserExecution=await executionObserver?.finish();
+  assert(cdp.dialogs.length===0,`Unexpected browser dialogs: ${cdp.dialogs.join(' | ')}`);
+  const finalErrors=cdp.events.filter(e=>e.method==='Runtime.exceptionThrown'||(e.method==='Log.entryAdded'&&['error','assert'].includes(e.params?.entry?.level)));assert(finalErrors.length===0,`Browser/runtime errors: ${finalErrors.map(e=>JSON.stringify(e.params)).join('\n')}`);
+  cdp.close();return {scenarios,browserExecution:browserExecution||null,dialogs:[],runtimeErrors:0};
 }
-async function cleanup(){if(!proc.killed)proc.kill('SIGTERM');await Promise.race([new Promise(r=>proc.once('exit',r)),sleep(1000)]);try{fs.rmSync(profile,{recursive:true,force:true,maxRetries:3,retryDelay:100});}catch{}}
-try{await main();}finally{executionObserver?.close();await cleanup();}
-
+async function cleanup(){
+ const exited=()=>!proc||!proc.pid||proc.exitCode!==null||proc.signalCode!==null;
+ const waitExit=ms=>exited()?Promise.resolve():new Promise(resolve=>{const timer=setTimeout(done,ms);function done(){clearTimeout(timer);proc.off('exit',done);resolve();}proc.once('exit',done);});
+ if(!exited()){proc.kill('SIGTERM');await waitExit(300);}
+ if(!exited()){proc.kill('SIGKILL');await waitExit(300);}
+ assert(exited(),'Disposable Chromium did not exit during bounded cleanup');
+ // Supervised profile and fixture tempfiles belong exclusively to the parent.
+ if(profile&&!laneId)fs.rmSync(profile,{recursive:true,force:true,maxRetries:3,retryDelay:100});
+}
+function verifyBrowserExtraSources(phase){
+ if(phase==='before'){
+const promptStart=appCoreSource.indexOf('function currentStagePrompt'),promptEnd=appCoreSource.indexOf('function operationMarkup',promptStart),currentStagePromptSource=promptStart>=0&&promptEnd>promptStart?appCoreSource.slice(promptStart,promptEnd):'';
+if(!currentStagePromptSource||currentStagePromptSource.includes('clone(current)'))throw new Error('Workflow prompt preview must not deep-clone the complete project on stage navigation.');
+if(!appCoreSource.includes('currentSchema&&!legacyNested&&!legacyStageRecords?p:core.migrateState(p)'))throw new Error('Current-schema projects must bypass full migration cloning during startup.');
+ }else if(phase==='after'){
 // reliability-v2 responsive UI source obligations (runtime browser suite above still exercises 320/393/desktop).
 {
  const source=fs.readFileSync('app-core.js','utf8');for(const token of ['Exact handoff','Continue talking to the agent. Do not import a final response file yet.','Canonical state changed: NO','Execution stability','Regression lifecycle','Current evidence is contradictory','Why the application believes each requirement is established'])if(!source.includes(token))throw new Error('Missing operator reliability UI: '+token);
@@ -919,4 +1026,27 @@ try{await main();}finally{executionObserver?.close();await cleanup();}
  for(const token of ['What you need to do now','Advanced verification details','Exact handoff — send / do not send / return','Download exact bytes','data-download-artifact','stagePurposeMarkup','verified artifact ready for transfer'])if(!source.includes(token))throw new Error('Missing action-first verification/artifact UX: '+token);
  if(!engineSource.includes("[22,23,24,25].includes(stage)"))throw new Error('Stage 22 is still omitted from exact finished-product handoff.');
  if(!source.includes('Stored bytes no longer match the canonical filename, byte size, and SHA-256. Download was blocked.'))throw new Error('Artifact download does not fail closed on byte-identity mismatch.');
+}
+ }else throw new Error('Unknown browser-extra source phase');
+}
+
+if(laneId||process.argv.includes('--project-link-picker-only')){
+ const reports=[],originalLog=console.log;
+ console.log=(...args)=>{if(args.length===1&&typeof args[0]==='string'&&args[0].startsWith('{')){let value;try{value=JSON.parse(args[0]);}catch{}if(value&&typeof value==='object')reports.push(value);}originalLog(...args);};
+ let result,primaryError;
+ try{if(laneId)assert(browserExtraSourceFingerprint()===process.env.CLOSED_LOOP_BROWSER_EXTRA_SOURCE_FINGERPRINT,'Child source fingerprint differs before execution');else verifyBrowserExtraSources('before');await launchBrowserExtra();result=await main();}
+ catch(error){primaryError=error;throw error;}
+ finally{const cleanupErrors=[];try{executionObserver?.close();}catch(error){cleanupErrors.push(error);}try{await cleanup();}catch(error){cleanupErrors.push(error);}console.log=originalLog;if(cleanupErrors.length){if(primaryError)for(const error of cleanupErrors)console.error('BROWSER_EXTRA_CLEANUP_DIAGNOSTIC: '+(error?.stack||error));else throw cleanupErrors[0];}}
+ if(laneId){assert(result,'Browser-extra lane did not finish');assert(browserExtraSourceFingerprint()===process.env.CLOSED_LOOP_BROWSER_EXTRA_SOURCE_FINGERPRINT,'Child source fingerprint differs after execution');assert(Date.now()<Number(process.env.CLOSED_LOOP_BROWSER_EXTRA_DEADLINE_AT),'Child completed after aggregate deadline');console.log(JSON.stringify({browserExtraChild:{schema:'closed-loop-browser-extra-child/1',laneId,invocationId:process.env.CLOSED_LOOP_BROWSER_EXTRA_INVOCATION_ID,sourceFingerprint:process.env.CLOSED_LOOP_BROWSER_EXTRA_SOURCE_FINGERPRINT,complete:true,...result,reports}}));}
+ else verifyBrowserExtraSources('after');
+}else{
+ const result=await superviseBrowserExtra({cwd:process.cwd(),script:'verify-browser-extra.mjs',deadlineMs:600000,startedAt:performance.timeOrigin,sourceChecks:verifyBrowserExtraSources,expected:await loadBrowserExpectedSite()});
+ for(const child of result.rawChildren){process.stdout.write(child.stdoutWithoutTerminal);if(child.stderr)process.stderr.write(child.stderr);}
+ const stale=result.reports.filter(row=>row.storageReliabilityStalePart),custody=result.reports.filter(row=>row.storageReliabilityBrowserPart);
+ assert(stale.length===1&&custody.length===1,'Missing or duplicate storage reliability constituent');
+ console.log(JSON.stringify({storageReliabilityBrowser:true,...stale[0].storageReliabilityStalePart,...custody[0].storageReliabilityBrowserPart.packageCustodyProof,...custody[0].storageReliabilityBrowserPart.importCommitProof,importSurvivedReload:custody[0].storageReliabilityBrowserPart.importSurvivedReload}));
+ result.browserExtraAggregate.elapsedMs=Date.now()-performance.timeOrigin;assert(result.browserExtraAggregate.elapsedMs<600000,'Final report exceeded absolute browser-extra deadline');
+ console.log(JSON.stringify({browserExtraVerified:true,completeBrowserExtraAggregate:true,browserExtraAggregate:result.browserExtraAggregate,browserExecution:result.browserExecution,exactPromptCopy:true,pendingProposalReload:true,successfulExport:true,successfulImport:true,canonicalDataRoundTrip:true,retainedNotDuplicated:true,retainedDeleteSuppression:true,projectLifecycleFunctional:true,blockerControl:true,freshContextControlContextual:true,blobPersistence:true,artifactIdempotence:true,twoTabConflict:true,storageFailureRollback:true,transactionMutatorLifetime:true,closedConnectionPromptSave:true,runtimeErrors:0},null,2));
+ if(process.stdout.writableNeedDrain)await new Promise((resolve,reject)=>{const timer=setTimeout(()=>{process.stdout.off('drain',done);reject(new Error('Final browser-extra output exceeded absolute deadline'));},Math.max(0,performance.timeOrigin+600000-Date.now()));function done(){clearTimeout(timer);resolve();}process.stdout.once('drain',done);});
+ assert(Date.now()<performance.timeOrigin+600000,'Final browser-extra output exceeded absolute deadline');
 }

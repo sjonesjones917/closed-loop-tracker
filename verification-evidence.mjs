@@ -10,6 +10,7 @@ import './hash.js';
 import {evaluateMobileAcceptanceSubmission,deployedExpected} from './evaluate-mobile-acceptance-submission.mjs';
 import {REQUIRED_MOBILE_RECEIPT_KINDS} from './verify-mobile-acceptance-evidence.mjs';
 import {validateBrowserExecution} from './browser-execution-evidence.mjs';
+import {validateBrowserExtraAggregate,browserExtraFingerprintFromInputs} from './browser-extra-aggregate.mjs';
 import {verificationCatalog,browserVerificationCatalog,metricCatalog,zeroCatalog,negativePopulationCatalog,completeManifestCurrentWorkRecovery} from './verification-evidence-catalog.mjs';
 import {deploymentContractIdentities} from './deployment-contract-identities.mjs';
 import {completeHumanCombinedUi,HUMAN_UI_RUNTIME_SOURCES,HUMAN_UI_TEST_SOURCES} from './human-combined-ui-evidence-contract.mjs';
@@ -318,6 +319,7 @@ export function validateExecutionReceipt(receipt,suite,fingerprint){
     requireEvidence(receipt.browser.manifest?.sourceCommit===receipt.fingerprint.sourceCommit,'browser manifest belongs to a different original producer candidate');
     requireEvidence(receipt.browser.scope==='LOCAL'||receipt.fingerprint.sourceCommit===fingerprint.sourceCommit,'deployed browser proof cannot be promoted from another deployed revision');
     validateBrowserExecution(carriers[0].browserExecution,{suite,scope:receipt.browser.scope,manifest:receipt.browser.manifest,sourceCommit:receipt.fingerprint.sourceCommit});
+    if(suite==='verify-browser-extra.mjs'){const owner=selectedReport(receipt.reports,'browserExtraVerified');validateBrowserExtraAggregate(owner.browserExtraAggregate,{browserExecution:carriers[0].browserExecution,reports:receipt.reports,expected:{scope:receipt.browser.scope,manifest:receipt.browser.manifest,sourceCommit:receipt.fingerprint.sourceCommit},sourceFingerprint:browserExtraFingerprintFromInputs(fingerprint.inputSha256)});}
     if(suite==='verify-browser-recovery.mjs')assertManifestRecoverySourceInputs(selectedReport(receipt.reports,'browserRecovery').manifestCurrentWorkRecovery,fingerprint,{buildIdentity:carriers[0].browserExecution.buildIdentity});
     if(suite==='verify-browser.mjs'){assertRetainedRootNativeSourceInputs(selectedReport(receipt.reports,'retainedRootNative').retainedRootNative,fingerprint);assertHumanCombinedNativeSourceInputs(selectedReport(receipt.reports,'humanCombinedNative').humanCombinedNative,fingerprint);assertHumanCombinedUiSourceInputs(selectedReport(receipt.reports,'humanCombinedUi').humanCombinedUi,fingerprint);}
   }

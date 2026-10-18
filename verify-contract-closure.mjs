@@ -1,3 +1,5 @@
+import {verificationCatalog} from './verification-evidence-catalog.mjs';
+import {verifyBrowserExtraMixedRecovery} from './test-browser-extra-mixed-recovery.mjs';
 import {verifyDerivationReceiptContract,verifyConvergenceRegisteredDefinitionChange,verifyProjectProjectionReceiptContract,verifyProjectProjectionStoreContract,verifyCarrierDerivationMetadata} from './test-derivation-receipt-contract.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -221,6 +223,11 @@ const convergenceRegisteredDefinitionChange=await verifyConvergenceRegisteredDef
 const projectProjectionReceiptContract=verifyProjectProjectionReceiptContract(derivationSchema,value=>derivationRealmParse(JSON.stringify(value)));
 const carrierDerivationMetadata=verifyCarrierDerivationMetadata(derivationSchema);
 const projectProjectionStoreContract=await verifyProjectProjectionStoreContract();
+const browserExtraMixedRecoveryControl=await verifyBrowserExtraMixedRecovery();
+const mixedRecoveryAdmission=verificationCatalog['verify-contract-closure.mjs'].checks.find(row=>row.id==='registry.browser-extra-mixed-recovery');
+assert.equal(mixedRecoveryAdmission.condition(browserExtraMixedRecoveryControl),true,'BROWSER_EXTRA_MIXED_CATALOG_ORACLE: actual control population missing');
+for(const mutate of [value=>value.actualBrowser=true,value=>delete value.positive[Object.keys(value.positive)[0]],value=>value.positive[Object.keys(value.positive)[0]]=false,value=>value.mutationControls.pop(),value=>value.mutationControls.push(value.mutationControls[0]),value=>value.durableMutations.pop(),value=>value.population.intakeOwners--]){const incomplete=structuredClone(browserExtraMixedRecoveryControl);mutate(incomplete);assert.equal(mixedRecoveryAdmission.condition(incomplete),false,'BROWSER_EXTRA_MIXED_CATALOG_ORACLE: incomplete control population admitted');}
+
 const uiAcceptanceRegistry=verifyUiAcceptanceContract(loadSchema(source));
 const uiAcceptancePresentation=await verifyUiAcceptancePresentation(loadSchema(source));
 // The literal source table is checked separately from the declaration-derived
@@ -292,4 +299,4 @@ for(const [field,omittedValue] of [['SOURCE_KIND','PROOF_OBLIGATION'],['VERIFICA
 assert.equal(fs.readFileSync('workflow-schema.js','utf8'),source,'FIELD_REGISTRY_SOURCE_UNCHANGED_ORACLE');
 const restored=verify(source);
 assert.deepEqual(restored,result,'FIELD_REGISTRY_RESTORED_ORACLE');
-console.log(JSON.stringify({...result,operationRegistryPropertyFaults,expectedVarianceContract,derivationReceiptContract,convergenceRegisteredDefinitionChange,projectProjectionReceiptContract,projectProjectionStoreContract,carrierDerivationMetadata,uiAcceptanceRegistry,uiAcceptancePresentation,specificationJobFields,specificationJobFieldMutants,specificationCarrierFields,specificationCarrierFieldMutants,conditionalDeferredManifestCarrier,recoverySourceReferenceCarrier,backupImportStagingCarrier,responseStagingRecoveryCarriers,jobPointerTargets,mobileAcceptanceSessionCarriers,mobileAcceptanceSessionMerge,artifactByteReferenceCarrier,registryFaults,receiptContractFaults,timingContractFaults,timingEnumContractFaults,sourceSha256:createHash('sha256').update(source).digest('hex'),sourceRestored:true,restored:'PASS'}));
+console.log(JSON.stringify({...result,browserExtraMixedRecoveryControl,operationRegistryPropertyFaults,expectedVarianceContract,derivationReceiptContract,convergenceRegisteredDefinitionChange,projectProjectionReceiptContract,projectProjectionStoreContract,carrierDerivationMetadata,uiAcceptanceRegistry,uiAcceptancePresentation,specificationJobFields,specificationJobFieldMutants,specificationCarrierFields,specificationCarrierFieldMutants,conditionalDeferredManifestCarrier,recoverySourceReferenceCarrier,backupImportStagingCarrier,responseStagingRecoveryCarriers,jobPointerTargets,mobileAcceptanceSessionCarriers,mobileAcceptanceSessionMerge,artifactByteReferenceCarrier,registryFaults,receiptContractFaults,timingContractFaults,timingEnumContractFaults,sourceSha256:createHash('sha256').update(source).digest('hex'),sourceRestored:true,restored:'PASS'}));

@@ -1,3 +1,4 @@
+import {verifyBrowserObserverLifecycleControls} from './test-browser-observer-lifecycle.mjs';
 import assert from 'node:assert/strict';
 import {validateBrowserExecution,loadBrowserExpectedSite,waitForBrowserExecutionObservations} from './browser-execution-evidence.mjs';
 
@@ -46,3 +47,5 @@ const state=()=>({pending:new Set(),errors:[],workerTargets:new Set([workerUrl])
  const row=state(),pending={};row.workers.add(workerUrl);row.pending.add(pending);setTimeout(()=>row.pending.delete(pending),15);await waitForBrowserExecutionObservations({...row,timeoutMs:200});assert.equal(row.pending.size,0);observerCases.push('pending-source-digest-completes-before-finish');
 }
 console.log(JSON.stringify({browserExecutionObserverScheduling:'PASS',synthetic:true,actualBrowser:false,observerCases}));
+
+console.log(JSON.stringify(await verifyBrowserObserverLifecycleControls()));
