@@ -1539,11 +1539,12 @@ export function verifyProjection7ActivationCatalogConsumers(){
   'verification/source-applicability-legacy4-20261011.json.gz',
   'verification/stage01-retained-capture-legacy-fixture-20261005.json',
   'verification/stage15-author-prerequisite-20261012.json.gz',
-  'verification/stage19-precomparison-prerequisite-20261010.json.gz'
+  'verification/stage19-precomparison-prerequisite-20261010.json.gz',
+  'verification/verifier-context-ui-prerequisite-20261018.json'
 ];
  const declaredFixtures=[...new Set([...Object.values(verificationCatalog),...Object.values(browserVerificationCatalog)].flatMap(row=>row.sourceInputs||[]))].filter(path=>path.startsWith('verification/')).sort();assert.deepEqual(declaredFixtures,expectedFixtures,'PROJECTION7_ACTIVE_FIXTURE_POPULATION12_ORACLE');cases.push('active-fixture-population13-valid');
  const receiptSource=fs.readFileSync(new URL('./verify-executed-evidence.mjs',import.meta.url),'utf8'),first=receiptSource.indexOf('const stage15AuthorFixtureInput='),last=receiptSource.indexOf('const producerFixtureInputs=',first);assert(first>=0&&last>first,'PROJECTION7_EXISTING_RECEIPT_GUARD_OWNER');
- const actualGuard=new Function('assert','activeFixtureInputs','verificationCatalog',receiptSource.slice(first,last)+'return fixtureCatalogMutations;'),guardedMutants=actualGuard(assert,declaredFixtures,verificationCatalog);assert.equal(guardedMutants.length,26);for(const mutant of guardedMutants)cases.push('actual-fixture-guard:'+mutant.file+':'+mutant.mutation);for(const name of ['valid','missing-rejected','duplicate-rejected','wrong-path-rejected','wrong-owner-rejected'])cases.push('actual-fixture-stage15-owner-declaration:'+name);
+ const actualGuard=new Function('assert','activeFixtureInputs','verificationCatalog',receiptSource.slice(first,last)+'return fixtureCatalogMutations;'),guardedMutants=actualGuard(assert,declaredFixtures,verificationCatalog);assert.equal(guardedMutants.length,27);for(const mutant of guardedMutants)cases.push('actual-fixture-guard:'+mutant.file+':'+mutant.mutation);for(const name of ['valid','missing-rejected','duplicate-rejected','wrong-path-rejected','wrong-owner-rejected'])cases.push('actual-fixture-stage15-owner-declaration:'+name);
  for(const name of ['valid','missing-rejected','duplicate-rejected','wrong-path-rejected','wrong-owner-rejected'])cases.push('actual-fixture-scoped-clarification-owner-declaration:'+name);
  for(const name of ['valid','missing-rejected','duplicate-rejected','wrong-path-rejected','wrong-owner-rejected'])cases.push('actual-fixture-historical-binding-owner-declaration:'+name);
  assert.throws(()=>actualGuard(assert,declaredFixtures.filter(path=>path!=='verification/project-projection5-activation-fixture.json'),verificationCatalog),/FIXTURE_INPUT_ORACLE/);cases.push('actual-fixture-guard-new-path-omission-rejected');

@@ -446,7 +446,8 @@ const expectedActiveFixtureInputs=[
   'verification/source-applicability-legacy4-20261011.json.gz',
   'verification/stage01-retained-capture-legacy-fixture-20261005.json',
   'verification/stage15-author-prerequisite-20261012.json.gz',
-  'verification/stage19-precomparison-prerequisite-20261010.json.gz'
+  'verification/stage19-precomparison-prerequisite-20261010.json.gz',
+  'verification/verifier-context-ui-prerequisite-20261018.json'
 ];
 function assertActiveFixtureInputs(paths){assert.deepEqual(paths,expectedActiveFixtureInputs,'FIXTURE_INPUT_ORACLE: active fixture source paths differ from the independently declared current producer inputs.');}
 assertActiveFixtureInputs(activeFixtureInputs);
