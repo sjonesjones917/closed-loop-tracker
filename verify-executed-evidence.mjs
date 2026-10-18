@@ -704,7 +704,9 @@ stage03ChildConstructionControl.counterexamplesDetected.push('missing-copied-hel
   producerControls.push({caseId:'missing-current-producer-receipt',accepted:false,result:'DETECTED'});
   // These original linkage/ownership controls belong to the exact retained 7df source context.
   // They are not current 3e assertions, a default-suite receipt, or full-clause proof.
-  const historicalLedgerEvidenceDirectory=path.join(directory,'historical-context-ledger');
+  // Keep historical receipts and stderr outside both owned temporary roots.
+  // The adapter still joins its children and removes its owned source fixture.
+  const historicalLedgerEvidenceDirectory=path.join(persistentChildEvidence?.directory||path.dirname(directory),path.basename(directory)+'-historical-context-ledger');
   const historicalLedgerParentFingerprint=evidenceFingerprint();
   const historicalLedgerReport=await runHistoricalContextLedger({sourceRoot:process.cwd(),expectedCommit:historicalLedgerParentFingerprint.sourceCommit,expectedTree:historicalLedgerParentFingerprint.sourceTree,evidenceDirectory:historicalLedgerEvidenceDirectory,originalOwnerStartedAtUnixMs:originalLedgerOwnerStartedAtUnixMs});
   const {normativeRegistryLinkageControl,observationOwnershipControl}=historicalLedgerReport;

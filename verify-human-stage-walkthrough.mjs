@@ -1,3 +1,4 @@
+import {stage04AcceptanceFixtureSource} from './test-fixtures.mjs';
 import {createBrowserExecutionObserver} from './browser-execution-evidence.mjs';
 import {downloadSyntheticHandoff} from './test-browser-handoff-authorization.mjs';
 import fs from 'node:fs';
@@ -6,6 +7,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {spawn} from 'node:child_process';
 
+const stage04PrerequisiteFixtureSource=stage04AcceptanceFixtureSource();
 const browser=process.env.BROWSER||['/usr/bin/google-chrome','/usr/bin/chromium','/usr/bin/chrome'].find(fs.existsSync);
 if(!browser)throw new Error('Chrome/Chromium was not found.');
 const serverPort=9400+Math.floor(Math.random()*300);
@@ -49,6 +51,7 @@ try{
     await idle();
     const core=globalThis.closedLoopCore,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine,schema=globalThis.closedLoopWorkflowSchema;
     if(!core||!engine||!prompts||!schema)throw new Error('Application runtime not loaded.');
+    ${stage04PrerequisiteFixtureSource}
     const state=core.createBlankState('JOB-HUMAN-WALKTHROUGH');
     Object.assign(state.job,{JOB_ID:'JOB-HUMAN-WALKTHROUGH',JOB_TITLE:'Sequential human walkthrough',JOB_OWNER:'Operator',EXACT_USER_OBJECTIVE_VERBATIM:'Build one complete subject-neutral deliverable while preserving every supplied project requirement exactly once.',SUPPLIED_MATERIALS_INVENTORY:'intent.txt',REQUIRED_OUTPUT_FORMAT:'Use the actual artifact format required by the project.',DEADLINE_OR_TEMPORAL_SCOPE:'No artificial deadline.',DESIRED_SOURCE_COUNT:3,KNOWN_AUTHORITATIVE_SOURCES:'Use governing sources where applicable.',AVAILABLE_TOOLS:'Authorized research and deterministic application tools.',PROHIBITED_ACTIONS:'Never ask for project information already supplied. Never invent evidence.',EXPLICIT_USER_REQUIREMENTS:'Capture all human intent once. Each stage must perform only its own complete job and must receive every relevant canonical prior-stage fact.',CURRENT_INPUT_VERSION:'INPUT-v001',CURRENT_SOURCE_SET_VERSION:'SOURCE-v001',CURRENT_REQUIREMENTS_VERSION:'REQ-v001',CURRENT_TEST_SUITE_VERSION:'TEST-v001',CURRENT_INSTRUCTION_VERSION:'INST-v001',CURRENT_ITERATION:'ITER-001',CURRENT_BASELINE_ID:'BASE-001',CURRENT_PRODUCT_ID:'PROD-001'});
     engine.ensureShape(state);engine.recalculate(state);
@@ -59,6 +62,21 @@ try{
     state.stages[3].agentData={ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED:'TRUE',SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED:'TRUE',LATEST_PASS_NUMBER:2,NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS:'FALSE'};
     for(let prerequisite=1;prerequisite<30;prerequisite++){state.stages[prerequisite].status='COMPLETE';state.stages[prerequisite].gate={complete:true,blocked:false,reasons:[]};}
     if(!engine.evaluateIntakeAccounting(state).complete)throw new Error('Sequential browser prompt audit failed to establish valid Stage 01 accounting.');
+    // The old synthetic cached gates are insufficient authority for Stage 04.
+    // Keep that exact stale setup as a permanent refusal control, then use the
+    // shared production-admitted hermetic Stage 01–03 fixture for prompt audit.
+    let legacyFixtureRefused=false;
+    try{prompts.buildPromptRecord(4,state,{operation:'RECONCILE_REQUIREMENTS'});}catch(error){if(error?.code!=='STAGE4_UPSTREAM_INCOMPLETE')throw error;legacyFixtureRefused=true;}
+    if(!legacyFixtureRefused)throw new Error('HUMAN_WALKTHROUGH_PREREQUISITE_ORACLE: stale Stage02 flags bypassed current Stage04 prerequisites.');
+    const originalStage01Capture=state.stages[1].agentData.INPUT_SET_CONTENTS;
+    Object.assign(state,stage04AcceptanceFixture({core,schema,engine,prompts,ingestion:globalThis.closedLoopResponseIngestion},state.job.JOB_ID,{project:state,stageData:state.stages[1].agentData}));
+    const currentUpstreamGates=[1,2,3].filter(stage=>engine.gate(stage,state).complete),sourceApplicability=engine.sourceApplicabilityState(state).determination,stage01CapturePreserved=state.stages[1].agentData.INPUT_SET_CONTENTS===originalStage01Capture;
+    if(currentUpstreamGates.length!==3||sourceApplicability!=='NO_APPLICABLE_EXTERNAL_SOURCE'||!stage01CapturePreserved)throw new Error('HUMAN_WALKTHROUGH_PREREQUISITE_ORACLE: current admitted prerequisite fixture is incomplete.');
+    const stage04Prerequisites={legacyFixtureRefused,currentUpstreamGates,sourceApplicability,stage01CapturePreserved,synthetic:true,actualProductionAcceptance:true,realExternalActor:false};
+    // Later cached gates remain setup-only for the original prompt-family audit;
+    // they are not evidence that any later stage actually completed.
+    for(let prerequisite=4;prerequisite<30;prerequisite++){state.stages[prerequisite].status='COMPLETE';state.stages[prerequisite].gate={complete:true,blocked:false,reasons:[]};}
+
     const structuredAction=engine.operationalNextAction(state,30);
     if(!Array.isArray(structuredAction.operatorChecks)||structuredAction.operatorChecks.length===0)throw new Error('Structured operator action fixture does not expose the compact double-check guide.');
     const checked=[],applicationOnly=[],lane={runId:'RUN-001',contextId:'CTX-001',iterationId:'ITER-001',candidateId:'CAND-001',baselineId:'BASE-001',productId:'PROD-001'};
@@ -93,14 +111,36 @@ try{
     const promptElement=document.querySelector('#generated-prompt');if(!promptElement)throw new Error('Rendered prompt display is missing from the Workflow UI.');
     const renderedStage1=promptElement.textContent||'';
     for(const required of ['first semantic reader','PASS 1 — EXHAUSTIVE EXTRACTION','PASS 2 — OMISSION CHALLENGE','humanAuthorityCandidates'])if(!renderedStage1.includes(required))throw new Error('Rendered Stage 01 COMPLETE prompt omitted required behavior: '+required+'; selected stage: '+document.querySelector('#stage-picker')?.value+'; operation: '+document.querySelector('#operation-picker')?.value+'; feedback: '+document.querySelector('#app-live-status')?.textContent+'; notice: '+document.querySelector('#next-required-action > .notice')?.textContent+'; actual prompt: '+renderedStage1.slice(0,1200));
-    // Exercise the one real stage-package action. It must save the controlling
-    // instruction as part of producing exactly one mobile-safe ZIP transfer.
+    // The retained bootstrap remains legacy, non-gating evidence. Its Stage02
+    // view must not expose an export while current Stage01 is incomplete.
+    const stage2Picker=document.querySelector('#stage-picker');stage2Picker.value='2';stage2Picker.dispatchEvent(new Event('change',{bubbles:true}));await idle();
+    const store=globalThis.closedLoopProjectStore,legacyId=document.querySelector('#current-project-summary')?.dataset?.projectId,legacy=await store.readProject(legacyId),legacyButton=document.getElementById('next-export-prompt-file');
+    const legacyUi={jobId:legacyId,profile:legacy?.projectData?.contractProfileMigration?.status,stage01Complete:engine.gate(1,legacy).complete,stage02Allowed:engine.stageEntryState(legacy,2).allowed,exportExists:Boolean(legacyButton),exportDisabled:legacyButton?legacyButton.disabled:null,selectedStage:document.querySelector('#stage-picker')?.value};
+    if(legacyUi.jobId!=='JOB-20260823144121'||legacyUi.profile!=='LEGACY_NON_GATING'||legacyUi.stage01Complete||legacyUi.stage02Allowed||legacyUi.exportExists||legacyUi.selectedStage!=='2')throw new Error('HUMAN_WALKTHROUGH_LEGACY_UI_ORACLE: '+JSON.stringify(legacyUi));
+    // A separate current UI project needs only real Stage01 acceptance and its
+    // bound synthetic confirmation. Never persist the prompt audit's gate flags.
+    const uiProject=stage01AcceptanceFixture({core,schema,engine,prompts,ingestion:globalThis.closedLoopResponseIngestion},'JOB-HUMAN-WALKTHROUGH-UI');
+    uiProject.activeStage=1;uiProject.activeView='Workflow';
+    const savedUiProject=await store.writeProject(uiProject,{createOnly:true,expectedProjectRevision:0});
+    return {stage04Prerequisites,legacyUi,uiProjectIdentity:{jobId:savedUiProject.job.JOB_ID,projectSha256:savedUiProject.projectSha256,revision:savedUiProject.revision},stages:30,prompts:checked.length,applicationOnlyOperations:applicationOnly.length,first:checked[0],last:checked.at(-1),uiStagesReached:reached.length,oneTimeSupply:true,operatorDoubleCheckGuide:true};
+  })()`);
+  const uiUrl=new URL(pageUrl);for(const key of ['project','version','stage','view'])uiUrl.searchParams.delete(key);uiUrl.searchParams.set('project',result.uiProjectIdentity.jobId);
+  await send('Page.navigate',{url:uiUrl.href});
+  await poll(async()=>{const ready=await evalJs(`document.readyState==='complete'&&globalThis.closedLoopAppReady===true&&document.querySelector('#current-project-summary')?.dataset?.projectId===${JSON.stringify(result.uiProjectIdentity.jobId)}`);if(!ready)throw new Error('The admitted UI fixture is not active.');return true;});
+  Object.assign(result,await evalJs(`(async()=>{
+    const idle=async()=>{const end=Date.now()+15000;while(Date.now()<end){if(document.querySelector('#app')?.getAttribute('aria-busy')!=='true')return;await new Promise(resolve=>setTimeout(resolve,25));}throw new Error('The operator action did not finish.');};await idle();
+    const store=globalThis.closedLoopProjectStore,engine=globalThis.closedLoopWorkflowEngine,expected=${JSON.stringify(result.uiProjectIdentity)},selected=document.querySelector('#current-project-summary')?.dataset?.projectId,current=await store.readProject(selected);
+    const stage01Accepted=current.projectData.acceptedChanges.filter(row=>Number(row.stage)===1&&!row.invalidatedBy),stage01Confirmations=current.projectData.stageConfirmations.filter(row=>Number(row.stage)===1&&row.confirmed&&!row.invalidatedBy);
+    const ui={selectedProject:selected===expected.jobId,exactStoredIdentity:current.projectSha256===expected.projectSha256&&current.revision===expected.revision,stage01Complete:engine.gate(1,current).complete,stage02Allowed:engine.stageEntryState(current,2).allowed,acceptedStage01Count:stage01Accepted.length,confirmedStage01Count:stage01Confirmations.length,laterAcceptedCount:current.projectData.acceptedChanges.filter(row=>Number(row.stage)>1&&!row.invalidatedBy).length,laterCompleteCount:Array.from({length:29},(_,i)=>i+2).filter(stage=>current.stages[stage].status==='COMPLETE'||current.stages[stage].gate?.complete===true).length};
+    if(!ui.selectedProject||!ui.exactStoredIdentity||!ui.stage01Complete||!ui.stage02Allowed||ui.acceptedStage01Count!==1||ui.confirmedStage01Count!==1||ui.laterAcceptedCount!==0||ui.laterCompleteCount!==0)throw new Error('HUMAN_WALKTHROUGH_CURRENT_UI_ORACLE: '+JSON.stringify(ui));
+    // Exercise the original real stage-package action on the admitted fixture.
+    const workflowButton=document.querySelector('[data-view="Workflow"]');if(!workflowButton)throw new Error('Workflow navigation is missing.');workflowButton.click();await idle();
     const stage2Picker=document.querySelector('#stage-picker');stage2Picker.value='2';stage2Picker.dispatchEvent(new Event('change',{bubbles:true}));await idle();
     const exportButton=document.getElementById('next-export-prompt-file');
     if(!exportButton||exportButton.disabled)throw new Error('Current consolidated stage-file package control is not available.');
     for(const legacy of ['export-prompt-file','export-prompt-manifest','export-prompt-context','export-stage-files'])if(document.getElementById(legacy))throw new Error('Superseded export control remains: '+legacy);
-    return {stages:30,prompts:checked.length,applicationOnlyOperations:applicationOnly.length,first:checked[0],last:checked.at(-1),uiStagesReached:reached.length,oneTimeSupply:true,operatorDoubleCheckGuide:true};
-  })()`);
+    return {stage02UiPrerequisites:{...ui,legacyBootstrapBlocked:true,actualProjectNavigation:true,productionCreateOnlyWrite:true,synthetic:true,actualExternalActor:false}};
+  })()`));
   const idleExpression=`(async()=>{const end=Date.now()+15000;while(Date.now()<end){if(document.querySelector('#app')?.getAttribute('aria-busy')!=='true')return;await new Promise(resolve=>setTimeout(resolve,25));}throw new Error('The operator action did not finish.');})()`;
   const handoff={
     click:async selector=>{await evalJs(`(()=>{const node=document.querySelector(${JSON.stringify(selector)});if(!node||node.disabled)throw new Error('The required handoff control is unavailable.');node.click();})()`);await evalJs(idleExpression);},
