@@ -41,7 +41,7 @@ export async function verifyFinalReviewFeedback({sourceOverrides={},stageFilter=
    [':independentFinalReviewOperation(stage,operation)?INDEPENDENT_FINAL_REVIEW_PROMPT_VERSION',''],
    ['    ...(independentFinalReviewOperation(stage,operation)?{independentFinalReviewContextVersion:INDEPENDENT_FINAL_REVIEW_CONTEXT_VERSION}:{}),\n',''],
    ["const authorizedOpen=open.flatMap(record=>{const authorization=contextContentAuthorization(state,{stage,operation,family:'blockers',record,scope});return authorization.allowed?[authorization.record]:[];});",'const authorizedOpen=open;'],
-   ['const isolated=Boolean(independentFeedbackContextRole(stage,operation)),validationFailures=','const isolated=false,validationFailures=']
+   ['const isolated=Boolean(independentFeedbackContextRole(stage,operation)||deferredExecutionContextPolicy(state,stage,operation)?.independentReview),validationFailures=','const isolated=false,validationFailures=']
   ];for(const [before,after]of mutations){assert.equal(source.split(before).length,2,'FINAL_FEEDBACK_LEGACY_ANCHOR_ORACLE');source=source.replace(before,after);}
   vm.runInContext(source,r.runtime,{filename:'prompt-engine.js:pre-final-feedback-equivalent'});const legacy=r.runtime.closedLoopPromptEngine;
   // The pre-fix producer exposed only the six-run-role assessment API. Keep

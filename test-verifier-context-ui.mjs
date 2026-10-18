@@ -4,6 +4,7 @@ import vm from 'node:vm';
 import {projectStoreRuntime,bindAcceptanceUi} from './test-project-store-runtime.mjs';
 import {deferredDefinitionRestorationFixture,authorizeFixtureHandoff} from './test-fixtures.mjs';
 import {readStoreArchive} from './test-zip.mjs';
+import {verifierUiPrerequisite} from './test-verifier-ui-prerequisite.mjs';
 import {responseFixture} from './operator-journey-fixtures.mjs';
 
 // The retained cohort establishes real Stage 11 prerequisites. Its historical
@@ -14,7 +15,14 @@ export async function verifyVerifierContextUi({sourceOverrides={},fault=null}={}
  const r=projectStoreRuntime({sourceOverrides}),e=r.engine,i=r.ingestion,h=r.runtime.closedLoopHash,schema=r.runtime.closedLoopWorkflowSchema,cases=[];
  const source=sourceOverrides['app-core.js']??fs.readFileSync('app-core.js','utf8'),promptSource=sourceOverrides['prompt-engine.js']??fs.readFileSync('prompt-engine.js','utf8');
  const extract=name=>{const start=source.search(new RegExp('(?:async )?function '+name+'\\(')),ends=[source.indexOf('\nfunction ',start+1),source.indexOf('\nasync function ',start+1)].filter(x=>x>=0);assert(start>=0&&ends.length,'VERIFIER_UI_OWNER_SOURCE_REQUIRED: '+name);return source.slice(start,Math.min(...ends));};
- const {p:restored}=await deferredDefinitionRestorationFixture(r,{family:'regressions',filename:'verification/deferred-definition-compatibility-legacy-fixture-20261005.json'});restored.activeStage=12;restored.activeView='Workflow';
+ let legacyPrerequisiteNegative=null;
+ if(!fault){
+  const legacy=projectStoreRuntime({sourceOverrides}),{p:oldPrerequisite}=await deferredDefinitionRestorationFixture(legacy,{family:'regressions',filename:'verification/deferred-definition-compatibility-legacy-fixture-20261005.json'}),before=legacy.runtime.closedLoopHash.sha256Value(oldPrerequisite.projectData.rawResponses);
+  assert.equal(legacy.engine.gate(11,oldPrerequisite).complete,false,'VERIFIER_UI_LEGACY_UNKNOWN_PREREQUISITE_REJECTED');
+  const unknown=oldPrerequisite.projectData.generatedPrompts.filter(prompt=>prompt.operation==='EXECUTE_RUN').filter(prompt=>legacy.prompts.runPromptContextIsolation(oldPrerequisite,prompt).determination==='UNKNOWN');assert(unknown.length>0,'VERIFIER_UI_LEGACY_UNKNOWN_ISOLATION_REQUIRED');
+  assert.equal(legacy.runtime.closedLoopHash.sha256Value(oldPrerequisite.projectData.rawResponses),before);legacyPrerequisiteNegative={passed:true,unknownInstructions:unknown.length,rawResponsesUnchanged:true};
+ }
+ const restored=await verifierUiPrerequisite(r);restored.activeStage=12;restored.activeView='Workflow';
  assert.equal(e.gate(11,restored).complete,true,'VERIFIER_UI_REAL_STAGE11_PREREQUISITE_ORACLE');
  let p=await r.store.writeProject(restored,{createOnly:true,expectedProjectRevision:0,incrementRevision:false});
  const verification=e.recordsForIteration(p,'verification',p.job.CURRENT_ITERATION).filter(row=>Number(row.stage)===12),first=verification.find(row=>{const context=p.projectData.freshContexts.find(ctx=>ctx.id===e.recordValue(row,'VERIFIER_CONTEXT_ID'));return e.contextRunBinding(context,e.recordValue(row,'RUN_ID')).matches;}),other=verification.find(row=>e.recordValue(row,'RUN_ID')!==e.recordValue(first,'RUN_ID'));
@@ -78,7 +86,7 @@ export async function verifyVerifierContextUi({sourceOverrides={},fault=null}={}
  p=await r.store.writeProject(prepared.project,{operational:true,expectedProjectRevision:p.revision,expectedStateSha256:p.projectSha256});const reloaded=await r.store.readProject(p.job.JOB_ID);
  assert.equal(i.findRaw(reloaded,captured.rawRecord.rawResponseId).completeRawResponse,text);assert.equal(i.findProposal(reloaded,prepared.proposal.proposalId).status,'PENDING_OPERATOR_REVIEW');assert.equal(h.sha256Value(reloaded.projectData.acceptedChanges),retained.acceptedChanges,'VERIFIER_UI_NO_AUTOMATIC_ACCEPTANCE_ORACLE');
  cases.push({caseId:'corrected-package-file-admission',passed:true,exportedRuns:1,otherRunCarrierLeaks:0,priorReviewerRecordLeaks:0,invalidRetainedCellAssigned:true,stagedFileAdmitted:true,persistedPendingProposal:true,automaticAcceptance:false});
- return {verifierContextUi:'PASS',cases,synthetic:true,actualBrowser:false,stageCompletionEstablished:false,boundary:'Actual extracted UI run selection/cache/save, real canonical persistence and exported instruction/context ZIP, actual staged response-file admission and proposal reload. Preserved retained prerequisite cohort; no new full journey or real external actor claim.'};
+ return {verifierContextUi:'PASS',cases,legacyPrerequisiteNegative,synthetic:true,actualBrowser:false,stageCompletionEstablished:false,boundary:'Actual extracted UI run selection/cache/save, real canonical persistence and exported instruction/context ZIP, actual staged response-file admission and proposal reload. Preserved retained prerequisite cohort; no new full journey or real external actor claim.'};
 }
 
 // Reuse the final-feedback suite's exact historical carrier fixture. This

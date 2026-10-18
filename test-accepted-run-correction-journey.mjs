@@ -284,6 +284,17 @@ function runRecords(r, contamination) {
 // Bounded Stage11/12 boundary owner. Reuse the exact retained prerequisite and
 // production package/staging/acceptance/store path without the later correction
 // journey. Retained history is input only; every gate is checked on this runtime.
+// Shared admitted prerequisite for isolated Stage12 controls. No readiness
+// flags are manufactured: all ten runs traverse the existing production path.
+export async function createAdmittedStage12Fixture({sourceOverrides={},onProgress=()=>{}}={}){
+ const sources=Object.fromEntries(runtimeFiles.map(file=>[file,sourceOverrides[file]??fs.readFileSync(file,'utf8')]));
+ let {r,p,prerequisiteSha256,decodedPrerequisiteSha256}=await prerequisite(sources);
+ for(let index=0;index<10;index++){({p}=await submit(r,p,11,'EXECUTE_RUN',runRecords(r,'NONE')));onProgress({acceptedRuns:index+1});}
+ for(let stage=1;stage<=11;stage++)assert.equal(r.engine.gate(stage,p).complete,true,'ADMITTED_STAGE12_PREREQUISITE_GATE_'+stage);
+ assert.equal(r.engine.recordsForIteration(p,'runs',p.job.CURRENT_ITERATION).length,10,'ADMITTED_STAGE12_TEN_RUNS');
+ return {r,p,prerequisiteSha256,decodedPrerequisiteSha256};
+}
+
 export async function verifyStage11AcceptedBoundary() {
   const sources = Object.fromEntries(runtimeFiles.map(file => [file, fs.readFileSync(file, 'utf8')]));
   let {r, p, prerequisiteSha256, decodedPrerequisiteSha256} = await prerequisite(sources);
