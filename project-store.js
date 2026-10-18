@@ -544,9 +544,9 @@ function copyOperationalAncestor(value){
 // field mirrors can share arrays. Compare values independently of alias topology,
 // without copying immutable response strings or hashing them a second time.
 function verifiedGraphNodes(value){
-  const nodes=new Map(),active=new WeakSet(),pending=[[value,false]];
+  const nodes=new Map(),active=new WeakSet(),pending=[value,false];
   while(pending.length){
-    const [item,finish]=pending.pop();if(!item||typeof item!=='object'){if(typeof item==='function'||typeof item==='symbol')return null;continue;}
+    const finish=pending.pop(),item=pending.pop();if(!item||typeof item!=='object'){if(typeof item==='function'||typeof item==='symbol')return null;continue;}
     if(finish){active.delete(item);continue;}
     if(active.has(item))return null;if(nodes.has(item))continue;
     if(!Array.isArray(item)&&Object.getPrototypeOf(item)!==Object.prototype&&Object.getPrototypeOf(item)!==null)return null;
@@ -556,10 +556,10 @@ function verifiedGraphNodes(value){
       if(Array.isArray(item)&&key==='length')continue;
       const descriptor=Object.getOwnPropertyDescriptor(item,key);
       if(!descriptor.enumerable||!Object.hasOwn(descriptor,'value'))return null;
-      entries.push([key,descriptor.value]);
+      entries.push(key,descriptor.value);
     }
-    nodes.set(item,entries);active.add(item);pending.push([item,true]);
-    for(const [,child]of entries)pending.push([child,false]);
+    nodes.set(item,entries);active.add(item);pending.push(item,true);
+    for(let index=1;index<entries.length;index+=2)pending.push(entries[index],false);
   }
   return nodes;
 }
@@ -567,22 +567,28 @@ function copyVerifiedTree(value){
   const nodes=verifiedGraphNodes(value);if(!nodes)return clone(value);
   if(!value||typeof value!=='object')return value;
   const copies=new Map([...nodes.keys()].map(item=>[item,Array.isArray(item)?new Array(item.length):{}]));
-  for(const [source,entries]of nodes){const target=copies.get(source);for(const [key,item]of entries)Object.defineProperty(target,key,{value:item&&typeof item==='object'?copies.get(item):item,enumerable:true,writable:true,configurable:true});}
+  for(const [source,entries]of nodes){const target=copies.get(source);for(let index=0;index<entries.length;index+=2){const item=entries[index+1];Object.defineProperty(target,entries[index],{value:item&&typeof item==='object'?copies.get(item):item,enumerable:true,writable:true,configurable:true});}}
   return copies.get(value);
 }
 function verifiedValuesEqual(before,after){
   const leftNodes=verifiedGraphNodes(before),rightNodes=verifiedGraphNodes(after);if(!leftNodes||!rightNodes)return false;
-  const pending=[[before,after]],compared=new WeakMap();
+  const pending=[before,after],compared=new WeakMap();
   while(pending.length){
-    const [left,right]=pending.pop();if(Object.is(left,right))continue;
+    const right=pending.pop(),left=pending.pop();if(Object.is(left,right))continue;
     if(!left||!right||typeof left!=='object'||typeof right!=='object'||Array.isArray(left)!==Array.isArray(right))return false;
     if(Array.isArray(left)&&left.length!==right.length)return false;
     let partners=compared.get(left);if(partners?.has(right))continue;if(!partners){partners=new WeakSet();compared.set(left,partners);}partners.add(right);
-    const entries=leftNodes.get(left),other=new Map(rightNodes.get(right));if(entries.length!==other.size)return false;
-    for(const [key,item]of entries){if(!other.has(key))return false;pending.push([item,other.get(key)]);}
+    const entries=leftNodes.get(left),otherEntries=rightNodes.get(right);if(entries.length!==otherEntries.length)return false;
+    // Complete graph validation above retains its original left-to-right
+    // inspection order. Snapshots usually preserve insertion order, so equal
+    // keys can use their captured descriptors without another lookup map.
+    let sameOrder=true;for(let index=0;index<entries.length;index+=2)if(entries[index]!==otherEntries[index]){sameOrder=false;break;}
+    if(sameOrder){for(let index=1;index<entries.length;index+=2){const item=entries[index],other=otherEntries[index];pending.push(item,other);}}
+    else{const other=new Map();for(let index=0;index<otherEntries.length;index+=2)other.set(otherEntries[index],otherEntries[index+1]);for(let index=0;index<entries.length;index+=2){const key=entries[index],item=entries[index+1];if(!other.has(key))return false;const value=other.get(key);pending.push(item,value);}}
   }
   return true;
 }
+
 const VERIFIED_PROJECT_INTEGRITY=Symbol('private verified project integrity');
 function verifiedProjectIntegrity(project,digest){return {kind:VERIFIED_PROJECT_INTEGRITY,project,digest,snapshot:copyVerifiedTree(project)};}
 function unchangedVerifiedProject(receipt,project,digest){return receipt?.kind===VERIFIED_PROJECT_INTEGRITY&&receipt.project===project&&receipt.digest===digest&&verifiedValuesEqual(receipt.snapshot,project);}
@@ -908,7 +914,7 @@ function cachedReadinessProjection(project){
 }
 function projectionActivationRequired(project){
  const schema=globalThis.closedLoopWorkflowSchema,id=project.projectData.applicationProjection?.receipt?.derivationId;
- return !Object.hasOwn(project.projectData||{},'applicationProjection')||[schema.LEGACY_PROJECT_PROJECTION_DERIVATION_CONTRACT.id,schema.LEGACY_PROJECT_PROJECTION2_DERIVATION_CONTRACT.id,schema.LEGACY_PROJECT_PROJECTION3_DERIVATION_CONTRACT.id,schema.LEGACY_PROJECT_PROJECTION4_DERIVATION_CONTRACT.id,schema.LEGACY_PROJECT_PROJECTION5_DERIVATION_CONTRACT.id,schema.LEGACY_PROJECT_PROJECTION6_DERIVATION_CONTRACT.id,schema.LEGACY_PROJECT_PROJECTION7_DERIVATION_CONTRACT.id,schema.LEGACY_PROJECT_PROJECTION8_DERIVATION_CONTRACT.id,schema.LEGACY_PROJECT_PROJECTION9_DERIVATION_CONTRACT.id,schema.LEGACY_PROJECT_PROJECTION10_DERIVATION_CONTRACT.id,schema.LEGACY_PROJECT_PROJECTION11_DERIVATION_CONTRACT.id,schema.LEGACY_PROJECT_PROJECTION12_DERIVATION_CONTRACT.id,schema.LEGACY_PROJECT_PROJECTION13_DERIVATION_CONTRACT.id,schema.LEGACY_PROJECT_PROJECTION14_DERIVATION_CONTRACT.id].includes(id);
+ return !Object.hasOwn(project.projectData||{},'applicationProjection')||[schema.LEGACY_PROJECT_PROJECTION_DERIVATION_CONTRACT.id,schema.LEGACY_PROJECT_PROJECTION2_DERIVATION_CONTRACT.id,schema.LEGACY_PROJECT_PROJECTION3_DERIVATION_CONTRACT.id,schema.LEGACY_PROJECT_PROJECTION4_DERIVATION_CONTRACT.id,schema.LEGACY_PROJECT_PROJECTION5_DERIVATION_CONTRACT.id,schema.LEGACY_PROJECT_PROJECTION6_DERIVATION_CONTRACT.id,schema.LEGACY_PROJECT_PROJECTION7_DERIVATION_CONTRACT.id,schema.LEGACY_PROJECT_PROJECTION8_DERIVATION_CONTRACT.id,schema.LEGACY_PROJECT_PROJECTION9_DERIVATION_CONTRACT.id,schema.LEGACY_PROJECT_PROJECTION10_DERIVATION_CONTRACT.id,schema.LEGACY_PROJECT_PROJECTION11_DERIVATION_CONTRACT.id,schema.LEGACY_PROJECT_PROJECTION12_DERIVATION_CONTRACT.id,schema.LEGACY_PROJECT_PROJECTION13_DERIVATION_CONTRACT.id,schema.LEGACY_PROJECT_PROJECTION14_DERIVATION_CONTRACT.id,schema.LEGACY_PROJECT_PROJECTION15_DERIVATION_CONTRACT.id].includes(id);
 }
 function archiveLegacySourceApplicability(project,sourceProjectSha256){
  const field='SOURCE_APPLICABILITY_DETERMINATION',stage=project.stages?.[2],values=[];

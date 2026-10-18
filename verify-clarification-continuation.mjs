@@ -2,7 +2,8 @@ import assert from 'node:assert/strict';
 import {projectStoreRuntime} from './test-project-store-runtime.mjs';
 import {responseFixture,OBJECTIVE} from './operator-journey-fixtures.mjs';
 import {registerFixtureSourceSearchCapability} from './test-fixtures.mjs';
-const faultName=process.argv.find(arg=>arg.startsWith('--fault='))?.slice(8),fault=faultName==='global-input-gate'?{file:'workflow-engine.js',id:faultName,before:'function inputVersionForStage(project,stage){return inputSnapshotForStage(project,stage).version;}',after:'function inputVersionForStage(project,stage){return project.job.CURRENT_INPUT_VERSION;}'}:faultName==='global-input-selector'?{file:'workflow-engine.js',id:faultName,before:'const scope={...current,inputVersion:inputVersionForStage(project,stage),...scopeRule}',after:'const scope={...current,...scopeRule}'}:null;
+const faultName=process.argv.find(arg=>arg.startsWith('--fault='))?.slice(8);let fault=faultName==='global-input-gate'?{file:'workflow-engine.js',id:faultName,before:'function inputVersionForStage(project,stage){return inputSnapshotForStage(project,stage).version;}',after:'function inputVersionForStage(project,stage){return project.job.CURRENT_INPUT_VERSION;}'}:faultName==='global-input-selector'?{file:'workflow-engine.js',id:faultName,before:'const scope={...current,inputVersion:inputVersionForStage(project,stage),...scopeRule}',after:'const scope={...current,...scopeRule}'}:null;
+if(faultName==='global-source-author')fault={file:'workflow-engine.js',id:faultName,before:'change.scope?.inputVersion===inputVersionForStage(project, 2)',after:'change.scope?.inputVersion===project.job.CURRENT_INPUT_VERSION'};
 const r=projectStoreRuntime({fault}),{core,engine,prompts,ingestion,store,copy,runtime}=r,schema=runtime.closedLoopWorkflowSchema,cases=[],note=name=>cases.push({name,result:'PASS'});
 let p=await store.createProject({commandId:'FILE-CORRECTION-PROJECT'}),draft=copy(p);draft.job.EXACT_USER_OBJECTIVE_VERBATIM=OBJECTIVE;engine.recordHumanInputVersion(draft,['EXACT_USER_OBJECTIVE_VERBATIM']);p=await store.writeProject(draft,{expectedProjectRevision:p.revision});
 draft=copy(p);const prompt=prompts.reserveAndBuildPromptRecord(draft,1).prompt;p=await store.writeProject(draft,{expectedProjectRevision:p.revision});
@@ -27,6 +28,23 @@ const nextRequest={...copy(requestEnvelope),stage:nextStage,operation:nextPrompt
 const questionResult=ingestion.prepare(p,{stage:nextStage,text:JSON.stringify(nextRequest),promptRecord:nextPrompt,expectedCommittedRevision:p.revision,transport:{authority:'AUTHORITATIVE_RESPONSE_FILE',packageId:nextPrompt.packageId,operationReservationId:nextPrompt.operationReservationId,challengeNonce:nextPrompt.challengeNonce}});assert.equal(questionResult.validation.valid,true,JSON.stringify(questionResult.validation.issues));p=await store.writeProject(questionResult.project,{expectedProjectRevision:p.revision,expectedStateSha256:p.projectSha256,operational:true});await persist(ingestion.commit(p,questionResult.proposal.proposalId).project);
 const nextAnswer=ingestion.answerHumanInput(p,{[p.projectData.humanInputRequests.at(-1).requestId]:'Include the terminal LF in the research notes.'});
 for(const definition of core.STAGES.filter(stage=>stage.number<nextStage))assert.equal(engine.gate(definition.number,nextAnswer.project).complete,true,'CLARIFICATION_SELECTOR_ORACLE: unchanged accepted upstream work remains valid after a later scoped answer');
+const acceptedSourceState=engine.sourceApplicabilityState(acceptedUpstream),continuedSourceState=engine.sourceApplicabilityState(nextAnswer.project);
+assert.notEqual(nextAnswer.project.job.CURRENT_INPUT_VERSION,acceptedUpstream.job.CURRENT_INPUT_VERSION,'CLARIFICATION_SOURCE_SCOPE_SETUP_ORACLE');
+assert.equal(engine.inputVersionForStage(nextAnswer.project,targetStage),engine.inputVersionForStage(acceptedUpstream,targetStage),'CLARIFICATION_SOURCE_SCOPE_ORACLE');
+assert.deepEqual(copy(continuedSourceState),copy(acceptedSourceState),'CLARIFICATION_SOURCE_PROVENANCE_ORACLE: unchanged source acceptance retains its exact author, contract, review, sources and evidence');
+// These isolated retained-state controls change only their declared input or
+// version. They are not admitted external responses or a new source search.
+for(const change of ['stage-two-answer','intake-input','source-set']){
+ const stale=copy(nextAnswer.project);
+ if(change==='stage-two-answer'){stale.projectData.userEntered.clarifications.push(copy({stage:targetStage,operation:'COMPLETE',answer:'Use a different bounded source-search scope.'}));engine.recordHumanInputVersion(stale,['CLARIFICATION']);}
+ else if(change==='intake-input'){stale.job.EXACT_USER_OBJECTIVE_VERBATIM+=' Include an additional controlling requirement.';engine.recordHumanInputVersion(stale,['EXACT_USER_OBJECTIVE_VERBATIM']);}
+ else stale.job.CURRENT_SOURCE_SET_VERSION='SOURCE-SET-CHANGED-CONTROL';
+ const state=engine.sourceApplicabilityState(stale);
+ assert.equal(state.determination,'UNDETERMINED','CLARIFICATION_CHANGED_SOURCE_ORACLE: '+change);
+ assert.equal(state.authorChangeId,null,'CLARIFICATION_CHANGED_AUTHOR_ORACLE: '+change);
+ assert.equal(engine.gate(targetStage,stale).complete,false,'CLARIFICATION_CHANGED_SOURCE_GATE_ORACLE: '+change);
+}
+note('Source acceptance preserves exact provenance only while its stage-local inputs and source set remain current');
 const context=engine.stageContext(nextAnswer.project,nextStage);assert.equal(engine.recordsForCurrentScope(context,'sourceSearchContracts').length,engine.recordsForCurrentScope(acceptedUpstream,'sourceSearchContracts').length,'CLARIFICATION_SELECTOR_ORACLE: projected context retains compatible prerequisite records');
 await persist(nextAnswer.project);const checkpoint=(await store.historyList(p.job.JOB_ID)).activeId;const currentAfterAnswer=copy(p);await acceptExternal(p.projectData.generatedPrompts.find(row=>row.instructionId===nextAnswer.generatedPromptIds[0]));assert.equal(engine.gate(nextStage,p).complete,true,JSON.stringify(engine.gate(nextStage,p)));
 note('A later clarification preserves accepted source work and supports successful subsequent acceptance');

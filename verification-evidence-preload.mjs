@@ -1,9 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import {verificationCatalog} from './verification-evidence-catalog.mjs';
-import {recordExecutionReceipt,evidenceFingerprint,sha,RECEIPT_SCHEMA} from './verification-evidence.mjs';
 
 const suite=path.basename(process.argv[1]||'');
+// Inline supervisor fixtures have no suite and cannot produce catalog receipts.
+// Do not load the evidence graph inside their unchanged startup deadlines.
+const {verificationCatalog}=suite?await import('./verification-evidence-catalog.mjs'):{verificationCatalog:{}};
 const directory=process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS;
 // --check parses a named file without executing its verifier body. Preserve its
 // actual parser exit status, but never publish it as an executed suite receipt.
@@ -49,6 +50,7 @@ if(failureVisibility){
 // replace the real producer receipt with a failure receipt.
 const injectedFault=process.argv.slice(2).some(argument=>/^--(?:[a-z0-9]+-)*fault(?:-[a-z0-9]+)*(?:=|$)/.test(argument))||Object.entries(process.env).some(([name,value])=>value&&/(?:_FAULT|_SOURCE)$/.test(name));
 if(directory&&verificationCatalog[suite]&&!syntaxOnly&&!focusedPopulation&&!injectedFault&&(!process.env.CLOSED_LOOP_VERIFICATION_SOURCE_ROOT||path.resolve(process.cwd())===path.resolve(process.env.CLOSED_LOOP_VERIFICATION_SOURCE_ROOT))){
+  const {recordExecutionReceipt,evidenceFingerprint,sha,RECEIPT_SCHEMA}=await import('./verification-evidence.mjs');
   const fingerprint=evidenceFingerprint(),chunks=[],stderrChunks=[];
   let byteCount=0,outputOverflow=false;
   const write=process.stdout.write;

@@ -1,3 +1,4 @@
+import {verifyVerifiedGraphSemantics} from './test-verified-graph-semantics.mjs';
 import {verifyRetainedRootContinuation} from './test-retained-root-continuation.mjs';
 import {verifyWorkerMessageCodec,verifyStorageWorkerStartup} from './test-worker-message-codec.mjs';
 import {verifyPromptContextStorage} from './test-prompt-context-storage.mjs';
@@ -216,3 +217,5 @@ for(const [fault,caseId,oracle] of [['repeat-cold-read','boundaries-control','ST
  await assert.rejects(()=>verifyStartupSelectedReadReuse({fault,caseFilter:[caseId]}),error=>error.code==='ERR_ASSERTION'&&error.message.includes(oracle),'STARTUP_SELECTED_INTENDED_FAULT_ORACLE '+fault);startupSelectedReadFaults.push({fault,caseId,oracle,detected:true});
 }
 console.log(JSON.stringify({startupSelectedReadReuse:{...startupSelectedReadReuse,faults:startupSelectedReadFaults}}));
+
+console.log(JSON.stringify({verifiedGraphSemantics:verifyVerifiedGraphSemantics()}));

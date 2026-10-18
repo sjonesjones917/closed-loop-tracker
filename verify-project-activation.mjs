@@ -7,7 +7,7 @@ import {projectStoreRuntime,bindAcceptanceUi,bindProjectActivationUi} from './te
 import {artifactFixtureId} from './test-artifact-fixtures.mjs';
 import {readStoreArchive} from './test-zip.mjs';
 import {verifyStartupActivationReuse,verifyLegacy5ProjectionActivation,verifyStage19ProjectionActivationOrdering} from './test-startup-activation-reuse.mjs';
-import {verifyProjectionVersion15ActivationContract,verifyProjectionVersion15IterationActivation} from './test-derivation-receipt-contract.mjs';
+import {verifyProjectionVersion16ActivationContract,verifyProjectionVersion16IterationActivation} from './test-derivation-receipt-contract.mjs';
 
 const app=fs.readFileSync(process.env.APP_SOURCE||'app-core.js','utf8'),digest=bytes=>createHash('sha256').update(bytes).digest('hex');
 const observations=[];
@@ -155,10 +155,10 @@ observations.push({id:'PROJECT_ACTIVATION_CALLERS',result:'PASS',callers:callerR
 }
 const projection5Activation15=await verifyLegacy5ProjectionActivation();
 observations.push({id:'PROJECT_PROJECTION5_ACTIVATION15',...projection5Activation15});
-const projectionVersion15IterationActivation=await verifyProjectionVersion15IterationActivation();
-observations.push({...projectionVersion15IterationActivation,id:'PROJECT_PROJECTION7_ITERATION4_ACTIVATION15'});
-const projectionVersion7Activation=await verifyProjectionVersion15ActivationContract();
-observations.push({id:'PROJECT_PROJECTION6_ACTIVATION15',...projectionVersion7Activation});
+const projectionVersion16IterationActivation=await verifyProjectionVersion16IterationActivation();
+observations.push({...projectionVersion16IterationActivation,id:'PROJECT_PROJECTION7_ITERATION4_ACTIVATION16'});
+const projectionVersion16Activation=await verifyProjectionVersion16ActivationContract();
+observations.push({id:'PROJECT_PROJECTION6_ACTIVATION16',...projectionVersion16Activation});
 const stage19ProjectionActivationOrdering=await verifyStage19ProjectionActivationOrdering();
 observations.push({id:'PROJECT_STAGE19_PROJECTION_ACTIVATION_ORDERING',...stage19ProjectionActivationOrdering});
 const startupActivationReuse=await verifyStartupActivationReuse({source:app});

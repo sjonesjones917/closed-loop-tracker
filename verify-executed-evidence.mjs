@@ -193,7 +193,7 @@ async function verifyPreloadFailureVisibility(directory,{preloadFile=path.resolv
   const statsFile=path.join(root,'tail-stats.json');
   const hook="\nprocess.on('exit',()=>fs.writeFileSync("+JSON.stringify(statsFile)+",JSON.stringify({bytes:failureTailBytes,storedBytes:failureTail.reduce((sum,row)=>sum+row.length,0),largestEntry:Math.max(0,...failureTail.map(row=>row.length)),largestBacking:Math.max(0,...failureTail.map(row=>row.buffer.byteLength)),smallTail:failureTailBytes<=128?Buffer.concat(failureTail).toString('utf8'):null})));\n";
   const isolated=path.join(root,'instrumented-preload.mjs'),rebase=specifier=>JSON.stringify(pathToFileURL(path.resolve(path.dirname(preloadFile),specifier)).href);
-  const isolatedBytes=bytes.replace(/from '(\.\/[^']+)'/g,(_match,specifier)=>'from '+rebase(specifier)).replace(anchor,hook+anchor);fs.writeFileSync(isolated,isolatedBytes);
+  const isolatedBytes=bytes.replace(/(from |import\()'(\.\/[^']+)'/g,(_match,prefix,specifier)=>prefix+rebase(specifier)).replace(anchor,hook+anchor);fs.writeFileSync(isolated,isolatedBytes);
   const mutation=await run('buffer-reuse',"const value=Buffer.from('ORIGINAL_WRITTEN_BUFFER');process.stderr.write(value,()=>{value.fill(90);process.exitCode=9;});",{registeredChild:true,observer:isolated});
   assert.equal(mutation.status,9);assert(mutation.stderr.startsWith('ORIGINAL_WRITTEN_BUFFER'),'PRELOAD_BUFFER_RAW_OUTPUT_ORACLE');assert.equal(JSON.parse(fs.readFileSync(statsFile,'utf8')).smallTail,'ORIGINAL_WRITTEN_BUFFER','PRELOAD_BUFFER_OWNERSHIP_ORACLE');cases.push({caseId:'registered-buffer-reuse-owned-snapshot',result:'PASS'});
   for(const [name,body] of [['huge-buffer',"process.stderr.write(Buffer.alloc(1024*1024,88));"],['huge-string',"process.stderr.write('X'.repeat(1024*1024));"]]){
@@ -206,8 +206,8 @@ async function verifyPreloadFailureVisibility(directory,{preloadFile=path.resolv
   const faultGuard='&&!injectedFault';
   assert.equal(bytes.split(faultGuard).length,2,'PRELOAD_RECEIPT_GUARD_POPULATION_ORACLE');
   const receiptPreload=path.join(root,'receipt-preload.mjs'),formerReceiptPreload=path.join(root,'receipt-preload-former.mjs');
-  fs.writeFileSync(receiptPreload,bytes.replace(/from '(\.\/[^']+)'/g,(_match,specifier)=>'from '+rebase(specifier)));
-  fs.writeFileSync(formerReceiptPreload,bytes.replace(faultGuard,'').replace(/from '(\.\/[^']+)'/g,(_match,specifier)=>'from '+rebase(specifier)));
+  fs.writeFileSync(receiptPreload,bytes.replace(/(from |import\()'(\.\/[^']+)'/g,(_match,prefix,specifier)=>prefix+rebase(specifier)));
+  fs.writeFileSync(formerReceiptPreload,bytes.replace(faultGuard,'').replace(/(from |import\()'(\.\/[^']+)'/g,(_match,prefix,specifier)=>prefix+rebase(specifier)));
   const receiptOwner='verify-hash.mjs',receiptOwnerPath=path.resolve(receiptOwner);
   assert(verificationCatalog[receiptOwner],'PRELOAD_RECEIPT_REGISTERED_OWNER_ORACLE');
   const receiptEnvironment=()=>Object.fromEntries(Object.entries(process.env).filter(([name])=>!/(?:_FAULT|_SOURCE)$/.test(name)));
@@ -402,6 +402,22 @@ assert.throws(()=>assertStage15AuthorFixtureDeclarations([]),/Stage 15 author fi
 assert.throws(()=>assertStage15AuthorFixtureDeclarations([...stage15AuthorFixtureDeclarations,...stage15AuthorFixtureDeclarations]),/Stage 15 author fixture/,'FIXTURE_INPUT_ORACLE: a duplicate Stage 15 author fixture declaration escaped detection.');
 assert.throws(()=>assertStage15AuthorFixtureDeclarations([[stage15AuthorFixtureOwner,'verification/unknown-stage15-author-fixture.json.gz']]),/Stage 15 author fixture/,'FIXTURE_INPUT_ORACLE: a wrong Stage 15 author fixture path escaped detection.');
 assert.throws(()=>assertStage15AuthorFixtureDeclarations([['verify-project-activation.mjs',stage15AuthorFixtureInput]]),/Stage 15 author fixture/,'FIXTURE_INPUT_ORACLE: a Stage 15 author fixture declared by the wrong owner escaped detection.');
+const scopedClarificationFixtureInput='verification/project-projection15-scoped-clarification-fixture.json.gz',scopedClarificationFixtureOwner='verify-contract-closure.mjs';
+const scopedClarificationFixtureDeclarations=Object.entries(verificationCatalog).flatMap(([owner,definition])=>(definition.sourceInputs||[]).filter(file=>file===scopedClarificationFixtureInput).map(file=>[owner,file]));
+function assertScopedClarificationFixtureDeclarations(rows){assert.deepEqual(rows,[[scopedClarificationFixtureOwner,scopedClarificationFixtureInput]],'FIXTURE_INPUT_ORACLE: scoped clarification fixture must have exactly one declaration at its actual owner.');}
+assertScopedClarificationFixtureDeclarations(scopedClarificationFixtureDeclarations);
+assert.throws(()=>assertScopedClarificationFixtureDeclarations([]),/scoped clarification fixture/,'FIXTURE_INPUT_ORACLE: a missing scoped clarification fixture declaration escaped detection.');
+assert.throws(()=>assertScopedClarificationFixtureDeclarations([...scopedClarificationFixtureDeclarations,...scopedClarificationFixtureDeclarations]),/scoped clarification fixture/,'FIXTURE_INPUT_ORACLE: a duplicate scoped clarification fixture declaration escaped detection.');
+assert.throws(()=>assertScopedClarificationFixtureDeclarations([[scopedClarificationFixtureOwner,'verification/unknown-scoped-clarification-fixture.json.gz']]),/scoped clarification fixture/,'FIXTURE_INPUT_ORACLE: a wrong scoped clarification fixture path escaped detection.');
+assert.throws(()=>assertScopedClarificationFixtureDeclarations([['verify-project-activation.mjs',scopedClarificationFixtureInput]]),/scoped clarification fixture/,'FIXTURE_INPUT_ORACLE: a scoped clarification fixture declared by the wrong owner escaped detection.');
+const historicalBindingFixtureInput='verification/historical-assertion-bindings-8b17763e-20261015.json',historicalBindingFixtureOwner='verify-final-acceptance.mjs';
+const historicalBindingFixtureDeclarations=Object.entries(verificationCatalog).flatMap(([owner,definition])=>(definition.sourceInputs||[]).filter(file=>file===historicalBindingFixtureInput).map(file=>[owner,file]));
+function assertHistoricalBindingFixtureDeclarations(rows){assert.deepEqual(rows,[[historicalBindingFixtureOwner,historicalBindingFixtureInput]],'FIXTURE_INPUT_ORACLE: historical binding fixture must have exactly one declaration at its actual owner.');}
+assertHistoricalBindingFixtureDeclarations(historicalBindingFixtureDeclarations);
+assert.throws(()=>assertHistoricalBindingFixtureDeclarations([]),/historical binding fixture/,'FIXTURE_INPUT_ORACLE: a missing historical binding fixture declaration escaped detection.');
+assert.throws(()=>assertHistoricalBindingFixtureDeclarations([...historicalBindingFixtureDeclarations,...historicalBindingFixtureDeclarations]),/historical binding fixture/,'FIXTURE_INPUT_ORACLE: a duplicate historical binding fixture declaration escaped detection.');
+assert.throws(()=>assertHistoricalBindingFixtureDeclarations([[historicalBindingFixtureOwner,'verification/unknown-historical-binding-fixture.json']]),/historical binding fixture/,'FIXTURE_INPUT_ORACLE: a wrong historical binding fixture path escaped detection.');
+assert.throws(()=>assertHistoricalBindingFixtureDeclarations([['verify-project-activation.mjs',historicalBindingFixtureInput]]),/historical binding fixture/,'FIXTURE_INPUT_ORACLE: a historical binding fixture declared by the wrong owner escaped detection.');
 const expectedActiveFixtureInputs=[
   'verification/accepted-run-stage10-prerequisite-20261007.json',
   'verification/approved-deferred-compatibility-proposal-20261005.md',
@@ -411,6 +427,7 @@ const expectedActiveFixtureInputs=[
   'verification/handoff-producer88-runtime-owner-fixture-20261011.json.gz',
   'verification/handoff-producer88-source-fixture-20261005.json',
   'verification/handoff-producer89-source-fixture-20261005.json',
+  'verification/historical-assertion-bindings-8b17763e-20261015.json',
   'verification/historical-context-assertion-inputs-7df-20261015.json.gz',
   'verification/historical-normative-fixture-inputs-20261015.json.gz',
   'verification/historical-source-relocation-crosswalk-20261014.json',
@@ -420,6 +437,7 @@ const expectedActiveFixtureInputs=[
   'verification/independent-source-review-20261014.json',
   'verification/manifest-stage01-legacy-writer-20261011.json.gz',
   'verification/normative-context-legacy-governance-7df5f46e.json',
+  'verification/project-projection15-scoped-clarification-fixture.json.gz',
   'verification/project-projection5-activation-fixture.json',
   'verification/projection7-iteration4-activation-prerequisite-20261014.json.gz',
   'verification/source-applicability-legacy4-20261011.json.gz',

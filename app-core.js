@@ -1083,6 +1083,9 @@ async function recordCurrentHandoffAuthorization(authorized){
    const reservation=safe(prepared.projectData.operationReservations).find(row=>engine.recordId(row,'operationReservations')===record.operationReservationId);
    if(!reservation)throw new Error('The reviewed instruction reservation is unavailable.');
    engine.transitionOperationReservation(reservation,'EXPIRED_BY_SCOPE');
+   // Derive the same current projections that canonical persistence will retain
+   // before their exact bytes become the replacement instruction's material.
+   engine.recalculate(prepared);
    globalThis.closedLoopPromptEngine.reserveAndBuildPromptRecord(prepared,origin.stage,promptOptions(origin.stage),{owningTabInstance:TAB_INSTANCE_ID});
    committing=prepared;
   }catch(error){promptPreparationError=error;}
