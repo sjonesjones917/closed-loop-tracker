@@ -42,7 +42,8 @@ export function assertFileFirstResponseContract({appSource=app,promptSource=prom
   assert.match(collectorSource,/for\(const suite of Object\.keys\(verificationCatalog\)\)/,'The collector must enumerate required catalogued producer suites.');
   assert.match(collectorSource,/await executeEvidenceProducer\(suite,\{directory,fingerprint\}\)/,'The collector must execute a missing catalogued producer.');
   assert.doesNotMatch(ingestionProofSource,/import ['"]\.\/verify-file-first-response\.mjs['"]/,'The ingestion wrapper must not rerun its separately owned file-first regression.');
-  assert.match(ingestionProofSource,/import ['"]\.\/verify-file-first-operator\.mjs['"]/,'The required ingestion proof must permanently execute the operator-path mutation regression.');
+  assert.match(ingestionProofSource,/const \{runIngestionFileFirstComponents\}=await import\(['"]\.\/test-file-first-components\.mjs['"]\);/,'The required ingestion proof must bind the operator component dispatcher.');
+  assert.match(ingestionProofSource,/await runIngestionFileFirstComponents\(process\.argv\.slice\(2\)\);/,'The required ingestion proof must await the operator component dispatcher.');
   return true;
 }
 
@@ -53,6 +54,46 @@ function assertResponseFileInstruction(text){
   assert.match(text,/Do not substitute inline or pasted JSON for response\.json/,'Inline JSON must not replace the authoritative response file.');
   assert.match(text,/final chat message must contain only links or attachments to the actual returned files/,'The final files must be accessible to the operator.');
   assert.doesNotMatch(text,/return exactly one complete strict JSON object and no surrounding prose|Return one final strict JSON object only when ready for machine ingestion/,'Inline-only final JSON instructions must not remain.');
+}
+
+// Exercise the actual ingestion owner-wiring statements without rerunning the
+// unrelated reservation/profile producers or the complete ingestion body.
+// Only import resolution is substituted; the dispatch call and awaiting/failure
+// behavior come from the checked source, including in the negative controls.
+async function executeIngestionOperatorWiring(source,dispatch,args=[]){
+  const start=source.indexOf("await import('./verify-reservation-contract.mjs');"),end=source.indexOf('\nglobalThis.Event=',start);
+  assert(start>=0&&end>start,'INGESTION_OPERATOR_WIRING_BOUNDARY_ORACLE');
+  const body=source.slice(start,end),events=[];let completed=false;
+  const loadOwner=async name=>{
+    events.push(name);
+    if(name==='./verify-reservation-contract.mjs')return {};
+    if(name==='./test-file-first-components.mjs')return {runIngestionFileFirstComponents:async actual=>{
+      assert.deepEqual(actual,args,'INGESTION_OPERATOR_ARGUMENTS_ORACLE');events.push('operator-start');
+      await dispatch(actual);completed=true;events.push('operator-complete');
+    }};
+    assert.equal(name,'./verify-response-contract-profile.mjs','INGESTION_OPERATOR_IMPORT_POPULATION_ORACLE');
+    assert(completed,'INGESTION_OPERATOR_AWAIT_ORACLE');return {};
+  };
+  const AsyncFunction=Object.getPrototypeOf(async function(){}).constructor;
+  await new AsyncFunction('loadOwner','process',body.replaceAll('import(','loadOwner('))(loadOwner,{argv:[process.execPath,'verify-ingestion.mjs',...args]});
+  assert.deepEqual(events,['./verify-reservation-contract.mjs','./test-file-first-components.mjs','operator-start','operator-complete','./verify-response-contract-profile.mjs'],'INGESTION_OPERATOR_EXECUTION_POPULATION_ORACLE');
+}
+async function verifyIngestionOperatorWiring(){
+  const call='await runIngestionFileFirstComponents(process.argv.slice(2));';
+  assert.equal(ingestionProof.split(call).length-1,1,'INGESTION_OPERATOR_CALL_ANCHOR_ORACLE');
+  const delayed=()=>new Promise(resolve=>setImmediate(resolve));
+  await executeIngestionOperatorWiring(ingestionProof,delayed,['--control-argument']);
+  await assert.rejects(()=>executeIngestionOperatorWiring(ingestionProof.replace(call,''),delayed),/INGESTION_OPERATOR_AWAIT_ORACLE/);
+  await assert.rejects(()=>executeIngestionOperatorWiring(ingestionProof.replace(call,call.slice('await '.length)),delayed),/INGESTION_OPERATOR_AWAIT_ORACLE/);
+  const sentinel=new Error('CONTROLLED_OPERATOR_FAILURE');
+  await assert.rejects(()=>executeIngestionOperatorWiring(ingestionProof,async()=>{throw sentinel;}),error=>error===sentinel);
+  await assert.rejects(()=>executeIngestionOperatorWiring(ingestionProof.replace(call,'try{'+call+'}catch{}'),async()=>{throw sentinel;}),/INGESTION_OPERATOR_AWAIT_ORACLE/);
+  // Execute the real operator mutation through the real dispatcher. Its core
+  // owner must reject the selected-operation fault; all siblings still join
+  // under the original child deadlines before the failure reaches this owner.
+  const {runIngestionFileFirstComponents}=await import('./test-file-first-components.mjs');
+  await assert.rejects(()=>executeIngestionOperatorWiring(ingestionProof,runIngestionFileFirstComponents,['--fault=selected-operation']),error=>error.name==='Error'&&/FILE_FIRST_COMPONENT_FAILED/.test(error.message)&&/SELECTED_OPERATION_HANDOFF_ORACLE/.test(error.message));
+  return {actualOperatorMutationRejected:true,awaitRequired:true,omittedDispatchRejected:true,swallowedFailureRejected:true,argumentsPreserved:true};
 }
 
 // Exercise the generated instruction for every registered operation in an isolated runtime.
@@ -80,6 +121,7 @@ for(let stage=1;stage<=schema.STAGE_COUNT;stage++){
 assert(generatedOperations>=30,'Every stage must be exercised.');
 
 assertFileFirstResponseContract();
+const ingestionOperatorWiring=await verifyIngestionOperatorWiring();
 assert.throws(()=>assertFileFirstResponseContract({engineSource:engine.replaceAll('SELECT_RESPONSE_JSON_FILE','PASTE_FINAL_JSON')}),/Paste must not remain/,'Mutation restoring paste as the workflow action must fail.');
 assert.throws(()=>assertFileFirstResponseContract({appSource:app.replace('id="response-json-file" type="file"','id="response-json-file" type="text"')}),/file input/,'Mutation replacing the primary file selector must fail.');
 assert.throws(()=>assertFileFirstResponseContract({storeSource:store.replaceAll('RESPONSE_STAGE_REHASH_MISMATCH','RESPONSE_STAGE_IGNORED_MISMATCH')}),/Read-back byte mismatch/,'Mutation removing staged-byte mismatch enforcement must fail.');
@@ -96,6 +138,7 @@ assert.throws(()=>assertFileFirstResponseContract({promptSource:prompt.replace('
 
 console.log(JSON.stringify({
   fileFirstResponseContract:'PASS',
+  ingestionOperatorWiring,
   generatedStages:schema.STAGE_COUNT,
   generatedOperations,conditionalRejections,
   promptOutputMutationsDetected:4,

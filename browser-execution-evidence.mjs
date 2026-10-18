@@ -80,7 +80,7 @@ export async function waitForBrowserExecutionObservations({pending,errors,worker
 export async function createBrowserExecutionObserver({webSocketDebuggerUrl,pageUrl,suite=path.basename(process.argv[1]),environment=process.env}){
   const expected=await loadBrowserExpectedSite(environment);if(!expected)return null;
   const base=siteBase(pageUrl,expected.scope,expected.manifest),resources=new Map(expected.manifest.runtimeResources.map(item=>[item.path,item]));
-  const pending=new Set(),errors=[],sources=new Map(),workers=new Set(),workerTargets=new Set(),sessions=new Map(),documentRequests=new Map(),documents=new Map(),diagnosticSessions=new Map(),workerSessionIds=new Set(),verifiedWorkerSessionIds=new Set(),scriptIdentities=new Map(),retiredSessions=new Set();let closed=false;
+  const pending=new Set(),errors=[],sources=new Map(),workers=new Set(),workerTargets=new Set(),sessions=new Map(),documentRequests=new Map(),documents=new Map(),diagnosticSessions=new Map(),workerSessionIds=new Set(),verifiedWorkerSessionIds=new Set(),scriptIdentities=new Map(),retiredSessions=new Set(),workerBreakpoints=new Map();let closed=false;
   const track=promise=>{pending.add(promise);promise.catch(error=>{if(!closed){errors.push(error);const session=diagnosticSessions.get(error.observerCommand?.sessionId);console.error('BROWSER_EXECUTION_OBSERVER_DIAGNOSTIC '+JSON.stringify({error:error.message,command:error.observerCommand||null,session:session||null,pendingCount:pending.size,workerTargetCount:workerTargets.size,observedWorkerCount:workers.size,at:Date.now()}));}}).finally(()=>pending.delete(promise));};
   const connection=new ObserverConnection(webSocketDebuggerUrl,message=>{
     if(closed)return;
@@ -98,8 +98,27 @@ export async function createBrowserExecutionObserver({webSocketDebuggerUrl,pageU
       const prior=sessions.get(sessionId);if(prior){if(retiredSessions.has(sessionId)){errors.push(new Error('BROWSER_EXECUTION_EVIDENCE: retired worker session was reattached: '+sessionId));return;}if(prior.targetId!==targetInfo.targetId||prior.type!==targetInfo.type||prior.url!==targetInfo.url)errors.push(new Error('BROWSER_EXECUTION_EVIDENCE: attached session identity changed: '+sessionId));return;}
       if(targetInfo.type!=='worker'||!targetInfo.url){errors.push(new Error('BROWSER_EXECUTION_EVIDENCE: attached target is not an identified worker: '+sessionId));return;}
       workerSessionIds.add(sessionId);diagnosticSessions.set(sessionId,{sessionId,targetInfo,attachedAt:Date.now(),detachedAt:null,parsed:[],verified:[]});console.error('BROWSER_EXECUTION_OBSERVER_EVENT '+JSON.stringify({kind:'attached',sessionId,targetInfo,at:Date.now()}));sessions.set(sessionId,targetInfo);if(targetInfo.type==='worker'&&targetInfo.url)workerTargets.add(targetInfo.url);
-      track(connection.send('Debugger.enable',{},sessionId));
+      track((async()=>{
+        await connection.send('Debugger.enable',{},sessionId);
+        if(message.params.waitingForDebugger){
+          const {breakpointId}=await connection.send('Debugger.setInstrumentationBreakpoint',{instrumentation:'beforeScriptExecution'},sessionId);
+          check(typeof breakpointId==='string'&&breakpointId.length>0,'missing worker source breakpoint identity');
+          workerBreakpoints.set(sessionId,breakpointId);
+          await connection.send('Runtime.runIfWaitingForDebugger',{},sessionId);
+        }
+      })());
       return;
+    }
+    if(message.method==='Debugger.paused'&&message.sessionId){
+      const sessionId=message.sessionId,scriptId=message.params.callFrames?.[0]?.location?.scriptId,identity=scriptIdentities.get(sessionId+':'+scriptId);
+      track((async()=>{
+        check(message.params.reason==='instrumentation'&&workerBreakpoints.has(sessionId)&&!retiredSessions.has(sessionId),'unexpected worker debugger pause');
+        check(identity?.sourceRead&&message.params.data?.scriptId===scriptId&&message.params.data?.url===identity.url,'paused worker script has no matching source observation');
+        await identity.sourceRead;
+        check(identity.verified,'paused worker source was not verified');
+        check(!closed&&!retiredSessions.has(sessionId),'worker detached before verified source resume');
+        await connection.send('Debugger.resume',{},sessionId);
+      })());return;
     }
     if(message.method!=='Debugger.scriptParsed'||!message.params.url)return;
     const {url,scriptId}=message.params,parsedAt=Date.now();diagnosticSessions.get(message.sessionId)?.parsed.push({url,scriptId,at:parsedAt});if(message.sessionId)console.error('BROWSER_EXECUTION_OBSERVER_EVENT '+JSON.stringify({kind:'parsed',sessionId:message.sessionId,url,scriptId,at:parsedAt}));let parsed;try{parsed=new URL(url);}catch{if(message.sessionId)errors.push(new Error('BROWSER_EXECUTION_EVIDENCE: malformed worker script URL: '+url));return;}
@@ -114,12 +133,13 @@ export async function createBrowserExecutionObserver({webSocketDebuggerUrl,pageU
     if(priorIdentity&&(priorIdentity.url!==url||priorIdentity.targetId!==(session?.targetId||null))){errors.push(new Error('BROWSER_EXECUTION_EVIDENCE: parsed script identity changed: '+identityKey));return;}
     const identity=identityKey?(priorIdentity||{url,targetId:session.targetId,verified:false}):null;if(identity)scriptIdentities.set(identityKey,identity);
     const targetType=message.sessionId?'WORKER':'PAGE',key=targetType+':'+url;
-    track((async()=>{const {scriptSource}=await connection.send('Debugger.getScriptSource',{scriptId},message.sessionId),bytes=Buffer.from(scriptSource,'utf8'),row={path:name,byteSize:bytes.length,sha256:sha(bytes),url,targetType,observation:'DEBUGGER_SCRIPT_SOURCE'};check(row.byteSize===item.byteSize&&row.sha256===item.digest,'loaded script bytes differ: '+name);diagnosticSessions.get(message.sessionId)?.verified.push({url,scriptId,sha256:row.sha256,byteSize:row.byteSize,at:Date.now()});if(message.sessionId)console.error('BROWSER_EXECUTION_OBSERVER_EVENT '+JSON.stringify({kind:'verified',sessionId:message.sessionId,url,scriptId,sha256:row.sha256,at:Date.now()}));if(identity)identity.verified=true;sources.set(key,row);if(message.sessionId&&session.url===url){workers.add(url);verifiedWorkerSessionIds.add(message.sessionId);}})());
+    const sourceRead=(async()=>{const {scriptSource}=await connection.send('Debugger.getScriptSource',{scriptId},message.sessionId),bytes=Buffer.from(scriptSource,'utf8'),row={path:name,byteSize:bytes.length,sha256:sha(bytes),url,targetType,observation:'DEBUGGER_SCRIPT_SOURCE'};check(row.byteSize===item.byteSize&&row.sha256===item.digest,'loaded script bytes differ: '+name);diagnosticSessions.get(message.sessionId)?.verified.push({url,scriptId,sha256:row.sha256,byteSize:row.byteSize,at:Date.now()});if(message.sessionId)console.error('BROWSER_EXECUTION_OBSERVER_EVENT '+JSON.stringify({kind:'verified',sessionId:message.sessionId,url,scriptId,sha256:row.sha256,at:Date.now()}));if(identity)identity.verified=true;sources.set(key,row);if(message.sessionId&&session.url===url){workers.add(url);verifiedWorkerSessionIds.add(message.sessionId);}})();if(identity)identity.sourceRead=sourceRead;track(sourceRead);
   });
   try{await connection.ready;await connection.send('Runtime.enable');await connection.send('Network.enable');await connection.send('Debugger.enable');
-  // Workers remain runnable: attaching the observer does not pause execution or
-  // replace application worker, storage, timing, or response functions.
-  await connection.send('Target.setAutoAttach',{autoAttach:true,waitForDebuggerOnStart:false,flatten:true});}
+  // Hold new workers until their source observer is installed. Each script is
+  // resumed only after its actual debugger bytes have passed existing checks.
+  // This adds debugger startup latency; application code and deadlines stay intact.
+  await connection.send('Target.setAutoAttach',{autoAttach:true,waitForDebuggerOnStart:true,flatten:true});}
   catch(error){closed=true;connection.close();throw error;}
   async function evaluate(expression){const result=await connection.send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});check(!result.exceptionDetails,result.exceptionDetails?.text||'browser evaluation failed');return result.result?.value;}
   return {close(){closed=true;connection.close();},async finish(){
