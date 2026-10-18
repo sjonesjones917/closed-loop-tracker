@@ -318,6 +318,8 @@ function disposeCanonicalDigestScope(scope){const data=memoApply(memoWeakGet,dig
 function scopedSha256Value(value){
  const data=memoApply(memoWeakGet,digestScopeData,[activeDigestScope]);
  if(!data||data.disposed)return sha256ValueCold(value);
+ // The scope indexes only objects; primitive values always use the cold path.
+ if(value===null||typeof value!=='object'){data.bypasses++;return sha256ValueCold(value);}
  if(!digestScopePrimitivesCurrent()){data.bypasses++;return sha256ValueCold(value);}
  const candidates=data.index.get(memoSignature(value))||[],currentGraph=candidates.length?memoGraph(value,50000,536870912):null,entry=currentGraph&&candidates.find(row=>memoValueEquals(row.value,value,currentGraph));
  if(!entry){data.bypasses++;return sha256ValueCold(value);}

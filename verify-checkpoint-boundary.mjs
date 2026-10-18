@@ -13,7 +13,8 @@ for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js
 const engine=globalThis.closedLoopWorkflowEngine,hash=globalThis.closedLoopHash,source=fs.readFileSync('verify-full-cycle.mjs','utf8'),anchor=source.indexOf('const checkpoint=engine.createPreDeliveryCheckpoint(p');
 assert.ok(anchor>0);
 const capture=path.join(os.tmpdir(),`checkpoint-${process.pid}.json`),script=path.resolve(`.checkpoint-${process.pid}.mjs`);
-fs.writeFileSync(script,source.slice(0,anchor)+`fs.writeFileSync(${JSON.stringify(capture)},JSON.stringify({project:p,artifacts:await captureArtifactFixture(byteStore,p.job.JOB_ID)}));process.exit(0);`);
+// Retain the unexecuted suffix so its hoisted helpers remain available to the prefix.
+fs.writeFileSync(script,source.slice(0,anchor)+`fs.writeFileSync(${JSON.stringify(capture)},JSON.stringify({project:p,artifacts:await captureArtifactFixture(byteStore,p.job.JOB_ID)}));process.exit(0);`+source.slice(anchor));
 let fixture;try{(await checkedVerifier(process.execPath,[script],{stdio:'pipe',timeout:3600000,maxBuffer:64*1024*1024}));const captured=JSON.parse(fs.readFileSync(capture,'utf8'));fixture=captured.project;await bindArtifactFixture(captured.artifacts);}finally{fs.rmSync(script,{force:true});fs.rmSync(capture,{force:true});}
 const cases=[],value=engine.recordValue;
 function check(name,run){try{run();cases.push({name,result:'PASS'});}catch(error){cases.push({name,result:'FAIL',message:error.message});}}

@@ -49,13 +49,14 @@ function verifyCurrentAtomicContextApplicability(){
  const contextIds=contextRows.map(row=>row.normativeRequirementId),atomicIds=atomicRows.map(row=>row.normativeRequirementId);
  const continuation=governance.atomicExtraction?.schema==='closed-loop-approved-insertion-atomic-extraction/1';
  if(continuation){
-  const checked=loadReviewedAtomicExtraction(governance.atomicExtraction,{sourceBytes:fs.readFileSync(SPECIFICATION_PATH),specificationPath:SPECIFICATION_PATH,sections:JSON.parse(fs.readFileSync('specification/closed-loop-specification-manifest.json')).sectionInventory});
+  let checked=loadReviewedAtomicExtraction(governance.atomicExtraction,{sourceBytes:fs.readFileSync(SPECIFICATION_PATH),specificationPath:SPECIFICATION_PATH,sections:JSON.parse(fs.readFileSync('specification/closed-loop-specification-manifest.json')).sectionInventory});
   assert.equal(checked.established,true,'CURRENT_CONTINUATION_SOURCE_UNIVERSE_ORACLE');
   const base=checked.continuation.data.originalBasePopulation;
   assert.equal(base.entryCount,7486,'ORIGINAL_CONTEXT_RETAINED_SOURCE_UNIVERSE_ORACLE');assert.equal(base.contextCount,291,'ORIGINAL_CONTEXT_COUNT_ORACLE');assert.equal(base.atomicCount,7195,'ORIGINAL_ATOMIC_COUNT_ORACLE');assert.equal(base.structuralContextCount,282);assert.equal(base.historicalContextCount,9);
   assert.deepEqual(contextIds,checked.entries.filter(row=>row.entryKind==='SOURCE_CONTEXT').map(row=>row.normativeRequirementId),'CURRENT_CONTEXT_REVIEWED_ID_UNIVERSE_ORACLE');
   assert.deepEqual(atomicIds,checked.entries.filter(row=>row.entryKind==='ATOMIC_OBLIGATION').map(row=>row.normativeRequirementId),'CURRENT_ATOMIC_REVIEWED_ID_UNIVERSE_ORACLE');
   assert.equal(new Set([...contextIds,...atomicIds]).size,checked.entries.length,'CURRENT_CONTEXT_STABLE_ID_UNIVERSE_ORACLE');
+  checked=null;
  }else{
  assert.equal(normative.requirements.length,7486,'CURRENT_CONTEXT_RETAINED_SOURCE_UNIVERSE_ORACLE');
  assert.equal(new Set([...contextIds,...atomicIds]).size,7486,'CURRENT_CONTEXT_STABLE_ID_UNIVERSE_ORACLE');

@@ -90,7 +90,8 @@ globalThis.closedLoopPromptEngine=Object.freeze({...fixturePromptOwner,
 `;
 const fixturePrefix=source.slice(0,anchor).replace('const core=globalThis.closedLoopCore',captureContext+'const core=globalThis.closedLoopCore');
 assert.ok(fixturePrefix.includes(captureContext),'The lifecycle fixture must capture context at generation time.');
-fs.writeFileSync(script,fixturePrefix+`fs.writeFileSync(${JSON.stringify(capture)},JSON.stringify({project:p,artifacts:await captureArtifactFixture(byteStore,p.job.JOB_ID),contextFiles:[...retainedContextFiles.values()]}));process.exit(0);`);
+// Retain the unexecuted suffix so its hoisted helpers remain available to the prefix.
+fs.writeFileSync(script,fixturePrefix+`fs.writeFileSync(${JSON.stringify(capture)},JSON.stringify({project:p,artifacts:await captureArtifactFixture(byteStore,p.job.JOB_ID),contextFiles:[...retainedContextFiles.values()]}));process.exit(0);`+source.slice(anchor));
 let fixture,fixtureContextFiles,fixtureArtifacts;
 try{(await checkedVerifier(process.execPath,[script],{stdio:'pipe',timeout:3600000,maxBuffer:64*1024*1024}));const generated=JSON.parse(fs.readFileSync(capture,'utf8'));fixture=generated.project;fixtureArtifacts=generated.artifacts;fixtureContextFiles=generated.contextFiles;}
 finally{fs.rmSync(script,{force:true});fs.rmSync(capture,{force:true});}
@@ -129,7 +130,7 @@ await check('authorized transfer receipts remain durably valid through every res
 await check('the continuation oracle detects premature completion after the final stage gate',async()=>{
   const source=fs.readFileSync('workflow-engine.js','utf8'),before='project.job.NEXT_REQUIRED_ACTION=nextAction(project,currentStage);';
   assert.equal(source.split(before).length-1,1,'The continuation fault must alter exactly one projection owner.');
-  const injected=source.replace(before,"project.job.NEXT_REQUIRED_ACTION=completed===30?actionEnvelope(project,currentStage,{actionType:'COMPLETE',heading:'Workflow complete',explanation:'Preserve the completed workflow and exact release evidence.',primaryButton:null}):nextAction(project,currentStage);");
+  const injected=source.replace(before,"project.job.NEXT_REQUIRED_ACTION=workflowComplete?actionEnvelope(project,currentStage,{actionType:'COMPLETE',heading:'Workflow complete',explanation:'Preserve the completed workflow and exact release evidence.',primaryButton:null}):nextAction(project,currentStage);");
   const fault=projectStoreRuntime({sourceOverrides:{'workflow-engine.js':injected}});await restoreArtifactFixture(fault.store,fixtureArtifacts);
   assert.throws(()=>receiptPersistenceOracle(fault.engine,fault.store,fault.copy),/DELIVERY_NEXT_ACTION_ORACLE: a completed transfer.*SUCCEEDED/,'DELIVERY_NEXT_ACTION_FAULT_ORACLE: premature completion was not detected.');
   assert.equal(fs.readFileSync('workflow-engine.js','utf8'),source);

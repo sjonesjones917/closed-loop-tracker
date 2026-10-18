@@ -232,7 +232,10 @@ assert.equal(emptyDenominatorAccepted.disposition,'SATISFIED','A current indepen
 assert.equal(emptyDenominatorAccepted.value,1,'A reviewed evidence-supported empty universe should publish 100% only through the explicit empty-universe rule.');
 
 const stage01Proof=await currentOwnerReport('verify-stage01-intake-closure.mjs','stage01IntakeClosure');
-const zeroLossProof=JSON.parse((await checkedVerifier(process.execPath,[new URL('./verify-zero-loss-accounting.mjs',import.meta.url).pathname],{encoding:'utf8'})));
+const zeroLossReports=executionReports(await checkedVerifier(process.execPath,[new URL('./verify-zero-loss-accounting.mjs',import.meta.url).pathname],{encoding:'utf8'}));
+const zeroLossMatches=zeroLossReports.filter(row=>Object.hasOwn(row,'zeroLossStage04'));
+assert.equal(zeroLossMatches.length,1,'Expected exactly one current zero-loss accounting report.');
+const zeroLossProof=zeroLossMatches[0];
 report.stage01IntakeCoverage=Number(Boolean(stage01Proof.stage01IntakeClosure&&stage01Proof.currentManifestBound&&stage01Proof.incompleteAccountingRejected));
 report.stage04ObligationCoverage=Number(Boolean(zeroLossProof.zeroLossStage04&&zeroLossProof.completeStage03ResearchUnion&&zeroLossProof.incompleteObligationRejected));
 assert.equal(report.stage01IntakeCoverage,1,'Measured Stage 01 intake coverage is not complete.');
