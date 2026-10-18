@@ -23,14 +23,21 @@ export async function verifyHistoricalContextLedger({directory,deadlineUnixMs,ex
  fs.mkdirSync(directory,{recursive:true});
  const remaining=()=>{const ms=deadlineUnixMs-Date.now();assert(ms>0,'HISTORICAL_LEDGER_ABSOLUTE_DEADLINE_ORACLE');return ms;};
  const produce=async(suite,destination)=>{const startedAt=new Date().toISOString();process.stderr.write(JSON.stringify({historicalLedgerProducer:suite,event:'STARTED',startedAt})+'\n');const receipt=await executeEvidenceProducer(suite,{directory:destination,cwd:process.cwd(),fingerprint:historicalFingerprint,timeout:Math.min(suiteTimeoutMs(suite),remaining()),evidenceDirectory:path.join(directory,'children',suite),environment:{...process.env,CLOSED_LOOP_REQUIRE_CURRENT_OWNER_RECEIPTS:'0',CLOSED_LOOP_VERIFICATION_RECEIPTS:destination}});validateExecutionReceipt(receipt,suite,historicalFingerprint);producerResults.push({suite,startedAt,finishedAt:new Date().toISOString(),receiptSha256:receipt.receiptSha256,fingerprint:receipt.fingerprint});process.stderr.write(JSON.stringify({historicalLedgerProducer:suite,event:'PASS',finishedAt:new Date().toISOString()})+'\n');return receipt;};
- // At most two actual producers. No current receipts are transported here.
- // The second lane fills the exact independent owners after registry finishes.
- const producerSettlements=await Promise.allSettled([
-   produce('verify-ingestion.mjs',ownershipDirectory),
-   (async()=>{await produce('verify-contract-closure.mjs',conformingDirectory);const stage03=await produce(suite,conformingDirectory);await produce('verify-response-authority-integrity.mjs',ownershipDirectory);await produce('verify-returned-slot-authority.mjs',ownershipDirectory);return stage03;})()
- ]);
+ // Ingestion owns bounded parallel components; do not compete with their CPU budget.
+ // After ingestion settles, run the independent prerequisite owners together.
+ // Join every producer and retain failures under the original shared deadline.
+ // No current receipts are transported here.
+ const producerSettlements=[
+   ...await Promise.allSettled([produce('verify-ingestion.mjs',ownershipDirectory)]),
+   ...await Promise.allSettled([
+     produce('verify-contract-closure.mjs',conformingDirectory),
+     produce(suite,conformingDirectory),
+     produce('verify-response-authority-integrity.mjs',ownershipDirectory),
+     produce('verify-returned-slot-authority.mjs',ownershipDirectory)
+   ])
+ ];
  const errors=producerSettlements.filter(row=>row.status==='rejected').map(row=>row.reason);if(errors.length)throw new AggregateError(errors,'Historical ledger actual producer prerequisite failed.');
- const good={receipt:producerSettlements[1].value};
+ const good={receipt:producerSettlements[2].value};
  process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS=ownershipDirectory;
   const evidenceDirectory=path.join(directory,'conforming','receipts'),evidencePath=path.join(evidenceDirectory,'evidence.json');
   const registryRequirements=[['NREQ-a56263f8ca87f003eb82d8ce2a013284','registry.fields'],['NREQ-15bcea4db7a052db7fc4f619dac3acae','registry.operations'],['NREQ-ca1881e2147860bad9fb1f6de8df247f','registry.scopes'],['NREQ-2eda4f41b65187dddb96d68135a7fe03','registry.durable']];
