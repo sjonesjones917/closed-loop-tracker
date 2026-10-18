@@ -45,10 +45,10 @@ function copyWorkspace(target){
     return !relative.split(path.sep).some(part=>part==='.git'||part==='node_modules'||part==='_site')&&!relative.startsWith(path.join('verification','controller-ci-proof'));
   }});
 }
-async function runCore(workspace){
+async function runCore(workspace,script=CORE_PATH){
   const beforeSpec=fs.readFileSync(path.join(workspace,SPEC_MANIFEST_PATH));
   const beforeNormative=fs.readFileSync(path.join(workspace,NORMATIVE_MANIFEST_PATH));
-  const result=(await runVerifier(process.execPath,[CORE_PATH],{
+  const result=(await runVerifier(process.execPath,[script],{
     cwd:workspace,
     env:{...process.env,SOURCE_COMMIT:sourceCommit,GITHUB_ACTIONS:'false'},
     encoding:'utf8',maxBuffer:256*1024*1024
@@ -77,13 +77,20 @@ try{
   mutation.sha256='0'.repeat(64);
   fs.writeFileSync(mutationPath,JSON.stringify(mutation,null,2)+'\n');
   const mutatedBytes=fs.readFileSync(mutationPath);
-  const mutationRun=(await runCore(mutationRoot));
+  // The first core validates the complete generated state and every core control.
+  // Regenerate the corrupted fixture independently, then require that same exact
+  // validated state before accepting its existing rewrite-detection control.
+  const mutationRun=(await runCore(mutationRoot,'generate-specification-governance.mjs'));
   assert(mutationRun.result.status===0,'Intentional committed-manifest mutation did not reach the rewrite-detection boundary.');
+  assert(mutationRun.afterSpec.equals(validation.afterSpec),'Mutation regeneration differs from the validated specification manifest.');
+  assert(mutationRun.afterNormative.equals(validation.afterNormative),'Mutation regeneration differs from the validated normative manifest.');
   assert(mutationRun.changed,'Intentional committed-manifest mutation was not detected by byte comparison.');
   let mutationRejected=false;
   try{assert(!mutationRun.changed,'Committed governance bytes changed during validation.');}catch{mutationRejected=true;}
   assert(mutationRejected,'Intentional committed-manifest mutation was not rejected.');
   assert(mutatedBytes.equals(mutationRun.beforeSpec),'Intentional mutation fixture changed before validation began.');
+  assert(fs.readFileSync(SPEC_MANIFEST_PATH).equals(committedSpecBytes),'Mutation regeneration modified the committed specification manifest.');
+  assert(fs.readFileSync(NORMATIVE_MANIFEST_PATH).equals(committedNormativeBytes),'Mutation regeneration modified the committed normative manifest.');
 
   const migrationProof=await currentOwnerReport('verify-v3-migration.mjs','verifyV3Migration',{run:()=>checkedVerifier(process.execPath,['verify-v3-migration.mjs'],{encoding:'utf8'})});
   assert(migrationProof.verifyV3Migration==='PASS','Current migration owner did not report PASS.');
