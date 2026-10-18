@@ -22,7 +22,8 @@ import vm from 'node:vm';
 // owner before starting the next; static sibling imports overlap after an
 // async dependency yields and contend with its bounded component children.
 await import('./verify-reservation-contract.mjs');
-await import('./verify-file-first-operator.mjs');
+const {runIngestionFileFirstComponents}=await import('./test-file-first-components.mjs');
+await runIngestionFileFirstComponents(process.argv.slice(2));
 await import('./verify-response-contract-profile.mjs');
 
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};

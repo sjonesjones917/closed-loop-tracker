@@ -2,7 +2,12 @@ import assert from 'node:assert/strict';
 import {runVerifier} from './verify-conformance-regressions.mjs';
 export class VerifierInfrastructureError extends Error{constructor(message){super(message);this.name='VerifierInfrastructureError';}}
 export const FILE_FIRST_COMPONENT_BOUNDARY='\n__CLOSED_LOOP_FILE_FIRST_COMPONENT_BOUNDARY__\n';
-export async function runFileFirstComponents(args){
+// The standalone I/O owner retains four simultaneous components under its
+// existing 30-second coordinator deadline. Ingestion has its own outer budget
+// and uses two owners at a time; every launched child retains its 30-second cap.
+export function runFileFirstComponents(args){return runComponents(args,4);}
+export function runIngestionFileFirstComponents(args){return runComponents(args,2);}
+async function runComponents(args,workers){
  const controller=new AbortController(),onTerm=()=>controller.abort('SIGTERM'),onInt=()=>controller.abort('SIGINT');
  process.on('SIGTERM',onTerm);process.on('SIGINT',onInt);
  const commands=[
@@ -14,7 +19,14 @@ export async function runFileFirstComponents(args){
  let settled;
  try{
   const execute=command=>{if(controller.signal.aborted)throw new VerifierInfrastructureError('FILE_FIRST_COMPONENT_CANCELLED');return runVerifier(process.execPath,command,{timeout:30000,maxBuffer:16*1024*1024,signal:controller.signal});};
-  settled=await Promise.allSettled(commands.map(execute));
+  settled=new Array(commands.length);let next=0;
+  await Promise.all(Array.from({length:workers},async()=>{
+   for(;;){
+    const index=next++;if(index>=commands.length)return;
+    try{settled[index]={status:'fulfilled',value:await execute(commands[index])};}
+    catch(reason){settled[index]={status:'rejected',reason};}
+   }
+  }));
  }
  finally{process.removeListener('SIGTERM',onTerm);process.removeListener('SIGINT',onInt);}
  // Every component and its owned descendants must settle before any failure escapes.
