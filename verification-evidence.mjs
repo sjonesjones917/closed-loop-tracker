@@ -328,10 +328,14 @@ export function validateExecutionReceipt(receipt,suite,fingerprint){
   requireEvidence(sha(receipt.reports)!==sha([]),'empty executed report');
   return receipt;
 }
-export function recordExecutionReceipt(result,{cwd=process.cwd(),directory=process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS}={}){
+export function recordExecutionReceipt(result,{cwd=process.cwd(),directory=process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS,expectedSourceInputsSha256}={}){
   if(!directory)return null;
   const suite=path.basename(result.command?.[1]||'');if(!verificationCatalog[suite])return null;
-  const receipt=createExecutionReceipt(suite,result,{cwd});fs.mkdirSync(directory,{recursive:true});
+  const receipt=createExecutionReceipt(suite,result,{cwd});
+  // Receipt construction performs a fresh full-source scan. Compare it with
+  // the producer's pre-execution snapshot before reusing or writing evidence.
+  if(expectedSourceInputsSha256!==undefined)requireEvidence(receipt.fingerprint.sourceInputsSha256===expectedSourceInputsSha256,'source changed during producer execution');
+  fs.mkdirSync(directory,{recursive:true});
   const file=path.resolve(directory,suite+'.json');
   if(fs.existsSync(file)){
     // Retain already valid evidence for unchanged inputs. A newly failed child

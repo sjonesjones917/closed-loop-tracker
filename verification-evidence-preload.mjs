@@ -68,8 +68,7 @@ if(directory&&verificationCatalog[suite]&&!syntaxOnly&&!focusedPopulation&&!inje
   process.on('exit',code=>{
     try{
       if(code!==0||outputOverflow)throw new Error('producer exit/output bound failed');
-      const after=evidenceFingerprint();if(after.sourceInputsSha256!==fingerprint.sourceInputsSha256)throw new Error('source changed during producer execution');
-      recordExecutionReceipt({command:[process.execPath,...process.argv.slice(1)],exitCode:code,outcome:'PASS',stdout:Buffer.concat(chunks).toString('utf8'),stderr:Buffer.concat(stderrChunks).toString('utf8')},{directory});
+      recordExecutionReceipt({command:[process.execPath,...process.argv.slice(1)],exitCode:code,outcome:'PASS',stdout:Buffer.concat(chunks).toString('utf8'),stderr:Buffer.concat(stderrChunks).toString('utf8')},{directory,expectedSourceInputsSha256:fingerprint.sourceInputsSha256});
     }catch(error){
       fs.mkdirSync(directory,{recursive:true});
       const failure={schema:RECEIPT_SCHEMA,suite,fingerprint,complete:false,exitCode:code,outcome:'FAIL',reason:error.message};failure.receiptSha256=sha(failure);
