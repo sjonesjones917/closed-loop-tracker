@@ -173,6 +173,7 @@ for(const file of ['verify-browser.mjs','verify-browser-extra.mjs','verify-mobil
 
 if(process.argv.includes('--driver-activation-only')){console.log(JSON.stringify({operatorActivation:'PASS',cases,actualBrowser:false}));process.exit(0);}
 
+async function runLifecycleUI(){
 function node(id){return {id,disabled:false,hidden:true,textContent:'',isConnected:true,attrs:{},setAttribute(k,v){this.attrs[k]=String(v);},removeAttribute(k){delete this.attrs[k];},getAttribute(k){return this.attrs[k]??null;},focus(){},classList:{contains(){return false;},add(){},remove(){}},querySelector(){return null;}};}
 const nodes=new Map(['project-picker','new-project','export-project','header-backup-project','import-project','import-file','save-prompt','app-operation-status','operation-label','app-live-status','app','storage-status','history-undo','project-history'].map(id=>['#'+id,node(id)]));
 const frames=[];
@@ -567,6 +568,9 @@ for(const stage of [10,20,28]){
  cases.push({caseId:'UI-HUMAN-AUTHORITY-CONTROL-LABEL',result:'PASS',actualBrowser:false});
 }
 if(recoveryScope){console.log(JSON.stringify(assertRecoveryScopeReport(recoveryScopeReport(cases)),null,2));process.exit(0);}
+}
+
+async function runLifecycleControls(){
 // Each helper owns its VM/storage fixtures. Run independent controls in bounded
 // processes while retaining the shared UI sequence and real threshold waits above.
 // Positive helpers receive the exact in-memory source, including local fault modes.
@@ -588,12 +592,10 @@ for(const [script,fault,oracle]of [
 for(const [fault,oracle]of [['missing-diagnostics','RESPONSE_RECOVERY_RENDER_ORACLE'],['stale-project','RESPONSE_RECOVERY_STALE_PROJECT_ORACLE'],['all-files-as-response','RESPONSE_RECOVERY_TYPED_ROUTE_ORACLE:RETURNED_FILE'],['repeat-stale-response','RESPONSE_RECOVERY_STALE_ROUTE_ORACLE:RESPONSE_STAGE_PROMPT_IDENTITY_MISMATCH']])controlJobs.push({group:'response',script:'test-response-staging-recovery-ui.mjs',fault,oracle});
 for(const [fault,oracle]of [['generic-attachment-feedback','ATTACHMENT_LIVE_REGION_ORACLE'],['trust-release-label','RELEASE_RENDER_CONTRADICTION_ORACLE'],['untyped-independence-error','INDEPENDENCE_LIVE_REGION_ORACLE']])controlJobs.push({group:'safety',script:'test-operator-safety-feedback.mjs',fault,oracle});
 const controlResults=new Array(controlJobs.length),controlErrors=new Array(controlJobs.length),controlRuns=new Array(controlJobs.length);
-const controlController=new AbortController(),cancelControls=signal=>controlController.abort(signal),onControlTerm=()=>cancelControls('SIGTERM'),onControlInt=()=>cancelControls('SIGINT');
-process.on('SIGTERM',onControlTerm);process.on('SIGINT',onControlInt);
 // Reduce lifecycle concurrency when running alongside the other file-first components.
 const controlWorkerCount=process.argv.includes('--file-first-lifecycle-two-workers')?2:4;
 let nextControl=0;
-try{await Promise.all(Array.from({length:controlWorkerCount},async()=>{
+await Promise.all(Array.from({length:controlWorkerCount},async()=>{
  while(!controlController.signal.aborted&&nextControl<controlJobs.length){
   const index=nextControl++,job=controlJobs[index];
   try{
@@ -612,7 +614,7 @@ try{await Promise.all(Array.from({length:controlWorkerCount},async()=>{
    }
   }catch(error){controlErrors[index]=error;}
  }
-}));}finally{process.removeListener('SIGTERM',onControlTerm);process.removeListener('SIGINT',onControlInt);}
+}));
 if(controlController.signal.aborted)throw new VerifierInfrastructureError('LIFECYCLE_CONTROL_CANCELLED');
 const infrastructureRun=controlRuns.find(run=>run&&isComponentInfrastructureFailure(run));
 if(infrastructureRun)throw fileFirstComponentFailure(infrastructureRun);
@@ -620,6 +622,26 @@ if(controlErrors.some((error,index)=>isComponentProcessingFailure(error,controlR
 // Do not abandon live fault controls on the first assertion failure. All raw
 // child evidence is settled before the original-order failure is propagated.
 const controlError=controlErrors.find(Boolean);if(controlError)throw controlError;
+return {controlResults,controlJobs};
+}
+
+// Independent child fixtures can execute during the real UI threshold waits.
+// Both branches settle before cancellation, infrastructure or assertion failure escapes.
+const controlController=new AbortController(),cancelControls=signal=>controlController.abort(signal),onControlTerm=()=>cancelControls('SIGTERM'),onControlInt=()=>cancelControls('SIGINT');
+let controlResults,controlJobs;
+if(recoveryScope){await runLifecycleUI();}
+else{
+ process.on('SIGTERM',onControlTerm);process.on('SIGINT',onControlInt);
+ let settled;
+ try{settled=await Promise.allSettled([runLifecycleUI(),runLifecycleControls()]);}
+ finally{process.removeListener('SIGTERM',onControlTerm);process.removeListener('SIGINT',onControlInt);}
+ if(controlController.signal.aborted)throw new VerifierInfrastructureError('LIFECYCLE_CONTROL_CANCELLED');
+ const [ui,controls]=settled;
+ if(controls.status==='rejected'&&controls.reason instanceof VerifierInfrastructureError)throw controls.reason;
+ if(ui.status==='rejected')throw ui.reason;
+ if(controls.status==='rejected')throw controls.reason;
+ ({controlResults,controlJobs}=controls.value);
+}
 const [backupImportStaging,backupStagingStore,backupExtensionByteRetention,backupExtensionBindingControls,responseStagingRecoveryUI,operatorSafetyFeedback]=controlResults;
 const resultsFor=group=>controlResults.filter((_,index)=>controlJobs[index].group===group);
 const backupStagingFaults=resultsFor('backup'),responseStagingUIFaults=resultsFor('response'),operatorSafetyFeedbackFaults=resultsFor('safety');

@@ -4,10 +4,11 @@ export class VerifierInfrastructureError extends Error{constructor(message){supe
 export const FILE_FIRST_COMPONENT_BOUNDARY='\n__CLOSED_LOOP_FILE_FIRST_COMPONENT_BOUNDARY__\n';
 // The standalone I/O owner retains four simultaneous components under its
 // existing 30-second coordinator deadline. Ingestion has its own outer budget
-// and uses two owners at a time; every launched child retains its 30-second cap.
+// and uses two owners at a time, with lifecycle exclusive because it owns its
+// own concurrent controls. Every launched child retains its 30-second cap.
 export function runFileFirstComponents(args){return runComponents(args,4);}
-export function runIngestionFileFirstComponents(args){return runComponents(args,2);}
-async function runComponents(args,workers){
+export function runIngestionFileFirstComponents(args){return runComponents(args,2,{exclusiveLifecycle:true});}
+async function runComponents(args,workers,{exclusiveLifecycle=false}={}){
  const controller=new AbortController(),onTerm=()=>controller.abort('SIGTERM'),onInt=()=>controller.abort('SIGINT');
  process.on('SIGTERM',onTerm);process.on('SIGINT',onInt);
  const commands=[
@@ -19,14 +20,19 @@ async function runComponents(args,workers){
  let settled;
  try{
   const execute=command=>{if(controller.signal.aborted)throw new VerifierInfrastructureError('FILE_FIRST_COMPONENT_CANCELLED');return runVerifier(process.execPath,command,{timeout:30000,maxBuffer:16*1024*1024,signal:controller.signal});};
+  const indices=exclusiveLifecycle?[0,1,3]:[0,1,2,3];
   settled=new Array(commands.length);let next=0;
+  const settle=async index=>{
+   try{settled[index]={status:'fulfilled',value:await execute(commands[index])};}
+   catch(reason){settled[index]={status:'rejected',reason};}
+  };
   await Promise.all(Array.from({length:workers},async()=>{
    for(;;){
-    const index=next++;if(index>=commands.length)return;
-    try{settled[index]={status:'fulfilled',value:await execute(commands[index])};}
-    catch(reason){settled[index]={status:'rejected',reason};}
+    const position=next++;if(position>=indices.length)return;
+    await settle(indices[position]);
    }
   }));
+  if(exclusiveLifecycle)await settle(2);
  }
  finally{process.removeListener('SIGTERM',onTerm);process.removeListener('SIGINT',onInt);}
  // Every component and its owned descendants must settle before any failure escapes.
