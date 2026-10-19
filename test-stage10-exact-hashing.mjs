@@ -45,7 +45,14 @@ export async function verifyStage10ExactHashing({sourceOverrides={}}={}) {
     else actual=(await imported.store.getArtifact(item.artifactId))?.blob;
     assert(actual instanceof Blob,'IMPORTED_ORIGINAL_MEMBER_PRESENT '+item.artifactId);assert.deepEqual(Buffer.from(await actual.arrayBuffer()),expected,'IMPORTED_ORIGINAL_MEMBER_BYTES '+item.artifactId);
   }
-  for(const {key,row} of stores.find(item=>item.store==='meta').entries.filter(item=>/:snapshot:|:bytes:/.test(item.key)))assert.deepEqual(await identity((await imported.store.metaGet(key))),await identity(row.value),'IMPORTED_ORIGINAL16_META_PAYLOAD '+key);
+  for(const {key,row} of stores.find(item=>item.store==='meta').entries.filter(item=>/:snapshot:|:bytes:/.test(item.key))){
+    const member=body.artifacts.find(item=>item.archiveKind==='RECOVERY_BYTES'?key.endsWith(':bytes:'+item.sha256):item.archiveKind==='RECOVERY_SNAPSHOT'&&key.endsWith(':snapshot:'+item.checkpointId));
+    assert(member&&typeof member.mediaType==='string','IMPORTED_ORIGINAL16_DECLARED_ARCHIVE_MEMBER '+key);
+    // Export declares recovery byte members as application/octet-stream; import
+    // restores that declared transport type while retaining the exact payload.
+    const expected=await identity(row.value);expected.blob.mediaType=member.mediaType;
+    assert.deepEqual(await identity((await imported.store.metaGet(key))),expected,'IMPORTED_ORIGINAL16_META_PAYLOAD '+key);
+  }
   cases.push('authentic16-backup-import-activation','original-history-artifact-and-backup-member-bytes-preserved');
   for(const mode of ['legacy-alias','legacy-digest','legacy-version']) {
     const bad=await make(),row=bad.rows.get('projects').get(jobId);
