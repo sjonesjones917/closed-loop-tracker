@@ -286,6 +286,11 @@ function runRecords(r, contamination) {
 // journey. Retained history is input only; every gate is checked on this runtime.
 // Shared admitted prerequisite for isolated Stage12 controls. No readiness
 // flags are manufactured: all ten runs traverse the existing production path.
+export async function createRetainedStage11Prerequisite({sourceOverrides={}}={}){
+ const sources=Object.fromEntries(runtimeFiles.map(file=>[file,sourceOverrides[file]??fs.readFileSync(file,'utf8')]));
+ return prerequisite(sources);
+}
+
 export async function createAdmittedStage12Fixture({sourceOverrides={},onProgress=()=>{}}={}){
  const sources=Object.fromEntries(runtimeFiles.map(file=>[file,sourceOverrides[file]??fs.readFileSync(file,'utf8')]));
  let {r,p,prerequisiteSha256,decodedPrerequisiteSha256}=await prerequisite(sources);
