@@ -20,7 +20,7 @@ async function runComponents(args,workers,{exclusiveLifecycle=false}={}){
  let settled;
  try{
   const execute=command=>{if(controller.signal.aborted)throw new VerifierInfrastructureError('FILE_FIRST_COMPONENT_CANCELLED');return runVerifier(process.execPath,command,{timeout:30000,maxBuffer:16*1024*1024,signal:controller.signal});};
-  const indices=exclusiveLifecycle?[0,1,3]:[0,1,2,3];
+  const indices=exclusiveLifecycle?[0,3]:[0,1,2,3];
   settled=new Array(commands.length);let next=0;
   const settle=async index=>{
    try{settled[index]={status:'fulfilled',value:await execute(commands[index])};}
@@ -32,7 +32,7 @@ async function runComponents(args,workers,{exclusiveLifecycle=false}={}){
     await settle(indices[position]);
    }
   }));
-  if(exclusiveLifecycle)await settle(2);
+  if(exclusiveLifecycle){await settle(1);await settle(2);}
  }
  finally{process.removeListener('SIGTERM',onTerm);process.removeListener('SIGINT',onInt);}
  // Every component and its owned descendants must settle before any failure escapes.
