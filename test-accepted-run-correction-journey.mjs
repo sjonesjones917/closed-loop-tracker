@@ -808,7 +808,8 @@ export async function verifyCandidateHashAdmissionControls({sourceOverrides = {}
     const e = r.engine, oracle = 'CANDIDATE_HASH_ADMISSION_ORACLE ' + caseId + ' ' + boundary;
     assert.doesNotThrow(() => e.recalculate(p), oracle + ' deterministic recalculation');
     assert.equal(e.gate(10, p).complete, false, oracle);
-    for (const name of ['ALL_REQUIRED_COMPONENTS_PRESENT', 'ALL_RUNS_WILL_RECEIVE_IDENTICAL_FROZEN_MATERIALS', 'HASHES_RECORDED_WHERE_PRACTICAL', 'ALL_FROZEN_COMPONENT_BYTES_HASHED']) assert.equal(p.stages[10].derivedData[name], false, oracle + ' ' + name);
+    for (const name of ['ALL_REQUIRED_COMPONENTS_PRESENT', 'ALL_RUNS_WILL_RECEIVE_IDENTICAL_FROZEN_MATERIALS', 'ALL_FROZEN_COMPONENT_BYTES_HASHED']) assert.equal(p.stages[10].derivedData[name], false, oracle + ' ' + name);
+    assert(!Object.hasOwn(p.stages[10].derivedData,'HASHES_RECORDED_WHERE_PRACTICAL'),oracle+' obsolete Stage10 alias absent');
     const evaluation = e.evaluateIteration(p, iterationId, 'INITIAL');
     assert.equal(evaluation.candidateIdentity, '', oracle + ' identity');
     assert.equal(evaluation.executionEvidenceComplete, false, oracle + ' execution');

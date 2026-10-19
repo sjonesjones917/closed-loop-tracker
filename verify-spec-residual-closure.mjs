@@ -15,7 +15,9 @@ const DEFERRED_MATRIX_TIMEOUT_MS=330*60*1000;
 const CROSS_RUN_OWNER_TIMEOUT_MS=20*60*1000;
 assert(schema,'workflow schema did not load');
 const source=fs.readFileSync('workflow-schema.js','utf8');
-assert.doesNotMatch(source,/HASHES_RECORDED_WHERE_PRACTICAL/,'Obsolete Stage 10 best-effort hashing contract must not exist.');
+// Historical receipts retain their exact registered output shape. The current
+// projection and authored Stage10 contracts must reject the retired alias.
+assert(!Object.hasOwn(schema.PROJECT_PROJECTION_STAGE_DEFINITIONS[10],'HASHES_RECORDED_WHERE_PRACTICAL'),'Obsolete Stage 10 best-effort hashing must not enter the current projection contract.');
 assert.doesNotMatch(source,/POST_CORRECTION_SUCCESSES_PROVEN/,'Stage 15 must not claim later post-correction success inside its own stage contract.');
 const controllingOps=['LOAD_ARTIFACT','READ_BYTES','DECODE_UTF8','PARSE_JSON','PARSE_CSV','PARSE_XML','SELECT_JSON_PATH','SELECT_XML','COUNT','SUM','MIN','MAX','SORT','UNIQUE','HASH_SHA256','REGEX','COMPARE','ASSERT_EQ','ASSERT_GT','ASSERT_GTE','ASSERT_LT','ASSERT_LTE','ASSERT_MATCH','ASSERT_CONTAINS','ASSERT_NOT_CONTAINS','ASSERT_SET_EQUAL','BYTE_COMPARE'];
 assert.deepEqual([...schema.TEST_IR.operations],controllingOps,'Schema Test IR operation universe must equal the controlling v1 primitive set.');
