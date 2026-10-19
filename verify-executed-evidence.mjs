@@ -413,6 +413,14 @@ assert.throws(()=>assertScopedClarificationFixtureDeclarations([]),/scoped clari
 assert.throws(()=>assertScopedClarificationFixtureDeclarations([...scopedClarificationFixtureDeclarations,...scopedClarificationFixtureDeclarations]),/scoped clarification fixture/,'FIXTURE_INPUT_ORACLE: a duplicate scoped clarification fixture declaration escaped detection.');
 assert.throws(()=>assertScopedClarificationFixtureDeclarations([[scopedClarificationFixtureOwner,'verification/unknown-scoped-clarification-fixture.json.gz']]),/scoped clarification fixture/,'FIXTURE_INPUT_ORACLE: a wrong scoped clarification fixture path escaped detection.');
 assert.throws(()=>assertScopedClarificationFixtureDeclarations([['verify-project-activation.mjs',scopedClarificationFixtureInput]]),/scoped clarification fixture/,'FIXTURE_INPUT_ORACLE: a scoped clarification fixture declared by the wrong owner escaped detection.');
+const stage10AuthenticFixtureInput='verification/stage10-authentic-projection16-f348.json.gz',stage10AuthenticFixtureOwner='verify-contract-closure.mjs';
+const stage10AuthenticFixtureDeclarations=Object.entries(verificationCatalog).flatMap(([owner,definition])=>(definition.sourceInputs||[]).filter(file=>file===stage10AuthenticFixtureInput).map(file=>[owner,file]));
+function assertStage10AuthenticFixtureDeclarations(rows){assert.deepEqual(rows,[[stage10AuthenticFixtureOwner,stage10AuthenticFixtureInput]],'FIXTURE_INPUT_ORACLE: Stage 10 authentic fixture must have exactly one declaration at its actual owner.');}
+assertStage10AuthenticFixtureDeclarations(stage10AuthenticFixtureDeclarations);
+assert.throws(()=>assertStage10AuthenticFixtureDeclarations([]),/Stage 10 authentic fixture/,'FIXTURE_INPUT_ORACLE: a missing Stage 10 authentic fixture declaration escaped detection.');
+assert.throws(()=>assertStage10AuthenticFixtureDeclarations([...stage10AuthenticFixtureDeclarations,...stage10AuthenticFixtureDeclarations]),/Stage 10 authentic fixture/,'FIXTURE_INPUT_ORACLE: a duplicate Stage 10 authentic fixture declaration escaped detection.');
+assert.throws(()=>assertStage10AuthenticFixtureDeclarations([[stage10AuthenticFixtureOwner,'verification/unknown-stage10-authentic-fixture.json.gz']]),/Stage 10 authentic fixture/,'FIXTURE_INPUT_ORACLE: a wrong Stage 10 authentic fixture path escaped detection.');
+assert.throws(()=>assertStage10AuthenticFixtureDeclarations([['verify-project-activation.mjs',stage10AuthenticFixtureInput]]),/Stage 10 authentic fixture/,'FIXTURE_INPUT_ORACLE: a Stage 10 authentic fixture declared by the wrong owner escaped detection.');
 const historicalBindingFixtureInput='verification/historical-assertion-bindings-8b17763e-20261015.json',historicalBindingFixtureOwner='verify-final-acceptance.mjs';
 const historicalBindingFixtureDeclarations=Object.entries(verificationCatalog).flatMap(([owner,definition])=>(definition.sourceInputs||[]).filter(file=>file===historicalBindingFixtureInput).map(file=>[owner,file]));
 function assertHistoricalBindingFixtureDeclarations(rows){assert.deepEqual(rows,[[historicalBindingFixtureOwner,historicalBindingFixtureInput]],'FIXTURE_INPUT_ORACLE: historical binding fixture must have exactly one declaration at its actual owner.');}
@@ -445,6 +453,7 @@ const expectedActiveFixtureInputs=[
   'verification/projection7-iteration4-activation-prerequisite-20261014.json.gz',
   'verification/source-applicability-legacy4-20261011.json.gz',
   'verification/stage01-retained-capture-legacy-fixture-20261005.json',
+  'verification/stage10-authentic-projection16-f348.json.gz',
   'verification/stage15-author-prerequisite-20261012.json.gz',
   'verification/stage19-precomparison-prerequisite-20261010.json.gz',
   'verification/verifier-context-ui-prerequisite-20261018.json'
