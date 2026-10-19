@@ -42,16 +42,17 @@ export async function verifyStage10ExactHashing({sourceOverrides={}}={}) {
   for(const item of body.artifacts){const expected=Buffer.from(item.base64,'base64');assert.equal(expected.length,item.byteSize);assert.equal(sha(expected),item.sha256);let actual;
     if(item.archiveKind==='RECOVERY_SNAPSHOT')actual=(await imported.store.metaGet('recovery:'+jobId+':snapshot:'+item.checkpointId))?.blob;
     else if(item.archiveKind==='RECOVERY_BYTES')actual=(await imported.store.metaGet('recovery:'+jobId+':bytes:'+item.sha256))?.blob;
-    else actual=(await imported.store.getArtifact(item.artifactId))?.blob;
+    else {const artifact=await imported.store.getArtifact(item.artifactId);assert.equal(artifact?.mediaType,item.mediaType,'IMPORTED_ARTIFACT_DECLARED_MEDIA_TYPE');assert.equal(artifact?.blob?.type,item.mediaType,'IMPORTED_ARTIFACT_HYDRATED_BLOB_TYPE');actual=artifact.blob;}
     assert(actual instanceof Blob,'IMPORTED_ORIGINAL_MEMBER_PRESENT '+item.artifactId);assert.deepEqual(Buffer.from(await actual.arrayBuffer()),expected,'IMPORTED_ORIGINAL_MEMBER_BYTES '+item.artifactId);
   }
   for(const {key,row} of stores.find(item=>item.store==='meta').entries.filter(item=>/:snapshot:|:bytes:/.test(item.key))){
     const member=body.artifacts.find(item=>item.archiveKind==='RECOVERY_BYTES'?key.endsWith(':bytes:'+item.sha256):item.archiveKind==='RECOVERY_SNAPSHOT'&&key.endsWith(':snapshot:'+item.checkpointId));
     assert(member&&typeof member.mediaType==='string','IMPORTED_ORIGINAL16_DECLARED_ARCHIVE_MEMBER '+key);
-    // Export declares recovery byte members as application/octet-stream; import
-    // restores that declared transport type while retaining the exact payload.
-    const expected=await identity(row.value);expected.blob.mediaType=member.mediaType;
-    assert.deepEqual(await identity((await imported.store.metaGet(key))),expected,'IMPORTED_ORIGINAL16_META_PAYLOAD '+key);
+    // Recovery bytes share a job+SHA pool with artifact occurrences. Pool Blob
+    // type follows the last writer; hydrated artifact MIME is checked above.
+    const expected=await identity(row.value),actual=await identity(await imported.store.metaGet(key));
+    if(member.archiveKind==='RECOVERY_BYTES'){delete expected.blob.mediaType;delete actual.blob.mediaType;}else expected.blob.mediaType=member.mediaType;
+    assert.deepEqual(actual,expected,'IMPORTED_ORIGINAL16_META_PAYLOAD '+key);
   }
   cases.push('authentic16-backup-import-activation','original-history-artifact-and-backup-member-bytes-preserved');
   for(const mode of ['legacy-alias','legacy-digest','legacy-version']) {
