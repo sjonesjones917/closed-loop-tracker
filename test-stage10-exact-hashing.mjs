@@ -26,7 +26,9 @@ export async function verifyStage10ExactHashing({sourceOverrides={}}={}) {
   const assertCurrent=(r,p)=>{assert.equal(p.projectData.applicationProjection.receipt.derivationId,'closed-loop-derivation/project-current-projection/17');assert.equal(r.store.validateProjectIntegrity(p).valid,true);assert.equal(Object.hasOwn(p.stages[10].derivedData,alias),false);const data=r.copy(r.engine.deriveStageData(p,10));assert.equal(Object.hasOwn(data,alias),false);assert.equal(data[exact],true);const old=r.copy(fixture.directStage10);delete old[alias];assert.deepEqual(data,old);};
   const r=await make(),source=r.copy(fixture.project);
   assert.equal(JSON.stringify(r.runtime.closedLoopWorkflowSchema.LEGACY_PROJECT_PROJECTION16_DERIVATION_CONTRACT),fixture.legacyDefinition);
-  assert.equal(r.engine.validateLegacyApplicationProjection(source).valid,true);assert.equal(r.store.validateProjectIntegrity(source).valid,true);
+  assert.equal(r.engine.validateLegacyApplicationProjection(source).valid,true);
+  assert.equal(r.store.validateProjectIntegrity(source).valid,false,'AUTHENTIC16_IS_NOT_CURRENT17_BEFORE_ACTIVATION');
+  assert.equal(r.store.validateProjectIntegrity(source,{verifyDerived:false,verifyProjection:true}).valid,true,'AUTHENTIC16_CANONICAL_BYTES_AND_LEGACY_RECEIPT_VALID');
   cases.push('authentic-projection16-receipt-and-exact-declaration');
   const current=await r.store.readProject(jobId);assertCurrent(r,current);assert.equal(current.revision,source.revision+1);
   const event=current.projectData.history.find(row=>row.type==='APPLICATION_PROJECTION_DERIVATION_ACTIVATED');assert.equal(event.previousDerivationId,'closed-loop-derivation/project-current-projection/16');assert.equal(event.sourceProjectSha256,fixture.projectRow.projectSha256);assert.equal(event.historicalProvenanceClaimed,false);await retained(r,'read-activation');
