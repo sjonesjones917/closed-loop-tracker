@@ -14,7 +14,7 @@ async function runComponents(args,workers,{exclusiveLifecycle=false}={}){
  const commands=[
   ['verify-file-first-operator.mjs',...args,'--file-first-component=core'],
   ['verify-file-first-operator.mjs',...args,'--file-first-component=recovery'],
-  ['verify-operator-action-lifecycle.mjs',...args,'--file-first-lifecycle-two-workers'],
+  ['verify-operator-action-lifecycle.mjs',...args,...(exclusiveLifecycle?[]:['--file-first-lifecycle-two-workers'])],
   ['verify-handoff-authorization-ui.mjs',...args]
  ];
  let settled;
