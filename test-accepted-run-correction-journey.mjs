@@ -615,8 +615,31 @@ export async function verifyAcceptedRunCorrectionJourney({sourceOverrides = {}, 
   assert.equal(e.stageEntryState(p, 19).allowed, true);
   assert.equal(e.gate(19, p).complete, false, 'ACCEPTED_RUN_CONFIRMATION_PENDING_COMPARISON_IS_NOT_COMPLETE');
   await checkpoint('stage19-before-comparison');
+  // Branch only from the actual source-bound saved cohort. The clean path must
+  // still perform regression verification; it cannot reuse the adverse branch
+  // or turn a material defect into a successful confirmation.
+  const originalBeforeClean = r.runtime.closedLoopHash.sha256Value(p);
+  const cleanBranch = await restore(snapshot(r, p, sources), sources), cleanRuntime = cleanBranch.r;
+  let cleanProject = cleanBranch.p;
+  ({p: cleanProject} = await submit(cleanRuntime, cleanProject, 19, 'COMPARE', {
+    comparisons: [comparison(false)],
+    semanticReviews: [recordProposal(schema, 'semanticReviews', {tempKey: 'requirement-discovery', overrides: {REVIEW_QUESTION: 'Does the full governing input set require additional requirements?', FINDING: 'No new requirement is discovered in this synthetic clean comparison.', REASONING: 'Compare the preserved governing inputs with the current requirement set and exact verified outputs.', RESULT: 'ACCEPTED'}})]
+  }));
+  const cleanAction = cleanRuntime.engine.operationalNextAction(cleanProject, 19);
+  assert.equal(cleanAction.failedConfirmationReturn, undefined, 'CONFIRMATION_CLEAN_ACCEPTED_COMPARISON_HAS_NO_RETURN_ACTION');
+  assert.equal(cleanAction.operation, 'REGRESSION_VERIFY', 'CONFIRMATION_CLEAN_ACCEPTED_COMPARISON_REQUIRES_REGRESSION');
+  const cleanRegs = cleanRuntime.engine.records(cleanProject, 'regressions').filter(row => cleanRuntime.engine.recordValue(row, 'ACTIVE_RETIRED_STATE') !== 'RETIRED');
+  ({p: cleanProject} = await submit(cleanRuntime, cleanProject, 19, 'REGRESSION_VERIFY', {regressionExecutions: cleanRegs.map((row, index) => recordProposal(schema, 'regressionExecutions', {tempKey: 'clean-prior-regression-' + index, relationships: {REG_ID: {recordId: row.id}, ITERATION_ID: {recordId: confirmationIterationId}, CANDIDATE_ID: {recordId: correctedCandidateId}}, overrides: {PHASE: 'UNCHANGED_CONFIRMATION', RESULT: 'SATISFIED'}}))}));
+  assert.equal(cleanRuntime.engine.operationalNextAction(cleanProject, 19).actionType, 'CALCULATE_UNCHANGED_CONFIRMATION', 'CONFIRMATION_CLEAN_REGRESSION_PERMITS_CALCULATION');
+  const cleanDraft = cleanRuntime.copy(cleanProject); cleanRuntime.engine.recordUnchangedConfirmation(cleanDraft);
+  cleanProject = await save(cleanRuntime, cleanProject, cleanDraft); cleanProject = await cleanRuntime.store.readProject(cleanProject.job.JOB_ID);
+  assert.equal(cleanRuntime.engine.gate(19, cleanProject).complete, true, 'CONFIRMATION_CLEAN_REGRESSION_COMPLETES_AFTER_SAVE_RELOAD');
+  assert.equal(r.runtime.closedLoopHash.sha256Value(p), originalBeforeClean, 'CONFIRMATION_CLEAN_BRANCH_PRESERVES_ADVERSE_INPUT');
+  const cleanConfirmationContinuation = {passed: true, actualAcceptedResponse: true, actualSaveColdRead: true, synthetic: true, actualBrowser: false, nextOperation: cleanAction.operation, regressionExecutions: cleanRegs.length, stage19Complete: true, originalBranchPreserved: true};
+  if (onCheckpoint) await onCheckpoint({label: 'stage19-clean-confirmation-complete', r: cleanRuntime, p: cleanProject, sources, snapshot: snapshot(cleanRuntime, cleanProject, sources)});
+  onProgress({label: 'stage19-clean-confirmation-complete', revision: cleanProject.revision});
   const failedConfirmationReturn = await verifyFailedConfirmationReturn({r, p, onProgress});
-  return {validationResultPreservation, failedConfirmationReturn, passed: true, synthetic: true, actualBrowser: false, physicalDeviceAcceptance: false, earlierCompleteFlagsForced: false, canonicalRunMutation: false, startedAt, finishedAt: new Date().toISOString(), elapsedMs: performance.now() - started, sourceSha256, retainedPreparationSourceSha256: retainedProducerSources ? Object.fromEntries(Object.entries(retainedProducerSources).map(([file, source]) => [file, sha(source)])) : null, retainedStage17Identity: retainedStage17Prefix ? {revision: retainedStage17Prefix.revision, projectSha256: retainedStage17Prefix.projectSha256, sourceSha256: retainedStage17Prefix.sourceSha256} : null, executedBoundary: retainedStage17Prefix ? 'stage17-to-stage19-and-failed-confirmation-return' : 'existing-owner-journey', excludedRetainedPrefix: retainedStage17Prefix ? 'Stages1–17 execution and prefix-only fault controls are retained prerequisites, not executed by this run.' : null, fullJourneyExecution: !retainedStage17Prefix && !retainedStage12Prefix && !retainedNineRunPrefix, retainedBoundary: retainedStage17Prefix ? 'stage17-complete' : retainedStage12Prefix ? 'stage12-complete' : retainedNineRunPrefix ? 'nine-initial-runs' : null, prerequisiteSha256, decodedPrerequisiteSha256, cases, initialIterationId, correctedIterationId, confirmationIterationId, initialCandidateId, correctedCandidateId, stages12Through18: [12, 13, 14, 15, 16, 17, 18].map(stage => ({stage, complete: e.gate(stage, p).complete})), stage11Complete: false, stage19EntryAllowed: true, confirmationRuns: 10, confirmationVerifications: 10, confirmationComparisonPending: true, convergenceDerivationTransition, convergenceSurvivesFirstConfirmationRun: true, convergenceSurvivesFirstConfirmationVerification: true, actualAdapterSaveReload: true, originalRawPreserved: true, boundary: 'Retained original Stage1–10 operator prerequisite and, where explicitly identified, actual previously completed source-bound diagnostic prefix. Actual saved ZIP, staged response, admission, explicit acceptance, transaction-adapter save/reload through the corrected and unchanged-confirmation cohorts. Synthetic external actors; no browser or physical-device acceptance claim.'};
+  return {validationResultPreservation, cleanConfirmationContinuation, failedConfirmationReturn, passed: true, synthetic: true, actualBrowser: false, physicalDeviceAcceptance: false, earlierCompleteFlagsForced: false, canonicalRunMutation: false, startedAt, finishedAt: new Date().toISOString(), elapsedMs: performance.now() - started, sourceSha256, retainedPreparationSourceSha256: retainedProducerSources ? Object.fromEntries(Object.entries(retainedProducerSources).map(([file, source]) => [file, sha(source)])) : null, retainedStage17Identity: retainedStage17Prefix ? {revision: retainedStage17Prefix.revision, projectSha256: retainedStage17Prefix.projectSha256, sourceSha256: retainedStage17Prefix.sourceSha256} : null, executedBoundary: retainedStage17Prefix ? 'stage17-to-stage19-and-failed-confirmation-return' : 'existing-owner-journey', excludedRetainedPrefix: retainedStage17Prefix ? 'Stages1–17 execution and prefix-only fault controls are retained prerequisites, not executed by this run.' : null, fullJourneyExecution: !retainedStage17Prefix && !retainedStage12Prefix && !retainedNineRunPrefix, retainedBoundary: retainedStage17Prefix ? 'stage17-complete' : retainedStage12Prefix ? 'stage12-complete' : retainedNineRunPrefix ? 'nine-initial-runs' : null, prerequisiteSha256, decodedPrerequisiteSha256, cases, initialIterationId, correctedIterationId, confirmationIterationId, initialCandidateId, correctedCandidateId, stages12Through18: [12, 13, 14, 15, 16, 17, 18].map(stage => ({stage, complete: e.gate(stage, p).complete})), stage11Complete: false, stage19EntryAllowed: true, confirmationRuns: 10, confirmationVerifications: 10, confirmationComparisonPending: true, convergenceDerivationTransition, convergenceSurvivesFirstConfirmationRun: true, convergenceSurvivesFirstConfirmationVerification: true, actualAdapterSaveReload: true, originalRawPreserved: true, boundary: 'Retained original Stage1–10 operator prerequisite and, where explicitly identified, actual previously completed source-bound diagnostic prefix. Actual saved ZIP, staged response, admission, explicit acceptance, transaction-adapter save/reload through the corrected and unchanged-confirmation cohorts. Synthetic external actors; no browser or physical-device acceptance claim.'};
 }
 
 
@@ -706,6 +729,7 @@ export async function verifyFailedConfirmationReturn({r, p, alreadyCompared = fa
   const checkpoint = async label => {if (onCheckpoint) await onCheckpoint({label, r, p}); onProgress({label, revision: p.revision});};
   if (!alreadyCompared) {
     assert.equal(e.confirmationCorrectionSubject(p), null, 'CONFIRMATION_CLEAN_COHORT_HAS_NO_RETURN_SUBJECT');
+    assert.equal(e.operationalNextAction(p, 19).failedConfirmationReturn, undefined, 'CONFIRMATION_CLEAN_COHORT_HAS_NO_RETURN_ACTION');
     const clean = r.prompts.reserveAndBuildPromptRecord(r.copy(p), 14, {operation: 'ROOT_CAUSE'}).prompt;
     assert.equal(clean.scope.iterationId, e.records(p, 'iterations').find(row => Number(row.stage) === 10).id, 'CONFIRMATION_CLEAN_LATER_COHORT_RETAINS_INITIAL_SUBJECT');
     ({p} = await submit(r, p, 19, 'COMPARE', {
@@ -713,17 +737,24 @@ export async function verifyFailedConfirmationReturn({r, p, alreadyCompared = fa
       defects: [recordProposal(schema, 'defects', {tempKey: 'confirmation-defect', relationships: {REQ_ID: {recordId: req}, RUN_ID: {recordId: runs[0].id}}, overrides: {OBSERVED_FAILURE: 'Synthetic correctness-affecting confirmation execution variance.', EXPECTED_CONDITION: 'No unexplained correctness-affecting confirmation variance.', EVIDENCE: 'Current independently verified confirmation outputs compared under the frozen variance contract.', SEVERITY: 'MAJOR', STATUS: 'CONFIRMED'}})],
       semanticReviews: [recordProposal(schema, 'semanticReviews', {tempKey: 'requirement-discovery', overrides: {REVIEW_QUESTION: 'Does the full governing input set require additional requirements?', FINDING: 'No new requirement is discovered in this synthetic challenge; the comparison defect remains separate.', REASONING: 'Review the exact governing inputs and preserve the declared synthetic defect.', RESULT: 'ACCEPTED'}})]
     }));
-    const regs = e.records(p, 'regressions').filter(row => e.recordValue(row, 'ACTIVE_RETIRED_STATE') !== 'RETIRED');
-    ({p} = await submit(r, p, 19, 'REGRESSION_VERIFY', {regressionExecutions: regs.map((row, index) => recordProposal(schema, 'regressionExecutions', {tempKey: 'prior-regression-' + index, relationships: {REG_ID: {recordId: row.id}, ITERATION_ID: {recordId: iterationId}, CANDIDATE_ID: {recordId: candidateId}}, overrides: {PHASE: 'UNCHANGED_CONFIRMATION', RESULT: 'SATISFIED'}}))}));
   }
   const subject = e.confirmationCorrectionSubject(p); assert(subject); assert.equal(subject.iterationId, iterationId);
+  const failedAction = e.operationalNextAction(p, 19);
+  assert.equal(failedAction.actionType, 'BLOCKED', 'CONFIRMATION_FAILED_COHORT_RETURNS_FOR_CORRECTION');
+  assert.equal(failedAction.failedConfirmationReturn, true, 'CONFIRMATION_FAILED_COHORT_RETURN_MARKER');
+  assert.equal(failedAction.operation, null, 'CONFIRMATION_FAILED_COHORT_HAS_NO_NEXT_EXECUTION');
+  assert.match(failedAction.explanation, /Stage 14.*Stage 15.*Stage 16.*Stage 17/);
+  assert.equal(e.stageEntryState(p, 19).allowed, false, 'CONFIRMATION_FAILED_COHORT_DOES_NOT_BYPASS_PREREQUISITES');
+  const deniedEntry = e.stageEntryState(p, 19, {allPrevious: false});
+  assert.throws(() => r.prompts.reserveAndBuildPromptRecord(r.copy(p), 19, {operation: 'REGRESSION_VERIFY'}), error => error.code === 'UPSTREAM_STAGE_INCOMPLETE' && error.upstreamStage === deniedEntry.upstreamStage, 'CONFIRMATION_FAILED_COHORT_REGRESSION_ENTRY_REMAINS_DENIED');
+  await checkpoint('confirmation-failed-cohort-return');
   const defect = subject.defectIds[0], defectRow = e.records(p, 'defects').find(row => row.id === defect);
   assert.equal(e.gate(19, p).complete, false, 'CONFIRMATION_ACCEPTED_DEFECT_NOT_COMPLETE');
   for (const [caseId, mutate] of [
     ['missing-raw', state => {state.projectData.rawResponses = state.projectData.rawResponses.filter(row => row.rawResponseId !== defectRow.rawResponseId);}],
     ['changed-raw', state => {state.projectData.rawResponses.find(row => row.rawResponseId === defectRow.rawResponseId).completeRawResponse += ' ';}],
     ['wrong-accepted-scope', state => {state.projectData.acceptedChanges.find(row => row.proposalId === defectRow.sourceProposalId).scope.iterationId = 'WRONG_ITERATION';}]
-  ]) {const invalid = r.copy(p); mutate(invalid); assert.equal(e.confirmationCorrectionSubject(invalid), null, 'CONFIRMATION_RETURN_PROVENANCE_' + caseId);}
+  ]) {const invalid = r.copy(p); mutate(invalid); assert.equal(e.confirmationCorrectionSubject(invalid), null, 'CONFIRMATION_RETURN_PROVENANCE_' + caseId); assert.equal(e.operationalNextAction(invalid, 19).failedConfirmationReturn, undefined, 'CONFIRMATION_RETURN_ACTION_PROVENANCE_' + caseId);}
   assert.equal(e.gate(14, p).complete, false, 'CONFIRMATION_CURRENT_DEFECT_REQUIRES_NEW_RCA');
   assert.equal(e.gate(17, p).complete, false, 'CONFIRMATION_OLD_CORRECTED_ITERATION_CANNOT_DISCHARGE_RETURN');
   const issued = r.prompts.reserveAndBuildPromptRecord(r.copy(p), 14, {operation: 'ROOT_CAUSE'}).prompt;

@@ -156,4 +156,9 @@ console.log(JSON.stringify({
   repositoryImplementationInstructionBoundary:true,
   governanceLeakMutationRejected
 },null,2));
-await import('./verify-file-first-operator.mjs');
+if(process.argv.find(argument=>argument.startsWith('--file-first-component='))){
+ await import('./verify-file-first-operator.mjs');
+}else{
+ const {runIngestionFileFirstComponents}=await import('./test-file-first-components.mjs');
+ await runIngestionFileFirstComponents(process.argv.slice(2));
+}

@@ -228,7 +228,16 @@ const memoOwnKeys=Reflect.ownKeys,memoDescriptor=Object.getOwnPropertyDescriptor
  memoPrototype=Object.getPrototypeOf,memoSame=Object.is,memoApply=Reflect.apply,memoWeakGet=WeakMap.prototype.get,memoHasOwn=Object.hasOwn;
 const memoNativeNames=['Object','Array','String','Number','Boolean','Math','JSON','Reflect','Map','WeakMap','Set','WeakSet','RegExp','Uint8Array','Uint32Array','ArrayBuffer','DataView','TextEncoder'];
 function memoDescriptors(target){return memoOwnKeys(target).map(key=>[key,memoDescriptor(target,key)]);}
-function memoDescriptorEqual(a,b){if(!a||!b)return false;const fields=['value','get','set','enumerable','writable','configurable'];for(let i=0;i<fields.length;i++){const key=fields[i];if(!memoSame(memoHasOwn(a,key)?a[key]:undefined,memoHasOwn(b,key)?b[key]:undefined))return false;}return true;}
+function memoDescriptorEqual(a,b){
+ if(!a||!b)return false;
+ if(!memoSame(memoHasOwn(a,'value')?a['value']:undefined,memoHasOwn(b,'value')?b['value']:undefined))return false;
+ if(!memoSame(memoHasOwn(a,'get')?a['get']:undefined,memoHasOwn(b,'get')?b['get']:undefined))return false;
+ if(!memoSame(memoHasOwn(a,'set')?a['set']:undefined,memoHasOwn(b,'set')?b['set']:undefined))return false;
+ if(!memoSame(memoHasOwn(a,'enumerable')?a['enumerable']:undefined,memoHasOwn(b,'enumerable')?b['enumerable']:undefined))return false;
+ if(!memoSame(memoHasOwn(a,'writable')?a['writable']:undefined,memoHasOwn(b,'writable')?b['writable']:undefined))return false;
+ if(!memoSame(memoHasOwn(a,'configurable')?a['configurable']:undefined,memoHasOwn(b,'configurable')?b['configurable']:undefined))return false;
+ return true;
+}
 const memoNativeBaseline=(()=>{
  const globals=memoNativeNames.map(name=>[name,memoDescriptor(globalThis,name)]),targets=new Set([canonicalChunks]);
  for(const [,descriptor]of globals){const value=descriptor?.value;if(!value)continue;targets.add(value);if(value.prototype)targets.add(value.prototype);}

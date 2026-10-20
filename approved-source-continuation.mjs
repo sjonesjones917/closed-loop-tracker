@@ -184,6 +184,11 @@ export function validateImmutableEvidenceDag({roots,nodes},readFile=readAtomicEv
 // Version 1 preserves the original atomic-only view. Version 2 additionally
 // validates the original shared source-semantic/exclusion and line pipeline.
 // Neither version composes a successor or renews proof.
+// Keep the public lazy defensive copy, without retaining its physical-byte owner.
+function createInsertionBaseDependencyIdentity(snapshot,logicalReferences,physicalReferences){
+  return {dependencyIdentity(){return structuredClone({view:snapshot,logicalReferences,physicalReferences});}}.dependencyIdentity;
+}
+
 export function loadValidatedInsertionAtomicBase(descriptor,{readFile=readAtomicEvidenceBytes}={}){
   const snapshot=JSON.parse(canonical(descriptor));
   keys(snapshot,['schema','source','specificationManifest','requirementEvidenceBindings','view'],'INSERTION_BASE_DESCRIPTOR');
@@ -247,7 +252,7 @@ export function loadValidatedInsertionAtomicBase(descriptor,{readFile=readAtomic
     viewIdentitySha256:sha(Buffer.from(canonical(snapshot))),sourceSha256:snapshot.source.sha256,entryCount:base.entries.length,
     // The exact view identity and actual archived byte references must be bound
     // by future production fingerprint integration; this function supplies none.
-    dependencyIdentity(){return structuredClone({view:snapshot,logicalReferences,physicalReferences});},
+    dependencyIdentity:createInsertionBaseDependencyIdentity(snapshot,logicalReferences,physicalReferences),
     baseData(){return structuredClone(base);},
     originalSemanticFacts(){return structuredClone(semanticFacts);},
     originalSource(){return Buffer.from(bytes);},
@@ -942,6 +947,19 @@ function validateDeclaredAdditiveLayerChain(declared,consumed,facts){
     need(root.length===1&&queue.length===1&&named('reconcile.py').length<=1&&auxiliary.length===root.length+queue.length+sources.length+named('reconcile.py').length&&sourceNames.every(name=>named(name).length<=1)&&equal(current.reconciliation,root[0])&&equal(current.queueDelta,queue[0])&&equal(current.sourceDecisionArtifacts,sources)&&equal(byPath(sources),byPath(expectedSources))&&sameRef(current.queueDelta,facts[i].queueReference)&&equal(current.combinedCountsAfterLayer,facts[i].combinedCounts),'INSERTION_CURRENT_CHAIN','Enriched root, queue, governor roles or recomputed counts differ.');
   }
 }
+// Keep dependency identity callable after establishment without retaining the
+// candidate's entry/data graph. Every invocation still makes fresh copies.
+function createInsertionCompositionDependencyIdentity(baseDependencyIdentity,dependencyPins){
+  return {dependencyIdentity(){return {base:baseDependencyIdentity(),delta:structuredClone(dependencyPins)};}}.dependencyIdentity;
+}
+// This interface must not close over the composition/custody working scope.
+function createInsertionCompositionCandidate(data,baseDependencyIdentity,dependencyPins,blockedSourceRecords,currentCounts,coverage,entries,currentBytes,map,sections,reviewedSections){
+  return Object.freeze({schema:'closed-loop-insertion-composition-candidate/1',baseAtomicValidated:true,sourceSemanticValidated:true,semanticDeltaMechanicallyValidated:true,successorEstablished:false,productionFingerprintIntegrated:false,implementationConformance:false,applicationAcceptance:false,entryCount:entries.length,blockedSourceRecordCount:blockedSourceRecords.length,
+    candidateData(){return structuredClone(data);},dependencyIdentity:createInsertionCompositionDependencyIdentity(baseDependencyIdentity,dependencyPins),
+    establishCurrentUniverse(){need(blockedSourceRecords.length===0&&currentCounts.BLOCKED===0,'INSERTION_CURRENT_SOURCE_INCOMPLETE','Current source identity/governor/member decisions remain unresolved.');validateGeneratorResolvedSourceCoverage(coverage);validateAtomicLineMembership(entries,coverage,currentBytes,map.specificationPath,sections);validateAtomicSectionCoverage({sections:reviewedSections},new Map(entries.map(row=>[row.normativeRequirementId,row])),sections,currentBytes,'normativeRequirementId','normativeRequirementIds');return {sourceUniverseEstablished:true,productionActivation:false,implementationConformance:false,applicationAcceptance:false,sourceSha256:map.currentSha256,entryCount:entries.length};}
+  });
+}
+
 export function loadApprovedInsertionAtomicContinuation(descriptor,{readFile=readAtomicEvidenceBytes}={}){
   need(descriptor?.semanticDelta,'INSERTION_SEMANTIC_DELTA_MISSING','Independent semantic amendment and impact evidence is mandatory.');
   need(descriptor.semanticDelta.status==='RECONCILED'&&descriptor.semanticDelta.draft&&descriptor.semanticDelta.independentReview&&descriptor.semanticDelta.reconciliation,'INSERTION_SEMANTIC_DELTA_UNREVIEWED','A candidate or unreviewed delta cannot activate governance.');
@@ -1156,10 +1174,7 @@ export function loadApprovedInsertionAtomicContinuation(descriptor,{readFile=rea
   const newTracePrior={schema:'closed-loop-insertion-current-source-trace/1',specificationSha256:map.currentSha256,sourceTrace,sourceLineCoverage:coverage,originalReviewRelabeled:false};
   const currentCounts=counts(),data={sourceSha256:map.currentSha256,baseSourceSha256:map.baseSha256,entries,identityRelations,sourceTrace,transportedBaseTrace,amendmentTrace,governingProjectionProvenance:governingProjection.provenance,sourceLineCoverage:coverage,sectionMembership,blockedSourceRecords,contextGraph,originalBasePopulation:{entryCount:base.entries.length,contextCount:base.entries.filter(row=>row.entryKind==='SOURCE_CONTEXT').length,atomicCount:base.entries.filter(row=>row.entryKind==='ATOMIC_OBLIGATION').length,structuralContextCount:base.entries.filter(row=>row.contextClassification?.classification==='STRUCTURAL_REQUIREMENT_CONTEXT').length,historicalContextCount:base.entries.filter(row=>row.contextClassification?.classification==='HISTORICAL_NONNORMATIVE_CONTEXT').length},currentOverlayEvidence,approvedRanges:structuredClone(declaredMap.ranges),reviewedSections,currentSourceTracePrior:newTracePrior,newContextAliasCount:contextIdentities.size,projectedNewContextRowCount:contextGraph.filter(node=>node.ordinaryRowEmitted).length,graphOnlyContextCount:contextGraph.filter(node=>node.projectionKind!=='ORDINARY_SOURCE_CONTEXT').length,pendingOrdinaryContextCount:contextGraph.filter(node=>node.projectionKind==='ORDINARY_SOURCE_CONTEXT'&&!node.ordinaryRowEmitted).length,atomicObligationCount:entries.filter(row=>row.entryKind==='ATOMIC_OBLIGATION').length,newAtomicDutyCount:newDuties.length,predecessorDispositionCounts:currentCounts,originalContractFindings:structuredClone(facts.sourceContractFindings),sourceMeaning,lastQueue:previousQueue};
   custody.assertClosure();const dependencyPins=custody.pins();custody.release();
-  return Object.freeze({schema:'closed-loop-insertion-composition-candidate/1',baseAtomicValidated:true,sourceSemanticValidated:true,semanticDeltaMechanicallyValidated:true,successorEstablished:false,productionFingerprintIntegrated:false,implementationConformance:false,applicationAcceptance:false,entryCount:entries.length,blockedSourceRecordCount:blockedSourceRecords.length,
-    candidateData(){return structuredClone(data);},dependencyIdentity(){return {base:validatedBase.dependencyIdentity(),delta:structuredClone(dependencyPins)};},
-    establishCurrentUniverse(){need(blockedSourceRecords.length===0&&currentCounts.BLOCKED===0,'INSERTION_CURRENT_SOURCE_INCOMPLETE','Current source identity/governor/member decisions remain unresolved.');validateGeneratorResolvedSourceCoverage(coverage);validateAtomicLineMembership(entries,coverage,currentBytes,map.specificationPath,sections);validateAtomicSectionCoverage({sections:reviewedSections},new Map(entries.map(row=>[row.normativeRequirementId,row])),sections,currentBytes,'normativeRequirementId','normativeRequirementIds');return {sourceUniverseEstablished:true,productionActivation:false,implementationConformance:false,applicationAcceptance:false,sourceSha256:map.currentSha256,entryCount:entries.length};}
-  });
+  return createInsertionCompositionCandidate(data,validatedBase.dependencyIdentity,dependencyPins,blockedSourceRecords,currentCounts,coverage,entries,currentBytes,map,sections,reviewedSections);
 }
 
 
@@ -1189,15 +1204,21 @@ export function insertionAtomicEvidenceReferences(descriptor,{readFile=readAtomi
   }
   return [...unique.values()];
 }
+// Finish the original clone-before-establish sequence in a nonescaping scope.
+// Do not evaluate dependency identity here: its copies belong after section checks.
+function prepareEstablishedInsertionComposition(descriptor,readFile){
+  const composed=loadApprovedInsertionAtomicContinuation(descriptor,{readFile}),data=composed.candidateData();
+  composed.establishCurrentUniverse();
+  return {data,readDependencyIdentity:composed.dependencyIdentity};
+}
 export function loadInsertionAtomicExtraction(descriptor,{sourceBytes,specificationPath,sections,readFile=readAtomicEvidenceBytes}={}){
   const {continuation:d}=readInsertionAtomicDescriptor(descriptor,{readFile});
   need(d.semanticDelta?.consumerChain,'INSERTION_PRODUCTION_CHAIN','Production composition requires its exact declared current identity chain.');
   need(Buffer.isBuffer(sourceBytes)&&sha(sourceBytes)===d.source?.sha256&&specificationPath===d.base?.source?.path,'INSERTION_PRODUCTION_SOURCE','Current controlling source differs from the checked continuation.');
-  const composed=loadApprovedInsertionAtomicContinuation(d,{readFile}),data=composed.candidateData();
-  composed.establishCurrentUniverse();
+  const {data,readDependencyIdentity}=prepareEstablishedInsertionComposition(d,readFile);
   const actualSections=reviewSpecificationCoverageBytes(sourceBytes,specificationPath).sectionInventory;
   need(!sections||equal(sections.map(({sectionId,title,startLine,endLine})=>({sectionId,...(title!==undefined?{title}:{}),startLine,endLine})),actualSections),'INSERTION_PRODUCTION_SECTIONS','Current caller section inventory differs from source.');
-  const dependencyIdentity=composed.dependencyIdentity(),references=insertionAtomicEvidenceReferences(descriptor,{readFile});
+  const dependencyIdentity=readDependencyIdentity(),references=insertionAtomicEvidenceReferences(descriptor,{readFile});
   const consumed=new Map([...dependencyIdentity.base.physicalReferences,...dependencyIdentity.delta.filter(row=>row.storagePath).map(row=>({path:row.storagePath,sha256:row.sha256}))].map(row=>[row.path,row.sha256]));
   need(references.length===consumed.size+1&&references.every(row=>row.path===descriptor.continuation.path||consumed.get(row.path)===row.sha256),'INSERTION_PRODUCTION_READ_SET','Fingerprint closure differs from actual validated base/delta reads.');
   return {established:true,descriptor:structuredClone(descriptor),entries:projectInsertionEntryProvenance(data.entries,descriptor.continuation),requirementIdentityCrosswalk:data.identityRelations,reconciliation:{sections:data.reviewedSections},sourcePrior:data.currentSourceTracePrior,continuation:{schema:'closed-loop-established-insertion-source/1',data,dependencyIdentity,references,sourceReviewReference:structuredClone(d.semanticDelta.independentReview),sourceReconciliationReference:structuredClone(d.semanticDelta.reconciliation)},implementationConformance:false,applicationAcceptance:false};
