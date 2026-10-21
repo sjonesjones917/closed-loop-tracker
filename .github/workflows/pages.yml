@@ -40,7 +40,7 @@ jobs:
     env:
       CLOSED_LOOP_VERIFICATION_SOURCE_ROOT: ${{ github.workspace }}
       CLOSED_LOOP_VERIFICATION_RECEIPTS: ${{ github.workspace }}/.verification-receipts
-      VERIFIER_CHILD_EVIDENCE_DIRECTORY: ${{ runner.temp }}/clrt-verifier-children
+      VERIFIER_CHILD_EVIDENCE_DIRECTORY: ${{ github.workspace }}/../clrt-verifier-children
       NODE_OPTIONS: --import ${{ github.workspace }}/verification-evidence-preload.mjs
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -217,7 +217,7 @@ jobs:
     env:
       CLOSED_LOOP_VERIFICATION_SOURCE_ROOT: ${{ github.workspace }}
       CLOSED_LOOP_VERIFICATION_RECEIPTS: ${{ github.workspace }}/.verification-receipts
-      VERIFIER_CHILD_EVIDENCE_DIRECTORY: ${{ runner.temp }}/clrt-verifier-children
+      VERIFIER_CHILD_EVIDENCE_DIRECTORY: ${{ github.workspace }}/../clrt-verifier-children
       NODE_OPTIONS: --import ${{ github.workspace }}/verification-evidence-preload.mjs
     outputs:
       executed: ${{ steps.matrix.outputs.executed }}
@@ -313,7 +313,7 @@ jobs:
     env:
       CLOSED_LOOP_VERIFICATION_SOURCE_ROOT: ${{ github.workspace }}
       CLOSED_LOOP_VERIFICATION_RECEIPTS: ${{ github.workspace }}/.verification-receipts
-      VERIFIER_CHILD_EVIDENCE_DIRECTORY: ${{ runner.temp }}/clrt-verifier-children
+      VERIFIER_CHILD_EVIDENCE_DIRECTORY: ${{ github.workspace }}/../clrt-verifier-children
       NODE_OPTIONS: --import ${{ github.workspace }}/verification-evidence-preload.mjs
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -447,9 +447,9 @@ jobs:
       CLOSED_LOOP_VERIFICATION_SOURCE_ROOT: ${{ github.workspace }}
       CLOSED_LOOP_VERIFICATION_RECEIPTS: ${{ github.workspace }}/.verification-receipts
       NODE_OPTIONS: --import ${{ github.workspace }}/verification-evidence-preload.mjs
-      CONFORMANCE_EVIDENCE_DIRECTORY: ${{ runner.temp }}/clrt-conformance-${{ matrix.group }}
-      VERIFIER_CHILD_EVIDENCE_DIRECTORY: ${{ runner.temp }}/clrt-conformance-${{ matrix.group }}/child-processes
-      CREATION_FAULT_EVIDENCE_DIRECTORY: ${{ runner.temp }}/clrt-conformance-${{ matrix.group }}/creation-presentation-faults
+      CONFORMANCE_EVIDENCE_DIRECTORY: ${{ github.workspace }}/../clrt-conformance-${{ matrix.group }}
+      VERIFIER_CHILD_EVIDENCE_DIRECTORY: ${{ github.workspace }}/../clrt-conformance-${{ matrix.group }}/child-processes
+      CREATION_FAULT_EVIDENCE_DIRECTORY: ${{ github.workspace }}/../clrt-conformance-${{ matrix.group }}/creation-presentation-faults
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         env:
@@ -538,7 +538,7 @@ jobs:
         with:
           name: conformance-regressions-${{ github.sha }}-${{ matrix.group }}
           path: |
-            ${{ runner.temp }}/clrt-conformance-${{ matrix.group }}/
+            ${{ env.CONFORMANCE_EVIDENCE_DIRECTORY }}/
             /tmp/conformance-regressions.json
           if-no-files-found: error
 
@@ -555,7 +555,7 @@ jobs:
     env:
       CLOSED_LOOP_VERIFICATION_SOURCE_ROOT: ${{ github.workspace }}
       CLOSED_LOOP_VERIFICATION_RECEIPTS: ${{ github.workspace }}/.verification-receipts
-      VERIFIER_CHILD_EVIDENCE_DIRECTORY: ${{ runner.temp }}/clrt-verifier-children
+      VERIFIER_CHILD_EVIDENCE_DIRECTORY: ${{ github.workspace }}/../clrt-verifier-children
       NODE_OPTIONS: --import ${{ github.workspace }}/verification-evidence-preload.mjs
     outputs:
       verified_artifact_name: ${{ steps.verified.outputs.artifact_name }}
@@ -862,7 +862,7 @@ jobs:
           NODE_OPTIONS: ''
         with:
           name: verifier-child-failure-${{ github.sha }}-${{ github.run_id }}
-          path: ${{ runner.temp }}/clrt-verifier-children/
+          path: ${{ env.VERIFIER_CHILD_EVIDENCE_DIRECTORY }}/
           retention-days: 30
           if-no-files-found: warn
 
@@ -896,7 +896,7 @@ jobs:
       VERIFIED_SITE_DIR: _verified-site/site
       CLOSED_LOOP_BROWSER_SCOPE: DEPLOYED
       CLOSED_LOOP_VERIFICATION_RECEIPTS: ${{ github.workspace }}/.verification-receipts
-      VERIFIER_CHILD_EVIDENCE_DIRECTORY: ${{ runner.temp }}/clrt-verifier-children
+      VERIFIER_CHILD_EVIDENCE_DIRECTORY: ${{ github.workspace }}/../clrt-verifier-children
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
@@ -974,7 +974,7 @@ jobs:
     env:
       CLOSED_LOOP_VERIFICATION_SOURCE_ROOT: ${{ github.workspace }}
       CLOSED_LOOP_VERIFICATION_RECEIPTS: ${{ github.workspace }}/.verification-receipts
-      VERIFIER_CHILD_EVIDENCE_DIRECTORY: ${{ runner.temp }}/clrt-verifier-children
+      VERIFIER_CHILD_EVIDENCE_DIRECTORY: ${{ github.workspace }}/../clrt-verifier-children
       # Publication consumes reconciled proof; missing registered receipts block it.
       CLOSED_LOOP_REQUIRE_CURRENT_OWNER_RECEIPTS: '1'
       NODE_OPTIONS: --import ${{ github.workspace }}/verification-evidence-preload.mjs
