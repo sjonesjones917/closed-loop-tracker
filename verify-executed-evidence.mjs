@@ -3,7 +3,7 @@ import {verifyBrowserObserverLifecycleControls} from './test-browser-observer-li
 import {verifyBrowserExtraAggregateControls} from './verify-browser-extra-aggregate.mjs';
 import {performance} from 'node:perf_hooks';
 import {auditCatalogExpectationRoundTrips} from './test-comparison-receipt-roundtrip.mjs';
-import {runHistoricalContextLedger} from './historical-context-ledger-adapter.mjs';
+import {runHistoricalContextLedger,validateHistoricalContextLedgerReport} from './historical-context-ledger-adapter.mjs';
 import {atomicEvidenceReferences} from './review-specification-coverage.mjs';
 import {verifyRetainedRootNativeEvidenceConsumers} from './test-retained-root-native-evidence.mjs';
 import {verifyHumanCombinedNativeEvidenceConsumers} from './test-human-combined-native-evidence.mjs';
@@ -17,7 +17,7 @@ import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {verifyDueEvidenceConsumers} from './test-due-evidence-consumers.mjs';
 import {verifyDueVerificationScheduling,verifyCrossRunVerificationScheduling} from './test-due-verification-scheduling.mjs';
-import {runVerifier,detectedFault,AGGREGATE_TIMEOUT_MS} from './verify-conformance-regressions.mjs';
+import {runVerifier,detectedFault,AGGREGATE_TIMEOUT_MS,EXECUTED_EVIDENCE_TIMEOUT_MS} from './verify-conformance-regressions.mjs';
 import {evidenceFingerprint,createExecutionReceipt,validateExecutionReceipt,aggregateExecutedEvidence,readExecutedEvidence,readExecutionReceipt,observationsFromReports,sha} from './verification-evidence.mjs';
 import {metricCatalog,verificationCatalog,browserVerificationCatalog} from './verification-evidence-catalog.mjs';
 import {collectVerificationEvidence,executeEvidenceProducer} from './collect-verification-evidence.mjs';
@@ -727,9 +727,32 @@ stage03ChildConstructionControl.counterexamplesDetected.push('missing-copied-hel
   assert.equal(historicalLedgerSourceClosure.checkedBeforeCleanup,true,'HISTORICAL_LEDGER_PARENT_SOURCE_CLOSURE_ORACLE');
   assert.equal(historicalLedgerCleanup.ownedFixtureAbsent,true,'HISTORICAL_LEDGER_PARENT_CLEANUP_ORACLE');
   assert.equal(historicalLedgerCleanup.allWorkerChildrenJoinedBeforeCleanup,true,'HISTORICAL_LEDGER_PARENT_CLEANUP_ORACLE');
-  const historicalContextLedgerControl={result:'PASS',report:historicalLedgerReport,parentFingerprint:historicalLedgerParentFingerprint,sourceClosure:historicalLedgerSourceClosure,cleanup:historicalLedgerCleanup,originalOwnerStartedAtUnixMs:originalLedgerOwnerStartedAtUnixMs,deadlineUnixMs:originalLedgerOwnerStartedAtUnixMs+1200000,finishedAtUnixMs:Date.now()};
+  const historicalContextLedgerControl={result:'PASS',report:historicalLedgerReport,parentFingerprint:historicalLedgerParentFingerprint,sourceClosure:historicalLedgerSourceClosure,cleanup:historicalLedgerCleanup,originalOwnerStartedAtUnixMs:originalLedgerOwnerStartedAtUnixMs,deadlineUnixMs:originalLedgerOwnerStartedAtUnixMs+EXECUTED_EVIDENCE_TIMEOUT_MS,finishedAtUnixMs:Date.now()};
   assert(historicalContextLedgerControl.finishedAtUnixMs<=historicalContextLedgerControl.deadlineUnixMs,'HISTORICAL_LEDGER_ORIGINAL_OWNER_DEADLINE_ORACLE');
   const ownReport={executedEvidenceProtection:'PASS',reviewedProjectHandoffControl,browserObserverLifecycleControl,browserExtraAggregateControl,historicalContextLedgerControl,splitRootControl,preloadFailureVisibilityControl,retainedRootNativeEvidenceControl,humanCombinedNativeEvidenceControl,humanCombinedUiEvidenceControl,ownershipReceiptRoutingControl,deferredCatalogConsumerControl,dueSchedulingControl,crossRunSchedulingControl,stage03ChildConstructionControl,coldCheckoutCases,coldUploadControl,producerViolationsRejected:producerControls.every(row=>row.result==='DETECTED'),syntaxChecksDoNotClaimExecution:true,syntaxPopulationCases,collectorOwnOutputControl,governanceFingerprintControl,governanceFingerprintInputs:true,activeFixtureFingerprintControl,activeHelperFingerprintControl,activeFixtureFingerprintInputs:true,normativeRegistryLinkageControl,observationOwnershipControl,emptyUniverseRejected:true,controlledProducerPopulation:producerControls,actualConformingStage03AssertionsExecuted:true,missingEvidenceRemainsUnknown:true,verificationObservations:[{checkId:'evidence.real-producer-controls',boundary:'actual Node exit/preload -> receipt consumer',expected:'ALL_CONTROLS_REJECTED_FOR_NAMED_REASON',observed:producerControls,passed:true,requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt#49']},{checkId:'APPROVED-GOVERNANCE-SOURCE-BYTES',boundary:governanceFingerprintControl.boundary,expected:{actualGovernanceByteHashBound:true,changedBytesRejectActualReceipt:true,missingBytesFailHonestly:true,untrackedBytesBound:true,untrackedMutationRejectsActualReceipt:true,exactRestoreAdmitsActualReceipt:true,formerMarkdownOmissionReproduced:true},observed:{actualGovernanceByteHashBound:governanceSourceCases.every(row=>row.actualByteHashBound),changedBytesRejectActualReceipt:governanceSourceCases.every(row=>row.changedBytesRejectActualReceipt),missingBytesFailHonestly:governanceSourceCases.every(row=>row.missingBytesFailHonestly),untrackedBytesBound:governanceSourceCases.every(row=>row.untrackedBytesBound),untrackedMutationRejectsActualReceipt:governanceSourceCases.every(row=>row.untrackedMutationRejectsActualReceipt),exactRestoreAdmitsActualReceipt:governanceSourceCases.every(row=>row.exactRestoreAdmitsActualReceipt),formerMarkdownOmissionReproduced:true},passed:true,requirementRefs:[96]}]};
+  const ownHistoricalLedgerCheck='receipts.exact-historical-context-controls';
+  assert.equal(observationsFromReports('verify-executed-evidence.mjs',[ownReport]).find(row=>row.checkId===ownHistoricalLedgerCheck)?.passed,true,'HISTORICAL_LEDGER_DEADLINE_CONSUMER_ORACLE: exact aggregate owner deadline was not admitted.');
+  for(const [variant,mutate]of [
+    ['former-single-producer-deadline',control=>{control.deadlineUnixMs=control.originalOwnerStartedAtUnixMs+20*60*1000;}],
+    ['extended-aggregate-deadline',control=>{control.deadlineUnixMs++;}],
+    ['mismatched-owner-start',control=>{control.originalOwnerStartedAtUnixMs++;}],
+    ['finished-after-deadline',control=>{control.finishedAtUnixMs=control.deadlineUnixMs+1;}],
+    ['finished-before-owner-start',control=>{control.finishedAtUnixMs=control.originalOwnerStartedAtUnixMs-1;}]
+  ]){
+    const incomplete=structuredClone(ownReport);mutate(incomplete.historicalContextLedgerControl);
+    assert.equal(observationsFromReports('verify-executed-evidence.mjs',[incomplete]).find(row=>row.checkId===ownHistoricalLedgerCheck)?.passed,false,'HISTORICAL_LEDGER_DEADLINE_CONSUMER_ORACLE: '+variant+' was silently admitted.');
+  }
+  // These copied timestamp fixtures test consumer boundaries only. They are
+  // never emitted as actual producer evidence or substituted into ownReport.
+  const syntheticProducerBoundary=structuredClone(ownReport),syntheticLedger=syntheticProducerBoundary.historicalContextLedgerControl,syntheticProducer=syntheticLedger.report.producerResults[0],syntheticStartedAtUnixMs=Math.ceil(syntheticLedger.originalOwnerStartedAtUnixMs);
+  syntheticLedger.finishedAtUnixMs=syntheticLedger.deadlineUnixMs;
+  syntheticProducer.startedAt=new Date(syntheticStartedAtUnixMs).toISOString();syntheticProducer.finishedAt=new Date(syntheticStartedAtUnixMs+20*60*1000).toISOString();
+  validateHistoricalContextLedgerReport(syntheticLedger.report,syntheticLedger.report.historicalFingerprint);
+  assert.equal(observationsFromReports('verify-executed-evidence.mjs',[syntheticProducerBoundary]).find(row=>row.checkId===ownHistoricalLedgerCheck)?.passed,true,'HISTORICAL_LEDGER_PRODUCER_DEADLINE_CONSUMER_ORACLE: synthetic exact20-minute boundary was not admitted.');
+  const syntheticOverlongProducer=structuredClone(syntheticProducerBoundary),overlongLedger=syntheticOverlongProducer.historicalContextLedgerControl;
+  overlongLedger.report.producerResults[0].finishedAt=new Date(syntheticStartedAtUnixMs+20*60*1000+1).toISOString();
+  assert.throws(()=>validateHistoricalContextLedgerReport(overlongLedger.report,overlongLedger.report.historicalFingerprint),/HISTORICAL_LEDGER_PRODUCER_DEADLINE_ORACLE/);
+  assert.equal(observationsFromReports('verify-executed-evidence.mjs',[syntheticOverlongProducer]).find(row=>row.checkId===ownHistoricalLedgerCheck)?.passed,false,'HISTORICAL_LEDGER_PRODUCER_DEADLINE_CONSUMER_ORACLE: synthetic20-minute-plus1ms producer within the aggregate deadline was admitted.');
   const ownPreloadCheck='receipts.preload-failure-visibility';
   assert.equal(observationsFromReports('verify-executed-evidence.mjs',[ownReport]).find(row=>row.checkId===ownPreloadCheck)?.passed,true,'PRELOAD_RECEIPT_OBSERVATION_ORACLE: actual preload receipt eligibility population was not admitted.');
   for(const variant of ['wrong-value','missing-field','extra-field']){

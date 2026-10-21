@@ -123,21 +123,25 @@ const MAX_OUTPUT_BYTES=64*1024*1024;
 export const CREATION_MATRIX_TIMEOUT_MS=180*60*1000;
 export const COUNTERPART_MATRIX_TIMEOUT_MS=280*60*1000;
 export const FULL_JOURNEY_TIMEOUT_MS=40*60*1000;
+export const EXECUTED_EVIDENCE_TIMEOUT_MS=60*60*1000;
 export function suiteTimeoutMs(suite){
- if(['verify-product-attachment-journey.mjs','verify-checkpoint-boundary.mjs','verify-delivery-transfer-boundary.mjs'].includes(suite))return 90*60*1000;
+ if(['verify-product-attachment-journey.mjs','verify-checkpoint-boundary.mjs','verify-delivery-transfer-boundary.mjs','verify-native-proof-journey.mjs','verify-native-proof-fault.mjs'].includes(suite))return 90*60*1000;
+ if(suite==='verify-executed-evidence.mjs')return EXECUTED_EVIDENCE_TIMEOUT_MS;
  if(suite==='verify-creation-presentation-faults.mjs')return CREATION_MATRIX_TIMEOUT_MS;
  if(suite==='verify-counterpart-faults.mjs')return COUNTERPART_MATRIX_TIMEOUT_MS;
  if(['verify-product-reservation-persistence.mjs','verify-operator-counterpart.mjs','verify-stage28-artifact-delivery-intent.mjs'].includes(suite))return FULL_JOURNEY_TIMEOUT_MS;
  return CHILD_TIMEOUT_MS;
 }
 export const verifierTimeoutMs=suiteTimeoutMs;
+// Execution logs are not source inputs. Keep default evidence outside the checkout.
+const conformanceEvidenceDirectory=()=>path.resolve(process.env.CONFORMANCE_EVIDENCE_DIRECTORY||path.join(os.tmpdir(),'clrt-conformance-'+crypto.createHash('sha256').update(process.cwd()).digest('hex').slice(0,16)));
 let childGateNumber=0;
 // All child calls use the same process-group owner, including direct verifier
 // entry points. Await cleanup before a caller can restore a fault or start work.
 export async function runVerifier(command,args,options={}){
  const timeout=options.timeout??CHILD_TIMEOUT_MS;
  assert.ok(Number.isFinite(timeout)&&timeout>0,'VERIFIER_CHILD_DEADLINE_ORACLE');
- const directory=path.resolve(options.evidenceDirectory||process.env.VERIFIER_CHILD_EVIDENCE_DIRECTORY||'conformance-regression-evidence/child-processes');
+ const directory=path.resolve(options.evidenceDirectory||process.env.VERIFIER_CHILD_EVIDENCE_DIRECTORY||path.join(conformanceEvidenceDirectory(),'child-processes'));
  const name=process.pid+'-'+String(++childGateNumber).padStart(4,'0')+'-'+crypto.randomUUID();
  const controller=new AbortController(),onTerm=()=>controller.abort('SIGTERM'),onInt=()=>controller.abort('SIGINT'),relay=()=>controller.abort(options.signal.reason||'INTERRUPTED');
  process.on('SIGTERM',onTerm);process.on('SIGINT',onInt);
@@ -442,10 +446,11 @@ function verifyConformanceGroups(){
  for(const group of Object.keys(conformanceGroups))assert.equal(selectConformanceGroup(['--group='+group]).suites,conformanceGroups[group],'CONFORMANCE_GROUP_SELECTION_ORACLE');
  for(const args of [['--group=unknown'],['--group=all'],['--group=core','--group=creation'],['--group','core'],['--skip']])assert.throws(()=>selectConformanceGroup(args),/CONFORMANCE_GROUP_ARGUMENT_ORACLE/);
  for(const suite of suites){
-  const expected=['verify-product-attachment-journey.mjs','verify-checkpoint-boundary.mjs','verify-delivery-transfer-boundary.mjs'].includes(suite)?90:suite==='verify-creation-presentation-faults.mjs'?180:suite==='verify-counterpart-faults.mjs'?280:['verify-product-reservation-persistence.mjs','verify-operator-counterpart.mjs'].includes(suite)?40:20;
+  const expected=['verify-product-attachment-journey.mjs','verify-checkpoint-boundary.mjs','verify-delivery-transfer-boundary.mjs','verify-native-proof-journey.mjs','verify-native-proof-fault.mjs'].includes(suite)?90:suite==='verify-executed-evidence.mjs'?60:suite==='verify-creation-presentation-faults.mjs'?180:suite==='verify-counterpart-faults.mjs'?280:['verify-product-reservation-persistence.mjs','verify-operator-counterpart.mjs'].includes(suite)?40:20;
   assert.equal(suiteTimeoutMs(suite),expected*60*1000,'CONFORMANCE_SUITE_BUDGET_ORACLE: '+suite);
  }
  assert.equal(suiteTimeoutMs('verify-stage28-artifact-delivery-intent.mjs'),40*60*1000,'CONFORMANCE_STAGE28_BUDGET_ORACLE');
+ for(const producer of ['verify-ingestion.mjs','verify-contract-closure.mjs','verify-stage03-agent-protocol.mjs','verify-response-authority-integrity.mjs','verify-returned-slot-authority.mjs'])assert.equal(suiteTimeoutMs(producer),20*60*1000,'HISTORICAL_PRODUCER_BUDGET_ORACLE: '+producer);
  assert.equal(AGGREGATE_TIMEOUT_MS,300*60*1000,'CONFORMANCE_AGGREGATE_BUDGET_ORACLE');
  return {case:'closed-conformance-groups-and-finite-budgets',groups:conformanceGroups,fullSuitePopulation:suites,aggregateTimeoutMs:AGGREGATE_TIMEOUT_MS};
 }
@@ -616,7 +621,7 @@ async function verifyRunnerContract({counterpartBudgetOnly=false}={}){
   cases.push(await verifyCounterpartRestoredBudget(directory));
   return {runnerContract:'PASS',cases};
  }catch(error){
-  const evidenceDirectory=path.resolve('conformance-regression-evidence/runner-contract-failures',path.basename(directory));
+  const evidenceDirectory=path.join(conformanceEvidenceDirectory(),'runner-contract-failures',path.basename(directory));
   fs.mkdirSync(path.dirname(evidenceDirectory),{recursive:true});fs.cpSync(directory,evidenceDirectory,{recursive:true});
   process.stderr.write(JSON.stringify({runnerContract:'FAIL',evidenceDirectory,error:String(error)})+'\n');throw error;
  }finally{fs.rmSync(directory,{recursive:true,force:true});}
@@ -716,6 +721,8 @@ async function verifyRunnerFaults(){
   ['omit-current-counterpart-oracle','const oracles=Object.fromEntries(COUNTERPART_FAULT_CASES.map(','const oracles=Object.fromEntries(COUNTERPART_FAULT_CASES.slice(1).map(','COUNTERPART_RESTORED_BUDGET_ORACLE'],
   ['shorten-restored-counterpart-budget','fs.writeFileSync(matrix,source);',"fs.writeFileSync(matrix,source.replace(\"const restored=(await runVerifier(process.execPath,['verify-operator-counterpart.mjs'],{encoding:'utf8',timeout:FULL_JOURNEY_TIMEOUT_MS\",\"const restored=(await runVerifier(process.execPath,['verify-operator-counterpart.mjs'],{encoding:'utf8',timeout:300000\"));",'COUNTERPART_RESTORED_BUDGET_ORACLE'],
   ['drop-conformance-group-suite','creation:creationSuites,','creation:Object.freeze(creationSuites.slice(1)),','CONFORMANCE_GROUP_POPULATION_ORACLE'],
+  ['shorten-historical-owner-budget',"if(suite==='verify-executed-evidence.mjs')return EXECUTED_EVIDENCE_TIMEOUT_MS;","if(suite==='verify-executed-evidence.mjs')return CHILD_TIMEOUT_MS;",'CONFORMANCE_SUITE_BUDGET_ORACLE'],
+  ['extend-historical-producer-budget',"if(suite==='verify-executed-evidence.mjs')return EXECUTED_EVIDENCE_TIMEOUT_MS;","if(suite==='verify-ingestion.mjs')return EXECUTED_EVIDENCE_TIMEOUT_MS; if(suite==='verify-executed-evidence.mjs')return EXECUTED_EVIDENCE_TIMEOUT_MS;",'HISTORICAL_PRODUCER_BUDGET_ORACLE'],
   ['shorten-product-suite-budget',"'verify-product-reservation-persistence.mjs','verify-operator-counterpart.mjs','verify-stage28-artifact-delivery-intent.mjs'","'verify-operator-counterpart.mjs','verify-stage28-artifact-delivery-intent.mjs'",'CONFORMANCE_SUITE_BUDGET_ORACLE'],
   ['ignore-child-exit','exitCode===0&&!error','!error','RUNNER_OUTCOME_ORACLE: nonzero'],
   ['accept-malformed-report',"&&!reportError?'PASS'","?'PASS'",'RUNNER_OUTCOME_ORACLE: malformed'],
@@ -746,7 +753,7 @@ async function verifyRunnerFaults(){
   assert.equal(fs.readFileSync(fileURLToPath(import.meta.url),'utf8'),original,'RUNNER_SOURCE_RESTORED_ORACLE');
   return {faults,sourceRestored:true};
  }catch(error){
-  const evidenceDirectory=path.resolve('conformance-regression-evidence/runner-contract-failures',path.basename(directory));
+  const evidenceDirectory=path.join(conformanceEvidenceDirectory(),'runner-contract-failures',path.basename(directory));
   fs.mkdirSync(path.dirname(evidenceDirectory),{recursive:true});fs.cpSync(directory,evidenceDirectory,{recursive:true});
   process.stderr.write(JSON.stringify({runnerFaults:'FAIL',evidenceDirectory,error:String(error)})+'\n');throw error;
  }finally{fs.rmSync(directory,{recursive:true,force:true});}
@@ -762,7 +769,7 @@ if(process.argv.includes('--counterpart-budget-contract-only')){
  console.log(JSON.stringify(contract,null,2));
 }else{
  const selected=selectConformanceGroup(process.argv.slice(2));
- const directory=path.resolve('conformance-regression-evidence'),reportFile=path.join(directory,'report.json');
+ const directory=conformanceEvidenceDirectory(),reportFile=path.join(directory,'report.json');
  const sourceCommit=execFileSync('git',['rev-parse','HEAD'],{timeout:30000,killSignal:'SIGKILL',encoding:'utf8'}).trim();
  const sources=conformanceSources();
  const sourceFiles=sources.map(path=>({path,sha256:sha(fs.readFileSync(path))})),workingTreeChanges=execFileSync('git',['status','--porcelain','--',...sources],{timeout:30000,killSignal:'SIGKILL',encoding:'utf8'}).trim();

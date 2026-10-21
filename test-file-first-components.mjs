@@ -2,24 +2,40 @@ import assert from 'node:assert/strict';
 import {runVerifier} from './verify-conformance-regressions.mjs';
 export class VerifierInfrastructureError extends Error{constructor(message){super(message);this.name='VerifierInfrastructureError';}}
 export const FILE_FIRST_COMPONENT_BOUNDARY='\n__CLOSED_LOOP_FILE_FIRST_COMPONENT_BOUNDARY__\n';
-// The standalone I/O owner retains four simultaneous components under its
-// existing 30-second coordinator deadline. Ingestion has its own outer budget
-// and uses two owners at a time, with lifecycle exclusive because it owns its
-// own concurrent controls. Every launched child retains its 30-second cap.
-export function runFileFirstComponents(args){return runComponents(args,4);}
-export function runIngestionFileFirstComponents(args){return runComponents(args,2,{exclusiveLifecycle:true});}
-async function runComponents(args,workers,{exclusiveLifecycle=false}={}){
+// These are verifier-process watchdogs, not product I/O or UI deadlines. Keep
+// the default and ingestion routes unchanged. Each fault matrix opts in by
+// name; its serial component allocation is 300s, plus at most four existing
+// 5s cleanup graces, inside its own independently bounded coordinator.
+const matrixComponentTimeouts=Object.freeze([30000,120000,120000,30000]);
+const componentPolicies=Object.freeze({
+ default:Object.freeze({workers:4,exclusiveLifecycle:false,timeouts:Object.freeze([30000,30000,30000,30000])}),
+ ingestion:Object.freeze({workers:2,exclusiveLifecycle:true,timeouts:Object.freeze([30000,30000,30000,30000])}),
+ 'creation-fault-matrix':Object.freeze({workers:1,exclusiveLifecycle:false,timeouts:matrixComponentTimeouts}),
+ 'io-fault-matrix':Object.freeze({workers:1,exclusiveLifecycle:false,timeouts:matrixComponentTimeouts}),
+ 'acceptance-fault-matrix':Object.freeze({workers:1,exclusiveLifecycle:false,timeouts:matrixComponentTimeouts})
+});
+export function fileFirstComponentPlan(args,{ingestion=false}={}){
+ const selectors=args.filter(argument=>argument.startsWith('--file-first-policy'));
+ assert.ok(selectors.length<=1,'FILE_FIRST_COMPONENT_POLICY_CONFLICT_ORACLE');
+ const selector=selectors[0],name=selector?.slice('--file-first-policy='.length);
+ assert.ok(!selector||selector==='--file-first-policy='+name&&['creation-fault-matrix','io-fault-matrix','acceptance-fault-matrix'].includes(name),'FILE_FIRST_COMPONENT_POLICY_ARGUMENT_ORACLE');
+ assert.ok(!selector||!ingestion&&!args.some(argument=>argument.startsWith('--file-first-component=')),'FILE_FIRST_COMPONENT_POLICY_SCOPE_ORACLE');
+ const policyName=ingestion?'ingestion':name||'default',policy=componentPolicies[policyName],forwarded=args.filter(argument=>argument!==selector);
+ return {policy:policyName,workers:policy.workers,exclusiveLifecycle:policy.exclusiveLifecycle,commands:[
+  ['verify-file-first-operator.mjs',...forwarded,'--file-first-component=core'],
+  ['verify-file-first-operator.mjs',...forwarded,'--file-first-component=recovery'],
+  ['verify-operator-action-lifecycle.mjs',...forwarded,...(policy.exclusiveLifecycle?[]:['--file-first-lifecycle-two-workers'])],
+  ['verify-handoff-authorization-ui.mjs',...forwarded]
+ ].map((args,index)=>({args,timeoutMs:policy.timeouts[index]}))};
+}
+export function runFileFirstComponents(args){return runComponents(fileFirstComponentPlan(args));}
+export function runIngestionFileFirstComponents(args){return runComponents(fileFirstComponentPlan(args,{ingestion:true}));}
+async function runComponents({commands,workers,exclusiveLifecycle}){
  const controller=new AbortController(),onTerm=()=>controller.abort('SIGTERM'),onInt=()=>controller.abort('SIGINT');
  process.on('SIGTERM',onTerm);process.on('SIGINT',onInt);
- const commands=[
-  ['verify-file-first-operator.mjs',...args,'--file-first-component=core'],
-  ['verify-file-first-operator.mjs',...args,'--file-first-component=recovery'],
-  ['verify-operator-action-lifecycle.mjs',...args,...(exclusiveLifecycle?[]:['--file-first-lifecycle-two-workers'])],
-  ['verify-handoff-authorization-ui.mjs',...args]
- ];
  let settled;
  try{
-  const execute=command=>{if(controller.signal.aborted)throw new VerifierInfrastructureError('FILE_FIRST_COMPONENT_CANCELLED');return runVerifier(process.execPath,command,{timeout:30000,maxBuffer:16*1024*1024,signal:controller.signal});};
+  const execute=command=>{if(controller.signal.aborted)throw new VerifierInfrastructureError('FILE_FIRST_COMPONENT_CANCELLED');return runVerifier(process.execPath,command.args,{timeout:command.timeoutMs,maxBuffer:16*1024*1024,signal:controller.signal});};
   const indices=exclusiveLifecycle?[0,3]:[0,1,2,3];
   settled=new Array(commands.length);let next=0;
   const settle=async index=>{

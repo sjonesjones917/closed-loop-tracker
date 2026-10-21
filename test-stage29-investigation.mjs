@@ -3,10 +3,10 @@ import {recordProposal} from './test-fixtures.mjs';
 
 // This function is also called at the genuine full-cycle Stage29 entry. The
 // focused caller declares synthetic prerequisites and never claims that entry.
-export async function verifyStage29Investigation({runtime,project,byteStore,basis,requireCompletePrefix=false,onReservedPrompt=null}){
+export async function verifyStage29Investigation({runtime,project,byteStore,basis,requireCompletePrefix=false,onReservedPrompt=null,environment={}}){
  if(onReservedPrompt!==null){assert.equal(requireCompletePrefix,true,'STAGE29_SCOPE_CALLBACK_GENUINE_PREFIX_ORACLE');assert.equal(typeof onReservedPrompt,'function','STAGE29_SCOPE_CALLBACK_TYPE_ORACLE');}
  const sourceHash=runtime.hash||runtime.runtime?.closedLoopHash||globalThis.closedLoopHash,original=sourceHash.sha256Value(project);
- const {projectStoreRuntime,captureArtifactFixture,restoreArtifactFixture}=await import('./test-project-store-runtime.mjs'),isolated=projectStoreRuntime({storageWorker:false});
+ const {projectStoreRuntime,captureArtifactFixture,restoreArtifactFixture}=await import('./test-project-store-runtime.mjs'),isolated=projectStoreRuntime({storageWorker:false,environment});
  await restoreArtifactFixture(isolated.store,await captureArtifactFixture(byteStore,project.job.JOB_ID));
  const originalContexts=project.projectData.generatedPrompts.map(row=>({instructionId:row.instructionId||row.promptId,files:runtime.prompts.materializePromptContextFiles(row)}));
  const {engine,prompts,ingestion}=isolated,schema=isolated.runtime.closedLoopWorkflowSchema,hash=isolated.runtime.closedLoopHash,stage=29,operation='INVESTIGATE_MISSING_EVIDENCE';let q=isolated.copy(project);

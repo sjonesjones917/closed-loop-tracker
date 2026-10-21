@@ -5,7 +5,9 @@ import {execFileSync} from 'node:child_process';
 import {evidenceFingerprint,validateExecutionReceipt,aggregateExecutedEvidence,readExecutedEvidence,readExecutionReceipt,observationsFromReports,sha} from './verification-evidence.mjs';
 import {metricCatalog,verificationCatalog} from './verification-evidence-catalog.mjs';
 import {executeEvidenceProducer} from './collect-verification-evidence.mjs';
-import {suiteTimeoutMs,AGGREGATE_TIMEOUT_MS} from './verify-conformance-regressions.mjs';
+// The aggregate owner has its own allocation. Every historical producer keeps
+// the original 20-minute ceiling, including any receipt fallback execution.
+const HISTORICAL_LEDGER_PRODUCER_TIMEOUT_MS=20*60*1000;
 const ownershipSuites=['verify-ingestion.mjs','verify-response-authority-integrity.mjs','verify-returned-slot-authority.mjs'];
 async function ownershipReceiptSource(owner,{currentReceiptDirectory=process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS,readReceipt=readExecutionReceipt,run=executeEvidenceProducer,fallbackDirectory,evidenceDirectory}={}){
   if(currentReceiptDirectory){
@@ -13,7 +15,7 @@ async function ownershipReceiptSource(owner,{currentReceiptDirectory=process.env
     if(!receipt)throw new Error('EXECUTED_EVIDENCE_ORACLE: current ownership receipt is missing for '+owner+'; run '+owner+' before this consumer.');
     return receipt;
   }
-  return run(owner,{directory:fallbackDirectory,evidenceDirectory,timeout:owner==='verify-ingestion.mjs'?AGGREGATE_TIMEOUT_MS:undefined});
+  return run(owner,{directory:fallbackDirectory,evidenceDirectory,timeout:HISTORICAL_LEDGER_PRODUCER_TIMEOUT_MS});
 }
 
 export async function verifyHistoricalContextLedger({directory,deadlineUnixMs,expectedFixtureCommit,expectedFixtureTree}={}){
@@ -22,7 +24,16 @@ export async function verifyHistoricalContextLedger({directory,deadlineUnixMs,ex
  const producerControls=[],suite='verify-stage03-agent-protocol.mjs',producerResults=[],conformingDirectory=path.join(directory,'conforming','receipts'),ownershipDirectory=path.join(directory,'ownership-receipts');
  fs.mkdirSync(directory,{recursive:true});
  const remaining=()=>{const ms=deadlineUnixMs-Date.now();assert(ms>0,'HISTORICAL_LEDGER_ABSOLUTE_DEADLINE_ORACLE');return ms;};
- const produce=async(suite,destination)=>{const startedAt=new Date().toISOString();process.stderr.write(JSON.stringify({historicalLedgerProducer:suite,event:'STARTED',startedAt})+'\n');const receipt=await executeEvidenceProducer(suite,{directory:destination,cwd:process.cwd(),fingerprint:historicalFingerprint,timeout:Math.min(suiteTimeoutMs(suite),remaining()),evidenceDirectory:path.join(directory,'children',suite),environment:{...process.env,CLOSED_LOOP_REQUIRE_CURRENT_OWNER_RECEIPTS:'0',CLOSED_LOOP_VERIFICATION_RECEIPTS:destination}});validateExecutionReceipt(receipt,suite,historicalFingerprint);producerResults.push({suite,startedAt,finishedAt:new Date().toISOString(),receiptSha256:receipt.receiptSha256,fingerprint:receipt.fingerprint});process.stderr.write(JSON.stringify({historicalLedgerProducer:suite,event:'PASS',finishedAt:new Date().toISOString()})+'\n');return receipt;};
+ const produce=async(suite,destination)=>{
+  const startedAtUnixMs=Date.now(),startedAt=new Date(startedAtUnixMs).toISOString(),producerDeadlineUnixMs=startedAtUnixMs+HISTORICAL_LEDGER_PRODUCER_TIMEOUT_MS;
+  process.stderr.write(JSON.stringify({historicalLedgerProducer:suite,event:'STARTED',startedAt})+'\n');
+  const timeout=Math.min(producerDeadlineUnixMs-Date.now(),remaining());assert(timeout>0,'HISTORICAL_LEDGER_PRODUCER_DEADLINE_ORACLE');
+  const receipt=await executeEvidenceProducer(suite,{directory:destination,cwd:process.cwd(),fingerprint:historicalFingerprint,timeout,evidenceDirectory:path.join(directory,'children',suite),environment:{...process.env,CLOSED_LOOP_REQUIRE_CURRENT_OWNER_RECEIPTS:'0',CLOSED_LOOP_VERIFICATION_RECEIPTS:destination}});
+  validateExecutionReceipt(receipt,suite,historicalFingerprint);
+  const finishedAtUnixMs=Date.now();assert(finishedAtUnixMs>=startedAtUnixMs&&finishedAtUnixMs<=producerDeadlineUnixMs,'HISTORICAL_LEDGER_PRODUCER_DEADLINE_ORACLE');
+  const finishedAt=new Date(finishedAtUnixMs).toISOString();producerResults.push({suite,startedAt,finishedAt,receiptSha256:receipt.receiptSha256,fingerprint:receipt.fingerprint});
+  process.stderr.write(JSON.stringify({historicalLedgerProducer:suite,event:'PASS',finishedAt})+'\n');return receipt;
+ };
  // Ingestion owns bounded parallel components; do not compete with their CPU budget.
  // After ingestion settles, run the independent prerequisite owners together.
  // Join every producer and retain failures under the original shared deadline.

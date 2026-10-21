@@ -7,11 +7,20 @@ import assert from 'node:assert/strict';
 // Reuse the complete production lifecycle with a genuinely executed Test IR
 // final-product test. Only authored test/response fixtures differ; no production
 // gate, accepted stage, or proof result is patched by this verifier.
+assert.equal(Object.hasOwn(process.env,'CLRT_STAGE29_FIXTURE_PATH'),false,'NATIVE_JOURNEY_FRESH_FULL_OWNER_NO_STAGE29_FIXTURE_PATH');
 let source=fs.readFileSync('verify-full-cycle.mjs','utf8');
 source="import {isolatedVerifierWorkerClass} from './verifier-runtime.mjs';\nimport {testIrManifestedEnvironment} from './test-test-ir-native-identity.mjs';\n"+source;
 const runtimeLoad="for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'])";
 assert.equal(source.split(runtimeLoad).length,2,'NATIVE_JOURNEY_RUNTIME_IDENTITY_ANCHOR_ORACLE');
-source=source.replace(runtimeLoad,"// Source-bound synthetic environment; real Test IR worker, no deployed-build claim.\nglobalThis.document=testIrManifestedEnvironment().document;\n"+runtimeLoad);
+source=source.replace(runtimeLoad,"// Source-bound synthetic environment; real Test IR worker, no deployed-build claim.\nconst nativeEnvironment=testIrManifestedEnvironment();globalThis.document=nativeEnvironment.document;\n"+runtimeLoad);
+// The release and Stage29 cold-store verifiers must retain the same explicit
+// native runtime identity as the executing caller. External/default callers
+// keep their original environment; no proof or gate is changed here.
+for(const [before,after]of [
+ ['const releaseCaptureRuntime=projectStoreRuntime()','const releaseCaptureRuntime=projectStoreRuntime({environment:nativeEnvironment})'],
+ ['verifyActualReleasePersistence({sourceProject:p,','verifyActualReleasePersistence({environment:nativeEnvironment,sourceProject:p,'],
+ ['verifyStage29Investigation({runtime:{engine,prompts,ingestion,schema,hash},','verifyStage29Investigation({environment:nativeEnvironment,runtime:{engine,prompts,ingestion,schema,hash},']
+]){assert.equal(source.split(before).length,2,'NATIVE_JOURNEY_ADAPTER_ENVIRONMENT_ANCHOR: '+before);source=source.replace(before,after);}
 const skipProof=process.env.CONFORMANCE_NATIVE_FAULT==='skip-proof-recording';
 if(skipProof){
  const owner="file==='workflow-engine.js'?timingFaultSource(fs.readFileSync(file,'utf8'))";
@@ -27,7 +36,11 @@ assert.ok(start>0&&end>start);
 source=source.slice(0,start)+`const nativeTest=engine.recordsForCurrentScope(p,'tests').find(row=>engine.recordId(row,'tests')===finalDeterministicTestId),nativeResult=await globalThis.closedLoopTestRuntime.executeTest(nativeTest,{PRODUCT:{artifactId:artifactFixtureId(engine,p,'PRODUCT-OUTPUT'),filename:'product.bin',bytes:productBytes}},{},{Worker:isolatedVerifierWorkerClass()});assert(nativeResult.determination==='SATISFIED','The actual native byte comparison failed.');engine.recordApplicationDeterministicResult(p,{testId:finalDeterministicTestId,productId,runtimeResult:nativeResult,inputArtifacts:[{artifactId:artifactFixtureId(engine,p,'PRODUCT-OUTPUT'),filename:'product.bin',byteSize:productBytes.byteLength,sha256:productSha}]});`+source.slice(end);
 source=source.replace('const deterministicResultId=',"const nativeChecks=[];\nconst nativeObservation=engine.recordsForCurrentScope(p,'observationRecords').find(row=>row.source==='APPLICATION_TEST_RUNTIME');assert(nativeObservation,'Native test did not emit its application observation.');nativeChecks.push({name:'actual native result creates a current observation',result:'PASS'});\nfor(const field of ['testId','testSpecSha256','inputArtifactSha256Values']){const copy=engine.clone(p),before=hash.sha256Value(copy),bad={...nativeResult,[field]:field==='inputArtifactSha256Values'?['0'.repeat(64)]:'WRONG'};let rejected=false;try{engine.recordApplicationDeterministicResult(copy,{testId:finalDeterministicTestId,productId,runtimeResult:bad,inputArtifacts:[{artifactId:artifactFixtureId(engine,p,'PRODUCT-OUTPUT'),filename:'product.bin',byteSize:productBytes.byteLength,sha256:productSha}]});}catch(error){rejected=error.code==='INVALID_NATIVE_EXECUTION_IDENTITY'||/exact current test/.test(error.message);}assert(rejected&&hash.sha256Value(copy)===before,'Mismatched native '+field+' was accepted or mutated the project.');nativeChecks.push({name:'native '+field+' mismatch rejected atomically',result:'PASS'});}\nfor(const kind of ['review-withdrawal','test-mutation']){const copy=engine.clone(p);if(kind==='review-withdrawal')for(const review of copy.projectData.semanticReviews.filter(row=>row.stage===6))review.active=false;else{const test=copy.projectData.tests.find(row=>engine.recordId(row,'tests')===finalDeterministicTestId);test.fields.TEST_PROPOSITION_TEXT='A different proposition';test.TEST_PROPOSITION_TEXT=test.fields.TEST_PROPOSITION_TEXT;}engine.recalculate(copy);assert(!engine.gate(22,copy).complete,'Native result retained proof authority after '+kind);nativeChecks.push({name:kind+' removes stale native proof authority',result:'PASS'});}\nconsole.log(JSON.stringify({nativeProofChecks:nativeChecks}));\n"+'const deterministicResultId=');
 const script=path.resolve(`.native-proof-journey-${process.pid}.mjs`);fs.writeFileSync(script,source);
-let result;try{result=(await runVerifier(process.execPath,[script],{encoding:'utf8',timeout:600000,maxBuffer:64*1024*1024,env:process.env}));}finally{fs.rmSync(script,{force:true});}
+// Infrastructure supervision covers the complete generated lifecycle, its
+// timing-fault children and cold-store tail, not a single product operation.
+// Product operation deadlines remain unchanged at their existing owner.
+const nativeLifecycleTimeoutMs=60*60*1000;
+let result;try{result=(await runVerifier(process.execPath,[script],{encoding:'utf8',timeout:nativeLifecycleTimeoutMs,maxBuffer:64*1024*1024,env:process.env}));}finally{fs.rmSync(script,{force:true});}
 if(result.error)throw result.error;
 const detected=skipProof&&detectedFault(result,'Native test did not emit its application observation');
 console.log(JSON.stringify({nativeProofJourney:result.status===0?'PASS':detected?'FAULT_DETECTED':'FAIL',fault:skipProof?'skip-proof-recording':null,basis:'SYNTHETIC_PRODUCTION_LIFECYCLE_WITH_EXECUTED_NATIVE_TEST',exitCode:result.status,stdout:result.stdout,stderr:result.stderr}));if(skipProof?!detected:result.status!==0)process.exitCode=1;

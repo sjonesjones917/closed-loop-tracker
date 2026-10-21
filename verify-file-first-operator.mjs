@@ -1,5 +1,5 @@
 import {runVerifier} from './verify-conformance-regressions.mjs';
-import {runFileFirstComponents,FILE_FIRST_COMPONENT_BOUNDARY,validateFileFirstComponents,fileFirstComponentFailure,settleFileFirstComponent} from './test-file-first-components.mjs';
+import {runFileFirstComponents,fileFirstComponentPlan,FILE_FIRST_COMPONENT_BOUNDARY,validateFileFirstComponents,fileFirstComponentFailure,settleFileFirstComponent} from './test-file-first-components.mjs';
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
@@ -23,8 +23,11 @@ function bindAuthorizedCoordinatorFixture(runtime){
 }
 
 
-const componentArgument=process.argv.find(argument=>argument.startsWith('--file-first-component='));
+const componentArguments=process.argv.filter(argument=>argument.startsWith('--file-first-component='));
+assert.ok(componentArguments.length<=1,'FILE_FIRST_COMPONENT_ARGUMENT_ORACLE');
+const componentArgument=componentArguments[0];
 const component=componentArgument?.slice('--file-first-component='.length);
+fileFirstComponentPlan(process.argv.slice(2));
 assert.ok(component===undefined||component==='core'||component==='recovery'||component==='recovery-corruption','FILE_FIRST_COMPONENT_ARGUMENT_ORACLE');
 if(component==='core'){
 let app=fs.readFileSync(process.env.APP_SOURCE||'app-core.js','utf8');if(process.argv.includes('--fault=selected-operation')){const anchor='if(!registration||explicit===action.operation)return action;';assert.equal(app.split(anchor).length-1,1);app=app.replace(anchor,'if(true)return action;');}

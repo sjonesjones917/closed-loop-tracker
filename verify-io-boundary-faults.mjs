@@ -10,7 +10,14 @@ const files=['project-store.js','hash.js','app-core.js','index.html','operator-b
 const originals=new Map(files.map(file=>[file,fs.readFileSync(file,'utf8')]));
 const directory=fs.mkdtempSync(path.join(os.tmpdir(),'closed-loop-io-faults-'));
 const events=[];
-async function execute(test,args=[],env={}){const command=[process.execPath,test,...args],r=(await runVerifier(command[0],command.slice(1),{encoding:'utf8',env:{...process.env,...env},timeout:30000,maxBuffer:16*1024*1024}));const record={command,status:r.status,signal:r.signal,error:r.error?String(r.error):null,stdout:r.stdout,stderr:r.stderr};events.push(record);assert.equal(record.error,null,'Fault verifier itself must execute');assert.equal(record.signal,null,'An infrastructure timeout is not fault detection');return record;}
+async function execute(test,args=[],env={}){
+ const composite=test==='verify-file-first-operator.mjs';
+ // The composite owns four serial processes (300s total watchdog allocation,
+ // plus bounded cleanup). Unrelated owners retain their original 30s cap.
+ const command=[process.execPath,test,...args,...(composite?['--file-first-policy=io-fault-matrix']:[])],timeout=composite?10*60*1000:30000;
+ const r=await runVerifier(command[0],command.slice(1),{encoding:'utf8',env:{...process.env,...env},timeout,maxBuffer:16*1024*1024});
+ const record={command,status:r.status,signal:r.signal,error:r.error?String(r.error):null,stdout:r.stdout,stderr:r.stderr};events.push(record);assert.equal(record.error,null,'Fault verifier itself must execute');assert.equal(record.signal,null,'An infrastructure timeout is not fault detection');return record;
+}
 // A mutated module is imported from a disposable directory, so its relative imports must still resolve to the production siblings.
 function anchorRelativeImports(source,file){return source.replace(/(\bfrom\s+)(['"])(\.{1,2}\/[^'"]+)\2/g,(match,prefix,quote,specifier)=>prefix+quote+pathToFileURL(path.resolve(path.dirname(file),specifier)).href+quote);}
 function replaceOne(source,before,after){assert.equal(source.split(before).length-1,1,'Fault anchor must identify exactly one production location');return source.replace(before,after);}

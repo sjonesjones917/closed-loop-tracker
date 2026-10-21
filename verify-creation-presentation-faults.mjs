@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import assert from 'node:assert/strict';
 import {executeGate,detectedFault,CREATION_MATRIX_TIMEOUT_MS,FULL_JOURNEY_TIMEOUT_MS} from './verify-conformance-regressions.mjs';
 
@@ -32,7 +33,7 @@ const directory=fs.mkdtempSync(path.join(os.tmpdir(),'creation-presentation-faul
 // Every child is independently bounded. The shared supervisor captures streams
 // as they arrive, terminates descendants, and never treats TIMEOUT as rejection.
 
-const evidenceDirectory=path.resolve(process.env.CREATION_FAULT_EVIDENCE_DIRECTORY||'conformance-regression-evidence/creation-presentation-faults');
+const evidenceDirectory=path.resolve(process.env.CREATION_FAULT_EVIDENCE_DIRECTORY||path.join(os.tmpdir(),'clrt-conformance-'+crypto.createHash('sha256').update(process.cwd()).digest('hex').slice(0,16),'creation-presentation-faults'));
 const controller=new AbortController(),onTerm=()=>controller.abort('SIGTERM'),onInt=()=>controller.abort('SIGINT');
 process.on('SIGTERM',onTerm);process.on('SIGINT',onInt);
 const aggregateDeadline=setTimeout(()=>controller.abort('AGGREGATE_TIMEOUT'),CREATION_MATRIX_TIMEOUT_MS);
@@ -44,7 +45,8 @@ const run=async(name,suite,env={})=>{
  assert.ok(Number.isFinite(childTimeoutMs)&&childTimeoutMs>0,'A finite child deadline is required.');
  report.running={name,suite,startedAt:new Date().toISOString()};persist();
  process.stderr.write(JSON.stringify({phase:'START',...report.running})+'\n');
- const observed=await executeGate({name,args:[suite]},{directory:evidenceDirectory,env,signal:controller.signal,timeoutMs:childTimeoutMs,requireJson:false});
+ const args=[suite,...(suite==='verify-file-first-operator.mjs'?['--file-first-policy=creation-fault-matrix']:[])];
+ const observed=await executeGate({name,args},{directory:evidenceDirectory,env,signal:controller.signal,timeoutMs:childTimeoutMs,requireJson:false});
  process.stderr.write(JSON.stringify({phase:'FINISH',name,suite,outcome:observed.outcome,exitCode:observed.exitCode,signal:observed.signal})+'\n');
  return observed;
 };

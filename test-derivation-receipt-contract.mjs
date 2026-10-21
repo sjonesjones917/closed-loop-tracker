@@ -612,18 +612,70 @@ export async function verifyIterationProductTransition({beforeProduct,afterProdu
 export function verifyIterationLaterEvidence({engine:e,beforeProduct,afterEvidence}){
  const reviews=e.recordsForCurrentScope(afterEvidence,'entailmentReviews').filter(row=>Number(row.stage)===22&&e.recordValue(row,'ACCEPTED_RELATION')==='ESTABLISHES');
  assert(reviews.length,'ITERATION_ACTUAL_FUTURE_EVIDENCE_PRESENT');
+ const ids=(rows,family)=>Array.from(rows,row=>e.recordId(row,family)),unique=(values,oracle)=>{assert(Array.isArray(values)&&values.length&&values.every(value=>typeof value==='string'&&value.length),oracle);assert.equal(new Set(values).size,values.length,oracle);return values;};
+ const one=(family,id)=>{assert(typeof id==='string'&&id.length,'ITERATION_FUTURE_EVIDENCE_REFERENCE_ID: '+family);const rows=e.recordsForCurrentScope(afterEvidence,family).filter(row=>e.recordId(row,family)===id);assert.equal(rows.length,1,'ITERATION_FUTURE_EVIDENCE_UNIQUE_REFERENCE: '+family);return rows[0];};
+ unique(ids(reviews,'entailmentReviews'),'ITERATION_FUTURE_EVIDENCE_UNIQUE_REVIEWS');
+ const nativeBindings=[];
  for(const review of reviews){
-  assert.equal(e.entailmentMetadataCurrent(afterEvidence,review),true,'ITERATION_FUTURE_EVIDENCE_ACCEPTED_PROVENANCE');
-  const observation=e.recordsForCurrentScope(afterEvidence,'observationRecords').find(row=>row.id===e.recordValue(review,'OBSERVATION_ID'));
-  const test=e.recordsForCurrentScope(afterEvidence,'tests').find(row=>row.id===e.recordValue(observation,'SUBJECT_ID'));
-  assert.equal(e.testDueState(afterEvidence,test,18,{perRunOnly:true}).dueNow,false,'ITERATION_FUTURE_SUBJECT_NOT_GOVERNING_EARLIER_PROOF');
+  assert.equal(e.recordValue(review,'ACCEPTED_STATUS'),'ACCEPTED','ITERATION_FUTURE_EVIDENCE_ACCEPTED_STATUS');
+  const observationId=e.recordValue(review,'OBSERVATION_ID'),observation=one('observationRecords',observationId),testId=e.recordValue(observation,'SUBJECT_ID'),test=one('tests',testId),propositionId=e.recordValue(review,'TARGET_PROPOSITION_ID');
+  one('propositions',propositionId);
+  assert.equal(review.relationships?.OBSERVATION_ID,observationId,'ITERATION_FUTURE_EVIDENCE_OBSERVATION_LINK');
+  assert.equal(review.relationships?.TARGET_PROPOSITION_ID,propositionId,'ITERATION_FUTURE_EVIDENCE_PROPOSITION_LINK');
+  assert.equal(observation.relationships?.SUBJECT_ID,testId,'ITERATION_FUTURE_EVIDENCE_TEST_LINK');
+  if(review.source==='APPLICATION_TEST_RUNTIME'){
+   // Native authority is the executed result plus its current reviewed semantic
+   // mapping, not an external response/proposal or entailment.metadata receipt.
+   assert.equal(observation.source,'APPLICATION_TEST_RUNTIME','ITERATION_NATIVE_OBSERVATION_OWNER');
+   assert.equal(Number(observation.stage),22,'ITERATION_NATIVE_OBSERVATION_STAGE');
+   assert.equal(e.recordValue(test,'EXECUTION_MODE'),'APPLICATION_DETERMINISTIC','ITERATION_NATIVE_TEST_OWNER');
+   assert.equal(e.recordValue(review,'TARGET_LEAF_ID'),testId,'ITERATION_NATIVE_ENTAILMENT_LEAF');
+   assert.equal(e.recordValue(observation,'OBSERVATION_ORIGIN'),'NATIVE_APPLICATION_OBSERVATION','ITERATION_NATIVE_OBSERVATION_ORIGIN');
+   assert.equal(e.recordValue(observation,'EPISTEMIC_BASIS'),'APPLICATION_OBSERVED','ITERATION_NATIVE_OBSERVATION_BASIS');
+   assert.equal(e.recordValue(observation,'FRESHNESS_STATUS'),'CURRENT','ITERATION_NATIVE_OBSERVATION_FRESHNESS');
+   const binding=JSON.parse(e.recordValue(observation,'RAW_OR_NATIVE_PROVENANCE'));
+   assert(binding&&typeof binding==='object'&&!Array.isArray(binding),'ITERATION_NATIVE_PROVENANCE_OBJECT');
+   assert.deepEqual(Object.keys(binding).sort(),['stage','resultCollection','resultId','nativeExecutionIdentitySha256','testId','testSemanticSha256','proofReviewIds'].sort(),'ITERATION_NATIVE_PROVENANCE_FIELDS');
+   assert.equal(binding.stage,22,'ITERATION_NATIVE_RESULT_STAGE');assert.equal(binding.resultCollection,'deterministicResults','ITERATION_NATIVE_RESULT_COLLECTION');assert.equal(binding.testId,testId,'ITERATION_NATIVE_RESULT_TEST_LINK');
+   assert.match(binding.nativeExecutionIdentitySha256,/^[a-f0-9]{64}$/,'ITERATION_NATIVE_EXECUTION_IDENTITY');
+   assert.equal(binding.testSemanticSha256,e.semanticTargetHash(test,'tests'),'ITERATION_NATIVE_TEST_SEMANTIC_IDENTITY');
+   const result=one(binding.resultCollection,binding.resultId);
+   assert.equal(result.source,'APPLICATION_TEST_RUNTIME','ITERATION_NATIVE_RESULT_OWNER');assert.equal(Number(result.stage),22,'ITERATION_NATIVE_RESULT_RECORD_STAGE');
+   assert.equal(e.recordValue(result,'TEST_ID'),testId,'ITERATION_NATIVE_RESULT_TEST');assert.equal(result.relationships?.TEST_ID,testId,'ITERATION_NATIVE_RESULT_TEST_RELATIONSHIP');
+   assert.equal(result.nativeExecutionIdentitySha256,binding.nativeExecutionIdentitySha256,'ITERATION_NATIVE_OBSERVATION_EXECUTION_LINK');
+   assert.equal(e.recordValue(result,'APPLICATION_DETERMINATION'),'SATISFIED','ITERATION_NATIVE_RESULT_DETERMINATION');
+   assert.equal(e.applicationNativeResultCurrent(afterEvidence,binding.resultCollection,result,test),true,'ITERATION_NATIVE_EXECUTION_CURRENT');
+   assert.equal(e.recordsForCurrentScope(afterEvidence,binding.resultCollection).filter(row=>row.source==='APPLICATION_TEST_RUNTIME'&&Number(row.stage)===22&&row.nativeExecutionIdentitySha256===binding.nativeExecutionIdentitySha256).length,1,'ITERATION_NATIVE_UNIQUE_EXECUTION_RESULT');
+   const bindingKey=value=>{if(typeof value==='string'){try{value=JSON.parse(value);}catch{return null;}}return value&&typeof value==='object'&&Array.isArray(value.proofReviewIds)?JSON.stringify([value.stage,value.resultCollection,value.resultId,value.nativeExecutionIdentitySha256,value.testId,value.testSemanticSha256,[...value.proofReviewIds].sort()]):null;};
+   assert.equal(e.recordsForCurrentScope(afterEvidence,'observationRecords').filter(row=>row.source==='APPLICATION_TEST_RUNTIME'&&Number(row.stage)===22&&bindingKey(e.recordValue(row,'RAW_OR_NATIVE_PROVENANCE'))===bindingKey(binding)).length,1,'ITERATION_NATIVE_UNIQUE_EXECUTION_OBSERVATION');
+   const evidenceIds=unique(Array.from(result.evidenceRefs||[]),'ITERATION_NATIVE_UNIQUE_RESULT_EVIDENCE');
+   assert.equal(evidenceIds.length,1,'ITERATION_NATIVE_SINGLE_EXECUTION_EVIDENCE');
+   for(const [label,values]of [['observation',observation.evidenceRefs],['observation-source',e.recordValue(observation,'SOURCE_EVIDENCE_IDS')],['entailment',review.evidenceRefs]])assert.deepEqual(Array.from(values||[]),evidenceIds,'ITERATION_NATIVE_SHARED_EVIDENCE_LINK: '+label);
+   for(const evidenceId of evidenceIds){const evidence=one('evidenceRecords',evidenceId);assert.equal(evidence.source,'APPLICATION_TEST_RUNTIME','ITERATION_NATIVE_EVIDENCE_OWNER');assert.equal(e.recordValue(evidence,'APPLICATION_EVIDENCE_KIND'),'APPLICATION_DETERMINISTIC_EXECUTION','ITERATION_NATIVE_EVIDENCE_KIND');assert.equal(e.recordValue(evidence,'SHA256'),binding.nativeExecutionIdentitySha256,'ITERATION_NATIVE_EVIDENCE_EXECUTION_LINK');}
+   const acceptedReviews=e.acceptedProofReviews(afterEvidence,testId),acceptedReviewIds=unique(ids(acceptedReviews,'semanticReviews'),'ITERATION_NATIVE_ACCEPTED_PROOF_REVIEWS').sort();
+   assert.deepEqual(unique(Array.from(binding.proofReviewIds||[]),'ITERATION_NATIVE_UNIQUE_PROOF_REVIEW_BINDING'),acceptedReviewIds,'ITERATION_NATIVE_CURRENT_PROOF_REVIEW_BINDING');
+   for(const id of acceptedReviewIds)one('semanticReviews',id);
+   assert.equal(e.recordValue(test,'SEMANTIC_COVERAGE_DISPOSITION'),'EQUIVALENT','ITERATION_NATIVE_EQUIVALENT_PROOF_MAPPING');
+   assert(Array.isArray(e.recordValue(test,'TARGET_PROPOSITION_IDS'))&&e.recordValue(test,'TARGET_PROPOSITION_IDS').includes(propositionId),'ITERATION_NATIVE_TEST_PROPOSITION_MAPPING');
+   const expressions=e.recordsForCurrentScope(afterEvidence,'proofExpressions').filter(row=>e.recordValue(row,'TARGET_PROPOSITION_ID')===propositionId);assert.equal(expressions.length,1,'ITERATION_NATIVE_UNIQUE_PROOF_EXPRESSION');
+   unique(ids(e.acceptedProofReviews(afterEvidence,e.recordId(expressions[0],'proofExpressions')),'semanticReviews'),'ITERATION_NATIVE_ACCEPTED_EXPRESSION_REVIEW');
+   assert.equal(reviews.filter(row=>row.source==='APPLICATION_TEST_RUNTIME'&&e.recordValue(row,'OBSERVATION_ID')===observationId&&e.recordValue(row,'TARGET_PROPOSITION_ID')===propositionId).length,1,'ITERATION_NATIVE_UNIQUE_ENTAILMENT_LINK');
+   nativeBindings.push({reviewId:e.recordId(review,'entailmentReviews'),observationId,resultId:binding.resultId,nativeExecutionIdentitySha256:binding.nativeExecutionIdentitySha256,proofReviewIds:acceptedReviewIds});
+  }else{
+   assert.notEqual(observation.source,'APPLICATION_TEST_RUNTIME','ITERATION_EXTERNAL_OBSERVATION_OWNER');
+   assert.equal(review.derivationKey,'entailment.metadata','ITERATION_EXTERNAL_ENTAILMENT_OWNER');
+   assert(typeof review.rawResponseId==='string'&&review.rawResponseId.length&&typeof review.sourceProposalId==='string'&&review.sourceProposalId.length,'ITERATION_EXTERNAL_ACCEPTED_TRANSPORT_IDENTITIES');
+   assert.equal(e.entailmentMetadataCurrent(afterEvidence,review),true,'ITERATION_FUTURE_EVIDENCE_ACCEPTED_PROVENANCE');
+  }
+  for(const stage of [18,19])assert.equal(e.testDueState(afterEvidence,test,stage,{perRunOnly:true}).dueNow,false,'ITERATION_FUTURE_SUBJECT_NOT_GOVERNING_EARLIER_PROOF: '+stage);
  }
  for(const [family,current]of [['convergenceRecords','convergenceRecordCurrent'],['confirmationRecords','confirmationRecordCurrent']]){
-  const before=(family==='convergenceRecords'?e.recordsForScope(beforeProduct,family,e.convergenceCalculation(beforeProduct).scope):e.recordsForCurrentScope(beforeProduct,family)).at(-1);assert(before,'ITERATION_NONGOVERNING_RETAINED_SOURCE_RECEIPT: '+family);const after=afterEvidence.projectData[family].find(row=>row.id===before.id);
+  const before=(family==='convergenceRecords'?e.recordsForScope(beforeProduct,family,e.convergenceCalculation(beforeProduct).scope):e.recordsForCurrentScope(beforeProduct,family)).at(-1);assert(before,'ITERATION_NONGOVERNING_RETAINED_SOURCE_RECEIPT: '+family);const retained=afterEvidence.projectData[family].filter(row=>row.id===before.id);assert.equal(retained.length,1,'ITERATION_NONGOVERNING_UNIQUE_RETAINED_RECEIPT: '+family);const after=retained[0];
   assert.equal(e[current](afterEvidence,after),true,'ITERATION_ACCEPTED_NONGOVERNING_EVIDENCE_PRESERVES_RECEIPT: '+family);
   assert.equal(JSON.stringify(after.derivationReceipt),JSON.stringify(before.derivationReceipt),'ITERATION_NONGOVERNING_EVIDENCE_NO_RESTAMP: '+family);
  }
- return {iterationLaterEvidence:'PASS',acceptedReviewIds:reviews.map(row=>row.id),rawResponseIds:reviews.map(row=>row.rawResponseId),synthetic:true,boundary:'Actual accepted Stage22 final-product evidence is not due preproduct input; original Stage18/19 receipts remain current unchanged.'};
+ for(const stage of [18,19])assert.equal(e.gate(stage,afterEvidence).complete,true,'ITERATION_NONGOVERNING_EVIDENCE_PRESERVES_GATE: '+stage);
+ return {iterationLaterEvidence:'PASS',acceptedReviewIds:reviews.map(row=>row.id),rawResponseIds:reviews.filter(row=>row.source!=='APPLICATION_TEST_RUNTIME').map(row=>row.rawResponseId),nativeBindings,synthetic:true,boundary:'Actual accepted Stage22 final-product evidence, qualified by its external or native authority owner, is not due preproduct input; original Stage18/19 receipts remain current unchanged.'};
 }
 
 // §§13.2,14.8,16,34.3: original executed /7 + /4 bytes are validated before

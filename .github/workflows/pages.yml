@@ -40,6 +40,7 @@ jobs:
     env:
       CLOSED_LOOP_VERIFICATION_SOURCE_ROOT: ${{ github.workspace }}
       CLOSED_LOOP_VERIFICATION_RECEIPTS: ${{ github.workspace }}/.verification-receipts
+      VERIFIER_CHILD_EVIDENCE_DIRECTORY: ${{ runner.temp }}/clrt-verifier-children
       NODE_OPTIONS: --import ${{ github.workspace }}/verification-evidence-preload.mjs
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -216,6 +217,7 @@ jobs:
     env:
       CLOSED_LOOP_VERIFICATION_SOURCE_ROOT: ${{ github.workspace }}
       CLOSED_LOOP_VERIFICATION_RECEIPTS: ${{ github.workspace }}/.verification-receipts
+      VERIFIER_CHILD_EVIDENCE_DIRECTORY: ${{ runner.temp }}/clrt-verifier-children
       NODE_OPTIONS: --import ${{ github.workspace }}/verification-evidence-preload.mjs
     outputs:
       executed: ${{ steps.matrix.outputs.executed }}
@@ -286,7 +288,7 @@ jobs:
           mkdir -p .ci-deferred-diagnostics
           if test -f /tmp/deferred-stage-matrix.json; then cp /tmp/deferred-stage-matrix.json .ci-deferred-diagnostics/; fi
           if test -f conformance-regression-evidence/deferred-phase-timings.json; then cp conformance-regression-evidence/deferred-phase-timings.json .ci-deferred-diagnostics/; fi
-          if test -d conformance-regression-evidence/child-processes; then cp -a conformance-regression-evidence/child-processes .ci-deferred-diagnostics/; fi
+          if test -d "$VERIFIER_CHILD_EVIDENCE_DIRECTORY"; then cp -a "$VERIFIER_CHILD_EVIDENCE_DIRECTORY" .ci-deferred-diagnostics/child-processes; fi
       - name: Preserve deferred matrix diagnostics
         if: always() && steps.matrix.outcome != 'skipped'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -311,6 +313,7 @@ jobs:
     env:
       CLOSED_LOOP_VERIFICATION_SOURCE_ROOT: ${{ github.workspace }}
       CLOSED_LOOP_VERIFICATION_RECEIPTS: ${{ github.workspace }}/.verification-receipts
+      VERIFIER_CHILD_EVIDENCE_DIRECTORY: ${{ runner.temp }}/clrt-verifier-children
       NODE_OPTIONS: --import ${{ github.workspace }}/verification-evidence-preload.mjs
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -444,6 +447,9 @@ jobs:
       CLOSED_LOOP_VERIFICATION_SOURCE_ROOT: ${{ github.workspace }}
       CLOSED_LOOP_VERIFICATION_RECEIPTS: ${{ github.workspace }}/.verification-receipts
       NODE_OPTIONS: --import ${{ github.workspace }}/verification-evidence-preload.mjs
+      CONFORMANCE_EVIDENCE_DIRECTORY: ${{ runner.temp }}/clrt-conformance-${{ matrix.group }}
+      VERIFIER_CHILD_EVIDENCE_DIRECTORY: ${{ runner.temp }}/clrt-conformance-${{ matrix.group }}/child-processes
+      CREATION_FAULT_EVIDENCE_DIRECTORY: ${{ runner.temp }}/clrt-conformance-${{ matrix.group }}/creation-presentation-faults
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         env:
@@ -501,7 +507,7 @@ jobs:
         if: always() && steps.conformance.outcome != 'skipped'
         run: |
           mkdir -p .ci-conformance-handoff
-          cp conformance-regression-evidence/report.json .ci-conformance-handoff/${{ matrix.group }}.json
+          cp "$CONFORMANCE_EVIDENCE_DIRECTORY/report.json" .ci-conformance-handoff/${{ matrix.group }}.json
       - name: Preserve complete conformance group report
         if: always() && steps.conformance.outcome != 'skipped'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -532,7 +538,7 @@ jobs:
         with:
           name: conformance-regressions-${{ github.sha }}-${{ matrix.group }}
           path: |
-            conformance-regression-evidence/
+            ${{ runner.temp }}/clrt-conformance-${{ matrix.group }}/
             /tmp/conformance-regressions.json
           if-no-files-found: error
 
@@ -549,6 +555,7 @@ jobs:
     env:
       CLOSED_LOOP_VERIFICATION_SOURCE_ROOT: ${{ github.workspace }}
       CLOSED_LOOP_VERIFICATION_RECEIPTS: ${{ github.workspace }}/.verification-receipts
+      VERIFIER_CHILD_EVIDENCE_DIRECTORY: ${{ runner.temp }}/clrt-verifier-children
       NODE_OPTIONS: --import ${{ github.workspace }}/verification-evidence-preload.mjs
     outputs:
       verified_artifact_name: ${{ steps.verified.outputs.artifact_name }}
@@ -855,7 +862,7 @@ jobs:
           NODE_OPTIONS: ''
         with:
           name: verifier-child-failure-${{ github.sha }}-${{ github.run_id }}
-          path: conformance-regression-evidence/child-processes/
+          path: ${{ runner.temp }}/clrt-verifier-children/
           retention-days: 30
           if-no-files-found: warn
 
@@ -889,6 +896,7 @@ jobs:
       VERIFIED_SITE_DIR: _verified-site/site
       CLOSED_LOOP_BROWSER_SCOPE: DEPLOYED
       CLOSED_LOOP_VERIFICATION_RECEIPTS: ${{ github.workspace }}/.verification-receipts
+      VERIFIER_CHILD_EVIDENCE_DIRECTORY: ${{ runner.temp }}/clrt-verifier-children
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
@@ -966,6 +974,7 @@ jobs:
     env:
       CLOSED_LOOP_VERIFICATION_SOURCE_ROOT: ${{ github.workspace }}
       CLOSED_LOOP_VERIFICATION_RECEIPTS: ${{ github.workspace }}/.verification-receipts
+      VERIFIER_CHILD_EVIDENCE_DIRECTORY: ${{ runner.temp }}/clrt-verifier-children
       # Publication consumes reconciled proof; missing registered receipts block it.
       CLOSED_LOOP_REQUIRE_CURRENT_OWNER_RECEIPTS: '1'
       NODE_OPTIONS: --import ${{ github.workspace }}/verification-evidence-preload.mjs

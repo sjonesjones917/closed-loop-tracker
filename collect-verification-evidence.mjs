@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {checkedVerifier,runVerifier} from './verify-conformance-regressions.mjs';
+import {checkedVerifier,runVerifier,suiteTimeoutMs} from './verify-conformance-regressions.mjs';
 import {verificationCatalog,browserVerificationCatalog} from './verification-evidence-catalog.mjs';
 import {evidenceFingerprint,readExecutionReceipt,readExecutionReceipts,aggregateExecutedEvidence,validateExecutionReceipt,createExecutionReceipt,sha} from './verification-evidence.mjs';
 
@@ -12,7 +12,7 @@ export async function executeEvidenceProducer(suite,{directory,cwd=process.cwd()
   // useful runner evidence, but is not part of that child's emitted JSON report.
   // Explicit preload also protects standalone --run-missing invocations while
   // preserving all ordinary NODE_OPTIONS supplied by the caller.
-  await checkedVerifier(process.execPath,['--import',preload,path.resolve(cwd,suite)],{cwd,encoding:'utf8',maxBuffer:64*1024*1024,evidenceDirectory,timeout,env:{...environment,CLOSED_LOOP_VERIFICATION_SOURCE_ROOT:path.resolve(cwd),CLOSED_LOOP_VERIFICATION_RECEIPTS:receiptDirectory}});
+  await checkedVerifier(process.execPath,['--import',preload,path.resolve(cwd,suite)],{cwd,encoding:'utf8',maxBuffer:64*1024*1024,evidenceDirectory,timeout:timeout??suiteTimeoutMs(suite),env:{...environment,CLOSED_LOOP_VERIFICATION_SOURCE_ROOT:path.resolve(cwd),CLOSED_LOOP_VERIFICATION_RECEIPTS:receiptDirectory}});
   const file=path.join(receiptDirectory,suite+'.json');
   if(!fs.existsSync(file))throw new Error('EXECUTED_EVIDENCE_ORACLE: successful producer did not persist its own receipt '+suite);
   return validateExecutionReceipt(JSON.parse(fs.readFileSync(file,'utf8')),suite,fingerprint);

@@ -2,7 +2,7 @@
 // Integrate these imports relative to the frozen candidate source closure.
 import assert from 'node:assert/strict';import fs from 'node:fs';import path from 'node:path';import {pathToFileURL} from 'node:url';
 import {createHistoricalContextLedgerFixture} from './historical-context-ledger-inputs.mjs';
-import {runVerifier} from './verify-conformance-regressions.mjs';
+import {runVerifier,EXECUTED_EVIDENCE_TIMEOUT_MS} from './verify-conformance-regressions.mjs';
 import {evidenceFingerprint,executionReports,readExecutionReceipt} from './verification-evidence.mjs';
 
 export const historicalLedgerControlCaseIds=["missing-required-ingestion-reference-observation:EVIDENCE-SOURCE-SCOPE-AUTHORITY","missing-required-ingestion-reference-observation:EVIDENCE-ATTACHMENT-SCOPE-CUSTODY","missing-required-human-candidate-target-observation","missing-required-external-response-identity-observation","missing-required-canonical-boundary-observation:CANONICAL-RESPONSE-RECOVERY","missing-required-canonical-boundary-observation:RESPONSE-CANONICAL-VALUE-BOUNDARIES","missing-retained-historical-custody-owner","missing-current-native-human-target-owner","missing-current-supplied-input-custody-owner","missing-current-supplied-input-outcome","wrong-current-supplied-input-outcome","missing-current-supplied-input-negative-case","undeclared-current-supplied-input-outcome","missing-required-storage-population:RETAINED-HISTORICAL-EVIDENCE-CUSTODY","missing-required-storage-population:CURRENT-SUPPLIED-INPUT-CUSTODY","stage28-pending-store:missing-projection","stage28-pending-store:null-write-accepted","stage28-pending-store:last-valid-state-lost","stage28-pending-store:false-full-stage27-claim","missing-native-binding-type-count","wrong-native-binding-type-count","false-native-binding-type-acceptance","coerced-native-binding-type-count","undeclared-native-binding-type-count","wrong-native-binding-type-contract","missing-required-native-binding-type-owner","missing-required-custody-observation:RETURNED-BYTE-CUSTODY-RETRY-RECOVERY","missing-required-custody-observation:ACTUAL-UI-RETURNED-BYTE-REVERIFY","double-owned-detailed-assertion","aggregate-rewritten-with-matching-checksum"];
@@ -16,14 +16,20 @@ export function validateHistoricalContextLedgerReport(report,fingerprint){
  assert.equal(report.currentApplicationProof,false,'HISTORICAL_LEDGER_CURRENT_PROOF_REFUSAL_ORACLE');assert.equal(report.defaultSuiteComplete,false,'HISTORICAL_LEDGER_DEFAULT_PROOF_REFUSAL_ORACLE');assert.equal(report.fullClauseConformanceClaimed,false,'HISTORICAL_LEDGER_FULL_PROOF_REFUSAL_ORACLE');
  assert.equal(fingerprint.specificationSha256,'95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d','HISTORICAL_LEDGER_EXPECTED_SOURCE_ORACLE');assert.deepEqual(report.historicalFingerprint,fingerprint,'HISTORICAL_LEDGER_EXACT_FINGERPRINT_ORACLE');
  const suites=['verify-ingestion.mjs','verify-contract-closure.mjs','verify-stage03-agent-protocol.mjs','verify-response-authority-integrity.mjs','verify-returned-slot-authority.mjs'];assert(Array.isArray(report.producerResults),'HISTORICAL_LEDGER_PRODUCER_POPULATION_ORACLE');assert.deepEqual(report.producerResults.map(row=>row.suite).sort(),[...suites].sort(),'HISTORICAL_LEDGER_PRODUCER_POPULATION_ORACLE');
- for(const row of report.producerResults){assert(/^[a-f0-9]{64}$/.test(row.receiptSha256),'HISTORICAL_LEDGER_RECEIPT_IDENTITY_ORACLE');assert.deepEqual(row.fingerprint,fingerprint,'HISTORICAL_LEDGER_PRODUCER_FINGERPRINT_ORACLE');}
+ for(const row of report.producerResults){
+  assert(/^[a-f0-9]{64}$/.test(row.receiptSha256),'HISTORICAL_LEDGER_RECEIPT_IDENTITY_ORACLE');assert.deepEqual(row.fingerprint,fingerprint,'HISTORICAL_LEDGER_PRODUCER_FINGERPRINT_ORACLE');
+  const startedAtUnixMs=Date.parse(row.startedAt),finishedAtUnixMs=Date.parse(row.finishedAt);
+  assert(Number.isFinite(startedAtUnixMs)&&Number.isFinite(finishedAtUnixMs)&&finishedAtUnixMs>=startedAtUnixMs&&finishedAtUnixMs-startedAtUnixMs<=20*60*1000,'HISTORICAL_LEDGER_PRODUCER_DEADLINE_ORACLE');
+ }
  assert.deepEqual(report.normativeRegistryLinkageControl,historicalLedgerRegistryFacts,'HISTORICAL_LEDGER_REGISTRY_FACT_POPULATION_ORACLE');
  const owned=report.observationOwnershipControl;assert(owned&&Array.isArray(owned.canonicalCheckIds),'HISTORICAL_LEDGER_OWNER_FACT_POPULATION_ORACLE');assert.deepEqual([...owned.canonicalCheckIds].sort(),[...historicalLedgerCanonicalCheckIds].sort(),'HISTORICAL_LEDGER_CANONICAL_POPULATION_ORACLE');const {canonicalCheckIds,...other}=owned;assert.deepEqual(other,historicalLedgerOwnershipFacts,'HISTORICAL_LEDGER_OWNER_FACT_POPULATION_ORACLE');
  assert.deepEqual(report.producerControls,historicalLedgerControlCaseIds.map(caseId=>({caseId,accepted:false,result:'DETECTED'})),'HISTORICAL_LEDGER_CONTROL_POPULATION_ORACLE');return report;
 }
 
 export async function runHistoricalContextLedger({sourceRoot,expectedCommit,expectedTree,evidenceDirectory,originalOwnerStartedAtUnixMs}={}){
- const deadlineUnixMs=originalOwnerStartedAtUnixMs+1200000;
+ // Setup, both producer waves, validation and cleanup share the original
+ // executed-evidence owner's aggregate budget, not one producer's deadline.
+ const deadlineUnixMs=originalOwnerStartedAtUnixMs+EXECUTED_EVIDENCE_TIMEOUT_MS;
  assert(Number.isFinite(originalOwnerStartedAtUnixMs)&&originalOwnerStartedAtUnixMs<=Date.now()&&deadlineUnixMs>Date.now(),'HISTORICAL_LEDGER_ORIGINAL_OWNER_DEADLINE_ORACLE');
  assert(path.isAbsolute(evidenceDirectory)&&!fs.existsSync(evidenceDirectory)&&!evidenceDirectory.startsWith(sourceRoot+path.sep),'HISTORICAL_LEDGER_EXTERNAL_PRIVATE_EVIDENCE_ORACLE');
  fs.mkdirSync(evidenceDirectory,{recursive:true});const errors=[];let fixture,report;

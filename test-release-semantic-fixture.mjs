@@ -87,7 +87,18 @@ export function verifyActualReleaseProofControls({engine,hash},project){
   reject('RELEASE_OBLIGATION_EXPRESSION_MISMATCH',p=>{const row=p.projectData.proofObligations.find(row=>row.id===proof.proofObligationId);row.fields.PROOF_EXPRESSION_ID=row.PROOF_EXPRESSION_ID='UNREGISTERED-EXPRESSION';});
   reject('RELEASE_UNKNOWN_NORMATIVE_CLASS',p=>{const row=p.projectData.requirements.find(row=>row.id===requirementId);row.fields.MANDATORY_OPTIONAL_STATUS=row.MANDATORY_OPTIONAL_STATUS='UNKNOWN';});
   reject('RELEASE_MISSING_ACCEPTED_ENTAILMENT',p=>{p.projectData.entailmentReviews=p.projectData.entailmentReviews.filter(row=>engine.recordValue(row,'TARGET_PROPOSITION_ID')!==propositionId);});
-  reject('RELEASE_STALE_ACCEPTED_TRANSPORT',p=>{for(const row of p.projectData.entailmentReviews.filter(row=>engine.recordValue(row,'TARGET_PROPOSITION_ID')===propositionId))row.rawResponseId='UNREGISTERED-RAW';});
+  const nativeAuthority=project.projectData.entailmentReviews.some(row=>row.source==='APPLICATION_TEST_RUNTIME'&&engine.recordValue(row,'TARGET_PROPOSITION_ID')===propositionId);
+  reject(nativeAuthority?'RELEASE_STALE_ACCEPTED_NATIVE_AUTHORITY':'RELEASE_STALE_ACCEPTED_TRANSPORT',p=>{
+   for(const row of p.projectData.entailmentReviews.filter(row=>engine.recordValue(row,'TARGET_PROPOSITION_ID')===propositionId)){
+    if(row.source!=='APPLICATION_TEST_RUNTIME'){row.rawResponseId='UNREGISTERED-RAW';continue;}
+    // Native entailments have no accepted external response to corrupt. Break
+    // the actual observation -> executed-result identity without replacing it.
+    const observations=p.projectData.observationRecords.filter(observation=>engine.recordId(observation,'observationRecords')===engine.recordValue(row,'OBSERVATION_ID'));
+    assert.equal(observations.length,1,'RELEASE_NATIVE_AUTHORITY_UNIQUE_OBSERVATION');const observation=observations[0];assert.equal(observation.source,'APPLICATION_TEST_RUNTIME','RELEASE_NATIVE_AUTHORITY_OBSERVATION_OWNER');
+    const binding=JSON.parse(engine.recordValue(observation,'RAW_OR_NATIVE_PROVENANCE'));assert(binding.nativeExecutionIdentitySha256,'RELEASE_NATIVE_AUTHORITY_EXECUTION_IDENTITY');binding.nativeExecutionIdentitySha256='0'.repeat(64);
+    observation.fields.RAW_OR_NATIVE_PROVENANCE=observation.RAW_OR_NATIVE_PROVENANCE=hash.stableStringify(binding);
+   }
+  });
   reject('RELEASE_CHANGED_REVIEWED_TIMING',p=>{const id=proof.leaves.find(row=>row.subjectFamily==='tests')?.subjectId;if(!id)throw new Error('Actual release control requires a reviewed test leaf.');const row=p.projectData.tests.find(row=>row.id===id);row.fields.REQUIRED_BY_STAGE=row.REQUIRED_BY_STAGE=Number(engine.recordValue(row,'REQUIRED_BY_STAGE'))+1;});
  }
  for(const [stage,family]of [[22,'deterministicResults'],[23,'meaningResults'],[24,'adversarialResults']]){
@@ -99,8 +110,8 @@ export function verifyActualReleaseProofControls({engine,hash},project){
 
 // Actual completed release command, transferred with original byte/context
 // custody to the existing isolated transaction adapter. No prefix is invented.
-export async function verifyActualReleasePersistence({sourceProject,sourcePrompts,artifacts,onCheckpoint=null}){
- const {projectStoreRuntime,restoreArtifactFixture}=await import('./test-project-store-runtime.mjs'),r=projectStoreRuntime({storageWorker:false}),e=r.engine,h=r.runtime.closedLoopHash,p=r.copy(sourceProject),sourceHash=h.sha256Value(p);
+export async function verifyActualReleasePersistence({sourceProject,sourcePrompts,artifacts,onCheckpoint=null,environment={}}){
+ const {projectStoreRuntime,restoreArtifactFixture}=await import('./test-project-store-runtime.mjs'),r=projectStoreRuntime({storageWorker:false,environment}),e=r.engine,h=r.runtime.closedLoopHash,p=r.copy(sourceProject),sourceHash=h.sha256Value(p);
  await restoreArtifactFixture(r.store,artifacts);
  const contexts=sourceProject.projectData.generatedPrompts.map(row=>({instructionId:row.instructionId||row.promptId,files:sourcePrompts.materializePromptContextFiles(row)}));
  for(const entry of contexts){const row=p.projectData.generatedPrompts.find(row=>(row.instructionId||row.promptId)===entry.instructionId);assert(row,'RELEASE_PERSISTENCE_ORIGINAL_PROMPT_ID');r.prompts.retainPromptContextFiles(row,r.copy(entry.files));r.prompts.materializePromptContextFiles(row);await r.store.persistPromptContextFiles(row,p);}
