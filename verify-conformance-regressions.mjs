@@ -199,6 +199,30 @@ function saveReport(file,report){
  fs.mkdirSync(path.dirname(file),{recursive:true});
  const temporary=file+'.partial';fs.writeFileSync(temporary,JSON.stringify(report,null,2)+'\n');fs.renameSync(temporary,file);
 }
+// This producer already emits an ordered sequence also consumed by the receipt
+// preload. Keep its raw reports and catalog assertions rather than dropping a
+// report, flattening colliding fields, or relaxing other gates' JSON contract.
+const OPERATIONAL_REPORT_OWNER='verify-operational-persistence.mjs';
+const OPERATIONAL_REPORT_MARKERS=Object.freeze(["operationalJournalCopy","validationRecordBackupRoundtrip","retainedEvidenceCustody","responseStagingRecovery","returnedSlotAtomicStaging","inboundArchiveParser","artifactByteSharing","artifactByteSharingFaults","promptContextStorage","operationalReadProof","operationalWarmProof","canonicalReadProof","retainedRootContinuation","checkpointCanonicalProof","workerMessageCodec","storageWorkerStartup","canonicalCommitWarmProof","startupSelectedReadReuse","verifiedGraphSemantics"]);
+export async function parseGateReport(gate,stdout){
+ const operational=gate.name===OPERATIONAL_REPORT_OWNER&&(gate.command||process.execPath)===process.execPath&&gate.args?.length===1&&gate.args[0]===OPERATIONAL_REPORT_OWNER;
+ if(operational){
+  const {executionReports,observationsFromReports}=await import('./verification-evidence.mjs');
+  const reports=executionReports(stdout);
+  assert.equal(reports.length,OPERATIONAL_REPORT_MARKERS.length,'CONFORMANCE_OPERATIONAL_REPORT_POPULATION_ORACLE');
+  for(const [index,marker]of OPERATIONAL_REPORT_MARKERS.entries()){
+   assert.ok(Object.hasOwn(reports[index],marker),'CONFORMANCE_OPERATIONAL_REPORT_ORDER_ORACLE: '+marker);
+   assert.equal(reports.filter(report=>Object.hasOwn(report,marker)).length,1,'CONFORMANCE_OPERATIONAL_REPORT_UNIQUENESS_ORACLE: '+marker);
+  }
+  const observations=observationsFromReports(OPERATIONAL_REPORT_OWNER,reports);
+  assert.ok(observations.length>0&&observations.every(row=>row.passed),'CONFORMANCE_OPERATIONAL_REPORT_ASSERTIONS_ORACLE');
+  return {schema:'closed-loop-conformance-report-sequence/1',suite:OPERATIONAL_REPORT_OWNER,reports,observations};
+ }
+ const report=JSON.parse(stdout);
+ if(!report||typeof report!=='object'||Array.isArray(report))throw new Error('Expected one JSON object.');
+ return report;
+}
+
 export function executeGate(gate,{directory,signal,timeoutMs=CHILD_TIMEOUT_MS,killGraceMs=KILL_GRACE_MS,env={},cwd,maxOutputBytes=MAX_OUTPUT_BYTES,forwardOutput=false,requireJson=true}={}){
  return new Promise(resolve=>{
   fs.mkdirSync(directory,{recursive:true});
@@ -250,13 +274,13 @@ export function executeGate(gate,{directory,signal,timeoutMs=CHILD_TIMEOUT_MS,ki
   if(gate.input!==undefined){child.stdin.on('error',e=>{error={code:e.code,message:e.message};stop('STDIN_ERROR');});child.stdin.end(gate.input);}
   // Do not wait for close: a remaining descendant can still hold the pipe open.
   child.on('exit',()=>{rootExited=true;kill('SIGKILL');});
-  child.on('close',(exitCode,terminationSignal)=>{
+  child.on('close',async (exitCode,terminationSignal)=>{
    clearTimeout(deadline);clearTimeout(killDeadline);signal?.removeEventListener('abort',abort);fs.closeSync(out);fs.closeSync(err);
    kill('SIGKILL');
    if(child.pid)sendOwner({type:'closed',pid:child.pid,token});
    if(ownerBuffer&&!error)error={code:'OWNER_PROTOCOL_ERROR',message:'Incomplete verifier process-owner message.'};
    const stdout=fs.readFileSync(stdoutPath,'utf8'),stderr=fs.readFileSync(stderrPath,'utf8');
-   let report=null,reportError=null;try{if(requireJson){report=JSON.parse(stdout);if(!report||typeof report!=='object'||Array.isArray(report))throw new Error('Expected one JSON object.');}}catch(e){reportError=e.message;}
+   let report=null,reportError=null;try{if(requireJson)report=await parseGateReport(gate,stdout);}catch(e){reportError=e.message;}
    const outcome=reason==='TIMEOUT'||reason==='AGGREGATE_TIMEOUT'?'TIMEOUT':exitCode===0&&!error&&!reason&&!reportError?'PASS':'FAIL';
    resolve({suite:gate.name,command:[command,...gate.args],startedAt,finishedAt:new Date().toISOString(),timeoutMs,exitCode,signal:terminationSignal,outcome,reason,error,reportError,stdout,stderr,stdoutSha256:sha(stdout),stderrSha256:sha(stderr),stdoutPath,stderrPath,report,ownedProcessGroups:Array.from(groups.values())});
   });

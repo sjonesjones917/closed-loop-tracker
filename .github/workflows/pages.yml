@@ -530,6 +530,12 @@ jobs:
           include-hidden-files: true
           if-no-files-found: warn
           retention-days: 30
+      - name: Normalize conformance evidence upload path
+        if: always() && contains(fromJSON('["success","failure","cancelled"]'), steps.conformance.outcome)
+        run: |
+          set -euo pipefail
+          canonical=$(realpath -m -- "$CONFORMANCE_EVIDENCE_DIRECTORY")
+          printf 'CONFORMANCE_EVIDENCE_DIRECTORY=%s\n' "$canonical" >> "$GITHUB_ENV"
       - name: Preserve executed regression evidence
         if: always() && (steps.conformance.outcome == 'success' || steps.conformance.outcome == 'failure' || steps.conformance.outcome == 'cancelled')
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -855,6 +861,12 @@ jobs:
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 30
+      - name: Normalize verifier child failure upload path
+        if: failure()
+        run: |
+          set -euo pipefail
+          canonical=$(realpath -m -- "$VERIFIER_CHILD_EVIDENCE_DIRECTORY")
+          printf 'VERIFIER_CHILD_EVIDENCE_DIRECTORY=%s\n' "$canonical" >> "$GITHUB_ENV"
       - name: Preserve verifier child logs after an earlier failed gate
         if: failure()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
