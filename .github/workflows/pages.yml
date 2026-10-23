@@ -668,6 +668,7 @@ jobs:
         if: steps.reuse.outputs.reused != 'true'
         run: |
           set -euo pipefail
+          node test-quarantine-ui-export-owner.mjs
           export CLRT_STAGE29_FIXTURE_PATH="$(mktemp)"
           export CLRT_STAGE30_FIXTURE_PATH="$(mktemp)"
           node verify-full-cycle.mjs | tee /tmp/full-cycle-proof.json

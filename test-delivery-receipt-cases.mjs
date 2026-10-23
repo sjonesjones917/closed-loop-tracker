@@ -319,8 +319,14 @@ await check('receipt outcomes retain the required controls across reload without
 process.stderr.write('delivery: restore transfer and observation versions without replaying delivery\n');
 let restorationPhase='build disposable persistence';
 try{
+  const unchanged=projectStoreRuntime();let control=unchanged.runtime.closedLoopCore.createBlankState('MATCHING-RELEASE-RESTORE');
+  unchanged.engine.recordReleaseDetermination(control);control=await unchanged.store.writeProject(control,{expectedProjectRevision:0,createOnly:true});
+  const matching=unchanged.engine.records(control,'releaseRecords').at(-1),checkpoint=(await unchanged.store.historyList(control.job.JOB_ID)).activeId;
+  const activated=(await unchanged.store.restoreCheckpoint(control.job.JOB_ID,checkpoint,{expectedProjectRevision:control.revision})).project;
+  assert.deepEqual(unchanged.engine.records(activated,'releaseRecords').at(-1),matching,'A release whose exact binding remains current must not be retired.');
   const r=projectStoreRuntime(),jobId=fixture.job.JOB_ID,versions=[];
-  let p=r.copy(fixture);p.activeStage=r.runtime.closedLoopWorkflowSchema.STAGE_COUNT;
+  assert.ok(generated.preTerminalProject,'Restoration requires the genuine lifecycle state captured before terminal authorization.');
+  let p=r.copy(generated.preTerminalProject);p.activeStage=r.runtime.closedLoopWorkflowSchema.STAGE_COUNT;
   await restoreArtifactFixture(r.store,fixtureArtifacts);
   restorationPhase='retain every original instruction context file';
   await hydrateRetainedPromptContexts(r,p,fixtureContextFiles);
@@ -331,10 +337,30 @@ try{
     assert.equal(file.byteSize,Number(r.engine.recordValue(artifact,'BYTE_SIZE')),'Retained artifact byte length must match its canonical record.');
     assert.equal(await h.sha256Bytes(file.blob),r.engine.recordValue(artifact,'SHA256'),'Retained artifact bytes must match their canonical digest.');
   }
-  restorationPhase='save the authorized lifecycle fixture';
+  // Initial persistence establishes revision 1 before the genuine terminal
+  // command binds its authority to the ordinary next committed revision.
+  restorationPhase='initialize the pre-terminal lifecycle fixture';
   p=await r.store.writeProject(p,{expectedProjectRevision:0,createOnly:true});
+  const initialRevision=p.revision,terminal=r.engine.calculateTerminal(p,{expectedRevision:initialRevision});
+  assert.equal(r.engine.recordValue(terminal,'DELIVERY_STATE'),'AUTHORIZED');
+  const terminalBytes=JSON.stringify(terminal),allocationBytes=JSON.stringify(p.projectData.allocationReceipts);
+  restorationPhase='save the authorized lifecycle fixture';
+  p=await r.store.writeProject(p,{expectedProjectRevision:initialRevision});
+  assert.equal(JSON.stringify(r.engine.records(p,'deliveryRecords').find(row=>r.engine.recordId(row,'deliveryRecords')===r.engine.recordId(terminal,'deliveryRecords'))),terminalBytes,'Saving must preserve the genuine terminal authorization.');
+  assert.equal(JSON.stringify(p.projectData.allocationReceipts),allocationBytes,'Saving must preserve the terminal allocation receipt.');
+  const currentRelease=r.engine.records(p,'releaseRecords').at(-1),currentBinding=r.engine.releaseBinding(p);
+  assert.equal(r.engine.releaseRecordMatchesBinding(currentRelease,currentBinding),true);
+  for(const [field,value] of [['DETERMINATION','BLOCKED'],['MANDATORY_REQUIREMENT_COUNTS',Number(currentRelease.MANDATORY_REQUIREMENT_COUNTS)+1]]){
+    const changed=r.copy(currentRelease);changed.fields[field]=value;changed[field]=value;r.engine.refreshRecordHashes(changed,'releaseRecords');
+    assert.equal(r.engine.releaseRecordMatchesBinding(changed,currentBinding),false,'Changed current release output must not pass its original derivation receipt.');
+  }
+  const corrupted=r.copy(p),corruptedRelease=r.engine.records(corrupted,'releaseRecords').at(-1);
+  corruptedRelease.fields.DETERMINATION='BLOCKED';corruptedRelease.DETERMINATION='BLOCKED';r.engine.refreshRecordHashes(corruptedRelease,'releaseRecords');
+  const corruptedIntegrity=r.store.validateProjectIntegrity(corrupted);
+  assert.equal(corruptedIntegrity.valid,false,'Changed current determination must remain an integrity failure.');
+  assert.ok(corruptedIntegrity.issues.some(issue=>String(issue).includes('Current release determination BLOCKED does not match deterministic release calculation ACCEPTED.')),'The changed determination itself must be rejected.');
   await r.store.beginHistorySession('DELIVERY-CONTINUATION');
-  async function retain(expected){versions.push({id:(await r.store.historyList(jobId)).activeId,project:JSON.parse(JSON.stringify(p)),expected});}
+  async function retain(expected){const history=await r.store.historyList(jobId);versions.push({id:history.activeId,checkpoint:r.copy(history.entries.find(row=>row.id===history.activeId)),project:JSON.parse(JSON.stringify(p)),expected});}
   await retain('EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS');
   let next=r.copy(p);r.engine.recordDeliveryAttempt(next,{commandId:'HISTORY-CONTROLLED-TRANSFER',result:'SUCCEEDED'});
   restorationPhase='save successful transfer';
@@ -346,17 +372,28 @@ try{
   for(const point of [...versions].reverse().concat(versions)){
     restorationPhase='restore '+point.expected;
     p=(await r.store.restoreCheckpoint(jobId,point.id,{expectedProjectRevision:p.revision})).project;
-    const reloaded=JSON.parse(JSON.stringify(await r.store.readProject(jobId)));
-    assert.deepEqual(reloaded.projectData,point.project.projectData,'Restoration must retain the matching transfer/evidence history without replaying a command.');
-    assert.deepEqual(reloaded.stages,point.project.stages,'Restoration mixed stage completion across delivery versions.');
-    assert.equal(reloaded.job.NEXT_REQUIRED_ACTION.actionType,point.expected);
-    restorationPhase='render '+point.expected;deliveryViewOracle(reloaded,point.expected);
+    const runtimeReloaded=await r.store.readProject(jobId),reloaded=JSON.parse(JSON.stringify(runtimeReloaded));
+    assert.deepEqual((await r.store.historyList(jobId)).entries.find(row=>row.id===point.id),point.checkpoint,'Restoration must preserve the immutable checkpoint descriptor and snapshot hashes.');
+    for(const family of ['deliveryAttempts','evidenceRecords','regressionExecutions','rawResponses','acceptedChanges'])assert.deepEqual(reloaded.projectData[family],point.project.projectData[family],'Restoration must preserve historical '+family+' without replay.');
+    assert.equal(reloaded.projectData.releaseRecords.length,point.project.projectData.releaseRecords.length,'Restoration must not calculate a new release.');
+    for(const prior of point.project.projectData.releaseRecords){
+      const retained=reloaded.projectData.releaseRecords.find(row=>row.id===prior.id);assert.ok(retained);
+      for(const key of ['fields','derivationInput','derivationReceipt','releaseEvidenceSha256'])assert.deepEqual(retained[key],prior[key],'Historical release '+key+' must remain exact.');
+      if(prior.active!==false&&!prior.invalidatedBy){assert.equal(retained.active,false);assert.equal(retained.invalidatedBy,'HISTORY_ACTIVATION_CHANGED');}else assert.deepEqual(retained,prior);
+    }
+    const subject=r.engine.records(runtimeReloaded,'failureTests').find(row=>r.runtime.closedLoopWorkflowSchema.deferredDefinitionCompatibilityRequired(row,'failureTests'));assert.ok(subject);
+    const compatibility=r.engine.deferredDefinitionCompatibilityState(runtimeReloaded,subject,'failureTests');
+    assert.equal(compatibility.compatible,false);assert.ok(compatibility.issues.some(issue=>issue.code==='STALE_DEFINITION_COMPATIBILITY_AUTHORITY'));
+    assert.equal(r.engine.gate(27,runtimeReloaded).complete,false,'Historical release evidence must not grant current release authority.');
+    assert.equal(reloaded.job.NEXT_REQUIRED_ACTION.actionType,'BLOCKED');
+    restorationPhase='render blocked historical activation';deliveryViewOracle(reloaded,'BLOCKED');
+    await assert.rejects(r.store.assertRecoveryTransfer(runtimeReloaded),/An AUTHORIZED Stage 30 delivery record is required before export\/share\./);
     for(const artifact of r.engine.records(p,'artifacts')){
       const stored=await r.store.getArtifact(r.engine.recordId(artifact,'artifacts'));
       assert.equal(await h.sha256Bytes(stored.blob),r.engine.recordValue(artifact,'SHA256'));
     }
     restorationPhase='reject repeated transfer '+point.expected;
-    await assert.rejects(r.store.assertRecoveryTransfer(p),error=>error.code==='RETAINED_TRANSFER_LIMIT_REACHED','Restoration must not authorize a duplicate external transfer.');
+    await assert.rejects(r.store.assertRecoveryTransfer(r.copy(point.project)),error=>error.code==='RETAINED_TRANSFER_LIMIT_REACHED','Restoration must not erase the consumed transfer allowance of the original authorization.');
   }
   cases.push({name:'restore transfer and observation versions without replaying delivery',result:'PASS',versions:versions.length,restores:versions.length*2,environment:'Production persistence with shared transaction adapter; no physical delivery asserted'});
 }catch(error){cases.push({name:'restore transfer and observation versions without replaying delivery',result:'FAIL',message:error.message,phase:restorationPhase,stack:error.stack});}

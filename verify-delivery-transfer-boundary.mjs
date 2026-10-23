@@ -81,10 +81,12 @@ globalThis.closedLoopPromptEngine=Object.freeze({...fixturePromptOwner,
   reserveAndBuildPromptRecord(...args){const result=fixturePromptOwner.reserveAndBuildPromptRecord(...args);retainContext(result.prompt,args[0]);return result;}
 });
 `;
-const fixturePrefix=source.slice(0,anchor).replace('const core=globalThis.closedLoopCore',captureContext+'const core=globalThis.closedLoopCore');
+const terminalAnchor='const stage30=engine.terminalPrerequisites(p);';
+assert.equal(source.split(terminalAnchor).length-1,1,'The lifecycle fixture must retain its genuine pre-terminal state.');
+const fixturePrefix=source.slice(0,anchor).replace('const core=globalThis.closedLoopCore',captureContext+'const core=globalThis.closedLoopCore').replace(terminalAnchor,'const preTerminalProject=structuredClone(p);'+terminalAnchor);
 assert.ok(fixturePrefix.includes(captureContext),'The lifecycle fixture must capture context at generation time.');
 // Retain the unexecuted suffix so its hoisted helpers remain available to the prefix.
-fs.writeFileSync(script,fixturePrefix+`fs.writeFileSync(${JSON.stringify(capture)},JSON.stringify({project:p,artifacts:await captureArtifactFixture(byteStore,p.job.JOB_ID),contextFiles:[...retainedContextFiles.values()]}));process.exit(0);`+source.slice(anchor));
+fs.writeFileSync(script,fixturePrefix+`fs.writeFileSync(${JSON.stringify(capture)},JSON.stringify({project:p,preTerminalProject,artifacts:await captureArtifactFixture(byteStore,p.job.JOB_ID),contextFiles:[...retainedContextFiles.values()]}));process.exit(0);`+source.slice(anchor));
   // The genuine lifecycle runs once, with its original 60-minute cap. Its
   // generated source is removed as soon as that supervised child settles.
   try{await checkedVerifier(process.execPath,[script],{stdio:'pipe',timeout:Math.min(3600000,remaining()),maxBuffer:64*1024*1024,signal:controller.signal});}

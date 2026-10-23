@@ -126,6 +126,11 @@ export function assertLifecycleWorkflowCommand(workflow){
     (testJob.match(/^          node verify-stage30-terminal-mobile-boundary\.mjs$/gm)||[]).length===1&&
     (full.match(/^          node verify-stage30-terminal-mobile-boundary\.mjs$/gm)||[]).length===1&&
     full.indexOf('node verify-full-cycle.mjs')<full.indexOf('node verify-stage30-terminal-mobile-boundary.mjs'),'Full-cycle and Stage 30 terminal proofs must each execute once after prompt semantics.');
+  const quarantineOwner='          node test-quarantine-ui-export-owner.mjs\n';
+  requireValue((workflow.match(/^\s*node test-quarantine-ui-export-owner\.mjs(?:\s|$)/gm)||[]).length===1&&full.includes(quarantineOwner)&&
+    full.indexOf(quarantineOwner)<full.indexOf('          node verify-full-cycle.mjs | tee /tmp/full-cycle-proof.json\n')&&
+    protectedTest.indexOf(quarantineOwner)>protectedTest.indexOf('        run: node verify-conformance-handoff.mjs\n')&&protectedTest.indexOf(quarantineOwner)<collectAt,
+    'Required quarantine UI export owner must execute once after complete conformance handoff and before full-cycle proof and strict collection.');
   const lifecycle='          node verify-project-lifecycle.mjs',definition='          node verify-v3-definition-of-done.mjs';
   const external='          node verify-external-result-determination.mjs';
   const stage01='          node verify-stage01-intake-closure.mjs',preflight='          node verify-independent-preflight.mjs',receiptControls='          node verify-definition-of-done.mjs --owner-receipt-controls',done='          node verify-definition-of-done.mjs\n';

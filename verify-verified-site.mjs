@@ -323,6 +323,18 @@ try{
     ['prompt-after-full-cycle',text=>{const next=text.indexOf('      - name:',promptAt+promptHeading.length),block=text.slice(promptAt,next);return text.slice(0,promptAt)+text.slice(next,sharedAt)+block+text.slice(sharedAt);},/specification order/]
   ]){const changed=alter(workflow);assert.notEqual(changed,workflow,`CI_PROOF_ORDER_SETUP_ORACLE: ${name} mutation did not apply.`);(await rejects(`proof-order-${name}`,()=>assertLifecycleWorkflowCommand(changed),diagnostic));}
   cases.push('workflow-proof-order-and-direct-owner-mutations');
+  const quarantineOwnerLine='          node test-quarantine-ui-export-owner.mjs\n';
+  const strictCollectionStep="      - name: Complete current non-browser assertion evidence\n        if: steps.reuse.outputs.reused != 'true'\n        run: node collect-verification-evidence.mjs\n\n";
+  for(const [name,alter]of [
+    ['missing',text=>text.replace(quarantineOwnerLine,'')],
+    ['duplicate',text=>text.replace(quarantineOwnerLine,quarantineOwnerLine+quarantineOwnerLine)],
+    ['before-conformance',text=>text.replace(quarantineOwnerLine,'').replace('        run: node verify-conformance-handoff.mjs\n','        run: |\n'+quarantineOwnerLine+'          node verify-conformance-handoff.mjs\n')],
+    ['after-full-cycle',text=>text.replace(quarantineOwnerLine,'').replace(fullCycleLine,fullCycleLine+quarantineOwnerLine)],
+    ['after-collection',text=>text.replace(quarantineOwnerLine,'').replace('      - name: Stale project navigation and draft preservation\n','      - name: Late quarantine owner\n        run: |\n'+quarantineOwnerLine+'      - name: Stale project navigation and draft preservation\n')],
+    ['collection-before-full-cycle',text=>text.replace(strictCollectionStep,'').replace(fullHeading,strictCollectionStep+fullHeading)],
+    ['focused-invocation',text=>text.replace(quarantineOwnerLine,'          node test-quarantine-ui-export-owner.mjs --focused\n')]
+  ]){const changed=alter(workflow);assert.notEqual(changed,workflow,'QUARANTINE_OWNER_GATE_SETUP_ORACLE: '+name);await rejects('quarantine-owner-'+name,()=>assertLifecycleWorkflowCommand(changed),/quarantine UI export owner must execute once/);}
+  assertLifecycleWorkflowCommand(workflow);cases.push('quarantine-owner-restored-workflow');
   assert.equal((workflow.match(/^          node build-test-project\.mjs$/gm)||[]).length,1,'CI_DUPLICATE_FIXTURE_ORACLE: retained fixture verification runs once');
   const conformancePosition=testWorkflow.indexOf('name: Validate complete conformance handoff');
   for(const name of ['Stale project navigation and draft preservation','Verification routing and capability evidence','Startup and scrolling at phone and desktop sizes','Acceptance viewport regression and targeted layout fault','Local Chromium operator path'])assert.ok(conformancePosition>=0&&testWorkflow.indexOf('name: '+name)>conformancePosition,'CI_PROOF_ORDER_ORACLE: non-browser proof precedes '+name);

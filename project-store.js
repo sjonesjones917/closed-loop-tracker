@@ -1843,7 +1843,16 @@ async function restoreCheckpoint(jobId,checkpointId,{expectedProjectRevision,sig
   let next=clone(saved.project);next.revision=Math.max(priorRevision,Number(saved.project.revision))+1;next.historyActivationId=crypto.randomUUID();delete next.projectSha256;bindRestoredCandidates(next,saved.project,checkpointId,saved.view);
   // The immutable saved version stays unchanged. Activation is a new revision
   // and observes current readiness, never an expired favorable cache.
-  withVerifiedRecoveryCustody(saved.artifacts,()=>{next=recalculateChangedProjection(next,{sourceProjectSha256:saved.projectSha256});assertProjectIntegrity(next);});const digest=projectSha256(next),updated=clone(state);
+  withVerifiedRecoveryCustody(saved.artifacts,()=>{
+    // The checkpoint was validated before activation. Preserve its release
+    // evidence, but do not carry stale release authority into the new branch.
+    const engine=globalThis.closedLoopWorkflowEngine,binding=engine.releaseBinding(next);
+    for(const record of engine.records(next,'releaseRecords'))if(!engine.releaseRecordMatchesBinding(record,binding)){
+      record.active=false;record.validity='SUPERSEDED';record.invalidatedBy='HISTORY_ACTIVATION_CHANGED';
+      engine.refreshRecordHashes(record,'releaseRecords');
+    }
+    next=recalculateChangedProjection(next,{sourceProjectSha256:saved.projectSha256});assertProjectIntegrity(next);
+  });const digest=projectSha256(next),updated=clone(state);
   updated.activeId=checkpointId;updated.activeProjectSha256=digest;updated.activeRevision=next.revision;updated.activeViewOverride=rebaseHistoryView(next,saved.view);updated.title=String(next.job?.JOB_TITLE||'');updated.removed=false;updated.generation=Number(state.generation)+1;
   if(mode==='UNDO')updated.redo=[state.activeId,...state.redo.filter(id=>id!==state.activeId)];else if(mode==='REDO')updated.redo=state.redo.filter(id=>id!==checkpointId);else updated.redo=[];
   const tx=await openTransaction([PROJECTS,ARTIFACTS,META],'readwrite');
