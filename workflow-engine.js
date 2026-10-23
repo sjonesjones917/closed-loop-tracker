@@ -20,7 +20,7 @@ const ALL_COLLECTIONS=Object.freeze([...new Set([...Object.keys(schema.RECORD_SC
 const INFRA_ID_FAMILIES=Object.freeze({...schema.FIELD_REGISTRY['JOB.JOB_ID']?.canonicalIdFamilies});
 
 
-const clone=value=>{if(value===undefined)return undefined;const copied=JSON.parse(JSON.stringify(value));globalThis.closedLoopPromptEngine?.copyRetainedPromptContextFiles?.(value,copied);return copied;};
+const clone=value=>{if(value===undefined)return undefined;const copied=typeof value==='string'?value:JSON.parse(JSON.stringify(value));globalThis.closedLoopPromptEngine?.copyRetainedPromptContextFiles?.(value,copied);return copied;};
 // One synchronous projection observes capability freshness at one instant.
 // Historical validation receives an exact recorded observation time and returns
 // only a clone; ordinary admission and execution keep the actual clock.
@@ -1823,8 +1823,8 @@ function enumerateInputLeaves(value,sourceLocation,kind,label,units,{inputVersio
   if(value===undefined||value===null)return;
   if(typeof value==='string'){
     const normalized=value.replace(/\r\n/g,'\n').replace(/\r/g,'\n'),lines=normalized.split('\n');let emitted=0;
-    lines.forEach((rawLine,index)=>{if(!rawLine.trim())return;const location=lines.length>1?`${sourceLocation}#line=${index+1}`:sourceLocation,rawValueSha256=hash.sha256Value(rawLine),unitId=`INPUT-UNIT-${hash.sha256Value({inputVersion,kind,sourceLocation:location,rawValueSha256}).slice(0,20).toUpperCase()}`;units.push({unitId,kind,sourceLocation:location,label:lines.length>1?`${label} line ${index+1}`:label,rawValueSha256,rawValueText:rawLine,...clone(extra)});emitted++;});
-    if(!emitted&&value.length){const rawValueSha256=hash.sha256Value(value),unitId=`INPUT-UNIT-${hash.sha256Value({inputVersion,kind,sourceLocation,rawValueSha256}).slice(0,20).toUpperCase()}`;units.push({unitId,kind,sourceLocation,label,rawValueSha256,rawValueText:value,...clone(extra)});}
+    lines.forEach((rawLine,index)=>{if(!rawLine.trim())return;const location=lines.length>1?`${sourceLocation}#line=${index+1}`:sourceLocation,rawValueSha256=hash.sha256Value(rawLine),unitId=`INPUT-UNIT-${hash.withCanonicalDigestScope(null,()=>hash.sha256Value({inputVersion,kind,sourceLocation:location,rawValueSha256})).slice(0,20).toUpperCase()}`;units.push({unitId,kind,sourceLocation:location,label:lines.length>1?`${label} line ${index+1}`:label,rawValueSha256,rawValueText:rawLine,...clone(extra)});emitted++;});
+    if(!emitted&&value.length){const rawValueSha256=hash.sha256Value(value),unitId=`INPUT-UNIT-${hash.withCanonicalDigestScope(null,()=>hash.sha256Value({inputVersion,kind,sourceLocation,rawValueSha256})).slice(0,20).toUpperCase()}`;units.push({unitId,kind,sourceLocation,label,rawValueSha256,rawValueText:value,...clone(extra)});}
     return;
   }
   if(Array.isArray(value)){value.forEach((item,index)=>enumerateInputLeaves(item,`${sourceLocation}[${index}]`,kind,`${label}[${index}]`,units,{inputVersion,extra}));return;}
@@ -2014,7 +2014,7 @@ gate=function adjudicationGate(stage,project){
   // Receipt-bound release and chain calculations must read canonical source records.
   // Adjudication projections can add fields and change their dependency hashes.
   const adjudicated=stage===27||stage===29?project:adjudicatedClone(project),base=applicationadjudicationGate(stage,adjudicated),reasons=[...base.reasons];
-  const add=x=>{for(const r of safe(x))if(r&&!reasons.includes(r))reasons.push(r);};
+  const reasonSet=new Set(reasons),add=x=>{for(const r of safe(x))if(r&&!reasonSet.has(r)){reasonSet.add(r);reasons.push(r);}};
   if(stage===1){const accounting=evaluateIntakeAccounting(project);if(!accounting.complete)add(accounting.reasons);}
   if(stage===4){const accounting=evaluateObligationAccounting(project);if(!accounting.complete)add(accounting.reasons);}
   if(stage===6)for(const test of recordsForCurrentScope(project,'tests'))if(truth(recordValue(test,'PER_RUN_REQUIRED'))||testDueState(project,test,stage).dueNow){const variance=expectedVarianceContractState(project,test);if(!variance.complete)add(variance.reasons.map(reason=>'Test '+recordId(test,'tests')+' EXPECTED_VARIANCE_CONTRACT: '+reason));}
@@ -4541,8 +4541,32 @@ function historicalProjection(project,observedAt){
 }
 // Output-only comparisons never manufacture a persistable project or receipt.
 // Real recalculation and historical projects retain the registered receipt path.
+// Canonical comparison inputs are ordinary data graphs. Copy their mutable
+// containers while retaining immutable primitive strings. Unusual inputs keep
+// the existing native clone path; no receipt or validation result is reused.
+function copyProjectionComparisonData(project){
+ const nodes=new Map(),pending=[project];
+ while(pending.length){
+  const value=pending.pop();if(value===null||typeof value!=='object'){if(typeof value==='function'||typeof value==='symbol')return structuredClone(project);continue;}
+  if(nodes.has(value))continue;
+  const array=Array.isArray(value),prototype=Object.getPrototypeOf(value);
+  if(prototype!==(array?Array.prototype:Object.prototype)&&!(prototype===null&&!array))return structuredClone(project);
+  if(Object.getOwnPropertySymbols(value).length)return structuredClone(project);
+  const entries=[];
+  for(const key of Object.keys(value)){
+   const descriptor=Object.getOwnPropertyDescriptor(value,key);
+   if(!descriptor||!Object.hasOwn(descriptor,'value'))return structuredClone(project);
+   entries.push([key,descriptor.value]);pending.push(descriptor.value);
+  }
+  nodes.set(value,{array,length:array?value.length:null,entries});
+ }
+ if(project===null||typeof project!=='object')return project;
+ const copies=new Map();for(const [value,node]of nodes)copies.set(value,node.array?new Array(node.length):{});
+ for(const [value,node]of nodes){const copy=copies.get(value);for(const [key,child]of node.entries)Object.defineProperty(copy,key,{value:child!==null&&typeof child==='object'?copies.get(child):child,writable:true,enumerable:true,configurable:true});}
+ return copies.get(project);
+}
 function compareApplicationProjection(project,{observedAt=null}={}){
- const expected=observedAt===null&&typeof structuredClone==='function'?structuredClone(project):e0.clone(project);
+ const expected=observedAt===null&&typeof structuredClone==='function'?copyProjectionComparisonData(project):e0.clone(project);
  globalThis.closedLoopPromptEngine?.copyRetainedPromptContextFiles?.(project,expected);
  delete expected.projectSha256;ensure(expected);
  return e0.withReadinessEvaluationEpoch(()=>{

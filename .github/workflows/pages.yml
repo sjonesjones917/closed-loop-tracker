@@ -1091,6 +1091,7 @@ jobs:
           node --input-type=module - <<'NODE'
           import fs from 'node:fs';
           import {evaluateFinalAcceptance} from './final-acceptance.mjs';
+          import {selectExecutionReport} from './execution-report.mjs';
           import {execFileSync} from 'node:child_process';
           import {resolveVisualBaselineSubmission} from './visual-baseline-submission.mjs';
           import {applyExecutedEvidence,readReleaseExecutedEvidence} from './verification-evidence.mjs';
@@ -1098,7 +1099,7 @@ jobs:
           const definition=JSON.parse(fs.readFileSync('/tmp/definition.json','utf8'));
           const v3=JSON.parse(fs.readFileSync('/tmp/v3.json','utf8'));
           const stage01=JSON.parse(fs.readFileSync('/tmp/stage01.out','utf8'));
-          const zeroLoss=JSON.parse(fs.readFileSync('/tmp/zero-loss.out','utf8'));
+          const zeroLoss=selectExecutionReport(fs.readFileSync('/tmp/zero-loss.out','utf8'),'zeroLossStage01');
           const fullCycle=JSON.parse(fs.readFileSync('/tmp/full-cycle.json','utf8'));
           const dataRoute=JSON.parse(fs.readFileSync('/tmp/data-route.json','utf8'));
           const infrastructureRoute=JSON.parse(fs.readFileSync('/tmp/infrastructure-route.json','utf8'));

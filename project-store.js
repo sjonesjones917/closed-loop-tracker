@@ -152,10 +152,10 @@ function storageEvent(kind,subscribe,transaction=null){
 const request=req=>storageEvent('REQUEST',(resolve,reject,active)=>{req.onsuccess=()=>{if(active())resolve(req.result);};req.onerror=()=>{if(active())reject(req.error||new Error('IndexedDB request failed.'));};},req.transaction);
 const complete=tx=>storageEvent('TRANSACTION',(resolve,reject,active)=>{tx.oncomplete=()=>{if(active())resolve();};tx.onerror=()=>{if(active())reject(tx.error||new Error('IndexedDB transaction failed.'));};tx.onabort=()=>{if(active())reject(tx.error||new Error('IndexedDB transaction aborted.'));};},tx);
 const canonicalProject=project=>{const copy={...project};delete copy.projectSha256;return copy;};
-// Only actual import JSON reconstructions receive a private computation scope.
+// Only parser-owned import or single-checkpoint reconstructions receive a private computation scope.
 const importDigestHolders=new WeakMap(),importProjectDigestScopes=new WeakMap(),importDigestPairs=new WeakMap();
 function withImportDigestScope(project,callback){const scope=importProjectDigestScopes.get(project);return scope?hash.withCanonicalDigestScope(scope,callback):callback();}
-function bindImportDigestScope(project,parts){const holder=importDigestHolders.get(parts);if(!holder)return project;if(!holder.attempted){holder.attempted=true;holder.scope=hash.createCanonicalDigestScope(canonicalProject(project));}if(holder.scope)importProjectDigestScopes.set(project,holder.scope);return project;}
+function bindImportDigestScope(project,parts){const holder=importDigestHolders.get(parts);if(!holder)return project;if(holder.privateRead&&(!project||typeof project!=='object'))return project;if(!holder.attempted){holder.attempted=true;holder.scope=hash.createCanonicalDigestScope(canonicalProject(project));}if(holder.scope)importProjectDigestScopes.set(project,holder.scope);return project;}
 
 const projectSha256=project=>hash.sha256Value(canonicalProject(project));
 const storageError=(message,code)=>Object.assign(new Error(message),{code});
@@ -240,7 +240,7 @@ async function requestStoreWorker(method,args){
 const useStoreWorker=()=>Boolean(STORE_SCRIPT_URL&&typeof Worker==='function');
 const runSynchronousMutator=(mutator,next,before)=>{const result=mutator(next,before);if(result&&typeof result.then==='function')throw storageError('Project transaction mutators must be synchronous. Complete asynchronous work before opening the canonical IndexedDB transaction.','ASYNC_TRANSACTION_MUTATOR');return result;};
 const PLACEHOLDER_REFERENCES=new Set(globalThis.closedLoopWorkflowSchema.CANONICAL_REFERENCE_PLACEHOLDERS);
-const equivalent=(left,right)=>Object.is(left,right)||(!(left===undefined||right===undefined)&&hash.sha256Value(left)===hash.sha256Value(right));
+const equivalent=(left,right)=>Object.is(left,right)||(!(left===undefined||right===undefined)&&hash.withCanonicalDigestScope(null,()=>hash.sha256Value(left)===hash.sha256Value(right)));
 function projectCollectionShapeIssues(project){return globalThis.closedLoopWorkflowSchema.projectShapeIssues(project,globalThis.closedLoopWorkflowEngine.ALL_COLLECTIONS);}
 function assertProjectCollectionShape(project){const issues=projectCollectionShapeIssues(project);if(issues.length){const error=storageError(`Canonical project integrity validation failed: ${issues.join(' | ')}`,'PROJECT_INTEGRITY_FAILED');error.issues=issues;throw error;}}
 // Preserve incomplete work, but never reinterpret a present canonical value as
@@ -603,18 +603,24 @@ function replayOperationalPatches(project,patches){
   assertOperationalChange(project,next);
   return next;
 }
-function applyOperationalJournal(row,journal){
+function applyOperationalJournal(row,journal,checkpointRead=null){
   if(!row||!journal)return row;
   const {sha256,...body}=journal;
   if(sha256!==hash.sha256Value(body)||body.schema!=='closed-loop-response-operations/1'||body.jobId!==String(row.jobId)||body.baseProjectSha256!==row.projectSha256||body.projectRevision!==Number(row.revision)||!Array.isArray(body.patches))throw storageError('Saved response operations do not match their canonical project.','OPERATIONAL_STATE_INTEGRITY_FAILED');
   const next=replayOperationalPatches(row.project,body.patches);
-  if(projectSha256(next)!==body.projectSha256)throw storageError('Saved response operation contents are corrupt.','OPERATIONAL_STATE_INTEGRITY_FAILED');
+  const primitive=checkpointRead&&rootDigestPrimitivesUnchanged(initialRootDigestPrimitives)?initialRootDigestPrimitives:null;
+  const snapshot=primitive&&verifiedGraphNodes(next)?copyVerifiedTree(canonicalProject(next)):null;
+  const pair=snapshot?historyProjectDigestsCold(next):null;
+  if((pair?pair.projectSha256:projectSha256(next))!==body.projectSha256)throw storageError('Saved response operation contents are corrupt.','OPERATIONAL_STATE_INTEGRITY_FAILED');
+  if(pair&&rootDigestPrimitivesUnchanged(primitive)&&verifiedValuesEqual(snapshot,canonicalProject(next))){
+    const proof={primitive,snapshot,...pair};checkpointDigestPairs.add(proof);checkpointRead.checkpointDigestPair=proof;
+  }
   return {...row,project:next,projectSha256:body.projectSha256};
 }
 // A successful canonical, operational or current-view checkpoint commit can supply the
 // next transaction's private read proof. It is consumed once and only after complete source-value equality;
 // ordinary reads/reloads still execute the full cold integrity path.
-const STARTUP_REFRESH_READ=Symbol('private startup refresh read'),STARTUP_RECOVERY_CAPTURE=Symbol('private recovery capture');
+const STARTUP_REFRESH_READ=Symbol('private startup refresh read'),STARTUP_RECOVERY_CAPTURE=Symbol('private recovery capture'),CHECKPOINT_PAIR_READ=Symbol('private checkpoint pair read');
 let recentOperationalCommitRead=null;
 function takeOperationalCommitRead(row,journal,readPurpose=null){
   const proof=recentOperationalCommitRead;recentOperationalCommitRead=null;
@@ -824,7 +830,7 @@ async function readProjectMetadata(jobId,sourceProof=null){
   if(computed!==row.projectSha256){await quarantine(row,'PROJECT_HASH_MISMATCH');throw storageError('Project hash mismatch. The original row was preserved in quarantine.','PROJECT_HASH_MISMATCH');}
   if(Number(row.revision)!==Number(row.project?.revision)){await quarantine(row,'PROJECT_REVISION_MISMATCH');throw storageError('Stored revision does not match the canonical project. The original row was preserved in quarantine.','PROJECT_REVISION_MISMATCH');}
   try{assertProjectIntegrity(row.project,{verifyDerived:false});}catch(error){if(!legacyJobPointerProjection(row.project,{verifyDerived:false})){await quarantine(row,'PROJECT_CANONICAL_INTEGRITY_FAILED: '+error.message);throw storageError('The stored project failed canonical integrity validation. Its original state was preserved in quarantine.','PROJECT_INTEGRITY_FAILED');}}
-  let active;try{active=applyOperationalJournal(row,journal?.value);if(active!==row){try{assertProjectIntegrity(active.project,{verifyDerived:false});}catch(error){if(!legacyJobPointerProjection(active.project,{verifyDerived:false}))throw error;}}}catch(error){if(!journal?.value)throw error;await quarantine(row,'OPERATIONAL_STATE_INTEGRITY_FAILED: '+error.message,{operationalSha256:journal.value.sha256});throw storageError('Saved response operations failed integrity verification. Their exact state was preserved in quarantine.','OPERATIONAL_STATE_INTEGRITY_FAILED');}const verifiedSourceRow=sourceProof?.row||copyVerifiedTree(row);active.project.revision=Number(active.revision||0);active.project.projectSha256=active.projectSha256;recoveryProjectionBounds.set(active.project,active===row?row.updatedAt:journal.updatedAt);
+  let active;try{active=applyOperationalJournal(row,journal?.value,sourceProof?.readPurpose===CHECKPOINT_PAIR_READ?sourceProof:null);if(active!==row){try{assertProjectIntegrity(active.project,{verifyDerived:false});}catch(error){if(!legacyJobPointerProjection(active.project,{verifyDerived:false}))throw error;}}}catch(error){if(!journal?.value)throw error;await quarantine(row,'OPERATIONAL_STATE_INTEGRITY_FAILED: '+error.message,{operationalSha256:journal.value.sha256});throw storageError('Saved response operations failed integrity verification. Their exact state was preserved in quarantine.','OPERATIONAL_STATE_INTEGRITY_FAILED');}const verifiedSourceRow=sourceProof?.row||copyVerifiedTree(row);active.project.revision=Number(active.revision||0);active.project.projectSha256=active.projectSha256;recoveryProjectionBounds.set(active.project,active===row?row.updatedAt:journal.updatedAt);
   const repaired=legacyJobPointerProjection(active.project,{verifyDerived:false});
   const projectionActivation=projectionActivationRequired(active.project),varianceActivation=legacyExpectedVarianceSources(active.project).length>0;
   if(repaired||unacceptedAgentJobDefaults(active.project).length||projectionActivation||varianceActivation){
@@ -832,9 +838,9 @@ async function readProjectMetadata(jobId,sourceProof=null){
     // and History reuse only private unchanged-value proofs; the transaction
     // still rereads both canonical row and operational journal before commit.
     const verifiedRead={row:verifiedSourceRow,journal:sourceProof?.journal||copyVerifiedTree(journal),...verifiedProjectIntegrity(active.project,active.projectSha256)};
-    if(sourceProof)sourceProof.current=false;
+    if(sourceProof){sourceProof.current=false;delete sourceProof.checkpointDigestPair;}
     return migrateJobPointerProjection(active.project,{...(repaired||{project:clone(active.project),repairs:[]}),projectionActivation,varianceActivation},verifiedRead);
-  }return active.project;
+  }if(sourceProof?.checkpointDigestPair&&!checkpointPairMatches(sourceProof.checkpointDigestPair,active.project))delete sourceProof.checkpointDigestPair;return active.project;
 }
 function unacceptedAgentJobDefaults(project){
   const schema=globalThis.closedLoopWorkflowSchema,stage=project?.stages?.[1],data=project?.projectData;
@@ -906,6 +912,7 @@ async function readProjectForTransaction(jobId,readPurpose=null){
  if(!project)return null;
  const canonicalReadIntegrity=readPurpose===STARTUP_REFRESH_READ&&sourceProof.current?verifiedProjectIntegrity(project,project.projectSha256):null;
  await observeProjectArtifactCustody(project);
+ if(sourceProof.checkpointDigestPair&&!checkpointPairMatches(sourceProof.checkpointDigestPair,project))delete sourceProof.checkpointDigestPair;
  return {...sourceProof,...verifiedProjectIntegrity(project,project.projectSha256),canonicalReadIntegrity};
 }
 function cachedReadinessProjection(project){
@@ -1215,7 +1222,11 @@ function historyProjectDigestsCold(project){
   return {projectSha256:projectDigest.digest(),workSha256:workDigest.digest()};
 }
 // One-use retained computations, never a validation-success cache.
-const rootCertificates=new WeakSet();
+const rootCertificates=new WeakSet(),checkpointDigestPairs=new WeakSet();
+// Private computation only: this never certifies static/current compatibility.
+function checkpointPairMatches(proof,project){
+  return checkpointDigestPairs.has(proof)&&rootDigestPrimitivesUnchanged(proof.primitive)&&verifiedValuesEqual(proof.snapshot,canonicalProject(project));
+}
 function captureRootDigestPrimitives(){
   if(globalThis.closedLoopHash!==hash||!verifiedGraphNodes(HISTORY_ACTIVATION_FIELDS))return null;
   const encoderDescriptor=Object.getOwnPropertyDescriptor(globalThis,'TextEncoder'),encoder=encoderDescriptor?.value,encoderPrototype=encoder?.prototype,encodeDescriptor=encoderPrototype&&Object.getOwnPropertyDescriptor(encoderPrototype,'encode');
@@ -1295,18 +1306,21 @@ async function commitRootCheckpoint(jobId,project,verifiedRead,prepared,operatio
     const storedRoot=(await request(meta.get(snapshotKey(jobId,root.descriptor.id))))?.value;
     if(nonactivatableHistoryEntry(current,root.descriptor.id)||!verifiedValuesEqual((({blob,...descriptor})=>descriptor)(storedRoot||{}),root.descriptor)||!(storedRoot?.blob instanceof Blob)||storedRoot.blob.size!==root.descriptor.byteSize||await owner.external(hash.sha256Bytes(storedRoot.blob))!==root.descriptor.sha256)throw storageError('The retained root changed before checkpoint commit.','HISTORY_SNAPSHOT_INTEGRITY_FAILED');
     const bytes=new Map();
+    const byteObservations=new WeakMap();
     async function retainedBytes(sha256,byteSize){
       const found=bytes.get(sha256);if(found){if(found.blob.size!==byteSize)throw storageError('Retained content sizes conflict.','HISTORY_VERSION_MISMATCH');return found;}
       const body=(await request(meta.get(historyFileKey(jobId,sha256))))?.value;
+      const bytePrimitive=checkpointBytePrimitives(body?.blob);
       if(body?.sha256!==sha256||!(body.blob instanceof Blob)||body.blob.size!==byteSize||await owner.external(hash.sha256Bytes(body.blob))!==sha256)throw storageError('Retained bytes changed before checkpoint commit.','HISTORY_FILE_INTEGRITY_FAILED');
+      if(checkpointBytePrimitivesMatch(bytePrimitive)){const observation={blob:body.blob,byteSize,sha256,primitive:bytePrimitive};checkpointByteObservations.add(observation);byteObservations.set(body.blob,observation);}
       bytes.set(sha256,body);return body;
     }
     if(root.descriptor.projectParts){assertHistoryProjectParts(root.descriptor.projectParts);for(const part of root.descriptor.projectParts.entries){if(current.files[part.sha256]?.byteSize!==part.byteSize)throw storageError('A retained project part is unavailable.','HISTORY_VERSION_MISMATCH');await retainedBytes(part.sha256,part.byteSize);}}
     const rootArtifacts=[];
     for(const descriptor of root.body.artifacts){const body=await retainedBytes(descriptor.sha256,descriptor.byteSize);rootArtifacts.push({...historyDescriptor(descriptor),blob:body.blob});}
-    const currentRows=await request(tx.objectStore(ARTIFACTS).index('jobId').getAll(String(jobId))),files=await hydrateArtifactRows(tx,currentRows);
+    const currentRows=await request(tx.objectStore(ARTIFACTS).index('jobId').getAll(String(jobId))),files=await hydrateArtifactRows(tx,currentRows,{backingBodies:{jobId:String(jobId),rows:bytes}});
     if(!verifiedValuesEqual(files.map(historyDescriptor),root.files))throw storageError('Artifact relationships changed before checkpoint commit.','HISTORY_FILE_INTEGRITY_FAILED');
-    for(const file of files)if(!(file.blob instanceof Blob)||file.blob.size!==file.byteSize||await owner.external(hash.sha256Bytes(file.blob))!==file.sha256)throw storageError('Artifact bytes changed before checkpoint commit.','HISTORY_FILE_INTEGRITY_FAILED');
+    for(const file of files)if(!(file.blob instanceof Blob)||file.blob.size!==file.byteSize||(consumeCheckpointByteObservation(file,byteObservations.get(file.blob))||await owner.external(hash.sha256Bytes(file.blob)))!==file.sha256)throw storageError('Artifact bytes changed before checkpoint commit.','HISTORY_FILE_INTEGRITY_FAILED');
     await owner.external(hydrateLegacyRunPromptContexts(root.project,rootArtifacts));
     await owner.external(verifyOriginalSourceBindings(root.project,rootArtifacts));
     await owner.external(verifyOriginalSourceBindings(project,files));
@@ -1388,6 +1402,31 @@ async function encodeHistoryProject(project,retainValue){
 }
 // Receipt keys are actual immutable Blob objects, not caller-declared hashes.
 // Only importPackage creates this map; ordinary saved-version reads verify anew.
+// A private one-use observation of the same immutable root bytes in this decode.
+// It never covers parts, artifacts, parser validation, or a later transaction.
+const checkpointByteObservations=new WeakSet();
+function checkpointBytePrimitives(blob){
+ try{
+  if(!blob||Object.getPrototypeOf(blob)!==Blob.prototype||['slice','arrayBuffer','size'].some(key=>Object.hasOwn(blob,key)))return null;
+  const globals=[Blob,Uint8Array,Uint32Array,ArrayBuffer,DataView,TextEncoder],functions=[hash.sha256Bytes];
+  const targets=[blob,...globals,...globals.map(value=>value.prototype),Object.getPrototypeOf(Uint8Array.prototype)];
+  const records=targets.map(target=>({target,prototype:Object.getPrototypeOf(target),descriptors:Reflect.ownKeys(target).map(key=>[key,Object.getOwnPropertyDescriptor(target,key)])}));
+  return {globals,functions,records};
+ }catch{return null;}
+}
+function checkpointBytePrimitivesMatch(proof){
+ try{
+  if(!proof||proof.globals.some((value,index)=>value!==[Blob,Uint8Array,Uint32Array,ArrayBuffer,DataView,TextEncoder][index])||proof.functions[0]!==hash.sha256Bytes)return false;
+  return proof.records.every(({target,prototype,descriptors})=>{
+    const keys=Reflect.ownKeys(target);if(Object.getPrototypeOf(target)!==prototype||keys.length!==descriptors.length)return false;
+    return descriptors.every(([key,before],index)=>{const after=Object.getOwnPropertyDescriptor(target,key);return keys[index]===key&&after&&Reflect.ownKeys(before).length===Reflect.ownKeys(after).length&&Reflect.ownKeys(before).every(field=>Object.is(before[field],after[field]));});
+  });
+ }catch{return false;}
+}
+function consumeCheckpointByteObservation(entry,proof){
+  if(!proof||!checkpointByteObservations.delete(proof))return null;
+  return proof.blob===entry.blob&&proof.byteSize===entry.byteSize&&proof.sha256===entry.sha256&&checkpointBytePrimitivesMatch(proof.primitive)?proof.sha256:null;
+}
 async function historyBlobSha256(blob,verifiedByteDigests=null){
   if(!verifiedByteDigests)return hash.sha256Bytes(blob);
   let digest=verifiedByteDigests.get(blob);
@@ -1430,7 +1469,11 @@ async function restoreHistoryProject(body,readFile,verifiedParts=new Map(),verif
     for(const key of part.path.slice(0,-1)){if(!parent||typeof parent!=='object'||!Object.hasOwn(parent,key)||Array.isArray(parent)!==(typeof key==='number'))throw storageError('Saved project content destination is unavailable.','HISTORY_VERSION_MISMATCH');parent=parent[key];}
     const key=part.path.at(-1);
     if(!parent||typeof parent!=='object'||!Object.hasOwn(parent,key)||parent[key]!==null||Array.isArray(parent)!==(typeof key==='number'))throw storageError('Saved project contents overlap or replace authored data.','HISTORY_VERSION_MISMATCH');
-    Object.defineProperty(parent,key,{value:verifiedByteDigests?copyVerifiedTree(value.contents):clone(value.contents),enumerable:true,writable:true,configurable:true});
+    const privateRead=importDigestHolders.get(verifiedParts)?.privateRead;
+    // Newly decoded JSON has no retained prompt-context side channel. Keep it
+    // private rather than exposing it to the mutable ordinary clone hook.
+    if(privateRead&&!verifiedGraphNodes(value.contents))throw storageError('Saved project contents are not ordinary JSON data.','HISTORY_FILE_INTEGRITY_FAILED');
+    Object.defineProperty(parent,key,{value:verifiedByteDigests||privateRead?copyVerifiedTree(value.contents):clone(value.contents),enumerable:true,writable:true,configurable:true});
   }
   return bindImportDigestScope(project,verifiedParts);
 }
@@ -1503,10 +1546,14 @@ async function prepareHistoryCommit(next,prior,{label=null,view=null,preserveAct
       const retained=snapshots.find(entry=>entry.id===usableBase.id)||await metaGet(snapshotKey(jobId,usableBase.id));
       if(!retained?.blob)throw storageError('A retained project body is unavailable. The new checkpoint was not committed.','HISTORY_PROJECT_REFERENCE_UNAVAILABLE');
       const {blob,...descriptor}=retained;
+      const bytePrimitive=checkpointBytePrimitives(blob);
       if(hash.sha256Value(descriptor)!==hash.sha256Value(usableBase)||blob.size!==usableBase.byteSize||await hash.sha256Bytes(blob)!==usableBase.sha256)throw storageError('A retained project body failed exact-byte verification. The new checkpoint was not committed.','HISTORY_SNAPSHOT_INTEGRITY_FAILED');
+      const rootBytes=checkpointBytePrimitivesMatch(bytePrimitive)?{blob,byteSize:usableBase.byteSize,sha256:usableBase.sha256,primitive:bytePrimitive}:null;if(rootBytes)checkpointByteObservations.add(rootBytes);
       if(usableBase.projectParts){assertHistoryProjectParts(usableBase.projectParts);for(const part of usableBase.projectParts.entries){if(state.files[part.sha256]?.byteSize!==part.byteSize)throw storageError('A retained project content dependency is unavailable.','HISTORY_VERSION_MISMATCH');await retainValue(part.sha256,null);}}
       const reuse=rootPreparation&&usableRootContinuation(rootPreparation.read.retainedRoot,rootPreparation.read,usableBase)?rootPreparation.read.retainedRoot:null;
-      const decoded=await decodeCheckpoint(jobId,{...usableBase,blob},sha=>newFiles.find(file=>file.sha256===sha)||retainedFiles.find(file=>file.sha256===sha)||metaGet(historyFileKey(jobId,sha)),async id=>snapshots.find(entry=>entry.id===id)||metaGet(snapshotKey(jobId,id)),new Map(),new Map(),null,null,null,reuse);
+      const measuredPair=rootPreparation&&checkpointPairMatches(verifiedRead.checkpointDigestPair,project)?verifiedRead.checkpointDigestPair:null;
+      const decoded=await decodeCheckpoint(jobId,{...usableBase,blob},sha=>newFiles.find(file=>file.sha256===sha)||retainedFiles.find(file=>file.sha256===sha)||metaGet(historyFileKey(jobId,sha)),async id=>snapshots.find(entry=>entry.id===id)||metaGet(snapshotKey(jobId,id)),new Map(),new Map(),null,null,null,reuse,measuredPair,rootBytes);
+      if(measuredPair&&(!checkpointPairMatches(measuredPair,project)||!checkpointPairMatches(measuredPair,decoded.project)))throw storageError('Checkpoint digest input changed during verification.','HISTORY_VERSION_MISMATCH');
       const rootQualified=rootPreparation&&rootPreparation.primitive&&unchangedVerifiedProject(rootPreparation.read,project,rootPreparation.read.digest)&&verifiedValuesEqual(canonicalProject(project),decoded.project)&&rootDigestPrimitivesUnchanged(rootPreparation.primitive)&&(!reuse||decoded.project!==reuse.project||verifiedValuesEqual(reuse.snapshot,reuse.project));
       if(reuse&&decoded.project===reuse.project&&!rootQualified)throw storageError('Deferred checkpoint validation lost its exact private source.','HISTORY_VERSION_MISMATCH');
       if(rootQualified){
@@ -1523,7 +1570,7 @@ async function prepareHistoryCommit(next,prior,{label=null,view=null,preserveAct
   // Matching project labels cannot certify its independently stored work.
   const currentEntry=state.entries.find(entry=>entry.id===state.activeId),unchangedView=!view||hash.sha256Value(view)===(state.activeViewOverride?hash.sha256Value(state.activeViewOverride):currentEntry?.viewSha256);
   if(state.activeId&&!snapshots.length&&((sessionId&&!state.sessions[sessionId])||(viewOnly&&unchangedView))){
-    try{await readRetainedCheckpoint(jobId,state.activeId,state);}catch(error){
+    try{await readRetainedCheckpoint(jobId,state.activeId,state,rootPreparation?.read);}catch(error){
       if(error.code!=='HISTORY_VERSION_MISMATCH'||error.message!=='Saved work identity does not match its complete project.')throw error;
       // Only the coherent stale-work defect is recoverable here. The full
       // inspection still checks all other bytes, identities, views and derived
@@ -1573,7 +1620,7 @@ async function saveCheckpoint(jobId,{expectedProjectRevision,expectedStateSha256
   // Scroll/draft checkpoints use the existing transaction owner off the UI
   // thread; only the small view and resulting checkpoint identity cross it.
   if(useStoreWorker())return requestStoreWorker('SAVE_CHECKPOINT',[jobId,{expectedProjectRevision,expectedStateSha256,view,label,sessionId}]);
-  const verifiedRead=await readProjectForTransaction(jobId),project=verifiedRead?.project;if(!project)throw storageError('The project is unavailable.','HISTORY_PROJECT_MISSING');
+  const verifiedRead=await readProjectForTransaction(jobId,CHECKPOINT_PAIR_READ),project=verifiedRead?.project;if(!project)throw storageError('The project is unavailable.','HISTORY_PROJECT_MISSING');
   let checkpointProject=project,checkpointDigest=project.projectSha256,prepared,checkpointId;
   if((expectedProjectRevision!==undefined&&Number(project.revision)!==Number(expectedProjectRevision))||(expectedStateSha256&&project.projectSha256!==expectedStateSha256)){
     // A stale tab may preserve its unsubmitted view against its exact retained
@@ -1686,9 +1733,26 @@ async function retainedCheckpointReaders(jobId,checkpointId,state=null){
   };
   return {manifest,readSnapshot};
 }
-async function readRetainedCheckpoint(jobId,checkpointId,state=null){
-  const {readSnapshot}=await retainedCheckpointReaders(jobId,checkpointId,state);
-  return decodeCheckpoint(jobId,await readSnapshot(checkpointId),undefined,readSnapshot);
+async function readRetainedCheckpoint(jobId,checkpointId,state=null,rootRead=null){
+  const {manifest,readSnapshot}=await retainedCheckpointReaders(jobId,checkpointId,state);
+  const entry=await readSnapshot(checkpointId),descriptor=entry?.projectReference?manifest.entries.find(row=>row.id===entry.projectReference.checkpointId):manifest.entries.find(row=>row.id===checkpointId);
+  const proof=rootRead?.retainedRoot,reuse=descriptor&&rootRead&&usableRootContinuation(proof,rootRead,descriptor);
+  if(!reuse)return decodeCheckpoint(jobId,entry,undefined,readSnapshot);
+  // The existing one-use private root supplies computation, never byte custody
+  // or current compatibility. Reread and hash each referenced part in this read.
+  if(descriptor.projectParts){
+    assertHistoryProjectParts(descriptor.projectParts);const checked=new Map();
+    for(const part of descriptor.projectParts.entries){
+      if(checked.has(part.sha256)){if(checked.get(part.sha256)!==part.byteSize)throw storageError('Saved project content sizes conflict.','HISTORY_VERSION_MISMATCH');continue;}
+      const file=await metaGet(historyFileKey(jobId,part.sha256));
+      if(!(file?.blob instanceof Blob)||file.blob.size!==part.byteSize||await hash.sha256Bytes(file.blob)!==part.sha256)throw storageError('Saved project contents are missing or corrupt. The current version is preserved.','HISTORY_FILE_INTEGRITY_FAILED');
+      checked.set(part.sha256,part.byteSize);
+    }
+  }
+  const body=await readCheckpointBody(jobId,entry,readSnapshot,new Map(),false,undefined,new Map(),null,null,proof);
+  const saved=await validateCheckpointArtifacts(jobId,body,sha=>metaGet(historyFileKey(jobId,sha)),null,null,null,false);
+  if(!usableRootContinuation(proof,rootRead,descriptor))throw storageError('Retained checkpoint computation changed during verification.','HISTORY_VERSION_MISMATCH');
+  return saved;
 }
 // A private diagnostic observation, never a saved-version activation receipt.
 // Every existing check still runs; only one coherent stale work preimage may
@@ -1712,8 +1776,8 @@ async function inspectRetainedCheckpoint(jobId,checkpointId,state=null,readFile=
     measuredWorkSha256:fact.measuredWorkSha256,artifactManifestSha256:historyArtifactsSha256(checked.artifacts),
     viewSha256:hash.sha256Value(body.view),artifactCount:checked.artifacts.length};
 }
-async function readCheckpointBody(jobId,entry,readSnapshot,validatedRoots=new Map(),inlineOnly=false,readFile=sha=>metaGet(historyFileKey(jobId,sha)),verifiedParts=new Map(),verifiedByteDigests=null,inspection=null,rootContinuation=null){
-  if(!entry?.blob||entry.blob.size!==Number(entry.byteSize)||await historyBlobSha256(entry.blob,verifiedByteDigests)!==entry.sha256)throw storageError('This saved version is missing or corrupt. The current project is preserved.','HISTORY_SNAPSHOT_INTEGRITY_FAILED');
+async function readCheckpointBody(jobId,entry,readSnapshot,validatedRoots=new Map(),inlineOnly=false,readFile=sha=>metaGet(historyFileKey(jobId,sha)),verifiedParts=new Map(),verifiedByteDigests=null,inspection=null,rootContinuation=null,measuredPair=null,rootBytes=null){
+  if(!entry?.blob||entry.blob.size!==Number(entry.byteSize)||(consumeCheckpointByteObservation(entry,rootBytes)||await historyBlobSha256(entry.blob,verifiedByteDigests))!==entry.sha256)throw storageError('This saved version is missing or corrupt. The current project is preserved.','HISTORY_SNAPSHOT_INTEGRITY_FAILED');
   const {payload,fileContents}=await readPackageJson(entry.blob,{spoolArtifacts:false}),{packageSha256,...body}=payload;
   if(await hash.sha256Chunks(packageJsonChunks(body,fileContents))!==packageSha256||body.schema!==HISTORY_SCHEMA||body.id!==entry.id||body.jobId!==String(jobId)||body.projectSha256!==entry.projectSha256||body.parentId!==entry.parentId||body.label!==entry.label||body.createdAt!==entry.createdAt||Number(body.view?.activeStage)!==Number(entry.stage)||!Array.isArray(body.artifacts))throw storageError('Saved project identity or contents do not match the checkpoint.','HISTORY_VERSION_MISMATCH');
   if(hash.sha256Value(body.projectReference||null)!==hash.sha256Value(entry.projectReference||null))throw storageError('Saved project reference does not match its checkpoint.','HISTORY_VERSION_MISMATCH');
@@ -1727,7 +1791,7 @@ async function readCheckpointBody(jobId,entry,readSnapshot,validatedRoots=new Ma
       const retained=await readSnapshot(reference.checkpointId);
       if(!retained)throw storageError('The retained project body required by this checkpoint is unavailable.','HISTORY_PROJECT_REFERENCE_UNAVAILABLE');
       if(retained.projectReference||retained.id!==reference.checkpointId||retained.sha256!==reference.snapshotSha256||retained.projectSha256!==body.projectSha256)throw storageError('Saved project reference identifies incompatible retained contents.','HISTORY_VERSION_MISMATCH');
-      const decoded=await readCheckpointBody(jobId,retained,readSnapshot,validatedRoots,true,readFile,verifiedParts,verifiedByteDigests,inspection);
+      const decoded=await readCheckpointBody(jobId,retained,readSnapshot,validatedRoots,true,readFile,verifiedParts,verifiedByteDigests,inspection,rootContinuation,measuredPair);
       base={snapshotSha256:retained.sha256,project:decoded.project,projectSha256:decoded.projectSha256,workSha256:inspection?.workFacts.get(retained.id)?.measuredWorkSha256||decoded.workSha256||historyWorkSha256(decoded.project)};if(!inspection?.issues.length)validatedRoots.set(reference.checkpointId,base);
     }
     if(base.snapshotSha256!==reference.snapshotSha256||base.projectSha256!==body.projectSha256)throw storageError('Saved project reference does not match its verified project body.','HISTORY_VERSION_MISMATCH');
@@ -1748,7 +1812,7 @@ async function readCheckpointBody(jobId,entry,readSnapshot,validatedRoots=new Ma
     }else{
       project=await restoreHistoryProject(body,readFile,verifiedParts,verifiedByteDigests);
       if(projectIdentity(project)!==String(jobId))throw storageError('Saved project belongs to another job.','HISTORY_VERSION_MISMATCH');
-      ({projectSha256:verifiedProjectSha256,workSha256:verifiedWorkSha256}=historyProjectDigests(project));
+      ({projectSha256:verifiedProjectSha256,workSha256:verifiedWorkSha256}=checkpointPairMatches(measuredPair,project)?measuredPair:historyProjectDigests(project));
       if(inspection){
         try{assertProjectIntegrity(project,{verifyDerived:false});}catch(error){if(!legacyJobPointerProjection(project,{verifyDerived:false}))throw error;}
       }else{
@@ -1781,9 +1845,18 @@ async function readCheckpointBody(jobId,entry,readSnapshot,validatedRoots=new Ma
   const materialized={...body,project};if(inspection)inspection.bodies.set(entry.id,materialized);
   return materialized;
 }
-async function decodeCheckpoint(jobId,entry,readFile=sha=>metaGet(historyFileKey(jobId,sha)),readSnapshot=id=>metaGet(snapshotKey(jobId,id)),validatedRoots=new Map(),verifiedParts=new Map(),verifiedByteDigests=null,validatedProjections=null,verifiedSources=null,rootContinuation=null){
-  const body=await readCheckpointBody(jobId,entry,readSnapshot,validatedRoots,false,readFile,verifiedParts,verifiedByteDigests,null,rootContinuation);
-  return validateCheckpointArtifacts(jobId,body,readFile,verifiedByteDigests,validatedProjections,verifiedSources,rootContinuation&&body.project===rootContinuation.project);
+async function decodeCheckpoint(jobId,entry,readFile=sha=>metaGet(historyFileKey(jobId,sha)),readSnapshot=id=>metaGet(snapshotKey(jobId,id)),validatedRoots=new Map(),verifiedParts=new Map(),verifiedByteDigests=null,validatedProjections=null,verifiedSources=null,rootContinuation=null,measuredPair=null,rootBytes=null){
+  // Reuse pure digest computation only during this fresh parser-owned decode.
+  // Existing import scopes and retained-root continuations keep their owners;
+  // no validation, byte-custody, or activation result is borrowed or retained.
+  const holder=!rootContinuation&&!verifiedByteDigests&&!validatedRoots.size&&!verifiedParts.size&&!importDigestHolders.has(verifiedParts)?{scope:null,attempted:false,privateRead:true}:null;
+  if(holder)importDigestHolders.set(verifiedParts,holder);
+  try{
+    const body=await readCheckpointBody(jobId,entry,readSnapshot,validatedRoots,false,readFile,verifiedParts,verifiedByteDigests,null,rootContinuation,measuredPair,rootBytes);
+    return await validateCheckpointArtifacts(jobId,body,readFile,verifiedByteDigests,validatedProjections,verifiedSources,rootContinuation&&body.project===rootContinuation.project);
+  }finally{
+    if(holder){if(holder.scope)hash.disposeCanonicalDigestScope(holder.scope);importDigestHolders.delete(verifiedParts);}
+  }
 }
 async function validateCheckpointArtifacts(jobId,body,readFile,verifiedByteDigests=null,validatedProjections=null,verifiedSources=null,deferCompatibility=false){
   const artifacts=[],ids=new Set();
@@ -2079,8 +2152,9 @@ async function prepareProjectWrite(project,options={}){
   await observeProjectArtifactCustody(next);
   engine.recalculate(next);if(options[NATIVE_PRODUCT_COMMAND_AUTHORITY]!==true)assertMutationConfirmation(prior,candidate,options.mutationConfirmation,next,candidateProof);assertProjectIntegrity(next,{prior});
   await persistProjectPromptFiles(next);
-  const digest=projectSha256(next),integrity=verifiedProjectIntegrity(next,digest);
-  const preparedHistory=await prepareHistoryCommit(next,prior,{label:options.historyLabel,view:options.historyView,artifactRows:options.creation?.artifacts||null,verifiedRead,verifiedDigests:[[next,digest]],verifiedIntegrity:[...(verifiedRead?[verifiedRead]:[]),integrity]});
+  const primitive=rootDigestPrimitivesUnchanged(initialRootDigestPrimitives)?initialRootDigestPrimitives:null,measured=primitive?historyProjectDigests(next):null,pair=measured&&rootDigestPrimitivesUnchanged(primitive)?measured:null;
+  const digest=pair?pair.projectSha256:projectSha256(next),integrity=verifiedProjectIntegrity(next,digest);
+  const preparedHistory=await prepareHistoryCommit(next,prior,{label:options.historyLabel,view:options.historyView,artifactRows:options.creation?.artifacts||null,verifiedRead,verifiedDigests:[[next,digest,pair?.workSha256]],verifiedIntegrity:[...(verifiedRead?[verifiedRead]:[]),integrity]});
   if(options.creation)preparedHistory.state.commandReceipts={...(preparedHistory.state.commandReceipts||{}),[options.creation.receiptKey]:clone(options.creation.receipt)};
   return {project:next,options:{...options,expectedProjectRevision:revision,expectedStateSha256:prior?.projectSha256||null,preparedHistory,[VERIFIED_CANONICAL_WRITE]:{read:verifiedRead,integrity,digest}}};
 }
@@ -2273,11 +2347,13 @@ async function sharedByteRecord(tx,row){
  const {blob,byteReference,...metadata}=row;return {...metadata,byteReference:reference};
 }
 async function storeArtifactRow(tx,row){tx.objectStore(ARTIFACTS).put(await sharedByteRecord(tx,row));}
-async function hydrateByteRecord(tx,row,{diagnostic=false,preserveDamagedBytes=false,allowOccurrenceSizeMismatch=false}={}){
+async function hydrateByteRecord(tx,row,{diagnostic=false,preserveDamagedBytes=false,allowOccurrenceSizeMismatch=false,backingBodies=null}={}){
  if(!row||!Object.hasOwn(row,'byteReference'))return row;
  const reference=row.byteReference,schema=globalThis.closedLoopWorkflowSchema;
  if(!schema.validateArtifactByteReference(reference).valid||reference.jobId!==String(row.jobId)||reference.sha256!==row.sha256||(!allowOccurrenceSizeMismatch&&reference.byteSize!==row.byteSize)||Object.hasOwn(row,'blob')){if(diagnostic)return {...row,blob:preserveDamagedBytes?row.blob:undefined};throw storageError('Stored artifact byte reference does not match its owner.','ARTIFACT_BYTE_REFERENCE_INVALID');}
- const body=(await request(tx.objectStore(META).get(historyFileKey(reference.jobId,reference.sha256))))?.value;
+ // Only the checkpoint transaction supplies bodies it just read and verified.
+ // Occurrence checks above and below still apply; MIME-created Blobs stay cold.
+ const body=backingBodies?.jobId===reference.jobId&&backingBodies.rows.has(reference.sha256)?backingBodies.rows.get(reference.sha256):(await request(tx.objectStore(META).get(historyFileKey(reference.jobId,reference.sha256))))?.value;
  if(!(body?.blob instanceof Blob)||body.sha256!==reference.sha256||(allowOccurrenceSizeMismatch&&body.blob.size!==reference.byteSize)){if(diagnostic)return {...row,blob:preserveDamagedBytes?body?.blob:undefined};throw storageError('Stored artifact bytes are missing or do not match their reference.','ARTIFACT_BYTES_UNAVAILABLE');}
  const {byteReference,...metadata}=row;return {...metadata,...(diagnostic?{byteReference}:{}),blob:!row.mediaType||row.mediaType===body.blob.type?body.blob:body.blob.slice(0,body.blob.size,row.mediaType)};
 }
@@ -2350,7 +2426,7 @@ async function deleteArtifact(artifactId,jobId){
 // This selector is private; ordinary list/read callers retain their refresh.
 async function readJobArtifactRows(jobId,publishCustody){
  if(publishCustody)forgetArtifactCustody(jobId);const observedEpoch=custodyEpoch,tx=await openTransaction([ARTIFACTS,META],'readonly'),stored=await request(tx.objectStore(ARTIFACTS).index('jobId').getAll(String(jobId))),rows=await hydrateArtifactRows(tx,stored);await complete(tx);
- await migrateInlineArtifacts(stored);for(const row of rows)await observeArtifactCustody(row,observedEpoch,publishCustody);return rows;
+ await migrateInlineArtifacts(stored);if(publishCustody)for(const row of rows)await observeArtifactCustody(row,observedEpoch,publishCustody);return rows;
 }
 async function listArtifacts(jobId){return readJobArtifactRows(jobId,true);}
 async function verifyProjectArtifacts(jobId){

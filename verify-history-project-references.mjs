@@ -11,19 +11,19 @@ const faults={
  'repeat-import-compatibility':{id:'REPEAT_IMPORT_COMPATIBILITY',file:'project-store.js',before:'if(!deferCompatibility&&!validatedProjections?.has(projectionKey)){',after:'if(!deferCompatibility){'},
  'share-import-compatibility-inventory':{id:'SHARE_IMPORT_COMPATIBILITY_INVENTORY',file:'project-store.js',before:'JSON.stringify([body.projectSha256,historyArtifactsSha256(artifacts)])',after:'JSON.stringify([body.projectSha256])'},
  'retain-import-compatibility':{id:'RETAIN_IMPORT_COMPATIBILITY',file:'project-store.js',before:'validatedProjections=new Set();',after:'validatedProjections=(globalThis.__retainedImportProjections ||= new Set());'},
- 'repeat-import-root-digest':{id:'REPEAT_IMPORT_ROOT_DIGEST',file:'project-store.js',before:'({projectSha256:verifiedProjectSha256,workSha256:verifiedWorkSha256}=historyProjectDigests(project));',after:'verifiedProjectSha256=projectSha256(project);verifiedWorkSha256=historyWorkSha256(project);'},
+ 'repeat-import-root-digest':{id:'REPEAT_IMPORT_ROOT_DIGEST',file:'project-store.js',before:'({projectSha256:verifiedProjectSha256,workSha256:verifiedWorkSha256}=checkpointPairMatches(measuredPair,project)?measuredPair:historyProjectDigests(project));',after:'verifiedProjectSha256=projectSha256(project);verifiedWorkSha256=historyWorkSha256(project);'},
  'repeat-import-byte-hash':{id:'REPEAT_IMPORT_BYTE_HASH',file:'project-store.js',before:'if(!verifiedByteDigests)return hash.sha256Bytes(blob);',after:'if(true)return hash.sha256Bytes(blob);'},
  'trust-import-declared-byte-hash':{id:'TRUST_IMPORT_DECLARED_BYTE_HASH',file:'project-store.js',before:'const digest=await historyBlobSha256(artifactBlob,verifiedByteDigests);',after:'const digest=a.sha256;verifiedByteDigests.set(artifactBlob,Promise.resolve(digest));'},
  'retain-import-project-roots':{id:'RETAIN_IMPORT_PROJECT_ROOTS',file:'project-store.js',before:'delete priorRoot.project;',after:'void priorRoot.project;'},
  'repeat-import-project-root':{id:'REPEAT_IMPORT_PROJECT_ROOT',file:'project-store.js',before:'if(!body.projectReference&&validatedRoots.has(entry.id)&&!inspection?.issues.length)',after:'if(false)'},
  'skip-selected-version-binding':{id:'SKIP_SELECTED_VERSION_BINDING',file:'project-store.js',before:"if(entry.id!==id||hash.sha256Value(descriptor)!==hash.sha256Value(expected))",after:'if(false)'},
- 'skip-project-body-byte-check':{id:'SKIP_PROJECT_BODY_BYTE_CHECK',file:'project-store.js',before:"if(!entry?.blob||entry.blob.size!==Number(entry.byteSize)||await historyBlobSha256(entry.blob,verifiedByteDigests)!==entry.sha256)",after:"if(!entry?.blob||entry.blob.size!==Number(entry.byteSize))"}
+ 'skip-project-body-byte-check':{id:'SKIP_PROJECT_BODY_BYTE_CHECK',file:'project-store.js',before:"if(!entry?.blob||entry.blob.size!==Number(entry.byteSize)||(consumeCheckpointByteObservation(entry,rootBytes)||await historyBlobSha256(entry.blob,verifiedByteDigests))!==entry.sha256)",after:"if(!entry?.blob||entry.blob.size!==Number(entry.byteSize))"}
 };
 if(mode&&!faults[mode])throw new Error('Unknown disposable implementation fault: '+mode);
 if(mode==='repeat-import-compatibility')assert.equal(source.split(faults[mode].before).length-1,1,'HISTORY_COMPATIBILITY_FAULT_SINGLE_ANCHOR_ORACLE');
 const cases=[],emit=(caseId,details={})=>cases.push({caseId,result:'PASS',...details});
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
-const validationAnchor='({projectSha256:verifiedProjectSha256,workSha256:verifiedWorkSha256}=historyProjectDigests(project));';
+const validationAnchor='({projectSha256:verifiedProjectSha256,workSha256:verifiedWorkSha256}=checkpointPairMatches(measuredPair,project)?measuredPair:historyProjectDigests(project));';
 const make=()=>{
  assert.equal(source.split(validationAnchor).length-1,1);
  const observed=source.replace(validationAnchor,"globalThis.__verifiedHistoryRoots?.push({checkpointId:entry.id,snapshotSha256:entry.sha256});globalThis.__historyDigestWatch={data:project.projectData,visits:0};"+validationAnchor+"globalThis.__historyDigestReads?.push({checkpointId:entry.id,visits:globalThis.__historyDigestWatch.visits});delete globalThis.__historyDigestWatch;");
