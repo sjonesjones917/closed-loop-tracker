@@ -1,3 +1,4 @@
+import {verifyCanonicalRegisteredArrayControls} from './test-canonical-registered-arrays.mjs';
 import {verifyCompleteRecordCarrierShapes} from './test-complete-record-carrier-shapes.mjs';
 import {verifyCanonicalPrefixSuppliers} from './test-canonical-prefix-supplier.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
@@ -309,23 +310,23 @@ const canonicalObservation=(checkId,line,expected,observed)=>{assert(JSON.string
 const exactNumberContext=createVerifierRuntime({Event:class Event{},dispatchEvent(){}});for(const owner of ['workbook.js','hash.js','workflow-schema.js'])createVerifierRuntime.loadScript(exactNumberContext,fs.readFileSync(owner,'utf8'),{filename:owner});
 const numberContract=exactNumberContext.closedLoopWorkflowSchema,exactDecimal=numberContract.canonicalDecimal('0.1'),exactLargeInteger=numberContract.canonicalDecimal('9007199254740992');
 assert(exactDecimal==='rational:1/10'&&exactLargeInteger==='rational:9007199254740992/1','CANONICAL_REGISTERED_EXACT_NUMBER_ORACLE');assert(numberContract.isCanonicalNumber(exactDecimal)&&numberContract.isCanonicalNumber(exactLargeInteger),'CANONICAL_REGISTERED_EXACT_NUMBER_TYPE_ORACLE');assert(!numberContract.isCanonicalNumber('rational:2/20'),'CANONICAL_UNREDUCED_NUMBER_ORACLE');
-canonicalObservation('canonical.safe-integer-and-typed-string',2874,
+canonicalObservation('canonical.safe-integer-and-typed-string',3055,
  {text:'{"decimal":"rational:1/10","large":"rational:9007199254740992/1","max":9007199254740991,"min":-9007199254740991}',unsafeRejected:true,registeredTypedStrings:true},
  {text:h.stableStringify({min:Number.MIN_SAFE_INTEGER,max:Number.MAX_SAFE_INTEGER,decimal:exactDecimal,large:exactLargeInteger}),unsafeRejected:['fraction','unsafe positive integer','unsafe negative integer'].every(name=>canonicalRejections.includes(name)),registeredTypedStrings:numberContract.isCanonicalNumber(exactDecimal)&&numberContract.isCanonicalNumber(exactLargeInteger)});
-canonicalObservation('canonical.unsigned-scalar-key-order',2875,
+canonicalObservation('canonical.unsigned-scalar-key-order',3056,
  '{"10":"ten","2":"two","a":"aye","":"bmp","𐀀":"astral"}',
  h.stableStringify({'𐀀':'astral','':'bmp',a:'aye','2':'two','10':'ten'}));
-canonicalObservation('canonical.ordered-arrays',2876,
+canonicalObservation('canonical.ordered-arrays',3057,
  ['["b","a","b"]','["a","b","b"]'],[h.stableStringify(['b','a','b']),h.stableStringify(['a','b','b'])]);
-canonicalObservation('canonical.exact-string-scalars-and-lines',2877,
+canonicalObservation('canonical.exact-string-scalars-and-lines',3058,
  '"é|é|A\\r\\nB\\nC\\rD"',h.stableStringify('é|é|A\r\nB\nC\rD'));
 const controlEscapes=['\\u0000','\\u0001','\\u0002','\\u0003','\\u0004','\\u0005','\\u0006','\\u0007','\\b','\\t','\\n','\\u000b','\\f','\\r','\\u000e','\\u000f','\\u0010','\\u0011','\\u0012','\\u0013','\\u0014','\\u0015','\\u0016','\\u0017','\\u0018','\\u0019','\\u001a','\\u001b','\\u001c','\\u001d','\\u001e','\\u001f'];
-canonicalObservation('canonical.exact-json-escapes',2878,
+canonicalObservation('canonical.exact-json-escapes',3059,
  controlEscapes.map(text=>'"'+text+'"').concat(['"\\\""','"\\\\"']),
  Array.from({length:32},(_,value)=>h.stableStringify(String.fromCharCode(value))).concat([h.stableStringify('"'),h.stableStringify('\\')]));
-canonicalObservation('canonical.printable-nonascii-unescaped',2879,'"é中🙂𐀀"',h.stableStringify('é中🙂𐀀'));
+canonicalObservation('canonical.printable-nonascii-unescaped',3060,'"é中🙂𐀀"',h.stableStringify('é中🙂𐀀'));
 const prohibitedCanonicalNames=['negative zero','NaN','Infinity','negative Infinity','undefined member','undefined array member','undefined root','sparse array','cycle','Date','Map','Set','function','symbol value','symbol key','accessor'];
-canonicalObservation('canonical.prohibited-values-rejected',2880,prohibitedCanonicalNames,prohibitedCanonicalNames.filter(name=>canonicalRejections.includes(name)));
+canonicalObservation('canonical.prohibited-values-rejected',3061,prohibitedCanonicalNames,prohibitedCanonicalNames.filter(name=>canonicalRejections.includes(name)));
 
 let undefinedPreimageRejected=false;
 try{h.hashRegistered('UNREGISTERED_KIND',{x:1});}catch(error){undefinedPreimageRejected=/UNDEFINED_HASH_PREIMAGE/.test(String(error));}
@@ -364,10 +365,10 @@ assert(/^REQ-[0-9a-v]{32}$/.test(idA.id),'Canonical ID must use uppercase family
 
 // Reuse the retained independent §34.2 tuple and SHA/base32hex oracle at this
 // normal owning verifier; no production projection supplies expected bytes.
-canonicalObservation('canonical.id-literal-payload-and-sha160',3039,
+canonicalObservation('canonical.id-literal-payload-and-sha160',3071,
  {canonical:'{"allocationSequence":7,"collisionCounter":0,"commandId":"CMD-1","familyNamespace":"requirements","idVersion":"closed-loop-id/1","jobNamespace":"JOB-123","parentId":"","targetSlot":"slot"}',digestHex:'3fc05074940067ee7dae2d5aa988c3ec900b7cc1'},
  {canonical:h.stableStringify(idA.payload),digestHex:idA.digestHex});
-canonicalObservation('canonical.id-base32hex-msb-prefix-no-padding',3052,
+canonicalObservation('canonical.id-base32hex-msb-prefix-no-padding',3084,
  'REQ-7v050t4k01jusvde5ldaj263ti80mv61',idA.id);
 
 const idChanged=h.allocateCanonicalId({...idInput,allocationSequence:8});
@@ -403,8 +404,9 @@ const completeRecordCarrierShapes=verifyCompleteRecordCarrierShapes();
 const sourceFamilyRecordHashDistinction=verifySourceFamilyRecordHashDistinction();
 const canonicalUtf8ByteObservation=await verifyCanonicalUtf8ByteObservation();
 const canonicalArrayImplementationObjects=await verifyCanonicalArrayImplementationControls();
-verificationObservations.push({checkId:canonicalArrayImplementationObjects.checkId,requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:2880'],boundary:canonicalArrayImplementationObjects.scopeLimit,expected:'Implementation/custom array prototypes rejected; dense ordinary/foreign/null-prototype data preserve literal canonical text/SHA, cold/memo and raw-byte controls',observed:canonicalArrayImplementationObjects,passed:canonicalArrayImplementationObjects.passed});
+verificationObservations.push({checkId:canonicalArrayImplementationObjects.checkId,requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:3061'],boundary:canonicalArrayImplementationObjects.scopeLimit,expected:'Implementation/custom array prototypes rejected; dense ordinary/foreign/null-prototype data preserve literal canonical text/SHA, cold/memo and raw-byte controls',observed:canonicalArrayImplementationObjects,passed:canonicalArrayImplementationObjects.passed});
 const recordHashDistinction=verifyRecordHashDistinctionControls();
 const importDigestScopes=verifyCanonicalDigestScopeControls();
-console.log(JSON.stringify({completeRecordCarrierShapes,canonicalArrayImplementationObjects,canonicalPrefixSuppliers,sourceFamilyRecordHashDistinction,canonicalUtf8ByteObservation,recordHashDistinction,importDigestScopes,verificationObservations,sha256Vectors:true,canonicalOrdering:true,integerLikeKeyOrdering:true,unicodeScalarOrdering:true,safeIntegerBoundaries:true,ambiguousValuesRejected:24,registeredHashPreimageFailureClosed:true,registeredSetSemantics:true,contentRecordPreimagesRegistered:true,unknownContentHashKindRejected:true,canonicalRecordPreimageRegistered:true,closedLoopIdStable:true,closedLoopIdCollisionChecked:true,sharedBuildIdentity,runtimeScriptCount:runtimeFiles.length,workerSharesBuildIdentity:true,stage04RepeatAttachmentControlAbsent:true}));
+const registeredArrayContracts=verifyCanonicalRegisteredArrayControls();
+console.log(JSON.stringify({registeredArrayContracts,completeRecordCarrierShapes,canonicalArrayImplementationObjects,canonicalPrefixSuppliers,sourceFamilyRecordHashDistinction,canonicalUtf8ByteObservation,recordHashDistinction,importDigestScopes,verificationObservations,sha256Vectors:true,canonicalOrdering:true,integerLikeKeyOrdering:true,unicodeScalarOrdering:true,safeIntegerBoundaries:true,ambiguousValuesRejected:24,registeredHashPreimageFailureClosed:true,registeredSetSemantics:true,contentRecordPreimagesRegistered:true,unknownContentHashKindRejected:true,canonicalRecordPreimageRegistered:true,closedLoopIdStable:true,closedLoopIdCollisionChecked:true,sharedBuildIdentity,runtimeScriptCount:runtimeFiles.length,workerSharesBuildIdentity:true,stage04RepeatAttachmentControlAbsent:true}));
 await import('./verify-stage02-primitives.mjs');

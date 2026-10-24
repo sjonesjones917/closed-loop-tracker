@@ -3,6 +3,8 @@ import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import {verifyMobileAcceptanceEvidence,REQUIRED_MOBILE_RECEIPT_KINDS,REQUIRED_MOBILE_CAPABILITY_PROBE_KEYS,isClosedLoopUtcInstant} from './verify-mobile-acceptance-evidence.mjs';
 import {evaluateMobileAcceptanceSubmission} from './evaluate-mobile-acceptance-submission.mjs';
+import {createMobileChallengeClaim,readMobileChallengeClaim,validateMobileChallengeClaim,mobileClaimRef} from './mobile-acceptance-claim.mjs';
+import {createHash} from 'node:crypto';
 
 const WORKFLOW_PATH=new URL('./.github/workflows/pages.yml',import.meta.url);
 const NONEMPTY=value=>typeof value==='string'&&value.trim().length>0;
@@ -63,7 +65,8 @@ export function assertWorkflowGovernance(workflow){
   assert.doesNotMatch(workflow,/actualIPhoneSafariAcceptance:false/,'The workflow must not hard-code physical-iPhone acceptance to false after evaluating submitted evidence.');
   assert.match(workflow,/USED_MOBILE_CHALLENGES_JSON/,'The evaluator must read durable used-challenge markers.');
   assert.match(workflow,/git ls-remote --tags origin 'refs\/tags\/mobile-acceptance-challenge-\*'/,'Challenge reuse must be checked against repository markers.');
-  assert.match(workflow,/authorized repository connection to recheck this exact acceptance report, consume its unused challenge marker, and create the release tag/,'Publication authority and single-use challenge requirements must remain explicit.');
+  assert.match(workflow,/authorized repository connection to recheck this exact acceptance report and its previously claimed challenge, then create the release tag/,'Publication must use the challenge claimed before acceptance.');
+  assert.match(workflow,/mobileAcceptanceClaim:executedEvidence\.externalMobile\?\.challengeClaimReference\|\|null/,'The acceptance artifact must retain its validated durable claim identity.');
 
   const eligibilityStep=workflow.match(/\n\s*- name: Record release tag eligibility[^\n]*\n(?<body>[\s\S]*?)(?=\n\s*- name:|\s*$)/);
   assert.ok(eligibilityStep,'A release-tag eligibility status step must exist.');
@@ -182,6 +185,45 @@ assert.equal(reusedSubmission.mobileAcceptanceResult,'BLOCKED','Challenge reuse 
 const partialSubmission=evaluateMobileAcceptanceSubmission({targetJson:JSON.stringify(target),evidenceJson:''});
 assert.equal(partialSubmission.mobileAcceptanceResult,'BLOCKED','Target and evidence must be submitted together.');
 
+// The repository connection below is a synthetic API fixture. It models the
+// GitHub create-ref contract, including an atomic conflict, not a device run.
+const claimInput={targetJson:JSON.stringify(target),evidenceJson:JSON.stringify(evidence),repository:'sjonesjones917/closed-loop-tracker',sourceCommit:target.sourceCommit,runId:'123456',runAttempt:'1',submitter:'acceptance-controller'};
+const claimRef=mobileClaimRef(target.challenge),claimObjects=new Map(),claimRefs=new Map(),claimCalls=[];
+const claimApi=async(method,path,body)=>{
+  claimCalls.push({method,path});
+  if(method==='GET'&&path==='actions/runs/123456')return {id:123456,run_attempt:1,event:'workflow_dispatch',head_branch:'main',head_sha:target.sourceCommit,path:'.github/workflows/pages.yml',status:'in_progress',conclusion:null,repository:{full_name:claimInput.repository},head_repository:{full_name:claimInput.repository}};
+  if(method==='POST'&&path==='git/tags'){const sha=createHash('sha1').update(JSON.stringify(body)).digest('hex');claimObjects.set(sha,{...body,sha,object:{type:body.type,sha:body.object}});return {sha};}
+  if(method==='POST'&&path==='git/refs'){if(claimRefs.has(body.ref))throw new Error('HTTP 422: reference already exists');claimRefs.set(body.ref,{ref:body.ref,object:{type:'tag',sha:body.sha}});return claimRefs.get(body.ref);}
+  if(method==='GET'&&path==='git/ref/'+claimRef.slice(5)){if(!claimRefs.has(claimRef))throw new Error('HTTP 404');return claimRefs.get(claimRef);}
+  if(method==='GET'&&path.startsWith('git/tags/'))return claimObjects.get(path.slice('git/tags/'.length));
+  throw new Error('Unexpected synthetic repository request '+method+' '+path);
+};
+const strictMobile=claim=>evaluateMobileAcceptanceSubmission({...claimInput,expected,requireChallengeClaim:true,challengeClaim:claim,acceptanceContext:{repository:claimInput.repository,runId:claimInput.runId,runAttempt:claimInput.runAttempt}});
+assert.equal(strictMobile(null).actualIPhoneSafariAcceptance,false,'MOBILE_CLAIM_MISSING_ORACLE: unclaimed challenge cannot satisfy CI');
+const parallelClaims=await Promise.allSettled([createMobileChallengeClaim(claimInput,{api:claimApi,expected}),createMobileChallengeClaim(claimInput,{api:claimApi,expected})]);
+assert.equal(parallelClaims.filter(row=>row.status==='fulfilled').length,1,'MOBILE_CLAIM_ATOMIC_ORACLE: exactly one create-only claim succeeds');
+assert.equal(parallelClaims.filter(row=>row.status==='rejected'&&/422/.test(row.reason.message)).length,1,'MOBILE_CLAIM_CONFLICT_ORACLE: second claim must conflict, never overwrite');
+assert.equal(claimRefs.size,1);
+const durableClaim=await readMobileChallengeClaim(claimInput,{api:claimApi});
+assert.equal(strictMobile(durableClaim.claim).actualIPhoneSafariAcceptance,true,'MOBILE_CLAIM_VALID_ORACLE: designated exact input can progress');
+const claimCases=[];
+for(const [name,change]of [
+ ['next-run',{runId:'123457'}],['next-attempt',{runAttempt:'2'}],['different-evidence-bytes',{evidenceJson:claimInput.evidenceJson+' '}],['different-target-bytes',{targetJson:claimInput.targetJson+' '}],['wrong-repository',{repository:'someone/else'}],['wrong-source',{sourceCommit:'f'.repeat(40)}]
+]){
+  await assert.rejects(()=>readMobileChallengeClaim({...claimInput,...change},{api:claimApi}),/MOBILE_CHALLENGE_CLAIM/,'MOBILE_CLAIM_REPLAY_ORACLE: '+name);
+  claimCases.push(name);
+}
+for(const key of Object.keys(durableClaim.claim)){
+  assert.throws(()=>validateMobileChallengeClaim({...durableClaim.claim,[key]:'CHANGED'},claimInput),/MOBILE_CHALLENGE_CLAIM/,'MOBILE_CLAIM_FIELD_ORACLE: '+key);
+}
+assert.throws(()=>validateMobileChallengeClaim({...durableClaim.claim,unregistered:true},claimInput),/field inventory/);
+assert.equal(evaluateMobileAcceptanceSubmission({...claimInput,expected,requireChallengeClaim:true,challengeClaim:durableClaim.claim,acceptanceContext:{repository:claimInput.repository,runId:'123457',runAttempt:'1'}}).actualIPhoneSafariAcceptance,false,'MOBILE_CLAIM_SECOND_ACCEPTANCE_ORACLE: a second dispatch is rejected after the first claim');
+assert(claimCalls.every(row=>['GET','POST'].includes(row.method)),'MOBILE_CLAIM_CREATE_ONLY_ORACLE');
+assert.equal(claimRefs.get(claimRef).object.sha,durableClaim.tagObjectSha,'MOBILE_CLAIM_PRESERVED_ORACLE');
+assert.equal(evaluateMobileAcceptanceSubmission({...claimInput,evidenceJson:claimInput.evidenceJson+' ',expected,requireChallengeClaim:true,challengeClaim:durableClaim.claim,acceptanceContext:{repository:claimInput.repository,runId:claimInput.runId,runAttempt:claimInput.runAttempt,evidenceJson:claimInput.evidenceJson}}).actualIPhoneSafariAcceptance,false,'MOBILE_CLAIM_CONTEXT_OVERRIDE_ORACLE: context cannot replace the actual submitted input bytes');
+const workflowClaimCases=[];
+for(const [name,change]of [['wrong-run',r=>r.id=123457],['wrong-attempt',r=>r.run_attempt=2],['wrong-event',r=>r.event='push'],['wrong-branch',r=>r.head_branch='topic'],['wrong-source',r=>r.head_sha='f'.repeat(40)],['wrong-workflow',r=>r.path='.github/workflows/other.yml'],['wrong-repository',r=>r.repository.full_name='another/repo'],['missing-repository',r=>delete r.repository],['foreign-head',r=>r.head_repository.full_name='another/repo'],['missing-head-repository',r=>delete r.head_repository],['completed-run',r=>r.status='completed'],['concluded-run',r=>r.conclusion='failure']]){let writes=0;const changedApi=async(method,path,body)=>{if(method!=='GET')writes++;const response=await claimApi(method,path,body);if(path==='actions/runs/123456'){const altered=structuredClone(response);change(altered);return altered;}return response;};await assert.rejects(()=>createMobileChallengeClaim(claimInput,{api:changedApi,expected}),/MOBILE_CHALLENGE_CLAIM/,'MOBILE_CLAIM_WORKFLOW_ORACLE: '+name);assert.equal(writes,0,'MOBILE_CLAIM_NO_PREMATURE_WRITE_ORACLE: '+name);workflowClaimCases.push(name);}
+
 const workflow=fs.readFileSync(WORKFLOW_PATH,'utf8');
 assertWorkflowGovernance(workflow);
 const unconditionalMutation=workflow.replace(/\n\s*if:\s*steps\.acceptance\.outputs\.final_acceptance\s*==\s*'true'/,'');
@@ -236,6 +278,7 @@ console.log(JSON.stringify({
   canonicalOriginBound:true,
   exactTargetBindingVerified:true,
   singleUseChallengeVerified:true,
+  durableChallengeClaim:{passed:true,concurrentClaimsAccepted:1,subsequentRunRejected:true,subsequentAttemptRejected:true,exactInputBytesRequired:true,negativeCases:claimCases,workflowBindingCases:workflowClaimCases,syntheticRepository:true,actualPhysicalDevice:false},
   challengeCaseNormalizationVerified:true,
   expiredChallengeRejected:true,
   canonicalTrustedTimeSyntaxEnforced:true,

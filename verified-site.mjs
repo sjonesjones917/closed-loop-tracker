@@ -68,6 +68,7 @@ export function assertWorkflowPreloadBoundaries(workflow){
 export function assertLifecycleWorkflowCommand(workflow){
   assertWorkflowPreloadBoundaries(workflow);
   const foundation=workflowJob(workflow,'foundation'),deferredJob=workflowJob(workflow,'deferred-matrix'),workflowGates=workflowJob(workflow,'workflow-gates'),conformanceJob=workflowJob(workflow,'conformance'),protectedTest=workflowJob(workflow,'test');
+  for(const job of [foundation,deferredJob,workflowGates,conformanceJob,protectedTest])requireValue(job.includes("        id: candidate\n        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'\n"),'Main acceptance dispatch must authenticate the existing deployed proof before any source-proof reuse.');
   requireValue(deferredJob.includes('    needs: foundation\n')&&workflowGates.includes('    needs: [foundation, deferred-matrix]\n')&&conformanceJob.includes('    needs: workflow-gates\n')&&protectedTest.includes('    needs: [foundation, deferred-matrix, workflow-gates, conformance]\n'),'Required proof phase dependencies must preserve foundation, deferred, workflow, conformance, and browser order.');
   let previous=-1;
   for(const name of foundationProofSteps){const marker='      - name: '+name+'\n',at=foundation.indexOf(marker);requireValue(at>previous&&foundation.indexOf(marker,at+marker.length)<0,'Required foundation proof order is absent, duplicated, or changed: '+name);previous=at;}
@@ -177,8 +178,8 @@ const artifactName=(run,attempt)=>`verified-site-${run}-${attempt}`;
 const output=(name,value)=>{if(process.env.GITHUB_OUTPUT)fs.appendFileSync(process.env.GITHUB_OUTPUT,`${name}=${value}\n`);};
 
 export function validateSite(directory){
-  const names=fs.readdirSync(directory).sort();
-  requireValue(JSON.stringify(names)===JSON.stringify([...runtimePaths,manifestName].sort()),'Verified artifact contains missing or unexpected files.');
+  const names=fs.readdirSync(directory).sort(),expectedNames=[...runtimePaths,manifestName].sort();
+  requireValue(JSON.stringify(names)===JSON.stringify(expectedNames),'Verified artifact contains missing or unexpected files: '+JSON.stringify({missing:expectedNames.filter(name=>!names.includes(name)),unexpected:names.filter(name=>!expectedNames.includes(name)).slice(0,16)}));
   for(const name of names)requireValue(fs.lstatSync(path.join(directory,name)).isFile(),'Verified artifact must contain regular files only.');
   const manifest=readJson(path.join(directory,manifestName)),unsigned={...manifest};delete unsigned.manifestDigest;
   requireValue(manifest.schema==='closed-loop-deployment-manifest/1','Invalid deployment manifest schema.');
@@ -241,6 +242,36 @@ export function assertReceipt(receipt,manifest,{run,repository,headSha,sourceCom
   requireValue(receipt.manifestDigest===manifest.manifestDigest.digest&&receipt.buildIdentity===manifest.buildIdentity,'Verified artifact receipt manifest mismatch.');
 }
 
+export function assertPassedDeploymentRun(run,jobs,{repository,commit,workflowId}){
+  assertLifecycleWorkflowCommand(fs.readFileSync('.github/workflows/pages.yml','utf8'));
+  requireValue(Number.isSafeInteger(run.id)&&run.id>0&&Number.isSafeInteger(run.run_attempt)&&run.run_attempt>0,'Deployed verification run or attempt identity is invalid.');
+  requireValue(run.event==='push'&&run.head_branch==='main'&&run.status==='completed'&&run.conclusion==='success','Deployed verification is not a successfully completed main push.');
+  requireValue(run.repository?.full_name===repository&&run.head_repository?.full_name===repository&&run.head_sha===commit,'Deployed verification repository or source mismatch.');
+  requireValue(run.workflow_id===workflowId&&run.path==='.github/workflows/pages.yml','Deployed verification used a different workflow.');
+  const required={foundation:[],'deferred-matrix':[],'workflow-gates':[],'conformance-core':[],'conformance-creation':[],'conformance-counterpart':[],test:['Verified artifact reuse checks','Collect current executed assertion evidence','Seal verified deployment artifact','Preserve verified site for merge and live verification'],'Deploy exact verified bytes':['Deploy application'],'Verify deployed bytes and operator path':['Exact deployed-byte verification','Deployed Chromium operator path','Preserve current deployed browser assertion receipts']};
+  for(const [name,steps]of Object.entries(required)){
+    const matches=jobs.filter(job=>job.name===name);
+    requireValue(matches.length===1&&matches[0].status==='completed'&&matches[0].conclusion==='success','Required deployed proof job has not passed: '+name);
+    for(const step of steps){const matchesForStep=matches[0].steps.filter(row=>row.name===step);requireValue(matchesForStep.length===1&&matchesForStep[0].status==='completed'&&matchesForStep[0].conclusion==='success','Required deployed proof step has not passed: '+name+'/'+step);}
+  }
+}
+
+export function assertAcceptanceDispatch(run,context){
+  requireValue(context.event==='workflow_dispatch'&&context.ref==='refs/heads/main'&&String(run?.id)===context.runId&&run.run_attempt===context.runAttempt,'Current acceptance dispatch run or attempt differs.');
+  requireValue(run.event==='workflow_dispatch'&&run.head_branch==='main'&&run.head_sha===context.commit,'Current acceptance dispatch source or event differs.');
+  requireValue(run.repository?.full_name===context.repository&&run.head_repository?.full_name===context.repository,'Current acceptance dispatch repository differs.');
+  requireValue(run.path==='.github/workflows/pages.yml'&&Number.isSafeInteger(run.workflow_id)&&run.workflow_id>0&&run.status==='in_progress'&&run.conclusion===null,'Current acceptance dispatch workflow is not active and exact.');
+}
+
+export function assertDeployedReceipt(receipt,manifest,{run,repository,commit,sourceTree,workflowDigest,manifestDigest}){
+  requireValue(receipt.schema==='closed-loop-verified-site/1'&&receipt.repository===repository&&receipt.event==='push','Deployed artifact receipt identity mismatch.');
+  requireValue(String(receipt.runId)===String(run.id)&&receipt.runAttempt===run.run_attempt&&receipt.headSha===commit,'Deployed artifact receipt does not belong to the passing main attempt.');
+  requireValue(receipt.sourceCommit===commit&&receipt.sourceTree===sourceTree&&manifest.sourceCommit===commit,'Deployed artifact source tree mismatch.');
+  requireValue(String(manifest.workflowRunIdentity)===String(run.id),'Deployed manifest does not belong to the passing main run.');
+  requireValue(manifest.workflowFileSha256===workflowDigest&&receipt.workflowFileSha256===workflowDigest,'Deployed workflow differs from the current workflow.');
+  requireValue(receipt.manifestDigest===manifest.manifestDigest.digest&&manifest.manifestDigest.digest===manifestDigest&&receipt.buildIdentity===manifest.buildIdentity,'Deployed artifact manifest differs from the current published target.');
+}
+
 function assertCleanSource(cwd){
   const changes=git(cwd,'diff','--name-only','HEAD','--').split('\n').filter(Boolean);
   requireValue(changes.every(name=>name==='TEST_PROJECT.json'),'Verification left tracked source changes outside the generated retained fixture.');
@@ -250,7 +281,7 @@ async function build(cwd,directory,commit,run){
   (await checkedVerifier(process.execPath,['build-static-site.mjs','--out',directory,'--source-commit',commit,'--workflow-run',String(run)],{cwd,stdio:'pipe'}));
 }
 
-export async function promoteSite({cwd,verifiedDirectory,outputDirectory,commit,runId}){
+export async function promoteSite({cwd,verifiedDirectory,outputDirectory,commit,runId,preserveManifest=false}){
   // Only the deterministic retained fixture is generated by the tests. All
   // other runtime input must come from the matching, checked-out main tree.
   validateSite(verifiedDirectory);
@@ -262,6 +293,7 @@ export async function promoteSite({cwd,verifiedDirectory,outputDirectory,commit,
     fs.copyFileSync(path.join(verifiedDirectory,'TEST_PROJECT.json'),fixture);
     (await build(cwd,rebuilt,commit,runId));
     assertRuntimeEqual(verifiedDirectory,rebuilt);
+    if(preserveManifest)requireValue(fs.readFileSync(path.join(verifiedDirectory,manifestName)).equals(fs.readFileSync(path.join(rebuilt,manifestName))),'Deployed manifest changed during acceptance reuse; current source and toolchain must reproduce the original deployment.');
     fs.rmSync(outputDirectory,{recursive:true,force:true});
     fs.cpSync(verifiedDirectory,outputDirectory,{recursive:true});
     // Preserve every tested runtime byte. Only deployment provenance changes:
@@ -278,10 +310,13 @@ export async function promoteSite({cwd,verifiedDirectory,outputDirectory,commit,
 export async function sealSite({cwd,directory,bundleDirectory,context}){
   assertCleanSource(cwd);
   const manifest=validateSite(directory);
-  requireValue(manifest.sourceCommit===context.commit&&String(manifest.workflowRunIdentity)===String(context.runId),'Site does not belong to this verification run.');
+  const deployedFrom=context.deployedFrom;
+  if(deployedFrom)requireValue(context.event==='workflow_dispatch'&&context.ref==='refs/heads/main'&&/^\d+$/.test(deployedFrom.runId)&&Number.isSafeInteger(deployedFrom.runAttempt)&&deployedFrom.runAttempt>0&&deployedFrom.sourceCommit===context.commit&&deployedFrom.sourceTree===git(cwd,'rev-parse','HEAD^{tree}')&&deployedFrom.manifestDigest===manifest.manifestDigest.digest&&/^[a-f0-9]{64}$/.test(deployedFrom.receiptSha256),'Acceptance handoff does not bind the exact prior deployment.');
+  const buildRun=deployedFrom?.runId||context.runId;
+  requireValue(manifest.sourceCommit===context.commit&&String(manifest.workflowRunIdentity)===String(buildRun),'Site does not belong to this verification run or its authenticated prior deployment.');
   const rebuilt=fs.mkdtempSync(path.join(cwd,'.verified-seal-'));
   try{
-    (await build(cwd,rebuilt,context.commit,context.runId));
+    (await build(cwd,rebuilt,context.commit,buildRun));
     assertRuntimeEqual(directory,rebuilt);
     requireValue(fs.readFileSync(path.join(directory,manifestName)).equals(fs.readFileSync(path.join(rebuilt,manifestName))),'Verified deployment manifest is not reproducible.');
   }finally{fs.rmSync(rebuilt,{recursive:true,force:true});}
@@ -300,7 +335,7 @@ export async function sealSite({cwd,directory,bundleDirectory,context}){
     sourceCommit:context.commit,sourceTree:git(cwd,'rev-parse','HEAD^{tree}'),headSha:context.headSha,
     runId:String(context.runId),runAttempt:context.runAttempt,workflowFileSha256:manifest.workflowFileSha256,
     manifestDigest:manifest.manifestDigest.digest,buildIdentity:manifest.buildIdentity,
-    ...(context.reusedFrom?{reusedFrom:context.reusedFrom}:{}),...(executedEvidence?{executedEvidence}:{})};
+    ...(context.reusedFrom?{reusedFrom:context.reusedFrom}:{}),...(deployedFrom?{deployedFrom}:{}),...(executedEvidence?{executedEvidence}:{})};
   writeJson(path.join(bundleDirectory,'receipt.json'),receipt);
   return receipt;
 }
@@ -321,7 +356,62 @@ async function api(context,suffix){
   return response.json();
 }
 
+async function deployedManifest(c){
+  const url=`https://sjonesjones917.github.io/closed-loop-tracker/${manifestName}?acceptance_run=${encodeURIComponent(c.runId)}`;
+  const response=await fetch(url,{cache:'no-store',redirect:'error',signal:AbortSignal.timeout(30000)});
+  requireValue(response.ok&&new URL(response.url).origin==='https://sjonesjones917.github.io'&&new URL(response.url).pathname==='/closed-loop-tracker/'+manifestName,'Current deployed manifest is unavailable at the canonical origin.');
+  const manifest=await response.json(),unsigned={...manifest};delete unsigned.manifestDigest;
+  requireValue(manifest.schema==='closed-loop-deployment-manifest/1'&&manifest.sourceCommit===c.commit&&/^\d+$/.test(String(manifest.workflowRunIdentity))&&manifest.manifestDigest?.hashAlgorithm==='SHA-256'&&manifest.manifestDigest.digest===hash.sha256Value(unsigned),'Current deployed manifest does not identify this exact main source.');
+  return manifest;
+}
+
+async function selectDeployedCandidate(c){
+  requireValue(c.ref==='refs/heads/main','Acceptance verification reuse is restricted to main.');
+  fs.rmSync('.verified-candidate.json',{force:true});
+  const current=await api(c,`actions/runs/${c.runId}`);assertAcceptanceDispatch(current,c);
+  const manifest=await deployedManifest(c),run=await api(c,`actions/runs/${manifest.workflowRunIdentity}`);
+  const jobs=(await api(c,`actions/runs/${run.id}/attempts/${run.run_attempt}/jobs?per_page=100`)).jobs;
+  assertPassedDeploymentRun(run,jobs,{repository:c.repository,commit:c.commit,workflowId:current.workflow_id});
+  const artifacts=(await api(c,`actions/runs/${run.id}/artifacts?per_page=100`)).artifacts,artifact=artifacts.find(item=>item.name===artifactName(run.id,run.run_attempt)&&!item.expired);
+  requireValue(artifact,'The exact deployed main proof artifact is unavailable; acceptance cannot substitute a fresh undeployed build.');
+  writeJson('.verified-candidate.json',{mode:'DEPLOYED_MAIN',runId:run.id,runAttempt:run.run_attempt,headSha:c.commit,workflowId:current.workflow_id,artifactId:artifact.id,artifactName:artifact.name,manifestDigest:manifest.manifestDigest.digest});
+  output('run_id',run.id);output('artifact_id',artifact.id);
+  console.log(`Found the exact deployed main artifact from run ${run.id}. Current source, toolchain, and complete proof remain subject to validation.`);
+}
+
+async function reuseDeployedCandidate(c){
+  requireValue(c.ref==='refs/heads/main','Acceptance verification reuse is restricted to main.');
+  const candidate=readJson('.verified-candidate.json');
+  requireValue(candidate.mode==='DEPLOYED_MAIN'&&candidate.headSha===c.commit,'Acceptance candidate is not the exact deployed main source.');
+  const current=await api(c,`actions/runs/${c.runId}`);assertAcceptanceDispatch(current,c);
+  requireValue(current.workflow_id===candidate.workflowId,'Current acceptance workflow changed during artifact retrieval.');
+  const run=await api(c,`actions/runs/${candidate.runId}`);
+  requireValue(run.run_attempt===candidate.runAttempt,'Deployed verification attempt changed during artifact retrieval.');
+  const jobs=(await api(c,`actions/runs/${run.id}/attempts/${run.run_attempt}/jobs?per_page=100`)).jobs;
+  assertPassedDeploymentRun(run,jobs,{repository:c.repository,commit:c.commit,workflowId:candidate.workflowId});
+  const artifacts=(await api(c,`actions/runs/${run.id}/artifacts?per_page=100`)).artifacts;
+  requireValue(artifacts.some(item=>item.id===candidate.artifactId&&item.name===candidate.artifactName&&!item.expired),'Deployed verification artifact changed or expired during retrieval.');
+  const receipt=readJson('_verified-pr/receipt.json'),manifest=validateSite('_verified-pr/site'),sourceTree=git(process.cwd(),'rev-parse','HEAD^{tree}');
+  const live=await deployedManifest(c);requireValue(live.manifestDigest.digest===candidate.manifestDigest,'Deployed target changed during artifact retrieval.');
+  assertDeployedReceipt(receipt,manifest,{run,repository:c.repository,commit:c.commit,sourceTree,workflowDigest:digest(fs.readFileSync('.github/workflows/pages.yml')),manifestDigest:candidate.manifestDigest});
+  let proofFiles;
+  if(collectsExecutedEvidence(process.cwd())){
+    proofFiles=receipt.executedEvidence?.proofFiles;
+    requireValue(receipt.executedEvidence?.sourceCommit===c.commit&&receipt.executedEvidence.proofBundleSha256===evidenceSha(proofFiles)&&isDeepStrictEqual(executedProofFileHashes('_verified-pr/proofs'),proofFiles),'Deployed executed proof bundle is absent or changed.');
+    const fingerprint=evidenceFingerprint(),receipts=readExecutionReceipts('_verified-pr/proofs',fingerprint);
+    requireValue([...receipts.keys()].filter(key=>!key.startsWith('browser/')).length===Object.keys((await import('./verification-evidence-catalog.mjs')).verificationCatalog).length,'Required deployed executed assertion receipt is absent.');
+    aggregateExecutedEvidence(receipts,fingerprint);
+  }
+  await promoteSite({cwd:process.cwd(),verifiedDirectory:path.resolve('_verified-pr/site'),outputDirectory:path.resolve('_site'),commit:c.commit,runId:String(run.id),preserveManifest:true});
+  if(proofFiles)for(const name of Object.keys(proofFiles)){const destination=path.join(process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS,name);fs.mkdirSync(path.dirname(destination),{recursive:true});fs.copyFileSync(path.join('_verified-pr/proofs',name),destination);}
+  const deployedFrom={runId:String(run.id),runAttempt:run.run_attempt,sourceCommit:c.commit,sourceTree,manifestDigest:manifest.manifestDigest.digest,receiptSha256:digest(fs.readFileSync('_verified-pr/receipt.json'))};
+  writeJson('.verified-reuse.json',{...candidate,testedCommit:c.commit,sourceTree,deployedFrom});
+  output('reused','true');output('run_id',run.id);output('tested_commit',c.commit);
+  console.log(`Reused exact deployed main run ${run.id}; deployment manifest and every runtime byte are unchanged. Acceptance belongs separately to run ${c.runId}, attempt ${c.runAttempt}.`);
+}
+
 async function selectCandidate(c){
+  if(c.event==='workflow_dispatch')return selectDeployedCandidate(c);
   requireValue(c.event==='push'&&c.ref==='refs/heads/main','Verification reuse is restricted to a main push.');
   fs.rmSync('.verified-candidate.json',{force:true});
   const current=await api(c,`actions/runs/${c.runId}`);
@@ -344,6 +434,7 @@ async function selectCandidate(c){
 }
 
 async function reuseCandidate(c){
+  if(c.event==='workflow_dispatch')return reuseDeployedCandidate(c);
   requireValue(c.event==='push'&&c.ref==='refs/heads/main','Verification reuse is restricted to a main push.');
   const candidate=readJson('.verified-candidate.json');
   // Recheck the server state after downloading, including the exact attempt.
@@ -387,6 +478,11 @@ async function main(){
     case 'reuse':return reuseCandidate(c);
     case 'seal':{
       if(fs.existsSync('.verified-reuse.json'))c.reusedFrom=readJson('.verified-reuse.json');
+      if(c.reusedFrom?.mode==='DEPLOYED_MAIN'){
+        c.deployedFrom=c.reusedFrom.deployedFrom;
+        requireValue(c.deployedFrom?.receiptSha256===digest(fs.readFileSync('_verified-pr/receipt.json')),'Authenticated deployment receipt changed before acceptance handoff.');
+        assertDeployedReceipt(readJson('_verified-pr/receipt.json'),validateSite('_verified-pr/site'),{run:{id:c.deployedFrom.runId,run_attempt:c.deployedFrom.runAttempt},repository:c.repository,commit:c.commit,sourceTree:git(process.cwd(),'rev-parse','HEAD^{tree}'),workflowDigest:digest(fs.readFileSync('.github/workflows/pages.yml')),manifestDigest:c.deployedFrom.manifestDigest});
+      }
       const receipt=(await sealSite({cwd:process.cwd(),directory:path.resolve('_site'),bundleDirectory:path.resolve('_verified-site'),context:c}));
       output('artifact_name',artifactName(c.runId,c.runAttempt));
       console.log(JSON.stringify({sealed:true,sourceCommit:receipt.sourceCommit,sourceTree:receipt.sourceTree,reusedFrom:receipt.reusedFrom||null}));return;

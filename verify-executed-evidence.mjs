@@ -248,7 +248,7 @@ async function verifyPreloadFailureVisibility(directory,{preloadFile=path.resolv
 
 async function verifyColdUploadBootstrap(workflow,directory,bootstrapNode=process.env.CLOSED_LOOP_ACTION_NODE||process.execPath){
   const actions=assertWorkflowPreloadBoundaries(workflow);
-  assert.equal(actions.length,18,'COLD_UPLOAD_ORACLE: the maintained upload action population changed.');
+  assert.equal(actions.length,19,'COLD_UPLOAD_ORACLE: the maintained upload action population changed.');
   assert(actions.every(row=>row.nodeOptions===''),'COLD_UPLOAD_ORACLE: upload environments must share the empty Node options.');
   const workspace=path.join(directory,'cold-upload');fs.mkdirSync(workspace);
   const inherited=actions.find(row=>row.job==='test')?.inheritedNodeOptions;
@@ -467,7 +467,7 @@ for(const file of expectedActiveFixtureInputs){
 }
 assert.throws(()=>assertActiveFixtureInputs([...activeFixtureInputs.slice(0,-1),'verification/unknown-fixture.json']),/FIXTURE_INPUT_ORACLE/,'A changed fixture path must not preserve the declared source population.');
 fixtureCatalogMutations.push({file:'verification/unknown-fixture.json',mutation:'changed-path',result:'DETECTED'});
-const producerFixtureInputs=['index.html','.nojekyll','normative-manifest-storage.mjs','approved-source-continuation.mjs','review-specification-coverage.mjs','verify-stage03-agent-protocol.mjs','verifier-runtime.mjs','workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','verification-evidence-preload.mjs','verification-evidence.mjs','browser-extra-aggregate.mjs','deployment-contract-identities.mjs','browser-execution-evidence.mjs','evaluate-mobile-acceptance-submission.mjs','verify-mobile-acceptance-evidence.mjs','verification-evidence-catalog.mjs','verification-negative-populations.json','verification-assertion-bindings.json','specification/closed-loop-reliability-controlling-implementation-specification.txt',governanceDeclaration,...governedApprovalInputs,...declaredVerifierInputs];
+const producerFixtureInputs=['index.html','.nojekyll','normative-manifest-storage.mjs','approved-source-continuation.mjs','review-specification-coverage.mjs','verify-stage03-agent-protocol.mjs','verifier-runtime.mjs','workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','verification-evidence-preload.mjs','verification-evidence.mjs','browser-extra-aggregate.mjs','deployment-contract-identities.mjs','browser-execution-evidence.mjs','evaluate-mobile-acceptance-submission.mjs','mobile-acceptance-claim.mjs','verify-mobile-acceptance-evidence.mjs','verification-evidence-catalog.mjs','verification-negative-populations.json','verification-assertion-bindings.json','specification/closed-loop-reliability-controlling-implementation-specification.txt',governanceDeclaration,...governedApprovalInputs,...declaredVerifierInputs];
 function assertStage03ChildCopyPopulation(inputs){for(const file of expectedOwnerHelperInputs)assert(inputs.includes(file),'STAGE03_CHILD_IMPORT_CLOSURE_ORACLE: copied Stage 03 child helper missing: '+file);}
 assertStage03ChildCopyPopulation(producerFixtureInputs);
 assert.throws(()=>assertStage03ChildCopyPopulation(producerFixtureInputs.filter(file=>file!=='test-zip.mjs')),/copied Stage 03 child helper missing/,'STAGE03_CHILD_IMPORT_CLOSURE_ORACLE: an incomplete copied helper population escaped detection.');

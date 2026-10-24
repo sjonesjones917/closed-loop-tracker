@@ -4,11 +4,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {execFileSync,spawnSync} from 'node:child_process';
-import {runtimePaths,manifestName,foundationProofSteps,workflowGateProofSteps,fullTestSteps,digest,validateSite,assertLifecycleWorkflowCommand,assertPassedRun,assertReceipt,promoteSite,promoteExecutedProofs,executedProofFileHashes,sealSite} from './verified-site.mjs';
+import {runtimePaths,manifestName,foundationProofSteps,workflowGateProofSteps,fullTestSteps,digest,validateSite,assertLifecycleWorkflowCommand,assertPassedRun,assertReceipt,assertPassedDeploymentRun,assertDeployedReceipt,promoteSite,promoteExecutedProofs,executedProofFileHashes,sealSite} from './verified-site.mjs';
 import {verificationCatalog} from './verification-evidence-catalog.mjs';
 
 const root=process.cwd(),temporary=fs.mkdtempSync(path.join(root,'.verify-artifact-'));
 const cases=[];
+let completed=false;
 async function rejects(name,operation,expected){await assert.rejects(async()=>await operation(),expected);cases.push(name);}
 const cataloguedOwners=new Set(Object.keys(verificationCatalog));
 const verifierSources=Object.fromEntries(fs.readdirSync(root).filter(file=>/^verify-[\w-]+\.mjs$/.test(file)).map(file=>[file,fs.readFileSync(path.join(root,file),'utf8')]));
@@ -140,14 +141,15 @@ try{
   assert.equal(promotedManifest.sourceCommit,mainCommit);assert.equal(promotedManifest.workflowRunIdentity,'456');
   const expectedManifest=clone(manifest);expectedManifest.sourceCommit=mainCommit;expectedManifest.workflowRunIdentity='456';expectedManifest.manifestDigest=promotedManifest.manifestDigest;
   assert.deepEqual(promotedManifest,expectedManifest);cases.push('different-merge-commit-identical-runtime-only-provenance-changed');
-  (await sealSite({cwd:workspace,directory:promoted,bundleDirectory:path.join(temporary,'main-bundle'),context:{...context,event:'push',commit:mainCommit,runId:'456',headSha:mainCommit,reusedFrom:{runId:'123',sourceTree:tree}}}));
+  const mainBundle=path.join(temporary,'main-bundle');
+  const mainReceipt=(await sealSite({cwd:workspace,directory:promoted,bundleDirectory:mainBundle,context:{...context,event:'push',commit:mainCommit,runId:'456',headSha:mainCommit,reusedFrom:{runId:'123',sourceTree:tree}}}));
   cases.push('promoted-main-artifact-reproducible');
 
   // Exercise the actual selection/reuse CLI against a recorded-shape GitHub
   // fixture. This never queries GitHub or starts a workflow.
   const responseFile=path.join(temporary,'api.json'),shim=path.join(temporary,'fetch-fixture.mjs'),eventFile=path.join(temporary,'event.json'),outputFile=path.join(temporary,'outputs');
   fs.writeFileSync(eventFile,'{}');
-  fs.writeFileSync(shim,`import fs from 'node:fs';globalThis.fetch=async value=>{const u=new URL(value);if(u.origin!=='https://api.github.com')throw new Error('Unexpected API origin');const responses=JSON.parse(fs.readFileSync(process.env.VERIFY_API_FIXTURE,'utf8'));if(!(u.pathname in responses))throw new Error('Unexpected API request: '+u.pathname);if(u.pathname.endsWith('/runs')&&u.searchParams.get('head_sha')!=='${headSha}')throw new Error('PR head filter missing');return {ok:true,status:200,json:async()=>responses[u.pathname]};};`);
+  fs.writeFileSync(shim,`import fs from 'node:fs';globalThis.fetch=async(value,options)=>{const u=new URL(value),responses=JSON.parse(fs.readFileSync(process.env.VERIFY_API_FIXTURE,'utf8'));if(u.origin==='https://sjonesjones917.github.io'&&u.pathname==='/closed-loop-tracker/closed-loop-deployment-manifest.json'){if(options?.redirect!=='error'||options?.cache!=='no-store')throw new Error('Deployed lookup lost its origin/cache boundary');return {ok:true,status:200,url:String(value),json:async()=>responses.deployedManifest};}if(u.origin!=='https://api.github.com')throw new Error('Unexpected API origin');if(!(u.pathname in responses))throw new Error('Unexpected API request: '+u.pathname);if(u.pathname.endsWith('/runs')&&u.searchParams.get('head_sha')!=='${headSha}')throw new Error('PR head filter missing');return {ok:true,status:200,json:async()=>responses[u.pathname]};};`);
   const prefix='/repos/'+repository;
   const responses={
     [prefix+'/actions/runs/456']:{workflow_id:workflowId},
@@ -159,7 +161,7 @@ try{
     [prefix+'/git/commits/'+testedCommit]:{sha:testedCommit,tree:{sha:tree},parents:[{sha:headSha}]}
   };
   const fixtureEnv={...process.env,GH_TOKEN:'synthetic-fixture-token',GITHUB_REPOSITORY:repository,GITHUB_SHA:mainCommit,GITHUB_RUN_ID:'456',GITHUB_RUN_ATTEMPT:'1',GITHUB_EVENT_NAME:'push',GITHUB_REF:'refs/heads/main',GITHUB_EVENT_PATH:eventFile,GITHUB_OUTPUT:outputFile,VERIFY_API_FIXTURE:responseFile};
-  const runCLI=async mode=>(await checkedVerifier(process.execPath,['--import',shim,path.join(root,'verified-site.mjs'),mode],{cwd:workspace,env:fixtureEnv,stdio:'pipe',encoding:'utf8'}));
+  const runCLI=async mode=>(await checkedVerifier(process.execPath,['--import',shim,path.join(root,'verified-site.mjs'),mode],{cwd:workspace,env:fixtureEnv,stdio:'pipe',encoding:'utf8',evidenceDirectory:path.join(temporary,'cli-child-evidence')}));
   const writeResponses=()=>fs.writeFileSync(responseFile,JSON.stringify(responses));
   writeResponses();(await runCLI('select'));
   assert.match(fs.readFileSync(outputFile,'utf8'),/artifact_id=789/);
@@ -178,6 +180,75 @@ try{
   assert.match((await runCLI('select')),/No complete reusable PR artifact/);assert.equal(fs.existsSync(path.join(workspace,'.verified-candidate.json')),false);assert.equal(fs.readFileSync(outputFile,'utf8'),'');
   cases.push('expired-artifact-falls-back-to-full-checks');
 
+  // A manual acceptance run observes a prior deployment. Rebuilding its
+  // manifest with the new run ID changes its digest despite identical bytes.
+  const dispatchSite=path.join(temporary,'fresh-dispatch-site');
+  await promoteSite({cwd:workspace,verifiedDirectory:promoted,outputDirectory:dispatchSite,commit:mainCommit,runId:'789'});
+  const freshDispatchManifest=validateSite(dispatchSite);
+  assert.equal(freshDispatchManifest.buildIdentity,promotedManifest.buildIdentity);
+  assert.deepEqual(freshDispatchManifest.runtimeResources,promotedManifest.runtimeResources);
+  assert.notEqual(freshDispatchManifest.manifestDigest.digest,promotedManifest.manifestDigest.digest,'ACCEPTANCE_DISPATCH_FORMER_MANIFEST_ORACLE');
+  cases.push('fresh-acceptance-build-reproduces-former-deployed-manifest-mismatch');
+  const mainRun={...clone(run),id:456,event:'push',head_branch:'main',head_sha:mainCommit};
+  const mainJobs=clone(jobs);
+  mainJobs.find(job=>job.name==='test').steps.push({name:'Preserve verified site for merge and live verification',status:'completed',conclusion:'success'});
+  for(const [name,steps]of [['Deploy exact verified bytes',['Deploy application']],['Verify deployed bytes and operator path',['Exact deployed-byte verification','Deployed Chromium operator path','Preserve current deployed browser assertion receipts']]])mainJobs.push({name,status:'completed',conclusion:'success',steps:steps.map(name=>({name,status:'completed',conclusion:'success'}))});
+  const mainBindings={repository,commit:mainCommit,workflowId};
+  assertPassedDeploymentRun(mainRun,mainJobs,mainBindings);
+  for(const [name,change]of [['failed',v=>v.conclusion='failure'],['running',v=>v.status='in_progress'],['not-main',v=>v.head_branch='topic'],['not-push',v=>v.event='workflow_dispatch'],['wrong-source',v=>v.head_sha='b'.repeat(40)],['wrong-repository',v=>v.repository.full_name='another/repo'],['fork',v=>v.head_repository.full_name='another/repo'],['wrong-workflow',v=>v.workflow_id=999]]){
+    const altered=clone(mainRun);change(altered);await rejects('dispatch-'+name+'-deployment',()=>assertPassedDeploymentRun(altered,mainJobs,mainBindings),/Deployed verification/);
+  }
+  for(const job of mainJobs){
+    await rejects('dispatch-missing-'+job.name,()=>assertPassedDeploymentRun(mainRun,mainJobs.filter(row=>row!==job),mainBindings),/Required deployed proof job/);
+    for(const conclusion of ['failure','skipped','cancelled']){const altered=clone(mainJobs);altered.find(row=>row.name===job.name).conclusion=conclusion;await rejects('dispatch-'+conclusion+'-'+job.name,()=>assertPassedDeploymentRun(mainRun,altered,mainBindings),/Required deployed proof job/);}
+  }
+  for(const [jobName,stepName]of [['test','Seal verified deployment artifact'],['Deploy exact verified bytes','Deploy application'],['Verify deployed bytes and operator path','Exact deployed-byte verification'],['Verify deployed bytes and operator path','Deployed Chromium operator path']]){
+    const altered=clone(mainJobs);altered.find(row=>row.name===jobName).steps.find(row=>row.name===stepName).conclusion='skipped';await rejects('dispatch-skipped-'+stepName,()=>assertPassedDeploymentRun(mainRun,altered,mainBindings),/Required deployed proof step/);
+  }
+  const mainReceiptBindings={run:mainRun,repository,commit:mainCommit,sourceTree:tree,workflowDigest:receiptBindings.workflowDigest,manifestDigest:promotedManifest.manifestDigest.digest};
+  assertDeployedReceipt(mainReceipt,promotedManifest,mainReceiptBindings);
+  for(const [field,value]of [['event','workflow_dispatch'],['runId','789'],['runAttempt',2],['headSha',headSha],['sourceCommit',headSha],['sourceTree','b'.repeat(40)],['workflowFileSha256','0'.repeat(64)],['manifestDigest','0'.repeat(64)]])await rejects('dispatch-wrong-receipt-'+field,()=>assertDeployedReceipt({...mainReceipt,[field]:value},promotedManifest,mainReceiptBindings),/Deployed artifact|Deployed workflow/);
+  await rejects('dispatch-fresh-manifest-substitution',()=>assertDeployedReceipt(mainReceipt,freshDispatchManifest,mainReceiptBindings),/Deployed manifest/);
+  const acceptanceRun={...clone(mainRun),id:789,event:'workflow_dispatch',status:'in_progress',conclusion:null};
+  responses[prefix+'/actions/runs/789']=acceptanceRun;
+  responses[prefix+'/actions/runs/456']=mainRun;
+  responses[prefix+'/actions/runs/456/attempts/1/jobs']={jobs:mainJobs};
+  responses[prefix+'/actions/runs/456/artifacts']={artifacts:[{id:987,name:'verified-site-456-1',expired:false}]};
+  responses.deployedManifest=promotedManifest;
+  Object.assign(fixtureEnv,{GITHUB_EVENT_NAME:'workflow_dispatch',GITHUB_RUN_ID:'789'});
+  for(const [name,change]of [['id',row=>row.id=999],['attempt',row=>row.run_attempt=2],['event',row=>row.event='push'],['branch',row=>row.head_branch='topic'],['source',row=>row.head_sha=headSha],['repository',row=>row.repository.full_name='another/repo'],['missing-repository',row=>delete row.repository],['head-repository',row=>row.head_repository.full_name='another/repo'],['path',row=>row.path='.github/workflows/other.yml'],['workflow-id',row=>row.workflow_id=null],['status',row=>row.status='completed'],['conclusion',row=>row.conclusion='failure']]){
+    const altered=clone(acceptanceRun);change(altered);responses[prefix+'/actions/runs/789']=altered;writeResponses();await rejects('dispatch-current-api-'+name,()=>runCLI('select'),/Current acceptance dispatch/);
+  }
+  responses[prefix+'/actions/runs/789']=acceptanceRun;
+  writeResponses();fs.writeFileSync(outputFile,'');
+  await runCLI('select');assert.match(fs.readFileSync(outputFile,'utf8'),/artifact_id=987/);
+  fs.rmSync(path.join(workspace,'_verified-pr'),{recursive:true});fs.cpSync(mainBundle,path.join(workspace,'_verified-pr'),{recursive:true});
+  await runCLI('reuse');await runCLI('seal');
+  assert.match(fs.readFileSync(outputFile,'utf8'),/artifact_name=verified-site-789-1/);
+  const acceptanceManifest=validateSite(path.join(workspace,'_verified-site/site')),acceptanceReceipt=JSON.parse(fs.readFileSync(path.join(workspace,'_verified-site/receipt.json'),'utf8'));
+  assert.deepEqual(acceptanceManifest,promotedManifest,'ACCEPTANCE_DISPATCH_EXACT_DEPLOYMENT_ORACLE');
+  for(const name of [...runtimePaths,manifestName])assert.deepEqual(fs.readFileSync(path.join(workspace,'_verified-site/site',name)),fs.readFileSync(path.join(mainBundle,'site',name)));
+  assert.equal(acceptanceReceipt.event,'workflow_dispatch');assert.equal(acceptanceReceipt.runId,'789');assert.equal(acceptanceReceipt.deployedFrom.runId,'456');assert.equal(acceptanceReceipt.deployedFrom.runAttempt,1);assert.equal(acceptanceReceipt.deployedFrom.manifestDigest,promotedManifest.manifestDigest.digest);
+  assert.equal(acceptanceReceipt.deployedFrom.receiptSha256,digest(fs.readFileSync(path.join(mainBundle,'receipt.json'))));
+  cases.push('dispatch-actual-CLI-preserves-deployed-manifest-and-separates-acceptance-run');
+  responses[prefix+'/actions/runs/789']={...clone(acceptanceRun),run_attempt:2};writeResponses();await rejects('dispatch-current-attempt-changed-after-selection',()=>runCLI('reuse'),/Current acceptance dispatch run or attempt differs/);responses[prefix+'/actions/runs/789']=acceptanceRun;writeResponses();
+  const savedReuse=fs.readFileSync(path.join(workspace,'.verified-reuse.json')),alteredReuse=JSON.parse(savedReuse);alteredReuse.deployedFrom.runAttempt=99;fs.writeFileSync(path.join(workspace,'.verified-reuse.json'),JSON.stringify(alteredReuse));await rejects('dispatch-handoff-attempt-must-match-original-receipt',()=>runCLI('seal'),/does not belong to the passing main attempt/);fs.writeFileSync(path.join(workspace,'.verified-reuse.json'),savedReuse);
+  const priorProofEnvironment=Object.fromEntries(['CLOSED_LOOP_VERIFICATION_SOURCE_ROOT','CLOSED_LOOP_VERIFICATION_RECEIPTS'].map(name=>[name,fixtureEnv[name]]));
+  Object.assign(fixtureEnv,{CLOSED_LOOP_VERIFICATION_SOURCE_ROOT:workspace,CLOSED_LOOP_VERIFICATION_RECEIPTS:path.join(workspace,'required-dispatch-proofs')});
+  await rejects('dispatch-requires-complete-executed-proof-bundle',()=>runCLI('reuse'),/Deployed executed proof bundle is absent or changed/);
+  for(const [name,value]of Object.entries(priorProofEnvironment))if(value===undefined)delete fixtureEnv[name];else fixtureEnv[name]=value;
+  responses[prefix+'/actions/runs/456'].run_attempt=2;writeResponses();await rejects('dispatch-attempt-changed-after-download',()=>runCLI('reuse'),/attempt changed/);responses[prefix+'/actions/runs/456'].run_attempt=1;
+  responses[prefix+'/actions/runs/456/artifacts'].artifacts[0].expired=true;writeResponses();await rejects('dispatch-expired-artifact-after-download',()=>runCLI('reuse'),/artifact changed or expired/);await rejects('dispatch-expired-artifact-cannot-rebuild-undeployed-manifest',()=>runCLI('select'),/exact deployed main proof artifact is unavailable/);responses[prefix+'/actions/runs/456/artifacts'].artifacts[0].expired=false;
+  writeResponses();await runCLI('select');
+  responses.deployedManifest=freshDispatchManifest;writeResponses();await rejects('dispatch-live-target-changed-after-download',()=>runCLI('reuse'),/Deployed target changed/);responses.deployedManifest=promotedManifest;writeResponses();
+  const savedMainReceipt=fs.readFileSync(path.join(workspace,'_verified-pr/receipt.json'));
+  fs.writeFileSync(path.join(workspace,'_verified-pr/receipt.json'),JSON.stringify({...mainReceipt,sourceTree:'b'.repeat(40)}));await rejects('dispatch-different-source-tree',()=>runCLI('reuse'),/source tree mismatch/);fs.writeFileSync(path.join(workspace,'_verified-pr/receipt.json'),savedMainReceipt);
+  const wrongToolchain=path.join(temporary,'wrong-deployed-toolchain');fs.cpSync(promoted,wrongToolchain,{recursive:true});
+  const wrongToolchainManifest=clone(promotedManifest);wrongToolchainManifest.dependencyAndToolchainManifestIdentity.node='v0.0.0';delete wrongToolchainManifest.manifestDigest;wrongToolchainManifest.manifestDigest={hashAlgorithm:'SHA-256',digest:globalThis.closedLoopHash.sha256Value(wrongToolchainManifest)};fs.writeFileSync(path.join(wrongToolchain,manifestName),JSON.stringify(wrongToolchainManifest,null,2)+'\n');
+  await rejects('dispatch-different-build-toolchain',()=>promoteSite({cwd:workspace,verifiedDirectory:wrongToolchain,outputDirectory:dispatchSite,commit:mainCommit,runId:'456',preserveManifest:true}),/Deployed manifest changed/);
+  fixtureEnv.GITHUB_REF='refs/heads/topic';await rejects('dispatch-non-main-ref',()=>runCLI('select'),/restricted to main/);fixtureEnv.GITHUB_REF='refs/heads/main';
+  await runCLI('reuse');await runCLI('seal');assert.deepEqual(validateSite(path.join(workspace,'_verified-site/site')),promotedManifest);cases.push('dispatch-restored-exact-deployment-passes-after-refusals');
+
   fs.appendFileSync(path.join(workspace,'app-core.js'),'\n/* untested source */');
   (await rejects('dirty-source',async ()=>(await promoteSite({cwd:workspace,verifiedDirectory:site,outputDirectory:promoted,commit:mainCommit,runId:'456'})),/tracked source changes/));
   git('add','app-core.js');git('-c','user.name=Verification fixture','-c','user.email=fixture@example.invalid','commit','-qm','Changed main runtime');
@@ -185,6 +256,9 @@ try{
   assert.deepEqual(fs.readFileSync(path.join(promoted,'app-core.js')),fs.readFileSync(path.join(site,'app-core.js')),'Failed promotion must not overwrite the last intact artifact.');
 
   const workflow=fs.readFileSync('.github/workflows/pages.yml','utf8');
+  const dispatchSelection="        id: candidate\n        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'\n";
+  assert.equal(workflow.split(dispatchSelection).length-1,5,'ACCEPTANCE_DISPATCH_PHASE_SELECTION_ORACLE');
+  await rejects('dispatch-disabled-before-source-proof',()=>assertLifecycleWorkflowCommand(workflow.replace(dispatchSelection,"        id: candidate\n        if: github.event_name == 'push' && github.ref == 'refs/heads/main'\n")),/Main acceptance dispatch must authenticate/);
   const nodeVersions=[...workflow.matchAll(/^          node-version: '([^']+)'$/gm)].map(match=>match[1]);
   assert.equal(nodeVersions.length,7,'CI_RUNTIME_IDENTITY_ORACLE: every proof job must select Node explicitly.');
   assert(nodeVersions.every(version=>/^22\.\d+\.\d+$/.test(version)&&version===nodeVersions[0]),'CI_RUNTIME_IDENTITY_ORACLE: all proof jobs require the same exact supported Node version.');
@@ -196,7 +270,7 @@ try{
   const testWorkflow=workflow.slice(workflow.indexOf('\n  test:'),workflow.indexOf('\n  deploy:'));
   assertLifecycleWorkflowCommand(workflow);
   const uploadSteps=[...workflow.matchAll(/^      - [\s\S]*?(?=^      - |^  [a-z][\w-]*:\n|(?![\s\S]))/gm)].map(match=>match[0]).filter(step=>/^        uses: actions\/upload-artifact@/m.test(step));
-  assert.equal(uploadSteps.length,18,'CI_UPLOAD_PRELOAD_ORACLE: all maintained artifact upload actions must be covered.');
+  assert.equal(uploadSteps.length,19,'CI_UPLOAD_PRELOAD_ORACLE: all maintained artifact upload actions must be covered.');
   for(const [index,step] of uploadSteps.entries()){
     const override="        env:\n          NODE_OPTIONS: ''\n";
     assert.equal(step.split(override).length,2,'CI_UPLOAD_PRELOAD_ORACLE: exact scoped action override required.');
@@ -395,4 +469,5 @@ try{
   assert.match(workflow,/VERIFIED_SITE_DIR: _verified-site\/site/);
   cases.push('all-original-gates-retained-before-artifact-publication');
   console.log(JSON.stringify({verifiedSiteReuse:'PASS',cases:cases.length,checks:cases,fullCIRun:false}));
-}finally{fs.rmSync(temporary,{recursive:true,force:true});}
+  completed=true;
+}finally{if(completed)fs.rmSync(temporary,{recursive:true,force:true});else process.stderr.write(JSON.stringify({verifiedSiteReuse:'FAIL',retainedFixtureDirectory:temporary,cliChildEvidenceDirectory:path.join(temporary,'cli-child-evidence')})+'\n');}

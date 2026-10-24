@@ -154,17 +154,29 @@ export async function createOperatorBrowser({url=process.env.PAGE_URL||'http://1
   directory=path.resolve(directory||fs.mkdtempSync(path.join(os.tmpdir(),'operator-journey-')));fs.mkdirSync(directory,{recursive:true});
   const downloads=path.join(directory,'downloads'),inputs=path.join(directory,'inputs'),profile=path.join(directory,'profile');for(const folder of [downloads,inputs,profile])fs.mkdirSync(folder,{recursive:true});
   const port=11000+Math.floor(Math.random()*1500),child=spawn(executable,['--headless=new','--no-sandbox','--disable-dev-shm-usage','--disable-gpu','--disable-background-networking','--no-first-run','--no-default-browser-check',`--remote-debugging-port=${port}`,`--user-data-dir=${profile}`,'about:blank'],{stdio:['ignore','ignore','pipe']});
-  let stderr='';child.stderr.on('data',bytes=>{stderr=(stderr+bytes).slice(-8000);});
+  let stderr='',launchError=null,version,closingChild,processExit=null,processClose=null;child.stderr.on('data',bytes=>{stderr=(stderr+bytes).slice(-8000);});child.once('error',error=>{launchError=error;});
+  child.once('exit',(exitCode,signal)=>{processExit={exitCode,signal,at:new Date().toISOString()};});
+  child.once('close',(exitCode,signal)=>{processClose={exitCode,signal,at:new Date().toISOString()};});
+  const terminal=()=>child.exitCode!==null||child.signalCode!==null||Boolean(launchError);
+  const waitForClose=milliseconds=>new Promise(resolve=>{if(processClose)return resolve(true);let timer;const finish=value=>{clearTimeout(timer);child.removeListener('close',closed);resolve(value);},closed=()=>finish(true);child.once('close',closed);timer=setTimeout(()=>finish(false),milliseconds);});
+  const stopChild=()=>closingChild??=(async()=>{
+    // The enclosing verifier's five-second termination grace also owns the
+    // interrupted report write. Bound browser shutdown inside that grace.
+    if(!processClose){if(!terminal())child.kill('SIGTERM');if(!(await waitForClose(2000))){if(!terminal())child.kill('SIGKILL');assert.ok(await waitForClose(2000),'BROWSER_PROCESS_CLOSE_ORACLE: the owned Chrome process and its stdio did not close.');}}
+    return {terminal:Boolean(processExit&&processClose),exitObserved:Boolean(processExit),stdioClosed:Boolean(processClose),pid:child.pid,exitCode:child.exitCode,signal:child.signalCode,exitedAt:processExit?.at||null,closedAt:processClose.at,profile,pageUrl:url,launchExecutable:executable,browserVersion:version?.Browser||null,protocolVersion:version?.['Protocol-Version']||null,javaScriptVersion:version?.['V8-Version']||null};
+  })();
   const json=async(route,options)=>{const response=await fetch(`http://127.0.0.1:${port}${route}`,options);if(!response.ok)throw new Error(`Browser ${route}: ${response.status}`);return response.json();};
-  const version=await until(()=>json('/json/version'),`Browser did not start: ${stderr}`),root=new Connection(version.webSocketDebuggerUrl);await root.ready;
+  try{version=await until(()=>{if(terminal())throw Object.assign(new Error(`Browser exited before startup: ${launchError?.message||stderr||child.exitCode||child.signalCode}`),{verifierTerminal:true});return json('/json/version');},'Browser did not start');}catch(error){await stopChild();throw error;}
+  let root,page,executionObserver;
+  try{
+  root=new Connection(version.webSocketDebuggerUrl);await root.ready;
   // CDP Browser.downloadProgress and allowAndName provide actual downloaded
   // bytes, not a mocked Blob or an application-declared success flag.
   await root.send('Browser.setDownloadBehavior',{behavior:'allowAndName',downloadPath:downloads,eventsEnabled:true});
-  const target=await json(`/json/new?${encodeURIComponent('about:blank')}`,{method:'PUT'}),page=new Connection(target.webSocketDebuggerUrl);await page.ready;await page.send('Runtime.enable');await page.send('Page.enable');
+  const target=await json(`/json/new?${encodeURIComponent('about:blank')}`,{method:'PUT'});page=new Connection(target.webSocketDebuggerUrl);await page.ready;await page.send('Runtime.enable');await page.send('Page.enable');
   await page.send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:width<600});
-  let executionObserver;
-  try{executionObserver=captureExecution?await createBrowserExecutionObserver({webSocketDebuggerUrl:target.webSocketDebuggerUrl,pageUrl:url}):null;await page.send('Page.navigate',{url});}
-  catch(error){executionObserver?.close();page.close();root.close();child.kill('SIGKILL');throw error;}
+  executionObserver=captureExecution?await createBrowserExecutionObserver({webSocketDebuggerUrl:target.webSocketDebuggerUrl,pageUrl:url}):null;await page.send('Page.navigate',{url});
+  }catch(error){executionObserver?.close();page?.close();root?.close();await stopChild();throw error;}
   const events=[];let inputSequence=0;
   async function evaluate(expression){const result=await page.send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true,userGesture:true});if(result.exceptionDetails)throw new Error(result.exceptionDetails.exception?.description||result.exceptionDetails.text);return result.result?.value;}
   const readiness=createBrowserReadiness(page,evaluate);
@@ -210,6 +222,6 @@ export async function createOperatorBrowser({url=process.env.PAGE_URL||'http://1
     return {url,send:connection.send.bind(connection),onEvent:connection.onEvent.bind(connection),evaluate,exists,click,fill,selectFiles,download,captureDownloads,project,readProject,settle:idle,openUrl:destination=>readiness.navigate('Page.navigate',{url:destination}),reload:()=>readiness.navigate('Page.reload',{ignoreCache:true}),events:targetEvents,protocolEvents:connection.events,exceptions:()=>connection.events.filter(event=>event.method==='Runtime.exceptionThrown'||event.method==='Page.javascriptDialogOpening'),close};
   }
 
-  async function close(){try{executionObserver?.close();for(const supplemental of supplementalTargets)supplemental.close();supplementalTargets.clear();page.close();root.close();}finally{child.kill('SIGKILL');}}
+  async function close(){let closure;try{executionObserver?.close();for(const supplemental of supplementalTargets)supplemental.close();supplementalTargets.clear();page.close();root.close();}finally{closure=await stopChild();}return closure;}
   try{await idle();}catch(error){await close();throw error;}return {createIsolatedTarget,click,fill,selectFiles,download,captureDownloads,project,readProject,readWorkflow,inspect,reload,exists,visible,settle:idle,evaluate,navigationHistory,restoreEntry,openUrl,events,directory,close,executionEvidence:()=>executionObserver?.finish(),exceptions:()=>page.events.filter(event=>event.method==='Runtime.exceptionThrown'||event.method==='Page.javascriptDialogOpening')};
 }

@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 import {verifyMobileAcceptanceEvidence} from './verify-mobile-acceptance-evidence.mjs';
+import {validateMobileChallengeClaim} from './mobile-acceptance-claim.mjs';
 
 export const MOBILE_ACCEPTANCE_ORIGIN='https://sjonesjones917.github.io';
 export const MOBILE_ACCEPTANCE_BASE_PATH='/closed-loop-tracker/';
@@ -35,7 +36,7 @@ function parseJson(label,text){
   }
 }
 
-export function evaluateMobileAcceptanceSubmission({targetJson='',evidenceJson='',expected={},usedChallenges=[],submitter=null}={}){
+export function evaluateMobileAcceptanceSubmission({targetJson='',evidenceJson='',expected={},usedChallenges=[],submitter=null,requireChallengeClaim=false,challengeClaim=null,acceptanceContext=null}={}){
   const hasTarget=NONEMPTY(targetJson);
   const hasEvidence=NONEMPTY(evidenceJson);
   if(!hasTarget&&!hasEvidence){
@@ -63,6 +64,10 @@ export function evaluateMobileAcceptanceSubmission({targetJson='',evidenceJson='
     return blocked('BLOCKED','Correct the malformed mobile acceptance submission and rerun the authenticated workflow dispatch.','Repository acceptance controller',[error.message]);
   }
 
+  if(requireChallengeClaim){
+    try{validateMobileChallengeClaim(challengeClaim,{targetJson,evidenceJson,repository:acceptanceContext?.repository,runId:acceptanceContext?.runId,runAttempt:acceptanceContext?.runAttempt,sourceCommit:expected.sourceCommit});}
+    catch(error){return blocked('BLOCKED','The authorized acceptance controller must atomically claim this exact target and evidence for this workflow run and attempt before CI can accept it. A superseding run requires a new challenge.','Repository acceptance controller',[{code:'MOBILE_CHALLENGE_CLAIM_REQUIRED',message:error.message}]);}
+  }
   const usedNormalized=new Set((Array.isArray(usedChallenges)?usedChallenges:[]).filter(NONEMPTY).map(value=>value.toLowerCase()));
   const verifierUsed=NONEMPTY(target.challenge)&&usedNormalized.has(target.challenge.toLowerCase())?[target.challenge]:[];
   const verification=verifyMobileAcceptanceEvidence({target,evidence,expected,usedChallenges:verifierUsed});

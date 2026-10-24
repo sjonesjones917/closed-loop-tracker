@@ -133,7 +133,7 @@ export function evaluateFullRequirementProof(requirement,bindings,observations,f
         if(!['EXECUTED_SYNTHETIC_PRODUCTION_ASSERTIONS','EXECUTED_SCHEMA_METADATA_ASSERTIONS','ACTUAL_BROWSER_CONTROL_ASSERTIONS','HUMAN_OBSERVATION','VERIFIED_EXTERNAL'].includes(observation.evidenceBasis))reject('UNSUPPORTED_ASSERTION_EVIDENCE_BASIS');
         if(observation.browserScope&&observation.evidenceBasis!=='ACTUAL_BROWSER_CONTROL_ASSERTIONS')reject('BROWSER_SCOPE_REQUIRES_ACTUAL_BROWSER_ASSERTION');if(observation.physicalDevice===true&&!['HUMAN_OBSERVATION','VERIFIED_EXTERNAL'].includes(observation.evidenceBasis))reject('PHYSICAL_SCOPE_REQUIRES_ACCEPTED_PHYSICAL_EVIDENCE');
         observedKinds.add(observation.evidenceBasis);if(observation.browserScope){externalScopes.add(observation.browserScope);const key=observation.checkId.replace(/^browser\.(?:LOCAL|DEPLOYED)\./,'');if(!browserCases.has(key))browserCases.set(key,new Set());browserCases.get(key).add(observation.browserScope);}if(observation.physicalDevice===true)externalScopes.add('ACTUAL_IPHONE_SAFARI');
-        for(const inputPath of reference.suite==='physical-iphone'?['verify-mobile-acceptance-evidence.mjs','evaluate-mobile-acceptance-submission.mjs','verification-evidence.mjs']:[reference.suite,'verification-evidence-catalog.mjs',...(verificationCatalog[reference.suite]?.sourceInputs||browserVerificationCatalog[reference.suite]?.sourceInputs||[]),...(browserVerificationCatalog[reference.suite]?['browser-execution-evidence.mjs','operator-browser-driver.mjs']:[])])if(!(Array.isArray(retainedReview?.reviewedInputs)?retainedReview.reviewedInputs:[]).some(input=>input?.path===inputPath&&input?.sha256===fingerprint.inputSha256[inputPath]))reject('COVERAGE_REVIEW_TEST_INPUT_MISMATCH');
+        for(const inputPath of reference.suite==='physical-iphone'?['verify-mobile-acceptance-evidence.mjs','evaluate-mobile-acceptance-submission.mjs','mobile-acceptance-claim.mjs','verification-evidence.mjs']:[reference.suite,'verification-evidence-catalog.mjs',...(verificationCatalog[reference.suite]?.sourceInputs||browserVerificationCatalog[reference.suite]?.sourceInputs||[]),...(browserVerificationCatalog[reference.suite]?['browser-execution-evidence.mjs','operator-browser-driver.mjs']:[])])if(!(Array.isArray(retainedReview?.reviewedInputs)?retainedReview.reviewedInputs:[]).some(input=>input?.path===inputPath&&input?.sha256===fingerprint.inputSha256[inputPath]))reject('COVERAGE_REVIEW_TEST_INPUT_MISMATCH');
         references.push({role,obligationId:obligation.id,checkId:observation.checkId,suite:observation.suite,receiptSha256:observation.receiptSha256});
       }
     }
@@ -432,8 +432,9 @@ export function aggregateExecutedEvidence(receipts,fingerprint,{mobile=null}={})
 }
 function mobileObservations(mobile,fingerprint,{fresh=false}={}){
   requireEvidence(plain(mobile)&&plain(mobile.expected)&&mobile.expected.sourceCommit===fingerprint.sourceCommit&&nonempty(mobile.submitter),'physical proof needs exact current source and authenticated submitter');
+  requireEvidence(mobile.requireChallengeClaim===true,'physical proof requires a validated durable challenge claim');
   const expected={...mobile.expected,...(fresh?{verificationTime:new Date().toISOString()}: {})};
-  const summary=evaluateMobileAcceptanceSubmission({targetJson:mobile.targetJson,evidenceJson:mobile.evidenceJson,expected,usedChallenges:mobile.usedChallenges,submitter:mobile.submitter});
+  const summary=evaluateMobileAcceptanceSubmission({...mobile,expected,requireChallengeClaim:true});
   requireEvidence(summary.mobileAcceptanceResult==='ACCEPTED','raw physical target/evidence was not accepted by its owner');
   const evidence=JSON.parse(mobile.evidenceJson),receiptSha256=sha(mobile);
   return REQUIRED_MOBILE_RECEIPT_KINDS.map(kind=>({checkId:`physical-iphone.${kind}`,suite:'physical-iphone',passed:true,evidenceBasis:evidence.evidenceBasis,physicalDevice:true,boundary:'Attributed physical iPhone Safari observation plus application-observed current-bound operation receipt',assertionReference:kind,expected:'Valid current physical acceptance operation receipt',observed:evidence.operationReceipts.find(row=>row.kind===kind),receiptSha256}));
@@ -450,7 +451,19 @@ export async function readReleaseExecutedEvidence(file,{siteDirectory,directory=
     requireEvidence(process.env.GITHUB_EVENT_NAME==='workflow_dispatch'&&nonempty(submitter)&&submitter===process.env.GITHUB_ACTOR,'physical proof requires the authenticated workflow submission actor');
     const expected=await deployedExpected();
     requireEvidence(expected.deploymentManifestDigest===manifest.manifestDigest.digest&&expected.buildIdentity===manifest.buildIdentity&&isDeepStrictEqual(expected.runtimeResources,manifest.runtimeResources),'physical submission deployed bytes differ from verified site');
-    const submission={targetJson,evidenceJson,expected,usedChallenges,submitter};mobileResult=evaluateMobileAcceptanceSubmission(submission);if(mobileResult.mobileAcceptanceResult==='ACCEPTED'){mobile=submission;mobileObservations(mobile,fingerprint);}
+    // The create-only repository ref binds a challenge to one exact dispatch
+    // attempt and input byte pair. CI reads it; it never creates or updates it.
+    const {readCurrentMobileChallengeClaim}=await import('./mobile-acceptance-claim.mjs');
+    const acceptanceContext={repository:process.env.GITHUB_REPOSITORY,runId:process.env.GITHUB_RUN_ID,runAttempt:process.env.GITHUB_RUN_ATTEMPT};
+    let durableClaim=null,claimError=null;
+    try{durableClaim=await readCurrentMobileChallengeClaim({targetJson,evidenceJson,sourceCommit:expected.sourceCommit,...acceptanceContext});}catch(error){claimError=String(error.message);}
+    // This one marker is the current reserved claim, not an earlier consumption.
+    // Every other marker remains a reused challenge. A mismatched claim never
+    // reaches this exclusion and cannot turn a previously used challenge fresh.
+    const priorUsed=durableClaim?usedChallenges.filter(value=>String(value).toLowerCase()!==durableClaim.claim.challenge):usedChallenges;
+    const submission={targetJson,evidenceJson,expected,usedChallenges:priorUsed,submitter,requireChallengeClaim:true,challengeClaim:durableClaim?.claim||null,acceptanceContext,...(durableClaim?{challengeClaimReference:{ref:durableClaim.ref,tagObjectSha:durableClaim.tagObjectSha,tagSha256:durableClaim.tagSha256}}:{})};
+    mobileResult=evaluateMobileAcceptanceSubmission(submission);if(claimError)mobileResult.mobileAcceptanceBlockers?.[0]?.details.push({code:'MOBILE_CHALLENGE_REPOSITORY_READ_FAILED',message:claimError});
+    if(mobileResult.mobileAcceptanceResult==='ACCEPTED'){mobile=submission;mobileObservations(mobile,fingerprint);}
   }
   const output=aggregateExecutedEvidence(receipts,fingerprint,{mobile});if(mobileResult)output.externalMobileResult=mobileResult;output.evidenceSha256=sha(output);
   validatedEvidenceDigests.set(output,{digest:sha(output),cwd:process.cwd(),releaseManifest:manifest,specificationIdentity:specificationAcceptanceIdentity(process.cwd(),fingerprint),contractIdentities:{registryIdentities:manifest.registryIdentities,testIrIdentities:manifest.testIrIdentities}});return output;

@@ -17,15 +17,22 @@ for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js
 const engine=globalThis.closedLoopWorkflowEngine,schema=globalThis.closedLoopWorkflowSchema,hash=globalThis.closedLoopHash;
 const directory=path.resolve(process.env.OPERATOR_EVIDENCE_DIR||'operator-evidence'),browser=await createOperatorBrowser({directory,captureExecution:true});
 const report={basis:'SYNTHETIC_EXTERNAL_COUNTERPART_WITH_ACTUAL_BROWSER_FILE_TRANSPORT',humanIndependenceEstablished:false,physicalDeviceAcceptance:false,viewportChecks:[],stages:[],operations:[],presentationCases:[],failures:[],complete:false};
-let snapshot,stage=1,sequence=0,rejected=false,reloaded=false;
+let snapshot,stage=1,sequence=0,rejected=false,reloaded=false,interrupted=false,closingBrowser;const supplementalBrowsers=new Set();
 function preserveReport(){
+ if(interrupted)report.complete=false;
  report.events=browser.events;
  const destination=path.join(directory,'journey.json'),pending=destination+'.pending';
  fs.writeFileSync(pending,JSON.stringify(report,null,2)+'\n');fs.renameSync(pending,destination);
 }
+async function closeBrowser(){
+ closingBrowser??=(async()=>{const closed=await Promise.allSettled([browser.close(),...[...supplementalBrowsers].map(driver=>driver.close())]);if(closed[0].status==='fulfilled')report.browserClosure=closed[0].value;const failure=closed.find(row=>row.status==='rejected');if(failure){report.complete=false;report.browserClosureError=String(failure.reason?.message||failure.reason);}preserveReport();if(failure)throw failure.reason;return report.browserClosure;})();
+ return closingBrowser;
+}
 process.once('SIGTERM',()=>{
+ interrupted=true;report.complete=false;
  report.failures.push({stage,sequence,phase:report.currentOperation?.phase||'STARTUP',message:'The operator journey was interrupted before completion. Retained observations do not establish the unexecuted checks.'});
- preserveReport();console.error(JSON.stringify({operatorJourneyInterrupted:true,stage,sequence,completedStages:report.stages.length,currentOperation:report.currentOperation}));process.exit(143);
+ preserveReport();console.error(JSON.stringify({operatorJourneyInterrupted:true,stage,sequence,completedStages:report.stages.length,currentOperation:report.currentOperation}));
+ void closeBrowser().catch(error=>{report.browserClosureError=String(error.message||error);preserveReport();}).finally(()=>process.exit(143));
 });
 
 async function captureOperationLatency(driver=browser){
@@ -104,6 +111,7 @@ try{
   // not a physical-device or independent-human acceptance assertion.
   for(const [width,height]of [[320,568],[1280,800]]){
     const check=await createOperatorBrowser({directory:path.join(directory,'viewport-'+width),width,height});
+    supplementalBrowsers.add(check);
     try{
       await check.click('#new-project');
       await check.fill('[data-job="JOB_TITLE"]','Operator action viewport '+width);
@@ -125,7 +133,7 @@ try{
       assert.equal(await check.visible('#next-export-prompt-file'),true,'Workflow navigation lost the primary control at '+width+'px');
       assert.equal(check.exceptions().length,0,'Viewport check raised a browser exception');
       report.viewportChecks.push({width,height,result:'PASS',view,exportSha256:file.sha256,events:check.events});preserveReport();
-    }finally{await check.close();}
+    }finally{await check.close();supplementalBrowsers.delete(check);}
   }
   await browser.click('#new-project');await browser.fill('[data-job="JOB_TITLE"]','Complete operator journey');await browser.fill('[data-job="EXACT_USER_OBJECTIVE_VERBATIM"]',OBJECTIVE);await browser.click('#save-job');assert.equal(await browser.evaluate(`document.querySelector('[data-view="Workflow"]')?.getAttribute('aria-selected')==='true'`),true,'Saving project information did not advance to Workflow.');assert.equal(await browser.visible('#next-required-action'),true,'Saving project information did not place the next required action in the viewport.');assert.equal(await browser.visible('#next-required-action #next-export-prompt-file'),true,'The actual Stage 01 export control is not inside the visible next-action region.');await saved();
   for(stage=1;stage<=30;stage++){
@@ -156,5 +164,5 @@ try{
   await captureOperationLatency();assert.equal(report.operationLatency.thresholdMs,1500,'Operator loading threshold changed outside D-1 configured default.');assert.ok(report.operationLatency.samples.length>0,'Complete journey did not record operation latency.');assert.ok(report.operationLatency.samples.every(sample=>Number.isFinite(sample.durationMs)&&sample.durationMs>=0),'Operation latency evidence contains an invalid duration.');
   assert.deepEqual(browser.exceptions(),[]);assert.equal(report.stages.length,30);report.browserExecution=await browser.executionEvidence();report.complete=true;
 }catch(error){report.failures.push({stage,sequence,message:error.stack});console.error(error);process.exitCode=1;try{report.failureView=await browser.evaluate(`(()=>{const node=document.querySelector('#next-required-action'),rect=node?.getBoundingClientRect();return {stage:document.querySelector('#stage-picker')?.value,width:innerWidth,height:innerHeight,scrollY,action:node?.innerText,rect:rect?.toJSON(),active:document.activeElement?.id,loading:document.querySelector('#app')?.getAttribute('aria-busy')};})()`);await browser.inspect(stage);}catch{}}
-finally{try{await captureOperationLatency();}catch(error){report.latencyReadFailure=String(error.message||error);}preserveReport();await browser.close();}
+finally{if(!interrupted)try{await captureOperationLatency();}catch(error){report.latencyReadFailure=String(error.message||error);}preserveReport();await closeBrowser();}
 console.log(JSON.stringify({completeOperatorJourney:report.complete,browserExecution:report.browserExecution,operationCases:report.operations,presentationCases:report.presentationCases,stages:report.stages.length,operations:report.operations.length,failures:report.failures,operationLatency:report.operationLatency,preDeliveryBackup:report.preDeliveryBackup,finalBackupHistory:report.finalBackupHistory,backupRestore:report.backupRestore},null,2));

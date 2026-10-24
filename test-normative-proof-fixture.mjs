@@ -11,6 +11,7 @@ import {verificationCatalog,browserVerificationCatalog} from './verification-evi
 import {SPECIFICATION_PATH,sha,evidenceFingerprint,coverageDeclarationSha256,createExecutionReceipt,aggregateExecutedEvidence,readExecutedEvidence} from './verification-evidence.mjs';
 export function createNormativeProofFixture(){
   const original=process.cwd(),directory=fs.mkdtempSync(path.join(os.tmpdir(),'closed-loop-normative-proof-'));
+  let retainFailedProducerFixture=false;
   const normativePath=SPECIFICATION_PATH.replace('closed-loop-reliability-controlling-implementation-specification.txt','closed-loop-normative-requirements.json'),bindingsPath='verification-assertion-bindings.json',reviewPath='verification/disposable-coverage-review.json',suite='verify-test-runtime-v3.mjs',checkId='test-ir.unknown-operation';
   const copy=relative=>{const target=path.join(directory,relative);fs.mkdirSync(path.dirname(target),{recursive:true});fs.copyFileSync(path.join(original,relative),target);};
   try{
@@ -54,8 +55,26 @@ export function createNormativeProofFixture(){
     cp.execFileSync('git',['init','--quiet'],{cwd:directory});cp.execFileSync('git',['add','.'],{cwd:directory});cp.execFileSync('git',['-c','user.name=Disposable proof fixture','-c','user.email=fixture@localhost','commit','--quiet','-m','Isolated normative proof consumer'],{cwd:directory});
     const fingerprint=evidenceFingerprint(directory);
     assert.equal(fingerprint.inputSha256['verification/normative-context-applicability-20261005.json'],undefined,'NORMATIVE_PROOF_HISTORICAL_CONTEXT_ISOLATION_ORACLE');
-    const execution=cp.spawnSync(process.execPath,[suite],{cwd:directory,encoding:'utf8',timeout:60000,maxBuffer:16*1024*1024,env:{...process.env,NODE_OPTIONS:''}});
-    assert.equal(execution.status,0,'NORMATIVE_PROOF_ACTUAL_PRODUCER_ORACLE: '+execution.stderr);
+    const producerStartedAt=new Date().toISOString(),producerStarted=process.hrtime.bigint(),producerTimeoutMs=60000,producerMaxBuffer=16*1024*1024;
+    const rawExecution=cp.spawnSync(process.execPath,[suite],{cwd:directory,timeout:producerTimeoutMs,maxBuffer:producerMaxBuffer,env:{...process.env,NODE_OPTIONS:''}});
+    const producerDurationMs=Number(process.hrtime.bigint()-producerStarted)/1e6;
+    const execution={...rawExecution,stdout:rawExecution.stdout?.toString('utf8')??'',stderr:rawExecution.stderr?.toString('utf8')??''};
+    let producerFailureDiagnostics;
+    if(execution.status!==0){
+      // Preserve only failed synthetic executions, after the producer stopped.
+      // Diagnostic files remain outside the fingerprinted fixture and never
+      // become an execution receipt or a substitute for a successful producer.
+      retainFailedProducerFixture=true;
+      const diagnosticsDirectory=directory+'-producer-failure',stdoutPath=path.join(diagnosticsDirectory,'stdout.bin'),stderrPath=path.join(diagnosticsDirectory,'stderr.bin');
+      producerFailureDiagnostics={schema:'closed-loop-normative-proof-producer-diagnostic/1',scope:'FAILED_SYNTHETIC_PRODUCER_DIAGNOSTIC',outcome:'FAIL',ordinaryExecutionReceipt:false,currentAtomicProof:false,fixtureDirectory:directory,diagnosticsDirectory,command:[process.execPath,suite],pid:execution.pid??null,status:execution.status??null,signal:execution.signal??null,error:execution.error?{name:execution.error.name,code:execution.error.code??null,message:execution.error.message,errno:execution.error.errno??null,syscall:execution.error.syscall??null}:null,timeoutMs:producerTimeoutMs,timedOut:execution.error?.code==='ETIMEDOUT',maxBufferBytes:producerMaxBuffer,startedAt:producerStartedAt,endedAt:new Date().toISOString(),durationMs:producerDurationMs,stdout:{path:stdoutPath,byteLength:rawExecution.stdout?.length??0},stderr:{path:stderrPath,byteLength:rawExecution.stderr?.length??0},sourceFingerprint:{sourceCommit:fingerprint.sourceCommit,sourceInputsSha256:fingerprint.sourceInputsSha256,specificationSha256:fingerprint.specificationSha256,path:path.join(diagnosticsDirectory,'source-fingerprint.json')}};
+      try{
+        fs.mkdirSync(diagnosticsDirectory);
+        fs.writeFileSync(stdoutPath,rawExecution.stdout??Buffer.alloc(0));fs.writeFileSync(stderrPath,rawExecution.stderr??Buffer.alloc(0));
+        fs.writeFileSync(producerFailureDiagnostics.sourceFingerprint.path,JSON.stringify(fingerprint,null,2)+'\n');
+        fs.writeFileSync(path.join(diagnosticsDirectory,'terminal.json'),JSON.stringify(producerFailureDiagnostics,null,2)+'\n');
+      }catch(error){producerFailureDiagnostics.diagnosticPreservationError={code:error.code??null,message:error.message};}
+    }
+    assert.equal(execution.status,0,'NORMATIVE_PROOF_ACTUAL_PRODUCER_ORACLE: '+execution.stderr+(producerFailureDiagnostics?'\n'+JSON.stringify(producerFailureDiagnostics):''));
     const receipt=createExecutionReceipt(suite,{command:[process.execPath,suite],exitCode:execution.status,outcome:'PASS',stdout:execution.stdout,stderr:execution.stderr,signal:execution.signal},{cwd:directory,fingerprint});
     const withScope=callback=>{const before=process.cwd();process.chdir(directory);try{return callback();}finally{process.chdir(before);}};
     const receipts=new Map([[suite,receipt]]),aggregate=withScope(()=>aggregateExecutedEvidence(receipts,fingerprint));
@@ -65,5 +84,5 @@ export function createNormativeProofFixture(){
     assert.equal(evidence.fullRequirementProofs.requirements[0].disposition,'CONFORMANT_PROVEN','NORMATIVE_PROOF_VALID_PROGRESS_ORACLE');
     const observations=new Map(receipt.observations.map(row=>[row.checkId,{...row,suite,receiptSha256:receipt.receiptSha256}]));
     return {directory,sourceUniverse:'HISTORICAL_SOURCE_TRACE_722382ED',currentAtomicProof:false,requirement,binding,review,reviewPath,fingerprint,receipt,receipts,evidence,evidencePath,observations,withScope,dispose:()=>fs.rmSync(directory,{recursive:true,force:true})};
-  }catch(error){fs.rmSync(directory,{recursive:true,force:true});throw error;}
+  }catch(error){if(!retainFailedProducerFixture)fs.rmSync(directory,{recursive:true,force:true});throw error;}
 }
