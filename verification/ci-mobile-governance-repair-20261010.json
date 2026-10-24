@@ -1,0 +1,213 @@
+{
+  "schema": "closed-loop-mobile-governance-fixture-repair/1",
+  "recordedAtUtc": "2026-10-10T16:13:10.125967+00:00",
+  "authorContext": "/root/activation_delta",
+  "examinedCommit": "1599f9cfb33cc246292ade693c877fbe200b1986",
+  "changedFile": "verify-mobile-release-governance.mjs",
+  "beforeSha256": "54d0cc77b48ff5bb86c6d0ceb7968e9678e6baec312e102a0b1e57782459a3ab",
+  "currentSha256": "87f5f9e7cde239e13d3a392613e263d3df6cd94bd2fd69751727137ad9d35dd2",
+  "classification": [
+    "TESTING",
+    "CI",
+    "FIXTURE_CONTRACT_DRIFT"
+  ],
+  "confirmedDefects": [
+    {
+      "id": "MOBILE-GOVERNANCE-STALE-JOB-INVENTORY",
+      "severity": "MANDATORY_CI_BLOCKER",
+      "basis": "Exact Node22.23.3 current owner exits1 at CI_JOB_PERMISSION_ORACLE: job permission inventory changed; actual conformance job missing from fixed expected inventory.",
+      "cause": "Conformance split changed required workflow job inventory without adapting permission suite expected keys.",
+      "preFixExecution": {
+        "command": [
+          "/workspace/scratch/runtime/node_modules/node/bin/node",
+          "verify-mobile-release-governance.mjs"
+        ],
+        "startUtc": "2026-10-10T16:09:55.513798+00:00",
+        "endUtc": "2026-10-10T16:09:55.978885+00:00",
+        "elapsedSeconds": 0.465,
+        "exitCode": 1
+      }
+    },
+    {
+      "id": "MOBILE-GOVERNANCE-STALE-FAULT-ANCHOR",
+      "severity": "MANDATORY_CI_BLOCKER",
+      "basis": "Isolated fixture repaired only inventory; owner then exits1 Missing expected exception for test-pages-write.",
+      "cause": "Exact mutation string included old needs: deferred-matrix; current needs array prevents substitution so negative control is unchanged valid workflow.",
+      "preFixExecution": {
+        "command": [
+          "/workspace/scratch/runtime/node_modules/node/bin/node",
+          "/workspace/scratch/mobile-release-governance/inventory-only-repair.mjs"
+        ],
+        "startUtc": "2026-10-10T16:10:17.573711+00:00",
+        "endUtc": "2026-10-10T16:10:18.139410+00:00",
+        "elapsedSeconds": 0.566,
+        "exitCode": 1
+      }
+    }
+  ],
+  "correction": "Match exactly one named job and its explicit permissions; mutate one exact permission line with no-op/duplicate anchor rejection. Expected closed inventory covers approved foundation/deferred/workflow-gates/conformance/test/deploy/verify-live/publish-status graph without changing privilege values.",
+  "caseEquivalenceMap": [
+    {
+      "before": "former-inherited-writes",
+      "after": "former-inherited-writes",
+      "assertion": "Same CI_JOB_PERMISSION_ORACLE rejection and restored baseline assertion retained; mutation restricted to exact relevant block."
+    },
+    {
+      "before": "matrix-pages-write",
+      "after": "matrix-pages-write",
+      "assertion": "Same CI_JOB_PERMISSION_ORACLE rejection and restored baseline assertion retained; mutation restricted to exact relevant block."
+    },
+    {
+      "before": "missing-matrix-artifact-read",
+      "after": "missing-matrix-artifact-read",
+      "assertion": "Same CI_JOB_PERMISSION_ORACLE rejection and restored baseline assertion retained; mutation restricted to exact relevant block."
+    },
+    {
+      "before": "test-pages-write",
+      "after": "test-pages-write",
+      "assertion": "Same CI_JOB_PERMISSION_ORACLE rejection and restored baseline assertion retained; mutation restricted to exact relevant block."
+    },
+    {
+      "before": "missing-test-artifact-read",
+      "after": "missing-test-artifact-read",
+      "assertion": "Same CI_JOB_PERMISSION_ORACLE rejection and restored baseline assertion retained; mutation restricted to exact relevant block."
+    },
+    {
+      "before": "missing-deployment-oidc",
+      "after": "missing-deployment-oidc",
+      "assertion": "Same CI_JOB_PERMISSION_ORACLE rejection and restored baseline assertion retained; mutation restricted to exact relevant block."
+    },
+    {
+      "before": "missing-deployment-pages",
+      "after": "missing-deployment-pages",
+      "assertion": "Same CI_JOB_PERMISSION_ORACLE rejection and restored baseline assertion retained; mutation restricted to exact relevant block."
+    },
+    {
+      "before": "live-status-write",
+      "after": "live-status-write",
+      "assertion": "Same CI_JOB_PERMISSION_ORACLE rejection and restored baseline assertion retained; mutation restricted to exact relevant block."
+    }
+  ],
+  "addedCases": [
+    "foundation-pages-write",
+    "workflow-gates-pages-write",
+    "conformance-pages-write",
+    "missing-foundation-artifact-read",
+    "missing-workflow-gates-artifact-read",
+    "missing-conformance-artifact-read"
+  ],
+  "unchangedCoverage": [
+    "All mobile evidence controls, physical proof identity/challenge/source/origin/expiry/absence rules and valid supported control",
+    "Two repository-write mutation controls",
+    "Unconditional tag eligibility, hardcoded-block and omitted strict-evaluator faults",
+    "All existing machine report fields and catalog assertion IDs"
+  ],
+  "limits": [
+    "This record authored by correction agent, not independent review.",
+    "No physical iPhone, actual deployment, browser or release conformance claim."
+  ],
+  "metadataAssessment": {
+    "retainedRequirementReviewDirectSourceBindings": 0,
+    "existingPartialNormativeBindings": 3,
+    "fullCoverageRenewalNeededForThisOwnerAlone": false
+  },
+  "checks": [
+    {
+      "command": "node --check verify-mobile-release-governance.mjs",
+      "node": "22.23.3",
+      "exitCode": 0
+    },
+    {
+      "command": "git diff --check -- verify-mobile-release-governance.mjs",
+      "exitCode": 0
+    }
+  ],
+  "postFixExecution": {
+    "command": [
+      "/workspace/scratch/runtime/node_modules/node/bin/node",
+      "verify-mobile-release-governance.mjs"
+    ],
+    "workflowSha256": "6c7e49b28ad578797a2c15122d425909a3614af7b77ce636e192c009dd8d923a",
+    "ownerSha256": "87f5f9e7cde239e13d3a392613e263d3df6cd94bd2fd69751727137ad9d35dd2",
+    "startUtc": "2026-10-10T16:14:18.724994+00:00",
+    "endUtc": "2026-10-10T16:14:19.290575+00:00",
+    "elapsedSeconds": 0.566,
+    "exitCode": 0
+  },
+  "postFixResult": {
+    "mobileReleaseGovernance": "PASS",
+    "jobPermissionFaults": [
+      {
+        "fault": "former-inherited-writes",
+        "result": "DETECTED",
+        "restored": "PASS"
+      },
+      {
+        "fault": "foundation-pages-write",
+        "result": "DETECTED",
+        "restored": "PASS"
+      },
+      {
+        "fault": "missing-foundation-artifact-read",
+        "result": "DETECTED",
+        "restored": "PASS"
+      },
+      {
+        "fault": "matrix-pages-write",
+        "result": "DETECTED",
+        "restored": "PASS"
+      },
+      {
+        "fault": "missing-matrix-artifact-read",
+        "result": "DETECTED",
+        "restored": "PASS"
+      },
+      {
+        "fault": "workflow-gates-pages-write",
+        "result": "DETECTED",
+        "restored": "PASS"
+      },
+      {
+        "fault": "missing-workflow-gates-artifact-read",
+        "result": "DETECTED",
+        "restored": "PASS"
+      },
+      {
+        "fault": "conformance-pages-write",
+        "result": "DETECTED",
+        "restored": "PASS"
+      },
+      {
+        "fault": "missing-conformance-artifact-read",
+        "result": "DETECTED",
+        "restored": "PASS"
+      },
+      {
+        "fault": "test-pages-write",
+        "result": "DETECTED",
+        "restored": "PASS"
+      },
+      {
+        "fault": "missing-test-artifact-read",
+        "result": "DETECTED",
+        "restored": "PASS"
+      },
+      {
+        "fault": "missing-deployment-oidc",
+        "result": "DETECTED",
+        "restored": "PASS"
+      },
+      {
+        "fault": "missing-deployment-pages",
+        "result": "DETECTED",
+        "restored": "PASS"
+      },
+      {
+        "fault": "live-status-write",
+        "result": "DETECTED",
+        "restored": "PASS"
+      }
+    ],
+    "repositoryMutationFaultCount": 2
+  }
+}

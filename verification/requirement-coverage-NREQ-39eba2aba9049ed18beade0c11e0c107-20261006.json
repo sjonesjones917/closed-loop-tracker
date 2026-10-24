@@ -1,0 +1,618 @@
+{
+  "schema": "closed-loop-requirement-coverage-review/1",
+  "normativeRequirementId": "NREQ-39eba2aba9049ed18beade0c11e0c107",
+  "sourceLineSha256": "f9380412c073605f92a34bedf33748f4069ea11c6da52184d846cc49d9278caa",
+  "specificationSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
+  "declarationSha256": "3f29c46a8871beab86cd0cf9fbaf35a176ca596d5b59ede5c79c6c7da90d7bed",
+  "decision": "COMPLETE_COVERAGE",
+  "evidenceBasis": "EXTERNALLY_SUPPORTED",
+  "method": "Independent renewed review of the unchanged exact source clause/declaration and unchanged direct production owner, preserving the retained prior semantic rationale, with explicit current dependency and test-input reconciliation. This review determines declaration sufficiency only; no prior execution is converted into a current PASS.",
+  "author": {
+    "actor": "Codex dependency recertification author",
+    "contextId": "/root/ci_delivery_audit"
+  },
+  "reviewer": {
+    "actor": "Codex independent dependency recertification reviewer",
+    "contextId": "/root/stage_contract_audit/late_stage_audit"
+  },
+  "reviewedInputs": [
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d"
+    },
+    {
+      "path": "verification-evidence-catalog.mjs",
+      "sha256": "feedf2e728fca37acf303536dd55216389d591567c1ab89236a53aa0b2d19eed"
+    },
+    {
+      "path": "verification/normative-context-applicability-20261005.json",
+      "sha256": "7cd05ff0028578a1ca1c2560533519a602ce6a974c240ee11dbbd272524cf656"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-39eba2aba9049ed18beade0c11e0c107-20261005.json",
+      "sha256": "3bcdcb76189ed0f6ce37aeb5ebbd2dc3bac7b1ffe914410f97ad599882a6063f"
+    },
+    {
+      "path": "verifier-runtime.mjs",
+      "sha256": "8a4c9058b6c72a5aa8dd68809e3cbfd8e5c217b358c41970347443a338f83933"
+    },
+    {
+      "path": "verify-stage-contract-closure.mjs",
+      "sha256": "34bf379a0b6acdbdb07158b8ecc833b498ec39832fdc5b9f34a08913607e6777"
+    },
+    {
+      "path": "workbook.js",
+      "sha256": "3a8098a9bb4ea108eadaa9bec90c76a1522f57f6465f45341cedf60937ddd008"
+    },
+    {
+      "declarationSha256": "3f29c46a8871beab86cd0cf9fbaf35a176ca596d5b59ede5c79c6c7da90d7bed"
+    }
+  ],
+  "findings": [],
+  "reviewPerformed": true,
+  "reviewCompletedAt": "2026-10-06T20:26:45.082955+00:00",
+  "sourceLocation": {
+    "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+    "startLine": 3654,
+    "endLine": 3654,
+    "lineSha256": "f9380412c073605f92a34bedf33748f4069ea11c6da52184d846cc49d9278caa"
+  },
+  "controllingText": "Stage 30 — PRESERVE FAILURES PERMANENTLY AND CLOSE DELIVERY",
+  "governingContext": [],
+  "additionalControllingContext": [],
+  "reviewedChecks": [
+    {
+      "suite": "verify-stage-contract-closure.mjs",
+      "checkId": "declaration.stage30.title"
+    }
+  ],
+  "semanticDecision": "EXACT_FINITE_SCHEMA_DECLARATION",
+  "reason": "The exact Stage30 title in the controlling source is preserved in workbook.js and checked by an independent literal assertion against the actually loaded stage declaration. This establishes the title declaration only; terminal command, history and delivery behavior remain separate source clauses.",
+  "scopeLimit": "No all-stage operation behavior, real external-agent journey or maturity claim.",
+  "actorIndependenceBoundary": "The current recertification author /root/ci_delivery_audit is distinct from the actual independent reviewer /root/stage_contract_audit/late_stage_audit. Attributed identity and hashes do not establish hidden context; prior semantic review attribution is retained separately.",
+  "reviewerPriorContributionDisclosure": "The reviewer performed an independent late-stage code/specification audit in this repair task, separate from this recertification author. No claim of source-only extraction or independent authorship of every implementation/test is made.",
+  "retainedReviewInputs": {
+    "proposal": {
+      "path": "/workspace/scratch/stage-declaration-bindings-proposal.json",
+      "sha256": "82964ba5e0f13e7176c3969436171aa43f945becabd95a36e6e526e6a9af2112"
+    },
+    "priorSemanticReview": {
+      "path": "/workspace/scratch/independent-full-coverage-semantic-review-current45.json",
+      "sha256": "8b76d6c6c1425220853a1798090edf609fadde97ad840f2699e006b7ed2bb866"
+    },
+    "currentProposal": {
+      "path": "/tmp/closed-loop-evidence/38-dependency-recertifications-proposed-edd5ca4d39eee03b9bdea891cf60c1f3f3ce181843c5ee24cca1738f250df944.json",
+      "sha256": "edd5ca4d39eee03b9bdea891cf60c1f3f3ce181843c5ee24cca1738f250df944"
+    }
+  },
+  "qualifiedExecutionAndReviewEvidence": [
+    {
+      "path": "/workspace/scratch/independent-stage-declaration-controls-current45.json",
+      "sha256": "cde928d67fb93f846a6b56a72100306ba1be2aae30e37d7f2da436ce798de6c7",
+      "qualification": "Retained actual boundary/source tuple only; this reference does not substitute for current canonical executed receipts."
+    },
+    {
+      "path": "/workspace/scratch/stage-declaration-collector-integration.json",
+      "sha256": "ec78917b631ca3f8a0f3efb0e366480161707c72d03cd918f6b07b78d682d82e",
+      "qualification": "Retained actual boundary/source tuple only; this reference does not substitute for current canonical executed receipts."
+    }
+  ],
+  "currentExecutionRequired": true,
+  "applicationConformanceClaim": false,
+  "priorReview": {
+    "path": "verification/requirement-coverage-NREQ-39eba2aba9049ed18beade0c11e0c107-20261005.json",
+    "sha256": "3bcdcb76189ed0f6ce37aeb5ebbd2dc3bac7b1ffe914410f97ad599882a6063f",
+    "author": {
+      "actor": "Codex declaration author",
+      "contextId": "/root/stage_regressions"
+    },
+    "reviewer": {
+      "actor": "Codex independent declaration reviewer",
+      "contextId": "/root/independent_spec"
+    },
+    "reviewCompletedAt": "2026-10-05T17:00:42.341Z"
+  },
+  "currentDependencyReconciliation": {
+    "classification": "ONLY_REVIEWED_DEPENDENCIES_CHANGED",
+    "priorStaleInputs": [
+      "verification-evidence-catalog.mjs"
+    ],
+    "newRequiredInputs": [],
+    "unchangedDeclarationSha256": "3f29c46a8871beab86cd0cf9fbaf35a176ca596d5b59ede5c79c6c7da90d7bed",
+    "unchangedDirectOwners": [
+      {
+        "path": "workbook.js",
+        "sha256": "3a8098a9bb4ea108eadaa9bec90c76a1522f57f6465f45341cedf60937ddd008"
+      }
+    ],
+    "owningSuites": [
+      "verify-stage-contract-closure.mjs"
+    ],
+    "sourceReviewStatus": "APPROVED_EXACT_CURRENT_INPUTS_NO_EXECUTION_CLAIM",
+    "independentRationale": "No changed owner/test semantics for the claimed primitive/integer/canonical/title/role. Changed schema and adapter additions do not alter corresponding owner; authorized synthetic setup/carrier changes must be source-bound and cannot stand for actual external work.",
+    "independentApproval": {
+      "path": "/tmp/closed-loop-evidence/38-independent-recertification-review-0bccfbd20e60a2cd7a791897396f468fe1054d26901dbbb9e0806a31ef9c91ce.json",
+      "sha256": "0bccfbd20e60a2cd7a791897396f468fe1054d26901dbbb9e0806a31ef9c91ce",
+      "normativeRequirementId": "NREQ-39eba2aba9049ed18beade0c11e0c107",
+      "recordDecision": "COMPLETE_COVERAGE",
+      "executionDisposition": "NOT_EXECUTED_BY_THIS_REVIEW; exact current required producer receipt remains mandatory"
+    },
+    "catalogRefresh": {
+      "reviewedAtUtc": "2026-10-06T20:02:01.695572+00:00",
+      "path": "verification-evidence-catalog.mjs",
+      "priorSha256": "b5fb7656f362ecf431144eb17128b11b9d7361cc11f99437967b5a6c2a3e5062",
+      "currentSha256": "83ddfd41592602113b552ef386e4de5c5ccf8ee0c627e5cfd5f1d3b75082744e",
+      "proofOfExactDelta": "Replacing exactly one corrected expectedDescription phrase with its prior phrase reproduces priorb5fb hash; no assertion code, named38 checks or sourceInputs change.",
+      "reviewConclusion": "Approved dependency-only rebind to83dd for eight integrated approvals and narrow semantics of pending30. Description now identifies Stage2 baseline as prohibited extra, matching exact scope population.",
+      "executionsByThisReviewer": 0,
+      "remainingCondition": "Runtime30 final loader/carrier freeze still requires explicit owner confirmation; visible file bytes are not presumed final.",
+      "independentReview": {
+        "path": "/tmp/closed-loop-evidence/38-independent-recertification-review-87a37c76ed424162b98cb52639859838ab3645f5191a84383d77d07ba14e3f02.json",
+        "sha256": "87a37c76ed424162b98cb52639859838ab3645f5191a84383d77d07ba14e3f02"
+      }
+    },
+    "quarantineCatalogRefresh": {
+      "priorSha256": "83ddfd41592602113b552ef386e4de5c5ccf8ee0c627e5cfd5f1d3b75082744e",
+      "currentSha256": "feedf2e728fca37acf303536dd55216389d591567c1ab89236a53aa0b2d19eed",
+      "independentReview": {
+        "path": "/tmp/closed-loop-evidence/38-independent-recertification-review-1ce8d05370d3bb8b41f75072bc1748adfd0a613281012d98b40f64346d958afe.json",
+        "sha256": "1ce8d05370d3bb8b41f75072bc1748adfd0a613281012d98b40f64346d958afe"
+      },
+      "reviewedAtUtc": "2026-10-06T20:26:45.082955+00:00",
+      "scope": "Dependency-only review of the complete added quarantine helper and two new suite definitions. Existing named check predicates and source-input lists are unchanged; no quarantine clause proof or executed result is inferred."
+    }
+  },
+  "currentSourceReviewHistory": [
+    {
+      "sha256": "afada10364b42956b45f266735ea297ae35329d46b525c16c8918cf479c1b3ec",
+      "retainedEncoding": "Exact UTF-8 JSON.stringify(record,null,2) plus LF",
+      "record": {
+        "schema": "closed-loop-requirement-coverage-review/1",
+        "normativeRequirementId": "NREQ-39eba2aba9049ed18beade0c11e0c107",
+        "sourceLineSha256": "f9380412c073605f92a34bedf33748f4069ea11c6da52184d846cc49d9278caa",
+        "specificationSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
+        "declarationSha256": "3f29c46a8871beab86cd0cf9fbaf35a176ca596d5b59ede5c79c6c7da90d7bed",
+        "decision": "COMPLETE_COVERAGE",
+        "evidenceBasis": "EXTERNALLY_SUPPORTED",
+        "method": "Independent renewed review of the unchanged exact source clause/declaration and unchanged direct production owner, preserving the retained prior semantic rationale, with explicit current dependency and test-input reconciliation. This review determines declaration sufficiency only; no prior execution is converted into a current PASS.",
+        "author": {
+          "actor": "Codex dependency recertification author",
+          "contextId": "/root/ci_delivery_audit"
+        },
+        "reviewer": {
+          "actor": "Codex independent dependency recertification reviewer",
+          "contextId": "/root/stage_contract_audit/late_stage_audit"
+        },
+        "reviewedInputs": [
+          {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "sha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d"
+          },
+          {
+            "path": "verification-evidence-catalog.mjs",
+            "sha256": "4af6b3153c1aea23a6dbc2906662dcce1c53cb157281c2220317e7f59bc0db99"
+          },
+          {
+            "path": "verification/normative-context-applicability-20261005.json",
+            "sha256": "7cd05ff0028578a1ca1c2560533519a602ce6a974c240ee11dbbd272524cf656"
+          },
+          {
+            "path": "verification/requirement-coverage-NREQ-39eba2aba9049ed18beade0c11e0c107-20261005.json",
+            "sha256": "3bcdcb76189ed0f6ce37aeb5ebbd2dc3bac7b1ffe914410f97ad599882a6063f"
+          },
+          {
+            "path": "verifier-runtime.mjs",
+            "sha256": "8a4c9058b6c72a5aa8dd68809e3cbfd8e5c217b358c41970347443a338f83933"
+          },
+          {
+            "path": "verify-stage-contract-closure.mjs",
+            "sha256": "34bf379a0b6acdbdb07158b8ecc833b498ec39832fdc5b9f34a08913607e6777"
+          },
+          {
+            "path": "workbook.js",
+            "sha256": "3a8098a9bb4ea108eadaa9bec90c76a1522f57f6465f45341cedf60937ddd008"
+          },
+          {
+            "declarationSha256": "3f29c46a8871beab86cd0cf9fbaf35a176ca596d5b59ede5c79c6c7da90d7bed"
+          }
+        ],
+        "findings": [],
+        "reviewPerformed": true,
+        "reviewCompletedAt": "2026-10-06T19:35:42.746974+00:00",
+        "sourceLocation": {
+          "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+          "startLine": 3654,
+          "endLine": 3654,
+          "lineSha256": "f9380412c073605f92a34bedf33748f4069ea11c6da52184d846cc49d9278caa"
+        },
+        "controllingText": "Stage 30 — PRESERVE FAILURES PERMANENTLY AND CLOSE DELIVERY",
+        "governingContext": [],
+        "additionalControllingContext": [],
+        "reviewedChecks": [
+          {
+            "suite": "verify-stage-contract-closure.mjs",
+            "checkId": "declaration.stage30.title"
+          }
+        ],
+        "semanticDecision": "EXACT_FINITE_SCHEMA_DECLARATION",
+        "reason": "The exact Stage30 title in the controlling source is preserved in workbook.js and checked by an independent literal assertion against the actually loaded stage declaration. This establishes the title declaration only; terminal command, history and delivery behavior remain separate source clauses.",
+        "scopeLimit": "No all-stage operation behavior, real external-agent journey or maturity claim.",
+        "actorIndependenceBoundary": "The current recertification author /root/ci_delivery_audit is distinct from the actual independent reviewer /root/stage_contract_audit/late_stage_audit. Attributed identity and hashes do not establish hidden context; prior semantic review attribution is retained separately.",
+        "reviewerPriorContributionDisclosure": "The reviewer performed an independent late-stage code/specification audit in this repair task, separate from this recertification author. No claim of source-only extraction or independent authorship of every implementation/test is made.",
+        "retainedReviewInputs": {
+          "proposal": {
+            "path": "/workspace/scratch/stage-declaration-bindings-proposal.json",
+            "sha256": "82964ba5e0f13e7176c3969436171aa43f945becabd95a36e6e526e6a9af2112"
+          },
+          "priorSemanticReview": {
+            "path": "/workspace/scratch/independent-full-coverage-semantic-review-current45.json",
+            "sha256": "8b76d6c6c1425220853a1798090edf609fadde97ad840f2699e006b7ed2bb866"
+          },
+          "currentProposal": {
+            "path": "/tmp/closed-loop-evidence/38-dependency-recertifications-proposed-edd5ca4d39eee03b9bdea891cf60c1f3f3ce181843c5ee24cca1738f250df944.json",
+            "sha256": "edd5ca4d39eee03b9bdea891cf60c1f3f3ce181843c5ee24cca1738f250df944"
+          }
+        },
+        "qualifiedExecutionAndReviewEvidence": [
+          {
+            "path": "/workspace/scratch/independent-stage-declaration-controls-current45.json",
+            "sha256": "cde928d67fb93f846a6b56a72100306ba1be2aae30e37d7f2da436ce798de6c7",
+            "qualification": "Retained actual boundary/source tuple only; this reference does not substitute for current canonical executed receipts."
+          },
+          {
+            "path": "/workspace/scratch/stage-declaration-collector-integration.json",
+            "sha256": "ec78917b631ca3f8a0f3efb0e366480161707c72d03cd918f6b07b78d682d82e",
+            "qualification": "Retained actual boundary/source tuple only; this reference does not substitute for current canonical executed receipts."
+          }
+        ],
+        "currentExecutionRequired": true,
+        "applicationConformanceClaim": false,
+        "priorReview": {
+          "path": "verification/requirement-coverage-NREQ-39eba2aba9049ed18beade0c11e0c107-20261005.json",
+          "sha256": "3bcdcb76189ed0f6ce37aeb5ebbd2dc3bac7b1ffe914410f97ad599882a6063f",
+          "author": {
+            "actor": "Codex declaration author",
+            "contextId": "/root/stage_regressions"
+          },
+          "reviewer": {
+            "actor": "Codex independent declaration reviewer",
+            "contextId": "/root/independent_spec"
+          },
+          "reviewCompletedAt": "2026-10-05T17:00:42.341Z"
+        },
+        "currentDependencyReconciliation": {
+          "classification": "ONLY_REVIEWED_DEPENDENCIES_CHANGED",
+          "priorStaleInputs": [
+            "verification-evidence-catalog.mjs"
+          ],
+          "newRequiredInputs": [],
+          "unchangedDeclarationSha256": "3f29c46a8871beab86cd0cf9fbaf35a176ca596d5b59ede5c79c6c7da90d7bed",
+          "unchangedDirectOwners": [
+            {
+              "path": "workbook.js",
+              "sha256": "3a8098a9bb4ea108eadaa9bec90c76a1522f57f6465f45341cedf60937ddd008"
+            }
+          ],
+          "owningSuites": [
+            "verify-stage-contract-closure.mjs"
+          ],
+          "sourceReviewStatus": "APPROVED_EXACT_CURRENT_INPUTS_NO_EXECUTION_CLAIM",
+          "independentRationale": "No changed owner/test semantics for the claimed primitive/integer/canonical/title/role. Changed schema and adapter additions do not alter corresponding owner; authorized synthetic setup/carrier changes must be source-bound and cannot stand for actual external work.",
+          "independentApproval": {
+            "path": "/tmp/closed-loop-evidence/38-independent-recertification-review-0bccfbd20e60a2cd7a791897396f468fe1054d26901dbbb9e0806a31ef9c91ce.json",
+            "sha256": "0bccfbd20e60a2cd7a791897396f468fe1054d26901dbbb9e0806a31ef9c91ce",
+            "normativeRequirementId": "NREQ-39eba2aba9049ed18beade0c11e0c107",
+            "recordDecision": "COMPLETE_COVERAGE",
+            "executionDisposition": "NOT_EXECUTED_BY_THIS_REVIEW; exact current required producer receipt remains mandatory"
+          }
+        }
+      }
+    },
+    {
+      "sha256": "d7c184460df0001f555556e5302eea1ab380211c71cc814c89ba65cb806b4271",
+      "retainedEncoding": "Exact UTF-8 JSON.stringify(record,null,2) plus LF",
+      "record": {
+        "schema": "closed-loop-requirement-coverage-review/1",
+        "normativeRequirementId": "NREQ-39eba2aba9049ed18beade0c11e0c107",
+        "sourceLineSha256": "f9380412c073605f92a34bedf33748f4069ea11c6da52184d846cc49d9278caa",
+        "specificationSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
+        "declarationSha256": "3f29c46a8871beab86cd0cf9fbaf35a176ca596d5b59ede5c79c6c7da90d7bed",
+        "decision": "COMPLETE_COVERAGE",
+        "evidenceBasis": "EXTERNALLY_SUPPORTED",
+        "method": "Independent renewed review of the unchanged exact source clause/declaration and unchanged direct production owner, preserving the retained prior semantic rationale, with explicit current dependency and test-input reconciliation. This review determines declaration sufficiency only; no prior execution is converted into a current PASS.",
+        "author": {
+          "actor": "Codex dependency recertification author",
+          "contextId": "/root/ci_delivery_audit"
+        },
+        "reviewer": {
+          "actor": "Codex independent dependency recertification reviewer",
+          "contextId": "/root/stage_contract_audit/late_stage_audit"
+        },
+        "reviewedInputs": [
+          {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "sha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d"
+          },
+          {
+            "path": "verification-evidence-catalog.mjs",
+            "sha256": "83ddfd41592602113b552ef386e4de5c5ccf8ee0c627e5cfd5f1d3b75082744e"
+          },
+          {
+            "path": "verification/normative-context-applicability-20261005.json",
+            "sha256": "7cd05ff0028578a1ca1c2560533519a602ce6a974c240ee11dbbd272524cf656"
+          },
+          {
+            "path": "verification/requirement-coverage-NREQ-39eba2aba9049ed18beade0c11e0c107-20261005.json",
+            "sha256": "3bcdcb76189ed0f6ce37aeb5ebbd2dc3bac7b1ffe914410f97ad599882a6063f"
+          },
+          {
+            "path": "verifier-runtime.mjs",
+            "sha256": "8a4c9058b6c72a5aa8dd68809e3cbfd8e5c217b358c41970347443a338f83933"
+          },
+          {
+            "path": "verify-stage-contract-closure.mjs",
+            "sha256": "34bf379a0b6acdbdb07158b8ecc833b498ec39832fdc5b9f34a08913607e6777"
+          },
+          {
+            "path": "workbook.js",
+            "sha256": "3a8098a9bb4ea108eadaa9bec90c76a1522f57f6465f45341cedf60937ddd008"
+          },
+          {
+            "declarationSha256": "3f29c46a8871beab86cd0cf9fbaf35a176ca596d5b59ede5c79c6c7da90d7bed"
+          }
+        ],
+        "findings": [],
+        "reviewPerformed": true,
+        "reviewCompletedAt": "2026-10-06T20:02:01.695572+00:00",
+        "sourceLocation": {
+          "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+          "startLine": 3654,
+          "endLine": 3654,
+          "lineSha256": "f9380412c073605f92a34bedf33748f4069ea11c6da52184d846cc49d9278caa"
+        },
+        "controllingText": "Stage 30 — PRESERVE FAILURES PERMANENTLY AND CLOSE DELIVERY",
+        "governingContext": [],
+        "additionalControllingContext": [],
+        "reviewedChecks": [
+          {
+            "suite": "verify-stage-contract-closure.mjs",
+            "checkId": "declaration.stage30.title"
+          }
+        ],
+        "semanticDecision": "EXACT_FINITE_SCHEMA_DECLARATION",
+        "reason": "The exact Stage30 title in the controlling source is preserved in workbook.js and checked by an independent literal assertion against the actually loaded stage declaration. This establishes the title declaration only; terminal command, history and delivery behavior remain separate source clauses.",
+        "scopeLimit": "No all-stage operation behavior, real external-agent journey or maturity claim.",
+        "actorIndependenceBoundary": "The current recertification author /root/ci_delivery_audit is distinct from the actual independent reviewer /root/stage_contract_audit/late_stage_audit. Attributed identity and hashes do not establish hidden context; prior semantic review attribution is retained separately.",
+        "reviewerPriorContributionDisclosure": "The reviewer performed an independent late-stage code/specification audit in this repair task, separate from this recertification author. No claim of source-only extraction or independent authorship of every implementation/test is made.",
+        "retainedReviewInputs": {
+          "proposal": {
+            "path": "/workspace/scratch/stage-declaration-bindings-proposal.json",
+            "sha256": "82964ba5e0f13e7176c3969436171aa43f945becabd95a36e6e526e6a9af2112"
+          },
+          "priorSemanticReview": {
+            "path": "/workspace/scratch/independent-full-coverage-semantic-review-current45.json",
+            "sha256": "8b76d6c6c1425220853a1798090edf609fadde97ad840f2699e006b7ed2bb866"
+          },
+          "currentProposal": {
+            "path": "/tmp/closed-loop-evidence/38-dependency-recertifications-proposed-edd5ca4d39eee03b9bdea891cf60c1f3f3ce181843c5ee24cca1738f250df944.json",
+            "sha256": "edd5ca4d39eee03b9bdea891cf60c1f3f3ce181843c5ee24cca1738f250df944"
+          }
+        },
+        "qualifiedExecutionAndReviewEvidence": [
+          {
+            "path": "/workspace/scratch/independent-stage-declaration-controls-current45.json",
+            "sha256": "cde928d67fb93f846a6b56a72100306ba1be2aae30e37d7f2da436ce798de6c7",
+            "qualification": "Retained actual boundary/source tuple only; this reference does not substitute for current canonical executed receipts."
+          },
+          {
+            "path": "/workspace/scratch/stage-declaration-collector-integration.json",
+            "sha256": "ec78917b631ca3f8a0f3efb0e366480161707c72d03cd918f6b07b78d682d82e",
+            "qualification": "Retained actual boundary/source tuple only; this reference does not substitute for current canonical executed receipts."
+          }
+        ],
+        "currentExecutionRequired": true,
+        "applicationConformanceClaim": false,
+        "priorReview": {
+          "path": "verification/requirement-coverage-NREQ-39eba2aba9049ed18beade0c11e0c107-20261005.json",
+          "sha256": "3bcdcb76189ed0f6ce37aeb5ebbd2dc3bac7b1ffe914410f97ad599882a6063f",
+          "author": {
+            "actor": "Codex declaration author",
+            "contextId": "/root/stage_regressions"
+          },
+          "reviewer": {
+            "actor": "Codex independent declaration reviewer",
+            "contextId": "/root/independent_spec"
+          },
+          "reviewCompletedAt": "2026-10-05T17:00:42.341Z"
+        },
+        "currentDependencyReconciliation": {
+          "classification": "ONLY_REVIEWED_DEPENDENCIES_CHANGED",
+          "priorStaleInputs": [
+            "verification-evidence-catalog.mjs"
+          ],
+          "newRequiredInputs": [],
+          "unchangedDeclarationSha256": "3f29c46a8871beab86cd0cf9fbaf35a176ca596d5b59ede5c79c6c7da90d7bed",
+          "unchangedDirectOwners": [
+            {
+              "path": "workbook.js",
+              "sha256": "3a8098a9bb4ea108eadaa9bec90c76a1522f57f6465f45341cedf60937ddd008"
+            }
+          ],
+          "owningSuites": [
+            "verify-stage-contract-closure.mjs"
+          ],
+          "sourceReviewStatus": "APPROVED_EXACT_CURRENT_INPUTS_NO_EXECUTION_CLAIM",
+          "independentRationale": "No changed owner/test semantics for the claimed primitive/integer/canonical/title/role. Changed schema and adapter additions do not alter corresponding owner; authorized synthetic setup/carrier changes must be source-bound and cannot stand for actual external work.",
+          "independentApproval": {
+            "path": "/tmp/closed-loop-evidence/38-independent-recertification-review-0bccfbd20e60a2cd7a791897396f468fe1054d26901dbbb9e0806a31ef9c91ce.json",
+            "sha256": "0bccfbd20e60a2cd7a791897396f468fe1054d26901dbbb9e0806a31ef9c91ce",
+            "normativeRequirementId": "NREQ-39eba2aba9049ed18beade0c11e0c107",
+            "recordDecision": "COMPLETE_COVERAGE",
+            "executionDisposition": "NOT_EXECUTED_BY_THIS_REVIEW; exact current required producer receipt remains mandatory"
+          },
+          "catalogRefresh": {
+            "reviewedAtUtc": "2026-10-06T20:02:01.695572+00:00",
+            "path": "verification-evidence-catalog.mjs",
+            "priorSha256": "b5fb7656f362ecf431144eb17128b11b9d7361cc11f99437967b5a6c2a3e5062",
+            "currentSha256": "83ddfd41592602113b552ef386e4de5c5ccf8ee0c627e5cfd5f1d3b75082744e",
+            "proofOfExactDelta": "Replacing exactly one corrected expectedDescription phrase with its prior phrase reproduces priorb5fb hash; no assertion code, named38 checks or sourceInputs change.",
+            "reviewConclusion": "Approved dependency-only rebind to83dd for eight integrated approvals and narrow semantics of pending30. Description now identifies Stage2 baseline as prohibited extra, matching exact scope population.",
+            "executionsByThisReviewer": 0,
+            "remainingCondition": "Runtime30 final loader/carrier freeze still requires explicit owner confirmation; visible file bytes are not presumed final.",
+            "independentReview": {
+              "path": "/tmp/closed-loop-evidence/38-independent-recertification-review-87a37c76ed424162b98cb52639859838ab3645f5191a84383d77d07ba14e3f02.json",
+              "sha256": "87a37c76ed424162b98cb52639859838ab3645f5191a84383d77d07ba14e3f02"
+            }
+          }
+        },
+        "currentSourceReviewHistory": [
+          {
+            "sha256": "afada10364b42956b45f266735ea297ae35329d46b525c16c8918cf479c1b3ec",
+            "retainedEncoding": "Exact UTF-8 JSON.stringify(record,null,2) plus LF",
+            "record": {
+              "schema": "closed-loop-requirement-coverage-review/1",
+              "normativeRequirementId": "NREQ-39eba2aba9049ed18beade0c11e0c107",
+              "sourceLineSha256": "f9380412c073605f92a34bedf33748f4069ea11c6da52184d846cc49d9278caa",
+              "specificationSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
+              "declarationSha256": "3f29c46a8871beab86cd0cf9fbaf35a176ca596d5b59ede5c79c6c7da90d7bed",
+              "decision": "COMPLETE_COVERAGE",
+              "evidenceBasis": "EXTERNALLY_SUPPORTED",
+              "method": "Independent renewed review of the unchanged exact source clause/declaration and unchanged direct production owner, preserving the retained prior semantic rationale, with explicit current dependency and test-input reconciliation. This review determines declaration sufficiency only; no prior execution is converted into a current PASS.",
+              "author": {
+                "actor": "Codex dependency recertification author",
+                "contextId": "/root/ci_delivery_audit"
+              },
+              "reviewer": {
+                "actor": "Codex independent dependency recertification reviewer",
+                "contextId": "/root/stage_contract_audit/late_stage_audit"
+              },
+              "reviewedInputs": [
+                {
+                  "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                  "sha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d"
+                },
+                {
+                  "path": "verification-evidence-catalog.mjs",
+                  "sha256": "4af6b3153c1aea23a6dbc2906662dcce1c53cb157281c2220317e7f59bc0db99"
+                },
+                {
+                  "path": "verification/normative-context-applicability-20261005.json",
+                  "sha256": "7cd05ff0028578a1ca1c2560533519a602ce6a974c240ee11dbbd272524cf656"
+                },
+                {
+                  "path": "verification/requirement-coverage-NREQ-39eba2aba9049ed18beade0c11e0c107-20261005.json",
+                  "sha256": "3bcdcb76189ed0f6ce37aeb5ebbd2dc3bac7b1ffe914410f97ad599882a6063f"
+                },
+                {
+                  "path": "verifier-runtime.mjs",
+                  "sha256": "8a4c9058b6c72a5aa8dd68809e3cbfd8e5c217b358c41970347443a338f83933"
+                },
+                {
+                  "path": "verify-stage-contract-closure.mjs",
+                  "sha256": "34bf379a0b6acdbdb07158b8ecc833b498ec39832fdc5b9f34a08913607e6777"
+                },
+                {
+                  "path": "workbook.js",
+                  "sha256": "3a8098a9bb4ea108eadaa9bec90c76a1522f57f6465f45341cedf60937ddd008"
+                },
+                {
+                  "declarationSha256": "3f29c46a8871beab86cd0cf9fbaf35a176ca596d5b59ede5c79c6c7da90d7bed"
+                }
+              ],
+              "findings": [],
+              "reviewPerformed": true,
+              "reviewCompletedAt": "2026-10-06T19:35:42.746974+00:00",
+              "sourceLocation": {
+                "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+                "startLine": 3654,
+                "endLine": 3654,
+                "lineSha256": "f9380412c073605f92a34bedf33748f4069ea11c6da52184d846cc49d9278caa"
+              },
+              "controllingText": "Stage 30 — PRESERVE FAILURES PERMANENTLY AND CLOSE DELIVERY",
+              "governingContext": [],
+              "additionalControllingContext": [],
+              "reviewedChecks": [
+                {
+                  "suite": "verify-stage-contract-closure.mjs",
+                  "checkId": "declaration.stage30.title"
+                }
+              ],
+              "semanticDecision": "EXACT_FINITE_SCHEMA_DECLARATION",
+              "reason": "The exact Stage30 title in the controlling source is preserved in workbook.js and checked by an independent literal assertion against the actually loaded stage declaration. This establishes the title declaration only; terminal command, history and delivery behavior remain separate source clauses.",
+              "scopeLimit": "No all-stage operation behavior, real external-agent journey or maturity claim.",
+              "actorIndependenceBoundary": "The current recertification author /root/ci_delivery_audit is distinct from the actual independent reviewer /root/stage_contract_audit/late_stage_audit. Attributed identity and hashes do not establish hidden context; prior semantic review attribution is retained separately.",
+              "reviewerPriorContributionDisclosure": "The reviewer performed an independent late-stage code/specification audit in this repair task, separate from this recertification author. No claim of source-only extraction or independent authorship of every implementation/test is made.",
+              "retainedReviewInputs": {
+                "proposal": {
+                  "path": "/workspace/scratch/stage-declaration-bindings-proposal.json",
+                  "sha256": "82964ba5e0f13e7176c3969436171aa43f945becabd95a36e6e526e6a9af2112"
+                },
+                "priorSemanticReview": {
+                  "path": "/workspace/scratch/independent-full-coverage-semantic-review-current45.json",
+                  "sha256": "8b76d6c6c1425220853a1798090edf609fadde97ad840f2699e006b7ed2bb866"
+                },
+                "currentProposal": {
+                  "path": "/tmp/closed-loop-evidence/38-dependency-recertifications-proposed-edd5ca4d39eee03b9bdea891cf60c1f3f3ce181843c5ee24cca1738f250df944.json",
+                  "sha256": "edd5ca4d39eee03b9bdea891cf60c1f3f3ce181843c5ee24cca1738f250df944"
+                }
+              },
+              "qualifiedExecutionAndReviewEvidence": [
+                {
+                  "path": "/workspace/scratch/independent-stage-declaration-controls-current45.json",
+                  "sha256": "cde928d67fb93f846a6b56a72100306ba1be2aae30e37d7f2da436ce798de6c7",
+                  "qualification": "Retained actual boundary/source tuple only; this reference does not substitute for current canonical executed receipts."
+                },
+                {
+                  "path": "/workspace/scratch/stage-declaration-collector-integration.json",
+                  "sha256": "ec78917b631ca3f8a0f3efb0e366480161707c72d03cd918f6b07b78d682d82e",
+                  "qualification": "Retained actual boundary/source tuple only; this reference does not substitute for current canonical executed receipts."
+                }
+              ],
+              "currentExecutionRequired": true,
+              "applicationConformanceClaim": false,
+              "priorReview": {
+                "path": "verification/requirement-coverage-NREQ-39eba2aba9049ed18beade0c11e0c107-20261005.json",
+                "sha256": "3bcdcb76189ed0f6ce37aeb5ebbd2dc3bac7b1ffe914410f97ad599882a6063f",
+                "author": {
+                  "actor": "Codex declaration author",
+                  "contextId": "/root/stage_regressions"
+                },
+                "reviewer": {
+                  "actor": "Codex independent declaration reviewer",
+                  "contextId": "/root/independent_spec"
+                },
+                "reviewCompletedAt": "2026-10-05T17:00:42.341Z"
+              },
+              "currentDependencyReconciliation": {
+                "classification": "ONLY_REVIEWED_DEPENDENCIES_CHANGED",
+                "priorStaleInputs": [
+                  "verification-evidence-catalog.mjs"
+                ],
+                "newRequiredInputs": [],
+                "unchangedDeclarationSha256": "3f29c46a8871beab86cd0cf9fbaf35a176ca596d5b59ede5c79c6c7da90d7bed",
+                "unchangedDirectOwners": [
+                  {
+                    "path": "workbook.js",
+                    "sha256": "3a8098a9bb4ea108eadaa9bec90c76a1522f57f6465f45341cedf60937ddd008"
+                  }
+                ],
+                "owningSuites": [
+                  "verify-stage-contract-closure.mjs"
+                ],
+                "sourceReviewStatus": "APPROVED_EXACT_CURRENT_INPUTS_NO_EXECUTION_CLAIM",
+                "independentRationale": "No changed owner/test semantics for the claimed primitive/integer/canonical/title/role. Changed schema and adapter additions do not alter corresponding owner; authorized synthetic setup/carrier changes must be source-bound and cannot stand for actual external work.",
+                "independentApproval": {
+                  "path": "/tmp/closed-loop-evidence/38-independent-recertification-review-0bccfbd20e60a2cd7a791897396f468fe1054d26901dbbb9e0806a31ef9c91ce.json",
+                  "sha256": "0bccfbd20e60a2cd7a791897396f468fe1054d26901dbbb9e0806a31ef9c91ce",
+                  "normativeRequirementId": "NREQ-39eba2aba9049ed18beade0c11e0c107",
+                  "recordDecision": "COMPLETE_COVERAGE",
+                  "executionDisposition": "NOT_EXECUTED_BY_THIS_REVIEW; exact current required producer receipt remains mandatory"
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

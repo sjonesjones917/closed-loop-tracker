@@ -1,0 +1,510 @@
+{
+  "schema": "closed-loop-requirement-coverage-review/1",
+  "normativeRequirementId": "NREQ-4b26e20f450b23eb551b2da03e69c9c9",
+  "sourceLineSha256": "32926b4b752f7f258af7d72829a566bc01ebcc5702e9852a7f68338daa724ba7",
+  "specificationSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
+  "declarationSha256": "07d6150a1321d3ee4110cbef80d5857d5d75bc49087af82c1b43d321880750d8",
+  "decision": "COMPLETE_COVERAGE",
+  "evidenceBasis": "EXTERNALLY_SUPPORTED",
+  "method": "Actual separate-context semantic review of the exact Section 46.2 source clause, governing context, production identity construction and final artifact projection, independent positive and negative assertions, and narrow applicability decisions. This record approves declaration sufficiency; current source-qualified executed receipts must separately establish the outcome.",
+  "author": {
+    "actor": "Codex CI/delivery declaration author",
+    "contextId": "/root/ci_delivery_audit"
+  },
+  "reviewer": {
+    "actor": "Codex independent declaration reviewer",
+    "contextId": "/root"
+  },
+  "reviewedInputs": [
+    {
+      "path": ".github/workflows/pages.yml",
+      "sha256": "4fed28a3de65b94d42023edf661d7383b65a3a134e8d562a6575558072aef59b"
+    },
+    {
+      "path": "app-core.js",
+      "sha256": "15d1b6ca2a49b77de75858c57080966b3bbd25560005322aa7ec25652fa6a2ad"
+    },
+    {
+      "path": "browser-execution-evidence.mjs",
+      "sha256": "19714d6f6b064626ac5d2d3188a424cf571d51a25b5c63b3b7114e58960db742"
+    },
+    {
+      "path": "deployment-contract-identities.mjs",
+      "sha256": "f68c2aa2ae755ff856713af5ce7a4cc392b10131dd2976a76291b643056e334c"
+    },
+    {
+      "path": "evaluate-mobile-acceptance-submission.mjs",
+      "sha256": "1fb8e48e2e71b1b78486a1f275322b4b89ef0928c89cb00284c7db3b5eacc2a1"
+    },
+    {
+      "path": "final-acceptance.mjs",
+      "sha256": "5f5187e5f8426d8681f4e88afbc2511ac08a5e3d1ca28fbae10d0632d147d4f2"
+    },
+    {
+      "path": "hash.js",
+      "sha256": "c5df5b7459ad610ee07e1793be3b3b38efbf0a65aeb22b03e2dd89026fed31a6"
+    },
+    {
+      "path": "mobile-evidence-test-fixture.mjs",
+      "sha256": "dc818d255e4c42ae4289e1f0799cd26bf66e37cdbd5551fe29053eb7be188b1c"
+    },
+    {
+      "path": "operator-journey-fixtures.mjs",
+      "sha256": "73cca7813dfdca430c66e76487efc60b91cbf4642bfcd93b96f6bad2a9314c38"
+    },
+    {
+      "path": "project-store.js",
+      "sha256": "2d6896f47164f4a232c631d949cce64d2200e6d4e2202c2c3cdb29b08648cdf2"
+    },
+    {
+      "path": "prompt-engine.js",
+      "sha256": "31489eaeffcd4f12696b473467c6be7e494e8e26a8eb64c4c8c69d18f215f94a"
+    },
+    {
+      "path": "response-ingestion.js",
+      "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
+    },
+    {
+      "path": "specification/closed-loop-normative-requirements.json",
+      "sha256": "97b43f690b60219d67f498459439bce30416650b9f26c46c34a89b972a13929f"
+    },
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d"
+    },
+    {
+      "path": "specification/closed-loop-specification-manifest.json",
+      "sha256": "651e71dffee949524793d50195d4958a777dc7392cb31f40b5975079a846b258"
+    },
+    {
+      "path": "test-external-normative-proof.mjs",
+      "sha256": "b7ab913bf89884b93e407374f17c9981502c9410e7b95f03877f3a86c255b12a"
+    },
+    {
+      "path": "test-fixtures.mjs",
+      "sha256": "fdcaa258f88be52f2b426785ac0fcdcd547392e702c33fbb0eb4823d9c2a711d"
+    },
+    {
+      "path": "test-handoff-authorization.mjs",
+      "sha256": "37bfb4e255afb6701fccaccdf055ee7961e838eaf03927c2963dfcf880cf82b6"
+    },
+    {
+      "path": "test-normative-catalog-consumers.mjs",
+      "sha256": "6c14d578e5d70351f30288c9182ca9f6cbfcced5ec35e230167b22874a202044"
+    },
+    {
+      "path": "test-normative-context-applicability.mjs",
+      "sha256": "a733281294d7af8103cd35340262725635c4565388ca9bcce69493b22c5ba0eb"
+    },
+    {
+      "path": "test-normative-proof-fixture.mjs",
+      "sha256": "b1f24a46bc3aefcfe79be849ecffe2f90f018293701272c487b6e8b6b28b1554"
+    },
+    {
+      "path": "test-project-store-runtime.mjs",
+      "sha256": "955fc63a1b7ae3ec7f8b71f36fd4d76d4ad8ee8fa0de2fa8d2697a66b1458eef"
+    },
+    {
+      "path": "test-runtime-operation-registry.mjs",
+      "sha256": "8892e1f7aea7a6565af693233fe802785d8dbcabee972c6b61890a66a02f233e"
+    },
+    {
+      "path": "test-runtime.js",
+      "sha256": "e4e01a79c526592f9d044e2c104845e63c9aa341eb64837c138f5c3e3ecba353"
+    },
+    {
+      "path": "test-specification-field-registry.mjs",
+      "sha256": "ca426f818b98867b9135b4bd0955c1529d12293a0f3cd1c8b7550ae70d6f18c9"
+    },
+    {
+      "path": "test-stage01-specification-controls.mjs",
+      "sha256": "3455469d384cd50cc4216ddd842d50c70ea088b3639b045ac9f5d82f4d73a2d3"
+    },
+    {
+      "path": "test-worker.js",
+      "sha256": "e76e168b24b8d89d4f815cb53a78e63fca18558045cb9fac225d65fdbfc88d11"
+    },
+    {
+      "path": "test-zip.mjs",
+      "sha256": "b5080a8e58eb7b13f421ecce5c63a3d95b765a5b021f5bd4543dce28d171e89d"
+    },
+    {
+      "path": "verification-evidence-catalog.mjs",
+      "sha256": "feedf2e728fca37acf303536dd55216389d591567c1ab89236a53aa0b2d19eed"
+    },
+    {
+      "path": "verification-evidence.mjs",
+      "sha256": "f1b4c7e6435c3cd42a1ed09c3ade9770cc3394a03c1e17a0a405c528e17a5ff2"
+    },
+    {
+      "path": "verification/normative-context-applicability-20261005.json",
+      "sha256": "7cd05ff0028578a1ca1c2560533519a602ce6a974c240ee11dbbd272524cf656"
+    },
+    {
+      "path": "verified-site.mjs",
+      "sha256": "54dd0953a0cd17f0ad0f88ab33224f495248bccebca4dff8f0759dd15f10db3c"
+    },
+    {
+      "path": "verifier-runtime.mjs",
+      "sha256": "8a4c9058b6c72a5aa8dd68809e3cbfd8e5c217b358c41970347443a338f83933"
+    },
+    {
+      "path": "verify-conformance-regressions.mjs",
+      "sha256": "619cb24a8609c572665dda898411217b5eda3084cd2ef60a468db7e31c025735"
+    },
+    {
+      "path": "verify-final-acceptance.mjs",
+      "sha256": "e21cea176e353bbadb0a98a5e7b344c0c11245019bb3830c564ad790981c1e41"
+    },
+    {
+      "path": "verify-mobile-acceptance-evidence.mjs",
+      "sha256": "97b0ed88dd3b29e84002ac823a2c8efa21dd2e14645a6e6224e4db72f9d67a78"
+    },
+    {
+      "path": "verify-test-runtime-v3.mjs",
+      "sha256": "4a86e7340d01ad8ccafc364fa0784f01a49583ab6423a65323f625c09424a971"
+    },
+    {
+      "path": "visual-baseline-submission.mjs",
+      "sha256": "8d6414ea25025e21d42cec86a7619b09f6f01a0e0bf80c25d6e46c357d02994f"
+    },
+    {
+      "path": "workbook.js",
+      "sha256": "3a8098a9bb4ea108eadaa9bec90c76a1522f57f6465f45341cedf60937ddd008"
+    },
+    {
+      "path": "workflow-engine.js",
+      "sha256": "b47195d41a130cb1b84425f5eb33bd8a163e1047c0e95e19eef59d47525e463d"
+    },
+    {
+      "path": "workflow-schema.js",
+      "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
+    },
+    {
+      "declarationSha256": "07d6150a1321d3ee4110cbef80d5857d5d75bc49087af82c1b43d321880750d8"
+    }
+  ],
+  "findings": [],
+  "reviewPerformed": true,
+  "reviewCompletedAt": "2026-10-06T20:42:39.554Z",
+  "sourceReviewApprovalRecordedAt": "2026-10-06T19:17:07Z",
+  "finalDependencyReviewApprovalRecordedAt": "2026-10-06T19:43:34Z",
+  "finalDependencyReview": "Reviewer /root reaffirmed the four narrow identity declaration scopes after independently reviewing final ingestion be22dcb2 boundary and three alias guards; both new exact catalog checks; consumer 42ff19ff full eight-line addition; focused Stage17 preload and scheduling-test changes. Identity owners and named identity checks remain unchanged. The recorded timestamp is receipt of final approval/source freeze, not a claim of test execution.",
+  "sourceLocation": {
+    "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+    "startLine": 5149,
+    "endLine": 5149,
+    "lineSha256": "32926b4b752f7f258af7d72829a566bc01ebcc5702e9852a7f68338daa724ba7"
+  },
+  "controllingText": "- exact source commit and specification path;",
+  "governingContext": [],
+  "additionalControllingContext": [
+    {
+      "line": 5147,
+      "text": "The final machine acceptance artifact additionally identifies:"
+    },
+    {
+      "lines": [
+        95,
+        99
+      ],
+      "reason": "Specification source commit and manifest are repository-only; not runtime project data."
+    }
+  ],
+  "reviewedChecks": [
+    {
+      "suite": "verify-final-acceptance.mjs",
+      "checkId": "acceptance.specification-identity"
+    }
+  ],
+  "semanticDecision": "COMPLETE_DETERMINISTIC_REPORT_IDENTITY_CLAUSE",
+  "reason": "The acceptance report identifies the exact specification sourceCommit and sourcePath from the verified repository-only manifest, separately from the application candidate commit; substituting the candidate commit, wrong path, malformed source commit, or alias mutation cannot authorize final acceptance.",
+  "reviewEvidence": [
+    "verify-final-acceptance.mjs:61-75 exact source commit/path and independent candidate/source inequality; every identity field removal; wrong path/candidate substitution; malformed/array/object/null commit rejection",
+    "verification-evidence.mjs:29-33 owner derives identity only from exact current manifest/source bytes",
+    "verification-evidence.mjs:131 final report identity equals private validated specification identity",
+    ".github/workflows/pages.yml:656,779,804 source identity survives report projection to JSON writer"
+  ],
+  "scopeLimit": "Specification-source identification, not successful deployment or full-clause behavioral conformance of that source.",
+  "actorIndependenceBoundary": "The actual declaration author context /root/ci_delivery_audit differs from reviewer context /root. The application checks recorded identities and exact reviewed bytes; it cannot establish hidden reviewer context. This review does not assert independent authorship of every test or implementation.",
+  "reviewerPriorContributionDisclosure": "The reviewer coordinates the ongoing repository repair and reviewed the source and assertions independently of this declaration author. The review covers the four narrow deterministic identity-field contracts and does not establish publication occurrence, registry semantic completeness or full application conformance.",
+  "retainedReviewInputs": {
+    "proposal": {
+      "path": "/tmp/closed-loop-evidence/section46-identity-declarations-proposed.json",
+      "sha256": "66a28a9d077525be845353d0acd5b9315faeb220f368ee6445b27c976b6fba36"
+    }
+  },
+  "sourceEvidenceQualification": "Run37498168680 step11/12 successfully executed deployment and final-consumer suites on testMergead39b7e (Node22.23.3). The failed overall run and any later source edits do not establish new current candidate acceptance. Declarations authorize no result; current source-qualified owner receipts remain mandatory.",
+  "currentExecutionRequired": true,
+  "applicationConformanceClaim": false,
+  "currentSourceReviewHistory": [
+    {
+      "sha256": "63bf885e88a47918ec666252f6691692ac0496e5a359087ddeda83c2862fc9b4",
+      "retainedEncoding": "Exact UTF-8 JSON.stringify(record,null,2) plus LF",
+      "record": {
+        "schema": "closed-loop-requirement-coverage-review/1",
+        "normativeRequirementId": "NREQ-4b26e20f450b23eb551b2da03e69c9c9",
+        "sourceLineSha256": "32926b4b752f7f258af7d72829a566bc01ebcc5702e9852a7f68338daa724ba7",
+        "specificationSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
+        "declarationSha256": "07d6150a1321d3ee4110cbef80d5857d5d75bc49087af82c1b43d321880750d8",
+        "decision": "COMPLETE_COVERAGE",
+        "evidenceBasis": "EXTERNALLY_SUPPORTED",
+        "method": "Actual separate-context semantic review of the exact Section 46.2 source clause, governing context, production identity construction and final artifact projection, independent positive and negative assertions, and narrow applicability decisions. This record approves declaration sufficiency; current source-qualified executed receipts must separately establish the outcome.",
+        "author": {
+          "actor": "Codex CI/delivery declaration author",
+          "contextId": "/root/ci_delivery_audit"
+        },
+        "reviewer": {
+          "actor": "Codex independent declaration reviewer",
+          "contextId": "/root"
+        },
+        "reviewedInputs": [
+          {
+            "path": ".github/workflows/pages.yml",
+            "sha256": "4fed28a3de65b94d42023edf661d7383b65a3a134e8d562a6575558072aef59b"
+          },
+          {
+            "path": "app-core.js",
+            "sha256": "15d1b6ca2a49b77de75858c57080966b3bbd25560005322aa7ec25652fa6a2ad"
+          },
+          {
+            "path": "browser-execution-evidence.mjs",
+            "sha256": "19714d6f6b064626ac5d2d3188a424cf571d51a25b5c63b3b7114e58960db742"
+          },
+          {
+            "path": "deployment-contract-identities.mjs",
+            "sha256": "f68c2aa2ae755ff856713af5ce7a4cc392b10131dd2976a76291b643056e334c"
+          },
+          {
+            "path": "evaluate-mobile-acceptance-submission.mjs",
+            "sha256": "1fb8e48e2e71b1b78486a1f275322b4b89ef0928c89cb00284c7db3b5eacc2a1"
+          },
+          {
+            "path": "final-acceptance.mjs",
+            "sha256": "5f5187e5f8426d8681f4e88afbc2511ac08a5e3d1ca28fbae10d0632d147d4f2"
+          },
+          {
+            "path": "hash.js",
+            "sha256": "c5df5b7459ad610ee07e1793be3b3b38efbf0a65aeb22b03e2dd89026fed31a6"
+          },
+          {
+            "path": "mobile-evidence-test-fixture.mjs",
+            "sha256": "dc818d255e4c42ae4289e1f0799cd26bf66e37cdbd5551fe29053eb7be188b1c"
+          },
+          {
+            "path": "operator-journey-fixtures.mjs",
+            "sha256": "73cca7813dfdca430c66e76487efc60b91cbf4642bfcd93b96f6bad2a9314c38"
+          },
+          {
+            "path": "project-store.js",
+            "sha256": "2d6896f47164f4a232c631d949cce64d2200e6d4e2202c2c3cdb29b08648cdf2"
+          },
+          {
+            "path": "prompt-engine.js",
+            "sha256": "31489eaeffcd4f12696b473467c6be7e494e8e26a8eb64c4c8c69d18f215f94a"
+          },
+          {
+            "path": "response-ingestion.js",
+            "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
+          },
+          {
+            "path": "specification/closed-loop-normative-requirements.json",
+            "sha256": "97b43f690b60219d67f498459439bce30416650b9f26c46c34a89b972a13929f"
+          },
+          {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "sha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d"
+          },
+          {
+            "path": "specification/closed-loop-specification-manifest.json",
+            "sha256": "651e71dffee949524793d50195d4958a777dc7392cb31f40b5975079a846b258"
+          },
+          {
+            "path": "test-external-normative-proof.mjs",
+            "sha256": "b7ab913bf89884b93e407374f17c9981502c9410e7b95f03877f3a86c255b12a"
+          },
+          {
+            "path": "test-fixtures.mjs",
+            "sha256": "de1477eff65ca4d8d0b5e7cdfa397dc471b43386a55ab44648f191a218f23191"
+          },
+          {
+            "path": "test-handoff-authorization.mjs",
+            "sha256": "37bfb4e255afb6701fccaccdf055ee7961e838eaf03927c2963dfcf880cf82b6"
+          },
+          {
+            "path": "test-normative-catalog-consumers.mjs",
+            "sha256": "42ff19ffbab702cdb13e9be4330ff21b5b408a8fc7f5cc6cb3107df92420329e"
+          },
+          {
+            "path": "test-normative-context-applicability.mjs",
+            "sha256": "a733281294d7af8103cd35340262725635c4565388ca9bcce69493b22c5ba0eb"
+          },
+          {
+            "path": "test-normative-proof-fixture.mjs",
+            "sha256": "b1f24a46bc3aefcfe79be849ecffe2f90f018293701272c487b6e8b6b28b1554"
+          },
+          {
+            "path": "test-project-store-runtime.mjs",
+            "sha256": "955fc63a1b7ae3ec7f8b71f36fd4d76d4ad8ee8fa0de2fa8d2697a66b1458eef"
+          },
+          {
+            "path": "test-runtime-operation-registry.mjs",
+            "sha256": "8892e1f7aea7a6565af693233fe802785d8dbcabee972c6b61890a66a02f233e"
+          },
+          {
+            "path": "test-runtime.js",
+            "sha256": "e4e01a79c526592f9d044e2c104845e63c9aa341eb64837c138f5c3e3ecba353"
+          },
+          {
+            "path": "test-specification-field-registry.mjs",
+            "sha256": "ca426f818b98867b9135b4bd0955c1529d12293a0f3cd1c8b7550ae70d6f18c9"
+          },
+          {
+            "path": "test-stage01-specification-controls.mjs",
+            "sha256": "3455469d384cd50cc4216ddd842d50c70ea088b3639b045ac9f5d82f4d73a2d3"
+          },
+          {
+            "path": "test-worker.js",
+            "sha256": "e76e168b24b8d89d4f815cb53a78e63fca18558045cb9fac225d65fdbfc88d11"
+          },
+          {
+            "path": "test-zip.mjs",
+            "sha256": "b5080a8e58eb7b13f421ecce5c63a3d95b765a5b021f5bd4543dce28d171e89d"
+          },
+          {
+            "path": "verification-evidence-catalog.mjs",
+            "sha256": "4af6b3153c1aea23a6dbc2906662dcce1c53cb157281c2220317e7f59bc0db99"
+          },
+          {
+            "path": "verification-evidence.mjs",
+            "sha256": "f1b4c7e6435c3cd42a1ed09c3ade9770cc3394a03c1e17a0a405c528e17a5ff2"
+          },
+          {
+            "path": "verification/normative-context-applicability-20261005.json",
+            "sha256": "7cd05ff0028578a1ca1c2560533519a602ce6a974c240ee11dbbd272524cf656"
+          },
+          {
+            "path": "verified-site.mjs",
+            "sha256": "54dd0953a0cd17f0ad0f88ab33224f495248bccebca4dff8f0759dd15f10db3c"
+          },
+          {
+            "path": "verifier-runtime.mjs",
+            "sha256": "8a4c9058b6c72a5aa8dd68809e3cbfd8e5c217b358c41970347443a338f83933"
+          },
+          {
+            "path": "verify-conformance-regressions.mjs",
+            "sha256": "619cb24a8609c572665dda898411217b5eda3084cd2ef60a468db7e31c025735"
+          },
+          {
+            "path": "verify-final-acceptance.mjs",
+            "sha256": "e21cea176e353bbadb0a98a5e7b344c0c11245019bb3830c564ad790981c1e41"
+          },
+          {
+            "path": "verify-mobile-acceptance-evidence.mjs",
+            "sha256": "97b0ed88dd3b29e84002ac823a2c8efa21dd2e14645a6e6224e4db72f9d67a78"
+          },
+          {
+            "path": "verify-test-runtime-v3.mjs",
+            "sha256": "4a86e7340d01ad8ccafc364fa0784f01a49583ab6423a65323f625c09424a971"
+          },
+          {
+            "path": "visual-baseline-submission.mjs",
+            "sha256": "8d6414ea25025e21d42cec86a7619b09f6f01a0e0bf80c25d6e46c357d02994f"
+          },
+          {
+            "path": "workbook.js",
+            "sha256": "3a8098a9bb4ea108eadaa9bec90c76a1522f57f6465f45341cedf60937ddd008"
+          },
+          {
+            "path": "workflow-engine.js",
+            "sha256": "b47195d41a130cb1b84425f5eb33bd8a163e1047c0e95e19eef59d47525e463d"
+          },
+          {
+            "path": "workflow-schema.js",
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
+          },
+          {
+            "declarationSha256": "07d6150a1321d3ee4110cbef80d5857d5d75bc49087af82c1b43d321880750d8"
+          }
+        ],
+        "findings": [],
+        "reviewPerformed": true,
+        "reviewCompletedAt": "2026-10-06T19:43:34Z",
+        "sourceReviewApprovalRecordedAt": "2026-10-06T19:17:07Z",
+        "finalDependencyReviewApprovalRecordedAt": "2026-10-06T19:43:34Z",
+        "finalDependencyReview": "Reviewer /root reaffirmed the four narrow identity declaration scopes after independently reviewing final ingestion be22dcb2 boundary and three alias guards; both new exact catalog checks; consumer 42ff19ff full eight-line addition; focused Stage17 preload and scheduling-test changes. Identity owners and named identity checks remain unchanged. The recorded timestamp is receipt of final approval/source freeze, not a claim of test execution.",
+        "sourceLocation": {
+          "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+          "startLine": 5149,
+          "endLine": 5149,
+          "lineSha256": "32926b4b752f7f258af7d72829a566bc01ebcc5702e9852a7f68338daa724ba7"
+        },
+        "controllingText": "- exact source commit and specification path;",
+        "governingContext": [],
+        "additionalControllingContext": [
+          {
+            "line": 5147,
+            "text": "The final machine acceptance artifact additionally identifies:"
+          },
+          {
+            "lines": [
+              95,
+              99
+            ],
+            "reason": "Specification source commit and manifest are repository-only; not runtime project data."
+          }
+        ],
+        "reviewedChecks": [
+          {
+            "suite": "verify-final-acceptance.mjs",
+            "checkId": "acceptance.specification-identity"
+          }
+        ],
+        "semanticDecision": "COMPLETE_DETERMINISTIC_REPORT_IDENTITY_CLAUSE",
+        "reason": "The acceptance report identifies the exact specification sourceCommit and sourcePath from the verified repository-only manifest, separately from the application candidate commit; substituting the candidate commit, wrong path, malformed source commit, or alias mutation cannot authorize final acceptance.",
+        "reviewEvidence": [
+          "verify-final-acceptance.mjs:61-75 exact source commit/path and independent candidate/source inequality; every identity field removal; wrong path/candidate substitution; malformed/array/object/null commit rejection",
+          "verification-evidence.mjs:29-33 owner derives identity only from exact current manifest/source bytes",
+          "verification-evidence.mjs:131 final report identity equals private validated specification identity",
+          ".github/workflows/pages.yml:656,779,804 source identity survives report projection to JSON writer"
+        ],
+        "scopeLimit": "Specification-source identification, not successful deployment or full-clause behavioral conformance of that source.",
+        "actorIndependenceBoundary": "The actual declaration author context /root/ci_delivery_audit differs from reviewer context /root. The application checks recorded identities and exact reviewed bytes; it cannot establish hidden reviewer context. This review does not assert independent authorship of every test or implementation.",
+        "reviewerPriorContributionDisclosure": "The reviewer coordinates the ongoing repository repair and reviewed the source and assertions independently of this declaration author. The review covers the four narrow deterministic identity-field contracts and does not establish publication occurrence, registry semantic completeness or full application conformance.",
+        "retainedReviewInputs": {
+          "proposal": {
+            "path": "/tmp/closed-loop-evidence/section46-identity-declarations-proposed.json",
+            "sha256": "66a28a9d077525be845353d0acd5b9315faeb220f368ee6445b27c976b6fba36"
+          }
+        },
+        "sourceEvidenceQualification": "Run37498168680 step11/12 successfully executed deployment and final-consumer suites on testMergead39b7e (Node22.23.3). The failed overall run and any later source edits do not establish new current candidate acceptance. Declarations authorize no result; current source-qualified owner receipts remain mandatory.",
+        "currentExecutionRequired": true,
+        "applicationConformanceClaim": false
+      }
+    }
+  ],
+  "currentFinalDependencyReconciliation": {
+    "approval": {
+      "path": "/tmp/closed-loop-evidence/root-final-dependency-approval.json",
+      "sha256": "0554ed0413b44777f7866ade406ba583bfaaef696476a3b3058076cfe5994854"
+    },
+    "changes": [
+      {
+        "path": "test-fixtures.mjs",
+        "priorSha256": "de1477eff65ca4d8d0b5e7cdfa397dc471b43386a55ab44648f191a218f23191",
+        "currentSha256": "fdcaa258f88be52f2b426785ac0fcdcd547392e702c33fbb0eb4823d9c2a711d"
+      },
+      {
+        "path": "test-normative-catalog-consumers.mjs",
+        "priorSha256": "42ff19ffbab702cdb13e9be4330ff21b5b408a8fc7f5cc6cb3107df92420329e",
+        "currentSha256": "6c14d578e5d70351f30288c9182ca9f6cbfcced5ec35e230167b22874a202044"
+      },
+      {
+        "path": "verification-evidence-catalog.mjs",
+        "priorSha256": "4af6b3153c1aea23a6dbc2906662dcce1c53cb157281c2220317e7f59bc0db99",
+        "currentSha256": "feedf2e728fca37acf303536dd55216389d591567c1ab89236a53aa0b2d19eed"
+      }
+    ],
+    "meaning": "Only the independently approved exact changed source inputs were rebound. Original clause scope, declaration digest, named checks and owner identities are unchanged. No current receipt is created."
+  }
+}

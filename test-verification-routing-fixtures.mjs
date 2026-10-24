@@ -7,6 +7,9 @@ export function routingFixture(mode='APPLICATION_DETERMINISTIC'){
  const requirement=add('requirements',{MANDATORY_OPTIONAL_STATUS:'MANDATORY',STATUS:'ACTIVE',APPLICABILITY:'APPLICABLE'},5);
  const canonical=engine.canonicalTestBindingCatalog(p)['JOB.JOB_ID'];
  const test=add('tests',{REQ_ID:requirement.id,TEST_TYPE:'DETERMINISTIC',EXECUTION_MODE:mode,REQUIRED_CAPABILITY:mode==='APPLICATION_DETERMINISTIC'?'CLOSED_LOOP_TEST_IR':'CAD_TOOL',EXECUTABLE_KIND:mode==='APPLICATION_DETERMINISTIC'?'TEST_IR':'NONE',EXECUTABLE_SPEC_VERSION:'closed-loop-test-spec/1',EXECUTABLE_SPEC:{version:'closed-loop-test-spec/1',steps:[{op:'LOAD_ARTIFACT',binding:'JOB'},{op:'ASSERT_EQ',value:p.job.JOB_ID}]},EXECUTABLE_INPUT_BINDINGS:{JOB:{kind:'CANONICAL_VALUE',canonicalKey:'JOB.JOB_ID',valueSha256:canonical.valueSha256}},ARTIFACT_REQUIREMENTS:'NONE',TEST_PROPOSITION_TEXT:'The exact current project identity is preserved.',EVIDENCE_TO_PRESERVE:'A report of the exact observed project identity.',STATUS:'ACTIVE',VERIFICATION_PHASE:'FINAL_PRODUCT_DETERMINISTIC',EARLIEST_EXECUTABLE_STAGE:22,REQUIRED_BY_STAGE:22,PER_RUN_REQUIRED:false,FINAL_PRODUCT_REQUIRED:true,DELIVERY_REQUIRED:false,TARGET_AVAILABILITY_CONDITION:{type:'PHASE_TARGET'}},6);
+ // Explicit synthetic accepted-record setup includes its application-owned canonical identity.
+ // This is not a Stage6 admission assertion. Stale-mutation tests retain this hash.
+ if(mode==='APPLICATION_DETERMINISTIC'){const digest=globalThis.closedLoopHash.sha256Value(globalThis.closedLoopTestRuntime.normalizeSpec(test.fields.EXECUTABLE_SPEC));test.fields.EXECUTABLE_SPEC_SHA256=test.EXECUTABLE_SPEC_SHA256=digest;engine.refreshRecordHashes(test,'tests');}
  return {p,test,product,canonical};
 }
 export function completedReport(p,test){

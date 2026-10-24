@@ -1,0 +1,330 @@
+{
+  "schema": "closed-loop-requirement-coverage-review/1",
+  "normativeRequirementId": "NREQ-1576e27fba46e1d68631bb2ade2e37f4",
+  "sourceLineSha256": "34d21a8d47ac34454516030c062acf0b4c5f0b0484b52cfff8b77162709a694c",
+  "specificationSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
+  "declarationSha256": "d57d861168165b76b2bea3d07c3824ca6a454bdc94cde2c43845b46d7ad616dd",
+  "decision": "COMPLETE_COVERAGE",
+  "evidenceBasis": "EXTERNALLY_SUPPORTED",
+  "method": "The exact narrow controlling clause and unchanged proof decomposition were independently reviewed in the embedded original semantic assessment. Current production, verifier, fixture and catalog deltas were separately reviewed in the referenced source-delta review bundle. This is coverage-design evidence only: current frozen-source executed receipts remain independently required, and unsupported clauses are not promoted.",
+  "author": {
+    "actor": "Codex coordinated exact-clause renewal proposer",
+    "contextId": "/root"
+  },
+  "reviewer": {
+    "actor": "Codex independent narrow declaration reviewer",
+    "contextId": "/root/normative_review"
+  },
+  "reviewedInputs": [
+    {
+      "declarationSha256": "d57d861168165b76b2bea3d07c3824ca6a454bdc94cde2c43845b46d7ad616dd"
+    },
+    {
+      "path": "app-core.js",
+      "sha256": "74036d41bcf1178b7030b6b8ef28087e5becd6d61034c11f896443238d23b6a6"
+    },
+    {
+      "path": "hash.js",
+      "sha256": "a13cf57bd7c7414bc801f511d5937f80eaf7fd675c0e6c2b5a92b365df16e4d7"
+    },
+    {
+      "path": "index.html",
+      "sha256": "7ef019fa3ae9887d8ba2286731c5269083cbceae143892b5858db50c038d563a"
+    },
+    {
+      "path": "operator-browser-driver.mjs",
+      "sha256": "140e0c94b6b77294f7a2275026e6c1693811fc841f5232749a20660d332062ac"
+    },
+    {
+      "path": "operator-journey-fixtures.mjs",
+      "sha256": "73cca7813dfdca430c66e76487efc60b91cbf4642bfcd93b96f6bad2a9314c38"
+    },
+    {
+      "path": "project-store.js",
+      "sha256": "e6c37175a93b934585d7b461ad6448bb0a929670e24e8fc03940dcc132330db8"
+    },
+    {
+      "path": "prompt-engine.js",
+      "sha256": "66a1eb2976826eb15b3d8d2963363836a160e75bf8ebaf904673c64963a20ba4"
+    },
+    {
+      "path": "response-ingestion.js",
+      "sha256": "e761fb032005030b8a63e5250e56c4bbb3ea617625be5ea55bbbc2d0b5029117"
+    },
+    {
+      "path": "specification/closed-loop-normative-requirements.json",
+      "sha256": "97b43f690b60219d67f498459439bce30416650b9f26c46c34a89b972a13929f"
+    },
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d"
+    },
+    {
+      "path": "test-app-markup.mjs",
+      "sha256": "d72db0dc996779541d13f65aa2b8c42d9f744ac44a7e4837ce76d97fdfac369c"
+    },
+    {
+      "path": "test-artifact-fixtures.mjs",
+      "sha256": "d695e57716d9aef5ea7c5d96464ed9492ef036a4f759fff1b6147e0cae21c3b4"
+    },
+    {
+      "path": "test-backup-import-staging.mjs",
+      "sha256": "4a0073eedc1092ef2d673437f6ea789fd8ace4eb42d80e4b479fb72d28479e3f"
+    },
+    {
+      "path": "test-backup-staging-store.mjs",
+      "sha256": "ff495b1155c1990f0c7431e52aab035c64f46862571a8d7ad2ebe6c7598ea3d5"
+    },
+    {
+      "path": "test-fixtures.mjs",
+      "sha256": "fdcaa258f88be52f2b426785ac0fcdcd547392e702c33fbb0eb4823d9c2a711d"
+    },
+    {
+      "path": "test-handoff-authorization.mjs",
+      "sha256": "37bfb4e255afb6701fccaccdf055ee7961e838eaf03927c2963dfcf880cf82b6"
+    },
+    {
+      "path": "test-human-job-authority.mjs",
+      "sha256": "3b8db1e6efdbe38354951bc5aed5788f680518be52d0a6f0fbbf4f77f0bf015d"
+    },
+    {
+      "path": "test-human-job-controls.mjs",
+      "sha256": "ed5c7be79e2111667eeede3562115e396afaf0fc5d6a20236e668fe2c1ba7138"
+    },
+    {
+      "path": "test-inbound-response-archive.mjs",
+      "sha256": "fa564d46a7469f229e35528f29f5cd0da83e50381e549d00ac4c89291b791431"
+    },
+    {
+      "path": "test-ingestion-context-reference.mjs",
+      "sha256": "18e4446b5960a39981964a8c2fa80128fc10f6d1008d84111f418130b4d277ee"
+    },
+    {
+      "path": "test-ingestion-syntax-transport.mjs",
+      "sha256": "e6f0c330defc80309158dd2bf2fa229e8b2b96a2bb119b6a8f0bf9611a3785cb"
+    },
+    {
+      "path": "test-operator-safety-feedback.mjs",
+      "sha256": "a6e804b9b3f05952b6ceff89933b248b899dce50bed79039cb758998a4f91a45"
+    },
+    {
+      "path": "test-project-store-runtime.mjs",
+      "sha256": "563817f6d8256a0ea3ebbc1d8836b6c5887fa7275b0378ade657ecfb61f00eed"
+    },
+    {
+      "path": "test-reservation-scope-fixture.mjs",
+      "sha256": "cfe6f9fb9667170d311f971d79088bd7c44b14e00bb5d4f32a412c90e7554aff"
+    },
+    {
+      "path": "test-response-staging-recovery-ui.mjs",
+      "sha256": "216a44b3c901f9df403473871004290b24428b9dc1e000e332d3ad56d97e1f68"
+    },
+    {
+      "path": "test-response-type-boundaries.mjs",
+      "sha256": "795224a6d8b5a6c13a81dc69072ef511cac15c07e8d311c142bfed0ed8d3db8f"
+    },
+    {
+      "path": "test-retained-history-browser.mjs",
+      "sha256": "df87262003b9be6eaef9bdbc0278c9c51188d64b78d6c9dbedf9762b55124bc3"
+    },
+    {
+      "path": "test-returned-attachment-boundaries.mjs",
+      "sha256": "895a14cef6cbfb7850ef485d7ec909c326b47916b01e97bf43da09002460a820"
+    },
+    {
+      "path": "test-runtime.js",
+      "sha256": "e4e01a79c526592f9d044e2c104845e63c9aa341eb64837c138f5c3e3ecba353"
+    },
+    {
+      "path": "test-semantic-response-retries.mjs",
+      "sha256": "9bb4e549699694e3f9d7ad4ba46aaf500c80517c3df18ee9af67548fdbd33257"
+    },
+    {
+      "path": "test-specification-field-registry.mjs",
+      "sha256": "064ebc232eaa07ce51587de4233e075c97824b15b953f1f7d925195f6d0f7f05"
+    },
+    {
+      "path": "test-zip.mjs",
+      "sha256": "b5080a8e58eb7b13f421ecce5c63a3d95b765a5b021f5bd4543dce28d171e89d"
+    },
+    {
+      "path": "verification-evidence-catalog.mjs",
+      "sha256": "570fcea534cac49e62a5f062d7f44757e7123309595d61150e6b02229a7b5796"
+    },
+    {
+      "path": "verification-negative-populations.json",
+      "sha256": "8fcf901cc8a9667ef37e1630b7d59e9ff4cc919ce2381acc60e23e695c43d22e"
+    },
+    {
+      "path": "verification/current-source-delta-review-20261007.json",
+      "sha256": "3fad9eab08ffad0ce72f8d64771514793b2a282bde132fbc7c036202239b0a73"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-1576e27fba46e1d68631bb2ade2e37f4-20261006-syntax-26d52bad9b8f.json",
+      "sha256": "665f65a33c3d87f55be7f0672ce52710ac5f54b8fc87b486bed93768c685bc37"
+    },
+    {
+      "path": "verification/stage01-retained-capture-legacy-fixture-20261005.json",
+      "sha256": "8352b036eca02dfd86bb441df4ea3fe0ea54b9ad6bcaaee9a000219ddfae09c5"
+    },
+    {
+      "path": "verifier-runtime.mjs",
+      "sha256": "8a4c9058b6c72a5aa8dd68809e3cbfd8e5c217b358c41970347443a338f83933"
+    },
+    {
+      "path": "verify-browser-extra.mjs",
+      "sha256": "ded6caf799125c5a423da1863298679dc8d43633ad46d984b1e78f1c266f1e11"
+    },
+    {
+      "path": "verify-complete-operator-journey.mjs",
+      "sha256": "40173709f06b0a985ff8528c75d7aaeef6e24f25686adb17477d73dbceb1af48"
+    },
+    {
+      "path": "verify-conformance-regressions.mjs",
+      "sha256": "5c38280e7a84d92a6b7f14b8c1cc8b0340d9004d6bf68e324d680ebbf10b83e0"
+    },
+    {
+      "path": "verify-file-first-operator.mjs",
+      "sha256": "569822f6436034038775d3a62ab115e4a952bcd8e1d25397f0e87e8b8730c1ac"
+    },
+    {
+      "path": "verify-handoff-authorization-ui.mjs",
+      "sha256": "1013ed85e4682b74e2b9c93459971aece451285293e43e7d2570b78f6e6af299"
+    },
+    {
+      "path": "verify-ingestion.mjs",
+      "sha256": "f7b4aef437956f2593401cc1923bc48ed8127223467b91d71f83608f7fa1c285"
+    },
+    {
+      "path": "verify-operator-action-lifecycle.mjs",
+      "sha256": "145bcbf002337f8dcc9240fbffed2e0ce5a8f6e6a538c3aeeda15b07e556b086"
+    },
+    {
+      "path": "verify-reservation-contract.mjs",
+      "sha256": "8c26d4f085118e956af896460f5e05ad90398570736c0043a0a5378767721d86"
+    },
+    {
+      "path": "verify-response-contract-profile.mjs",
+      "sha256": "a925643310ee061f5de2e25481ab1a3e4bb4470d9fef4d5e58a1447ce9247ce6"
+    },
+    {
+      "path": "verify-retained-history-oracles.mjs",
+      "sha256": "a5b821d861295746c629fceedc52368ba98640e1d9231c1c149f36c6d26f18a6"
+    },
+    {
+      "path": "workbook.js",
+      "sha256": "3a8098a9bb4ea108eadaa9bec90c76a1522f57f6465f45341cedf60937ddd008"
+    },
+    {
+      "path": "workflow-engine.js",
+      "sha256": "fac2c0f35a3e10f4be41711ea36d6da4b4b49d86f45ec751b509134dc5ab8777"
+    },
+    {
+      "path": "workflow-schema.js",
+      "sha256": "656e9e632cea3a60e1c7e0fb486e6630d205011d7db32d9674ac5e88593d24f1"
+    }
+  ],
+  "findings": [],
+  "reviewPerformed": true,
+  "sourceLocation": {
+    "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+    "startLine": 1428,
+    "endLine": 1428,
+    "lineSha256": "34d21a8d47ac34454516030c062acf0b4c5f0b0484b52cfff8b77162709a694c"
+  },
+  "controllingText": "- wrong root type;",
+  "governingContext": [
+    {
+      "normativeRequirementId": "NREQ-6c392009e2925e9e3e3baaf1e42cbc93",
+      "sourceLineSha256": "a8a298876c99dfea0ed6a1c39c7a06c729213341e056ac22e85dc6ce6f53a8b0",
+      "controllingText": "17.5 Closed-schema rejection"
+    }
+  ],
+  "additionalControllingContext": {
+    "normativeRequirementId": "NREQ-f3c76d5b2691175b5c4f18f5b12f2892",
+    "sourceLocation": {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "startLine": 1421,
+      "endLine": 1421,
+      "lineSha256": "d79d136180581dd41050286f4f83801fb731c7b2ceb4857985c292a1293a0f44"
+    },
+    "controllingText": "The single ingestion path rejects before canonical mutation:"
+  },
+  "scopeLimit": "Using a real new Stage1 project, current input version, application-owned reservation, saved instruction and actual exported ZIP package, the invalid response must be rejected with its literal expected diagnostic and no proposal. Preparation and actual operational save/reload preserve the whole canonical project snapshot: every Job field except CURRENT_STATE/NEXT_REQUIRED_ACTION, all registered and nonregistry canonical values, all stage values except gate/status/derivedData/responseDraft, the selected reservation binding/contentSha256 and all other reservations, canonical revision, identities, versions, pointers and root metadata. Exact operational raw/audit collections and recomputed projectSha256 are excluded from that snapshot comparison, while all preexisting audit prefixes remain byte/value-equivalent. The original input object remains unchanged. These are synthetic controlled actor inputs under the production storage owner with an isolated transaction adapter; no browser, external actor, authenticated human decision, stage completion or acceptance is claimed. The maintained assertions require three directly exercised conforming response-file controls to remain valid pending proposals, retain exact raw bytes, and commit no canonical changes. The finite wrong-root population independently includes array, null, string, number, true and false JSON roots, each with sole INVALID_ROOT.",
+  "independentSemanticAssessment": {
+    "path": "/workspace/scratch/normative-review/24-declaration-semantic-review.json",
+    "sha256": "5440a66128d087b55a4d858ea0149fd024916806fa7d0ea9c23b6d0243f480ac",
+    "row": {
+      "normativeRequirementId": "NREQ-1576e27fba46e1d68631bb2ade2e37f4",
+      "sourceLocation": {
+        "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "startLine": 1428,
+        "endLine": 1428,
+        "lineSha256": "34d21a8d47ac34454516030c062acf0b4c5f0b0484b52cfff8b77162709a694c"
+      },
+      "controllingText": "- wrong root type;",
+      "review": {
+        "path": "verification/requirement-coverage-NREQ-1576e27fba46e1d68631bb2ade2e37f4-20261006-syntax-26d52bad9b8f.json",
+        "sha256": "665f65a33c3d87f55be7f0672ce52710ac5f54b8fc87b486bed93768c685bc37"
+      },
+      "checkIds": [
+        "ingestion.syntax.root-object"
+      ],
+      "status": "NARROW_COVERAGE_DESIGN_REVIEWED_NO_GAP_FOUND",
+      "rationale": "Exact source17.5 parent1421 requires rejection before canonical mutation. Literal malformed/truncated/wrapped/oversize/duplicate/type/transport negatives require actual diagnostic and absence of proposal; whole protected-state and retained audit-prefix comparisons cover save/reload; controls distinguish valid string quotations and exact byte boundary from invalid syntax. Stage1 setup creates project/input version/reservation/package through production owners. Shared parser/envelope path applies to external operations. Finite Stage1 synthetic storage-adapter evidence does not claim other operation semantics, browser, agent, human or completion.",
+      "reviewedSourceInputs": [
+        {
+          "path": "test-ingestion-syntax-transport.mjs",
+          "sha256": "e6f0c330defc80309158dd2bf2fa229e8b2b96a2bb119b6a8f0bf9611a3785cb"
+        },
+        {
+          "path": "test-ingestion-context-reference.mjs",
+          "sha256": "3c34f3e78b7e20bbd8b60f51b6df250252c583b29e8672f4518abcae125fb84f"
+        },
+        {
+          "path": "verify-ingestion.mjs",
+          "sha256": "00d91794cd53ca8d13f22011091226e4d34a84d8b98167f9a432baf02fe4fce0"
+        },
+        {
+          "path": "response-ingestion.js",
+          "sha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19"
+        },
+        {
+          "path": "project-store.js",
+          "sha256": "2d6896f47164f4a232c631d949cce64d2200e6d4e2202c2c3cdb29b08648cdf2"
+        },
+        {
+          "path": "verification-evidence-catalog.mjs",
+          "sha256": "e6378e7747ba860e5312a813c55625748d2fbaee5f2838d8ee4e97349ba4640f"
+        },
+        {
+          "path": "verification-evidence.mjs",
+          "sha256": "f1b4c7e6435c3cd42a1ed09c3ade9770cc3394a03c1e17a0a405c528e17a5ff2"
+        }
+      ],
+      "executedCurrentProducerByThisReview": false,
+      "fullApplicationConformanceClaim": false
+    }
+  },
+  "priorReview": {
+    "path": "verification/requirement-coverage-NREQ-1576e27fba46e1d68631bb2ade2e37f4-20261006-syntax-26d52bad9b8f.json",
+    "sha256": "665f65a33c3d87f55be7f0672ce52710ac5f54b8fc87b486bed93768c685bc37",
+    "author": {
+      "actor": "Codex exact syntax/transport declaration author",
+      "contextId": "/root/stage_contract_audit"
+    },
+    "reviewer": {
+      "actor": "Codex independent exact-clause reviewer",
+      "contextId": "/root"
+    },
+    "reviewCompletedAt": "2026-10-06T21:59:28.806Z"
+  },
+  "reviewerPriorContributionDisclosure": "Actual reviewer contribution and boundary are retained in the embedded assessment. For the five custody clauses, this reviewer authored strengthened tests; parent and separate PR inventory reviewer independently inspected the delta and intended oracle. This does not establish external-agent context independence.",
+  "currentExecutionRequired": true,
+  "applicationConformanceClaim": false,
+  "reviewCompletedAt": "2026-10-07T01:21:18.248Z",
+  "currentDependencyDeltaReview": {
+    "path": "verification/current-source-delta-review-20261007.json",
+    "sha256": "3fad9eab08ffad0ce72f8d64771514793b2a282bde132fbc7c036202239b0a73"
+  }
+}

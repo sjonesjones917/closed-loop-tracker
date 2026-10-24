@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {execFileSync} from 'node:child_process';
-import {projectStoreRuntime} from './test-project-store-runtime.mjs';
+import {projectStoreRuntime,bindProjectActivationUi} from './test-project-store-runtime.mjs';
 const sourceRevision=execFileSync('git',['rev-parse','HEAD'],{timeout:30000,killSignal:'SIGKILL',encoding:'utf8'}).trim();
 const app=fs.readFileSync(process.env.APP_SOURCE||'app-core.js','utf8'),r=projectStoreRuntime(),{runtime,store,engine,copy}=r;
 const source=await store.createProject({commandId:'ARCHIVE-LAST-PROJECT-SOURCE'});
@@ -10,6 +10,7 @@ Object.assign(runtime,{current:source,projects:[source],core:r.core,engine,proje
 for(const prefix of ['const views=','function blankStage(','function ensureState(','function createUniqueJobId(','const projectUiEntry=','const projectIsArchived=','async function saveProjectUi(','function unloadInactiveProjects('])vm.runInContext(app.split('\n').find(line=>line.startsWith(prefix)),runtime,{filename:'app-core.js:'+prefix});
 vm.runInContext(app.slice(app.indexOf('async function persistNewProject('),app.indexOf('async function persistReplacement(')),runtime,{filename:'app-core.js:persistNewProject'});
 vm.runInContext(app.slice(app.indexOf('async function materializeProject('),app.indexOf('function unloadInactiveProjects(')),runtime,{filename:'app-core.js:materializeProject'});
+bindProjectActivationUi(r,{source:app});
 vm.runInContext(app.slice(app.indexOf('async function archiveCurrentProject('),app.indexOf('async function restoreArchivedProject('))+'\nglobalThis.archive=archiveCurrentProject;',runtime,{filename:'app-core.js:archiveCurrentProject'});
 await runtime.archive();
 const replacement=await store.readProject(runtime.current.job.JOB_ID),ui=await store.metaGet('projectUi');

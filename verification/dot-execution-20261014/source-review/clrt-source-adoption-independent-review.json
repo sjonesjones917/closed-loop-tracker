@@ -1,0 +1,182 @@
+{
+  "review": "FROZEN_SOURCE_ADOPTION_DELTA_ONLY",
+  "result": "ACCEPT",
+  "base": "7df5f46e9a7e54da09622387a978badb39916c09",
+  "head": "ebf6a930d1e5ef2f9afaaf68631a318facee5181",
+  "node": "v22.23.3",
+  "source": {
+    "byteLength": 309482,
+    "sha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883"
+  },
+  "historical": {
+    "byteLength": 342110,
+    "sha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d"
+  },
+  "checkCount": 24,
+  "results": [
+    {
+      "name": "supplied/frozen/disk byte equality and pinned identity",
+      "status": "PASS"
+    },
+    {
+      "name": "historical source retained at reachable base and historical source commit",
+      "status": "PASS"
+    },
+    {
+      "name": "all changes within bounded source governance scope; runtime and historical declarations unchanged",
+      "status": "PASS"
+    },
+    {
+      "name": "exact source accepts actual frozen source commit tuple",
+      "status": "PASS"
+    },
+    {
+      "name": "independent boundary rejects BOM even with rehashed tuple",
+      "status": "PASS"
+    },
+    {
+      "name": "independent boundary rejects invalid UTF8 even with rehashed tuple",
+      "status": "PASS"
+    },
+    {
+      "name": "independent boundary rejects CR interior even with rehashed tuple",
+      "status": "PASS"
+    },
+    {
+      "name": "independent boundary rejects remove both final LF even with rehashed tuple",
+      "status": "PASS"
+    },
+    {
+      "name": "independent boundary rejects one final LF even with rehashed tuple",
+      "status": "PASS"
+    },
+    {
+      "name": "independent boundary rejects three final LF even with rehashed tuple",
+      "status": "PASS"
+    },
+    {
+      "name": "independent boundary rejects prepend blank even with rehashed tuple",
+      "status": "PASS"
+    },
+    {
+      "name": "independent boundary rejects remove supplied header even with rehashed tuple",
+      "status": "PASS"
+    },
+    {
+      "name": "independent boundary rejects combined prompt boundary even with rehashed tuple",
+      "status": "PASS"
+    },
+    {
+      "name": "independent boundary rejects changed final phrase even with rehashed tuple",
+      "status": "PASS"
+    },
+    {
+      "name": "same-length interior mutation fails original tuple",
+      "status": "PASS"
+    },
+    {
+      "name": "base verifier reproduced wrong one-LF rejection against exact supplied bytes",
+      "status": "PASS"
+    },
+    {
+      "name": "current source regression passes actual Node process",
+      "status": "PASS"
+    },
+    {
+      "name": "frozen verify-specification-governance.mjs rejects historical source evidence and does not rewrite manifests",
+      "status": "PASS"
+    },
+    {
+      "name": "frozen generate-specification-governance.mjs rejects historical source evidence and does not rewrite manifests",
+      "status": "PASS"
+    },
+    {
+      "name": "imported verifier remains active and fails closed",
+      "status": "PASS"
+    },
+    {
+      "name": "historical governance core still executes all clarification/amendment/semantic negative gates",
+      "status": "PASS"
+    },
+    {
+      "name": "relabeling only manifest source tuple cannot renew historical semantic evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "rehashed same-length altered source cannot pass current verifier regression",
+      "status": "PASS"
+    },
+    {
+      "name": "reviewer extraction unchanged on historical source except source-code identity",
+      "status": "PASS"
+    }
+  ],
+  "changed": [
+    "generate-specification-governance.mjs",
+    "review-specification-coverage.mjs",
+    "specification-governance-core.mjs",
+    "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+    "test-specification-source-adoption.mjs",
+    "verification/specification-source-adoption-20261014/README.md",
+    "verification/specification-source-adoption-20261014/before-verifier.log",
+    "verification/specification-source-adoption-20261014/generate-specification-governance.log",
+    "verification/specification-source-adoption-20261014/historical-core-compatibility.log",
+    "verification/specification-source-adoption-20261014/imported-verifier.log",
+    "verification/specification-source-adoption-20261014/source-controls.log",
+    "verification/specification-source-adoption-20261014/verify-specification-governance.log",
+    "verify-specification-governance.mjs"
+  ],
+  "artifacts": {
+    "baseVerifier": {
+      "status": 1,
+      "signal": null,
+      "stdout": "",
+      "stderr": "(node:32) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.\n(Use `node --trace-warnings ...` to show where the warning was created)\nfile:///tmp/clrt-independent-adoption-OPDFJW/verify-specification-governance.mjs:15\nconst assert=(condition,message)=>{if(!condition)throw new Error(message);};\n                                                       ^\n\nError: Specification must end with exactly one LF.\n    at assert (file:///tmp/clrt-independent-adoption-OPDFJW/verify-specification-governance.mjs:15:56)\n    at file:///tmp/clrt-independent-adoption-OPDFJW/verify-specification-governance.mjs:30:1\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n\nNode.js v22.23.3\n"
+    },
+    "sourceRegression": {
+      "status": 0,
+      "signal": null,
+      "stdout": "{\n  \"test\": \"test-specification-source-adoption\",\n  \"result\": \"PASS\",\n  \"scope\": \"EXACT_SOURCE_BYTE_VALIDATION_AND_MECHANICAL_SECTION_CONTROLS_ONLY\",\n  \"sourceByteLength\": 309482,\n  \"sourceSha256\": \"8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883\",\n  \"topLevelSectionCount\": 53,\n  \"sectionCount\": 253,\n  \"exactSourceAccepted\": true,\n  \"mutationCount\": 16,\n  \"mutations\": [\n    \"BOM\",\n    \"invalid UTF-8\",\n    \"CRLF conversion\",\n    \"leading blank line\",\n    \"missing final LF\",\n    \"extra final LF\",\n    \"missing supplied header\",\n    \"changed final sentence\",\n    \"same-length interior byte mutation\",\n    \"changed digest tuple\",\n    \"changed byte-length tuple\",\n    \"missing source commit\",\n    \"different source commit\",\n    \"missing top-level section\",\n    \"duplicate subsection\",\n    \"historical evidence source tuple\"\n  ],\n  \"historicalEvidenceCannotRegenerateCurrentManifests\": true,\n  \"normativeCoverageAcceptanceClaim\": false,\n  \"implementationConformanceClaim\": false,\n  \"gitProvenanceAcceptanceClaim\": false\n}\n",
+      "stderr": "(node:40) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.\n(Use `node --trace-warnings ...` to show where the warning was created)\n"
+    },
+    "verify-specification-governance.mjs": {
+      "status": 1,
+      "signal": null,
+      "stdout": "",
+      "stderr": "(node:80) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.\n(Use `node --trace-warnings ...` to show where the warning was created)\nfile:///workspace/shared/clrt-source-review/review-specification-coverage.mjs:8\nconst assert=(condition,message)=>{if(!condition)throw new Error(message);};\n                                                       ^\n\nError: Committed specification manifest does not bind the exact source bytes.\n    at assert (file:///workspace/shared/clrt-source-review/review-specification-coverage.mjs:8:56)\n    at validateSpecificationSource (file:///workspace/shared/clrt-source-review/review-specification-coverage.mjs:20:1)\n    at file:///workspace/shared/clrt-source-review/verify-specification-governance.mjs:26:18\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n\nNode.js v22.23.3\n"
+    },
+    "generate-specification-governance.mjs": {
+      "status": 1,
+      "signal": null,
+      "stdout": "",
+      "stderr": "(node:88) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.\n(Use `node --trace-warnings ...` to show where the warning was created)\nfile:///workspace/shared/clrt-source-review/generate-specification-governance.mjs:11\nif(evidence.schema!=='closed-loop-requirement-evidence-bindings/1'||evidence.specificationSha256!==sourceSha256)throw Error('Requirement evidence bindings do not match the controlling specification');\n                                                                                                                      ^\n\nError: Requirement evidence bindings do not match the controlling specification\n    at file:///workspace/shared/clrt-source-review/generate-specification-governance.mjs:11:119\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n\nNode.js v22.23.3\n"
+    },
+    "importedVerifier": {
+      "status": 1,
+      "signal": null,
+      "stdout": "",
+      "stderr": "(node:97) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.\n(Use `node --trace-warnings ...` to show where the warning was created)\nfile:///workspace/shared/clrt-source-review/review-specification-coverage.mjs:8\nconst assert=(condition,message)=>{if(!condition)throw new Error(message);};\n                                                       ^\n\nError: Committed specification manifest does not bind the exact source bytes.\n    at assert (file:///workspace/shared/clrt-source-review/review-specification-coverage.mjs:8:56)\n    at validateSpecificationSource (file:///workspace/shared/clrt-source-review/review-specification-coverage.mjs:20:1)\n    at file:///workspace/shared/clrt-source-review/verify-specification-governance.mjs:26:18\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n\nNode.js v22.23.3\n"
+    },
+    "historicalCore": {
+      "status": 0,
+      "signal": null,
+      "stdout": "{\n  \"specificationSourcePresent\": true,\n  \"sourceCommit\": \"8283121898e18d7868eef81c5ca8bebf0c9585c0\",\n  \"sourceByteLength\": 342110,\n  \"sourceSha256\": \"95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d\",\n  \"topLevelSectionCount\": 53,\n  \"sectionCount\": 255,\n  \"normativeRequirementCount\": 4066,\n  \"dispositionCounts\": {\n    \"CONFORMANT_PROVEN\": 0,\n    \"IMPLEMENTED_UNPROVEN\": 3856,\n    \"MISSING\": 0,\n    \"CONTRADICTED\": 0,\n    \"BLOCKED_HUMAN\": 0,\n    \"BLOCKED_ENVIRONMENT\": 0,\n    \"UNKNOWN\": 210\n  },\n  \"independentMechanicalOmissionPass\": true,\n  \"independentOmissionChallenge\": true,\n  \"independentSemanticSourceReviewPath\": \"verification/independent-source-review-20261005.json\",\n  \"independentSemanticSourceReviewSha256\": \"7e08fd37e0885c3de089d1939ea25515a1bc933dc45aa7997e8062d68ac845bb\",\n  \"independentSemanticReconciliationPath\": \"verification/independent-source-reconciliation-20261005.json\",\n  \"independentSemanticReconciliationSha256\": \"b2b22f137623d5916a025d12575152a36b2b8b20daa8100db5c420e4d90f87a8\",\n  \"sourceReviewAddedRequirementCount\": 174,\n  \"reconciliationComplete\": true,\n  \"runtimeSpecificationCopies\": 0,\n  \"runtimeControllerCopies\": 0,\n  \"mutationCount\": 17,\n  \"mutations\": [\n    \"uncovered-section\",\n    \"missing-requirement\",\n    \"source-reviewed-clause-omission\",\n    \"duplicate-id\",\n    \"missing-test-trace\",\n    \"source-conflict\",\n    \"runtime-copy\",\n    \"approved-clarification-omission\",\n    \"approved-amendment-inventory-omission\",\n    \"approved-amendment-obligation-omission\",\n    \"approved-amendment-wrong-identity\",\n    \"approved-amendment-unproven-conformance\",\n    \"independent-semantic-review-omission\",\n    \"independent-semantic-review-basis\",\n    \"independent-semantic-addition-omission\",\n    \"independent-semantic-context-omission\",\n    \"independent-semantic-unproven-conformance\"\n  ],\n  \"intentionalUncoveredSectionMutationRejected\": true,\n  \"allNormativeRequirementsConformant\": false,\n  \"specificationTraceIntegrity\": \"PASS\"\n}\n",
+      "stderr": "(node:105) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.\n(Use `node --trace-warnings ...` to show where the warning was created)\n"
+    },
+    "relabeledManifest": {
+      "status": 1,
+      "signal": null,
+      "stdout": "",
+      "stderr": "(node:137) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.\n(Use `node --trace-warnings ...` to show where the warning was created)\nfile:///tmp/clrt-independent-adoption-OPDFJW/verify-specification-governance.mjs:90\n  if(validation.result.status!==0)throw new Error(`Independent governance validation failed:\\n${validation.result.stdout||''}\\n${validation.result.stderr||''}`);\n                                        ^\n\nError: Independent governance validation failed:\n\n(node:185) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.\n(Use `node --trace-warnings ...` to show where the warning was created)\nfile:///tmp/closed-loop-governance-validation-57x20i/verify-conformance-regressions.mjs:159\n  throw Object.assign(new Error('Verifier child did not pass: '+JSON.stringify(summary)),{code:result.error?.code||'VERIFIER_CHILD_FAILED',result});\n                      ^\n\nError: Verifier child did not pass: {\"command\":[\"/workspace/shared/npm-cache/_npx/d18f28baf1132559/node_modules/node/bin/node\",\"generate-specification-governance.mjs\"],\"outcome\":\"FAIL\",\"status\":1,\"signal\":null,\"reason\":null,\"diagnostic\":\"Requirement evidence bindings do not match the controlling specification\",\"evidencePath\":\"/tmp/closed-loop-governance-validation-57x20i/conformance-regression-evidence/child-processes/185-0001-8865abc0-1bd2-4a58-8c80-9017924e4dee.json\",\"stdoutPath\":\"/tmp/closed-loop-governance-validation-57x20i/conformance-regression-evidence/child-processes/185-0001-8865abc0-1bd2-4a58-8c80-9017924e4dee.stdout.log\",\"stderrPath\":\"/tmp/closed-loop-governance-validation-57x20i/conformance-regression-evidence/child-processes/185-0001-8865abc0-1bd2-4a58-8c80-9017924e4dee.stderr.log\"}\n    at checkedVerifier (file:///tmp/closed-loop-governance-validation-57x20i/verify-conformance-regressions.mjs:159:23)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async file:///tmp/closed-loop-governance-validation-57x20i/specification-governance-core.mjs:9:2 {\n  code: 'VERIFIER_CHILD_FAILED',\n  result: {\n    suite: '185-0001-8865abc0-1bd2-4a58-8c80-9017924e4dee',\n    command: [\n      '/workspace/shared/npm-cache/_npx/d18f28baf1132559/node_modules/node/bin/node',\n      'generate-specification-governance.mjs'\n    ],\n    startedAt: '2026-10-14T03:48:53.239Z',\n    finishedAt: '2026-10-14T03:48:53.349Z',\n    timeoutMs: 1200000,\n    exitCode: 1,\n    signal: null,\n    outcome: 'FAIL',\n    reason: null,\n    error: null,\n    reportError: null,\n    stdout: '',\n    stderr: '(node:193) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.\\n' +\n      '(Use `node --trace-warnings ...` to show where the warning was created)\\n' +\n      'file:///tmp/closed-loop-governance-validation-57x20i/generate-specification-governance.mjs:11\\n' +\n      \"if(evidence.schema!=='closed-loop-requirement-evidence-bindings/1'||evidence.specificationSha256!==sourceSha256)throw Error('Requirement evidence bindings do not match the controlling specification');\\n\" +\n      '                                                                                                                      ^\\n' +\n      '\\n' +\n      'Error: Requirement evidence bindings do not match the controlling specification\\n' +\n      '    at file:///tmp/closed-loop-governance-validation-57x20i/generate-specification-governance.mjs:11:119\\n' +\n      '    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\\n' +\n      '\\n' +\n      'Node.js v22.23.3\\n',\n    stdoutSha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',\n    stderrSha256: 'ae03585f227fe11c95d94d30a89f4ff9c5bd47b35dfbee8b714dcc5af18f7e20',\n    stdoutPath: '/tmp/closed-loop-governance-validation-57x20i/conformance-regression-evidence/child-processes/185-0001-8865abc0-1bd2-4a58-8c80-9017924e4dee.stdout.log',\n    stderrPath: '/tmp/closed-loop-governance-validation-57x20i/conformance-regression-evidence/child-processes/185-0001-8865abc0-1bd2-4a58-8c80-9017924e4dee.stderr.log',\n    report: null,\n    ownedProcessGroups: [],\n    status: 1,\n    evidencePath: '/tmp/closed-loop-governance-validation-57x20i/conformance-regression-evidence/child-processes/185-0001-8865abc0-1bd2-4a58-8c80-9017924e4dee.json'\n  }\n}\n\nNode.js v22.23.3\n\n    at file:///tmp/clrt-independent-adoption-OPDFJW/verify-specification-governance.mjs:90:41\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n\nNode.js v22.23.3\n"
+    },
+    "rehashedChangedSource": {
+      "status": 1,
+      "signal": null,
+      "stdout": "",
+      "stderr": "(node:201) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.\n(Use `node --trace-warnings ...` to show where the warning was created)\nfile:///tmp/clrt-independent-adoption-OPDFJW/verify-conformance-regressions.mjs:159\n  throw Object.assign(new Error('Verifier child did not pass: '+JSON.stringify(summary)),{code:result.error?.code||'VERIFIER_CHILD_FAILED',result});\n                      ^\n\nError: Verifier child did not pass: {\"command\":[\"/workspace/shared/npm-cache/_npx/d18f28baf1132559/node_modules/node/bin/node\",\"test-specification-source-adoption.mjs\"],\"outcome\":\"FAIL\",\"status\":1,\"signal\":null,\"reason\":null,\"diagnostic\":\"The regression fixture cannot silently follow a changed source.\",\"evidencePath\":\"/tmp/clrt-independent-adoption-OPDFJW/conformance-regression-evidence/child-processes/201-0001-2d6c38c9-4c3e-4f1b-9842-37407c266e89.json\",\"stdoutPath\":\"/tmp/clrt-independent-adoption-OPDFJW/conformance-regression-evidence/child-processes/201-0001-2d6c38c9-4c3e-4f1b-9842-37407c266e89.stdout.log\",\"stderrPath\":\"/tmp/clrt-independent-adoption-OPDFJW/conformance-regression-evidence/child-processes/201-0001-2d6c38c9-4c3e-4f1b-9842-37407c266e89.stderr.log\"}\n    at checkedVerifier (file:///tmp/clrt-independent-adoption-OPDFJW/verify-conformance-regressions.mjs:159:23)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async file:///tmp/clrt-independent-adoption-OPDFJW/verify-specification-governance.mjs:27:2 {\n  code: 'VERIFIER_CHILD_FAILED',\n  result: {\n    suite: '201-0001-2d6c38c9-4c3e-4f1b-9842-37407c266e89',\n    command: [\n      '/workspace/shared/npm-cache/_npx/d18f28baf1132559/node_modules/node/bin/node',\n      'test-specification-source-adoption.mjs'\n    ],\n    startedAt: '2026-10-14T03:48:53.537Z',\n    finishedAt: '2026-10-14T03:48:53.597Z',\n    timeoutMs: 1200000,\n    exitCode: 1,\n    signal: null,\n    outcome: 'FAIL',\n    reason: null,\n    error: null,\n    reportError: null,\n    stdout: '',\n    stderr: '(node:209) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.\\n' +\n      '(Use `node --trace-warnings ...` to show where the warning was created)\\n' +\n      'node:internal/modules/run_main:123\\n' +\n      '    triggerUncaughtException(\\n' +\n      '    ^\\n' +\n      '\\n' +\n      'AssertionError [ERR_ASSERTION]: The regression fixture cannot silently follow a changed source.\\n' +\n      '+ actual - expected\\n' +\n      '\\n' +\n      \"+ 'c4c1e8044775abbd75697f52d87dc36625e42bec0f571fb664f2f005eb6ecf54'\\n\" +\n      \"- '8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883'\\n\" +\n      '\\n' +\n      '    at file:///tmp/clrt-independent-adoption-OPDFJW/test-specification-source-adoption.mjs:16:8\\n' +\n      '    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)\\n' +\n      '    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\\n' +\n      '    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)\\n' +\n      '    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5) {\\n' +\n      '  generatedMessage: false,\\n' +\n      \"  code: 'ERR_ASSERTION',\\n\" +\n      \"  actual: 'c4c1e8044775abbd75697f52d87dc36625e42bec0f571fb664f2f005eb6ecf54',\\n\" +\n      \"  expected: '8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883',\\n\" +\n      \"  operator: 'strictEqual',\\n\" +\n      \"  diff: 'simple'\\n\" +\n      '}\\n' +\n      '\\n' +\n      'Node.js v22.23.3\\n',\n    stdoutSha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',\n    stderrSha256: '38267bb64de1ec7e06fd78cc2ef0eb9649d4bb0ed013c597768f5245ffab3704',\n    stdoutPath: '/tmp/clrt-independent-adoption-OPDFJW/conformance-regression-evidence/child-processes/201-0001-2d6c38c9-4c3e-4f1b-9842-37407c266e89.stdout.log',\n    stderrPath: '/tmp/clrt-independent-adoption-OPDFJW/conformance-regression-evidence/child-processes/201-0001-2d6c38c9-4c3e-4f1b-9842-37407c266e89.stderr.log',\n    report: null,\n    ownedProcessGroups: [\n      {\n        pid: 209,\n        parent: 201,\n        token: '3645fd1c-7472-4011-8b13-ce977ffb3ad3',\n        active: false\n      }\n    ],\n    status: 1,\n    evidencePath: '/tmp/clrt-independent-adoption-OPDFJW/conformance-regression-evidence/child-processes/201-0001-2d6c38c9-4c3e-4f1b-9842-37407c266e89.json'\n  }\n}\n\nNode.js v22.23.3\n"
+    }
+  },
+  "fullGovernanceAccepted": false,
+  "runtimeConformanceClaim": false,
+  "sourceReachabilityOnRemoteMainClaim": false
+}

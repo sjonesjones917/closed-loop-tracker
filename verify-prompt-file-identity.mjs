@@ -1,17 +1,18 @@
+import {stage04AcceptanceFixture} from './test-fixtures.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 const runtime=createVerifierRuntime({TextEncoder,TextDecoder,Event:class Event{},dispatchEvent(){}});
-for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])vm.runInContext(fs.readFileSync(file,'utf8'),runtime,{filename:file});
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])vm.runInContext(fs.readFileSync(file,'utf8'),runtime,{filename:file});
 const {closedLoopCore:core,closedLoopWorkflowSchema:schema,closedLoopWorkflowEngine:engine,closedLoopPromptEngine:prompts}=runtime;
 const p=core.createBlankState('JOB-PROMPT-FILE-IDENTITY');
 Object.assign(p.job,{EXACT_USER_OBJECTIVE_VERBATIM:'Verify exact instruction bytes — café.',SUPPLIED_MATERIALS_INVENTORY:'NONE',CURRENT_INPUT_VERSION:'INPUT-FILE'});
 engine.ensureShape(p);
 const intake=prompts.intakeCoverageManifest(p);
 p.stages[1].agentData.INPUT_SET_CONTENTS=JSON.stringify({schema:'closed-loop-stage01-capture/2',inputVersion:intake.inputVersion,manifestSha256:intake.manifestSha256,pass1Completed:true,pass2OmissionChallenge:{completed:true,checkedCategories:['QUALIFIERS','EXCEPTIONS','DEPENDENCIES','NEGATIVE_REQUIREMENTS','DO_NOT_CHANGE','VISUAL_CONSTRAINTS','TEMPORAL_CONSTRAINTS','ACCEPTANCE_CONDITIONS','AUTHORITY_STATEMENTS','TOOL_RESTRICTIONS','FILE_REFERENCES','OUTPUT_FORMAT_REQUIREMENTS','CORRECTIONS','LATER_OVERRIDES'],omissionsFound:[],omissionsResolved:true},units:intake.units.map((u,i)=>({sourceUnitId:u.unitId,sourceRawValueSha256:u.rawValueSha256,disposition:'EXTRACTED_RELEVANT_INFORMATION',extractedStatements:[{statementKey:'S'+i,text:u.rawValueText||u.label,statementClass:'CONTEXT'}]}))});
-p.stages[2].agentData.SOURCE_APPLICABILITY_DETERMINATION='NO_APPLICABLE_EXTERNAL_SOURCE';
+Object.assign(p,stage04AcceptanceFixture({core,schema,engine,prompts,ingestion:runtime.closedLoopResponseIngestion},p.job.JOB_ID,{project:p,stageData:p.stages[1].agentData}));
 let generatedOperations=0,nonExternalOperations=0,mutations=0,totalOperations=0,conditionalRejections=0;
 for(let stage=1;stage<=30;stage++){
  if(stage>1){p.stages[stage-1].status='COMPLETE';p.stages[stage-1].gate={complete:true};}

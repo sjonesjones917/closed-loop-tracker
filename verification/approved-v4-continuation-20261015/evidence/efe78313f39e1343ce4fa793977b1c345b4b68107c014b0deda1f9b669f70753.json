@@ -1,0 +1,237 @@
+[
+  {
+    "schema": "closed-loop-attributed-new-duty-edge-reconciliation/1",
+    "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+    "entryKind": "NEW_AMENDMENT_DEPENDENCY",
+    "canonicalId": "AMEND-L2073-A2",
+    "originalNewDutyId": "NREQ-3da23d396b13f2f2f14ee4cad0627aa0",
+    "originalNewDutyIndex": 434,
+    "originalEntryEvidence": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/new-amendment-obligations.json",
+        "sha256": "529ab908025aa47387337eae07de480d3cf09d9af952945d21f5dfc3cbc25eca",
+        "byteLength": 11169039
+      },
+      "jsonPointer": "/434",
+      "entrySha256": "5fa3ddfb1770045563270f5ba107352b7c040b1390f0639ae55601f5b387430e"
+    },
+    "originalStatement": "The first segment matches the document element at position 1",
+    "originalSourceOccurrenceSet": {
+      "primarySourceLocationPointer": "/434/primarySourceLocation",
+      "sourceSpansPointer": "/434/sourceSpans",
+      "contextSourceLocationsPointer": "/434/contextSourceLocations",
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/new-amendment-obligations.json",
+        "sha256": "529ab908025aa47387337eae07de480d3cf09d9af952945d21f5dfc3cbc25eca",
+        "byteLength": 11169039
+      }
+    },
+    "verifiedSourcePassageKeys": [
+      "L2073-2073",
+      "L1817-1819",
+      "L1883-1883",
+      "L2016-2035",
+      "L2052-2052",
+      "L2071-2071",
+      "L2079-2079",
+      "L2086-2086",
+      "L2054-2054",
+      "L2083-2083",
+      "L2078-2078",
+      "L2080-2080"
+    ],
+    "historicalUnresolvedSourceEffects": [
+      "SRC-AMBIGUITY-XML-SUBNODE-ROOT"
+    ],
+    "historicalSourceStatus": "DETERMINATE_DUTY_WITH_BLOCKED_EFFECT",
+    "currentUnresolvedSourceEffects": [],
+    "edgeDecision": "ATTRIBUTED_SEMANTIC_REFERENT_CHANGE",
+    "successorDisposition": "CHANGED",
+    "independentReason": "The exact first-segment predicate depends on what document element denotes when SELECT_XML receives a selected nonroot node. The accepted technical interpretation selects the eligible supplied node as the invocation root and first match at position1, with subtree-only traversal and no implicit original-root/ancestor/outside-sibling access. This changes the formerly ambiguous effective referent and requires a fresh attributed identity. The original statement, source bytes, occurrence set and source-only ambiguity remain immutable.",
+    "effectiveGovernorLink": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/xml-reviewed-resolution-successor/effective-governor-link.json",
+      "sha256": "20dfd446263cdffd35a8b12b70844cad851cf7abb5ad059548bbb5f088c5875c",
+      "byteLength": 7671
+    },
+    "resolutionEvidenceReference": {
+      "governor": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/xml-reviewed-resolution-successor/effective-governor-link.json",
+        "sha256": "20dfd446263cdffd35a8b12b70844cad851cf7abb5ad059548bbb5f088c5875c",
+        "byteLength": 7671
+      },
+      "role": "CONTROLLING_EFFECTIVE_SCOPE"
+    },
+    "originalReviewInheritance": false,
+    "proofInheritance": false,
+    "implementationStatus": "UNKNOWN",
+    "testConformance": "UNKNOWN",
+    "sourceLedgerActivated": false,
+    "identityPreimage": {
+      "schema": "closed-loop-attributed-new-amendment-scope-identity/1",
+      "successorSourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "priorNewDutyId": "NREQ-3da23d396b13f2f2f14ee4cad0627aa0",
+      "priorEntryEvidence": {
+        "artifact": {
+          "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/new-amendment-obligations.json",
+          "sha256": "529ab908025aa47387337eae07de480d3cf09d9af952945d21f5dfc3cbc25eca",
+          "byteLength": 11169039
+        },
+        "jsonPointer": "/434",
+        "entrySha256": "5fa3ddfb1770045563270f5ba107352b7c040b1390f0639ae55601f5b387430e"
+      },
+      "statement": "The first segment matches the document element at position 1",
+      "originalSourceOccurrenceSet": {
+        "primarySourceLocationPointer": "/434/primarySourceLocation",
+        "sourceSpansPointer": "/434/sourceSpans",
+        "contextSourceLocationsPointer": "/434/contextSourceLocations",
+        "artifact": {
+          "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/new-amendment-obligations.json",
+          "sha256": "529ab908025aa47387337eae07de480d3cf09d9af952945d21f5dfc3cbc25eca",
+          "byteLength": 11169039
+        }
+      },
+      "explicitTechnicalGovernor": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/xml-reviewed-resolution-successor/effective-governor-link.json",
+        "sha256": "20dfd446263cdffd35a8b12b70844cad851cf7abb5ad059548bbb5f088c5875c",
+        "byteLength": 7671
+      },
+      "relationship": "SELECTS_XML_FIRST_SEGMENT_INVOCATION_ROOT_REFERENT",
+      "sourceDecision": "The exact first-segment predicate depends on what document element denotes when SELECT_XML receives a selected nonroot node. The accepted technical interpretation selects the eligible supplied node as the invocation root and first match at position1, with subtree-only traversal and no implicit original-root/ancestor/outside-sibling access. This changes the formerly ambiguous effective referent and requires a fresh attributed identity. The original statement, source bytes, occurrence set and source-only ambiguity remain immutable."
+    },
+    "identityPreimageSha256": "22f8daa9775c978bb94bb762535e2055bfa8ae4cdfdd6f96b113f51d3d434a30",
+    "successorNormativeRequirementId": "NREQ-22f8daa9775c978bb94bb762535e2055",
+    "identityStatus": "FRESH_ATTRIBUTED_CANDIDATE_IDENTITY_CONDITIONAL_ON_LINKED_GOVERNOR_PENDING_SOURCE_ADOPTION"
+  },
+  {
+    "schema": "closed-loop-attributed-new-duty-edge-reconciliation/1",
+    "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+    "entryKind": "NEW_AMENDMENT_DEPENDENCY",
+    "canonicalId": "AMEND-L2080-A4",
+    "originalNewDutyId": "NREQ-f9ce8088eb6e0ab587669ce93921c90e",
+    "originalNewDutyIndex": 487,
+    "originalEntryEvidence": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/new-amendment-obligations.json",
+        "sha256": "529ab908025aa47387337eae07de480d3cf09d9af952945d21f5dfc3cbc25eca",
+        "byteLength": 11169039
+      },
+      "jsonPointer": "/487",
+      "entrySha256": "4c6f7731f4fd79976cf170759c3ad78fb0dd44eccdedf75aaec2a86a8113d46f"
+    },
+    "originalStatement": "SELECT_XML requires a parsed node value from PARSE_XML or a node selected from that parsed value in the same execution",
+    "originalSourceOccurrenceSet": {
+      "primarySourceLocationPointer": "/487/primarySourceLocation",
+      "sourceSpansPointer": "/487/sourceSpans",
+      "contextSourceLocationsPointer": "/487/contextSourceLocations",
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/new-amendment-obligations.json",
+        "sha256": "529ab908025aa47387337eae07de480d3cf09d9af952945d21f5dfc3cbc25eca",
+        "byteLength": 11169039
+      }
+    },
+    "verifiedSourcePassageKeys": [
+      "L2080-2080",
+      "L1817-1819",
+      "L1883-1883",
+      "L2016-2035",
+      "L2052-2052",
+      "L2075-2075",
+      "L2079-2079",
+      "L2086-2086",
+      "L2054-2054",
+      "L2083-2083",
+      "L2073-2073",
+      "L2078-2078"
+    ],
+    "historicalUnresolvedSourceEffects": [
+      "SRC-AMBIGUITY-XML-SUBNODE-ROOT"
+    ],
+    "historicalSourceStatus": "DETERMINATE_DUTY_WITH_BLOCKED_EFFECT",
+    "currentUnresolvedSourceEffects": [],
+    "edgeDecision": "NO_EFFECT_ON_EXACT_ELIGIBILITY_OR_ARITY_PREDICATE",
+    "successorDisposition": "RETAINED",
+    "independentReason": "This atom specifies eligible input provenance: a node from PARSE_XML or selected from it in the same execution. Both original D4 and the technical interpretation explicitly preserve that eligibility and provenance; the root choice does not add or remove any allowed provenance. Shared D3 context does not turn this eligibility predicate into the separate first-segment-root predicate. Discharge the root-ambiguity effect for this atom without adding a new semantic governor or changing its identity.",
+    "effectiveGovernorLink": null,
+    "resolutionEvidenceReference": {
+      "governor": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/xml-reviewed-resolution-successor/effective-governor-link.json",
+        "sha256": "20dfd446263cdffd35a8b12b70844cad851cf7abb5ad059548bbb5f088c5875c",
+        "byteLength": 7671
+      },
+      "role": "CONFIRMS_EXPLICITLY_PRESERVED_PREDICATE_WITHOUT_SCOPE_EXPANSION"
+    },
+    "originalReviewInheritance": false,
+    "proofInheritance": false,
+    "implementationStatus": "UNKNOWN",
+    "testConformance": "UNKNOWN",
+    "sourceLedgerActivated": false,
+    "successorNormativeRequirementId": "NREQ-f9ce8088eb6e0ab587669ce93921c90e",
+    "identityStatus": "ORIGINAL_NEW_DUTY_IDENTITY_RETAINED_NO_EFFECTIVE_SCOPE_CHANGE"
+  },
+  {
+    "schema": "closed-loop-attributed-new-duty-edge-reconciliation/1",
+    "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+    "entryKind": "NEW_AMENDMENT_DEPENDENCY",
+    "canonicalId": "AMEND-L2080-A7",
+    "originalNewDutyId": "NREQ-f173c791f8c7566fcfec33ca2de91f18",
+    "originalNewDutyIndex": 490,
+    "originalEntryEvidence": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/new-amendment-obligations.json",
+        "sha256": "529ab908025aa47387337eae07de480d3cf09d9af952945d21f5dfc3cbc25eca",
+        "byteLength": 11169039
+      },
+      "jsonPointer": "/490",
+      "entrySha256": "d7d2a81f173e9b31c1808a3d1c194f31de6c9e2c6612c2f1bbebcb1c5da069fd"
+    },
+    "originalStatement": "Its input is one node, not an implicitly unwrapped array",
+    "originalSourceOccurrenceSet": {
+      "primarySourceLocationPointer": "/490/primarySourceLocation",
+      "sourceSpansPointer": "/490/sourceSpans",
+      "contextSourceLocationsPointer": "/490/contextSourceLocations",
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/new-amendment-obligations.json",
+        "sha256": "529ab908025aa47387337eae07de480d3cf09d9af952945d21f5dfc3cbc25eca",
+        "byteLength": 11169039
+      }
+    },
+    "verifiedSourcePassageKeys": [
+      "L2080-2080",
+      "L1817-1819",
+      "L1883-1883",
+      "L2016-2035",
+      "L2052-2052",
+      "L2075-2075",
+      "L2079-2079",
+      "L2086-2086",
+      "L2054-2054",
+      "L2083-2083",
+      "L2073-2073",
+      "L2078-2078"
+    ],
+    "historicalUnresolvedSourceEffects": [
+      "SRC-AMBIGUITY-XML-SUBNODE-ROOT"
+    ],
+    "historicalSourceStatus": "DETERMINATE_DUTY_WITH_BLOCKED_EFFECT",
+    "currentUnresolvedSourceEffects": [],
+    "edgeDecision": "NO_EFFECT_ON_EXACT_ELIGIBILITY_OR_ARITY_PREDICATE",
+    "successorDisposition": "RETAINED",
+    "independentReason": "This atom specifies one-node input cardinality and prohibits implicit array unwrapping. D4 explicitly states this before the technical interpretation, which expressly preserves explicit array extraction. Root choice does not change arity or permit implicit extraction. Discharge the root-ambiguity effect for this exact predicate without adding a new semantic governor or changing its identity.",
+    "effectiveGovernorLink": null,
+    "resolutionEvidenceReference": {
+      "governor": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/xml-reviewed-resolution-successor/effective-governor-link.json",
+        "sha256": "20dfd446263cdffd35a8b12b70844cad851cf7abb5ad059548bbb5f088c5875c",
+        "byteLength": 7671
+      },
+      "role": "CONFIRMS_EXPLICITLY_PRESERVED_PREDICATE_WITHOUT_SCOPE_EXPANSION"
+    },
+    "originalReviewInheritance": false,
+    "proofInheritance": false,
+    "implementationStatus": "UNKNOWN",
+    "testConformance": "UNKNOWN",
+    "sourceLedgerActivated": false,
+    "successorNormativeRequirementId": "NREQ-f173c791f8c7566fcfec33ca2de91f18",
+    "identityStatus": "ORIGINAL_NEW_DUTY_IDENTITY_RETAINED_NO_EFFECTIVE_SCOPE_CHANGE"
+  }
+]

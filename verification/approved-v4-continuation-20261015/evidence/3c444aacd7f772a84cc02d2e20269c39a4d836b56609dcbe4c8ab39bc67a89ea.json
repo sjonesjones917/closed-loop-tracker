@@ -1,0 +1,56 @@
+{
+  "schema": "closed-loop-additive-predecessor-technical-reference-resolution/1",
+  "status": "FROZEN_DISTINCT_QUALIFIER_LINKAGE_RECONCILIATION_001",
+  "records": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-001/per-entry-reconciliation.json",
+    "sha256": "3a86f798443cdcf5adc94798ad2fc1d17d746493d09d289f63d6de4d6caf3282",
+    "byteLength": 628957
+  },
+  "exactEvidence": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-001/source-evidence.json",
+    "sha256": "222c8da19018b1a881bd59393cbcfb926c054dc33fdd396036fca49e9f1faf9b",
+    "byteLength": 24791
+  },
+  "requiredTypedGovernor": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-001/effective-governor-link.json",
+    "sha256": "5776e3c128ca5e7c5c7643501071afd647a39ee5a6cf64270aa62a23c1c47e9a",
+    "byteLength": 13313
+  },
+  "validation": {
+    "entryCount": 76,
+    "edgeCount": 76,
+    "freshCurrentIdentityCount": 76,
+    "retainedCurrentIdentityCount": 0,
+    "proposalCounts": {
+      "accepted": 76,
+      "corrected": 0,
+      "blocked": 0
+    },
+    "verifiedOriginalOccurrenceBindings": 448,
+    "uniqueOriginalOccurrences": 36,
+    "predecessorPopulationBefore": {
+      "RETAINED": 5964,
+      "CHANGED": 1522,
+      "BLOCKED": 0
+    },
+    "predecessorPopulationAfter": {
+      "RETAINED": 5964,
+      "CHANGED": 1522,
+      "BLOCKED": 0
+    },
+    "originalPredecessorDenominator": 7486,
+    "newDutyPopulation": 712,
+    "otherHistoricalQualifierEdgesUnchanged": true,
+    "remainingQualifierRows": 1121,
+    "remainingQualifierEdges": 2182,
+    "proofPromoted": false
+  },
+  "sourceAuthorProposalManifest": {
+    "path": "/tmp/clrt-current-qualifier-linkage-proposals-001/finalized/manifest.json",
+    "sha256": "f46fe8974d741d11758f8f9e09adb7b1a50cca73b520cce7a1e6d41c04b458e6",
+    "byteLength": 2213
+  },
+  "mergeRule": "After declared impact chain and explicit predecessor overlays, require each original index/id/hash and prior current ID/row hash. Preserve exact original proposition, ordered occurrence set, prior current source governors and historical qualifier object. Install the exact typed conditional-branch governor and fresh preimage identity for each of76 listed rows only. Their current effects become explicitly empty; all other rows remain as before. No original disposition/denominator or implementation/proof state changes.",
+  "sourceLedgerActivated": false,
+  "proofPromoted": false
+}

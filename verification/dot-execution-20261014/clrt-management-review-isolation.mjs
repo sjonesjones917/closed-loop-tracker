@@ -1,0 +1,19 @@
+import {createVerifierRuntime} from '../../verifier-runtime.mjs';
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+// Maintained portable migration; original executable bytes and identity are archived beside this file.
+const root=new URL('../../',import.meta.url);
+const source=fs.readFileSync(new URL('verify-build-stage-ledger.mjs',root),'utf8');
+const functionSource=source.slice(source.indexOf('async function validateLedger('),source.indexOf('\nconst files=repositoryFiles();'));
+const context=createVerifierRuntime({structuredClone,fs:{readFileSync:p=>fs.readFileSync(new URL(p,root))},LEDGER_SCHEMA:'closed-loop-monotonic-implementation-ledger/1',CONTROLLER_ID:'closed-loop-monotonic-build-controller/2',CONTROLLER_TITLE:'CLOSED-LOOP RELIABILITY APPLICATION / MONOTONIC IMPLEMENTATION CONTROLLER',SPEC_PATH:'specification/closed-loop-reliability-controlling-implementation-specification.txt',SPEC_MANIFEST_PATH:'specification/closed-loop-specification-manifest.json',readJson:p=>JSON.parse(fs.readFileSync(new URL(p,root),'utf8')),sha256:b=>crypto.createHash('sha256').update(b).digest('hex'),assert:(c,m)=>{if(!c)throw new Error(m)},isSha:v=>typeof v==='string'&&/^[0-9a-f]{40}$/.test(v),proveAncestor:async()=>true,stageKey:n=>String(n).padStart(2,'0'),VALID_STATUS:new Set(['NOT_STARTED','IN_PROGRESS','BLOCKED','DONE']),arrays:['changedFiles','specificationSections','testsActuallyRun','browserEvidence','deploymentEvidence','deviceEvidence','regressions','openAcceptanceItems'],verifyExecutionClaims:async()=>{throw new Error('DONE not authorized by isolated review')}});
+createVerifierRuntime.loadScript(context,functionSource);
+const state=JSON.parse(fs.readFileSync(new URL('verification/closed-loop-build-state.json',root),'utf8'));
+const ordinary=await context.validateLedger(state);
+const poison=structuredClone(state);
+poison.dotManagement={currentStage:'NONE',stages:Object.fromEntries(Array.from({length:30},(_,i)=>[String(i+1).padStart(2,'0'),{status:'DONE'}])),acceptance:{functionalReadiness:'ACCEPT',physicalAcceptance:'ACCEPT',productionMaturity:'ACCEPT'}};
+const poisoned=await context.validateLedger(poison);
+assert.equal(JSON.stringify(poisoned),JSON.stringify(ordinary));
+const runtimeBad=structuredClone(state);runtimeBad.stages['01'].status='VERIFIED';
+await assert.rejects(context.validateLedger(runtimeBad),/invalid status/);
+console.log(JSON.stringify({result:'PASS',scope:'Exact existing validateLedger function in isolated VM; ancestor helper deliberately stubbed true, no DONE execution paths or remote validation used',checks:['Fabricated management DONE/acceptance cannot promote existing stages','Management task VERIFIED remains invalid in stage.status'],ordinaryResult:ordinary}));

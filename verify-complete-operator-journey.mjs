@@ -1,3 +1,6 @@
+import {observeRetainedHistory,verifyRetainedBackup,verifyRetainedRestore,observeBackupCanonicalFamilies,verifyBackupCanonicalFamilies} from './test-retained-history-browser.mjs';
+import {downloadSyntheticHandoff} from './test-browser-handoff-authorization.mjs';
+import {registerFixtureSourceSearchCapability} from './test-fixtures.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -12,7 +15,7 @@ import {observeWorkflowDOM,assertWorkflowPresentation} from './test-app-markup.m
 globalThis.dispatchEvent=()=>true;
 for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
 const engine=globalThis.closedLoopWorkflowEngine,schema=globalThis.closedLoopWorkflowSchema,hash=globalThis.closedLoopHash;
-const directory=path.resolve(process.env.OPERATOR_EVIDENCE_DIR||'operator-evidence'),browser=await createOperatorBrowser({directory});
+const directory=path.resolve(process.env.OPERATOR_EVIDENCE_DIR||'operator-evidence'),browser=await createOperatorBrowser({directory,captureExecution:true});
 const report={basis:'SYNTHETIC_EXTERNAL_COUNTERPART_WITH_ACTUAL_BROWSER_FILE_TRANSPORT',humanIndependenceEstablished:false,physicalDeviceAcceptance:false,viewportChecks:[],stages:[],operations:[],presentationCases:[],failures:[],complete:false};
 let snapshot,stage=1,sequence=0,rejected=false,reloaded=false;
 function preserveReport(){
@@ -44,43 +47,27 @@ async function inspectPresentation(driver,caseId,instruction){
   const result=assertWorkflowPresentation(observed,{caseId,instruction});report.presentationCases.push(result);if(driver===browser)await captureOperationLatency(driver);return result;
 }
 async function saved({backup=false,workflow=false,stages=[stage]}={}){await captureOperationLatency();if(!backup)return workflow?browser.readWorkflow(stages):browser.readProject();snapshot=await browser.project();const {packageSha256,...body}=snapshot.package;assert.equal(hash.sha256Value(body),packageSha256,'Actual downloaded backup must verify against its package digest');return snapshot.project;}
-async function boundStage30BrowserRecovery(project,purpose='PRE_DELIVERY'){
-  const jobId=String(project?.job?.JOB_ID||''),revision=Number(project?.revision),projectSha256=String(project?.projectSha256||'');
-  assert.ok(jobId&&Number.isInteger(revision)&&/^[a-f0-9]{64}$/.test(projectSha256),'Bounded Stage 30 browser fixture requires the exact current stored project identity.');
-  const before=await browser.evaluate(`closedLoopProjectStore.historyList(${JSON.stringify(jobId)})`);
-  const observed=await browser.evaluate(`(async()=>{
-    const jobId=${JSON.stringify(jobId)},expectedRevision=${revision},expectedSha=${JSON.stringify(projectSha256)},store=closedLoopProjectStore,current=await store.readProject(jobId);
-    if(!current||current.revision!==expectedRevision||current.projectSha256!==expectedSha)throw new Error('BOUND_BROWSER_FIXTURE_STALE_PROJECT');
-    const db=await store.openDatabase(),tx=db.transaction(store.stores.meta,'readwrite'),meta=tx.objectStore(store.stores.meta),prefix='recovery:'+jobId;
-    const complete=new Promise((resolve,reject)=>{tx.oncomplete=()=>resolve(true);tx.onerror=()=>reject(tx.error||new Error('BOUND_BROWSER_FIXTURE_TRANSACTION_FAILED'));tx.onabort=()=>reject(tx.error||new Error('BOUND_BROWSER_FIXTURE_TRANSACTION_ABORTED'));});
-    await new Promise((resolve,reject)=>{const request=meta.openCursor();request.onerror=()=>reject(request.error||new Error('BOUND_BROWSER_FIXTURE_CURSOR_FAILED'));request.onsuccess=()=>{const cursor=request.result;if(!cursor){resolve(true);return;}const key=String(cursor.key);if(key===prefix||key.startsWith(prefix+':'))cursor.delete();cursor.continue();};});
-    await complete;
-    const checkpointId=await store.saveCheckpoint(jobId,{expectedProjectRevision:expectedRevision,label:'Bounded Stage 30 browser backup fixture'}),after=await store.readProject(jobId),history=await store.historyList(jobId);
-    return {checkpointId,revision:after?.revision,projectSha256:after?.projectSha256,historyEntries:history.entries.length,compressedProjectBytes:history.compressedProjectBytes,retainedFileBytes:history.retainedFileBytes};
-  })()`);
-  assert.equal(observed.revision,revision,'Bounded Stage 30 browser fixture changed the canonical project revision.');
-  assert.equal(observed.projectSha256,projectSha256,'Bounded Stage 30 browser fixture changed canonical project bytes.');
-  assert.equal(observed.historyEntries,1,'Bounded Stage 30 browser fixture must retain exactly one fresh recovery root.');
-  const fixture={purpose,basis:'CURRENT_CANONICAL_PROJECT_FROM_PRECEDING_REAL_BROWSER_CONTROLS',beforeHistoryEntries:before.entries.length,afterHistoryEntries:observed.historyEntries,compressedProjectBytes:observed.compressedProjectBytes,retainedFileBytes:observed.retainedFileBytes,projectRevision:revision,projectSha256};
-  (report.boundedBrowserHistoryFixtures??=[]).push(fixture);
-  if(purpose==='PRE_DELIVERY')report.stage30BrowserFixture=fixture;
-  preserveReport();return fixture;
-}
 async function verifyFinalBackupRoundTrip(){
-  report.currentOperation={phase:'FINAL_BACKUP_FIXTURE',stage,sequence};preserveReport();
-  // Completed-stage presentation adds saved views after the pre-delivery
-  // bound. Keep this real-file control check independent of that accumulated
-  // History workload. All canonical stages and actual files remain unchanged;
-  // the existing non-browser recovery gates prove larger retained histories.
-  report.finalBackupBrowserFixture=await boundStage30BrowserRecovery(await browser.readProject(),'FINAL_BACKUP');
+  report.currentOperation={phase:'FINAL_BACKUP_HISTORY_OBSERVATION',stage,sequence};preserveReport();
+  const current=await browser.readProject(),canonicalBefore=observeBackupCanonicalFamilies(current),retained=await observeRetainedHistory(browser,current);
   report.currentOperation={phase:'FINAL_BACKUP_EXPORT',stage,sequence};preserveReport();
   const before=await saved({backup:true}),backup=snapshot.file;
+  const canonicalExport=verifyBackupCanonicalFamilies(canonicalBefore,before,'DOWNLOADED_BACKUP');
+  report.currentOperation={phase:'FINAL_BACKUP_HISTORY_EXPORT_VERIFY',stage,sequence};preserveReport();
+  const exported=verifyRetainedBackup(retained,backup,{decoded:snapshot.package});
+  report.finalBackupHistory=exported.report;
   report.currentOperation={phase:'FINAL_BACKUP_IMPORT',stage,sequence};preserveReport();
   await browser.selectFiles('#import-file',[{filename:'journey.closed-loop.json.gz',bytes:backup.bytes}]);
   report.currentOperation={phase:'FINAL_BACKUP_VERIFY',stage,sequence};preserveReport();
   // Read the freshly restored stored state. Exporting it again is a separate
   // expensive operator action and contributes no assertion to this round trip.
   const observed=await saved({workflow:true,stages:Array.from({length:schema.STAGE_COUNT},(_,index)=>index+1)}),restored=observed.project;assert.equal(restored.job.JOB_ID,before.job.JOB_ID);assert.equal(restored.projectData.acceptedChanges.length,before.projectData.acceptedChanges.length);assert.ok(observed.workflow.every(row=>row.gate.complete),'Every restored stage must pass in the runtime that verified its saved artifact bytes.');report.backupRestore={selectedSha256:backup.sha256,stagesPreserved:observed.workflow.length,workflow:observed.workflow};
+  report.backupRestore.canonicalFamilies={before:canonicalBefore,export:canonicalExport,restore:verifyBackupCanonicalFamilies(canonicalBefore,restored,'UI_IMPORTED_PROJECT')};
+  report.currentOperation={phase:'FINAL_BACKUP_HISTORY_RESTORE_VERIFY',stage,sequence};preserveReport();
+  const restoredHistory=await observeRetainedHistory(browser,restored,{verifyBytes:true});
+  report.backupRestore.history=verifyRetainedRestore(exported,restoredHistory);
+  assert.ok(Number.isSafeInteger(restored.revision)&&restored.revision>before.revision&&typeof restored.historyActivationId==='string'&&restored.historyActivationId!==before.historyActivationId,'FINAL_BACKUP_ACTIVATION_ORACLE: the import must activate a new saved revision, not leave the pre-import project unchanged');
+  report.backupRestore.activation={beforeRevision:before.revision,restoredRevision:restored.revision,beforeHistoryActivationId:before.historyActivationId??null,restoredHistoryActivationId:restored.historyActivationId,activatedNewRevision:true};
 }
 async function ingest(request,{invalid=false,observedBefore=null}={}){
   // The caller may pass its just-read pre-operation state; no state is reused
@@ -95,11 +82,12 @@ async function ingest(request,{invalid=false,observedBefore=null}={}){
   assert.equal(after.projectData.acceptedChanges.length,count+1,'Accept did not commit exactly one response: '+JSON.stringify(report.acceptanceFailure));assert.ok(after.projectData.rawResponses.some(row=>row.completeRawResponse===bytes.toString()),'The selected response bytes were not retained exactly');
   report.operations.push({stage,operation:request.operation,responseSha256:digest(bytes),acceptedChangeId:after.projectData.acceptedChanges.at(-1).changeId,revision:after.revision});return observation;
 }
+function syntheticJourneyAction(stage){return {target:'Disposable isolated complete-operator fixture, Stage '+stage,riskClasses:['READ_ONLY','REVERSIBLE'],expectedEffect:'Read this synthetic fixture and create only its declared response.json and disposable returned result.txt when requested.',reversibility:'Discard the isolated test project and its disposable output files; no real external resources are modified.',maximumCost:'No paid services or external tool calls are used by this synthetic counterpart.',authority:'Explicitly synthetic operator authorization for this controlled browser test project only.',containment:'Only the fixture context and files selected through this isolated browser; no real user projects, credentials, network search, or external side effects.',stopCondition:'Stop on any request outside the declared synthetic fixture or any changed target.',responsibleActor:'SYNTHETIC_TEST_OPERATOR and the declared deterministic fixture counterpart'};}
 async function external(){
   const exportControl=await browser.exists('#next-export-prompt-file')?'#next-export-prompt-file':await browser.exists('#download-execution-package')?'#download-execution-package':null;
   assert.ok(exportControl,`Stage ${stage}: no consolidated stage package control was available for the current external operation.`);
   assert.equal(await browser.visible(`#next-required-action ${exportControl}`),true,`Stage ${stage}: consolidated stage-file export was not the visible next action before transport.`);
-  const files=await browser.download(exportControl);assert.equal(files.length,1,'ONE_FILE_HANDOFF_ORACLE: the stage export action must download exactly one file.');const [archive]=files,members=readStoreArchive(archive.bytes);
+  const files=await downloadSyntheticHandoff(browser,exportControl,{syntheticProject:true,action:syntheticJourneyAction(stage)});assert.equal(files.length,1,'ONE_FILE_HANDOFF_ORACLE: the stage export action must download exactly one file.');const [archive]=files,members=readStoreArchive(archive.bytes);
   const manifest=JSON.parse(Buffer.from(members.find(member=>member.canonicalPath==='manifest.json').bytes).toString()),instructionMember=members.find(member=>member.canonicalPath==='instruction.txt'),instruction={bytes:Buffer.from(instructionMember.bytes),sha256:digest(instructionMember.bytes)};
   await inspectPresentation(browser,'exported-stage-'+stage+'-'+manifest.operation,instruction.bytes.toString());
   assert.equal(instruction.sha256,manifest.instruction.bodySha256);assert.equal(instruction.bytes.length,manifest.members.find(member=>member.canonicalPath==='instruction.txt').byteSize);
@@ -126,7 +114,7 @@ try{
       const view=await check.inspect(1);
       assert.match(view.action,/Current state:/);
       assert.match(view.action,/Who acts:/);
-      const files=await check.download('#next-export-prompt-file');assert.equal(files.length,1,'ONE_FILE_HANDOFF_ORACLE: viewport stage export must download one file.');const [file]=files;
+      const files=await downloadSyntheticHandoff(check,'#next-export-prompt-file',{syntheticProject:true});assert.equal(files.length,1,'ONE_FILE_HANDOFF_ORACLE: viewport stage export must download one file.');const [file]=files;
       const members=readStoreArchive(file.bytes);
       assert.ok(members.some(member=>member.canonicalPath==='instruction.txt'));
       assert.ok(members.some(member=>member.canonicalPath==='manifest.json'));
@@ -149,15 +137,16 @@ try{
       report.currentOperation={phase:'STAGE_OPERATOR_ACTION',stage,sequence,action:action.actionType,operation:action.operation,startedAt:new Date().toISOString()};preserveReport();
       console.log(JSON.stringify({operatorStage:stage,action:action.actionType,operation:action.operation,reasons:gate.reasons}));
       if(stage===28&&!engine.recordValue(engine.recordsForCurrentScope(p,'artifactIdentities').at(-1),'EXACT_HASH_MATCH')){await browser.click('[data-view="Release"]');await browser.selectFiles('#audited-files',[{filename:'result.txt',bytes:Buffer.from(OUTPUT)}]);await browser.click('#hash-audited');await browser.selectFiles('#release-files',[{filename:'result.txt',bytes:Buffer.from(OUTPUT)}]);await browser.click('#hash-release');await browser.click('#compare-release');await browser.click('[data-view="Workflow"]');await browser.fill('#stage-picker',stage);continue;}
+      if(action.actionType==='REGISTER_SOURCE_SEARCH_CAPABILITY'){const report=registerFixtureSourceSearchCapability({engine},p,{register:false});await browser.selectFiles('#capability-evidence-file',[{filename:'source-search-readiness.json',bytes:Buffer.from(JSON.stringify(report))}]);await browser.fill('#capability-operator','SYNTHETIC_SEARCH_OPERATOR');await browser.click('#capability-confirm');await browser.click('#register-capability-evidence');continue;}
       if(action.actionType==='CAPTURE_DELIVERY_INTENT'){for(const [key,value]of Object.entries({recipient:'Disposable CI operator',destination:'Disposable CI download directory',purpose:'Retrieve the tested literal file',channel:'BROWSER_DOWNLOAD',disclosure:'SYNTHETIC_PUBLIC',count:'1'}))await browser.fill('#delivery-intent-'+key,value);await browser.click('#capture-delivery-intent');continue;}
       if(action.actionType==='RECORD_DELIVERY_EVIDENCE'){await browser.fill('#delivery-observed-outcome','RECEIVED');await browser.fill('#delivery-observation','Synthetic operator opened the actual downloaded result.txt and compared all nine bytes.');await browser.fill('#delivery-evidence-location','Actual Chromium download event and filesystem byte comparison in this test.');if(await browser.exists('#delivery-observer'))await browser.fill('#delivery-observer','SYNTHETIC_OPERATOR');await browser.click('#record-delivery-evidence');continue;}
       if(action.actionType==='EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS'){const files=await browser.download('#export-authorized-artifacts');assert.equal(files.length,1);assert.equal(files[0].filename,'result.txt');assert.deepEqual(files[0].bytes,Buffer.from(OUTPUT));report.finalArtifact={filename:files[0].filename,sha256:files[0].sha256,byteSize:files[0].bytes.length};continue;}
-      if(action.actionType==='EXPORT_PRE_DELIVERY_CHECKPOINT'){await boundStage30BrowserRecovery(p);const [file]=await browser.download('#export-pre-delivery-checkpoint');report.preDeliveryBackup={sha256:file.sha256,byteSize:file.bytes.length};continue;}
+      if(action.actionType==='EXPORT_PRE_DELIVERY_CHECKPOINT'){const retained=await observeRetainedHistory(browser,p);const [file]=await browser.download('#export-pre-delivery-checkpoint');report.preDeliveryBackup={sha256:file.sha256,byteSize:file.bytes.length,history:verifyRetainedBackup(retained,file).report};continue;}
       const controls={CONFIRM_STAGE_ONE_INTENT:'#confirm-stage-one',FREEZE_CANDIDATE:'#freeze-candidate',RESERVE_RUN_BATCH:'#reserve-run-batch',BEGIN_UNCHANGED_CONFIRMATION:'#begin-unchanged-confirmation',FREEZE_BASELINE:'#freeze-baseline',RESERVE_PRODUCT_EXECUTION:'#reserve-product-execution',FREEZE_DELIVERY_CANDIDATE:'#freeze-delivery-candidate',RUN_APP_TESTS:'#run-native-tests',CALCULATE_CONVERGENCE:'#calculate-stage18-convergence',CALCULATE_UNCHANGED_CONFIRMATION:'#calculate-stage19-confirmation',CALCULATE_RELEASE:'#calculate-stage27-release',BUILD_EVIDENCE_CHAINS:'#build-evidence-chains',CALCULATE_TERMINAL:'#calculate-stage30-terminal'};
       if(controls[action.actionType]){if(action.actionType==='FREEZE_CANDIDATE'){assert.equal(engine.recordValue(engine.recordsForCurrentScope(p,'instructions').at(-1),'INSTRUCTION_TEXT'),CANDIDATE);await browser.selectFiles('#stage-files',[{filename:'production-instruction.txt',bytes:Buffer.from(CANDIDATE)}]);}await browser.click(controls[action.actionType]);report.operations.push({stage,command:action.actionType});}
       else if(['EXTERNAL_AGENT_TOOL','AI_REVIEW','EXTERNAL_SYSTEM','CONTINUE_AGENT_CONVERSATION','SELECT_RESPONSE_JSON_FILE'].includes(action.actionType))nextObservedWorkflow=await external();
       else throw new Error(`Stage ${stage} has no progressing operator action: ${JSON.stringify(action)}`);
-      if(stage===5&&!reloaded){nextObservedWorkflow=null;const before=await saved();await captureOperationLatency();await browser.reload();const after=await saved();assert.deepEqual(after.projectData,before.projectData);assert.deepEqual(after.stages,before.stages);reloaded=true;await browser.click('[data-view="Workflow"]');await browser.fill('#stage-picker',stage);await captureOperationLatency();}
+      if(stage===5&&!reloaded){nextObservedWorkflow=null;const before=await saved();await captureOperationLatency();await browser.reload();const after=await saved();assert.deepEqual(after.projectData,before.projectData);assert.deepEqual(after.stages,before.stages);assert.equal(await browser.visible('#next-required-action'),true,'Reload did not restore the current action to the viewport.');reloaded=true;await browser.click('[data-view="Overview"]');await browser.click('[data-view="Workflow"]');await browser.fill('#stage-picker',stage);await captureOperationLatency();}
     }
     assert.ok(report.stages.some(row=>row.stage===stage),`Stage ${stage} did not finish within 80 actions`);
   }
@@ -165,7 +154,7 @@ try{
   await verifyFinalBackupRoundTrip();
   report.currentOperation={phase:'FINAL_LATENCY_AND_BROWSER_ERRORS',stage,sequence};preserveReport();
   await captureOperationLatency();assert.equal(report.operationLatency.thresholdMs,1500,'Operator loading threshold changed outside D-1 configured default.');assert.ok(report.operationLatency.samples.length>0,'Complete journey did not record operation latency.');assert.ok(report.operationLatency.samples.every(sample=>Number.isFinite(sample.durationMs)&&sample.durationMs>=0),'Operation latency evidence contains an invalid duration.');
-  assert.deepEqual(browser.exceptions(),[]);assert.equal(report.stages.length,30);report.complete=true;
+  assert.deepEqual(browser.exceptions(),[]);assert.equal(report.stages.length,30);report.browserExecution=await browser.executionEvidence();report.complete=true;
 }catch(error){report.failures.push({stage,sequence,message:error.stack});console.error(error);process.exitCode=1;try{report.failureView=await browser.evaluate(`(()=>{const node=document.querySelector('#next-required-action'),rect=node?.getBoundingClientRect();return {stage:document.querySelector('#stage-picker')?.value,width:innerWidth,height:innerHeight,scrollY,action:node?.innerText,rect:rect?.toJSON(),active:document.activeElement?.id,loading:document.querySelector('#app')?.getAttribute('aria-busy')};})()`);await browser.inspect(stage);}catch{}}
 finally{try{await captureOperationLatency();}catch(error){report.latencyReadFailure=String(error.message||error);}preserveReport();await browser.close();}
-console.log(JSON.stringify({completeOperatorJourney:report.complete,stages:report.stages.length,operations:report.operations.length,failures:report.failures,operationLatency:report.operationLatency},null,2));
+console.log(JSON.stringify({completeOperatorJourney:report.complete,browserExecution:report.browserExecution,operationCases:report.operations,presentationCases:report.presentationCases,stages:report.stages.length,operations:report.operations.length,failures:report.failures,operationLatency:report.operationLatency,preDeliveryBackup:report.preDeliveryBackup,finalBackupHistory:report.finalBackupHistory,backupRestore:report.backupRestore},null,2));

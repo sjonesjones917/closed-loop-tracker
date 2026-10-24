@@ -1,0 +1,195 @@
+{
+  "aggregate": {
+    "allSuiteCollectorExecuted": false,
+    "globalProven": 7,
+    "overallReleaseEstablished": false,
+    "privateEvidenceSha256": "eaed1dac0d123dea05ca93d2b7e7b26f6902692b2addbc1836bec5a6c9609e49",
+    "privateResultSha256": "9635d5b5f8bd1d9b5644c6744bac16b7223254736b49c7bc51b1cb5e809a3a5e",
+    "targetRows": 7,
+    "totalSubstantive": 3999,
+    "uniqueTargetNreqIds": 7,
+    "verifyHashReceiptSha256": "c131b6d537a5d3f7df37a96d4ff8e13282ac922c575ebfea6b64e83682c359ea"
+  },
+  "lineageAndLimits": {
+    "destinationPublishedHead": "75bcc72115d9ccb81bb193b636fc1f4052b50f76",
+    "distinctIdsAcrossCurrentAndEarlierSevenProofs": 7,
+    "earlier53ceTuplePreserved": {
+      "evidenceSha256": "2f2686c8938a65825aa78a612446c784a3fb07e6f124333664a98164ccf6790e",
+      "fingerprintSha256": "53ce2b7db8c1816359c1c7632d3515efab4a9a1d8e341c5faa163148e1362633",
+      "privateResultSha256": "1a19f1c4b49a885dcf3f54e22a86c10651232b7f6883bbea3148dc71d687380c",
+      "recordedReceiptSha256": "2a632da57af1096d864d6fcc87d9436408c51898ba6515479ff87433fb9acb65",
+      "sourceCommit": "427b1010707ff4566a54b2acb0392e9e702b14d9",
+      "sourceInputsSha256": "16808a50c76bd1db408925d30a8e2d1b5c90436cfeff8b918cb61f7d702765be"
+    },
+    "privateEvidenceAccess": "Full result, fingerprint, evidence payload, receipt bytes, and per-row review files remain private and are not included in this portable summary. Per-row repository-relative path strings are preserved from the private result, but those files are unavailable in the destination worktree and absent from this proposal. Digests identify private artifacts; they are not evidence bytes or standalone proof.",
+    "release": "No overall release, all-suite collection, or promotion is established.",
+    "sameSevenIdsAsEarlier53ceTuple": true,
+    "sourceIsDestinationHead": false,
+    "unrelatedRequirements": "No current evidence status is asserted for target requirements outside these seven rows; map/ledger statuses remain governed by their existing records.",
+    "uploadedV7WorkMapSnapshotUnchanged": false,
+    "workMapQualification": "This portable postimage is the locator-sanitized derivative. Original map identity remains in map sourceLineage; proof receipts are not restamped.",
+    "workMapSha256": "8b10831c9cf7c1cf069fde6528869ab870f9079e5781e3fbe085e6afd5b33a97"
+  },
+  "recordType": "source-bound-current-evidence-delta",
+  "recordedUtc": "2026-10-12T10:22:58.879Z",
+  "schema": "v7-current-source-evidence-delta/1",
+  "sourceTuple": {
+    "fingerprintSha256": "dfc4ade53155082096cbb33538097652074b4809eef1485e00922c26ec2920e3",
+    "sourceCommit": "3b235b943d81a6a8a46a1f48262e5a04a8d63771",
+    "sourceInputsSha256": "b1450598092d02e7e6c601b0ae66625dcff8b34fa84ff45d0b20a9be2aec3fb3",
+    "sourceTreeSha256": "f2f3f815fc67f8e9198624aa8dd68f0a6ce32934"
+  },
+  "status": "VALIDATED_PARTIAL_CANONICAL_ADMISSION",
+  "targetRows": [
+    {
+      "disposition": "CONFORMANT_PROVEN",
+      "executedAssertions": [
+        {
+          "checkId": "canonical.content-complete-record-distinction",
+          "receiptSha256": "c131b6d537a5d3f7df37a96d4ff8e13282ac922c575ebfea6b64e83682c359ea",
+          "suite": "verify-hash.mjs"
+        },
+        {
+          "checkId": "canonical.source-family-content-complete-distinction",
+          "receiptSha256": "c131b6d537a5d3f7df37a96d4ff8e13282ac922c575ebfea6b64e83682c359ea",
+          "suite": "verify-hash.mjs"
+        },
+        {
+          "checkId": "canonical.complete-record-carrier-shapes",
+          "receiptSha256": "c131b6d537a5d3f7df37a96d4ff8e13282ac922c575ebfea6b64e83682c359ea",
+          "suite": "verify-hash.mjs"
+        }
+      ],
+      "nreqId": "NREQ-7b1cd2debadb570b49fe041bd444592f",
+      "productionOwnerStatus": "VERIFIED_PRODUCTION_OWNER",
+      "review": {
+        "availability": "Not present in the accessible destination worktree or bundled proposal; private source access is required to inspect it.",
+        "locatorType": "repository-relative path recorded by the private admission result",
+        "repositoryRelativePath": "verification/requirement-coverage-NREQ-7b1cd2debadb570b49fe041bd444592f-20261012-final-schema-delta-baad5e8ae9d3-66663ca8dec4.json",
+        "sha256": "657188d51013b09ebbf437512b45b1b45ceaf7a1da4226a60d06ef8a48738492"
+      },
+      "sourceLineSha256": "b6dc4278eba0b77d47190a27e473be50c1bd1a29c7282aa3cebbe93f6fcd964f",
+      "testTraceStatus": "EXECUTED_REQUIREMENT_CASES"
+    },
+    {
+      "disposition": "CONFORMANT_PROVEN",
+      "executedAssertions": [
+        {
+          "checkId": "canonical.utf8-no-bom-byte-routes",
+          "receiptSha256": "c131b6d537a5d3f7df37a96d4ff8e13282ac922c575ebfea6b64e83682c359ea",
+          "suite": "verify-hash.mjs"
+        }
+      ],
+      "nreqId": "NREQ-be0ecfa19d607c0df242b048d6ef63bf",
+      "productionOwnerStatus": "VERIFIED_PRODUCTION_OWNER",
+      "review": {
+        "availability": "Not present in the accessible destination worktree or bundled proposal; private source access is required to inspect it.",
+        "locatorType": "repository-relative path recorded by the private admission result",
+        "repositoryRelativePath": "verification/requirement-coverage-NREQ-be0ecfa19d607c0df242b048d6ef63bf-20261012-final-schema-delta-baad5e8ae9d3-66663ca8dec4.json",
+        "sha256": "bc87be3c663580c09a68da975acf0649f9b0c8abe3da3374b3da6cdf8a10bc9d"
+      },
+      "sourceLineSha256": "0b0f1de963804c1eeb888da7a2b2e1b818c703823a3e117b4eccd6ed3f8f3a07",
+      "testTraceStatus": "EXECUTED_REQUIREMENT_CASES"
+    },
+    {
+      "disposition": "CONFORMANT_PROVEN",
+      "executedAssertions": [
+        {
+          "checkId": "canonical.safe-integer-and-typed-string",
+          "receiptSha256": "c131b6d537a5d3f7df37a96d4ff8e13282ac922c575ebfea6b64e83682c359ea",
+          "suite": "verify-hash.mjs"
+        }
+      ],
+      "nreqId": "NREQ-ab9ab7c7ba110dfd3e0a5f8f5c9908cb",
+      "productionOwnerStatus": "VERIFIED_PRODUCTION_OWNER",
+      "review": {
+        "availability": "Not present in the accessible destination worktree or bundled proposal; private source access is required to inspect it.",
+        "locatorType": "repository-relative path recorded by the private admission result",
+        "repositoryRelativePath": "verification/requirement-coverage-NREQ-ab9ab7c7ba110dfd3e0a5f8f5c9908cb-20261012-final-schema-delta-baad5e8ae9d3-66663ca8dec4.json",
+        "sha256": "50706ef00f2ca80bf3f3425b26cd380cf6ea0339f10dc328b916ad886bc19aa7"
+      },
+      "sourceLineSha256": "e17eda37620c3017ac470eaf42989140e74944e89206e2c9ecf51fb78bb872a2",
+      "testTraceStatus": "EXECUTED_REQUIREMENT_CASES"
+    },
+    {
+      "disposition": "CONFORMANT_PROVEN",
+      "executedAssertions": [
+        {
+          "checkId": "canonical.unsigned-scalar-key-order",
+          "receiptSha256": "c131b6d537a5d3f7df37a96d4ff8e13282ac922c575ebfea6b64e83682c359ea",
+          "suite": "verify-hash.mjs"
+        }
+      ],
+      "nreqId": "NREQ-853a934199459ed6bf419687ca08ba34",
+      "productionOwnerStatus": "VERIFIED_PRODUCTION_OWNER",
+      "review": {
+        "availability": "Not present in the accessible destination worktree or bundled proposal; private source access is required to inspect it.",
+        "locatorType": "repository-relative path recorded by the private admission result",
+        "repositoryRelativePath": "verification/requirement-coverage-NREQ-853a934199459ed6bf419687ca08ba34-20261012-final-schema-delta-baad5e8ae9d3-66663ca8dec4.json",
+        "sha256": "28fad910df5e2c66f783906eb26c5e73fc068a6b8aa751239c7d127e9b6a8782"
+      },
+      "sourceLineSha256": "6cd002e410cce68e03f5b46b09436696f71111cd2df5ad887d8476e0083c3775",
+      "testTraceStatus": "EXECUTED_REQUIREMENT_CASES"
+    },
+    {
+      "disposition": "CONFORMANT_PROVEN",
+      "executedAssertions": [
+        {
+          "checkId": "canonical.exact-string-scalars-and-lines",
+          "receiptSha256": "c131b6d537a5d3f7df37a96d4ff8e13282ac922c575ebfea6b64e83682c359ea",
+          "suite": "verify-hash.mjs"
+        }
+      ],
+      "nreqId": "NREQ-d6f8519fc2d36e59e4eba26af0442d14",
+      "productionOwnerStatus": "VERIFIED_PRODUCTION_OWNER",
+      "review": {
+        "availability": "Not present in the accessible destination worktree or bundled proposal; private source access is required to inspect it.",
+        "locatorType": "repository-relative path recorded by the private admission result",
+        "repositoryRelativePath": "verification/requirement-coverage-NREQ-d6f8519fc2d36e59e4eba26af0442d14-20261012-final-schema-delta-baad5e8ae9d3-66663ca8dec4.json",
+        "sha256": "ebd2a645f3c24400564240297e4dbddc531955041d3a14c041b59bf6dac9b9c4"
+      },
+      "sourceLineSha256": "03cb01d5ae34c69335090d3607bb7f3380f6e4eba8070ee4ffa5cba9cb32d751",
+      "testTraceStatus": "EXECUTED_REQUIREMENT_CASES"
+    },
+    {
+      "disposition": "CONFORMANT_PROVEN",
+      "executedAssertions": [
+        {
+          "checkId": "canonical.exact-json-escapes",
+          "receiptSha256": "c131b6d537a5d3f7df37a96d4ff8e13282ac922c575ebfea6b64e83682c359ea",
+          "suite": "verify-hash.mjs"
+        }
+      ],
+      "nreqId": "NREQ-dba22c5f93e4359c4b7d4ebdd9799dbf",
+      "productionOwnerStatus": "VERIFIED_PRODUCTION_OWNER",
+      "review": {
+        "availability": "Not present in the accessible destination worktree or bundled proposal; private source access is required to inspect it.",
+        "locatorType": "repository-relative path recorded by the private admission result",
+        "repositoryRelativePath": "verification/requirement-coverage-NREQ-dba22c5f93e4359c4b7d4ebdd9799dbf-20261012-final-schema-delta-baad5e8ae9d3-66663ca8dec4.json",
+        "sha256": "8919746fb6ac34e4e9bdbfb1b0e8b3cb617d2e1b0c56fcb253753e3e02435f43"
+      },
+      "sourceLineSha256": "6ceea161cf4fc12d52f66189110a6aae635278efe3442751a653794c8e81c68f",
+      "testTraceStatus": "EXECUTED_REQUIREMENT_CASES"
+    },
+    {
+      "disposition": "CONFORMANT_PROVEN",
+      "executedAssertions": [
+        {
+          "checkId": "canonical.id-literal-payload-and-sha160",
+          "receiptSha256": "c131b6d537a5d3f7df37a96d4ff8e13282ac922c575ebfea6b64e83682c359ea",
+          "suite": "verify-hash.mjs"
+        }
+      ],
+      "nreqId": "NREQ-e74693ce28b14adb92ef359ccec7bb2b",
+      "productionOwnerStatus": "VERIFIED_PRODUCTION_OWNER",
+      "review": {
+        "availability": "Not present in the accessible destination worktree or bundled proposal; private source access is required to inspect it.",
+        "locatorType": "repository-relative path recorded by the private admission result",
+        "repositoryRelativePath": "verification/requirement-coverage-NREQ-e74693ce28b14adb92ef359ccec7bb2b-20261012-final-schema-delta-baad5e8ae9d3-66663ca8dec4.json",
+        "sha256": "157894f046b8ad128e8914e9cd2b32e33bd5fc977df901e24136527718de4806"
+      },
+      "sourceLineSha256": "cc1adfaf4adf818c9ef8ac1a6d1680bf2070cd2176b6a3cffbe40312d1e01cde",
+      "testTraceStatus": "EXECUTED_REQUIREMENT_CASES"
+    }
+  ]
+}

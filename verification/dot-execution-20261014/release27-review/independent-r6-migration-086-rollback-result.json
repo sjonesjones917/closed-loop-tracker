@@ -1,0 +1,29 @@
+{
+  "result": "PASS",
+  "synthetic": true,
+  "cases": [
+    {
+      "phase": "before-project-transaction",
+      "result": "PASS",
+      "observed": {
+        "code": "INJECTED_STORAGE_FAILURE",
+        "message": "Injected storage failure at before-project-transaction."
+      },
+      "allRowsPreserved": true,
+      "retryProjection": "closed-loop-derivation/project-current-projection/13"
+    },
+    {
+      "phase": "before-transaction-commit",
+      "result": "PASS",
+      "observed": {
+        "code": "INJECTED_STORAGE_FAILURE",
+        "message": "Injected storage failure at before-transaction-commit."
+      },
+      "allRowsPreserved": true,
+      "retryProjection": "closed-loop-derivation/project-current-projection/13"
+    }
+  ],
+  "completedAt": "2026-10-14T17:15:46.351Z",
+  "driverSha256": "a1641294ebec83d8fa2c1cd961200bca264441a38118661b5c5f0fb8eb320c3f",
+  "fixtureSha256": "84890d53689dfe181c36e5edcacf96217a4e21d65a96c2a5bf3f61028478044d"
+}

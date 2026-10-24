@@ -14,7 +14,7 @@ const engineSource=fs.readFileSync(engineSourcePath||new URL('./workflow-engine.
 globalThis.dispatchEvent=()=>{};
 for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])createVerifierRuntime.loadScript(globalThis,file==='workflow-schema.js'?schemaSource:file==='workflow-engine.js'?engineSource:fs.readFileSync(new URL(file,import.meta.url),'utf8'),{filename:file});
 const {closedLoopCore:core,closedLoopWorkflowSchema:schema,closedLoopWorkflowEngine:engine,closedLoopPromptEngine:prompts,closedLoopResponseIngestion:ingestion,closedLoopHash:hash}=globalThis;
-const results=[];
+const results=[],closedFamilyObservations=[],blindAliasAdmissionObservations=[],blindAliasAcceptanceObservations=[];
 async function check(name,operation){try{await operation();results.push({name,result:'PASS'});}catch(error){results.push({name,result:'FAIL',message:String(error.stack||error)});}}
 function blindFixture(stage){
  const project=core.createBlankState('RESPONSE-AUTHORITY-'+stage);engine.ensureShape(project);project.job.EXACT_USER_OBJECTIVE_VERBATIM='Preserve literal returned observations and their exact source provenance.';engine.recalculate(project);
@@ -30,8 +30,73 @@ function blindFixture(stage){
  return {project,prompt,envelope,alias,family,field};
 }
 function prepare(fixture,envelope=fixture.envelope){const text=JSON.stringify(envelope),prepared=ingestion.prepare(fixture.project,{stage:envelope.stage,promptRecord:fixture.prompt,text});assert.equal(prepared.validation.valid,true,JSON.stringify(prepared.validation.issues));assert.equal(prepared.rawRecord.completeRawResponse,text);assert.equal(prepared.rawRecord.sha256,hash.sha256Text(text));return prepared;}
+function blindAliasAdmissionFixture(configure){
+ const fixture=blindFixture(23),project=structuredClone(fixture.project),promptIndex=project.projectData.generatedPrompts.findIndex(row=>(row.instructionId||row.promptId)===(fixture.prompt.instructionId||fixture.prompt.promptId));assert.notEqual(promptIndex,-1);
+ const prompt=project.projectData.generatedPrompts[promptIndex],envelope=structuredClone(fixture.envelope),validEntry=structuredClone(prompt.contextManifest.blindAliasMap.find(entry=>entry.kind==='PRODUCT_ID'));assert.ok(validEntry);
+ configure({project,prompt,envelope,validEntry,fixture});
+ prompt.contextSignature=hash.sha256Value(prompt.contextManifest);envelope.promptIdentity.contextSignature=prompt.contextSignature;
+ return {project,prompt,envelope,alias:fixture.alias,family:fixture.family,field:fixture.field};
+}
+function observeBlindAliasAdmission(caseId,configure,{accepted,targetId=null,expectedIssue=null}={}){
+ const fixture=blindAliasAdmissionFixture(configure),text=JSON.stringify(fixture.envelope),before=hash.sha256Value(fixture.project),acceptedBefore=structuredClone(fixture.project.projectData.acceptedChanges),prepared=ingestion.prepare(fixture.project,{stage:fixture.envelope.stage,promptRecord:fixture.prompt,text}),canonical=prepared.proposal?.canonicalRecords?.[fixture.family]?.[0]||null;
+ const observed={accepted:prepared.validation.valid,proposalCreated:Boolean(prepared.proposal),dispositionCreated:Boolean(prepared.disposition),rawStatus:prepared.rawRecord.status,relationshipProductId:canonical?.relationships?.PRODUCT_ID||null,rawPreserved:prepared.rawRecord.completeRawResponse===text,rawSha256Exact:prepared.rawRecord.sha256===hash.sha256Text(text),sourceProjectUnchanged:hash.sha256Value(fixture.project)===before,acceptedStateUnchanged:hash.sha256Value(fixture.project.projectData.acceptedChanges)===hash.sha256Value(acceptedBefore),literalFieldPreserved:canonical?.fields?.[fixture.field]===fixture.alias,literalEvidencePreserved:['description','content','location','notes'].every(key=>prepared.proposal?.envelope?.evidence?.[0]?.[key]===fixture.alias),issues:prepared.validation.issues.map(({code,path})=>({code,path}))};
+ blindAliasAdmissionObservations.push({caseId,expected:{accepted,targetId,rawPreserved:true,sourceProjectUnchanged:true,...(expectedIssue?{issue:expectedIssue}:{})},observed});
+ assert.equal(observed.rawPreserved,true);assert.equal(observed.rawSha256Exact,true);assert.equal(observed.sourceProjectUnchanged,true);assert.equal(observed.acceptedStateUnchanged,true);
+ if(accepted){assert.equal(observed.accepted,true,JSON.stringify(observed.issues));assert.equal(observed.proposalCreated,true);assert.equal(observed.dispositionCreated,false);assert.equal(observed.rawStatus,'VALIDATED_PENDING_REVIEW');assert.equal(observed.relationshipProductId,targetId);assert.equal(observed.literalFieldPreserved,true);assert.equal(observed.literalEvidencePreserved,true);}
+ else {assert.equal(observed.accepted,false,'Blind alias case was admitted: '+caseId);assert.equal(observed.proposalCreated,false);assert.equal(observed.dispositionCreated,true);assert.equal(observed.rawStatus,'VALIDATION_FAILED');if(expectedIssue){assert.deepEqual(observed.issues,[expectedIssue]);}else assert.ok(observed.issues.some(issue=>issue.path==='/scope/productId'||issue.path===`/records/${fixture.family}/0/relationships/PRODUCT_ID`||issue.path===`/records/${fixture.family}/0/relationships/PRODUCT_ID/recordId`),JSON.stringify(observed.issues));assert.equal(observed.issues.some(issue=>issue.code==='STALE_CONTEXT_SIGNATURE'||issue.code==='STALE_PROMPT_BODY'),false,JSON.stringify(observed.issues));}
+ return observed;
+}
+await check('BLIND-ALIAS-ADMISSION: valid prompt alias maps only typed product references and preserves raw/literal values',()=>observeBlindAliasAdmission('valid-issued-alias',()=>{}, {accepted:true,targetId:'PRODUCT-INTEGRITY'}));
+await check('BLIND-ALIAS-ADMISSION: identical repeat preserves the same prompt-bound mapping',()=>observeBlindAliasAdmission('valid-identical-repeat',({prompt,validEntry})=>{prompt.contextManifest.blindAliasMap=[validEntry,structuredClone(validEntry)];}, {accepted:true,targetId:'PRODUCT-INTEGRITY'}));
+await check('BLIND-ALIAS-ADMISSION: unknown alias is rejected without canonical mutation',()=>observeBlindAliasAdmission('unknown-alias',({envelope})=>{const unknown='REVIEW-PRODUCT-UNKNOWN';envelope.records.meaningResults[0].relationships.PRODUCT_ID.recordId=unknown;}, {accepted:false}));
+for(const order of ['valid-first','conflict-first'])await check(`BLIND-ALIAS-ADMISSION: conflicting duplicate alias is rejected (${order})`,()=>observeBlindAliasAdmission('duplicate-conflict-'+order,({project,prompt,validEntry})=>{const product=structuredClone(project.projectData.products.find(row=>row.id==='PRODUCT-INTEGRITY'));product.id='PRODUCT-OUTSIDE-SCOPE';product.fields.PRODUCT_ID=product.id;product.scope.productId=product.id;engine.refreshRecordHashes(product,'products');project.projectData.products.unshift(product);const conflict={...structuredClone(validEntry),canonicalId:product.id};prompt.contextManifest.blindAliasMap=order==='valid-first'?[validEntry,conflict]:[conflict,validEntry];}, {accepted:false,expectedIssue:{code:'DUPLICATE_BLIND_ALIAS',path:'/prompt/contextManifest/blindAliasMap'}}));
+await check('BLIND-ALIAS-ADMISSION: alias issued for the wrong record family is rejected',()=>observeBlindAliasAdmission('wrong-family',({prompt,validEntry})=>{prompt.contextManifest.blindAliasMap=[{...validEntry,kind:'RUN_ID'}];}, {accepted:false}));
+await check('BLIND-ALIAS-ADMISSION: alias resolving to an existing product outside prompt scope is rejected',()=>observeBlindAliasAdmission('outside-prompt-scope',({project,prompt,validEntry})=>{const product=structuredClone(project.projectData.products.find(row=>row.id==='PRODUCT-INTEGRITY'));product.id='PRODUCT-OUTSIDE-SCOPE';product.fields.PRODUCT_ID=product.id;product.scope.productId=product.id;engine.refreshRecordHashes(product,'products');project.projectData.products.unshift(product);prompt.contextManifest.blindAliasMap=[{...validEntry,canonicalId:product.id}];}, {accepted:false}));
+await check('BLIND-ALIAS-ACCEPTANCE: a prepared proposal rejects a newly ambiguous persisted map before commit',()=>{
+ const fixture=blindFixture(23),text=JSON.stringify(fixture.envelope),prepared=ingestion.prepare(fixture.project,{stage:23,promptRecord:fixture.prompt,text});assert.equal(prepared.validation.valid,true,JSON.stringify(prepared.validation.issues));assert.ok(prepared.proposal);
+ const prompt=prepared.project.projectData.generatedPrompts.find(row=>(row.instructionId||row.promptId)===(fixture.prompt.instructionId||fixture.prompt.promptId)),entry=structuredClone(prompt.contextManifest.blindAliasMap.find(row=>row.kind==='PRODUCT_ID'));assert.ok(entry);
+ // Synthetic internal post-prepare corruption only: keep the approved prompt
+ // identity immutable so the acceptance reparse reaches its remap guard.
+ prompt.contextManifest.blindAliasMap=[entry,{...structuredClone(entry),canonicalId:'PRODUCT-CONFLICTING-MAP'}];
+ const before=hash.sha256Value(prepared.project),acceptedBefore=hash.sha256Value(prepared.project.projectData.acceptedChanges),rawBefore=prepared.project.projectData.rawResponses.find(row=>row.rawResponseId===prepared.rawRecord.rawResponseId);assert.ok(rawBefore);const rawText=rawBefore.completeRawResponse,rawSha256=rawBefore.sha256,proposalStatus=prepared.proposal.status;
+ let caught=null,committed=null;try{committed=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'SYNTHETIC_BOUNDARY_TEST'});}catch(error){caught=error;}
+ const observed={code:caught?.code||null,causeCode:caught?.cause?.code||null,causePath:caught?.cause?.path||null,sourceProjectUnchanged:hash.sha256Value(prepared.project)===before,acceptedStateUnchanged:hash.sha256Value(prepared.project.projectData.acceptedChanges)===acceptedBefore,rawBytesUnchanged:rawBefore.completeRawResponse===rawText&&rawBefore.sha256===rawSha256&&hash.sha256Text(rawText)===rawSha256,proposalStillPending:prepared.proposal.status===proposalStatus&&proposalStatus==='PENDING_OPERATOR_REVIEW',commitCreated:Boolean(committed)};
+ assert.deepEqual({code:observed.code,causeCode:observed.causeCode,causePath:observed.causePath},{code:'PROPOSAL_RESPONSE_MISMATCH',causeCode:'DUPLICATE_BLIND_ALIAS',causePath:'/prompt/contextManifest/blindAliasMap'});assert.equal(observed.sourceProjectUnchanged,true);assert.equal(observed.acceptedStateUnchanged,true);assert.equal(observed.rawBytesUnchanged,true);assert.equal(observed.proposalStillPending,true);blindAliasAcceptanceObservations.push({caseId:'prepared-then-ambiguous-map',expected:{code:'PROPOSAL_RESPONSE_MISMATCH',causeCode:'DUPLICATE_BLIND_ALIAS',causePath:'/prompt/contextManifest/blindAliasMap',sourceProjectUnchanged:true,acceptedStateUnchanged:true,rawBytesUnchanged:true,proposalStillPending:true,commitCreated:false},observed,passed:true,syntheticInternalPromptMapMutation:true,storageExercised:false,externalReviewerMutationClaimed:false});
+});
+function rejectClosedFamilyInput(fixture,kind,value){
+ const envelope=structuredClone(fixture.envelope),before=hash.sha256Value(fixture.project),path=kind==='record-family'?'/records/'+value:'/humanAuthorityCandidates/0/targetFamily';
+ if(kind==='record-family'){
+  const descriptor=prompts.responseContractDescriptor(envelope.stage,envelope.operation);
+  assert.equal(Object.hasOwn(schema.RECORD_SCHEMAS,value),false);assert.equal(Object.hasOwn(descriptor.records,value),false);assert.equal(descriptor.agentWritableCollections.includes(value),false);
+  envelope.records=JSON.parse(JSON.stringify({[value]:[{tempKey:'unknown-family',fields:{TITLE:'Undeclared family'},relationships:{},evidenceRefs:[]}]}));
+ }else envelope.humanAuthorityCandidates=[{temporaryKey:'candidate',label:'Malformed decision identity',value:false,authorityClass:'HUMAN',claimedConversationBasis:'Synthetic boundary input',externalResponsePointer:'/humanAuthorityCandidates/0',affectedStageFields:[],affectedRecords:[],targetFamily:value}];
+ const inspect=(candidate,alternatives,caseName='original')=>{
+  const text=JSON.stringify(candidate),captured=ingestion.captureRaw(fixture.project,{stage:envelope.stage,promptRecord:fixture.prompt,text}),prepared=ingestion.prepareCaptured(captured.project,{rawResponseId:captured.rawRecord.rawResponseId});
+  assert.equal(prepared.validation.valid,false);assert.equal(prepared.proposal,null);
+  const diagnostic=prepared.validation.issues.find(row=>alternatives.some(([code,expectedPath])=>row.code===code&&row.path===expectedPath));assert.ok(diagnostic,caseName+': '+JSON.stringify(prepared.validation.issues));
+  assert.equal(prepared.rawRecord.completeRawResponse,text);assert.equal(prepared.rawRecord.status,'VALIDATION_FAILED');assert.deepEqual(prepared.project.projectData.acceptedChanges,fixture.project.projectData.acceptedChanges);assert.equal(hash.sha256Value(fixture.project),before);
+  return diagnostic;
+ };
+ const familyDiagnostic=['UNKNOWN_COLLECTION',path],titleDiagnostic=['UNKNOWN_PROPERTY',path+'/0/fields/TITLE'];
+ const diagnostic=inspect(envelope,kind==='record-family'?[familyDiagnostic,titleDiagnostic]:[['WRONG_VALUE_TYPE',path]]);
+ if(kind==='record-family'){
+  // Empty shapes independently exercise the actual family boundary when no
+  // nested field can trigger an earlier conservative token-shape rejection.
+  for(const [caseName,rows,alternatives]of [
+   ['empty-array',[],[familyDiagnostic]],
+   ['empty-fields',[{tempKey:'unknown-family',fields:{},relationships:{},evidenceRefs:[]}],[familyDiagnostic]],
+   ['fields-wrong-type',[{tempKey:'unknown-family',fields:[],relationships:{},evidenceRefs:[]}],[familyDiagnostic,['WRONG_VALUE_TYPE',path+'/0/fields']]],
+   ['nested-title-wrong-type',[{tempKey:'unknown-family',fields:{TITLE:{}},relationships:{},evidenceRefs:[]}],[familyDiagnostic,titleDiagnostic]]
+  ]){
+   const candidate=structuredClone(envelope);candidate.records=JSON.parse(JSON.stringify({[value]:rows}));inspect(candidate,alternatives,caseName);
+  }
+ }
+ closedFamilyObservations.push({stage:envelope.stage,blindAliases:fixture.prompt.contextManifest.blindAliasMap.length>0,kind,case:kind==='record-family'?value:Array.isArray(value)?'hostile-array':'hostile-object',code:diagnostic.code,rawPreserved:true,noProposal:true});
+}
 for(const stage of [23,24]){
  const fixture=blindFixture(stage),{alias,family,field}=fixture;
+ for(const family of ['constructor','toString','__proto__'])await check(`Stage ${stage}: inherited record family ${family} is rejected before blind remapping`,()=>rejectClosedFamilyInput(fixture,'record-family',family));
+ for(const value of [{toString:null,valueOf:null},[{toString:null,valueOf:null}]])await check(`Stage ${stage}: malformed ${Array.isArray(value)?'array':'object'} candidate family survives blind remapping for typed rejection`,()=>rejectClosedFamilyInput(fixture,'candidate-family',value));
  await check(`Stage ${stage}: literal canonical observation retains alias-looking text`,()=>{const prepared=prepare(fixture);assert.equal(prepared.proposal.canonicalRecords[family][0].fields[field],alias);});
  await check(`Stage ${stage}: typed relationship alone resolves the blind reference`,()=>{const prepared=prepare(fixture);assert.equal(prepared.proposal.canonicalRecords[family][0].relationships.PRODUCT_ID,'PRODUCT-INTEGRITY');assert.equal(prepared.proposal.envelope.scope.productId,'PRODUCT-INTEGRITY');assert.equal(prepared.proposal.envelope.records[family][0].relationships.PRODUCT_ID.recordId,'PRODUCT-INTEGRITY');});
  for(const key of ['description','content','location','notes'])await check(`Stage ${stage}: evidence ${key} is literal data`,()=>{const prepared=prepare(fixture);assert.equal(prepared.proposal.envelope.evidence[0][key],alias);});
@@ -61,8 +126,14 @@ function assertTimingRejected(api,fixture,field){
  const envelope=structuredClone(fixture.envelope);envelope.records.propositions[0].fields[field]=timingAssignments[field];
  const before=api.hash.sha256Value(fixture.project),prepared=prepareTiming(api,fixture,envelope),path='/records/propositions/0/fields/'+field;
  assert.equal(prepared.validation.valid,false,'An agent assigned application-owned proposition timing: '+field);
- assert.ok(prepared.validation.issues.some(issue=>['FIELD_OWNERSHIP_VIOLATION','UNKNOWN_RECORD_FIELD'].includes(issue.code)&&issue.path===path),JSON.stringify(prepared.validation.issues));
+ assert.equal(prepared.proposal,null,'Rejected agent timing created a canonical proposal.');
+ assert.equal(prepared.rawRecord.completeRawResponse,JSON.stringify(envelope),'Rejecting agent timing changed the original response.');
+ assert.equal(prepared.rawRecord.status,'VALIDATION_FAILED');
+ assert.deepEqual(prepared.project.projectData.acceptedChanges,fixture.project.projectData.acceptedChanges,'Rejecting agent timing changed accepted canonical history.');
+ assert.deepEqual(prepared.project.projectData.propositions,fixture.project.projectData.propositions,'Rejecting agent timing changed canonical propositions.');
+ assert.ok(prepared.validation.issues.some(issue=>['FIELD_OWNERSHIP_VIOLATION','UNKNOWN_RECORD_FIELD','UNKNOWN_PROPERTY'].includes(issue.code)&&issue.path===path),JSON.stringify(prepared.validation.issues));
  assert.equal(api.hash.sha256Value(fixture.project),before,'Rejecting an invalid response changed accepted project state.');
+ return {accepted:prepared.validation.valid,field,path,issues:JSON.parse(JSON.stringify(prepared.validation.issues.filter(issue=>issue.path===path))),acceptedStateUnchanged:api.hash.sha256Value(fixture.project)===before};
 }
 function assertOwnershipViews(api){
  const owners={AGENT:'agent',APPLICATION:'application',HUMAN:'human',HUMAN_DECISION:'humanDecision'};
@@ -80,19 +151,27 @@ function timingSourceWithAgentField(source,field=null){
  const shared=source.indexOf("for(const family of ['propositions','proofObligations'])RS[family]=extend(RS[family],"),start=shared>=0?shared:source.indexOf('RS.propositions=extend(RS.propositions,'),end=source.indexOf(';',start);
  assert.ok(start>=0&&end>start,'The proposition timing authority fault anchor is missing.');
  const original=source.slice(start,end+1).replace("for(const family of ['propositions','proofObligations'])RS[family]=extend(RS[family],",'RS.proofObligations=extend(RS.proofObligations,'),defs={...timingAssignments};
- const additions=Object.entries(defs).map(([name])=>`${JSON.stringify(name)}:{...(RS.propositions.fieldDefinitions[${JSON.stringify(name)}]||TIMING_FIELD_DEFS[${JSON.stringify(name)}]||{}),producer:${!field?"'AGENT'":JSON.stringify(name===field?'AGENT':'APPLICATION')},owner:${!field?"'agent'":JSON.stringify(name===field?'agent':'application')},...( ${JSON.stringify(name)}==='TIMING_ENTRIES'?{valueType:'OBJECT_ARRAY'}:{})}`).join(',');
+ const additions=Object.entries(defs).map(([name])=>`${JSON.stringify(name)}:{...(RS.propositions.fieldDefinitions[${JSON.stringify(name)}]||TIMING_FIELD_DEFS[${JSON.stringify(name)}]||{}),producer:${!field?"'AGENT'":JSON.stringify(name===field?'AGENT':'APPLICATION')},owner:${!field?"'agent'":JSON.stringify(name===field?'agent':'application')},...( ${JSON.stringify(name)}==='TIMING_ENTRIES'?{valueType:'OBJECT_ARRAY'}:{}),...( ${JSON.stringify(name)}==='TIMING_SCHEDULE_SHA256'?{nullable:true}:{})}`).join(',');
  return source.slice(0,start)+original+`RS.propositions=extend(RS.propositions,{${additions}});`+source.slice(end+1);
 }
 const currentTiming=timingFixture(runtime,'PROPOSITION-TIMING-AUTHORITY');
+for(const family of ['constructor','toString','__proto__'])await check(`Ordinary Stage 4: inherited record family ${family} is rejected`,()=>rejectClosedFamilyInput(currentTiming,'record-family',family));
+for(const value of [{toString:null,valueOf:null},[{toString:null,valueOf:null}]])await check(`Ordinary Stage 4: malformed ${Array.isArray(value)?'array':'object'} candidate family is rejected`,()=>rejectClosedFamilyInput(currentTiming,'candidate-family',value));
 await check('TIMING-SEMANTIC-CONTROL: permitted proposition meaning still validates and commits',()=>{
  const prepared=prepareTiming(runtime,currentTiming);assert.equal(prepared.validation.valid,true,JSON.stringify(prepared.validation.issues));
  const accepted=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'SYNTHETIC_AUTHORITY_TEST'}),record=engine.recordsForCurrentScope(accepted.project,'propositions')[0];
  assert.equal(engine.recordValue(record,'PROPOSITION_TEXT'),currentTiming.envelope.records.propositions[0].fields.PROPOSITION_TEXT);
 });
-for(const field of Object.keys(timingAssignments))await check('TIMING-REJECT-'+field,()=>assertTimingRejected(runtime,currentTiming,field));
+const verificationObservations=[];
+verificationObservations.push({checkId:'RESPONSE-BLIND-ALIAS-ADMISSION-BOUNDARY',requirementRefs:['NREQ-08d21889678a2a60ba8921fcd1876fe2'],boundary:'Focused production response admission with a generated Stage 23 prompt and private persisted-map variants; no browser, external-agent, native execution, storage reload, or whole-clause claim.',expected:{caseCount:7,validAccepted:2,invalidRejected:5,duplicateOrdersRejected:2,identicalRepeatAccepted:true,rawPreserved:true,sourceProjectUnchanged:true},observed:{caseCount:blindAliasAdmissionObservations.length,validAccepted:blindAliasAdmissionObservations.filter(row=>row.caseId.startsWith('valid-')&&row.observed.accepted).length,invalidRejected:blindAliasAdmissionObservations.filter(row=>!row.caseId.startsWith('valid-')&&!row.observed.accepted).length,duplicateOrdersRejected:blindAliasAdmissionObservations.filter(row=>row.caseId.startsWith('duplicate-conflict-')&&!row.observed.accepted).length,identicalRepeatAccepted:blindAliasAdmissionObservations.some(row=>row.caseId==='valid-identical-repeat'&&row.observed.accepted),rawPreserved:blindAliasAdmissionObservations.every(row=>row.observed.rawPreserved&&row.observed.rawSha256Exact),sourceProjectUnchanged:blindAliasAdmissionObservations.every(row=>row.observed.sourceProjectUnchanged&&row.observed.acceptedStateUnchanged),cases:blindAliasAdmissionObservations},passed:blindAliasAdmissionObservations.length===7&&blindAliasAdmissionObservations.filter(row=>row.caseId.startsWith('valid-')).every(row=>row.observed.accepted)&&blindAliasAdmissionObservations.filter(row=>!row.caseId.startsWith('valid-')).every(row=>!row.observed.accepted)});
+verificationObservations.push({checkId:'RESPONSE-BLIND-ALIAS-ACCEPTANCE-RECHECK',requirementRefs:['NREQ-08d21889678a2a60ba8921fcd1876fe2'],boundary:'In-memory production acceptance reparse after a synthetic internal persisted-map mutation; no storage, browser, external-reviewer mutation, or whole-clause claim.',expected:{caseCount:1,code:'PROPOSAL_RESPONSE_MISMATCH',causeCode:'DUPLICATE_BLIND_ALIAS',causePath:'/prompt/contextManifest/blindAliasMap',sourceProjectUnchanged:true,acceptedStateUnchanged:true,rawBytesUnchanged:true,proposalStillPending:true,commitCreated:false},observed:{caseCount:blindAliasAcceptanceObservations.length,...blindAliasAcceptanceObservations[0]?.observed},cases:blindAliasAcceptanceObservations,passed:blindAliasAcceptanceObservations.length===1&&blindAliasAcceptanceObservations[0].passed===true});
+verificationObservations.push({checkId:'RESPONSE-CLOSED-FAMILY-BOUNDARY',boundary:'Actual production generated blind Stage23/24 and ordinary Stage4 instructions; exact JSON capture/prepare/diagnostic/raw preservation. Synthetic canonical prerequisites and legacy in-memory transport; no browser, staged file, storage reload or external-agent claim.',expected:{rejected:15,blindRejected:10,ordinaryRejected:5,rawPreserved:true,noProposal:true},observed:{rejected:closedFamilyObservations.length,blindRejected:closedFamilyObservations.filter(row=>row.blindAliases).length,ordinaryRejected:closedFamilyObservations.filter(row=>!row.blindAliases).length,rawPreserved:closedFamilyObservations.every(row=>row.rawPreserved),noProposal:closedFamilyObservations.every(row=>row.noProposal)},passed:closedFamilyObservations.length===15});
+for(const field of Object.keys(timingAssignments))await check('TIMING-REJECT-'+field,()=>{const observed=assertTimingRejected(runtime,currentTiming,field);verificationObservations.push({checkId:'PRODUCER-TIMING-REJECT-'+field,requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:132'],boundary:'Production response ingestion rejects agent assignment of application-owned proposition timing',expected:{accepted:false,field,acceptedStateUnchanged:true},observed,passed:true,violation:'externalApplicationOwnedFieldMutation',accepted:false});});
 await check('TIMING-PROMPT-CONTRACT: every proposition-writing operation excludes application-owned timing',()=>{
  const operations=Object.values(schema.STAGE_OPERATION_REGISTRY).filter(operation=>operation.acceptsExternalResponse&&operation.agentWritableCollections.includes('propositions'));assert.ok(operations.length);
- for(const operation of operations){const descriptor=prompts.responseContractDescriptor(operation.stage,operation.operation);for(const field of Object.keys(timingAssignments))assert.equal(Object.hasOwn(descriptor.records.propositions.agentFields,field),false,operation.operation+' disclosed '+field+' as agent-writable.');}
+ const actual=[];
+ for(const operation of operations){const descriptor=prompts.responseContractDescriptor(operation.stage,operation.operation);for(const field of Object.keys(timingAssignments))assert.equal(Object.hasOwn(descriptor.records.propositions.agentFields,field),false,operation.operation+' disclosed '+field+' as agent-writable.');actual.push({stage:operation.stage,operation:operation.operation,applicationTimingFieldsAdvertisedAsAgentWritable:Object.keys(timingAssignments).filter(field=>Object.hasOwn(descriptor.records.propositions.agentFields,field))});}
+ verificationObservations.push({checkId:'PRODUCER-TIMING-PROMPT-EXCLUDES-APPLICATION-FIELDS',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:735'],boundary:'Generated response contract descriptor for every external proposition-writing operation',expected:{applicationTimingFieldsAdvertisedAsAgentWritable:[]},observed:{operations:actual},passed:true});
 });
 await check('TIMING-REGISTRY-OWNER: all producer views preserve application authority',()=>{
  for(const field of ['TIMING_ENTRIES','TIMING_SCHEDULE_SHA256']){
@@ -101,14 +180,16 @@ await check('TIMING-REGISTRY-OWNER: all producer views preserve application auth
  }
 });
 await check('RECORD-OWNERSHIP-CLOSURE: every declared field has exactly its declared owner in every exported view',()=>assertOwnershipViews(schema));
-const legacyRuntime=loadAuthorityRuntime(timingSourceWithAgentField(schemaSource)),legacyFixture=timingFixture(legacyRuntime,'LEGACY-PROPOSITION-TIMING');
+const legacyRuntime=loadAuthorityRuntime(timingSourceWithAgentField(schemaSource));
+assert.equal(legacyRuntime.schema.RECORD_SCHEMAS.propositions.fieldDefinitions.TIMING_SCHEDULE_SHA256.nullable,true,'The synthetic historical ownership defect must preserve timing-schedule digest nullability.');
+const legacyFixture=timingFixture(legacyRuntime,'LEGACY-PROPOSITION-TIMING');
 const historicalProjects=new Map();
 for(const [field,value] of Object.entries(timingAssignments)){
  const envelope=structuredClone(legacyFixture.envelope);envelope.records.propositions[0].fields[field]=value;
  const prepared=prepareTiming(legacyRuntime,legacyFixture,envelope);assert.equal(prepared.validation.valid,true,'The otherwise-valid historical fixture did not reproduce the prior ownership defect: '+field+' '+JSON.stringify(prepared.validation.issues));
  await check('TIMING-PENDING-RESTORE-'+field,()=>{
   const restored=JSON.parse(JSON.stringify(prepared.project)),before=hash.sha256Value(restored);
-  assert.throws(()=>ingestion.commit(restored,prepared.proposal.proposalId,{operator:'SYNTHETIC_AUTHORITY_TEST'}),error=>error.code==='STALE_PROPOSAL'&&error.issues?.some(issue=>['FIELD_OWNERSHIP_VIOLATION','UNKNOWN_RECORD_FIELD'].includes(issue.code)&&issue.path==='/records/propositions/0/fields/'+field),'A restored pending response bypassed the current producer contract.');
+  assert.throws(()=>ingestion.commit(restored,prepared.proposal.proposalId,{operator:'SYNTHETIC_AUTHORITY_TEST'}),error=>error.code==='STALE_PROPOSAL'&&error.issues?.some(issue=>['FIELD_OWNERSHIP_VIOLATION','UNKNOWN_RECORD_FIELD','UNKNOWN_PROPERTY'].includes(issue.code)&&issue.path==='/records/propositions/0/fields/'+field),'A restored pending response bypassed the current producer contract.');
   assert.equal(hash.sha256Value(restored),before,'Rejected historical acceptance changed the recoverable project.');
  });
  const accepted=legacyRuntime.ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'SYNTHETIC_LEGACY_AUTHORITY'});historicalProjects.set(field,accepted.project);
@@ -139,5 +220,5 @@ if(results.every(row=>row.result==='PASS')){
   detectedFault('derived-ownership-omission',/propositions.TIMING_ENTRIES has inconsistent ownership/,()=>assertOwnershipViews(faulty.schema));
  });
 }
-const report={responseAuthorityIntegrity:results.every(row=>row.result==='PASS')?'PASS':'FAIL',syntheticCanonicalContexts:true,productionPromptAndIngestion:true,schemaSha256:hash.sha256Text(schemaSource),engineSha256:hash.sha256Text(engineSource),cases:results.length,passed:results.filter(row=>row.result==='PASS').length,failed:results.filter(row=>row.result==='FAIL').length,results,faults,sourceFaults:'IN_MEMORY_ONLY'};
+const report={responseAuthorityIntegrity:results.every(row=>row.result==='PASS')?'PASS':'FAIL',syntheticCanonicalContexts:true,productionPromptAndIngestion:true,schemaSha256:hash.sha256Text(schemaSource),engineSha256:hash.sha256Text(engineSource),cases:results.length,passed:results.filter(row=>row.result==='PASS').length,failed:results.filter(row=>row.result==='FAIL').length,results,faults,sourceFaults:'IN_MEMORY_ONLY',verificationObservations};
 const reportPath=process.argv.find(value=>value.startsWith('--authority-report='))?.slice('--authority-report='.length);if(reportPath)fs.writeFileSync(reportPath,JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report));assert.equal(report.failed,0,`${report.failed} response authority regressions failed.`);

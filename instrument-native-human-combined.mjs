@@ -1,0 +1,10 @@
+// Private served-copy observers only. Native transaction implementations are unchanged.
+export function instrumentNativeHumanCombinedSource(original){
+ const anchors=[];
+ const once=(before,after)=>{const count=original.split(before).length-1;if(count!==1)throw Error('Native human combined anchor count '+count+': '+before);anchors.push(before);original=original.replace(before,after);};
+ once('},STORAGE_IO_TIMEOUT_MS);\n    try{subscribe','},globalThis.__humanStorageDeadlineMs||STORAGE_IO_TIMEOUT_MS);\n    try{subscribe');
+ once("const prepared=await prepareProjectWrite(project,options);fault('before-project-transaction');const tx=await openTransaction(options.creation?[PROJECTS,ARTIFACTS,META]:[PROJECTS,META],'readwrite');", "const prepared=await prepareProjectWrite(project,options);if(globalThis.__humanBeforeTransaction)await globalThis.__humanBeforeTransaction(prepared);fault('before-project-transaction');const tx=await openTransaction(options.creation?[PROJECTS,ARTIFACTS,META]:[PROJECTS,META],'readwrite');");
+ once("  try{const next=await writeProjectRow(prepared.project,tx,prepared.options);fault('before-transaction-commit');await complete(tx);", "  try{if(globalThis.__humanBeforeWrite)await globalThis.__humanBeforeWrite(tx,prepared);const next=await writeProjectRow(prepared.project,tx,prepared.options);globalThis.__humanAfterWrite?.(tx,next);fault('before-transaction-commit');await complete(tx);");
+ once("tx.oncomplete=()=>{if(active())resolve();};tx.onerror=()=>{if(active())reject(tx.error||new Error('IndexedDB transaction failed.'));};tx.onabort=()=>{if(active())reject(tx.error||new Error('IndexedDB transaction aborted.'));};", "tx.oncomplete=()=>{if(tx===globalThis.__humanObservedTransaction&&globalThis.__humanHideCompletion)return;if(active())resolve();};tx.onerror=()=>{if(active())reject(tx.error||new Error('IndexedDB transaction failed.'));};tx.onabort=()=>{if(active())reject(tx.error||new Error('IndexedDB transaction aborted.'));};");
+ return {source:original,anchors};
+}

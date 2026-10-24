@@ -1,0 +1,1294 @@
+{
+  "schema": "closed-loop-catalog-owner-schedule-review/2",
+  "observedAtUtc": "2026-10-10T16:22:46.402546+00:00",
+  "scope": "Static full catalog process/argv/environment/receipt-destination/dependency audit of current working workflow. No58-owner execution or pass claim.",
+  "catalogOwners": 58,
+  "rows": [
+    {
+      "suite": "verify-quarantine-recovery.mjs",
+      "receipt": ".verification-receipts/verify-quarantine-recovery.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "SPAWNED_CONFORMANCE_OWNER",
+      "sites": [
+        {
+          "job": "conformance",
+          "boundary": "verify-conformance-regressions.mjs:750 runSequence suite args -> executeGate:209 spawn(command,gate.args), process.env inherited",
+          "suiteGroup": "core",
+          "receiptDirectory": "Inherited job .verification-receipts"
+        }
+      ]
+    },
+    {
+      "suite": "verify-integrity-recovery-faults.mjs",
+      "receipt": ".verification-receipts/verify-integrity-recovery-faults.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "SPAWNED_CONFORMANCE_OWNER",
+      "sites": [
+        {
+          "job": "conformance",
+          "boundary": "verify-conformance-regressions.mjs:750 runSequence suite args -> executeGate:209 spawn(command,gate.args), process.env inherited",
+          "suiteGroup": "core",
+          "receiptDirectory": "Inherited job .verification-receipts"
+        }
+      ]
+    },
+    {
+      "suite": "verify-final-acceptance.mjs",
+      "receipt": ".verification-receipts/verify-final-acceptance.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "DIRECT_NODE_OWNER",
+      "sites": [
+        {
+          "job": "workflow-gates",
+          "stepIndex": 11,
+          "step": "Physical iPhone release-tag governance",
+          "beforeCollector": true,
+          "process": "SHELL_NODE_ENTRYPOINT",
+          "argv1": "verify-final-acceptance.mjs",
+          "receipt": ".verification-receipts/verify-final-acceptance.mjs.json"
+        }
+      ]
+    },
+    {
+      "suite": "verify-due-stage-timing.mjs",
+      "receipt": ".verification-receipts/verify-due-stage-timing.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "DIRECT_NODE_OWNER",
+      "sites": [
+        {
+          "job": "deferred-matrix",
+          "stepIndex": 7,
+          "step": "Execute complete deferred stage matrix",
+          "beforeCollector": true,
+          "process": "SHELL_NODE_ENTRYPOINT",
+          "argv1": "verify-due-stage-timing.mjs",
+          "receipt": ".verification-receipts/verify-due-stage-timing.mjs.json"
+        }
+      ]
+    },
+    {
+      "suite": "verify-definition-of-done-invariants.mjs",
+      "receipt": ".verification-receipts/verify-definition-of-done-invariants.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "SPAWNED_NESTED_OWNER",
+      "sites": [
+        {
+          "job": "workflow-gates",
+          "stepIndex": 12,
+          "step": "Workflow and gates",
+          "beforeCollector": true,
+          "process": "SHELL_NODE_ENTRYPOINT",
+          "argv1": "verify-definition-of-done.mjs",
+          "receipt": ".verification-receipts/verify-definition-of-done.mjs.json"
+        },
+        {
+          "job": "workflow-gates",
+          "stepIndex": 12,
+          "step": "Workflow and gates",
+          "beforeCollector": true,
+          "process": "SHELL_NODE_ENTRYPOINT",
+          "argv1": "verify-definition-of-done.mjs",
+          "receipt": ".verification-receipts/verify-definition-of-done.mjs.json"
+        }
+      ],
+      "chain": [
+        "verify-definition-of-done.mjs:97-103"
+      ],
+      "invocation": "checkedVerifier; complete actual owner or validated existing current receipt",
+      "importOnly": false
+    },
+    {
+      "suite": "verify-v3-definition-of-done.mjs",
+      "receipt": ".verification-receipts/verify-v3-definition-of-done.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "DIRECT_NODE_OWNER",
+      "sites": [
+        {
+          "job": "workflow-gates",
+          "stepIndex": 12,
+          "step": "Workflow and gates",
+          "beforeCollector": true,
+          "process": "SHELL_NODE_ENTRYPOINT",
+          "argv1": "verify-v3-definition-of-done.mjs",
+          "receipt": ".verification-receipts/verify-v3-definition-of-done.mjs.json"
+        }
+      ]
+    },
+    {
+      "suite": "verify-shared-contract-faults.mjs",
+      "receipt": ".verification-receipts/verify-shared-contract-faults.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "SPAWNED_CONFORMANCE_OWNER",
+      "sites": [
+        {
+          "job": "conformance",
+          "boundary": "verify-conformance-regressions.mjs:750 runSequence suite args -> executeGate:209 spawn(command,gate.args), process.env inherited",
+          "suiteGroup": "core",
+          "receiptDirectory": "Inherited job .verification-receipts"
+        }
+      ]
+    },
+    {
+      "suite": "verify-response-retry-persistence.mjs",
+      "receipt": ".verification-receipts/verify-response-retry-persistence.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "SPAWNED_CONFORMANCE_OWNER",
+      "sites": [
+        {
+          "job": "conformance",
+          "boundary": "verify-conformance-regressions.mjs:750 runSequence suite args -> executeGate:209 spawn(command,gate.args), process.env inherited",
+          "suiteGroup": "core",
+          "receiptDirectory": "Inherited job .verification-receipts"
+        }
+      ]
+    },
+    {
+      "suite": "verify-operational-persistence.mjs",
+      "receipt": ".verification-receipts/verify-operational-persistence.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "SPAWNED_CONFORMANCE_OWNER",
+      "sites": [
+        {
+          "job": "conformance",
+          "boundary": "verify-conformance-regressions.mjs:750 runSequence suite args -> executeGate:209 spawn(command,gate.args), process.env inherited",
+          "suiteGroup": "core",
+          "receiptDirectory": "Inherited job .verification-receipts"
+        }
+      ]
+    },
+    {
+      "suite": "verify-production-baseline-authority.mjs",
+      "receipt": ".verification-receipts/verify-production-baseline-authority.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "DIRECT_NODE_OWNER",
+      "sites": [
+        {
+          "job": "workflow-gates",
+          "stepIndex": 12,
+          "step": "Workflow and gates",
+          "beforeCollector": true,
+          "process": "SHELL_NODE_ENTRYPOINT",
+          "argv1": "verify-production-baseline-authority.mjs",
+          "receipt": ".verification-receipts/verify-production-baseline-authority.mjs.json"
+        }
+      ]
+    },
+    {
+      "suite": "verify-stage01-agent-contract-alignment.mjs",
+      "receipt": ".verification-receipts/verify-stage01-agent-contract-alignment.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "DIRECT_NODE_OWNER",
+      "sites": [
+        {
+          "job": "foundation",
+          "stepIndex": 10,
+          "step": "Stage 01 agent response contract alignment",
+          "beforeCollector": true,
+          "process": "SHELL_NODE_ENTRYPOINT",
+          "argv1": "verify-stage01-agent-contract-alignment.mjs",
+          "receipt": ".verification-receipts/verify-stage01-agent-contract-alignment.mjs.json"
+        }
+      ]
+    },
+    {
+      "suite": "verify-response-authority-integrity.mjs",
+      "receipt": ".verification-receipts/verify-response-authority-integrity.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "DIRECT_NODE_OWNER",
+      "sites": [
+        {
+          "job": "foundation",
+          "stepIndex": 15,
+          "step": "Raw-first ingestion and negative cases",
+          "beforeCollector": true,
+          "process": "SHELL_NODE_ENTRYPOINT",
+          "argv1": "verify-response-authority-integrity.mjs",
+          "receipt": ".verification-receipts/verify-response-authority-integrity.mjs.json"
+        }
+      ]
+    },
+    {
+      "suite": "verify-returned-slot-authority.mjs",
+      "receipt": ".verification-receipts/verify-returned-slot-authority.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "DIRECT_NODE_OWNER",
+      "sites": [
+        {
+          "job": "foundation",
+          "stepIndex": 15,
+          "step": "Raw-first ingestion and negative cases",
+          "beforeCollector": true,
+          "process": "SHELL_NODE_ENTRYPOINT",
+          "argv1": "verify-returned-slot-authority.mjs",
+          "receipt": ".verification-receipts/verify-returned-slot-authority.mjs.json"
+        }
+      ]
+    },
+    {
+      "suite": "verify-copy-transaction.mjs",
+      "receipt": ".verification-receipts/verify-copy-transaction.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "SPAWNED_CONFORMANCE_OWNER",
+      "sites": [
+        {
+          "job": "conformance",
+          "boundary": "verify-conformance-regressions.mjs:750 runSequence suite args -> executeGate:209 spawn(command,gate.args), process.env inherited",
+          "suiteGroup": "core",
+          "receiptDirectory": "Inherited job .verification-receipts"
+        }
+      ]
+    },
+    {
+      "suite": "verify-history-project-lifecycle.mjs",
+      "receipt": ".verification-receipts/verify-history-project-lifecycle.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "SPAWNED_CONFORMANCE_OWNER",
+      "sites": [
+        {
+          "job": "conformance",
+          "boundary": "verify-conformance-regressions.mjs:750 runSequence suite args -> executeGate:209 spawn(command,gate.args), process.env inherited",
+          "suiteGroup": "core",
+          "receiptDirectory": "Inherited job .verification-receipts"
+        }
+      ]
+    },
+    {
+      "suite": "verify-recoverable-history.mjs",
+      "receipt": ".verification-receipts/verify-recoverable-history.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "SPAWNED_CONFORMANCE_OWNER",
+      "sites": [
+        {
+          "job": "conformance",
+          "boundary": "verify-conformance-regressions.mjs:750 runSequence suite args -> executeGate:209 spawn(command,gate.args), process.env inherited",
+          "suiteGroup": "core",
+          "receiptDirectory": "Inherited job .verification-receipts"
+        }
+      ]
+    },
+    {
+      "suite": "verify-stage-prompts-complete.mjs",
+      "receipt": ".verification-receipts/verify-stage-prompts-complete.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "DIRECT_NODE_OWNER",
+      "sites": [
+        {
+          "job": "workflow-gates",
+          "stepIndex": 13,
+          "step": "Prompt semantics and leakage",
+          "beforeCollector": true,
+          "process": "SHELL_NODE_ENTRYPOINT",
+          "argv1": "verify-stage-prompts-complete.mjs",
+          "receipt": ".verification-receipts/verify-stage-prompts-complete.mjs.json"
+        }
+      ]
+    },
+    {
+      "suite": "verify-stage19-discovery-challenge.mjs",
+      "receipt": ".verification-receipts/verify-stage19-discovery-challenge.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "SPAWNED_CONFORMANCE_OWNER",
+      "sites": [
+        {
+          "job": "conformance",
+          "boundary": "verify-conformance-regressions.mjs:750 runSequence suite args -> executeGate:209 spawn(command,gate.args), process.env inherited",
+          "suiteGroup": "core",
+          "receiptDirectory": "Inherited job .verification-receipts"
+        }
+      ]
+    },
+    {
+      "suite": "verify-stage26-independent-review.mjs",
+      "receipt": ".verification-receipts/verify-stage26-independent-review.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "SPAWNED_CONFORMANCE_OWNER",
+      "sites": [
+        {
+          "job": "conformance",
+          "boundary": "verify-conformance-regressions.mjs:750 runSequence suite args -> executeGate:209 spawn(command,gate.args), process.env inherited",
+          "suiteGroup": "core",
+          "receiptDirectory": "Inherited job .verification-receipts"
+        }
+      ]
+    },
+    {
+      "suite": "verify-handoff-metadata-boundary.mjs",
+      "receipt": ".verification-receipts/verify-handoff-metadata-boundary.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "DIRECT_NODE_OWNER",
+      "sites": [
+        {
+          "job": "workflow-gates",
+          "stepIndex": 13,
+          "step": "Prompt semantics and leakage",
+          "beforeCollector": true,
+          "process": "SHELL_NODE_ENTRYPOINT",
+          "argv1": "verify-handoff-metadata-boundary.mjs",
+          "receipt": ".verification-receipts/verify-handoff-metadata-boundary.mjs.json"
+        }
+      ]
+    },
+    {
+      "suite": "verify-project-activation.mjs",
+      "receipt": ".verification-receipts/verify-project-activation.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "SPAWNED_CONFORMANCE_OWNER",
+      "sites": [
+        {
+          "job": "conformance",
+          "boundary": "verify-conformance-regressions.mjs:750 runSequence suite args -> executeGate:209 spawn(command,gate.args), process.env inherited",
+          "suiteGroup": "core",
+          "receiptDirectory": "Inherited job .verification-receipts"
+        }
+      ]
+    },
+    {
+      "suite": "verify-project-lifecycle.mjs",
+      "receipt": ".verification-receipts/verify-project-lifecycle.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "DIRECT_NODE_OWNER",
+      "sites": [
+        {
+          "job": "workflow-gates",
+          "stepIndex": 12,
+          "step": "Workflow and gates",
+          "beforeCollector": true,
+          "process": "SHELL_NODE_ENTRYPOINT",
+          "argv1": "verify-project-lifecycle.mjs",
+          "receipt": ".verification-receipts/verify-project-lifecycle.mjs.json"
+        }
+      ]
+    },
+    {
+      "suite": "verify-external-result-determination.mjs",
+      "receipt": ".verification-receipts/verify-external-result-determination.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "DIRECT_NODE_OWNER",
+      "sites": [
+        {
+          "job": "workflow-gates",
+          "stepIndex": 12,
+          "step": "Workflow and gates",
+          "beforeCollector": true,
+          "process": "SHELL_NODE_ENTRYPOINT",
+          "argv1": "verify-external-result-determination.mjs",
+          "receipt": ".verification-receipts/verify-external-result-determination.mjs.json"
+        }
+      ]
+    },
+    {
+      "suite": "verify-stage01-intake-closure.mjs",
+      "receipt": ".verification-receipts/verify-stage01-intake-closure.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "DIRECT_NODE_OWNER",
+      "sites": [
+        {
+          "job": "foundation",
+          "stepIndex": 11,
+          "step": "Stage 01 raw intake and semantic accounting",
+          "beforeCollector": true,
+          "process": "SHELL_NODE_ENTRYPOINT",
+          "argv1": "verify-stage01-intake-closure.mjs",
+          "receipt": ".verification-receipts/verify-stage01-intake-closure.mjs.json"
+        }
+      ]
+    },
+    {
+      "suite": "verify-semantic-review-acceptance.mjs",
+      "receipt": ".verification-receipts/verify-semantic-review-acceptance.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "DIRECT_NODE_OWNER",
+      "sites": [
+        {
+          "job": "foundation",
+          "stepIndex": 12,
+          "step": "Stage 02 bounded search and Stage 03 omission challenge",
+          "beforeCollector": true,
+          "process": "SHELL_NODE_ENTRYPOINT",
+          "argv1": "verify-semantic-review-acceptance.mjs",
+          "receipt": ".verification-receipts/verify-semantic-review-acceptance.mjs.json"
+        }
+      ]
+    },
+    {
+      "suite": "verify-verification-routing.mjs",
+      "receipt": ".verification-receipts/verify-verification-routing.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "DIRECT_NODE_OWNER",
+      "sites": [
+        {
+          "job": "workflow-gates",
+          "stepIndex": 12,
+          "step": "Workflow and gates",
+          "beforeCollector": true,
+          "process": "SHELL_NODE_ENTRYPOINT",
+          "argv1": "verify-verification-routing.mjs",
+          "receipt": ".verification-receipts/verify-verification-routing.mjs.json"
+        }
+      ]
+    },
+    {
+      "suite": "verify-independent-preflight.mjs",
+      "receipt": ".verification-receipts/verify-independent-preflight.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "DIRECT_NODE_OWNER",
+      "sites": [
+        {
+          "job": "workflow-gates",
+          "stepIndex": 12,
+          "step": "Workflow and gates",
+          "beforeCollector": true,
+          "process": "SHELL_NODE_ENTRYPOINT",
+          "argv1": "verify-independent-preflight.mjs",
+          "receipt": ".verification-receipts/verify-independent-preflight.mjs.json"
+        }
+      ]
+    },
+    {
+      "suite": "verify-stage03-agent-protocol.mjs",
+      "receipt": ".verification-receipts/verify-stage03-agent-protocol.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "DIRECT_NODE_OWNER",
+      "sites": [
+        {
+          "job": "foundation",
+          "stepIndex": 12,
+          "step": "Stage 02 bounded search and Stage 03 omission challenge",
+          "beforeCollector": true,
+          "process": "SHELL_NODE_ENTRYPOINT",
+          "argv1": "verify-stage03-agent-protocol.mjs",
+          "receipt": ".verification-receipts/verify-stage03-agent-protocol.mjs.json"
+        }
+      ]
+    },
+    {
+      "suite": "verify-ingestion.mjs",
+      "receipt": ".verification-receipts/verify-ingestion.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "DIRECT_NODE_OWNER",
+      "sites": [
+        {
+          "job": "foundation",
+          "stepIndex": 15,
+          "step": "Raw-first ingestion and negative cases",
+          "beforeCollector": true,
+          "process": "SHELL_NODE_ENTRYPOINT",
+          "argv1": "verify-ingestion.mjs",
+          "receipt": ".verification-receipts/verify-ingestion.mjs.json"
+        }
+      ]
+    },
+    {
+      "suite": "verify-complete.mjs",
+      "receipt": ".verification-receipts/verify-complete.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "DIRECT_NODE_OWNER",
+      "sites": [
+        {
+          "job": "workflow-gates",
+          "stepIndex": 12,
+          "step": "Workflow and gates",
+          "beforeCollector": true,
+          "process": "SHELL_NODE_ENTRYPOINT",
+          "argv1": "verify-complete.mjs",
+          "receipt": ".verification-receipts/verify-complete.mjs.json"
+        }
+      ]
+    },
+    {
+      "suite": "verify-full-cycle.mjs",
+      "receipt": ".verification-receipts/verify-full-cycle.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "DIRECT_NODE_OWNER",
+      "sites": [
+        {
+          "job": "test",
+          "stepIndex": 20,
+          "step": "Full cycle and terminal boundary",
+          "beforeCollector": true,
+          "process": "SHELL_NODE_ENTRYPOINT",
+          "argv1": "verify-full-cycle.mjs",
+          "receipt": ".verification-receipts/verify-full-cycle.mjs.json"
+        }
+      ]
+    },
+    {
+      "suite": "verify-stage28-artifact-delivery-intent.mjs",
+      "receipt": ".verification-receipts/verify-stage28-artifact-delivery-intent.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "DIRECT_NODE_OWNER",
+      "sites": [
+        {
+          "job": "workflow-gates",
+          "stepIndex": 12,
+          "step": "Workflow and gates",
+          "beforeCollector": true,
+          "process": "SHELL_NODE_ENTRYPOINT",
+          "argv1": "verify-stage28-artifact-delivery-intent.mjs",
+          "receipt": ".verification-receipts/verify-stage28-artifact-delivery-intent.mjs.json"
+        }
+      ]
+    },
+    {
+      "suite": "verify-semantic-invariant.mjs",
+      "receipt": ".verification-receipts/verify-semantic-invariant.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "DIRECT_NODE_OWNER",
+      "sites": [
+        {
+          "job": "workflow-gates",
+          "stepIndex": 13,
+          "step": "Prompt semantics and leakage",
+          "beforeCollector": true,
+          "process": "SHELL_NODE_ENTRYPOINT",
+          "argv1": "verify-semantic-invariant.mjs",
+          "receipt": ".verification-receipts/verify-semantic-invariant.mjs.json"
+        }
+      ]
+    },
+    {
+      "suite": "verify-contract-closure.mjs",
+      "receipt": ".verification-receipts/verify-contract-closure.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "DIRECT_NODE_OWNER",
+      "sites": [
+        {
+          "job": "foundation",
+          "stepIndex": 6,
+          "step": "Schema, ownership, and single-architecture proof",
+          "beforeCollector": true,
+          "process": "SHELL_NODE_ENTRYPOINT",
+          "argv1": "verify-contract-closure.mjs",
+          "receipt": ".verification-receipts/verify-contract-closure.mjs.json"
+        }
+      ]
+    },
+    {
+      "suite": "verify-v3-migration.mjs",
+      "receipt": ".verification-receipts/verify-v3-migration.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "DIRECT_NODE_OWNER",
+      "sites": [
+        {
+          "job": "foundation",
+          "stepIndex": 9,
+          "step": "Contract-profile migration",
+          "beforeCollector": true,
+          "process": "SHELL_NODE_ENTRYPOINT",
+          "argv1": "verify-v3-migration.mjs",
+          "receipt": ".verification-receipts/verify-v3-migration.mjs.json"
+        }
+      ]
+    },
+    {
+      "suite": "verify-file-first-response.mjs",
+      "receipt": ".verification-receipts/verify-file-first-response.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "DIRECT_NODE_OWNER",
+      "sites": [
+        {
+          "job": "foundation",
+          "stepIndex": 15,
+          "step": "Raw-first ingestion and negative cases",
+          "beforeCollector": true,
+          "process": "SHELL_NODE_ENTRYPOINT",
+          "argv1": "verify-file-first-response.mjs",
+          "receipt": ".verification-receipts/verify-file-first-response.mjs.json"
+        }
+      ]
+    },
+    {
+      "suite": "verify-test-runtime-v3.mjs",
+      "receipt": ".verification-receipts/verify-test-runtime-v3.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "DIRECT_NODE_OWNER",
+      "sites": [
+        {
+          "job": "foundation",
+          "stepIndex": 14,
+          "step": "Test IR validation, security, and deterministic runtime",
+          "beforeCollector": true,
+          "process": "SHELL_NODE_ENTRYPOINT",
+          "argv1": "verify-test-runtime-v3.mjs",
+          "receipt": ".verification-receipts/verify-test-runtime-v3.mjs.json"
+        }
+      ]
+    },
+    {
+      "suite": "verify-test-runtime-dag.mjs",
+      "receipt": ".verification-receipts/verify-test-runtime-dag.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "SPAWNED_NESTED_OWNER",
+      "sites": [
+        {
+          "job": "foundation",
+          "stepIndex": 14,
+          "step": "Test IR validation, security, and deterministic runtime",
+          "beforeCollector": true,
+          "process": "SHELL_NODE_ENTRYPOINT",
+          "argv1": "verify-test-runtime.mjs",
+          "receipt": ".verification-receipts/verify-test-runtime.mjs.json"
+        }
+      ],
+      "chain": [
+        "verify-test-runtime.mjs:68"
+      ],
+      "invocation": "checkedVerifier(process.execPath,[absolute owner pathname],{stdio:inherit})",
+      "importOnly": false
+    },
+    {
+      "suite": "verify-prompt-file-identity.mjs",
+      "receipt": ".verification-receipts/verify-prompt-file-identity.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "DIRECT_NODE_OWNER",
+      "sites": [
+        {
+          "job": "workflow-gates",
+          "stepIndex": 13,
+          "step": "Prompt semantics and leakage",
+          "beforeCollector": true,
+          "process": "SHELL_NODE_ENTRYPOINT",
+          "argv1": "verify-prompt-file-identity.mjs",
+          "receipt": ".verification-receipts/verify-prompt-file-identity.mjs.json"
+        }
+      ]
+    },
+    {
+      "suite": "verify-human-authority-roundtrip.mjs",
+      "receipt": ".verification-receipts/verify-human-authority-roundtrip.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "SPAWNED_NESTED_OWNER",
+      "sites": [
+        {
+          "job": "foundation",
+          "stepIndex": 11,
+          "step": "Stage 01 raw intake and semantic accounting",
+          "beforeCollector": true,
+          "process": "SHELL_NODE_ENTRYPOINT",
+          "argv1": "verify-stage01-intake-closure.mjs",
+          "receipt": ".verification-receipts/verify-stage01-intake-closure.mjs.json"
+        }
+      ],
+      "chain": [
+        "verify-stage01-intake-closure.mjs:163"
+      ],
+      "invocation": "checkedVerifier(process.execPath,[full owner filename]); --human-stage-save-only absent",
+      "importOnly": false
+    },
+    {
+      "suite": "verify-final-product-timing.mjs",
+      "receipt": ".verification-receipts/verify-final-product-timing.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "DIRECT_NODE_OWNER",
+      "sites": [
+        {
+          "job": "workflow-gates",
+          "stepIndex": 11,
+          "step": "Physical iPhone release-tag governance",
+          "beforeCollector": true,
+          "process": "SHELL_NODE_ENTRYPOINT",
+          "argv1": "verify-final-product-timing.mjs",
+          "receipt": ".verification-receipts/verify-final-product-timing.mjs.json"
+        }
+      ]
+    },
+    {
+      "suite": "verify-controller-v3-gap-closure.mjs",
+      "receipt": ".verification-receipts/verify-controller-v3-gap-closure.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "SPAWNED_NESTED_OWNER",
+      "sites": [
+        {
+          "job": "workflow-gates",
+          "stepIndex": 12,
+          "step": "Workflow and gates",
+          "beforeCollector": true,
+          "process": "SHELL_NODE_ENTRYPOINT",
+          "argv1": "verify-v3-definition-of-done.mjs",
+          "receipt": ".verification-receipts/verify-v3-definition-of-done.mjs.json"
+        }
+      ],
+      "chain": [
+        "verify-v3-definition-of-done.mjs:53-65"
+      ],
+      "invocation": "executedProof resolves required filename then checkedVerifier; complete owner or validated existing current receipt",
+      "importOnly": false
+    },
+    {
+      "suite": "verify-terminal-human-authority.mjs",
+      "receipt": ".verification-receipts/verify-terminal-human-authority.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "SPAWNED_NESTED_OWNER",
+      "sites": [
+        {
+          "job": "workflow-gates",
+          "stepIndex": 10,
+          "step": "Cross-stage contract gates",
+          "beforeCollector": true,
+          "process": "SHELL_NODE_ENTRYPOINT",
+          "argv1": "verify-v3-contract.mjs",
+          "receipt": ".verification-receipts/verify-v3-contract.mjs.json"
+        }
+      ],
+      "chain": [
+        "verify-v3-contract.mjs:136-152"
+      ],
+      "invocation": "loop has literal owner filename then runVerifier(process.execPath,[file]); registered owner argv1",
+      "importOnly": false
+    },
+    {
+      "suite": "verify-mobile-release-governance.mjs",
+      "receipt": ".verification-receipts/verify-mobile-release-governance.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "DIRECT_NODE_OWNER",
+      "sites": [
+        {
+          "job": "workflow-gates",
+          "stepIndex": 11,
+          "step": "Physical iPhone release-tag governance",
+          "beforeCollector": true,
+          "process": "SHELL_NODE_ENTRYPOINT",
+          "argv1": "verify-mobile-release-governance.mjs",
+          "receipt": ".verification-receipts/verify-mobile-release-governance.mjs.json"
+        }
+      ]
+    },
+    {
+      "suite": "verify-test-runtime-integrity.mjs",
+      "receipt": ".verification-receipts/verify-test-runtime-integrity.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "SPAWNED_NESTED_OWNER",
+      "sites": [
+        {
+          "job": "foundation",
+          "stepIndex": 14,
+          "step": "Test IR validation, security, and deterministic runtime",
+          "beforeCollector": true,
+          "process": "SHELL_NODE_ENTRYPOINT",
+          "argv1": "verify-test-runtime-limits.mjs",
+          "receipt": ".verification-receipts/verify-test-runtime-limits.mjs.json"
+        }
+      ],
+      "chain": [
+        "verify-test-runtime-limits.mjs:105"
+      ],
+      "invocation": "checkedVerifier(process.execPath,[absolute owner pathname],{stdio:inherit})",
+      "importOnly": false
+    },
+    {
+      "suite": "verify-native-proof-journey.mjs",
+      "receipt": ".verification-receipts/verify-native-proof-journey.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "SPAWNED_CONFORMANCE_OWNER",
+      "sites": [
+        {
+          "job": "conformance",
+          "boundary": "verify-conformance-regressions.mjs:750 runSequence suite args -> executeGate:209 spawn(command,gate.args), process.env inherited",
+          "suiteGroup": "core",
+          "receiptDirectory": "Inherited job .verification-receipts"
+        }
+      ]
+    },
+    {
+      "suite": "verify-stage29-evidence-chain-checkpoint.mjs",
+      "receipt": ".verification-receipts/verify-stage29-evidence-chain-checkpoint.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "DIRECT_NODE_OWNER",
+      "sites": [
+        {
+          "job": "workflow-gates",
+          "stepIndex": 12,
+          "step": "Workflow and gates",
+          "beforeCollector": true,
+          "process": "SHELL_NODE_ENTRYPOINT",
+          "argv1": "verify-stage29-evidence-chain-checkpoint.mjs",
+          "receipt": ".verification-receipts/verify-stage29-evidence-chain-checkpoint.mjs.json"
+        }
+      ]
+    },
+    {
+      "suite": "verify-stage30-terminal-mobile-boundary.mjs",
+      "receipt": ".verification-receipts/verify-stage30-terminal-mobile-boundary.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "DIRECT_NODE_OWNER",
+      "sites": [
+        {
+          "job": "test",
+          "stepIndex": 20,
+          "step": "Full cycle and terminal boundary",
+          "beforeCollector": true,
+          "process": "SHELL_NODE_ENTRYPOINT",
+          "argv1": "verify-stage30-terminal-mobile-boundary.mjs",
+          "receipt": ".verification-receipts/verify-stage30-terminal-mobile-boundary.mjs.json"
+        }
+      ]
+    },
+    {
+      "suite": "verify-deployment-manifest.mjs",
+      "receipt": ".verification-receipts/verify-deployment-manifest.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "DIRECT_NODE_OWNER",
+      "sites": [
+        {
+          "job": "foundation",
+          "stepIndex": 7,
+          "step": "Deployment manifest, build identity, and reproducibility",
+          "beforeCollector": true,
+          "process": "SHELL_NODE_ENTRYPOINT",
+          "argv1": "verify-deployment-manifest.mjs",
+          "receipt": ".verification-receipts/verify-deployment-manifest.mjs.json"
+        }
+      ]
+    },
+    {
+      "suite": "verify-executed-evidence.mjs",
+      "receipt": ".verification-receipts/verify-executed-evidence.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "SPAWNED_CONFORMANCE_OWNER",
+      "sites": [
+        {
+          "job": "conformance",
+          "boundary": "verify-conformance-regressions.mjs:750 runSequence suite args -> executeGate:209 spawn(command,gate.args), process.env inherited",
+          "suiteGroup": "core",
+          "receiptDirectory": "Inherited job .verification-receipts"
+        }
+      ]
+    },
+    {
+      "suite": "verify-stage-operation-registry.mjs",
+      "receipt": ".verification-receipts/verify-stage-operation-registry.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "DIRECT_NODE_OWNER",
+      "sites": [
+        {
+          "job": "foundation",
+          "stepIndex": 6,
+          "step": "Schema, ownership, and single-architecture proof",
+          "beforeCollector": true,
+          "process": "SHELL_NODE_ENTRYPOINT",
+          "argv1": "verify-stage-operation-registry.mjs",
+          "receipt": ".verification-receipts/verify-stage-operation-registry.mjs.json"
+        }
+      ]
+    },
+    {
+      "suite": "verify-stage-contract-closure.mjs",
+      "receipt": ".verification-receipts/verify-stage-contract-closure.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "DIRECT_NODE_OWNER",
+      "sites": [
+        {
+          "job": "foundation",
+          "stepIndex": 6,
+          "step": "Schema, ownership, and single-architecture proof",
+          "beforeCollector": true,
+          "process": "SHELL_NODE_ENTRYPOINT",
+          "argv1": "verify-stage-contract-closure.mjs",
+          "receipt": ".verification-receipts/verify-stage-contract-closure.mjs.json"
+        }
+      ]
+    },
+    {
+      "suite": "verify-hash.mjs",
+      "receipt": ".verification-receipts/verify-hash.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "DIRECT_NODE_OWNER",
+      "sites": [
+        {
+          "job": "foundation",
+          "stepIndex": 14,
+          "step": "Test IR validation, security, and deterministic runtime",
+          "beforeCollector": true,
+          "process": "SHELL_NODE_ENTRYPOINT",
+          "argv1": "verify-hash.mjs",
+          "receipt": ".verification-receipts/verify-hash.mjs.json"
+        }
+      ]
+    },
+    {
+      "suite": "verify-cross-run-comparison.mjs",
+      "receipt": ".verification-receipts/verify-cross-run-comparison.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "SPAWNED_NESTED_OWNER",
+      "sites": [
+        {
+          "job": "workflow-gates",
+          "stepIndex": 12,
+          "step": "Workflow and gates",
+          "beforeCollector": true,
+          "process": "SHELL_NODE_ENTRYPOINT",
+          "argv1": "verify-complete.mjs",
+          "receipt": ".verification-receipts/verify-complete.mjs.json"
+        }
+      ],
+      "chain": [
+        "verify-complete.mjs:522",
+        "verify-spec-residual-closure.mjs:33"
+      ],
+      "invocation": "complete imports residual module; residual explicitly calls checkedVerifier with full owner pathname; no focused args",
+      "importOnly": false
+    },
+    {
+      "suite": "verify-handoff-disclosure.mjs",
+      "receipt": ".verification-receipts/verify-handoff-disclosure.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "DIRECT_NODE_OWNER",
+      "sites": [
+        {
+          "job": "workflow-gates",
+          "stepIndex": 13,
+          "step": "Prompt semantics and leakage",
+          "beforeCollector": true,
+          "process": "SHELL_NODE_ENTRYPOINT",
+          "argv1": "verify-handoff-disclosure.mjs",
+          "receipt": ".verification-receipts/verify-handoff-disclosure.mjs.json"
+        }
+      ]
+    },
+    {
+      "suite": "verify-job-confirmation-contract.mjs",
+      "receipt": ".verification-receipts/verify-job-confirmation-contract.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "SPAWNED_CONFORMANCE_OWNER",
+      "sites": [
+        {
+          "job": "conformance",
+          "boundary": "verify-conformance-regressions.mjs:750 runSequence suite args -> executeGate:209 spawn(command,gate.args), process.env inherited",
+          "suiteGroup": "core",
+          "receiptDirectory": "Inherited job .verification-receipts"
+        }
+      ]
+    },
+    {
+      "suite": "verify-independent-run-verification.mjs",
+      "receipt": ".verification-receipts/verify-independent-run-verification.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "SPAWNED_NESTED_OWNER",
+      "sites": [
+        {
+          "job": "workflow-gates",
+          "stepIndex": 12,
+          "step": "Workflow and gates",
+          "beforeCollector": true,
+          "process": "SHELL_NODE_ENTRYPOINT",
+          "argv1": "verify-complete.mjs",
+          "receipt": ".verification-receipts/verify-complete.mjs.json"
+        }
+      ],
+      "chain": [
+        "verify-complete.mjs:522",
+        "verify-spec-residual-closure.mjs:32"
+      ],
+      "invocation": "complete imports residual module; residual explicitly calls checkedVerifier with full owner pathname",
+      "importOnly": false
+    },
+    {
+      "suite": "verify-mobile-receipt-boundary.mjs",
+      "receipt": ".verification-receipts/verify-mobile-receipt-boundary.mjs.json",
+      "scheduledBeforeCollector": true,
+      "actualInvocationVerifiedStatically": true,
+      "executedThisReview": false,
+      "executionKind": "SPAWNED_CONFORMANCE_OWNER",
+      "sites": [
+        {
+          "job": "conformance",
+          "boundary": "verify-conformance-regressions.mjs:750 runSequence suite args -> executeGate:209 spawn(command,gate.args), process.env inherited",
+          "suiteGroup": "core",
+          "receiptDirectory": "Inherited job .verification-receipts"
+        }
+      ]
+    }
+  ],
+  "counts": {
+    "SPAWNED_CONFORMANCE_OWNER": 15,
+    "DIRECT_NODE_OWNER": 35,
+    "SPAWNED_NESTED_OWNER": 8
+  },
+  "missingOrLateOwners": [],
+  "importOnlyOwners": [],
+  "collector": {
+    "job": "test",
+    "stepIndex": 21,
+    "stepName": "Complete current non-browser assertion evidence",
+    "command": "node collect-verification-evidence.mjs",
+    "requiredAncestors": [
+      "conformance",
+      "deferred-matrix",
+      "foundation",
+      "workflow-gates"
+    ]
+  },
+  "receiptBoundary": {
+    "identity": "verification-evidence-preload.mjs:6 chooses basename(process.argv[1]); only registered full-population, nonsyntax, source-root matching producer writes receipt.",
+    "childEnvironment": "verify-conformance-regressions.mjs:209 merges process.env with explicit overrides; reviewed eight nested calls do not override receipt directory, source root or NODE_OPTIONS.",
+    "jobEnvironment": "foundation, deferred-matrix, workflow-gates, conformance and test each set same source-root and .verification-receipts with NODE_OPTIONS preload; checkout alone suppresses unavailable preload.",
+    "failurePropagation": "Nonzero, changed-source, overflow or malformed/missing producer observations record FAIL and nonzero; checkedVerifier/runVerifier parent checks retain failure."
+  },
+  "artifactPropagation": [
+    "foundation uploads complete .verification-receipts + TEST_PROJECT; workflow-gates downloads that proof before owner calls.",
+    "deferred-matrix receipt restored and validated in workflow-gates and test.",
+    "workflow-gates uploads inherited foundation plus gate receipts; conformance and test download it.",
+    "conformance suites use full filename subprocess entrypoints; each group uploads root receipts; test downloads all and validates conformance handoff before full-cycle and strict collector.",
+    "test executes full-cycle and terminal owner before collection. Artifact reuse branch remains governed by verified-site validation; this scan does not claim real promotion."
+  ],
+  "resolvedEarlierFindings": {
+    "fourMissingOwners": "stage-contract-closure is directly scheduled in foundation registry; file-first-response and response-authority/returned-slot owners in foundation ingestion.",
+    "lateRegistry": "stage-operation-registry is directly scheduled before migration and late consumer reuses current validated report.",
+    "lateRouting": "verification-routing is now directly scheduled in workflow-gates, not solely later browser-adjacent step.",
+    "duplicatePrivateOwners": "Current ownership consumer reuses exact current authority/custody receipts; standalone fallback remains separate."
+  },
+  "inputs": [
+    {
+      "path": ".github/workflows/pages.yml",
+      "sha256": "1081433eb92a0b736bc354c1b616e2ac1995898b91a3720b0cdd1b6cf0def4a1"
+    },
+    {
+      "path": "verification-evidence-catalog.mjs",
+      "sha256": "5d8e04d46601123d4552e796d0e69027f29774155d5309d5e1356c6456c53010"
+    },
+    {
+      "path": "verification-evidence-preload.mjs",
+      "sha256": "3c7835db4197c92c07dc83abae8f1f63bf1815d389d9f8392e08096093d92ffa"
+    },
+    {
+      "path": "verify-conformance-regressions.mjs",
+      "sha256": "cec69ce4a4eb45ad2c49dccd164852a35cd7386f6b269e22d318d5ed63204a39"
+    },
+    {
+      "path": "collect-verification-evidence.mjs",
+      "sha256": "1954c33089333e7195a078eb9871263ae042f595ad72a475d7a16d08060fb616"
+    },
+    {
+      "path": "verify-executed-evidence.mjs",
+      "sha256": "0c104f64eda5a0e304a495b2415750f5d1688ee09296d86740f9e774429ecdc3"
+    },
+    {
+      "path": "verify-v3-contract.mjs",
+      "sha256": "ffe52ebab48784e7025f8852b353b3918456344a40e77970b6d2f0d752bcc437"
+    },
+    {
+      "path": "verify-definition-of-done.mjs",
+      "sha256": "5edc6d0d0b83549ed5ebbc1b34d2364ae01583ca2e1b8c3122109163f7ea6351"
+    },
+    {
+      "path": "verify-test-runtime.mjs",
+      "sha256": "3b4da955fcf651522c20522c6345732d3f67bd8414639e51b3e1ac6e72da7580"
+    },
+    {
+      "path": "verify-test-runtime-limits.mjs",
+      "sha256": "e5dcb100b3b0e8e0ffd16b0c7d09f195ab256f5492bf635d713fe56a42402493"
+    },
+    {
+      "path": "verify-stage01-intake-closure.mjs",
+      "sha256": "b02768b73295732c000458620f4a73b4879904b8ebbc4639cb46a88e9d1246c4"
+    },
+    {
+      "path": "verify-v3-definition-of-done.mjs",
+      "sha256": "e6a76b428e800578d4975bb0ebc13b68b4a5c22db0716d90c86b80d8e581dd82"
+    },
+    {
+      "path": "verify-complete.mjs",
+      "sha256": "af148aa4817b8b3dee01e0675357ea8b26024f9ce1926ab4e7461c12b3b567c1"
+    },
+    {
+      "path": "verify-spec-residual-closure.mjs",
+      "sha256": "d9649a4916d916e212d73a3ca756fe42d84e42cd1da9083f4d9e3b73ac8d4720"
+    }
+  ],
+  "qualification": "This verifies explicit full owner dispatch and propagation statically. Only the required coherent CI run can establish that all owners completed and receipts were accepted.",
+  "finalLocationRefresh": {
+    "workflowSha256": "1081433eb92a0b736bc354c1b616e2ac1995898b91a3720b0cdd1b6cf0def4a1",
+    "scope": "Cheap static location/hash refresh only; six unchanged broad prompt/context/disclosure owner commands now in later prompt phase, proposal acceptance memory now in workflow phase. Existing spawn/receipt chain audit retained. No producer executed.",
+    "changedCatalogLocations": [
+      {
+        "suite": "verify-stage-prompts-complete.mjs",
+        "before": [
+          {
+            "job": "foundation",
+            "stepIndex": 13,
+            "step": "Stage 04 obligation accounting and prompt completeness",
+            "beforeCollector": true,
+            "process": "SHELL_NODE_ENTRYPOINT",
+            "argv1": "verify-stage-prompts-complete.mjs",
+            "receipt": ".verification-receipts/verify-stage-prompts-complete.mjs.json"
+          }
+        ],
+        "after": [
+          {
+            "job": "workflow-gates",
+            "stepIndex": 13,
+            "step": "Prompt semantics and leakage",
+            "beforeCollector": true,
+            "process": "SHELL_NODE_ENTRYPOINT",
+            "argv1": "verify-stage-prompts-complete.mjs",
+            "receipt": ".verification-receipts/verify-stage-prompts-complete.mjs.json"
+          }
+        ]
+      },
+      {
+        "suite": "verify-handoff-metadata-boundary.mjs",
+        "before": [
+          {
+            "job": "foundation",
+            "stepIndex": 13,
+            "step": "Stage 04 obligation accounting and prompt completeness",
+            "beforeCollector": true,
+            "process": "SHELL_NODE_ENTRYPOINT",
+            "argv1": "verify-handoff-metadata-boundary.mjs",
+            "receipt": ".verification-receipts/verify-handoff-metadata-boundary.mjs.json"
+          }
+        ],
+        "after": [
+          {
+            "job": "workflow-gates",
+            "stepIndex": 13,
+            "step": "Prompt semantics and leakage",
+            "beforeCollector": true,
+            "process": "SHELL_NODE_ENTRYPOINT",
+            "argv1": "verify-handoff-metadata-boundary.mjs",
+            "receipt": ".verification-receipts/verify-handoff-metadata-boundary.mjs.json"
+          }
+        ]
+      },
+      {
+        "suite": "verify-handoff-disclosure.mjs",
+        "before": [
+          {
+            "job": "foundation",
+            "stepIndex": 13,
+            "step": "Stage 04 obligation accounting and prompt completeness",
+            "beforeCollector": true,
+            "process": "SHELL_NODE_ENTRYPOINT",
+            "argv1": "verify-handoff-disclosure.mjs",
+            "receipt": ".verification-receipts/verify-handoff-disclosure.mjs.json"
+          }
+        ],
+        "after": [
+          {
+            "job": "workflow-gates",
+            "stepIndex": 13,
+            "step": "Prompt semantics and leakage",
+            "beforeCollector": true,
+            "process": "SHELL_NODE_ENTRYPOINT",
+            "argv1": "verify-handoff-disclosure.mjs",
+            "receipt": ".verification-receipts/verify-handoff-disclosure.mjs.json"
+          }
+        ]
+      }
+    ]
+  }
+}

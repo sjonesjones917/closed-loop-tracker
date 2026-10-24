@@ -1,0 +1,32 @@
+{
+  "before": {
+    "valid": true,
+    "issues": []
+  },
+  "after": {
+    "valid": true,
+    "issues": []
+  },
+  "writeError": null,
+  "cold": {
+    "integrity": {
+      "valid": true,
+      "issues": []
+    },
+    "gate10": {
+      "stage": 10,
+      "complete": true,
+      "blocked": false,
+      "reasons": [],
+      "acceptedResponseCount": 0,
+      "checkedAt": "2026-10-07T10:54:33.800Z",
+      "priorReasonCount": 0
+    },
+    "candidateHashes": {},
+    "revision": 2
+  },
+  "candidateId": "CANDIDATE-bkl76hcqmmticv3jsh20rihdi2sbiq14",
+  "originalHashes": {
+    "ARTIFACT-do0v4uiirbu2972ki268gjmee7176a34": "3c4dc735ac58198daba0a9be2aaed66eccdb552954236be7bb5ca90368ca36a8"
+  }
+}

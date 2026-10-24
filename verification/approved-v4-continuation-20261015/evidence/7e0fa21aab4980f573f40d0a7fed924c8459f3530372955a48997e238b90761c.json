@@ -1,0 +1,47 @@
+{
+  "schema": "closed-loop-attributed-reference-edge-freeze/1",
+  "status": "FROZEN",
+  "outputs": [
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-002/chain-loader-v2.py",
+      "sha256": "75c044cb9c9a665288dd1e2e631664a5416017277c1e4f6a9b6940a6839db561",
+      "byteLength": 9786
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-002/effective-governor-link.json",
+      "sha256": "2a99deda8b0fe212dc838120e9da2f06fad85a9d5cd99928d190b5e80da4d480",
+      "byteLength": 16854
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-002/per-entry-reconciliation.json",
+      "sha256": "f9df6a00fae80b5bc4dc2b467f80a6798643fc7e5007e921584cb932d59c9ddc",
+      "byteLength": 371695
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-002/read-inventory.json",
+      "sha256": "2f552a0dd91ef674a76159994acb1b213d76d1798fa8d0ddcfe70ef4737b74f3",
+      "byteLength": 47283
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-002/reconcile.py",
+      "sha256": "17d69e9616a28526719eabe0c140f432d701156c4f00e1a13eb203494a5caa36",
+      "byteLength": 15536
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-002/reconciliation.json",
+      "sha256": "ae573e3bc530e4a91c46dcca735f317f53ca55b8f04503fd1cee3804da253dd7",
+      "byteLength": 2892
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-002/source-evidence.json",
+      "sha256": "69e651b3f2c5726e868ee4141830e1995a772bca5ba344124213471cbbd45aaa",
+      "byteLength": 83606
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-002/validation.json",
+      "sha256": "13148d661c56011edea74e6d1b90116c51daea0819f93a9e7ed83ebddd12554c",
+      "byteLength": 693
+    }
+  ],
+  "sourceOnly": true
+}

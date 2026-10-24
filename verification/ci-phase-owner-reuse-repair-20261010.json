@@ -1,0 +1,1916 @@
+{
+  "schema": "closed-loop-ci-phase-and-owner-reuse-repair/1",
+  "recordedAtUtc": "2026-10-10T16:21:42.355835+00:00",
+  "repository": "sjonesjones917/closed-loop-tracker",
+  "pullRequest": 1248,
+  "baseline": {
+    "head": "1599f9cfb33cc246292ade693c877fbe200b1986",
+    "base": "a3c7fa80ced99e73f55177d4a6a78fec582ab651",
+    "testMerge": "4414b0cca6d2f23f6994fb6eae838030ba0588fe",
+    "run": 38034828219,
+    "runStatus": "completed",
+    "runConclusion": "cancelled",
+    "runStartedAt": "2026-10-10T07:33:27Z",
+    "runCompletedAt": "2026-10-10T07:34:40Z",
+    "directCancellationEvidence": "check-run114162979368 annotation: The run was canceled by @sjonesjones917.",
+    "requiredCheck": "test",
+    "ruleset": 21578362,
+    "branchRulesAccess": "GET rules/branches/main succeeded; branch protection endpoint returned403; GraphQL PR BLOCKED, rollup FAILURE",
+    "sourceBaselineCopies": [
+      "/workspace/scratch/ci-ingestion-reuse/pages.before.yml",
+      "/workspace/scratch/ci-ingestion-reuse/verified-site.before.mjs",
+      "/workspace/scratch/ci-ingestion-reuse/verify-verified-site.before.mjs"
+    ]
+  },
+  "controllingRequirement": {
+    "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+    "section": "46",
+    "lines": [
+      5081,
+      5101
+    ],
+    "sha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
+    "independentSourceObservation": "INDEPENDENT-SOURCE-0967",
+    "approvedOrderExceptionFound": false
+  },
+  "confirmedDefects": [
+    {
+      "id": "required-proof-phase-order",
+      "classification": [
+        "CI",
+        "specification-conformance",
+        "testing"
+      ],
+      "mechanism": "Required deferred and conformance producers executed before Syntax; stage2/3 review ran in schema; Stage4 zero-loss ran in Stage1; implicit missing-owner collection ran after Chromium. Broad allstage prompt/disclosure owners and acceptance-memory admission/gate owner also ran in earlier registry/Stage04 wrappers; command-level phase guards now reject those original placements.",
+      "correction": "Single workflow foundation\u2192deferred\u2192workflow-gates\u2192conformance\u2192test barriers; exactly ordered foundation phases; actual mixed contract owners moved to gates; every registered owner scheduled before strict prebrowser/final collection.",
+      "boundary": "Workflow source plus actual guard/mutation owner; hosted phase execution remains required"
+    },
+    {
+      "id": "duplicate-ingestion-producer",
+      "classification": [
+        "CI",
+        "performance"
+      ],
+      "mechanism": "Same full default verify-ingestion producer ran once in conformance-core then again in test after transferred valid receipt.",
+      "beforeDefaultInvocations": 2,
+      "afterDefaultInvocations": 1,
+      "correction": "Single actual foundation producer; existing current-source receipt validation/export transfers full reports to downstream consumers; no generic cache.",
+      "boundary": "Source scheduling plus owner current-receipt controls; hosted savings unmeasured"
+    },
+    {
+      "id": "strict-collector-owner-coverage",
+      "classification": [
+        "CI",
+        "proof-order"
+      ],
+      "mechanism": "Six required owners had only late collector/private execution; routing was scheduled after proposed strict collector.",
+      "correction": "Schedule registry,stage3 response,stage-contract, file-first, authority and slots explicitly in appropriate earlier phases; move actual routing producer into workflow-gates.",
+      "boundary": "Exact command/producers map plus strict collector and scheduling mutations; actual coherent CI remains required"
+    }
+  ],
+  "jobGraph": [
+    {
+      "job": "foundation",
+      "needs": null,
+      "permissions": {
+        "contents": "read",
+        "actions": "read",
+        "pull-requests": "read"
+      },
+      "timeoutMinutes": 360
+    },
+    {
+      "job": "deferred-matrix",
+      "needs": "foundation",
+      "permissions": {
+        "contents": "read",
+        "actions": "read",
+        "pull-requests": "read"
+      },
+      "timeoutMinutes": 360
+    },
+    {
+      "job": "workflow-gates",
+      "needs": [
+        "foundation",
+        "deferred-matrix"
+      ],
+      "permissions": {
+        "contents": "read",
+        "actions": "read",
+        "pull-requests": "read"
+      },
+      "timeoutMinutes": 360
+    },
+    {
+      "job": "conformance",
+      "needs": "workflow-gates",
+      "permissions": {
+        "contents": "read",
+        "actions": "read",
+        "pull-requests": "read"
+      },
+      "timeoutMinutes": 360
+    },
+    {
+      "job": "test",
+      "needs": [
+        "foundation",
+        "deferred-matrix",
+        "workflow-gates",
+        "conformance"
+      ],
+      "permissions": {
+        "contents": "read",
+        "actions": "read",
+        "pull-requests": "read"
+      },
+      "timeoutMinutes": 360
+    },
+    {
+      "job": "deploy",
+      "needs": "test",
+      "permissions": {
+        "pages": "write",
+        "id-token": "write"
+      },
+      "timeoutMinutes": null
+    },
+    {
+      "job": "verify-live",
+      "needs": [
+        "test",
+        "deploy"
+      ],
+      "permissions": {
+        "inherited": "contents:read"
+      },
+      "timeoutMinutes": 180
+    },
+    {
+      "job": "publish-status",
+      "needs": [
+        "test",
+        "deploy",
+        "verify-live"
+      ],
+      "permissions": {
+        "contents": "read"
+      },
+      "timeoutMinutes": null
+    }
+  ],
+  "caseEquivalence": {
+    "oldNodeEntrypoints": [
+      {
+        "file": "verified-site.mjs",
+        "job": "deferred-matrix",
+        "step": "Find complete PR verification for this main commit",
+        "stepIndex": 2,
+        "command": "node verified-site.mjs select",
+        "newLocations": [
+          {
+            "job": "foundation",
+            "step": "Find complete PR verification for this main commit",
+            "stepIndex": 2,
+            "command": "node verified-site.mjs select"
+          },
+          {
+            "job": "deferred-matrix",
+            "step": "Find complete PR verification for this main commit",
+            "stepIndex": 2,
+            "command": "node verified-site.mjs select"
+          },
+          {
+            "job": "workflow-gates",
+            "step": "Find complete PR verification for this main commit",
+            "stepIndex": 2,
+            "command": "node verified-site.mjs select"
+          },
+          {
+            "job": "conformance",
+            "step": "Find complete PR verification for this main commit",
+            "stepIndex": 2,
+            "command": "node verified-site.mjs select"
+          }
+        ]
+      },
+      {
+        "file": "verified-site.mjs",
+        "job": "deferred-matrix",
+        "step": "Verify exact reusable source for deferred proof",
+        "stepIndex": 4,
+        "command": "node verified-site.mjs reuse",
+        "newLocations": [
+          {
+            "job": "deferred-matrix",
+            "step": "Verify exact reusable source for deferred proof",
+            "stepIndex": 4,
+            "command": "node verified-site.mjs reuse"
+          }
+        ]
+      },
+      {
+        "file": "verify-due-stage-timing.mjs",
+        "job": "deferred-matrix",
+        "step": "Execute complete deferred stage matrix",
+        "stepIndex": 5,
+        "command": "node verify-due-stage-timing.mjs > /tmp/deferred-stage-matrix.json",
+        "newLocations": [
+          {
+            "job": "deferred-matrix",
+            "step": "Execute complete deferred stage matrix",
+            "stepIndex": 7,
+            "command": "node verify-due-stage-timing.mjs > /tmp/deferred-stage-matrix.json"
+          }
+        ]
+      },
+      {
+        "file": "verify-deferred-proof-handoff.mjs",
+        "job": "deferred-matrix",
+        "step": "Execute complete deferred stage matrix",
+        "stepIndex": 5,
+        "command": "node verify-deferred-proof-handoff.mjs",
+        "newLocations": [
+          {
+            "job": "deferred-matrix",
+            "step": "Execute complete deferred stage matrix",
+            "stepIndex": 7,
+            "command": "node verify-deferred-proof-handoff.mjs"
+          }
+        ]
+      },
+      {
+        "file": "verified-site.mjs",
+        "job": "conformance",
+        "step": "Find complete PR verification for this main commit",
+        "stepIndex": 2,
+        "command": "node verified-site.mjs select",
+        "newLocations": [
+          {
+            "job": "foundation",
+            "step": "Find complete PR verification for this main commit",
+            "stepIndex": 2,
+            "command": "node verified-site.mjs select"
+          },
+          {
+            "job": "deferred-matrix",
+            "step": "Find complete PR verification for this main commit",
+            "stepIndex": 2,
+            "command": "node verified-site.mjs select"
+          },
+          {
+            "job": "workflow-gates",
+            "step": "Find complete PR verification for this main commit",
+            "stepIndex": 2,
+            "command": "node verified-site.mjs select"
+          },
+          {
+            "job": "conformance",
+            "step": "Find complete PR verification for this main commit",
+            "stepIndex": 2,
+            "command": "node verified-site.mjs select"
+          }
+        ]
+      },
+      {
+        "file": "verified-site.mjs",
+        "job": "conformance",
+        "step": "Verify exact reusable source for conformance proof",
+        "stepIndex": 4,
+        "command": "node verified-site.mjs reuse",
+        "newLocations": [
+          {
+            "job": "conformance",
+            "step": "Verify exact reusable source for conformance proof",
+            "stepIndex": 4,
+            "command": "node verified-site.mjs reuse"
+          }
+        ]
+      },
+      {
+        "file": "verify-ingestion.mjs",
+        "job": "conformance",
+        "step": "Execute complete conformance group",
+        "stepIndex": 5,
+        "command": "if [ \"${{ matrix.group }}\" = core ]; then node verify-ingestion.mjs; fi",
+        "newLocations": [
+          {
+            "job": "foundation",
+            "step": "Raw-first ingestion and negative cases",
+            "stepIndex": 15,
+            "command": "node verify-ingestion.mjs"
+          }
+        ]
+      },
+      {
+        "file": "verify-conformance-regressions.mjs",
+        "job": "conformance",
+        "step": "Execute complete conformance group",
+        "stepIndex": 5,
+        "command": "node verify-conformance-regressions.mjs --group=${{ matrix.group }} > /tmp/conformance-regressions.json",
+        "newLocations": [
+          {
+            "job": "conformance",
+            "step": "Execute complete conformance group",
+            "stepIndex": 8,
+            "command": "node verify-conformance-regressions.mjs --group=${{ matrix.group }} > /tmp/conformance-regressions.json"
+          }
+        ]
+      },
+      {
+        "file": "verify-verified-site.mjs",
+        "job": "test",
+        "step": "Verified artifact reuse checks",
+        "stepIndex": 4,
+        "command": "node verify-verified-site.mjs",
+        "newLocations": [
+          {
+            "job": "test",
+            "step": "Verified artifact reuse checks",
+            "stepIndex": 6,
+            "command": "node verify-verified-site.mjs"
+          }
+        ]
+      },
+      {
+        "file": "verified-site.mjs",
+        "job": "test",
+        "step": "Find completed PR verification for this main commit",
+        "stepIndex": 5,
+        "command": "node verified-site.mjs select",
+        "newLocations": [
+          {
+            "job": "test",
+            "step": "Find completed PR verification for this main commit",
+            "stepIndex": 7,
+            "command": "node verified-site.mjs select"
+          }
+        ]
+      },
+      {
+        "file": "verified-site.mjs",
+        "job": "test",
+        "step": "Verify matching source and promote tested runtime files",
+        "stepIndex": 7,
+        "command": "node verified-site.mjs reuse",
+        "newLocations": [
+          {
+            "job": "test",
+            "step": "Verify matching source and promote tested runtime files",
+            "stepIndex": 9,
+            "command": "node verified-site.mjs reuse"
+          }
+        ]
+      },
+      {
+        "file": "verify-deferred-proof-handoff.mjs",
+        "job": "test",
+        "step": "Validate complete deferred matrix receipt",
+        "stepIndex": 10,
+        "command": "node verify-deferred-proof-handoff.mjs",
+        "newLocations": [
+          {
+            "job": "workflow-gates",
+            "step": "Validate complete deferred matrix receipt",
+            "stepIndex": 8,
+            "command": "node verify-deferred-proof-handoff.mjs"
+          },
+          {
+            "job": "test",
+            "step": "Validate complete deferred matrix receipt",
+            "stepIndex": 14,
+            "command": "node verify-deferred-proof-handoff.mjs"
+          }
+        ]
+      },
+      {
+        "file": "verify-conformance-handoff.mjs",
+        "job": "test",
+        "step": "Validate complete conformance handoff",
+        "stepIndex": 13,
+        "command": "node verify-conformance-handoff.mjs",
+        "newLocations": [
+          {
+            "job": "test",
+            "step": "Validate complete conformance handoff",
+            "stepIndex": 17,
+            "command": "node verify-conformance-handoff.mjs"
+          }
+        ]
+      },
+      {
+        "file": "verify-deployment-manifest.mjs",
+        "job": "test",
+        "step": "Deployment manifest, build identity, and reproducibility",
+        "stepIndex": 17,
+        "command": "node verify-deployment-manifest.mjs",
+        "newLocations": [
+          {
+            "job": "foundation",
+            "step": "Deployment manifest, build identity, and reproducibility",
+            "stepIndex": 7,
+            "command": "node verify-deployment-manifest.mjs"
+          }
+        ]
+      },
+      {
+        "file": "verify-mobile-acceptance-target.mjs",
+        "job": "test",
+        "step": "Physical iPhone release-tag governance",
+        "stepIndex": 18,
+        "command": "node verify-mobile-acceptance-target.mjs",
+        "newLocations": [
+          {
+            "job": "workflow-gates",
+            "step": "Physical iPhone release-tag governance",
+            "stepIndex": 11,
+            "command": "node verify-mobile-acceptance-target.mjs"
+          }
+        ]
+      },
+      {
+        "file": "verify-browser-execution-evidence.mjs",
+        "job": "test",
+        "step": "Physical iPhone release-tag governance",
+        "stepIndex": 18,
+        "command": "node verify-browser-execution-evidence.mjs",
+        "newLocations": [
+          {
+            "job": "workflow-gates",
+            "step": "Physical iPhone release-tag governance",
+            "stepIndex": 11,
+            "command": "node verify-browser-execution-evidence.mjs"
+          }
+        ]
+      },
+      {
+        "file": "verify-final-acceptance.mjs",
+        "job": "test",
+        "step": "Physical iPhone release-tag governance",
+        "stepIndex": 18,
+        "command": "node verify-final-acceptance.mjs",
+        "newLocations": [
+          {
+            "job": "workflow-gates",
+            "step": "Physical iPhone release-tag governance",
+            "stepIndex": 11,
+            "command": "node verify-final-acceptance.mjs"
+          }
+        ]
+      },
+      {
+        "file": "verify-visual-baseline-submission.mjs",
+        "job": "test",
+        "step": "Physical iPhone release-tag governance",
+        "stepIndex": 18,
+        "command": "node verify-visual-baseline-submission.mjs",
+        "newLocations": [
+          {
+            "job": "workflow-gates",
+            "step": "Physical iPhone release-tag governance",
+            "stepIndex": 11,
+            "command": "node verify-visual-baseline-submission.mjs"
+          }
+        ]
+      },
+      {
+        "file": "verify-prompt-file-identity.mjs",
+        "job": "test",
+        "step": "Physical iPhone release-tag governance",
+        "stepIndex": 18,
+        "command": "node verify-prompt-file-identity.mjs",
+        "newLocations": [
+          {
+            "job": "workflow-gates",
+            "step": "Prompt semantics and leakage",
+            "stepIndex": 13,
+            "command": "node verify-prompt-file-identity.mjs"
+          }
+        ]
+      },
+      {
+        "file": "verify-final-product-timing.mjs",
+        "job": "test",
+        "step": "Physical iPhone release-tag governance",
+        "stepIndex": 18,
+        "command": "node verify-final-product-timing.mjs",
+        "newLocations": [
+          {
+            "job": "workflow-gates",
+            "step": "Physical iPhone release-tag governance",
+            "stepIndex": 11,
+            "command": "node verify-final-product-timing.mjs"
+          }
+        ]
+      },
+      {
+        "file": "verify-mobile-release-governance.mjs",
+        "job": "test",
+        "step": "Physical iPhone release-tag governance",
+        "stepIndex": 18,
+        "command": "node verify-mobile-release-governance.mjs",
+        "newLocations": [
+          {
+            "job": "workflow-gates",
+            "step": "Physical iPhone release-tag governance",
+            "stepIndex": 11,
+            "command": "node verify-mobile-release-governance.mjs"
+          }
+        ]
+      },
+      {
+        "file": "build-test-project.mjs",
+        "job": "test",
+        "step": "Schema, ownership, and single-architecture proof",
+        "stepIndex": 19,
+        "command": "node build-test-project.mjs",
+        "newLocations": [
+          {
+            "job": "foundation",
+            "step": "Schema, ownership, and single-architecture proof",
+            "stepIndex": 6,
+            "command": "node build-test-project.mjs"
+          }
+        ]
+      },
+      {
+        "file": "verify.mjs",
+        "job": "test",
+        "step": "Schema, ownership, and single-architecture proof",
+        "stepIndex": 19,
+        "command": "node verify.mjs",
+        "newLocations": [
+          {
+            "job": "foundation",
+            "step": "Schema, ownership, and single-architecture proof",
+            "stepIndex": 6,
+            "command": "node verify.mjs"
+          }
+        ]
+      },
+      {
+        "file": "verify-proposal-acceptance-memory.mjs",
+        "job": "test",
+        "step": "Schema, ownership, and single-architecture proof",
+        "stepIndex": 19,
+        "command": "node verify-proposal-acceptance-memory.mjs",
+        "newLocations": [
+          {
+            "job": "workflow-gates",
+            "step": "Workflow and gates",
+            "stepIndex": 12,
+            "command": "node verify-proposal-acceptance-memory.mjs"
+          }
+        ]
+      },
+      {
+        "file": "verify-semantic-review-acceptance.mjs",
+        "job": "test",
+        "step": "Schema, ownership, and single-architecture proof",
+        "stepIndex": 19,
+        "command": "node verify-semantic-review-acceptance.mjs",
+        "newLocations": [
+          {
+            "job": "foundation",
+            "step": "Stage 02 bounded search and Stage 03 omission challenge",
+            "stepIndex": 12,
+            "command": "node verify-semantic-review-acceptance.mjs"
+          }
+        ]
+      },
+      {
+        "file": "verify-data-route-closure.mjs",
+        "job": "test",
+        "step": "Complete 30-stage canonical data-route closure",
+        "stepIndex": 20,
+        "command": "node verify-data-route-closure.mjs",
+        "newLocations": [
+          {
+            "job": "foundation",
+            "step": "Complete 30-stage canonical data-route closure",
+            "stepIndex": 8,
+            "command": "node verify-data-route-closure.mjs"
+          }
+        ]
+      },
+      {
+        "file": "verify-contract-closure.mjs",
+        "job": "test",
+        "step": "Migration and v3 contracts",
+        "stepIndex": 21,
+        "command": "node verify-contract-closure.mjs",
+        "newLocations": [
+          {
+            "job": "foundation",
+            "step": "Schema, ownership, and single-architecture proof",
+            "stepIndex": 6,
+            "command": "node verify-contract-closure.mjs"
+          }
+        ]
+      },
+      {
+        "file": "verify-v3-migration.mjs",
+        "job": "test",
+        "step": "Migration and v3 contracts",
+        "stepIndex": 21,
+        "command": "node verify-v3-migration.mjs",
+        "newLocations": [
+          {
+            "job": "foundation",
+            "step": "Contract-profile migration",
+            "stepIndex": 9,
+            "command": "node verify-v3-migration.mjs"
+          }
+        ]
+      },
+      {
+        "file": "verify-v3-contract.mjs",
+        "job": "test",
+        "step": "Migration and v3 contracts",
+        "stepIndex": 21,
+        "command": "node verify-v3-contract.mjs",
+        "newLocations": [
+          {
+            "job": "workflow-gates",
+            "step": "Cross-stage contract gates",
+            "stepIndex": 10,
+            "command": "node verify-v3-contract.mjs"
+          }
+        ]
+      },
+      {
+        "file": "verify-spec3-contract.mjs",
+        "job": "test",
+        "step": "Migration and v3 contracts",
+        "stepIndex": 21,
+        "command": "node verify-spec3-contract.mjs",
+        "newLocations": [
+          {
+            "job": "workflow-gates",
+            "step": "Cross-stage contract gates",
+            "stepIndex": 10,
+            "command": "node verify-spec3-contract.mjs"
+          }
+        ]
+      },
+      {
+        "file": "verify-stage01-agent-contract-alignment.mjs",
+        "job": "test",
+        "step": "Stage 01 agent response contract alignment",
+        "stepIndex": 22,
+        "command": "node verify-stage01-agent-contract-alignment.mjs",
+        "newLocations": [
+          {
+            "job": "foundation",
+            "step": "Stage 01 agent response contract alignment",
+            "stepIndex": 10,
+            "command": "node verify-stage01-agent-contract-alignment.mjs"
+          }
+        ]
+      },
+      {
+        "file": "verify-stage01-intake-closure.mjs",
+        "job": "test",
+        "step": "Stage 01 raw intake and semantic accounting",
+        "stepIndex": 23,
+        "command": "node verify-stage01-intake-closure.mjs",
+        "newLocations": [
+          {
+            "job": "foundation",
+            "step": "Stage 01 raw intake and semantic accounting",
+            "stepIndex": 11,
+            "command": "node verify-stage01-intake-closure.mjs"
+          }
+        ]
+      },
+      {
+        "file": "verify-one-time-intent-intake.mjs",
+        "job": "test",
+        "step": "Stage 01 raw intake and semantic accounting",
+        "stepIndex": 23,
+        "command": "node verify-one-time-intent-intake.mjs",
+        "newLocations": [
+          {
+            "job": "foundation",
+            "step": "Stage 01 raw intake and semantic accounting",
+            "stepIndex": 11,
+            "command": "node verify-one-time-intent-intake.mjs"
+          }
+        ]
+      },
+      {
+        "file": "verify-zero-loss-accounting.mjs",
+        "job": "test",
+        "step": "Stage 01 raw intake and semantic accounting",
+        "stepIndex": 23,
+        "command": "node verify-zero-loss-accounting.mjs",
+        "newLocations": [
+          {
+            "job": "foundation",
+            "step": "Stage 04 obligation accounting and prompt completeness",
+            "stepIndex": 13,
+            "command": "node verify-zero-loss-accounting.mjs"
+          }
+        ]
+      },
+      {
+        "file": "verify-stage01-review-subject.mjs",
+        "job": "test",
+        "step": "Stage 01 raw intake and semantic accounting",
+        "stepIndex": 23,
+        "command": "node verify-stage01-review-subject.mjs",
+        "newLocations": [
+          {
+            "job": "foundation",
+            "step": "Stage 01 raw intake and semantic accounting",
+            "stepIndex": 11,
+            "command": "node verify-stage01-review-subject.mjs"
+          }
+        ]
+      },
+      {
+        "file": "verify-all-stage-prompts.mjs",
+        "job": "test",
+        "step": "Stage 04 obligation accounting and prompt completeness",
+        "stepIndex": 24,
+        "command": "node verify-all-stage-prompts.mjs",
+        "newLocations": [
+          {
+            "job": "workflow-gates",
+            "step": "Prompt semantics and leakage",
+            "stepIndex": 13,
+            "command": "node verify-all-stage-prompts.mjs"
+          }
+        ]
+      },
+      {
+        "file": "verify-stage-context-boundary.mjs",
+        "job": "test",
+        "step": "Stage 04 obligation accounting and prompt completeness",
+        "stepIndex": 24,
+        "command": "node verify-stage-context-boundary.mjs",
+        "newLocations": [
+          {
+            "job": "workflow-gates",
+            "step": "Prompt semantics and leakage",
+            "stepIndex": 13,
+            "command": "node verify-stage-context-boundary.mjs"
+          }
+        ]
+      },
+      {
+        "file": "verify-handoff-metadata-boundary.mjs",
+        "job": "test",
+        "step": "Stage 04 obligation accounting and prompt completeness",
+        "stepIndex": 24,
+        "command": "node verify-handoff-metadata-boundary.mjs",
+        "newLocations": [
+          {
+            "job": "workflow-gates",
+            "step": "Prompt semantics and leakage",
+            "stepIndex": 13,
+            "command": "node verify-handoff-metadata-boundary.mjs"
+          }
+        ]
+      },
+      {
+        "file": "verify-handoff-disclosure.mjs",
+        "job": "test",
+        "step": "Stage 04 obligation accounting and prompt completeness",
+        "stepIndex": 24,
+        "command": "node verify-handoff-disclosure.mjs",
+        "newLocations": [
+          {
+            "job": "workflow-gates",
+            "step": "Prompt semantics and leakage",
+            "stepIndex": 13,
+            "command": "node verify-handoff-disclosure.mjs"
+          }
+        ]
+      },
+      {
+        "file": "verify-stage-prompts-complete.mjs",
+        "job": "test",
+        "step": "Stage 04 obligation accounting and prompt completeness",
+        "stepIndex": 24,
+        "command": "node verify-stage-prompts-complete.mjs",
+        "newLocations": [
+          {
+            "job": "workflow-gates",
+            "step": "Prompt semantics and leakage",
+            "stepIndex": 13,
+            "command": "node verify-stage-prompts-complete.mjs"
+          }
+        ]
+      },
+      {
+        "file": "verify-user-prompt-invariants.mjs",
+        "job": "test",
+        "step": "Stage 04 obligation accounting and prompt completeness",
+        "stepIndex": 24,
+        "command": "node verify-user-prompt-invariants.mjs",
+        "newLocations": [
+          {
+            "job": "workflow-gates",
+            "step": "Prompt semantics and leakage",
+            "stepIndex": 13,
+            "command": "node verify-user-prompt-invariants.mjs"
+          }
+        ]
+      },
+      {
+        "file": "verify-test-runtime-v3.mjs",
+        "job": "test",
+        "step": "Test IR validation, security, and deterministic runtime",
+        "stepIndex": 25,
+        "command": "node verify-test-runtime-v3.mjs",
+        "newLocations": [
+          {
+            "job": "foundation",
+            "step": "Test IR validation, security, and deterministic runtime",
+            "stepIndex": 14,
+            "command": "node verify-test-runtime-v3.mjs"
+          }
+        ]
+      },
+      {
+        "file": "verify-test-runtime-limits.mjs",
+        "job": "test",
+        "step": "Test IR validation, security, and deterministic runtime",
+        "stepIndex": 25,
+        "command": "node verify-test-runtime-limits.mjs",
+        "newLocations": [
+          {
+            "job": "foundation",
+            "step": "Test IR validation, security, and deterministic runtime",
+            "stepIndex": 14,
+            "command": "node verify-test-runtime-limits.mjs"
+          }
+        ]
+      },
+      {
+        "file": "verify-test-runtime.mjs",
+        "job": "test",
+        "step": "Test IR validation, security, and deterministic runtime",
+        "stepIndex": 25,
+        "command": "node verify-test-runtime.mjs",
+        "newLocations": [
+          {
+            "job": "foundation",
+            "step": "Test IR validation, security, and deterministic runtime",
+            "stepIndex": 14,
+            "command": "node verify-test-runtime.mjs"
+          }
+        ]
+      },
+      {
+        "file": "verify-hash.mjs",
+        "job": "test",
+        "step": "Test IR validation, security, and deterministic runtime",
+        "stepIndex": 25,
+        "command": "node verify-hash.mjs",
+        "newLocations": [
+          {
+            "job": "foundation",
+            "step": "Test IR validation, security, and deterministic runtime",
+            "stepIndex": 14,
+            "command": "node verify-hash.mjs"
+          }
+        ]
+      },
+      {
+        "file": "verify-ingestion.mjs",
+        "job": "test",
+        "step": "Raw-first ingestion and negative cases",
+        "stepIndex": 26,
+        "command": "node verify-ingestion.mjs",
+        "newLocations": [
+          {
+            "job": "foundation",
+            "step": "Raw-first ingestion and negative cases",
+            "stepIndex": 15,
+            "command": "node verify-ingestion.mjs"
+          }
+        ]
+      },
+      {
+        "file": "verify-execution-reports.mjs",
+        "job": "test",
+        "step": "Raw-first ingestion and negative cases",
+        "stepIndex": 26,
+        "command": "node verify-execution-reports.mjs",
+        "newLocations": [
+          {
+            "job": "foundation",
+            "step": "Raw-first ingestion and negative cases",
+            "stepIndex": 15,
+            "command": "node verify-execution-reports.mjs"
+          }
+        ]
+      },
+      {
+        "file": "verify-backup-json-stream.mjs",
+        "job": "test",
+        "step": "Raw-first ingestion and negative cases",
+        "stepIndex": 26,
+        "command": "node verify-backup-json-stream.mjs",
+        "newLocations": [
+          {
+            "job": "foundation",
+            "step": "Raw-first ingestion and negative cases",
+            "stepIndex": 15,
+            "command": "node verify-backup-json-stream.mjs"
+          }
+        ]
+      },
+      {
+        "file": "verify-complete.mjs",
+        "job": "test",
+        "step": "Workflow and gates",
+        "stepIndex": 27,
+        "command": "node verify-complete.mjs",
+        "newLocations": [
+          {
+            "job": "workflow-gates",
+            "step": "Workflow and gates",
+            "stepIndex": 12,
+            "command": "node verify-complete.mjs"
+          }
+        ]
+      },
+      {
+        "file": "verify-independent-preflight.mjs",
+        "job": "test",
+        "step": "Workflow and gates",
+        "stepIndex": 27,
+        "command": "node verify-independent-preflight.mjs",
+        "newLocations": [
+          {
+            "job": "workflow-gates",
+            "step": "Workflow and gates",
+            "stepIndex": 12,
+            "command": "node verify-independent-preflight.mjs"
+          }
+        ]
+      },
+      {
+        "file": "verify-external-result-determination.mjs",
+        "job": "test",
+        "step": "Workflow and gates",
+        "stepIndex": 27,
+        "command": "node verify-external-result-determination.mjs",
+        "newLocations": [
+          {
+            "job": "workflow-gates",
+            "step": "Workflow and gates",
+            "stepIndex": 12,
+            "command": "node verify-external-result-determination.mjs"
+          }
+        ]
+      },
+      {
+        "file": "verify-stage28-artifact-delivery-intent.mjs",
+        "job": "test",
+        "step": "Workflow and gates",
+        "stepIndex": 27,
+        "command": "node verify-stage28-artifact-delivery-intent.mjs",
+        "newLocations": [
+          {
+            "job": "workflow-gates",
+            "step": "Workflow and gates",
+            "stepIndex": 12,
+            "command": "node verify-stage28-artifact-delivery-intent.mjs"
+          }
+        ]
+      },
+      {
+        "file": "verify-stage29-evidence-chain-checkpoint.mjs",
+        "job": "test",
+        "step": "Workflow and gates",
+        "stepIndex": 27,
+        "command": "node verify-stage29-evidence-chain-checkpoint.mjs",
+        "newLocations": [
+          {
+            "job": "workflow-gates",
+            "step": "Workflow and gates",
+            "stepIndex": 12,
+            "command": "node verify-stage29-evidence-chain-checkpoint.mjs"
+          }
+        ]
+      },
+      {
+        "file": "verify-production-baseline-authority.mjs",
+        "job": "test",
+        "step": "Workflow and gates",
+        "stepIndex": 27,
+        "command": "node verify-production-baseline-authority.mjs",
+        "newLocations": [
+          {
+            "job": "workflow-gates",
+            "step": "Workflow and gates",
+            "stepIndex": 12,
+            "command": "node verify-production-baseline-authority.mjs"
+          }
+        ]
+      },
+      {
+        "file": "verify-definition-of-done.mjs",
+        "job": "test",
+        "step": "Workflow and gates",
+        "stepIndex": 27,
+        "command": "node verify-definition-of-done.mjs --owner-receipt-controls",
+        "newLocations": [
+          {
+            "job": "workflow-gates",
+            "step": "Workflow and gates",
+            "stepIndex": 12,
+            "command": "node verify-definition-of-done.mjs --owner-receipt-controls"
+          }
+        ]
+      },
+      {
+        "file": "verify-definition-of-done.mjs",
+        "job": "test",
+        "step": "Workflow and gates",
+        "stepIndex": 27,
+        "command": "node verify-definition-of-done.mjs",
+        "newLocations": [
+          {
+            "job": "workflow-gates",
+            "step": "Workflow and gates",
+            "stepIndex": 12,
+            "command": "node verify-definition-of-done.mjs"
+          }
+        ]
+      },
+      {
+        "file": "verify-project-lifecycle.mjs",
+        "job": "test",
+        "step": "Workflow and gates",
+        "stepIndex": 27,
+        "command": "node verify-project-lifecycle.mjs",
+        "newLocations": [
+          {
+            "job": "workflow-gates",
+            "step": "Workflow and gates",
+            "stepIndex": 12,
+            "command": "node verify-project-lifecycle.mjs"
+          }
+        ]
+      },
+      {
+        "file": "verify-v3-definition-of-done.mjs",
+        "job": "test",
+        "step": "Workflow and gates",
+        "stepIndex": 27,
+        "command": "node verify-v3-definition-of-done.mjs",
+        "newLocations": [
+          {
+            "job": "workflow-gates",
+            "step": "Workflow and gates",
+            "stepIndex": 12,
+            "command": "node verify-v3-definition-of-done.mjs"
+          }
+        ]
+      },
+      {
+        "file": "verify-prompt-semantics.mjs",
+        "job": "test",
+        "step": "Prompt semantics and leakage",
+        "stepIndex": 28,
+        "command": "node verify-prompt-semantics.mjs",
+        "newLocations": [
+          {
+            "job": "workflow-gates",
+            "step": "Prompt semantics and leakage",
+            "stepIndex": 13,
+            "command": "node verify-prompt-semantics.mjs"
+          }
+        ]
+      },
+      {
+        "file": "verify-semantic-invariant.mjs",
+        "job": "test",
+        "step": "Prompt semantics and leakage",
+        "stepIndex": 28,
+        "command": "node verify-semantic-invariant.mjs",
+        "newLocations": [
+          {
+            "job": "workflow-gates",
+            "step": "Prompt semantics and leakage",
+            "stepIndex": 13,
+            "command": "node verify-semantic-invariant.mjs"
+          }
+        ]
+      },
+      {
+        "file": "verify-full-cycle.mjs",
+        "job": "test",
+        "step": "Full cycle and terminal boundary",
+        "stepIndex": 29,
+        "command": "node verify-full-cycle.mjs | tee /tmp/full-cycle-proof.json",
+        "newLocations": [
+          {
+            "job": "test",
+            "step": "Full cycle and terminal boundary",
+            "stepIndex": 20,
+            "command": "node verify-full-cycle.mjs | tee /tmp/full-cycle-proof.json"
+          }
+        ]
+      },
+      {
+        "file": "verify-stage30-terminal-mobile-boundary.mjs",
+        "job": "test",
+        "step": "Full cycle and terminal boundary",
+        "stepIndex": 29,
+        "command": "node verify-stage30-terminal-mobile-boundary.mjs",
+        "newLocations": [
+          {
+            "job": "test",
+            "step": "Full cycle and terminal boundary",
+            "stepIndex": 20,
+            "command": "node verify-stage30-terminal-mobile-boundary.mjs"
+          }
+        ]
+      },
+      {
+        "file": "verify-stale-view-navigation.mjs",
+        "job": "test",
+        "step": "Stale project navigation and draft preservation",
+        "stepIndex": 30,
+        "command": "node verify-stale-view-navigation.mjs",
+        "newLocations": [
+          {
+            "job": "test",
+            "step": "Stale project navigation and draft preservation",
+            "stepIndex": 22,
+            "command": "node verify-stale-view-navigation.mjs"
+          }
+        ]
+      },
+      {
+        "file": "build-static-site.mjs",
+        "job": "test",
+        "step": "Stale project navigation and draft preservation",
+        "stepIndex": 30,
+        "command": "node build-static-site.mjs --out _stale_view_site --source-commit \"$GITHUB_SHA\" --workflow-run \"$GITHUB_RUN_ID\"",
+        "newLocations": [
+          {
+            "job": "test",
+            "step": "Stale project navigation and draft preservation",
+            "stepIndex": 22,
+            "command": "node build-static-site.mjs --out _stale_view_site --source-commit \"$GITHUB_SHA\" --workflow-run \"$GITHUB_RUN_ID\""
+          }
+        ]
+      },
+      {
+        "file": "verify-stale-view-browser.mjs",
+        "job": "test",
+        "step": "Stale project navigation and draft preservation",
+        "stepIndex": 30,
+        "command": "timeout --signal=TERM --kill-after=10s 5m node verify-stale-view-browser.mjs",
+        "newLocations": [
+          {
+            "job": "test",
+            "step": "Stale project navigation and draft preservation",
+            "stepIndex": 22,
+            "command": "timeout --signal=TERM --kill-after=10s 5m node verify-stale-view-browser.mjs"
+          }
+        ]
+      },
+      {
+        "file": "verify-verification-routing.mjs",
+        "job": "test",
+        "step": "Verification routing and capability evidence",
+        "stepIndex": 32,
+        "command": "node verify-verification-routing.mjs",
+        "newLocations": [
+          {
+            "job": "workflow-gates",
+            "step": "Workflow and gates",
+            "stepIndex": 12,
+            "command": "node verify-verification-routing.mjs"
+          }
+        ]
+      },
+      {
+        "file": "build-static-site.mjs",
+        "job": "test",
+        "step": "Verification routing and capability evidence",
+        "stepIndex": 32,
+        "command": "node build-static-site.mjs --out _routing_site --source-commit \"$GITHUB_SHA\" --workflow-run \"$GITHUB_RUN_ID\"",
+        "newLocations": [
+          {
+            "job": "test",
+            "step": "Verification routing and capability evidence",
+            "stepIndex": 24,
+            "command": "node build-static-site.mjs --out _routing_site --source-commit \"$GITHUB_SHA\" --workflow-run \"$GITHUB_RUN_ID\""
+          }
+        ]
+      },
+      {
+        "file": "verify-verification-routing-browser.mjs",
+        "job": "test",
+        "step": "Verification routing and capability evidence",
+        "stepIndex": 32,
+        "command": "timeout --signal=TERM --kill-after=10s 5m node verify-verification-routing-browser.mjs",
+        "newLocations": [
+          {
+            "job": "test",
+            "step": "Verification routing and capability evidence",
+            "stepIndex": 24,
+            "command": "timeout --signal=TERM --kill-after=10s 5m node verify-verification-routing-browser.mjs"
+          }
+        ]
+      },
+      {
+        "file": "build-static-site.mjs",
+        "job": "test",
+        "step": "Startup and scrolling at phone and desktop sizes",
+        "stepIndex": 34,
+        "command": "node build-static-site.mjs --out _acceptance_site --source-commit \"$GITHUB_SHA\" --workflow-run \"$GITHUB_RUN_ID\"",
+        "newLocations": [
+          {
+            "job": "test",
+            "step": "Startup and scrolling at phone and desktop sizes",
+            "stepIndex": 26,
+            "command": "node build-static-site.mjs --out _acceptance_site --source-commit \"$GITHUB_SHA\" --workflow-run \"$GITHUB_RUN_ID\""
+          }
+        ]
+      },
+      {
+        "file": "verify-browser.mjs",
+        "job": "test",
+        "step": "Startup and scrolling at phone and desktop sizes",
+        "stepIndex": 34,
+        "command": "timeout --signal=TERM --kill-after=10s 10m node verify-browser.mjs --startup-scroll-only 2>&1 | tee /tmp/startup-scroll.log",
+        "newLocations": [
+          {
+            "job": "test",
+            "step": "Startup and scrolling at phone and desktop sizes",
+            "stepIndex": 26,
+            "command": "timeout --signal=TERM --kill-after=10s 10m node verify-browser.mjs --startup-scroll-only 2>&1 | tee /tmp/startup-scroll.log"
+          }
+        ]
+      },
+      {
+        "file": "build-static-site.mjs",
+        "job": "test",
+        "step": "Acceptance viewport regression and targeted layout fault",
+        "stepIndex": 35,
+        "command": "node build-static-site.mjs --out _acceptance_site --source-commit \"$GITHUB_SHA\" --workflow-run \"$GITHUB_RUN_ID\"",
+        "newLocations": [
+          {
+            "job": "test",
+            "step": "Acceptance viewport regression and targeted layout fault",
+            "stepIndex": 27,
+            "command": "node build-static-site.mjs --out _acceptance_site --source-commit \"$GITHUB_SHA\" --workflow-run \"$GITHUB_RUN_ID\""
+          }
+        ]
+      },
+      {
+        "file": "verify-acceptance-viewport.mjs",
+        "job": "test",
+        "step": "Acceptance viewport regression and targeted layout fault",
+        "stepIndex": 35,
+        "command": "timeout --signal=TERM --kill-after=10s 15m node verify-acceptance-viewport.mjs 2>&1 | tee /tmp/acceptance-viewport.log",
+        "newLocations": [
+          {
+            "job": "test",
+            "step": "Acceptance viewport regression and targeted layout fault",
+            "stepIndex": 27,
+            "command": "timeout --signal=TERM --kill-after=10s 15m node verify-acceptance-viewport.mjs 2>&1 | tee /tmp/acceptance-viewport.log"
+          }
+        ]
+      },
+      {
+        "file": "build-static-site.mjs",
+        "job": "test",
+        "step": "Build static application for operator verification",
+        "stepIndex": 37,
+        "command": "node build-static-site.mjs --out _site --source-commit \"$GITHUB_SHA\" --workflow-run \"$GITHUB_RUN_ID\"",
+        "newLocations": [
+          {
+            "job": "test",
+            "step": "Build static application for operator verification",
+            "stepIndex": 29,
+            "command": "node build-static-site.mjs --out _site --source-commit \"$GITHUB_SHA\" --workflow-run \"$GITHUB_RUN_ID\""
+          }
+        ]
+      },
+      {
+        "file": "collect-verification-evidence.mjs",
+        "job": "test",
+        "step": "Local Chromium operator path",
+        "stepIndex": 38,
+        "command": "timeout --signal=TERM --kill-after=10s \"$budget\" node collect-verification-evidence.mjs --browser-suite=\"$script\" --browser-scope=\"$CLOSED_LOOP_BROWSER_SCOPE\" 2>&1 | tee \"$log\"",
+        "newLocations": [
+          {
+            "job": "test",
+            "step": "Local Chromium operator path",
+            "stepIndex": 30,
+            "command": "timeout --signal=TERM --kill-after=10s \"$budget\" node collect-verification-evidence.mjs --browser-suite=\"$script\" --browser-scope=\"$CLOSED_LOOP_BROWSER_SCOPE\" 2>&1 | tee \"$log\""
+          }
+        ]
+      },
+      {
+        "file": "collect-verification-evidence.mjs",
+        "job": "test",
+        "step": "Collect current executed assertion evidence",
+        "stepIndex": 41,
+        "command": "node collect-verification-evidence.mjs --run-missing",
+        "newLocations": [
+          {
+            "job": "test",
+            "step": "Complete current non-browser assertion evidence",
+            "stepIndex": 21,
+            "command": "node collect-verification-evidence.mjs"
+          },
+          {
+            "job": "test",
+            "step": "Collect current executed assertion evidence",
+            "stepIndex": 33,
+            "command": "node collect-verification-evidence.mjs"
+          },
+          {
+            "job": "publish-status",
+            "step": "Validate current executed assertion evidence handoff",
+            "stepIndex": 3,
+            "command": "node collect-verification-evidence.mjs"
+          },
+          {
+            "job": "publish-status",
+            "step": "Reconcile local and deployed current assertion receipts",
+            "stepIndex": 7,
+            "command": "node collect-verification-evidence.mjs"
+          }
+        ],
+        "change": "Registered producers are explicitly scheduled before the strict collector; no missing-owner execution is allowed after Chromium."
+      },
+      {
+        "file": "verified-site.mjs",
+        "job": "test",
+        "step": "Seal verified deployment artifact",
+        "stepIndex": 42,
+        "command": "node verified-site.mjs seal",
+        "newLocations": [
+          {
+            "job": "test",
+            "step": "Seal verified deployment artifact",
+            "stepIndex": 34,
+            "command": "node verified-site.mjs seal"
+          }
+        ]
+      },
+      {
+        "file": "verify-live.mjs",
+        "job": "verify-live",
+        "step": "Exact deployed-byte verification",
+        "stepIndex": 4,
+        "command": "node verify-live.mjs 2>&1 | tee /tmp/deployed-byte-proof.log",
+        "newLocations": [
+          {
+            "job": "verify-live",
+            "step": "Exact deployed-byte verification",
+            "stepIndex": 4,
+            "command": "node verify-live.mjs 2>&1 | tee /tmp/deployed-byte-proof.log"
+          }
+        ]
+      },
+      {
+        "file": "collect-verification-evidence.mjs",
+        "job": "verify-live",
+        "step": "Deployed Chromium operator path",
+        "stepIndex": 5,
+        "command": "timeout --signal=TERM --kill-after=10s \"$budget\" node collect-verification-evidence.mjs --browser-suite=\"$script\" --browser-scope=\"$CLOSED_LOOP_BROWSER_SCOPE\" 2>&1 | tee \"$log\"",
+        "newLocations": [
+          {
+            "job": "verify-live",
+            "step": "Deployed Chromium operator path",
+            "stepIndex": 5,
+            "command": "timeout --signal=TERM --kill-after=10s \"$budget\" node collect-verification-evidence.mjs --browser-suite=\"$script\" --browser-scope=\"$CLOSED_LOOP_BROWSER_SCOPE\" 2>&1 | tee \"$log\""
+          }
+        ]
+      },
+      {
+        "file": "collect-verification-evidence.mjs",
+        "job": "publish-status",
+        "step": "Validate current executed assertion evidence handoff",
+        "stepIndex": 3,
+        "command": "node collect-verification-evidence.mjs",
+        "newLocations": [
+          {
+            "job": "publish-status",
+            "step": "Validate current executed assertion evidence handoff",
+            "stepIndex": 3,
+            "command": "node collect-verification-evidence.mjs"
+          }
+        ]
+      },
+      {
+        "file": "collect-verification-evidence.mjs",
+        "job": "publish-status",
+        "step": "Reverify deployed Chromium for authenticated mobile acceptance",
+        "stepIndex": 4,
+        "command": "timeout --signal=TERM --kill-after=10s \"$budget\" node collect-verification-evidence.mjs --browser-suite=\"$script\" --browser-scope=\"$CLOSED_LOOP_BROWSER_SCOPE\" 2>&1 | tee \"$log\"",
+        "newLocations": [
+          {
+            "job": "publish-status",
+            "step": "Reverify deployed Chromium for authenticated mobile acceptance",
+            "stepIndex": 4,
+            "command": "timeout --signal=TERM --kill-after=10s \"$budget\" node collect-verification-evidence.mjs --browser-suite=\"$script\" --browser-scope=\"$CLOSED_LOOP_BROWSER_SCOPE\" 2>&1 | tee \"$log\""
+          }
+        ]
+      },
+      {
+        "file": "collect-verification-evidence.mjs",
+        "job": "publish-status",
+        "step": "Reconcile local and deployed current assertion receipts",
+        "stepIndex": 7,
+        "command": "node collect-verification-evidence.mjs",
+        "newLocations": [
+          {
+            "job": "publish-status",
+            "step": "Reconcile local and deployed current assertion receipts",
+            "stepIndex": 7,
+            "command": "node collect-verification-evidence.mjs"
+          }
+        ]
+      },
+      {
+        "file": "verify-definition-of-done.mjs",
+        "job": "publish-status",
+        "step": "Build acceptance artifact from executed proof jobs",
+        "stepIndex": 8,
+        "command": "node verify-definition-of-done.mjs > /tmp/definition.json",
+        "newLocations": [
+          {
+            "job": "publish-status",
+            "step": "Build acceptance artifact from executed proof jobs",
+            "stepIndex": 8,
+            "command": "node verify-definition-of-done.mjs > /tmp/definition.json"
+          }
+        ]
+      },
+      {
+        "file": "verify-v3-definition-of-done.mjs",
+        "job": "publish-status",
+        "step": "Build acceptance artifact from executed proof jobs",
+        "stepIndex": 8,
+        "command": "node verify-v3-definition-of-done.mjs > /tmp/v3.json",
+        "newLocations": [
+          {
+            "job": "publish-status",
+            "step": "Build acceptance artifact from executed proof jobs",
+            "stepIndex": 8,
+            "command": "node verify-v3-definition-of-done.mjs > /tmp/v3.json"
+          }
+        ]
+      },
+      {
+        "file": "collect-verification-evidence.mjs",
+        "job": "publish-status",
+        "step": "Build acceptance artifact from executed proof jobs",
+        "stepIndex": 8,
+        "command": "node collect-verification-evidence.mjs --export-owner=verify-ingestion.mjs > /tmp/ingestion.out",
+        "newLocations": [
+          {
+            "job": "publish-status",
+            "step": "Build acceptance artifact from executed proof jobs",
+            "stepIndex": 8,
+            "command": "node collect-verification-evidence.mjs --export-owner=verify-ingestion.mjs > /tmp/ingestion.out"
+          }
+        ]
+      },
+      {
+        "file": "collect-verification-evidence.mjs",
+        "job": "publish-status",
+        "step": "Build acceptance artifact from executed proof jobs",
+        "stepIndex": 8,
+        "command": "node collect-verification-evidence.mjs --export-owner=verify-stage01-intake-closure.mjs --report-marker=stage01IntakeClosure > /tmp/stage01.out",
+        "newLocations": [
+          {
+            "job": "publish-status",
+            "step": "Build acceptance artifact from executed proof jobs",
+            "stepIndex": 8,
+            "command": "node collect-verification-evidence.mjs --export-owner=verify-stage01-intake-closure.mjs --report-marker=stage01IntakeClosure > /tmp/stage01.out"
+          }
+        ]
+      },
+      {
+        "file": "verify-zero-loss-accounting.mjs",
+        "job": "publish-status",
+        "step": "Build acceptance artifact from executed proof jobs",
+        "stepIndex": 8,
+        "command": "node verify-zero-loss-accounting.mjs > /tmp/zero-loss.out",
+        "newLocations": [
+          {
+            "job": "publish-status",
+            "step": "Build acceptance artifact from executed proof jobs",
+            "stepIndex": 8,
+            "command": "node verify-zero-loss-accounting.mjs > /tmp/zero-loss.out"
+          }
+        ]
+      },
+      {
+        "file": "collect-verification-evidence.mjs",
+        "job": "publish-status",
+        "step": "Build acceptance artifact from executed proof jobs",
+        "stepIndex": 8,
+        "command": "node collect-verification-evidence.mjs --export-owner=verify-full-cycle.mjs --report-marker=stagesCompleted > /tmp/full-cycle.json",
+        "newLocations": [
+          {
+            "job": "publish-status",
+            "step": "Build acceptance artifact from executed proof jobs",
+            "stepIndex": 8,
+            "command": "node collect-verification-evidence.mjs --export-owner=verify-full-cycle.mjs --report-marker=stagesCompleted > /tmp/full-cycle.json"
+          }
+        ]
+      },
+      {
+        "file": "verify-data-route-closure.mjs",
+        "job": "publish-status",
+        "step": "Build acceptance artifact from executed proof jobs",
+        "stepIndex": 8,
+        "command": "node verify-data-route-closure.mjs > /tmp/data-route.json",
+        "newLocations": [
+          {
+            "job": "publish-status",
+            "step": "Build acceptance artifact from executed proof jobs",
+            "stepIndex": 8,
+            "command": "node verify-data-route-closure.mjs > /tmp/data-route.json"
+          }
+        ]
+      },
+      {
+        "file": "verify-infrastructure-route-closure.mjs",
+        "job": "publish-status",
+        "step": "Build acceptance artifact from executed proof jobs",
+        "stepIndex": 8,
+        "command": "node verify-infrastructure-route-closure.mjs > /tmp/infrastructure-route.json",
+        "newLocations": [
+          {
+            "job": "publish-status",
+            "step": "Build acceptance artifact from executed proof jobs",
+            "stepIndex": 8,
+            "command": "node verify-infrastructure-route-closure.mjs > /tmp/infrastructure-route.json"
+          }
+        ]
+      },
+      {
+        "file": "collect-verification-evidence.mjs",
+        "job": "publish-status",
+        "step": "Build acceptance artifact from executed proof jobs",
+        "stepIndex": 8,
+        "command": "node collect-verification-evidence.mjs --export-owner=verify-mobile-release-governance.mjs --report-marker=mobileReleaseGovernance > /tmp/mobile-governance.json",
+        "newLocations": [
+          {
+            "job": "publish-status",
+            "step": "Build acceptance artifact from executed proof jobs",
+            "stepIndex": 8,
+            "command": "node collect-verification-evidence.mjs --export-owner=verify-mobile-release-governance.mjs --report-marker=mobileReleaseGovernance > /tmp/mobile-governance.json"
+          }
+        ]
+      }
+    ],
+    "invocationCountChanges": [
+      {
+        "file": "collect-verification-evidence.mjs",
+        "before": 10,
+        "after": 18
+      },
+      {
+        "file": "verified-site.mjs",
+        "before": 7,
+        "after": 11
+      },
+      {
+        "file": "verify-deferred-proof-handoff.mjs",
+        "before": 2,
+        "after": 3
+      },
+      {
+        "file": "verify-file-first-response.mjs",
+        "before": 0,
+        "after": 1
+      },
+      {
+        "file": "verify-ingestion.mjs",
+        "before": 2,
+        "after": 1
+      },
+      {
+        "file": "verify-response-authority-integrity.mjs",
+        "before": 0,
+        "after": 1
+      },
+      {
+        "file": "verify-returned-slot-authority.mjs",
+        "before": 0,
+        "after": 1
+      },
+      {
+        "file": "verify-stage-contract-closure.mjs",
+        "before": 0,
+        "after": 1
+      },
+      {
+        "file": "verify-stage-operation-registry.mjs",
+        "before": 0,
+        "after": 1
+      },
+      {
+        "file": "verify-stage03-agent-protocol.mjs",
+        "before": 0,
+        "after": 1
+      }
+    ],
+    "preservation": "All prior step commands retained or moved, except duplicate default ingestion replaced by existing producer receipt consumption and final run-missing changed to strict evidence collection. Six previously required implicit owners are explicit earlier producers, reusing their current receipts later. No application stage, operation, independent run, unchanged confirmation, child fault, expected semantic result, or named negative population was removed.",
+    "stage23": "verify-semantic-review-acceptance.mjs moved intact from Schema, covers bounded search and independent omission/reconciliation. verify-stage03-agent-protocol.mjs now supplies its actual registered default producer before Stage4 instead of final collector fallback.",
+    "stage4": "The intact verify-zero-loss-accounting.mjs remains in foundation after Stage02/03. Exact Stage04 production observations retain all required source/accepted-input manifest facts, complete accounting accepted, omitted obligation rejected, and one obligation\u2192multiple atomic requirements accepted, plus retained Stage01 controls and Stage04 source context union. Six broad prompt/context/disclosure owners move intact after workflow gates; no Stage04 assertion is removed.",
+    "mixedV3": "verify-v3-contract.mjs and verify-spec3-contract.mjs moved intact to cross-stage gate; stage-operation-registry child uses existing currentOwnerReport from foundation, retaining complete report and PASS assertion.",
+    "ownership": "verify-executed-evidence private authority and slot reruns replaced by complete current foundation receipts under unchanged report ownership and negative mutations; standalone fallback retained.",
+    "sharedReportIdentity": "readExecutionReceipt/readExecutionReceipts retain schema/producer/digest/current source/specification/catalog/runtime/commit/full-command/report/observation checks; same-run artifact names remain SHA+run bound; main reuse requires authenticated prior successful PR identical tree/runtime/artifact.",
+    "broadPromptOwners": [
+      "verify-all-stage-prompts.mjs",
+      "verify-stage-context-boundary.mjs",
+      "verify-handoff-metadata-boundary.mjs",
+      "verify-handoff-disclosure.mjs",
+      "verify-stage-prompts-complete.mjs",
+      "verify-user-prompt-invariants.mjs"
+    ],
+    "acceptanceMemory": "verify-proposal-acceptance-memory.mjs moves intact from schema step into Workflow and gates. Its actual Stage4/5 prepare/commit\u2192Stage6 gate, stale/duplicate negatives and bounded-heap control remain; it is not classified as registry proof."
+  },
+  "historicalTiming": {
+    "sourceHead": "a199d3b6d2c5ef0cd8354dbb070e13ec31e66077",
+    "run": 38005669603,
+    "runStatus": "failure",
+    "workflowStartedAt": "2026-10-09T23:41:42Z",
+    "workflowUpdatedAt": "2026-10-10T04:24:28Z",
+    "criticalPathElapsedSeconds": 16966,
+    "runnerSecondsExcludingSkippedJobs": 16959,
+    "deferredJob": {
+      "id": 114073771744,
+      "startedAt": "2026-10-09T23:41:45Z",
+      "completedAt": "2026-10-10T03:20:38Z",
+      "elapsedSeconds": 13133
+    },
+    "testJob": {
+      "id": 114119366885,
+      "startedAt": "2026-10-10T03:20:41Z",
+      "completedAt": "2026-10-10T04:24:27Z",
+      "elapsedSeconds": 3826
+    },
+    "rawIngestionCompositeStep": {
+      "startedAt": "2026-10-10T03:58:18Z",
+      "completedAt": "2026-10-10T04:08:21Z",
+      "elapsedSeconds": 603,
+      "includes": [
+        "verify-ingestion.mjs",
+        "verify-execution-reports.mjs",
+        "verify-backup-json-stream.mjs"
+      ]
+    },
+    "comparison": "Historical failed-run timings are context, not comparable completed-release before/after benchmark;603s is not pure ingestion duration. Current phase order may lengthen critical path because required barriers were previously absent. Removing duplicate ingestion/two authority reruns reduces known producer invocation count; elapsed and total runner savings are unmeasured. No nested duration double counting."
+  },
+  "modifiedOwnedFiles": [
+    {
+      "path": ".github/workflows/pages.yml",
+      "sha256": "1081433eb92a0b736bc354c1b616e2ac1995898b91a3720b0cdd1b6cf0def4a1"
+    },
+    {
+      "path": "verified-site.mjs",
+      "sha256": "d60bb92fc56f4f8def2dd772d6be6d0ed3d4993bb131db0a4f47ad850395f3cf"
+    },
+    {
+      "path": "verify-verified-site.mjs",
+      "sha256": "f948c07c29ff48c6393682c215bc22133b8b00403348ee9a739860dea96185e4"
+    }
+  ],
+  "verification": {
+    "syntax": "PASS",
+    "yamlParse": "PASS",
+    "actionlint": "1.7.7 exit0, shellcheck unavailable/disabled",
+    "diffCheck": "exit0",
+    "focusedOwner": {
+      "command": "PATH=/workspace/scratch/runtime/node_modules/node/bin:$PATH /workspace/scratch/runtime/node_modules/node/bin/node verify-verified-site.mjs",
+      "exitCode": 0,
+      "runtime": "Node22.23.3",
+      "report": "/workspace/scratch/ci-ingestion-reuse/verified-site-final.stdout",
+      "reportSha256": "442803b6aa1387de1735a8b4c8d35a4b58e2645bbae382e744fa620e7c1b34b4",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reportObservedAtUtc": "2026-10-10T16:21:42.355959+00:00",
+      "cases": 190,
+      "caseIds": [
+        "catalogued-owners-not-nested",
+        "nested-full-cycle-owner",
+        "complete-passing-PR",
+        "incomplete-run",
+        "failed-run",
+        "cancelled-run",
+        "non-PR-run",
+        "wrong-head",
+        "wrong-repository",
+        "fork-run",
+        "wrong-workflow",
+        "unpassed-required-step-failure",
+        "unpassed-required-step-skipped",
+        "unpassed-required-step-null",
+        "missing-required-step",
+        "duplicate-test-job",
+        "missing-conformance-core",
+        "unpassed-conformance-core-failure",
+        "unpassed-conformance-core-cancelled",
+        "unpassed-conformance-core-skipped",
+        "missing-conformance-core-Validate current authority receipts",
+        "missing-conformance-core-Execute complete conformance group",
+        "missing-conformance-core-Preserve complete conformance group report",
+        "missing-conformance-core-Preserve conformance execution receipts",
+        "missing-conformance-creation",
+        "unpassed-conformance-creation-failure",
+        "unpassed-conformance-creation-cancelled",
+        "unpassed-conformance-creation-skipped",
+        "missing-conformance-creation-Validate current authority receipts",
+        "missing-conformance-creation-Execute complete conformance group",
+        "missing-conformance-creation-Preserve complete conformance group report",
+        "missing-conformance-creation-Preserve conformance execution receipts",
+        "missing-conformance-counterpart",
+        "unpassed-conformance-counterpart-failure",
+        "unpassed-conformance-counterpart-cancelled",
+        "unpassed-conformance-counterpart-skipped",
+        "missing-conformance-counterpart-Validate current authority receipts",
+        "missing-conformance-counterpart-Execute complete conformance group",
+        "missing-conformance-counterpart-Preserve complete conformance group report",
+        "missing-conformance-counterpart-Preserve conformance execution receipts",
+        "missing-deferred-matrix-job",
+        "unpassed-deferred-matrix-failure",
+        "unpassed-deferred-matrix-skipped",
+        "unpassed-deferred-matrix-null",
+        "missing-deferred-matrix-step",
+        "missing-deferred-matrix-upload",
+        "missing-foundation-job",
+        "unpassed-foundation-failure",
+        "unpassed-foundation-cancelled",
+        "unpassed-foundation-skipped",
+        "missing-foundation-Syntax",
+        "missing-foundation-Schema, ownership, and single-architecture proof",
+        "missing-foundation-Deployment manifest, build identity, and reproducibility",
+        "missing-foundation-Complete 30-stage canonical data-route closure",
+        "missing-foundation-Contract-profile migration",
+        "missing-foundation-Stage 01 agent response contract alignment",
+        "missing-foundation-Stage 01 raw intake and semantic accounting",
+        "missing-foundation-Stage 02 bounded search and Stage 03 omission challenge",
+        "missing-foundation-Stage 04 obligation accounting and prompt completeness",
+        "missing-foundation-Test IR validation, security, and deterministic runtime",
+        "missing-foundation-Raw-first ingestion and negative cases",
+        "missing-foundation-Preserve foundation proof",
+        "missing-workflow-gates-job",
+        "unpassed-workflow-gates-failure",
+        "unpassed-workflow-gates-cancelled",
+        "unpassed-workflow-gates-skipped",
+        "missing-workflow-gates-Download foundation proof",
+        "missing-workflow-gates-Validate foundation ingestion receipt",
+        "missing-workflow-gates-Download complete deferred matrix receipt",
+        "missing-workflow-gates-Validate complete deferred matrix receipt",
+        "missing-workflow-gates-Validate current registry receipt",
+        "missing-workflow-gates-Cross-stage contract gates",
+        "missing-workflow-gates-Physical iPhone release-tag governance",
+        "missing-workflow-gates-Workflow and gates",
+        "missing-workflow-gates-Prompt semantics and leakage",
+        "missing-workflow-gates-Preserve workflow gate proof",
+        "changed-proof-node-requires-full-verification-before-copying",
+        "changed-proof-platform-requires-full-verification-before-copying",
+        "changed-proof-architecture-requires-full-verification-before-copying",
+        "changed-proof-source-still-rejected",
+        "changed-proof-bytes-still-rejected",
+        "extra-proof-file-still-rejected",
+        "sealed-reproducible-artifact",
+        "wrong-receipt-runId",
+        "wrong-receipt-runAttempt",
+        "wrong-receipt-sourceCommit",
+        "wrong-receipt-sourceTree",
+        "wrong-receipt-workflowFileSha256",
+        "wrong-receipt-manifestDigest",
+        "changed-runtime-bytes",
+        "unmanifested-file",
+        "missing-hidden-runtime-file",
+        "changed-manifest",
+        "symlink-runtime",
+        "different-merge-commit-identical-runtime-only-provenance-changed",
+        "promoted-main-artifact-reproducible",
+        "main-selects-and-reuses-passing-artifact-through-actual-CLI-mocked-API",
+        "changed-merge-tree-falls-back-to-full-checks",
+        "changed-run-attempt-during-download",
+        "expired-artifact-falls-back-to-full-checks",
+        "dirty-source",
+        "changed-merged-source",
+        "exact-runtime-and-visible-deferred-diagnostics",
+        "conformance-workflow-missing-group",
+        "conformance-workflow-missing-execution",
+        "conformance-workflow-missing-report",
+        "conformance-workflow-missing-receipts",
+        "conformance-workflow-missing-handoff",
+        "conformance-workflow-missing-group-gate",
+        "conformance-workflow-missing-ingestion-prerequisite",
+        "conformance-workflow-wrong-ingestion-group",
+        "conformance-workflow-late-ingestion-prerequisite",
+        "conformance-workflow-former-duplicate-producer",
+        "conformance-workflow-partial-report-export",
+        "conformance-workflow-repeated-producer-after-export",
+        "ingestion-report-reuse-restored-workflow",
+        "phase-order-deferred-before-foundation",
+        "phase-order-workflow-before-deferred",
+        "phase-order-conformance-before-prompts",
+        "phase-missing-foundation-required-guard",
+        "phase-missing-workflow-gates-required-guard",
+        "phase-order-migration-before-registries",
+        "phase-order-final-collector-runs-producers",
+        "foundation-owner-missing-verify-stage-contract-closure.mjs",
+        "foundation-owner-duplicate-verify-stage-contract-closure.mjs",
+        "foundation-owner-missing-verify-file-first-response.mjs",
+        "foundation-owner-duplicate-verify-file-first-response.mjs",
+        "foundation-owner-missing-verify-response-authority-integrity.mjs",
+        "foundation-owner-duplicate-verify-response-authority-integrity.mjs",
+        "foundation-owner-missing-verify-returned-slot-authority.mjs",
+        "foundation-owner-duplicate-verify-returned-slot-authority.mjs",
+        "phase-missing-current-receipt-verify-stage-operation-registry.mjs",
+        "phase-missing-current-receipt-verify-response-authority-integrity.mjs",
+        "phase-missing-current-receipt-verify-returned-slot-authority.mjs",
+        "phase-order-routing-owner-after-collector",
+        "phase-order-missing-prebrowser-collector",
+        "prompt-phase-former-stage04-placement-verify-all-stage-prompts.mjs",
+        "prompt-phase-missing-verify-all-stage-prompts.mjs",
+        "prompt-phase-duplicate-verify-all-stage-prompts.mjs",
+        "prompt-phase-former-stage04-placement-verify-stage-context-boundary.mjs",
+        "prompt-phase-missing-verify-stage-context-boundary.mjs",
+        "prompt-phase-duplicate-verify-stage-context-boundary.mjs",
+        "prompt-phase-former-stage04-placement-verify-handoff-metadata-boundary.mjs",
+        "prompt-phase-missing-verify-handoff-metadata-boundary.mjs",
+        "prompt-phase-duplicate-verify-handoff-metadata-boundary.mjs",
+        "prompt-phase-former-stage04-placement-verify-handoff-disclosure.mjs",
+        "prompt-phase-missing-verify-handoff-disclosure.mjs",
+        "prompt-phase-duplicate-verify-handoff-disclosure.mjs",
+        "prompt-phase-former-stage04-placement-verify-stage-prompts-complete.mjs",
+        "prompt-phase-missing-verify-stage-prompts-complete.mjs",
+        "prompt-phase-duplicate-verify-stage-prompts-complete.mjs",
+        "prompt-phase-former-stage04-placement-verify-user-prompt-invariants.mjs",
+        "prompt-phase-missing-verify-user-prompt-invariants.mjs",
+        "prompt-phase-duplicate-verify-user-prompt-invariants.mjs",
+        "stage04-obligation-owner-missing",
+        "acceptance-memory-phase-former-registry-placement",
+        "acceptance-memory-phase-missing",
+        "acceptance-memory-phase-duplicate",
+        "deferred-matrix-missing-job",
+        "deferred-matrix-missing-producer",
+        "deferred-matrix-missing-dependency",
+        "deferred-matrix-missing-receipt-validation",
+        "deferred-matrix-skipped-required-test",
+        "deferred-matrix-missing-required-gate",
+        "dod-receipt-stage01-missing",
+        "dod-receipt-preflight-missing",
+        "dod-receipt-preflight-duplicate",
+        "dod-receipt-receipt-control-missing",
+        "dod-receipt-receipt-control-duplicate",
+        "dod-receipt-receipt-control-before-preflight",
+        "dod-receipt-receipt-control-after-dod",
+        "external-result-missing",
+        "external-result-duplicate",
+        "external-result-reordered",
+        "lifecycle-missing",
+        "lifecycle-duplicate",
+        "lifecycle-reordered",
+        "proof-order-contract-missing",
+        "proof-order-contract-duplicate",
+        "proof-order-contract-after-migration",
+        "proof-order-early-infrastructure",
+        "proof-order-full-cycle-missing",
+        "proof-order-terminal-duplicate",
+        "proof-order-prompt-after-full-cycle",
+        "workflow-proof-order-and-direct-owner-mutations",
+        "non-browser-prompt-entry-rejects-transitive-browser-launch",
+        "browser-gate-0-failure-retained-and-masking-fault-detected",
+        "browser-gate-1-failure-retained-and-masking-fault-detected",
+        "browser-gate-2-failure-retained-and-masking-fault-detected",
+        "all-original-gates-retained-before-artifact-publication"
+      ],
+      "fullCIRun": false
+    },
+    "fullHostedCi": "NOT_RUN_CURRENT_WORKING_TREE",
+    "merge": "NOT_DONE",
+    "deployment": "NOT_DONE",
+    "humanPhysicalAcceptance": "NOT_ESTABLISHED",
+    "originalWorkflowGuardControl": {
+      "source": "1599f9cfb33cc246292ade693c877fbe200b1986:.github/workflows/pages.yml",
+      "outcome": "REJECTED",
+      "intendedDiagnostic": "Required foundation proof job is absent.",
+      "correctedControl": "ACCEPTED",
+      "boundary": "actual promotion guard with original source; independent new mutations reject original misplaced producer commands"
+    }
+  },
+  "limitations": [
+    "Synthetic workflow/job/API artifacts prove rejection and propagation boundaries, not hosted execution or product behavior.",
+    "No new full journey or real-agent/device proof claimed.",
+    "Current source is uncommitted work atop existing PR; root owns reconciliation/commit/push/delivery."
+  ]
+}

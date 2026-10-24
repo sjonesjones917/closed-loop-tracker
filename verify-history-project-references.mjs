@@ -3,39 +3,43 @@ import fs from 'node:fs';
 import {createHash} from 'node:crypto';
 import {gzipSync,gunzipSync} from 'node:zlib';
 import {projectStoreRuntime} from './test-project-store-runtime.mjs';
+import {verifyHistoryStaticRead,HISTORY_STATIC_READ_FAULTS} from './test-history-static-read.mjs';
 
 const mode=process.argv.find(x=>x.startsWith('--fault='))?.slice(8),source=fs.readFileSync('project-store.js','utf8');
 const faults={
- 'repeat-import-compatibility':{id:'REPEAT_IMPORT_COMPATIBILITY',file:'project-store.js',before:'if(!validatedProjections?.has(projectionKey)){',after:'if(true){'},
+ ...HISTORY_STATIC_READ_FAULTS,
+ 'repeat-import-compatibility':{id:'REPEAT_IMPORT_COMPATIBILITY',file:'project-store.js',before:'if(!deferCompatibility&&!validatedProjections?.has(projectionKey)){',after:'if(!deferCompatibility){'},
  'share-import-compatibility-inventory':{id:'SHARE_IMPORT_COMPATIBILITY_INVENTORY',file:'project-store.js',before:'JSON.stringify([body.projectSha256,historyArtifactsSha256(artifacts)])',after:'JSON.stringify([body.projectSha256])'},
  'retain-import-compatibility':{id:'RETAIN_IMPORT_COMPATIBILITY',file:'project-store.js',before:'validatedProjections=new Set();',after:'validatedProjections=(globalThis.__retainedImportProjections ||= new Set());'},
- 'repeat-import-root-digest':{id:'REPEAT_IMPORT_ROOT_DIGEST',file:'project-store.js',before:'({projectSha256:verifiedProjectSha256,workSha256:verifiedWorkSha256}=historyProjectDigests(project));',after:'verifiedProjectSha256=projectSha256(project);verifiedWorkSha256=historyWorkSha256(project);'},
+ 'repeat-import-root-digest':{id:'REPEAT_IMPORT_ROOT_DIGEST',file:'project-store.js',before:'({projectSha256:verifiedProjectSha256,workSha256:verifiedWorkSha256}=checkpointPairMatches(measuredPair,project)?measuredPair:historyProjectDigests(project));',after:'verifiedProjectSha256=projectSha256(project);verifiedWorkSha256=historyWorkSha256(project);'},
  'repeat-import-byte-hash':{id:'REPEAT_IMPORT_BYTE_HASH',file:'project-store.js',before:'if(!verifiedByteDigests)return hash.sha256Bytes(blob);',after:'if(true)return hash.sha256Bytes(blob);'},
  'trust-import-declared-byte-hash':{id:'TRUST_IMPORT_DECLARED_BYTE_HASH',file:'project-store.js',before:'const digest=await historyBlobSha256(artifactBlob,verifiedByteDigests);',after:'const digest=a.sha256;verifiedByteDigests.set(artifactBlob,Promise.resolve(digest));'},
  'retain-import-project-roots':{id:'RETAIN_IMPORT_PROJECT_ROOTS',file:'project-store.js',before:'delete priorRoot.project;',after:'void priorRoot.project;'},
- 'repeat-import-project-root':{id:'REPEAT_IMPORT_PROJECT_ROOT',file:'project-store.js',before:'if(!body.projectReference&&validatedRoots.has(entry.id))',after:'if(false)'},
+ 'repeat-import-project-root':{id:'REPEAT_IMPORT_PROJECT_ROOT',file:'project-store.js',before:'if(!body.projectReference&&validatedRoots.has(entry.id)&&!inspection?.issues.length)',after:'if(false)'},
  'skip-selected-version-binding':{id:'SKIP_SELECTED_VERSION_BINDING',file:'project-store.js',before:"if(entry.id!==id||hash.sha256Value(descriptor)!==hash.sha256Value(expected))",after:'if(false)'},
- 'skip-project-body-byte-check':{id:'SKIP_PROJECT_BODY_BYTE_CHECK',file:'project-store.js',before:"if(!entry?.blob||entry.blob.size!==Number(entry.byteSize)||await historyBlobSha256(entry.blob,verifiedByteDigests)!==entry.sha256)",after:"if(!entry?.blob||entry.blob.size!==Number(entry.byteSize))"}
+ 'skip-project-body-byte-check':{id:'SKIP_PROJECT_BODY_BYTE_CHECK',file:'project-store.js',before:"if(!entry?.blob||entry.blob.size!==Number(entry.byteSize)||(consumeCheckpointByteObservation(entry,rootBytes)||await historyBlobSha256(entry.blob,verifiedByteDigests))!==entry.sha256)",after:"if(!entry?.blob||entry.blob.size!==Number(entry.byteSize))"}
 };
 if(mode&&!faults[mode])throw new Error('Unknown disposable implementation fault: '+mode);
+if(mode==='repeat-import-compatibility')assert.equal(source.split(faults[mode].before).length-1,1,'HISTORY_COMPATIBILITY_FAULT_SINGLE_ANCHOR_ORACLE');
 const cases=[],emit=(caseId,details={})=>cases.push({caseId,result:'PASS',...details});
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
-const validationAnchor='({projectSha256:verifiedProjectSha256,workSha256:verifiedWorkSha256}=historyProjectDigests(project));';
+const validationAnchor='({projectSha256:verifiedProjectSha256,workSha256:verifiedWorkSha256}=checkpointPairMatches(measuredPair,project)?measuredPair:historyProjectDigests(project));';
 const make=()=>{
  assert.equal(source.split(validationAnchor).length-1,1);
  const observed=source.replace(validationAnchor,"globalThis.__verifiedHistoryRoots?.push({checkpointId:entry.id,snapshotSha256:entry.sha256});globalThis.__historyDigestWatch={data:project.projectData,visits:0};"+validationAnchor+"globalThis.__historyDigestReads?.push({checkpointId:entry.id,visits:globalThis.__historyDigestWatch.visits});delete globalThis.__historyDigestWatch;");
- const residencyAnchor='checkpointId=>archiveSnapshots.get(checkpointId),validatedRoots,verifiedParts,verifiedByteDigests,validatedProjections);if(entry.id===incoming.activeId)';
+ // Observe the one post-decode consumer, shared by normal and compatibility branches.
+ const residencyAnchor='if(decoded&&entry.id===incoming.activeId)';
  assert.equal(observed.split(residencyAnchor).length-1,1);
- const measured=observed.replace(residencyAnchor,'checkpointId=>archiveSnapshots.get(checkpointId),validatedRoots,verifiedParts,verifiedByteDigests,validatedProjections);globalThis.__historyRootResidency?.push([...validatedRoots.values()].filter(root=>root?.project).length);if(entry.id===incoming.activeId)');
+ const measured=observed.replace(residencyAnchor,'globalThis.__historyRootResidency?.push([...validatedRoots.values()].filter(root=>root?.project).length);'+residencyAnchor);
  const inputAnchor='fileContents.delete(a);';
  assert.equal(measured.split(inputAnchor).length-1,1);
  const compatibilityAnchor='withVerifiedRecoveryCustody(artifacts,()=>assertRecoveryCompatibility(body.project));';
  assert.equal(measured.split(compatibilityAnchor).length-1,1);
- const withCompatibility=measured.replace(compatibilityAnchor,'globalThis.__historyCompatibilityChecks?.push({projectSha256:body.projectSha256,artifactManifestSha256:historyArtifactsSha256(artifacts)});'+compatibilityAnchor);
+ const withCompatibility=measured.replace(compatibilityAnchor,'globalThis.__historyCompatibilityChecks?.push({scope:validatedProjections?"incoming-import":"local-history",projectSha256:body.projectSha256,artifactManifestSha256:historyArtifactsSha256(artifacts)});'+compatibilityAnchor);
  const withBytes=withCompatibility.replace(inputAnchor,inputAnchor+'globalThis.__archiveImportByteObjects?.push(artifactBlob);');
  const hashSource=fs.readFileSync('hash.js','utf8'),hashAnchor='async function sha256Bytes(bytes){';
  assert.equal(hashSource.split(hashAnchor).length-1,1);
- const traversalAnchor='const frame=stack.at(-1),input=frame.value,path=frame.path;';assert.equal(hashSource.split(traversalAnchor).length-1,1);
+ const traversalAnchor='const frame=stack.at(-1),input=frame.value;diagnosticFrame=frame;';assert.equal(hashSource.split(traversalAnchor).length-1,1);
  const observedHash=hashSource.replace(hashAnchor,hashAnchor+'globalThis.__historyBlobHashes?.push(bytes);').replace(traversalAnchor,traversalAnchor+"if(frame.kind==='value'&&input===globalThis.__historyDigestWatch?.data)globalThis.__historyDigestWatch.visits++;");
  return projectStoreRuntime({fault:faults[mode],sourceOverrides:{'project-store.js':withBytes.replace('function historyProjectDigests(project){','globalThis.__historyProjectDigests=historyProjectDigests;function historyProjectDigests(project){'),'hash.js':observedHash}});
 };
@@ -61,6 +65,10 @@ function installSnapshot(f,id,value){
  stateRow.value.compressedProjectBytes=stateRow.value.entries.reduce((n,x)=>n+x.byteSize,0);meta.set(f.stateKey,stateRow);
 }
 function frozenRows(r){return new Map([...r.rows].map(([name,rows])=>[name,new Map([...rows].map(([key,row])=>[key,r.copy(row)]))]));}
+if(!mode||HISTORY_STATIC_READ_FAULTS[mode]){
+const staticRead=await verifyHistoryStaticRead({sourceOverrides:{'project-store.js':source},fault:HISTORY_STATIC_READ_FAULTS[mode]||null});
+emit('HISTORY-SINGLE-BODY-STATIC-VALIDATION',{caseCount:staticRead.caseCount,cases:staticRead.cases,sourceSha256:staticRead.sourceSha256});
+}
 const f=await fixture(make(),'HISTORY-PROJECT-REFERENCES'),{r,p}=f,meta=r.rows.get('meta');
 emit('HISTORY-REFERENCE-VALID-PROGRESSION',{savedViews:f.children.length});
 // Independent preimages retain the exact original exclusions, Unicode key
@@ -192,12 +200,17 @@ emit('HISTORY-REFERENCE-REORDERED-BACKUP-CLOSURE',{exportedBytes:exported.size,e
 // A later import and an ordinary History read must establish their own proof.
 fresh.runtime.__historyCompatibilityChecks=[];
 await fresh.store.importPackage(reorderedBlob);
-assert.equal(fresh.runtime.__historyCompatibilityChecks.length,compatibilityStates.size,'HISTORY_IMPORT_COMPATIBILITY_FRESH_ORACLE: completed projection receipts must not survive into another import');
+const repeatedCompatibilityChecks=Array.from(fresh.runtime.__historyCompatibilityChecks),reimportChecks=repeatedCompatibilityChecks.filter(row=>row.scope==='incoming-import'),localHistoryChecks=repeatedCompatibilityChecks.filter(row=>row.scope==='local-history');
+// Reimport independently verifies the reused local active checkpoint before
+// validating incoming archive projections with this import's fresh receipts.
+assert.equal(reimportChecks.length,compatibilityStates.size,'HISTORY_IMPORT_COMPATIBILITY_FRESH_ORACLE: completed projection receipts must not survive into another import');
+assert.equal(localHistoryChecks.length,1,'HISTORY_IMPORT_LOCAL_HISTORY_ORACLE: reimport must independently validate the reused local active checkpoint');
 fresh.runtime.__historyCompatibilityChecks=[];
 for(const child of f.children)await fresh.store.readHistoryView(p.job.JOB_ID,child);
 assert.equal(fresh.runtime.__historyCompatibilityChecks.length,f.children.length,'HISTORY_IMPORT_COMPATIBILITY_FRESH_ORACLE: ordinary History reads must validate the current stored bytes anew');
+assert.ok(fresh.runtime.__historyCompatibilityChecks.every(row=>row.scope==='local-history'),'HISTORY_IMPORT_COMPATIBILITY_FRESH_ORACLE: ordinary History reads cannot borrow incoming import receipts');
 delete fresh.runtime.__historyCompatibilityChecks;
-emit('HISTORY-IMPORT-COMPATIBILITY-FRESHNESS',{reimportChecks:compatibilityStates.size,independentHistoryChecks:f.children.length});
+emit('HISTORY-IMPORT-COMPATIBILITY-FRESHNESS',{reimportChecks:reimportChecks.length,independentLocalHistoryChecks:localHistoryChecks.length,independentHistoryChecks:f.children.length});
 // A canonical version can retain different file inventories in different
 // views. Construct both through the real store and preserve each exact view.
 const inventory=await fixture(make(),'HISTORY-COMPATIBILITY-INVENTORIES'),inventoryStore=inventory.r.store;

@@ -1,0 +1,35 @@
+{
+  "case": "normal",
+  "startedAt": "2026-10-14T17:15:55.443Z",
+  "driverSha256": "802f6f5c5dcbd9bfc42e65a70adcc19151e422df5d5bc18f1e11a56a4c5bf480",
+  "fixturePath": "/workspace/shared/clrt-iteration-repair-evidence/frozen-cd56dd97-release-binding-blocked-r6/release-public-cold.json.gz",
+  "fixtureSha256": "84890d53689dfe181c36e5edcacf96217a4e21d65a96c2a5bf3f61028478044d",
+  "candidate": "086f2b2ecc271013ebc90a7694350ffd2eee6102",
+  "oldSourceHashes": {
+    "workbook.js": "11eff4fea42e47a5a70eafdc6b985d064ea2cdfe9a6feb72be6a74ec54c4b062",
+    "hash.js": "bc1c486855fa2096623b560cfc44b7c5d9e263040546921eb00f54e7f38b7420",
+    "workflow-schema.js": "3e11c7233449bbd3e2efb48e543f9e94e372c137c88d98ea29efbba25775000e",
+    "test-runtime.js": "a9eadc5db096997c51540068fecddaa71dca221b7342eac703d243438a9d1c23",
+    "workflow-engine.js": "d4e8b297f504dea6e56bf7975f6e0deb196563172d9df6e56125fb90fd207927",
+    "prompt-engine.js": "5d67f8096f91a1efc17ad6ce367dfa43ab5990ecaede9b52c9f12dcc34b41d20",
+    "response-ingestion.js": "ea0c6d1798dfd3a5711bf96550b7a7d085d8374fdfdfaf5e694ee84b39ad28f9",
+    "project-store.js": "935761d3de772a00b1da1da48a6e29a7abeb16b3cc121f379ae87829addad281",
+    "app-core.js": "38fad6b6170193b5675c4bf2c69374def1f735c100a51a5ac108489daa3b63b9",
+    "verify-full-cycle.mjs": "af1c0a33d1126a9086e24aebc714ddbb69f0da8b7f6607a9d0b67675028a181c",
+    "test-derivation-receipt-contract.mjs": "969f399ece309647ab05d99d9ca62f0c1936299d751a1e4588fce86a0a245d19"
+  },
+  "currentSourceHashes": {
+    "workbook.js": "11eff4fea42e47a5a70eafdc6b985d064ea2cdfe9a6feb72be6a74ec54c4b062",
+    "hash.js": "bc1c486855fa2096623b560cfc44b7c5d9e263040546921eb00f54e7f38b7420",
+    "workflow-schema.js": "b06c92acb0433d5611fec8782595467e52330decfb478664d5a68e13e43573de",
+    "test-runtime.js": "a9eadc5db096997c51540068fecddaa71dca221b7342eac703d243438a9d1c23",
+    "workflow-engine.js": "bf9076eaadef45baba900b389d01305be052ac8bc2f3964c7ba842910cfbfd12",
+    "prompt-engine.js": "5d67f8096f91a1efc17ad6ce367dfa43ab5990ecaede9b52c9f12dcc34b41d20",
+    "response-ingestion.js": "ea0c6d1798dfd3a5711bf96550b7a7d085d8374fdfdfaf5e694ee84b39ad28f9",
+    "project-store.js": "530047847aafb62755c7f5e768f5ca1cac86bf767e678e74bf0d6dd3e1a64143",
+    "app-core.js": "38fad6b6170193b5675c4bf2c69374def1f735c100a51a5ac108489daa3b63b9",
+    "verify-full-cycle.mjs": "554143fc723eeb471756386076f9018e7903eea25cf6a7be1f2c8768e2f06a33",
+    "test-derivation-receipt-contract.mjs": "969f399ece309647ab05d99d9ca62f0c1936299d751a1e4588fce86a0a245d19"
+  },
+  "scope": "Actual expired BLOCKED legacy store activation and reproof in a Node transaction adapter; synthetic isolated corruption/failure controls. No browser, fresh acceptance, full lifecycle, or authority renewal claim."
+}

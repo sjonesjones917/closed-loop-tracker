@@ -1,0 +1,1526 @@
+[
+  {
+    "schema": "closed-loop-attributed-predecessor-edge-reconciliation/1",
+    "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+    "predecessorIndex": 1527,
+    "predecessorNormativeRequirementId": "NREQ-5a70aa283a0d53f8e960efbdcb0ce944",
+    "predecessorEntrySha256": "8290989551b6d22edfdadb1ceff4f77152ad4b874d5e64e799ad95cfc1e2f4b6",
+    "priorCurrentNormativeRequirementId": "NREQ-5865e74f852415164963c7bba2729053",
+    "priorCurrentEntryEvidence": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-001-002/batch-001-reconciliation.json",
+        "sha256": "82afb2f1f64a05f19a63492de907d2808de0c5564455e415898e952604bb3c12",
+        "byteLength": 1541443
+      },
+      "jsonPointer": "/211",
+      "entrySha256": "c7fe4db5fc051ba8b495d36b88d4d860a549369d9fc407ea60d34a4bb6b79dc8"
+    },
+    "originalStatement": "NEXT_REQUIRED_ACTION has authority contract operationalNextAction() under its Section 15 row and the Section 15 value/nullability rules.",
+    "priorCurrentStatement": "NEXT_REQUIRED_ACTION has authority contract operationalNextAction() under its Section 15 row and the Section 15 value/nullability rules.",
+    "preservedStatementCompression": null,
+    "originalOccurrenceSetReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/1527/originalOccurrenceBindings",
+      "sha256": "76cea95687032f7703c85a77a1f39d99d3da8036c67a334d15109911881aa21b"
+    },
+    "originalOccurrenceTransport": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-occurrence-transport.json",
+      "sha256": "4157cda2f60669a2feba4c3021aa212f5bee00f4456a4e7a59d8e86da08a02d4",
+      "byteLength": 6309790
+    },
+    "verifiedOriginalOccurrenceBindingCount": 12,
+    "originalAddedGovernorReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-001-002/batch-001-reconciliation.json",
+        "sha256": "82afb2f1f64a05f19a63492de907d2808de0c5564455e415898e952604bb3c12",
+        "byteLength": 1541443
+      },
+      "jsonPointer": "/211/addedGoverningSourceReferences",
+      "sha256": "4b1b979d298e44fa1b02d78b08b49cb98a2fcc2f4aa3220e5ca6921942df5de1"
+    },
+    "historicalBlockedInheritedReferenceDetails": [
+      "SRC-GAP-DECODER-SUBSET",
+      "SRC-GAP-DEFERRED-BINDING",
+      "SRC-AMBIGUITY-XML-SUBNODE-ROOT"
+    ],
+    "historicalReferenceQualifierPreserved": true,
+    "currentUnresolvedSourceEffects": [],
+    "currentBlockedInheritedReferenceDetails": [],
+    "edgeDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+    "edgeSuccessorDisposition": "CHANGED",
+    "successorDisposition": "CHANGED",
+    "independentReason": "Exact atom: NEXT_REQUIRED_ACTION has authority contract operationalNextAction() under its Section 15 row and the Section 15 value/nullability rules. SRC-GAP-DECODER-SUBSET: Technical11–19 fixes the exact supported ZIP admission/member-verification/provenance branch of C/C1. The affected current intake value or source-domain result must use those admitted units and retain blocked/unknown remainder, without treating structural validation as exhaustive reading. The exact Section15 operationalNextAction authority evaluates real current action availability, including actual intake dependencies, native readiness and compatible conditional-route receipts. Its unchanged function name is not a static ownership-only declaration. SRC-GAP-DEFERRED-BINDING: Technical27–29 fixes the accepted current definition/test/fixture/target/history and phase compatibility for the conditional execution route. Preserve exact independent reviews, reserved current subject, distinct PRE/POST observations and honest restoration; B proofExpressions alone controls availability and missing evidence remains blocking. The exact Section15 operationalNextAction authority evaluates real current action availability, including actual intake dependencies, native readiness and compatible conditional-route receipts. Its unchanged function name is not a static ownership-only declaration. SRC-AMBIGUITY-XML-SUBNODE-ROOT: Technical33–35 fixes supplied-node SELECT_XML invocation rooting, subtree confinement, explicit element-array extraction and same-execution provenance. Current affected native admission/results/identities must reflect that meaning; no ambient ancestor or old semantic identity may stand in for it. The exact Section15 operationalNextAction authority evaluates real current action availability, including actual intake dependencies, native readiness and compatible conditional-route receipts. Its unchanged function name is not a static ownership-only declaration.",
+    "perIssueScopeDecisions": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/independent-scope-decisions.json",
+        "sha256": "d502c00096377617dc605b5fa9055d232ed26d05ad12c72f9d0f5d3f8dddd67d",
+        "byteLength": 32054
+      },
+      "jsonPointer": "/0",
+      "entrySha256": "e5e9ca5326e83ae2128bfe5612d2b89aa1f8d95420345655d8e410b9f5857de4"
+    },
+    "effectiveGovernorLink": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/composite-governor-1527.json",
+      "sha256": "c0abfd2847ecf6b2d03a672cf63c812fb1d2ae785613a80c1bf7caa453c5b602",
+      "byteLength": 2211
+    },
+    "resolutionEvidenceReferences": [
+      {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/decoder-effective-governor-link.json",
+        "sha256": "c97346f6790670765a3f461a4b2bcf0e7defac0783cbd03dcd1e7f8a120c04f0",
+        "byteLength": 12300
+      },
+      {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/deferred-effective-governor-link.json",
+        "sha256": "467e39481adfd6bada7770f387639e70e1adaf74a6941fab481a8beac55705ea",
+        "byteLength": 11041
+      },
+      {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/xml-effective-governor-link.json",
+        "sha256": "6e6114939c94e3b255075f0572dd5b1e7dc02e1fd53e2f10bbbb0129330a1eb2",
+        "byteLength": 8471
+      }
+    ],
+    "proposalAdjudication": "ACCEPTED_WITH_EXPLICIT_PREDICATE_SCOPE",
+    "proposalReference": {
+      "manifest": {
+        "path": "/tmp/clrt-current-qualifier-linkage-proposals-012/finalized/manifest.json",
+        "sha256": "a947b5731c4814be0f3e40379173d2866b4725085f59d9a34abe68d1e9818dba",
+        "byteLength": 2878
+      },
+      "archive": {
+        "path": "/tmp/clrt-current-qualifier-linkage-proposals-012/finalized/qualifier-linkage-proposal-012.tar.gz",
+        "sha256": "57ff04f3a40f436b68f24c81af032e5639b8e9176334b8135ad95af2ce018f78",
+        "byteLength": 219331
+      },
+      "archiveMember": "per-row-proposals.json",
+      "memberSha256": "0ca5aa575a7ffd11676866c41f49852f44002974b93a0224bd6682d7481daa14",
+      "jsonPointer": "/0",
+      "entrySha256": "d56f3d1fe94eb77fc3eb25d1f8834afbd9373fadb2c7b6c7ca7f12432887f39b"
+    },
+    "currentMeaningStatus": "RESOLVED_WITH_ATTRIBUTED_REFERENCE_LINK",
+    "originalReviewInheritance": false,
+    "proofInheritance": false,
+    "implementationStatus": "UNKNOWN",
+    "testConformance": "UNKNOWN",
+    "sourceLedgerActivated": false,
+    "identityPreimage": {
+      "schema": "closed-loop-attributed-predecessor-edge-identity/1",
+      "successorSourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "predecessorId": "NREQ-5a70aa283a0d53f8e960efbdcb0ce944",
+      "predecessorEntrySha256": "8290989551b6d22edfdadb1ceff4f77152ad4b874d5e64e799ad95cfc1e2f4b6",
+      "priorCurrentId": "NREQ-5865e74f852415164963c7bba2729053",
+      "priorCurrentEntrySha256": "c7fe4db5fc051ba8b495d36b88d4d860a549369d9fc407ea60d34a4bb6b79dc8",
+      "statement": "NEXT_REQUIRED_ACTION has authority contract operationalNextAction() under its Section 15 row and the Section 15 value/nullability rules.",
+      "retainedAddedGovernorSetSha256": "4b1b979d298e44fa1b02d78b08b49cb98a2fcc2f4aa3220e5ca6921942df5de1",
+      "typedEffectiveGovernor": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/composite-governor-1527.json",
+        "sha256": "c0abfd2847ecf6b2d03a672cf63c812fb1d2ae785613a80c1bf7caa453c5b602",
+        "byteLength": 2211
+      },
+      "scopeDecision": {
+        "artifact": {
+          "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/independent-scope-decisions.json",
+          "sha256": "d502c00096377617dc605b5fa9055d232ed26d05ad12c72f9d0f5d3f8dddd67d",
+          "byteLength": 32054
+        },
+        "jsonPointer": "/0",
+        "entrySha256": "e5e9ca5326e83ae2128bfe5612d2b89aa1f8d95420345655d8e410b9f5857de4"
+      }
+    },
+    "identityPreimageSha256": "8303efc8e0300acb81d94431bbc8ca2881bed7f7fb3e39c708757f2f18db9307",
+    "successorNormativeRequirementId": "NREQ-8303efc8e0300acb81d94431bbc8ca28",
+    "identityStatus": "FRESH_ATTRIBUTED_CANDIDATE_IDENTITY_CONDITIONAL_ON_LINKED_GOVERNOR_PENDING_SOURCE_ADOPTION"
+  },
+  {
+    "schema": "closed-loop-attributed-predecessor-edge-reconciliation/1",
+    "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+    "predecessorIndex": 1545,
+    "predecessorNormativeRequirementId": "NREQ-a27acf5d08da0313bd8dd002a5629d19",
+    "predecessorEntrySha256": "e54f1cf5782da36698b57a24b1bb9b1a6b730d1f5d6c712e7279973b05d84e49",
+    "priorCurrentNormativeRequirementId": "NREQ-644ae60bf9b1cabb25728d930d8001b2",
+    "priorCurrentEntryEvidence": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-001-002/batch-001-reconciliation.json",
+        "sha256": "82afb2f1f64a05f19a63492de907d2808de0c5564455e415898e952604bb3c12",
+        "byteLength": 1541443
+      },
+      "jsonPointer": "/229",
+      "entrySha256": "6e4d8b41040ecb9bc7dc86a27e0f0c4369950d40442efaae16cac68cbe673a29"
+    },
+    "originalStatement": "JOB_RECORD_STATUS has authority contract Stage 01 gate under its Section 15 row and the Section 15 value/nullability rules.",
+    "priorCurrentStatement": "JOB_RECORD_STATUS has authority contract Stage 01 gate under its Section 15 row and the Section 15 value/nullability rules.",
+    "preservedStatementCompression": null,
+    "originalOccurrenceSetReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/1545/originalOccurrenceBindings",
+      "sha256": "0fab60f443183d1b5a8c2b059fcd1208280fdf6fc698fc922feee78cde357271"
+    },
+    "originalOccurrenceTransport": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-occurrence-transport.json",
+      "sha256": "4157cda2f60669a2feba4c3021aa212f5bee00f4456a4e7a59d8e86da08a02d4",
+      "byteLength": 6309790
+    },
+    "verifiedOriginalOccurrenceBindingCount": 12,
+    "originalAddedGovernorReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-001-002/batch-001-reconciliation.json",
+        "sha256": "82afb2f1f64a05f19a63492de907d2808de0c5564455e415898e952604bb3c12",
+        "byteLength": 1541443
+      },
+      "jsonPointer": "/229/addedGoverningSourceReferences",
+      "sha256": "940555850d17cfedde300375d458c56ec0970540269ae1db9c5968bcccc7ddfe"
+    },
+    "historicalBlockedInheritedReferenceDetails": [
+      "SRC-GAP-DECODER-SUBSET"
+    ],
+    "historicalReferenceQualifierPreserved": true,
+    "currentUnresolvedSourceEffects": [],
+    "currentBlockedInheritedReferenceDetails": [],
+    "edgeDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+    "edgeSuccessorDisposition": "CHANGED",
+    "successorDisposition": "CHANGED",
+    "independentReason": "Exact atom: JOB_RECORD_STATUS has authority contract Stage 01 gate under its Section 15 row and the Section 15 value/nullability rules. SRC-GAP-DECODER-SUBSET: Technical11–19 fixes the exact supported ZIP admission/member-verification/provenance branch of C/C1. The affected current intake value or source-domain result must use those admitted units and retain blocked/unknown remainder, without treating structural validation as exhaustive reading. These six exact authority facets name the Stage01 gate or accepted proposal, whose admission requires complete available material and raw-unit accounting. Preserve each individual field predicate and the separately retained producer/type/stage facets; no Stage01 XML or later F1 duty is introduced.",
+    "perIssueScopeDecisions": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/independent-scope-decisions.json",
+        "sha256": "d502c00096377617dc605b5fa9055d232ed26d05ad12c72f9d0f5d3f8dddd67d",
+        "byteLength": 32054
+      },
+      "jsonPointer": "/1",
+      "entrySha256": "5396a7219393d25c63658d95cfc8700ef366d291f11a8bcc87396c45ec0bb6d0"
+    },
+    "effectiveGovernorLink": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/decoder-effective-governor-link.json",
+      "sha256": "c97346f6790670765a3f461a4b2bcf0e7defac0783cbd03dcd1e7f8a120c04f0",
+      "byteLength": 12300
+    },
+    "resolutionEvidenceReferences": [
+      {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/decoder-effective-governor-link.json",
+        "sha256": "c97346f6790670765a3f461a4b2bcf0e7defac0783cbd03dcd1e7f8a120c04f0",
+        "byteLength": 12300
+      }
+    ],
+    "proposalAdjudication": "ACCEPTED_WITH_EXPLICIT_PREDICATE_SCOPE",
+    "proposalReference": {
+      "manifest": {
+        "path": "/tmp/clrt-current-qualifier-linkage-proposals-012/finalized/manifest.json",
+        "sha256": "a947b5731c4814be0f3e40379173d2866b4725085f59d9a34abe68d1e9818dba",
+        "byteLength": 2878
+      },
+      "archive": {
+        "path": "/tmp/clrt-current-qualifier-linkage-proposals-012/finalized/qualifier-linkage-proposal-012.tar.gz",
+        "sha256": "57ff04f3a40f436b68f24c81af032e5639b8e9176334b8135ad95af2ce018f78",
+        "byteLength": 219331
+      },
+      "archiveMember": "per-row-proposals.json",
+      "memberSha256": "0ca5aa575a7ffd11676866c41f49852f44002974b93a0224bd6682d7481daa14",
+      "jsonPointer": "/1",
+      "entrySha256": "dffa96bdbbdca546a41b7dc08419117204c179332e22f1bfe2dd7797351e19bc"
+    },
+    "currentMeaningStatus": "RESOLVED_WITH_ATTRIBUTED_REFERENCE_LINK",
+    "originalReviewInheritance": false,
+    "proofInheritance": false,
+    "implementationStatus": "UNKNOWN",
+    "testConformance": "UNKNOWN",
+    "sourceLedgerActivated": false,
+    "identityPreimage": {
+      "schema": "closed-loop-attributed-predecessor-edge-identity/1",
+      "successorSourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "predecessorId": "NREQ-a27acf5d08da0313bd8dd002a5629d19",
+      "predecessorEntrySha256": "e54f1cf5782da36698b57a24b1bb9b1a6b730d1f5d6c712e7279973b05d84e49",
+      "priorCurrentId": "NREQ-644ae60bf9b1cabb25728d930d8001b2",
+      "priorCurrentEntrySha256": "6e4d8b41040ecb9bc7dc86a27e0f0c4369950d40442efaae16cac68cbe673a29",
+      "statement": "JOB_RECORD_STATUS has authority contract Stage 01 gate under its Section 15 row and the Section 15 value/nullability rules.",
+      "retainedAddedGovernorSetSha256": "940555850d17cfedde300375d458c56ec0970540269ae1db9c5968bcccc7ddfe",
+      "typedEffectiveGovernor": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/decoder-effective-governor-link.json",
+        "sha256": "c97346f6790670765a3f461a4b2bcf0e7defac0783cbd03dcd1e7f8a120c04f0",
+        "byteLength": 12300
+      },
+      "scopeDecision": {
+        "artifact": {
+          "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/independent-scope-decisions.json",
+          "sha256": "d502c00096377617dc605b5fa9055d232ed26d05ad12c72f9d0f5d3f8dddd67d",
+          "byteLength": 32054
+        },
+        "jsonPointer": "/1",
+        "entrySha256": "5396a7219393d25c63658d95cfc8700ef366d291f11a8bcc87396c45ec0bb6d0"
+      }
+    },
+    "identityPreimageSha256": "2f705e1ed58682dbda1d20f0b63a080b7beae9bef3f6b51600cb6a20f9deacdb",
+    "successorNormativeRequirementId": "NREQ-2f705e1ed58682dbda1d20f0b63a080b",
+    "identityStatus": "FRESH_ATTRIBUTED_CANDIDATE_IDENTITY_CONDITIONAL_ON_LINKED_GOVERNOR_PENDING_SOURCE_ADOPTION"
+  },
+  {
+    "schema": "closed-loop-attributed-predecessor-edge-reconciliation/1",
+    "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+    "predecessorIndex": 1551,
+    "predecessorNormativeRequirementId": "NREQ-09379acfc68577fcaa70fc56c4b86222",
+    "predecessorEntrySha256": "87c270425c2821e206143c394d402e3dc85db2100067e08288023353125975bd",
+    "priorCurrentNormativeRequirementId": "NREQ-f11ec87246d4536a77886d128f63106c",
+    "priorCurrentEntryEvidence": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-001-002/batch-001-reconciliation.json",
+        "sha256": "82afb2f1f64a05f19a63492de907d2808de0c5564455e415898e952604bb3c12",
+        "byteLength": 1541443
+      },
+      "jsonPointer": "/235",
+      "entrySha256": "69c8e0e66026ef52b97e99503d6f3457e067a45484980cf719288a15c9e2a84d"
+    },
+    "originalStatement": "STATUS_EVIDENCE has authority contract Stage 01 gate under its Section 15 row and the Section 15 value/nullability rules.",
+    "priorCurrentStatement": "STATUS_EVIDENCE has authority contract Stage 01 gate under its Section 15 row and the Section 15 value/nullability rules.",
+    "preservedStatementCompression": null,
+    "originalOccurrenceSetReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/1551/originalOccurrenceBindings",
+      "sha256": "70b7b97d25309d9725a6d12d4c32ae9c38af7f9d0845f62ee4cfe3915aded61e"
+    },
+    "originalOccurrenceTransport": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-occurrence-transport.json",
+      "sha256": "4157cda2f60669a2feba4c3021aa212f5bee00f4456a4e7a59d8e86da08a02d4",
+      "byteLength": 6309790
+    },
+    "verifiedOriginalOccurrenceBindingCount": 12,
+    "originalAddedGovernorReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-001-002/batch-001-reconciliation.json",
+        "sha256": "82afb2f1f64a05f19a63492de907d2808de0c5564455e415898e952604bb3c12",
+        "byteLength": 1541443
+      },
+      "jsonPointer": "/235/addedGoverningSourceReferences",
+      "sha256": "940555850d17cfedde300375d458c56ec0970540269ae1db9c5968bcccc7ddfe"
+    },
+    "historicalBlockedInheritedReferenceDetails": [
+      "SRC-GAP-DECODER-SUBSET"
+    ],
+    "historicalReferenceQualifierPreserved": true,
+    "currentUnresolvedSourceEffects": [],
+    "currentBlockedInheritedReferenceDetails": [],
+    "edgeDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+    "edgeSuccessorDisposition": "CHANGED",
+    "successorDisposition": "CHANGED",
+    "independentReason": "Exact atom: STATUS_EVIDENCE has authority contract Stage 01 gate under its Section 15 row and the Section 15 value/nullability rules. SRC-GAP-DECODER-SUBSET: Technical11–19 fixes the exact supported ZIP admission/member-verification/provenance branch of C/C1. The affected current intake value or source-domain result must use those admitted units and retain blocked/unknown remainder, without treating structural validation as exhaustive reading. These six exact authority facets name the Stage01 gate or accepted proposal, whose admission requires complete available material and raw-unit accounting. Preserve each individual field predicate and the separately retained producer/type/stage facets; no Stage01 XML or later F1 duty is introduced.",
+    "perIssueScopeDecisions": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/independent-scope-decisions.json",
+        "sha256": "d502c00096377617dc605b5fa9055d232ed26d05ad12c72f9d0f5d3f8dddd67d",
+        "byteLength": 32054
+      },
+      "jsonPointer": "/2",
+      "entrySha256": "e87e2645a984572fa3f7150038cb97e42b18531f9432289bb86d3ff96a387872"
+    },
+    "effectiveGovernorLink": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/decoder-effective-governor-link.json",
+      "sha256": "c97346f6790670765a3f461a4b2bcf0e7defac0783cbd03dcd1e7f8a120c04f0",
+      "byteLength": 12300
+    },
+    "resolutionEvidenceReferences": [
+      {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/decoder-effective-governor-link.json",
+        "sha256": "c97346f6790670765a3f461a4b2bcf0e7defac0783cbd03dcd1e7f8a120c04f0",
+        "byteLength": 12300
+      }
+    ],
+    "proposalAdjudication": "ACCEPTED_WITH_EXPLICIT_PREDICATE_SCOPE",
+    "proposalReference": {
+      "manifest": {
+        "path": "/tmp/clrt-current-qualifier-linkage-proposals-012/finalized/manifest.json",
+        "sha256": "a947b5731c4814be0f3e40379173d2866b4725085f59d9a34abe68d1e9818dba",
+        "byteLength": 2878
+      },
+      "archive": {
+        "path": "/tmp/clrt-current-qualifier-linkage-proposals-012/finalized/qualifier-linkage-proposal-012.tar.gz",
+        "sha256": "57ff04f3a40f436b68f24c81af032e5639b8e9176334b8135ad95af2ce018f78",
+        "byteLength": 219331
+      },
+      "archiveMember": "per-row-proposals.json",
+      "memberSha256": "0ca5aa575a7ffd11676866c41f49852f44002974b93a0224bd6682d7481daa14",
+      "jsonPointer": "/2",
+      "entrySha256": "45bfb4f21c20242811ee50621f948c1104a6cc11e619c31ffc86b6ae491edeb0"
+    },
+    "currentMeaningStatus": "RESOLVED_WITH_ATTRIBUTED_REFERENCE_LINK",
+    "originalReviewInheritance": false,
+    "proofInheritance": false,
+    "implementationStatus": "UNKNOWN",
+    "testConformance": "UNKNOWN",
+    "sourceLedgerActivated": false,
+    "identityPreimage": {
+      "schema": "closed-loop-attributed-predecessor-edge-identity/1",
+      "successorSourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "predecessorId": "NREQ-09379acfc68577fcaa70fc56c4b86222",
+      "predecessorEntrySha256": "87c270425c2821e206143c394d402e3dc85db2100067e08288023353125975bd",
+      "priorCurrentId": "NREQ-f11ec87246d4536a77886d128f63106c",
+      "priorCurrentEntrySha256": "69c8e0e66026ef52b97e99503d6f3457e067a45484980cf719288a15c9e2a84d",
+      "statement": "STATUS_EVIDENCE has authority contract Stage 01 gate under its Section 15 row and the Section 15 value/nullability rules.",
+      "retainedAddedGovernorSetSha256": "940555850d17cfedde300375d458c56ec0970540269ae1db9c5968bcccc7ddfe",
+      "typedEffectiveGovernor": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/decoder-effective-governor-link.json",
+        "sha256": "c97346f6790670765a3f461a4b2bcf0e7defac0783cbd03dcd1e7f8a120c04f0",
+        "byteLength": 12300
+      },
+      "scopeDecision": {
+        "artifact": {
+          "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/independent-scope-decisions.json",
+          "sha256": "d502c00096377617dc605b5fa9055d232ed26d05ad12c72f9d0f5d3f8dddd67d",
+          "byteLength": 32054
+        },
+        "jsonPointer": "/2",
+        "entrySha256": "e87e2645a984572fa3f7150038cb97e42b18531f9432289bb86d3ff96a387872"
+      }
+    },
+    "identityPreimageSha256": "efafea20df3c984573ca67f725a9d22873568184bc48a1b2422e264db4c244bc",
+    "successorNormativeRequirementId": "NREQ-efafea20df3c984573ca67f725a9d228",
+    "identityStatus": "FRESH_ATTRIBUTED_CANDIDATE_IDENTITY_CONDITIONAL_ON_LINKED_GOVERNOR_PENDING_SOURCE_ADOPTION"
+  },
+  {
+    "schema": "closed-loop-attributed-predecessor-edge-reconciliation/1",
+    "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+    "predecessorIndex": 1557,
+    "predecessorNormativeRequirementId": "NREQ-84b950e47a713238260e87b77f44c5b3",
+    "predecessorEntrySha256": "721d47e762627af9e5545106357584cd25027daaef8d1713799f33bbae769631",
+    "priorCurrentNormativeRequirementId": "NREQ-fbfc5682afa5389298d79610bc1dbe7e",
+    "priorCurrentEntryEvidence": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-001-002/batch-001-reconciliation.json",
+        "sha256": "82afb2f1f64a05f19a63492de907d2808de0c5564455e415898e952604bb3c12",
+        "byteLength": 1541443
+      },
+      "jsonPointer": "/241",
+      "entrySha256": "a297512b63ad2b21306aea5dcd50fc9c118f096c4010bb9d981a80b91347886c"
+    },
+    "originalStatement": "EXACT_DELIVERABLE_REQUESTED has authority contract Accepted Stage 01 proposal under its Section 15 row and the Section 15 value/nullability rules.",
+    "priorCurrentStatement": "EXACT_DELIVERABLE_REQUESTED has authority contract Accepted Stage 01 proposal under its Section 15 row and the Section 15 value/nullability rules.",
+    "preservedStatementCompression": null,
+    "originalOccurrenceSetReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/1557/originalOccurrenceBindings",
+      "sha256": "73227905e43f016c8a4fbaa55453acd96b56a176e8a9c061f8464213b7a66c43"
+    },
+    "originalOccurrenceTransport": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-occurrence-transport.json",
+      "sha256": "4157cda2f60669a2feba4c3021aa212f5bee00f4456a4e7a59d8e86da08a02d4",
+      "byteLength": 6309790
+    },
+    "verifiedOriginalOccurrenceBindingCount": 12,
+    "originalAddedGovernorReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-001-002/batch-001-reconciliation.json",
+        "sha256": "82afb2f1f64a05f19a63492de907d2808de0c5564455e415898e952604bb3c12",
+        "byteLength": 1541443
+      },
+      "jsonPointer": "/241/addedGoverningSourceReferences",
+      "sha256": "940555850d17cfedde300375d458c56ec0970540269ae1db9c5968bcccc7ddfe"
+    },
+    "historicalBlockedInheritedReferenceDetails": [
+      "SRC-GAP-DECODER-SUBSET"
+    ],
+    "historicalReferenceQualifierPreserved": true,
+    "currentUnresolvedSourceEffects": [],
+    "currentBlockedInheritedReferenceDetails": [],
+    "edgeDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+    "edgeSuccessorDisposition": "CHANGED",
+    "successorDisposition": "CHANGED",
+    "independentReason": "Exact atom: EXACT_DELIVERABLE_REQUESTED has authority contract Accepted Stage 01 proposal under its Section 15 row and the Section 15 value/nullability rules. SRC-GAP-DECODER-SUBSET: Technical11–19 fixes the exact supported ZIP admission/member-verification/provenance branch of C/C1. The affected current intake value or source-domain result must use those admitted units and retain blocked/unknown remainder, without treating structural validation as exhaustive reading. These six exact authority facets name the Stage01 gate or accepted proposal, whose admission requires complete available material and raw-unit accounting. Preserve each individual field predicate and the separately retained producer/type/stage facets; no Stage01 XML or later F1 duty is introduced.",
+    "perIssueScopeDecisions": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/independent-scope-decisions.json",
+        "sha256": "d502c00096377617dc605b5fa9055d232ed26d05ad12c72f9d0f5d3f8dddd67d",
+        "byteLength": 32054
+      },
+      "jsonPointer": "/3",
+      "entrySha256": "dc37c1600bf08c423286ff62b22afdf740b3736535d84f42ab82c805f5437bf0"
+    },
+    "effectiveGovernorLink": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/decoder-effective-governor-link.json",
+      "sha256": "c97346f6790670765a3f461a4b2bcf0e7defac0783cbd03dcd1e7f8a120c04f0",
+      "byteLength": 12300
+    },
+    "resolutionEvidenceReferences": [
+      {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/decoder-effective-governor-link.json",
+        "sha256": "c97346f6790670765a3f461a4b2bcf0e7defac0783cbd03dcd1e7f8a120c04f0",
+        "byteLength": 12300
+      }
+    ],
+    "proposalAdjudication": "ACCEPTED_WITH_EXPLICIT_PREDICATE_SCOPE",
+    "proposalReference": {
+      "manifest": {
+        "path": "/tmp/clrt-current-qualifier-linkage-proposals-012/finalized/manifest.json",
+        "sha256": "a947b5731c4814be0f3e40379173d2866b4725085f59d9a34abe68d1e9818dba",
+        "byteLength": 2878
+      },
+      "archive": {
+        "path": "/tmp/clrt-current-qualifier-linkage-proposals-012/finalized/qualifier-linkage-proposal-012.tar.gz",
+        "sha256": "57ff04f3a40f436b68f24c81af032e5639b8e9176334b8135ad95af2ce018f78",
+        "byteLength": 219331
+      },
+      "archiveMember": "per-row-proposals.json",
+      "memberSha256": "0ca5aa575a7ffd11676866c41f49852f44002974b93a0224bd6682d7481daa14",
+      "jsonPointer": "/3",
+      "entrySha256": "33f876d75fee6310618e2940d49fc617786b69e3aa3a59210e41f68be78afa4c"
+    },
+    "currentMeaningStatus": "RESOLVED_WITH_ATTRIBUTED_REFERENCE_LINK",
+    "originalReviewInheritance": false,
+    "proofInheritance": false,
+    "implementationStatus": "UNKNOWN",
+    "testConformance": "UNKNOWN",
+    "sourceLedgerActivated": false,
+    "identityPreimage": {
+      "schema": "closed-loop-attributed-predecessor-edge-identity/1",
+      "successorSourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "predecessorId": "NREQ-84b950e47a713238260e87b77f44c5b3",
+      "predecessorEntrySha256": "721d47e762627af9e5545106357584cd25027daaef8d1713799f33bbae769631",
+      "priorCurrentId": "NREQ-fbfc5682afa5389298d79610bc1dbe7e",
+      "priorCurrentEntrySha256": "a297512b63ad2b21306aea5dcd50fc9c118f096c4010bb9d981a80b91347886c",
+      "statement": "EXACT_DELIVERABLE_REQUESTED has authority contract Accepted Stage 01 proposal under its Section 15 row and the Section 15 value/nullability rules.",
+      "retainedAddedGovernorSetSha256": "940555850d17cfedde300375d458c56ec0970540269ae1db9c5968bcccc7ddfe",
+      "typedEffectiveGovernor": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/decoder-effective-governor-link.json",
+        "sha256": "c97346f6790670765a3f461a4b2bcf0e7defac0783cbd03dcd1e7f8a120c04f0",
+        "byteLength": 12300
+      },
+      "scopeDecision": {
+        "artifact": {
+          "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/independent-scope-decisions.json",
+          "sha256": "d502c00096377617dc605b5fa9055d232ed26d05ad12c72f9d0f5d3f8dddd67d",
+          "byteLength": 32054
+        },
+        "jsonPointer": "/3",
+        "entrySha256": "dc37c1600bf08c423286ff62b22afdf740b3736535d84f42ab82c805f5437bf0"
+      }
+    },
+    "identityPreimageSha256": "982ca022ab05ab0e233cd8b02aac2772d706b28592d278decf7a3131bf6cbc49",
+    "successorNormativeRequirementId": "NREQ-982ca022ab05ab0e233cd8b02aac2772",
+    "identityStatus": "FRESH_ATTRIBUTED_CANDIDATE_IDENTITY_CONDITIONAL_ON_LINKED_GOVERNOR_PENDING_SOURCE_ADOPTION"
+  },
+  {
+    "schema": "closed-loop-attributed-predecessor-edge-reconciliation/1",
+    "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+    "predecessorIndex": 1563,
+    "predecessorNormativeRequirementId": "NREQ-2a57e1c74dbd65d3901ad20467e5d822",
+    "predecessorEntrySha256": "f2e39fc3df8c81ed7933329c879faf543959fe174bc194a1cfa3ad1e6a195b77",
+    "priorCurrentNormativeRequirementId": "NREQ-b26467d90dd1f76d5abcd60f01691bdd",
+    "priorCurrentEntryEvidence": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-001-002/batch-001-reconciliation.json",
+        "sha256": "82afb2f1f64a05f19a63492de907d2808de0c5564455e415898e952604bb3c12",
+        "byteLength": 1541443
+      },
+      "jsonPointer": "/247",
+      "entrySha256": "e1c90b2960022cffad605b90104d173bde2bd0173a7646695df87754c7e1167d"
+    },
+    "originalStatement": "ASSUMPTIONS has authority contract Accepted Stage 01 proposal under its Section 15 row and the Section 15 value/nullability rules.",
+    "priorCurrentStatement": "ASSUMPTIONS has authority contract Accepted Stage 01 proposal under its Section 15 row and the Section 15 value/nullability rules.",
+    "preservedStatementCompression": null,
+    "originalOccurrenceSetReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/1563/originalOccurrenceBindings",
+      "sha256": "fc1846d638b9ff1eaaff27d2693ddcdb0521391cd4e4ddae8bfc597315709ee3"
+    },
+    "originalOccurrenceTransport": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-occurrence-transport.json",
+      "sha256": "4157cda2f60669a2feba4c3021aa212f5bee00f4456a4e7a59d8e86da08a02d4",
+      "byteLength": 6309790
+    },
+    "verifiedOriginalOccurrenceBindingCount": 12,
+    "originalAddedGovernorReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-001-002/batch-001-reconciliation.json",
+        "sha256": "82afb2f1f64a05f19a63492de907d2808de0c5564455e415898e952604bb3c12",
+        "byteLength": 1541443
+      },
+      "jsonPointer": "/247/addedGoverningSourceReferences",
+      "sha256": "940555850d17cfedde300375d458c56ec0970540269ae1db9c5968bcccc7ddfe"
+    },
+    "historicalBlockedInheritedReferenceDetails": [
+      "SRC-GAP-DECODER-SUBSET"
+    ],
+    "historicalReferenceQualifierPreserved": true,
+    "currentUnresolvedSourceEffects": [],
+    "currentBlockedInheritedReferenceDetails": [],
+    "edgeDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+    "edgeSuccessorDisposition": "CHANGED",
+    "successorDisposition": "CHANGED",
+    "independentReason": "Exact atom: ASSUMPTIONS has authority contract Accepted Stage 01 proposal under its Section 15 row and the Section 15 value/nullability rules. SRC-GAP-DECODER-SUBSET: Technical11–19 fixes the exact supported ZIP admission/member-verification/provenance branch of C/C1. The affected current intake value or source-domain result must use those admitted units and retain blocked/unknown remainder, without treating structural validation as exhaustive reading. These six exact authority facets name the Stage01 gate or accepted proposal, whose admission requires complete available material and raw-unit accounting. Preserve each individual field predicate and the separately retained producer/type/stage facets; no Stage01 XML or later F1 duty is introduced.",
+    "perIssueScopeDecisions": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/independent-scope-decisions.json",
+        "sha256": "d502c00096377617dc605b5fa9055d232ed26d05ad12c72f9d0f5d3f8dddd67d",
+        "byteLength": 32054
+      },
+      "jsonPointer": "/4",
+      "entrySha256": "92b3574cb9155d908146cb6a47127defef67f5a476502555c386109c757336fc"
+    },
+    "effectiveGovernorLink": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/decoder-effective-governor-link.json",
+      "sha256": "c97346f6790670765a3f461a4b2bcf0e7defac0783cbd03dcd1e7f8a120c04f0",
+      "byteLength": 12300
+    },
+    "resolutionEvidenceReferences": [
+      {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/decoder-effective-governor-link.json",
+        "sha256": "c97346f6790670765a3f461a4b2bcf0e7defac0783cbd03dcd1e7f8a120c04f0",
+        "byteLength": 12300
+      }
+    ],
+    "proposalAdjudication": "ACCEPTED_WITH_EXPLICIT_PREDICATE_SCOPE",
+    "proposalReference": {
+      "manifest": {
+        "path": "/tmp/clrt-current-qualifier-linkage-proposals-012/finalized/manifest.json",
+        "sha256": "a947b5731c4814be0f3e40379173d2866b4725085f59d9a34abe68d1e9818dba",
+        "byteLength": 2878
+      },
+      "archive": {
+        "path": "/tmp/clrt-current-qualifier-linkage-proposals-012/finalized/qualifier-linkage-proposal-012.tar.gz",
+        "sha256": "57ff04f3a40f436b68f24c81af032e5639b8e9176334b8135ad95af2ce018f78",
+        "byteLength": 219331
+      },
+      "archiveMember": "per-row-proposals.json",
+      "memberSha256": "0ca5aa575a7ffd11676866c41f49852f44002974b93a0224bd6682d7481daa14",
+      "jsonPointer": "/4",
+      "entrySha256": "e59d9c99fcd0d5bc72b04ff4696d6eaef2d6115014429750eb2cc4a2718b59d9"
+    },
+    "currentMeaningStatus": "RESOLVED_WITH_ATTRIBUTED_REFERENCE_LINK",
+    "originalReviewInheritance": false,
+    "proofInheritance": false,
+    "implementationStatus": "UNKNOWN",
+    "testConformance": "UNKNOWN",
+    "sourceLedgerActivated": false,
+    "identityPreimage": {
+      "schema": "closed-loop-attributed-predecessor-edge-identity/1",
+      "successorSourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "predecessorId": "NREQ-2a57e1c74dbd65d3901ad20467e5d822",
+      "predecessorEntrySha256": "f2e39fc3df8c81ed7933329c879faf543959fe174bc194a1cfa3ad1e6a195b77",
+      "priorCurrentId": "NREQ-b26467d90dd1f76d5abcd60f01691bdd",
+      "priorCurrentEntrySha256": "e1c90b2960022cffad605b90104d173bde2bd0173a7646695df87754c7e1167d",
+      "statement": "ASSUMPTIONS has authority contract Accepted Stage 01 proposal under its Section 15 row and the Section 15 value/nullability rules.",
+      "retainedAddedGovernorSetSha256": "940555850d17cfedde300375d458c56ec0970540269ae1db9c5968bcccc7ddfe",
+      "typedEffectiveGovernor": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/decoder-effective-governor-link.json",
+        "sha256": "c97346f6790670765a3f461a4b2bcf0e7defac0783cbd03dcd1e7f8a120c04f0",
+        "byteLength": 12300
+      },
+      "scopeDecision": {
+        "artifact": {
+          "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/independent-scope-decisions.json",
+          "sha256": "d502c00096377617dc605b5fa9055d232ed26d05ad12c72f9d0f5d3f8dddd67d",
+          "byteLength": 32054
+        },
+        "jsonPointer": "/4",
+        "entrySha256": "92b3574cb9155d908146cb6a47127defef67f5a476502555c386109c757336fc"
+      }
+    },
+    "identityPreimageSha256": "e14405789593cb680d2500bf3ed825ece054fb4bc947630da4f3c8bb7ec0f9db",
+    "successorNormativeRequirementId": "NREQ-e14405789593cb680d2500bf3ed825ec",
+    "identityStatus": "FRESH_ATTRIBUTED_CANDIDATE_IDENTITY_CONDITIONAL_ON_LINKED_GOVERNOR_PENDING_SOURCE_ADOPTION"
+  },
+  {
+    "schema": "closed-loop-attributed-predecessor-edge-reconciliation/1",
+    "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+    "predecessorIndex": 1569,
+    "predecessorNormativeRequirementId": "NREQ-22642bf6f064927cf7e14290df9e63cb",
+    "predecessorEntrySha256": "ce74ded099424ecb0d7d55da695ea0cb7a3ae502e79db8978bd541a0277eb3dd",
+    "priorCurrentNormativeRequirementId": "NREQ-4619f8580c38789f2a09ee896e61d12f",
+    "priorCurrentEntryEvidence": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-001-002/batch-001-reconciliation.json",
+        "sha256": "82afb2f1f64a05f19a63492de907d2808de0c5564455e415898e952604bb3c12",
+        "byteLength": 1541443
+      },
+      "jsonPointer": "/253",
+      "entrySha256": "b1f6027600f54a7f2ecb6e43136ae0135e8ec18496af1567643d123e6a78e80a"
+    },
+    "originalStatement": "UNKNOWN_INFORMATION has authority contract Accepted Stage 01 proposal under its Section 15 row and the Section 15 value/nullability rules.",
+    "priorCurrentStatement": "UNKNOWN_INFORMATION has authority contract Accepted Stage 01 proposal under its Section 15 row and the Section 15 value/nullability rules.",
+    "preservedStatementCompression": null,
+    "originalOccurrenceSetReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/1569/originalOccurrenceBindings",
+      "sha256": "fb0f8f30aa0133d0239a584421537cc0d0302e44ca76b17cffb0ea7f75754e88"
+    },
+    "originalOccurrenceTransport": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-occurrence-transport.json",
+      "sha256": "4157cda2f60669a2feba4c3021aa212f5bee00f4456a4e7a59d8e86da08a02d4",
+      "byteLength": 6309790
+    },
+    "verifiedOriginalOccurrenceBindingCount": 12,
+    "originalAddedGovernorReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-001-002/batch-001-reconciliation.json",
+        "sha256": "82afb2f1f64a05f19a63492de907d2808de0c5564455e415898e952604bb3c12",
+        "byteLength": 1541443
+      },
+      "jsonPointer": "/253/addedGoverningSourceReferences",
+      "sha256": "940555850d17cfedde300375d458c56ec0970540269ae1db9c5968bcccc7ddfe"
+    },
+    "historicalBlockedInheritedReferenceDetails": [
+      "SRC-GAP-DECODER-SUBSET"
+    ],
+    "historicalReferenceQualifierPreserved": true,
+    "currentUnresolvedSourceEffects": [],
+    "currentBlockedInheritedReferenceDetails": [],
+    "edgeDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+    "edgeSuccessorDisposition": "CHANGED",
+    "successorDisposition": "CHANGED",
+    "independentReason": "Exact atom: UNKNOWN_INFORMATION has authority contract Accepted Stage 01 proposal under its Section 15 row and the Section 15 value/nullability rules. SRC-GAP-DECODER-SUBSET: Technical11–19 fixes the exact supported ZIP admission/member-verification/provenance branch of C/C1. The affected current intake value or source-domain result must use those admitted units and retain blocked/unknown remainder, without treating structural validation as exhaustive reading. These six exact authority facets name the Stage01 gate or accepted proposal, whose admission requires complete available material and raw-unit accounting. Preserve each individual field predicate and the separately retained producer/type/stage facets; no Stage01 XML or later F1 duty is introduced.",
+    "perIssueScopeDecisions": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/independent-scope-decisions.json",
+        "sha256": "d502c00096377617dc605b5fa9055d232ed26d05ad12c72f9d0f5d3f8dddd67d",
+        "byteLength": 32054
+      },
+      "jsonPointer": "/5",
+      "entrySha256": "931a8b7649fbaaf243b00553d2f34f401bde7b3c190eb18a25f80ae00b6bf7b3"
+    },
+    "effectiveGovernorLink": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/decoder-effective-governor-link.json",
+      "sha256": "c97346f6790670765a3f461a4b2bcf0e7defac0783cbd03dcd1e7f8a120c04f0",
+      "byteLength": 12300
+    },
+    "resolutionEvidenceReferences": [
+      {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/decoder-effective-governor-link.json",
+        "sha256": "c97346f6790670765a3f461a4b2bcf0e7defac0783cbd03dcd1e7f8a120c04f0",
+        "byteLength": 12300
+      }
+    ],
+    "proposalAdjudication": "ACCEPTED_WITH_EXPLICIT_PREDICATE_SCOPE",
+    "proposalReference": {
+      "manifest": {
+        "path": "/tmp/clrt-current-qualifier-linkage-proposals-012/finalized/manifest.json",
+        "sha256": "a947b5731c4814be0f3e40379173d2866b4725085f59d9a34abe68d1e9818dba",
+        "byteLength": 2878
+      },
+      "archive": {
+        "path": "/tmp/clrt-current-qualifier-linkage-proposals-012/finalized/qualifier-linkage-proposal-012.tar.gz",
+        "sha256": "57ff04f3a40f436b68f24c81af032e5639b8e9176334b8135ad95af2ce018f78",
+        "byteLength": 219331
+      },
+      "archiveMember": "per-row-proposals.json",
+      "memberSha256": "0ca5aa575a7ffd11676866c41f49852f44002974b93a0224bd6682d7481daa14",
+      "jsonPointer": "/5",
+      "entrySha256": "4fe0daa44bc8a1f39d7deebe1277e9dedfc354952099cff182b78fa5ff61f7c9"
+    },
+    "currentMeaningStatus": "RESOLVED_WITH_ATTRIBUTED_REFERENCE_LINK",
+    "originalReviewInheritance": false,
+    "proofInheritance": false,
+    "implementationStatus": "UNKNOWN",
+    "testConformance": "UNKNOWN",
+    "sourceLedgerActivated": false,
+    "identityPreimage": {
+      "schema": "closed-loop-attributed-predecessor-edge-identity/1",
+      "successorSourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "predecessorId": "NREQ-22642bf6f064927cf7e14290df9e63cb",
+      "predecessorEntrySha256": "ce74ded099424ecb0d7d55da695ea0cb7a3ae502e79db8978bd541a0277eb3dd",
+      "priorCurrentId": "NREQ-4619f8580c38789f2a09ee896e61d12f",
+      "priorCurrentEntrySha256": "b1f6027600f54a7f2ecb6e43136ae0135e8ec18496af1567643d123e6a78e80a",
+      "statement": "UNKNOWN_INFORMATION has authority contract Accepted Stage 01 proposal under its Section 15 row and the Section 15 value/nullability rules.",
+      "retainedAddedGovernorSetSha256": "940555850d17cfedde300375d458c56ec0970540269ae1db9c5968bcccc7ddfe",
+      "typedEffectiveGovernor": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/decoder-effective-governor-link.json",
+        "sha256": "c97346f6790670765a3f461a4b2bcf0e7defac0783cbd03dcd1e7f8a120c04f0",
+        "byteLength": 12300
+      },
+      "scopeDecision": {
+        "artifact": {
+          "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/independent-scope-decisions.json",
+          "sha256": "d502c00096377617dc605b5fa9055d232ed26d05ad12c72f9d0f5d3f8dddd67d",
+          "byteLength": 32054
+        },
+        "jsonPointer": "/5",
+        "entrySha256": "931a8b7649fbaaf243b00553d2f34f401bde7b3c190eb18a25f80ae00b6bf7b3"
+      }
+    },
+    "identityPreimageSha256": "919fb206a74a18a73f748ea1dd5beaead33d9231cc049b793176fee648b0942a",
+    "successorNormativeRequirementId": "NREQ-919fb206a74a18a73f748ea1dd5beaea",
+    "identityStatus": "FRESH_ATTRIBUTED_CANDIDATE_IDENTITY_CONDITIONAL_ON_LINKED_GOVERNOR_PENDING_SOURCE_ADOPTION"
+  },
+  {
+    "schema": "closed-loop-attributed-predecessor-edge-reconciliation/1",
+    "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+    "predecessorIndex": 1575,
+    "predecessorNormativeRequirementId": "NREQ-6e55afd8420e1f97077d9e05c74181d6",
+    "predecessorEntrySha256": "fc627fbdbf3eca8700ffe8c66dc2d4223fe187971ac080d45dee559fdcb222d1",
+    "priorCurrentNormativeRequirementId": "NREQ-2a11df75dfd560bfb781c0c142b00c11",
+    "priorCurrentEntryEvidence": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-001-002/batch-001-reconciliation.json",
+        "sha256": "82afb2f1f64a05f19a63492de907d2808de0c5564455e415898e952604bb3c12",
+        "byteLength": 1541443
+      },
+      "jsonPointer": "/259",
+      "entrySha256": "ccb552e5a36853206d36f920faa7b3d38d085bc54f88e6a311a7d8bdfc54f809"
+    },
+    "originalStatement": "INPUT_SET_CONTENTS has authority contract Accepted Stage 01 proposal under its Section 15 row and the Section 15 value/nullability rules.",
+    "priorCurrentStatement": "INPUT_SET_CONTENTS has authority contract Accepted Stage 01 proposal under its Section 15 row and the Section 15 value/nullability rules.",
+    "preservedStatementCompression": null,
+    "originalOccurrenceSetReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/1575/originalOccurrenceBindings",
+      "sha256": "ed41f087d95fe55cad1503879350d7161e3490944d87a8e4ea43484aa09836f6"
+    },
+    "originalOccurrenceTransport": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-occurrence-transport.json",
+      "sha256": "4157cda2f60669a2feba4c3021aa212f5bee00f4456a4e7a59d8e86da08a02d4",
+      "byteLength": 6309790
+    },
+    "verifiedOriginalOccurrenceBindingCount": 12,
+    "originalAddedGovernorReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-001-002/batch-001-reconciliation.json",
+        "sha256": "82afb2f1f64a05f19a63492de907d2808de0c5564455e415898e952604bb3c12",
+        "byteLength": 1541443
+      },
+      "jsonPointer": "/259/addedGoverningSourceReferences",
+      "sha256": "940555850d17cfedde300375d458c56ec0970540269ae1db9c5968bcccc7ddfe"
+    },
+    "historicalBlockedInheritedReferenceDetails": [
+      "SRC-GAP-DECODER-SUBSET"
+    ],
+    "historicalReferenceQualifierPreserved": true,
+    "currentUnresolvedSourceEffects": [],
+    "currentBlockedInheritedReferenceDetails": [],
+    "edgeDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+    "edgeSuccessorDisposition": "CHANGED",
+    "successorDisposition": "CHANGED",
+    "independentReason": "Exact atom: INPUT_SET_CONTENTS has authority contract Accepted Stage 01 proposal under its Section 15 row and the Section 15 value/nullability rules. SRC-GAP-DECODER-SUBSET: Technical11–19 fixes the exact supported ZIP admission/member-verification/provenance branch of C/C1. The affected current intake value or source-domain result must use those admitted units and retain blocked/unknown remainder, without treating structural validation as exhaustive reading. These six exact authority facets name the Stage01 gate or accepted proposal, whose admission requires complete available material and raw-unit accounting. Preserve each individual field predicate and the separately retained producer/type/stage facets; no Stage01 XML or later F1 duty is introduced.",
+    "perIssueScopeDecisions": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/independent-scope-decisions.json",
+        "sha256": "d502c00096377617dc605b5fa9055d232ed26d05ad12c72f9d0f5d3f8dddd67d",
+        "byteLength": 32054
+      },
+      "jsonPointer": "/6",
+      "entrySha256": "9fbad0b40c620f78efc3efe51b3e1cb52ea7b2b157c762460c64f87dd7f677af"
+    },
+    "effectiveGovernorLink": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/decoder-effective-governor-link.json",
+      "sha256": "c97346f6790670765a3f461a4b2bcf0e7defac0783cbd03dcd1e7f8a120c04f0",
+      "byteLength": 12300
+    },
+    "resolutionEvidenceReferences": [
+      {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/decoder-effective-governor-link.json",
+        "sha256": "c97346f6790670765a3f461a4b2bcf0e7defac0783cbd03dcd1e7f8a120c04f0",
+        "byteLength": 12300
+      }
+    ],
+    "proposalAdjudication": "ACCEPTED_WITH_EXPLICIT_PREDICATE_SCOPE",
+    "proposalReference": {
+      "manifest": {
+        "path": "/tmp/clrt-current-qualifier-linkage-proposals-012/finalized/manifest.json",
+        "sha256": "a947b5731c4814be0f3e40379173d2866b4725085f59d9a34abe68d1e9818dba",
+        "byteLength": 2878
+      },
+      "archive": {
+        "path": "/tmp/clrt-current-qualifier-linkage-proposals-012/finalized/qualifier-linkage-proposal-012.tar.gz",
+        "sha256": "57ff04f3a40f436b68f24c81af032e5639b8e9176334b8135ad95af2ce018f78",
+        "byteLength": 219331
+      },
+      "archiveMember": "per-row-proposals.json",
+      "memberSha256": "0ca5aa575a7ffd11676866c41f49852f44002974b93a0224bd6682d7481daa14",
+      "jsonPointer": "/6",
+      "entrySha256": "dc1a450fb151976b9b89bce04561cf917caab2485bb3ad672ee2eea7cdf7f915"
+    },
+    "currentMeaningStatus": "RESOLVED_WITH_ATTRIBUTED_REFERENCE_LINK",
+    "originalReviewInheritance": false,
+    "proofInheritance": false,
+    "implementationStatus": "UNKNOWN",
+    "testConformance": "UNKNOWN",
+    "sourceLedgerActivated": false,
+    "identityPreimage": {
+      "schema": "closed-loop-attributed-predecessor-edge-identity/1",
+      "successorSourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "predecessorId": "NREQ-6e55afd8420e1f97077d9e05c74181d6",
+      "predecessorEntrySha256": "fc627fbdbf3eca8700ffe8c66dc2d4223fe187971ac080d45dee559fdcb222d1",
+      "priorCurrentId": "NREQ-2a11df75dfd560bfb781c0c142b00c11",
+      "priorCurrentEntrySha256": "ccb552e5a36853206d36f920faa7b3d38d085bc54f88e6a311a7d8bdfc54f809",
+      "statement": "INPUT_SET_CONTENTS has authority contract Accepted Stage 01 proposal under its Section 15 row and the Section 15 value/nullability rules.",
+      "retainedAddedGovernorSetSha256": "940555850d17cfedde300375d458c56ec0970540269ae1db9c5968bcccc7ddfe",
+      "typedEffectiveGovernor": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/decoder-effective-governor-link.json",
+        "sha256": "c97346f6790670765a3f461a4b2bcf0e7defac0783cbd03dcd1e7f8a120c04f0",
+        "byteLength": 12300
+      },
+      "scopeDecision": {
+        "artifact": {
+          "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/independent-scope-decisions.json",
+          "sha256": "d502c00096377617dc605b5fa9055d232ed26d05ad12c72f9d0f5d3f8dddd67d",
+          "byteLength": 32054
+        },
+        "jsonPointer": "/6",
+        "entrySha256": "9fbad0b40c620f78efc3efe51b3e1cb52ea7b2b157c762460c64f87dd7f677af"
+      }
+    },
+    "identityPreimageSha256": "655d4804d550512887effb5bedcff251f474c7506b8e5d4ca90635d652d3aa12",
+    "successorNormativeRequirementId": "NREQ-655d4804d550512887effb5bedcff251",
+    "identityStatus": "FRESH_ATTRIBUTED_CANDIDATE_IDENTITY_CONDITIONAL_ON_LINKED_GOVERNOR_PENDING_SOURCE_ADOPTION"
+  },
+  {
+    "schema": "closed-loop-attributed-predecessor-edge-reconciliation/1",
+    "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+    "predecessorIndex": 4534,
+    "predecessorNormativeRequirementId": "NREQ-1ba6a49f79c535838a7398b3fc6f6d84",
+    "predecessorEntrySha256": "4113c752adca801f2eec32c723ff93a549aee0948c4d32b076155d831f730c70",
+    "priorCurrentNormativeRequirementId": "NREQ-468f18d21c6523b1645da86ec8367ef5",
+    "priorCurrentEntryEvidence": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-001-002/batch-002-reconciliation.json",
+        "sha256": "87ca9fa12fd3e6b7d5a2393df825cbb8ff25dae85ca27a5bd86f50942ce4f110",
+        "byteLength": 2520332
+      },
+      "jsonPointer": "/180",
+      "entrySha256": "953d923a2e328d6b697ea0031a475c3e91b0696f800bd3e61342c6cf0437a4f4"
+    },
+    "originalStatement": "confirmationRecords: Application must derive completeness.",
+    "priorCurrentStatement": "confirmationRecords: Application must derive completeness.",
+    "preservedStatementCompression": null,
+    "originalOccurrenceSetReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/4534/originalOccurrenceBindings",
+      "sha256": "67a8bab8a38eca1bbf0ab5e6117857d819fe473e75fda216b55dd9885b72691f"
+    },
+    "originalOccurrenceTransport": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-occurrence-transport.json",
+      "sha256": "4157cda2f60669a2feba4c3021aa212f5bee00f4456a4e7a59d8e86da08a02d4",
+      "byteLength": 6309790
+    },
+    "verifiedOriginalOccurrenceBindingCount": 9,
+    "originalAddedGovernorReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-001-002/batch-002-reconciliation.json",
+        "sha256": "87ca9fa12fd3e6b7d5a2393df825cbb8ff25dae85ca27a5bd86f50942ce4f110",
+        "byteLength": 2520332
+      },
+      "jsonPointer": "/180/addedGoverningSourceReferences",
+      "sha256": "d0a45149238fef309c2abfbb49913c16d571d1a06d262978880a1a09b77b47a0"
+    },
+    "historicalBlockedInheritedReferenceDetails": [
+      "SRC-GAP-DEFERRED-BINDING",
+      "SRC-AMBIGUITY-XML-SUBNODE-ROOT"
+    ],
+    "historicalReferenceQualifierPreserved": true,
+    "currentUnresolvedSourceEffects": [],
+    "currentBlockedInheritedReferenceDetails": [],
+    "edgeDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+    "edgeSuccessorDisposition": "CHANGED",
+    "successorDisposition": "CHANGED",
+    "independentReason": "Exact atom: confirmationRecords: Application must derive completeness. SRC-GAP-DEFERRED-BINDING: Technical27–29 fixes the accepted current definition/test/fixture/target/history and phase compatibility for the conditional execution route. Preserve exact independent reviews, reserved current subject, distinct PRE/POST observations and honest restoration; B proofExpressions alone controls availability and missing evidence remains blocking. The exact sourceDecision on4534 corrected the historical ownership-only proposal: deriving completeness evaluates the Stage19 due-verification/regression conjunction, as does final determination4536. Current native meaning and compatible conditional execution govern their actual operands. Preserve application ownership, mandatory membership and independent evidence; the stale mechanismClass label has no authority over the corrective sourceDecision. SRC-AMBIGUITY-XML-SUBNODE-ROOT: Technical33–35 fixes supplied-node SELECT_XML invocation rooting, subtree confinement, explicit element-array extraction and same-execution provenance. Current affected native admission/results/identities must reflect that meaning; no ambient ancestor or old semantic identity may stand in for it. The exact sourceDecision on4534 corrected the historical ownership-only proposal: deriving completeness evaluates the Stage19 due-verification/regression conjunction, as does final determination4536. Current native meaning and compatible conditional execution govern their actual operands. Preserve application ownership, mandatory membership and independent evidence; the stale mechanismClass label has no authority over the corrective sourceDecision.",
+    "perIssueScopeDecisions": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/independent-scope-decisions.json",
+        "sha256": "d502c00096377617dc605b5fa9055d232ed26d05ad12c72f9d0f5d3f8dddd67d",
+        "byteLength": 32054
+      },
+      "jsonPointer": "/7",
+      "entrySha256": "686a5cb435e2aa114354facce70ad7f3ec246097be1d87d763a9bc89f16e3305"
+    },
+    "effectiveGovernorLink": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/composite-governor-4534.json",
+      "sha256": "33f3a43784f639e4e86e5652fd8716adc6ccd6feff99183080472f4509f1d02f",
+      "byteLength": 1862
+    },
+    "resolutionEvidenceReferences": [
+      {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/deferred-effective-governor-link.json",
+        "sha256": "467e39481adfd6bada7770f387639e70e1adaf74a6941fab481a8beac55705ea",
+        "byteLength": 11041
+      },
+      {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/xml-effective-governor-link.json",
+        "sha256": "6e6114939c94e3b255075f0572dd5b1e7dc02e1fd53e2f10bbbb0129330a1eb2",
+        "byteLength": 8471
+      }
+    ],
+    "proposalAdjudication": "ACCEPTED_WITH_EXPLICIT_PREDICATE_SCOPE",
+    "proposalReference": {
+      "manifest": {
+        "path": "/tmp/clrt-current-qualifier-linkage-proposals-012/finalized/manifest.json",
+        "sha256": "a947b5731c4814be0f3e40379173d2866b4725085f59d9a34abe68d1e9818dba",
+        "byteLength": 2878
+      },
+      "archive": {
+        "path": "/tmp/clrt-current-qualifier-linkage-proposals-012/finalized/qualifier-linkage-proposal-012.tar.gz",
+        "sha256": "57ff04f3a40f436b68f24c81af032e5639b8e9176334b8135ad95af2ce018f78",
+        "byteLength": 219331
+      },
+      "archiveMember": "per-row-proposals.json",
+      "memberSha256": "0ca5aa575a7ffd11676866c41f49852f44002974b93a0224bd6682d7481daa14",
+      "jsonPointer": "/7",
+      "entrySha256": "f190273ea7a90f7e88b8717bd8f79ce337d85a38e9ceaecede8a458c537b6b72"
+    },
+    "currentMeaningStatus": "RESOLVED_WITH_ATTRIBUTED_REFERENCE_LINK",
+    "originalReviewInheritance": false,
+    "proofInheritance": false,
+    "implementationStatus": "UNKNOWN",
+    "testConformance": "UNKNOWN",
+    "sourceLedgerActivated": false,
+    "identityPreimage": {
+      "schema": "closed-loop-attributed-predecessor-edge-identity/1",
+      "successorSourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "predecessorId": "NREQ-1ba6a49f79c535838a7398b3fc6f6d84",
+      "predecessorEntrySha256": "4113c752adca801f2eec32c723ff93a549aee0948c4d32b076155d831f730c70",
+      "priorCurrentId": "NREQ-468f18d21c6523b1645da86ec8367ef5",
+      "priorCurrentEntrySha256": "953d923a2e328d6b697ea0031a475c3e91b0696f800bd3e61342c6cf0437a4f4",
+      "statement": "confirmationRecords: Application must derive completeness.",
+      "retainedAddedGovernorSetSha256": "d0a45149238fef309c2abfbb49913c16d571d1a06d262978880a1a09b77b47a0",
+      "typedEffectiveGovernor": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/composite-governor-4534.json",
+        "sha256": "33f3a43784f639e4e86e5652fd8716adc6ccd6feff99183080472f4509f1d02f",
+        "byteLength": 1862
+      },
+      "scopeDecision": {
+        "artifact": {
+          "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/independent-scope-decisions.json",
+          "sha256": "d502c00096377617dc605b5fa9055d232ed26d05ad12c72f9d0f5d3f8dddd67d",
+          "byteLength": 32054
+        },
+        "jsonPointer": "/7",
+        "entrySha256": "686a5cb435e2aa114354facce70ad7f3ec246097be1d87d763a9bc89f16e3305"
+      }
+    },
+    "identityPreimageSha256": "490867b441e5b6f4d93a9b98101ca8beb278b322a2b56aac19f4aecae8b24e8e",
+    "successorNormativeRequirementId": "NREQ-490867b441e5b6f4d93a9b98101ca8be",
+    "identityStatus": "FRESH_ATTRIBUTED_CANDIDATE_IDENTITY_CONDITIONAL_ON_LINKED_GOVERNOR_PENDING_SOURCE_ADOPTION"
+  },
+  {
+    "schema": "closed-loop-attributed-predecessor-edge-reconciliation/1",
+    "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+    "predecessorIndex": 4536,
+    "predecessorNormativeRequirementId": "NREQ-df5c11923c1eb1d84e4234af62867d12",
+    "predecessorEntrySha256": "759cb670834f2f0fc524aa3641c3590cb0cf8c7b2f28e597ac3de9dd0fd27847",
+    "priorCurrentNormativeRequirementId": "NREQ-d904e3a5c1a6cf21fbe6aec0a6dcf74d",
+    "priorCurrentEntryEvidence": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-001-002/batch-002-reconciliation.json",
+        "sha256": "87ca9fa12fd3e6b7d5a2393df825cbb8ff25dae85ca27a5bd86f50942ce4f110",
+        "byteLength": 2520332
+      },
+      "jsonPointer": "/182",
+      "entrySha256": "68df9e7137669a50753304a5af4a5935be70bdc94192f6a5c577d7246c9080d0"
+    },
+    "originalStatement": "confirmationRecords: Application must derive final determination.",
+    "priorCurrentStatement": "confirmationRecords: Application must derive final determination.",
+    "preservedStatementCompression": null,
+    "originalOccurrenceSetReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/4536/originalOccurrenceBindings",
+      "sha256": "67a8bab8a38eca1bbf0ab5e6117857d819fe473e75fda216b55dd9885b72691f"
+    },
+    "originalOccurrenceTransport": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-occurrence-transport.json",
+      "sha256": "4157cda2f60669a2feba4c3021aa212f5bee00f4456a4e7a59d8e86da08a02d4",
+      "byteLength": 6309790
+    },
+    "verifiedOriginalOccurrenceBindingCount": 9,
+    "originalAddedGovernorReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-001-002/batch-002-reconciliation.json",
+        "sha256": "87ca9fa12fd3e6b7d5a2393df825cbb8ff25dae85ca27a5bd86f50942ce4f110",
+        "byteLength": 2520332
+      },
+      "jsonPointer": "/182/addedGoverningSourceReferences",
+      "sha256": "49c1c5c6b7da0d425ffe9bce8e5b74b687d0d17a45a3e0895b05b7de0a1cdaaf"
+    },
+    "historicalBlockedInheritedReferenceDetails": [
+      "SRC-GAP-DEFERRED-BINDING",
+      "SRC-AMBIGUITY-XML-SUBNODE-ROOT"
+    ],
+    "historicalReferenceQualifierPreserved": true,
+    "currentUnresolvedSourceEffects": [],
+    "currentBlockedInheritedReferenceDetails": [],
+    "edgeDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+    "edgeSuccessorDisposition": "CHANGED",
+    "successorDisposition": "CHANGED",
+    "independentReason": "Exact atom: confirmationRecords: Application must derive final determination. SRC-GAP-DEFERRED-BINDING: Technical27–29 fixes the accepted current definition/test/fixture/target/history and phase compatibility for the conditional execution route. Preserve exact independent reviews, reserved current subject, distinct PRE/POST observations and honest restoration; B proofExpressions alone controls availability and missing evidence remains blocking. The exact sourceDecision on4534 corrected the historical ownership-only proposal: deriving completeness evaluates the Stage19 due-verification/regression conjunction, as does final determination4536. Current native meaning and compatible conditional execution govern their actual operands. Preserve application ownership, mandatory membership and independent evidence; the stale mechanismClass label has no authority over the corrective sourceDecision. SRC-AMBIGUITY-XML-SUBNODE-ROOT: Technical33–35 fixes supplied-node SELECT_XML invocation rooting, subtree confinement, explicit element-array extraction and same-execution provenance. Current affected native admission/results/identities must reflect that meaning; no ambient ancestor or old semantic identity may stand in for it. The exact sourceDecision on4534 corrected the historical ownership-only proposal: deriving completeness evaluates the Stage19 due-verification/regression conjunction, as does final determination4536. Current native meaning and compatible conditional execution govern their actual operands. Preserve application ownership, mandatory membership and independent evidence; the stale mechanismClass label has no authority over the corrective sourceDecision.",
+    "perIssueScopeDecisions": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/independent-scope-decisions.json",
+        "sha256": "d502c00096377617dc605b5fa9055d232ed26d05ad12c72f9d0f5d3f8dddd67d",
+        "byteLength": 32054
+      },
+      "jsonPointer": "/8",
+      "entrySha256": "34e253b915ee5d176bcc70f02fcfa79be0bddb74713991658c6707965a50889c"
+    },
+    "effectiveGovernorLink": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/composite-governor-4536.json",
+      "sha256": "644071ecc53615f6be0d4cab304da4f7b0db803c503e14a0c6d9cc22d669ebd0",
+      "byteLength": 1862
+    },
+    "resolutionEvidenceReferences": [
+      {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/deferred-effective-governor-link.json",
+        "sha256": "467e39481adfd6bada7770f387639e70e1adaf74a6941fab481a8beac55705ea",
+        "byteLength": 11041
+      },
+      {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/xml-effective-governor-link.json",
+        "sha256": "6e6114939c94e3b255075f0572dd5b1e7dc02e1fd53e2f10bbbb0129330a1eb2",
+        "byteLength": 8471
+      }
+    ],
+    "proposalAdjudication": "ACCEPTED_WITH_EXPLICIT_PREDICATE_SCOPE",
+    "proposalReference": {
+      "manifest": {
+        "path": "/tmp/clrt-current-qualifier-linkage-proposals-012/finalized/manifest.json",
+        "sha256": "a947b5731c4814be0f3e40379173d2866b4725085f59d9a34abe68d1e9818dba",
+        "byteLength": 2878
+      },
+      "archive": {
+        "path": "/tmp/clrt-current-qualifier-linkage-proposals-012/finalized/qualifier-linkage-proposal-012.tar.gz",
+        "sha256": "57ff04f3a40f436b68f24c81af032e5639b8e9176334b8135ad95af2ce018f78",
+        "byteLength": 219331
+      },
+      "archiveMember": "per-row-proposals.json",
+      "memberSha256": "0ca5aa575a7ffd11676866c41f49852f44002974b93a0224bd6682d7481daa14",
+      "jsonPointer": "/8",
+      "entrySha256": "e9b3ce3c1e37f27cc9ac21eb8c82328cdb0ab34c1148726626aead698f5374b9"
+    },
+    "currentMeaningStatus": "RESOLVED_WITH_ATTRIBUTED_REFERENCE_LINK",
+    "originalReviewInheritance": false,
+    "proofInheritance": false,
+    "implementationStatus": "UNKNOWN",
+    "testConformance": "UNKNOWN",
+    "sourceLedgerActivated": false,
+    "identityPreimage": {
+      "schema": "closed-loop-attributed-predecessor-edge-identity/1",
+      "successorSourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "predecessorId": "NREQ-df5c11923c1eb1d84e4234af62867d12",
+      "predecessorEntrySha256": "759cb670834f2f0fc524aa3641c3590cb0cf8c7b2f28e597ac3de9dd0fd27847",
+      "priorCurrentId": "NREQ-d904e3a5c1a6cf21fbe6aec0a6dcf74d",
+      "priorCurrentEntrySha256": "68df9e7137669a50753304a5af4a5935be70bdc94192f6a5c577d7246c9080d0",
+      "statement": "confirmationRecords: Application must derive final determination.",
+      "retainedAddedGovernorSetSha256": "49c1c5c6b7da0d425ffe9bce8e5b74b687d0d17a45a3e0895b05b7de0a1cdaaf",
+      "typedEffectiveGovernor": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/composite-governor-4536.json",
+        "sha256": "644071ecc53615f6be0d4cab304da4f7b0db803c503e14a0c6d9cc22d669ebd0",
+        "byteLength": 1862
+      },
+      "scopeDecision": {
+        "artifact": {
+          "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/independent-scope-decisions.json",
+          "sha256": "d502c00096377617dc605b5fa9055d232ed26d05ad12c72f9d0f5d3f8dddd67d",
+          "byteLength": 32054
+        },
+        "jsonPointer": "/8",
+        "entrySha256": "34e253b915ee5d176bcc70f02fcfa79be0bddb74713991658c6707965a50889c"
+      }
+    },
+    "identityPreimageSha256": "594b5b3d62d67a3ff992d9e7c319643001a6684582ec11d1d3ed848019dc89ff",
+    "successorNormativeRequirementId": "NREQ-594b5b3d62d67a3ff992d9e7c3196430",
+    "identityStatus": "FRESH_ATTRIBUTED_CANDIDATE_IDENTITY_CONDITIONAL_ON_LINKED_GOVERNOR_PENDING_SOURCE_ADOPTION"
+  },
+  {
+    "schema": "closed-loop-attributed-predecessor-edge-reconciliation/1",
+    "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+    "predecessorIndex": 6122,
+    "predecessorNormativeRequirementId": "NREQ-a2b6942e825a969ac41d231a9331ee44",
+    "predecessorEntrySha256": "425ed9f6e1fb04f1f5a1bddb2ff446c7f3bf2851b3c2e93ccc91e26086264f9a",
+    "priorCurrentNormativeRequirementId": "NREQ-8ba2a2bfa27f404acd3ac238b0166ea5",
+    "priorCurrentEntryEvidence": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-003/batch-003-reconciliation.json",
+        "sha256": "5570a01d770432a57cfa49f0c6a6f6c7cf66ad6d9b2bab42910f3f4a12faae13",
+        "byteLength": 1327313
+      },
+      "jsonPointer": "/116",
+      "entrySha256": "4476759063b73a28fadf5178e1334249ae3a00cd0d9d262b78124e103eeaa87b"
+    },
+    "originalStatement": "Browser acceptance must include native Stage 22 worker execution",
+    "priorCurrentStatement": "Browser acceptance must include native Stage 22 worker execution",
+    "preservedStatementCompression": null,
+    "originalOccurrenceSetReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/6122/originalOccurrenceBindings",
+      "sha256": "a1a0053b5352485c5c414f78a6b3bb9e37695c23ac82a63a225a4fd7653dc2dd"
+    },
+    "originalOccurrenceTransport": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-occurrence-transport.json",
+      "sha256": "4157cda2f60669a2feba4c3021aa212f5bee00f4456a4e7a59d8e86da08a02d4",
+      "byteLength": 6309790
+    },
+    "verifiedOriginalOccurrenceBindingCount": 4,
+    "originalAddedGovernorReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-003/batch-003-reconciliation.json",
+        "sha256": "5570a01d770432a57cfa49f0c6a6f6c7cf66ad6d9b2bab42910f3f4a12faae13",
+        "byteLength": 1327313
+      },
+      "jsonPointer": "/116/addedGoverningSourceReferences",
+      "sha256": "3b60abe81d6ef597a0003966ca77e83859fa59eef5da531196f6e5213be6e59d"
+    },
+    "historicalBlockedInheritedReferenceDetails": [
+      "SRC-AMBIGUITY-XML-SUBNODE-ROOT"
+    ],
+    "historicalReferenceQualifierPreserved": true,
+    "currentUnresolvedSourceEffects": [],
+    "currentBlockedInheritedReferenceDetails": [],
+    "edgeDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+    "edgeSuccessorDisposition": "CHANGED",
+    "successorDisposition": "CHANGED",
+    "independentReason": "Exact atom: Browser acceptance must include native Stage 22 worker execution SRC-AMBIGUITY-XML-SUBNODE-ROOT: Technical33–35 fixes supplied-node SELECT_XML invocation rooting, subtree confinement, explicit element-array extraction and same-execution provenance. Current affected native admission/results/identities must reflect that meaning; no ambient ancestor or old semantic identity may stand in for it. The required browser case proves actual current Stage22 native worker behavior, including supported supplied-node selector semantics. Preserve exact language/operation identity and worker failure boundaries; this source link does not claim a browser result.",
+    "perIssueScopeDecisions": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/independent-scope-decisions.json",
+        "sha256": "d502c00096377617dc605b5fa9055d232ed26d05ad12c72f9d0f5d3f8dddd67d",
+        "byteLength": 32054
+      },
+      "jsonPointer": "/9",
+      "entrySha256": "495c8b788765aedaa50d3b6ec3c0289b444ba4aeba292036e8ebdfcd230bd72f"
+    },
+    "effectiveGovernorLink": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/xml-effective-governor-link.json",
+      "sha256": "6e6114939c94e3b255075f0572dd5b1e7dc02e1fd53e2f10bbbb0129330a1eb2",
+      "byteLength": 8471
+    },
+    "resolutionEvidenceReferences": [
+      {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/xml-effective-governor-link.json",
+        "sha256": "6e6114939c94e3b255075f0572dd5b1e7dc02e1fd53e2f10bbbb0129330a1eb2",
+        "byteLength": 8471
+      }
+    ],
+    "proposalAdjudication": "ACCEPTED_WITH_EXPLICIT_PREDICATE_SCOPE",
+    "proposalReference": {
+      "manifest": {
+        "path": "/tmp/clrt-current-qualifier-linkage-proposals-012/finalized/manifest.json",
+        "sha256": "a947b5731c4814be0f3e40379173d2866b4725085f59d9a34abe68d1e9818dba",
+        "byteLength": 2878
+      },
+      "archive": {
+        "path": "/tmp/clrt-current-qualifier-linkage-proposals-012/finalized/qualifier-linkage-proposal-012.tar.gz",
+        "sha256": "57ff04f3a40f436b68f24c81af032e5639b8e9176334b8135ad95af2ce018f78",
+        "byteLength": 219331
+      },
+      "archiveMember": "per-row-proposals.json",
+      "memberSha256": "0ca5aa575a7ffd11676866c41f49852f44002974b93a0224bd6682d7481daa14",
+      "jsonPointer": "/9",
+      "entrySha256": "f434a6c955fa688f60760b274f5ef1092e672e4e6f18d4585376ecb580a9df4b"
+    },
+    "currentMeaningStatus": "RESOLVED_WITH_ATTRIBUTED_REFERENCE_LINK",
+    "originalReviewInheritance": false,
+    "proofInheritance": false,
+    "implementationStatus": "UNKNOWN",
+    "testConformance": "UNKNOWN",
+    "sourceLedgerActivated": false,
+    "identityPreimage": {
+      "schema": "closed-loop-attributed-predecessor-edge-identity/1",
+      "successorSourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "predecessorId": "NREQ-a2b6942e825a969ac41d231a9331ee44",
+      "predecessorEntrySha256": "425ed9f6e1fb04f1f5a1bddb2ff446c7f3bf2851b3c2e93ccc91e26086264f9a",
+      "priorCurrentId": "NREQ-8ba2a2bfa27f404acd3ac238b0166ea5",
+      "priorCurrentEntrySha256": "4476759063b73a28fadf5178e1334249ae3a00cd0d9d262b78124e103eeaa87b",
+      "statement": "Browser acceptance must include native Stage 22 worker execution",
+      "retainedAddedGovernorSetSha256": "3b60abe81d6ef597a0003966ca77e83859fa59eef5da531196f6e5213be6e59d",
+      "typedEffectiveGovernor": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/xml-effective-governor-link.json",
+        "sha256": "6e6114939c94e3b255075f0572dd5b1e7dc02e1fd53e2f10bbbb0129330a1eb2",
+        "byteLength": 8471
+      },
+      "scopeDecision": {
+        "artifact": {
+          "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/independent-scope-decisions.json",
+          "sha256": "d502c00096377617dc605b5fa9055d232ed26d05ad12c72f9d0f5d3f8dddd67d",
+          "byteLength": 32054
+        },
+        "jsonPointer": "/9",
+        "entrySha256": "495c8b788765aedaa50d3b6ec3c0289b444ba4aeba292036e8ebdfcd230bd72f"
+      }
+    },
+    "identityPreimageSha256": "dbbc02accff3d2f5ada769aaa8b0981c3974fd37c0cf83ebad160d01f105eb81",
+    "successorNormativeRequirementId": "NREQ-dbbc02accff3d2f5ada769aaa8b0981c",
+    "identityStatus": "FRESH_ATTRIBUTED_CANDIDATE_IDENTITY_CONDITIONAL_ON_LINKED_GOVERNOR_PENDING_SOURCE_ADOPTION"
+  },
+  {
+    "schema": "closed-loop-attributed-predecessor-edge-reconciliation/1",
+    "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+    "predecessorIndex": 6188,
+    "predecessorNormativeRequirementId": "NREQ-9edfbb4f718e280b00ab026a169d5c82",
+    "predecessorEntrySha256": "1222793e76e851a27d8c95475f00ea99e5ea8f77e4f356133e788a7fb211e075",
+    "priorCurrentNormativeRequirementId": "NREQ-5d28378f215f0d6609d19c1851da994c",
+    "priorCurrentEntryEvidence": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-003/batch-003-reconciliation.json",
+        "sha256": "5570a01d770432a57cfa49f0c6a6f6c7cf66ad6d9b2bab42910f3f4a12faae13",
+        "byteLength": 1327313
+      },
+      "jsonPointer": "/183",
+      "entrySha256": "2499681c0a44be09a0e793841e5ad3a989716ab1580777557d8d06461e2dafee"
+    },
+    "originalStatement": "The actual-iPhone path must prove raw file intake",
+    "priorCurrentStatement": "The actual-iPhone path must prove raw file intake",
+    "preservedStatementCompression": null,
+    "originalOccurrenceSetReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/6188/originalOccurrenceBindings",
+      "sha256": "483a57896549a268286e5b1d7cca607d51355dca5025a8a8a8b682b3d776d770"
+    },
+    "originalOccurrenceTransport": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-occurrence-transport.json",
+      "sha256": "4157cda2f60669a2feba4c3021aa212f5bee00f4456a4e7a59d8e86da08a02d4",
+      "byteLength": 6309790
+    },
+    "verifiedOriginalOccurrenceBindingCount": 7,
+    "originalAddedGovernorReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-003/batch-003-reconciliation.json",
+        "sha256": "5570a01d770432a57cfa49f0c6a6f6c7cf66ad6d9b2bab42910f3f4a12faae13",
+        "byteLength": 1327313
+      },
+      "jsonPointer": "/183/addedGoverningSourceReferences",
+      "sha256": "1e6499997602b6f1be7f0bb5da6bc9143a9e6ef91024cab461f65c286ae904be"
+    },
+    "historicalBlockedInheritedReferenceDetails": [
+      "SRC-GAP-DECODER-SUBSET"
+    ],
+    "historicalReferenceQualifierPreserved": true,
+    "currentUnresolvedSourceEffects": [],
+    "currentBlockedInheritedReferenceDetails": [],
+    "edgeDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+    "edgeSuccessorDisposition": "CHANGED",
+    "successorDisposition": "CHANGED",
+    "independentReason": "Exact atom: The actual-iPhone path must prove raw file intake SRC-GAP-DECODER-SUBSET: Technical11–19 fixes the exact supported ZIP admission/member-verification/provenance branch of C/C1. The affected current intake value or source-domain result must use those admitted units and retain blocked/unknown remainder, without treating structural validation as exhaustive reading. The actual-iPhone raw-intake path includes C/C1 source admission and complete available-unit/provenance accounting. The original physical Safari/device/build/origin/challenge constraints remain; hash matching or partial intake is no device/reading proof.",
+    "perIssueScopeDecisions": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/independent-scope-decisions.json",
+        "sha256": "d502c00096377617dc605b5fa9055d232ed26d05ad12c72f9d0f5d3f8dddd67d",
+        "byteLength": 32054
+      },
+      "jsonPointer": "/10",
+      "entrySha256": "c33421b3659dd74606e49613bfd6ecb4f6f1d0a61f3f5d252cc7c5312280537f"
+    },
+    "effectiveGovernorLink": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/decoder-effective-governor-link.json",
+      "sha256": "c97346f6790670765a3f461a4b2bcf0e7defac0783cbd03dcd1e7f8a120c04f0",
+      "byteLength": 12300
+    },
+    "resolutionEvidenceReferences": [
+      {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/decoder-effective-governor-link.json",
+        "sha256": "c97346f6790670765a3f461a4b2bcf0e7defac0783cbd03dcd1e7f8a120c04f0",
+        "byteLength": 12300
+      }
+    ],
+    "proposalAdjudication": "ACCEPTED_WITH_EXPLICIT_PREDICATE_SCOPE",
+    "proposalReference": {
+      "manifest": {
+        "path": "/tmp/clrt-current-qualifier-linkage-proposals-012/finalized/manifest.json",
+        "sha256": "a947b5731c4814be0f3e40379173d2866b4725085f59d9a34abe68d1e9818dba",
+        "byteLength": 2878
+      },
+      "archive": {
+        "path": "/tmp/clrt-current-qualifier-linkage-proposals-012/finalized/qualifier-linkage-proposal-012.tar.gz",
+        "sha256": "57ff04f3a40f436b68f24c81af032e5639b8e9176334b8135ad95af2ce018f78",
+        "byteLength": 219331
+      },
+      "archiveMember": "per-row-proposals.json",
+      "memberSha256": "0ca5aa575a7ffd11676866c41f49852f44002974b93a0224bd6682d7481daa14",
+      "jsonPointer": "/10",
+      "entrySha256": "53c72991f05f38852d38d6843e65097708ce907d121f54d766abc4825d89ec0c"
+    },
+    "currentMeaningStatus": "RESOLVED_WITH_ATTRIBUTED_REFERENCE_LINK",
+    "originalReviewInheritance": false,
+    "proofInheritance": false,
+    "implementationStatus": "UNKNOWN",
+    "testConformance": "UNKNOWN",
+    "sourceLedgerActivated": false,
+    "identityPreimage": {
+      "schema": "closed-loop-attributed-predecessor-edge-identity/1",
+      "successorSourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "predecessorId": "NREQ-9edfbb4f718e280b00ab026a169d5c82",
+      "predecessorEntrySha256": "1222793e76e851a27d8c95475f00ea99e5ea8f77e4f356133e788a7fb211e075",
+      "priorCurrentId": "NREQ-5d28378f215f0d6609d19c1851da994c",
+      "priorCurrentEntrySha256": "2499681c0a44be09a0e793841e5ad3a989716ab1580777557d8d06461e2dafee",
+      "statement": "The actual-iPhone path must prove raw file intake",
+      "retainedAddedGovernorSetSha256": "1e6499997602b6f1be7f0bb5da6bc9143a9e6ef91024cab461f65c286ae904be",
+      "typedEffectiveGovernor": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/decoder-effective-governor-link.json",
+        "sha256": "c97346f6790670765a3f461a4b2bcf0e7defac0783cbd03dcd1e7f8a120c04f0",
+        "byteLength": 12300
+      },
+      "scopeDecision": {
+        "artifact": {
+          "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/independent-scope-decisions.json",
+          "sha256": "d502c00096377617dc605b5fa9055d232ed26d05ad12c72f9d0f5d3f8dddd67d",
+          "byteLength": 32054
+        },
+        "jsonPointer": "/10",
+        "entrySha256": "c33421b3659dd74606e49613bfd6ecb4f6f1d0a61f3f5d252cc7c5312280537f"
+      }
+    },
+    "identityPreimageSha256": "a50bc6348ba3673e808e33a928e254d0c43b7bea13f56b067cd4c15084e27318",
+    "successorNormativeRequirementId": "NREQ-a50bc6348ba3673e808e33a928e254d0",
+    "identityStatus": "FRESH_ATTRIBUTED_CANDIDATE_IDENTITY_CONDITIONAL_ON_LINKED_GOVERNOR_PENDING_SOURCE_ADOPTION"
+  },
+  {
+    "schema": "closed-loop-attributed-predecessor-edge-reconciliation/1",
+    "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+    "predecessorIndex": 6191,
+    "predecessorNormativeRequirementId": "NREQ-9c8f90564722679a1de53d04271507af",
+    "predecessorEntrySha256": "3228fc4180f498517a2b40b41bec28b511bf3a19635b01c941802fb57c0a9f1c",
+    "priorCurrentNormativeRequirementId": "NREQ-c374a9e1b6d74a722851ec7563d10419",
+    "priorCurrentEntryEvidence": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-003/batch-003-reconciliation.json",
+        "sha256": "5570a01d770432a57cfa49f0c6a6f6c7cf66ad6d9b2bab42910f3f4a12faae13",
+        "byteLength": 1327313
+      },
+      "jsonPointer": "/186",
+      "entrySha256": "32cfaf7151028365e2867699242aad100b0a631f53d617dca3e00fb53fe4df03"
+    },
+    "originalStatement": "The actual-iPhone path must prove direct response JSON file ingestion",
+    "priorCurrentStatement": "The actual-iPhone path must prove direct response JSON file ingestion",
+    "preservedStatementCompression": null,
+    "originalOccurrenceSetReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/6191/originalOccurrenceBindings",
+      "sha256": "69cff0d22eced0f5e82b07b5700013d01bb69dd2ac1ded8f46e9c4bed684ca0f"
+    },
+    "originalOccurrenceTransport": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-occurrence-transport.json",
+      "sha256": "4157cda2f60669a2feba4c3021aa212f5bee00f4456a4e7a59d8e86da08a02d4",
+      "byteLength": 6309790
+    },
+    "verifiedOriginalOccurrenceBindingCount": 7,
+    "originalAddedGovernorReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-003/batch-003-reconciliation.json",
+        "sha256": "5570a01d770432a57cfa49f0c6a6f6c7cf66ad6d9b2bab42910f3f4a12faae13",
+        "byteLength": 1327313
+      },
+      "jsonPointer": "/186/addedGoverningSourceReferences",
+      "sha256": "1579673085414f40e2bab0585d2fa93bd504087eea08964597106488d43683c5"
+    },
+    "historicalBlockedInheritedReferenceDetails": [
+      "SRC-AMBIGUITY-XML-SUBNODE-ROOT"
+    ],
+    "historicalReferenceQualifierPreserved": true,
+    "currentUnresolvedSourceEffects": [],
+    "currentBlockedInheritedReferenceDetails": [],
+    "edgeDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+    "edgeSuccessorDisposition": "CHANGED",
+    "successorDisposition": "CHANGED",
+    "independentReason": "Exact atom: The actual-iPhone path must prove direct response JSON file ingestion SRC-AMBIGUITY-XML-SUBNODE-ROOT: Technical33–35 fixes supplied-node SELECT_XML invocation rooting, subtree confinement, explicit element-array extraction and same-execution provenance. Current affected native admission/results/identities must reflect that meaning; no ambient ancestor or old semantic identity may stand in for it. This atom is complete direct response JSON ingestion and current native-definition semantic admission on the actual device, not the separately retained file-selection action. Only an affected SELECT_XML definition receives the linked semantics; no new transport or authority is added.",
+    "perIssueScopeDecisions": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/independent-scope-decisions.json",
+        "sha256": "d502c00096377617dc605b5fa9055d232ed26d05ad12c72f9d0f5d3f8dddd67d",
+        "byteLength": 32054
+      },
+      "jsonPointer": "/11",
+      "entrySha256": "6a68b4a17566af10424b4b9f9e70b25cabb391493420c9acabf620acb6fe3313"
+    },
+    "effectiveGovernorLink": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/xml-effective-governor-link.json",
+      "sha256": "6e6114939c94e3b255075f0572dd5b1e7dc02e1fd53e2f10bbbb0129330a1eb2",
+      "byteLength": 8471
+    },
+    "resolutionEvidenceReferences": [
+      {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/xml-effective-governor-link.json",
+        "sha256": "6e6114939c94e3b255075f0572dd5b1e7dc02e1fd53e2f10bbbb0129330a1eb2",
+        "byteLength": 8471
+      }
+    ],
+    "proposalAdjudication": "ACCEPTED_WITH_EXPLICIT_PREDICATE_SCOPE",
+    "proposalReference": {
+      "manifest": {
+        "path": "/tmp/clrt-current-qualifier-linkage-proposals-012/finalized/manifest.json",
+        "sha256": "a947b5731c4814be0f3e40379173d2866b4725085f59d9a34abe68d1e9818dba",
+        "byteLength": 2878
+      },
+      "archive": {
+        "path": "/tmp/clrt-current-qualifier-linkage-proposals-012/finalized/qualifier-linkage-proposal-012.tar.gz",
+        "sha256": "57ff04f3a40f436b68f24c81af032e5639b8e9176334b8135ad95af2ce018f78",
+        "byteLength": 219331
+      },
+      "archiveMember": "per-row-proposals.json",
+      "memberSha256": "0ca5aa575a7ffd11676866c41f49852f44002974b93a0224bd6682d7481daa14",
+      "jsonPointer": "/11",
+      "entrySha256": "c608750d3a7446919b9bf7cf69dede6b4beac9b0e735b66cba4d372fc3cb5b22"
+    },
+    "currentMeaningStatus": "RESOLVED_WITH_ATTRIBUTED_REFERENCE_LINK",
+    "originalReviewInheritance": false,
+    "proofInheritance": false,
+    "implementationStatus": "UNKNOWN",
+    "testConformance": "UNKNOWN",
+    "sourceLedgerActivated": false,
+    "identityPreimage": {
+      "schema": "closed-loop-attributed-predecessor-edge-identity/1",
+      "successorSourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "predecessorId": "NREQ-9c8f90564722679a1de53d04271507af",
+      "predecessorEntrySha256": "3228fc4180f498517a2b40b41bec28b511bf3a19635b01c941802fb57c0a9f1c",
+      "priorCurrentId": "NREQ-c374a9e1b6d74a722851ec7563d10419",
+      "priorCurrentEntrySha256": "32cfaf7151028365e2867699242aad100b0a631f53d617dca3e00fb53fe4df03",
+      "statement": "The actual-iPhone path must prove direct response JSON file ingestion",
+      "retainedAddedGovernorSetSha256": "1579673085414f40e2bab0585d2fa93bd504087eea08964597106488d43683c5",
+      "typedEffectiveGovernor": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/xml-effective-governor-link.json",
+        "sha256": "6e6114939c94e3b255075f0572dd5b1e7dc02e1fd53e2f10bbbb0129330a1eb2",
+        "byteLength": 8471
+      },
+      "scopeDecision": {
+        "artifact": {
+          "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/independent-scope-decisions.json",
+          "sha256": "d502c00096377617dc605b5fa9055d232ed26d05ad12c72f9d0f5d3f8dddd67d",
+          "byteLength": 32054
+        },
+        "jsonPointer": "/11",
+        "entrySha256": "6a68b4a17566af10424b4b9f9e70b25cabb391493420c9acabf620acb6fe3313"
+      }
+    },
+    "identityPreimageSha256": "01a4f1b0bdc572a7764bc711e7fc7417b57053a85811c650b76fd74f797d98ed",
+    "successorNormativeRequirementId": "NREQ-01a4f1b0bdc572a7764bc711e7fc7417",
+    "identityStatus": "FRESH_ATTRIBUTED_CANDIDATE_IDENTITY_CONDITIONAL_ON_LINKED_GOVERNOR_PENDING_SOURCE_ADOPTION"
+  }
+]

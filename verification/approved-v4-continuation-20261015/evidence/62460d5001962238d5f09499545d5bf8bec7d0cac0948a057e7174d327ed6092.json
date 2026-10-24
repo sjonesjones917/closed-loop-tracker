@@ -1,0 +1,482 @@
+{
+  "schema": "closed-loop-v4-technical-reference-adoption-input/1",
+  "id": "V4-TECHNICAL-REFERENCE-INPUT-ZIP-DEFERRED-XML-20261015",
+  "status": "EXTERNAL_ADDITIVE_INPUT_PREPARED_FOR_INDEPENDENT_RECORD_REVIEW",
+  "baseCommit": "2933fd05538a3663769f27ad08e70d0f9520e910",
+  "baseTree": "7a1453515c29bd81058cb63fbd14791d2e1297c4",
+  "attribution": {
+    "recordPreparer": "/root/repair_iteration_receipt_dependencies/diagnose_browser_confirmation_ci",
+    "technicalResolutionKind": "IMPLEMENTATION_AWARE_TECHNICAL_REFERENCE_CLARIFICATION",
+    "technicalResolutionAuthorship": "The exact predecessor/successor packet and its correction-provenance.json retain their original authorship and input history; this record is only an additive attribution/binding wrapper.",
+    "independentTechnicalReviewer": "/root/review_release_scope_binding",
+    "blindSourceOnlyExtraction": false,
+    "newBlindReviewClaimed": false,
+    "sourceOnlyContributorOutputsInspectedByRecordPreparer": false,
+    "recordReviewStatus": "PENDING",
+    "underlyingTechnicalReviewStatus": "ACCEPT_NARROW_TECHNICAL_REFERENCE_RESOLUTION_SCOPE"
+  },
+  "sourceAndAuthority": {
+    "originalSource": {
+      "path": "/workspace/shared/clrt-v4-adoption-design-2933/source-only/base-original-2933.txt",
+      "byteLength": 309482,
+      "sha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "role": "IMMUTABLE_ORIGINAL_CONTROLLING_SOURCE"
+    },
+    "approvedV4": {
+      "path": "/workspace/shared/clrt-owner-decisions-v4/exact-contract-amendment-v4.txt",
+      "byteLength": 65481,
+      "sha256": "aa966b7ac8f38f66b046ce796ab55de5c69dc3f8485f6bba499e32442e29476f",
+      "role": "EXACT_OWNER_APPROVED_V4"
+    },
+    "sourceCandidate": {
+      "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "byteLength": 369901,
+      "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "role": "APPROVED_V4_INSERTION_ONLY_SOURCE_CANDIDATE_NOT_INTEGRATED"
+    },
+    "v4ApprovalProvenance": {
+      "path": "/workspace/shared/clrt-v4-adoption-design-2933/source-only-approval-provenance.json",
+      "byteLength": 1715,
+      "sha256": "87652453a6e2875bac77abbabfaed9e81b59c55ddeb66dcaf7a822634aad8fb2",
+      "role": "EXACT_V4_OWNER_APPROVAL_PROVENANCE"
+    },
+    "v4Approval": {
+      "requestMessageId": "Sentinel_0b56149405008191bfa011f4ac8c50c7",
+      "approvalMessageId": "Sentinel_758903605ba881919f8f43d503096713",
+      "approvalMessageExact": "👍🏻yes",
+      "requestMessageExact": "CI is now blocked by five unresolved behavior rules. The attached revision 4 gives concrete recommendations for input counting, evidence requirements, native-test semantics, clarification/target references, and variance handling.\n\nImportant proposed limits: ZIP processing stops at 27 members or 67 MiB expanded data and reports incomplete coverage; numeric JSON spellings such as 1.0 and 1e0 return UNDETERMINED. These are choices requiring your approval.\n\nDo you approve revision 4 for implementation and verification, or want exceptions? Approval won’t accept unfinished code or waive CI. Independent repairs continue while you decide.",
+      "attachmentLibraryIds": [
+        "libfile_ddd633041f248191a56963ec22371282",
+        "libfile_a8f9abf04aa48191a468535516a66e96"
+      ],
+      "scope": "Exact revision 4 for implementation and verification; no implementation, CI, release, merge or deployment acceptance inferred"
+    },
+    "delegatedTechnicalDecisionAuthority": {
+      "messageId": "Sentinel_a923e955d0a08191b56d89578d6d0736",
+      "author": "User",
+      "exactText": "Please continue at all costs . If you get done making it live continue the remaining work. You have approval to spend up to $50 on ram or cpu or storage or tokens or whatever you need that will expedite it finish the application. You but make decisions for me in favor of the intent of the application. Please finish the application while I’m sleeping. When I wake up you better have at the least made pr1248 live",
+      "provenance": "Exact transcript_evidence forwarded by the lead to this preparer on 2026-10-15; original message ID retained.",
+      "usedScope": "Intent-consistent technical implementation decisions within exact approved v4 and this independently reviewed narrow reference resolution.",
+      "notInferred": [
+        "Separate owner approval of this record or the technical text",
+        "Approval of material silent behavior changes beyond reviewed scope",
+        "Implementation/CI/deployment acceptance or waiver",
+        "Purchase authority exercised by this record"
+      ]
+    },
+    "newOwnerDecisionRequiredWithinReviewedScope": false,
+    "noNewOwnerDecisionBasis": {
+      "reviewSha256": "0131a25605ac81d6ac53407252fd2cf7196a9075a1a1ae928806c021b577348b",
+      "field": "newOwnerDecisionRequiredWithinScope",
+      "value": false
+    }
+  },
+  "technicalResolution": {
+    "proposal": {
+      "path": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+      "byteLength": 10634,
+      "sha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+      "role": "EXACT_TECHNICAL_INTERPRETATION"
+    },
+    "freeze": {
+      "path": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/freeze-manifest.json",
+      "byteLength": 2314,
+      "sha256": "d9a80e6f870fbd894d7375b30d07e00b470083754a8604e91cd0456552d3757f",
+      "role": "IMMUTABLE_REVIEWED_TECHNICAL_PACKET"
+    },
+    "independentReview": {
+      "path": "/workspace/shared/clrt-iteration-repair-evidence/independent-release-review-20261014/approved-v4-reference-resolution-precedence-successor-review.json",
+      "byteLength": 4088,
+      "sha256": "0131a25605ac81d6ac53407252fd2cf7196a9075a1a1ae928806c021b577348b",
+      "role": "INDEPENDENT_IMPLEMENTATION_AWARE_TECHNICAL_SCOPE_REVIEW"
+    },
+    "referenceInventory": {
+      "path": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/reference-evidence.json",
+      "byteLength": 138418,
+      "sha256": "ef1c2d62aa1cbf9246887f9be8b7d4fee784a3938887fa976e1ea32b62e49a4e",
+      "role": "EXACT_CLASSIFIED_REFERENCE_INVENTORY"
+    },
+    "decoderTrace": {
+      "path": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/zip/reference-trace.json",
+      "byteLength": 150916,
+      "sha256": "1d54b9abf422743c6616e6212039511ef24193b2f6bd7bc54298741d60dada20",
+      "role": "EXACT_DECODER_DENOTATION_TRACE"
+    },
+    "preservedMachineScope": {
+      "path": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/resolutions.json",
+      "byteLength": 5722,
+      "sha256": "17b2fe2497a2a8029fdb76bd09ed7e04e0010a5a5a97973d842d113fc772b03f",
+      "role": "PRE_REVIEW_MACHINE_SCOPE_PRESERVED_WITH_STATUS_HISTORY"
+    },
+    "precedence": "Exact owner-approved v4 and current controlling source govern. The original packet remains proposed/unintegrated in its historical bytes; the later independent review establishes only its accepted narrow technical-reference scope. This additive record neither rewrites prior statuses nor silently upgrades implementation observations into normative authority.",
+    "independentReviewNextGateExact": "Lead may retain this exact reviewed technical resolution as a separately attributed reconciliation/adoption input. Preserve original blind artifacts and unresolved impacts; any successor reconciliation must identify this new technical input honestly. Source composition, independent impact/identity decisions and actual implementation/affected tests remain required."
+  },
+  "issueBindings": [
+    {
+      "issueId": "SRC-GAP-DECODER-SUBSET",
+      "resolutionId": "V4-C1-BOUNDED-DECODER-DENOTATION",
+      "proposalSpan": {
+        "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+        "startLine": 6,
+        "endLine": 21,
+        "startByte": 758,
+        "endByteExclusive": 5830,
+        "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+        "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt"
+      },
+      "interpretationKind": "PINNED_REFERENCE_DENOTATION_AND_SAFETY_PRESERVATION_WITHIN_APPROVED_C1",
+      "reviewedDisposition": "The exact decoder referent and its observed structural/safety predicate matrix may be used as a separately attributed technical clarification of C1; no standalone earlier normative enumeration is claimed.",
+      "references": [
+        {
+          "artifactSha256": "1d54b9abf422743c6616e6212039511ef24193b2f6bd7bc54298741d60dada20",
+          "referenceId": "BASE_ENGINEERING_BOUNDARY",
+          "inputId": "base",
+          "spanSha256IncludingLineTerminators": "fd8df860f5cf920cd87c417dde2c126d1f88038bed0577f0fb423310d97e8bc6"
+        },
+        {
+          "artifactSha256": "1d54b9abf422743c6616e6212039511ef24193b2f6bd7bc54298741d60dada20",
+          "referenceId": "BASE_ARCHIVE_SAFETY",
+          "inputId": "base",
+          "spanSha256IncludingLineTerminators": "865baeaca54f8ca081e29998403a829009853311fbf2fcaf869e9697bc473df0"
+        },
+        {
+          "artifactSha256": "1d54b9abf422743c6616e6212039511ef24193b2f6bd7bc54298741d60dada20",
+          "referenceId": "V4_NO_PINNED_IMPLEMENTATION_ADOPTION",
+          "inputId": "v4",
+          "spanSha256IncludingLineTerminators": "57da3bf05cb598e32a02528942b96ef8e2743b7f9cd051d02e644539b101088d"
+        },
+        {
+          "artifactSha256": "1d54b9abf422743c6616e6212039511ef24193b2f6bd7bc54298741d60dada20",
+          "referenceId": "V4_STRUCTURAL_MAPPING_AUTHORITY",
+          "inputId": "v4",
+          "spanSha256IncludingLineTerminators": "003b9f6b76dbbc77462e8bc5b7c648ca6d444bf5be50786511ecfcb809939ebb"
+        },
+        {
+          "artifactSha256": "1d54b9abf422743c6616e6212039511ef24193b2f6bd7bc54298741d60dada20",
+          "referenceId": "V4_C1_SCOPE",
+          "inputId": "v4",
+          "spanSha256IncludingLineTerminators": "1c204eb4639164b52c36f9ce853a64ca63300bef215e7302286e3c7f1caf9958"
+        },
+        {
+          "artifactSha256": "1d54b9abf422743c6616e6212039511ef24193b2f6bd7bc54298741d60dada20",
+          "referenceId": "V4_C1_RECORD_EXTENTS",
+          "inputId": "v4",
+          "spanSha256IncludingLineTerminators": "0bb228227919925163be8427ba0724d9ae33bd1f479b48c1fd990e0f28bf111a"
+        },
+        {
+          "artifactSha256": "1d54b9abf422743c6616e6212039511ef24193b2f6bd7bc54298741d60dada20",
+          "referenceId": "V4_C1_RECURSION",
+          "inputId": "v4",
+          "spanSha256IncludingLineTerminators": "8398aa9f9e4e00f422244f1dab6e5bde2714e7724616359d7b53cc5dfc4a5d92"
+        },
+        {
+          "artifactSha256": "1d54b9abf422743c6616e6212039511ef24193b2f6bd7bc54298741d60dada20",
+          "referenceId": "V4_C1_FAILURES",
+          "inputId": "v4",
+          "spanSha256IncludingLineTerminators": "beedb375aedb793f4f57f088d8d2abb6529cb825c348e384a240c1300780c258"
+        },
+        {
+          "artifactSha256": "1d54b9abf422743c6616e6212039511ef24193b2f6bd7bc54298741d60dada20",
+          "referenceId": "STORE_CP437",
+          "inputId": "store",
+          "spanSha256IncludingLineTerminators": "5f67cc2a90e87e4993ec2031e63f018c1307c2deac0e6275977e9fb6aa8b4bd0"
+        },
+        {
+          "artifactSha256": "1d54b9abf422743c6616e6212039511ef24193b2f6bd7bc54298741d60dada20",
+          "referenceId": "STORE_CRC_AND_EXTRAS",
+          "inputId": "store",
+          "spanSha256IncludingLineTerminators": "fccbd870711c25b970cd3f8dd0d5bda70c566339e7290e01a9a40cc8dff64ce2"
+        },
+        {
+          "artifactSha256": "1d54b9abf422743c6616e6212039511ef24193b2f6bd7bc54298741d60dada20",
+          "referenceId": "STORE_UNICODE_NAMES",
+          "inputId": "store",
+          "spanSha256IncludingLineTerminators": "0487ff078cff921eaa60ea3fb38bc74b5289d8cb99b0ce47fbacdedc1b9f8c61"
+        },
+        {
+          "artifactSha256": "1d54b9abf422743c6616e6212039511ef24193b2f6bd7bc54298741d60dada20",
+          "referenceId": "STORE_ZIP64_EXTRA",
+          "inputId": "store",
+          "spanSha256IncludingLineTerminators": "26959e13ac22837ff5cff576a22cd74c4edf000b94e8c7444274daa7663b3433"
+        },
+        {
+          "artifactSha256": "1d54b9abf422743c6616e6212039511ef24193b2f6bd7bc54298741d60dada20",
+          "referenceId": "STORE_DEFLATE",
+          "inputId": "store",
+          "spanSha256IncludingLineTerminators": "b6ee652dd7a14c57a2723cf36f2e7b5ea1f50945565b35e6d7a316870180eb62"
+        },
+        {
+          "artifactSha256": "1d54b9abf422743c6616e6212039511ef24193b2f6bd7bc54298741d60dada20",
+          "referenceId": "STORE_EOCD_ZIP64",
+          "inputId": "store",
+          "spanSha256IncludingLineTerminators": "37c636612f0339de48cd694ec29c9ab3b9b4786a746a6451a279b964a55375a5"
+        },
+        {
+          "artifactSha256": "1d54b9abf422743c6616e6212039511ef24193b2f6bd7bc54298741d60dada20",
+          "referenceId": "STORE_CENTRAL",
+          "inputId": "store",
+          "spanSha256IncludingLineTerminators": "695b3b570b8d1c9cd4c20b7ff3eb2d18982b9a6a7761ea636729727157d0ae30"
+        },
+        {
+          "artifactSha256": "1d54b9abf422743c6616e6212039511ef24193b2f6bd7bc54298741d60dada20",
+          "referenceId": "STORE_LOCAL_DESCRIPTOR",
+          "inputId": "store",
+          "spanSha256IncludingLineTerminators": "54b4a2cecdbc1b28b40fd7a4f8f41b1b52f50a6677fa7e5fbf2a669cf4163a94"
+        },
+        {
+          "artifactSha256": "1d54b9abf422743c6616e6212039511ef24193b2f6bd7bc54298741d60dada20",
+          "referenceId": "STORE_BYTES",
+          "inputId": "store",
+          "spanSha256IncludingLineTerminators": "679733219ec198797da78a9a30ee6d089b51b2560d8bd426bdc6306a70cbf090"
+        },
+        {
+          "artifactSha256": "1d54b9abf422743c6616e6212039511ef24193b2f6bd7bc54298741d60dada20",
+          "referenceId": "STORE_WORKER",
+          "inputId": "store",
+          "spanSha256IncludingLineTerminators": "928a9bfc6cd1ead8eabebb8951bdfcf313ee4f7dd3ed1a21e223b3bdb175eb0b"
+        },
+        {
+          "artifactSha256": "1d54b9abf422743c6616e6212039511ef24193b2f6bd7bc54298741d60dada20",
+          "referenceId": "STORE_WORKER_DISPATCH",
+          "inputId": "store",
+          "spanSha256IncludingLineTerminators": "e6916f61dc2dff6b610f03918b5f01dfa204d80ec76b1fb6405d69042c85c470"
+        },
+        {
+          "artifactSha256": "1d54b9abf422743c6616e6212039511ef24193b2f6bd7bc54298741d60dada20",
+          "referenceId": "SCHEMA_LIMITS_AND_SUBSET",
+          "inputId": "schema",
+          "spanSha256IncludingLineTerminators": "7a0c7046654f9894f24c17330c6b8d5a8688fc26edb65c125729184d926a8d6c"
+        },
+        {
+          "artifactSha256": "1d54b9abf422743c6616e6212039511ef24193b2f6bd7bc54298741d60dada20",
+          "referenceId": "HASH_UNICODE_IDENTITY",
+          "inputId": "hash",
+          "spanSha256IncludingLineTerminators": "adcd57b6a46775bac4e0581a69a654954f11f37989e89aa49349b272b44dcd97"
+        },
+        {
+          "artifactSha256": "1d54b9abf422743c6616e6212039511ef24193b2f6bd7bc54298741d60dada20",
+          "referenceId": "HASH_PATH_SAFETY",
+          "inputId": "hash",
+          "spanSha256IncludingLineTerminators": "0d6f788400e13d0415b5fcdfdf41dbbc550b29a7d99bfe9f983bbf398cdc9abc"
+        }
+      ],
+      "limits": [
+        "Only the exact pinned decoder subset is identified; no wholesale code incorporation or claim that existing behavior is automatically correct.",
+        "Approved C1 intake accounting, recursion, pass-wide safety budgets, explicit empty-archive blocker and honest incomplete/unavailable/resource outcomes continue to govern.",
+        "Transport-specific roles/size allowances and response opacity do not become intake authority; no accepted-form expansion, integrity/path weakening or unsupported/resource bypass."
+      ],
+      "remainingDuties": [
+        "Reconcile every preservation predicate with retained/current source safety.",
+        "Implement source-determined intake accounting and run actual boundary/fault tests.",
+        "Retain any differing or unsupported predicate as an explicit unresolved impact."
+      ],
+      "relationshipType": "CLARIFIES_INHERITED_DENOTATION",
+      "statuses": {
+        "technicalReferenceReview": "ACCEPTED_NARROW_SCOPE",
+        "sourceOnlyUncertaintyHistory": "PRESERVED_WITHOUT_REWRITE",
+        "successorSourceAdoption": "NOT_ESTABLISHED_BY_THIS_RECORD",
+        "implementationConformance": "NOT_ESTABLISHED_BY_THIS_RECORD"
+      }
+    },
+    {
+      "issueId": "SRC-GAP-DEFERRED-BINDING",
+      "resolutionId": "V4-F1-HISTORICAL-MEANINGS-UNDER-CURRENT-B",
+      "proposalSpan": {
+        "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+        "startLine": 23,
+        "endLine": 29,
+        "startByte": 5831,
+        "endByteExclusive": 9340,
+        "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+        "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt"
+      },
+      "interpretationKind": "LIMITED_HISTORICAL_REFERENCE_RECOVERY_WITH_EXPLICIT_CURRENT_SOURCE_PRECEDENCE",
+      "reviewedDisposition": "Recover only F1-expressly preserved binding, compatibility, receipt and restoration meanings; approved v4 B determines the single current canonical availability representation.",
+      "references": [
+        {
+          "artifactSha256": "ef1c2d62aa1cbf9246887f9be8b7d4fee784a3938887fa976e1ea32b62e49a4e",
+          "referenceId": "V4_B_TARGET_AVAILABILITY_PRECEDENCE",
+          "inputId": "V4",
+          "spanSha256IncludingLineTerminators": "df9601b218510bd7992a22132ce98646d96313a8efaea3464e2a082e19bbb66e"
+        },
+        {
+          "artifactSha256": "ef1c2d62aa1cbf9246887f9be8b7d4fee784a3938887fa976e1ea32b62e49a4e",
+          "referenceId": "F1_CURRENT_PRESERVATION",
+          "inputId": "V4",
+          "spanSha256IncludingLineTerminators": "b8d8a55d7f1e575527315e9c9f51787909aee2864c53ac2d1dd80e91374f81b2"
+        },
+        {
+          "artifactSha256": "ef1c2d62aa1cbf9246887f9be8b7d4fee784a3938887fa976e1ea32b62e49a4e",
+          "referenceId": "F2_CUSTODY_AND_STRONGER_GATES",
+          "inputId": "V4",
+          "spanSha256IncludingLineTerminators": "69079b310351e8ac273b433f85d26fed3f087c1c4d7d01d50d4c9490103c1e60"
+        },
+        {
+          "artifactSha256": "ef1c2d62aa1cbf9246887f9be8b7d4fee784a3938887fa976e1ea32b62e49a4e",
+          "referenceId": "F1_LINEAGE_POINTER",
+          "inputId": "V4",
+          "spanSha256IncludingLineTerminators": "1857ad637443ed97bad11e959661f79abfda91f91e212db118beba026e218f82"
+        },
+        {
+          "artifactSha256": "ef1c2d62aa1cbf9246887f9be8b7d4fee784a3938887fa976e1ea32b62e49a4e",
+          "referenceId": "HIST_DEFERRED_FULL",
+          "inputId": "HIST",
+          "spanSha256IncludingLineTerminators": "42f76060e394d627579651e11f3bd1987e11aa2249b78b81fb343669d4f8a375"
+        },
+        {
+          "artifactSha256": "ef1c2d62aa1cbf9246887f9be8b7d4fee784a3938887fa976e1ea32b62e49a4e",
+          "referenceId": "HIST_TIMING_FOR_DEFERRED_ONLY",
+          "inputId": "HIST",
+          "spanSha256IncludingLineTerminators": "4edee93555eab4f194bca586329d226809eb63fb61df06a624c2e23dc29680e2"
+        },
+        {
+          "artifactSha256": "ef1c2d62aa1cbf9246887f9be8b7d4fee784a3938887fa976e1ea32b62e49a4e",
+          "referenceId": "APPROVED_COMPATIBILITY",
+          "inputId": "COMPAT",
+          "spanSha256IncludingLineTerminators": "d0d9b51ced1a7b15bcb334adc4b144f110a600f205e2b2f9e508d8379e2ec624"
+        },
+        {
+          "artifactSha256": "ef1c2d62aa1cbf9246887f9be8b7d4fee784a3938887fa976e1ea32b62e49a4e",
+          "referenceId": "APPROVED_COMPATIBILITY_EXPECTATIONS",
+          "inputId": "COMPAT",
+          "spanSha256IncludingLineTerminators": "31f7fcfcfb785ad75fd230a0b9378db332c84bf1a325085038faeb67fc6e9930"
+        },
+        {
+          "artifactSha256": "ef1c2d62aa1cbf9246887f9be8b7d4fee784a3938887fa976e1ea32b62e49a4e",
+          "referenceId": "USER_REPLACEMENT_RESTORE",
+          "inputId": "RECOVERY",
+          "spanSha256IncludingLineTerminators": "2fd2e4bda99e8f674e9b2cd0e5868cd5bcd6298a51719734833ec5b2dc3b2dc2"
+        },
+        {
+          "artifactSha256": "ef1c2d62aa1cbf9246887f9be8b7d4fee784a3938887fa976e1ea32b62e49a4e",
+          "referenceId": "USER_HISTORY_ACTIVATION",
+          "inputId": "RECOVERY",
+          "spanSha256IncludingLineTerminators": "6805ce2305990b4f5992cdd477a1aa6688b323a0674cd79af4ed2dba21f6e1ac"
+        },
+        {
+          "artifactSha256": "ef1c2d62aa1cbf9246887f9be8b7d4fee784a3938887fa976e1ea32b62e49a4e",
+          "referenceId": "BASE_SCOPE_TIMING",
+          "inputId": "BASE",
+          "spanSha256IncludingLineTerminators": "cad26827e46a40f3d9b4856690d466ce25a15df9f4b86213da2ae6b021d1ca41"
+        }
+      ],
+      "limits": [
+        "Required non-null closed TARGET_AVAILABILITY_CONDITION contains exactly required non-null PROOF_EXPRESSION_ID; application relationship admission and later accepted/current proof readiness remain distinct.",
+        "LEAF/ALL_OF/ANY_OF/AT_LEAST_K and current proof target/evidence/scope/identity/byte rules govern; the historical custom condition grammar and phase table are migration/equivalence evidence only.",
+        "Every effective phase constraint needs current-source authority. Migration must preserve the whole target/evidence/scope and TRUE/FALSE/UNKNOWN predicate; absent equivalence leaves timing/proofs stale pending reauthoring/review.",
+        "No blanket history adoption, grandfathered helper, new executor/store/writer authority, proof-basis upgrade or favorable missing-evidence migration."
+      ],
+      "remainingDuties": [
+        "Trace source/field/producer/consumer closure for the current representation.",
+        "Review whole-predicate migration equivalence and independently source-required phase constraints.",
+        "Implement and verify custody, freshness, receipts, compatibility, pending restoration and stale-result refusal."
+      ],
+      "relationshipType": "CLARIFIES_PRESERVED_HISTORICAL_MEANINGS_UNDER_CURRENT_SOURCE_PRECEDENCE",
+      "statuses": {
+        "technicalReferenceReview": "ACCEPTED_NARROW_SCOPE",
+        "sourceOnlyUncertaintyHistory": "PRESERVED_WITHOUT_REWRITE",
+        "successorSourceAdoption": "NOT_ESTABLISHED_BY_THIS_RECORD",
+        "implementationConformance": "NOT_ESTABLISHED_BY_THIS_RECORD"
+      }
+    },
+    {
+      "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+      "resolutionId": "V4-D3-D4-SUPPLIED-NODE-INVOCATION-ROOT",
+      "proposalSpan": {
+        "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+        "startLine": 31,
+        "endLine": 35,
+        "startByte": 9341,
+        "endByteExclusive": 10421,
+        "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+        "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt"
+      },
+      "interpretationKind": "EXPLICIT_INTENT_CONSISTENT_OBSERVABLE_TECHNICAL_INTERPRETATION",
+      "reviewedDisposition": "For SELECT_XML the one eligible supplied node is this invocation root; first absolute child segment matches it at position 1 and traversal stays within its subtree.",
+      "references": [
+        {
+          "artifactSha256": "ef1c2d62aa1cbf9246887f9be8b7d4fee784a3938887fa976e1ea32b62e49a4e",
+          "referenceId": "D3_D4_XML",
+          "inputId": "V4",
+          "spanSha256IncludingLineTerminators": "329cf4b673d573adb4c3bbda8982c4c224986cae9b136d4357c5acb66c546a69"
+        },
+        {
+          "artifactSha256": "ef1c2d62aa1cbf9246887f9be8b7d4fee784a3938887fa976e1ea32b62e49a4e",
+          "referenceId": "BASE_XML_SELECTOR",
+          "inputId": "BASE",
+          "spanSha256IncludingLineTerminators": "371c359b0ca29f08bc0a6a47579fe87e0972957f65c40d5ee3b89e43585e57a5"
+        },
+        {
+          "artifactSha256": "ef1c2d62aa1cbf9246887f9be8b7d4fee784a3938887fa976e1ea32b62e49a4e",
+          "referenceId": "BASE_EXPLICIT_INPUTS_NO_AMBIENT_STATE",
+          "inputId": "BASE",
+          "spanSha256IncludingLineTerminators": "4c57e121314d9f410e7f2313c78ca904c5bddd50bf772599c5dfdc122db7fd4b"
+        },
+        {
+          "artifactSha256": "ef1c2d62aa1cbf9246887f9be8b7d4fee784a3938887fa976e1ea32b62e49a4e",
+          "referenceId": "IMPL_XML_PARSER_SELECTOR",
+          "inputId": "XML_RUNTIME",
+          "spanSha256IncludingLineTerminators": "823ffafc00614610628159553154f764f7ec532eabde973d89dad82507ce18aa"
+        }
+      ],
+      "limits": [
+        "The previous source ambiguity remains acknowledged; this is not asserted to have been uniquely determined by old source.",
+        "No implicit original-root/ancestor/outside-sibling access. Original parsed root must be passed explicitly through the same execution DAG.",
+        "Preserve same-execution provenance, explicit array extraction, exact four-property node shape/equality, selector grammar, bounds and v4 UNDETERMINED empty-selection rule."
+      ],
+      "remainingDuties": [
+        "Reflect the explicit interpretation in successor source reconciliation without rewriting original blind findings.",
+        "Implement and run root/subnode, provenance, outside-subtree and empty-selection controls."
+      ],
+      "relationshipType": "SELECTS_PREVIOUSLY_AMBIGUOUS_SEMANTICS_WITHIN_DELEGATED_TECHNICAL_AUTHORITY",
+      "statuses": {
+        "technicalReferenceReview": "ACCEPTED_NARROW_SCOPE",
+        "sourceOnlyUncertaintyHistory": "PRESERVED_WITHOUT_REWRITE",
+        "successorSourceAdoption": "NOT_ESTABLISHED_BY_THIS_RECORD",
+        "implementationConformance": "NOT_ESTABLISHED_BY_THIS_RECORD"
+      }
+    }
+  ],
+  "preservation": {
+    "originalSourceBytesUnchanged": true,
+    "approvedV4BytesUnchanged": true,
+    "insertionOnlySourceCandidateBytesUnchanged": true,
+    "allOriginalTechnicalPacketsUnchanged": true,
+    "blindArtifactsAndUncertaintyRecordsUnchanged": true,
+    "existingUncertaintyInputReference": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/unresolved-source-issues.json",
+      "byteLength": 40545,
+      "sha256": "4fa1d3346256df3e0cddec2059d19afc49cd24f9e9f1c12e78e25bb7abfddff9",
+      "referenceInventoryInputId": "ISSUES",
+      "provenance": "Copied only from the exact independently reviewed reference inventory; this preparer did not open the source-only uncertainty artifact."
+    },
+    "consumerRule": "A successor reconciliation must identify this as a new implementation-aware input and retain original issue IDs, evidence, open impacts and uncertainty history. Technical-reference resolution is distinct from source composition, obligation extraction, governing context, identity and conformance. No old contributor is relabeled as having reviewed the new technical input.",
+    "historicalStatusRule": "Frozen proposed/pending states remain historical facts; use the later review as a separate state event, not a rewrite of earlier records."
+  },
+  "integrationBoundaries": {
+    "repositoryEdits": false,
+    "testsExecuted": false,
+    "sourceAdoptionEstablished": false,
+    "completeImpactReconciliationEstablished": false,
+    "identityRetentionAuthorized": false,
+    "productionFingerprintIntegrated": false,
+    "implementationConformanceEstablished": false,
+    "fiveFindingClosureEstablished": false,
+    "ciOrDeploymentAcceptanceEstablished": false
+  },
+  "mandatoryConsumerRefusals": [
+    "Proposal/freeze/review/source/authority hash mismatch or missing referenced artifact.",
+    "Claiming the technical record is blind source-only evidence or new exact-text user approval.",
+    "Using historical grammar or phase tables as current canonical/phase authority contrary to v4 B.",
+    "ZIP subset expansion, weakened safety, invented favorable coverage or unsupported/resource bypass.",
+    "XML original-root ambient access or rejecting every selected subnode contrary to this reviewed interpretation.",
+    "Deleting original uncertainty/impact findings or claiming implementation/identity/proof acceptance from this record alone.",
+    "Treating technical-reference acceptance as a substitute for applicable existing source-composition, source-identity, proof or verification requirements. This record creates no additional whole-application proof prerequisite or blanket population-wide impact-review gate."
+  ],
+  "preparationPredecessor": {
+    "recordPath": "/workspace/shared/clrt-v4-technical-reference-adoption-input-2933/approved-v4-technical-reference-input-20261015.json",
+    "recordSha256": "720e642f98df9f7a2f52f137f4cda227f7cecae4917035185c621f8868ba71d6",
+    "reason": "Add reconciler-requested explicit relationship types/text locations and clarify that this record creates no extra blanket impact or whole-application proof gate."
+  },
+  "validationScope": "Only the applicable controlling source and existing owners determine source composition, identity retention and proof validation requirements. Unexamined impacts are not silently cleared; this input does not itself require every unrelated application proof or every predecessor impact to be complete before PR CI may run."
+}

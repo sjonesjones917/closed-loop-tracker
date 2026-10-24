@@ -1,0 +1,16 @@
+Bounded independent behavior review: ACCEPT
+Exact subject: f62eaac1f0c04d6386147e209a8f8039bcfa237a (corrects a155e804122d18bc49a7fa8875fd30c6a13ed12d), based on independently accepted repeated-context support14880c1f.
+Scope: truthful cross-section occurrence references; heading-only parent section disposition; pinned typed component/history/context-chain governor coverage; generated/core section inventory preservation and complete reviewed component target membership. No application acceptance or semantic extraction completeness established.
+
+Independent expectations frozen before code inspection:
+section-coverage-independent-expectations.txt SHA2569b55e18300a10f31d181bbe684bb21cfb8b1d7556efb622fff895b822fc34eff
+typed-governor-independent-expectations.txt SHA2568ab053f72f54ff8c7e795fcd1d31c718a1d195e53c006eee6774d82ef674acbe
+Both under /workspace/shared/clrt-atomic-review-evidence.
+
+Rejected a155 evidence remains in section-result.json and governor-result.json: production generator mislabeled reviewed cross-section coverage and structural parents NONNORMATIVE; typed graph silently dropped a missing active sibling named in pinned component review. The latter permitted a two-target reviewed mapping to become one target without changing the authority artifact.
+
+Corrected independent controls:27 PASS (13 section/consumer,14 governor/new-scope). Scripts/results under corrected/. Tests invoke exact committed production helper and extracted production generator/core section seams. Positives preserve original cross-section range, exact parent heading, both component targets and explicit multi-hop context chain. Negatives reject omitted/wrong/withdrawn range, duplicated primary membership, fake structural section, missing child, false generated mirrors, both mirrors deleting reference, stale scope snapshot, unknown key, unsupported edge, skipped/cyclic chain, missing governor scope, dropped reviewed sibling, and omitted/changed key/statement/primary of independently reviewed new scope. Synthetic fixtures are only validator challenges, never renewed governance evidence.
+
+Compatibility replay on Node22.23.3:218 focused format controls PASS; source adoption PASS; source classifications PASS. Core retains19 historical controls and218 focused controls, then exits1 with expected BLOCKED_ATOMIC_REQUIREMENT_COMPLETENESS and explicit Section2.2 unproven distinct-obligation completeness. This is not a full governance pass. Reviewer worktree only has generated manifests and conformance regression output from the replay; no source modifications. Runtime/app files unchanged in this scope. No new runtime build claim for this incremental scope.
+
+Actual component record read-only check found5 NEW_DISTINCT_SCOPE mappings at22,170,332,1422,1868. Correction binds every such reviewed proposed key/statement/primary, in addition to exact existing target-key resolution. All declared normalized semantic inputs are checked and fingerprinted. Actual source semantics and final membership remain the distinct reconciliation reviewers' responsibility; this review establishes bounded mechanical support behavior only.

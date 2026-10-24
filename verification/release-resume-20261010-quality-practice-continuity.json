@@ -1,0 +1,2122 @@
+{
+  "schema": "closed-loop-recovered-quality-practice-continuity/1",
+  "checkedAtUtc": "2026-10-10T16:16:49.783728+00:00",
+  "committedHead": "1599f9cfb33cc246292ade693c877fbe200b1986",
+  "recoveryIdentity": {
+    "manifestGitBlob": "23cb364dbdba418910f30b59f66a22212f304a3c",
+    "manifestGitBlobUrl": "https://api.github.com/repos/sjonesjones917/closed-loop-tracker/git/blobs/23cb364dbdba418910f30b59f66a22212f304a3c",
+    "checkpointCommentUrl": "https://github.com/sjonesjones917/closed-loop-tracker/pull/1248#issuecomment-6027182767",
+    "archiveSha256": "415de13c078cf0175bd06ea41bddf3d8efd23b64311e142a51ce1c96d3588e0f",
+    "captureManifestSha256": "2828f8cb648b2f6274ab45b50c7b63ba37cf59c0419b7cb920269e17e2dc2eb2",
+    "parts": [
+      {
+        "index": 0,
+        "bytes": 8388608,
+        "sha256": "670030f54056a515713f7d18f1a5b9e05925f8139a498371a0f5d45ff3233270",
+        "gitBlobSha": "a250e84b0b0b375e189325f0f3d19f73cfc4a362"
+      },
+      {
+        "index": 1,
+        "bytes": 8388608,
+        "sha256": "62095ca9f0e3c74c63d52c4de4d46b3dbaa4ea3225b65ca1da2ae594f40872a0",
+        "gitBlobSha": "1b18af019e839cb066481029d39903f2e1d67645"
+      },
+      {
+        "index": 2,
+        "bytes": 7523120,
+        "sha256": "92f26770408cdb729b750a7e72823f180dd4c22d45eb0378d0468b6e79ea2917",
+        "gitBlobSha": "28b9f497fb3ab5d5f2faf7a05b06868ba0d4227a"
+      }
+    ],
+    "captureUtc": "2026-10-06T23:08:56.644801+00:00",
+    "capturedSourceCommit": "a194ae7020c40bf27bb4d5d1c586d271d4c87e92",
+    "captureQualification": "WIP_NONCOHERENT_NOT_RELEASE_PROOF",
+    "rootValidatedMembers": 1496,
+    "rootExtractedEvidenceMembers": 612,
+    "rootRecoveryCheckedAtUtc": "2026-10-10T16:14:17.361533+00:00",
+    "continuationIndependentlyVerifiedSelectedMembers": [
+      {
+        "path": "/workspace/scratch/recovered-20261006/evidence/02-pr-review/complete-pr-file-review-inventory.json",
+        "archiveMember": "evidence/02-pr-review/complete-pr-file-review-inventory.json",
+        "bytes": 892883,
+        "sha256": "49781bf6d7fd87ca5f27c9ba3a308e7bf33fb01bc8d5db7b6b373f9eeb426aff",
+        "gitBlobSha": "a982fdfa18bfade42ce499485bad193f38793370"
+      },
+      {
+        "path": "/workspace/scratch/recovered-20261006/evidence/02-pr-review/working-pr-file-review-inventory.json",
+        "archiveMember": "evidence/02-pr-review/working-pr-file-review-inventory.json",
+        "bytes": 1447751,
+        "sha256": "ecc81683048cc74de6238ad77dcd359bc09ec412368bcca6bef36ee477e3408c",
+        "gitBlobSha": "7e7f71f31546e4eb2a1cdd9805ca704dcfaf6fe8"
+      },
+      {
+        "path": "/workspace/scratch/recovered-20261006/evidence/01-stage-review/current-stage-matrix.json",
+        "archiveMember": "evidence/01-stage-review/current-stage-matrix.json",
+        "bytes": 78588,
+        "sha256": "617e5e59d357f3c5bc903d03488a557dcfc9e30ae3af00924fb798c14534cc7f",
+        "gitBlobSha": "facbe3aa9814afbcb619fb45a10657be3f7cd994"
+      },
+      {
+        "path": "/workspace/scratch/recovered-20261006/evidence/01-stage-review/current-operation-coverage.json",
+        "archiveMember": "evidence/01-stage-review/current-operation-coverage.json",
+        "bytes": 460720,
+        "sha256": "7c645072ecc05e8d89ed6a42b1969e1b7a733e1d6b1fd778c29bb93b449e6c56",
+        "gitBlobSha": "cde2f7b496145f09c590e53461dc5a84e35a99a3"
+      },
+      {
+        "path": "/workspace/scratch/recovered-20261006/evidence/01-stage-review/prior-comparison-a194.json",
+        "archiveMember": "evidence/01-stage-review/prior-comparison-a194.json",
+        "bytes": 2968,
+        "sha256": "531e52a24755fe8191a5f4d2a477b851497962c8153364e352211831784cbe83",
+        "gitBlobSha": "b54ebe906a7f94b6f59393ca88e0194d6433b26e"
+      },
+      {
+        "path": "/workspace/scratch/recovered-20261006/evidence/00-current-evidence/current-quality-practice-record.json",
+        "archiveMember": "evidence/00-current-evidence/current-quality-practice-record.json",
+        "bytes": 111554,
+        "sha256": "0248ae5a978d365a137ddc5756a90264549a1532e433cba974585136eb0aadbc",
+        "gitBlobSha": "e4024151f2ce3e0116a4bd247ecffd7c78b7dc05"
+      }
+    ],
+    "qualification": "Historical WIP evidence recovered exactly. Byte recovery and scoped source identity establish neither current behavioral proof nor release conformance."
+  },
+  "recoveredPracticeRecord": {
+    "schema": "closed-loop-quality-practice-reuse/1",
+    "reviewedAtUtc": "2026-10-06T23:08:55.976979+00:00",
+    "examinedSource": "a194ae7020c40bf27bb4d5d1c586d271d4c87e92",
+    "primaryResearchAccessDate": "2026-10-04",
+    "primaryRecord": "/workspace/scratch/recovery/quality-history/workspace/scratch/system-diagnosis/quality-primary-sources-20261004/quality-record.json",
+    "primarySources": [
+      {
+        "id": "apg-alert",
+        "requestedURL": "https://www.w3.org/WAI/ARIA/apg/patterns/alert/",
+        "accessedAtUTC": "2026-10-04T06:54:33.459753+00:00",
+        "route": "Python urllib HTTPS using current environment network configuration",
+        "timeoutSeconds": 25,
+        "status": 200,
+        "finalURL": "https://www.w3.org/WAI/ARIA/apg/patterns/alert/",
+        "headers": {
+          "date": "Sun, 04 Oct 2026 06:54:33 GMT",
+          "content-type": "text/html; charset=utf-8",
+          "last-modified": "Fri, 02 Oct 2026 21:12:40 GMT",
+          "access-control-allow-origin": "*",
+          "cf-cache-status": "HIT",
+          "expires": "Fri, 02 Oct 2026 21:33:10 GMT",
+          "cache-control": "max-age=600, s-maxage=2592001",
+          "x-proxy-cache": "MISS",
+          "x-github-request-id": "2442:12F969:3AD33C:4C8824:6AC020BE",
+          "x-github-edge-region": "iad",
+          "x-content-type-options": "nosniff",
+          "via": "1.1 varnish",
+          "x-served-by": "cache-iad-kcgs7200161-IAD",
+          "x-cache": "MISS",
+          "x-cache-hits": "0",
+          "x-timer": "S1790976191.919957,VS0,VE23",
+          "vary": "Accept-Encoding",
+          "x-fastly-request-id": "8dfff4b72bb240cb40204aafc4a1c0b9151ac063",
+          "age": "120682",
+          "x-backend": "www-mirrors",
+          "x-request-id": "a446c448fcfce769",
+          "strict-transport-security": "max-age=15552000; includeSubdomains; preload",
+          "content-security-policy": "frame-ancestors 'self' https://cms.w3.org/ https://cms-dev.w3.org/; upgrade-insecure-requests",
+          "server": "envoy",
+          "cf-ray": "a45246a38f56ab95-ORD",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "x-envoy-upstream-service-time": "15",
+          "connection": "close",
+          "transfer-encoding": "chunked"
+        },
+        "bytes": 34955,
+        "sha256": "b0b2f8b621b4715ef7568dc1a3c170b7fe3ac0f89f48711f375966d5c8936dbb",
+        "rawPath": "/workspace/scratch/system-diagnosis/quality-primary-sources-20261004/apg-alert.html",
+        "outcome": "FETCHED",
+        "elapsedSeconds": 0.0791756099788472,
+        "versionOrAccessedSnapshot": "WAI ARIA Authoring Practices Guide, Alert Pattern; accessed snapshot",
+        "authorityKind": "NONNORMATIVE_AUTHORING_GUIDANCE",
+        "reviewScope": "Relevant API/algorithm or guidance sections only, not an exhaustive review of every section of this document.",
+        "metadataPrivacyRedaction": {
+          "suppressedHeaderNames": [
+            "set-cookie"
+          ],
+          "reason": "Public-source research does not need anonymous response cookies or credential-bearing headers. Original HTML/JSON/text response bytes are retained exactly; only unnecessary header values are omitted from publishable research metadata.",
+          "originalMetadataSHA256": "ad36f05010d2116598d5cc6947ea1290106e6cfc8a9d854aac40c8918009af7d"
+        }
+      },
+      {
+        "id": "cdp-browser-protocol",
+        "requestedURL": "https://raw.githubusercontent.com/ChromeDevTools/devtools-protocol/master/json/browser_protocol.json",
+        "accessedAtUTC": "2026-10-04T06:55:20.756694+00:00",
+        "route": "Python urllib HTTPS using current environment network configuration",
+        "timeoutSeconds": 25,
+        "status": 200,
+        "finalURL": "https://raw.githubusercontent.com/ChromeDevTools/devtools-protocol/master/json/browser_protocol.json",
+        "headers": {
+          "cache-control": "max-age=300",
+          "content-security-policy": "default-src 'none'; style-src 'unsafe-inline'; sandbox",
+          "content-type": "text/plain; charset=utf-8",
+          "etag": "\"e92ea699c8f7440e12abc379069255bbbf2f199d338e24ec83ad97119eab6e40\"",
+          "strict-transport-security": "max-age=31536000",
+          "x-content-type-options": "nosniff",
+          "x-frame-options": "deny",
+          "x-xss-protection": "1; mode=block",
+          "x-github-request-id": "BABA:2D4F80:1DF193:2D84FA:6AC1F858",
+          "x-github-edge-region": "iad",
+          "accept-ranges": "bytes",
+          "date": "Sun, 04 Oct 2026 06:55:21 GMT",
+          "via": "1.1 varnish",
+          "x-served-by": "cache-chi-klot8100129-CHI",
+          "x-cache": "MISS",
+          "x-cache-hits": "0",
+          "x-timer": "S1791096921.860260,VS0,VE194",
+          "vary": "Authorization,Accept-Encoding",
+          "access-control-allow-origin": "*",
+          "cross-origin-resource-policy": "cross-origin",
+          "x-fastly-request-id": "93aab54730ac95e12c4b43841d090895ef52eb8c",
+          "expires": "Sun, 04 Oct 2026 07:00:21 GMT",
+          "source-age": "0",
+          "content-length": "1418018",
+          "x-envoy-upstream-service-time": "248",
+          "server": "envoy",
+          "connection": "close"
+        },
+        "bytes": 1418018,
+        "sha256": "37b77cd1dadbef05c627f7c0578b15c212577493cbb6f234aef144633646ee6c",
+        "rawPath": "/workspace/scratch/system-diagnosis/quality-primary-sources-20261004/cdp-browser-protocol.json",
+        "outcome": "FETCHED",
+        "elapsedSeconds": 0.32924067400745116,
+        "versionOrAccessedSnapshot": "Official devtools-protocol master browser_protocol.json; protocol 1.3 snapshot",
+        "authorityKind": "TIP_OF_TREE_PROTOCOL_NOT_PINNED_CHROMIUM151_COMPATIBILITY_PROOF",
+        "reviewScope": "Relevant API/algorithm or guidance sections only, not an exhaustive review of every section of this document."
+      },
+      {
+        "id": "cdp-dom",
+        "requestedURL": "https://chromedevtools.github.io/devtools-protocol/tot/DOM/#method-setFileInputFiles",
+        "accessedAtUTC": "2026-10-04T06:54:33.545996+00:00",
+        "route": "Python urllib HTTPS using current environment network configuration",
+        "timeoutSeconds": 25,
+        "status": 200,
+        "finalURL": "https://chromedevtools.github.io/devtools-protocol/tot/DOM/#method-setFileInputFiles",
+        "headers": {
+          "server": "envoy",
+          "content-type": "text/html; charset=utf-8",
+          "last-modified": "Sat, 03 Oct 2026 04:43:15 GMT",
+          "access-control-allow-origin": "*",
+          "etag": "\"6ac087e3-1feb\"",
+          "expires": "Sun, 04 Oct 2026 07:04:33 GMT",
+          "cache-control": "max-age=600",
+          "x-proxy-cache": "MISS",
+          "x-github-request-id": "19B2:1ECEE3:6E22BA:7B46E3:6AC1F829",
+          "x-github-edge-region": "iad",
+          "accept-ranges": "bytes",
+          "age": "0",
+          "date": "Sun, 04 Oct 2026 06:54:33 GMT",
+          "via": "1.1 varnish",
+          "x-served-by": "cache-chi-klot8100044-CHI",
+          "x-cache": "MISS",
+          "x-cache-hits": "0",
+          "x-timer": "S1791096874.663093,VS0,VE53",
+          "vary": "Accept-Encoding",
+          "x-fastly-request-id": "c6994eb9b3a8bcc1e650be88b7ea579f80fb7061",
+          "content-length": "8171",
+          "x-envoy-upstream-service-time": "97",
+          "connection": "close"
+        },
+        "bytes": 8171,
+        "sha256": "d5909c15993e0557b3f394eebdda56d60fc96b5ef5c3b42c39126021db3e36c1",
+        "rawPath": "/workspace/scratch/system-diagnosis/quality-primary-sources-20261004/cdp-dom.html",
+        "outcome": "FETCHED",
+        "elapsedSeconds": 0.17593999902601354,
+        "versionOrAccessedSnapshot": "Chrome DevTools Protocol tip-of-tree DOM documentation shell",
+        "authorityKind": "DYNAMIC_DOCUMENTATION_SHELL_NOT_PARAMETER_EVIDENCE",
+        "reviewScope": "Relevant API/algorithm or guidance sections only, not an exhaustive review of every section of this document."
+      },
+      {
+        "id": "cdp-js-protocol",
+        "requestedURL": "https://raw.githubusercontent.com/ChromeDevTools/devtools-protocol/master/json/js_protocol.json",
+        "accessedAtUTC": "2026-10-04T06:55:20.757044+00:00",
+        "route": "Python urllib HTTPS using current environment network configuration",
+        "timeoutSeconds": 25,
+        "status": 200,
+        "finalURL": "https://raw.githubusercontent.com/ChromeDevTools/devtools-protocol/master/json/js_protocol.json",
+        "headers": {
+          "cache-control": "max-age=300",
+          "content-security-policy": "default-src 'none'; style-src 'unsafe-inline'; sandbox",
+          "content-type": "text/plain; charset=utf-8",
+          "etag": "\"42d55f593705d4097f3ac30cab2c9a5a16bb4194f66efedeef62952a905022d1\"",
+          "strict-transport-security": "max-age=31536000",
+          "x-content-type-options": "nosniff",
+          "x-frame-options": "deny",
+          "x-xss-protection": "1; mode=block",
+          "x-github-request-id": "39A4:1FA9A:1E5DB6:2DF16E:6AC1F858",
+          "x-github-edge-region": "iad",
+          "accept-ranges": "bytes",
+          "date": "Sun, 04 Oct 2026 06:55:21 GMT",
+          "via": "1.1 varnish",
+          "x-served-by": "cache-chi-klot8100076-CHI",
+          "x-cache": "MISS",
+          "x-cache-hits": "0",
+          "x-timer": "S1791096921.854707,VS0,VE280",
+          "vary": "Authorization,Accept-Encoding",
+          "access-control-allow-origin": "*",
+          "cross-origin-resource-policy": "cross-origin",
+          "x-fastly-request-id": "834af4340b7158b9c7099b00ed15c5aad27e9571",
+          "expires": "Sun, 04 Oct 2026 07:00:21 GMT",
+          "source-age": "0",
+          "content-length": "182696",
+          "x-envoy-upstream-service-time": "322",
+          "server": "envoy",
+          "connection": "close"
+        },
+        "bytes": 182696,
+        "sha256": "76f43fd9cb7048795ab1b945e2589f613ed3d6449c90ac9517736293381623fc",
+        "rawPath": "/workspace/scratch/system-diagnosis/quality-primary-sources-20261004/cdp-js-protocol.json",
+        "outcome": "FETCHED",
+        "elapsedSeconds": 0.38950821600155905,
+        "versionOrAccessedSnapshot": "Official devtools-protocol master js_protocol.json; protocol 1.3 snapshot",
+        "authorityKind": "TIP_OF_TREE_PROTOCOL_NOT_PINNED_CHROMIUM151_COMPATIBILITY_PROOF",
+        "reviewScope": "Relevant API/algorithm or guidance sections only, not an exhaustive review of every section of this document."
+      },
+      {
+        "id": "cdp-runtime",
+        "requestedURL": "https://chromedevtools.github.io/devtools-protocol/tot/Runtime/#method-evaluate",
+        "accessedAtUTC": "2026-10-04T06:54:33.635809+00:00",
+        "route": "Python urllib HTTPS using current environment network configuration",
+        "timeoutSeconds": 25,
+        "status": 200,
+        "finalURL": "https://chromedevtools.github.io/devtools-protocol/tot/Runtime/#method-evaluate",
+        "headers": {
+          "server": "envoy",
+          "content-type": "text/html; charset=utf-8",
+          "x-origin-cache": "HIT",
+          "last-modified": "Sat, 03 Oct 2026 04:43:16 GMT",
+          "access-control-allow-origin": "*",
+          "etag": "\"6ac087e4-153f\"",
+          "expires": "Sun, 04 Oct 2026 07:04:33 GMT",
+          "cache-control": "max-age=600",
+          "x-proxy-cache": "MISS",
+          "x-github-request-id": "B8C2:250B40:8D7D98:987897:6AC1F829",
+          "x-github-edge-region": "iad",
+          "accept-ranges": "bytes",
+          "age": "0",
+          "date": "Sun, 04 Oct 2026 06:54:33 GMT",
+          "via": "1.1 varnish",
+          "x-served-by": "cache-chi-klot8100048-CHI",
+          "x-cache": "MISS",
+          "x-cache-hits": "0",
+          "x-timer": "S1791096874.736370,VS0,VE36",
+          "vary": "Accept-Encoding",
+          "x-fastly-request-id": "fddbf2c4c2b8683e8f72e073d7fc556e4591b5e3",
+          "content-length": "5439",
+          "x-envoy-upstream-service-time": "79",
+          "connection": "close"
+        },
+        "bytes": 5439,
+        "sha256": "b7a6240581ac057176fb101e2fdda5d544bc9e06a66a1ed2ab5c821f2d8e55d3",
+        "rawPath": "/workspace/scratch/system-diagnosis/quality-primary-sources-20261004/cdp-runtime.html",
+        "outcome": "FETCHED",
+        "elapsedSeconds": 0.14280221398803405,
+        "versionOrAccessedSnapshot": "Chrome DevTools Protocol tip-of-tree Runtime documentation shell",
+        "authorityKind": "DYNAMIC_DOCUMENTATION_SHELL_NOT_PARAMETER_EVIDENCE",
+        "reviewScope": "Relevant API/algorithm or guidance sections only, not an exhaustive review of every section of this document."
+      },
+      {
+        "id": "csp3",
+        "requestedURL": "https://www.w3.org/TR/CSP3/",
+        "accessedAtUTC": "2026-10-04T06:53:58.012132+00:00",
+        "route": "Python urllib HTTPS using current environment network configuration",
+        "timeoutSeconds": 25,
+        "status": 200,
+        "finalURL": "https://www.w3.org/TR/CSP3/",
+        "headers": {
+          "date": "Sun, 04 Oct 2026 06:53:58 GMT",
+          "content-type": "text/html; charset=utf-8",
+          "content-location": "Overview.html",
+          "last-modified": "Wed, 16 Sep 2026 13:44:14 GMT",
+          "cache-control": "max-age=31536000, s-maxage=2592001",
+          "expires": "Fri, 01 Oct 2027 08:33:00 GMT",
+          "vary": "Accept-Encoding,Origin",
+          "cf-cache-status": "HIT",
+          "access-control-allow-origin": "*",
+          "x-backend": "www-mirrors",
+          "x-request-id": "a43a1eb72816da88",
+          "strict-transport-security": "max-age=15552000; includeSubdomains; preload",
+          "content-security-policy": "frame-ancestors 'self' https://cms.w3.org/ https://cms-dev.w3.org/; upgrade-insecure-requests",
+          "x-content-type-options": "nosniff",
+          "age": "253258",
+          "server": "envoy",
+          "cf-ray": "a45245c6dc0f21de-ORD",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "x-envoy-upstream-service-time": "49",
+          "connection": "close",
+          "transfer-encoding": "chunked"
+        },
+        "bytes": 1011213,
+        "sha256": "df90a9028632b39c70d9ed40dadfadbc2f3f690621ecf6212ef4f1376005738e",
+        "rawPath": "/workspace/scratch/system-diagnosis/quality-primary-sources-20261004/csp3.html",
+        "outcome": "FETCHED",
+        "elapsedSeconds": 0.2420828540052753,
+        "versionOrAccessedSnapshot": "Content Security Policy Level 3, 16 September 2026",
+        "authorityKind": "W3C_WORKING_DRAFT",
+        "reviewScope": "Relevant API/algorithm or guidance sections only, not an exhaustive review of every section of this document.",
+        "metadataPrivacyRedaction": {
+          "suppressedHeaderNames": [
+            "set-cookie"
+          ],
+          "reason": "Public-source research does not need anonymous response cookies or credential-bearing headers. Original HTML/JSON/text response bytes are retained exactly; only unnecessary header values are omitted from publishable research metadata.",
+          "originalMetadataSHA256": "d35f30dc32e392701f30847a872bce1461d1093e2b8507cc42e3d1e88505293e"
+        }
+      },
+      {
+        "id": "ecma-2026",
+        "requestedURL": "https://262.ecma-international.org/17.0/#sec-json.parse",
+        "accessedAtUTC": "2026-10-04T06:55:20.754643+00:00",
+        "route": "Python urllib HTTPS using current environment network configuration",
+        "timeoutSeconds": 25,
+        "status": 200,
+        "finalURL": "https://262.ecma-international.org/17.0/#sec-json.parse",
+        "headers": {
+          "date": "Sun, 04 Oct 2026 06:55:21 GMT",
+          "server": "envoy",
+          "strict-transport-security": "max-age=16000000",
+          "last-modified": "Tue, 30 Jun 2026 11:00:15 GMT",
+          "etag": "\"7f64e8-655767ad65edc\"",
+          "accept-ranges": "bytes",
+          "content-length": "8348904",
+          "vary": "Accept-Encoding",
+          "content-type": "text/html",
+          "x-envoy-upstream-service-time": "361",
+          "connection": "close"
+        },
+        "bytes": 8348904,
+        "sha256": "5df49e088c2b5c7a3dfd4a330414b92897fb4535cb62fc5936cad101a6c2304a",
+        "rawPath": "/workspace/scratch/system-diagnosis/quality-primary-sources-20261004/ecma-2026.html",
+        "outcome": "FETCHED",
+        "elapsedSeconds": 2.832920090004336,
+        "versionOrAccessedSnapshot": "ECMA-262, 17th edition, ECMAScript 2026",
+        "authorityKind": "PUBLISHED_LANGUAGE_STANDARD",
+        "reviewScope": "Relevant API/algorithm or guidance sections only, not an exhaustive review of every section of this document."
+      },
+      {
+        "id": "ecma-json",
+        "requestedURL": "https://tc39.es/ecma262/multipage/structured-data.html#sec-json.parse",
+        "accessedAtUTC": "2026-10-04T06:53:58.008617+00:00",
+        "route": "Python urllib HTTPS using current environment network configuration",
+        "timeoutSeconds": 25,
+        "status": 200,
+        "finalURL": "https://tc39.es/ecma262/multipage/structured-data.html#sec-json.parse",
+        "headers": {
+          "server": "envoy",
+          "content-type": "text/html; charset=utf-8",
+          "last-modified": "Sat, 03 Oct 2026 08:48:16 GMT",
+          "access-control-allow-origin": "*",
+          "etag": "\"6ac0c150-ea520\"",
+          "expires": "Sun, 04 Oct 2026 07:03:58 GMT",
+          "cache-control": "max-age=600",
+          "x-proxy-cache": "MISS",
+          "x-github-request-id": "6FC0:1C5A:16D240:1FFE84:6AC1F806",
+          "x-github-edge-region": "iad",
+          "accept-ranges": "bytes",
+          "age": "0",
+          "date": "Sun, 04 Oct 2026 06:53:58 GMT",
+          "via": "1.1 varnish",
+          "x-served-by": "cache-chi-klot8100076-CHI",
+          "x-cache": "MISS",
+          "x-cache-hits": "0",
+          "x-timer": "S1791096838.195481,VS0,VE122",
+          "vary": "Accept-Encoding",
+          "x-fastly-request-id": "2d77b4ca1db353d41c4df8aba42bffd76d3bd061",
+          "content-length": "959776",
+          "x-envoy-upstream-service-time": "172",
+          "connection": "close"
+        },
+        "bytes": 959776,
+        "sha256": "e0e001b472dfcf40ee312e6e4aa4fe6eb66a73aededb0d1d61f6bd360dbe8d78",
+        "rawPath": "/workspace/scratch/system-diagnosis/quality-primary-sources-20261004/ecma-json.html",
+        "outcome": "FETCHED",
+        "elapsedSeconds": 0.34062090900260955,
+        "versionOrAccessedSnapshot": "ECMAScript 2027 editor draft; accessed snapshot",
+        "authorityKind": "EDITOR_DRAFT_NOT_THE_RUNTIME_COMPATIBILITY_BASELINE",
+        "reviewScope": "Relevant API/algorithm or guidance sections only, not an exhaustive review of every section of this document."
+      },
+      {
+        "id": "file-api",
+        "requestedURL": "https://www.w3.org/TR/FileAPI/",
+        "accessedAtUTC": "2026-10-04T06:53:58.010903+00:00",
+        "route": "Python urllib HTTPS using current environment network configuration",
+        "timeoutSeconds": 25,
+        "status": 200,
+        "finalURL": "https://www.w3.org/TR/FileAPI/",
+        "headers": {
+          "date": "Sun, 04 Oct 2026 06:53:58 GMT",
+          "content-type": "text/html; charset=utf-8",
+          "content-location": "Overview.html",
+          "last-modified": "Sat, 12 Sep 2026 11:39:12 GMT",
+          "cache-control": "max-age=31536000, s-maxage=2592001",
+          "expires": "Fri, 01 Oct 2027 08:33:18 GMT",
+          "vary": "Accept-Encoding,Origin",
+          "cf-cache-status": "HIT",
+          "access-control-allow-origin": "*",
+          "x-backend": "www-mirrors",
+          "x-request-id": "a43a1f28acb9586a",
+          "strict-transport-security": "max-age=15552000; includeSubdomains; preload",
+          "content-security-policy": "frame-ancestors 'self' https://cms.w3.org/ https://cms-dev.w3.org/; upgrade-insecure-requests",
+          "x-content-type-options": "nosniff",
+          "age": "253239",
+          "server": "envoy",
+          "cf-ray": "a45245c6da418f1c-ORD",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "x-envoy-upstream-service-time": "83",
+          "connection": "close",
+          "transfer-encoding": "chunked"
+        },
+        "bytes": 567075,
+        "sha256": "975b6f12f51320b7f90af2b97e38a80358b5964bc274caafb5d126b3f3881efc",
+        "rawPath": "/workspace/scratch/system-diagnosis/quality-primary-sources-20261004/file-api.html",
+        "outcome": "FETCHED",
+        "elapsedSeconds": 0.2352849520102609,
+        "versionOrAccessedSnapshot": "File API, 12 September 2026",
+        "authorityKind": "W3C_WORKING_DRAFT",
+        "reviewScope": "Relevant API/algorithm or guidance sections only, not an exhaustive review of every section of this document.",
+        "metadataPrivacyRedaction": {
+          "suppressedHeaderNames": [
+            "set-cookie"
+          ],
+          "reason": "Public-source research does not need anonymous response cookies or credential-bearing headers. Original HTML/JSON/text response bytes are retained exactly; only unnecessary header values are omitted from publishable research metadata.",
+          "originalMetadataSHA256": "fc0caff16321a6d7ff7f5f020f4e0f75894123ee518f33ca476cba98b736afe8"
+        }
+      },
+      {
+        "id": "github-artifacts",
+        "requestedURL": "https://docs.github.com/en/actions/how-tos/writing-workflows/choosing-what-your-workflow-does/storing-and-sharing-data-from-a-workflow",
+        "accessedAtUTC": "2026-10-04T06:54:33.466516+00:00",
+        "route": "Python urllib HTTPS using current environment network configuration",
+        "timeoutSeconds": 25,
+        "status": 200,
+        "finalURL": "https://docs.github.com/en/actions/tutorials/store-and-share-data",
+        "headers": {
+          "access-control-allow-origin": "*",
+          "content-security-policy": "default-src 'none';prefetch-src 'self';connect-src 'self' https://collector.githubapp.com;font-src 'self' data:;img-src 'self' github.com *.github.com *.githubusercontent.com *.githubassets.com data: placehold.it;object-src 'self';script-src 'self' github.com *.github.com *.githubusercontent.com *.githubassets.com 'self' data: 'sha256-U3LWw3Ab3GkeLl43emMGkOL69tCBBkGDB4UldMshHq0=';script-src-attr 'self';frame-src 'self' github.com *.github.com *.githubusercontent.com *.githubassets.com https://support.github.com;frame-ancestors 'self' github.com *.github.com *.githubusercontent.com *.githubassets.com;style-src 'self' github.com *.github.com *.githubusercontent.com *.githubassets.com 'self' 'unsafe-inline' data:;child-src 'self';manifest-src 'self';upgrade-insecure-requests;base-uri 'self';form-action 'self'",
+          "cross-origin-opener-policy": "same-origin",
+          "cross-origin-resource-policy": "same-origin",
+          "origin-agent-cluster": "?1",
+          "referrer-policy": "no-referrer-when-downgrade",
+          "x-content-type-options": "nosniff",
+          "x-dns-prefetch-control": "off",
+          "x-download-options": "noopen",
+          "x-frame-options": "SAMEORIGIN",
+          "x-permitted-cross-domain-policies": "none",
+          "x-xss-protection": "0",
+          "cache-control": "public, max-age=60",
+          "x-powered-by": "Next.js",
+          "content-type": "text/html; charset=utf-8",
+          "x-github-backend": "Kubernetes",
+          "x-github-request-id": "3136:375D41:FA5975:1366F7F:6AC1F829",
+          "x-github-edge-region": "iad",
+          "via": "1.1 varnish, 1.1 varnish",
+          "accept-ranges": "bytes",
+          "age": "0",
+          "date": "Sun, 04 Oct 2026 06:54:34 GMT",
+          "x-served-by": "cache-iad-kiad7000044-IAD, cache-chi-klot8100144-CHI",
+          "x-cache": "MISS, MISS",
+          "x-cache-hits": "0, 0",
+          "x-timer": "S1791096874.765569,VS0,VE370",
+          "vary": "x-user-version, accept, Accept-Encoding",
+          "strict-transport-security": "max-age=31557600",
+          "content-length": "385269",
+          "x-envoy-upstream-service-time": "377",
+          "server": "envoy",
+          "connection": "close"
+        },
+        "bytes": 385269,
+        "sha256": "e05bd805543f44c17e5f9f12838fd3ee093ac4bef0621c350a69777fb37310b1",
+        "rawPath": "/workspace/scratch/system-diagnosis/quality-primary-sources-20261004/github-artifacts.html",
+        "outcome": "FETCHED",
+        "elapsedSeconds": 0.6777812539949082,
+        "versionOrAccessedSnapshot": "Store and share data with workflow artifacts; accessed snapshot",
+        "authorityKind": "OFFICIAL_SERVICE_DOCUMENTATION",
+        "reviewScope": "Relevant API/algorithm or guidance sections only, not an exhaustive review of every section of this document."
+      },
+      {
+        "id": "github-contexts",
+        "requestedURL": "https://docs.github.com/en/actions/reference/workflows-and-actions/contexts",
+        "accessedAtUTC": "2026-10-04T06:54:33.469016+00:00",
+        "route": "Python urllib HTTPS using current environment network configuration",
+        "timeoutSeconds": 25,
+        "status": 200,
+        "finalURL": "https://docs.github.com/en/actions/reference/workflows-and-actions/contexts",
+        "headers": {
+          "access-control-allow-origin": "*",
+          "content-security-policy": "default-src 'none';prefetch-src 'self';connect-src 'self' https://collector.githubapp.com;font-src 'self' data:;img-src 'self' github.com *.github.com *.githubusercontent.com *.githubassets.com data: placehold.it;object-src 'self';script-src 'self' github.com *.github.com *.githubusercontent.com *.githubassets.com 'self' data: 'sha256-U3LWw3Ab3GkeLl43emMGkOL69tCBBkGDB4UldMshHq0=';script-src-attr 'self';frame-src 'self' github.com *.github.com *.githubusercontent.com *.githubassets.com https://support.github.com;frame-ancestors 'self' github.com *.github.com *.githubusercontent.com *.githubassets.com;style-src 'self' github.com *.github.com *.githubusercontent.com *.githubassets.com 'self' 'unsafe-inline' data:;child-src 'self';manifest-src 'self';upgrade-insecure-requests;base-uri 'self';form-action 'self'",
+          "cross-origin-opener-policy": "same-origin",
+          "cross-origin-resource-policy": "same-origin",
+          "origin-agent-cluster": "?1",
+          "referrer-policy": "no-referrer-when-downgrade",
+          "x-content-type-options": "nosniff",
+          "x-dns-prefetch-control": "off",
+          "x-download-options": "noopen",
+          "x-frame-options": "SAMEORIGIN",
+          "x-permitted-cross-domain-policies": "none",
+          "x-xss-protection": "0",
+          "cache-control": "public, max-age=60",
+          "x-powered-by": "Next.js",
+          "content-type": "text/html; charset=utf-8",
+          "x-github-backend": "Kubernetes",
+          "x-github-request-id": "6202:9FF6:1075ED3:1436DCD:6AC1F829",
+          "x-github-edge-region": "iad",
+          "via": "1.1 varnish, 1.1 varnish",
+          "accept-ranges": "bytes",
+          "age": "0",
+          "date": "Sun, 04 Oct 2026 06:54:34 GMT",
+          "x-served-by": "cache-iad-kiad7000202-IAD, cache-chi-klot8100056-CHI",
+          "x-cache": "MISS, MISS",
+          "x-cache-hits": "0, 0",
+          "x-timer": "S1791096874.628470,VS0,VE991",
+          "vary": "x-user-version, accept, Accept-Encoding",
+          "strict-transport-security": "max-age=31557600",
+          "content-length": "1014668",
+          "x-envoy-upstream-service-time": "1040",
+          "server": "envoy",
+          "connection": "close"
+        },
+        "bytes": 1014668,
+        "sha256": "e0089768f683cbdb18e471ede996ac6c8c9140e67a0a6404cf2a955c1c621edc",
+        "rawPath": "/workspace/scratch/system-diagnosis/quality-primary-sources-20261004/github-contexts.html",
+        "outcome": "FETCHED",
+        "elapsedSeconds": 1.1903216939826962,
+        "versionOrAccessedSnapshot": "Contexts reference; accessed snapshot",
+        "authorityKind": "OFFICIAL_SERVICE_DOCUMENTATION",
+        "reviewScope": "Relevant API/algorithm or guidance sections only, not an exhaustive review of every section of this document."
+      },
+      {
+        "id": "github-events",
+        "requestedURL": "https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#pull_request",
+        "accessedAtUTC": "2026-10-04T07:02:02.171374+00:00",
+        "route": "Python urllib HTTPS using current environment network configuration",
+        "timeoutSeconds": 25,
+        "status": 200,
+        "finalURL": "https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#pull_request",
+        "headers": {
+          "access-control-allow-origin": "*",
+          "content-security-policy": "default-src 'none';prefetch-src 'self';connect-src 'self' https://collector.githubapp.com;font-src 'self' data:;img-src 'self' github.com *.github.com *.githubusercontent.com *.githubassets.com data: placehold.it;object-src 'self';script-src 'self' github.com *.github.com *.githubusercontent.com *.githubassets.com 'self' data: 'sha256-U3LWw3Ab3GkeLl43emMGkOL69tCBBkGDB4UldMshHq0=';script-src-attr 'self';frame-src 'self' github.com *.github.com *.githubusercontent.com *.githubassets.com https://support.github.com;frame-ancestors 'self' github.com *.github.com *.githubusercontent.com *.githubassets.com;style-src 'self' github.com *.github.com *.githubusercontent.com *.githubassets.com 'self' 'unsafe-inline' data:;child-src 'self';manifest-src 'self';upgrade-insecure-requests;base-uri 'self';form-action 'self'",
+          "cross-origin-opener-policy": "same-origin",
+          "cross-origin-resource-policy": "same-origin",
+          "origin-agent-cluster": "?1",
+          "referrer-policy": "no-referrer-when-downgrade",
+          "x-content-type-options": "nosniff",
+          "x-dns-prefetch-control": "off",
+          "x-download-options": "noopen",
+          "x-frame-options": "SAMEORIGIN",
+          "x-permitted-cross-domain-policies": "none",
+          "x-xss-protection": "0",
+          "cache-control": "public, max-age=60",
+          "x-powered-by": "Next.js",
+          "content-type": "text/html; charset=utf-8",
+          "x-github-backend": "Kubernetes",
+          "x-github-request-id": "620E:2C96A5:F8A298:135BBB5:6AC1F9DA",
+          "x-github-edge-region": "iad",
+          "via": "1.1 varnish, 1.1 varnish",
+          "accept-ranges": "bytes",
+          "age": "2",
+          "date": "Sun, 04 Oct 2026 07:02:02 GMT",
+          "x-served-by": "cache-iad-kcgs7200164-IAD, cache-chi-klot8100178-CHI",
+          "x-cache": "HIT, MISS",
+          "x-cache-hits": "1, 0",
+          "x-timer": "S1791097322.274058,VS0,VE24",
+          "vary": "x-user-version, accept, Accept-Encoding",
+          "strict-transport-security": "max-age=31557600",
+          "content-length": "1073543",
+          "x-envoy-upstream-service-time": "66",
+          "server": "envoy",
+          "connection": "close"
+        },
+        "bytes": 1073543,
+        "sha256": "10ff4a55f35f8cbb491eb9a666274438b209e1a6d72cd00279c5f4281583473f",
+        "rawPath": "/workspace/scratch/system-diagnosis/quality-primary-sources-20261004/github-events.html",
+        "outcome": "FETCHED",
+        "elapsedSeconds": 0.15339212398976088,
+        "versionOrAccessedSnapshot": "Events that trigger workflows, pull_request; accessed snapshot",
+        "authorityKind": "OFFICIAL_SERVICE_DOCUMENTATION",
+        "reviewScope": "Relevant API/algorithm or guidance sections only, not an exhaustive review of every section of this document."
+      },
+      {
+        "id": "github-permissions",
+        "requestedURL": "https://docs.github.com/en/actions/security-for-github-actions/security-guides/automatic-token-authentication",
+        "accessedAtUTC": "2026-10-04T06:54:33.460063+00:00",
+        "route": "Python urllib HTTPS using current environment network configuration",
+        "timeoutSeconds": 25,
+        "status": 200,
+        "finalURL": "https://docs.github.com/en/actions/tutorials/authenticate-with-github_token",
+        "headers": {
+          "access-control-allow-origin": "*",
+          "content-security-policy": "default-src 'none';prefetch-src 'self';connect-src 'self' https://collector.githubapp.com;font-src 'self' data:;img-src 'self' github.com *.github.com *.githubusercontent.com *.githubassets.com data: placehold.it;object-src 'self';script-src 'self' github.com *.github.com *.githubusercontent.com *.githubassets.com 'self' data: 'sha256-U3LWw3Ab3GkeLl43emMGkOL69tCBBkGDB4UldMshHq0=';script-src-attr 'self';frame-src 'self' github.com *.github.com *.githubusercontent.com *.githubassets.com https://support.github.com;frame-ancestors 'self' github.com *.github.com *.githubusercontent.com *.githubassets.com;style-src 'self' github.com *.github.com *.githubusercontent.com *.githubassets.com 'self' 'unsafe-inline' data:;child-src 'self';manifest-src 'self';upgrade-insecure-requests;base-uri 'self';form-action 'self'",
+          "cross-origin-opener-policy": "same-origin",
+          "cross-origin-resource-policy": "same-origin",
+          "origin-agent-cluster": "?1",
+          "referrer-policy": "no-referrer-when-downgrade",
+          "x-content-type-options": "nosniff",
+          "x-dns-prefetch-control": "off",
+          "x-download-options": "noopen",
+          "x-frame-options": "SAMEORIGIN",
+          "x-permitted-cross-domain-policies": "none",
+          "x-xss-protection": "0",
+          "cache-control": "public, max-age=60",
+          "x-powered-by": "Next.js",
+          "content-type": "text/html; charset=utf-8",
+          "x-github-backend": "Kubernetes",
+          "x-github-request-id": "7C50:243187:2B893:403C4:6AC1F6A6",
+          "x-github-edge-region": "iad",
+          "via": "1.1 varnish, 1.1 varnish",
+          "accept-ranges": "bytes",
+          "age": "374",
+          "date": "Sun, 04 Oct 2026 06:54:33 GMT",
+          "x-served-by": "cache-iad-kiad7000093-IAD, cache-chi-klot8100129-CHI",
+          "x-cache": "HIT, MISS",
+          "x-cache-hits": "1, 0",
+          "x-timer": "S1791096874.806328,VS0,VE23",
+          "vary": "x-user-version, accept, Accept-Encoding",
+          "strict-transport-security": "max-age=31557600",
+          "content-length": "312211",
+          "x-envoy-upstream-service-time": "67",
+          "server": "envoy",
+          "connection": "close"
+        },
+        "bytes": 312211,
+        "sha256": "7a70c4f0d65b7989f7d9a822009ead7cc277f0788181ee4745014919f64cb12f",
+        "rawPath": "/workspace/scratch/system-diagnosis/quality-primary-sources-20261004/github-permissions.html",
+        "outcome": "FETCHED",
+        "elapsedSeconds": 0.3859297390154097,
+        "versionOrAccessedSnapshot": "Use GITHUB_TOKEN for authentication in workflows; accessed snapshot",
+        "authorityKind": "OFFICIAL_SERVICE_DOCUMENTATION",
+        "reviewScope": "Relevant API/algorithm or guidance sections only, not an exhaustive review of every section of this document."
+      },
+      {
+        "id": "github-workflow-syntax",
+        "requestedURL": "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax",
+        "accessedAtUTC": "2026-10-04T06:54:33.461042+00:00",
+        "route": "Python urllib HTTPS using current environment network configuration",
+        "timeoutSeconds": 25,
+        "status": 200,
+        "finalURL": "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax",
+        "headers": {
+          "access-control-allow-origin": "*",
+          "content-security-policy": "default-src 'none';prefetch-src 'self';connect-src 'self' https://collector.githubapp.com;font-src 'self' data:;img-src 'self' github.com *.github.com *.githubusercontent.com *.githubassets.com data: placehold.it;object-src 'self';script-src 'self' github.com *.github.com *.githubusercontent.com *.githubassets.com 'self' data: 'sha256-U3LWw3Ab3GkeLl43emMGkOL69tCBBkGDB4UldMshHq0=';script-src-attr 'self';frame-src 'self' github.com *.github.com *.githubusercontent.com *.githubassets.com https://support.github.com;frame-ancestors 'self' github.com *.github.com *.githubusercontent.com *.githubassets.com;style-src 'self' github.com *.github.com *.githubusercontent.com *.githubassets.com 'self' 'unsafe-inline' data:;child-src 'self';manifest-src 'self';upgrade-insecure-requests;base-uri 'self';form-action 'self'",
+          "cross-origin-opener-policy": "same-origin",
+          "cross-origin-resource-policy": "same-origin",
+          "origin-agent-cluster": "?1",
+          "referrer-policy": "no-referrer-when-downgrade",
+          "x-content-type-options": "nosniff",
+          "x-dns-prefetch-control": "off",
+          "x-download-options": "noopen",
+          "x-frame-options": "SAMEORIGIN",
+          "x-permitted-cross-domain-policies": "none",
+          "x-xss-protection": "0",
+          "cache-control": "public, max-age=60",
+          "x-powered-by": "Next.js",
+          "content-type": "text/html; charset=utf-8",
+          "x-github-backend": "Kubernetes",
+          "x-github-request-id": "8AF4:22FA72:279BB:3B6CF:6AC1F69B",
+          "x-github-edge-region": "iad",
+          "via": "1.1 varnish, 1.1 varnish",
+          "accept-ranges": "bytes",
+          "age": "395",
+          "date": "Sun, 04 Oct 2026 06:54:33 GMT",
+          "x-served-by": "cache-iad-kcgs7200128-IAD, cache-chi-klot8100144-CHI",
+          "x-cache": "HIT, MISS",
+          "x-cache-hits": "1, 0",
+          "x-timer": "S1791096874.570586,VS0,VE26",
+          "vary": "x-user-version, accept, Accept-Encoding",
+          "strict-transport-security": "max-age=31557600",
+          "content-length": "2096202",
+          "x-envoy-upstream-service-time": "72",
+          "server": "envoy",
+          "connection": "close"
+        },
+        "bytes": 2096202,
+        "sha256": "9bba4d2eabc7197eda43fcc9d9976d4521f99aa2d5ead4ff2e8e0466f5229bd6",
+        "rawPath": "/workspace/scratch/system-diagnosis/quality-primary-sources-20261004/github-workflow-syntax.html",
+        "outcome": "FETCHED",
+        "elapsedSeconds": 0.17439247298170812,
+        "versionOrAccessedSnapshot": "Workflow syntax for GitHub Actions; accessed snapshot",
+        "authorityKind": "OFFICIAL_SERVICE_DOCUMENTATION",
+        "reviewScope": "Relevant API/algorithm or guidance sections only, not an exhaustive review of every section of this document."
+      },
+      {
+        "id": "high-res-time",
+        "requestedURL": "https://www.w3.org/TR/hr-time-3/",
+        "accessedAtUTC": "2026-10-04T06:55:20.756099+00:00",
+        "route": "Python urllib HTTPS using current environment network configuration",
+        "timeoutSeconds": 25,
+        "status": 200,
+        "finalURL": "https://www.w3.org/TR/hr-time-3/",
+        "headers": {
+          "date": "Sun, 04 Oct 2026 06:55:20 GMT",
+          "content-type": "text/html; charset=utf-8",
+          "content-location": "Overview.html",
+          "last-modified": "Tue, 01 Sep 2026 18:54:40 GMT",
+          "cache-control": "max-age=31536000, s-maxage=2592001",
+          "expires": "Fri, 01 Oct 2027 08:49:54 GMT",
+          "vary": "Accept-Encoding,Origin",
+          "cf-cache-status": "HIT",
+          "access-control-allow-origin": "*",
+          "x-backend": "www-mirrors",
+          "x-request-id": "a43a377abb609dfc",
+          "strict-transport-security": "max-age=15552000; includeSubdomains; preload",
+          "content-security-policy": "frame-ancestors 'self' https://cms.w3.org/ https://cms-dev.w3.org/; upgrade-insecure-requests",
+          "x-content-type-options": "nosniff",
+          "age": "252326",
+          "server": "envoy",
+          "cf-ray": "a45247cb3b7e5582-ORD",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "x-envoy-upstream-service-time": "51",
+          "connection": "close",
+          "transfer-encoding": "chunked"
+        },
+        "bytes": 184617,
+        "sha256": "2c263286856eace560a8618be46fd47c18ce99cc7c8daeecfc97f2d9d844ba4d",
+        "rawPath": "/workspace/scratch/system-diagnosis/quality-primary-sources-20261004/high-res-time.html",
+        "outcome": "FETCHED",
+        "elapsedSeconds": 0.10529487597523257,
+        "versionOrAccessedSnapshot": "High Resolution Time, 1 September 2026",
+        "authorityKind": "W3C_WORKING_DRAFT",
+        "reviewScope": "Relevant API/algorithm or guidance sections only, not an exhaustive review of every section of this document.",
+        "metadataPrivacyRedaction": {
+          "suppressedHeaderNames": [
+            "set-cookie"
+          ],
+          "reason": "Public-source research does not need anonymous response cookies or credential-bearing headers. Original HTML/JSON/text response bytes are retained exactly; only unnecessary header values are omitted from publishable research metadata.",
+          "originalMetadataSHA256": "33bea948c4d06d44bee0819eac644d1cd67c93b62d1e59cbea3256a3a4b79c51"
+        }
+      },
+      {
+        "id": "html-event-loop",
+        "requestedURL": "https://html.spec.whatwg.org/multipage/webappapis.html#event-loops",
+        "accessedAtUTC": "2026-10-04T06:53:58.009932+00:00",
+        "route": "Python urllib HTTPS using current environment network configuration",
+        "timeoutSeconds": 25,
+        "status": 200,
+        "finalURL": "https://html.spec.whatwg.org/multipage/webappapis.html#event-loops",
+        "headers": {
+          "server": "envoy",
+          "date": "Sun, 04 Oct 2026 06:53:58 GMT",
+          "content-type": "text/html; charset=utf-8",
+          "content-length": "806519",
+          "last-modified": "Sat, 03 Oct 2026 11:12:15 GMT",
+          "vary": "Accept-Encoding",
+          "etag": "\"6ac0e30f-c4e77\"",
+          "access-control-allow-origin": "*",
+          "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
+          "x-content-type-options": "nosniff",
+          "accept-ranges": "bytes",
+          "x-envoy-upstream-service-time": "142",
+          "connection": "close"
+        },
+        "bytes": 806519,
+        "sha256": "b792860a3eabd35b577531acd23a9e9d9a2e82fcd1ea59c0d627aacb8ff6762a",
+        "rawPath": "/workspace/scratch/system-diagnosis/quality-primary-sources-20261004/html-event-loop.html",
+        "outcome": "FETCHED",
+        "elapsedSeconds": 0.41281122600776143,
+        "versionOrAccessedSnapshot": "WHATWG HTML Living Standard; last updated 3 October 2026",
+        "authorityKind": "LIVING_STANDARD",
+        "reviewScope": "Relevant API/algorithm or guidance sections only, not an exhaustive review of every section of this document."
+      },
+      {
+        "id": "html-file-upload",
+        "requestedURL": "https://html.spec.whatwg.org/multipage/input.html#file-upload-state-(type=file)",
+        "accessedAtUTC": "2026-10-04T06:53:58.009316+00:00",
+        "route": "Python urllib HTTPS using current environment network configuration",
+        "timeoutSeconds": 25,
+        "status": 200,
+        "finalURL": "https://html.spec.whatwg.org/multipage/input.html#file-upload-state-(type=file)",
+        "headers": {
+          "server": "envoy",
+          "date": "Sun, 04 Oct 2026 06:53:58 GMT",
+          "content-type": "text/html; charset=utf-8",
+          "content-length": "687514",
+          "last-modified": "Sat, 03 Oct 2026 11:12:14 GMT",
+          "vary": "Accept-Encoding",
+          "etag": "\"6ac0e30e-a7d9a\"",
+          "access-control-allow-origin": "*",
+          "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
+          "x-content-type-options": "nosniff",
+          "accept-ranges": "bytes",
+          "x-envoy-upstream-service-time": "153",
+          "connection": "close"
+        },
+        "bytes": 687514,
+        "sha256": "d26eeb83e8f6a643a6868cfed480e76141f544cde9324600cebef5061ec85279",
+        "rawPath": "/workspace/scratch/system-diagnosis/quality-primary-sources-20261004/html-file-upload.html",
+        "outcome": "FETCHED",
+        "elapsedSeconds": 0.3303147479891777,
+        "versionOrAccessedSnapshot": "WHATWG HTML Living Standard; last updated 3 October 2026",
+        "authorityKind": "LIVING_STANDARD",
+        "reviewScope": "Relevant API/algorithm or guidance sections only, not an exhaustive review of every section of this document."
+      },
+      {
+        "id": "html-history",
+        "requestedURL": "https://html.spec.whatwg.org/multipage/nav-history-apis.html#the-history-interface",
+        "accessedAtUTC": "2026-10-04T06:54:33.458333+00:00",
+        "route": "Python urllib HTTPS using current environment network configuration",
+        "timeoutSeconds": 25,
+        "status": 200,
+        "finalURL": "https://html.spec.whatwg.org/multipage/nav-history-apis.html#the-history-interface",
+        "headers": {
+          "server": "envoy",
+          "date": "Sun, 04 Oct 2026 06:54:33 GMT",
+          "content-type": "text/html; charset=utf-8",
+          "content-length": "818186",
+          "last-modified": "Sat, 03 Oct 2026 11:12:15 GMT",
+          "vary": "Accept-Encoding",
+          "etag": "\"6ac0e30f-c7c0a\"",
+          "access-control-allow-origin": "*",
+          "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
+          "x-content-type-options": "nosniff",
+          "accept-ranges": "bytes",
+          "x-envoy-upstream-service-time": "55",
+          "connection": "close"
+        },
+        "bytes": 818186,
+        "sha256": "515bcf193898828422423586b5a330f3b411cb4b57d22ddafa27afe60429dd83",
+        "rawPath": "/workspace/scratch/system-diagnosis/quality-primary-sources-20261004/html-history.html",
+        "outcome": "FETCHED",
+        "elapsedSeconds": 0.32598811900243163,
+        "versionOrAccessedSnapshot": "WHATWG HTML Living Standard; accessed snapshot",
+        "authorityKind": "LIVING_STANDARD",
+        "reviewScope": "Relevant API/algorithm or guidance sections only, not an exhaustive review of every section of this document."
+      },
+      {
+        "id": "indexeddb",
+        "requestedURL": "https://www.w3.org/TR/IndexedDB/",
+        "accessedAtUTC": "2026-10-04T06:53:58.010325+00:00",
+        "route": "Python urllib HTTPS using current environment network configuration",
+        "timeoutSeconds": 25,
+        "status": 200,
+        "finalURL": "https://www.w3.org/TR/IndexedDB/",
+        "headers": {
+          "date": "Sun, 04 Oct 2026 06:53:58 GMT",
+          "content-type": "text/html; charset=utf-8",
+          "content-location": "Overview.html",
+          "last-modified": "Wed, 13 Aug 2025 18:41:23 GMT",
+          "cache-control": "max-age=31536000, s-maxage=2592001",
+          "expires": "Fri, 01 Oct 2027 08:33:07 GMT",
+          "vary": "Accept-Encoding,Origin",
+          "cf-cache-status": "HIT",
+          "access-control-allow-origin": "*",
+          "x-backend": "www-mirrors",
+          "x-request-id": "a43a1ee2ea40ce71",
+          "strict-transport-security": "max-age=15552000; includeSubdomains; preload",
+          "content-security-policy": "frame-ancestors 'self' https://cms.w3.org/ https://cms-dev.w3.org/; upgrade-insecure-requests",
+          "x-content-type-options": "nosniff",
+          "age": "253250",
+          "server": "envoy",
+          "cf-ray": "a45245c6da448f1c-ORD",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "x-envoy-upstream-service-time": "59",
+          "connection": "close",
+          "transfer-encoding": "chunked"
+        },
+        "bytes": 1589888,
+        "sha256": "c3a5c1e003fc2f7fa8d27ea2dc6b2e2e097b49aa81d8b138543c8725004e8536",
+        "rawPath": "/workspace/scratch/system-diagnosis/quality-primary-sources-20261004/indexeddb.html",
+        "outcome": "FETCHED",
+        "elapsedSeconds": 0.24703228400903754,
+        "versionOrAccessedSnapshot": "Indexed Database API 3.0, 13 August 2025",
+        "authorityKind": "W3C_WORKING_DRAFT",
+        "reviewScope": "Relevant API/algorithm or guidance sections only, not an exhaustive review of every section of this document.",
+        "metadataPrivacyRedaction": {
+          "suppressedHeaderNames": [
+            "set-cookie"
+          ],
+          "reason": "Public-source research does not need anonymous response cookies or credential-bearing headers. Original HTML/JSON/text response bytes are retained exactly; only unnecessary header values are omitted from publishable research metadata.",
+          "originalMetadataSHA256": "872ad7c5aebe4f6496f5ebc0c6edd41d53686f8298052c9f36e53b494e1fdb79"
+        }
+      },
+      {
+        "id": "indexeddb2-rec",
+        "requestedURL": "https://www.w3.org/TR/2018/REC-IndexedDB-2-20180130/",
+        "accessedAtUTC": "2026-10-04T06:55:20.755241+00:00",
+        "route": "Python urllib HTTPS using current environment network configuration",
+        "timeoutSeconds": 25,
+        "status": 200,
+        "finalURL": "https://www.w3.org/TR/2018/REC-IndexedDB-2-20180130/",
+        "headers": {
+          "date": "Sun, 04 Oct 2026 06:55:21 GMT",
+          "content-type": "text/html; charset=utf-8",
+          "content-location": "Overview.html",
+          "last-modified": "Fri, 20 Nov 2020 12:06:04 GMT",
+          "cache-control": "max-age=31536000, s-maxage=2592001",
+          "expires": "Fri, 01 Oct 2027 09:34:02 GMT",
+          "vary": "Accept-Encoding,Origin",
+          "cf-cache-status": "HIT",
+          "access-control-allow-origin": "*",
+          "x-backend": "www-mirrors",
+          "x-request-id": "a43a78202f2622da",
+          "strict-transport-security": "max-age=15552000; includeSubdomains; preload",
+          "content-security-policy": "frame-ancestors 'self' https://cms.w3.org/ https://cms-dev.w3.org/; upgrade-insecure-requests",
+          "x-content-type-options": "nosniff",
+          "server": "envoy",
+          "cf-ray": "a45247cc0b0c4848-ORD",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "x-envoy-upstream-service-time": "74",
+          "connection": "close",
+          "transfer-encoding": "chunked"
+        },
+        "bytes": 1037746,
+        "sha256": "5be03028657a31e2d7f2f8a7499a856f2603a106c89aa0c2d7448799f66661ec",
+        "rawPath": "/workspace/scratch/system-diagnosis/quality-primary-sources-20261004/indexeddb2-rec.html",
+        "outcome": "FETCHED",
+        "elapsedSeconds": 0.2715214019990526,
+        "versionOrAccessedSnapshot": "Indexed Database API 2.0, 30 January 2018",
+        "authorityKind": "W3C_RECOMMENDATION",
+        "reviewScope": "Relevant API/algorithm or guidance sections only, not an exhaustive review of every section of this document.",
+        "metadataPrivacyRedaction": {
+          "suppressedHeaderNames": [
+            "set-cookie"
+          ],
+          "reason": "Public-source research does not need anonymous response cookies or credential-bearing headers. Original HTML/JSON/text response bytes are retained exactly; only unnecessary header values are omitted from publishable research metadata.",
+          "originalMetadataSHA256": "fa4cb59bac0a44c11702343fe82d129fa5f6bac293cce9c09572d27647172b09"
+        }
+      },
+      {
+        "id": "owasp-dom-xss",
+        "requestedURL": "https://cheatsheetseries.owasp.org/cheatsheets/DOM_based_XSS_Prevention_Cheat_Sheet.html",
+        "accessedAtUTC": "2026-10-04T06:54:33.539109+00:00",
+        "route": "Python urllib HTTPS using current environment network configuration",
+        "timeoutSeconds": 25,
+        "status": 200,
+        "finalURL": "https://cheatsheetseries.owasp.org/cheatsheets/DOM_based_XSS_Prevention_Cheat_Sheet.html",
+        "headers": {
+          "date": "Sun, 04 Oct 2026 06:54:33 GMT",
+          "content-type": "text/html; charset=utf-8",
+          "server": "envoy",
+          "last-modified": "Sat, 03 Oct 2026 18:19:03 GMT",
+          "access-control-allow-origin": "*",
+          "expires": "Sun, 04 Oct 2026 07:04:33 GMT",
+          "cache-control": "max-age=600",
+          "x-proxy-cache": "MISS",
+          "x-github-request-id": "CBF4:38E955:7009D4:7D2C5C:6AC1F829",
+          "x-github-edge-region": "iad",
+          "age": "0",
+          "via": "1.1 varnish",
+          "x-served-by": "cache-chi-klot8100077-CHI",
+          "x-cache": "MISS",
+          "x-cache-hits": "0",
+          "x-timer": "S1791096874.857040,VS0,VE50",
+          "vary": "Accept-Encoding",
+          "x-fastly-request-id": "d0f23a5b1a0c49af4c8906f42abcbb74e50bde6f",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "a45246a57feffa25-ORD",
+          "x-envoy-upstream-service-time": "107",
+          "connection": "close",
+          "transfer-encoding": "chunked"
+        },
+        "bytes": 152378,
+        "sha256": "23158027b934a97c920a04733fd8a367c23ee826ab75db1b9b6c74f81d7ea143",
+        "rawPath": "/workspace/scratch/system-diagnosis/quality-primary-sources-20261004/owasp-dom-xss.html",
+        "outcome": "FETCHED",
+        "elapsedSeconds": 0.3828959689999465,
+        "versionOrAccessedSnapshot": "OWASP DOM based XSS Prevention Cheat Sheet; accessed snapshot",
+        "authorityKind": "ORGANIZATION_SECURITY_GUIDANCE",
+        "reviewScope": "Relevant API/algorithm or guidance sections only, not an exhaustive review of every section of this document."
+      },
+      {
+        "id": "rfc6901",
+        "requestedURL": "https://www.rfc-editor.org/rfc/rfc6901.txt",
+        "accessedAtUTC": "2026-10-04T06:58:07.003954+00:00",
+        "route": "Python urllib HTTPS using current environment network configuration",
+        "timeoutSeconds": 25,
+        "status": 200,
+        "finalURL": "https://www.rfc-editor.org/rfc/rfc6901.txt",
+        "headers": {
+          "date": "Sun, 04 Oct 2026 06:58:07 GMT",
+          "content-type": "text/plain;charset=utf-8",
+          "access-control-allow-origin": "*",
+          "cache-control": "public, max-age=86400",
+          "etag": "W/\"09f15ed36975e36f1c36fd3be872904b\"",
+          "link": "<https://www.rfc-editor.org/info/rfc6901/>; rel=\"canonical\"",
+          "cf-r2-served": "1",
+          "server": "envoy",
+          "cf-ray": "a4524bdb5c9cb4c1-ORD",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "x-envoy-upstream-service-time": "91",
+          "connection": "close",
+          "transfer-encoding": "chunked"
+        },
+        "bytes": 13037,
+        "sha256": "12f9f4fc13d686aa4fbe7d144d70166cd3fcd4ab89174c2b13bda8f4b55e49da",
+        "rawPath": "/workspace/scratch/system-diagnosis/quality-primary-sources-20261004/rfc6901.txt",
+        "outcome": "FETCHED",
+        "elapsedSeconds": 0.30968071598908864,
+        "versionOrAccessedSnapshot": "RFC 6901, JavaScript Object Notation (JSON) Pointer, April 2013",
+        "authorityKind": "RFC_STANDARDS_TRACK",
+        "reviewScope": "Relevant API/algorithm or guidance sections only, not an exhaustive review of every section of this document.",
+        "metadataPrivacyRedaction": {
+          "suppressedHeaderNames": [
+            "set-cookie"
+          ],
+          "reason": "Public-source research does not need anonymous response cookies or credential-bearing headers. Original HTML/JSON/text response bytes are retained exactly; only unnecessary header values are omitted from publishable research metadata.",
+          "originalMetadataSHA256": "89f0abc6a1a3efcd698bd425aa7996dbd98c6a4e07094d173eee29868786e982"
+        }
+      },
+      {
+        "id": "rfc8174",
+        "requestedURL": "https://www.rfc-editor.org/rfc/rfc8174.txt",
+        "accessedAtUTC": "2026-10-04T06:58:07.004820+00:00",
+        "route": "Python urllib HTTPS using current environment network configuration",
+        "timeoutSeconds": 25,
+        "status": 200,
+        "finalURL": "https://www.rfc-editor.org/rfc/rfc8174.txt",
+        "headers": {
+          "date": "Sun, 04 Oct 2026 06:58:07 GMT",
+          "content-type": "text/plain;charset=utf-8",
+          "access-control-allow-origin": "*",
+          "cache-control": "public, max-age=86400",
+          "etag": "W/\"3cbb64e943298b3e4d32ad691858355d\"",
+          "link": "<https://www.rfc-editor.org/info/rfc8174/>; rel=\"canonical\"",
+          "cf-r2-served": "1",
+          "server": "envoy",
+          "cf-ray": "a4524bdbcda1eacc-ORD",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "x-envoy-upstream-service-time": "88",
+          "connection": "close",
+          "transfer-encoding": "chunked"
+        },
+        "bytes": 6071,
+        "sha256": "5ca0e2f90be0bc5928ee465f76518fee316dfa775aed885658a29a419cc293b7",
+        "rawPath": "/workspace/scratch/system-diagnosis/quality-primary-sources-20261004/rfc8174.txt",
+        "outcome": "FETCHED",
+        "elapsedSeconds": 0.3720633599732537,
+        "versionOrAccessedSnapshot": "RFC 8174, Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words, May 2017",
+        "authorityKind": "RFC_BEST_CURRENT_PRACTICE",
+        "reviewScope": "Relevant API/algorithm or guidance sections only, not an exhaustive review of every section of this document.",
+        "metadataPrivacyRedaction": {
+          "suppressedHeaderNames": [
+            "set-cookie"
+          ],
+          "reason": "Public-source research does not need anonymous response cookies or credential-bearing headers. Original HTML/JSON/text response bytes are retained exactly; only unnecessary header values are omitted from publishable research metadata.",
+          "originalMetadataSHA256": "3ad72215600f9564a326899ff4f519b855d67d3f1a4e93c0acce25669d10e9ad"
+        }
+      },
+      {
+        "id": "rfc8259",
+        "requestedURL": "https://www.rfc-editor.org/rfc/rfc8259.txt",
+        "accessedAtUTC": "2026-10-04T06:58:07.003044+00:00",
+        "route": "Python urllib HTTPS using current environment network configuration",
+        "timeoutSeconds": 25,
+        "status": 200,
+        "finalURL": "https://www.rfc-editor.org/rfc/rfc8259.txt",
+        "headers": {
+          "date": "Sun, 04 Oct 2026 06:58:07 GMT",
+          "content-type": "text/plain;charset=utf-8",
+          "access-control-allow-origin": "*",
+          "cache-control": "public, max-age=86400",
+          "etag": "W/\"effcde61d580b8bb9e8eb8fdca283c5f\"",
+          "link": "<https://www.rfc-editor.org/info/rfc8259/>; rel=\"canonical\"",
+          "cf-r2-served": "1",
+          "server": "envoy",
+          "cf-ray": "a4524bdb29d261b3-ORD",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "x-envoy-upstream-service-time": "113",
+          "connection": "close",
+          "transfer-encoding": "chunked"
+        },
+        "bytes": 28360,
+        "sha256": "61a5378f4255c720beb2a4b4a63b29540147c140f36988bf086291989b4cd2d7",
+        "rawPath": "/workspace/scratch/system-diagnosis/quality-primary-sources-20261004/rfc8259.txt",
+        "outcome": "FETCHED",
+        "elapsedSeconds": 0.3023909510229714,
+        "versionOrAccessedSnapshot": "RFC 8259, The JavaScript Object Notation (JSON) Data Interchange Format, December 2017",
+        "authorityKind": "RFC_STANDARDS_TRACK",
+        "reviewScope": "Relevant API/algorithm or guidance sections only, not an exhaustive review of every section of this document.",
+        "metadataPrivacyRedaction": {
+          "suppressedHeaderNames": [
+            "set-cookie"
+          ],
+          "reason": "Public-source research does not need anonymous response cookies or credential-bearing headers. Original HTML/JSON/text response bytes are retained exactly; only unnecessary header values are omitted from publishable research metadata.",
+          "originalMetadataSHA256": "53d5e45cdd75eb018a938fcda2906ad3bdeca442ced3e79f995477111f150dc8"
+        }
+      },
+      {
+        "id": "rfc8785",
+        "requestedURL": "https://www.rfc-editor.org/rfc/rfc8785.txt",
+        "accessedAtUTC": "2026-10-04T06:58:07.004380+00:00",
+        "route": "Python urllib HTTPS using current environment network configuration",
+        "timeoutSeconds": 25,
+        "status": 200,
+        "finalURL": "https://www.rfc-editor.org/rfc/rfc8785.txt",
+        "headers": {
+          "date": "Sun, 04 Oct 2026 06:58:07 GMT",
+          "content-type": "text/plain;charset=utf-8",
+          "access-control-allow-origin": "*",
+          "cache-control": "public, max-age=86400",
+          "etag": "W/\"83382a9b05bddfdbc2a1ef5832e16c63\"",
+          "link": "<https://www.rfc-editor.org/info/rfc8785/>; rel=\"canonical\"",
+          "cf-r2-served": "1",
+          "server": "envoy",
+          "cf-ray": "a4524bdb29d461b3-ORD",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "x-envoy-upstream-service-time": "113",
+          "connection": "close",
+          "transfer-encoding": "chunked"
+        },
+        "bytes": 41879,
+        "sha256": "63d52294eb0e3f0014174288186d388b4ddbf2c67d1ce8af1d9726eb0c3ab240",
+        "rawPath": "/workspace/scratch/system-diagnosis/quality-primary-sources-20261004/rfc8785.txt",
+        "outcome": "FETCHED",
+        "elapsedSeconds": 0.30229622501065023,
+        "versionOrAccessedSnapshot": "RFC 8785, JSON Canonicalization Scheme (JCS), June 2020",
+        "authorityKind": "RFC_INFORMATIONAL_NOT_A_REPLACEMENT_FOR_THE_CONTROLLING_CANONICALIZATION_CONTRACT",
+        "reviewScope": "Relevant API/algorithm or guidance sections only, not an exhaustive review of every section of this document.",
+        "metadataPrivacyRedaction": {
+          "suppressedHeaderNames": [
+            "set-cookie"
+          ],
+          "reason": "Public-source research does not need anonymous response cookies or credential-bearing headers. Original HTML/JSON/text response bytes are retained exactly; only unnecessary header values are omitted from publishable research metadata.",
+          "originalMetadataSHA256": "73475d3dcbf39142645a995cea68321d19e80a1b8e7d1813364352e7fee26ae8"
+        }
+      },
+      {
+        "id": "storage",
+        "requestedURL": "https://storage.spec.whatwg.org/",
+        "accessedAtUTC": "2026-10-04T06:54:33.458981+00:00",
+        "route": "Python urllib HTTPS using current environment network configuration",
+        "timeoutSeconds": 25,
+        "status": 200,
+        "finalURL": "https://storage.spec.whatwg.org/",
+        "headers": {
+          "server": "envoy",
+          "date": "Sun, 04 Oct 2026 06:54:33 GMT",
+          "content-type": "text/html; charset=utf-8",
+          "content-length": "202328",
+          "last-modified": "Sun, 15 Mar 2026 09:04:49 GMT",
+          "vary": "Accept-Encoding",
+          "etag": "\"69b67631-31658\"",
+          "access-control-allow-origin": "*",
+          "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
+          "x-content-type-options": "nosniff",
+          "accept-ranges": "bytes",
+          "x-envoy-upstream-service-time": "155",
+          "connection": "close"
+        },
+        "bytes": 202328,
+        "sha256": "bab62b870d9d5458405729ec870dddb48da07ca4858ba5315d139077aad9b338",
+        "rawPath": "/workspace/scratch/system-diagnosis/quality-primary-sources-20261004/storage.html",
+        "outcome": "FETCHED",
+        "elapsedSeconds": 0.36044149700319394,
+        "versionOrAccessedSnapshot": "WHATWG Storage Living Standard; last updated 15 March 2026",
+        "authorityKind": "LIVING_STANDARD",
+        "reviewScope": "Relevant API/algorithm or guidance sections only, not an exhaustive review of every section of this document."
+      },
+      {
+        "id": "user-timing",
+        "requestedURL": "https://www.w3.org/TR/user-timing/",
+        "accessedAtUTC": "2026-10-04T06:54:33.459364+00:00",
+        "route": "Python urllib HTTPS using current environment network configuration",
+        "timeoutSeconds": 25,
+        "status": 200,
+        "finalURL": "https://www.w3.org/TR/user-timing/",
+        "headers": {
+          "date": "Sun, 04 Oct 2026 06:54:33 GMT",
+          "content-type": "text/html; charset=utf-8",
+          "content-location": "Overview.html",
+          "last-modified": "Wed, 11 Mar 2026 16:02:27 GMT",
+          "cache-control": "max-age=31536000, s-maxage=2592001",
+          "expires": "Fri, 01 Oct 2027 08:41:41 GMT",
+          "vary": "Accept-Encoding,Origin",
+          "cf-cache-status": "HIT",
+          "access-control-allow-origin": "*",
+          "x-backend": "www-mirrors",
+          "x-request-id": "a43a2b73d99a502d",
+          "strict-transport-security": "max-age=15552000; includeSubdomains; preload",
+          "content-security-policy": "frame-ancestors 'self' https://cms.w3.org/ https://cms-dev.w3.org/; upgrade-insecure-requests",
+          "x-content-type-options": "nosniff",
+          "age": "252771",
+          "server": "envoy",
+          "cf-ray": "a45246a38f52ab95-ORD",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "x-envoy-upstream-service-time": "49",
+          "connection": "close",
+          "transfer-encoding": "chunked"
+        },
+        "bytes": 133273,
+        "sha256": "3a2595e2b35497d74092b0ac6e3ce6414a4b0a418bd1a243c1fb256e0b145b24",
+        "rawPath": "/workspace/scratch/system-diagnosis/quality-primary-sources-20261004/user-timing.html",
+        "outcome": "FETCHED",
+        "elapsedSeconds": 0.0864940810133703,
+        "versionOrAccessedSnapshot": "User Timing, 11 March 2026",
+        "authorityKind": "W3C_CANDIDATE_RECOMMENDATION_DRAFT",
+        "reviewScope": "Relevant API/algorithm or guidance sections only, not an exhaustive review of every section of this document.",
+        "metadataPrivacyRedaction": {
+          "suppressedHeaderNames": [
+            "set-cookie"
+          ],
+          "reason": "Public-source research does not need anonymous response cookies or credential-bearing headers. Original HTML/JSON/text response bytes are retained exactly; only unnecessary header values are omitted from publishable research metadata.",
+          "originalMetadataSHA256": "0541c1f6492996851b1e308944d48188f4b9013e36cff693b365cc097b15eec7"
+        }
+      },
+      {
+        "id": "wcag22",
+        "requestedURL": "https://www.w3.org/TR/WCAG22/",
+        "accessedAtUTC": "2026-10-04T06:53:58.016111+00:00",
+        "route": "Python urllib HTTPS using current environment network configuration",
+        "timeoutSeconds": 25,
+        "status": 200,
+        "finalURL": "https://www.w3.org/TR/WCAG22/",
+        "headers": {
+          "date": "Sun, 04 Oct 2026 06:53:58 GMT",
+          "content-type": "text/html; charset=utf-8",
+          "content-location": "Overview.html",
+          "last-modified": "Thu, 12 Dec 2024 10:36:22 GMT",
+          "cache-control": "public, max-age=86400, s-maxage=2592001",
+          "vary": "Accept-Encoding,Origin",
+          "cf-cache-status": "HIT",
+          "access-control-allow-origin": "*",
+          "x-backend": "www-mirrors",
+          "x-request-id": "a43a1d615b42bcf7",
+          "strict-transport-security": "max-age=15552000; includeSubdomains; preload",
+          "content-security-policy": "frame-ancestors 'self' https://cms.w3.org/ https://cms-dev.w3.org/; upgrade-insecure-requests",
+          "x-content-type-options": "nosniff",
+          "age": "253312",
+          "server": "envoy",
+          "cf-ray": "a45245c6ea96f861-ORD",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "x-envoy-upstream-service-time": "50",
+          "connection": "close",
+          "transfer-encoding": "chunked"
+        },
+        "bytes": 512457,
+        "sha256": "6e3c5fe397257cae509a2fb4752b73062cf8cbeb92c2cec618989b17e4cf7057",
+        "rawPath": "/workspace/scratch/system-diagnosis/quality-primary-sources-20261004/wcag22.html",
+        "outcome": "FETCHED",
+        "elapsedSeconds": 0.2349198030133266,
+        "versionOrAccessedSnapshot": "Web Content Accessibility Guidelines 2.2, 12 December 2024",
+        "authorityKind": "W3C_RECOMMENDATION",
+        "reviewScope": "Relevant API/algorithm or guidance sections only, not an exhaustive review of every section of this document.",
+        "metadataPrivacyRedaction": {
+          "suppressedHeaderNames": [
+            "set-cookie"
+          ],
+          "reason": "Public-source research does not need anonymous response cookies or credential-bearing headers. Original HTML/JSON/text response bytes are retained exactly; only unnecessary header values are omitted from publishable research metadata.",
+          "originalMetadataSHA256": "aafaa912d8fb7243f8e3c49311543ba1498096e95c007a8337efc42ed138c493"
+        }
+      },
+      {
+        "id": "web-platform-tests",
+        "requestedURL": "https://web-platform-tests.org/writing-tests/testharness.html",
+        "accessedAtUTC": "2026-10-04T06:54:33.722073+00:00",
+        "route": "Python urllib HTTPS using current environment network configuration",
+        "timeoutSeconds": 25,
+        "status": 200,
+        "finalURL": "https://web-platform-tests.org/writing-tests/testharness.html",
+        "headers": {
+          "server": "envoy",
+          "content-type": "text/html; charset=utf-8",
+          "last-modified": "Tue, 29 Sep 2026 18:12:48 GMT",
+          "access-control-allow-origin": "*",
+          "etag": "\"6abbffa0-a870\"",
+          "expires": "Sun, 04 Oct 2026 07:04:34 GMT",
+          "cache-control": "max-age=600",
+          "x-proxy-cache": "MISS",
+          "x-github-request-id": "11C8:1FB003:6BD187:78F394:6AC1F82A",
+          "x-github-edge-region": "iad",
+          "accept-ranges": "bytes",
+          "age": "0",
+          "date": "Sun, 04 Oct 2026 06:54:34 GMT",
+          "via": "1.1 varnish",
+          "x-served-by": "cache-chi-klot8100116-CHI",
+          "x-cache": "MISS",
+          "x-cache-hits": "0",
+          "x-timer": "S1791096874.328712,VS0,VE180",
+          "vary": "Accept-Encoding",
+          "x-fastly-request-id": "adaeb35106e6a00541476da6af795d73aa22dd1c",
+          "content-length": "43120",
+          "x-envoy-upstream-service-time": "225",
+          "connection": "close"
+        },
+        "bytes": 43120,
+        "sha256": "023bb9fe8cd628f07c4933133241b671c7470b3ca73d6dcfe8acff291e15c6de",
+        "rawPath": "/workspace/scratch/system-diagnosis/quality-primary-sources-20261004/web-platform-tests.html",
+        "outcome": "FETCHED",
+        "elapsedSeconds": 0.796263733995147,
+        "versionOrAccessedSnapshot": "web-platform-tests, JavaScript Tests (testharness.js); accessed snapshot",
+        "authorityKind": "OFFICIAL_TEST_PROJECT_GUIDANCE",
+        "reviewScope": "Relevant API/algorithm or guidance sections only, not an exhaustive review of every section of this document."
+      },
+      {
+        "id": "webcrypto-rec",
+        "requestedURL": "https://www.w3.org/TR/2017/REC-WebCryptoAPI-20170126/",
+        "accessedAtUTC": "2026-10-04T06:55:20.755632+00:00",
+        "route": "Python urllib HTTPS using current environment network configuration",
+        "timeoutSeconds": 25,
+        "status": 200,
+        "finalURL": "https://www.w3.org/TR/2017/REC-WebCryptoAPI-20170126/",
+        "headers": {
+          "date": "Sun, 04 Oct 2026 06:55:20 GMT",
+          "content-type": "text/html; charset=utf-8",
+          "content-location": "Overview.html",
+          "last-modified": "Tue, 28 Mar 2017 13:40:52 GMT",
+          "cache-control": "max-age=31536000, s-maxage=2592001",
+          "expires": "Fri, 01 Oct 2027 08:37:51 GMT",
+          "vary": "Accept-Encoding,Origin",
+          "cf-cache-status": "HIT",
+          "link": "<https://www.w3.org/TR/WebCryptoAPI/>;rel=\"canonical\"",
+          "access-control-allow-origin": "*",
+          "x-backend": "www-mirrors",
+          "x-request-id": "a43a25d1de154e3c",
+          "strict-transport-security": "max-age=15552000; includeSubdomains; preload",
+          "content-security-policy": "frame-ancestors 'self' https://cms.w3.org/ https://cms-dev.w3.org/; upgrade-insecure-requests",
+          "x-content-type-options": "nosniff",
+          "age": "253049",
+          "server": "envoy",
+          "cf-ray": "a45247cb5902115f-ORD",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "x-envoy-upstream-service-time": "71",
+          "connection": "close",
+          "transfer-encoding": "chunked"
+        },
+        "bytes": 838260,
+        "sha256": "55f2fc292f774c7dd0cb84e80daafd110f9109a793b555dda8a3882281bc4d86",
+        "rawPath": "/workspace/scratch/system-diagnosis/quality-primary-sources-20261004/webcrypto-rec.html",
+        "outcome": "FETCHED",
+        "elapsedSeconds": 0.14984045500750653,
+        "versionOrAccessedSnapshot": "Web Cryptography API, 26 January 2017",
+        "authorityKind": "W3C_RECOMMENDATION",
+        "reviewScope": "Relevant API/algorithm or guidance sections only, not an exhaustive review of every section of this document.",
+        "metadataPrivacyRedaction": {
+          "suppressedHeaderNames": [
+            "set-cookie"
+          ],
+          "reason": "Public-source research does not need anonymous response cookies or credential-bearing headers. Original HTML/JSON/text response bytes are retained exactly; only unnecessary header values are omitted from publishable research metadata.",
+          "originalMetadataSHA256": "4e1fd9e19d7806ac7c4acca0ae341453448c68b64214da91bf39393b50235254"
+        }
+      },
+      {
+        "id": "webcrypto",
+        "requestedURL": "https://www.w3.org/TR/WebCryptoAPI/",
+        "accessedAtUTC": "2026-10-04T06:53:58.011621+00:00",
+        "route": "Python urllib HTTPS using current environment network configuration",
+        "timeoutSeconds": 25,
+        "status": 200,
+        "finalURL": "https://www.w3.org/TR/webcrypto/",
+        "headers": {
+          "date": "Sun, 04 Oct 2026 06:53:58 GMT",
+          "content-type": "text/html; charset=utf-8",
+          "content-location": "Overview.html",
+          "last-modified": "Tue, 22 Apr 2025 09:08:38 GMT",
+          "cache-control": "public, max-age=86400, s-maxage=2592001",
+          "vary": "Accept-Encoding,Origin",
+          "cf-cache-status": "HIT",
+          "access-control-allow-origin": "*",
+          "x-backend": "www-mirrors",
+          "x-request-id": "a43a28decac4de51",
+          "strict-transport-security": "max-age=15552000; includeSubdomains; preload",
+          "content-security-policy": "frame-ancestors 'self' https://cms.w3.org/ https://cms-dev.w3.org/; upgrade-insecure-requests",
+          "x-content-type-options": "nosniff",
+          "age": "252842",
+          "server": "envoy",
+          "cf-ray": "a45245c82d2f8f1c-ORD",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "x-envoy-upstream-service-time": "19",
+          "connection": "close",
+          "transfer-encoding": "chunked"
+        },
+        "bytes": 1585280,
+        "sha256": "e211cbfe5185afba44f2e0eed7fde1d2d649cbd0a82d136cd9ff360e58a48fa5",
+        "rawPath": "/workspace/scratch/system-diagnosis/quality-primary-sources-20261004/webcrypto.html",
+        "outcome": "FETCHED",
+        "elapsedSeconds": 0.4574096209835261,
+        "versionOrAccessedSnapshot": "Web Cryptography Level 2, 22 April 2025",
+        "authorityKind": "W3C_FIRST_PUBLIC_WORKING_DRAFT",
+        "reviewScope": "Relevant API/algorithm or guidance sections only, not an exhaustive review of every section of this document.",
+        "metadataPrivacyRedaction": {
+          "suppressedHeaderNames": [
+            "set-cookie"
+          ],
+          "reason": "Public-source research does not need anonymous response cookies or credential-bearing headers. Original HTML/JSON/text response bytes are retained exactly; only unnecessary header values are omitted from publishable research metadata.",
+          "originalMetadataSHA256": "8c04f9ce62fc6e7f4425e8b74a42754f95b04c95429bd15bf91266f07b0dff14"
+        }
+      }
+    ],
+    "qualification": "Original snapshots/authority/version classifications preserved; no current fetch or whole-category behavior proof inferred",
+    "basis": "Current stage owner/registry/package, PR source/UI, CI/build/receipt reviews confirm same platform/product boundaries; recommendations remain subordinate to controlling specification",
+    "practices": [
+      {
+        "practiceRecordId": "QP-01",
+        "qualityCategories": [
+          "correctness",
+          "specification conformance",
+          "agent-contract usability"
+        ],
+        "sources": [
+          "ecma-2026",
+          "rfc8259",
+          "rfc6901",
+          "rfc8174"
+        ],
+        "applicableExistingOwners": [
+          "workflow-schema.js",
+          "response-ingestion.js",
+          "prompt-engine.js",
+          "workflow-engine.js"
+        ],
+        "practice": "Keep JSON syntax, declared schema, typed references, admission, operator acceptance and stage completion distinct. Publish profile restrictions stricter than JSON syntax; do not normalize rejected input into a false success.",
+        "failureAddressed": "Hidden closed values, duplicate-member ambiguity, false admission and false completion.",
+        "adoptionOrRejectionRationale": "Preserve existing shared contract and staged acceptance owners. ECMA JSON.parse overwrites earlier duplicate keys; the application may deliberately reject them under its published stricter profile. RFC 6901 specifies pointer escaping, not record-family authority.",
+        "verificationMethod": "Inspect actual exported instruction/manifest/context and test conforming controls plus one deliberate schema, reference or completion violation through ingestion and persistence. Do not generate expected semantic outcomes from production.",
+        "mandatoryBasis": "Only the controlling specification, existing normative manifest and authorized repair scope create application obligations. These sources explain platform behavior or recommend techniques; they do not create new requirement rows.",
+        "continuedApplicability": "REUSED_AT_UNCHANGED_PLATFORM_BOUNDARY_NOT_A_NEW_EXECUTION_CLAIM",
+        "currentReviewEvidence": [
+          "/workspace/scratch/stage-review/review-status.json",
+          "/workspace/scratch/pr-review/ui-browser-review.json",
+          "/workspace/scratch/ci-audit/report.txt"
+        ],
+        "currentExecutionScope": "Only matching owning evidence above; other behavior remains unverified. Historical executed evidence remains available in original record."
+      },
+      {
+        "practiceRecordId": "QP-02",
+        "qualityCategories": [
+          "agent-contract usability",
+          "data integrity",
+          "compatibility"
+        ],
+        "sources": [
+          "html-file-upload",
+          "file-api",
+          "cdp-browser-protocol",
+          "cdp-js-protocol"
+        ],
+        "applicableExistingOwners": [
+          "project-store.js",
+          "response-ingestion.js",
+          "app-core.js",
+          "operator-browser-driver.mjs"
+        ],
+        "practice": "Treat File name/type/body, exact stored bytes, decoded JSON and returned attachment slot mapping as separate observations. Read bytes before asserting custody, and preserve raw input when parsing it.",
+        "failureAddressed": "Metadata-only completion, wrong attachment mapping, byte normalization and file-selection state loss.",
+        "adoptionOrRejectionRationale": "Retain file-first provider-neutral transport and existing slot contract. File.text() decodes UTF-8 while arrayBuffer() returns bytes; decoded text alone does not establish preserved original bytes. CDP is a test interface, not the product transport.",
+        "verificationMethod": "Use actual OS fixture files, DOM.setFileInputFiles and actual browser downloads; compare bytes and hashes to exported slot manifests; test absent/wrong/late/stale returned files before acceptance.",
+        "mandatoryBasis": "Only the controlling specification, existing normative manifest and authorized repair scope create application obligations. These sources explain platform behavior or recommend techniques; they do not create new requirement rows.",
+        "continuedApplicability": "REUSED_AT_UNCHANGED_PLATFORM_BOUNDARY_NOT_A_NEW_EXECUTION_CLAIM",
+        "currentReviewEvidence": [
+          "/workspace/scratch/stage-review/review-status.json",
+          "/workspace/scratch/pr-review/ui-browser-review.json",
+          "/workspace/scratch/ci-audit/report.txt"
+        ],
+        "currentExecutionScope": "Only matching owning evidence above; other behavior remains unverified. Historical executed evidence remains available in original record."
+      },
+      {
+        "practiceRecordId": "QP-03",
+        "qualityCategories": [
+          "data integrity",
+          "reliability/recovery",
+          "concurrency"
+        ],
+        "sources": [
+          "indexeddb2-rec",
+          "indexeddb"
+        ],
+        "applicableExistingOwners": [
+          "project-store.js",
+          "app-core.js",
+          "response-ingestion.js"
+        ],
+        "practice": "Wait for transaction completion, recheck current revision and validate projected canonical integrity before presenting commit-ready work. Complete asynchronous preparation outside the active canonical IndexedDB transaction.",
+        "failureAddressed": "Request-success-shaped save messages, transaction inactivity after awaits, stale writes and admission/save disagreement.",
+        "adoptionOrRejectionRationale": "Existing project-store request()/complete() separates request success from tx.oncomplete; runSynchronousMutator refuses a returned Promise. Preserve this owning store rather than introduce a second transactional model. IndexedDB 3 source is a draft; the stable IndexedDB 2 Recommendation explicitly states request success is not final transaction success.",
+        "verificationMethod": "Exercise prepare \u2192 proposal \u2192 acceptance \u2192 commit \u2192 readback with type/ref faults, storage aborts, revision conflicts and worker-result loss. Read committed state rather than infer it from intermediate feedback.",
+        "mandatoryBasis": "Only the controlling specification, existing normative manifest and authorized repair scope create application obligations. These sources explain platform behavior or recommend techniques; they do not create new requirement rows.",
+        "continuedApplicability": "REUSED_AT_UNCHANGED_PLATFORM_BOUNDARY_NOT_A_NEW_EXECUTION_CLAIM",
+        "currentReviewEvidence": [
+          "/workspace/scratch/stage-review/review-status.json",
+          "/workspace/scratch/pr-review/ui-browser-review.json",
+          "/workspace/scratch/ci-audit/report.txt"
+        ],
+        "currentExecutionScope": "Only matching owning evidence above; other behavior remains unverified. Historical executed evidence remains available in original record."
+      },
+      {
+        "practiceRecordId": "QP-04",
+        "qualityCategories": [
+          "correctness",
+          "concurrency",
+          "reliability/recovery"
+        ],
+        "sources": [
+          "indexeddb2-rec",
+          "html-history",
+          "storage"
+        ],
+        "applicableExistingOwners": [
+          "workflow-engine.js",
+          "project-store.js",
+          "prompt-engine.js",
+          "response-ingestion.js"
+        ],
+        "practice": "Bind attempts, confirmations and retries to exact project/version/stage/operation/material inputs. Recover durable receipts before repeating an action whose result is uncertain.",
+        "failureAddressed": "Duplicate execution, terminal correction using stale candidate revision, abandoned delayed responses and corrupted continuation.",
+        "adoptionOrRejectionRationale": "Preserve existing reservations, idempotency and recovery owners. A changed context ID alone is not independence. Browser history is navigation state, not the sole canonical recovery store.",
+        "verificationMethod": "Verify stale and duplicate submissions, interrupted results, correction preservation, invalidation and restored continuation; require intended storage error and behavioral oracle in fault proof.",
+        "mandatoryBasis": "Only the controlling specification, existing normative manifest and authorized repair scope create application obligations. These sources explain platform behavior or recommend techniques; they do not create new requirement rows.",
+        "continuedApplicability": "REUSED_AT_UNCHANGED_PLATFORM_BOUNDARY_NOT_A_NEW_EXECUTION_CLAIM",
+        "currentReviewEvidence": [
+          "/workspace/scratch/stage-review/review-status.json",
+          "/workspace/scratch/pr-review/ui-browser-review.json",
+          "/workspace/scratch/ci-audit/report.txt"
+        ],
+        "currentExecutionScope": "Only matching owning evidence above; other behavior remains unverified. Historical executed evidence remains available in original record."
+      },
+      {
+        "practiceRecordId": "QP-05",
+        "qualityCategories": [
+          "reliability/recovery",
+          "performance/capacity",
+          "data integrity"
+        ],
+        "sources": [
+          "storage",
+          "indexeddb2-rec",
+          "html-history"
+        ],
+        "applicableExistingOwners": [
+          "project-store.js",
+          "app-core.js"
+        ],
+        "practice": "Declare tested retention/capacity limits, preserve recoverable complete versions and backup bytes, and handle storage quota/eviction or missing files honestly.",
+        "failureAddressed": "Recovery advertised beyond retained state, history-only durability, partial restore and silent loss under browser storage pressure.",
+        "adoptionOrRejectionRationale": "Storage buckets begin best-effort; persist()/persisted()/estimate() describe platform permissions and estimates, not an unconditional no-loss guarantee. Keep local durable history and specified backup route; no backend added.",
+        "verificationMethod": "Test whole-state restore, missing/corrupt artifacts, competing tabs, branch alternatives, retention boundaries and exported backup bytes through the existing store.",
+        "mandatoryBasis": "Only the controlling specification, existing normative manifest and authorized repair scope create application obligations. These sources explain platform behavior or recommend techniques; they do not create new requirement rows.",
+        "continuedApplicability": "REUSED_AT_UNCHANGED_PLATFORM_BOUNDARY_NOT_A_NEW_EXECUTION_CLAIM",
+        "currentReviewEvidence": [
+          "/workspace/scratch/stage-review/review-status.json",
+          "/workspace/scratch/pr-review/ui-browser-review.json",
+          "/workspace/scratch/ci-audit/report.txt"
+        ],
+        "currentExecutionScope": "Only matching owning evidence above; other behavior remains unverified. Historical executed evidence remains available in original record."
+      },
+      {
+        "practiceRecordId": "QP-06",
+        "qualityCategories": [
+          "correctness",
+          "accessibility/mobile usability",
+          "operator experience"
+        ],
+        "sources": [
+          "html-event-loop",
+          "html-history",
+          "cdp-js-protocol"
+        ],
+        "applicableExistingOwners": [
+          "app-core.js",
+          "index.html",
+          "operator-browser-driver.mjs"
+        ],
+        "practice": "Evaluate next-action visibility and prohibited upward movement after fonts and browser layout settle, using condition-based bounded readiness.",
+        "failureAddressed": "Handler-return checks miss delayed render/layout displacement; stale navigation observations or indefinite waits conceal failure.",
+        "adoptionOrRejectionRationale": "Preserve the existing rendering and layout-quiescence oracle. Runtime.evaluate awaitPromise only waits for the returned Promise; it does not prove arbitrary application operations or future layout have finished.",
+        "verificationMethod": "Use real Chromium geometry after quiescence and an injected late-layout fault, plus non-browser logic checks. Keep exact last completed phase on failure/timeout.",
+        "mandatoryBasis": "Only the controlling specification, existing normative manifest and authorized repair scope create application obligations. These sources explain platform behavior or recommend techniques; they do not create new requirement rows.",
+        "continuedApplicability": "REUSED_AT_UNCHANGED_PLATFORM_BOUNDARY_NOT_A_NEW_EXECUTION_CLAIM",
+        "currentReviewEvidence": [
+          "/workspace/scratch/stage-review/review-status.json",
+          "/workspace/scratch/pr-review/ui-browser-review.json",
+          "/workspace/scratch/ci-audit/report.txt"
+        ],
+        "currentExecutionScope": "Only matching owning evidence above; other behavior remains unverified. Historical executed evidence remains available in original record."
+      },
+      {
+        "practiceRecordId": "QP-07",
+        "qualityCategories": [
+          "security",
+          "privacy"
+        ],
+        "sources": [
+          "owasp-dom-xss",
+          "csp3"
+        ],
+        "applicableExistingOwners": [
+          "app-core.js",
+          "index.html",
+          "test-runtime.js",
+          "test-worker.js"
+        ],
+        "practice": "Render untrusted values using safe text/attribute handling and the closed URL policy; preserve restrictive script, worker and network policy.",
+        "failureAddressed": "DOM injection, arbitrary worker/execution/network capability and diagnostic data disclosure.",
+        "adoptionOrRejectionRationale": "OWASP identifies textContent as a safe DOM sink; it does not prove every existing template safe. Existing escaped authored markup can remain if the actual sink/context is verified. CSP3 is a working draft. Do not weaken CSP or migrate frameworks merely to use a generic recommendation.",
+        "verificationMethod": "Review each changed sink and affected callers; test actual hostile content, URLs and page/worker policy enforcement. Browser automation evaluation has different powers from normal page scripts.",
+        "mandatoryBasis": "Only the controlling specification, existing normative manifest and authorized repair scope create application obligations. These sources explain platform behavior or recommend techniques; they do not create new requirement rows.",
+        "continuedApplicability": "REUSED_AT_UNCHANGED_PLATFORM_BOUNDARY_NOT_A_NEW_EXECUTION_CLAIM",
+        "currentReviewEvidence": [
+          "/workspace/scratch/stage-review/review-status.json",
+          "/workspace/scratch/pr-review/ui-browser-review.json",
+          "/workspace/scratch/ci-audit/report.txt"
+        ],
+        "currentExecutionScope": "Only matching owning evidence above; other behavior remains unverified. Historical executed evidence remains available in original record."
+      },
+      {
+        "practiceRecordId": "QP-08",
+        "qualityCategories": [
+          "data integrity",
+          "security",
+          "specification conformance"
+        ],
+        "sources": [
+          "webcrypto-rec",
+          "webcrypto",
+          "rfc8785"
+        ],
+        "applicableExistingOwners": [
+          "hash.js",
+          "project-store.js",
+          "workflow-engine.js"
+        ],
+        "practice": "Keep byte identity, canonical record identity, publisher/provenance authority, substantive verification and release permission separate.",
+        "failureAddressed": "A reported hash or matching artifact is misrepresented as authenticity, correctness, human action or release authorization.",
+        "adoptionOrRejectionRationale": "WebCrypto digest computes a digest of given data; it does not establish the application semantic proposition. RFC 8785 is informational and is not substituted for the controlling custom exact-number/canonicalization contract. Preserve designated hash authority and evidence gates.",
+        "verificationMethod": "Test byte perturbations and independent gate counterexamples while retaining positive controls; verify release-bound artifact bytes and provenance records separately.",
+        "mandatoryBasis": "Only the controlling specification, existing normative manifest and authorized repair scope create application obligations. These sources explain platform behavior or recommend techniques; they do not create new requirement rows.",
+        "continuedApplicability": "REUSED_AT_UNCHANGED_PLATFORM_BOUNDARY_NOT_A_NEW_EXECUTION_CLAIM",
+        "currentReviewEvidence": [
+          "/workspace/scratch/stage-review/review-status.json",
+          "/workspace/scratch/pr-review/ui-browser-review.json",
+          "/workspace/scratch/ci-audit/report.txt"
+        ],
+        "currentExecutionScope": "Only matching owning evidence above; other behavior remains unverified. Historical executed evidence remains available in original record."
+      },
+      {
+        "practiceRecordId": "QP-09",
+        "qualityCategories": [
+          "accessibility/mobile usability",
+          "operator experience"
+        ],
+        "sources": [
+          "wcag22",
+          "apg-alert"
+        ],
+        "applicableExistingOwners": [
+          "index.html",
+          "app-core.js"
+        ],
+        "practice": "Keep reflow, logical and visible keyboard focus, status announcements, target usability and recoverable actionable errors under direct interaction checks.",
+        "failureAddressed": "Hidden next control, focus loss, excessive interruption, double scroll and unavailable recovery for keyboard or screen-reader users.",
+        "adoptionOrRejectionRationale": "WCAG 2.2 A/AA criteria provide concrete reference points; this record does not claim the application attained WCAG conformance or that every WCAG criterion is newly mandatory. APG Alert is advisory and recommends avoiding unrequested focus interruption. Retain specification-required explicit navigation/correction focus and approved visuals.",
+        "verificationMethod": "Automated geometry/keyboard/ARIA assertions plus actual assistive-technology and physical-iPhone Safari observations where required. Screenshot or DOM attribute presence alone is insufficient.",
+        "mandatoryBasis": "Only the controlling specification, existing normative manifest and authorized repair scope create application obligations. These sources explain platform behavior or recommend techniques; they do not create new requirement rows.",
+        "continuedApplicability": "REUSED_AT_UNCHANGED_PLATFORM_BOUNDARY_NOT_A_NEW_EXECUTION_CLAIM",
+        "currentReviewEvidence": [
+          "/workspace/scratch/stage-review/review-status.json",
+          "/workspace/scratch/pr-review/ui-browser-review.json",
+          "/workspace/scratch/ci-audit/report.txt"
+        ],
+        "currentExecutionScope": "Only matching owning evidence above; other behavior remains unverified. Historical executed evidence remains available in original record."
+      },
+      {
+        "practiceRecordId": "QP-10",
+        "qualityCategories": [
+          "performance/capacity",
+          "observability",
+          "operator experience"
+        ],
+        "sources": [
+          "high-res-time",
+          "user-timing",
+          "file-api"
+        ],
+        "applicableExistingOwners": [
+          "app-core.js",
+          "project-store.js",
+          "operator-browser-driver.mjs"
+        ],
+        "practice": "Measure operation duration using monotonic time where available; keep wall-clock timestamps for evidence identity, and ensure loading/failure feedback terminates.",
+        "failureAddressed": "Clock-adjustment timing errors, unmeasured workflow bottlenecks and stalled indicators mistaken for progress.",
+        "adoptionOrRejectionRationale": "Existing operationClock prefers performance.now(); app-core records 512 retained samples with a 1500 ms indicator threshold. Those source constants are not latency measurements or operator confirmation of D-1. Use existing local measurements; do not add remote telemetry or a new analytics service.",
+        "verificationMethod": "Measure representative bounded workloads and actual supported browsers; report sample scope, outcomes and distributions from raw operation records, not CI elapsed duration. Verify delayed loading and terminal failures.",
+        "mandatoryBasis": "Only the controlling specification, existing normative manifest and authorized repair scope create application obligations. These sources explain platform behavior or recommend techniques; they do not create new requirement rows.",
+        "continuedApplicability": "REUSED_AT_UNCHANGED_PLATFORM_BOUNDARY_NOT_A_NEW_EXECUTION_CLAIM",
+        "currentReviewEvidence": [
+          "/workspace/scratch/stage-review/review-status.json",
+          "/workspace/scratch/pr-review/ui-browser-review.json",
+          "/workspace/scratch/ci-audit/report.txt"
+        ],
+        "currentExecutionScope": "Only matching owning evidence above; other behavior remains unverified. Historical executed evidence remains available in original record."
+      },
+      {
+        "practiceRecordId": "QP-11",
+        "qualityCategories": [
+          "performance/capacity",
+          "correctness",
+          "agent-contract usability"
+        ],
+        "sources": [
+          "file-api",
+          "storage",
+          "rfc8259"
+        ],
+        "applicableExistingOwners": [
+          "workflow-schema.js",
+          "prompt-engine.js",
+          "response-ingestion.js",
+          "project-store.js"
+        ],
+        "practice": "Test mandatory accounting through representation expansion, response limits, storage and recovery, with accurate blocked/unsupported outcomes.",
+        "failureAddressed": "A supported input fits raw intake but cannot fit mandatory full accounting or retained handoff, producing impossible retries.",
+        "adoptionOrRejectionRationale": "Keep versioned resource limits and lossless externalized context architecture. JSON/RFCs permit parser size/depth limits; this does not authorize dropping required obligations or silently shrinking the application support contract.",
+        "verificationMethod": "Probe declared boundaries with otherwise conforming positive controls and one excessive/invalid dimension; compare actual exported bytes and complete accounting.",
+        "mandatoryBasis": "Only the controlling specification, existing normative manifest and authorized repair scope create application obligations. These sources explain platform behavior or recommend techniques; they do not create new requirement rows.",
+        "continuedApplicability": "REUSED_AT_UNCHANGED_PLATFORM_BOUNDARY_NOT_A_NEW_EXECUTION_CLAIM",
+        "currentReviewEvidence": [
+          "/workspace/scratch/stage-review/review-status.json",
+          "/workspace/scratch/pr-review/ui-browser-review.json",
+          "/workspace/scratch/ci-audit/report.txt"
+        ],
+        "currentExecutionScope": "Only matching owning evidence above; other behavior remains unverified. Historical executed evidence remains available in original record."
+      },
+      {
+        "practiceRecordId": "QP-12",
+        "qualityCategories": [
+          "tests",
+          "correctness",
+          "compatibility"
+        ],
+        "sources": [
+          "web-platform-tests",
+          "html-event-loop",
+          "cdp-browser-protocol"
+        ],
+        "applicableExistingOwners": [
+          "verifier-runtime.mjs",
+          "existing verify-*.mjs",
+          "operator-browser-driver.mjs"
+        ],
+        "practice": "Separate logic assertions, real-browser-only geometry/transport and genuinely manual observations; keep shared runtime and fixtures that establish state through authorized controls.",
+        "failureAddressed": "Mocks bypass true input/state contracts, setup crashes count as intended fault detection, or virtual tests claim physical behavior.",
+        "adoptionOrRejectionRationale": "Retain existing test system and shared runtime. WPT distinguishes JavaScript tests from rendering/human-interaction tests; do not adopt WPT as another framework merely because its guidance is applicable. Require intended oracle/code plus conforming control for deliberate faults.",
+        "verificationMethod": "Inspect executed child reports, restore faults, and independently verify full production-boundary cases. Keep synthetic provenance explicit.",
+        "mandatoryBasis": "Only the controlling specification, existing normative manifest and authorized repair scope create application obligations. These sources explain platform behavior or recommend techniques; they do not create new requirement rows.",
+        "continuedApplicability": "REUSED_AT_UNCHANGED_PLATFORM_BOUNDARY_NOT_A_NEW_EXECUTION_CLAIM",
+        "currentReviewEvidence": [
+          "/workspace/scratch/stage-review/review-status.json",
+          "/workspace/scratch/pr-review/ui-browser-review.json",
+          "/workspace/scratch/ci-audit/report.txt"
+        ],
+        "currentExecutionScope": "Only matching owning evidence above; other behavior remains unverified. Historical executed evidence remains available in original record."
+      },
+      {
+        "practiceRecordId": "QP-13",
+        "qualityCategories": [
+          "CI/build/deployment",
+          "security",
+          "observability"
+        ],
+        "sources": [
+          "github-permissions",
+          "github-workflow-syntax",
+          "github-contexts",
+          "github-events"
+        ],
+        "applicableExistingOwners": [
+          ".github/workflows/pages.yml",
+          "existing verification evidence producers"
+        ],
+        "practice": "Use actual event-specific source identities, bounded gates, preserved exit statuses and least necessary workflow permissions; do not alter a head while its run is active.",
+        "failureAddressed": "Confusing PR head with test merge commit; masked failure, skipped mandatory proof or mutation-induced superseding CI.",
+        "adoptionOrRejectionRationale": "Current workflow defines read source/action/PR permissions and explicit deploy/status permissions; actions are commit-pinned. Official docs explain pull_request checkout uses the merge ref by default. No generic permission reduction is made without verifying normal deployment consumers.",
+        "verificationMethod": "Bind run/check/job/checkout/head identities and complete command outputs. Inspect conditionals, continue-on-error, shell pipefail and required checks before publication.",
+        "mandatoryBasis": "Only the controlling specification, existing normative manifest and authorized repair scope create application obligations. These sources explain platform behavior or recommend techniques; they do not create new requirement rows.",
+        "continuedApplicability": "REUSED_AT_UNCHANGED_PLATFORM_BOUNDARY_NOT_A_NEW_EXECUTION_CLAIM",
+        "currentReviewEvidence": [
+          "/workspace/scratch/stage-review/review-status.json",
+          "/workspace/scratch/pr-review/ui-browser-review.json",
+          "/workspace/scratch/ci-audit/report.txt"
+        ],
+        "currentExecutionScope": "Only matching owning evidence above; other behavior remains unverified. Historical executed evidence remains available in original record."
+      },
+      {
+        "practiceRecordId": "QP-14",
+        "qualityCategories": [
+          "CI/build/deployment",
+          "data integrity",
+          "reliability/recovery"
+        ],
+        "sources": [
+          "github-artifacts",
+          "github-events",
+          "webcrypto-rec"
+        ],
+        "applicableExistingOwners": [
+          "verified-site.mjs",
+          "build-static-site.mjs",
+          ".github/workflows/pages.yml"
+        ],
+        "practice": "Promote/reuse artifacts only under the existing complete verified source/test/dependency/configuration identity contract, and verify deployed resource bytes and runtime separately.",
+        "failureAddressed": "Artifact warning treated as hard failure, runtime subset mistaken for whole-source equivalence, or CI success called deployment.",
+        "adoptionOrRejectionRationale": "GitHub documents that artifact digest mismatch yields a warning. Existing verified-site/source-manifest checks must supply explicit fail-closed application promotion assurance. Reuse may avoid hours of redundant tests only when existing promotion rules prove equivalence; do not invent such equivalence from a matching runtime subset.",
+        "verificationMethod": "Run existing reuse negative/control cases; compare source archive, sealed artifact and deployed manifest; perform live required behavior checks.",
+        "mandatoryBasis": "Only the controlling specification, existing normative manifest and authorized repair scope create application obligations. These sources explain platform behavior or recommend techniques; they do not create new requirement rows.",
+        "continuedApplicability": "REUSED_AT_UNCHANGED_PLATFORM_BOUNDARY_NOT_A_NEW_EXECUTION_CLAIM",
+        "currentReviewEvidence": [
+          "/workspace/scratch/stage-review/review-status.json",
+          "/workspace/scratch/pr-review/ui-browser-review.json",
+          "/workspace/scratch/ci-audit/report.txt"
+        ],
+        "currentExecutionScope": "Only matching owning evidence above; other behavior remains unverified. Historical executed evidence remains available in original record."
+      },
+      {
+        "practiceRecordId": "QP-15",
+        "qualityCategories": [
+          "architecture",
+          "maintainability",
+          "readability",
+          "specification conformance"
+        ],
+        "sources": [
+          "rfc8174",
+          "ecma-2026"
+        ],
+        "applicableExistingOwners": [
+          "workbook.js",
+          "workflow-schema.js",
+          "hash.js",
+          "test-runtime.js",
+          "test-worker.js",
+          "workflow-engine.js",
+          "prompt-engine.js",
+          "response-ingestion.js",
+          "project-store.js",
+          "app-core.js",
+          "index.html"
+        ],
+        "practice": "Keep each business rule under the controlling designated owner, and make corrective control flow/producer-consumer relationships explicit across its dependency closure.",
+        "failureAddressed": "Handwritten duplicate rule sets drift between prompts, admission, canonical persistence and gates.",
+        "adoptionOrRejectionRationale": "The controlling specification \u00a712 supplies the exact existing owners and runtime order. It is the architectural mandate; generic language/style guidance is not a reason to rewrite large files, add a framework/backend or move designated ownership. No aesthetic refactor is proposed.",
+        "verificationMethod": "Review all changed symbols and affected unchanged callers; independently test exported producer contract, consumer rejection and persistence outcome. Preserve original correct tests and the stated reasons for any verifier correction.",
+        "mandatoryBasis": "Only the controlling specification, existing normative manifest and authorized repair scope create application obligations. These sources explain platform behavior or recommend techniques; they do not create new requirement rows.",
+        "continuedApplicability": "REUSED_AT_UNCHANGED_PLATFORM_BOUNDARY_NOT_A_NEW_EXECUTION_CLAIM",
+        "currentReviewEvidence": [
+          "/workspace/scratch/stage-review/review-status.json",
+          "/workspace/scratch/pr-review/ui-browser-review.json",
+          "/workspace/scratch/ci-audit/report.txt"
+        ],
+        "currentExecutionScope": "Only matching owning evidence above; other behavior remains unverified. Historical executed evidence remains available in original record."
+      },
+      {
+        "practiceRecordId": "QP-16",
+        "qualityCategories": [
+          "observability",
+          "privacy",
+          "maintainability",
+          "continued maintenance"
+        ],
+        "sources": [
+          "high-res-time",
+          "github-artifacts",
+          "github-contexts",
+          "storage"
+        ],
+        "applicableExistingOwners": [
+          "existing normative manifest",
+          "existing PR convergence checkpoint",
+          "existing CI artifact/evidence producers",
+          "app-core.js"
+        ],
+        "practice": "Maintain revision/environment-qualified regression, performance, recovery and compatibility evidence without inserting engineering audits into runtime project state or exposing private project data.",
+        "failureAddressed": "Stale audits repeated as facts, synthetic observations promoted to real evidence, private diagnostic content leaked and unscheduled maintenance implied.",
+        "adoptionOrRejectionRationale": "Use the existing normative manifest and checkpoint/evidence machinery; this read-only supplement is not another requirement register, scoring system or runtime data source. Retain raw public source snapshots and provenance, redact secret/signed capabilities in engineering reports.",
+        "verificationMethod": "For a new failure reduce its sequence, test the intended invariant, update existing regression/evidence under the same owners, and revalidate affected evidence after actual dependency/browser/source changes. Existing Actions run only on their real configured triggers.",
+        "mandatoryBasis": "Only the controlling specification, existing normative manifest and authorized repair scope create application obligations. These sources explain platform behavior or recommend techniques; they do not create new requirement rows.",
+        "continuedApplicability": "REUSED_AT_UNCHANGED_PLATFORM_BOUNDARY_NOT_A_NEW_EXECUTION_CLAIM",
+        "currentReviewEvidence": [
+          "/workspace/scratch/stage-review/review-status.json",
+          "/workspace/scratch/pr-review/ui-browser-review.json",
+          "/workspace/scratch/ci-audit/report.txt"
+        ],
+        "currentExecutionScope": "Only matching owning evidence above; other behavior remains unverified. Historical executed evidence remains available in original record."
+      }
+    ],
+    "categories": [
+      {
+        "category": "correctness",
+        "practiceRecordIds": [
+          "QP-01",
+          "QP-04",
+          "QP-06",
+          "QP-11",
+          "QP-12"
+        ],
+        "status": "SCOPED_RESEARCH_RECORDED_NO_CATEGORY_CERTIFICATION",
+        "qualification": "No numerical quality score, whole-row acceptance or absence-of-future-defects claim."
+      },
+      {
+        "category": "specification conformance",
+        "practiceRecordIds": [
+          "QP-01",
+          "QP-08",
+          "QP-15"
+        ],
+        "status": "SCOPED_RESEARCH_RECORDED_NO_CATEGORY_CERTIFICATION",
+        "qualification": "No numerical quality score, whole-row acceptance or absence-of-future-defects claim."
+      },
+      {
+        "category": "architecture",
+        "practiceRecordIds": [
+          "QP-15"
+        ],
+        "status": "SCOPED_RESEARCH_RECORDED_NO_CATEGORY_CERTIFICATION",
+        "qualification": "No numerical quality score, whole-row acceptance or absence-of-future-defects claim."
+      },
+      {
+        "category": "maintainability",
+        "practiceRecordIds": [
+          "QP-15",
+          "QP-16"
+        ],
+        "status": "SCOPED_RESEARCH_RECORDED_NO_CATEGORY_CERTIFICATION",
+        "qualification": "No numerical quality score, whole-row acceptance or absence-of-future-defects claim."
+      },
+      {
+        "category": "readability",
+        "practiceRecordIds": [
+          "QP-15"
+        ],
+        "status": "SCOPED_RESEARCH_RECORDED_NO_CATEGORY_CERTIFICATION",
+        "qualification": "No numerical quality score, whole-row acceptance or absence-of-future-defects claim."
+      },
+      {
+        "category": "agent-contract usability",
+        "practiceRecordIds": [
+          "QP-01",
+          "QP-02",
+          "QP-11"
+        ],
+        "status": "SCOPED_RESEARCH_RECORDED_NO_CATEGORY_CERTIFICATION",
+        "qualification": "No numerical quality score, whole-row acceptance or absence-of-future-defects claim."
+      },
+      {
+        "category": "data integrity",
+        "practiceRecordIds": [
+          "QP-02",
+          "QP-03",
+          "QP-05",
+          "QP-08",
+          "QP-14"
+        ],
+        "status": "SCOPED_RESEARCH_RECORDED_NO_CATEGORY_CERTIFICATION",
+        "qualification": "No numerical quality score, whole-row acceptance or absence-of-future-defects claim."
+      },
+      {
+        "category": "reliability/recovery",
+        "practiceRecordIds": [
+          "QP-03",
+          "QP-04",
+          "QP-05",
+          "QP-14"
+        ],
+        "status": "SCOPED_RESEARCH_RECORDED_NO_CATEGORY_CERTIFICATION",
+        "qualification": "No numerical quality score, whole-row acceptance or absence-of-future-defects claim."
+      },
+      {
+        "category": "concurrency",
+        "practiceRecordIds": [
+          "QP-03",
+          "QP-04"
+        ],
+        "status": "SCOPED_RESEARCH_RECORDED_NO_CATEGORY_CERTIFICATION",
+        "qualification": "No numerical quality score, whole-row acceptance or absence-of-future-defects claim."
+      },
+      {
+        "category": "security",
+        "practiceRecordIds": [
+          "QP-07",
+          "QP-08",
+          "QP-13"
+        ],
+        "status": "SCOPED_RESEARCH_RECORDED_NO_CATEGORY_CERTIFICATION",
+        "qualification": "No numerical quality score, whole-row acceptance or absence-of-future-defects claim."
+      },
+      {
+        "category": "privacy",
+        "practiceRecordIds": [
+          "QP-07",
+          "QP-16"
+        ],
+        "status": "SCOPED_RESEARCH_RECORDED_NO_CATEGORY_CERTIFICATION",
+        "qualification": "No numerical quality score, whole-row acceptance or absence-of-future-defects claim."
+      },
+      {
+        "category": "performance/capacity",
+        "practiceRecordIds": [
+          "QP-05",
+          "QP-10",
+          "QP-11"
+        ],
+        "status": "SCOPED_RESEARCH_RECORDED_NO_CATEGORY_CERTIFICATION",
+        "qualification": "No numerical quality score, whole-row acceptance or absence-of-future-defects claim."
+      },
+      {
+        "category": "accessibility/mobile usability",
+        "practiceRecordIds": [
+          "QP-06",
+          "QP-09"
+        ],
+        "status": "SCOPED_RESEARCH_RECORDED_NO_CATEGORY_CERTIFICATION",
+        "qualification": "No numerical quality score, whole-row acceptance or absence-of-future-defects claim."
+      },
+      {
+        "category": "operator experience",
+        "practiceRecordIds": [
+          "QP-06",
+          "QP-09",
+          "QP-10"
+        ],
+        "status": "SCOPED_RESEARCH_RECORDED_NO_CATEGORY_CERTIFICATION",
+        "qualification": "No numerical quality score, whole-row acceptance or absence-of-future-defects claim."
+      },
+      {
+        "category": "tests",
+        "practiceRecordIds": [
+          "QP-12"
+        ],
+        "status": "SCOPED_RESEARCH_RECORDED_NO_CATEGORY_CERTIFICATION",
+        "qualification": "No numerical quality score, whole-row acceptance or absence-of-future-defects claim."
+      },
+      {
+        "category": "CI/build/deployment",
+        "practiceRecordIds": [
+          "QP-13",
+          "QP-14"
+        ],
+        "status": "SCOPED_RESEARCH_RECORDED_NO_CATEGORY_CERTIFICATION",
+        "qualification": "No numerical quality score, whole-row acceptance or absence-of-future-defects claim."
+      },
+      {
+        "category": "observability",
+        "practiceRecordIds": [
+          "QP-10",
+          "QP-13",
+          "QP-16"
+        ],
+        "status": "SCOPED_RESEARCH_RECORDED_NO_CATEGORY_CERTIFICATION",
+        "qualification": "No numerical quality score, whole-row acceptance or absence-of-future-defects claim."
+      },
+      {
+        "category": "compatibility",
+        "practiceRecordIds": [
+          "QP-02",
+          "QP-12"
+        ],
+        "status": "SCOPED_RESEARCH_RECORDED_NO_CATEGORY_CERTIFICATION",
+        "qualification": "No numerical quality score, whole-row acceptance or absence-of-future-defects claim."
+      },
+      {
+        "category": "continued maintenance",
+        "practiceRecordIds": [
+          "QP-16"
+        ],
+        "status": "SCOPED_RESEARCH_RECORDED_NO_CATEGORY_CERTIFICATION",
+        "qualification": "No numerical quality score, whole-row acceptance or absence-of-future-defects claim."
+      }
+    ]
+  },
+  "currentApplicability": "The same browser-local vanilla JavaScript/IndexedDB/file-first application, Node/GitHub Actions verification and GitHub Pages delivery boundaries remain in the committed candidate. Retain existing primary-source decisions; changed owner implementations still require their own review and executed controls. Recommendations remain subordinate to the unchanged controlling specification.",
+  "primarySourceAccess": "Original recorded 2026-10-04 accesses retained; no new web fetch claimed.31 source records and16 decisions cover19 quality categories.",
+  "rawPrimarySnapshotAvailability": "Research source URLs, version/access metadata, hashes and decisions are recovered in this member; original raw primary-source snapshots were not among the612 extracted checkpoint evidence/reference members. No claim those raw snapshots were re-read or freshly fetched.",
+  "scopeLimit": "Practice applicability is not a claim of current compliance, measured improvement, or complete category verification."
+}

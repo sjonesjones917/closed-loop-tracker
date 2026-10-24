@@ -1,0 +1,144 @@
+(node:6) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "review": "FROZEN_SOURCE_ADOPTION_DELTA_ONLY",
+  "result": "ACCEPT",
+  "base": "7df5f46e9a7e54da09622387a978badb39916c09",
+  "head": "ebf6a930d1e5ef2f9afaaf68631a318facee5181",
+  "node": "v22.23.3",
+  "source": {
+    "byteLength": 309482,
+    "sha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883"
+  },
+  "historical": {
+    "byteLength": 342110,
+    "sha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d"
+  },
+  "checkCount": 24,
+  "results": [
+    {
+      "name": "supplied/frozen/disk byte equality and pinned identity",
+      "status": "PASS"
+    },
+    {
+      "name": "historical source retained at reachable base and historical source commit",
+      "status": "PASS"
+    },
+    {
+      "name": "all changes within bounded source governance scope; runtime and historical declarations unchanged",
+      "status": "PASS"
+    },
+    {
+      "name": "exact source accepts actual frozen source commit tuple",
+      "status": "PASS"
+    },
+    {
+      "name": "independent boundary rejects BOM even with rehashed tuple",
+      "status": "PASS"
+    },
+    {
+      "name": "independent boundary rejects invalid UTF8 even with rehashed tuple",
+      "status": "PASS"
+    },
+    {
+      "name": "independent boundary rejects CR interior even with rehashed tuple",
+      "status": "PASS"
+    },
+    {
+      "name": "independent boundary rejects remove both final LF even with rehashed tuple",
+      "status": "PASS"
+    },
+    {
+      "name": "independent boundary rejects one final LF even with rehashed tuple",
+      "status": "PASS"
+    },
+    {
+      "name": "independent boundary rejects three final LF even with rehashed tuple",
+      "status": "PASS"
+    },
+    {
+      "name": "independent boundary rejects prepend blank even with rehashed tuple",
+      "status": "PASS"
+    },
+    {
+      "name": "independent boundary rejects remove supplied header even with rehashed tuple",
+      "status": "PASS"
+    },
+    {
+      "name": "independent boundary rejects combined prompt boundary even with rehashed tuple",
+      "status": "PASS"
+    },
+    {
+      "name": "independent boundary rejects changed final phrase even with rehashed tuple",
+      "status": "PASS"
+    },
+    {
+      "name": "same-length interior mutation fails original tuple",
+      "status": "PASS"
+    },
+    {
+      "name": "base verifier reproduced wrong one-LF rejection against exact supplied bytes",
+      "status": "PASS"
+    },
+    {
+      "name": "current source regression passes actual Node process",
+      "status": "PASS"
+    },
+    {
+      "name": "frozen verify-specification-governance.mjs rejects historical source evidence and does not rewrite manifests",
+      "status": "PASS"
+    },
+    {
+      "name": "frozen generate-specification-governance.mjs rejects historical source evidence and does not rewrite manifests",
+      "status": "PASS"
+    },
+    {
+      "name": "imported verifier remains active and fails closed",
+      "status": "PASS"
+    },
+    {
+      "name": "historical governance core still executes all clarification/amendment/semantic negative gates",
+      "status": "PASS"
+    },
+    {
+      "name": "relabeling only manifest source tuple cannot renew historical semantic evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "rehashed same-length altered source cannot pass current verifier regression",
+      "status": "PASS"
+    },
+    {
+      "name": "reviewer extraction unchanged on historical source except source-code identity",
+      "status": "PASS"
+    }
+  ],
+  "changed": [
+    "generate-specification-governance.mjs",
+    "review-specification-coverage.mjs",
+    "specification-governance-core.mjs",
+    "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+    "test-specification-source-adoption.mjs",
+    "verification/specification-source-adoption-20261014/README.md",
+    "verification/specification-source-adoption-20261014/before-verifier.log",
+    "verification/specification-source-adoption-20261014/generate-specification-governance.log",
+    "verification/specification-source-adoption-20261014/historical-core-compatibility.log",
+    "verification/specification-source-adoption-20261014/imported-verifier.log",
+    "verification/specification-source-adoption-20261014/source-controls.log",
+    "verification/specification-source-adoption-20261014/verify-specification-governance.log",
+    "verify-specification-governance.mjs"
+  ],
+  "artifacts": [
+    "baseVerifier",
+    "sourceRegression",
+    "verify-specification-governance.mjs",
+    "generate-specification-governance.mjs",
+    "importedVerifier",
+    "historicalCore",
+    "relabeledManifest",
+    "rehashedChangedSource"
+  ],
+  "fullGovernanceAccepted": false,
+  "runtimeConformanceClaim": false,
+  "sourceReachabilityOnRemoteMainClaim": false
+}

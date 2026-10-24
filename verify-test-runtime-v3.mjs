@@ -4,6 +4,10 @@ import assert from 'node:assert/strict';
 import {webcrypto} from 'node:crypto';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import {testIrLimitFixtures} from './test-fixtures.mjs';
+import {verifyOperationRegistryAdmission,verifyTestIrDiagnosticBounds} from './test-runtime-operation-registry.mjs';
+import {verifyTestIrProducerContract} from './test-test-ir-producer-contract.mjs';
+import {verifyTestIrNativeIdentity} from './test-test-ir-native-identity.mjs';
+import {verifyTestIrNativeRecovery} from './test-test-ir-native-recovery.mjs';
 
 const source=fs.readFileSync(new URL('./test-runtime.js',import.meta.url),'utf8');
 const context={console,crypto:webcrypto,TextEncoder,TextDecoder,Uint8Array,ArrayBuffer,DataView,URL,setTimeout,clearTimeout,Date,Math,Promise};
@@ -13,6 +17,73 @@ vm.runInContext(fs.readFileSync(new URL('./hash.js',import.meta.url),'utf8'),con
 vm.runInContext(source,context,{filename:'test-runtime.js'});
 const runtime=context.closedLoopTestRuntime;
 assert.ok(runtime,'runtime must load');
+
+async function verifyIntegerBoundaryContract(runtime){
+ const observations=[],bindings={VALUES:{kind:'CANONICAL_VALUE',canonicalKey:'VALUES'}};
+ const execution=(op,values,expected)=>runtime.execute({spec:{version:'closed-loop-test-spec/1',steps:[{op:'LOAD_ARTIFACT',binding:'VALUES'},{op},{op:'ASSERT_EQ',value:expected}]},canonicalBindings:{VALUES:{value:values}},metadata:{testId:'SYNTHETIC-EXACT-INTEGER',bindings}});
+ // Literal expected values derive from the safe-integer contract, independently
+ // of the runtime arithmetic implementation and its exported limit constants.
+ for(const [caseId,op,values,expected]of [
+  ['sum-positive-boundary','SUM',[9007199254740990,1],9007199254740991],
+  ['sum-negative-boundary','SUM',[-9007199254740990,-1],-9007199254740991],
+  ['sum-exact-cancellation','SUM',[9007199254740991,-9007199254740991,7],7],
+  ['minimum-boundary','MIN',[9007199254740991,-9007199254740991,0],-9007199254740991],
+  ['maximum-boundary','MAX',[-9007199254740991,9007199254740991,0],9007199254740991],
+  ['count-exact','COUNT',[-9007199254740991,9007199254740991,0],3]
+ ]){const actual=await execution(op,values,expected);assert.equal(actual.determination,'SATISFIED','TEST_IR_INTEGER_BOUNDARY_ORACLE: '+caseId);assert.equal(actual.actual,expected,'TEST_IR_INTEGER_EXACT_VALUE_ORACLE: '+caseId);observations.push({caseId,op,expected,actual:actual.actual,determination:actual.determination});}
+ for(const [caseId,op,values,code]of [
+  ['sum-positive-overflow','SUM',[9007199254740991,1],'INTEGER_OVERFLOW'],
+  ['sum-negative-overflow','SUM',[-9007199254740991,-1],'INTEGER_OVERFLOW'],
+  ['sum-overflow-before-cancellation','SUM',[9007199254740991,1,-1],'INTEGER_OVERFLOW'],
+  ['unsupported-integer-text-sum-input','SUM',['9007199254740992'],'UNSUPPORTED_NUMERIC_PRECISION'],
+  ['decimal-minimum-input','MIN',[{numberType:'DECIMAL',value:'0.1'}],'UNSUPPORTED_NUMERIC_PRECISION'],
+  ['decimal-maximum-input','MAX',[{numberType:'DECIMAL',value:'0.1'}],'UNSUPPORTED_NUMERIC_PRECISION']
+ ]){let failure;await assert.rejects(()=>execution(op,values,0),error=>{failure=error;return error.code===code&&error.disposition==='UNDETERMINED';},'TEST_IR_INTEGER_REJECTION_ORACLE: '+caseId);observations.push({caseId,op,code:failure.code,disposition:failure.disposition,rejected:true});}
+ const restored=await execution('SUM',[9007199254740990,1],9007199254740991);assert.equal(restored.determination,'SATISFIED','TEST_IR_INTEGER_RESTORED_CONTROL_ORACLE');
+ return {checkId:'test-ir.exact-integer-boundaries',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:1927'],boundary:'Production Test IR execution with explicit immutable canonical bindings; no project commit or worker responsiveness claim',expected:{conforming:6,rejected:6,restoredControl:true},observed:{conforming:observations.filter(row=>!row.rejected).length,rejected:observations.filter(row=>row.rejected).length,restoredControl:restored.determination==='SATISFIED'},cases:observations,passed:true};
+}
+async function verifyLiteralRuntimeBoundaries(runtime){
+ const cases=[],plain=value=>JSON.parse(JSON.stringify(value)),literal=value=>({literal:value});
+ const base={version:'closed-loop-test-spec/1',languageVersion:'closed-loop-test-ir-language/1',operationRegistryVersion:'closed-loop-test-ir-operations/1',operationRegistrySha256:runtime.OPERATION_REGISTRY_SHA256};
+ const dag=(steps)=>({...base,steps:steps.map((step,index)=>({stepId:'S'+String(index+1).padStart(3,'0'),...step})),result:{stepRef:'S'+String(steps.length).padStart(3,'0'),output:'assertion'}});
+ const eq=(actual,expected,extra={})=>({op:'ASSERT_EQ',inputs:{actual,expected:literal(expected),...extra}}),ref=(stepRef,output)=>({stepRef,output});
+ async function outcome(caseId,spec,expectedActual,expectedDetermination='SATISFIED'){
+  const result=await runtime.execute({spec,metadata:{bindings:{}}});
+  assert.equal(result.determination,expectedDetermination,'TEST_IR_LITERAL_CONTRACT_ORACLE: '+caseId);
+  assert.deepEqual(plain(result.actual),expectedActual,'TEST_IR_LITERAL_VALUE_ORACLE: '+caseId);
+  cases.push({caseId,result:'PASS',determination:result.determination,actual:plain(result.actual)});
+ }
+ // §21.6 literal expected output establishes root, array order, and per-parent
+ // 1-based XML indexing independently of the selector implementation.
+ for(const [caseId,parser,text,selector,path,expected]of [
+  ['json-root','PARSE_JSON','{"answer":7}','SELECT_JSON_PATH','$',{answer:7}],
+  ['json-array-wildcard-document-order','PARSE_JSON','[3,1,2]','SELECT_JSON_PATH','$[*]',[3,1,2]],
+  ['xml-one-based-second-element','PARSE_XML','<r><x>A</x><x>B</x><x>C</x></r>','SELECT_XML','/r/x[2]/text()',['B']],
+  ['xml-position-is-per-parent','PARSE_XML','<r><p><x>A</x><x>B</x></p><p><x>C</x><x>D</x></p></r>','SELECT_XML','/r/p/x[2]/text()',['B','D']]
+ ])await outcome(caseId,dag([{op:parser,inputs:{text:literal(text)}},{op:selector,inputs:{value:ref('S001','value'),path:literal(path)}},eq(ref('S002','selection'),expected)]),expected);
+ // §21.7 explicitly bound CR/CRLF/AUTO semantics and mismatched bytes.
+ const csv=(text,newline)=>dag([{op:'PARSE_CSV',inputs:{text:literal(text),delimiter:literal(','),header:literal(false),quote:literal('"'),newline:literal(newline),encoding:literal('UTF-8')}},eq(ref('S001','value'),[['a'],['b']])]);
+ for(const [caseId,text,newline]of [['csv-cr','a\rb','CR'],['csv-crlf','a\r\nb','CRLF'],['csv-auto-crlf','a\r\nb','AUTO']])await outcome(caseId,csv(text,newline),[['a'],['b']]);
+ for(const [caseId,text,newline]of [['csv-cr-rejects-lf','a\nb','CR'],['csv-crlf-rejects-lf','a\nb','CRLF'],['csv-lf-rejects-crlf','a\r\nb','LF']]){
+  await assert.rejects(()=>runtime.execute({spec:csv(text,newline),metadata:{bindings:{}}}),error=>error.code==='MALFORMED_CSV'&&error.message==='CSV newline does not match the explicit newline contract.','TEST_IR_LITERAL_CONTRACT_ORACLE: '+caseId);
+  cases.push({caseId,result:'PASS',code:'MALFORMED_CSV'});
+ }
+ // §21.10 relative tolerance scales by max magnitude and combines with
+ // absolute tolerance using max, never their sum; expected outcomes are literal.
+ for(const [caseId,actual,expected,settings,determination]of [
+  ['relative-tolerance-inside','110','100',{relTol:'0.1'},'SATISFIED'],
+  ['relative-tolerance-outside','112','100',{relTol:'0.1'},'VIOLATED'],
+  ['combined-relative-dominates','110','100',{absTol:'1',relTol:'0.1'},'SATISFIED'],
+  ['combined-not-summed','112','100',{absTol:'1',relTol:'0.1'},'VIOLATED'],
+  ['combined-absolute-boundary','120','100',{absTol:'20',relTol:'0.01'},'SATISFIED'],
+  ['combined-absolute-outside','121','100',{absTol:'20',relTol:'0.01'},'VIOLATED']
+ ])await outcome(caseId,dag([eq(literal(actual),expected,{numericMode:literal('APPROXIMATE'),...Object.fromEntries(Object.entries(settings).map(([key,value])=>[key,literal(value)]))})]),actual,determination);
+ return {checkId:'test-ir.literal-contract-boundaries',passed:true,synthetic:true,actualBrowser:false,cases,boundary:'Production normalized DAG execution; literal selector/newline/tolerance outcomes only, no ingestion/storage/browser or whole-clause conformance claim',requirementRefs:['NREQ-da451a908ba4a4b028e03107ca54afb2','NREQ-ff6c454e36be6ed2e78201186509c537','NREQ-b0df53c5bb2160c660a516acf260b6c7']};
+}
+
+if(process.argv.includes('--contract-boundaries-only')){console.log(JSON.stringify({verifyTestRuntimeContractBoundaries:'PASS',literalContractBoundaries:await verifyLiteralRuntimeBoundaries(runtime)}));process.exit(0);}
+if(process.argv.includes('--numeric-only')){console.log(JSON.stringify({verifyTestRuntimeInteger:'PASS',verificationObservations:[await verifyIntegerBoundaryContract(runtime)]}));process.exit(0);}
+
 
 const artifact=(id,text)=>({artifactId:id,filename:`${id}.txt`,bytes:new TextEncoder().encode(text)});
 const test=(spec,bindings={PRODUCT:{kind:'ARTIFACT',artifactId:'ART-PRODUCT'}})=>({
@@ -149,8 +220,15 @@ assert.equal(timeoutResult.status,'EXECUTION_FAILED');
 assert.equal(timeoutResult.failure.code,'WORKER_TIMEOUT');
 assert.equal(timeoutResult.observations.length,0,'timeout must produce no partial result');
 
+const literalContractBoundaries=await verifyLiteralRuntimeBoundaries(runtime);
+const integerBoundaryContract=await verifyIntegerBoundaryContract(runtime);
+const diagnosticBounds=verifyTestIrDiagnosticBounds(source,runtime);
+const operationRegistryAdmission=await verifyOperationRegistryAdmission(source,runtime);
+const producerContract=await verifyTestIrProducerContract(runtime);
+const nativeCanonicalIdentity=await verifyTestIrNativeIdentity();
+const nativeStaleRecovery=await verifyTestIrNativeRecovery();
 console.log(JSON.stringify({
-  verifyTestRuntimeV3:'PASS',
+  verifyTestRuntimeV3:'PASS',literalContractBoundaries,diagnosticBounds,operationRegistryAdmission,producerContract,nativeCanonicalIdentity,nativeStaleRecovery,verificationObservations:[integerBoundaryContract],
   operations:runtime.OPS.length,
   inputLimit:runtime.LIMITS.maxTotalInputBytes,
   workerTimeoutMs:runtime.LIMITS.workerTimeoutMs,

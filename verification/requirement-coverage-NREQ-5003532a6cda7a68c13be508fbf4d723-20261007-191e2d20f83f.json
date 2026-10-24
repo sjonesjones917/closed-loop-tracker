@@ -1,0 +1,187 @@
+{
+  "schema": "closed-loop-requirement-coverage-review/1",
+  "normativeRequirementId": "NREQ-5003532a6cda7a68c13be508fbf4d723",
+  "sourceLineSha256": "e3b13b5c54e898d4f1d4d88840cf7b90baa8e95b381220354450f376f4053e54",
+  "specificationSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
+  "declarationSha256": "191e2d20f83fc299fb6fec900bc7d41743106d2f386f0aba5a74583ed4d29301",
+  "decision": "COMPLETE_COVERAGE",
+  "evidenceBasis": "EXTERNALLY_SUPPORTED",
+  "method": "The exact narrow controlling clause and unchanged proof decomposition were independently reviewed in the embedded original semantic assessment. Current production, verifier, fixture and catalog deltas were separately reviewed in the referenced source-delta review bundle. This is coverage-design evidence only: current frozen-source executed receipts remain independently required, and unsupported clauses are not promoted.",
+  "author": {
+    "actor": "Codex coordinated exact-clause renewal proposer",
+    "contextId": "/root"
+  },
+  "reviewer": {
+    "actor": "Codex independent narrow declaration reviewer",
+    "contextId": "/root/normative_review"
+  },
+  "reviewedInputs": [
+    {
+      "declarationSha256": "191e2d20f83fc299fb6fec900bc7d41743106d2f386f0aba5a74583ed4d29301"
+    },
+    {
+      "path": "app-core.js",
+      "sha256": "74036d41bcf1178b7030b6b8ef28087e5becd6d61034c11f896443238d23b6a6"
+    },
+    {
+      "path": "hash.js",
+      "sha256": "a13cf57bd7c7414bc801f511d5937f80eaf7fd675c0e6c2b5a92b365df16e4d7"
+    },
+    {
+      "path": "project-store.js",
+      "sha256": "e6c37175a93b934585d7b461ad6448bb0a929670e24e8fc03940dcc132330db8"
+    },
+    {
+      "path": "prompt-engine.js",
+      "sha256": "66a1eb2976826eb15b3d8d2963363836a160e75bf8ebaf904673c64963a20ba4"
+    },
+    {
+      "path": "response-ingestion.js",
+      "sha256": "e761fb032005030b8a63e5250e56c4bbb3ea617625be5ea55bbbc2d0b5029117"
+    },
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d"
+    },
+    {
+      "path": "test-artifact-fixtures.mjs",
+      "sha256": "d695e57716d9aef5ea7c5d96464ed9492ef036a4f759fff1b6147e0cae21c3b4"
+    },
+    {
+      "path": "test-project-store-runtime.mjs",
+      "sha256": "563817f6d8256a0ea3ebbc1d8836b6c5887fa7275b0378ade657ecfb61f00eed"
+    },
+    {
+      "path": "test-runtime.js",
+      "sha256": "e4e01a79c526592f9d044e2c104845e63c9aa341eb64837c138f5c3e3ecba353"
+    },
+    {
+      "path": "verification-evidence-catalog.mjs",
+      "sha256": "570fcea534cac49e62a5f062d7f44757e7123309595d61150e6b02229a7b5796"
+    },
+    {
+      "path": "verification/current-source-delta-review-20261007.json",
+      "sha256": "3fad9eab08ffad0ce72f8d64771514793b2a282bde132fbc7c036202239b0a73"
+    },
+    {
+      "path": "verification/normative-context-applicability-20261005.json",
+      "sha256": "7cd05ff0028578a1ca1c2560533519a602ce6a974c240ee11dbbd272524cf656"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-5003532a6cda7a68c13be508fbf4d723-20261005.json",
+      "sha256": "6dfaf7a1cd1b752373d26e0f406bcc4d6e10a13b106cf97d064d9f0d3f4f8d91"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-5003532a6cda7a68c13be508fbf4d723-20261006-followup-6592f15eaff3.json",
+      "sha256": "a346484560cbadc42396371ba35c1e8b63e669b52caf693193afc70a2f52f568"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-5003532a6cda7a68c13be508fbf4d723-20261006.json",
+      "sha256": "728d071e901508d49319ca1a64d57804e96f4022c33ede1299ce593cd092e434"
+    },
+    {
+      "path": "verifier-runtime.mjs",
+      "sha256": "8a4c9058b6c72a5aa8dd68809e3cbfd8e5c217b358c41970347443a338f83933"
+    },
+    {
+      "path": "verify-recoverable-history.mjs",
+      "sha256": "bec8d5ebf0bd61d89a4b7c7b6fd060fe362a20edde7e82890b038fe7763fa1f8"
+    },
+    {
+      "path": "workbook.js",
+      "sha256": "3a8098a9bb4ea108eadaa9bec90c76a1522f57f6465f45341cedf60937ddd008"
+    },
+    {
+      "path": "workflow-engine.js",
+      "sha256": "fac2c0f35a3e10f4be41711ea36d6da4b4b49d86f45ec751b509134dc5ab8777"
+    },
+    {
+      "path": "workflow-schema.js",
+      "sha256": "656e9e632cea3a60e1c7e0fb486e6630d205011d7db32d9674ac5e88593d24f1"
+    }
+  ],
+  "findings": [],
+  "reviewPerformed": true,
+  "sourceLocation": {
+    "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+    "startLine": 3082,
+    "endLine": 3082,
+    "lineSha256": "e3b13b5c54e898d4f1d4d88840cf7b90baa8e95b381220354450f376f4053e54"
+  },
+  "controllingText": "A stale tab cannot overwrite a newer revision.",
+  "governingContext": [
+    {
+      "normativeRequirementId": "NREQ-2782d9ffebe3a79637b31fc8b6b4ecdb",
+      "sourceLineSha256": "5a107ddef71a5a6ae718108b986c1c81b4b593ad1caf33c6db7754c45a317245",
+      "controllingText": "35.1 Compare-and-swap"
+    }
+  ],
+  "additionalControllingContext": [],
+  "reviewedChecks": [
+    {
+      "suite": "verify-recoverable-history.mjs",
+      "checkId": "store.cas-stale-write-population"
+    }
+  ],
+  "scopeLimit": "Production transaction adapter exercises CAS state/history isolation; browser two-tab UI behavior remains separate proof.",
+  "independentSemanticAssessment": {
+    "path": "/workspace/scratch/normative-review/24-declaration-semantic-review.json",
+    "sha256": "5440a66128d087b55a4d858ea0149fd024916806fa7d0ea9c23b6d0243f480ac",
+    "row": {
+      "normativeRequirementId": "NREQ-5003532a6cda7a68c13be508fbf4d723",
+      "sourceLocation": {
+        "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "startLine": 3082,
+        "endLine": 3082,
+        "lineSha256": "e3b13b5c54e898d4f1d4d88840cf7b90baa8e95b381220354450f376f4053e54"
+      },
+      "controllingText": "A stale tab cannot overwrite a newer revision.",
+      "review": {
+        "path": "verification/requirement-coverage-NREQ-5003532a6cda7a68c13be508fbf4d723-20261006-followup-6592f15eaff3.json",
+        "sha256": "a346484560cbadc42396371ba35c1e8b63e669b52caf693193afc70a2f52f568"
+      },
+      "checkIds": [
+        "store.cas-stale-write-population"
+      ],
+      "status": "NARROW_COVERAGE_DESIGN_REVIEWED_NO_GAP_FOUND",
+      "rationale": "Exact stale revision rejected through owning writeProject after real restore increased revision; test compares whole canonical state and complete history before/after refusal, then successful newer restore. Finite CAS adapter control is appropriate for deterministic clause; real IndexedDB overlapping-tab behavior is separate.",
+      "reviewedSourceInputs": [
+        {
+          "path": "project-store.js",
+          "sha256": "2d6896f47164f4a232c631d949cce64d2200e6d4e2202c2c3cdb29b08648cdf2"
+        },
+        {
+          "path": "verify-recoverable-history.mjs",
+          "sha256": "3eea361576cc9f38bf1eb968fcc15142eafc08be20da1d9a1da2075ed42afae6"
+        },
+        {
+          "path": "verification-evidence-catalog.mjs",
+          "sha256": "e6378e7747ba860e5312a813c55625748d2fbaee5f2838d8ee4e97349ba4640f"
+        }
+      ],
+      "executedCurrentProducerByThisReview": false,
+      "fullApplicationConformanceClaim": false
+    }
+  },
+  "priorReview": {
+    "path": "verification/requirement-coverage-NREQ-5003532a6cda7a68c13be508fbf4d723-20261006-followup-6592f15eaff3.json",
+    "sha256": "a346484560cbadc42396371ba35c1e8b63e669b52caf693193afc70a2f52f568",
+    "author": {
+      "actor": "Codex follow-up source-qualified renewal author",
+      "contextId": "/root/ci_delivery_audit"
+    },
+    "reviewer": {
+      "actor": "Codex independent exact-clause declaration reviewer",
+      "contextId": "/root/storage_audit"
+    },
+    "reviewCompletedAt": "2026-10-06T21:54:08.261034+00:00"
+  },
+  "reviewerPriorContributionDisclosure": "Actual reviewer contribution and boundary are retained in the embedded assessment. For the five custody clauses, this reviewer authored strengthened tests; parent and separate PR inventory reviewer independently inspected the delta and intended oracle. This does not establish external-agent context independence.",
+  "currentExecutionRequired": true,
+  "applicationConformanceClaim": false,
+  "reviewCompletedAt": "2026-10-07T01:21:18.248Z",
+  "currentDependencyDeltaReview": {
+    "path": "verification/current-source-delta-review-20261007.json",
+    "sha256": "3fad9eab08ffad0ce72f8d64771514793b2a282bde132fbc7c036202239b0a73"
+  }
+}

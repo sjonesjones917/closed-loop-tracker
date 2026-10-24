@@ -1,0 +1,36 @@
+(node:59) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "test": "test-specification-source-classifications",
+  "result": "PASS",
+  "scope": "REVIEWED_SOURCE_CLASSIFICATION_ONLY",
+  "exclusionCount": 9,
+  "mandatoryPreservedLines": [
+    5578,
+    5596,
+    5597,
+    5599,
+    5600,
+    5601,
+    5602,
+    5603,
+    5604,
+    5605,
+    5606,
+    5607,
+    5608,
+    5609,
+    5611
+  ],
+  "negativeControls": [
+    "missing evidence",
+    "changed evidence digest",
+    "missing reviewed exclusion",
+    "overbroad historical exclusion",
+    "mandatory line substituted",
+    "changed exclusion source text",
+    "changed independent pointer"
+  ],
+  "atomicRequirementCompletenessEstablished": false,
+  "implementationConformanceClaim": false
+}

@@ -1,0 +1,190 @@
+{
+  "schema": "closed-loop-requirement-coverage-review/1",
+  "normativeRequirementId": "NREQ-ea453611a3a1f48cdd2fbfbe946d7ac7",
+  "sourceLineSha256": "3fb221aaa0c37d2bc7c8bc1c437d7d3771a00488e7c282fb0f5b5fa8257da994",
+  "specificationSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
+  "declarationSha256": "1a27648a53e6c6d03ac50694fdf228cc9e0b309e79f2cb7569059d5e25142be8",
+  "decision": "COMPLETE_COVERAGE",
+  "evidenceBasis": "EXTERNALLY_SUPPORTED",
+  "method": "Actual separate-context review of the exact narrow storage clause, designated production owner, independent literal positive/negative assertions, source-bound named report consumers and applicability decisions. Complete current source-qualified producer receipts remain separately mandatory.",
+  "author": {
+    "actor": "Codex CI/delivery declaration author",
+    "contextId": "/root/ci_delivery_audit"
+  },
+  "reviewer": {
+    "actor": "Codex independent quarantine declaration reviewer",
+    "contextId": "/root/storage_audit"
+  },
+  "reviewedInputs": [
+    {
+      "path": "app-core.js",
+      "sha256": "15d1b6ca2a49b77de75858c57080966b3bbd25560005322aa7ec25652fa6a2ad"
+    },
+    {
+      "path": "hash.js",
+      "sha256": "c5df5b7459ad610ee07e1793be3b3b38efbf0a65aeb22b03e2dd89026fed31a6"
+    },
+    {
+      "path": "operator-journey-fixtures.mjs",
+      "sha256": "73cca7813dfdca430c66e76487efc60b91cbf4642bfcd93b96f6bad2a9314c38"
+    },
+    {
+      "path": "project-store.js",
+      "sha256": "2d6896f47164f4a232c631d949cce64d2200e6d4e2202c2c3cdb29b08648cdf2"
+    },
+    {
+      "path": "prompt-engine.js",
+      "sha256": "31489eaeffcd4f12696b473467c6be7e494e8e26a8eb64c4c8c69d18f215f94a"
+    },
+    {
+      "path": "response-ingestion.js",
+      "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
+    },
+    {
+      "path": "specification/closed-loop-normative-requirements.json",
+      "sha256": "97b43f690b60219d67f498459439bce30416650b9f26c46c34a89b972a13929f"
+    },
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d"
+    },
+    {
+      "path": "specification/closed-loop-specification-manifest.json",
+      "sha256": "651e71dffee949524793d50195d4958a777dc7392cb31f40b5975079a846b258"
+    },
+    {
+      "path": "specification/requirement-evidence-bindings.json",
+      "sha256": "9c4631c86ccd2d8234f23469ffc7e11374bcda51eb4bb1f27c1f4a97ade7b72e"
+    },
+    {
+      "path": "test-due-verification-scheduling.mjs",
+      "sha256": "d3fc5cc1c2d7e86cffe73028a50cb840229b54285f1e88473e64ff7f5d802f33"
+    },
+    {
+      "path": "test-fixtures.mjs",
+      "sha256": "fdcaa258f88be52f2b426785ac0fcdcd547392e702c33fbb0eb4823d9c2a711d"
+    },
+    {
+      "path": "test-handoff-authorization.mjs",
+      "sha256": "37bfb4e255afb6701fccaccdf055ee7961e838eaf03927c2963dfcf880cf82b6"
+    },
+    {
+      "path": "test-normative-catalog-consumers.mjs",
+      "sha256": "6c14d578e5d70351f30288c9182ca9f6cbfcced5ec35e230167b22874a202044"
+    },
+    {
+      "path": "test-project-store-runtime.mjs",
+      "sha256": "955fc63a1b7ae3ec7f8b71f36fd4d76d4ad8ee8fa0de2fa8d2697a66b1458eef"
+    },
+    {
+      "path": "test-runtime.js",
+      "sha256": "e4e01a79c526592f9d044e2c104845e63c9aa341eb64837c138f5c3e3ecba353"
+    },
+    {
+      "path": "test-zip.mjs",
+      "sha256": "b5080a8e58eb7b13f421ecce5c63a3d95b765a5b021f5bd4543dce28d171e89d"
+    },
+    {
+      "path": "verification-evidence-catalog.mjs",
+      "sha256": "feedf2e728fca37acf303536dd55216389d591567c1ab89236a53aa0b2d19eed"
+    },
+    {
+      "path": "verification-evidence-preload.mjs",
+      "sha256": "3c7835db4197c92c07dc83abae8f1f63bf1815d389d9f8392e08096093d92ffa"
+    },
+    {
+      "path": "verification/normative-context-applicability-20261005.json",
+      "sha256": "7cd05ff0028578a1ca1c2560533519a602ce6a974c240ee11dbbd272524cf656"
+    },
+    {
+      "path": "verifier-runtime.mjs",
+      "sha256": "8a4c9058b6c72a5aa8dd68809e3cbfd8e5c217b358c41970347443a338f83933"
+    },
+    {
+      "path": "verify-conformance-regressions.mjs",
+      "sha256": "619cb24a8609c572665dda898411217b5eda3084cd2ef60a468db7e31c025735"
+    },
+    {
+      "path": "verify-filename-transports.mjs",
+      "sha256": "48bd2a5ef6731d755eb71be6371c764ecf94fac6ef05dc6a2905e1dd4934972a"
+    },
+    {
+      "path": "verify-integrity-recovery-faults.mjs",
+      "sha256": "9b5770fa7fb2bef7e20754cfefd54471d98bcfff5cbf0ec7facf1e85bee8a181"
+    },
+    {
+      "path": "verify-project-lifecycle-full.mjs",
+      "sha256": "14dd427907690386f819c7aa4be9f1405ec5eceac718d7d213e92476558e9e5f"
+    },
+    {
+      "path": "verify-quarantine-recovery.mjs",
+      "sha256": "12a0dd0dfc01dc04b16915681c92967c30557ca8a5e626f1ce0b1ee57cce79cf"
+    },
+    {
+      "path": "workbook.js",
+      "sha256": "3a8098a9bb4ea108eadaa9bec90c76a1522f57f6465f45341cedf60937ddd008"
+    },
+    {
+      "path": "workflow-engine.js",
+      "sha256": "b47195d41a130cb1b84425f5eb33bd8a163e1047c0e95e19eef59d47525e463d"
+    },
+    {
+      "path": "workflow-schema.js",
+      "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
+    },
+    {
+      "declarationSha256": "1a27648a53e6c6d03ac50694fdf228cc9e0b309e79f2cb7569059d5e25142be8"
+    }
+  ],
+  "findings": [],
+  "reviewPerformed": true,
+  "reviewCompletedAt": "2026-10-06T20:42:47.521746+00:00",
+  "reason": "Read the complete Section35.8 allowed-action context and exact deletion clause. The current removeQuarantinedProject owner removes selected body/catalog together with its receipt in one metadata transaction, checks conflicting retries and waits for commit. Existing assertions establish rollback and valid active-project/file isolation. The added direct metaGet(key)===undefined assertion establishes successful body removal, and the maintained omitted-meta.delete fault is detected by the intended oracle while the unchanged production owner passes. The declaration binds that actual mutation separately from deterministic deletion. It does not claim all quarantine actions, native IndexedDB concurrency, or UI/device acceptance.",
+  "scopeLimit": "Deterministic controlled store command under the lifecycle transaction adapter. This does not approve all quarantine recovery actions, real IndexedDB fault behavior, UI discoverability, browser/device acceptance or full application conformance.",
+  "sourceLocation": {
+    "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+    "startLine": 3162,
+    "endLine": 3162,
+    "lineSha256": "3fb221aaa0c37d2bc7c8bc1c437d7d3771a00488e7c282fb0f5b5fa8257da994"
+  },
+  "controllingText": "- delete the quarantined project.",
+  "governingContext": [],
+  "reviewEvidence": [
+    "project-store.js:445–450 removeQuarantinedProject validates selected quarantine identity, performs receipt/conflict check, deletes body/catalog in one metadata transaction, records receipt and awaits commit; abort preserves state",
+    "verify-quarantine-recovery.mjs:23 injected failure retains body; successful deletion directly asserts metaGet(raw.key)===undefined at QUARANTINE_BODY_REMOVAL_ORACLE; exact retry, conflicting retry and independent active project/file controls follow",
+    "verify-integrity-recovery-faults.mjs:4–6 registers exact quarantine-body-delete mutation; assertDetectedFault requires intended diagnostic and restored unchanged owner exit0",
+    "/tmp/closed-loop-evidence/quarantine-delete-oracle/report.json old exact assertions plus omitted body delete exit0; new intended diagnostic exit1; current owner exit0",
+    "/tmp/closed-loop-evidence/quarantine-delete-oracle/provenance.json pre-fix driver preserves all old assertions/setup and changes only fault selector on line7"
+  ],
+  "reviewedChecks": [
+    {
+      "suite": "verify-quarantine-recovery.mjs",
+      "checkId": "recovery.quarantine-controlled-deletion"
+    },
+    {
+      "suite": "verify-integrity-recovery-faults.mjs",
+      "checkId": "recovery.quarantine-body-delete-fault"
+    }
+  ],
+  "retainedReviewInputs": {
+    "proposal": {
+      "path": "/tmp/closed-loop-evidence/2-quarantine-declarations-proposed-e5efb885d02ea6ae7fc6a568073be820ab061b1640effd89cf7ff9280fdead8c.json",
+      "sha256": "e5efb885d02ea6ae7fc6a568073be820ab061b1640effd89cf7ff9280fdead8c"
+    },
+    "independentReview": {
+      "path": "/tmp/closed-loop-evidence/2-quarantine-independent-review-19926136a2e3b70b320d972e13da54d13f82856baf2207f1d3b63c65852efcca.json",
+      "sha256": "19926136a2e3b70b320d972e13da54d13f82856baf2207f1d3b63c65852efcca"
+    },
+    "dependencyReviews": [
+      {
+        "path": "/tmp/closed-loop-evidence/2-quarantine-independent-review-19926136a2e3b70b320d972e13da54d13f82856baf2207f1d3b63c65852efcca.json",
+        "sha256": "19926136a2e3b70b320d972e13da54d13f82856baf2207f1d3b63c65852efcca"
+      }
+    ]
+  },
+  "reviewerPriorContributionDisclosure": "The proposed reviewer authored the minimal new successful-body-absence assertion and maintained fault registration, disclosed in the review. Root independently reviewed that assertion, mutation and focused pre-fix/control evidence. The proposed reviewer did not author these declarations, the catalog/report consumer changes, production quarantine/deletion implementation or other owning assertions.",
+  "actorIndependenceBoundary": "Declaration author /root/ci_delivery_audit and reviewer /root/storage_audit are distinct actual contexts. The reviewer authored the disclosed minimal successful-delete assertion/fault registration; root independently reviewed those changes and their actual pre-fix/control evidence. No hidden-context authentication or independent authorship of every implementation/test is claimed.",
+  "sourceEvidenceQualification": "Existing producer suite outputs and focused old/new defect controls have their retained identities. Declaration review is not a current full-suite receipt or final release acceptance; all named current source-qualified receipts remain required.",
+  "currentExecutionRequired": true,
+  "applicationConformanceClaim": false
+}

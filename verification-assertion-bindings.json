@@ -1,0 +1,521 @@
+{
+  "schema": "closed-loop-verification-assertion-bindings/1",
+  "specificationSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+  "bindings": [
+    {
+      "normativeRequirementId": "NREQ-7f4177f55e785aab7b5d6299625ddb31",
+      "sourceLineSha256": "e4f0738b7c6be20d6fcf48cab76f41d604c2099d91bb776f34a352af1192bc88",
+      "atomicObligationSha256": "ffabe34346774fb1a000f174093e61b8bb08ea1fd070856b7c4b509bf837b858",
+      "checkIds": [
+        "PRODUCER-TIMING-REJECT-VERIFICATION_PHASE",
+        "PRODUCER-TIMING-REJECT-EARLIEST_EXECUTABLE_STAGE",
+        "PRODUCER-TIMING-REJECT-REQUIRED_BY_STAGE",
+        "PRODUCER-TIMING-REJECT-PER_RUN_REQUIRED",
+        "PRODUCER-TIMING-REJECT-FINAL_PRODUCT_REQUIRED",
+        "PRODUCER-TIMING-REJECT-DELIVERY_REQUIRED",
+        "PRODUCER-TIMING-REJECT-TARGET_AVAILABILITY_CONDITION",
+        "PRODUCER-TIMING-REJECT-TIMING_ENTRIES",
+        "PRODUCER-TIMING-REJECT-TIMING_SCHEDULE_SHA256"
+      ],
+      "scope": "Current synthetic Node VM Stage04 proposition response admission rejects each of the nine named application-owned timing fields: validation fails with an owning field issue, no proposal is created, exact raw response is retained with VALIDATION_FAILED, and canonical propositions, accepted changes and source project hash remain unchanged. This establishes only these proposition timing rejection boundaries; no other fields or stages, storage/browser behavior, actual external actor, or full requirement coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-e9ee7497bb9d7e5d687f2bd0e17654b3",
+      "sourceLineSha256": "24f24da03f3e5ac99590339843699e6cae1224bafc301f01be7bc47850a1721a",
+      "atomicObligationSha256": "b9a50a19cee4701763beecce077906a008a5c26266f6463268e178104f59334e",
+      "checkIds": [
+        "CURRENT-SUPPLIED-INPUT-CUSTODY"
+      ],
+      "scope": "Current synthetic Node VM production-store intake retains an explicitly authorized supplied Blob across an input-version correction and actual staged response acceptance, reload, checkpoint restore and fresh-store package import, without requiring a manual byte read. The linked check includes the omitted-input-observer refusal and five missing, metadata-only, corrupt, different-job and unselected-old custody refusals, and rejects unrelated historical-scope authorization. This is scoped fixture evidence, not browser or external-actor proof, all file/input/retention behavior, independent store-once or canonical-occurrence deduplication proof, or full requirement coverage.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-47111062e64d0d3b30e6cc9e1826cfc3",
+      "sourceLineSha256": "e17eda37620c3017ac470eaf42989140e74944e89206e2c9ecf51fb78bb872a2",
+      "atomicObligationSha256": "0030b8d637057b6fd8342f6eb62ad2fe47e5fd893c5a78838ab2620aaf600772",
+      "checkIds": [
+        "canonical.safe-integer-and-typed-string",
+        "canonical.exact-serialization-controls"
+      ],
+      "scope": "Literal min/max safe-integer serialization, rejection of fractional/unsafe values, and registered canonical rational strings for 0.1 and 9007199254740992. Scoped current-source executed observations only when validated receipts are present. No full requirement coverage, browser, physical-device, external-actor or other unlisted cases are claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-f25aa7572d552a605b446c527f7ffb29",
+      "sourceLineSha256": "e17eda37620c3017ac470eaf42989140e74944e89206e2c9ecf51fb78bb872a2",
+      "atomicObligationSha256": "7c1dae3f6b5a8f7d1d985bd6e2debc0b8f571b709a91980913e22a742460fff8",
+      "checkIds": [
+        "canonical.safe-integer-and-typed-string",
+        "canonical.exact-serialization-controls"
+      ],
+      "scope": "Literal min/max safe-integer serialization, rejection of fractional/unsafe values, and registered canonical rational strings for 0.1 and 9007199254740992. Scoped current-source executed observations only when validated receipts are present. No full requirement coverage, browser, physical-device, external-actor or other unlisted cases are claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-853a934199459ed6bf419687ca08ba34",
+      "sourceLineSha256": "6cd002e410cce68e03f5b46b09436696f71111cd2df5ad887d8476e0083c3775",
+      "atomicObligationSha256": "89ab675bd97bc2d81ecb66a978919f12e31206f08204b84da66040de6a7bbeef",
+      "checkIds": [
+        "canonical.unsigned-scalar-key-order",
+        "canonical.exact-serialization-controls"
+      ],
+      "scope": "Literal ordering of decimal-looking ASCII keys, ASCII, BMP private-use and supplementary scalar keys. Scoped current-source executed observations only when validated receipts are present. No full requirement coverage, browser, physical-device, external-actor or other unlisted cases are claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-7add6f24a57198b72b500e5a2acf1ca6",
+      "sourceLineSha256": "dc22dec623f4faadc455909b5c327cf4bda535aa9abbe91b83e80e4ad7b675b9",
+      "atomicObligationSha256": "eccd4662fe496c0f27ea13a6fff5fc48d8927204794987e2a147f8230f3fe691",
+      "checkIds": [
+        "canonical.ordered-arrays",
+        "canonical.exact-serialization-controls"
+      ],
+      "scope": "Two literal ordered arrays preserve order and duplicate positions; no claim about every registered set normalizer. Scoped current-source executed observations only when validated receipts are present. No full requirement coverage, browser, physical-device, external-actor or other unlisted cases are claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-a0db10cfb1e0fefb6724aa418817d6a8",
+      "sourceLineSha256": "1507a1aa07a338fe713cf6cb9ac28c79adc329113a1133c29383359959db2185",
+      "atomicObligationSha256": "548d200aecb6878b435e6660ba993576c7d00e5a03f4e620a6e22a472fa8578f",
+      "checkIds": [
+        "canonical.ordered-arrays",
+        "canonical.exact-serialization-controls"
+      ],
+      "scope": "Two literal ordered arrays preserve order and duplicate positions; no claim about every registered set normalizer. Scoped current-source executed observations only when validated receipts are present. No full requirement coverage, browser, physical-device, external-actor or other unlisted cases are claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-636ebdfdf26f0c6df9d969321a522f19",
+      "sourceLineSha256": "03cb01d5ae34c69335090d3607bb7f3380f6e4eba8070ee4ffa5cba9cb32d751",
+      "atomicObligationSha256": "130e7ac87016f161b2a920faac9db56455350a76029581343db285fd4c773001",
+      "checkIds": [
+        "canonical.exact-string-scalars-and-lines",
+        "canonical.exact-serialization-controls"
+      ],
+      "scope": "One literal combining/precomposed scalar and CRLF/LF/CR string is serialized without normalization or line-ending change. Scoped current-source executed observations only when validated receipts are present. No full requirement coverage, browser, physical-device, external-actor or other unlisted cases are claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-eecb88f846482530ebd5e963183f2711",
+      "sourceLineSha256": "03cb01d5ae34c69335090d3607bb7f3380f6e4eba8070ee4ffa5cba9cb32d751",
+      "atomicObligationSha256": "6ff03d3ea361cf2d2543185c690d276eac2d35a4b8fe9ca60a6a171ebcc24547",
+      "checkIds": [
+        "canonical.exact-string-scalars-and-lines",
+        "canonical.exact-serialization-controls"
+      ],
+      "scope": "One literal combining/precomposed scalar and CRLF/LF/CR string is serialized without normalization or line-ending change. Scoped current-source executed observations only when validated receipts are present. No full requirement coverage, browser, physical-device, external-actor or other unlisted cases are claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-dba22c5f93e4359c4b7d4ebdd9799dbf",
+      "sourceLineSha256": "6ceea161cf4fc12d52f66189110a6aae635278efe3442751a653794c8e81c68f",
+      "atomicObligationSha256": "0697964bd4a4a340b4c73d2e7a05d3cf2055de8f9383063fcc77e05a244ce294",
+      "checkIds": [
+        "canonical.exact-json-escapes",
+        "canonical.exact-serialization-controls"
+      ],
+      "scope": "All 32 U+0000 through U+001F scalar values plus quote/backslash are compared against independently declared literal escape strings. Scoped current-source executed observations only when validated receipts are present. No full requirement coverage, browser, physical-device, external-actor or other unlisted cases are claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-27f437fe3040767de849d06a48cdb3c3",
+      "sourceLineSha256": "4055a25ae67a9030286ac3c68bbfcee52e77841001c6782c34eb9b62fdfff8c3",
+      "atomicObligationSha256": "9b5d553b863d2ec2af064bf7670cc92e14c1ce23dc1a21c4cb1964c4224128b8",
+      "checkIds": [
+        "canonical.printable-nonascii-unescaped",
+        "canonical.exact-serialization-controls"
+      ],
+      "scope": "Literal accented Latin, CJK, emoji, private-use BMP and supplementary scalar characters remain unescaped. Scoped current-source executed observations only when validated receipts are present. No full requirement coverage, browser, physical-device, external-actor or other unlisted cases are claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-51ce4098cc4744b966dc6d89fc7d5621",
+      "sourceLineSha256": "3d14033f2bcab6a74bb1206dc1ffc21a22450ac131f2d2fdb084c28d43c05623",
+      "atomicObligationSha256": "b37d1e2bf581e47666ad4815b88671d816927583aecc42f5eca008fd99a1ce39",
+      "checkIds": [
+        "canonical.prohibited-values-rejected",
+        "canonical.exact-serialization-controls"
+      ],
+      "scope": "Explicit negative-zero, NaN, Infinity, undefined, sparse-array, cycle, Date, Map, Set, function, symbol and accessor fixtures are rejected. Scoped current-source executed observations only when validated receipts are present. No full requirement coverage, browser, physical-device, external-actor or other unlisted cases are claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-0290dd2e119f2cef20371cc0109c4833",
+      "sourceLineSha256": "3d14033f2bcab6a74bb1206dc1ffc21a22450ac131f2d2fdb084c28d43c05623",
+      "atomicObligationSha256": "55cb94ee59127d417bbba2aa54c69d61b74d7c89c0449b45ea4485c278b289ac",
+      "checkIds": [
+        "canonical.prohibited-values-rejected",
+        "canonical.exact-serialization-controls"
+      ],
+      "scope": "Explicit negative-zero, NaN, Infinity, undefined, sparse-array, cycle, Date, Map, Set, function, symbol and accessor fixtures are rejected. Scoped current-source executed observations only when validated receipts are present. No full requirement coverage, browser, physical-device, external-actor or other unlisted cases are claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-eb942909863b29d2c26fd0ae5480625f",
+      "sourceLineSha256": "3d14033f2bcab6a74bb1206dc1ffc21a22450ac131f2d2fdb084c28d43c05623",
+      "atomicObligationSha256": "6b09d215ddab432a11e3dcd04e1ee7561000215fe53b0de8fb18dc0b34e1031c",
+      "checkIds": [
+        "canonical.prohibited-values-rejected",
+        "canonical.exact-serialization-controls"
+      ],
+      "scope": "Explicit negative-zero, NaN, Infinity, undefined, sparse-array, cycle, Date, Map, Set, function, symbol and accessor fixtures are rejected. Scoped current-source executed observations only when validated receipts are present. No full requirement coverage, browser, physical-device, external-actor or other unlisted cases are claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-662eca90789c91ae31177173980783dd",
+      "sourceLineSha256": "3d14033f2bcab6a74bb1206dc1ffc21a22450ac131f2d2fdb084c28d43c05623",
+      "atomicObligationSha256": "f233646324865dc6ebda6df18cf27e471629b5162bc4571303c05f73b6206eb9",
+      "checkIds": [
+        "canonical.prohibited-values-rejected",
+        "canonical.exact-serialization-controls"
+      ],
+      "scope": "Explicit negative-zero, NaN, Infinity, undefined, sparse-array, cycle, Date, Map, Set, function, symbol and accessor fixtures are rejected. Scoped current-source executed observations only when validated receipts are present. No full requirement coverage, browser, physical-device, external-actor or other unlisted cases are claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-b7e22bb7fad4a45b444f988e4eabca55",
+      "sourceLineSha256": "3d14033f2bcab6a74bb1206dc1ffc21a22450ac131f2d2fdb084c28d43c05623",
+      "atomicObligationSha256": "a63453eb237325b51aae101d2e0b6baf8c4e882582a44de40aec80301b84147c",
+      "checkIds": [
+        "canonical.prohibited-values-rejected",
+        "canonical.exact-serialization-controls"
+      ],
+      "scope": "Explicit negative-zero, NaN, Infinity, undefined, sparse-array, cycle, Date, Map, Set, function, symbol and accessor fixtures are rejected. Scoped current-source executed observations only when validated receipts are present. No full requirement coverage, browser, physical-device, external-actor or other unlisted cases are claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-5d8520fcb9a6a88eae542e3a1f2fcfb9",
+      "sourceLineSha256": "3d14033f2bcab6a74bb1206dc1ffc21a22450ac131f2d2fdb084c28d43c05623",
+      "atomicObligationSha256": "46c331734e2e2f8a3b1279fc5e6cfd1d049e8ce7489a31fa8b5e7952aa20c52d",
+      "checkIds": [
+        "canonical.prohibited-values-rejected",
+        "canonical.exact-serialization-controls"
+      ],
+      "scope": "Explicit negative-zero, NaN, Infinity, undefined, sparse-array, cycle, Date, Map, Set, function, symbol and accessor fixtures are rejected. Scoped current-source executed observations only when validated receipts are present. No full requirement coverage, browser, physical-device, external-actor or other unlisted cases are claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-046cf426431e0493fe8fc1b75d803617",
+      "sourceLineSha256": "3d14033f2bcab6a74bb1206dc1ffc21a22450ac131f2d2fdb084c28d43c05623",
+      "atomicObligationSha256": "e252121646c4469c4ef6194b6aed964d04897c3f9ab70ccc234515f903c89dd8",
+      "checkIds": [
+        "canonical.prohibited-values-rejected",
+        "canonical.exact-serialization-controls"
+      ],
+      "scope": "Explicit negative-zero, NaN, Infinity, undefined, sparse-array, cycle, Date, Map, Set, function, symbol and accessor fixtures are rejected. Scoped current-source executed observations only when validated receipts are present. No full requirement coverage, browser, physical-device, external-actor or other unlisted cases are claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-53cba25ed9217f0e73651fa2c61364a5",
+      "sourceLineSha256": "ee87ec99bf590ab7ad273f985492a78b8765e7eeb38f9e77cb0d6e9e49e3b20b",
+      "atomicObligationSha256": "3aa940464f0f2dc1a285e0523705769a3a8833e2fef4b1f950588564fd44a22d",
+      "checkIds": [
+        "ingestion.invalid.stale-contract-hash"
+      ],
+      "scope": "One original negativeAt stale-contract-hash response rejects with STALE_CONTRACT_HASH,accepted=false and acceptedChanges=0. This is a synthetic admission boundary, not all acceptance-time rechecks. Scoped current-source executed observations only when validated receipts are present. No full requirement coverage, browser, physical-device, external-actor or other unlisted cases are claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-cfeded273e1987e645c09660471cfc82",
+      "sourceLineSha256": "d9be07a49c644c1987bb9cd82697cd38b72ef93aa259041a99563812bd54c2ae",
+      "atomicObligationSha256": "7b5a319df5cb8ba123be0e27c05be003036380f8de8e69e961634ed58c70efe3",
+      "checkIds": [
+        "ingestion.invalid.stale-context-signature"
+      ],
+      "scope": "One original negativeAt stale-context-signature response rejects with STALE_CONTEXT_SIGNATURE,accepted=false and acceptedChanges=0. This is a synthetic admission boundary, not all acceptance-time rechecks. Scoped current-source executed observations only when validated receipts are present. No full requirement coverage, browser, physical-device, external-actor or other unlisted cases are claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-e9339b0fbec004d304e63378d3dbe91d",
+      "sourceLineSha256": "15968ab6cfcb305b94e767f60e01fa39420bae94e6ae1edb6cfe288d3e347103",
+      "atomicObligationSha256": "78a9394e51c3c42f8e1586b93dd982d57951f3d70370e2bdc749183280cc3d7b",
+      "checkIds": [
+        "canonical.import-digest-scopes"
+      ],
+      "scope": "Only the 23 fixed synthetic helper controls compare exact canonical preimages and optional bounded digest-scope hits/fallbacks. Full current value/primitive guards, changed value/order/identity/revision, cold fallback, restoration and disposal remain exercised. This is not all semantic hashes, native storage, whole import, parser envelope owner wiring, a deadline or release proof. This declaration is a proposed scoped link only; current admitted source-bound receipts are still required. No fullCoverage is declared.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-52d2c79341b28c2823a54b9363793082",
+      "sourceLineSha256": "1507a1aa07a338fe713cf6cb9ac28c79adc329113a1133c29383359959db2185",
+      "atomicObligationSha256": "4ed32a37ec181a871e04f153102b5e9e4c561d12a49a624c3d9295ff19e517ad",
+      "checkIds": [
+        "canonical.registered-set-semantics"
+      ],
+      "scope": "Only the TEST_HASH /members registered elementIdentityKey=id control: input order and explicitly omitted digest labels leave the registered digest equal; duplicate id is rejected. No every-array/every-normalizer or named-version closure claim. This declaration is a proposed scoped link only; current admitted source-bound receipts are still required. No fullCoverage is declared.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-5441641396c82b4f2ac36bbf3ee26f9c",
+      "sourceLineSha256": "cef5d0b441fbaf72c3a70d7d3ed5bf52ecf3f7e656cb7881adf701a541f8a81e",
+      "atomicObligationSha256": "1da7375b397e89585c2deb84de8895b76082dd7f909dae9162823a6c5250e1ab",
+      "checkIds": [
+        "ingestion.canonical-response-recovery"
+      ],
+      "scope": "Only the existing seven unsupported canonical-value response-file controls, seven pre-fix crash contrasts, direct validation, two changed pending-proposal refusals and paired Unicode control. Actual staged response raw text, structured validation record and recoverable pending work are checked under a synthetic transaction adapter. All response values, every validation result and native browser durability remain open. This declaration is a proposed scoped link only; current admitted source-bound receipts are still required. No fullCoverage is declared.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-42622c5f4d4a71e2d96e2f306b24e220",
+      "sourceLineSha256": "02aefc738a97e4e72074e8aaa912d62b7801484dc9a4f41a2405bed7b57d7026",
+      "atomicObligationSha256": "0eac9b64a92eca8958d759cfc65f8b24cdd63385e3b7837af5f0943e1333e22e",
+      "checkIds": [
+        "ingestion.canonical-response-recovery"
+      ],
+      "scope": "Only the existing seven unsupported canonical-value response-file controls, seven pre-fix crash contrasts, direct validation, two changed pending-proposal refusals and paired Unicode control. Actual staged response raw text, structured validation record and recoverable pending work are checked under a synthetic transaction adapter. All response values, every validation result and native browser durability remain open. This declaration is a proposed scoped link only; current admitted source-bound receipts are still required. No fullCoverage is declared.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-8fe1bfd0e1bd9dcfb906edb36f78c438",
+      "sourceLineSha256": "c6ed6e483e91ff3fa520b4d63ebd94efbca9dcbb5612c885866751db5b5bde89",
+      "atomicObligationSha256": "e0d9ce36db8f1be1db5abe1cfba1072222109d162d200d92755b1fb6630ef9bc",
+      "checkIds": [
+        "ingestion.canonical-response-recovery"
+      ],
+      "scope": "Only the existing seven unsupported canonical-value response-file controls, seven pre-fix crash contrasts, direct validation, two changed pending-proposal refusals and paired Unicode control. Actual staged response raw text, structured validation record and recoverable pending work are checked under a synthetic transaction adapter. All response values, every validation result and native browser durability remain open. This declaration is a proposed scoped link only; current admitted source-bound receipts are still required. No fullCoverage is declared.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-0af80c7e2c0d73910b626b42a9237183",
+      "sourceLineSha256": "0a3007670191303f1d939218e3a098b2898a24324ddb8a469181984d54ee443f",
+      "atomicObligationSha256": "7b6f040841851cd3adc7c0c07ef5078451f890e88e8808f7842f52f97e7c331d",
+      "checkIds": [
+        "ingestion.canonical-value-boundaries"
+      ],
+      "scope": "Only malformed returned digest scalar type, two inherited stage-field names, reordered HUMAN object equality and four material object/array/string/type contrasts. The reordered object confirms without a needless correction; material values require explicit replacement correction. This is not every STRING, field, HUMAN authority route or response canonicalization case. This declaration is a proposed scoped link only; current admitted source-bound receipts are still required. No fullCoverage is declared.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-7add6f24a57198b72b500e5a2acf1ca6",
+      "sourceLineSha256": "dc22dec623f4faadc455909b5c327cf4bda535aa9abbe91b83e80e4ad7b675b9",
+      "atomicObligationSha256": "eccd4662fe496c0f27ea13a6fff5fc48d8927204794987e2a147f8230f3fe691",
+      "checkIds": [
+        "ingestion.canonical-value-boundaries"
+      ],
+      "scope": "Only malformed returned digest scalar type, two inherited stage-field names, reordered HUMAN object equality and four material object/array/string/type contrasts. The reordered object confirms without a needless correction; material values require explicit replacement correction. This is not every STRING, field, HUMAN authority route or response canonicalization case. This declaration is a proposed scoped link only; current admitted source-bound receipts are still required. No fullCoverage is declared.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-eecb88f846482530ebd5e963183f2711",
+      "sourceLineSha256": "03cb01d5ae34c69335090d3607bb7f3380f6e4eba8070ee4ffa5cba9cb32d751",
+      "atomicObligationSha256": "6ff03d3ea361cf2d2543185c690d276eac2d35a4b8fe9ca60a6a171ebcc24547",
+      "checkIds": [
+        "ingestion.canonical-value-boundaries"
+      ],
+      "scope": "Only malformed returned digest scalar type, two inherited stage-field names, reordered HUMAN object equality and four material object/array/string/type contrasts. The reordered object confirms without a needless correction; material values require explicit replacement correction. This is not every STRING, field, HUMAN authority route or response canonicalization case. This declaration is a proposed scoped link only; current admitted source-bound receipts are still required. No fullCoverage is declared.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-0af80c7e2c0d73910b626b42a9237183",
+      "sourceLineSha256": "0a3007670191303f1d939218e3a098b2898a24324ddb8a469181984d54ee443f",
+      "atomicObligationSha256": "7b6f040841851cd3adc7c0c07ef5078451f890e88e8808f7842f52f97e7c331d",
+      "checkIds": [
+        "ingestion.closed-envelope-controls"
+      ],
+      "scope": "Only five evidence STRING type controls, conforming authority default, temporary-key 120/121 bound/type/exact-identity/shared-namespace contrasts and an attachmentRef extra-key refusal. Prepare-based refusals check diagnostic path, no proposal and unchanged accepted history; the direct attachmentRef control checks only invalid result and the exact extra-key diagnostic. No complete field registry or every temporary-key namespace claim. This declaration is a proposed scoped link only; current admitted source-bound receipts are still required. No fullCoverage is declared.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-97b5f41ba7027f7a4196160142947587",
+      "sourceLineSha256": "cc4e67e551cba2d1c2ec538f1bc12952e9bb58c9dc4201d66d23165cdc3726e1",
+      "atomicObligationSha256": "34a821c568b4a5e7ee54caf62b4bc8fa91792daec43d7552b09eee560869a4b1",
+      "checkIds": [
+        "ingestion.closed-envelope-controls"
+      ],
+      "scope": "Only five evidence STRING type controls, conforming authority default, temporary-key 120/121 bound/type/exact-identity/shared-namespace contrasts and an attachmentRef extra-key refusal. Prepare-based refusals check diagnostic path, no proposal and unchanged accepted history; the direct attachmentRef control checks only invalid result and the exact extra-key diagnostic. No complete field registry or every temporary-key namespace claim. This declaration is a proposed scoped link only; current admitted source-bound receipts are still required. No fullCoverage is declared.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-56a1f12e5f6d7b80a236d6c75239148c",
+      "sourceLineSha256": "cf180ccaab3cd1b737bf75305b7321588a31daaea21e43ce1eb9185e7ed11f48",
+      "atomicObligationSha256": "534021327974a55abf6037076b8bac1418e2b684be87c3a363908354ad8beedf",
+      "checkIds": [
+        "ingestion.closed-envelope-controls"
+      ],
+      "scope": "Only five evidence STRING type controls, conforming authority default, temporary-key 120/121 bound/type/exact-identity/shared-namespace contrasts and an attachmentRef extra-key refusal. Prepare-based refusals check diagnostic path, no proposal and unchanged accepted history; the direct attachmentRef control checks only invalid result and the exact extra-key diagnostic. No complete field registry or every temporary-key namespace claim. This declaration is a proposed scoped link only; current admitted source-bound receipts are still required. No fullCoverage is declared.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-26a282546a741753827457c90a05c010",
+      "sourceLineSha256": "70f4b6671f6c017103a2142290638178e175c2ed9d5eafc5475c0ea4699fbc52",
+      "atomicObligationSha256": "e44f223f49b6203d3bf1f666311858cf948b33e7460bed7a31316d8df55c2bc9",
+      "checkIds": [
+        "scope.current-identities"
+      ],
+      "scope": "Only the explicitly enumerated current/stale scope dimension fixtures in scopeNegative: conforming control accepted, type-conforming changed identity produces STALE_SCOPE at exact /scope/key, and accepted history is unchanged. This does not establish complete stage/operation scope-matrix coverage or scope-hash construction. This declaration is a proposed scoped link only; current admitted source-bound receipts are still required. No fullCoverage is declared.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-eedebbb62445bc357690265d3dad39c0",
+      "sourceLineSha256": "5c7c16671f8e824dfac972d28508cebb67d6ea68b61ec053ad3d38514b016993",
+      "atomicObligationSha256": "8dbe4e371387bdc3bba1ad921d8d531cd27a9f8e3ebb60a5661ef17d3da2ecfd",
+      "checkIds": [
+        "ingestion.stale-proposal"
+      ],
+      "scope": "Only the existing Stage02 pending-proposal test which increments project revision after prepare and requires commit to throw STALE_PROPOSAL. No all prerequisite, clock, authority, stage or concurrent-store path is proved by this marker. This declaration is a proposed scoped link only; current admitted source-bound receipts are still required. No fullCoverage is declared.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-32c645273386c248f10352d029b11a13",
+      "sourceLineSha256": "116c7adc99a7e43603cc641875a95c072ef00d007a7af7f38963e6d9e4dc0c6f",
+      "atomicObligationSha256": "0f700cad5514ef2ba50a6319ac375fa4effbefbb96be5480fa7487ebcb1656fd",
+      "checkIds": [
+        "ingestion.stale-proposal"
+      ],
+      "scope": "Only the existing Stage02 pending-proposal test which increments project revision after prepare and requires commit to throw STALE_PROPOSAL. No all prerequisite, clock, authority, stage or concurrent-store path is proved by this marker. This declaration is a proposed scoped link only; current admitted source-bound receipts are still required. No fullCoverage is declared.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-bffa6d70970c446725c1b96369021717",
+      "sourceLineSha256": "f694dd23cf20631d522b9514952c5df3a3bfec5596ad81276f312fd79f33bd23",
+      "atomicObligationSha256": "c79a0e0a6545def122a30c07445c5a416f53ec89f054a3f5a3b6a17069ac9f0b",
+      "checkIds": [
+        "ingestion.before-acceptance"
+      ],
+      "scope": "Only the parse/proposal versus explicit commit boundary in the existing staged synthetic stage fixtures: acceptedChanges stays equal before operator acceptance and one target accepted change is created afterward. Phase1 file-staging durability and all three durable-phase ordering are not established by this top-level marker. This declaration is a proposed scoped link only; current admitted source-bound receipts are still required. No fullCoverage is declared.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-a5be515530a4736a534a4ca3cd843377",
+      "sourceLineSha256": "220d1e71bafe2134ebe233bbaa1082cfe442cd71a381802003e6bda9f6dcf948",
+      "atomicObligationSha256": "2aaab5aa08822b744dd963272c0894c59c99875a758478b7cf5858ee8da89719",
+      "checkIds": [
+        "store.operational-journal-copy"
+      ],
+      "scope": "Only operational journal replay against the retained clone reference and independently expected final state/digests: original plus nested-scope/same-length-text tampering cases retain exact errors/outcomes and inserted patch values remain isolated. Operational replay is supporting evidence, not the whole canonical ordered transaction or quarantine implementation. This declaration is a proposed scoped link only; current admitted source-bound receipts are still required. No fullCoverage is declared.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-5003532a6cda7a68c13be508fbf4d723",
+      "sourceLineSha256": "e3b13b5c54e898d4f1d4d88840cf7b90baa8e95b381220354450f376f4053e54",
+      "atomicObligationSha256": "a2d1b1f97114d13a6954b1962006ef9e01c9d1ad294c2837b2ed37ec09d9261a",
+      "checkIds": [
+        "store.private-read-proof"
+      ],
+      "scope": "Only the 18 existing checkpoint/operational synthetic command cases plus intended digest-label and exact private retainValue omission controls. Exact changed row/journal/alias/cycle and concurrent writes reject without overwriting; valid raw/history/view controls preserve their stated values. This is not quarantine, native IndexedDB, all public load paths or complete ordered transaction proof. This declaration is a proposed scoped link only; current admitted source-bound receipts are still required. No fullCoverage is declared.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-a5be515530a4736a534a4ca3cd843377",
+      "sourceLineSha256": "220d1e71bafe2134ebe233bbaa1082cfe442cd71a381802003e6bda9f6dcf948",
+      "atomicObligationSha256": "2aaab5aa08822b744dd963272c0894c59c99875a758478b7cf5858ee8da89719",
+      "checkIds": [
+        "store.private-read-proof"
+      ],
+      "scope": "Only the 18 existing checkpoint/operational synthetic command cases plus intended digest-label and exact private retainValue omission controls. Exact changed row/journal/alias/cycle and concurrent writes reject without overwriting; valid raw/history/view controls preserve their stated values. This is not quarantine, native IndexedDB, all public load paths or complete ordered transaction proof. This declaration is a proposed scoped link only; current admitted source-bound receipts are still required. No fullCoverage is declared.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-7c6165582b8ddae4e124c2db6ed6f966",
+      "sourceLineSha256": "7dfc8058683952990202279178fba3e33c084f7653960465c60bfac19d76cbdf",
+      "atomicObligationSha256": "28da905af65697d44bca0406f2983782c21135941efe4ade1d2d0b71b9414380",
+      "checkIds": [
+        "store.private-postcommit-proof"
+      ],
+      "scope": "Only 26 existing checkpoint/operational synthetic warm-proof cases and seven intended fault controls: one-use trusted committed value, cold public/reload verification, caller mutation across custody await, row/journal corruption and failed writes. Only the same-digest corruption branches explicitly assert quarantine. No general every-mismatch quarantine or all public load proof. This declaration is a proposed scoped link only; current admitted source-bound receipts are still required. No fullCoverage is declared.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-c94c878ef2cf8c6a35b0985da91c0c85",
+      "sourceLineSha256": "81e2f80bd8992d1328c44a89fd0c5e5bc19f1046c9bb0f959e63730d2ed4c487",
+      "atomicObligationSha256": "526934b35555a276285ef9f3704d21cfcbf8374723c5138b5d5ba199b9c72e34",
+      "checkIds": [
+        "store.private-postcommit-proof"
+      ],
+      "scope": "Only 26 existing checkpoint/operational synthetic warm-proof cases and seven intended fault controls: one-use trusted committed value, cold public/reload verification, caller mutation across custody await, row/journal corruption and failed writes. Only the same-digest corruption branches explicitly assert quarantine. No general every-mismatch quarantine or all public load proof. This declaration is a proposed scoped link only; current admitted source-bound receipts are still required. No fullCoverage is declared.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-a5be515530a4736a534a4ca3cd843377",
+      "sourceLineSha256": "220d1e71bafe2134ebe233bbaa1082cfe442cd71a381802003e6bda9f6dcf948",
+      "atomicObligationSha256": "2aaab5aa08822b744dd963272c0894c59c99875a758478b7cf5858ee8da89719",
+      "checkIds": [
+        "store.private-postcommit-proof"
+      ],
+      "scope": "Only 26 existing checkpoint/operational synthetic warm-proof cases and seven intended fault controls: one-use trusted committed value, cold public/reload verification, caller mutation across custody await, row/journal corruption and failed writes. Only the same-digest corruption branches explicitly assert quarantine. No general every-mismatch quarantine or all public load proof. This declaration is a proposed scoped link only; current admitted source-bound receipts are still required. No fullCoverage is declared.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-ee00110abd4b71eed09ff59450781609",
+      "sourceLineSha256": "c63004daa3d7a050e73838e5db526d95a3693eb369da8397e074956e53fb2373",
+      "atomicObligationSha256": "42aec5feb163c394b6511e13567ef6cc852a95de6496a21d06425d6cdc2ad122",
+      "checkIds": [
+        "store.private-canonical-read-proof"
+      ],
+      "scope": "Only 13 canonical-write CAS/history/currentness cases, seven intended omission controls and the exact private retainValue byte controls. Prepared candidate mutation, expired current authority and concurrent creation/revision changes reject without overwrite; valid/equal-alias controls preserve retained prompt context/raw/view. No all canonical operations, quarantine, native IndexedDB or complete transaction-order coverage. This declaration is a proposed scoped link only; current admitted source-bound receipts are still required. No fullCoverage is declared.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-5003532a6cda7a68c13be508fbf4d723",
+      "sourceLineSha256": "e3b13b5c54e898d4f1d4d88840cf7b90baa8e95b381220354450f376f4053e54",
+      "atomicObligationSha256": "a2d1b1f97114d13a6954b1962006ef9e01c9d1ad294c2837b2ed37ec09d9261a",
+      "checkIds": [
+        "store.private-canonical-read-proof"
+      ],
+      "scope": "Only 13 canonical-write CAS/history/currentness cases, seven intended omission controls and the exact private retainValue byte controls. Prepared candidate mutation, expired current authority and concurrent creation/revision changes reject without overwrite; valid/equal-alias controls preserve retained prompt context/raw/view. No all canonical operations, quarantine, native IndexedDB or complete transaction-order coverage. This declaration is a proposed scoped link only; current admitted source-bound receipts are still required. No fullCoverage is declared.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-a5be515530a4736a534a4ca3cd843377",
+      "sourceLineSha256": "220d1e71bafe2134ebe233bbaa1082cfe442cd71a381802003e6bda9f6dcf948",
+      "atomicObligationSha256": "2aaab5aa08822b744dd963272c0894c59c99875a758478b7cf5858ee8da89719",
+      "checkIds": [
+        "store.private-canonical-read-proof"
+      ],
+      "scope": "Only 13 canonical-write CAS/history/currentness cases, seven intended omission controls and the exact private retainValue byte controls. Prepared candidate mutation, expired current authority and concurrent creation/revision changes reject without overwrite; valid/equal-alias controls preserve retained prompt context/raw/view. No all canonical operations, quarantine, native IndexedDB or complete transaction-order coverage. This declaration is a proposed scoped link only; current admitted source-bound receipts are still required. No fullCoverage is declared.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-a5be515530a4736a534a4ca3cd843377",
+      "sourceLineSha256": "220d1e71bafe2134ebe233bbaa1082cfe442cd71a381802003e6bda9f6dcf948",
+      "atomicObligationSha256": "2aaab5aa08822b744dd963272c0894c59c99875a758478b7cf5858ee8da89719",
+      "checkIds": [
+        "store.startup-recovery-hook-isolation"
+      ],
+      "scope": "Only the selected-startup recovery hook boundary in the strict four-case synthetic transaction-adapter report: a healthy control and target mutation plus sync/queued source-hook cases. The target-mutation repair-reversion control is detected by STARTUP_RECOVERY_HOOK_PROJECT_ORACLE target-mutation. Refreshed and cold project returns must retain the persisted draft and authentic digest, with zero canonical raw-response records and unchanged canonical/artifact rows. This supports only prevention of this hook-induced apparently valid returned project, not every corruption form, on-load rehash path, quarantine, native IndexedDB, actual worker, browser or full requirement. No fullCoverage or executed/current receipt status is declared.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-0cf073f54e3f44e3e65472d8c67998c0",
+      "sourceLineSha256": "ced7f088b0a0bc42ee6d2217615df666a237ff32c325b17cee458701e5b1e396",
+      "atomicObligationSha256": "0badca0f75d507d7db3756d0ad661155fddd7c3eeaa9aee0dee92520721b9276",
+      "checkIds": [
+        "store.startup-recovery-hook-isolation"
+      ],
+      "scope": "Only the failure-record-preservation arm of the composite recovery requirement for the same strict four-case synthetic transaction-adapter report. Synchronous and queued mutations of the recovery source must not manufacture ALREADY_RECORDED: both returned and durable receipts remain BLOCKED with RESPONSE_STAGE_PROMPT_IDENTITY_MISMATCH, while canonical project/artifact rows and exact RAW archive bytes remain unchanged. The source-recovery-input-sync and source-recovery-input-queued repair-reversion controls must fail their exact STARTUP_RECOVERY_HOOK_RECEIPT_ORACLE cases. Exact-valid-operation resumption, safe cleanup/removal, other orphan/staging classes, all retry/custody paths, native storage/browser/worker and whole-clause coverage remain unproved. No fullCoverage or executed/current receipt status is declared.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-a5be515530a4736a534a4ca3cd843377",
+      "sourceLineSha256": "220d1e71bafe2134ebe233bbaa1082cfe442cd71a381802003e6bda9f6dcf948",
+      "atomicObligationSha256": "2aaab5aa08822b744dd963272c0894c59c99875a758478b7cf5858ee8da89719",
+      "checkIds": [
+        "store.canonical-noop-hook-isolation"
+      ],
+      "scope": "Only the strict four-case canonical no-op hook-isolation report through the isolated transaction adapter: healthy-hook, target-sync, target-queued and final-prepared-clone, with three exact repair-reversion controls. Contaminated target/final clones reject with STALE_PROJECT_REVISION and no incorrect returned project; rejected complete adapter stores remain unchanged, and the literal saved History title/generation and cold project digest/title retain their expected values. This supports only prevention of these hook-mutated values becoming apparently valid returns or History, not complete History preservation, every corruption path, all canonical transaction ordering, native storage/worker/browser or full requirement. No fullCoverage or executed/current receipt status is declared.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-a5be515530a4736a534a4ca3cd843377",
+      "sourceLineSha256": "220d1e71bafe2134ebe233bbaa1082cfe442cd71a381802003e6bda9f6dcf948",
+      "atomicObligationSha256": "2aaab5aa08822b744dd963272c0894c59c99875a758478b7cf5858ee8da89719",
+      "checkIds": [
+        "store.canonical-completion-hook-isolation"
+      ],
+      "scope": "Only the strict six-case canonical completion/warm-context hook report and three exact repair-reversion controls in the isolated transaction adapter. Revision and no-op completion mutation plus warm-source mutation must yield COMMITTED_PROJECT_UNAVAILABLE with committed=true, existingProjectsUnchanged=false and the authentic durable job/revision/digest; valid controls and isolated warm-target mutation must return authentic values, and refreshed/cold reads retain the exact durable row identity. These are truthful post-completion outcomes and returned-value integrity only. A committed error is not rollback, a lost write, proof of native transaction atomicity, UI recovery, operator display, all corruption behavior or whole-clause acceptance. No fullCoverage or executed/current receipt status is declared.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-a5be515530a4736a534a4ca3cd843377",
+      "sourceLineSha256": "220d1e71bafe2134ebe233bbaa1082cfe442cd71a381802003e6bda9f6dcf948",
+      "atomicObligationSha256": "2aaab5aa08822b744dd963272c0894c59c99875a758478b7cf5858ee8da89719",
+      "checkIds": [
+        "store.private-read-custody-hook-isolation"
+      ],
+      "scope": "Only the strict twenty-one-case custody report: the original twenty cases crossing checkpoint, operational-no-op, canonical-skip-unchanged and startup-refresh with healthy, sync-value, queued-value, digest-label and custody-throws, plus startup-refresh:projection-consistent-draft. Two genuine intended-fault controls are distinct from one honest redundant-defense control. The startup omitted-value-binding fault is detected only by the projection-consistent-draft case, after a real projection rebuild/full-validator control preserves the original digest label; the mutant must demonstrate the changed-draft/stale-digest return, unchanged durable stores and authentic cold read before the intended rejection oracle. Omission under the original startup-refresh:sync-value case remains independently rejected by the projection receipt validator and is explicitly detected:false, not an intended detected fault. For the defined hook mutations, private-read owners reject STALE_PROJECT_REVISION and startup refresh rejects PROJECT_INTEGRITY_FAILED; thrown custody errors retain exact original identity. These refusal fixtures preserve complete adapter stores, canonical/journal/artifact/quarantine rows and exact History generation; successful controls and subsequent refreshed/cold reads retain authentic draft/digest values. Startup draft cases belong to this check, not a fabricated extra check ID. No-false-quarantine applies only to these transient hook fixtures, not arbitrary corrupt durable input. No artifact-intake, all load-hash/quarantine, native storage/worker/browser, complete History/transaction semantics, fullCoverage or executed/current receipt status is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    }
+  ],
+  "contractRefs": []
+}

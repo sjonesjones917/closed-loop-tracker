@@ -1,0 +1,270 @@
+{
+  "schema": "closed-loop-attributed-source-population-resolution-input/1",
+  "id": "STAGE14-UNDETERMINED-ROOT-CAUSES-POPULATION-20261015",
+  "status": "PROPOSED_UNDER_DELEGATED_INTENT_AUTHORITY_PENDING_DISTINCT_REVIEW",
+  "attribution": {
+    "author": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+    "kind": "EXPLICIT_TECHNICAL_SOURCE_POPULATION_CHOICE",
+    "sourceOnlyOriginalMeaningClaim": false,
+    "implementationCodeConsulted": false,
+    "delegatedAuthorityMessageVerbatim": "Root authorizes proceeding under delegated intent authority with the independently reviewed Stage14 interpretation: count all current material defects lacking an admissibly established known RCA, allowing overlap with blocked analyses. Prepare a small attributed technical-resolution input with exact controlling spans and rationale that existing-record-only counting omits unresolved material defects. No fabricated RCA rows or implementation/proof claim. Keep Stage14 pending until independent review of that exact interpretation; preserve source-only ambiguity report and original five-choice resolution.",
+    "authorityMessageSender": "/root/repair_iteration_receipt_dependencies",
+    "authorityReportedAs": "Root/user-delegated intent-consistent engineering decisions; this record does not invent a new owner approval or claim independent review already occurred."
+  },
+  "affectedPredecessor": {
+    "id": "NREQ-5ad9f8e779b15e02b947f0660ea681a7",
+    "originalEvidence": {
+      "inputRole": "PREDECESSOR",
+      "jsonPointer": "/entries/3818",
+      "frozenArtifactSha256": "1cc93c4e49e3e5530ee2a802314617f3aa07d5c72282ded6cd1da68570dac280"
+    },
+    "originalEntrySha256": "2cf0381f17a5dbf3dc41f8410296cd31845e4f460f944c2b1ec7d34d6aca5bc1",
+    "originalStatement": "Stage 14 must include the UNDETERMINED_ROOT_CAUSES field under the specification-controlled FIELD_REGISTRY contract; ownership, requiredness and value semantics follow the applicable explicit contract or ordered closed defaults, not an implementation-selected interpretation."
+  },
+  "preservedSourceOnlyJudgment": {
+    "artifact": {
+      "path": "/workspace/shared/clrt-v4-source-status-judgment-20261015/source-only-judgment.json",
+      "sha256": "98ab88d761758370d59d5e78a1c3915343f3bfb9341b56171e9fb5a2961c2744",
+      "byteLength": 74430
+    },
+    "jsonPointer": "/decisions/2",
+    "ambiguityStatusUnchanged": "UNRESOLVED_SOURCE_POPULATION_AMBIGUITY"
+  },
+  "proposedControllingInterpretation": {
+    "field": "UNDETERMINED_ROOT_CAUSES",
+    "countingUnit": "Distinct canonical IDs of all current material defects in the existing Stage14 scope.",
+    "membership": "Include each such defect until one current admissibly established, evidence-supported RCA establishes its known cause at the earliest defective layer required by the existing Stage14 contract.",
+    "unestablishedCases": "An absent RCA, a stale/rejected/inadmissible RCA, semantic-UNKNOWN cause content or other missing required affirmative support does not remove the defect from this population. Contradictory sufficient evidence follows the existing contradiction/UNKNOWN gates; do not choose a favorable RCA to clear the defect.",
+    "relationshipToBlockedAnalyses": "Overlap with BLOCKED_ANALYSES is permitted. No disjoint partition, complement equation or replacement of that independent field is implied.",
+    "records": "Do not fabricate RCA records or accepted UNKNOWN review records to represent missing analysis. Derive the projection from the preserved current material-defect population and its actual current RCA/evidence relationships.",
+    "preservedRequirements": "Every current material defect still requires the original evidence-supported RCA; unknown RCA remains blocked. Existing author/application authority, currentness, evidence, review and F2 input-basis duties remain. No new RCA authoring family, writer or operation is added."
+  },
+  "rationale": "Existing-RCA-only counting can yield zero when one current material defect has no RCA. Although a separate completion blocker can prevent favorable acceptance, that projection omits the unresolved material defect from the field named UNDETERMINED_ROOT_CAUSES. The selected defect-based population keeps missing analyses visible and aligns this summary with the explicit every-current-material-defect RCA duty without inventing records or shrinking its universe. This is an explicit narrow choice among previously source-compatible populations, not a retroactive assertion that the old source uniquely chose it.",
+  "controllingEvidence": {
+    "ordered-field-defaults": {
+      "BASE": {
+        "sourceRole": "BASE",
+        "startLine": 1047,
+        "endLine": 1072,
+        "startByte": 55612,
+        "endByte": 58084,
+        "sha256": "aff0b284339e149e9a7337a0fa5d71490d5d6e5ab527c5b34c84b9d34e2b1256",
+        "text": "workflow-schema.js MUST expose one closed FIELD_REGISTRY covering every job field, stage field, canonical-record field, nested durable-object field, relationship, prompt field, package field, result field, receipt field, and terminal field. Every field appears exactly once and declares:\n\n- producer;\n- value type and exact enum where applicable;\n- nullability;\n- cardinality;\n- requiredness by stage and operation;\n- writable operation;\n- canonical, proposal, derived-summary, immutable-reference, or audit-only status;\n- relationship target and direction where applicable;\n- current-scope dimensions;\n- migration default or explicit no-default rule;\n- invalidation owner;\n- normalizer and derivation identities where applicable.\n\nAn unregistered field, multiply classified field, ambiguous producer, undeclared default, or operation writing outside its declared set is invalid.\n\nRegistry completeness is specification-controlled, not implementation-chosen. Every field named anywhere in this specification receives its complete FIELD_REGISTRY contract either from an explicit statement of this specification or from these closed default rules, applied in order:\n1. a field defined in Section 15 uses its Section 15 row and the Section 15 value contracts;\n2. STAGE_DECISION, DECISION_EVIDENCE, and every *_DETERMINATION, CONTROLLING_REASON, CONTROLLING_EVIDENCE, and FINAL_* field is an APPLICATION-derived gate summary;\n3. every count, coverage, or completeness field — including TOTAL_*, *_COVERAGE, ALL_*, EXPECTED_*, ACTUAL_*, MISSING_*, EXECUTED, SATISFIED, VIOLATED, UNDETERMINED, and RUNS — is an APPLICATION-derived summary under Sections 14.1 and 16.2;\n4. every *_RECORDS field is a Section 14.8 projection of its owning Section 38 family, and substantive ownership follows that family's declared partitions;\n5. every *_VERSION and *_ID field is an APPLICATION-allocated identity under Section 34.2 or its owning version registry;\n6. fields assigned by Sections 14.2, 14.3, and 14.6 follow those assignments;\n7. every remaining stage field is an APPLICATION-recomputed summary or immutable reference under Section 14.8; substantive agent or human content never exists as a bare stage field and lives only in its owning family.\nA field whose contract is neither explicitly specified nor uniquely produced by these rules is UNDEFINED_FIELD_CONTRACT and blocks specification acceptance; the resolution is a specification change, never an implementation choice.\n",
+        "includesFinalLineTerminator": true
+      },
+      "SUCCESSOR": {
+        "sourceRole": "SUCCESSOR",
+        "startLine": 1121,
+        "endLine": 1146,
+        "startByte": 83100,
+        "endByte": 85572,
+        "sha256": "aff0b284339e149e9a7337a0fa5d71490d5d6e5ab527c5b34c84b9d34e2b1256",
+        "text": "workflow-schema.js MUST expose one closed FIELD_REGISTRY covering every job field, stage field, canonical-record field, nested durable-object field, relationship, prompt field, package field, result field, receipt field, and terminal field. Every field appears exactly once and declares:\n\n- producer;\n- value type and exact enum where applicable;\n- nullability;\n- cardinality;\n- requiredness by stage and operation;\n- writable operation;\n- canonical, proposal, derived-summary, immutable-reference, or audit-only status;\n- relationship target and direction where applicable;\n- current-scope dimensions;\n- migration default or explicit no-default rule;\n- invalidation owner;\n- normalizer and derivation identities where applicable.\n\nAn unregistered field, multiply classified field, ambiguous producer, undeclared default, or operation writing outside its declared set is invalid.\n\nRegistry completeness is specification-controlled, not implementation-chosen. Every field named anywhere in this specification receives its complete FIELD_REGISTRY contract either from an explicit statement of this specification or from these closed default rules, applied in order:\n1. a field defined in Section 15 uses its Section 15 row and the Section 15 value contracts;\n2. STAGE_DECISION, DECISION_EVIDENCE, and every *_DETERMINATION, CONTROLLING_REASON, CONTROLLING_EVIDENCE, and FINAL_* field is an APPLICATION-derived gate summary;\n3. every count, coverage, or completeness field — including TOTAL_*, *_COVERAGE, ALL_*, EXPECTED_*, ACTUAL_*, MISSING_*, EXECUTED, SATISFIED, VIOLATED, UNDETERMINED, and RUNS — is an APPLICATION-derived summary under Sections 14.1 and 16.2;\n4. every *_RECORDS field is a Section 14.8 projection of its owning Section 38 family, and substantive ownership follows that family's declared partitions;\n5. every *_VERSION and *_ID field is an APPLICATION-allocated identity under Section 34.2 or its owning version registry;\n6. fields assigned by Sections 14.2, 14.3, and 14.6 follow those assignments;\n7. every remaining stage field is an APPLICATION-recomputed summary or immutable reference under Section 14.8; substantive agent or human content never exists as a bare stage field and lives only in its owning family.\nA field whose contract is neither explicitly specified nor uniquely produced by these rules is UNDEFINED_FIELD_CONTRACT and blocks specification acceptance; the resolution is a specification change, never an implementation choice.\n",
+        "includesFinalLineTerminator": true
+      },
+      "identicalBytes": true
+    },
+    "canonical-projections": {
+      "BASE": {
+        "sourceRole": "BASE",
+        "startLine": 1153,
+        "endLine": 1162,
+        "startByte": 67632,
+        "endByte": 68412,
+        "sha256": "24060ba2f3ef49f5f16322cd2d2a385c0edbb6dff420070b5120e544e10ffdc8",
+        "text": "14.8 Canonical authority and stage-data projections\n\nCanonical record families are the sole substantive authority. A stage field that concerns canonical data is exactly one of:\n\n- an agent proposal before acceptance;\n- an immutable ID reference to canonical records;\n- an application-recomputed summary derived exclusively from canonical records;\n- audit-only historical data that cannot gate.\n\nStage data MUST NOT duplicate an independently editable substantive canonical value. Any stored projection includes its derivation identity and source-record hashes. A mismatch between a projection and canonical records fails integrity validation and the projection is regenerated or the project is quarantined; the mismatch is never resolved by selecting whichever copy is favorable.\n",
+        "includesFinalLineTerminator": true
+      },
+      "SUCCESSOR": {
+        "sourceRole": "SUCCESSOR",
+        "startLine": 1243,
+        "endLine": 1252,
+        "startByte": 98316,
+        "endByte": 99096,
+        "sha256": "24060ba2f3ef49f5f16322cd2d2a385c0edbb6dff420070b5120e544e10ffdc8",
+        "text": "14.8 Canonical authority and stage-data projections\n\nCanonical record families are the sole substantive authority. A stage field that concerns canonical data is exactly one of:\n\n- an agent proposal before acceptance;\n- an immutable ID reference to canonical records;\n- an application-recomputed summary derived exclusively from canonical records;\n- audit-only historical data that cannot gate.\n\nStage data MUST NOT duplicate an independently editable substantive canonical value. Any stored projection includes its derivation identity and source-record hashes. A mismatch between a projection and canonical records fails integrity validation and the projection is regenerated or the project is quarantined; the mismatch is never resolved by selecting whichever copy is favorable.\n",
+        "includesFinalLineTerminator": true
+      },
+      "identicalBytes": true
+    },
+    "canonical-sole-authority": {
+      "BASE": {
+        "sourceRole": "BASE",
+        "startLine": 1285,
+        "endLine": 1287,
+        "startByte": 80275,
+        "endByte": 80791,
+        "sha256": "2f23fa0955359f4e7d8adff811a977f537e3107e4e4c903b13d8e9f931d93bfe",
+        "text": "16.2 Canonical-family sole-authority rule\n\nCanonical record families are the sole substantive authority for canonical project data. Stage-data fields that correspond to canonical records may contain only: (a) pre-acceptance proposal payloads, (b) immutable canonical ID references, or (c) application-recomputed summaries. Duplicated substantive canonical values in stage data are prohibited. Any summary/reference mismatch fails integrity validation and cannot be resolved by choosing whichever copy is convenient.\n",
+        "includesFinalLineTerminator": true
+      },
+      "SUCCESSOR": {
+        "sourceRole": "SUCCESSOR",
+        "startLine": 1375,
+        "endLine": 1377,
+        "startByte": 110959,
+        "endByte": 111475,
+        "sha256": "2f23fa0955359f4e7d8adff811a977f537e3107e4e4c903b13d8e9f931d93bfe",
+        "text": "16.2 Canonical-family sole-authority rule\n\nCanonical record families are the sole substantive authority for canonical project data. Stage-data fields that correspond to canonical records may contain only: (a) pre-acceptance proposal payloads, (b) immutable canonical ID references, or (c) application-recomputed summaries. Duplicated substantive canonical values in stage data are prohibited. Any summary/reference mismatch fails integrity validation and cannot be resolved by choosing whichever copy is convenient.\n",
+        "includesFinalLineTerminator": true
+      },
+      "identicalBytes": true
+    },
+    "stage14-completion-and-fields": {
+      "BASE": {
+        "sourceRole": "BASE",
+        "startLine": 3365,
+        "endLine": 3371,
+        "startByte": 188632,
+        "endByte": 189092,
+        "sha256": "6fd1ca60302a43cc586c3f92604921465c39f4952d3b102c4ddeb0fb50050826",
+        "text": "Stage 14 — ROOT-CAUSE EVERY DEFECT\nRole: Root-cause analyst\nOperations: ROOT_CAUSE\nThe prompt traces every material defect backward to the earliest defective layer.\nCompletion: Every current material defect has one evidence-supported RCA. Unknown RCA remains blocked.\nFields:\nROOT_CAUSE_ANALYSIS_VERSION, DEFECT_ROOT_CAUSE_RECORDS, TOTAL_MATERIAL_DEFECTS, CONFIRMED_ROOT_CAUSES, UNDETERMINED_ROOT_CAUSES, BLOCKED_ANALYSES, STAGE_DECISION, DECISION_EVIDENCE.\n",
+        "includesFinalLineTerminator": true
+      },
+      "SUCCESSOR": {
+        "sourceRole": "SUCCESSOR",
+        "startLine": 3546,
+        "endLine": 3552,
+        "startByte": 245082,
+        "endByte": 245542,
+        "sha256": "6fd1ca60302a43cc586c3f92604921465c39f4952d3b102c4ddeb0fb50050826",
+        "text": "Stage 14 — ROOT-CAUSE EVERY DEFECT\nRole: Root-cause analyst\nOperations: ROOT_CAUSE\nThe prompt traces every material defect backward to the earliest defective layer.\nCompletion: Every current material defect has one evidence-supported RCA. Unknown RCA remains blocked.\nFields:\nROOT_CAUSE_ANALYSIS_VERSION, DEFECT_ROOT_CAUSE_RECORDS, TOTAL_MATERIAL_DEFECTS, CONFIRMED_ROOT_CAUSES, UNDETERMINED_ROOT_CAUSES, BLOCKED_ANALYSES, STAGE_DECISION, DECISION_EVIDENCE.\n",
+        "includesFinalLineTerminator": true
+      },
+      "identicalBytes": true
+    },
+    "stage14-canonical-families": {
+      "BASE": {
+        "sourceRole": "BASE",
+        "startLine": 3632,
+        "endLine": 3644,
+        "startByte": 209561,
+        "endByte": 209877,
+        "sha256": "5038ca5fc57ab2cfecf96a43bfda9ce2de48742be1790db841016b98303f124d",
+        "text": "defects\n- ID: DEFECT_ID\n- Stage: 14\n- Policy: APPEND_ONLY\n- Agent owns substantive defect observations.\n- Application owns identity, typed relationships, and lifecycle state.\n\nrootCauses\n- ID: RCA_ID\n- Stage: 14\n- Policy: APPEND_SCOPED\n- Agent owns semantic RCA.\n- Application owns identity and defect relationship.\n",
+        "includesFinalLineTerminator": true
+      },
+      "SUCCESSOR": {
+        "sourceRole": "SUCCESSOR",
+        "startLine": 3813,
+        "endLine": 3825,
+        "startByte": 266011,
+        "endByte": 266327,
+        "sha256": "5038ca5fc57ab2cfecf96a43bfda9ce2de48742be1790db841016b98303f124d",
+        "text": "defects\n- ID: DEFECT_ID\n- Stage: 14\n- Policy: APPEND_ONLY\n- Agent owns substantive defect observations.\n- Application owns identity, typed relationships, and lifecycle state.\n\nrootCauses\n- ID: RCA_ID\n- Stage: 14\n- Policy: APPEND_SCOPED\n- Agent owns semantic RCA.\n- Application owns identity and defect relationship.\n",
+        "includesFinalLineTerminator": true
+      },
+      "identicalBytes": true
+    },
+    "universal-proposition-state": {
+      "BASE": {
+        "sourceRole": "BASE",
+        "startLine": 2562,
+        "endLine": 2566,
+        "startByte": 134269,
+        "endByte": 135295,
+        "sha256": "0b8cf2309b9d30fb3ed8ab9340bf49161bb103c153324bb85297e89118fe153d",
+        "text": "29.12 Universal proposition state and three-valued logic\n\nEvery release-bearing proposition, applicability condition, independence condition, entailment conclusion, source-authenticity conclusion, environment claim, and external-capability claim carries truthValue TRUE, FALSE, or UNKNOWN; epistemicBasis APPLICATION_OBSERVED, VERIFIED_EXTERNAL, EXTERNALLY_SUPPORTED, SELF_ASSERTED, or NONE; currentScopeStatus CURRENT or STALE; freshnessStatus CURRENT, EXPIRED, UNKNOWN, or NOT_APPLICABLE; contradictionStatus CLEAR or CONTRADICTED; reasons; supportingEvidenceIds; and a derivation or accepted semantic-review identity.\n\nTRUE requires affirmative support meeting the proof obligation. FALSE requires sufficient current evidence establishing noncompliance or negation. UNKNOWN applies when neither is established and fails closed wherever affirmative proof is required. Missing data is UNKNOWN unless a closed-universe rule affirmatively establishes FALSE. Contradictory sufficient evidence blocks and is never averaged away.\n",
+        "includesFinalLineTerminator": true
+      },
+      "SUCCESSOR": {
+        "sourceRole": "SUCCESSOR",
+        "startLine": 2743,
+        "endLine": 2747,
+        "startByte": 190719,
+        "endByte": 191745,
+        "sha256": "0b8cf2309b9d30fb3ed8ab9340bf49161bb103c153324bb85297e89118fe153d",
+        "text": "29.12 Universal proposition state and three-valued logic\n\nEvery release-bearing proposition, applicability condition, independence condition, entailment conclusion, source-authenticity conclusion, environment claim, and external-capability claim carries truthValue TRUE, FALSE, or UNKNOWN; epistemicBasis APPLICATION_OBSERVED, VERIFIED_EXTERNAL, EXTERNALLY_SUPPORTED, SELF_ASSERTED, or NONE; currentScopeStatus CURRENT or STALE; freshnessStatus CURRENT, EXPIRED, UNKNOWN, or NOT_APPLICABLE; contradictionStatus CLEAR or CONTRADICTED; reasons; supportingEvidenceIds; and a derivation or accepted semantic-review identity.\n\nTRUE requires affirmative support meeting the proof obligation. FALSE requires sufficient current evidence establishing noncompliance or negation. UNKNOWN applies when neither is established and fails closed wherever affirmative proof is required. Missing data is UNKNOWN unless a closed-universe rule affirmatively establishes FALSE. Contradictory sufficient evidence blocks and is never averaged away.\n",
+        "includesFinalLineTerminator": true
+      },
+      "identicalBytes": true
+    },
+    "coverage-universe": {
+      "BASE": {
+        "sourceRole": "BASE",
+        "startLine": 2737,
+        "endLine": 2752,
+        "startByte": 144837,
+        "endByte": 145653,
+        "sha256": "763634d82ec7a0f830489c6fb0d9cf08c61a7519e24d4a26d489fcf79bae826b",
+        "text": "Browser-local data cannot be represented as population-wide telemetry.\n\n31.1 Closed metric universes\n\nEvery coverage, completion, agreement, stability, reliability, and zero-count metric publishes:\n- metric identity and derivation version;\n- the closed universe definition;\n- numerator;\n- denominator;\n- exact included IDs;\n- exact excluded IDs and reasons;\n- current scope hash;\n- evidence references;\n- calculated value and disposition.\n\nAn empty denominator is SATISFIED only when a current independently reviewed evidence-supported EMPTY_UNIVERSE determination exists for that metric. Otherwise the metric is UNKNOWN or BLOCKED; it is never automatically 100%. A missing trigger record, missing reservation, missing test, or missing proposition cannot make coverage pass by removing itself from the denominator.\n",
+        "includesFinalLineTerminator": true
+      },
+      "SUCCESSOR": {
+        "sourceRole": "SUCCESSOR",
+        "startLine": 2918,
+        "endLine": 2933,
+        "startByte": 201287,
+        "endByte": 202103,
+        "sha256": "763634d82ec7a0f830489c6fb0d9cf08c61a7519e24d4a26d489fcf79bae826b",
+        "text": "Browser-local data cannot be represented as population-wide telemetry.\n\n31.1 Closed metric universes\n\nEvery coverage, completion, agreement, stability, reliability, and zero-count metric publishes:\n- metric identity and derivation version;\n- the closed universe definition;\n- numerator;\n- denominator;\n- exact included IDs;\n- exact excluded IDs and reasons;\n- current scope hash;\n- evidence references;\n- calculated value and disposition.\n\nAn empty denominator is SATISFIED only when a current independently reviewed evidence-supported EMPTY_UNIVERSE determination exists for that metric. Otherwise the metric is UNKNOWN or BLOCKED; it is never automatically 100%. A missing trigger record, missing reservation, missing test, or missing proposition cannot make coverage pass by removing itself from the denominator.\n",
+        "includesFinalLineTerminator": true
+      },
+      "identicalBytes": true
+    },
+    "derivation-closure": {
+      "BASE": {
+        "sourceRole": "BASE",
+        "startLine": 2907,
+        "endLine": 2911,
+        "startByte": 155211,
+        "endByte": 156144,
+        "sha256": "e1b7c944dc135b1fb0f49515edbade50cfadd24ae4f6f0e205f9563ac09f263f",
+        "text": "34.3 Registered normalizers and derivations\n\nEvery normalizer and application derivation has an immutable registry ID, version, implementation-owner file, canonical input contract, output contract, hash or build identity, and invalidation consequences. Every derived value records the exact derivation ID and source-record hashes. A changed normalizer or derivation invalidates affected current values and results unless an explicit compatibility migration proves byte- and semantic-equivalent output.\n\nEvery release-bearing derivation and normalizer is completely defined by this specification or by an explicitly named versioned normative algorithm. The semantics defined in Sections 14.6, 15, 16.1, 26, 29, 30, 31, 34.1, 34.2, and 36 control their registry entries, and an entry cannot deviate from them. A release-bearing derivation or normalizer whose semantics are not so defined is UNDEFINED_DERIVATION and blocks acceptance.\n",
+        "includesFinalLineTerminator": true
+      },
+      "SUCCESSOR": {
+        "sourceRole": "SUCCESSOR",
+        "startLine": 3088,
+        "endLine": 3092,
+        "startByte": 211661,
+        "endByte": 212594,
+        "sha256": "e1b7c944dc135b1fb0f49515edbade50cfadd24ae4f6f0e205f9563ac09f263f",
+        "text": "34.3 Registered normalizers and derivations\n\nEvery normalizer and application derivation has an immutable registry ID, version, implementation-owner file, canonical input contract, output contract, hash or build identity, and invalidation consequences. Every derived value records the exact derivation ID and source-record hashes. A changed normalizer or derivation invalidates affected current values and results unless an explicit compatibility migration proves byte- and semantic-equivalent output.\n\nEvery release-bearing derivation and normalizer is completely defined by this specification or by an explicitly named versioned normative algorithm. The semantics defined in Sections 14.6, 15, 16.1, 26, 29, 30, 31, 34.1, 34.2, and 36 control their registry entries, and an entry cannot deviate from them. A release-bearing derivation or normalizer whose semantics are not so defined is UNDEFINED_DERIVATION and blocks acceptance.\n",
+        "includesFinalLineTerminator": true
+      },
+      "identicalBytes": true
+    },
+    "amendment-F2": {
+      "SUCCESSOR": {
+        "sourceRole": "SUCCESSOR",
+        "startLine": 2524,
+        "endLine": 2551,
+        "startByte": 181854,
+        "endByte": 185547,
+        "sha256": "d64000e5157c61f1e96a5ae2527f294cfb8ba9273b336a0af55e73da6a46d8fc",
+        "text": "F2. Insert after §26.6: closed-loop-external-input-binding-minima/1\n\nMINIMUM_INPUT_BINDING_BASIS is EXTERNALLY_SUPPORTED for the external route of each pair in the following closed mapping:\n01 COMPLETE, SEMANTIC_CHALLENGE, RECONCILE_INTAKE;\n02 COMPLETE, SEARCH_ADEQUACY_REVIEW, RECONCILE_SOURCE_SEARCH;\n03 COMPLETE, SEMANTIC_CHALLENGE, RECONCILE_RESEARCH;\n04 COMPLETE, DISPOSITION_CHALLENGE, ATOMICITY_CHALLENGE, RECONCILE_REQUIREMENTS;\n05 COMPLETE, SEMANTIC_REVIEW, RECONCILE_REQUIREMENT_SET;\n06 COMPLETE, PROOF_REVIEW, RECONCILE_VERIFICATION_SUITE;\n07 COMPLETE, EXECUTE_FAILURE_TEST when externally routed;\n08 COMPLETE; 09 COMPLETE; 11 EXECUTE_RUN; 12 VERIFY; 13 COMPARE; 14 ROOT_CAUSE;\n15 COMPLETE, EXECUTE_REGRESSION when externally routed;\n16 CORRECT;\n17 EXECUTE_RUN, VERIFY, COMPARE, ROOT_CAUSE, REGRESSION, CORRECT;\n19 EXECUTE_RUN, VERIFY, COMPARE (always external);\n19 REGRESSION_VERIFY only when externally routed;\n21 COMPLETE; 22 EXECUTE_EXTERNAL_TEST; 23 COMPLETE; 24 COMPLETE; 25 COMPLETE;\n26 COMPLETE, SEMANTIC_REVIEW, RECONCILE;\n27 ADVISORY_REVIEW; 29 INVESTIGATE_MISSING_EVIDENCE;\nand, only when externally routed, every one of the 38 exact conditional pairs listed in F1.\n\nThe mapping has 88 external routes: 50 from the original §14.6 list plus 23 later failure-test and 15 later regression routes. F1's closed lists, not a wildcard allowing arbitrary operation names or stages, determine the additional pairs. The minimum does not grant operation availability or new writer authority. ADVISORY_REVIEW remains optional and non-gating.\n\nFor the conditional native route of 07 EXECUTE_FAILURE_TEST, 15 EXECUTE_REGRESSION, 19 REGRESSION_VERIFY, and the 38 F1 pairs, the input-binding minimum is APPLICATION_OBSERVED. The application establishes that basis from actual custody and verification of each required exact input, its current identity/hash and scope, before execution may start. This is not a requirement that execution has already succeeded: execution outcome, isolation, provenance, disposition and evidence sufficiency are separately determined from the actual execution. An absent or mismatched required input blocks native execution; a download, actor echo or route label does not satisfy this native minimum. This clause does not change the execution mode or permit an unapproved fallback to a different executor. Existing application, human-decision and operator commands outside these conditional pairs retain their existing source contracts; no external evidence minimum is assigned to them by this amendment.\n\nFor an external route, exact attributable echoes of the application-issued package/manifest identity and each required member identity/digest may establish EXTERNALLY_SUPPORTED under the existing input-binding contract; missing or mismatched echoes cannot. A package download, filename, provider label or unbound assertion is insufficient. Echoes never become APPLICATION_OBSERVED external possession, VERIFIED_EXTERNAL attestation, or proof of hidden provider independence. Recording that the application supplied bytes does not prove that an external recipient independently possessed or executed them.\n\nIf the applicable proof obligation, evidence contract or dimensioned-independence contract requires a stronger or distinct basis, that requirement also must be met. This generic minimum cannot weaken it, convert SUPPORTS_ONLY into ESTABLISHES, remove a required accepted review, waive unknown freshness/independence, or supply a successful result. §29.14's registered attestation-verification contract remains necessary for VERIFIED_EXTERNAL. Actual basis and its supporting observations remain recorded and evaluated by the existing gates.\n",
+        "includesFinalLineTerminator": true
+      }
+    }
+  },
+  "conditionalIdentityEffect": "After this exact interpretation is independently reviewed and formally linked as controlling, Stage14 is CHANGED: F2 modifies the admissibility context for establishing the current known RCA. Allocate a fresh successor source identity with this explicit added governor; inherit no proof. Until then retain the current BLOCKED identity relation.",
+  "reviewQuestion": "Does this exact defect-ID population and its missing/stale/rejected/inadmissible/unknown inclusion preserve Stage14 every-material-defect duty, earliest-layer RCA, current evidence/authority and F2 minima, while avoiding invented RCA rows, disjoint-count assumptions and favorable omission?",
+  "statuses": {
+    "technicalInputProposed": true,
+    "independentlyReviewed": false,
+    "formallyAdopted": false,
+    "sourceLedgerActivated": false,
+    "implementationComplete": "UNKNOWN",
+    "testConformance": "UNKNOWN",
+    "proofPromoted": false
+  },
+  "unchangedArtifacts": [
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/reconciliation.json",
+      "sha256": "68e43e1a4dace5980c54f9a5704638e2479d431e0096eb67540c351981843e92",
+      "byteLength": 19317
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/source-contract-meaning-map/five-finding-source-meaning-map.json",
+      "sha256": "63aae16f8dd1be2126a6aa148714eaae52b06ae3c93d70ff9e1e6943345e5a40",
+      "byteLength": 234672
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/source-contract-meaning-map-citation-successor/five-finding-source-meaning-map.json",
+      "sha256": "38a2c874c44d2c2554d434ac8007eb2777a0f28b13a14c165ba61cffe724f542",
+      "byteLength": 235800
+    }
+  ],
+  "noAutomaticFindingZeroing": true
+}

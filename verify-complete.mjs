@@ -1,10 +1,39 @@
-import {projectStoreRuntime} from './test-project-store-runtime.mjs';
-import {canonicalFixtureRecord,reviewApplicabilityFixture} from './test-fixtures.mjs';
+import {verifyStage11AcceptedBoundary} from './test-accepted-run-correction-journey.mjs';
+import {verifyOperationalResponseMetricControls} from './test-operational-response-metrics.mjs';
+import {verifyAcceptedExternalResponseMetrics} from './test-accepted-external-response-metrics.mjs';
+import {projectStoreRuntime,bindArtifactFixture} from './test-project-store-runtime.mjs';
+import {canonicalFixtureRecord,reviewApplicabilityFixture,stage02AcceptanceFixture} from './test-fixtures.mjs';
+import {buildUnchangedConfirmationFixture} from './stage19-fixture.mjs';
 import {artifactFixtureId} from './test-artifact-fixtures.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 
+// §31 safety: diagnostic event proxies do not establish closed observation universes.
+function verifyOperationalMetricSafetyControls(source=fs.readFileSync('workflow-engine.js','utf8'),uiSource=fs.readFileSync('app-core.js','utf8')){
+ const r=createVerifierRuntime({Event:globalThis.Event||class Event{},dispatchEvent:()=>true});for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js'])createVerifierRuntime.loadScript(r,fs.readFileSync(file,'utf8'),{filename:file});createVerifierRuntime.loadScript(r,source,{filename:'workflow-engine.js'});const e=r.closedLoopWorkflowEngine,p=r.closedLoopCore.createBlankState('METRIC-SAFETY-CONTROL');e.ensureShape(p);const cases=[],failures=[],check=(id,fn)=>{try{fn();cases.push({caseId:id,passed:true});}catch(error){failures.push({caseId:id,message:error.message});}};
+ const unknown=(state)=>{const m=e.operationalMetrics(state);if(m.observedSilentFailures!==null||m.silentFailureObservationStatus!=='UNKNOWN')throw new Error('SILENT_FAILURE_UNIVERSE_UNKNOWN_ORACLE');if(m.humanCorrectionFrequency!==null||m.humanCorrectionFrequencyStatus!=='UNKNOWN')throw new Error('HUMAN_CORRECTION_UNIVERSE_UNKNOWN_ORACLE');if(m.zeroFailure95PercentUpperBound!==null)throw new Error('RULE_OF_THREE_EXISTING_SUPPRESSION_ORACLE');return m;};
+ check('existing-rule-of-three-suppression',()=>{if(e.operationalMetrics(p).zeroFailure95PercentUpperBound!==null)throw new Error('RULE_OF_THREE_EXISTING_SUPPRESSION_ORACLE');});
+ check('empty-history-universe-unproved',()=>unknown(p));
+ // Use the actual authoritative human-change command writer; SELF_ASSERTED is preserved.
+ e.invalidateStageForAuthorityChange(p,{stage:1,reason:'Literal human governing input correction.',operatorLabel:'SYNTHETIC HUMAN'});check('actual-human-event-with-empty-denominator-unproved',()=>{const row=p.projectData.history.find(x=>x.type==='STAGE_AUTHORITY_CHANGED');if(row?.identityAssurance!=='SELF_ASSERTED')throw new Error('HUMAN_EVENT_METADATA_PRESERVED_ORACLE');unknown(p);});
+ e.recordMigratedAcceptedChange(p,{changeId:'MIGRATED-SAFETY-1',stage:1,migrationSchema:'LITERAL-HISTORICAL-CONTROL'});check('migration-is-not-correction-universe',()=>{const m=unknown(p);if(m.operationalMetricProxies?.acceptedChangeInvalidationRatio!==1)throw new Error('CORRECTION_PROXY_ARITHMETIC_PRESERVED_ORACLE');if(p.projectData.acceptedChanges[0].source!=='DETERMINISTIC_MIGRATION')throw new Error('MIGRATION_WRITER_METADATA_PRESERVED_ORACLE');});
+ e.recordMigratedAcceptedChange(p,{changeId:'MIGRATED-SAFETY-2',stage:1,migrationSchema:'LITERAL-HISTORICAL-CONTROL'});check('migration-does-not-improve-observed-human-frequency',()=>{const m=unknown(p);if(m.operationalMetricProxies?.acceptedChangeInvalidationRatio!==0.5)throw new Error('MIGRATION_DILUTION_DIAGNOSTIC_ORACLE');});
+ p.projectData.history.push({type:'BASELINE_FROZEN',eventSequence:10});p.projectData.defects.push({id:'DEFECT-SAFETY',active:true,eventSequence:11,fields:{DEFECT_ID:'DEFECT-SAFETY',STATUS:'CONFIRMED'}});check('post-baseline-defect-is-not-silent-discovery-evidence',()=>{const m=unknown(p);if(m.operationalMetricProxies?.postBaselineActiveConfirmedDefects!==1)throw new Error('POST_BASELINE_PROXY_PRESERVED_ORACLE');});
+ check('other-project-not-inferred-empty-observation-universe',()=>unknown(r.closedLoopCore.createBlankState('OTHER-METRIC-PROJECT')));
+ check('actual-overview-shows-unknown',()=>{const state=r.closedLoopCore.createBlankState('UI-METRIC-PROJECT');e.ensureShape(state);const m=e.operationalMetrics(state),ctx=createVerifierRuntime({current:state,core:{STAGES:[]},engine:{workflowProgressState:()=>({completedStageCount:0,resolvedHistoricalStages:[],workflowComplete:false}),openBlockers:()=>[],operationalMetrics:()=>({...m,materiallyIndependentAcceptedOperations:1})},canonicalCurrentStage:()=>1,statusClass:()=>'',label:x=>x||'',esc:x=>String(x||''),safe:x=>Array.isArray(x)?x:[],nextActionMarkup:()=>'',stageList:()=>''}),start=uiSource.indexOf('function overview('),end=uiSource.indexOf('\nfunction ',start+1);createVerifierRuntime.loadScript(ctx,uiSource.slice(start,end)+';globalThis.metricSafetyOverview=overview;');const text=ctx.metricSafetyOverview();if(!text.includes('Observed silent failures: <strong>UNKNOWN</strong>')||text.includes('Zero silent failures observed'))throw new Error('METRIC_SAFETY_UI_UNKNOWN_ORACLE');});
+ return {passed:failures.length===0,cases,failures,synthetic:true,actualBrowser:false,closedMetricUniversesProved:false,boundary:'Two §31 unknown observation populations and already suppressed zero-failure bound only; actual command/migration writers and extracted overview, no closed observation universe or whole-metric conformance.'};
+}
+function verifyOperationalMetricSafetyFaultControls(source=fs.readFileSync('workflow-engine.js','utf8'),uiSource=fs.readFileSync('app-core.js','utf8')){
+ const faults=[];for(const [name,before,after,expectedCase,oracle]of [
+ ['silent-zero','observedSilentFailures:null','observedSilentFailures:0','empty-history-universe-unproved','SILENT_FAILURE_UNIVERSE_UNKNOWN_ORACLE'],
+ ['human-zero','humanCorrectionFrequency:null','humanCorrectionFrequency:0','empty-history-universe-unproved','HUMAN_CORRECTION_UNIVERSE_UNKNOWN_ORACLE'],
+ ['bound-favorable','zeroFailure95PercentUpperBound:null','zeroFailure95PercentUpperBound:0.3','existing-rule-of-three-suppression','RULE_OF_THREE_EXISTING_SUPPRESSION_ORACLE']]){
+ const at=source.indexOf('function metrics(p){'),body=source.slice(at);if(at<0||body.split(before).length!==2)throw new Error('METRIC_SAFETY_FAULT_ANCHOR:'+name);const result=verifyOperationalMetricSafetyControls(source.slice(0,at)+body.replace(before,after),uiSource);
+ if(!result.failures.some(row=>row.caseId===expectedCase&&row.message===oracle))throw new Error('METRIC_SAFETY_FAULT_NOT_DETECTED:'+name);faults.push({name,expectedCase,oracle,detected:true});}
+ return faults;
+}
+if(process.argv.includes('--operational-metric-safety-only')){const report=verifyOperationalMetricSafetyControls();if(report.passed)report.owningFaults=verifyOperationalMetricSafetyFaultControls();console.log(JSON.stringify({operationalMetricSafety:report},null,2));process.exit(report.passed?0:1);}
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
 for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
@@ -142,11 +171,12 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
 
 // Invalid canonical relationship is rejected before mutation.
 {
-  const p=project('JOB-BAD-REL'),stage=3;p.job.CURRENT_SOURCE_SET_VERSION='SYNTHETIC-SOURCES';p.stages[2].agentData.SOURCE_APPLICABILITY_DETERMINATION='NO_APPLICABLE_EXTERNAL_SOURCE';p.stages[2].status='COMPLETE';p.stages[2].gate={complete:true,blocked:false,reasons:[]};const pr=prompt(p,stage);
-  const e={schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:p.job.JOB_ID,stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{},records:{research:[{tempKey:'research-1',fields:{PASS_NUMBER:1,EXACT_PORTION_EXAMINED:'Controlled source portion',FINDING_CLASSIFICATION:'FACT',SOURCE_EVIDENCE:'Controlled evidence'},relationships:{SOURCE_ID:{recordId:'SOURCE-DOES-NOT-EXIST'}},evidenceRefs:['evidence-1']}]},evidence:[{temporaryKey:'evidence-1',kind:'WORKFLOW_EVIDENCE',description:'Relationship validation fixture',location:'synthetic test',content:'controlled'}],unresolved:[],warnings:[],attachments:[]};
-  const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});
+  let p=project('JOB-BAD-REL');const stage=3;p.job.CURRENT_SOURCE_SET_VERSION='SYNTHETIC-SOURCES';p=stage02AcceptanceFixture({core,schema,engine,prompts,ingestion},p.job.JOB_ID,{project:p});const canonicalBefore={acceptedChanges:engine.clone(p.projectData.acceptedChanges),research:engine.clone(p.projectData.research)};const pr=prompt(p,stage);
+  const e={schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:p.job.JOB_ID,stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{},records:{research:[{tempKey:'research-1',fields:{PASS_NUMBER:'1',EXACT_PORTION_EXAMINED:'Controlled source portion',FINDING_CLASSIFICATION:'FACT',SOURCE_EVIDENCE:'Controlled evidence'},relationships:{SOURCE_ID:{recordId:'SOURCE-DOES-NOT-EXIST'}},evidenceRefs:['evidence-1']}]},evidence:[{temporaryKey:'evidence-1',kind:'WORKFLOW_EVIDENCE',description:'Relationship validation fixture',location:'synthetic test',content:'controlled'}],unresolved:[],warnings:[],attachments:[]};
+  const text=JSON.stringify(e),prepared=ingestion.prepare(p,{stage,text,promptRecord:pr});
+  assert(prepared.proposal===null&&prepared.rawRecord.completeRawResponse===text,'Wrong-source rejection lost its exact raw bytes or created a proposal.');
   assert(!prepared.validation.valid&&prepared.validation.issues.some(x=>x.code==='UNRESOLVED_RELATIONSHIP'),'Invalid relationship was not rejected.');
-  assert(prepared.project.projectData.research.length===0&&prepared.project.projectData.acceptedChanges.length===0,'Invalid relationship partially mutated canonical state.');
+  assert(hash.sha256Value({acceptedChanges:prepared.project.projectData.acceptedChanges,research:prepared.project.projectData.research})===hash.sha256Value(canonicalBefore),'Invalid relationship partially mutated canonical state.');
 }
 
 // Structured blocking human question blocks the stage until answered and versions User Job Input.
@@ -213,7 +243,8 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
 }
 
 
-// Stage 11 initial execution completion does not depend on Stage 12 verification triples.
+// The former hand-seeded purported positive is counterfeit provenance and must
+// remain rejected; actual accepted Stage11/12 boundary coverage follows.
 {
   const p=project('JOB-STAGE11-BOUNDARY');
   p.job.CURRENT_ITERATION='ITERATION-STAGE11';p.stages[10].status='COMPLETE';
@@ -226,9 +257,13 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
     p.projectData.acceptedChanges.push({changeId:`CHANGE-STAGE11-${i}`,stage:11,status:'COMMITTED',responseType:'DATA_PROPOSAL',operation:'EXECUTE_RUN',rawResponseId:`RAW-STAGE11-${i}`,scope:{iterationId:'ITERATION-STAGE11',candidateId:'CANDIDATE-STAGE11',runId:`RUN-STAGE11-${i}`,contextId:`CONTEXT-STAGE11-${i}`}});
     p.projectData.rawResponses.push({rawResponseId:`RAW-STAGE11-${i}`,stage:11});p.projectData.outputReceipts.push({receiptId:`RECEIPT-STAGE11-${i}`,rawResponseId:`RAW-STAGE11-${i}`,stage:11,iteration:'ITERATION-STAGE11',runId:`RUN-STAGE11-${i}`,contextId:`CONTEXT-STAGE11-${i}`});
   }
-  const stage11=engine.gate(11,p);assert(stage11.complete,`Stage 11 incorrectly depends on Stage 12 verification data: ${stage11.reasons.join('; ')}`);
-  const stage12=engine.gate(12,p);assert(!stage12.complete&&stage12.reasons.some(r=>/REQ × RUN × TEST|coverage/i.test(r)),'Stage 12 completed without verification triples.');
+  const stage11=engine.gate(11,p);
+  assert(!stage11.complete&&stage11.reasons.some(reason=>reason.includes('exact accepted proposal')),'STAGE11_COUNTERFEIT_PROVENANCE_REJECTED_ORACLE');
 }
+
+// Stage11 completion uses actual accepted provenance without subsequent Stage12 results.
+const stage11AcceptedBoundary = await verifyStage11AcceptedBoundary();
+console.log(JSON.stringify({stage11AcceptedBoundary}));
 
 // Current-scope selection excludes historical scoped records.
 {
@@ -329,21 +364,16 @@ console.log(JSON.stringify({scopedAcceptedResultRefinement:true},null,2));
 
 // Exact unchanged-confirmed candidate artifact identity controls Stage 20 baseline bytes.
 {
-  const p=project('JOB-BASELINE-EXACT-CANDIDATE');
-  const shaA='aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',shaB='bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb';
-  const a=record('artifacts',17,{FILENAME:'confirmed.bin',TYPE:'application/octet-stream',BYTE_SIZE:10,SHA256:shaA,STORAGE_REFERENCE:'indexeddb:ARTIFACT-CONFIRMED',AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'},'ARTIFACT-CONFIRMED');
-  const b=record('artifacts',20,{FILENAME:'different.bin',TYPE:'application/octet-stream',BYTE_SIZE:10,SHA256:shaB,STORAGE_REFERENCE:'indexeddb:ARTIFACT-DIFFERENT',AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'},'ARTIFACT-DIFFERENT');
-  p.projectData.artifacts.push(a,b);
-  const candidate=record('candidateFreezes',17,{ITERATION_ID:'ITERATION-CORRECTED',COMPONENT_MANIFEST:[{artifactId:'ARTIFACT-CONFIRMED',filename:'confirmed.bin',byteSize:10,sha256:shaA,storageReference:'indexeddb:ARTIFACT-CONFIRMED'}],COMPONENT_HASHES:{'ARTIFACT-CONFIRMED':shaA},STATUS:'FROZEN'},'CANDIDATE-CONFIRMED');
-  p.projectData.candidateFreezes.push(candidate);
-  const iteration=record('iterations',19,{CANDIDATE_ID:'CANDIDATE-CONFIRMED',PURPOSE:'UNCHANGED_CONFIRMATION',STATUS:'FROZEN'},'ITERATION-CONFIRM');
-  p.projectData.iterations.push(iteration);p.job.CURRENT_ITERATION='ITERATION-CONFIRM';
-  const scope={...engine.currentScope(p),iterationId:'ITERATION-CONFIRM',candidateId:'CANDIDATE-CONFIRMED'};candidate.scope={...scope,iterationId:'ITERATION-CORRECTED'};iteration.scope=scope;a.scope=scope;b.scope=scope;
-  const confirmation=record('confirmationRecords',19,{ITERATION_ID:'ITERATION-CONFIRM',CANDIDATE_ID:'CANDIDATE-CONFIRMED',DETERMINATION:'SATISFIED'},'CONFIRM-EXACT-CANDIDATE');confirmation.scope=scope;p.projectData.confirmationRecords.push(confirmation);
-  let rejected=false;try{engine.freezeBaseline(p,{artifactIds:['ARTIFACT-DIFFERENT'],operatorLabel:'VERIFY'});}catch(error){rejected=/exact artifact set/i.test(String(error.message));}
-  assert(rejected,'Stage 20 accepted a baseline artifact set different from the unchanged-confirmed candidate.');
-  const authorizationDecision=engine.recordRegisteredHumanDecision(p,{stage:20,purpose:'BASELINE_AUTHORIZATION',targetFamily:'candidateFreezes',targetId:'CANDIDATE-CONFIRMED',value:'AUTHORIZED',operatorLabel:'VERIFY'});
-  const baseline=engine.freezeBaseline(p,{authorizationDecisionId:engine.recordId(authorizationDecision,'humanDecisions'),operatorLabel:'VERIFY'});assert(JSON.stringify(engine.recordValue(baseline,'IMMUTABLE_ARTIFACT_RECORDS'))===JSON.stringify(['ARTIFACT-CONFIRMED']),'Stage 20 did not derive baseline artifacts from the unchanged-confirmed candidate manifest.');assert(engine.recordValue(baseline,'APPROVED_VERSIONS').candidateId==='CANDIDATE-CONFIRMED'&&engine.recordValue(baseline,'APPROVED_VERSIONS').iterationId==='ITERATION-CONFIRM','Stage 20 baseline lost the exact unchanged-confirmation candidate/iteration identity.');assert(engine.recordValue(baseline,'HUMAN_AUTHORIZATION')===engine.recordId(authorizationDecision,'humanDecisions'),'Stage 20 baseline did not reference the exact BASELINE_AUTHORIZATION human decision.');
+  const {p,cand19,iter19}=buildUnchangedConfirmationFixture('JOB-BASELINE-EXACT-CANDIDATE');
+  const artifactId=artifactFixtureId(engine,p,'ARTIFACT-CANDIDATE');
+  const authorizationDecision=engine.recordRegisteredHumanDecision(p,{stage:20,purpose:'BASELINE_AUTHORIZATION',targetFamily:'candidateFreezes',targetId:cand19,value:'AUTHORIZED',operatorLabel:'VERIFY'});
+  const before=hash.sha256Value(p);let rejected=false;
+  try{engine.freezeBaseline(p,{artifactIds:['ARTIFACT-DIFFERENT'],authorizationDecisionId:engine.recordId(authorizationDecision,'humanDecisions'),operatorLabel:'VERIFY'});}catch(error){rejected=/exact artifact set/i.test(String(error.message));}
+  assert(rejected,'Stage 20 accepted a baseline artifact set different from the unchanged-confirmed candidate.');assert(hash.sha256Value(p)===before,'Rejected exact-candidate selection mutated canonical state.');
+  const baseline=engine.freezeBaseline(p,{authorizationDecisionId:engine.recordId(authorizationDecision,'humanDecisions'),operatorLabel:'VERIFY'});
+  assert(JSON.stringify(engine.recordValue(baseline,'IMMUTABLE_ARTIFACT_RECORDS'))===JSON.stringify([artifactId]),'Stage 20 did not derive baseline artifacts from the unchanged-confirmed candidate manifest.');
+  assert(engine.recordValue(baseline,'APPROVED_VERSIONS').candidateId===cand19&&engine.recordValue(baseline,'APPROVED_VERSIONS').iterationId===iter19,'Stage 20 baseline lost the exact unchanged-confirmation candidate/iteration identity.');
+  assert(engine.recordValue(baseline,'HUMAN_AUTHORIZATION')===engine.recordId(authorizationDecision,'humanDecisions'),'Stage 20 baseline did not reference the exact BASELINE_AUTHORIZATION human decision.');
 }
 
 
@@ -376,7 +406,16 @@ console.log(JSON.stringify({stage5RequirementVersionIsolation:true,iterationOper
  let ev=engine.evaluateContextIndependence(p,{role:'RUN_BATCH',iterationId:iid});assert(ev.determination==='APPLICATION_ESTABLISHED','Ten distinct contexts were not application-established.');const ctx2=engine.records(p,'freshContexts')[1];ctx2.fields.EXTERNAL_CONTEXT_IDENTIFIER='external-0';ctx2.EXTERNAL_CONTEXT_IDENTIFIER='external-0';ev=engine.evaluateContextIndependence(p,{role:'RUN_BATCH',iterationId:iid});assert(ev.determination==='VIOLATED','Duplicate external context was not detected.');
 }
 {
- const p=project('JOB-EVIDENCE-V2'),t=record('tests',6,{REQ_ID:'REQ-E',TEST_TYPE:'DETERMINISTIC',EXECUTION_MODE:'EXTERNAL_AGENT_TOOL',REQUIRED_CAPABILITY:'sha256',ARTIFACT_REQUIREMENTS:'exact bytes',EVIDENCE_TO_PRESERVE:'byte hash',STATUS:'READY'},'TEST-E'),r=record('deterministicResults',22,{TEST_ID:'TEST-E',ACTUAL_RESULT:'same',DETERMINATION:'SATISFIED',EVIDENCE:'agent says same'},'RESULT-E');assert(!engine.evaluateEvidenceSufficiency(p,{test:t,result:r}).sufficient,'Prose satisfied a byte test.');const a=record('artifacts',22,{FILENAME:'x.bin',TYPE:'application/octet-stream',BYTE_SIZE:1,SHA256:'b'.repeat(64),AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'},'ART-E'),e=record('evidenceRecords',22,{KIND:'TOOL_OUTPUT',DESCRIPTION:'hash',LOCATION:'tool',CONTENT:'sha256 output',ATTACHMENT_ID:'ART-E',STATUS:'PRESERVED'},'EVIDENCE-E');p.projectData.artifacts.push(a);p.projectData.evidenceRecords.push(e);r.evidenceRefs=['EVIDENCE-E'];assert(engine.evaluateEvidenceSufficiency(p,{test:t,result:r}).sufficient,'Verified byte-backed evidence was not sufficient.');
+ const p=project('JOB-EVIDENCE-V2'),t=record('tests',6,{REQ_ID:'REQ-E',TEST_TYPE:'DETERMINISTIC',EXECUTION_MODE:'EXTERNAL_AGENT_TOOL',REQUIRED_CAPABILITY:'sha256',ARTIFACT_REQUIREMENTS:'exact bytes',EVIDENCE_TO_PRESERVE:'byte hash',STATUS:'READY'},'TEST-E'),r=record('deterministicResults',22,{TEST_ID:'TEST-E',ACTUAL_RESULT:'same',DETERMINATION:'SATISFIED',EVIDENCE:'agent says same'},'RESULT-E');assert(!engine.evaluateEvidenceSufficiency(p,{test:t,result:r}).sufficient,'Prose satisfied a byte test.');
+ // The synthetic positive byte control uses the production custody authority.
+ // Metadata and a claimed hash alone cannot establish §§17.6/25 byte evidence.
+ const blob=new Blob(['Controlled byte evidence'],{type:'application/octet-stream'}),artifactId=artifactFixtureId(engine,p,'BYTE-EVIDENCE'),digest=await hash.sha256Bytes(blob);
+ engine.registerArtifactBytes(p,{stage:22,artifactId,filename:'x.bin',mediaType:blob.type,byteSize:blob.size,sha256:digest});
+ const e=record('evidenceRecords',22,{KIND:'TOOL_OUTPUT',DESCRIPTION:'Synthetic application byte fixture',LOCATION:'native fixture store',CONTENT:'sha256 output',ATTACHMENT_ID:artifactId,STATUS:'PRESERVED'},'EVIDENCE-E');p.projectData.evidenceRecords.push(e);r.evidenceRefs=['EVIDENCE-E'];
+ assert(!engine.evaluateEvidenceSufficiency(p,{test:t,result:r}).sufficient,'Metadata-only evidence satisfied a byte test.');
+ const byteStore=await bindArtifactFixture([]);await byteStore.putArtifact({artifactId,jobId:p.job.JOB_ID,blob,filename:'x.bin',mediaType:blob.type});const stored=await byteStore.getArtifact(artifactId);
+ assert(stored.jobId===p.job.JOB_ID&&stored.byteSize===blob.size&&await hash.sha256Bytes(stored.blob)===digest,'The synthetic byte fixture did not retain exact actual bytes.');
+ assert(engine.evaluateEvidenceSufficiency(p,{test:t,result:r}).sufficient,'Verified byte-backed evidence was not sufficient.');
 }
 {
  const p=project('JOB-CONTRADICTION-V2');p.job.CURRENT_REQUIREMENTS_VERSION='R1';p.job.CURRENT_TEST_SUITE_VERSION='T1';const scope=engine.currentScope(p);const t=record('tests',6,{REQ_ID:'REQ-C',TEST_TYPE:'DETERMINISTIC',EXECUTION_MODE:'EXTERNAL_AGENT_TOOL',REQUIRED_CAPABILITY:'TEST_TOOL',ARTIFACT_REQUIREMENTS:'NONE',STATUS:'READY'},'TEST-C');t.scope={...scope};p.projectData.tests.push(t);const d=record('deterministicResults',22,{REQ_ID:'REQ-C',TEST_ID:'TEST-C',DETERMINATION:'SATISFIED'},'DET-C'),m=record('meaningResults',23,{REQ_ID:'REQ-C',TEST_ID:'TEST-C',DETERMINATION:'VIOLATED'},'MEAN-C');d.scope={...scope};m.scope={...scope};p.projectData.deterministicResults.push(d);p.projectData.meaningResults.push(m);assert(engine.detectCurrentContradictions(p).some(x=>x.type==='DETERMINISTIC_MEANING_CONFLICT'),'Cross-method contradiction was not detected.');
@@ -390,12 +429,22 @@ console.log(JSON.stringify({reliabilityV2Execution:true,reliabilityV2Independenc
 }
 
 
-// reliability-hardening-final: Stage 22 exact product handoff, epistemic evidence, and release contradictions.
+// reliability-hardening-final: Stage 22 exact product handoff, cross-stage product-artifact equivalence, epistemic evidence, and release contradictions.
+let stage22ProductArtifactEquivalence;
 {
  const p=project('JOB-STAGE22-PRODUCT-HANDOFF');p.job.CURRENT_PRODUCT_ID='PRODUCT-HANDOFF';const scope={...engine.currentScope(p),productId:'PRODUCT-HANDOFF'};
- const productRecord=record('products',21,{PRODUCT_ID:'PRODUCT-HANDOFF',PRODUCT_VERSION:'PRODUCT-v001',BASELINE_ID:'BASELINE-HANDOFF',EXECUTION_ID:'EXEC-HANDOFF',PRODUCTION_CONTEXT_ID:'CTX-HANDOFF',INSTRUCTION_VERSION:'INSTRUCTION-v001',GENERATED_ARTIFACT_INVENTORY:['ARTIFACT-HANDOFF'],STATUS:'COMPLETED'},'PRODUCT-HANDOFF');productRecord.scope=scope;p.projectData.products.push(productRecord);
- const artifactRecord=record('artifacts',21,{FILENAME:'finished-product.bin',TYPE:'application/octet-stream',VERSION:'v1',BYTE_SIZE:4,SHA256:'a'.repeat(64),ROLE:'FINISHED_PRODUCT',STORAGE_REFERENCE:'indexeddb:ARTIFACT-HANDOFF',AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'},'ARTIFACT-HANDOFF');artifactRecord.scope=scope;p.projectData.artifacts.push(artifactRecord);
- const handoff=engine.executionHandoff(p,{stage:22,operation:'COMPLETE'});assert(handoff.send.some(x=>x.artifactId==='ARTIFACT-HANDOFF'&&x.filename==='finished-product.bin'),'Stage 22 handoff omitted exact current finished-product bytes.');
+ const productRecord=record('products',21,{PRODUCT_ID:'PRODUCT-HANDOFF',PRODUCT_VERSION:'PRODUCT-v001',BASELINE_ID:'BASELINE-HANDOFF',EXECUTION_ID:'EXEC-HANDOFF',PRODUCTION_CONTEXT_ID:'CTX-HANDOFF',INSTRUCTION_VERSION:'INSTRUCTION-v001',GENERATED_ARTIFACT_INVENTORY:['ARTIFACT-HANDOFF-A','ARTIFACT-HANDOFF-B'],STATUS:'COMPLETED'},'PRODUCT-HANDOFF');productRecord.scope=scope;productRecord.completionState='COMPLETED';p.projectData.products.push(productRecord);
+ const artifact=(id,filename,byteSize,sha256,productId='PRODUCT-HANDOFF')=>{const row=record('artifacts',21,{FILENAME:filename,TYPE:'application/octet-stream',VERSION:'v1',BYTE_SIZE:byteSize,SHA256:sha256,ROLE:'FINISHED_PRODUCT',STORAGE_REFERENCE:'indexeddb:'+id,AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'},id);row.scope={...scope,productId};return row;};
+ p.projectData.artifacts.push(artifact('ARTIFACT-HANDOFF-A','finished-product-a.bin',4,'a'.repeat(64)),artifact('ARTIFACT-HANDOFF-B','finished-product-b.bin',7,'b'.repeat(64)),artifact('ARTIFACT-FOREIGN','foreign-product.bin',9,'f'.repeat(64),'PRODUCT-OTHER'));
+ const exact=row=>({artifactId:row.artifactId,filename:row.filename,byteSize:row.byteSize,sha256:row.sha256,availability:row.availability,role:row.role}),sort=rows=>rows.map(exact).sort((a,b)=>a.artifactId.localeCompare(b.artifactId)),expected=[{artifactId:'ARTIFACT-HANDOFF-A',filename:'finished-product-a.bin',byteSize:4,sha256:'a'.repeat(64),availability:'BYTES_PERSISTED_AND_VERIFIED',role:'FINISHED_PRODUCT'},{artifactId:'ARTIFACT-HANDOFF-B',filename:'finished-product-b.bin',byteSize:7,sha256:'b'.repeat(64),availability:'BYTES_PERSISTED_AND_VERIFIED',role:'FINISHED_PRODUCT'}],observed=Object.fromEntries([22,23,24,25].map(stage=>[stage,sort(engine.executionHandoff(p,{stage,operation:'COMPLETE'}).send)])),cases=[],check=(caseId,fn)=>{fn();cases.push({caseId,passed:true});},same=(actual,want,oracle)=>assert(hash.stableStringify(actual)===hash.stableStringify(want),oracle);
+ check('stage22-literal-current-product-artifact-set',()=>same(observed[22],expected,'STAGE22_LITERAL_PRODUCT_ARTIFACT_SET_ORACLE'));
+ for(const stage of [23,24,25])check('stage22-stage'+stage+'-exact-product-artifact-equivalence',()=>same(observed[22],observed[stage],'STAGE22_STAGE'+stage+'_PRODUCT_ARTIFACT_EQUIVALENCE_ORACLE'));
+ check('foreign-product-excluded-from-stages22-through25',()=>assert(Object.values(observed).every(rows=>!rows.some(row=>row.artifactId==='ARTIFACT-FOREIGN')),'FOREIGN_PRODUCT_ARTIFACT_EXCLUSION_ORACLE'));
+ const mustReject=(caseId,mutate,oracle)=>check(caseId,()=>{const changed=structuredClone(observed);mutate(changed);let rejected=false;try{same(changed[22],expected,oracle);for(const stage of [23,24,25])same(changed[22],changed[stage],oracle);}catch(error){rejected=error.message===oracle;}assert(rejected,oracle+'_FAULT_NOT_DETECTED');});
+ mustReject('missing-stage22-product-member-detected',changed=>changed[22].pop(),'STAGE22_MISSING_PRODUCT_MEMBER_ORACLE');
+ mustReject('changed-stage23-product-byte-identity-detected',changed=>{changed[23][0].sha256='c'.repeat(64);},'STAGE23_CHANGED_PRODUCT_BYTE_IDENTITY_ORACLE');
+ mustReject('foreign-stage25-product-member-detected',changed=>{changed[25].push({artifactId:'ARTIFACT-FOREIGN',filename:'foreign-product.bin',byteSize:9,sha256:'f'.repeat(64),availability:'BYTES_PERSISTED_AND_VERIFIED',role:'FINISHED_PRODUCT'});},'STAGE25_FOREIGN_PRODUCT_MEMBER_ORACLE');
+ stage22ProductArtifactEquivalence={passed:true,cases,stagesCompared:[22,23,24,25],expectedArtifactIds:expected.map(row=>row.artifactId),synthetic:true,actualArtifactBytesRead:false,fullClauseProof:false,boundary:'Application-derived executionHandoff product-artifact metadata for one current two-artifact product, the three exact Stage 22 to Stage 23-25 comparisons, foreign-product exclusion, and three independently perturbed observation controls.'};
 }
 {
  const p=project('JOB-EPISTEMIC-EFFECTIVE'),scope=engine.currentScope(p),req=record('requirements',4,{OBLIGATION:'Meaning must be established.',MANDATORY_OPTIONAL_STATUS:'MANDATORY',STATUS:'ACTIVE'},'REQ-EPISTEMIC'),test=record('tests',6,{REQ_ID:'REQ-EPISTEMIC',TEST_TYPE:'MEANING',EXECUTION_MODE:'INDEPENDENT_AGENT_REVIEW',REQUIRED_CAPABILITY:'semantic review',ARTIFACT_REQUIREMENTS:'NONE',INPUTS:'product',TOOLS:'independent reviewer',PROCEDURE:'compare meaning',EXPECTED_RESULT:'SATISFIED',FAILURE_CONDITION:'meaning differs',EVIDENCE_TO_PRESERVE:'meaning comparison',STATUS:'READY'},'TEST-EPISTEMIC'),evidence=record('evidenceRecords',23,{KIND:'REVIEW_NOTE',DESCRIPTION:'generic note',AUTHORITY_TYPE:'INDEPENDENT_REVIEWER',LOCATION:'review',CONTENT:'review performed',STATUS:'PRESERVED'},'EVIDENCE-EPISTEMIC'),result=record('meaningResults',23,{REQ_ID:'REQ-EPISTEMIC',TEST_ID:'TEST-EPISTEMIC',PRODUCT_LOCATION:'',EXTERNAL_SOURCE_EVIDENCE:'',REQUIRED_MEANING:'required meaning',OBSERVED_MEANING:'required meaning',EVIDENCE_BASED_COMPARISON:'SATISFIED',DETERMINATION:'SATISFIED'},'MEAN-EPISTEMIC');req.scope=scope;test.scope=scope;evidence.scope=scope;result.scope=scope;result.evidenceRefs=['EVIDENCE-EPISTEMIC'];p.projectData.requirements.push(req);p.projectData.tests.push(test);p.projectData.evidenceRecords.push(evidence);p.projectData.meaningResults.push(result);const effective=engine.evaluateResultConsistency('meaningResults',result,test,p);assert(effective.determination==='UNDETERMINED'&&effective.reasons.some(x=>x.includes('PRODUCT_LOCATION')),'A structurally present but epistemically insufficient meaning result remained effectively satisfied.');
@@ -435,7 +484,7 @@ assert(JSON.stringify(schema.STAGE_OPERATIONS[19])===JSON.stringify(['CONFIRM_FR
   assert(schema.validateTestIRTest(native).valid===true,'Valid native Test IR test was rejected.');
   assert(engine.applicationTestCapabilities().includes('CLOSED_LOOP_TEST_IR'),'Closed Loop Test IR is not registered as an application-native capability.');
 }
-console.log(JSON.stringify({stage22ProductHandoff:true,epistemicEffectiveEvidence:true,releaseContradictions:true},null,2));
+console.log(JSON.stringify({stage22ProductHandoff:true,stage22ProductArtifactEquivalence,epistemicEffectiveEvidence:true,releaseContradictions:true},null,2));
 
 
 // stage04-captured-input-regression-v3
@@ -464,7 +513,11 @@ console.log(JSON.stringify({stage04CapturedInputReuse:true}));
   const req=record('requirements',4,{OBLIGATION:'Native deterministic route',REQUIREMENT_TYPE:'FUNCTIONAL',MANDATORY_OPTIONAL_STATUS:'MANDATORY',USER_INPUT_RELATIONSHIP:'User input',APPLICABILITY:'APPLICABLE',OBSERVABLE_SATISFACTION_CONDITION:'true',INTENDED_VERIFICATION_METHOD:'DETERMINISTIC',EXPECTED_EVIDENCE:'native',FAILURE_CONDITION:'false',SEVERITY:'MAJOR',STATUS:'ACTIVE'},'REQ-ROUTE');req.scope=engine.currentScope(p);p.projectData.requirements.push(req);
   const artifact=record('artifacts',22,{FILENAME:'product.json',TYPE:'application/json',VERSION:'1',BYTE_SIZE:2,SHA256:'0'.repeat(64),ROLE:'PRODUCT',STORAGE_REFERENCE:'idb',AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED',NOTES:''},'ARTIFACT-ROUTE');artifact.scope={...engine.currentScope(p),productId:'PRODUCT-ROUTE'};p.projectData.artifacts.push(artifact);
   const test=record('tests',6,{REQ_ID:'REQ-ROUTE',TEST_TYPE:'DETERMINISTIC',EXECUTION_MODE:'APPLICATION_DETERMINISTIC',REQUIRED_CAPABILITY:'CLOSED_LOOP_TEST_IR',ARTIFACT_REQUIREMENTS:'NONE',EXECUTABLE_KIND:'TEST_IR',EXECUTABLE_SPEC_VERSION:'closed-loop-test-spec/1',EXECUTABLE_INPUT_BINDINGS:{PRODUCT:{source:'CURRENT_PRODUCT',filename:'product.json'}},EXECUTABLE_SPEC:{version:'closed-loop-test-spec/1',steps:[{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'ASSERT_EQ',value:2}]},INPUTS:'product',TOOLS:'runtime',PROCEDURE:'read bytes',EXPECTED_RESULT:'2',FAILURE_CONDITION:'not 2',EVIDENCE_TO_PRESERVE:'application evidence',STATUS:'READY'},'TEST-ROUTE');test.scope=engine.currentScope(p);p.projectData.tests.push(test);
-  p.activeStage=22;const item=engine.testExecutionPlan(p).items.find(x=>x.testId==='TEST-ROUTE');assert(item&&item.executableNow&&item.userAction==='RUN_IN_APP','Native Test IR route was not executable in-app.');assert(item.returnRequirements.structuredResponse===false&&item.handoff.expectBack.length===0&&item.handoff.send.length===0,'Native Test IR incorrectly requires external response/file handoff.');
+  p.activeStage=22;
+  assert(!engine.testExecutionPlan(p).items.find(x=>x.testId==='TEST-ROUTE')?.executableNow,'Native Test IR route accepted a canonical test without its application-owned specification hash.');
+  // Match the application-owned normalized specification identity written at ingestion.
+  test.EXECUTABLE_SPEC_SHA256=test.fields.EXECUTABLE_SPEC_SHA256=hash.sha256Value(globalThis.closedLoopTestRuntime.normalizeTestSpec(test));
+  const item=engine.testExecutionPlan(p).items.find(x=>x.testId==='TEST-ROUTE');assert(item&&item.executableNow&&item.userAction==='RUN_IN_APP','Native Test IR route was not executable in-app.');assert(item.returnRequirements.structuredResponse===false&&item.handoff.expectBack.length===0&&item.handoff.send.length===0,'Native Test IR incorrectly requires external response/file handoff.');
   artifact.AVAILABILITY=artifact.fields.AVAILABILITY='METADATA_ONLY';const blocked=engine.testExecutionPlan(p).items.find(x=>x.testId==='TEST-ROUTE');assert(blocked&&!blocked.executableNow&&blocked.operatorAction==='BLOCKED','Native Test IR did not fail closed after verified bytes became unavailable.');
 }
 {
@@ -512,8 +565,14 @@ console.log(JSON.stringify({nativeHandoffNoExternalReturn:true,capabilityNegatio
   for(const run of p.projectData.runs){run.fields.EXECUTION_STATUS=run.EXECUTION_STATUS='COMPLETED';run.fields.COMPLETE_OUTPUT=run.COMPLETE_OUTPUT='controlled output';}
   metrics=engine.operationalMetrics(p);assert(metrics.materiallyIndependentAcceptedOperations===10,'Ten completed application-established run contexts did not count as ten independent accepted operations.');
 }
-console.log(JSON.stringify({reviewerIndependenceAuthority:true,truthfulOperationalMetrics:true},null,2));
+const acceptedExternalResponseMetrics=verifyAcceptedExternalResponseMetrics();
+console.log(JSON.stringify({reviewerIndependenceAuthority:true,truthfulOperationalMetrics:true,acceptedExternalResponseMetrics},null,2));
 
 await import('./verify-spec-residual-closure.mjs');
 
 await import('./verify-operation-scope-classification.mjs');
+
+const operationalMetricSafety=verifyOperationalMetricSafetyControls();assert(operationalMetricSafety.passed,'OPERATIONAL_METRIC_SAFETY_CONTROLS_ORACLE');operationalMetricSafety.owningFaults=verifyOperationalMetricSafetyFaultControls();console.log(JSON.stringify({operationalMetricSafety}));
+
+const operationalResponseMetrics=verifyOperationalResponseMetricControls();
+console.log(JSON.stringify({operationalResponseMetrics},null,2));

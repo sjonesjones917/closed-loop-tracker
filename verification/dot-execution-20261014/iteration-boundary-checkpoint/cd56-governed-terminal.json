@@ -1,0 +1,10 @@
+{
+  "commit": "cd56dd97509f0c6c96e2f6e9055c97b4b65452a0",
+  "completedAt": "2026-10-14T14:46:48.097016+00:00",
+  "exitCode": 1,
+  "result": "FAILED_OR_TERMINATED",
+  "fixtureVariant": "governed-preproduct-and-separate-final-product",
+  "fullJourneyRequested": true,
+  "stdoutSha256": "092ef80e41e422bf20c315297e629b0616e69cda4b46974ee04d3929fd5a2ab7",
+  "stderrSha256": "83e017258756d0943288243c1f8021f8400befcedbe32c7a2de90423e194e729"
+}

@@ -1,0 +1,1898 @@
+{
+  "sourceCommit": "1599f9cfb33cc246292ade693c877fbe200b1986",
+  "sourceInputsSha256": "14439e27e8651e41a7189ca7a9330080ce602ecb274ebee6526c23f577d455b4",
+  "specificationSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
+  "normativeCount": 4066,
+  "contextCount": 67,
+  "bindings": 263,
+  "fullCoverageDeclarations": 156,
+  "activeReviewPaths": 156,
+  "rows": [
+    {
+      "normativeRequirementId": "NREQ-9e0ad66ef878f9e97c909997e976cc13",
+      "reviewPath": "verification/requirement-coverage-NREQ-9e0ad66ef878f9e97c909997e976cc13-20261007-context-c8e259a009f0-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "reviewedInputCount": 25
+    },
+    {
+      "normativeRequirementId": "NREQ-606a27b2b9b712e933dda6e0e7b0ce68",
+      "reviewPath": "verification/requirement-coverage-NREQ-606a27b2b9b712e933dda6e0e7b0ce68-20261007-context-c717ae8f5d63-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "reviewedInputCount": 25
+    },
+    {
+      "normativeRequirementId": "NREQ-a99b13aa6aa9c7ffa4b65010951f18ec",
+      "reviewPath": "verification/requirement-coverage-NREQ-a99b13aa6aa9c7ffa4b65010951f18ec-20261007-context-8e1c768bc690-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "reviewedInputCount": 25
+    },
+    {
+      "normativeRequirementId": "NREQ-178819f4c44ad7250656e79d18a8cae3",
+      "reviewPath": "verification/requirement-coverage-NREQ-178819f4c44ad7250656e79d18a8cae3-20261007-context-c1c5855362aa-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "reviewedInputCount": 25
+    },
+    {
+      "normativeRequirementId": "NREQ-6a5e773812226552e3448329be3966cd",
+      "reviewPath": "verification/requirement-coverage-NREQ-6a5e773812226552e3448329be3966cd-20261007-context-14f5a52593d0-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "reviewedInputCount": 25
+    },
+    {
+      "normativeRequirementId": "NREQ-b67c348ca653ff5a19ba01272dfd4262",
+      "reviewPath": "verification/requirement-coverage-NREQ-b67c348ca653ff5a19ba01272dfd4262-20261007-context-d619c471e8d3-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "reviewedInputCount": 25
+    },
+    {
+      "normativeRequirementId": "NREQ-4592c9487837c81077b166abf57bb4a7",
+      "reviewPath": "verification/requirement-coverage-NREQ-4592c9487837c81077b166abf57bb4a7-20261007-context-86ef01f1c3cb-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "reviewedInputCount": 25
+    },
+    {
+      "normativeRequirementId": "NREQ-c0a2fa84e2aafe674742a0bb98c40e02",
+      "reviewPath": "verification/requirement-coverage-NREQ-c0a2fa84e2aafe674742a0bb98c40e02-20261007-context-949b3819c6b9-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "reviewedInputCount": 25
+    },
+    {
+      "normativeRequirementId": "NREQ-f6e1df45974ccc5d32aafbc5f38dd535",
+      "reviewPath": "verification/requirement-coverage-NREQ-f6e1df45974ccc5d32aafbc5f38dd535-20261007-context-b48c49f827aa-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "reviewedInputCount": 25
+    },
+    {
+      "normativeRequirementId": "NREQ-012f85cfd2196b3413752b3deb14edf0",
+      "reviewPath": "verification/requirement-coverage-NREQ-012f85cfd2196b3413752b3deb14edf0-20261007-context-faf7fb1b8f5f-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "reviewedInputCount": 25
+    },
+    {
+      "normativeRequirementId": "NREQ-75151f881444015977da6a6d7d86cb1c",
+      "reviewPath": "verification/requirement-coverage-NREQ-75151f881444015977da6a6d7d86cb1c-20261007-context-5c2a016004df-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "reviewedInputCount": 25
+    },
+    {
+      "normativeRequirementId": "NREQ-595ff4d66406e3bd9529e12f036c882b",
+      "reviewPath": "verification/requirement-coverage-NREQ-595ff4d66406e3bd9529e12f036c882b-20261007-context-b22989818f22-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "reviewedInputCount": 25
+    },
+    {
+      "normativeRequirementId": "NREQ-d2fa27e805583d3a5c7d281ed7051950",
+      "reviewPath": "verification/requirement-coverage-NREQ-d2fa27e805583d3a5c7d281ed7051950-20261007-context-8e1b30f0d0bb-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "reviewedInputCount": 25
+    },
+    {
+      "normativeRequirementId": "NREQ-b366c2ac73e0e846627de23589a5a772",
+      "reviewPath": "verification/requirement-coverage-NREQ-b366c2ac73e0e846627de23589a5a772-20261007-context-a26853843e41-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "reviewedInputCount": 25
+    },
+    {
+      "normativeRequirementId": "NREQ-e0b91994f249e0b795ab80a6e3f4a4a2",
+      "reviewPath": "verification/requirement-coverage-NREQ-e0b91994f249e0b795ab80a6e3f4a4a2-20261007-context-b609fa37652f-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "reviewedInputCount": 25
+    },
+    {
+      "normativeRequirementId": "NREQ-bde18b0504b7485cf77fad020a4a494b",
+      "reviewPath": "verification/requirement-coverage-NREQ-bde18b0504b7485cf77fad020a4a494b-20261007-context-90bbee2744c4-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "reviewedInputCount": 25
+    },
+    {
+      "normativeRequirementId": "NREQ-1e002259d64a939cee2f2a41f4bf3515",
+      "reviewPath": "verification/requirement-coverage-NREQ-1e002259d64a939cee2f2a41f4bf3515-20261007-context-19c88e9b3697-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "reviewedInputCount": 25
+    },
+    {
+      "normativeRequirementId": "NREQ-55f458162d319bfbb710223b3528ef9f",
+      "reviewPath": "verification/requirement-coverage-NREQ-55f458162d319bfbb710223b3528ef9f-20261007-context-5b104c0b9184-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "reviewedInputCount": 25
+    },
+    {
+      "normativeRequirementId": "NREQ-d6eeb36f75c6f6f6854a2e3aa9ac2070",
+      "reviewPath": "verification/requirement-coverage-NREQ-d6eeb36f75c6f6f6854a2e3aa9ac2070-20261007-context-e9e30bbb47a8-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "reviewedInputCount": 25
+    },
+    {
+      "normativeRequirementId": "NREQ-1543275bf85c6f452bce3c65a31dd691",
+      "reviewPath": "verification/requirement-coverage-NREQ-1543275bf85c6f452bce3c65a31dd691-20261007-context-bc25b407a6a7-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "reviewedInputCount": 25
+    },
+    {
+      "normativeRequirementId": "NREQ-2323c8d363fd8c29f965d8c0e67549ae",
+      "reviewPath": "verification/requirement-coverage-NREQ-2323c8d363fd8c29f965d8c0e67549ae-20261007-context-cb02bb332e42-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "reviewedInputCount": 25
+    },
+    {
+      "normativeRequirementId": "NREQ-7643f1fb351e295ecb8565583cb9a37f",
+      "reviewPath": "verification/requirement-coverage-NREQ-7643f1fb351e295ecb8565583cb9a37f-20261007-context-1fe2c84cf115-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "reviewedInputCount": 25
+    },
+    {
+      "normativeRequirementId": "NREQ-b04395198a63faa09666a1bfca300a1e",
+      "reviewPath": "verification/requirement-coverage-NREQ-b04395198a63faa09666a1bfca300a1e-20261007-context-3d6d12bed622-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "reviewedInputCount": 25
+    },
+    {
+      "normativeRequirementId": "NREQ-bc997511e2328af90b68d1898bcf6ed7",
+      "reviewPath": "verification/requirement-coverage-NREQ-bc997511e2328af90b68d1898bcf6ed7-20261007-context-18574f44b5d8-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "reviewedInputCount": 25
+    },
+    {
+      "normativeRequirementId": "NREQ-2969c103b4ac33435f1e5d6c258a7b7b",
+      "reviewPath": "verification/requirement-coverage-NREQ-2969c103b4ac33435f1e5d6c258a7b7b-20261007-context-857befb4ca6d-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "reviewedInputCount": 25
+    },
+    {
+      "normativeRequirementId": "NREQ-ec756b9a468c4ea50f2d35c578a1a11a",
+      "reviewPath": "verification/requirement-coverage-NREQ-ec756b9a468c4ea50f2d35c578a1a11a-20261007-context-5b0bc69cf0f7-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "reviewedInputCount": 25
+    },
+    {
+      "normativeRequirementId": "NREQ-797b5fe50f9d13ae34d17cc98c7c8f24",
+      "reviewPath": "verification/requirement-coverage-NREQ-797b5fe50f9d13ae34d17cc98c7c8f24-20261007-context-0a94e402d167-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "reviewedInputCount": 25
+    },
+    {
+      "normativeRequirementId": "NREQ-1cb8c122e35c6f4e36f01c95ea0d02c9",
+      "reviewPath": "verification/requirement-coverage-NREQ-1cb8c122e35c6f4e36f01c95ea0d02c9-20261007-context-4e1b5cc17d08-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "test-ir.unknown-operation",
+        "test-ir.operation-registry-admission"
+      ],
+      "reviewedInputCount": 25
+    },
+    {
+      "normativeRequirementId": "NREQ-318da161cc5f30f33449238ba3870773",
+      "reviewPath": "verification/requirement-coverage-NREQ-318da161cc5f30f33449238ba3870773-20261007-context-123b97ea9f3d-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "test-ir.unknown-operation",
+        "test-ir.operation-registry-admission"
+      ],
+      "reviewedInputCount": 25
+    },
+    {
+      "normativeRequirementId": "NREQ-a1bafeb7c6f6f12bf0c7b0f6fcadaab9",
+      "reviewPath": "verification/requirement-coverage-NREQ-a1bafeb7c6f6f12bf0c7b0f6fcadaab9-20261007-context-4b6563194ed6-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "migration.unknown-preserved"
+      ],
+      "reviewedInputCount": 28
+    },
+    {
+      "normativeRequirementId": "NREQ-f41a79c58369bd76c58ad7e831e953ce",
+      "reviewPath": "verification/requirement-coverage-NREQ-f41a79c58369bd76c58ad7e831e953ce-20261007-context-a6f639cd6cfc-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "migration.current-profile"
+      ],
+      "reviewedInputCount": 28
+    },
+    {
+      "normativeRequirementId": "NREQ-5811c65fa83521ee7afeedd602cec806",
+      "reviewPath": "verification/requirement-coverage-NREQ-5811c65fa83521ee7afeedd602cec806-20261007-context-60e25b364eb4-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "migration.current-profile"
+      ],
+      "reviewedInputCount": 28
+    },
+    {
+      "normativeRequirementId": "NREQ-2046e21dd63ad76f992233d5582c716d",
+      "reviewPath": "verification/requirement-coverage-NREQ-2046e21dd63ad76f992233d5582c716d-20261007-context-8d03363ebd61-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "migration.current-profile"
+      ],
+      "reviewedInputCount": 28
+    },
+    {
+      "normativeRequirementId": "NREQ-1b07d67693ef773b4800dc6e06626b5b",
+      "reviewPath": "verification/requirement-coverage-NREQ-1b07d67693ef773b4800dc6e06626b5b-20261007-context-dcaf72405bbe-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "migration.current-profile"
+      ],
+      "reviewedInputCount": 28
+    },
+    {
+      "normativeRequirementId": "NREQ-72ba9c97f91e20a56d469fe3d4acf669",
+      "reviewPath": "verification/requirement-coverage-NREQ-72ba9c97f91e20a56d469fe3d4acf669-20261007-context-ce1798099b2f-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "store.retained-evidence-custody",
+        "store.current-supplied-input-custody"
+      ],
+      "reviewedInputCount": 30
+    },
+    {
+      "normativeRequirementId": "NREQ-d3216139914fb4c3ec1d54819ee18890",
+      "reviewPath": "verification/requirement-coverage-NREQ-d3216139914fb4c3ec1d54819ee18890-20261007-context-4d85dbcad915-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "store.retained-evidence-custody",
+        "store.current-supplied-input-custody"
+      ],
+      "reviewedInputCount": 30
+    },
+    {
+      "normativeRequirementId": "NREQ-949f1919a3c7d66486dd74bbd084b71a",
+      "reviewPath": "verification/requirement-coverage-NREQ-949f1919a3c7d66486dd74bbd084b71a-20261007-context-51d18e6898a2-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "store.retained-evidence-custody",
+        "store.current-supplied-input-custody"
+      ],
+      "reviewedInputCount": 30
+    },
+    {
+      "normativeRequirementId": "NREQ-a7139de247d6263164ddc139ec1fe2ce",
+      "reviewPath": "verification/requirement-coverage-NREQ-a7139de247d6263164ddc139ec1fe2ce-20261007-context-1e402d1c19b7-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "store.retained-evidence-custody",
+        "store.current-supplied-input-custody"
+      ],
+      "reviewedInputCount": 30
+    },
+    {
+      "normativeRequirementId": "NREQ-87e7a29563e2235e49d5eea31da7db0c",
+      "reviewPath": "verification/requirement-coverage-NREQ-87e7a29563e2235e49d5eea31da7db0c-20261007-context-04879b11d740-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "store.retained-evidence-custody",
+        "store.current-supplied-input-custody"
+      ],
+      "reviewedInputCount": 30
+    },
+    {
+      "normativeRequirementId": "NREQ-ab9ab7c7ba110dfd3e0a5f8f5c9908cb",
+      "reviewPath": "verification/requirement-coverage-NREQ-ab9ab7c7ba110dfd3e0a5f8f5c9908cb-20261007-context-d64ec081ccf9-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "canonical.exact-serialization-controls"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-853a934199459ed6bf419687ca08ba34",
+      "reviewPath": "verification/requirement-coverage-NREQ-853a934199459ed6bf419687ca08ba34-20261007-context-00fada70b5c9-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "canonical.exact-serialization-controls"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-7add6f24a57198b72b500e5a2acf1ca6",
+      "reviewPath": "verification/requirement-coverage-NREQ-7add6f24a57198b72b500e5a2acf1ca6-20261007-context-6cba32557505-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "canonical.exact-serialization-controls",
+        "canonical.registered-set-semantics"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-d6f8519fc2d36e59e4eba26af0442d14",
+      "reviewPath": "verification/requirement-coverage-NREQ-d6f8519fc2d36e59e4eba26af0442d14-20261007-context-2fbfbdc64e39-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "canonical.exact-serialization-controls"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-dba22c5f93e4359c4b7d4ebdd9799dbf",
+      "reviewPath": "verification/requirement-coverage-NREQ-dba22c5f93e4359c4b7d4ebdd9799dbf-20261007-context-20dec9a14f41-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "canonical.exact-serialization-controls"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-27f437fe3040767de849d06a48cdb3c3",
+      "reviewPath": "verification/requirement-coverage-NREQ-27f437fe3040767de849d06a48cdb3c3-20261007-context-f1acc99ffcf8-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "canonical.exact-serialization-controls"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-c756b0b15119dd819444cd7212bdad56",
+      "reviewPath": "verification/requirement-coverage-NREQ-c756b0b15119dd819444cd7212bdad56-20261007-context-fb0c67dfb2a4-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "canonical.exact-serialization-controls"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-092f78e488e6282f342b533fa7801e3e",
+      "reviewPath": "verification/requirement-coverage-NREQ-092f78e488e6282f342b533fa7801e3e-20261007-context-11d306878126-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "test-ir.exact-integer-boundary-population",
+        "test-ir.exact-integer"
+      ],
+      "reviewedInputCount": 25
+    },
+    {
+      "normativeRequirementId": "NREQ-5003532a6cda7a68c13be508fbf4d723",
+      "reviewPath": "verification/requirement-coverage-NREQ-5003532a6cda7a68c13be508fbf4d723-20261007-context-dccb85cd4973-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "store.cas-stale-write-population"
+      ],
+      "reviewedInputCount": 22
+    },
+    {
+      "normativeRequirementId": "NREQ-360281bfdd66bed29237ed7202962808",
+      "reviewPath": "verification/requirement-coverage-NREQ-360281bfdd66bed29237ed7202962808-20261007-context-defd14234c9a-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "ingestion.scope-negative-population"
+      ],
+      "reviewedInputCount": 56
+    },
+    {
+      "normativeRequirementId": "NREQ-a0db6ddcb33d9af123b08d4d481c8ebd",
+      "reviewPath": "verification/requirement-coverage-NREQ-a0db6ddcb33d9af123b08d4d481c8ebd-20261007-context-6d4092da78f9-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "ingestion.scope-negative-population"
+      ],
+      "reviewedInputCount": 56
+    },
+    {
+      "normativeRequirementId": "NREQ-baa1c33b2e2490264f91881b06ff9da8",
+      "reviewPath": "verification/requirement-coverage-NREQ-baa1c33b2e2490264f91881b06ff9da8-20261007-context-029f6195f4ba-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "ingestion.scope-negative-population"
+      ],
+      "reviewedInputCount": 56
+    },
+    {
+      "normativeRequirementId": "NREQ-f1919b51ebfc8561d0140c02cbf08abd",
+      "reviewPath": "verification/requirement-coverage-NREQ-f1919b51ebfc8561d0140c02cbf08abd-20261007-context-5b509fd997c1-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "ingestion.scope-negative-population"
+      ],
+      "reviewedInputCount": 56
+    },
+    {
+      "normativeRequirementId": "NREQ-4b27c9f604f44c29404eacc12a59fd68",
+      "reviewPath": "verification/requirement-coverage-NREQ-4b27c9f604f44c29404eacc12a59fd68-20261007-context-0ea535138580-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "ingestion.scope-negative-population"
+      ],
+      "reviewedInputCount": 56
+    },
+    {
+      "normativeRequirementId": "NREQ-71896faa31bc64e94d98bc976e1e6f1d",
+      "reviewPath": "verification/requirement-coverage-NREQ-71896faa31bc64e94d98bc976e1e6f1d-20261007-context-def6b5edfdba-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "ingestion.scope-negative-population"
+      ],
+      "reviewedInputCount": 56
+    },
+    {
+      "normativeRequirementId": "NREQ-78fef21919bbd7bb3bafba6f62210631",
+      "reviewPath": "verification/requirement-coverage-NREQ-78fef21919bbd7bb3bafba6f62210631-20261007-context-8f3806190781-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "ingestion.scope-negative-population"
+      ],
+      "reviewedInputCount": 56
+    },
+    {
+      "normativeRequirementId": "NREQ-72aa03a305fb8893a65d384f41d86aeb",
+      "reviewPath": "verification/requirement-coverage-NREQ-72aa03a305fb8893a65d384f41d86aeb-20261007-context-6fb2556fc745-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "ingestion.scope-negative-population"
+      ],
+      "reviewedInputCount": 56
+    },
+    {
+      "normativeRequirementId": "NREQ-848909d4b95219bdb481803a4b1b91c2",
+      "reviewPath": "verification/requirement-coverage-NREQ-848909d4b95219bdb481803a4b1b91c2-20261007-context-73f60d480258-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "ingestion.scope-negative-population"
+      ],
+      "reviewedInputCount": 56
+    },
+    {
+      "normativeRequirementId": "NREQ-601ec85ffefcffd713520f4067f7529c",
+      "reviewPath": "verification/requirement-coverage-NREQ-601ec85ffefcffd713520f4067f7529c-20261007-context-be7aad854ceb-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "ingestion.scope-negative-population"
+      ],
+      "reviewedInputCount": 56
+    },
+    {
+      "normativeRequirementId": "NREQ-c0080ab56f40757c88225dc35a1f98f0",
+      "reviewPath": "verification/requirement-coverage-NREQ-c0080ab56f40757c88225dc35a1f98f0-20261007-context-79fe3bf8357b-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "ingestion.scope-negative-population"
+      ],
+      "reviewedInputCount": 56
+    },
+    {
+      "normativeRequirementId": "NREQ-a42ec803577aa8ccbe176ed8e20a8595",
+      "reviewPath": "verification/requirement-coverage-NREQ-a42ec803577aa8ccbe176ed8e20a8595-20261007-context-66547fe135c2-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "ingestion.scope-negative-population"
+      ],
+      "reviewedInputCount": 56
+    },
+    {
+      "normativeRequirementId": "NREQ-928a65a08b403be3edc8b160ef9cc53c",
+      "reviewPath": "verification/requirement-coverage-NREQ-928a65a08b403be3edc8b160ef9cc53c-20261007-context-bc514f8d980c-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "ingestion.foreign-project-response"
+      ],
+      "reviewedInputCount": 56
+    },
+    {
+      "normativeRequirementId": "NREQ-0fe0693c63b640aac77aa7fa2ad3861d",
+      "reviewPath": "verification/requirement-coverage-NREQ-0fe0693c63b640aac77aa7fa2ad3861d-20261007-context-e479a2d67661-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "STAGE01-SPECIFICATION-CONTRACT-CONTROLS"
+      ],
+      "reviewedInputCount": 26
+    },
+    {
+      "normativeRequirementId": "NREQ-57f8fa829a872f35948a81bd58477291",
+      "reviewPath": "verification/requirement-coverage-NREQ-57f8fa829a872f35948a81bd58477291-20261007-context-fd3ea3b718ef-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "STAGE01-SPECIFICATION-CONTRACT-CONTROLS"
+      ],
+      "reviewedInputCount": 26
+    },
+    {
+      "normativeRequirementId": "NREQ-ebadc5f449d2029613a3af4b31f78c6f",
+      "reviewPath": "verification/requirement-coverage-NREQ-ebadc5f449d2029613a3af4b31f78c6f-20261007-context-4fd7fab953a6-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "STAGE01-SPECIFICATION-CONTRACT-CONTROLS"
+      ],
+      "reviewedInputCount": 26
+    },
+    {
+      "normativeRequirementId": "NREQ-85b110cf9d0bf8e7e2a6ca34dcdee412",
+      "reviewPath": "verification/requirement-coverage-NREQ-85b110cf9d0bf8e7e2a6ca34dcdee412-20261007-context-80144a03a02d-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "STAGE01-SPECIFICATION-CONTRACT-CONTROLS"
+      ],
+      "reviewedInputCount": 26
+    },
+    {
+      "normativeRequirementId": "NREQ-b7b9ecdbceaad6aaefc9e55f7d5b3d48",
+      "reviewPath": "verification/requirement-coverage-NREQ-b7b9ecdbceaad6aaefc9e55f7d5b3d48-20261007-context-08a2d1fe5fc7-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "STAGE01-SPECIFICATION-CONTRACT-CONTROLS"
+      ],
+      "reviewedInputCount": 26
+    },
+    {
+      "normativeRequirementId": "NREQ-5dbdcf72dd32a519bb29fbf8250726d3",
+      "reviewPath": "verification/requirement-coverage-NREQ-5dbdcf72dd32a519bb29fbf8250726d3-20261007-context-99eab70395b3-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "STAGE01-SPECIFICATION-CONTRACT-CONTROLS"
+      ],
+      "reviewedInputCount": 26
+    },
+    {
+      "normativeRequirementId": "NREQ-f2d6f77dfa27e853d7eb5dab69be388d",
+      "reviewPath": "verification/requirement-coverage-NREQ-f2d6f77dfa27e853d7eb5dab69be388d-20261007-context-e9122d35086e-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "STAGE01-SPECIFICATION-CONTRACT-CONTROLS"
+      ],
+      "reviewedInputCount": 26
+    },
+    {
+      "normativeRequirementId": "NREQ-ade9df74bf03ff347d7ae537fbfa738d",
+      "reviewPath": "verification/requirement-coverage-NREQ-ade9df74bf03ff347d7ae537fbfa738d-20261007-context-61a2341f94ae-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "STAGE01-SPECIFICATION-CONTRACT-CONTROLS"
+      ],
+      "reviewedInputCount": 26
+    },
+    {
+      "normativeRequirementId": "NREQ-1f578d8524f1af57b280fd03422827f1",
+      "reviewPath": "verification/requirement-coverage-NREQ-1f578d8524f1af57b280fd03422827f1-20261007-context-33c756e92bb7-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "STAGE01-SPECIFICATION-CONTRACT-CONTROLS"
+      ],
+      "reviewedInputCount": 26
+    },
+    {
+      "normativeRequirementId": "NREQ-cf2cbee76666e1f836c4cca046988062",
+      "reviewPath": "verification/requirement-coverage-NREQ-cf2cbee76666e1f836c4cca046988062-20261007-context-ee826876a6b9-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "STAGE01-SPECIFICATION-CONTRACT-CONTROLS"
+      ],
+      "reviewedInputCount": 26
+    },
+    {
+      "normativeRequirementId": "NREQ-2524a1d9ecc583bbd420778cfb147983",
+      "reviewPath": "verification/requirement-coverage-NREQ-2524a1d9ecc583bbd420778cfb147983-20261007-context-04970fd5ee41-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "STAGE01-SPECIFICATION-CONTRACT-CONTROLS"
+      ],
+      "reviewedInputCount": 26
+    },
+    {
+      "normativeRequirementId": "NREQ-e2c966ff2db0502c8d0f2d40e87f4262",
+      "reviewPath": "verification/requirement-coverage-NREQ-e2c966ff2db0502c8d0f2d40e87f4262-20261007-context-c6d95e2cb2e2-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "STAGE01-SPECIFICATION-CONTRACT-CONTROLS"
+      ],
+      "reviewedInputCount": 26
+    },
+    {
+      "normativeRequirementId": "NREQ-b3e8d9cffdde1f94d9d342ff0ed4f097",
+      "reviewPath": "verification/requirement-coverage-NREQ-b3e8d9cffdde1f94d9d342ff0ed4f097-20261007-context-b36ec8d0d499-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "STAGE01-SPECIFICATION-CONTRACT-CONTROLS"
+      ],
+      "reviewedInputCount": 26
+    },
+    {
+      "normativeRequirementId": "NREQ-c1d94148ff5023aac7735baefed6c35d",
+      "reviewPath": "verification/requirement-coverage-NREQ-c1d94148ff5023aac7735baefed6c35d-20261007-context-c697349e63e8-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "STAGE01-SPECIFICATION-CONTRACT-CONTROLS"
+      ],
+      "reviewedInputCount": 26
+    },
+    {
+      "normativeRequirementId": "NREQ-7be2bf6dfeab825b0549d41a0151841e",
+      "reviewPath": "verification/requirement-coverage-NREQ-7be2bf6dfeab825b0549d41a0151841e-20261007-context-4d745e4aa672-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "STAGE01-SPECIFICATION-CONTRACT-CONTROLS"
+      ],
+      "reviewedInputCount": 26
+    },
+    {
+      "normativeRequirementId": "NREQ-a6fb1ab9c309f702b7cd3d8c7f38cf8f",
+      "reviewPath": "verification/requirement-coverage-NREQ-a6fb1ab9c309f702b7cd3d8c7f38cf8f-20261007-context-683bf6ce202e-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "STAGE01-SPECIFICATION-CONTRACT-CONTROLS"
+      ],
+      "reviewedInputCount": 26
+    },
+    {
+      "normativeRequirementId": "NREQ-0b73c99557630a5deeace7e89ea0e28f",
+      "reviewPath": "verification/requirement-coverage-NREQ-0b73c99557630a5deeace7e89ea0e28f-20261007-context-70f6fc73db90-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "STAGE01-SPECIFICATION-CONTRACT-CONTROLS"
+      ],
+      "reviewedInputCount": 26
+    },
+    {
+      "normativeRequirementId": "NREQ-8bb8790d8dd6c5082d6e0351c032cda5",
+      "reviewPath": "verification/requirement-coverage-NREQ-8bb8790d8dd6c5082d6e0351c032cda5-20261007-context-ebd61b02b8d5-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "STAGE01-SPECIFICATION-CONTRACT-CONTROLS"
+      ],
+      "reviewedInputCount": 26
+    },
+    {
+      "normativeRequirementId": "NREQ-a3f1c0440fabe4b988fb5fca68a0487c",
+      "reviewPath": "verification/requirement-coverage-NREQ-a3f1c0440fabe4b988fb5fca68a0487c-20261007-context-eac1ae13e05b-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "STAGE01-SPECIFICATION-CONTRACT-CONTROLS"
+      ],
+      "reviewedInputCount": 26
+    },
+    {
+      "normativeRequirementId": "NREQ-2b14774ffd65e947a3d3deae3ad09c92",
+      "reviewPath": "verification/requirement-coverage-NREQ-2b14774ffd65e947a3d3deae3ad09c92-20261007-context-aa8204f96091-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage02.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-c6ad5908eba2e59771e74f2ceebc5077",
+      "reviewPath": "verification/requirement-coverage-NREQ-c6ad5908eba2e59771e74f2ceebc5077-20261007-context-e1522203239f-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage03.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-5fe6282f6c99d8d0f13fdf06bb5317fa",
+      "reviewPath": "verification/requirement-coverage-NREQ-5fe6282f6c99d8d0f13fdf06bb5317fa-20261007-context-b3f25a0a1514-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage04.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-18edc302ca3fad90513b66c585e688e6",
+      "reviewPath": "verification/requirement-coverage-NREQ-18edc302ca3fad90513b66c585e688e6-20261007-context-c29757d88109-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage05.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-26b8cfa830777dd2bfa4c8aac620403c",
+      "reviewPath": "verification/requirement-coverage-NREQ-26b8cfa830777dd2bfa4c8aac620403c-20261007-context-08c3774267c0-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage06.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-04e156310ae4ecdd6915448e3f30e047",
+      "reviewPath": "verification/requirement-coverage-NREQ-04e156310ae4ecdd6915448e3f30e047-20261007-context-9f8a35215a69-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage07.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-f0d3896f2d4c46e85ce52981147764ef",
+      "reviewPath": "verification/requirement-coverage-NREQ-f0d3896f2d4c46e85ce52981147764ef-20261007-context-01afc04c65c4-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage08.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-a8822e7da5b9525a6c3e097b71e59183",
+      "reviewPath": "verification/requirement-coverage-NREQ-a8822e7da5b9525a6c3e097b71e59183-20261007-context-c52dc24f6227-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage09.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-8c2bdedb1f707a1a97695f7b0745365c",
+      "reviewPath": "verification/requirement-coverage-NREQ-8c2bdedb1f707a1a97695f7b0745365c-20261007-context-96450c77219a-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage10.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-a9ef7326ce64b6049b07bdddd8d9d024",
+      "reviewPath": "verification/requirement-coverage-NREQ-a9ef7326ce64b6049b07bdddd8d9d024-20261007-context-f1fcf2f90e43-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage11.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-f50ee5baca83ff85d962de77d313fda6",
+      "reviewPath": "verification/requirement-coverage-NREQ-f50ee5baca83ff85d962de77d313fda6-20261007-context-fd5c589d06d2-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage12.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-7d91a0dd124e5a78fc01449f23a3e8fa",
+      "reviewPath": "verification/requirement-coverage-NREQ-7d91a0dd124e5a78fc01449f23a3e8fa-20261007-context-dfcfcb839c96-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage13.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-f9c8f3d1723060ee3fd3fa87ba2a4d75",
+      "reviewPath": "verification/requirement-coverage-NREQ-f9c8f3d1723060ee3fd3fa87ba2a4d75-20261007-context-0bef4700f599-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage14.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-925405b741265dbbc292d4f3a74c2bd6",
+      "reviewPath": "verification/requirement-coverage-NREQ-925405b741265dbbc292d4f3a74c2bd6-20261007-context-acc52814e6d6-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage15.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-4363c0420b1bd921591c1f2446cfb8eb",
+      "reviewPath": "verification/requirement-coverage-NREQ-4363c0420b1bd921591c1f2446cfb8eb-20261007-context-de3533a949d5-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage16.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-2174af2894ceaa1acb9a032113db659d",
+      "reviewPath": "verification/requirement-coverage-NREQ-2174af2894ceaa1acb9a032113db659d-20261007-context-8376db0a1333-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage17.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-a12012292224d4b4a0a9b1088c8c49d0",
+      "reviewPath": "verification/requirement-coverage-NREQ-a12012292224d4b4a0a9b1088c8c49d0-20261007-context-3fe1f1abe0f4-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage18.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-255fe5112069486751f53087b1ab699e",
+      "reviewPath": "verification/requirement-coverage-NREQ-255fe5112069486751f53087b1ab699e-20261007-context-608c37b31d30-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage19.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-6fe30b5cb969bf2fb9daaabc3422ac38",
+      "reviewPath": "verification/requirement-coverage-NREQ-6fe30b5cb969bf2fb9daaabc3422ac38-20261007-context-2594d1e812f8-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage20.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-229f56cf458329f04d589d3aa92b95e5",
+      "reviewPath": "verification/requirement-coverage-NREQ-229f56cf458329f04d589d3aa92b95e5-20261007-context-23fcc35649f3-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage21.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-4d7b09d088c999d3c6e91a968cbe1a02",
+      "reviewPath": "verification/requirement-coverage-NREQ-4d7b09d088c999d3c6e91a968cbe1a02-20261007-context-03745896590f-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage22.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-55dce831e47c4a26e093cc6134572e8f",
+      "reviewPath": "verification/requirement-coverage-NREQ-55dce831e47c4a26e093cc6134572e8f-20261007-context-b731d3ee0180-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage23.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-7542acad543ceb37f7fb325baac0d9d0",
+      "reviewPath": "verification/requirement-coverage-NREQ-7542acad543ceb37f7fb325baac0d9d0-20261007-context-1dab787f784f-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage25.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-292af594522de75d72b35851b9befed4",
+      "reviewPath": "verification/requirement-coverage-NREQ-292af594522de75d72b35851b9befed4-20261007-context-e580690eff15-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage26.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-f295ec535d0d117429de1cced6886a6e",
+      "reviewPath": "verification/requirement-coverage-NREQ-f295ec535d0d117429de1cced6886a6e-20261007-context-c064f5db48cd-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage27.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-9b21240c5c27ee356dec92b459a0fcb9",
+      "reviewPath": "verification/requirement-coverage-NREQ-9b21240c5c27ee356dec92b459a0fcb9-20261007-context-f0585937ea82-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage28.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-0774fcb2b6e2510d755133d371474ec8",
+      "reviewPath": "verification/requirement-coverage-NREQ-0774fcb2b6e2510d755133d371474ec8-20261007-context-d48d5f2a8e1a-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage29.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-39eba2aba9049ed18beade0c11e0c107",
+      "reviewPath": "verification/requirement-coverage-NREQ-39eba2aba9049ed18beade0c11e0c107-20261007-context-3f29c46a8871-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage30.title"
+      ],
+      "reviewedInputCount": 11
+    },
+    {
+      "normativeRequirementId": "NREQ-0f5cdc9e49a6fb5b69455d4b2338448c",
+      "reviewPath": "verification/requirement-coverage-NREQ-0f5cdc9e49a6fb5b69455d4b2338448c-20261007-context-fb52feb719db-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage30.role"
+      ],
+      "reviewedInputCount": 11
+    },
+    {
+      "normativeRequirementId": "NREQ-a5e73329c9ae93f23b01a42d43179133",
+      "reviewPath": "verification/requirement-coverage-NREQ-a5e73329c9ae93f23b01a42d43179133-20261007-context-71a07396be34-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage30.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-70114fe79e900fc756a0d6cc14ea8f90",
+      "reviewPath": "verification/requirement-coverage-NREQ-70114fe79e900fc756a0d6cc14ea8f90-20261007-context-0322b753560e-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage02.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-db8a127d9ff92a6510ae92e3eb1fbb86",
+      "reviewPath": "verification/requirement-coverage-NREQ-db8a127d9ff92a6510ae92e3eb1fbb86-20261007-context-e4c13fc3e86d-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage03.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-f6858b1d41ca1327e88e31e7f0e8f94f",
+      "reviewPath": "verification/requirement-coverage-NREQ-f6858b1d41ca1327e88e31e7f0e8f94f-20261007-context-4f6feb334f83-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage04.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-b14772d932b286c302b05996186c8022",
+      "reviewPath": "verification/requirement-coverage-NREQ-b14772d932b286c302b05996186c8022-20261007-context-53abd11134eb-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage05.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-9e413bfc92a85655c990712d56002499",
+      "reviewPath": "verification/requirement-coverage-NREQ-9e413bfc92a85655c990712d56002499-20261007-context-ce45300844ea-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage06.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-22cf265b2b952dcb7187618a915c98bd",
+      "reviewPath": "verification/requirement-coverage-NREQ-22cf265b2b952dcb7187618a915c98bd-20261007-context-78f2e077c3d8-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage07.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-928c9bbcf0101e2a0e4a0e69edc59164",
+      "reviewPath": "verification/requirement-coverage-NREQ-928c9bbcf0101e2a0e4a0e69edc59164-20261007-context-c00b5434d55a-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage08.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-27cf5e6a8e4cf40ff1873bd4d059b3cd",
+      "reviewPath": "verification/requirement-coverage-NREQ-27cf5e6a8e4cf40ff1873bd4d059b3cd-20261007-context-079978627600-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage09.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-e5db8a7c723f5b54ada73ce37c7725a2",
+      "reviewPath": "verification/requirement-coverage-NREQ-e5db8a7c723f5b54ada73ce37c7725a2-20261007-context-6d038e318a4a-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage10.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-4bb54f6379863c0a17e6fbc58edcd042",
+      "reviewPath": "verification/requirement-coverage-NREQ-4bb54f6379863c0a17e6fbc58edcd042-20261007-context-c3df825e72e4-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage11.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-266e79545a48e7c4310883faa04e9844",
+      "reviewPath": "verification/requirement-coverage-NREQ-266e79545a48e7c4310883faa04e9844-20261007-context-7b27fb019885-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage12.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-e1a8ce05f1d7a97c385039fd3bd71143",
+      "reviewPath": "verification/requirement-coverage-NREQ-e1a8ce05f1d7a97c385039fd3bd71143-20261007-context-6e9650794698-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage13.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-ddf7192c16e06f5276d4d324b2e1f6c3",
+      "reviewPath": "verification/requirement-coverage-NREQ-ddf7192c16e06f5276d4d324b2e1f6c3-20261007-context-471ddf5379c5-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage14.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-1000a70e39109bdb76b85fa6855a4892",
+      "reviewPath": "verification/requirement-coverage-NREQ-1000a70e39109bdb76b85fa6855a4892-20261007-context-fab4e794a047-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage15.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-252dcf08d6bbe6a5893bc9cd551ef6ec",
+      "reviewPath": "verification/requirement-coverage-NREQ-252dcf08d6bbe6a5893bc9cd551ef6ec-20261007-context-568f2f91efca-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage16.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-931f08afd15144dcac6c7768f2c393d0",
+      "reviewPath": "verification/requirement-coverage-NREQ-931f08afd15144dcac6c7768f2c393d0-20261007-context-4eaa8fcb825e-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage17.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-3a3ba3d92dd569d454e781fcccf7ac61",
+      "reviewPath": "verification/requirement-coverage-NREQ-3a3ba3d92dd569d454e781fcccf7ac61-20261007-context-66b766ea1a5d-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage18.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-bfc0e4b5d516977d7fcad7b3f74e43c6",
+      "reviewPath": "verification/requirement-coverage-NREQ-bfc0e4b5d516977d7fcad7b3f74e43c6-20261007-context-a86412ff6400-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage19.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-5d9431875519d7cfc3188157a10d6bfc",
+      "reviewPath": "verification/requirement-coverage-NREQ-5d9431875519d7cfc3188157a10d6bfc-20261007-context-6cff1723f402-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage20.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-aafc7cd5dc54af415d36425000d76acb",
+      "reviewPath": "verification/requirement-coverage-NREQ-aafc7cd5dc54af415d36425000d76acb-20261007-context-a26debd029d2-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage21.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-829ac5f73d2b01828644e51c0675d6b6",
+      "reviewPath": "verification/requirement-coverage-NREQ-829ac5f73d2b01828644e51c0675d6b6-20261007-context-b712f2bc0f59-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage22.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-9050383f9f0b382f0fd9b465a0a20f78",
+      "reviewPath": "verification/requirement-coverage-NREQ-9050383f9f0b382f0fd9b465a0a20f78-20261007-context-cfc13d3d88ae-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage23.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-dd1241e76fbe641c1c88243ba947dc89",
+      "reviewPath": "verification/requirement-coverage-NREQ-dd1241e76fbe641c1c88243ba947dc89-20261007-context-d1b7c31332df-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage24.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-536910c50d3998944884b519e0d89555",
+      "reviewPath": "verification/requirement-coverage-NREQ-536910c50d3998944884b519e0d89555-20261007-context-0ceefe702ac1-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage25.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-efa519285f6f28591dc9ad7936c1caa6",
+      "reviewPath": "verification/requirement-coverage-NREQ-efa519285f6f28591dc9ad7936c1caa6-20261007-context-67b0bcc51a0a-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage26.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-ee95aae3e46bebd05ef8469aff39c9da",
+      "reviewPath": "verification/requirement-coverage-NREQ-ee95aae3e46bebd05ef8469aff39c9da-20261007-context-4ab906314fee-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage27.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-647d36595971915d7c485a338ddc4013",
+      "reviewPath": "verification/requirement-coverage-NREQ-647d36595971915d7c485a338ddc4013-20261007-context-661182e4e06d-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage28.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-aa165dd96291b05acd70bf948f215d04",
+      "reviewPath": "verification/requirement-coverage-NREQ-aa165dd96291b05acd70bf948f215d04-20261007-context-bb47e51ecefe-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage29.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-5f9aa84ccae751c1692f148708a9288c",
+      "reviewPath": "verification/requirement-coverage-NREQ-5f9aa84ccae751c1692f148708a9288c-20261007-context-1a6ddd562cda-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "declaration.stage30.operations"
+      ],
+      "reviewedInputCount": 13
+    },
+    {
+      "normativeRequirementId": "NREQ-bedc4564e47ae7ebf86911eb8426b6f0",
+      "reviewPath": "verification/requirement-coverage-NREQ-bedc4564e47ae7ebf86911eb8426b6f0-20261007-context-303caf90caff-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "acceptance.specification-identity"
+      ],
+      "reviewedInputCount": 50
+    },
+    {
+      "normativeRequirementId": "NREQ-4b26e20f450b23eb551b2da03e69c9c9",
+      "reviewPath": "verification/requirement-coverage-NREQ-4b26e20f450b23eb551b2da03e69c9c9-20261007-context-07d6150a1321-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "acceptance.specification-identity"
+      ],
+      "reviewedInputCount": 50
+    },
+    {
+      "normativeRequirementId": "NREQ-befdab6cc6a4121936987a35fc18e1c9",
+      "reviewPath": "verification/requirement-coverage-NREQ-befdab6cc6a4121936987a35fc18e1c9-20261007-context-c8b0b09a87ad-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "acceptance.registry-identity",
+        "deployment.registry-identities"
+      ],
+      "reviewedInputCount": 53
+    },
+    {
+      "normativeRequirementId": "NREQ-a011968eff2ed2dc314d58ed27dfad88",
+      "reviewPath": "verification/requirement-coverage-NREQ-a011968eff2ed2dc314d58ed27dfad88-20261007-context-87882d5bae07-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "acceptance.registry-identity",
+        "deployment.registry-identities"
+      ],
+      "reviewedInputCount": 53
+    },
+    {
+      "normativeRequirementId": "NREQ-c94c878ef2cf8c6a35b0985da91c0c85",
+      "reviewPath": "verification/requirement-coverage-NREQ-c94c878ef2cf8c6a35b0985da91c0c85-20261007-context-fe6c073ad55f-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "store.hash-mismatch-quarantine",
+        "lifecycle.complete-report-population"
+      ],
+      "reviewedInputCount": 36
+    },
+    {
+      "normativeRequirementId": "NREQ-ea453611a3a1f48cdd2fbfbe946d7ac7",
+      "reviewPath": "verification/requirement-coverage-NREQ-ea453611a3a1f48cdd2fbfbe946d7ac7-20261007-context-5fb3beeac070-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "recovery.quarantine-controlled-deletion",
+        "recovery.quarantine-body-delete-fault"
+      ],
+      "reviewedInputCount": 36
+    },
+    {
+      "normativeRequirementId": "NREQ-7a68fe07ee725cf205dd2102cd997b7f",
+      "reviewPath": "verification/requirement-coverage-NREQ-7a68fe07ee725cf205dd2102cd997b7f-20261007-context-652ecb1fe1af-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "ingestion.syntax.malformed-json"
+      ],
+      "reviewedInputCount": 56
+    },
+    {
+      "normativeRequirementId": "NREQ-4bb86ccfacff0ea8bbbc59df67b0ca4f",
+      "reviewPath": "verification/requirement-coverage-NREQ-4bb86ccfacff0ea8bbbc59df67b0ca4f-20261007-context-6dcc93386d57-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "ingestion.syntax.truncated-json"
+      ],
+      "reviewedInputCount": 56
+    },
+    {
+      "normativeRequirementId": "NREQ-768d67996244254c83c0d11796f63912",
+      "reviewPath": "verification/requirement-coverage-NREQ-768d67996244254c83c0d11796f63912-20261007-context-291bd5dd0e04-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "ingestion.syntax.markdown-wrapper"
+      ],
+      "reviewedInputCount": 56
+    },
+    {
+      "normativeRequirementId": "NREQ-59d5854af99ac5a566eb61e978519b21",
+      "reviewPath": "verification/requirement-coverage-NREQ-59d5854af99ac5a566eb61e978519b21-20261007-context-e53573db3335-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "ingestion.syntax.oversized-json"
+      ],
+      "reviewedInputCount": 56
+    },
+    {
+      "normativeRequirementId": "NREQ-75b670fc6ea047b7452b4148f12a30ba",
+      "reviewPath": "verification/requirement-coverage-NREQ-75b670fc6ea047b7452b4148f12a30ba-20261007-context-dfc64a21a246-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "ingestion.syntax.duplicate-members"
+      ],
+      "reviewedInputCount": 56
+    },
+    {
+      "normativeRequirementId": "NREQ-86651d173d1583e48cf6c03f9d486f4f",
+      "reviewPath": "verification/requirement-coverage-NREQ-86651d173d1583e48cf6c03f9d486f4f-20261007-context-327d2cc2c990-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "ingestion.syntax.unsafe-smart-quotes"
+      ],
+      "reviewedInputCount": 56
+    },
+    {
+      "normativeRequirementId": "NREQ-1576e27fba46e1d68631bb2ade2e37f4",
+      "reviewPath": "verification/requirement-coverage-NREQ-1576e27fba46e1d68631bb2ade2e37f4-20261007-context-f03bceab9e8e-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "ingestion.syntax.root-object"
+      ],
+      "reviewedInputCount": 56
+    },
+    {
+      "normativeRequirementId": "NREQ-cf25cf824db06866df51c0e538fcbc03",
+      "reviewPath": "verification/requirement-coverage-NREQ-cf25cf824db06866df51c0e538fcbc03-20261007-context-fde639603c5f-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "ingestion.transport.stage"
+      ],
+      "reviewedInputCount": 56
+    },
+    {
+      "normativeRequirementId": "NREQ-41ab1c200b4ce5c9d1d96613a3e5b264",
+      "reviewPath": "verification/requirement-coverage-NREQ-41ab1c200b4ce5c9d1d96613a3e5b264-20261007-context-867dae61e345-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "ingestion.transport.operation"
+      ],
+      "reviewedInputCount": 56
+    },
+    {
+      "normativeRequirementId": "NREQ-0c973b955d61ee36887734df0ade5e69",
+      "reviewPath": "verification/requirement-coverage-NREQ-0c973b955d61ee36887734df0ade5e69-20261007-context-aa211674369a-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "ingestion.transport.prompt-identity"
+      ],
+      "reviewedInputCount": 56
+    },
+    {
+      "normativeRequirementId": "NREQ-971af7158d193e9b1d780c13b6c8e0ec",
+      "reviewPath": "verification/requirement-coverage-NREQ-971af7158d193e9b1d780c13b6c8e0ec-20261007-context-3e84d85be560-54e18bc1f938.json",
+      "reviewSha256Matches": true,
+      "declarationSha256Matches": true,
+      "staleInputs": [],
+      "staleOwners": [],
+      "checkIds": [
+        "ingestion.transport.context-signature"
+      ],
+      "reviewedInputCount": 56
+    }
+  ],
+  "originalDetailedScanSha256": "6cb8cfe57bc2ab852cb3b64cb9cb5e38f54b66f8f76664b1ac887e00b764d664"
+}

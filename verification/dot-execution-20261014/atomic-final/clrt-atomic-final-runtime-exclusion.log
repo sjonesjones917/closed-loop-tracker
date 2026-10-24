@@ -1,0 +1,11 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "schema": "closed-loop-deployment-manifest/1",
+  "sourceCommit": "b2f06cdec1a8185714fe3e01ac2a5d1e92aa348f",
+  "workflowRunIdentity": "atomic-evidence-exclusion-diagnostic",
+  "buildIdentity": "build-sha256-bd53275a79b31db15d087b8da3108a69d5ff9e16af0eb10d9b301e5f52ac0b81",
+  "resources": 13,
+  "manifestDigest": "cb0a33dd91a85a8d3ab493366a244537e54a48f2e27115e2caac75ce2fcc78a6",
+  "outDir": "/workspace/shared/clrt-atomic-final-runtime-bundle"
+}

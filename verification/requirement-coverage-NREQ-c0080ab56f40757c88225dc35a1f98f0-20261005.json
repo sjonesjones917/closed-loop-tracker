@@ -1,0 +1,119 @@
+{
+  "schema": "closed-loop-requirement-coverage-review/1",
+  "normativeRequirementId": "NREQ-c0080ab56f40757c88225dc35a1f98f0",
+  "sourceLineSha256": "cf196230c36da48915e53125569a9657e84f5b95c12975c65c5036ddf36e05a6",
+  "specificationSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
+  "declarationSha256": "1988735bcfd1374b4b970d31fa91240ee0c1d3ab3cf4c8d7d15af79ef106f3b3",
+  "decision": "COMPLETE_COVERAGE",
+  "evidenceBasis": "EXTERNALLY_SUPPORTED",
+  "method": "Actual separate-context semantic review of the complete exact source clause, governing context, named production owners, independent test inputs/oracles and applicability decisions; targeted independent executions and final owner source reconciliation as stated below. This review approves the declaration sufficiency, not a precomputed execution outcome.",
+  "author": {
+    "actor": "Codex declaration author",
+    "contextId": "/root/contracts"
+  },
+  "reviewer": {
+    "actor": "Codex independent declaration reviewer",
+    "contextId": "/root/independent_spec"
+  },
+  "reviewedInputs": [
+    {
+      "path": "response-ingestion.js",
+      "sha256": "35e0aa0d949d2acd86a4d81e03763ce64d7493cadc9d60b1da26ae111dedb014"
+    },
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d"
+    },
+    {
+      "path": "test-artifact-fixtures.mjs",
+      "sha256": "d695e57716d9aef5ea7c5d96464ed9492ef036a4f759fff1b6147e0cae21c3b4"
+    },
+    {
+      "path": "test-fixtures.mjs",
+      "sha256": "79a3955c5b2b598de1ca3fc3ae63a5e4ce218d3bc6bb8a067f4fa785dea8d81b"
+    },
+    {
+      "path": "test-ingestion-context-reference.mjs",
+      "sha256": "e9b6281a248d297bdba98e6c5be47aa87d46c187578cdae33a1b32cef74934d0"
+    },
+    {
+      "path": "test-project-store-runtime.mjs",
+      "sha256": "3f82a071a5436e6ccc5cfc60fe3b9784598cbebe517c8e5427a0b72871ee8245"
+    },
+    {
+      "path": "verification-evidence-catalog.mjs",
+      "sha256": "576202e5983c4d2056a26db06815d650ac734d99dee33edea68cb7e319ec4671"
+    },
+    {
+      "path": "verification/normative-context-applicability-20261005.json",
+      "sha256": "7cd05ff0028578a1ca1c2560533519a602ce6a974c240ee11dbbd272524cf656"
+    },
+    {
+      "path": "verifier-runtime.mjs",
+      "sha256": "8a4c9058b6c72a5aa8dd68809e3cbfd8e5c217b358c41970347443a338f83933"
+    },
+    {
+      "path": "verify-ingestion.mjs",
+      "sha256": "f738378bc944fbd1705da5a8aefc77481b429bfb906a9641a6d2d8b7ff9e8d15"
+    },
+    {
+      "path": "workflow-schema.js",
+      "sha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c"
+    },
+    {
+      "declarationSha256": "1988735bcfd1374b4b970d31fa91240ee0c1d3ab3cf4c8d7d15af79ef106f3b3"
+    }
+  ],
+  "findings": [],
+  "reviewPerformed": true,
+  "reviewCompletedAt": "2026-10-05T17:00:42.234Z",
+  "sourceLocation": {
+    "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+    "startLine": 1446,
+    "endLine": 1446,
+    "lineSha256": "cf196230c36da48915e53125569a9657e84f5b95c12975c65c5036ddf36e05a6"
+  },
+  "controllingText": "- stale baseline;",
+  "governingContext": [
+    {
+      "normativeRequirementId": "NREQ-6c392009e2925e9e3e3baaf1e42cbc93",
+      "sourceLineSha256": "a8a298876c99dfea0ed6a1c39c7a06c729213341e056ac22e85dc6ce6f53a8b0",
+      "controllingText": "17.5 Closed-schema rejection"
+    }
+  ],
+  "additionalControllingContext": [
+    {
+      "line": 1421,
+      "text": "The single ingestion path rejects before canonical mutation:",
+      "normativeRequirementId": "NREQ-f3c76d5b2691175b5c4f18f5b12f2892"
+    }
+  ],
+  "reviewedChecks": [
+    {
+      "suite": "verify-ingestion.mjs",
+      "checkId": "ingestion.scope-negative-population"
+    },
+    {
+      "suite": "verify-ingestion.mjs",
+      "checkId": "ingestion.scope-negative-population"
+    }
+  ],
+  "semanticDecision": "EXACT_TRANSPORT_SCOPE_REJECTION",
+  "reason": "Read the single ingestion validator, current scope comparator and independently changed scope values in the owning test. The expected STALE_SCOPE at the exact dimension, zero accepted changes and conforming controls establish the rejection clause under line1421 before canonical mutation. Wrong job uses its separate exact negative. No downstream reference-family completeness is inferred.",
+  "scopeLimit": "Machine transport identity boundary only; no universal agent semantic or reference-family guarantee.",
+  "actorIndependenceBoundary": "The application checks attributed review identity, exact reviewed bytes and current proof relationships; it does not establish the reviewer hidden context. This actual review context is distinct from the named declaration author. The earlier sealed source-only extraction remains a separate unchanged artifact.",
+  "reviewerPriorContributionDisclosure": "No authorship of this declaration or expected-case test oracle by this reviewing context.",
+  "retainedReviewInputs": {
+    "proposal": {
+      "path": "/workspace/scratch/full-coverage-contracts-proposals.json",
+      "sha256": "890122bf31c612738f6bd7d9c994803656c02a7798994a7846f560f6cccb6fcc"
+    },
+    "priorSemanticReview": {
+      "path": "/workspace/scratch/independent-full-coverage-semantic-review-current45.json",
+      "sha256": "8b76d6c6c1425220853a1798090edf609fadde97ad840f2699e006b7ed2bb866"
+    }
+  },
+  "qualifiedExecutionAndReviewEvidence": [],
+  "currentExecutionRequired": true,
+  "applicationConformanceClaim": false
+}

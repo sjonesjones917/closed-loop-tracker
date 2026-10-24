@@ -1,0 +1,2973 @@
+{
+  "schema": "clrt-job-declarations-independent-review/1",
+  "decision": "ACCEPT",
+  "scope": "Bounded declaration-only PARTIAL binding review; no current conformance, receipt, full atomic behavior, runtime writer/admission, lifecycle, persistence, browser, deployment or acceptance claim.",
+  "base": "fbc3ac40a96b5482bafb6968bb6df9130ab2e5ee",
+  "candidate": "597226a22066c667f9e19590df6f5b9d89383c87",
+  "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+  "independentExpectationsSha256": "7651c9fb564e03f9b6279f4cc65f21c6d6c4064db63e9192e50f79bd2a5458e8",
+  "changedFiles": [
+    "verification-assertion-bindings.json"
+  ],
+  "priorRowsPreserved": 270,
+  "priorFullCoverageClaimsPreserved": 14,
+  "newRows": 88,
+  "newFullCoverageClaims": 0,
+  "section15AtomicRows": 282,
+  "focusedTupleResult": {
+    "checkId": "registry.specification-job-field-table",
+    "expectedFieldNames": [
+      "ASSUMPTIONS",
+      "AVAILABLE_TOOLS",
+      "CONTRACT_PROFILE_ID",
+      "CURRENT_BASELINE_ID",
+      "CURRENT_BLOCKERS",
+      "CURRENT_CANDIDATE_ID",
+      "CURRENT_DELIVERY_CANDIDATE_SET_ID",
+      "CURRENT_DELIVERY_ID",
+      "CURRENT_EVIDENCE_CHAIN_VERSION",
+      "CURRENT_HASH_REVIEW_ID",
+      "CURRENT_INPUT_VERSION",
+      "CURRENT_INSTRUCTION_VERSION",
+      "CURRENT_ITERATION",
+      "CURRENT_PRODUCT_ID",
+      "CURRENT_PRODUCT_VERSION",
+      "CURRENT_RECONCILED_REVIEW_VERSION",
+      "CURRENT_RELEASE_ID",
+      "CURRENT_REQUIREMENTS_VERSION",
+      "CURRENT_RESEARCH_VERSION",
+      "CURRENT_REVIEW_VERSION",
+      "CURRENT_SOURCE_SET_VERSION",
+      "CURRENT_STAGE",
+      "CURRENT_STATE",
+      "CURRENT_TEST_SUITE_VERSION",
+      "DATE_OPENED",
+      "DEADLINE_OR_TEMPORAL_SCOPE",
+      "DESIRED_SOURCE_COUNT",
+      "EXACT_DELIVERABLE_REQUESTED",
+      "EXACT_USER_OBJECTIVE_VERBATIM",
+      "EXPLICIT_USER_REQUIREMENTS",
+      "INPUT_SET_CONTENTS",
+      "INPUT_SET_HASH_OR_MANIFEST",
+      "JOB_ID",
+      "JOB_OWNER",
+      "JOB_RECORD_STATUS",
+      "JOB_TITLE",
+      "KNOWN_AUTHORITATIVE_SOURCES",
+      "LATEST_EVIDENCE_REFERENCE",
+      "NEXT_REQUIRED_ACTION",
+      "PROHIBITED_ACTIONS",
+      "REQUIRED_OUTPUT_FORMAT",
+      "STATUS_EVIDENCE",
+      "SUPPLIED_MATERIALS_INVENTORY",
+      "UNKNOWN_INFORMATION"
+    ],
+    "observations": [
+      {
+        "field": "JOB_TITLE",
+        "registryKey": "JOB.JOB_TITLE",
+        "producer": "HUMAN_DECISION",
+        "valueType": "STRING",
+        "nullable": true,
+        "editable": true,
+        "requiredAtStage": null,
+        "passed": true
+      },
+      {
+        "field": "JOB_OWNER",
+        "registryKey": "JOB.JOB_OWNER",
+        "producer": "HUMAN_DECISION",
+        "valueType": "STRING",
+        "nullable": true,
+        "editable": true,
+        "requiredAtStage": null,
+        "passed": true
+      },
+      {
+        "field": "EXACT_USER_OBJECTIVE_VERBATIM",
+        "registryKey": "JOB.EXACT_USER_OBJECTIVE_VERBATIM",
+        "producer": "HUMAN",
+        "valueType": "STRING",
+        "nullable": false,
+        "editable": true,
+        "requiredAtStage": 1,
+        "passed": true
+      },
+      {
+        "field": "SUPPLIED_MATERIALS_INVENTORY",
+        "registryKey": "JOB.SUPPLIED_MATERIALS_INVENTORY",
+        "producer": "HUMAN",
+        "valueType": "STRING",
+        "nullable": true,
+        "editable": true,
+        "requiredAtStage": null,
+        "passed": true
+      },
+      {
+        "field": "REQUIRED_OUTPUT_FORMAT",
+        "registryKey": "JOB.REQUIRED_OUTPUT_FORMAT",
+        "producer": "HUMAN",
+        "valueType": "STRING",
+        "nullable": true,
+        "editable": true,
+        "requiredAtStage": null,
+        "passed": true
+      },
+      {
+        "field": "DEADLINE_OR_TEMPORAL_SCOPE",
+        "registryKey": "JOB.DEADLINE_OR_TEMPORAL_SCOPE",
+        "producer": "HUMAN",
+        "valueType": "STRING",
+        "nullable": true,
+        "editable": true,
+        "requiredAtStage": null,
+        "passed": true
+      },
+      {
+        "field": "DESIRED_SOURCE_COUNT",
+        "registryKey": "JOB.DESIRED_SOURCE_COUNT",
+        "producer": "HUMAN",
+        "valueType": "INTEGER",
+        "nullable": true,
+        "editable": true,
+        "requiredAtStage": null,
+        "passed": true
+      },
+      {
+        "field": "KNOWN_AUTHORITATIVE_SOURCES",
+        "registryKey": "JOB.KNOWN_AUTHORITATIVE_SOURCES",
+        "producer": "HUMAN",
+        "valueType": "STRING",
+        "nullable": true,
+        "editable": true,
+        "requiredAtStage": null,
+        "passed": true
+      },
+      {
+        "field": "AVAILABLE_TOOLS",
+        "registryKey": "JOB.AVAILABLE_TOOLS",
+        "producer": "HUMAN",
+        "valueType": "STRING",
+        "nullable": true,
+        "editable": true,
+        "requiredAtStage": null,
+        "passed": true
+      },
+      {
+        "field": "PROHIBITED_ACTIONS",
+        "registryKey": "JOB.PROHIBITED_ACTIONS",
+        "producer": "HUMAN",
+        "valueType": "STRING",
+        "nullable": true,
+        "editable": true,
+        "requiredAtStage": null,
+        "passed": true
+      },
+      {
+        "field": "EXPLICIT_USER_REQUIREMENTS",
+        "registryKey": "JOB.EXPLICIT_USER_REQUIREMENTS",
+        "producer": "HUMAN",
+        "valueType": "STRING",
+        "nullable": true,
+        "editable": true,
+        "requiredAtStage": null,
+        "passed": true
+      },
+      {
+        "field": "JOB_ID",
+        "registryKey": "JOB.JOB_ID",
+        "producer": "APPLICATION",
+        "valueType": "STRING",
+        "nullable": false,
+        "editable": false,
+        "requiredAtStage": null,
+        "passed": true
+      },
+      {
+        "field": "CONTRACT_PROFILE_ID",
+        "registryKey": "JOB.CONTRACT_PROFILE_ID",
+        "producer": "APPLICATION",
+        "valueType": "STRING",
+        "nullable": false,
+        "editable": false,
+        "requiredAtStage": null,
+        "passed": true
+      },
+      {
+        "field": "DATE_OPENED",
+        "registryKey": "JOB.DATE_OPENED",
+        "producer": "APPLICATION",
+        "valueType": "STRING",
+        "nullable": false,
+        "editable": false,
+        "requiredAtStage": null,
+        "passed": true
+      },
+      {
+        "field": "CURRENT_ITERATION",
+        "registryKey": "JOB.CURRENT_ITERATION",
+        "producer": "APPLICATION",
+        "valueType": "STRING",
+        "nullable": true,
+        "editable": false,
+        "requiredAtStage": null,
+        "passed": true
+      },
+      {
+        "field": "CURRENT_STAGE",
+        "registryKey": "JOB.CURRENT_STAGE",
+        "producer": "APPLICATION",
+        "valueType": "STRING",
+        "nullable": false,
+        "editable": false,
+        "requiredAtStage": null,
+        "passed": true
+      },
+      {
+        "field": "CURRENT_STATE",
+        "registryKey": "JOB.CURRENT_STATE",
+        "producer": "APPLICATION",
+        "valueType": "STRING",
+        "nullable": false,
+        "editable": false,
+        "requiredAtStage": null,
+        "passed": true
+      },
+      {
+        "field": "CURRENT_INPUT_VERSION",
+        "registryKey": "JOB.CURRENT_INPUT_VERSION",
+        "producer": "APPLICATION",
+        "valueType": "STRING",
+        "nullable": false,
+        "editable": false,
+        "requiredAtStage": null,
+        "passed": true
+      },
+      {
+        "field": "CURRENT_SOURCE_SET_VERSION",
+        "registryKey": "JOB.CURRENT_SOURCE_SET_VERSION",
+        "producer": "APPLICATION",
+        "valueType": "STRING",
+        "nullable": true,
+        "editable": false,
+        "requiredAtStage": null,
+        "passed": true
+      },
+      {
+        "field": "CURRENT_RESEARCH_VERSION",
+        "registryKey": "JOB.CURRENT_RESEARCH_VERSION",
+        "producer": "APPLICATION",
+        "valueType": "STRING",
+        "nullable": true,
+        "editable": false,
+        "requiredAtStage": null,
+        "passed": true
+      },
+      {
+        "field": "CURRENT_REQUIREMENTS_VERSION",
+        "registryKey": "JOB.CURRENT_REQUIREMENTS_VERSION",
+        "producer": "APPLICATION",
+        "valueType": "STRING",
+        "nullable": true,
+        "editable": false,
+        "requiredAtStage": null,
+        "passed": true
+      },
+      {
+        "field": "CURRENT_TEST_SUITE_VERSION",
+        "registryKey": "JOB.CURRENT_TEST_SUITE_VERSION",
+        "producer": "APPLICATION",
+        "valueType": "STRING",
+        "nullable": true,
+        "editable": false,
+        "requiredAtStage": null,
+        "passed": true
+      },
+      {
+        "field": "CURRENT_INSTRUCTION_VERSION",
+        "registryKey": "JOB.CURRENT_INSTRUCTION_VERSION",
+        "producer": "APPLICATION",
+        "valueType": "STRING",
+        "nullable": true,
+        "editable": false,
+        "requiredAtStage": null,
+        "passed": true
+      },
+      {
+        "field": "CURRENT_CANDIDATE_ID",
+        "registryKey": "JOB.CURRENT_CANDIDATE_ID",
+        "producer": "APPLICATION",
+        "valueType": "STRING",
+        "nullable": true,
+        "editable": false,
+        "requiredAtStage": null,
+        "passed": true
+      },
+      {
+        "field": "CURRENT_BASELINE_ID",
+        "registryKey": "JOB.CURRENT_BASELINE_ID",
+        "producer": "APPLICATION",
+        "valueType": "STRING",
+        "nullable": true,
+        "editable": false,
+        "requiredAtStage": null,
+        "passed": true
+      },
+      {
+        "field": "CURRENT_PRODUCT_ID",
+        "registryKey": "JOB.CURRENT_PRODUCT_ID",
+        "producer": "APPLICATION",
+        "valueType": "STRING",
+        "nullable": true,
+        "editable": false,
+        "requiredAtStage": null,
+        "passed": true
+      },
+      {
+        "field": "CURRENT_PRODUCT_VERSION",
+        "registryKey": "JOB.CURRENT_PRODUCT_VERSION",
+        "producer": "APPLICATION",
+        "valueType": "STRING",
+        "nullable": true,
+        "editable": false,
+        "requiredAtStage": null,
+        "passed": true
+      },
+      {
+        "field": "CURRENT_DELIVERY_CANDIDATE_SET_ID",
+        "registryKey": "JOB.CURRENT_DELIVERY_CANDIDATE_SET_ID",
+        "producer": "APPLICATION",
+        "valueType": "STRING",
+        "nullable": true,
+        "editable": false,
+        "requiredAtStage": null,
+        "passed": true
+      },
+      {
+        "field": "CURRENT_REVIEW_VERSION",
+        "registryKey": "JOB.CURRENT_REVIEW_VERSION",
+        "producer": "APPLICATION",
+        "valueType": "STRING",
+        "nullable": true,
+        "editable": false,
+        "requiredAtStage": null,
+        "passed": true
+      },
+      {
+        "field": "CURRENT_RECONCILED_REVIEW_VERSION",
+        "registryKey": "JOB.CURRENT_RECONCILED_REVIEW_VERSION",
+        "producer": "APPLICATION",
+        "valueType": "STRING",
+        "nullable": true,
+        "editable": false,
+        "requiredAtStage": null,
+        "passed": true
+      },
+      {
+        "field": "CURRENT_RELEASE_ID",
+        "registryKey": "JOB.CURRENT_RELEASE_ID",
+        "producer": "APPLICATION",
+        "valueType": "STRING",
+        "nullable": true,
+        "editable": false,
+        "requiredAtStage": null,
+        "passed": true
+      },
+      {
+        "field": "CURRENT_HASH_REVIEW_ID",
+        "registryKey": "JOB.CURRENT_HASH_REVIEW_ID",
+        "producer": "APPLICATION",
+        "valueType": "STRING",
+        "nullable": true,
+        "editable": false,
+        "requiredAtStage": null,
+        "passed": true
+      },
+      {
+        "field": "CURRENT_EVIDENCE_CHAIN_VERSION",
+        "registryKey": "JOB.CURRENT_EVIDENCE_CHAIN_VERSION",
+        "producer": "APPLICATION",
+        "valueType": "STRING",
+        "nullable": true,
+        "editable": false,
+        "requiredAtStage": null,
+        "passed": true
+      },
+      {
+        "field": "CURRENT_DELIVERY_ID",
+        "registryKey": "JOB.CURRENT_DELIVERY_ID",
+        "producer": "APPLICATION",
+        "valueType": "STRING",
+        "nullable": true,
+        "editable": false,
+        "requiredAtStage": null,
+        "passed": true
+      },
+      {
+        "field": "CURRENT_BLOCKERS",
+        "registryKey": "JOB.CURRENT_BLOCKERS",
+        "producer": "APPLICATION",
+        "valueType": "STRING_ARRAY",
+        "nullable": false,
+        "editable": false,
+        "requiredAtStage": null,
+        "passed": true
+      },
+      {
+        "field": "NEXT_REQUIRED_ACTION",
+        "registryKey": "JOB.NEXT_REQUIRED_ACTION",
+        "producer": "APPLICATION",
+        "valueType": "OBJECT",
+        "nullable": false,
+        "editable": false,
+        "requiredAtStage": null,
+        "passed": true
+      },
+      {
+        "field": "LATEST_EVIDENCE_REFERENCE",
+        "registryKey": "JOB.LATEST_EVIDENCE_REFERENCE",
+        "producer": "APPLICATION",
+        "valueType": "STRING",
+        "nullable": true,
+        "editable": false,
+        "requiredAtStage": null,
+        "passed": true
+      },
+      {
+        "field": "INPUT_SET_HASH_OR_MANIFEST",
+        "registryKey": "JOB.INPUT_SET_HASH_OR_MANIFEST",
+        "producer": "APPLICATION",
+        "valueType": "STRING",
+        "nullable": false,
+        "editable": false,
+        "requiredAtStage": null,
+        "passed": true
+      },
+      {
+        "field": "JOB_RECORD_STATUS",
+        "registryKey": "JOB.JOB_RECORD_STATUS",
+        "producer": "APPLICATION",
+        "valueType": "STRING",
+        "nullable": false,
+        "editable": false,
+        "requiredAtStage": null,
+        "passed": true
+      },
+      {
+        "field": "STATUS_EVIDENCE",
+        "registryKey": "JOB.STATUS_EVIDENCE",
+        "producer": "APPLICATION",
+        "valueType": "STRING",
+        "nullable": false,
+        "editable": false,
+        "requiredAtStage": null,
+        "passed": true
+      },
+      {
+        "field": "EXACT_DELIVERABLE_REQUESTED",
+        "registryKey": "JOB.EXACT_DELIVERABLE_REQUESTED",
+        "producer": "AGENT",
+        "valueType": "STRING",
+        "nullable": false,
+        "editable": false,
+        "requiredAtStage": 1,
+        "passed": true
+      },
+      {
+        "field": "ASSUMPTIONS",
+        "registryKey": "JOB.ASSUMPTIONS",
+        "producer": "AGENT",
+        "valueType": "STRING",
+        "nullable": false,
+        "editable": false,
+        "requiredAtStage": 1,
+        "passed": true
+      },
+      {
+        "field": "UNKNOWN_INFORMATION",
+        "registryKey": "JOB.UNKNOWN_INFORMATION",
+        "producer": "AGENT",
+        "valueType": "STRING",
+        "nullable": false,
+        "editable": false,
+        "requiredAtStage": 1,
+        "passed": true
+      },
+      {
+        "field": "INPUT_SET_CONTENTS",
+        "registryKey": "JOB.INPUT_SET_CONTENTS",
+        "producer": "AGENT",
+        "valueType": "STRING",
+        "nullable": false,
+        "editable": false,
+        "requiredAtStage": 1,
+        "passed": true
+      }
+    ],
+    "passed": true,
+    "scopeLimit": "All44 literal Section15 field declaration tuples and their registry projections. Does not establish every writer, required-stage transition, value derivation, persistence or authority provenance."
+  },
+  "focusedMutationResult": {
+    "checkId": "registry.specification-job-field-mutants",
+    "negativeCases": 266,
+    "cases": [
+      {
+        "field": "JOB_TITLE",
+        "property": "producer",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_PRODUCER_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "JOB_TITLE",
+        "property": "valueType",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_TYPE_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "JOB_TITLE",
+        "property": "nullable",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_NULLABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "JOB_TITLE",
+        "property": "requiredAtStage",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_REQUIREDNESS_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "JOB_TITLE",
+        "property": "enumValues",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_ENUM_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "JOB_OWNER",
+        "property": "producer",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_PRODUCER_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "JOB_OWNER",
+        "property": "valueType",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_TYPE_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "JOB_OWNER",
+        "property": "nullable",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_NULLABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "JOB_OWNER",
+        "property": "requiredAtStage",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_REQUIREDNESS_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "JOB_OWNER",
+        "property": "enumValues",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_ENUM_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "EXACT_USER_OBJECTIVE_VERBATIM",
+        "property": "producer",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_PRODUCER_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "EXACT_USER_OBJECTIVE_VERBATIM",
+        "property": "valueType",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_TYPE_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "EXACT_USER_OBJECTIVE_VERBATIM",
+        "property": "nullable",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_NULLABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "EXACT_USER_OBJECTIVE_VERBATIM",
+        "property": "requiredAtStage",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_REQUIREDNESS_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "EXACT_USER_OBJECTIVE_VERBATIM",
+        "property": "enumValues",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_ENUM_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "SUPPLIED_MATERIALS_INVENTORY",
+        "property": "producer",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_PRODUCER_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "SUPPLIED_MATERIALS_INVENTORY",
+        "property": "valueType",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_TYPE_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "SUPPLIED_MATERIALS_INVENTORY",
+        "property": "nullable",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_NULLABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "SUPPLIED_MATERIALS_INVENTORY",
+        "property": "requiredAtStage",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_REQUIREDNESS_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "SUPPLIED_MATERIALS_INVENTORY",
+        "property": "enumValues",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_ENUM_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "REQUIRED_OUTPUT_FORMAT",
+        "property": "producer",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_PRODUCER_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "REQUIRED_OUTPUT_FORMAT",
+        "property": "valueType",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_TYPE_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "REQUIRED_OUTPUT_FORMAT",
+        "property": "nullable",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_NULLABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "REQUIRED_OUTPUT_FORMAT",
+        "property": "requiredAtStage",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_REQUIREDNESS_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "REQUIRED_OUTPUT_FORMAT",
+        "property": "enumValues",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_ENUM_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "DEADLINE_OR_TEMPORAL_SCOPE",
+        "property": "producer",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_PRODUCER_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "DEADLINE_OR_TEMPORAL_SCOPE",
+        "property": "valueType",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_TYPE_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "DEADLINE_OR_TEMPORAL_SCOPE",
+        "property": "nullable",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_NULLABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "DEADLINE_OR_TEMPORAL_SCOPE",
+        "property": "requiredAtStage",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_REQUIREDNESS_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "DEADLINE_OR_TEMPORAL_SCOPE",
+        "property": "enumValues",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_ENUM_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "DESIRED_SOURCE_COUNT",
+        "property": "producer",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_PRODUCER_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "DESIRED_SOURCE_COUNT",
+        "property": "valueType",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_TYPE_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "DESIRED_SOURCE_COUNT",
+        "property": "nullable",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_NULLABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "DESIRED_SOURCE_COUNT",
+        "property": "requiredAtStage",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_REQUIREDNESS_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "DESIRED_SOURCE_COUNT",
+        "property": "enumValues",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_ENUM_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "KNOWN_AUTHORITATIVE_SOURCES",
+        "property": "producer",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_PRODUCER_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "KNOWN_AUTHORITATIVE_SOURCES",
+        "property": "valueType",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_TYPE_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "KNOWN_AUTHORITATIVE_SOURCES",
+        "property": "nullable",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_NULLABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "KNOWN_AUTHORITATIVE_SOURCES",
+        "property": "requiredAtStage",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_REQUIREDNESS_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "KNOWN_AUTHORITATIVE_SOURCES",
+        "property": "enumValues",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_ENUM_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "AVAILABLE_TOOLS",
+        "property": "producer",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_PRODUCER_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "AVAILABLE_TOOLS",
+        "property": "valueType",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_TYPE_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "AVAILABLE_TOOLS",
+        "property": "nullable",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_NULLABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "AVAILABLE_TOOLS",
+        "property": "requiredAtStage",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_REQUIREDNESS_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "AVAILABLE_TOOLS",
+        "property": "enumValues",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_ENUM_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "PROHIBITED_ACTIONS",
+        "property": "producer",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_PRODUCER_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "PROHIBITED_ACTIONS",
+        "property": "valueType",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_TYPE_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "PROHIBITED_ACTIONS",
+        "property": "nullable",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_NULLABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "PROHIBITED_ACTIONS",
+        "property": "requiredAtStage",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_REQUIREDNESS_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "PROHIBITED_ACTIONS",
+        "property": "enumValues",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_ENUM_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "EXPLICIT_USER_REQUIREMENTS",
+        "property": "producer",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_PRODUCER_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "EXPLICIT_USER_REQUIREMENTS",
+        "property": "valueType",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_TYPE_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "EXPLICIT_USER_REQUIREMENTS",
+        "property": "nullable",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_NULLABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "EXPLICIT_USER_REQUIREMENTS",
+        "property": "requiredAtStage",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_REQUIREDNESS_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "EXPLICIT_USER_REQUIREMENTS",
+        "property": "enumValues",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_ENUM_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "JOB_ID",
+        "property": "producer",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_PRODUCER_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "JOB_ID",
+        "property": "valueType",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_TYPE_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "JOB_ID",
+        "property": "nullable",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_NULLABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "JOB_ID",
+        "property": "requiredAtStage",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_REQUIREDNESS_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "JOB_ID",
+        "property": "enumValues",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_ENUM_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CONTRACT_PROFILE_ID",
+        "property": "producer",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_PRODUCER_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CONTRACT_PROFILE_ID",
+        "property": "valueType",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_TYPE_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CONTRACT_PROFILE_ID",
+        "property": "nullable",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_NULLABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CONTRACT_PROFILE_ID",
+        "property": "requiredAtStage",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_REQUIREDNESS_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CONTRACT_PROFILE_ID",
+        "property": "enumValues",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_ENUM_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "DATE_OPENED",
+        "property": "producer",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_PRODUCER_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "DATE_OPENED",
+        "property": "valueType",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_TYPE_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "DATE_OPENED",
+        "property": "nullable",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_NULLABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "DATE_OPENED",
+        "property": "requiredAtStage",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_REQUIREDNESS_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "DATE_OPENED",
+        "property": "enumValues",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_ENUM_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_ITERATION",
+        "property": "producer",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_PRODUCER_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_ITERATION",
+        "property": "valueType",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_TYPE_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_ITERATION",
+        "property": "nullable",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_NULLABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_ITERATION",
+        "property": "requiredAtStage",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_REQUIREDNESS_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_ITERATION",
+        "property": "enumValues",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_ENUM_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_STAGE",
+        "property": "producer",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_PRODUCER_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_STAGE",
+        "property": "valueType",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_TYPE_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_STAGE",
+        "property": "nullable",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_NULLABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_STAGE",
+        "property": "requiredAtStage",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_REQUIREDNESS_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_STAGE",
+        "property": "enumValues",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_ENUM_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_STATE",
+        "property": "producer",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_PRODUCER_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_STATE",
+        "property": "valueType",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_TYPE_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_STATE",
+        "property": "nullable",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_NULLABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_STATE",
+        "property": "requiredAtStage",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_REQUIREDNESS_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_STATE",
+        "property": "enumValues",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_ENUM_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_INPUT_VERSION",
+        "property": "producer",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_PRODUCER_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_INPUT_VERSION",
+        "property": "valueType",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_TYPE_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_INPUT_VERSION",
+        "property": "nullable",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_NULLABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_INPUT_VERSION",
+        "property": "requiredAtStage",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_REQUIREDNESS_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_INPUT_VERSION",
+        "property": "enumValues",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_ENUM_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_SOURCE_SET_VERSION",
+        "property": "producer",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_PRODUCER_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_SOURCE_SET_VERSION",
+        "property": "valueType",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_TYPE_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_SOURCE_SET_VERSION",
+        "property": "nullable",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_NULLABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_SOURCE_SET_VERSION",
+        "property": "requiredAtStage",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_REQUIREDNESS_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_SOURCE_SET_VERSION",
+        "property": "enumValues",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_ENUM_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_RESEARCH_VERSION",
+        "property": "producer",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_PRODUCER_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_RESEARCH_VERSION",
+        "property": "valueType",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_TYPE_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_RESEARCH_VERSION",
+        "property": "nullable",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_NULLABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_RESEARCH_VERSION",
+        "property": "requiredAtStage",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_REQUIREDNESS_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_RESEARCH_VERSION",
+        "property": "enumValues",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_ENUM_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_REQUIREMENTS_VERSION",
+        "property": "producer",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_PRODUCER_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_REQUIREMENTS_VERSION",
+        "property": "valueType",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_TYPE_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_REQUIREMENTS_VERSION",
+        "property": "nullable",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_NULLABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_REQUIREMENTS_VERSION",
+        "property": "requiredAtStage",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_REQUIREDNESS_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_REQUIREMENTS_VERSION",
+        "property": "enumValues",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_ENUM_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_TEST_SUITE_VERSION",
+        "property": "producer",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_PRODUCER_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_TEST_SUITE_VERSION",
+        "property": "valueType",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_TYPE_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_TEST_SUITE_VERSION",
+        "property": "nullable",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_NULLABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_TEST_SUITE_VERSION",
+        "property": "requiredAtStage",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_REQUIREDNESS_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_TEST_SUITE_VERSION",
+        "property": "enumValues",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_ENUM_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_INSTRUCTION_VERSION",
+        "property": "producer",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_PRODUCER_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_INSTRUCTION_VERSION",
+        "property": "valueType",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_TYPE_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_INSTRUCTION_VERSION",
+        "property": "nullable",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_NULLABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_INSTRUCTION_VERSION",
+        "property": "requiredAtStage",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_REQUIREDNESS_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_INSTRUCTION_VERSION",
+        "property": "enumValues",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_ENUM_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_CANDIDATE_ID",
+        "property": "producer",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_PRODUCER_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_CANDIDATE_ID",
+        "property": "valueType",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_TYPE_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_CANDIDATE_ID",
+        "property": "nullable",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_NULLABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_CANDIDATE_ID",
+        "property": "requiredAtStage",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_REQUIREDNESS_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_CANDIDATE_ID",
+        "property": "enumValues",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_ENUM_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_BASELINE_ID",
+        "property": "producer",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_PRODUCER_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_BASELINE_ID",
+        "property": "valueType",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_TYPE_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_BASELINE_ID",
+        "property": "nullable",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_NULLABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_BASELINE_ID",
+        "property": "requiredAtStage",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_REQUIREDNESS_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_BASELINE_ID",
+        "property": "enumValues",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_ENUM_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_PRODUCT_ID",
+        "property": "producer",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_PRODUCER_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_PRODUCT_ID",
+        "property": "valueType",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_TYPE_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_PRODUCT_ID",
+        "property": "nullable",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_NULLABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_PRODUCT_ID",
+        "property": "requiredAtStage",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_REQUIREDNESS_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_PRODUCT_ID",
+        "property": "enumValues",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_ENUM_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_PRODUCT_VERSION",
+        "property": "producer",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_PRODUCER_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_PRODUCT_VERSION",
+        "property": "valueType",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_TYPE_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_PRODUCT_VERSION",
+        "property": "nullable",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_NULLABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_PRODUCT_VERSION",
+        "property": "requiredAtStage",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_REQUIREDNESS_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_PRODUCT_VERSION",
+        "property": "enumValues",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_ENUM_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_DELIVERY_CANDIDATE_SET_ID",
+        "property": "producer",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_PRODUCER_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_DELIVERY_CANDIDATE_SET_ID",
+        "property": "valueType",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_TYPE_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_DELIVERY_CANDIDATE_SET_ID",
+        "property": "nullable",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_NULLABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_DELIVERY_CANDIDATE_SET_ID",
+        "property": "requiredAtStage",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_REQUIREDNESS_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_DELIVERY_CANDIDATE_SET_ID",
+        "property": "enumValues",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_ENUM_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_REVIEW_VERSION",
+        "property": "producer",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_PRODUCER_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_REVIEW_VERSION",
+        "property": "valueType",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_TYPE_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_REVIEW_VERSION",
+        "property": "nullable",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_NULLABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_REVIEW_VERSION",
+        "property": "requiredAtStage",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_REQUIREDNESS_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_REVIEW_VERSION",
+        "property": "enumValues",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_ENUM_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_RECONCILED_REVIEW_VERSION",
+        "property": "producer",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_PRODUCER_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_RECONCILED_REVIEW_VERSION",
+        "property": "valueType",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_TYPE_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_RECONCILED_REVIEW_VERSION",
+        "property": "nullable",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_NULLABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_RECONCILED_REVIEW_VERSION",
+        "property": "requiredAtStage",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_REQUIREDNESS_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_RECONCILED_REVIEW_VERSION",
+        "property": "enumValues",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_ENUM_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_RELEASE_ID",
+        "property": "producer",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_PRODUCER_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_RELEASE_ID",
+        "property": "valueType",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_TYPE_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_RELEASE_ID",
+        "property": "nullable",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_NULLABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_RELEASE_ID",
+        "property": "requiredAtStage",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_REQUIREDNESS_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_RELEASE_ID",
+        "property": "enumValues",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_ENUM_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_HASH_REVIEW_ID",
+        "property": "producer",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_PRODUCER_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_HASH_REVIEW_ID",
+        "property": "valueType",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_TYPE_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_HASH_REVIEW_ID",
+        "property": "nullable",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_NULLABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_HASH_REVIEW_ID",
+        "property": "requiredAtStage",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_REQUIREDNESS_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_HASH_REVIEW_ID",
+        "property": "enumValues",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_ENUM_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_EVIDENCE_CHAIN_VERSION",
+        "property": "producer",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_PRODUCER_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_EVIDENCE_CHAIN_VERSION",
+        "property": "valueType",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_TYPE_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_EVIDENCE_CHAIN_VERSION",
+        "property": "nullable",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_NULLABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_EVIDENCE_CHAIN_VERSION",
+        "property": "requiredAtStage",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_REQUIREDNESS_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_EVIDENCE_CHAIN_VERSION",
+        "property": "enumValues",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_ENUM_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_DELIVERY_ID",
+        "property": "producer",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_PRODUCER_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_DELIVERY_ID",
+        "property": "valueType",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_TYPE_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_DELIVERY_ID",
+        "property": "nullable",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_NULLABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_DELIVERY_ID",
+        "property": "requiredAtStage",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_REQUIREDNESS_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_DELIVERY_ID",
+        "property": "enumValues",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_ENUM_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_BLOCKERS",
+        "property": "producer",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_PRODUCER_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_BLOCKERS",
+        "property": "valueType",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_TYPE_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_BLOCKERS",
+        "property": "nullable",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_NULLABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_BLOCKERS",
+        "property": "requiredAtStage",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_REQUIREDNESS_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_BLOCKERS",
+        "property": "enumValues",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_ENUM_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "NEXT_REQUIRED_ACTION",
+        "property": "producer",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_PRODUCER_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "NEXT_REQUIRED_ACTION",
+        "property": "valueType",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_TYPE_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "NEXT_REQUIRED_ACTION",
+        "property": "nullable",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_NULLABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "NEXT_REQUIRED_ACTION",
+        "property": "requiredAtStage",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_REQUIREDNESS_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "NEXT_REQUIRED_ACTION",
+        "property": "enumValues",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_ENUM_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "LATEST_EVIDENCE_REFERENCE",
+        "property": "producer",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_PRODUCER_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "LATEST_EVIDENCE_REFERENCE",
+        "property": "valueType",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_TYPE_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "LATEST_EVIDENCE_REFERENCE",
+        "property": "nullable",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_NULLABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "LATEST_EVIDENCE_REFERENCE",
+        "property": "requiredAtStage",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_REQUIREDNESS_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "LATEST_EVIDENCE_REFERENCE",
+        "property": "enumValues",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_ENUM_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "INPUT_SET_HASH_OR_MANIFEST",
+        "property": "producer",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_PRODUCER_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "INPUT_SET_HASH_OR_MANIFEST",
+        "property": "valueType",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_TYPE_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "INPUT_SET_HASH_OR_MANIFEST",
+        "property": "nullable",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_NULLABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "INPUT_SET_HASH_OR_MANIFEST",
+        "property": "requiredAtStage",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_REQUIREDNESS_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "INPUT_SET_HASH_OR_MANIFEST",
+        "property": "enumValues",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_ENUM_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "JOB_RECORD_STATUS",
+        "property": "producer",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_PRODUCER_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "JOB_RECORD_STATUS",
+        "property": "valueType",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_TYPE_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "JOB_RECORD_STATUS",
+        "property": "nullable",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_NULLABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "JOB_RECORD_STATUS",
+        "property": "requiredAtStage",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_REQUIREDNESS_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "JOB_RECORD_STATUS",
+        "property": "enumValues",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_ENUM_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "STATUS_EVIDENCE",
+        "property": "producer",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_PRODUCER_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "STATUS_EVIDENCE",
+        "property": "valueType",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_TYPE_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "STATUS_EVIDENCE",
+        "property": "nullable",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_NULLABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "STATUS_EVIDENCE",
+        "property": "requiredAtStage",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_REQUIREDNESS_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "STATUS_EVIDENCE",
+        "property": "enumValues",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_ENUM_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "EXACT_DELIVERABLE_REQUESTED",
+        "property": "producer",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_PRODUCER_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "EXACT_DELIVERABLE_REQUESTED",
+        "property": "valueType",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_TYPE_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "EXACT_DELIVERABLE_REQUESTED",
+        "property": "nullable",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_NULLABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "EXACT_DELIVERABLE_REQUESTED",
+        "property": "requiredAtStage",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_REQUIREDNESS_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "EXACT_DELIVERABLE_REQUESTED",
+        "property": "enumValues",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_ENUM_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "ASSUMPTIONS",
+        "property": "producer",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_PRODUCER_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "ASSUMPTIONS",
+        "property": "valueType",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_TYPE_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "ASSUMPTIONS",
+        "property": "nullable",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_NULLABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "ASSUMPTIONS",
+        "property": "requiredAtStage",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_REQUIREDNESS_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "ASSUMPTIONS",
+        "property": "enumValues",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_ENUM_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "UNKNOWN_INFORMATION",
+        "property": "producer",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_PRODUCER_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "UNKNOWN_INFORMATION",
+        "property": "valueType",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_TYPE_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "UNKNOWN_INFORMATION",
+        "property": "nullable",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_NULLABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "UNKNOWN_INFORMATION",
+        "property": "requiredAtStage",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_REQUIREDNESS_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "UNKNOWN_INFORMATION",
+        "property": "enumValues",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_ENUM_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "INPUT_SET_CONTENTS",
+        "property": "producer",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_PRODUCER_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "INPUT_SET_CONTENTS",
+        "property": "valueType",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_TYPE_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "INPUT_SET_CONTENTS",
+        "property": "nullable",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_NULLABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "INPUT_SET_CONTENTS",
+        "property": "requiredAtStage",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_REQUIREDNESS_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "INPUT_SET_CONTENTS",
+        "property": "enumValues",
+        "coherentDeclarationAndRegistryMutation": true,
+        "expectedOracle": "SPECIFICATION_JOB_ENUM_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "JOB_TITLE",
+        "property": "editable",
+        "expectedOracle": "SPECIFICATION_JOB_EDITABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "JOB_OWNER",
+        "property": "editable",
+        "expectedOracle": "SPECIFICATION_JOB_EDITABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "EXACT_USER_OBJECTIVE_VERBATIM",
+        "property": "editable",
+        "expectedOracle": "SPECIFICATION_JOB_EDITABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "SUPPLIED_MATERIALS_INVENTORY",
+        "property": "editable",
+        "expectedOracle": "SPECIFICATION_JOB_EDITABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "REQUIRED_OUTPUT_FORMAT",
+        "property": "editable",
+        "expectedOracle": "SPECIFICATION_JOB_EDITABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "DEADLINE_OR_TEMPORAL_SCOPE",
+        "property": "editable",
+        "expectedOracle": "SPECIFICATION_JOB_EDITABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "DESIRED_SOURCE_COUNT",
+        "property": "editable",
+        "expectedOracle": "SPECIFICATION_JOB_EDITABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "KNOWN_AUTHORITATIVE_SOURCES",
+        "property": "editable",
+        "expectedOracle": "SPECIFICATION_JOB_EDITABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "AVAILABLE_TOOLS",
+        "property": "editable",
+        "expectedOracle": "SPECIFICATION_JOB_EDITABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "PROHIBITED_ACTIONS",
+        "property": "editable",
+        "expectedOracle": "SPECIFICATION_JOB_EDITABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "EXPLICIT_USER_REQUIREMENTS",
+        "property": "editable",
+        "expectedOracle": "SPECIFICATION_JOB_EDITABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "JOB_ID",
+        "property": "editable",
+        "expectedOracle": "SPECIFICATION_JOB_EDITABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CONTRACT_PROFILE_ID",
+        "property": "editable",
+        "expectedOracle": "SPECIFICATION_JOB_EDITABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "DATE_OPENED",
+        "property": "editable",
+        "expectedOracle": "SPECIFICATION_JOB_EDITABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_ITERATION",
+        "property": "editable",
+        "expectedOracle": "SPECIFICATION_JOB_EDITABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_STAGE",
+        "property": "editable",
+        "expectedOracle": "SPECIFICATION_JOB_EDITABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_STATE",
+        "property": "editable",
+        "expectedOracle": "SPECIFICATION_JOB_EDITABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_INPUT_VERSION",
+        "property": "editable",
+        "expectedOracle": "SPECIFICATION_JOB_EDITABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_SOURCE_SET_VERSION",
+        "property": "editable",
+        "expectedOracle": "SPECIFICATION_JOB_EDITABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_RESEARCH_VERSION",
+        "property": "editable",
+        "expectedOracle": "SPECIFICATION_JOB_EDITABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_REQUIREMENTS_VERSION",
+        "property": "editable",
+        "expectedOracle": "SPECIFICATION_JOB_EDITABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_TEST_SUITE_VERSION",
+        "property": "editable",
+        "expectedOracle": "SPECIFICATION_JOB_EDITABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_INSTRUCTION_VERSION",
+        "property": "editable",
+        "expectedOracle": "SPECIFICATION_JOB_EDITABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_CANDIDATE_ID",
+        "property": "editable",
+        "expectedOracle": "SPECIFICATION_JOB_EDITABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_BASELINE_ID",
+        "property": "editable",
+        "expectedOracle": "SPECIFICATION_JOB_EDITABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_PRODUCT_ID",
+        "property": "editable",
+        "expectedOracle": "SPECIFICATION_JOB_EDITABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_PRODUCT_VERSION",
+        "property": "editable",
+        "expectedOracle": "SPECIFICATION_JOB_EDITABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_DELIVERY_CANDIDATE_SET_ID",
+        "property": "editable",
+        "expectedOracle": "SPECIFICATION_JOB_EDITABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_REVIEW_VERSION",
+        "property": "editable",
+        "expectedOracle": "SPECIFICATION_JOB_EDITABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_RECONCILED_REVIEW_VERSION",
+        "property": "editable",
+        "expectedOracle": "SPECIFICATION_JOB_EDITABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_RELEASE_ID",
+        "property": "editable",
+        "expectedOracle": "SPECIFICATION_JOB_EDITABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_HASH_REVIEW_ID",
+        "property": "editable",
+        "expectedOracle": "SPECIFICATION_JOB_EDITABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_EVIDENCE_CHAIN_VERSION",
+        "property": "editable",
+        "expectedOracle": "SPECIFICATION_JOB_EDITABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_DELIVERY_ID",
+        "property": "editable",
+        "expectedOracle": "SPECIFICATION_JOB_EDITABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "CURRENT_BLOCKERS",
+        "property": "editable",
+        "expectedOracle": "SPECIFICATION_JOB_EDITABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "NEXT_REQUIRED_ACTION",
+        "property": "editable",
+        "expectedOracle": "SPECIFICATION_JOB_EDITABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "LATEST_EVIDENCE_REFERENCE",
+        "property": "editable",
+        "expectedOracle": "SPECIFICATION_JOB_EDITABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "INPUT_SET_HASH_OR_MANIFEST",
+        "property": "editable",
+        "expectedOracle": "SPECIFICATION_JOB_EDITABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "JOB_RECORD_STATUS",
+        "property": "editable",
+        "expectedOracle": "SPECIFICATION_JOB_EDITABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "STATUS_EVIDENCE",
+        "property": "editable",
+        "expectedOracle": "SPECIFICATION_JOB_EDITABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "EXACT_DELIVERABLE_REQUESTED",
+        "property": "editable",
+        "expectedOracle": "SPECIFICATION_JOB_EDITABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "ASSUMPTIONS",
+        "property": "editable",
+        "expectedOracle": "SPECIFICATION_JOB_EDITABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "UNKNOWN_INFORMATION",
+        "property": "editable",
+        "expectedOracle": "SPECIFICATION_JOB_EDITABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "field": "INPUT_SET_CONTENTS",
+        "property": "editable",
+        "expectedOracle": "SPECIFICATION_JOB_EDITABILITY_ORACLE",
+        "detected": true
+      },
+      {
+        "property": "missing-field",
+        "coherentDeclarationAndRegistryMutation": true,
+        "detected": true
+      },
+      {
+        "property": "extra-field",
+        "coherentDeclarationAndRegistryMutation": true,
+        "detected": true
+      }
+    ],
+    "restored": true,
+    "passed": true,
+    "scopeLimit": "Literal declaration/type/ownership mutation controls; no application-state mutation or runtime value enforcement claimed."
+  },
+  "supplementalLegalWrongValueAndAllFieldOmissionControls": 132,
+  "checkOwnership": [
+    {
+      "id": "registry.specified-job-tuples",
+      "basis": "EXECUTED_SCHEMA_METADATA_ASSERTIONS"
+    },
+    {
+      "id": "registry.specified-job-mutations",
+      "basis": "EXECUTED_SCHEMA_METADATA_ASSERTIONS"
+    }
+  ],
+  "currentBlockersAbstraction": {
+    "accepted": true,
+    "reason": "Structured value does not require a specific JSON container. Allowed structured declarations are partial type abstraction only, not canonical runtime shape or validation evidence."
+  },
+  "unproved": [
+    "Actual producer authority at command/response and persistence boundaries",
+    "Canonical runtime type admission and rejection",
+    "Required-stage transitions, creation, absence and pointer retention",
+    "Derivation, current scope and persistence integrity",
+    "All other Section15 atoms and all full atomic behavior"
+  ],
+  "auditedAtoms": [
+    {
+      "field": "JOB_TITLE",
+      "property": "producer",
+      "id": "NREQ-53d93ea3ee22ca715e8d76bf01e625ad",
+      "atomicObligationSha256": "555887c23f5de345124a141544df6cb2762d51882e5a63794d497c731734cf18",
+      "sourceLine": 1180
+    },
+    {
+      "field": "JOB_TITLE",
+      "property": "valueType",
+      "id": "NREQ-5a8b1e352093cd2533dee2ea6c5d5d9c",
+      "atomicObligationSha256": "3bbdcdfcff4000645de3011da4d4aa2807a734bdc5409eeb807e82d461cd3fcd",
+      "sourceLine": 1180
+    },
+    {
+      "field": "JOB_OWNER",
+      "property": "producer",
+      "id": "NREQ-35e2199daae8019bd9a15d729dc29b2c",
+      "atomicObligationSha256": "b1487f8dd96d41cef9f2412fd2d3146bc20b7986d2532c728a1d2374e8b54b2e",
+      "sourceLine": 1181
+    },
+    {
+      "field": "JOB_OWNER",
+      "property": "valueType",
+      "id": "NREQ-dd8850c5c6fdbcd343859f0d7240ba5c",
+      "atomicObligationSha256": "24e171d84b3a75025da780f71c0d416b9d904030c9582843035f851c5781bd5c",
+      "sourceLine": 1181
+    },
+    {
+      "field": "EXACT_USER_OBJECTIVE_VERBATIM",
+      "property": "producer",
+      "id": "NREQ-37b7248bf58abcd833f5e08f897a6efc",
+      "atomicObligationSha256": "003b70be27661a718f91606081f951e1ec570770ed03a6641ddebc1b0386bf76",
+      "sourceLine": 1182
+    },
+    {
+      "field": "EXACT_USER_OBJECTIVE_VERBATIM",
+      "property": "valueType",
+      "id": "NREQ-b073a07ed47193c168b5ce272830f612",
+      "atomicObligationSha256": "7cdd6abca08de194e050d7f3c932e22c23840052ccee3e1f4c28dd99f462936e",
+      "sourceLine": 1182
+    },
+    {
+      "field": "SUPPLIED_MATERIALS_INVENTORY",
+      "property": "producer",
+      "id": "NREQ-e691e1685f937f46500c976dc1a1e80a",
+      "atomicObligationSha256": "986cea4728620d587641fa9a7c9f6def225e04bfeeec85dd6da015989d2c7ace",
+      "sourceLine": 1183
+    },
+    {
+      "field": "SUPPLIED_MATERIALS_INVENTORY",
+      "property": "valueType",
+      "id": "NREQ-298cdfd70b3f6ed6360fb6ee8758bb6b",
+      "atomicObligationSha256": "9c170cc03946be2b67d2768b5591338b163a7eb641e2e829851b1b2c109bb048",
+      "sourceLine": 1183
+    },
+    {
+      "field": "REQUIRED_OUTPUT_FORMAT",
+      "property": "producer",
+      "id": "NREQ-0b7ec930d6e8e91daf2e12bd19dfee35",
+      "atomicObligationSha256": "0716968067134b9b88432acd6b960ad7afbcc9484417a9d1853298bdc839ba68",
+      "sourceLine": 1184
+    },
+    {
+      "field": "REQUIRED_OUTPUT_FORMAT",
+      "property": "valueType",
+      "id": "NREQ-74e593d46dc502ee53f72201f4d67e6b",
+      "atomicObligationSha256": "8ecd442f60437bf96085260f09a7f6b0eb1016b821eaddf707da9bd4925c212e",
+      "sourceLine": 1184
+    },
+    {
+      "field": "DEADLINE_OR_TEMPORAL_SCOPE",
+      "property": "producer",
+      "id": "NREQ-2321a166fde654359d136ee8db39fa30",
+      "atomicObligationSha256": "956628c7a471f894e1f3cea5e838eea15fcd573dba9e3ea14f7ce2dc64a43c4f",
+      "sourceLine": 1185
+    },
+    {
+      "field": "DEADLINE_OR_TEMPORAL_SCOPE",
+      "property": "valueType",
+      "id": "NREQ-cb77a52a184c2de39c30d70b5f5a0e78",
+      "atomicObligationSha256": "ff9df696266e76e9ad99cd0b3d96bb244674d3dc56f4a5005c617700438bcff7",
+      "sourceLine": 1185
+    },
+    {
+      "field": "DESIRED_SOURCE_COUNT",
+      "property": "producer",
+      "id": "NREQ-b4a2ee6276009442fe36628db93f902a",
+      "atomicObligationSha256": "100749bf95bc22f40f1f3fdb9e54bc2866c81b34be1fd608db7e5e26318fbc43",
+      "sourceLine": 1186
+    },
+    {
+      "field": "DESIRED_SOURCE_COUNT",
+      "property": "valueType",
+      "id": "NREQ-c836a30a608bbe5d034ecf1a9a81ddc8",
+      "atomicObligationSha256": "35a0adffc5591ac9f5a95929636158ddb5610cb35ce60a66f2b9a7d0c929fb8e",
+      "sourceLine": 1186
+    },
+    {
+      "field": "KNOWN_AUTHORITATIVE_SOURCES",
+      "property": "producer",
+      "id": "NREQ-8af8ef3ce1e9dfb16670dd23180bd4aa",
+      "atomicObligationSha256": "cbfb2fa086f27750b17d271c7ed1c12e47df7e3d4fec8ecf09e48f4fd0e31c07",
+      "sourceLine": 1187
+    },
+    {
+      "field": "KNOWN_AUTHORITATIVE_SOURCES",
+      "property": "valueType",
+      "id": "NREQ-40277e6b19e216862cbcb5397a7c76bb",
+      "atomicObligationSha256": "8a88ef1629df7ec7fa8f5b46a6f1d675b58c0d880f7b7caa0be7c03d03551707",
+      "sourceLine": 1187
+    },
+    {
+      "field": "AVAILABLE_TOOLS",
+      "property": "producer",
+      "id": "NREQ-8d4c93dfd33825095cc8360dff1550ae",
+      "atomicObligationSha256": "32eedc91ec084bcdb8ff6ddc640683921a0c2122cb1031306c218d611925bea5",
+      "sourceLine": 1188
+    },
+    {
+      "field": "AVAILABLE_TOOLS",
+      "property": "valueType",
+      "id": "NREQ-51d84b17cf06231927797f0f08432e6a",
+      "atomicObligationSha256": "25278b2b196094ff4d44c6363973602d4a5d8d979180ab8a806e96f287f9402b",
+      "sourceLine": 1188
+    },
+    {
+      "field": "PROHIBITED_ACTIONS",
+      "property": "producer",
+      "id": "NREQ-2c9fcb21f6dd3e54a0bae4eab0829af9",
+      "atomicObligationSha256": "480ef3d6ce0c0f93c57271d8b73f97e7c0d04f8e529dc87306e75c40baee6cea",
+      "sourceLine": 1189
+    },
+    {
+      "field": "PROHIBITED_ACTIONS",
+      "property": "valueType",
+      "id": "NREQ-96c33cc1ecc84e0bc9b1a05c27a43249",
+      "atomicObligationSha256": "ef6cb92253ef9003f2812375ea83f46f19ad64c28c5d7bf51b5a360254b404c2",
+      "sourceLine": 1189
+    },
+    {
+      "field": "EXPLICIT_USER_REQUIREMENTS",
+      "property": "producer",
+      "id": "NREQ-be918a59d1c2c31f125d35d927eac645",
+      "atomicObligationSha256": "8bc17f40420c21a83256ce1c599f7cadb9e1d9d34f5452d12e03d18d1d67b606",
+      "sourceLine": 1190
+    },
+    {
+      "field": "EXPLICIT_USER_REQUIREMENTS",
+      "property": "valueType",
+      "id": "NREQ-558b6326b6a66da7200ae6ed76c7b7ac",
+      "atomicObligationSha256": "e6e8147f05eeae78dc142d1f7d448fa37effafa51aab220d791a6e492fe89e7d",
+      "sourceLine": 1190
+    },
+    {
+      "field": "JOB_ID",
+      "property": "producer",
+      "id": "NREQ-97eceee98f70106655b1d3c2f69206bf",
+      "atomicObligationSha256": "57e1cc1d0be2829719d76fd6c94535f8978e29bb5c079e56cafff11790399f10",
+      "sourceLine": 1191
+    },
+    {
+      "field": "JOB_ID",
+      "property": "valueType",
+      "id": "NREQ-ca2dabdf294db7c7b4361c1a35152658",
+      "atomicObligationSha256": "2a46ea60ae99764eea5ccdc9bc84a5bdca55815698d86acd7c0f4aee72ae971e",
+      "sourceLine": 1191
+    },
+    {
+      "field": "CONTRACT_PROFILE_ID",
+      "property": "producer",
+      "id": "NREQ-4255df2ccfd510ddf32d46cbd5ac7b54",
+      "atomicObligationSha256": "2daeef9ae043e697ef4b29f7b267b3ecd5a85b91861029ec2531ee14c8adaa77",
+      "sourceLine": 1192
+    },
+    {
+      "field": "CONTRACT_PROFILE_ID",
+      "property": "valueType",
+      "id": "NREQ-dbb4b2b439a2419e2e2fb091c7efff60",
+      "atomicObligationSha256": "11640dd709fbc0bc94012d483898ea6f5fd288f7c8fd51db98f8129c22b79238",
+      "sourceLine": 1192
+    },
+    {
+      "field": "DATE_OPENED",
+      "property": "producer",
+      "id": "NREQ-e7097619359ad3c6ca54ac037ece19a1",
+      "atomicObligationSha256": "1c8e298a183f3e369a77ff57b5197877a9b3a598bf3ba1b4ff217616bbc76c6d",
+      "sourceLine": 1193
+    },
+    {
+      "field": "DATE_OPENED",
+      "property": "valueType",
+      "id": "NREQ-4833308a7ee0ae8cc76ab6087c7e2ac3",
+      "atomicObligationSha256": "265de3aa8951efa1200aa387680ccd4a7a5a9d280360939714db49bf4292e1e0",
+      "sourceLine": 1193
+    },
+    {
+      "field": "CURRENT_ITERATION",
+      "property": "producer",
+      "id": "NREQ-be0d96de9262d5c0c0b417b261118721",
+      "atomicObligationSha256": "a406a5929d41da87c931f6e5aa26b0601295880e152f5c9ea76417bd01c47294",
+      "sourceLine": 1194
+    },
+    {
+      "field": "CURRENT_ITERATION",
+      "property": "valueType",
+      "id": "NREQ-b134ff25da7263cc16f69761f537037f",
+      "atomicObligationSha256": "123ab851e4b7db1db621721f94bac4bcb39b93e55f08b7b7a8766c638e0b70ab",
+      "sourceLine": 1194
+    },
+    {
+      "field": "CURRENT_STAGE",
+      "property": "producer",
+      "id": "NREQ-2a9a1ee19dbec5e00e768bc395f291a8",
+      "atomicObligationSha256": "8113805062635a0390b10256b5260038087ddcb265f4a90724d42f99082fc99d",
+      "sourceLine": 1195
+    },
+    {
+      "field": "CURRENT_STAGE",
+      "property": "valueType",
+      "id": "NREQ-f3f94d700c2dfbf337546ab00b846f22",
+      "atomicObligationSha256": "6a8026f56a37eb81ddc8a6c034e17cde7a807bcc95881e7f0757fd8f5bdd1641",
+      "sourceLine": 1195
+    },
+    {
+      "field": "CURRENT_STATE",
+      "property": "producer",
+      "id": "NREQ-ddd7ce7c1fae2d550fd76ae2892c68c5",
+      "atomicObligationSha256": "ec4c949fd0d698795643e73f0b84c702e3eaaf37ca29852a694bef03e510ac08",
+      "sourceLine": 1196
+    },
+    {
+      "field": "CURRENT_STATE",
+      "property": "valueType",
+      "id": "NREQ-bac769d0a58e5269431001b0ee0d3001",
+      "atomicObligationSha256": "55fabccc6c18df7d2642d7f994c3b95687c279394c68bdd1082990fb5ca3cd29",
+      "sourceLine": 1196
+    },
+    {
+      "field": "CURRENT_INPUT_VERSION",
+      "property": "producer",
+      "id": "NREQ-0ea7885fc648ffa1239f418603048e39",
+      "atomicObligationSha256": "530eb1bcd4cc33c1882b7f08596c956dcb82fa25b31140719522d8c0adcbf4e3",
+      "sourceLine": 1197
+    },
+    {
+      "field": "CURRENT_INPUT_VERSION",
+      "property": "valueType",
+      "id": "NREQ-5543cba8efee07717d5ef2a50e8df7b4",
+      "atomicObligationSha256": "ff2bcda72acc9c2c0b0e8dec8be41eff0c08607e16903b129f93783681bf3c4e",
+      "sourceLine": 1197
+    },
+    {
+      "field": "CURRENT_SOURCE_SET_VERSION",
+      "property": "producer",
+      "id": "NREQ-f52cebf736a1cc1379033214fd51ab0f",
+      "atomicObligationSha256": "64ba2fb0e69280bf411ca011107b648bad570cf46a21abc27a25e3c94c9351fe",
+      "sourceLine": 1198
+    },
+    {
+      "field": "CURRENT_SOURCE_SET_VERSION",
+      "property": "valueType",
+      "id": "NREQ-c75f19b1079b6aa3045337825b376b21",
+      "atomicObligationSha256": "67121b8443d6e0a965f50620d40fffab800de934f54c373ca663332689b03a55",
+      "sourceLine": 1198
+    },
+    {
+      "field": "CURRENT_RESEARCH_VERSION",
+      "property": "producer",
+      "id": "NREQ-e286cf53c33cf8c6cefbdd41f4eb548e",
+      "atomicObligationSha256": "b4e9a4110da574f5716797575092c92f48a95a5f302e933d05b5fc254a542bc8",
+      "sourceLine": 1199
+    },
+    {
+      "field": "CURRENT_RESEARCH_VERSION",
+      "property": "valueType",
+      "id": "NREQ-8042be8665fcac366f7ebd9498fb7891",
+      "atomicObligationSha256": "e23d204cf4eb6b3db1f11543e42c0cb5c38a5770636bb9924291dd3ba70edf59",
+      "sourceLine": 1199
+    },
+    {
+      "field": "CURRENT_REQUIREMENTS_VERSION",
+      "property": "producer",
+      "id": "NREQ-7cde52fd302c75a81cec85fea3b12bfb",
+      "atomicObligationSha256": "8f8bb377a2852328d1dd22bb2d8719db1b631614ed0b4e92bb3fe55708149f17",
+      "sourceLine": 1200
+    },
+    {
+      "field": "CURRENT_REQUIREMENTS_VERSION",
+      "property": "valueType",
+      "id": "NREQ-6f2fec52418f113298ca1eb7cb310f04",
+      "atomicObligationSha256": "e7ef7ccbbcad2ac8800f17034e92d55702a035d74eda16c5361b3add5c5dffd1",
+      "sourceLine": 1200
+    },
+    {
+      "field": "CURRENT_TEST_SUITE_VERSION",
+      "property": "producer",
+      "id": "NREQ-86584a4f6f0052d8e9b57dda1ca5ef2a",
+      "atomicObligationSha256": "b0a6184a52ffdcf81e034db65546440f889023448a9a179b7d2a1cbc32b81b2f",
+      "sourceLine": 1201
+    },
+    {
+      "field": "CURRENT_TEST_SUITE_VERSION",
+      "property": "valueType",
+      "id": "NREQ-2513b0f915915d1759189ffe46ba0719",
+      "atomicObligationSha256": "0fd1d36da839d53251c277339d273f1aae4562c140de8660a4023a6863699a1e",
+      "sourceLine": 1201
+    },
+    {
+      "field": "CURRENT_INSTRUCTION_VERSION",
+      "property": "producer",
+      "id": "NREQ-e06ef451a3ddd0461e161e346f5a0253",
+      "atomicObligationSha256": "cc9c9fc1dc28ada6eb17bb9fd8e69c8c3d229037736c6d5bfcc4f2fb23ab7714",
+      "sourceLine": 1202
+    },
+    {
+      "field": "CURRENT_INSTRUCTION_VERSION",
+      "property": "valueType",
+      "id": "NREQ-6a9acc98724c139bb2f0da0d79255b09",
+      "atomicObligationSha256": "fb91caf0d390caea7479a5de46eeb0962a00824a7ca3a67983c6af98e3ea6819",
+      "sourceLine": 1202
+    },
+    {
+      "field": "CURRENT_CANDIDATE_ID",
+      "property": "producer",
+      "id": "NREQ-733c9d9c8055badb51c6e0e0d051d32b",
+      "atomicObligationSha256": "28d4c6616002b4a4891c4b4060933b00998c741f8408d551921dd1621f70afa1",
+      "sourceLine": 1203
+    },
+    {
+      "field": "CURRENT_CANDIDATE_ID",
+      "property": "valueType",
+      "id": "NREQ-92b0d20deab881a917e7ce3a5c6b7146",
+      "atomicObligationSha256": "05f3dbe2f6914d660b47562c058ef92e24473fdc5759f0487e3692faf693751c",
+      "sourceLine": 1203
+    },
+    {
+      "field": "CURRENT_BASELINE_ID",
+      "property": "producer",
+      "id": "NREQ-1e15e7f3e7041949208f4fca48dd9de2",
+      "atomicObligationSha256": "9d179974ab502b9aa482fd55bfaab0efb791ea5592474568cb1beeb23937e4f1",
+      "sourceLine": 1204
+    },
+    {
+      "field": "CURRENT_BASELINE_ID",
+      "property": "valueType",
+      "id": "NREQ-18c08eb3e9e6ccd8d8de9538ac715dcd",
+      "atomicObligationSha256": "17b63daeae658b6bb96690b7d26fb3b45e7f1d6564c1d0f24f3a62e4841dae64",
+      "sourceLine": 1204
+    },
+    {
+      "field": "CURRENT_PRODUCT_ID",
+      "property": "producer",
+      "id": "NREQ-73e15d23f0abf9343eadf2017df393cd",
+      "atomicObligationSha256": "cb1e6b818f546ff77446b5fd255cf8e0b082f2b9d6fa958f43dd8ce4e9b3dd3c",
+      "sourceLine": 1205
+    },
+    {
+      "field": "CURRENT_PRODUCT_ID",
+      "property": "valueType",
+      "id": "NREQ-f1063968f77bb94e913832b36f0487e4",
+      "atomicObligationSha256": "d6f60d4ca4a02af9e290154cff3e436bee2b905f462feb452905df8e366a17a3",
+      "sourceLine": 1205
+    },
+    {
+      "field": "CURRENT_PRODUCT_VERSION",
+      "property": "producer",
+      "id": "NREQ-b54247bc3e42dd59433b7a7dfffad66f",
+      "atomicObligationSha256": "eb41609c07793daf6e48f2f42321fb9f2040748e50917b63b780c407ce48b154",
+      "sourceLine": 1206
+    },
+    {
+      "field": "CURRENT_PRODUCT_VERSION",
+      "property": "valueType",
+      "id": "NREQ-04b63fbda9a698c16282b506c237da92",
+      "atomicObligationSha256": "f34cd2c49d46f79e41c565b72a1f4d2bbc47d6817ddb9449ce856c9568eee668",
+      "sourceLine": 1206
+    },
+    {
+      "field": "CURRENT_DELIVERY_CANDIDATE_SET_ID",
+      "property": "producer",
+      "id": "NREQ-2547e70f7c84844abc9b93f1336323a1",
+      "atomicObligationSha256": "0cdef65292c260579bc8ab6c4048867906f26d997a763d886f8237ee70102fef",
+      "sourceLine": 1207
+    },
+    {
+      "field": "CURRENT_DELIVERY_CANDIDATE_SET_ID",
+      "property": "valueType",
+      "id": "NREQ-51ce248b1a17469cff6064a0b9d9b87a",
+      "atomicObligationSha256": "ff553f650f62b89ee2550b36c90a08a26bc965328f2ba64c69212bc7910d1f56",
+      "sourceLine": 1207
+    },
+    {
+      "field": "CURRENT_REVIEW_VERSION",
+      "property": "producer",
+      "id": "NREQ-f87833fb49fce403c56810ab788b64c1",
+      "atomicObligationSha256": "6b2c72eda8dbd2b6432afce8321f77b1c21ff9e37ab22489fd12187034765d22",
+      "sourceLine": 1208
+    },
+    {
+      "field": "CURRENT_REVIEW_VERSION",
+      "property": "valueType",
+      "id": "NREQ-9e0abd5250cb42b04c72673f7588d6b0",
+      "atomicObligationSha256": "66a60c4849f02c032a7dcc8a852741ca8b1409684807cdb9d59f2b73a0880279",
+      "sourceLine": 1208
+    },
+    {
+      "field": "CURRENT_RECONCILED_REVIEW_VERSION",
+      "property": "producer",
+      "id": "NREQ-f90bfda3090da0946beaede1750a8f88",
+      "atomicObligationSha256": "fe9dc08c0ad998b66dedbee9bf196d2a67e4b6b2a23b40c85558661c4413cebb",
+      "sourceLine": 1209
+    },
+    {
+      "field": "CURRENT_RECONCILED_REVIEW_VERSION",
+      "property": "valueType",
+      "id": "NREQ-85c7b1f05a9b67050a7a52a50cc75f3a",
+      "atomicObligationSha256": "6aa48c691edf93c2990f890305035f3901db63d77e7b8f631e157aedca918d25",
+      "sourceLine": 1209
+    },
+    {
+      "field": "CURRENT_RELEASE_ID",
+      "property": "producer",
+      "id": "NREQ-5989ff619eef63ccb38535582525dc92",
+      "atomicObligationSha256": "f8122c973cbd397800ff27a6aa8d415f6803bdc8c481ca88e5fde4a4da78710c",
+      "sourceLine": 1210
+    },
+    {
+      "field": "CURRENT_RELEASE_ID",
+      "property": "valueType",
+      "id": "NREQ-db2d036de54308b8ccf1966bf64a9f2c",
+      "atomicObligationSha256": "5e2e1b40507a08fbbecd9a991e6829b34310c43e5eeeaf2366df71301b95742c",
+      "sourceLine": 1210
+    },
+    {
+      "field": "CURRENT_HASH_REVIEW_ID",
+      "property": "producer",
+      "id": "NREQ-2cd2b937240e1b8116a7077e5630a24a",
+      "atomicObligationSha256": "fcc44d173c1f72b2b21fa7052494b948ceaf61631e9bcea5ac7659158959ecba",
+      "sourceLine": 1211
+    },
+    {
+      "field": "CURRENT_HASH_REVIEW_ID",
+      "property": "valueType",
+      "id": "NREQ-638c1df4652b215aa090a08bdee1c68b",
+      "atomicObligationSha256": "376eb5b4de30e098c42c096720120fa6d79e97e57401b83de520f80b2da4e374",
+      "sourceLine": 1211
+    },
+    {
+      "field": "CURRENT_EVIDENCE_CHAIN_VERSION",
+      "property": "producer",
+      "id": "NREQ-4f0781ecc04b8f37c27814296336914b",
+      "atomicObligationSha256": "de1c25ece088cf00a7cc2b5d88cb76e0fa31a338ecd4d0e4c9f7b57073fdd1dc",
+      "sourceLine": 1212
+    },
+    {
+      "field": "CURRENT_EVIDENCE_CHAIN_VERSION",
+      "property": "valueType",
+      "id": "NREQ-51bdd1afc031bc7bc861970f0a1fbabc",
+      "atomicObligationSha256": "e38e26e8e92de3cbdfad2509f9ce120225dacaf4c16fb4063a6d6d0efabdda2a",
+      "sourceLine": 1212
+    },
+    {
+      "field": "CURRENT_DELIVERY_ID",
+      "property": "producer",
+      "id": "NREQ-98a66bdcc28de599b7de1e2c43a65bfd",
+      "atomicObligationSha256": "44a805f70493a63bc920ae724de0ad1b626a6b3292fc0505367f1947a3007f82",
+      "sourceLine": 1213
+    },
+    {
+      "field": "CURRENT_DELIVERY_ID",
+      "property": "valueType",
+      "id": "NREQ-908d7323f2396bb2ea8430e2b3520880",
+      "atomicObligationSha256": "e53193e349b59530dd39f95a8ebcca79d8912be99ae5a7de04dfd07324bca66d",
+      "sourceLine": 1213
+    },
+    {
+      "field": "CURRENT_BLOCKERS",
+      "property": "producer",
+      "id": "NREQ-7c1cb285498296a15faac1809b424b4d",
+      "atomicObligationSha256": "7432fae47cac62f803e30c8db4b0cdf5ce52f585d3e18fc7544deb64e1b2f48d",
+      "sourceLine": 1214
+    },
+    {
+      "field": "CURRENT_BLOCKERS",
+      "property": "valueType",
+      "id": "NREQ-e45d2e98144d811751b9d5b0e5e93d09",
+      "atomicObligationSha256": "eec44904d3a9f8520f2dd79f422cbaf65fbd454ed1dae7ec06c2b85ecc87cd53",
+      "sourceLine": 1214
+    },
+    {
+      "field": "NEXT_REQUIRED_ACTION",
+      "property": "producer",
+      "id": "NREQ-478234127620baaac4254804fd6e20d3",
+      "atomicObligationSha256": "1b8a3ee785d4001cfd723bb0c1170dfeb25ff21a0867298ca09278b13d71e2f5",
+      "sourceLine": 1215
+    },
+    {
+      "field": "NEXT_REQUIRED_ACTION",
+      "property": "valueType",
+      "id": "NREQ-121b5294e5514215c53d3f3210383c32",
+      "atomicObligationSha256": "8023637b579cc423e38c07937ef5fac03107804f867cceaa4c4f6e1be3726189",
+      "sourceLine": 1215
+    },
+    {
+      "field": "LATEST_EVIDENCE_REFERENCE",
+      "property": "producer",
+      "id": "NREQ-d0a4bb3b7b4de1d6f6507a26e293ae39",
+      "atomicObligationSha256": "0867d6aaae3cd13febb6be8524ff2f5d723cb97df306a6070928f495a15dc1e9",
+      "sourceLine": 1216
+    },
+    {
+      "field": "LATEST_EVIDENCE_REFERENCE",
+      "property": "valueType",
+      "id": "NREQ-8f20926e0d2990459bedc3567d0a1740",
+      "atomicObligationSha256": "5122f6bd50dd460d22c6aaf19da588faeacff29807ac6cd0220622e8422e48fd",
+      "sourceLine": 1216
+    },
+    {
+      "field": "INPUT_SET_HASH_OR_MANIFEST",
+      "property": "producer",
+      "id": "NREQ-91071046419b861c7e6e65188f16258b",
+      "atomicObligationSha256": "0d34d0afa336208b7d1f1bbd3fa8077e6127afb7999e5009332793f2c3a0b12d",
+      "sourceLine": 1217
+    },
+    {
+      "field": "INPUT_SET_HASH_OR_MANIFEST",
+      "property": "valueType",
+      "id": "NREQ-c802558dbdae1de24d91f9510e62a50c",
+      "atomicObligationSha256": "d27b544d9aa79efd39350300e9988baa404332b2bcacb847ffa02d1699da1f8a",
+      "sourceLine": 1217
+    },
+    {
+      "field": "JOB_RECORD_STATUS",
+      "property": "producer",
+      "id": "NREQ-b7d2b99e2d64a8e4f74fc9c83158e203",
+      "atomicObligationSha256": "8ffd400957599b5814b68382196a6a183149364a3398410d3678c3f9c85a7f6e",
+      "sourceLine": 1218
+    },
+    {
+      "field": "JOB_RECORD_STATUS",
+      "property": "valueType",
+      "id": "NREQ-03b586be0843ea7d0a33f618bdbffc0f",
+      "atomicObligationSha256": "29b5bcd9a230304b2dcd9d7a305ca027b60db11b138f8c7c327c81fbecabcc3d",
+      "sourceLine": 1218
+    },
+    {
+      "field": "STATUS_EVIDENCE",
+      "property": "producer",
+      "id": "NREQ-aa657f271994c22512bfaba78b7a08c9",
+      "atomicObligationSha256": "17e42690f0bf6e96f8418de385008a008fb82cd6d96323b2131edab5b2bf262e",
+      "sourceLine": 1219
+    },
+    {
+      "field": "STATUS_EVIDENCE",
+      "property": "valueType",
+      "id": "NREQ-6eabbeada442318bb9aee9b7d0c8a46e",
+      "atomicObligationSha256": "e3125c4f54945d7b3d18dbdfbfd3455101a4fe049eb77a2131b67ae1d4bbc985",
+      "sourceLine": 1219
+    },
+    {
+      "field": "EXACT_DELIVERABLE_REQUESTED",
+      "property": "producer",
+      "id": "NREQ-6a9c989afcda6d352ccda89dea703076",
+      "atomicObligationSha256": "82de69f184613e9963d00a2e980c072132e206f33a49dd87e3af9a3c6fdc4050",
+      "sourceLine": 1220
+    },
+    {
+      "field": "EXACT_DELIVERABLE_REQUESTED",
+      "property": "valueType",
+      "id": "NREQ-7b88f1f086b724cbe366878e9ae495b0",
+      "atomicObligationSha256": "c372ffb4d59ac9fcbaf11c6d340568ece787e1a5c5127df284d081ab3a5f004c",
+      "sourceLine": 1220
+    },
+    {
+      "field": "ASSUMPTIONS",
+      "property": "producer",
+      "id": "NREQ-21ff2f4c25a72917fe238efe691f0f6b",
+      "atomicObligationSha256": "a8827da465098df19527eae089bc6be4e495f4d9d8d088477252e0a2cd3a57c4",
+      "sourceLine": 1221
+    },
+    {
+      "field": "ASSUMPTIONS",
+      "property": "valueType",
+      "id": "NREQ-827de09c1a8c0261d72d484752edc5f9",
+      "atomicObligationSha256": "613762ff83956ae3a3ffc079a482e5d8a69f12f22c705fa8c6078818d8374616",
+      "sourceLine": 1221
+    },
+    {
+      "field": "UNKNOWN_INFORMATION",
+      "property": "producer",
+      "id": "NREQ-fb8dd28e8b44077063f2e65859b02dfa",
+      "atomicObligationSha256": "efc7959dfc66505745accd99006b2558f6de05bfa36becdddb22f9cb49ae813d",
+      "sourceLine": 1222
+    },
+    {
+      "field": "UNKNOWN_INFORMATION",
+      "property": "valueType",
+      "id": "NREQ-0bf10c958814c2727e73498a4477c40d",
+      "atomicObligationSha256": "a74e19564eecb940e9d737c98bd2a755d26690a248c31afba59ee81b1934e1fa",
+      "sourceLine": 1222
+    },
+    {
+      "field": "INPUT_SET_CONTENTS",
+      "property": "producer",
+      "id": "NREQ-1eb66080b7f0fea9b9860200cfc0c83e",
+      "atomicObligationSha256": "b61116657c0a9cb7eae9a20319d7e09ec1c158dd7925aaf60fa90522488c17a9",
+      "sourceLine": 1223
+    },
+    {
+      "field": "INPUT_SET_CONTENTS",
+      "property": "valueType",
+      "id": "NREQ-3e3e7a9b84d6522725aa68b92ac6be10",
+      "atomicObligationSha256": "ae160a98e2eac6672676f5b6eead9f227922975850321a48bbb47e1e6716bda8",
+      "sourceLine": 1223
+    }
+  ]
+}
