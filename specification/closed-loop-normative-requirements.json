@@ -121808,7 +121808,14 @@
       "requiredBrowserOrPhysicalDeviceProof": [],
       "acceptanceReportField": "normativeRequirementTrace.NREQ-bffa6d70970c446725c1b96369021717",
       "currentDisposition": "UNKNOWN",
-      "currentDispositionReason": "Reviewed current controlling-source scope. Implementation and executed proof remain unestablished."
+      "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+      "productionOwners": [
+        "response-ingestion.js:prepareCaptured.prepareParsedEnvelope/withEnvelopeDigests"
+      ],
+      "unresolvedRequirements": [
+        "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+        "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+      ]
     },
     {
       "entryKind": "ATOMIC_OBLIGATION",
@@ -155945,7 +155952,14 @@
       "requiredBrowserOrPhysicalDeviceProof": [],
       "acceptanceReportField": "normativeRequirementTrace.NREQ-97b5f41ba7027f7a4196160142947587",
       "currentDisposition": "UNKNOWN",
-      "currentDispositionReason": "Reviewed current controlling-source scope. Implementation and executed proof remain unestablished."
+      "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+      "productionOwners": [
+        "response-ingestion.js:prepareCaptured.prepareParsedEnvelope/withEnvelopeDigests"
+      ],
+      "unresolvedRequirements": [
+        "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+        "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+      ]
     },
     {
       "entryKind": "ATOMIC_OBLIGATION",
@@ -157203,7 +157217,14 @@
       "requiredBrowserOrPhysicalDeviceProof": [],
       "acceptanceReportField": "normativeRequirementTrace.NREQ-26a282546a741753827457c90a05c010",
       "currentDisposition": "UNKNOWN",
-      "currentDispositionReason": "Reviewed current controlling-source scope. Implementation and executed proof remain unestablished."
+      "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+      "productionOwners": [
+        "response-ingestion.js:prepareCaptured.prepareParsedEnvelope/withEnvelopeDigests"
+      ],
+      "unresolvedRequirements": [
+        "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+        "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+      ]
     },
     {
       "entryKind": "ATOMIC_OBLIGATION",
@@ -158167,7 +158188,14 @@
       "requiredBrowserOrPhysicalDeviceProof": [],
       "acceptanceReportField": "normativeRequirementTrace.NREQ-0af80c7e2c0d73910b626b42a9237183",
       "currentDisposition": "UNKNOWN",
-      "currentDispositionReason": "Reviewed current controlling-source scope. Implementation and executed proof remain unestablished."
+      "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+      "productionOwners": [
+        "response-ingestion.js:prepareCaptured.prepareParsedEnvelope/withEnvelopeDigests"
+      ],
+      "unresolvedRequirements": [
+        "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+        "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+      ]
     },
     {
       "normativeRequirementId": "NREQ-0638e07ba74cc28446710a87d7e6f6a3",
@@ -160242,7 +160270,15 @@
       "requiredBrowserOrPhysicalDeviceProof": [],
       "acceptanceReportField": "normativeRequirementTrace.NREQ-32c645273386c248f10352d029b11a13",
       "currentDisposition": "UNKNOWN",
-      "currentDispositionReason": "Reviewed current controlling-source scope. Implementation and executed proof remain unestablished."
+      "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+      "productionOwners": [
+        "response-ingestion.js:commit prerequisite checks",
+        "response-ingestion.js:prepareCaptured.prepareParsedEnvelope/withEnvelopeDigests"
+      ],
+      "unresolvedRequirements": [
+        "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+        "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+      ]
     },
     {
       "entryKind": "ATOMIC_OBLIGATION",
@@ -161977,7 +162013,15 @@
       "requiredBrowserOrPhysicalDeviceProof": [],
       "acceptanceReportField": "normativeRequirementTrace.NREQ-42622c5f4d4a71e2d96e2f306b24e220",
       "currentDisposition": "UNKNOWN",
-      "currentDispositionReason": "Reviewed current controlling-source scope. Implementation and executed proof remain unestablished."
+      "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+      "productionOwners": [
+        "response-ingestion.js:prepareCaptured.prepareParsedEnvelope/withEnvelopeDigests",
+        "response-ingestion.js:safeDiagnosticText/canonicalEnvelopeState/strictParse"
+      ],
+      "unresolvedRequirements": [
+        "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+        "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+      ]
     },
     {
       "entryKind": "ATOMIC_OBLIGATION",
@@ -162184,7 +162228,15 @@
       "requiredBrowserOrPhysicalDeviceProof": [],
       "acceptanceReportField": "normativeRequirementTrace.NREQ-8fe1bfd0e1bd9dcfb906edb36f78c438",
       "currentDisposition": "UNKNOWN",
-      "currentDispositionReason": "Reviewed current controlling-source scope. Implementation and executed proof remain unestablished."
+      "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+      "productionOwners": [
+        "response-ingestion.js:prepareCaptured.prepareParsedEnvelope/withEnvelopeDigests",
+        "response-ingestion.js:safeDiagnosticText/canonicalEnvelopeState/strictParse"
+      ],
+      "unresolvedRequirements": [
+        "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+        "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+      ]
     },
     {
       "normativeRequirementId": "NREQ-4ec6f17245b330dd4820d76cc37f1c81",
@@ -164630,7 +164682,15 @@
       "requiredBrowserOrPhysicalDeviceProof": [],
       "acceptanceReportField": "normativeRequirementTrace.NREQ-eedebbb62445bc357690265d3dad39c0",
       "currentDisposition": "UNKNOWN",
-      "currentDispositionReason": "Reviewed current controlling-source scope. Implementation and executed proof remain unestablished."
+      "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+      "productionOwners": [
+        "response-ingestion.js:commit prerequisite checks",
+        "response-ingestion.js:prepareCaptured.prepareParsedEnvelope/withEnvelopeDigests"
+      ],
+      "unresolvedRequirements": [
+        "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+        "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+      ]
     },
     {
       "entryKind": "ATOMIC_OBLIGATION",
@@ -164834,7 +164894,14 @@
       "requiredBrowserOrPhysicalDeviceProof": [],
       "acceptanceReportField": "normativeRequirementTrace.NREQ-53cba25ed9217f0e73651fa2c61364a5",
       "currentDisposition": "UNKNOWN",
-      "currentDispositionReason": "Reviewed current controlling-source scope. Implementation and executed proof remain unestablished."
+      "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+      "productionOwners": [
+        "response-ingestion.js:prepareCaptured.prepareParsedEnvelope/withEnvelopeDigests"
+      ],
+      "unresolvedRequirements": [
+        "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+        "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+      ]
     },
     {
       "entryKind": "ATOMIC_OBLIGATION",
@@ -164902,7 +164969,14 @@
       "requiredBrowserOrPhysicalDeviceProof": [],
       "acceptanceReportField": "normativeRequirementTrace.NREQ-cfeded273e1987e645c09660471cfc82",
       "currentDisposition": "UNKNOWN",
-      "currentDispositionReason": "Reviewed current controlling-source scope. Implementation and executed proof remain unestablished."
+      "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+      "productionOwners": [
+        "response-ingestion.js:prepareCaptured.prepareParsedEnvelope/withEnvelopeDigests"
+      ],
+      "unresolvedRequirements": [
+        "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+        "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+      ]
     },
     {
       "entryKind": "ATOMIC_OBLIGATION",
@@ -253923,7 +253997,15 @@
       "requiredBrowserOrPhysicalDeviceProof": [],
       "acceptanceReportField": "normativeRequirementTrace.NREQ-e9339b0fbec004d304e63378d3dbe91d",
       "currentDisposition": "UNKNOWN",
-      "currentDispositionReason": "Reviewed current controlling-source scope. Implementation and executed proof remain unestablished."
+      "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+      "productionOwners": [
+        "hash.js:assertUnicodeScalars/compareUnicodeScalarSequence/canonicalChunks/stableStringify",
+        "hash.js:digestScopePrimitivesCurrent/memoGraph/memoSignature/memoValueEquals/createCanonicalDigestScope/withCanonicalDigestScope/scopedSha256Value"
+      ],
+      "unresolvedRequirements": [
+        "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+        "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+      ]
     },
     {
       "entryKind": "ATOMIC_OBLIGATION",
@@ -254127,7 +254209,15 @@
       "requiredBrowserOrPhysicalDeviceProof": [],
       "acceptanceReportField": "normativeRequirementTrace.NREQ-5441641396c82b4f2ac36bbf3ee26f9c",
       "currentDisposition": "UNKNOWN",
-      "currentDispositionReason": "Reviewed current controlling-source scope. Implementation and executed proof remain unestablished."
+      "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+      "productionOwners": [
+        "response-ingestion.js:prepareCaptured.prepareParsedEnvelope/withEnvelopeDigests",
+        "response-ingestion.js:safeDiagnosticText/canonicalEnvelopeState/strictParse"
+      ],
+      "unresolvedRequirements": [
+        "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+        "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+      ]
     },
     {
       "entryKind": "ATOMIC_OBLIGATION",
@@ -254195,7 +254285,15 @@
       "requiredBrowserOrPhysicalDeviceProof": [],
       "acceptanceReportField": "normativeRequirementTrace.NREQ-47111062e64d0d3b30e6cc9e1826cfc3",
       "currentDisposition": "UNKNOWN",
-      "currentDispositionReason": "Reviewed current controlling-source scope. Implementation and executed proof remain unestablished."
+      "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+      "productionOwners": [
+        "hash.js:assertUnicodeScalars/compareUnicodeScalarSequence/canonicalChunks/stableStringify",
+        "workflow-schema.js:reducedNumber/canonicalDecimal/isCanonicalNumber"
+      ],
+      "unresolvedRequirements": [
+        "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+        "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+      ]
     },
     {
       "entryKind": "ATOMIC_OBLIGATION",
@@ -254263,7 +254361,15 @@
       "requiredBrowserOrPhysicalDeviceProof": [],
       "acceptanceReportField": "normativeRequirementTrace.NREQ-f25aa7572d552a605b446c527f7ffb29",
       "currentDisposition": "UNKNOWN",
-      "currentDispositionReason": "Reviewed current controlling-source scope. Implementation and executed proof remain unestablished."
+      "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+      "productionOwners": [
+        "hash.js:assertUnicodeScalars/compareUnicodeScalarSequence/canonicalChunks/stableStringify",
+        "workflow-schema.js:reducedNumber/canonicalDecimal/isCanonicalNumber"
+      ],
+      "unresolvedRequirements": [
+        "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+        "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+      ]
     },
     {
       "entryKind": "ATOMIC_OBLIGATION",
@@ -254331,7 +254437,14 @@
       "requiredBrowserOrPhysicalDeviceProof": [],
       "acceptanceReportField": "normativeRequirementTrace.NREQ-853a934199459ed6bf419687ca08ba34",
       "currentDisposition": "UNKNOWN",
-      "currentDispositionReason": "Reviewed current controlling-source scope. Implementation and executed proof remain unestablished."
+      "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+      "productionOwners": [
+        "hash.js:assertUnicodeScalars/compareUnicodeScalarSequence/canonicalChunks/stableStringify"
+      ],
+      "unresolvedRequirements": [
+        "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+        "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+      ]
     },
     {
       "entryKind": "ATOMIC_OBLIGATION",
@@ -254399,7 +254512,15 @@
       "requiredBrowserOrPhysicalDeviceProof": [],
       "acceptanceReportField": "normativeRequirementTrace.NREQ-7add6f24a57198b72b500e5a2acf1ca6",
       "currentDisposition": "UNKNOWN",
-      "currentDispositionReason": "Reviewed current controlling-source scope. Implementation and executed proof remain unestablished."
+      "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+      "productionOwners": [
+        "hash.js:assertUnicodeScalars/compareUnicodeScalarSequence/canonicalChunks/stableStringify",
+        "response-ingestion.js:prepareCaptured.prepareParsedEnvelope/withEnvelopeDigests"
+      ],
+      "unresolvedRequirements": [
+        "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+        "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+      ]
     },
     {
       "entryKind": "ATOMIC_OBLIGATION",
@@ -254467,7 +254588,14 @@
       "requiredBrowserOrPhysicalDeviceProof": [],
       "acceptanceReportField": "normativeRequirementTrace.NREQ-636ebdfdf26f0c6df9d969321a522f19",
       "currentDisposition": "UNKNOWN",
-      "currentDispositionReason": "Reviewed current controlling-source scope. Implementation and executed proof remain unestablished."
+      "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+      "productionOwners": [
+        "hash.js:assertUnicodeScalars/compareUnicodeScalarSequence/canonicalChunks/stableStringify"
+      ],
+      "unresolvedRequirements": [
+        "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+        "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+      ]
     },
     {
       "entryKind": "ATOMIC_OBLIGATION",
@@ -254535,7 +254663,15 @@
       "requiredBrowserOrPhysicalDeviceProof": [],
       "acceptanceReportField": "normativeRequirementTrace.NREQ-eecb88f846482530ebd5e963183f2711",
       "currentDisposition": "UNKNOWN",
-      "currentDispositionReason": "Reviewed current controlling-source scope. Implementation and executed proof remain unestablished."
+      "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+      "productionOwners": [
+        "hash.js:assertUnicodeScalars/compareUnicodeScalarSequence/canonicalChunks/stableStringify",
+        "response-ingestion.js:prepareCaptured.prepareParsedEnvelope/withEnvelopeDigests"
+      ],
+      "unresolvedRequirements": [
+        "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+        "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+      ]
     },
     {
       "entryKind": "ATOMIC_OBLIGATION",
@@ -254603,7 +254739,14 @@
       "requiredBrowserOrPhysicalDeviceProof": [],
       "acceptanceReportField": "normativeRequirementTrace.NREQ-dba22c5f93e4359c4b7d4ebdd9799dbf",
       "currentDisposition": "UNKNOWN",
-      "currentDispositionReason": "Reviewed current controlling-source scope. Implementation and executed proof remain unestablished."
+      "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+      "productionOwners": [
+        "hash.js:assertUnicodeScalars/compareUnicodeScalarSequence/canonicalChunks/stableStringify"
+      ],
+      "unresolvedRequirements": [
+        "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+        "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+      ]
     },
     {
       "entryKind": "ATOMIC_OBLIGATION",
@@ -254671,7 +254814,14 @@
       "requiredBrowserOrPhysicalDeviceProof": [],
       "acceptanceReportField": "normativeRequirementTrace.NREQ-27f437fe3040767de849d06a48cdb3c3",
       "currentDisposition": "UNKNOWN",
-      "currentDispositionReason": "Reviewed current controlling-source scope. Implementation and executed proof remain unestablished."
+      "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+      "productionOwners": [
+        "hash.js:assertUnicodeScalars/compareUnicodeScalarSequence/canonicalChunks/stableStringify"
+      ],
+      "unresolvedRequirements": [
+        "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+        "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+      ]
     },
     {
       "entryKind": "ATOMIC_OBLIGATION",
@@ -254739,7 +254889,14 @@
       "requiredBrowserOrPhysicalDeviceProof": [],
       "acceptanceReportField": "normativeRequirementTrace.NREQ-51ce4098cc4744b966dc6d89fc7d5621",
       "currentDisposition": "UNKNOWN",
-      "currentDispositionReason": "Reviewed current controlling-source scope. Implementation and executed proof remain unestablished."
+      "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+      "productionOwners": [
+        "hash.js:assertUnicodeScalars/compareUnicodeScalarSequence/canonicalChunks/stableStringify"
+      ],
+      "unresolvedRequirements": [
+        "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+        "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+      ]
     },
     {
       "entryKind": "ATOMIC_OBLIGATION",
@@ -254807,7 +254964,14 @@
       "requiredBrowserOrPhysicalDeviceProof": [],
       "acceptanceReportField": "normativeRequirementTrace.NREQ-0290dd2e119f2cef20371cc0109c4833",
       "currentDisposition": "UNKNOWN",
-      "currentDispositionReason": "Reviewed current controlling-source scope. Implementation and executed proof remain unestablished."
+      "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+      "productionOwners": [
+        "hash.js:assertUnicodeScalars/compareUnicodeScalarSequence/canonicalChunks/stableStringify"
+      ],
+      "unresolvedRequirements": [
+        "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+        "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+      ]
     },
     {
       "entryKind": "ATOMIC_OBLIGATION",
@@ -254875,7 +255039,14 @@
       "requiredBrowserOrPhysicalDeviceProof": [],
       "acceptanceReportField": "normativeRequirementTrace.NREQ-eb942909863b29d2c26fd0ae5480625f",
       "currentDisposition": "UNKNOWN",
-      "currentDispositionReason": "Reviewed current controlling-source scope. Implementation and executed proof remain unestablished."
+      "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+      "productionOwners": [
+        "hash.js:assertUnicodeScalars/compareUnicodeScalarSequence/canonicalChunks/stableStringify"
+      ],
+      "unresolvedRequirements": [
+        "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+        "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+      ]
     },
     {
       "entryKind": "ATOMIC_OBLIGATION",
@@ -254943,7 +255114,14 @@
       "requiredBrowserOrPhysicalDeviceProof": [],
       "acceptanceReportField": "normativeRequirementTrace.NREQ-662eca90789c91ae31177173980783dd",
       "currentDisposition": "UNKNOWN",
-      "currentDispositionReason": "Reviewed current controlling-source scope. Implementation and executed proof remain unestablished."
+      "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+      "productionOwners": [
+        "hash.js:assertUnicodeScalars/compareUnicodeScalarSequence/canonicalChunks/stableStringify"
+      ],
+      "unresolvedRequirements": [
+        "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+        "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+      ]
     },
     {
       "entryKind": "ATOMIC_OBLIGATION",
@@ -255011,7 +255189,14 @@
       "requiredBrowserOrPhysicalDeviceProof": [],
       "acceptanceReportField": "normativeRequirementTrace.NREQ-b7e22bb7fad4a45b444f988e4eabca55",
       "currentDisposition": "UNKNOWN",
-      "currentDispositionReason": "Reviewed current controlling-source scope. Implementation and executed proof remain unestablished."
+      "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+      "productionOwners": [
+        "hash.js:assertUnicodeScalars/compareUnicodeScalarSequence/canonicalChunks/stableStringify"
+      ],
+      "unresolvedRequirements": [
+        "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+        "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+      ]
     },
     {
       "entryKind": "ATOMIC_OBLIGATION",
@@ -255079,7 +255264,14 @@
       "requiredBrowserOrPhysicalDeviceProof": [],
       "acceptanceReportField": "normativeRequirementTrace.NREQ-5d8520fcb9a6a88eae542e3a1f2fcfb9",
       "currentDisposition": "UNKNOWN",
-      "currentDispositionReason": "Reviewed current controlling-source scope. Implementation and executed proof remain unestablished."
+      "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+      "productionOwners": [
+        "hash.js:assertUnicodeScalars/compareUnicodeScalarSequence/canonicalChunks/stableStringify"
+      ],
+      "unresolvedRequirements": [
+        "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+        "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+      ]
     },
     {
       "entryKind": "ATOMIC_OBLIGATION",
@@ -255147,7 +255339,14 @@
       "requiredBrowserOrPhysicalDeviceProof": [],
       "acceptanceReportField": "normativeRequirementTrace.NREQ-046cf426431e0493fe8fc1b75d803617",
       "currentDisposition": "UNKNOWN",
-      "currentDispositionReason": "Reviewed current controlling-source scope. Implementation and executed proof remain unestablished."
+      "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+      "productionOwners": [
+        "hash.js:assertUnicodeScalars/compareUnicodeScalarSequence/canonicalChunks/stableStringify"
+      ],
+      "unresolvedRequirements": [
+        "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+        "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+      ]
     },
     {
       "entryKind": "ATOMIC_OBLIGATION",
@@ -255883,7 +256082,14 @@
       "requiredBrowserOrPhysicalDeviceProof": [],
       "acceptanceReportField": "normativeRequirementTrace.NREQ-a0db10cfb1e0fefb6724aa418817d6a8",
       "currentDisposition": "UNKNOWN",
-      "currentDispositionReason": "Reviewed current controlling-source scope. Implementation and executed proof remain unestablished."
+      "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+      "productionOwners": [
+        "hash.js:assertUnicodeScalars/compareUnicodeScalarSequence/canonicalChunks/stableStringify"
+      ],
+      "unresolvedRequirements": [
+        "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+        "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+      ]
     },
     {
       "normativeRequirementId": "NREQ-f2235cf5680e8db4d072c91f62133547",
@@ -256184,7 +256390,14 @@
       "requiredBrowserOrPhysicalDeviceProof": [],
       "acceptanceReportField": "normativeRequirementTrace.NREQ-52d2c79341b28c2823a54b9363793082",
       "currentDisposition": "UNKNOWN",
-      "currentDispositionReason": "Reviewed current controlling-source scope. Implementation and executed proof remain unestablished."
+      "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+      "productionOwners": [
+        "hash.js:registerHashPreimage/registerSetSemantics/normalizedRegisteredValue/registeredHashPreimage/hashRegistered"
+      ],
+      "unresolvedRequirements": [
+        "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+        "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+      ]
     },
     {
       "entryKind": "ATOMIC_OBLIGATION",
@@ -259625,7 +259838,19 @@
       "requiredBrowserOrPhysicalDeviceProof": [],
       "acceptanceReportField": "normativeRequirementTrace.NREQ-ee00110abd4b71eed09ff59450781609",
       "currentDisposition": "UNKNOWN",
-      "currentDispositionReason": "Reviewed current controlling-source scope. Implementation and executed proof remain unestablished."
+      "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+      "productionOwners": [
+        "project-store.js:prepareProjectWrite",
+        "project-store.js:readProjectForTransaction",
+        "project-store.js:readProjectMetadata",
+        "project-store.js:takeOperationalCommitRead/projectRowWithOperations",
+        "project-store.js:writeOperationalProject",
+        "project-store.js:writeProjectRow"
+      ],
+      "unresolvedRequirements": [
+        "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+        "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+      ]
     },
     {
       "entryKind": "ATOMIC_OBLIGATION",
@@ -259692,7 +259917,19 @@
       "requiredBrowserOrPhysicalDeviceProof": [],
       "acceptanceReportField": "normativeRequirementTrace.NREQ-5003532a6cda7a68c13be508fbf4d723",
       "currentDisposition": "UNKNOWN",
-      "currentDispositionReason": "Reviewed current controlling-source scope. Implementation and executed proof remain unestablished."
+      "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+      "productionOwners": [
+        "project-store.js:prepareProjectWrite",
+        "project-store.js:readProjectForTransaction",
+        "project-store.js:readProjectMetadata",
+        "project-store.js:takeOperationalCommitRead/projectRowWithOperations",
+        "project-store.js:writeOperationalProject",
+        "project-store.js:writeProjectRow"
+      ],
+      "unresolvedRequirements": [
+        "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+        "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+      ]
     },
     {
       "entryKind": "ATOMIC_OBLIGATION",
@@ -259826,7 +260063,19 @@
       "requiredBrowserOrPhysicalDeviceProof": [],
       "acceptanceReportField": "normativeRequirementTrace.NREQ-7c6165582b8ddae4e124c2db6ed6f966",
       "currentDisposition": "UNKNOWN",
-      "currentDispositionReason": "Reviewed current controlling-source scope. Implementation and executed proof remain unestablished."
+      "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+      "productionOwners": [
+        "project-store.js:prepareProjectWrite",
+        "project-store.js:readProjectForTransaction",
+        "project-store.js:readProjectMetadata",
+        "project-store.js:takeOperationalCommitRead/projectRowWithOperations",
+        "project-store.js:writeOperationalProject",
+        "project-store.js:writeProjectRow"
+      ],
+      "unresolvedRequirements": [
+        "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+        "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+      ]
     },
     {
       "entryKind": "ATOMIC_OBLIGATION",
@@ -259893,7 +260142,19 @@
       "requiredBrowserOrPhysicalDeviceProof": [],
       "acceptanceReportField": "normativeRequirementTrace.NREQ-c94c878ef2cf8c6a35b0985da91c0c85",
       "currentDisposition": "UNKNOWN",
-      "currentDispositionReason": "Reviewed current controlling-source scope. Implementation and executed proof remain unestablished."
+      "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+      "productionOwners": [
+        "project-store.js:prepareProjectWrite",
+        "project-store.js:readProjectForTransaction",
+        "project-store.js:readProjectMetadata",
+        "project-store.js:takeOperationalCommitRead/projectRowWithOperations",
+        "project-store.js:writeOperationalProject",
+        "project-store.js:writeProjectRow"
+      ],
+      "unresolvedRequirements": [
+        "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+        "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+      ]
     },
     {
       "entryKind": "ATOMIC_OBLIGATION",
@@ -259960,7 +260221,25 @@
       "requiredBrowserOrPhysicalDeviceProof": [],
       "acceptanceReportField": "normativeRequirementTrace.NREQ-a5be515530a4736a534a4ca3cd843377",
       "currentDisposition": "UNKNOWN",
-      "currentDispositionReason": "Reviewed current controlling-source scope. Implementation and executed proof remain unestablished."
+      "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+      "productionOwners": [
+        "project-store.js:operationalPatches/cloneOperationalPatchValue/replayOperationalPatches/applyOperationalJournal",
+        "project-store.js:prepareProjectWrite",
+        "project-store.js:readProjectForTransaction",
+        "project-store.js:readProjectMetadata",
+        "project-store.js:takeOperationalCommitRead/projectRowWithOperations",
+        "project-store.js:writeOperationalProject",
+        "project-store.js:writeProjectRow",
+        "project-store.js:recoverResponseStaging/readRecoveryProject",
+        "project-store.js:takeOperationalCommitRead",
+        "project-store.js:readProject/readProjectForTransaction",
+        "project-store.js:writeProject",
+        "project-store.js:refreshStoredProjectProjection"
+      ],
+      "unresolvedRequirements": [
+        "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+        "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+      ]
     },
     {
       "entryKind": "ATOMIC_OBLIGATION",
@@ -268328,7 +268607,16 @@
       "requiredBrowserOrPhysicalDeviceProof": [],
       "acceptanceReportField": "normativeRequirementTrace.NREQ-0cf073f54e3f44e3e65472d8c67998c0",
       "currentDisposition": "UNKNOWN",
-      "currentDispositionReason": "Reviewed current controlling-source scope. Implementation and executed proof remain unestablished."
+      "currentDispositionReason": "Bounded startup-hook assertion link proposed only; current owner/catalog admission and complete recovery behavior remain unestablished.",
+      "productionOwners": [
+        "project-store.js:recoverResponseStaging/readRecoveryProject",
+        "project-store.js:recoverResponseStaging receipt classification/persistence",
+        "response-ingestion.js:stagedResponseRecoveryStatus"
+      ],
+      "unresolvedRequirements": [
+        "Qualify the exact strict normal-owner startupRecoveryHookIsolation report and current source/authority/catalog/binding fingerprints.",
+        "Only failure-record preservation under these source hooks is linked; valid resumption, safe cleanup, native storage/browser/worker and all unlisted recovery obligations remain open. No fullCoverage."
+      ]
     },
     {
       "entryKind": "ATOMIC_OBLIGATION",
@@ -737874,7 +738162,14 @@
       "requiredBrowserOrPhysicalDeviceProof": [],
       "acceptanceReportField": "normativeRequirementTrace.NREQ-56a1f12e5f6d7b80a236d6c75239148c",
       "currentDisposition": "UNKNOWN",
-      "currentDispositionReason": "Reviewed current controlling-source scope. Implementation and executed proof remain unestablished."
+      "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+      "productionOwners": [
+        "response-ingestion.js:prepareCaptured.prepareParsedEnvelope/withEnvelopeDigests"
+      ],
+      "unresolvedRequirements": [
+        "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+        "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+      ]
     },
     {
       "normativeRequirementId": "NREQ-a37611c95c0c556036a283a272c67394",
@@ -1710998,7 +1711293,7 @@
       "implementationConformance": false
     }
   },
-  "manifestSha256": "3c9f7c5aaca386289b303c33a53b27e699c243420944ad8eafe53e237645c7f5",
+  "manifestSha256": "8ebc966038373c72f52b9bfd84f1a77324251d037adecce84f69cd0dff0cba2f",
   "storageEncoding": {
     "schema": "closed-loop-shared-context-anchor-storage/1",
     "anchors": [

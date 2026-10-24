@@ -180,13 +180,13 @@ async function operationalProofSeed(sourceOverrides,{retainedContext=false}={}){
 export async function verifyOperationalWarmProof({sourceOverrides={},caseFilter=null,fault=null}={}){
  const files=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
  const frozen={...Object.fromEntries(files.map(file=>[file,fs.readFileSync(file,'utf8')])),...sourceOverrides},sourceSha256=Object.fromEntries(files.map(file=>[file,createHash('sha256').update(frozen[file]).digest('hex')]));
- let source=frozen['project-store.js'];const anchor='function applyOperationalJournal(row,journal){';assert.equal(source.split(anchor).length,2,'WARM_PROOF_REPLAY_COUNTER_ANCHOR');source=source.replace(anchor,anchor+'globalThis.__warmColdReplays=(globalThis.__warmColdReplays||0)+1;');
+ let source=frozen['project-store.js'];const anchor='function applyOperationalJournal(row,journal,checkpointRead=null){';assert.equal(source.split(anchor).length,2,'WARM_PROOF_REPLAY_COUNTER_ANCHOR');source=source.replace(anchor,anchor+'globalThis.__warmColdReplays=(globalThis.__warmColdReplays||0)+1;');
  const custodyAnchor='async function observeProjectArtifactCustody(project){';assert.equal(source.split(custodyAnchor).length,2,'WARM_PROOF_CUSTODY_HOOK_ANCHOR');source=source.replace(custodyAnchor,custodyAnchor+'globalThis.__warmDuringCustody?.();');
  const privateReadAnchor='globalThis.closedLoopProjectStore=Object.freeze({STORAGE_IO_TIMEOUT_MS';assert.equal(source.split(privateReadAnchor).length,2,'WARM_PROOF_PRIVATE_READ_ANCHOR');source=source.replace(privateReadAnchor,'globalThis.__privateWarmRead=readProjectForTransaction;'+privateReadAnchor);
  const patchAnchor='// Prove the generated journal itself reconstructs the validated candidate.';assert.equal(source.split(patchAnchor).length,2,'WARM_PROOF_PATCH_GENERATION_ANCHOR');source=source.replace(patchAnchor,"if(globalThis.__warmCorruptGeneratedPatches)body.patches=[];\n    "+patchAnchor);
  if(fault==='omit-full-source-comparison'){const a='!verifiedValuesEqual(proof.row,row)||!verifiedValuesEqual(proof.journal,journal)';assert.equal(source.split(a).length,2,'WARM_PROOF_SOURCE_FAULT_ANCHOR');source=source.replace(a,'false');}
  if(fault==='omit-generated-replay-check'){const a='if(!verifiedValuesEqual(replayOperationalPatches(base.project,body.patches),next))';assert.equal(source.split(a).length,2,'WARM_PROOF_PATCH_FAULT_ANCHOR');source=source.replace(a,'if(false)');}
- if(fault==='reuse-returned-project'){const a='privateCommitted=copyVerifiedTree(committed);';assert.equal(source.split(a).length,2,'WARM_PROOF_PUBLIC_ALIAS_FAULT_ANCHOR');source=source.replace(a,'privateCommitted=committed;');}
+ if(fault==='reuse-returned-project'){const a='privateCommitted=copyVerifiedTree(committed),committedIntegrity=';assert.equal(source.split(a).length,2,'WARM_PROOF_PUBLIC_ALIAS_FAULT_ANCHOR');source=source.replace(a,'privateCommitted=committed,committedIntegrity=');}
  if(fault==='reuse-public-read'){const a='const committedRead=sourceProof&&sourceProof.readPurpose!==STARTUP_RECOVERY_CAPTURE?takeOperationalCommitRead(row,journal,sourceProof.readPurpose):null;if(!sourceProof||sourceProof.readPurpose===STARTUP_RECOVERY_CAPTURE)recentOperationalCommitRead=null;';assert.equal(source.split(a).length,2,'WARM_PROOF_COLD_FAULT_ANCHOR');source=source.replace(a,'const committedRead=takeOperationalCommitRead(row,journal);if(committedRead&&!sourceProof)return committedRead.project;');}
  const sources={...frozen,'project-store.js':source},{seed,project,text}=await operationalProofSeed(sources),jobId=project.job.JOB_ID,rows=new Map([...seed.rows].map(([name,map])=>[name,new Map([...map].map(([key,value])=>[key,seed.copy(value)]))])),cases=[];
  const scenarios=['valid-control','one-use-only','same-digest-canonical-payload','same-digest-journal-payload','returned-project-mutation','returned-project-mutation-during-custody','other-project','public-read-remains-cold','cold-reload-remains-cold','failed-write-before-commit','failed-write-during-journal','wrong-generated-patches','corrupt-retained-project-part'];
@@ -196,11 +196,11 @@ export async function verifyOperationalWarmProof({sourceOverrides={},caseFilter=
   const warm=copy(current);engine.addHistory(warm,'SYNTHETIC_WARM_COMMIT',{scope:'warm command test only'});current=await store.writeProject(warm,{operational:true,expectedProjectRevision:current.revision,expectedStateSha256:current.projectSha256});const storedCurrent=copy(current),history=await store.historyList(jobId),beforeHash=current.projectSha256;
   const cold=()=>Number(runtime.__warmColdReplays||0),before=cold(),next=copy(storedCurrent);engine.addHistory(next,'SYNTHETIC_NEXT_COMMAND',{scope:'warm command test only'});const view=copy({activeStage:1,activeView:'Workflow',drafts:{'#response-note':{value:caseId}},scrollX:0,scrollY:19});
   const execute=()=>command==='checkpoint'?store.saveCheckpoint(jobId,{expectedProjectRevision:storedCurrent.revision,expectedStateSha256:beforeHash,view}):store.writeProject(next,{operational:true,expectedProjectRevision:storedCurrent.revision,expectedStateSha256:beforeHash,historyView:view});
-  let expectedError=null,expectedCold=false;
+  let expectedError=null,expectedCold=false,duringCustodyMutations=0;
   if(scenario==='same-digest-canonical-payload'){r.rows.get('projects').get(jobId).project.job.JOB_TITLE='Different canonical bytes';expectedError='PROJECT_HASH_MISMATCH';}
   if(scenario==='same-digest-journal-payload'){const patch=r.rows.get('meta').get('responseOperations:'+jobId).value.patches.find(p=>!p.remove);assert.ok(patch);patch.value={different:'journal bytes'};expectedError='OPERATIONAL_STATE_INTEGRITY_FAILED';}
   if(scenario==='returned-project-mutation')current.projectData.rawResponses.at(-1).completeRawResponse='Uncommitted caller corruption';
-  if(scenario==='returned-project-mutation-during-custody')runtime.__warmDuringCustody=()=>{delete runtime.__warmDuringCustody;current.projectData.rawResponses.at(-1).completeRawResponse='Caller mutation after proof consumption';};
+  if(scenario==='returned-project-mutation-during-custody')runtime.__warmDuringCustody=()=>{delete runtime.__warmDuringCustody;duringCustodyMutations++;current.projectData.rawResponses.at(-1).completeRawResponse='Caller mutation after proof consumption';};
   if(scenario==='other-project'){await store.saveCheckpoint(other.job.JOB_ID,{expectedProjectRevision:other.revision,expectedStateSha256:other.projectSha256,view:copy({...view,drafts:{}})});assert.ok(cold()>before,'WARM_PROOF_OTHER_PROJECT_COLD_ORACLE');expectedCold=true;}
   if(scenario==='public-read-remains-cold'){const read=await store.readProject(jobId);assert.equal(read.projectSha256,beforeHash);assert.ok(cold()>before,'WARM_PROOF_PUBLIC_COLD_ORACLE');expectedCold=true;}
   if(scenario==='cold-reload-remains-cold'){const fresh=projectStoreRuntime({sourceOverrides:sources});for(const [name,map]of r.rows)fresh.rows.set(name,new Map([...map].map(([key,value])=>[key,fresh.copy(value)])));const read=await fresh.store.readProject(jobId);assert.equal(read.projectSha256,beforeHash);assert.ok(fresh.runtime.__warmColdReplays>0,'WARM_PROOF_RELOAD_COLD_ORACLE');}
@@ -208,7 +208,17 @@ export async function verifyOperationalWarmProof({sourceOverrides={},caseFilter=
   if(scenario==='wrong-generated-patches'){const beforeRows=copy([...r.rows].map(([name,map])=>[name,[...map]]));runtime.__warmCorruptGeneratedPatches=true;await assert.rejects(()=>store.writeProject(next,{operational:true,expectedProjectRevision:storedCurrent.revision,expectedStateSha256:beforeHash}),e=>e.code==='OPERATIONAL_STATE_INTEGRITY_FAILED','WARM_PROOF_WRONG_PATCH_REJECTION_ORACLE');delete runtime.__warmCorruptGeneratedPatches;assert.deepEqual(copy([...r.rows].map(([name,map])=>[name,[...map]])),beforeRows,'WARM_PROOF_WRONG_PATCH_NO_COMMIT_ORACLE');expectedCold=true;}
   if(scenario==='corrupt-retained-project-part'){const part=history.entries.findLast(e=>e.projectSha256===beforeHash).projectParts.entries.find(e=>e.path.includes('rawResponses')&&e.path.at(-1)==='completeRawResponse');assert.ok(part);const row=r.rows.get('meta').get('recovery:'+jobId+':bytes:'+part.sha256);row.value.blob=new Blob(['X'.repeat(row.value.blob.size)]);expectedError='HISTORY_FILE_INTEGRITY_FAILED';}
   const coldBeforeCommand=cold();if(expectedError){await assert.rejects(execute,e=>e.code===expectedError,'WARM_PROOF_REJECTION_ORACLE '+caseId);if(scenario.includes('same-digest')){assert.ok(cold()>coldBeforeCommand||expectedError==='PROJECT_HASH_MISMATCH','WARM_PROOF_COLD_INTEGRITY_ROUTE_ORACLE');assert.ok((await store.listQuarantinedProjects()).some(row=>row.jobId===jobId),'WARM_PROOF_CORRUPT_ORIGINAL_RETAINED_ORACLE');}cases.push({caseId,result:'PASS',error:expectedError});continue;}
-  try{await execute();}catch(error){if(scenario==='returned-project-mutation-during-custody'&&error.code==='OPERATIONAL_OWNERSHIP_VIOLATION')assert.fail('WARM_PROOF_RETURNED_ALIAS_ISOLATION_ORACLE '+caseId+': '+error.code);throw error;}const commandReplays=cold()-coldBeforeCommand;if(expectedCold)assert.ok(commandReplays>0,'WARM_PROOF_FALLBACK_COLD_ORACLE '+caseId);else assert.equal(commandReplays,0,'WARM_PROOF_EXACT_REUSE_ORACLE '+caseId);
+  const sharedAliasFault=fault==='reuse-returned-project'&&command==='operational'&&scenario==='returned-project-mutation-during-custody',beforeAliasFaultRows=sharedAliasFault?copy([...r.rows].map(([name,map])=>[name,[...map]])):null;
+  try{await execute();}catch(error){
+   if(scenario==='returned-project-mutation-during-custody'&&error.code==='OPERATIONAL_OWNERSHIP_VIOLATION')assert.fail('WARM_PROOF_RETURNED_ALIAS_ISOLATION_ORACLE '+caseId+': '+error.code);
+   // The unchanged alias-isolation fault now meets the earlier custody boundary.
+   // Only that exact fault, actual callback and refusal may name the old oracle.
+   if(sharedAliasFault&&error.code==='STALE_PROJECT_REVISION'&&error.message==='Project or response data changed after verification. The newer state is preserved.'){
+    assert.equal(duringCustodyMutations,1,'WARM_PROOF_SHARED_ALIAS_MUTATION_REACHED '+caseId);assert.equal(current.projectData.rawResponses.at(-1).completeRawResponse,'Caller mutation after proof consumption','WARM_PROOF_SHARED_ALIAS_CURRENT_VALUE '+caseId);assert.deepEqual(copy([...r.rows].map(([name,map])=>[name,[...map]])),beforeAliasFaultRows,'WARM_PROOF_SHARED_ALIAS_REFUSAL_PRESERVES_ROWS '+caseId);
+    assert.fail('WARM_PROOF_RETURNED_ALIAS_ISOLATION_ORACLE '+caseId+': '+error.code);
+   }
+   throw error;
+  }const commandReplays=cold()-coldBeforeCommand;if(expectedCold)assert.ok(commandReplays>0,'WARM_PROOF_FALLBACK_COLD_ORACLE '+caseId);else assert.equal(commandReplays,0,'WARM_PROOF_EXACT_REUSE_ORACLE '+caseId);
   if(scenario==='one-use-only'){const latest=command==='operational'?next:storedCurrent,hash=command==='operational'?r.rows.get('meta').get('responseOperations:'+jobId).value.projectSha256:beforeHash,first=cold();await store.saveCheckpoint(jobId,{expectedProjectRevision:latest.revision,expectedStateSha256:hash,view:copy({...view,scrollY:20})});assert.equal(cold(),first,'WARM_PROOF_NEW_COMMIT_REPLACES_SINGLE_PROOF_ORACLE');const once=cold();await runtime.__privateWarmRead(jobId);assert.equal(cold(),once,'WARM_PROOF_FIRST_PRIVATE_READ_REUSES_ORACLE');await runtime.__privateWarmRead(jobId);assert.ok(cold()>once,'WARM_PROOF_CONSUMED_ONCE_ORACLE');}
   const savedHistory=await store.historyList(jobId);let retainedView;try{retainedView=await store.readHistoryView(jobId,savedHistory.activeId);}catch(error){assert.fail('WARM_PROOF_RETAINED_CHECKPOINT_INTEGRITY_ORACLE '+caseId+': '+error.code);}assert.equal(retainedView.drafts['#response-note'].value,caseId,'WARM_PROOF_RETAINED_VIEW_ORACLE');
   const reloaded=await store.readProject(jobId);assert.equal(reloaded.projectData.rawResponses.at(-1).completeRawResponse,text,'WARM_PROOF_EXACT_RAW_RELOAD_ORACLE');assert.equal(reloaded.revision,storedCurrent.revision,'WARM_PROOF_CANONICAL_REVISION_ORACLE');cases.push({caseId,result:'PASS',commandColdReplays:commandReplays,exactRawBytes:true,failedWritePreserved:scenario.startsWith('failed-write')||scenario==='wrong-generated-patches'});
@@ -274,7 +284,7 @@ export async function verifyCanonicalCommitWarmProof({sourceOverrides={},fault=n
  let source=frozen['project-store.js'];const replay='function applyOperationalJournal(row,journal,checkpointRead=null){',custody='async function observeProjectArtifactCustody(project){',expose='globalThis.closedLoopProjectStore=Object.freeze({STORAGE_IO_TIMEOUT_MS';
  for(const anchor of [replay,custody,expose])assert.equal(source.split(anchor).length,2,'CANONICAL_WARM_SOURCE_ANCHOR_ORACLE');
  source=source.replace(replay,replay+'globalThis.__canonicalWarmColdReplays=(globalThis.__canonicalWarmColdReplays||0)+1;').replace(custody,custody+'globalThis.__canonicalWarmDuringCustody?.();').replace(expose,'globalThis.__canonicalWarmRead=readProjectForTransaction;globalThis.__canonicalWarmProofExists=()=>Boolean(recentOperationalCommitRead);'+expose);
- if(fault==='omit-canonical-proof'){const anchor='if(committedRow){const privateCommitted=copyVerifiedTree(next);';assert.equal(source.split(anchor).length,2,'CANONICAL_WARM_PREBEHAVIOR_ANCHOR');source=source.replace(anchor,'if(false){const privateCommitted=copyVerifiedTree(next);');}
+ if(fault==='omit-canonical-proof'){const anchor='if(committedRow){const privateCommitted=copyVerifiedTree(next),committedIntegrity=';assert.equal(source.split(anchor).length,2,'CANONICAL_WARM_PREBEHAVIOR_ANCHOR');source=source.replace(anchor,'if(false){const privateCommitted=copyVerifiedTree(next),committedIntegrity=');}
  const sources={...frozen,'project-store.js':source},seed=await operationalProofSeed(sources),snapshot=new Map([...seed.seed.rows].map(([name,rows])=>[name,new Map([...rows].map(([key,value])=>[key,seed.copy(value)]))])),jobId=seed.project.job.JOB_ID,cases=[];
  for(const name of ['valid-control','one-use-only','same-digest-canonical-payload','unexpected-journal','returned-project-mutation','returned-project-mutation-during-custody','public-read-remains-cold','cold-reload-remains-cold','failed-write-before-commit','failed-write-during-project-write']){
   if(caseFilter&&!caseFilter.includes(name))continue;
@@ -316,7 +326,7 @@ export async function verifyStartupSelectedReadReuse({sourceOverrides={},caseFil
  source=source.replace('const issues=[],engine=globalThis.closedLoopWorkflowEngine,schemaApi=globalThis.closedLoopWorkflowSchema;','globalThis.__startupSelectedDerived=(globalThis.__startupSelectedDerived||0)+1;const issues=[],engine=globalThis.closedLoopWorkflowEngine,schemaApi=globalThis.closedLoopWorkflowSchema;');
  if(fault==='repeat-cold-read'){const anchor='readProjectForTransaction(jobId,STARTUP_REFRESH_READ)';assert.equal(source.split(anchor).length,2);source=source.replace(anchor,'readProjectForTransaction(jobId)');}
  if(fault==='repeat-static-validation'){const anchor='currentDefinition&&unchangedVerifiedProject(canonicalReadIntegrity,project,expectedStateSha256)';assert.equal(source.split(anchor).length,2);source=source.replace(anchor,'false');}
- if(fault==='capture-after-custody'){const anchor='const canonicalReadIntegrity=readPurpose===STARTUP_REFRESH_READ&&sourceProof.current?verifiedProjectIntegrity(project,project.projectSha256):null;\n await observeProjectArtifactCustody(project);';assert.equal(source.split(anchor).length,2);source=source.replace(anchor,'await observeProjectArtifactCustody(project);const canonicalReadIntegrity=readPurpose===STARTUP_REFRESH_READ&&sourceProof.current?verifiedProjectIntegrity(project,project.projectSha256):null;');}
+ if(fault==='capture-after-custody'){const capture=' const canonicalReadIntegrity=readPurpose===STARTUP_REFRESH_READ&&sourceProof.current?verifiedProjectIntegrity(project,project.projectSha256):null;\n',custody='\n await observeProjectArtifactCustody(project);\n';assert.equal(source.split(capture).length,2);assert.equal(source.split(custody).length,2);source=source.replace(capture,'').replace(custody,custody+capture);}
  source=source.replace('function historyProjectDigests(project){','function historyProjectDigests(project){globalThis.__startupMigrationPairedDigests=(globalThis.__startupMigrationPairedDigests||0)+1;(globalThis.__startupMigrationDigestInputs||=[]).push({jobId:project.job.JOB_ID,revision:project.revision});').replace('function historyWorkSha256(project){','function historyWorkSha256(project){globalThis.__startupMigrationWorkDigests=(globalThis.__startupMigrationWorkDigests||0)+1;');
  const sources={...frozen,'project-store.js':source},base=projectStoreRuntime({sourceOverrides:sources}),p=await base.store.createProject({commandId:'SYNTHETIC-STARTUP-SELECTED'}),other=await base.store.createProject({commandId:'SYNTHETIC-STARTUP-OTHER'}),jobId=p.job.JOB_ID,otherId=other.job.JOB_ID;
  await base.store.metaPut('selectedProject',jobId);
@@ -384,4 +394,209 @@ export async function verifyStartupSelectedReadReuse({sourceOverrides={},caseFil
   cases.push({caseId:name,result:'PASS',recoveryColdReads:recoveryReads,recoveryFullValidationCalls,...(name==='migration'?{verifiedMigrationWriteReused:runtime.__startupMigrationWriterFull===0}:{}),totalColdReads:cold(),fullValidationCalls:runtime.__startupSelectedFull,derivedValidationCalls:runtime.__startupSelectedDerived,currentProjectionChecked:runtime.__startupSelectedProjectionCalls>0,...(artifactId?{currentCustody:engine.timingArtifactAvailability(result,artifactId)}:{})});
  }
  return {result:'PASS',actualBrowser:false,sourceSha256,caseCount:cases.length,cases,boundary:'Production recovery, canonical reads, custody, migration and projection through isolated transaction adapter; no browser latency claim'};
+}
+
+// Persistent regressions for the two independently reproduced startup hook
+// faults. These are genuine public recovery/read owners through the isolated
+// transaction adapter, not native-browser or whole-clause execution evidence.
+export async function verifyStartupRecoveryHookIsolation({sourceOverrides={},caseFilter=null,fault=null}={}){
+ const files=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'],frozen={...Object.fromEntries(files.map(file=>[file,fs.readFileSync(file,'utf8')])),...sourceOverrides},sourceSha256=Object.fromEntries(files.map(file=>[file,createHash('sha256').update(frozen[file]).digest('hex')]));let source=frozen['project-store.js'];
+ if(fault){
+  assert(['capture-after-context-hook','source-recovery-input-sync','source-recovery-input-queued'].includes(fault),'STARTUP_RECOVERY_HOOK_KNOWN_FAULT_ORACLE');
+  const start='const readRecoveryProject=async owner=>{',end='\n };';assert.equal(source.split(start).length,2,'STARTUP_RECOVERY_HOOK_SOURCE_ANCHOR_ORACLE');const offset=source.indexOf(start),finish=source.indexOf(end,offset);assert(finish>offset,'STARTUP_RECOVERY_HOOK_SOURCE_END_ORACLE');let body=source.slice(offset,finish);
+  const replace=(before,after)=>{assert.equal(body.split(before).length,2,'STARTUP_RECOVERY_HOOK_FAULT_ANCHOR_ORACLE '+fault);body=body.replace(before,after);};
+  if(fault==='capture-after-context-hook'){
+   replace('const privateProject=copyVerifiedTree(project),integrity=verifiedProjectIntegrity(privateProject,privateProject.projectSha256),recoveryProject=copyVerifiedTree(project);','const privateProject=copyVerifiedTree(project),recoveryProject=copyVerifiedTree(project);');
+   const hook='globalThis.closedLoopPromptEngine?.copyRetainedPromptContextFiles?.(project,privateProject);';replace(hook,hook+'const integrity=verifiedProjectIntegrity(privateProject,privateProject.projectSha256);');
+  }else replace('return recoveryProject;','return project;');
+  source=source.slice(0,offset)+body+source.slice(finish);
+ }
+ const cases=[],names=['healthy-hook','target-mutation','source-sync','source-queued'];
+ for(const caseId of names){
+  if(caseFilter&&!caseFilter.includes(caseId))continue;
+  const r=projectStoreRuntime({storageWorker:false,sourceOverrides:{...frozen,'project-store.js':source}});await r.store.ready;
+  const project=await r.store.createProject({commandId:'SYNTHETIC-STARTUP-HOOK-'+caseId}),jobId=project.job.JOB_ID;await r.store.metaPut('selectedProject',jobId);
+  const text='{"synthetic":"exact staged startup hook bytes"}',sourceInputSha256=createHash('sha256').update(text).digest('hex'),identity={instructionId:'SYNTHETIC-UNISSUED-PROMPT',bodySha256:'1'.repeat(64),contractSha256:'2'.repeat(64),contextSignature:'3'.repeat(64)};
+  const staged=await r.store.stageResponseFile({jobId,stage:1,blob:new Blob([text],{type:'application/json'}),rawFilename:'startup-hook.json',mediaType:'application/json',promptIdentity:identity,packageId:'SYNTHETIC-PACKAGE',operationReservationId:'SYNTHETIC-RESERVATION',challengeNonce:'SYNTHETIC-NONCE'});
+  assert.equal(staged.sha256,sourceInputSha256,'STARTUP_RECOVERY_HOOK_INPUT_HASH_ORACLE '+caseId);
+  // Existing raw-recovery fixture pattern: delete only staging metadata while
+  // retaining the exact original RAW archive and its identity/descriptor.
+  assert(r.rows.get('meta').delete('responseStaging:'+jobId+':'+staged.stagingId),'STARTUP_RECOVERY_HOOK_STAGED_METADATA_ORACLE '+caseId);
+  const before=await r.store.readProject(jobId);assert.equal(before.projectData.rawResponses.length,0,'STARTUP_RECOVERY_HOOK_UNRECORDED_FIXTURE_ORACLE '+caseId);
+  const canonicalBefore=r.copy(r.rows.get('projects').get(jobId)),artifactsBefore=new Map([...r.rows.get('artifacts')].map(([key,value])=>[key,r.copy(value)])),original=r.runtime.closedLoopPromptEngine;let hookCalls=0,mutations=0;
+  r.runtime.closedLoopPromptEngine=Object.freeze({...original,copyRetainedPromptContextFiles(from,to,...rest){
+   const result=Reflect.apply(original.copyRetainedPromptContextFiles,original,[from,to,...rest]);
+   if(from?.job?.JOB_ID===jobId&&from!==to&&from?.projectData?.rawResponses){
+    hookCalls++;
+    if(caseId==='target-mutation'){to.stages[1].responseDraft='SYNTHETIC-TARGET-HOOK-MUTATION';mutations++;}
+    if(caseId==='source-sync'||caseId==='source-queued'){
+     const inject=()=>{from.projectData.rawResponses.push(r.copy({jobId,stage:1,sha256:staged.sha256,completeRawResponse:text,promptInstructionId:identity.instructionId,promptBodySha256:identity.bodySha256,promptContractSha256:identity.contractSha256,promptContextSignature:identity.contextSignature,transport:{packageId:staged.packageId,operationReservationId:staged.operationReservationId,challengeNonce:staged.challengeNonce}}));mutations++;};
+     if(caseId==='source-queued')queueMicrotask(inject);else inject();
+    }
+   }
+   return result;
+  }});
+  let recovered;try{recovered=await r.store.recoverResponseStaging();}finally{r.runtime.closedLoopPromptEngine=original;}
+  assert.equal(hookCalls,1,'STARTUP_RECOVERY_HOOK_COUNT_ORACLE '+caseId);assert.equal(mutations,caseId==='healthy-hook'?0:1,'STARTUP_RECOVERY_HOOK_MUTATION_EXECUTED_ORACLE '+caseId);
+  const receipt=recovered.find(row=>row.stagingId===staged.stagingId),durable=(await r.store.listResponseStagingRecovery(jobId)).find(row=>row.stagingId===staged.stagingId);assert(receipt&&durable,'STARTUP_RECOVERY_HOOK_RECEIPTS_PRESENT_ORACLE '+caseId);
+  const selected=await r.store.readProject(jobId,{refreshProjection:true});
+  assert.equal(selected.stages[1].responseDraft,before.stages[1].responseDraft,'STARTUP_RECOVERY_HOOK_PROJECT_ORACLE '+caseId);
+  assert.equal(selected.projectSha256,r.store.projectSha256(selected),'STARTUP_RECOVERY_HOOK_DIGEST_ORACLE '+caseId);
+  assert.equal(selected.projectData.rawResponses.length,0,'STARTUP_RECOVERY_HOOK_CANONICAL_RAW_ORACLE '+caseId);
+  for(const row of [receipt,durable]){assert.equal(row.outcome,'BLOCKED','STARTUP_RECOVERY_HOOK_RECEIPT_ORACLE '+caseId);assert.equal(row.code,'RESPONSE_STAGE_PROMPT_IDENTITY_MISMATCH','STARTUP_RECOVERY_HOOK_RECEIPT_CODE_ORACLE '+caseId);}
+  const cold=await r.store.readProject(jobId);assert.equal(cold.projectSha256,r.store.projectSha256(cold),'STARTUP_RECOVERY_HOOK_COLD_DIGEST_ORACLE '+caseId);assert.equal(cold.projectSha256,selected.projectSha256,'STARTUP_RECOVERY_HOOK_COLD_PARITY_ORACLE '+caseId);assert.equal(cold.stages[1].responseDraft,before.stages[1].responseDraft,'STARTUP_RECOVERY_HOOK_COLD_DRAFT_ORACLE '+caseId);
+  const archive=await r.store.getArtifact('RAW-'+staged.stagingId);assert(archive&&archive.jobId===jobId&&archive.sha256===sourceInputSha256,'STARTUP_RECOVERY_HOOK_ARCHIVE_IDENTITY_ORACLE '+caseId);assert.equal(await archive.blob.text(),text,'STARTUP_RECOVERY_HOOK_ARCHIVE_BYTES_ORACLE '+caseId);
+  assert.deepEqual(r.rows.get('projects').get(jobId),canonicalBefore,'STARTUP_RECOVERY_HOOK_CANONICAL_ROW_ORACLE '+caseId);assert.deepEqual(r.rows.get('artifacts'),artifactsBefore,'STARTUP_RECOVERY_HOOK_ARTIFACT_ROWS_ORACLE '+caseId);
+  cases.push({caseId,result:'PASS',hookCalls,mutations,returnedOutcome:receipt.outcome,returnedCode:receipt.code,durableOutcome:durable.outcome,durableCode:durable.code,canonicalRawResponseCount:selected.projectData.rawResponses.length,projectDigestAuthentic:true,returnedDraftMatchesPersisted:true,coldReadMatches:true,canonicalRowUnchanged:true,artifactRowsUnchanged:true,exactRawArchive:true,sourceInputSha256});
+ }
+ return {schema:'startup-recovery-hook-isolation/1',checkId:'store.startup-recovery-hook-isolation',result:'PASS',synthetic:true,actualBrowser:false,nativeIndexedDB:false,actualStorageAdapter:true,actualStorageWorker:false,fullClauseProof:false,sourceSha256,caseCount:cases.length,cases,boundary:'Public selected recovery and refreshed/cold reads through isolated transaction adapter; no native browser or whole-clause claim'};
+}
+
+// A no-op save may preserve the measured source identity only when its actual
+// context-copy destination is still that value, including across persistence.
+export async function verifyCanonicalNoopHookIsolation({sourceOverrides={},caseFilter=null,fault=null}={}){
+ const files=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'],frozen={...Object.fromEntries(files.map(file=>[file,fs.readFileSync(file,'utf8')])),...sourceOverrides},sourceSha256=Object.fromEntries(files.map(file=>[file,createHash('sha256').update(frozen[file]).digest('hex')]));let source=frozen['project-store.js'];
+ if(fault){
+  assert(['omit-target-value-binding','capture-after-prompt-persistence','omit-final-prepared-clone-check'].includes(fault),'CANONICAL_NOOP_HOOK_KNOWN_FAULT_ORACLE');
+  const replace=(before,after)=>{assert.equal(source.split(before).length,2,'CANONICAL_NOOP_HOOK_FAULT_ANCHOR_ORACLE '+fault);source=source.replace(before,after);};
+  if(fault==='omit-target-value-binding')replace("    if(!verifiedValuesEqual(canonicalProject(candidateProof.snapshot),canonicalProject(next)))throw storageError('The prepared project changed before commit. Prepare the current candidate again.','STALE_PROJECT_REVISION');\n",'');
+  if(fault==='capture-after-prompt-persistence')replace('    const integrity=verifiedProjectIntegrity(next,candidateDigest);await persistProjectPromptFiles(next);','    await persistProjectPromptFiles(next);const integrity=verifiedProjectIntegrity(next,candidateDigest);');
+  if(fault==='omit-final-prepared-clone-check')replace('if(skipUnchanged&&prior?.projectSha256===(preparedDigest||projectSha256(next))){if(preparedHistory)await commitHistory(tx,preparedHistory);assertPreparedClone();next.projectSha256=prior.projectSha256;','if(skipUnchanged&&prior?.projectSha256===(preparedDigest||projectSha256(next))){if(preparedHistory)await commitHistory(tx,preparedHistory);next.projectSha256=prior.projectSha256;');
+ }
+ const cases=[];
+ for(const caseId of ['healthy-hook','target-sync','target-queued','final-prepared-clone']){
+  if(caseFilter&&!caseFilter.includes(caseId))continue;
+  const r=projectStoreRuntime({storageWorker:false,sourceOverrides:{...frozen,'project-store.js':source}});await r.store.ready;
+  let current=await r.store.createProject({commandId:'SYNTHETIC-CANONICAL-NOOP-'+caseId});current=await r.store.readProject(current.job.JOB_ID);
+  const input=r.copy(current),jobId=current.job.JOB_ID,title=current.job.JOB_TITLE,digest=current.projectSha256,prompt=r.runtime.closedLoopPromptEngine,before=r.copy([...r.rows].map(([name,map])=>[name,[...map]])),canonicalBefore=r.copy(r.rows.get('projects').get(jobId)),journalBefore=r.copy(r.rows.get('meta').get('responseOperations:'+jobId)),historyBefore=r.copy(r.rows.get('meta').get('recovery:'+jobId));
+  let candidate=null,target=null,candidateCaptures=0,targetCalls=0,finalCloneCalls=0,mutations=0,returned=null,error=null;
+  const mutate=project=>{project.job.JOB_TITLE='SYNTHETIC UNCOMMITTED NOOP TITLE';mutations++;};
+  r.runtime.closedLoopPromptEngine=Object.freeze({...prompt,copyRetainedPromptContextFiles(from,to,...rest){
+   const result=Reflect.apply(prompt.copyRetainedPromptContextFiles,prompt,[from,to,...rest]);
+   if(from===input){candidate=to;candidateCaptures++;}
+   else if(from===candidate&&!target){target=to;targetCalls++;if(caseId==='target-sync')mutate(to);if(caseId==='target-queued')queueMicrotask(()=>mutate(to));}
+   else if(from===target){finalCloneCalls++;if(caseId==='final-prepared-clone')mutate(to);}
+   return result;
+  }});
+  try{returned=await r.store.writeProject(input,{skipUnchanged:true,expectedProjectRevision:current.revision,expectedStateSha256:digest,historyView:r.copy({activeStage:1,activeView:'Workflow',drafts:{'#response-note':{value:caseId}},scrollX:0,scrollY:29})});}catch(caught){error=caught;}finally{r.runtime.closedLoopPromptEngine=prompt;}
+  assert.equal(candidateCaptures,1,'CANONICAL_NOOP_HOOK_CANDIDATE_CAPTURE_ORACLE '+caseId);assert.equal(targetCalls,1,'CANONICAL_NOOP_HOOK_TARGET_COPY_ORACLE '+caseId);assert.equal(mutations,caseId==='healthy-hook'?0:1,'CANONICAL_NOOP_HOOK_MUTATION_REACHED_ORACLE '+caseId);
+  assert.equal(input.job.JOB_TITLE,title,'CANONICAL_NOOP_HOOK_PUBLIC_INPUT_ORACLE '+caseId);assert.equal(candidate.job.JOB_TITLE,title,'CANONICAL_NOOP_HOOK_CANDIDATE_INPUT_ORACLE '+caseId);
+  const rejected=caseId!=='healthy-hook';
+  if(rejected){assert.equal(error?.code,'STALE_PROJECT_REVISION','CANONICAL_NOOP_HOOK_REJECTION_ORACLE '+caseId);assert.equal(returned,null,'CANONICAL_NOOP_HOOK_NO_BAD_RETURN_ORACLE '+caseId);assert.deepEqual(r.copy([...r.rows].map(([name,map])=>[name,[...map]])),before,'CANONICAL_NOOP_HOOK_DURABLE_ROLLBACK_ORACLE '+caseId);}
+  else{assert.equal(error,null,'CANONICAL_NOOP_HOOK_HEALTHY_OWNER_ORACLE');assert.equal(returned?.projectSha256,r.store.projectSha256(returned),'CANONICAL_NOOP_HOOK_RETURNED_DIGEST_ORACLE');assert.equal(returned.projectSha256,digest);assert.equal(returned.job.JOB_TITLE,title);}
+  assert.equal(finalCloneCalls,['healthy-hook','final-prepared-clone'].includes(caseId)?1:0,'CANONICAL_NOOP_HOOK_FINAL_CLONE_ORACLE '+caseId);
+  assert.deepEqual(r.rows.get('projects').get(jobId),canonicalBefore,'CANONICAL_NOOP_HOOK_CANONICAL_ROW_ORACLE '+caseId);assert.deepEqual(r.rows.get('meta').get('responseOperations:'+jobId),journalBefore,'CANONICAL_NOOP_HOOK_JOURNAL_ORACLE '+caseId);
+  const historyAfter=r.rows.get('meta').get('recovery:'+jobId);assert.equal(historyAfter.value.title,String(title||''),'CANONICAL_NOOP_HOOK_HISTORY_TITLE_ORACLE '+caseId);assert.equal(historyAfter.value.generation,historyBefore.value.generation+(rejected?0:1),'CANONICAL_NOOP_HOOK_HISTORY_GENERATION_ORACLE '+caseId);
+  const cold=await r.store.readProject(jobId);assert.equal(cold.projectSha256,r.store.projectSha256(cold),'CANONICAL_NOOP_HOOK_COLD_DIGEST_ORACLE '+caseId);assert.equal(cold.projectSha256,digest);assert.equal(cold.job.JOB_TITLE,title);
+  cases.push({caseId,result:'PASS',candidateCaptures,targetCalls,finalCloneCalls,mutations,rejected,errorCode:error?.code||null,noIncorrectReturnedValue:true,sourceInputUnchanged:true,canonicalRowUnchanged:true,journalRowUnchanged:true,historyTitleAuthentic:true,historyGenerationDelta:historyAfter.value.generation-historyBefore.value.generation,rejectionStoresUnchanged:rejected,coldReadAuthentic:true,sourceProjectSha256:digest});
+ }
+ return {schema:'canonical-noop-hook-isolation/1',checkId:'store.canonical-noop-hook-isolation',result:'PASS',synthetic:true,actualBrowser:false,nativeIndexedDB:false,actualStorageAdapter:true,actualStorageWorker:false,fullClauseProof:false,sourceSha256,caseCount:cases.length,cases,boundary:'Public canonical no-op save and exact durable History through isolated transaction adapter; no native browser or whole-clause claim'};
+}
+
+// The synthetic adapter completes its actual put before the retained hook
+// target changes. Native completion coverage remains a separate owner.
+export async function verifyCanonicalCompletionHookIsolation({sourceOverrides={},caseFilter=null,fault=null}={}){
+ const files=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'],frozen={...Object.fromEntries(files.map(file=>[file,fs.readFileSync(file,'utf8')])),...sourceOverrides},sourceSha256=Object.fromEntries(files.map(file=>[file,createHash('sha256').update(frozen[file]).digest('hex')]));let source=frozen['project-store.js'];
+ if(fault==='omit-completion-return-binding'){assert.equal(source.split('assertCommittedReturn();').length,3,'CANONICAL_COMPLETION_HOOK_FAULT_ANCHOR');source=source.replaceAll('assertCommittedReturn();','');}
+ else if(fault==='omit-context-source-return-binding'){const anchor='globalThis.closedLoopPromptEngine?.copyRetainedPromptContextFiles?.(next,privateCommitted);assertCommittedReturn();recentOperationalCommitRead=';assert.equal(source.split(anchor).length,2,'CANONICAL_COMPLETION_SOURCE_FAULT_ANCHOR');source=source.replace(anchor,'globalThis.closedLoopPromptEngine?.copyRetainedPromptContextFiles?.(next,privateCommitted);recentOperationalCommitRead=');}
+ else assert.equal(fault,null,'CANONICAL_COMPLETION_KNOWN_FAULT_ORACLE');
+ const cases=[],names=['revision-healthy','noop-healthy','revision-completion-mutation','noop-completion-mutation','warm-source-mutation','warm-target-mutation'];
+ for(const caseId of names){
+  if(caseFilter&&!caseFilter.includes(caseId))continue;
+  const r=projectStoreRuntime({storageWorker:false,sourceOverrides:{...frozen,'project-store.js':source}});await r.store.ready;
+  let current=await r.store.createProject({commandId:'SYNTHETIC-CANONICAL-COMPLETE-'+caseId});current=await r.store.readProject(current.job.JOB_ID);
+  const noop=caseId.startsWith('noop-'),jobId=current.job.JOB_ID,input=r.copy(current),title=current.job.JOB_TITLE,prompt=r.runtime.closedLoopPromptEngine,open=r.runtime.openStorageTransaction;if(!noop)r.engine.addHistory(input,'SYNTHETIC_CANONICAL_COMPLETION_PREFIX',{synthetic:true});
+  let candidate=null,preparedTarget=null,writerTarget=null,completionCalls=0,putCalls=0,warmHookCalls=0,mutations=0,completed=false,returned=null,error=null,durableAtCompletion=null;
+  const mutate=project=>{project.job.JOB_TITLE='SYNTHETIC POSTCOMPLETION TITLE';mutations++;};
+  r.runtime.closedLoopPromptEngine=Object.freeze({...prompt,copyRetainedPromptContextFiles(from,to,...rest){
+   const result=Reflect.apply(prompt.copyRetainedPromptContextFiles,prompt,[from,to,...rest]);
+   if(from===input)candidate=to;else if(from===candidate&&!preparedTarget)preparedTarget=to;else if(from===preparedTarget)writerTarget=to;
+   if(completed){warmHookCalls++;if(caseId==='warm-source-mutation')mutate(from);if(caseId==='warm-target-mutation')mutate(to);}
+   return result;
+  }});
+  r.runtime.openStorageTransaction=async(names,mode)=>{
+   const tx=await Reflect.apply(open,r.runtime,[names,mode]),objectStore=tx.objectStore,commit=tx.commit;let actualPut=false;
+   tx.objectStore=name=>{const store=Reflect.apply(objectStore,tx,[name]);if(name!=='projects')return store;const put=store.put;return {...store,put(row){if(!completed&&mode==='readwrite'&&row.jobId===jobId&&row.project){putCalls++;actualPut=true;assert.equal(row.project,writerTarget,'CANONICAL_COMPLETION_HOOK_ACTUAL_PUT_TARGET_ORACLE '+caseId);}return Reflect.apply(put,store,[row]);}};};
+   tx.commit=()=>{const result=Reflect.apply(commit,tx,[]);if(!completed&&writerTarget&&mode==='readwrite'&&(noop||actualPut)){completed=true;completionCalls++;durableAtCompletion=r.copy(r.rows.get('projects').get(jobId));assert.equal(durableAtCompletion.project.job.JOB_TITLE,title);if(caseId.endsWith('completion-mutation'))mutate(writerTarget);}return result;};return tx;
+  };
+  try{returned=await r.store.writeProject(input,{skipUnchanged:noop,expectedProjectRevision:current.revision,expectedStateSha256:current.projectSha256,historyView:r.copy({activeStage:1,activeView:'Workflow',drafts:{'#response-note':{value:caseId}},scrollX:0,scrollY:31})});}catch(caught){error=caught;}finally{r.runtime.closedLoopPromptEngine=prompt;r.runtime.openStorageTransaction=open;}
+  assert.equal(completionCalls,1,'CANONICAL_COMPLETION_HOOK_COMPLETION_ORACLE '+caseId);assert.equal(putCalls,noop?0:1,'CANONICAL_COMPLETION_HOOK_PUT_ORACLE '+caseId);assert(durableAtCompletion);assert.deepEqual(r.rows.get('projects').get(jobId),durableAtCompletion,'CANONICAL_COMPLETION_HOOK_DURABLE_ROW_ORACLE '+caseId);
+  const rejected=caseId.endsWith('completion-mutation')||caseId==='warm-source-mutation';
+  if(rejected){assert.equal(error?.code,'COMMITTED_PROJECT_UNAVAILABLE','CANONICAL_COMPLETION_HOOK_OUTCOME_ORACLE '+caseId);assert.equal(returned,null);assert.equal(error.committed,true,'CANONICAL_COMPLETION_HOOK_COMMITTED_FLAG_ORACLE');assert.equal(error.existingProjectsUnchanged,false,'CANONICAL_COMPLETION_HOOK_NO_ROLLBACK_CLAIM_ORACLE');assert.equal(error.jobId,jobId);assert.equal(error.revision,durableAtCompletion.revision);assert.equal(error.projectSha256,durableAtCompletion.projectSha256);assert.equal(error.cause?.code,'STALE_PROJECT_REVISION');}
+  else{assert.equal(error,null,'CANONICAL_COMPLETION_HOOK_HEALTHY_OWNER_ORACLE '+caseId);assert(returned);assert.equal(returned.projectSha256,r.store.projectSha256(returned),'CANONICAL_COMPLETION_HOOK_RETURNED_DIGEST_ORACLE '+caseId);assert.equal(returned.projectSha256,durableAtCompletion.projectSha256);assert.equal(returned.job.JOB_TITLE,title);}
+  assert.equal(mutations,caseId.endsWith('healthy')?0:1,'CANONICAL_COMPLETION_HOOK_MUTATION_EXECUTED_ORACLE '+caseId);assert.equal(warmHookCalls,noop||caseId==='revision-completion-mutation'?0:1,'CANONICAL_COMPLETION_HOOK_WARM_TRANSFER_COUNT_ORACLE '+caseId);
+  const refreshed=await r.store.readProject(jobId,{refreshProjection:true}),cold=await r.store.readProject(jobId);for(const project of [refreshed,cold]){assert.equal(project.projectSha256,r.store.projectSha256(project),'CANONICAL_COMPLETION_HOOK_READ_DIGEST_ORACLE '+caseId);assert.equal(project.projectSha256,durableAtCompletion.projectSha256);assert.equal(project.job.JOB_TITLE,title);}
+  cases.push({caseId,result:'PASS',putCalls,completionCalls,warmHookCalls,mutations,rejected,errorCode:error?.code||null,committedErrorFlagsCorrect:rejected,noIncorrectReturnedValue:true,trustedErrorIdentity:rejected,durableRowAuthentic:true,refreshedReadAuthentic:true,coldReadAuthentic:true,sourceProjectSha256:durableAtCompletion.projectSha256});
+ }
+ return {schema:'canonical-completion-hook-isolation/1',checkId:'store.canonical-completion-hook-isolation',result:'PASS',synthetic:true,actualBrowser:false,nativeIndexedDB:false,actualStorageAdapter:true,actualStorageWorker:false,fullClauseProof:false,sourceSha256,caseCount:cases.length,cases,boundary:'Public canonical save with actual synthetic transaction completion and refreshed/cold reads; no native browser or whole-clause claim'};
+}
+
+// Genuine public private-read owners must never certify custody-mutated values.
+export async function verifyPrivateReadCustodyHookIsolation({sourceOverrides={},caseFilter=null,fault:injectedFault=null}={}){
+ const files=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'],frozen={...Object.fromEntries(files.map(file=>[file,fs.readFileSync(file,'utf8')])),...sourceOverrides},sourceSha256=Object.fromEntries(files.map(file=>[file,createHash('sha256').update(frozen[file]).digest('hex')]));let source=frozen['project-store.js'];
+ if(injectedFault==='capture-after-custody'){
+  const anchor=' const integrity=verifiedProjectIntegrity(project,project.projectSha256);\n await observeProjectArtifactCustody(project);';assert.equal(source.split(anchor).length,2,'CUSTODY_HOOK_CAPTURE_FAULT_ANCHOR');source=source.replace(anchor,' await observeProjectArtifactCustody(project);\n const integrity=verifiedProjectIntegrity(project,project.projectSha256);');
+ }else if(injectedFault==='omit-startup-value-binding'){assert.equal(source.split('assertCanonicalRead();').length,3,'CUSTODY_HOOK_STARTUP_FAULT_ANCHOR');source=source.replaceAll('assertCanonicalRead();','');}
+ else assert.equal(injectedFault,null,'CUSTODY_HOOK_KNOWN_FAULT_ORACLE');
+ const cases=[];
+for(const owner of ['checkpoint','operational-no-op','canonical-skip-unchanged','startup-refresh'])for(const fault of ['healthy','sync-value','queued-value','digest-label','custody-throws',...(owner==='startup-refresh'?['projection-consistent-draft']:[])]){
+ const caseId=owner+':'+fault;if(caseFilter&&!caseFilter.includes(caseId))continue;const r=projectStoreRuntime({storageWorker:false,sourceOverrides:{...frozen,'project-store.js':source}});await r.store.ready;
+ let current=await r.store.createProject({commandId:'SYNTHETIC-CUSTODY-CAPTURE-'+caseId});
+ const pending=r.copy(current);r.engine.addHistory(pending,'SYNTHETIC_CUSTODY_CAPTURE_PREFIX',{synthetic:true});
+ current=await r.store.writeProject(pending,{operational:true,expectedProjectRevision:current.revision,expectedStateSha256:current.projectSha256});
+ const input=r.copy(current),jobId=current.job.JOB_ID,digest=current.projectSha256,draft=current.stages[1].responseDraft,engine=r.runtime.closedLoopWorkflowEngine;
+ const before=r.copy([...r.rows].map(([name,map])=>[name,[...map]])),canonicalBefore=r.copy(r.rows.get('projects').get(jobId)),journalBefore=r.copy(r.rows.get('meta').get('responseOperations:'+jobId));
+ const quarantineBefore=r.copy([...r.rows.get('meta')].filter(([key])=>key.startsWith('quarantine:'))),artifactsBefore=r.copy([...r.rows.get('artifacts')]),historyBefore=r.copy(r.rows.get('meta').get('recovery:'+jobId));
+ let armed=true,hookCalls=0,mutationCalls=0,projectionRebuilds=0,transientValidationPassed=false,returned=null,error=null;const sentinel=new Error('SYNTHETIC_CUSTODY_ERROR_IDENTITY');
+ const mutate=project=>{mutationCalls++;if(fault==='digest-label')project.projectSha256='0'.repeat(64);else project.stages[1].responseDraft='SYNTHETIC-CUSTODY-CAPTURE-MUTATION';
+  if(fault==='projection-consistent-draft'){
+   Reflect.apply(engine.recalculate,engine,[project]);projectionRebuilds++;
+   const checked=r.store.validateProjectIntegrity(project);assert.equal(checked.valid,true,'CUSTODY_HOOK_TRANSIENT_FULL_VALIDATION '+caseId+': '+JSON.stringify(checked.issues));
+   assert.equal(project.projectSha256,digest,'CUSTODY_HOOK_ORIGINAL_DIGEST_LABEL '+caseId);transientValidationPassed=true;
+  }
+ };
+ r.runtime.closedLoopWorkflowEngine=Object.freeze({...engine,recordsForCurrentScope(project,collection,...rest){
+  const result=Reflect.apply(engine.recordsForCurrentScope,engine,[project,collection,...rest]);
+  if(armed&&project?.job?.JOB_ID===jobId&&collection==='artifacts'){
+   armed=false;hookCalls++;
+   if(fault==='custody-throws')throw sentinel;
+   if(fault==='queued-value')queueMicrotask(()=>mutate(project));
+   else if(fault==='sync-value'||fault==='digest-label'||fault==='projection-consistent-draft')mutate(project);
+  }
+  return result;
+ }});
+ const view=r.copy({activeStage:1,activeView:'Workflow',drafts:{'#response-note':{value:caseId}},scrollX:0,scrollY:17});
+ try{
+  returned=owner==='startup-refresh'?await r.store.readProject(jobId,{refreshProjection:true}):owner==='checkpoint'?await r.store.saveCheckpoint(jobId,{expectedProjectRevision:current.revision,expectedStateSha256:digest,view}):await r.store.writeProject(input,{operational:owner==='operational-no-op',skipUnchanged:owner==='canonical-skip-unchanged',expectedProjectRevision:current.revision,expectedStateSha256:digest,historyView:view});
+ }catch(caught){error=caught;}finally{r.runtime.closedLoopWorkflowEngine=engine;}
+ assert.equal(hookCalls,1,'CUSTODY_CAPTURE_ACTUAL_OBSERVER_ONCE '+caseId);
+ if(fault==='projection-consistent-draft'){
+  assert.equal(projectionRebuilds,1,'CUSTODY_HOOK_REAL_PROJECTION_REBUILD '+caseId);assert.equal(transientValidationPassed,true,'CUSTODY_HOOK_VALIDATED_TRANSIENT_CANDIDATE '+caseId);
+  // Only a proven stale-label return, not an unrelated error, detects this fault.
+  if(injectedFault==='omit-startup-value-binding'&&(error?.code!=='PROJECT_INTEGRITY_FAILED'||returned!==null)){
+   assert.equal(error,null,'CUSTODY_HOOK_OMISSION_RETURN_ERROR '+caseId);assert(returned,'CUSTODY_HOOK_OMISSION_RETURN_PRESENT '+caseId);assert.equal(returned.projectSha256,digest,'CUSTODY_HOOK_OMISSION_ORIGINAL_LABEL '+caseId);assert.notEqual(r.store.projectSha256(returned),digest,'CUSTODY_HOOK_OMISSION_ACTUAL_DIGEST_MISMATCH '+caseId);assert.equal(returned.stages[1].responseDraft,'SYNTHETIC-CUSTODY-CAPTURE-MUTATION','CUSTODY_HOOK_OMISSION_CHANGED_DRAFT '+caseId);
+   assert.deepEqual(r.copy([...r.rows].map(([name,map])=>[name,[...map]])),before,'CUSTODY_HOOK_OMISSION_DURABLE_STORES_UNCHANGED '+caseId);
+   const authentic=await r.store.readProject(jobId);assert.equal(authentic.projectSha256,digest,'CUSTODY_HOOK_OMISSION_COLD_LABEL '+caseId);assert.equal(r.store.projectSha256(authentic),digest,'CUSTODY_HOOK_OMISSION_COLD_DIGEST '+caseId);assert.equal(authentic.stages[1].responseDraft,draft,'CUSTODY_HOOK_OMISSION_COLD_DRAFT '+caseId);
+   assert.fail('CUSTODY_HOOK_REJECTION_ORACLE '+caseId);
+  }
+  assert(Array.isArray(error?.issues),'CUSTODY_HOOK_EXACT_VALUE_BINDING_ISSUES '+caseId);assert.equal(error.issues.length,1,'CUSTODY_HOOK_EXACT_VALUE_BINDING_ISSUE_COUNT '+caseId);assert.equal(error.issues[0],'Project changed during custody observation.','CUSTODY_HOOK_EXACT_VALUE_BINDING_OWNER '+caseId);
+ }
+ if(owner==='startup-refresh'&&fault==='sync-value')assert(error?.issues?.some(issue=>String(issue).includes('STALE_DERIVATION_RECEIPT')&&String(issue).includes('canonicalInputSha256')),'CUSTODY_HOOK_INDEPENDENT_PROJECTION_DEFENSE '+caseId);
+
+ if(fault==='healthy'){
+  assert.equal(error,null,'CUSTODY_CAPTURE_HEALTHY_OWNER_ORACLE '+caseId);assert(returned,'CUSTODY_CAPTURE_HEALTHY_RETURN_ORACLE '+caseId);
+  if(owner!=='checkpoint'){assert.equal(returned.projectSha256,r.store.projectSha256(returned),'CUSTODY_CAPTURE_HEALTHY_RETURN_DIGEST '+caseId);assert.equal(returned.projectSha256,digest);assert.equal(returned.stages[1].responseDraft,draft);}
+ }else{
+  if(fault==='custody-throws')assert.equal(error,sentinel,'CUSTODY_CAPTURE_ORIGINAL_ERROR_IDENTITY '+caseId);
+  else{assert.equal(mutationCalls,1,'CUSTODY_CAPTURE_MUTATION_REACHED '+caseId);assert.equal(error?.code,owner==='startup-refresh'?'PROJECT_INTEGRITY_FAILED':'STALE_PROJECT_REVISION','CUSTODY_HOOK_REJECTION_ORACLE '+caseId);}
+  assert.equal(returned,null,'CUSTODY_CAPTURE_NO_UNTRUSTED_RETURN '+caseId);
+  assert.deepEqual(r.copy([...r.rows].map(([name,map])=>[name,[...map]])),before,'CUSTODY_CAPTURE_ALL_DURABLE_STORES_UNCHANGED '+caseId);
+ }
+ assert.deepEqual(r.rows.get('projects').get(jobId),canonicalBefore,'CUSTODY_CAPTURE_CANONICAL_ROW_ORACLE '+caseId);assert.deepEqual(r.rows.get('meta').get('responseOperations:'+jobId),journalBefore,'CUSTODY_CAPTURE_JOURNAL_ORACLE '+caseId);
+ const historyAfter=r.rows.get('meta').get('recovery:'+jobId),historyDelta=fault==='healthy'&&['checkpoint','canonical-skip-unchanged'].includes(owner)?1:0;assert.equal(historyAfter.value.generation,historyBefore.value.generation+historyDelta,'CUSTODY_HOOK_HISTORY_ORACLE '+caseId);assert.deepEqual(r.copy([...r.rows.get('artifacts')]),artifactsBefore,'CUSTODY_HOOK_ARTIFACT_ROWS_ORACLE '+caseId);assert.deepEqual(r.copy([...r.rows.get('meta')].filter(([key])=>key.startsWith('quarantine:'))),quarantineBefore,'CUSTODY_HOOK_NO_FALSE_QUARANTINE_ORACLE '+caseId);
+ const refreshed=await r.store.readProject(jobId,{refreshProjection:true}),cold=await r.store.readProject(jobId);
+ for(const [kind,project]of [['refreshed',refreshed],['cold',cold]]){assert(project,'CUSTODY_CAPTURE_AUTHENTIC_READ '+caseId+' '+kind);assert.equal(project.projectSha256,r.store.projectSha256(project),'CUSTODY_CAPTURE_FRESH_DIGEST '+caseId+' '+kind);assert.equal(project.projectSha256,digest);assert.equal(project.stages[1].responseDraft,draft);}
+ cases.push({caseId,result:'PASS',hookCalls,mutationCalls,errorCode:error?.code||null,exactCustodyError:fault==='custody-throws',rejected:fault!=='healthy',rejectionStoresUnchanged:fault!=='healthy',canonicalAndJournalRowsUnchanged:true,artifactRowsUnchanged:true,quarantineUnchanged:true,historyGenerationDelta:historyDelta,authenticRefreshedAndColdReads:true,sourceProjectSha256:digest,...(fault==='projection-consistent-draft'?{projectionRebuilds,transientValidationPassed,originalDigestLabelRetained:true}:{}),...(owner==='startup-refresh'&&fault==='sync-value'?{independentProjectionReceiptRejected:true}:{})});
+}
+ return {schema:'private-read-custody-hook-isolation/1',checkId:'store.private-read-custody-hook-isolation',result:'PASS',synthetic:true,actualBrowser:false,nativeIndexedDB:false,actualStorageAdapter:true,actualStorageWorker:false,fullClauseProof:false,sourceSha256,caseCount:cases.length,cases,boundary:'Public checkpoint, operational no-op, canonical no-op and startup reads through isolated transaction adapter; no native browser or whole-clause claim'};
 }

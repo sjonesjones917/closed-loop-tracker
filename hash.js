@@ -291,7 +291,19 @@ function memoCopyGraph(root,graph){
  for(const [value,entries]of graph.nodes){const copy=copies.get(value);for(const [key,child]of entries)Object.defineProperty(copy,key,{value:child&&typeof child==='object'?copies.get(child):child,enumerable:true,writable:false,configurable:false});Object.freeze(copy);}
  return root&&typeof root==='object'?copies.get(root):root;
 }
-function memoSignature(value){return value&&typeof value==='object'?(Array.isArray(value)?'A:'+value.length:'O:'+Object.keys(value).length):typeof value;}
+function memoSignature(value){
+ // This only narrows candidate search; complete graph equality and primitive
+ // guards still establish every digest hit. Equal objects have equal key sets
+ // regardless of insertion order. No property values are read here.
+ if(!value||typeof value!=='object')return typeof value;
+ if(Array.isArray(value))return 'A:'+value.length;
+ const keys=Object.keys(value),wide='O:'+keys.length;
+ // Keep refinement bounded. Wide objects or long names retain the original
+ // count bucket; this changes neither cache eligibility nor the cold encoder.
+ if(keys.length>64)return wide;
+ let units=0;for(const key of keys){units+=key.length;if(units>4096)return wide;}
+ return 'K:'+JSON.stringify(keys.sort());
+}
 function memoValueEquals(expected,current,preparedGraph=null){
  const graph=preparedGraph||memoGraph(current,50000,536870912);if(!graph)return false;
  const pending=[[expected,current]],pairs=new WeakMap();

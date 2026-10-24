@@ -22419,8 +22419,8 @@
   ],
   "contractProfileId": "closed-loop-completion-profile/1",
   "normativeRequirementManifestIdentity": "NRM-7a899cdfbcbcb760e5c3792e4126e66f",
-  "normativeRequirementManifestSha256": "cccee39b8e44df641c22f316feb741c43f817df2ef3b925d07b545194b5f7a17",
-  "normativeRequirementManifestCanonicalSha256": "3c9f7c5aaca386289b303c33a53b27e699c243420944ad8eafe53e237645c7f5",
+  "normativeRequirementManifestSha256": "0f4ba29a82dcb61d6044c186ee83404457f4875993f02f24b5eb94bad86926dc",
+  "normativeRequirementManifestCanonicalSha256": "8ebc966038373c72f52b9bfd84f1a77324251d037adecce84f69cd0dff0cba2f",
   "normativeRequirementManifestPath": "specification/closed-loop-normative-requirements.json",
   "normativeRequirementCount": 8244,
   "normativeRequirementCountDefinition": "Compatibility alias for manifestEntryCount; includes retained source contexts.",
@@ -22436,5 +22436,5 @@
     "status": "ACCEPTED",
     "originalReviewsRelabeled": false
   },
-  "manifestSha256": "1adaf619e325b9840d87b928e13c3cdcea10b29df5393d200cca66e6f31b5b63"
+  "manifestSha256": "17d07cbd16d1477ec16d4e96ab270785106ba7037644327daf50947a0af5682a"
 }

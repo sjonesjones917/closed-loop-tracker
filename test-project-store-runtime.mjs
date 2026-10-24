@@ -173,7 +173,7 @@ export function adaptProjectStoreSource(source){
    // Adapter-only completion bridge; native lifetime is owned and verified by
    // the separate native production-store control, not this synchronous Map.
    const first=source.indexOf('function checkpointTransactionOwner(tx,jobId){'),last=source.indexOf('async function commitRootCheckpoint(',first);
-   source=source.slice(0,first)+`function checkpointTransactionOwner(tx,jobId){let resolve,reject;const completion=new Promise((yes,no)=>{resolve=yes;reject=no;});completion.catch(()=>{});return {external:promise=>Promise.resolve(promise),completion,finish(){tx.commit();resolve();},abort(error){tx.abort();reject(error);}};}\n`+source.slice(last);
+   source=source.slice(0,first)+`function checkpointTransactionOwner(tx,jobId){let resolve,reject,failure=null;const completion=new Promise((yes,no)=>{resolve=yes;reject=no;});completion.catch(()=>{});return {external:promise=>Promise.resolve(promise),completion,finish(){tx.commit();resolve();},abort(error){failure=failure||error;tx.abort();reject(failure);return failure;}};}\n`+source.slice(last);
   }
  return source;
 }

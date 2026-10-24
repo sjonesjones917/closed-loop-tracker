@@ -13,7 +13,7 @@ import {canonicalFixtureRecord} from './test-fixtures.mjs';
 import {verifyResponseStagingRecovery} from './test-response-staging-recovery.mjs';
 import {verifyReturnedSlotAtomicStaging} from './test-returned-slot-atomic-staging.mjs';
 import {verifyValidationRecordBackupRoundtrip} from './test-validation-record-backup.mjs';
-import {verifyOperationalJournalCopy,verifyOperationalReadProof,verifyCanonicalReadProof,verifyOperationalWarmProof,verifyCheckpointCanonicalProof,verifyCanonicalCommitWarmProof,verifyStartupSelectedReadReuse} from './test-operational-journal-copy.mjs';
+import {verifyOperationalJournalCopy,verifyOperationalReadProof,verifyCanonicalReadProof,verifyOperationalWarmProof,verifyCheckpointCanonicalProof,verifyCanonicalCommitWarmProof,verifyStartupSelectedReadReuse,verifyStartupRecoveryHookIsolation,verifyCanonicalNoopHookIsolation,verifyCanonicalCompletionHookIsolation,verifyPrivateReadCustodyHookIsolation} from './test-operational-journal-copy.mjs';
 console.log(JSON.stringify({operationalJournalCopy:verifyOperationalJournalCopy()}));
 console.log(JSON.stringify({validationRecordBackupRoundtrip:await verifyValidationRecordBackupRoundtrip()}));
 const faultName=process.argv.find(arg=>arg.startsWith('--fault='))?.split('=')[1],faults={ownership:{id:'BYPASS-OPERATIONAL-OWNERSHIP',file:'project-store.js',before:'if(!allowed)throw storageError(\'An operational response event',after:'if(false)throw storageError(\'An operational response event'},revision:{id:'BYPASS-RESERVATION-REVISION',file:'response-ingestion.js',before:'reservationRevision!==effectiveRevision||',after:''},canonical:{id:'CANONICAL-WRITE-FOR-STAGING',file:'project-store.js',before:'if(options.operational)return writeOperationalProject(project,options);',after:''}};
@@ -185,7 +185,28 @@ for(const [scenario,fault]of [['prepared-candidate-mutation','omit-candidate-sna
 }
 await assert.rejects(()=>verifyCanonicalReadProof({fault:'omit-retained-prompt-context-copy',caseFilter:['canonical:valid-control']}),error=>error.message==='Exact prompt context bytes are unavailable.','CANONICAL_RETAINED_CONTEXT_INTENDED_FAULT_ORACLE');
 canonicalReadProofFaults.push({caseId:'canonical:valid-control',fault:'omit-retained-prompt-context-copy',detected:true,oracle:'CANONICAL_RETAINED_PROMPT_CONTEXT_BYTES_ORACLE'});
-console.log(JSON.stringify({canonicalReadProof:{...canonicalReadProof,faults:canonicalReadProofFaults}}));
+const canonicalNoopHookIsolation=await verifyCanonicalNoopHookIsolation(),canonicalNoopHookIsolationFaults=[];
+for(const {fault,caseId,oracle} of [{"fault":"omit-target-value-binding","caseId":"target-sync","oracle":"CANONICAL_NOOP_HOOK_REJECTION_ORACLE target-sync","detected":true},{"fault":"capture-after-prompt-persistence","caseId":"target-queued","oracle":"CANONICAL_NOOP_HOOK_REJECTION_ORACLE target-queued","detected":true},{"fault":"omit-final-prepared-clone-check","caseId":"final-prepared-clone","oracle":"CANONICAL_NOOP_HOOK_REJECTION_ORACLE final-prepared-clone","detected":true}]){
+ await assert.rejects(()=>verifyCanonicalNoopHookIsolation({fault,caseFilter:[caseId]}),error=>error.code==='ERR_ASSERTION'&&error.message.includes(oracle),'CANONICAL_HOOK_INTENDED_FAULT_ORACLE '+fault+' '+caseId);
+ canonicalNoopHookIsolationFaults.push({fault,caseId,oracle,detected:true});
+}
+
+const canonicalCompletionHookIsolation=await verifyCanonicalCompletionHookIsolation(),canonicalCompletionHookIsolationFaults=[];
+for(const {fault,caseId,oracle} of [{"fault":"omit-completion-return-binding","caseId":"revision-completion-mutation","oracle":"CANONICAL_COMPLETION_HOOK_OUTCOME_ORACLE revision-completion-mutation","detected":true},{"fault":"omit-completion-return-binding","caseId":"noop-completion-mutation","oracle":"CANONICAL_COMPLETION_HOOK_OUTCOME_ORACLE noop-completion-mutation","detected":true},{"fault":"omit-context-source-return-binding","caseId":"warm-source-mutation","oracle":"CANONICAL_COMPLETION_HOOK_OUTCOME_ORACLE warm-source-mutation","detected":true}]){
+ await assert.rejects(()=>verifyCanonicalCompletionHookIsolation({fault,caseFilter:[caseId]}),error=>error.code==='ERR_ASSERTION'&&error.message.includes(oracle),'CANONICAL_HOOK_INTENDED_FAULT_ORACLE '+fault+' '+caseId);
+ canonicalCompletionHookIsolationFaults.push({fault,caseId,oracle,detected:true});
+}
+
+const privateReadCustodyHookIsolation=await verifyPrivateReadCustodyHookIsolation(),privateReadCustodyHookFaults=[];
+for(const {fault,caseId,oracle}of [{"fault":"capture-after-custody","caseId":"checkpoint:sync-value","oracle":"CUSTODY_HOOK_REJECTION_ORACLE checkpoint:sync-value","detected":true},{"fault":"omit-startup-value-binding","caseId":"startup-refresh:projection-consistent-draft","oracle":"CUSTODY_HOOK_REJECTION_ORACLE startup-refresh:projection-consistent-draft","detected":true}]) {
+ await assert.rejects(()=>verifyPrivateReadCustodyHookIsolation({fault,caseFilter:[caseId]}),error=>error.code==='ERR_ASSERTION'&&error.message.includes(oracle),'CUSTODY_HOOK_INTENDED_FAULT_ORACLE '+fault);
+ privateReadCustodyHookFaults.push({fault,caseId,oracle,detected:true});
+}
+const projectionDefense=await verifyPrivateReadCustodyHookIsolation({fault:'omit-startup-value-binding',caseFilter:['startup-refresh:sync-value']});
+assert.equal(projectionDefense.caseCount,1,'CUSTODY_HOOK_REDUNDANT_DEFENSE_POPULATION');assert.equal(projectionDefense.cases[0].errorCode,'PROJECT_INTEGRITY_FAILED','CUSTODY_HOOK_REDUNDANT_DEFENSE_ERROR');assert.equal(projectionDefense.cases[0].independentProjectionReceiptRejected,true,'CUSTODY_HOOK_REDUNDANT_DEFENSE_OWNER');
+const privateReadCustodyRedundantDefenses=[{"fault":"omit-startup-value-binding","caseId":"startup-refresh:sync-value","detected":false,"retainedRejection":"PROJECT_INTEGRITY_FAILED","independentProjectionReceiptRejected":true}];
+
+console.log(JSON.stringify({privateReadCustodyHookIsolation:{...privateReadCustodyHookIsolation,faults:privateReadCustodyHookFaults,redundantDefenses:privateReadCustodyRedundantDefenses},canonicalReadProof:{...canonicalReadProof,faults:canonicalReadProofFaults},canonicalNoopHookIsolation:{...canonicalNoopHookIsolation,faults:canonicalNoopHookIsolationFaults},canonicalCompletionHookIsolation:{...canonicalCompletionHookIsolation,faults:canonicalCompletionHookIsolationFaults}}));
 
 const retainedRootContinuation=await verifyRetainedRootContinuation(),retainedRootContinuationFaults=[];
 for(const [fault,caseId,oracle] of [['repeat-root-computations','valid-two-warm-views','RETAINED_ROOT_WARM_RESTORE_ORACLE'],['skip-preparation-requalification','root-mutation-during-preparation','Deferred warm validation cannot escape into ordinary commit']]){
@@ -216,6 +237,11 @@ const startupSelectedReadReuse=await verifyStartupSelectedReadReuse(),startupSel
 for(const [fault,caseId,oracle] of [['repeat-cold-read','boundaries-control','STARTUP_SELECTED_SINGLE_COLD_ORACLE'],['repeat-static-validation','boundaries-control','STARTUP_SELECTED_STATIC_REUSE_ORACLE'],['capture-after-custody','mutation-during-custody','STARTUP_SELECTED_REJECTION_ORACLE'],['repeat-migration-validation','migration','STARTUP_MIGRATION_VERIFIED_WRITE_REUSE_ORACLE'],['repeat-migration-digests','migration-digest-control','STARTUP_MIGRATION_SINGLE_DIGEST_TRAVERSAL_ORACLE']]){
  await assert.rejects(()=>verifyStartupSelectedReadReuse({fault,caseFilter:[caseId]}),error=>error.code==='ERR_ASSERTION'&&error.message.includes(oracle),'STARTUP_SELECTED_INTENDED_FAULT_ORACLE '+fault);startupSelectedReadFaults.push({fault,caseId,oracle,detected:true});
 }
-console.log(JSON.stringify({startupSelectedReadReuse:{...startupSelectedReadReuse,faults:startupSelectedReadFaults}}));
+const startupRecoveryHookIsolation=await verifyStartupRecoveryHookIsolation(),startupRecoveryHookFaults=[];
+for(const [fault,caseId,oracle] of [['capture-after-context-hook','target-mutation','STARTUP_RECOVERY_HOOK_PROJECT_ORACLE target-mutation'],['source-recovery-input-sync','source-sync','STARTUP_RECOVERY_HOOK_RECEIPT_ORACLE source-sync'],['source-recovery-input-queued','source-queued','STARTUP_RECOVERY_HOOK_RECEIPT_ORACLE source-queued']]){
+ await assert.rejects(()=>verifyStartupRecoveryHookIsolation({fault,caseFilter:[caseId]}),error=>error.code==='ERR_ASSERTION'&&error.message.includes(oracle),'STARTUP_RECOVERY_HOOK_INTENDED_FAULT_ORACLE '+fault);
+ startupRecoveryHookFaults.push({fault,caseId,oracle,detected:true});
+}
+console.log(JSON.stringify({startupSelectedReadReuse:{...startupSelectedReadReuse,faults:startupSelectedReadFaults},startupRecoveryHookIsolation:{...startupRecoveryHookIsolation,faults:startupRecoveryHookFaults}}));
 
 console.log(JSON.stringify({verifiedGraphSemantics:verifyVerifiedGraphSemantics()}));

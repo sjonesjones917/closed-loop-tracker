@@ -514,14 +514,31 @@ function effectiveGovernorOccurrences(references,map){
   for(const ref of references){const checked=sourcePassage(ref,map);need(checked.role==='SUCCESSOR_SOURCE','INSERTION_DELTA_PROPOSAL_GOVERNORS','Effective governor is not current-source authority.');for(let line=checked.startLine;line<=checked.endLine;line++)occurrences.set(line,{sourceSha256:map.currentSha256,line,lineSha256:sha(Buffer.from(mapData(map).current.lines[line-1]))});}
   return [...occurrences.values()].sort((a,b)=>a.line-b.line);
 }
+// These populations come from the private JSON custody owner. Reuse only
+// Sets that this same predicate already constructs for uniqueness. A changed
+// membership/iteration primitive keeps the original includes path instead.
+const proposalMembershipPrimitivesCurrent=(()=>{
+  const descriptor=Object.getOwnPropertyDescriptor,array=Array.prototype,set=Set.prototype,iterator=Object.getPrototypeOf([][Symbol.iterator]());
+  const targets=[[globalThis,'Array'],[globalThis,'Set'],[Array,'prototype'],[Array,'isArray'],[array,'includes'],[array,'every'],[array,'map'],[array,'some'],[array,Symbol.iterator],[iterator,'next'],[Set,'prototype'],[set,'add'],[set,'has'],[set,'size']];
+  const expected=targets.map(([owner,key])=>descriptor(owner,key));
+  return ()=>{
+    for(let index=0;index<targets.length;index++){
+      const target=targets[index],before=expected[index],after=descriptor(target[0],target[1]);
+      if(!before||!after||before.value!==after.value||before.get!==after.get||before.set!==after.set)return false;
+    }
+    return true;
+  };
+})();
 function decodeCompactProposal(candidate,rows,summary,summaryRef,proposalFreeze,ref,custody,original,map,reconciler,record,checkedOccurrences){
   const versions={'closed-loop-incremental-retained-impact-proposal/2':2,'closed-loop-incremental-retained-impact-proposal/3':3,'closed-loop-incremental-retained-impact-proposal/4':4},version=versions[summary.schema],dir=ref.path.slice(0,ref.path.lastIndexOf('/')+1);
   need(version&&proposalFreeze.schema==='closed-loop-incremental-retained-impact-freeze/2'&&proposalFreeze.status==='FROZEN_PENDING_DISTINCT_RECONCILIATION'&&summary.status==='FROZEN_PROPOSAL_PENDING_DISTINCT_RECONCILIATION','INSERTION_DELTA_PROPOSAL_VERSION','Unknown or mismatched compact proposal/freeze version.');
   const file=name=>{const matches=proposalFreeze.files.filter(value=>value.path===dir+name);need(matches.length===1,'INSERTION_DELTA_PROPOSAL_COMPACT_CUSTODY','Compact support file is not uniquely freeze-pinned.');return matches[0];};
-  need(proposalFreeze.files.some(value=>sameRef(value,ref))&&proposalFreeze.files.some(value=>sameRef(value,summaryRef))&&summary.completedMemberCount===rows.length&&Array.isArray(summary.exactCompletedIds)&&summary.exactCompletedIds.length===rows.length&&new Set(summary.exactCompletedIds).size===rows.length&&new Set(rows.map(value=>value.predecessorNormativeRequirementId)).size===rows.length&&rows.every(value=>summary.exactCompletedIds.includes(value.predecessorNormativeRequirementId)),'INSERTION_DELTA_PROPOSAL_ACTOR','Compact proposal exact population or frozen outputs differ.');
+  let completedIds;const completedSetMembership=proposalMembershipPrimitivesCurrent();
+  need(proposalFreeze.files.some(value=>sameRef(value,ref))&&proposalFreeze.files.some(value=>sameRef(value,summaryRef))&&summary.completedMemberCount===rows.length&&Array.isArray(summary.exactCompletedIds)&&summary.exactCompletedIds.length===rows.length&&(completedIds=new Set(summary.exactCompletedIds)).size===rows.length&&new Set(rows.map(value=>value.predecessorNormativeRequirementId)).size===rows.length&&rows.every(value=>completedSetMembership?completedIds.has(value.predecessorNormativeRequirementId):summary.exactCompletedIds.includes(value.predecessorNormativeRequirementId)),'INSERTION_DELTA_PROPOSAL_ACTOR','Compact proposal exact population or frozen outputs differ.');
   const actorReference=file('actual-read-inventory.json'),inventory=custody.json(actorReference);
   need(inventory.schema==='source-only-actual-read-inventory/2'&&nonblank(inventory.actorId)&&inventory.actorId!==reconciler&&(summary.actorId===undefined||summary.actorId===inventory.actorId)&&inventory.implementationRead===false&&inventory.testImplementationRead===false&&inventory.runtimeOrProofResultsRead===false&&equal(inventory.unexpectedInputs,[]),'INSERTION_DELTA_PROPOSAL_ACTOR','Compact proposal lacks its exact independent source-only actor inventory.');
-  need(Array.isArray(inventory.selectedPredecessorIds)&&Array.isArray(inventory.selectedPredecessorIndexes)&&inventory.selectedPredecessorIds.length===rows.length&&inventory.selectedPredecessorIndexes.length===rows.length&&new Set(inventory.selectedPredecessorIds).size===rows.length&&new Set(inventory.selectedPredecessorIndexes).size===rows.length&&rows.every(value=>inventory.selectedPredecessorIds.includes(value.predecessorNormativeRequirementId)&&inventory.selectedPredecessorIndexes.includes(value.predecessorIndex)),'INSERTION_DELTA_PROPOSAL_POPULATION','Compact actor inventory names another member population.');
+  let selectedIds,selectedIndexes;const selectedSetMembership=proposalMembershipPrimitivesCurrent();
+  need(Array.isArray(inventory.selectedPredecessorIds)&&Array.isArray(inventory.selectedPredecessorIndexes)&&inventory.selectedPredecessorIds.length===rows.length&&inventory.selectedPredecessorIndexes.length===rows.length&&(selectedIds=new Set(inventory.selectedPredecessorIds)).size===rows.length&&(selectedIndexes=new Set(inventory.selectedPredecessorIndexes)).size===rows.length&&rows.every(value=>selectedSetMembership?selectedIds.has(value.predecessorNormativeRequirementId)&&selectedIndexes.has(value.predecessorIndex):inventory.selectedPredecessorIds.includes(value.predecessorNormativeRequirementId)&&inventory.selectedPredecessorIndexes.includes(value.predecessorIndex)),'INSERTION_DELTA_PROPOSAL_POPULATION','Compact actor inventory names another member population.');
   const input=(role,filePath)=>{const matches=inventory.inputs.filter(value=>(role===null||value.role===role)&&(filePath===undefined||value.path===filePath));need(matches.length===1,'INSERTION_DELTA_PROPOSAL_COMPACT_CUSTODY','Compact input authority is missing or ambiguous.');return matches[0];};
   need(input('BASE_SOURCE').sha256===map.baseSha256&&input('SUCCESSOR_SOURCE').sha256===map.currentSha256,'INSERTION_DELTA_PROPOSAL_SOURCE','Compact proposal actor read another source version.');
   const predecessor=input('PREDECESSOR');

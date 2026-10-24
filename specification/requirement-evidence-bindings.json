@@ -1,7 +1,627 @@
 {
   "schema": "closed-loop-requirement-evidence-bindings/1",
   "specificationSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
-  "requirements": [],
+  "requirements": [
+    {
+      "normativeRequirementId": "NREQ-47111062e64d0d3b30e6cc9e1826cfc3",
+      "sourceLineSha256": "e17eda37620c3017ac470eaf42989140e74944e89206e2c9ecf51fb78bb872a2",
+      "atomicObligationSha256": "0030b8d637057b6fd8342f6eb62ad2fe47e5fd893c5a78838ab2620aaf600772",
+      "fields": {
+        "productionOwners": [
+          "hash.js:assertUnicodeScalars/compareUnicodeScalarSequence/canonicalChunks/stableStringify",
+          "workflow-schema.js:reducedNumber/canonicalDecimal/isCanonicalNumber"
+        ],
+        "currentDisposition": "UNKNOWN",
+        "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+        "unresolvedRequirements": [
+          "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+          "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-f25aa7572d552a605b446c527f7ffb29",
+      "sourceLineSha256": "e17eda37620c3017ac470eaf42989140e74944e89206e2c9ecf51fb78bb872a2",
+      "atomicObligationSha256": "7c1dae3f6b5a8f7d1d985bd6e2debc0b8f571b709a91980913e22a742460fff8",
+      "fields": {
+        "productionOwners": [
+          "hash.js:assertUnicodeScalars/compareUnicodeScalarSequence/canonicalChunks/stableStringify",
+          "workflow-schema.js:reducedNumber/canonicalDecimal/isCanonicalNumber"
+        ],
+        "currentDisposition": "UNKNOWN",
+        "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+        "unresolvedRequirements": [
+          "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+          "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-853a934199459ed6bf419687ca08ba34",
+      "sourceLineSha256": "6cd002e410cce68e03f5b46b09436696f71111cd2df5ad887d8476e0083c3775",
+      "atomicObligationSha256": "89ab675bd97bc2d81ecb66a978919f12e31206f08204b84da66040de6a7bbeef",
+      "fields": {
+        "productionOwners": [
+          "hash.js:assertUnicodeScalars/compareUnicodeScalarSequence/canonicalChunks/stableStringify"
+        ],
+        "currentDisposition": "UNKNOWN",
+        "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+        "unresolvedRequirements": [
+          "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+          "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-7add6f24a57198b72b500e5a2acf1ca6",
+      "sourceLineSha256": "dc22dec623f4faadc455909b5c327cf4bda535aa9abbe91b83e80e4ad7b675b9",
+      "atomicObligationSha256": "eccd4662fe496c0f27ea13a6fff5fc48d8927204794987e2a147f8230f3fe691",
+      "fields": {
+        "productionOwners": [
+          "hash.js:assertUnicodeScalars/compareUnicodeScalarSequence/canonicalChunks/stableStringify",
+          "response-ingestion.js:prepareCaptured.prepareParsedEnvelope/withEnvelopeDigests"
+        ],
+        "currentDisposition": "UNKNOWN",
+        "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+        "unresolvedRequirements": [
+          "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+          "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-a0db10cfb1e0fefb6724aa418817d6a8",
+      "sourceLineSha256": "1507a1aa07a338fe713cf6cb9ac28c79adc329113a1133c29383359959db2185",
+      "atomicObligationSha256": "548d200aecb6878b435e6660ba993576c7d00e5a03f4e620a6e22a472fa8578f",
+      "fields": {
+        "productionOwners": [
+          "hash.js:assertUnicodeScalars/compareUnicodeScalarSequence/canonicalChunks/stableStringify"
+        ],
+        "currentDisposition": "UNKNOWN",
+        "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+        "unresolvedRequirements": [
+          "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+          "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-636ebdfdf26f0c6df9d969321a522f19",
+      "sourceLineSha256": "03cb01d5ae34c69335090d3607bb7f3380f6e4eba8070ee4ffa5cba9cb32d751",
+      "atomicObligationSha256": "130e7ac87016f161b2a920faac9db56455350a76029581343db285fd4c773001",
+      "fields": {
+        "productionOwners": [
+          "hash.js:assertUnicodeScalars/compareUnicodeScalarSequence/canonicalChunks/stableStringify"
+        ],
+        "currentDisposition": "UNKNOWN",
+        "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+        "unresolvedRequirements": [
+          "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+          "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-eecb88f846482530ebd5e963183f2711",
+      "sourceLineSha256": "03cb01d5ae34c69335090d3607bb7f3380f6e4eba8070ee4ffa5cba9cb32d751",
+      "atomicObligationSha256": "6ff03d3ea361cf2d2543185c690d276eac2d35a4b8fe9ca60a6a171ebcc24547",
+      "fields": {
+        "productionOwners": [
+          "hash.js:assertUnicodeScalars/compareUnicodeScalarSequence/canonicalChunks/stableStringify",
+          "response-ingestion.js:prepareCaptured.prepareParsedEnvelope/withEnvelopeDigests"
+        ],
+        "currentDisposition": "UNKNOWN",
+        "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+        "unresolvedRequirements": [
+          "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+          "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-dba22c5f93e4359c4b7d4ebdd9799dbf",
+      "sourceLineSha256": "6ceea161cf4fc12d52f66189110a6aae635278efe3442751a653794c8e81c68f",
+      "atomicObligationSha256": "0697964bd4a4a340b4c73d2e7a05d3cf2055de8f9383063fcc77e05a244ce294",
+      "fields": {
+        "productionOwners": [
+          "hash.js:assertUnicodeScalars/compareUnicodeScalarSequence/canonicalChunks/stableStringify"
+        ],
+        "currentDisposition": "UNKNOWN",
+        "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+        "unresolvedRequirements": [
+          "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+          "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-27f437fe3040767de849d06a48cdb3c3",
+      "sourceLineSha256": "4055a25ae67a9030286ac3c68bbfcee52e77841001c6782c34eb9b62fdfff8c3",
+      "atomicObligationSha256": "9b5d553b863d2ec2af064bf7670cc92e14c1ce23dc1a21c4cb1964c4224128b8",
+      "fields": {
+        "productionOwners": [
+          "hash.js:assertUnicodeScalars/compareUnicodeScalarSequence/canonicalChunks/stableStringify"
+        ],
+        "currentDisposition": "UNKNOWN",
+        "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+        "unresolvedRequirements": [
+          "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+          "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-51ce4098cc4744b966dc6d89fc7d5621",
+      "sourceLineSha256": "3d14033f2bcab6a74bb1206dc1ffc21a22450ac131f2d2fdb084c28d43c05623",
+      "atomicObligationSha256": "b37d1e2bf581e47666ad4815b88671d816927583aecc42f5eca008fd99a1ce39",
+      "fields": {
+        "productionOwners": [
+          "hash.js:assertUnicodeScalars/compareUnicodeScalarSequence/canonicalChunks/stableStringify"
+        ],
+        "currentDisposition": "UNKNOWN",
+        "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+        "unresolvedRequirements": [
+          "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+          "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-0290dd2e119f2cef20371cc0109c4833",
+      "sourceLineSha256": "3d14033f2bcab6a74bb1206dc1ffc21a22450ac131f2d2fdb084c28d43c05623",
+      "atomicObligationSha256": "55cb94ee59127d417bbba2aa54c69d61b74d7c89c0449b45ea4485c278b289ac",
+      "fields": {
+        "productionOwners": [
+          "hash.js:assertUnicodeScalars/compareUnicodeScalarSequence/canonicalChunks/stableStringify"
+        ],
+        "currentDisposition": "UNKNOWN",
+        "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+        "unresolvedRequirements": [
+          "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+          "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-eb942909863b29d2c26fd0ae5480625f",
+      "sourceLineSha256": "3d14033f2bcab6a74bb1206dc1ffc21a22450ac131f2d2fdb084c28d43c05623",
+      "atomicObligationSha256": "6b09d215ddab432a11e3dcd04e1ee7561000215fe53b0de8fb18dc0b34e1031c",
+      "fields": {
+        "productionOwners": [
+          "hash.js:assertUnicodeScalars/compareUnicodeScalarSequence/canonicalChunks/stableStringify"
+        ],
+        "currentDisposition": "UNKNOWN",
+        "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+        "unresolvedRequirements": [
+          "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+          "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-662eca90789c91ae31177173980783dd",
+      "sourceLineSha256": "3d14033f2bcab6a74bb1206dc1ffc21a22450ac131f2d2fdb084c28d43c05623",
+      "atomicObligationSha256": "f233646324865dc6ebda6df18cf27e471629b5162bc4571303c05f73b6206eb9",
+      "fields": {
+        "productionOwners": [
+          "hash.js:assertUnicodeScalars/compareUnicodeScalarSequence/canonicalChunks/stableStringify"
+        ],
+        "currentDisposition": "UNKNOWN",
+        "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+        "unresolvedRequirements": [
+          "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+          "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-b7e22bb7fad4a45b444f988e4eabca55",
+      "sourceLineSha256": "3d14033f2bcab6a74bb1206dc1ffc21a22450ac131f2d2fdb084c28d43c05623",
+      "atomicObligationSha256": "a63453eb237325b51aae101d2e0b6baf8c4e882582a44de40aec80301b84147c",
+      "fields": {
+        "productionOwners": [
+          "hash.js:assertUnicodeScalars/compareUnicodeScalarSequence/canonicalChunks/stableStringify"
+        ],
+        "currentDisposition": "UNKNOWN",
+        "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+        "unresolvedRequirements": [
+          "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+          "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-5d8520fcb9a6a88eae542e3a1f2fcfb9",
+      "sourceLineSha256": "3d14033f2bcab6a74bb1206dc1ffc21a22450ac131f2d2fdb084c28d43c05623",
+      "atomicObligationSha256": "46c331734e2e2f8a3b1279fc5e6cfd1d049e8ce7489a31fa8b5e7952aa20c52d",
+      "fields": {
+        "productionOwners": [
+          "hash.js:assertUnicodeScalars/compareUnicodeScalarSequence/canonicalChunks/stableStringify"
+        ],
+        "currentDisposition": "UNKNOWN",
+        "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+        "unresolvedRequirements": [
+          "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+          "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-046cf426431e0493fe8fc1b75d803617",
+      "sourceLineSha256": "3d14033f2bcab6a74bb1206dc1ffc21a22450ac131f2d2fdb084c28d43c05623",
+      "atomicObligationSha256": "e252121646c4469c4ef6194b6aed964d04897c3f9ab70ccc234515f903c89dd8",
+      "fields": {
+        "productionOwners": [
+          "hash.js:assertUnicodeScalars/compareUnicodeScalarSequence/canonicalChunks/stableStringify"
+        ],
+        "currentDisposition": "UNKNOWN",
+        "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+        "unresolvedRequirements": [
+          "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+          "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-53cba25ed9217f0e73651fa2c61364a5",
+      "sourceLineSha256": "ee87ec99bf590ab7ad273f985492a78b8765e7eeb38f9e77cb0d6e9e49e3b20b",
+      "atomicObligationSha256": "3aa940464f0f2dc1a285e0523705769a3a8833e2fef4b1f950588564fd44a22d",
+      "fields": {
+        "productionOwners": [
+          "response-ingestion.js:prepareCaptured.prepareParsedEnvelope/withEnvelopeDigests"
+        ],
+        "currentDisposition": "UNKNOWN",
+        "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+        "unresolvedRequirements": [
+          "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+          "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-cfeded273e1987e645c09660471cfc82",
+      "sourceLineSha256": "d9be07a49c644c1987bb9cd82697cd38b72ef93aa259041a99563812bd54c2ae",
+      "atomicObligationSha256": "7b5a319df5cb8ba123be0e27c05be003036380f8de8e69e961634ed58c70efe3",
+      "fields": {
+        "productionOwners": [
+          "response-ingestion.js:prepareCaptured.prepareParsedEnvelope/withEnvelopeDigests"
+        ],
+        "currentDisposition": "UNKNOWN",
+        "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+        "unresolvedRequirements": [
+          "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+          "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-e9339b0fbec004d304e63378d3dbe91d",
+      "sourceLineSha256": "15968ab6cfcb305b94e767f60e01fa39420bae94e6ae1edb6cfe288d3e347103",
+      "atomicObligationSha256": "78a9394e51c3c42f8e1586b93dd982d57951f3d70370e2bdc749183280cc3d7b",
+      "fields": {
+        "productionOwners": [
+          "hash.js:assertUnicodeScalars/compareUnicodeScalarSequence/canonicalChunks/stableStringify",
+          "hash.js:digestScopePrimitivesCurrent/memoGraph/memoSignature/memoValueEquals/createCanonicalDigestScope/withCanonicalDigestScope/scopedSha256Value"
+        ],
+        "currentDisposition": "UNKNOWN",
+        "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+        "unresolvedRequirements": [
+          "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+          "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-52d2c79341b28c2823a54b9363793082",
+      "sourceLineSha256": "1507a1aa07a338fe713cf6cb9ac28c79adc329113a1133c29383359959db2185",
+      "atomicObligationSha256": "4ed32a37ec181a871e04f153102b5e9e4c561d12a49a624c3d9295ff19e517ad",
+      "fields": {
+        "productionOwners": [
+          "hash.js:registerHashPreimage/registerSetSemantics/normalizedRegisteredValue/registeredHashPreimage/hashRegistered"
+        ],
+        "currentDisposition": "UNKNOWN",
+        "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+        "unresolvedRequirements": [
+          "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+          "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-5441641396c82b4f2ac36bbf3ee26f9c",
+      "sourceLineSha256": "cef5d0b441fbaf72c3a70d7d3ed5bf52ecf3f7e656cb7881adf701a541f8a81e",
+      "atomicObligationSha256": "1da7375b397e89585c2deb84de8895b76082dd7f909dae9162823a6c5250e1ab",
+      "fields": {
+        "productionOwners": [
+          "response-ingestion.js:prepareCaptured.prepareParsedEnvelope/withEnvelopeDigests",
+          "response-ingestion.js:safeDiagnosticText/canonicalEnvelopeState/strictParse"
+        ],
+        "currentDisposition": "UNKNOWN",
+        "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+        "unresolvedRequirements": [
+          "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+          "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-42622c5f4d4a71e2d96e2f306b24e220",
+      "sourceLineSha256": "02aefc738a97e4e72074e8aaa912d62b7801484dc9a4f41a2405bed7b57d7026",
+      "atomicObligationSha256": "0eac9b64a92eca8958d759cfc65f8b24cdd63385e3b7837af5f0943e1333e22e",
+      "fields": {
+        "productionOwners": [
+          "response-ingestion.js:prepareCaptured.prepareParsedEnvelope/withEnvelopeDigests",
+          "response-ingestion.js:safeDiagnosticText/canonicalEnvelopeState/strictParse"
+        ],
+        "currentDisposition": "UNKNOWN",
+        "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+        "unresolvedRequirements": [
+          "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+          "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-8fe1bfd0e1bd9dcfb906edb36f78c438",
+      "sourceLineSha256": "c6ed6e483e91ff3fa520b4d63ebd94efbca9dcbb5612c885866751db5b5bde89",
+      "atomicObligationSha256": "e0d9ce36db8f1be1db5abe1cfba1072222109d162d200d92755b1fb6630ef9bc",
+      "fields": {
+        "productionOwners": [
+          "response-ingestion.js:prepareCaptured.prepareParsedEnvelope/withEnvelopeDigests",
+          "response-ingestion.js:safeDiagnosticText/canonicalEnvelopeState/strictParse"
+        ],
+        "currentDisposition": "UNKNOWN",
+        "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+        "unresolvedRequirements": [
+          "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+          "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-0af80c7e2c0d73910b626b42a9237183",
+      "sourceLineSha256": "0a3007670191303f1d939218e3a098b2898a24324ddb8a469181984d54ee443f",
+      "atomicObligationSha256": "7b6f040841851cd3adc7c0c07ef5078451f890e88e8808f7842f52f97e7c331d",
+      "fields": {
+        "productionOwners": [
+          "response-ingestion.js:prepareCaptured.prepareParsedEnvelope/withEnvelopeDigests"
+        ],
+        "currentDisposition": "UNKNOWN",
+        "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+        "unresolvedRequirements": [
+          "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+          "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-97b5f41ba7027f7a4196160142947587",
+      "sourceLineSha256": "cc4e67e551cba2d1c2ec538f1bc12952e9bb58c9dc4201d66d23165cdc3726e1",
+      "atomicObligationSha256": "34a821c568b4a5e7ee54caf62b4bc8fa91792daec43d7552b09eee560869a4b1",
+      "fields": {
+        "productionOwners": [
+          "response-ingestion.js:prepareCaptured.prepareParsedEnvelope/withEnvelopeDigests"
+        ],
+        "currentDisposition": "UNKNOWN",
+        "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+        "unresolvedRequirements": [
+          "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+          "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-56a1f12e5f6d7b80a236d6c75239148c",
+      "sourceLineSha256": "cf180ccaab3cd1b737bf75305b7321588a31daaea21e43ce1eb9185e7ed11f48",
+      "atomicObligationSha256": "534021327974a55abf6037076b8bac1418e2b684be87c3a363908354ad8beedf",
+      "fields": {
+        "productionOwners": [
+          "response-ingestion.js:prepareCaptured.prepareParsedEnvelope/withEnvelopeDigests"
+        ],
+        "currentDisposition": "UNKNOWN",
+        "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+        "unresolvedRequirements": [
+          "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+          "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-26a282546a741753827457c90a05c010",
+      "sourceLineSha256": "70f4b6671f6c017103a2142290638178e175c2ed9d5eafc5475c0ea4699fbc52",
+      "atomicObligationSha256": "e44f223f49b6203d3bf1f666311858cf948b33e7460bed7a31316d8df55c2bc9",
+      "fields": {
+        "productionOwners": [
+          "response-ingestion.js:prepareCaptured.prepareParsedEnvelope/withEnvelopeDigests"
+        ],
+        "currentDisposition": "UNKNOWN",
+        "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+        "unresolvedRequirements": [
+          "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+          "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-eedebbb62445bc357690265d3dad39c0",
+      "sourceLineSha256": "5c7c16671f8e824dfac972d28508cebb67d6ea68b61ec053ad3d38514b016993",
+      "atomicObligationSha256": "8dbe4e371387bdc3bba1ad921d8d531cd27a9f8e3ebb60a5661ef17d3da2ecfd",
+      "fields": {
+        "productionOwners": [
+          "response-ingestion.js:commit prerequisite checks",
+          "response-ingestion.js:prepareCaptured.prepareParsedEnvelope/withEnvelopeDigests"
+        ],
+        "currentDisposition": "UNKNOWN",
+        "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+        "unresolvedRequirements": [
+          "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+          "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-32c645273386c248f10352d029b11a13",
+      "sourceLineSha256": "116c7adc99a7e43603cc641875a95c072ef00d007a7af7f38963e6d9e4dc0c6f",
+      "atomicObligationSha256": "0f700cad5514ef2ba50a6319ac375fa4effbefbb96be5480fa7487ebcb1656fd",
+      "fields": {
+        "productionOwners": [
+          "response-ingestion.js:commit prerequisite checks",
+          "response-ingestion.js:prepareCaptured.prepareParsedEnvelope/withEnvelopeDigests"
+        ],
+        "currentDisposition": "UNKNOWN",
+        "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+        "unresolvedRequirements": [
+          "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+          "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-bffa6d70970c446725c1b96369021717",
+      "sourceLineSha256": "f694dd23cf20631d522b9514952c5df3a3bfec5596ad81276f312fd79f33bd23",
+      "atomicObligationSha256": "c79a0e0a6545def122a30c07445c5a416f53ec89f054a3f5a3b6a17069ac9f0b",
+      "fields": {
+        "productionOwners": [
+          "response-ingestion.js:prepareCaptured.prepareParsedEnvelope/withEnvelopeDigests"
+        ],
+        "currentDisposition": "UNKNOWN",
+        "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+        "unresolvedRequirements": [
+          "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+          "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-a5be515530a4736a534a4ca3cd843377",
+      "sourceLineSha256": "220d1e71bafe2134ebe233bbaa1082cfe442cd71a381802003e6bda9f6dcf948",
+      "atomicObligationSha256": "2aaab5aa08822b744dd963272c0894c59c99875a758478b7cf5858ee8da89719",
+      "fields": {
+        "productionOwners": [
+          "project-store.js:operationalPatches/cloneOperationalPatchValue/replayOperationalPatches/applyOperationalJournal",
+          "project-store.js:prepareProjectWrite",
+          "project-store.js:readProjectForTransaction",
+          "project-store.js:readProjectMetadata",
+          "project-store.js:takeOperationalCommitRead/projectRowWithOperations",
+          "project-store.js:writeOperationalProject",
+          "project-store.js:writeProjectRow",
+          "project-store.js:recoverResponseStaging/readRecoveryProject",
+          "project-store.js:takeOperationalCommitRead",
+          "project-store.js:readProject/readProjectForTransaction",
+          "project-store.js:writeProject",
+          "project-store.js:refreshStoredProjectProjection"
+        ],
+        "currentDisposition": "UNKNOWN",
+        "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+        "unresolvedRequirements": [
+          "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+          "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-5003532a6cda7a68c13be508fbf4d723",
+      "sourceLineSha256": "e3b13b5c54e898d4f1d4d88840cf7b90baa8e95b381220354450f376f4053e54",
+      "atomicObligationSha256": "a2d1b1f97114d13a6954b1962006ef9e01c9d1ad294c2837b2ed37ec09d9261a",
+      "fields": {
+        "productionOwners": [
+          "project-store.js:prepareProjectWrite",
+          "project-store.js:readProjectForTransaction",
+          "project-store.js:readProjectMetadata",
+          "project-store.js:takeOperationalCommitRead/projectRowWithOperations",
+          "project-store.js:writeOperationalProject",
+          "project-store.js:writeProjectRow"
+        ],
+        "currentDisposition": "UNKNOWN",
+        "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+        "unresolvedRequirements": [
+          "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+          "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-7c6165582b8ddae4e124c2db6ed6f966",
+      "sourceLineSha256": "7dfc8058683952990202279178fba3e33c084f7653960465c60bfac19d76cbdf",
+      "atomicObligationSha256": "28da905af65697d44bca0406f2983782c21135941efe4ade1d2d0b71b9414380",
+      "fields": {
+        "productionOwners": [
+          "project-store.js:prepareProjectWrite",
+          "project-store.js:readProjectForTransaction",
+          "project-store.js:readProjectMetadata",
+          "project-store.js:takeOperationalCommitRead/projectRowWithOperations",
+          "project-store.js:writeOperationalProject",
+          "project-store.js:writeProjectRow"
+        ],
+        "currentDisposition": "UNKNOWN",
+        "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+        "unresolvedRequirements": [
+          "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+          "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-c94c878ef2cf8c6a35b0985da91c0c85",
+      "sourceLineSha256": "81e2f80bd8992d1328c44a89fd0c5e5bc19f1046c9bb0f959e63730d2ed4c487",
+      "atomicObligationSha256": "526934b35555a276285ef9f3704d21cfcbf8374723c5138b5d5ba199b9c72e34",
+      "fields": {
+        "productionOwners": [
+          "project-store.js:prepareProjectWrite",
+          "project-store.js:readProjectForTransaction",
+          "project-store.js:readProjectMetadata",
+          "project-store.js:takeOperationalCommitRead/projectRowWithOperations",
+          "project-store.js:writeOperationalProject",
+          "project-store.js:writeProjectRow"
+        ],
+        "currentDisposition": "UNKNOWN",
+        "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+        "unresolvedRequirements": [
+          "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+          "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-ee00110abd4b71eed09ff59450781609",
+      "sourceLineSha256": "c63004daa3d7a050e73838e5db526d95a3693eb369da8397e074956e53fb2373",
+      "atomicObligationSha256": "42aec5feb163c394b6511e13567ef6cc852a95de6496a21d06425d6cdc2ad122",
+      "fields": {
+        "productionOwners": [
+          "project-store.js:prepareProjectWrite",
+          "project-store.js:readProjectForTransaction",
+          "project-store.js:readProjectMetadata",
+          "project-store.js:takeOperationalCommitRead/projectRowWithOperations",
+          "project-store.js:writeOperationalProject",
+          "project-store.js:writeProjectRow"
+        ],
+        "currentDisposition": "UNKNOWN",
+        "currentDispositionReason": "Reviewed bounded implementation/test binding proposal only. Current source-specific raw outcomes and admitted catalog receipts remain separate; no requirement conformance is established.",
+        "unresolvedRequirements": [
+          "Qualify each linked existing owner observation using exact current source/authority/catalog/binding fingerprints and independently review before integration.",
+          "Retain all unlisted semantic, browser, native storage, physical-device and release obligations; no fullCoverage is declared."
+        ]
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-0cf073f54e3f44e3e65472d8c67998c0",
+      "sourceLineSha256": "ced7f088b0a0bc42ee6d2217615df666a237ff32c325b17cee458701e5b1e396",
+      "atomicObligationSha256": "0badca0f75d507d7db3756d0ad661155fddd7c3eeaa9aee0dee92520721b9276",
+      "fields": {
+        "productionOwners": [
+          "project-store.js:recoverResponseStaging/readRecoveryProject",
+          "project-store.js:recoverResponseStaging receipt classification/persistence",
+          "response-ingestion.js:stagedResponseRecoveryStatus"
+        ],
+        "currentDisposition": "UNKNOWN",
+        "currentDispositionReason": "Bounded startup-hook assertion link proposed only; current owner/catalog admission and complete recovery behavior remain unestablished.",
+        "unresolvedRequirements": [
+          "Qualify the exact strict normal-owner startupRecoveryHookIsolation report and current source/authority/catalog/binding fingerprints.",
+          "Only failure-record preservation under these source hooks is linked; valid resumption, safe cleanup, native storage/browser/worker and all unlisted recovery obligations remain open. No fullCoverage."
+        ]
+      }
+    }
+  ],
   "approvedClarifications": [],
   "approvedAmendments": [
     {
