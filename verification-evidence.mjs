@@ -31,6 +31,83 @@ const plain=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
 const contextApplicabilityPath='verification/normative-context-applicability-20261005.json';
 const normativeManifestPath=SPECIFICATION_PATH.replace('closed-loop-reliability-controlling-implementation-specification.txt','closed-loop-normative-requirements.json');
 const specificationManifestPath=SPECIFICATION_PATH.replace('closed-loop-reliability-controlling-implementation-specification.txt','closed-loop-specification-manifest.json');
+// This private reuse belongs only to the default filesystem context consumer.
+// A matching input guard is not an extraction, a proof token or caller acceptance.
+const atomicContextRootPaths=['specification/requirement-evidence-bindings.json',SPECIFICATION_PATH,specificationManifestPath];
+const atomicContextDescriptor=Object.getOwnPropertyDescriptor,atomicContextOwnKeys=Reflect.ownKeys,atomicContextPrototype=Object.getPrototypeOf,atomicContextSame=Object.is,atomicContextHasOwn=Object.hasOwn,atomicContextFreeze=Object.freeze;
+const atomicContextDescriptorKeys=['value','get','set','enumerable','writable','configurable'];
+const atomicContextPrimitiveBaseline=(()=>{
+  const names=['Object','Array','String','Number','Boolean','Math','JSON','Reflect','Map','WeakMap','Set','WeakSet','RegExp','Uint8Array','Uint32Array','ArrayBuffer','DataView','TextEncoder','TextDecoder','Buffer','Intl','structuredClone','closedLoopHash'];
+  const globals=names.map(name=>[globalThis,name,atomicContextDescriptor(globalThis,name)]),targets=new Set();
+  for(const name of names){const value=globalThis[name];if(value&&(typeof value==='object'||typeof value==='function')){targets.add(value);if(value.prototype)targets.add(value.prototype);}}
+  for(const [owner,key]of [[fs,'readFileSync'],[fs,'realpathSync'],[crypto,'createHash'],[process,'cwd'],[path,'resolve'],[path,'relative'],[path,'dirname'],[path,'sep'],[path.posix,'normalize'],[path.posix,'join'],[path.posix,'dirname']])globals.push([owner,key,atomicContextDescriptor(owner,key)]);
+  for(const value of [[][Symbol.iterator](),new Map()[Symbol.iterator](),new Set()[Symbol.iterator](),globalThis.closedLoopHash.canonicalChunks(null),new Intl.Collator()])targets.add(atomicContextPrototype(value));
+  const nativeHash=crypto.createHash('sha256');targets.add(atomicContextPrototype(nativeHash));nativeHash.digest();
+  for(const target of [...targets]){let parent=atomicContextPrototype(target);while(parent){targets.add(parent);parent=atomicContextPrototype(parent);}}
+  return {globals,targets:[...targets].map(target=>[target,atomicContextPrototype(target),atomicContextOwnKeys(target).map(key=>[key,atomicContextDescriptor(target,key)])]),locale:new Intl.Collator().resolvedOptions().locale};
+})();
+function atomicContextSameDescriptor(before,after){
+  if(!before||!after)return false;
+  for(let i=0;i<atomicContextDescriptorKeys.length;i++){const key=atomicContextDescriptorKeys[i];if(!atomicContextSame(atomicContextHasOwn(before,key)?before[key]:undefined,atomicContextHasOwn(after,key)?after[key]:undefined))return false;}
+  return true;
+}
+function atomicContextPrimitivesCurrent(){
+  try{
+    const baseline=atomicContextPrimitiveBaseline;
+    for(let i=0;i<baseline.globals.length;i++){const row=baseline.globals[i];if(!atomicContextSameDescriptor(row[2],atomicContextDescriptor(row[0],row[1])))return false;}
+    for(let i=0;i<baseline.targets.length;i++){
+      const row=baseline.targets[i],target=row[0],prototype=row[1],entries=row[2];if(atomicContextPrototype(target)!==prototype)return false;
+      if(atomicContextOwnKeys(target).length!==entries.length)return false;
+      for(let j=0;j<entries.length;j++)if(!atomicContextSameDescriptor(entries[j][1],atomicContextDescriptor(target,entries[j][0])))return false;
+    }
+    return new Intl.Collator().resolvedOptions().locale===baseline.locale;
+  }catch{return false;}
+}
+function atomicContextFreezeOwned(value){
+  const pending=[value],seen=new Set();
+  while(pending.length){const current=pending.pop();if(current===null||typeof current!=='object'||seen.has(current))continue;seen.add(current);for(const key of atomicContextOwnKeys(current)){const descriptor=atomicContextDescriptor(current,key);if(atomicContextHasOwn(descriptor,'value'))pending.push(descriptor.value);}atomicContextFreeze(current);}
+  return value;
+}
+function atomicContextRootIdentity(bytes){
+  return {cwd:process.cwd(),root:fs.realpathSync(process.cwd()),roots:atomicContextRootPaths.map((file,index)=>({path:file,sha256:sha(bytes[index]),byteLength:bytes[index].length}))};
+}
+function atomicContextSameRoots(before,after){
+  return before.cwd===after.cwd&&before.root===after.root&&isDeepStrictEqual(before.roots,after.roots);
+}
+// A finite byte/dispatch predicate for cheap helper controls. Nothing returned
+// here can populate the private validated-extraction slot.
+export function atomicContextReuseInputsCurrent(identity){
+  if(!atomicContextPrimitivesCurrent())return false;
+  try{
+    if(!identity||identity.cwd!==process.cwd()||identity.root!==fs.realpathSync(process.cwd())||!Array.isArray(identity.roots)||identity.roots.length!==atomicContextRootPaths.length||!Array.isArray(identity.physicalReferences)||!identity.physicalReferences.length)return false;
+    for(let i=0;i<atomicContextRootPaths.length;i++){const pin=identity.roots[i];if(pin?.path!==atomicContextRootPaths[i])return false;const bytes=fs.readFileSync(pin.path);if(bytes.length!==pin.byteLength||sha(bytes)!==pin.sha256)return false;}
+    for(const pin of identity.physicalReferences){const bytes=readAtomicEvidenceBytes(pin.path);if(bytes.length!==pin.byteLength||sha(bytes)!==pin.sha256)return false;}
+    return identity.cwd===process.cwd()&&identity.root===fs.realpathSync(process.cwd())&&atomicContextPrimitivesCurrent();
+  }catch{return false;}
+}
+let atomicContextSnapshot=null;
+const atomicContextReuseCounts={coldLoads:0,reuses:0,evictions:0};
+export function atomicContextReuseDiagnostics(){return {...atomicContextReuseCounts,retainedEntries:atomicContextSnapshot?.atomic.entries.length||0,retainedPhysicalFiles:atomicContextSnapshot?.identity.physicalReferences.length||0,acceptanceResultCached:false};}
+function evictAtomicContextSnapshot(){if(atomicContextSnapshot)atomicContextReuseCounts.evictions++;atomicContextSnapshot=null;}
+function loadAtomicContextProjection(descriptor,options,roots){
+  const observed=new Map();let stable=true;
+  const readFile=file=>{
+    const bytes=readAtomicEvidenceBytes(file);
+    if(Buffer.isBuffer(bytes)){const pin={path:file,sha256:sha(bytes),byteLength:bytes.length},prior=observed.get(file);if(prior&&!isDeepStrictEqual(prior,pin))stable=false;observed.set(file,pin);}else stable=false;
+    return bytes;
+  };
+  atomicContextReuseCounts.coldLoads++;
+  const loaded=loadReviewedAtomicExtraction(descriptor,{...options,readFile});
+  const references=loaded.continuation?.references;
+  const complete=loaded.established===true&&Array.isArray(references)&&references.length===observed.size&&new Set(references.map(ref=>ref.path)).size===references.length&&references.every(ref=>observed.get(ref.path)?.sha256===ref.sha256);
+  if(!stable||!complete||!atomicContextPrimitivesCurrent())return {atomic:loaded,candidate:null};
+  // These entries are newly owned by this call and have never escaped. Keep
+  // every field, including projected provenance, without cloning the whole
+  // continuation or retaining its data/custody closures.
+  const atomic=atomicContextFreezeOwned({established:true,entries:loaded.entries,descriptor:loaded.descriptor,continuation:true});
+  const identity=atomicContextFreezeOwned({...roots,physicalReferences:references.map(ref=>({...observed.get(ref.path)}))});
+  return {atomic,candidate:{atomic,identity}};
+}
 function specificationAcceptanceIdentity(cwd,fingerprint){
   const bytes=fs.readFileSync(path.join(cwd,specificationManifestPath)),manifest=JSON.parse(bytes);
   requireEvidence(sha(bytes)===fingerprint.inputSha256[specificationManifestPath],'acceptance specification manifest is not the current source input');
@@ -44,16 +121,35 @@ export function coverageDeclarationSha256(coverage){const declaration={...covera
 export function reviewedContextApplicability(normative,fingerprint){
   normative=decodeNormativeManifest(normative);
   if(normative.requirements.some(row=>row.entryKind)){
-    const governance=readJson('specification/requirement-evidence-bindings.json'),source=fs.readFileSync(SPECIFICATION_PATH),sections=readJson(specificationManifestPath).sectionInventory;
-    const atomic=loadReviewedAtomicExtraction(governance.atomicExtraction,{sourceBytes:source,specificationPath:SPECIFICATION_PATH,sections});
+    let rootBytes,governance,source,sections;
+    try{rootBytes=atomicContextRootPaths.map(file=>fs.readFileSync(file));governance=JSON.parse(rootBytes[0]);source=rootBytes[1];sections=JSON.parse(rootBytes[2]).sectionInventory;}catch(error){evictAtomicContextSnapshot();throw error;}
+    const options={sourceBytes:source,specificationPath:SPECIFICATION_PATH,sections};
+    const eligible=governance.atomicExtraction?.schema==='closed-loop-approved-insertion-atomic-extraction/1'&&atomicContextPrimitivesCurrent();
+    let atomic,candidate=null,roots=null;
+    try{
+      if(eligible){
+        roots=atomicContextRootIdentity(rootBytes);
+        if(atomicContextSnapshot&&atomicContextSameRoots(atomicContextSnapshot.identity,roots)&&atomicContextReuseInputsCurrent(atomicContextSnapshot.identity)){atomic=atomicContextSnapshot.atomic;atomicContextReuseCounts.reuses++;}
+        else{evictAtomicContextSnapshot();({atomic,candidate}=loadAtomicContextProjection(governance.atomicExtraction,options,roots));}
+      }else{evictAtomicContextSnapshot();atomic=loadReviewedAtomicExtraction(governance.atomicExtraction,options);}
+    }catch(error){evictAtomicContextSnapshot();throw error;}
     requireEvidence(atomic.established&&sha(source)===fingerprint.specificationSha256,'atomic context review is incomplete or stale');
     requireEvidence(normative.requirements.length===atomic.entries.length&&atomic.entries.every(entry=>{const row=normative.requirements.find(row=>row.normativeRequirementId===entry.normativeRequirementId);return row&&Object.entries(entry).every(([key,value])=>isDeepStrictEqual(row[key],value));}),'atomic context universe differs from reviewed entries');
     validateAtomicLineMembership(normative.requirements,normative.sourceLineCoverage,source,SPECIFICATION_PATH,sections);
-    for(const ref of atomicEvidenceReferences(atomic.descriptor))requireEvidence(fingerprint.inputSha256[ref.path]===ref.sha256,'atomic context evidence fingerprint mismatch');
+    let currentReferences;
+    try{currentReferences=atomicEvidenceReferences(atomic.descriptor);}catch(error){evictAtomicContextSnapshot();throw error;}
+    for(const ref of currentReferences)requireEvidence(fingerprint.inputSha256[ref.path]===ref.sha256,'atomic context evidence fingerprint mismatch');
     const contexts=new Map();for(const row of normative.requirements.filter(row=>row.entryKind==='SOURCE_CONTEXT')){
       const reviewed=atomic.entries.find(entry=>entry.normativeRequirementId===row.normativeRequirementId);requireEvidence(reviewed&&isDeepStrictEqual(reviewed.contextClassification,row.contextClassification),'atomic context classification differs from reviewed scope');
-      const c=row.contextClassification;contexts.set(row.normativeRequirementId,{...row,existingReconciledClassification:c.classification,reviewedDisposition:c.classification==='STRUCTURAL_REQUIREMENT_CONTEXT'?'CONTEXT_GOVERNED_BY_LINKED_CLAUSES':'HISTORICAL_CONTEXT_NOT_CURRENT_OBLIGATION',exclusionReason:c.reason,governingNormativeRequirementIds:c.governingNormativeRequirementIds,review:atomic.continuation?{kind:'APPROVED_INSERTION_SOURCE_CONTINUATION',...atomic.descriptor.continuation}:atomic.descriptor.reconciliation});
-    }return contexts;
+      const c=row.contextClassification;contexts.set(row.normativeRequirementId,{...row,existingReconciledClassification:c.classification,reviewedDisposition:c.classification==='STRUCTURAL_REQUIREMENT_CONTEXT'?'CONTEXT_GOVERNED_BY_LINKED_CLAUSES':'HISTORICAL_CONTEXT_NOT_CURRENT_OBLIGATION',exclusionReason:c.reason,governingNormativeRequirementIds:c.governingNormativeRequirementIds,review:structuredClone(atomic.continuation?{kind:'APPROVED_INSERTION_SOURCE_CONTINUATION',...atomic.descriptor.continuation}:atomic.descriptor.reconciliation)});
+    }
+    if(eligible){
+      let current=false;
+      try{current=atomicContextPrimitivesCurrent()&&atomicContextSameRoots(roots,atomicContextRootIdentity(atomicContextRootPaths.map(file=>fs.readFileSync(file))));}catch{}
+      if(!current){evictAtomicContextSnapshot();requireEvidence(false,'atomic context inputs changed during validation');}
+      if(candidate)atomicContextSnapshot=candidate;
+    }
+    return contexts;
   }
   if(!fingerprint.inputSha256[contextApplicabilityPath])return new Map();
   const review=readJson(contextApplicabilityPath),governance=readJson('specification/requirement-evidence-bindings.json');
