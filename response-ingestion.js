@@ -64,8 +64,9 @@ const byteLength=text=>new TextEncoder().encode(String(text??'')).byteLength;
 // Curly quotation marks are legal Unicode data inside an ASCII-delimited JSON
 // string. They are unsafe only when used as JSON syntax outside such a string.
 function hasUnsafeSmartJsonDelimiter(raw){
+  const text=String(raw??'');if(!/[“”]/.test(text))return false;
   let inString=false,escaped=false;
-  for(const c of String(raw??'')){
+  for(const c of text){
     if(inString){
       if(escaped){escaped=false;continue;}
       if(c==='\\'){escaped=true;continue;}
@@ -85,7 +86,10 @@ function scanJsonAmbiguity(raw,maxDepth,{responseContract=false}={}){
  let i=0,depth=0;
  const ws=()=>{while(/\s/.test(raw[i]||''))i++;};
  const preflight=(code,path,message)=>{const detail=issue(code,'/'+path.map(pointerEscape).join('/'),message+' Response shape preflight stopped at this error; diagnostics are incomplete. Correct this error pattern throughout the response and revalidate. Exact original bytes remain preserved.');throw Object.assign(new Error(detail.message),{code:detail.code,path:detail.path,responseShapePreflight:true});};
- const str=(decode=false)=>{const start=i;if(raw[i++]!=='"')throw new Error('Expected string.');while(i<raw.length){const c=raw[i++];if(c==='"')return decode?JSON.parse(raw.slice(start,i)):undefined;if(c==='\\')i++;}throw new Error('Unterminated string.');};
+ // Native search skips ordinary value text; escape handling and decoded keys
+ // retain the exact scanner grammar, with JSON.parse validating string syntax.
+ const quoteOrEscape=/["\\]/g;
+ const str=(decode=false)=>{const start=i;if(raw[i++]!=='"')throw new Error('Expected string.');while(i<raw.length){quoteOrEscape.lastIndex=i;const match=quoteOrEscape.exec(raw);if(!match)break;i=quoteOrEscape.lastIndex;if(match[0]==='"')return decode?JSON.parse(raw.slice(start,i)):undefined;i++;}throw new Error('Unterminated string.');};
  const ruleAt=path=>responseContract?schema.responseJsonScanRule(path):null;
  const kindAt=()=>raw[i]==='{'?'OBJECT':raw[i]==='['?'ARRAY':raw[i]==='"'?'STRING':raw.startsWith('null',i)?'NULL':raw.startsWith('true',i)||raw.startsWith('false',i)?'BOOLEAN':raw[i]==='-'||/[0-9]/.test(raw[i]||'')?'NUMBER':'INVALID';
  const checkKind=(rule,path,kind)=>{
@@ -1132,7 +1136,7 @@ function prepareCaptured(project,{rawResponseId,promptRecord=null,expectedCommit
   let envelope=null,parseError=null;try{envelope=remapBlindAliases(strictParse(rawText,{limits:schema.responseResourceLimitsForPrompt(prompt),responseContract:true}),prompt).envelope;}catch(error){parseError=error;}
   // Reuse only full-value/primitive-guarded digests of this parsed envelope.
   // Other preparation owners keep their ambient scope; no scope crosses an await.
-  const envelopeDigestScope=envelope?hash.createCanonicalDigestScope(envelope):null;
+  const envelopeDigestScope=envelope&&rawText.length>=4096?hash.createCanonicalDigestScope(envelope):null;
   const withEnvelopeDigests=callback=>{let result;hash.withCanonicalDigestScope(envelopeDigestScope,()=>{result=callback();});return result;};
   try{return prepareParsedEnvelope();}finally{hash.disposeCanonicalDigestScope(envelopeDigestScope);}
   function prepareParsedEnvelope(){

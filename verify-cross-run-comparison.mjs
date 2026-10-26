@@ -6,10 +6,14 @@ import {reviewProofFixture,reviewApplicabilityFixture,recordProposal,evidence} f
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {runVerifier,assertDetectedFault} from './verify-conformance-regressions.mjs';
+import {verifyComparisonMatrixOutput} from './test-comparison-matrix-output.mjs';
 import {createHash,randomUUID} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
+
+const comparisonMatrixOnly=process.argv.includes('--comparison-matrix-only');
+if(comparisonMatrixOnly&&(process.argv.slice(2).length!==1||process.env.CLOSED_LOOP_COMPARISON_SETUP))throw new Error('COMPARISON_MATRIX_MODE_ORACLE: matrix-only requires fresh local prerequisites and no other selector.');
 
 if(process.argv.includes('--materiality-stage19-only')){const {verifyComparisonMaterialityStage19}=await import('./test-comparison-materiality-stage19.mjs');console.log(JSON.stringify(await verifyComparisonMaterialityStage19()));process.exit(0);}
 if(process.argv.includes('--materiality-retry-package-only')){const {verifyComparisonMaterialityPackage}=await import('./test-comparison-materiality-package.mjs');console.log(JSON.stringify(await verifyComparisonMaterialityPackage({stopAfterRetry:true})));process.exit(0);}
@@ -19,7 +23,7 @@ if(process.argv.includes('--projection-recovery-only')){const {verifyStage13Proj
 // The complete package journey has a distinct checked producer. Its default
 // receipt must exist before this bounded comparison owner starts. Focused
 // mutation/restoration populations never consume or replace that prerequisite.
-const focusedComparisonInvocation=process.argv.slice(2).some(argument=>argument.startsWith('--comparison-fault=')||['--comparison-control','--stability-aggregate-control','--scheduled-iteration-controls','--materiality-only','--variance-prerequisite-only','--ten-run-population-only'].includes(argument));
+const focusedComparisonInvocation=comparisonMatrixOnly||process.argv.slice(2).some(argument=>argument.startsWith('--comparison-fault=')||['--comparison-control','--stability-aggregate-control','--scheduled-iteration-controls','--materiality-only','--variance-prerequisite-only','--ten-run-population-only'].includes(argument));
 let packageProofModule,packageProof;
 if(!focusedComparisonInvocation){
  packageProofModule=await import('./comparison-materiality-package-proof.mjs');
@@ -74,8 +78,8 @@ if(selectedComparisonFault&&!injectedComparisonFault)throw new Error('Unknown co
 const explicitOwnerArgument=process.argv.find(arg=>arg.startsWith('--comparison-owner='))?.split('=')[1];
 const independentFaultOwnerMap={"COMPARISON-MATERIALITY-ROLE-CONTRACT":"materiality13","COMPARISON-MATERIALITY-UI-STALE":"materiality13","COMPARISON-MATERIALITY-RETRY":"materiality13","COMPARISON-REQUIRED-FILE-SELECTION":"artifacts","COMPARISON-MATERIALITY-SELF-EXEMPT":"materiality13","COMPARISON-MATERIALITY-DISAGREEMENT":"materiality13","COMPARISON-MATERIALITY-BINDING":"materiality13","COMPARISON-MATERIALITY-AUTHOR-MODE":"materiality13","ITERATION-STAGE13-ALL-MANDATORY":"scheduled","ITERATION-MATRIX-FIXED12":"scheduled","ITERATION-CORRECTED-ALL-MANDATORY":"scheduled","ITERATION-NO-DEFECT-ALL-MANDATORY":"scheduled","ITERATION-CONFIRMATION-ALL-MANDATORY":"scheduled","ITERATION-CONFIRMATION-ALL-REGRESSIONS":"scheduled","ITERATION-CONVERGENCE-EARLY-FRONTIER":"scheduled","STABILITY-REPEATED-GROUP-MAPPING":"core-model","COMPARISON-ATOMIC-DEFECT-BINDING":"core-atomic","COMPARISON-ATOMIC-DEFECT-MEMBERSHIP":"core-atomic","COMPARISON-ATOMIC-DEFECT-PROVENANCE":"core-atomic","COMPARISON-CORRECTED-DEFECT-AUTHORING":"core-atomic","COMPARISON-PRODUCTION-BINDING":"core-model","COMPARISON-MISSING-TUPLE":"core-model","COMPARISON-MISSING-CONTRACT":"core-model","COMPARISON-UNKNOWN-AUTHORIZATION":"core-model","COMPARISON-NONRESOLVING-DEFECT":"core-model","COMPARISON-MUTATING-READ":"core-model","COMPARISON-SUPERSESSION":"core-replacement","VERIFICATION-INDEPENDENT-BATCH":"core-verification","VERIFICATION-SCOPED-REFINEMENT":"core-verification","VERIFICATION-INDEPENDENT-PROMPT":"core-verification","VERIFICATION-INDEPENDENT-PROPOSAL":"core-verification","VERIFICATION-INTRA-STAGE-DEPENDENCY":"core-verification","COMPARISON-UNCONFIRMED-ACCEPTANCE":"core-replacement","UI-ADDITIONAL-BATCH-MISLABEL":"core-verification","UI-SAME-STAGE-DEPENDENCY":"core-verification","SCOPED-BATCH-DUPLICATE":"core-duplicate"};
 const faultOwner=injectedComparisonFault?independentFaultOwnerMap[injectedComparisonFault.id]:null;
-const explicitOwner=explicitOwnerArgument||faultOwner;
-if(explicitOwner&&!['materiality13','materiality17','artifacts','scheduled','core-model','core-verification','core-replacement','core-duplicate','core-atomic'].includes(explicitOwner))throw new Error('COMPARISON_OWNER_SELECTION_ORACLE');
+const explicitOwner=explicitOwnerArgument||faultOwner||(comparisonMatrixOnly?'matrix':null);
+if(explicitOwner&&!(comparisonMatrixOnly&&explicitOwner==='matrix')&&!['materiality13','materiality17','artifacts','scheduled','core-model','core-verification','core-replacement','core-duplicate','core-atomic'].includes(explicitOwner))throw new Error('COMPARISON_OWNER_SELECTION_ORACLE');
 if(faultOwner&&explicitOwner!==faultOwner)throw new Error('COMPARISON_FAULT_OWNER_BINDING_ORACLE');
 
 const comparisonSourceHashes={},comparisonDigest=source=>createHash('sha256').update(source).digest('hex');
@@ -485,24 +489,43 @@ for(const iterationStage of [10,17,19]){
 }
 if(explicitOwner?.startsWith('core-'))process.exit(0);
 
-if(!selectedComparisonFault&&!process.argv.includes('--comparison-control')){
- const setup=createComparisonInvocationSetup(),rawRuns=[],faultResults=[],restoredOwners=['materiality13','materiality17','artifacts','scheduled','core-model','core-verification','core-replacement','core-duplicate','core-atomic'],started=Date.now(),suiteBoundMs=180000;
+async function verifyComparisonFaultMatrix(){
+ const setup=createComparisonInvocationSetup(),rawRuns=[],faultResults=[],restoredOwners=['materiality13','materiality17','artifacts','scheduled','core-model','core-verification','core-replacement','core-duplicate','core-atomic'],started=Date.now(),suiteBoundMs=300000;
+ // These two complete 93-case restoration journeys measured 24–30 seconds on
+ // Node 22.23.3. The disagreement mutation reached its intended assertion in
+ // 19s with the actual evidence preload. These complete-child allowances are
+ // distinct from product-operation latency assertions; other children keep 15s.
  const execute=async(args,operationOwner,index)=>{
   const remaining=suiteBoundMs-(Date.now()-started);assert(remaining>0,'COMPARISON_FAULT_SUITE_DEADLINE_ORACLE: fault matrix exceeded its hard bound.');
-  const child=await runVerifier(process.execPath,['verify-cross-run-comparison.mjs',...args],{timeout:Math.min(15000,remaining),maxBuffer:16*1024*1024,env:{CLOSED_LOOP_COMPARISON_SETUP:JSON.stringify(setup)}});
-  const run={command:[process.execPath,'verify-cross-run-comparison.mjs',...args],operationOwner,setupSha256:setup.sha256,exitCode:child.status,signal:child.signal,error:child.error?String(child.error):null,stdout:child.stdout||'',stderr:child.stderr||''};rawRuns[index]=run;
+  const childBoundMs=args[0]==='--comparison-fault=COMPARISON-MATERIALITY-DISAGREEMENT'?30000:args[0]==='--comparison-control'&&['materiality13','materiality17'].includes(operationOwner)?60000:15000,timeoutMs=Math.min(childBoundMs,remaining);
+  const child=await runVerifier(process.execPath,['verify-cross-run-comparison.mjs',...args],{timeout:timeoutMs,maxBuffer:16*1024*1024,env:{CLOSED_LOOP_COMPARISON_SETUP:JSON.stringify(setup)}});
+  const run={command:[process.execPath,'verify-cross-run-comparison.mjs',...args],operationOwner,setupSha256:setup.sha256,timeoutMs,exitCode:child.status,signal:child.signal,error:child.error?String(child.error):null,stdout:child.stdout||'',stderr:child.stderr||''};rawRuns[index]=run;
   assert(!run.error&&!run.signal&&child.outcome!=='TIMEOUT','COMPARISON_FAULT_EXECUTION_ORACLE: a timeout or execution failure is not fault detection.');return run;
  };
  try{
   async function phase(entries,offset,work,concurrency=2){let next=0,failure=null;await Promise.allSettled(Array.from({length:concurrency},async()=>{while(!failure&&next<entries.length){const local=next++;try{await work(entries[local],offset+local);}catch(error){failure=error;}}}));if(failure)throw failure;}
-  await phase(comparisonFaults,0,async(fault,index)=>{const operationOwner=independentFaultOwnerMap[fault.id],run=await execute(['--comparison-fault='+fault.id],operationOwner,index);assertDetectedFault(run,fault.oracle,'COMPARISON_FAULT_DETECTION_ORACLE: '+fault.id+' did not fail at its intended invariant.');faultResults[index]={faultId:fault.id,owner:'production',operationOwner,file:fault.file,originalSha256:comparisonSourceHashes[fault.file],injectedSha256:comparisonDigest(fs.readFileSync(fault.file,'utf8').replace(fault.from,fault.to)),caughtBy:fault.oracle,result:'PASS'};});
+  const verifyFault=async(fault,index)=>{const operationOwner=independentFaultOwnerMap[fault.id],run=await execute(['--comparison-fault='+fault.id],operationOwner,index);assertDetectedFault(run,fault.oracle,'COMPARISON_FAULT_DETECTION_ORACLE: '+fault.id+' did not fail at its intended invariant.');faultResults[index]={faultId:fault.id,owner:'production',operationOwner,file:fault.file,originalSha256:comparisonSourceHashes[fault.file],injectedSha256:comparisonDigest(fs.readFileSync(fault.file,'utf8').replace(fault.from,fault.to)),caughtBy:fault.oracle,result:'PASS'};};
+  // This mutation reaches the disagreement assertion only after its valid
+  // author/review prefix. Keep it isolated from competing children so that
+  // contention does not consume its narrowly calibrated 30s allowance.
+  const isolatedFaultIndex=comparisonFaults.findIndex(fault=>fault.id==='COMPARISON-MATERIALITY-DISAGREEMENT');
+  assert(isolatedFaultIndex>=0,'COMPARISON_ISOLATED_FAULT_POPULATION_ORACLE');
+  await phase(comparisonFaults.slice(0,isolatedFaultIndex),0,verifyFault);
+  await phase([comparisonFaults[isolatedFaultIndex]],isolatedFaultIndex,verifyFault,1);
+  await phase(comparisonFaults.slice(isolatedFaultIndex+1),isolatedFaultIndex+1,verifyFault);
   await phase(restoredOwners,comparisonFaults.length,async(owner,index)=>{const restored=await execute(['--comparison-control','--comparison-owner='+owner],owner,index);assert(restored.exitCode===0,'COMPARISON_RESTORED_CONTROL_ORACLE: '+owner+' did not return to green.');},1);
   for(const[file,digest]of Object.entries(comparisonSourceHashes))assert(comparisonDigest(fs.readFileSync(file,'utf8'))===digest,'COMPARISON_SOURCE_RESTORED_ORACLE: retained source changed during fault injection.');
   readComparisonInvocationSetup(setup);fs.rmSync(path.dirname(setup.path),{recursive:true,force:true});
   assert(rawRuns.length===45&&Date.now()-started<=suiteBoundMs,'COMPARISON_COMPLETE_MATRIX_ORACLE');
-  console.log(JSON.stringify({caseId:'COMPARISON-IMPLEMENTATION-FAULTS',result:'PASS',synthetic:true,actualBrowser:false,childBoundSeconds:15,suiteBoundSeconds:180,elapsedMs:Date.now()-started,maxConcurrentChildren:2,restoredConcurrency:1,temporarySetupRemoved:true,faults:faultResults,rawRuns,restoredOwners,setup,sourceRestored:true}));
+  return {caseId:'COMPARISON-IMPLEMENTATION-FAULTS',result:'PASS',synthetic:true,actualBrowser:false,childBoundSeconds:15,materialityControlBoundSeconds:60,materialityDisagreementBoundSeconds:30,suiteBoundSeconds:300,elapsedMs:Date.now()-started,maxConcurrentChildren:2,restoredConcurrency:1,temporarySetupRemoved:true,faults:faultResults,rawRuns,restoredOwners,setup,sourceRestored:true};
  }catch(error){console.log(JSON.stringify({caseId:'COMPARISON-IMPLEMENTATION-FAULTS',result:'FAIL',faults:faultResults,rawRuns,setup,failure:String(error.stack||error)}));throw error;}
  finally{fs.rmSync(path.dirname(setup.path),{recursive:true,force:true});}
+}
+
+if(!selectedComparisonFault&&!process.argv.includes('--comparison-control')){
+ console.log(JSON.stringify(await verifyComparisonMatrixOutput()));
+ console.log(JSON.stringify(await verifyComparisonFaultMatrix()));
+ if(comparisonMatrixOnly){await new Promise((resolve,reject)=>process.stdout.write(JSON.stringify({comparisonFaultMatrixOnly:true,fullComparisonProducer:false,packageJourneyExecuted:false,freshPrerequisiteVariants:8,scope:'All 36 injected faults and nine restored owners only; default package, recovery, and Stage19 producers remain separately required.'})+'\n',error=>error?reject(error):resolve()));process.exit(0);}
 }
 
 // Recovery runs once in the default parent, never in each injected-fault child.

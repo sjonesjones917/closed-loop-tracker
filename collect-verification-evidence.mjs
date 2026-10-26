@@ -28,7 +28,7 @@ export async function executeBrowserEvidenceProducer(suite,{scope,directory=proc
   // leave an old successful receipt masquerading as that attempt's evidence.
   if(fs.existsSync(file)){const retained=file+'.'+sha(fs.readFileSync(file))+'.superseded';fs.renameSync(file,retained);}
   const result=await runVerifier(process.execPath,[path.resolve(cwd,suite)],{cwd,timeout:definition.timeoutMs,maxBuffer:64*1024*1024,env:{...environment,CLOSED_LOOP_BROWSER_SCOPE:scope,CLOSED_LOOP_BROWSER_SOURCE_COMMIT:fingerprint.sourceCommit}});
-  process.stdout.write(result.stdout||'');process.stderr.write(result.stderr||'');
+  await Promise.all([new Promise((resolve,reject)=>process.stdout.write(result.stdout||'',error=>error?reject(error):resolve())),new Promise((resolve,reject)=>process.stderr.write(result.stderr||'',error=>error?reject(error):resolve()))]);
   if(evidenceFingerprint(cwd).sourceInputsSha256!==fingerprint.sourceInputsSha256)throw new Error('EXECUTED_EVIDENCE_ORACLE: browser source changed during execution');
   const receipt=createExecutionReceipt(suite,result,{cwd,fingerprint,browser:{scope,manifest}});
   const temporary=file+'.partial';fs.writeFileSync(temporary,JSON.stringify(receipt,null,2)+'\n');fs.renameSync(temporary,file);return receipt;

@@ -1,3 +1,4 @@
+import {verifyEnvelopeDigestAdmission} from './test-envelope-digest-admission.mjs';
 import {verifyContractProfileContrasts} from './test-contract-profile-contrasts.mjs';
 import {verifyExtractionManifestBackupPersistence} from './test-manifest-record-backup.mjs';
 import {verifySchemaReferenceAdmission} from './test-schema-reference-admission.mjs';
@@ -975,3 +976,7 @@ console.log(JSON.stringify({extractionManifestBackupPersistence}));
 
 // Exact finite Section38 relationship admission controls; runtime eligibility remains separate.
 await verifySchemaReferenceAdmission();
+
+// Optional memo admission preserves all mandatory ingestion work.
+const envelopeDigestAdmission=await verifyEnvelopeDigestAdmission();
+console.log(JSON.stringify({envelopeDigestAdmission}));

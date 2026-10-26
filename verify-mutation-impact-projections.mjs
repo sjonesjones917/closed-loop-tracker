@@ -3,7 +3,7 @@ import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import {projectStoreRuntime} from './test-project-store-runtime.mjs';
 import {responseFixture,OBJECTIVE} from './operator-journey-fixtures.mjs';
-const fault=process.argv.includes('--fault=stale-projection')?{file:'project-store.js',id:'STALE-PROJECTION-IMPACT',before:'const candidate=next;next=derivedNext||clone(candidate);',after:'const candidate=next;next=clone(candidate);derivedNext=candidate;'}:null;
+const fault=process.argv.includes('--fault=stale-projection')?{file:'project-store.js',id:'STALE-PROJECTION-IMPACT',before:'const candidate=next;next=derivedNext||cloneOperationalPatchValue(candidate);',after:'const candidate=next;next=cloneOperationalPatchValue(candidate);derivedNext=candidate;'}:null;
 const r=projectStoreRuntime({fault}),{core,engine,prompts,ingestion,store,copy,runtime}=r,schema=runtime.closedLoopWorkflowSchema,cases=[],note=name=>cases.push({name,result:'PASS'});
 let p=await store.createProject({commandId:'FILE-CORRECTION-PROJECT'}),draft=copy(p);draft.job.EXACT_USER_OBJECTIVE_VERBATIM=OBJECTIVE;engine.recordHumanInputVersion(draft,['EXACT_USER_OBJECTIVE_VERBATIM']);p=await store.writeProject(draft,{expectedProjectRevision:p.revision});
 draft=copy(p);const prompt=prompts.reserveAndBuildPromptRecord(draft,1).prompt;p=await store.writeProject(draft,{expectedProjectRevision:p.revision});

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 // Synthetic verifier setup only. The actual human-decision command, ordinary
 // save, fresh reservation and byte review remain production boundaries. This
 // never represents a real operator decision or an external actor execution.
-export async function authorizeSyntheticHandoff(r,{project,prompt,options={},action=null,scanInspection=null}={}){
+export async function authorizeSyntheticHandoff(r,{project,prompt,options={},action=null,scanInspection=null,coalescePromptSave=false}={}){
  const stage=Number(prompt.stage),operation=prompt.operation;
  const request=(state,instruction)=>({project:state,stage,operation,instructionId:instruction.instructionId,...(instruction.scope?.runId?{runId:instruction.scope.runId}:{}),...(options.testIds?{testIds:options.testIds}:{})});
  let review=await r.store.prepareExecutionPackageReview(request(project,prompt));
@@ -18,11 +18,31 @@ export async function authorizeSyntheticHandoff(r,{project,prompt,options={},act
   const beforeSubject=review.authorization.subjectSha256,next=r.copy(project);
   const decision=r.engine.recordHandoffAuthorization(next,{promptRecord:prompt,members:r.copy(review.members),scan:r.copy(review.scan),purpose,recipient:'Synthetic isolated verifier actor',provider:'Synthetic local verifier context',suitabilityBasis:'Only the declared disposable test fixture is supplied to this isolated verifier; no actual private user data or external transfer is involved.',operatorLabel:'SYNTHETIC_TEST_OPERATOR',confirmed:true,...(action?{action:r.copy(action)}:{}),...(scanInspection?{scanInspection:r.copy(scanInspection)}:{})});
   decisionIds.push(r.engine.recordId(decision,'humanDecisions'));
+  if(coalescePromptSave===true){
+   // Opt-in package-fixture alignment with the current application command:
+   // one canonical decision/replacement save, not a second transport-only save.
+   // Keep the decision-only candidate private if preparation cannot complete.
+   const reserved=r.copy(next);let committing=next,issued=null,preparationError=null;
+   try{
+    const reservation=(reserved.projectData.operationReservations||[]).find(row=>r.engine.recordId(row,'operationReservations')===prompt.operationReservationId);
+    if(!reservation)throw new Error('The reviewed instruction reservation is unavailable.');
+    r.engine.transitionOperationReservation(reservation,'EXPIRED_BY_SCOPE');
+    r.engine.recalculate(reserved);
+    const prepared={...options,operation,scope:{...prompt.scope,...(options.scope||{})},...((prompt.contextManifest?.operationActorContextId||prompt.contextManifest?.semanticReviewBinding?.authorContextId)?{authorContextId:prompt.contextManifest.operationActorContextId||prompt.contextManifest.semanticReviewBinding.authorContextId}:{}),...(prompt.contextManifest?.semanticReviewBinding?.reviewerContextId?{reviewerContextId:prompt.contextManifest.semanticReviewBinding.reviewerContextId}:{}),...(prompt.contextManifest?.deferredDefinitionCorrectionTarget?{deferredDefinitionCorrectionTarget:prompt.contextManifest.deferredDefinitionCorrectionTarget}:{})};
+    issued=r.prompts.reserveAndBuildPromptRecord(reserved,stage,r.copy(prepared),{owningTabInstance:'SYNTHETIC_HANDOFF_VERIFIER'}).prompt;
+    committing=reserved;
+   }catch(error){preparationError=error;}
+   project=await r.store.writeProject(committing,{expectedProjectRevision:project.revision,expectedStateSha256:project.projectSha256});
+   if(preparationError)throw preparationError;
+   prompt=project.projectData.generatedPrompts.find(item=>item.instructionId===issued.instructionId);
+  }else{
   let saved=await r.store.writeProject(next,{expectedProjectRevision:project.revision,expectedStateSha256:project.projectSha256});
   const reserved=r.copy(saved),prepared={...options,operation,scope:{...prompt.scope,...(options.scope||{})},...((prompt.contextManifest?.operationActorContextId||prompt.contextManifest?.semanticReviewBinding?.authorContextId)?{authorContextId:prompt.contextManifest.operationActorContextId||prompt.contextManifest.semanticReviewBinding.authorContextId}:{}),...(prompt.contextManifest?.semanticReviewBinding?.reviewerContextId?{reviewerContextId:prompt.contextManifest.semanticReviewBinding.reviewerContextId}:{}),...(prompt.contextManifest?.deferredDefinitionCorrectionTarget?{deferredDefinitionCorrectionTarget:prompt.contextManifest.deferredDefinitionCorrectionTarget}:{})};
   const issued=r.prompts.reserveAndBuildPromptRecord(reserved,stage,r.copy(prepared),{owningTabInstance:'SYNTHETIC_HANDOFF_VERIFIER'}).prompt;
   project=await r.store.writeProject(reserved,{expectedProjectRevision:saved.revision,expectedStateSha256:saved.projectSha256});
-  prompt=project.projectData.generatedPrompts.find(item=>item.instructionId===issued.instructionId);review=await r.store.prepareExecutionPackageReview(request(project,prompt));
+  prompt=project.projectData.generatedPrompts.find(item=>item.instructionId===issued.instructionId);
+  }
+  review=await r.store.prepareExecutionPackageReview(request(project,prompt));
   if(purpose==='DISCLOSURE_AUTHORIZATION')assert.equal(review.authorization.subjectSha256,beforeSubject,'SYNTHETIC_HANDOFF_SETUP: authorization bookkeeping changed the material handoff subject.');
  }
  assert.equal(review.authorization.allowed,true,'SYNTHETIC_HANDOFF_SETUP: actual saved authorization did not permit its unchanged material handoff: '+review.authorization.reasons.join(' '));

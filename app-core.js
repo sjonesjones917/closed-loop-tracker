@@ -1029,6 +1029,40 @@ async function savePromptRecord(n,retry=true){
 function promptTransportFilename(record,stage){const raw=`${current?.job?.JOB_ID||'JOB'}_${String(stage).padStart(2,'0')}_${record?.operation||selectedOperation(stage)||'COMPLETE'}_${record?.instructionId||record?.promptId||'INSTRUCTION'}.txt`;return globalThis.closedLoopHash.normalizeFilename(raw).canonicalPath;}
 let promptExportInFlight=null;
 const promptExportRequests=new Map();
+// One-use UI continuation only. Package/member owners still re-read all bytes
+// and independently decide current authorization before any transfer.
+const autoHandoffContinuations=new WeakMap(),autoHandoffDenial=Symbol('auto-handoff-denial');
+function handoffContinuationValues(record,args,origin,actionKey){
+ const field=(value,key)=>{const item=value?.[key];return {present:Boolean(value&&Object.hasOwn(value,key)),type:typeof item,value:item===undefined?null:item};};
+ const {project,...options}=args;
+ return {record,options,project:{job:field(project?.job,'JOB_ID'),jobId:field(project,'jobId'),revision:field(project,'revision'),historyActivationId:field(project,'historyActivationId'),projectSha256:field(project,'projectSha256')},origin,selection:handoffSelection(),actionKey};
+}
+function captureHandoffContinuation(record,args,origin,actionKey){
+ try{
+  if(!record||actionKey==='capability-request'||actionKey==='review')return null;
+  const api=globalThis.closedLoopHash,serialize=api?.stableStringify;if(typeof serialize!=='function')return null;
+  return {record,api,serialize,values:serialize(handoffContinuationValues(record,args,origin,actionKey))};
+ }catch{return null;}
+}
+function handoffContinuationMatches(capture,record,args,origin,actionKey){
+ try{return Boolean(capture)&&record===capture.record&&globalThis.closedLoopHash===capture.api&&capture.api.stableStringify===capture.serialize&&capture.serialize(handoffContinuationValues(record,args,origin,actionKey))===capture.values;}catch{return false;}
+}
+function retainAutoHandoffContinuation(capture,review,record,origin,actionKey){
+ try{
+  if(review?.authorization?.allowed!==true||!handoffContinuationMatches(capture,record,handoffPackageArguments(record),origin,actionKey))return null;
+  const token={};autoHandoffContinuations.set(token,{capture,review,reviewValues:capture.serialize(review)});return token;
+ }catch{return null;}
+}
+function autoHandoffReviewMatches(reuse,record,origin,actionKey,args=null){
+ try{return Boolean(reuse)&&handoffContinuationMatches(reuse.capture,record,args||handoffPackageArguments(record),origin,actionKey)&&reuse.review.authorization.allowed===true&&reuse.capture.serialize(reuse.review)===reuse.reviewValues;}catch{return false;}
+}
+async function readAutoHandoffInput(read){
+ try{return await read();}catch(error){
+  const review=error?.review;
+  if(!['HANDOFF_AUTHORIZATION_REQUIRED','HANDOFF_CREDENTIAL_SECRET_BLOCKED'].includes(error?.code)||review?.authorization?.allowed!==false||!Array.isArray(review.members)||!review.scan||!Array.isArray(review.scan.findings))throw error;
+  return {[autoHandoffDenial]:review};
+ }
+}
 function handoffSelection(){return {jobId:current.job.JOB_ID,stage:Number(current.activeStage),operation:selectedOperation(current.activeStage),runId:runSelection[current.activeStage]||null,activeView:current.activeView,historyActivationId:current.historyActivationId||null,navigationSequence:handoffNavigationSequence};}
 function handoffReviewMatchesSelection(){return Boolean(handoffReview?.origin)&&JSON.stringify(handoffReview.origin)===JSON.stringify(handoffSelection());}
 function assertHandoffSelection(origin){if(JSON.stringify(origin)!==JSON.stringify(handoffSelection()))throw new Error('The selected project, stage, operation or view changed. Return to the intended stage and review its current sharing permissions. No files were exported.');}
@@ -1053,12 +1087,26 @@ function handoffReviewMarkup(){
  const inspection=a.inspectionRequired?`<fieldset><legend>Inspect possible credential markers</legend><p>A pattern match may be an example, but a clean scan does not prove that secrets are absent. Inspect the flagged original files locally. Never approve actual credentials.</p>${details('Flagged locations',safe(review.scan?.findings).filter(row=>row&&typeof row==='object').map(row=>({file:row.canonicalPath,rule:row.ruleId,offset:row.offset})),true)}<div class="field full"><label for="handoff-inspection-classification">Inspection result</label><select id="handoff-inspection-classification"><option value="">Select after inspecting the exact files</option>${c.scanInspection.classificationValues.map(value=>`<option value="${esc(value)}">${esc(label(value))}</option>`).join('')}</select></div>${input('handoff-inspection-basis','Basis for the noncredential determination')}</fieldset>`:'';
  return `<section class="panel" id="handoff-review" tabindex="-1" aria-labelledby="handoff-review-heading"><h2 class="section-title" id="handoff-review-heading">Review external sharing</h2>${review.capabilityRequest?'<p class="notice">This is a readiness-report request only. Approval permits sharing this request; it does not authorize executing the test or search.</p>':''}<p>These are the exact files proposed for the selected operation. Approval applies to this content and recipient/provider. Material changes require a new review. Downloading a package does not prove it was sent.</p><p class="help">Known-pattern scan: ${esc(safe(schema.HANDOFF_SECRET_SCAN_CONTRACT.literalEncodings).join(', '))} literal bytes.${schema.HANDOFF_SECRET_SCAN_CONTRACT.compressedOrContainerDecoding?'':' Compressed or container contents are not decoded.'} A clean scan does not establish a file classification or prove that secrets are absent.</p>${a.reasons.length?`<div class="notice ${a.blocked?'danger':'warn'}">${a.reasons.map(esc).join('<br>')}</div>`:'<p class="notice">Current sharing permissions allow this handoff.</p>'}${details('Files proposed for sharing',safe(review.members).filter(row=>row&&typeof row==='object').map(row=>({path:row.canonicalPath,classification:row.disclosureClassification,bytes:row.byteSize,sha256:row.sha256})),true)}${a.canAuthorize?`<fieldset><legend>Decisions to record</legend>${purposes.map(purpose=>`<label><input id="handoff-purpose-${esc(purpose)}" type="checkbox" value="${esc(purpose)}"${required.has(purpose)?' checked':''}> ${esc(label(purpose))}</label>`).join('')}<p class="help">Select the decisions to approve, update, or revoke. If action authorization is selected, save it first; then review the updated files and confirm disclosure separately. Previous decisions remain in History.</p></fieldset>${disclosures}${action}${inspection}${input('handoff-operator','Human operator label')}<label><input id="handoff-confirmed" type="checkbox"> I am recording my own decision for the exact files and selected purposes.</label><div class="button-row"><button id="authorize-handoff" class="primary" type="button">Save authorization and continue</button><button id="revoke-handoff" type="button">Revoke selected permissions</button></div>`:''}<div class="button-row">${a.allowed?'<button id="continue-handoff" type="button">Continue with current permissions</button>':''}${a.credentialProhibited&&current.activeStage===1&&engine.stageOneSuppliedInputSelection(current).some(row=>row.withdrawable)?'<button id="open-input-correction" type="button">Correct supplied inputs</button>':''}<button id="close-handoff-review" type="button">Close review</button></div><p class="help">${a.credentialProhibited?'Credential-secret content cannot be approved. Keep the original private. This handoff must use reviewed nonsecret inputs before it can continue.':'Sharing and action authorization are recorded human decisions; they do not establish that an external action occurred.'}</p></section>`;
 }
-async function promptExport(action,actionKey=null){
+async function promptExport(action,actionKey=null,continuation=null){
   const origin=handoffSelection(),stage=origin.stage,jobId=origin.jobId,preceding=promptExportInFlight,key=actionKey?`${jobId}:${stage}:${origin.operation}:${origin.runId||''}:${actionKey}`:null;
   if(key&&promptExportRequests.has(key))return promptExportRequests.get(key).catch(()=>{});
-  const request=(async()=>{if(preceding)await preceding.catch(()=>{});assertHandoffSelection(origin);announce('preparing files');await new Promise(resolve=>setTimeout(resolve,0));assertHandoffSelection(origin);const record=await savePromptRecord(stage);assertHandoffSelection(origin);const args=handoffPackageArguments(record),review=await projectStore.prepareExecutionPackageReview(args);assertHandoffSelection(origin);if(actionKey==='review'||!review.authorization.allowed){presentHandoffReview(review,actionKey,origin);await captureCurrentView();return;}return action(record,args,review,origin);})();
+  let reuse=autoHandoffContinuations.get(continuation);autoHandoffContinuations.delete(continuation);
+  const request=(async()=>{
+   if(preceding)await preceding.catch(()=>{});assertHandoffSelection(origin);
+   if(reuse&&!autoHandoffReviewMatches(reuse,reuse.capture.record,origin,actionKey))reuse=null;
+   announce('preparing files');await new Promise(resolve=>setTimeout(resolve,0));assertHandoffSelection(origin);
+   if(reuse&&!autoHandoffReviewMatches(reuse,reuse.capture.record,origin,actionKey))reuse=null;
+   const record=await savePromptRecord(stage);assertHandoffSelection(origin);const args=handoffPackageArguments(record);
+   if(reuse&&!autoHandoffReviewMatches(reuse,record,origin,actionKey,args))reuse=null;
+   const review=reuse?reuse.review:await projectStore.prepareExecutionPackageReview(args);assertHandoffSelection(origin);
+   if(actionKey==='review'||!review.authorization.allowed){presentHandoffReview(review,actionKey,origin);await captureCurrentView();return;}
+   if(!reuse)return action(record,args,review,origin);
+   const result=await action(record,args,review,origin,true);
+   if(result?.[autoHandoffDenial]){assertHandoffSelection(origin);presentHandoffReview(result[autoHandoffDenial],actionKey,origin);await captureCurrentView();return;}
+   return result;
+  })();
   promptExportInFlight=request;if(key)promptExportRequests.set(key,request);
-  try{return await request;}catch(error){reportActionFailure(error);}finally{if(promptExportInFlight===request)promptExportInFlight=null;if(key&&promptExportRequests.get(key)===request)promptExportRequests.delete(key);}
+  try{return await request;}catch(error){reportActionFailure(error);}finally{reuse=null;if(promptExportInFlight===request)promptExportInFlight=null;if(key&&promptExportRequests.get(key)===request)promptExportRequests.delete(key);}
 }
 async function recordCurrentHandoffAuthorization(authorized){
  const retainedView=captureView(),retainedOrigin=handoffSelection(),retainedFocus=document.activeElement?.id||(authorized?'authorize-handoff':'revoke-handoff');let decisionSaved=false;
@@ -1097,18 +1145,20 @@ async function recordCurrentHandoffAuthorization(authorized){
  announce(riskFirst?'Action authorization saved. Preparing the updated files for disclosure review.':authorized?'Sharing decision saved. Checking the current handoff.':'Selected permissions revoked. No files were exported.');
  if(promptPreparationError)throw promptPreparationError;
  const freshRecord=capabilityTarget?null:await savePromptRecord(origin.stage);assertHandoffSelection(origin);if(capabilityTarget)assertCapabilityRequestSelection(capabilityTarget);
- const freshReview=capabilityTarget?await projectStore.prepareCapabilityRequestReview({project:current,targetId:capabilityTarget}):await projectStore.prepareExecutionPackageReview(handoffPackageArguments(freshRecord));assertHandoffSelection(origin);if(capabilityTarget)assertCapabilityRequestSelection(capabilityTarget);
+  const freshArgs=capabilityTarget?null:handoffPackageArguments(freshRecord),continuationCapture=!capabilityTarget&&!riskFirst&&authorized?captureHandoffContinuation(freshRecord,freshArgs,origin,pending.actionKey):null;
+  const freshReview=capabilityTarget?await projectStore.prepareCapabilityRequestReview({project:current,targetId:capabilityTarget}):await projectStore.prepareExecutionPackageReview(freshArgs);assertHandoffSelection(origin);if(capabilityTarget)assertCapabilityRequestSelection(capabilityTarget);
+  const continuation=continuationCapture?retainAutoHandoffContinuation(continuationCapture,freshReview,freshRecord,origin,pending.actionKey):null;
  presentHandoffReview(freshReview,pending.actionKey,origin,{preserveDrafts:true,message:riskFirst?'Action authorization saved. Review the updated files, select disclosure authorization and confirm the sharing decision. No files were exported.':authorized?'Sharing decision saved. Current files checked.':'Selected permissions revoked. No files were exported.'});
  if(riskFirst){const risk=$('#handoff-purpose-EXTERNAL_ACTION_RISK_AUTHORIZATION'),disclosure=$('#handoff-purpose-DISCLOSURE_AUTHORIZATION');if(risk)risk.checked=false;if(disclosure)disclosure.checked=safe(freshReview.authorization.requiredPurposes).includes('DISCLOSURE_AUTHORIZATION');}
  await captureCurrentView();
- if(!riskFirst&&authorized&&freshReview.authorization.allowed&&freshReview.authorization.subjectSha256===review.authorization.subjectSha256){assertHandoffSelection(origin);return resumeHandoff(pending.actionKey);}
+ if(!riskFirst&&authorized&&freshReview.authorization.allowed&&freshReview.authorization.subjectSha256===review.authorization.subjectSha256){assertHandoffSelection(origin);return resumeHandoff(pending.actionKey,continuation);}
  }catch(error){
   if(JSON.stringify(retainedOrigin)===JSON.stringify(handoffSelection())){if(handoffReviewMatchesSelection()&&!$('#handoff-review'))render();applySavedView(retainedView,{position:false});if(retainedFocus&&$('#'+CSS.escape(retainedFocus))&&!error.control)error.control='#'+CSS.escape(retainedFocus);}
   if(decisionSaved)throw Object.assign(new Error('The sharing decision was saved, but continuation did not finish. Review the current handoff before exporting. '+String(error?.message||error)),{cause:error,control:error.control});
   throw error;
  }
 }
-function resumeHandoff(key){if(key==='capability-request')return downloadCapabilityRequest();if(key==='context')return exportPromptContext();if(key==='manifest')return exportPromptManifest();if(key==='instruction')return exportPromptFile();if(key==='copy')return copyAuthorizedPrompt();return exportStageFiles();}
+function resumeHandoff(key,continuation=null){if(key==='capability-request')return downloadCapabilityRequest();if(key==='context')return exportPromptContext(continuation);if(key==='manifest')return exportPromptManifest(continuation);if(key==='instruction')return exportPromptFile(continuation);if(key==='copy')return copyAuthorizedPrompt(continuation);return exportStageFiles(continuation);}
 
 async function recordInstructionExport(record){
  const next=clone(current),reservation=safe(next.projectData.operationReservations).find(row=>engine.recordId(row,'operationReservations')===record.operationReservationId);
@@ -1124,21 +1174,21 @@ function handoffPackageArguments(record){
   const testIds=stagePlanItems(stage,operation).filter(item=>providedTestIds.has(String(item.testId))&&item.executionMode!=='APPLICATION_DETERMINISTIC'&&item.operatorAction!=='NO_ACTION'&&(!operatorAction||item.operatorAction===operatorAction)).map(item=>item.testId);
   return {project:owner,jobId:owner.job.JOB_ID,stage,operation,testIds,productId:owner.job.CURRENT_PRODUCT_ID,runId:scope.runId||null,instructionId:record.instructionId||record.promptId};
 }
-async function exportStageFiles(){return promptExport(async (record,args,review,origin)=>withStorageActivity('Preparing stage files',async()=>{
+async function exportStageFiles(continuation=null){return promptExport(async (record,args,review,origin,reusedReview=false)=>withStorageActivity('Preparing stage files',async()=>{
   const owner=current,stage=Number(owner.activeStage),revision=Number(owner.revision||0);
-  const pkg=await projectStore.createExecutionPackage(args||handoffPackageArguments(record));
+  const pkg=reusedReview?await readAutoHandoffInput(()=>projectStore.createExecutionPackage(args||handoffPackageArguments(record))):await projectStore.createExecutionPackage(args||handoffPackageArguments(record));if(reusedReview&&pkg?.[autoHandoffDenial])return pkg;
   if(current.job.JOB_ID!==owner.job.JOB_ID||current.activeStage!==stage||Number(current.revision||0)!==revision)throw new Error('The project changed while preparing files. Export the current stage again.');
   assertHandoffSelection(origin);downloadBlob(pkg.blob,pkg.filename);await recordCompletedHandoffTransfer(record,'The stage package download started');handoffReview=null;announce('Stage files ready for '+review.authorization.disclosure.recipient+' via '+review.authorization.disclosure.provider+'. Open the ZIP and send only its files.');render();
   requestAnimationFrame(()=>{const next=$('#response-heading');next?.focus({preventScroll:true});if(next&&next.getBoundingClientRect().bottom>innerHeight)next.scrollIntoView({block:'start',behavior:'smooth'});});
-}),'stage-files');}
-async function exportHandoffMember(canonicalPath,actionKey,{copy=false,mobileEvent=null}={}){return promptExport(async(record,args,review,origin)=>{
- const file=await projectStore.readAuthorizedHandoffMember({...args,canonicalPath});assertHandoffSelection(origin);
+}),'stage-files',continuation);}
+async function exportHandoffMember(canonicalPath,actionKey,{copy=false,mobileEvent=null,continuation=null}={}){return promptExport(async(record,args,review,origin,reusedReview=false)=>{
+ const file=reusedReview?await readAutoHandoffInput(()=>projectStore.readAuthorizedHandoffMember({...args,canonicalPath})):await projectStore.readAuthorizedHandoffMember({...args,canonicalPath});if(reusedReview&&file?.[autoHandoffDenial])return file;assertHandoffSelection(origin);
  if(copy){if(!navigator.clipboard?.writeText)throw new Error('Clipboard API unavailable. Use Export stage files.');const text=await file.blob.text();assertHandoffSelection(origin);await navigator.clipboard.writeText(text);await recordCompletedHandoffTransfer(record,'The authorized instruction was copied');}
  else {downloadBlob(file.blob,file.filename||canonicalPath);await recordCompletedHandoffTransfer(record,'The authorized file download started');if(mobileEvent)await recordMobileExport(mobileEvent,file.blob,file.filename||canonicalPath);}
  handoffReview=null;announce(copy?'Authorized instruction copied.':'Authorized handoff file ready.');render();
-},actionKey);}
-async function exportPromptContext(){return exportHandoffMember('context.json','context');}
-async function copyAuthorizedPrompt(){return exportHandoffMember('instruction.txt','copy',{copy:true});}
+},actionKey,continuation);}
+async function exportPromptContext(continuation=null){return exportHandoffMember('context.json','context',{continuation});}
+async function copyAuthorizedPrompt(continuation=null){return exportHandoffMember('instruction.txt','copy',{copy:true,continuation});}
 
 function promptContextMarkup(record){
   if(!record)return '';
@@ -1146,8 +1196,8 @@ function promptContextMarkup(record){
   const context=files.length?'<p class="help">This instruction requires context.json. It is included in the one stage ZIP.</p>':'';
   return context+'<details class="record-card"><summary>If the external chat requires a message</summary><div class="record-body"><p>Attach the authorized files, then enter this exact message only if the conversation requires one. File-only sharing remains available. This message does not replace instruction.txt.</p><pre>'+esc(launcher.text)+'</pre></div></details>';
 }
-async function exportPromptManifest(){return exportHandoffMember('manifest.json','manifest',{mobileEvent:'INPUT_FILE_ATTACHMENT_INSTRUCTIONS_CONFIRMED'});}
-async function exportPromptFile(){return exportHandoffMember('instruction.txt','instruction',{mobileEvent:'PROMPT_FILE_EXPORTED_OR_SHARED'});}
+async function exportPromptManifest(continuation=null){return exportHandoffMember('manifest.json','manifest',{mobileEvent:'INPUT_FILE_ATTACHMENT_INSTRUCTIONS_CONFIRMED',continuation});}
+async function exportPromptFile(continuation=null){return exportHandoffMember('instruction.txt','instruction',{mobileEvent:'PROMPT_FILE_EXPORTED_OR_SHARED',continuation});}
 
 function fileSelectionKey(kind,stage=current.activeStage){return JSON.stringify({jobId:current.job.JOB_ID,kind,stage:Number(stage),operation:kind==='response'?selectedOperation(stage):null,runId:kind==='response'?(runSelection[stage]||null):null});}
 function currentFileSelection(kind,stage=current.activeStage){return fileSelectionDrafts[fileSelectionKey(kind,stage)]||null;}
