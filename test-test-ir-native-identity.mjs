@@ -118,7 +118,7 @@ async function verifyNativeProductCommandGuards({sourceOverrides,project,result}
 }
 
 async function verifyNativeCommandOutcomeUncertainty({sourceOverrides,project,result}){
- const anchor="async function readProject(jobId,{refreshProjection=false}={}){",notify="function notifyProjectChange(project,details={}){",fault="error.code='INJECTED_STORAGE_FAILURE';throw error;",store=sourceOverrides['project-store.js'];for(const text of [anchor,notify,fault])assert.equal(store.split(text).length,2,'TEST_IR_NATIVE_UNCERTAIN_OUTCOME_FAULT_ANCHOR');
+ const anchor="async function readProject(jobId,{refreshProjection=false,[PHYSICAL_SOURCE_CAPTURE]:physicalCapture=null}={}){",notify="function notifyProjectChange(project,details={}){",fault="error.code='INJECTED_STORAGE_FAILURE';throw error;",store=sourceOverrides['project-store.js'];for(const text of [anchor,notify,fault])assert.equal(store.split(text).length,2,'TEST_IR_NATIVE_UNCERTAIN_OUTCOME_FAULT_ANCHOR');
  // Faults affect only transaction completion/observation. No native receipt,
  // expected identity or canonical candidate is supplied by this injection.
  const injected=store.replace(anchor,anchor+"if(globalThis.__nativeRecoveryReadHook){const hook=globalThis.__nativeRecoveryReadHook;delete globalThis.__nativeRecoveryReadHook;await hook();}").replace(notify,notify+"if(globalThis.__nativeAfterCommitFault){const error=Object.assign(new Error('Injected notification failure after commit'),{code:'CONTROLLED_AFTER_COMMIT_FAILURE'});globalThis.__nativeAfterCommitError=error;throw error;}").replace(fault,"error.code='INJECTED_STORAGE_FAILURE';if(globalThis.__nativeRecoveryHookOnFault)globalThis.__nativeRecoveryReadHook=globalThis.__nativeRecoveryHookOnFault;throw error;"),cases=[];
