@@ -1,4 +1,5 @@
 import {verifySpecificationSourceHistoryRegressions} from './test-specification-source-history.mjs';
+import {assertDetectedFault} from './verify-conformance-regressions.mjs';
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
@@ -68,8 +69,7 @@ try{
   ]){
     const fixture=path.join(temporaryRoot,'mutated-source.txt');fs.writeFileSync(fixture,mutated);
     const result=run('review-specification-coverage.mjs',[fixture]);
-    assert.notEqual(result.status,0,name);
-    assert.match(result.stderr,pattern,name);
+    assertDetectedFault(result,pattern,name);
     mutations.push(name);
   }
   // Old-source approval ranges cannot be interpreted as authority for the new
@@ -83,8 +83,7 @@ try{
     approvedClarifications:[{startLine:1283,lineCount:64}],requirements:[]
   }));
   const staleEvidence=run('generate-specification-governance.mjs',[],temporaryRoot);
-  assert.notEqual(staleEvidence.status,0,'Historical source evidence must not regenerate current manifests.');
-  assert.match(staleEvidence.stderr,/Requirement evidence bindings do not match the controlling specification/);
+  assertDetectedFault(staleEvidence,/Requirement evidence bindings do not match the controlling specification/,'Historical source evidence must not regenerate current manifests.');
   assert.ok(!fs.existsSync(path.join(temporaryRoot,'specification/closed-loop-specification-manifest.json')));
   assert.ok(!fs.existsSync(path.join(temporaryRoot,'specification/closed-loop-normative-requirements.json')));
   mutations.push('historical evidence source tuple');

@@ -11,7 +11,17 @@ const assert=(condition,message)=>{if(!condition)throw new Error(message);};
 
 // Atomic interpretation is supplied by reviewed, file-pinned evidence. The
 // mechanical line scanner below remains an omission challenge, not an atomizer.
-const atomicHash=value=>globalThis.closedLoopHash.sha256Value(value);
+// Node-only atomic evidence validation retains the complete current canonical
+// traversal and cold-hash chunk grouping; only the SHA-256 sink is native.
+const atomicHash=value=>{
+  const digest=crypto.createHash('sha256');let pending='';
+  for(const chunk of globalThis.closedLoopHash.canonicalChunks(value)){
+    if(pending.length+chunk.length>16384){digest.update(pending,'utf8');pending='';}
+    pending+=chunk;
+  }
+  if(pending)digest.update(pending,'utf8');
+  return digest.digest('hex');
+};
 const atomicEqual=(a,b)=>globalThis.closedLoopHash.stableStringify(a)===globalThis.closedLoopHash.stableStringify(b);
 // Only for unchanged parser-owned context anchors during one loader call.
 // Keep lazy left/right evaluation and never retain a failed canonicalization.

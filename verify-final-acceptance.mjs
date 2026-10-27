@@ -1,4 +1,6 @@
 import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {pathToFileURL} from 'node:url';
 import assert from 'node:assert/strict';
@@ -9,19 +11,35 @@ import {verifyNormativeCatalogConsumers} from './test-normative-catalog-consumer
 import {verifyExternalNormativeProof} from './test-external-normative-proof.mjs';
 import {verifyNormativeContextApplicability} from './test-normative-context-applicability.mjs';
 import {createNormativeProofFixture} from './test-normative-proof-fixture.mjs';
+import {executeEvidenceProducer} from './collect-verification-evidence.mjs';
 import {verifyHistoricalNormativeProofSource} from './test-normative-proof-source.mjs';
-import {applyExecutedEvidence,evaluateFullRequirementProof,coverageDeclarationSha256,validateFinalNormativeProof,readExecutedEvidence,validateExecutionReceipt,aggregateExecutedEvidence,readExecutionReceipts,evidenceFingerprint,observationsFromReports,sha} from './verification-evidence.mjs';
+import {applyExecutedEvidence,evaluateFullRequirementProof,coverageDeclarationSha256,validateFinalNormativeProof,readExecutedEvidence,validateExecutionReceipt,aggregateExecutedEvidence,readExecutionReceipt,readExecutionReceipts,evidenceFingerprint,observationsFromReports,sha} from './verification-evidence.mjs';
 import {runtimePaths} from './verified-site.mjs';
 import {evaluateFinalAcceptance,CORE_COVERAGE_KEYS,SECTION49_COVERAGE_KEYS,CORE_ZERO_KEYS,SECTION49_ZERO_KEYS} from './final-acceptance.mjs';
+// The report-consumer controls below own a genuine current full-v3 report,
+// independently of the historical singleton's bounded proof producer.
+async function finalRuntimeAdmissionReceipt({currentReceiptDirectory=process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS,readReceipt=readExecutionReceipt,run=executeEvidenceProducer}={}){
+ const suite='verify-test-runtime-v3.mjs';
+ if(currentReceiptDirectory){
+  const receipt=readReceipt(currentReceiptDirectory,suite);
+  if(!receipt)throw new Error('EXECUTED_EVIDENCE_ORACLE: current runtime admission receipt is missing for '+suite+'; run '+suite+' before this consumer.');
+  return receipt;
+ }
+ // Standalone operation retains the existing complete-owner fallback pattern.
+ // A configured missing, stale or corrupt receipt never reaches this branch.
+ const directory=fs.mkdtempSync(path.join(os.tmpdir(),'closed-loop-final-runtime-'));
+ try{return await run(suite,{directory:path.join(directory,'receipts'),evidenceDirectory:path.join(directory,'children')});}
+ finally{fs.rmSync(directory,{recursive:true,force:true});}
+}
 // Disposable publication fixture. This proves the gate, not a physical-device run.
 const normativeContextApplicability=verifyNormativeContextApplicability();
 const normativeFixture=createNormativeProofFixture();
 process.on('exit',()=>normativeFixture.dispose());
 const historicalProofSourceControls=verifyHistoricalNormativeProofSource(normativeFixture);
-// Reuse this fixture's actual producer report. Mutations below test only its
-// finite evidence consumer; they do not stand for additional runtime runs.
+// Reuse the actual validated current full-v3 report. Mutations below test only
+// its finite evidence consumer; they do not stand for additional runtime runs.
 const runtimeAdmissionConsumerControls=[];
-const runtimeReports=normativeFixture.receipt.reports;
+const runtimeReports=(await finalRuntimeAdmissionReceipt()).reports;
 const runtimeAdmissionPassed=reports=>observationsFromReports('verify-test-runtime-v3.mjs',reports).find(row=>row.checkId==='test-ir.operation-registry-admission')?.passed;
 assert.equal(runtimeAdmissionPassed(runtimeReports),true,'RUNTIME_ADMISSION_CONSUMER_CONTROL_ORACLE');
 for(const [name,change]of [
@@ -133,13 +151,13 @@ for(const [name,change,reason] of [
  ['review-stale-helper-input',review=>review.reviewedInputs.push({path:'test-project-store-runtime.mjs',sha256:'0'.repeat(64)}),'COVERAGE_REVIEW_INPUT_CHANGED'],
  ['review-wrong-declaration',review=>review.declarationSha256='0'.repeat(64),'COVERAGE_REVIEW_BINDING_MISMATCH'],
  ['review-missing-catalog-source',review=>review.reviewedInputs=review.reviewedInputs.filter(row=>row.path!=='verification-evidence-catalog.mjs'),'COVERAGE_REVIEW_TEST_INPUT_MISMATCH'],
- ['review-missing-test-source',review=>review.reviewedInputs=review.reviewedInputs.filter(row=>row.path!=='verify-test-runtime-v3.mjs'),'COVERAGE_REVIEW_TEST_INPUT_MISMATCH']
+ ['review-missing-test-source',review=>review.reviewedInputs=review.reviewedInputs.filter(row=>row.path!=='verify-test-runtime-limits.mjs'),'COVERAGE_REVIEW_TEST_INPUT_MISMATCH']
 ]){
  const review=structuredClone(normativeFixture.review);change(review);const bytes=JSON.stringify(review),binding=structuredClone(normativeFixture.binding),fingerprint=structuredClone(normativeFixture.fingerprint);binding.fullCoverage.review.sha256=sha(bytes);fingerprint.inputSha256[normativeFixture.reviewPath]=sha(bytes);
  normativeFixture.withScope(()=>{const previous=fs.readFileSync(normativeFixture.reviewPath);try{fs.writeFileSync(normativeFixture.reviewPath,bytes);const proof=evaluateFullRequirementProof(normativeFixture.requirement,[binding],normativeFixture.observations,fingerprint);assert.equal(proof.disposition,'UNKNOWN');assert(proof.reasons.includes(reason),'NORMATIVE_REVIEW_ORACLE: '+name+' '+JSON.stringify(proof.reasons));}finally{fs.writeFileSync(normativeFixture.reviewPath,previous);}});
  normativeProofCases.push({caseId:name,boundary:'Retained review record and full-coverage evaluator; controlled fingerprint is a helper input, not a newly executed receipt',result:'REJECTED_FOR_EXPECTED_REASON',expectedReason:reason});
 }
-for(const [name,mutateObservation] of [['missing-required-case',rows=>rows.delete('test-ir.unknown-operation')],['failed-required-case',rows=>rows.get('test-ir.unknown-operation').passed=false]]){
+for(const [name,mutateObservation] of [['missing-required-case',rows=>rows.delete('test-ir.limits-unknown-operation')],['failed-required-case',rows=>rows.get('test-ir.limits-unknown-operation').passed=false]]){
  const observations=new Map(structuredClone([...normativeFixture.observations]));mutateObservation(observations);
  const proof=normativeFixture.withScope(()=>evaluateFullRequirementProof(normativeFixture.requirement,[normativeFixture.binding],observations,normativeFixture.fingerprint));assert.equal(proof.disposition,'UNKNOWN');assert(proof.reasons.includes('REQUIRED_CURRENT_ASSERTION_MISSING_OR_WRONG_PRODUCER'),'NORMATIVE_REQUIRED_CASE_ORACLE: '+name);assert.equal(healthyProof().disposition,'CONFORMANT_PROVEN');normativeProofCases.push({caseId:name,boundary:'Full-coverage observation consumer',result:'REJECTED_FOR_EXPECTED_REASON',restored:'CONFORMANT_PROVEN'});
 }
@@ -160,7 +178,7 @@ assert.throws(()=>validateFinalNormativeProof(fixture,structuredClone(normativeF
 const originalDisposition=normativeFixture.evidence.fullRequirementProofs.requirements[0].disposition;normativeFixture.evidence.fullRequirementProofs.requirements[0].disposition='UNKNOWN';assert.equal(check(fixture).accepted,false,'NORMATIVE_FINAL_GATE_ORACLE: post-validation mutation passed');normativeFixture.evidence.fullRequirementProofs.requirements[0].disposition=originalDisposition;assert.equal(check(fixture).accepted,true);
 for(const mutate of [r=>r.commit='0'.repeat(40),r=>r.fullRequirementProofs.requirements=[],r=>r.fullRequirementProofs.normativeManifestSha256='0'.repeat(64),r=>r.executedVerificationEvidence.fingerprint.specificationSha256='0'.repeat(64),r=>r.section49CoverageMetrics.normativeRequirementTraceCoverage.includedIds=['UNREVIEWED'],r=>r.section49CoverageMetrics.normativeRequirementTraceCoverage.numerator=0])reject(mutate);
 normativeFixture.withScope(()=>{const file='test-runtime.js',bytes=fs.readFileSync(file);try{fs.appendFileSync(file,'\n');assert.throws(()=>readExecutedEvidence(normativeFixture.evidencePath),/not the current source|stale source/,'NORMATIVE_STALE_RECEIPT_ORACLE');assert.throws(()=>validateFinalNormativeProof(fixture,normativeFixture.evidence),/source changed after/,'NORMATIVE_FINAL_FRESHNESS_ORACLE');}finally{fs.writeFileSync(file,bytes);}assert.equal(check(fixture).accepted,true);});
-const corruptReceipt=structuredClone(normativeFixture.receipt);corruptReceipt.observations.find(row=>row.checkId==='test-ir.unknown-operation').passed=false;delete corruptReceipt.receiptSha256;corruptReceipt.receiptSha256=sha(corruptReceipt);assert.throws(()=>validateExecutionReceipt(corruptReceipt,corruptReceipt.suite,normativeFixture.fingerprint),/assertions differ from actual executed report/,'NORMATIVE_CORRUPT_RECEIPT_ORACLE');
+const corruptReceipt=structuredClone(normativeFixture.receipt);corruptReceipt.observations.find(row=>row.checkId==='test-ir.limits-unknown-operation').passed=false;delete corruptReceipt.receiptSha256;corruptReceipt.receiptSha256=sha(corruptReceipt);assert.throws(()=>validateExecutionReceipt(corruptReceipt,corruptReceipt.suite,normativeFixture.fingerprint),/assertions differ from actual executed report/,'NORMATIVE_CORRUPT_RECEIPT_ORACLE');
 normativeProofCases.push({caseId:'actual-receipt-final-boundary',boundary:'Real runtime producer -> current receipt read -> source/manifest/ID proof -> final gate; exact source restore permits progress',actualProducerExecuted:true,missingCopiedMutatedEvidenceRejected:true,wrongCandidateOrUniverseRejected:true,staleSourceRejected:true,corruptReceiptRejected:true,restoredProgress:true,isolatedRequirementCount:1,realReleaseProof:false});
 
 // verified-site first authenticates the successful run, complete proof bundle,

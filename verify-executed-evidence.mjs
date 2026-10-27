@@ -430,6 +430,23 @@ assert.throws(()=>assertHistoricalBindingFixtureDeclarations([]),/historical bin
 assert.throws(()=>assertHistoricalBindingFixtureDeclarations([...historicalBindingFixtureDeclarations,...historicalBindingFixtureDeclarations]),/historical binding fixture/,'FIXTURE_INPUT_ORACLE: a duplicate historical binding fixture declaration escaped detection.');
 assert.throws(()=>assertHistoricalBindingFixtureDeclarations([[historicalBindingFixtureOwner,'verification/unknown-historical-binding-fixture.json']]),/historical binding fixture/,'FIXTURE_INPUT_ORACLE: a wrong historical binding fixture path escaped detection.');
 assert.throws(()=>assertHistoricalBindingFixtureDeclarations([['verify-project-activation.mjs',historicalBindingFixtureInput]]),/historical binding fixture/,'FIXTURE_INPUT_ORACLE: a historical binding fixture declared by the wrong owner escaped detection.');
+// "Fixture" custody here intentionally includes every declared verification/
+// input. These two numeric inputs belong to the direct integrity owner and its
+// intact limits parent; their current bytes are not historical project pins.
+const numericFixtureInputOwners=[
+ ['verification/runtime-integrity-registry.json',['verify-test-runtime-integrity.mjs','verify-test-runtime-limits.mjs']],
+ ['verification/test-ir-numeric-contract-cases.json',['verify-test-runtime-integrity.mjs','verify-test-runtime-limits.mjs']]
+];
+for(const [file,owners]of numericFixtureInputOwners){
+ const expected=owners.map(owner=>[owner,file]);
+ const declarations=Object.entries(verificationCatalog).flatMap(([owner,definition])=>(definition.sourceInputs||[]).filter(input=>input===file).map(input=>[owner,input])).sort(([a],[b])=>a<b?-1:a>b?1:0);
+ const assertDeclarations=rows=>assert.deepEqual(rows,expected,'FIXTURE_INPUT_ORACLE: numeric input must be declared exactly once at its direct integrity and intact limits owners: '+file);
+ assertDeclarations(declarations);
+ for(const owner of owners)assert.throws(()=>assertDeclarations(declarations.filter(([name])=>name!==owner)),/FIXTURE_INPUT_ORACLE: numeric input/,'A missing numeric owner declaration escaped detection: '+file+':'+owner);
+ assert.throws(()=>assertDeclarations([...declarations,declarations[0]]),/FIXTURE_INPUT_ORACLE: numeric input/,'A duplicate numeric input declaration escaped detection: '+file);
+ assert.throws(()=>assertDeclarations(declarations.map((row,index)=>index===0?[row[0],'verification/unknown-numeric-input.json']:row)),/FIXTURE_INPUT_ORACLE: numeric input/,'A wrong numeric input path escaped detection: '+file);
+ assert.throws(()=>assertDeclarations(declarations.map((row,index)=>index===0?['verify-final-acceptance.mjs',row[1]]:row)),/FIXTURE_INPUT_ORACLE: numeric input/,'A wrong numeric input owner escaped detection: '+file);
+}
 const expectedActiveFixtureInputs=[
   'verification/accepted-run-stage10-prerequisite-20261007.json',
   'verification/approved-deferred-compatibility-proposal-20261005.md',
@@ -452,11 +469,13 @@ const expectedActiveFixtureInputs=[
   'verification/project-projection15-scoped-clarification-fixture.json.gz',
   'verification/project-projection5-activation-fixture.json',
   'verification/projection7-iteration4-activation-prerequisite-20261014.json.gz',
+  'verification/runtime-integrity-registry.json',
   'verification/source-applicability-legacy4-20261011.json.gz',
   'verification/stage01-retained-capture-legacy-fixture-20261005.json',
   'verification/stage10-authentic-projection16-f348.json.gz',
   'verification/stage15-author-prerequisite-20261012.json.gz',
   'verification/stage19-precomparison-prerequisite-20261010.json.gz',
+  'verification/test-ir-numeric-contract-cases.json',
   'verification/verifier-context-ui-prerequisite-20261018.json'
 ];
 function assertActiveFixtureInputs(paths){assert.deepEqual(paths,expectedActiveFixtureInputs,'FIXTURE_INPUT_ORACLE: active fixture source paths differ from the independently declared current producer inputs.');}

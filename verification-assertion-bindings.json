@@ -211,7 +211,8 @@
       "sourceLineSha256": "ee87ec99bf590ab7ad273f985492a78b8765e7eeb38f9e77cb0d6e9e49e3b20b",
       "atomicObligationSha256": "3aa940464f0f2dc1a285e0523705769a3a8833e2fef4b1f950588564fd44a22d",
       "checkIds": [
-        "ingestion.invalid.stale-contract-hash"
+        "ingestion.invalid.stale-contract-hash",
+        "ingestion.pending-six-authority-recheck"
       ],
       "scope": "One original negativeAt stale-contract-hash response rejects with STALE_CONTRACT_HASH,accepted=false and acceptedChanges=0. This is a synthetic admission boundary, not all acceptance-time rechecks. Scoped current-source executed observations only when validated receipts are present. No full requirement coverage, browser, physical-device, external-actor or other unlisted cases are claimed.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
@@ -221,7 +222,8 @@
       "sourceLineSha256": "d9be07a49c644c1987bb9cd82697cd38b72ef93aa259041a99563812bd54c2ae",
       "atomicObligationSha256": "7b5a319df5cb8ba123be0e27c05be003036380f8de8e69e961634ed58c70efe3",
       "checkIds": [
-        "ingestion.invalid.stale-context-signature"
+        "ingestion.invalid.stale-context-signature",
+        "ingestion.pending-six-authority-recheck"
       ],
       "scope": "One original negativeAt stale-context-signature response rejects with STALE_CONTEXT_SIGNATURE,accepted=false and acceptedChanges=0. This is a synthetic admission boundary, not all acceptance-time rechecks. Scoped current-source executed observations only when validated receipts are present. No full requirement coverage, browser, physical-device, external-actor or other unlisted cases are claimed.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
@@ -514,6 +516,96 @@
         "store.private-read-custody-hook-isolation"
       ],
       "scope": "Only the strict twenty-one-case custody report: the original twenty cases crossing checkpoint, operational-no-op, canonical-skip-unchanged and startup-refresh with healthy, sync-value, queued-value, digest-label and custody-throws, plus startup-refresh:projection-consistent-draft. Two genuine intended-fault controls are distinct from one honest redundant-defense control. The startup omitted-value-binding fault is detected only by the projection-consistent-draft case, after a real projection rebuild/full-validator control preserves the original digest label; the mutant must demonstrate the changed-draft/stale-digest return, unchanged durable stores and authentic cold read before the intended rejection oracle. Omission under the original startup-refresh:sync-value case remains independently rejected by the projection receipt validator and is explicitly detected:false, not an intended detected fault. For the defined hook mutations, private-read owners reject STALE_PROJECT_REVISION and startup refresh rejects PROJECT_INTEGRITY_FAILED; thrown custody errors retain exact original identity. These refusal fixtures preserve complete adapter stores, canonical/journal/artifact/quarantine rows and exact History generation; successful controls and subsequent refreshed/cold reads retain authentic draft/digest values. Startup draft cases belong to this check, not a fabricated extra check ID. No-false-quarantine applies only to these transient hook fixtures, not arbitrary corrupt durable input. No artifact-intake, all load-hash/quarantine, native storage/worker/browser, complete History/transaction semantics, fullCoverage or executed/current receipt status is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-cdde2f9057527263dbb25c0596d295e2",
+      "sourceLineSha256": "14d31fab17ef518d5422d4d1c612f380c4a9444f3ec289eb7546a6bb2a813524",
+      "atomicObligationSha256": "d533d268526f2f35b21726a15dc624407ddd3c34e9847669886c90d68753c5c4",
+      "checkIds": [
+        "registry.semantic-drift"
+      ],
+      "scope": "For the reviewed numeric-registry revision only, the original synthetic Node VM integrity check derives each of the four declared operation/JSON-selector/XML-selector/regex descriptor digests with the application canonical hasher, compares it with the declared digest and runtime exported constant, and requires it to differ from that descriptor's declared previous digest. This provides finite executed evidence of this published registry revision's identity change and reproducibility, not proof that every possible semantic change triggers a new identity, that all registry semantics are correct, or that two independent runtimes are equivalent. The linked check does not select the 379 numeric helper cases. No full requirement coverage, browser/physical-device behavior, stored-result migration, or final acceptance is claimed. Scoped evidence is current only with a fresh matching source/specification/catalog/runtime receipt.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-88867171010850ae842c0ec188e3a08f",
+      "sourceLineSha256": "14d31fab17ef518d5422d4d1c612f380c4a9444f3ec289eb7546a6bb2a813524",
+      "atomicObligationSha256": "b846339679e509bfea63daa336060c5da462863f5b1a4c19dd17db91843d3bc8",
+      "checkIds": [
+        "registry.semantic-drift"
+      ],
+      "scope": "The original synthetic Node VM integrity check substitutes the checked-in operation registry's declared previous digest into an otherwise current one-step ASSERT_EQ literal true/true DAG and asserts that production validateSpec returns valid=false. This is one finite earlier-definition admission refusal only. This linked check does not assert the exact validation issue, execute the stale DAG, observe a worker launch, exercise stored-result migration/reverification, or select the separate numeric identity-helper populations; it does not independently harden wrong-cause rejection sensitivity. No full requirement coverage, all earlier registries/results, browser/physical-device behavior, or final acceptance is claimed. Scoped evidence is current only with a fresh matching source/specification/catalog/runtime receipt.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-b964567af5356e67fcdc0a6f961cd059",
+      "sourceLineSha256": "cdd9f27fd1ebc9a6c033e0844d81691b0fd223dc86a9c7ff352f4bebccf1a54c",
+      "atomicObligationSha256": "d210089c38cb5055a160ab751ef9049b689d0374ffd5da2051245080e6e09e05",
+      "checkIds": [
+        "test-ir.tolerance-alias-equality"
+      ],
+      "scope": "For the reviewed 61-case subset of toleranceAliasEquality only: ASSERT_EQ, COMPARE EQ and COMPARE NE each exercise both absTol/absoluteTolerance and relTol/relativeTolerance pairs with eight equal representations (decimal spelling, number/string, typed/string, string/typed, separate typed objects, number/typed, zero and high precision) and two unequal ordinary/high-precision pairs; one further case supplies both equal components. Equal pairs pass public validateSpec and execute with literal expected determinations/actual values and unchanged input definitions. Unequal pairs reject admission and execute with INVALID_TEST_IR and the exact contradictory-component issue. The registered selector verifies the entire 176-record report, but this row claims only those 61 linked cases. It does not prove all values, malformed alias forms, default semantics or all approximate operations. This is finite synthetic public-runtime evidence with no worker launch or actual browser/device claim. No full requirement coverage, arbitrary numeric-domain completeness, formula max-scaling proof, binding-resolution transport, or final acceptance is claimed. Current scoped admission requires this binding and the reviewed selector/authority declarations to be included before a fresh coherent verify-test-runtime-integrity.mjs producer receipt and original collector validation with matching source/specification/catalog/runtime fingerprints; earlier bd509 receipts do not satisfy these newly registered checks.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-244ad897cd55d232ed458965ccc0803d",
+      "sourceLineSha256": "34e651eab755a848c3bd3df63d8709bfb5a20e7b1f6cf5c84c1683dc35d7c10b",
+      "atomicObligationSha256": "e25f24374c82e9e8c095b3c4252e62359eeda1c3aeee9ccea4d1923e27aac46b",
+      "checkIds": [
+        "test-ir.numeric-contract"
+      ],
+      "scope": "For the reviewed 39 equality-domain cases within numericContract only: COMPARE EQ/NE and ASSERT_EQ in DECIMAL_STRING mode reject number/number, number/string and singleton-array/string pairs and NBSP-wrapped strings; ASSERT_EQ also rejects the selected U+1680, U+2000-U+200A, U+2028, U+2029, U+202F, U+205F, U+3000 and U+FEFF wrappers. These runtime refusals expose UNSUPPORTED_NUMERIC_PRECISION with UNDETERMINED. Three decimal-string controls accept selected plus/leading-zero/trailing-fraction-zero spellings, and six ASSERT_EQ controls accept surrounding ASCII U+0009-U+000D/U+0020, preserving the literal expected determination and actual value. The registered selector verifies the entire 203-record report; this row excludes its ordered comparisons, SORT, approximate domains and identity populations. Report-level refusal sensitivity checks emitted code/disposition, not error-message fields absent from this numeric report. The scope is selected inputs only, not every lexical string, length, position or transport. This is finite synthetic public-runtime evidence with no worker launch or actual browser/device claim. No full requirement coverage, arbitrary numeric-domain completeness, formula max-scaling proof, binding-resolution transport, or final acceptance is claimed. Current scoped admission requires this binding and the reviewed selector/authority declarations to be included before a fresh coherent verify-test-runtime-integrity.mjs producer receipt and original collector validation with matching source/specification/catalog/runtime fingerprints; earlier bd509 receipts do not satisfy these newly registered checks.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-237bc2b886209a0d2334941fcb804152",
+      "sourceLineSha256": "716f74d1c330a23d7f2f70d7900eef3e7acc01577fc5ef064adf55767e6945ca",
+      "atomicObligationSha256": "86d111bca0b094fb142f30dfe98fc5e2fd2d1966955a8ab168b7ed655f30836c",
+      "checkIds": [
+        "test-ir.literal-contract-boundaries"
+      ],
+      "scope": "Finite original V3 public-runtime controls establish XML_PATH_MISSING/UNDETERMINED for six wholly empty element/attribute/text/wildcard/position selections and preserve five present-empty/partial-selection positive controls. This binds only those exact cases; no arbitrary selector, provenance, browser, worker, complete requirement or current changed-source qualification is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-6172e8dea845cfb6aea6dbfa1fccc741",
+      "sourceLineSha256": "941f3b2c8a2b59900737131a1fba6a12d01d89a6659dbcd97cb93f54742e6f48",
+      "atomicObligationSha256": "0ce4e4b9f70d643f4ca2e90508fd293e1262053941ec6ba029ffc25a99f8b066",
+      "checkIds": [
+        "test-ir.literal-contract-boundaries"
+      ],
+      "scope": "Finite original V3 public-runtime controls reject thirteen decoded unpaired-surrogate value/member/token configurations and one duplicate decoded member control, while six scalar-valid/pair/order controls pass. This is bounded scalar/duplicate rejection evidence, not complete JSON syntax or arbitrary-input coverage.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-d83074c970bd1e6d86d4d980fdc5bd6a",
+      "sourceLineSha256": "941f3b2c8a2b59900737131a1fba6a12d01d89a6659dbcd97cb93f54742e6f48",
+      "atomicObligationSha256": "4ffcdf78a3b75cd7e28db9991aa17fbd2cccea10379dee5130281a412dc94667",
+      "checkIds": [
+        "test-ir.literal-contract-boundaries"
+      ],
+      "scope": "Finite original V3 public-runtime controls observe UNDETERMINED for thirteen decoded invalid-scalar configurations, malformed Unicode escape and duplicate decoded member controls; missing shared authority and unrelated authority error retain distinct outcomes. This does not establish every malformed JSON or unsupported numeric token, all D5 propagation, worker/browser or whole requirement coverage.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-cc70f4ad015943e71bb2e1ff0ddd68e1",
+      "sourceLineSha256": "41f7ac8e2dd71b3ece890df5017cd3ece9bd8dbb8bc2d34ce8df26658063bccb",
+      "atomicObligationSha256": "7ce2f81f3516badbd4cbefdcdfa441b7ddeefb4599f575f18ec54d93a6ac6c76",
+      "checkIds": [
+        "test-ir.literal-contract-boundaries"
+      ],
+      "scope": "Finite original V3 public-runtime controls admit capturing/noncapturing groups with the listed bounded outer repetitions, including exact-one baseline regressions and ASSERT_MATCH, while retaining listed nested-unbounded refusals. This is only the exact group/quantifier interaction cases, not complete regex grammar, arbitrary-pattern safety or whole requirement coverage.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-e4aed2c41c2e39486f8175db1f41eb76",
+      "sourceLineSha256": "41f7ac8e2dd71b3ece890df5017cd3ece9bd8dbb8bc2d34ce8df26658063bccb",
+      "atomicObligationSha256": "b222fe6a1a96319d19ce65be0bcecb146af3b90907122b348b8792e144973cc2",
+      "checkIds": [
+        "test-ir.literal-contract-boundaries"
+      ],
+      "scope": "Finite original V3 public-runtime controls admit the listed exact/range/lazy/optional/zero bounded outer quantifiers and bounded-inner/unbounded-outer control, distinguish a nonmatch, and retain nested-unbounded, invalid-range and unbounded-count refusals. This is bounded quantifier classification evidence, not all combinations, arbitrary regex safety, worker responsiveness or complete requirement coverage.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
     }
   ],

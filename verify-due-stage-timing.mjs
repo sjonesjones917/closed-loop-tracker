@@ -1384,12 +1384,28 @@ function stage17DeferredReceiptParentControls(){
  assert.equal(cases.length,38,'STAGE17_RECEIPT_PARENT_POPULATION_ORACLE');
  return {case:'STAGE17_REQUIRED_RECEIPT_PARENT_CONSUMER',validLiteralAccepted:true,malformedOrMissingMarkersRejected:cases.length,cases,actualStage17Executed:false,syntheticConsumerOnly:true};
 }
+// This producer resumes an already accepted synthetic snapshot for definition
+// compatibility controls, whose consumers explicitly replay recorded time.
+// Preserve its original capability report and real expiry guard unchanged.
+function recordedDefinitionCompatibilityPrefix(seed){
+ assert.equal(seed?.synthetic,true,'DEFINITION_PREFIX_REPLAY_SYNTHETIC_ORACLE');
+ assert.equal(seed.actualBrowser,false,'DEFINITION_PREFIX_REPLAY_BROWSER_ORACLE');
+ assert.equal(seed.earlierCompleteFlagsForced,false,'DEFINITION_PREFIX_REPLAY_GATES_ORACLE');
+ const instant=derivedDiagnosticPrefixInstant(seed),millis=Date.parse(instant),reports=seed.project.projectData.environmentManifests.map(row=>row.fields?.EXTERNAL_CLAIMS||row.EXTERNAL_CLAIMS).filter(report=>report?.request?.targetFamily==='sourceSearchContracts');
+ assert.equal(reports.length,1,'DEFINITION_PREFIX_REPLAY_CAPABILITY_ORACLE');
+ const observed=Date.parse(reports[0].observedAt),until=Date.parse(reports[0].validUntil);
+ assert(Number.isFinite(observed)&&Number.isFinite(until)&&observed<=millis&&millis<until,'DEFINITION_PREFIX_REPLAY_VALIDITY_ORACLE');
+ if(Object.hasOwn(seed,'archivedFixtureClockUtc'))assert.equal(seed.archivedFixtureClockUtc,instant,'DEFINITION_PREFIX_REPLAY_RECORDED_CLOCK_ORACLE');
+ return {...seed,archivedFixtureClockUtc:instant,clockBasis:'EXPLICIT_RECORDED_SYNTHETIC_FIXTURE_INSTANT; canonical reports and timestamps retained; not current browser or external evidence'};
+}
 function generateDefinitionCompatibilityPrefixes(generated){
  // The required continuation took 27 minutes to reach the fifth Stage 12
  // review. It also builds a failed Stage 17 iteration with ten runs and ten
  // reviews after Stage 16. Bound that complete path, not just the stage loop.
  const continuationTimeoutMs=120*60*1000;
- const startedAt=performance.now(),input=path.join(generated.outputDir,'prefix-stage08.json'),hash=runtime().runtime.closedLoopHash,stdout=execFileSync(process.execPath,['verify-operator-counterpart.mjs'],{env:{...process.env,CLRT_COUNTERPART_FAULT:'',CLRT_COUNTERPART_STAGE_LIMIT:'16',CLRT_COUNTERPART_DIAGNOSTIC_PREFIX_DIR:generated.outputDir,CLRT_COUNTERPART_DIAGNOSTIC_PREFIX_INPUT:input},encoding:'utf8',timeout:continuationTimeoutMs,maxBuffer:16*1024*1024});
+ const startedAt=performance.now(),input=path.join(generated.outputDir,'prefix-stage08-recorded.json'),hash=runtime().runtime.closedLoopHash;
+ const replay=recordedDefinitionCompatibilityPrefix(generated.prefix);fs.writeFileSync(input,JSON.stringify(replay),{flag:'wx'});
+ const stdout=execFileSync(process.execPath,['verify-operator-counterpart.mjs'],{env:{...process.env,CLRT_COUNTERPART_FAULT:'',CLRT_COUNTERPART_STAGE_LIMIT:'16',CLRT_COUNTERPART_DIAGNOSTIC_PREFIX_DIR:generated.outputDir,CLRT_COUNTERPART_DIAGNOSTIC_PREFIX_INPUT:input},encoding:'utf8',timeout:continuationTimeoutMs,maxBuffer:16*1024*1024});
  let deferredReceiptRegression;for(const stage of [7,15,17]){const prefix=JSON.parse(fs.readFileSync(path.join(generated.outputDir,'prefix-stage'+String(stage).padStart(2,'0')+'.json'),'utf8'));assert.equal(prefix.entryStage,stage);assert.equal(prefix.earlierCompleteFlagsForced,false);for(const[file,digest]of Object.entries(prefix.sourceFingerprints))assert.equal(hash.sha256Text(fs.readFileSync(file,'utf8')),digest,'DEFINITION_COMPATIBILITY_DERIVED_PREFIX_SOURCE_ORACLE: '+file);if(stage===17)deferredReceiptRegression=requireStage17DeferredReceiptRegression(prefix);}
  return {directory:generated.outputDir,setup:{case:'LEGITIMATE_DEFERRED_DEFINITION_AUTHOR_PREFIXES',deferredReceiptRegression,resumedFromStage8:true,entryStages:[7,15,17],childExitStatus:0,childStdoutSha256:hash.sha256Text(stdout),earlierCompleteFlagsForced:false,elapsedSeconds:(performance.now()-startedAt)/1000,historicalPredecessorResumeSeconds:716.058,historicalPredecessorBoundary:'Retained 8→14 continuation that failed at Stage15 admission; excludes current invocation Stage17 failed-iteration/RCA work.',childBudgetMilliseconds:continuationTimeoutMs,synthetic:true,actualBrowser:false}};
 }

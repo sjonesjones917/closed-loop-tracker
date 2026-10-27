@@ -14,13 +14,13 @@ const EXECUTABLE_KIND='TEST_IR';
 const CAPABILITY='CLOSED_LOOP_TEST_IR';
 const TEST_IR_LANGUAGE_VERSION='closed-loop-test-ir-language/1';
 const OPERATION_REGISTRY_VERSION='closed-loop-test-ir-operations/1';
-const OPERATION_REGISTRY_SHA256='77e7b900e5f7f5ac66033564cc0cb4f323cc76b7f7dd95ac6d173c0f649f655d';
+const OPERATION_REGISTRY_SHA256='aea1efab8e1c342d550653238ef2740bd625c2ec5bbadb0dbaf76fcd1034492d';
 const JSON_SELECTOR_REGISTRY_VERSION='closed-loop-json-selector/1';
 const JSON_SELECTOR_REGISTRY_SHA256='3136dbd1f69ee7039a178a1c682bcf1f21da94f11e89bbddc2fd0f8eb668fbc3';
 const XML_SELECTOR_REGISTRY_VERSION='closed-loop-xml-selector/1';
-const XML_SELECTOR_REGISTRY_SHA256='29c6c2698d789f185619a6e1a3493982f1ac96f4d5416c7e3221f9c63c5c5c79';
+const XML_SELECTOR_REGISTRY_SHA256='5acde5bb0468acc83a53f3ba66819e2af85d8a1d5d77fb11f45e97ca7f716659';
 const REGEX_REGISTRY_VERSION='closed-loop-regex/1';
-const REGEX_REGISTRY_SHA256='0533522402875ae03dc4cc859097424e2887d36045a2fd20db11b3feeaccce15';
+const REGEX_REGISTRY_SHA256='329a75cbbd3f7c9cf899a13aad8ba3a49f945981b6d9e3e39b108fce592aa354';
 const MAX_REGEX_UNBOUNDED_QUANTIFIERS=16;
 const NORMALIZATION_CONTRACT=Object.freeze({id:'closed-loop-test-ir-normalization/1',version:1,implementationOwner:'test-runtime.js',implementationFunction:'normalizeSpec',canonicalInputContract:'VALIDATED_EXPLICIT_DAG_OR_REGISTERED_LEGACY_AUTHORING_FORM',outputContract:'VALIDATED_EXPLICIT_CANONICAL_TEST_IR_DAG',buildIdentity:TEST_IR_LANGUAGE_VERSION,invalidationConsequences:'RECHECK_EXECUTABLE_SPEC_HASH_AND_CURRENT_OPERATION_REGISTRY; REAUTHOR_AND_REVIEW_STALE_DEFINITIONS; PRESERVE_RAW_AUTHOR_RESPONSE'});
 const PRIOR_OPERATION_REGISTRY_SHA256='21b4c97a596fecd7ec5dca7788ded488827ef71c0aee3a041f89bd19d0eede00';
@@ -149,11 +149,11 @@ const OPERATION_EXECUTION_CONTRACTS=Object.freeze({
   LOAD_ARTIFACT:{cost:'BINDING_LOOKUP',errors:[],meaning:'Resolve the named immutable binding. The nominal ARTIFACT output carries its artifact transport or explicit canonical value; a canonical value does not acquire bytes.'},
   READ_BYTES:{cost:'BYTE_VIEW',errors:['BYTES_REQUIRED'],meaning:'Read exact bytes from an explicit byte-backed artifact.'},
   DECODE_UTF8:{cost:'LINEAR_BYTES',errors:['BYTES_REQUIRED','TEXT_BYTE_LIMIT','DECOMPRESSED_BYTE_LIMIT','INVALID_UTF8'],meaning:'Fatal UTF-8 decoding; invalid bytes are UNDETERMINED. A leading UTF-8 BOM follows TextDecoder UTF-8 handling.'},
-  PARSE_JSON:{cost:'BOUNDED_PARSE',errors:['MALFORMED_JSON','UNSUPPORTED_JSON_NUMBER','DUPLICATE_JSON_MEMBER','PARSED_DEPTH_LIMIT','PARSED_NODE_LIMIT','COLLECTION_LIMIT'],meaning:'Strict JSON with unique object members. JSON numbers must be safe integers without fraction, exponent or negative zero; member order is retained for selection.'},
+  PARSE_JSON:{cost:'BOUNDED_PARSE',errors:['MALFORMED_JSON','UNSUPPORTED_JSON_NUMBER','DUPLICATE_JSON_MEMBER','PARSED_DEPTH_LIMIT','PARSED_NODE_LIMIT','COLLECTION_LIMIT'],meaning:'Strict JSON with unique decoded object members and Unicode-scalar-valid strings and member names. Invalid scalar values are MALFORMED_JSON and UNDETERMINED. JSON numbers must be safe integers without fraction, exponent or negative zero; member order is retained for selection.'},
   PARSE_CSV:{cost:'BOUNDED_PARSE',errors:['UNSUPPORTED_ENCODING','MALFORMED_CSV','CSV_CELL_LIMIT','COLLECTION_LIMIT','PARSED_NODE_LIMIT','PARSED_DEPTH_LIMIT'],meaning:'Explicit delimiter, quote, header, newline and UTF-8 settings. Delimiter and quote must differ. Double the quote character inside a quoted cell. After a closing quote only delimiter, contracted newline or end is allowed. Header false returns row arrays; true returns objects with unique exact header names and equal cell counts. Empty input returns [].'},
   PARSE_XML:{cost:'BOUNDED_PARSE',errors:['MALFORMED_XML','UNSUPPORTED_XML_DECLARATION','UNSUPPORTED_XML_ENTITY','UNSAFE_XML','XML_NODE_LIMIT','PARSED_DEPTH_LIMIT','PARSED_NODE_LIMIT','COLLECTION_LIMIT'],meaning:'XML 1.0 UTF-8 subset with one root; ASCII element/attribute names, legal XML characters, predefined and legal numeric entities, comments and CDATA. DTDs, custom entities and processing instructions are prohibited. XML newline and literal attribute-whitespace normalization apply.'},
   SELECT_JSON_PATH:{cost:'BOUNDED_SELECTION',errors:['UNSUPPORTED_JSON_SELECTOR','SELECTOR_LIMIT','JSON_PATH_MISSING'],meaning:'Use the jsonSelector registry. Without wildcard return the selected value; with wildcard return selected values in document order. No match is UNDETERMINED.'},
-  SELECT_XML:{cost:'BOUNDED_SELECTION',errors:['XML_NODE_REQUIRED','UNSUPPORTED_XML_SELECTOR','SELECTOR_LIMIT','XML_PATH_MISSING'],meaning:'Use the xmlSelector registry on an actual PARSE_XML node. Element selections return arrays. Final @name and text() return arrays of strings; missing selected attributes or a missing child path followed by either suffix return []. A mismatched document root or missing final element path without a suffix is UNDETERMINED.'},
+  SELECT_XML:{cost:'BOUNDED_SELECTION',errors:['XML_NODE_REQUIRED','UNSUPPORTED_XML_SELECTOR','SELECTOR_LIMIT','XML_PATH_MISSING'],meaning:'Use the xmlSelector registry on an actual PARSE_XML node. Element selections return arrays. Final @name and text() return arrays of existing exact strings in document order. A wholly empty selection at any segment, including a final attribute selection, is UNDETERMINED. Missing matches under one parent do not discard matches under other parents; an existing empty attribute value or selected element with no text yields an empty string, not a missing selection.'},
   COUNT:{cost:'LENGTH',errors:['COUNT_INPUT','COLLECTION_LIMIT'],meaning:'Array item count, string UTF-16 code-unit length, or byte length; bounded by maxCollectionItems.'},
   SUM:{cost:'LINEAR_COLLECTION',errors:['COLLECTION_REQUIRED','COLLECTION_LIMIT','UNSUPPORTED_NUMERIC_PRECISION','INTEGER_OVERFLOW'],meaning:'Exact safe-integer sum; empty array gives 0, each intermediate sum must remain safe.'},
   MIN:{cost:'LINEAR_COLLECTION',errors:['COLLECTION_REQUIRED','COLLECTION_LIMIT','UNSUPPORTED_NUMERIC_PRECISION','EMPTY_COLLECTION'],meaning:'Minimum of a nonempty safe-integer array.'},
@@ -236,9 +236,14 @@ function validateRegex(pattern,flags=''){
     }
     if(ch===')'){lastGroup=groups.pop()||null;if(lastGroup?.unbounded&&groups.length)groups.at(-1).unbounded=true;continue;}
     if(ch==='*'||ch==='+'||ch==='{'){
-      if(lastGroup?.unbounded)issues.push('Regex nested unbounded quantification is outside the registered safe subset.');
-      const repeat=ch==='{'?pattern.slice(i).match(/^\{\d+,(\d*)\}/):null;
-      if(ch==='*'||ch==='+'||(repeat&&repeat[1]==='')){unbounded++;if(groups.length)groups.at(-1).unbounded=true;}
+      const repeat=ch==='{'?pattern.slice(i).match(/^\{\d+(?:,(\d*))?\}/):null;
+      const isUnbounded=ch==='*'||ch==='+'||(repeat&&repeat[1]==='');
+      // Finite {m}/{m,n}, like ?, do not add an unbounded outer repeat.
+      // Lazy suffixes preserve boundedness; RegExp below validates syntax.
+      if(isUnbounded){
+        if(lastGroup?.unbounded)issues.push('Regex nested unbounded quantification is outside the registered safe subset.');
+        unbounded++;if(groups.length)groups.at(-1).unbounded=true;
+      }
     }
     if(ch!=='?')lastGroup=null;
   }
@@ -388,11 +393,11 @@ function selectXml(rootNode,path){
   const parts=parseXmlSelector(path),first=parts.shift();if(first.kind!=='element'||(first.name!=='*'&&first.name!==rootNode.name)||(first.index!==null&&first.index!==1))fail('XML_PATH_MISSING',`XML selector does not address document element ${rootNode.name}.`,STATUS.UNDETERMINED);
   let current=[rootNode];
   for(const part of parts){
-    if(part.kind==='text')return current.map(xmlText);
-    if(part.kind==='attribute')return current.filter(node=>hasOwn(node.attributes,part.name)).map(node=>node.attributes[part.name]);
-    const next=[];for(const node of current){const matches=node.children.filter(child=>part.name==='*'||child.name===part.name);if(part.index!==null){if(matches[part.index-1])next.push(matches[part.index-1]);}else next.push(...matches);}current=next;
+    if(part.kind==='text')current=current.map(xmlText);
+    else if(part.kind==='attribute')current=current.filter(node=>hasOwn(node.attributes,part.name)).map(node=>node.attributes[part.name]);
+    else{const next=[];for(const node of current){const matches=node.children.filter(child=>part.name==='*'||child.name===part.name);if(part.index!==null){if(matches[part.index-1])next.push(matches[part.index-1]);}else next.push(...matches);}current=next;}
+    if(!current.length)fail('XML_PATH_MISSING',`XML selector does not resolve: ${path}.`,STATUS.UNDETERMINED);
   }
-  if(!current.length)fail('XML_PATH_MISSING',`XML selector does not resolve: ${path}.`,STATUS.UNDETERMINED);
   return current;
 }
 
@@ -401,7 +406,19 @@ function validateJsonSourceExact(text){
   const source=text,length=source.length;let i=0,nodes=0;
   const ws=()=>{while(i<length&&/[\x20\x09\x0a\x0d]/.test(source[i]))i++;};
   const error=message=>fail('MALFORMED_JSON',`JSON parse failed: ${message} at character ${i}.`,STATUS.UNDETERMINED);
-  const stringToken=()=>{if(source[i]!=='"')error('Expected string');const start=i++;let escaped=false;for(;i<length;i++){const ch=source[i];if(escaped){if(ch==='u'){if(!/^[0-9a-fA-F]{4}$/.test(source.slice(i+1,i+5)))error('Invalid Unicode escape');i+=4;}else if(!'"\\/bfnrt'.includes(ch))error('Invalid string escape');escaped=false;continue;}if(ch==='\\'){escaped=true;continue;}if(ch==='"'){i++;try{return JSON.parse(source.slice(start,i));}catch{error('Invalid JSON string');}}if(ch.charCodeAt(0)<0x20)error('Unescaped control character');}error('Unterminated string');};
+  const scalarString=value=>{
+    const authority=root.closedLoopHash;
+    if(!authority||authority.canonicalizationVersion!=='closed-loop-canonical-json/1'||typeof authority.compareUnicodeScalarSequence!=='function')fail('CANONICAL_HASH_AUTHORITY_UNAVAILABLE','Test IR JSON parsing requires the shared Unicode scalar authority.');
+    // The shared comparator validates each complete string before ordering;
+    // comparing with empty avoids serializing or duplicating the scalar scan.
+    try{authority.compareUnicodeScalarSequence(value,'');}
+    catch(cause){
+      if(cause instanceof TypeError&&(cause.message==='Cannot canonically hash unpaired UTF-16 high surrogate at object key.'||cause.message==='Cannot canonically hash unpaired UTF-16 low surrogate at object key.'))error('Unpaired surrogate in JSON string');
+      throw cause;
+    }
+    return value;
+  };
+  const stringToken=()=>{if(source[i]!=='"')error('Expected string');const start=i++;let escaped=false;for(;i<length;i++){const ch=source[i];if(escaped){if(ch==='u'){if(!/^[0-9a-fA-F]{4}$/.test(source.slice(i+1,i+5)))error('Invalid Unicode escape');i+=4;}else if(!'"\\/bfnrt'.includes(ch))error('Invalid string escape');escaped=false;continue;}if(ch==='\\'){escaped=true;continue;}if(ch==='"'){i++;let value;try{value=JSON.parse(source.slice(start,i));}catch{error('Invalid JSON string');}return scalarString(value);}if(ch.charCodeAt(0)<0x20)error('Unescaped control character');}error('Unterminated string');};
   const numberToken=()=>{const match=source.slice(i).match(/^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?/);if(!match)error('Invalid number');const raw=match[0];i+=raw.length;if(raw.includes('.')||/[eE]/.test(raw))fail('UNSUPPORTED_JSON_NUMBER',`PARSE_JSON numeric token ${raw} is not a safe-integer JSON number. Use a typed exact number representation.`,STATUS.UNDETERMINED);const n=Number(raw);if(!Number.isSafeInteger(n)||Object.is(n,-0))fail('UNSUPPORTED_JSON_NUMBER',`PARSE_JSON numeric token ${raw} is outside the finite safe-integer domain.`,STATUS.UNDETERMINED);return n;};
   const parseValue=depth=>{
     if(depth>LIMITS.maxParsedDepth)fail('PARSED_DEPTH_LIMIT','JSON exceeds the registered depth limit.');
@@ -426,8 +443,16 @@ function validateJsonSourceExact(text){
 }
 
 function exactDecimalParts(value){
-  if(value&&typeof value==='object'&&!Array.isArray(value)&&value.numberType==='DECIMAL')value=value.value;
-  const text=String(value);if(!/^-?(?:0|[1-9]\d*)(?:\.\d+)?$/.test(text)||text==='-0'||/^-0(?:\.0+)?$/.test(text))fail('UNSUPPORTED_NUMERIC_PRECISION','Exact decimal value must be canonical plain decimal text with no exponent or negative zero.',STATUS.UNDETERMINED);
+  // Validate the declared exact domain before any conversion or unwrapping.
+  // Mathematical alias equality must not make malformed typed values valid.
+  if(typeof value==='number'){
+    if(!Number.isSafeInteger(value)||Object.is(value,-0))fail('UNSUPPORTED_NUMERIC_PRECISION','Exact decimal numbers must be safe integers without negative zero.',STATUS.UNDETERMINED);
+    value=String(value);
+  }else if(typeof value!=='string'){
+    if(!value||Array.isArray(value)||typeof value!=='object'||Object.keys(value).sort().join(',')!=='numberType,value'||!hasOwn(value,'numberType')||!hasOwn(value,'value')||value.numberType!=='DECIMAL'||typeof value.value!=='string')fail('UNSUPPORTED_NUMERIC_PRECISION','Exact typed DECIMAL values require exactly numberType and a string value.',STATUS.UNDETERMINED);
+    value=value.value;
+  }
+  const text=value;if(!/^-?(?:0|[1-9]\d*)(?:\.\d+)?$/.test(text)||text==='-0'||/^-0(?:\.0+)?$/.test(text))fail('UNSUPPORTED_NUMERIC_PRECISION','Exact decimal value must be canonical plain decimal text with no exponent or negative zero.',STATUS.UNDETERMINED);
   const neg=text[0]==='-',body=neg?text.slice(1):text,[whole,fraction='']=body.split('.'),scale=fraction.length,digits=BigInt((whole+fraction)||'0');return{sign:neg?-1n:1n,digits,scale};
 }
 function decimalAlign(a,b){const scale=Math.max(a.scale,b.scale),pow=n=>10n**BigInt(n);return{a:a.sign*a.digits*pow(scale-a.scale),b:b.sign*b.digits*pow(scale-b.scale),scale};}
@@ -437,7 +462,11 @@ function decimalMaxAbs(a,b){const aa=decimalAbs(a),bb=decimalAbs(b),x=decimalAli
 function decimalMultiply(a,b){const aa=exactDecimalParts(a),bb=b&&b.digits!==undefined?b:decimalAbs(b);return{digits:aa.digits*bb.digits,scale:aa.scale+bb.scale};}
 function decimalLTE(left,right){const x=decimalAlign({sign:1n,digits:left.digits,scale:left.scale},{sign:1n,digits:right.digits,scale:right.scale});return x.a<=x.b;}
 function exactApproximate(actual,expected,step){const issues=comparisonIssues(step,'Approximate comparison');for(const key of ['absTol','relTol','absoluteTolerance','relativeTolerance'])if(step[key]!==undefined&&!validateType(step[key],'exactNonnegativeDecimal'))issues.push('Tolerance must be a nonnegative exact decimal.');if(issues.length)fail('INVALID_TOLERANCE',issues.join(' '));const absTol=step.absTol??step.absoluteTolerance??'0',relTol=step.relTol??step.relativeTolerance??'0',diff=decimalAbsDiff(actual,expected),abs=decimalAbs(absTol),relProduct=decimalMultiply(relTol,decimalMaxAbs(actual,expected)),maxTol=decimalLTE(abs,relProduct)?relProduct:abs;return decimalLTE(diff,maxTol);}
-function sortDomain(values,declared){if(!values.length)return declared||'STRING';const inferred=typeof values[0]==='string'?'STRING':typeof values[0]==='boolean'?'BOOLEAN':Number.isSafeInteger(values[0])?'INTEGER':values[0]&&values[0].numberType==='DECIMAL'?'DECIMAL':null,domain=declared||inferred;if(!domain)fail('SORT_DOMAIN','SORT requires an explicit supported homogeneous domain.',STATUS.UNDETERMINED);const ok=v=>domain==='STRING'?typeof v==='string':domain==='BOOLEAN'?typeof v==='boolean':domain==='INTEGER'?Number.isSafeInteger(v):domain==='DECIMAL'&&v&&v.numberType==='DECIMAL';if(!values.every(ok))fail('SORT_DOMAIN','SORT input is not homogeneous in the declared domain.',STATUS.UNDETERMINED);return domain;}
+function isExactTypedDecimal(value){
+  if(!value||typeof value!=='object'||Array.isArray(value))return false;
+  try{exactDecimalParts(value);return true;}catch{return false;}
+}
+function sortDomain(values,declared){if(!values.length)return declared||'STRING';const inferred=typeof values[0]==='string'?'STRING':typeof values[0]==='boolean'?'BOOLEAN':Number.isSafeInteger(values[0])?'INTEGER':isExactTypedDecimal(values[0])?'DECIMAL':null,domain=declared||inferred;if(!domain)fail('SORT_DOMAIN','SORT requires an explicit supported homogeneous domain.',STATUS.UNDETERMINED);const ok=v=>domain==='STRING'?typeof v==='string':domain==='BOOLEAN'?typeof v==='boolean':domain==='INTEGER'?Number.isSafeInteger(v):domain==='DECIMAL'&&isExactTypedDecimal(v);if(!values.every(ok))fail('SORT_DOMAIN','SORT input is not homogeneous in the declared domain.',STATUS.UNDETERMINED);return domain;}
 function compareSortValues(a,b,domain){if(domain==='STRING')return scalarCompare(a,b);if(domain==='BOOLEAN')return a===b?0:a?1:-1;if(domain==='INTEGER')return a===b?0:a<b?-1:1;if(domain==='DECIMAL')return compareDecimal(a.value,b.value);return 0;}
 
 function inspectStructure(value){
@@ -471,7 +500,8 @@ function parseCsv(text,configuration){
 }
 
 function normalizeDecimal(value){
-  const text=String(value).trim();const match=text.match(/^([+-]?)(\d+)(?:\.(\d+))?$/);if(!match)return null;let whole=match[2].replace(/^0+(?=\d)/,'');let fraction=(match[3]||'').replace(/0+$/,'');if(whole==='0'&&!fraction)return '0';return `${match[1]==='-'?'-':''}${whole}${fraction?'.'+fraction:''}`;
+  if(typeof value!=='string')return null;
+  const text=value.replace(/^[\u0009-\u000D\u0020]+|[\u0009-\u000D\u0020]+$/g,'');const match=text.match(/^([+-]?)(\d+)(?:\.(\d+))?$/);if(!match)return null;let whole=match[2].replace(/^0+(?=\d)/,'');let fraction=(match[3]||'').replace(/0+$/,'');if(whole==='0'&&!fraction)return '0';return `${match[1]==='-'?'-':''}${whole}${fraction?'.'+fraction:''}`;
 }
 function compareDecimal(left,right){
   const a=normalizeDecimal(left),b=normalizeDecimal(right);if(a===null||b===null)fail('UNSUPPORTED_NUMERIC_PRECISION','Exact decimal comparison requires plain decimal strings.',STATUS.UNDETERMINED);if(a===b)return 0;const negA=a.startsWith('-'),negB=b.startsWith('-');if(negA!==negB)return negA?-1:1;const aa=negA?a.slice(1):a,bb=negB?b.slice(1):b;const [aw,af='']=aa.split('.'),[bw,bf='']=bb.split('.');let result=aw.length!==bw.length?(aw.length<bw.length?-1:1):aw!==bw?(aw<bw?-1:1):af.padEnd(Math.max(af.length,bf.length),'0')===bf.padEnd(Math.max(af.length,bf.length),'0')?0:af.padEnd(Math.max(af.length,bf.length),'0')<bf.padEnd(Math.max(af.length,bf.length),'0')?-1:1;return negA?-result:result;
@@ -487,7 +517,8 @@ function exactEqual(actual,expected,step){
   }
   return canonical(actual)===canonical(expected);
 }
-function orderedCompare(actual,expected){
+function orderedCompare(actual,expected,numericMode){
+  if(numericMode==='DECIMAL_STRING')return compareDecimal(actual,expected);
   if(isSafeIntegerValue(actual)&&isSafeIntegerValue(expected))return actual===expected?0:actual<expected?-1:1;
   if(typeof actual==='string'&&typeof expected==='string'&&normalizeDecimal(actual)!==null&&normalizeDecimal(expected)!==null)return compareDecimal(actual,expected);
   fail('UNSUPPORTED_NUMERIC_PRECISION','Ordered numeric comparison supports safe integers or plain decimal strings only.',STATUS.UNDETERMINED);
@@ -547,9 +578,17 @@ function valueInputType(op,name,value){
 }
 function forbidsLiteralInput(op,name){return Boolean(INPUT_PORT_TYPES[op]?.[name]?.some(type=>['ARTIFACT','BYTES','XML_NODE'].includes(type)));}
 function comparisonIssues(inputs,prefix){
-  const issues=[],mode=inputs.numericMode;
+  const issues=[],mode=inputs.numericMode,tolerances=['absTol','relTol','absoluteTolerance','relativeTolerance'].filter(key=>inputs[key]!==undefined);
+  if(['GT','GTE','LT','LTE'].includes(inputs.operator)){
+    if(mode==='APPROXIMATE'||tolerances.length)issues.push(`${prefix} ordered comparison cannot use APPROXIMATE numericMode or tolerance arguments.`);
+  }else if(mode!=='APPROXIMATE'&&tolerances.length)issues.push(`${prefix} tolerance arguments require numericMode APPROXIMATE.`);
   if(mode==='APPROXIMATE'&&!['absTol','relTol','absoluteTolerance','relativeTolerance'].some(key=>inputs[key]!==undefined))issues.push(`${prefix} approximate comparison requires an explicit tolerance.`);
-  for(const [short,long] of [['absTol','absoluteTolerance'],['relTol','relativeTolerance']])if(inputs[short]!==undefined&&inputs[long]!==undefined&&inputs[short]!==inputs[long])issues.push(`${prefix} contains contradictory ${short} and ${long} tolerances.`);
+  for(const [short,long] of [['absTol','absoluteTolerance'],['relTol','relativeTolerance']])if(inputs[short]!==undefined&&inputs[long]!==undefined){
+    try{
+      const normalized=decimalAlign(exactDecimalParts(inputs[short]),exactDecimalParts(inputs[long]));
+      if(normalized.a!==normalized.b)issues.push(`${prefix} contains contradictory ${short} and ${long} tolerances.`);
+    }catch{issues.push(`${prefix} contains invalid ${short} or ${long} tolerance.`);}
+  }
   return issues;
 }
 function resolvedInputIssues(step,inputs){
@@ -564,7 +603,17 @@ function resolvedInputIssues(step,inputs){
   return issues;
 }
 
-function priorRegistrySubset(spec){return spec?.operationRegistrySha256===PRIOR_OPERATION_REGISTRY_SHA256&&Array.isArray(spec.steps)&&spec.steps.length<=LIMITS.maxSteps&&spec.steps.every(step=>typeof step?.op==='string'&&hasOwn(PORT_CONTRACTS,step.op)&&step.op!=='SELECT_JSON_PATH');}
+function priorRegistrySubset(spec){
+  if(spec?.operationRegistrySha256!==PRIOR_OPERATION_REGISTRY_SHA256||!Array.isArray(spec.steps)||spec.steps.length>LIMITS.maxSteps)return false;
+  return spec.steps.every(step=>{
+    if(typeof step?.op!=='string'||!hasOwn(PORT_CONTRACTS,step.op)||['SELECT_JSON_PATH','ASSERT_GT','ASSERT_GTE','ASSERT_LT','ASSERT_LTE','PARSE_JSON','SELECT_XML','REGEX','ASSERT_MATCH'].includes(step.op))return false;
+    const inputs=step.inputs||{};
+    if(['COMPARE','ASSERT_EQ'].includes(step.op)&&(['APPROXIMATE','DECIMAL_STRING'].includes(inputs.numericMode?.literal)||['absTol','relTol','absoluteTolerance','relativeTolerance'].some(key=>hasOwn(inputs,key))))return false;
+    if(step.op==='COMPARE'&&['GT','GTE','LT','LTE'].includes(inputs.operator?.literal))return false;
+    if(step.op==='SORT'&&(!hasOwn(inputs,'domain')||inputs.domain?.literal==='DECIMAL'))return false;
+    return true;
+  });
+}
 function validateDagSpec(spec,bindings,{allowPriorRegistry=false}={}){
   const issues=[];
   if(!spec||typeof spec!=='object'||Array.isArray(spec))return {valid:false,issues:['Test IR must be an object.']};
@@ -716,7 +765,7 @@ function normalizeTestSpec(test){
   const spec=field(test,'EXECUTABLE_SPEC'),normalized=normalizeSpec(spec,{allowPriorRegistry:true}),stored=field(test,'EXECUTABLE_SPEC_SHA256');
   // Only a retained legacy definition with an exact application-owned prior
   // canonical hash can select this finite compatibility contract. No selector
-  // operation (including unused branches) may acquire changed semantics.
+  // or changed parser, regex, numeric comparison/decimal sort (including unused branches) may acquire changed semantics.
   if(!hasOwn(spec,'languageVersion')&&typeof stored==='string'&&/^[0-9a-f]{64}$/.test(stored)&&root.closedLoopHash.sha256Value(normalized)!==stored){
     const previous={...normalized,operationRegistrySha256:PRIOR_OPERATION_REGISTRY_SHA256};
     if(priorRegistrySubset(previous)&&root.closedLoopHash.sha256Value(previous)===stored)return previous;
@@ -806,7 +855,7 @@ async function execute({spec,artifacts={},canonicalBindings={},metadata={}}){
       case 'UNIQUE':{const seen=new Set(),value=collection(inputs.value,'UNIQUE').filter(item=>{const key=canonical(item);if(seen.has(key))return false;seen.add(key);return true;});out={value};break;}
       case 'HASH_SHA256':{const bytes=bytesFrom(inputs.bytes);if(!bytes)fail('BYTES_REQUIRED','HASH_SHA256 requires bytes.');out={sha256:await sha256(bytes)};break;}
       case 'REGEX':{const input=inputs.value;if(byteLength(input)>LIMITS.maxRegexInputBytes)fail('REGEX_INPUT_LIMIT','Regex input exceeds the registered byte limit.');const regexIssues=validateRegex(inputs.pattern,inputs.flags);if(regexIssues.length)fail('UNSAFE_REGEX',regexIssues.join(' '));out={match:new RegExp(inputs.pattern,inputs.flags||'').test(input)};break;}
-      case 'COMPARE':{const left=inputs.left,right=inputs.right,operator=inputs.operator||'EQ';const options={numericMode:inputs.numericMode,absTol:inputs.absTol,relTol:inputs.relTol,absoluteTolerance:inputs.absoluteTolerance,relativeTolerance:inputs.relativeTolerance};const cmp=['EQ','NE'].includes(operator)?null:orderedCompare(left,right);let comparison;if(operator==='EQ')comparison=exactEqual(left,right,options);else if(operator==='NE')comparison=!exactEqual(left,right,options);else if(operator==='GT')comparison=cmp>0;else if(operator==='GTE')comparison=cmp>=0;else if(operator==='LT')comparison=cmp<0;else if(operator==='LTE')comparison=cmp<=0;else fail('INVALID_COMPARE_OPERATOR',`Unsupported compare operator ${operator}.`);out={comparison};break;}
+      case 'COMPARE':{const left=inputs.left,right=inputs.right,operator=inputs.operator||'EQ';const options={numericMode:inputs.numericMode,absTol:inputs.absTol,relTol:inputs.relTol,absoluteTolerance:inputs.absoluteTolerance,relativeTolerance:inputs.relativeTolerance};const cmp=['EQ','NE'].includes(operator)?null:orderedCompare(left,right,inputs.numericMode);let comparison;if(operator==='EQ')comparison=exactEqual(left,right,options);else if(operator==='NE')comparison=!exactEqual(left,right,options);else if(operator==='GT')comparison=cmp>0;else if(operator==='GTE')comparison=cmp>=0;else if(operator==='LT')comparison=cmp<0;else if(operator==='LTE')comparison=cmp<=0;else fail('INVALID_COMPARE_OPERATOR',`Unsupported compare operator ${operator}.`);out={comparison};break;}
       case 'BYTE_COMPARE':{const left=bytesFrom(inputs.left),right=bytesFrom(inputs.right);if(!left||!right)fail('BYTES_REQUIRED','BYTE_COMPARE requires explicit byte-backed left and right inputs.');let comparison=left.byteLength===right.byteLength;if(comparison)for(let i=0;i<left.byteLength;i++)if(left[i]!==right[i]){comparison=false;break;}out={comparison};break;}
       case 'ASSERT_EQ':{const actual=inputs.actual,expected=inputs.expected,options={numericMode:inputs.numericMode,absTol:inputs.absTol,relTol:inputs.relTol,absoluteTolerance:inputs.absoluteTolerance,relativeTolerance:inputs.relativeTolerance};out={assertion:assertion(exactEqual(actual,expected,options),expected,actual,inputs.message)};break;}
       case 'ASSERT_GT':case 'ASSERT_GTE':case 'ASSERT_LT':case 'ASSERT_LTE':{const actual=inputs.actual,expected=inputs.expected,cmp=orderedCompare(actual,expected),ok=step.op==='ASSERT_GT'?cmp>0:step.op==='ASSERT_GTE'?cmp>=0:step.op==='ASSERT_LT'?cmp<0:cmp<=0;out={assertion:assertion(ok,`${step.op.slice(7)} ${expected}`,actual,inputs.message)};break;}
@@ -962,9 +1011,9 @@ function authoringContract(){
       rule:'The pattern must also compile as a JavaScript RegExp with the declared flags. Runtime work is isolated by the published worker timeout.'},
     csv:{allSettingsRequired:true,delimiterAndQuoteMustDiffer:true,newlineValues:[...ARGUMENT_ENUMS.csvNewline],encodingValues:[...ARGUMENT_ENUMS.utf8],newlineAuto:'Accept CRLF, LF or CR; quoted content is preserved.',headerValues:[false,true],selector:'jsonSelector'},
     numericSemantics:{integer:'JSON numbers are finite safe integers. SUM checks each intermediate result; unsupported precision is UNDETERMINED.',
-      equality:'Default or INTEGER: safe integers if either value is a number, otherwise canonical JSON equality. DECIMAL_STRING: exact plain decimal-string interpretation, accepting leading +, zeros and surrounding whitespace. No exponent.',
-      approximate:'COMPARE/ASSERT_EQ numericMode APPROXIMATE requires explicit absTol or relTol, or compatibility names absoluteTolerance/relativeTolerance. Aliases may coexist only when their values are strictly equal primitives (same text or same number); separately supplied typed DECIMAL objects conflict even when their contents match. Prefer one name per tolerance component, especially for typed objects. Tolerances are nonnegative exact decimals. abs(actual-expected) <= max(absTol, relTol*max(abs(actual),abs(expected))). Omitted tolerance component is zero.',
-      ordered:'GT/GTE/LT/LTE support safe integers or plain decimal strings; they do not use approximate mode.',typedDecimal:'{numberType:"DECIMAL",value:"<plain decimal text>"} supports declared DECIMAL sorting and approximate operands; it is not an arbitrary-precision JSON number.'},
+      equality:'Default or INTEGER: safe integers if either value is a number, otherwise canonical JSON equality. DECIMAL_STRING: two plain decimal strings only, accepting leading +, zeros and surrounding ASCII U+0009-U+000D/U+0020 whitespace. Nonstring operands and other surrounding Unicode whitespace are unsupported precision, not coerced. No exponent. Outside APPROXIMATE, EQ/NE/ASSERT_EQ reject all tolerance arguments, including compatibility aliases; tolerance presence never infers a mode.',
+      approximate:'COMPARE/ASSERT_EQ numericMode APPROXIMATE requires explicit absTol or relTol, or compatibility names absoluteTolerance/relativeTolerance. Aliases may coexist only when both values are valid nonnegative exact decimals and normalize to exactly the same mathematical value, including equivalent decimal spellings and supported number/string/typed DECIMAL representations. Operands and tolerances accept safe integer JSON numbers without negative zero, canonical plain decimal strings, or closed typed DECIMAL objects with exactly numberType and a string value. Tolerances are mathematically nonnegative; operands may be negative. abs(actual-expected) <= max(absTol, relTol*max(abs(actual),abs(expected))). Omitted tolerance component is zero.',
+      ordered:'GT/GTE/LT/LTE support safe integers or plain decimal strings. Explicit DECIMAL_STRING requires two strings; omitted mode and INTEGER retain the ordinary exact integer-or-string domain. Only surrounding ASCII U+0009-U+000D/U+0020 whitespace is removed from decimal strings. Ordered COMPARE rejects APPROXIMATE numericMode and every tolerance argument at definition admission.',typedDecimal:'Exactly {numberType:"DECIMAL",value:"<canonical plain decimal text>"}, with two non-null keys and a string value; no extra keys, plus, whitespace, exponent, leading integer zeros or negative zero. SORT DECIMAL validates every item, including singleton collections, before ordering; malformed typed items produce SORT_DOMAIN/UNDETERMINED. Exact stable ASC order, reversed DESC order and original objects/spellings are preserved. This is not an arbitrary-precision JSON number.'},
     executionContract:{
       sharedErrorCodes:['INVALID_TEST_IR','INVALID_BINDINGS','INVALID_INPUT_TYPE','INVALID_CANONICAL_BINDING','INVALID_CANONICAL_VALUE','MISSING_BINDING','MISSING_CANONICAL_VALUE','MISSING_STEP_OUTPUT','INPUT_BYTE_LIMIT','ARTIFACT_HASH_MISMATCH','CANONICAL_IDENTITY_MISMATCH','CANONICAL_HASH_MISMATCH','CANONICAL_HASH_AUTHORITY_UNAVAILABLE','RESULT_OUTPUT_UNAVAILABLE','UNDEFINED_OPERATION_OUTPUT','IMPLICIT_OPERAND_MISSING','UNKNOWN_OPERATION'],
       workerErrorCodes:['STALE_EXECUTABLE_SPEC_IDENTITY','WORKER_UNAVAILABLE','WORKER_TIMEOUT','WORKER_ERROR','WORKER_EXECUTION_FAILED','WORKER_DIGEST_IDENTITY_MISSING','WORKER_RESULT_IDENTITY_MISMATCH'],
@@ -973,7 +1022,7 @@ function authoringContract(){
       assertionPropagation:'A VIOLATED assertion terminates the DAG and becomes the decisive result; otherwise the explicitly selected ASSERTION result determines the outcome. Ordinary data cannot create a determination.',
       intermediateLifetime:'Current execution only, except explicitly emitted observations/evidence.',
       resourceCosts:'Categories describe the implementation work shape, not a measured duration or a new budget. All operations remain under centralized limits and isolated workerTimeoutMs; unsupported work routes externally or remains blocked.'},
-    priorRegistryCompatibility:{operationRegistrySha256:PRIOR_OPERATION_REGISTRY_SHA256,excludedOperations:['SELECT_JSON_PATH'],scope:'Retained accepted definitions only; new author submissions must use the current published registry. Explicit prior DAGs retain their exact prior identity. Legacy retained forms must match their stored application-owned canonical hash under that exact prior registry. All ordinary syntax, type, binding and resource checks still apply; missing or changed hashes and any excluded operation require reauthor/review. Receipts report the selected DAG registry, never relabel prior work as the current registry.'},
+    priorRegistryCompatibility:{operationRegistrySha256:PRIOR_OPERATION_REGISTRY_SHA256,excludedOperations:['SELECT_JSON_PATH','ASSERT_GT','ASSERT_GTE','ASSERT_LT','ASSERT_LTE','PARSE_JSON','SELECT_XML','REGEX','ASSERT_MATCH'],excludedNumericModes:{COMPARE:['APPROXIMATE','DECIMAL_STRING'],ASSERT_EQ:['APPROXIMATE','DECIMAL_STRING']},excludedCompareOperators:['GT','GTE','LT','LTE'],excludedSortDomains:['DECIMAL'],excludedInferredSortDomain:true,excludedInputPorts:{COMPARE:['absTol','relTol','absoluteTolerance','relativeTolerance'],ASSERT_EQ:['absTol','relTol','absoluteTolerance','relativeTolerance']},scope:'Retained accepted definitions only; new author submissions must use the current published registry. Explicit prior DAGs retain their exact prior identity. Legacy retained forms must match their stored application-owned canonical hash under that exact prior registry. All ordinary syntax, type, binding and resource checks still apply; missing or changed hashes and any excluded operation, numeric mode, operator, sort domain, inferred sort domain or input port require reauthor/review. Receipts report the selected DAG registry, never relabel prior work as the current registry.'},
     recovery:'Contract error: correct the declared syntax/type/value. Missing/stale binding or bytes: obtain the authorized current input and regenerate as required. Unsupported language/precision/format or exceeded supported limit: route externally or report BLOCKED, never fabricate a passing native receipt.'
   };
 }

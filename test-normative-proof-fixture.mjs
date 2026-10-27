@@ -11,7 +11,7 @@ import {verificationCatalog,browserVerificationCatalog} from './verification-evi
 import {SPECIFICATION_PATH,sha,evidenceFingerprint,coverageDeclarationSha256,createExecutionReceipt,aggregateExecutedEvidence,readExecutedEvidence} from './verification-evidence.mjs';
 export function createNormativeProofFixture(){
   const original=process.cwd(),directory=fs.mkdtempSync(path.join(os.tmpdir(),'closed-loop-normative-proof-'));
-  const normativePath=SPECIFICATION_PATH.replace('closed-loop-reliability-controlling-implementation-specification.txt','closed-loop-normative-requirements.json'),bindingsPath='verification-assertion-bindings.json',reviewPath='verification/disposable-coverage-review.json',suite='verify-test-runtime-v3.mjs',checkId='test-ir.unknown-operation';
+  const normativePath=SPECIFICATION_PATH.replace('closed-loop-reliability-controlling-implementation-specification.txt','closed-loop-normative-requirements.json'),bindingsPath='verification-assertion-bindings.json',reviewPath='verification/disposable-coverage-review.json',suite='verify-test-runtime-limits.mjs',checkId='test-ir.limits-unknown-operation';
   const copy=relative=>{const target=path.join(directory,relative);fs.mkdirSync(path.dirname(target),{recursive:true});fs.copyFileSync(path.join(original,relative),target);};
   try{
     for(const name of fs.readdirSync(original))if(/\.(?:m?js|html|css|json)$/.test(name)&&name!=='TEST_PROJECT.json')copy(name);

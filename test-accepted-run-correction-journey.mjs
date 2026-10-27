@@ -93,12 +93,10 @@ async function restore(prefix, sources) {
 async function restoreStage12AfterRuntimeUpdate(prefix, producerSources, sources) {
   assert.equal(prefix.label, 'stage12-complete', 'ACCEPTED_RUN_EXACT_RESUME_BOUNDARY');
   assert.deepEqual(prefix.sourceSha256, Object.fromEntries(Object.entries(producerSources).map(([file, source]) => [file, sha(source)])), 'ACCEPTED_RUN_RETAINED_SOURCE_BYTES');
-  const projectRows = prefix.stores.find(([name]) => name === 'projects')?.[1] || [];
-  const row = projectRows.map(([, value]) => value).find(value => value.jobId === prefix.jobId);
-  assert(row, 'ACCEPTED_RUN_RETAINED_CANONICAL_ROW');
-  assert.equal(row.revision, prefix.revision);
-  assert.equal(row.projectSha256, prefix.projectSha256);
-  const rawBefore = JSON.stringify(row.project.projectData.rawResponses);
+  // Authenticate and decode the retained physical rows with their original
+  // owner before comparing raw history with the current cold activation.
+  const original = await restore(prefix, producerSources);
+  const rawBefore = JSON.stringify(original.p.projectData.rawResponses);
   const r = runtime(sources);
   r.rows.clear();
   for (const [name, rows] of prefix.stores) r.rows.set(name, new Map(rows.map(([key, value]) => [key, r.copy(value)])));
@@ -135,7 +133,10 @@ async function restoreStage17AfterRuntimeUpdate(prefix, producerSources, sources
   for (const [name, rows] of prefix.stores) r.rows.set(name, new Map(rows.map(([key, value]) => [key, r.copy(value)])));
   const p = await r.store.readProject(prefix.jobId);
   assert.equal(r.store.validateProjectIntegrity(p).valid, true, 'ACCEPTED_RUN_STAGE17_CURRENT_COLD_INTEGRITY');
-  assert.equal(p.projectData.applicationProjection.receipt.derivationId, 'closed-loop-derivation/project-current-projection/9');
+  const currentProjectionId = r.runtime.closedLoopWorkflowSchema.PROJECT_PROJECTION_DERIVATION_CONTRACT?.id;
+  assert.equal(typeof currentProjectionId, 'string', 'ACCEPTED_RUN_CURRENT_PROJECTION_REGISTERED');
+  assert(currentProjectionId.length > 0, 'ACCEPTED_RUN_CURRENT_PROJECTION_REGISTERED');
+  assert.equal(p.projectData.applicationProjection.receipt.derivationId, currentProjectionId, 'ACCEPTED_RUN_STAGE17_CURRENT_PROJECTION');
   for (const [key, value] of Object.entries(preserved)) {
     const actual = key === 'history' ? p.projectData[key].slice(0, value.length) : p.projectData[key];
     assert.deepEqual(plain(actual), value, 'ACCEPTED_RUN_STAGE17_ACTIVATION_PRESERVES_' + key);

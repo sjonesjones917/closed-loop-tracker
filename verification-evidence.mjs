@@ -1,4 +1,5 @@
 import {decodeNormativeManifest} from './normative-manifest-storage.mjs';
+import {createInsertionBaseSemanticReadScope} from './approved-source-continuation.mjs';
 // Repository verification evidence. This module is never shipped to the app.
 import fs from 'node:fs';
 import {atomicEvidenceReferences,isAtomicEvidencePath,readAtomicEvidenceBytes,atomicObligationSha256,validateAtomicRequirementRows,validateAtomicLineMembership,loadReviewedAtomicExtraction} from './review-specification-coverage.mjs';
@@ -41,15 +42,22 @@ export function coverageDeclarationSha256(coverage){const declaration={...covera
 // Context entries remain in the source inventory. Only the exact independently
 // reviewed set is excluded from the independent behavior denominator; their
 // governing clauses and modifiers remain mandatory.
-export function reviewedContextApplicability(normative,fingerprint){
+// Only this finite context population opts in. No alternate reader or caller
+// template enters this factory; ordinary public validation stays uncached.
+export function createReviewedContextApplicabilityScope(){
+  const scope=createInsertionBaseSemanticReadScope();
+  return Object.freeze({run(normative,fingerprint){requireEvidence(!scope.stats().disposed,'context applicability scope is disposed');return reviewedContextApplicabilityFromReader(normative,fingerprint,scope.readFile);},stats(){return scope.stats();},dispose(){scope.dispose();}});
+}
+export function reviewedContextApplicability(normative,fingerprint){return reviewedContextApplicabilityFromReader(normative,fingerprint,readAtomicEvidenceBytes);}
+function reviewedContextApplicabilityFromReader(normative,fingerprint,readFile){
   normative=decodeNormativeManifest(normative);
   if(normative.requirements.some(row=>row.entryKind)){
     const governance=readJson('specification/requirement-evidence-bindings.json'),source=fs.readFileSync(SPECIFICATION_PATH),sections=readJson(specificationManifestPath).sectionInventory;
-    const atomic=loadReviewedAtomicExtraction(governance.atomicExtraction,{sourceBytes:source,specificationPath:SPECIFICATION_PATH,sections});
+    const atomic=loadReviewedAtomicExtraction(governance.atomicExtraction,{sourceBytes:source,specificationPath:SPECIFICATION_PATH,sections,readFile});
     requireEvidence(atomic.established&&sha(source)===fingerprint.specificationSha256,'atomic context review is incomplete or stale');
     requireEvidence(normative.requirements.length===atomic.entries.length&&atomic.entries.every(entry=>{const row=normative.requirements.find(row=>row.normativeRequirementId===entry.normativeRequirementId);return row&&Object.entries(entry).every(([key,value])=>isDeepStrictEqual(row[key],value));}),'atomic context universe differs from reviewed entries');
     validateAtomicLineMembership(normative.requirements,normative.sourceLineCoverage,source,SPECIFICATION_PATH,sections);
-    for(const ref of atomicEvidenceReferences(atomic.descriptor))requireEvidence(fingerprint.inputSha256[ref.path]===ref.sha256,'atomic context evidence fingerprint mismatch');
+    for(const ref of atomicEvidenceReferences(atomic.descriptor,readFile))requireEvidence(fingerprint.inputSha256[ref.path]===ref.sha256,'atomic context evidence fingerprint mismatch');
     const contexts=new Map();for(const row of normative.requirements.filter(row=>row.entryKind==='SOURCE_CONTEXT')){
       const reviewed=atomic.entries.find(entry=>entry.normativeRequirementId===row.normativeRequirementId);requireEvidence(reviewed&&isDeepStrictEqual(reviewed.contextClassification,row.contextClassification),'atomic context classification differs from reviewed scope');
       const c=row.contextClassification;contexts.set(row.normativeRequirementId,{...row,existingReconciledClassification:c.classification,reviewedDisposition:c.classification==='STRUCTURAL_REQUIREMENT_CONTEXT'?'CONTEXT_GOVERNED_BY_LINKED_CLAUSES':'HISTORICAL_CONTEXT_NOT_CURRENT_OBLIGATION',exclusionReason:c.reason,governingNormativeRequirementIds:c.governingNormativeRequirementIds,review:atomic.continuation?{kind:'APPROVED_INSERTION_SOURCE_CONTINUATION',...atomic.descriptor.continuation}:atomic.descriptor.reconciliation});

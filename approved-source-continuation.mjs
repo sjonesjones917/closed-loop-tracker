@@ -2,6 +2,7 @@ import {encodeNormativeManifest,projectInsertionEntryProvenance,reconstructInser
 // Reviewed insertion-only source continuation. Ordinary source owners retain
 // their original path; this explicit branch binds immutable base plus current delta.
 import crypto from 'node:crypto';
+import {serialize,deserialize} from 'node:v8';
 import path from 'node:path';
 import {validateSpecificationSource,validateAtomicRequirementRows,validateAtomicSectionCoverage,validateAtomicGoverningOccurrences,loadAtomicComponentReconciliation,validateAtomicLineMembership,projectAtomicSectionInventory,sourceInventorySummary,reviewSpecificationCoverageBytes,generatorMechanicalCandidates,mergeGeneratorMechanicalCandidates,applyGeneratorSourceClauses,applyGeneratorSourceSemantics,validateGeneratorMandatorySourceTraces,validateGeneratorSemanticTraceReferences,materializeGeneratorSourceCoverage,materializeGeneratorAtomicMembership,validateGeneratorResolvedSourceCoverage,atomicObligationSha256,isAtomicEvidencePath,readAtomicEvidenceBytes,loadReviewedAtomicExtraction,atomicEvidenceReferences} from './review-specification-coverage.mjs';
 
@@ -189,8 +190,27 @@ function createInsertionBaseDependencyIdentity(snapshot,logicalReferences,physic
   return {dependencyIdentity(){return structuredClone({view:snapshot,logicalReferences,physicalReferences});}}.dependencyIdentity;
 }
 
+// A finite owner explicitly opts in; ordinary readers retain cold validation.
+// The brand selects only this module's slot, never caller-provided proof state.
+const insertionBaseSemanticScopes=new WeakMap();
+export function createInsertionBaseSemanticReadScope(readFile=readAtomicEvidenceBytes){
+  need(typeof readFile==='function','INSERTION_BASE_SCOPE_READER','A byte reader is required.');
+  const state={entry:null,hits:0,misses:0,failures:0,disposed:false};
+  const scopedReader=file=>{need(!state.disposed,'INSERTION_BASE_SCOPE_DISPOSED','The finite semantic scope has ended.');const bytes=readFile(file);need(!state.disposed,'INSERTION_BASE_SCOPE_DISPOSED','The finite semantic scope has ended.');return bytes;};
+  insertionBaseSemanticScopes.set(scopedReader,state);
+  return Object.freeze({readFile:scopedReader,
+    stats(){return Object.freeze({hits:state.hits,misses:state.misses,failures:state.failures,disposed:state.disposed,hasTemplate:state.entry!==null,templateCodeUnits:state.entry?.payload.length??0});},
+    dispose(){state.entry=null;state.disposed=true;}
+  });
+}
+const baseSemanticDependencies=()=>[globalThis.closedLoopHash,globalThis.closedLoopHash.stableStringify,globalThis.closedLoopHash.sha256Value,globalThis.closedLoopHash.canonicalChunks];
+const sameBaseSemanticDependencies=(left,right)=>left.length===right.length&&left.every((value,index)=>value===right[index]);
+
 export function loadValidatedInsertionAtomicBase(descriptor,{readFile=readAtomicEvidenceBytes}={}){
-  const snapshot=JSON.parse(canonical(descriptor));
+  const scope=insertionBaseSemanticScopes.get(readFile);
+  try{
+  if(scope)need(!scope.disposed,'INSERTION_BASE_SCOPE_DISPOSED','The finite semantic scope has ended.');
+  const descriptorIdentity=canonical(descriptor),snapshot=JSON.parse(descriptorIdentity);
   keys(snapshot,['schema','source','specificationManifest','requirementEvidenceBindings','view'],'INSERTION_BASE_DESCRIPTOR');
   need(['closed-loop-insertion-atomic-base/1','closed-loop-insertion-atomic-base/2'].includes(snapshot.schema),'INSERTION_BASE_VERSION','Unknown original-base view version.');
   const roots=[snapshot.source,snapshot.specificationManifest,snapshot.requirementEvidenceBindings];
@@ -221,9 +241,27 @@ export function loadValidatedInsertionAtomicBase(descriptor,{readFile=readAtomic
     const item=logical.get(file);need(item,'INSERTION_BASE_UNDECLARED_READ','Original loader consumed an undeclared logical dependency.');
     consumed.add(file);return Buffer.from(buffers.get(item.storagePath));
   };
-  const bytes=readOriginal(snapshot.source.path),original=source(bytes),manifest=JSON.parse(readOriginal(snapshot.specificationManifest.path)),bindings=JSON.parse(readOriginal(snapshot.requirementEvidenceBindings.path));
+  const bytes=readOriginal(snapshot.source.path),dependencies=scope?baseSemanticDependencies():null;
+  let base,semanticFacts,sections,logicalReferences;
+  const entry=scope?.entry;
+  if(entry&&entry.descriptorIdentity===descriptorIdentity&&sameBaseSemanticDependencies(entry.dependencies,dependencies)){
+    // Only immutable encoded semantics survive between calls. Every graph here
+    // is newly decoded and this invocation's byte owner remains freshly captured.
+    ({base,semanticFacts,sections,logicalReferences}=deserialize(Buffer.from(entry.payload,'base64')));
+    const expected=new Map();
+    for(const ref of logicalReferences){
+      need(!expected.has(ref.path)||expected.get(ref.path)===ref.sha256,'INSERTION_BASE_LOGICAL_CONFLICT','Original roots/dependencies conflict at one logical path.');
+      need(logical.get(ref.path)?.sha256===ref.sha256,'INSERTION_BASE_REFERENCE','Typed original dependency differs from pinned view.');expected.set(ref.path,ref.sha256);
+    }
+    need(expected.size===logical.size&&[...logical.keys()].every(file=>expected.has(file)),'INSERTION_BASE_CLOSURE','View contains an undeclared or unused logical node.');
+    // The typed logical-consumption fact was established by the exact successful
+    // cold pipeline; do not manufacture a current semantic read/validation run.
+    scope.hits++;
+  }else{
+  if(scope)scope.entry=null;
+  const original=source(bytes),manifest=JSON.parse(readOriginal(snapshot.specificationManifest.path)),bindings=JSON.parse(readOriginal(snapshot.requirementEvidenceBindings.path));
   need(manifest.schema==='closed-loop-specification-manifest/1'&&manifest.repositoryPath===snapshot.source.path&&manifest.sha256===snapshot.source.sha256&&manifest.byteLength===bytes.length&&manifest.physicalLineCount===original.lines.length&&manifest.logicalLineCount===original.lines.length+1&&/^[0-9a-f]{40}$/.test(manifest.sourceCommit??''),'INSERTION_BASE_SOURCE_METADATA','Pinned original specification manifest differs from exact original source.');
-  const sections=manifest.sectionInventory;
+  sections=manifest.sectionInventory;
   need(Array.isArray(sections)&&sections.length>0,'INSERTION_BASE_SECTIONS','Original pinned section inventory is absent.');
   const sectionIds=new Set();let last=0;
   for(const section of sections){
@@ -237,9 +275,9 @@ export function loadValidatedInsertionAtomicBase(descriptor,{readFile=readAtomic
   // Immutable predecessor custody cannot recursively activate a successor.
   need(bindings.atomicExtraction?.schema!=='closed-loop-approved-insertion-atomic-extraction/1','INSERTION_BASE_CONTINUATION_FORBIDDEN','The archived base must use the unchanged ordinary atomic loader.');
   // The descriptor cannot replace atomicExtraction, sections or source traces.
-  const base=loadReviewedAtomicExtraction(bindings.atomicExtraction,{sourceBytes:bytes,specificationPath:snapshot.source.path,sections,priorRequirements:semanticState?.sourceRows??null,readFile:readOriginal});
+  base=loadReviewedAtomicExtraction(bindings.atomicExtraction,{sourceBytes:bytes,specificationPath:snapshot.source.path,sections,priorRequirements:semanticState?.sourceRows??null,readFile:readOriginal});
   need(base.established===true,'INSERTION_BASE_PENDING','Missing or pending original atomic evidence does not establish a base.');
-  const semanticFacts=semanticState?finishOriginalSourceSemantics(semanticState,base,bytes,snapshot.source.path,manifest):null;
+  semanticFacts=semanticState?finishOriginalSourceSemantics(semanticState,base,bytes,snapshot.source.path,manifest):null;
   const references=atomicEvidenceReferences(bindings.atomicExtraction,readOriginal),expected=new Map();
   for(const ref of [...roots,...references,...semanticReferences]){
     need(!expected.has(ref.path)||expected.get(ref.path)===ref.sha256,'INSERTION_BASE_LOGICAL_CONFLICT','Original roots/dependencies conflict at one logical path.');
@@ -247,7 +285,18 @@ export function loadValidatedInsertionAtomicBase(descriptor,{readFile=readAtomic
   }
   need(expected.size===logical.size&&[...logical.keys()].every(file=>expected.has(file)),'INSERTION_BASE_CLOSURE','View contains an undeclared or unused logical node.');
   need(consumed.size===expected.size&&[...consumed].every(file=>expected.has(file)),'INSERTION_BASE_READ_SET','Actual reads and typed original dependency closure differ.');
-  const logicalReferences=[...expected].map(([path,sha256])=>({path,sha256})),physicalReferences=[...physical].map(([path,sha256])=>({path,sha256}));
+  logicalReferences=[...expected].map(([path,sha256])=>({path,sha256}));
+  if(scope){
+    // Capture before any API clone can expose this invocation's graphs. A live
+    // clone observer can later retain/mutate only those graphs, not this string.
+    need(!scope.disposed,'INSERTION_BASE_SCOPE_DISPOSED','The finite semantic scope has ended.');
+    const payload=serialize({base,semanticFacts,sections,logicalReferences}).toString('base64');
+    need(!scope.disposed,'INSERTION_BASE_SCOPE_DISPOSED','The finite semantic scope has ended.');
+    if(sameBaseSemanticDependencies(dependencies,baseSemanticDependencies()))scope.entry={descriptorIdentity,dependencies,payload};
+    scope.misses++;
+  }
+  }
+  const physicalReferences=[...physical].map(([path,sha256])=>({path,sha256}));
   return Object.freeze({schema:'closed-loop-validated-insertion-atomic-base/1',baseAtomicValidated:true,successorEstablished:false,semanticDeltaValidated:false,identityRetentionAuthorized:false,productionFingerprintIntegrated:false,sourceSemanticValidated:Boolean(semanticFacts),lineMembershipMaterialized:Boolean(semanticFacts),
     viewIdentitySha256:sha(Buffer.from(canonical(snapshot))),sourceSha256:snapshot.source.sha256,entryCount:base.entries.length,
     // The exact view identity and actual archived byte references must be bound
@@ -259,6 +308,7 @@ export function loadValidatedInsertionAtomicBase(descriptor,{readFile=readAtomic
     originalSections(){return structuredClone(sections);},
     readOriginalFile(file){return readOriginal(file);}
   });
+  }catch(error){if(scope){scope.entry=null;scope.failures++;}throw error;}
 }
 
 // Version 2 validates the original unamended source pipeline. It deliberately

@@ -452,7 +452,7 @@ async function metaPut(key,value,tx=null){
   const logicalRow={key,value:String(key).startsWith('responseStaging:')&&saved?.blob instanceof Blob?await sharedByteRecord(own,saved):saved,updatedAt:now()};if(physicalKey){const prepared=await preparePhysicalRowPut(own,logicalRow,META,'value');commitPhysicalRowPut(own,prepared,logicalRow);}else store.put(logicalRow);if(!tx)await complete(own);return saved;
  }catch(error){if(storageDeadlineTransactions.get(error)!==own){try{own.abort();}catch{}}throw error;}
 }
-async function metaGet(key){const tx=await openTransaction(META,'readonly');const row=(await readPhysicalStoredSource(tx,META,key,'value')).logical,value=String(key).startsWith('responseStaging:')?await hydrateByteRecord(tx,row?.value):row?.value;await complete(tx);return value;}
+async function metaGet(key){const tx=await openTransaction(META,'readonly');const source=await readPhysicalStoredSource(tx,META,key,'value'),row=source.logical,value=String(key).startsWith('responseStaging:')?await hydrateByteRecord(tx,row?.value):hydrateQuarantineValue(source);await complete(tx);return value;}
 // Operational response work is owned by META and bound to one canonical row.
 // Its closed patch contains no accepted-work authority. Canonical commits fold
 // the resulting audit records into their complete snapshot and retire the patch.
@@ -681,6 +681,7 @@ function verifiedProjectIntegrity(project,digest){return {kind:VERIFIED_PROJECT_
 function unchangedVerifiedProject(receipt,project,digest){return receipt?.kind===VERIFIED_PROJECT_INTEGRITY&&receipt.project===project&&receipt.digest===digest&&verifiedValuesEqual(receipt.snapshot,project);}
 // Private physical storage only. Canonical values and their hash schemas do not change.
 const PHYSICAL_RECORD_SCHEMA='closed-loop-record-parts/1',PHYSICAL_PART_SCHEMA='closed-loop-record-part/1';
+const QUARANTINE_RECORD_SCHEMA='closed-loop-quarantine-record-parts/1',QUARANTINE_OPAQUE_SCHEMA='closed-loop-quarantine-physical-json/1';
 const PHYSICAL_INLINE_BYTES=16*1024*1024,PHYSICAL_PART_UNITS=262144,PHYSICAL_PART_COMMANDS=1024,PHYSICAL_STRING_FRAGMENT=65536,PHYSICAL_INLINE_STRING=4096;
 const physicalPartPrefix=generation=>'recordPart:v1:'+generation+':';
 const physicalPartKey=(generation,index)=>physicalPartPrefix(generation)+String(index);
@@ -723,8 +724,9 @@ function physicalStringUnits(value){
  }return units;
 }
 function physicalPartHeaderUnits(part){return part.key.length+part.value.schema.length+part.value.ownerStore.length+part.value.ownerKey.length+part.value.generation.length+String(part.updatedAt).length;}
-function encodePhysicalRow(row,ownerStore,payloadField,{force=false}={}){
+function encodePhysicalRow(row,ownerStore,payloadField,{force=false,quarantineEncoding=false}={}){
  const ownerKey=ownerStore===PROJECTS?row.jobId:row.key;
+ if(quarantineEncoding&&(ownerStore!==META||typeof ownerKey!=='string'||!ownerKey.startsWith('quarantine:')||payloadField!=='value'||!quarantineOwnMarker(row)||row.value?.schema!==QUARANTINE_OPAQUE_SCHEMA))throw physicalInvalid('quarantine write boundary');
  if(typeof ownerKey!=='string'||![PROJECTS,META].includes(ownerStore)||payloadField!==(ownerStore===PROJECTS?'project':'value')||!Object.hasOwn(row,payloadField)||Object.hasOwn(row,'storageEncoding'))throw physicalInvalid('write boundary');
  try{if(!force&&physicalGraphEstimate(row[payloadField])<=PHYSICAL_INLINE_BYTES)return {logical:row,root:row,parts:[],packed:false};}
  catch(error){if(error===physicalUnsupported)return {logical:row,root:row,parts:[],packed:false};throw error;}
@@ -742,13 +744,13 @@ function encodePhysicalRow(row,ownerStore,payloadField,{force=false}={}){
   for(let at=0;at<queue.length;at++){const entry=queue[at];emit(['node',entry.id,entry.kind]);for(const [key,value]of entry.entries){const keyToken=textToken(key),valueToken=token(value);emit(['property',entry.id,keyToken,valueToken]);}emit(['endNode',entry.id,entry.entries.length,entry.kind==='array'?entry.value.length:null]);}
  }catch(error){if(error===physicalUnsupported)return {logical:row,root:row,parts:[],packed:false};throw error;}
  parts.at(-1).value.last=true;
- const storageEncoding={schema:PHYSICAL_RECORD_SCHEMA,payloadField,ownerStore,ownerKey,generation,partCount:parts.length,commandCount,stringCodeUnits},root={...row,storageEncoding};delete root[payloadField];
+ const storageEncoding={schema:quarantineEncoding?QUARANTINE_RECORD_SCHEMA:PHYSICAL_RECORD_SCHEMA,payloadField,ownerStore,ownerKey,generation,partCount:parts.length,commandCount,stringCodeUnits},root={...row,storageEncoding};delete root[payloadField];
  return {logical:row,root,parts,packed:true};
 }
 function physicalEnvelope(row,ownerStore,payloadField){
  if(!row||!Object.hasOwn(row,'storageEncoding'))return null;
  const e=row.storageEncoding,ownerKey=ownerStore===PROJECTS?row.jobId:row.key;
- if(!physicalExactKeys(e,['schema','payloadField','ownerStore','ownerKey','generation','partCount','commandCount','stringCodeUnits'])||e.schema!==PHYSICAL_RECORD_SCHEMA||e.payloadField!==payloadField||e.ownerStore!==ownerStore||e.ownerKey!==ownerKey||typeof ownerKey!=='string'||typeof e.generation!=='string'||!/^[-a-zA-Z0-9]{1,128}$/.test(e.generation)||Object.hasOwn(row,payloadField)||!Number.isSafeInteger(e.partCount)||e.partCount<1||!Number.isSafeInteger(e.commandCount)||e.commandCount<1||!Number.isSafeInteger(e.stringCodeUnits)||e.stringCodeUnits<0)throw physicalInvalid('root envelope');
+ if(!physicalExactKeys(e,['schema','payloadField','ownerStore','ownerKey','generation','partCount','commandCount','stringCodeUnits'])||!(e.schema===PHYSICAL_RECORD_SCHEMA||e.schema===QUARANTINE_RECORD_SCHEMA&&ownerStore===META&&typeof ownerKey==='string'&&ownerKey.startsWith('quarantine:')&&payloadField==='value'&&quarantineOwnMarker(row))||e.payloadField!==payloadField||e.ownerStore!==ownerStore||e.ownerKey!==ownerKey||typeof ownerKey!=='string'||typeof e.generation!=='string'||!/^[-a-zA-Z0-9]{1,128}$/.test(e.generation)||Object.hasOwn(row,payloadField)||!Number.isSafeInteger(e.partCount)||e.partCount<1||!Number.isSafeInteger(e.commandCount)||e.commandCount<1||!Number.isSafeInteger(e.stringCodeUnits)||e.stringCodeUnits<0)throw physicalInvalid('root envelope');
  return e;
 }
 function decodePhysicalRow(row,ownerStore,payloadField,parts){
@@ -823,6 +825,7 @@ function orderedPhysicalParts(root,ownerStore,payloadField,inventory){
 }
 async function readPhysicalStoredSource(tx,ownerStore,key,payloadField,providedRoot){
  const root=arguments.length>=5?providedRoot:await request(tx.objectStore(ownerStore).get(key));
+ if(ownerStore===META&&typeof key==='string'&&key.startsWith('quarantine:')&&root&&Object.hasOwn(root,'quarantineEncoding')&&root.storageEncoding?.schema!==QUARANTINE_RECORD_SCHEMA)throw physicalInvalid('quarantine reserved marker without its version');
  if(!root||!Object.hasOwn(root,'storageEncoding'))return {logical:root,root,records:[],identity:null,packed:false};
  let inventory={keys:[],records:[],unavailable:true};
  try{
@@ -865,8 +868,8 @@ async function physicalGenerationReferencedElsewhere(tx,source){
  }
  return false;
 }
-async function preparePhysicalRowPut(tx,row,ownerStore,payloadField,oldSource=null){
- let snapshot;try{snapshot=copyPhysicalGraph(row);}catch(error){if(error!==physicalUnsupported)throw error;snapshot=null;}const encoded=encodePhysicalRow(row,ownerStore,payloadField);
+async function preparePhysicalRowPut(tx,row,ownerStore,payloadField,oldSource=null,quarantineEncoding=false){
+ let snapshot;try{snapshot=copyPhysicalGraph(row);}catch(error){if(error!==physicalUnsupported)throw error;snapshot=null;}const encoded=encodePhysicalRow(row,ownerStore,payloadField,{quarantineEncoding});
  const physicalSnapshot=encoded.packed?{root:copyPhysicalGraph(encoded.root),parts:copyPhysicalGraph(encoded.parts)}:null;
  const source=oldSource||await readPhysicalStoredSource(tx,ownerStore,ownerStore===PROJECTS?row.jobId:row.key,payloadField);
  if(encoded.packed){const present=await physicalGenerationRecords(tx,encoded.root.storageEncoding.generation);if(present.records.length)throw physicalInvalid('new generation already exists');
@@ -1131,15 +1134,134 @@ function currentPhysicalCorruptionReason(rowCapture,journalCapture){
  catch(error){if(error?.code==='OPERATIONAL_STATE_INTEGRITY_FAILED'||isNativeDomainCanonicalRefusal(error,journal?.value,'sha256'))return 'OPERATIONAL_STATE_INTEGRITY_FAILED: '+error.message;throw error;}
  return null;
 }
+// This is a storage-only carrier for already encoded physical part rows, not
+// a canonical project or an activation format. Unsupported forensic graphs
+// retain the original physical/native path in their entirety.
+const QUARANTINE_OPAQUE_TEXT_UNITS=PHYSICAL_PART_UNITS*8;
+const quarantineJSONOwner=JSON,quarantineJSONParse=JSON.parse;
+const quarantineDescriptor=Object.getOwnPropertyDescriptor;
+function quarantineOwnMarker(row){const descriptor=quarantineDescriptor(row,'quarantineEncoding');return descriptor&&descriptor.enumerable&&Object.hasOwn(descriptor,'value')&&descriptor.value===QUARANTINE_OPAQUE_SCHEMA;}
+function quarantineJSONCurrent(){
+ const owner=quarantineDescriptor(globalThis,'JSON'),parse=quarantineDescriptor(quarantineJSONOwner,'parse');
+ return owner?.value===quarantineJSONOwner&&parse?.value===quarantineJSONParse&&!quarantineDescriptor(Object.prototype,'toJSON')&&!quarantineDescriptor(Array.prototype,'toJSON');
+}
+function quarantineOpaqueFields(value,strict){
+ const prototype=Object.getPrototypeOf(value),array=Array.isArray(value);
+ if(prototype!==(array?Array.prototype:Object.prototype)&&!(prototype===null&&!strict&&!array)||Object.getOwnPropertySymbols(value).length)return null;
+ const names=Object.getOwnPropertyNames(value),keys=Object.keys(value);
+ if(names.length!==keys.length+(array?1:0)||array&&!names.includes('length'))return null;
+ if(strict&&array&&(keys.length!==value.length||keys.some((key,index)=>key!==String(index))))return null;
+ const fields=[];for(const key of keys){const descriptor=Object.getOwnPropertyDescriptor(value,key);if(!descriptor||!descriptor.enumerable||!Object.hasOwn(descriptor,'value')||strict&&key==='toJSON')return null;fields.push([key,descriptor.value]);}return fields;
+}
+function quarantineOpaqueScalar(value){return value===null||typeof value==='string'||typeof value==='boolean'||typeof value==='number'&&value===value&&value!==Infinity&&value!==-Infinity&&(value!==0||1/value===Infinity);}
+function quarantineOpaqueTreeEqual(left,right,separate=true){
+ const seenLeft=new Set(),seenRight=new Set(),pending=[[left,right]];
+ while(pending.length){const [a,b]=pending.pop();if(a===null||typeof a!=='object'){if(!quarantineOpaqueScalar(a)||!Object.is(a,b))return false;continue;}
+  if(!b||typeof b!=='object'||separate&&(a===b||seenRight.has(a)||seenLeft.has(b))||a instanceof Blob||b instanceof Blob||Array.isArray(a)!==Array.isArray(b)||seenLeft.has(a)||seenRight.has(b))return false;seenLeft.add(a);seenRight.add(b);
+  const af=quarantineOpaqueFields(a,true),bf=quarantineOpaqueFields(b,true);if(!af||!bf||af.length!==bf.length||Array.isArray(a)&&a.length!==b.length)return false;
+  for(let index=0;index<af.length;index++){if(af[index][0]!==bf[index][0])return false;pending.push([af[index][1],bf[index][1]]);}
+ }return true;
+}
+const quarantineOpaqueUnsupported=Symbol('unsupported opaque physical row');
+const quarantineOpaqueEscapes={__proto__:null,"\u0000":"\\u0000", "\u0001":"\\u0001", "\u0002":"\\u0002", "\u0003":"\\u0003", "\u0004":"\\u0004", "\u0005":"\\u0005", "\u0006":"\\u0006", "\u0007":"\\u0007", "\b":"\\b", "\t":"\\t", "\n":"\\n", "\u000b":"\\u000b", "\f":"\\f", "\r":"\\r", "\u000e":"\\u000e", "\u000f":"\\u000f", "\u0010":"\\u0010", "\u0011":"\\u0011", "\u0012":"\\u0012", "\u0013":"\\u0013", "\u0014":"\\u0014", "\u0015":"\\u0015", "\u0016":"\\u0016", "\u0017":"\\u0017", "\u0018":"\\u0018", "\u0019":"\\u0019", "\u001a":"\\u001a", "\u001b":"\\u001b", "\u001c":"\\u001c", "\u001d":"\\u001d", "\u001e":"\\u001e", "\u001f":"\\u001f", "\"":"\\\"", "\\":"\\\\"};
+function quarantineOpaqueText(value){
+ const bounded=text=>{if(text.length>QUARANTINE_OPAQUE_TEXT_UNITS)throw quarantineOpaqueUnsupported;return text;};
+ const quoted=text=>{if(text.length>QUARANTINE_OPAQUE_TEXT_UNITS)throw quarantineOpaqueUnsupported;let output='"';for(let index=0;index<text.length;index++){const character=text[index];
+   if(character>='\ud800'&&character<='\udbff'){const next=text[index+1];if(!(next>='\udc00'&&next<='\udfff'))throw quarantineOpaqueUnsupported;output+=character+next;index++;}
+   else if(character>='\udc00'&&character<='\udfff')throw quarantineOpaqueUnsupported;
+   else output+=quarantineOpaqueEscapes[character]??character;bounded(output);
+  }return bounded(output+'"');};
+ const encode=(item,depth)=>{if(depth>16)throw quarantineOpaqueUnsupported;if(item===null)return 'null';if(typeof item==='string')return quoted(item);if(typeof item==='boolean')return item?'true':'false';if(typeof item==='number'&&quarantineOpaqueScalar(item))return ''+item;
+  if(!item||typeof item!=='object'||item instanceof Blob)throw quarantineOpaqueUnsupported;const fields=quarantineOpaqueFields(item,true);if(!fields)throw quarantineOpaqueUnsupported;
+  const array=Array.isArray(item);let output=array?'[':'{';for(let index=0;index<fields.length;index++){if(index)output+=',';if(!array)output+=quoted(fields[index][0])+':';output+=encode(fields[index][1],depth+1);bounded(output);}return bounded(output+(array?']':'}'));
+ };return encode(value,0);
+}
+function quarantineOpaqueDisjoint(saved,roots,shells){
+ const owners=new Map(),pending=[[saved,-1]];
+ while(pending.length){let [value,owner]=pending.pop();if(value===null||typeof value!=='object'){if(owner>=0&&!quarantineOpaqueScalar(value))return false;continue;}
+  if(roots.has(value)){if(owner>=0)return false;owner=roots.get(value);}
+  if(owners.has(value)){if(owner>=0||owners.get(value)>=0||shells.has(value))return false;continue;}owners.set(value,owner);
+  if(value instanceof Blob){if(owner>=0)return false;continue;}
+  const fields=quarantineOpaqueFields(value,owner>=0);if(!fields)return false;for(const [,child]of fields)pending.push([child,owner]);
+ }return true;
+}
+function quarantineMappedFields(target,original,exceptA=null,exceptB=null){
+ const left=quarantineOpaqueFields(target,false),right=quarantineOpaqueFields(original,false);if(!left||!right||left.length!==right.length)return false;
+ for(let index=0;index<left.length;index++){const [key,value]=left[index];if(key!==right[index][0]||key!==exceptA&&key!==exceptB&&!Object.is(value,right[index][1]))return false;}return true;
+}
+function quarantineBindingInvalid(){return storageError('Prepared quarantine evidence changed before commit. Refresh and retry.','STALE_PROJECT_REVISION');}
+function compactQuarantineRow(saved){
+ if(!quarantineJSONCurrent())return null;
+ const value=saved.value,evidence=value?.physicalEvidence;
+ if(!physicalExactKeys(value,['schema','reason','row','operationalJournal','artifacts','capturedAt','physicalEvidence','completeSnapshot'])||value.schema!=='closed-loop-quarantine/1'||!physicalExactKeys(evidence,['schema','project','journal'])||evidence.schema!=='closed-loop-physical-evidence/1')return null;
+ const roots=new Map(),shells=new Set([saved,value,evidence]);
+ for(let index=0;index<2;index++){const capture=index===0?evidence.project:evidence.journal;if(!physicalExactKeys(capture,['ownerStore','key','payloadField','root','records','facts','packed'])||capture.ownerStore!==(index===0?PROJECTS:META)||capture.payloadField!==(index===0?'project':'value')||typeof capture.key!=='string'||typeof capture.packed!=='boolean'||!physicalOwnArray(capture.records))return null;shells.add(capture);shells.add(capture.records);for(const entry of capture.records){shells.add(entry);if(!physicalExactKeys(entry,['key','row'])||typeof entry.key!=='string'||!entry.row||typeof entry.row!=='object'||Array.isArray(entry.row)||roots.has(entry.row))return null;roots.set(entry.row,roots.size);}}
+ if(!roots.size||value.row!==evidence.project.root||value.operationalJournal!==(evidence.journal.packed?evidence.journal.root:evidence.journal.root?.value||null)||!quarantineOpaqueDisjoint(saved,roots,shells))return null;
+ // Neither this indexed container nor its comparators is passed to observers.
+ // Expected primitive text/key/digest bindings live only in lexical closures.
+ const bindings={__proto__:null},captures={__proto__:null};let bindingCount=0;
+ for(let group=0;group<2;group++){const capture=group===0?evidence.project:evidence.journal,sourceRecords=capture.records,records=[],count=sourceRecords.length;
+  for(let index=0;index<count;index++){const entry=sourceRecords[index],sourceRow=entry.row,key=entry.key;if(!quarantineJSONCurrent())return null;let text;try{text=quarantineOpaqueText(sourceRow);}catch(error){if(error===quarantineOpaqueUnsupported)return null;throw error;}
+   const decoded=quarantineJSONParse(text);let reencoded;try{reencoded=quarantineOpaqueText(decoded);}catch(error){if(error===quarantineOpaqueUnsupported)return null;throw error;}
+   if(reencoded!==text||!quarantineOpaqueTreeEqual(sourceRow,decoded)||!quarantineJSONCurrent())return null;
+   const codeUnits=text.length,sha256=hash.sha256Text(text);if(typeof sha256!=='string'||!/^[0-9a-f]{64}$/.test(sha256))return null;const record={key,text,codeUnits,sha256};
+   bindings[bindingCount++]=recheck=>{if(sourceRecords[index]!==entry||entry.row!==sourceRow||entry.key!==key||records[index]!==record||!physicalExactKeys(record,['key','text','codeUnits','sha256'])||record.key!==key||record.text!==text||record.codeUnits!==codeUnits||record.sha256!==sha256)throw quarantineBindingInvalid();if(recheck){let current;try{current=quarantineOpaqueText(sourceRow);}catch(error){if(error!==quarantineOpaqueUnsupported)throw error;throw quarantineBindingInvalid();}if(current!==text)throw quarantineBindingInvalid();}};
+   records.push(record);
+  }
+  const compact={...capture,records};captures[group]=compact;
+  bindings[bindingCount++]=()=>{if(capture.records!==sourceRecords||compact.records!==records||!physicalOwnArray(records,count)||!quarantineMappedFields(compact,capture,'records'))throw quarantineBindingInvalid();};
+ }
+ const mappedEvidence={...evidence,project:captures[0],journal:captures[1]},body={...value,physicalEvidence:mappedEvidence},wrapper={schema:QUARANTINE_OPAQUE_SCHEMA,evidence:body},stored={...saved,quarantineEncoding:QUARANTINE_OPAQUE_SCHEMA,value:wrapper};
+ const assertCurrent=(recheck=false)=>{if(!physicalExactKeys(stored,['key','value','updatedAt','quarantineEncoding'])||stored.key!==saved.key||stored.updatedAt!==saved.updatedAt||stored.quarantineEncoding!==QUARANTINE_OPAQUE_SCHEMA||stored.value!==wrapper||!physicalExactKeys(wrapper,['schema','evidence'])||wrapper.schema!==QUARANTINE_OPAQUE_SCHEMA||wrapper.evidence!==body||body.physicalEvidence!==mappedEvidence||!quarantineMappedFields(body,value,'physicalEvidence')||!quarantineMappedFields(mappedEvidence,evidence,'project','journal')||mappedEvidence.project!==captures[0]||mappedEvidence.journal!==captures[1])throw quarantineBindingInvalid();for(let index=0;index<bindingCount;index++)bindings[index](recheck);};
+ // No forced mode: naturally small or unsupported carriers stay on old storage.
+ try{if(physicalGraphEstimate(stored.value)<=PHYSICAL_INLINE_BYTES)return null;}catch(error){if(error===physicalUnsupported)return null;throw error;}
+ if(!quarantineJSONCurrent())return null;assertCurrent(true);return {row:stored,assertCurrent};
+}
+function hydrateQuarantineValue(source){
+ const opaque=source.root?.storageEncoding?.schema===QUARANTINE_RECORD_SCHEMA;
+ if(!opaque){if(typeof source.root?.key==='string'&&source.root.key.startsWith('quarantine:')&&Object.hasOwn(source.root,'quarantineEncoding'))throw physicalInvalid('quarantine reserved marker without its version');return source.logical?.value;}
+ let row;try{row=copyPhysicalGraph(source.logical);}catch(error){if(error!==physicalUnsupported)throw error;throw physicalInvalid('quarantine compact domain');}
+ const wrapper=row?.value,value=wrapper?.evidence,evidence=value?.physicalEvidence;
+ if(!quarantineOwnMarker(row)||!quarantineJSONCurrent()||!physicalExactKeys(wrapper,['schema','evidence'])||wrapper.schema!==QUARANTINE_OPAQUE_SCHEMA||!physicalExactKeys(value,['schema','reason','row','operationalJournal','artifacts','capturedAt','physicalEvidence','completeSnapshot'])||value.schema!=='closed-loop-quarantine/1'||!physicalExactKeys(evidence,['schema','project','journal'])||evidence.schema!=='closed-loop-physical-evidence/1')throw physicalInvalid('quarantine opaque envelope');
+ const captures=[],shells=new Set([row,wrapper,value,evidence]),decodedRoots=new Map(),bindings={__proto__:null};let bindingCount=0;
+ for(let index=0;index<2;index++){const capture=index===0?evidence.project:evidence.journal;
+  if(!physicalExactKeys(capture,['ownerStore','key','payloadField','root','records','facts','packed'])||capture.ownerStore!==(index===0?PROJECTS:META)||capture.payloadField!==(index===0?'project':'value')||typeof capture.key!=='string'||typeof capture.packed!=='boolean'||!physicalOwnArray(capture.records))throw physicalInvalid('quarantine capture envelope');shells.add(capture);shells.add(capture.records);
+  const records=[];for(const entry of capture.records){shells.add(entry);
+   if(!physicalExactKeys(entry,['key','text','codeUnits','sha256'])||typeof entry.key!=='string'||typeof entry.text!=='string'||entry.text.length>QUARANTINE_OPAQUE_TEXT_UNITS||entry.codeUnits!==entry.text.length||typeof entry.sha256!=='string'||!/^[0-9a-f]{64}$/.test(entry.sha256)||hash.sha256Text(entry.text)!==entry.sha256||!quarantineJSONCurrent())throw physicalInvalid('quarantine opaque row identity');
+   const text=entry.text,key=entry.key,parsed=quarantineJSONParse(text);if(!parsed||typeof parsed!=='object'||Array.isArray(parsed)||!quarantineOpaqueTreeEqual(parsed,parsed,false))throw physicalInvalid('quarantine opaque row domain');
+   // A parse observer may retain its result or queue a mutation. Detach each
+   // bounded result before retaining it, using the existing physical copier.
+   const decoded=copyPhysicalGraph(parsed);let reencoded;try{reencoded=quarantineOpaqueText(decoded);}catch(error){if(error!==quarantineOpaqueUnsupported)throw error;throw physicalInvalid('quarantine opaque row domain');}
+   if(reencoded!==text||!quarantineOpaqueTreeEqual(parsed,decoded)||!quarantineJSONCurrent())throw physicalInvalid('quarantine opaque row domain');
+   const record={key,row:decoded},position=records.length;bindings[bindingCount++]=()=>{let current;try{current=quarantineOpaqueText(decoded);}catch(error){if(error!==quarantineOpaqueUnsupported)throw error;throw physicalInvalid('quarantine decoded row changed');}if(records[position]!==record||!physicalExactKeys(record,['key','row'])||record.key!==key||record.row!==decoded||current!==text)throw physicalInvalid('quarantine decoded row changed');};
+   decodedRoots.set(decoded,decodedRoots.size);records.push(record);
+  }const outputCapture={...capture,records},count=records.length;bindings[bindingCount++]=()=>{if(captures[index]!==outputCapture||outputCapture.records!==records||!physicalOwnArray(records,count)||!quarantineMappedFields(outputCapture,capture,'records'))throw physicalInvalid('quarantine decoded capture changed');};captures.push(outputCapture);
+ }
+ if(!quarantineOpaqueDisjoint(row,new Map(),shells)||value.row!==evidence.project.root||value.operationalJournal!==(evidence.journal.packed?evidence.journal.root:evidence.journal.root?.value||null))throw physicalInvalid('quarantine alias boundary');
+ const mappedEvidence={...evidence,project:captures[0],journal:captures[1]},hydrated={...value,physicalEvidence:mappedEvidence};if(!decodedRoots.size||!quarantineMappedFields(hydrated,value,'physicalEvidence')||!quarantineMappedFields(mappedEvidence,evidence,'project','journal')||!quarantineOpaqueDisjoint(hydrated,decodedRoots,new Set())||!quarantineJSONCurrent())throw physicalInvalid('quarantine decoded row alias');
+ for(let index=0;index<bindingCount;index++)bindings[index]();if(!physicalValuesEqual(source.logical,row))throw physicalInvalid('quarantine compact evidence changed');return hydrated;
+}
+function assertOriginalQuarantineRow(snapshot,row){if(snapshot&&!physicalValuesEqual(snapshot,row))throw storageError('Prepared quarantine evidence changed before commit. Refresh and retry.','STALE_PROJECT_REVISION');}
+async function prepareQuarantineRowPut(tx,row){
+ if(!row.value?.physicalEvidence)return {prepared:await preparePhysicalRowPut(tx,row,META,'value'),row,snapshot:null};
+ let snapshot;try{snapshot=copyPhysicalGraph(row);}catch(error){if(error!==physicalUnsupported)throw error;return {prepared:await preparePhysicalRowPut(tx,row,META,'value'),row,snapshot:null};}
+ let plan=compactQuarantineRow(row);assertOriginalQuarantineRow(snapshot,row);
+ if(!plan){snapshot=null;return {prepared:await preparePhysicalRowPut(tx,row,META,'value'),row,snapshot:null};}
+ let prepared=await preparePhysicalRowPut(tx,plan.row,META,'value',null,true);plan.assertCurrent();assertOriginalQuarantineRow(snapshot,row);
+ if(!prepared.packed){prepared=null;plan=null;snapshot=null;return {prepared:await preparePhysicalRowPut(tx,row,META,'value'),row,snapshot:null};}
+ return {prepared,row:plan.row,snapshot,assertCompact:plan.assertCurrent};
+}
+function commitQuarantineRowPut(tx,write,original){write.assertCompact?.();assertOriginalQuarantineRow(write.snapshot,original);commitPhysicalRowPut(tx,write.prepared,write.row);write.assertCompact?.();assertOriginalQuarantineRow(write.snapshot,original);}
+
 async function preservePhysicalQuarantine(tx,rowCapture,journalCapture,reason,title){
  const meta=tx.objectStore(META),id=String(rowCapture.key),artifacts=await hydrateArtifactRows(tx,await request(tx.objectStore(ARTIFACTS).index('jobId').getAll(id)),{diagnostic:true,preserveDamagedBytes:true}),key=`quarantine:${id||'UNKNOWN'}:${crypto.randomUUID()}`,capturedAt=now(),catalog=clone((await request(meta.get('quarantineCatalog')))?.value||{});
  const packed=rowCapture.packed||journalCapture.packed,completeSnapshot=Boolean(rowCapture.facts.complete&&journalCapture.facts.complete);
  // Never reconstruct corrupt canonical values for preservation. The new owned
  // graph contains original physical roots/rows and compact inventory facts.
  const value={schema:'closed-loop-quarantine/1',reason,row:rowCapture.root,operationalJournal:journalCapture.packed?journalCapture.root:journalCapture.root?.value||null,artifacts,capturedAt,...(packed?{physicalEvidence:{schema:'closed-loop-physical-evidence/1',project:rowCapture,journal:journalCapture},completeSnapshot}:{})};
- const saved={key,value,updatedAt:capturedAt},write=await preparePhysicalRowPut(tx,saved,META,'value'),projectRemoval=await preparePreservedPhysicalRemoval(tx,rowCapture),journalRemoval=await preparePreservedPhysicalRemoval(tx,journalCapture);
+ const saved={key,value,updatedAt:capturedAt},write=await prepareQuarantineRowPut(tx,saved),projectRemoval=await preparePreservedPhysicalRemoval(tx,rowCapture),journalRemoval=await preparePreservedPhysicalRemoval(tx,journalCapture);
  const entry={key,jobId:id,title:String(title||'Project needing recovery'),reason,capturedAt,artifactCount:artifacts.length,completeSnapshot,...(projectRemoval.retainedOldParts||journalRemoval.retainedOldParts?{retainedPhysicalParts:true}:{})};catalog[key]=entry;
- fault('during-quarantine-write');commitPhysicalRowPut(tx,write,saved);meta.put({key:'quarantineCatalog',value:catalog,updatedAt:capturedAt});commitPhysicalRowRemoval(tx,projectRemoval);commitPhysicalRowRemoval(tx,journalRemoval);
+ fault('during-quarantine-write');commitQuarantineRowPut(tx,write,saved);meta.put({key:'quarantineCatalog',value:catalog,updatedAt:capturedAt});commitPhysicalRowRemoval(tx,projectRemoval);commitPhysicalRowRemoval(tx,journalRemoval);
 }
 async function quarantine(row,reason,{operationalSha256,physicalSources}={}){
  const tx=await openTransaction([PROJECTS,ARTIFACTS,META],'readwrite');
@@ -1163,7 +1285,7 @@ async function listQuarantinedProjects(){
   const catalog=await metaGet('quarantineCatalog');if(catalog)return Object.values(catalog);
   // Discover older preserved rows once. Normal startup reads the small catalog.
   const tx=await openTransaction(META,'readwrite'),store=tx.objectStore(META),current=await request(store.get('quarantineCatalog'));if(current){await complete(tx);return Object.values(current.value);}const keys=store.getAllKeys?await request(store.getAllKeys()):(await request(store.getAll())).map(row=>row.key),result={};
-  for(const key of keys.filter(key=>String(key).startsWith('quarantine:'))){const saved=(await readPhysicalStoredSource(tx,META,key,'value')).logical,value=saved.value;result[key]={key,jobId:String(value.row?.jobId||''),title:String(value.row?.project?.job?.JOB_TITLE||'Project needing recovery'),reason:String(value.reason||'Integrity validation failed'),capturedAt:value.capturedAt||saved.updatedAt,artifactCount:value.artifacts?.length??null,completeSnapshot:value.completeSnapshot===false?false:Array.isArray(value.artifacts)};}
+  for(const key of keys.filter(key=>String(key).startsWith('quarantine:'))){const source=await readPhysicalStoredSource(tx,META,key,'value'),saved=source.logical,value=hydrateQuarantineValue(source);result[key]={key,jobId:String(value.row?.jobId||''),title:String(value.row?.project?.job?.JOB_TITLE||'Project needing recovery'),reason:String(value.reason||'Integrity validation failed'),capturedAt:value.capturedAt||saved.updatedAt,artifactCount:value.artifacts?.length??null,completeSnapshot:value.completeSnapshot===false?false:Array.isArray(value.artifacts)};}
   store.put({key:'quarantineCatalog',value:result,updatedAt:now()});await complete(tx);return Object.values(result);
 }
 
@@ -3897,7 +4019,7 @@ async function removeUnreferencedResponseStage(tx,{project,artifact,descriptor,r
  const projectRows=await readPhysicalProjectRows(tx);
  if(projectRows.some(row=>referencesStagedIdentity(row.project,identities)))return false;
  const keys=meta.getAllKeys?await request(meta.getAllKeys()):(await request(meta.getAll())).map(row=>row.key);
- for(const key of keys){if(key===receiptKey||key===retiredKey||key===historyFileKey(owner,artifact.sha256))continue;const row=String(key).startsWith('recordPart:v1:')?await request(meta.get(key)):(await readPhysicalStoredSource(tx,META,key,'value')).logical,value=row?.value,schema=globalThis.closedLoopWorkflowSchema;
+ for(const key of keys){if(key===receiptKey||key===retiredKey||key===historyFileKey(owner,artifact.sha256))continue;const source=String(key).startsWith('recordPart:v1:')?{logical:await request(meta.get(key))}:await readPhysicalStoredSource(tx,META,key,'value'),value=hydrateQuarantineValue(source),schema=globalThis.closedLoopWorkflowSchema;
   if(String(key).startsWith('responseStagingRecovery:')&&schema.validateResponseStagingRecovery(value).valid)continue;
   if(String(key).startsWith('responseStagingRetired:')&&schema.validateResponseStagingRetirement(value).valid)continue;
   if(identities.has(String(key))||referencesStagedIdentity(value,identities))return false;

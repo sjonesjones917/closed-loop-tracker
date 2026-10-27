@@ -261,7 +261,7 @@ export async function verifyNativeInputRuntimeRecording({sourceOverrides={}}={})
  const steps=[],add=(op,inputs)=>{const stepId='S'+String(steps.length+1).padStart(3,'0');steps.push({stepId,op,inputs});return stepId;};
  for(const file of files){const loaded=add('LOAD_ARTIFACT',{binding:{bindingRef:file.binding}}),read=add('READ_BYTES',{artifact:{stepRef:loaded,output:'artifact'}}),digest=add('HASH_SHA256',{bytes:{stepRef:read,output:'bytes'}});add('ASSERT_EQ',{actual:{stepRef:digest,output:'sha256'},expected:{literal:file.sha256}});}
  const job=add('LOAD_ARTIFACT',{binding:{bindingRef:'JOB'}}),last=add('ASSERT_EQ',{actual:{stepRef:job,output:'artifact'},expected:{literal:p.job.JOB_ID}});
- const spec={version:'closed-loop-test-spec/1',languageVersion:'closed-loop-test-ir-language/1',operationRegistryVersion:'closed-loop-test-ir-operations/1',operationRegistrySha256:'77e7b900e5f7f5ac66033564cc0cb4f323cc76b7f7dd95ac6d173c0f649f655d',steps,result:{stepRef:last,output:'assertion'}};
+ const spec={version:'closed-loop-test-spec/1',languageVersion:'closed-loop-test-ir-language/1',operationRegistryVersion:'closed-loop-test-ir-operations/1',operationRegistrySha256:'aea1efab8e1c342d550653238ef2740bd625c2ec5bbadb0dbaf76fcd1034492d',steps,result:{stepRef:last,output:'assertion'}};
  for(const [key,value]of Object.entries({EXECUTABLE_SPEC:spec,EXECUTABLE_SPEC_SHA256:h.sha256Value(r.copy(spec)),EXECUTABLE_INPUT_BINDINGS:bindings,ARTIFACT_REQUIREMENTS:'Exact registered UTF-8 and binary artifacts.'}))test.fields[key]=test[key]=r.copy(value);
  e.refreshRecordHashes(test,'tests');
  // Extract the existing normal input owner, without executing an app UI shell

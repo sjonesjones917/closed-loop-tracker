@@ -26,8 +26,8 @@ export function verifyHistoricalNormativeProofSource(fixture){
     assert.equal(fixture.sourceUniverse,'HISTORICAL_SOURCE_TRACE_722382ED');assert.equal(fixture.currentAtomicProof,false);
     assert.equal(fixture.fingerprint.specificationSha256,historicalSha);
     assert.equal(sha(fs.readFileSync(path.join(fixture.directory,SPECIFICATION_PATH))),historicalSha);
-    assert.doesNotThrow(()=>validateExecutionReceipt(fixture.receipt,'verify-test-runtime-v3.mjs',fixture.fingerprint));cases.push('actual-historical-producer-receipt');
-    assert.throws(()=>validateExecutionReceipt(fixture.receipt,'verify-test-runtime-v3.mjs',fingerprint),/stale source\/specification\/catalog\/runtime receipt/);cases.push('historical-receipt-refused-as-current');
+    assert.doesNotThrow(()=>validateExecutionReceipt(fixture.receipt,'verify-test-runtime-limits.mjs',fixture.fingerprint));cases.push('actual-historical-producer-receipt');
+    assert.throws(()=>validateExecutionReceipt(fixture.receipt,'verify-test-runtime-limits.mjs',fingerprint),/stale source\/specification\/catalog\/runtime receipt/);cases.push('historical-receipt-refused-as-current');
     assert.deepEqual(fs.readFileSync(SPECIFICATION_PATH),current);assert.equal(process.cwd(),root);cases.push('current-source-preserved');
     return {passed:true,cases,currentApplicationProof:false,historicalSourceSha256:historicalSha,currentSourceSha256:sha(current)};
   }finally{fs.rmSync(temporary,{recursive:true,force:true});}

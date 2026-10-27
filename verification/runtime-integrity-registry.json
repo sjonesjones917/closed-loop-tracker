@@ -5,11 +5,11 @@
   "registryDigests": [
     {
       "constant": "OPERATION_REGISTRY_SHA256",
-      "previousSha256": "331f661c553db872097dcbcc1aae8104deef68e6aa206173504ce4a82e6e7b83",
-      "sha256": "77e7b900e5f7f5ac66033564cc0cb4f323cc76b7f7dd95ac6d173c0f649f655d",
+      "previousSha256": "d4f11645f43b2a76f0c8a866a7458908b55014577932bea0b051ff4116ce94d1",
+      "sha256": "aea1efab8e1c342d550653238ef2740bd625c2ec5bbadb0dbaf76fcd1034492d",
       "descriptor": {
         "version": "closed-loop-test-ir-operations/1",
-        "revision": "2026-10-10.native-identity-bounded-diagnostics.1",
+        "revision": "2026-10-27.xml-json-regex-contract.1",
         "rules": [
           "named-port data is never unwrapped by member name",
           "canonical transport wrappers are resolved only at their declared binding boundary",
@@ -24,10 +24,76 @@
           "release-bearing native receipts retain the loaded build identity, exact worker digest, worker protocol and device-time provenance; missing, altered or stale identities never establish current proof",
           "a failed execution retains its exact loaded target identity and explicit inconclusive failure without fabricating completed steps or release-bearing observations",
           "completed native evidence agrees with the executed observation prefix, selected assertion values and determination; canonical result fields cannot contradict retained execution evidence",
-          "invalid specifications stop before traversing more than the registered step limit; closed-shape and binding violations return bounded precise diagnostics with surrogate-safe 256-UTF-16-unit value previews, leaving submitted source unchanged"
+          "invalid specifications stop before traversing more than the registered step limit; closed-shape and binding violations return bounded precise diagnostics with surrogate-safe 256-UTF-16-unit value previews, leaving submitted source unchanged",
+          "approximate operands and tolerances use only safe integer numbers without negative zero, canonical plain decimal strings, or closed typed DECIMAL objects with a string value; both aliases for a tolerance component must normalize to exactly the same mathematical value",
+          "tolerance arguments are admitted only for APPROXIMATE COMPARE EQ/NE or ASSERT_EQ; ordered COMPARE rejects APPROXIMATE and every tolerance argument at definition admission",
+          "retained prior-registry compatibility excludes COMPARE and ASSERT_EQ carrying APPROXIMATE or any tolerance input so affected numeric definitions require explicit migration and reverification",
+          "DECIMAL_STRING equality and all ordered decimal-string comparisons accept only string operands and remove only surrounding ASCII U+0009 through U+000D and U+0020 whitespace; no nonstring coercion or Unicode trim expansion",
+          "ordered COMPARE with explicit DECIMAL_STRING restricts both operands to the exact plain-decimal string domain; omitted mode and INTEGER retain safe-integer or plain-decimal-string ordering",
+          "SORT DECIMAL validates every item as the closed canonical typed DECIMAL representation including singleton collections; exact stable ASC order, reversed DESC order and original values are preserved; malformed typed domains use SORT_DOMAIN with UNDETERMINED",
+          "retained prior-registry compatibility also excludes DECIMAL_STRING equality, ordered comparisons and DECIMAL or inferred-domain SORT; unaffected ordinary exact comparisons and explicit nondecimal SORT retain their prior identity",
+          "SELECT_XML rejects every wholly empty segment including a final attribute selection as XML_PATH_MISSING with UNDETERMINED; existing empty text or attribute strings and nonempty partial matches retain exact document order",
+          "PARSE_JSON validates every decoded string value and member name with the shared Unicode scalar authority before admitting the parsed value; lone surrogates are MALFORMED_JSON with UNDETERMINED and valid pairs remain accepted",
+          "REGEX and ASSERT_MATCH distinguish finite outer quantifiers from unbounded outer quantifiers; actual nested unbounded repetition remains rejected under unchanged pattern, input, quantifier-count and worker limits",
+          "retained prior-registry compatibility excludes PARSE_JSON, SELECT_XML, REGEX and ASSERT_MATCH so affected earlier definitions require explicit migration and reverification; no old receipt is relabeled as current"
         ]
       },
       "priorRevisions": [
+        {
+          "sha256": "d4f11645f43b2a76f0c8a866a7458908b55014577932bea0b051ff4116ce94d1",
+          "previousSha256": "77e7b900e5f7f5ac66033564cc0cb4f323cc76b7f7dd95ac6d173c0f649f655d",
+          "descriptor": {
+            "version": "closed-loop-test-ir-operations/1",
+            "revision": "2026-10-26.numeric-contract-normalizers.1",
+            "rules": [
+              "named-port data is never unwrapped by member name",
+              "canonical transport wrappers are resolved only at their declared binding boundary",
+              "only registered assertion outputs determine results",
+              "first violated assertion is terminal and cannot be masked by result selection",
+              "literal types, closed options and selector grammar validate before execution",
+              "exact approximate tolerances are explicit, nonnegative and alias-consistent",
+              "parsers preserve the selected complete data and fail closed",
+              "CSV Unicode scalar separators, final empty records and post-quote state are explicit",
+              "structured literal and immutable canonical object wildcard order follows unsigned Unicode scalar key ordering; parsed JSON and CSV header order remain parser-owned",
+              "native execution receipts bind the actually executed step prefix, selected assertion port, normalized DAG and all used operation, parser, selector and regex registry identities",
+              "release-bearing native receipts retain the loaded build identity, exact worker digest, worker protocol and device-time provenance; missing, altered or stale identities never establish current proof",
+              "a failed execution retains its exact loaded target identity and explicit inconclusive failure without fabricating completed steps or release-bearing observations",
+              "completed native evidence agrees with the executed observation prefix, selected assertion values and determination; canonical result fields cannot contradict retained execution evidence",
+              "invalid specifications stop before traversing more than the registered step limit; closed-shape and binding violations return bounded precise diagnostics with surrogate-safe 256-UTF-16-unit value previews, leaving submitted source unchanged",
+              "approximate operands and tolerances use only safe integer numbers without negative zero, canonical plain decimal strings, or closed typed DECIMAL objects with a string value; both aliases for a tolerance component must normalize to exactly the same mathematical value",
+              "tolerance arguments are admitted only for APPROXIMATE COMPARE EQ/NE or ASSERT_EQ; ordered COMPARE rejects APPROXIMATE and every tolerance argument at definition admission",
+              "retained prior-registry compatibility excludes COMPARE and ASSERT_EQ carrying APPROXIMATE or any tolerance input so affected numeric definitions require explicit migration and reverification",
+              "DECIMAL_STRING equality and all ordered decimal-string comparisons accept only string operands and remove only surrounding ASCII U+0009 through U+000D and U+0020 whitespace; no nonstring coercion or Unicode trim expansion",
+              "ordered COMPARE with explicit DECIMAL_STRING restricts both operands to the exact plain-decimal string domain; omitted mode and INTEGER retain safe-integer or plain-decimal-string ordering",
+              "SORT DECIMAL validates every item as the closed canonical typed DECIMAL representation including singleton collections; exact stable ASC order, reversed DESC order and original values are preserved; malformed typed domains use SORT_DOMAIN with UNDETERMINED",
+              "retained prior-registry compatibility also excludes DECIMAL_STRING equality, ordered comparisons and DECIMAL or inferred-domain SORT; unaffected ordinary exact comparisons and explicit nondecimal SORT retain their prior identity"
+            ]
+          }
+        },
+        {
+          "sha256": "77e7b900e5f7f5ac66033564cc0cb4f323cc76b7f7dd95ac6d173c0f649f655d",
+          "previousSha256": "331f661c553db872097dcbcc1aae8104deef68e6aa206173504ce4a82e6e7b83",
+          "descriptor": {
+            "version": "closed-loop-test-ir-operations/1",
+            "revision": "2026-10-10.native-identity-bounded-diagnostics.1",
+            "rules": [
+              "named-port data is never unwrapped by member name",
+              "canonical transport wrappers are resolved only at their declared binding boundary",
+              "only registered assertion outputs determine results",
+              "first violated assertion is terminal and cannot be masked by result selection",
+              "literal types, closed options and selector grammar validate before execution",
+              "exact approximate tolerances are explicit, nonnegative and alias-consistent",
+              "parsers preserve the selected complete data and fail closed",
+              "CSV Unicode scalar separators, final empty records and post-quote state are explicit",
+              "structured literal and immutable canonical object wildcard order follows unsigned Unicode scalar key ordering; parsed JSON and CSV header order remain parser-owned",
+              "native execution receipts bind the actually executed step prefix, selected assertion port, normalized DAG and all used operation, parser, selector and regex registry identities",
+              "release-bearing native receipts retain the loaded build identity, exact worker digest, worker protocol and device-time provenance; missing, altered or stale identities never establish current proof",
+              "a failed execution retains its exact loaded target identity and explicit inconclusive failure without fabricating completed steps or release-bearing observations",
+              "completed native evidence agrees with the executed observation prefix, selected assertion values and determination; canonical result fields cannot contradict retained execution evidence",
+              "invalid specifications stop before traversing more than the registered step limit; closed-shape and binding violations return bounded precise diagnostics with surrogate-safe 256-UTF-16-unit value previews, leaving submitted source unchanged"
+            ]
+          }
+        },
         {
           "sha256": "331f661c553db872097dcbcc1aae8104deef68e6aa206173504ce4a82e6e7b83",
           "previousSha256": "21b4c97a596fecd7ec5dca7788ded488827ef71c0aee3a041f89bd19d0eede00",
@@ -101,34 +167,70 @@
     },
     {
       "constant": "XML_SELECTOR_REGISTRY_SHA256",
-      "previousSha256": "83077fa4cfae3a215852e01728cde32f943c46ae7ba4bc5e845b2347b4a0a903",
-      "sha256": "29c6c2698d789f185619a6e1a3493982f1ac96f4d5416c7e3221f9c63c5c5c79",
+      "previousSha256": "29c6c2698d789f185619a6e1a3493982f1ac96f4d5416c7e3221f9c63c5c5c79",
+      "sha256": "5acde5bb0468acc83a53f3ba66819e2af85d8a1d5d77fb11f45e97ca7f716659",
       "descriptor": {
         "version": "closed-loop-xml-selector/1",
-        "revision": "2026-09-16.integrity.1",
+        "revision": "2026-10-27.empty-selection.1",
         "rules": [
           "absolute child paths with positive safe-integer positions",
           "attributes are own literal names",
           "text extraction traverses ordered mixed content",
           "only nodes produced by the restricted XML parser are selectable",
-          "XML 1.0 legal characters, document structure, entities, quotes and comments are checked"
+          "XML 1.0 legal characters, document structure, entities, quotes and comments are checked",
+          "every globally empty segment including final attribute selection is XML_PATH_MISSING with UNDETERMINED before a dependent operation can consume it",
+          "existing empty attribute values and selected elements with no text remain empty strings; missing per-parent matches do not discard nonempty global matches or document order"
         ]
-      }
+      },
+      "priorRevisions": [
+        {
+          "sha256": "29c6c2698d789f185619a6e1a3493982f1ac96f4d5416c7e3221f9c63c5c5c79",
+          "previousSha256": "83077fa4cfae3a215852e01728cde32f943c46ae7ba4bc5e845b2347b4a0a903",
+          "descriptor": {
+            "version": "closed-loop-xml-selector/1",
+            "revision": "2026-09-16.integrity.1",
+            "rules": [
+              "absolute child paths with positive safe-integer positions",
+              "attributes are own literal names",
+              "text extraction traverses ordered mixed content",
+              "only nodes produced by the restricted XML parser are selectable",
+              "XML 1.0 legal characters, document structure, entities, quotes and comments are checked"
+            ]
+          }
+        }
+      ]
     },
     {
       "constant": "REGEX_REGISTRY_SHA256",
-      "previousSha256": "dd4585d69d80059a7b284ef1307e2782ab5de81439b3ce0da31aa634de6ab2b8",
-      "sha256": "0533522402875ae03dc4cc859097424e2887d36045a2fd20db11b3feeaccce15",
+      "previousSha256": "0533522402875ae03dc4cc859097424e2887d36045a2fd20db11b3feeaccce15",
+      "sha256": "329a75cbbd3f7c9cf899a13aad8ba3a49f945981b6d9e3e39b108fce592aa354",
       "descriptor": {
         "version": "closed-loop-regex/1",
-        "revision": "2026-09-16.integrity.1",
+        "revision": "2026-10-27.bounded-outer-quantifiers.1",
         "rules": [
           "escape-aware scanning distinguishes literals from forbidden backreferences",
           "lookaround, named groups, legacy numeric and Unicode property escapes are rejected",
-          "group-aware nested unbounded quantification checks",
-          "pattern, flags, input bytes and worker time remain bounded"
+          "group-aware scanning rejects an unbounded outer *, + or {m,} when its group contains an unbounded repeat; finite ?, {m} and {m,n} outer repeats are not misclassified as unbounded",
+          "pattern, flags, input bytes and worker time remain bounded",
+          "greedy and lazy suffixes share the same boundedness; final JavaScript RegExp compilation validates quantifier syntax"
         ]
-      }
+      },
+      "priorRevisions": [
+        {
+          "sha256": "0533522402875ae03dc4cc859097424e2887d36045a2fd20db11b3feeaccce15",
+          "previousSha256": "dd4585d69d80059a7b284ef1307e2782ab5de81439b3ce0da31aa634de6ab2b8",
+          "descriptor": {
+            "version": "closed-loop-regex/1",
+            "revision": "2026-09-16.integrity.1",
+            "rules": [
+              "escape-aware scanning distinguishes literals from forbidden backreferences",
+              "lookaround, named groups, legacy numeric and Unicode property escapes are rejected",
+              "group-aware nested unbounded quantification checks",
+              "pattern, flags, input bytes and worker time remain bounded"
+            ]
+          }
+        }
+      ]
     }
   ]
 }

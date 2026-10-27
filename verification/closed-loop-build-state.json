@@ -691,7 +691,7 @@
       "endCommit": null,
       "specificationSections": [
         "36.8 Delivery-candidate set",
-        "37 Stage 25 \u2014 INSPECT THE FINAL REPRESENTATION",
+        "37 Stage 25 — INSPECT THE FINAL REPRESENTATION",
         "38 representationInspections",
         "38.1 deliveryCandidateSets",
         "41 tests 180-181",
@@ -778,8 +778,8 @@
         "30 Contradiction detection",
         "36.4 Release",
         "36.12 Derived-command self-validity",
-        "37 Stage 26 \u2014 RECONCILE PROCESS AND PRODUCT EVIDENCE",
-        "37 Stage 27 \u2014 APPLY THE RELEASE GATE",
+        "37 Stage 26 — RECONCILE PROCESS AND PRODUCT EVIDENCE",
+        "37 Stage 27 — APPLY THE RELEASE GATE",
         "38 processAudits",
         "38 productAudits",
         "38 releaseGateReviews",
@@ -864,7 +864,7 @@
         "30 Contradiction detection",
         "36.8 Delivery-candidate set",
         "36.9 Terminal delivery",
-        "37 Stage 28 \u2014 VERIFY ARTIFACT IDENTITY BEFORE RELEASE",
+        "37 Stage 28 — VERIFY ARTIFACT IDENTITY BEFORE RELEASE",
         "38 artifactIdentities",
         "38 humanDecisions",
         "41 tests 180-181",
@@ -957,7 +957,7 @@
         "36.6 Evidence graph",
         "36.9 Atomic Stage 30 terminal command",
         "36.12 Derived-command self-validity",
-        "37 Stage 29 \u2014 PRESERVE THE COMPLETE EVIDENCE CHAIN",
+        "37 Stage 29 — PRESERVE THE COMPLETE EVIDENCE CHAIN",
         "38.1 backupCheckpoints",
         "38 evidenceChains",
         "40 Permanent regression obligations",
@@ -1623,7 +1623,7 @@
         "id": "draft-atomic-prefix",
         "owner": "/root/extract_distinct_normative_obligations",
         "state": "VERIFIED",
-        "scope": "Partial draft sections0\u201314 retained; remaining ranges assigned separately",
+        "scope": "Partial draft sections0–14 retained; remaining ranges assigned separately",
         "evidencePath": "verification/dot-execution-20261014/atomic-final/clrt-atomic-final-evidence-replay.json",
         "host": "dot cloud workspace",
         "lastInspectedAt": "2026-10-14T06:49:25.113704Z",
@@ -1653,7 +1653,7 @@
         "id": "extract_obligations_sections_15_36",
         "owner": "/root/extract_obligations_sections_15_36",
         "state": "VERIFIED",
-        "scope": "Draft source obligations15\u201336",
+        "scope": "Draft source obligations15–36",
         "evidencePath": "verification/dot-execution-20261014/atomic-final/clrt-atomic-final-evidence-replay.json",
         "host": "dot cloud workspace",
         "lastInspectedAt": "2026-10-14T06:49:25.113704Z",
@@ -1669,7 +1669,7 @@
         "id": "extract_obligations_sections_37_52",
         "owner": "/root/extract_obligations_sections_37_52",
         "state": "VERIFIED",
-        "scope": "Draft source obligations37\u201352",
+        "scope": "Draft source obligations37–52",
         "evidencePath": "verification/dot-execution-20261014/atomic-final/clrt-atomic-final-evidence-replay.json",
         "host": "dot cloud workspace",
         "lastInspectedAt": "2026-10-14T06:49:25.113704Z",
@@ -1685,7 +1685,7 @@
         "id": "complete_blind_atomic_review",
         "owner": "/root/complete_blind_atomic_review",
         "state": "VERIFIED",
-        "scope": "Complete independent blind source coverage37\u201352",
+        "scope": "Complete independent blind source coverage37–52",
         "evidencePath": "verification/dot-execution-20261014/atomic-final/clrt-atomic-final-evidence-replay.json",
         "host": "dot cloud workspace",
         "lastInspectedAt": "2026-10-14T06:49:25.113704Z",
@@ -1717,7 +1717,7 @@
         "id": "reconcile_atomic_requirement_entries",
         "owner": "/root/reconcile_atomic_requirement_entries",
         "state": "VERIFIED",
-        "scope": "Distinct proposition reconciliation, starting completed0\u201314 prefix",
+        "scope": "Distinct proposition reconciliation, starting completed0–14 prefix",
         "evidencePath": "verification/dot-execution-20261014/atomic-final/clrt-atomic-final-evidence-replay.json",
         "host": "dot cloud workspace",
         "lastInspectedAt": "2026-10-14T06:49:25.113704Z",
@@ -1749,7 +1749,7 @@
         "id": "reconcile_tail_requirement_entries",
         "owner": "/root/reconcile_tail_requirement_entries",
         "state": "VERIFIED",
-        "scope": "Source-only reconciliation sections 37\u201352, final cross-section closure owned by primary reconciler",
+        "scope": "Source-only reconciliation sections 37–52, final cross-section closure owned by primary reconciler",
         "host": "dot cloud workspace",
         "writeScope": "Own isolated evidence only",
         "lastInspectedAt": "2026-10-14T06:49:25.113704Z",
@@ -2445,7 +2445,7 @@
           "sourceCommit": "cd56dd97509f0c6c96e2f6e9055c97b4b65452a0",
           "startedAt": "2026-10-14T14:11:33Z",
           "state": "TERMINAL_EXIT1_STAGE27_RELEASE_BINDING",
-          "lastDurableBoundary": "Stages1\u201326 completed; exact Stage27 release determination evidence/disposition/product/baseline binding gate rejects.",
+          "lastDurableBoundary": "Stages1–26 completed; exact Stage27 release determination evidence/disposition/product/baseline binding gate rejects.",
           "evidenceDirectory": "/workspace/shared/clrt-iteration-repair-evidence/frozen-cd56dd97-governed",
           "fullLifecycleOutcome": "FAILED",
           "completedAt": "2026-10-14T14:46:48.097016Z",
@@ -2666,7 +2666,7 @@
       "constraints": "No phase-specific fallback, no DEFERRED-as-success, preserve ANY_OF/K logic and independent duefinaltests/regressions/matrix; direct sufficientdueREFUTES precedence including activatedconditional requirements.",
       "primaryAuthorizedScope": "Reuse existing stageProofTruth optional trace and one requirement classifier for allcurrentapplicablemandatory requirements, including activatedconditional; exactlyonecurrentprimary/expression/obligation/review; allindependentduefinaltests/regressions/matrix/bytes/freshness/independence preserved; currentdueREFUTES controls evenpositiveproofmissing; futurevalidscheduled leaves neveraffirmative, dueunknownblocks, ANY_OF/K semantics preserved.",
       "additionalBoundedScope": [
-        "Release-only evaluationStage27 optional existingphase-selection parameter; originalstage22/23/24defaults unchanged; due25\u201327controls required.",
+        "Release-only evaluationStage27 optional existingphase-selection parameter; originalstage22/23/24defaults unchanged; due25–27controls required.",
         "Registeredfuture diagnostic projection retains allauthoredtiming/identity/scheduledstate but omits liveavailability only for validnot-yet-due leaves; due/invalidunknownavailability unchanged.",
         "ExistingCONTROLLING_REASON accurately distinguishes dueproof from future scheduled; bound disjointcountpartition required."
       ],
@@ -2688,7 +2688,7 @@
           "r4": "Actual24 response/integrity passed; later host literal allocator failed strict VM realm. Preserved.",
           "r5": "VM-native continuation completed deferred24, accepted25 and passed integrity. Complete25 blocked after actual unchanged source-search capability expired16:13:02.513Z; no product defect or expiry renewal inferred.",
           "accepted25CaptureSha256": "35704c9d16c4a52fd6bf586b2d166d4d6dac0c7f5e79c7e5dee5f9ca494fed9b",
-          "accepted25Custody": "11 exact sources,23 original artifacts,93 original prompt contexts; captured16:13:16.549\u201316:13:19.419Z",
+          "accepted25Custody": "11 exact sources,23 original artifacts,93 original prompt contexts; captured16:13:16.549–16:13:19.419Z",
           "r6": "Independent driver3ad2b90db09021dda8e7500648538be089ef8ef96a5b6da1d6de2a0da9b6ef41 approved: ordinary unconditional Release Recalculate on actual blocked25 after strict public save/cold validation; genuine pre/post capture; expectedBLOCKED; normal persistence attempt.",
           "scope": "Self-binding diagnosis only; no accepted release/live readiness/completedprefix/migration claim, no clock or evidence-expiry changes."
         },
@@ -2798,7 +2798,7 @@
         "reviewSha256": "321e31120e616a7a8f3204f997f5917e63d1fc499fb0bb065944e066c1b8a24c",
         "checkpointReviewSha256": "6da8a1c653f2721c055fe9bfe4a28f332224e2d4f98ba350a9c452924badda97",
         "originalCapabilityExpiresAt": "2026-10-14T19:20:11.524Z",
-        "scope": "Original executable23\u201330 checks including exact release retry/public save/cold, retained original custody, newly executed presentation assertions. No regenerated prefix pass arrays.",
+        "scope": "Original executable23–30 checks including exact release retry/public save/cold, retained original custody, newly executed presentation assertions. No regenerated prefix pass arrays.",
         "outstandingVerificationObligations": [
           {
             "name": "prefix workflowPresentationCases aggregate",
@@ -2829,7 +2829,7 @@
         "driverSha256": "8682bc24bbaeffceed5a6a7bba5973ab6a18355b8df617e872e7cc0722cfcfca",
         "session": 79312,
         "startedAt": "2026-10-14T18:57:50Z",
-        "scope": "Actual saved isolated revision0 seed, original post-cold checks then literal28\u201330; original caller revision7 separately identified. Retained23\u201327 arrays carried; no repeated prefix.",
+        "scope": "Actual saved isolated revision0 seed, original post-cold checks then literal28–30; original caller revision7 separately identified. Retained23–27 arrays carried; no repeated prefix.",
         "fullOwnerAcceptance": false,
         "originalCapabilityExpiresAt": "2026-10-14T19:20:11.524Z",
         "outstanding": [
@@ -2844,7 +2844,7 @@
       },
       "stage29SetupCorrection": {
         "commit": "700c48b56359fd52289dd3097457d8cdc5aa03ea",
-        "scope": "Test helper isolated ordinary base save, reserve, expected-revision/state prompt save and exact original custody; all original negative/semantic/raw/retry/caller isolation assertions retained. Also current13 derivationVersion assertion corrected12\u219213. No runtime changes.",
+        "scope": "Test helper isolated ordinary base save, reserve, expected-revision/state prompt save and exact original custody; all original negative/semantic/raw/retry/caller isolation assertions retained. Also current13 derivationVersion assertion corrected12→13. No runtime changes.",
         "reviewSha256": "2fddbab722ec527d0066bbcdf19e48a3f475c3ba6b6ade2be32dc9570e311e29",
         "state": "INDEPENDENT_SOURCE_REVIEW_ACCEPTED_HELPER_RETURN_OBSERVED"
       },
@@ -2857,7 +2857,7 @@
         "sourceCheckpointCompressedSha256": "8a2f6d43cb9e9f9c503802c8c294f8c2c96f403aa1e09a7b48c0c5dff3a319b2",
         "sourceCanonicalProjectSha256": "0ecdf798bce7a46cc18d142ece1c4db0ae62b4f5fe069a55a8684d4c2fbcc065",
         "originalCapabilityExpiresAt": "2026-10-14T19:20:11.524Z",
-        "scope": "Remaining28 identity assertion and actual29\u201330 only; no repeated successful prefix or renewed authority.",
+        "scope": "Remaining28 identity assertion and actual29–30 only; no repeated successful prefix or renewed authority.",
         "fullOwnerAcceptance": false,
         "exitCode": 1,
         "endedAt": "2026-10-14T19:17:20Z",
@@ -2911,7 +2911,7 @@
           "projectionCases": 25,
           "captureTimestamp": "NOT_RECORDED_IN_ITERATION_SNAPSHOT"
         },
-        "nextAction": "Reviewed VM-native remaining post21 and22\u201330 continuation with original arrays/custody; no prefix repeat. Missing governing-refutation scalar report remains qualified."
+        "nextAction": "Reviewed VM-native remaining post21 and22–30 continuation with original arrays/custody; no prefix repeat. Missing governing-refutation scalar report remains qualified."
       },
       "coverageRenewal": {
         "state": "ON_HOLD_UNTIL_RUNTIME_STABLE",
@@ -2934,7 +2934,7 @@
         "sourceCheckpointCompressedSha256": "558e48b0e39b790abd89cbf5905028a9b78ba4f52c6b70229fc7979c2ccc6b90",
         "sourceCheckpointCanonicalSha256": "99c6ea909b5f4f1eeff40a67bf90846a921e5dc34ed2c872915c0ca59e6d7b73",
         "checkpointIndependentReviewSha256": "f7db33c2e18cd42ae08d64bbe5cabd7a85557e83a56469ee1e2569c5ccc8e0a8",
-        "scope": "Original remaining post21 controls and22\u201330 in original VM realm. Exact17 captured prefix arrays restored; all original final presentation/attachment/type/hash/timing assertions retained. Every capture labeled partial continuation.",
+        "scope": "Original remaining post21 controls and22–30 in original VM realm. Exact17 captured prefix arrays restored; all original final presentation/attachment/type/hash/timing assertions retained. Every capture labeled partial continuation.",
         "fullJourneyExecution": false,
         "unavailableReportObjects": [
           "governedIterationRefutation original scalar report; separate real branch proof retained"
@@ -3112,7 +3112,7 @@
       {
         "observedAt": "2026-10-14T22:01:39Z",
         "supersededCurrentCriticalPath": [
-          "Recover exact fresh197 Stage12 checkpoint and original arrays/custody after actual74837 Unknown process/no terminal; independently review native-VM remaining13\u201330 continuation without prefix restart. Preserve original authority expiry, record partial execution honestly, then run genuine fresh prerequisite Stage29/30 consumers and positive public chain command/retry/cold proof.",
+          "Recover exact fresh197 Stage12 checkpoint and original arrays/custody after actual74837 Unknown process/no terminal; independently review native-VM remaining13–30 continuation without prefix restart. Preserve original authority expiry, record partial execution honestly, then run genuine fresh prerequisite Stage29/30 consumers and positive public chain command/retry/cold proof.",
           "Independent chain5 ready-state/stale-release/mutation and legacy archive/forgery/rollback controls passed; new5 cold receipt currentness and positive current-time public command/persistence remain pending. Integrate only independently accepted exact candidate.",
           "Repair the pre-existing Stage29 required-owner unsupported synthetic-positive fixture without weakening provenance, then run affected mandatory owners on frozen integrated source",
           "Renew current catalog source maps and all19 stale independent coverage reviews, collect genuine current producer receipts and execute required integrated acceptance",
@@ -3558,7 +3558,7 @@
       "observedAt": "2026-10-15T00:58:30Z",
       "formerLead": "/root/repair_iteration_receipt_dependencies",
       "formerLeadStatus": "ERRORED_PREVIEW_LIMIT",
-      "reportedError": "You\u2019ve hit the preview limit. Try again at Nov 14th, 2026 12:23 AM.",
+      "reportedError": "You’ve hit the preview limit. Try again at Nov 14th, 2026 12:23 AM.",
       "model": "UNOBSERVED",
       "quotaScope": "UNESTABLISHED; not evidence all account capacity is exhausted",
       "availableRegisteredEnvironments": [],
@@ -3929,6 +3929,109 @@
       "sourceReviewSha256": "fb0ce1f3d0760086642076fa14715083f0ad3628f55d0ec9768470629b1703a4",
       "originalFailure": "Missing atomic closure before producer; singleton narrowing also incompatible with active atomic universe",
       "currentPositiveParity": "PENDING_SEPARATE_GENUINE_RECEIPT_AGGREGATE_COMPARISON"
+    },
+    "currentRecoveryCheckpoint20261026": {
+      "status": "REVIEWED_SOURCE_CANDIDATE_PENDING_FRESH_COHERENT_QUALIFICATION",
+      "observedAt": "2026-10-27T01:24:59.350353+00:00",
+      "publicHead": "e4c9dd78e591ebb2697f9c87315e9e95427e2594",
+      "publicTree": "c270f5b651d3cd26fe036f7a4cc7a133c31469ca",
+      "publicCiRun": 40280349703,
+      "publicCiOutcome": "FAILURE; foundation passed; deferred Stage17 failure retained",
+      "ownership": {
+        "integrationAndSharedRecordWriter": "existing integration lead",
+        "sourceAuthor": "existing assigned repair authors",
+        "independentReview": "existing independent reviewer",
+        "execution": "existing sole test executor/resource coordinator"
+      },
+      "selectedScope": [
+        "M38 recorded synthetic prefix replay",
+        "qualified Stage13 and optional history repairs",
+        "numeric shared-root correction and explicit selectors/input authority closure",
+        "M55 root hash correction",
+        "M70 proof-fixture ownership correction",
+        "M73 per-population semantic reuse",
+        "three reviewed classifier corrections",
+        "strict Stage01 current-receipt routing",
+        "seven citation-only reference corrections",
+        "reviewed partial assertion bindings"
+      ],
+      "qualificationBoundary": "Earlier component and owner outcomes remain source-specific; no old receipt establishes current coherent qualification. Four original numeric tops passed on bd509; its final acceptance timed out at the unchanged1200-second bound. Recovery-classifier healthy owner timed out and is not a pass. Stage01 dispatch controls passed; genuine coherent producers and collectors remain pending.",
+      "nextAction": "Independently review exact complete composition; execute genuine current Stage01 and v3 producers and original collectors before configured final acceptance under original limits.",
+      "publicationHold": true,
+      "excluded": [
+        "rejected storage optimizations",
+        "M71",
+        "safety-blocked immutable carrier",
+        "closed unexecuted trusted-meta diagnostic"
+      ],
+      "sourceFreezeRule": "This record and bindings are source inputs. Keep frozen qualification bytes unchanged; later progress stays in isolated pending records. No fingerprint exclusions or receipt restamping.",
+      "restrictions": [
+        "no purchases or increased limits",
+        "no protection bypass",
+        "no merge or deployment",
+        "no public ref or CI launch authorized by this checkpoint"
+      ]
+    },
+    "obligationProgressReconciliation20261026": {
+      "status": "PRE_QUALIFICATION_PARTIAL_BINDINGS_NOT_COMPLETION",
+      "authority": "specification/closed-loop-normative-requirements.json",
+      "atomicObligations": 7907,
+      "sourceContexts": 337,
+      "totalManifestEntries": 8244,
+      "implementationMapping": "Candidate file/module mappings are not implementation closure or executed proof.",
+      "publishedBindingBaseline": {
+        "rows": 49,
+        "requirementIds": 38,
+        "fullCoverageDeclarations": 0
+      },
+      "selectedCandidateBindings": {
+        "sha256": "d57b134307a033dbe25cb1c288514ac2e08f783919e6a4bd8f2cffbdf327f4c2",
+        "rows": 53,
+        "requirementIds": 42,
+        "fullCoverageDeclarations": 0
+      },
+      "evidenceBoundary": "Finite scoped bindings only. Numeric additions cover61 alias cases and39 equality-domain cases, not every case in their176/203-record reports or whole clauses. Fresh matching integrity producer and original collector validation are required. Historical and CI-merge receipts retain their original scope; no full current obligation totals are promoted.",
+      "aggregateCompletion": "UNESTABLISHED; no completion percentage or mutually exclusive verified/stale/blocked totals asserted",
+      "maintenance": "Use existing normative manifest, assertion bindings, catalog and build record; no parallel requirements framework."
+    },
+    "runtimeLiteralRepairCheckpoint20261027": {
+      "status": "IMPLEMENTED_SCOPED_REPAIRS_PENDING_FRESH_METADATA_SOURCE_QUALIFICATION",
+      "observedAt": "2026-10-27T04:31:26.555284+00:00",
+      "sourceBaselineTree": "b8192d337c56f856398059ab67185ac4789c054b",
+      "reproducedAndImplementedDefects": [
+        "XML wholly empty selections incorrectly returned an empty list instead of XML_PATH_MISSING/UNDETERMINED",
+        "JSON decoded invalid Unicode scalar values were not consistently rejected",
+        "Regex bounded outer repetitions around groups were incorrectly refused"
+      ],
+      "retainedEvidence": {
+        "af76Tree": "af76dcc595bbeb9b8d15f38ceea7b0e8120c120b",
+        "af76Scope": "Original V3 and collector passed; generic/DAG and collector passed; visual passed. Integrity passed 153 of 154 cases; the inherited-attribute D16 expectation failed and remains retained.",
+        "b819Scope": "The reviewed D16 test-only expectation correction retains runtime identities and populations. Original limits/integrity 154 of 154 and 379 numeric controls passed with genuine collector validation.",
+        "applicability": "These outcomes remain tied to their exact original source. They do not qualify the changed bindings or this checkpoint."
+      },
+      "pendingBindings": {
+        "sha256": "c1aff5773949a70ceae877588e8cfc65e07e2b08e884f23e52880c9268e93dd3",
+        "rows": 58,
+        "requirementIds": 47,
+        "fullCoverageDeclarations": 0,
+        "addedRows": 5,
+        "checkId": "test-ir.literal-contract-boundaries",
+        "scope": "Five finite links for the three runtime repairs; original 53 rows preserved. No completed-obligation promotion."
+      },
+      "unchangedNormativeInventory": {
+        "atomicObligations": 7907,
+        "sourceContexts": 337
+      },
+      "remainingQualification": "Fresh matching source producers and original collectors are required after selecting this metadata delta. No current complete V3, Stage01, final-acceptance or CI pass is claimed for this changed source.",
+      "priorFailures": "All prior failed observations, timeouts and source-specific passes remain retained without restamping.",
+      "ownershipAndDates": "Existing sole integration/shared-record writer, original kickoff and target, and historical assignments remain unchanged.",
+      "publicationHold": true,
+      "sourceFreeze": "Select reviewed metadata before qualification; subsequent progress stays outside frozen tested source.",
+      "restrictions": [
+        "no public branch update or commit",
+        "no CI launch, merge or deployment",
+        "no increased limits, purchases or protection changes"
+      ]
     }
   }
 }
