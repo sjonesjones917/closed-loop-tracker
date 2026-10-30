@@ -1,5 +1,6 @@
 import {stage04AcceptanceFixture} from './test-fixtures.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
+import {verifyStage07DeferralInstructions} from './test-stage07-deferral-instructions.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 const assert=(v,m)=>{if(!v)throw new Error(m)};
@@ -68,4 +69,5 @@ const s4=prompts.buildPromptRecord(4,state,{operation:'COMPLETE'}).prompt;for(co
 const uiSrc=fs.readFileSync('app-core.js','utf8');assert(!/The agent should|agent should use|agent must /i.test(uiSrc),'External-agent behavioral instruction exists outside prompt-engine.js.');
 const src=fs.readFileSync('prompt-engine.js','utf8');assert(!src.includes('stageSpecial[stage.number]||`Perform only Stage'),'Generic stage fallback remains in source.');
 const html=fs.readFileSync('index.html','utf8');assert(html.includes('height:clamp(260px,45vh,520px)')&&html.includes('.expandable-prompt{max-height:280px}.expandable-prompt.expanded{max-height:80vh}')&&!html.includes('#prompt-heading .expandable-prompt:not(.expanded){max-height:88px}'),'Prompt visual dimensions changed.');
-console.log(JSON.stringify({all30StageProceduresExplicit:true,allStageOperationsExplicit:true,currentUserAuthorityInEveryGeneratedPrompt:true,upstreamReadContractsAudited:true,stage4CompletePriorData:true,noGenericFallback:true,promptSizingSourceTokens:true},null,2));
+const stage07Deferral=verifyStage07DeferralInstructions({core,schema,engine,prompts,ingestion:globalThis.closedLoopResponseIngestion});
+console.log(JSON.stringify({all30StageProceduresExplicit:true,stage07DeferralInstructionsPreserved:stage07Deferral.stage07DeferralInstructionsPreserved,allStageOperationsExplicit:true,currentUserAuthorityInEveryGeneratedPrompt:true,upstreamReadContractsAudited:true,stage4CompletePriorData:true,noGenericFallback:true,promptSizingSourceTokens:true},null,2));
