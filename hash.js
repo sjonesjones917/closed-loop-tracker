@@ -225,7 +225,8 @@ function sha256ValueCold(value){const digest=createSha256();let pending='';for(c
 const digestScopeData=new WeakMap();
 let activeDigestScope=null;
 const memoOwnKeys=Reflect.ownKeys,memoDescriptor=Object.getOwnPropertyDescriptor,
- memoPrototype=Object.getPrototypeOf,memoSame=Object.is,memoApply=Reflect.apply,memoWeakGet=WeakMap.prototype.get,memoHasOwn=Object.hasOwn;
+ memoPrototype=Object.getPrototypeOf,memoSame=Object.is,memoApply=Reflect.apply,memoWeakGet=WeakMap.prototype.get,memoHasOwn=Object.hasOwn,
+ memoIsArray=Array.isArray,memoKeys=Object.keys,memoSort=Array.prototype.sort,memoMapGet=Map.prototype.get;
 const memoNativeNames=['Object','Array','String','Number','Boolean','Math','JSON','Reflect','Map','WeakMap','Set','WeakSet','RegExp','Uint8Array','Uint32Array','ArrayBuffer','DataView','TextEncoder'];
 function memoDescriptors(target){return memoOwnKeys(target).map(key=>[key,memoDescriptor(target,key)]);}
 function memoDescriptorEqual(a,b){
@@ -294,15 +295,20 @@ function memoCopyGraph(root,graph){
 function memoSignature(value){
  // This only narrows candidate search; complete graph equality and primitive
  // guards still establish every digest hit. Equal objects have equal key sets
- // regardless of insertion order. No property values are read here.
+ // regardless of insertion order. No property values are read here. Only
+ // bootstrap-captured natives are called, so scopedSha256Value can run this
+ // before digestScopePrimitivesCurrent without dispatching through a changed one.
  if(!value||typeof value!=='object')return typeof value;
- if(Array.isArray(value))return 'A:'+value.length;
- const keys=Object.keys(value),wide='O:'+keys.length;
+ if(memoApply(memoIsArray,undefined,[value]))return 'A:'+value.length;
+ const keys=memoApply(memoKeys,undefined,[value]),count=keys.length,wide='O:'+count;
  // Keep refinement bounded. Wide objects or long names retain the original
  // count bucket; this changes neither cache eligibility nor the cold encoder.
- if(keys.length>64)return wide;
- let units=0;for(const key of keys){units+=key.length;if(units>4096)return wide;}
- return 'K:'+JSON.stringify(keys.sort());
+ if(count>64)return wide;
+ let units=0;for(let i=0;i<count;i++){units+=keys[i].length;if(units>4096)return wide;}
+ memoApply(memoSort,keys,[]);
+ // Length-prefixed names keep the key injective without JSON.stringify.
+ let signature='K:';for(let i=0;i<count;i++)signature+=keys[i].length+':'+keys[i];
+ return signature;
 }
 function memoValueEquals(expected,current,preparedGraph=null){
  const graph=preparedGraph||memoGraph(current,50000,536870912);if(!graph)return false;
@@ -341,8 +347,13 @@ function scopedSha256Value(value){
  if(!data||data.disposed)return sha256ValueCold(value);
  // The scope indexes only objects; primitive values always use the cold path.
  if(value===null||typeof value!=='object'){data.bypasses++;return sha256ValueCold(value);}
+ // A value with no indexed candidate always takes the cold path, so the
+ // primitive guard is required only before candidate comparison and reuse.
+ // The lookup uses captured natives only; a changed native is never reached first.
+ const candidates=memoApply(memoMapGet,data.index,[memoSignature(value)])||[];
+ if(!candidates.length){data.bypasses++;return sha256ValueCold(value);}
  if(!digestScopePrimitivesCurrent()){data.bypasses++;return sha256ValueCold(value);}
- const candidates=data.index.get(memoSignature(value))||[],currentGraph=candidates.length?memoGraph(value,50000,536870912):null,entry=currentGraph&&candidates.find(row=>memoValueEquals(row.value,value,currentGraph));
+ const currentGraph=memoGraph(value,50000,536870912),entry=currentGraph&&candidates.find(row=>memoValueEquals(row.value,value,currentGraph));
  if(!entry){data.bypasses++;return sha256ValueCold(value);}
  if(entry.digest){data.hits++;return entry.digest;}
  data.misses++;const digest=sha256ValueCold(value);

@@ -1,5 +1,6 @@
 import {verifyCompleteRecordCarrierShapes} from './test-complete-record-carrier-shapes.mjs';
 import {verifyCanonicalPrefixSuppliers} from './test-canonical-prefix-supplier.mjs';
+import {verifyDigestScopeNativeFallback} from './test-digest-scope-native-fallback.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import {createHash} from 'node:crypto';
@@ -406,5 +407,6 @@ const canonicalArrayImplementationObjects=await verifyCanonicalArrayImplementati
 verificationObservations.push({checkId:canonicalArrayImplementationObjects.checkId,requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:2880'],boundary:canonicalArrayImplementationObjects.scopeLimit,expected:'Implementation/custom array prototypes rejected; dense ordinary/foreign/null-prototype data preserve literal canonical text/SHA, cold/memo and raw-byte controls',observed:canonicalArrayImplementationObjects,passed:canonicalArrayImplementationObjects.passed});
 const recordHashDistinction=verifyRecordHashDistinctionControls();
 const importDigestScopes=verifyCanonicalDigestScopeControls();
-console.log(JSON.stringify({completeRecordCarrierShapes,canonicalArrayImplementationObjects,canonicalPrefixSuppliers,sourceFamilyRecordHashDistinction,canonicalUtf8ByteObservation,recordHashDistinction,importDigestScopes,verificationObservations,sha256Vectors:true,canonicalOrdering:true,integerLikeKeyOrdering:true,unicodeScalarOrdering:true,safeIntegerBoundaries:true,ambiguousValuesRejected:24,registeredHashPreimageFailureClosed:true,registeredSetSemantics:true,contentRecordPreimagesRegistered:true,unknownContentHashKindRejected:true,canonicalRecordPreimageRegistered:true,closedLoopIdStable:true,closedLoopIdCollisionChecked:true,sharedBuildIdentity,runtimeScriptCount:runtimeFiles.length,workerSharesBuildIdentity:true,stage04RepeatAttachmentControlAbsent:true}));
+const digestScopeNativeFallback=verifyDigestScopeNativeFallback();
+console.log(JSON.stringify({completeRecordCarrierShapes,canonicalArrayImplementationObjects,canonicalPrefixSuppliers,sourceFamilyRecordHashDistinction,canonicalUtf8ByteObservation,recordHashDistinction,importDigestScopes,digestScopeNativeFallback,verificationObservations,sha256Vectors:true,canonicalOrdering:true,integerLikeKeyOrdering:true,unicodeScalarOrdering:true,safeIntegerBoundaries:true,ambiguousValuesRejected:24,registeredHashPreimageFailureClosed:true,registeredSetSemantics:true,contentRecordPreimagesRegistered:true,unknownContentHashKindRejected:true,canonicalRecordPreimageRegistered:true,closedLoopIdStable:true,closedLoopIdCollisionChecked:true,sharedBuildIdentity,runtimeScriptCount:runtimeFiles.length,workerSharesBuildIdentity:true,stage04RepeatAttachmentControlAbsent:true}));
 await import('./verify-stage02-primitives.mjs');
