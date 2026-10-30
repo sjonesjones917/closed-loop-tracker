@@ -7,7 +7,7 @@ import {gzipSync,gunzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
 import {readStoreArchive} from './test-zip.mjs';
 import {responseFixture} from './operator-journey-fixtures.mjs';
-import {execFileSync} from 'node:child_process';
+import {execFileSync,spawn} from 'node:child_process';
 import {storedArtifactBody,projectStoreRuntime,captureArtifactFixture,restoreArtifactFixture,hydrateRetainedPromptContexts,bindAcceptanceUi,reverifyFixtureReturnedFiles} from './test-project-store-runtime.mjs';
 import {appMarkup} from './test-app-markup.mjs';
 import {createVerifierRuntime,isolatedVerifierWorkerClass} from './verifier-runtime.mjs';
@@ -1479,8 +1479,46 @@ if(process.argv.includes('--deferred-cache-only')){const generated=generateLegit
 // Keep phase timing outside the assertion report and flush after each phase so
 // a failed matrix still leaves useful diagnostics on its own runner.
 const deferredTimingFile='conformance-regression-evidence/deferred-phase-timings.json',deferredPhaseTimings=[];
-async function timedDeferredPhase(name,run){const start=process.hrtime.bigint(),startedAt=new Date().toISOString();try{return await run();}finally{deferredPhaseTimings.push({name,startedAt,finishedAt:new Date().toISOString(),durationMs:Number(process.hrtime.bigint()-start)/1e6});fs.mkdirSync('conformance-regression-evidence',{recursive:true});fs.writeFileSync(deferredTimingFile,JSON.stringify({schema:'closed-loop-deferred-phase-timings/1',synthetic:true,phases:deferredPhaseTimings},null,2)+'\n');}}
+// Concurrent chains share one timing file: merge by phase name under a lock so
+// each flush keeps every phase either chain has finished.
+function flushDeferredPhaseTimings(){
+ fs.mkdirSync('conformance-regression-evidence',{recursive:true});
+ const lock=deferredTimingFile+'.lock',pause=new Int32Array(new SharedArrayBuffer(4));let handle=null;
+ for(let attempt=0;handle===null;attempt++){try{handle=fs.openSync(lock,'wx');}catch(error){if(error.code!=='EEXIST'||attempt>=600)throw error;Atomics.wait(pause,0,0,50);}}
+ try{
+  let merged=[];try{const existing=JSON.parse(fs.readFileSync(deferredTimingFile,'utf8'));if(existing?.schema==='closed-loop-deferred-phase-timings/1'&&Array.isArray(existing.phases))merged=existing.phases;}catch{merged=[];}
+  const names=new Set(deferredPhaseTimings.map(row=>row.name));merged=[...merged.filter(row=>!names.has(row.name)),...deferredPhaseTimings].sort((a,b)=>a.startedAt<b.startedAt?-1:a.startedAt>b.startedAt?1:0);
+  const temporary=deferredTimingFile+'.'+process.pid+'.tmp';fs.writeFileSync(temporary,JSON.stringify({schema:'closed-loop-deferred-phase-timings/1',synthetic:true,phases:merged},null,2)+'\n');fs.renameSync(temporary,deferredTimingFile);
+ }finally{fs.closeSync(handle);fs.rmSync(lock,{force:true});}
+}
+async function timedDeferredPhase(name,run){const start=process.hrtime.bigint(),startedAt=new Date().toISOString();try{return await run();}finally{deferredPhaseTimings.push({name,startedAt,finishedAt:new Date().toISOString(),durationMs:Number(process.hrtime.bigint()-start)/1e6});flushDeferredPhaseTimings();}}
 const source=fs.readFileSync('workflow-schema.js','utf8'),r=runtime();
+// The matrix has two independent phase chains. They run concurrently as two
+// children of this owner so the complete matrix fits the unchanged step budget.
+// Every phase, assertion, fixture, child deadline and fault population is
+// unchanged; only the schedule changes. The parent merges the chain results in
+// the original phase order and remains the single receipt-producing process.
+const DEFERRED_CHAINS=Object.freeze({controls:Object.freeze(['bounded-contract-controls','receipt-and-native-journeys']),prefix:Object.freeze(['legitimate-deferred-prefix','cached-package-refresh','returned-file-admission','definition-compatibility-prefixes','definition-compatibility-admission','controlled-fault-populations'])});
+const deferredChain=process.argv.find(arg=>arg.startsWith('--deferred-chain='))?.slice('--deferred-chain='.length)??null,deferredChainOutput=process.argv.find(arg=>arg.startsWith('--deferred-chain-output='))?.slice('--deferred-chain-output='.length)??null;
+assert(deferredChain===null?deferredChainOutput===null:Object.hasOwn(DEFERRED_CHAINS,deferredChain)&&Boolean(deferredChainOutput),'DEFERRED_CHAIN_ARGUMENT_ORACLE');
+// Chain children are focused populations for the receipt preload: they must never publish the complete producer receipt.
+const preloadIsolatesChainChildren=()=>fs.readFileSync('verification-evidence-preload.mjs','utf8').includes("suite==='verify-due-stage-timing.mjs'&&process.argv.slice(2).some(argument=>focusedDueModes.has(argument)||argument.startsWith('--deferred-fixture=')||argument.startsWith('--deferred-chain'))");
+if(process.argv.includes('--deferred-chain-plan')){console.log(JSON.stringify({deferredChainPlan:'PASS',chains:DEFERRED_CHAINS,receiptIsolation:preloadIsolatesChainChildren()}));process.exit(0);}
+let faults=[],definitionCompatibilityCohort=null;
+if(deferredChain===null){
+ assert(preloadIsolatesChainChildren(),'DEFERRED_CHAIN_RECEIPT_ISOLATION_ORACLE');
+ fs.rmSync(deferredTimingFile,{force:true});
+ const forwarded=process.argv.slice(2),children=Object.keys(DEFERRED_CHAINS).map(chain=>{const output=path.join(os.tmpdir(),`clrt-deferred-chain-${chain}-${process.pid}.json`);const child=spawn(process.execPath,[process.argv[1],...forwarded,'--deferred-chain='+chain,'--deferred-chain-output='+output],{stdio:['ignore','pipe','inherit'],env:process.env});return {chain,output,child};});
+ // Child stdout is diagnostic here; this parent's stdout is the single report.
+ for(const {child}of children)child.stdout.on('data',chunk=>process.stderr.write(chunk));
+ const settled=await Promise.all(children.map(({chain,child})=>new Promise(resolve=>{child.on('error',error=>resolve({chain,error:String(error?.message||error)}));child.on('exit',(code,signal)=>{if(code!==0||signal)for(const other of children)if(other.child!==child&&other.child.exitCode===null&&other.child.signalCode===null)other.child.kill('SIGTERM');resolve({chain,code,signal});});})));
+ const failed=settled.filter(row=>row.error||row.code!==0||row.signal);
+ assert(!failed.length,'DEFERRED_CHAIN_FAILED: '+JSON.stringify(failed));
+ const chainReports=Object.fromEntries(children.map(({chain,output})=>{const report=JSON.parse(fs.readFileSync(output,'utf8'));fs.rmSync(output,{force:true});assert.equal(report.chain,chain,'DEFERRED_CHAIN_REPORT_IDENTITY_ORACLE');assert.deepEqual(report.phases,[...DEFERRED_CHAINS[chain]],'DEFERRED_CHAIN_PHASE_COVERAGE_ORACLE: '+chain);return [chain,report];}));
+ results.push(...chainReports.controls.results,...chainReports.prefix.results);faults=chainReports.prefix.faults;definitionCompatibilityCohort=chainReports.prefix.definitionCompatibilityCohort;
+ assert(Array.isArray(faults)&&faults.length&&definitionCompatibilityCohort&&typeof definitionCompatibilityCohort.passed==='boolean','DEFERRED_CHAIN_REPORT_ORACLE');
+}
+if(deferredChain==='controls'){
 await timedDeferredPhase('bounded-contract-controls',async()=>{
 results.push(recordedDeferredMetricControls(runtime()),recordedDeferredMetricFaultControls());
 await deferredExecutionRouting(runtime());
@@ -1492,12 +1530,14 @@ deferredReviewProvenance(runtime());await deferredArtifactOwnership(runtime());a
 regressionIterationBoundary(r);regressionTimingConsumers(r);failureTimingConsumers(r);
 const completedFixture=process.argv.find(arg=>arg.startsWith('--completed-fixture='))?.slice('--completed-fixture='.length);if(completedFixture)await completedPhaseTargets(r,completedFixture);
 });
+fs.writeFileSync(deferredChainOutput,JSON.stringify({chain:'controls',phases:deferredPhaseTimings.map(row=>row.name),results}));process.exit(0);
+}
+if(deferredChain==='prefix'){
 const generatedDeferredPrefix=await timedDeferredPhase('legitimate-deferred-prefix',()=>generateLegitimateDeferredPrefix());results.push(generatedDeferredPrefix.setup);
 results.push(await timedDeferredPhase('cached-package-refresh',()=>verifyLegitimateDeferredCachedPackages(generatedDeferredPrefix.prefix)));
 results.push(await timedDeferredPhase('returned-file-admission',()=>legitimateDeferredReturnedJourney(generatedDeferredPrefix.prefix)));
 const generatedDefinitionPrefixes=await timedDeferredPhase('definition-compatibility-prefixes',()=>generateDefinitionCompatibilityPrefixes(generatedDeferredPrefix));results.push(generatedDefinitionPrefixes.setup);
-const definitionCompatibilityCohort=await timedDeferredPhase('definition-compatibility-admission',()=>verifyDefinitionCompatibility({prefixDirectory:generatedDefinitionPrefixes.directory}));results.push({case:'DEFERRED_DEFINITION_COMPATIBILITY_ADMISSION',...definitionCompatibilityCohort});
-const faults=[];
+definitionCompatibilityCohort=await timedDeferredPhase('definition-compatibility-admission',()=>verifyDefinitionCompatibility({prefixDirectory:generatedDefinitionPrefixes.directory}));results.push({case:'DEFERRED_DEFINITION_COMPATIBILITY_ADMISSION',...definitionCompatibilityCohort});
 await timedDeferredPhase('controlled-fault-populations',async()=>{
 for(const [name,before,after,oracle] of [
  ['stage-coercion',"!Number.isInteger(value[name])||!core.STAGES.some(stage=>stage.number===value[name])","!Number.isInteger(Number(value[name]))||!core.STAGES.some(stage=>stage.number===Number(value[name]))",'TIMING_SCALAR_ORACLE'],
@@ -1570,5 +1610,7 @@ for(const [name,file,before,after,oracle,caseIds]of [
 
 faults.push(...await evidenceChainFrontierFaults());
 });
+fs.writeFileSync(deferredChainOutput,JSON.stringify({chain:'prefix',phases:deferredPhaseTimings.map(row=>row.name),results,faults,definitionCompatibilityCohort}));process.exit(0);
+}
 assert.equal(fs.readFileSync('workflow-schema.js','utf8'),source);scalarCases(r);conditions(r);
 console.log(JSON.stringify({dueStageTiming:'PASS',results,faults,sourceRestored:true,deferredDefinitionCompatibilityAdmission:definitionCompatibilityCohort.passed,verificationObservations:[{checkId:'DEFERRED-DEFINITION-COMPATIBILITY-ADMISSION',passed:definitionCompatibilityCohort.passed,boundary:definitionCompatibilityCohort.boundary,expected:definitionCompatibilityCohort.expected,observed:definitionCompatibilityCohort.observed,detail:definitionCompatibilityCohort}]}));
