@@ -2,6 +2,7 @@ import {authorizeSyntheticHandoff} from './test-handoff-authorization.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
+import v8 from 'node:v8';
 import {createHash} from 'node:crypto';
 import {projectStoreRuntime,bindAcceptanceUi,bindProjectActivationUi} from './test-project-store-runtime.mjs';
 import {artifactFixtureId} from './test-artifact-fixtures.mjs';
@@ -147,20 +148,31 @@ observations.push({id:'PROJECT_ACTIVATION_CALLERS',result:'PASS',callers:callerR
  observations.push({id:'PROJECT_ACTIVATION_SAME_PROJECT_VIEW',result:'PASS',savedOperation:'COMPLETE',ownedRunId:dest.expected.runId,draft:'Destination-own draft',pendingTitle:'Destination pending title',explicitOperationPreserved:'RECONCILE_INTAKE'});
 }
 {
- const source=fs.readFileSync('project-store.js','utf8'),anchor='async function readProjectMetadata(jobId,sourceProof=null){';assert.equal(source.split(anchor).length,2,'ACTIVATION_COMBINED_READ_COUNTER_OWNER');const r=projectStoreRuntime({sourceOverrides:{'project-store.js':source.replace(anchor,anchor+'globalThis.__activationColdReads=(globalThis.__activationColdReads||0)+1;')}}),p=await r.store.createProject({commandId:'ACTIVATION-COMBINED-READ'});r.runtime.__activationColdReads=0;
+ const source=fs.readFileSync('project-store.js','utf8'),anchor='async function readProjectMetadata(jobId,sourceProof=null,physicalCapture=null){';assert.equal(source.split(anchor).length,2,'ACTIVATION_COMBINED_READ_COUNTER_OWNER');const r=projectStoreRuntime({sourceOverrides:{'project-store.js':source.replace(anchor,anchor+'globalThis.__activationColdReads=(globalThis.__activationColdReads||0)+1;')}}),p=await r.store.createProject({commandId:'ACTIVATION-COMBINED-READ'});r.runtime.__activationColdReads=0;
  const combined=await r.store.readProject(p.job.JOB_ID,{refreshProjection:true});assert.equal(r.runtime.__activationColdReads,1,'ACTIVATION_COMBINED_SINGLE_COLD_READ_ORACLE');const explicit=await r.store.refreshProjectProjection(p.job.JOB_ID,{expectedProjectRevision:combined.revision,expectedStateSha256:combined.projectSha256});assert.equal(explicit.projectSha256,combined.projectSha256,'ACTIVATION_COMBINED_EQUIVALENT_CURRENT_RESULT_ORACLE');
  await assert.rejects(()=>r.store.refreshProjectProjection(p.job.JOB_ID,{expectedProjectRevision:combined.revision,expectedStateSha256:'0'.repeat(64)}),error=>error.code==='STALE_PROJECT_REVISION','ACTIVATION_EXPLICIT_FRESHNESS_PRESERVED_ORACLE');
  r.rows.get('projects').get(p.job.JOB_ID).project.job.JOB_TITLE='Corrupt bytes under unchanged digest';await assert.rejects(()=>r.store.readProject(p.job.JOB_ID,{refreshProjection:true}),error=>error.code==='PROJECT_HASH_MISMATCH','ACTIVATION_COMBINED_COLD_INTEGRITY_ORACLE');
  observations.push({id:'PROJECT_ACTIVATION_COMBINED_COLD_READ',result:'PASS',coldReads:1,sameCurrentResult:true,staleExplicitPredicateRejected:true,corruptColdSourceRejected:true});
 }
-const projection5Activation15=await verifyLegacy5ProjectionActivation();
-observations.push({id:'PROJECT_PROJECTION5_ACTIVATION15',...projection5Activation15});
-const projectionVersion16IterationActivation=await verifyProjectionVersion16IterationActivation();
-observations.push({...projectionVersion16IterationActivation,id:'PROJECT_PROJECTION7_ITERATION4_ACTIVATION16'});
-const projectionVersion16Activation=await verifyProjectionVersion16ActivationContract();
-observations.push({id:'PROJECT_PROJECTION6_ACTIVATION16',...projectionVersion16Activation});
+// The two fixture-heavy activation checks each install full copies of a large historical store into fresh runtimes
+// (measured alone, forced GC: Stage 19 ordering peaks at 0.86 GB live, projection-16 iteration at 0.98 GB) and a
+// finished check's runtimes stay reachable for several seconds while their async chains unwind (1.0 GB right after
+// return, 8 MB after about 15 s, no open handles). Run back to back they exceed the default 2 GB heap. Each check and
+// its observation are unchanged; they run with the lighter checks between them and after the previous runtimes have
+// settled, so the owner fits the default heap without any assertion, fixture or budget change.
+const collectGarbage=(()=>{if(typeof globalThis.gc==='function')return globalThis.gc;v8.setFlagsFromString('--expose-gc');return vm.runInNewContext('gc');})();
+const settleRuntimes=async()=>{let previous=Infinity;for(let i=0;i<40;i++){await new Promise(resolve=>setTimeout(resolve,500));collectGarbage();const current=process.memoryUsage().heapUsed;if(i>=2&&current>=previous*0.98)break;previous=current;}};
 const stage19ProjectionActivationOrdering=await verifyStage19ProjectionActivationOrdering();
 observations.push({id:'PROJECT_STAGE19_PROJECTION_ACTIVATION_ORDERING',...stage19ProjectionActivationOrdering});
+await settleRuntimes();
+const projection5Activation15=await verifyLegacy5ProjectionActivation();
+observations.push({id:'PROJECT_PROJECTION5_ACTIVATION15',...projection5Activation15});
+const projectionVersion16Activation=await verifyProjectionVersion16ActivationContract();
+observations.push({id:'PROJECT_PROJECTION6_ACTIVATION16',...projectionVersion16Activation});
+await settleRuntimes();
+const projectionVersion16IterationActivation=await verifyProjectionVersion16IterationActivation();
+observations.push({...projectionVersion16IterationActivation,id:'PROJECT_PROJECTION7_ITERATION4_ACTIVATION16'});
+await settleRuntimes();
 const startupActivationReuse=await verifyStartupActivationReuse({source:app});
 const startupActivationFaults=[];
 for(const [fault,oracle] of [['duplicate-load',/STARTUP_REUSE_REFRESH_POPULATION_ORACLE/],['duplicate-same-job-url',/STARTUP_REUSE_URL_READ_ORACLE/],['skip-changed-selection',/STARTUP_REUSE_REFRESH_POPULATION_ORACLE/],['duplicate-unloaded-refresh',/STARTUP_REUSE_REFRESH_POPULATION_ORACLE/],['duplicate-linked-read',/STARTUP_REUSE_URL_COMBINED_ORACLE/]]){await assert.rejects(verifyStartupActivationReuse({source:app,fault}),oracle);startupActivationFaults.push({fault,result:'PASS',intendedOracle:String(oracle)});}
