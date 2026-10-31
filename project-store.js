@@ -445,8 +445,12 @@ function mergeMobileAcceptanceSession(prior,value){
  return merged;
 }
 async function metaPut(key,value,tx=null){
- if(String(key).startsWith('responseStaging:')&&value?.blob instanceof Blob&&(value.blob.size!==value.byteSize||await hash.sha256Bytes(value.blob)!==value.sha256))throw storageError('Response staging bytes failed identity verification.','RESPONSE_STAGE_REHASH_MISMATCH');
- const physicalKey=String(key).startsWith('responseOperations:')||String(key).startsWith('quarantine:'),own=tx||await openTransaction(physicalKey?[PROJECTS,META]:META,'readwrite'),store=own.objectStore(META);
+ // The key is read once before the transaction is selected; every later read of
+ // it happens while writing through the owned or supplied transaction, where a
+ // failure aborts that transaction unless it is this transaction's own deadline.
+ const name=String(key);
+ if(name.startsWith('responseStaging:')&&value?.blob instanceof Blob&&(value.blob.size!==value.byteSize||await hash.sha256Bytes(value.blob)!==value.sha256))throw storageError('Response staging bytes failed identity verification.','RESPONSE_STAGE_REHASH_MISMATCH');
+ const physicalKey=name.startsWith('responseOperations:')||name.startsWith('quarantine:'),own=tx||await openTransaction(physicalKey?[PROJECTS,META]:META,'readwrite'),store=own.objectStore(META);
  try{
   let saved=value;if(String(key).startsWith('stage30MobileAcceptance.v1:')){const prior=(await request(store.get(key)))?.value;assertMobileAcceptanceSessionWrite(key,value,prior);saved=mergeMobileAcceptanceSession(prior,value);}
   const logicalRow={key,value:String(key).startsWith('responseStaging:')&&saved?.blob instanceof Blob?await sharedByteRecord(own,saved):saved,updatedAt:now()};if(physicalKey){const prepared=await preparePhysicalRowPut(own,logicalRow,META,'value');commitPhysicalRowPut(own,prepared,logicalRow);}else store.put(logicalRow);if(!tx)await complete(own);return saved;
