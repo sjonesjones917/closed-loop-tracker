@@ -4010,13 +4010,13 @@
         "applicability": "These outcomes remain tied to their exact original source. They do not qualify the changed bindings or this checkpoint."
       },
       "pendingBindings": {
-        "sha256": "c1aff5773949a70ceae877588e8cfc65e07e2b08e884f23e52880c9268e93dd3",
-        "rows": 58,
-        "requirementIds": 47,
+        "sha256": "ce501dfdb26c85a6c1216d0f2b80d463ccae4cd37b3a194b6ce211d213336bb7",
+        "rows": 119,
+        "requirementIds": 108,
         "fullCoverageDeclarations": 0,
-        "addedRows": 5,
+        "addedRows": 61,
         "checkId": "test-ir.literal-contract-boundaries",
-        "scope": "Five finite links for the three runtime repairs; original 53 rows preserved. No completed-obligation promotion."
+        "scope": "Sixty-one reviewed executed-assertion links added on the integration batch (48 Stage-contract declaration rows incl. the restored Stage 25 explanation row, 12 Stage 25 frozen-set and invalidation rows, 1 accepted-external-response metric row); original 58 rows preserved; every row validated against the normative manifest line and obligation hashes and against catalog check ids. No completed-obligation promotion."
       },
       "unchangedNormativeInventory": {
         "atomicObligations": 7907,

@@ -607,6 +607,617 @@
       ],
       "scope": "Finite original V3 public-runtime controls admit the listed exact/range/lazy/optional/zero bounded outer quantifiers and bounded-inner/unbounded-outer control, distinguish a nonmatch, and retain nested-unbounded, invalid-range and unbounded-count refusals. This is bounded quantifier classification evidence, not all combinations, arbitrary regex safety, worker responsiveness or complete requirement coverage.",
       "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-00589ac7ea403394eff5f3f58cd27738",
+      "sourceLineSha256": "7081fe0685baf1aad5e34f729f3f463d3860f2d2a0c1593b9a4bcc96ea7c53c4",
+      "atomicObligationSha256": "5c140053e20bcaca4f70ca984b11fe7c264d913cb94bbcac7cb7e76a0f70d796",
+      "checkIds": [
+        "declaration.stage01.role"
+      ],
+      "scope": "verify-stage-contract-closure.mjs: executed role assertion for Stage 1 (spec line 3416); no actor compliance, execution or release claim",
+      "basis": "EXECUTED_WIRING_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-0eb47ae8de2bfae12b06d84e3bc6de03",
+      "sourceLineSha256": "491420959c75c86dbef05dc40661522edee480d1947ca229e6d532857c8f638a",
+      "atomicObligationSha256": "5ef4c4838d078b9dcf9ae0dc8b4663912560a0c689d53a2ef4994ed84c1b9f48",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "verify-stage-contract-closure.mjs: executed role assertion for Stage 15 (spec line 3555); no actor compliance, execution or release claim",
+      "basis": "EXECUTED_WIRING_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-12dbcde7c6fb615b0ff78d471aaa3d08",
+      "sourceLineSha256": "5b7a57788a4b90c4751b05f85495c7d7026d825b2664d5fd80d4dc5c5311c54f",
+      "atomicObligationSha256": "84e6e2b685ecea5039d37b15f556bdd0e2e3ab9a8b69009af5f8783e1c20e061",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "verify-stage-contract-closure.mjs: executed role assertion for Stage 12 (spec line 3529); no actor compliance, execution or release claim",
+      "basis": "EXECUTED_WIRING_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-1ca1a99e86f24cb2690fc4663009c497",
+      "sourceLineSha256": "8940af8895026cfbeab3c972a69720ca525a111047eed4cfd4b67db704411854",
+      "atomicObligationSha256": "4cfda3b1c5655d8207938f73e70a315a10d4a42d2d6ac92d1e7d7e83a8df306b",
+      "checkIds": [
+        "declaration.stage-explanation-core-meanings"
+      ],
+      "scope": "verify-stage-contract-closure.mjs: executed explanation assertion for Stage 17 (spec line 3574); no actor compliance, execution or release claim; synthetic rendered markup under the production app source (appMarkup), core-meaning assertion; no browser/CSS visibility, execution or complete-stage claim",
+      "basis": "EXECUTED_WIRING_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-21e6acd689da49ef5794ed7b0da45b40",
+      "sourceLineSha256": "808742e614c0f92c89905eb22466805ac733bd5ef6f688b42dc66fc1b813c645",
+      "atomicObligationSha256": "bfb5082948dd68da54661ab5348b4ae266eed22b47f564aac76c282be5f5623c",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "verify-stage-contract-closure.mjs: executed role assertion for Stage 25 (spec line 3642); no actor compliance, execution or release claim",
+      "basis": "EXECUTED_WIRING_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-24e6069a277ef302124bf0ad269f477a",
+      "sourceLineSha256": "1f54be8021b4e00d474f0d2afa153f9cfab6d5d23cd55fb1a06d1070b0e0fba9",
+      "atomicObligationSha256": "37070e5a8c6c9ae45f210d6dc7221a78f0011c6682d536b489c0acfc65bc58cb",
+      "checkIds": [
+        "declaration.stage-explanation-core-meanings"
+      ],
+      "scope": "verify-stage-contract-closure.mjs: executed explanation assertion for Stage 6 (spec line 3466); no actor compliance, execution or release claim; synthetic rendered markup under the production app source (appMarkup), core-meaning assertion; no browser/CSS visibility, execution or complete-stage claim",
+      "basis": "EXECUTED_WIRING_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-25e91e450e724c8ac9d5b51a43867b67",
+      "sourceLineSha256": "67427145e4b8cbd9c934decabc780eee34fbb2bd77d17b94f9828fae5bc9ce75",
+      "atomicObligationSha256": "5d6ca4d9abf498d68f8a6585ddb7f5c79c433cec25e9f3dd580869168099edea",
+      "checkIds": [
+        "declaration.stage-explanation-core-meanings"
+      ],
+      "scope": "verify-stage-contract-closure.mjs: executed explanation assertion for Stage 26 (spec line 3653); no actor compliance, execution or release claim; synthetic rendered markup under the production app source (appMarkup), core-meaning assertion; no browser/CSS visibility, execution or complete-stage claim",
+      "basis": "EXECUTED_WIRING_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-27273749a1bfb5e53140b70e3a8d245a",
+      "sourceLineSha256": "d4053446066c4262e17a67a5c05a16e17aaeec59d38fb51230a7efd6da7fbd0a",
+      "atomicObligationSha256": "33448ffde118a792b00b678507aa91c902bda2def6529570d41635907d8fb88b",
+      "checkIds": [
+        "declaration.stage-explanation-core-meanings"
+      ],
+      "scope": "verify-stage-contract-closure.mjs: executed explanation assertion for Stage 10 (spec line 3511); no actor compliance, execution or release claim; synthetic rendered markup under the production app source (appMarkup), core-meaning assertion; no browser/CSS visibility, execution or complete-stage claim",
+      "basis": "EXECUTED_WIRING_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-2eadf7aa431600ec6d4f1092a60b7c05",
+      "sourceLineSha256": "925a3c88173c1dbe37f38743699b4d65d9d4c56752815f117213ed40ed478f33",
+      "atomicObligationSha256": "6ca78353d656863e54690a9797ae8bc14b05a0d51e2b14d99d0f06e75f05ab19",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "verify-stage-contract-closure.mjs: executed prompt-obligation assertion for Stage 16 (spec line 3566); no actor compliance, execution or release claim",
+      "basis": "EXECUTED_WIRING_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-321537d0e19dda97945429537926ebbc",
+      "sourceLineSha256": "029421debf02d8bb1ecb567b4851b2fb5388e9edab2daa94f54a317f52b853c3",
+      "atomicObligationSha256": "ad6e136429a2d709c17bbce8b6abd2b2f503f197dd1ec68b0f508837932bd931",
+      "checkIds": [
+        "declaration.stage-explanation-core-meanings"
+      ],
+      "scope": "verify-stage-contract-closure.mjs: executed explanation assertion for Stage 12 (spec line 3531); no actor compliance, execution or release claim; synthetic rendered markup under the production app source (appMarkup), core-meaning assertion; no browser/CSS visibility, execution or complete-stage claim",
+      "basis": "EXECUTED_WIRING_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-38628cafed872262a9b8d9144f0da01f",
+      "sourceLineSha256": "7c9740377ef1a60bedc946c2fb46efa4ad8ffe8cf3fdaf371ca914d8ee34a1f4",
+      "atomicObligationSha256": "1e9e8f4b13b6a822912679c968bf489e21eec8e4958bd2d24714cd7d66b9baff",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "verify-stage-contract-closure.mjs: executed role assertion for Stage 29 (spec line 3677); no actor compliance, execution or release claim",
+      "basis": "EXECUTED_WIRING_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-3fb148fc485595ad314466ee24e86991",
+      "sourceLineSha256": "95488fdb13c003c5fa84d887e2789bf712636996215dfce2d311fc8c4fc6e9a0",
+      "atomicObligationSha256": "17cd3c4c7ebf090d798cd96054b371d432a5379d92ad28cbf574e56c94d0a783",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "verify-stage-contract-closure.mjs: executed role assertion for Stage 24 (spec line 3634); no actor compliance, execution or release claim",
+      "basis": "EXECUTED_WIRING_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-420c6b157ecd757f6a0cb77463de308e",
+      "sourceLineSha256": "3f896919371966203d7292238d95502e2672012b817eb52ba0e6ad4d2409ee52",
+      "atomicObligationSha256": "a2088431282869ec7761fb71d4fcead49a39a05e5d0850444d5d93b0b48fbf0a",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "verify-stage-contract-closure.mjs: executed role assertion for Stage 18 (spec line 3580); no actor compliance, execution or release claim",
+      "basis": "EXECUTED_WIRING_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-427f0fb0dd0c2264bbd7b69842eba179",
+      "sourceLineSha256": "7f1343b99742d342341e72f1ced49d79c2b87dc05148e78b5bdb1e8db2dd5b87",
+      "atomicObligationSha256": "2bf6d81d51c85ca6604e75703cd126d6b4122e53e05aa08c7a56009b29e3ee7d",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "verify-stage-contract-closure.mjs: executed role assertion for Stage 2 (spec line 3427); no actor compliance, execution or release claim",
+      "basis": "EXECUTED_WIRING_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-49557d149933baccaf81eb90eb5e1717",
+      "sourceLineSha256": "27e56ea8c13f7fcd18a1a803b9b1cf33bed79feaf3f7132a1f736930331288bd",
+      "atomicObligationSha256": "4f61253a7daf073043cd709d43e96799cddef22236fdb13ede01b5b1a724c0d4",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "verify-stage-contract-closure.mjs: executed role assertion for Stage 23 (spec line 3625); no actor compliance, execution or release claim",
+      "basis": "EXECUTED_WIRING_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-4c47880c9ca5429f400dc34ceae3043e",
+      "sourceLineSha256": "94e270e0eaf32079c14a36bf16e127532723ce2c922b91f84284e0ecaf424150",
+      "atomicObligationSha256": "75b3687878e08dd18adaa014d47dcd48f16ce02fd735a787976c9f190295f424",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "verify-stage-contract-closure.mjs: executed role assertion for Stage 5 (spec line 3456); no actor compliance, execution or release claim",
+      "basis": "EXECUTED_WIRING_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-527722a8c538d094388563d1a6c01b52",
+      "sourceLineSha256": "fa8f779d4bfd0bc1b314fa2e7cc9357fa8488729985399ed0a58f34fa4e19d00",
+      "atomicObligationSha256": "6aaa6cd9cd8013ebee84658acff9292b1d1f3d8698e82961ff2ae37f870a6211",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "verify-stage-contract-closure.mjs: executed role assertion for Stage 17 (spec line 3572); no actor compliance, execution or release claim",
+      "basis": "EXECUTED_WIRING_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-57334ead2bc052e40b1c21436c935c28",
+      "sourceLineSha256": "53ec112262bcd0ec463865aafc0de1b1e14b6d1bb019c5e75d49f6af420ada45",
+      "atomicObligationSha256": "c4083ebf1aa6d78cfc768a4b72cd85c86e301f1702d43d5638a7665a66f0c21c",
+      "checkIds": [
+        "declaration.stage-explanation-core-meanings"
+      ],
+      "scope": "verify-stage-contract-closure.mjs: executed explanation assertion for Stage 27 (spec line 3661); no actor compliance, execution or release claim; synthetic rendered markup under the production app source (appMarkup), core-meaning assertion; no browser/CSS visibility, execution or complete-stage claim",
+      "basis": "EXECUTED_WIRING_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-5fb114a9f3df0d4a47e7d40cc130d253",
+      "sourceLineSha256": "5258bf9a9eef7da8346faa40c46e8028b67df6edd527eff78126fed68e4e4941",
+      "atomicObligationSha256": "442e9f722ca955a59c4668dc5a2ef9158dc07128f786ed9d4ea3a12ae738d99a",
+      "checkIds": [
+        "declaration.stage-explanation-core-meanings"
+      ],
+      "scope": "verify-stage-contract-closure.mjs: executed explanation assertion for Stage 11 (spec line 3521); no actor compliance, execution or release claim; synthetic rendered markup under the production app source (appMarkup), core-meaning assertion; no browser/CSS visibility, execution or complete-stage claim",
+      "basis": "EXECUTED_WIRING_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-604c2ea233a5b328c6cd6e33c6d681db",
+      "sourceLineSha256": "1109c3eb86fdecbc7073157110b4cb1099f7c1452b62fda801493fdea616343f",
+      "atomicObligationSha256": "fe67b75c70e373319dbf8a0eadab060cafc99e7cd524b7a318fa6473aacf7efd",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "verify-stage-contract-closure.mjs: executed role assertion for Stage 28 (spec line 3669); no actor compliance, execution or release claim",
+      "basis": "EXECUTED_WIRING_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-6199ac43aaadd4bbdee5e7bdd1ac6421",
+      "sourceLineSha256": "321a432d5dd8b32b0ff2825745ae776f7fcd08f3d65e5f562591dd27b76e77bd",
+      "atomicObligationSha256": "3b1dbe1b5ee6674e8e71e66b71b100907d8f282e5c3423db022433e505f65033",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "verify-stage-contract-closure.mjs: executed role assertion for Stage 22 (spec line 3615); no actor compliance, execution or release claim",
+      "basis": "EXECUTED_WIRING_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-62a7ed51e5192a6b11be2850b098da98",
+      "sourceLineSha256": "bc84d947cced3f8be7c99297e2f3ef82f89f16e51fbae5c6ec39cc6ab8a18b02",
+      "atomicObligationSha256": "621d755297ada68b2b6798a3a22e02401a59511cfc81edd03b9f2e0add6e9ad2",
+      "checkIds": [
+        "declaration.stage-explanation-core-meanings"
+      ],
+      "scope": "verify-stage-contract-closure.mjs: executed explanation assertion for Stage 22 (spec line 3617); no actor compliance, execution or release claim; synthetic rendered markup under the production app source (appMarkup), core-meaning assertion; no browser/CSS visibility, execution or complete-stage claim",
+      "basis": "EXECUTED_WIRING_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-77fc05bed2f6e7b6e683de1c2b102051",
+      "sourceLineSha256": "356d376e042a7214899f1517abff8d025c89de4cd6c3ca74cc5ee4d972008bdc",
+      "atomicObligationSha256": "46d3d2adf20c30426eca5193dd6d23f6a40d7eaf81eee7b3b30bf78249bfc118",
+      "checkIds": [
+        "declaration.stage-explanation-core-meanings"
+      ],
+      "scope": "verify-stage-contract-closure.mjs: executed explanation assertion for Stage 15 (spec line 3557); no actor compliance, execution or release claim; synthetic rendered markup under the production app source (appMarkup), core-meaning assertion; no browser/CSS visibility, execution or complete-stage claim",
+      "basis": "EXECUTED_WIRING_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-804783f8a5edc1e25d4e4b8a0761310d",
+      "sourceLineSha256": "436e4a8cc7c06d208c144dc2344d4243c1074d35d6bbec2e2371044c14181784",
+      "atomicObligationSha256": "bfe0647736980ab030e635dbe79b191d426c9bbc18dbbe8c969ee17b8bdc12e2",
+      "checkIds": [
+        "declaration.stage-explanation-core-meanings"
+      ],
+      "scope": "verify-stage-contract-closure.mjs: executed explanation assertion for Stage 7 (spec line 3483); no actor compliance, execution or release claim; synthetic rendered markup under the production app source (appMarkup), core-meaning assertion; no browser/CSS visibility, execution or complete-stage claim",
+      "basis": "EXECUTED_WIRING_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-831250724c9d58362ca4ecfd50d4fe89",
+      "sourceLineSha256": "d2564a2db95c873aa1008537045844241299073ed43174935e568ffa5a96df36",
+      "atomicObligationSha256": "8d37a5726a221abf0560a57ca73853cb21774fb0b572e738dd43b95e60b5746b",
+      "checkIds": [
+        "declaration.stage-explanation-core-meanings"
+      ],
+      "scope": "verify-stage-contract-closure.mjs: executed explanation assertion for Stage 29 (spec line 3679); no actor compliance, execution or release claim; synthetic rendered markup under the production app source (appMarkup), core-meaning assertion; no browser/CSS visibility, execution or complete-stage claim",
+      "basis": "EXECUTED_WIRING_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-86fafbed2d6b79f634e7ee47e980d54b",
+      "sourceLineSha256": "c4e35a529bad7bb49466cac23b068a78256e280903ef336530470cdf977761b0",
+      "atomicObligationSha256": "a8b0b43d7cdc61a46f1b0a4d1b468f454dbdb29c3ff715448b60c7dda39031ef",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "verify-stage-contract-closure.mjs: executed role assertion for Stage 7 (spec line 3481); no actor compliance, execution or release claim",
+      "basis": "EXECUTED_WIRING_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-8906f0d0b1cf7cf54cb4323ed2569940",
+      "sourceLineSha256": "43ec448b86aa5f0ec89a9bd8deecf931d039e55edcde2e87ae3790b67db3e9dc",
+      "atomicObligationSha256": "7534ad20194f698e24a5b5cdb087294a7b5eeda18b8f50a94d2e6e1808ea436e",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "verify-stage-contract-closure.mjs: executed role assertion for Stage 26 (spec line 3651); no actor compliance, execution or release claim",
+      "basis": "EXECUTED_WIRING_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-8c80bba7955aae714b1a5a1cf2398020",
+      "sourceLineSha256": "10c518a4cdb46b6e90b4dc7dcab197d2bcee1c49e3855eef417774db9c0d5a7a",
+      "atomicObligationSha256": "32bf2ce734f887dbb6f7f20ef297b5a693c98bf0a15df68d07755b397bf39870",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "verify-stage-contract-closure.mjs: executed role assertion for Stage 9 (spec line 3499); no actor compliance, execution or release claim",
+      "basis": "EXECUTED_WIRING_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-a3f44049c6c9f372f83fecd7e9841b0a",
+      "sourceLineSha256": "240a4b86cc0d807fd94b9c496d9d251471f6eb9b18522ee364961f76875b7b59",
+      "atomicObligationSha256": "ec3bd720afc5614d68065c77dcc51918c30a874b7a9746de0efbb6659ac1cfc9",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "verify-stage-contract-closure.mjs: executed role assertion for Stage 21 (spec line 3606); no actor compliance, execution or release claim",
+      "basis": "EXECUTED_WIRING_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-a8cbcf1c749752d55c4731222628be6f",
+      "sourceLineSha256": "b2e135459a70ba084ca2e32b49da9613b842d5f4238b920bc0ec5ca0ff971519",
+      "atomicObligationSha256": "991daf4463041ea942673dbdbd157d70777a034971f00ef60cd3bd701fa078fa",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "verify-stage-contract-closure.mjs: executed role assertion for Stage 27 (spec line 3659); no actor compliance, execution or release claim",
+      "basis": "EXECUTED_WIRING_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-a96b0068a391e24691be806831c2ad94",
+      "sourceLineSha256": "38e4f4770efd0470807457e0eae437d43e6d556a04dde7d75f88d761a9457cf4",
+      "atomicObligationSha256": "fc95479e00f1c59057edc073a55e19ae7da21ce34dde912074b7442292d1df6b",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "verify-stage-contract-closure.mjs: executed prompt-obligation assertion for Stage 6 (spec line 3475); no actor compliance, execution or release claim",
+      "basis": "EXECUTED_WIRING_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-aa2a1d8c7c45e9c7f0bbea28fd9eb266",
+      "sourceLineSha256": "e93870210f10876726df33ec34423895ac180cdaa94249fca7346c95734861f7",
+      "atomicObligationSha256": "78ee908194f986c5cd28958dfb3ac882087fc6656c8c7d5a1ebd2cd5f4a65153",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "verify-stage-contract-closure.mjs: executed role assertion for Stage 8 (spec line 3490); no actor compliance, execution or release claim",
+      "basis": "EXECUTED_WIRING_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-b3b8074e42901ec598fe77099a811e63",
+      "sourceLineSha256": "e097334dc8ff875606abac1b1419ba27fd99c5ded7a310983d51a132e538b885",
+      "atomicObligationSha256": "d8e7b356932fb1ebfb20311181e09c05fb0d2ef7c47126e28aa46534150117d2",
+      "checkIds": [
+        "declaration.stage-explanation-core-meanings"
+      ],
+      "scope": "verify-stage-contract-closure.mjs: executed explanation assertion for Stage 23 (spec line 3627); no actor compliance, execution or release claim; synthetic rendered markup under the production app source (appMarkup), core-meaning assertion; no browser/CSS visibility, execution or complete-stage claim",
+      "basis": "EXECUTED_WIRING_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-b8ff460c90ce9c09f2fd2e4093918c64",
+      "sourceLineSha256": "72a225ff4e6a68c228c4677937b9832ec05175ba67e02f3257007ca64e906534",
+      "atomicObligationSha256": "484becba57d93449691ff3ed3a9b4526603602a8df63090a9d67f717e2468617",
+      "checkIds": [
+        "declaration.stage-explanation-core-meanings"
+      ],
+      "scope": "verify-stage-contract-closure.mjs: executed explanation assertion for Stage 19 (spec line 3590); no actor compliance, execution or release claim; synthetic rendered markup under the production app source (appMarkup), core-meaning assertion; no browser/CSS visibility, execution or complete-stage claim",
+      "basis": "EXECUTED_WIRING_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-bbed713638d67f007309164b5a07a81c",
+      "sourceLineSha256": "efa5838ad011d8e2d49eb7bd62621531317f5c314f775faa2ec873ad9f6d749f",
+      "atomicObligationSha256": "97a4cc0a152d96ad7f029d3a47ac3673b7ee4b7056474367416b04e5285cc2ac",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "verify-stage-contract-closure.mjs: executed role assertion for Stage 20 (spec line 3597); no actor compliance, execution or release claim",
+      "basis": "EXECUTED_WIRING_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-bf4a2a2724397b7b5b06bf5a05bd94f3",
+      "sourceLineSha256": "3fe4d6d555762e6a05d4e1a31e03996b00ec7dbd2be72c8e26e3972094faf493",
+      "atomicObligationSha256": "58b1190e1c0ff60b8ffef5c697fa90be2aa78d83dca6492c6ad44fe41745cc6f",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "verify-stage-contract-closure.mjs: executed role assertion for Stage 13 (spec line 3538); no actor compliance, execution or release claim",
+      "basis": "EXECUTED_WIRING_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-cb1734917ab51fda9d64f86f7f247925",
+      "sourceLineSha256": "fce118928fdb287bf727169bc16aba2a063bdd67fc539f2f75ea60ecb4055712",
+      "atomicObligationSha256": "d03ce1a7f39302e56afe9c5ea6a9a743f47adbe4285e50228de95752eca68719",
+      "checkIds": [
+        "declaration.stage-explanation-core-meanings"
+      ],
+      "scope": "verify-stage-contract-closure.mjs: executed explanation assertion for Stage 21 (spec line 3608); no actor compliance, execution or release claim; synthetic rendered markup under the production app source (appMarkup), core-meaning assertion; no browser/CSS visibility, execution or complete-stage claim",
+      "basis": "EXECUTED_WIRING_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-cdae1d95803c975e2b5817dcbc1acf43",
+      "sourceLineSha256": "27a1e836059adb6a3c3b285eb2bfa146f2a2586c36a7a1ccd60dbbfbabe78bb0",
+      "atomicObligationSha256": "f1f43ed46d358ac87f0b8d8e06f895323bbfca294232bc2fb6ccf92f8c2884a5",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "verify-stage-contract-closure.mjs: executed role assertion for Stage 11 (spec line 3519); no actor compliance, execution or release claim",
+      "basis": "EXECUTED_WIRING_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-cecb8ce5bce13cbdb99027efa0fc1af0",
+      "sourceLineSha256": "3a1c658e16c92b01d778ddfdb2e1e05705fe9ff39a995d48cb614864cc2d8cf2",
+      "atomicObligationSha256": "f19524de789a09429a534144ed911a072257bd1418a9f029d5bb0c25dcf3bcba",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "verify-stage-contract-closure.mjs: executed role assertion for Stage 4 (spec line 3446); no actor compliance, execution or release claim",
+      "basis": "EXECUTED_WIRING_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-e389d9af84e3cdb122c3a94fa8678ef3",
+      "sourceLineSha256": "a4085ba05acb3803f39d1d66a7420cce594f27e242c804f4af4a6bf939620880",
+      "atomicObligationSha256": "79b0780503c414184e281510de661416d23b30e8cd3318bc7bcf47780bb033a9",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "verify-stage-contract-closure.mjs: executed prompt-obligation assertion for Stage 6 (spec line 3474); no actor compliance, execution or release claim",
+      "basis": "EXECUTED_WIRING_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-e4dac8e0912ddd4d1f86523d9d1560f9",
+      "sourceLineSha256": "b00419cf20820712b42c19fa7a95dc20735a04e9b87550d8d7d32e15cfabc640",
+      "atomicObligationSha256": "4f8d46836686e0a55129d186001ab511de1da488d51881cd9c1143a3fafc4214",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "verify-stage-contract-closure.mjs: executed role assertion for Stage 19 (spec line 3588); no actor compliance, execution or release claim",
+      "basis": "EXECUTED_WIRING_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-efb9653c51f466d131fe2fe2099fa9bc",
+      "sourceLineSha256": "bb94a66acc6ca6271844b0c6496d5548bca5293a1b7871719678491a41c09200",
+      "atomicObligationSha256": "2e3c77e4028e74c741c89b8c3a627cde006ced21c7ff6cdb87224b2e5c0da81e",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "verify-stage-contract-closure.mjs: executed role assertion for Stage 10 (spec line 3509); no actor compliance, execution or release claim",
+      "basis": "EXECUTED_WIRING_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-f150e202fa4bae8ca5b9785736cf1b24",
+      "sourceLineSha256": "0bb83bb4ed6aae5a1a811a314aef7de887262bbfd96655a21fd007ecadf49c26",
+      "atomicObligationSha256": "0aab7ff308e212da9bd161b55648f928963976e9696919a44c61ebd9e1cf024e",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "verify-stage-contract-closure.mjs: executed role assertion for Stage 14 (spec line 3547); no actor compliance, execution or release claim",
+      "basis": "EXECUTED_WIRING_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-f519a715c4ce0b702fcf4f432a2f3e24",
+      "sourceLineSha256": "7ca6ec131783812b5257fadb315bb561c424c364772107f2a79be85131a29e7f",
+      "atomicObligationSha256": "ba2b03754a3419e33ac75e6e336f4ded1631bfb9a6da604c0e7d24d788cd81ed",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "verify-stage-contract-closure.mjs: executed role assertion for Stage 3 (spec line 3437); no actor compliance, execution or release claim",
+      "basis": "EXECUTED_WIRING_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-f5fbc421f0da0d6b66826b29ce420104",
+      "sourceLineSha256": "3fa9e4937c0d987f6dd255a5ad4f9e588144b6d6b6d1df44fa9db00ec278bccd",
+      "atomicObligationSha256": "f40b453765a6a5d6cd17ca6869977d059d80a7da3c541d4c324dc95ed2592b25",
+      "checkIds": [
+        "declaration.stage-explanation-core-meanings"
+      ],
+      "scope": "verify-stage-contract-closure.mjs: executed explanation assertion for Stage 24 (spec line 3636); no actor compliance, execution or release claim; synthetic rendered markup under the production app source (appMarkup), core-meaning assertion; no browser/CSS visibility, execution or complete-stage claim",
+      "basis": "EXECUTED_WIRING_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-fa538df94482d0550096ae456a4acc4d",
+      "sourceLineSha256": "8250846f7db1b4033df0a7a641aaadc8d11cc0116edfcdefcb670894f2a2f9bd",
+      "atomicObligationSha256": "154805b1890e24dc27f1e0a82ccae086af29ec4b05bcc2f6d4e850ce25566a28",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "verify-stage-contract-closure.mjs: executed role assertion for Stage 6 (spec line 3464); no actor compliance, execution or release claim",
+      "basis": "EXECUTED_WIRING_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-fd0607224eb3b5176911a403d86e4034",
+      "sourceLineSha256": "97aa147d19e42ccf1e91f917ec3656c92697e6abb1a96cabd9fd98e0bcfd132a",
+      "atomicObligationSha256": "9c1258d84420af21fbb3452f0c9a89b2235ed78cb9571fef141eaf1dd0e27342",
+      "checkIds": [
+        "declaration.stage02-29.roles-and-prompt-obligations"
+      ],
+      "scope": "verify-stage-contract-closure.mjs: executed role assertion for Stage 16 (spec line 3563); no actor compliance, execution or release claim",
+      "basis": "EXECUTED_WIRING_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-045d929fc50b7d6fbd16480328112227",
+      "sourceLineSha256": "d5b384680f6f82cf262c265e37193889025a1a596113d2a956bc198427e99994",
+      "atomicObligationSha256": "7557a62700e436b10e4dc71f630b046901fc3a6a00f1e954a3bb1028d465e386",
+      "checkIds": [
+        "declaration.stage-explanation-core-meanings"
+      ],
+      "scope": "verify-stage-contract-closure.mjs: executed explanation assertion for Stage 25 (spec line 3645); no actor compliance, execution or release claim",
+      "basis": "EXECUTED_WIRING_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-6ab981f610c147f059b335abc34ac9a8",
+      "sourceLineSha256": "157e18bc47a1bbea9b36db5bcebd1167855666978fd2927dff500aeaf1868118",
+      "atomicObligationSha256": "b2a9c69115b77f83ae8e2b5c637c3c35ba4f5893263af7ae9dddeaf3b6576027",
+      "checkIds": [
+        "delivery-candidate.frozen-set-contains-transformation-records"
+      ],
+      "scope": "Synthetic two-artifact fixture under the production engine. The frozen record field TRANSFORMATION_RECORD_IDS equals the expected transformation ids of the two-artifact fixture. Not Stage 25 inspection completeness, not Stage 28 byte comparison, not a browser or native claim, and not whole-clause coverage. NREQ-0fab6d29 (metadata-sensitive property) is intentionally not linked. Proposed scoped link only; no fullCoverage.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-cf71d9ce5654a8918fde87115705f978",
+      "sourceLineSha256": "157e18bc47a1bbea9b36db5bcebd1167855666978fd2927dff500aeaf1868118",
+      "atomicObligationSha256": "c50237b758b0080858d7d4513970c47c56abf7d3607bb3a4ef99a8db8c94eee3",
+      "checkIds": [
+        "delivery-candidate.frozen-set-contains-package-membership"
+      ],
+      "scope": "Synthetic two-artifact fixture under the production engine. The frozen record field PACKAGE_MEMBERSHIP equals the expected per-artifact membership of the fixture. Not Stage 25 inspection completeness, not Stage 28 byte comparison, not a browser or native claim, and not whole-clause coverage. NREQ-0fab6d29 (metadata-sensitive property) is intentionally not linked. Proposed scoped link only; no fullCoverage.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-dc78d5e3c5bb8e1d6ee286f46af3f3e0",
+      "sourceLineSha256": "157e18bc47a1bbea9b36db5bcebd1167855666978fd2927dff500aeaf1868118",
+      "atomicObligationSha256": "4a8d0a7b7b68678e3776150fe131d66dbb7f7f04ba8b902a3b1ab29defe32b02",
+      "checkIds": [
+        "delivery-candidate.frozen-set-contains-viewer-requirements"
+      ],
+      "scope": "Synthetic two-artifact fixture under the production engine. The frozen record field VIEWER_REQUIREMENTS (viewer requirements only; the engine has no separate parser-requirement field) equals the expected values. Not Stage 25 inspection completeness, not Stage 28 byte comparison, not a browser or native claim, and not whole-clause coverage. NREQ-0fab6d29 (metadata-sensitive property) is intentionally not linked. Proposed scoped link only; no fullCoverage.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-77f3b901a41b8602ca37de939bfa4e6e",
+      "sourceLineSha256": "157e18bc47a1bbea9b36db5bcebd1167855666978fd2927dff500aeaf1868118",
+      "atomicObligationSha256": "c171e65b401e60fc0e63fd82455fc69355afb0a7ca7b7652cdc4c66b88542d91",
+      "checkIds": [
+        "delivery-candidate.frozen-set-contains-product-lineage"
+      ],
+      "scope": "Synthetic two-artifact fixture under the production engine. The frozen record field PRODUCT_LINEAGE carries the expected product, version, baseline and per-artifact lineage. Not Stage 25 inspection completeness, not Stage 28 byte comparison, not a browser or native claim, and not whole-clause coverage. NREQ-0fab6d29 (metadata-sensitive property) is intentionally not linked. Proposed scoped link only; no fullCoverage.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-9d4f34353f612db1d2f8e4cab01536aa",
+      "sourceLineSha256": "2ad9e8136b9fbd15b929aa75d9da07eb08d66fd91dd0a34ff1544629d422969c",
+      "atomicObligationSha256": "780453513c5987e650769ff17f14b40ea4ecedc4b1b483e10b657f604e03d554",
+      "checkIds": [
+        "delivery-candidate.invalidation.changed-transformation"
+      ],
+      "scope": "Synthetic two-artifact fixture under the production engine: the named change makes the exact frozen delivery candidate stale (identity differs) and restoring it makes it current. Stage 25 status reset and later terminal-result invalidation are not evidenced; no full requirement coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-0ec5b282b73908f6f6643a69d84d6e2a",
+      "sourceLineSha256": "2ad9e8136b9fbd15b929aa75d9da07eb08d66fd91dd0a34ff1544629d422969c",
+      "atomicObligationSha256": "7aca521b99fac8dfe370b514600501c39d45a1f11ed76c4ddd65194e0c9dc758",
+      "checkIds": [
+        "delivery-candidate.invalidation.changed-package-membership"
+      ],
+      "scope": "Synthetic two-artifact fixture under the production engine: the named change makes the exact frozen delivery candidate stale (identity differs) and restoring it makes it current. Stage 25 status reset and later terminal-result invalidation are not evidenced; no full requirement coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-ad0ba3364106c53fe39d548253401664",
+      "sourceLineSha256": "2ad9e8136b9fbd15b929aa75d9da07eb08d66fd91dd0a34ff1544629d422969c",
+      "atomicObligationSha256": "9c0defaee33bdceb9458ae3b06873ef0d55b06ee6e8260c1f6b7ed848abd4c88",
+      "checkIds": [
+        "delivery-candidate.invalidation.changed-viewer-requirement"
+      ],
+      "scope": "Synthetic two-artifact fixture under the production engine: the named change makes the exact frozen delivery candidate stale (identity differs) and restoring it makes it current. Stage 25 status reset and later terminal-result invalidation are not evidenced; no full requirement coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-417cb07fa08cb207765bb9d693898fc1",
+      "sourceLineSha256": "2ad9e8136b9fbd15b929aa75d9da07eb08d66fd91dd0a34ff1544629d422969c",
+      "atomicObligationSha256": "9fcdc05c08530d8cd28b117c61963cca0798cd4d39776824e6378ddc7da20714",
+      "checkIds": [
+        "delivery-candidate.invalidation.changed-product-lineage-field"
+      ],
+      "scope": "Synthetic two-artifact fixture under the production engine: the named change makes the exact frozen delivery candidate stale (identity differs) and restoring it makes it current. Stage 25 status reset and later terminal-result invalidation are not evidenced; no full requirement coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-1de25108799309e397e0c2f85e427815",
+      "sourceLineSha256": "d3c9ea45b7df479388f498fdaf9f6ef0bb61b8b26df178ec19aefc5b8bab0b50",
+      "atomicObligationSha256": "22df7d2e13d9e7694ec59206703448a14f6f621f2bb3e5fb9d4e7c57a358d6de",
+      "checkIds": [
+        "delivery-candidate.invalidation.changed-transformation"
+      ],
+      "scope": "Synthetic two-artifact fixture under the production engine: the named change makes the exact frozen delivery candidate stale (identity differs) and restoring it makes it current. Stage 25 status reset and later terminal-result invalidation are not evidenced; no full requirement coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-7da878c9bec733c2b7b3e8bec763c743",
+      "sourceLineSha256": "d3c9ea45b7df479388f498fdaf9f6ef0bb61b8b26df178ec19aefc5b8bab0b50",
+      "atomicObligationSha256": "513572dce6ffa2f89c79fa22316712280ef0fde3ffe285b87b9750b7290891a4",
+      "checkIds": [
+        "delivery-candidate.invalidation.changed-package-membership"
+      ],
+      "scope": "Synthetic two-artifact fixture under the production engine: the named change makes the exact frozen delivery candidate stale (identity differs) and restoring it makes it current. Stage 25 status reset and later terminal-result invalidation are not evidenced; no full requirement coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-12f526097b0e652ef82230b003476a9b",
+      "sourceLineSha256": "d3c9ea45b7df479388f498fdaf9f6ef0bb61b8b26df178ec19aefc5b8bab0b50",
+      "atomicObligationSha256": "494a993154909a2b6517286ea00177f6f8656c5dc1ff72790b097cac7bc90ddb",
+      "checkIds": [
+        "delivery-candidate.invalidation.changed-byte-size",
+        "delivery-candidate.invalidation.changed-sha256"
+      ],
+      "scope": "Synthetic two-artifact fixture under the production engine: the named change makes the exact frozen delivery candidate stale (identity differs) and restoring it makes it current. Stage 25 status reset and later terminal-result invalidation are not evidenced; no full requirement coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-b066d36861082b5ee9edf4b95dd1922f",
+      "sourceLineSha256": "d3c9ea45b7df479388f498fdaf9f6ef0bb61b8b26df178ec19aefc5b8bab0b50",
+      "atomicObligationSha256": "a906a5d08dd4f5739eef3322d7400794ba13bd3036b81174dcae9ce5b79b2ca0",
+      "checkIds": [
+        "delivery-candidate.invalidation.changed-filename"
+      ],
+      "scope": "Synthetic two-artifact fixture under the production engine: the named change makes the exact frozen delivery candidate stale (identity differs) and restoring it makes it current. Stage 25 status reset and later terminal-result invalidation are not evidenced; no full requirement coverage is claimed.",
+      "basis": "EXECUTED_DETERMINISTIC_BOUNDARY"
+    },
+    {
+      "normativeRequirementId": "NREQ-030c4c2774d2802d6009db314a8dc98d",
+      "sourceLineSha256": "095e19dfcbb672eec2ed0447e8ddcaec7ce5f3b5a722cc0d2256b4a2bddacb67",
+      "atomicObligationSha256": "d321023f9fa8a6c9a82ff0e45e4ef0f178732fe176720eec069e54da9149aa75",
+      "checkIds": [
+        "metrics.accepted-external-response-controls"
+      ],
+      "scope": "verify-complete.mjs: executed operational-metric assertion for spec line 2900 — acceptedExternalResponsesMetric (closed metric) asserted by test-accepted-external-response-metrics (46 cases); project-local retained observations only, no population-wide telemetry, release or zero-failure claim",
+      "basis": "EXECUTED_WIRING_BOUNDARY"
     }
   ],
   "contractRefs": []
