@@ -685,11 +685,13 @@ const QUARANTINE_RECORD_SCHEMA='closed-loop-quarantine-record-parts/1',QUARANTIN
 // Inline threshold on the weighted graph estimate (64 B per scalar, 128 B per object or field, 2 B per string code unit;
 // about 2.3-3.1x the JSON byte length of real projects). Measured 2026-10-31 on stored projects: 5.2-8.8 MB of JSON at
 // Stage 7-8 already exceeded a 16 MiB estimate, so every ordinary write from Stage 7 onward took the packed path and a
-// single 6.3 MB transition write cost 12.2 s against 3.0 s inline (same adapter). The specification describes no packing
-// threshold; packing exists for rows too large to store as one value. 64 MiB (about 25 MB of JSON) keeps realistic
-// projects inline and still packs genuinely oversized rows; the packed codec, its integrity checks and existing packed
-// generations are unchanged, and the codec tests exercise packing below this threshold explicitly.
-const PHYSICAL_INLINE_BYTES=64*1024*1024,PHYSICAL_PART_UNITS=262144,PHYSICAL_PART_COMMANDS=1024,PHYSICAL_STRING_FRAGMENT=65536,PHYSICAL_INLINE_STRING=4096;
+// single 6.3 MB transition write cost 12.2 s against 3.0 s inline (same adapter); a 64 MiB estimate was crossed again
+// around Stage 12 of the deferred prefix lifecycle (33 MB of JSON by Stage 17, 70% of it retained instruction text),
+// quadrupling each later step. The specification describes no packing threshold; packing exists for rows too large to
+// store as one value. 256 MiB (about 100 MB of JSON) keeps every realistic project inline through Stage 30 and still
+// packs genuinely oversized rows; the packed codec, its integrity checks and existing packed generations are unchanged,
+// and the codec tests exercise packing below this threshold explicitly.
+const PHYSICAL_INLINE_BYTES=256*1024*1024,PHYSICAL_PART_UNITS=262144,PHYSICAL_PART_COMMANDS=1024,PHYSICAL_STRING_FRAGMENT=65536,PHYSICAL_INLINE_STRING=4096;
 const physicalPartPrefix=generation=>'recordPart:v1:'+generation+':';
 const physicalPartKey=(generation,index)=>physicalPartPrefix(generation)+String(index);
 const physicalInvalid=message=>storageError('Stored physical record is invalid: '+message,'PHYSICAL_RECORD_INVALID');

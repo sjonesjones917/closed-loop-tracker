@@ -41,6 +41,20 @@ const falsey=value=>['FALSE','NO','NONE','0','NOT APPLICABLE'].includes(upper(va
 const numeric=value=>{const parsed=Number(String(value??'').replace(/[^0-9.-]/g,''));return Number.isFinite(parsed)?parsed:0;};
 const recordFields=record=>record?.fields&&typeof record.fields==='object'?record.fields:record||{};
 const recordValue=(record,key)=>recordFields(record)?.[key]??record?.[key];
+// Derivation source bindings re-hash the same immutable operational rows (retained instructions, proposals, receipts) on
+// every calculation. These memos return hash.js's own digest for a row whose structure hash.js has
+// validated against its snapshot (createCanonicalDigestScope: structural equality, strings by identity); any change to a row
+// bypasses the snapshot and the scope is rebuilt, so the digest is always the one the cold path would compute.
+const rowDigestScopes=new WeakMap();
+function memoizedRowSha256(row){
+  if(!row||typeof row!=='object')return hash.sha256Value(row);
+  let scope=rowDigestScopes.get(row);
+  if(!scope){scope=hash.createCanonicalDigestScope(row);if(!scope)return hash.sha256Value(row);rowDigestScopes.set(row,scope);}
+  const before=hash.canonicalDigestScopeStats(scope)?.bypasses??0,digest=hash.withCanonicalDigestScope(scope,()=>hash.sha256Value(row));
+  if((hash.canonicalDigestScopeStats(scope)?.bypasses??0)>before){hash.disposeCanonicalDigestScope(scope);rowDigestScopes.delete(row);}
+  return digest;
+}
+
 const recordId=(record,collection)=>{
   const idField=schema.RECORD_SCHEMAS[collection]?.idField;
   return String(record?.id||record?.recordId||(idField?recordValue(record,idField):'')||'').trim();
@@ -1315,7 +1329,7 @@ function applicationDerivationSourceBinding(project,{derivationKey,selectedRecor
    accepted.add(change.changeId);
    const raw=safe(project.projectData.rawResponses).filter(row=>row.rawResponseId===change.rawResponseId),prompts=safe(project.projectData.generatedPrompts).filter(row=>(row.instructionId||row.promptId)===change.promptId),proposals=safe(project.projectData.responseProposals).filter(row=>row.proposalId===change.proposalId),receipts=safe(project.projectData.outputReceipts).filter(row=>row.rawResponseId===change.rawResponseId);
    for(const prompt of prompts){const reservation=safe(project.projectData.operationReservations).find(row=>recordId(row,'operationReservations')===prompt.operationReservationId);if(reservation)add('operationReservations',reservation);}
-   transport.push({changeId:change.changeId,acceptanceSha256:hash.recordSha256(change),rawResponses:raw.map(row=>({rawResponseId:row.rawResponseId,metadataSha256:hash.sha256Value(Object.fromEntries(Object.entries(row).filter(([key])=>key!=='completeRawResponse'))),actualTextSha256:typeof row.completeRawResponse==='string'?hash.sha256Text(row.completeRawResponse):null})),prompts:prompts.map(row=>({instructionId:row.instructionId||row.promptId,canonicalCarrierSha256:hash.sha256Value(row),retention:globalThis.closedLoopPromptEngine?.promptContextRetentionState?.(row)||null})),proposals:proposals.map(row=>({proposalId:row.proposalId,sha256:hash.sha256Value(row)})),receipts:receipts.map(row=>({receiptId:row.receiptId||null,sha256:hash.sha256Value(row)}))});
+   transport.push({changeId:change.changeId,acceptanceSha256:hash.recordSha256(change),rawResponses:raw.map(row=>({rawResponseId:row.rawResponseId,metadataSha256:hash.sha256Value(Object.fromEntries(Object.entries(row).filter(([key])=>key!=='completeRawResponse'))),actualTextSha256:typeof row.completeRawResponse==='string'?hash.sha256Text(row.completeRawResponse):null})),prompts:prompts.map(row=>({instructionId:row.instructionId||row.promptId,canonicalCarrierSha256:memoizedRowSha256(row),retention:globalThis.closedLoopPromptEngine?.promptContextRetentionState?.(row)||null})),proposals:proposals.map(row=>({proposalId:row.proposalId,sha256:memoizedRowSha256(row)})),receipts:receipts.map(row=>({receiptId:row.receiptId||null,sha256:memoizedRowSha256(row)}))});
   }
  }while(cursor<queue.length);
  transport.sort((a,b)=>hash.compareUnicodeScalarSequence(a.changeId,b.changeId));

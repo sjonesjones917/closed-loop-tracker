@@ -28,7 +28,7 @@ export async function verifyStage10ExactHashing({sourceOverrides={}}={}) {
       assert.equal(source.split(anchor).length,2,'STAGE10_PHYSICAL_CODEC_UNIQUE_ANCHOR');assert.equal(source.includes('__stage10PhysicalFixture'),false);
       // The codec cases run at the historical 16 MiB inline threshold so the authentic Stage 17 row is packed; the
       // production threshold is larger and is not what these cases assert.
-      const thresholdAnchor="const PHYSICAL_INLINE_BYTES=64*1024*1024,",thresholdTest="const PHYSICAL_INLINE_BYTES=16*1024*1024,";assert.equal(source.split(thresholdAnchor).length,2,'STAGE10_PHYSICAL_THRESHOLD_UNIQUE_ANCHOR');
+      const thresholdAnchor="const PHYSICAL_INLINE_BYTES=256*1024*1024,",thresholdTest="const PHYSICAL_INLINE_BYTES=16*1024*1024,";assert.equal(source.split(thresholdAnchor).length,2,'STAGE10_PHYSICAL_THRESHOLD_UNIQUE_ANCHOR');
       const observed=source.replace(anchor,probe+anchor).replace(thresholdAnchor,thresholdTest);assert.equal(observed.replace(probe,'').replace(thresholdTest,thresholdAnchor),source,'STAGE10_PHYSICAL_CODEC_EXACT_REVERSE');
       overrides={...sourceOverrides,'project-store.js':observed};
     }
