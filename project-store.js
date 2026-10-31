@@ -682,7 +682,14 @@ function unchangedVerifiedProject(receipt,project,digest){return receipt?.kind==
 // Private physical storage only. Canonical values and their hash schemas do not change.
 const PHYSICAL_RECORD_SCHEMA='closed-loop-record-parts/1',PHYSICAL_PART_SCHEMA='closed-loop-record-part/1';
 const QUARANTINE_RECORD_SCHEMA='closed-loop-quarantine-record-parts/1',QUARANTINE_OPAQUE_SCHEMA='closed-loop-quarantine-physical-json/1';
-const PHYSICAL_INLINE_BYTES=16*1024*1024,PHYSICAL_PART_UNITS=262144,PHYSICAL_PART_COMMANDS=1024,PHYSICAL_STRING_FRAGMENT=65536,PHYSICAL_INLINE_STRING=4096;
+// Inline threshold on the weighted graph estimate (64 B per scalar, 128 B per object or field, 2 B per string code unit;
+// about 2.3-3.1x the JSON byte length of real projects). Measured 2026-10-31 on stored projects: 5.2-8.8 MB of JSON at
+// Stage 7-8 already exceeded a 16 MiB estimate, so every ordinary write from Stage 7 onward took the packed path and a
+// single 6.3 MB transition write cost 12.2 s against 3.0 s inline (same adapter). The specification describes no packing
+// threshold; packing exists for rows too large to store as one value. 64 MiB (about 25 MB of JSON) keeps realistic
+// projects inline and still packs genuinely oversized rows; the packed codec, its integrity checks and existing packed
+// generations are unchanged, and the codec tests exercise packing below this threshold explicitly.
+const PHYSICAL_INLINE_BYTES=64*1024*1024,PHYSICAL_PART_UNITS=262144,PHYSICAL_PART_COMMANDS=1024,PHYSICAL_STRING_FRAGMENT=65536,PHYSICAL_INLINE_STRING=4096;
 const physicalPartPrefix=generation=>'recordPart:v1:'+generation+':';
 const physicalPartKey=(generation,index)=>physicalPartPrefix(generation)+String(index);
 const physicalInvalid=message=>storageError('Stored physical record is invalid: '+message,'PHYSICAL_RECORD_INVALID');

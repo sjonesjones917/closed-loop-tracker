@@ -14,7 +14,9 @@ export async function verifyStage13ProjectionRecovery(){
  const oldEngine=sources['workflow-engine.js'].replace(anchor,'REPEATED_FAILURE_GROUPS:stability.repeatedDefectCount');
  const codecAnchor='globalThis.closedLoopProjectStore=Object.freeze({STORAGE_IO_TIMEOUT_MS',codecProbe='globalThis.__stage13PhysicalFixture={read:readPhysicalStoredSource,encode:encodePhysicalRow,decode:decodePhysicalRow};\n';
  assert.equal(sources['project-store.js'].split(codecAnchor).length,2,'STAGE13_PHYSICAL_CODEC_UNIQUE_ANCHOR');assert.equal(sources['project-store.js'].includes('__stage13PhysicalFixture'),false);
- const observedStore=sources['project-store.js'].replace(codecAnchor,codecProbe+codecAnchor);assert.equal(observedStore.replace(codecProbe,''),sources['project-store.js'],'STAGE13_PHYSICAL_CODEC_EXACT_REVERSE');
+ // Codec cases run at the historical 16 MiB inline threshold so the authentic Stage 13 row is packed; the production threshold is larger.
+ const thresholdAnchor="const PHYSICAL_INLINE_BYTES=64*1024*1024,",thresholdTest="const PHYSICAL_INLINE_BYTES=16*1024*1024,";assert.equal(sources['project-store.js'].split(thresholdAnchor).length,2,'STAGE13_PHYSICAL_THRESHOLD_UNIQUE_ANCHOR');
+ const observedStore=sources['project-store.js'].replace(codecAnchor,codecProbe+codecAnchor).replace(thresholdAnchor,thresholdTest);assert.equal(observedStore.replace(codecProbe,'').replace(thresholdTest,thresholdAnchor),sources['project-store.js'],'STAGE13_PHYSICAL_CODEC_EXACT_REVERSE');
  const r=projectStoreRuntime({sourceOverrides:{...sources,'workflow-engine.js':oldEngine,'project-store.js':observedStore}}),codec=r.runtime.__stage13PhysicalFixture;delete r.runtime.__stage13PhysicalFixture;assert.deepEqual(Object.keys(codec),['read','encode','decode']);assert.equal(Object.hasOwn(r.runtime,'__stage13PhysicalFixture'),false);
  let prefix=deferredReviewedPrerequisiteFixture(r,'nativeStage15');
  const clock=prefix.archivedFixtureClockUtc;assert.equal(typeof clock,'string','STAGE13_RECOVERY_ARCHIVED_CLOCK_ORACLE');
