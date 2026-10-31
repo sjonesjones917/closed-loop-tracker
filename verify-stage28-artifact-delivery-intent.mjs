@@ -151,4 +151,10 @@ for (const [id,mutate] of [
   assert.equal(created.every(r=>engine.recordValue(r,'AUTHORIZATION')==='AUTHORIZED'),true,'Reversed picker order changed exact artifact authorization.');
 }
 
-console.log(JSON.stringify({stage28:'PASS',applicationStage:28,pendingIdentityStoreProjection,intentionalInvalidFixturesRejected:rejected,noIdentityMutationOnRejectedByteFixtures:true,applicationByteRehashRequired:true,exactCandidateMappingRequired:true,orderIndependentIdentity:true,destinationBoundIntentGate:true,trustedTimedValidityGate:true,ambiguousDuplicateIntentBlocked:true,candidateSemanticDriftRejected:true,identityScopeDriftRejected:true,stage28DoesNotAuthorizeDelivery:true,repairedPathProgressed:true,fullCycleFixtureReachedStage27:true,isolatedDisposableProjects:true}));
+// Stage 25 frozen-candidate field contents and invalidation controls. The existing cheap verifier runs unchanged as a
+// bounded child (it has no receipt of its own) and its named case populations are published through this owner's report.
+const stage25DeliveryCandidateReport=JSON.parse(execFileSync(process.execPath,['verify-delivery-candidate-representation.mjs'],{encoding:'utf8',timeout:120000,maxBuffer:4*1024*1024}));
+assert.equal(stage25DeliveryCandidateReport.deliveryCandidateFreeze,'PASS','STAGE25_DELIVERY_CANDIDATE_OWNER_ORACLE');
+const stage25DeliveryCandidateInvalidation={deliveryCandidateFreeze:stage25DeliveryCandidateReport.deliveryCandidateFreeze,deliveryCandidateInvalidationCases:stage25DeliveryCandidateReport.deliveryCandidateInvalidationCases,deliveryCandidateFrozenFieldCases:stage25DeliveryCandidateReport.deliveryCandidateFrozenFieldCases};
+
+console.log(JSON.stringify({stage28:'PASS',applicationStage:28,pendingIdentityStoreProjection,intentionalInvalidFixturesRejected:rejected,noIdentityMutationOnRejectedByteFixtures:true,applicationByteRehashRequired:true,exactCandidateMappingRequired:true,orderIndependentIdentity:true,destinationBoundIntentGate:true,trustedTimedValidityGate:true,ambiguousDuplicateIntentBlocked:true,candidateSemanticDriftRejected:true,identityScopeDriftRejected:true,stage28DoesNotAuthorizeDelivery:true,repairedPathProgressed:true,fullCycleFixtureReachedStage27:true,isolatedDisposableProjects:true,stage25DeliveryCandidateInvalidation}));
