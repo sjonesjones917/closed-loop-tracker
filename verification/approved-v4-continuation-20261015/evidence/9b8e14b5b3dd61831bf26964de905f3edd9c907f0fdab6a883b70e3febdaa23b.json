@@ -1,0 +1,224 @@
+{
+  "batch": "009",
+  "proposalManifest": {
+    "path": "/tmp/clrt-current-qualifier-linkage-proposals-009/finalized/manifest.json",
+    "sha256": "f6f5b816fa5b28658811c3333791cb7d115dba314e25a302e7158df119791e3c"
+  },
+  "entryCount": 45,
+  "independentClasses": [
+    {
+      "name": "CURRENT_HANDOFF_AND_PROVENANCE",
+      "members": [
+        642,
+        1719,
+        1720,
+        1895,
+        1905,
+        2313,
+        2314,
+        2367,
+        1948,
+        1953,
+        5062,
+        5063,
+        5964,
+        5965,
+        5966,
+        6466,
+        6536,
+        6719,
+        6902
+      ],
+      "issues": {
+        "SRC-GAP-DECODER-SUBSET": {
+          "actual": true,
+          "reason": "C/C1 and technical11–19 define the actual safe admitted metadata and verified member bytes, original occurrence lineage and honest blocked/unknown remainder. This exact current input/handoff/provenance/member requirement consumes that ZIP source domain; no transport role or metadata grants disclosure, execution or semantic authority. Preserve smallest complete required package, original bytes and source locations.",
+          "branch": "Only the exact predicate’s current ZIP source-occurrence/verified-child/metadata/availability branch."
+        },
+        "SRC-GAP-DEFERRED-BINDING": {
+          "actual": true,
+          "reason": "Technical27–29 defines the actual accepted F1 test/definition/fixture/target/outcome, current scope/history, distinct execution input identities and attributable custody. This exact required handoff/provenance/byte predicate consumes those conditional inputs; preserve minimum disclosure, blind/future-material exclusion, exact registered route and stronger evidence.",
+          "branch": "Only its current F1 conditional input/test/fixture/target/history branch."
+        }
+      }
+    },
+    {
+      "name": "FIXED_DURABLE_REGISTRY_DECLARATION",
+      "members": [
+        1191,
+        1192,
+        1193,
+        1194,
+        1195,
+        1196,
+        1197,
+        1198,
+        1199,
+        1200
+      ],
+      "issues": {
+        "SRC-GAP-DECODER-SUBSET": {
+          "actual": false,
+          "reason": "This exact predicate requires registration/one parent or a declared identity/producer/lifecycle/scope/relationship/hash/migration/gate component. Technical11–19 determines actual ZIP bytes, not a new canonical object/family/property or the declaration rule. Current C/C1 structures remain registered under already-governing source; actual input/provenance values have separate links.",
+          "branch": "Only the exact predicate’s current ZIP source-occurrence/verified-child/metadata/availability branch."
+        },
+        "SRC-GAP-DEFERRED-BINDING": {
+          "actual": false,
+          "reason": "Technical29 explicitly introduces no store, writer or family and requires separate source field/producer/consumer review for serialization. The exact registry declaration/cardinality rule remains; actual conditional receipt/binding values are separately governed. Do not infer schema additions from the technical meaning record.",
+          "branch": "Only its current F1 conditional input/test/fixture/target/history branch."
+        }
+      }
+    },
+    {
+      "name": "FIXED_CATALOGUE_AND_HASH_RULES",
+      "members": [
+        5350,
+        5351,
+        5354,
+        6032,
+        6033,
+        6036,
+        5615,
+        6591,
+        6595,
+        6596
+      ],
+      "issues": {
+        "SRC-GAP-DECODER-SUBSET": {
+          "actual": false,
+          "reason": "This atom rejects an unregistered derivation/normalizer/object or implements registered pointer/derivation/normalizer hashing. Technical11–19 affects underlying ZIP occurrence values, not these closed membership/declaration/canonical hashing rules. Preserve all current registry coverage without attaching decoder semantics to the generic rule.",
+          "branch": "Only the exact predicate’s current ZIP source-occurrence/verified-child/metadata/availability branch."
+        },
+        "SRC-AMBIGUITY-XML-SUBNODE-ROOT": {
+          "actual": false,
+          "reason": "Technical33 changes SELECT_XML query rooting and affected semantic identity, not registry membership, one-family closure, canonical serialization, pointer sets or hashing procedures. Actual XML semantics and identity values remain separately governed; this catalogue/hash-rule qualifier is diagnostic.",
+          "branch": "Only its affected current SELECT_XML traversal/root semantics branch."
+        }
+      }
+    },
+    {
+      "name": "EXACT_STAGE01_HANDOFF",
+      "members": [
+        6487,
+        6533,
+        6674
+      ],
+      "issues": {
+        "SRC-GAP-DECODER-SUBSET": {
+          "actual": true,
+          "reason": "C/C1 and technical11–19 define the actual safe admitted metadata and verified member bytes, original occurrence lineage and honest blocked/unknown remainder. This exact current input/handoff/provenance/member requirement consumes that ZIP source domain; no transport role or metadata grants disclosure, execution or semantic authority. Preserve smallest complete required package, original bytes and source locations.",
+          "branch": "Only the exact predicate’s current ZIP source-occurrence/verified-child/metadata/availability branch."
+        },
+        "SRC-GAP-DEFERRED-BINDING": {
+          "actual": false,
+          "reason": "This exact predicate is Stage01 file handoff and its prescribed ordering. F1 specialized later failure/regression binding/history does not govern the initial Stage01 source input. Preserve the actual C/C1 intake link and all later handoff dependencies elsewhere.",
+          "branch": "Only its current F1 conditional input/test/fixture/target/history branch."
+        }
+      }
+    },
+    {
+      "name": "COMPLETE_SECURITY_TEST_DOMAIN",
+      "members": [
+        6751,
+        7132
+      ],
+      "issues": {
+        "SRC-GAP-DECODER-SUBSET": {
+          "actual": true,
+          "reason": "Complete current security coverage includes C1 ZIP structural/safety admission, verified decompression, bounded isolated resource handling and rejection of unsafe paths under technical11–19. Keep response transport and native worker policies separate; this source duty does not accept an executed test.",
+          "branch": "Only the exact predicate’s current ZIP source-occurrence/verified-child/metadata/availability branch."
+        },
+        "SRC-AMBIGUITY-XML-SUBNODE-ROOT": {
+          "actual": true,
+          "reason": "Complete current security coverage includes technical33’s confinement to the supplied XML subtree, no implicit ancestor/original-root/outside-sibling lookup and explicit same-execution node provenance. Link that actual traversal boundary only; preserve other security rules and required sequence.",
+          "branch": "Only its affected current SELECT_XML traversal/root semantics branch."
+        }
+      }
+    },
+    {
+      "name": "COMPLETE_STORAGE_FAILURE_DOMAIN",
+      "members": [
+        6752
+      ],
+      "issues": {
+        "SRC-GAP-DECODER-SUBSET": {
+          "actual": true,
+          "reason": "C1 intake may reserve/quarantine/write verified expanded children and must preserve honest blocked states on actual platform/storage limits. Technical11–19 preserves those boundaries, so complete current storage-failure coverage consumes this ZIP branch without weakening atomic storage duties.",
+          "branch": "Only the exact predicate’s current ZIP source-occurrence/verified-child/metadata/availability branch."
+        },
+        "SRC-AMBIGUITY-XML-SUBNODE-ROOT": {
+          "actual": false,
+          "reason": "Technical33 changes SELECT_XML traversal inside a supplied node, not durable storage, allocation ownership or storage-failure semantics. The complete security/actual native outcome duties remain separately linked.",
+          "branch": "Only its affected current SELECT_XML traversal/root semantics branch."
+        }
+      }
+    }
+  ],
+  "governorTemplates": {
+    "SRC-AMBIGUITY-XML-SUBNODE-ROOT": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/xml-reviewed-resolution-successor/effective-governor-link.json",
+      "sha256": "20dfd446263cdffd35a8b12b70844cad851cf7abb5ad059548bbb5f088c5875c",
+      "tag": "XML"
+    },
+    "SRC-GAP-DEFERRED-BINDING": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/decoder-deferred-amendment-edge-successor-001/deferred-effective-governor-link.json",
+      "sha256": "75381e46b03c244ee35f7c5c1154b30992070d214557a75bca00a00304d3eb37",
+      "tag": "DEFERRED"
+    },
+    "SRC-GAP-DECODER-SUBSET": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/decoder-deferred-amendment-edge-successor-001/decoder-effective-governor-link.json",
+      "sha256": "6d3046bd8c2f6d99086a15b803626d09fe5f3368f2c75b5b6e1bb38f9990d5b4",
+      "tag": "DECODER"
+    }
+  },
+  "extraSourceSpans": [
+    [
+      "BASE_SOURCE",
+      1164,
+      1166
+    ],
+    [
+      "BASE_SOURCE",
+      1635,
+      1647
+    ],
+    [
+      "SUCCESSOR_SOURCE",
+      424,
+      494
+    ]
+  ],
+  "reviewAttestation": "All45 exact predicates and15 current mechanisms read;50 unique original context occurrences examined including15 newly displayed versus prior001–008. Exact durable declaration/cardinality/hash-rule exceptions separated from actual handoff/provenance/input/security/storage dependencies. Stage01 handoff retains decoder alone; XML storage edge is diagnostic.",
+  "expected": {
+    "entryCount": 45,
+    "edgeCount": 90,
+    "actualEffectiveEdges": 46,
+    "diagnosticOnlyEdges": 44,
+    "freshCurrentIdentityCount": 25,
+    "retainedCurrentIdentityCount": 20,
+    "remainingQualifierRows": 394,
+    "remainingQualifierEdges": 1162
+  },
+  "priorReconciliations": [
+    {
+      "path": "/tmp/clrt-source-final-archives/qualifier-linkage-reconciliation-004-deliverable-manifest.json",
+      "sha256": "7ef909ea040083e32cc5b86c183e15fd2c48c3d88510004ddcd05bc07852de8a"
+    },
+    {
+      "path": "/tmp/clrt-source-final-archives/qualifier-linkage-reconciliation-005-deliverable-manifest.json",
+      "sha256": "adcaf5af75d1be7464da6f70404703edfa480308296f2d04654990ecef547fb0"
+    },
+    {
+      "path": "/tmp/clrt-source-final-archives/qualifier-linkage-reconciliation-006-deliverable-manifest.json",
+      "sha256": "9350eee1f7ebc54a5776f212b873b01a38b1d9c21106fe730e120b86a2c50228"
+    },
+    {
+      "path": "/tmp/clrt-source-final-archives/qualifier-linkage-reconciliation-007-deliverable-manifest.json",
+      "sha256": "a35c72e00af4312eae0e5be215b5ecd74d4a40e675dbb747d0edead7c6344566"
+    },
+    {
+      "path": "/tmp/clrt-source-final-archives/qualifier-linkage-reconciliation-008-deliverable-manifest.json",
+      "sha256": "d0eccc4800291124a2d8e0199b64be469ec4334655c6655aac37c11eb6d92892"
+    }
+  ]
+}

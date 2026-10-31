@@ -1,9 +1,10 @@
+import {authorizeSyntheticHandoff} from './test-handoff-authorization.mjs';
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {readStoreArchive} from './test-zip.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
-import {projectStoreRuntime,bindAcceptanceUi} from './test-project-store-runtime.mjs';
+import {projectStoreRuntime,bindAcceptanceUi,bindHandoffReviewUiState} from './test-project-store-runtime.mjs';
 import {responseFixture,OUTPUT} from './operator-journey-fixtures.mjs';
 import {createWorkflowObservation} from './operator-browser-driver.mjs';
 globalThis.dispatchEvent=()=>true;
@@ -68,10 +69,11 @@ report.durableCases=['Persist the baseline before product reservation','Persist 
   console.error(JSON.stringify({caseId:'HANDOFF-COMMITTED-CURRENT',operation:options.operation,selectedOptions:options,savedScope:record?.scope,currentScope:scope,revision:runtime.current.revision,error:String(error.message||error)}));
   assert.fail('HANDOFF_COMMITTED_CURRENT_ORACLE: a generated handoff must remain current and exportable after its normal durable commit: '+String(error.message||error));
  }
- const committed=runtime.currentPromptRecord(21);assert.ok(committed?.transportBindingRequired,'HANDOFF_COMMITTED_CURRENT_ORACLE');
+ let committed=runtime.currentPromptRecord(21);assert.ok(committed?.transportBindingRequired,'HANDOFF_COMMITTED_CURRENT_ORACLE');
  runtime.current=await durableStore.readProject(saved.job.JOB_ID);
  assert.equal(runtime.currentPromptRecord(21)?.instructionId,committed.instructionId,'HANDOFF_RELOAD_CURRENT_ORACLE');
- const bundle=await durableStore.createExecutionPackage({jobId:saved.job.JOB_ID,stage:21,operation:committed.operation,instructionId:committed.instructionId});
+ const authorized=await authorizeSyntheticHandoff(durable,{project:runtime.current,prompt:committed,action:durable.copy({target:'Disposable Stage21 product-reservation fixture',riskClasses:['READ_ONLY','REVERSIBLE'],expectedEffect:'Read the synthetic supplied context and write only response.json and result.txt in the disposable verifier location.',reversibility:'Discard this isolated verifier project and output files.',maximumCost:'No paid services or external tool calls.',authority:'Explicit synthetic operator decision for this fixture only.',containment:'No real user projects, network resources, credentials, or production systems.',stopCondition:'Stop if a requested action exceeds this disposable fixture.',responsibleActor:'SYNTHETIC_TEST_OPERATOR and deterministic fixture counterpart'})});runtime.current=authorized.project;runtime.projects=[runtime.current];committed=authorized.prompt;
+ const bundle=await durableStore.createExecutionPackage(authorized.request);
  assert.equal(bundle.manifest.promptIdentity.bodySha256,committed.bodySha256,'HANDOFF_EXPORT_IDENTITY_ORACLE');
  assert.equal(bundle.manifest.scope.productId,committed.scope.productId,'HANDOFF_EXPORT_TARGET_ORACLE');
  const members=new Map(readStoreArchive(new Uint8Array(await bundle.blob.arrayBuffer())).map(entry=>[entry.canonicalPath,entry.bytes]));
@@ -81,6 +83,7 @@ report.durableCases=['Persist the baseline before product reservation','Persist 
  assert.equal(exportedManifest.scope.productId,committed.scope.productId,'HANDOFF_EXPORTED_TARGET_ORACLE');
  // Execute the real stage export owner, including its durable receipt. A
  // duplicate activation must still deliver one archive containing exact bytes.
+ bindHandoffReviewUiState(runtime,{source});
  const downloads=[];
  Object.assign(runtime,{stagePlanItems:(stage,operation)=>uiEngine.stageTestExecutionPlan(runtime.current,{stage,operation}).items,displayedStageAction:stage=>uiEngine.operationalNextAction(runtime.current,stage),document:{querySelectorAll:()=>[]},$:()=>null,announce:()=>{},reportActionFailure:error=>{throw error;},downloadBlob:(blob,filename)=>downloads.push({blob,filename})});
  const functionSource=name=>{const start=source.search(new RegExp('(?:async )?function '+name+'\\('));assert.ok(start>=0);const next=source.slice(start+1).search(/\n(?:async )?function /);assert.ok(next>=0);return source.slice(start,start+1+next);};
@@ -126,22 +129,34 @@ report.durableCases=['Persist the baseline before product reservation','Persist 
  const staged=await durableStore.writeProject(prepared.project,{operational:true,expectedProjectRevision:current.revision,expectedStateSha256:current.projectSha256});
  phase('valid-response-staged');
  const acceptedCount=staged.projectData.acceptedChanges.length;
+ const finalProductPhases=['FINAL_PRODUCT_DETERMINISTIC','FINAL_PRODUCT_MEANING','FINAL_PRODUCT_ADVERSARIAL'];
  const assertAccepted=(r,failures)=>{
   assert.equal(failures.length,0,'PRODUCT_ACCEPTANCE_PERSISTENCE_ORACLE: a valid response with verified product bytes failed to commit: '+failures.map(error=>error.message).join(' | '));
   assert.equal(r.runtime.current.projectData.acceptedChanges.length,acceptedCount+1,'PRODUCT_ACCEPTANCE_PERSISTENCE_ORACLE: acceptance did not commit exactly once.');
   assert.equal(r.engine.gate(21,r.runtime.current).complete,true,'PRODUCT_ACCEPTANCE_PERSISTENCE_ORACLE: the matching accepted product and bytes did not complete their stage.');
+  for(const phase of finalProductPhases)assert.equal(r.engine.verificationPhaseTargetAvailability(r.runtime.current,phase),'TRUE','PRODUCT_ACCEPTANCE_PERSISTENCE_ORACLE: accepted product bytes must be available before reload for '+phase);
  };
  // Replay the same valid, bounded case in an isolated shared runtime with one
  // implementation fault. The production files and healthy store stay intact.
- const productionSource=fs.readFileSync('project-store.js','utf8'),faulted=projectStoreRuntime({fault:{id:'omit-candidate-byte-verification',file:'project-store.js',before:'  await observeProjectArtifactCustody(next);',after:'  // Injected fault: derive the new version using only prior-version custody.'}});
+ const productionSource=fs.readFileSync('project-store.js','utf8'),candidateCustodyAnchor="  await observeProjectArtifactCustody(next);\n  // Keep all canonical owners and fresh-byte observation in their original\n  // order. Reuse only full-value/primitive-guarded carrier digests inside this\n  // synchronous block; no validation or permission result crosses an await.\n  const canonicalWriteDigestScope=hash.createCanonicalDigestScope({generatedPrompts:next.projectData.generatedPrompts,rawResponses:next.projectData.rawResponses,responseProposals:next.projectData.responseProposals,generatedOutputs:next.projectData.generatedOutputs});\n  try{\n    hash.withCanonicalDigestScope(canonicalWriteDigestScope,()=>{\n      engine.recalculate(next);";
+ assert.equal(productionSource.split(candidateCustodyAnchor).length-1,1,'PRODUCT_ACCEPTANCE_CUSTODY_FAULT_ANCHOR_ORACLE: the fault must bind to candidate preparation before recalculation.');
+ const faulted=projectStoreRuntime({fault:{id:'omit-candidate-byte-verification',file:'project-store.js',before:candidateCustodyAnchor,after:candidateCustodyAnchor.replace('  await observeProjectArtifactCustody(next);','  // Injected fault: derive the new version using only prior-version custody.\n  globalThis.__candidateCustodyFaultExecutions=(globalThis.__candidateCustodyFaultExecutions||0)+1;')}});
  for(const [name,rows] of durable.rows)faulted.rows.set(name,new Map([...rows].map(([key,row])=>[key,faulted.copy(row)])));
  const faultFailures=bindAcceptanceUi(faulted,faulted.copy(staged),prepared.proposal.proposalId);
  await faulted.runtime.accept();if(faulted.runtime.replacementReview)await faulted.runtime.confirm();
- assert.throws(()=>assertAccepted(faulted,faultFailures),/PRODUCT_ACCEPTANCE_PERSISTENCE_ORACLE/,'The normative acceptance oracle must detect omitted candidate-byte verification.');
- assert.ok(faultFailures.some(error=>error.code==='PROJECT_INTEGRITY_FAILED'&&/deterministic recalculation/.test(error.message)),'The injected fault must reproduce the classified save failure.');
- assert.equal((await faulted.store.readProject(staged.job.JOB_ID)).projectData.acceptedChanges.length,acceptedCount,'A rejected acceptance must preserve accepted work.');
+ assert.ok(faulted.runtime.__candidateCustodyFaultExecutions>0,'PRODUCT_ACCEPTANCE_CUSTODY_FAULT_ACTIVATION_ORACLE');
+ assert.throws(()=>assertAccepted(faulted,faultFailures),/PRODUCT_ACCEPTANCE_PERSISTENCE_ORACLE: accepted product bytes must be available before reload/,'The normative acceptance oracle must detect omitted candidate-byte verification.');
+ // History verifies its own bytes without publishing current custody. The
+ // omission now commits metadata but leaves final-product execution unavailable;
+ // observe that defect before a normal read can restore current byte custody.
+ assert.equal(faultFailures.length,0,'PRODUCT_ACCEPTANCE_CUSTODY_FAULT_ORACLE: the omission must reach the accepted state.');
+ const unavailablePhases=Object.fromEntries(finalProductPhases.map(phase=>[phase,faulted.engine.verificationPhaseTargetAvailability(faulted.runtime.current,phase)]));
+ for(const phase of finalProductPhases)assert.equal(unavailablePhases[phase],'UNKNOWN','PRODUCT_ACCEPTANCE_CUSTODY_FAULT_ORACLE: '+phase);
+ const faultReloaded=await faulted.store.readProject(staged.job.JOB_ID);
+ assert.equal(faultReloaded.projectData.acceptedChanges.length,acceptedCount+1,'The fault must exercise committed product acceptance.');
+ for(const phase of finalProductPhases)assert.equal(faulted.engine.verificationPhaseTargetAvailability(faultReloaded,phase),'TRUE','PRODUCT_ACCEPTANCE_CUSTODY_RELOAD_ORACLE: '+phase);
  assert.equal(fs.readFileSync('project-store.js','utf8'),productionSource,'The injected runtime fault must not change production source.');
- report.acceptanceFault={caseId:'omit-candidate-byte-verification',detectedBy:'PRODUCT_ACCEPTANCE_PERSISTENCE_ORACLE',errors:faultFailures.map(error=>({code:error.code,message:error.message})),sourceRestored:true,result:'PASS'};
+ report.acceptanceFault={caseId:'omit-candidate-byte-verification',detectedBy:'PRODUCT_ACCEPTANCE_PERSISTENCE_ORACLE',faultExecutions:faulted.runtime.__candidateCustodyFaultExecutions,unavailablePhases,restoredByRead:true,errors:faultFailures.map(error=>({code:error.code,message:error.message})),sourceRestored:true,result:'PASS'};
  phase('candidate-custody-fault-detected');
  const failures=bindAcceptanceUi(durable,staged,prepared.proposal.proposalId);
  await runtime.accept();if(runtime.replacementReview)await runtime.confirm();assertAccepted(durable,failures);

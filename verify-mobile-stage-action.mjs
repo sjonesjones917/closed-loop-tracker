@@ -1,3 +1,4 @@
+import {createBrowserExecutionObserver} from './browser-execution-evidence.mjs';
 import {createBrowserReadiness,activateOperatorControl} from './operator-browser-driver.mjs';
 import {spawn} from 'node:child_process';
 import fs from 'node:fs';
@@ -27,10 +28,13 @@ async function openStage(cdp,stage){await click(cdp,'[data-view="Workflow"]');aw
 // project link; a reload of a saved-version URL must restore that saved version.
 async function navigateAndWait(cdp,method,params={},options={}){await createBrowserReadiness(cdp,expression=>evaluate(cdp,expression),{timeout:60000}).navigate(method,params,options);}
 async function openStoredFixture(cdp){const url=await evaluate(cdp,`(async()=>{const url=new URL(location.href);url.searchParams.delete('version');url.searchParams.delete('stage');url.searchParams.set('project',await closedLoopProjectStore.metaGet('selectedProject'));return url.href;})()`);await navigateAndWait(cdp,'Page.navigate',{url});}
+let executionObserver;
 async function main(){
   await poll(()=>getJson(`http://127.0.0.1:${port}/json/version`));
-  const target=await getJson(`http://127.0.0.1:${port}/json/new?${encodeURIComponent(`${PAGE_URL}?mobile-stage-regression=${Date.now()}`)}`,{method:'PUT'}),cdp=new CDP(target.webSocketDebuggerUrl);
+  const target=await getJson(`http://127.0.0.1:${port}/json/new?${encodeURIComponent('about:blank')}`,{method:'PUT'}),cdp=new CDP(target.webSocketDebuggerUrl);
   await cdp.ready;await cdp.send('Runtime.enable');await cdp.send('Page.enable');
+  executionObserver=await createBrowserExecutionObserver({webSocketDebuggerUrl:target.webSocketDebuggerUrl,pageUrl:PAGE_URL});
+  await cdp.send('Page.navigate',{url:`${PAGE_URL}?mobile-stage-regression=${Date.now()}`});
   await waitFor(cdp,`document.readyState==='complete'`);await waitFor(cdp,`globalThis.closedLoopAppReady===true`);assert(!(await evaluate(cdp,'globalThis.closedLoopAppError')),await evaluate(cdp,'globalThis.closedLoopAppError'));
   await click(cdp,'#new-project');await waitFor(cdp,`Boolean(document.querySelector('[data-job="SUPPLIED_MATERIALS_INVENTORY"]'))`);
   const filename='MAINFRAME_INVENTION_DISCLOSURE_COUNSEL_READY_LOGIC_CLEAN_2_WITH_A_DELIBERATELY_LONG_UNBROKEN_MOBILE_FILENAME_1234567890.pdf';
@@ -181,8 +185,8 @@ async function main(){
   assert(await evaluate(cdp,`closedLoopProjectStore.historyList('BROWSER-FILE-PRESSURE').then(history=>history.removed&&history.entries.length>0)`),'File-pressure removal lost promised History.');
   console.log(JSON.stringify({boundedFileCustodyAndStaging:fileCustody,pagedArtifactDownloadAndCompleteExport:fileExport}));
   console.log(JSON.stringify({all30StageCollapsedDiagnostics:true,diagnosticArrowProof,diagnosticReasonCount,all30StageAccumulatedDataViews:true,historyRecords:BROWSER_HISTORY_RECORDS,minimumRawHistoryCharacters:BROWSER_HISTORY_RECORDS*BROWSER_HISTORY_CHARACTERS,collapsedDom:pressureDom,pagedDom,historyExport}));
-  console.log(JSON.stringify({mobileStageActionRegression:true,widths:[320,393],longFilenameWrapped:true,stateAndActionExplicit:true,primaryActionReachable:true,promptVisualBaselinePreserved:true,horizontalOverflow:false,mobileCapabilityEvidence:'verify-mobile-capability-journey.mjs performs actual export, selection, and restore'}));
+  console.log(JSON.stringify({mobileStageActionRegression:true,browserExecution:await executionObserver?.finish(),widths:[320,393],longFilenameWrapped:true,stateAndActionExplicit:true,primaryActionReachable:true,promptVisualBaselinePreserved:true,horizontalOverflow:false,mobileCapabilityEvidence:'verify-mobile-capability-journey.mjs performs actual export, selection, and restore'}));
   cdp.close();
 }
 async function cleanup(){if(!proc.killed)proc.kill('SIGTERM');await Promise.race([new Promise(resolve=>proc.once('exit',resolve)),sleep(1000)]);try{fs.rmSync(profile,{recursive:true,force:true,maxRetries:3,retryDelay:100});}catch{}}
-try{await main();}finally{await cleanup();}
+try{await main();}finally{executionObserver?.close();await cleanup();}

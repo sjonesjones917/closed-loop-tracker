@@ -1,0 +1,187 @@
+{
+  "schema": "closed-loop-approved-insertion-coordinate-map/1",
+  "baseCommit": "2933fd05538a3663769f27ad08e70d0f9520e910",
+  "baseSourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+  "successorSourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+  "ranges": [
+    {
+      "clause": "C_C1",
+      "amendmentId": "APPROVED-OWNER-DECISIONS-V4-20261015-C_C1",
+      "sectionId": "6.5A",
+      "approvedProposalSourceStartLine": 39,
+      "approvedProposalSourceEndLine": 111,
+      "insertBeforeBaseLine": 422,
+      "insertBeforeBaseByte": 25996,
+      "startLine": 422,
+      "lineCount": 74,
+      "endLine": 495,
+      "textSha256": "127946d9ff0901fbb32eebb3464c2126a8cfc7f2429a7ac650f7795c05714168",
+      "byteLength": 27488,
+      "baseSpecificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "previousSpecificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "successorAfterThisInsertionSha256": "db282e8c4ad994ac579af6c1a7b83f27fc77493ca137bedf3753dc11cfa73300"
+    },
+    {
+      "clause": "F_F1",
+      "amendmentId": "APPROVED-OWNER-DECISIONS-V4-20261015-F_F1",
+      "sectionId": "14.6",
+      "approvedProposalSourceStartLine": 161,
+      "approvedProposalSourceEndLine": 175,
+      "insertBeforeBaseLine": 1113,
+      "insertBeforeBaseByte": 60770,
+      "startLine": 1187,
+      "lineCount": 16,
+      "endLine": 1202,
+      "textSha256": "5c56b939e7834605b79b6485c3e72d42992780e92abdd90791792a1ed75f85c3",
+      "byteLength": 3196,
+      "baseSpecificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "previousSpecificationSha256": "db282e8c4ad994ac579af6c1a7b83f27fc77493ca137bedf3753dc11cfa73300",
+      "successorAfterThisInsertionSha256": "c9b1744e23a33cadaa374ce4143bf02fec40e691dcc2eba7ed004027a61e9b1a"
+    },
+    {
+      "clause": "A",
+      "amendmentId": "APPROVED-OWNER-DECISIONS-V4-20261015-A",
+      "sectionId": "18",
+      "approvedProposalSourceStartLine": 13,
+      "approvedProposalSourceEndLine": 26,
+      "insertBeforeBaseLine": 1547,
+      "insertBeforeBaseByte": 92117,
+      "startLine": 1637,
+      "lineCount": 15,
+      "endLine": 1651,
+      "textSha256": "72ddbce7b01252d3b36bc20a9ba181f0f3040c63f57f89c75ef4439a8c7c3643",
+      "byteLength": 3561,
+      "baseSpecificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "previousSpecificationSha256": "c9b1744e23a33cadaa374ce4143bf02fec40e691dcc2eba7ed004027a61e9b1a",
+      "successorAfterThisInsertionSha256": "2941ba45d74efb7c556a99a7c89be3e953aeb7bf7b68e3a3dc2c8c2cb9f4b772"
+    },
+    {
+      "clause": "B",
+      "amendmentId": "APPROVED-OWNER-DECISIONS-V4-20261015-B",
+      "sectionId": "21.17",
+      "approvedProposalSourceStartLine": 28,
+      "approvedProposalSourceEndLine": 37,
+      "insertBeforeBaseLine": 1936,
+      "insertBeforeBaseByte": 111266,
+      "startLine": 2041,
+      "lineCount": 11,
+      "endLine": 2051,
+      "textSha256": "8759a4ea425f8a0128fcb4f4bde318fa0bc68cbc87bcf203bb68774e227d986a",
+      "byteLength": 4130,
+      "baseSpecificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "previousSpecificationSha256": "2941ba45d74efb7c556a99a7c89be3e953aeb7bf7b68e3a3dc2c8c2cb9f4b772",
+      "successorAfterThisInsertionSha256": "de05830c14f9056fb652c92992ae7aa423b55a865a23288e90027edfe2673363"
+    },
+    {
+      "clause": "D",
+      "amendmentId": "APPROVED-OWNER-DECISIONS-V4-20261015-D",
+      "sectionId": "21.17",
+      "approvedProposalSourceStartLine": 113,
+      "approvedProposalSourceEndLine": 147,
+      "insertBeforeBaseLine": 1936,
+      "insertBeforeBaseByte": 111266,
+      "startLine": 2052,
+      "lineCount": 36,
+      "endLine": 2087,
+      "textSha256": "fae6d458e246fea60b71610142f47172cb0bef14155d25fa92d707c92e9d785e",
+      "byteLength": 14381,
+      "baseSpecificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "previousSpecificationSha256": "de05830c14f9056fb652c92992ae7aa423b55a865a23288e90027edfe2673363",
+      "successorAfterThisInsertionSha256": "f2119ce09b9d2d8413014ccf026e650d75b5f374f8ca637df2fef7f5848cda8b"
+    },
+    {
+      "clause": "F2",
+      "amendmentId": "APPROVED-OWNER-DECISIONS-V4-20261015-F2",
+      "sectionId": "26.6",
+      "approvedProposalSourceStartLine": 177,
+      "approvedProposalSourceEndLine": 204,
+      "insertBeforeBaseLine": 2372,
+      "insertBeforeBaseByte": 129098,
+      "startLine": 2524,
+      "lineCount": 29,
+      "endLine": 2552,
+      "textSha256": "17d97ac0b9bc29a8f533ba163b66558a7a83f1d6aaad8ea53f3c35e6d33c2765",
+      "byteLength": 3694,
+      "baseSpecificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "previousSpecificationSha256": "f2119ce09b9d2d8413014ccf026e650d75b5f374f8ca637df2fef7f5848cda8b",
+      "successorAfterThisInsertionSha256": "70f968a25968611ec174bb7a9bc4c03eb8aecb4c4890784ce002eeb3921b0a6d"
+    },
+    {
+      "clause": "E",
+      "amendmentId": "APPROVED-OWNER-DECISIONS-V4-20261015-E",
+      "sectionId": "38.1",
+      "approvedProposalSourceStartLine": 149,
+      "approvedProposalSourceEndLine": 159,
+      "insertBeforeBaseLine": 3874,
+      "insertBeforeBaseByte": 218308,
+      "startLine": 4055,
+      "lineCount": 12,
+      "endLine": 4066,
+      "textSha256": "a68cbba0b5227198852dbdba70f9ab3653c753b7a06f98273b9c92d459af4f40",
+      "byteLength": 3969,
+      "baseSpecificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "previousSpecificationSha256": "70f968a25968611ec174bb7a9bc4c03eb8aecb4c4890784ce002eeb3921b0a6d",
+      "successorAfterThisInsertionSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9"
+    }
+  ],
+  "segments": [
+    {
+      "baseStartLine": 1,
+      "baseEndLine": 421,
+      "lineDelta": 0,
+      "byteDelta": 0
+    },
+    {
+      "baseStartLine": 422,
+      "baseEndLine": 1112,
+      "lineDelta": 74,
+      "byteDelta": 27488
+    },
+    {
+      "baseStartLine": 1113,
+      "baseEndLine": 1546,
+      "lineDelta": 90,
+      "byteDelta": 30684
+    },
+    {
+      "baseStartLine": 1547,
+      "baseEndLine": 1935,
+      "lineDelta": 105,
+      "byteDelta": 34245
+    },
+    {
+      "baseStartLine": 1936,
+      "baseEndLine": 2371,
+      "lineDelta": 152,
+      "byteDelta": 52756
+    },
+    {
+      "baseStartLine": 2372,
+      "baseEndLine": 3873,
+      "lineDelta": 181,
+      "byteDelta": 56450
+    },
+    {
+      "baseStartLine": 3874,
+      "baseEndLine": 5658,
+      "lineDelta": 193,
+      "byteDelta": 60419
+    }
+  ],
+  "transportRule": "Exact original occurrence-set transport. Split any retained multi-line range at inserted intervals; no new source occurrence is attributed to the historical reader. This map is arithmetic only, not semantic impact approval.",
+  "correction": {
+    "suppliedMapSha256": "01c66373e254d319a6ae6f7a3292de55389eb363b84e5253199913b5496cef33",
+    "field": "segments/6/baseEndLine",
+    "supplied": 5659,
+    "corrected": 5658,
+    "reason": "Final split sentinel is not a physical line. The final blank physical line is real and retained.",
+    "sourceByteAuthority": {
+      "physicalLines": "One-based LF-delimited physical lines; the final split sentinel after the final LF is not a new physical source line. Preserve the final blank physical line.",
+      "byteOffsets": "Zero-based absolute UTF-8 byte offsets with exclusive end. Never use UTF-16 code-unit offsets.",
+      "lineSha256": "SHA-256 of exact line UTF-8 bytes excluding LF, including all other original characters.",
+      "sourceSpanSha256": "SHA-256 of the exact specified byte slice.",
+      "canonicalPaths": "Use the supplied role/path and source hash; do not infer identity from a filename."
+    },
+    "doesNotChangeSourceBytes": true
+  }
+}

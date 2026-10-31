@@ -130,6 +130,29 @@ await check('VERIFIER-CONSUMER-NAVIGATION','Each reload or direct project naviga
  }
  assert.equal(observed.filter(row=>row.readyDocument!=='destination-document').length,0,'VERIFIER_CONSUMER_NAVIGATION_ORACLE: '+JSON.stringify(observed));return observed;
 });
+await check('VERIFIER-NATIVE-ADAPTER-DESTINATION','The shared native-target adapter ignores historical load events, resolves only after the requested destination loader arrives, and rejects an absent destination under the readiness gate deadline.',async()=>{
+ const source=fs.readFileSync(process.env.BROWSER_SOURCE||'verify-browser.mjs','utf8'),start=source.indexOf(' const createNativeTarget=async()=>{'),end=source.indexOf('\n const appendOnlyNative=',start);
+ assert(start>=0&&end>start,'VERIFIER_NATIVE_ADAPTER_EXTRACTION_ORACLE');
+ const observe=async mode=>{
+  let native;
+  class CDP{
+   constructor(){native=this;this.events=mode==='stale-event'?[{method:'Page.loadEventFired',params:{timestamp:1}}]:[];this.ready=Promise.resolve();this.loader='previous-document';this.calls=[];}
+   async send(method,params={}){this.calls.push(method);if(method==='Page.enable')return {};if(method==='Page.getFrameTree')return {frameTree:{frame:{id:'main',loaderId:this.loader}}};if(method==='Page.navigate'){if(mode==='fresh-destination'){this.loader='destination-document';this.events.push({method:'Page.loadEventFired',params:{timestamp:2}});}return {frameId:'main',loaderId:'destination-document'};}if(method==='Target.closeTarget')return {success:true};throw new Error('Unexpected native adapter CDP method: '+method);}
+   close(){}
+  }
+  const runtime=createVerifierRuntime({port:12345,CDP,getJson:async()=>({id:'controlled-native-target',webSocketDebuggerUrl:'ws://controlled-native-target'}),evalValue:async()=>true,poll:async read=>{let last;for(let attempt=0;attempt<3;attempt++){try{return await read();}catch(error){last=error;}}throw last;}});
+  runtime.createBrowserReadiness=(cdp,evaluate,options)=>readinessFactory(cdp,evaluate,{...options,timeout:20});
+  vm.runInContext(source.slice(start,end)+'\nglobalThis.extractedCreateNativeTarget=createNativeTarget;',runtime,{filename:process.env.BROWSER_SOURCE||'verify-browser.mjs'});
+  const target=await runtime.extractedCreateNativeTarget();let error=null;
+  try{await target.navigate('https://fixture.invalid/native-destination?phase=FRESH');}catch(cause){error=cause;}finally{await target.close();}
+  return {mode,outcome:error?'REJECTED':'RESOLVED',errorCode:error?.code||null,finalLoader:native.loader,calls:native.calls,staleEventCount:native.events.filter(event=>event.method==='Page.loadEventFired'&&event.params?.timestamp===1).length};
+ };
+ const stale=await observe('stale-event'),fresh=await observe('fresh-destination'),absent=await observe('absent-destination');
+ assert.equal(stale.outcome,'REJECTED','VERIFIER_NATIVE_STALE_LOAD_EVENT_ORACLE: a historical load event satisfied a new navigation');assert.equal(stale.errorCode,'VERIFIER_TIMEOUT','VERIFIER_NATIVE_STALE_EVENT_BOUND_ORACLE');assert.equal(stale.finalLoader,'previous-document');
+ assert.equal(fresh.outcome,'RESOLVED','VERIFIER_NATIVE_FRESH_LOADER_ORACLE');assert.equal(fresh.finalLoader,'destination-document');assert(fresh.calls.filter(method=>method==='Page.getFrameTree').length>=2,'VERIFIER_NATIVE_LOADER_OBSERVATION_ORACLE');
+ assert.equal(absent.outcome,'REJECTED','VERIFIER_NATIVE_ABSENT_DESTINATION_ORACLE');assert.equal(absent.errorCode,'VERIFIER_TIMEOUT','VERIFIER_NATIVE_ABSENT_DESTINATION_BOUND_ORACLE');assert.equal(absent.finalLoader,'previous-document');
+ return {stale,fresh,absent,actualExtractedAdapter:true,actualSharedReadiness:true,syntheticCdp:true};
+});
 await check('VERIFIER-HISTORY-DESTINATION','Browser history traversal waits for the requested entry before judging readiness, including delayed multi-entry traversal.',async()=>{
  const source=fs.readFileSync('operator-browser-driver.mjs','utf8'),start=source.lastIndexOf('async function restoreEntry('),end=source.indexOf('\n  async function ',start+1);assert(start>=0&&end>start);
  let entry=11,polls=0,navigating=false,readyEntry=null;const events=[];

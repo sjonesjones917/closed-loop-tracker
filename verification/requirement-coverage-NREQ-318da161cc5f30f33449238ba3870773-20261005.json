@@ -1,0 +1,124 @@
+{
+  "schema": "closed-loop-requirement-coverage-review/1",
+  "normativeRequirementId": "NREQ-318da161cc5f30f33449238ba3870773",
+  "sourceLineSha256": "e8d7b295bb44879a132a56b269b6e29a1807c18b957046191674c0c73181074b",
+  "specificationSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
+  "declarationSha256": "123b97ea9f3d6c1f5b3c9908f407b0026dddfb180e4efec387a03805cf6eec73",
+  "decision": "COMPLETE_COVERAGE",
+  "evidenceBasis": "EXTERNALLY_SUPPORTED",
+  "method": "Actual separate-context semantic review of the complete exact source clause, governing context, named production owners, independent test inputs/oracles and applicability decisions; targeted independent executions and final owner source reconciliation as stated below. This review approves the declaration sufficiency, not a precomputed execution outcome.",
+  "author": {
+    "actor": "Codex declaration author",
+    "contextId": "/root/storage"
+  },
+  "reviewer": {
+    "actor": "Codex independent declaration reviewer",
+    "contextId": "/root/independent_spec"
+  },
+  "reviewedInputs": [
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d"
+    },
+    {
+      "path": "test-project-store-runtime.mjs",
+      "sha256": "3f82a071a5436e6ccc5cfc60fe3b9784598cbebe517c8e5427a0b72871ee8245"
+    },
+    {
+      "path": "test-runtime-operation-registry.mjs",
+      "sha256": "8892e1f7aea7a6565af693233fe802785d8dbcabee972c6b61890a66a02f233e"
+    },
+    {
+      "path": "test-runtime.js",
+      "sha256": "e4e01a79c526592f9d044e2c104845e63c9aa341eb64837c138f5c3e3ecba353"
+    },
+    {
+      "path": "verification-evidence-catalog.mjs",
+      "sha256": "576202e5983c4d2056a26db06815d650ac734d99dee33edea68cb7e319ec4671"
+    },
+    {
+      "path": "verification/deferred-definition-compatibility-legacy-fixture-20261005.json",
+      "sha256": "ee24d42567765ed0f56cb1658fd3d79a4b2cfba499b983abf7b9c79f9cac7464"
+    },
+    {
+      "path": "verification/normative-context-applicability-20261005.json",
+      "sha256": "7cd05ff0028578a1ca1c2560533519a602ce6a974c240ee11dbbd272524cf656"
+    },
+    {
+      "path": "verifier-runtime.mjs",
+      "sha256": "8a4c9058b6c72a5aa8dd68809e3cbfd8e5c217b358c41970347443a338f83933"
+    },
+    {
+      "path": "verify-test-runtime-v3.mjs",
+      "sha256": "4a86e7340d01ad8ccafc364fa0784f01a49583ab6423a65323f625c09424a971"
+    },
+    {
+      "declarationSha256": "123b97ea9f3d6c1f5b3c9908f407b0026dddfb180e4efec387a03805cf6eec73"
+    }
+  ],
+  "findings": [],
+  "reviewPerformed": true,
+  "reviewCompletedAt": "2026-10-05T17:00:42.148Z",
+  "sourceLocation": {
+    "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+    "startLine": 4753,
+    "endLine": 4753,
+    "lineSha256": "e8d7b295bb44879a132a56b269b6e29a1807c18b957046191674c0c73181074b"
+  },
+  "controllingText": "- unknown operation is rejected;",
+  "governingContext": [
+    {
+      "normativeRequirementId": "NREQ-c323c5269f25094fda1ee794ae5c60f5",
+      "sourceLineSha256": "2fa8f9254102fefa8e46d7e1d22a41cc07145134aef01438f0dc3cb2cf3ac26b",
+      "controllingText": "The suite covers:"
+    }
+  ],
+  "additionalControllingContext": [],
+  "reviewedChecks": [
+    {
+      "suite": "verify-test-runtime-v3.mjs",
+      "checkId": "test-ir.unknown-operation"
+    },
+    {
+      "suite": "verify-test-runtime-v3.mjs",
+      "checkId": "test-ir.operation-registry-admission"
+    },
+    {
+      "suite": "verify-test-runtime-v3.mjs",
+      "checkId": "test-ir.unknown-operation"
+    },
+    {
+      "suite": "verify-test-runtime-v3.mjs",
+      "checkId": "test-ir.operation-registry-admission"
+    }
+  ],
+  "semanticDecision": "CLOSED_TEST_IR_OPERATION_ADMISSION",
+  "reason": "Read the closed named operation set and string plus own-membership admission in legacy and DAG paths. Unknown, inherited-name and nonstring operations have independent exact invalid diagnostics; all27 registered primitive controls remain conforming. Maintained actual validateEnvelope variants additionally exercise the native-test ingestion boundary. This is restoration of the already-declared language, without a registered operation identity/semantic change.",
+  "scopeLimit": "Closed operation validation and shown ingestion boundary; no stored import, browser release or every other malformed field claim.",
+  "actorIndependenceBoundary": "The application checks attributed review identity, exact reviewed bytes and current proof relationships; it does not establish the reviewer hidden context. This actual review context is distinct from the named declaration author. The earlier sealed source-only extraction remains a separate unchanged artifact.",
+  "reviewerPriorContributionDisclosure": "This reviewer previously authored the bounded operation-admission repair and literal primitive regression; this is an actual independent review of the separate storage-agent declaration, not a claim of independent authorship of every referenced test. The source-only omission review predated and remained separate from implementation work.",
+  "retainedReviewInputs": {
+    "proposal": {
+      "path": "/workspace/scratch/full-coverage-storage-proposals.json",
+      "sha256": "3a805bca70e96b132d5f8923fc4d87d8131af0977692ddfbc361ce9f7bd8656e"
+    },
+    "priorSemanticReview": {
+      "path": "/workspace/scratch/independent-full-coverage-semantic-review-current45.json",
+      "sha256": "8b76d6c6c1425220853a1798090edf609fadde97ad840f2699e006b7ed2bb866"
+    }
+  },
+  "qualifiedExecutionAndReviewEvidence": [
+    {
+      "path": "/workspace/scratch/runtime-operation-registry-focused-current45.json",
+      "sha256": "274216d23ac18e59fc94bbe4de3b8f1e00094f6656386d565e54571b07b9cd34",
+      "qualification": "Retained actual boundary/source tuple only; this reference does not substitute for current canonical executed receipts."
+    },
+    {
+      "path": "/workspace/scratch/runtime-untrusted-operation-repair-current45.json",
+      "sha256": "7cfeab2a56b1574797073f10a80a3a96347dc315744859e828c2e538240f78e4",
+      "qualification": "Retained actual boundary/source tuple only; this reference does not substitute for current canonical executed receipts."
+    }
+  ],
+  "currentExecutionRequired": true,
+  "applicationConformanceClaim": false
+}

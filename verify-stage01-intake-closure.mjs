@@ -2,6 +2,7 @@ import {checkedVerifier} from './verify-conformance-regressions.mjs';
 import {artifactFixtureId} from './test-artifact-fixtures.mjs';
 import {recordProposal} from './test-fixtures.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
+import {executionReports} from './verification-evidence.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {execFileSync} from 'node:child_process';
@@ -52,6 +53,24 @@ let invalid=envelope(incomplete);let validation=ingestion.validateEnvelope(p,inv
 assert(validation.issues.some(issue=>issue.code==='INCOMPLETE_INTAKE_ACCOUNTING'),'Stage 01 ingestion accepted incomplete intake accounting.');
 let valid=envelope(capture);validation=ingestion.validateEnvelope(p,valid,{stage:1,promptRecord:prompt,rawSha256:hash.sha256Value(valid),files:[]});
 assert(!validation.issues.some(issue=>issue.code==='INCOMPLETE_INTAKE_ACCOUNTING'),`Stage 01 ingestion rejected repaired intake accounting: ${JSON.stringify(validation.issues)}`);
+
+// A valid partial proposal and human confirmation cannot define a missing
+// deliverable. Exercise the actual accepted-state gate, not JSON spelling.
+const deliverableCompletionCases=[];
+const verificationObservations=[];
+for(const [caseId,value,expectedComplete] of [['omitted',undefined,false],['empty','',false],['unknown','UNKNOWN',false],['defined','Exact requested product',true]]){
+  const candidate=structuredClone(p),response=envelope(capture);
+  if(value===undefined)delete response.stageData.EXACT_DELIVERABLE_REQUESTED;else response.stageData.EXACT_DELIVERABLE_REQUESTED=value;
+  const prepared=ingestion.prepare(candidate,{stage:1,text:JSON.stringify(response),promptRecord:prompt});
+  assert(prepared.validation.valid,`DELIVERABLE_GATE_SETUP_ORACLE: ${caseId}: ${JSON.stringify(prepared.validation.issues)}`);
+  const committed=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'INTAKE_DELIVERABLE_FIXTURE'}),project=committed.project;
+  engine.recordStageConfirmation(project,1,true,'Current intent confirmed','INTAKE_DELIVERABLE_FIXTURE',{acceptedChangeId:committed.acceptedChange.changeId,inputVersion:project.job.CURRENT_INPUT_VERSION,instructionId:committed.acceptedChange.promptId,contextSignature:committed.acceptedChange.contextSignature,operatorLabel:'INTAKE_DELIVERABLE_FIXTURE'});
+  const gate=engine.gate(1,project);
+  assert(gate.complete===expectedComplete,`DELIVERABLE_COMPLETION_ORACLE: ${caseId}: ${JSON.stringify(gate)}`);
+  if(!expectedComplete)assert(gate.reasons.some(reason=>reason.includes('intended deliverable')),`DELIVERABLE_REASON_ORACLE: ${caseId}: ${JSON.stringify(gate)}`);
+  deliverableCompletionCases.push({observationId:'stage01.deliverable.'+caseId,expected:{complete:expectedComplete},actual:{complete:gate.complete,deliverable:project.job.EXACT_DELIVERABLE_REQUESTED||null,reasons:gate.reasons}});
+  verificationObservations.push({checkId:'stage01.deliverable.'+caseId,requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:557'],boundary:'Actual accepted Stage01 proposal and current human confirmation completion gate',expected:{complete:expectedComplete},observed:{complete:gate.complete},passed:true,...(!expectedComplete?{violation:'STAGE01_UNDEFINED_INTENDED_DELIVERABLE',accepted:false}:{})});
+}
 
 // Stored UTF-8 text is mechanically available and must not collapse into a
 // whole-file coverage assertion. Comments and line endings remain exact bytes.
@@ -135,6 +154,18 @@ for(const testCase of challengeCases){
   }
   fileChallengeCases.push({id,count,required,complete:gate.complete,result:'PASS'});
 }
-const humanAuthorityRoundTrip=JSON.parse((await checkedVerifier(process.execPath,['verify-human-authority-roundtrip.mjs'],{encoding:'utf8'})));
-assert(humanAuthorityRoundTrip.humanAuthorityRoundTrip==='PASS'&&humanAuthorityRoundTrip.atomicCoAcceptanceStable===true&&humanAuthorityRoundTrip.unrelatedMutationFailsClosed===true&&humanAuthorityRoundTrip.returnedAttachmentNotRawInput===true,'Integrated Stage 01 human-authority regression did not report every repaired-path proof.');
-console.log(JSON.stringify({stage01IntakeClosure:true,artifactIdentityBound:true,currentManifestBound:true,incompleteAccountingRejected:true,missingInspectionClaimRejected:true,missingHandoffRejected:true,legacyCaptureRejected:true,missingPassOneRejected:true,missingPassTwoRejected:true,incompleteChallengeCategoriesRejected:true,humanAuthorityRoundTripIntegrated:true,fileChallengeCases}));
+function selectHumanAuthorityReports(reports){
+  const save=reports.filter(row=>Object.hasOwn(row,'humanStageSave'));
+  const authority=reports.filter(row=>Object.hasOwn(row,'humanAuthorityRoundTrip'));
+  assert(reports.length===2&&save.length===1&&authority.length===1,'HUMAN_AUTHORITY_REPORT_ORACLE: expected one stage-save and one authority report.');
+  return {save:save[0],authority:authority[0]};
+}
+const humanAuthorityReports=executionReports(await checkedVerifier(process.execPath,['verify-human-authority-roundtrip.mjs'],{encoding:'utf8'}));
+const {save:humanStageSave,authority:humanAuthorityRoundTrip}=selectHumanAuthorityReports(humanAuthorityReports);
+for(const [name,reports] of [
+  ['missing-authority',humanAuthorityReports.filter(row=>row!==humanAuthorityRoundTrip)],
+  ['duplicate-authority',[...humanAuthorityReports,humanAuthorityRoundTrip]],
+  ['missing-stage-save',humanAuthorityReports.filter(row=>row!==humanStageSave)]
+]){let rejected=false;try{selectHumanAuthorityReports(reports);}catch(error){rejected=error.message.includes('HUMAN_AUTHORITY_REPORT_ORACLE');}assert(rejected,'HUMAN_AUTHORITY_REPORT_MUTATION_ORACLE: '+name+' was accepted.');}
+assert(humanStageSave.humanStageSave==='PASS'&&humanStageSave.actualStoreAndReload===true&&humanAuthorityRoundTrip.humanAuthorityRoundTrip==='PASS'&&humanAuthorityRoundTrip.atomicCoAcceptanceStable===true&&humanAuthorityRoundTrip.unrelatedMutationFailsClosed===true&&humanAuthorityRoundTrip.returnedAttachmentNotRawInput===true,'Integrated Stage 01 human-authority regression did not report every repaired-path proof.');
+console.log(JSON.stringify({stage01IntakeClosure:true,verificationObservations,artifactIdentityBound:true,currentManifestBound:true,incompleteAccountingRejected:true,missingInspectionClaimRejected:true,missingHandoffRejected:true,legacyCaptureRejected:true,missingPassOneRejected:true,missingPassTwoRejected:true,incompleteChallengeCategoriesRejected:true,humanAuthorityRoundTripIntegrated:true,fileChallengeCases,deliverableCompletionCases}));

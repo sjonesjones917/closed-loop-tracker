@@ -1,0 +1,185 @@
+{
+  "proposalSha256": "41beae3590201c525103431e26bbfbb5019fd708389ebb0fecf8dce3dcff2cd1",
+  "reviewerContext": "/root/review_canonical_json_proofs",
+  "reviewType": "SOURCE_AND_ASSERTION_LINEAGE_SCOPED_MAPPING_ONLY",
+  "proposalApplied": false,
+  "newProducerExecution": false,
+  "results": [
+    {
+      "id": "NREQ-8b4e4766609f47fbd274a2b126e68ebb",
+      "family": "native-input-runtime",
+      "decision": "ACCEPT_PARTIAL_SCOPED_MAPPING",
+      "currentConformance": "UNPROVEN",
+      "fullCoverage": false
+    },
+    {
+      "id": "NREQ-075fd51f95d3df67edd23c51d325154b",
+      "family": "native-input-runtime",
+      "decision": "ACCEPT_PARTIAL_SCOPED_MAPPING",
+      "currentConformance": "UNPROVEN",
+      "fullCoverage": false
+    },
+    {
+      "id": "NREQ-11653c23ebc288f46eb77a40d05ed2e0",
+      "family": "backup-extension",
+      "decision": "ACCEPT_PARTIAL_SCOPED_MAPPING",
+      "currentConformance": "UNPROVEN",
+      "fullCoverage": false
+    },
+    {
+      "id": "NREQ-4b229054068c2b9cba885a3c6692d855",
+      "family": "backup-extension",
+      "decision": "ACCEPT_PARTIAL_SCOPED_MAPPING",
+      "currentConformance": "UNPROVEN",
+      "fullCoverage": false
+    },
+    {
+      "id": "NREQ-89327bc392b2dbb4f44696ae45041fbb",
+      "family": "proof-obligation-dependencies",
+      "decision": "ACCEPT_PARTIAL_SCOPED_MAPPING",
+      "currentConformance": "UNPROVEN",
+      "fullCoverage": false
+    },
+    {
+      "id": "NREQ-5613daddef07c70470dfea6e3c4cbba0",
+      "family": "proof-obligation-dependencies",
+      "decision": "ACCEPT_PARTIAL_SCOPED_MAPPING",
+      "currentConformance": "UNPROVEN",
+      "fullCoverage": false
+    },
+    {
+      "id": "NREQ-dcec51f0ed0117a6b78e6055cc962c2f",
+      "family": "canonical-response-retries",
+      "decision": "ACCEPT_PARTIAL_SCOPED_MAPPING",
+      "currentConformance": "UNPROVEN",
+      "fullCoverage": false
+    },
+    {
+      "id": "NREQ-440234c09eee79fd0d3fe843d9801dbe",
+      "family": "canonical-response-retries",
+      "decision": "ACCEPT_PARTIAL_SCOPED_MAPPING",
+      "currentConformance": "UNPROVEN",
+      "fullCoverage": false
+    },
+    {
+      "id": "NREQ-f5c52c1c9a8ce3988d00901fe91576a1",
+      "family": "canonical-response-retries",
+      "decision": "ACCEPT_PARTIAL_SCOPED_MAPPING",
+      "currentConformance": "UNPROVEN",
+      "fullCoverage": false
+    },
+    {
+      "id": "NREQ-fd9a86945c15e9f00566de3c0367d4b5",
+      "family": "stage16-operator-outcomes",
+      "decision": "ACCEPT_PARTIAL_SCOPED_MAPPING",
+      "currentConformance": "UNPROVEN",
+      "fullCoverage": false
+    },
+    {
+      "id": "NREQ-4607730f4d187c887c8d74035ad3fc0c",
+      "family": "stage22-canonical-owner",
+      "decision": "ACCEPT_PARTIAL_SCOPED_MAPPING",
+      "currentConformance": "UNPROVEN",
+      "fullCoverage": false
+    },
+    {
+      "id": "NREQ-b221990823d8a59e135ccf00015d66e4",
+      "family": "stage22-canonical-owner",
+      "decision": "ACCEPT_PARTIAL_SCOPED_MAPPING",
+      "currentConformance": "UNPROVEN",
+      "fullCoverage": false
+    },
+    {
+      "id": "NREQ-6770dd9fc11a3a823620bb0727f021b6",
+      "family": "stage22-canonical-owner",
+      "decision": "ACCEPT_PARTIAL_SCOPED_MAPPING",
+      "currentConformance": "UNPROVEN",
+      "fullCoverage": false
+    }
+  ],
+  "unboundSiblingCount": 17,
+  "stage16Limit": "Four branches are partial support for a shared five-way atom. Automatic-only correction and broader unavailable-capability handoff not established; full atom remains unproven.",
+  "limits": [
+    {
+      "family": "native-input-runtime",
+      "limits": [
+        "Normally reviewed Stage06 journey, native IndexedDB/storage-worker, deferred stored-version path, all possible inputs and actual browser remain unproved."
+      ]
+    },
+    {
+      "family": "backup-extension",
+      "limits": [
+        "Only exact UTF-8 normal-package cases and reduced Stage1 gate comparison; arbitrary encodings, trust promotion, non-execution, every operational path, prompt/handoff exclusion, and parsed-only fallback provenance remain unproved.",
+        "Do not bind the other eleven sibling atoms: retention is not complete evidence for byte-policy precedence, explicit migration trust, non-executable/non-operational universal behavior, parsed-only provenance fields, or prompt-default exclusion."
+      ]
+    },
+    {
+      "family": "proof-obligation-dependencies",
+      "limits": [
+        "One in-memory environment dependency only; no persistence, browser, arbitrary dependency family or Stage6 completion proof."
+      ]
+    },
+    {
+      "family": "canonical-response-retries",
+      "limits": [
+        "Synthetic Stage1 actor and Map transaction adapter only; no actual browser, external actor, complete all-stage/scope combinations or default-owner receipt supplied."
+      ]
+    },
+    {
+      "family": "stage16-operator-outcomes",
+      "limits": [
+        "Fifth deterministic automatic-only no-user-action branch is explicitly unresolved, so entire five-way atom remains unproven.",
+        "Synthetic RCA/authority/proposal/question fixtures; no actual stage entry, acceptance/transaction lifetime, external/human execution or full-clause claim."
+      ]
+    },
+    {
+      "family": "stage22-canonical-owner",
+      "limits": [
+        "Uncommitted normalization/planner candidates only; no reserved or accepted native/external execution, durable late-stage journey, browser or fullCoverage.",
+        "Six other siblings remain unmapped: remaining-all-fields completeness, evidence relationship ownership, executor classification ownership, complete runtime/capability identity ownership, status ownership and complete Test IR identity ownership are not established by this bounded field-specific assertion population."
+      ]
+    }
+  ],
+  "reviewedInputs": [
+    {
+      "path": "test-test-ir-native-identity.mjs",
+      "sha256": "38ece104992034a31e6250390fbdc6444d34ea4a94fb9f202348e7ca6b9733d6"
+    },
+    {
+      "path": "test-backup-extension-byte-retention.mjs",
+      "sha256": "2cbc8722ccb29b8966b276e0336ecc2cae7122f99787d33dd78b15f926e30b2c"
+    },
+    {
+      "path": "verify-semantic-operation-boundaries.mjs",
+      "sha256": "2de5f4af6d8306cd0d3a3d7374c2e1a59e60a64ed68fec55d50448a661f1a87c"
+    },
+    {
+      "path": "test-semantic-response-retries.mjs",
+      "sha256": "69032f44bf184202a47bd4029b68144f1801e34a8c6e34b2f354afcd9acf098d"
+    },
+    {
+      "path": "test-stage16-operator-action.mjs",
+      "sha256": "58cdd202b1d1685757472c294046bef1f51e1788fedf7cbac3226a4fddb98684"
+    },
+    {
+      "path": "test-schema-product-observation.mjs",
+      "sha256": "d84a78bf1b195aa39b8d4e44b8db0298a50a8905090cfee47f3e15a8fda42600"
+    },
+    {
+      "path": "test-stage22-external-result-normalization.mjs",
+      "sha256": "9ffd6b6a74b80c1432de8965d126ae931b844d0459d70ba9bb1d31c641621709"
+    },
+    {
+      "path": "verification-evidence-catalog.mjs",
+      "sha256": "d585909462997cc0276d7469a5948901fd17e66336828af3654923a077abda95"
+    },
+    {
+      "path": "specification/closed-loop-normative-requirements.json",
+      "sha256": "4773f157f198781918b0fb9f20a696ad9d2b09dbea0120a9407ce0d24c96df5c"
+    },
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883"
+    }
+  ]
+}

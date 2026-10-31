@@ -30,7 +30,11 @@ for(const [suite,fault,oracle] of [
  ['verify-history-project-references.mjs','repeat-import-root-digest','HISTORY_IMPORT_ROOT_DIGEST_COST_ORACLE'],
  ['verify-history-project-references.mjs','retain-import-project-roots','HISTORY_IMPORT_ROOT_RESIDENCY_ORACLE'],
  ['verify-history-project-references.mjs','skip-project-body-byte-check','HISTORY_REFERENCE_BYTE_ORACLE'],
- ['verify-history-project-references.mjs','skip-selected-version-binding','HISTORY_SELECTED_VERSION_ORACLE']
+ ['verify-history-project-references.mjs','skip-selected-version-binding','HISTORY_SELECTED_VERSION_ORACLE'],
+ ['verify-history-project-references.mjs','history-static-trust-mutated-body','HISTORY_STATIC_REJECTION_ORACLE changed-static-after-await'],
+ ['verify-history-project-references.mjs','history-static-retain-receipt','HISTORY_RECEIPT_ONE_USE_ORACLE'],
+ ['verify-history-project-references.mjs','history-static-skip-derived','HISTORY_STATIC_DERIVED_AFTER_CUSTODY_ORACLE'],
+ ['verify-history-project-references.mjs','history-static-trust-tolerated-legacy','HISTORY_TOLERATED_STATIC_FAILURE_NO_PROOF_ORACLE']
 ]){
  const run=async args=>{const command=[process.execPath,suite,...args],startedAt=new Date().toISOString(),actual=(await runVerifier(command[0],command.slice(1),{encoding:'utf8',maxBuffer:64*1024*1024,timeout:CHILD_TIMEOUT_MS,killSignal:'SIGKILL'}));return {command,startedAt,finishedAt:new Date().toISOString(),timeoutMs:CHILD_TIMEOUT_MS,exitCode:actual.status,signal:actual.signal,outcome:actual.error?.code==='ETIMEDOUT'?'TIMEOUT':actual.status===0?'PASS':'FAIL',error:actual.error?{code:actual.error.code,message:actual.error.message}:null,stdout:actual.stdout||'',stderr:actual.stderr||''};};
  const injected=(await run(['--fault='+fault]));console.error(JSON.stringify({suite,fault,phase:'injected',...injected}));

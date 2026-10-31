@@ -1,0 +1,7 @@
+{
+  "fixtureScope": "ISOLATED_SYNTHETIC_ATOMIC_FLAGS_TO_REACH_CONTRACT_GATE_ONLY",
+  "status": 1,
+  "acceptanceEvidenceClaim": false,
+  "result": "PASS",
+  "finding": "Unresolved candidate contract findings still block after the atomic flag gate."
+}

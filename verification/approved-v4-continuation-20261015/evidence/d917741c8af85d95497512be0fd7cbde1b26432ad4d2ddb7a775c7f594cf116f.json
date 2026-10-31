@@ -1,0 +1,24 @@
+{
+  "schema": "closed-loop-distinct-source-status-judgment-reconciliation/1",
+  "status": "FROZEN_TWO_RESOLVED_ONE_PENDING",
+  "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+  "independentSourceJudgment": {
+    "path": "/workspace/shared/clrt-v4-source-status-judgment-20261015/source-only-judgment.json",
+    "sha256": "98ab88d761758370d59d5e78a1c3915343f3bfb9341b56171e9fb5a2961c2744",
+    "byteLength": 74430
+  },
+  "records": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/status-field-judgment-successor/per-id-reconciliation.json",
+    "sha256": "a20edf0f4557e0bb6c0bcda72a9e7280184fac2ed7d6793f5e615732fd8d0dd7",
+    "byteLength": 26279
+  },
+  "verifiedSourceSpans": 40,
+  "verifiedOriginalOccurrenceBindings": 86,
+  "combinedCounts": {
+    "RETAINED": 2299,
+    "CHANGED": 455,
+    "BLOCKED": 4732
+  },
+  "originalBatch004AndJudgmentPreserved": true,
+  "proofPromoted": false
+}

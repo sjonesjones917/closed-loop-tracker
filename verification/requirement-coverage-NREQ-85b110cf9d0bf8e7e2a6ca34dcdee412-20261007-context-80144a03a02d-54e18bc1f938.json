@@ -1,0 +1,260 @@
+{
+  "schema": "closed-loop-requirement-coverage-review/1",
+  "normativeRequirementId": "NREQ-85b110cf9d0bf8e7e2a6ca34dcdee412",
+  "sourceLineSha256": "c6e1fa3d6945827e40a4cbbc8826ef7a222fafc2ba56e68ed4aff88587107840",
+  "specificationSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
+  "declarationSha256": "80144a03a02d9d4793812d77f1c1f0d270ecd2ed1fb3653ce8d38182bfe8008a",
+  "decision": "COMPLETE_COVERAGE",
+  "evidenceBasis": "EXTERNALLY_SUPPORTED",
+  "method": "The exact narrow controlling clause and unchanged proof decomposition were independently reviewed in the embedded original semantic assessment. Current production, verifier, fixture and catalog deltas were separately reviewed in the referenced source-delta review bundle. This is coverage-design evidence only: current frozen-source executed receipts remain independently required, and unsupported clauses are not promoted.",
+  "author": {
+    "actor": "Codex exact-source coverage renewal integrator",
+    "contextId": "/root"
+  },
+  "reviewer": {
+    "actor": "Codex independent verifier-context correction reviewer",
+    "contextId": "/root/pr_inventory_review"
+  },
+  "reviewedInputs": [
+    {
+      "declarationSha256": "80144a03a02d9d4793812d77f1c1f0d270ecd2ed1fb3653ce8d38182bfe8008a"
+    },
+    {
+      "path": "app-core.js",
+      "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+    },
+    {
+      "path": "hash.js",
+      "sha256": "a13cf57bd7c7414bc801f511d5937f80eaf7fd675c0e6c2b5a92b365df16e4d7"
+    },
+    {
+      "path": "project-store.js",
+      "sha256": "4e8368f0d91eab0b937ee5c256a121c6ca2b3524e9d06ffc16c3f5637a05b060"
+    },
+    {
+      "path": "prompt-engine.js",
+      "sha256": "61e363381dfb88fcfd32a176066762e2a37cf7b14fb9d39bff4eacf7e6d5706f"
+    },
+    {
+      "path": "response-ingestion.js",
+      "sha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5"
+    },
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d"
+    },
+    {
+      "path": "test-handoff-authorization.mjs",
+      "sha256": "37bfb4e255afb6701fccaccdf055ee7961e838eaf03927c2963dfcf880cf82b6"
+    },
+    {
+      "path": "test-project-store-runtime.mjs",
+      "sha256": "743e74ce60e3f81f1601daf7a1bf589ac2a3b8600e275a5865c24fbd0f335f1b"
+    },
+    {
+      "path": "test-runtime.js",
+      "sha256": "e4e01a79c526592f9d044e2c104845e63c9aa341eb64837c138f5c3e3ecba353"
+    },
+    {
+      "path": "test-stage01-specification-controls.mjs",
+      "sha256": "3455469d384cd50cc4216ddd842d50c70ea088b3639b045ac9f5d82f4d73a2d3"
+    },
+    {
+      "path": "test-zip.mjs",
+      "sha256": "b5080a8e58eb7b13f421ecce5c63a3d95b765a5b021f5bd4543dce28d171e89d"
+    },
+    {
+      "path": "verification-evidence-catalog.mjs",
+      "sha256": "5d8e04d46601123d4552e796d0e69027f29774155d5309d5e1356c6456c53010"
+    },
+    {
+      "path": "verification/current-source-delta-review-20261007.json",
+      "sha256": "45cca5871ac89cf1583a3825aec5a7d488d4d40dc70afb51a8534470dececf09"
+    },
+    {
+      "path": "verification/normative-context-applicability-20261005.json",
+      "sha256": "7cd05ff0028578a1ca1c2560533519a602ce6a974c240ee11dbbd272524cf656"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-85b110cf9d0bf8e7e2a6ca34dcdee412-20261005.json",
+      "sha256": "53a69683d913a313d0f2388d2a7b73fe7aaf0e9d2644c3b43af85af4c0a7f072"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-85b110cf9d0bf8e7e2a6ca34dcdee412-20261006-followup-a5bc86b189b1.json",
+      "sha256": "e37b7d4674ef0690d0c0273219c4e87201c2718f21c78e96889ade65ca701613"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-85b110cf9d0bf8e7e2a6ca34dcdee412-20261006.json",
+      "sha256": "c0656678419e525ca1f7a60b40e5c0e49e1ad1a98469b034a87b4980f1c2991e"
+    },
+    {
+      "path": "verifier-runtime.mjs",
+      "sha256": "051318fc24ea587ced6268d4a60278e5155e3fee8ed26309b28b532c921277f9"
+    },
+    {
+      "path": "verify-stage01-agent-contract-alignment.mjs",
+      "sha256": "a3bb726418a565ea1a4f3d4853b4fdfbac423e8c8fa304e73ba4bd9fbbb4bec0"
+    },
+    {
+      "path": "workbook.js",
+      "sha256": "3a8098a9bb4ea108eadaa9bec90c76a1522f57f6465f45341cedf60937ddd008"
+    },
+    {
+      "path": "workflow-engine.js",
+      "sha256": "16c2a16d61d6a462ecebd25cd7d530a3cce46e11c1d9f88664c2e9a27cf61295"
+    },
+    {
+      "path": "workflow-schema.js",
+      "sha256": "656e9e632cea3a60e1c7e0fb486e6630d205011d7db32d9674ac5e88593d24f1"
+    },
+    {
+      "path": "test-fixtures.mjs",
+      "sha256": "666a66d54f5944eae28c608eb0d627aefe45972413b8f5ac004db306205f00c7"
+    },
+    {
+      "path": "verification/deferred-definition-current-prerequisite-fixture-20261007.json",
+      "sha256": "61966404f4bff8a74ad0f42ef8b8b6a04964f3e5630fddb8a0df33c09302ba2f"
+    },
+    {
+      "path": "verification/runtime-storage-independent-delta-review-20261010.json",
+      "sha256": "1aeddf08767ed1d3a70ff7d4f31d69a74cde85099cce89d8d7a0d0e97404542a"
+    },
+    {
+      "path": "verification/ci-group-handoff-independent-delta-review-20261010.json",
+      "sha256": "3b8b941ac5a47dec4bd681f3e4dbe939230db8875d40c62c17e862e912f04c4d"
+    }
+  ],
+  "findings": [],
+  "reviewPerformed": true,
+  "sourceLocation": {
+    "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+    "startLine": 430,
+    "endLine": 430,
+    "lineSha256": "c6e1fa3d6945827e40a4cbbc8826ef7a222fafc2ba56e68ed4aff88587107840"
+  },
+  "controllingText": "- exceptions;",
+  "governingContext": [],
+  "additionalControllingContext": [
+    {
+      "line": 422,
+      "text": "The Stage 01 prompt MUST require:",
+      "normativeRequirementId": "NREQ-d72153098f746d8eb6f60b678d7ebbd4"
+    },
+    {
+      "line": 428,
+      "text": "Compare the extracted ledger back against every raw input unit and specifically search for omitted:",
+      "normativeRequirementId": "NREQ-57f8fa829a872f35948a81bd58477291"
+    }
+  ],
+  "reviewedChecks": [
+    {
+      "suite": "verify-stage01-agent-contract-alignment.mjs",
+      "checkId": "STAGE01-SPECIFICATION-CONTRACT-CONTROLS"
+    }
+  ],
+  "scopeLimit": "Current executed receipts still required. No browser, physical-device, real human semantic confirmation, or arbitrary external actor truth inferred.",
+  "independentSemanticAssessment": {
+    "path": "/workspace/scratch/stage-review/32-stage1-freshness-declaration-review.json",
+    "sha256": "6245f19b3f1bdb320025cf07f86f1fa4055328974855b0fd072d1af27c61078a",
+    "row": {
+      "normativeRequirementId": "NREQ-85b110cf9d0bf8e7e2a6ca34dcdee412",
+      "sourceLocation": {
+        "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "startLine": 430,
+        "endLine": 430,
+        "lineSha256": "c6e1fa3d6945827e40a4cbbc8826ef7a222fafc2ba56e68ed4aff88587107840"
+      },
+      "controllingText": "- exceptions;",
+      "activeReview": {
+        "path": "verification/requirement-coverage-NREQ-85b110cf9d0bf8e7e2a6ca34dcdee412-20261006-followup-a5bc86b189b1.json",
+        "sha256": "e37b7d4674ef0690d0c0273219c4e87201c2718f21c78e96889ade65ca701613"
+      },
+      "scope": "The actual saved COMPLETE instruction explicitly requires the full two-pass intake procedure; COMPLETE and RECONCILE_INTAKE publish exactly the fourteen source-derived omission categories, both completed-pass flags and resolved omissions. Each missing category and unresolved-pass state is rejected at authoritative-file admission with its intended accounting reason and no accepted change. The reconciliation procedure preserves valid extracted items and requires the final omission challenge. This proves applicable producer instructions and recorded accounting, not the truth of an arbitrary external actor semantic claim.",
+      "checkIds": [
+        "STAGE01-SPECIFICATION-CONTRACT-CONTROLS"
+      ],
+      "productionOwners": [
+        {
+          "path": "prompt-engine.js",
+          "symbol": "procedureFor / responseContractDescriptor / body",
+          "sha256": "31489eaeffcd4f12696b473467c6be7e494e8e26a8eb64c4c8c69d18f215f94a",
+          "currentSha256": "31489eaeffcd4f12696b473467c6be7e494e8e26a8eb64c4c8c69d18f215f94a",
+          "hashMatches": true
+        },
+        {
+          "path": "workflow-engine.js",
+          "symbol": "evaluateIntakeAccounting",
+          "sha256": "b47195d41a130cb1b84425f5eb33bd8a163e1047c0e95e19eef59d47525e463d",
+          "currentSha256": "b47195d41a130cb1b84425f5eb33bd8a163e1047c0e95e19eef59d47525e463d",
+          "hashMatches": true
+        },
+        {
+          "path": "response-ingestion.js",
+          "symbol": "validateEnvelope",
+          "sha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19",
+          "currentSha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19",
+          "hashMatches": true
+        }
+      ],
+      "decision": "COVERAGE_DESIGN_SUFFICIENT_FOR_EXACT_SPECIFIED_BOUNDARY",
+      "rationale": "Controlling parent422 says the Stage01 prompt MUST require the two-pass procedure. This source obligation is producer instruction, not proof an arbitrary external actor has read or understood every artifact. The owner decodes the actual saved COMPLETE and RECONCILE_INTAKE ZIP carriers, compares the saved instruction bytes/hash, checks explicit exhaustive/extraction and final omission/reconciliation procedure, parses the published14-category/six-disposition accounting shape against independent specification literals, and rejects missing categories or incomplete pass flags at file admission. Carrier mutation controls deliberately remove a category or affirm unresolved omissions and detect the intended assertion. No real actor truth or file-inspection evidence is inferred.",
+      "exactCases": [
+        "COMPLETE exported instruction",
+        "RECONCILE_INTAKE exported instruction",
+        "pass1-incomplete",
+        "pass2-incomplete",
+        "omissions-unresolved",
+        "omitted-category-EXCEPTIONS"
+      ],
+      "evidence": {
+        "kind": "COVERAGE_DESIGN_SOURCE_REVIEW_ONLY_CURRENT_OWNER_EXECUTION_STILL_REQUIRED",
+        "owningCommand": "node verify-stage01-agent-contract-alignment.mjs",
+        "actualCurrentInitialPackage": "package-inspection-a194.json (only initial no-file COMPLETE carrier, not substituted for full owning test)",
+        "newOwnerRun": false
+      },
+      "mutationsQualification": "Named invalid-input controls and carrier mutations, not a claim all implementation mutants were executed.",
+      "semanticOrPhysicalNonapplicability": "Only the deterministic producer/accounting/identity clause is covered. Related actual semantic actor, browser, persistence, physical-device and full-stage obligations remain separately tracked.",
+      "unresolvedDesignIssues": []
+    }
+  },
+  "priorReview": {
+    "path": "verification/requirement-coverage-NREQ-85b110cf9d0bf8e7e2a6ca34dcdee412-20261007-bb369762d8db.json",
+    "sha256": "2f3771ed6245eb1be15bac719803ebe35f6721a4f415fc7429830596b7e29a90",
+    "author": {
+      "actor": "Codex coordinated exact-clause renewal proposer",
+      "contextId": "/root"
+    },
+    "reviewer": {
+      "actor": "Codex independent narrow declaration reviewer",
+      "contextId": "/root/stage_contract_review"
+    },
+    "reviewCompletedAt": "2026-10-07T01:21:18.248Z"
+  },
+  "reviewerPriorContributionDisclosure": "Reviewer authored only the conformanceSources registration of test-verifier-context-ui.mjs and test-prompt-context-storage.mjs. CI owner independently reviewed those additive source-input registrations. No runtime repair or owning behavioral test was authored by this reviewer in this correction chain.",
+  "currentExecutionRequired": true,
+  "applicationConformanceClaim": false,
+  "reviewCompletedAt": "2026-10-07T05:10:44.883240+00:00",
+  "currentDependencyDeltaReview": {
+    "path": "verification/current-source-delta-review-20261007.json",
+    "sha256": "45cca5871ac89cf1583a3825aec5a7d488d4d40dc70afb51a8534470dececf09"
+  },
+  "supplementaryIndependentSourceDeltaReviews": [
+    {
+      "path": "verification/runtime-storage-independent-delta-review-20261010.json",
+      "sha256": "1aeddf08767ed1d3a70ff7d4f31d69a74cde85099cce89d8d7a0d0e97404542a",
+      "reviewedAtUtc": "2026-10-10T05:59:54.689Z",
+      "scope": "Exact reviewed dependency and owner source delta; prior semantic obligation/check decomposition unchanged."
+    },
+    {
+      "path": "verification/ci-group-handoff-independent-delta-review-20261010.json",
+      "sha256": "3b8b941ac5a47dec4bd681f3e4dbe939230db8875d40c62c17e862e912f04c4d",
+      "reviewedAtUtc": "2026-10-10T06:13:50.965Z",
+      "scope": "Exact reviewed dependency and owner source delta; prior semantic obligation/check decomposition unchanged."
+    }
+  ],
+  "reviewRenewedAt": "2026-10-10T06:13:50.965Z",
+  "renewalActor": {
+    "actor": "Codex CI repair integrator",
+    "contextId": "/root"
+  }
+}

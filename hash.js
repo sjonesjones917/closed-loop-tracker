@@ -66,9 +66,9 @@ function assertUnicodeScalars(value,path){
     const unit=value.charCodeAt(i);
     if(unit>=0xD800&&unit<=0xDBFF){
       const next=value.charCodeAt(i+1);
-      if(!(next>=0xDC00&&next<=0xDFFF))throw new TypeError(`Cannot canonically hash unpaired UTF-16 high surrogate at ${path}.`);
+      if(!(next>=0xDC00&&next<=0xDFFF))throw new TypeError(`Cannot canonically hash unpaired UTF-16 high surrogate at ${typeof path==='function'?path():path}.`);
       i++;
-    }else if(unit>=0xDC00&&unit<=0xDFFF)throw new TypeError(`Cannot canonically hash unpaired UTF-16 low surrogate at ${path}.`);
+    }else if(unit>=0xDC00&&unit<=0xDFFF)throw new TypeError(`Cannot canonically hash unpaired UTF-16 low surrogate at ${typeof path==='function'?path():path}.`);
   }
   return value;
 }
@@ -78,51 +78,98 @@ function compareUnicodeScalarSequence(a,b){
   while(i<left.length&&j<right.length){const x=left.codePointAt(i),y=right.codePointAt(j);if(x!==y)return x-y;i+=x>0xFFFF?2:1;j+=y>0xFFFF?2:1;}
   return (i<left.length?1:0)-(j<right.length?1:0);
 }
+// Dense data arrays may cross a same-engine realm or have no prototype.
+// Class/custom array prototypes are implementation objects, not canonical data.
+// Native constructor descriptors/source establish a foreign Array.prototype
+// without reading or calling its user-overridable constructor property.
+const canonicalArrayPrototype=Array.prototype,canonicalFunctionToString=Function.prototype.toString,canonicalReflectApply=Reflect.apply;
+const canonicalNativeArraySource=canonicalReflectApply(canonicalFunctionToString,Array,[]);
+function canonicalDataArrayPrototype(value){
+  const prototype=Object.getPrototypeOf(value);
+  if(prototype===canonicalArrayPrototype||prototype===null)return true;
+  if(!Array.isArray(prototype))return false;
+  const constructor=Object.getOwnPropertyDescriptor(prototype,'constructor');
+  if(!constructor||!Object.prototype.hasOwnProperty.call(constructor,'value')||typeof constructor.value!=='function')return false;
+  const owner=Object.getOwnPropertyDescriptor(constructor.value,'prototype');
+  return !!owner&&owner.value===prototype&&owner.writable===false&&owner.configurable===false&&canonicalReflectApply(canonicalFunctionToString,constructor.value,[])===canonicalNativeArraySource;
+}
 function* canonicalChunks(value){
-  // Traverse once and yield only bounded output, rather than suspending a
-  // nested generator for every delimiter at every level of accumulated data.
-  const seen=new WeakSet(),stack=[{kind:'value',value,path:'$'}];let pending='';
+  // Frames retain only structural ancestry. Diagnostic paths are materialized
+  // on refusal; successful canonical bytes never depend on a path string.
+  // Child edges snapshot the original selected local before any later mutation
+  // of an externally retained Object.keys/sort result can change diagnostics.
+  const root={kind:'value',value,parent:null,index:0,keys:null,objectKey:false,edge:null,arrayEdge:false};
+  const seen=new WeakSet(),stack=[root];let pending='',spareFrame=null,diagnosticFrame=root;
+  const diagnosticPath=()=>{
+    let frame=diagnosticFrame,suffix='';
+    while(frame.parent){
+      const parent=frame.parent;
+      suffix=(frame.objectKey?' object key':frame.arrayEdge?`[${frame.edge}]`:`.${frame.edge}`)+suffix;
+      frame=parent;
+    }
+    return '$'+suffix;
+  };
+  const diagnosticObjectKeyPath=()=>diagnosticPath()+' object key';
   while(stack.length){
-    const frame=stack.at(-1),input=frame.value,path=frame.path;
+    const frame=stack.at(-1),input=frame.value;diagnosticFrame=frame;
     if(frame.kind==='string'){
       let end=Math.min(frame.index+16384,input.length);
       if(end<input.length&&input.charCodeAt(end-1)>=0xD800&&input.charCodeAt(end-1)<=0xDBFF)end--;
-      pending+=JSON.stringify(assertUnicodeScalars(input.slice(frame.index,end),path)).slice(1,-1);frame.index=end;
-      if(end===input.length){pending+='"';stack.pop();}
-    }else if(frame.kind==='colon'){pending+=':';stack.pop();}
+      pending+=JSON.stringify(assertUnicodeScalars(input.slice(frame.index,end),diagnosticPath)).slice(1,-1);frame.index=end;
+      if(end===input.length){pending+='"';stack.pop();spareFrame=frame;}
+    }else if(frame.kind==='colon'){pending+=':';stack.pop();spareFrame=frame;}
     else if(frame.kind==='array'){
-      if(frame.index===input.length){pending+=']';seen.delete(input);stack.pop();}
-      else{const index=frame.index++,descriptor=Object.getOwnPropertyDescriptor(input,String(index));if(!descriptor||!Object.prototype.hasOwnProperty.call(descriptor,'value'))throw new TypeError(`Cannot canonically hash accessor property at ${path}[${index}].`);if(index)pending+=',';stack.push({kind:'value',value:descriptor.value,path:`${path}[${index}]`});}
+      if(frame.index===input.length){pending+=']';seen.delete(input);stack.pop();spareFrame=frame;}
+      else{
+        const index=frame.index++,descriptor=Object.getOwnPropertyDescriptor(input,String(index));
+        if(!descriptor||!Object.prototype.hasOwnProperty.call(descriptor,'value'))throw new TypeError(`Cannot canonically hash accessor property at ${diagnosticPath()}[${index}].`);
+        if(index)pending+=',';
+        const child=spareFrame||{kind:'value',value:null,parent:null,index:0,keys:null,objectKey:false,edge:null,arrayEdge:false};spareFrame=null;
+        child.kind='value';child.value=descriptor.value;child.parent=frame;child.objectKey=false;child.edge=index;child.arrayEdge=true;stack.push(child);
+      }
     }else if(frame.kind==='object'){
-      if(frame.index===frame.keys.length){pending+='}';seen.delete(input);stack.pop();}
+      if(frame.index===frame.keys.length){pending+='}';seen.delete(input);stack.pop();spareFrame=frame;}
       else{
         const key=frame.keys[frame.index++],descriptor=Object.getOwnPropertyDescriptor(input,key);
-        if(!descriptor||!Object.prototype.hasOwnProperty.call(descriptor,'value'))throw new TypeError(`Cannot canonically hash accessor property at ${path}.${key}.`);
-        if(frame.index>1)pending+=',';pending+='"';
-        stack.push({kind:'value',value:descriptor.value,path:`${path}.${key}`},{kind:'colon'},{kind:'string',value:key,index:0,path:`${path} object key`});
+        if(!descriptor||!Object.prototype.hasOwnProperty.call(descriptor,'value'))throw new TypeError(`Cannot canonically hash accessor property at ${diagnosticPath()}.${key}.`);
+        if(frame.index>1)pending+=',';
+        if(key.length<=16384){
+          pending+=JSON.stringify(assertUnicodeScalars(key,diagnosticObjectKeyPath))+':';
+          const child=spareFrame||{kind:'value',value:null,parent:null,index:0,keys:null,objectKey:false,edge:null,arrayEdge:false};spareFrame=null;
+          child.kind='value';child.value=descriptor.value;child.parent=frame;child.objectKey=false;child.edge=`${key}`;child.arrayEdge=false;stack.push(child);
+        }else{
+          pending+='"';
+          const child=spareFrame||{kind:'value',value:null,parent:null,index:0,keys:null,objectKey:false,edge:null,arrayEdge:false};spareFrame=null;
+          child.kind='value';child.value=descriptor.value;child.parent=frame;child.objectKey=false;child.edge=`${key}`;child.arrayEdge=false;
+          stack.push(child,{kind:'colon',value:null,parent:null,index:0,keys:null,objectKey:false,edge:null,arrayEdge:false},{kind:'string',value:key,parent:frame,index:0,keys:null,objectKey:true,edge:null,arrayEdge:false});
+        }
       }
     }else{
       stack.pop();
-      if(input===null)pending+='null';
-      else if(typeof input==='string'){pending+='"';stack.push({kind:'string',value:input,index:0,path});}
-      else if(typeof input==='boolean')pending+=input?'true':'false';
+      if(input===null){pending+='null';spareFrame=frame;}
+      else if(typeof input==='string'){
+        if(input.length<=16384){pending+=JSON.stringify(assertUnicodeScalars(input,diagnosticPath));spareFrame=frame;}
+        else{pending+='"';frame.kind='string';frame.index=0;stack.push(frame);}
+      }
+      else if(typeof input==='boolean'){pending+=input?'true':'false';spareFrame=frame;}
       else if(typeof input==='number'){
-        if(!Number.isFinite(input)||Object.is(input,-0)||!Number.isSafeInteger(input)||input<MIN_SAFE_INTEGER||input>MAX_SAFE_INTEGER)throw new TypeError(`Cannot canonically hash non-safe-integer JSON number at ${path}.`);
-        pending+=String(input);
+        if(!Number.isFinite(input)||Object.is(input,-0)||!Number.isSafeInteger(input)||input<MIN_SAFE_INTEGER||input>MAX_SAFE_INTEGER)throw new TypeError(`Cannot canonically hash non-safe-integer JSON number at ${diagnosticPath()}.`);
+        pending+=String(input);spareFrame=frame;
       }else{
-        if(typeof input!=='object')throw new TypeError(`Cannot canonically hash ${typeof input} at ${path}.`);
-        if(seen.has(input))throw new TypeError(`Cannot hash a cyclic value at ${path}.`);
+        if(typeof input!=='object')throw new TypeError(`Cannot canonically hash ${typeof input} at ${diagnosticPath()}.`);
+        if(seen.has(input))throw new TypeError(`Cannot hash a cyclic value at ${diagnosticPath()}.`);
         seen.add(input);const keys=Object.keys(input);
-        if(Object.getOwnPropertySymbols(input).length)throw new TypeError(`Cannot canonically hash symbol-keyed properties at ${path}.`);
+        if(Object.getOwnPropertySymbols(input).length)throw new TypeError(`Cannot canonically hash symbol-keyed properties at ${diagnosticPath()}.`);
         if(Array.isArray(input)){
-          for(let index=0;index<input.length;index++)if(!Object.prototype.hasOwnProperty.call(input,index))throw new TypeError(`Cannot canonically hash sparse array at ${path}.`);
-          if(keys.some(key=>!/^(?:0|[1-9]\d*)$/.test(key)||Number(key)>=input.length))throw new TypeError(`Cannot canonically hash array with extra properties at ${path}.`);
-          pending+='[';stack.push({kind:'array',value:input,index:0,path});
+          if(!canonicalDataArrayPrototype(input))throw new TypeError(`Cannot canonically hash nonstandard array prototype at ${diagnosticPath()}.`);
+          for(let index=0;index<input.length;index++)if(!Object.prototype.hasOwnProperty.call(input,index))throw new TypeError(`Cannot canonically hash sparse array at ${diagnosticPath()}.`);
+          if(keys.some(key=>!/^(?:0|[1-9]\d*)$/.test(key)||Number(key)>=input.length))throw new TypeError(`Cannot canonically hash array with extra properties at ${diagnosticPath()}.`);
+          pending+='[';frame.kind='array';frame.index=0;frame.keys=null;stack.push(frame);
         }else{
           const prototype=Object.getPrototypeOf(input);
-          if(prototype!==Object.prototype&&prototype!==null)throw new TypeError(`Cannot canonically hash non-plain object at ${path}.`);
-          for(const key of keys)assertUnicodeScalars(key,`${path} object key`);keys.sort(keys.some(key=>/[\uD800-\uDBFF]/.test(key))?compareUnicodeScalarSequence:undefined);
-          pending+='{';stack.push({kind:'object',value:input,index:0,keys,path});
+          if(prototype!==Object.prototype&&prototype!==null)throw new TypeError(`Cannot canonically hash non-plain object at ${diagnosticPath()}.`);
+          for(const key of keys)assertUnicodeScalars(key,diagnosticObjectKeyPath);keys.sort(keys.some(key=>/[\uD800-\uDBFF]/.test(key))?compareUnicodeScalarSequence:undefined);
+          pending+='{';frame.kind='object';frame.index=0;frame.keys=keys;stack.push(frame);
         }
       }
     }
@@ -142,7 +189,12 @@ function createSha256(){
     for(let i=0;i<16;i++)w[i]=view.getUint32(offset+i*4,false);
     for(let i=16;i<64;i++){const x=w[i-15],y=w[i-2];const s0=(rightRotate(x,7)^rightRotate(x,18)^(x>>>3))>>>0;const s1=(rightRotate(y,17)^rightRotate(y,19)^(y>>>10))>>>0;w[i]=(w[i-16]+s0+w[i-7]+s1)>>>0;}
     let a=h[0],b=h[1],c=h[2],d=h[3],e=h[4],f=h[5],g=h[6],hh=h[7];
-    for(let i=0;i<64;i++){const s1=(rightRotate(e,6)^rightRotate(e,11)^rightRotate(e,25))>>>0;const ch=((e&f)^((~e)&g))>>>0;const t1=(hh+s1+ch+k[i]+w[i])>>>0;const s0=(rightRotate(a,2)^rightRotate(a,13)^rightRotate(a,22))>>>0;const maj=((a&b)^(a&c)^(b&c))>>>0;const t2=(s0+maj)>>>0;hh=g;g=f;f=e;e=(d+t1)>>>0;d=c;c=b;b=a;a=(t1+t2)>>>0;}
+    for(let i=0;i<64;i+=4){
+{const s1=(rightRotate(e,6)^rightRotate(e,11)^rightRotate(e,25))>>>0;const ch=((e&f)^((~e)&g))>>>0;const t1=(hh+s1+ch+k[i+0]+w[i+0])>>>0;const s0=(rightRotate(a,2)^rightRotate(a,13)^rightRotate(a,22))>>>0;const maj=((a&b)^(a&c)^(b&c))>>>0;const t2=(s0+maj)>>>0;hh=g;g=f;f=e;e=(d+t1)>>>0;d=c;c=b;b=a;a=(t1+t2)>>>0;}
+{const s1=(rightRotate(e,6)^rightRotate(e,11)^rightRotate(e,25))>>>0;const ch=((e&f)^((~e)&g))>>>0;const t1=(hh+s1+ch+k[i+1]+w[i+1])>>>0;const s0=(rightRotate(a,2)^rightRotate(a,13)^rightRotate(a,22))>>>0;const maj=((a&b)^(a&c)^(b&c))>>>0;const t2=(s0+maj)>>>0;hh=g;g=f;f=e;e=(d+t1)>>>0;d=c;c=b;b=a;a=(t1+t2)>>>0;}
+{const s1=(rightRotate(e,6)^rightRotate(e,11)^rightRotate(e,25))>>>0;const ch=((e&f)^((~e)&g))>>>0;const t1=(hh+s1+ch+k[i+2]+w[i+2])>>>0;const s0=(rightRotate(a,2)^rightRotate(a,13)^rightRotate(a,22))>>>0;const maj=((a&b)^(a&c)^(b&c))>>>0;const t2=(s0+maj)>>>0;hh=g;g=f;f=e;e=(d+t1)>>>0;d=c;c=b;b=a;a=(t1+t2)>>>0;}
+{const s1=(rightRotate(e,6)^rightRotate(e,11)^rightRotate(e,25))>>>0;const ch=((e&f)^((~e)&g))>>>0;const t1=(hh+s1+ch+k[i+3]+w[i+3])>>>0;const s0=(rightRotate(a,2)^rightRotate(a,13)^rightRotate(a,22))>>>0;const maj=((a&b)^(a&c)^(b&c))>>>0;const t2=(s0+maj)>>>0;hh=g;g=f;f=e;e=(d+t1)>>>0;d=c;c=b;b=a;a=(t1+t2)>>>0;}
+    }
     h[0]=(h[0]+a)>>>0;h[1]=(h[1]+b)>>>0;h[2]=(h[2]+c)>>>0;h[3]=(h[3]+d)>>>0;h[4]=(h[4]+e)>>>0;h[5]=(h[5]+f)>>>0;h[6]=(h[6]+g)>>>0;h[7]=(h[7]+hh)>>>0;
   }
   function update(bytes){
@@ -167,7 +219,149 @@ function createSha256(){
   return {update,updateText,digest};
 }
 function sha256Text(text){const digest=createSha256();digest.updateText(text);return digest.digest();}
-function sha256Value(value){const digest=createSha256();let pending='';for(const chunk of canonicalChunks(value)){if(pending.length+chunk.length>16384){digest.updateText(pending);pending='';}pending+=chunk;}if(pending)digest.updateText(pending);return digest.digest();}
+function sha256ValueCold(value){const digest=createSha256();let pending='';for(const chunk of canonicalChunks(value)){if(pending.length+chunk.length>16384){digest.updateText(pending);pending='';}pending+=chunk;}if(pending)digest.updateText(pending);return digest.digest();}
+// Private import computation scope. Every caller still supplies the complete
+// current preimage; this stores no validation, authority or activation result.
+const digestScopeData=new WeakMap();
+let activeDigestScope=null;
+const memoOwnKeys=Reflect.ownKeys,memoDescriptor=Object.getOwnPropertyDescriptor,
+ memoPrototype=Object.getPrototypeOf,memoSame=Object.is,memoApply=Reflect.apply,memoWeakGet=WeakMap.prototype.get,memoHasOwn=Object.hasOwn,
+ memoIsArray=Array.isArray,memoKeys=Object.keys,memoSort=Array.prototype.sort,memoMapGet=Map.prototype.get;
+const memoNativeNames=['Object','Array','String','Number','Boolean','Math','JSON','Reflect','Map','WeakMap','Set','WeakSet','RegExp','Uint8Array','Uint32Array','ArrayBuffer','DataView','TextEncoder'];
+function memoDescriptors(target){return memoOwnKeys(target).map(key=>[key,memoDescriptor(target,key)]);}
+function memoDescriptorEqual(a,b){
+ if(!a||!b)return false;
+ if(!memoSame(memoHasOwn(a,'value')?a['value']:undefined,memoHasOwn(b,'value')?b['value']:undefined))return false;
+ if(!memoSame(memoHasOwn(a,'get')?a['get']:undefined,memoHasOwn(b,'get')?b['get']:undefined))return false;
+ if(!memoSame(memoHasOwn(a,'set')?a['set']:undefined,memoHasOwn(b,'set')?b['set']:undefined))return false;
+ if(!memoSame(memoHasOwn(a,'enumerable')?a['enumerable']:undefined,memoHasOwn(b,'enumerable')?b['enumerable']:undefined))return false;
+ if(!memoSame(memoHasOwn(a,'writable')?a['writable']:undefined,memoHasOwn(b,'writable')?b['writable']:undefined))return false;
+ if(!memoSame(memoHasOwn(a,'configurable')?a['configurable']:undefined,memoHasOwn(b,'configurable')?b['configurable']:undefined))return false;
+ return true;
+}
+const memoNativeBaseline=(()=>{
+ const globals=memoNativeNames.map(name=>[name,memoDescriptor(globalThis,name)]),targets=new Set([canonicalChunks]);
+ for(const [,descriptor]of globals){const value=descriptor?.value;if(!value)continue;targets.add(value);if(value.prototype)targets.add(value.prototype);}
+ for(const target of [...targets]){let parent=memoPrototype(target);while(parent){targets.add(parent);parent=memoPrototype(parent);}}
+ let generator=memoPrototype(canonicalChunks(null));while(generator&&generator!==Object.prototype){targets.add(generator);generator=memoPrototype(generator);}
+ // A method's callable object can have its own consumed dispatch metadata.
+ for(const target of [...targets])for(const [,descriptor]of memoDescriptors(target))for(const value of [descriptor.value,descriptor.get,descriptor.set])if(typeof value==='function')targets.add(value);
+ return {globals,targets:[...targets].map(target=>[target,memoPrototype(target),memoDescriptors(target)])};
+})();
+function digestScopePrimitivesCurrent(){
+ if(memoDescriptor(globalThis,'closedLoopHash')?.value!==api)return false;
+ // The guard cannot dispatch through the mutable methods it is checking.
+ for(let i=0;i<memoNativeBaseline.globals.length;i++){const row=memoNativeBaseline.globals[i];if(!memoDescriptorEqual(row[1],memoDescriptor(globalThis,row[0])))return false;}
+ for(let i=0;i<memoNativeBaseline.targets.length;i++){
+  const row=memoNativeBaseline.targets[i],target=row[0],prototype=row[1],entries=row[2];
+  if(memoPrototype(target)!==prototype)return false;
+  const current=memoOwnKeys(target);if(current.length!==entries.length)return false;
+  for(let j=0;j<entries.length;j++){const entry=entries[j];if(!memoDescriptorEqual(entry[1],memoDescriptor(target,entry[0])))return false;}
+ }
+ return true;
+}
+function memoGraph(root,maxNodes,maxStringCodeUnits){
+ const nodes=new Map(),active=new WeakSet(),pending=[[root,false]];let units=0,edgeCount=0;
+ while(pending.length){
+  const [value,finish]=pending.pop();
+  if(typeof value==='string'){units+=value.length;if(units>maxStringCodeUnits)return null;continue;}
+  if(value===null||typeof value==='boolean')continue;
+  if(typeof value==='number'){if(!Number.isSafeInteger(value)||Object.is(value,-0))return null;continue;}
+  if(!value||typeof value!=='object')return null;
+  if(finish){active.delete(value);continue;}
+  if(active.has(value))return null;if(nodes.has(value))continue;
+  const array=Array.isArray(value),prototype=memoPrototype(value);
+  if(!array&&prototype!==Object.prototype&&prototype!==null)return null;
+  if(array&&prototype!==Array.prototype)return null;
+  const keys=memoOwnKeys(value),entries=[];edgeCount+=keys.length;if(edgeCount>200000)return null;
+  if(array&&(keys.length!==value.length+1||!keys.includes('length')))return null;
+  for(const key of keys){
+   if(array&&key==='length')continue;
+   if(typeof key!=='string')return null;
+   if(array&&(!/^(0|[1-9][0-9]*)$/.test(key)||Number(key)>=value.length))return null;
+   const descriptor=memoDescriptor(value,key);if(!descriptor?.enumerable||!Object.hasOwn(descriptor,'value'))return null;
+   units+=key.length;if(units>maxStringCodeUnits)return null;entries.push([key,descriptor.value]);
+  }
+  nodes.set(value,entries);if(nodes.size>maxNodes)return null;
+  active.add(value);pending.push([value,true]);for(const [,child]of entries)pending.push([child,false]);
+ }
+ return {nodes,units,edgeCount};
+}
+function memoCopyGraph(root,graph){
+ const copies=new Map([...graph.nodes.keys()].map(value=>[value,Array.isArray(value)?new Array(value.length):Object.create(null)]));
+ for(const [value,entries]of graph.nodes){const copy=copies.get(value);for(const [key,child]of entries)Object.defineProperty(copy,key,{value:child&&typeof child==='object'?copies.get(child):child,enumerable:true,writable:false,configurable:false});Object.freeze(copy);}
+ return root&&typeof root==='object'?copies.get(root):root;
+}
+function memoSignature(value){
+ // This only narrows candidate search; complete graph equality and primitive
+ // guards still establish every digest hit. Equal objects have equal key sets
+ // regardless of insertion order. No property values are read here. Only
+ // bootstrap-captured natives are called, so scopedSha256Value can run this
+ // before digestScopePrimitivesCurrent without dispatching through a changed one.
+ if(!value||typeof value!=='object')return typeof value;
+ if(memoApply(memoIsArray,undefined,[value]))return 'A:'+value.length;
+ const keys=memoApply(memoKeys,undefined,[value]),count=keys.length,wide='O:'+count;
+ // Keep refinement bounded. Wide objects or long names retain the original
+ // count bucket; this changes neither cache eligibility nor the cold encoder.
+ if(count>64)return wide;
+ let units=0;for(let i=0;i<count;i++){units+=keys[i].length;if(units>4096)return wide;}
+ memoApply(memoSort,keys,[]);
+ // Length-prefixed names keep the key injective without JSON.stringify.
+ let signature='K:';for(let i=0;i<count;i++)signature+=keys[i].length+':'+keys[i];
+ return signature;
+}
+function memoValueEquals(expected,current,preparedGraph=null){
+ const graph=preparedGraph||memoGraph(current,50000,536870912);if(!graph)return false;
+ const pending=[[expected,current]],pairs=new WeakMap();
+ while(pending.length){
+  const [a,b]=pending.pop();if(memoSame(a,b))continue;
+  if(!a||!b||typeof a!=='object'||typeof b!=='object'||Array.isArray(a)!==Array.isArray(b))return false;
+  if(Array.isArray(a)&&a.length!==b.length)return false;
+  let seen=pairs.get(a);if(seen?.has(b))continue;if(!seen){seen=new WeakSet();pairs.set(a,seen);}seen.add(b);
+  const right=new Map(graph.nodes.get(b)),keys=Object.keys(a);if(keys.length!==right.size)return false;
+  for(const key of keys){if(!right.has(key))return false;pending.push([a[key],right.get(key)]);}
+ }
+ return true;
+}
+function createCanonicalDigestScope(root){
+ // Only the store import owner uses this with parser-owned ordinary JSON.
+ // Arbitrary JS objects/Proxies are not an admitted external input boundary.
+ if(!digestScopePrimitivesCurrent())return null;
+ const graph=memoGraph(root,50000,536870912);if(!graph)return null;
+ const snapshot=memoCopyGraph(root,graph),index=new Map(),queue=[snapshot],seen=new WeakSet();
+ while(queue.length){const value=queue.pop();if(!value||typeof value!=='object'||seen.has(value))continue;seen.add(value);
+  const key=memoSignature(value),rows=index.get(key)||[];rows.push({value,digest:null});index.set(key,rows);for(const child of Object.values(value))queue.push(child);
+ }
+ const scope=Object.freeze({});digestScopeData.set(scope,{snapshot,index,hits:0,misses:0,bypasses:0,entries:0,nodes:graph.nodes.size,edges:graph.edgeCount,stringCodeUnits:graph.units,disposed:false});return scope;
+}
+function withCanonicalDigestScope(scope,callback){
+ const data=memoApply(memoWeakGet,digestScopeData,[scope]),previous=activeDigestScope;
+ activeDigestScope=data&&!data.disposed?scope:null;
+ try{const result=callback();if(result&&typeof result.then==='function')throw new TypeError('Digest scopes require synchronous computation.');return result;}finally{activeDigestScope=previous;}
+}
+function canonicalDigestScopeMatches(scope,value){const data=memoApply(memoWeakGet,digestScopeData,[scope]);return !!data&&!data.disposed&&digestScopePrimitivesCurrent()&&memoValueEquals(data.snapshot,value);}
+function canonicalDigestScopeStats(scope){const data=memoApply(memoWeakGet,digestScopeData,[scope]);return data?{hits:data.hits,misses:data.misses,bypasses:data.bypasses,entries:data.entries,nodes:data.nodes,edges:data.edges,stringCodeUnits:data.stringCodeUnits,disposed:data.disposed}:null;}
+function disposeCanonicalDigestScope(scope){const data=memoApply(memoWeakGet,digestScopeData,[scope]);if(data){data.disposed=true;data.snapshot=null;data.index.clear();}}
+function scopedSha256Value(value){
+ const data=memoApply(memoWeakGet,digestScopeData,[activeDigestScope]);
+ if(!data||data.disposed)return sha256ValueCold(value);
+ // The scope indexes only objects; primitive values always use the cold path.
+ if(value===null||typeof value!=='object'){data.bypasses++;return sha256ValueCold(value);}
+ // A value with no indexed candidate always takes the cold path, so the
+ // primitive guard is required only before candidate comparison and reuse.
+ // The lookup uses captured natives only; a changed native is never reached first.
+ const candidates=memoApply(memoMapGet,data.index,[memoSignature(value)])||[];
+ if(!candidates.length){data.bypasses++;return sha256ValueCold(value);}
+ if(!digestScopePrimitivesCurrent()){data.bypasses++;return sha256ValueCold(value);}
+ const currentGraph=memoGraph(value,50000,536870912),entry=currentGraph&&candidates.find(row=>memoValueEquals(row.value,value,currentGraph));
+ if(!entry){data.bypasses++;return sha256ValueCold(value);}
+ if(entry.digest){data.hits++;return entry.digest;}
+ data.misses++;const digest=sha256ValueCold(value);
+ if(data.entries<256&&digestScopePrimitivesCurrent()&&memoValueEquals(entry.value,value)){entry.digest=digest;data.entries++;}
+ return digest;
+}
+
+function sha256Value(value){return scopedSha256Value(value);}
 async function sha256Chunks(chunks){
   const digest=createSha256();let lastYield=Date.now();
   for await(const chunk of chunks){if(ArrayBuffer.isView(chunk))digest.update(chunk instanceof Uint8Array?chunk:new Uint8Array(chunk.buffer,chunk.byteOffset,chunk.byteLength));else digest.updateText(chunk);if(Date.now()-lastYield>=8){await new Promise(resolve=>setTimeout(resolve,0));lastYield=Date.now();}}
@@ -287,6 +481,7 @@ function filenameCollisionKeys(filename){const normalized=normalizeFilename(file
 function normalizeFilenameSet(filenames){
   const identities=filenames.map(filename=>normalizeFilename(filename,{allowPath:true})),seen=[new Set(),new Set(),new Set()];
   for(const identity of identities){const keys=[identity.canonicalPath,identity.caseFoldCollisionKey,identity.platformRiskCollisionKey];for(let index=0;index<keys.length;index++){if(seen[index].has(keys[index]))throw new TypeError(['DUPLICATE_CANONICAL_PATH','CASE_FOLD_PATH_COLLISION','PLATFORM_RISK_PATH_COLLISION'][index]+': selected package paths collide.');seen[index].add(keys[index]);}}
+  for(const paths of seen)for(const path of paths){const segments=path.split('/');for(let count=1;count<segments.length;count++)if(paths.has(segments.slice(0,count).join('/')))throw new TypeError('EXTRACTION_TARGET_PATH_COLLISION: a selected path is both a file and a directory.');}
   return identities;
 }
 
@@ -327,7 +522,7 @@ function evaluateTrustedTimeEvidence({basis='NONE'}={}){
   return Object.freeze({version:TRUSTED_TIME_VERSION,basis:normalizedBasis,trusted:false,attestationContractId:null,attributableExternalSystem:false});
 }
 
-const api={version:'closed-loop-hash/9',IO_READ_TIMEOUT_MS,readWithDeadline,canonicalizationVersion:CANONICALIZATION_VERSION,idVersion:ID_VERSION,filenameVersion:FILENAME_VERSION,trustedTimeVersion:TRUSTED_TIME_VERSION,unicodeContract:UNICODE_CONTRACT,canonicalChunks,stableStringify,compareUnicodeScalarSequence,createSha256,sha256Text,sha256Value,sha256Chunks,sha256Bytes,rawResponseSha256,canonicalEnvelopeSha256,contentRecordValue,contentRecordSha256,recordSha256,registerHashPreimage,registerSetSemantics,registeredHashPreimage,hashRegistered,allocateCanonicalId,allocateCanonicalIdWithCollisionCheck,base32hex,assertPinnedUnicodeHost,pinnedNFD,pinnedNFC,defaultCaseFold,confusableSkeleton,normalizeFilename,filenameCollisionKeys,normalizeFilenameSet,normalizeDateTime,evaluateTrustedTimeEvidence,hashPreimageRegistry:HASH_PREIMAGE_REGISTRY,setSemanticsRegistry:SET_SEMANTICS_REGISTRY,contentRecordIdFields:CONTENT_RECORD_ID_FIELDS,knownVectors:Object.freeze({empty:sha256Text(''),abc:sha256Text('abc')})};
+const api={createCanonicalDigestScope,withCanonicalDigestScope,canonicalDigestScopeMatches,canonicalDigestScopeStats,disposeCanonicalDigestScope,version:'closed-loop-hash/9',IO_READ_TIMEOUT_MS,readWithDeadline,canonicalizationVersion:CANONICALIZATION_VERSION,idVersion:ID_VERSION,filenameVersion:FILENAME_VERSION,trustedTimeVersion:TRUSTED_TIME_VERSION,unicodeContract:UNICODE_CONTRACT,canonicalChunks,stableStringify,compareUnicodeScalarSequence,createSha256,sha256Text,sha256Value,sha256Chunks,sha256Bytes,rawResponseSha256,canonicalEnvelopeSha256,contentRecordValue,contentRecordSha256,recordSha256,registerHashPreimage,registerSetSemantics,registeredHashPreimage,hashRegistered,allocateCanonicalId,allocateCanonicalIdWithCollisionCheck,base32hex,assertPinnedUnicodeHost,pinnedNFD,pinnedNFC,defaultCaseFold,confusableSkeleton,normalizeFilename,filenameCollisionKeys,normalizeFilenameSet,normalizeDateTime,evaluateTrustedTimeEvidence,hashPreimageRegistry:HASH_PREIMAGE_REGISTRY,setSemanticsRegistry:SET_SEMANTICS_REGISTRY,contentRecordIdFields:CONTENT_RECORD_ID_FIELDS,knownVectors:Object.freeze({empty:sha256Text(''),abc:sha256Text('abc')})};
 globalThis.closedLoopHash=Object.freeze(api);
 
 })();

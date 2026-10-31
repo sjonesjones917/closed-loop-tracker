@@ -1,0 +1,1953 @@
+{
+  "sourceOnly": true,
+  "originalPredecessor": {
+    "role": "PREDECESSOR",
+    "path": "/workspace/shared/clrt-integration/verification/atomic-extraction-20261014/reconciliation.json",
+    "sha256": "1cc93c4e49e3e5530ee2a802314617f3aa07d5c72282ded6cd1da68570dac280",
+    "byteLength": 71701945,
+    "purpose": "Pinned source-only evidence",
+    "readMode": "WHOLE_FILE_BYTES_FOR_HASH_AND_STRUCTURAL_ACCOUNTING"
+  },
+  "baseLedger": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+    "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+    "byteLength": 20401933
+  },
+  "originalOccurrenceTransport": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-occurrence-transport.json",
+    "sha256": "4157cda2f60669a2feba4c3021aa212f5bee00f4456a4e7a59d8e86da08a02d4",
+    "byteLength": 6309790
+  },
+  "exactPassages": {
+    "BASE:1367:1367": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1367,
+      "endLine": 1367,
+      "startByte": 83307,
+      "endByte": 83335,
+      "sha256": "cc4e67e551cba2d1c2ec538f1bc12952e9bb58c9dc4201d66d23165cdc3726e1",
+      "text": "- unknown closed properties;"
+    },
+    "BASE:1357:1357": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1357,
+      "endLine": 1357,
+      "startByte": 83050,
+      "endByte": 83078,
+      "sha256": "a8a298876c99dfea0ed6a1c39c7a06c729213341e056ac22e85dc6ce6f53a8b0",
+      "text": "17.5 Closed-schema rejection"
+    },
+    "BASE:1359:1359": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1359,
+      "endLine": 1359,
+      "startByte": 83080,
+      "endByte": 83140,
+      "sha256": "d79d136180581dd41050286f4f83801fb731c7b2ceb4857985c292a1293a0f44",
+      "text": "The single ingestion path rejects before canonical mutation:"
+    },
+    "SUCCESSOR_SOURCE:122801:126361": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startByte": 122801,
+      "endByte": 126361,
+      "sha256": "1f02226ccf6e99fe0c9d31d773dd69ef747d08978cbf7a7a6b5cbcf3730bb190",
+      "text": "A. Insert after §18's unknown-key sentence: closed-loop-human-input-fallback/1\n\nhumanInputRequests is a required, non-null ordered array, empty allowed. Each item is a closed object with exactly these required properties: temporaryKey, question, whyRequired, affectedStageFields, affectedRecords, answerType, allowedValues; its only optional property is blocking. No item property is nullable. All strings preserve their supplied scalar values; nonblank means containing at least one character outside U+0009–U+000D and U+0020.\n\n- temporaryKey is a string matching ^[A-Za-z][A-Za-z0-9._:-]{0,119}$, unique across response record tempKey values and temporaryKey values in attachments, evidence, humanInputRequests and humanAuthorityCandidates. It is a response-local reference, not a canonical identity.\n- question and whyRequired are nonblank strings.\n- affectedStageFields is an ordered array of strings naming registered fields of this response's stage; affectedRecords is an ordered array of strings naming canonical families in this operation's registered read, agent-writable or application-owned set. Both arrays may be empty. These names identify affected context, not authority to write the named fields or families.\n- answerType is exactly one of the eight controls already listed in this section.\n- allowedValues is an ordered array of strings. CHOICE and MULTI_CHOICE require one or more unique nonblank strings, compared exactly. For other controls the array may be empty; its values have no answer-validation effect.\n- blocking is Boolean; absence normalizes to true. No other absent property receives a default. False only makes this particular fallback request optional and cannot waive any governing requirement, human authority, missing evidence or unresolved material uncertainty.\n\nAll item content is an AGENT proposal admitted only through the owning registered external operation. The APPLICATION owns canonical request identity, envelope-derived job/stage/operation/scope, currentness and lifecycle. Answers remain HUMAN values written only by SAVE_HUMAN_INPUT. These proposal fields share the envelope's §14.7 scope, have no migration default other than the expressly stated blocking default for an otherwise valid request, and are invalidated by the owning input/prompt lifecycle under §18; references above point from the request to its affected stage fields/families and grant no reverse ownership.\n\nFor SAVE_HUMAN_INPUT, an absent/null/empty-string answer, or an empty MULTI_CHOICE array, is unanswered; a blocking request rejects it. A nonmissing TEXT or LONG_TEXT answer is a nonblank string; BOOLEAN is Boolean; NUMBER is either a JSON safe integer other than negative zero, or a string rational:N/D where N is a nonzero signed base-10 integer with no plus or leading zeros, D is a positive base-10 integer with no leading zeros, and gcd(abs(N),D)=1. D=1 is permitted only when N is outside the JSON safe-integer range. Zero is represented only by JSON integer 0. Other strings and typed objects are rejected; saving preserves this canonical representation; CHOICE is one exact allowed string; MULTI_CHOICE is an ordered duplicate-free array of exact allowed strings; DATE is a valid Gregorian calendar date in four-digit YYYY-MM-DD form with year 0001–9999, validated without time-zone conversion; FILE_REFERENCE is one current canonical artifact ID in the same project. Optional unanswered requests confer no factual assertion. Successful saving has precisely the existing §18 invalidation and replacement consequences.\n"
+    },
+    "SUCCESSOR_SOURCE:145511:149640": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startByte": 145511,
+      "endByte": 149640,
+      "sha256": "df9601b218510bd7992a22132ce98646d96313a8efaea3464e2a082e19bbb66e",
+      "text": "B. Insert after §21.17: target-availability reference contract\n\nTARGET_AVAILABILITY_CONDITION is a required, non-null closed canonical object with exactly one required non-null property PROOF_EXPRESSION_ID, a canonical proofExpressions ID string. It is one immutable owning-record-to-proofExpressions relationship, with no default. Its producer, scope, writable operation and invalidation owner follow the owning record's existing proposal/acceptance contract; the APPLICATION alone resolves and installs the canonical relationship. It is stored on that existing record, not in a new family.\n\nThe authored form is records.<owning family>[i].fields.TARGET_AVAILABILITY_CONDITION = {\"PROOF_EXPRESSION_ID\": <reference>}. Here <reference> uses the existing response-local relationship convention: exactly {\"tempKey\":\"<same-response proofExpressions tempKey>\"} or {\"recordId\":\"<current proofExpressions canonical ID supplied by the operation>\"}, with no other keys, nulls or defaults. A tempKey must resolve uniquely to a proofExpressions proposal in the same response; a recordId must resolve to the correct current family, project and scope. The APPLICATION resolves this nested relationship through the single ingestion path and at proposal acceptance replaces <reference> with the allocated/resolved canonical ID string. Agents do not write the canonical string directly. This declares the nested relationship's placement, not a second ingestion path.\n\nStage 06 COMPLETE or RECONCILE_VERIFICATION_SUITE may admit structurally valid tests and their availability expressions together using existing proposal acceptance. Admission and canonical ID installation do not establish proof sufficiency. Pending PROOF_REVIEW blocks readiness/evaluation as accepted availability evidence, not initial authoring or proposal admission. Stage 06 PROOF_REVIEW then assesses the installed exact expression and target proposition under the existing review contract; accepted current review permits evaluation. A failed review uses the existing reconciliation/replacement/invalidation lifecycle. No user-operated reference creation is required. The expression's proposition must be availability of the exact target identified by the owning obligation's current scope; the appropriate agent proposes its semantic meaning and composition, and the application validates it.\nThe expression uses only the existing LEAF, ALL_OF, ANY_OF and AT_LEAST_K language, existing valid leaf targets, evidence classes, truth extraction, accepted sufficiency review and current-scope bindings. It evaluates solely under §§29.12–29.14 and the target's existing byte/currentness/identity requirements. It must not depend on completion of the very execution whose availability it determines; ordinary acyclic prerequisite availability proof is permitted. A bare artifact record, filename, digest claim or phase label does not itself establish required byte availability. Missing, stale, unaccepted, circular or unresolved references cannot establish TRUE; apply the existing UNKNOWN/blocking rules without treating unknown as known absence. Closed-universe evidence is required to establish FALSE.\n\nThis reference does not change §16.1's due predicate or phase timing. No PHASE_TARGET, CURRENT_RECORD, VERIFIED_ARTIFACT_BYTES, or other additional condition-node grammar is introduced. An older representation may migrate only after a recorded lossless equivalence demonstration covering target, evidence, scope and TRUE/FALSE/UNKNOWN outcomes; otherwise affected timing/proofs remain stale pending reauthoring and review. Equivalence covers the whole effective predicate, including any separately applied phase-target constraints that the controlling source actually requires, not just the old serialized object. Existing compliant target/currentness/byte-observation functions and three-valued evaluators may be retained when their outputs are bound to the accepted existing proof contract and equivalence is demonstrated; old custom node objects are not admitted as a second canonical language. No pinned phase helper is grandfathered merely because it exists.\n"
+    },
+    "SUCCESSOR_SOURCE:149641:164021": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startByte": 149641,
+      "endByte": 164021,
+      "sha256": "9e838eac06445b2801b3af8e90d4ddd2993aa8b989b0a1364fd3e4c11cc1f6c9",
+      "text": "D. Insert after §21.17: residual native semantics\n\nThese clauses close result-bearing primitive/parser choices, not replace §§21.1–21.17. Named ports, DAG validation, immutable bindings, prohibited execution, limits and required identities remain as already specified. Unless expressly defaulted below, an omitted required argument is invalid; no coercion supplies it. The published registry must encode these rules exactly.\n\nD1. Collections, equality and primitive outputs.\nCOUNT accepts only a string, array or bytes: output is respectively UTF-16 code-unit length, array element count, or byte length. It does not count Unicode scalar values or grapheme clusters. SUM, MIN and MAX accept safe-integer arrays; SUM of [] is 0 and checks each left-to-right intermediate sum for safe-integer range; MIN/MAX of [] and unsupported precision are UNDETERMINED. UNIQUE compares canonical-JSON values under §34.1 and preserves each first occurrence in original order. ASSERT_SET_EQUAL compares the same values ignoring order and duplicate multiplicity.\nSORT accepts a homogeneous array and optional domain STRING, BOOLEAN, INTEGER or DECIMAL and optional direction ASC or DESC. Omitted domain is inferred from the first element (empty array: STRING); omitted direction is ASC. Strings compare by unsigned Unicode-scalar sequence, Boolean false precedes true, integers compare exactly, and DECIMAL values compare the exact plain-decimal value of {\"numberType\":\"DECIMAL\",\"value\":\"...\"}. ASC is stable; DESC is the reversal of the ASC result. Mixed/unsupported domains are UNDETERMINED. Invalid canonical values never acquire equality through string coercion.\nASSERT_CONTAINS uses exact substring membership for two strings or canonical equality membership for an array and one canonical value; ASSERT_NOT_CONTAINS negates that result. REGEX returns Boolean match; COMPARE and BYTE_COMPARE return Boolean comparison. HASH_SHA256 returns the lowercase hexadecimal digest of the supplied exact bytes. No Boolean data result is itself an assertion disposition. A failed assertion stops execution as VIOLATED; otherwise the explicitly selected assertion result governs.\n\nD2. Numbers.\nPARSE_JSON accepts standard JSON syntax with unique decoded object member names and scalar-valid strings. Numeric tokens are restricted to -?(0|[1-9][0-9]*) in the inclusive range -9007199254740991 through 9007199254740991, excluding -0; decimal points/exponents are unsupported even if the mathematical value is integral. Reject duplicate members and unpaired surrogates; preserve source member order for selection. Malformed JSON, unsupported numeric tokens or invalid scalar values produce UNDETERMINED, never an approximate successful parse.\nCOMPARE has optional operator with exact enum EQ, NE, GT, GTE, LT, LTE and default EQ. Its optional numericMode has exactly INTEGER, DECIMAL_STRING, APPROXIMATE; omission means the ordinary exact comparison described below, with no mode inferred from tolerance presence. ASSERT_EQ accepts the same optional numericMode and tolerances. No other assertion accepts numericMode or tolerances. Explicit INTEGER remains accepted and preserves ordinary exact comparison: canonical equality for nonnumeric canonical values, and safe-integer equality if either operand is a JSON number (then both must be safe integers). The name INTEGER does not coerce strings or prohibit ordinary nonnumeric canonical equality. Omitted mode follows the same rule. NE is the logical complement of EQ under the selected mode; invalid operands do not become a true NE.\n\nDECIMAL_STRING equality requires two plain decimal strings matching [+-]?[0-9]+(\\.[0-9]+)? after removal of surrounding ASCII U+0009–U+000D/U+0020 whitespace; compare mathematically exactly, ignoring leading plus/zeros and trailing fractional zeros. Ordered COMPARE operators and ASSERT_GT/GTE/LT/LTE use exact ordering of two safe integers or two such decimal strings. COMPARE with ordered operators accepts omitted mode or INTEGER for that ordinary exact domain; explicit DECIMAL_STRING restricts both operands to those strings. Ordered comparisons reject APPROXIMATE and every tolerance argument at definition admission. All EQ/NE/ASSERT_EQ comparisons outside APPROXIMATE also reject tolerance arguments, including compatibility aliases. No binary-float approximation or exponent is implicit.\n\nThe exact typed DECIMAL representation is a closed object with exactly the two required non-null keys numberType and value: numberType is the string DECIMAL; value is a string matching -?(0|[1-9][0-9]*)(\\.[0-9]+)? whose mathematical value is not negative zero. Fractional trailing zeros are accepted; an empty fractional part, plus, whitespace, exponent, leading integer zeros, nulls, extra keys, and numeric value in place of the string are rejected. This same decimal-text grammar is used for canonical plain decimal strings in APPROXIMATE; it is deliberately stricter than DECIMAL_STRING mode. SORT's DECIMAL domain requires these typed objects, compares mathematical values exactly, and preserves each original object; it does not rewrite equivalent decimal spellings. Safe-integer numeric values belong to SORT INTEGER, not DECIMAL.\n\nAPPROXIMATE applies only to COMPARE EQ/NE or ASSERT_EQ and requires an explicit absTol or relTol (or its compatibility alias). Operands and tolerances accept a JSON safe integer other than negative zero, a canonical plain decimal string as just defined, or that exact typed DECIMAL object. Operands may be negative; tolerances must be mathematically nonnegative. At least one tolerance component is explicit; the omitted component is zero. Use exact arithmetic: |actual-expected| <= max(absTol, relTol × max(|actual|,|expected|)). Approximate NE is the logical complement of that equality result. Compatibility names absoluteTolerance and relativeTolerance map to absTol and relTol; when both names for a component appear they must normalize to exactly the same mathematical value, otherwise reject the definition. Unsupported precision is UNDETERMINED. These aliases authorize no other default.\n\nD3. Selectors.\nJSON selector syntax is $ followed by zero or more .identifier, .*, [index], [*], or ['name'] segments. Identifier is [A-Za-z_][A-Za-z0-9_]*; index is 0 or a nonzero digit followed by digits and must be safe; bracket names allow only escaped single quote or escaped backslash. Child access addresses object members, index access addresses arrays, and wildcard addresses object values or array elements. Without wildcard return the selected value; with wildcard return an ordered array of matches. Parsed JSON retains source member order and CSV objects retain header order; objects without source order use §34.1 key order. Array order is retained. Missing branches contribute no match; if a segment has no matches, the result is UNDETERMINED. Selecting a present empty array without a wildcard returns that empty array.\nXML selectors start with exactly one slash, then child-element segments named [A-Za-z_][A-Za-z0-9_.:-]* or *, optionally followed by [positive safe integer]. The first segment matches the document element at position 1; later positions apply within each parent's matching child elements. Only the final segment may be @name or text(). Element results are arrays of the canonical element-node values defined in D4; attribute results are arrays of existing exact attribute strings; text() returns one string per selected element, concatenating descendant text/CDATA in document order and excluding comments. A wholly empty selection at any segment, including a final attribute selection, is UNDETERMINED. A selected element with no text yields the known empty string, not a missing selection. Other selector syntax is invalid before execution.\n\nD4. Text, CSV, XML and regex.\nDECODE_UTF8 is fatal on invalid UTF-8; it removes one initial UTF-8 BOM for text interpretation only, never from byte identity. Invalid encoding is UNDETERMINED.\nPARSE_CSV requires explicit delimiter, quote, header, newline and encoding. Delimiter and quote are distinct single Unicode scalars other than CR/LF; header is Boolean; encoding is UTF-8; newline is AUTO, LF, CRLF or CR. AUTO accepts CRLF as one newline and otherwise CR or LF. A quoted cell starts at the beginning of its field, doubles quote characters for one literal quote, preserves quoted newlines, and allows only delimiter, contracted newline or end after closing quote. Other unquoted CR/LF is malformed. Empty input yields []; a final newline does not create an extra row; blank rows contain one empty cell; a trailing delimiter creates an empty final cell. Header false yields row arrays; header true consumes the first row as unique exact header names and requires equal subsequent widths. No cell type inference occurs.\nPARSE_XML supports the XML 1.0 UTF-8 subset with one root, scalar-valid XML characters, the element/attribute name grammar above, quoted unique attributes, matching tags, comments, CDATA, the five predefined entities and legal decimal/hex numeric character references. An optional initial declaration states version 1.0, optional encoding UTF-8 and optional standalone yes/no in that order. CRLF and CR normalize to LF; literal attribute tab/newline/CR normalize to spaces, while numeric character references preserve their referenced character. DTDs, custom entities, processing instructions, namespace expansion and unsupported declarations are not native semantics. Names containing a colon remain literal names, not namespace-resolved names. Comments do not enter text() output; CDATA does. Invalid/unsupported content cannot yield a successful partial parse.\nPARSE_XML returns the document element as a canonical JSON object with exactly four required non-null properties: name (exact element-name string), attributes (object of exact parsed attribute-name/string-value pairs), children (ordered array of its immediate element-node values), and content (ordered array of strings and immediate element-node values in source content order). Every child appears once in children and once as the same canonical value in content; this is duplicated value content, not a cyclic pointer or identity-based equality. Each nonempty ordinary text run between markup boundaries contributes one decoded string; each nonempty CDATA body contributes one literal string. Empty runs are omitted, comments contribute no entry, adjacent strings separated by comment/CDATA boundaries are not coalesced, and entity references within a text run are decoded into that one string. Outside-root whitespace and the declaration are not represented. Attribute order has no canonical-equality significance; child/content array order and text-run segmentation do. Thus differently ordered attributes with equal values compare equal, while mixed text/child content remains observable in exact document order. XML name/attribute/character normalization is precisely the parsing rule above, not namespace inference.\nThese canonical node values may be consumed by canonical equality, UNIQUE, ASSERT_SET_EQUAL and SELECT_JSON_PATH without opaque host-object behavior. For JSON-path traversal their object keys, including attributes, use §34.1 key order; XML traversal uses children/content source order. SELECT_XML requires a parsed node value from PARSE_XML or a node selected from that parsed value in the same execution; a lookalike authored JSON object does not acquire XML-node provenance. Provenance does not affect canonical equality. Its input is one node, not an implicitly unwrapped array; extraction from an element-result array is explicit through SELECT_JSON_PATH.\nRegex retains §21.9's required JavaScript-compatible subset. Flags are an optional string of unique i, m, s, u characters, default empty. Matching uses those flags with fresh match state; no global/sticky state is accepted. In addition to §21.9's listed constructs, allow word-boundary \\b/\\B and literal escapes \\f, \\n, \\r, \\t, \\v, \\xHH, \\uHHHH and escaped punctuation under the selected flags. Do not accept backreferences, legacy numeric escapes, named groups, lookaround, inline mode groups, Unicode property escapes or unknown alphabetic escapes. Enforce the existing centralized pattern/input/work limits; a safety restriction must not silently change a valid match to false.\n\nRemaining result-bearing argument/output closure: BYTE_COMPARE is exact length-and-byte equality of two byte inputs, with no ordering/operator default. ASSERT_MATCH asserts the same Boolean regex result as REGEX using actual/pattern/optional flags; ordered assertions use the exact ordering above. Each assertion yields only SATISFIED or VIOLATED on valid data, with other terminal dispositions propagated as D5 states. The optional message on assertions is a non-null string, absent by default, used only as diagnostic text and never to alter a result. SORT/UNIQUE require arrays and return arrays; MIN/MAX/SUM require arrays as stated. HASH_SHA256 requires bytes; REGEX requires string value/pattern; selectors require a string path and the defined structured value. Unknown optional arguments and implicit operand/binding selection are prohibited. Authoring shortcuts remain permitted only when they compile to the identical explicit §21.3 DAG and named ports. No extra primitive, alternate successful result type or undeclared default is authorized by registry publication. These additions close the result-bearing choices identified in the bounded argument/port omission comparison; the full generated registry still receives the independent §§2.2/14.5 review.\n\nD5. Errors and identity.\nUnsupported definition syntax, unknown arguments/operations and invalid declared types reject Stage 06 ingestion. Missing required material before execution is BLOCKED. Once started, invalid/unrepresentable data, no-match selection, empty required aggregate, numeric overflow or unsupported precision yields UNDETERMINED; runtime limit/platform/worker failure yields EXECUTION_FAILED. A dependency cannot consume an error or partial output. The operation registry declares deterministic typed codes for these categories; wording is not a new semantic contract. Apply §21.16 to every affected language/parser/selector/operation identity. No existing digest is endorsed by this amendment, and no same-identity incompatible runtime is permitted.\n"
+    },
+    "SUCCESSOR_SOURCE:274758:278726": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startByte": 274758,
+      "endByte": 278726,
+      "sha256": "e7dea6d4e81c712bdd302094af708484b013f8921df3a74666d17e35d7b3a7dc",
+      "text": "E. Insert after §38.1 expectedVarianceContracts: closed-loop-expected-variance-normalization/1\n\nThe normalized semantic value is an object containing required dimensions and allowedVariance and optional rationale. dimensions is a nonempty ordered array of nonblank strings; allowedVariance is a nonblank string; rationale, when present, is a string including empty. Nonblank uses the definition in insertion A. Preserve strings and array order exactly; do not trim, case-fold, sort, deduplicate or infer a missing rationale. Null is not a substitute for any of these fields.\n\nAccepted authoring forms are (1) records.tests[i].fields.EXPECTED_VARIANCE_CONTRACT, an embedded object with those lower-camel-case names, and (2) records.expectedVarianceContracts[i].fields.DIMENSIONS, .ALLOWED_VARIANCE and optional .RATIONALE, with TEST_ID in that record's relationships member. The latter is exactly relationships.TEST_ID = {\"tempKey\":\"<same-response tests tempKey>\"} or {\"recordId\":\"<operation-supplied current tests ID>\"}, resolved through the existing ingestion path. No direct authored application-owned TEST_ID field is accepted. Map only those three direct names to their lower-camel-case counterparts. Embedded additional canonical-JSON properties are preserved exactly and included in the semantic hash as nonoperative context; they cannot introduce executable meaning, a gate, evidence basis or favorable outcome. Direct records remain subject to their closed family registry; no arbitrary new direct field is permitted. If both forms address a test, their normalized objects must be canonical-byte-identical; disagreement or ambiguous duplicates block rather than choosing a winner. Byte-identical embedded and direct forms for the same resolved test produce exactly one current enclosing contract retaining provenance from both sources, never competing canonical contracts. Section 35.10 continues to require preservation of original extension bytes where available and default prompt exclusion. Hashing retained context establishes identity and invalidation only, never permission to execute it or to count it as favorable evidence.\n\nHash NORMALIZED_CONTRACT as SHA-256 of the entire normalized object under closed-loop-canonical-json/1, excluding no property of that object. This CONTRACT_SHA256 does not include record ID, TEST_ID, FROZEN_AT, scope or lifecycle status; those remain bound by the enclosing record/scope hashes. The application resolves exactly one current test relationship and retains exact authored source provenance. Its existing output fields are TEST_ID, NORMALIZED_CONTRACT, FROZEN_AT, SCOPE, CONTRACT_SHA256 and STATUS; identity remains VARIANCE_CONTRACT_ID. No authored value may supply application identity, time, scope or status.\n\nFROZEN_AT records the actual validation observation that creates an immutable normalized snapshot and STATUS=FROZEN denotes immutable bytes, not accepted semantic review. For an absent legacy counterpart, use only verified exact accepted source and the actual activation observation; never invent an earlier freeze time. Present corrupt/stale data cannot be treated as absence. Readiness and comparison still require the existing accepted current proof/review and frozen-candidate/test-suite bindings. Hash identity alone does not establish that a difference is allowed. Semantic evaluation, independent materiality review, all-ten-run comparison, defects and UNKNOWN blocking remain governed by the existing source; no comparison-rate release threshold is added.\n\nThis algorithm's input is the exact authored form plus application-resolved test/source identity; its output is the normalized object and its enclosing application-owned bindings above. Changed normalized bytes, source, test membership or material scope invalidate affected values and comparisons under §34.3. A lossless representation-only migration requires byte- and semantic-equivalence evidence; it supplies no missing approval.\n"
+    },
+    "BASE:1386:1386": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1386,
+      "endLine": 1386,
+      "startByte": 83717,
+      "endByte": 83740,
+      "sha256": "b60b68eb3d4df33af460002568ae78497cbbffc46b6e697425c9c110bc98bbb5",
+      "text": "- ownership violations;"
+    },
+    "BASE:1387:1387": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1387,
+      "endLine": 1387,
+      "startByte": 83741,
+      "endByte": 83754,
+      "sha256": "0a3007670191303f1d939218e3a098b2898a24324ddb8a469181984d54ee443f",
+      "text": "- wrong type;"
+    },
+    "BASE:1388:1388": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1388,
+      "endLine": 1388,
+      "startByte": 83755,
+      "endByte": 83768,
+      "sha256": "b136d3917ff84ba74df4c19c67a36900714eacd2449ab4df1ac1901f1e271066",
+      "text": "- wrong enum;"
+    },
+    "BASE:1389:1389": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1389,
+      "endLine": 1389,
+      "startByte": 83769,
+      "endByte": 83787,
+      "sha256": "b449b144024a2d53f41d2beb4aa70657914763b0908b6ffe0eb60624006f17d0",
+      "text": "- prohibited null;"
+    },
+    "BASE:1390:1390": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1390,
+      "endLine": 1390,
+      "startByte": 83788,
+      "endByte": 83813,
+      "sha256": "d0268f71333ac69177bcb483c0d78c6c069d2f484d0c1934826ce2027a2f8943",
+      "text": "- invalid required empty;"
+    },
+    "BASE:2190:2190": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 2190,
+      "endLine": 2190,
+      "startByte": 119186,
+      "endByte": 119355,
+      "sha256": "991d919d38af62c02013256084b9ccd3e2d1bc824ff1970c47075ea9e370edd3",
+      "text": "Stage 22 finished-product artifact selection must include the same relevant product artifacts included for Stages 23-25 whenever Stage 22 execution requires those bytes."
+    },
+    "BASE:2144:2144": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 2144,
+      "endLine": 2144,
+      "startByte": 118179,
+      "endByte": 118213,
+      "sha256": "b4298fb7d4ed2229704098cc2972e9028ca37d27a98233f588a54144805baad8",
+      "text": "24. Deterministic artifact handoff"
+    },
+    "BASE:3311:3311": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3311,
+      "endLine": 3311,
+      "startByte": 183863,
+      "endByte": 183911,
+      "sha256": "d38a3011068c411c8486a91134fbbd961a06b69a4d31a94b9cbadd8eb5d9f91b",
+      "text": "The prompt uses accepted requirements and tests."
+    },
+    "BASE:1074:1074": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1074,
+      "endLine": 1074,
+      "startByte": 58085,
+      "endByte": 59059,
+      "sha256": "8f783f3abb717dd6595fdae0cbdca60be63eb6811d3af69ae7080ee5dc471392",
+      "text": "The same closure governs STAGE_OPERATION_REGISTRY. For every operation: executor class, response permissions, and writable-family constraints come from Section 14.6; required scope from Section 14.7; acceptance mode from Section 17.12; writable families are exactly the Section 38 families whose records the operation's Section 37 description and Section 14.6 contract create or complete, and the Stage 17 and Stage 19 iteration operations reuse the families of their corresponding Stage 10-16 and Stage 15 operations under the new iteration scope; the completion predicate is the owning stage's Section 37 Completion clause; retry behavior is Section 35.6 for exact retries and replacement-prompt regeneration otherwise; independence requirements are exactly those Sections 26.1-26.6 impose on the operation's role. A stage-operation property neither fixed by this specification nor uniquely derivable from these rules is UNDEFINED_OPERATION_CONTRACT and blocks acceptance."
+    },
+    "BASE:1113:1113": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1113,
+      "endLine": 1113,
+      "startByte": 60770,
+      "endByte": 61120,
+      "sha256": "b4bf4f9e8e7992b1946444df79daa18066c459d66d482887274f7f83495d9c42",
+      "text": "No other stage-operation combination is valid. The registry declares for each listed operation its allowed response types, target-slot derivation, required input families, writable fields and collections, reservation requirement, independence requirement, completion predicate, retry behavior, and whether it is agent, human, or application executed."
+    },
+    "BASE:1117:1117": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1117,
+      "endLine": 1117,
+      "startByte": 61180,
+      "endByte": 62188,
+      "sha256": "25c33ec6fb87fed8c2c26021b21e754d4fc23be6077dd649806fa98a123f5083",
+      "text": "- External-agent operations are COMPLETE at Stages 01-09, 15, 21, 23, 24, 25, and 26; SEMANTIC_CHALLENGE; RECONCILE_INTAKE; SEARCH_ADEQUACY_REVIEW; RECONCILE_SOURCE_SEARCH; RECONCILE_RESEARCH; DISPOSITION_CHALLENGE; ATOMICITY_CHALLENGE; RECONCILE_REQUIREMENTS; SEMANTIC_REVIEW; RECONCILE_REQUIREMENT_SET; PROOF_REVIEW; RECONCILE_VERIFICATION_SUITE; EXECUTE_RUN; VERIFY; COMPARE; ROOT_CAUSE; REGRESSION; CORRECT; RECONCILE at Stage 26; ADVISORY_REVIEW at Stage 27; EXECUTE_EXTERNAL_TEST; INVESTIGATE_MISSING_EVIDENCE; and EXECUTE_FAILURE_TEST, EXECUTE_REGRESSION, and REGRESSION_VERIFY when externally routed. They require an operation reservation and file-first package. Their responseType is exactly DATA_PROPOSAL, HUMAN_INPUT_REQUIRED, BLOCKED, or EXECUTION_FAILED as permitted by the operation's field contract. ADVISORY_REVIEW at Stage 27 is optional and non-gating: it writes releaseGateReviews records only and cannot modify, delay, or substitute for any CALCULATE_RELEASE input, calculation, or state."
+    },
+    "BASE:1118:1118": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1118,
+      "endLine": 1118,
+      "startByte": 62189,
+      "endByte": 63082,
+      "sha256": "a9e92d274bdf03583d97e80b6c209d859254f313745c85c4495799bc85759891",
+      "text": "- Application commands are EXECUTE_FAILURE_TEST when natively routed, EXECUTE_REGRESSION when natively routed, REGRESSION_VERIFY when natively routed, FREEZE, CONFIRM_FREEZE, COMPLETE at Stage 18, CONFIRM at Stage 19, FREEZE_BASELINE, RUN_NATIVE_TESTS, RUN_NATIVE_ATTACKS, FREEZE_DELIVERY_CANDIDATE, VERIFY_IDENTITY, CALCULATE_RELEASE, CALCULATE_EVIDENCE_CHAINS, and CALCULATE_TERMINAL. They accept no external response envelope and commit only application-owned results through the universal command path. COMPLETE at Stage 18 and CONFIRM at Stage 19 are application-calculated convergence and confirmation determinations; agents contribute only the separately declared explanatory fields of the owning record families. FREEZE, CONFIRM_FREEZE, FREEZE_BASELINE, and FREEZE_DELIVERY_CANDIDATE consume and reference the required current humanDecisions records; they never create human authority."
+    },
+    "BASE:1119:1119": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1119,
+      "endLine": 1119,
+      "startByte": 63083,
+      "endByte": 64273,
+      "sha256": "87b64ac04faa4596593b4a1d4011f08f47ed08c5511a7f20289ae96bd69de00e",
+      "text": "- HUMAN_DECISION commands are CAPTURE_DELIVERY_INTENT; application confirmation of a newly reported human-origin answer; and RECORD_HUMAN_DECISION, one global application-validated command bound to exactly one registered purpose and target per invocation. The closed RECORD_HUMAN_DECISION purpose enum is INTENT_CONFIRMATION, CANDIDATE_COMPONENT_SELECTION, BASELINE_AUTHORIZATION, DISCLOSURE_AUTHORIZATION, EXTERNAL_ACTION_RISK_AUTHORIZATION, CONTROLLED_EXCEPTION, REGRESSION_RETIREMENT_AUTHORIZATION, BACKUP_POLICY_SELECTION, TRADEOFF_OR_SCOPE_DECISION, VISUAL_BASELINE_AUTHORIZATION, and HUMAN_AUTHORITY_CORRECTION. Each purpose writes only the humanDecisions record and the human-decision-owned fields FIELD_REGISTRY declares for that purpose and target. HUMAN commands are SAVE_HUMAN_INPUT, which creates and edits User Job Input and saves Section 18 fallback answers with their declared consequences, and RECORD_HUMAN_OBSERVATION, which records human-owned observation and evidence records for human-inspection routes. These commands write only their declared HUMAN or HUMAN_DECISION fields and records, accept no agent-owned canonical fields, and accept no external response envelope."
+    },
+    "BASE:1122:1122": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1122,
+      "endLine": 1122,
+      "startByte": 64575,
+      "endByte": 64995,
+      "sha256": "2c4e65369b73b594e74c250efc9fd8ab028cc15f75683c28f85a5a938d20483c",
+      "text": "For every operation, TARGET_SLOT = SHA-256(closed-loop-canonical-json/1 of contractProfileId, jobId, stage, operation, and all operation-specific target identities required by Section 14.7). The target slot excludes projectRevision so an exact retry retains its slot; expectedRevision and scopeHash remain separate mandatory preconditions. No operation can write a family or field not listed in its FIELD_REGISTRY entry."
+    },
+    "BASE:1151:1151": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1151,
+      "endLine": 1151,
+      "startByte": 67316,
+      "endByte": 67630,
+      "sha256": "3b34966264383c18bbc623cf2e41e57ab55df6cefdf332ddd0162ead4831f51e",
+      "text": "A dimension designated by this matrix is required and non-null. A scope dimension not designated for the operation is prohibited unless the registry marks it as an immutable referenced target. Missing, extra, stale, unreserved, or inconsistent dimensions are rejected before proposal creation or command execution."
+    },
+    "BASE:3228:3228": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3228,
+      "endLine": 3228,
+      "startByte": 175851,
+      "endByte": 175901,
+      "sha256": "39635cbd6c259697791f158c16d731a1305156be2e29190c3853505c3e574743",
+      "text": "37. Exact 30-stage workflow and prompt obligations"
+    },
+    "BASE:3230:3230": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3230,
+      "endLine": 3230,
+      "startByte": 175903,
+      "endByte": 175939,
+      "sha256": "9be1da9a7462efaa0b031dc5680d346500a6f2d6c0bea3ad1fb7b7454c7ea0fc",
+      "text": "37.0 Closed stage-operation registry"
+    },
+    "BASE:3308:3308": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3308,
+      "endLine": 3308,
+      "startByte": 183757,
+      "endByte": 183803,
+      "sha256": "4f576145ea76de7e19a0f892d0df17d6eec1d36a44f3a1db1b00832fc0890e87",
+      "text": "Stage 08 — AUTHOR THE PRODUCTION INSTRUCTION"
+    },
+    "BASE:3333:3333": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3333,
+      "endLine": 3333,
+      "startByte": 185670,
+      "endByte": 185775,
+      "sha256": "7f42e3801d49d55b0c6565c78851f19b0a83e37d4e550f604f74cdf43be6b27f",
+      "text": "Completion: All required components are present and every run will receive the exact same frozen package."
+    },
+    "BASE:3327:3327": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3327,
+      "endLine": 3327,
+      "startByte": 185254,
+      "endByte": 185292,
+      "sha256": "7d3bff2523fcde29b8c0e2601325760be1e064029481ba6eded90fdd255c83f1",
+      "text": "Stage 10 — FREEZE THE TEST CANDIDATE"
+    },
+    "BASE:3335:3335": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3335,
+      "endLine": 3335,
+      "startByte": 185784,
+      "endByte": 186075,
+      "sha256": "0a80a9784f7109005043757952850e0506c484a10c3652cee02ce8acbf671bc5",
+      "text": "CANDIDATE_ID, ITERATION_ID, FREEZE_DATE, FREEZE_OWNER, FROZEN_COMPONENT_RECORDS, TOOL_CONFIGURATION_RECORDS, ALL_REQUIRED_COMPONENTS_PRESENT, ALL_FROZEN_COMPONENT_BYTES_HASHED, ALL_RUNS_WILL_RECEIVE_IDENTICAL_FROZEN_MATERIALS, CHANGES_ALLOWED_DURING_BATCH, STAGE_DECISION, DECISION_EVIDENCE."
+    },
+    "BASE:1047:1047": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1047,
+      "endLine": 1047,
+      "startByte": 55612,
+      "endByte": 55899,
+      "sha256": "e41bb8f3aff8227ca6cedc91fdee53e2377804ac618e0f3689c0006c991b1324",
+      "text": "workflow-schema.js MUST expose one closed FIELD_REGISTRY covering every job field, stage field, canonical-record field, nested durable-object field, relationship, prompt field, package field, result field, receipt field, and terminal field. Every field appears exactly once and declares:"
+    },
+    "BASE:1064:1064": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1064,
+      "endLine": 1064,
+      "startByte": 56493,
+      "endByte": 56775,
+      "sha256": "06c684945157fefb168d52e86c24c0b4d880568b4d45af0add4786b99b506fb2",
+      "text": "Registry completeness is specification-controlled, not implementation-chosen. Every field named anywhere in this specification receives its complete FIELD_REGISTRY contract either from an explicit statement of this specification or from these closed default rules, applied in order:"
+    },
+    "BASE:1065:1065": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1065,
+      "endLine": 1065,
+      "startByte": 56776,
+      "endByte": 56868,
+      "sha256": "b45d8d206d0ff37379f1b4b9439f3edc3242766987affaf77f4c635d810ecb34",
+      "text": "1. a field defined in Section 15 uses its Section 15 row and the Section 15 value contracts;"
+    },
+    "BASE:1066:1066": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1066,
+      "endLine": 1066,
+      "startByte": 56869,
+      "endByte": 57033,
+      "sha256": "77cd183b9ca1c942e420c2849ebbf5923d4637161445becff5ec29a9e73a9f80",
+      "text": "2. STAGE_DECISION, DECISION_EVIDENCE, and every *_DETERMINATION, CONTROLLING_REASON, CONTROLLING_EVIDENCE, and FINAL_* field is an APPLICATION-derived gate summary;"
+    },
+    "BASE:1067:1067": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1067,
+      "endLine": 1067,
+      "startByte": 57034,
+      "endByte": 57278,
+      "sha256": "98143f4899c9ab6f01fc3447075d8df15e82aa1beecdcf23275b4d396255ab3b",
+      "text": "3. every count, coverage, or completeness field — including TOTAL_*, *_COVERAGE, ALL_*, EXPECTED_*, ACTUAL_*, MISSING_*, EXECUTED, SATISFIED, VIOLATED, UNDETERMINED, and RUNS — is an APPLICATION-derived summary under Sections 14.1 and 16.2;"
+    },
+    "BASE:1068:1068": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1068,
+      "endLine": 1068,
+      "startByte": 57279,
+      "endByte": 57434,
+      "sha256": "cd6f7b32c8598359fd994dcc74d7bc085bbc4f0e0f276d4e6b6c92ba2d1a07d0",
+      "text": "4. every *_RECORDS field is a Section 14.8 projection of its owning Section 38 family, and substantive ownership follows that family's declared partitions;"
+    },
+    "BASE:1069:1069": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1069,
+      "endLine": 1069,
+      "startByte": 57435,
+      "endByte": 57556,
+      "sha256": "c94ffab1f0b6703ab51b17f74e1257f5291e898974c352518ae2b183a473c61c",
+      "text": "5. every *_VERSION and *_ID field is an APPLICATION-allocated identity under Section 34.2 or its owning version registry;"
+    },
+    "BASE:1070:1070": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1070,
+      "endLine": 1070,
+      "startByte": 57557,
+      "endByte": 57634,
+      "sha256": "935c2aa364ee996a36732cd65077aba90e7b173b7b0f1061cf2fbb548526e449",
+      "text": "6. fields assigned by Sections 14.2, 14.3, and 14.6 follow those assignments;"
+    },
+    "BASE:1071:1071": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1071,
+      "endLine": 1071,
+      "startByte": 57635,
+      "endByte": 57852,
+      "sha256": "257f4c0f4802817644acf22de38cddd926579adef4b0cf1e3939ba5573f8d6d2",
+      "text": "7. every remaining stage field is an APPLICATION-recomputed summary or immutable reference under Section 14.8; substantive agent or human content never exists as a bare stage field and lives only in its owning family."
+    },
+    "BASE:1072:1072": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1072,
+      "endLine": 1072,
+      "startByte": 57853,
+      "endByte": 58083,
+      "sha256": "98968946a61348b7b55d642aca710b1fd5fb6cc4cf8e241dcdced93927c9c762",
+      "text": "A field whose contract is neither explicitly specified nor uniquely produced by these rules is UNDEFINED_FIELD_CONTRACT and blocks specification acceptance; the resolution is a specification change, never an implementation choice."
+    },
+    "BASE:3232:3232": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3232,
+      "endLine": 3232,
+      "startByte": 175941,
+      "endByte": 176469,
+      "sha256": "ccc9b3058a78c02cbaea965817c67e6f022d1602c478d095f33b303cc5c4d252",
+      "text": "workflow-schema.js MUST define one STAGE_OPERATION_REGISTRY and STAGE_OPERATION_SCOPE_MATRIX covering every permitted operation in all 30 stages and every semantic suboperation. For each combination it fixes response types, target-slot calculation, required/prohibited scope dimensions, required input records, writable fields/collections, reservation requirement, independence requirement, completion rule, and retry rule. Unknown stage-operation combinations, missing scope dimensions, and extra scope dimensions are rejected."
+    },
+    "BASE:3334:3334": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3334,
+      "endLine": 3334,
+      "startByte": 185776,
+      "endByte": 185783,
+      "sha256": "2f5c69fb2d466e1b2ec80ee258ba75c758711d504fe08b9e32e8eb4f005c7c2b",
+      "text": "Fields:"
+    },
+    "BASE:3352:3352": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3352,
+      "endLine": 3352,
+      "startByte": 187146,
+      "endByte": 187473,
+      "sha256": "13363edfb2a0effb714b65dcd2335e455e3eb2678731ab7a6bfceefb1b4913cb",
+      "text": "Completion: The complete current required relation set exists for every due PER_RUN_REQUIRED proposition, run, and test. Every verifier satisfies the semantic-review independence contract. Every required tuple has sufficient evidence and exactly one valid determination; no nondue or meaningless Cartesian cell is manufactured."
+    },
+    "BASE:1279:1279": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1279,
+      "endLine": 1279,
+      "startByte": 79116,
+      "endByte": 79434,
+      "sha256": "e602e6e71fc5a4f68acfadf722f89e68af70626dbe978de992740e90a9cee928",
+      "text": "The application derives DUE_NOW only when the current stage is at least EARLIEST_EXECUTABLE_STAGE, the target-availability condition is TRUE, the obligation is current and applicable, and the current stage is at or beyond its REQUIRED_BY_STAGE. UNKNOWN target availability blocks only when the obligation could be due."
+    },
+    "BASE:1281:1281": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1281,
+      "endLine": 1281,
+      "startByte": 79436,
+      "endByte": 80026,
+      "sha256": "788403e3d4ed95f4a558a873193241fba3b256cccad56dca4a5f888e960de186",
+      "text": "Stages 12, 13, 18, and 19 evaluate only current applicable PREPRODUCT_ITERATION obligations whose PER_RUN_REQUIRED value is TRUE and that are due by the relevant stage. Final-product, representation, delivery, evidence-closure, registry-closure, and terminal-delivery obligations do not block Stage 18 or Stage 19 before their targets exist, and Stages 12, 13, 18, and 19 MUST NOT require product-only, representation-only, delivery-only, or terminal-only propositions before their targets exist. They remain preserved as future required obligations and become due at their declared stages."
+    },
+    "BASE:1283:1283": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1283,
+      "endLine": 1283,
+      "startByte": 80028,
+      "endByte": 80273,
+      "sha256": "327f0b5e7063582d5069ef8ec6a518bdaabcb4edcd8b7385fe912b7c4c906b86",
+      "text": "A deferred target-dependent test becomes due no earlier than the first stage where its target exists and no later than REQUIRED_BY_STAGE. It is never required before the target exists and is never represented as executed before actual execution."
+    },
+    "BASE:2347:2347": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 2347,
+      "endLine": 2347,
+      "startByte": 126385,
+      "endByte": 126450,
+      "sha256": "e5586a822f8d6398226c702ffe65ddcf3354476e28d5c68f815bf67fabf7b4c5",
+      "text": "Agent statements of independence are corroborating evidence only."
+    },
+    "BASE:2352:2352": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 2352,
+      "endLine": 2352,
+      "startByte": 126543,
+      "endByte": 126589,
+      "sha256": "39e5056ff7a2a35c12f61dc8271a91ece6c52ceb402d047a96208fed595f31d1",
+      "text": "Every release-bearing semantic review records:"
+    },
+    "BASE:2353:2353": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 2353,
+      "endLine": 2353,
+      "startByte": 126590,
+      "endByte": 126635,
+      "sha256": "20e224b6a57ccf5dda4ee53b2a368407ad0eadcaf61d5ae4550e264e658345dc",
+      "text": "- reviewed proposal or record IDs and hashes;"
+    },
+    "BASE:2354:2354": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 2354,
+      "endLine": 2354,
+      "startByte": 126636,
+      "endByte": 126679,
+      "sha256": "fdccb3310fa2f687655e7577eb1e001af62a2838a7e2c8b55ac1b4aa171759d1",
+      "text": "- author context and operation reservation;"
+    },
+    "BASE:2355:2355": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 2355,
+      "endLine": 2355,
+      "startByte": 126680,
+      "endByte": 126725,
+      "sha256": "752e6b17c58bc605c12bfa509821b24487ebd16f695ef8914d931cbeda8a99cf",
+      "text": "- reviewer context and operation reservation;"
+    },
+    "BASE:2356:2356": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 2356,
+      "endLine": 2356,
+      "startByte": 126726,
+      "endByte": 126778,
+      "sha256": "362816a9688ec670498b64d3f95ef6dfc5f38d32201c8d770a3a28c7ef6ab1f7",
+      "text": "- required independence dimensions and actual bases;"
+    },
+    "BASE:2357:2357": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 2357,
+      "endLine": 2357,
+      "startByte": 126779,
+      "endByte": 126822,
+      "sha256": "e80bb2729cb46e969b8589871ef4c59343c8686ce160826bb629da23898cc948",
+      "text": "- review question and allowed dispositions;"
+    },
+    "BASE:2358:2358": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 2358,
+      "endLine": 2358,
+      "startByte": 126823,
+      "endByte": 126854,
+      "sha256": "7d77fa6354124890a4a497a1129854e55be9dc080b6fbc2318ec2ffeac3244cc",
+      "text": "- observation and evidence IDs;"
+    },
+    "BASE:2359:2359": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 2359,
+      "endLine": 2359,
+      "startByte": 126855,
+      "endByte": 126916,
+      "sha256": "df49674a6dad8124c0d1c505407c75149ce8de2316771a15c4ebbc40145bd776",
+      "text": "- result: ACCEPTED, REJECTED, PARTIAL, UNKNOWN, or DISAGREED;"
+    },
+    "BASE:2360:2360": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 2360,
+      "endLine": 2360,
+      "startByte": 126917,
+      "endByte": 126957,
+      "sha256": "a90eb8b2aa80fcc2cad13701ae15c490a2035ff652a7950be051dfa1943fa538",
+      "text": "- reconciliation requirement and status."
+    },
+    "BASE:2362:2362": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 2362,
+      "endLine": 2362,
+      "startByte": 126959,
+      "endByte": 127433,
+      "sha256": "c24885ce6090e18b6aebb6f04e67bb23ed5b797e2b61fabee265f5dae608aa5a",
+      "text": "The author and reviewer cannot share the same raw response, context reservation, operation reservation, or accepted review identity. A reviewer cannot approve a semantic value it authored. Search adequacy, Stage 03 extraction challenge, Stage 04 disposition and atomicity, Stage 05 classification/applicability/equivalence, Stage 06 proof-expression, evidence-basis, and native-versus-external representability review, and Stage 26 semantic reconciliation use this contract."
+    },
+    "BASE:2364:2364": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 2364,
+      "endLine": 2364,
+      "startByte": 127435,
+      "endByte": 128120,
+      "sha256": "a08b2528a5733ad660c8269b3925c9010ade78ec285706540eaeae77d3116ce6",
+      "text": "When author and reviewer disagree materially, neither output is promoted. A distinct reconciliation operation is required, and a distinct reconciler receives both completed outputs and the governing evidence. The reconciler differs from both contexts unless a genuine human-authority decision is required. A third reviewer is required when the reconciliation contract designates the dispute as technical semantic judgment and neither prior view can be rejected from objective evidence. A human may decide only an actual human authority, policy, scope, risk, disclosure, or tradeoff question. Every unresolved disagreement remains UNKNOWN or BLOCKED and is never automatically promoted."
+    },
+    "BASE:2368:2368": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 2368,
+      "endLine": 2368,
+      "startByte": 128153,
+      "endByte": 128684,
+      "sha256": "16de094f91ab4806e187aa9137a90446fd3466137b07f4c9f1e5440073582508",
+      "text": "Independence is recorded separately for APPLICATION_SESSION_DISTINCTNESS, APPLICATION_INPUT_ISOLATION, USER_TRANSFER_CONFORMITY, EXTERNAL_CONTEXT_IDENTIFIER_DISTINCTNESS, PROVIDER_CONTEXT_INDEPENDENCE, EXECUTOR_OR_REVIEWER_ROLE_SEPARATION, and ENVIRONMENT_INDEPENDENCE where required. APPLICATION_ESTABLISHED means only that application-observable dimensions required by the contract are satisfied. Distinct IDs do not prove hidden provider-state independence. A required UNKNOWN dimension blocks or leaves the result undetermined."
+    },
+    "BASE:2370:2370": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 2370,
+      "endLine": 2370,
+      "startByte": 128686,
+      "endByte": 129096,
+      "sha256": "80ea0650234a1d7cb4eef3d76e5dc6d7db8096cc255192f19f63c2fed7f0e84f",
+      "text": "Every external operation contract declares MINIMUM_INPUT_BINDING_BASIS from APPLICATION_OBSERVED, VERIFIED_EXTERNAL, EXTERNALLY_SUPPORTED, and SELF_ASSERTED. An echoed manifest identity and per-member digests establish at most EXTERNALLY_SUPPORTED. SELF_ASSERTED or UNKNOWN cannot satisfy an operation whose contract requires byte-exact input possession, and gates derive admissibility from the recorded basis."
+    },
+    "BASE:2372:2372": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 2372,
+      "endLine": 2372,
+      "startByte": 129098,
+      "endByte": 129101,
+      "sha256": "1b8a6e38d83d35247fd9933b83ce7769a0e7b087a66d587e61dd6357b381f364",
+      "text": "⸻"
+    },
+    "BASE:3088:3088": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3088,
+      "endLine": 3088,
+      "startByte": 166606,
+      "endByte": 167325,
+      "sha256": "2b8f4da95900cc91c660b9e7cc3346e86d09c8377c57566c50649b49a532f68e",
+      "text": "A run execution attempt that ends REJECTED, BLOCKED, or EXECUTION_FAILED never counts toward the exactly-ten requirement and cannot satisfy any matrix cell. Its reservation reaches a terminal state, the same run target slot is re-reserved under Section 35.6, and the replacement attempt receives a new fresh context reserved for that run. The superseded context becomes historical, is excluded from the ten-distinct-context calculation, and its outputs cannot appear in any authorized input. Exactly the ten current accepted runs and their ten current distinct contexts satisfy Stage 11. An accepted run is never re-executed within the same iteration; a defect discovered in an accepted run routes through Stages 13-17."
+    },
+    "BASE:3092:3092": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3092,
+      "endLine": 3092,
+      "startByte": 167359,
+      "endByte": 167388,
+      "sha256": "2bfef95d9c8b1accb276dbfb1a9f21256b8024613d4ca8483511d2a5bf87a527",
+      "text": "Verification completeness is:"
+    },
+    "BASE:3095:3095": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3095,
+      "endLine": 3095,
+      "startByte": 167418,
+      "endByte": 167482,
+      "sha256": "e4bde88b18471ca6b07f6ef51251e99f7fff239928bde22f74448b3527408ce4",
+      "text": "Every required triple has exactly one current valid record with:"
+    },
+    "BASE:3096:3096": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3096,
+      "endLine": 3096,
+      "startByte": 167483,
+      "endByte": 167502,
+      "sha256": "335d2fe1b3ade0d9ba2fc191e24a4872bba6d4bc8463ff3f34ba14049eac881f",
+      "text": "- current versions;"
+    },
+    "BASE:3097:3097": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3097,
+      "endLine": 3097,
+      "startByte": 167503,
+      "endByte": 167523,
+      "sha256": "9e4c9c1ed872fdb2f272a862896cc06ec2ea46e3fdf9062780156fd683e23e6e",
+      "text": "- current iteration;"
+    },
+    "BASE:3098:3098": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3098,
+      "endLine": 3098,
+      "startByte": 167524,
+      "endByte": 167538,
+      "sha256": "e8d6c8e2334724a2c4badf2900c0969494a8e03160bc41ead7b86a3f2a73a9c8",
+      "text": "- correct run;"
+    },
+    "BASE:3099:3099": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3099,
+      "endLine": 3099,
+      "startByte": 167539,
+      "endByte": 167562,
+      "sha256": "8c364b2480bd06ef520eae04c7d859d833e64dc4f6656a4569d8804ae1d13d00",
+      "text": "- independent verifier;"
+    },
+    "BASE:3100:3100": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3100,
+      "endLine": 3100,
+      "startByte": 167563,
+      "endByte": 167585,
+      "sha256": "27fb954401bc7ad78a12b9c539673c4197714451a5f0d4fddba2aee52d9f4f02",
+      "text": "- sufficient evidence;"
+    },
+    "BASE:3101:3101": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3101,
+      "endLine": 3101,
+      "startByte": 167586,
+      "endByte": 167608,
+      "sha256": "03f53b305b18aee29d084f845457bf2a216584c8185ccc86ba0eddb77961d2ff",
+      "text": "- valid determination."
+    },
+    "BASE:3347:3347": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3347,
+      "endLine": 3347,
+      "startByte": 186839,
+      "endByte": 186887,
+      "sha256": "8b38f222a5c5d7353de307a5a34aa9862e62d064dec53af0e55506a85ea75125",
+      "text": "Stage 12 — VERIFY EACH EXECUTION INDEPENDENTLY"
+    },
+    "SUCCESSOR_SOURCE:181854:185547": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startByte": 181854,
+      "endByte": 185547,
+      "sha256": "d64000e5157c61f1e96a5ae2527f294cfb8ba9273b336a0af55e73da6a46d8fc",
+      "text": "F2. Insert after §26.6: closed-loop-external-input-binding-minima/1\n\nMINIMUM_INPUT_BINDING_BASIS is EXTERNALLY_SUPPORTED for the external route of each pair in the following closed mapping:\n01 COMPLETE, SEMANTIC_CHALLENGE, RECONCILE_INTAKE;\n02 COMPLETE, SEARCH_ADEQUACY_REVIEW, RECONCILE_SOURCE_SEARCH;\n03 COMPLETE, SEMANTIC_CHALLENGE, RECONCILE_RESEARCH;\n04 COMPLETE, DISPOSITION_CHALLENGE, ATOMICITY_CHALLENGE, RECONCILE_REQUIREMENTS;\n05 COMPLETE, SEMANTIC_REVIEW, RECONCILE_REQUIREMENT_SET;\n06 COMPLETE, PROOF_REVIEW, RECONCILE_VERIFICATION_SUITE;\n07 COMPLETE, EXECUTE_FAILURE_TEST when externally routed;\n08 COMPLETE; 09 COMPLETE; 11 EXECUTE_RUN; 12 VERIFY; 13 COMPARE; 14 ROOT_CAUSE;\n15 COMPLETE, EXECUTE_REGRESSION when externally routed;\n16 CORRECT;\n17 EXECUTE_RUN, VERIFY, COMPARE, ROOT_CAUSE, REGRESSION, CORRECT;\n19 EXECUTE_RUN, VERIFY, COMPARE (always external);\n19 REGRESSION_VERIFY only when externally routed;\n21 COMPLETE; 22 EXECUTE_EXTERNAL_TEST; 23 COMPLETE; 24 COMPLETE; 25 COMPLETE;\n26 COMPLETE, SEMANTIC_REVIEW, RECONCILE;\n27 ADVISORY_REVIEW; 29 INVESTIGATE_MISSING_EVIDENCE;\nand, only when externally routed, every one of the 38 exact conditional pairs listed in F1.\n\nThe mapping has 88 external routes: 50 from the original §14.6 list plus 23 later failure-test and 15 later regression routes. F1's closed lists, not a wildcard allowing arbitrary operation names or stages, determine the additional pairs. The minimum does not grant operation availability or new writer authority. ADVISORY_REVIEW remains optional and non-gating.\n\nFor the conditional native route of 07 EXECUTE_FAILURE_TEST, 15 EXECUTE_REGRESSION, 19 REGRESSION_VERIFY, and the 38 F1 pairs, the input-binding minimum is APPLICATION_OBSERVED. The application establishes that basis from actual custody and verification of each required exact input, its current identity/hash and scope, before execution may start. This is not a requirement that execution has already succeeded: execution outcome, isolation, provenance, disposition and evidence sufficiency are separately determined from the actual execution. An absent or mismatched required input blocks native execution; a download, actor echo or route label does not satisfy this native minimum. This clause does not change the execution mode or permit an unapproved fallback to a different executor. Existing application, human-decision and operator commands outside these conditional pairs retain their existing source contracts; no external evidence minimum is assigned to them by this amendment.\n\nFor an external route, exact attributable echoes of the application-issued package/manifest identity and each required member identity/digest may establish EXTERNALLY_SUPPORTED under the existing input-binding contract; missing or mismatched echoes cannot. A package download, filename, provider label or unbound assertion is insufficient. Echoes never become APPLICATION_OBSERVED external possession, VERIFIED_EXTERNAL attestation, or proof of hidden provider independence. Recording that the application supplied bytes does not prove that an external recipient independently possessed or executed them.\n\nIf the applicable proof obligation, evidence contract or dimensioned-independence contract requires a stronger or distinct basis, that requirement also must be met. This generic minimum cannot weaken it, convert SUPPORTS_ONLY into ESTABLISHES, remove a required accepted review, waive unknown freshness/independence, or supply a successful result. §29.14's registered attestation-verification contract remains necessary for VERIFIED_EXTERNAL. Actual basis and its supporting observations remain recorded and evaluated by the existing gates.\n"
+    },
+    "BASE:3394:3394": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3394,
+      "endLine": 3394,
+      "startByte": 190718,
+      "endByte": 190893,
+      "sha256": "98d20eec66720b97e954c19df29dc4cc0b077779da64ee6f00a833e27f2ba465",
+      "text": "Completion: New iteration and candidate exist. The shared evaluator proves ten new runs, complete verification, comparison, RCA, regression execution, and correction behavior."
+    },
+    "BASE:3390:3390": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3390,
+      "endLine": 3390,
+      "startByte": 190464,
+      "endByte": 190520,
+      "sha256": "56bf96798d601069c9add5f21e1472fc2cc2f481db5f8bc733421ba204bf9c58",
+      "text": "Stage 17 — RE-RUN THE COMPLETE TEN-EXECUTION ITERATION"
+    },
+    "BASE:3396:3396": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3396,
+      "endLine": 3396,
+      "startByte": 190902,
+      "endByte": 191314,
+      "sha256": "062494c0e4524f5b9e636a9a94727366869508bbac0a1060d43e362aa032f0d0",
+      "text": "PREVIOUS_ITERATION_ID, NEW_ITERATION_ID, PREVIOUS_CANDIDATE_ID, NEW_CANDIDATE_ID, CHANGESET_ID, NEW_FROZEN_VERSIONS, OLD_CONVERSATIONS_CONTINUED, TEN_NEW_CONTEXTS_CREATED, RUN_NAMESPACE, IDENTICAL_PACKAGE_CONFIRMED_FOR_ALL_RUNS, PRIOR_OUTPUTS_WITHHELD, EXECUTE_COMPLETED, VERIFY_COMPLETED, COMPARE_COMPLETED, ROOT_CAUSE_COMPLETED, REGRESSION_TESTS_ADDED, CORRECTIONS_COMPLETED, STAGE_DECISION, DECISION_EVIDENCE."
+    },
+    "BASE:3395:3395": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3395,
+      "endLine": 3395,
+      "startByte": 190894,
+      "endByte": 190901,
+      "sha256": "2f5c69fb2d466e1b2ec80ee258ba75c758711d504fe08b9e32e8eb4f005c7c2b",
+      "text": "Fields:"
+    },
+    "BASE:3413:3413": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3413,
+      "endLine": 3413,
+      "startByte": 193342,
+      "endByte": 193805,
+      "sha256": "087a6d633a3e6add6183962bcbacdc85b7ffd2f756f9630ec2aa10a8ddb7de03",
+      "text": "SOURCE_CONVERGED_ITERATION, CONFIRMATION_ITERATION_ID, ZERO_CHANGE_AUDIT, TEN_NEW_CONTEXTS_CREATED, SAME_FROZEN_PACKAGE_USED, RUNS_COMPLETED, COMPLETE_TEST_SUITE_RUN, ALL_REGRESSION_TESTS_RUN, CROSS_RUN_COMPARISON_COMPLETED, NEW_CRITICAL_DEFECTS, NEW_MAJOR_DEFECTS, NEW_REQUIREMENTS_DISCOVERED, INJECTED_DEFECTS_NOT_DETECTED, NEW_CORRECTNESS_AFFECTING_VARIANCE, CONFIRMATION_ACCEPTANCE_CRITERIA_SATISFIED, REQUIRED_RETURN_STAGE, STAGE_DECISION, DECISION_EVIDENCE."
+    },
+    "BASE:3406:3406": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3406,
+      "endLine": 3406,
+      "startByte": 192624,
+      "endByte": 192676,
+      "sha256": "ebd0adaa66fbb1aa36f5ce6cc2ee4c6f86c849680e458fe286c848a55b412382",
+      "text": "Stage 19 — RUN AN UNCHANGED CONFIRMATION ITERATION"
+    },
+    "BASE:3412:3412": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3412,
+      "endLine": 3412,
+      "startByte": 193334,
+      "endByte": 193341,
+      "sha256": "2f5c69fb2d466e1b2ec80ee258ba75c758711d504fe08b9e32e8eb4f005c7c2b",
+      "text": "Fields:"
+    },
+    "BASE:3437:3437": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3437,
+      "endLine": 3437,
+      "startByte": 195682,
+      "endByte": 195761,
+      "sha256": "9c3dc853f21dcf7bde1cf63cb1f8c13639fdb1fbe468c94c515d559bbc414caa",
+      "text": "The application automatically executes every current ready native Test IR test."
+    },
+    "BASE:3433:3433": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3433,
+      "endLine": 3433,
+      "startByte": 195429,
+      "endByte": 195496,
+      "sha256": "4d5a783c55c5496a1efb968f8c07bc88c4a71607563eda543abbe3b8864d432a",
+      "text": "Stage 22 — RUN DETERMINISTIC VERIFICATION ON THE FINISHED PRODUCT"
+    },
+    "BASE:3438:3438": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3438,
+      "endLine": 3438,
+      "startByte": 195762,
+      "endByte": 195828,
+      "sha256": "cf216ce578385c1a375268a35b0d6ce2aa3373eefee88ca3d8f7c807db8a456a",
+      "text": "Unsupported tests route to the exact required external capability."
+    },
+    "BASE:4320:4320": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 4320,
+      "endLine": 4320,
+      "startByte": 238716,
+      "endByte": 238755,
+      "sha256": "a203a65f10aa745759b758402073488da6b7c12728196fbfb3861ac926c9d5a3",
+      "text": "2. Unsupported native test → blocked."
+    },
+    "BASE:4321:4321": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 4321,
+      "endLine": 4321,
+      "startByte": 238756,
+      "endByte": 238820,
+      "sha256": "a7e32053dcc926dfef4d518067c0aed5f7550300ad0fed6bec3a5cdff43e565f",
+      "text": "3. External-agent test with capability and bytes → executable."
+    },
+    "BASE:4322:4322": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 4322,
+      "endLine": 4322,
+      "startByte": 238821,
+      "endByte": 238880,
+      "sha256": "d10a85a16399131da18e9c289a761d8bb6a1e4f7758f8f05d47337aaaff439db",
+      "text": "4. External-agent test with missing capability → blocked."
+    },
+    "BASE:4323:4323": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 4323,
+      "endLine": 4323,
+      "startByte": 238881,
+      "endByte": 238935,
+      "sha256": "c4c57a0ff7652e71890a17b00dd4f7c0241f875d3d35276bf613a57dc1e79ba0",
+      "text": "5. External-agent test with missing bytes → blocked."
+    },
+    "BASE:4639:4639": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 4639,
+      "endLine": 4639,
+      "startByte": 260973,
+      "endByte": 261032,
+      "sha256": "2da45593baf2bed192b302b0f41b9ce374c6b1b377b2724c2be3f5795d039615",
+      "text": "- unsupported native operation blocks or routes externally;"
+    },
+    "BASE:3439:3439": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3439,
+      "endLine": 3439,
+      "startByte": 195829,
+      "endByte": 195969,
+      "sha256": "99ae7a2d8aec5f7b700a2903c980bd0b12585698416072fcd9d264d3d2937bde",
+      "text": "Completion: Every applicable mandatory deterministic test has exactly one current sufficient result and all mandatory results are satisfied."
+    },
+    "BASE:3441:3441": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3441,
+      "endLine": 3441,
+      "startByte": 195978,
+      "endByte": 196284,
+      "sha256": "ba5fe2797f49433e2c731df65baccdb0d6acb470ed7f334084e7b1f1c6f6c218",
+      "text": "PRODUCT_ID, PRODUCT_VERSION, PRODUCT_HASHES_BEFORE_TEST, TEST_SUITE_VERSION, VALIDATOR_VERSION, DETERMINISTIC_TEST_RESULTS, APPLICABLE_MANDATORY_DETERMINISTIC_TESTS, EXECUTED, SATISFIED, VIOLATED, UNDETERMINED, MISSING_TEST_RESULTS, PRODUCT_REJECTED_BY_MANDATORY_FAILURE, STAGE_DECISION, DECISION_EVIDENCE."
+    },
+    "BASE:3440:3440": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3440,
+      "endLine": 3440,
+      "startByte": 195970,
+      "endByte": 195977,
+      "sha256": "2f5c69fb2d466e1b2ec80ee258ba75c758711d504fe08b9e32e8eb4f005c7c2b",
+      "text": "Fields:"
+    },
+    "BASE:3501:3501": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3501,
+      "endLine": 3501,
+      "startByte": 203275,
+      "endByte": 203428,
+      "sha256": "eba53c73224a3ec7f3661c6a4eb3c19b1affb8fd42d73d0a1b862e64e040ef6d",
+      "text": "Completion: Every mandatory chain is structurally complete, current-scope, evidence-sufficient, and linked to current artifact identity where applicable."
+    },
+    "BASE:3105:3105": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3105,
+      "endLine": 3105,
+      "startByte": 167624,
+      "endByte": 167752,
+      "sha256": "0c7b58ab16eb0cd0d0629223796d38b73f24a793d43490d5daed9f3bb3d2254f",
+      "text": "Stage 27 calculates one current release disposition from the complete due release-evidence universe using this exact precedence:"
+    },
+    "BASE:3107:3107": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3107,
+      "endLine": 3107,
+      "startByte": 167754,
+      "endByte": 167876,
+      "sha256": "3c99c50405ef0d5db6907d7549d4fae33dd40743bd206cbf2de8fa35d8a715e2",
+      "text": "1. If current sufficient evidence REFUTES any current applicable mandatory proposition, SELECTED_RELEASE_STATE = REJECTED."
+    },
+    "BASE:3108:3108": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3108,
+      "endLine": 3108,
+      "startByte": 167877,
+      "endByte": 168175,
+      "sha256": "3e7c590429de143ea8ae7f0c415d1662d44ba160f6c226fce8870623fed1bb95",
+      "text": "2. Otherwise, if any required proposition, applicability, proof obligation, evidence relation, freshness state, independence condition, dependency, due test, artifact, challenge, contradiction, or capability is UNKNOWN, stale, incomplete, insufficient, or blocked, SELECTED_RELEASE_STATE = BLOCKED."
+    },
+    "BASE:3109:3109": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3109,
+      "endLine": 3109,
+      "startByte": 168176,
+      "endByte": 168288,
+      "sha256": "1a91b7af4ff5edf98dbd47bf543dfe1c96aada95d207bad751bc9ad4e9560ddf",
+      "text": "3. Otherwise, if every current applicable mandatory proposition is SATISFIED, SELECTED_RELEASE_STATE = ACCEPTED."
+    },
+    "BASE:3110:3110": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3110,
+      "endLine": 3110,
+      "startByte": 168289,
+      "endByte": 168322,
+      "sha256": "3fbfadabb6a925390a4cbdfbd1750f1d5f1c9a68082ac33312c78f6f0d7a636b",
+      "text": "4. No other disposition is valid."
+    },
+    "BASE:3112:3112": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3112,
+      "endLine": 3112,
+      "startByte": 168324,
+      "endByte": 168599,
+      "sha256": "20ed00e3bb53dfd143e7a1dda19b1990eb4de9d00c7abc9526d42918eb10fee5",
+      "text": "All blockers, contradictions, and unknowns remain recorded even when REJECTED controls. ACCEPTED means PRODUCT_RELEASE_ELIGIBLE only. Release is application-derived and idempotent from a release-evidence hash. Changed dependency-closure evidence supersedes the prior release."
+    },
+    "BASE:3175:3175": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3175,
+      "endLine": 3175,
+      "startByte": 169934,
+      "endByte": 170305,
+      "sha256": "157e18bc47a1bbea9b36db5bcebd1167855666978fd2927dff500aeaf1868118",
+      "text": "Before Stage 25 inspection, the application executes FREEZE_DELIVERY_CANDIDATE and creates one application-immutable DELIVERY_CANDIDATE_SET_ID containing the exact artifact IDs, versions, authorized candidate filenames, byte lengths, hashes, transformation records, package membership, parser or viewer requirements, and product lineage. Stage 25 inspects that exact set."
+    },
+    "BASE:3177:3177": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3177,
+      "endLine": 3177,
+      "startByte": 170307,
+      "endByte": 170668,
+      "sha256": "2ad9e8136b9fbd15b929aa75d9da07eb08d66fd91dd0a34ff1544629d422969c",
+      "text": "Stage 28 may verify and authorize only the same current DELIVERY_CANDIDATE_SET_ID. Any changed artifact byte, filename, transformation, package membership, viewer-relevant metadata, product lineage, or set membership invalidates Stage 25 and every later terminal result. Byte equality alone cannot substitute for a required representation or package inspection."
+    },
+    "BASE:3181:3181": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3181,
+      "endLine": 3181,
+      "startByte": 170709,
+      "endByte": 170788,
+      "sha256": "1c176ba88274d162f5035e323c47277e539443973cf9ca3353c157b8fa2ba5e3",
+      "text": "Stage 30 uses one idempotent CALCULATE_TERMINAL command. In one transaction it:"
+    },
+    "BASE:3192:3192": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3192,
+      "endLine": 3192,
+      "startByte": 171524,
+      "endByte": 172077,
+      "sha256": "4f1aacfeea740280b348e6b00d7b2a3fe2dc4e9342bc9e1414471aff6efec23a",
+      "text": "A BLOCKED delivery record is a terminal determination record, not an authorization. The command's own committed revision is part of the record and does not invalidate it. Only a later revision that changes a dependency in the recorded terminal dependency closure can supersede, block, or withdraw it. Registry incompleteness blocks Stage 30; it does not mutate Stage 27 into a dependency cycle. A registry finding that objectively refutes an earlier premise invalidates that premise through the responsible-stage map and requires recalculation in order."
+    },
+    "BASE:3194:3194": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3194,
+      "endLine": 3194,
+      "startByte": 172079,
+      "endByte": 172682,
+      "sha256": "86e0ac282cfbd529677b49063521fd9a0f1fcacae92ff3f1e00a38bb5f90e571",
+      "text": "RESPONSIBLE_STAGE_MAP is mechanically derived: every canonical family maps to its Section 38 declared stage, and every global family maps to the earliest stage whose gate consumes it; a mutation in a family invalidates from that stage under Section 36.1. Registry findings are classified TERMINAL_ONLY_DEFECT, which blocks Stage 30 only, or PREMISE_REFUTING_DEFECT, which invalidates from the mapped responsible stage. A defect in the release-calculation semantics themselves is an implementation defect handled through the Sections 40-44 regression discipline, never by silently recalculating Stage 27."
+    },
+    "BASE:3196:3196": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3196,
+      "endLine": 3196,
+      "startByte": 172684,
+      "endByte": 173023,
+      "sha256": "b6f578ff715ca793fd180aa7d31ef947200a1ba82a39727d1e94329490d6bfd4",
+      "text": "The terminal evidence hash is computed from the exact Stage 27 release record, Stage 28 identity record and human intent, Stage 29 evidence-chain set and hash, Stage 30 registry calculation, pre-delivery checkpoint, delivery scope, and authorized artifact identities. It is never computed from a summary standing in place of those records."
+    },
+    "BASE:3220:3220": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3220,
+      "endLine": 3220,
+      "startByte": 174443,
+      "endByte": 175407,
+      "sha256": "3983a2525e84904999db4ad2736a7123d3fab1ae778436be32d8ee3c69dbcc95",
+      "text": "The application records a DELIVERY_ATTEMPT receipt containing the delivery ID, attempt ID, exact artifacts, byte hashes, operator action, intended recipient/destination/channel, device-reported time, result, and available external receipt. When the requested outcome includes delivery to the operator or another destination, Stage 30 workflow completion requires at least one successful authorized export or share attempt within the delivery record's scope. DELIVERY_STATE = AUTHORIZED permits the UI to say \"Delivery authorized.\" It may say \"Delivery attempted\" only after the action receipt exists. It may say \"Delivered\" only when current evidence attributable to the recipient, destination, channel, or external system establishes transfer at its actual epistemic basis. The application cannot prevent or count transfers performed outside its controlled action path and must display that limitation. It does not claim it can undo a completed external transfer."
+    },
+    "BASE:3224:3224": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3224,
+      "endLine": 3224,
+      "startByte": 175446,
+      "endByte": 175844,
+      "sha256": "7dfaebe1e5f0a5076c0333304a47a84936fa7062d03c01f05aa42f9616b78946",
+      "text": "Creation of an application-derived receipt, release calculation, evidence-chain calculation, registry calculation, or terminal determination MUST NOT invalidate itself merely because its own atomic commit increments the project revision. Each derived record binds to its precondition dependency closure and committed revision. Only a later mutation affecting that dependency closure makes it stale."
+    },
+    "BASE:3495:3495": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3495,
+      "endLine": 3495,
+      "startByte": 202925,
+      "endByte": 202974,
+      "sha256": "4958ff6a5e57cbe605c874a4d95289c2db189723334151e7f9dea2526c137e75",
+      "text": "Stage 29 — PRESERVE THE COMPLETE EVIDENCE CHAIN"
+    },
+    "BASE:4346:4346": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 4346,
+      "endLine": 4346,
+      "startByte": 239965,
+      "endByte": 240030,
+      "sha256": "1c99453736bf503630ad294e5d609a22995616f4444d4329db41e03dc5513a14",
+      "text": "24. Byte test with verified hashes and identities → sufficient."
+    },
+    "BASE:4316:4316": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 4316,
+      "endLine": 4316,
+      "startByte": 238598,
+      "endByte": 238646,
+      "sha256": "6e2fbcd234631d30dd33368b3dc5111a8f383312e3a180d573885fc43be06404",
+      "text": "41. Mandatory deterministic and behavioral tests"
+    },
+    "BASE:4344:4344": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 4344,
+      "endLine": 4344,
+      "startByte": 239896,
+      "endByte": 239916,
+      "sha256": "441d61d887d89247e062800c9716952c06daae6f309c6bea9cae522a7df555dd",
+      "text": "Evidence sufficiency"
+    },
+    "BASE:4697:4697": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 4697,
+      "endLine": 4697,
+      "startByte": 262989,
+      "endByte": 263311,
+      "sha256": "4c12cfc448c8a9b1d117c0df1b8425614dfcc7c22b5fa1febd51ab567fa285cc",
+      "text": "Every intentional invalid state is created in a disposable project, test-only database namespace, immutable artifact copy, worker-isolated byte set, or explicitly authorized external sandbox. The suite must verify both defect detection and absence of mutation to any canonical user project or unauthorized external target."
+    },
+    "BASE:4365:4365": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 4365,
+      "endLine": 4365,
+      "startByte": 241110,
+      "endByte": 241158,
+      "sha256": "490ee42368550edd63dc356ad2746e9e17875c57613d88fc9ba6e46c4259f77d",
+      "text": "39. Violation and undetermined counts are exact."
+    },
+    "BASE:4362:4362": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 4362,
+      "endLine": 4362,
+      "startByte": 241013,
+      "endByte": 241022,
+      "sha256": "1e42d0c86af7a9c6a4d88038a3fe9043520f95c6b06afd2ac6ca5dcc885f6c36",
+      "text": "Stability"
+    },
+    "BASE:4427:4427": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 4427,
+      "endLine": 4427,
+      "startByte": 244226,
+      "endByte": 244295,
+      "sha256": "b2a6741e3047d9cdf0534c59cfcd22b04be6caff05a3d36a8af64b2155b53e3e",
+      "text": "93. Weak Stage 22 evidence cannot satisfy deterministic verification."
+    },
+    "BASE:4412:4412": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 4412,
+      "endLine": 4412,
+      "startByte": 243538,
+      "endByte": 243548,
+      "sha256": "2fc83758f74baa48f9360dce0f1bdc84ad7da9d86760919fb340ae18ad97bf62",
+      "text": "Full cycle"
+    },
+    "BASE:4428:4428": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 4428,
+      "endLine": 4428,
+      "startByte": 244296,
+      "endByte": 244331,
+      "sha256": "55522bc89dd5086a3ed54440d1ffdff1f85848d6627f445d56e0a3c4b99cbd5e",
+      "text": "94. Correct objective evidence can."
+    },
+    "BASE:4601:4601": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 4601,
+      "endLine": 4601,
+      "startByte": 259299,
+      "endByte": 259353,
+      "sha256": "e7058c880fba96c96ed2ff0f739f049d8edfc9feeac3b4a34a74bd0311e61be3",
+      "text": "- migration creates valid defaults for Test IR fields;"
+    },
+    "BASE:2808:2808": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 2808,
+      "endLine": 2808,
+      "startByte": 147485,
+      "endByte": 148047,
+      "sha256": "b9bb0f4afc43664d164c4ddfb5d3c238051d51dbecf5ab31aea399df11c0511b",
+      "text": "Every negative, mutation, adversarial, storage-failure, parser-hostility, and deliberately invalid fixture executes against isolated disposable state: a test-only project clone, test-only IndexedDB namespace, immutable read-only artifact copy, isolated worker input, or explicitly authorized external sandbox. The suite must prove that no fixture mutated a canonical user project or an unauthorized third-party target. Canonical user projects and third-party systems are never mutation targets unless the exact action is separately authorized and safely bounded."
+    },
+    "BASE:4597:4597": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 4597,
+      "endLine": 4597,
+      "startByte": 259194,
+      "endByte": 259232,
+      "sha256": "23b52df2a8f0ae95c8ccdf5a1e84634855a50efcb2cf65e1827b4426a03d7395",
+      "text": "42. Additional mandatory Test IR tests"
+    },
+    "BASE:4599:4599": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 4599,
+      "endLine": 4599,
+      "startByte": 259234,
+      "endByte": 259251,
+      "sha256": "2fa8f9254102fefa8e46d7e1d22a41cc07145134aef01438f0dc3cb2cf3ac26b",
+      "text": "The suite covers:"
+    },
+    "BASE:4605:4605": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 4605,
+      "endLine": 4605,
+      "startByte": 259514,
+      "endByte": 259555,
+      "sha256": "f2e5471fe35a790bd1cb6eee68a32cb865d80452b8f72fb5bca258f63742c94d",
+      "text": "- unknown operation property is rejected;"
+    },
+    "BASE:4606:4606": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 4606,
+      "endLine": 4606,
+      "startByte": 259556,
+      "endByte": 259597,
+      "sha256": "ebd758f15d8f718a6789bd72c6206396dd88c5b1e89443d2be861cb08d390957",
+      "text": "- missing operation argument is rejected;"
+    },
+    "BASE:4607:4607": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 4607,
+      "endLine": 4607,
+      "startByte": 259598,
+      "endByte": 259632,
+      "sha256": "8be22bf52ccf9cff08dc4c4792a231a631229c1cb10b63d1b7cfb7396197c03d",
+      "text": "- wrong argument type is rejected;"
+    },
+    "BASE:4608:4608": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 4608,
+      "endLine": 4608,
+      "startByte": 259633,
+      "endByte": 259672,
+      "sha256": "fa1f3baa67d3076cb45ae4d79bb3143a15c6ed9fe48db29b6fb5ee4a299de157",
+      "text": "- invalid artifact binding is rejected;"
+    },
+    "BASE:4641:4641": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 4641,
+      "endLine": 4641,
+      "startByte": 261095,
+      "endByte": 261150,
+      "sha256": "a359d5d84f7b6adbb161b80a5d45a62e7f8b29b300abd73885bf2f9a7d2bbd81",
+      "text": "- one failed native mandatory test rejects the product;"
+    },
+    "BASE:4642:4642": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 4642,
+      "endLine": 4642,
+      "startByte": 261151,
+      "endByte": 261203,
+      "sha256": "a2eda40773d12c68988145b74c6087524f75b60c3fad01c7774b14497e4bcdc9",
+      "text": "- execution failure remains distinct from violation;"
+    },
+    "BASE:4645:4645": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 4645,
+      "endLine": 4645,
+      "startByte": 261296,
+      "endByte": 261383,
+      "sha256": "7672df0b5452c7bd9e4da8844c6f23a6df552563952522ef4114bfc2ba1c8390",
+      "text": "- only current sufficient native results enter release and evidence-chain calculations."
+    },
+    "BASE:4684:4684": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 4684,
+      "endLine": 4684,
+      "startByte": 262492,
+      "endByte": 262524,
+      "sha256": "3ace459d6f58b8625bf743ed9c3a7d4a95e29f1a074e54ce29b068e8e4c24141",
+      "text": "- unsupported Test IR operation;"
+    },
+    "BASE:4665:4665": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 4665,
+      "endLine": 4665,
+      "startByte": 261996,
+      "endByte": 262014,
+      "sha256": "bd458f53c54c21027831b0d911293e193e60a4dd764086e1ec7d0462a6aa2759",
+      "text": "43. Test the tests"
+    },
+    "BASE:4667:4667": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 4667,
+      "endLine": 4667,
+      "startByte": 262016,
+      "endByte": 262057,
+      "sha256": "a1f7b0ec8c3d374fb28d95d84d42783832695820686a5e4ddb769cfeec478b36",
+      "text": "For every new gate class, the suite must:"
+    },
+    "BASE:4673:4673": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 4673,
+      "endLine": 4673,
+      "startByte": 262172,
+      "endByte": 262199,
+      "sha256": "ad584cb88c53e337d0708f9e9d2d0f0d91977b1752e9d2b55db9f5266f6c387c",
+      "text": "Required mutations include:"
+    },
+    "BASE:4758:4758": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 4758,
+      "endLine": 4758,
+      "startByte": 264824,
+      "endByte": 264849,
+      "sha256": "05e29ff3c4fa7f622e0c2712f64d2209a2dbf28fe4b85bfe55150f78d640275e",
+      "text": "- weak Stage 22 evidence;"
+    },
+    "BASE:4701:4701": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 4701,
+      "endLine": 4701,
+      "startByte": 263318,
+      "endByte": 263342,
+      "sha256": "096c53c3bbc985727235241ffb02b700583e38f2c6116866860815a9933dd98e",
+      "text": "44. Negative test matrix"
+    },
+    "BASE:4703:4703": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 4703,
+      "endLine": 4703,
+      "startByte": 263344,
+      "endByte": 263384,
+      "sha256": "39f71962ad75ea67b1baf6f0f950d37ce8f8416fe16d5d981c1cc13cef750481",
+      "text": "The acceptance suite covers, at minimum:"
+    },
+    "BASE:5100:5100": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5100,
+      "endLine": 5100,
+      "startByte": 282901,
+      "endByte": 282958,
+      "sha256": "a293340542db16e9b8e717a423a7a83820eb28bcd5722249c4cd88554abc3b90",
+      "text": "- generate retry context from actual validation failures;"
+    },
+    "BASE:5027:5027": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5027,
+      "endLine": 5027,
+      "startByte": 280212,
+      "endByte": 280255,
+      "sha256": "06dbfe388b0523bfcef7caaf27e050019b906c705134d282aa7ea232d9420164",
+      "text": "47. Required implementation changes by file"
+    },
+    "BASE:5084:5084": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5084,
+      "endLine": 5084,
+      "startByte": 282218,
+      "endByte": 282234,
+      "sha256": "58dc584bd470b182e5a4d2ff7f2980f8c943300b8110e1686ec538c9e2ad1e95",
+      "text": "prompt-engine.js"
+    },
+    "BASE:5109:5109": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5109,
+      "endLine": 5109,
+      "startByte": 283246,
+      "endByte": 283314,
+      "sha256": "02876c7b5d2adda78d9c0d9e6572261eab56093fb220f1a4d984463efd9e9660",
+      "text": "- validate Test IR and bindings before accepting Stage 06 proposals;"
+    },
+    "BASE:5104:5104": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5104,
+      "endLine": 5104,
+      "startByte": 283065,
+      "endByte": 283086,
+      "sha256": "d67546aa4b7d649fccfefefd24e96a27b719b5ffd8e4537aa3c7e4e702798d01",
+      "text": "response-ingestion.js"
+    },
+    "BASE:5112:5112": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5112,
+      "endLine": 5112,
+      "startByte": 283406,
+      "endByte": 283511,
+      "sha256": "c4ce914a206416352822fd3b0980d4f37a68d1feb0b40babc5037d5975a2cabe",
+      "text": "- validate file-first response JSON, external packages, named attachment slots, and returned attachments;"
+    },
+    "BASE:5133:5133": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5133,
+      "endLine": 5133,
+      "startByte": 284195,
+      "endByte": 284229,
+      "sha256": "eb097bd1b2e76b3d9bc82c80d7336f34d9c345ad749197ad7b7c9d27dc1ae53c",
+      "text": "- provide native Run Tests action;"
+    },
+    "BASE:5129:5129": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5129,
+      "endLine": 5129,
+      "startByte": 284033,
+      "endByte": 284044,
+      "sha256": "73dfea5f0837cf535428c84feeeac90ac04cbfee3f4573249c4d1bc5de99145e",
+      "text": "app-core.js"
+    },
+    "BASE:5176:5176": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5176,
+      "endLine": 5176,
+      "startByte": 285710,
+      "endByte": 285738,
+      "sha256": "87348e25cd40b090ec74517f01387d9a5016cdeeedce43215c6901c9b3080640",
+      "text": "- run native Stage 22 tests;"
+    },
+    "BASE:5169:5169": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5169,
+      "endLine": 5169,
+      "startByte": 285522,
+      "endByte": 285549,
+      "sha256": "267452bb53d388a7b14551d9fc53a797edc124dc9085ecc79f5339277a1e53b5",
+      "text": ".github/workflows/pages.yml"
+    },
+    "BASE:5243:5243": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5243,
+      "endLine": 5243,
+      "startByte": 289425,
+      "endByte": 289460,
+      "sha256": "bb04b264534e48a4130a78c49e7c7eb44a305f80de73c5f114046e687dbc19b3",
+      "text": "1. Fix Stage 22 artifact inclusion."
+    },
+    "BASE:5227:5227": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5227,
+      "endLine": 5227,
+      "startByte": 288704,
+      "endByte": 288737,
+      "sha256": "5f904dbe26250918ff334fa814a9aa7fa8b1fcf8854e10942f5778464f19e9bd",
+      "text": "48. Required implementation order"
+    },
+    "BASE:5242:5242": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5242,
+      "endLine": 5242,
+      "startByte": 289381,
+      "endByte": 289424,
+      "sha256": "032a0621b7d3172390cb0921c8c1a0a1c36ef76b1e1c8772727400f09657cf96",
+      "text": "Phase 2 — repair current operator defects"
+    },
+    "BASE:5271:5271": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5271,
+      "endLine": 5271,
+      "startByte": 290363,
+      "endByte": 290401,
+      "sha256": "b931eff519e0ce2d84270243464ff238ef1ea6b136024f1f33473c79f0e755d9",
+      "text": "1. Run all current ready native tests."
+    },
+    "BASE:5270:5270": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5270,
+      "endLine": 5270,
+      "startByte": 290335,
+      "endByte": 290362,
+      "sha256": "21bd9c4eda1f8421156c71609c58cfbf20078992a82c8f73c341fc9d4713aca1",
+      "text": "Phase 5 — native Stage 22"
+    },
+    "BASE:5291:5291": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5291,
+      "endLine": 5291,
+      "startByte": 291059,
+      "endByte": 291130,
+      "sha256": "b45cfe995ae033fef419c1b070ba46fb0737e4909981fbd41fe2bb9e16ffc26d",
+      "text": "2. Package exact files, records, prompt, manifest, and return contract."
+    },
+    "BASE:5289:5289": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5289,
+      "endLine": 5289,
+      "startByte": 290986,
+      "endByte": 291025,
+      "sha256": "c31a6ff3a592a987ac565ca5aaf38b718fae5d692da2c31303a738a3b0281062",
+      "text": "Phase 7 — external execution packages"
+    },
+    "BASE:5290:5290": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5290,
+      "endLine": 5290,
+      "startByte": 291026,
+      "endByte": 291058,
+      "sha256": "d5f71f2f3cf88286f3db262a71a1b7e5f69849ed45d1c9e09508216fbfaf3a70",
+      "text": "1. Add createExecutionPackage()."
+    },
+    "BASE:5292:5292": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5292,
+      "endLine": 5292,
+      "startByte": 291131,
+      "endByte": 291224,
+      "sha256": "c4bb36dabbaf784d6e746bc3f87ee6870fe0f6e7a629d5374b0c86d9373fc526",
+      "text": "3. Verify returned response JSON files, named attachment slots, returned files, and evidence."
+    },
+    "BASE:5297:5297": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5297,
+      "endLine": 5297,
+      "startByte": 291391,
+      "endByte": 291466,
+      "sha256": "afde6d5384a64410d5c421e012f25dc080d4e40cd043fc77052882d7b646ba78",
+      "text": "- a demonstrated current test cannot be represented by existing primitives;"
+    },
+    "BASE:5295:5295": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5295,
+      "endLine": 5295,
+      "startByte": 291314,
+      "endByte": 291354,
+      "sha256": "c7eab4b567c445bf847d97d4cf6078a993cb7303a9cf03c85473f61c549c0e20",
+      "text": "Phase 8 — adapters only when justified"
+    },
+    "BASE:5296:5296": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5296,
+      "endLine": 5296,
+      "startByte": 291355,
+      "endByte": 291390,
+      "sha256": "fcb68b9c525f738061b1fbc7ac18d4b9cfc5857e6bed8ce3a0f667067e42cbeb",
+      "text": "Add a specialized parser only when:"
+    },
+    "SUCCESSOR_SOURCE:25996:53483": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startByte": 25996,
+      "endByte": 53483,
+      "sha256": "1edc5f5d721400425addba1c9dff124bb905532b9f27c2843b41d59afc9398dc",
+      "text": "C. Insert after §6.5A: normative algorithm closed-loop-raw-units/1\n\nThe unit universe is structural accounting. Retain the exact originating input and artifact bytes; no normalized projection replaces them or asserts inspection. Each unit binds the input version, supplied occurrence, exact structural location and source-value hash. Enumerate roots in their retained source occurrence order; within a structured value visit arrays in index order and object keys in unsigned Unicode-scalar order. A canonical mirror of the same originating field is visited only once, using the originating field; separately supplied equal values are separate occurrences.\n\nFor human text and string-valued structured human input, CRLF, CR and LF delimit physical lines. Retain original line positions. Emit each line containing a character other than U+0009–U+000D or U+0020; if a nonempty string has no such line, emit that entire string as one unit. Empty strings, null and absent scalar values emit no content unit. Other scalar leaves emit one unit retaining their declared type and value. Original blank lines and exact original text remain available to the mandatory semantic reader even when the line projection emits no separate blank-line unit.\n\nFor every supplied artifact occurrence, emit one inventory unit. Where exact bytes are valid UTF-8 and the text projection re-encodes to those exact bytes, also emit physical content units: scan left to right, treating CRLF as one terminator and otherwise CR, LF or form feed as a terminator; each unit contains the span through its terminator. Retain every nonempty span, including blank lines; emit a final unterminated span if present, but no zero-length trailing span. Coordinates start at page 1/line 1; form feed increments page and resets line to 1, other terminators increment line. BOM bytes, if present, remain part of the exact projection, not silently removed. This rule is accounting, not a claim that every UTF-8 artifact's media semantics have been parsed.\n\nFor a mechanically supported structured-media subdivision, emit one structural unit per exposed page, section, archive member, embedded document/object, comment, annotation, tracked change or metadata object, using its exact parent and source locator; traverse children in source order, breaking any absent source-order tie by unsigned Unicode-scalar locator order. Recurse into textual leaves using the physical-content rule and into child media using this rule. A structural node is counted once per occurrence/location/kind; a node's structural unit and its descendant content units are distinct. Preserve inaccessible exposed nodes as INACCESSIBLE_OR_BLOCKED; do not fabricate children. Detailed coverage requires a closed format mapping that is part of this named versioned normative algorithm or an explicitly identified versioned normative format mapping authorized under §34.3. Merely publishing an implementation descriptor does not authorize such semantics. The mapping must fix node kinds, source locators, ordering, exact canonical source values and child extraction. This insertion adds no format-specific adapter or mapping. A claim of supported detailed coverage without that normative mapping is blocked; genuinely unsupported formats retain the fallback below. A mechanically available subdivision cannot be suppressed or relabeled unsupported to avoid that blocker.\n\nSubdivision is additive: an exact UTF-8 whole-file projection emits its physical spans even when a supported structured mapping also emits structural nodes and textual leaves. Whole-file spans, structural nodes and structural textual-leaf spans have distinct kinds and locators and are all counted; overlap in underlying bytes does not deduplicate these different accounting obligations. Each archive-member or embedded-file occurrence emits both its parent structural occurrence unit and its own child inventory unit, followed by its own supported content/subdivisions. A textual leaf is not a child file and gets no inventory unit. Repeated references to the same emitted unit still deduplicate under the rule below.\n\nSource hashes and binding are closed as follows. C(x) means the exact UTF-8 bytes of §34.1 canonical JSON; H(b) means lowercase SHA-256 hexadecimal of exact bytes b. Source-value hash preimages by kind are:\n- HUMAN_TEXT_LINE or HUMAN_TEXT_WHOLE: C({\"type\":\"STRING\",\"value\":s}), where s is the exact emitted line excluding its terminator, or the entire whitespace-only nonempty string respectively. Physical line number and original field pointer retain position; retained originating bytes preserve terminators.\n- HUMAN_SCALAR: C({\"type\":t,\"value\":v}), where t is the declared scalar type and v its exact canonical value; no string coercion. Null/absent values remain excluded as above.\n- ARTIFACT_INVENTORY: C({\"byteLength\":n,\"contentSha256\":h}), where n is exact byte length and h=H(exact artifact bytes). If bytes are unavailable, both values are null; asserted length/digest remains source context, never substituted for observed bytes. The unit remains inaccessible/blocked, with its retained occurrence/locator binding.\n- PHYSICAL_SPAN: the exact original byte span including its terminator, without canonical JSON wrapping. Its locator binds zero-based byte start and exclusive end plus the one-based page/line coordinates.\n- STRUCTURAL_NODE: C({\"nodeKind\":k,\"status\":q,\"value\":v}), where k and v are the exact kind and canonical source value fixed by the authorized format mapping, and q is ACCESSIBLE or INACCESSIBLE_OR_BLOCKED. Inaccessible nodes have v=null; exact exposed parent/locator and k remain bound. No invented serialization of an adapter object is permitted.\n- STRUCTURAL_TEXT_SPAN: exact UTF-8 bytes of the mapped exact textual leaf's physical span, including its terminator. The authorized mapping identifies the leaf and its exact extraction; no silent whitespace normalization is allowed.\n\nEach unit's binding hash preimage is C({\"algorithm\":\"closed-loop-raw-units/1\",\"inputVersion\":V,\"occurrence\":O,\"kind\":K,\"locator\":L,\"sourceValueSha256\":S}). V is the exact owning input-version identity string; O is the ordered zero-based safe-integer path of supplied root and, where applicable, child-member occurrence indices; K is exactly one of the seven uppercase kinds above; S is the corresponding source-value hash. L is an ordered locator array: human units use [originating JSON pointer, one-based physical line] or [originating JSON pointer] for whole strings/scalars; inventories use []; whole-file spans use [startByte,endByte,page,line]; structural nodes use [normative format mapping ID, exact mapping locator]; structural textual spans append [startByte,endByte,page,line] to their structural-leaf locator. Byte offsets for a structural textual leaf refer to its exact UTF-8 extraction. The source-value hash alone does not identify the occurrence: binding hash plus retained input/source supplies the exact type, location and occurrence. These accounting hashes/locators are not §34.2 canonical record IDs. Distinct roots are numbered in retained source occurrence order, including separately supplied identical roots; a canonical mirror does not receive a second root number.\n\nAn image/media occurrence without a supported finer subdivision uses its inventory unit as its whole-media unit. A format with no supported mechanically available subdivision likewise uses its inventory unit as the whole-file fallback, with an explicit unsupported/unavailable-subdivision basis and the original bytes retained. These fallbacks neither prove inspection nor remove existing material uncertainty/blockers. Comments, annotations, tracked changes, metadata and embedded content are not discarded as nonsemantic.\n\nDeduplicate only repeated accounting references to the same occurrence, kind, location and exact source-value hash. Never merge distinct supplied occurrences, even with identical hashes. Order and retained source identity determine stable accounting references; canonical record IDs still use §34.2. Count the entire resulting unit universe, including inventory, structural and inaccessible units, when applying the unchanged §6.5A limits. The raw-unit challenge condition is strictly greater than 500, not greater than or equal to 500; every other size-independent trigger remains effective.\n\nC1. Named structured mapping: closed-loop-raw-units-zip/1\nInsert immediately after C's common raw-unit rules. This is the only structured-media mapping added by this revision. It makes the following counting choices explicit; the existence of a transport parser alone did not authorize these choices.\n\nScope and preservation\nApply this mapping to a supplied ZIP occurrence for which the application can use its existing bounded closed-loop-inbound-zip/1 structural decoder. Preserve the exact compressed archive bytes, their original supplied occurrence, byte length and SHA-256. Expanded member bytes are verified immutable child copies; they never replace the original archive. Decode and retain bytes only in the existing isolated in-memory/Blob/storage path. No member is extracted to a filesystem, executed, followed as a link, or used as a path outside that path-safe storage authority.\n\nThe supported decoding subset is ordinary single-volume ZIP and the decoder's bounded ZIP64 forms, with stored or DEFLATE compression, permitted data descriptors, UTF-8 or CP437 names and the decoder's validated Unicode-path extras. Keep its existing checks for complete consistent local/central headers, exact boundaries, safe noncolliding canonical paths, actual expanded lengths, CRC and SHA-256, permitted flags/extras and resource/platform bounds. Encrypted entries, split volumes, self-extracting prefixes, directory/link/device/special entries, unsupported compression/extra fields and ambiguous or colliding paths do not become supported through this mapping. The exact intake safety profile below and existing worker isolation remain effective. The response transport contract remains unchanged. A resource or platform failure is not reclassified as an unsupported format to bypass a blocker. Intake uses this decoder's structural/byte validation, not the inbound response's manifest, response.json role or attachment-admission semantics.\n\nRecognition and bounded decoding\nApply the same recognition test to each supplied root and each verified expanded child. A byte candidate exists if the first four bytes are a ZIP local-header, EOCD, ZIP64 EOCD or ZIP64-locator signature (respectively hexadecimal 504b0304, 504b0506, 504b0606, 504b0607), or if the EOCD signature 504b0506 occurs anywhere in the last min(byteLength,65557) bytes. Also attempt validation when a supplied filename ends with .zip under ASCII case-insensitive comparison, or the supplied media type, before a semicolon and after ASCII whitespace trim/case-fold, is application/zip or application/x-zip-compressed. Names and media types can require an attempt but cannot suppress a byte candidate or establish success. A random signature or claimed filename can never create successful ZIP coverage: the complete retained structural, boundary, path and integrity checks decide that. Missing bytes retain an unavailable inventory/blocker; they do not establish absence of ZIP structure. Noncandidate bytes without a ZIP claim do not receive ZIP nodes through speculation; C's other available accounting rules remain applicable.\n\nUse a centralized, versioned intake profile closed-loop-raw-units-zip-limits/1. Its bounds are: 27 cumulative central-directory entries across the entire selected input-version archive-mapping pass, including every supplied root and recursively decoded child; 67108864 bytes per expanded member; 70254592 cumulative reserved-or-produced expanded bytes; 140509184 cumulative archive bytes submitted to decoding (count a nested archive again when it is submitted); compression ratio at most 1100 per member; filename byte length at most 65535; canonical path depth at most 128; maximum archive nesting level 27 with the supplied archive at level 1; and one cumulative elapsed-worker deadline of 600000 ms for that entire input-version archive-mapping pass. The entry budget is charged on exposure before expansion, including unsupported/blocked entries; the maximum depth cannot bypass that budget. Expansion and byte accounting are checked before allocation and incrementally, against both declared and actual lengths; declared metadata never substitutes for verified bytes. The expansion safety counter reserves each declared output length before allocation; actual production within that reservation does not charge the same byte twice, while any additional produced byte must first fit and consume remaining budget. Every produced/reserved byte remains charged even if later CRC, validation or decoding fails; no refund, reset or retry can escape the pass-wide ceiling. It includes every child occurrence at every depth, including a nested archive's bytes as its parent's output and its own children separately. This work-safety counter is distinct from the semantic aggregate-byte review sum, which includes only actually verified retained child bytes. The archive-byte sum counts each archive occurrence once when submitted to decoding. The same original per-archive structural and byte checks remain; a bound can stop processing earlier, never authorize weaker checking. These ceilings reuse the current default decoder's 27 entries, 64 MiB file bound, 64 MiB + 1 MiB response + 2 MiB manifest total, twice-total archive bound, ratio/name/path/work bounds; the intake profile assigns those generic ceilings without granting any response.json/manifest.json role or larger filename-specific allowance. Transport recursiveExpansion=false and maxNestingDepth=0 remain response-transport rules, not intake accounting rules. A lower already-applicable storage/worker bound still stops work and remains explicitly blocked; it must not silently change this profile or yield favorable completeness. The exact profile-hash preimage is C({\"version\":\"closed-loop-raw-units-zip-limits/1\",\"scope\":\"INPUT_VERSION_PASS\",\"maxEntries\":27,\"maxEntryBytes\":67108864,\"maxExpandedBytes\":70254592,\"maxArchiveBytes\":140509184,\"maxCompressionRatio\":1100,\"maxFilenameBytes\":65535,\"maxPathDepth\":128,\"maxNestingDepth\":27,\"workerTimeoutMs\":600000}); its SHA-256 is the profile hash. The retained unitization derivation binds the owning input version, mapping ID, this exact profile ID/hash, actual counters and completion/blocker status; changed profile or source invalidates reuse under the existing derivation rules. Repeated equal roots and members are charged separately. Any future profile change follows existing versioning and acceptance requirements.\n\nOccurrence identity and order\nLet P be the parent archive's C occurrence path, already bound to the owning input version. Number central-directory entries from zero in their exact central-directory order, not local-file-offset order, canonical-filename order or extraction completion order. The child occurrence for entry i is P followed by i. Different supplied archives and different nested occurrences remain distinct even when bytes or names are equal. Local/central identity validation is still required; choosing central-directory order for accounting does not weaken it.\n\nUse the base C unit kinds STRUCTURAL_NODE, ARTIFACT_INVENTORY, PHYSICAL_SPAN and STRUCTURAL_TEXT_SPAN only; do not add canonical record families or a second unit-ID scheme. Every archive, member, metadata, extra and comment structural node uses occurrence P of the archive being mapped; child inventories/content and recursively mapped child archive nodes use P followed by i. Every ZIP structural unit's locator is [\"closed-loop-raw-units-zip/1\", locatorValue], where locatorValue is one of the exact ordered arrays below. All offsets and lengths are nonnegative safe integers measured in the parent archive's original bytes; an index is a zero-based safe integer. A node with verified source bytes has status ACCESSIBLE. Its C source-value hash is H(C({\"nodeKind\":k,\"status\":\"ACCESSIBLE\",\"value\":v})); the outer binding hash uses the unchanged C input-version/occurrence/kind/locator/source-value preimage. Exact raw bytes below use lowercase hexadecimal, preserving every byte without character decoding. Metadata offsets/bytes belong to the archive, not to a reserialized ZIP.\n\nEmit the parent's inventory and any applicable exact whole-file UTF-8 spans under C first. Then emit the following archive-level nodes in increasing original byte-offset order:\n- ZIP_CONTROL_RECORD for each present end-of-central-directory fixed record, ZIP64 end record and ZIP64 locator. locatorValue is [\"CONTROL\", recordType, offset]; recordType is EOCD, ZIP64_EOCD or ZIP64_LOCATOR. v has exactly recordType, offset, byteLength and rawHex. The ordinary EOCD record excludes its following archive-comment bytes; ZIP64 records use the exact validated decoder-supported record extent.\n- ZIP_ARCHIVE_COMMENT only when the EOCD archive-comment length is nonzero. locatorValue is [\"ARCHIVE_COMMENT\", offset]. v has exactly offset, byteLength and rawHex for all declared comment bytes. An empty comment creates no comment unit. No character-set guess or interpretation makes comment bytes executable or favorable evidence.\n\nThen, for every entry i in central-directory order, emit in this exact order:\n1. One ZIP_MEMBER structural node, with occurrence P and locatorValue [\"MEMBER\", i, centralHeaderOffset]. Its v has exactly index, centralHeaderOffset, localHeaderOffset, rawFilename, rawFilenameHex, canonicalPath, compressionMethod, compressedByteLength, compressedSha256, expandedByteLength, expandedSha256 and crc32. rawFilename is the decoder's exact decoded central name before path normalization; rawFilenameHex retains its exact original name bytes. canonicalPath is the separately validated safe canonical path, never a replacement for the raw name. compressionMethod is integer 0 or 8; both digests are H of the actual compressed data span and actual verified expanded bytes respectively; crc32 is the verified unsigned integer. No timestamp, name or claimed digest substitutes for observed member bytes.\n2. ZIP_MEMBER_METADATA nodes for the central fixed header, local fixed header and data descriptor if present, in that order. locatorValue is [\"MEMBER_METADATA\", i, recordType, offset], with recordType CENTRAL_HEADER, LOCAL_HEADER or DATA_DESCRIPTOR. v has exactly recordType, offset, byteLength and rawHex. Central and local fixed-header extents are 46 and 30 bytes respectively; the descriptor extent is the exact 12/16/20/24-byte form validated by the existing decoder. Filename, extras and comment bytes are excluded from these fixed-header units because their exact representations are bound separately.\n3. One ZIP_EXTRA_FIELD node per actually present local extra field, followed by one per actually present central extra field; preserve byte order within each area, including separately present equal fields in the two areas. locatorValue is [\"EXTRA_FIELD\", i, area, ordinal, offset], with area LOCAL or CENTRAL and ordinal zero-based within that area. v has exactly area, headerId, offset, byteLength and rawHex. byteLength and rawHex cover the full 4-byte ID/length header plus its declared payload. Existing duplicate/unsupported/malformed-extra rejection is unchanged. No decoded timestamp, UID, Unicode name or other extra interpretation replaces its exact source bytes.\n4. ZIP_MEMBER_COMMENT only when the central entry's comment length is nonzero. locatorValue is [\"MEMBER_COMMENT\", i, offset]. v has exactly offset, byteLength and rawHex. Empty comments create no comment unit. These bytes are counted even though comments have no transport authority.\n5. One child ARTIFACT_INVENTORY with occurrence P followed by i and inventory locator [], binding the actual expanded byte length and H(expanded bytes) by C. Then emit that child's exact verified UTF-8 physical spans when C permits them, using offsets in the expanded child bytes, and apply the recursive rule below before proceeding to entry i+1. A recursively mapped child archive uses this already-emitted inventory and physical spans without emitting them a second time. The ZIP_MEMBER structural node and child inventory are different accounting obligations and both count. Metadata/comment nodes are not child files and do not receive inventory units. This mapping creates no semantic XML/JSON/CSV/Office/PDF section or annotation units from a member's contents; plain supported UTF-8 spans do not claim such parsing or inspection.\n\nRecursive child media\nFor every verified expanded child, apply the byte/claim recognition test above. A ZIP candidate is mapped recursively by this same mapping, in depth-first central-directory order, under the entire input-version mapping pass's shared cumulative safety counters and deadline. The expanded child becomes the next archive occurrence P; no new root identity, fresh budget or favorable parent result is substituted. Exact expanded bytes remain retained and bound even when their own ZIP structure is blocked. A ZIP-based document can expose these ZIP members without thereby claiming semantic Office/XML/PDF parsing. A child that is not a ZIP candidate still receives its inventory and applicable exact UTF-8 physical spans under C; this addendum invents no other media mapping.\n\nWhen a depth, entry, byte, ratio, path, name, worker or work bound actually stops a recognized child, retain that child's already exposed member occurrence, inventory and available exact bytes, mark its unresolved subdivision INACCESSIBLE_OR_BLOCKED with the precise cause, and stop the affected expansion safely. It is neither a successful opaque fallback nor proof that children do not exist. Never reset counters for nested ZIPs, invoke unbounded recursive decompression, fabricate descendants, or treat unknown remaining units as zero. A separately supplied copy is a separate root occurrence with its own identity and is charged again to the same input-version pass counters; equality of bytes does not merge it or reset the budget.\n\nCounting and thresholds\nEvery emitted inventory, member, metadata, comment and content unit participates in C's unchanged greater-than-500 raw-unit trigger. The supplied-file/archive-member count includes the supplied archive occurrence once and each enumerated child member occurrence once; metadata/comments do not add file occurrences. For the existing aggregate-supplied-byte challenge, count each retained file occurrence's actual bytes once: the original compressed archive plus each verified expanded child occurrence at every recursive depth; do not count metadata byte spans again or deduplicate equal occurrences. Apply the existing per-text/document and mechanically countable-page thresholds to eligible original/child content by their existing rules. This additive count can trigger review sooner than treating an archive as one opaque file; no threshold value is raised or reduced. Storage/expansion safety budgets remain separate from these review triggers and retain their original enforcement.\n\nFailure and unknown content\nA supplied archive always retains its C inventory, exact original bytes when available, and a precise outcome. Distinguish (a) unsupported/encrypted structural features; (b) malformed/truncated/inconsistent structures, bad CRC or changed bytes; (c) unsafe/duplicate/colliding member identities; (d) absent/unreadable required bytes or unavailable decompressor/worker; and (e) resource-limit, timeout or interrupted execution. None is a successful parse or a favorable whole-file completeness result. Keep the exact typed cause and existing recovery route; do not silently drop the failing member, retry with weaker validation or invent child bytes.\n\nOnly fully verified members receive ACCESSIBLE ZIP_MEMBER values with observed expanded hashes/lengths. An exposed member means a central-directory record with the exact central signature and complete in-bounds fixed header, filename, extra area and comment area, within the established central-directory extent and traversal order. Its entry index and central-header offset establish the member locator even when local validation or expansion fails. Preserve each such exposed occurrence, including duplicate names, directories, links and unsupported entries, as INACCESSIBLE_OR_BLOCKED with value=null when it cannot be validated; do not expand it or grant its path authority. It still receives exactly one child ARTIFACT_INVENTORY at P followed by i under C: when verified expanded bytes are unavailable, both byteLength and contentSha256 are null, with an explicit blocked disposition. A claimed member size or digest does not fill these values. Distinct colliding/duplicate central occurrences are never merged to hide them. No child inventory is created for a guessed entry, unparsed count or incomplete/unbounded central record.\n\nPreserve independently established exact metadata and comment spans as their corresponding ACCESSIBLE structural units even when the owning member is blocked; accessibility here concerns the exact metadata bytes, not the member's safe expansion or semantic validity. An extra field receives its specified unit only when its own 4-byte header and full declared payload are in bounds; duplicate/unsupported fields can be preserved as separate observed bytes but still block member admission. If malformed metadata prevents complete field segmentation, preserve the exact whole extra-area bytes as diagnostic provenance on the blocked occurrence, without inventing extra-field units. For a blocked member whose local metadata is not safely established, emit only established central metadata/extras/comments, then its blocked child inventory. This is bounded read-only exposure; it does not relax existing decoder rejection. Unknown remaining structure remains an explicit archive-level blocker, and a smaller observed count cannot discharge it.\n\nA structurally established zero-entry EOCD with zero central-directory size and consistent offsets is a known empty archive, not malformed merely because the existing decoder rejects count=0. Preserve its inventory and exposed control/comment nodes, emit no invented member or child inventory, and record EMPTY_ARCHIVE_DECODER_BOUNDARY as INACCESSIBLE_OR_BLOCKED for detailed decoding under this current parser scope. It does not yield a successful detailed-coverage claim or unsupported-format fallback. A missing or unusable DEFLATE implementation/worker is unavailable evidence, not unsupported ZIP format; preserve originals, established nodes and blocked child inventories. Corrupt bytes, an unsupported feature, unsafe paths, actual resource exhaustion and unavailable machinery retain distinct causes and recovery requirements.\n\nThis mapping adopts accounting order, unit granularity, raw-name/metadata/comment identity, additive counts, recursive traversal and its explicit bounded intake profile only. It does not adopt arbitrary parser output as normative truth, authorize an unbounded parser or relaxed safety policy, establish semantic inspection, waive current evidence requirements, or accept historical coverage proof. Implementation must expose the required exact locators/bytes from the existing decoder without changing its retained safety predicates; actual boundary and fault tests remain due.\n"
+    },
+    "BASE:5522:5522": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5522,
+      "endLine": 5522,
+      "startByte": 301987,
+      "endByte": 302089,
+      "sha256": "a5a215a7cd1e58a346992633a3d43522849ebe1fa0bd9ee818be82001cdda55a",
+      "text": "9. one real project using native Test IR under the current language and operation-registry identities;"
+    },
+    "BASE:3025:3025": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3025,
+      "endLine": 3025,
+      "startByte": 161755,
+      "endByte": 162087,
+      "sha256": "9c8b7e5f8411870a6b5d58e541a00fc3906c96b8ea595fbbc7a26f59ee42bace",
+      "text": "Each state records its actual evidence and epistemic basis. A package generated or duplicated inside the same IndexedDB origin is not an external backup; browser-local duplicate data in the same origin is not disaster-recovery backup evidence. Production maturity requires a successful restore from the exact exported package bytes."
+    },
+    "BASE:3029:3029": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3029,
+      "endLine": 3029,
+      "startByte": 162824,
+      "endByte": 163485,
+      "sha256": "2f326003e68c9bff23f01078f21b37c89c50d792b68dd35dd4862f81a10ee002",
+      "text": "Before the terminal Stage 30 calculation, the application creates a PRE_DELIVERY_CHECKPOINT bound to the exact Stage 27 through Stage 30 prerequisite records and every authorized artifact byte identity. The checkpoint is exported under the backup policy and its CHECKPOINT_ID is a terminal prerequisite and delivery-record field. The terminal prerequisite is satisfied only when the checkpoint custody state is at least BACKUP_EXPORT_ACTION_COMPLETED; BACKUP_PACKAGE_GENERATED alone is insufficient because an in-origin package is not an external backup. A later post-transfer checkpoint may be recorded but cannot retroactively satisfy preauthorization backup."
+    },
+    "BASE:4893:4893": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 4893,
+      "endLine": 4893,
+      "startByte": 270088,
+      "endByte": 270519,
+      "sha256": "ce534a2edc18257a99dacadaf69e84b0a55a4a6f99868873b1586bd23eecafec",
+      "text": "The required mobile acceptance executes on an actual iPhone in Safari. Simulator, desktop responsive mode, and another browser are supplementary only and cannot satisfy the physical-device requirement. \"Current\" is frozen by the target record; a material iOS, Safari/WebKit, application build, origin, storage behavior, or target-device change before final delivery invalidates the affected mobile result and requires revalidation."
+    },
+    "BASE:4895:4895": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 4895,
+      "endLine": 4895,
+      "startByte": 270521,
+      "endByte": 270918,
+      "sha256": "52595d6d41ae64aa6a1a4428e58f73373e35863019727b4f50886a9bf6dde2c8",
+      "text": "The minimum required target-identity tuple is: the physical-device human observation; reported iOS version; observed Safari user-agent string; viewport dimensions and device-pixel ratio; exact deployed commit and deployment-manifest digest; origin; and test-project identity. WebKit build identity and exact hardware model may remain UNKNOWN without blocking; every other tuple member is required."
+    },
+    "BASE:4914:4914": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 4914,
+      "endLine": 4914,
+      "startByte": 271633,
+      "endByte": 271723,
+      "sha256": "d455ae9aa2b8d4ff183b52b2a83b72b8ca0e3c7b71fb8ef78cb782ad8a9565ce",
+      "text": "A failed or incomplete physical-device result blocks final acceptance and release tagging."
+    },
+    "BASE:4916:4916": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 4916,
+      "endLine": 4916,
+      "startByte": 271725,
+      "endByte": 272601,
+      "sha256": "af8984215181d6ccfc7ed6a7967ed4c07974f57fec5126a3341e469dc0c1d0be",
+      "text": "Because the canonical handoff container is logical under Section 19.7, per-member sequential export or share on the pinned device satisfies package export whenever a combined multi-file share is unavailable; the optional archive representation is never required. Before the acceptance run, the acceptance procedure executes a recorded MOBILE_CAPABILITY_PROBE on the pinned target covering file export or share, response-file selection, returned-file slot selection, persistent-storage request, logical package export, and backup export and restore. A required capability the pinned target cannot perform yields BLOCKED with the exact missing capability recorded. The only permitted continuations are a new pinned target record on an iOS or Safari version that supports the capability, or a governance change to the controlling specification. No silent degradation path exists."
+    },
+    "BASE:4920:4920": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 4920,
+      "endLine": 4920,
+      "startByte": 272642,
+      "endByte": 273014,
+      "sha256": "feaf5ec73289de819e67c45d9b7a485d6ee58ca658c09392a548df609a989ff2",
+      "text": "Before the device run, CI or the authorized acceptance controller creates a cryptographically random MOBILE_ACCEPTANCE_CHALLENGE of at least 128 bits bound to the exact commit, deployment manifest, origin, target ID, procedure version, and test project. The actual iPhone loads that deployed build and the application records the challenge in its acceptance-mode receipts."
+    },
+    "BASE:4922:4922": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 4922,
+      "endLine": 4922,
+      "startByte": 273016,
+      "endByte": 273626,
+      "sha256": "d0cdb7d882114a641779d7f0015e2026524b06acbfe308da41850000b9cb2dea",
+      "text": "At completion, the application exports `mobile-acceptance-evidence.json` containing the target ID, challenge, build identity, origin, test-project identity, operation receipts, console/runtime findings available to the application, screenshots or recording references, exported project digest, performer identity assurance, physical-device assertion, and evidence basis. CI verifies every mechanically verifiable binding before accepting the record. The physical-device fact remains HUMAN_OBSERVATION or stronger external attestation according to the actual evidence and is never mislabeled application-proven."
+    },
+    "BASE:4924:4924": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 4924,
+      "endLine": 4924,
+      "startByte": 273628,
+      "endByte": 274276,
+      "sha256": "b88954b6338fb938d71ac05bf8a40d2371bbe51bce3197e74021695aaeeed3c3",
+      "text": "The evidence file reaches CI through the repository as a committed file or authenticated workflow input from a submitter recorded in the acceptance artifact. Each MOBILE_ACCEPTANCE_CHALLENGE is single-use: CI accepts at most one evidence file per challenge and rejects reused, unknown, or expired challenges and any evidence bound to a different commit, manifest, origin, target, or test project; a superseding run requires a new challenge. The gate minimum for the physical-device fact is HUMAN_OBSERVATION by the recorded performer at the recorded identity assurance; that basis is explicitly sufficient and is never relabeled application-proven."
+    },
+    "BASE:5509:5509": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5509,
+      "endLine": 5509,
+      "startByte": 301227,
+      "endByte": 301250,
+      "sha256": "eeab6aaa9d2d475d1c7526d98aa58d6e4610631a0dcd4c2447385bd9c4d1832b",
+      "text": "50. Production maturity"
+    },
+    "BASE:5513:5513": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5513,
+      "endLine": 5513,
+      "startByte": 301337,
+      "endByte": 301384,
+      "sha256": "eb136ec3d6b6022a848d97dca2d7c7131af26c66dfdd6306547bc73ff5a27d8d",
+      "text": "Full production maturity additionally requires:"
+    },
+    "BASE:5527:5527": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5527,
+      "endLine": 5527,
+      "startByte": 302341,
+      "endByte": 302413,
+      "sha256": "9687cb76c7590e4dd3bec889a16a64dc4cf4713a6e4484f0309640dcc6ad44c3",
+      "text": "The system cannot claim full production maturity until these are proven."
+    },
+    "BASE:5174:5174": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5174,
+      "endLine": 5174,
+      "startByte": 285656,
+      "endByte": 285688,
+      "sha256": "b3ea77c323dad92d7cb23813f18e3ac46ffc3fbb8afb08de4f8341d6663af178",
+      "text": "- run worker and security tests;"
+    },
+    "BASE_SOURCE:1919:1930": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1919,
+      "endLine": 1930,
+      "startByte": 110100,
+      "endByte": 110920,
+      "sha256": "246d707bbe90f25ebc3ad94248683f1e3d7351466f78990e9ccaed0fca21132d",
+      "text": "21.16 Test IR language and registry identity\n\nEvery Test IR specification and every result binds:\n- TEST_IR_LANGUAGE_VERSION;\n- OPERATION_REGISTRY_VERSION;\n- OPERATION_REGISTRY_SHA256;\n- JSON_SELECTOR_REGISTRY_VERSION and digest when used;\n- XML_SELECTOR_REGISTRY_VERSION and digest when used;\n- REGEX_REGISTRY_VERSION and digest when used;\n- parser registry identities used by the execution.\n\nAny operation, argument, dataflow, output, parser, selector, regex, numeric, or error-semantic change creates a new language or registry identity. An affected test or result under an earlier identity becomes stale and cannot satisfy a current proof obligation until explicitly migrated and reverified. Two runtimes MUST NOT claim the same current language identity while accepting materially different operations or semantics."
+    },
+    "BASE_SOURCE:1830:1836": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1830,
+      "endLine": 1836,
+      "startByte": 105734,
+      "endByte": 106943,
+      "sha256": "bc85173c4921c7fdeddafadf313b174565b0994920d043ace6bf8e78856d07b6",
+      "text": "21.6 Restricted selectors\n\nSELECT_JSON_PATH and SELECT_XML use restricted application-owned selector contracts.\nThe application cannot claim complete third-party JSONPath or XPath semantics unless a specific implementation is explicitly adopted, versioned, and regression-tested.\nUnknown or unsupported selector syntax fails Stage 06 ingestion.\n\nThe current registries are closed-loop-json-selector/1 and closed-loop-xml-selector/1. closed-loop-json-selector/1 MUST support at least: the root `$`; child access by identifier name and by single-quoted bracket name; nonnegative array index; and the wildcard `*` over object values and array elements. Selection order is document order. Recursive descent, filters, unions, slices, and script expressions are excluded from version 1. closed-loop-xml-selector/1 MUST support at least: absolute child-element paths from the document root; the element wildcard `*`; 1-based positional index predicates; attribute access `@name`; and `text()` value extraction. All other axes, predicates, and functions are excluded from version 1. A proposition that cannot be faithfully expressed within these registered subsets is not natively representable and routes externally."
+    }
+  },
+  "currentMechanisms": {
+    "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-019/mechanism-adjudication.json#/decisions/CURRENT_CLOSED_FIELDS_AND_VALUE_DOMAINS": {
+      "reference": {
+        "artifactSha256": "94d9d51c75ec0a506b289666f94af93d2785bc6409e64ca0d938e831a9833910",
+        "jsonPointer": "/decisions/CURRENT_CLOSED_FIELDS_AND_VALUE_DOMAINS",
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-019/mechanism-adjudication.json",
+        "selectedValueSha256": "68414aa1e2c9c374935c4e44be088c150e9696d5c636697eab02f95fb69faa41"
+      },
+      "value": "Concrete unknown-property, producer/type/enum/null/empty admission domains include A exact request/control rules, B application-installed references, D closed definitions and E embedded/direct variance forms. Preserve nonoperative extra embedded canonicalJSON context under E while direct family fields remain closed. An affectedRecords reference grants no ownership."
+    },
+    "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-010/mechanism-adjudication.json#/decisions/STAGE22_REQUIRED_ARTIFACT_DOMAIN": {
+      "reference": {
+        "artifactSha256": "b668a10d34ab92b2e265e41b79357d8cf7bfe1edd659b5aa55792272e110b0b5",
+        "jsonPointer": "/decisions/STAGE22_REQUIRED_ARTIFACT_DOMAIN",
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-010/mechanism-adjudication.json",
+        "selectedValueSha256": "2bc1a04b3d91924278d9274d006ab7e02ffc70ac0a2ad6cb5be01a8e553bba5d"
+      },
+      "value": "The exact Stage22 shared-artifact requirement remains, while its effective required-input domain now depends on B accepted current target availability and D precise native inputs. Required product bytes must be included consistently with Stages23–25; no future unavailable target or unsupported definition becomes ready. Applicable historical XML linkage remains explicit."
+    },
+    "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-004/mechanism-adjudication.json#/decisions/ACCEPTED_TEST_INPUT": {
+      "reference": {
+        "artifactSha256": "5b009aa92c60956f2421ed1a66455f0807a79e7959a084ddacb840f0f2be3c34",
+        "jsonPointer": "/decisions/ACCEPTED_TEST_INPUT",
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-004/mechanism-adjudication.json",
+        "selectedValueSha256": "5c97e9607c8e5caf30130dfdd17cfb8d86b368aa52aa257be645104666842c5d"
+      },
+      "value": "The accepted test semantic input now includes B current availability relationship, D valid native definition/semantics and E exact variance contract. Admission, immutable freeze and accepted proof review stay distinct; applicable XML ambiguity remains qualified."
+    },
+    "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-023/mechanism-adjudication.json#/decisions/CURRENT_FROZEN_COMPONENT_COMPLETENESS": {
+      "reference": {
+        "artifactSha256": "580f567fd65d6a15306b3641865f14dbcdb8574d233700643c31a12515626c70",
+        "jsonPointer": "/decisions/CURRENT_FROZEN_COMPONENT_COMPLETENESS",
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-023/mechanism-adjudication.json",
+        "selectedValueSha256": "9b36528754ac36a7df7b2beab6ecb0a800769a88308da3eb4d285f7f6a943684"
+      },
+      "value": "Actual required candidate components include current B availability/proof relationships, D semantic identities and E exact full normalized variance with required accepted review and frozen bindings. Preserve human selection, same package and actual snapshot times; a prior set cannot prove current completeness."
+    },
+    "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-004/mechanism-adjudication.json#/decisions/NATIVE_CONFIGURATION_IDENTITY": {
+      "reference": {
+        "artifactSha256": "5b009aa92c60956f2421ed1a66455f0807a79e7959a084ddacb840f0f2be3c34",
+        "jsonPointer": "/decisions/NATIVE_CONFIGURATION_IDENTITY",
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-004/mechanism-adjudication.json",
+        "selectedValueSha256": "4e6cbab016a759e7261c9b3c215865dd94acebfec65b190f3bc84b0c12a7096c"
+      },
+      "value": "D changes the effective native registry/parser/selector configuration identity. The field must bind the current configuration or explicit equivalent migration; application ownership does not preserve an incompatible old registry."
+    },
+    "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-004/mechanism-adjudication.json#/decisions/PER_RUN_VALID_DETERMINATION": {
+      "reference": {
+        "artifactSha256": "5b009aa92c60956f2421ed1a66455f0807a79e7959a084ddacb840f0f2be3c34",
+        "jsonPointer": "/decisions/PER_RUN_VALID_DETERMINATION",
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-004/mechanism-adjudication.json",
+        "selectedValueSha256": "4f24ed4d525b3cb64e1db6b35a3d15da6ef4184581eeade489dc17710c4ba98d"
+      },
+      "value": "Current exactly-one valid tuple determination acquires B/D current availability and result semantics plus A/F2 external admission where relevant. Error/unknown/stale states cannot become favorable proof."
+    },
+    "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-009/mechanism-adjudication.json#/decisions/REPEATED_ITERATION_COMPARISON": {
+      "reference": {
+        "artifactSha256": "090b3fbed3622f3d5b916115ce4220f5ea8dd69f65743c04acb4ae2d32f9299e",
+        "jsonPointer": "/decisions/REPEATED_ITERATION_COMPARISON",
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-009/mechanism-adjudication.json",
+        "selectedValueSha256": "417fcc29503f864233dc79f8e6259cab69696ac79735a5ef92eb02c47f28115b"
+      },
+      "value": "Actual complete ten-run comparison and its completion summary consume current accepted runs, B due results, D outcomes and E normalized frozen variance with A/F2 current admission. Fixed arithmetic, all-ten coverage and no omitted run remain; frozen bytes alone do not supply semantic approval."
+    },
+    "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-009/mechanism-adjudication.json#/decisions/REPEATED_ITERATION_CORRECTION_AND_RCA": {
+      "reference": {
+        "artifactSha256": "090b3fbed3622f3d5b916115ce4220f5ea8dd69f65743c04acb4ae2d32f9299e",
+        "jsonPointer": "/decisions/REPEATED_ITERATION_CORRECTION_AND_RCA",
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-009/mechanism-adjudication.json",
+        "selectedValueSha256": "a6ca154288e6211a6bf5d92b3cbd0b6795e949f8dfa254d4db1a58b863d5b308"
+      },
+      "value": "Actual current complete correction/RCA behavior concerns the classified current failures and admissible semantic records. D changes failure/error meanings and A/F2 relevant response/input admission, while canonical semantic ownership, causal evidence, new-version discipline and independent review remain. This batch does not incorporate a new counting-unit interpretation for other fields."
+    },
+    "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-023/mechanism-adjudication.json#/decisions/CURRENT_CONFIRMATION_ZERO_CHANGE_IDENTITY": {
+      "reference": {
+        "artifactSha256": "580f567fd65d6a15306b3641865f14dbcdb8574d233700643c31a12515626c70",
+        "jsonPointer": "/decisions/CURRENT_CONFIRMATION_ZERO_CHANGE_IDENTITY",
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-023/mechanism-adjudication.json",
+        "selectedValueSha256": "8f5089dfa22c4e53e52710825162b5217f8b3d7d9b14878c5ba4a78badb6e055"
+      },
+      "value": "Actual zero-change audit compares full current candidate/component closure including B proof, D semantic identities and E all hash-bearing normalized properties. Retain exact unchanged version/hash policy; older equality or FROZEN status does not establish current equivalence/approval."
+    },
+    "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-004/mechanism-adjudication.json#/decisions/CURRENT_NATIVE_EXECUTION": {
+      "reference": {
+        "artifactSha256": "5b009aa92c60956f2421ed1a66455f0807a79e7959a084ddacb840f0f2be3c34",
+        "jsonPointer": "/decisions/CURRENT_NATIVE_EXECUTION",
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-004/mechanism-adjudication.json",
+        "selectedValueSha256": "bcb9b0f30536f2f2db9e54064570e5806df2e18d315aa0953b804f660c1276b6"
+      },
+      "value": "B governs readiness while D fixes exact supported native semantics and terminal outcomes. The every-ready-test execution requirement remains; no run or accepted result is established by source review."
+    },
+    "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-004/mechanism-adjudication.json#/decisions/EXTERNAL_CAPABILITY_FALLBACK": {
+      "reference": {
+        "artifactSha256": "5b009aa92c60956f2421ed1a66455f0807a79e7959a084ddacb840f0f2be3c34",
+        "jsonPointer": "/decisions/EXTERNAL_CAPABILITY_FALLBACK",
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-004/mechanism-adjudication.json",
+        "selectedValueSha256": "5cad88529ddfe75c281b2fb90033443560251dba7cc473e2f3ffcd62108a559f"
+      },
+      "value": "D affects native expressibility and F2 affects admissible external input support. Unsupported native work remains mandatory/blocked unless the exact authorized external capability and bytes are available; no automatic executor substitution is inferred."
+    },
+    "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-004/mechanism-adjudication.json#/decisions/DETERMINISTIC_CURRENT_RESULTS": {
+      "reference": {
+        "artifactSha256": "5b009aa92c60956f2421ed1a66455f0807a79e7959a084ddacb840f0f2be3c34",
+        "jsonPointer": "/decisions/DETERMINISTIC_CURRENT_RESULTS",
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-004/mechanism-adjudication.json",
+        "selectedValueSha256": "cac5725a60e9fad007e8db27b4932dff17aa607ca2c280b49107f91168799942"
+      },
+      "value": "Current sufficient deterministic outcomes/gates require B current availability, D native semantics and A/F2 external route admission where applicable. Every applicable mandatory test still requires exactly one current sufficient satisfied result."
+    },
+    "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-004/mechanism-adjudication.json#/decisions/VALIDATOR_SEMANTIC_VERSION": {
+      "reference": {
+        "artifactSha256": "5b009aa92c60956f2421ed1a66455f0807a79e7959a084ddacb840f0f2be3c34",
+        "jsonPointer": "/decisions/VALIDATOR_SEMANTIC_VERSION",
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-004/mechanism-adjudication.json",
+        "selectedValueSha256": "f3312be5c317f77094d1480e7fc7db36f5825337219cca10697f036929f85e8c"
+      },
+      "value": "D requires fresh affected validator/parser/selector registry identity or explicit verified equivalence. This exact current semantic-version reference cannot retain an incompatible old identity."
+    },
+    "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-004/mechanism-adjudication.json#/decisions/EVIDENCE_CHAIN_CURRENT_SCOPE": {
+      "reference": {
+        "artifactSha256": "5b009aa92c60956f2421ed1a66455f0807a79e7959a084ddacb840f0f2be3c34",
+        "jsonPointer": "/decisions/EVIDENCE_CHAIN_CURRENT_SCOPE",
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-004/mechanism-adjudication.json",
+        "selectedValueSha256": "0b55f9301372b7d319d7303673b132ebc2b6fd4ea96dd5b205b50a21eaa02127"
+      },
+      "value": "B/D/E change current proof, execution-registry and variance bindings that a current-scope chain must reference. Literal artifact ID linkage alone does not establish semantic dependency currentness."
+    },
+    "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-005/mechanism-adjudication.json#/decisions/BYTE_EVIDENCE_SUFFICIENCY": {
+      "reference": {
+        "artifactSha256": "d838e9e82bd854314f66b205769705a990370d5e0577474683f6c80bf7f1ff20",
+        "jsonPointer": "/decisions/BYTE_EVIDENCE_SUFFICIENCY",
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-005/mechanism-adjudication.json",
+        "selectedValueSha256": "c1a788ba6dd9f61ce2b6f3915721ecbeceb09f1ce6518dd54373829bd1568eed"
+      },
+      "value": "A favorable/weak current objective-result case depends on D actual operation outcomes, B current due/availability and F2 external input evidence where applicable. A hash binds bytes and identity, not execution success or the proposition by itself."
+    },
+    "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-005/mechanism-adjudication.json#/decisions/NORMALIZED_RESULT_COUNTS": {
+      "reference": {
+        "artifactSha256": "d838e9e82bd854314f66b205769705a990370d5e0577474683f6c80bf7f1ff20",
+        "jsonPointer": "/decisions/NORMALIZED_RESULT_COUNTS",
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-005/mechanism-adjudication.json",
+        "selectedValueSha256": "4dd62c579bb9ab1c1380358c56da501f4e5396b1e0739e390f85db06502e831d"
+      },
+      "value": "The exact count must classify the current B due population and D normalized outcomes with F2 external admission where relevant. Error and UNKNOWN classifications cannot be discarded or counted favorably. Arithmetic remains exact and the denominator is preserved."
+    },
+    "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-007/mechanism-adjudication.json#/decisions/MIGRATION_AND_TYPED_NATIVE_ARGUMENTS": {
+      "reference": {
+        "artifactSha256": "397f36e75055ff49783d215b49ef6e2326afe85c3dd072bbb36f05c80cfb107d",
+        "jsonPointer": "/decisions/MIGRATION_AND_TYPED_NATIVE_ARGUMENTS",
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-007/mechanism-adjudication.json",
+        "selectedValueSha256": "4dfeeb95c614b969605fb9637033ca29b9047cd33c3f477375807872b6538cc0"
+      },
+      "value": "Complete current native migration/argument/property/binding cases now use D exact required and optional types/forms and B/E proof/test relationships. No coercion, implicit operand selection or historical schema name supplies conformance. Complete migration or historical nongating treatment remains required; selected-nonroot XML details stay qualified."
+    },
+    "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-007/mechanism-adjudication.json#/decisions/NATIVE_FAILURE_AND_SUFFICIENCY": {
+      "reference": {
+        "artifactSha256": "397f36e75055ff49783d215b49ef6e2326afe85c3dd072bbb36f05c80cfb107d",
+        "jsonPointer": "/decisions/NATIVE_FAILURE_AND_SUFFICIENCY",
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-007/mechanism-adjudication.json",
+        "selectedValueSha256": "7db2595ba103d2637b7daf092140f0353bbef60a6d55bb3620c5428a1e43aea8"
+      },
+      "value": "Actual native assertion/Boolean-data sufficiency and terminal failures use D precise definition/prestart/data/platform distinctions together with B due availability and E normalized test context. Execution failure or unknown input is not refutation or compliance. Applicable XML limits remain explicit."
+    },
+    "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-015/mechanism-adjudication.json#/decisions/CURRENT_UNSUPPORTED_NATIVE_MUTATION": {
+      "reference": {
+        "artifactSha256": "6d902b3e646b2138987db0ea318a87e9b6b36d934b614d5db97f3d0978df2ad0",
+        "jsonPointer": "/decisions/CURRENT_UNSUPPORTED_NATIVE_MUTATION",
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-015/mechanism-adjudication.json",
+        "selectedValueSha256": "faafdaa2cbeae7a7d0fc75481c18c777cb6a6768e6f0eb50637507320bb6f4eb"
+      },
+      "value": "The supported native operation boundary now consumes D exact closed primitives, argument/value/parser/selector/result semantics and current semantic identities, with applicable F2 route input custody. Preserve native authority and no silent fallback. Selected-node XML meaning requires explicit attributed linkage where this actual definition depends on it."
+    },
+    "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-006/mechanism-adjudication.json#/decisions/RETRY_AND_RESPONSE_CONTRACT": {
+      "reference": {
+        "artifactSha256": "dfa205f382aa4df8ae6576b1575317b1d199fe66b4159f3245ad7bafd2663e52",
+        "jsonPointer": "/decisions/RETRY_AND_RESPONSE_CONTRACT",
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-006/mechanism-adjudication.json",
+        "selectedValueSha256": "f971571b8333acde084a13c858043f39e94b16865b52697210ff35584e2d7079"
+      },
+      "value": "Actual validation failures and return/response contracts now include A/B/D/E current authored domains and F2 external admission. Retry context must describe those actual failures without invented observations; C1 leaves response transport unchanged."
+    },
+    "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-006/mechanism-adjudication.json#/decisions/CURRENT_TEST_BINDINGS": {
+      "reference": {
+        "artifactSha256": "dfa205f382aa4df8ae6576b1575317b1d199fe66b4159f3245ad7bafd2663e52",
+        "jsonPointer": "/decisions/CURRENT_TEST_BINDINGS",
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-006/mechanism-adjudication.json",
+        "selectedValueSha256": "55d0c53ee6b33f0d016596b93bb993faae0fdd6b99034c771ab8f5c3318b093a"
+      },
+      "value": "B canonical availability-proof relationships, D typed native definitions and E identical normalized variance forms govern current Stage06 binding validation. Initial nested proof authoring is distinct from accepted independent review or execution readiness; conditional XML details remain unresolved."
+    },
+    "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-006/mechanism-adjudication.json#/decisions/NATIVE_STAGE22_ACTION": {
+      "reference": {
+        "artifactSha256": "dfa205f382aa4df8ae6576b1575317b1d199fe66b4159f3245ad7bafd2663e52",
+        "jsonPointer": "/decisions/NATIVE_STAGE22_ACTION",
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-006/mechanism-adjudication.json",
+        "selectedValueSha256": "77a8cd63d6de1ae208537806dd293cceeb8e512886859b1917ce60df065568a2"
+      },
+      "value": "Actual Stage22 native execution and its inclusion/readiness use B reviewed availability, D supported typed semantics and E current frozen test context. Application execution, one action and no unauthorized external fallback remain; applicable XML uncertainty cannot be called supported."
+    },
+    "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-006/mechanism-adjudication.json#/decisions/SPECIALIZED_PARSER_NECESSITY": {
+      "reference": {
+        "artifactSha256": "dfa205f382aa4df8ae6576b1575317b1d199fe66b4159f3245ad7bafd2663e52",
+        "jsonPointer": "/decisions/SPECIALIZED_PARSER_NECESSITY",
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-006/mechanism-adjudication.json",
+        "selectedValueSha256": "c3b12e8dc51274ff8dd5bd9a33d884fb0d7964bf77b584e18eb8644d98593bb8"
+      },
+      "value": "The condition that a demonstrated test is unrepresentable by existing primitives must be evaluated against D’s current exact domain. C/C1 authorizes only its stated structural mappings. Determinism and no subject-domain architecture remain additional conjuncts; no parser is authorized by this review."
+    },
+    "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-015/mechanism-adjudication.json#/decisions/CURRENT_REAL_NATIVE_ROUTE": {
+      "reference": {
+        "artifactSha256": "6d902b3e646b2138987db0ea318a87e9b6b36d934b614d5db97f3d0978df2ad0",
+        "jsonPointer": "/decisions/CURRENT_REAL_NATIVE_ROUTE",
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-015/mechanism-adjudication.json",
+        "selectedValueSha256": "c1a950194fa14b7cab48f3d621002ad3aa2ab769b1e0585ae1dceeda8a9cf2c5"
+      },
+      "value": "A real native project under current language/registry identities consumes D closed semantics, B accepted reviewed availability, E applicable current variance context and F2 actual native input custody. Preserve native executor and no fallback; this establishes neither real execution nor its success. Typed XML interpretation must be explicitly linked where effective."
+    },
+    "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-006/mechanism-adjudication.json#/decisions/WORKER_TEST_DOMAIN": {
+      "reference": {
+        "artifactSha256": "dfa205f382aa4df8ae6576b1575317b1d199fe66b4159f3245ad7bafd2663e52",
+        "jsonPointer": "/decisions/WORKER_TEST_DOMAIN",
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-006/mechanism-adjudication.json",
+        "selectedValueSha256": "8ae84262f10e72cb55800acd6a4275d0daa8f864d23e16998531a0898b54c527"
+      },
+      "value": "Full worker verification now covers D deterministic outputs, typed grammar and propagation in addition to the unchanged isolation/timeout/security properties. Neither the worker’s existence nor historical tests establish that complete current obligation."
+    }
+  },
+  "independentScopes": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-006/independent-scope-decisions.json",
+    "sha256": "465dc50cdd5bcf0555cfc50c007c6a4eefe23bd1c3d0583cc07d987b2d4a217f",
+    "byteLength": 114953
+  },
+  "originalTextRepresentationQualifications": [],
+  "typedGovernors": {
+    "SRC-AMBIGUITY-XML-SUBNODE-ROOT": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-006/xml-effective-governor-link.json",
+      "sha256": "b8f9a0e8834f67d5f9497721e17ddbecc0038208e13c7e4331ee2bfbc12e2ed7",
+      "byteLength": 8882
+    }
+  },
+  "typedComposites": {},
+  "implementationAdapterTestProofFilesRead": false
+}

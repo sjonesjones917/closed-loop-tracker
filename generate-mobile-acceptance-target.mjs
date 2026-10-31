@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import {validateMobileAcceptanceTarget,REQUIRED_MOBILE_EVIDENCE_ARTIFACTS} from './verify-mobile-acceptance-evidence.mjs';
 
 export const MOBILE_ACCEPTANCE_ORIGIN='https://sjonesjones917.github.io';
 export const MOBILE_ACCEPTANCE_BASE_PATH='/closed-loop-tracker/';
@@ -20,7 +21,8 @@ function instant(value,name){
 export function createMobileAcceptanceTarget(input={}){
   const {
     sourceCommit,deploymentManifestDigest,origin,basePath,testProjectId,procedureVersion,
-    viewport,deviceModel,iosVersion,safariVersion,safariUserAgent,
+    viewport,deviceModel,iosVersion,iosBuild='UNKNOWN',safariVersion,webkitBuild='UNKNOWN',safariUserAgent,
+    performer,identityAssurance,buildIdentity,unavailableEnvironmentFacts,
     challengeLifetimeSeconds=3600,issuedAt=new Date().toISOString()
   }=input;
   if(!COMMIT.test(sourceCommit||''))throw new TypeError('sourceCommit must be an exact 40-character commit SHA.');
@@ -34,14 +36,21 @@ export function createMobileAcceptanceTarget(input={}){
   instant(issuedAt,'issuedAt');
   const expiresAt=new Date(Date.parse(issuedAt)+challengeLifetimeSeconds*1000).toISOString();
   const challenge=crypto.randomBytes(32).toString('hex');
-  return {
+  const target={
     schema:'closed-loop-mobile-acceptance-target/1',
     mobileAcceptanceTargetId:`MOBILE-TARGET-${crypto.randomBytes(12).toString('hex')}`,
+    preparationId:`MOBILE-PREPARATION-${crypto.randomBytes(12).toString('hex')}`,
+    performer,identityAssurance,buildIdentity,
+    requiredEvidenceArtifacts:[...REQUIRED_MOBILE_EVIDENCE_ARTIFACTS],
+    unavailableEnvironmentFacts:structuredClone(unavailableEnvironmentFacts),
     physicalDeviceRequired:true,challenge,challengeIssuedAt:issuedAt,challengeExpiresAt:expiresAt,
     sourceCommit,deploymentManifestDigest,origin,basePath,testProjectId,procedureVersion,
     viewport:{width:viewport.width,height:viewport.height,devicePixelRatio:viewport.devicePixelRatio},
-    deviceModel,iosVersion,safariVersion,safariUserAgent
+    deviceModel,iosVersion,iosBuild,safariVersion,webkitBuild,safariUserAgent
   };
+  const errors=validateMobileAcceptanceTarget(target);
+  if(errors.length)throw new TypeError(errors.map(error=>error.message).join(' '));
+  return target;
 }
 
 if(import.meta.url===new URL(`file://${process.argv[1]}`).href){

@@ -108,3 +108,12 @@ export function createVerifierRuntime(seed={},options){
 }
 
 createVerifierRuntime.loadScript=(context,source,options)=>evaluateScript(context===globalThis?createVerifierRuntime(context):context,source,options);
+
+// Persistence fixtures repeatedly traverse large canonical projects. Node's
+// contextified global proxy adds work to every builtin lookup in those exact
+// production algorithms. A native VM global keeps the same separate realm and
+// scripts while avoiding that proxy; explicit fixture overrides still apply.
+createVerifierRuntime.withNativeGlobal=(seed={},options)=>{
+  if(!seed||typeof seed!=='object'||seed===globalThis)throw new TypeError('An isolated verifier runtime requires an object seed distinct from the host global.');
+  return createVerifierRuntime(Object.defineProperties(vm.createContext(vm.constants.DONT_CONTEXTIFY,options),Object.getOwnPropertyDescriptors(seed)));
+};

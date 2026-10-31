@@ -25,7 +25,7 @@ if(!process.argv.includes('--bounded-heap')){
   for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js']){
     let source=fs.readFileSync(file,'utf8');
     if(file==='response-ingestion.js'&&intakeFault){
-      const owner=intakeFault==='raw-json-copy'?'captureRaw':'prepareCaptured',start=source.indexOf('function '+owner+'('),end=source.indexOf('\nfunction ',start+1),body=source.slice(start,end),before="const next=typeof structuredClone==='function'?structuredClone(project):clone(project);";
+      const owner=intakeFault==='raw-json-copy'?'captureRaw':'prepareCaptured',start=source.indexOf('function '+owner+'('),end=source.indexOf('\nfunction ',start+1),body=source.slice(start,end),before="const next=cloneProject(project);";
       assert.equal(body.split(before).length-1,1,'The intake fault must resolve to exactly one owning copy boundary');
       source=source.slice(0,start)+body.replace(before,'const next=clone(project);')+source.slice(end);
     }

@@ -1,0 +1,146 @@
+{
+  "schema": "closed-loop-requirement-coverage-review/1",
+  "normativeRequirementId": "NREQ-1d255fb22dcf311f8c59cfd6754608c6",
+  "sourceLineSha256": "eafb1ece826f7c026731b5a6f90b43ad2d8967e51c25be4938a2cd032ba1a28f",
+  "specificationSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
+  "declarationSha256": "79953baa04d3c747b40955484df005a0b619a2440ee8915ef375d6e1f434a699",
+  "decision": "COMPLETE_COVERAGE",
+  "evidenceBasis": "EXTERNALLY_SUPPORTED",
+  "method": "Independent bounded final-catalog applicability renewal of the retained complete coverage decision. The current production-owner tuple, declaration, owning check, suite sourceInputs, and scoped semantic judgment remain unchanged. The final catalogue delta changes only the backup-import failure fault population from two to the actual four and does not alter this requirement’s selector, sourceInputs, owner projection, or obligations. No test, producer, receipt, browser, native, or application-conformance execution is claimed.",
+  "author": {
+    "actor": "Codex terminal-cycle declaration proposer",
+    "contextId": "review-context:content_record_final_source_review"
+  },
+  "reviewer": {
+    "actor": "Codex independent bounded current-source applicability reviewer (included GPT)",
+    "contextId": "review-context:extension_regression_review"
+  },
+  "reviewPerformed": true,
+  "reviewedInputs": [
+    {
+      "declarationSha256": "79953baa04d3c747b40955484df005a0b619a2440ee8915ef375d6e1f434a699"
+    },
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d"
+    },
+    {
+      "path": "verify-stage30-terminal-mobile-boundary.mjs",
+      "sha256": "2e2c849f4f4377b5afaa1c38129a0d9cc58d0f679fc9c58ade98e6c598dc2919"
+    },
+    {
+      "path": "verification-evidence-catalog.mjs",
+      "sha256": "c1db019dc2e7cd7d08d7654eed36a128de2f17bca19359b66b95e414fae2a067"
+    },
+    {
+      "path": "verify-terminal-cycle-owning-control.mjs",
+      "sha256": "994675c1c23db32817342abdaec93af827f785ab94cff63643f36432c5d3c8f8"
+    },
+    {
+      "path": "test-release-semantic-fixture.mjs",
+      "sha256": "052aa9f6e591f95d134f34900d5ecb91c917fc3b98a9bd650dac48c9a2dddc3a"
+    },
+    {
+      "path": "test-project-store-runtime.mjs",
+      "sha256": "28a45861b76ba38038882e0dfb22afc886b7a32e615e801410a894d542f8cbdf"
+    },
+    {
+      "path": "test-fixtures.mjs",
+      "sha256": "cf29aa183e1f6079fb9ba0ec966a72dedc6a3dcf82549b5f7d154d087d2adda6"
+    },
+    {
+      "path": "test-handoff-authorization.mjs",
+      "sha256": "37bfb4e255afb6701fccaccdf055ee7961e838eaf03927c2963dfcf880cf82b6"
+    },
+    {
+      "path": "test-zip.mjs",
+      "sha256": "b5080a8e58eb7b13f421ecce5c63a3d95b765a5b021f5bd4543dce28d171e89d"
+    },
+    {
+      "path": "test-reservation-scope-fixture.mjs",
+      "sha256": "cfe6f9fb9667170d311f971d79088bd7c44b14e00bb5d4f32a412c90e7554aff"
+    },
+    {
+      "path": "operator-journey-fixtures.mjs",
+      "sha256": "de738c8e1d2a4b2b72105a8c8c592dc1bab16f548bec05ecadbfd5f75f251288"
+    },
+    {
+      "path": "verifier-runtime.mjs",
+      "sha256": "051318fc24ea587ced6268d4a60278e5155e3fee8ed26309b28b532c921277f9"
+    },
+    {
+      "path": "workbook.js",
+      "sha256": "11eff4fea42e47a5a70eafdc6b985d064ea2cdfe9a6feb72be6a74ec54c4b062"
+    },
+    {
+      "path": "hash.js",
+      "sha256": "bc1c486855fa2096623b560cfc44b7c5d9e263040546921eb00f54e7f38b7420"
+    },
+    {
+      "path": "workflow-schema.js",
+      "sha256": "c680b30671e76d6c2489d7a86b1c3e2bbae5026f57194310cf9fd9b0ca4f4cf4"
+    },
+    {
+      "path": "test-runtime.js",
+      "sha256": "a9eadc5db096997c51540068fecddaa71dca221b7342eac703d243438a9d1c23"
+    },
+    {
+      "path": "workflow-engine.js",
+      "sha256": "384746b24ad6d4f50d640b50895736178e1f4102382006cb6584b09f225528bb"
+    },
+    {
+      "path": "prompt-engine.js",
+      "sha256": "5d67f8096f91a1efc17ad6ce367dfa43ab5990ecaede9b52c9f12dcc34b41d20"
+    },
+    {
+      "path": "response-ingestion.js",
+      "sha256": "01372de4f5f54a480d8ec8a14b21ae595e5d27486add7c882d944b59497ddd21"
+    },
+    {
+      "path": "project-store.js",
+      "sha256": "e31012867a846860cbbf7990cfb24622473f8c9fa77f4164af7237f10fd6d8cc"
+    },
+    {
+      "path": "app-core.js",
+      "sha256": "6d45356cbd672d0e99d317f9fc0f3c6a0cd1195e9d038b56045775298b8dab93"
+    }
+  ],
+  "findings": [],
+  "reviewedAt": "2026-10-12T12:55:26Z",
+  "sourceLocation": {
+    "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+    "startLine": 4947,
+    "endLine": 4947,
+    "lineSha256": "eafb1ece826f7c026731b5a6f90b43ad2d8967e51c25be4938a2cd032ba1a28f"
+  },
+  "controllingText": "- terminal self-invalidation and Stage 27/Stage 30 dependency cycle;",
+  "governingContext": [],
+  "reviewedChecks": [
+    {
+      "role": "deterministic",
+      "suite": "verify-stage30-terminal-mobile-boundary.mjs",
+      "checkId": "terminal-persisted-revision-current-control"
+    },
+    {
+      "role": "mutation",
+      "suite": "verify-stage30-terminal-mobile-boundary.mjs",
+      "checkId": "terminal-revision-self-invalidation-mutant-detected"
+    },
+    {
+      "role": "mutation",
+      "suite": "verify-stage30-terminal-mobile-boundary.mjs",
+      "checkId": "stage27-stage30-dependency-cycle-mutant-detected"
+    }
+  ],
+  "scopeLimit": "Exact terminal self-invalidation and Stage 27/Stage 30 dependency-cycle clause on production workflow owners and the project-store Map transaction adapter. The compact prerequisite is isolated fixture setup; the graph oracle reads the calculated Stage 30 record in memory, while only revision currentness uses project-store commit/reload. No browser, native IndexedDB, physical device, accepted full lifecycle, current receipt, or whole-application claim.",
+  "currentApplicabilityRenewal": {
+    "catalogSha256": "c1db019dc2e7cd7d08d7654eed36a128de2f17bca19359b66b95e414fae2a067",
+    "catalogDeltaScope": "completeBackupImportFailurePreservation exact expected fault population corrected from two to four; target selector/sourceInputs unchanged",
+    "priorReviewPath": "verification/requirement-coverage-NREQ-1d255fb22dcf311f8c59cfd6754608c6-20261012-current-d3c4a62f-c680b306-e3101286.json",
+    "priorReviewSha256": "9ee937ea4c06bdaadc03f9f38f78041ef2a0f6e3034783e570cbc6ae2f52f960",
+    "semanticDecisionPreserved": true,
+    "testsRunByReviewer": false,
+    "receiptCreatedOrRestamped": false,
+    "applicationConformanceClaim": false
+  }
+}

@@ -43,7 +43,10 @@ self.addEventListener('message',async event=>{
     if(WORKER_BUILD_ID!=='UNMANIFESTED_LOCAL_RUNTIME'&&!EXPECTED_WORKER_SHA256){
       throw Object.assign(new Error('Deployed Test IR worker URL lacks the manifest-bound worker SHA-256.'),{code:'WORKER_DIGEST_IDENTITY_MISSING'});
     }
-    const validation=runtime.validateSpec(message.spec,message.bindings);
+    // executeTest already checked the accepted definition's exact stored hash.
+    // The worker repeats the same finite execution compatibility validation;
+    // current author admission remains strict in response-ingestion.js.
+    const validation=runtime.validateSpec(message.spec,message.bindings,{allowPriorRegistry:true});
     if(!validation.valid)throw Object.assign(new Error(validation.issues.join(' ')),{code:'INVALID_TEST_IR'});
     const result=await runtime.execute({spec:message.spec,artifacts:message.artifacts||{},canonicalBindings:message.canonicalBindings||{},metadata:message.metadata});
     const runtimeReportedBuildIdentity=String(result?.runtimeBuildIdentity||'');

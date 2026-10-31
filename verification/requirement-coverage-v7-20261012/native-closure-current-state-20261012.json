@@ -1,0 +1,429 @@
+{
+  "artifactAccess": "Private output hashes are preserved as references. Proposal patches/reports and execution bytes are not embedded by this addendum; a digest does not make private evidence portable or admitted.",
+  "assignedIds": {
+    "countsByPackage": {
+      "comparison-variance-prerequisite": 1,
+      "human-mode-three-clause": 3,
+      "independently-auditable-quarantine-clone-premise": 1,
+      "quarantine-six-clause": 6,
+      "section-35.5-backup-eleven": 11,
+      "stage37-role-single-clause": 1,
+      "terminal-cycle-clause": 1
+    },
+    "overlapAcrossPackages": false,
+    "packageCount": 7,
+    "uniqueNreqCount": 24,
+    "uniqueNreqIds": [
+      "NREQ-00589ac7ea403394eff5f3f58cd27738",
+      "NREQ-1d255fb22dcf311f8c59cfd6754608c6",
+      "NREQ-3140c1e4ff7ae54bca60fbc69f817271",
+      "NREQ-44fd18cf9801f02c34f8820d2a3acb34",
+      "NREQ-565a4e32ba059a7f2bb12136d5300025",
+      "NREQ-568c874e5bc2e40448edcbe19d2fb8f4",
+      "NREQ-5d1a9d3acc2c91c228528273276da7a3",
+      "NREQ-5fd38e249cabfceace66e3488d9bef39",
+      "NREQ-5fe399cb17e5ef4e71d7789bc46f9694",
+      "NREQ-664f5c5b72efea7443b8f478ff4973df",
+      "NREQ-7d1a2b6f6871fd61e3b088fd77a27542",
+      "NREQ-84c2302d90282984272ef96fffe71232",
+      "NREQ-9d24cb0d2daab9f1168e84c503e311d3",
+      "NREQ-aacd65892b3a5265252f8af8035bea8f",
+      "NREQ-ac1547d5c66a755d9eee61d9f99a4e76",
+      "NREQ-be8170916c23d867812a1a5aeef1bcc0",
+      "NREQ-c66f5606d354d43bfbd3be6980e56365",
+      "NREQ-c926b55ede1b00e6bf9d8b754f232b77",
+      "NREQ-d8364b451e9bacebe247eb7156b4cca1",
+      "NREQ-e27f616490036d42b6051729088d2fc7",
+      "NREQ-e7dcf30a497ab9a4f1ca4d96d1eb74fc",
+      "NREQ-e930db71215117ddfb5e78fefcfac07c",
+      "NREQ-ea453611a3a1f48cdd2fbfbe946d7ac7",
+      "NREQ-f3a162780b1c810f1a98f9a34500e0ea"
+    ]
+  },
+  "canonicalSevenProofSeparate": {
+    "currentDeltaFile": "current-source-evidence-delta-20261012.json",
+    "fingerprintSha256": "dfc4ade53155082096cbb33538097652074b4809eef1485e00922c26ec2920e3",
+    "globalProven": 7,
+    "overallReleaseEstablished": false,
+    "privateResultSha256": "9635d5b5f8bd1d9b5644c6744bac16b7223254736b49c7bc51b1cb5e809a3a5e",
+    "scope": "Seven IDs on the captured current private tuple only; not merged with package proposals or in-flight default consumer.",
+    "sourceCommit": "3b235b943d81a6a8a46a1f48262e5a04a8d63771",
+    "sourceInputsSha256": "b1450598092d02e7e6c601b0ae66625dcff8b34fa84ff45d0b20a9be2aec3fb3",
+    "targetIds": 7,
+    "uniqueTargetIds": 7
+  },
+  "constraints": {
+    "copilot": false,
+    "newSubagents": false,
+    "sharedWrites": false,
+    "sourceEdits": false,
+    "spend": false,
+    "testsRunByThisReconciliation": false,
+    "uploads": false
+  },
+  "currentInFlightEvidence": {
+    "fingerprintSha256": "dfc4ade53155082096cbb33538097652074b4809eef1485e00922c26ec2920e3",
+    "name": "current default eligible consumer",
+    "notReused": false,
+    "result": "NOT_RETURNED; do not poll here or infer eligibility/result",
+    "sourceCommit": "3b235b943d81a6a8a46a1f48262e5a04a8d63771",
+    "sourceInputsSha256": "b1450598092d02e7e6c601b0ae66625dcff8b34fa84ff45d0b20a9be2aec3fb3",
+    "startedAtUtc": "2026-10-12T10:39:21.415Z",
+    "state": "RUNNING_ACTUAL_DEFAULT_CONSUMER",
+    "threePrerequisiteReceipts": [
+      {
+        "receiptSha256": "3b6eedabf9b1396349379e4809be663bb9559a07e231a33e6da37b8b35d62f8a",
+        "suite": "verify-ingestion.mjs"
+      },
+      {
+        "receiptSha256": "fafeb58c859418475604c329ddb231bfadd466f03e2663b6d7c2f43d7de718dc",
+        "suite": "verify-response-authority-integrity.mjs"
+      },
+      {
+        "receiptSha256": "b85ed9121f7e3259f6e88328ed9a8089360d9efe8e8db6bd81cd0ec2f3f7ada2",
+        "suite": "verify-returned-slot-authority.mjs"
+      }
+    ],
+    "threePrerequisiteReceiptsReportedStatus": {
+      "basis": "Parent-provided current receipt status; hashes are listed in the receipt array above.",
+      "endedAtUtc": "2026-10-12T10:38:07.952Z",
+      "status": "PASSED"
+    }
+  },
+  "denominatorAndHistory": {
+    "contextualRowsSeparate": 67,
+    "historicalVerdictRewrite": false,
+    "historicalVerdictsPreserved": true,
+    "newCurrentEligibleRowAdmissionsFromThisStatusRecord": 0,
+    "newFullClausePASS": 0,
+    "substantiveRows": 3999,
+    "uniqueSubstantiveNreqIds": 3999
+  },
+  "finiteNextQueue": [
+    {
+      "action": "Finish the already-running current default eligible-consumer run on fingerprint dfc4\u2026 and record its actual result/eligibility; keep it distinct from the seven-row canonical proof.",
+      "blockingCondition": "Result not returned yet.",
+      "rank": 1
+    },
+    {
+      "action": "Root review/integrate comparison cumulative private patch under guard; only then use eligible owner receipts and normal consumer output for that source.",
+      "blockingCondition": "Patch remains private/unintegrated; focused controls are not current proof.",
+      "rank": 2
+    },
+    {
+      "action": "Complete human-mode-3 original-owner correction; require distinct review after corrected postimages are fixed; then execute current eligible owning path.",
+      "blockingCondition": "Prior review cannot certify independence; corrected candidate not yet executed.",
+      "rank": 3
+    },
+    {
+      "action": "Obtain quarantine-six independent semantic review; integrate guarded focused patch and register current-source owner receipts.",
+      "blockingCondition": "Semantic review is in progress; private proposal execution is not admitted evidence.",
+      "rank": 4
+    },
+    {
+      "action": "Resolve clone source applicability for NREQ-c66\u2026 and finish owner source review; inspect only permitted audited-source or explicit nonselection premise.",
+      "blockingCondition": "No source-review result returned; current applicability and eligible evidence unknown.",
+      "rank": 5
+    },
+    {
+      "action": "Complete section 35.5 backup-eleven owner check and return a bounded report.",
+      "blockingCondition": "Only task start recorded; no review or execution output.",
+      "rank": 6
+    },
+    {
+      "action": "Complete Stage37 role v4 independent review, then satisfy the still-open current-source runtime acceptance action.",
+      "blockingCondition": "No v4 result and no current runtime proof; scoped design admission does not close the requirement.",
+      "rank": 7
+    },
+    {
+      "action": "For terminal-cycle clause, integrate corrected patch under guards, run current designated owner, then issue and consume a distinct full-coverage review only if promotion remains intended.",
+      "blockingCondition": "Declaration review and eligible current owner receipt are absent.",
+      "rank": 8
+    }
+  ],
+  "independenceBlockers": [
+    "Human-mode-3 proposal author is undeclared; the earlier correction reviewer is also its correction author, so an independent final review of the corrected candidate remains necessary.",
+    "Quarantine-six independent semantic review has not returned.",
+    "Terminal declaration requires a distinct final coverage review and a current owner receipt.",
+    "NREQ-c66 source-review clone has no returned output and its worker self-reported model identity is not tool-verified.",
+    "Stage37 role v4 review has only been routed; no review artifact exists.",
+    "Current default eligible consumer run is still in progress."
+  ],
+  "modelAttribution": {
+    "actualBackendReceiptAvailable": false,
+    "cloneWorkerSelfReport": "GPT-6 inherited; self-report only, not tool-verified backend identity.",
+    "requestedModelEffortAsProvidedByCurrentTask": "GPT-5.6-Sol / high where explicitly known"
+  },
+  "packages": [
+    {
+      "executionBoundary": {
+        "affectedConsumerControl": {
+          "artifactInputCaseCount": 24,
+          "boundary": [
+            "Production reserved instructions and manifest/context carriers, admission, operator acceptance, current comparison calculation and Stage13 gate over declared synthetic upstream ten-run fixture; supplied transport identity descriptor, no physical or external actor claim.",
+            "Current COMPARE AUTHOR13/17/19 required artifact selection over declared canonical fixtures; exact evidence and run output identities, unavailable/missing/foreign/stale/ambiguous controls. No actual Blob or external actor claim; actual ZIP/file custody is separately tested."
+          ],
+          "command": [
+            "node",
+            "verify-cross-run-comparison-consumer-id-minimal-diagnostic.mjs",
+            "--consumer-id-drift-minimal-only"
+          ],
+          "defaultComparisonExecuted": false,
+          "diagnosticSourceSha256": "3266cb1719dfa3ec123d43a2270008d806c0cb1d9f8c01ea0f41d8b8bc66e484",
+          "elapsedSeconds": 28.317,
+          "evidence": {
+            "status.txt": {
+              "bytes": 2,
+              "filename": "newv3-exclusive/evidence-exclusive/consumer-id-drift-minimal.status.txt",
+              "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+            },
+            "stderr.txt": {
+              "bytes": 0,
+              "filename": "newv3-exclusive/evidence-exclusive/consumer-id-drift-minimal.stderr.txt",
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "stdout.jsonl": {
+              "bytes": 8006,
+              "filename": "newv3-exclusive/evidence-exclusive/consumer-id-drift-minimal.stdout.jsonl",
+              "sha256": "170d1915910bc4fdd379f8ada813a17735a99a76871658a2532dc3aaf9e83d69"
+            },
+            "time.txt": {
+              "bytes": 7,
+              "filename": "newv3-exclusive/evidence-exclusive/consumer-id-drift-minimal.time.txt",
+              "sha256": "034ad967a08b64343aadeb024429cc2b5ed5e4b25070c513a85b87b7e7cd5519"
+            }
+          },
+          "exitCode": 0,
+          "materialityCaseCount": 124,
+          "timeoutSeconds": 30,
+          "unrelatedPrerequisiteBasesConstructed": false
+        },
+        "browserOrFullJourneyRun": false,
+        "defaultComparisonRun": false,
+        "eligibleAdmission": false,
+        "focusedPrerequisiteSeconds": 23.116,
+        "nextAction": "Root review/integration under the recorded guard; no published/current eligible row admission is asserted."
+      },
+      "independenceBoundary": "Independent review output exists for this repair; proposal remains private and unintegrated.",
+      "packageId": "comparison-variance-prerequisite",
+      "proposal": {
+        "availability": "PRIVATE_RECORD_NOT_BUNDLED",
+        "bytes": 106173,
+        "label": "final cumulative patch",
+        "sha256": "3e7f22006ddf2ff7be365eea9ac3fbee680de2459d017e1f37265f92154b4090"
+      },
+      "review": {
+        "availability": "PRIVATE_RECORD_NOT_BUNDLED",
+        "bytes": 9234,
+        "label": "final independent review v2",
+        "sha256": "8e47300e9297091edf3870608b301f950623c58d3cd3056e70db3665a2b8e2ef"
+      },
+      "state": "PRIVATE_FINAL_PATCH_AND_FOCUSED_CONTROLS_COMPLETE_PENDING_ROOT_INTEGRATION",
+      "uniqueNreqIds": [
+        "NREQ-e7dcf30a497ab9a4f1ca4d96d1eb74fc"
+      ]
+    },
+    {
+      "executionBoundary": {
+        "correctedCandidateReexecuted": false,
+        "earlierFocusedControlWasProposalOnly": true,
+        "nextAction": "Complete original-owner integration, then obtain a distinct review of corrected postimages and execute on current eligible source.",
+        "normalDefaultOrNativeRun": false,
+        "productionDefect": "NOT_CLAIMED",
+        "wholeClauseAdmission": "NOT_ESTABLISHED"
+      },
+      "independenceBoundary": "The review record does not declare proposal author; correction author is the reviewer. It explicitly says reviewer distinctness is unknown, so the correction is not counted as an independent completed review.",
+      "independentCorrection": {
+        "availability": "PRIVATE_RECORD_NOT_BUNDLED",
+        "bytes": 8556,
+        "label": "minimal review correction patch",
+        "sha256": "85acb66976f0f71217794ab23b8370320712ee0d58caac03bcee434d5527e253"
+      },
+      "packageId": "human-mode-three-clause",
+      "proposal": {
+        "availability": "PRIVATE_RECORD_NOT_BUNDLED",
+        "bytes": 6931,
+        "label": "original owner test proposal",
+        "sha256": "9d5c746e326fa5f127eb150a53141b467c4e2c9a8a0001a9f07480e9e12657b4"
+      },
+      "review": {
+        "availability": "PRIVATE_RECORD_NOT_BUNDLED",
+        "bytes": 10581,
+        "label": "review report",
+        "sha256": "77bb50e1c544eb62e2f071006e3583f2cc634c9e6509501c260742759d1050cb"
+      },
+      "state": "ORIGINAL_OWNER_INTEGRATING_REVIEW_CORRECTION",
+      "uniqueNreqIds": [
+        "NREQ-5fd38e249cabfceace66e3488d9bef39",
+        "NREQ-aacd65892b3a5265252f8af8035bea8f",
+        "NREQ-be8170916c23d867812a1a5aeef1bcc0"
+      ]
+    },
+    {
+      "executionBoundary": {
+        "catalogueConsumerExitCode": 0,
+        "currentEligibleReceipt": false,
+        "focusedOwnerCases": 9,
+        "focusedOwnerExitCode": 0,
+        "nextAction": "Independent semantic review, guarded root integration, and current-source receipts for affected owners; six-row clause stays PARTIAL.",
+        "rootIntegrationRequired": true,
+        "wholeClauseDisposition": "PARTIAL_OPEN_NO_FULL_COVERAGE_DECLARATION"
+      },
+      "independenceBoundary": "Independent semantic reviewer is admitted/running per current native routing; no returned review artifact is yet recorded.",
+      "ownerReport": {
+        "availability": "PRIVATE_RECORD_NOT_BUNDLED",
+        "bytes": 7213,
+        "label": "v2 execution report",
+        "sha256": "76854e523577d06fa024cf876607cc8087f24b76248c34f387c1b4dbf6fe4724"
+      },
+      "packageId": "quarantine-six-clause",
+      "proposal": {
+        "availability": "PRIVATE_RECORD_NOT_BUNDLED",
+        "bytes": 18729,
+        "label": "v2 focused test/catalog patch",
+        "sha256": "f03f5fdd7aaa99c164193f9e9a43b5d7e2a44c0826d5dcbd36f9cc9a792d712b"
+      },
+      "state": "PRIVATE_FOCUSED_OWNER_PROPOSAL_EXECUTION_PASS; INDEPENDENT_SEMANTIC_REVIEW_PENDING",
+      "uniqueNreqIds": [
+        "NREQ-44fd18cf9801f02c34f8820d2a3acb34",
+        "NREQ-568c874e5bc2e40448edcbe19d2fb8f4",
+        "NREQ-664f5c5b72efea7443b8f478ff4973df",
+        "NREQ-7d1a2b6f6871fd61e3b088fd77a27542",
+        "NREQ-e27f616490036d42b6051729088d2fc7",
+        "NREQ-ea453611a3a1f48cdd2fbfbe946d7ac7"
+      ]
+    },
+    {
+      "executionBoundary": {
+        "currentProofDisposition": "UNKNOWN_PENDING_INTEGRATION_ELIGIBLE_OWNER_EXECUTION_AND_DISTINCT_COVERAGE_REVIEW",
+        "fullCoverageDeclared": false,
+        "nextAction": "Guarded integration, current designated-owner receipt, distinct review of exact full-coverage declaration and final normal proof consumer.",
+        "ownerExecutedOnFinalTuple": false,
+        "reusedFocusedControlEligible": false
+      },
+      "independenceBoundary": "Two metadata corrections received independent review; the full-coverage declaration still lacks its distinct review record and eligible current owner receipt.",
+      "independentReview": {
+        "availability": "PRIVATE_RECORD_NOT_BUNDLED",
+        "bytes": 13577,
+        "label": "independent correction review",
+        "sha256": "aec6f939a222eed70e35ed34ff415ad41d030dea75bbe8f0d99562aec734f094"
+      },
+      "ownerMetadata": {
+        "availability": "PRIVATE_RECORD_NOT_BUNDLED",
+        "bytes": 5504,
+        "label": "terminal final review metadata",
+        "sha256": "46caff7ff792b714430b4ea5b82c1d0021befca19a7f005db543753fcde6a539"
+      },
+      "packageId": "terminal-cycle-clause",
+      "proposal": {
+        "availability": "PRIVATE_RECORD_NOT_BUNDLED",
+        "bytes": 31562,
+        "label": "corrected terminal owner patch",
+        "sha256": "d31cd616c7562368efd9bce61472a84516be53096e38bb9bd93a8e35cda76fef"
+      },
+      "state": "CORRECTED_PATCH_READY; OWNER_EXECUTION_AND_FINAL_DECLARATION_REVIEW_OPEN",
+      "uniqueNreqIds": [
+        "NREQ-1d255fb22dcf311f8c59cfd6754608c6"
+      ]
+    },
+    {
+      "exactRecordedBoundary": "Root records permitted auditable-source/authorization applicability or nonselection; if a real permittedsource exists, reuse clone identity/atomic controls and attribute exact quarantine immutability/no activation effects. Never convert invalidprovenance to current by clone.",
+      "executionBoundary": {
+        "currentEligibility": false,
+        "currentOwnerExecution": false,
+        "nextAction": "Determine permitted auditable-source applicability or nonselection; if a real permitted source exists, reuse clone identity/atomic controls and attribute quarantine immutability/no-activation. Do not convert invalid provenance to current."
+      },
+      "independenceBoundary": "The source-review clone is admitted/running; no review result has been returned.",
+      "modelAttribution": {
+        "actualBackendReceipt": "NOT_AVAILABLE; neither request nor worker self-report is tool-receipt proof.",
+        "requestedEffort": "high",
+        "requestedModel": "GPT-5.6-Sol",
+        "workerSelfReport": "GPT-6 inherited"
+      },
+      "packageId": "independently-auditable-quarantine-clone-premise",
+      "sourceLocation": {
+        "nreqId": "NREQ-c66f5606d354d43bfbd3be6980e56365",
+        "sourceArtifact": "complete-work-map.json",
+        "sourceRecordLocator": "V5_BASELINE_ROW_RETAINED; no repository file path is recorded for this map row"
+      },
+      "state": "SOURCE_REVIEW_ADMITTED_PENDING_RETURNED_OUTPUT",
+      "uniqueNreqIds": [
+        "NREQ-c66f5606d354d43bfbd3be6980e56365"
+      ]
+    },
+    {
+      "executionBoundary": {
+        "admissionOrProof": "NONE",
+        "nextAction": "Use the exact existing per-row backup/import boundaries; attribute only already-present controls or identify a bounded missing acceptance action. Preserve current receipts and avoid broader audit.",
+        "runtimeOrTestExecution": "NOT_REPORTED"
+      },
+      "independenceBoundary": "Only the task start is recorded; no owner report or review is yet available.",
+      "ownerOutput": null,
+      "packageId": "section-35.5-backup-eleven",
+      "startedAtUtc": "2026-10-12T10:38:32Z",
+      "state": "OWNER_TASK_STARTED_NO_OUTPUT_YET",
+      "uniqueNreqIds": [
+        "NREQ-3140c1e4ff7ae54bca60fbc69f817271",
+        "NREQ-565a4e32ba059a7f2bb12136d5300025",
+        "NREQ-5d1a9d3acc2c91c228528273276da7a3",
+        "NREQ-5fe399cb17e5ef4e71d7789bc46f9694",
+        "NREQ-84c2302d90282984272ef96fffe71232",
+        "NREQ-9d24cb0d2daab9f1168e84c503e311d3",
+        "NREQ-ac1547d5c66a755d9eee61d9f99a4e76",
+        "NREQ-c926b55ede1b00e6bf9d8b754f232b77",
+        "NREQ-d8364b451e9bacebe247eb7156b4cca1",
+        "NREQ-e930db71215117ddfb5e78fefcfac07c",
+        "NREQ-f3a162780b1c810f1a98f9a34500e0ea"
+      ]
+    },
+    {
+      "executionBoundary": {
+        "currentSourceRuntimeProofActionStillOpen": true,
+        "nextAction": "Complete source-bound runtime acceptance; independent v4 review has been assigned but has not returned."
+      },
+      "independenceBoundary": "Root applied the row-level scoped design admission. A subsequent v4 independent review is assigned to the same native worker as the completed comparison repair; no v4 report exists yet, so reviewer independence for this row remains unestablished.",
+      "packageId": "stage37-role-single-clause",
+      "proposalAndIntegration": {
+        "actionIndexAfterSha256": "d8ac507ef6c063e68e49b277c150796e22a02419ec1cd8ebfb4628c9c037d709",
+        "currentEligiblePASS": 0,
+        "overlayAfterSha256": "b835a443df6d2afc3878b4210c533ed025e1e071936634c100c737427c0aa5ef",
+        "runtimeProofAdmissions": 0,
+        "scopedSupplementAfterSha256": "b248ff53a6800ef6d8993c2c44c110aa5f259cf9e4c12c7a21c0ca03d9d8eecd",
+        "scopedSupplementBeforeSha256": "762e1d9c6a6e4344324991ca30e865a726a5a12a180273e6e1a69095136508d3",
+        "uniqueScopedStaticAdequacyAdmissions": 1,
+        "wholeClausePASS": false
+      },
+      "state": "SCOPED_TEST_DESIGN_ADEQUACY_ADMITTED_PENDING_CURRENT_SOURCE_RUNTIME_PROOF_ACCEPTANCE",
+      "uniqueNreqIds": [
+        "NREQ-00589ac7ea403394eff5f3f58cd27738"
+      ]
+    }
+  ],
+  "recordedAtUtc": "2026-10-12T10:40:00Z",
+  "schema": "v7-maintained-owner-closure-current-state/1",
+  "scope": "Append-only private reconciliation of named native work, returned proposals, and exact IDs from existing V7/closure records. No new map, source audit, test, upload, runtime edit, or shared ledger change.",
+  "sources": [
+    {
+      "artifact": "complete-work-map.json",
+      "rows": 3999,
+      "scope": "source snapshot only",
+      "sha256": "8b10831c9cf7c1cf069fde6528869ab870f9079e5781e3fbe085e6afd5b33a97"
+    },
+    {
+      "artifact": "ownership-overlay-current.json pre-integration",
+      "rows": 3999,
+      "scope": "preserved pre-integration queue snapshot",
+      "sha256": "20f80e370079d11efca774e4fa29e5524715528ec50af122b8a69939ab4752f3"
+    },
+    {
+      "artifact": "ownership-overlay-current.json post-Stage37 row",
+      "scope": "one-row current overlay status",
+      "sha256": "b835a443df6d2afc3878b4210c533ed025e1e071936634c100c737427c0aa5ef"
+    },
+    {
+      "artifact": "action-index post-Stage37 row",
+      "scope": "one-row current action-index status",
+      "sha256": "d8ac507ef6c063e68e49b277c150796e22a02419ec1cd8ebfb4628c9c037d709"
+    }
+  ]
+}

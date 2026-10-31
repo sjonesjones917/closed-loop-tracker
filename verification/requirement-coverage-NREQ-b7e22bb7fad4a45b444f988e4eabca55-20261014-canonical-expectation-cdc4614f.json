@@ -1,0 +1,127 @@
+{
+  "schema": "closed-loop-requirement-coverage-review/1",
+  "normativeRequirementId": "NREQ-b7e22bb7fad4a45b444f988e4eabca55",
+  "sourceLineSha256": "3d14033f2bcab6a74bb1206dc1ffc21a22450ac131f2d2fdb084c28d43c05623",
+  "specificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+  "atomicObligationSha256": "e796bf2def4ac2874865fd0c8d209e36a6844dbda2763430c479b94d5e9e99d8",
+  "reviewedAtomicStatement": "closed-loop-canonical-json/1 rejects negative zero.",
+  "sourceSpans": [
+    {
+      "startByte": 151391,
+      "endByte": 151503,
+      "text": "- rejection of negative zero, NaN, Infinity, undefined, sparse holes, cyclic values, and implementation objects.",
+      "sha256": "3d14033f2bcab6a74bb1206dc1ffc21a22450ac131f2d2fdb084c28d43c05623"
+    }
+  ],
+  "contextSourceLocations": [
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "startLine": 2869,
+      "endLine": 2869,
+      "lineSha256": "774e4e8f76194d802466c7325360169af41c413cc053a82d83c1e1c9d69d8d40",
+      "controllingText": "34.1 Canonical serialization portability"
+    },
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "startLine": 2871,
+      "endLine": 2871,
+      "lineSha256": "15968ab6cfcb305b94e767f60e01fa39420bae94e6ae1edb6cfe288d3e347103",
+      "controllingText": "All canonical semantic hashes use closed-loop-canonical-json/1. Its implementation contract fixes:"
+    }
+  ],
+  "declarationSha256": "2148a8fb7c99d44e4f994a194ae0b4c6f0fb1a85a2b609598ef4530ba3a82310",
+  "decision": "COMPLETE_COVERAGE",
+  "evidenceBasis": "EXTERNALLY_SUPPORTED",
+  "method": "Fresh independent bounded source review on cdc4614f86d65d1b278008b60e668ab630f08b86 following frozen100eb46d. Inspected the exact two-file correction: the entire catalog becomes identical to100eb after removing only migration.current-profile.expectedDescription; migration predicate/function bodies and complete canonical owner suite are unchanged. Independently confirmed hash.js, verify-hash.mjs, workflow-schema.js, workflow-engine.js, project-store.js and all358 binding rows are byte-identical before review-reference renewal. Re-executed379 migration refusal controls and the new eight-observation JSON serialization/recomputation stability assertion. No canonical proposition, context, owner, check or declaration digest changes. Prior independent canonical semantic controls and actual hash receipt support remain explicitly frozen100eb; that receipt previously yielded14 CONFORMANT_PROVEN through the existing evaluator and is not promoted to this new candidate. Only catalog reviewedInput changes, with old reviews preserved. These new records admit the same14 coverage designs on corrected source; fresh executed receipts are still required for cdc4614f. No new producer, lifecycle or global conformance claim.",
+  "author": {
+    "actor": "Canonical JSON current-atom proof author",
+    "contextId": "/root/bind_canonical_json_proofs"
+  },
+  "reviewer": {
+    "actor": "Independent final-catalog canonical JSON reviewer",
+    "contextId": "/root/review_canonical_json_proofs"
+  },
+  "reviewedInputs": [
+    {
+      "declarationSha256": "2148a8fb7c99d44e4f994a194ae0b4c6f0fb1a85a2b609598ef4530ba3a82310"
+    },
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883"
+    },
+    {
+      "path": "specification/closed-loop-normative-requirements.json",
+      "sha256": "4773f157f198781918b0fb9f20a696ad9d2b09dbea0120a9407ce0d24c96df5c"
+    },
+    {
+      "path": "specification/requirement-evidence-bindings.json",
+      "sha256": "cd5e2800f114801aacc2c194974088b37059c64013b8c5fbd02010c4d143774c"
+    },
+    {
+      "path": "verify-hash.mjs",
+      "sha256": "78c7407c182cd96035293c7335c07c1a729b7312813cde5474af74b82e905e28"
+    },
+    {
+      "path": "verification-evidence-catalog.mjs",
+      "sha256": "bb0dc858bf47569475a9ea7b929e77be0fb8c8b1fe641a1e6c69f9552135ff95"
+    },
+    {
+      "path": "verification-evidence.mjs",
+      "sha256": "6c3fc424b828bb7edbdda043f82116712e3870a0632c09b6adf795344948bf30"
+    },
+    {
+      "path": "workbook.js",
+      "sha256": "11eff4fea42e47a5a70eafdc6b985d064ea2cdfe9a6feb72be6a74ec54c4b062"
+    },
+    {
+      "path": "workflow-schema.js",
+      "sha256": "626e51a6590e1bb19e6c4478a2531326daddceffabdb8ced225dbb4aa81deb1b"
+    },
+    {
+      "path": "hash.js",
+      "sha256": "bc1c486855fa2096623b560cfc44b7c5d9e263040546921eb00f54e7f38b7420"
+    },
+    {
+      "path": "verifier-runtime.mjs",
+      "sha256": "051318fc24ea587ced6268d4a60278e5155e3fee8ed26309b28b532c921277f9"
+    },
+    {
+      "path": "test-canonical-prefix-supplier.mjs",
+      "sha256": "9460ed0c645255980e85c7f372134db3657e50489d2b9ab4c370a740f43776a5"
+    },
+    {
+      "path": "test-project-store-runtime.mjs",
+      "sha256": "d5a2c93dde17700f524e4e1092e40ee1fdcd650d96022c6e56c117b601beeea0"
+    },
+    {
+      "path": "test-runtime.js",
+      "sha256": "a9eadc5db096997c51540068fecddaa71dca221b7342eac703d243438a9d1c23"
+    },
+    {
+      "path": "workflow-engine.js",
+      "sha256": "1a0e0789abcb829c79dec4748dbaa0e90d2989d6d263ac3e6b6e1fcf26377d1f"
+    },
+    {
+      "path": "prompt-engine.js",
+      "sha256": "5d67f8096f91a1efc17ad6ce367dfa43ab5990ecaede9b52c9f12dcc34b41d20"
+    },
+    {
+      "path": "response-ingestion.js",
+      "sha256": "ea0c6d1798dfd3a5711bf96550b7a7d085d8374fdfdfaf5e694ee84b39ad28f9"
+    },
+    {
+      "path": "project-store.js",
+      "sha256": "be8a5b5f9a2ca7caa42024f2831447c38947fe099198c3303e7eb83e410965d0"
+    },
+    {
+      "path": "app-core.js",
+      "sha256": "38fad6b6170193b5675c4bf2c69374def1f735c100a51a5ac108489daa3b63b9"
+    },
+    {
+      "path": "test-complete-record-carrier-shapes.mjs",
+      "sha256": "7e0598b04149a45b241c0e7049f62e0d93446e026ca0b3faf94c1b3176859dfb"
+    }
+  ],
+  "findings": [],
+  "reviewPerformed": true
+}

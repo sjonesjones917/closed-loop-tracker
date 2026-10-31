@@ -1,0 +1,18 @@
+{
+  "schema": "closed-loop-source-reconciliation-compressed-deliverable/1",
+  "status": "FROZEN_STAGED_AWAITING_PRIVATE_DURABLE_CUSTODY",
+  "archive": {
+    "path": "/tmp/clrt-source-final-archives/qualifier-linkage-reconciliation-009-count-clarification-001-frozen-payloads.tar.gz",
+    "sha256": "020c81b8573df043a67e390fbdb42eebfb3a3e3dc8c10ada0b61658fca196605",
+    "byteLength": 1151
+  },
+  "archivedLogicalFiles": [
+    {
+      "logicalPath": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-009-count-clarification-001/count-clarification.json",
+      "archiveMember": "qualifier-linkage-reconciliation-009-count-clarification-001/count-clarification.json",
+      "sha256": "98e52b1cc98062f648267e54819770b569e7be74dd1f70f3f95703d7ca12a11a",
+      "byteLength": 3273
+    }
+  ],
+  "noSemanticIdentityChange": true
+}

@@ -10,33 +10,46 @@ const ctx=createVerifierRuntime({console,Event:class{},dispatchEvent(){},addEven
 for(const name of ['workbook.js','hash.js','workflow-schema.js'])vm.runInContext(fs.readFileSync(name,'utf8'),ctx,{filename:name});
 const marker='globalThis.closedLoopAppReady=false;';assert.equal(source.split(marker).length,2,'Unique application-start boundary is required');
 vm.runInContext(source.replace(marker,`core=globalThis.closedLoopCore;schema=globalThis.closedLoopWorkflowSchema;globalThis.nativeFinalizationCase=async(kind,phase)=>{
- const previous={current,engine,selectedOperation,nativeStage22Tests,nativeTestInputs,persistReplacement,render,runtime:globalThis.closedLoopTestRuntime};
+ const previous={current,engine,selectedOperation,nativeProductTests,nativeTestInputs,persistReplacement,render,runtime:globalThis.closedLoopTestRuntime};
  const observations={executions:0,commits:0,renders:0};
  current=core.createBlankState('NATIVE-FINALIZATION-'+kind+'-'+phase);
  current.projectSha256='SOURCE-PROJECT';
- current.activeStage=kind==='deferred'?Number(schema.RECORD_SCHEMAS.failureTests.stage)+1:Number(schema.RECORD_SCHEMAS.deterministicResults.stage);
- selectedOperation=()=>kind==='deferred'?'EXECUTE_FAILURE_TEST':schema.STAGE_CONTRACTS[current.activeStage].operations[0];
+ current.activeStage=kind==='deferred'?Number(schema.RECORD_SCHEMAS.failureTests.stage)+1:Number(schema.RECORD_SCHEMAS[kind==='adversarial'?'adversarialResults':'deterministicResults'].stage);
+ selectedOperation=()=>kind==='deferred'?'EXECUTE_FAILURE_TEST':schema.NATIVE_PRODUCT_RESULT_CONTRACTS[current.activeStage].operation;
  const test={testId:'FINALIZATION-TEST'};
- engine={records:()=>[test],recordId:row=>row.testId,currentDeferredExecution:()=>({testId:test.testId,subjectId:'FINALIZATION-SUBJECT',bindingSha256:'CONTROLLED-BINDING'}),async executeDeferredNative(){observations.executions++;},recordApplicationDeterministicResult(){}};
- nativeStage22Tests=()=>[test];nativeTestInputs=async()=>({artifactPayload:{},canonicalPayload:{},identities:[]});
+ engine={records:()=>[test],recordId:row=>row.testId,currentDeferredExecution:()=>({testId:test.testId,subjectId:'FINALIZATION-SUBJECT',bindingSha256:'CONTROLLED-BINDING'}),async executeDeferredNative(){observations.executions++;},recordApplicationNativeProductResult(){}};
+ nativeProductTests=()=>[test];nativeTestInputs=async()=>({artifactPayload:{},canonicalPayload:{},identities:[]});
  globalThis.closedLoopTestRuntime={async executeTest(){observations.executions++;return {status:'COMPLETE',determination:'SATISFIED'};}};
  persistReplacement=async next=>{if(phase==='before-commit')throw new Error('Injected storage rejection');if(phase==='unknown-commit')throw Object.assign(new Error('Storage outcome is unconfirmed'),{existingProjectsUnchanged:false});observations.commits++;current=next;current.projectSha256='SAVED-PROJECT';if(kind==='save'&&phase==='after-commit')throw new Error('Injected view refresh failure');return next;};
  render=()=>{observations.renders++;if(phase==='after-commit')throw new Error('Injected view refresh failure');};
- try{await runOperatorAction('Native finalization regression',()=>kind==='save'?save():kind==='deferred'?runNativeDeferredTest():runNativeStage22Tests());return observations;}
- finally{({current,engine,selectedOperation,nativeStage22Tests,nativeTestInputs,persistReplacement,render}=previous);globalThis.closedLoopTestRuntime=previous.runtime;}
-};globalThis.finalization={run:fn=>runOperatorAction('Finalization regression',fn),capture:fn=>{captureCurrentView=fn},failure:()=>reportActionFailure(new Error('Recorded internal failure')),responseFailure:()=>{render=()=>{};reportResponseFailure('Your accepted work is unchanged.',new Error('The follow-up receipt failed'))},changed:()=>{current.projectSha256='CHANGED-PROJECT'},samples:()=>operationLatencyEvidence().samples,select:()=>{current={job:{JOB_ID:'FINALIZATION-FIXTURE'},revision:0,projectSha256:'SOURCE-PROJECT',activeStage:1,historyActivationId:null}}};return;`),ctx,{filename:'app-core.js'});
+ try{await runOperatorAction('Native finalization regression',()=>kind==='save'?save():kind==='deferred'?runNativeDeferredTest():runNativeProductTests(Number(current.activeStage)));return observations;}
+ finally{({current,engine,selectedOperation,nativeProductTests,nativeTestInputs,persistReplacement,render}=previous);globalThis.closedLoopTestRuntime=previous.runtime;}
+};globalThis.finalization={announce,run:fn=>runOperatorAction('Finalization regression',fn),capture:fn=>{captureCurrentView=fn},failure:()=>reportActionFailure(new Error('Recorded internal failure')),responseFailure:()=>{render=()=>{};reportResponseFailure('Your accepted work is unchanged.',new Error('The follow-up receipt failed'))},changed:()=>{current.projectSha256='CHANGED-PROJECT'},samples:()=>operationLatencyEvidence().samples,select:()=>{current={job:{JOB_ID:'FINALIZATION-FIXTURE'},revision:0,projectSha256:'SOURCE-PROJECT',activeStage:1,historyActivationId:null}}};return;`),ctx,{filename:'app-core.js'});
 const ui=ctx.finalization;ui.select();
 async function frames(){for(let n=0;n<6;n++){frameQueue.splice(0).forEach(fn=>fn());await Promise.resolve();}}
 async function check(caseId,fn){try{await fn();cases.push({caseId,result:'PASS'});}catch(error){cases.push({caseId,result:'FAIL',error:String(error.stack||error)});}}
 await check('ACTION-FINALIZATION-VALID',async()=>{let entered=0;ui.capture(async()=>{entered++});const run=ui.run(async()=>{});await frames();await run;assert.equal(entered,1);assert.equal(ui.samples().at(-1).outcome,'COMPLETED');assert.equal(nodes.get('#save-prompt').disabled,false);assert.equal(nodes.get('#app-operation-status').hidden,true)});
+await check('ACTION-SUCCESS-WHILE-FINALIZATION-HELD',async()=>{
+ let release;const held=new Promise(resolve=>{release=resolve});ui.capture(async()=>{await held});
+ const message='response already staged; proposal ready',run=ui.run(async()=>ui.announce(message));await frames();
+ await new Promise(resolve=>setTimeout(resolve,1510));await frames();
+ const observed={message:nodes.get('#app-live-status').textContent,loading:!nodes.get('#app-operation-status').hidden,disabled:nodes.get('#save-prompt').disabled};
+ release();await run;await frames();
+ assert.equal(observed.message,message,'SUCCESS_FEEDBACK_PENDING_ORACLE: delayed loading replaced completed-action feedback.');
+ assert.equal(observed.loading,true,'SUCCESS_FEEDBACK_PENDING_ORACLE: required final persistence must retain its loading indicator.');
+ assert.equal(observed.disabled,true,'SUCCESS_FEEDBACK_PENDING_ORACLE: required final persistence must retain the action lock.');
+ assert.equal(nodes.get('#app-live-status').textContent,message);assert.equal(ui.samples().at(-1).outcome,'COMPLETED');
+ assert.equal(nodes.get('#save-prompt').disabled,false);assert.equal(nodes.get('#app-operation-status').hidden,true);
+});
 await check('ACTION-FINALIZATION-HELD',async()=>{
  let release,entered=0,activations=0;const held=new Promise(resolve=>{release=resolve});ui.capture(async()=>{entered++;await held});
  const count=ui.samples().length;const run=ui.run(async()=>{activations++});await frames();assert.equal(entered,1,'Required checkpoint was not attempted');
  const duplicate=ui.run(async()=>{activations++});await frames();
  await new Promise(resolve=>setTimeout(resolve,1510));await frames();
  // Capture all observations before releasing a deliberately held valid boundary.
- const observed={loading:!nodes.get('#app-operation-status').hidden,disabled:nodes.get('#save-prompt').disabled,partialSamples:ui.samples().length-count,activations};
+ const observed={message:nodes.get('#app-live-status').textContent,loading:!nodes.get('#app-operation-status').hidden,disabled:nodes.get('#save-prompt').disabled,partialSamples:ui.samples().length-count,activations};
  release();await Promise.all([run,duplicate]);await frames();
+ assert.equal(observed.message,'Finalization regression','FINALIZATION_LOADING_ORACLE: an action without newer feedback must retain its loading announcement');
  assert.equal(observed.loading,true,'FINALIZATION_LOADING_ORACLE: a pending required checkpoint has no loading indicator');
  assert.equal(observed.disabled,true);assert.equal(observed.partialSamples,0,'FINALIZATION_LATENCY_ORACLE: completion was recorded before required persistence settled');assert.equal(observed.activations,1);
  assert.ok(ui.samples().at(-1).durationMs>=1500,'FINALIZATION_LATENCY_ORACLE: measured duration omitted final persistence');assert.equal(nodes.get('#save-prompt').disabled,false);assert.equal(nodes.get('#app-operation-status').hidden,true);
@@ -63,7 +76,7 @@ await check('ACTION-DIRECT-POST-COMMIT-FAILURE',async()=>{
  assert.match(nodes.get('#app-live-status').textContent,/saved outcome needs verification/,'DIRECT_POST_COMMIT_FEEDBACK_ORACLE: failure feedback must direct recovery without claiming rollback.');
  assert.equal(ui.samples().at(-1).outcome,'FAILED');assert.equal(nodes.get('#save-prompt').disabled,false);assert.equal(nodes.get('#app-operation-status').hidden,true);
 });
-for(const kind of ['deferred','product','save'])for(const phase of ['before-commit','unknown-commit','after-commit','success'])await check('ACTION-NATIVE-COMMIT-FEEDBACK-'+kind+'-'+phase,async()=>{
+for(const kind of ['deferred','product','adversarial','save'])for(const phase of ['before-commit','unknown-commit','after-commit','success'])await check('ACTION-NATIVE-COMMIT-FEEDBACK-'+kind+'-'+phase,async()=>{
  ui.capture(async()=>{});nodes.get('#operation-error').diagnosticMarkup='';const run=ctx.nativeFinalizationCase(kind,phase);await frames();const observed=await run;await frames();
  assert.equal(observed.executions,kind==='save'?0:1,'NATIVE_COMMIT_FEEDBACK_ORACLE: execution repeated.');
  assert.equal(observed.commits,['after-commit','success'].includes(phase)?1:0,'NATIVE_COMMIT_FEEDBACK_ORACLE: unexpected commit boundary.');

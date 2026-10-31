@@ -1,0 +1,187 @@
+{
+  "schema": "closed-loop-requirement-coverage-review/1",
+  "normativeRequirementId": "NREQ-7be2bf6dfeab825b0549d41a0151841e",
+  "sourceLineSha256": "b21856c22e02378948b84d4516c1f483dfc9cff316073c39a0ae0ab3e96f9fce",
+  "specificationSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
+  "declarationSha256": "caba8e9cdf9e26b150ae4c6af8fb8d7a3ed2638edb0ea2cb63ef5ddd9717c1bb",
+  "decision": "COMPLETE_COVERAGE",
+  "evidenceBasis": "EXTERNALLY_SUPPORTED",
+  "method": "Actual separate-context renewed review reconciled the exact complete source clause and governing context, current production owners, original expected outcomes and named positive/negative assertions, and current declared suite dependencies. The retained row-specific independent decision approves this narrow declaration. Current complete executed receipts remain separately required.",
+  "author": {
+    "actor": "Codex current-owner declaration renewal author",
+    "contextId": "/root/ci_delivery_audit"
+  },
+  "reviewer": {
+    "actor": "Codex independent exact-clause declaration reviewer",
+    "contextId": "/root"
+  },
+  "reviewedInputs": [
+    {
+      "path": "prompt-engine.js",
+      "sha256": "31489eaeffcd4f12696b473467c6be7e494e8e26a8eb64c4c8c69d18f215f94a"
+    },
+    {
+      "path": "response-ingestion.js",
+      "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
+    },
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d"
+    },
+    {
+      "path": "test-handoff-authorization.mjs",
+      "sha256": "37bfb4e255afb6701fccaccdf055ee7961e838eaf03927c2963dfcf880cf82b6"
+    },
+    {
+      "path": "test-project-store-runtime.mjs",
+      "sha256": "955fc63a1b7ae3ec7f8b71f36fd4d76d4ad8ee8fa0de2fa8d2697a66b1458eef"
+    },
+    {
+      "path": "test-stage01-specification-controls.mjs",
+      "sha256": "3455469d384cd50cc4216ddd842d50c70ea088b3639b045ac9f5d82f4d73a2d3"
+    },
+    {
+      "path": "test-zip.mjs",
+      "sha256": "b5080a8e58eb7b13f421ecce5c63a3d95b765a5b021f5bd4543dce28d171e89d"
+    },
+    {
+      "path": "verification-evidence-catalog.mjs",
+      "sha256": "feedf2e728fca37acf303536dd55216389d591567c1ab89236a53aa0b2d19eed"
+    },
+    {
+      "path": "verification/normative-context-applicability-20261005.json",
+      "sha256": "7cd05ff0028578a1ca1c2560533519a602ce6a974c240ee11dbbd272524cf656"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-7be2bf6dfeab825b0549d41a0151841e-20261005.json",
+      "sha256": "c3ca98940bde6c8bd05bfd21fdcd3c74249948632725d38361550366bcfae4ce"
+    },
+    {
+      "path": "verifier-runtime.mjs",
+      "sha256": "8a4c9058b6c72a5aa8dd68809e3cbfd8e5c217b358c41970347443a338f83933"
+    },
+    {
+      "path": "verify-stage01-agent-contract-alignment.mjs",
+      "sha256": "a3bb726418a565ea1a4f3d4853b4fdfbac423e8c8fa304e73ba4bd9fbbb4bec0"
+    },
+    {
+      "path": "workflow-engine.js",
+      "sha256": "b47195d41a130cb1b84425f5eb33bd8a163e1047c0e95e19eef59d47525e463d"
+    },
+    {
+      "declarationSha256": "caba8e9cdf9e26b150ae4c6af8fb8d7a3ed2638edb0ea2cb63ef5ddd9717c1bb"
+    }
+  ],
+  "findings": [],
+  "reviewPerformed": true,
+  "reviewCompletedAt": "2026-10-06T20:42:39.554Z",
+  "sourceLocation": {
+    "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+    "startLine": 441,
+    "endLine": 441,
+    "lineSha256": "b21856c22e02378948b84d4516c1f483dfc9cff316073c39a0ae0ab3e96f9fce"
+  },
+  "controllingText": "- corrections;",
+  "governingContext": [],
+  "additionalControllingContext": [
+    {
+      "line": 422,
+      "text": "The Stage 01 prompt MUST require:",
+      "normativeRequirementId": "NREQ-d72153098f746d8eb6f60b678d7ebbd4"
+    },
+    {
+      "line": 428,
+      "text": "Compare the extracted ledger back against every raw input unit and specifically search for omitted:",
+      "normativeRequirementId": "NREQ-57f8fa829a872f35948a81bd58477291"
+    }
+  ],
+  "reviewedChecks": [
+    {
+      "suite": "verify-stage01-agent-contract-alignment.mjs",
+      "checkId": "STAGE01-SPECIFICATION-CONTRACT-CONTROLS"
+    }
+  ],
+  "semanticDecision": "EXACT_STAGE01_PROMPT_PRODUCER_DUTY",
+  "reason": "Parent422 requires producer instructions: exact exported carrier literals and independent category list test the requirement without claiming the actor actually understands arbitrary input.",
+  "scopeLimit": "Current executed receipts still required. No browser, physical-device, real human semantic confirmation, or arbitrary external actor truth inferred.",
+  "actorIndependenceBoundary": "Renewal author /root/ci_delivery_audit is a different actual agent context from reviewer /root. Attribution does not establish hidden-context authentication or independent authorship of all implementation/tests.",
+  "reviewerPriorContributionDisclosure": "Repository engineering declaration reviewer distinct from current renewal author and prior author. Root reviewed and coordinated shared ingestion corrections and authored a separate scope-test strengthening, but did not author the original Stage1 literal expected outcomes or these coverage declarations. This is not a source-only blind specification extraction or arbitrary agent semantic-completeness claim.",
+  "retainedReviewInputs": {
+    "proposal": {
+      "path": "/workspace/scratch/full-coverage-contracts-proposals.json",
+      "sha256": "890122bf31c612738f6bd7d9c994803656c02a7798994a7846f560f6cccb6fcc"
+    },
+    "priorSemanticReview": {
+      "path": "/workspace/scratch/independent-full-coverage-semantic-review-current45.json",
+      "sha256": "8b76d6c6c1425220853a1798090edf609fadde97ad840f2699e006b7ed2bb866"
+    }
+  },
+  "qualifiedExecutionAndReviewEvidence": [
+    {
+      "path": "/workspace/scratch/independent-stage01-producer-controls-current45.json",
+      "sha256": "7c20a2528a79757ea6479f9b8fffe6a6cd746de65e9f067774b7c1a242a87a67",
+      "qualification": "Retained actual boundary/source tuple only; this reference does not substitute for current canonical executed receipts."
+    }
+  ],
+  "currentExecutionRequired": true,
+  "applicationConformanceClaim": false,
+  "priorReview": {
+    "path": "verification/requirement-coverage-NREQ-7be2bf6dfeab825b0549d41a0151841e-20261005.json",
+    "sha256": "c3ca98940bde6c8bd05bfd21fdcd3c74249948632725d38361550366bcfae4ce",
+    "author": {
+      "actor": "Codex declaration author",
+      "contextId": "/root/contracts"
+    },
+    "reviewer": {
+      "actor": "Codex independent declaration reviewer",
+      "contextId": "/root/independent_spec"
+    },
+    "reviewCompletedAt": "2026-10-05T17:00:42.280Z",
+    "declarationSha256": "c9fc0a9075b566d32d93597cfc33d6d1e0db13f66db03468967e0184485c49b4"
+  },
+  "currentDependencyReconciliation": {
+    "classification": "DIRECT_PRODUCTION_OWNER_CHANGED",
+    "priorStaleInputs": [
+      "prompt-engine.js",
+      "response-ingestion.js",
+      "test-project-store-runtime.mjs",
+      "test-stage01-specification-controls.mjs",
+      "verification-evidence-catalog.mjs",
+      "verify-stage01-agent-contract-alignment.mjs",
+      "workflow-engine.js"
+    ],
+    "newRequiredInputs": [
+      "test-handoff-authorization.mjs"
+    ],
+    "changedProductionOwners": [
+      "prompt-engine.js",
+      "workflow-engine.js",
+      "response-ingestion.js"
+    ],
+    "changedDirectSuiteFiles": [
+      "verify-stage01-agent-contract-alignment.mjs"
+    ],
+    "priorDeclarationSha256": "c9fc0a9075b566d32d93597cfc33d6d1e0db13f66db03468967e0184485c49b4",
+    "currentDeclarationSha256": "caba8e9cdf9e26b150ae4c6af8fb8d7a3ed2638edb0ea2cb63ef5ddd9717c1bb",
+    "declarationChanges": "Only production-owner SHA256 values are changed; all controlling clause text, governing context, obligation decomposition, expected outcomes, evidence kinds, named assertions, nonapplicability and scope remain exact for independent reassessment.",
+    "sourceReviewStatus": "ACTUAL_INDEPENDENT_REVIEW_COMPLETE_NO_EXECUTION_CLAIM",
+    "finalSourceFreezeStatus": "EXACT_FINAL_INPUTS_APPROVED_WITH_CURRENT_EXECUTION_REQUIRED",
+    "finalIndependentEvidence": {
+      "packet": {
+        "path": "/tmp/closed-loop-evidence/19-stage01-final-renewal-proposal-10a8804c75f185f6aedd5441e85218cbb265317b760afeabeae9182c3446fd8a.json",
+        "sha256": "10a8804c75f185f6aedd5441e85218cbb265317b760afeabeae9182c3446fd8a"
+      },
+      "semanticReview": {
+        "path": "/tmp/closed-loop-evidence/19-stage01-declarations-independent-review-2aa0d1968edb3816f9b1e2b706be20ebf897aa74b6ee76b09b583715f5f0d7f9.json",
+        "sha256": "2aa0d1968edb3816f9b1e2b706be20ebf897aa74b6ee76b09b583715f5f0d7f9"
+      },
+      "finalDependencyReview": [
+        {
+          "path": "/tmp/closed-loop-evidence/root-final-dependency-approval-0554ed0413b44777f7866ade406ba583bfaaef696476a3b3058076cfe5994854.json",
+          "sha256": "0554ed0413b44777f7866ade406ba583bfaaef696476a3b3058076cfe5994854"
+        }
+      ]
+    },
+    "finalDependencyFinding": "Root exact source clauses and named Stage1 assertions approved; final catalog additions were independently reviewed and leave named Stage1 checks/owners unchanged. Declared named-helper input set is current; global producer receipt fingerprints all tracked first-party inputs. Current complete owner receipts remain required."
+  }
+}

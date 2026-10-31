@@ -1,0 +1,72 @@
+{
+  "reviewedAt": "2026-10-14T18:11:38.932866+00:00",
+  "driverPath": "/workspace/shared/clrt-release-frozen-445fe4da/.bounded-governed445.mjs",
+  "driverSha256": "21419a1f017c0b69d3db5df56218ecb971840f357f392c56b446fe554b0e496f",
+  "commit": "445fe4da9688cc68a59406376ffef0e06cae9f2c",
+  "generatedBodySha256": "3fc38891cc2d967358d5c8258e8adab8ab74bc76a9953e153a7958bfbb313269",
+  "generatedBodySyntax": "PASS",
+  "identifierAudit": {
+    "method": "Conservative whole-AST declaration/reference inventory plus manual reached-path review",
+    "unresolvedNames": [
+      {
+        "name": "preproductRequirementText",
+        "reachable": false,
+        "reason": "Earlier Stage4 proposal branch only"
+      },
+      {
+        "name": "verifyIterationComparisonGate",
+        "reachable": false,
+        "reason": "complete() condition only for Stages13,17,19"
+      }
+    ]
+  },
+  "sourceCustodyVerification": "fresh445-stage22-custody.json",
+  "executionScope": [
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30
+  ],
+  "preservedChecks": [
+    "literal late-stage operations/assertions",
+    "actual proof mutations and obligation binding negatives",
+    "exact release retry and isolated public save/cold",
+    "remaining recovery/project projection controls",
+    "actual Stage29 investigation ingress/authority",
+    "terminal and serialization/reload",
+    "exact retained confirmation tuple population and omission control",
+    "newly executed presentation cases",
+    "application-owned types and record hashes",
+    "final reviewed leaf schedule"
+  ],
+  "setupChanges": [
+    "VM-native AsyncFunction restores original literal realm",
+    "exact verifyActualReleaseProofControls helper compiled in owning VM; only export token removed",
+    "original accepted closure IDs and product/cohort evidence reattached from retained state",
+    "original prompt contexts and artifact bodies hydrated through existing store owners",
+    "inert before/after and per-stage byte/context/source captures"
+  ],
+  "outstandingVerificationObligations": [
+    {
+      "name": "prefix workflowPresentationCases aggregate",
+      "status": "UNESTABLISHED",
+      "reason": "Original prefix collection catches FAIL; array was not captured; Stage22 is not evidence of pass"
+    },
+    {
+      "name": "assertProductAttachmentJourney final aggregate",
+      "status": "NOT EXECUTED",
+      "reason": "Prefix-only report array unavailable; no PASS population reconstructed"
+    }
+  ],
+  "disposition": "Cleared for explicitly partial bounded diagnostic under root authorization; not full-owner acceptance, integration or application completion approval",
+  "launchRequirements": [
+    "actual HEAD445 and clean tracked tree",
+    "exact driver hash pin",
+    "original expiry unchanged; current public integrity and gate22 required",
+    "stop on unexpected control failure"
+  ]
+}

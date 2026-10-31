@@ -11,7 +11,7 @@ function runtime(fault){
   const c=createVerifierRuntime({console,TextDecoder,TextEncoder,Uint8Array,ArrayBuffer,Blob,structuredClone,crypto:globalThis.crypto,Event:class Event{},dispatchEvent(){}});
   for(const [file,original] of Object.entries(sources)){
     let source=original;
-    if(fault?.file===file){assert.ok(source.includes(fault.before),`Fault anchor disappeared: ${fault.id}`);source=source.replaceAll(fault.before,fault.after);}
+    if(fault?.file===file){const matches=source.split(fault.before).length-1;assert.equal(matches,1,`Fault anchor must match exactly once: ${fault.id}`);c.__injectedFaultVisits=0;source=source.replace(fault.before,fault.after);}
     vm.runInContext(source,c,{filename:file});
   }
   return c;
@@ -56,7 +56,8 @@ function invalidation(c){
       assert.equal(Boolean(p.projectData.generatedPrompts.find(x=>x.stage===stage).invalidatedBy),invalid,`INVALIDATION_ORACLE: prompt at ${stage} retained incorrect authority.`);
       assert.equal(Boolean(p.projectData.acceptedChanges.find(x=>x.stage===stage).invalidatedBy),invalid,`INVALIDATION_ORACLE: accepted change at ${stage} retained incorrect authority.`);
     }
-    record(`INVALIDATION-FROM-${String(upstream).padStart(2,'0')}`,{upstream,checkedStages:30,fixture:'synthetic authority sentinels'});
+    const ownTransition=upstream===30?Object.fromEntries(['releaseRecords','deliveryRecords'].map(family=>{const value=p.projectData[family].find(row=>row.id===`${family}-SENTINEL`);return [family,{invalidated:Boolean(value.invalidatedBy),active:value.active,validity:value.validity}];})):undefined;
+    record(`INVALIDATION-FROM-${String(upstream).padStart(2,'0')}`,{upstream,checkedStages:30,fixture:'synthetic authority sentinels',...(ownTransition?{ownTransition}:{})});
   }
 }
 async function byteEquality(c){
@@ -71,20 +72,30 @@ async function byteEquality(c){
   }
 }
 const faults=[
-  {id:'BYPASS-PRODUCER-VALIDATION',file:'response-ingestion.js',before:"if(!schema.authorizeMutation({fieldDefinition:definition,actor:'AGENT',mutationType:'RESPONSE_INGESTION'}).authorized)",after:'if(false)',check:ownership,error:/OWNERSHIP_ORACLE/},
-  {id:'SKIP-DOWNSTREAM-INVALIDATION',file:'workflow-engine.js',before:"function invalidateDownstream(project,stage,changeId,reason='Material upstream change'){",after:"function invalidateDownstream(project,stage,changeId,reason='Material upstream change'){return [];",check:invalidation,error:/INVALIDATION_ORACLE/},
-  {id:'SELF-INVALIDATE-TERMINAL',file:'workflow-engine.js',before:"for(const d of Number(n)<30?scoped(p,'deliveryRecords'):[])",after:"for(const d of scoped(p,'deliveryRecords'))",check:invalidation,error:/INVALIDATION_ORACLE/},
-  {id:'COMPARE-LENGTH-ONLY',file:'test-runtime.js',before:'if(left[i]!==right[i]){comparison=false;break;}',after:'if(false){comparison=false;break;}',check:byteEquality,error:/BYTE_EQUALITY_ORACLE/}
+  {id:'BYPASS-PRODUCER-VALIDATION',file:'response-ingestion.js',before:"if(!schema.authorizeMutation({fieldDefinition:definition,actor:'AGENT',mutationType:'RESPONSE_INGESTION'}).authorized)",after:'if((globalThis.__injectedFaultVisits++,false))',check:ownership,error:/OWNERSHIP_ORACLE/},
+  {id:'SKIP-DOWNSTREAM-INVALIDATION',file:'workflow-engine.js',before:"function invalidateDownstream(project,stage,changeId,reason='Material upstream change',{correctionIterationId=null}={}){",after:"function invalidateDownstream(project,stage,changeId,reason='Material upstream change',{correctionIterationId=null}={}){globalThis.__injectedFaultVisits++;return [];",check:invalidation,error:/INVALIDATION_ORACLE/},
+  {id:'SELF-INVALIDATE-TERMINAL',file:'workflow-engine.js',before:"for(const d of Number(n)<30?scoped(p,'deliveryRecords'):[])",after:"for(const d of (globalThis.__injectedFaultVisits++,scoped(p,'deliveryRecords')))",check:invalidation,error:/INVALIDATION_ORACLE/},
+  {id:'COMPARE-LENGTH-ONLY',file:'test-runtime.js',before:'if(left[i]!==right[i]){comparison=false;break;}',after:'if((globalThis.__injectedFaultVisits++,false)){comparison=false;break;}',check:byteEquality,error:/BYTE_EQUALITY_ORACLE/}
 ];
 const faultResults=[];
 for(const fault of faults){
   await fault.check(runtime());
   const count=cases.length;
-  await assert.rejects(async()=>fault.check(runtime(fault)),fault.error,`${fault.id}: the targeted implementation fault survived.`);
+  let diagnostic='';
+  const defective=runtime(fault);
+  await assert.rejects(async()=>{try{return await fault.check(defective);}catch(error){diagnostic=String(error.message);throw error;}},fault.error,`${fault.id}: the targeted implementation fault survived.`);
+  assert.ok(defective.__injectedFaultVisits>0,`FAULT_ACTIVATION_ORACLE: ${fault.id} did not execute its mutated operation.`);
   cases.length=count;
   await fault.check(runtime());
-  faultResults.push({faultId:fault.id,productionFile:fault.file,detectedBy: fault.error.source,result:'DETECTED',restoredImplementation:'PASS'});
+  faultResults.push({faultId:fault.id,productionFile:fault.file,detectedBy: fault.error.source,result:'DETECTED',restoredImplementation:'PASS',diagnostic,mutationVisits:defective.__injectedFaultVisits});
 }
 // Repaired reruns may execute the same case; publish each ID once with run count.
 const executed=[...new Set(cases.map(x=>x.caseId))].map(id=>({...cases.find(x=>x.caseId===id),executions:cases.filter(x=>x.caseId===id).length}));
-console.log(JSON.stringify({schema:'closed-loop-executed-cases/1',synthetic:true,environment:'Node VM; production modules; no disk or user-project mutations',cases:executed,implementationFaults:faultResults},null,2));
+const ownTerminal=executed.find(row=>row.caseId==='INVALIDATION-FROM-30'),terminalFault=faultResults.find(row=>row.faultId==='SELF-INVALIDATE-TERMINAL');
+const scopeLimit='One production invalidateDownstream own-stage30 transition using disposable release/delivery authority sentinels, and its existing exact self-invalidation module mutant. This does not establish accepted stage completion, all terminal dependency-cycle behavior, model judgment or physical-device acceptance.';
+const verificationObservations=[
+  {checkId:'terminal-own-transition-noninvalidated',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:4947','specification/closed-loop-reliability-controlling-implementation-specification.txt:5535'],boundary:'production invalidateDownstream at stage30 with disposable current release/delivery sentinels',expected:{releaseRecords:{invalidated:false,active:true,validity:'CURRENT'},deliveryRecords:{invalidated:false,active:true,validity:'CURRENT'}},observed:ownTerminal.ownTransition,passed:true,scopeLimit,empiricalPopulation:{includedIds:['INVALIDATION-FROM-30'],transitionCount:1,selfInvalidationCount:Number(ownTerminal.ownTransition.deliveryRecords.invalidated)}},
+  {checkId:'terminal-self-invalidation-mutant-detected',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:4947','specification/closed-loop-reliability-controlling-implementation-specification.txt:5535'],boundary:'existing disposable SELF-INVALIDATE-TERMINAL production-module fault and exact invalidation assertion owner',expected:{faultId:'SELF-INVALIDATE-TERMINAL',result:'DETECTED',restoredImplementation:'PASS'},observed:terminalFault,passed:true,violation:'terminalSelfInvalidationOrDependencyCycles',accepted:false,scopeLimit}
+];
+const negativeCasePopulation=[{caseId:'terminal-self-invalidation-mutant',checkId:'terminal-self-invalidation-mutant-detected',violation:'terminalSelfInvalidationOrDependencyCycles',boundary:verificationObservations[1].boundary,observed:terminalFault,accepted:false,result:'PASS',scopeLimit}];
+console.log(JSON.stringify({schema:'closed-loop-executed-cases/1',synthetic:true,environment:'Node VM; production modules; no disk or user-project mutations',cases:executed,implementationFaults:faultResults,verificationObservations,negativeCasePopulation},null,2));

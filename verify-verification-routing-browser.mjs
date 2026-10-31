@@ -3,6 +3,7 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 import {createOperatorBrowser} from './operator-browser-driver.mjs';
 import {routingFixture,completedReport} from './test-verification-routing-fixtures.mjs';
+import {downloadSyntheticHandoff} from './test-browser-handoff-authorization.mjs';
 
 const directory=path.resolve('verification-routing-browser-evidence');
 fs.mkdirSync(directory,{recursive:true});
@@ -32,7 +33,7 @@ for(const [width,height] of [[320,568],[1280,800]]){
     assert.equal(selector.length,1);assert.equal(selector[0].value,fixture.testId,'The readiness selector must retain the exact test binding.');
     assert.ok(!selector[0].text.includes(fixture.testId),'CAPABILITY_GUIDANCE_ORACLE: internal test IDs must not appear in the normal selector.');
     assert.match(selector[0].text,/Evidence needed/);
-    const [download]=await browser.download('#download-capability-request'),request=JSON.parse(download.bytes.toString());assert.equal(request.request.testId,fixture.testId);assert(Object.values(request.checks).every(check=>check.status==='UNKNOWN'));
+    const [download]=await downloadSyntheticHandoff(browser,'#download-capability-request',{syntheticProject:true}),request=JSON.parse(download.bytes.toString()).reportTemplate;assert.equal(request.request.testId,fixture.testId);assert(Object.values(request.checks).every(check=>check.status==='UNKNOWN'));
     const completed=await browser.evaluate(`(async()=>{${completedReport.toString()}const p=await closedLoopProjectStore.readProject(${JSON.stringify(fixture.jobId)}),test=p.projectData.tests.find(row=>row.id===${JSON.stringify(fixture.testId)});return completedReport(p,test);})()`);
     await browser.selectFiles('#capability-evidence-file',[{filename:'readiness.json',bytes:Buffer.from(JSON.stringify(completed))}]);
     assert.equal(await browser.exists('#capability-confirm'),true,'Uploading the report must display an explicit authorization review.');
@@ -43,8 +44,8 @@ for(const [width,height] of [[320,568],[1280,800]]){
     assert.equal(await browser.evaluate(`document.querySelector('#capability-confirm').checked`),false,'Authorization cannot default to true.');
     await browser.fill('#capability-operator','SYNTHETIC_BROWSER_OPERATOR');await browser.click('#capability-confirm');await browser.click('#register-capability-evidence');
     await browser.reload();
-    const ready=await browser.evaluate(`(async()=>{const p=await closedLoopProjectStore.readProject(${JSON.stringify(fixture.jobId)}),item=closedLoopWorkflowEngine.testExecutionPlan(p).items.find(row=>row.testId===${JSON.stringify(fixture.testId)});return {ready:item.capabilityReady,count:p.projectData.externalCapabilities.length,decisions:p.projectData.humanDecisions.length};})()`);
-    assert.equal(ready.ready,true);assert.equal(ready.count,1);assert.equal(ready.decisions,1);
+    const ready=await browser.evaluate(`(async()=>{const p=await closedLoopProjectStore.readProject(${JSON.stringify(fixture.jobId)}),item=closedLoopWorkflowEngine.testExecutionPlan(p).items.find(row=>row.testId===${JSON.stringify(fixture.testId)});return {ready:item.capabilityReady,count:p.projectData.externalCapabilities.length,purposes:p.projectData.humanDecisions.map(row=>closedLoopWorkflowEngine.recordValue(row,'PURPOSE'))};})()`);
+    assert.equal(ready.ready,true);assert.equal(ready.count,1);assert.equal(ready.purposes.filter(value=>value==='EXTERNAL_ACTION_RISK_AUTHORIZATION').length,1);assert.equal(ready.purposes.filter(value=>value==='DISCLOSURE_AUTHORIZATION').length,1);
    }else{
     assert.equal(await browser.exists('#run-native-tests'),true,'A canonical-only input test must reach the native control.');
     await browser.click('#run-native-tests');await browser.reload();

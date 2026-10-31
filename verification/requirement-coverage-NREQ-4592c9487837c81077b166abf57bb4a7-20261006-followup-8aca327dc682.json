@@ -1,0 +1,321 @@
+{
+  "schema": "closed-loop-requirement-coverage-review/1",
+  "normativeRequirementId": "NREQ-4592c9487837c81077b166abf57bb4a7",
+  "sourceLineSha256": "e84297fe73c7cd11bc980989ab25e2254d6b7b4a71f434f4a568d7edd17affe1",
+  "specificationSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
+  "declarationSha256": "86ef01f1c3cb48d9bc4c074669653b127427ff613c34d90ec5e3c3c61d9a5791",
+  "decision": "COMPLETE_COVERAGE",
+  "evidenceBasis": "EXTERNALLY_SUPPORTED",
+  "method": "Fresh review of new immutable packet, all97 current source-path digests, repository-retained prior38 review documents, and exact current binding declarations. Lost packet/approval bytes and execution logs are not reconstructed or represented as recovered.",
+  "author": {
+    "actor": "Codex follow-up source-qualified renewal author",
+    "contextId": "/root/ci_delivery_audit"
+  },
+  "reviewer": {
+    "actor": "Codex independent declaration dependency reviewer",
+    "contextId": "/root/stage_contract_audit/late_stage_audit"
+  },
+  "reviewedInputs": [
+    {
+      "path": "app-core.js",
+      "sha256": "83ab20995a8e3ab8942c6291854630af7b1eea86bf5a6424e685f61b7461bcb3"
+    },
+    {
+      "path": "hash.js",
+      "sha256": "c5df5b7459ad610ee07e1793be3b3b38efbf0a65aeb22b03e2dd89026fed31a6"
+    },
+    {
+      "path": "project-store.js",
+      "sha256": "2d6896f47164f4a232c631d949cce64d2200e6d4e2202c2c3cdb29b08648cdf2"
+    },
+    {
+      "path": "prompt-engine.js",
+      "sha256": "31489eaeffcd4f12696b473467c6be7e494e8e26a8eb64c4c8c69d18f215f94a"
+    },
+    {
+      "path": "response-ingestion.js",
+      "sha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19"
+    },
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d"
+    },
+    {
+      "path": "test-fixtures.mjs",
+      "sha256": "fdcaa258f88be52f2b426785ac0fcdcd547392e702c33fbb0eb4823d9c2a711d"
+    },
+    {
+      "path": "test-handoff-authorization.mjs",
+      "sha256": "37bfb4e255afb6701fccaccdf055ee7961e838eaf03927c2963dfcf880cf82b6"
+    },
+    {
+      "path": "test-project-store-runtime.mjs",
+      "sha256": "955fc63a1b7ae3ec7f8b71f36fd4d76d4ad8ee8fa0de2fa8d2697a66b1458eef"
+    },
+    {
+      "path": "test-runtime-operation-registry.mjs",
+      "sha256": "8892e1f7aea7a6565af693233fe802785d8dbcabee972c6b61890a66a02f233e"
+    },
+    {
+      "path": "test-runtime.js",
+      "sha256": "e4e01a79c526592f9d044e2c104845e63c9aa341eb64837c138f5c3e3ecba353"
+    },
+    {
+      "path": "verification-evidence-catalog.mjs",
+      "sha256": "e6378e7747ba860e5312a813c55625748d2fbaee5f2838d8ee4e97349ba4640f"
+    },
+    {
+      "path": "verification/deferred-definition-compatibility-legacy-fixture-20261005.json",
+      "sha256": "d7a1b076de3d301ee108660c1e7ea5dafdf4e630e202f2c498d32c30d3f72bb1"
+    },
+    {
+      "path": "verification/normative-context-applicability-20261005.json",
+      "sha256": "7cd05ff0028578a1ca1c2560533519a602ce6a974c240ee11dbbd272524cf656"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-4592c9487837c81077b166abf57bb4a7-20261005.json",
+      "sha256": "c22c631c9b20ac9596a1da6e3d42e43acba9b57cf3fa69526ad0870348f19ec9"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-4592c9487837c81077b166abf57bb4a7-20261006.json",
+      "sha256": "ad1d6d39562e66c4dd7b4e28274370f4edd500620349aa951c265a006bd28920"
+    },
+    {
+      "path": "verifier-runtime.mjs",
+      "sha256": "8a4c9058b6c72a5aa8dd68809e3cbfd8e5c217b358c41970347443a338f83933"
+    },
+    {
+      "path": "verify-test-runtime-v3.mjs",
+      "sha256": "4a86e7340d01ad8ccafc364fa0784f01a49583ab6423a65323f625c09424a971"
+    },
+    {
+      "path": "workbook.js",
+      "sha256": "3a8098a9bb4ea108eadaa9bec90c76a1522f57f6465f45341cedf60937ddd008"
+    },
+    {
+      "path": "workflow-engine.js",
+      "sha256": "b47195d41a130cb1b84425f5eb33bd8a163e1047c0e95e19eef59d47525e463d"
+    },
+    {
+      "path": "workflow-schema.js",
+      "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
+    },
+    {
+      "declarationSha256": "86ef01f1c3cb48d9bc4c074669653b127427ff613c34d90ec5e3c3c61d9a5791"
+    }
+  ],
+  "findings": [],
+  "reviewPerformed": true,
+  "reviewCompletedAt": "2026-10-06T21:54:02.366377+00:00",
+  "sourceLocation": {
+    "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+    "startLine": 1851,
+    "endLine": 1851,
+    "lineSha256": "e84297fe73c7cd11bc980989ab25e2254d6b7b4a71f434f4a568d7edd17affe1"
+  },
+  "controllingText": "- SELECT_JSON_PATH",
+  "governingContext": [
+    {
+      "normativeRequirementId": "NREQ-658c71fb2e3992ee94fb6b4ecedc1681",
+      "sourceLineSha256": "e6081e1fc0a5cdd4edf6d99920c352c45cd10859b8a8c6458c3c752855e6d1db",
+      "controllingText": "21.4 Required primitives"
+    }
+  ],
+  "additionalControllingContext": [],
+  "reviewedChecks": [
+    {
+      "suite": "verify-test-runtime-v3.mjs",
+      "checkId": "test-ir.operation-registry-admission"
+    }
+  ],
+  "semanticDecision": "REQUIRED_TEST_IR_PRIMITIVE",
+  "reason": "$.items selects the two-element array from fixed JSON. The literal operation-name universe is exactly27; every registered operation occurs in the actual executed DAG. A VIOLATED assertion stops execution, so final SATISFIED cannot hide a failed intermediate literal oracle. This is primitive existence/basic semantics, not complete §21.3/21.4 parent-contract coverage. Independently read the registered primitive definition, typed ports and execution switch under Section21.4. Each complete source entry requires that named primitive; additional grammar, parser, resource and worker obligations retain their own requirements.",
+  "scopeLimit": "Primitive existence/basic declared semantics; no full Test IR safety or every-input parser correctness claim.",
+  "actorIndependenceBoundary": "Renewal author /root/ci_delivery_audit and actual reviewer /root/stage_contract_audit/late_stage_audit are separate agent contexts. This declaration sufficiency review does not certify hidden-context or external-actor independence.",
+  "reviewerPriorContributionDisclosure": "Reviewer previously read and approved these exact narrow clauses and dependency paths in this same continuing context; recertification packet author is a separate agent. This record uses current source hashes plus retained repository declarations and prior review records, not unavailable transient artifacts. No blind external actor independence or release claim.",
+  "retainedReviewInputs": {
+    "proposal": {
+      "path": "/workspace/scratch/full-coverage-storage-proposals.json",
+      "sha256": "3a805bca70e96b132d5f8923fc4d87d8131af0977692ddfbc361ce9f7bd8656e"
+    },
+    "priorSemanticReview": {
+      "path": "/workspace/scratch/independent-full-coverage-semantic-review-current45.json",
+      "sha256": "8b76d6c6c1425220853a1798090edf609fadde97ad840f2699e006b7ed2bb866"
+    }
+  },
+  "qualifiedExecutionAndReviewEvidence": [
+    {
+      "path": "/workspace/scratch/runtime-operation-registry-focused-current45.json",
+      "sha256": "274216d23ac18e59fc94bbe4de3b8f1e00094f6656386d565e54571b07b9cd34",
+      "qualification": "Retained actual boundary/source tuple only; this reference does not substitute for current canonical executed receipts."
+    },
+    {
+      "path": "/workspace/scratch/runtime-untrusted-operation-repair-current45.json",
+      "sha256": "7cfeab2a56b1574797073f10a80a3a96347dc315744859e828c2e538240f78e4",
+      "qualification": "Retained actual boundary/source tuple only; this reference does not substitute for current canonical executed receipts."
+    }
+  ],
+  "currentExecutionRequired": true,
+  "applicationConformanceClaim": false,
+  "priorReview": {
+    "path": "verification/requirement-coverage-NREQ-4592c9487837c81077b166abf57bb4a7-20261006.json",
+    "sha256": "ad1d6d39562e66c4dd7b4e28274370f4edd500620349aa951c265a006bd28920",
+    "author": {
+      "actor": "Codex dependency recertification author",
+      "contextId": "/root/ci_delivery_audit"
+    },
+    "reviewer": {
+      "actor": "Codex independent exact-clause declaration reviewer",
+      "contextId": "/root/stage_contract_audit/late_stage_audit"
+    },
+    "reviewCompletedAt": "2026-10-06T20:48:40.827880+00:00",
+    "retainedEarlierPriorReview": {
+      "path": "verification/requirement-coverage-NREQ-4592c9487837c81077b166abf57bb4a7-20261005.json",
+      "sha256": "c22c631c9b20ac9596a1da6e3d42e43acba9b57cf3fa69526ad0870348f19ec9",
+      "author": {
+        "actor": "Codex declaration author",
+        "contextId": "/root/storage"
+      },
+      "reviewer": {
+        "actor": "Codex independent declaration reviewer",
+        "contextId": "/root/independent_spec"
+      },
+      "reviewCompletedAt": "2026-10-05T17:00:41.875Z"
+    }
+  },
+  "currentDependencyReconciliation": {
+    "status": "APPROVED_EXACT_CURRENT_SOURCE_REBIND",
+    "baselineHead": "5fd6d120cea99e514560365684ffe3eec53ea206",
+    "sourceInputsSha256": "3de26df2d3c285c252614b63a5d45bd5fe31e7c283b0bcc022f94caa525b22fd",
+    "changes": [
+      {
+        "path": "app-core.js",
+        "sha256": "83ab20995a8e3ab8942c6291854630af7b1eea86bf5a6424e685f61b7461bcb3",
+        "priorSha256": null,
+        "kind": "ADDED_ACTUAL_DEPENDENCY_OR_RETAINED_REVIEW"
+      },
+      {
+        "path": "hash.js",
+        "sha256": "c5df5b7459ad610ee07e1793be3b3b38efbf0a65aeb22b03e2dd89026fed31a6",
+        "priorSha256": null,
+        "kind": "ADDED_ACTUAL_DEPENDENCY_OR_RETAINED_REVIEW"
+      },
+      {
+        "path": "project-store.js",
+        "sha256": "2d6896f47164f4a232c631d949cce64d2200e6d4e2202c2c3cdb29b08648cdf2",
+        "priorSha256": null,
+        "kind": "ADDED_ACTUAL_DEPENDENCY_OR_RETAINED_REVIEW"
+      },
+      {
+        "path": "prompt-engine.js",
+        "sha256": "31489eaeffcd4f12696b473467c6be7e494e8e26a8eb64c4c8c69d18f215f94a",
+        "priorSha256": null,
+        "kind": "ADDED_ACTUAL_DEPENDENCY_OR_RETAINED_REVIEW"
+      },
+      {
+        "path": "response-ingestion.js",
+        "sha256": "362714ee051592bb7c492ab1a1cd411b295b6c86f456ac83901dcbdff65e6c19",
+        "priorSha256": null,
+        "kind": "ADDED_ACTUAL_DEPENDENCY_OR_RETAINED_REVIEW"
+      },
+      {
+        "path": "verification-evidence-catalog.mjs",
+        "sha256": "e6378e7747ba860e5312a813c55625748d2fbaee5f2838d8ee4e97349ba4640f",
+        "priorSha256": "feedf2e728fca37acf303536dd55216389d591567c1ab89236a53aa0b2d19eed",
+        "kind": "CHANGED_PREVIOUSLY_REVIEWED_INPUT"
+      },
+      {
+        "path": "verification/requirement-coverage-NREQ-4592c9487837c81077b166abf57bb4a7-20261006.json",
+        "sha256": "ad1d6d39562e66c4dd7b4e28274370f4edd500620349aa951c265a006bd28920",
+        "priorSha256": null,
+        "kind": "ADDED_ACTUAL_DEPENDENCY_OR_RETAINED_REVIEW"
+      },
+      {
+        "path": "workbook.js",
+        "sha256": "3a8098a9bb4ea108eadaa9bec90c76a1522f57f6465f45341cedf60937ddd008",
+        "priorSha256": null,
+        "kind": "ADDED_ACTUAL_DEPENDENCY_OR_RETAINED_REVIEW"
+      },
+      {
+        "path": "workflow-engine.js",
+        "sha256": "b47195d41a130cb1b84425f5eb33bd8a163e1047c0e95e19eef59d47525e463d",
+        "priorSha256": null,
+        "kind": "ADDED_ACTUAL_DEPENDENCY_OR_RETAINED_REVIEW"
+      },
+      {
+        "path": "workflow-schema.js",
+        "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8",
+        "priorSha256": null,
+        "kind": "ADDED_ACTUAL_DEPENDENCY_OR_RETAINED_REVIEW"
+      }
+    ],
+    "changedOwners": [],
+    "supplementalInputRationale": [
+      {
+        "path": "workbook.js",
+        "reason": "Actual projectStoreRuntime load in operation-admission population; integer-only clause retains narrower arithmetic scope despite complete owner dependency closure."
+      },
+      {
+        "path": "hash.js",
+        "reason": "Actual projectStoreRuntime load in operation-admission population; integer-only clause retains narrower arithmetic scope despite complete owner dependency closure."
+      },
+      {
+        "path": "workflow-schema.js",
+        "reason": "Actual projectStoreRuntime load in operation-admission population; integer-only clause retains narrower arithmetic scope despite complete owner dependency closure."
+      },
+      {
+        "path": "test-runtime.js",
+        "reason": "Actual projectStoreRuntime load in operation-admission population; integer-only clause retains narrower arithmetic scope despite complete owner dependency closure."
+      },
+      {
+        "path": "workflow-engine.js",
+        "reason": "Actual projectStoreRuntime load in operation-admission population; integer-only clause retains narrower arithmetic scope despite complete owner dependency closure."
+      },
+      {
+        "path": "prompt-engine.js",
+        "reason": "Actual projectStoreRuntime load in operation-admission population; integer-only clause retains narrower arithmetic scope despite complete owner dependency closure."
+      },
+      {
+        "path": "response-ingestion.js",
+        "reason": "Actual projectStoreRuntime load in operation-admission population; integer-only clause retains narrower arithmetic scope despite complete owner dependency closure."
+      },
+      {
+        "path": "project-store.js",
+        "reason": "Actual projectStoreRuntime load in operation-admission population; integer-only clause retains narrower arithmetic scope despite complete owner dependency closure."
+      },
+      {
+        "path": "app-core.js",
+        "reason": "Actual projectStoreRuntime load in operation-admission population; integer-only clause retains narrower arithmetic scope despite complete owner dependency closure."
+      }
+    ],
+    "priorReview": {
+      "path": "verification/requirement-coverage-NREQ-4592c9487837c81077b166abf57bb4a7-20261006.json",
+      "sha256": "ad1d6d39562e66c4dd7b4e28274370f4edd500620349aa951c265a006bd28920"
+    },
+    "sourceReviewStatus": "COMPLETE_COVERAGE_DECLARATION_SUFFICIENCY_ONLY",
+    "executionStatus": "CURRENT_COMPLETE_PRODUCER_RECEIPTS_STILL_REQUIRED"
+  },
+  "currentIndependentReview": {
+    "path": "/workspace/.closed-loop-engineering/followup-145-renewal-recovered/late38-fresh-independent-approval.json",
+    "sha256": "84e0f28953d1f0a10cdb98add0e4e336df5cdcbf33aa43b0088973ae9f04557b",
+    "decision": "APPROVED_RECONSTRUCTED_PACKET_CURRENT_SOURCE_BINDINGS_FOR_38",
+    "proposal": {
+      "path": "/workspace/.closed-loop-engineering/followup-145-renewal-recovered/late38.json",
+      "sha256": "a92e75b35ac61f0f11760a2c2e60aeb27a48914f3c7e1017e9c908edfdeae22a"
+    },
+    "reviewCompletedAt": "2026-10-06T21:54:02.366377+00:00",
+    "reviewer": {
+      "actor": "Codex independent declaration dependency reviewer",
+      "contextId": "/root/stage_contract_audit/late_stage_audit"
+    },
+    "sourceReviewOnly": true,
+    "reason": "$.items selects the two-element array from fixed JSON. The literal operation-name universe is exactly27; every registered operation occurs in the actual executed DAG. A VIOLATED assertion stops execution, so final SATISFIED cannot hide a failed intermediate literal oracle. This is primitive existence/basic semantics, not complete §21.3/21.4 parent-contract coverage. Independently read the registered primitive definition, typed ports and execution switch under Section21.4. Each complete source entry requires that named primitive; additional grammar, parser, resource and worker obligations retain their own requirements."
+  },
+  "recoveryQualification": {
+    "historicalTemporaryArtifactBytesAvailable": false,
+    "priorObservedApprovalSha256": "8a23f6b084719fb2545a96edf171949842004649cc12b0917a28529bc4a14d33",
+    "freshApprovalRequiredAndObtained": true,
+    "retainedRepositoryReviewFilesPreserved": true,
+    "executionEvidenceRecreated": false
+  }
+}
