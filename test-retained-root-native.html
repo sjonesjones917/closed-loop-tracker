@@ -22,7 +22,9 @@ const view=activeView=>({activeStage:1,activeView,drafts:{'#exact':{value:active
 async function fixture(label){
  let p=await store.createProject({commandId:'PRIVATE-NATIVE-ROOT-'+label});p.job.JOB_TITLE='Private bounded retained root '+label+' '+ 'exact retained value '.repeat(350);engine.recalculate(p);p=await store.writeProject(p,{expectedProjectRevision:p.revision});
  await store.putArtifact({artifactId:'PRIVATE-FILE-'+p.job.JOB_ID,jobId:p.job.JOB_ID,blob:new Blob(['exact native artifact bytes '+label]),filename:'private.txt',mediaType:'text/plain'});
- await store.readProject(p.job.JOB_ID);return p;
+ // A one-use private read consumes the write's root certificate, so the first
+ // view save below performs the independent cold materialization.
+ await store.readProject(p.job.JOB_ID,{refreshProjection:true});return p;
 }
 async function save(p,activeView){return store.saveCheckpoint(p.job.JOB_ID,{expectedProjectRevision:p.revision,expectedStateSha256:p.projectSha256,view:view(activeView)});}
 const p=await fixture('positive');const readings=[];
@@ -30,8 +32,8 @@ for(const activeView of ['Project','Workflow','Records']){
  const before={...__rootObservation},id=await save(p,activeView),counts=Object.fromEntries(Object.entries(__rootObservation).map(([k,v])=>[k,v-before[k]]));
  readings.push({activeView,id,counts});
  assert(counts.owner===1&&counts.publish===1,'Actual production transaction owner and publication used');
- if(activeView==='Project')assert(counts.restore===1&&counts.digest===1,'First certificate follows full cold materialization and dual digest');
- else assert(counts.restore===0&&counts.digest===0&&counts.static>=1&&counts.derived>=1&&counts.actualHashes>=5,'Warm saves skip only materialization/dual digests while validation and byte work run');
+ if(activeView==='Project')assert(counts.restore===1&&counts.digest===1&&counts.static>=1&&counts.derived>=1,'First certificate follows full cold materialization, dual digest and validation');
+ else assert(counts.restore===0&&counts.digest===0&&counts.static===0&&counts.derived===0&&counts.actualHashes>=5,'Warm saves carry the certified validation under unchanged validators while byte work runs');
 }
 const coldBefore={...__rootObservation};await store.readHistoryView(p.job.JOB_ID,readings.at(-1).id);assert(__rootObservation.restore>coldBefore.restore&&__rootObservation.digest>coldBefore.digest,'Public read stays cold');
 checks.push({mode:'three-view-saves-and-public-cold',readings});

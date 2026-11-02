@@ -16,7 +16,7 @@ const names=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','wor
 const main={browserVerified:true,horizontalOverflow:false,controlsWithinViewport:true,buttonSizing:true,touchTargetFloor:44,minimumUiTextPx:14,all30StagesReachable:true,reloadPersistence:true,runtimeErrors:0};
 const digest=text=>createHash('sha256').update(text).digest('hex');
 const fixture=()=>({
- status:'PASS',checks:modes.map(mode=>mode==='three-view-saves-and-public-cold'?{mode,readings:['Project','Workflow','Records'].map(activeView=>({activeView,id:'independent-'+activeView,counts:{restore:activeView==='Project'?1:0,digest:activeView==='Project'?1:0,static:1,derived:1,bytes:1,actualHashes:5,owner:1,publish:1}}))}:{mode,error:{code:mode==='definition-after-await'?'PROJECT_INTEGRITY_FAILED':'HISTORY_VERSION_MISMATCH',name:'Error',message:'Independent refusal fixture'},...(mode.endsWith('-during-preparation')?{}:{cleanup:{gates:0,ready:0,terminal:true,running:false}}),noCheckpointReturned:true,noProofPublished:true,exactStatePreserved:true}),
+ status:'PASS',checks:modes.map(mode=>mode==='three-view-saves-and-public-cold'?{mode,readings:['Project','Workflow','Records'].map(activeView=>({activeView,id:'independent-'+activeView,counts:{restore:activeView==='Project'?1:0,digest:activeView==='Project'?1:0,static:activeView==='Project'?1:0,derived:activeView==='Project'?1:0,bytes:1,actualHashes:5,owner:1,publish:1}}))}:{mode,error:{code:mode==='definition-after-await'?'PROJECT_INTEGRITY_FAILED':'HISTORY_VERSION_MISMATCH',name:'Error',message:'Independent refusal fixture'},...(mode.endsWith('-during-preparation')?{}:{cleanup:{gates:0,ready:0,terminal:true,running:false}}),noCheckpointReturned:true,noProofPublished:true,exactStatePreserved:true}),
  sourceFiles:Object.fromEntries(names.map(name=>[name,{bytes:1,sha256:digest('independent original '+name),observedRuntimeSha256:digest((['hash.js','project-store.js'].includes(name)?'independent observed ':'independent original ')+name),executed:name!=='app-core.js'}])),
  fixture:{name:'test-retained-root-native.html',bytes:1,sha256:digest('independent fixture')},observerAnchors:Array.from({length:15},(_,index)=>'independent anchor '+index),requiredObserverAnchorsAllMatchedOnce:true,existingBrowserReused:true,isolatedTargetAndOrigin:true
 });
@@ -71,7 +71,7 @@ export function verifyRetainedRootNativeEvidenceConsumers({directory}={}){
  reject('cold-without-materialization',value=>value.checks[0].readings[0].counts.restore=0);
  reject('cold-without-dual-digest',value=>value.checks[0].readings[0].counts.digest=0);
  for(const field of ['static','derived','actualHashes'])reject('cold-zero-'+field,value=>value.checks[0].readings[0].counts[field]=0);
- for(const [field,changed]of [['restore',1],['digest',1],['static',0],['derived',0],['bytes',0],['actualHashes',4],['owner',0],['publish',0]])reject('warm-invalid-'+field,value=>value.checks[0].readings[1].counts[field]=changed);
+ for(const [field,changed]of [['restore',1],['digest',1],['static',1],['derived',1],['bytes',0],['actualHashes',4],['owner',0],['publish',0]])reject('warm-invalid-'+field,value=>value.checks[0].readings[1].counts[field]=changed);
  reject('counter-coercion',value=>value.checks[0].readings[1].counts.bytes='1');
  reject('missing-observer-anchor',value=>value.observerAnchors.pop());
  reject('duplicate-observer-anchor',value=>value.observerAnchors[1]=value.observerAnchors[0]);
