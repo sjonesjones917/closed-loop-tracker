@@ -1183,7 +1183,7 @@ async function exportStageFiles(continuation=null){return promptExport(async (re
 }),'stage-files',continuation);}
 async function exportHandoffMember(canonicalPath,actionKey,{copy=false,mobileEvent=null,continuation=null}={}){return promptExport(async(record,args,review,origin,reusedReview=false)=>{
  const file=reusedReview?await readAutoHandoffInput(()=>projectStore.readAuthorizedHandoffMember({...args,canonicalPath})):await projectStore.readAuthorizedHandoffMember({...args,canonicalPath});if(reusedReview&&file?.[autoHandoffDenial])return file;assertHandoffSelection(origin);
- if(copy){if(!navigator.clipboard?.writeText)throw new Error('Clipboard API unavailable. Use Export stage files.');const text=await file.blob.text();assertHandoffSelection(origin);await navigator.clipboard.writeText(text);await recordCompletedHandoffTransfer(record,'The authorized instruction was copied');}
+  if(copy){if(!navigator.clipboard?.writeText)throw new Error('Clipboard API unavailable. Use Export stage files.');const text=await globalThis.closedLoopHash.readWithDeadline(file.blob.text(),'Reading authorized instruction');assertHandoffSelection(origin);await navigator.clipboard.writeText(text);await recordCompletedHandoffTransfer(record,'The authorized instruction was copied');}
  else {downloadBlob(file.blob,file.filename||canonicalPath);await recordCompletedHandoffTransfer(record,'The authorized file download started');if(mobileEvent)await recordMobileExport(mobileEvent,file.blob,file.filename||canonicalPath);}
  handoffReview=null;announce(copy?'Authorized instruction copied.':'Authorized handoff file ready.');render();
 },actionKey,continuation);}
