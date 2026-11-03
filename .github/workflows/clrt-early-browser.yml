@@ -65,7 +65,6 @@ jobs:
           fi
           test -n "$BROWSER" && test -x "$BROWSER"
           printf 'BROWSER=%s\n' "$BROWSER" >> "$GITHUB_ENV"
-          printf 'NODE_OPTIONS=--import %s/verification-evidence-preload.mjs\n' "$GITHUB_WORKSPACE" >> "$GITHUB_ENV"
           mkdir -p "$GITHUB_WORKSPACE/../clrt-early-logs"
           {
             printf 'Scope: independent LOCAL browser diagnostics, NOT full CI or release acceptance\n'
@@ -79,6 +78,8 @@ jobs:
           } | tee "$GITHUB_WORKSPACE/../clrt-early-logs/identity.txt"
       - name: Build the unchanged candidate
         shell: bash
+        env:
+          NODE_OPTIONS: --import ${{ github.workspace }}/verification-evidence-preload.mjs
         run: |
           set -euo pipefail
           # The committed TEST_PROJECT.json is used. No fixture is reduced.
@@ -89,6 +90,7 @@ jobs:
         env:
           SUITE: ${{ matrix.suite }}
           BUDGET: ${{ matrix.budget }}
+          NODE_OPTIONS: --import ${{ github.workspace }}/verification-evidence-preload.mjs
         run: |
           set -euo pipefail
           LOG_ROOT="$GITHUB_WORKSPACE/../clrt-early-logs"
