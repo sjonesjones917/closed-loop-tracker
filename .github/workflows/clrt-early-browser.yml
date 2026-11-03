@@ -31,9 +31,9 @@ jobs:
             budget: 120m
     env:
       # This is the verified PR merge commit, not the diagnostic branch's HEAD.
-      TARGET_COMMIT: c2ee2ec27632fa747d698caf11e4cfeaeef117f2
-      TARGET_TREE: 7ada27c2753d060bc0a8a76bdff9829f672070bd
-      TARGET_PR_HEAD: 24d5c8e5450f27f5088bc119332bb72a0672c8ed
+      TARGET_COMMIT: bd9024894b0ace8f7632c8db0956aa5df53ca527
+      TARGET_TREE: 322d7067d1f6091dd2380a5072de1dc611bada32
+      TARGET_PR_HEAD: 1acc593f41d35c2e804c0a8d09f331bbef6953e0
       BROWSER: /usr/bin/google-chrome
       PAGE_URL: http://127.0.0.1:4173/
       STATIC_SITE_ROOT: _site
