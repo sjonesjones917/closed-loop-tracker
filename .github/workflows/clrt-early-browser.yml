@@ -40,7 +40,7 @@ jobs:
       CLOSED_LOOP_BROWSER_SCOPE: LOCAL
       CLOSED_LOOP_VERIFICATION_SOURCE_ROOT: ${{ github.workspace }}
       CLOSED_LOOP_VERIFICATION_RECEIPTS: ${{ github.workspace }}/.verification-receipts
-      VERIFIER_CHILD_EVIDENCE_DIRECTORY: ${{ github.workspace }}/../clrt-verifier-children
+      VERIFIER_CHILD_EVIDENCE_DIRECTORY: ${{ runner.temp }}/clrt-verifier-children
     steps:
       - name: Check out the exact candidate, without diagnostic source changes
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -65,7 +65,7 @@ jobs:
           fi
           test -n "$BROWSER" && test -x "$BROWSER"
           printf 'BROWSER=%s\n' "$BROWSER" >> "$GITHUB_ENV"
-          mkdir -p "$GITHUB_WORKSPACE/../clrt-early-logs"
+          mkdir -p "$RUNNER_TEMP/clrt-early-logs"
           {
             printf 'Scope: independent LOCAL browser diagnostics, NOT full CI or release acceptance\n'
             printf 'Diagnostic workflow run: %s\n' "$GITHUB_RUN_ID"
@@ -75,7 +75,7 @@ jobs:
             printf 'UTC started: '; date -u +%FT%TZ
             printf 'Kernel: '; uname -a
             printf '\nMemory:\n'; free -m
-          } | tee "$GITHUB_WORKSPACE/../clrt-early-logs/identity.txt"
+          } | tee "$RUNNER_TEMP/clrt-early-logs/identity.txt"
       - name: Build the unchanged candidate
         shell: bash
         env:
@@ -84,7 +84,7 @@ jobs:
           set -euo pipefail
           # The committed TEST_PROJECT.json is used. No fixture is reduced.
           node build-static-site.mjs --out _site --source-commit "$TARGET_COMMIT" --workflow-run "$GITHUB_RUN_ID" \
-            | tee "$GITHUB_WORKSPACE/../clrt-early-logs/build.log"
+            | tee "$RUNNER_TEMP/clrt-early-logs/build.log"
       - name: Execute the original complete browser owner and validate its receipt
         shell: bash
         env:
@@ -93,7 +93,7 @@ jobs:
           NODE_OPTIONS: --import ${{ github.workspace }}/verification-evidence-preload.mjs
         run: |
           set -euo pipefail
-          LOG_ROOT="$GITHUB_WORKSPACE/../clrt-early-logs"
+          LOG_ROOT="$RUNNER_TEMP/clrt-early-logs"
           python3 -m http.server 4173 --bind 127.0.0.1 --directory _site >"$LOG_ROOT/http.log" 2>&1 &
           SERVER_PID=$!
           trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
@@ -136,8 +136,8 @@ jobs:
           if-no-files-found: warn
           retention-days: 7
           path: |
-            ${{ github.workspace }}/../clrt-early-logs/
-            ${{ github.workspace }}/../clrt-verifier-children/
+            ${{ runner.temp }}/clrt-early-logs/
+            ${{ runner.temp }}/clrt-verifier-children/
             ${{ github.workspace }}/.verification-receipts/browser/
             ${{ github.workspace }}/operator-evidence/journey.json
             ${{ github.workspace }}/mobile-capability-evidence/capability.json
