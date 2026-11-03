@@ -1,3 +1,4 @@
+import {verifyBoundedBlobNativeHash} from './test-bounded-blob-native-hash.mjs';
 import {verifyCompleteRecordCarrierShapes} from './test-complete-record-carrier-shapes.mjs';
 import {verifyCanonicalPrefixSuppliers} from './test-canonical-prefix-supplier.mjs';
 import {verifyDigestScopeNativeFallback} from './test-digest-scope-native-fallback.mjs';
@@ -408,5 +409,6 @@ verificationObservations.push({checkId:canonicalArrayImplementationObjects.check
 const recordHashDistinction=verifyRecordHashDistinctionControls();
 const importDigestScopes=verifyCanonicalDigestScopeControls();
 const digestScopeNativeFallback=verifyDigestScopeNativeFallback();
-console.log(JSON.stringify({completeRecordCarrierShapes,canonicalArrayImplementationObjects,canonicalPrefixSuppliers,sourceFamilyRecordHashDistinction,canonicalUtf8ByteObservation,recordHashDistinction,importDigestScopes,digestScopeNativeFallback,verificationObservations,sha256Vectors:true,canonicalOrdering:true,integerLikeKeyOrdering:true,unicodeScalarOrdering:true,safeIntegerBoundaries:true,ambiguousValuesRejected:24,registeredHashPreimageFailureClosed:true,registeredSetSemantics:true,contentRecordPreimagesRegistered:true,unknownContentHashKindRejected:true,canonicalRecordPreimageRegistered:true,closedLoopIdStable:true,closedLoopIdCollisionChecked:true,sharedBuildIdentity,runtimeScriptCount:runtimeFiles.length,workerSharesBuildIdentity:true,stage04RepeatAttachmentControlAbsent:true}));
+const boundedBlobNativeHash=await verifyBoundedBlobNativeHash();
+console.log(JSON.stringify({boundedBlobNativeHash,completeRecordCarrierShapes,canonicalArrayImplementationObjects,canonicalPrefixSuppliers,sourceFamilyRecordHashDistinction,canonicalUtf8ByteObservation,recordHashDistinction,importDigestScopes,digestScopeNativeFallback,verificationObservations,sha256Vectors:true,canonicalOrdering:true,integerLikeKeyOrdering:true,unicodeScalarOrdering:true,safeIntegerBoundaries:true,ambiguousValuesRejected:24,registeredHashPreimageFailureClosed:true,registeredSetSemantics:true,contentRecordPreimagesRegistered:true,unknownContentHashKindRejected:true,canonicalRecordPreimageRegistered:true,closedLoopIdStable:true,closedLoopIdCollisionChecked:true,sharedBuildIdentity,runtimeScriptCount:runtimeFiles.length,workerSharesBuildIdentity:true,stage04RepeatAttachmentControlAbsent:true}));
 await import('./verify-stage02-primitives.mjs');

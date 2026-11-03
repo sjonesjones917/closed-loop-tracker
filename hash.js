@@ -387,6 +387,10 @@ function readWithDeadline(promise,label='Reading data',abort=null){
 }
 async function sha256Bytes(bytes){
   if(bytes instanceof Blob){
+    // A single existing bounded read can use the native byte-buffer owner.
+    // Larger files retain incremental hashing; no whole-file allocation grows
+    // with their size. Read and digest failures keep their normal deadlines.
+    if(bytes.size>0&&bytes.size<=65536)return sha256Bytes(new Uint8Array(await readWithDeadline(bytes.slice(0,65536).arrayBuffer(),'Reading artifact bytes')));
     const digest=createSha256();let lastYield=Date.now();
     for(let offset=0;offset<bytes.size;offset+=65536){digest.update(new Uint8Array(await readWithDeadline(bytes.slice(offset,offset+65536).arrayBuffer(),'Reading artifact bytes')));if(Date.now()-lastYield>=8){await new Promise(resolve=>setTimeout(resolve,0));lastYield=Date.now();}}
     return digest.digest();
