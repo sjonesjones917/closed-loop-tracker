@@ -942,7 +942,7 @@ async function main(){
       return {
         ready:closedLoopAppReady===true&&!globalThis.closedLoopAppError&&document.readyState==='complete'&&Boolean(document.querySelector('#app'))&&!document.querySelector('#app').hasAttribute('inert')&&document.querySelector('#app').getAttribute('aria-busy')!=='true',
         corruptBlocked:Boolean(quarantined?.completeSnapshot&&preserved?.reason==='PROJECT_HASH_MISMATCH'&&preserved.row?.jobId==='UPGRADE-CORRUPT'&&preserved.row.project===null&&preserved.row.projectSha256==='0'.repeat(64)&&Array.isArray(preserved.artifacts)&&await store.readProject('UPGRADE-CORRUPT')===null),
-        version:db.version===2,projectHash:p.projectSha256===${JSON.stringify(upgradeRow.projectSha256)},picker:summary?.revision===p.revision,
+        version:db.version===store.DB_VERSION&&store.DB_VERSION>1,projectHash:p.projectSha256===${JSON.stringify(upgradeRow.projectSha256)},picker:summary?.revision===p.revision,
         sessionStart:history.entries.some(entry=>Object.values(history.sessions||{}).some(session=>session.checkpointId===entry.id)),
         artifact:rows.length===1&&await rows[0].blob.text()==='exact version-one bytes'&&rows[0].byteSize===rows[0].blob.size&&rows[0].sha256===await closedLoopHash.sha256Bytes(rows[0].blob)
       };
