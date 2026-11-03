@@ -72,7 +72,7 @@ await check('VERIFIER-UPGRADE-INTERACTIVE-ORACLE','An upgrade gate passes only f
   const project=await r.store.readProject(r.upgradeRow.jobId);await r.store.saveCheckpoint(project.job.JOB_ID,{sessionId:'UPGRADE-ORACLE'});
   await assert.rejects(r.store.readProject('UPGRADE-CORRUPT'),error=>error.code==='PROJECT_HASH_MISMATCH');
   if(state==='missing-quarantine'){const [quarantined]=await r.store.listQuarantinedProjects();r.rows.get('meta').delete(quarantined.key);}
-  r.runtime.closedLoopProjectStore={...r.store,openDatabase:async()=>({version:2}),listProjectSummaries:async()=>[{job:{JOB_ID:project.job.JOB_ID},revision:project.revision}],...(state==='missing-checkpoint'?{historyList:async()=>({entries:[],sessions:{}})}:{})};
+  r.runtime.closedLoopProjectStore={...r.store,openDatabase:async()=>({version:r.store.DB_VERSION}),listProjectSummaries:async()=>[{job:{JOB_ID:project.job.JOB_ID},revision:project.revision}],...(state==='missing-checkpoint'?{historyList:async()=>({entries:[],sessions:{}})}:{})};
   Object.assign(r.runtime,{closedLoopAppReady:ready,closedLoopAppError:error,document:{readyState:state==='document-pending'?'loading':'complete',querySelector:()=>state==='absent'?null:({hasAttribute:name=>name==='inert'&&inert,getAttribute:()=>state==='busy'?'true':null})}});
   const context=createVerifierRuntime({upgradeRow:r.upgradeRow,upgradeCdp:{},evalValue:async(_cdp,expression)=>vm.runInContext(expression,r.runtime)});
   const proof=await vm.runInContext('(async()=>{'+r.source.slice(start,end)+'return proof;})()',context),accepted=Object.values(proof).every(Boolean);
