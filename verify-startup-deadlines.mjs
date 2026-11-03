@@ -67,16 +67,23 @@ await check('VERIFIER-UPGRADE-FIXTURE-CUSTODY','Both upgrade paths begin with va
 });
 await check('VERIFIER-UPGRADE-INTERACTIVE-ORACLE','An upgrade gate passes only for an interactive application, never for an explicit startup failure, pending startup or inert application with intact database rows.',async()=>{
  const observed=[];
- for(const [state,ready,inert,error,expected] of [['failed',false,true,'CONTROLLED_UPGRADE_STARTUP_FAILURE',false],['pending',false,true,null,false],['inert',true,true,null,false],['busy',true,false,null,false],['absent',true,false,null,false],['document-pending',true,false,null,false],['missing-quarantine',true,false,null,false],['missing-checkpoint',true,false,null,false],['interactive',true,false,null,true]]){
+ for(const [state,ready,inert,error,expected] of [['failed',false,true,'CONTROLLED_UPGRADE_STARTUP_FAILURE',false],['pending',false,true,null,false],['inert',true,true,null,false],['busy',true,false,null,false],['absent',true,false,null,false],['document-pending',true,false,null,false],['missing-quarantine',true,false,null,false],['missing-checkpoint',true,false,null,false],['legacy-version',true,false,null,false],['stale-version',true,false,null,false],['future-version',true,false,null,false],['string-version',true,false,null,false],['missing-version',true,false,null,false],['legacy-declaration',true,false,null,false],['future-declaration',true,false,null,true],['interactive',true,false,null,true]]){
   const r=await browserUpgradeFixture(false),anchor=r.source.indexOf('  const upgradeRow='),start=r.source.indexOf('    const proof=',anchor),end=r.source.indexOf('\n    assert(Object.values(proof)',start);assert(start>anchor&&end>start);
   const project=await r.store.readProject(r.upgradeRow.jobId);await r.store.saveCheckpoint(project.job.JOB_ID,{sessionId:'UPGRADE-ORACLE'});
   await assert.rejects(r.store.readProject('UPGRADE-CORRUPT'),error=>error.code==='PROJECT_HASH_MISMATCH');
   if(state==='missing-quarantine'){const [quarantined]=await r.store.listQuarantinedProjects();r.rows.get('meta').delete(quarantined.key);}
-  r.runtime.closedLoopProjectStore={...r.store,openDatabase:async()=>({version:r.store.DB_VERSION}),listProjectSummaries:async()=>[{job:{JOB_ID:project.job.JOB_ID},revision:project.revision}],...(state==='missing-checkpoint'?{historyList:async()=>({entries:[],sessions:{}})}:{})};
+  // Exercise the browser owner's declared schema contract. The synthetic
+  // database must follow that declaration without accepting stale, future or
+  // coerced versions; this adapter does not prove native IndexedDB migration.
+  assert(Number.isInteger(r.store.DB_VERSION)&&r.store.DB_VERSION>1,'UPGRADE_SCHEMA_VERSION_ORACLE');
+  const declaredVersion=state==='legacy-declaration'?1:state==='future-declaration'?r.store.DB_VERSION+1:r.store.DB_VERSION;
+  const versions={'legacy-version':1,'stale-version':r.store.DB_VERSION-1,'future-version':r.store.DB_VERSION+1,'string-version':String(r.store.DB_VERSION),'missing-version':undefined};
+  const databaseVersion=Object.hasOwn(versions,state)?versions[state]:declaredVersion;
+  r.runtime.closedLoopProjectStore={...r.store,DB_VERSION:declaredVersion,openDatabase:async()=>({version:databaseVersion}),listProjectSummaries:async()=>[{job:{JOB_ID:project.job.JOB_ID},revision:project.revision}],...(state==='missing-checkpoint'?{historyList:async()=>({entries:[],sessions:{}})}:{})};
   Object.assign(r.runtime,{closedLoopAppReady:ready,closedLoopAppError:error,document:{readyState:state==='document-pending'?'loading':'complete',querySelector:()=>state==='absent'?null:({hasAttribute:name=>name==='inert'&&inert,getAttribute:()=>state==='busy'?'true':null})}});
   const context=createVerifierRuntime({upgradeRow:r.upgradeRow,upgradeCdp:{},evalValue:async(_cdp,expression)=>vm.runInContext(expression,r.runtime)});
   const proof=await vm.runInContext('(async()=>{'+r.source.slice(start,end)+'return proof;})()',context),accepted=Object.values(proof).every(Boolean);
-  assert.equal(accepted,expected,'UPGRADE_INTERACTIVE_ORACLE: '+state+' application was misclassified: '+JSON.stringify(proof));observed.push({state,accepted,proof});
+  assert.equal(accepted,expected,'UPGRADE_INTERACTIVE_ORACLE: '+state+' application was misclassified: '+JSON.stringify(proof));observed.push({state,declaredVersion,databaseVersion,accepted,proof});
  }
  return {observed,actualBrowserOracle:true,syntheticDocument:true};
 });
