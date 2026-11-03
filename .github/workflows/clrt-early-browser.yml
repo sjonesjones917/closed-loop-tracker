@@ -1,0 +1,142 @@
+name: CLRT 6066 early browser diagnostics
+
+# Install only on the separate diagnostics/clrt-6066 branch.
+# Its push starts this workflow without editing or cancelling PR #1248.
+"on":
+  push:
+    branches: [diagnostics/clrt-6066]
+    paths: [.github/workflows/clrt-early-browser.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser:
+    name: Early ${{ matrix.suite }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 140
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        include:
+          - suite: verify-browser-extra.mjs
+            budget: 10m
+          - suite: verify-mobile-capability-journey.mjs
+            budget: 10m
+          - suite: verify-browser.mjs
+            budget: 10m
+          - suite: verify-complete-operator-journey.mjs
+            budget: 120m
+    env:
+      # This is the verified PR merge commit, not the diagnostic branch's HEAD.
+      TARGET_COMMIT: c2ee2ec27632fa747d698caf11e4cfeaeef117f2
+      TARGET_TREE: 7ada27c2753d060bc0a8a76bdff9829f672070bd
+      TARGET_PR_HEAD: 24d5c8e5450f27f5088bc119332bb72a0672c8ed
+      BROWSER: /usr/bin/google-chrome
+      PAGE_URL: http://127.0.0.1:4173/
+      STATIC_SITE_ROOT: _site
+      CLOSED_LOOP_BROWSER_SCOPE: LOCAL
+      CLOSED_LOOP_VERIFICATION_SOURCE_ROOT: ${{ github.workspace }}
+      CLOSED_LOOP_VERIFICATION_RECEIPTS: ${{ github.workspace }}/.verification-receipts
+      VERIFIER_CHILD_EVIDENCE_DIRECTORY: ${{ github.workspace }}/../clrt-verifier-children
+    steps:
+      - name: Check out the exact candidate, without diagnostic source changes
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: c2ee2ec27632fa747d698caf11e4cfeaeef117f2
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Use the original CI Node version
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22.23.3'
+      - name: Verify and record source and environment identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$TARGET_COMMIT"
+          test "$(git rev-parse HEAD^{tree})" = "$TARGET_TREE"
+          test "$(node --version)" = v22.23.3
+          git diff --quiet HEAD --
+          if [ ! -x "$BROWSER" ]; then
+            BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          fi
+          test -n "$BROWSER" && test -x "$BROWSER"
+          printf 'BROWSER=%s\n' "$BROWSER" >> "$GITHUB_ENV"
+          printf 'NODE_OPTIONS=--import %s/verification-evidence-preload.mjs\n' "$GITHUB_WORKSPACE" >> "$GITHUB_ENV"
+          mkdir -p "$GITHUB_WORKSPACE/../clrt-early-logs"
+          {
+            printf 'Scope: independent LOCAL browser diagnostics, NOT full CI or release acceptance\n'
+            printf 'Diagnostic workflow run: %s\n' "$GITHUB_RUN_ID"
+            printf 'Candidate commit: %s\nCandidate tree: %s\nPR head: %s\n' "$TARGET_COMMIT" "$TARGET_TREE" "$TARGET_PR_HEAD"
+            printf 'Node: '; node --version
+            printf 'Browser: '; "$BROWSER" --version
+            printf 'UTC started: '; date -u +%FT%TZ
+            printf 'Kernel: '; uname -a
+            printf '\nMemory:\n'; free -m
+          } | tee "$GITHUB_WORKSPACE/../clrt-early-logs/identity.txt"
+      - name: Build the unchanged candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          # The committed TEST_PROJECT.json is used. No fixture is reduced.
+          node build-static-site.mjs --out _site --source-commit "$TARGET_COMMIT" --workflow-run "$GITHUB_RUN_ID" \
+            | tee "$GITHUB_WORKSPACE/../clrt-early-logs/build.log"
+      - name: Execute the original complete browser owner and validate its receipt
+        shell: bash
+        env:
+          SUITE: ${{ matrix.suite }}
+          BUDGET: ${{ matrix.budget }}
+        run: |
+          set -euo pipefail
+          LOG_ROOT="$GITHUB_WORKSPACE/../clrt-early-logs"
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory _site >"$LOG_ROOT/http.log" 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          # Confirm the server is serving THIS candidate, not an existing process.
+          python3 - "$TARGET_COMMIT" "$SERVER_PID" <<'PY'
+          import json, os, sys, time, urllib.request
+          expected, pid = sys.argv[1], int(sys.argv[2])
+          deadline = time.monotonic() + 30
+          last = None
+          while time.monotonic() < deadline:
+              os.kill(pid, 0)
+              try:
+                  with urllib.request.urlopen('http://127.0.0.1:4173/closed-loop-deployment-manifest.json', timeout=2) as response:
+                      manifest = json.load(response)
+                  if manifest.get('sourceCommit') != expected:
+                      raise SystemExit('Unexpected server source commit; no test was run.')
+                  break
+              except (OSError, ValueError) as error:
+                  last = error
+                  time.sleep(0.2)
+          else:
+              raise SystemExit(f'Static server did not become ready: {last}')
+          PY
+          # Original outer budgets: 10m / 120m; all internal limits are unchanged.
+          # The complete default suite is used, not a reduced fixture or case filter.
+          timeout --signal=TERM --kill-after=10s "$BUDGET" \
+            node collect-verification-evidence.mjs --browser-suite="$SUITE" --browser-scope=LOCAL \
+            2>&1 | tee "$LOG_ROOT/$SUITE.log"
+          git diff --quiet HEAD --
+          printf '%s passed its complete LOCAL browser owner. This is not full CI acceptance.\n' "$SUITE" \
+            >> "$GITHUB_STEP_SUMMARY"
+      - name: Retain raw outcomes and actual diagnostic receipts
+        if: always()
+        env:
+          NODE_OPTIONS: ''
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: early-6066-${{ matrix.suite }}-${{ github.run_id }}-${{ github.run_attempt }}
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 7
+          path: |
+            ${{ github.workspace }}/../clrt-early-logs/
+            ${{ github.workspace }}/../clrt-verifier-children/
+            ${{ github.workspace }}/.verification-receipts/browser/
+            ${{ github.workspace }}/operator-evidence/journey.json
+            ${{ github.workspace }}/mobile-capability-evidence/capability.json
+            ${{ github.workspace }}/_site/closed-loop-deployment-manifest.json
