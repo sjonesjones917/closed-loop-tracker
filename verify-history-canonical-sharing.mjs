@@ -1,3 +1,4 @@
+import {verifyHistorySmallPartAllocation} from './test-history-small-part-allocation.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {createHash} from 'node:crypto';
@@ -8,6 +9,7 @@ import {stage04AcceptanceFixture} from './test-fixtures.mjs';
 // Scaled reproduction of the retained-version capacity failure from the real
 // all-stage browser journey. This is not a production-capacity browser claim.
 const source=fs.readFileSync(process.env.HISTORY_SOURCE||'project-store.js','utf8');
+const smallPartAllocation=await verifyHistorySmallPartAllocation({source});
 const faultMode=process.argv.find(value=>value.startsWith('--fault='))?.slice(8);
 const faults={
  'duplicate-canonical-content':{before:'const contents=projectReference?null:await encodeHistoryProject(canonical,retainValue);',after:'const contents={project:canonical};'},
@@ -256,4 +258,4 @@ const next=copy(p);next.job.JOB_TITLE='Interrupted correction';engine.recordHuma
 await assert.rejects(()=>store.writeProject(next,{expectedProjectRevision:p.revision}),error=>error.code==='INJECTED_STORAGE_FAILURE');
 r.runtime.__closedLoopStorageFault=null;assert.deepEqual(await store.readProject(p.job.JOB_ID),before);assert.deepEqual(await store.historyList(p.job.JOB_ID),beforeHistory);
 cases.push({caseId:'HISTORY-CANONICAL-ATOMIC-FAILURE',result:'PASS'});
-console.log(JSON.stringify({synthetic:true,actualBrowser:false,productionByteCapacityTested:false,implementationFault:faultMode||null,sourceSha256:createHash('sha256').update(source).digest('hex'),disposableCapacity:capacity,cases},null,2));
+console.log(JSON.stringify({smallPartAllocation,synthetic:true,actualBrowser:false,productionByteCapacityTested:false,implementationFault:faultMode||null,sourceSha256:createHash('sha256').update(source).digest('hex'),disposableCapacity:capacity,cases},null,2));

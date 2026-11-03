@@ -2170,7 +2170,13 @@ async function encodeHistoryProject(project,retainValue){
       // repeated value shares its already encoded and retained byte identity.
       const prior=typeof value==='string'?retainedStrings.get(value):null;
       if(prior){entries.push({path,...prior});return true;}
-      const blob=new Blob([...hash.canonicalChunks(value)],{type:'application/json'});if(blob.size<4096)return false;
+      const chunks=[...hash.canonicalChunks(value)];
+      // UTF-8 uses at most three bytes per UTF-16 code unit. Avoid allocating
+      // a Blob for a canonical value that cannot reach the existing threshold.
+      // Ambiguous/non-string chunks still take the exact Blob-size path.
+      let upperBytes=0;for(const chunk of chunks){if(typeof chunk!=='string'){upperBytes=Infinity;break;}upperBytes+=chunk.length*3;}
+      if(upperBytes<4096)return false;
+      const blob=new Blob(chunks,{type:'application/json'});if(blob.size<4096)return false;
       const sha256=hash.sha256Value(value);await retainValue(sha256,blob);const identity={sha256,byteSize:blob.size};entries.push({path,...identity});
       if(typeof value==='string')retainedStrings.set(value,identity);return true;
     }
