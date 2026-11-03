@@ -2065,12 +2065,13 @@ function checkpointTransactionOwner(tx,jobId){
   return {external,completion,abort,finish(){running=false;clearTimeout(timer);}};
 }
 async function commitRootCheckpoint(jobId,project,verifiedRead,prepared,operationId,checkpointId){
-  const root=prepared.retainedRoot,primitive=root.primitive,rootValueCapture=copyCheckpointValueSnapshot(root.snapshot);
+  const root=prepared.retainedRoot,primitive=root.primitive,rootValueCapture=copyCheckpointValueSnapshot(root.snapshot);let stateCapture=null;
   try{
   const rootDescriptorSnapshot=copyVerifiedTree(root.descriptor),rootDigests={projectSha256:root.projectSha256,workSha256:root.workSha256},rootBodySnapshot=copyVerifiedTree({...root.body,project:undefined,artifacts:root.body.artifacts.map(historyDescriptor)});
-  const stateSnapshot=copyVerifiedTree(prepared.state),snapshotSources=prepared.snapshots.map(snapshot=>({blob:snapshot.blob,descriptor:copyVerifiedTree((({blob,...descriptor})=>descriptor)(snapshot))}));
+  stateCapture=copyCheckpointValueSnapshot(prepared.state);
+  const snapshotSources=prepared.snapshots.map(snapshot=>({blob:snapshot.blob,descriptor:copyVerifiedTree((({blob,...descriptor})=>descriptor)(snapshot))}));
   const newFileSources=prepared.newFiles.map(file=>({sha256:file.sha256,blob:file.blob,byteSize:file.blob?.size}));
-  const gateUnchanged=()=>root.primitive===primitive&&rootDigestPrimitivesUnchanged(primitive)&&verifiedRead.project===project&&project.projectSha256===verifiedRead.digest&&verifiedRead.digest===root.projectSha256&&verifiedValuesEqual(rootDigests,{projectSha256:root.projectSha256,workSha256:root.workSha256})&&verifiedValuesEqual(rootDescriptorSnapshot,root.descriptor)&&unchangedCheckpointValueSnapshot(rootValueCapture,root.project)&&unchangedCheckpointValueSnapshot(rootValueCapture,canonicalProject(project))&&verifiedValuesEqual(prepared.state,stateSnapshot)&&verifiedValuesEqual(rootBodySnapshot,{...root.body,project:undefined,artifacts:root.body.artifacts.map(historyDescriptor)})&&snapshotSources.length===prepared.snapshots.length&&!snapshotSources.some((source,index)=>source.blob!==prepared.snapshots[index]?.blob||!verifiedValuesEqual(source.descriptor,(({blob,...descriptor})=>descriptor)(prepared.snapshots[index])))&&newFileSources.length===prepared.newFiles.length&&!newFileSources.some((source,index)=>source.blob!==prepared.newFiles[index]?.blob||source.sha256!==prepared.newFiles[index]?.sha256||source.byteSize!==prepared.newFiles[index]?.blob?.size);
+  const gateUnchanged=()=>root.primitive===primitive&&rootDigestPrimitivesUnchanged(primitive)&&verifiedRead.project===project&&project.projectSha256===verifiedRead.digest&&verifiedRead.digest===root.projectSha256&&verifiedValuesEqual(rootDigests,{projectSha256:root.projectSha256,workSha256:root.workSha256})&&verifiedValuesEqual(rootDescriptorSnapshot,root.descriptor)&&unchangedCheckpointValueSnapshot(rootValueCapture,root.project)&&unchangedCheckpointValueSnapshot(rootValueCapture,canonicalProject(project))&&unchangedCheckpointValueSnapshot(stateCapture,prepared.state)&&verifiedValuesEqual(rootBodySnapshot,{...root.body,project:undefined,artifacts:root.body.artifacts.map(historyDescriptor)})&&snapshotSources.length===prepared.snapshots.length&&!snapshotSources.some((source,index)=>source.blob!==prepared.snapshots[index]?.blob||!verifiedValuesEqual(source.descriptor,(({blob,...descriptor})=>descriptor)(prepared.snapshots[index])))&&newFileSources.length===prepared.newFiles.length&&!newFileSources.some((source,index)=>source.blob!==prepared.newFiles[index]?.blob||source.sha256!==prepared.newFiles[index]?.sha256||source.byteSize!==prepared.newFiles[index]?.blob?.size);
   const tx=await openTransaction([PROJECTS,ARTIFACTS,META],'readwrite'),owner=checkpointTransactionOwner(tx,jobId),meta=tx.objectStore(META);
   try{
     const row=await projectRowWithOperations(tx,jobId,verifiedRead),current=(await request(meta.get(historyKey(jobId))))?.value;
@@ -2139,7 +2140,7 @@ async function commitRootCheckpoint(jobId,project,verifiedRead,prepared,operatio
     owner.finish();await owner.completion;
     rootCertificates.add(root);recentOperationalCommitRead={...verifiedRead,retainedRoot:root};return checkpointId;
   }catch(error){const failure=owner.abort(error);await owner.completion.catch(()=>{});throw failure;}
-  }finally{releaseCheckpointValueSnapshot(rootValueCapture);}
+  }finally{releaseCheckpointValueSnapshot(rootValueCapture);if(stateCapture)releaseCheckpointValueSnapshot(stateCapture);}
 }
 
 function historyUndoId(state){const byId=new Map(state.entries.map(entry=>[entry.id,entry])),active=byId.get(state.activeId);if(!active)return null;const same=active.workSha256||active.projectSha256;let prior=byId.get(active.parentId);while(prior&&(nonactivatableHistoryEntry(state,prior.id)||(prior.workSha256||prior.projectSha256)===same))prior=byId.get(prior.parentId);return prior?.id||null;}

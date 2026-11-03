@@ -1,3 +1,4 @@
+import {verifyCheckpointStateSnapshot,verifyCheckpointStateCommitMutation} from './test-checkpoint-state-snapshot.mjs';
 import {verifyVerifiedGraphSemantics} from './test-verified-graph-semantics.mjs';
 import {verifyRetainedRootContinuation} from './test-retained-root-continuation.mjs';
 import {verifyWorkerMessageCodec,verifyStorageWorkerStartup} from './test-worker-message-codec.mjs';
@@ -14,7 +15,7 @@ import {verifyResponseStagingRecovery} from './test-response-staging-recovery.mj
 import {verifyReturnedSlotAtomicStaging} from './test-returned-slot-atomic-staging.mjs';
 import {verifyValidationRecordBackupRoundtrip} from './test-validation-record-backup.mjs';
 import {verifyOperationalJournalCopy,verifyOperationalReadProof,verifyCanonicalReadProof,verifyOperationalWarmProof,verifyCheckpointCanonicalProof,verifyCanonicalCommitWarmProof,verifyStartupSelectedReadReuse,verifyStartupRecoveryHookIsolation,verifyCanonicalNoopHookIsolation,verifyCanonicalCompletionHookIsolation,verifyPrivateReadCustodyHookIsolation} from './test-operational-journal-copy.mjs';
-console.log(JSON.stringify({operationalJournalCopy:verifyOperationalJournalCopy()}));
+console.log(JSON.stringify({checkpointStateSnapshot:verifyCheckpointStateSnapshot(),checkpointStateCommitMutation:await verifyCheckpointStateCommitMutation(),operationalJournalCopy:verifyOperationalJournalCopy()}));
 console.log(JSON.stringify({validationRecordBackupRoundtrip:await verifyValidationRecordBackupRoundtrip()}));
 const faultName=process.argv.find(arg=>arg.startsWith('--fault='))?.split('=')[1],faults={ownership:{id:'BYPASS-OPERATIONAL-OWNERSHIP',file:'project-store.js',before:'if(!allowed)throw storageError(\'An operational response event',after:'if(false)throw storageError(\'An operational response event'},revision:{id:'BYPASS-RESERVATION-REVISION',file:'response-ingestion.js',before:'reservationRevision!==effectiveRevision||',after:''},canonical:{id:'CANONICAL-WRITE-FOR-STAGING',file:'project-store.js',before:'if(options.operational)return writeOperationalProject(project,options);',after:''}};
 const r=projectStoreRuntime({fault:faultName?faults[faultName]:null}),{core,engine,prompts,ingestion,store,copy}=r,schema=r.runtime.closedLoopWorkflowSchema,cases=[],note=name=>cases.push({name,result:'PASS'});
