@@ -17,7 +17,7 @@ const resetNodes=()=>{nodes=new Map([
  ['#response-file-status',{textContent:''}],['#process-response-file',{}]
  ]);};
 resetNodes();
-Object.assign(runtime,{current:project,projectStore:store,clone:copy,history:{state:{entryId:'draft-entry'}},restoringHistory:false,fileSelectionDrafts:{},operationSelection:{},runSelection:{},replacementReview:null,APPLICATION_SESSION_ID:'FILE-SELECTION-DRAFT-SESSION',CSS:{escape:String},window:{scrollX:0,scrollY:0,scrollTo(){throw new Error('File selection must not restore an old scroll position.');}},document:{querySelectorAll:()=>[...nodes.values()].filter(n=>n.id),querySelector:s=>nodes.get(s)},$:s=>nodes.get(s),captureCurrentView:async()=>{},responseAttemptPrompt:()=>null,selectedOperation:()=> 'COMPLETE',artifactIdFor:jobId=>jobId+'-FILE-'+runtime.crypto.randomUUID(),logicalFilePath:file=>file.name,writeBrowserEntry(){},refreshHistory:async()=>{},announce(){},focusAfterAction(){},render:resetNodes});
+Object.assign(runtime,{current:project,projectStore:store,clone:copy,history:{state:{entryId:'draft-entry'}},restoringHistory:false,fileSelectionDrafts:{},operationSelection:{},runSelection:{},replacementReview:null,APPLICATION_SESSION_ID:'FILE-SELECTION-DRAFT-SESSION',CSS:{escape:String},window:{scrollX:0,scrollY:0,scrollTo(){throw new Error('File selection must not restore an old scroll position.');}},document:{querySelectorAll:()=>[...nodes.values()].filter(n=>n.id),querySelector:s=>nodes.get(s)},$:s=>nodes.get(s),captureCurrentView:async()=>{},responseAttemptPrompt:()=>null,selectedOperation:()=> 'COMPLETE',artifactIdFor:jobId=>jobId+'-FILE-'+runtime.crypto.randomUUID(),logicalFilePath:file=>file.name,writeBrowserEntry(){},refreshHistory:async()=>{},announce(){},focusAfterAction(){},render:resetNodes,displayedHistoryEntryId:'draft-entry',savedDraftView:null,savedViewSignature:null});
 bindHandoffReviewUiState(runtime,{source});
 createVerifierRuntime.loadScript(runtime,extract('const VIEW_NAVIGATION_CONTROL_IDS=','function selectSavedView(').replace(/function replacementReviewFromSavedView\([\s\S]*$/,'' )+extract('function applySavedView(','function entryUrl(')+extract('function fileSelectionKey(','async function readFileSelection('));
 const cases=[];
@@ -34,7 +34,21 @@ for(let stage=1;stage<=schema.STAGE_COUNT;stage++)for(const kind of ['response',
   const selection=runtime.currentFileSelection(kind,stage),retained=await store.getArtifact(selection.files[0].artifactId);
   assert.equal(await retained.blob.text(),text,'FILE_SELECTION_BYTE_RETENTION_ORACLE');
   assert.equal((await store.readProject(project.job.JOB_ID)).revision,project.revision,'File selection must not accept or revise canonical work.');
+  // The checkpoint just saved this view; recording its signature lets the
+  // action's identical final capture skip a second checkpoint.
+  assert.deepEqual(copy(runtime.savedDraftView),copy(saved),'FILE_SELECTION_SAVED_VIEW_ORACLE: the recorded view must be the checkpointed view');
+  assert.equal(runtime.savedViewSignature,runtime.closedLoopHash.sha256Value(runtime.JSON.parse(JSON.stringify({jobId:project.job.JOB_ID,revision:project.revision,projectSha256:runtime.current.projectSha256||null,entryId:'draft-entry',view:runtime.savedDraftView}))),'FILE_SELECTION_SAVED_VIEW_SIGNATURE_ORACLE: the saved selection view must carry the capture signature');
   cases.push({stage,kind,attempt,name:'File selection preserves current and durable operator drafts and exact selected bytes without accepting work',result:'PASS'});
  }
+}
+// A selection whose browser entry changes while it is saved records no signature,
+// so the next capture still saves the view for the entry now displayed.
+{
+ runtime.current.activeStage=1;runtime.savedDraftView=null;runtime.savedViewSignature=null;
+ runtime.projectStore={...store,saveCheckpoint:async(...args)=>{const id=await store.saveCheckpoint(...args);runtime.history.state={entryId:'navigated-entry'};return id;}};
+ try{await runtime.saveFileSelection('response',[new runtime.File(['navigated entry'],'response.json',{type:'application/json'})],1);}
+ finally{runtime.projectStore=store;runtime.history.state={entryId:'draft-entry'};}
+ assert.equal(runtime.savedViewSignature,null,'FILE_SELECTION_SIGNATURE_ENTRY_ORACLE: a view saved for an entry that is no longer displayed must still be captured');
+ cases.push({stage:1,kind:'response',attempt:'navigated-entry',name:'A selection whose browser entry changes while it is saved records no view signature',result:'PASS'});
 }
 console.log(JSON.stringify({synthetic:true,actualBrowser:false,environment:'Actual file-selection, draft-capture and draft-application functions; production persistence with transactional adapter; DOM controls recreated on render',cases},null,2));

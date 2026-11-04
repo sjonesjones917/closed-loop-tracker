@@ -1231,7 +1231,11 @@ async function saveFileSelection(kind,files,stage=current.activeStage){
   if(current.job.JOB_ID!==jobId||current.revision!==revision)throw new Error('Project changed while the selected files were being saved.');
   fileSelectionDrafts[key]={jobId,stage:Number(stage),kind,promptId:prompt?.instructionId||prompt?.promptId||null,files:stored};
   const view={...viewBefore,fileSelections:captureView().fileSelections},id=await projectStore.saveCheckpoint(jobId,{expectedProjectRevision:revision,view,label:kind==='response'?'Selected response file':'Selected '+kind+' files',sessionId:APPLICATION_SESSION_ID});
-  if(history.state?.entryId===entryId&&!restoringHistory)writeBrowserEntry(id,view,{replace:true});await refreshHistory();
+  // The checkpoint just saved this exact view for the displayed entry; a later
+  // capture of the identical view (the action's final capture) skips it, as
+  // captureCurrentView does after its own checkpoint. Any change still saves.
+  if(history.state?.entryId===entryId&&!restoringHistory){writeBrowserEntry(id,view,{replace:true});if(current.job.JOB_ID===jobId&&current.revision===revision){savedDraftView=view;savedViewSignature=globalThis.closedLoopHash.sha256Value({jobId,revision,projectSha256:current.projectSha256||null,entryId:displayedHistoryEntryId||null,view});}}
+  await refreshHistory();
   if(kind==='response'){responseActionFailure=null;render();applySavedView(view,{position:false});focusAfterAction($('#process-response-file'));}const status=$('#response-file-status');if(kind==='response'&&status)status.textContent=responseSelectionLabel(stage);announce(kind==='response'?'Response file saved. Stage and validate it when ready.':'Selected files saved.');
  }catch(error){if(prior)fileSelectionDrafts[key]=prior;else delete fileSelectionDrafts[key];throw error;}
 }
