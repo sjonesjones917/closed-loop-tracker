@@ -41,6 +41,13 @@ export async function verifyRetainedRootContinuation({fault=null,caseFilter=null
  guardFaults['drop-write-derivation-prevalidator-check']=['const derivationValidators=preparedProof.validators&&rootValidatorsUnchanged(preparedProof.validators)?preparedProof.validators:null;','const derivationValidators=preparedProof.validators;'];
  guardFaults['carry-run-context-write-derivation']=['if((record.subject?.projectData?.generatedPrompts||[]).some(prompt=>globalThis.closedLoopPromptEngine.requiresRetainedRunContext(prompt)))return null;',''];
  guardFaults['drop-validator-internal-state']=['function rootValidatorInternalState(node){','function rootValidatorInternalState(node){return null;'];
+ // A certified root's carried envelope used without the stored blob digest
+ // check, the only check binding the root's stored bytes before that envelope
+ // is used: the check skipped whenever an envelope is carried, or the carried
+ // attempt moved above it.
+ const rootByteCheck='  if(!entry?.blob||entry.blob.size!==Number(entry.byteSize)||(consumeCheckpointByteObservation(entry,rootBytes)||await historyBlobSha256(entry.blob,verifiedByteDigests))!==entry.sha256)throw',carriedAttempt='  const carried=certifiedRootEnvelope(entry,validatedRoots,inspection,rootContinuation);\n  if(carried)try{return await bindCheckpointBody(carried,true);}catch{/* Decode the stored bytes; their own outcome stands. */}\n';
+ guardFaults['skip-carried-root-byte-check']=[rootByteCheck,'  if(!certifiedRootEnvelope(entry,validatedRoots,inspection,rootContinuation)&&(!entry?.blob||entry.blob.size!==Number(entry.byteSize)||(consumeCheckpointByteObservation(entry,rootBytes)||await historyBlobSha256(entry.blob,verifiedByteDigests))!==entry.sha256))throw'];
+ if(fault==='carry-before-root-byte-check'){assert.equal(source.split(rootByteCheck).length,2,'RETAINED_ROOT_FAULT_ANCHOR_ORACLE '+fault);assert.equal(source.split(carriedAttempt).length,2,'RETAINED_ROOT_FAULT_ANCHOR_ORACLE '+fault);source=source.replace(carriedAttempt,'').replace(rootByteCheck,()=>carriedAttempt+rootByteCheck);}
  if(fault==='capture-write-validators-after-validation'){const before='const validatorsBefore=options[ROOT_CERTIFICATE_WRITE]===true?captureRootValidators(initialRootDigestPrimitives):null;',after='const writeValidators=validatorsBefore&&rootValidatorsUnchanged(validatorsBefore)?validatorsBefore:null;';assert.equal(source.split(before).length,2);assert.equal(source.split(after).length,2);source=source.replace(before,'const validatorsBefore=null;').replace(after,'const writeValidators=options[ROOT_CERTIFICATE_WRITE]===true?captureRootValidators(initialRootDigestPrimitives):null;');}
  if(fault==='capture-operational-validators-after-validation'){const before='const operationalBefore=options[ROOT_CERTIFICATE_WRITE]===true?captureRootValidators(initialRootDigestPrimitives):null;',after='const operationalValidators=operationalBefore&&rootValidatorsUnchanged(operationalBefore)?operationalBefore:null;';assert.equal(source.split(before).length,2);assert.equal(source.split(after).length,2);source=source.replace(before,'const operationalBefore=null;').replace(after,'const operationalValidators=options[ROOT_CERTIFICATE_WRITE]===true?captureRootValidators(initialRootDigestPrimitives):null;');}
  if(Object.hasOwn(guardFaults,fault)){const [before,after]=guardFaults[fault];assert.equal(source.split(before).length,2,'RETAINED_ROOT_FAULT_ANCHOR_ORACLE '+fault);source=source.replace(before,after);}
@@ -62,7 +69,7 @@ export async function verifyRetainedRootContinuation({fault=null,caseFilter=null
  const envelopeDecode='  const {payload,fileContents}=await readPackageJson(entry.blob,{spoolArtifacts:false}),{packageSha256,...body}=payload;';assert.equal(source.split(envelopeDecode).length,2,'RETAINED_ROOT_ENVELOPE_DECODE_ANCHOR_ORACLE');source=source.replace(envelopeDecode,'  globalThis.__rootEnvelopeDecodes=(globalThis.__rootEnvelopeDecodes||0)+1;\n'+envelopeDecode);
  const qualify='      const rootQualified=';assert.equal(source.split(qualify).length,2);source=source.replace(qualify,'      globalThis.__mutateRootPreparation?.(decoded.project,project);\n'+qualify);
  const cases=[];
- for(const mode of ['valid-two-warm-views','wrong-work-proof','wrong-project-proof','wrong-root-descriptor','mutated-root-value','mutated-root-snapshot','changed-generator-dispatch','changed-encoder-dispatch','changed-validator-definition','changed-nested-definition','public-read-keeps-certificate','one-use-private-read','unchanged-view-keeps-certificate','unchanged-view-changed-validator','failed-save-cold-fallback','root-mutation-during-preparation','source-mutation-during-preparation','primitive-mutation-during-preparation','mutated-root-envelope','corrupt-root-after-certification','swapped-root-after-certification']){
+ for(const mode of ['valid-two-warm-views','wrong-work-proof','wrong-project-proof','wrong-root-descriptor','mutated-root-value','mutated-root-snapshot','changed-generator-dispatch','changed-encoder-dispatch','changed-validator-definition','changed-nested-definition','public-read-keeps-certificate','one-use-private-read','unchanged-view-keeps-certificate','unchanged-view-changed-validator','failed-save-cold-fallback','root-mutation-during-preparation','source-mutation-during-preparation','primitive-mutation-during-preparation','mutated-root-envelope','corrupt-root-after-certification','swapped-root-after-certification','corrupt-root-after-certification-session','swapped-root-after-certification-session','corrupt-root-after-certification-unchanged-view','swapped-root-after-certification-unchanged-view']){
   if(caseFilter&&!caseFilter.includes(mode))continue;
   const r=projectStoreRuntime({sourceOverrides:{'project-store.js':source},environment:{__rootCounts:{restore:0,digest:0,static:0,derived:0}},storageWorker:false});
   let p=await r.store.createProject({commandId:'PRIVATE-ROOT-'+mode});p.job.JOB_TITLE='Exact retained title '+'independent retained content '.repeat(300);r.engine.recalculate(p);p=await r.store.writeProject(p,{expectedProjectRevision:p.revision});await r.store.readProject(p.job.JOB_ID);
@@ -79,17 +86,32 @@ export async function verifyRetainedRootContinuation({fault=null,caseFilter=null
   if(mode==='mutated-root-envelope'){assert.ok(proof.body&&typeof proof.body==='object','RETAINED_ROOT_ENVELOPE_FIXTURE_ORACLE');proof.body.label='Changed carried envelope';}
   // A certified root whose bytes were already decoded and compared stays bound
   // to its stored bytes: a root blob corrupted or swapped after certification
-  // is refused, nothing is written and no continuation is published.
-  if(mode==='corrupt-root-after-certification'||mode==='swapped-root-after-certification'){
-   const meta=r.rows.get('meta'),prefix='recovery:'+p.job.JOB_ID+':snapshot:',row=meta.get(prefix+proof.descriptor.id);
+  // is refused, nothing is written and no continuation is published. A changed
+  // view is refused by append's own pre-check. A new session alone, or the
+  // unchanged active view, appends nothing: its retained read reaches the root
+  // through the certificate's carried envelope, which the stored blob digest
+  // check alone binds to the root's stored bytes.
+  const tamper=/^(corrupt|swapped)-root-after-certification(?:-(session|unchanged-view))?$/.exec(mode);
+  if(tamper){
+   const [,kind,noAppend]=tamper,meta=r.rows.get('meta'),prefix='recovery:'+p.job.JOB_ID+':snapshot:',entries=async()=>(await r.store.historyList(p.job.JOB_ID)).entries.length;
+   const attempt=noAppend==='session'?sessionId=>r.store.saveCheckpoint(p.job.JOB_ID,{expectedProjectRevision:p.revision,expectedStateSha256:p.projectSha256,sessionId}):noAppend==='unchanged-view'?()=>save('Project'):()=>save('Workflow');
+   // The same no-append save over intact bytes carries the certified root:
+   // only the active checkpoint's envelope is decoded and the re-proven
+   // certificate stays published.
+   if(noAppend){
+    const count=await entries(),decodes=r.runtime.__rootEnvelopeDecodes||0;await attempt('certified-root-control-session');
+    assert.equal((r.runtime.__rootEnvelopeDecodes||0)-decodes,1,'RETAINED_ROOT_CERTIFIED_NO_APPEND_FIXTURE_ORACLE: the no-append read carries the certified root envelope');
+    assert.equal(await entries(),count,'RETAINED_ROOT_CERTIFIED_NO_APPEND_FIXTURE_ORACLE: the no-append save appends nothing');assert.ok(r.runtime.__rootProof()?.descriptor?.id===proof.descriptor.id,'RETAINED_ROOT_CERTIFIED_NO_APPEND_FIXTURE_ORACLE: the certificate stays published');
+   }
+   const row=meta.get(prefix+proof.descriptor.id);
    assert.ok(row?.value?.blob instanceof Blob&&row.value.sha256===proof.descriptor.sha256&&!row.value.projectReference,'RETAINED_ROOT_CERTIFIED_TAMPER_TARGET_ORACLE');
-   const other=mode==='swapped-root-after-certification'?[...meta.entries()].find(([key,item])=>key.startsWith(prefix)&&key!==prefix+proof.descriptor.id&&item?.value?.blob instanceof Blob)?.[1]:null;
-   if(mode==='swapped-root-after-certification')assert.ok(other&&other.value.sha256!==row.value.sha256,'RETAINED_ROOT_CERTIFIED_SWAP_SOURCE_ORACLE');
+   const other=kind==='swapped'?[...meta.entries()].find(([key,item])=>key.startsWith(prefix)&&key!==prefix+proof.descriptor.id&&item?.value?.blob instanceof Blob)?.[1]:null;
+   if(kind==='swapped')assert.ok(other&&other.value.sha256!==row.value.sha256,'RETAINED_ROOT_CERTIFIED_SWAP_SOURCE_ORACLE');
    row.value.blob=other?other.value.blob:new Blob(['X'.repeat(row.value.blob.size)]);
    const snapshot=r.copy([...r.rows].map(([name,rows])=>[name,[...rows]]));
-   await assert.rejects(()=>save('Workflow'),e=>e.code==='HISTORY_SNAPSHOT_INTEGRITY_FAILED','RETAINED_ROOT_CERTIFIED_BYTES_ORACLE '+mode);
+   await assert.rejects(()=>attempt('tampered-root-session'),e=>e.code==='HISTORY_SNAPSHOT_INTEGRITY_FAILED','RETAINED_ROOT_CERTIFIED_BYTES_ORACLE '+mode);
    assert.deepEqual(r.copy([...r.rows].map(([name,rows])=>[name,[...rows]])),snapshot,'Rejected save preserves exact state');assert.ok(r.runtime.__rootProof()===undefined,'Rejected save publishes no continuation');
-   cases.push({mode,result:'PASS',error:'HISTORY_SNAPSHOT_INTEGRITY_FAILED',noCheckpointReturned:true,noProofPublished:true,exactStatePreserved:true});continue;
+   cases.push({mode,result:'PASS',error:'HISTORY_SNAPSHOT_INTEGRITY_FAILED',...(noAppend?{noAppend,carriedBeforeTamper:true}:{}),noCheckpointReturned:true,noProofPublished:true,exactStatePreserved:true});continue;
   }
   let dispatch,encoderDispatch;
   if(mode==='changed-generator-dispatch'){const proto=Object.getPrototypeOf(r.runtime.closedLoopHash.canonicalChunks(null));dispatch=Object.getOwnPropertyDescriptor(proto,'next');Object.defineProperty(proto,'next',{value:function(){return Object.getPrototypeOf(Object.getPrototypeOf(this)).next.call(this);},configurable:true});}
