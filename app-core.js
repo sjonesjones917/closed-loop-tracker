@@ -177,7 +177,8 @@ function runOperatorAction(label,operation,{retainsView=false}={}){
       // Required view persistence belongs to the operation, including its lock,
       // loading interval, failure outcome and measured end-to-end duration.
       // The deferred focus target is placed first, so this capture already
-      // holds the scroll position that focus leaves after unlocking.
+      // holds the scroll position that focus leaves after unlocking. If the
+      // capture fails without a confirmed commit, that placement is undone.
       if(actionFocusTarget)placeActionFocusBeforeCapture(pending);
       try{if(operatorActionInFlight===pending&&(current?.historyActivationId||null)===pending.activationId)await captureCurrentView();}
       catch(error){
@@ -187,7 +188,7 @@ function runOperatorAction(label,operation,{retainsView=false}={}){
           const diagnostic=String(error?.message||error||'Final draft and view capture failed.');
           globalThis.__closedLoopPostCommitRecoveryWarning={message:'Project change saved, but the final draft and view could not be saved. Reload to inspect the current saved project and History before retrying that view action. Reason: '+diagnostic.slice(0,512),diagnostic};
           showPostCommitRecoveryWarning();
-        }else{outcome='FAILED';reportActionFailure(error);}
+        }else{outcome='FAILED';if(pending.prePlacementScroll)restorePrePlacementScroll(pending);reportActionFailure(error);}
       }
       finally{
         clearTimeout(pending.timer);if(pending.failed)outcome='FAILED';recordOperationLatency('operator',label,pending.startedAt,outcome);
@@ -228,13 +229,25 @@ function placeFocusTarget(control,{allowUp=false,excludeOperationStatus=false}={
 // this pass computes what the post-unlock pass will, which then finds the
 // target placed. A target inside a closed disclosure is left to that pass,
 // which opens it. Placement here is advisory and never holds the action lock.
+// A pass that moves the page records where it started (prePlacementScroll).
 function placeActionFocusBeforeCapture(pending){
  const control=actionFocusTarget;
  if(operatorActionInFlight!==pending||(current?.historyActivationId||null)!==pending.activationId||historyRestoreController||!control?.isConnected)return;
  try{
   for(let parent=control.parentElement;parent;parent=parent.parentElement)if(parent.tagName==='DETAILS'&&!parent.open)return;
-  placeFocusTarget(control,{allowUp:focusMayScrollUp(pending.focusReason||'FORWARD'),excludeOperationStatus:true});
+  const before=windowScrollPosition();
+  try{placeFocusTarget(control,{allowUp:focusMayScrollUp(pending.focusReason||'FORWARD'),excludeOperationStatus:true});}
+  finally{const after=windowScrollPosition();if(before&&after&&(after.left!==before.left||after.top!==before.top))pending.prePlacementScroll=before;}
  }catch{}
+}
+function windowScrollPosition(){try{return {left:Number(window.scrollX)||0,top:Number(window.scrollY)||0};}catch{return null;}}
+// A final capture that fails without a confirmed commit saved no view, and its
+// failure report replaces the placed target, so the operator was never sent to
+// that position: the page returns to where the operation left it. A known
+// commit keeps the placement. Advisory, like the placement it undoes.
+function restorePrePlacementScroll(pending){
+ const scroll=pending.prePlacementScroll;pending.prePlacementScroll=null;
+ try{if(scroll&&typeof window.scrollTo==='function')window.scrollTo({left:scroll.left,top:scroll.top,behavior:'instant'});}catch{}
 }
 function focusAfterAction(control,{reason='FORWARD'}={}){if(!control)return;if(operatorActionInFlight){actionFocusTarget=control;operatorActionInFlight.focusReason=reason;return;}const sequence=++focusPlacementSequence;for(let parent=control.parentElement;parent;parent=parent.parentElement)if(parent.tagName==='DETAILS')parent.open=true;control.focus({preventScroll:true});const allowUp=focusMayScrollUp(reason),place=()=>{if(sequence!==focusPlacementSequence||!control.isConnected)return;placeFocusTarget(control,{allowUp});},geometry=()=>{if(sequence!==focusPlacementSequence||!control.isConnected)return null;const rect=control.getBoundingClientRect?.(),height=focusViewportHeight();return rect&&height?[rect.top,rect.bottom,rect.height,height].join('|'):null;};let previousGeometry=null,stableFrames=0,frameCount=0;place();const settle=()=>{if(sequence!==focusPlacementSequence||!control.isConnected)return;place();const currentGeometry=geometry();stableFrames=currentGeometry!==null&&currentGeometry===previousGeometry?stableFrames+1:0;previousGeometry=currentGeometry;frameCount+=1;if(frameCount<FOCUS_LAYOUT_QUIESCENCE_MAX_FRAMES&&(frameCount<FOCUS_LAYOUT_QUIESCENCE_MIN_FRAMES||stableFrames<FOCUS_LAYOUT_QUIESCENCE_STABLE_FRAMES))requestAnimationFrame(settle);};requestAnimationFrame(settle);}
 function bindAction(selector,operation,label,{capture,retainsView=false}={}){

@@ -14,7 +14,7 @@ vm.runInContext(source.slice(0,source.indexOf('globalThis.closedLoopAppReady=fal
   const previous={current,projectStore,captureCurrentView,savedDraftView,savedViewSignature,displayedHistoryEntryId,historyState,recoveryProjects,quarantinedProjects,responseStagingRecovery,responseStagingRecoveryReadError};
   current=fixture.project;projectStore=fixture.store;captureCurrentView=productionViewCapture;savedDraftView=null;savedViewSignature=null;displayedHistoryEntryId=null;
   return ()=>{({current,projectStore,captureCurrentView,savedDraftView,savedViewSignature,displayedHistoryEntryId,historyState,recoveryProjects,quarantinedProjects,responseStagingRecovery,responseStagingRecoveryReadError}=previous);};
- },capture:()=>captureCurrentView()},contentTop:(control,options)=>visibleContentTop(control,options),native:async fixture=>{
+ },capture:()=>captureCurrentView(),commit:()=>{operatorActionInFlight.confirmedCommit={jobId:current.job.JOB_ID,revision:Number(current.revision),projectSha256:current.projectSha256};}},contentTop:(control,options)=>visibleContentTop(control,options),native:async fixture=>{
  const previous={current,engine,schema,nativeProductTests,nativeTestInputs,persistReplacement,render,runtime:globalThis.closedLoopTestRuntime};
  current=fixture.project;engine=fixture.engine;schema=globalThis.closedLoopWorkflowSchema;nativeProductTests=fixture.select;nativeTestInputs=fixture.inputs;persistReplacement=async (next,options)=>{await fixture.commit(next,options);current=next;};render=fixture.render;globalThis.closedLoopTestRuntime=fixture.runtime;
  try{return await runOperatorAction('Running registered application tests',()=>runNativeProductTests(Number(current.activeStage)));}finally{({current,engine,schema,nativeProductTests,nativeTestInputs,persistReplacement,render}=previous);globalThis.closedLoopTestRuntime=previous.runtime;}
@@ -308,6 +308,51 @@ for(const variant of ['forward-clipped-next-action','retry-under-progress-banner
   cases.push({caseId:'FOCUS-FINAL-CAPTURE-CARRIES-PLACEMENT',variant,result:'PASS',actualBrowser:false,savedScrollY:saves[0].scrollY,moves:moves.length,checkpoints:saves.length});
  }catch(error){retryFailures.push(String(error.stack||error));cases.push({caseId:'FOCUS-FINAL-CAPTURE-CARRIES-PLACEMENT',variant,result:'FAIL',error:String(error.stack||error)});}
  finally{release();for(let i=0;i<64&&!actionDone;i++){await paint();await new Promise(resolve=>setImmediate(resolve));}leave();delete c.history;delete c.getComputedStyle;status.getBoundingClientRect=statusRect;c.window.scrollY=0;frames.length=0;calls.length=0;if(!banner)nodes.delete('#next-required-action');delete c.window.scrollBy;}
+}
+// A final capture that fails with no confirmed commit saved no view, and its
+// failure report replaces the placed target. The pre-capture placement is then
+// undone: the page returns to where the operation left it (not the origin) and
+// the error report takes focus. Control: after a confirmed commit the
+// post-commit warning keeps the placement and the deferred next action.
+for(const outcome of ['capture-failure-without-commit','capture-failure-after-commit']){
+ const committed=outcome==='capture-failure-after-commit',report=nodes.get('#operation-error'),saves=[];
+ frames.length=0;calls.length=0;c.window.scrollX=12;c.window.scrollY=300;c.ui.announce('Starting final capture failure');
+ const start={left:c.window.scrollX,top:c.window.scrollY},rect={top:920,bottom:1121,left:10,right:383,width:373,height:201},distance=rect.bottom-c.innerHeight;
+ const target=element('next-required-action',rect);target.tagName='DIV';nodes.set('#next-required-action',target);
+ target.scrollIntoView=options=>{const move=Math.max(0,rect.bottom-c.innerHeight);calls.push({type:'scroll',id:target.id,options});rect.top-=move;rect.bottom-=move;c.window.scrollY+=move;};
+ c.window.scrollBy=options=>{calls.push({type:'residual-scroll',id:target.id,options});rect.top-=options.top;rect.bottom-=options.top;c.window.scrollY+=options.top;};
+ c.window.scrollTo=options=>{calls.push({type:'restore-scroll',options:{...options}});const move=options.top-c.window.scrollY;rect.top-=move;rect.bottom-=move;c.window.scrollX=options.left;c.window.scrollY=options.top;};
+ const store={async saveCheckpoint(jobId,{view}){saves.push({jobId,scrollX:view.scrollX,scrollY:view.scrollY});calls.push({type:'checkpoint',scrollY:view.scrollY});throw new Error('Injected final view capture failure');},async historyList(jobId){return {jobId,entries:[],sessions:{},redo:[],undoId:null,activeId:null};},async listRecoverableProjects(){return [];},async pendingBackupImportIdentity(){return null;}};
+ const project={job:{JOB_ID:'FOCUS-FINAL-CAPTURE-FAILURE-'+outcome},revision:5,projectSha256:'FINAL-CAPTURE-FAILURE-PROJECT',historyActivationId:null,activeView:'Workflow',activeStage:9};
+ c.history={state:null};const leave=c.ui.viewCapture.enter({project,store});let release=()=>{},actionDone=true;
+ try{
+  report.hidden=true;
+  const held=new Promise(resolve=>release=resolve);
+  const action=c.ui.run('Advancing stage',async()=>{c.ui.focus(target);if(committed)c.ui.viewCapture.commit();await held;});actionDone=false;action.finally(()=>{actionDone=true;});await paint();
+  assert.equal(calls.some(call=>['scroll','residual-scroll','restore-scroll','focus','checkpoint'].includes(call.type)),false,'FINAL_CAPTURE_FAILURE_SCROLL_ORACLE: placement, focus or the final capture preceded the end of the operation.');
+  release();await finished(action,'FINAL_CAPTURE_FAILURE_SCROLL_ORACLE: the action did not finish.');await paint();
+  const checkpoint=calls.findIndex(call=>call.type==='checkpoint'),restores=calls.filter(call=>call.type==='restore-scroll'),focused=calls.filter(call=>call.type==='focus').at(-1);
+  assert.equal(saves.length,1,'The action must attempt its final view capture once.');
+  assert.ok(checkpoint>0&&calls.slice(0,checkpoint).some(call=>call.type==='scroll'&&call.id===target.id),'The fixture must place the clipped next action before the final capture.');
+  assert.equal(saves[0].scrollY,String(start.top+distance),'The failed final capture must have read the placed position.');
+  if(committed){
+   assert.equal(restores.length,0,'FINAL_CAPTURE_COMMITTED_PLACEMENT_ORACLE: a known commit undid the placement its next action needs.');
+   assert.equal(c.window.scrollY,start.top+distance,'FINAL_CAPTURE_COMMITTED_PLACEMENT_ORACLE: a known commit moved the page away from the placed next action.');
+   assert.equal(focused?.id,target.id,'FINAL_CAPTURE_COMMITTED_PLACEMENT_ORACLE: a known commit lost its deferred next action.');
+   assert.match(report.textContent,/^Project change saved, but the final draft and view could not be saved\./,'The known-commit branch must show the post-commit recovery warning.');
+  }else{
+   assert.equal(restores.length,1,'FINAL_CAPTURE_FAILURE_SCROLL_ORACLE: a capture that failed without a commit left the page at the unsaved pre-capture placement.');
+   assert.deepEqual(restores[0].options,{left:start.left,top:start.top,behavior:'instant'},'FINAL_CAPTURE_FAILURE_SCROLL_ORACLE: the page did not return instantly to the pre-placement position.');
+   assert.equal(c.window.scrollX,start.left);assert.equal(c.window.scrollY,start.top,'FINAL_CAPTURE_FAILURE_SCROLL_ORACLE: the page did not return to where the operation left it.');
+   assert.ok(calls.indexOf(restores[0])>checkpoint&&calls.indexOf(restores[0])<calls.indexOf(focused),'FINAL_CAPTURE_FAILURE_SCROLL_ORACLE: the restore must follow the failed capture and precede the error focus.');
+   assert.ok(calls.slice(calls.indexOf(restores[0])+1).every(call=>!['scroll','residual-scroll'].includes(call.type)),'FINAL_CAPTURE_FAILURE_SCROLL_ORACLE: the page moved again after returning to the pre-placement position.');
+   assert.equal(focused?.id,'operation-error','FINAL_CAPTURE_FAILURE_FOCUS_ORACLE: the failed final capture did not focus its error report.');
+   assert.equal(focused.disabled,false);assert.equal(focused.options?.preventScroll,true,'FOCUS_NATIVE_SCROLL_ORACLE: error focus reintroduced implicit scrolling.');
+   assert.equal(report.hidden,false);assert.equal(report.textContent,'Injected final view capture failure','The intended final capture boundary must fail, rather than fixture setup.');
+  }
+  cases.push({caseId:'FOCUS-FINAL-CAPTURE-FAILURE-RESTORES-SCROLL',outcome,result:'PASS',actualBrowser:false,startScrollY:start.top,placedScrollY:saves[0].scrollY,endScrollY:c.window.scrollY,restores:restores.length});
+ }catch(error){retryFailures.push(String(error.stack||error));cases.push({caseId:'FOCUS-FINAL-CAPTURE-FAILURE-RESTORES-SCROLL',outcome,result:'FAIL',error:String(error.stack||error)});}
+ finally{release();for(let i=0;i<64&&!actionDone;i++){await paint();await new Promise(resolve=>setImmediate(resolve));}leave();delete c.history;c.ui.announce('Final capture failure case finished');report.hidden=true;c.window.scrollX=0;c.window.scrollY=0;frames.length=0;calls.length=0;nodes.delete('#next-required-action');delete c.window.scrollBy;delete c.window.scrollTo;}
 }
 c.ui.fail(new Error('Disposable storage failure'));assert.equal(nodes.get('#operation-error').hidden,false,'OPERATION_ERROR_ORACLE: a failed operation must have a visible report independent of optional tutorial content.');assert.equal(nodes.get('#operation-error').textContent,'Disposable storage failure');assert.equal(nodes.get('#app-live-status').textContent,'Disposable storage failure');c.ui.announce('Retry started');assert.equal(nodes.get('#operation-error').hidden,true);cases.push({caseId:'FOCUS-VISIBLE-FAILURE-AND-RETRY',result:'PASS'});
 console.log(JSON.stringify({schema:'closed-loop-focus-observations/1',productionSourceSha256:createHash('sha256').update(source).digest('hex'),synthetic:true,actualBrowser:false,scope:'Production focus and shared operation lifecycle with controlled geometry/frame boundaries. These cases do not establish physical device acceptance or every cross-stage forward-scroll postcondition.',cases},null,2));
