@@ -15,7 +15,8 @@ export async function verifyCredentialHistoryParts({sourceOverrides={}}={}){
   engine.ensureShape(project);engine.recalculate(project);
   project=await store.writeProject(project,{expectedProjectRevision:0,incrementRevision:false,createOnly:true});
   const jobId=project.job.JOB_ID,history=await store.metaGet('recovery:'+jobId),entry=history.entries.find(row=>row.id===history.activeId);
-  const part=entry.projectParts?.entries.find(row=>JSON.stringify(row.path)===JSON.stringify(['vendorExtension','retained']));
+  // The History state names the parts by digest; the snapshot record keeps them.
+  const record=await store.metaGet('recovery:'+jobId+':snapshot:'+entry.id),part=record?.projectParts?.entries.find(row=>JSON.stringify(row.path)===JSON.stringify(['vendorExtension','retained']));
   async function leaveInHistory(){const next=copy(project);delete next.vendorExtension;engine.recalculate(next);project=await store.writeProject(next,{expectedProjectRevision:project.revision});assert.equal(project.vendorExtension,undefined);}
   return {r,store,jobId,entry,part,leaveInHistory};
  }

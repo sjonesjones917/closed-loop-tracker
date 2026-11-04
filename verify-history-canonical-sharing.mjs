@@ -241,7 +241,9 @@ assert.deepEqual(frozenRows(),beforeRejected,'An invalid retained version cannot
 const corrected=await rejected.store.importPackage(backup);assert.equal(corrected.job.JOB_ID,p.job.JOB_ID);
 cases.push({caseId:'HISTORY-IMPORT-SHARED-SIZE-CONFLICT',result:'PASS',failedImportPreservesAllRows:true,correctedImport:'PASS'});
 
-const state=await store.metaGet('recovery:'+p.job.JOB_ID),part=state.entries.flatMap(entry=>entry.projectParts?.entries||[]).find(part=>JSON.stringify(part.path)===JSON.stringify(['job','EXACT_USER_OBJECTIVE_VERBATIM']));
+// The History state names each complete version's parts by digest; the
+// immutable snapshot record keeps the parts themselves.
+const state=await store.metaGet('recovery:'+p.job.JOB_ID),records=await Promise.all(state.entries.map(entry=>store.metaGet('recovery:'+p.job.JOB_ID+':snapshot:'+entry.id))),part=records.flatMap(record=>record?.projectParts?.entries||[]).find(part=>JSON.stringify(part.path)===JSON.stringify(['job','EXACT_USER_OBJECTIVE_VERBATIM']));
 assert.ok(part,'The retained input must have exact-byte custody.');
 const key='recovery:'+p.job.JOB_ID+':bytes:'+part.sha256,original=r.rows.get('meta').get(key),before=copy(await store.readProject(p.job.JOB_ID)),beforeHistory=copy(await store.historyList(p.job.JOB_ID));
 for(const failure of ['missing','corrupt']){
