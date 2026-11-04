@@ -338,6 +338,27 @@ emit('HISTORY-REFERENCE-LEGACY-INLINE-BACKUP',{legacyBytes:legacyBytes.size,lega
   const u=copyOf(w),ustate=stateOf(u),secondPart=recordOf(u,secondRoot).projectParts.entries.find(part=>!recordOf(u,firstRoot).projectParts.entries.some(other=>other.sha256===part.sha256));ustate.retainedFileBytes-=ustate.files[secondPart.sha256].byteSize;delete ustate.files[secondPart.sha256];
   await refused(u,()=>u.store.saveCheckpoint(jobId,{expectedProjectRevision:sp.revision,view:draft(11,u)}),'HISTORY_VERSION_MISMATCH','A retained project content dependency is unavailable.','HISTORY_STATE_FORM_UNRETAINED_PART_ORACLE reuse');
   emit('HISTORY-STATE-FORM-UNRETAINED-PART',{read:notRetained,restore:notRetained,export:notRetained,reuse:'A retained project content dependency is unavailable.',unrelatedRootReadable:true});}
+ // N11: an immutable record rewritten into the state form (its parts list
+ // replaced by that list's exact digest, body untouched) is never a stored
+ // record. Reads, restore and root reuse refuse it with the existing codes and
+ // messages, for a state-form and a legacy inline History; nothing is written.
+ {const forge=(t,id)=>{const row=t.rows.get('meta').get(recordKey(id)),forged={};for(const key of Object.keys(row.value))if(key==='projectParts')forged.projectPartsSha256=sha(Buffer.from(json(row.value.projectParts)));else forged[key]=row.value[key];row.value=forged;};
+  const identity='Stored snapshot identity does not match the selected retained version.',bodyFailure='A retained project body failed exact-byte verification. The new checkpoint was not committed.';
+  for(const form of ['state','legacy']){
+   const prepare=()=>{const t=copyOf(w);if(form==='legacy')inflate(t,[firstRoot,secondRoot]);return t;};
+   {const t=prepare();forge(t,firstRoot);
+    await refused(t,()=>t.store.readHistoryView(jobId,firstView),'HISTORY_VERSION_MISMATCH',identity,'HISTORY_STATE_FORM_FORGED_RECORD_ORACLE '+form+' read view');
+    await refused(t,()=>t.store.readHistoryView(jobId,firstRoot),'HISTORY_VERSION_MISMATCH',identity,'HISTORY_STATE_FORM_FORGED_RECORD_ORACLE '+form+' read root');
+    await refused(t,()=>t.store.restoreCheckpoint(jobId,firstRoot,{expectedProjectRevision:sp.revision}),'HISTORY_VERSION_MISMATCH',identity,'HISTORY_STATE_FORM_FORGED_RECORD_ORACLE '+form+' restore');
+    assert.deepEqual(t.copy(await t.store.readHistoryView(jobId,secondView)),draft(7,t),'HISTORY_STATE_FORM_FORGED_RECORD_UNRELATED_ROOT_ORACLE '+form);}
+   // A legacy inline entry whose part is unretained is refused at conversion (N5).
+   for(const dropped of form==='state'?[false,true]:[false]){const t=prepare();forge(t,secondRoot);
+    if(dropped){const state=stateOf(t),part=recordOf(w,secondRoot).projectParts.entries.find(part=>!recordOf(w,firstRoot).projectParts.entries.some(other=>other.sha256===part.sha256));state.retainedFileBytes-=state.files[part.sha256].byteSize;delete state.files[part.sha256];}
+    const generation=stateOf(t).generation;
+    await refused(t,()=>t.store.saveCheckpoint(jobId,{expectedProjectRevision:sp.revision,view:draft(21,t)}),'HISTORY_SNAPSHOT_INTEGRITY_FAILED',bodyFailure,'HISTORY_STATE_FORM_FORGED_RECORD_ORACLE '+form+' reuse'+(dropped?' with an unretained part':''));
+    assert.equal(stateOf(t).generation,generation,'HISTORY_STATE_FORM_FORGED_RECORD_ORACLE: generation unchanged');}
+  }
+  emit('HISTORY-STATE-FORM-FORGED-RECORD',{forms:['state','legacy'],read:'HISTORY_VERSION_MISMATCH',restore:'HISTORY_VERSION_MISMATCH',reuse:'HISTORY_SNAPSHOT_INTEGRITY_FAILED',reuseWithUnretainedPart:'HISTORY_SNAPSHOT_INTEGRITY_FAILED',unrelatedRootReadable:true});}
  // N5: the first write converts legacy inline entries; a corrupted inline
  // entry is refused, never converted, and nothing is written.
  {const t=copyOf(w);inflate(t,[firstRoot,secondRoot]);const legacyState=json(stateOf(t));await readAll(t);

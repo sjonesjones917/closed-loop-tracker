@@ -2238,6 +2238,13 @@ function historyStateForm(descriptor){
   for(const key of Object.keys(descriptor))Object.defineProperty(entry,key==='projectParts'?'projectPartsSha256':key,{value:key==='projectParts'?hash.sha256Value(descriptor.projectParts):descriptor[key],enumerable:true,writable:true,configurable:true});
   return entry;
 }
+// An immutable snapshot record always keeps its complete descriptor. A record
+// that names its parts by digest is never a stored record (null), so it can
+// never compare equal to a state entry in state form.
+function historyRecordForm(record){
+  if(record&&typeof record==='object'&&Object.hasOwn(record,'projectPartsSha256'))return null;
+  return historyStateForm(record);
+}
 function historyStateEntry(descriptor){
   const entry=historyStateForm(descriptor);
   if(!entry||Object.hasOwn(entry,'projectPartsSha256')&&!/^[a-f0-9]{64}$/.test(entry.projectPartsSha256))throw storageError('Saved project content references are unsupported.','HISTORY_VERSION_MISMATCH');
@@ -2510,7 +2517,7 @@ async function prepareHistoryCommit(next,prior,{label=null,view=null,preserveAct
       if(!retained?.blob)throw storageError('A retained project body is unavailable. The new checkpoint was not committed.','HISTORY_PROJECT_REFERENCE_UNAVAILABLE');
       const {blob,...descriptor}=retained;
       const bytePrimitive=checkpointBytePrimitives(blob);
-      if(hash.sha256Value(historyStateForm(descriptor))!==hash.sha256Value(historyStateForm(usableBase))||blob.size!==usableBase.byteSize||await hash.sha256Bytes(blob)!==usableBase.sha256)throw storageError('A retained project body failed exact-byte verification. The new checkpoint was not committed.','HISTORY_SNAPSHOT_INTEGRITY_FAILED');
+      if(hash.sha256Value(historyRecordForm(descriptor))!==hash.sha256Value(historyStateForm(usableBase))||blob.size!==usableBase.byteSize||await hash.sha256Bytes(blob)!==usableBase.sha256)throw storageError('A retained project body failed exact-byte verification. The new checkpoint was not committed.','HISTORY_SNAPSHOT_INTEGRITY_FAILED');
       const rootBytes=checkpointBytePrimitivesMatch(bytePrimitive)?{blob,byteSize:usableBase.byteSize,sha256:usableBase.sha256,primitive:bytePrimitive}:null;if(rootBytes)checkpointByteObservations.add(rootBytes);
       const reuse=rootPreparation&&usableRootContinuation(rootPreparation.read.retainedRoot,rootPreparation.read,usableBase)?rootPreparation.read.retainedRoot:null;
       // A fresh checkpoint decode verifies these same retained bytes below, and
@@ -2712,7 +2719,7 @@ async function retainedCheckpointReaders(jobId,checkpointId,state=null){
     const retained=byId.get(id);
     if(!retained)throw storageError('A saved version depends on an unretained project body.','HISTORY_VERSION_MISMATCH');
     const entry=await metaGet(snapshotKey(jobId,id));if(!entry)return null;
-    const {blob,...record}=entry,descriptor=historyStateForm(record),expected=historyStateForm(retained);
+    const {blob,...record}=entry,descriptor=historyRecordForm(record),expected=historyStateForm(retained);
     if(entry.id!==id||hash.sha256Value(descriptor)!==hash.sha256Value(expected))throw storageError('Stored snapshot identity does not match the selected retained version.','HISTORY_VERSION_MISMATCH');
     if(Object.hasOwn(retained,'projectPartsSha256'))assertHistoryPartsRetained(manifest,record.projectParts);
     return entry;
