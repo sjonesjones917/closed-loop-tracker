@@ -12,7 +12,7 @@ globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
 for(const file of ['workbook.js','hash.js','workflow-schema.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
 const schema=globalThis.closedLoopWorkflowSchema;
 const DEFERRED_MATRIX_TIMEOUT_MS=330*60*1000;
-const CROSS_RUN_OWNER_TIMEOUT_MS=20*60*1000;
+const CROSS_RUN_OWNER_TIMEOUT_MS=30*60*1000;
 assert(schema,'workflow schema did not load');
 const source=fs.readFileSync('workflow-schema.js','utf8');
 // Historical receipts retain their exact registered output shape. The current
@@ -35,7 +35,9 @@ if(!currentDeferredMatrixReceipt())await checkedVerifier(process.execPath,[fileU
 await import('./verify-ten-independent-runs.mjs');
 await checkedVerifier(process.execPath,[fileURLToPath(new URL('./verify-independent-run-verification.mjs',import.meta.url))],{stdio:'inherit',timeout:AGGREGATE_TIMEOUT_MS});
 // Prepare the complete package producer outside the comparison owner's own
-// unchanged twenty-minute budget. The enclosing residual/CI budget is unchanged.
+// thirty-minute budget. The comparison owner itself takes about 15 minutes on
+// a hosted runner; the bound leaves room for a slower runner and still fails
+// a stalled child. The enclosing residual/CI budget is unchanged.
 // Existing invalid receipts refuse admission; only an absent receipt executes.
 await withPreparedComparisonPackageProof(async()=>{
 await checkedVerifier(process.execPath,[fileURLToPath(new URL('./verify-cross-run-comparison.mjs',import.meta.url))],{stdio:'inherit',timeout:CROSS_RUN_OWNER_TIMEOUT_MS});
