@@ -10,7 +10,11 @@ function element(id,rect={top:120,bottom:164,left:0,right:300,width:300,height:4
 for(const id of ['project-picker','new-project','import-project','import-file','app','app-operation-status','operation-label','app-live-status','operation-error','save-prompt'])nodes.set('#'+id,element(id));
 nodes.get('#operation-error').tagName='DIV';nodes.get('#operation-error').hidden=true;
 const c=createVerifierRuntime({console,Event,dispatchEvent(){},URL,URLSearchParams,Blob,TextEncoder,TextDecoder,crypto:globalThis.crypto,structuredClone,setTimeout,clearTimeout,queueMicrotask,requestAnimationFrame:fn=>frames.push(fn),innerHeight:852,innerWidth:393,window:{innerHeight:852,innerWidth:393,scrollX:0,scrollY:0},CSS:{escape:value=>value},document:{currentScript:null,querySelector:s=>nodes.get(s)||null,querySelectorAll:s=>s==='[data-human-answer]'?humanFields:[...nodes.values()].filter(x=>x.tagName==='BUTTON'),dispatchEvent(){}}});
-vm.runInContext(source.slice(0,source.indexOf('globalThis.closedLoopAppReady=false;'))+`globalThis.ui={native:async fixture=>{
+vm.runInContext(source.slice(0,source.indexOf('globalThis.closedLoopAppReady=false;'))+`const productionViewCapture=captureCurrentView;globalThis.ui={viewCapture:{enter:fixture=>{
+  const previous={current,projectStore,captureCurrentView,savedDraftView,savedViewSignature,displayedHistoryEntryId,historyState,recoveryProjects,quarantinedProjects,responseStagingRecovery,responseStagingRecoveryReadError};
+  current=fixture.project;projectStore=fixture.store;captureCurrentView=productionViewCapture;savedDraftView=null;savedViewSignature=null;displayedHistoryEntryId=null;
+  return ()=>{({current,projectStore,captureCurrentView,savedDraftView,savedViewSignature,displayedHistoryEntryId,historyState,recoveryProjects,quarantinedProjects,responseStagingRecovery,responseStagingRecoveryReadError}=previous);};
+ },capture:()=>captureCurrentView()},contentTop:(control,options)=>visibleContentTop(control,options),native:async fixture=>{
  const previous={current,engine,schema,nativeProductTests,nativeTestInputs,persistReplacement,render,runtime:globalThis.closedLoopTestRuntime};
  current=fixture.project;engine=fixture.engine;schema=globalThis.closedLoopWorkflowSchema;nativeProductTests=fixture.select;nativeTestInputs=fixture.inputs;persistReplacement=async (next,options)=>{await fixture.commit(next,options);current=next;};render=fixture.render;globalThis.closedLoopTestRuntime=fixture.runtime;
  try{return await runOperatorAction('Running registered application tests',()=>runNativeProductTests(Number(current.activeStage)));}finally{({current,engine,schema,nativeProductTests,nativeTestInputs,persistReplacement,render}=previous);globalThis.closedLoopTestRuntime=previous.runtime;}
@@ -257,6 +261,53 @@ for(const stage of [22,24])for(const count of [1,3])for(const outcome of ['succe
   cases.push({caseId:'FOCUS-NATIVE-RESULT-COMPLETION',stage,count,outcome,result:'PASS',actualBrowser:false,executed,commits,renders});
  }catch(error){retryFailures.push(String(error.stack||error));cases.push({caseId:'FOCUS-NATIVE-RESULT-COMPLETION',stage,count,outcome,result:'FAIL',error:String(error.stack||error)});}
  finally{releaseWorker();releaseCommit();frames.length=0;calls.length=0;nodes.delete('#next-required-action');delete c.window.scrollBy;}
+}
+// The deferred target's scroll placement precedes the action's final view
+// capture, using the production capture owner. That capture saves the placed
+// position, focus still follows unlock, and the capture after a later scroll
+// event (preserveView) finds the view unchanged and saves no checkpoint. The
+// fixed progress banner, hidden after unlock, cannot change that placement.
+async function finished(promise,message){let done=false;promise.then(()=>{done=true;},()=>{done=true;});await checkpointPhase(()=>done,message);return promise;}
+for(const variant of ['forward-clipped-next-action','retry-under-progress-banner']){
+ frames.length=0;calls.length=0;c.window.scrollY=0;c.ui.announce('Starting final capture placement');
+ const banner=variant==='retry-under-progress-banner',status=nodes.get('#app-operation-status'),statusRect=status.getBoundingClientRect,saves=[];
+ const rect=banner?{top:30,bottom:74,left:0,right:300,width:300,height:44}:{top:920,bottom:1121,left:10,right:383,width:373,height:201};
+ const target=element(banner?'banner-covered-retry':'next-required-action',rect);if(!banner){target.tagName='DIV';nodes.set('#next-required-action',target);}
+ target.scrollIntoView=options=>{const distance=rect.bottom>c.innerHeight?rect.bottom-c.innerHeight:Math.min(0,rect.top);calls.push({type:'scroll',id:target.id,options});rect.top-=distance;rect.bottom-=distance;c.window.scrollY+=distance;};
+ c.window.scrollBy=options=>{calls.push({type:'residual-scroll',id:target.id,options});rect.top-=options.top;rect.bottom-=options.top;c.window.scrollY+=options.top;};
+ const store={async saveCheckpoint(jobId,{view}){saves.push({jobId,scrollY:view.scrollY});calls.push({type:'checkpoint',scrollY:view.scrollY});return 'FINAL-CAPTURE-CHECKPOINT-'+saves.length;},async historyList(jobId){return {jobId,entries:[],sessions:{},redo:[],undoId:null,activeId:'FINAL-CAPTURE-CHECKPOINT-'+saves.length};},async listRecoverableProjects(){return [];},async pendingBackupImportIdentity(){return null;}};
+ const project={job:{JOB_ID:'FOCUS-FINAL-CAPTURE-'+variant},revision:5,projectSha256:'FINAL-CAPTURE-PROJECT',historyActivationId:null,activeView:'Workflow',activeStage:9};
+ c.history={state:null};const leave=c.ui.viewCapture.enter({project,store});let release=()=>{},actionDone=true;
+ try{
+  nodes.get('#operation-error').hidden=true;
+  if(banner){status.getBoundingClientRect=()=>({top:0,bottom:64,left:0,right:393,width:393,height:64});c.getComputedStyle=node=>({position:node===status?'fixed':'static',top:'0px',visibility:'visible',display:'block'});}
+  const held=new Promise(resolve=>release=resolve);
+  const action=c.ui.run(banner?'Retrying':'Advancing stage',async()=>{c.ui.focus(target,banner?{reason:'RETRY'}:undefined);await held;});actionDone=false;action.finally(()=>{actionDone=true;});await paint();
+  if(banner){
+   await new Promise(resolve=>setTimeout(resolve,1550));
+   assert.equal(status.hidden,false,'The fixture must show the delayed progress banner during the action.');
+   assert.equal(c.ui.contentTop(target),64,'The fixture banner must cover the target while it is visible.');
+   assert.equal(c.ui.contentTop(target,{excludeOperationStatus:true}),0);
+  }
+  assert.equal(calls.some(call=>['scroll','residual-scroll','focus','checkpoint'].includes(call.type)),false,'FINAL_CAPTURE_PLACEMENT_ORACLE: placement, focus or the final capture preceded the end of the operation.');
+  release();await finished(action,'FINAL_CAPTURE_PLACEMENT_ORACLE: the action did not finish.');await paint();
+  const checkpoint=calls.findIndex(call=>call.type==='checkpoint'),focus=calls.findIndex(call=>call.type==='focus'&&call.id===target.id),moves=calls.filter(call=>['scroll','residual-scroll'].includes(call.type));
+  assert.equal(saves.length,1,'The action must save its final view once.');
+  assert.ok(checkpoint>=0&&focus>checkpoint,'FINAL_CAPTURE_PLACEMENT_ORACLE: focus must still wait for the final capture and unlock.');
+  assert.equal(calls[focus].disabled,false);assert.equal(calls[focus].options?.preventScroll,true,'FOCUS_NATIVE_SCROLL_ORACLE: deferred focus reintroduced implicit scrolling.');
+  assert.equal(saves[0].scrollY,String(c.window.scrollY),'FINAL_CAPTURE_PLACEMENT_ORACLE: the final capture did not hold the position the deferred focus left.');
+  assert.ok(calls.slice(checkpoint).every(call=>!['scroll','residual-scroll'].includes(call.type)),'FINAL_CAPTURE_PLACEMENT_ORACLE: the page moved after the final capture.');
+  if(banner)assert.equal(moves.length,0,'FINAL_CAPTURE_BANNER_ORACLE: the progress banner, hidden after unlock, moved the page for an otherwise visible target.');
+  else{assert.ok(moves.length>0&&calls.indexOf(moves[0])<checkpoint,'FINAL_CAPTURE_PLACEMENT_ORACLE: the clipped next action was not placed before the final capture.');assert.ok(rect.top>=0&&rect.bottom<=c.innerHeight,'The placed next action must be visible.');}
+  // preserveView's capture after the action's later scroll event.
+  await c.ui.viewCapture.capture();
+  assert.equal(saves.length,1,'FINAL_CAPTURE_SKIP_ORACLE: a scroll-triggered capture after the action saved the unchanged view again.');
+  // Control: a genuine later scroll is still saved, so the skip discriminates.
+  c.window.scrollY+=40;await c.ui.viewCapture.capture();
+  assert.equal(saves.length,2,'FINAL_CAPTURE_SKIP_ORACLE: a changed scroll position was not saved.');assert.equal(saves[1].scrollY,String(c.window.scrollY));
+  cases.push({caseId:'FOCUS-FINAL-CAPTURE-CARRIES-PLACEMENT',variant,result:'PASS',actualBrowser:false,savedScrollY:saves[0].scrollY,moves:moves.length,checkpoints:saves.length});
+ }catch(error){retryFailures.push(String(error.stack||error));cases.push({caseId:'FOCUS-FINAL-CAPTURE-CARRIES-PLACEMENT',variant,result:'FAIL',error:String(error.stack||error)});}
+ finally{release();for(let i=0;i<64&&!actionDone;i++){await paint();await new Promise(resolve=>setImmediate(resolve));}leave();delete c.history;delete c.getComputedStyle;status.getBoundingClientRect=statusRect;c.window.scrollY=0;frames.length=0;calls.length=0;if(!banner)nodes.delete('#next-required-action');delete c.window.scrollBy;}
 }
 c.ui.fail(new Error('Disposable storage failure'));assert.equal(nodes.get('#operation-error').hidden,false,'OPERATION_ERROR_ORACLE: a failed operation must have a visible report independent of optional tutorial content.');assert.equal(nodes.get('#operation-error').textContent,'Disposable storage failure');assert.equal(nodes.get('#app-live-status').textContent,'Disposable storage failure');c.ui.announce('Retry started');assert.equal(nodes.get('#operation-error').hidden,true);cases.push({caseId:'FOCUS-VISIBLE-FAILURE-AND-RETRY',result:'PASS'});
 console.log(JSON.stringify({schema:'closed-loop-focus-observations/1',productionSourceSha256:createHash('sha256').update(source).digest('hex'),synthetic:true,actualBrowser:false,scope:'Production focus and shared operation lifecycle with controlled geometry/frame boundaries. These cases do not establish physical device acceptance or every cross-stage forward-scroll postcondition.',cases},null,2));

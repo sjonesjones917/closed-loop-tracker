@@ -176,6 +176,9 @@ function runOperatorAction(label,operation,{retainsView=false}={}){
     finally{
       // Required view persistence belongs to the operation, including its lock,
       // loading interval, failure outcome and measured end-to-end duration.
+      // The deferred focus target is placed first, so this capture already
+      // holds the scroll position that focus leaves after unlocking.
+      if(actionFocusTarget)placeActionFocusBeforeCapture(pending);
       try{if(operatorActionInFlight===pending&&(current?.historyActivationId||null)===pending.activationId)await captureCurrentView();}
       catch(error){
         const knownCommit=!pending.failed&&confirmedCurrentActionCommit();
@@ -194,17 +197,46 @@ function runOperatorAction(label,operation,{retainsView=false}={}){
   })();
   return pending.promise;
 }
-function visibleContentTop(control){
+function visibleContentTop(control,{excludeOperationStatus=false}={}){
  if(typeof globalThis.getComputedStyle!=='function'||globalThis.getComputedStyle(control).position==='fixed')return 0;
  let top=0;
  for(const selector of ['#app-operation-status','#operation-error','.app-header','.view-tabs','#next-required-action']){
+  if(excludeOperationStatus&&selector==='#app-operation-status')continue;
   const node=$(selector);if(!node||node.hidden||node===control||node.contains?.(control)||control.contains?.(node))continue;
   const style=globalThis.getComputedStyle(node);if(!['fixed','sticky'].includes(style.position)||style.visibility==='hidden'||style.display==='none')continue;
   const rect=node.getBoundingClientRect(),inset=Number.parseFloat(style.top)||0;if(rect.top<=Math.max(top,inset)+1&&rect.bottom>top)top=rect.bottom;
  }
  return Math.max(0,Math.ceil(top));
 }
-function focusAfterAction(control,{reason='FORWARD'}={}){if(!control)return;if(operatorActionInFlight){actionFocusTarget=control;operatorActionInFlight.focusReason=reason;return;}const sequence=++focusPlacementSequence;for(let parent=control.parentElement;parent;parent=parent.parentElement)if(parent.tagName==='DETAILS')parent.open=true;control.focus({preventScroll:true});const allowUp=reason==='CORRECTION'||reason==='RETURN'||reason==='RETRY',viewportHeight=()=>Number(globalThis.innerHeight||document.documentElement?.clientHeight||0),place=()=>{if(sequence!==focusPlacementSequence||!control.isConnected)return;const rect=control.getBoundingClientRect?.(),height=viewportHeight(),below=Boolean(rect&&height&&rect.bottom>height),above=Boolean(rect&&rect.top<visibleContentTop(control));if(below||(above&&allowUp)){control.scrollIntoView?.({block:'nearest',inline:'nearest',behavior:'instant'});const placed=control.getBoundingClientRect?.();if(placed&&height&&placed.bottom>height&&placed.height<=height)window.scrollBy?.({top:Math.ceil(placed.bottom-height),behavior:'instant'});if(placed&&placed.top<visibleContentTop(control)&&allowUp)window.scrollBy?.({top:Math.floor(placed.top-visibleContentTop(control)),behavior:'instant'});}},geometry=()=>{if(sequence!==focusPlacementSequence||!control.isConnected)return null;const rect=control.getBoundingClientRect?.(),height=viewportHeight();return rect&&height?[rect.top,rect.bottom,rect.height,height].join('|'):null;};let previousGeometry=null,stableFrames=0,frameCount=0;place();const settle=()=>{if(sequence!==focusPlacementSequence||!control.isConnected)return;place();const currentGeometry=geometry();stableFrames=currentGeometry!==null&&currentGeometry===previousGeometry?stableFrames+1:0;previousGeometry=currentGeometry;frameCount+=1;if(frameCount<FOCUS_LAYOUT_QUIESCENCE_MAX_FRAMES&&(frameCount<FOCUS_LAYOUT_QUIESCENCE_MIN_FRAMES||stableFrames<FOCUS_LAYOUT_QUIESCENCE_STABLE_FRAMES))requestAnimationFrame(settle);};requestAnimationFrame(settle);}
+function focusViewportHeight(){return Number(globalThis.innerHeight||document.documentElement?.clientHeight||0);}
+function focusMayScrollUp(reason){return reason==='CORRECTION'||reason==='RETURN'||reason==='RETRY';}
+// One placement pass: expose a clipped target with instant scrolling. Only an
+// explicit return (CORRECTION, RETURN, RETRY) may move the document upward.
+function placeFocusTarget(control,{allowUp=false,excludeOperationStatus=false}={}){
+ const contentTop=()=>visibleContentTop(control,{excludeOperationStatus}),rect=control.getBoundingClientRect?.(),height=focusViewportHeight(),below=Boolean(rect&&height&&rect.bottom>height),above=Boolean(rect&&rect.top<contentTop());
+ if(!below&&!(above&&allowUp))return;
+ control.scrollIntoView?.({block:'nearest',inline:'nearest',behavior:'instant'});
+ const placed=control.getBoundingClientRect?.();
+ if(placed&&height&&placed.bottom>height&&placed.height<=height)window.scrollBy?.({top:Math.ceil(placed.bottom-height),behavior:'instant'});
+ if(placed&&placed.top<contentTop()&&allowUp)window.scrollBy?.({top:Math.floor(placed.top-contentTop()),behavior:'instant'});
+}
+// Before the action's final view capture, run its deferred focus target's
+// placement pass so the capture records the scroll position that focus will
+// keep; a later scroll event then finds that view already saved. Focus itself
+// still waits for unlock, because the action keeps its controls disabled. The
+// fixed progress banner is ignored: it is hidden once the action unlocks, so
+// this pass computes what the post-unlock pass will, which then finds the
+// target placed. A target inside a closed disclosure is left to that pass,
+// which opens it. Placement here is advisory and never holds the action lock.
+function placeActionFocusBeforeCapture(pending){
+ const control=actionFocusTarget;
+ if(operatorActionInFlight!==pending||(current?.historyActivationId||null)!==pending.activationId||historyRestoreController||!control?.isConnected)return;
+ try{
+  for(let parent=control.parentElement;parent;parent=parent.parentElement)if(parent.tagName==='DETAILS'&&!parent.open)return;
+  placeFocusTarget(control,{allowUp:focusMayScrollUp(pending.focusReason||'FORWARD'),excludeOperationStatus:true});
+ }catch{}
+}
+function focusAfterAction(control,{reason='FORWARD'}={}){if(!control)return;if(operatorActionInFlight){actionFocusTarget=control;operatorActionInFlight.focusReason=reason;return;}const sequence=++focusPlacementSequence;for(let parent=control.parentElement;parent;parent=parent.parentElement)if(parent.tagName==='DETAILS')parent.open=true;control.focus({preventScroll:true});const allowUp=focusMayScrollUp(reason),place=()=>{if(sequence!==focusPlacementSequence||!control.isConnected)return;placeFocusTarget(control,{allowUp});},geometry=()=>{if(sequence!==focusPlacementSequence||!control.isConnected)return null;const rect=control.getBoundingClientRect?.(),height=focusViewportHeight();return rect&&height?[rect.top,rect.bottom,rect.height,height].join('|'):null;};let previousGeometry=null,stableFrames=0,frameCount=0;place();const settle=()=>{if(sequence!==focusPlacementSequence||!control.isConnected)return;place();const currentGeometry=geometry();stableFrames=currentGeometry!==null&&currentGeometry===previousGeometry?stableFrames+1:0;previousGeometry=currentGeometry;frameCount+=1;if(frameCount<FOCUS_LAYOUT_QUIESCENCE_MAX_FRAMES&&(frameCount<FOCUS_LAYOUT_QUIESCENCE_MIN_FRAMES||stableFrames<FOCUS_LAYOUT_QUIESCENCE_STABLE_FRAMES))requestAnimationFrame(settle);};requestAnimationFrame(settle);}
 function bindAction(selector,operation,label,{capture,retainsView=false}={}){
   const control=typeof selector==='string'?$(selector):selector;if(!control)return;
   control.onclick=()=>{const input=capture?.();return runOperatorAction(label||`Working: ${control.textContent.trim()||'current action'}`,()=>operation(input),{retainsView});};
@@ -1199,7 +1231,11 @@ async function exportStageFiles(continuation=null){return promptExport(async (re
   const pkg=reusedReview?await readAutoHandoffInput(()=>projectStore.createExecutionPackage(args||handoffPackageArguments(record))):await projectStore.createExecutionPackage(args||handoffPackageArguments(record));if(reusedReview&&pkg?.[autoHandoffDenial])return pkg;
   if(current.job.JOB_ID!==owner.job.JOB_ID||current.activeStage!==stage||Number(current.revision||0)!==revision)throw new Error('The project changed while preparing files. Export the current stage again.');
   assertHandoffSelection(origin);downloadBlob(pkg.blob,pkg.filename);await recordCompletedHandoffTransfer(record,'The stage package download started');handoffReview=null;announce('Stage files ready for '+review.authorization.disclosure.recipient+' via '+review.authorization.disclosure.provider+'. Open the ZIP and send only its files.');render();
-  requestAnimationFrame(()=>{const next=$('#response-heading');next?.focus({preventScroll:true});if(next&&next.getBoundingClientRect().bottom>innerHeight)next.scrollIntoView({block:'start',behavior:'smooth'});});
+  // Reveal the response section now, with an instant scroll, so the action's
+  // final view capture holds this position; a smooth scroll on a later frame
+  // would move the page after that capture and cost another one.
+  const responseHeading=$('#response-heading'),viewportHeight=Number(globalThis.innerHeight||0);if(viewportHeight&&responseHeading?.getBoundingClientRect?.().bottom>viewportHeight)responseHeading.scrollIntoView?.({block:'start',behavior:'instant'});
+  requestAnimationFrame(()=>{$('#response-heading')?.focus({preventScroll:true});});
 }),'stage-files',continuation);}
 async function exportHandoffMember(canonicalPath,actionKey,{copy=false,mobileEvent=null,continuation=null}={}){return promptExport(async(record,args,review,origin,reusedReview=false)=>{
  const file=reusedReview?await readAutoHandoffInput(()=>projectStore.readAuthorizedHandoffMember({...args,canonicalPath})):await projectStore.readAuthorizedHandoffMember({...args,canonicalPath});if(reusedReview&&file?.[autoHandoffDenial])return file;assertHandoffSelection(origin);
