@@ -18,7 +18,9 @@ async function setup(sourceOverrides,{stage=1}={}){
  else{p=await r.store.createProject({commandId:'SYNTHETIC_HANDOFF_TRANSACTION'});p.job.EXACT_USER_OBJECTIVE_VERBATIM='Read this disposable synthetic project and produce a proposal.';e.recordHumanInputVersion(p,['EXACT_USER_OBJECTIVE_VERBATIM'],'SYNTHETIC_OPERATOR');p=await r.store.writeProject(p,{expectedProjectRevision:p.revision,expectedStateSha256:p.projectSha256});}
  p.activeStage=stage;p.activeView='Workflow';
  Object.assign(t,{current:p,projects:r.copy([p]),projectStore:r.store,engine:e,core:r.core,schema:t.closedLoopWorkflowSchema,ingestion:r.ingestion,clone:r.copy,safe:e.safe,recordValue:e.recordValue,runSelection:{},operationSelection:{[stage]:'COMPLETE'},handoffReview:null,handoffNavigationSequence:0,TAB_INSTANCE_ID:'SYNTHETIC_HANDOFF_TRANSACTION',selectedOperation:()=> 'COMPLETE',selectedOperationRegistration:n=>t.closedLoopWorkflowSchema.STAGE_OPERATION_REGISTRY[n+':COMPLETE'],unloadInactiveProjects(){},mobileSessionCurrent:()=>false,recordCommittedBoundary:async()=>{},render(){},announce(){},focusAfterAction(){},applySavedView(){},CSS:{escape:String},document:{activeElement:{id:'authorize-handoff'},querySelectorAll:()=>[]},requestAnimationFrame(){},innerHeight:900,$:selector=>controls.get(selector)||null,withStorageActivity:async(_label,fn)=>fn(),reportActionFailure:error=>failures.push(error),downloadBlob:(blob,filename)=>downloads.push({blob,filename}),displayedStageAction:()=>e.operationalNextAction(t.current),captureView:()=>r.copy({activeStage:t.current.activeStage,activeView:t.current.activeView,operationSelection:t.operationSelection,runSelection:t.runSelection,drafts:{}})});
- t.captureCurrentView=()=>r.store.saveCheckpoint(t.current.job.JOB_ID,{expectedProjectRevision:t.current.revision,view:t.captureView()});
+ // A write that retains the current view as its History view saves no separate
+ // view first (the actual capture owner is verified in its own suite).
+ const captures=[];t.captureCurrentView=options=>{captures.push(options?.retainedByWrite?'retained':'saved');return options?.retainedByWrite?null:r.store.saveCheckpoint(t.current.job.JOB_ID,{expectedProjectRevision:t.current.revision,view:t.captureView()});};
  const source=sourceOverrides['app-core.js'],extract=(a,b)=>{const first=source.indexOf(a),last=source.indexOf(b,first+a.length);assert.ok(first>=0&&last>first,'HANDOFF_TRANSACTION_SOURCE_OWNER '+a);return source.slice(first,last);},line=prefix=>{const found=source.split('\n').find(row=>row.startsWith(prefix));assert.ok(found,prefix);return found;};
  vm.runInContext(line('function operationExecutorClass(')+'\n'+line('function externalAgentOperation(')+'\n'+line('function stagePlanItems(')+'\n'+extract('function currentRunSlots(','// A saved response may be inspected independently.')+extract('async function persistReplacement(','async function save(')+extract('async function savePromptRecord(','function promptTransportFilename(')+extract('let promptExportInFlight=null;','function fileSelectionKey('),t,{filename:'app-core.js:actual-handoff-transaction-owners'});
  vm.runInContext('presentHandoffReview=(review,key,origin)=>retainHandoffReview(review,key,origin);',t);
@@ -42,7 +44,7 @@ async function setup(sourceOverrides,{stage=1}={}){
  }
  await t.exportStageFiles();assert.equal(downloads.length,0);assert.equal(failures.length,0);assert.ok(t.handoffReview);
  const before=await r.store.readProject(t.current.job.JOB_ID),prompt=t.currentPromptRecord(stage),subject=t.handoffReview.review.authorization.subjectSha256;
- return {r,t,e,controls,downloads,failures,before,prompt,subject,stage};
+ return {r,t,e,controls,downloads,failures,before,prompt,subject,stage,captures};
 }
 
 export async function verifyHandoffAuthorizationTransaction({sourceOverrides={},scenario=null}={}){
@@ -56,7 +58,7 @@ export async function verifyHandoffAuthorizationTransaction({sourceOverrides={},
   if(kind==='transaction-failure')t.projectStore={...originalStore,replaceProject:async(...args)=>{t.__closedLoopStorageFault='during-project-write';try{return await originalStore.replaceProject(...args);}finally{delete t.__closedLoopStorageFault;}}};
   if(kind==='concurrent-change')t.projectStore={...originalStore,replaceProject:async(...args)=>{const concurrent=await originalStore.readProject(before.job.JOB_ID);concurrent.job.JOB_TITLE='Synthetic independently saved work';await originalStore.writeProject(concurrent,{expectedProjectRevision:concurrent.revision,expectedStateSha256:concurrent.projectSha256});return originalStore.replaceProject(...args);}};
   if(kind==='navigation-after-commit')t.projectStore={...originalStore,replaceProject:async(...args)=>{const saved=await originalStore.replaceProject(...args);t.handoffNavigationSequence++;return saved;}};
-  let error=null;try{await t.recordCurrentHandoffAuthorization(true);}catch(caught){error=caught;}
+  f.captures.length=0;let error=null;try{await t.recordCurrentHandoffAuthorization(true);}catch(caught){error=caught;}
   t.closedLoopPromptEngine=originalPrompts;
   const stored=await originalStore.readProject(before.job.JOB_ID);
   assert.equal(JSON.stringify({raw:stored.projectData.rawResponses,accepted:stored.projectData.acceptedChanges}),JSON.stringify(history),'HANDOFF_UNRELATED_HISTORY_PRESERVED');
@@ -69,6 +71,9 @@ export async function verifyHandoffAuthorizationTransaction({sourceOverrides={},
    assert.equal(e.recordValue(stored.projectData.operationReservations.find(row=>e.recordId(row,'operationReservations')===prompt.operationReservationId),'STATUS'),'EXPIRED_BY_SCOPE');
    const review=await originalStore.prepareExecutionPackageReview({project:stored,stage,operation:'COMPLETE',instructionId:fresh.instructionId});assert.equal(review.authorization.allowed,true);assert.equal(review.authorization.subjectSha256,f.subject);
    const retained=await originalStore.historyList(stored.job.JOB_ID);assert.equal(retained.activeProjectSha256,stored.projectSha256);assert.ok(await originalStore.readHistoryView(stored.job.JOB_ID));
+   // The decision write and the export record each retain the operator's view;
+   // the reviewed continuation is not saved as a separate view before export.
+   assert.deepEqual(f.captures,['retained','retained'],'HANDOFF_VIEW_RETAINED_BY_WRITE_ORACLE');assert.equal(t.closedLoopHash.sha256Value(await originalStore.readHistoryView(stored.job.JOB_ID)),t.closedLoopHash.sha256Value(r.copy({...t.captureView(),pendingMutation:null})),'HANDOFF_EXPORT_HISTORY_VIEW_ORACLE');
    if(stage===4){
     assert.equal(JSON.stringify({validations:stored.projectData.responseValidations,receipts:stored.projectData.outputReceipts,proposals:stored.projectData.responseProposals}),JSON.stringify({validations:before.projectData.responseValidations,receipts:before.projectData.outputReceipts,proposals:before.projectData.responseProposals}),'HANDOFF_CORRECTION_EVIDENCE_PRESERVED');
     const members=readStoreArchive(new Uint8Array(await f.downloads[0].blob.arrayBuffer())),memberMap=new Map(members.map(row=>[row.canonicalPath,Buffer.from(row.bytes)])),manifest=JSON.parse(memberMap.get('manifest.json').toString());

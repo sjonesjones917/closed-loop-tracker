@@ -12,6 +12,12 @@ export async function verifyRetainedRootContinuation({fault=null,caseFilter=null
  if(fault==='repeat-root-computations'){const before='const reuse=rootPreparation&&usableRootContinuation';assert.equal(source.split(before).length,2);source=source.replace(before,'const reuse=false&&rootPreparation&&usableRootContinuation');}
  if(fault==='skip-preparation-requalification'){const before='if(reuse&&decoded.project===reuse.project&&!rootQualified)throw storageError';assert.equal(source.split(before).length,2);source=source.replace(before,'if(false)throw storageError');}
  if(fault==='carry-write-derivation'){const before='validators,derivedVerified:false,derivedAt:0};';assert.equal(source.split(before).length,2);source=source.replace(before,'validators,derivedVerified:true,derivedAt:0};');}
+ // A write's derivation carried without reproducing the custody it read, or
+ // without its own derivation time.
+ if(fault==='carry-unreproduced-write-derivation'){const before='&&writeDerivationReproduced(writeDerivation,rootArtifacts)){root.derivedVerified=true;';assert.equal(source.split(before).length,2,'RETAINED_ROOT_FAULT_ANCHOR_ORACLE '+fault);source=source.replace(before,'){root.derivedVerified=true;');}
+ // A write that never carries its derivation repeats it at the next save.
+ if(fault==='drop-write-derivation-binding'){const before='if(derivation&&derivation.validators===validators&&writeDerivationArtifactsRetained(derivation,encoded.body.artifacts))writeDerivations.set(root,derivation);';assert.equal(source.split(before).length,2,'RETAINED_ROOT_FAULT_ANCHOR_ORACLE '+fault);source=source.replace(before,'');}
+ if(fault==='carry-write-derivation-without-clock'){const before='{root.derivedVerified=true;root.derivedAt=writeDerivation.at;}';assert.equal(source.split(before).length,2,'RETAINED_ROOT_FAULT_ANCHOR_ORACLE '+fault);source=source.replace(before,'{root.derivedVerified=true;root.derivedAt=0;}');}
  if(fault==='skip-no-append-validator-check'){const before='const staticCarried=body.project===proof.project&&Boolean(proof.validators)&&rootValidatorsUnchanged(proof.validators),',after='if(staticCarried&&!rootValidatorsUnchanged(proof.validators)){recoveryBodyStaticIntegrity.delete(saved.project);';assert.equal(source.split(before).length,2);assert.equal(source.split(after).length,2);source=source.replace(before,'const staticCarried=body.project===proof.project&&Boolean(proof.validators),').replace(after,'if(false){recoveryBodyStaticIntegrity.delete(saved.project);');}
  // Each intended fault below removes exactly one guard of the carried validation.
  const guardFaults={
@@ -29,6 +35,11 @@ export async function verifyRetainedRootContinuation({fault=null,caseFilter=null
  guardFaults['public-continuation-decode']=['const holder=!verifiedByteDigests&&!validatedRoots.size&&!verifiedParts.size&&!importDigestHolders.has(verifiedParts)?{scope:null,attempted:Boolean(rootContinuation),privateRead:true}:null;','const holder=!rootContinuation&&!verifiedByteDigests&&!validatedRoots.size&&!verifiedParts.size&&!importDigestHolders.has(verifiedParts)?{scope:null,attempted:false,privateRead:true}:null;'];
  guardFaults['public-retained-decode']=['importDigestHolders.set(privateParts,{scope:null,attempted:true,privateRead:true});',''];
  guardFaults['swallow-write-check-errors']=['const decoded=await restoreHistoryProject({...body,project:copyVerifiedTree(body.project)},readFile,verifiedParts,verifiedByteDigests);','let decoded=null;try{decoded=await restoreHistoryProject({...body,project:copyVerifiedTree(body.project)},readFile,verifiedParts,verifiedByteDigests);}catch{}if(!decoded){rootCertificates.delete(proof);return false;}'];
+ // A write derivation carried although its validators changed while it ran, or
+ // before it ran, or although its subject requires retained run context.
+ guardFaults['drop-write-derivation-validator-check']=['||!rootValidatorsUnchanged(validators))return null;',')return null;'];
+ guardFaults['drop-write-derivation-prevalidator-check']=['const derivationValidators=preparedProof.validators&&rootValidatorsUnchanged(preparedProof.validators)?preparedProof.validators:null;','const derivationValidators=preparedProof.validators;'];
+ guardFaults['carry-run-context-write-derivation']=['if((record.subject?.projectData?.generatedPrompts||[]).some(prompt=>globalThis.closedLoopPromptEngine.requiresRetainedRunContext(prompt)))return null;',''];
  guardFaults['drop-validator-internal-state']=['function rootValidatorInternalState(node){','function rootValidatorInternalState(node){return null;'];
  if(fault==='capture-write-validators-after-validation'){const before='const validatorsBefore=options[ROOT_CERTIFICATE_WRITE]===true?captureRootValidators(initialRootDigestPrimitives):null;',after='const writeValidators=validatorsBefore&&rootValidatorsUnchanged(validatorsBefore)?validatorsBefore:null;';assert.equal(source.split(before).length,2);assert.equal(source.split(after).length,2);source=source.replace(before,'const validatorsBefore=null;').replace(after,'const writeValidators=options[ROOT_CERTIFICATE_WRITE]===true?captureRootValidators(initialRootDigestPrimitives):null;');}
  if(fault==='capture-operational-validators-after-validation'){const before='const operationalBefore=options[ROOT_CERTIFICATE_WRITE]===true?captureRootValidators(initialRootDigestPrimitives):null;',after='const operationalValidators=operationalBefore&&rootValidatorsUnchanged(operationalBefore)?operationalBefore:null;';assert.equal(source.split(before).length,2);assert.equal(source.split(after).length,2);source=source.replace(before,'const operationalBefore=null;').replace(after,'const operationalValidators=options[ROOT_CERTIFICATE_WRITE]===true?captureRootValidators(initialRootDigestPrimitives):null;');}
@@ -46,7 +57,7 @@ export async function verifyRetainedRootContinuation({fault=null,caseFilter=null
  const strictDerivation='      const issues=derivedProjectIntegrityIssues(project);\n',tolerance='  }catch(error){\n    if(projectionActivationRequired(project)||legacyExpectedVarianceSources(project).length){';assert.equal(source.split(strictDerivation).length,2);assert.equal(source.split(tolerance).length,2);
  source=source.replace(strictDerivation,"      if(globalThis.__tolerateDerivation?.(project))throw Object.assign(new Error('Tolerated diagnostic derivation'),{code:'TOLERATED_DIAGNOSTIC_DERIVATION'});\n"+strictDerivation).replace(tolerance,"  }catch(error){if(error.code==='TOLERATED_DIAGNOSTIC_DERIVATION')return;\n    if(projectionActivationRequired(project)||legacyExpectedVarianceSources(project).length){");
  const exportAnchor='globalThis.closedLoopProjectStore=Object.freeze({STORAGE_IO_TIMEOUT_MS';assert.equal(source.split(exportAnchor).length,2);
- source=source.replace(exportAnchor,'globalThis.__rootProof=()=>recentOperationalCommitRead?.retainedRoot;globalThis.__rootPrivateRead=readProjectForTransaction;'+exportAnchor);
+ source=source.replace(exportAnchor,'globalThis.__rootProof=()=>recentOperationalCommitRead?.retainedRoot;globalThis.__rootPrivateRead=readProjectForTransaction;globalThis.__writeDerivationBinding=record=>writeDerivationBinding(record,captureRootValidators(initialRootDigestPrimitives));'+exportAnchor);
  const qualify='      const rootQualified=';assert.equal(source.split(qualify).length,2);source=source.replace(qualify,'      globalThis.__mutateRootPreparation?.(decoded.project,project);\n'+qualify);
  const cases=[];
  for(const mode of ['valid-two-warm-views','wrong-work-proof','wrong-project-proof','wrong-root-descriptor','mutated-root-value','mutated-root-snapshot','changed-generator-dispatch','changed-encoder-dispatch','changed-validator-definition','changed-nested-definition','public-read-keeps-certificate','one-use-private-read','unchanged-view-keeps-certificate','unchanged-view-changed-validator','failed-save-cold-fallback','root-mutation-during-preparation','source-mutation-during-preparation','primitive-mutation-during-preparation']){
@@ -97,11 +108,14 @@ export async function verifyRetainedRootContinuation({fault=null,caseFilter=null
   assert.equal((await r.store.readHistoryView(p.job.JOB_ID,id)).drafts['#exact'].value,'Workflow exact draft');assert.equal((await r.store.readProject(p.job.JOB_ID)).job.JOB_TITLE,p.job.JOB_TITLE);
   cases.push({mode,result:'PASS',counts:difference,exactDraftAndProjectPreserved:true});
  }
- // A canonical write certifies the value it validated, carrying its static
- // validation only. The next view save decodes the stored root bytes and
- // compares them with that value, rehashes the stored root, every part and
- // every artifact in its transaction and validates the derivation once.
- for(const mode of ['write-certificate-warm','write-certificate-corrupt-part','write-certificate-corrupt-root','write-certificate-changed-validator','write-certificate-encode-native-swap']){
+ // A canonical write certifies the value it validated and its static
+ // validation. The next view save decodes the stored root bytes and compares
+ // them with that value, rehashes the stored root, every part and every
+ // artifact in its transaction. It carries the write's own strict derivation
+ // only when every custody answer that derivation read is reproduced by the
+ // root's byte-verified artifacts, under unchanged validators and no earlier
+ // clock; otherwise it validates the derivation once.
+ for(const mode of ['write-certificate-warm','write-certificate-corrupt-part','write-certificate-corrupt-root','write-certificate-changed-validator','write-certificate-encode-native-swap','write-certificate-custody-differs','write-certificate-clock-before-derivation','write-certificate-derivation-validator-swap','write-certificate-derivation-validator-preswap']){
   if(caseFilter&&!caseFilter.includes(mode))continue;
   // A realm clock (stable for the validator capture) whose construction inside
   // the write's root encode installs a one-shot JSON.stringify that changes one
@@ -109,12 +123,28 @@ export async function verifyRetainedRootContinuation({fault=null,caseFilter=null
   // and commit can observe.
   const swap={armed:false,fired:0,realm:null};
   class EncodeClock extends Date{constructor(...args){super(...args);if(swap.armed&&new Error().stack.includes('encodeCheckpoint')){swap.armed=false;const json=swap.realm.JSON,original=json.stringify;json.stringify=function(value,...rest){if(value==='Exact written title'){json.stringify=original;swap.fired++;return original.call(this,'Exact swapped title',...rest);}return original.call(this,value,...rest);};}}}
-  const swapped=mode==='write-certificate-encode-native-swap';
-  const r=projectStoreRuntime({sourceOverrides:{'project-store.js':source},environment:{__rootCounts:{restore:0,digest:0,static:0,derived:0},...(swapped?{Date:EncodeClock}:{})},storageWorker:false});swap.realm=r.runtime;
+  const swapped=mode==='write-certificate-encode-native-swap',clock={frozen:null};class WriteClock extends Date{static now(){return clock.frozen??super.now();}}
+  const r=projectStoreRuntime({sourceOverrides:{'project-store.js':source},environment:{__rootCounts:{restore:0,digest:0,static:0,derived:0},...(swapped?{Date:EncodeClock}:mode==='write-certificate-clock-before-derivation'?{Date:WriteClock}:{})},storageWorker:false});swap.realm=r.runtime;
   let p=await r.store.createProject({commandId:'PRIVATE-WRITE-ROOT-'+mode});
   if(swapped){r.engine.recalculate(p);p=await r.store.writeProject(p,{expectedProjectRevision:p.revision});swap.armed=true;p.job.JOB_TITLE='Exact written title';p.job.EXACT_USER_OBJECTIVE_VERBATIM='Independent written content '.repeat(300);}
   else p.job.JOB_TITLE='Exact written title '+'independent written content '.repeat(300);
-  r.engine.recalculate(p);p=await r.store.writeProject(p,{expectedProjectRevision:p.revision});
+  // A stored file outside the project's current scope: the write observes no
+  // custody for it, so its derivation reads UNKNOWN, while the root retains
+  // its bytes and a checkpoint deriving under the root's artifacts reads TRUE.
+  const selectedText='Exact file stored before the write.',selected=mode==='write-certificate-custody-differs'?r.copy({jobId:p.job.JOB_ID,artifactId:'WRITE-CUSTODY-SELECTION',filename:'selected.txt',byteSize:Buffer.byteLength(selectedText),sha256:createHash('sha256').update(selectedText).digest('hex')}):null;
+  if(selected){await r.store.putArtifact({artifactId:selected.artifactId,jobId:p.job.JOB_ID,filename:selected.filename,mediaType:'text/plain',blob:new Blob([selectedText])});assert.equal(r.store.artifactCustodyState(selected),'TRUE','RETAINED_ROOT_WRITE_CUSTODY_FIXTURE_ORACLE');}
+  let derivationAnswer=null;if(selected)r.runtime.__duringDerived=()=>{derivationAnswer=r.store.artifactCustodyState(selected);};
+  // A validator definition replaced only while the write derives (restored
+  // after the write), or replaced after the write's static validation by an
+  // equivalent definition that restores itself while the derivation reads it:
+  // either derivation ran under validators other than the root's.
+  const writeEngine=r.runtime.closedLoopWorkflowEngine,validatorSwap={fired:0};
+  if(mode==='write-certificate-derivation-validator-swap')r.runtime.__duringDerived=()=>{if(validatorSwap.fired++)return;r.runtime.closedLoopWorkflowEngine=Object.freeze({...writeEngine});};
+  if(mode==='write-certificate-derivation-validator-preswap')r.runtime.__afterEncode=()=>{if(validatorSwap.fired++)return;r.runtime.closedLoopWorkflowEngine=Object.freeze({...writeEngine,compareApplicationProjection(...args){r.runtime.closedLoopWorkflowEngine=writeEngine;validatorSwap.restored=true;return writeEngine.compareApplicationProjection(...args);}});};
+  r.engine.recalculate(p);try{p=await r.store.writeProject(p,{expectedProjectRevision:p.revision});}finally{delete r.runtime.__duringDerived;delete r.runtime.__afterEncode;r.runtime.closedLoopWorkflowEngine=writeEngine;}
+  if(mode==='write-certificate-derivation-validator-swap')assert.equal(validatorSwap.fired>=1,true,'RETAINED_ROOT_WRITE_DERIVATION_VALIDATOR_FIXTURE_ORACLE');
+  if(mode==='write-certificate-derivation-validator-preswap')assert.equal(validatorSwap.restored,true,'RETAINED_ROOT_WRITE_DERIVATION_VALIDATOR_FIXTURE_ORACLE: the replaced definition was read by the write derivation');
+  if(selected){assert.equal(derivationAnswer,'UNKNOWN','RETAINED_ROOT_WRITE_CUSTODY_FIXTURE_ORACLE');const state=await r.store.historyList(p.job.JOB_ID),written=state.entries.find(entry=>entry.id===state.activeId);assert.ok(written&&!written.projectReference,'RETAINED_ROOT_WRITE_CUSTODY_FIXTURE_ORACLE');assert.ok((await r.store.listArtifacts(p.job.JOB_ID)).some(row=>row.artifactId===selected.artifactId),'RETAINED_ROOT_WRITE_CUSTODY_FIXTURE_ORACLE');}
   assert.equal((await r.store.readProject(p.job.JOB_ID)).projectSha256,p.projectSha256);assert.ok(r.runtime.__rootProof(),'RETAINED_ROOT_WRITE_CERTIFICATE_PUBLISHED_ORACLE');
   const view=name=>r.copy({activeStage:1,activeView:name,drafts:{'#exact':{value:name+' exact draft'}},scrollX:0,scrollY:17});
   const save=name=>r.store.saveCheckpoint(p.job.JOB_ID,{expectedProjectRevision:p.revision,expectedStateSha256:p.projectSha256,view:view(name)});
@@ -136,8 +166,15 @@ export async function verifyRetainedRootContinuation({fault=null,caseFilter=null
    cases.push({mode,result:'PASS',error:expected,noCheckpointReturned:true,noProofPublished:true,exactStatePreserved:true});continue;
   }
   const originalEngine=r.runtime.closedLoopWorkflowEngine;if(mode==='write-certificate-changed-validator')vm.runInContext('globalThis.closedLoopWorkflowEngine=Object.freeze({...globalThis.closedLoopWorkflowEngine});',r.runtime);
-  await save('Project');const first=Object.fromEntries(Object.entries(r.runtime.__rootCounts).map(([key,value])=>[key,value-before[key]]));
-  assert.equal(first.restore,1,'RETAINED_ROOT_WRITE_BYTES_DECODED_ORACLE: the first save after a write decodes its stored root bytes once');assert.equal(first.digest,0,'RETAINED_ROOT_WRITE_CERTIFICATE_DIGEST_ORACLE');assert.equal(first.derived,1,'RETAINED_ROOT_WRITE_CERTIFICATE_DERIVED_ONCE_ORACLE');
+  // A clock reading earlier than the write's derivation.
+  if(mode==='write-certificate-clock-before-derivation')clock.frozen=Date.now()-3600000;
+  try{await save('Project');}finally{clock.frozen=null;}const first=Object.fromEntries(Object.entries(r.runtime.__rootCounts).map(([key,value])=>[key,value-before[key]]));
+  assert.equal(first.restore,1,'RETAINED_ROOT_WRITE_BYTES_DECODED_ORACLE: the first save after a write decodes its stored root bytes once');assert.equal(first.digest,0,'RETAINED_ROOT_WRITE_CERTIFICATE_DIGEST_ORACLE');
+  if(mode==='write-certificate-warm')assert.equal(first.derived,0,"RETAINED_ROOT_WRITE_CERTIFICATE_DERIVATION_CARRIED_ORACLE: the first save after a write carries the write's own derivation when the root's artifacts reproduce the custody it read");
+  else if(mode==='write-certificate-custody-differs')assert.equal(first.derived,1,'RETAINED_ROOT_WRITE_CERTIFICATE_DERIVATION_REPRODUCED_ORACLE: a write derivation whose custody answers the root does not reproduce is validated once');
+  else if(mode==='write-certificate-clock-before-derivation')assert.equal(first.derived,1,'RETAINED_ROOT_WRITE_CERTIFICATE_CLOCK_ORACLE: a save before the write derivation time validates the derivation once');
+  else if(mode==='write-certificate-derivation-validator-swap'||mode==='write-certificate-derivation-validator-preswap')assert.equal(first.derived,1,'RETAINED_ROOT_WRITE_DERIVATION_VALIDATOR_ORACLE: a write derivation run under validators other than the root\'s is validated once');
+  else assert.equal(first.derived,1,'RETAINED_ROOT_WRITE_CERTIFICATE_DERIVED_ONCE_ORACLE: a replaced validator definition validates the written root derivation once');
   if(mode==='write-certificate-changed-validator'){assert.ok(first.static>=1,'RETAINED_ROOT_VALIDATOR_ORACLE: a replaced validator definition re-validates the written root statically');r.runtime.closedLoopWorkflowEngine=originalEngine;}
   else assert.equal(first.static,0,'RETAINED_ROOT_WRITE_CERTIFICATE_STATIC_CARRIED_ORACLE');
   const second={...r.runtime.__rootCounts},id=await save('Workflow'),next=Object.fromEntries(Object.entries(r.runtime.__rootCounts).map(([key,value])=>[key,value-second[key]]));
@@ -145,12 +182,34 @@ export async function verifyRetainedRootContinuation({fault=null,caseFilter=null
   assert.equal((await r.store.readHistoryView(p.job.JOB_ID,id)).drafts['#exact'].value,'Workflow exact draft');assert.equal((await r.store.readProject(p.job.JOB_ID)).job.JOB_TITLE,p.job.JOB_TITLE);
   cases.push({mode,result:'PASS',counts:first,nextCounts:next,exactDraftAndProjectPreserved:true});
  }
+ // A write never carries a derivation whose subject holds a prompt requiring
+ // retained run context: that context's retention state is observed outside
+ // the custody answers a root can reproduce, so the root's first save derives.
+ // The actual binding owner is asked directly under the store's own captured
+ // validators and the actual prompt engine predicate.
+ {const mode='write-derivation-retained-run-context';if(!caseFilter||caseFilter.includes(mode)){
+  const r=projectStoreRuntime({sourceOverrides:{'project-store.js':source},environment:{__rootCounts:{restore:0,digest:0,static:0,derived:0}},storageWorker:false}),p=await r.store.createProject({commandId:'PRIVATE-RUN-CONTEXT-ROOT'});
+  const legacy=r.copy({stage:11,operation:'EXECUTE_RUN',instructionId:'LEGACY-RUN-CONTEXT',promptEngineVersion:'closed-loop-prompt-engine/legacy-run-context',contextManifest:{promptContext:{attachments:[{path:'context/run.txt',filename:'run.txt',mediaType:'text/plain',sha256:'0'.repeat(64),byteSize:1}]}}});
+  assert.equal(r.runtime.closedLoopPromptEngine.requiresRetainedRunContext(legacy),true,'RETAINED_ROOT_RUN_CONTEXT_FIXTURE_ORACLE');
+  const derivation=subject=>({subject,answers:[],reproducible:true,strict:true}),ordinary=r.copy(p),withContext=r.copy(p);withContext.projectData.generatedPrompts=[...(withContext.projectData.generatedPrompts||[]),legacy];
+  // Compare presence only: a binding holds the validator graph, which an
+  // assertion message must never render.
+  assert.equal(r.runtime.__writeDerivationBinding(derivation(ordinary))!==null,true,'RETAINED_ROOT_RUN_CONTEXT_FIXTURE_ORACLE: an ordinary strict derivation binds');
+  assert.equal(r.runtime.__writeDerivationBinding(derivation(withContext))===null,true,'RETAINED_ROOT_WRITE_DERIVATION_RUN_CONTEXT_ORACLE: a derivation whose subject requires retained run context is never carried');
+  cases.push({mode,result:'PASS',ordinaryBound:true,runContextBound:false});
+ }}
  // Each guard of the carried validation, exercised by the one case that needs it.
  for(const mode of ['no-append-validator-during-read','tolerated-derivation-not-carried','clock-before-derivation','no-append-different-manifest','validator-swap-during-validation','changed-native-dependency']){
   if(caseFilter&&!caseFilter.includes(mode))continue;
   const clock={frozen:null};class ObservationClock extends Date{static now(){return clock.frozen??super.now();}}
   const r=projectStoreRuntime({sourceOverrides:{'project-store.js':source},environment:{__rootCounts:{restore:0,digest:0,static:0,derived:0},...(mode==='clock-before-derivation'?{Date:ObservationClock}:{})},storageWorker:false});
-  let p=await r.store.createProject({commandId:'PRIVATE-GUARD-ROOT-'+mode});p.job.JOB_TITLE='Exact guarded title '+'independent guarded content '.repeat(300);r.engine.recalculate(p);p=await r.store.writeProject(p,{expectedProjectRevision:p.revision});await r.store.readProject(p.job.JOB_ID);
+  let p=await r.store.createProject({commandId:'PRIVATE-GUARD-ROOT-'+mode});p.job.JOB_TITLE='Exact guarded title '+'independent guarded content '.repeat(300);r.engine.recalculate(p);
+  // These guards act on the derivation of the written root's first save: the
+  // write's derivation reads a custody identity (an accessor) that cannot be
+  // asked again exactly, so the write carries no derivation to its root.
+  const unaskable=Object.defineProperty(r.copy({jobId:p.job.JOB_ID,artifactId:'GUARD-UNASKABLE',byteSize:0,sha256:'0'.repeat(64)}),'filename',{get:()=>'unaskable.txt',enumerable:true});
+  r.runtime.__duringDerived=()=>{r.store.artifactCustodyState(unaskable);};
+  try{p=await r.store.writeProject(p,{expectedProjectRevision:p.revision});}finally{delete r.runtime.__duringDerived;}await r.store.readProject(p.job.JOB_ID);
   const view=name=>r.copy({activeStage:1,activeView:name,drafts:{'#exact':{value:name+' exact draft'}},scrollX:0,scrollY:17});
   const save=name=>r.store.saveCheckpoint(p.job.JOB_ID,{expectedProjectRevision:p.revision,expectedStateSha256:p.projectSha256,view:view(name)});
   const counted=async action=>{const start={...r.runtime.__rootCounts};await action();return Object.fromEntries(Object.entries(r.runtime.__rootCounts).map(([key,value])=>[key,value-start[key]]));};

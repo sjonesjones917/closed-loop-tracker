@@ -3,7 +3,7 @@ import {artifactFixtureId} from './test-artifact-fixtures.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
-import {projectStoreRuntime} from './test-project-store-runtime.mjs';
+import {projectStoreRuntime,storedArtifactBody} from './test-project-store-runtime.mjs';
 import {readStoreArchive} from './test-zip.mjs';
 const faultName=process.argv.find(arg=>arg.startsWith('--fault='))?.slice(8);
 // Handoff assembly is guarded twice: after members and authorization are assembled, and again
@@ -38,4 +38,79 @@ const latest=copy(p);let latestPrompt=prompts.reserveAndBuildPromptRecord(latest
 const open=r.runtime.openStorageTransaction;let concurrent=true,interleaved=false;r.runtime.openStorageTransaction=async(names,mode)=>{if(concurrent&&mode==='readonly'&&(Array.isArray(names)?names:[names]).includes('artifacts')){concurrent=false;const edit=copy(p);edit.job.JOB_TITLE='Changed during file assembly';await store.writeProject(edit,{expectedProjectRevision:p.revision});interleaved=true;}return open(names,mode);};
 await assert.rejects(()=>store.createExecutionPackage({project:p,stage:1,operation:latestPrompt.operation,instructionId:latestPrompt.instructionId}),error=>error.code==='EXECUTION_PACKAGE_VERSION_STALE','HANDOFF_ASSEMBLY_RACE_ORACLE');assert.equal(interleaved,true);r.runtime.openStorageTransaction=open;note('A change committed while file bytes are being assembled prevents release of the stale handoff');
 p=await store.readProject(p.job.JOB_ID);r.rows.get('projects').get(p.job.JOB_ID).project.job.JOB_TITLE='Corrupted after tab cached the project';await assert.rejects(()=>store.createExecutionPackage({project:p,stage:1,operation:latestPrompt.operation,instructionId:latestPrompt.instructionId}),error=>error.code==='PROJECT_HASH_MISMATCH','QUARANTINED_HANDOFF_ORACLE');assert.equal((await store.listQuarantinedProjects()).length,1);note('A cached project cannot supply agent-facing context after its authoritative stored data becomes corrupt');
-console.log(JSON.stringify({synthetic:true,actualBrowser:false,environment:'Node production modules with lifecycle transaction adapter',artifactBytes:bytes.length,cases},null,2));
+// A package's later staleness reads compare its own cold read's stored sources
+// with a fresh read; stored bytes corrupted after that cold read, while the
+// package is assembled, take the cold read, which refuses them and preserves
+// them in quarantine.
+{const r2=projectStoreRuntime({sourceOverrides}),open2=r2.runtime.openStorageTransaction;let q=r2.core.createBlankState('ASSEMBLY-CORRUPTION');q.job.EXACT_USER_OBJECTIVE_VERBATIM='Use the supplied text.';r2.engine.ensureShape(q);r2.engine.recalculate(q);q=await r2.store.writeProject(q,{expectedProjectRevision:0,incrementRevision:false,createOnly:true});
+ const draft=r2.copy(q);let qPrompt=r2.prompts.reserveAndBuildPromptRecord(draft,1,{},{}).prompt;q=await r2.store.writeProject(draft,{expectedProjectRevision:q.revision});({project:q,prompt:qPrompt}=await authorizeSyntheticHandoff(r2,{project:q,prompt:qPrompt}));
+ const request={project:q,stage:1,operation:qPrompt.operation,instructionId:qPrompt.instructionId};assert.ok((await r2.store.createExecutionPackage(request)).blob,'HANDOFF_ASSEMBLY_CORRUPTION_FIXTURE_ORACLE');
+ let corrupted=false,projectReads=0;r2.runtime.openStorageTransaction=async(names,mode)=>{if(!corrupted&&mode==='readonly'&&(Array.isArray(names)?names:[names]).includes('projects')&&++projectReads===2){corrupted=true;r2.rows.get('projects').get(q.job.JOB_ID).project.job.JOB_TITLE='Corrupted while its handoff was assembled';}return open2(names,mode);};
+ try{await assert.rejects(()=>r2.store.createExecutionPackage(request),error=>error.code==='PROJECT_HASH_MISMATCH','HANDOFF_ASSEMBLY_CORRUPTION_ORACLE');}finally{r2.runtime.openStorageTransaction=open2;}
+ assert.equal(corrupted,true,'HANDOFF_ASSEMBLY_CORRUPTION_FIXTURE_ORACLE');assert.equal((await r2.store.listQuarantinedProjects()).length,1,'HANDOFF_ASSEMBLY_CORRUPTION_ORACLE: the corrupted row is preserved in quarantine');}
+note('Stored project bytes corrupted while a handoff is assembled are refused and preserved in quarantine');
+// Each block below builds its own isolated store and authorized handoff, then
+// acts at the n-th read-only projects transaction of one package build: the
+// first is the package's cold read, the second its first staleness read.
+// storeSource null is the store under test; a string is an intended fault.
+async function assemblyFixture(storeSource,title,{journal=false,artifact=false}={}){
+ const f={r3:projectStoreRuntime({sourceOverrides:storeSource===null?sourceOverrides:{...sourceOverrides,'project-store.js':storeSource}}),identity:null},{r3}=f;let q=r3.core.createBlankState(title);q.job.EXACT_USER_OBJECTIVE_VERBATIM='Use the supplied text.';r3.engine.ensureShape(q);r3.engine.recalculate(q);q=await r3.store.writeProject(q,{expectedProjectRevision:0,incrementRevision:false,createOnly:true});
+ if(artifact){const name='assembly.txt',body=Buffer.from('Exact assembly bytes\n'),saved=await r3.store.putArtifact({artifactId:artifactFixtureId(r3.engine,q,'ASSEMBLY-ARTIFACT'),jobId:q.job.JOB_ID,filename:name,blob:new Blob([body],{type:'text/plain'})}),next=r3.copy(q);r3.engine.registerArtifactBytes(next,r3.copy({stage:1,artifactId:saved.artifactId,filename:name,mediaType:'text/plain',byteSize:body.length,sha256:saved.sha256}));next.stages[1].authorizedFiles.push(r3.copy({artifactId:saved.artifactId,name,sha256:saved.sha256,size:body.length}));q=await r3.store.writeProject(next,{expectedProjectRevision:q.revision});f.identity={jobId:q.job.JOB_ID,artifactId:saved.artifactId,filename:name,byteSize:body.length,sha256:saved.sha256};}
+ const draft=r3.copy(q);let qPrompt=r3.prompts.reserveAndBuildPromptRecord(draft,1,{},{}).prompt;q=await r3.store.writeProject(draft,{expectedProjectRevision:q.revision});({project:q,prompt:qPrompt}=await authorizeSyntheticHandoff(r3,{project:q,prompt:qPrompt}));
+ if(journal){const changed=r3.copy(q);r3.engine.addHistory(changed,'SYNTHETIC_PRIOR_OBSERVATION',{synthetic:true});q=await r3.store.writeProject(changed,{operational:true,expectedProjectRevision:q.revision,expectedStateSha256:q.projectSha256});assert.ok(r3.rows.get('meta').get('responseOperations:'+q.job.JOB_ID),'HANDOFF_ASSEMBLY_FIXTURE_ORACLE: operational journal present');}
+ f.q=q;f.request={project:q,stage:1,operation:qPrompt.operation,instructionId:qPrompt.instructionId};assert.ok((await r3.store.createExecutionPackage(f.request)).blob,'HANDOFF_ASSEMBLY_FIXTURE_ORACLE');return f;
+}
+async function assemble(f,{at,act,review=false}){
+ const open3=f.r3.runtime.openStorageTransaction;let reads=0,acted=false,outcome;
+ f.r3.runtime.openStorageTransaction=async(names,mode)=>{if(!acted&&mode==='readonly'&&(Array.isArray(names)?names:[names]).includes('projects')&&++reads===at){acted=true;await act();}return open3(names,mode);};
+ try{const result=review?await f.r3.store.prepareExecutionPackageReview(f.request):await f.r3.store.createExecutionPackage(f.request);outcome={released:true,allowed:result?.authorization?.allowed??null};}catch(error){outcome={released:false,code:error.code};}finally{f.r3.runtime.openStorageTransaction=open3;}
+ assert.equal(acted,true,'HANDOFF_ASSEMBLY_FIXTURE_ORACLE: interleaving point reached');return {...outcome,quarantined:(await f.r3.store.listQuarantinedProjects()).length};
+}
+// A package's first cold read hashes its row across awaits through replaceable
+// natives. A one-shot, self-restoring swap of the realm's Array.prototype.join
+// or of TextEncoder.prototype.encode during that read makes a stored row,
+// corrupted outside its projection receipt, pass once; the staleness read
+// before the review or package leaves recomputes the digest and refuses it.
+async function firstReadSwap(storeSource,swapKind,review){
+ const f=await assemblyFixture(storeSource,'ASSEMBLY-FIRST-READ-SWAP'),row=f.r3.rows.get('projects').get(f.q.job.JOB_ID);assert.ok(row?.project,'HANDOFF_ASSEMBLY_FIXTURE_ORACLE: inline project row');
+ const stored=row.projectSha256,originalView=row.project.activeView,corruptView='Corrupted outside the projection receipt';row.project.activeView=corruptView;
+ const h=f.r3.runtime.closedLoopHash,canonical=f.r3.copy(row.project);delete canonical.projectSha256;const corrupted=await h.sha256Chunks(h.canonicalChunks(canonical));assert.notEqual(corrupted,stored,'HANDOFF_ASSEMBLY_FIXTURE_ORACLE: corruption changes the digest');
+ const arrays=f.r3.runtime.Array.prototype,join=arrays.join,encoders=TextEncoder.prototype,encode=encoders.encode,marker=JSON.stringify(corruptView);let fired=0,outcome;
+ const swappedJoin=function(...args){const out=Reflect.apply(join,this,args);if(out===corrupted){arrays.join=join;fired++;return stored;}return out;};
+ const swappedEncode=function(input){const text=String(input);if(text.includes(marker)){encoders.encode=encode;fired++;return Reflect.apply(encode,this,[text.replace(marker,JSON.stringify(originalView))]);}return Reflect.apply(encode,this,[input]);};
+ try{outcome=await assemble(f,{at:1,review,act:async()=>{if(swapKind==='encoder')encoders.encode=swappedEncode;else arrays.join=swappedJoin;}});}finally{arrays.join=join;encoders.encode=encode;}
+ assert.equal(fired,1,'HANDOFF_ASSEMBLY_FIXTURE_ORACLE: the swap fired exactly once');return outcome;
+}
+// A concurrent operational write changes only the journal; a tampered journal
+// changes only its stored value. Both must reach the cold read's refusal.
+async function journalAssembly(storeSource,kind){
+ const f=await assemblyFixture(storeSource,'ASSEMBLY-JOURNAL',{journal:true}),key='responseOperations:'+f.q.job.JOB_ID;
+ return assemble(f,{at:2,act:async()=>{if(kind==='concurrent'){const changed=f.r3.copy(f.q);f.r3.engine.addHistory(changed,'SYNTHETIC_CONCURRENT_OBSERVATION',{synthetic:true});await f.r3.store.writeProject(changed,{operational:true,expectedProjectRevision:f.q.revision,expectedStateSha256:f.q.projectSha256});}else{const stored=f.r3.rows.get('meta').get(key);stored.value=JSON.parse(JSON.stringify(stored.value).replace('SYNTHETIC_PRIOR_OBSERVATION','SYNTHETIC_TAMPERED_OBSERVATION'));}}});
+}
+// Current-scope artifact bytes corrupted while the handoff is assembled: each
+// staleness read observes custody again, as a cold read does, so custody is
+// no longer TRUE for those bytes after the build.
+async function custodyAssembly(storeSource){
+ const f=await assemblyFixture(storeSource,'ASSEMBLY-CUSTODY',{artifact:true});assert.equal(f.r3.store.artifactCustodyState(f.identity),'TRUE','HANDOFF_ASSEMBLY_FIXTURE_ORACLE: custody before assembly');
+ const outcome=await assemble(f,{at:2,act:async()=>{storedArtifactBody(f.r3,f.identity.artifactId).blob=new Blob([Buffer.alloc(f.identity.byteSize,33)]);}});return {...outcome,custody:f.r3.store.artifactCustodyState(f.identity)};
+}
+const swapRefused={released:false,code:'PROJECT_HASH_MISMATCH',quarantined:1};
+for(const swapKind of ['join','encoder'])for(const review of [false,true])assert.deepEqual(await firstReadSwap(null,swapKind,review),swapRefused,`HANDOFF_ASSEMBLY_FIRST_READ_SWAP_ORACLE: ${swapKind} ${review?'review':'package'}`);
+note('A corrupted stored row that one transient hash or encoder swap passes during the package cold read is still refused and preserved in quarantine before any review or package is returned');
+assert.deepEqual(await journalAssembly(null,'concurrent'),{released:false,code:'EXECUTION_PACKAGE_VERSION_STALE',quarantined:0},'HANDOFF_ASSEMBLY_JOURNAL_RACE_ORACLE');
+assert.deepEqual(await journalAssembly(null,'tampered'),{released:false,code:'OPERATIONAL_STATE_INTEGRITY_FAILED',quarantined:1},'HANDOFF_ASSEMBLY_JOURNAL_CORRUPTION_ORACLE');
+note('A journal-only concurrent write or tampered journal during assembly is refused with its stale or integrity code');
+assert.equal((await custodyAssembly(null)).custody,'UNKNOWN','HANDOFF_ASSEMBLY_CUSTODY_REOBSERVED_ORACLE');
+note('Artifact bytes corrupted during assembly lose custody at the staleness read, as at a cold read');
+// Intended faults: each removes one part of the staleness read and must be detected.
+const storeSource=fs.readFileSync('project-store.js','utf8'),storeFault=(name,before,after)=>{if(storeSource.split(before).length!==2)throw new Error('Fault anchor missing: '+name);return storeSource.replace(before,after);};
+const rehash='    if(unchanged&&verifyBytes){let computed=null;try{computed=await hash.sha256Chunks(hash.canonicalChunks(canonicalProject(sources.row.project)));}catch{computed=null;}unchanged=computed!==null&&computed===sources.row.projectSha256;}\n';
+const assemblyFaults=[
+ ['first-read-digest-trusted',storeFault('first-read-digest-trusted',rehash,''),async source=>firstReadSwap(source,'join',false),swapRefused,'HANDOFF_ASSEMBLY_FIRST_READ_SWAP_ORACLE'],
+ ['package-digest-after-archive-only',storeFault('package-digest-after-archive-only','rereadPackageProject(canonicalJobId,packageSource,{verifyBytes:true})','rereadPackageProject(canonicalJobId,packageSource,{verifyBytes:false})').replace('rereadPackageProject(canonicalJobId,packageSource,{verifyBytes:false});if(!afterArchive','rereadPackageProject(canonicalJobId,packageSource,{verifyBytes:true});if(!afterArchive'),async source=>firstReadSwap(source,'join',true),swapRefused,'HANDOFF_ASSEMBLY_FIRST_READ_SWAP_ORACLE'],
+ ['package-journal-uncompared',storeFault('package-journal-uncompared','&&verifiedValuesEqual(source.journal,sources.journal)',''),async source=>journalAssembly(source,'concurrent'),{released:false,code:'EXECUTION_PACKAGE_VERSION_STALE',quarantined:0},'HANDOFF_ASSEMBLY_JOURNAL_RACE_ORACLE'],
+ ['package-custody-unobserved',storeFault('package-custody-unobserved','      forgetArtifactCustody(jobId);\n      for(const artifactId of source.artifactIds){try{await getArtifact(artifactId);}catch(error){if(!CUSTODY_UNAVAILABLE_CODES.includes(error.code))throw error;}}\n',''),async source=>({custody:(await custodyAssembly(source)).custody}),{custody:'UNKNOWN'},'HANDOFF_ASSEMBLY_CUSTODY_REOBSERVED_ORACLE']];
+const faultsDetected=[];
+for(const [name,source,run,expected,oracle] of assemblyFaults){let detected=false;try{assert.deepEqual(await run(source),expected,oracle);}catch(error){if(error?.code!=='ERR_ASSERTION'||!String(error.message).includes(oracle))throw error;detected=true;}assert.equal(detected,true,'HANDOFF_ASSEMBLY_INTENDED_FAULT_ORACLE: '+name+' escaped '+oracle);faultsDetected.push({fault:name,oracle,result:'DETECTED'});}
+note('Intended faults removing the staleness read digest, its placement, journal comparison or custody observation are each detected');
+console.log(JSON.stringify({synthetic:true,actualBrowser:false,environment:'Node production modules with lifecycle transaction adapter',artifactBytes:bytes.length,cases,faultsDetected},null,2));

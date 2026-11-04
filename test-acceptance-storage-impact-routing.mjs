@@ -5,20 +5,25 @@ import {createHash} from 'node:crypto';
 
 // Actual UI persistence owner with a controlled storage command adapter. The
 // owning acceptance suite separately executes real canonical acceptance/storage.
-export async function verifyAcceptanceStorageImpactRouting({source=fs.readFileSync('app-core.js','utf8')}={}){
+// Canonical writes, acceptance or ordinary, are confirmed only by the store
+// transaction (MUTATION_CONFIRMATION_REQUIRED with its current impact), whose
+// refusal opens the review; operational writes, which the store does not
+// confirm, keep the single main-thread preflight.
+const STORE_CONFIRMED_CASES=new Set(['required-storage-confirmation','stale-storage-confirmation','ordinary-store-confirmation-route']);
+export async function verifyAcceptanceStorageImpactRouting({source=fs.readFileSync('app-core.js','utf8'),controls=true}={}){
  const start=source.indexOf('async function persistReplacement('),end=source.indexOf('async function save(',start);assert.ok(start>=0&&end>start);
  const cases=[],viewHelper=source.slice(source.indexOf('function acceptedProposalHistoryView('),source.indexOf('function rebaseAcceptedLaneSelection('));
- for(const name of ['conforming-acceptance','required-storage-confirmation','stale-storage-confirmation','failed-write','ordinary-preflight-preserved']){
+ for(const name of ['conforming-acceptance','required-storage-confirmation','stale-storage-confirmation','failed-write','ordinary-store-confirmation-route','operational-preflight-preserved']){
   const prior={job:{JOB_ID:'SYNTHETIC-IMPACT'},revision:4,projectSha256:'prior',activeStage:2,activeView:'Workflow'},next=structuredClone(prior);next.proposed='exact candidate';
-  const acceptance=name==='ordinary-preflight-preserved'?null:{stage:2,proposalId:'PENDING-PROPOSAL',rawResponseId:'RETAINED-RAW'};
+  const ordinary=name==='ordinary-store-confirmation-route',operational=name==='operational-preflight-preserved',acceptance=ordinary||operational?null:{stage:2,proposalId:'PENDING-PROPOSAL',rawResponseId:'RETAINED-RAW'};
   const impact={requiresConfirmation:true,confirmationKey:'current-storage-impact',affected:[{stage:3,work:[{id:'RETAINED-DOWNSTREAM'}]}]};let preflight=0,writes=0,review=null,saved=null;
-  const runtime=createVerifierRuntime({current:prior,projects:[prior],projectStore:{mutationImpact(){preflight++;return impact;},async replaceProject(candidate,options){writes++;assert.equal(candidate,next,'ACCEPTANCE_EXACT_CANDIDATE_ORACLE');assert.equal(options.acceptance,undefined);if(name==='required-storage-confirmation'||name==='stale-storage-confirmation')throw Object.assign(new Error('Review current effect'),{code:'MUTATION_CONFIRMATION_REQUIRED',impact});if(name==='failed-write')throw Object.assign(new Error('Controlled failed write'),{code:'INJECTED_STORAGE_FAILURE'});saved={...candidate,revision:5,projectSha256:'saved'};return saved;}},showReplacementReview:async value=>{review=value;},captureCurrentView:async()=>{},captureView:()=>({activeStage:2}),acceptedContinuation:()=>null,rebaseAcceptedLaneSelection:()=>{},withStorageActivity:async(_label,operation)=>operation(),operationSelection:{},runSelection:{},unloadInactiveProjects:()=>{},mobileSessionCurrent:()=>false,recordCommittedBoundary:async()=>{},render:()=>{}});
+  const runtime=createVerifierRuntime({current:prior,projects:[prior],projectStore:{mutationImpact(){preflight++;return impact;},async replaceProject(candidate,options){writes++;assert.equal(candidate,next,'ACCEPTANCE_EXACT_CANDIDATE_ORACLE');assert.equal(options.acceptance,undefined);assert.equal(options.operational,operational,'STORAGE_WRITE_KIND_ORACLE '+name);if(STORE_CONFIRMED_CASES.has(name))throw Object.assign(new Error('Review current effect'),{code:'MUTATION_CONFIRMATION_REQUIRED',impact});if(name==='failed-write')throw Object.assign(new Error('Controlled failed write'),{code:'INJECTED_STORAGE_FAILURE'});saved={...candidate,revision:5,projectSha256:'saved'};return saved;}},showReplacementReview:async value=>{review=value;},captureCurrentView:async()=>{},captureView:()=>({activeStage:2}),acceptedContinuation:()=>null,rebaseAcceptedLaneSelection:()=>{},withStorageActivity:async(_label,operation)=>operation(),operationSelection:{},runSelection:{},unloadInactiveProjects:()=>{},mobileSessionCurrent:()=>false,recordCommittedBoundary:async()=>{},render:()=>{}});
   runtime.safe=value=>Array.isArray(value)?value:[];createVerifierRuntime.loadScript(runtime,viewHelper+source.slice(start,end)+'\nglobalThis.persist=persistReplacement;');
-  const run=()=>runtime.persist(next,{acceptance,...(name==='stale-storage-confirmation'?{mutationConfirmation:{confirmationKey:'older-impact'}}:{})});
+  const run=()=>runtime.persist(next,{acceptance,...(operational?{operational:true}:{}),...(name==='stale-storage-confirmation'?{mutationConfirmation:{confirmationKey:'older-impact'}}:{})});
   if(name==='conforming-acceptance'){assert.equal(await run(),saved);assert.equal(runtime.current,saved);assert.equal(review,null);}
   else if(name==='failed-write'){await assert.rejects(run,error=>error.code==='INJECTED_STORAGE_FAILURE');assert.equal(runtime.current,prior);assert.equal(review,null);}
   else{await assert.rejects(run,error=>error.code==='MUTATION_REVIEW_SHOWN','ACCEPTANCE_STORAGE_REVIEW_ROUTE_ORACLE '+name);assert.equal(review.next,next,'ACCEPTANCE_REVIEW_CANDIDATE_RETENTION_ORACLE');assert.equal(review.impact,impact,'ACCEPTANCE_REVIEW_STORAGE_IMPACT_ORACLE');assert.equal(review.acceptance,acceptance);assert.equal(runtime.current,prior,'ACCEPTANCE_REVIEW_NO_COMMIT_ORACLE');}
-  assert.equal(preflight,name==='ordinary-preflight-preserved'?1:0,'ACCEPTANCE_NO_DUPLICATE_PREFLIGHT_ORACLE '+name);assert.equal(writes,name==='ordinary-preflight-preserved'?0:1,'ACCEPTANCE_STORAGE_OWNER_CALLED_ORACLE '+name);
+  assert.equal(preflight,operational?1:0,'ACCEPTANCE_NO_DUPLICATE_PREFLIGHT_ORACLE '+name);assert.equal(writes,operational?0:1,'ACCEPTANCE_STORAGE_OWNER_CALLED_ORACLE '+name);
   cases.push({caseId:name,result:'PASS',preflightCalls:preflight,storageCalls:writes,exactCandidateRetained:review?review.next===next:true});
  }
  {
@@ -26,7 +31,47 @@ export async function verifyAcceptanceStorageImpactRouting({source=fs.readFileSy
   const runtime=createVerifierRuntime({replacementReview:review,current:{revision:4,job:{JOB_ID:'SYNTHETIC'},projectSha256:'current'},ingestion:{findRaw:()=>({}),acceptanceImpact:()=>impact,validateAcceptanceCandidate:()=>{}},reverifyReturnedFiles:async()=>{},humanAuthorityConfirmationValues:()=>({}),closedLoopHash:{sha256Value:JSON.stringify},projectStore:{mutationImpact:()=>impact},engine:{records:()=>[]},persistReplacement:async candidate=>{assert.equal(candidate,next);stored=true;runtime.replacementReview={...review,impact:{...impact,confirmationKey:'changed-at-commit'}};throw Object.assign(new Error('Review refreshed'),{code:'MUTATION_REVIEW_SHOWN'});},finishAcceptedProposal:()=>{finished=true;}});
   createVerifierRuntime.loadScript(runtime,source.slice(begin,end)+'\nglobalThis.confirm=confirmReplacement;');await runtime.confirm();assert.equal(stored,true,'ACCEPTANCE_CONFIRM_STORAGE_RECHECK_ORACLE');assert.equal(finished,false,'ACCEPTANCE_CONFIRM_NO_FALSE_SUCCESS_ORACLE');assert.equal(runtime.replacementReview.impact.confirmationKey,'changed-at-commit');cases.push({caseId:'confirmation-refresh-remains-review',result:'PASS',noFalseSave:true,exactCandidateRetained:runtime.replacementReview.next===next});
  }
- return {result:'PASS',boundary:'Extracted actual UI persistence function with controlled store responses; owning suite separately proves real store acceptance',sourceSha256:createHash('sha256').update(source).digest('hex'),cases,acceptedViewCheckpointReuse:await verifyAcceptedViewCheckpointReuse({source})};
+ // Intended regressions of the confirmation route; each must be refused by its owning oracle.
+ const faults=[];
+ if(controls)for(const [name,before,after,oracle] of [
+  ['ordinary-duplicate-preflight','nativeProductResults||acceptance||!operational?null:projectStore.mutationImpact?.(source,next)','nativeProductResults||acceptance?null:projectStore.mutationImpact?.(source,next)','ACCEPTANCE_NO_DUPLICATE_PREFLIGHT_ORACLE ordinary-store-confirmation-route'],
+  ['acceptance-only-store-route',"if((acceptance||!operational&&!nativeProductResults)&&error?.code==='MUTATION_CONFIRMATION_REQUIRED'&&error.impact)","if(acceptance&&error?.code==='MUTATION_CONFIRMATION_REQUIRED'&&error.impact)",'ACCEPTANCE_STORAGE_REVIEW_ROUTE_ORACLE ordinary-store-confirmation-route'],
+  ['operational-preflight-dropped','nativeProductResults||acceptance||!operational?null:projectStore.mutationImpact?.(source,next)','null','ACCEPTANCE_STORAGE_REVIEW_ROUTE_ORACLE operational-preflight-preserved']
+ ]){assert.equal(source.split(before).length-1,1,'Storage confirmation route fault anchor: '+name);await assert.rejects(verifyAcceptanceStorageImpactRouting({source:source.replace(before,after),controls:false}),error=>error.code==='ERR_ASSERTION'&&error.message.includes(oracle),'Storage confirmation route fault was not detected: '+name);faults.push({fault:name,result:'DETECTED',oracle});}
+ return {result:'PASS',boundary:'Extracted actual UI persistence function with controlled store responses; owning suite separately proves real store acceptance',sourceSha256:createHash('sha256').update(source).digest('hex'),cases,faults,...(controls?{acceptedViewCheckpointReuse:await verifyAcceptedViewCheckpointReuse({source}),retainedViewCapture:await verifyRetainedViewCapture({source})}:{})};
+}
+
+// A write that retains the selected view as its own History view does not save
+// that view separately first. Captures already admitted (edits) still finish
+// before the write, and a pending replacement review is still captured.
+export async function verifyRetainedViewCapture({source=fs.readFileSync('app-core.js','utf8'),controls=true}={}){
+ const extract=(start,end)=>{const a=source.indexOf(start),b=source.indexOf(end,a);assert.ok(a>=0&&b>a,start);return source.slice(a,b);};
+ const body=extract('function acceptedProposalHistoryView(','function rebaseAcceptedLaneSelection(')+extract('async function persistReplacement(','async function save(')+extract('async function captureCurrentView(','async function navigateWithinVersion('),cases=[];
+ const sha=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex'),expectedOrder={'retained-by-write':['write'],'admitted-capture-first':['checkpoint-start','checkpoint','write'],'pending-review-captured':['checkpoint','write'],'ordinary-write-captures':['checkpoint','write']};
+ for(const name of Object.keys(expectedOrder)){
+  const prior={job:{JOB_ID:'SYNTHETIC-RETAINED-VIEW'},revision:4,projectSha256:'prior',activeStage:1,activeView:'Workflow',projectData:{}},next=structuredClone(prior);next.exportRecorded=true;
+  const view={activeStage:1,activeView:'Workflow',operationSelection:{},runSelection:{},drafts:{'#handoff-recipient':{value:'Unsaved recipient draft'}},pendingMutation:null},order=[];let committedView,release=()=>{};
+  const runtime=createVerifierRuntime({ingestion:{proposalAccepted:()=>false},current:prior,projects:[prior],safe:value=>Array.isArray(value)?value:[],operationSelection:{},runSelection:{},replacementReview:name==='pending-review-captured'?{next:structuredClone(prior),impact:{requiresConfirmation:true,confirmationKey:'pending'},expectedProjectRevision:4}:null,historyRestoreController:null,restoringHistory:false,operatorActionInFlight:null,pendingViewCaptures:[],capturingViewPromise:null,savedDraftView:null,savedViewSignature:'earlier-view',displayedHistoryEntryId:'entry',APPLICATION_SESSION_ID:'SYNTHETIC-SESSION',closedLoopHash:{sha256Value:sha},acceptedContinuation:()=>null,rebaseAcceptedLaneSelection:()=>{},withStorageActivity:async(_label,fn)=>fn(),unloadInactiveProjects:()=>{},mobileSessionCurrent:()=>false,writeBrowserEntry:()=>{},displayedBrowserEntry:()=>({entryId:'entry'}),showReplacementReview:()=>{throw Error('Unexpected replacement review');},refreshHistory:async()=>{},recordCommittedBoundary:async()=>{}});
+  runtime.captureView=()=>structuredClone({...view,pendingMutation:runtime.replacementReview?{next:runtime.replacementReview.next,impact:runtime.replacementReview.impact}:null});
+  runtime.projectStore={mutationImpact:()=>({requiresConfirmation:false}),async saveCheckpoint(){order.push('checkpoint');return 'view-checkpoint';},async replaceProject(candidate,options){order.push('write');committedView=structuredClone(options.historyView);return {...candidate,revision:5,projectSha256:'committed'};}};
+  createVerifierRuntime.loadScript(runtime,body+'\nglobalThis.persist=persistReplacement;globalThis.capture=captureCurrentView;');
+  if(name==='admitted-capture-first'){
+   runtime.projectStore.saveCheckpoint=async()=>{order.push('checkpoint-start');await new Promise(resolve=>{release=resolve;});order.push('checkpoint');return 'edit-checkpoint';};
+   const edit=runtime.capture(),write=runtime.persist(next,{operational:true,viewRetainedByWrite:true});
+   try{await new Promise(resolve=>setTimeout(resolve,0));assert.deepEqual(order,['checkpoint-start'],'RETAINED_VIEW_ADMITTED_CAPTURE_ORDER_ORACLE');}finally{release();}
+   await Promise.all([edit,write]);
+  }else await runtime.persist(next,{operational:true,viewRetainedByWrite:name!=='ordinary-write-captures'});
+  assert.deepEqual(order,expectedOrder[name],'RETAINED_VIEW_CHECKPOINT_ORACLE '+name);
+  assert.equal(JSON.stringify(committedView),JSON.stringify({...view,pendingMutation:null}),'RETAINED_VIEW_HISTORY_ORACLE '+name);
+  cases.push({caseId:name,result:'PASS',order,historyViewRetained:true});
+ }
+ const faults=[];
+ if(controls)for(const [name,before,after,oracle] of [
+  ['admitted-capture-not-awaited','if(retainedByWrite&&!replacementReview)return capturingViewPromise;','if(retainedByWrite&&!replacementReview)return;','RETAINED_VIEW_ADMITTED_CAPTURE_ORDER_ORACLE'],
+  ['pending-review-not-captured','if(retainedByWrite&&!replacementReview)return capturingViewPromise;','if(retainedByWrite)return capturingViewPromise;','RETAINED_VIEW_CHECKPOINT_ORACLE pending-review-captured'],
+  ['retained-view-captured-again','await captureCurrentView(viewRetainedByWrite&&selectedOwner&&!acceptance&&!nativeProductResults?{retainedByWrite:true}:undefined);','await captureCurrentView();','RETAINED_VIEW_CHECKPOINT_ORACLE retained-by-write']
+ ]){assert.equal(source.split(before).length-1,1,'Retained view fault anchor: '+name);await assert.rejects(verifyRetainedViewCapture({source:source.replace(before,after),controls:false}),error=>error.code==='ERR_ASSERTION'&&error.message.includes(oracle),'Retained view fault was not detected: '+name);faults.push({fault:name,result:'DETECTED',oracle});}
+ return {result:'PASS',boundary:'Actual extracted UI persist and view-capture functions with explicit synthetic storage adapter; not browser timing',cases,faults};
 }
 
 export async function verifyAcceptedViewCheckpointReuse({source=fs.readFileSync('app-core.js','utf8'),controls=true}={}){

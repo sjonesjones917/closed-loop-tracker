@@ -43,6 +43,10 @@ if(process.argv.includes('--fault=close-recovery-disclosures')){
  assert.equal(source.split(before).length-1,1,'The controlled disclosure-close fault must target exactly one restoration boundary');
  source=source.replace(before,'node.open=false;');
 }
+for(const [name,before,after] of [
+ ['authorization-pre-action-capture',"'Saving sharing authorization',{retainsView:true})","'Saving sharing authorization')"],
+ ['ordinary-pre-action-capture-skipped','function bindAction(selector,operation,label,{capture,retainsView=false}={}){','function bindAction(selector,operation,label,{capture,retainsView=true}={}){']
+])if(process.argv.includes('--fault='+name)){assert.equal(source.split(before).length-1,1,'The controlled action view-capture fault must target exactly one binding');source=source.replace(before,after);}
 const extract=(start,end)=>{const i=source.indexOf(start),j=source.indexOf(end,i+start.length);assert.ok(i>=0&&j>i);return source.slice(i,j);};
 vm.runInContext(extract('const OPERATION_LOADING_THRESHOLD_MS=','let core,schema,engine,')+extract('function setControlDisabled(','function paintOperatorAction(')+extract('function runOperatorAction(','function focusAfterAction(')+extract('function bindAction(','function bindFileAction(')+extract('function responseStagingRecoveryMarkup(','async function exportQuarantineEvidence(')+extract('function paintHistory(','async function captureCurrentView('),runtime);
 const cases=[];
@@ -85,4 +89,21 @@ runtime.quarantinedProjects.push({key:'RECOVERY-COPY-C',jobId:p.job.JOB_ID,title
 activeRecovery=assertRecoveryOpen('Damaged current project',false);
 for(const summary of ['Integrity details','Remove damaged copy'])assertRecoveryOpen(summary,false,activeRecovery);
 cases.push({name:'Opened recovery controls survive view-save repaint and reordering; closed, removed, and replacement copies retain their own state',result:'PASS'});
+// Sharing decisions retain their starting view in their own first write, or
+// capture it before replacing it, so their actual bindings admit no separate
+// pre-action view; captures already admitted are still awaited. Ordinary
+// actions keep the pre-action capture, and every action keeps its final one.
+{
+ const bindings=extract("bindAction('#authorize-handoff',","bindAction('#continue-handoff',"),controls=new Map(),seen=[],decisions=[],priorLookup=runtime.$,priorCapture=runtime.captureCurrentView;
+ for(const id of ['#authorize-handoff','#revoke-handoff','#ordinary-action'])controls.set(id,button());
+ runtime.$=selector=>controls.get(selector)||nodes.get(selector);runtime.recordCurrentHandoffAuthorization=async authorized=>{decisions.push(authorized);};
+ runtime.captureCurrentView=async options=>{seen.push(options?.retainedByWrite===true?'retained':'captured');};
+ try{
+  vm.runInContext(bindings+"bindAction('#ordinary-action',async()=>{},'Synthetic ordinary action');",runtime);
+  for(const id of ['#authorize-handoff','#revoke-handoff','#ordinary-action'])await controls.get(id).onclick();
+ }finally{runtime.$=priorLookup;runtime.captureCurrentView=priorCapture;}
+ assert.equal(runtime.failures.length,0,runtime.failures.map(e=>e.stack).join('\n'));assert.deepEqual(decisions,[true,false]);
+ assert.deepEqual(seen,['retained','captured','retained','captured','captured','captured'],'ACTION_VIEW_RETENTION_ORACLE: sharing decisions retain their starting view in their own write; ordinary actions keep the pre-action capture and every action keeps its final capture');
+ cases.push({name:'Sharing-decision bindings retain their starting view in their own write; ordinary actions keep the pre-action capture; every action keeps its final capture',result:'PASS'});
+}
 console.log(JSON.stringify({synthetic:true,actualBrowser:false,environment:'Actual History binding and action pipeline with production persistence and transactional test adapter',cases},null,2));

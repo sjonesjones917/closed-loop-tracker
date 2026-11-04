@@ -128,7 +128,7 @@ const changed=capability.copy(capProject);changed.job.EXPLICIT_USER_REQUIREMENTS
 
 // Interleave an actual ordinary save at the two asynchronous export boundaries.
 for(const boundary of ['before-review-return','after-archive']){
- const anchor=boundary==='before-review-return'?'  const currentProject=await readProject(canonicalJobId);':'  const afterArchive=await readProject(canonicalJobId);';assert(sources['project-store.js'].includes(anchor));
+ const anchor=boundary==='before-review-return'?'  const currentProject=await rereadPackageProject(canonicalJobId,packageSource,{verifyBytes:true});':'  const afterArchive=await rereadPackageProject(canonicalJobId,packageSource,{verifyBytes:false});';assert(sources['project-store.js'].includes(anchor));
  const f=await fixture({overrides:{'project-store.js':sources['project-store.js'].replace(anchor,"  await globalThis.__syntheticHandoffInterleave?.();\n"+anchor)}}),allowed=await authorizeSyntheticHandoff(f.r,{project:f.project,prompt:f.prompt});
  let committed=null;f.r.runtime.__syntheticHandoffInterleave=async()=>{delete f.r.runtime.__syntheticHandoffInterleave;const next=f.r.copy(allowed.project);next.job.JOB_TITLE='Concurrent synthetic save';committed=await f.r.store.writeProject(next,{expectedProjectRevision:allowed.project.revision,expectedStateSha256:allowed.project.projectSha256});};
  await assert.rejects(()=>f.r.store.createExecutionPackage(allowed.request),error=>error.code==='EXECUTION_PACKAGE_VERSION_STALE','DISCLOSURE_CONCURRENT_STATE_ORACLE');assert(committed);assert.equal((await f.r.store.readProject(committed.job.JOB_ID)).projectSha256,committed.projectSha256);cases.push('concurrent-save-'+boundary);
