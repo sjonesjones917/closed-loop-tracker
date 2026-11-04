@@ -1079,11 +1079,11 @@ async function writeOperationalProject(project,options={}){
   // Reuse only guarded digests of the unchanged large response carriers
   // during this synchronous derivation/validation. Every owner still runs;
   // scope limits or changed values/primitives retain the ordinary cold path.
-  const operationalBefore=options[ROOT_CERTIFICATE_WRITE]===true?captureRootValidators(initialRootDigestPrimitives):null;let operationalDerivation=null;
+  const operationalBefore=options[ROOT_CERTIFICATE_WRITE]===true?captureRootValidators(initialRootDigestPrimitives):null;let operationalDerivation=null,operationalChangePatches=null;
   const responseDigestScope=hash.createCanonicalDigestScope({rawResponses:next.projectData.rawResponses,responseProposals:next.projectData.responseProposals,generatedOutputs:next.projectData.generatedOutputs})||hash.createCanonicalDigestScope({rawResponses:next.projectData.rawResponses,generatedOutputs:next.projectData.generatedOutputs});
   try{
     hash.withCanonicalDigestScope(responseDigestScope,()=>{
-      globalThis.closedLoopWorkflowEngine.recalculate(next);assertOperationalChange(prior,next);operationalDerivation=withWriteDerivationRecord(next,()=>assertProjectIntegrity(next));
+      globalThis.closedLoopWorkflowEngine.recalculate(next);operationalChangePatches=assertOperationalChange(prior,next);operationalDerivation=withWriteDerivationRecord(next,()=>assertProjectIntegrity(next));
     });
   }finally{hash.disposeCanonicalDigestScope(responseDigestScope);}
   // The validators that just validated next, unchanged since before validation.
@@ -1104,7 +1104,9 @@ async function writeOperationalProject(project,options={}){
   assertRetainedContexts(contextCarrier);assertOperationalCandidate();if(digest===prior.projectSha256){if(pendingArtifacts.length)throw storageError('Pending returned files require their response mapping transaction.','PENDING_ARTIFACTS_WITHOUT_CHANGE');return prior;}
   const retainedArtifacts=pendingArtifacts.length?await listArtifacts(id):null,byId=new Map((retainedArtifacts||[]).map(row=>[row.artifactId,row]));
   for(const row of pendingArtifacts){const existing=byId.get(row.artifactId);if(existing&&(existing.sha256!==row.sha256||existing.byteSize!==row.byteSize||existing.filename!==row.filename||existing.mediaType!==row.mediaType||!equivalent(existing.lineage,row.lineage)))throw storageError('A pending returned artifact conflicts with stored bytes.','ARTIFACT_ID_REUSE');if(existing)row.createdAt=existing.createdAt;byId.set(row.artifactId,row);}
-  assertOperationalCandidate();
+  // Without pending files nothing above awaits or calls a replaceable owner
+  // since the identical check, so it is repeated only after the listing await.
+  if(pendingArtifacts.length)assertOperationalCandidate();
   // Every asynchronous History check, including original-source binding,
   // consumes the unexposed capture rather than hook-retained mutable values.
   const historyCandidate=pair?pair.snapshot:integrity.snapshot,historyIntegrity=verifiedProjectIntegrity(historyCandidate,digest);
@@ -1115,17 +1117,36 @@ async function writeOperationalProject(project,options={}){
     if(current?.projectSha256!==prior.projectSha256)throw storageError('Another session changed the pending response.','STALE_PROJECT_REVISION');
     globalThis.closedLoopWorkflowEngine.validateAllocationReceipts(next,current?.project);
     if(pendingArtifacts.length){const artifacts=tx.objectStore(ARTIFACTS);for(const row of pendingArtifacts){const existing=await request(artifacts.get(row.artifactId));if(existing&&(existing.jobId!==id||existing.sha256!==row.sha256||existing.byteSize!==row.byteSize||existing.filename!==row.filename||existing.mediaType!==row.mediaType||existing.createdAt!==row.createdAt||!equivalent(existing.lineage,row.lineage)))throw storageError('Another operation changed the pending returned artifact identity.','ARTIFACT_ID_REUSE');fault('during-pending-artifact-write');await storeArtifactRow(tx,row);}}
-    const existingSource=pendingArtifacts.length?await readPhysicalStoredSource(tx,META,operationalKey(id),'value'):sources.journalSource,existing=existingSource.logical?.value,body={schema:'closed-loop-response-operations/1',jobId:id,baseProjectSha256:base.projectSha256,projectRevision:Number(base.revision),sequence:Number(existing?.sequence||0)+1,patches:assertOperationalChange(base.project,next),projectSha256:digest};
+    const existingSource=pendingArtifacts.length?await readPhysicalStoredSource(tx,META,operationalKey(id),'value'):sources.journalSource,existing=existingSource.logical?.value;
+    // With no stored journal the verified prior is the reread canonical row
+    // (the source comparison above), so the patches diffed from prior before
+    // any await are the diff from base. They are used only if the replay proof
+    // below reconstructs the current candidate from base; replay re-runs the
+    // ownership checks against base. Any other outcome regenerates them here.
+    const reusablePatches=!sources.journal?.value&&!existing&&Array.isArray(operationalChangePatches)?operationalChangePatches:null;
+    const body={schema:'closed-loop-response-operations/1',jobId:id,baseProjectSha256:base.projectSha256,projectRevision:Number(base.revision),sequence:Number(existing?.sequence||0)+1,patches:reusablePatches||assertOperationalChange(base.project,next),projectSha256:digest};
+    try{
     // Prove the generated journal itself reconstructs the validated candidate.
     // This exact comparison reuses the known candidate digest; a faulty patch
     // generator cannot mint an integrity receipt for different stored values.
     if(!verifiedValuesEqual(replayOperationalPatches(base.project,body.patches),next))throw storageError('Generated response operations do not reconstruct the validated project.','OPERATIONAL_STATE_INTEGRITY_FAILED');
+    }catch(error){
+      // Reused patches that fail the proof (a changed candidate or prior) take
+      // the original path: diff base against the candidate, then the same proof.
+      if(!reusablePatches||body.patches!==reusablePatches||!['OPERATIONAL_STATE_INTEGRITY_FAILED','OPERATIONAL_OWNERSHIP_VIOLATION','OPERATIONAL_TRANSITION_VIOLATION'].includes(error?.code))throw error;
+      const regenerated=assertOperationalChange(base.project,next);
+      if(!verifiedValuesEqual(replayOperationalPatches(base.project,regenerated),next))throw storageError('Generated response operations do not reconstruct the validated project.','OPERATIONAL_STATE_INTEGRITY_FAILED');
+      body.patches=regenerated;
+    }
     const savedJournal={key:operationalKey(id),value:{...body,sha256:hash.sha256Value(body)},updatedAt:now()},journalSnapshot=copyVerifiedTree(savedJournal);
     const journalWrite=await preparePhysicalRowPut(tx,savedJournal,META,'value',existingSource);
     const assertOperationalCommit=()=>{assertPreparedPhysicalRow(journalWrite,savedJournal);assertOperationalCandidate();if(!verifiedValuesEqual(journalSnapshot,savedJournal))throw storageError('The prepared response journal changed before commit. Prepare the current candidate again.','STALE_PROJECT_REVISION');};
     // History may await native requests. Abort the same transaction if either
     // the actual candidate or the journal changed before their durable put.
-    await commitHistory(tx,prepared);assertOperationalCommit();const committedJournalStorage=commitPhysicalRowPut(tx,journalWrite,savedJournal);fault('during-operational-write');recordWorkerCommit(tx,options.operationId,next,digest);fault('before-transaction-commit');assertOperationalCommit();await complete(tx);
+    // From this check to completion only store-owned synchronous code runs
+    // (the puts, which recheck the prepared rows, the fault probes and the
+    // receipt put), so the check is not repeated before complete().
+    await commitHistory(tx,prepared);assertOperationalCommit();const committedJournalStorage=commitPhysicalRowPut(tx,journalWrite,savedJournal);fault('during-operational-write');recordWorkerCommit(tx,options.operationId,next,digest);fault('before-transaction-commit');await complete(tx);
     // Native completion already committed the checked journal. A late hook
     // mutation of next cannot change the success result or its warm proof.
     try{
