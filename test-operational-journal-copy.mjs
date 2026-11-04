@@ -611,3 +611,93 @@ for(const owner of ['checkpoint','checkpoint-cold','operational-no-op','canonica
 }
  return {schema:'private-read-custody-hook-isolation/1',checkId:'store.private-read-custody-hook-isolation',result:'PASS',synthetic:true,actualBrowser:false,nativeIndexedDB:false,actualStorageAdapter:true,actualStorageWorker:false,fullClauseProof:false,sourceSha256,caseCount:cases.length,cases,boundary:'Public checkpoint, operational no-op, canonical no-op and startup reads through isolated transaction adapter; no native browser or whole-clause claim'};
 }
+
+// A canonical write validates statically at prepare and derives the prepared
+// value once at commit. These actual store writes pin what that split keeps:
+// the projection-receipt guard at prepare, same-revision derivation at prepare,
+// derivation before durable prompt-context rows, complete static diagnostics,
+// and the commit derivation bound to the private prepared value.
+const CANONICAL_PREPARED_VALIDATION_FAULTS=Object.freeze({
+ 'omit-prepare-projection-receipt':[',requireCurrentProjection:true});','});'],
+ 'derive-same-revision-at-commit':['const commitDerives=!prior||Number(next.revision)!==revision;','const commitDerives=true;'],
+ 'persist-context-before-derivation':['if(missing.size&&beforeWrite)beforeWrite();',''],
+ 'omit-static-refusal-derivation':["if(commitDerives&&error?.code==='PROJECT_INTEGRITY_FAILED')assertProjectIntegrity(next,{prior});",''],
+ 'unbound-commit-derivation':["    assertPreparedClone();\n  }else assertProjectIntegrity(next,{prior:prior?.project});","  }else assertProjectIntegrity(next,{prior:prior?.project});"]
+});
+export async function verifyCanonicalPreparedValidation({sourceOverrides={},caseFilter=null,fault=null}={}){
+ const files=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'],frozen={...Object.fromEntries(files.map(file=>[file,fs.readFileSync(file,'utf8')])),...sourceOverrides},sourceSha256=Object.fromEntries(files.map(file=>[file,createHash('sha256').update(frozen[file]).digest('hex')]));
+ let source=frozen['project-store.js'];
+ if(fault){const replacement=CANONICAL_PREPARED_VALIDATION_FAULTS[fault];assert(replacement,'CANONICAL_PREPARED_VALIDATION_KNOWN_FAULT');assert.equal(source.split(replacement[0]).length,2,'CANONICAL_PREPARED_VALIDATION_FAULT_ANCHOR '+fault);source=source.replace(replacement[0],replacement[1]);}
+ const sources={...frozen,'project-store.js':source},cases=[];
+ const rowsDigest=r=>createHash('sha256').update(JSON.stringify([...r.rows].map(([name,rows])=>[name,[...rows].map(([key,value])=>[key,JSON.stringify(value)])]))).digest('hex');
+ const forgeRelease=(r,project)=>{const id='RELEASE-FORGED-PREPARED-VALIDATION';project.projectData.releaseRecords.push(r.copy({id,active:true,fields:{RELEASE_ID:id,DETERMINATION:'ACCEPTED'}}));project.job.CURRENT_RELEASE_ID=id;};
+ const lyingComparison=(r,field)=>{const engine=r.runtime.closedLoopWorkflowEngine;return Object.freeze({...engine,compareApplicationProjection(project,...rest){const result=Reflect.apply(engine.compareApplicationProjection,engine,[project,...rest]);return {...result,output:{...result.output,job:{...result.output.job,[field]:'Untrusted prepared-validation derivation'}}};}});};
+ const seed=async(r,commandId)=>{const created=await r.store.createProject({commandId});return r.store.readProject(created.job.JOB_ID);};
+ for(const caseId of ['recalculation-omits-projection-receipt','same-revision-rewrite-derives-at-prepare','derivation-before-prompt-context-persistence','static-refusal-reports-derived-issues','commit-derivation-bound-to-prepared-clone']){
+  if(caseFilter&&!caseFilter.includes(caseId))continue;
+  const oracle='CANONICAL_PREPARED_VALIDATION_ORACLE '+caseId;
+  if(caseId==='recalculation-omits-projection-receipt'){
+   // A replaced recalculation that drops the projection receipt is refused
+   // at prepare; the commit derivation alone does not require the receipt.
+   const r=projectStoreRuntime({storageWorker:false,sourceOverrides:sources}),{store,copy,runtime}=r,p=await seed(r,'SYNTHETIC-PREPARED-RECEIPT'),next=copy(p),engine=runtime.closedLoopWorkflowEngine;next.job.JOB_TITLE='Prepared projection receipt control';
+   const before=rowsDigest(r);let error=null;
+   runtime.closedLoopWorkflowEngine=Object.freeze({...engine,recalculate(project,...rest){const result=Reflect.apply(engine.recalculate,engine,[project,...rest]);delete project.projectData.applicationProjection;return result;}});
+   try{await store.writeProject(next,{expectedProjectRevision:p.revision});}catch(caught){error=caught;}finally{runtime.closedLoopWorkflowEngine=engine;}
+   assert.equal(error?.code==='PROJECT_INTEGRITY_FAILED'&&Boolean(error.issues?.some(issue=>/projection receipt is missing/.test(issue)))&&rowsDigest(r)===before,true,oracle);
+   cases.push({caseId,result:'PASS',error:error.code,receiptIssue:true,rowsUnchanged:true});
+  }else if(caseId==='same-revision-rewrite-derives-at-prepare'){
+   // A same-revision rewrite that recalculates back to the stored value commits
+   // as unchanged, without a commit derivation, so it still derives at prepare.
+   const clock=Date.parse('2026-10-01T00:00:00Z');class FrozenDate extends Date{constructor(...args){super(...(args.length?args:[clock]));}static now(){return clock;}}
+   const r=projectStoreRuntime({storageWorker:false,sourceOverrides:sources,environment:{Date:FrozenDate}}),{store,copy,engine,runtime}=r,field=runtime.closedLoopWorkflowSchema.PROJECT_PROJECTION_DERIVATION_CONTRACT.jobOutputFields[0];
+   let p=await seed(r,'SYNTHETIC-PREPARED-SAME-REVISION');const titled=copy(p);titled.job.JOB_TITLE='Prepared same-revision control';engine.recalculate(titled);p=await store.writeProject(titled,{expectedProjectRevision:p.revision});
+   const rewrite=()=>{const value=copy(p);value.job[field]='Stale prepared derived value';return value;};
+   const unchanged=await store.writeProject(rewrite(),{expectedProjectRevision:p.revision,incrementRevision:false});assert.equal(unchanged.projectSha256===p.projectSha256&&unchanged.revision===p.revision,true,'CANONICAL_PREPARED_VALIDATION_CONTROL '+caseId);
+   const before=rowsDigest(r),original=runtime.closedLoopWorkflowEngine;let error=null;runtime.closedLoopWorkflowEngine=lyingComparison(r,field);
+   try{await store.writeProject(rewrite(),{expectedProjectRevision:p.revision,incrementRevision:false});}catch(caught){error=caught;}finally{runtime.closedLoopWorkflowEngine=original;}
+   assert.equal(error?.code==='PROJECT_INTEGRITY_FAILED'&&rowsDigest(r)===before,true,oracle);
+   cases.push({caseId,result:'PASS',error:error.code,unchangedControlCommitted:true,rowsUnchanged:true});
+  }else if(caseId==='derivation-before-prompt-context-persistence'){
+   // A derived-invalid write that introduces prompt context is refused before
+   // that context is stored; the same valid write stores it.
+   const r=projectStoreRuntime({storageWorker:false,sourceOverrides:sources}),{store,copy,engine,prompts}=r;let p=await seed(r,'SYNTHETIC-PREPARED-CONTEXT');
+   const objective=copy(p);objective.job.EXACT_USER_OBJECTIVE_VERBATIM='Synthetic prepared-validation objective. '+'SYNTHETIC_PREPARED_CONTEXT '.repeat(5000);engine.recordHumanInputVersion(objective,['EXACT_USER_OBJECTIVE_VERBATIM']);p=await store.writeProject(objective,{expectedProjectRevision:p.revision});
+   const candidate=copy(p),record=prompts.reserveAndBuildPromptRecord(candidate,1).prompt,contextRows=()=>[...r.rows.get('artifacts').keys()].filter(key=>String(key).startsWith('PROMPT-CONTEXT-')).length;
+   assert.equal((record.contextManifest?.promptContext?.attachments?.length||0)>0&&contextRows()===0,true,'CANONICAL_PREPARED_VALIDATION_SETUP '+caseId);
+   const forged=copy(candidate);forgeRelease(r,forged);const before=rowsDigest(r);let error=null;
+   try{await store.writeProject(forged,{expectedProjectRevision:p.revision});}catch(caught){error=caught;}
+   assert.equal(error?.code==='PROJECT_INTEGRITY_FAILED'&&Boolean(error.issues?.some(issue=>/release determination/.test(issue)))&&contextRows()===0&&rowsDigest(r)===before,true,oracle);
+   const saved=await store.writeProject(copy(candidate),{expectedProjectRevision:p.revision});assert.equal(saved.revision===p.revision+1&&contextRows()>0,true,'CANONICAL_PREPARED_VALIDATION_CONTROL '+caseId);
+   cases.push({caseId,result:'PASS',error:error.code,promptContextRowsWrittenOnRefusal:0,validControlStoredContext:true,rowsUnchanged:true});
+  }else if(caseId==='static-refusal-reports-derived-issues'){
+   // A value with static and derived faults reports both, as a full validation does.
+   const r=projectStoreRuntime({storageWorker:false,sourceOverrides:sources}),{store,copy}=r,p=await seed(r,'SYNTHETIC-PREPARED-DIAGNOSTICS'),next=copy(p);
+   forgeRelease(r,next);next.projectData.history.push(copy({eventSequence:0,eventId:'SYNTHETIC-DUPLICATE-SEQUENCE'}));
+   const before=rowsDigest(r);let error=null;try{await store.writeProject(next,{expectedProjectRevision:p.revision});}catch(caught){error=caught;}
+   assert.equal(error?.code==='PROJECT_INTEGRITY_FAILED'&&Boolean(error.issues?.some(issue=>/eventSequence/.test(issue)))&&Boolean(error.issues?.some(issue=>/release determination/.test(issue)))&&rowsDigest(r)===before,true,oracle);
+   cases.push({caseId,result:'PASS',error:error.code,staticAndDerivedIssuesReported:true,rowsUnchanged:true});
+  }else{
+   // Prepare recalculates under non-current capabilities. A clone hook makes the
+   // commit clone pass the commit derivation, then restores the prepared value.
+   const r=projectStoreRuntime({storageWorker:false,sourceOverrides:sources}),{store,copy,runtime}=r,p=await seed(r,'SYNTHETIC-PREPARED-CLONE-BINDING'),jobId=p.job.JOB_ID,input=copy(p);r.engine.addHistory(input,'SYNTHETIC_PREPARED_VALIDATION',{synthetic:true});
+   const engine=runtime.closedLoopWorkflowEngine,prompt=runtime.closedLoopPromptEngine,testRuntime=runtime.closedLoopTestRuntime,open=runtime.openStorageTransaction,stale=Object.freeze({...testRuntime,capabilities:()=>Object.freeze([])});
+   let candidate=null,preparedTarget=null,writerTarget=null,saved=null,commitOpened=false,restored=false,error=null;
+   runtime.closedLoopWorkflowEngine=Object.freeze({...engine,
+    recalculate(project,...rest){if(project===preparedTarget&&!commitOpened){runtime.closedLoopTestRuntime=stale;try{return Reflect.apply(engine.recalculate,engine,[project,...rest]);}finally{runtime.closedLoopTestRuntime=testRuntime;}}return Reflect.apply(engine.recalculate,engine,[project,...rest]);},
+    validateAllocationReceipts(project,...rest){if(project===writerTarget&&saved&&!restored){for(const key of Object.keys(project))delete project[key];for(const key of Object.keys(saved))project[key]=saved[key];restored=true;}return Reflect.apply(engine.validateAllocationReceipts,engine,[project,...rest]);}});
+   runtime.closedLoopPromptEngine=Object.freeze({...prompt,copyRetainedPromptContextFiles(from,to,...rest){const result=Reflect.apply(prompt.copyRetainedPromptContextFiles,prompt,[from,to,...rest]);
+    if(from===input&&!candidate)candidate=to;
+    else if(from===candidate&&to!==candidate&&!preparedTarget&&to?.job?.JOB_ID===jobId)preparedTarget=to;
+    else if(commitOpened&&from===preparedTarget&&!writerTarget){writerTarget=to;saved=copy(to);Reflect.apply(engine.recalculate,engine,[to]);}
+    return result;}});
+   runtime.openStorageTransaction=async(names,mode)=>{if(mode==='readwrite'&&(Array.isArray(names)?names:[names]).includes('projects')&&preparedTarget)commitOpened=true;return Reflect.apply(open,runtime,[names,mode]);};
+   const before=rowsDigest(r);
+   try{await store.writeProject(input,{expectedProjectRevision:p.revision,expectedStateSha256:p.projectSha256});}catch(caught){error=caught;}
+   finally{runtime.closedLoopWorkflowEngine=engine;runtime.closedLoopPromptEngine=prompt;runtime.openStorageTransaction=open;runtime.closedLoopTestRuntime=testRuntime;}
+   assert.equal(Boolean(preparedTarget&&writerTarget),true,'CANONICAL_PREPARED_VALIDATION_SETUP '+caseId);
+   assert.equal(error?.code==='STALE_PROJECT_REVISION'&&rowsDigest(r)===before,true,oracle);
+   cases.push({caseId,result:'PASS',error:error.code,commitCloneRederived:true,rowsUnchanged:true});
+  }
+ }
+ return {result:'PASS',sourceSha256,caseCount:cases.length,cases,boundary:'Actual canonical writes through the isolated transaction adapter with replaced engine, capability and clone hooks where stated; no browser or IndexedDB claim'};
+}

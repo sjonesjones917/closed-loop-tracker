@@ -261,7 +261,7 @@ function derivedProjectIntegrityIssues(project,{verifyCachedProjection=true,proj
   return issues;
 }
 function validateProjectIntegrity(project,options){return withImportDigestScope(project,()=>validateProjectIntegrityCurrent(project,options));}
-function validateProjectIntegrityCurrent(project,{verifyDerived=true,verifyCachedProjection=true,verifyProjection=true,projectionObservedAt=null,prior=null}={}){
+function validateProjectIntegrityCurrent(project,{verifyDerived=true,requireCurrentProjection=verifyDerived,verifyCachedProjection=true,verifyProjection=true,projectionObservedAt=null,prior=null}={}){
   const issues=[],schemaApi=globalThis.closedLoopWorkflowSchema,engine=globalThis.closedLoopWorkflowEngine;
   if(!project||typeof project!=='object')return {valid:false,issues:['Project is not an object.']};
   if(!schemaApi||!engine)return {valid:false,issues:['Workflow schema and engine are required for canonical project integrity validation.']};
@@ -272,11 +272,11 @@ function validateProjectIntegrityCurrent(project,{verifyDerived=true,verifyCache
     const present=Object.hasOwn(project.projectData,'applicationProjection');
     if(present){
       const legacy=engine.validateLegacyApplicationProjection(project),checked=legacy||engine.validateApplicationProjection(project,project,{useRetainedObservations:true});
-      if(legacy&&verifyDerived)issues.push('Application projection algorithm requires explicit current activation.');
+      if(legacy&&requireCurrentProjection)issues.push('Application projection algorithm requires explicit current activation.');
       for(const item of checked.issues)issues.push('Application projection receipt is invalid: '+item.code+' '+item.message);
       const observedAt=project.projectData.applicationProjection?.observedAt;
       for(const [number,state] of Object.entries(project.stages))if(Object.hasOwn(state.gate||{},'checkedAt')&&state.gate.checkedAt!==observedAt)issues.push('Stage '+number+' gate observation does not match its projection receipt.');
-    }else if(verifyDerived)issues.push('Application projection receipt is missing; explicit legacy projection activation is required.');
+    }else if(requireCurrentProjection)issues.push('Application projection receipt is missing; explicit legacy projection activation is required.');
   }
 
   if(project.schema!==schemaApi.PROJECT_SCHEMA)issues.push(`Project schema ${project.schema||'UNKNOWN'} does not match ${schemaApi.PROJECT_SCHEMA}.`);
@@ -1445,18 +1445,22 @@ async function readProjectMetadata(jobId,sourceProof=null,physicalCapture=null){
   if(computed!==row.projectSha256){await quarantine(row,'PROJECT_HASH_MISMATCH',{physicalSources:sources});throw storageError('Project hash mismatch. The original row was preserved in quarantine.','PROJECT_HASH_MISMATCH');}
   if(Number(row.revision)!==Number(row.project?.revision)){await quarantine(row,'PROJECT_REVISION_MISMATCH',{physicalSources:sources});throw storageError('Stored revision does not match the canonical project. The original row was preserved in quarantine.','PROJECT_REVISION_MISMATCH');}
   try{assertProjectIntegrity(row.project,{verifyDerived:false});}catch(error){if(!legacyJobPointerProjection(row.project,{verifyDerived:false})){await quarantine(row,'PROJECT_CANONICAL_INTEGRITY_FAILED: '+error.message,{physicalSources:sources});throw storageError('The stored project failed canonical integrity validation. Its original state was preserved in quarantine.','PROJECT_INTEGRITY_FAILED');}}
-  let active;try{active=applyOperationalJournal(row,journal?.value,sourceProof?.readPurpose===CHECKPOINT_PAIR_READ?sourceProof:null);if(active!==row){try{assertProjectIntegrity(active.project,{verifyDerived:false});}catch(error){if(!legacyJobPointerProjection(active.project,{verifyDerived:false}))throw error;}}}catch(error){if(!journal?.value)throw error;await quarantine(row,'OPERATIONAL_STATE_INTEGRITY_FAILED: '+error.message,{operationalSha256:journal.value.sha256,physicalSources:sources});throw storageError('Saved response operations failed integrity verification. Their exact state was preserved in quarantine.','OPERATIONAL_STATE_INTEGRITY_FAILED');}const verifiedSourceRow=sourceProof?.row||copyVerifiedTree(row);active.project.revision=Number(active.revision||0);active.project.projectSha256=active.projectSha256;recoveryProjectionBounds.set(active.project,active===row?row.updatedAt:journal.updatedAt);
+  let active;try{active=applyOperationalJournal(row,journal?.value,sourceProof?.readPurpose===CHECKPOINT_PAIR_READ?sourceProof:null);if(active!==row){try{assertProjectIntegrity(active.project,{verifyDerived:false});}catch(error){if(!legacyJobPointerProjection(active.project,{verifyDerived:false}))throw error;}}}catch(error){if(!journal?.value)throw error;await quarantine(row,'OPERATIONAL_STATE_INTEGRITY_FAILED: '+error.message,{operationalSha256:journal.value.sha256,physicalSources:sources});throw storageError('Saved response operations failed integrity verification. Their exact state was preserved in quarantine.','OPERATIONAL_STATE_INTEGRITY_FAILED');}const verifiedSourceRow=sourceProof?.row||null,storedLabels=!verifiedSourceRow&&active.project===row.project?{revision:row.project.revision,digestPresent:Object.hasOwn(row.project,'projectSha256'),projectSha256:row.project.projectSha256}:null;active.project.revision=Number(active.revision||0);active.project.projectSha256=active.projectSha256;recoveryProjectionBounds.set(active.project,active===row?row.updatedAt:journal.updatedAt);
   const repaired=legacyJobPointerProjection(active.project,{verifyDerived:false});
   const projectionActivation=projectionActivationRequired(active.project),varianceActivation=legacyExpectedVarianceSources(active.project).length>0;
   if(repaired||unacceptedAgentJobDefaults(active.project).length||projectionActivation||varianceActivation){
     // Bind the migration to this complete cold-verified source. Its candidate
     // and History reuse only private unchanged-value proofs; the transaction
     // still rereads both canonical row and operational journal before commit.
-    const verifiedRead={row:verifiedSourceRow,storage,journal:sourceProof?.journal||copyVerifiedTree(journal),...verifiedProjectIntegrity(active.project,active.projectSha256)};
+    const verifiedRead={row:verifiedSourceRow||storedSourceRowCopy(row,storedLabels),storage,journal:sourceProof?.journal||copyVerifiedTree(journal),...verifiedProjectIntegrity(active.project,active.projectSha256)};
     if(sourceProof){sourceProof.current=false;delete sourceProof.checkpointDigestPair;}
     const migrated=await migrateJobPointerProjection(active.project,{...(repaired||{project:clone(active.project),repairs:[]}),projectionActivation,varianceActivation},verifiedRead);return physicalCapture?readProjectMetadata(jobId,null,physicalCapture):migrated;
   }if(sourceProof?.checkpointDigestPair&&!checkpointPairMatches(sourceProof.checkpointDigestPair,active.project))delete sourceProof.checkpointDigestPair;return active.project;
 }
+// A public read labels its own active project (revision and digest) after
+// verification. Only a migration needs the stored source row: copy it then,
+// with any labels written on the stored project returned to their read values.
+function storedSourceRowCopy(row,labels){const copy=copyVerifiedTree(row);if(labels){copy.project.revision=labels.revision;if(labels.digestPresent)copy.project.projectSha256=labels.projectSha256;else delete copy.project.projectSha256;}return copy;}
 function unacceptedAgentJobDefaults(project){
   const schema=globalThis.closedLoopWorkflowSchema,stage=project?.stages?.[1],data=project?.projectData;
   if(project?.schema!==schema.PROJECT_SCHEMA||project?.job?.CONTRACT_PROFILE_ID!==schema.CONTRACT_PROFILE_ID||!stage||!data)return [];
@@ -2851,7 +2855,7 @@ async function restoreCheckpoint(jobId,checkpointId,{expectedProjectRevision,sig
   }catch(error){try{tx.abort();}catch{}throw error;}
 }
 
-async function persistProjectPromptFiles(project){const prompts=globalThis.closedLoopPromptEngine;await persistPromptContextRecords((project.projectData?.generatedPrompts||[]).filter(record=>!record.invalidatedBy&&record.promptEngineVersion===(prompts?.versionFor?.(record.stage,record.operation)||prompts?.version)),project);}
+async function persistProjectPromptFiles(project,beforeWrite=null){const prompts=globalThis.closedLoopPromptEngine;await persistPromptContextRecords((project.projectData?.generatedPrompts||[]).filter(record=>!record.invalidatedBy&&record.promptEngineVersion===(prompts?.versionFor?.(record.stage,record.operation)||prompts?.version)),project,beforeWrite);}
 // Section 34/38: correcting an append-only definition creates a new record.
 // Application lifecycle/status consequences remain with their declared owner;
 // the original authored content and original identity cannot be overwritten.
@@ -2920,8 +2924,12 @@ async function writeProjectRow(project,tx,{expectedProjectRevision=null,incremen
   if(preparedProof&&Number(project.revision)===Number(next.revision)){
     // Type/reference/receipt validation is bound to the private unchanged value.
     // Current time, custody and capability observations still recalculate here.
+    // Prepare validates statically, so this is the derived check of the
+    // prepared value: bind its input to the private snapshot before any later
+    // hook could restore a different clone.
     const issues=derivedProjectIntegrityIssues(next);
     if(issues.length)throw Object.assign(storageError('Canonical project integrity validation failed: '+issues.join(' | '),'PROJECT_INTEGRITY_FAILED'),{issues});
+    assertPreparedClone();
   }else assertProjectIntegrity(next,{prior:prior?.project});
   globalThis.closedLoopWorkflowEngine.validateAllocationReceipts(next,prior?.project);
   // The private proof covers this exact prepared revision; other callers still
@@ -2973,12 +2981,12 @@ function mutationImpactComparisonEligible(project){
   return true;
 }
 function mutationImpact(prior,next,derivedNext=null){return globalThis.closedLoopWorkflowEngine.withReadinessEvaluationEpoch(()=>mutationImpactAtObservation(prior,next,derivedNext));}
-function mutationImpactAtObservation(prior,next,derivedNext=null,verifiedCandidate=null){
+function mutationImpactAtObservation(prior,next,derivedNext=null,verifiedCandidate=null,candidateWhenRequired=false){
   const engine=globalThis.closedLoopWorkflowEngine,affected=new Map(),replaces=[];
   // Normal analysis uses the full fresh derived graph, not a partial stage
   // overlay. Replaced authorities or unusual clone domains keep the old path;
   // canonical writers supplying derivedNext are deliberately unchanged.
-  if(!derivedNext&&engine===mutationImpactComparisonEngine&&typeof engine.selectFreshProjectionComparison==='function'&&operationalCloneBindingCurrent()&&mutationImpactComparisonEligible(next))return engine.selectFreshProjectionComparison(next,comparison=>mutationImpactAtObservation(prior,next,comparison,verifiedCandidate));
+  if(!derivedNext&&engine===mutationImpactComparisonEngine&&typeof engine.selectFreshProjectionComparison==='function'&&operationalCloneBindingCurrent()&&mutationImpactComparisonEligible(next))return engine.selectFreshProjectionComparison(next,comparison=>mutationImpactAtObservation(prior,next,comparison,verifiedCandidate,candidateWhenRequired));
   const candidate=next;next=derivedNext||cloneOperationalPatchValue(candidate);
   if(!derivedNext){engine.ensureShape(next);engine.recalculate(next);}
   const active=row=>row&&!row.invalidatedBy&&row.active!==false;
@@ -3015,11 +3023,13 @@ function mutationImpactAtObservation(prior,next,derivedNext=null,verifiedCandida
       }
     }
   }
-  const effect={jobId:projectIdentity(next),projectRevision:Number(prior?.revision||0),priorProjectSha256:prior?(prior.projectSha256||projectSha256(prior)):null,historyActivationId:prior?.historyActivationId||null,candidateSha256:unchangedVerifiedProject(verifiedCandidate,candidate,verifiedCandidate?.digest)?verifiedCandidate.digest:projectSha256(candidate),replaces,affected:[...affected.values()].sort((a,b)=>a.stage-b.stage)};
+  const effect={jobId:projectIdentity(next),projectRevision:Number(prior?.revision||0),priorProjectSha256:prior?(prior.projectSha256||projectSha256(prior)):null,historyActivationId:prior?.historyActivationId||null,candidateSha256:candidateWhenRequired&&!affected.size?null:unchangedVerifiedProject(verifiedCandidate,candidate,verifiedCandidate?.digest)?verifiedCandidate.digest:projectSha256(candidate),replaces,affected:[...affected.values()].sort((a,b)=>a.stage-b.stage)};
   return {...effect,stage:effect.affected[0]?.stage||Number(next.activeStage||1),requiresConfirmation:Boolean(affected.size),confirmationKey:hash.sha256Value(effect)};
 }
+// Only a required confirmation is compared or reported here (error.impact), so
+// only then is the candidate digest bound. Public impacts are unchanged.
 function assertMutationConfirmation(prior,next,confirmation,derivedNext=null,verifiedCandidate=null){
-  const impact=globalThis.closedLoopWorkflowEngine.withReadinessEvaluationEpoch(()=>mutationImpactAtObservation(prior,next,derivedNext,verifiedCandidate));
+  const impact=globalThis.closedLoopWorkflowEngine.withReadinessEvaluationEpoch(()=>mutationImpactAtObservation(prior,next,derivedNext,verifiedCandidate,true));
   if(impact.requiresConfirmation&&impact.confirmationKey!==confirmation?.confirmationKey){const error=storageError(confirmation?'The project or proposed correction changed. Review its updated effect.':'Review the correction and affected work before saving.','MUTATION_CONFIRMATION_REQUIRED');error.impact=impact;throw error;}
   return impact;
 }
@@ -3082,6 +3092,12 @@ async function prepareProjectWrite(project,options={}){
   next.revision=(options.incrementRevision??true)?revision+1:revision;
   const engine=globalThis.closedLoopWorkflowEngine;engine.ensureShape(next);
   engine.reconcileReservationRevisions(next);
+  // writeProjectRow derives this exact prepared value at commit under current
+  // authority; here it is validated statically, projection receipt included.
+  // A static refusal still reports the derived issues, and missing prompt
+  // context is persisted only after the derived check (below). A same-revision
+  // rewrite can commit as unchanged without that check, so it still derives here.
+  const commitDerives=!prior||Number(next.revision)!==revision;
   // A write that may certify its root records the validators before validating
   // and keeps them only if they are unchanged after the validation below.
   const validatorsBefore=options[ROOT_CERTIFICATE_WRITE]===true?captureRootValidators(initialRootDigestPrimitives):null;
@@ -3095,7 +3111,7 @@ async function prepareProjectWrite(project,options={}){
   const canonicalWriteDigestScope=hash.createCanonicalDigestScope({generatedPrompts:next.projectData.generatedPrompts,rawResponses:next.projectData.rawResponses,responseProposals:next.projectData.responseProposals,generatedOutputs:next.projectData.generatedOutputs});
   try{
     hash.withCanonicalDigestScope(canonicalWriteDigestScope,()=>{
-      engine.recalculate(next);if(options[NATIVE_PRODUCT_COMMAND_AUTHORITY]!==true)assertMutationConfirmation(prior,candidate,options.mutationConfirmation,next,candidateProof);assertProjectIntegrity(next,{prior});
+      engine.recalculate(next);if(options[NATIVE_PRODUCT_COMMAND_AUTHORITY]!==true)assertMutationConfirmation(prior,candidate,options.mutationConfirmation,next,candidateProof);try{assertProjectIntegrity(next,{prior,verifyDerived:!commitDerives,requireCurrentProjection:true});}catch(error){if(commitDerives&&error?.code==='PROJECT_INTEGRITY_FAILED')assertProjectIntegrity(next,{prior});throw error;}
     });
   }finally{hash.disposeCanonicalDigestScope(canonicalWriteDigestScope);}
   // Bind the validated value and the validators that just validated it in the
@@ -3104,7 +3120,7 @@ async function prepareProjectWrite(project,options={}){
   const writeValidators=validatorsBefore&&rootValidatorsUnchanged(validatorsBefore)?validatorsBefore:null;
   const primitive=rootDigestPrimitivesUnchanged(initialRootDigestPrimitives)?initialRootDigestPrimitives:null,measured=primitive?historyProjectDigests(next):null,pair=measured&&rootDigestPrimitivesUnchanged(primitive)?measured:null;
   const digest=pair?pair.projectSha256:projectSha256(next),integrity=verifiedProjectIntegrity(next,digest);
-  await persistProjectPromptFiles(next);
+  await persistProjectPromptFiles(next,commitDerives?()=>{const found=derivedProjectIntegrityIssues(next);if(found.length)throw Object.assign(storageError('Canonical project integrity validation failed: '+found.join(' | '),'PROJECT_INTEGRITY_FAILED'),{issues:found});}:null);
   const preparedHistory=await prepareHistoryCommit(next,prior,{label:options.historyLabel,view:options.historyView,artifactRows:options.creation?.artifacts||null,verifiedRead,verifiedDigests:[[next,digest,pair?.workSha256]],verifiedIntegrity:[...(verifiedRead?[verifiedRead]:[]),integrity],privateEncodeSources:new Map([[next,integrity.snapshot]])});
   if(options.creation)preparedHistory.state.commandReceipts={...(preparedHistory.state.commandReceipts||{}),[options.creation.receiptKey]:clone(options.creation.receipt)};
   return {project:next,options:{...options,expectedProjectRevision:revision,expectedStateSha256:prior?.projectSha256||null,preparedHistory,[VERIFIED_CANONICAL_WRITE]:{read:verifiedRead,integrity,digest,primitive:pair?primitive:null,validators:pair?writeValidators:null}}};
@@ -3900,7 +3916,7 @@ async function importPackage(blob,{operationId=null,passphrase=null,pendingBacku
 }
 
 function promptContextArtifactId(jobId,file){return 'PROMPT-CONTEXT-'+hash.sha256Value({jobId:String(jobId),sha256:file.sha256});}
-async function persistPromptContextRecords(records,project){
+async function persistPromptContextRecords(records,project,beforeWrite=null){
   const jobId=projectIdentity(project),byDigest=new Map(),groups=[];
   for(const record of records){
     const identities=[];
@@ -3926,6 +3942,9 @@ async function persistPromptContextRecords(records,project){
     }));
     await finished;
   }catch(error){try{tx.abort();}catch{}await finished.catch(()=>{});throw error;}
+  // A canonical preparation that defers its derived check to commit runs it
+  // here, before the first context write outlives a refusal.
+  if(missing.size&&beforeWrite)beforeWrite();
   // This set belongs only to this preparation. New saves re-read the store.
   // The existing writer still hashes, stores, reads back and rehashes new bytes.
   for(const {record,identities:required} of groups){
