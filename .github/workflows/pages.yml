@@ -814,8 +814,10 @@ jobs:
           run_browser_verifier verify-mobile-stage-action.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-mobile-capability-journey.mjs || BROWSER_VERIFY_RESULT=1
           # Run5926 reached all30 stages and imported its backup before the90m
-          # deadline cut off final proof. Keep a finite budget with headroom.
-          run_browser_verifier verify-complete-operator-journey.mjs 120m || BROWSER_VERIFY_RESULT=1
+          # deadline cut off final proof. The integrity-checked branch reached
+          # Stage 17 at 120m, so the finite budget is 240m: the 90 s per-action
+          # gate is unchanged and the job keeps headroom under its 360m limit.
+          run_browser_verifier verify-complete-operator-journey.mjs 240m || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-browser-recovery.mjs || BROWSER_VERIFY_RESULT=1
           test "$BROWSER_VERIFY_RESULT" = 0
           kill "$SERVER_PID" 2>/dev/null || true
@@ -903,7 +905,7 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: [test, deploy]
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    timeout-minutes: 360
     env:
       PAGE_URL: ${{ needs.deploy.outputs.page_url }}
       VERIFIED_SITE_DIR: _verified-site/site
@@ -943,7 +945,7 @@ jobs:
           BROWSER_VERIFY_RESULT=0
           run_browser_verifier verify-mobile-stage-action.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-mobile-capability-journey.mjs || BROWSER_VERIFY_RESULT=1
-          run_browser_verifier verify-complete-operator-journey.mjs 120m || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-complete-operator-journey.mjs 240m || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-browser-recovery.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-browser.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-browser-extra.mjs || BROWSER_VERIFY_RESULT=1
@@ -1033,7 +1035,7 @@ jobs:
           BROWSER_VERIFY_RESULT=0
           run_browser_verifier verify-mobile-stage-action.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-mobile-capability-journey.mjs || BROWSER_VERIFY_RESULT=1
-          run_browser_verifier verify-complete-operator-journey.mjs 120m || BROWSER_VERIFY_RESULT=1
+          run_browser_verifier verify-complete-operator-journey.mjs 240m || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-browser-recovery.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-browser.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-browser-extra.mjs || BROWSER_VERIFY_RESULT=1

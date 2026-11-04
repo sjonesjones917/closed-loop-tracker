@@ -324,7 +324,7 @@ assert.throws(()=>assertRegressionEvidenceEligibility(silentMissingEvidence),/RE
 assertRegressionEvidenceEligibility(workflow);regressionEvidenceFaults.push({fault:'silent-missing-evidence',result:'DETECTED',restored:'PASS'});
 const journeyInvocations=[...workflow.matchAll(/run_browser_verifier verify-complete-operator-journey\.mjs (\d+)m/g)];
 assert.equal(journeyInvocations.length,3,'Every candidate, main and re-verification journey remains required.');
-assert.ok(journeyInvocations.every(match=>Number(match[1])===120),'All existing complete journeys require the same finite120m execution budget.');
+assert.ok(journeyInvocations.every(match=>Number(match[1])===240),'All existing complete journeys require the same finite240m execution budget.');
 
 for(const token of ['node verify-final-acceptance.mjs','const finalGate=evaluateFinalAcceptance(report,{visualBaseline,executedEvidence})','report.finalAcceptancePublication=finalGate.accepted','report.releaseTagEligible=finalGate.accepted',"if: steps.acceptance.outputs.final_acceptance == 'true'"])assert.throws(()=>assertPublicationWiring(workflow.replace(token,'')),error=>error.code==='ERR_ASSERTION');
 const artifactFaults=[];

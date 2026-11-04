@@ -469,7 +469,7 @@ const sourceSearchCompletionObservations=[];
   assert.equal(basis.retention,'CANONICAL_UTF8_REPORT');assert.notEqual(engine.recordValue(bound,'SEARCH_PERFORMER_CAPABILITY_ID'),p.projectData.generatedPrompts.at(-1).contextManifest.semanticReviewBinding.authorContextId);
   const manifest=engine.recordsForCurrentScope(p,'environmentManifests').find(row=>engine.recordId(row,'environmentManifests')===engine.recordValue(capability,'ENVIRONMENT_MANIFEST_ID'));assert.equal(engine.recordValue(manifest,'EVIDENCE_BASES').epistemicBasis,'OPERATOR_CONFIRMED_EXTERNAL_CLAIM');
   sourceSearchCompletionObservations.push({checkId:'stage02.search-capability.bound-evidence',requirementRefs:['specification/closed-loop-reliability-controlling-implementation-specification.txt:606'],boundary:'Actual canonical execution evidence and registered operator-confirmed performer/capability writer',expected:{evidenceIdsMatch:true,capabilityRegistered:true,retention:'CANONICAL_UTF8_REPORT',basis:'OPERATOR_CONFIRMED_EXTERNAL_CLAIM'},observed:{evidenceIdsMatch:hash.stableStringify(engine.recordValue(bound,'EXECUTION_EVIDENCE_IDS'))===hash.stableStringify(bound.evidenceRefs),capabilityRegistered:capability.source==='EXTERNAL_CAPABILITY_REGISTRATION',retention:basis.retention,basis:engine.recordValue(manifest,'EVIDENCE_BASES').epistemicBasis},passed:true});
-  // The complete operator journey is allowed to run for 120 minutes. Its
+  // The complete operator journey is allowed to run for 240 minutes. Its
   // positive synthetic source-search claim must remain current throughout that
   // bounded fixture lifetime, while the real validator must reject at expiry.
   // Execute the serialized helper in the same VM shape used by browser callers;
