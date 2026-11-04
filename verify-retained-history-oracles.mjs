@@ -6,7 +6,7 @@ import {pathToFileURL} from 'node:url';
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
 export async function verifyRetainedHistoryOracles(){
  const source=process.env.RETAINED_HISTORY_SOURCE||new URL('./test-retained-history-browser.mjs',import.meta.url),text=fs.readFileSync(source,'utf8');
- const {verifyRetainedBackup,verifyRetainedRestore}=await import('data:text/javascript;base64,'+Buffer.from(text).toString('base64'));
+ const {verifyRetainedBackup,verifyRetainedRestore,observeRetainedHistory}=await import('data:text/javascript;base64,'+Buffer.from(text).toString('base64'));
  const content=[Buffer.from('first retained body'),Buffer.from('next retained body!')],fileBytes=Buffer.from('retained exact file bytes é\n');
  const entries=content.map((bytes,index)=>({id:'checkpoint-'+index,parentId:index?'checkpoint-0':null,sha256:sha(bytes),byteSize:bytes.length,projectSha256:String(index).repeat(64)}));
  const fileSha=sha(fileBytes),history={schema:'closed-loop-recovery/1',jobId:'SYNTHETIC-HISTORY',entries,sessions:{FIRST:{checkpointId:'checkpoint-0',startedAt:'2000-01-01T00:00:00.000Z'}},files:{[fileSha]:{byteSize:fileBytes.length}}};
@@ -28,6 +28,32 @@ export async function verifyRetainedHistoryOracles(){
  assert.equal(verifyRetainedRestore(sourceExported,sourceRestored).verifiedRestoredMembers,3);assert.equal(verifyRetainedRestore(sourceExported,sourceRestored).verifiedRestoredSourceArchives,1);rows.push({caseId:'RETAINED_HISTORY_SOURCE_LITERAL_CONTROL',result:'PASS'});
  const lostReference=structuredClone(sourceBody);delete lostReference.recovery.sourceArchiveReferences[sourceSha];reject('RETAINED_HISTORY_SOURCE_REFERENCE_GUARD_ORACLE',()=>verifyRetainedBackup(sourceBefore,download(lostReference)),'RETAINED_HISTORY_SOURCE_REFERENCE_ORACLE');
  const changedSource=structuredClone(sourceRestored);changedSource.bytes.at(-1).sha256='0'.repeat(64);reject('RETAINED_HISTORY_SOURCE_BYTES_GUARD_ORACLE',()=>verifyRetainedRestore(sourceExported,changedSource),'RETAINED_HISTORY_RESTORED_BYTES_ORACLE');
- return {schema:'closed-loop-retained-history-verifier-oracles/1',cases:rows,passed:true,synthetic:true,boundary:'Independent literal exported package bytes and retained descriptors test the verifier assertions. No application/browser storage behavior is asserted.',helperSha256:sha(text)};
+ // History state form. A state entry may name its complete parts list by the
+ // canonical digest of that list; the snapshot record and the backup keep the
+ // list. The observer compares retained versions in the recorded form. These
+ // rows are reported separately; the frozen recovery-scope case list is unchanged.
+ const stateFormRows=[],canonical=x=>x===null||typeof x!=='object'?JSON.stringify(x):Array.isArray(x)?'['+x.map(canonical).join(',')+']':'{'+Object.keys(x).sort().map(k=>JSON.stringify(k)+':'+canonical(x[k])).join(',')+'}';
+ const parts={schema:'closed-loop-history-project-parts/1',entries:[{path:['stages','1'],sha256:fileSha,byteSize:fileBytes.length}]},records=entries.map((entry,index)=>index?entry:{...entry,projectParts:parts});
+ const stateHistory={...structuredClone(history),entries:entries.map((entry,index)=>index?entry:{...entry,projectPartsSha256:sha(Buffer.from(canonical(parts)))})};
+ const project={job:{JOB_ID:history.jobId},revision:3,projectSha256:'a'.repeat(64)};
+ // A controlled page: the expression runs against literal stored rows, and its
+ // result crosses a JSON boundary as a returned browser value does.
+ const page=(state,recordRows)=>{const meta=new Map([['recovery:'+history.jobId,state],['recovery:'+history.jobId+':bytes:'+fileSha,{blob:new Blob([fileBytes])}]]);recordRows.forEach((row,index)=>{if(row)meta.set('recovery:'+history.jobId+':snapshot:'+row.id,{...row,blob:new Blob([content[index]])});});
+  const closedLoopProjectStore={readProject:async id=>id===history.jobId?{revision:project.revision,projectSha256:project.projectSha256}:null,metaGet:async key=>structuredClone(meta.get(key))},closedLoopHash={sha256Bytes:async blob=>sha(Buffer.from(await blob.arrayBuffer()))};
+  return {evaluate:async expression=>JSON.parse(JSON.stringify(await Function('closedLoopProjectStore','closedLoopHash','return '+expression)(closedLoopProjectStore,closedLoopHash)))};};
+ const recordedBody={...structuredClone(body),recovery:{...structuredClone(history),entries:structuredClone(records)}};
+ const observed=await observeRetainedHistory(page(stateHistory,records),project);
+ assert.deepEqual(observed.history.entries,records,'RETAINED_HISTORY_STATE_FORM_OBSERVATION_CONTROL: state-form entries are observed as their records');
+ const stateExported=verifyRetainedBackup(observed,download(recordedBody));assert.equal(stateExported.report.verifiedByteMembers,3);
+ const stateRestored=await observeRetainedHistory(page(stateHistory,records),project,{verifyBytes:true});
+ assert.equal(verifyRetainedRestore(stateExported,stateRestored).verifiedRestoredMembers,3);stateFormRows.push({caseId:'RETAINED_HISTORY_STATE_FORM_CONTROL',result:'PASS'});
+ async function rejectObservation(caseId,state,recordRows,oracle){await assert.rejects(()=>observeRetainedHistory(page(state,recordRows),project),error=>String(error.message).includes(oracle),caseId+': a state-form entry that its record does not prove was accepted.');stateFormRows.push({caseId,result:'PASS',intendedOracle:oracle});}
+ const wrongDigest=structuredClone(stateHistory);wrongDigest.entries[0].projectPartsSha256='f'.repeat(64);await rejectObservation('RETAINED_HISTORY_STATE_FORM_DIGEST_GUARD_ORACLE',wrongDigest,records,'RETAINED_HISTORY_STATE_FORM_DIGEST_ORACLE');
+ const changedField=structuredClone(records);changedField[0].label='another version';await rejectObservation('RETAINED_HISTORY_STATE_FORM_FIELD_GUARD_ORACLE',stateHistory,changedField,'RETAINED_HISTORY_STATE_FORM_RECORD_ORACLE');
+ const {projectParts:inlineParts,...forged}=records[0];await rejectObservation('RETAINED_HISTORY_STATE_FORM_RECORD_FORM_GUARD_ORACLE',stateHistory,[{...forged,projectPartsSha256:stateHistory.entries[0].projectPartsSha256},records[1]],'RETAINED_HISTORY_STATE_FORM_RECORD_ORACLE');
+ await rejectObservation('RETAINED_HISTORY_STATE_FORM_MISSING_RECORD_GUARD_ORACLE',stateHistory,[null,records[1]],'RETAINED_HISTORY_RECORD_MISSING');
+ const changedParts=structuredClone(recordedBody);changedParts.recovery.entries[0].projectParts.entries[0].byteSize++;
+ assert.throws(()=>verifyRetainedBackup(observed,download(changedParts)),error=>String(error.message).includes('RETAINED_HISTORY_IMMUTABLE_PREFIX_ORACLE'),'RETAINED_HISTORY_STATE_FORM_PREFIX_GUARD_ORACLE: a backup whose recorded parts differ was accepted.');stateFormRows.push({caseId:'RETAINED_HISTORY_STATE_FORM_PREFIX_GUARD_ORACLE',result:'PASS',intendedOracle:'RETAINED_HISTORY_IMMUTABLE_PREFIX_ORACLE'});
+ return {schema:'closed-loop-retained-history-verifier-oracles/1',cases:rows,stateFormCases:stateFormRows,passed:true,synthetic:true,boundary:'Independent literal exported package bytes and retained descriptors test the verifier assertions; a controlled page over literal rows tests the state-form observation. No application/browser storage behavior is asserted.',helperSha256:sha(text)};
 }
 if(process.argv[1]&&pathToFileURL(process.argv[1]).href===import.meta.url)console.log(JSON.stringify(await verifyRetainedHistoryOracles(),null,2));
