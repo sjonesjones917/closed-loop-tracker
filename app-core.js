@@ -354,14 +354,15 @@ function refreshStorageHealth(){
 }
 function stageLocked(n){return engine.stageEntryState(current,n).reason||'';}
 async function persistNewProject(project,{initialMobileAcceptanceSession=null}={}){const saved=await withStorageActivity('Creating project',()=>projectStore.writeProject(project,{expectedProjectRevision:0,incrementRevision:false,createOnly:true,...(initialMobileAcceptanceSession?{initialMobileAcceptanceSession}:{})}));projects=[saved,...projects];return saved;}
-async function persistReplacement(next,{expectedProjectRevision=null,mutationConfirmation=null,acceptance=null,operational=false,pendingArtifacts=null,nativeProductResults=null,viewRetainedByWrite=false}={}){
+async function persistReplacement(next,{expectedProjectRevision=null,mutationConfirmation=null,acceptance=null,operational=false,pendingArtifacts=null,nativeProductResults=null,viewRetainedByWrite=false,recalculated=false}={}){
  const jobId=String(next?.job?.JOB_ID||''),selectedOwner=String(current?.job?.JOB_ID||'')===jobId,expectedStateSha256=next.projectSha256||(selectedOwner?current.projectSha256:null);
  const source=selectedOwner?current:projects.find(project=>project.job?.JOB_ID===jobId);
  if(expectedProjectRevision===null)expectedProjectRevision=Number(source?.revision??next.revision??0);
  // Canonical writes are confirmed by the store transaction itself, against its
  // own current row; its refusal (error.impact) opens the same review below.
  // Operational writes have no store-side confirmation, so they keep this one.
- const impact=nativeProductResults||acceptance||!operational?null:projectStore.mutationImpact?.(source,next);
+ // A candidate its caller has just recalculated is its own derived graph.
+ const impact=nativeProductResults||acceptance||!operational?null:projectStore.mutationImpact?.(source,next,recalculated?next:null);
  if(impact?.requiresConfirmation&&mutationConfirmation?.confirmationKey!==impact.confirmationKey){await showReplacementReview({impact,next,expectedProjectRevision,acceptance});throw Object.assign(new Error('Review this change before saving.'),{code:'MUTATION_REVIEW_SHOWN'});}
  let committed,committedView,nativeCommandDispatched=false;
  try{
@@ -1334,7 +1335,7 @@ async function prepareStageResponseFile(file,{nonauthoritativeFallback=false}={}
     reportResponseFailure(message,error);return;
   }
   try{const slots=ingestion.attachmentSlotPlan(current,ingestion.strictParse(text,{limits:schema.responseResourceLimitsForPrompt(prompt),responseContract:true}),prompt);if(slots.length){announce('Select the returned files in their named attachment slots.');render();queueMicrotask(()=>focusAfterAction($('#returned-file-slots')));return;}}catch{/* The normal validator records malformed response and identity findings. */}
-  try{const expectedProjectRevision=Number(current.revision||0),prepared=ingestion.prepareCaptured(current,{rawResponseId:captured.rawRecord.rawResponseId,promptRecord:prompt,expectedCommittedRevision:expectedProjectRevision});await persistReplacement(prepared.project,{expectedProjectRevision,operational:true});const continuation=!prepared.validation?.valid?await saveRequiredContinuation(n):null;await recordMobileValidation(prepared);if(continuation)selectStageContinuation(continuation.prompt);presentPreparedResponse(prepared,continuation);}
+  try{const expectedProjectRevision=Number(current.revision||0),prepared=ingestion.prepareCaptured(current,{rawResponseId:captured.rawRecord.rawResponseId,promptRecord:prompt,expectedCommittedRevision:expectedProjectRevision});await persistReplacement(prepared.project,{expectedProjectRevision,operational:true,recalculated:!prepared.idempotent&&!prepared.duplicate});const continuation=!prepared.validation?.valid?await saveRequiredContinuation(n):null;await recordMobileValidation(prepared);if(continuation)selectStageContinuation(continuation.prompt);presentPreparedResponse(prepared,continuation);}
   catch(error){reportResponseFailure('The response bytes are preserved, but validation could not be saved. Your accepted work is unchanged.',error);}
 }
 function presentPreparedResponse(prepared,continuation){
@@ -1373,7 +1374,7 @@ async function reverifyReturnedFiles(raw){
 async function validateReturnedResponse(retry=true,rawResponseId=null){
   responseActionFailure=null;
   const raw=rawResponseId?ingestion.findRaw(current,rawResponseId):pendingReturnedResponse();if(!raw)return;if(rawResponseId&&!['PRESERVED','VALIDATION_FAILED'].includes(raw.status)){render();return;}const jobId=current.job.JOB_ID,revision=current.revision;
-  try{await reverifyReturnedFiles(raw);if(current.job.JOB_ID!==jobId||current.revision!==revision)throw new Error('Project changed while returned-file bytes were being verified.');const expectedProjectRevision=Number(current.revision||0),prepared=ingestion.prepareCaptured(current,{rawResponseId:raw.rawResponseId,expectedCommittedRevision:expectedProjectRevision});await persistReplacement(prepared.project,{expectedProjectRevision,operational:true});const continuation=!prepared.validation?.valid?await saveRequiredContinuation(raw.stage):null;await recordMobileValidation(prepared);if(continuation)selectStageContinuation(continuation.prompt);presentPreparedResponse(prepared,continuation);}catch(error){if(retry&&error?.code==='STALE_PROJECT_REVISION'&&current.job.JOB_ID===jobId)return validateReturnedResponse(false,raw.rawResponseId);reportResponseFailure('The returned files could not be validated. Your accepted work is unchanged.',error);}
+  try{await reverifyReturnedFiles(raw);if(current.job.JOB_ID!==jobId||current.revision!==revision)throw new Error('Project changed while returned-file bytes were being verified.');const expectedProjectRevision=Number(current.revision||0),prepared=ingestion.prepareCaptured(current,{rawResponseId:raw.rawResponseId,expectedCommittedRevision:expectedProjectRevision});await persistReplacement(prepared.project,{expectedProjectRevision,operational:true,recalculated:!prepared.idempotent&&!prepared.duplicate});const continuation=!prepared.validation?.valid?await saveRequiredContinuation(raw.stage):null;await recordMobileValidation(prepared);if(continuation)selectStageContinuation(continuation.prompt);presentPreparedResponse(prepared,continuation);}catch(error){if(retry&&error?.code==='STALE_PROJECT_REVISION'&&current.job.JOB_ID===jobId)return validateReturnedResponse(false,raw.rawResponseId);reportResponseFailure('The returned files could not be validated. Your accepted work is unchanged.',error);}
 }
 async function saveRequiredContinuation(stage){const next=clone(current),continuation=ingestion.prepareStageContinuation(next,{stage,owningTabInstance:TAB_INSTANCE_ID});if(continuation?.created)await persistReplacement(next);return continuation;}
 function pendingProposal(){return safe(current.projectData.responseProposals).filter(x=>x.status==='PENDING_OPERATOR_REVIEW'&&operatorLaneMatches(x,current.activeStage)).at(-1);}
