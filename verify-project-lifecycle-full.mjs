@@ -323,8 +323,10 @@ vm.runInContext(`
   globalThis.closedLoopWorkflowEngine={stageContext:project=>project,handoffDisclosureClassification:()=> 'UNKNOWN',evaluateHandoffAuthorization:()=>({allowed:true,subjectSha256:hash.sha256Text('SYNTHETIC_STREAMING_POLICY_ONLY'),syntheticPolicyFixture:true}),finalizeExecutionHandoff:(_project,_prompt,{base,members})=>({...base,...fixtureTransfer,filesToSend:members,attachmentSlots:[],syntheticPolicyFixture:true}),executionHandoff:()=>({send:[{artifactId:'FILE-6'}]}),records:(_p,family)=>family==='artifacts'?[{id:'FILE-6',SHA256:fixtureArtifacts[6].sha256,BYTE_SIZE:fixtureArtifacts[6].byteSize,FILENAME:fixtureArtifacts[6].filename}]:[],recordId:r=>r.id,recordValue:(r,key)=>r[key],isActiveRecord:()=>true};
 `,filePackageRuntime);
 // Re-evaluate the same store with only its I/O substituted for immutable rows.
+// Package builds read through readPackageProject and rereadPackageProject,
+// so those reads return the same immutable fixture row as readProject.
 filePackageRuntime.structuredClone=undefined; // Preserve the isolated realm's plain-object prototypes.
-vm.runInContext(store.replace('globalThis.closedLoopProjectStore=', 'readProject=async()=>fixtureProject;readArtifactRow=getArtifact=async id=>[...fixtureArtifacts,fixtureContextRow].find(row=>row.artifactId===id);globalThis.closedLoopProjectStore='),filePackageRuntime);
+vm.runInContext(store.replace('globalThis.closedLoopProjectStore=', 'readProject=readPackageProject=rereadPackageProject=async()=>fixtureProject;readArtifactRow=getArtifact=async id=>[...fixtureArtifacts,fixtureContextRow].find(row=>row.artifactId===id);globalThis.closedLoopProjectStore='),filePackageRuntime);
 vm.runInContext("fixtureProject.projectData.generatedPrompts[0].promptEngineVersion='STALE-FIXTURE'",filePackageRuntime);
 let stalePromptRejected=false;
 try{await vm.runInContext("closedLoopProjectStore.createExecutionPackage({project:fixtureProject,stage:4,operation:'COMPLETE'})",filePackageRuntime);}catch(error){stalePromptRejected=error.code==='EXECUTION_PACKAGE_CURRENT_PROMPT_REQUIRED';}
