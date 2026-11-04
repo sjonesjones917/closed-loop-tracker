@@ -1718,13 +1718,15 @@ async function readHistorySourceFile(state,source,readFile=sha=>metaGet(historyF
     file=await readFile(source.sha256);
   }else if(reference){
     if(source.kind===PACKAGE_EXTENSION_KIND)throw storageError('Package extension bytes cannot be reconstructed from a project snapshot.','SOURCE_ARCHIVE_INTEGRITY_FAILED');
-    const checkedSnapshot=async id=>{const expected=state.entries.find(entry=>entry.id===id),stored=await readSnapshot(id);if(!expected||!stored?.blob)throw storageError('Original source depends on a missing saved project.','SOURCE_ARCHIVE_INTEGRITY_FAILED');return {...expected,blob:stored.blob};};
+    // Every complete version this reconstruction decodes, whether the
+    // reference names it or one of its views, is resolved here. A state-form
+    // version's parts are its record's parts, bound by the entry's digest, and
+    // must be retained files before its body is decoded.
+    const checkedSnapshot=async id=>{const expected=state.entries.find(entry=>entry.id===id),stored=await readSnapshot(id);if(!expected||!stored?.blob)throw storageError('Original source depends on a missing saved project.','SOURCE_ARCHIVE_INTEGRITY_FAILED');if(Object.hasOwn(expected,'projectPartsSha256'))assertHistoryRecordPartsRetained(state,expected,stored);return {...expected,blob:stored.blob};};
     const entry=await checkedSnapshot(reference.checkpointId);
     if(entry.sha256!==reference.snapshotSha256)throw storageError('Original source identifies a different saved project.','SOURCE_ARCHIVE_INTEGRITY_FAILED');
     const cached=decodedSources?.get(reference.checkpointId);let body=cached?.blob===entry.blob?cached.body:null;
     if(!body){body=await readCheckpointBody(state.jobId,entry,checkedSnapshot,new Map(),false,readFile,new Map(),verifiedByteDigests);if(decodedSources){decodedSources.clear();decodedSources.set(reference.checkpointId,{blob:entry.blob,body});}}
-    // A state-form root names its parts by digest; the body's parts matched it.
-    if(Object.hasOwn(entry,'projectPartsSha256'))assertHistoryPartsRetained(state,body.projectParts);
     const project=sourceReferenceProject(body.project,reference),blob=new Blob([...hash.canonicalChunks(project)],{type:source.mediaType});
     file={sha256:source.sha256,blob};
   }else file=await readFile(source.sha256);
@@ -2266,6 +2268,15 @@ function assertHistoryStateFormEntry(entry){
 function assertHistoryPartsRetained(state,parts){
   assertHistoryProjectParts(parts);
   if(parts.entries.some(part=>state.files[part.sha256]?.byteSize!==part.byteSize))throw storageError('Recovery project contents are not retained in this complete history.','HISTORY_VERSION_MISMATCH');
+}
+// A state-form entry's parts are its stored record's complete list, bound by
+// the entry's digest before use; each part is a retained file.
+function assertHistoryRecordPartsRetained(state,entry,record){
+  const parts=record&&typeof record==='object'&&!Object.hasOwn(record,'projectPartsSha256')?record.projectParts:null;
+  if(!parts)throw storageError('Saved project contents do not match their checkpoint.','HISTORY_VERSION_MISMATCH');
+  assertHistoryProjectParts(parts);
+  if(hash.sha256Value(parts)!==entry.projectPartsSha256)throw storageError('Saved project contents do not match their checkpoint.','HISTORY_VERSION_MISMATCH');
+  assertHistoryPartsRetained(state,parts);
 }
 // Convert inline entries to the state form once, at the first preparation of a
 // write. A corrupted inline or state-form entry is refused, never converted or
