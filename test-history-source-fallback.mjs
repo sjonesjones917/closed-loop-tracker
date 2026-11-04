@@ -49,6 +49,52 @@ try{
  await check('current-wrong-indexed-raw-size-refuses',async()=>{const r=copyRuntime(base);addRaw(r);stateOf(r).files[sourceSha].byteSize--;stateOf(r).retainedFileBytes--;const before=await fingerprint(r);await assert.rejects(()=>r.store.readOriginalSourceArchive(jobId,sourceSha),rawError);assert.equal(await fingerprint(r),before);return{code:'SOURCE_ARCHIVE_INTEGRITY_FAILED',beforeSha256:before};});
  await check('current-stale-reference-with-no-raw-remains-refused',async()=>{const r=copyRuntime(base);await staleRoot(r);const before=await fingerprint(r);await assert.rejects(()=>r.store.readOriginalSourceArchive(jobId,sourceSha),staleError);assert.equal(await fingerprint(r),before);return{code:'HISTORY_VERSION_MISMATCH',beforeSha256:before};});
  await check('current-raw-storage-read-error-propagates',async()=>{const r=copyRuntime(base);await staleRoot(r);addRaw(r);const before=await fingerprint(r),open=r.runtime.openStorageTransaction;let failures=0;r.runtime.openStorageTransaction=async(...args)=>{const tx=await open(...args),objectStore=tx.objectStore;tx.objectStore=name=>{const store=objectStore(name);if(name==='meta'){const get=store.get;store.get=key=>{if(key==='recovery:'+jobId+':bytes:'+sourceSha){failures++;throw Object.assign(new Error('Controlled exact-source storage read failure'),{code:'CONTROLLED_STORAGE_READ_FAILURE'});}return get(key);};}return store;};return tx;};await assert.rejects(()=>r.store.readOriginalSourceArchive(jobId,sourceSha),e=>e.code==='CONTROLLED_STORAGE_READ_FAILURE');assert.equal(failures,1);assert.equal(await fingerprint(r),before);return{failures,code:'CONTROLLED_STORAGE_READ_FAILURE',beforeSha256:before};});
+ // The History state names the reference root's parts by digest. A digest that
+ // disagrees with the root body, or a root part that is not a retained file,
+ // refuses the reconstruction with the existing codes; nothing changes.
+ const stateFormRoot=r=>{const entry=stateOf(r).entries.find(x=>x.id===refOf(r).checkpointId);assert.equal(typeof entry?.projectPartsSha256,'string','SOURCE_FALLBACK_STATE_FORM_ROOT_FIXTURE');return entry;};
+ await check('state-form-root-digest-disagreeing-with-body-refuses',async()=>{const r=copyRuntime(base);stateFormRoot(r).projectPartsSha256='f'.repeat(64);const before=await fingerprint(r),refusal=e=>e.code==='HISTORY_VERSION_MISMATCH'&&e.message==='Saved project contents do not match their checkpoint.';await assert.rejects(()=>r.store.readOriginalSourceArchive(jobId,sourceSha),refusal,'SOURCE_FALLBACK_STATE_FORM_DIGEST_ORACLE');await assert.rejects(()=>r.runtime.__sourceFallbackControl.verify(stateOf(r)),refusal,'SOURCE_FALLBACK_STATE_FORM_DIGEST_ORACLE grouped');assert.equal(await fingerprint(r),before);return{code:'HISTORY_VERSION_MISMATCH',message:'Saved project contents do not match their checkpoint.',beforeSha256:before};});
+ await check('state-form-root-unretained-part-refuses',async()=>{const r=copyRuntime(base),root=stateFormRoot(r),state=stateOf(r),part=r.rows.get('meta').get('recovery:'+jobId+':snapshot:'+root.id).value.projectParts.entries[0];state.retainedFileBytes-=state.files[part.sha256].byteSize;delete state.files[part.sha256];const before=await fingerprint(r),refusal=e=>e.code==='HISTORY_VERSION_MISMATCH'&&e.message==='Recovery project contents are not retained in this complete history.';await assert.rejects(()=>r.store.readOriginalSourceArchive(jobId,sourceSha),refusal,'SOURCE_FALLBACK_STATE_FORM_RETAINED_PART_ORACLE');assert.equal(await fingerprint(r),before);return{code:'HISTORY_VERSION_MISMATCH',message:'Recovery project contents are not retained in this complete history.',beforeSha256:before};});
+ // A normal import whose active version is a saved view binds the source
+ // reference to that view, and the view's root is a state-form entry. Every
+ // reconstruction through the view checks that root's recorded parts against
+ // the retained files before decoding it (public, grouped and restore paths).
+ let viewBase,viewJob,viewSource,viewRoot,laterRoot;
+ const viewStateOf=r=>r.rows.get('meta').get('recovery:'+viewJob).value,viewRecordOf=(r,id)=>r.rows.get('meta').get('recovery:'+viewJob+':snapshot:'+id).value;
+ const notRetained=e=>e.code==='HISTORY_VERSION_MISMATCH'&&e.message==='Recovery project contents are not retained in this complete history.',contentsDiffer=e=>e.code==='HISTORY_VERSION_MISMATCH'&&e.message==='Saved project contents do not match their checkpoint.';
+ await check('setup-view-reference-state-form-root',async()=>{
+  const writer=runtime();let p=await writer.store.createProject({commandId:'SYNTHETIC-VIEW-SOURCE-FALLBACK'});viewJob=p.job.JOB_ID;
+  p.job.JOB_TITLE='View reference root '+'retained '.repeat(300);writer.engine.recalculate(p);p=await writer.store.writeProject(p,{expectedProjectRevision:p.revision});
+  await writer.store.saveCheckpoint(viewJob,{expectedProjectRevision:p.revision,view:writer.copy({activeView:'Project',activeStage:1,scrollY:41})});
+  viewBase=runtime();let q=await viewBase.store.importPackage(await writer.store.exportPackage(viewJob));
+  const state=viewStateOf(viewBase),[sha256,reference]=Object.entries(state.sourceArchiveReferences||{})[0]||[],view=state.entries.find(x=>x.id===reference?.checkpointId);
+  assert.ok(view?.projectReference,'SOURCE_FALLBACK_VIEW_REFERENCE_FIXTURE: the reference names a saved view');viewSource=sha256;viewRoot=view.projectReference.checkpointId;
+  assert.equal(typeof state.entries.find(x=>x.id===viewRoot)?.projectPartsSha256,'string','SOURCE_FALLBACK_VIEW_REFERENCE_FIXTURE: its root is in state form');
+  // A later root; restoring it verifies every original source again.
+  const next=viewBase.copy(q);next.job.JOB_TITLE='View reference later root '+'other '.repeat(300);viewBase.engine.recalculate(next);q=await viewBase.store.writeProject(next,{expectedProjectRevision:q.revision});
+  laterRoot={id:viewStateOf(viewBase).activeId,revision:q.revision};assert.equal(viewStateOf(viewBase).entries.find(x=>x.id===laterRoot.id)?.projectReference,undefined,'SOURCE_FALLBACK_VIEW_REFERENCE_FIXTURE: later root');
+  const r=copyRuntime(viewBase),before=await fingerprint(r),row=await r.store.readOriginalSourceArchive(viewJob,viewSource);assert.equal(sha(new Uint8Array(await row.blob.arrayBuffer())),viewSource);await r.runtime.__sourceFallbackControl.verify(viewStateOf(r));assert.equal(await fingerprint(r),before);
+  return {jobId:viewJob,sourceSha256:viewSource,referenceTarget:'SAVED_VIEW',rootForm:'STATE',controlReadSucceeded:true};
+ });
+ await check('state-form-view-reference-root-unretained-part-refuses',async()=>{
+  const r=copyRuntime(viewBase),state=viewStateOf(r),later=new Set(viewRecordOf(r,laterRoot.id).projectParts.entries.map(x=>x.sha256)),part=viewRecordOf(r,viewRoot).projectParts.entries.find(x=>!later.has(x.sha256));
+  assert.ok(part,'SOURCE_FALLBACK_VIEW_REFERENCE_DISTINCT_PART_FIXTURE');state.retainedFileBytes-=state.files[part.sha256].byteSize;delete state.files[part.sha256];const before=await fingerprint(r);
+  await assert.rejects(()=>r.store.readOriginalSourceArchive(viewJob,viewSource),notRetained,'SOURCE_FALLBACK_VIEW_REFERENCE_RETAINED_PART_ORACLE');
+  await assert.rejects(()=>r.runtime.__sourceFallbackControl.verify(viewStateOf(r)),notRetained,'SOURCE_FALLBACK_VIEW_REFERENCE_RETAINED_PART_ORACLE grouped');
+  await assert.rejects(()=>r.store.restoreCheckpoint(viewJob,laterRoot.id,{expectedProjectRevision:laterRoot.revision}),notRetained,'SOURCE_FALLBACK_VIEW_REFERENCE_RETAINED_PART_ORACLE restore');
+  assert.equal(await fingerprint(r),before);
+  return {code:'HISTORY_VERSION_MISMATCH',message:'Recovery project contents are not retained in this complete history.',paths:['readOriginalSourceArchive','verifyHistorySourceArchives','restoreCheckpoint'],beforeSha256:before};
+ });
+ await check('state-form-view-reference-root-record-not-matching-digest-refuses',async()=>{
+  const results=[];
+  for(const [shape,change]of [['state-digest',r=>{viewStateOf(r).entries.find(x=>x.id===viewRoot).projectPartsSha256='f'.repeat(64);}],['record-in-state-form',r=>{const row=r.rows.get('meta').get('recovery:'+viewJob+':snapshot:'+viewRoot),forged={};for(const key of Object.keys(row.value))if(key==='projectParts')forged.projectPartsSha256=sha(canonical(row.value.projectParts));else forged[key]=row.value[key];row.value=forged;}]]){
+   const r=copyRuntime(viewBase);change(r);const before=await fingerprint(r);
+   await assert.rejects(()=>r.store.readOriginalSourceArchive(viewJob,viewSource),contentsDiffer,'SOURCE_FALLBACK_VIEW_REFERENCE_RECORD_DIGEST_ORACLE '+shape);
+   await assert.rejects(()=>r.runtime.__sourceFallbackControl.verify(viewStateOf(r)),contentsDiffer,'SOURCE_FALLBACK_VIEW_REFERENCE_RECORD_DIGEST_ORACLE grouped '+shape);
+   assert.equal(await fingerprint(r),before);results.push({shape,beforeSha256:before});
+  }
+  return {code:'HISTORY_VERSION_MISMATCH',message:'Saved project contents do not match their checkpoint.',results};
+ });
  receipt.status='PASS';
  receipt.boundary='Actual production normal-import generated source/reference through isolated transaction adapter; exact independent source bytes, public and grouped verification, strict rejection and unchanged originals. No browser, full suite, compatibility import or HIS14 claim.';
  return receipt;

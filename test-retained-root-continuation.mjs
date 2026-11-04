@@ -67,9 +67,10 @@ export async function verifyRetainedRootContinuation({fault=null,caseFilter=null
  source=source.replace(exportAnchor,'globalThis.__rootProof=()=>recentOperationalCommitRead?.retainedRoot;globalThis.__rootPrivateRead=readProjectForTransaction;globalThis.__writeDerivationBinding=record=>writeDerivationBinding(record,captureRootValidators(initialRootDigestPrimitives));'+exportAnchor);
  // Counts decodes of a checkpoint envelope from its stored bytes.
  const envelopeDecode='  const {payload,fileContents}=await readPackageJson(entry.blob,{spoolArtifacts:false}),{packageSha256,...body}=payload;';assert.equal(source.split(envelopeDecode).length,2,'RETAINED_ROOT_ENVELOPE_DECODE_ANCHOR_ORACLE');source=source.replace(envelopeDecode,'  globalThis.__rootEnvelopeDecodes=(globalThis.__rootEnvelopeDecodes||0)+1;\n'+envelopeDecode);
+ const commitAnchor='  const root=prepared.retainedRoot,primitive=root.primitive,';assert.equal(source.split(commitAnchor).length,2);source=source.replace(commitAnchor,'  globalThis.__beforeRootCommit?.(prepared.retainedRoot);\n'+commitAnchor);
  const qualify='      const rootQualified=';assert.equal(source.split(qualify).length,2);source=source.replace(qualify,'      globalThis.__mutateRootPreparation?.(decoded.project,project);\n'+qualify);
  const cases=[];
- for(const mode of ['valid-two-warm-views','wrong-work-proof','wrong-project-proof','wrong-root-descriptor','mutated-root-value','mutated-root-snapshot','changed-generator-dispatch','changed-encoder-dispatch','changed-validator-definition','changed-nested-definition','public-read-keeps-certificate','one-use-private-read','unchanged-view-keeps-certificate','unchanged-view-changed-validator','failed-save-cold-fallback','root-mutation-during-preparation','source-mutation-during-preparation','primitive-mutation-during-preparation','mutated-root-envelope','corrupt-root-after-certification','swapped-root-after-certification','corrupt-root-after-certification-session','swapped-root-after-certification-session','corrupt-root-after-certification-unchanged-view','swapped-root-after-certification-unchanged-view']){
+ for(const mode of ['valid-two-warm-views','wrong-work-proof','wrong-project-proof','wrong-root-descriptor','mutated-root-value','mutated-root-snapshot','changed-generator-dispatch','changed-encoder-dispatch','changed-validator-definition','changed-nested-definition','public-read-keeps-certificate','one-use-private-read','unchanged-view-keeps-certificate','unchanged-view-changed-validator','failed-save-cold-fallback','root-mutation-during-preparation','source-mutation-during-preparation','primitive-mutation-during-preparation','mutated-root-envelope','corrupt-root-after-certification','swapped-root-after-certification','corrupt-root-after-certification-session','swapped-root-after-certification-session','corrupt-root-after-certification-unchanged-view','swapped-root-after-certification-unchanged-view','wrong-root-descriptor-parts','mutated-candidate-parts-before-commit']){
   if(caseFilter&&!caseFilter.includes(mode))continue;
   const r=projectStoreRuntime({sourceOverrides:{'project-store.js':source},environment:{__rootCounts:{restore:0,digest:0,static:0,derived:0}},storageWorker:false});
   let p=await r.store.createProject({commandId:'PRIVATE-ROOT-'+mode});p.job.JOB_TITLE='Exact retained title '+'independent retained content '.repeat(300);r.engine.recalculate(p);p=await r.store.writeProject(p,{expectedProjectRevision:p.revision});await r.store.readProject(p.job.JOB_ID);
@@ -79,6 +80,9 @@ export async function verifyRetainedRootContinuation({fault=null,caseFilter=null
   if(mode==='wrong-work-proof')proof.workSha256='0'.repeat(64);
   if(mode==='wrong-project-proof')proof.projectSha256='0'.repeat(64);
   if(mode==='wrong-root-descriptor')proof.descriptor.label='Unrelated immutable root';
+  // The certificate carries the record descriptor; the History state names its
+  // parts by digest. Changed parts no longer match and the save decodes cold.
+  if(mode==='wrong-root-descriptor-parts'){assert.ok(proof.descriptor.projectParts?.entries?.length,'RETAINED_ROOT_RECORD_DESCRIPTOR_ORACLE');proof.descriptor.projectParts.entries[0].sha256='0'.repeat(64);}
   if(mode==='mutated-root-value')proof.project.job.JOB_TITLE='Caller mutation of private retained value';
   if(mode==='mutated-root-snapshot')proof.snapshot.job.JOB_TITLE='Changed private proof snapshot';
   // The carried envelope is never trusted over the stored bytes: a changed
@@ -134,6 +138,15 @@ export async function verifyRetainedRootContinuation({fault=null,caseFilter=null
   // certified root again instead of carrying its validation.
   if(mode==='unchanged-view-changed-validator'){const engine=r.runtime.closedLoopWorkflowEngine,start={...r.runtime.__rootCounts};vm.runInContext('globalThis.closedLoopWorkflowEngine=Object.freeze({...globalThis.closedLoopWorkflowEngine});',r.runtime);try{await save('Project');}finally{r.runtime.closedLoopWorkflowEngine=engine;}assert.ok(r.runtime.__rootCounts.static>start.static,'RETAINED_ROOT_VALIDATOR_ORACLE: an unchanged view under a replaced validator re-validates statically');assert.ok(r.runtime.__rootCounts.derived>start.derived,'RETAINED_ROOT_VALIDATOR_ORACLE: an unchanged view under a replaced validator re-validates the derivation');before={...r.runtime.__rootCounts};}
   if(mode==='failed-save-cold-fallback'){const snapshot=r.copy([...r.rows].map(([name,rows])=>[name,[...rows]]));r.runtime.__closedLoopStorageFault='during-history-write';await assert.rejects(()=>save('Workflow'),e=>e.code==='INJECTED_STORAGE_FAILURE');delete r.runtime.__closedLoopStorageFault;assert.deepEqual(r.copy([...r.rows].map(([name,rows])=>[name,[...rows]])),snapshot);assert.ok(r.runtime.__rootProof()===undefined,'Failed save publishes no continuation');}
+  // A prepared root whose record parts change before its commit transaction is
+  // refused by the stored-root comparison; nothing is written or published.
+  if(mode==='mutated-candidate-parts-before-commit'){
+   const snapshot=r.copy([...r.rows].map(([name,rows])=>[name,[...rows]]));let reached=false;
+   r.runtime.__beforeRootCommit=root=>{reached=true;delete r.runtime.__beforeRootCommit;assert.ok(root.descriptor.projectParts?.entries?.length,'RETAINED_ROOT_RECORD_DESCRIPTOR_ORACLE: the candidate carries the complete record descriptor');root.descriptor.projectParts.entries[0].byteSize++;};
+   await assert.rejects(()=>save('Workflow'),e=>e.code==='HISTORY_SNAPSHOT_INTEGRITY_FAILED'&&e.message==='The retained root changed before checkpoint commit.','RETAINED_ROOT_CANDIDATE_PARTS_ORACLE');
+   assert.equal(reached,true,'RETAINED_ROOT_CANDIDATE_PARTS_FIXTURE_ORACLE');assert.deepEqual(r.copy([...r.rows].map(([name,rows])=>[name,[...rows]])),snapshot);assert.ok(r.runtime.__rootProof()===undefined);
+   cases.push({mode,result:'PASS',error:'HISTORY_SNAPSHOT_INTEGRITY_FAILED',noCheckpointReturned:true,noProofPublished:true,exactStatePreserved:true});continue;
+  }
   if(mode.endsWith('during-preparation')){
    const snapshot=r.copy([...r.rows].map(([name,rows])=>[name,[...rows]]));let reached=false;
    r.runtime.__mutateRootPreparation=(root,sourceProject)=>{reached=true;delete r.runtime.__mutateRootPreparation;if(mode==='root-mutation-during-preparation')root.job.JOB_TITLE='Changed deferred root';if(mode==='source-mutation-during-preparation')sourceProject.job.JOB_TITLE='Changed current source';if(mode==='primitive-mutation-during-preparation')r.runtime.closedLoopHash.canonicalChunks.extra='changed during preparation';};
@@ -193,7 +206,9 @@ export async function verifyRetainedRootContinuation({fault=null,caseFilter=null
   const view=name=>r.copy({activeStage:1,activeView:name,drafts:{'#exact':{value:name+' exact draft'}},scrollX:0,scrollY:17});
   const save=name=>r.store.saveCheckpoint(p.job.JOB_ID,{expectedProjectRevision:p.revision,expectedStateSha256:p.projectSha256,view:view(name)});
   const meta=r.rows.get('meta'),historyKey='recovery:'+p.job.JOB_ID,state=await r.store.historyList(p.job.JOB_ID),root=state.entries.find(entry=>entry.id===state.activeId);
-  assert.ok(root&&!root.projectReference&&root.projectParts?.entries?.length,'RETAINED_ROOT_WRITE_FIXTURE_ORACLE');
+  // The History state names the root's parts by digest; its record keeps them.
+  const rootRecord=root&&meta.get(historyKey+':snapshot:'+root.id)?.value;
+  assert.ok(root&&!root.projectReference&&rootRecord?.projectParts?.entries?.length,'RETAINED_ROOT_WRITE_FIXTURE_ORACLE');
   const before={...r.runtime.__rootCounts},rows=()=>r.copy([...r.rows].map(([name,map])=>[name,[...map]]));
   // The swap changed only the stored root bytes; the certified value is intact.
   // Decoding those bytes at the first use refuses them as a cold decode does.
@@ -204,7 +219,7 @@ export async function verifyRetainedRootContinuation({fault=null,caseFilter=null
    cases.push({mode,result:'PASS',error:'PROJECT_INTEGRITY_FAILED',noCheckpointReturned:true,exactStatePreserved:true});continue;
   }
   if(mode==='write-certificate-corrupt-part'||mode==='write-certificate-corrupt-root'){
-   const row=mode==='write-certificate-corrupt-part'?meta.get(historyKey+':bytes:'+root.projectParts.entries[0].sha256):meta.get(historyKey+':snapshot:'+root.id),expected=mode==='write-certificate-corrupt-part'?'HISTORY_FILE_INTEGRITY_FAILED':'HISTORY_SNAPSHOT_INTEGRITY_FAILED';
+   const row=mode==='write-certificate-corrupt-part'?meta.get(historyKey+':bytes:'+rootRecord.projectParts.entries[0].sha256):meta.get(historyKey+':snapshot:'+root.id),expected=mode==='write-certificate-corrupt-part'?'HISTORY_FILE_INTEGRITY_FAILED':'HISTORY_SNAPSHOT_INTEGRITY_FAILED';
    assert.ok(row,'RETAINED_ROOT_WRITE_TAMPER_TARGET_ORACLE');row.value.blob=new Blob(['X'.repeat(row.value.blob.size)]);const snapshot=rows();
    await assert.rejects(()=>save('Workflow'),e=>e.code===expected,'RETAINED_ROOT_WRITE_CERTIFICATE_BYTES_ORACLE '+mode);assert.deepEqual(rows(),snapshot,'Rejected save preserves exact state');assert.ok(r.runtime.__rootProof()===undefined,'Rejected save publishes no proof');
    cases.push({mode,result:'PASS',error:expected,noCheckpointReturned:true,noProofPublished:true,exactStatePreserved:true});continue;

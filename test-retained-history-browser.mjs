@@ -57,8 +57,31 @@ export async function observeRetainedHistory(browser,project,{verifyBytes=false}
    for(const [sha,info]of Object.entries(history.files)){const saved=await store.metaGet('recovery:'+jobId+':bytes:'+sha);if(!(saved?.blob instanceof Blob))throw new Error('RETAINED_HISTORY_BYTES_MISSING:'+sha);bytes.push({kind:'RECOVERY_BYTES',id:sha,byteSize:saved.blob.size,sha256:await closedLoopHash.sha256Bytes(saved.blob)});}
    for(const sha of new Set(Object.values(history.sourceArchives||{}).map(source=>source.sha256))){const saved=await store.readOriginalSourceArchive(jobId,sha);bytes.push({kind:'ORIGINAL_SOURCE',id:sha,byteSize:saved.blob.size,sha256:await closedLoopHash.sha256Bytes(saved.blob)});}
   }
-  return {jobId,revision:project.revision,projectSha256:project.projectSha256,history,bytes};
+  // A state-form entry names its parts by digest; return its immutable record
+  // descriptor (without the body) for the independent comparison below.
+  const records={};
+  for(const entry of history.entries)if(entry&&typeof entry==='object'&&Object.hasOwn(entry,'projectPartsSha256')){const saved=await store.metaGet('recovery:'+jobId+':snapshot:'+entry.id);if(!saved||typeof saved!=='object')throw new Error('RETAINED_HISTORY_RECORD_MISSING:'+entry.id);const {blob,...record}=saved;records[entry.id]=record;}
+  return {jobId,revision:project.revision,projectSha256:project.projectSha256,history,records,bytes};
  })()`);
+ const {records,...result}=observed;result.history={...observed.history,entries:observed.history.entries.map(entry=>recordedHistoryEntry(entry,records))};
+ return verifyObservedHistory(result,jobId);
+}
+// The History state may name a complete version's inline project parts by the
+// canonical digest of that exact list (projectPartsSha256); its immutable
+// snapshot record and every backup keep the complete descriptor. Retained
+// versions are compared in that recorded form. The record must carry the
+// complete list, equal the state entry in every other field, and its list must
+// hash (independently of the application) to the state entry's digest.
+export function recordedHistoryEntry(entry,records){
+ if(!entry||typeof entry!=='object'||!Object.hasOwn(entry,'projectPartsSha256'))return entry;
+ const record=records?.[entry.id];
+ assert.ok(record&&typeof record==='object'&&!Object.hasOwn(record,'projectPartsSha256')&&record.projectParts&&!Object.hasOwn(entry,'projectParts'),'RETAINED_HISTORY_STATE_FORM_RECORD_ORACLE:'+entry.id);
+ const {projectPartsSha256,...fields}=entry,{projectParts,...recordFields}=record;
+ assert.deepEqual(recordFields,fields,'RETAINED_HISTORY_STATE_FORM_RECORD_ORACLE:'+entry.id);
+ assert.equal(jsonIdentity(projectParts).sha256,projectPartsSha256,'RETAINED_HISTORY_STATE_FORM_DIGEST_ORACLE:'+entry.id);
+ return record;
+}
+function verifyObservedHistory(observed,jobId){
  assert.equal(observed.jobId,jobId);assert.ok(observed.history.entries.length>1,'RETAINED_HISTORY_ACCUMULATED_ROOTS_ORACLE');
  assert.ok(Object.keys(observed.history.sessions||{}).length>0,'RETAINED_HISTORY_SESSIONS_PRESENT_ORACLE');
  return observed;
