@@ -305,8 +305,8 @@ for(const variant of ['forward-clipped-next-action','retry-under-progress-banner
   // Control: a genuine later scroll is still saved, so the skip discriminates.
   c.window.scrollY+=40;await c.ui.viewCapture.capture();
   assert.equal(saves.length,2,'FINAL_CAPTURE_SKIP_ORACLE: a changed scroll position was not saved.');assert.equal(saves[1].scrollY,String(c.window.scrollY));
-  cases.push({caseId:'FOCUS-FINAL-CAPTURE-CARRIES-PLACEMENT',variant,result:'PASS',actualBrowser:false,savedScrollY:saves[0].scrollY,moves:moves.length,checkpoints:saves.length});
- }catch(error){retryFailures.push(String(error.stack||error));cases.push({caseId:'FOCUS-FINAL-CAPTURE-CARRIES-PLACEMENT',variant,result:'FAIL',error:String(error.stack||error)});}
+  cases.push({caseId:'FOCUS-FINAL-CAPTURE-CARRIES-PLACEMENT',variant,outcome:variant,result:'PASS',actualBrowser:false,savedScrollY:saves[0].scrollY,moves:moves.length,checkpoints:saves.length});
+ }catch(error){retryFailures.push(String(error.stack||error));cases.push({caseId:'FOCUS-FINAL-CAPTURE-CARRIES-PLACEMENT',variant,outcome:variant,result:'FAIL',error:String(error.stack||error)});}
  finally{release();for(let i=0;i<64&&!actionDone;i++){await paint();await new Promise(resolve=>setImmediate(resolve));}leave();delete c.history;delete c.getComputedStyle;status.getBoundingClientRect=statusRect;c.window.scrollY=0;frames.length=0;calls.length=0;if(!banner)nodes.delete('#next-required-action');delete c.window.scrollBy;}
 }
 // A final capture that fails with no confirmed commit saved no view, and its
