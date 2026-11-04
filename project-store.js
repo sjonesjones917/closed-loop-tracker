@@ -2768,8 +2768,16 @@ async function inspectRetainedCheckpoint(jobId,checkpointId,state=null,readFile=
 }
 async function readCheckpointBody(jobId,entry,readSnapshot,validatedRoots=new Map(),inlineOnly=false,readFile=sha=>metaGet(historyFileKey(jobId,sha)),verifiedParts=new Map(),verifiedByteDigests=null,inspection=null,rootContinuation=null,measuredPair=null,rootBytes=null){
   if(!entry?.blob||entry.blob.size!==Number(entry.byteSize)||(consumeCheckpointByteObservation(entry,rootBytes)||await historyBlobSha256(entry.blob,verifiedByteDigests))!==entry.sha256)throw storageError('This saved version is missing or corrupt. The current project is preserved.','HISTORY_SNAPSHOT_INTEGRITY_FAILED');
+  // A certified, byte-verified root carries the envelope its stored bytes
+  // decode to (certifiedRootEnvelope). It is bound by every check below; if
+  // any disagrees, the stored bytes are decoded exactly as without it.
+  const carried=certifiedRootEnvelope(entry,validatedRoots,inspection,rootContinuation);
+  if(carried)try{return await bindCheckpointBody(carried,true);}catch{/* Decode the stored bytes; their own outcome stands. */}
   const {payload,fileContents}=await readPackageJson(entry.blob,{spoolArtifacts:false}),{packageSha256,...body}=payload;
-  if(await hash.sha256Chunks(packageJsonChunks(body,fileContents))!==packageSha256||body.schema!==HISTORY_SCHEMA||body.id!==entry.id||body.jobId!==String(jobId)||body.projectSha256!==entry.projectSha256||body.parentId!==entry.parentId||body.label!==entry.label||body.createdAt!==entry.createdAt||Number(body.view?.activeStage)!==Number(entry.stage)||!Array.isArray(body.artifacts))throw storageError('Saved project identity or contents do not match the checkpoint.','HISTORY_VERSION_MISMATCH');
+  if(await hash.sha256Chunks(packageJsonChunks(body,fileContents))!==packageSha256)throw storageError('Saved project identity or contents do not match the checkpoint.','HISTORY_VERSION_MISMATCH');
+  return bindCheckpointBody(body,false);
+  async function bindCheckpointBody(body,carried){
+  if(body.schema!==HISTORY_SCHEMA||body.id!==entry.id||body.jobId!==String(jobId)||body.projectSha256!==entry.projectSha256||body.parentId!==entry.parentId||body.label!==entry.label||body.createdAt!==entry.createdAt||Number(body.view?.activeStage)!==Number(entry.stage)||!Array.isArray(body.artifacts))throw storageError('Saved project identity or contents do not match the checkpoint.','HISTORY_VERSION_MISMATCH');
   if(hash.sha256Value(body.projectReference||null)!==hash.sha256Value(entry.projectReference||null))throw storageError('Saved project reference does not match its checkpoint.','HISTORY_VERSION_MISMATCH');
   if(hash.sha256Value(body.projectParts||null)!==hash.sha256Value(entry.projectParts||null))throw storageError('Saved project contents do not match their checkpoint.','HISTORY_VERSION_MISMATCH');
   let project=body.project,verifiedProjectSha256,verifiedWorkSha256;
@@ -2796,7 +2804,10 @@ async function readCheckpointBody(jobId,entry,readSnapshot,validatedRoots=new Ma
       project=verifiedRoot.project||await restoreHistoryProject(body,readFile,verifiedParts,verifiedByteDigests);
       if(projectIdentity(project)!==String(jobId))throw storageError('Saved project belongs to another job.','HISTORY_VERSION_MISMATCH');
       verifiedProjectSha256=verifiedRoot.projectSha256;verifiedWorkSha256=verifiedRoot.workSha256;
-    }else if(!inspection&&rootContinuation&&rootCertificates.has(rootContinuation)&&verifiedValuesEqual(rootContinuation.descriptor,(({blob,...descriptor})=>descriptor)(entry))&&rootDigestPrimitivesUnchanged(rootContinuation.primitive)&&await writeRootBytesVerified(rootContinuation,body,readFile,verifiedParts,verifiedByteDigests)){
+    }else if(carried||!inspection&&rootContinuation&&rootCertificates.has(rootContinuation)&&verifiedValuesEqual(rootContinuation.descriptor,(({blob,...descriptor})=>descriptor)(entry))&&rootDigestPrimitivesUnchanged(rootContinuation.primitive)&&await writeRootBytesVerified(rootContinuation,body,readFile,verifiedParts,verifiedByteDigests)){
+      // The carried envelope holds no restorable body: its certificate must
+      // still hold, in this same synchronous turn, or the bytes are decoded.
+      if(carried&&!(rootCertificates.has(rootContinuation)&&!unverifiedWriteRoots.has(rootContinuation)&&rootDigestPrimitivesUnchanged(rootContinuation.primitive)))throw storageError('Saved project root does not match its verified bytes.','HISTORY_VERSION_MISMATCH');
       project=rootContinuation.project;verifiedProjectSha256=rootContinuation.projectSha256;verifiedWorkSha256=rootContinuation.workSha256;
       recoveryBodyStaticIntegrity.delete(rootContinuation.project);
     }else{
@@ -2834,6 +2845,23 @@ async function readCheckpointBody(jobId,entry,readSnapshot,validatedRoots=new Ma
   if(!body.projectReference)recoveryProjectionBounds.set(project,body.createdAt);
   const materialized={...body,project};if(inspection)inspection.bodies.set(entry.id,materialized);
   return materialized;
+  }
+}
+// A root certificate whose stored bytes this store has already decoded and
+// compared (one minted by a checkpoint commit, or a write's certificate after
+// its first use) carries the envelope those bytes decode to. The blob digest
+// check binds the bytes to entry.sha256 and the entry equals the certificate's
+// descriptor, so gunzipping, parsing and re-digesting the inline body would only
+// re-derive that envelope; the continuation already uses the certified project.
+// A first use, another descriptor, changed digest primitives or a malformed
+// carrier return null and the stored bytes are decoded.
+function certifiedRootEnvelope(entry,validatedRoots,inspection,proof){
+  if(inspection||entry.projectReference||!proof||!rootCertificates.has(proof)||unverifiedWriteRoots.has(proof)||validatedRoots.has(entry.id))return null;
+  const carried=proof.body;
+  if(!carried||typeof carried!=='object'||carried.projectReference||!Array.isArray(carried.artifacts)||!carried.artifacts.every(row=>row&&typeof row==='object')||!verifiedValuesEqual(proof.descriptor,(({blob,...descriptor})=>descriptor)(entry))||!rootDigestPrimitivesUnchanged(proof.primitive))return null;
+  // A decoded inventory carries its verified file blobs; the envelope lists
+  // descriptors only. The certified project replaces the inline project.
+  return {...carried,project:undefined,artifacts:carried.artifacts.map(({blob,...descriptor})=>descriptor)};
 }
 async function decodeCheckpoint(jobId,entry,readFile=sha=>metaGet(historyFileKey(jobId,sha)),readSnapshot=id=>metaGet(snapshotKey(jobId,id)),validatedRoots=new Map(),verifiedParts=new Map(),verifiedByteDigests=null,validatedProjections=null,verifiedSources=null,rootContinuation=null,measuredPair=null,rootBytes=null){
   // Reuse pure digest computation only during this fresh parser-owned decode.
