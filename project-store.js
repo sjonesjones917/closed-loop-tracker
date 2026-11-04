@@ -1854,6 +1854,11 @@ function validateRecoveryManifest(state){
     assertHistoryProjectParts(entry.projectParts);
     if(entry.projectReference||entry.projectParts.entries.some(part=>state.files[part.sha256]?.byteSize!==part.byteSize))throw storageError('Recovery project contents are not retained in this complete history.','HISTORY_VERSION_MISMATCH');
   }
+  // State-form entries name their parts by digest; each per-root use reads the
+  // parts from the immutable record and checks them against these files.
+  for(const entry of state.entries)if(Object.hasOwn(entry,'projectPartsSha256')){
+    if(Object.hasOwn(entry,'projectParts')||entry.projectReference||typeof entry.projectPartsSha256!=='string'||!/^[a-f0-9]{64}$/.test(entry.projectPartsSha256))throw storageError('Saved project content references are unsupported.','HISTORY_VERSION_MISMATCH');
+  }
   if(state.sourceArchives!==undefined){
     if(!state.sourceArchives||typeof state.sourceArchives!=='object'||Array.isArray(state.sourceArchives))throw storageError('Original-source recovery metadata is invalid.','SOURCE_ARCHIVE_INTEGRITY_FAILED');
     for(const [key,source]of Object.entries(state.sourceArchives)){
@@ -2219,6 +2224,48 @@ function assertHistoryProjectParts(parts){
   for(const part of parts.entries){
     if(!part||Object.keys(part).some(key=>!['path','sha256','byteSize'].includes(key))||!Array.isArray(part.path)||!part.path.length||part.path.some(key=>typeof key!=='string'&&(!Number.isSafeInteger(key)||key<0))||!/^[a-f0-9]{64}$/.test(part.sha256||'')||!Number.isSafeInteger(part.byteSize)||part.byteSize<=0)throw storageError('Saved project content identity is invalid.','HISTORY_VERSION_MISMATCH');
     const path=JSON.stringify(part.path);if(seen.has(path))throw storageError('Saved project content has duplicate destinations.','HISTORY_VERSION_MISMATCH');seen.add(path);
+  }
+}
+// The History state names a complete version's inline project parts by the
+// canonical digest of that exact list. The immutable per-snapshot record keeps
+// the complete descriptor and its parts; records, bodies and backups never
+// change. A state entry carries projectParts (legacy inline), projectPartsSha256
+// (state form) or neither; carrying both is never a state form (null).
+function historyStateForm(descriptor){
+  if(!descriptor?.projectParts)return descriptor;
+  if(Object.hasOwn(descriptor,'projectPartsSha256'))return null;
+  const entry={};
+  for(const key of Object.keys(descriptor))Object.defineProperty(entry,key==='projectParts'?'projectPartsSha256':key,{value:key==='projectParts'?hash.sha256Value(descriptor.projectParts):descriptor[key],enumerable:true,writable:true,configurable:true});
+  return entry;
+}
+function historyStateEntry(descriptor){
+  const entry=historyStateForm(descriptor);
+  if(!entry||Object.hasOwn(entry,'projectPartsSha256')&&!/^[a-f0-9]{64}$/.test(entry.projectPartsSha256))throw storageError('Saved project content references are unsupported.','HISTORY_VERSION_MISMATCH');
+  return entry;
+}
+// A record-shaped descriptor (snapshot record, certificate) and a state entry
+// of either form identify the same immutable version.
+function historyDescriptorMatches(record,entry){
+  if(!entry||typeof entry!=='object'||!Object.hasOwn(entry,'projectPartsSha256'))return verifiedValuesEqual(record,entry);
+  if(!record?.projectParts||Object.hasOwn(record,'projectPartsSha256'))return false;
+  return verifiedValuesEqual(historyStateForm(record),entry);
+}
+// Each part of one retained complete version is a retained History file of
+// exactly its promised size.
+function assertHistoryPartsRetained(state,parts){
+  assertHistoryProjectParts(parts);
+  if(parts.entries.some(part=>state.files[part.sha256]?.byteSize!==part.byteSize))throw storageError('Recovery project contents are not retained in this complete history.','HISTORY_VERSION_MISMATCH');
+}
+// Convert inline entries to the state form once, at the first preparation of a
+// write. A corrupted inline entry is refused, never converted. Entries named by
+// a compatibility observation stay inline: descriptorSha256 binds that shape.
+function slimHistoryStateEntries(state){
+  for(let index=0;index<state.entries.length;index++){
+    const entry=state.entries[index];
+    if(!entry?.projectParts||nonactivatableHistoryEntry(state,entry.id))continue;
+    assertHistoryProjectParts(entry.projectParts);
+    if(entry.projectReference||entry.projectParts.entries.some(part=>state.files[part.sha256]?.byteSize!==part.byteSize))throw storageError('Recovery project contents are not retained in this complete history.','HISTORY_VERSION_MISMATCH');
+    state.entries[index]=historyStateEntry(entry);
   }
 }
 async function encodeHistoryProject(project,retainValue){
