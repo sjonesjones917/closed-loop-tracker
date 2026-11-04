@@ -3727,6 +3727,7 @@ async function exportPackage(jobId,{passphrase=null,historyRecovery=false}={}){
   await verifyOriginalSourceBindings(project,artifacts);
   if(recovery){
     validateRecoveryManifest(recovery);await verifyHistorySourceArchives(recovery);requiresEncryption=requiresEncryption||containsCredentialSecret(recovery.sourceArchives);
+    const exportedEntries=[];
     for(const entry of recovery.entries){const saved=await metaGet(snapshotKey(jobId,entry.id));if(!saved?.blob||saved.sha256!==entry.sha256)throw storageError('A promised checkpoint is missing. Backup export did not complete.','HISTORY_VERSION_UNAVAILABLE');await member({artifactId:'RECOVERY-SNAPSHOT-'+entry.id,jobId,filename:entry.id+'.checkpoint.gz',mediaType:'application/gzip',archiveKind:'RECOVERY_SNAPSHOT',checkpointId:entry.id,byteSize:entry.byteSize,sha256:entry.sha256,blob:saved.blob});const {payload:checkpoint}=await readPackageJson(saved.blob,{spoolArtifacts:false});if(checkpoint.schema!==HISTORY_SCHEMA||checkpoint.id!==entry.id||checkpoint.jobId!==String(jobId)||checkpoint.projectSha256!==entry.projectSha256)throw storageError('A saved checkpoint does not match its recorded identity.','HISTORY_VERSION_MISMATCH');// A matching snapshot transport hash does not prove its declared work
       // preimage. Verify the complete immutable body before calling this a
       // successful backup; retain at most one expanded root between groups.
@@ -3738,7 +3739,13 @@ async function exportPackage(jobId,{passphrase=null,historyRecovery=false}={}){
       await readCheckpointBody(jobId,{...entry,blob:saved.blob},async id=>{const expected=recovery.entries.find(item=>item.id===id),stored=await metaGet(snapshotKey(jobId,id));return expected&&stored?.blob?{...expected,blob:stored.blob}:null;},verifiedHistoryRoots,false,sha=>metaGet(historyFileKey(jobId,sha)),verifiedHistoryParts);
       }
       requiresEncryption=requiresEncryption||containsCredentialSecret(checkpoint);
-      if(!equivalent(checkpoint.projectParts||null,entry.projectParts||null))throw storageError('Saved project content references differ from their retained manifest.','HISTORY_VERSION_MISMATCH');
+      // The backup keeps the legacy inline shape: a state-form entry is exported
+      // as its immutable record descriptor once that record matches it exactly
+      // and its parts are retained files. Legacy entries are exported unchanged.
+      const record=(({blob,...descriptor})=>descriptor)(saved),exported=Object.hasOwn(entry,'projectPartsSha256')?record:entry;
+      if(exported!==entry){if(!historyDescriptorMatches(record,entry))throw storageError('Saved project content references differ from their retained manifest.','HISTORY_VERSION_MISMATCH');assertHistoryPartsRetained(recovery,record.projectParts);}
+      exportedEntries.push(exported);
+      if(!equivalent(checkpoint.projectParts||null,exported.projectParts||null))throw storageError('Saved project content references differ from their retained manifest.','HISTORY_VERSION_MISMATCH');
       for(const part of checkpoint.projectParts?.entries||[]){const prior=classifiedProjectParts.get(part.sha256);if(prior!==undefined&&prior!==part.byteSize)throw storageError('Saved project content sizes conflict.','HISTORY_VERSION_MISMATCH');classifiedProjectParts.set(part.sha256,part.byteSize);}
     }
     for(const [sha256,info] of Object.entries(recovery.files)){const file=await metaGet(historyFileKey(jobId,sha256));if(!file?.blob)throw storageError('A retained file is missing. Backup export did not complete.','HISTORY_FILE_INTEGRITY_FAILED');await member({artifactId:'RECOVERY-BYTES-'+sha256,jobId,filename:sha256+'.bin',mediaType:'application/octet-stream',archiveKind:'RECOVERY_BYTES',byteSize:info.byteSize,sha256,blob:file.blob});
@@ -3751,6 +3758,8 @@ async function exportPackage(jobId,{passphrase=null,historyRecovery=false}={}){
       }
     }
     if(classifiedProjectParts.size)throw storageError('Referenced saved project contents are missing. Backup export did not complete.','HISTORY_FILE_INTEGRITY_FAILED');
+    // The exported manifest is the complete legacy form; validate it whole.
+    recovery.entries=exportedEntries;validateRecoveryManifest(recovery);
   }
   if(historyRecovery&&recovery){recovery.compatibility={schema:globalThis.closedLoopWorkflowSchema.RECOVERY_COMPATIBILITY_CONTRACT.schema,observations:compatibilityObservations};validateHistoryCompatibility(recovery);}
   const exportedProject=canonicalProject(project),packageManifest={jobId,projectSha256:project.projectSha256,artifactCount:artifactEntries.length,artifacts:artifactEntries.map(a=>({artifactId:a.artifactId,filename:a.filename,mediaType:a.mediaType,byteSize:a.byteSize,sha256:a.sha256}))};
