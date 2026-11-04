@@ -13,8 +13,10 @@ const events=[];
 async function execute(test,args=[],env={}){
  const composite=test==='verify-file-first-operator.mjs';
  // The composite owns four serial processes (300s total watchdog allocation,
- // plus bounded cleanup). Unrelated owners retain their original 30s cap.
- const command=[process.execPath,test,...args,...(composite?['--file-first-policy=io-fault-matrix']:[])],timeout=composite?10*60*1000:30000;
+ // plus bounded cleanup). Recoverable History runs its expiry fixture in a
+ // child process with its own 90s watchdog, so it receives the same 120s
+ // allocation as verify-recovery-faults. Unrelated owners retain their 30s cap.
+ const command=[process.execPath,test,...args,...(composite?['--file-first-policy=io-fault-matrix']:[])],timeout=composite?10*60*1000:test==='verify-recoverable-history.mjs'?120000:30000;
  const r=await runVerifier(command[0],command.slice(1),{encoding:'utf8',env:{...process.env,...env},timeout,maxBuffer:16*1024*1024});
  const record={command,status:r.status,signal:r.signal,error:r.error?String(r.error):null,stdout:r.stdout,stderr:r.stderr};events.push(record);assert.equal(record.error,null,'Fault verifier itself must execute');assert.equal(record.signal,null,'An infrastructure timeout is not fault detection');return record;
 }

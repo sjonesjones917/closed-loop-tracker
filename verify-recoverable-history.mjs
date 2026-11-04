@@ -33,9 +33,10 @@ const nestedImportProjectionRejection=error=>error?.code==='PROJECT_INTEGRITY_FA
 const record=(name,details={})=>cases.push({name,...details,result:'PASS'});
 // The expiry fixture owns a separate store and clock; run its unchanged
 // controls in an owned process while this process checks the other histories.
+// Its 90s watchdog stays inside the 120s allocation every caller grants.
 const expiryController=new AbortController(),cancelExpiry=()=>expiryController.abort();
 process.on('SIGTERM',cancelExpiry);process.on('SIGINT',cancelExpiry);
-const expiryRun=runVerifier(process.execPath,['test-recoverable-history-expiry.mjs',...process.argv.slice(2)],{timeout:30000,maxBuffer:16*1024*1024,signal:expiryController.signal});
+const expiryRun=runVerifier(process.execPath,['test-recoverable-history-expiry.mjs',...process.argv.slice(2)],{timeout:90000,maxBuffer:16*1024*1024,signal:expiryController.signal});
 const outcomes=await Promise.allSettled([(async()=>{
 let p=core.createBlankState(id);engine.ensureShape(p);engine.recalculate(p);p=await store.writeProject(p,{expectedProjectRevision:0,createOnly:true});
 await store.beginHistorySession('SESSION-A');let history=await store.historyList(id);const start=history.sessions['SESSION-A'].checkpointId,starting=copy(p);

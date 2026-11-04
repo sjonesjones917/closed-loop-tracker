@@ -71,6 +71,7 @@ export async function verifyHandoffAuthorizationTransaction({sourceOverrides={},
    assert.equal(e.recordValue(stored.projectData.operationReservations.find(row=>e.recordId(row,'operationReservations')===prompt.operationReservationId),'STATUS'),'EXPIRED_BY_SCOPE');
    const review=await originalStore.prepareExecutionPackageReview({project:stored,stage,operation:'COMPLETE',instructionId:fresh.instructionId});assert.equal(review.authorization.allowed,true);assert.equal(review.authorization.subjectSha256,f.subject);
    const retained=await originalStore.historyList(stored.job.JOB_ID);assert.equal(retained.activeProjectSha256,stored.projectSha256);assert.ok(await originalStore.readHistoryView(stored.job.JOB_ID));
+   assert.equal(e.recordValue(stored.projectData.operationReservations.find(row=>e.recordId(row,'operationReservations')===fresh.operationReservationId),'STATUS'),'EXPORTED','HANDOFF_RECEIPT_ORACLE: export must record its successful transfer');
    // The decision write and the export record each retain the operator's view;
    // the reviewed continuation is not saved as a separate view before export.
    assert.deepEqual(f.captures,['retained','retained'],'HANDOFF_VIEW_RETAINED_BY_WRITE_ORACLE');assert.equal(t.closedLoopHash.sha256Value(await originalStore.readHistoryView(stored.job.JOB_ID)),t.closedLoopHash.sha256Value(r.copy({...t.captureView(),pendingMutation:null})),'HANDOFF_EXPORT_HISTORY_VIEW_ORACLE');
