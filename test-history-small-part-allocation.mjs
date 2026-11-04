@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {createHash} from 'node:crypto';
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 
 export async function verifyHistorySmallPartAllocation({source=fs.readFileSync(new URL('./project-store.js',import.meta.url),'utf8')}={}){
  const begin='async function encodeHistoryProject(',end='// Receipt keys are actual immutable Blob objects';
@@ -16,7 +17,7 @@ export async function verifyHistorySmallPartAllocation({source=fs.readFileSync(n
       const blob=new Blob(chunks,{type:'application/json'});if(blob.size<4096)return false;`;
  assert.equal(actual.split(guard).length,2,'SMALL_PART_GUARD_UNIQUE');
  const original=actual.replace(guard,"      const blob=new Blob([...hash.canonicalChunks(value)],{type:'application/json'});if(blob.size<4096)return false;");
- const runtime=vm.createContext({Object,Array,TextEncoder,TextDecoder,Blob,Uint8Array,ArrayBuffer,console});vm.runInContext(fs.readFileSync(new URL('./hash.js',import.meta.url),'utf8'),runtime);
+ const runtime=createVerifierRuntime({Object,Array,TextEncoder,TextDecoder,Blob,Uint8Array,ArrayBuffer,console});vm.runInContext(fs.readFileSync(new URL('./hash.js',import.meta.url),'utf8'),runtime);
  const hash=runtime.closedLoopHash,sha=bytes=>createHash('sha256').update(bytes).digest('hex');
  async function observe(text,value,authority=hash){
   let allocations=0,smallAllocations=0;const retained=[];

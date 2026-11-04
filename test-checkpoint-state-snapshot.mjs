@@ -1,11 +1,11 @@
-import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';
+import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';import {createVerifierRuntime} from './verifier-runtime.mjs';
 export function verifyCheckpointStateSnapshot(){
  const source=fs.readFileSync(new URL('./project-store.js',import.meta.url),'utf8');
  assert.ok(source.includes('stateCapture=copyCheckpointValueSnapshot(prepared.state);'),'CHECKPOINT_STATE_CAPTURE_REQUIRED');
  assert.ok(source.includes('unchangedCheckpointValueSnapshot(stateCapture,prepared.state)'),'CHECKPOINT_STATE_GATE_REQUIRED');
  assert.ok(source.includes('if(stateCapture)releaseCheckpointValueSnapshot(stateCapture);'),'CHECKPOINT_STATE_RELEASE_REQUIRED');
  const section=source.slice(source.indexOf('function verifiedGraphNodes('),source.indexOf('const VERIFIED_PROJECT_INTEGRITY='));
- const context=vm.createContext({Blob,TextEncoder,TextDecoder,Uint8Array,Uint32Array,ArrayBuffer,DataView,structuredClone});vm.runInContext(fs.readFileSync(new URL('./hash.js',import.meta.url),'utf8'),context);
+ const context=createVerifierRuntime({Blob,TextEncoder,TextDecoder,Uint8Array,Uint32Array,ArrayBuffer,DataView,structuredClone});vm.runInContext(fs.readFileSync(new URL('./hash.js',import.meta.url),'utf8'),context);
  vm.runInContext(`const hash=closedLoopHash,clone=structuredClone;let walks=0;${section.replace('function verifiedGraphNodes(value){','function verifiedGraphNodes(value){walks++;')}const shared={sha:'x',byteSize:4};const candidate={entries:[{parts:[shared,shared],view:{draft:'kept'}}],files:{x:{byteSize:4}},generation:7};const proof=copyCheckpointValueSnapshot(candidate);`,context);
  const run=s=>vm.runInContext(s,context);
  assert.equal(run('proof.nodes!==null'),true,'CHECKPOINT_STATE_NATIVE_PROOF');const initial=run('walks');
