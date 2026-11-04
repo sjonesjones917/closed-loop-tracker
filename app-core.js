@@ -1260,7 +1260,7 @@ function fileSelectionKey(kind,stage=current.activeStage){return JSON.stringify(
 function currentFileSelection(kind,stage=current.activeStage){return fileSelectionDrafts[fileSelectionKey(kind,stage)]||null;}
 function responseSelectionLabel(stage=current.activeStage){const selection=currentFileSelection('response',stage),file=selection?.files?.[0];return file?`${file.filename} · ${file.byteSize.toLocaleString()} bytes saved`:'No response file selected yet';}
 async function saveFileSelection(kind,files,stage=current.activeStage){
- const jobId=current.job.JOB_ID,revision=current.revision,key=fileSelectionKey(kind,stage),entryId=history.state?.entryId,prior=fileSelectionDrafts[key],viewBefore=captureView(),stored=[];
+ const jobId=current.job.JOB_ID,revision=current.revision,projectSha256=current.projectSha256||null,key=fileSelectionKey(kind,stage),entryId=history.state?.entryId,prior=fileSelectionDrafts[key],viewBefore=captureView(),stored=[];
  await captureCurrentView();
  try{
   const prompt=kind==='response'?responseAttemptPrompt(stage):null;
@@ -1268,11 +1268,15 @@ async function saveFileSelection(kind,files,stage=current.activeStage){
   if(current.job.JOB_ID!==jobId||current.revision!==revision)throw new Error('Project changed while the selected files were being saved.');
   fileSelectionDrafts[key]={jobId,stage:Number(stage),kind,promptId:prompt?.instructionId||prompt?.promptId||null,files:stored};
   const view={...viewBefore,fileSelections:captureView().fileSelections},id=await projectStore.saveCheckpoint(jobId,{expectedProjectRevision:revision,view,label:kind==='response'?'Selected response file':'Selected '+kind+' files',sessionId:APPLICATION_SESSION_ID});
+  const entryWritten=history.state?.entryId===entryId&&!restoringHistory;if(entryWritten)writeBrowserEntry(id,view,{replace:true});
+  await refreshHistory();
   // The checkpoint just saved this exact view for the displayed entry; a later
   // capture of the identical view (the action's final capture) skips it, as
-  // captureCurrentView does after its own checkpoint. Any change still saves.
-  if(history.state?.entryId===entryId&&!restoringHistory){writeBrowserEntry(id,view,{replace:true});if(current.job.JOB_ID===jobId&&current.revision===revision){savedDraftView=view;savedViewSignature=globalThis.closedLoopHash.sha256Value({jobId,revision,projectSha256:current.projectSha256||null,entryId:displayedHistoryEntryId||null,view});}}
-  await refreshHistory();
+  // captureCurrentView does after its own checkpoint. The checkpoint is bound
+  // only to the revision, so the signature is recorded only when History's
+  // active entry is that checkpoint of this tab's own project bytes; a tab
+  // left stale by another tab's write still saves its bound copy. Any change saves.
+  if(entryWritten&&displayedHistoryEntryId===entryId&&current.job.JOB_ID===jobId&&current.revision===revision&&(current.projectSha256||null)===projectSha256&&historyState?.jobId===jobId&&historyState.activeId===id&&(historyState.activeProjectSha256||null)===projectSha256){savedDraftView=view;savedViewSignature=globalThis.closedLoopHash.sha256Value({jobId,revision,projectSha256,entryId,view});}
   if(kind==='response'){responseActionFailure=null;render();applySavedView(view,{position:false});focusAfterAction($('#process-response-file'));}const status=$('#response-file-status');if(kind==='response'&&status)status.textContent=responseSelectionLabel(stage);announce(kind==='response'?'Response file saved. Stage and validate it when ready.':'Selected files saved.');
  }catch(error){if(prior)fileSelectionDrafts[key]=prior;else delete fileSelectionDrafts[key];throw error;}
 }

@@ -17,7 +17,7 @@ const resetNodes=()=>{nodes=new Map([
  ['#response-file-status',{textContent:''}],['#process-response-file',{}]
  ]);};
 resetNodes();
-Object.assign(runtime,{current:project,projectStore:store,clone:copy,history:{state:{entryId:'draft-entry'}},restoringHistory:false,fileSelectionDrafts:{},operationSelection:{},runSelection:{},replacementReview:null,APPLICATION_SESSION_ID:'FILE-SELECTION-DRAFT-SESSION',CSS:{escape:String},window:{scrollX:0,scrollY:0,scrollTo(){throw new Error('File selection must not restore an old scroll position.');}},document:{querySelectorAll:()=>[...nodes.values()].filter(n=>n.id),querySelector:s=>nodes.get(s)},$:s=>nodes.get(s),captureCurrentView:async()=>{},responseAttemptPrompt:()=>null,selectedOperation:()=> 'COMPLETE',artifactIdFor:jobId=>jobId+'-FILE-'+runtime.crypto.randomUUID(),logicalFilePath:file=>file.name,writeBrowserEntry(){},refreshHistory:async()=>{},announce(){},focusAfterAction(){},render:resetNodes,displayedHistoryEntryId:'draft-entry',savedDraftView:null,savedViewSignature:null});
+Object.assign(runtime,{current:project,projectStore:store,clone:copy,history:{state:{entryId:'draft-entry'}},restoringHistory:false,fileSelectionDrafts:{},operationSelection:{},runSelection:{},replacementReview:null,APPLICATION_SESSION_ID:'FILE-SELECTION-DRAFT-SESSION',CSS:{escape:String},window:{scrollX:0,scrollY:0,scrollTo(){throw new Error('File selection must not restore an old scroll position.');}},document:{querySelectorAll:()=>[...nodes.values()].filter(n=>n.id),querySelector:s=>nodes.get(s)},$:s=>nodes.get(s),captureCurrentView:async()=>{},responseAttemptPrompt:()=>null,selectedOperation:()=> 'COMPLETE',artifactIdFor:jobId=>jobId+'-FILE-'+runtime.crypto.randomUUID(),logicalFilePath:file=>file.name,writeBrowserEntry(){},historyState:null,refreshHistory:async()=>{runtime.historyState=await store.historyList(runtime.current.job.JOB_ID);},announce(){},focusAfterAction(){},render:resetNodes,displayedHistoryEntryId:'draft-entry',savedDraftView:null,savedViewSignature:null});
 bindHandoffReviewUiState(runtime,{source});
 createVerifierRuntime.loadScript(runtime,extract('const VIEW_NAVIGATION_CONTROL_IDS=','function selectSavedView(').replace(/function replacementReviewFromSavedView\([\s\S]*$/,'' )+extract('function applySavedView(','function entryUrl(')+extract('function fileSelectionKey(','async function readFileSelection('));
 const cases=[];
@@ -50,5 +50,15 @@ for(let stage=1;stage<=schema.STAGE_COUNT;stage++)for(const kind of ['response',
  finally{runtime.projectStore=store;runtime.history.state={entryId:'draft-entry'};}
  assert.equal(runtime.savedViewSignature,null,'FILE_SELECTION_SIGNATURE_ENTRY_ORACLE: a view saved for an entry that is no longer displayed must still be captured');
  cases.push({stage:1,kind:'response',attempt:'navigated-entry',name:'A selection whose browser entry changes while it is saved records no view signature',result:'PASS'});
+}
+// Another tab's operational write leaves this tab at the same revision with
+// older project bytes; the selection checkpoint then holds the newer project,
+// so no signature is recorded and the final capture still saves a bound copy.
+{
+ runtime.current.activeStage=1;runtime.savedDraftView=null;runtime.savedViewSignature=null;const actual=runtime.current.projectSha256;runtime.current.projectSha256='f'.repeat(64);
+ try{await runtime.saveFileSelection('response',[new runtime.File(['stale tab'],'response.json',{type:'application/json'})],1);}
+ finally{runtime.current.projectSha256=actual;}
+ assert.equal(runtime.savedViewSignature,null,'FILE_SELECTION_SIGNATURE_PROJECT_ORACLE: a view checkpointed against other project bytes must still be captured for this tab');
+ cases.push({stage:1,kind:'response',attempt:'stale-project-bytes',name:'A selection saved while the stored project bytes differ from this tab records no view signature',result:'PASS'});
 }
 console.log(JSON.stringify({synthetic:true,actualBrowser:false,environment:'Actual file-selection, draft-capture and draft-application functions; production persistence with transactional adapter; DOM controls recreated on render',cases},null,2));
