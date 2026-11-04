@@ -2282,6 +2282,15 @@ function assertHistoryRecordPartsRetained(state,entry,record){
 // write. A corrupted inline or state-form entry is refused, never converted or
 // carried forward. Entries named by a compatibility observation stay inline:
 // descriptorSha256 binds that shape.
+// Version skew: this conversion is one-way, and HISTORY_SCHEMA and DB_VERSION
+// are unchanged, so an earlier build cannot tell that the state is newer. A
+// tab still running a build without state-form support (during a deploy) or a
+// rollback to such a build compares its record with a converted entry and
+// refuses History reads, checkpoints, undo, restore and export with its
+// integrity errors (HISTORY_VERSION_MISMATCH, HISTORY_SNAPSHOT_INTEGRITY_FAILED);
+// plain project writes still succeed. Nothing is lost: every record keeps its
+// complete descriptor, and this build reads the state again. A rollback past
+// this build needs the state entries re-inflated from their records first.
 function slimHistoryStateEntries(state){
   for(let index=0;index<state.entries.length;index++){
     const entry=state.entries[index];
