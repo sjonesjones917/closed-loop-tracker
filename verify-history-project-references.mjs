@@ -284,4 +284,98 @@ for(const id of [old.root,...old.children]){const body=await bodyOf(legacy.rows.
 const legacyBytes=await legacy.store.exportPackage(old.p.job.JOB_ID),newReader=make();await newReader.store.importPackage(legacyBytes);
 for(let i=0;i<old.children.length;i++)assert.deepEqual(legacy.copy(await newReader.store.readHistoryView(old.p.job.JOB_ID,old.children[i])),old.views[i]);
 emit('HISTORY-REFERENCE-LEGACY-INLINE-BACKUP',{legacyBytes:legacyBytes.size,legacySha256:sha(Buffer.from(await legacyBytes.arrayBuffer())),legacyEncoding:'Inline project member; sharing suppressed only in the disposable writer.'});
+// History state form. The state names a complete version's inline parts by the
+// canonical digest of that exact list; the immutable record, body and backup
+// keep the complete descriptor. Independent expected digests below.
+{
+ const json=x=>x===null||typeof x!=='object'?JSON.stringify(x):Array.isArray(x)?'['+x.map(json).join(',')+']':'{'+Object.keys(x).sort().map(k=>JSON.stringify(k)+':'+json(x[k])).join(',')+'}';
+ const stateForm=d=>{if(!d?.projectParts)return d;const {projectParts,...rest}=d;return {...rest,projectPartsSha256:sha(Buffer.from(json(projectParts)))};};
+ const w=make();let sp=w.core.createBlankState('HISTORY-STATE-FORM');sp.job.JOB_TITLE='State form retained title '.repeat(200);w.engine.ensureShape(sp);w.engine.recalculate(sp);sp=await w.store.writeProject(sp,{expectedProjectRevision:0});
+ const jobId=sp.job.JOB_ID,stateKey='recovery:'+jobId,recordKey=id=>stateKey+':snapshot:'+id,draft=(n,t=w)=>t.copy({activeView:'Workflow',activeStage:1,scrollY:n,drafts:{'#job-objective':{value:'State form draft '+n}}});
+ const firstRoot=(await w.store.historyList(jobId)).activeId,firstView=await w.store.saveCheckpoint(jobId,{expectedProjectRevision:sp.revision,view:draft(5,w)});
+ let next=w.copy(sp);next.job.JOB_TITLE='Second state form title '.repeat(200);w.engine.recalculate(next);sp=await w.store.writeProject(next,{expectedProjectRevision:sp.revision});
+ const secondRoot=(await w.store.historyList(jobId)).activeId,secondView=await w.store.saveCheckpoint(jobId,{expectedProjectRevision:sp.revision,view:draft(7,w)});
+ const stateOf=t=>t.rows.get('meta').get(stateKey).value,recordOf=(t,id)=>{const {blob,...descriptor}=t.rows.get('meta').get(recordKey(id)).value;return descriptor;};
+ const copyOf=from=>{const t=make();for(const [name,rows]of from.rows)t.rows.set(name,new Map([...rows].map(([key,row])=>[key,t.copy(row)])));return t;};
+ const views={[firstView]:5,[secondView]:7},readAll=async t=>{for(const [id,n]of Object.entries(views))assert.deepEqual(t.copy(await t.store.readHistoryView(jobId,id)),draft(n,t),'HISTORY_STATE_FORM_READ_ORACLE');};
+ const entryOf=(t,id)=>stateOf(t).entries.find(e=>e.id===id),inflate=(t,ids)=>{const state=stateOf(t);state.entries=state.entries.map(e=>ids.includes(e.id)?t.copy(recordOf(t,e.id)):e);};
+ const refused=async(t,action,code,message,oracle)=>{const before=frozenRows(t);await assert.rejects(action,e=>e.code===code&&(message===null||e.message===message),oracle);assert.deepEqual(frozenRows(t),before,oracle+': refusal preserves every row');};
+ const exportBody=async t=>{const blob=await t.store.exportPackage(jobId),body=JSON.parse(gunzipSync(Buffer.from(await blob.arrayBuffer())).toString('utf8'));const {packageSha256,exportedAt,...rest}=body;assert.equal(sha(Buffer.from(json({...rest,exportedAt}))),packageSha256,'HISTORY_STATE_FORM_PACKAGE_ORACLE');return {blob,rest};};
+ const firstPart=recordOf(w,firstRoot).projectParts.entries.find(part=>!recordOf(w,secondRoot).projectParts.entries.some(other=>other.sha256===part.sha256));
+ for(const id of [firstRoot,secondRoot]){const entry=entryOf(w,id),record=recordOf(w,id);assert.ok(record.projectParts?.entries?.length&&!Object.hasOwn(record,'projectPartsSha256'),'HISTORY_STATE_FORM_RECORD_ORACLE: the record keeps the complete descriptor');assert.equal(json(entry),json(stateForm(record)),'HISTORY_STATE_FORM_WRITE_ORACLE: a write records the exact state form');}
+ for(const id of [firstView,secondView])assert.equal(json(entryOf(w,id)),json(recordOf(w,id)),'HISTORY_STATE_FORM_REFERENCE_ORACLE: a view reference entry is unchanged');
+ assert.ok(firstPart,'HISTORY_STATE_FORM_DISTINCT_PART_FIXTURE_ORACLE');await readAll(w);
+ const reference=await exportBody(w);
+ for(const entry of reference.rest.recovery.entries)assert.equal(json(entry),json(recordOf(w,entry.id)),'HISTORY_STATE_FORM_EXPORT_ORACLE: a backup carries the complete recorded descriptor');
+ emit('HISTORY-STATE-FORM-WRITE',{roots:2,views:2,stateBytes:JSON.stringify(stateOf(w)).length,inlineStateBytes:JSON.stringify({...stateOf(w),entries:stateOf(w).entries.map(e=>recordOf(w,e.id))}).length});
+ // N1/N2: a digest that disagrees with the record or with the body.
+ {const t=copyOf(w);entryOf(t,firstRoot).projectPartsSha256='f'.repeat(64);
+  await refused(t,()=>t.store.readHistoryView(jobId,firstView),'HISTORY_VERSION_MISMATCH','Stored snapshot identity does not match the selected retained version.','HISTORY_STATE_FORM_RECORD_DIGEST_ORACLE read');
+  await refused(t,()=>t.store.restoreCheckpoint(jobId,firstRoot,{expectedProjectRevision:sp.revision}),'HISTORY_VERSION_MISMATCH','Stored snapshot identity does not match the selected retained version.','HISTORY_STATE_FORM_RECORD_DIGEST_ORACLE restore');
+  await refused(t,()=>t.store.exportPackage(jobId),'HISTORY_VERSION_MISMATCH','Saved project contents do not match their checkpoint.','HISTORY_STATE_FORM_BODY_DIGEST_ORACLE export');
+  await t.store.readHistoryView(jobId,secondView);
+  const u=copyOf(w);entryOf(u,secondRoot).projectPartsSha256='f'.repeat(64);
+  await refused(u,()=>u.store.saveCheckpoint(jobId,{expectedProjectRevision:sp.revision,view:draft(9,u)}),'HISTORY_SNAPSHOT_INTEGRITY_FAILED','A retained project body failed exact-byte verification. The new checkpoint was not committed.','HISTORY_STATE_FORM_RECORD_DIGEST_ORACLE reuse');
+  emit('HISTORY-STATE-FORM-DIGEST-MISMATCH',{read:'HISTORY_VERSION_MISMATCH',restore:'HISTORY_VERSION_MISMATCH',export:'HISTORY_VERSION_MISMATCH',reuse:'HISTORY_SNAPSHOT_INTEGRITY_FAILED',unrelatedRootReadable:true});}
+ // N3: both fields, a digest on a reference entry, or a malformed digest.
+ for(const [shape,change]of [['both-fields',t=>{entryOf(t,firstRoot).projectParts=t.copy(recordOf(t,firstRoot).projectParts);}],['reference-digest',t=>{entryOf(t,firstView).projectPartsSha256=entryOf(t,firstRoot).projectPartsSha256;}],['uppercase-digest',t=>{const e=entryOf(t,firstRoot);e.projectPartsSha256=e.projectPartsSha256.toUpperCase();}],['short-digest',t=>{const e=entryOf(t,firstRoot);e.projectPartsSha256=e.projectPartsSha256.slice(1);}],['non-string-digest',t=>{entryOf(t,firstRoot).projectPartsSha256={sha256:'0'.repeat(64)};}]]){
+  const t=copyOf(w);change(t);
+  await refused(t,()=>t.store.readHistoryView(jobId,secondView),'HISTORY_VERSION_MISMATCH','Saved project content references are unsupported.','HISTORY_STATE_FORM_SHAPE_ORACLE '+shape);
+  const changed=t.copy(sp);changed.job.JOB_TITLE='Refused state form write';t.engine.recalculate(changed);
+  await refused(t,()=>t.store.writeProject(changed,{expectedProjectRevision:sp.revision}),'HISTORY_VERSION_MISMATCH','Saved project content references are unsupported.','HISTORY_STATE_FORM_SHAPE_ORACLE write '+shape);
+  await refused(t,()=>t.store.exportPackage(jobId),'HISTORY_VERSION_MISMATCH','Saved project content references are unsupported.','HISTORY_STATE_FORM_SHAPE_ORACLE export '+shape);
+ }
+ emit('HISTORY-STATE-FORM-SHAPES',{shapes:5,code:'HISTORY_VERSION_MISMATCH'});
+ // N4: a state-form root whose part is not a retained file (accounting
+ // adjusted) is refused by every use of that root; other roots stay readable.
+ {const t=copyOf(w),state=stateOf(t);state.retainedFileBytes-=state.files[firstPart.sha256].byteSize;delete state.files[firstPart.sha256];
+  const notRetained='Recovery project contents are not retained in this complete history.';
+  await refused(t,()=>t.store.readHistoryView(jobId,firstView),'HISTORY_VERSION_MISMATCH',notRetained,'HISTORY_STATE_FORM_UNRETAINED_PART_ORACLE read');
+  await refused(t,()=>t.store.restoreCheckpoint(jobId,firstRoot,{expectedProjectRevision:sp.revision}),'HISTORY_VERSION_MISMATCH',notRetained,'HISTORY_STATE_FORM_UNRETAINED_PART_ORACLE restore');
+  await refused(t,()=>t.store.exportPackage(jobId),'HISTORY_VERSION_MISMATCH',notRetained,'HISTORY_STATE_FORM_UNRETAINED_PART_ORACLE export');
+  assert.deepEqual(t.copy(await t.store.readHistoryView(jobId,secondView)),draft(7,t),'HISTORY_STATE_FORM_UNRELATED_ROOT_ORACLE');
+  // Reusing the root for a new checkpoint is refused before commit.
+  const u=copyOf(w),ustate=stateOf(u),secondPart=recordOf(u,secondRoot).projectParts.entries.find(part=>!recordOf(u,firstRoot).projectParts.entries.some(other=>other.sha256===part.sha256));ustate.retainedFileBytes-=ustate.files[secondPart.sha256].byteSize;delete ustate.files[secondPart.sha256];
+  await refused(u,()=>u.store.saveCheckpoint(jobId,{expectedProjectRevision:sp.revision,view:draft(11,u)}),'HISTORY_VERSION_MISMATCH','A retained project content dependency is unavailable.','HISTORY_STATE_FORM_UNRETAINED_PART_ORACLE reuse');
+  emit('HISTORY-STATE-FORM-UNRETAINED-PART',{read:notRetained,restore:notRetained,export:notRetained,reuse:'A retained project content dependency is unavailable.',unrelatedRootReadable:true});}
+ // N5: the first write converts legacy inline entries; a corrupted inline
+ // entry is refused, never converted, and nothing is written.
+ {const t=copyOf(w);inflate(t,[firstRoot,secondRoot]);const legacyState=json(stateOf(t));await readAll(t);
+  const legacyExport=await exportBody(t);assert.equal(json(legacyExport.rest),json(reference.rest),'HISTORY_STATE_FORM_LEGACY_EXPORT_ORACLE: legacy and state-form manifests export identical bytes');
+  assert.equal(json(stateOf(t)),legacyState,'HISTORY_STATE_FORM_LEGACY_EXPORT_ORACLE: reads and export never convert the stored state');
+  const bad=copyOf(t),state=stateOf(bad);state.retainedFileBytes-=state.files[firstPart.sha256].byteSize;delete state.files[firstPart.sha256];const generation=state.generation;
+  const changed=bad.copy(sp);changed.job.JOB_TITLE='Refused migration write';bad.engine.recalculate(changed);
+  await refused(bad,()=>bad.store.writeProject(changed,{expectedProjectRevision:sp.revision}),'HISTORY_VERSION_MISMATCH','Recovery project contents are not retained in this complete history.','HISTORY_STATE_FORM_MIGRATION_ORACLE write');
+  await refused(bad,()=>bad.store.saveCheckpoint(jobId,{expectedProjectRevision:sp.revision,view:draft(13,bad)}),'HISTORY_VERSION_MISMATCH','Recovery project contents are not retained in this complete history.','HISTORY_STATE_FORM_MIGRATION_ORACLE checkpoint');
+  assert.equal(stateOf(bad).generation,generation,'HISTORY_STATE_FORM_MIGRATION_ORACLE: generation unchanged');
+  const id=await t.store.saveCheckpoint(jobId,{expectedProjectRevision:sp.revision,view:draft(15,t)});
+  for(const root of [firstRoot,secondRoot])assert.equal(json(entryOf(t,root)),json(stateForm(recordOf(t,root))),'HISTORY_STATE_FORM_MIGRATION_ORACLE: converted once to the exact state form');
+  await readAll(t);assert.deepEqual(t.copy(await t.store.readHistoryView(jobId,id)),draft(15,t));
+  emit('HISTORY-STATE-FORM-MIGRATION',{legacyExportIdentical:true,corruptedLegacyRefused:'HISTORY_VERSION_MISMATCH',generationUnchanged:true,converted:2});}
+ // N8: an observed version keeps the inline shape its descriptorSha256 binds.
+ {const observe=t=>{const state=stateOf(t),root=entryOf(t,firstRoot);state.compatibility={schema:t.runtime.closedLoopWorkflowSchema.RECOVERY_COMPATIBILITY_CONTRACT.schema,observations:[{checkpointId:firstRoot,snapshotSha256:root.sha256,descriptorSha256:sha(Buffer.from(json(recordOf(t,firstRoot)))),issues:[{checkpointId:firstRoot,declaredWorkSha256:root.workSha256,measuredWorkSha256:'0'.repeat(64)}]}]};};
+  const slim=copyOf(w);observe(slim);
+  await refused(slim,()=>slim.store.readHistoryView(jobId,secondView),'HISTORY_VERSION_MISMATCH','Recovery observation does not identify its original checkpoint.','HISTORY_STATE_FORM_OBSERVED_ORACLE');
+  const inline=copyOf(w);observe(inline);inflate(inline,[firstRoot]);
+  assert.deepEqual(inline.copy(await inline.store.readHistoryView(jobId,secondView)),draft(7,inline),'HISTORY_STATE_FORM_OBSERVED_INLINE_CONTROL');
+  inflate(inline,[secondRoot]);await inline.store.saveCheckpoint(jobId,{expectedProjectRevision:sp.revision,view:draft(17,inline)});
+  assert.equal(json(entryOf(inline,firstRoot)),json(recordOf(inline,firstRoot)),'HISTORY_STATE_FORM_OBSERVED_ORACLE: an observed entry is never converted');
+  assert.equal(json(entryOf(inline,secondRoot)),json(stateForm(recordOf(inline,secondRoot))),'HISTORY_STATE_FORM_OBSERVED_ORACLE: other entries are converted');
+  emit('HISTORY-STATE-FORM-OBSERVED-ENTRY',{slimObservedRefused:'HISTORY_VERSION_MISMATCH',observedKeptInline:true});}
+ // N9: the backup format stays closed to the state form.
+ {const body={...reference.rest,exportedAt:'2026-11-04T00:00:00.000Z'};body.recovery={...body.recovery,entries:body.recovery.entries.map(stateForm)};
+  const crafted=new Blob([gzipSync(Buffer.from(json({...body,packageSha256:sha(Buffer.from(json(body)))})))],{type:'application/gzip'}),fresh=make();
+  await refused(fresh,()=>fresh.store.importPackage(crafted),'HISTORY_VERSION_MISMATCH','Backup History identity is invalid.','HISTORY_STATE_FORM_BACKUP_ORACLE');
+  const local=copyOf(w);await refused(local,()=>local.store.importPackage(crafted),'HISTORY_VERSION_MISMATCH','Backup History identity is invalid.','HISTORY_STATE_FORM_BACKUP_ORACLE existing');
+  emit('HISTORY-STATE-FORM-BACKUP-CLOSED',{code:'HISTORY_VERSION_MISMATCH'});}
+ // N10: a mixed state reads, writes, exports and imports exactly.
+ {const t=copyOf(w);inflate(t,[firstRoot]);await readAll(t);
+  const mixedExport=await exportBody(t);assert.equal(json(mixedExport.rest),json(reference.rest),'HISTORY_STATE_FORM_MIXED_EXPORT_ORACLE');
+  const fresh=make(),imported=await fresh.store.importPackage(mixedExport.blob);await readAll(fresh);
+  for(const entry of reference.rest.recovery.entries){assert.equal(json(entryOf(fresh,entry.id)),json(stateForm(entry)),'HISTORY_STATE_FORM_IMPORT_ORACLE: an import records the state form');assert.equal(json(recordOf(fresh,entry.id)),json(entry),'HISTORY_STATE_FORM_IMPORT_ORACLE: the imported record is complete');}
+  const again=await fresh.store.importPackage(mixedExport.blob);assert.equal(again.job.JOB_ID,jobId,'HISTORY_STATE_FORM_REIMPORT_ORACLE');await readAll(fresh);
+  const local=copyOf(t);await local.store.importPackage(mixedExport.blob);await readAll(local);for(const id of [firstRoot,secondRoot])assert.equal(json(entryOf(local,id)),json(stateForm(recordOf(local,id))),'HISTORY_STATE_FORM_IMPORT_ORACLE: local mixed entries agree in state form');
+  await t.store.saveCheckpoint(jobId,{expectedProjectRevision:sp.revision,view:draft(19,t)});await readAll(t);assert.equal(json(entryOf(t,firstRoot)),json(stateForm(recordOf(t,firstRoot))));
+  emit('HISTORY-STATE-FORM-MIXED',{exportIdentical:true,imported:imported.job.JOB_ID===jobId,reimported:true,writeConverted:true});}
+}
 console.log(JSON.stringify({case:'history-project-references',productionSourceSha256:sha(source),implementationFault:mode||null,synthetic:true,actualBrowser:false,environment:'Production persistence and complete compressed backup bytes in Node lifecycle transaction adapter',cases},null,2));

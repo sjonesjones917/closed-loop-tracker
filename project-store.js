@@ -3973,7 +3973,7 @@ async function importPackage(blob,{operationId=null,passphrase=null,pendingBacku
       if(decoded&&entry.id===incoming.activeId){importedActive=decoded;importedView=incoming.activeViewOverride||decoded.view;}
 
       const existing=merged.entries.find(item=>item.id===entry.id);
-      if(existing&&hash.sha256Value(existing)!==hash.sha256Value(entry))throw storageError('Backup History conflicts with a retained version.','IMMUTABLE_HISTORY_CONFLICT');
+      if(existing&&hash.sha256Value(historyStateForm(existing))!==hash.sha256Value(historyStateForm(entry)))throw storageError('Backup History conflicts with a retained version.','IMMUTABLE_HISTORY_CONFLICT');
       if(!existing){merged.entries.push(clone(entry));merged.compressedProjectBytes+=entry.byteSize;importSnapshots.push(snapshot);}
     }
     }finally{if(digestHolder.scope)hash.disposeCanonicalDigestScope(digestHolder.scope);importDigestHolders.delete(verifiedParts);}
@@ -3981,12 +3981,16 @@ async function importPackage(blob,{operationId=null,passphrase=null,pendingBacku
      if(hash.sha256Value(incomingObservations)!==hash.sha256Value(incoming.compatibility.observations))throw storageError('Recovery observations differ from independently verified original History.','HISTORY_VERSION_MISMATCH');
      const combined=new Map((merged.compatibility?.observations||[]).map(row=>[row.checkpointId,row]));for(const row of incomingObservations)combined.set(row.checkpointId,clone(row));
      merged.compatibility={schema:globalThis.closedLoopWorkflowSchema.RECOVERY_COMPATIBILITY_CONTRACT.schema,observations:[...combined.values()]};
+     // An observed version keeps the inline shape its descriptorSha256 binds;
+     // the incoming entry equals the local state-form entry in state form.
+     for(const row of incomingObservations){const index=merged.entries.findIndex(item=>item.id===row.checkpointId);if(index>=0&&Object.hasOwn(merged.entries[index],'projectPartsSha256'))merged.entries[index]=clone(incoming.entries.find(item=>item.id===row.checkpointId));}
     }
     for(const entry of incoming.entries)if(entry.parentId&&!incoming.entries.some(parent=>parent.id===entry.parentId))throw storageError('Backup History has a missing parent checkpoint.','HISTORY_VERSION_MISMATCH');
     for(const [sha,info] of Object.entries(incoming.files)){
       const file=archiveFiles.get(sha);if(!file||file.byteSize!==info.byteSize)throw storageError('A retained file is missing from the backup.','HISTORY_FILE_INTEGRITY_FAILED');
       if(!merged.files[sha]){merged.files[sha]=clone(info);merged.retainedFileBytes+=info.byteSize;importFiles.push({sha256:sha,blob:file.blob});}
     }
+    slimHistoryStateEntries(merged);
     for(const [session,info] of Object.entries(incoming.sessions||{})){if(!incoming.entries.some(e=>e.id===info.checkpointId))throw storageError('Backup session start is unavailable.','HISTORY_VERSION_MISMATCH');if(merged.sessions[session]&&merged.sessions[session].checkpointId!==info.checkpointId)throw storageError('Backup session start conflicts with retained History.','IMMUTABLE_HISTORY_CONFLICT');merged.sessions[session]=clone(info);}
     for(const [command,transfer] of Object.entries(incoming.transfers||{})){const prior=merged.transfers?.[command];if(prior&&prior.intentSha256!==transfer.intentSha256)throw storageError('Backup external-operation history conflicts with retained evidence.','EXTERNAL_OPERATION_CONFLICT');merged.transfers=merged.transfers||{};if(!prior||!['SUCCEEDED','FAILED'].includes(prior.result))merged.transfers[command]=clone(transfer);}
     for(const [key,receipt] of Object.entries(incoming.commandReceipts||{})){const existing=merged.commandReceipts?.[key];if(existing&&hash.sha256Value(existing)!==hash.sha256Value(receipt))throw storageError('Backup command receipt conflicts with retained execution history.','IDEMPOTENCY_PAYLOAD_CONFLICT');merged.commandReceipts={...(merged.commandReceipts||{}),[key]:clone(receipt)};}
