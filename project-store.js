@@ -762,8 +762,25 @@ function unchangedCheckpointValueSnapshot(proof,current){
 }
 
 const VERIFIED_PROJECT_INTEGRITY=Symbol('private verified project integrity');
-function verifiedProjectIntegrity(project,digest){return {kind:VERIFIED_PROJECT_INTEGRITY,project,digest,snapshot:copyVerifiedTree(project)};}
-function unchangedVerifiedProject(receipt,project,digest){return receipt?.kind===VERIFIED_PROJECT_INTEGRITY&&receipt.project===project&&receipt.digest===digest&&verifiedValuesEqual(receipt.snapshot,project);}
+// An audited private receipt or source copy may keep the graph description
+// captured while its snapshot was copied (copyCheckpointValueSnapshot), so a
+// comparison walks only the current value. Only sites whose snapshot is never
+// handed to replaceable code or used as data opt in. A changed primitive
+// releases the captured nodes for good and both sides are walked again.
+const CAPTURED_PROJECT_INTEGRITY=Symbol('private captured project integrity'),capturedIntegrityProofs=new WeakMap(),capturedValueProofs=new WeakMap();
+function verifiedProjectIntegrity(project,digest,capture=null){
+  if(capture!==CAPTURED_PROJECT_INTEGRITY)return {kind:VERIFIED_PROJECT_INTEGRITY,project,digest,snapshot:copyVerifiedTree(project)};
+  const proof=copyCheckpointValueSnapshot(project),receipt={kind:VERIFIED_PROJECT_INTEGRITY,project,digest,snapshot:proof.snapshot};
+  if(proof.nodes)capturedIntegrityProofs.set(receipt,proof);return receipt;
+}
+// A private carrier spread from a captured receipt (a read or a commit proof)
+// keeps the capture only while it carries that receipt's own snapshot.
+function carryCapturedIntegrity(carrier,receipt){const proof=capturedIntegrityProofs.get(receipt);if(proof&&carrier.snapshot===proof.snapshot)capturedIntegrityProofs.set(carrier,proof);return carrier;}
+function capturedSnapshotMatches(receipt,current){const proof=capturedIntegrityProofs.get(receipt);return proof&&proof.snapshot===receipt.snapshot?unchangedCheckpointValueSnapshot(proof,current):verifiedValuesEqual(receipt.snapshot,current);}
+function unchangedVerifiedProject(receipt,project,digest){return receipt?.kind===VERIFIED_PROJECT_INTEGRITY&&receipt.project===project&&receipt.digest===digest&&capturedSnapshotMatches(receipt,project);}
+// The same capture for a private copy of a stored source row or journal.
+function capturedPrivateCopy(value){const proof=copyCheckpointValueSnapshot(value);if(proof.nodes&&proof.snapshot&&typeof proof.snapshot==='object')capturedValueProofs.set(proof.snapshot,proof);return proof.snapshot;}
+function privateCopyMatches(copy,current){const proof=copy&&typeof copy==='object'?capturedValueProofs.get(copy):undefined;return proof?unchangedCheckpointValueSnapshot(proof,current):verifiedValuesEqual(copy,current);}
 // Private physical storage only. Canonical values and their hash schemas do not change.
 const PHYSICAL_RECORD_SCHEMA='closed-loop-record-parts/1',PHYSICAL_PART_SCHEMA='closed-loop-record-part/1';
 const QUARANTINE_RECORD_SCHEMA='closed-loop-quarantine-record-parts/1',QUARANTINE_OPAQUE_SCHEMA='closed-loop-quarantine-physical-json/1';
@@ -1068,7 +1085,7 @@ const ROOT_CERTIFICATE_WRITE=Symbol('private certifiable write'),STARTUP_REFRESH
 let recentOperationalCommitRead=null;
 function takeOperationalCommitRead(row,journal,readPurpose=null,storage=null){
   const proof=recentOperationalCommitRead;recentOperationalCommitRead=null;
-  if(!proof||proof.requiredReadPurpose&&proof.requiredReadPurpose!==readPurpose||!row||String(row.jobId)!==projectIdentity(proof.project)||!unchangedVerifiedProject(proof,proof.project,proof.digest)||!verifiedValuesEqual(proof.row,row)||!verifiedValuesEqual(proof.journal,journal)||!physicalSourcesUnchanged(proof.storage,storage))return null;
+  if(!proof||proof.requiredReadPurpose&&proof.requiredReadPurpose!==readPurpose||!row||String(row.jobId)!==projectIdentity(proof.project)||!unchangedVerifiedProject(proof,proof.project,proof.digest)||!privateCopyMatches(proof.row,row)||!privateCopyMatches(proof.journal,journal)||!physicalSourcesUnchanged(proof.storage,storage))return null;
   return proof;
 }
 async function projectRowWithOperations(tx,jobId,verifiedRead=null,physicalCapture=null,sourceOutput=null){
@@ -1080,7 +1097,7 @@ async function projectRowWithOperations(tx,jobId,verifiedRead=null,physicalCaptu
  if(verifiedRead){
   // Compare the complete freshly reread source, including all payload values.
   // Matching stored digest labels alone cannot establish unchanged bytes.
-  if(!unchangedVerifiedProject(verifiedRead,verifiedRead.project,verifiedRead.digest)||!verifiedValuesEqual(verifiedRead.row,row)||!verifiedValuesEqual(verifiedRead.journal,journal)||!physicalSourcesUnchanged(verifiedRead.storage,sources.storage))throw storageError('Project or response data changed after verification. The newer state is preserved.','STALE_PROJECT_REVISION');
+  if(!unchangedVerifiedProject(verifiedRead,verifiedRead.project,verifiedRead.digest)||!privateCopyMatches(verifiedRead.row,row)||!privateCopyMatches(verifiedRead.journal,journal)||!physicalSourcesUnchanged(verifiedRead.storage,sources.storage))throw storageError('Project or response data changed after verification. The newer state is preserved.','STALE_PROJECT_REVISION');
   return {...row,project:verifiedRead.project,projectSha256:verifiedRead.digest};
  }
  return applyOperationalJournal(row,journal?.value);
@@ -1123,14 +1140,16 @@ async function writeOperationalProject(project,options={}){
   // The ordinary context-copy hook may retain next, never this capture.
   const primitive=rootDigestPrimitivesUnchanged(initialRootDigestPrimitives)?initialRootDigestPrimitives:null,snapshot=primitive&&verifiedGraphNodes(next)?copyVerifiedTree(canonicalProject(next)):null,measured=snapshot?historyProjectDigests(next):null;
   const pair=measured&&rootDigestPrimitivesUnchanged(primitive)&&verifiedValuesEqual(snapshot,canonicalProject(next))?Object.freeze({primitive,snapshot,...measured}):null;if(pair)checkpointDigestPairs.add(pair);
-  const digest=pair?pair.projectSha256:projectSha256(next),integrity=verifiedProjectIntegrity(next,digest);
+  // With a bound pair History encodes the pair's own snapshot, so this
+  // receipt's snapshot is only copied and compared, never handed out.
+  const digest=pair?pair.projectSha256:projectSha256(next),integrity=verifiedProjectIntegrity(next,digest,pair?CAPTURED_PROJECT_INTEGRITY:null);
   const retentionState=globalThis.closedLoopPromptEngine.promptContextRetentionState,retainedStates=(next.projectData.generatedPrompts||[]).map(record=>retentionState(record));
   const assertRetainedContexts=project=>{const records=project.projectData.generatedPrompts||[];for(let index=0;index<retainedStates.length;index++){const expected=retainedStates[index];if(expected.availability==='AVAILABLE'&&!verifiedValuesEqual(expected,retentionState(records[index])))throw storageError('Previously retained prompt context bytes are unavailable on the committed response.','PROMPT_CONTEXT_INTEGRITY_FAILED');}};
   // Context bytes need their own carrier: never expose the digest snapshot to
   // the replaceable hook, and never depend on next after an asynchronous wait.
   const contextCarrier=copyVerifiedTree(integrity.snapshot);
   globalThis.closedLoopPromptEngine.copyRetainedPromptContextFiles(next,contextCarrier);
-  const assertOperationalCandidate=()=>{if(!unchangedVerifiedProject(integrity,next,digest)||!verifiedValuesEqual(integrity.snapshot,contextCarrier)||pair&&!checkpointPairMatches(pair,next))throw storageError('The prepared response candidate changed before commit. Prepare the current candidate again.','STALE_PROJECT_REVISION');};
+  const assertOperationalCandidate=()=>{if(!unchangedVerifiedProject(integrity,next,digest)||!capturedSnapshotMatches(integrity,contextCarrier)||pair&&!checkpointPairMatches(pair,next))throw storageError('The prepared response candidate changed before commit. Prepare the current candidate again.','STALE_PROJECT_REVISION');};
   assertRetainedContexts(contextCarrier);assertOperationalCandidate();if(digest===prior.projectSha256){if(pendingArtifacts.length)throw storageError('Pending returned files require their response mapping transaction.','PENDING_ARTIFACTS_WITHOUT_CHANGE');return prior;}
   const retainedArtifacts=pendingArtifacts.length?await listArtifacts(id):null,byId=new Map((retainedArtifacts||[]).map(row=>[row.artifactId,row]));
   for(const row of pendingArtifacts){const existing=byId.get(row.artifactId);if(existing&&(existing.sha256!==row.sha256||existing.byteSize!==row.byteSize||existing.filename!==row.filename||existing.mediaType!==row.mediaType||!equivalent(existing.lineage,row.lineage)))throw storageError('A pending returned artifact conflicts with stored bytes.','ARTIFACT_ID_REUSE');if(existing)row.createdAt=existing.createdAt;byId.set(row.artifactId,row);}
@@ -1185,16 +1204,16 @@ async function writeOperationalProject(project,options={}){
       const committed={...copyVerifiedTree(integrity.snapshot),projectSha256:digest},returnedIntegrity=verifiedProjectIntegrity(committed,digest);
       // Preserve exact prompt-context bytes on the trusted return carrier,
       // while binding its canonical values before the replaceable transfer.
-      if(!verifiedValuesEqual(integrity.snapshot,contextCarrier))throw storageError('Captured prompt context values changed during transaction completion.','STALE_PROJECT_REVISION');
+      if(!capturedSnapshotMatches(integrity,contextCarrier))throw storageError('Captured prompt context values changed during transaction completion.','STALE_PROJECT_REVISION');
       globalThis.closedLoopPromptEngine.copyRetainedPromptContextFiles(contextCarrier,committed);
       if(!unchangedVerifiedProject(returnedIntegrity,committed,digest))throw storageError('Returned response values changed during context restoration.','STALE_PROJECT_REVISION');
       assertRetainedContexts(committed);
-      const privateCommitted=copyVerifiedTree(committed),committedIntegrity=verifiedProjectIntegrity(privateCommitted,digest);
+      const privateCommitted=copyVerifiedTree(committed),committedIntegrity=verifiedProjectIntegrity(privateCommitted,digest,CAPTURED_PROJECT_INTEGRITY);
       // Capture first so the existing consumption guard rejects hook mutations.
       globalThis.closedLoopPromptEngine.copyRetainedPromptContextFiles(committed,privateCommitted);
       if(!unchangedVerifiedProject(returnedIntegrity,committed,digest))throw storageError('Returned response values changed during context restoration.','STALE_PROJECT_REVISION');
       assertRetainedContexts(committed);if(unchangedVerifiedProject(committedIntegrity,privateCommitted,digest))assertRetainedContexts(privateCommitted);
-      recentOperationalCommitRead={row:copyVerifiedTree(base),journal:copyVerifiedTree(journalSnapshot),storage:{row:baseSource.identity,journal:committedJournalStorage},...committedIntegrity,checkpointDigestPair:checkpointPairMatches(pair,privateCommitted)?pair:null,retainedRoot:mintWriteRootCertificate(prepared,digest,primitive,operationalValidators,operationalDerived)};
+      recentOperationalCommitRead=carryCapturedIntegrity({row:capturedPrivateCopy(base),journal:capturedPrivateCopy(journalSnapshot),storage:{row:baseSource.identity,journal:committedJournalStorage},...committedIntegrity,checkpointDigestPair:checkpointPairMatches(pair,privateCommitted)?pair:null,retainedRoot:mintWriteRootCertificate(prepared,digest,primitive,operationalValidators,operationalDerived)},committedIntegrity);
       notifyProjectChange(committed,{operational:true});return committed;
     }catch(error){
       recentOperationalCommitRead=null;
@@ -1647,11 +1666,11 @@ async function readProjectForTransaction(jobId,readPurpose=null){
  const canonicalReadIntegrity=readPurpose===STARTUP_REFRESH_READ&&sourceProof.current?verifiedProjectIntegrity(project,project.projectSha256):null;
  // Custody/context observers may retain this project. Bind the verified source
  // before invoking them; side-channel hydration cannot change canonical data.
- const integrity=verifiedProjectIntegrity(project,project.projectSha256);
+ const integrity=verifiedProjectIntegrity(project,project.projectSha256,CAPTURED_PROJECT_INTEGRITY);
  await observeProjectArtifactCustody(project);
  if(sourceProof.checkpointDigestPair&&!checkpointPairMatches(sourceProof.checkpointDigestPair,project))delete sourceProof.checkpointDigestPair;
  if(readPurpose!==STARTUP_REFRESH_READ&&!unchangedVerifiedProject(integrity,project,integrity.digest))throw storageError('Project or response data changed after verification. The newer state is preserved.','STALE_PROJECT_REVISION');
- return {...sourceProof,...integrity,canonicalReadIntegrity};
+ return carryCapturedIntegrity({...sourceProof,...integrity,canonicalReadIntegrity},integrity);
 }
 function cachedReadinessProjection(project){
  const job=Object.fromEntries(['CURRENT_STAGE','CURRENT_STATE','CURRENT_BLOCKERS','NEXT_REQUIRED_ACTION','JOB_RECORD_STATUS','STATUS_EVIDENCE',...Object.keys(globalThis.closedLoopWorkflowSchema.JOB_POINTER_TARGETS)].map(key=>[key,project.job?.[key]]));
@@ -3405,7 +3424,7 @@ async function writeProject(project,options={}){
     try{
       const assertCommittedReturn=()=>{if(!committedProject||next.projectSha256!==committedDigest||!verifiedValuesEqual(canonicalProject(committedProject),canonicalProject(next)))throw storageError('The committed project return changed during completion or context restoration.','STALE_PROJECT_REVISION');};
       assertCommittedReturn();
-      if(committedRow){const privateCommitted=copyVerifiedTree(next),committedIntegrity=verifiedProjectIntegrity(privateCommitted,next.projectSha256);globalThis.closedLoopPromptEngine?.copyRetainedPromptContextFiles?.(next,privateCommitted);assertCommittedReturn();recentOperationalCommitRead={row:committedRow,journal:undefined,storage:proof.committedStorage,...committedIntegrity,retainedRoot:mintWriteRootCertificate(prepared.options.preparedHistory,next.projectSha256,proof.primitive,proof.validators,proof.derivation)};}
+      if(committedRow){const privateCommitted=copyVerifiedTree(next),committedIntegrity=verifiedProjectIntegrity(privateCommitted,next.projectSha256,CAPTURED_PROJECT_INTEGRITY);globalThis.closedLoopPromptEngine?.copyRetainedPromptContextFiles?.(next,privateCommitted);assertCommittedReturn();recentOperationalCommitRead=carryCapturedIntegrity({row:committedRow,journal:undefined,storage:proof.committedStorage,...committedIntegrity,retainedRoot:mintWriteRootCertificate(prepared.options.preparedHistory,next.projectSha256,proof.primitive,proof.validators,proof.derivation)},committedIntegrity);}
       notifyProjectChange(next);return next;
     }catch(error){
       recentOperationalCommitRead=null;

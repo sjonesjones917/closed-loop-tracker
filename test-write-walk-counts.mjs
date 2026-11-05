@@ -9,11 +9,12 @@ import assert from 'node:assert/strict';
 import {projectStoreRuntime} from './test-project-store-runtime.mjs';
 
 // Totals per command (walks include the walk inside each copy; a copy is a
-// copyVerifiedTree or copyCheckpointValueSnapshot copy of a project).
+// copyVerifiedTree or copyCheckpointValueSnapshot copy of a project). Captured
+// private receipts and source copies compare by walking the current side only.
 export const WRITE_WALK_PINS=Object.freeze({
- canonicalWrite:Object.freeze({walks:29,copies:8,digestScopes:0}),
- firstOperationalWrite:Object.freeze({walks:63,copies:12,digestScopes:0}),
- operationalWrite:Object.freeze({walks:63,copies:12,digestScopes:0})
+ canonicalWrite:Object.freeze({walks:26,copies:8,digestScopes:0}),
+ firstOperationalWrite:Object.freeze({walks:52,copies:12,digestScopes:0}),
+ operationalWrite:Object.freeze({walks:50,copies:12,digestScopes:0})
 });
 // Walks at the sites whose double walks were removed. The operational History
 // candidate is its own bound pair snapshot: each of the four pair checks walks
@@ -97,6 +98,8 @@ export const WRITE_WALK_FAULTS=Object.freeze({
  'digest-pair-self-compare':['project===pair.snapshot?checkpointPairSnapshotMatches(pair):checkpointPairMatches(pair,project)','checkpointPairMatches(pair,project)','WRITE_WALK_COUNT_PIN_ORACLE'],
  'bound-history-receipt':['historyIntegrity=pair?null:verifiedProjectIntegrity(historyCandidate,digest);','historyIntegrity=verifiedProjectIntegrity(historyCandidate,digest);','WRITE_WALK_COUNT_PIN_ORACLE'],
  'root-continuation-double-walk':['verifiedValueMatchesNodes(proof.snapshot,snapshotNodes,canonicalProject(read.project))','verifiedValuesEqual(proof.snapshot,canonicalProject(read.project))','WRITE_WALK_ROOT_CONTINUATION_ORACLE'],
+ 'uncaptured-private-receipts':['if(capture!==CAPTURED_PROJECT_INTEGRITY)return {kind:VERIFIED_PROJECT_INTEGRITY,','if(true)return {kind:VERIFIED_PROJECT_INTEGRITY,','WRITE_WALK_COUNT_PIN_ORACLE'],
+ 'uncaptured-source-copies':['function capturedPrivateCopy(value){','function capturedPrivateCopy(value){return copyVerifiedTree(value);','WRITE_WALK_COUNT_PIN_ORACLE'],
  'root-bytes-double-walk':['verifiedValueMatchesNodes(proof.snapshot,snapshotNodes,proof.project)){unverifiedWriteRoots.delete(proof);','verifiedValuesEqual(proof.snapshot,proof.project)){unverifiedWriteRoots.delete(proof);','WRITE_WALK_ROOT_BYTES_ORACLE']
 });
 export async function verifyWriteWalkCountFaults({source=fs.readFileSync(new URL('./project-store.js',import.meta.url),'utf8')}={}){
