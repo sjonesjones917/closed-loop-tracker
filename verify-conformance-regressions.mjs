@@ -124,11 +124,16 @@ export const CREATION_MATRIX_TIMEOUT_MS=180*60*1000;
 export const COUNTERPART_MATRIX_TIMEOUT_MS=280*60*1000;
 export const FULL_JOURNEY_TIMEOUT_MS=40*60*1000;
 export const EXECUTED_EVIDENCE_TIMEOUT_MS=60*60*1000;
+// verify-operational-faults re-executes the complete operational persistence
+// owner after each of its three deliberate faults (about 7 minutes per hosted
+// run), so it receives the composite allocation of the other full owners.
+export const OPERATIONAL_FAULTS_TIMEOUT_MS=40*60*1000;
 export function suiteTimeoutMs(suite){
  if(['verify-product-attachment-journey.mjs','verify-checkpoint-boundary.mjs','verify-delivery-transfer-boundary.mjs','verify-native-proof-journey.mjs','verify-native-proof-fault.mjs'].includes(suite))return 90*60*1000;
  if(suite==='verify-executed-evidence.mjs')return EXECUTED_EVIDENCE_TIMEOUT_MS;
  if(suite==='verify-creation-presentation-faults.mjs')return CREATION_MATRIX_TIMEOUT_MS;
  if(suite==='verify-counterpart-faults.mjs')return COUNTERPART_MATRIX_TIMEOUT_MS;
+ if(suite==='verify-operational-faults.mjs')return OPERATIONAL_FAULTS_TIMEOUT_MS;
  if(['verify-product-reservation-persistence.mjs','verify-operator-counterpart.mjs','verify-stage28-artifact-delivery-intent.mjs'].includes(suite))return FULL_JOURNEY_TIMEOUT_MS;
  return CHILD_TIMEOUT_MS;
 }
@@ -470,7 +475,7 @@ function verifyConformanceGroups(){
  for(const group of Object.keys(conformanceGroups))assert.equal(selectConformanceGroup(['--group='+group]).suites,conformanceGroups[group],'CONFORMANCE_GROUP_SELECTION_ORACLE');
  for(const args of [['--group=unknown'],['--group=all'],['--group=core','--group=creation'],['--group','core'],['--skip']])assert.throws(()=>selectConformanceGroup(args),/CONFORMANCE_GROUP_ARGUMENT_ORACLE/);
  for(const suite of suites){
-  const expected=['verify-product-attachment-journey.mjs','verify-checkpoint-boundary.mjs','verify-delivery-transfer-boundary.mjs','verify-native-proof-journey.mjs','verify-native-proof-fault.mjs'].includes(suite)?90:suite==='verify-executed-evidence.mjs'?60:suite==='verify-creation-presentation-faults.mjs'?180:suite==='verify-counterpart-faults.mjs'?280:['verify-product-reservation-persistence.mjs','verify-operator-counterpart.mjs'].includes(suite)?40:20;
+  const expected=['verify-product-attachment-journey.mjs','verify-checkpoint-boundary.mjs','verify-delivery-transfer-boundary.mjs','verify-native-proof-journey.mjs','verify-native-proof-fault.mjs'].includes(suite)?90:suite==='verify-executed-evidence.mjs'?60:suite==='verify-creation-presentation-faults.mjs'?180:suite==='verify-counterpart-faults.mjs'?280:['verify-product-reservation-persistence.mjs','verify-operator-counterpart.mjs','verify-operational-faults.mjs'].includes(suite)?40:20;
   assert.equal(suiteTimeoutMs(suite),expected*60*1000,'CONFORMANCE_SUITE_BUDGET_ORACLE: '+suite);
  }
  assert.equal(suiteTimeoutMs('verify-stage28-artifact-delivery-intent.mjs'),40*60*1000,'CONFORMANCE_STAGE28_BUDGET_ORACLE');
