@@ -16,7 +16,9 @@ export async function verifyHistorySmallPartAllocation({source=fs.readFileSync(n
       if(upperBytes<4096)return false;
       const blob=new Blob(chunks,{type:'application/json'});if(blob.size<4096)return false;`;
  assert.equal(actual.split(guard).length,2,'SMALL_PART_GUARD_UNIQUE');
- const original=actual.replace(guard,"      const blob=new Blob([...hash.canonicalChunks(value)],{type:'application/json'});if(blob.size<4096)return false;");
+ // The pre-fast-path control still names the one chunk array that the
+ // retained digest is computed from after the Blob.
+ const original=actual.replace(guard,"      const chunks=[...hash.canonicalChunks(value)];const blob=new Blob(chunks,{type:'application/json'});if(blob.size<4096)return false;");
  const runtime=createVerifierRuntime({Object,Array,TextEncoder,TextDecoder,Blob,Uint8Array,ArrayBuffer,console});vm.runInContext(fs.readFileSync(new URL('./hash.js',import.meta.url),'utf8'),runtime);
  const hash=runtime.closedLoopHash,sha=bytes=>createHash('sha256').update(bytes).digest('hex');
  async function observe(text,value,authority=hash){
@@ -40,5 +42,11 @@ export async function verifyHistorySmallPartAllocation({source=fs.readFileSync(n
  const multibyte={records:[{text:'\u0800'.repeat(1362)}]},valid=await observe(actual,multibyte),unsafe=await observe(actual.replace('chunk.length*3','chunk.length*2'),multibyte);assert.equal(valid.retained.length,1);assert.equal(unsafe.retained.length,0,'SMALL_PART_UNSAFE_BOUND_FAULT');
  const byteChunks={...hash,*canonicalChunks(value){for(const chunk of hash.canonicalChunks(value))yield new TextEncoder().encode(chunk);}};
  const byteBefore=await observe(original,multibyte,byteChunks),byteAfter=await observe(actual,multibyte,byteChunks);assert.equal(byteBefore.error,undefined);assert.deepEqual(byteAfter,byteBefore,'SMALL_PART_NONSTRING_FALLBACK');
- return {historySmallPartAllocation:'PASS',synthetic:true,actualBrowser:false,caseCount:cases.length,avoidedAllocations:avoided,baselineSmallAllocations:cold.smallAllocations,exactByteThresholds:true,nonStringFallback:true,unsafeBoundDetected:true,cases};
+ // A retained part's digest comes from the canonical chunks already placed in
+ // its Blob (SMALL_PART_RETAINED_DIGEST binds it to those bytes); the value is
+ // not canonicalized again for its digest.
+ let valueDigests=0,valueChunkPasses=0;const counted={...hash,sha256Value(value){valueDigests++;return hash.sha256Value(value);},*canonicalChunks(value){valueChunkPasses++;yield* hash.canonicalChunks(value);}};
+ const single=await observe(actual,{records:[{text:'x'.repeat(8192)},{text:'\u0800'.repeat(1400)},{text:'x'.repeat(8192)}]},counted);
+ assert.equal(single.error,undefined);assert.equal(single.retained.length,2);assert.equal(valueDigests,0,'SMALL_PART_SINGLE_CANONICAL_PASS');assert.equal(valueChunkPasses,single.retained.length,'SMALL_PART_SINGLE_CANONICAL_PASS');
+ return {historySmallPartAllocation:'PASS',synthetic:true,actualBrowser:false,caseCount:cases.length,avoidedAllocations:avoided,baselineSmallAllocations:cold.smallAllocations,exactByteThresholds:true,nonStringFallback:true,unsafeBoundDetected:true,singleCanonicalPass:true,cases};
 }

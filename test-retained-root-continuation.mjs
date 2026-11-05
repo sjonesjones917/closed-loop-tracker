@@ -323,7 +323,8 @@ export async function verifyRetainedRootContinuation({fault=null,caseFilter=null
  }
  // A write certificate's first check decodes privately and reports its own read
  // failures. A retained part's bytes swapped while the write encodes them
- // (through a stable realm crypto.randomUUID) cannot be masked by a clone swap
+ // (through a stable realm crypto.randomUUID; the part's one canonical pass
+ // gives both its bytes and its digest) cannot be masked by a clone swap
  // during the first decode, and a failing part read refuses with its own code
  // before any cold validation.
  for(const mode of ['write-certificate-decode-clone-swap','write-certificate-session-decode-clone-swap','write-certificate-transient-part-read']){
@@ -336,13 +337,13 @@ export async function verifyRetainedRootContinuation({fault=null,caseFilter=null
   p.job.EXACT_USER_OBJECTIVE_VERBATIM=target;r.engine.recalculate(p);
   if(swapping)vm.runInContext(`(()=>{const c=globalThis.crypto,uuid=c.randomUUID;globalThis.__encodeSwaps=0;globalThis.__encodeArmed=false;
    const target=${JSON.stringify('Independent written content ')}.repeat(300),swapped=${JSON.stringify('Independent swapped content ')}.repeat(300);
-   c.randomUUID=function randomUUID(){if(globalThis.__encodeArmed&&/encodeCheckpoint/.test(new Error().stack)){globalThis.__encodeArmed=false;const json=JSON,original=json.stringify;json.stringify=function stringify(value,...rest){if(value===target){globalThis.__encodeSwaps++;if(globalThis.__encodeSwaps===2)json.stringify=original;return original.call(this,swapped,...rest);}return original.call(this,value,...rest);};}return uuid.call(c);};})();`,r.runtime);
+   c.randomUUID=function randomUUID(){if(globalThis.__encodeArmed&&/encodeCheckpoint/.test(new Error().stack)){globalThis.__encodeArmed=false;const json=JSON,original=json.stringify;json.stringify=function stringify(value,...rest){if(value===target){globalThis.__encodeSwaps++;if(globalThis.__encodeSwaps===1)json.stringify=original;return original.call(this,swapped,...rest);}return original.call(this,value,...rest);};}return uuid.call(c);};})();`,r.runtime);
   if(swapping)r.runtime.__encodeArmed=true;
   p=await r.store.writeProject(p,{expectedProjectRevision:p.revision});
   const view=name=>r.copy({activeStage:1,activeView:name,drafts:{'#exact':{value:name+' exact draft'}},scrollX:0,scrollY:17});
   const rows=()=>r.copy([...r.rows].map(([name,map])=>[name,[...map]]));
   if(swapping){
-   assert.equal(r.runtime.__encodeSwaps,2,'RETAINED_ROOT_DECODE_SWAP_FIXTURE_ORACLE');const snapshot=rows();control.armedDecode=true;
+   assert.equal(r.runtime.__encodeSwaps,1,'RETAINED_ROOT_DECODE_SWAP_FIXTURE_ORACLE');const snapshot=rows();control.armedDecode=true;
    const save=mode==='write-certificate-session-decode-clone-swap'?()=>r.store.saveCheckpoint(p.job.JOB_ID,{expectedProjectRevision:p.revision,expectedStateSha256:p.projectSha256,sessionId:'decode-swap-session'}):()=>r.store.saveCheckpoint(p.job.JOB_ID,{expectedProjectRevision:p.revision,expectedStateSha256:p.projectSha256,view:view('Workflow')});
    try{await assert.rejects(save,e=>e.code==='PROJECT_INTEGRITY_FAILED','RETAINED_ROOT_PRIVATE_DECODE_ORACLE: a clone swap during the first decode cannot mask stored bytes that differ from the certified value');}finally{control.armedDecode=false;}
    assert.equal(control.decodeFired,0,'RETAINED_ROOT_PRIVATE_DECODE_ORACLE: the first decode copies parts privately');assert.deepEqual(rows(),snapshot,'Rejected save preserves exact state');

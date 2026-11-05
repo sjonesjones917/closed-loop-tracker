@@ -151,6 +151,98 @@ export async function verifyCanonicalArrayImplementationControls(source=fs.readF
  return {checkId:'canonical.array-implementation-objects',passed:true,cases,faults,caseCount:cases.length,synthetic:true,actualBrowser:false,fullNormalProducerClaimed:false,scopeLimit:'Actual canonical APIs reject observable implementation/custom array prototypes with native foreign/null-prototype data and memo fallback guards. Same-engine foreign native prototype recognition; no general Proxy detection, arbitrary foreign plain-object support, store/browser or full-clause claim.'};
 }
 
+// Whole-subject registered preimages (inclusion [''] with omissions at most one
+// object below the root) are hashed from a private shallow view instead of a
+// canonical text/JSON.parse clone. Differential: every whole-subject kind of the
+// actual registry plus synthetic pointer shapes, against the unchanged deep-clone
+// route sha256Value(registeredHashPreimage(...)), over healthy and adversarial
+// subjects. Digests and exact refusal name/message must match, getters never
+// run, and healthy whole-subject subjects must take the view (no JSON.parse).
+export function verifyRegisteredWholeSubjectViews(source=fs.readFileSync('hash.js','utf8'),{kinds=[],detectCounterexamples=true,quick=false}={}){
+ const strict=(ok,name)=>assert(ok,'REGISTERED_WHOLE_SUBJECT_VIEW_ORACLE: '+name),digest=text=>createHash('sha256').update(text,'utf8').digest('hex');
+ const context=createVerifierRuntime.withNativeGlobal({TextEncoder,TextDecoder,Uint8Array,Uint32Array,ArrayBuffer,DataView,Blob,quick});createVerifierRuntime.loadScript(context,source,{filename:'hash.js:registered-whole-subject-view'});
+ const foreign=quick?null:createVerifierRuntime({}),fromForeign=code=>foreign?createVerifierRuntime.loadScript(foreign,code):null;
+ context.foreignRecord=fromForeign("({fields:{STATUS:'C',A:1},recordSha256:'r'})");context.foreignFields=fromForeign("({STATUS:'C',A:1})");context.foreignArray=fromForeign("[1,'é🙂',null]");
+ context.copiedKinds=JSON.stringify(kinds.filter(entry=>entry.includePointers.length===1&&entry.includePointers[0]==='').map(entry=>({kind:entry.kind,omitPointers:[...entry.omitPointers],reasons:{...entry.reasonByOmittedPointer}})));
+ const observed=JSON.parse(createVerifierRuntime.loadScript(context,String.raw`(()=>{
+  const h=closedLoopHash;let parses=0,getterRuns=0;const nativeParse=JSON.parse;JSON.parse=function(...args){parses++;return Reflect.apply(nativeParse,this,args);};
+  const exact=[],register=(kind,omit)=>{const reasons={};for(const pointer of omit)reasons[pointer]='Synthetic view-shape omission.';h.registerHashPreimage(kind,{includePointers:[''],omitPointers:omit,reasonByOmittedPointer:reasons});};
+  exact.push('CANONICAL_RECORD');for(const row of nativeParse(copiedKinds))if(!h.hashPreimageRegistry.has(row.kind)){h.registerHashPreimage(row.kind,{includePointers:[''],omitPointers:row.omitPointers,reasonByOmittedPointer:row.reasons});exact.push(row.kind);}
+  register('VIEW_SHAPE_NESTED',['/recordSha256','/a~1b','/x~0y','/','/__proto__','/fields/STATUS','/fields/__proto__','/scope/projectRevision','/REASONS','/fields/REASONS']);exact.push('VIEW_SHAPE_NESTED');
+  register('VIEW_SHAPE_EMPTY',[]);exact.push('VIEW_SHAPE_EMPTY');
+  register('VIEW_SHAPE_OVERLAP',['/fields/STATUS','/fields']);register('VIEW_SHAPE_DEEP',['/fields/STATUS/x']);register('VIEW_SHAPE_RELATIVE',['recordSha256']);register('VIEW_SHAPE_ROOT',['']);
+  const others=['VIEW_SHAPE_OVERLAP','VIEW_SHAPE_DEEP','VIEW_SHAPE_RELATIVE','VIEW_SHAPE_ROOT','CONTENT_RECORD:REQ_ID','UNREGISTERED_VIEW_KIND'];
+  const fields=extra=>Object.assign({REQ_ID:'REQ-1',STATUS:'CURRENT',TRUTH_VALUE:'UNKNOWN',CURRENT_SCOPE_HASH:'a'.repeat(64),REASONS:['é🙂','x'],TIMING_ENTRIES:[{at:'2026-01-01',n:1}],EVIDENCE_CHAIN_VERSION:'V1',CREATED_AT:'device-a'},extra||{});
+  const rec=(extra,fieldsExtra)=>Object.assign({id:'REQ-1',stage:4,active:true,scope:{jobId:'JOB-1',inputVersion:'INPUT-v001',projectRevision:7,evidenceChainVersion:'V1'},fields:fields(fieldsExtra),relationships:{SOURCE_ID:'SOURCE-1'},evidenceRefs:['EV-1'],STATUS:'CURRENT',TRUTH_VALUE:'UNKNOWN',REASONS:['é🙂'],TIMING_ENTRIES:[],CURRENT_SCOPE_HASH:'b'.repeat(64),recordSha256:'r'.repeat(64),sha256:'s'.repeat(64),contentSha256:'c'.repeat(64),updatedAt:'2026-01-02T00:00:00.000Z',createdAt:'2026-01-01T00:00:00.000Z',eventSequence:3},extra||{});
+  const getter=(target,key)=>Object.defineProperty(target,key,{get(){getterRuns++;throw Error('GETTER_MUST_NOT_RUN');},enumerable:true,configurable:true});
+  const cycle=build=>{const r=rec();build(r);return r;};
+  const subjects=[
+   ['healthy-record',()=>rec(),true],
+   ['omitted-fraction',()=>rec({recordSha256:1.5})],['omitted-negative-zero',()=>rec({sha256:-0})],['omitted-unsafe-integer',()=>rec({sha256:2**53})],['omitted-lone-surrogate',()=>rec({recordSha256:'\ud800'})],
+   ['omitted-undefined',()=>rec({recordSha256:undefined})],['omitted-function',()=>rec({recordSha256:()=>1})],['omitted-symbol-value',()=>rec({recordSha256:Symbol('s')})],['omitted-bigint',()=>rec({recordSha256:1n})],
+   ['omitted-object-with-negative-zero',()=>rec({recordSha256:{nested:-0}})],['omitted-date',()=>rec({updatedAt:new Date(0)})],['omitted-array-fraction',()=>rec({REASONS:[1.5]},{REASONS:[2.5]})],['omitted-nested-lone-surrogate',()=>rec({},{STATUS:'\udc00'})],
+   ['omitted-nested-object-valid',()=>rec({},{STATUS:{a:[1,'é🙂']},TIMING_ENTRIES:[[{n:2}]]}),true],['omitted-sparse-array',()=>rec({},{REASONS:[1,,3]})],
+   ['healthy-minimal',()=>({fields:{A:1}}),true],['healthy-empty',()=>({}),true],
+   ['healthy-unicode-and-integer-keys',()=>rec({'10':'ten','2':'two','𐀀':'astral','':'empty','é':'é','a/b':'slash','x~y':'tilde'},{'é':'é','𐀀':[1]}),true],
+   ['healthy-long-strings',()=>rec({text:'x'.repeat(16383)+'🙂'},{STATUS:'y'.repeat(16384)+'🙂'}),'narrow'],
+   ['healthy-own-proto-keys',()=>JSON.parse('{"__proto__":{"x":1},"keep":1,"fields":{"__proto__":[1],"STATUS":"C","KEEP":2},"recordSha256":"r"}'),true],
+   ['healthy-null-prototype',()=>Object.assign(Object.create(null),rec(),{fields:Object.assign(Object.create(null),fields()),scope:Object.assign(Object.create(null),{projectRevision:1,jobId:'J'})}),true],
+   ['healthy-shared-subtrees',()=>{const s={a:[1,'é']};return rec({x:s,y:s},{X:s,REASONS:[s,s]});},'narrow'],
+   ['healthy-frozen',()=>{const r=rec();Object.freeze(r.fields);return Object.freeze(r);},'narrow'],
+   ['healthy-non-enumerable',()=>{const r=rec();Object.defineProperty(r,'hidden',{value:1.5,enumerable:false});Object.defineProperty(r.fields,'hidden',{value:undefined,enumerable:false});return r;},'narrow'],
+   ['healthy-non-object-parents',()=>rec({scope:'not-an-object',fields:null}),'narrow'],['healthy-numeric-parent',()=>rec({fields:7,scope:true}),'narrow'],
+   ['healthy-foreign-nested-array',()=>rec({x:foreignArray},{X:foreignArray}),'narrow'],['healthy-proxy-subject',()=>new Proxy(rec(),{}),'narrow'],
+   ['top-accessor',()=>getter(rec(),'title')],['omitted-top-accessor',()=>getter(rec(),'recordSha256')],['nested-accessor',()=>{const r=rec();getter(r.fields,'TITLE');return r;}],['omitted-nested-accessor',()=>{const r=rec();getter(r.fields,'STATUS');return r;}],['parent-accessor',()=>getter(rec(),'fields')],
+   ['cycle-root-via-fields',()=>cycle(r=>{r.fields.self=r;})],['cycle-root',()=>cycle(r=>{r.self=r;})],['cycle-root-via-omitted',()=>cycle(r=>{r.recordSha256=r;})],['cycle-root-via-omitted-nested',()=>cycle(r=>{r.fields.STATUS=r;})],
+   ['cycle-omitted-array-to-fields',()=>cycle(r=>{r.fields.REASONS=[r.fields];})],['cycle-fields-self',()=>cycle(r=>{r.fields.self=r.fields;})],['cycle-omitted-to-scope',()=>cycle(r=>{r.scope.projectRevision=[r.scope];})],
+   ['sparse-nested',()=>rec({x:[1,,3]})],['negative-zero-nested',()=>rec({x:-0})],['extra-array-property',()=>rec({x:Object.assign([1],{y:2})})],['undefined-nested',()=>rec({},{X:undefined})],
+   ['symbol-key-top',()=>rec({[Symbol('s')]:1})],['symbol-key-fields',()=>rec({},{[Symbol('s')]:1})],
+   ['lone-surrogate-key-top',()=>rec({'\ud800':1})],['lone-surrogate-key-fields',()=>rec({},{'\udc00':1})],['lone-surrogate-value',()=>rec({x:'\ud800'})],
+   ['map-fields',()=>rec({fields:new Map([['STATUS','C']])})],['class-fields',()=>rec({fields:new (class Fields{constructor(){this.STATUS='C';}})()})],['array-fields',()=>rec({fields:['STATUS','C']})],['array-scope',()=>rec({scope:[7]})],
+   ['foreign-subject',()=>foreignRecord],['foreign-fields',()=>rec({fields:foreignFields})],
+   ['throwing-proxy-subject',()=>new Proxy(rec(),{ownKeys(){throw Error('PROXY_TRAP');}})],
+   ['array-subject',()=>[1,2]],['string-subject',()=>'text'],['null-subject',()=>null],['undefined-subject',()=>undefined],['number-subject',()=>1],['function-subject',()=>(()=>1)],['date-subject',()=>new Date(0)],['class-subject',()=>new (class Row{constructor(){this.fields={};}})()]
+  ];
+  const outcome=(kind,subject,view)=>{parses=0;getterRuns=0;let result;try{result={digest:view?h.hashRegistered(kind,subject):h.sha256Value(h.registeredHashPreimage(kind,subject))};}catch(error){result={error:{name:String(error?.name),message:String(error?.message)}};}result.getterRuns=getterRuns;result.parses=parses;return result;};
+  const rows=[];
+  // Ordinary healthy subjects run against every kind; boundary and adversarial
+  // subjects against the kinds that differ in view shape. A counterexample run
+  // needs only the first rows that each fault changes.
+  const pick=test=>exact.find(kind=>test(h.hashPreimageRegistry.get(kind).omitPointers));
+  const wide=quick?['CANONICAL_RECORD','VIEW_SHAPE_NESTED']:[...exact,...others],narrow=quick?wide:[...new Set(['CANONICAL_RECORD','VIEW_SHAPE_NESTED','VIEW_SHAPE_EMPTY',pick(omit=>omit.some(pointer=>pointer.startsWith('/scope/'))),pick(omit=>omit.length>=20),...others].filter(Boolean))];
+  for(const [name,make,healthy]of quick?subjects.slice(0,3):subjects)for(const kind of healthy===true?wide:narrow){const viewResult=outcome(kind,make(),true),cloneResult=outcome(kind,make(),false);rows.push({kind,name,wholeKind:h.hashPreimageRegistry.get(kind)?.includePointers.join('|')==='',exactKind:exact.includes(kind),healthy:!!healthy,view:viewResult,clone:cloneResult});}
+  JSON.parse=nativeParse;
+  const literal=JSON.parse('{"__proto__":1,"":2,"a/b":3,"x~y":4,"keep":"é🙂","recordSha256":"r","REASONS":[1],"fields":{"__proto__":5,"STATUS":"C","REASONS":[[2]],"KEEP":[1]},"scope":{"projectRevision":9,"jobId":"J"}}');
+  const scopedRecord=rec(),scope=()=>h.createCanonicalDigestScope({rows:[h.registeredHashPreimage('CANONICAL_RECORD',scopedRecord)]}),viewScope=scope(),cloneScope=scope();
+  const scoped={view:[0,1].map(()=>h.withCanonicalDigestScope(viewScope,()=>h.hashRegistered('CANONICAL_RECORD',scopedRecord))),clone:[0,1].map(()=>h.withCanonicalDigestScope(cloneScope,()=>h.sha256Value(h.registeredHashPreimage('CANONICAL_RECORD',scopedRecord)))),viewStats:h.canonicalDigestScopeStats(viewScope),cloneStats:h.canonicalDigestScopeStats(cloneScope)};
+  return JSON.stringify({rows,exactKinds:exact.length,literal:h.hashRegistered('VIEW_SHAPE_NESTED',literal),scoped});
+ })()`));
+ let fast=0,refused=0;
+ for(const row of observed.rows){
+  const name=row.kind+'/'+row.name,{parses:viewParses,...view}=row.view,{parses:cloneParses,...clone}=row.clone;
+  strict(JSON.stringify(view)===JSON.stringify(clone),'EXACT '+name+' view '+JSON.stringify(view).slice(0,200)+' clone '+JSON.stringify(clone).slice(0,200));
+  if(row.wholeKind)strict(view.getterRuns===0,'GETTER_NOT_RUN '+name);
+  if(row.exactKind&&row.healthy){strict(typeof view.digest==='string'&&viewParses===0,'VIEW_ROUTE '+name);fast++;}
+  if(view.error)refused++;
+ }
+ strict(observed.literal===digest('{"fields":{"KEEP":[1]},"keep":"é🙂","scope":{"jobId":"J"}}'),'LITERAL nested omission view');
+ strict(observed.scoped.view.every(value=>value===observed.scoped.clone[0])&&observed.scoped.clone[1]===observed.scoped.clone[0],'SCOPED_DIGEST');
+ strict(JSON.stringify(observed.scoped.viewStats)===JSON.stringify(observed.scoped.cloneStats)&&observed.scoped.viewStats.hits===1&&observed.scoped.viewStats.misses===1,'SCOPED_HIT_MISS_PARITY '+JSON.stringify(observed.scoped));
+ const negativeControls=[];
+ if(detectCounterexamples)for(const [name,before,after,oracle]of [
+  ['view-route-removed','function hashRegistered(kind,subject){try{const view=registeredWholeSubjectView(kind,subject);if(view!==null)return sha256Value(view);}catch{}return sha256Value(registeredHashPreimage(kind,subject));}','function hashRegistered(kind,subject){return sha256Value(registeredHashPreimage(kind,subject));}','VIEW_ROUTE'],
+  ['omitted-value-kept',"if(omit[key]!==true){view[key]=descriptor.value;continue;}","view[key]=descriptor.value;continue;",'EXACT'],
+  ['omitted-value-unchecked',"const value=descriptor.value;assertUnicodeScalars(key,'object key');","continue;const value=descriptor.value;",'EXACT'],
+  ['nested-parent-shared','const inner=registeredOwnDataView(parent,nested[key]);if(inner===null)return null;view[key]=inner;','const inner=registeredOwnDataView(parent,nested[key]);if(inner===null)return null;','EXACT']
+ ]){
+  strict(source.split(before).length===2,'COUNTEREXAMPLE_ANCHOR '+name);
+  let message=null;try{verifyRegisteredWholeSubjectViews(source.replace(before,after),{kinds,detectCounterexamples:false,quick:true});}catch(error){message=error.message;}
+  strict(message?.startsWith('REGISTERED_WHOLE_SUBJECT_VIEW_ORACLE: '+oracle+' '),'COUNTEREXAMPLE_DETECTED '+name+': '+message);
+  negativeControls.push({name,oracle,detected:true});
+ }
+ return {checkId:'canonical.registered-whole-subject-view',passed:true,pairs:observed.rows.length,exactKinds:observed.exactKinds,viewRoutePairs:fast,refusedPairs:refused,literal:true,scopedParity:true,negativeControls,synthetic:true,actualBrowser:false,boundary:'Actual hash.js registered whole-subject view against the unchanged deep-clone route for the actual registry and synthetic pointer shapes; no store transaction or browser claim.'};
+}
+
 createVerifierRuntime.loadScript(globalThis,fs.readFileSync('hash.js','utf8'),{filename:'hash.js'});
 const h=globalThis.closedLoopHash;
 const assert=(ok,msg)=>{if(!ok)throw new Error(msg);};
@@ -408,5 +500,6 @@ verificationObservations.push({checkId:canonicalArrayImplementationObjects.check
 const recordHashDistinction=verifyRecordHashDistinctionControls();
 const importDigestScopes=verifyCanonicalDigestScopeControls();
 const digestScopeNativeFallback=verifyDigestScopeNativeFallback();
-console.log(JSON.stringify({completeRecordCarrierShapes,canonicalArrayImplementationObjects,canonicalPrefixSuppliers,sourceFamilyRecordHashDistinction,canonicalUtf8ByteObservation,recordHashDistinction,importDigestScopes,digestScopeNativeFallback,verificationObservations,sha256Vectors:true,canonicalOrdering:true,integerLikeKeyOrdering:true,unicodeScalarOrdering:true,safeIntegerBoundaries:true,ambiguousValuesRejected:24,registeredHashPreimageFailureClosed:true,registeredSetSemantics:true,contentRecordPreimagesRegistered:true,unknownContentHashKindRejected:true,canonicalRecordPreimageRegistered:true,closedLoopIdStable:true,closedLoopIdCollisionChecked:true,sharedBuildIdentity,runtimeScriptCount:runtimeFiles.length,workerSharesBuildIdentity:true,stage04RepeatAttachmentControlAbsent:true}));
+const registeredWholeSubjectViews=verifyRegisteredWholeSubjectViews(undefined,{kinds:[...exactNumberContext.closedLoopHash.hashPreimageRegistry.values()]});
+console.log(JSON.stringify({completeRecordCarrierShapes,canonicalArrayImplementationObjects,canonicalPrefixSuppliers,sourceFamilyRecordHashDistinction,canonicalUtf8ByteObservation,recordHashDistinction,importDigestScopes,digestScopeNativeFallback,registeredWholeSubjectViews,verificationObservations,sha256Vectors:true,canonicalOrdering:true,integerLikeKeyOrdering:true,unicodeScalarOrdering:true,safeIntegerBoundaries:true,ambiguousValuesRejected:24,registeredHashPreimageFailureClosed:true,registeredSetSemantics:true,contentRecordPreimagesRegistered:true,unknownContentHashKindRejected:true,canonicalRecordPreimageRegistered:true,closedLoopIdStable:true,closedLoopIdCollisionChecked:true,sharedBuildIdentity,runtimeScriptCount:runtimeFiles.length,workerSharesBuildIdentity:true,stage04RepeatAttachmentControlAbsent:true}));
 await import('./verify-stage02-primitives.mjs');

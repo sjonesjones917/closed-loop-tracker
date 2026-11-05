@@ -2410,6 +2410,13 @@ function slimHistoryStateEntries(state){
 }
 async function encodeHistoryProject(project,retainValue){
   const entries=[],retainedStrings=new Map();
+  // The cold canonical value digest's 16 KiB text batches over the same
+  // chunks give the same SHA-256 input bytes. Null for any non-text chunk.
+  function retainedChunksSha256(chunks){
+    const digest=hash.createSha256();let text='';
+    for(const chunk of chunks){if(typeof chunk!=='string')return null;if(text.length+chunk.length>16384){digest.updateText(text);text='';}text+=chunk;}
+    if(text)digest.updateText(text);return digest.digest();
+  }
   async function visit(value,path=[],arrayItem=false){
     // Stable records and large text are shared across complete versions. The
     // references are disjoint values, never patches against another version.
@@ -2426,7 +2433,10 @@ async function encodeHistoryProject(project,retainValue){
       let upperBytes=0;for(const chunk of chunks){if(typeof chunk!=='string'){upperBytes=Infinity;break;}upperBytes+=chunk.length*3;}
       if(upperBytes<4096)return false;
       const blob=new Blob(chunks,{type:'application/json'});if(blob.size<4096)return false;
-      const sha256=hash.sha256Value(value);await retainValue(sha256,blob);const identity={sha256,byteSize:blob.size};entries.push({path,...identity});
+      // Hash the exact canonical chunks placed in the Blob instead of
+      // canonicalizing the value a second time; a non-text chunk keeps the
+      // value digest.
+      const sha256=retainedChunksSha256(chunks)??hash.sha256Value(value);await retainValue(sha256,blob);const identity={sha256,byteSize:blob.size};entries.push({path,...identity});
       if(typeof value==='string')retainedStrings.set(value,identity);return true;
     }
     if(typeof value==='string'&&value.length>=4096&&await retain())return null;
@@ -4014,7 +4024,8 @@ async function readPackageJson(blob,{compressed=true,spoolArtifacts=true,capture
   // buffered prefix. Full backup packages always keep artifact strings spooled.
   const METADATA_PARSE_BYTE_LIMIT=8*1024*1024;
   let metadataText=spoolArtifacts||capturePackageExtensions?null:[];
-  async function consume(text){parseChunk(text);if(Date.now()-lastYield>=8){await new Promise(resolve=>setTimeout(resolve,0));lastYield=Date.now();}}
+  // Yield after about 48 ms of parsing, as the cooperative digests do.
+  async function consume(text){parseChunk(text);if(Date.now()-lastYield>=48){await new Promise(resolve=>setTimeout(resolve,0));lastYield=Date.now();}}
   try{
     while(true){
       const {value:bytes,done}=await hash.readWithDeadline(reader.read(),'Reading recovery stream',error=>reader.cancel(error));if(done)break;

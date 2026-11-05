@@ -424,9 +424,12 @@ function scopedSha256Value(value){
 }
 
 function sha256Value(value){return scopedSha256Value(value);}
+// Cooperative digests yield after about 48 ms of work: each nested
+// setTimeout(0) waits at least 4 ms, and a shorter slice left much of a long
+// digest's wall time idle. One slice stays under the 50 ms long-task bound.
 async function sha256Chunks(chunks){
   const digest=createSha256();let lastYield=Date.now();
-  for await(const chunk of chunks){if(ArrayBuffer.isView(chunk))digest.update(chunk instanceof Uint8Array?chunk:new Uint8Array(chunk.buffer,chunk.byteOffset,chunk.byteLength));else digest.updateText(chunk);if(Date.now()-lastYield>=8){await new Promise(resolve=>setTimeout(resolve,0));lastYield=Date.now();}}
+  for await(const chunk of chunks){if(ArrayBuffer.isView(chunk))digest.update(chunk instanceof Uint8Array?chunk:new Uint8Array(chunk.buffer,chunk.byteOffset,chunk.byteLength));else digest.updateText(chunk);if(Date.now()-lastYield>=48){await new Promise(resolve=>setTimeout(resolve,0));lastYield=Date.now();}}
   return digest.digest();
 }
 function bytesToHex(bytes){return Array.from(bytes,value=>value.toString(16).padStart(2,'0')).join('');}
@@ -450,7 +453,7 @@ function readWithDeadline(promise,label='Reading data',abort=null){
 async function sha256Bytes(bytes){
   if(bytes instanceof Blob){
     const digest=createSha256();let lastYield=Date.now();
-    for(let offset=0;offset<bytes.size;offset+=65536){digest.update(new Uint8Array(await readWithDeadline(bytes.slice(offset,offset+65536).arrayBuffer(),'Reading artifact bytes')));if(Date.now()-lastYield>=8){await new Promise(resolve=>setTimeout(resolve,0));lastYield=Date.now();}}
+    for(let offset=0;offset<bytes.size;offset+=65536){digest.update(new Uint8Array(await readWithDeadline(bytes.slice(offset,offset+65536).arrayBuffer(),'Reading artifact bytes')));if(Date.now()-lastYield>=48){await new Promise(resolve=>setTimeout(resolve,0));lastYield=Date.now();}}
     return digest.digest();
   }
   let view;if(bytes instanceof ArrayBuffer)view=new Uint8Array(bytes);else if(ArrayBuffer.isView(bytes))view=new Uint8Array(bytes.buffer,bytes.byteOffset,bytes.byteLength);else throw new TypeError('sha256Bytes requires an ArrayBuffer, ArrayBuffer view, or Blob.');
@@ -472,7 +475,54 @@ function deletePointer(root,pointer){if(pointer==='')throw new TypeError('A regi
 function cloneCanonicalValue(value){return JSON.parse(stableStringify(value));}
 function normalizedRegisteredValue(pointer,value){const semantics=SET_SEMANTICS_REGISTRY.get(pointer);if(!semantics)return value;if(!Array.isArray(value))throw new TypeError(`Registered set pointer ${pointer} must resolve to an array.`);const seen=new Set();const copy=value.map(item=>{if(item===null||typeof item!=='object'||Array.isArray(item)||!Object.prototype.hasOwnProperty.call(item,semantics.elementIdentityKey))throw new TypeError(`Set element at ${pointer} lacks identity key ${semantics.elementIdentityKey}.`);const identity=stableStringify(item[semantics.elementIdentityKey]);if(seen.has(identity))throw new TypeError(`Duplicate set element identity at ${pointer}.`);seen.add(identity);return item;});copy.sort((a,b)=>compareUnicodeScalarSequence(stableStringify(a[semantics.elementIdentityKey]),stableStringify(b[semantics.elementIdentityKey])));return copy;}
 function registeredHashPreimage(kind,subject){const entry=HASH_PREIMAGE_REGISTRY.get(String(kind));if(!entry)throw new TypeError(`UNDEFINED_HASH_PREIMAGE: ${kind}.`);let out={};for(const pointer of entry.includePointers){const selected=cloneCanonicalValue(normalizedRegisteredValue(pointer,getPointer(subject,pointer)));out=setPointer(out,pointer,selected);}for(const pointer of entry.omitPointers)deletePointer(out,pointer);return out;}
-function hashRegistered(kind,subject){return sha256Value(registeredHashPreimage(kind,subject));}
+function hashRegistered(kind,subject){try{const view=registeredWholeSubjectView(kind,subject);if(view!==null)return sha256Value(view);}catch{}return sha256Value(registeredHashPreimage(kind,subject));}
+// A whole-subject preimage (inclusion [''] with omissions at most one object
+// below the root) hashes a private shallow view instead of the canonical text
+// and JSON.parse clone above. The view holds the subject's own enumerable data
+// properties minus the omitted ones, and a copy of each parent of a nested
+// omission; every other value is the subject's own, so its canonical bytes are
+// the clone's. Each omitted value is still checked canonical, as the clone
+// requires. Anything the view cannot represent exactly (accessor, symbol key,
+// array or exotic parent, other pointer shape) returns null, and any failure,
+// including a nested refusal, takes the clone path with its exact error.
+// registeredHashPreimage stays the deep clone that callers may mutate.
+function registeredWholeSubjectView(kind,subject){
+ const entry=HASH_PREIMAGE_REGISTRY.get(String(kind));
+ if(!entry||entry.includePointers.length!==1||entry.includePointers[0]!=='')return null;
+ // Null-prototype dictionaries: lookups dispatch through no replaceable method.
+ const top={__proto__:null},nested={__proto__:null},omitted=entry.omitPointers;
+ for(let i=0;i<omitted.length;i++){
+  const pointer=omitted[i];if(!pointer.startsWith('/'))return null;
+  const parts=pointer.slice(1).split('/').map(decodePointerSegment);
+  if(parts.length===1)top[parts[0]]=true;
+  else if(parts.length===2){const omit=nested[parts[0]]||(nested[parts[0]]={__proto__:null});omit[parts[1]]=true;}
+  else return null;
+ }
+ const view=registeredOwnDataView(subject,top);if(view===null)return null;
+ for(const key in nested){
+  if(top[key]===true)return null;
+  if(!Object.prototype.hasOwnProperty.call(view,key))continue;
+  const parent=view[key];if(parent===null||typeof parent!=='object')continue;
+  const inner=registeredOwnDataView(parent,nested[key]);if(inner===null)return null;view[key]=inner;
+ }
+ return view;
+}
+function registeredOwnDataView(source,omit){
+ if(source===null||typeof source!=='object'||Array.isArray(source))return null;
+ const prototype=Object.getPrototypeOf(source);if(prototype!==Object.prototype&&prototype!==null)return null;
+ if(Object.getOwnPropertySymbols(source).length)return null;
+ const keys=Object.keys(source),view={__proto__:null};
+ for(let i=0;i<keys.length;i++){
+  const key=keys[i],descriptor=Object.getOwnPropertyDescriptor(source,key);
+  if(!descriptor||!Object.prototype.hasOwnProperty.call(descriptor,'value'))return null;
+  if(omit[key]!==true){view[key]=descriptor.value;continue;}
+  // The clone serializes an omitted key and value before deleting them.
+  const value=descriptor.value;assertUnicodeScalars(key,'object key');
+  if(value!==null&&typeof value==='object'){for(const chunk of canonicalChunks(value))void chunk;}
+  else if(!(value===null||typeof value==='boolean'||typeof value==='string'&&assertUnicodeScalars(value,'omitted value')===value||typeof value==='number'&&Number.isSafeInteger(value)&&!Object.is(value,-0)))return null;
+ }
+ return view;
+}
 registerHashPreimage('CLONE_COMMAND',{includePointers:['/operation','/sourceJobId','/sourceProjectSha256']});
 registerHashPreimage('CLONE_MAPPING_MANIFEST',{includePointers:['/schema','/sourceJobId','/resultingJobId','/files']});
 
