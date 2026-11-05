@@ -3170,16 +3170,25 @@ function stageContext(project,stage){
     }
     return projected;
   };
-  const visibleData=Object.fromEntries(Object.entries(project.projectData||{}).map(([family,rows])=>[family,Array.isArray(rows)?rows.map(record=>{
+  // The withheld application fields depend only on the (frozen) family schema
+  // and the selected stage, so they are listed once per family.
+  const visibleData=Object.fromEntries(Object.entries(project.projectData||{}).map(([family,rows])=>{
+    if(!Array.isArray(rows))return [family,rows];
     const hidden=Object.entries(schema.RECORD_SCHEMAS[family]?.fieldDefinitions||{}).filter(([,definition])=>definition.producer===schema.PRODUCER.APPLICATION&&definition.availableFromStage>number).map(([name])=>name);
-    record=propositionEvidenceProjection(record,family);if(!hidden.length)return record;const projected={...record,fields:{...record.fields}};if(projectedPropositions.has(record))projectedPropositions.add(projected);for(const name of hidden){delete projected[name];delete projected.fields[name];}return projected;
-  }):rows]));
+    return [family,rows.map(record=>{
+      record=propositionEvidenceProjection(record,family);if(!hidden.length)return record;const projected={...record,fields:{...record.fields}};if(projectedPropositions.has(record))projectedPropositions.add(projected);for(const name of hidden){delete projected[name];delete projected.fields[name];}return projected;
+    })];
+  }));
   const blockedIds=new Set(),all=[];
   for(const [family,rows] of Object.entries(visibleData))if(Array.isArray(rows))for(const record of rows){const id=contextRecordId(record,family);all.push({family,record,id});if(owner(record,family)>number&&id&&!correctionIds.has(String(id)))blockedIds.add(String(id));}
   // A copied record whose declared sources include later work remains later
   // work, regardless of the collection or summary into which it was copied.
   const referencesBlocked=value=>{if(typeof value==='string')return blockedIds.has(value);if(Array.isArray(value))return value.some(referencesBlocked);if(value&&typeof value==='object')return Object.values(value).some(referencesBlocked);return false;};
-  let changed=true;while(changed){changed=false;for(const {record,id} of all)if(id&&!blockedIds.has(String(id))&&referencesBlocked(record)){blockedIds.add(String(id));changed=true;}}
+  // Blocking spreads only from an id that is already blocked, so with none
+  // there is nothing to trace. Otherwise records are rechecked in order only
+  // until each has been checked once against the current set with no change;
+  // any further recheck would also make no change.
+  for(let index=0,unchanged=blockedIds.size?0:all.length;unchanged<all.length;index=(index+1)%all.length){const {record,id}=all[index];if(id&&!blockedIds.has(String(id))&&referencesBlocked(record)){blockedIds.add(String(id));unchanged=0;}else unchanged++;}
   const permitted=(record,family)=>(owner(record,family)<=number||number<=16&&correctionIds.has(String(contextRecordId(record,family))))&&!blockedIds.has(String(contextRecordId(record,family)));
   const context={...project,activeStage:number,job:{...project.job,CURRENT_INPUT_VERSION:inputVersionForStage(project,number)},stages:{},projectData:{...visibleData}};
   // Do not carry complete backups or imported project copies into handoffs.
