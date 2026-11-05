@@ -256,9 +256,15 @@ function createSha256(){
     if(pendingSize){const count=Math.min(64-pendingSize,bytes.length);pending.set(bytes.subarray(0,count),pendingSize);pendingSize+=count;offset=count;if(pendingSize===64){sha256Blocks(h,pending,0,64);pendingSize=0;}}
     // A DataView over this range still admits (or refuses) the byte source;
     // the blocks are then read from that same range as bytes instead of one
-    // DataView call per word.
-    const buffer=bytes.buffer,byteOffset=bytes.byteOffset,byteLength=bytes.byteLength;void new DataView(buffer,byteOffset,byteLength);
-    if(offset+64<=bytes.length)offset=sha256Blocks(h,new Uint8Array(buffer,byteOffset,byteLength),offset,bytes.length);
+    // DataView call per word. As before, bytes.length is read before every
+    // block, and a block whose last byte lies outside that range first makes
+    // the same out-of-range DataView read, so such a source is still refused
+    // with the same RangeError after the same in-range blocks.
+    const buffer=bytes.buffer,byteOffset=bytes.byteOffset,byteLength=bytes.byteLength,view=new DataView(buffer,byteOffset,byteLength);
+    if(offset+64<=bytes.length){
+      const blocks=new Uint8Array(buffer,byteOffset,byteLength);
+      do{if(blocks[offset+63]===undefined)view.getUint32(offset+60,false);offset=sha256Blocks(h,blocks,offset,offset+64);}while(offset+64<=bytes.length);
+    }
     if(offset<bytes.length){pending.set(bytes.subarray(offset));pendingSize=bytes.length-offset;}
   }
   function updateText(value){
