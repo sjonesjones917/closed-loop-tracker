@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {spawnSync} from 'node:child_process';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import {appMarkup,observeWorkflowMarkup,assertWorkflowPresentation} from './test-app-markup.mjs';
+import {verifyRenderLaneMemo} from './test-render-lane-memo.mjs';
 globalThis.dispatchEvent=()=>true;
 for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
 const {verifyPrimaryGuidanceCurrentRunScope}=await import('./test-primary-guidance-current-run.mjs');
@@ -39,5 +40,7 @@ print(json.dumps(out))`;
 const parsed=await runVerifier('python',['-c',parser],{input:JSON.stringify(pages),encoding:'utf8',maxBuffer:64*1024*1024,timeout:120000});assert.equal(parsed.status,0,parsed.stderr);
 const observations=JSON.parse(parsed.stdout),ids=new Set(p.projectData.allocationReceipts.map(row=>row.resultingId));
 const cases=observations.map(row=>({stage:row.stage??null,operation:row.operation??null,view:row.view||'Workflow',leakedIds:[...ids].filter(id=>row.text.includes(id))}));
-console.log(JSON.stringify({synthetic:true,actualBrowser:false,currentRunScope,source:process.env.APP_SOURCE||'app-core.js',expected:'Every stage and available operation keeps internal identities out of primary guidance and presents one instruction with at most one consolidated handoff control; exact bindings and diagnostic disclosures remain available',cases,presentationCases},null,2));
+// One render reads each stage's operator lane once; its markup is unchanged.
+const renderLaneMemo=await verifyRenderLaneMemo({source});
+console.log(JSON.stringify({synthetic:true,actualBrowser:false,currentRunScope,source:process.env.APP_SOURCE||'app-core.js',expected:'Every stage and available operation keeps internal identities out of primary guidance and presents one instruction with at most one consolidated handoff control; exact bindings and diagnostic disclosures remain available',cases,presentationCases,renderLaneMemo},null,2));
 assert.ok(cases.every(row=>!row.leakedIds.length),'PRIMARY_GUIDANCE_ORACLE: current-stage controls and next-action guidance must not expose internal identities outside instructions or disclosures.');
