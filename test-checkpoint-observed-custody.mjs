@@ -27,6 +27,7 @@ const COUNT_ANCHORS=Object.freeze({
  compatibility:'function assertRecoveryCompatibility(project){'
 });
 const OBSERVATION_CHOICE='const observedCustody=recoveryDerivationCustody(root.project,project,rootArtifacts);';
+const OBSERVED_STRICT_RUN='try{observedCustody(()=>assertRecoveryCompatibility(root.project));}catch{/* The overlay path below decides. */}';
 const PAGE_SCRIPT="const STORE_SCRIPT_URL=typeof document!=='undefined'?document.currentScript?.src:null;";
 const BUILD='CHECKPOINT-OBSERVED-CUSTODY';
 function replaceOnce(source,before,after,label){assert.equal(source.split(before).length,2,'CHECKPOINT_OBSERVED_CUSTODY_ANCHOR_ORACLE '+label);return source.replace(before,after);}
@@ -108,17 +109,38 @@ async function scenario(create,source){
  const body=storedArtifactBody({rows:database},superseded.artifactId),original=body.blob;body.blob=new Blob(['X'.repeat(original.size)]);
  const snapshot=databaseKeys(database);let refusal=null;
  try{await save('Project',73);}catch(error){refusal={code:error.code,message:error.message};}finally{body.blob=original;}
- assert.ok(refusal,'CHECKPOINT_OBSERVED_CUSTODY_CORRUPTION_ORACLE: corrupted stored bytes are refused');
+ assert.deepEqual(refusal,{code:'HISTORY_FILE_INTEGRITY_FAILED',message:'Cannot preserve history: stored file superseded.txt is missing or corrupt.'},'CHECKPOINT_OBSERVED_CUSTODY_CORRUPTION_ORACLE: corrupted stored bytes are refused');
  assert.equal(databaseKeys(database),snapshot,'CHECKPOINT_OBSERVED_CUSTODY_CORRUPTION_ORACLE: the refused save writes nothing');
  await save('Workflow',79);
  assert.equal((await store.readProject(jobId)).projectSha256,p.projectSha256,'CHECKPOINT_OBSERVED_CUSTODY_PROJECT_ORACLE');
  return {workerStarts:realms.workerStarts(),saves:Object.fromEntries(Object.entries(saves).map(([key,value])=>[key,value.counts])),custodyWriteDerived:custodyWrite.counts.derived>=1,refusal};
+}
+// The observation decides only through a strict recalculation. Here the
+// storage realm's capability observation changes after the write, so neither
+// custody reproduces the receipt strictly: every view save is still accepted
+// as before, and none of them carries the root derivation.
+async function uncarriedScenario(create,source){
+ const {page,worker}=create(source),store=page.store,engine=page.engine;
+ let p=await store.createProject({commandId:'CHECKPOINT-OBSERVED-CUSTODY-UNCARRIED'});const jobId=p.job.JOB_ID;
+ let next=store.clone(p);const superseded=await storeFile(page,next,{stage:1,filename:'superseded.txt',text:'Exact Stage 1 file superseded by the next input version.\n',commandId:'CHECKPOINT-OBSERVED-CUSTODY-UNCARRIED-SUPERSEDED'});
+ p=await store.writeProject(next,{expectedProjectRevision:p.revision});
+ next=store.clone(p);next.job.EXACT_USER_OBJECTIVE_VERBATIM='Exact objective of the next Stage 1 input version.';engine.recordHumanInputVersion(next,page.copy(['EXACT_USER_OBJECTIVE_VERBATIM']),'HUMAN_OPERATOR');
+ p=await store.writeProject(next,{expectedProjectRevision:p.revision});
+ assert.equal(availability(p,superseded.artifactId),'UNKNOWN','CHECKPOINT_OBSERVED_CUSTODY_FIXTURE_ORACLE: the receipt records the unobserved stored file as UNKNOWN');
+ const runtime=worker.runtime.closedLoopTestRuntime,saves=[];
+ worker.runtime.closedLoopTestRuntime=Object.freeze({...runtime,capabilities:()=>Object.freeze([...runtime.capabilities(),'CHECKPOINT_OBSERVED_CUSTODY_EXTRA_CAPABILITY'])});
+ try{
+  for(const [name,scrollY] of [['Project',11],['Workflow',23],['Records',37]])saves.push((await counted(worker.runtime.__custodyCounts,()=>store.saveCheckpoint(jobId,{expectedProjectRevision:p.revision,expectedStateSha256:p.projectSha256,view:page.copy({activeStage:1,activeView:name,drafts:{'#exact':{value:name+' exact draft'}},scrollX:0,scrollY}),label:'Saved view',sessionId:'CHECKPOINT-OBSERVED-CUSTODY-UNCARRIED-SESSION'}))).counts);
+ }finally{worker.runtime.closedLoopTestRuntime=runtime;}
+ return saves;
 }
 
 export async function verifyCheckpointObservedCustody({fault=null}={}){
  let source=countedSource(fs.readFileSync('project-store.js','utf8'));
  // The superseded overlay-only choice: every root artifact always available.
  if(fault==='overlay-only')source=replaceOnce(source,OBSERVATION_CHOICE,'const observedCustody=null;','fault '+fault);
+ // A weakened choice: the observed custody counts as strict without deriving.
+ if(fault==='skip-observed-strict')source=replaceOnce(source,OBSERVED_STRICT_RUN,'strictlyCompatibleRoots.add(root.project);','fault '+fault);
  const cases=[];
  for(const [mode,create] of [['page-and-worker-realms',browserRealms],['single-realm',singleRealm]]){
   const observed=await scenario(create,source),{saves}=observed,warm={derived:0,compatibility:0};
@@ -126,7 +148,9 @@ export async function verifyCheckpointObservedCustody({fault=null}={}){
   for(const key of ['second','third','afterPageReads','afterCustodyWriteWarm','reloadSecond','reloadThird'])assert.deepEqual(saves[key],warm,'CHECKPOINT_OBSERVED_CUSTODY_WARM_ORACLE '+mode+' '+key+': a later view save carries the root derivation');
   for(const key of ['first','afterCustodyWrite'])assert.ok(saves[key].derived<=1,'CHECKPOINT_OBSERVED_CUSTODY_FIRST_SAVE_ORACLE '+mode+' '+key+': the first save after a write derives at most once');
   assert.ok(saves.reloadFirst.compatibility>=1&&saves.reloadFirst.derived>=1,'CHECKPOINT_OBSERVED_CUSTODY_RELOAD_ORACLE '+mode+': the first save after a reload derives the root again');
-  cases.push({mode,result:'PASS',...observed});
+  const uncarried=await uncarriedScenario(create,source);
+  uncarried.forEach((counts,index)=>assert.ok(counts.compatibility>=1&&counts.derived>=1,'CHECKPOINT_OBSERVED_CUSTODY_STRICT_ORACLE '+mode+' save '+(index+1)+': a root not strictly reproduced under the observation is never carried'));
+  cases.push({mode,result:'PASS',...observed,uncarried});
  }
  // Both realm layouts behave identically: same counts and the same refusal.
  assert.deepEqual(cases[0].saves,cases[1].saves,'CHECKPOINT_OBSERVED_CUSTODY_REALM_PARITY_ORACLE');
@@ -137,5 +161,6 @@ export async function verifyCheckpointObservedCustody({fault=null}={}){
 if(import.meta.url===pathToFileURL(process.argv[1]||'').href){
  const result=await verifyCheckpointObservedCustody();
  await assert.rejects(()=>verifyCheckpointObservedCustody({fault:'overlay-only'}),error=>error.code==='ERR_ASSERTION'&&error.message.includes('CHECKPOINT_OBSERVED_CUSTODY_WARM_ORACLE'),'CHECKPOINT_OBSERVED_CUSTODY_INTENDED_FAULT_ORACLE overlay-only');
- console.log(JSON.stringify({checkpointObservedCustody:{...result,faults:[{fault:'overlay-only',detected:true,oracle:'CHECKPOINT_OBSERVED_CUSTODY_WARM_ORACLE'}]}}));
+ await assert.rejects(()=>verifyCheckpointObservedCustody({fault:'skip-observed-strict'}),error=>error.code==='ERR_ASSERTION'&&error.message.includes('CHECKPOINT_OBSERVED_CUSTODY_STRICT_ORACLE'),'CHECKPOINT_OBSERVED_CUSTODY_INTENDED_FAULT_ORACLE skip-observed-strict');
+ console.log(JSON.stringify({checkpointObservedCustody:{...result,faults:[{fault:'overlay-only',detected:true,oracle:'CHECKPOINT_OBSERVED_CUSTODY_WARM_ORACLE'},{fault:'skip-observed-strict',detected:true,oracle:'CHECKPOINT_OBSERVED_CUSTODY_STRICT_ORACLE'}]}}));
 }

@@ -227,7 +227,8 @@ console.log(JSON.stringify({retainedRootContinuation:{...retainedRootContinuatio
 // later view saves; the superseded overlay-only choice is detected.
 const checkpointObservedCustody=await verifyCheckpointObservedCustody();
 await assert.rejects(()=>verifyCheckpointObservedCustody({fault:'overlay-only'}),error=>error.code==='ERR_ASSERTION'&&error.message.includes('CHECKPOINT_OBSERVED_CUSTODY_WARM_ORACLE'),'CHECKPOINT_OBSERVED_CUSTODY_INTENDED_FAULT_ORACLE overlay-only');
-console.log(JSON.stringify({checkpointObservedCustody:{...checkpointObservedCustody,faults:[{fault:'overlay-only',detected:true,oracle:'CHECKPOINT_OBSERVED_CUSTODY_WARM_ORACLE'}]}}));
+await assert.rejects(()=>verifyCheckpointObservedCustody({fault:'skip-observed-strict'}),error=>error.code==='ERR_ASSERTION'&&error.message.includes('CHECKPOINT_OBSERVED_CUSTODY_STRICT_ORACLE'),'CHECKPOINT_OBSERVED_CUSTODY_INTENDED_FAULT_ORACLE skip-observed-strict');
+console.log(JSON.stringify({checkpointObservedCustody:{...checkpointObservedCustody,faults:[{fault:'overlay-only',detected:true,oracle:'CHECKPOINT_OBSERVED_CUSTODY_WARM_ORACLE'},{fault:'skip-observed-strict',detected:true,oracle:'CHECKPOINT_OBSERVED_CUSTODY_STRICT_ORACLE'}]}}));
 
 const checkpointCanonicalProof=await verifyCheckpointCanonicalProof();
 await assert.rejects(()=>verifyCheckpointCanonicalProof({fault:'omit-full-source-comparison',caseFilter:['same-digest-journal-payload']}),error=>error.code==='ERR_ASSERTION'&&error.message.includes('CHECKPOINT_CANONICAL_REJECTION_ORACLE'),'CHECKPOINT_CANONICAL_INTENDED_FAULT_ORACLE');
