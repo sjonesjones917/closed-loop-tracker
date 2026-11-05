@@ -2,9 +2,11 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {createHash} from 'node:crypto';
-import {projectStoreRuntime} from './test-project-store-runtime.mjs';
+import {projectStoreRuntime,storedArtifactBody} from './test-project-store-runtime.mjs';
 import {stage04AcceptanceFixture,stage04AcceptanceEnvelope} from './test-fixtures.mjs';
 import {readStoreArchive} from './test-zip.mjs';
+import {authorizeSyntheticHandoff} from './test-handoff-authorization.mjs';
+import {artifactFixtureId} from './test-artifact-fixtures.mjs';
 
 const files=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
 const sha=value=>createHash('sha256').update(value).digest('hex');
@@ -105,4 +107,171 @@ export async function verifyHandoffAuthorizationTransaction({sourceOverrides={},
   }
  }
  return {passed:true,checkId:'handoff.authorization-canonical-transaction',synthetic:true,actualBrowser:false,sourceSha256,boundary:'Actual extracted UI owners, generated instruction and exact package review, registered synthetic decision, canonical transaction, reload and History under storage adapter; fault injection at preparation/transaction/concurrency/navigation boundaries.',cases};
+}
+
+// One build per authorized continuation. The continuation's fresh review keeps
+// the archive of its own verified members; the store releases it to the export
+// once, for the same request, under unchanged validators, after rereading each
+// member's stored bytes, a compare-only staleness read of both project sources
+// and a new authorization decision. Every difference returns null and the app
+// runs today's create, which refuses as before. Digest and archive probes count
+// the actual whole-project digests and archive builds; they change no result.
+const RETAINED_PACKAGE_PROBES=[
+ ['let computed;try{computed=await hash.sha256Chunks(hash.canonicalChunks(canonicalProject(row.project)));}',"let computed;try{globalThis.__retainedPackageProbe?.digests.push('cold');computed=await hash.sha256Chunks(hash.canonicalChunks(canonicalProject(row.project)));}"],
+ ['try{computed=await hash.sha256Chunks(hash.canonicalChunks(canonicalProject(sources.row.project)));}',"try{globalThis.__retainedPackageProbe?.digests.push('reread');computed=await hash.sha256Chunks(hash.canonicalChunks(canonicalProject(sources.row.project)));}"],
+ ['async function handoffArchive(members,crc32ByBlob){\n','async function handoffArchive(members,crc32ByBlob){\n  globalThis.__retainedPackageProbe?.archives.push(members.length);\n']];
+// Intended faults: each removes one condition of the take.
+const RETAINED_PACKAGE_FAULTS=[
+ ['retained-package-reused',' retainedExecutionPackages.delete(review);\n','','RETAINED_PACKAGE_ONE_USE_ORACLE','oneUse'],
+ ['retained-package-request-unbound',' if(executionPackageRequestKey(options)!==retained.request||!unchanged())return null;\n',' if(!unchanged())return null;\n','RETAINED_PACKAGE_REQUEST_ORACLE','request'],
+ ['retained-package-validators-unchecked','unchanged=()=>rootValidatorsUnchanged(packageSource.validators)&&globalThis.closedLoopWorkflowEngine===engine;','unchanged=()=>true;','RETAINED_PACKAGE_VALIDATOR_ORACLE','validators'],
+ ['retained-package-bytes-unread','  for(const file of retained.storedBytes.artifacts){','  for(const file of []){','RETAINED_PACKAGE_MEMBER_BYTES_ORACLE','memberBytes'],
+ ['retained-package-unread',' const current=await rereadPackageProject(retained.jobId,packageSource,{verifyBytes:false});\n',' const current={...identity};\n','RETAINED_PACKAGE_OTHER_WRITER_ORACLE','otherWriter'],
+ ['retained-package-authorization-carried','  if(authorization?.allowed!==true||authorization.subjectSha256!==retained.authorization.subjectSha256||hash.stableStringify(authorization)!==hash.stableStringify(retained.authorization))return null;\n','','RETAINED_PACKAGE_TAKE_AUTHORIZATION_ORACLE','clock']];
+function retainedPackageSources(sourceOverrides,fault=null){
+ let store=sourceOverrides['project-store.js'];
+ for(const [before,after] of [...RETAINED_PACKAGE_PROBES,...(fault?[[fault[1],fault[2]]]:[])]){assert.equal(store.split(before).length,2,'RETAINED_PACKAGE_SOURCE_ANCHOR '+before.slice(0,60));store=store.replace(before,after);}
+ return {...sourceOverrides,'project-store.js':store};
+}
+// The clock owner is replaced once, before any review captures validators; only
+// its private offset moves, as the operator's clock would. Moving it before the
+// decision's validity start leaves that decision no longer current.
+const RETAINED_PACKAGE_CLOCK_SHIFT=-2*24*3600*1000;
+function installRetainedPackageClock(context){return vm.runInContext('(()=>{const now=Date.now;let offset=0;Date.now=function(){return now()+offset;};return value=>{offset=value;};})()',context);}
+function retainedPackageProbe(r){const probe={digests:[],archives:[]};r.runtime.__retainedPackageProbe=probe;return probe;}
+// Store owner: an authorized Stage 01 handoff whose package carries a stored artifact.
+async function retainedPackageStoreFixture(sources){
+ const r=projectStoreRuntime({sourceOverrides:sources}),store=r.store;let q=r.core.createBlankState('RETAINED-PACKAGE');q.job.EXACT_USER_OBJECTIVE_VERBATIM='Use the supplied text.';r.engine.ensureShape(q);r.engine.recalculate(q);q=await store.writeProject(q,{expectedProjectRevision:0,incrementRevision:false,createOnly:true});
+ const name='retained.txt',body=Buffer.from('Exact retained package bytes\n'),saved=await store.putArtifact({artifactId:artifactFixtureId(r.engine,q,'RETAINED-ARTIFACT'),jobId:q.job.JOB_ID,filename:name,blob:new Blob([body],{type:'text/plain'})}),next=r.copy(q);
+ r.engine.registerArtifactBytes(next,r.copy({stage:1,artifactId:saved.artifactId,filename:name,mediaType:'text/plain',byteSize:body.length,sha256:saved.sha256}));next.stages[1].authorizedFiles.push(r.copy({artifactId:saved.artifactId,name,sha256:saved.sha256,size:body.length}));q=await store.writeProject(next,{expectedProjectRevision:q.revision});
+ const draft=r.copy(q);let prompt=r.prompts.reserveAndBuildPromptRecord(draft,1,{},{}).prompt;q=await store.writeProject(draft,{expectedProjectRevision:q.revision});({project:q,prompt}=await authorizeSyntheticHandoff(r,{project:q,prompt}));
+ return {r,store,sources,artifactId:saved.artifactId,probe:retainedPackageProbe(r),shiftClock:installRetainedPackageClock(r.runtime),args:()=>({project:q,jobId:q.job.JOB_ID,stage:1,operation:prompt.operation,testIds:[],productId:null,runId:null,instructionId:prompt.instructionId})};
+}
+async function packageBytes(pkg){return Buffer.from(await pkg.blob.arrayBuffer());}
+async function retainedPackageStoreCases(f,{only=null}={}){
+ const {store,r}=f,h=r.runtime.closedLoopHash,cases={},run=async(name,body)=>{if(only?only===name:name!=='corruption')cases[name]=await body();};
+ const retain=async(args=f.args())=>store.prepareExecutionPackageReview(args,{retainPackage:true});
+ await run('equal',async()=>{
+  const args=f.args(),archives=f.probe.archives.length,review=await retain(args);assert.equal(f.probe.archives.length,archives+1,'RETAINED_PACKAGE_EQUALITY_ORACLE: an authorized retaining review builds the archive once');
+  const taken=await store.takeRetainedExecutionPackage(review,args),created=await store.createExecutionPackage(args);
+  assert.ok(taken,'RETAINED_PACKAGE_EQUALITY_ORACLE: an unchanged authorized continuation must take its retained package');
+  const [takenBytes,createdBytes]=[await packageBytes(taken),await packageBytes(created)];
+  assert.equal(takenBytes.equals(createdBytes),true,'RETAINED_PACKAGE_EQUALITY_ORACLE: ZIP bytes differ from createExecutionPackage on the same source');
+  assert.equal(taken.packageSha256,created.packageSha256,'RETAINED_PACKAGE_EQUALITY_ORACLE');assert.equal(taken.packageSha256,sha(takenBytes),'RETAINED_PACKAGE_EQUALITY_ORACLE: independent digest');
+  assert.equal(taken.filename,created.filename,'RETAINED_PACKAGE_EQUALITY_ORACLE');assert.equal(h.stableStringify(taken.manifest),h.stableStringify(created.manifest),'RETAINED_PACKAGE_EQUALITY_ORACLE: manifest');
+  const members=readStoreArchive(new Uint8Array(takenBytes));assert.deepEqual(members.map(row=>row.canonicalPath),Array.from(review.members,row=>row.canonicalPath).sort((a,b)=>Buffer.compare(Buffer.from(a),Buffer.from(b))),'RETAINED_PACKAGE_EQUALITY_ORACLE: reviewed members');
+  for(const member of review.members)if(member.sha256)assert.equal(sha(Buffer.from(members.find(row=>row.canonicalPath===member.canonicalPath).bytes)),member.sha256,'RETAINED_PACKAGE_EQUALITY_ORACLE: reviewed member bytes');
+  return {zipBytes:takenBytes.length,members:members.length,equalToCreate:true};
+ });
+ await run('oneUse',async()=>{const args=f.args(),review=await retain(args);assert.ok(await store.takeRetainedExecutionPackage(review,args),'RETAINED_PACKAGE_ONE_USE_ORACLE: first take');assert.equal(await store.takeRetainedExecutionPackage(review,args),null,'RETAINED_PACKAGE_ONE_USE_ORACLE: a second take must return null');return {secondTake:null};});
+ await run('request',async()=>{
+  const args=f.args(),review=await retain(args);
+  assert.equal(await store.takeRetainedExecutionPackage(review,{...args,testIds:['SYNTHETIC-UNREVIEWED-TEST']}),null,'RETAINED_PACKAGE_REQUEST_ORACLE: mismatched arguments must return null');
+  assert.equal(await store.takeRetainedExecutionPackage(review,args),null,'RETAINED_PACKAGE_REQUEST_ORACLE: a refused take consumes the entry');
+  const again=await retain(args);assert.equal(await store.takeRetainedExecutionPackage(again,{...args,project:{...args.project,revision:Number(args.project.revision)+1}}),null,'RETAINED_PACKAGE_REQUEST_ORACLE: another project identity must return null');
+  return {mismatchedArguments:null,consumed:null,otherIdentity:null};
+ });
+ await run('unretained',async()=>{
+  const args=f.args(),archives=f.probe.archives.length,review=await store.prepareExecutionPackageReview(args);
+  assert.equal(f.probe.archives.length,archives,'RETAINED_PACKAGE_REVIEW_ONLY_ORACLE: a review without retainPackage builds no archive');
+  assert.equal(await store.takeRetainedExecutionPackage(review,args),null,'RETAINED_PACKAGE_REVIEW_ONLY_ORACLE');
+  return {archives:0,take:null};
+ });
+ await run('validators',async()=>{
+  const out={};
+  for(const kind of ['engine-global','text-encoder']){
+   const args=f.args(),review=await retain(args),engine=r.runtime.closedLoopWorkflowEngine,encoders=TextEncoder.prototype,encode=encoders.encode;
+   if(kind==='engine-global')r.runtime.closedLoopWorkflowEngine=Object.freeze({...engine});else encoders.encode=function(input){return Reflect.apply(encode,this,[input]);};
+   let taken;try{taken=await store.takeRetainedExecutionPackage(review,args);}finally{r.runtime.closedLoopWorkflowEngine=engine;encoders.encode=encode;}
+   assert.equal(taken,null,'RETAINED_PACKAGE_VALIDATOR_ORACLE: a replaced '+kind+' must return null');out[kind]=null;
+  }
+  const args=f.args(),control=await retain(args);assert.ok(await store.takeRetainedExecutionPackage(control,args),'RETAINED_PACKAGE_VALIDATOR_ORACLE: restored validators take again');
+  return out;
+ });
+ await run('memberBytes',async()=>{
+  const args=f.args(),review=await retain(args),body=storedArtifactBody(r,f.artifactId),original=body.blob;body.blob=new Blob([Buffer.alloc(original.size,33)]);
+  let taken,refusal=null;try{taken=await store.takeRetainedExecutionPackage(review,args);try{await store.createExecutionPackage(args);}catch(error){refusal=error.code;}}finally{body.blob=original;}
+  assert.equal(taken,null,'RETAINED_PACKAGE_MEMBER_BYTES_ORACLE: changed stored member bytes must return null');assert.equal(refusal,'EXECUTION_PACKAGE_ARTIFACT_MISMATCH','RETAINED_PACKAGE_MEMBER_BYTES_ORACLE: the create refuses with its own code');
+  const control=await retain(args);assert.ok(await store.takeRetainedExecutionPackage(control,args),'RETAINED_PACKAGE_MEMBER_BYTES_ORACLE: restored bytes take again');
+  return {take:null,createRefusal:refusal};
+ });
+ await run('clock',async()=>{
+  const args=f.args(),review=await retain(args);f.shiftClock(RETAINED_PACKAGE_CLOCK_SHIFT);let taken,refusal=null;
+  try{taken=await store.takeRetainedExecutionPackage(review,args);try{await store.createExecutionPackage(args);}catch(error){refusal={code:error.code,allowed:error.review?.authorization?.allowed};}}finally{f.shiftClock(0);}
+  assert.equal(taken,null,'RETAINED_PACKAGE_TAKE_AUTHORIZATION_ORACLE: authorization is decided again when the package is taken');assert.deepEqual(refusal,{code:'HANDOFF_AUTHORIZATION_REQUIRED',allowed:false},'RETAINED_PACKAGE_TAKE_AUTHORIZATION_ORACLE: the create denies with its review');
+  return {take:null,createRefusal:refusal.code};
+ });
+ await run('otherWriter',async()=>{
+  // Another tab: a separate store runtime that writes the same physical rows.
+  const args=f.args(),review=await retain(args),tab=projectStoreRuntime({sourceOverrides:f.sources});tab.rows.get=name=>r.rows.get(name);tab.rows.set=(name,value)=>r.rows.set(name,value);
+  const other=await tab.store.readProject(args.jobId);other.job.JOB_TITLE='Synthetic work saved by another tab';await tab.store.writeProject(other,{expectedProjectRevision:other.revision,expectedStateSha256:other.projectSha256});
+  assert.equal(await store.takeRetainedExecutionPackage(review,args),null,'RETAINED_PACKAGE_OTHER_WRITER_ORACLE: a write from another tab must return null');
+  let refusal=null;try{await store.createExecutionPackage(args);}catch(error){refusal={code:error.code,message:error.message};}
+  assert.deepEqual(refusal,{code:'EXECUTION_PACKAGE_VERSION_STALE',message:'The project changed before its handoff could be prepared. Open the current version and export again.'},'RETAINED_PACKAGE_OTHER_WRITER_ORACLE: the create refuses as before');
+  return {take:null,createRefusal:refusal.code};
+ });
+ // Its own fixture (only): a corrupted stored row takes the cold public read,
+ // which refuses and quarantines it once.
+ await run('corruption',async()=>{
+  const args=f.args(),review=await retain(args),row=r.rows.get('projects').get(args.jobId);assert.ok(row?.project,'RETAINED_PACKAGE_CORRUPTION_ORACLE: inline project row');
+  row.project.activeView='Corrupted outside the projection receipt';let refusal=null;
+  try{await store.takeRetainedExecutionPackage(review,args);}catch(error){refusal={code:error.code,message:error.message};}
+  assert.deepEqual(refusal,{code:'PROJECT_HASH_MISMATCH',message:'Project hash mismatch. The original row was preserved in quarantine.'},'RETAINED_PACKAGE_CORRUPTION_ORACLE');assert.equal((await store.listQuarantinedProjects()).length,1,'RETAINED_PACKAGE_CORRUPTION_ORACLE: quarantined once');
+  return {code:refusal.code,quarantined:1};
+ });
+ return cases;
+}
+// App owner: the actual authorization continuation with the actual store.
+async function retainedPackageAppFixture(sources){
+ const f=await setup(sources),{r,t}=f,store=r.store,calls=[];f.probe=retainedPackageProbe(r);f.calls=calls;f.store=store;f.shiftClock=installRetainedPackageClock(t);
+ const counted=async(entry,run)=>{const digests=f.probe.digests.length,archives=f.probe.archives.length;try{const value=await run();if(entry.kind==='take')entry.taken=value!==null;return value;}catch(error){entry.error=error.code||String(error.message||error);throw error;}finally{entry.digests=f.probe.digests.slice(digests).join('+')||'none';entry.archives=f.probe.archives.length-archives;calls.push(entry);}};
+ // take:false, retain:false is today's continuation: a review, then a create.
+ f.authorize=async({take=true,retain=true,beforeTake=null}={})=>{
+  const {takeRetainedExecutionPackage,...rest}=store;
+  t.projectStore={...rest,
+   prepareExecutionPackageReview:(args,options)=>counted({kind:'review',retain:retain&&options?.retainPackage===true},()=>retain?store.prepareExecutionPackageReview(args,options):store.prepareExecutionPackageReview(args)),
+   createExecutionPackage:args=>counted({kind:'create'},()=>store.createExecutionPackage(args)),
+   ...(take?{takeRetainedExecutionPackage:(review,args)=>counted({kind:'take'},async()=>{await beforeTake?.();return store.takeRetainedExecutionPackage(review,args);})}:{})};
+  calls.length=0;f.captures.length=0;let error=null;
+  try{await t.recordCurrentHandoffAuthorization(true);}catch(caught){error=caught;}finally{t.projectStore=store;f.shiftClock(0);}
+  return error;
+ };
+ return f;
+}
+export async function verifyRetainedHandoffPackage({sourceOverrides={}}={}){
+ sourceOverrides=Object.fromEntries(files.map(file=>[file,sourceOverrides[file]??fs.readFileSync(file,'utf8')]));
+ const sources=retainedPackageSources(sourceOverrides),observations={},continuationDigests=calls=>calls.slice(1).reduce((sum,call)=>sum+(call.digests==='none'?0:call.digests.split('+').length),0);
+ // The continuation takes its review's package: one cold read (two digests)
+ // where today's review and create read cold twice (four), and no create.
+ {
+  const f=await retainedPackageAppFixture(sources);assert.equal(f.probe.archives.length,0,'RETAINED_PACKAGE_REVIEW_ONLY_ORACLE: the operator review builds no archive');
+  assert.equal(await f.authorize(),null);assert.equal(f.failures.length,0);assert.equal(f.downloads.length,1);
+  assert.deepEqual(f.calls,[{kind:'review',retain:false,digests:'cold+reread',archives:0},{kind:'review',retain:true,digests:'cold+reread',archives:1},{kind:'take',taken:true,digests:'none',archives:0}],'RETAINED_PACKAGE_SINGLE_BUILD_ORACLE');
+  assert.deepEqual(f.captures,['retained','retained'],'HANDOFF_VIEW_RETAINED_BY_WRITE_ORACLE');
+  const zip=readStoreArchive(new Uint8Array(await packageBytes(f.downloads[0]))),manifest=JSON.parse(Buffer.from(zip.find(row=>row.canonicalPath==='manifest.json').bytes).toString());assert.equal(manifest.promptIdentity.instructionId,f.t.currentPromptRecord(f.stage).instructionId,'RETAINED_PACKAGE_SINGLE_BUILD_ORACLE: the exported package is the current instruction');
+  observations.continuation={calls:f.calls,continuationDigests:continuationDigests(f.calls)};
+ }
+ {
+  const f=await retainedPackageAppFixture(sources);assert.equal(await f.authorize({take:false,retain:false}),null);assert.equal(f.downloads.length,1);
+  assert.deepEqual(f.calls,[{kind:'review',retain:false,digests:'cold+reread',archives:0},{kind:'review',retain:false,digests:'cold+reread',archives:0},{kind:'create',digests:'cold+reread',archives:1}],'RETAINED_PACKAGE_SINGLE_BUILD_ORACLE: control');
+  observations.withoutRetention={calls:f.calls,continuationDigests:continuationDigests(f.calls)};
+ }
+ assert.deepEqual([observations.continuation.continuationDigests,observations.withoutRetention.continuationDigests],[2,4],'RETAINED_PACKAGE_SINGLE_BUILD_ORACLE: continuation digests');
+ // A take-time denial (the operator clock no longer within the decision's
+ // validity) returns null; the create's denial takes the existing review path.
+ {
+  const f=await retainedPackageAppFixture(sources);assert.equal(await f.authorize({beforeTake:async()=>f.shiftClock(RETAINED_PACKAGE_CLOCK_SHIFT)}),null);
+  assert.equal(f.failures.length,0,'RETAINED_PACKAGE_TAKE_DENIAL_ORACLE: a denial is presented, not reported');assert.equal(f.downloads.length,0,'RETAINED_PACKAGE_TAKE_DENIAL_ORACLE: nothing is exported');
+  assert.deepEqual(f.calls.slice(1),[{kind:'review',retain:true,digests:'cold+reread',archives:1},{kind:'take',taken:false,digests:'none',archives:0},{kind:'create',digests:'cold+reread',archives:0,error:'HANDOFF_AUTHORIZATION_REQUIRED'}],'RETAINED_PACKAGE_TAKE_DENIAL_ORACLE');
+  assert.equal(f.t.handoffReview?.review?.authorization?.allowed,false,'RETAINED_PACKAGE_TAKE_DENIAL_ORACLE: the denial review is presented');
+  observations.takeDenial={calls:f.calls.slice(1),presented:'denied'};
+ }
+ observations.store={...await retainedPackageStoreCases(await retainedPackageStoreFixture(sources)),...await retainedPackageStoreCases(await retainedPackageStoreFixture(sources),{only:'corruption'})};
+ const faults=[];
+ for(const fault of RETAINED_PACKAGE_FAULTS){
+  const [name,,,oracle,only]=fault,faulted=retainedPackageSources(sourceOverrides,fault);let detected=false;
+  try{await retainedPackageStoreCases(await retainedPackageStoreFixture(faulted),{only});}catch(error){if(error?.code!=='ERR_ASSERTION'||!String(error.message).includes(oracle))throw error;detected=true;}
+  assert.equal(detected,true,'RETAINED_PACKAGE_INTENDED_FAULT_ORACLE: '+name+' escaped '+oracle);faults.push({fault:name,oracle,result:'DETECTED'});
+ }
+ return {passed:true,checkId:'handoff.retained-continuation-package',synthetic:true,actualBrowser:false,boundary:'Actual extracted UI owners and production store under the transaction adapter; a second store runtime on the same rows stands for another tab; synthetic digest and archive probes count work only.',observations,faults};
 }

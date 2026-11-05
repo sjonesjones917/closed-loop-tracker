@@ -4439,7 +4439,7 @@ async function rereadPackageProject(jobId,source,{verifyBytes=true}={}){
   }
   return readProject(jobId);
 }
-async function buildExecutionPackage({project=null,jobId=null,stage,operation=null,testIds=[],productId=null,runId=null,reviewerAliasContext=null,instructionId=null}={}, {reviewOnly=false,memberPath=null}={}){
+async function buildExecutionPackage({project=null,jobId=null,stage,operation=null,testIds=[],productId=null,runId=null,reviewerAliasContext=null,instructionId=null}={}, {reviewOnly=false,memberPath=null,retainRequest=null}={}){
   if(!project&&jobId)project=await readProject(jobId);
   if(!project||typeof project!=='object')throw new Error('A canonical project is required for an execution package.');
   const engine=globalThis.closedLoopWorkflowEngine,promptEngine=globalThis.closedLoopPromptEngine,canonicalJobId=projectIdentity(project);if(jobId&&String(jobId)!==canonicalJobId)throw storageError(`Execution-package job ${jobId} does not match canonical project ${canonicalJobId}.`,'EXECUTION_PACKAGE_JOB_MISMATCH');
@@ -4507,6 +4507,9 @@ async function buildExecutionPackage({project=null,jobId=null,stage,operation=nu
   if(authorization.subjectSha256!==firstAuthorization.subjectSha256)throw storageError('The final handoff changed its disclosure subject. Prepare its review again.','HANDOFF_SUBJECT_CHANGED');
   const currentProject=await rereadPackageProject(canonicalJobId,packageSource,{verifyBytes:true});if(!currentProject||currentProject.projectSha256!==activeProject.projectSha256||Number(currentProject.revision||0)!==Number(activeProject.revision||0)||(currentProject.historyActivationId||null)!==(activeProject.historyActivationId||null))throw storageError('The project changed while its handoff was being assembled. Export the current version again.','EXECUTION_PACKAGE_VERSION_STALE');
   const review={handoff:clone(manifest.handoff),members:descriptors(finalMembers),authorization:clone(authorization),scan:clone(scan)};
+  // A review its caller will continue at once may keep the archive of these
+  // exact final members, built after the first staleness read (see below).
+  if(retainRequest!==null&&reviewOnly&&memberPath===null)await retainExecutionPackage(review,retainRequest,{jobId:canonicalJobId,packageSource,engine,project:activeProject,prompt:selectedPrompt,members:finalMembers,artifactEntries,scan,authorization,manifest,crc32ByBlob,filename:`STAGE-${String(normalizedStage).padStart(2,'0')}-files.zip`});
   if(reviewOnly)return review;
   if(!authorization.allowed){const secret=finalMembers.some(member=>member.disclosureClassification==='CREDENTIAL_SECRET');throw Object.assign(storageError(secret?'A credential-secret member cannot be transferred. Remove it from this handoff or supply a separately redacted artifact.':'Review and authorize this exact handoff before exporting its files.',secret?'HANDOFF_CREDENTIAL_SECRET_BLOCKED':'HANDOFF_AUTHORIZATION_REQUIRED'),{review});}
   if(memberPath!==null){const selected=finalMembers.find(member=>member.canonicalPath===memberPath);if(!selected)throw storageError('This file is outside the authorized handoff.','HANDOFF_MEMBER_NOT_AUTHORIZED');const {blob,...identity}=selected;return {...identity,blob,authorization:clone(authorization)};}
@@ -4515,7 +4518,61 @@ async function buildExecutionPackage({project=null,jobId=null,stage,operation=nu
   return {blob,filename:`STAGE-${String(normalizedStage).padStart(2,'0')}-files.zip`,manifest,packageSha256};
 }
 async function createExecutionPackage(options){return buildExecutionPackage(options);}
-async function prepareExecutionPackageReview(options){return buildExecutionPackage(options,{reviewOnly:true});}
+async function prepareExecutionPackageReview(options,{retainPackage=false}={}){const request=retainPackage===true?executionPackageRequestKey(options):null;return buildExecutionPackage(options,{reviewOnly:true,retainRequest:request===null?null:{options,request}});}
+// An authorized review whose caller continues straight to the export keeps that
+// export's archive, so the continuation need not assemble the same verified
+// sources again. The archive and its digest are built from the review's own
+// final members after its first staleness read, exactly as createExecutionPackage
+// builds them; an archive failure retains nothing, and the ordinary create then
+// reproduces it. The entry is private, keyed by the returned review object and
+// bound to the exact request (every option but the project value, plus the
+// project identity the build checks). Taking it is one-use: it requires that
+// request and the build's unchanged validators, compares a fresh physical read
+// of both sources with the build's private copies (the compare-only staleness
+// read, which also reobserves custody), and decides authorization again, which
+// must still allow the identical subject. Any difference returns null and the
+// caller runs createExecutionPackage, which refuses as before; a changed row
+// takes the cold public read, which quarantines and refuses here as well.
+const retainedExecutionPackages=new WeakMap();
+function executionPackageRequestKey(options){
+ try{
+  if(!options||typeof options!=='object')return null;
+  const {project,...request}=options;if(!project||typeof project!=='object')return null;
+  const field=key=>({present:Object.hasOwn(project,key),type:typeof project[key],value:project[key]===undefined?null:project[key]});
+  return hash.stableStringify({request,project:{jobId:projectIdentity(project),revision:field('revision'),historyActivationId:field('historyActivationId'),projectSha256:field('projectSha256')}});
+ }catch{return null;}
+}
+async function retainExecutionPackage(review,{options,request},retained){
+ // The options the build consumed are still the request it was asked for.
+ const {packageSource,authorization}=retained;
+ if(typeof request!=='string'||executionPackageRequestKey(options)!==request||authorization?.allowed!==true||packageSource.current!==true||!packageSource.validators||!rootValidatorsUnchanged(packageSource.validators))return;
+ let blob,packageSha256;try{blob=await handoffArchive(retained.members,retained.crc32ByBlob);packageSha256=await hash.sha256Bytes(blob);}catch{return;}
+ const {members,artifactEntries,crc32ByBlob,manifest,...entry}=retained,identity=packageSource.identity,stored=row=>({artifactId:String(row.artifactId),sha256:row.sha256,byteSize:row.byteSize});
+ // The stored bytes the build read for its members, checked again when taken.
+ const storedBytes={contextFiles:manifest.contextFiles.map(({path,sha256,byteSize})=>({path,sha256,byteSize})),artifacts:[...artifactEntries.map(stored),...manifest.retryFiles.map(stored)]};
+ retainedExecutionPackages.set(review,{...entry,request,storedBytes,members:members.map(({blob,...descriptor})=>descriptor),identity:{revision:identity.revision,projectSha256:identity.projectSha256,historyActivationId:identity.historyActivationId},result:{blob,filename:retained.filename,manifest:clone(manifest),packageSha256}});
+}
+async function takeRetainedExecutionPackage(review,options){
+ const retained=review&&typeof review==='object'?retainedExecutionPackages.get(review):null;if(!retained)return null;
+ retainedExecutionPackages.delete(review);
+ const {packageSource,identity,engine}=retained,unchanged=()=>rootValidatorsUnchanged(packageSource.validators)&&globalThis.closedLoopWorkflowEngine===engine;
+ if(executionPackageRequestKey(options)!==retained.request||!unchanged())return null;
+ // Each member's stored bytes are read and verified again, as a create reads
+ // them; a missing or changed file leaves that create to refuse it.
+ try{
+  for(const file of retained.storedBytes.contextFiles){const read=await readPromptContextFile(retained.prompt,retained.jobId,file.path);if(read.sha256!==file.sha256||read.byteSize!==file.byteSize||read.blob.size!==file.byteSize)return null;}
+  for(const file of retained.storedBytes.artifacts){const row=await getArtifact(file.artifactId);if(!row||String(row.jobId)!==retained.jobId||row.blob.size!==file.byteSize||await observedArtifactDigest(row)!==file.sha256)return null;}
+ }catch{return null;}
+ const current=await rereadPackageProject(retained.jobId,packageSource,{verifyBytes:false});
+ if(!current||current.projectSha256!==identity.projectSha256||Number(current.revision||0)!==Number(identity.revision||0)||(current.historyActivationId||null)!==(identity.historyActivationId||null)||!unchanged())return null;
+ // Authorization is decided again here, before any transfer, on the build's
+ // own verified project, prompt, members and scan.
+ try{
+  const authorization=engine.evaluateHandoffAuthorization(retained.project,{promptRecord:retained.prompt,members:retained.members,scan:retained.scan});
+  if(authorization?.allowed!==true||authorization.subjectSha256!==retained.authorization.subjectSha256||hash.stableStringify(authorization)!==hash.stableStringify(retained.authorization))return null;
+ }catch{return null;}
+ return retained.result;
+}
 async function readAuthorizedHandoffMember({canonicalPath,...options}={}){if(typeof canonicalPath!=='string'||!canonicalPath)throw storageError('Select an exact authorized handoff path.','HANDOFF_MEMBER_NOT_AUTHORIZED');return buildExecutionPackage(options,{memberPath:canonicalPath});}
 async function buildCapabilityRequest({project=null,jobId=null,targetId}={},reviewOnly=false){
   if(!project&&jobId)project=await readProject(jobId);
@@ -4781,7 +4838,7 @@ const ready=(async()=>{hash.assertPinnedUnicodeHost();if(globalThis.indexedDB&&!
 if(STORE_WORKER){let queue=Promise.resolve();globalThis.addEventListener('message',event=>{const message=event.data||{};queue=queue.then(async()=>{try{if(message.buildIdentity!==STORE_BUILD_ID||!message.operationId||!['WRITE_PROJECT','IMPORT_PACKAGE','SAVE_CHECKPOINT','EXTRACT_INBOUND_ARCHIVE','COMMIT_NATIVE_PRODUCT_RESULTS'].includes(message.method)||ARCHIVE_PARSER_WORKER&&message.method!=='EXTRACT_INBOUND_ARCHIVE'||!Array.isArray(message.args))throw storageError('Invalid storage worker command or build identity.','INVALID_STORAGE_WORKER_REQUEST');message.args=unpackStorageWorkerValue(message.args,message.argumentStrings);await ready;globalThis.__closedLoopStorageFault=message.fault;
   const result=message.method==='EXTRACT_INBOUND_ARCHIVE'?{archiveResult:await parseInboundArchive(message.args[0],message.args[1])}:message.method==='SAVE_CHECKPOINT'?{checkpointId:await saveCheckpoint(message.args[0],{...message.args[1],operationId:message.operationId})}:{project:message.method==='COMMIT_NATIVE_PRODUCT_RESULTS'?await commitNativeProductResultsLocal(message.args[0],message.operationId):message.method==='WRITE_PROJECT'?await writeProject(message.args[0],{...message.args[1],operationId:message.operationId}):await importPackage(message.args[0],{...message.args[1],operationId:message.operationId})};
   const packed=result.project?packStorageWorkerValue(result.project):null;globalThis.postMessage({operationId:message.operationId,buildIdentity:STORE_BUILD_ID,ok:true,...result,...(packed?{project:packed.value,...(packed.stringTable?{projectStrings:packed.stringTable}:{})}:{})});}catch(error){globalThis.postMessage({operationId:message.operationId,buildIdentity:STORE_BUILD_ID,ok:false,error:{code:error?.code||'STORAGE_OPERATION_FAILED',message:String(error?.message||error),...(error?.code==='MUTATION_CONFIRMATION_REQUIRED'&&error.impact?{impact:error.impact}:{})}});}finally{delete globalThis.__closedLoopStorageFault;}}).catch(error=>{setTimeout(()=>{throw error;},0);});});}
-globalThis.closedLoopProjectStore=Object.freeze({STORAGE_IO_TIMEOUT_MS,STORAGE_WORKER_TIMEOUT_MS,listQuarantinedProjects,exportQuarantinedProject,exportHistoryRecoveryEvidence,exportLegacyMigrationData,removeQuarantinedProject,ENCRYPTED_EXPORT_PROFILE,isEncryptedPackage,HISTORY_LIMITS,mutationImpact,rebaseHistoryView,assertRecoveryTransfer,historyList,listRecoverableProjects,readOriginalSourceArchive,readHistoryView,saveCheckpoint,beginHistorySession,restoreCheckpoint,persistPromptContextFiles,readPromptContextFile,archiveMigrationPayload,version:'closed-loop-project-store/2',DB_NAME,DB_VERSION,stores:Object.freeze({projects:PROJECTS,artifacts:ARTIFACTS,meta:META}),STORE_KEY,LEGACY_KEYS,clone,projectIdentity,projectSha256,validateProjectIntegrity,openDatabase,ready,readAll,readProject,refreshProjectProjection,listProjectSummaries,writeAll,writeProject,commitNativeProductResults,replaceProject,transact,removeProject,putArtifact,getArtifact,deleteArtifact,listArtifacts,artifactCustodyState,verifyProjectArtifacts,createExecutionPackage,prepareExecutionPackageReview,readAuthorizedHandoffMember,prepareCapabilityRequestReview,readAuthorizedCapabilityRequest,extractInboundArchive,exportPackage,importPackage,stageBackupImport,pendingBackupImportIdentity,readPendingBackupImport,recoverResponseStaging,listResponseStagingRecovery,stageResponseFile,readStagedResponseFile,removeStagedResponseFile,storageHealth,metaGet,metaPut,clearLegacy,createProject});
+globalThis.closedLoopProjectStore=Object.freeze({STORAGE_IO_TIMEOUT_MS,STORAGE_WORKER_TIMEOUT_MS,listQuarantinedProjects,exportQuarantinedProject,exportHistoryRecoveryEvidence,exportLegacyMigrationData,removeQuarantinedProject,ENCRYPTED_EXPORT_PROFILE,isEncryptedPackage,HISTORY_LIMITS,mutationImpact,rebaseHistoryView,assertRecoveryTransfer,historyList,listRecoverableProjects,readOriginalSourceArchive,readHistoryView,saveCheckpoint,beginHistorySession,restoreCheckpoint,persistPromptContextFiles,readPromptContextFile,archiveMigrationPayload,version:'closed-loop-project-store/2',DB_NAME,DB_VERSION,stores:Object.freeze({projects:PROJECTS,artifacts:ARTIFACTS,meta:META}),STORE_KEY,LEGACY_KEYS,clone,projectIdentity,projectSha256,validateProjectIntegrity,openDatabase,ready,readAll,readProject,refreshProjectProjection,listProjectSummaries,writeAll,writeProject,commitNativeProductResults,replaceProject,transact,removeProject,putArtifact,getArtifact,deleteArtifact,listArtifacts,artifactCustodyState,verifyProjectArtifacts,createExecutionPackage,prepareExecutionPackageReview,takeRetainedExecutionPackage,readAuthorizedHandoffMember,prepareCapabilityRequestReview,readAuthorizedCapabilityRequest,extractInboundArchive,exportPackage,importPackage,stageBackupImport,pendingBackupImportIdentity,readPendingBackupImport,recoverResponseStaging,listResponseStagingRecovery,stageResponseFile,readStagedResponseFile,removeStagedResponseFile,storageHealth,metaGet,metaPut,clearLegacy,createProject});
 })();
 ;(()=>{
 'use strict';

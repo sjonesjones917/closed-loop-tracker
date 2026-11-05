@@ -1090,6 +1090,11 @@ const promptExportRequests=new Map();
 // One-use UI continuation only. Package/member owners still re-read all bytes
 // and independently decide current authorization before any transfer.
 const autoHandoffContinuations=new WeakMap(),autoHandoffDenial=Symbol('auto-handoff-denial');
+// Inside an operator action whose project activation is unchanged, the
+// action's own final capture (runOperatorAction) saves the current view after
+// placing its deferred focus target, so a capture of that same view a moment
+// before it is superseded. Outside an action every capture is kept.
+function finalActionCaptureFollows(){return typeof operatorActionInFlight!=='undefined'&&Boolean(operatorActionInFlight)&&(current?.historyActivationId||null)===operatorActionInFlight.activationId&&typeof historyRestoreController!=='undefined'&&!historyRestoreController;}
 function handoffContinuationValues(record,args,origin,actionKey){
  const field=(value,key)=>{const item=value?.[key];return {present:Boolean(value&&Object.hasOwn(value,key)),type:typeof item,value:item===undefined?null:item};};
  const {project,...options}=args;
@@ -1157,7 +1162,7 @@ async function promptExport(action,actionKey=null,continuation=null){
    const record=await savePromptRecord(stage);assertHandoffSelection(origin);const args=handoffPackageArguments(record);
    if(reuse&&!autoHandoffReviewMatches(reuse,record,origin,actionKey,args))reuse=null;
    const review=reuse?reuse.review:await projectStore.prepareExecutionPackageReview(args);assertHandoffSelection(origin);
-   if(actionKey==='review'||!review.authorization.allowed){await captureCurrentView();assertHandoffSelection(origin);presentHandoffReview(review,actionKey,origin);await captureCurrentView();return;}
+   if(actionKey==='review'||!review.authorization.allowed){await captureCurrentView();assertHandoffSelection(origin);presentHandoffReview(review,actionKey,origin);if(!finalActionCaptureFollows())await captureCurrentView();return;}
    if(!reuse)return action(record,args,review,origin);
    const result=await action(record,args,review,origin,true);
    if(result?.[autoHandoffDenial]){assertHandoffSelection(origin);await captureCurrentView();assertHandoffSelection(origin);presentHandoffReview(result[autoHandoffDenial],actionKey,origin);await captureCurrentView();return;}
@@ -1204,14 +1209,16 @@ async function recordCurrentHandoffAuthorization(authorized){
  if(promptPreparationError)throw promptPreparationError;
  const freshRecord=capabilityTarget?null:await savePromptRecord(origin.stage);assertHandoffSelection(origin);if(capabilityTarget)assertCapabilityRequestSelection(capabilityTarget);
   const freshArgs=capabilityTarget?null:handoffPackageArguments(freshRecord),continuationCapture=!capabilityTarget&&!riskFirst&&authorized?captureHandoffContinuation(freshRecord,freshArgs,origin,pending.actionKey):null;
-  const freshReview=capabilityTarget?await projectStore.prepareCapabilityRequestReview({project:current,targetId:capabilityTarget}):await projectStore.prepareExecutionPackageReview(freshArgs);assertHandoffSelection(origin);if(capabilityTarget)assertCapabilityRequestSelection(capabilityTarget);
+  const freshReview=capabilityTarget?await projectStore.prepareCapabilityRequestReview({project:current,targetId:capabilityTarget}):await projectStore.prepareExecutionPackageReview(freshArgs,{retainPackage:continuationCapture!==null&&pending.actionKey==='stage-files'});assertHandoffSelection(origin);if(capabilityTarget)assertCapabilityRequestSelection(capabilityTarget);
   const continuation=continuationCapture?retainAutoHandoffContinuation(continuationCapture,freshReview,freshRecord,origin,pending.actionKey):null;
  presentHandoffReview(freshReview,pending.actionKey,origin,{preserveDrafts:true,message:riskFirst?'Action authorization saved. Review the updated files, select disclosure authorization and confirm the sharing decision. No files were exported.':authorized?'Sharing decision saved. Current files checked.':'Selected permissions revoked. No files were exported.'});
  if(riskFirst){const risk=$('#handoff-purpose-EXTERNAL_ACTION_RISK_AUTHORIZATION'),disclosure=$('#handoff-purpose-DISCLOSURE_AUTHORIZATION');if(risk)risk.checked=false;if(disclosure)disclosure.checked=safe(freshReview.authorization.requiredPurposes).includes('DISCLOSURE_AUTHORIZATION');}
  // An authorized continuation records its transfer in an operational write
  // that retains this reviewed view as its History view (recordInstructionExport);
- // a denial, or a transfer needing no write, captures this view first.
+ // a denial, or a transfer needing no write, captures this view first. A
+ // denial inside the operator action leaves it to the action's final capture.
  const continuing=!riskFirst&&authorized&&freshReview.authorization.allowed&&freshReview.authorization.subjectSha256===review.authorization.subjectSha256;
+ if(!continuing&&finalActionCaptureFollows())return;
  if(!continuing||capabilityTarget)await captureCurrentView();
  if(continuing){assertHandoffSelection(origin);return resumeHandoff(pending.actionKey,continuation);}
  }catch(error){
@@ -1242,7 +1249,9 @@ function handoffPackageArguments(record){
 }
 async function exportStageFiles(continuation=null){return promptExport(async (record,args,review,origin,reusedReview=false)=>withStorageActivity('Preparing stage files',async()=>{
   const owner=current,stage=Number(owner.activeStage),revision=Number(owner.revision||0);
-  const pkg=reusedReview?await readAutoHandoffInput(()=>projectStore.createExecutionPackage(args||handoffPackageArguments(record))):await projectStore.createExecutionPackage(args||handoffPackageArguments(record));if(reusedReview&&pkg?.[autoHandoffDenial])return pkg;
+  // A reused authorized review may hold this exact package, which the store
+  // releases only after its own staleness read and a new authorization decision.
+  const pkg=reusedReview?await readAutoHandoffInput(async()=>await projectStore.takeRetainedExecutionPackage?.(review,args)||projectStore.createExecutionPackage(args||handoffPackageArguments(record))):await projectStore.createExecutionPackage(args||handoffPackageArguments(record));if(reusedReview&&pkg?.[autoHandoffDenial])return pkg;
   if(current.job.JOB_ID!==owner.job.JOB_ID||current.activeStage!==stage||Number(current.revision||0)!==revision)throw new Error('The project changed while preparing files. Export the current stage again.');
   assertHandoffSelection(origin);downloadBlob(pkg.blob,pkg.filename);await recordCompletedHandoffTransfer(record,'The stage package download started');handoffReview=null;announce('Stage files ready for '+review.authorization.disclosure.recipient+' via '+review.authorization.disclosure.provider+'. Open the ZIP and send only its files.');render();
   // Reveal the response section now, with an instant scroll, so the action's

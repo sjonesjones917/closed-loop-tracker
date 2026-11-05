@@ -78,6 +78,7 @@ for(const allowed of[false,true]){
 // an authorized continuation (which saves no view first) that the package
 // build then denies. Intended faults each remove one pre-review capture.
 const viewOrder=r=>r.events.filter(event=>['capture','present','zip'].includes(event.kind)).map(event=>event.kind==='present'?'present:'+event.allowed:event.kind);
+const inOperatorAction=r=>Object.assign(r.runtime,{operatorActionInFlight:{label:'Synthetic operator action',activationId:r.current.historyActivationId||null,jobId:r.current.job.JOB_ID},historyRestoreController:null});
 const viewRetention={
  denied:async mutate=>{const r=setup({mutate});await r.runtime.owners.exportStageFiles();return viewOrder(r);},
  materialChange:async mutate=>{const r=setup({mutate});r.installPending();r.replaceResume();r.runtime.projectStore.prepareExecutionPackageReview=async()=>review(false,'changed-material');await r.runtime.owners.recordCurrentHandoffAuthorization(true);return viewOrder(r);},
@@ -91,17 +92,47 @@ const viewRetention={
   // The continuation token was honoured: no third review and no reported failure.
   assert.equal(reviews,2,'HANDOFF_CONTINUATION_REUSE_FIXTURE_ORACLE');assert.equal(r.events.filter(event=>event.kind==='failure').length,0,'HANDOFF_CONTINUATION_REUSE_FIXTURE_ORACLE');assert.equal(r.presented.value.authorization.allowed,false);
   return viewOrder(r);
- }
+ },
+ // Inside the operator action, its own final capture saves the view a review
+ // presents; the owner still saves the starting view the review replaces.
+ deniedInAction:async mutate=>{const r=setup({mutate});inOperatorAction(r);await r.runtime.owners.exportStageFiles();return viewOrder(r);},
+ revocation:async mutate=>{const r=setup({mutate});r.installPending();r.replaceResume();await r.runtime.owners.recordCurrentHandoffAuthorization(false);return viewOrder(r);},
+ revocationInAction:async mutate=>{const r=setup({mutate});inOperatorAction(r);r.installPending();r.replaceResume();await r.runtime.owners.recordCurrentHandoffAuthorization(false);return viewOrder(r);}
 };
 const viewRetentionCases=[
  ['denied',['capture','present:false','capture'],'HANDOFF_REVIEW_VIEW_CAPTURED_ORACLE','review-view-not-precaptured',"if(actionKey==='review'||!review.authorization.allowed){await captureCurrentView();assertHandoffSelection(origin);presentHandoffReview(","if(actionKey==='review'||!review.authorization.allowed){presentHandoffReview("],
  ['materialChange',['capture','present:false','capture'],'HANDOFF_MATERIAL_CHANGE_VIEW_CAPTURED_ORACLE','material-change-view-not-precaptured',"if(review.authorization.subjectSha256!==pending.review.authorization.subjectSha256){await captureCurrentView();assertHandoffSelection(origin);if(capabilityTarget)assertCapabilityRequestSelection(capabilityTarget);presentHandoffReview(","if(review.authorization.subjectSha256!==pending.review.authorization.subjectSha256){presentHandoffReview("],
- ['continuationDenied',['present:true','zip','capture','present:false','capture'],'HANDOFF_CONTINUATION_DENIAL_VIEW_CAPTURED_ORACLE','continuation-denial-view-not-precaptured',"if(result?.[autoHandoffDenial]){assertHandoffSelection(origin);await captureCurrentView();assertHandoffSelection(origin);presentHandoffReview(","if(result?.[autoHandoffDenial]){assertHandoffSelection(origin);presentHandoffReview("]];
+ ['continuationDenied',['present:true','zip','capture','present:false','capture'],'HANDOFF_CONTINUATION_DENIAL_VIEW_CAPTURED_ORACLE','continuation-denial-view-not-precaptured',"if(result?.[autoHandoffDenial]){assertHandoffSelection(origin);await captureCurrentView();assertHandoffSelection(origin);presentHandoffReview(","if(result?.[autoHandoffDenial]){assertHandoffSelection(origin);presentHandoffReview("],
+ ['deniedInAction',['capture','present:false'],'HANDOFF_SUPERSEDED_REVIEW_VIEW_ORACLE','superseded-review-view-captured',"presentHandoffReview(review,actionKey,origin);if(!finalActionCaptureFollows())await captureCurrentView();return;}","presentHandoffReview(review,actionKey,origin);await captureCurrentView();return;}"],
+ ['revocation',['present:false','capture'],'HANDOFF_DECISION_VIEW_CAPTURED_ORACLE','decision-view-uncaptured',' if(!continuing||capabilityTarget)await captureCurrentView();\n',' \n'],
+ ['revocationInAction',['present:false'],'HANDOFF_SUPERSEDED_DECISION_VIEW_ORACLE','superseded-decision-view-captured',' if(!continuing&&finalActionCaptureFollows())return;\n',' \n']];
 for(const [name,expected,oracle,fault,before,after] of viewRetentionCases){
  assert.deepEqual(await viewRetention[name](null),expected,oracle);observations.push({id:'view-retention:'+name,result:'PASS'});
  const owners=source.slice(start,end);assert.equal(owners.split(before).length,2,'Fault anchor missing: '+fault);
  let detected=false;try{assert.deepEqual(await viewRetention[name](text=>text.replace(before,after)),expected,oracle);}catch(error){if(error?.code!=='ERR_ASSERTION'||!String(error.message).includes(oracle))throw error;detected=true;}
  assert.equal(detected,true,'HANDOFF_VIEW_RETENTION_INTENDED_FAULT_ORACLE: '+fault);observations.push({id:'view-retention-fault:'+fault,result:'DETECTED'});
+}
+// The final-save fault path of an in-action decision: the actual operator
+// wrapper's final capture is that decision's only view save, and its failure
+// after the decision commit keeps the known committed result and warning.
+async function finalCaptureFault(mutate){
+ const r=setup({mutate}),outcomes=[],warnings=[];r.installPending();r.replaceResume();
+ const runner=source.slice(source.indexOf('function runOperatorAction('),source.indexOf('function visibleContentTop(')),committed=source.split('\n').find(line=>line.startsWith('function confirmedCurrentActionCommit('));assert.ok(runner.length>0&&committed,'HANDOFF_FINAL_VIEW_CAPTURE_FIXTURE_ORACLE');
+ vm.runInContext('var operatorActionInFlight=null,historyRestoreController=null,historyRestoreTail=null,actionFocusTarget=null;'+committed+'\n'+runner+'\nglobalThis.runOperator=runOperatorAction;',r.runtime);
+ Object.assign(r.runtime,{requestAnimationFrame:callback=>callback(),operationClock:()=>Date.now(),OPERATION_LOADING_THRESHOLD_MS:1500,paintOperatorAction(){},recordOperationLatency:(_kind,_label,_startedAt,outcome)=>outcomes.push(outcome),showPostCommitRecoveryWarning:()=>warnings.push(r.runtime.__closedLoopPostCommitRecoveryWarning?.message||'')});
+ r.runtime.reportActionFailure=error=>{r.events.push({kind:'failure',message:error.message});if(r.runtime.operatorActionInFlight)r.runtime.operatorActionInFlight.failed=true;};
+ r.runtime.captureCurrentView=async()=>{r.events.push({kind:'capture'});throw new Error('CONTROLLED_FINAL_VIEW_CAPTURE_FAILURE');};
+ // As the actual persistence owner, a saved decision confirms the action's commit.
+ r.runtime.persistReplacement=async()=>{r.current.revision++;r.runtime.operatorActionInFlight.confirmedCommit={jobId:r.current.job.JOB_ID,revision:r.current.revision,projectSha256:r.current.projectSha256};r.events.push({kind:'save'});};
+ await r.runtime.runOperator('Revoking sharing authorization',()=>r.runtime.owners.recordCurrentHandoffAuthorization(false),{retainsView:true});
+ return {outcome:outcomes.at(-1),captures:r.events.filter(event=>event.kind==='capture').length,failures:r.events.filter(event=>event.kind==='failure').length,warnings:warnings.filter(message=>message.includes('CONTROLLED_FINAL_VIEW_CAPTURE_FAILURE')).length};
+}
+{
+ const expected={outcome:'COMMITTED_VIEW_CAPTURE_FAILED',captures:1,failures:0,warnings:1};
+ assert.deepEqual(await finalCaptureFault(null),expected,'HANDOFF_FINAL_VIEW_CAPTURE_FAULT_ORACLE');observations.push({id:'final-view-capture-fault:in-action-decision',result:'PASS'});
+ const before=' if(!continuing&&finalActionCaptureFollows())return;\n';assert.equal(source.slice(start,end).split(before).length,2,'Fault anchor missing: final-view-capture-superseded');
+ let detected=false;try{assert.deepEqual(await finalCaptureFault(text=>text.replace(before,' \n')),expected,'HANDOFF_FINAL_VIEW_CAPTURE_FAULT_ORACLE');}catch(error){if(error?.code!=='ERR_ASSERTION'||!String(error.message).includes('HANDOFF_FINAL_VIEW_CAPTURE_FAULT_ORACLE'))throw error;detected=true;}
+ assert.equal(detected,true,'HANDOFF_VIEW_RETENTION_INTENDED_FAULT_ORACLE: final-view-capture-superseded');observations.push({id:'final-view-capture-fault:superseded-capture-restored',result:'DETECTED'});
 }
 const transactionControls=await verifyHandoffAuthorizationTransaction({sourceOverrides:{'app-core.js':source}});
 const byteDeadlineControls=await verifyHandoffByteDeadlines({setup});
