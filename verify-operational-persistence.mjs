@@ -1,5 +1,6 @@
 import {verifyCheckpointStateSnapshot,verifyCheckpointStateCommitMutation} from './test-checkpoint-state-snapshot.mjs';
 import {verifyVerifiedGraphSemantics} from './test-verified-graph-semantics.mjs';
+import {verifyWriteWalkCounts,verifyDigestPairSelfMatch} from './test-write-walk-counts.mjs';
 import {verifyRetainedRootContinuation} from './test-retained-root-continuation.mjs';
 import {verifyCheckpointObservedCustody} from './test-checkpoint-observed-custody.mjs';
 import {verifyWorkerMessageCodec,verifyStorageWorkerStartup} from './test-worker-message-codec.mjs';
@@ -260,4 +261,4 @@ for(const [fault,caseId,oracle] of [['capture-after-context-hook','target-mutati
 }
 console.log(JSON.stringify({startupSelectedReadReuse:{...startupSelectedReadReuse,faults:startupSelectedReadFaults},startupRecoveryHookIsolation:{...startupRecoveryHookIsolation,faults:startupRecoveryHookFaults}}));
 
-console.log(JSON.stringify({verifiedGraphSemantics:verifyVerifiedGraphSemantics()}));
+console.log(JSON.stringify({verifiedGraphSemantics:verifyVerifiedGraphSemantics(),writeWalkCounts:await verifyWriteWalkCounts(),digestPairSelfMatch:verifyDigestPairSelfMatch()}));

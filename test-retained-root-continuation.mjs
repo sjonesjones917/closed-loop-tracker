@@ -57,7 +57,7 @@ export async function verifyRetainedRootContinuation({fault=null,caseFilter=null
  // A hook holding the value a write's custody checks handed out, and the end of
  // each write's synchronous validation.
  const encodeLine='const contents=projectReference?null:await encodeHistoryProject(canonical,retainValue);';assert.equal(source.split(encodeLine).length,2);source=source.replace(encodeLine,'globalThis.__duringEncode?.(exposedCanonical);'+encodeLine+'globalThis.__afterEncode?.();');
- for(const anchor of ['}finally{hash.disposeCanonicalDigestScope(canonicalWriteDigestScope);}','}finally{hash.disposeCanonicalDigestScope(responseDigestScope);}']){assert.equal(source.split(anchor).length,2);source=source.replace(anchor,anchor+'globalThis.__afterWriteValidation?.();');}
+ for(const anchor of ["}catch(error){if(commitDerives&&error?.code==='PROJECT_INTEGRITY_FAILED')assertProjectIntegrity(next,{prior});throw error;}",'operationalDerivation=withWriteDerivationRecord(next,()=>assertProjectIntegrity(next));']){assert.equal(source.split(anchor).length,2);source=source.replace(anchor,anchor+'globalThis.__afterWriteValidation?.();');}
  const retainedRead='const saved=await validateCheckpointArtifacts(jobId,body,sha=>metaGet(historyFileKey(jobId,sha)),null,null,null,certified);';assert.equal(source.split(retainedRead).length,2);source=source.replace(retainedRead,'globalThis.__duringRetainedRead?.();'+retainedRead);
  // A diagnostic tolerated derivation: it returns like the legacy and historical
  // tolerances do, without a strict pass.
