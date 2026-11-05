@@ -1,6 +1,7 @@
 import {verifyCheckpointStateSnapshot,verifyCheckpointStateCommitMutation} from './test-checkpoint-state-snapshot.mjs';
 import {verifyVerifiedGraphSemantics} from './test-verified-graph-semantics.mjs';
 import {verifyRetainedRootContinuation} from './test-retained-root-continuation.mjs';
+import {verifyCheckpointObservedCustody} from './test-checkpoint-observed-custody.mjs';
 import {verifyWorkerMessageCodec,verifyStorageWorkerStartup} from './test-worker-message-codec.mjs';
 import {verifyPromptContextStorage} from './test-prompt-context-storage.mjs';
 import {verifyArtifactByteSharing,verifyArtifactByteSharingFaultDetection} from './test-artifact-byte-sharing.mjs';
@@ -220,6 +221,13 @@ for(const [fault,caseId,oracle] of [['repeat-root-computations','valid-two-warm-
  await assert.rejects(()=>verifyRetainedRootContinuation({fault,caseFilter:[caseId]}),error=>error.code==='ERR_ASSERTION'&&error.message.includes(oracle),'RETAINED_ROOT_INTENDED_FAULT_ORACLE '+fault);retainedRootContinuationFaults.push({fault,caseId,oracle,detected:true});
 }
 console.log(JSON.stringify({retainedRootContinuation:{...retainedRootContinuation,faults:retainedRootContinuationFaults}}));
+
+// Page and storage-worker realms over one database: a root whose receipt was
+// derived under the application's own custody observation is carried by
+// later view saves; the superseded overlay-only choice is detected.
+const checkpointObservedCustody=await verifyCheckpointObservedCustody();
+await assert.rejects(()=>verifyCheckpointObservedCustody({fault:'overlay-only'}),error=>error.code==='ERR_ASSERTION'&&error.message.includes('CHECKPOINT_OBSERVED_CUSTODY_WARM_ORACLE'),'CHECKPOINT_OBSERVED_CUSTODY_INTENDED_FAULT_ORACLE overlay-only');
+console.log(JSON.stringify({checkpointObservedCustody:{...checkpointObservedCustody,faults:[{fault:'overlay-only',detected:true,oracle:'CHECKPOINT_OBSERVED_CUSTODY_WARM_ORACLE'}]}}));
 
 const checkpointCanonicalProof=await verifyCheckpointCanonicalProof();
 await assert.rejects(()=>verifyCheckpointCanonicalProof({fault:'omit-full-source-comparison',caseFilter:['same-digest-journal-payload']}),error=>error.code==='ERR_ASSERTION'&&error.message.includes('CHECKPOINT_CANONICAL_REJECTION_ORACLE'),'CHECKPOINT_CANONICAL_INTENDED_FAULT_ORACLE');

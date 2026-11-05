@@ -153,17 +153,53 @@ function writeDerivationArtifactsRetained(derivation,artifacts){
  return Array.isArray(artifacts)&&derivation.answers.every(answer=>answer.state!=='TRUE'||artifacts.some(row=>CUSTODY_IDENTITY_FIELDS.every(key=>row?.[key]===answer[key])));
 }
 // The custody a checkpoint derives a root under (live custody overlaid with the
-// root's own byte-verified artifacts) answers every recorded query identically,
-// and every TRUE answer comes from one of those artifacts.
+// root's own byte-verified artifacts, or the commit's observation of the root
+// chosen by recoveryDerivationCustody) answers every recorded query
+// identically, and every TRUE answer comes from one of those artifacts.
 function writeDerivationReproduced(derivation,rootArtifacts){
  if(!derivation||!writeDerivationArtifactsRetained(derivation,rootArtifacts))return false;
- return withVerifiedRecoveryCustody(rootArtifacts,()=>derivation.answers.every(answer=>artifactCustodyState(Object.fromEntries(CUSTODY_IDENTITY_FIELDS.map(key=>[key,answer[key]])))===answer.state));
+ const custody=recoveryDerivationCustodies.get(rootArtifacts)||(action=>withVerifiedRecoveryCustody(rootArtifacts,action));
+ return custody(()=>derivation.answers.every(answer=>artifactCustodyState(Object.fromEntries(CUSTODY_IDENTITY_FIELDS.map(key=>[key,answer[key]])))===answer.state));
 }
 function withVerifiedRecoveryCustody(artifacts,action){
  // Call only after every supplied immutable Blob has passed its size/hash check.
  const previous=artifactCustody;artifactCustody=new Map(previous);
  for(const row of artifacts)artifactCustody.set(custodyKey(row.jobId,row.artifactId),{jobId:String(row.jobId),artifactId:String(row.artifactId),filename:row.filename,byteSize:row.byteSize,sha256:row.sha256});
  try{return action();}finally{artifactCustody=previous;}
+}
+// The overlay of withVerifiedRecoveryCustody restricted, for this job, to the
+// artifacts an observation of its value selects: every other answer for the
+// job is forgotten, as observeProjectArtifactCustody forgets it.
+function withObservedRecoveryCustody(jobId,selected,artifacts,action){
+ // Call only after every supplied immutable Blob has passed its size/hash check.
+ const previous=artifactCustody,job=String(jobId);artifactCustody=new Map([...previous].filter(([,value])=>value.jobId!==job||selected.has(value.artifactId)));
+ for(const row of artifacts)if(String(row.jobId)===job&&selected.has(String(row.artifactId)))artifactCustody.set(custodyKey(row.jobId,row.artifactId),{jobId:String(row.jobId),artifactId:String(row.artifactId),filename:row.filename,byteSize:row.byteSize,sha256:row.sha256});
+ try{return action();}finally{artifactCustody=previous;}
+}
+// A write derives its projection receipt under the application's observation
+// of the value (observeProjectArtifactCustody forgets the job's custody, then
+// rereads only the artifacts it selects), so a stored artifact outside that
+// selection, such as a superseded file, is recorded UNKNOWN. The overlay of
+// every root artifact then contradicts the receipt and no checkpoint of that
+// root can derive it strictly. When the overlay contradicts the receipt's
+// recorded custody answers and the same overlay restricted to the selection of
+// this commit's own observation of the equal value reproduces every one of
+// them, return a custody runner for that restricted overlay; otherwise null:
+// the overlay applies, as before. Either way the complete derivation and every
+// comparison run, and every TRUE answer is live or verified in this commit.
+const recoveryDerivationCustodies=new WeakMap();
+function recordedCustodyAnswerReproduced(entry){
+ if(!entry||typeof entry!=='object'||Array.isArray(entry)||!['TRUE','UNKNOWN'].includes(entry.availability))return false;
+ const identity={};
+ for(const key of CUSTODY_IDENTITY_FIELDS){const value=entry[key];if(value!==undefined&&value!==null&&!['string','number','boolean'].includes(typeof value))return false;identity[key]=value;}
+ return artifactCustodyState(identity)===entry.availability;
+}
+function recoveryDerivationCustody(project,observed,artifacts){
+ const selection=observedCustodyArtifacts.get(observed),recorded=project?.projectData?.applicationProjection?.inputObservations?.artifactCustody,jobId=projectIdentity(project);
+ if(!Array.isArray(selection)||!Array.isArray(recorded)||!jobId||!Array.isArray(artifacts))return null;
+ const selected=new Set(selection.map(String)),reproduced=()=>recorded.every(recordedCustodyAnswerReproduced);
+ if(withVerifiedRecoveryCustody(artifacts,reproduced)||!withObservedRecoveryCustody(jobId,selected,artifacts,reproduced))return null;
+ const custody=action=>withObservedRecoveryCustody(jobId,selected,artifacts,action);recoveryDerivationCustodies.set(artifacts,custody);return custody;
 }
 try{const changes=new BroadcastChannel('closed-loop-reliability');changes.addEventListener('message',event=>{if(event.data?.jobId&&event.data.contextId!==STORE_CONTEXT_ID)forgetArtifactCustody(event.data.jobId);});changes.unref?.();}catch{}
 
@@ -2205,6 +2241,11 @@ async function commitRootCheckpoint(jobId,project,verifiedRead,prepared,operatio
     // artifacts under the current projection definition; the validator and
     // clock guards below then apply to the write's derivation time.
     const writeDerivation=writeDerivations.get(root);writeDerivations.delete(root);
+    // The custody both derivation checks below read: the overlay of every root
+    // artifact, or, when the root's receipt was derived under the application's
+    // observation of the value, that overlay restricted to this commit's own
+    // observation of the equal value (recoveryDerivationCustody).
+    const observedCustody=recoveryDerivationCustody(root.project,project,rootArtifacts);
     if(writeDerivation&&!root.derivedVerified&&writeDerivation.validators===root.validators&&root.project?.projectData?.applicationProjection?.receipt?.derivationId===globalThis.closedLoopWorkflowSchema.PROJECT_PROJECTION_DERIVATION_CONTRACT.id&&writeDerivationReproduced(writeDerivation,rootArtifacts)){root.derivedVerified=true;root.derivedAt=writeDerivation.at;}
     const carriedValidators=root.validators&&rootValidatorsUnchanged(root.validators)?root.validators:null,validators=carriedValidators||captureRootValidators(primitive),carriedDerived=Boolean(carriedValidators&&root.derivedVerified&&Date.now()>=root.derivedAt);
     let staticVerified=Boolean(carriedValidators),derivedStrict=carriedDerived;
@@ -2212,7 +2253,12 @@ async function commitRootCheckpoint(jobId,project,verifiedRead,prepared,operatio
       recoveryBodyStaticIntegrity.delete(root.project);
       try{assertProjectIntegrity(root.project,{verifyDerived:false});recoveryBodyStaticIntegrity.set(root.project,verifiedProjectIntegrity(root.project,root.projectSha256));staticVerified=true;}catch(error){if(!legacyJobPointerProjection(root.project,{verifyDerived:false}))throw error;}
     }else if(!carriedDerived)recoveryBodyStaticIntegrity.set(root.project,{kind:VERIFIED_PROJECT_INTEGRITY,project:root.project,digest:root.projectSha256,snapshot:root.snapshot});
-    if(!carriedDerived){strictlyCompatibleRoots.delete(root.project);withVerifiedRecoveryCustody(rootArtifacts,()=>assertRecoveryCompatibility(root.project));derivedStrict=strictlyCompatibleRoots.delete(root.project);}
+    // Under the observation a derivation counts only when it passes strictly;
+    // every other outcome takes the overlay path, whose tolerances and
+    // refusals are exactly as before, from the same static receipt.
+    if(!carriedDerived){strictlyCompatibleRoots.delete(root.project);
+      if(observedCustody){const staticReceipt=recoveryBodyStaticIntegrity.get(root.project);try{observedCustody(()=>assertRecoveryCompatibility(root.project));}catch{/* The overlay path below decides. */}if(!strictlyCompatibleRoots.has(root.project)&&staticReceipt)recoveryBodyStaticIntegrity.set(root.project,staticReceipt);}
+      if(!strictlyCompatibleRoots.has(root.project))withVerifiedRecoveryCustody(rootArtifacts,()=>assertRecoveryCompatibility(root.project));derivedStrict=strictlyCompatibleRoots.delete(root.project);}
     root.validators=staticVerified&&validators&&(carriedDerived||rootValidatorsUnchanged(validators))?validators:null;root.derivedVerified=Boolean(root.validators&&derivedStrict);if(root.derivedVerified&&!carriedDerived)root.derivedAt=Date.now();
     assertPackageArtifactCustody(root.project,rootArtifacts);assertPackageArtifactCustody(project,files);
     assertRecoveryViewFiles(jobId,root.body.view,rootArtifacts);
