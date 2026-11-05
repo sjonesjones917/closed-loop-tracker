@@ -84,6 +84,14 @@ function compareUnicodeScalarSequence(a,b){
 // without reading or calling its user-overridable constructor property.
 const canonicalArrayPrototype=Array.prototype,canonicalFunctionToString=Function.prototype.toString,canonicalReflectApply=Reflect.apply;
 const canonicalNativeArraySource=canonicalReflectApply(canonicalFunctionToString,Array,[]);
+// The canonical encoder binds the realm's Object, JSON, Number, String and
+// Array namespace objects once, at load, instead of resolving each one on the
+// global object at every value visit (a contextified vm global intercepts each
+// such lookup). Every method is still read from those objects at its call, so
+// a replaced method (JSON.stringify, Object.keys, Array.isArray, ...) is
+// dispatched exactly as before. A later rebinding of one of these global names
+// is not followed here; the digest-scope native baseline still reports it.
+const canonicalChunks=((Object,JSON,Number,String,Array)=>{
 function canonicalDataArrayPrototype(value){
   const prototype=Object.getPrototypeOf(value);
   if(prototype===canonicalArrayPrototype||prototype===null)return true;
@@ -177,32 +185,80 @@ function* canonicalChunks(value){
   }
   if(pending)yield pending;
 }
+return canonicalChunks;
+})(Object,JSON,Number,String,Array);
 function stableStringify(value){return Array.from(canonicalChunks(value)).join('');}
 
-function rightRotate(value,amount){return (value>>>amount)|(value<<(32-amount));}
-function createSha256(){
-  const k=new Uint32Array([0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2]);
-  const h=new Uint32Array([0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19]);
-  const w=new Uint32Array(64);
-  const pending=new Uint8Array(64),encoder=new TextEncoder();let pendingSize=0,totalBytes=0,finished=false;
-  function process(view,offset){
-    for(let i=0;i<16;i++)w[i]=view.getUint32(offset+i*4,false);
-    for(let i=16;i<64;i++){const x=w[i-15],y=w[i-2];const s0=(rightRotate(x,7)^rightRotate(x,18)^(x>>>3))>>>0;const s1=(rightRotate(y,17)^rightRotate(y,19)^(y>>>10))>>>0;w[i]=(w[i-16]+s0+w[i-7]+s1)>>>0;}
-    let a=h[0],b=h[1],c=h[2],d=h[3],e=h[4],f=h[5],g=h[6],hh=h[7];
-    for(let i=0;i<64;i+=4){
-{const s1=(rightRotate(e,6)^rightRotate(e,11)^rightRotate(e,25))>>>0;const ch=((e&f)^((~e)&g))>>>0;const t1=(hh+s1+ch+k[i+0]+w[i+0])>>>0;const s0=(rightRotate(a,2)^rightRotate(a,13)^rightRotate(a,22))>>>0;const maj=((a&b)^(a&c)^(b&c))>>>0;const t2=(s0+maj)>>>0;hh=g;g=f;f=e;e=(d+t1)>>>0;d=c;c=b;b=a;a=(t1+t2)>>>0;}
-{const s1=(rightRotate(e,6)^rightRotate(e,11)^rightRotate(e,25))>>>0;const ch=((e&f)^((~e)&g))>>>0;const t1=(hh+s1+ch+k[i+1]+w[i+1])>>>0;const s0=(rightRotate(a,2)^rightRotate(a,13)^rightRotate(a,22))>>>0;const maj=((a&b)^(a&c)^(b&c))>>>0;const t2=(s0+maj)>>>0;hh=g;g=f;f=e;e=(d+t1)>>>0;d=c;c=b;b=a;a=(t1+t2)>>>0;}
-{const s1=(rightRotate(e,6)^rightRotate(e,11)^rightRotate(e,25))>>>0;const ch=((e&f)^((~e)&g))>>>0;const t1=(hh+s1+ch+k[i+2]+w[i+2])>>>0;const s0=(rightRotate(a,2)^rightRotate(a,13)^rightRotate(a,22))>>>0;const maj=((a&b)^(a&c)^(b&c))>>>0;const t2=(s0+maj)>>>0;hh=g;g=f;f=e;e=(d+t1)>>>0;d=c;c=b;b=a;a=(t1+t2)>>>0;}
-{const s1=(rightRotate(e,6)^rightRotate(e,11)^rightRotate(e,25))>>>0;const ch=((e&f)^((~e)&g))>>>0;const t1=(hh+s1+ch+k[i+3]+w[i+3])>>>0;const s0=(rightRotate(a,2)^rightRotate(a,13)^rightRotate(a,22))>>>0;const maj=((a&b)^(a&c)^(b&c))>>>0;const t2=(s0+maj)>>>0;hh=g;g=f;f=e;e=(d+t1)>>>0;d=c;c=b;b=a;a=(t1+t2)>>>0;}
+// SHA-256 round constants, shared by every digest.
+const SHA256_K=new Int32Array([0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2]);
+// Compresses each complete 64-byte block of bytes[offset,end) into state and
+// returns the offset after the last one. Words are read big-endian from the
+// bytes and all arithmetic is int32 ((x>>>n|x<<32-n) is a right rotation).
+// The message schedule is a rolling window of 16 locals: each later group of
+// 16 rounds first extends it in place. The state stays in locals across blocks.
+function sha256Blocks(state,bytes,offset,end){
+  const k=SHA256_K;
+  let a=0,b=0,c=0,d=0,e=0,f=0,g=0,h=0,t=0,w0=0,w1=0,w2=0,w3=0,w4=0,w5=0,w6=0,w7=0,w8=0,w9=0,w10=0,w11=0,w12=0,w13=0,w14=0,w15=0;
+  let h0=state[0]|0,h1=state[1]|0,h2=state[2]|0,h3=state[3]|0,h4=state[4]|0,h5=state[5]|0,h6=state[6]|0,h7=state[7]|0;
+  for(;offset+64<=end;offset+=64){
+    w0=bytes[offset]<<24|bytes[offset+1]<<16|bytes[offset+2]<<8|bytes[offset+3];w1=bytes[offset+4]<<24|bytes[offset+5]<<16|bytes[offset+6]<<8|bytes[offset+7];w2=bytes[offset+8]<<24|bytes[offset+9]<<16|bytes[offset+10]<<8|bytes[offset+11];w3=bytes[offset+12]<<24|bytes[offset+13]<<16|bytes[offset+14]<<8|bytes[offset+15];
+    w4=bytes[offset+16]<<24|bytes[offset+17]<<16|bytes[offset+18]<<8|bytes[offset+19];w5=bytes[offset+20]<<24|bytes[offset+21]<<16|bytes[offset+22]<<8|bytes[offset+23];w6=bytes[offset+24]<<24|bytes[offset+25]<<16|bytes[offset+26]<<8|bytes[offset+27];w7=bytes[offset+28]<<24|bytes[offset+29]<<16|bytes[offset+30]<<8|bytes[offset+31];
+    w8=bytes[offset+32]<<24|bytes[offset+33]<<16|bytes[offset+34]<<8|bytes[offset+35];w9=bytes[offset+36]<<24|bytes[offset+37]<<16|bytes[offset+38]<<8|bytes[offset+39];w10=bytes[offset+40]<<24|bytes[offset+41]<<16|bytes[offset+42]<<8|bytes[offset+43];w11=bytes[offset+44]<<24|bytes[offset+45]<<16|bytes[offset+46]<<8|bytes[offset+47];
+    w12=bytes[offset+48]<<24|bytes[offset+49]<<16|bytes[offset+50]<<8|bytes[offset+51];w13=bytes[offset+52]<<24|bytes[offset+53]<<16|bytes[offset+54]<<8|bytes[offset+55];w14=bytes[offset+56]<<24|bytes[offset+57]<<16|bytes[offset+58]<<8|bytes[offset+59];w15=bytes[offset+60]<<24|bytes[offset+61]<<16|bytes[offset+62]<<8|bytes[offset+63];
+    a=h0;b=h1;c=h2;d=h3;e=h4;f=h5;g=h6;h=h7;
+    for(let i=0;i<64;i+=16){
+      if(i){
+        w0=w0+((w1>>>7|w1<<25)^(w1>>>18|w1<<14)^w1>>>3)+w9+((w14>>>17|w14<<15)^(w14>>>19|w14<<13)^w14>>>10)|0;
+        w1=w1+((w2>>>7|w2<<25)^(w2>>>18|w2<<14)^w2>>>3)+w10+((w15>>>17|w15<<15)^(w15>>>19|w15<<13)^w15>>>10)|0;
+        w2=w2+((w3>>>7|w3<<25)^(w3>>>18|w3<<14)^w3>>>3)+w11+((w0>>>17|w0<<15)^(w0>>>19|w0<<13)^w0>>>10)|0;
+        w3=w3+((w4>>>7|w4<<25)^(w4>>>18|w4<<14)^w4>>>3)+w12+((w1>>>17|w1<<15)^(w1>>>19|w1<<13)^w1>>>10)|0;
+        w4=w4+((w5>>>7|w5<<25)^(w5>>>18|w5<<14)^w5>>>3)+w13+((w2>>>17|w2<<15)^(w2>>>19|w2<<13)^w2>>>10)|0;
+        w5=w5+((w6>>>7|w6<<25)^(w6>>>18|w6<<14)^w6>>>3)+w14+((w3>>>17|w3<<15)^(w3>>>19|w3<<13)^w3>>>10)|0;
+        w6=w6+((w7>>>7|w7<<25)^(w7>>>18|w7<<14)^w7>>>3)+w15+((w4>>>17|w4<<15)^(w4>>>19|w4<<13)^w4>>>10)|0;
+        w7=w7+((w8>>>7|w8<<25)^(w8>>>18|w8<<14)^w8>>>3)+w0+((w5>>>17|w5<<15)^(w5>>>19|w5<<13)^w5>>>10)|0;
+        w8=w8+((w9>>>7|w9<<25)^(w9>>>18|w9<<14)^w9>>>3)+w1+((w6>>>17|w6<<15)^(w6>>>19|w6<<13)^w6>>>10)|0;
+        w9=w9+((w10>>>7|w10<<25)^(w10>>>18|w10<<14)^w10>>>3)+w2+((w7>>>17|w7<<15)^(w7>>>19|w7<<13)^w7>>>10)|0;
+        w10=w10+((w11>>>7|w11<<25)^(w11>>>18|w11<<14)^w11>>>3)+w3+((w8>>>17|w8<<15)^(w8>>>19|w8<<13)^w8>>>10)|0;
+        w11=w11+((w12>>>7|w12<<25)^(w12>>>18|w12<<14)^w12>>>3)+w4+((w9>>>17|w9<<15)^(w9>>>19|w9<<13)^w9>>>10)|0;
+        w12=w12+((w13>>>7|w13<<25)^(w13>>>18|w13<<14)^w13>>>3)+w5+((w10>>>17|w10<<15)^(w10>>>19|w10<<13)^w10>>>10)|0;
+        w13=w13+((w14>>>7|w14<<25)^(w14>>>18|w14<<14)^w14>>>3)+w6+((w11>>>17|w11<<15)^(w11>>>19|w11<<13)^w11>>>10)|0;
+        w14=w14+((w15>>>7|w15<<25)^(w15>>>18|w15<<14)^w15>>>3)+w7+((w12>>>17|w12<<15)^(w12>>>19|w12<<13)^w12>>>10)|0;
+        w15=w15+((w0>>>7|w0<<25)^(w0>>>18|w0<<14)^w0>>>3)+w8+((w13>>>17|w13<<15)^(w13>>>19|w13<<13)^w13>>>10)|0;
+      }
+      t=h+((e>>>6|e<<26)^(e>>>11|e<<21)^(e>>>25|e<<7))+(g^e&(f^g))+k[i]+w0|0;d=d+t|0;h=t+((a>>>2|a<<30)^(a>>>13|a<<19)^(a>>>22|a<<10))+(a&b|c&(a|b))|0;
+      t=g+((d>>>6|d<<26)^(d>>>11|d<<21)^(d>>>25|d<<7))+(f^d&(e^f))+k[i+1]+w1|0;c=c+t|0;g=t+((h>>>2|h<<30)^(h>>>13|h<<19)^(h>>>22|h<<10))+(h&a|b&(h|a))|0;
+      t=f+((c>>>6|c<<26)^(c>>>11|c<<21)^(c>>>25|c<<7))+(e^c&(d^e))+k[i+2]+w2|0;b=b+t|0;f=t+((g>>>2|g<<30)^(g>>>13|g<<19)^(g>>>22|g<<10))+(g&h|a&(g|h))|0;
+      t=e+((b>>>6|b<<26)^(b>>>11|b<<21)^(b>>>25|b<<7))+(d^b&(c^d))+k[i+3]+w3|0;a=a+t|0;e=t+((f>>>2|f<<30)^(f>>>13|f<<19)^(f>>>22|f<<10))+(f&g|h&(f|g))|0;
+      t=d+((a>>>6|a<<26)^(a>>>11|a<<21)^(a>>>25|a<<7))+(c^a&(b^c))+k[i+4]+w4|0;h=h+t|0;d=t+((e>>>2|e<<30)^(e>>>13|e<<19)^(e>>>22|e<<10))+(e&f|g&(e|f))|0;
+      t=c+((h>>>6|h<<26)^(h>>>11|h<<21)^(h>>>25|h<<7))+(b^h&(a^b))+k[i+5]+w5|0;g=g+t|0;c=t+((d>>>2|d<<30)^(d>>>13|d<<19)^(d>>>22|d<<10))+(d&e|f&(d|e))|0;
+      t=b+((g>>>6|g<<26)^(g>>>11|g<<21)^(g>>>25|g<<7))+(a^g&(h^a))+k[i+6]+w6|0;f=f+t|0;b=t+((c>>>2|c<<30)^(c>>>13|c<<19)^(c>>>22|c<<10))+(c&d|e&(c|d))|0;
+      t=a+((f>>>6|f<<26)^(f>>>11|f<<21)^(f>>>25|f<<7))+(h^f&(g^h))+k[i+7]+w7|0;e=e+t|0;a=t+((b>>>2|b<<30)^(b>>>13|b<<19)^(b>>>22|b<<10))+(b&c|d&(b|c))|0;
+      t=h+((e>>>6|e<<26)^(e>>>11|e<<21)^(e>>>25|e<<7))+(g^e&(f^g))+k[i+8]+w8|0;d=d+t|0;h=t+((a>>>2|a<<30)^(a>>>13|a<<19)^(a>>>22|a<<10))+(a&b|c&(a|b))|0;
+      t=g+((d>>>6|d<<26)^(d>>>11|d<<21)^(d>>>25|d<<7))+(f^d&(e^f))+k[i+9]+w9|0;c=c+t|0;g=t+((h>>>2|h<<30)^(h>>>13|h<<19)^(h>>>22|h<<10))+(h&a|b&(h|a))|0;
+      t=f+((c>>>6|c<<26)^(c>>>11|c<<21)^(c>>>25|c<<7))+(e^c&(d^e))+k[i+10]+w10|0;b=b+t|0;f=t+((g>>>2|g<<30)^(g>>>13|g<<19)^(g>>>22|g<<10))+(g&h|a&(g|h))|0;
+      t=e+((b>>>6|b<<26)^(b>>>11|b<<21)^(b>>>25|b<<7))+(d^b&(c^d))+k[i+11]+w11|0;a=a+t|0;e=t+((f>>>2|f<<30)^(f>>>13|f<<19)^(f>>>22|f<<10))+(f&g|h&(f|g))|0;
+      t=d+((a>>>6|a<<26)^(a>>>11|a<<21)^(a>>>25|a<<7))+(c^a&(b^c))+k[i+12]+w12|0;h=h+t|0;d=t+((e>>>2|e<<30)^(e>>>13|e<<19)^(e>>>22|e<<10))+(e&f|g&(e|f))|0;
+      t=c+((h>>>6|h<<26)^(h>>>11|h<<21)^(h>>>25|h<<7))+(b^h&(a^b))+k[i+13]+w13|0;g=g+t|0;c=t+((d>>>2|d<<30)^(d>>>13|d<<19)^(d>>>22|d<<10))+(d&e|f&(d|e))|0;
+      t=b+((g>>>6|g<<26)^(g>>>11|g<<21)^(g>>>25|g<<7))+(a^g&(h^a))+k[i+14]+w14|0;f=f+t|0;b=t+((c>>>2|c<<30)^(c>>>13|c<<19)^(c>>>22|c<<10))+(c&d|e&(c|d))|0;
+      t=a+((f>>>6|f<<26)^(f>>>11|f<<21)^(f>>>25|f<<7))+(h^f&(g^h))+k[i+15]+w15|0;e=e+t|0;a=t+((b>>>2|b<<30)^(b>>>13|b<<19)^(b>>>22|b<<10))+(b&c|d&(b|c))|0;
     }
-    h[0]=(h[0]+a)>>>0;h[1]=(h[1]+b)>>>0;h[2]=(h[2]+c)>>>0;h[3]=(h[3]+d)>>>0;h[4]=(h[4]+e)>>>0;h[5]=(h[5]+f)>>>0;h[6]=(h[6]+g)>>>0;h[7]=(h[7]+hh)>>>0;
+    h0=h0+a|0;h1=h1+b|0;h2=h2+c|0;h3=h3+d|0;h4=h4+e|0;h5=h5+f|0;h6=h6+g|0;h7=h7+h|0;
   }
+  state[0]=h0;state[1]=h1;state[2]=h2;state[3]=h3;state[4]=h4;state[5]=h5;state[6]=h6;state[7]=h7;
+  return offset;
+}
+function createSha256(){
+  const h=new Uint32Array([0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19]);
+  const pending=new Uint8Array(64),encoder=new TextEncoder();let pendingSize=0,totalBytes=0,finished=false;
   function update(bytes){
     if(finished)throw new Error('SHA-256 already finalized.');totalBytes+=bytes.length;
     let offset=0;
-    if(pendingSize){const count=Math.min(64-pendingSize,bytes.length);pending.set(bytes.subarray(0,count),pendingSize);pendingSize+=count;offset=count;if(pendingSize===64){process(new DataView(pending.buffer),0);pendingSize=0;}}
-    const view=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
-    while(offset+64<=bytes.length){process(view,offset);offset+=64;}
+    if(pendingSize){const count=Math.min(64-pendingSize,bytes.length);pending.set(bytes.subarray(0,count),pendingSize);pendingSize+=count;offset=count;if(pendingSize===64){sha256Blocks(h,pending,0,64);pendingSize=0;}}
+    // A DataView over this range still admits (or refuses) the byte source;
+    // the blocks are then read from that same range as bytes instead of one
+    // DataView call per word.
+    const buffer=bytes.buffer,byteOffset=bytes.byteOffset,byteLength=bytes.byteLength;void new DataView(buffer,byteOffset,byteLength);
+    if(offset+64<=bytes.length)offset=sha256Blocks(h,new Uint8Array(buffer,byteOffset,byteLength),offset,bytes.length);
     if(offset<bytes.length){pending.set(bytes.subarray(offset));pendingSize=bytes.length-offset;}
   }
   function updateText(value){
@@ -213,7 +269,7 @@ function createSha256(){
     if(finished)throw new Error('SHA-256 already finalized.');
     const tail=new Uint8Array(pendingSize<56?64:128);tail.set(pending.subarray(0,pendingSize));tail[pendingSize]=0x80;
     const view=new DataView(tail.buffer),bits=totalBytes*8;view.setUint32(tail.length-8,Math.floor(bits/0x100000000),false);view.setUint32(tail.length-4,bits>>>0,false);
-    for(let offset=0;offset<tail.length;offset+=64)process(view,offset);finished=true;
+    sha256Blocks(h,tail,0,tail.length);finished=true;
     return Array.from(h,value=>value.toString(16).padStart(8,'0')).join('');
   }
   return {update,updateText,digest};
