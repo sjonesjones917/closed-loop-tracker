@@ -85,7 +85,9 @@ export async function verifyWriteDigestPreflights(){
  const source=fs.readFileSync(new URL('./project-store.js',import.meta.url),'utf8');
  const testExports='globalThis.closedLoopProjectStore=Object.freeze({STORAGE_IO_TIMEOUT_MS';
  const tapped=replaceOnce(source,testExports,'globalThis.__writeTrapCopy=checkpointPairSource;'+testExports);
- const r=projectStoreRuntime({storageWorker:false,sourceOverrides:{'project-store.js':tapped}});
+ class LocalEncoder extends TextEncoder{}
+ Object.defineProperty(LocalEncoder.prototype,'encode',Object.getOwnPropertyDescriptor(TextEncoder.prototype,'encode'));
+ const r=projectStoreRuntime({storageWorker:false,sourceOverrides:{'project-store.js':tapped},environment:{TextEncoder:LocalEncoder}});
  let p=await r.store.createProject({commandId:'WRITE-DIGEST-PREFLIGHT'});
  p.writeTrapProbe=r.copy([{value:1}]);p.job.JOB_TITLE='Guarded preflight';r.engine.recalculate(p);p=await r.store.writeProject(p,{expectedProjectRevision:p.revision});
  const options=()=>({expectedProjectRevision:p.revision,expectedStateSha256:p.projectSha256});
@@ -110,38 +112,49 @@ export async function verifyWriteDigestPreflights(){
   finally{Object.defineProperty=define;}
  })()`,r.runtime);
  assert.deepEqual([...trapped],[true,false,2],'WRITE_PAIR_COPY_TRANSIENT_NATIVE_ORACLE');
- const ordinary=r.store.mutationImpact(p,p,p),whenRequired={candidateWhenRequired:true};
+ const ordinary=r.store.mutationImpact(p,p,p);
  assert.equal(ordinary.candidateSha256,p.projectSha256);
- assert.equal(r.store.mutationImpact(p,p,p,whenRequired).candidateSha256,null);
  const prior=r.copy(p);
  prior.projectData.acceptedChanges.push({changeId:'REVIEW-WRITE',stage:1,active:true});
- const required=r.store.mutationImpact(prior,p,p),preflight=r.store.mutationImpact(prior,p,p,whenRequired);
- assert.equal(required.requiresConfirmation,true);assert.deepEqual(preflight,required,'REQUIRED_REVIEW_DIGEST_AND_KEY');
- // The fallback hashes the canonical root already observed. A getter that
- // answers differently on its second call must retain its first refusal.
- for(const options of [null,whenRequired]){
+ const required=r.store.mutationImpact(prior,p,p);
+ assert.equal(required.requiresConfirmation,true);assert.equal(required.candidateSha256,p.projectSha256,'REQUIRED_REVIEW_DIGEST');
+ // The cold digest consumes the first root observation and every descriptor
+ // in encoder order, including an input that temporarily replaces TextEncoder.
+ {
   const transient=r.copy(p);let reads=0;
   Object.defineProperty(transient,'extraRoot',{enumerable:true,get(){return ++reads===1?undefined:'later';}});
-  assert.throws(()=>r.store.mutationImpact(p,transient,transient,options),error=>error.message==='Cannot canonically hash undefined at $.extraRoot.');
+  assert.throws(()=>r.store.mutationImpact(p,transient,transient),error=>error.message==='Cannot canonically hash undefined at $.extraRoot.');
   assert.equal(reads,1,'PREFLIGHT_SINGLE_ROOT_OBSERVATION');
  }
- for(const options of [null,whenRequired]){
+ {
   const transient=r.copy(p);let reads=0;
   transient.nested=new Proxy(r.copy({leaf:true}),{getOwnPropertyDescriptor(target,key){
     const d=Reflect.getOwnPropertyDescriptor(target,key);
     return key==='leaf'?{...d,value:++reads===1?'valid':undefined}:d;
   }});
-  assert.throws(()=>r.store.mutationImpact(p,transient,transient,options),error=>error.message==='Cannot canonically hash undefined at $.nested.leaf.');
+  assert.throws(()=>r.store.mutationImpact(p,transient,transient),error=>error.message==='Cannot canonically hash undefined at $.nested.leaf.');
   assert.equal(reads,2,'PREFLIGHT_ENCODER_DESCRIPTOR_ORDER');
  }
- // Both the early no-op comparison and the unused-digest paths still reject
+ const swapResult=vm.runInContext(`(()=>{
+  const original=TextEncoder.prototype.encode;
+  const extension=new Proxy({a:'x'.repeat(70000),z:1},{getOwnPropertyDescriptor(target,key){
+    if(key==='a')TextEncoder.prototype.encode=()=>{throw new Error('TRANSIENT_PREFLIGHT_ENCODER');};
+    if(key==='z')TextEncoder.prototype.encode=original;
+    return Reflect.getOwnPropertyDescriptor(target,key);
+  }});
+  const project={job:{JOB_ID:'ENCODER-SWAP'},projectData:{extension},activeStage:1};
+  try{return closedLoopProjectStore.mutationImpact(null,project,project,{candidateWhenRequired:true}).requiresConfirmation;}
+  catch(error){return error.message;}finally{TextEncoder.prototype.encode=original;}
+ })()`,r.runtime);
+ assert.equal(swapResult,'TRANSIENT_PREFLIGHT_ENCODER','PREFLIGHT_TRANSIENT_ENCODER_REFUSAL');
+ // Each write path must still reject
  // malformed extension values at the canonical encoder, before recalculation.
  for(const leaf of ['\uD800',-0,undefined]){
   const invalid=r.copy(p);invalid.extra=r.copy({leaf});
   let expected;try{r.store.projectSha256(invalid);}catch(error){expected=error;}
   assert.ok(expected,'INVALID_EXTENSION_DIGEST_ORACLE');
   const same=error=>error.name===expected.name&&error.message===expected.message;
-  assert.throws(()=>r.store.mutationImpact(p,invalid,invalid,whenRequired),same);
+  assert.throws(()=>r.store.mutationImpact(p,invalid,invalid),same);
   await assert.rejects(r.store.writeProject(invalid,{...options(),skipUnchanged:false}),same);
   await assert.rejects(r.store.writeProject(invalid,{...options(),operational:true}),same);
   await assert.rejects(r.store.writeProject(invalid,{...options(),expectedProjectRevision:p.revision+5}),error=>error.code==='STALE_PROJECT_REVISION');
@@ -152,7 +165,7 @@ export async function verifyWriteDigestPreflights(){
  const original=r.runtime.JSON.stringify,marker='refuse swapped encoding native';
  r.runtime.JSON.stringify=function(value,...args){if(value==='Updated preflight')throw new Error(marker);return Reflect.apply(original,this,[value,...args]);};
  try{
-  assert.throws(()=>r.store.mutationImpact(p,p,p,whenRequired),error=>error.message===marker);
+  assert.throws(()=>r.store.mutationImpact(p,p,p),error=>error.message===marker);
   await assert.rejects(r.store.writeProject(r.copy(p),{...options(),operational:true}),error=>error.message===marker);
  }finally{r.runtime.JSON.stringify=original;}
  assert.equal((await r.store.readProject(p.job.JOB_ID)).projectSha256,p.projectSha256,'FAILED_PREFLIGHT_PRESERVES_ROW');

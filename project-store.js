@@ -3489,11 +3489,7 @@ function mutationImpactComparisonEligible(project){
   for(const value of nodes.keys())if(Array.isArray(value)&&Object.getPrototypeOf(value)!==Array.prototype)return false;
   return true;
 }
-// Keep the ordinary public impact's full identity. The page's operational
-// preflight consumes the identity only when it actually opens a review.
-function mutationImpact(prior,next,derivedNext=null,options=null){
-  return globalThis.closedLoopWorkflowEngine.withReadinessEvaluationEpoch(()=>mutationImpactAtObservation(prior,next,derivedNext,null,options?.candidateWhenRequired===true?'preflight':false));
-}
+function mutationImpact(prior,next,derivedNext=null){return globalThis.closedLoopWorkflowEngine.withReadinessEvaluationEpoch(()=>mutationImpactAtObservation(prior,next,derivedNext));}
 function mutationImpactAtObservation(prior,next,derivedNext=null,verifiedCandidate=null,candidateWhenRequired=false){
   const engine=globalThis.closedLoopWorkflowEngine,affected=new Map(),replaces=[];
   // Normal analysis uses the full fresh derived graph, not a partial stage
@@ -3536,11 +3532,7 @@ function mutationImpactAtObservation(prior,next,derivedNext=null,verifiedCandida
       }
     }
   }
-  const candidateDigest=()=>{
-    if(candidateWhenRequired&&!affected.size)return candidateWhenRequired==='preflight'?unusedWriteCandidateDigest(canonicalProject(candidate)):null;
-    return unchangedVerifiedProject(verifiedCandidate,candidate,verifiedCandidate?.digest)?verifiedCandidate.digest:projectSha256(candidate);
-  };
-  const effect={jobId:projectIdentity(next),projectRevision:Number(prior?.revision||0),priorProjectSha256:prior?(prior.projectSha256||projectSha256(prior)):null,historyActivationId:prior?.historyActivationId||null,candidateSha256:candidateDigest(),replaces,affected:[...affected.values()].sort((a,b)=>a.stage-b.stage)};
+  const effect={jobId:projectIdentity(next),projectRevision:Number(prior?.revision||0),priorProjectSha256:prior?(prior.projectSha256||projectSha256(prior)):null,historyActivationId:prior?.historyActivationId||null,candidateSha256:candidateWhenRequired&&!affected.size?null:unchangedVerifiedProject(verifiedCandidate,candidate,verifiedCandidate?.digest)?verifiedCandidate.digest:projectSha256(candidate),replaces,affected:[...affected.values()].sort((a,b)=>a.stage-b.stage)};
   return {...effect,stage:effect.affected[0]?.stage||Number(next.activeStage||1),requiresConfirmation:Boolean(affected.size),confirmationKey:hash.sha256Value(effect)};
 }
 // Only a required confirmation is compared or reported here (error.impact), so
@@ -3585,17 +3577,6 @@ async function commitNativeProductResults(command){
  if(useStoreWorker())return requestStoreWorker('COMMIT_NATIVE_PRODUCT_RESULTS',[command]);
  return commitNativeProductResultsLocal(command);
 }
-// An unused candidate identity still requires canonical encoding at its
-// original point in the write. Under current primitives omit only hashing
-// the already validated bytes. A changed primitive uses the full owner.
-function unusedWriteCandidateDigest(canonical){
-  if(!checkpointSnapshotPrimitivesCurrent(operationalEqualityScope)||!rootDigestPrimitivesUnchanged(initialRootDigestPrimitives))return hash.sha256Value(canonical);
-  // The ordinary encoder owns the observation order of data descriptors,
-  // including Proxy traps. Discard its chunks when no identity is consumed.
-  for(const chunk of hash.canonicalChunks(canonical))void chunk;
-  if(!checkpointSnapshotPrimitivesCurrent(operationalEqualityScope)||!rootDigestPrimitivesUnchanged(initialRootDigestPrimitives))return hash.sha256Value(canonical);
-  return null;
-}
 async function prepareProjectWrite(project,options={}){
   if(options.initialMobileAcceptanceSession!==undefined&&(!options.createOnly||!options.initialMobileAcceptanceSession||typeof options.initialMobileAcceptanceSession!=='object'||Array.isArray(options.initialMobileAcceptanceSession)))throw storageError('Initial mobile sessions require a create-only project transaction.','MOBILE_ACCEPTANCE_CREATION_INVALID');
   const candidate=clone(project),id=projectIdentity(candidate),verifiedRead=await readProjectForTransaction(id),prior=verifiedRead?.project,revision=Number(prior?.revision||0),next=copyVerifiedTree(candidate);globalThis.closedLoopPromptEngine?.copyRetainedPromptContextFiles?.(candidate,next);delete next.projectSha256;
@@ -3606,8 +3587,7 @@ async function prepareProjectWrite(project,options={}){
   assertCanonicalFieldValues(next);
   assertJobPointerIntegrity(next,prior);
   if(options[APPEND_ONLY_CANONICAL_WRITE])assertAppendOnlyDefinitionPreservation(prior,next);
-  const candidateDigest=options.skipUnchanged?projectSha256(candidate):unusedWriteCandidateDigest(canonicalProject(candidate));
-  const candidateProof=candidateDigest?verifiedProjectIntegrity(candidate,candidateDigest):null;
+  const candidateDigest=projectSha256(candidate),candidateProof=verifiedProjectIntegrity(candidate,candidateDigest);
   if(options.skipUnchanged&&prior?.projectSha256===candidateDigest){
     // The context-copy target must still match the measured candidate. Capture
     // before persistence can yield to a retained target's queued mutation.
