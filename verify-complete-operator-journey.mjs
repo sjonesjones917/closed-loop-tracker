@@ -15,7 +15,9 @@ import {observeWorkflowDOM,assertWorkflowPresentation} from './test-app-markup.m
 globalThis.dispatchEvent=()=>true;
 for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
 const engine=globalThis.closedLoopWorkflowEngine,schema=globalThis.closedLoopWorkflowSchema,hash=globalThis.closedLoopHash;
-const directory=path.resolve(process.env.OPERATOR_EVIDENCE_DIR||'operator-evidence'),browser=await createOperatorBrowser({directory,captureExecution:true});
+// The November 6 operator journey budget allows 180 seconds for each action.
+const OPERATOR_ACTION_WAIT_MS=180000;
+const directory=path.resolve(process.env.OPERATOR_EVIDENCE_DIR||'operator-evidence'),browser=await createOperatorBrowser({directory,captureExecution:true,actionTimeoutMs:OPERATOR_ACTION_WAIT_MS});
 const report={basis:'SYNTHETIC_EXTERNAL_COUNTERPART_WITH_ACTUAL_BROWSER_FILE_TRANSPORT',humanIndependenceEstablished:false,physicalDeviceAcceptance:false,viewportChecks:[],stages:[],operations:[],presentationCases:[],failures:[],complete:false};
 let snapshot,stage=1,sequence=0,rejected=false,reloaded=false;
 function preserveReport(){
@@ -103,7 +105,7 @@ try{
   // Export path at both additional required sizes. This is responsive Chrome,
   // not a physical-device or independent-human acceptance assertion.
   for(const [width,height]of [[320,568],[1280,800]]){
-    const check=await createOperatorBrowser({directory:path.join(directory,'viewport-'+width),width,height});
+    const check=await createOperatorBrowser({directory:path.join(directory,'viewport-'+width),width,height,actionTimeoutMs:OPERATOR_ACTION_WAIT_MS});
     try{
       await check.click('#new-project');
       await check.fill('[data-job="JOB_TITLE"]','Operator action viewport '+width);
