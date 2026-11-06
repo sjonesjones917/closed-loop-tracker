@@ -109,26 +109,13 @@ export function verifyCheckpointStateSnapshot(){
   })()`);
   assert.equal(observed,true,'CHECKPOINT_DISCOVERY_METADATA_CUSTODY:'+attack);
  }
- const operationStart=source.indexOf('const operationalEqualityScope='),operationEnd=source.indexOf('function assertOperationalChange(');
- const treeStart=source.indexOf('function operationalPatchTree('),treeEnd=source.indexOf('function copyOperationalAncestor(');
- assert.ok(operationStart>=0&&operationEnd>operationStart&&treeStart>=0&&treeEnd>treeStart);
- run(`let coldComparisons=0;const equivalent=(a,b)=>{coldComparisons++;return hash.sha256Value(a)===hash.sha256Value(b)};
-   ${source.slice(operationStart,operationEnd)}${source.slice(treeStart,treeEnd)}
-   const mirrored=v=>{const shared={v};return {a:shared,b:shared};};`);
- for(const value of ['"text"','"👩‍🔬"','null','Number.MAX_SAFE_INTEGER','Object.assign(Object.create(null),{key:[true,1]})']){
-  const cold=run('coldComparisons');
-  assert.equal(run(`operationalValuesEqual(mirrored(${value}),mirrored(${value}))`),true);
-  assert.equal(run('coldComparisons'),cold,'OPERATIONAL_CANONICAL_SHARED_FAST_PATH:'+value);
- }
- for(const value of ['NaN','-0','0.5','1n','undefined','"\\ud800"','{["\\udc00"]:1}','new Array(2)','Object.assign([1],{hidden:2})','Object.setPrototypeOf([1],{})']){
-  const observe=expression=>{try{return run(expression);}catch(error){return [error.name,error.message];}};
-  const cold=run('coldComparisons');
-  assert.deepEqual(observe(`operationalValuesEqual(mirrored(${value}),mirrored(${value}))`),observe(`hash.sha256Value(mirrored(${value}))`),'OPERATIONAL_CANONICAL_REFUSAL:'+value);
-  assert.equal(run('coldComparisons'),cold+1,'OPERATIONAL_CANONICAL_FALLBACK:'+value);
- }
- assert.equal(run('operationalValuesEqual(mirrored(1),mirrored(2))'),false,'OPERATIONAL_SHARED_DIFFERENCE');
- run('Object.getOwnPropertyNames=value=>originalNames(value);');
- const cold=run('coldComparisons');try{assert.equal(run('operationalValuesEqual(mirrored(1),mirrored(1))'),true);assert.equal(run('coldComparisons'),cold+1,'OPERATIONAL_SHARED_NATIVE_SWAP_FALLBACK');}finally{run('Object.getOwnPropertyNames=originalNames;');}
+ // The write preflight's canonical-admissibility check is conservative. Its
+ // callers run the encoder for every inadmissible graph and its diagnostics.
+ run('const mirrored=v=>{const shared={v};return {a:shared,b:shared};};const ordinary=v=>canonicalVerifiedGraph(v,verifiedGraphNodes(v));');
+ for(const value of ['"text"','"👩‍🔬"','null','Number.MAX_SAFE_INTEGER','Object.assign(Object.create(null),{key:[true,1]})'])
+  assert.equal(run(`ordinary(mirrored(${value}))`),true,'CANONICAL_VERIFIED_GRAPH_ACCEPT:'+value);
+ for(const value of ['NaN','-0','0.5','1n','undefined','"\\ud800"','{["\\udc00"]:1}','new Array(2)','Object.assign([1],{hidden:2})','Object.setPrototypeOf([1],{})'])
+  assert.equal(run(`ordinary(mirrored(${value}))`),false,'CANONICAL_VERIFIED_GRAPH_COLD:'+value);
  return {checkpointStateSnapshot:'PASS',currentWalksPerComparison:1,privateSnapshotAliasPreserved:true,currentMutationRejected:true,nativeReplacementInvalidates:true,restoredNativeDoesNotRevive:true,unusualInputCases:5,released:true};
 }
 

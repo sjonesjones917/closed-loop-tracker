@@ -588,27 +588,13 @@ function operationalPatches(before,after,path=[]){
 }
 // This null-root scope guards native bindings only. It holds no project values
 // or digests and cannot authorize a result from a previous comparison.
-const operationalEqualityScope={scope:null},sharedOperationalTree=Symbol('shared operational graph');
+const operationalEqualityScope={scope:null};
 try{operationalEqualityScope.scope=hash.createCanonicalDigestScope(null);}catch{}
 function operationalValuesEqual(before,after){
   if(Object.is(before,after))return true;
   // Preserve the existing hashing behavior for unusual graphs/accessors. The
   // fast path compares the exact ordinary canonical trees used by this owner.
-  const leftTree=operationalPatchTree(before,sharedOperationalTree);
-  const rightTree=leftTree===true?operationalPatchTree(after,sharedOperationalTree):false;
-  if(leftTree!==true||rightTree!==true){
-    // Canonical mirrors may share subtrees. For precisely equal, admissible
-    // graphs the bytes are equal regardless of that sharing. A mismatch or an
-    // unsupported graph keeps the original hash owner's errors and ordering.
-    if((leftTree===sharedOperationalTree||rightTree===sharedOperationalTree)&&checkpointSnapshotPrimitivesCurrent(operationalEqualityScope)){
-      try{
-        const ops=guardedGraphOperations(),left=verifiedGraphNodes(before),right=verifiedGraphNodes(after);
-        if(canonicalVerifiedGraph(before,left)&&canonicalVerifiedGraph(after,right)&&
-           verifiedNodeValuesEqual(before,after,left,right,ops)&&checkpointSnapshotPrimitivesCurrent(operationalEqualityScope))return true;
-      }catch{} // The canonical owner supplies the original diagnostic.
-    }
-    return equivalent(before,after);
-  }
+  if(!operationalPatchTree(before)||!operationalPatchTree(after))return equivalent(before,after);
   const pending=[[before,after]];
   while(pending.length){
     const [left,right]=pending.pop();if(Object.is(left,right))continue;
@@ -650,11 +636,11 @@ function assertOperationalChange(before,after){
 // Path-copy replay is limited to unshared trees. Canonical field mirrors can
 // share arrays, so retain structured-clone behavior for shared graphs/accessors
 // instead of changing their alias semantics while replaying a path patch.
-function operationalPatchTree(value,repeated=false){
+function operationalPatchTree(value){
   const seen=new WeakSet(),pending=[value];
   while(pending.length){
     const item=pending.pop();if(!item||typeof item!=='object')continue;
-    if(seen.has(item))return repeated;seen.add(item);
+    if(seen.has(item))return false;seen.add(item);
     if(!Array.isArray(item)&&Object.getPrototypeOf(item)!==Object.prototype&&Object.getPrototypeOf(item)!==null)return false;
     if(Object.getOwnPropertySymbols(item).length)return false;
     for(const key of Object.getOwnPropertyNames(item)){

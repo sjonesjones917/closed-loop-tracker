@@ -232,7 +232,45 @@ export async function verifyCopiedReceiptHarvest({source=read('project-store.js'
  assert.deepEqual({committed:accepted.committed,title:accepted.title,stage:accepted.stage,harvested:accepted.harvested},{committed:true,title:'Harvested private snapshot change',stage:'restored',harvested:1},'CAPTURED_RECEIPT_COPIED_SNAPSHOT_FAULT_ORACLE');
  return {passed:true,refused,capturedFaultAccepted:true};
 }
+// A context hook receives the writer's candidate. The shared history value
+// requires byte comparison even when a transient encoder swap could disappear
+// before a later native check.
+export async function verifyOperationalSharedBytes(source=read('project-store.js')){
+ class LocalEncoder extends TextEncoder{}
+ Object.defineProperty(LocalEncoder.prototype,'encode',Object.getOwnPropertyDescriptor(TextEncoder.prototype,'encode'));
+ const r=projectStoreRuntime({storageWorker:false,sourceOverrides:{'project-store.js':source},environment:{TextEncoder:LocalEncoder}});
+ const p=await r.store.createProject({commandId:'OPERATIONAL-SHARED-OWNER'});
+ const event=r.engine.addHistory(p,'SHARED_GUARD_PROBE',{payload:{a:'m'.repeat(70000),z:1}});event.mirror=event.payload;
+ r.engine.recalculate(p);
+ const saved=await r.store.writeProject(p,{expectedProjectRevision:p.revision,expectedStateSha256:p.projectSha256});
+ const retained=saved.projectData.history.find(row=>row.type==='SHARED_GUARD_PROBE');assert.equal(retained.payload,retained.mirror,'OPERATIONAL_SHARED_BYTES_FIXTURE');
+ const next=r.copy(saved);next.activeView='Records';r.runtime.incoming=next;
+ const durable=()=>r.copy([...r.rows].map(([name,rows])=>[name,[...rows]])),before=durable();
+ vm.runInContext(`
+  const oldEncode=TextEncoder.prototype.encode,engine=closedLoopPromptEngine;Error.stackTraceLimit=35;
+  globalThis.probe={swaps:0,encodes:0,hooks:0};
+  globalThis.closedLoopPromptEngine=Object.freeze({...engine,copyRetainedPromptContextFiles(input,copy){
+   engine.copyRetainedPromptContextFiles(input,copy);
+   if(input!==incoming||!copy?.projectData)return;
+   const event=copy.projectData.history.find(row=>row.type==='SHARED_GUARD_PROBE');if(!event)return;
+   probe.hooks++;
+   const payload=new Proxy(event.payload,{getOwnPropertyDescriptor(target,key){
+    const comparing=new Error().stack.includes('operationalValuesEqual');
+    if(comparing&&key==='a'){probe.swaps++;TextEncoder.prototype.encode=()=>{probe.encodes++;throw Error('SHARED_BYTES_ENCODER_CHANGED');};}
+    if(comparing&&key==='z')TextEncoder.prototype.encode=oldEncode;
+    return Reflect.getOwnPropertyDescriptor(target,key);
+   }});
+   event.payload=event.mirror=payload;
+  }});`,r.runtime);
+ try{
+  await assert.rejects(()=>r.store.writeProject(next,{operational:true,expectedProjectRevision:saved.revision,expectedStateSha256:saved.projectSha256}),
+   error=>error.message==='SHARED_BYTES_ENCODER_CHANGED','OPERATIONAL_SHARED_BYTES_REFUSAL');
+  assert.ok(r.runtime.probe.hooks>0&&r.runtime.probe.swaps>0&&r.runtime.probe.encodes>0,'OPERATIONAL_SHARED_BYTES_REACHED_ENCODER');
+  assert.deepEqual(durable(),before,'OPERATIONAL_SHARED_BYTES_ATOMIC');
+ }finally{vm.runInContext('TextEncoder.prototype.encode=oldEncode;',r.runtime);}
+}
 export async function verifyCapturedProjectIntegrity(options={}){
+ await verifyOperationalSharedBytes(options.source);
  return {sites:verifyCapturedReceiptSites(options.source),owners:verifyCapturedReceiptOwners(options),storeAudit:await verifyCapturedReceiptStoreAudit(options),copiedReceiptHarvest:await verifyCopiedReceiptHarvest(options),equivalence:await verifyCapturedReceiptEquivalence(options)};
 }
 if(import.meta.url===`file://${process.argv[1]}`){
