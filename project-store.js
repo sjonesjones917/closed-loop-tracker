@@ -1175,13 +1175,26 @@ function replayOperationalPatches(project,patches){
   assertOperationalChange(project,next);
   return next;
 }
+// The pair owns a detached canonical copy. On the ordinary path, its source
+// descriptors supply both eligibility and the copy. A changed native or an
+// unusual root keeps the original copy path and its diagnostics.
+function checkpointPairSource(project){
+  const guarded=checkpointSnapshotPrimitivesCurrent(operationalEqualityScope),nodes=verifiedGraphNodes(project);
+  if(!nodes)return null;
+  if(guarded&&checkpointSnapshotPrimitivesCurrent(operationalEqualityScope)&&canonicalVerifiedGraph(project,nodes)){
+    const snapshot=copyVerifiedGraph(project,nodes);
+    delete snapshot.projectSha256;
+    if(checkpointSnapshotPrimitivesCurrent(operationalEqualityScope))return snapshot;
+  }
+  return copyVerifiedTree(canonicalProject(project));
+}
 function applyOperationalJournal(row,journal,checkpointRead=null){
   if(!row||!journal)return row;
   const {sha256,...body}=journal;
   if(sha256!==hash.sha256Value(body)||body.schema!=='closed-loop-response-operations/1'||body.jobId!==String(row.jobId)||body.baseProjectSha256!==row.projectSha256||body.projectRevision!==Number(row.revision)||!Array.isArray(body.patches))throw storageError('Saved response operations do not match their canonical project.','OPERATIONAL_STATE_INTEGRITY_FAILED');
   const next=replayOperationalPatches(row.project,body.patches);
   const primitive=checkpointRead&&rootDigestPrimitivesUnchanged(initialRootDigestPrimitives)?initialRootDigestPrimitives:null;
-  const snapshot=primitive&&verifiedGraphNodes(next)?copyVerifiedTree(canonicalProject(next)):null;
+  const snapshot=primitive?checkpointPairSource(next):null;
   const pair=snapshot?historyProjectDigestsCold(next):null;
   if((pair?pair.projectSha256:projectSha256(next))!==body.projectSha256)throw storageError('Saved response operation contents are corrupt.','OPERATIONAL_STATE_INTEGRITY_FAILED');
   if(pair&&rootDigestPrimitivesUnchanged(primitive)&&verifiedValuesEqual(snapshot,canonicalProject(next))){
@@ -1229,6 +1242,27 @@ async function preparePendingReturnedArtifacts(project,prior,input){
  }
  return rows;
 }
+// Only a write with an authenticated digest can replace the preliminary
+// no-op hash by exact value comparison. The captured row was reread and
+// compared by readProjectForTransaction. Its root binds the measured digest
+// to the native validators of that write. Check both the write guard and
+// the read's private snapshot guard before and after walking the candidate.
+function verifiedReadCandidateEquality(read,next){
+  const root=read?.retainedRoot,proof=capturedIntegrityProofs.get(read);
+  if(proof?.nodes&&proof.snapshot===read.snapshot&&rootCertificates.has(root)&&
+     root.projectSha256===read.digest&&read.project.projectSha256===read.digest&&
+     rootValidatorsUnchanged(root.validators)&&checkpointSnapshotPrimitivesCurrent(proof)){
+    try{
+      const current={...next,projectSha256:read.digest},nodes=verifiedGraphNodes(current);
+      if(canonicalVerifiedGraph(current,nodes)&&checkpointSnapshotPrimitivesCurrent(proof)){
+        const matches=verifiedNodeValuesEqual(proof.snapshot,current,proof.nodes,nodes);
+        if(checkpointSnapshotPrimitivesCurrent(proof)&&rootValidatorsUnchanged(root.validators))return matches;
+      }
+    }catch{/* Use the canonical owner for unusual values and its original errors. */}
+  }
+  if(proof?.nodes&&!checkpointSnapshotPrimitivesCurrent(proof))releaseCheckpointValueSnapshot(proof);
+  return null;
+}
 async function writeOperationalProject(project,options={}){
   const id=projectIdentity(project),verifiedRead=await readProjectForTransaction(id),prior=verifiedRead?.project;if(!prior)throw storageError('Project is unavailable.','PROJECT_NOT_FOUND');
   if(Number(options.expectedProjectRevision)!==Number(prior.revision)||!options.expectedStateSha256||options.expectedStateSha256!==prior.projectSha256)throw storageError('Project or pending response changed. Refresh it before retrying.','STALE_PROJECT_REVISION');
@@ -1238,7 +1272,7 @@ async function writeOperationalProject(project,options={}){
   assertJobPointerIntegrity(next,prior);
   if(Number(next.revision)!==Number(prior.revision))throw storageError('An operational event cannot advance the canonical revision.','OPERATIONAL_OWNERSHIP_VIOLATION');
   const pendingArtifacts=await preparePendingReturnedArtifacts(next,prior,options.pendingArtifacts);
-  if(projectSha256(next)===prior.projectSha256){if(pendingArtifacts.length)throw storageError('Pending returned files require their response mapping transaction.','PENDING_ARTIFACTS_WITHOUT_CHANGE');return prior;}
+  if(verifiedReadCandidateEquality(verifiedRead,next)??(projectSha256(next)===prior.projectSha256)){if(pendingArtifacts.length)throw storageError('Pending returned files require their response mapping transaction.','PENDING_ARTIFACTS_WITHOUT_CHANGE');return prior;}
   globalThis.closedLoopPromptEngine.copyRetainedPromptContextFiles(prior,next);
   // Every owner runs in order on the ordinary cold digest path during this
   // synchronous derivation/validation; no digest or result is reused here.
@@ -1249,7 +1283,7 @@ async function writeOperationalProject(project,options={}){
   const operationalDerived=writeDerivationBinding(operationalDerivation,operationalValidators);
   // Bind both measured labels to a private value snapshot before any await.
   // The ordinary context-copy hook may retain next, never this capture.
-  const primitive=rootDigestPrimitivesUnchanged(initialRootDigestPrimitives)?initialRootDigestPrimitives:null,snapshot=primitive&&verifiedGraphNodes(next)?copyVerifiedTree(canonicalProject(next)):null,measured=snapshot?historyProjectDigests(next):null;
+  const primitive=rootDigestPrimitivesUnchanged(initialRootDigestPrimitives)?initialRootDigestPrimitives:null,snapshot=primitive?checkpointPairSource(next):null,measured=snapshot?historyProjectDigests(next):null;
   const pair=measured&&rootDigestPrimitivesUnchanged(primitive)&&verifiedValuesEqual(snapshot,canonicalProject(next))?Object.freeze({primitive,snapshot,...measured}):null;if(pair)checkpointDigestPairs.add(pair);
   // With a bound pair or not, this receipt is never captured: its snapshot is
   // walked again to copy the context carrier and the returned project, so its
@@ -1325,7 +1359,11 @@ async function writeOperationalProject(project,options={}){
       globalThis.closedLoopPromptEngine.copyRetainedPromptContextFiles(committed,privateCommitted);
       if(!unchangedVerifiedProject(returnedIntegrity,committed,digest))throw storageError('Returned response values changed during context restoration.','STALE_PROJECT_REVISION');
       assertRetainedContexts(committed);if(unchangedVerifiedProject(committedIntegrity,privateCommitted,digest))assertRetainedContexts(privateCommitted);
-      recentOperationalCommitRead=carryCapturedIntegrity({row:capturedPrivateCopy(base),journal:capturedPrivateCopy(journalSnapshot),storage:{row:baseSource.identity,journal:committedJournalStorage},...committedIntegrity,checkpointDigestPair:checkpointPairMatches(pair,privateCommitted)?pair:null,retainedRoot:mintWriteRootCertificate(prepared,digest,primitive,operationalValidators,operationalDerived)},committedIntegrity);
+      // A source-row capture can be carried only while it has stayed private.
+      // A cold comparison under a swapped primitive releases it permanently.
+      const capturedRow=capturedValueProofs.get(verifiedRead.row);
+      const committedSourceRow=capturedRow?.nodes&&checkpointSnapshotPrimitivesCurrent(capturedRow)?verifiedRead.row:capturedPrivateCopy(base);
+      recentOperationalCommitRead=carryCapturedIntegrity({row:committedSourceRow,journal:capturedPrivateCopy(journalSnapshot),storage:{row:baseSource.identity,journal:committedJournalStorage},...committedIntegrity,checkpointDigestPair:checkpointPairMatches(pair,privateCommitted)?pair:null,retainedRoot:mintWriteRootCertificate(prepared,digest,primitive,operationalValidators,operationalDerived)},committedIntegrity);
       notifyProjectChange(committed,{operational:true});return committed;
     }catch(error){
       recentOperationalCommitRead=null;
@@ -3388,7 +3426,11 @@ function mutationImpactComparisonEligible(project){
   for(const value of nodes.keys())if(Array.isArray(value)&&Object.getPrototypeOf(value)!==Array.prototype)return false;
   return true;
 }
-function mutationImpact(prior,next,derivedNext=null){return globalThis.closedLoopWorkflowEngine.withReadinessEvaluationEpoch(()=>mutationImpactAtObservation(prior,next,derivedNext));}
+// Keep the ordinary public impact's full identity. The page's operational
+// preflight consumes the identity only when it actually opens a review.
+function mutationImpact(prior,next,derivedNext=null,options=null){
+  return globalThis.closedLoopWorkflowEngine.withReadinessEvaluationEpoch(()=>mutationImpactAtObservation(prior,next,derivedNext,null,options?.candidateWhenRequired===true?'preflight':false));
+}
 function mutationImpactAtObservation(prior,next,derivedNext=null,verifiedCandidate=null,candidateWhenRequired=false){
   const engine=globalThis.closedLoopWorkflowEngine,affected=new Map(),replaces=[];
   // Normal analysis uses the full fresh derived graph, not a partial stage
@@ -3431,7 +3473,8 @@ function mutationImpactAtObservation(prior,next,derivedNext=null,verifiedCandida
       }
     }
   }
-  const effect={jobId:projectIdentity(next),projectRevision:Number(prior?.revision||0),priorProjectSha256:prior?(prior.projectSha256||projectSha256(prior)):null,historyActivationId:prior?.historyActivationId||null,candidateSha256:candidateWhenRequired&&!affected.size?null:unchangedVerifiedProject(verifiedCandidate,candidate,verifiedCandidate?.digest)?verifiedCandidate.digest:projectSha256(candidate),replaces,affected:[...affected.values()].sort((a,b)=>a.stage-b.stage)};
+  const omitCandidate=candidateWhenRequired&&!affected.size&&(candidateWhenRequired!=='preflight'||ordinaryWriteDigestInput(candidate));
+  const effect={jobId:projectIdentity(next),projectRevision:Number(prior?.revision||0),priorProjectSha256:prior?(prior.projectSha256||projectSha256(prior)):null,historyActivationId:prior?.historyActivationId||null,candidateSha256:omitCandidate?null:unchangedVerifiedProject(verifiedCandidate,candidate,verifiedCandidate?.digest)?verifiedCandidate.digest:projectSha256(candidate),replaces,affected:[...affected.values()].sort((a,b)=>a.stage-b.stage)};
   return {...effect,stage:effect.affected[0]?.stage||Number(next.activeStage||1),requiresConfirmation:Boolean(affected.size),confirmationKey:hash.sha256Value(effect)};
 }
 // Only a required confirmation is compared or reported here (error.impact), so
@@ -3476,6 +3519,17 @@ async function commitNativeProductResults(command){
  if(useStoreWorker())return requestStoreWorker('COMMIT_NATIVE_PRODUCT_RESULTS',[command]);
  return commitNativeProductResultsLocal(command);
 }
+// Even an unused digest used to validate its input at this point. Omit its
+// encoding only for ordinary, canonically admissible data under the original
+// natives. Any other input is hashed by the original owner in its original
+// position, preserving canonical refusal messages and precedence.
+function ordinaryWriteDigestInput(project){
+  try{
+    if(!checkpointSnapshotPrimitivesCurrent(operationalEqualityScope)||!rootDigestPrimitivesUnchanged(initialRootDigestPrimitives))return false;
+    const value=canonicalProject(project),nodes=verifiedGraphNodes(value);
+    return canonicalVerifiedGraph(value,nodes)&&checkpointSnapshotPrimitivesCurrent(operationalEqualityScope)&&rootDigestPrimitivesUnchanged(initialRootDigestPrimitives);
+  }catch{return false;}
+}
 async function prepareProjectWrite(project,options={}){
   if(options.initialMobileAcceptanceSession!==undefined&&(!options.createOnly||!options.initialMobileAcceptanceSession||typeof options.initialMobileAcceptanceSession!=='object'||Array.isArray(options.initialMobileAcceptanceSession)))throw storageError('Initial mobile sessions require a create-only project transaction.','MOBILE_ACCEPTANCE_CREATION_INVALID');
   const candidate=clone(project),id=projectIdentity(candidate),verifiedRead=await readProjectForTransaction(id),prior=verifiedRead?.project,revision=Number(prior?.revision||0),next=copyVerifiedTree(candidate);globalThis.closedLoopPromptEngine?.copyRetainedPromptContextFiles?.(candidate,next);delete next.projectSha256;
@@ -3486,7 +3540,13 @@ async function prepareProjectWrite(project,options={}){
   assertCanonicalFieldValues(next);
   assertJobPointerIntegrity(next,prior);
   if(options[APPEND_ONLY_CANONICAL_WRITE])assertAppendOnlyDefinitionPreservation(prior,next);
-  const candidateDigest=projectSha256(candidate),candidateProof=verifiedProjectIntegrity(candidate,candidateDigest);
+  const matches=options.skipUnchanged?verifiedReadCandidateEquality(verifiedRead,candidate):null;
+  // A certified mismatch needs no candidate identity until a review asks for
+  // one. Compare no-op clone targets against the same measured candidate.
+  let candidateDigest=null;
+  if(matches===true)candidateDigest=verifiedRead.digest;
+  else if(matches===null&&(options.skipUnchanged||!ordinaryWriteDigestInput(candidate)))candidateDigest=projectSha256(candidate);
+  const candidateProof=candidateDigest?verifiedProjectIntegrity(candidate,candidateDigest):null;
   if(options.skipUnchanged&&prior?.projectSha256===candidateDigest){
     // The context-copy target must still match the measured candidate. Capture
     // before persistence can yield to a retained target's queued mutation.

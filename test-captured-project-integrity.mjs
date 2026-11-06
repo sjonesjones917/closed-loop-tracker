@@ -18,7 +18,7 @@ export const CAPTURED_RECEIPT_SITES=Object.freeze([
  ' const integrity=verifiedProjectIntegrity(project,project.projectSha256,CAPTURED_PROJECT_INTEGRITY);',
  'committedIntegrity=verifiedProjectIntegrity(privateCommitted,digest,CAPTURED_PROJECT_INTEGRITY);',
  'committedIntegrity=verifiedProjectIntegrity(privateCommitted,next.projectSha256,CAPTURED_PROJECT_INTEGRITY);',
- 'row:capturedPrivateCopy(base),journal:capturedPrivateCopy(journalSnapshot),'
+ 'row:committedSourceRow,journal:capturedPrivateCopy(journalSnapshot),'
 ]);
 // The operational write receipt's snapshot is walked again to copy the context
 // carrier and the returned project, so it must stay an ordinary receipt.
@@ -99,7 +99,7 @@ function instrumentCaptureAudit(source){
  }
  source=replaceOnce(source,'if(pair)checkpointDigestPairs.add(pair);\n  // With a bound pair','if(pair){checkpointDigestPairs.add(pair);globalThis.__privateSite?.(\'checkpointPair\',pair.snapshot);}\n  // With a bound pair');
  source=replaceOnce(source,'rootCertificates.add(root);unverifiedWriteRoots.add(root);return root;','globalThis.__privateSite?.(\'rootCertificate\',root.snapshot);globalThis.__privateSite?.(\'rootCertificateProject\',root.project);rootCertificates.add(root);unverifiedWriteRoots.add(root);return root;');
- source=replaceOnce(source,'const candidateDigest=projectSha256(candidate),candidateProof=verifiedProjectIntegrity(candidate,candidateDigest);','const candidateDigest=projectSha256(candidate),candidateProof=verifiedProjectIntegrity(candidate,candidateDigest);globalThis.__privateSite?.(\'mutationCandidate\',candidateProof.snapshot);');
+ source=replaceOnce(source,'const candidateProof=candidateDigest?verifiedProjectIntegrity(candidate,candidateDigest):null;','const candidateProof=candidateDigest?verifiedProjectIntegrity(candidate,candidateDigest):null;globalThis.__privateSite?.(\'mutationCandidate\',candidateProof?.snapshot);');
  source=replaceOnce(source,'const digest=pair?pair.projectSha256:projectSha256(next),integrity=verifiedProjectIntegrity(next,digest);\n  await persistProjectPromptFiles(','const digest=pair?pair.projectSha256:projectSha256(next),integrity=verifiedProjectIntegrity(next,digest);globalThis.__privateSite?.(\'canonicalEncodeSource\',integrity.snapshot);\n  await persistProjectPromptFiles(');
  source=replaceOnce(source,'globalThis.closedLoopProjectStore=Object.freeze({STORAGE_IO_TIMEOUT_MS','globalThis.__captureState=()=>({commit:Boolean(recentOperationalCommitRead),receipt:Boolean(recentOperationalCommitRead)&&capturedIntegrityProofs.has(recentOperationalCommitRead),row:Boolean(recentOperationalCommitRead?.row)&&capturedValueProofs.has(recentOperationalCommitRead.row),journal:recentOperationalCommitRead?.journal?capturedValueProofs.has(recentOperationalCommitRead.journal):null});globalThis.__privateRead=readProjectForTransaction;globalThis.__readCaptured=value=>capturedIntegrityProofs.has(value);globalThis.closedLoopProjectStore=Object.freeze({STORAGE_IO_TIMEOUT_MS');
  return source;
@@ -156,8 +156,8 @@ export const CAPTURED_RECEIPT_AUDIT_FAULTS=Object.freeze({
  'capture-copied-operational-receipt':['integrity=verifiedProjectIntegrity(next,digest);\n  const retentionState=','integrity=verifiedProjectIntegrity(next,digest,pair?CAPTURED_PROJECT_INTEGRITY:null);\n  const retentionState=','CAPTURED_RECEIPT_NO_EXPOSURE_ORACLE'],
  // Faults apply to the instrumented source.
  'capture-canonical-encode-source':["integrity=verifiedProjectIntegrity(next,digest);globalThis.__privateSite?.('canonicalEncodeSource',","integrity=verifiedProjectIntegrity(next,digest,CAPTURED_PROJECT_INTEGRITY);globalThis.__privateSite?.('canonicalEncodeSource',",'CAPTURED_RECEIPT_NO_EXPOSURE_ORACLE'],
- 'capture-mutation-candidate':['candidateProof=verifiedProjectIntegrity(candidate,candidateDigest);','candidateProof=verifiedProjectIntegrity(candidate,candidateDigest,CAPTURED_PROJECT_INTEGRITY);','CAPTURED_RECEIPT_NO_EXPOSURE_ORACLE'],
- 'capture-checkpoint-pair':[',snapshot=primitive&&verifiedGraphNodes(next)?copyVerifiedTree(canonicalProject(next)):null,measured=',',snapshot=primitive&&verifiedGraphNodes(next)?capturedPrivateCopy(canonicalProject(next)):null,measured=','CAPTURED_RECEIPT_NO_EXPOSURE_ORACLE']
+ 'capture-mutation-candidate':['candidateProof=candidateDigest?verifiedProjectIntegrity(candidate,candidateDigest):null;','candidateProof=candidateDigest?verifiedProjectIntegrity(candidate,candidateDigest,CAPTURED_PROJECT_INTEGRITY):null;','CAPTURED_RECEIPT_NO_EXPOSURE_ORACLE'],
+ 'capture-checkpoint-pair':[',snapshot=primitive?checkpointPairSource(next):null,measured=',',snapshot=primitive?capturedPrivateCopy(canonicalProject(next)):null,measured=','CAPTURED_RECEIPT_NO_EXPOSURE_ORACLE']
 });
 export async function verifyCapturedReceiptAuditFaults({source=read('project-store.js')}={}){
  const faults=[];

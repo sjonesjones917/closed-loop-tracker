@@ -78,6 +78,58 @@ export async function measureWriteWalks({source=fs.readFileSync(new URL('./proje
  for(const name of ['Project','Workflow']){const saved=await measure(()=>r.store.saveCheckpoint(p.job.JOB_ID,{expectedProjectRevision:p.revision,expectedStateSha256:p.projectSha256,view:view(name)}));cases.push({command:'viewCheckpoint:'+name,...saved.observed});}
  return {projectNodes,walkThreshold:r.runtime.__walkThreshold,cases};
 }
+// No-op comparisons change the cost of the initial digest, never its
+// admissibility, error text, required confirmation identity or CAS order.
+export async function verifyWriteDigestPreflights(){
+ const source=fs.readFileSync(new URL('./project-store.js',import.meta.url),'utf8');
+ const anchor='if(checkpointSnapshotPrimitivesCurrent(proof)&&rootValidatorsUnchanged(root.validators))return matches;';
+ const instrumented=replaceOnce(source,anchor,anchor.replace('return matches;','{globalThis.__readEquality(matches);return matches;}'));
+ const comparisons=[];
+ const r=projectStoreRuntime({storageWorker:false,sourceOverrides:{'project-store.js':instrumented},environment:{__readEquality:matches=>comparisons.push(matches)}});
+ let p=await r.store.createProject({commandId:'WRITE-DIGEST-PREFLIGHT'});
+ p.job.JOB_TITLE='Guarded preflight';r.engine.recalculate(p);p=await r.store.writeProject(p,{expectedProjectRevision:p.revision});
+ const options=()=>({expectedProjectRevision:p.revision,expectedStateSha256:p.projectSha256});
+ const oldRevision=p.revision;
+ const canonical=r.copy(p);canonical.job.JOB_TITLE='Updated preflight';r.engine.recalculate(canonical);
+ comparisons.length=0;p=await r.store.writeProject(canonical,options());
+ assert.deepEqual(comparisons,[false],'CANONICAL_PRECHECK_VERIFIED_MISMATCH');
+ assert.equal(p.revision,oldRevision+1);assert.equal(p.projectSha256,r.store.projectSha256(p));
+ comparisons.length=0;
+ const unchanged=await r.store.writeProject(r.copy(p),{...options(),operational:true});
+ assert.deepEqual(comparisons,[true],'OPERATIONAL_PRECHECK_VERIFIED_MATCH');
+ assert.equal(unchanged.projectSha256,p.projectSha256);assert.equal(unchanged.revision,p.revision);
+ const extra=r.copy(p);extra.activeView='Records';p=await r.store.writeProject(extra,{...options(),operational:true});
+ assert.equal(p.projectSha256,r.store.projectSha256(p));
+ const ordinary=r.store.mutationImpact(p,p,p),whenRequired={candidateWhenRequired:true};
+ assert.equal(ordinary.candidateSha256,p.projectSha256);
+ assert.equal(r.store.mutationImpact(p,p,p,whenRequired).candidateSha256,null);
+ const prior=r.copy(p);
+ prior.projectData.acceptedChanges.push({changeId:'REVIEW-WRITE',stage:1,active:true});
+ const required=r.store.mutationImpact(prior,p,p),preflight=r.store.mutationImpact(prior,p,p,whenRequired);
+ assert.equal(required.requiresConfirmation,true);assert.deepEqual(preflight,required,'REQUIRED_REVIEW_DIGEST_AND_KEY');
+ // Both the early no-op comparison and the unused-digest paths still reject
+ // malformed extension values at the canonical encoder, before recalculation.
+ for(const leaf of ['\uD800',-0,undefined]){
+  const invalid=r.copy(p);invalid.extra=r.copy({leaf});
+  let expected;try{r.store.projectSha256(invalid);}catch(error){expected=error;}
+  assert.ok(expected,'INVALID_EXTENSION_DIGEST_ORACLE');
+  const same=error=>error.name===expected.name&&error.message===expected.message;
+  assert.throws(()=>r.store.mutationImpact(p,invalid,invalid,whenRequired),same);
+  await assert.rejects(r.store.writeProject(invalid,{...options(),skipUnchanged:false}),same);
+  await assert.rejects(r.store.writeProject(invalid,{...options(),operational:true}),same);
+  await assert.rejects(r.store.writeProject(invalid,{...options(),expectedProjectRevision:p.revision+5}),error=>error.code==='STALE_PROJECT_REVISION');
+ }
+ // A changed encoding native must actually be called, even on an unchanged
+ // write, and an unnecessary page confirmation must not hide its failure.
+ const warm=r.copy(p);warm.activeView='Workflow';p=await r.store.writeProject(warm,{...options(),operational:true});
+ const original=r.runtime.JSON.stringify,marker='refuse swapped encoding native';
+ r.runtime.JSON.stringify=function(value,...args){if(value==='Updated preflight')throw new Error(marker);return Reflect.apply(original,this,[value,...args]);};
+ try{
+  assert.throws(()=>r.store.mutationImpact(p,p,p,whenRequired),error=>error.message===marker);
+  await assert.rejects(r.store.writeProject(r.copy(p),{...options(),operational:true}),error=>error.message===marker);
+ }finally{r.runtime.JSON.stringify=original;}
+ assert.equal((await r.store.readProject(p.job.JOB_ID)).projectSha256,p.projectSha256,'FAILED_PREFLIGHT_PRESERVES_ROW');
+}
 export async function verifyWriteWalkCounts(options={}){
  const {projectNodes,walkThreshold,cases}=await measureWriteWalks(options);
  for(const row of cases.filter(row=>Object.hasOwn(WRITE_WALK_PINS,row.command))){
@@ -94,6 +146,7 @@ export async function verifyWriteWalkCounts(options={}){
   assert.equal(row.rootContinuationWalks,row.rootContinuationCalls*WRITE_SITE_PINS.rootContinuationWalksPerCall,'WRITE_WALK_ROOT_CONTINUATION_ORACLE: '+row.command);
   assert.equal(row.rootBytesWalks,row.rootBytesCalls*WRITE_SITE_PINS.rootBytesWalksPerCall,'WRITE_WALK_ROOT_BYTES_ORACLE: '+row.command);
  }
+ await verifyWriteDigestPreflights();
  return {passed:true,projectNodes,walkThreshold,pins:WRITE_WALK_PINS,sitePins:WRITE_SITE_PINS,cases,boundary:'In-memory instrumented production store and hash sources over the transaction adapter; counts whole-project graph walks and copies per command, not time.'};
 }
 // Intended faults: each restores one removed pass and must fail its pin.

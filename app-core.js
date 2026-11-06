@@ -375,7 +375,7 @@ async function persistReplacement(next,{expectedProjectRevision=null,mutationCon
  // own current row; its refusal (error.impact) opens the same review below.
  // Operational writes have no store-side confirmation, so they keep this one.
  // A candidate its caller has just recalculated is its own derived graph.
- const impact=nativeProductResults||acceptance||!operational?null:projectStore.mutationImpact?.(source,next,recalculated?next:null);
+ const impact=nativeProductResults||acceptance||!operational?null:projectStore.mutationImpact?.(source,next,recalculated?next:null,{candidateWhenRequired:true});
  if(impact?.requiresConfirmation&&mutationConfirmation?.confirmationKey!==impact.confirmationKey){await showReplacementReview({impact,next,expectedProjectRevision,acceptance});throw Object.assign(new Error('Review this change before saving.'),{code:'MUTATION_REVIEW_SHOWN'});}
  let committed,committedView,nativeCommandDispatched=false;
  try{
