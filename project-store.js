@@ -602,9 +602,9 @@ function operationalValuesEqual(before,after){
     // unsupported graph keeps the original hash owner's errors and ordering.
     if((leftTree===sharedOperationalTree||rightTree===sharedOperationalTree)&&checkpointSnapshotPrimitivesCurrent(operationalEqualityScope)){
       try{
-        const left=verifiedGraphNodes(before),right=verifiedGraphNodes(after);
+        const ops=guardedGraphOperations(),left=verifiedGraphNodes(before),right=verifiedGraphNodes(after);
         if(canonicalVerifiedGraph(before,left)&&canonicalVerifiedGraph(after,right)&&
-           verifiedNodeValuesEqual(before,after,left,right)&&checkpointSnapshotPrimitivesCurrent(operationalEqualityScope))return true;
+           verifiedNodeValuesEqual(before,after,left,right,ops)&&checkpointSnapshotPrimitivesCurrent(operationalEqualityScope))return true;
       }catch{} // The canonical owner supplies the original diagnostic.
     }
     return equivalent(before,after);

@@ -23,6 +23,13 @@ export function verifyCheckpointStateSnapshot(){
  for(const [label,expression] of [['symbol','({...candidate,[Symbol("x")]:1})'],['getter','Object.defineProperty({...candidate},"generation",{enumerable:true,get(){return 7;}})'],['cycle','(()=>{const c={...candidate};c.self=c;return c;})()'],['proxy-change','new Proxy(candidate,{getOwnPropertyDescriptor(target,key){const d=Reflect.getOwnPropertyDescriptor(target,key);return key==="generation"?{...d,value:8}:d;}})']])assert.equal(run(`unchangedCheckpointValueSnapshot(second,${expression})`),false,'CHECKPOINT_STATE_UNUSUAL_INPUT:'+label);
  assert.throws(()=>run('unchangedCheckpointValueSnapshot(second,new Proxy(candidate,{getOwnPropertyDescriptor(){throw new Error("PROXY_TRAP");}}))'),/PROXY_TRAP/);
  run('releaseCheckpointValueSnapshot(second);');
+ // A broken visited map may miss a node it saw. An active ancestor still
+ // ends the walk immediately, before another descent or a recursion hang.
+ assert.equal(run(`(()=>{const original=Map.prototype.has;let calls=0;
+  Map.prototype.has=function(){if(++calls>4)throw Error('GRAPH_REPEATED_ACTIVE_NODE');return false;};
+  try{const cycle={};cycle.self=cycle;return verifiedGraphNodes(cycle)===null&&calls===1;}
+  finally{Map.prototype.has=original;}})()`),true,'VERIFIED_GRAPH_ACTIVE_CYCLE_FIRST');
+
  // A candidate can replace a native while the owner is inspecting it. The
  // cached nodes must be retired even when the wrapper forwards the same data.
  for(const phase of ['walk','compare']){
