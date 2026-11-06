@@ -5,6 +5,7 @@
 // A pass removed on purpose lowers its pin here; a pass added back fails the
 // pin. Sources are instrumented in memory only; production files are unchanged.
 import fs from 'node:fs';
+import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import {projectStoreRuntime} from './test-project-store-runtime.mjs';
 
@@ -85,9 +86,11 @@ export async function verifyWriteDigestPreflights(){
  const anchor='if(checkpointSnapshotPrimitivesCurrent(proof)&&rootValidatorsUnchanged(root.validators))return matches;';
  const instrumented=replaceOnce(source,anchor,anchor.replace('return matches;','{globalThis.__readEquality(matches);return matches;}'));
  const comparisons=[];
- const r=projectStoreRuntime({storageWorker:false,sourceOverrides:{'project-store.js':instrumented},environment:{__readEquality:matches=>comparisons.push(matches)}});
+ const testExports='globalThis.closedLoopProjectStore=Object.freeze({STORAGE_IO_TIMEOUT_MS';
+ const tapped=replaceOnce(instrumented,testExports,'globalThis.__writeTrapCompare=value=>verifiedReadCandidateEquality(recentOperationalCommitRead,value);globalThis.__writeTrapCopy=checkpointPairSource;'+testExports);
+ const r=projectStoreRuntime({storageWorker:false,sourceOverrides:{'project-store.js':tapped},environment:{__readEquality:matches=>comparisons.push(matches)}});
  let p=await r.store.createProject({commandId:'WRITE-DIGEST-PREFLIGHT'});
- p.job.JOB_TITLE='Guarded preflight';r.engine.recalculate(p);p=await r.store.writeProject(p,{expectedProjectRevision:p.revision});
+ p.writeTrapProbe=r.copy([{value:1}]);p.job.JOB_TITLE='Guarded preflight';r.engine.recalculate(p);p=await r.store.writeProject(p,{expectedProjectRevision:p.revision});
  const options=()=>({expectedProjectRevision:p.revision,expectedStateSha256:p.projectSha256});
  const oldRevision=p.revision;
  const canonical=r.copy(p);canonical.job.JOB_TITLE='Updated preflight';r.engine.recalculate(canonical);
@@ -100,6 +103,26 @@ export async function verifyWriteDigestPreflights(){
  assert.equal(unchanged.projectSha256,p.projectSha256);assert.equal(unchanged.revision,p.revision);
  const extra=r.copy(p);extra.activeView='Records';p=await r.store.writeProject(extra,{...options(),operational:true});
  assert.equal(p.projectSha256,r.store.projectSha256(p));
+ // Replacing one native from an array length trap and restoring it inside
+ // its first dispatch must never expose a private snapshot or copy target.
+ for(const phase of ['copy','compare']){
+  r.runtime.__trapProject=r.copy(p);r.runtime.__trapPhase=phase;
+  const result=vm.runInContext(`(()=>{
+    const candidate=__trapProject,phase=__trapPhase,same=Object.is,define=Object.defineProperty;
+    let lengths=0,stolen=false;
+    candidate.writeTrapProbe=new Proxy(candidate.writeTrapProbe,{get(target,key,receiver){
+      if(key==='length'&&++lengths===2){
+        if(phase==='copy')Object.defineProperty=(...args)=>{Object.defineProperty=define;stolen=true;return define(...args);};
+        else Object.is=(left,right)=>{Object.is=same;stolen=true;return same(left,right);};
+      }
+      return Reflect.get(target,key,receiver);
+    }});
+    try{const value=phase==='copy'?__writeTrapCopy(candidate):__writeTrapCompare(candidate);
+      return [value===null,stolen,lengths];}
+    finally{Object.defineProperty=define;Object.is=same;}
+  })()`,r.runtime);
+  assert.deepEqual([...result],[true,false,2],'WRITE_PRECHECK_TRANSIENT_NATIVE_ORACLE '+phase);
+ }
  const ordinary=r.store.mutationImpact(p,p,p),whenRequired={candidateWhenRequired:true};
  assert.equal(ordinary.candidateSha256,p.projectSha256);
  assert.equal(r.store.mutationImpact(p,p,p,whenRequired).candidateSha256,null);

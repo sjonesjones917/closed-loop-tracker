@@ -1181,10 +1181,16 @@ function replayOperationalPatches(project,patches){
 function checkpointPairSource(project){
   const guarded=checkpointSnapshotPrimitivesCurrent(operationalEqualityScope),nodes=verifiedGraphNodes(project);
   if(!nodes)return null;
-  if(guarded&&checkpointSnapshotPrimitivesCurrent(operationalEqualityScope)&&canonicalVerifiedGraph(project,nodes)){
-    const snapshot=copyVerifiedGraph(project,nodes);
+  if(guarded&&canonicalVerifiedGraph(project,nodes)){
+    // Reading a Proxy array's length can replace a native for one call. Take
+    // every length before the private target exists and withhold the pair if
+    // that inspection changed a primitive.
+    const arrayLengths=new Map();
+    for(const source of nodes.keys())if(Array.isArray(source))arrayLengths.set(source,source.length);
+    if(!checkpointSnapshotPrimitivesCurrent(operationalEqualityScope))return null;
+    const snapshot=copyVerifiedGraph(project,nodes,null,arrayLengths);
     delete snapshot.projectSha256;
-    if(checkpointSnapshotPrimitivesCurrent(operationalEqualityScope))return snapshot;
+    return checkpointSnapshotPrimitivesCurrent(operationalEqualityScope)?snapshot:null;
   }
   return copyVerifiedTree(canonicalProject(project));
 }
@@ -1255,10 +1261,10 @@ function verifiedReadCandidateEquality(read,next){
     try{
       const current={...next,projectSha256:read.digest},nodes=verifiedGraphNodes(current);
       if(canonicalVerifiedGraph(current,nodes)&&checkpointSnapshotPrimitivesCurrent(proof)){
-        const matches=verifiedNodeValuesEqual(proof.snapshot,current,proof.nodes,nodes);
+        const matches=verifiedNodeValuesEqual(proof.snapshot,current,proof.nodes,nodes,guardedGraphOperations());
         if(checkpointSnapshotPrimitivesCurrent(proof)&&rootValidatorsUnchanged(root.validators))return matches;
       }
-    }catch{/* Use the canonical owner for unusual values and its original errors. */}
+    }catch{releaseCheckpointValueSnapshot(proof);}
   }
   if(proof?.nodes&&!checkpointSnapshotPrimitivesCurrent(proof))releaseCheckpointValueSnapshot(proof);
   return null;
