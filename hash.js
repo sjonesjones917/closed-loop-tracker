@@ -303,6 +303,9 @@ function memoDescriptorEqual(a,b){
 }
 const memoNativeBaseline=(()=>{
  const globals=memoNativeNames.map(name=>[name,memoDescriptor(globalThis,name)]),targets=new Set([canonicalChunks]);
+ // Array, string and collection iterators dispatch through separate prototypes.
+ // Include their shared parent so a changed next or iterator method disables reuse.
+ for(const iterator of [[][Symbol.iterator](),''[Symbol.iterator](),new Map().entries(),new Set().values()])targets.add(memoPrototype(iterator));
  for(const [,descriptor]of globals){const value=descriptor?.value;if(!value)continue;targets.add(value);if(value.prototype)targets.add(value.prototype);}
  for(const target of [...targets]){let parent=memoPrototype(target);while(parent){targets.add(parent);parent=memoPrototype(parent);}}
  let generator=memoPrototype(canonicalChunks(null));while(generator&&generator!==Object.prototype){targets.add(generator);generator=memoPrototype(generator);}

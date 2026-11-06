@@ -1690,6 +1690,52 @@ async function listProjectSummaries(){
   const cursorRead=storageEvent('CURSOR',(resolve,reject,active)=>{const req=tx.objectStore(PROJECTS).index('picker').openKeyCursor();req.onerror=()=>{if(active())reject(req.error||new Error('Project picker could not be read.'));};req.onsuccess=()=>{if(!active())return;const cursor=req.result;if(!cursor){resolve();return;}summaries.push(projectPickerSummary(cursor.key));cursor.continue();};},tx);
   await Promise.all([cursorRead,finished]);return summaries;
 }
+// A package hashes its own detached values in bounded slices. Verify the
+// hash natives before copying and on every resume, before the generator or
+// digest can observe another byte. An ineligible source or swap takes the
+// cooperative cold digest and the independent byte check before release.
+function ordinaryPackageRowNodes(row){
+  const nodes=verifiedGraphNodes(row);
+  if(!nodes)return null;
+  for(const item of nodes.keys())if(Array.isArray(item)&&Object.getPrototypeOf(item)!==Array.prototype)return null;
+  return nodes;
+}
+function packagePrimitivesCurrent(scope){
+  return Boolean(scope&&hash.canonicalDigestScopeMatches(scope,null)&&rootDigestPrimitivesUnchanged(initialRootDigestPrimitives));
+}
+function packageRowMatches(scope,privateRow,row){
+  if(!packagePrimitivesCurrent(scope))return false;
+  const nodes=ordinaryPackageRowNodes(row);
+  return nodes&&verifiedNodeValuesEqual(privateRow,row,verifiedGraphNodes(privateRow),nodes)&&packagePrimitivesCurrent(scope);
+}
+function capturePackageSources(source,{storage,row,journal}){
+  let scope=null;try{scope=hash.createCanonicalDigestScope(null);}catch{}
+  Object.assign(source,{current:false,validators:null,storage,row:copyVerifiedTree(row),journal:copyVerifiedTree(journal)});
+  return scope;
+}
+async function guardedPackageRowDigest(scope,privateRow){
+  const current=()=>packagePrimitivesCurrent(scope);
+  try{
+    if(!current())return null;
+    const nodes=ordinaryPackageRowNodes(privateRow);if(!nodes)return null;
+    // The generator resumes in later turns. No retained reference can change
+    // the preimage between its first and last chunk.
+    for(const item of nodes.keys())Object.freeze(item);
+    if(!current())return null;
+    const digest=hash.createSha256(),chunks=hash.canonicalChunks(canonicalProject(privateRow.project));
+    let units=0;
+    for(const chunk of chunks){
+      digest.updateText(chunk);units+=chunk.length;
+      if(units>=1024*1024){
+        await new Promise(resolve=>setTimeout(resolve,0));
+        if(!current())return null;
+        units=0;
+      }
+    }
+    const measured=digest.digest();
+    return current()?measured:null;
+  }catch{return null;}
+}
 // A root certificate survives plain public reads of its own job: they verify
 // their own fresh row cold, return fresh objects and never consume it, and every
 // later consumer rereads and compares the stored row, journal and bytes against
@@ -1705,7 +1751,7 @@ async function readProjectMetadata(jobId,sourceProof=null,physicalCapture=null,p
   try{sources=await readPhysicalProjectSources(tx,jobId);await complete(tx);}catch(error){try{tx.abort();}catch{}if(error?.code!=='PHYSICAL_RECORD_INVALID')throw error;await quarantinePhysicalProject(jobId,'PHYSICAL_RECORD_INVALID: '+error.message,error.physicalCapture);throw storageError('Stored physical project data failed integrity verification. Available original evidence was preserved in quarantine.','PROJECT_INTEGRITY_FAILED');}
   const {row,journal,storage}=sources;if(physicalCapture)physicalCapture.storage=storage;
   // A package read keeps private copies of the exact sources it verifies below.
-  if(packageSource)Object.assign(packageSource,{current:false,validators:null,storage,row:copyVerifiedTree(row),journal:copyVerifiedTree(journal)});
+  const digestScope=packageSource&&row?capturePackageSources(packageSource,sources):null;
   const committedRead=sourceProof&&sourceProof.readPurpose!==STARTUP_RECOVERY_CAPTURE?takeOperationalCommitRead(row,journal,sourceProof.readPurpose,storage):null;if(sourceProof?.readPurpose===STARTUP_RECOVERY_CAPTURE||!sourceProof&&!(!physicalCapture&&durableCommitRead(jobId)))recentOperationalCommitRead=null;
   if(!row)return null;
   if(sourceProof&&committedRead){
@@ -1718,9 +1764,16 @@ async function readProjectMetadata(jobId,sourceProof=null,physicalCapture=null,p
     recoveryProjectionBounds.set(committedRead.project,journal?.updatedAt||row.updatedAt);return committedRead.project;
   }
   if(sourceProof){sourceProof.row=copyVerifiedTree(row);sourceProof.journal=copyVerifiedTree(journal);sourceProof.storage=storage;sourceProof.current=true;}
-  let computed;try{computed=await hash.sha256Chunks(hash.canonicalChunks(canonicalProject(row.project)));}catch(error){await quarantine(row,'PROJECT_ENCODING_INVALID: '+error.message,{physicalSources:sources});throw storageError('The stored project contains invalid canonical data. Its original state was preserved in quarantine.','PROJECT_INTEGRITY_FAILED');}
+  let computed;try{
+    computed=digestScope?await guardedPackageRowDigest(digestScope,packageSource.row):null;
+    // The verifier validates the live row, so bind it to the hashed snapshot
+    // in this turn, after the digest's last await.
+    if(computed!==null&&!packageRowMatches(digestScope,packageSource.row,row))computed=null;
+    if(packageSource)packageSource.guardedDigest=computed;
+    if(computed===null)computed=await hash.sha256Chunks(hash.canonicalChunks(canonicalProject(row.project)));
+  }catch(error){await quarantine(row,'PROJECT_ENCODING_INVALID: '+error.message,{physicalSources:sources});throw storageError('The stored project contains invalid canonical data. Its original state was preserved in quarantine.','PROJECT_INTEGRITY_FAILED');}finally{if(digestScope)releaseCheckpointValueSnapshot({scope:digestScope});}
   // A package read carries only the synchronous checks below, under validators
-  // captured after its last await; its digest spanned awaits and is not carried.
+  // captured after its last await. Only the guarded digest can also be carried.
   if(packageSource)packageSource.before=captureRootValidators(initialRootDigestPrimitives);
   if(computed!==row.projectSha256){await quarantine(row,'PROJECT_HASH_MISMATCH',{physicalSources:sources});throw storageError('Project hash mismatch. The original row was preserved in quarantine.','PROJECT_HASH_MISMATCH');}
   if(Number(row.revision)!==Number(row.project?.revision)){await quarantine(row,'PROJECT_REVISION_MISMATCH',{physicalSources:sources});throw storageError('Stored revision does not match the canonical project. The original row was preserved in quarantine.','PROJECT_REVISION_MISMATCH');}
@@ -4626,12 +4679,10 @@ async function scanHandoffMembers(members,{crc32ByBlob=null}={}){
 // is repeated. Any difference, a migrated or partial read, unavailable
 // validators or retained run context to rehydrate takes the cold public read,
 // which refuses, quarantines and releases proofs as before.
-// The first read's digest ran across awaits through replaceable natives, so it
-// is never the only byte check. The first staleness read (verifyBytes), which
-// precedes every review, denial, member or archive the build returns, hashes
-// the stored row it read itself and takes the cold read, which quarantines and
-// refuses, unless that digest is the row's stored label. The read after the
-// archive only compares: those same bytes were already checked independently.
+// A guarded first digest authenticates the private row to which the staleness
+// read compares fresh storage. After any unguarded first digest, staleness
+// verification also hashes the freshly read row before any review or archive
+// can leave the store.
 async function readPackageProject(jobId,source){
   // readProjectMetadata records the validators of its synchronous checks.
   const project=await readProjectMetadata(jobId,null,null,source);
@@ -4650,9 +4701,11 @@ async function rereadPackageProject(jobId,source,{verifyBytes=true}={}){
     let sources=null;const tx=await openTransaction([PROJECTS,META],'readonly');
     try{sources=await readPhysicalProjectSources(tx,jobId);await complete(tx);}catch{try{tx.abort();}catch{}sources=null;}
     if(!durableCommitRead(jobId))recentOperationalCommitRead=null;
-    let unchanged=Boolean(sources?.row)&&physicalSourcesUnchanged(source.storage,sources.storage)&&verifiedValuesEqual(source.row,sources.row)&&verifiedValuesEqual(source.journal,sources.journal);
+    // An IndexedDB read spanned awaits. Recheck before exposing either private
+    // source to reflection, even when a subsequently restored native would pass.
+    let unchanged=Boolean(sources?.row)&&hash.canonicalDigestScopeMatches(source.validators.scope,null)&&physicalSourcesUnchanged(source.storage,sources.storage)&&(source.guardedDigest?packageRowMatches(source.validators.scope,source.row,sources.row):verifiedValuesEqual(source.row,sources.row))&&verifiedValuesEqual(source.journal,sources.journal);
     // This read's own digest of the stored row bytes, independent of the first read's.
-    if(unchanged&&verifyBytes){let computed=null;try{computed=await hash.sha256Chunks(hash.canonicalChunks(canonicalProject(sources.row.project)));}catch{computed=null;}unchanged=computed!==null&&computed===sources.row.projectSha256;}
+    if(unchanged&&verifyBytes&&source.guardedDigest!==sources.row.projectSha256){let computed=null;try{computed=await hash.sha256Chunks(hash.canonicalChunks(canonicalProject(sources.row.project)));}catch{computed=null;}unchanged=computed!==null&&computed===sources.row.projectSha256;}
     if(unchanged&&rootValidatorsUnchanged(source.validators)){
       // The custody observation of a cold read of these sources, in its order.
       forgetArtifactCustody(jobId);

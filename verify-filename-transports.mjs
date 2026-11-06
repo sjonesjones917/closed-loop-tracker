@@ -71,14 +71,21 @@ async function assemble(f,{at,act,review=false}){
 // or of TextEncoder.prototype.encode during that read makes a stored row,
 // corrupted outside its projection receipt, pass once; the staleness read
 // before the review or package leaves recomputes the digest and refuses it.
-async function firstReadSwap(storeSource,swapKind,review){
+async function firstReadSwap(storeSource,swapKind,review,{duringYield=false}={}){
+ if(duringYield){
+  const base=storeSource||sourceOverrides['project-store.js']||fs.readFileSync('project-store.js','utf8');
+  const slice='if(units>=1024*1024){',resumed='        await new Promise(resolve=>setTimeout(resolve,0));';
+  assert.equal(base.split(slice).length,2);assert.equal(base.split(resumed).length,2);
+  storeSource=base.replace(slice,'if(globalThis.__packageDigestSwap||units>=1024*1024){').replace(resumed,resumed+'globalThis.__packageDigestSwap?.();');
+ }
  const f=await assemblyFixture(storeSource,'ASSEMBLY-FIRST-READ-SWAP'),row=f.r3.rows.get('projects').get(f.q.job.JOB_ID);assert.ok(row?.project,'HANDOFF_ASSEMBLY_FIXTURE_ORACLE: inline project row');
  const stored=row.projectSha256,originalView=row.project.activeView,corruptView='Corrupted outside the projection receipt';row.project.activeView=corruptView;
  const h=f.r3.runtime.closedLoopHash,canonical=f.r3.copy(row.project);delete canonical.projectSha256;const corrupted=await h.sha256Chunks(h.canonicalChunks(canonical));assert.notEqual(corrupted,stored,'HANDOFF_ASSEMBLY_FIXTURE_ORACLE: corruption changes the digest');
  const arrays=f.r3.runtime.Array.prototype,join=arrays.join,encoders=TextEncoder.prototype,encode=encoders.encode,marker=JSON.stringify(corruptView);let fired=0,outcome;
  const swappedJoin=function(...args){const out=Reflect.apply(join,this,args);if(out===corrupted){arrays.join=join;fired++;return stored;}return out;};
  const swappedEncode=function(input){const text=String(input);if(text.includes(marker)){encoders.encode=encode;fired++;return Reflect.apply(encode,this,[text.replace(marker,JSON.stringify(originalView))]);}return Reflect.apply(encode,this,[input]);};
- try{outcome=await assemble(f,{at:1,review,act:async()=>{if(swapKind==='encoder')encoders.encode=swappedEncode;else arrays.join=swappedJoin;}});}finally{arrays.join=join;encoders.encode=encode;}
+ try{outcome=await assemble(f,{at:1,review,act:async()=>{const install=()=>{if(swapKind==='encoder')encoders.encode=swappedEncode;else arrays.join=swappedJoin;};
+ if(duringYield)f.r3.runtime.__packageDigestSwap=()=>{delete f.r3.runtime.__packageDigestSwap;install();};else install();}});}finally{arrays.join=join;encoders.encode=encode;}
  assert.equal(fired,1,'HANDOFF_ASSEMBLY_FIXTURE_ORACLE: the swap fired exactly once');return outcome;
 }
 // A concurrent operational write changes only the journal; a tampered journal
@@ -94,8 +101,29 @@ async function custodyAssembly(storeSource){
  const f=await assemblyFixture(storeSource,'ASSEMBLY-CUSTODY',{artifact:true});assert.equal(f.r3.store.artifactCustodyState(f.identity),'TRUE','HANDOFF_ASSEMBLY_FIXTURE_ORACLE: custody before assembly');
  const outcome=await assemble(f,{at:2,act:async()=>{storedArtifactBody(f.r3,f.identity.artifactId).blob=new Blob([Buffer.alloc(f.identity.byteSize,33)]);}});return {...outcome,custody:f.r3.store.artifactCustodyState(f.identity)};
 }
+// A package digest may yield while holding a detached source. A change to
+// the live row just before its verification must take the normal cold path.
+async function liveDigestRowChange(source){
+ const anchor='    if(computed!==null&&!packageRowMatches(digestScope,packageSource.row,row))computed=null;';
+ const observe='    globalThis.__changeDigestRow?.(row);';
+ assert.equal(source.split(anchor).length,2);
+ const f=await assemblyFixture(source.replace(anchor,observe+'\n'+anchor),'ASSEMBLY-DIGEST-LIVE-ROW');
+ return assemble(f,{at:1,act:async()=>{f.r3.runtime.__changeDigestRow=row=>{delete f.r3.runtime.__changeDigestRow;row.project.activeView='Changed on digest resume';};}});
+}
+async function privateDigestRowChange(source){
+ const anchor='    const digest=hash.createSha256(),chunks=hash.canonicalChunks(canonicalProject(privateRow.project));';
+ assert.equal(source.split(anchor).length,2);
+ const f=await assemblyFixture(source.replace(anchor,'    globalThis.__changeDigestPrivate?.(privateRow);\n'+anchor),'ASSEMBLY-DIGEST-PRIVATE-ROW');let changed=null;
+ const outcome=await assemble(f,{at:1,act:async()=>{f.r3.runtime.__changeDigestPrivate=row=>{delete f.r3.runtime.__changeDigestPrivate;changed=Reflect.set(row.project,'activeView','Changed private digest preimage');};}});
+ assert.deepEqual([outcome.released,changed],[true,false],'HANDOFF_ASSEMBLY_PRIVATE_DIGEST_SOURCE_ORACLE');
+}
+const digestBindingSource=fs.readFileSync('project-store.js','utf8');
+const liveChanged=await liveDigestRowChange(digestBindingSource);
+assert.deepEqual(liveChanged,{released:false,code:'STALE_PROJECT_REVISION',quarantined:0},'HANDOFF_ASSEMBLY_LIVE_DIGEST_SOURCE_ORACLE');
+await privateDigestRowChange(digestBindingSource);
 const swapRefused={released:false,code:'PROJECT_HASH_MISMATCH',quarantined:1};
 for(const swapKind of ['join','encoder'])for(const review of [false,true])assert.deepEqual(await firstReadSwap(null,swapKind,review),swapRefused,`HANDOFF_ASSEMBLY_FIRST_READ_SWAP_ORACLE: ${swapKind} ${review?'review':'package'}`);
+assert.deepEqual(await firstReadSwap(null,'join',true,{duringYield:true}),swapRefused,'HANDOFF_ASSEMBLY_RESUMED_DIGEST_ORACLE');
 note('A corrupted stored row that one transient hash or encoder swap passes during the package cold read is still refused and preserved in quarantine before any review or package is returned');
 assert.deepEqual(await journalAssembly(null,'concurrent'),{released:false,code:'EXECUTION_PACKAGE_VERSION_STALE',quarantined:0},'HANDOFF_ASSEMBLY_JOURNAL_RACE_ORACLE');
 assert.deepEqual(await journalAssembly(null,'tampered'),{released:false,code:'OPERATIONAL_STATE_INTEGRITY_FAILED',quarantined:1},'HANDOFF_ASSEMBLY_JOURNAL_CORRUPTION_ORACLE');
@@ -104,8 +132,9 @@ assert.equal((await custodyAssembly(null)).custody,'UNKNOWN','HANDOFF_ASSEMBLY_C
 note('Artifact bytes corrupted during assembly lose custody at the staleness read, as at a cold read');
 // Intended faults: each removes one part of the staleness read and must be detected.
 const storeSource=fs.readFileSync('project-store.js','utf8'),storeFault=(name,before,after)=>{if(storeSource.split(before).length!==2)throw new Error('Fault anchor missing: '+name);return storeSource.replace(before,after);};
-const rehash='    if(unchanged&&verifyBytes){let computed=null;try{computed=await hash.sha256Chunks(hash.canonicalChunks(canonicalProject(sources.row.project)));}catch{computed=null;}unchanged=computed!==null&&computed===sources.row.projectSha256;}\n';
+const rehash='    if(unchanged&&verifyBytes&&source.guardedDigest!==sources.row.projectSha256){let computed=null;try{computed=await hash.sha256Chunks(hash.canonicalChunks(canonicalProject(sources.row.project)));}catch{computed=null;}unchanged=computed!==null&&computed===sources.row.projectSha256;}\n';
 const assemblyFaults=[
+ ['package-resume-native-unchecked',storeFault('package-resume-native-unchecked','        if(!current())return null;\n',''),async source=>firstReadSwap(source,'join',true,{duringYield:true}),swapRefused,'HANDOFF_ASSEMBLY_RESUMED_DIGEST_ORACLE'],
  ['first-read-digest-trusted',storeFault('first-read-digest-trusted',rehash,''),async source=>firstReadSwap(source,'join',false),swapRefused,'HANDOFF_ASSEMBLY_FIRST_READ_SWAP_ORACLE'],
  ['package-digest-after-archive-only',storeFault('package-digest-after-archive-only','rereadPackageProject(canonicalJobId,packageSource,{verifyBytes:true})','rereadPackageProject(canonicalJobId,packageSource,{verifyBytes:false})').replace('rereadPackageProject(canonicalJobId,packageSource,{verifyBytes:false});if(!afterArchive','rereadPackageProject(canonicalJobId,packageSource,{verifyBytes:true});if(!afterArchive'),async source=>firstReadSwap(source,'join',true),swapRefused,'HANDOFF_ASSEMBLY_FIRST_READ_SWAP_ORACLE'],
  ['package-journal-uncompared',storeFault('package-journal-uncompared','&&verifiedValuesEqual(source.journal,sources.journal)',''),async source=>journalAssembly(source,'concurrent'),{released:false,code:'EXECUTION_PACKAGE_VERSION_STALE',quarantined:0},'HANDOFF_ASSEMBLY_JOURNAL_RACE_ORACLE'],

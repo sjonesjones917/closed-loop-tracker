@@ -117,7 +117,8 @@ export async function verifyHandoffAuthorizationTransaction({sourceOverrides={},
 // runs today's create, which refuses as before. Digest and archive probes count
 // the actual whole-project digests and archive builds; they change no result.
 const RETAINED_PACKAGE_PROBES=[
- ['let computed;try{computed=await hash.sha256Chunks(hash.canonicalChunks(canonicalProject(row.project)));}',"let computed;try{globalThis.__retainedPackageProbe?.digests.push('cold');computed=await hash.sha256Chunks(hash.canonicalChunks(canonicalProject(row.project)));}"],
+ ["if(computed===null)computed=await hash.sha256Chunks(hash.canonicalChunks(canonicalProject(row.project)));","if(computed===null){globalThis.__retainedPackageProbe?.digests.push('cold');computed=await hash.sha256Chunks(hash.canonicalChunks(canonicalProject(row.project)));}"],
+ ["const measured=digest.digest();","const measured=digest.digest();globalThis.__retainedPackageProbe?.digests.push('guarded');"],
  ['try{computed=await hash.sha256Chunks(hash.canonicalChunks(canonicalProject(sources.row.project)));}',"try{globalThis.__retainedPackageProbe?.digests.push('reread');computed=await hash.sha256Chunks(hash.canonicalChunks(canonicalProject(sources.row.project)));}"],
  ['async function handoffArchive(members,crc32ByBlob){\n','async function handoffArchive(members,crc32ByBlob){\n  globalThis.__retainedPackageProbe?.archives.push(members.length);\n']];
 // Intended faults: each removes one condition of the take.
@@ -243,28 +244,28 @@ async function retainedPackageAppFixture(sources){
 export async function verifyRetainedHandoffPackage({sourceOverrides={}}={}){
  sourceOverrides=Object.fromEntries(files.map(file=>[file,sourceOverrides[file]??fs.readFileSync(file,'utf8')]));
  const sources=retainedPackageSources(sourceOverrides),observations={},continuationDigests=calls=>calls.slice(1).reduce((sum,call)=>sum+(call.digests==='none'?0:call.digests.split('+').length),0);
- // The continuation takes its review's package: one cold read (two digests)
- // where today's review and create read cold twice (four), and no create.
+ // The continuation takes its review's package: one guarded digest
+ // where today's review and create would compute two, and no create.
  {
   const f=await retainedPackageAppFixture(sources);assert.equal(f.probe.archives.length,0,'RETAINED_PACKAGE_REVIEW_ONLY_ORACLE: the operator review builds no archive');
   assert.equal(await f.authorize(),null);assert.equal(f.failures.length,0);assert.equal(f.downloads.length,1);
-  assert.deepEqual(f.calls,[{kind:'review',retain:false,digests:'cold+reread',archives:0},{kind:'review',retain:true,digests:'cold+reread',archives:1},{kind:'take',taken:true,digests:'none',archives:0}],'RETAINED_PACKAGE_SINGLE_BUILD_ORACLE');
+  assert.deepEqual(f.calls,[{kind:'review',retain:false,digests:'guarded',archives:0},{kind:'review',retain:true,digests:'guarded',archives:1},{kind:'take',taken:true,digests:'none',archives:0}],'RETAINED_PACKAGE_SINGLE_BUILD_ORACLE');
   assert.deepEqual(f.captures,['retained','retained'],'HANDOFF_VIEW_RETAINED_BY_WRITE_ORACLE');
   const zip=readStoreArchive(new Uint8Array(await packageBytes(f.downloads[0]))),manifest=JSON.parse(Buffer.from(zip.find(row=>row.canonicalPath==='manifest.json').bytes).toString());assert.equal(manifest.promptIdentity.instructionId,f.t.currentPromptRecord(f.stage).instructionId,'RETAINED_PACKAGE_SINGLE_BUILD_ORACLE: the exported package is the current instruction');
   observations.continuation={calls:f.calls,continuationDigests:continuationDigests(f.calls)};
  }
  {
   const f=await retainedPackageAppFixture(sources);assert.equal(await f.authorize({take:false,retain:false}),null);assert.equal(f.downloads.length,1);
-  assert.deepEqual(f.calls,[{kind:'review',retain:false,digests:'cold+reread',archives:0},{kind:'review',retain:false,digests:'cold+reread',archives:0},{kind:'create',digests:'cold+reread',archives:1}],'RETAINED_PACKAGE_SINGLE_BUILD_ORACLE: control');
+  assert.deepEqual(f.calls,[{kind:'review',retain:false,digests:'guarded',archives:0},{kind:'review',retain:false,digests:'guarded',archives:0},{kind:'create',digests:'guarded',archives:1}],'RETAINED_PACKAGE_SINGLE_BUILD_ORACLE: control');
   observations.withoutRetention={calls:f.calls,continuationDigests:continuationDigests(f.calls)};
  }
- assert.deepEqual([observations.continuation.continuationDigests,observations.withoutRetention.continuationDigests],[2,4],'RETAINED_PACKAGE_SINGLE_BUILD_ORACLE: continuation digests');
+ assert.deepEqual([observations.continuation.continuationDigests,observations.withoutRetention.continuationDigests],[1,2],'RETAINED_PACKAGE_SINGLE_BUILD_ORACLE: continuation digests');
  // A take-time denial (the operator clock no longer within the decision's
  // validity) returns null; the create's denial takes the existing review path.
  {
   const f=await retainedPackageAppFixture(sources);assert.equal(await f.authorize({beforeTake:async()=>f.shiftClock(RETAINED_PACKAGE_CLOCK_SHIFT)}),null);
   assert.equal(f.failures.length,0,'RETAINED_PACKAGE_TAKE_DENIAL_ORACLE: a denial is presented, not reported');assert.equal(f.downloads.length,0,'RETAINED_PACKAGE_TAKE_DENIAL_ORACLE: nothing is exported');
-  assert.deepEqual(f.calls.slice(1),[{kind:'review',retain:true,digests:'cold+reread',archives:1},{kind:'take',taken:false,digests:'none',archives:0},{kind:'create',digests:'cold+reread',archives:0,error:'HANDOFF_AUTHORIZATION_REQUIRED'}],'RETAINED_PACKAGE_TAKE_DENIAL_ORACLE');
+  assert.deepEqual(f.calls.slice(1),[{kind:'review',retain:true,digests:'guarded',archives:1},{kind:'take',taken:false,digests:'none',archives:0},{kind:'create',digests:'guarded',archives:0,error:'HANDOFF_AUTHORIZATION_REQUIRED'}],'RETAINED_PACKAGE_TAKE_DENIAL_ORACLE');
   assert.equal(f.t.handoffReview?.review?.authorization?.allowed,false,'RETAINED_PACKAGE_TAKE_DENIAL_ORACLE: the denial review is presented');
   observations.takeDenial={calls:f.calls.slice(1),presented:'denied'};
  }
