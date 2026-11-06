@@ -657,21 +657,52 @@ function copyOperationalAncestor(value){
 // field mirrors can share arrays. Compare values independently of alias topology,
 // without copying immutable response strings or hashing them a second time.
 function verifiedGraphNodes(value){
-  const ops=arguments[1]||liveGraphOperations,nodes=ops.map(),active=ops.weakSet(),pending=ops.stack(value,false);
+  if(arguments[1])return protectedGraphNodes(value,arguments[1]);
+  const nodes=new Map(),active=new WeakSet(),pending=[value,false];
+  while(pending.length){
+    const finish=pending.pop(),item=pending.pop();if(!item||typeof item!=='object'){if(typeof item==='function'||typeof item==='symbol')return null;continue;}
+    if(finish){active.delete(item);continue;}
+    if(active.has(item))return null;if(nodes.has(item))continue;
+    if(!Array.isArray(item)&&Object.getPrototypeOf(item)!==Object.prototype&&Object.getPrototypeOf(item)!==null)return null;
+    if(Object.getOwnPropertySymbols(item).length)return null;
+    const entries=[];let hasChildren=false;
+    for(const key of Object.getOwnPropertyNames(item)){
+      if(Array.isArray(item)&&key==='length')continue;
+      const descriptor=Object.getOwnPropertyDescriptor(item,key);
+      if(!descriptor.enumerable||!Object.hasOwn(descriptor,'value'))return null;
+      const child=descriptor.value;
+      entries.push(key,child);
+      // Only objects and unsupported leaves need a visit. Stack them in
+      // insertion order so a later sibling's trap still runs first.
+      const type=typeof child;
+      if(child!==null&&(type==='object'||type==='function'||type==='symbol')){
+        if(!hasChildren){active.add(item);pending.push(item,true);hasChildren=true;}
+        pending.push(child,false);
+      }
+    }
+    nodes.set(item,entries);
+  }
+  return nodes;
+}
+// Receipt discovery owns every intermediate container and only uses methods
+// bound under the full native guard. Keep generic callers on their original
+// reflection path, including live iterator and descriptor dispatch.
+function protectedGraphNodes(value,ops){
+  const nodes=ops.map(),active=ops.weakSet(),pending=ops.stack(value,false);
   while(pending.length){
     const finish=ops.pop(pending),item=ops.pop(pending);if(!item||typeof item!=='object'){if(typeof item==='function'||typeof item==='symbol')return null;continue;}
     if(finish){ops.setDelete(active,item);continue;}
     if(ops.setHas(active,item))return null;if(ops.mapHas(nodes,item))continue;
     if(!ops.array(item)&&ops.prototype(item)!==Object.prototype&&ops.prototype(item)!==null)return null;
     if(ops.symbols(item).length)return null;
-    const entries=ops.entries();let hasChildren=false;
-    const names=ops.names(item);
-    const capture=key=>{
-      if(ops.array(item)&&key==='length')return true;
+    const names=ops.names(item),entries=ops.entries();let hasChildren=false;
+    for(let index=0;index<names.length;index++){
+      const key=names[index];
+      if(ops.array(item)&&key==='length')continue;
       const descriptor=ops.descriptor(item,key);
-      if(!descriptor.enumerable||!ops.hasOwn(descriptor,'value'))return false;
+      if(!descriptor.enumerable||!ops.hasOwn(descriptor,'value'))return null;
       const child=descriptor.value;
-      ops.push(entries,key,child);
+      ops.append(entries,key,child);
       // Only objects and unsupported leaves need a visit. Stack them in
       // insertion order so a later sibling's trap still runs first.
       const type=typeof child;
@@ -679,14 +710,6 @@ function verifiedGraphNodes(value){
         if(!hasChildren){ops.setAdd(active,item);ops.push(pending,item,true);hasChildren=true;}
         ops.push(pending,child,false);
       }
-      return true;
-    };
-    if(ops===liveGraphOperations){
-      for(const key of names)if(!capture(key))return null;
-    }else{
-      // A protected walk's dense list comes from the captured native. A
-      // preceding source trap cannot replace its iterator or inject a key.
-      for(let index=0;index<names.length;index++)if(!capture(names[index]))return null;
     }
     ops.mapSet(nodes,item,entries);
   }
@@ -699,6 +722,10 @@ function copyVerifiedTree(value){
 function copyVerifiedGraph(value,sourceNodes,capturedNodes=null,arrayLengths=null){
   if(!value||typeof value!=='object')return value;
   const ops=capturedNodes?guardedGraphOperations():liveGraphOperations,copies=ops.map();
+  const dataPrototype=capturedNodes&&ops.prototype({});
+  const descriptor=capturedNodes&&(!ops.descriptor(dataPrototype,'get')&&!ops.descriptor(dataPrototype,'set')?
+    {value:null,enumerable:true,writable:true,configurable:true}:
+    {__proto__:null,value:null,enumerable:true,writable:true,configurable:true});
   ops.forEachNode(sourceNodes,(entries,source)=>{
     ops.mapSet(copies,source,ops.array(source)?ops.arrayOfLength(arrayLengths?ops.mapGet(arrayLengths,source):source.length):{});
   });
@@ -707,9 +734,10 @@ function copyVerifiedGraph(value,sourceNodes,capturedNodes=null,arrayLengths=nul
     for(let index=0;index<entries.length;index+=2){
       const child=entries[index+1],copy=child&&typeof child==='object'?ops.mapGet(copies,child):child;
       if(captured){
-        // No inherited descriptor setters can observe this private child.
-        ops.define(target,entries[index],{__proto__:null,value:copy,enumerable:true,writable:true,configurable:true});
-        ops.push(captured,entries[index],copy);
+        // All source callbacks finished before the private fill; this checked
+        // descriptor cannot hand the child to an inherited accessor.
+        descriptor.value=copy;ops.define(target,entries[index],descriptor);
+        ops.append(captured,entries[index],copy);
       }else Object.defineProperty(target,entries[index],{value:copy,enumerable:true,writable:true,configurable:true});
     }
     if(captured)ops.mapSet(capturedNodes,target,captured);
@@ -737,15 +765,13 @@ function verifiedValuesEqual(before,after){
 // trap, replace a method, then restore it during that method's first call.
 const liveGraphOperations={
   same:(left,right)=>Object.is(left,right),array:value=>Array.isArray(value),
-  prototype:value=>Object.getPrototypeOf(value),symbols:value=>Object.getOwnPropertySymbols(value),names:value=>Object.getOwnPropertyNames(value),
-  descriptor:(value,key)=>Object.getOwnPropertyDescriptor(value,key),hasOwn:(value,key)=>Object.hasOwn(value,key),
-  entries:()=>[],arrayOfLength:size=>new Array(size),define:(target,key,value)=>Object.defineProperty(target,key,value),
+  arrayOfLength:size=>new Array(size),
   forEachNode:(nodes,visit)=>Map.prototype.forEach.call(nodes,visit),
   stack:(left,right)=>[left,right],push:(stack,left,right)=>stack.push(left,right),pop:stack=>stack.pop(),
   map:()=>new Map(),weakMap:()=>new WeakMap(),weakSet:()=>new WeakSet(),
   mapGet:(map,key)=>map.get(key),mapSet:(map,key,value)=>map.set(key,value),mapHas:(map,key)=>map.has(key),
   weakGet:(map,key)=>map.get(key),weakSetValue:(map,key,value)=>map.set(key,value),
-  setHas:(set,value)=>set.has(value),setAdd:(set,value)=>set.add(value),setDelete:(set,value)=>set.delete(value)
+  setHas:(set,value)=>set.has(value),setAdd:(set,value)=>set.add(value)
 };
 let privateGraphOperations;
 function guardedGraphOperations(){
@@ -759,8 +785,12 @@ function guardedGraphOperations(){
     descriptor:Object.getOwnPropertyDescriptor,hasOwn:Object.hasOwn,
     entries:()=>withoutPrototype([],null),arrayOfLength:size=>new array(size),define:Object.defineProperty,
     forEachNode:bind(map.prototype.forEach),
-    // The null-prototype stack cannot dispatch inherited numeric setters.
-    stack:(left,right)=>withoutPrototype([left,right],null),push:bind(Array.prototype.push),pop:bind(Array.prototype.pop),
+    // No source trap can intercept a private pair through an inherited
+    // array index or a collection method while length inspection runs.
+    stack:(left,right)=>({length:2,tail:{left,right,parent:null}}),
+    push:(stack,left,right)=>{stack.tail={left,right,parent:stack.tail};stack.length+=2;},
+    pop:stack=>{const tail=stack.tail;if(--stack.length%2)return tail.right;stack.tail=tail.parent;return tail.left;},
+    append:(items,key,value)=>{const i=items.length;items[i]=key;items[i+1]=value;},
     map:()=>new map(),weakMap:()=>new weakMap(),weakSet:()=>new weakSet(),
     mapGet:bind(map.prototype.get),mapSet:bind(map.prototype.set),mapHas:bind(map.prototype.has),
     weakGet:bind(weakMap.prototype.get),weakSetValue:bind(weakMap.prototype.set),
@@ -787,11 +817,13 @@ function verifiedNodeValuesEqual(before,after,leftNodes,rightNodes,ops=liveGraph
     // Both graph inspections are complete. Equal key order can use their
     // captured descriptors directly without a lookup map.
     let sameOrder=true;for(let index=0;index<entries.length;index+=2)if(entries[index]!==otherEntries[index]){sameOrder=false;break;}
-    if(sameOrder){for(let index=1;index<entries.length;index+=2)ops.push(pending,entries[index],otherEntries[index]);}
+    if(sameOrder){for(let index=1;index<entries.length;index+=2){
+      const item=entries[index],other=otherEntries[index];if(ops!==liveGraphOperations&&ops.same(item,other))continue;ops.push(pending,item,other);
+    }}
     else{
       const other=ops.map();
       for(let index=0;index<otherEntries.length;index+=2)ops.mapSet(other,otherEntries[index],otherEntries[index+1]);
-      for(let index=0;index<entries.length;index+=2){const key=entries[index];if(!ops.mapHas(other,key))return false;ops.push(pending,entries[index+1],ops.mapGet(other,key));}
+      for(let index=0;index<entries.length;index+=2){const key=entries[index];if(!ops.mapHas(other,key))return false;const item=entries[index+1],match=ops.mapGet(other,key);if(ops===liveGraphOperations||!ops.same(item,match))ops.push(pending,item,match);}
     }
   }
   return true;

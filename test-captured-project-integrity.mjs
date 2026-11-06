@@ -90,6 +90,7 @@ function instrumentCaptureAudit(source){
  // A captured snapshot walked again (by a copy or a cold comparison) is exposed
  // to the reflection primitives current at that walk; its capture must never
  // be compared after that.
+ source=replaceOnce(source,'    if(finish){active.delete(item);continue;}','    if(finish){active.delete(item);continue;}globalThis.__walkedNode?.(item);');
  source=replaceOnce(source,'    if(finish){ops.setDelete(active,item);continue;}','    if(finish){ops.setDelete(active,item);continue;}globalThis.__walkedNode?.(item);');
  source=replaceOnce(source,'function unchangedCheckpointValueSnapshot(proof,current){','function unchangedCheckpointValueSnapshot(proof,current){globalThis.__capturedCompare?.(proof);');
  // The value each History owner encodes or exposes to its hooks.
