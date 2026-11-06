@@ -1248,27 +1248,6 @@ async function preparePendingReturnedArtifacts(project,prior,input){
  }
  return rows;
 }
-// Only a write with an authenticated digest can replace the preliminary
-// no-op hash by exact value comparison. The captured row was reread and
-// compared by readProjectForTransaction. Its root binds the measured digest
-// to the native validators of that write. Check both the write guard and
-// the read's private snapshot guard before and after walking the candidate.
-function verifiedReadCandidateEquality(read,next){
-  const root=read?.retainedRoot,proof=capturedIntegrityProofs.get(read);
-  if(proof?.nodes&&proof.snapshot===read.snapshot&&rootCertificates.has(root)&&
-     root.projectSha256===read.digest&&read.project.projectSha256===read.digest&&
-     rootValidatorsUnchanged(root.validators)&&checkpointSnapshotPrimitivesCurrent(proof)){
-    try{
-      const current={...next,projectSha256:read.digest},nodes=verifiedGraphNodes(current);
-      if(canonicalVerifiedGraph(current,nodes)&&checkpointSnapshotPrimitivesCurrent(proof)){
-        const matches=verifiedNodeValuesEqual(proof.snapshot,current,proof.nodes,nodes,guardedGraphOperations());
-        if(checkpointSnapshotPrimitivesCurrent(proof)&&rootValidatorsUnchanged(root.validators))return matches;
-      }
-    }catch{releaseCheckpointValueSnapshot(proof);}
-  }
-  if(proof?.nodes&&!checkpointSnapshotPrimitivesCurrent(proof))releaseCheckpointValueSnapshot(proof);
-  return null;
-}
 async function writeOperationalProject(project,options={}){
   const id=projectIdentity(project),verifiedRead=await readProjectForTransaction(id),prior=verifiedRead?.project;if(!prior)throw storageError('Project is unavailable.','PROJECT_NOT_FOUND');
   if(Number(options.expectedProjectRevision)!==Number(prior.revision)||!options.expectedStateSha256||options.expectedStateSha256!==prior.projectSha256)throw storageError('Project or pending response changed. Refresh it before retrying.','STALE_PROJECT_REVISION');
@@ -1278,8 +1257,7 @@ async function writeOperationalProject(project,options={}){
   assertJobPointerIntegrity(next,prior);
   if(Number(next.revision)!==Number(prior.revision))throw storageError('An operational event cannot advance the canonical revision.','OPERATIONAL_OWNERSHIP_VIOLATION');
   const pendingArtifacts=await preparePendingReturnedArtifacts(next,prior,options.pendingArtifacts);
-  const canonicalCandidate=canonicalProject(next);
-  if(verifiedReadCandidateEquality(verifiedRead,canonicalCandidate)??(hash.sha256Value(canonicalCandidate)===prior.projectSha256)){if(pendingArtifacts.length)throw storageError('Pending returned files require their response mapping transaction.','PENDING_ARTIFACTS_WITHOUT_CHANGE');return prior;}
+  if(projectSha256(next)===prior.projectSha256){if(pendingArtifacts.length)throw storageError('Pending returned files require their response mapping transaction.','PENDING_ARTIFACTS_WITHOUT_CHANGE');return prior;}
   globalThis.closedLoopPromptEngine.copyRetainedPromptContextFiles(prior,next);
   // Every owner runs in order on the ordinary cold digest path during this
   // synchronous derivation/validation; no digest or result is reused here.
@@ -3628,15 +3606,7 @@ async function prepareProjectWrite(project,options={}){
   assertCanonicalFieldValues(next);
   assertJobPointerIntegrity(next,prior);
   if(options[APPEND_ONLY_CANONICAL_WRITE])assertAppendOnlyDefinitionPreservation(prior,next);
-  // Take the canonical root once. The fallback hashes those same observed
-  // property values even if a root accessor would answer differently later.
-  const canonicalCandidate=canonicalProject(candidate);
-  const matches=options.skipUnchanged?verifiedReadCandidateEquality(verifiedRead,canonicalCandidate):null;
-  // A certified mismatch needs no candidate identity until a review asks for
-  // one. Compare no-op clone targets against the same measured candidate.
-  let candidateDigest=null;
-  if(matches===true)candidateDigest=verifiedRead.digest;
-  else if(matches===null)candidateDigest=options.skipUnchanged?hash.sha256Value(canonicalCandidate):unusedWriteCandidateDigest(canonicalCandidate);
+  const candidateDigest=options.skipUnchanged?projectSha256(candidate):unusedWriteCandidateDigest(canonicalProject(candidate));
   const candidateProof=candidateDigest?verifiedProjectIntegrity(candidate,candidateDigest):null;
   if(options.skipUnchanged&&prior?.projectSha256===candidateDigest){
     // The context-copy target must still match the measured candidate. Capture

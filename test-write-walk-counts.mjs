@@ -83,46 +83,33 @@ export async function measureWriteWalks({source=fs.readFileSync(new URL('./proje
 // admissibility, error text, required confirmation identity or CAS order.
 export async function verifyWriteDigestPreflights(){
  const source=fs.readFileSync(new URL('./project-store.js',import.meta.url),'utf8');
- const anchor='if(checkpointSnapshotPrimitivesCurrent(proof)&&rootValidatorsUnchanged(root.validators))return matches;';
- const instrumented=replaceOnce(source,anchor,anchor.replace('return matches;','{globalThis.__readEquality(matches);return matches;}'));
- const comparisons=[];
  const testExports='globalThis.closedLoopProjectStore=Object.freeze({STORAGE_IO_TIMEOUT_MS';
- const tapped=replaceOnce(instrumented,testExports,'globalThis.__writeTrapCompare=value=>verifiedReadCandidateEquality(recentOperationalCommitRead,value);globalThis.__writeTrapCopy=checkpointPairSource;'+testExports);
- const r=projectStoreRuntime({storageWorker:false,sourceOverrides:{'project-store.js':tapped},environment:{__readEquality:matches=>comparisons.push(matches)}});
+ const tapped=replaceOnce(source,testExports,'globalThis.__writeTrapCopy=checkpointPairSource;'+testExports);
+ const r=projectStoreRuntime({storageWorker:false,sourceOverrides:{'project-store.js':tapped}});
  let p=await r.store.createProject({commandId:'WRITE-DIGEST-PREFLIGHT'});
  p.writeTrapProbe=r.copy([{value:1}]);p.job.JOB_TITLE='Guarded preflight';r.engine.recalculate(p);p=await r.store.writeProject(p,{expectedProjectRevision:p.revision});
  const options=()=>({expectedProjectRevision:p.revision,expectedStateSha256:p.projectSha256});
  const oldRevision=p.revision;
  const canonical=r.copy(p);canonical.job.JOB_TITLE='Updated preflight';r.engine.recalculate(canonical);
- comparisons.length=0;p=await r.store.writeProject(canonical,options());
- assert.deepEqual(comparisons,[false],'CANONICAL_PRECHECK_VERIFIED_MISMATCH');
+ p=await r.store.writeProject(canonical,options());
  assert.equal(p.revision,oldRevision+1);assert.equal(p.projectSha256,r.store.projectSha256(p));
- comparisons.length=0;
  const unchanged=await r.store.writeProject(r.copy(p),{...options(),operational:true});
- assert.deepEqual(comparisons,[true],'OPERATIONAL_PRECHECK_VERIFIED_MATCH');
  assert.equal(unchanged.projectSha256,p.projectSha256);assert.equal(unchanged.revision,p.revision);
  const extra=r.copy(p);extra.activeView='Records';p=await r.store.writeProject(extra,{...options(),operational:true});
  assert.equal(p.projectSha256,r.store.projectSha256(p));
- // Replacing one native from an array length trap and restoring it inside
- // its first dispatch must never expose a private snapshot or copy target.
- for(const phase of ['copy','compare']){
-  r.runtime.__trapProject=r.copy(p);r.runtime.__trapPhase=phase;
-  const result=vm.runInContext(`(()=>{
-    const candidate=__trapProject,phase=__trapPhase,same=Object.is,define=Object.defineProperty;
-    let lengths=0,stolen=false;
-    candidate.writeTrapProbe=new Proxy(candidate.writeTrapProbe,{get(target,key,receiver){
-      if(key==='length'&&++lengths===2){
-        if(phase==='copy')Object.defineProperty=(...args)=>{Object.defineProperty=define;stolen=true;return define(...args);};
-        else Object.is=(left,right)=>{Object.is=same;stolen=true;return same(left,right);};
-      }
-      return Reflect.get(target,key,receiver);
-    }});
-    try{const value=phase==='copy'?__writeTrapCopy(candidate):__writeTrapCompare(candidate);
-      return [value===null,stolen,lengths];}
-    finally{Object.defineProperty=define;Object.is=same;}
-  })()`,r.runtime);
-  assert.deepEqual([...result],[true,false,2],'WRITE_PRECHECK_TRANSIENT_NATIVE_ORACLE '+phase);
- }
+ // Read array lengths before a private pair copy can enter a swapped
+ // defineProperty that restores itself on its first dispatch.
+ r.runtime.__trapProject=r.copy(p);
+ const trapped=vm.runInContext(`(()=>{
+  const candidate=__trapProject,define=Object.defineProperty;let lengths=0,stolen=false;
+  candidate.writeTrapProbe=new Proxy(candidate.writeTrapProbe,{get(target,key,receiver){
+    if(key==='length'&&++lengths===2)Object.defineProperty=(...args)=>{Object.defineProperty=define;stolen=true;return define(...args);};
+    return Reflect.get(target,key,receiver);
+  }});
+  try{return [__writeTrapCopy(candidate)===null,stolen,lengths];}
+  finally{Object.defineProperty=define;}
+ })()`,r.runtime);
+ assert.deepEqual([...trapped],[true,false,2],'WRITE_PAIR_COPY_TRANSIENT_NATIVE_ORACLE');
  const ordinary=r.store.mutationImpact(p,p,p),whenRequired={candidateWhenRequired:true};
  assert.equal(ordinary.candidateSha256,p.projectSha256);
  assert.equal(r.store.mutationImpact(p,p,p,whenRequired).candidateSha256,null);
@@ -169,6 +156,22 @@ export async function verifyWriteDigestPreflights(){
   await assert.rejects(r.store.writeProject(r.copy(p),{...options(),operational:true}),error=>error.message===marker);
  }finally{r.runtime.JSON.stringify=original;}
  assert.equal((await r.store.readProject(p.job.JOB_ID)).projectSha256,p.projectSha256,'FAILED_PREFLIGHT_PRESERVES_ROW');
+ // A replaced hook can supply a Proxy to a private candidate even if that
+ // very hook certified the preceding write. Its encoder refusal stays cold.
+ const prompts=r.runtime.closedLoopPromptEngine;let armed,reads=0,hooks=0;
+ r.runtime.closedLoopPromptEngine=Object.freeze({...prompts,copyRetainedPromptContextFiles(from,to,...args){
+  const result=prompts.copyRetainedPromptContextFiles(from,to,...args);
+  if(armed&&from===armed){hooks++;to.extra=new Proxy(to.extra,{getOwnPropertyDescriptor(target,key){
+    const d=Reflect.getOwnPropertyDescriptor(target,key);return key==='leaf'?{...d,value:++reads===1?'ok':undefined}:d;
+  }});}
+  return result;
+ }});
+ try{
+  const withHook=r.copy(p);withHook.extra=r.copy({leaf:'ok'});withHook.job.JOB_TITLE='Certify with replaced hook';r.engine.recalculate(withHook);
+  p=await r.store.writeProject(withHook,options());armed=r.copy(p);
+  await assert.rejects(r.store.writeProject(armed,{...options(),operational:true}),error=>error.message==='Cannot canonically hash undefined at $.extra.leaf.');
+  assert.equal(hooks,1,'WRITE_PRECHECK_REPLACED_HOOK_REACHED');assert.equal(reads,2,'WRITE_PRECHECK_REPLACED_HOOK_ENCODER_ORDER');
+ }finally{r.runtime.closedLoopPromptEngine=prompts;}
 }
 export async function verifyWriteWalkCounts(options={}){
  const {projectNodes,walkThreshold,cases}=await measureWriteWalks(options);
