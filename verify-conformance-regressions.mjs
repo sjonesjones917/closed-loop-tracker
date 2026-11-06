@@ -731,6 +731,14 @@ async function verifyCreationMatrixFaults(){
   return {results,sourceRestored:true};
  }finally{process.stderr.write(JSON.stringify({caseId:'CREATION_MATRIX_SUPERVISOR_FAULTS',results})+'\n');fs.rmSync(directory,{recursive:true,force:true});}
 }
+// Node resolves a module URL to its physical file, while argv can retain a
+// symlink such as macOS /var or a linked checkout. Imported helpers stay idle.
+function isRunnerEntryPoint(){
+ const entry=process.argv[1],moduleFile=fileURLToPath(import.meta.url);
+ if(!entry)return false;
+ if(path.resolve(entry)===moduleFile)return true;
+ try{return fs.realpathSync(entry)===fs.realpathSync(moduleFile);}catch{return false;}
+}
 async function verifyRunnerFaults(){
  const original=fs.readFileSync(fileURLToPath(import.meta.url),'utf8'),directory=fs.mkdtempSync(path.join(os.tmpdir(),'clrt-runner-fault-')),faults=[];
  const mutations=[
@@ -771,10 +779,16 @@ async function verifyRunnerFaults(){
    assert.equal(implementation.split(before).length,2,'Unique runner fault anchor required: '+name);
    // Exercise the mutated owner itself. An enclosing healthy owner's cleanup
    // must not mask this disposable supervisor fault.
-   const mutant=path.join(directory,name+'.mjs');fs.writeFileSync(mutant,"if(path.resolve(process.argv[1]||'')===fileURLToPath(import.meta.url))delete process.env.CLOSED_LOOP_VERIFIER_OWNER_FD;\n"+serializedImplementation.replace(before,after)+original.slice(implementation.length));
+   const mutant=path.join(directory,name+'.mjs');fs.writeFileSync(mutant,"if(isRunnerEntryPoint())delete process.env.CLOSED_LOOP_VERIFIER_OWNER_FD;\n"+serializedImplementation.replace(before,after)+original.slice(implementation.length));
    const counterpartBudgetFault=['omit-current-counterpart-oracle','shorten-restored-counterpart-budget'].includes(name);
    const args=counterpartBudgetFault?['--counterpart-budget-contract-only']:['--runner-contract-only','--fault-probe'];
-   const result=await executeGate({name,args:[mutant,...args]},{directory,timeoutMs:20000,killGraceMs:50});
+   // One negative control invokes the real mutant through an alias on every
+   // runner. It must still execute and reach its specific rejection oracle.
+   let entry=mutant;
+   if(name==='accept-any-fault-exit'){
+    entry=path.join(directory,'linked-'+name+'.mjs');fs.symlinkSync(path.basename(mutant),entry);
+   }
+   const result=await executeGate({name,args:[entry,...args]},{directory,timeoutMs:20000,killGraceMs:50});
    assert.equal(result.outcome,'FAIL','RUNNER_FAULT_DETECTION_ORACLE: '+name);
    assertDetectedFault(result,oracle,'RUNNER_FAULT_SPECIFICITY_ORACLE: '+name);
    faults.push({fault:name,oracle,result:'DETECTED',execution:result});
@@ -787,7 +801,7 @@ async function verifyRunnerFaults(){
   process.stderr.write(JSON.stringify({runnerFaults:'FAIL',evidenceDirectory,error:String(error)})+'\n');throw error;
  }finally{fs.rmSync(directory,{recursive:true,force:true});}
 }
-if(path.resolve(process.argv[1]||'')===fileURLToPath(import.meta.url)){
+if(isRunnerEntryPoint()){
 if(process.argv.includes('--counterpart-budget-contract-only')){
  console.log(JSON.stringify(await verifyRunnerContract({counterpartBudgetOnly:true}),null,2));
 }else if(process.argv.includes('--creation-matrix-contract-only')){
