@@ -69,6 +69,12 @@ export function verifyCheckpointStateSnapshot(){
   assert.equal(observed,true,'CHECKPOINT_TRANSIENT_NATIVE_CUSTODY:'+phase);
  }
 
+ assert.equal(run(`(()=>{const external={value:1},unusual=new Proxy([],{get(target,key,receiver){
+  return key==='length'?external:Reflect.get(target,key,receiver);
+ }}),proof=copyCheckpointValueSnapshot(unusual);
+ return !proof.nodes&&!proof.scope&&proof.snapshot[0]===external;
+ })()`),true,'CHECKPOINT_NON_NUMERIC_LENGTH_IS_NOT_A_PRIVATE_COPY');
+
  // The source can poison discovery metadata while native bindings later
  // appear current. An own method on the discovered map, or a getter on a
  // retained entry array, must never expose an attested private target.

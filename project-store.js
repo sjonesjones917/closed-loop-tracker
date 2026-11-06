@@ -710,8 +710,11 @@ function copyVerifiedGraph(value,sourceNodes,capturedNodes=null,arrayLengths=nul
     const target=ops.mapGet(copies,source),captured=capturedNodes?ops.entries():null;
     for(let index=0;index<entries.length;index+=2){
       const child=entries[index+1],copy=child&&typeof child==='object'?ops.mapGet(copies,child):child;
-      ops.define(target,entries[index],{__proto__:null,value:copy,enumerable:true,writable:true,configurable:true});
-      if(captured)ops.push(captured,entries[index],copy);
+      if(captured){
+        // No inherited descriptor setters can observe this private child.
+        ops.define(target,entries[index],{__proto__:null,value:copy,enumerable:true,writable:true,configurable:true});
+        ops.push(captured,entries[index],copy);
+      }else Object.defineProperty(target,entries[index],{value:copy,enumerable:true,writable:true,configurable:true});
     }
     if(captured)ops.mapSet(capturedNodes,target,captured);
   });
@@ -849,9 +852,16 @@ function copyCheckpointValueSnapshot(value){
     if(!sourceNodes){proof.snapshot=clone(value);releaseCheckpointValueSnapshot(proof);completed=true;return proof;}
     // Array length reads can run user code. Finish those reads before any
     // private target exists and recheck the guard before populating it.
-    const arrayLengths=ops.map();
-    ops.forEachNode(sourceNodes,(entries,source)=>{if(ops.array(source))ops.mapSet(arrayLengths,source,source.length);});
-    if(!checkpointSnapshotPrimitivesCurrent(proof)){
+    const arrayLengths=ops.map();let numericLengths=true;
+    ops.forEachNode(sourceNodes,(entries,source)=>{
+      if(ops.array(source)){
+        const size=source.length;ops.mapSet(arrayLengths,source,size);
+        // new Array(object) inserts the caller's object as an element.
+        // Preserve that unusual copy behavior without attesting its contents.
+        if(typeof size!=='number')numericLengths=false;
+      }
+    });
+    if(!numericLengths||!checkpointSnapshotPrimitivesCurrent(proof)){
       releaseCheckpointValueSnapshot(proof);proof.snapshot=copyVerifiedGraph(value,sourceNodes,null,arrayLengths);completed=true;return proof;
     }
     const nodes=ops.map();
