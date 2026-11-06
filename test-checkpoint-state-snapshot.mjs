@@ -69,6 +69,46 @@ export function verifyCheckpointStateSnapshot(){
   assert.equal(observed,true,'CHECKPOINT_TRANSIENT_NATIVE_CUSTODY:'+phase);
  }
 
+ // The source can poison discovery metadata while native bindings later
+ // appear current. An own method on the discovered map, or a getter on a
+ // retained entry array, must never expose an attested private target.
+ for(const attack of ['source-map','entry-array']){
+  const observed=run(`(()=>{
+   const attack=${JSON.stringify(attack)},mapSet=Map.prototype.set,forEach=Map.prototype.forEach,push=Array.prototype.push,define=Object.defineProperty;
+   let leaked,armed=true;
+   const original={title:'measured',nested:{x:1}};
+   const input=new Proxy(original,{getOwnPropertyDescriptor(target,key){
+    if(armed&&key==='title'){
+     armed=false;
+     if(attack==='source-map')Map.prototype.set=function(key,value){
+      Map.prototype.set=mapSet;
+      if(key===input)define(this,'forEach',{value:function(visit){return forEach.call(this,(entries,source)=>{
+       if(source===input)Map.prototype.set=function(k,v){Map.prototype.set=mapSet;if(k===input)leaked=v;return mapSet.call(this,k,v);};
+       visit(entries,source);Map.prototype.set=mapSet;
+      });}});
+      return mapSet.call(this,key,value);
+     };
+     else Array.prototype.push=function(...values){
+      const result=push.apply(this,values);
+      if(values[0]==='title'){
+       Array.prototype.push=push;
+       define(this,'0',{get(){Object.defineProperty=function(object,...args){Object.defineProperty=define;leaked=object;return define(object,...args);};return 'title';}});
+      }
+      return result;
+     };
+    }
+    return Reflect.getOwnPropertyDescriptor(target,key);
+   }});
+   try{
+    const receipt=copyCheckpointValueSnapshot(input);
+    Map.prototype.set=mapSet;Array.prototype.push=push;Object.defineProperty=define;
+    if(leaked!==receipt.snapshot)return true;
+    leaked.title='forged';
+    return !receipt.nodes&&!unchangedCheckpointValueSnapshot(receipt,original);
+   }finally{Map.prototype.set=mapSet;Array.prototype.push=push;Object.defineProperty=define;}
+  })()`);
+  assert.equal(observed,true,'CHECKPOINT_DISCOVERY_METADATA_CUSTODY:'+attack);
+ }
  const operationStart=source.indexOf('const operationalEqualityScope='),operationEnd=source.indexOf('function assertOperationalChange(');
  const treeStart=source.indexOf('function operationalPatchTree('),treeEnd=source.indexOf('function copyOperationalAncestor(');
  assert.ok(operationStart>=0&&operationEnd>operationStart&&treeStart>=0&&treeEnd>treeStart);

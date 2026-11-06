@@ -32,7 +32,7 @@ const replaceOnce=(source,before,after)=>{assert.equal(source.split(before).leng
 // Function names of the nearest frames above the instrumented call.
 const FRAMES="String(new Error().stack).split('\\n').slice(2,8).map(line=>{const match=/at (?:async )?(?:Object\\.)?([A-Za-z0-9_$]+)/.exec(line.trim());return match?match[1]:'';})";
 export function instrumentWriteWalks(source,hashSource){
- source=replaceOnce(source,'function verifiedGraphNodes(value){',`function verifiedGraphNodes(value){const counted=verifiedGraphNodesUncounted(value);if(counted&&counted.size>=globalThis.__walkThreshold)globalThis.__recordPass('walk',${FRAMES});return counted;}\nfunction verifiedGraphNodesUncounted(value){`);
+ source=replaceOnce(source,'function verifiedGraphNodes(value){',`function verifiedGraphNodes(value){const counted=verifiedGraphNodesUncounted(value,arguments[1]);if(counted&&counted.size>=globalThis.__walkThreshold)globalThis.__recordPass('walk',${FRAMES});return counted;}\nfunction verifiedGraphNodesUncounted(value){`);
  // Count each ordinary whole-project copy where the target is populated.
  // This includes direct copies from a previously inspected graph.
  const copier='function copyVerifiedGraph(value,sourceNodes,capturedNodes=null,arrayLengths=null){';
