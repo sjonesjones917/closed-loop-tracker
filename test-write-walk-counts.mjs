@@ -130,6 +130,23 @@ export async function verifyWriteDigestPreflights(){
  prior.projectData.acceptedChanges.push({changeId:'REVIEW-WRITE',stage:1,active:true});
  const required=r.store.mutationImpact(prior,p,p),preflight=r.store.mutationImpact(prior,p,p,whenRequired);
  assert.equal(required.requiresConfirmation,true);assert.deepEqual(preflight,required,'REQUIRED_REVIEW_DIGEST_AND_KEY');
+ // The fallback hashes the canonical root already observed. A getter that
+ // answers differently on its second call must retain its first refusal.
+ for(const options of [null,whenRequired]){
+  const transient=r.copy(p);let reads=0;
+  Object.defineProperty(transient,'extraRoot',{enumerable:true,get(){return ++reads===1?undefined:'later';}});
+  assert.throws(()=>r.store.mutationImpact(p,transient,transient,options),error=>error.message==='Cannot canonically hash undefined at $.extraRoot.');
+  assert.equal(reads,1,'PREFLIGHT_SINGLE_ROOT_OBSERVATION');
+ }
+ for(const options of [null,whenRequired]){
+  const transient=r.copy(p);let reads=0;
+  transient.nested=new Proxy(r.copy({leaf:true}),{getOwnPropertyDescriptor(target,key){
+    const d=Reflect.getOwnPropertyDescriptor(target,key);
+    return key==='leaf'?{...d,value:++reads===1?'valid':undefined}:d;
+  }});
+  assert.throws(()=>r.store.mutationImpact(p,transient,transient,options),error=>error.message==='Cannot canonically hash undefined at $.nested.leaf.');
+  assert.equal(reads,2,'PREFLIGHT_ENCODER_DESCRIPTOR_ORDER');
+ }
  // Both the early no-op comparison and the unused-digest paths still reject
  // malformed extension values at the canonical encoder, before recalculation.
  for(const leaf of ['\uD800',-0,undefined]){
