@@ -15,8 +15,8 @@ import {projectStoreRuntime} from './test-project-store-runtime.mjs';
 // the operational write receipt, whose snapshot is copied again, walks both.
 export const WRITE_WALK_PINS=Object.freeze({
  canonicalWrite:Object.freeze({walks:26,copies:8,digestScopes:0}),
- firstOperationalWrite:Object.freeze({walks:57,copies:12,digestScopes:0}),
- operationalWrite:Object.freeze({walks:54,copies:12,digestScopes:0})
+ firstOperationalWrite:Object.freeze({walks:58,copies:12,digestScopes:0}),
+ operationalWrite:Object.freeze({walks:55,copies:12,digestScopes:0})
 });
 // Walks at the sites whose double walks were removed. The operational History
 // candidate is its own bound pair snapshot: each of the four pair checks walks
@@ -77,6 +77,22 @@ export async function measureWriteWalks({source=fs.readFileSync(new URL('./proje
  // Consecutive changed views: each uses the certified root of the save before.
  const view=name=>r.copy({activeStage:1,activeView:name,drafts:{'#exact':{value:name+' exact draft'}},scrollX:0,scrollY:17});
  for(const name of ['Project','Workflow']){const saved=await measure(()=>r.store.saveCheckpoint(p.job.JOB_ID,{expectedProjectRevision:p.revision,expectedStateSha256:p.projectSha256,view:view(name)}));cases.push({command:'viewCheckpoint:'+name,...saved.observed});}
+ // An operational caller can pass a descriptor trap. Initial qualification
+ // observes the old title; the copy must observe the subsequently changed
+ // canonical work and reject the whole write, including the view edit.
+ const incoming=r.copy(p),durable=()=>r.copy([...r.rows].map(([name,rows])=>[name,[...rows]])),before=durable();
+ incoming.activeView=incoming.activeView==='Workflow'?'Records':'Workflow';
+ let titleReads=0;
+ incoming.job=new Proxy(incoming.job,{getOwnPropertyDescriptor(target,key){
+  const descriptor=Reflect.getOwnPropertyDescriptor(target,key);
+  if(key!=='JOB_TITLE'||!descriptor)return descriptor;
+  titleReads++;
+  return {...descriptor,value:titleReads<=2?descriptor.value:'Canonical title injected after initial discovery'};
+ }});
+ await assert.rejects(()=>r.store.writeProject(incoming,{operational:true,expectedProjectRevision:p.revision,expectedStateSha256:p.projectSha256}),
+  error=>error.code==='OPERATIONAL_OWNERSHIP_VIOLATION'&&error.message==='An operational response event attempted to change canonical work: /job/JOB_TITLE','OPERATIONAL_CALLER_COPY_OWNERSHIP');
+ assert.ok(titleReads>=3,'OPERATIONAL_CALLER_COPY_REINSPECTED');
+ assert.deepEqual(durable(),before,'OPERATIONAL_CALLER_COPY_REFUSAL_ATOMIC');
  return {projectNodes,walkThreshold:r.runtime.__walkThreshold,cases};
 }
 // No-op comparisons change the cost of the initial digest, never its

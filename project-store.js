@@ -751,11 +751,11 @@ function canonicalVerifiedGraph(value,nodes){
 // without recopying their bytes. Preserve shared aliases and mutable-container
 // isolation; accessors, symbols, cycles and exotic values use the native clone.
 function cloneOperationalPatchValue(value){
-  if(!operationalCloneBindingCurrent())return clone(value);
-  const nodes=verifiedGraphNodes(value);
-  if(!nodes||!operationalCloneBindingCurrent())return clone(value);
-  const copy=copyVerifiedGraph(value,nodes);
-  if(!operationalCloneBindingCurrent())return clone(value);
+  // A caller or a replaceable hook can supply an inspection trap. Its
+  // qualification and copy are separate observations; the second walk owns
+  // the values validated by the write.
+  if(!operationalCloneBindingCurrent()||!verifiedGraphNodes(value))return clone(value);
+  const copy=copyVerifiedTree(value);
   globalThis.closedLoopPromptEngine?.copyRetainedPromptContextFiles?.(value,copy);
   return copy;
 }
