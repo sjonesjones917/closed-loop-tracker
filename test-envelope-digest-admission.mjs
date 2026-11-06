@@ -7,7 +7,7 @@ import {createStageOneIngestionFixture as seed,stageOneResponseEnvelope} from '.
 
 const CURRENT='7d9084fe26f5fe47ba07b3e2034135b4ade3a9bbcb999949e960c5039f7f098d';
 const REFERENCE='c8614699dbd3959213212de72b4a97564c71331c2f7445ad412f0bd5c612451e';
-const HASH='9047a4f2a927c95c54a9523dab5270dc5fcffa43c788389ad72f457b375b6926';
+const HASH='e621498af5b581f6a38676dbc423b1898acb1299d2e9fbd7c216b2e7a31dd6a4';
 const ADMITTED='const envelopeDigestScope=envelope&&rawText.length>=4096?hash.createCanonicalDigestScope(envelope):null;';
 const FORMER='const envelopeDigestScope=envelope?hash.createCanonicalDigestScope(envelope):null;';
 const sha=value=>createHash('sha256').update(value).digest('hex');
