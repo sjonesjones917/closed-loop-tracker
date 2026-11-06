@@ -4583,8 +4583,11 @@ function executionPackageRequestKey(options){
  try{
   if(!options||typeof options!=='object')return null;
   const {project,...request}=options;if(!project||typeof project!=='object')return null;
+  // An option given as undefined builds exactly as an omitted one (every
+  // buildExecutionPackage option has a default), so it keys the same request.
+  const defined=Object.fromEntries(Object.entries(request).filter(([,value])=>value!==undefined));
   const field=key=>({present:Object.hasOwn(project,key),type:typeof project[key],value:project[key]===undefined?null:project[key]});
-  return hash.stableStringify({request,project:{jobId:projectIdentity(project),revision:field('revision'),historyActivationId:field('historyActivationId'),projectSha256:field('projectSha256')}});
+  return hash.stableStringify({request:defined,project:{jobId:projectIdentity(project),revision:field('revision'),historyActivationId:field('historyActivationId'),projectSha256:field('projectSha256')}});
  }catch{return null;}
 }
 async function retainExecutionPackage(review,{options,request},retained){

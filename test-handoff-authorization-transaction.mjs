@@ -164,6 +164,8 @@ async function retainedPackageStoreCases(f,{only=null}={}){
   return {zipBytes:takenBytes.length,members:members.length,equalToCreate:true};
  });
  await run('oneUse',async()=>{const args=f.args(),review=await retain(args);assert.ok(await store.takeRetainedExecutionPackage(review,args),'RETAINED_PACKAGE_ONE_USE_ORACLE: first take');assert.equal(await store.takeRetainedExecutionPackage(review,args),null,'RETAINED_PACKAGE_ONE_USE_ORACLE: a second take must return null');return {secondTake:null};});
+ // An option given as undefined builds exactly as an omitted one, so it must retain and take like it.
+ await run('undefinedOption',async()=>{const args={...f.args(),productId:undefined},review=await retain(args);const taken=await store.takeRetainedExecutionPackage(review,args);assert.ok(taken,'RETAINED_PACKAGE_UNDEFINED_OPTION_ORACLE: an option given as undefined must retain like an omitted one');return {taken:true};});
  await run('request',async()=>{
   const args=f.args(),review=await retain(args);
   assert.equal(await store.takeRetainedExecutionPackage(review,{...args,testIds:['SYNTHETIC-UNREVIEWED-TEST']}),null,'RETAINED_PACKAGE_REQUEST_ORACLE: mismatched arguments must return null');
