@@ -117,6 +117,16 @@ async function privateDigestRowChange(source){
  const outcome=await assemble(f,{at:1,act:async()=>{f.r3.runtime.__changeDigestPrivate=row=>{delete f.r3.runtime.__changeDigestPrivate;changed=Reflect.set(row.project,'activeView','Changed private digest preimage');};}});
  assert.deepEqual([outcome.released,changed],[true,false],'HANDOFF_ASSEMBLY_PRIVATE_DIGEST_SOURCE_ORACLE');
 }
+async function swappedPackageSource(storeSource){
+ const probe='    globalThis.__substitutePackageRow?.(source,sources.row);';
+ const boundary='    // An IndexedDB read spanned awaits.';
+ assert.equal(storeSource.split(boundary).length,2);
+ const f=await assemblyFixture(storeSource.replace(boundary,probe+'\n'+boundary),'ASSEMBLY-SWAPPED-ROW');
+ return assemble(f,{at:2,act:async()=>{
+  f.r3.rows.get('projects').get(f.q.job.JOB_ID).project.activeView='Substituted after the guarded digest';
+  f.r3.runtime.__substitutePackageRow=(source,row)=>{delete f.r3.runtime.__substitutePackageRow;source.row=row;};
+ }});
+}
 const digestBindingSource=fs.readFileSync('project-store.js','utf8');
 // Exercise an ordinary public read after a real, authorized package. Count
 // whole-row digests independently of the returned project and its validation.
@@ -160,6 +170,7 @@ const digestBindingSource=fs.readFileSync('project-store.js','utf8');
 const liveChanged=await liveDigestRowChange(digestBindingSource);
 assert.deepEqual(liveChanged,{released:false,code:'STALE_PROJECT_REVISION',quarantined:0},'HANDOFF_ASSEMBLY_LIVE_DIGEST_SOURCE_ORACLE');
 await privateDigestRowChange(digestBindingSource);
+assert.deepEqual(await swappedPackageSource(digestBindingSource),{released:false,code:'PROJECT_HASH_MISMATCH',quarantined:1},'HANDOFF_ASSEMBLY_DIGEST_CARRIER_ORACLE');
 const swapRefused={released:false,code:'PROJECT_HASH_MISMATCH',quarantined:1};
 for(const swapKind of ['join','encoder'])for(const review of [false,true])assert.deepEqual(await firstReadSwap(null,swapKind,review),swapRefused,`HANDOFF_ASSEMBLY_FIRST_READ_SWAP_ORACLE: ${swapKind} ${review?'review':'package'}`);
 assert.deepEqual(await firstReadSwap(null,'join',true,{duringYield:true}),swapRefused,'HANDOFF_ASSEMBLY_RESUMED_DIGEST_ORACLE');
@@ -173,6 +184,7 @@ note('Artifact bytes corrupted during assembly lose custody at the staleness rea
 const storeSource=fs.readFileSync('project-store.js','utf8'),storeFault=(name,before,after)=>{if(storeSource.split(before).length!==2)throw new Error('Fault anchor missing: '+name);return storeSource.replace(before,after);};
 const rehash='    if(unchanged&&verifyBytes&&certificate?.digest!==sources.row.projectSha256){let computed=null;try{computed=await hash.sha256Chunks(hash.canonicalChunks(canonicalProject(sources.row.project)));}catch{computed=null;}unchanged=computed!==null&&computed===sources.row.projectSha256;}\n';
 const assemblyFaults=[
+ ['package-digest-unbound-row',storeFault('package-digest-unbound-row','    const certificate=packageBaseFor(source);','    const base=packageBaseFor(source),certificate=base&&{row:source.row,digest:base.digest};'),async source=>swappedPackageSource(source),swapRefused,'HANDOFF_ASSEMBLY_DIGEST_CARRIER_ORACLE'],
  ['package-resume-native-unchecked',storeFault('package-resume-native-unchecked','        if(!current())return null;\n',''),async source=>firstReadSwap(source,'join',true,{duringYield:true}),swapRefused,'HANDOFF_ASSEMBLY_RESUMED_DIGEST_ORACLE'],
  ['first-read-digest-trusted',storeFault('first-read-digest-trusted',rehash,''),async source=>firstReadSwap(source,'join',false),swapRefused,'HANDOFF_ASSEMBLY_FIRST_READ_SWAP_ORACLE'],
  ['package-digest-after-archive-only',storeFault('package-digest-after-archive-only','rereadPackageProject(canonicalJobId,packageSource,{verifyBytes:true})','rereadPackageProject(canonicalJobId,packageSource,{verifyBytes:false})').replace('rereadPackageProject(canonicalJobId,packageSource,{verifyBytes:false});if(!afterArchive','rereadPackageProject(canonicalJobId,packageSource,{verifyBytes:true});if(!afterArchive'),async source=>firstReadSwap(source,'join',true),swapRefused,'HANDOFF_ASSEMBLY_FIRST_READ_SWAP_ORACLE'],
