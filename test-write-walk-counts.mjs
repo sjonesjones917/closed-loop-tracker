@@ -9,13 +9,13 @@ import assert from 'node:assert/strict';
 import {projectStoreRuntime} from './test-project-store-runtime.mjs';
 
 // Totals per command (walks include the walk inside each copy; a copy is a
-// copyVerifiedTree or copyCheckpointValueSnapshot copy of a project). Captured
+// private whole-project copy). Captured
 // private receipts and source copies compare by walking the current side only;
 // the operational write receipt, whose snapshot is copied again, walks both.
 export const WRITE_WALK_PINS=Object.freeze({
  canonicalWrite:Object.freeze({walks:26,copies:8,digestScopes:0}),
- firstOperationalWrite:Object.freeze({walks:59,copies:12,digestScopes:0}),
- operationalWrite:Object.freeze({walks:57,copies:12,digestScopes:0})
+ firstOperationalWrite:Object.freeze({walks:58,copies:12,digestScopes:0}),
+ operationalWrite:Object.freeze({walks:56,copies:12,digestScopes:0})
 });
 // Walks at the sites whose double walks were removed. The operational History
 // candidate is its own bound pair snapshot: each of the four pair checks walks
@@ -32,7 +32,10 @@ const replaceOnce=(source,before,after)=>{assert.equal(source.split(before).leng
 const FRAMES="String(new Error().stack).split('\\n').slice(2,8).map(line=>{const match=/at (?:async )?(?:Object\\.)?([A-Za-z0-9_$]+)/.exec(line.trim());return match?match[1]:'';})";
 export function instrumentWriteWalks(source,hashSource){
  source=replaceOnce(source,'function verifiedGraphNodes(value){',`function verifiedGraphNodes(value){const counted=verifiedGraphNodesUncounted(value);if(counted&&counted.size>=globalThis.__walkThreshold)globalThis.__recordPass('walk',${FRAMES});return counted;}\nfunction verifiedGraphNodesUncounted(value){`);
- for(const owner of ['function copyVerifiedTree(value){','function copyCheckpointValueSnapshot(value){'])source=replaceOnce(source,owner,`${owner}if(value&&typeof value==='object'&&Object.hasOwn(value,'projectData'))globalThis.__recordPass('copy',${FRAMES});`);
+ // Count each ordinary whole-project copy where the target is populated.
+ // This includes direct copies from a previously inspected graph.
+ const copier='function copyVerifiedGraph(value,sourceNodes,capturedNodes=null,arrayLengths=null){';
+ source=replaceOnce(source,copier,`${copier}if(value&&typeof value==='object'&&Object.hasOwn(value,'projectData'))globalThis.__recordPass('copy',${FRAMES});`);
  source=replaceOnce(source,'function usableRootContinuation(proof,read,descriptor){','function usableRootContinuation(proof,read,descriptor){globalThis.__recordPass(\'call:usableRootContinuation\',[]);');
  source=replaceOnce(source,'async function writeRootBytesVerified(proof,body,readFile,verifiedParts,verifiedByteDigests){','async function writeRootBytesVerified(proof,body,readFile,verifiedParts,verifiedByteDigests){if(unverifiedWriteRoots.has(proof)&&rootCertificates.has(proof))globalThis.__recordPass(\'call:writeRootBytesVerified\',[]);');
  source=replaceOnce(source,'globalThis.closedLoopProjectStore=Object.freeze({STORAGE_IO_TIMEOUT_MS','globalThis.__projectNodes=value=>verifiedGraphNodesUncounted(value)?.size||0;globalThis.closedLoopProjectStore=Object.freeze({STORAGE_IO_TIMEOUT_MS');
@@ -44,7 +47,7 @@ function summarize(passes){
  const walks=passes.filter(row=>row.kind==='walk'),copies=passes.filter(row=>row.kind==='copy');
  return {walks:walks.length,copies:copies.length,digestScopes:passes.filter(row=>row.kind==='scope').length,
   digestPairWalks:walks.filter(row=>near(row,'assertDigestPair',4)).length,
-  operationalReceiptCopies:copies.filter(row=>{const at=row.frames.indexOf('verifiedProjectIntegrity');return at>=0&&at<2&&row.frames[at+1]==='writeOperationalProject';}).length,
+  operationalReceiptCopies:copies.filter(row=>{const at=row.frames.indexOf('verifiedProjectIntegrity');return at>=0&&at<3&&row.frames[at+1]==='writeOperationalProject';}).length,
   rootContinuationWalks:walks.filter(row=>near(row,'usableRootContinuation')&&!row.frames.includes('copyVerifiedTree')).length,
   rootContinuationCalls:passes.filter(row=>row.kind==='call:usableRootContinuation').length,
   rootBytesWalks:walks.filter(row=>near(row,'writeRootBytesVerified')&&!near(row,'copyVerifiedTree')&&!row.frames.includes('restoreHistoryProject')).length,

@@ -586,11 +586,29 @@ function operationalPatches(before,after,path=[]){
   }
   return [{path,value:cloneOperationalPatchValue(after)}];
 }
+// This null-root scope guards native bindings only. It holds no project values
+// or digests and cannot authorize a result from a previous comparison.
+const operationalEqualityScope={scope:null},sharedOperationalTree=Symbol('shared operational graph');
+try{operationalEqualityScope.scope=hash.createCanonicalDigestScope(null);}catch{}
 function operationalValuesEqual(before,after){
   if(Object.is(before,after))return true;
   // Preserve the existing hashing behavior for unusual graphs/accessors. The
   // fast path compares the exact ordinary canonical trees used by this owner.
-  if(!operationalPatchTree(before)||!operationalPatchTree(after))return equivalent(before,after);
+  const leftTree=operationalPatchTree(before,sharedOperationalTree);
+  const rightTree=leftTree===true?operationalPatchTree(after,sharedOperationalTree):false;
+  if(leftTree!==true||rightTree!==true){
+    // Canonical mirrors may share subtrees. For precisely equal, admissible
+    // graphs the bytes are equal regardless of that sharing. A mismatch or an
+    // unsupported graph keeps the original hash owner's errors and ordering.
+    if((leftTree===sharedOperationalTree||rightTree===sharedOperationalTree)&&checkpointSnapshotPrimitivesCurrent(operationalEqualityScope)){
+      try{
+        const left=verifiedGraphNodes(before),right=verifiedGraphNodes(after);
+        if(canonicalVerifiedGraph(before,left)&&canonicalVerifiedGraph(after,right)&&
+           verifiedNodeValuesEqual(before,after,left,right)&&checkpointSnapshotPrimitivesCurrent(operationalEqualityScope))return true;
+      }catch{} // The canonical owner supplies the original diagnostic.
+    }
+    return equivalent(before,after);
+  }
   const pending=[[before,after]];
   while(pending.length){
     const [left,right]=pending.pop();if(Object.is(left,right))continue;
@@ -632,11 +650,11 @@ function assertOperationalChange(before,after){
 // Path-copy replay is limited to unshared trees. Canonical field mirrors can
 // share arrays, so retain structured-clone behavior for shared graphs/accessors
 // instead of changing their alias semantics while replaying a path patch.
-function operationalPatchTree(value){
+function operationalPatchTree(value,repeated=false){
   const seen=new WeakSet(),pending=[value];
   while(pending.length){
     const item=pending.pop();if(!item||typeof item!=='object')continue;
-    if(seen.has(item))return false;seen.add(item);
+    if(seen.has(item))return repeated;seen.add(item);
     if(!Array.isArray(item)&&Object.getPrototypeOf(item)!==Object.prototype&&Object.getPrototypeOf(item)!==null)return false;
     if(Object.getOwnPropertySymbols(item).length)return false;
     for(const key of Object.getOwnPropertyNames(item)){
@@ -661,34 +679,83 @@ function verifiedGraphNodes(value){
   while(pending.length){
     const finish=pending.pop(),item=pending.pop();if(!item||typeof item!=='object'){if(typeof item==='function'||typeof item==='symbol')return null;continue;}
     if(finish){active.delete(item);continue;}
-    if(active.has(item))return null;if(nodes.has(item))continue;
+    if(nodes.has(item)){if(active.has(item))return null;continue;}
     if(!Array.isArray(item)&&Object.getPrototypeOf(item)!==Object.prototype&&Object.getPrototypeOf(item)!==null)return null;
     if(Object.getOwnPropertySymbols(item).length)return null;
-    const entries=[];
+    const entries=[];let hasChildren=false;
     for(const key of Object.getOwnPropertyNames(item)){
       if(Array.isArray(item)&&key==='length')continue;
       const descriptor=Object.getOwnPropertyDescriptor(item,key);
       if(!descriptor.enumerable||!Object.hasOwn(descriptor,'value'))return null;
-      entries.push(key,descriptor.value);
+      const child=descriptor.value;
+      entries.push(key,child);
+      // Only objects and unsupported leaves need a visit. Stack them in
+      // insertion order so a later sibling's trap still runs first.
+      const type=typeof child;
+      if(child!==null&&(type==='object'||type==='function'||type==='symbol')){
+        if(!hasChildren){active.add(item);pending.push(item,true);hasChildren=true;}
+        pending.push(child,false);
+      }
     }
-    nodes.set(item,entries);active.add(item);pending.push(item,true);
-    for(let index=1;index<entries.length;index+=2)pending.push(entries[index],false);
+    nodes.set(item,entries);
   }
   return nodes;
 }
 function copyVerifiedTree(value){
   const nodes=verifiedGraphNodes(value);if(!nodes)return clone(value);
+  return copyVerifiedGraph(value,nodes);
+}
+function copyVerifiedGraph(value,sourceNodes,capturedNodes=null,arrayLengths=null){
   if(!value||typeof value!=='object')return value;
-  const copies=new Map([...nodes.keys()].map(item=>[item,Array.isArray(item)?new Array(item.length):{}]));
-  for(const [source,entries]of nodes){const target=copies.get(source);for(let index=0;index<entries.length;index+=2){const item=entries[index+1];Object.defineProperty(target,entries[index],{value:item&&typeof item==='object'?copies.get(item):item,enumerable:true,writable:true,configurable:true});}}
+  const copies=new Map();
+  sourceNodes.forEach((entries,source)=>{
+    copies.set(source,Array.isArray(source)?new Array(arrayLengths?arrayLengths.get(source):source.length):{});
+  });
+  sourceNodes.forEach((entries,source)=>{
+    const target=copies.get(source),captured=capturedNodes?[]:null;
+    for(let index=0;index<entries.length;index+=2){
+      const child=entries[index+1],copy=child&&typeof child==='object'?copies.get(child):child;
+      Object.defineProperty(target,entries[index],{value:copy,enumerable:true,writable:true,configurable:true});
+      // Keep captured edges isolated from any descriptor/array hook that
+      // observed the source walk.
+      if(captured)captured.push(entries[index],copy);
+    }
+    if(captured)capturedNodes.set(target,captured);
+  });
   return copies.get(value);
+}
+// A sufficient subset of canonical JSON. Send other values (including strings
+// with unpaired surrogates and arrays from other realms) to the encoder for
+// the full Unicode/prototype rules and its exact path-specific diagnostics.
+function canonicalVerifiedGraph(value,nodes){
+  if(!nodes)return false;
+  const scalar=item=>item===null||typeof item==='boolean'||
+    (typeof item==='number'&&Number.isSafeInteger(item)&&!Object.is(item,-0))||
+    (typeof item==='string'&&!/[\uD800-\uDFFF]/u.test(item));
+  if(!value||typeof value!=='object')return scalar(value);
+  for(const [source,entries] of nodes){
+    const array=Array.isArray(source);
+    if(array){
+      const prototype=Object.getPrototypeOf(source);
+      if((prototype!==Array.prototype&&prototype!==null)||source.length!==entries.length/2)return false;
+    }
+    for(let index=0;index<entries.length;index+=2){
+      const key=entries[index],child=entries[index+1];
+      if(array?key!==String(index/2):/[\uD800-\uDFFF]/u.test(key))return false;
+      if((!child||typeof child!=='object')&&!scalar(child))return false;
+    }
+  }
+  return true;
 }
 // Copy only private ordinary operational values, retaining string primitives
 // without recopying their bytes. Preserve shared aliases and mutable-container
 // isolation; accessors, symbols, cycles and exotic values use the native clone.
 function cloneOperationalPatchValue(value){
-  if(!operationalCloneBindingCurrent()||!verifiedGraphNodes(value))return clone(value);
-  const copy=copyVerifiedTree(value);
+  if(!operationalCloneBindingCurrent())return clone(value);
+  const nodes=verifiedGraphNodes(value);
+  if(!nodes||!operationalCloneBindingCurrent())return clone(value);
+  const copy=copyVerifiedGraph(value,nodes);
+  if(!operationalCloneBindingCurrent())return clone(value);
   globalThis.closedLoopPromptEngine?.copyRetainedPromptContextFiles?.(value,copy);
   return copy;
 }
@@ -696,21 +763,59 @@ function verifiedValuesEqual(before,after){
   const leftNodes=verifiedGraphNodes(before),rightNodes=verifiedGraphNodes(after);
   return verifiedNodeValuesEqual(before,after,leftNodes,rightNodes);
 }
-function verifiedNodeValuesEqual(before,after,leftNodes,rightNodes){
+// General equality observes live reflection. An audited snapshot must never
+// enter a replaced method: reading a candidate array's length can run a Proxy
+// trap, replace a method, then restore it during that method's first call.
+const liveGraphOperations={
+  same:(left,right)=>Object.is(left,right),array:value=>Array.isArray(value),
+  stack:(left,right)=>[left,right],push:(stack,left,right)=>stack.push(left,right),pop:stack=>stack.pop(),
+  map:()=>new Map(),weakMap:()=>new WeakMap(),weakSet:()=>new WeakSet(),
+  mapGet:(map,key)=>map.get(key),mapSet:(map,key,value)=>map.set(key,value),mapHas:(map,key)=>map.has(key),
+  weakGet:(map,key)=>map.get(key),weakSetValue:(map,key,value)=>map.set(key,value),
+  setHas:(set,value)=>set.has(value),setAdd:(set,value)=>set.add(value)
+};
+let privateGraphOperations;
+function guardedGraphOperations(){
+  if(privateGraphOperations)return privateGraphOperations;
+  // Called only after the full native-binding guard has admitted this realm.
+  const bind=method=>Function.prototype.call.bind(method);
+  const map=Map,weakMap=WeakMap,weakSet=WeakSet,withoutPrototype=Object.setPrototypeOf;
+  privateGraphOperations={
+    same:Object.is,array:Array.isArray,
+    // The null-prototype stack cannot dispatch inherited numeric setters.
+    stack:(left,right)=>withoutPrototype([left,right],null),push:bind(Array.prototype.push),pop:bind(Array.prototype.pop),
+    map:()=>new map(),weakMap:()=>new weakMap(),weakSet:()=>new weakSet(),
+    mapGet:bind(map.prototype.get),mapSet:bind(map.prototype.set),mapHas:bind(map.prototype.has),
+    weakGet:bind(weakMap.prototype.get),weakSetValue:bind(weakMap.prototype.set),
+    setHas:bind(weakSet.prototype.has),setAdd:bind(weakSet.prototype.add)
+  };
+  return privateGraphOperations;
+}
+function verifiedNodeValuesEqual(before,after,leftNodes,rightNodes,ops=liveGraphOperations){
   if(!leftNodes||!rightNodes)return false;
-  const pending=[before,after],compared=new WeakMap();
+  const pending=ops.stack(before,after),compared=ops.weakMap();let additionalPartners;
   while(pending.length){
-    const right=pending.pop(),left=pending.pop();if(Object.is(left,right))continue;
-    if(!left||!right||typeof left!=='object'||typeof right!=='object'||Array.isArray(left)!==Array.isArray(right))return false;
-    if(Array.isArray(left)&&left.length!==right.length)return false;
-    let partners=compared.get(left);if(partners?.has(right))continue;if(!partners){partners=new WeakSet();compared.set(left,partners);}partners.add(right);
-    const entries=leftNodes.get(left),otherEntries=rightNodes.get(right);if(entries.length!==otherEntries.length)return false;
-    // Complete graph validation above retains its original left-to-right
-    // inspection order. Snapshots usually preserve insertion order, so equal
-    // keys can use their captured descriptors without another lookup map.
+    const right=ops.pop(pending),left=ops.pop(pending);if(ops.same(left,right))continue;
+    if(!left||!right||typeof left!=='object'||typeof right!=='object'||ops.array(left)!==ops.array(right))return false;
+    if(ops.array(left)&&left.length!==right.length)return false;
+    const previous=ops.weakGet(compared,left);
+    if(previous===right)continue;
+    if(!previous)ops.weakSetValue(compared,left,right);
+    else{
+      additionalPartners||=ops.weakMap();
+      let partners=ops.weakGet(additionalPartners,left);if(partners&&ops.setHas(partners,right))continue;
+      if(!partners){partners=ops.weakSet();ops.weakSetValue(additionalPartners,left,partners);}ops.setAdd(partners,right);
+    }
+    const entries=ops.mapGet(leftNodes,left),otherEntries=ops.mapGet(rightNodes,right);if(entries.length!==otherEntries.length)return false;
+    // Both graph inspections are complete. Equal key order can use their
+    // captured descriptors directly without a lookup map.
     let sameOrder=true;for(let index=0;index<entries.length;index+=2)if(entries[index]!==otherEntries[index]){sameOrder=false;break;}
-    if(sameOrder){for(let index=1;index<entries.length;index+=2){const item=entries[index],other=otherEntries[index];pending.push(item,other);}}
-    else{const other=new Map();for(let index=0;index<otherEntries.length;index+=2)other.set(otherEntries[index],otherEntries[index+1]);for(let index=0;index<entries.length;index+=2){const key=entries[index],item=entries[index+1];if(!other.has(key))return false;const value=other.get(key);pending.push(item,value);}}
+    if(sameOrder){for(let index=1;index<entries.length;index+=2)ops.push(pending,entries[index],otherEntries[index]);}
+    else{
+      const other=ops.map();
+      for(let index=0;index<otherEntries.length;index+=2)ops.mapSet(other,otherEntries[index],otherEntries[index+1]);
+      for(let index=0;index<entries.length;index+=2){const key=entries[index];if(!ops.mapHas(other,key))return false;ops.push(pending,entries[index+1],ops.mapGet(other,key));}
+    }
   }
   return true;
 }
@@ -738,23 +843,29 @@ function copyCheckpointValueSnapshot(value){
   try{
     const sourceNodes=verifiedGraphNodes(value);
     if(!sourceNodes){proof.snapshot=clone(value);releaseCheckpointValueSnapshot(proof);completed=true;return proof;}
-    const copies=new Map([...sourceNodes.keys()].map(item=>[item,Array.isArray(item)?new Array(item.length):{}])),nodes=new Map();
-    for(const [source,entries]of sourceNodes){
-      const target=copies.get(source),captured=[];
-      for(let index=0;index<entries.length;index+=2){
-        const item=entries[index+1],copy=item&&typeof item==='object'?copies.get(item):item;
-        Object.defineProperty(target,entries[index],{value:copy,enumerable:true,writable:true,configurable:true});
-        captured.push(entries[index],copy);
-      }
-      nodes.set(target,captured);
+    // Array length reads can run user code. Finish those reads before any
+    // private target exists and recheck the guard before populating it.
+    const arrayLengths=new Map();
+    for(const source of sourceNodes.keys())if(Array.isArray(source))arrayLengths.set(source,source.length);
+    if(!checkpointSnapshotPrimitivesCurrent(proof)){
+      releaseCheckpointValueSnapshot(proof);proof.snapshot=copyVerifiedGraph(value,sourceNodes,null,arrayLengths);completed=true;return proof;
     }
-    proof.snapshot=value&&typeof value==='object'?copies.get(value):value;proof.nodes=nodes;
+    const nodes=new Map();
+    proof.snapshot=copyVerifiedGraph(value,sourceNodes,nodes,arrayLengths);proof.nodes=nodes;
     if(!checkpointSnapshotPrimitivesCurrent(proof))releaseCheckpointValueSnapshot(proof);
     completed=true;return proof;
   }finally{if(!completed)releaseCheckpointValueSnapshot(proof);}
 }
 function unchangedCheckpointValueSnapshot(proof,current){
-  if(proof.nodes&&checkpointSnapshotPrimitivesCurrent(proof))return verifiedNodeValuesEqual(proof.snapshot,current,proof.nodes,verifiedGraphNodes(current));
+  if(proof.nodes&&checkpointSnapshotPrimitivesCurrent(proof)){
+    try{
+      const currentNodes=verifiedGraphNodes(current);
+      if(checkpointSnapshotPrimitivesCurrent(proof)){
+        const equal=verifiedNodeValuesEqual(proof.snapshot,current,proof.nodes,currentNodes,guardedGraphOperations());
+        if(checkpointSnapshotPrimitivesCurrent(proof))return equal;
+      }
+    }catch(error){releaseCheckpointValueSnapshot(proof);throw error;}
+  }
   // Invalidate before the original path can expose the private snapshot to a
   // replaced reflection primitive. Restoring that primitive cannot revive it.
   releaseCheckpointValueSnapshot(proof);

@@ -86,7 +86,7 @@ export function verifyCapturedReceiptOwners({source=read('project-store.js')}={}
 // recorded; replaceable globals and the excluded store sites are watched for
 // any argument that reaches a captured node.
 function instrumentCaptureAudit(source){
- source=replaceOnce(source,"proof.snapshot=value&&typeof value==='object'?copies.get(value):value;proof.nodes=nodes;","proof.snapshot=value&&typeof value==='object'?copies.get(value):value;proof.nodes=nodes;globalThis.__recordCapturedNodes?.(nodes,proof);");
+ source=replaceOnce(source,"proof.snapshot=copyVerifiedGraph(value,sourceNodes,nodes,arrayLengths);proof.nodes=nodes;","proof.snapshot=copyVerifiedGraph(value,sourceNodes,nodes,arrayLengths);proof.nodes=nodes;globalThis.__recordCapturedNodes?.(nodes,proof);");
  // A captured snapshot walked again (by a copy or a cold comparison) is exposed
  // to the reflection primitives current at that walk; its capture must never
  // be compared after that.

@@ -23,6 +23,65 @@ export function verifyCheckpointStateSnapshot(){
  for(const [label,expression] of [['symbol','({...candidate,[Symbol("x")]:1})'],['getter','Object.defineProperty({...candidate},"generation",{enumerable:true,get(){return 7;}})'],['cycle','(()=>{const c={...candidate};c.self=c;return c;})()'],['proxy-change','new Proxy(candidate,{getOwnPropertyDescriptor(target,key){const d=Reflect.getOwnPropertyDescriptor(target,key);return key==="generation"?{...d,value:8}:d;}})']])assert.equal(run(`unchangedCheckpointValueSnapshot(second,${expression})`),false,'CHECKPOINT_STATE_UNUSUAL_INPUT:'+label);
  assert.throws(()=>run('unchangedCheckpointValueSnapshot(second,new Proxy(candidate,{getOwnPropertyDescriptor(){throw new Error("PROXY_TRAP");}}))'),/PROXY_TRAP/);
  run('releaseCheckpointValueSnapshot(second);');
+ // A candidate can replace a native while the owner is inspecting it. The
+ // cached nodes must be retired even when the wrapper forwards the same data.
+ for(const phase of ['walk','compare']){
+  const proof='const changing=copyCheckpointValueSnapshot({items:[1]});';
+  const trap=phase==='walk'?'getOwnPropertyDescriptor(target,key){Object.getOwnPropertyNames=names;return Reflect.getOwnPropertyDescriptor(target,key);}':
+                              'get(target,key,receiver){if(key==="length")Object.getOwnPropertyNames=names;return Reflect.get(target,key,receiver);}';
+  assert.equal(run(`(()=>{${proof}const names=value=>originalNames(value),items=new Proxy([1],{${trap}});
+   try{return unchangedCheckpointValueSnapshot(changing,{items})&&changing.nodes===null&&changing.scope===null;}
+   finally{Object.getOwnPropertyNames=originalNames;}})()`),true,'CHECKPOINT_MID_COMPARE_SWAP_RELEASED:'+phase);
+ }
+ assert.equal(run(`(()=>{const current=new Proxy({items:[1]},{ownKeys(target){Object.getOwnPropertyNames=value=>originalNames(value);return Reflect.ownKeys(target);}});
+  try{const changing=copyCheckpointValueSnapshot(current);return !changing.nodes&&!changing.scope&&changing.snapshot.items[0]===1;}
+  finally{Object.getOwnPropertyNames=originalNames;}})()`),true,'CHECKPOINT_MID_CAPTURE_SWAP_RELEASED');
+
+ // A one-shot replacement restores itself during its first dispatch. If it
+ // observes a snapshot, that snapshot must already have lost its captured
+ // nodes; changing the observed copy must therefore fail its next comparison.
+ for(const phase of ['capture','compare']){
+  const observed=run(`(()=>{
+   const phase=${JSON.stringify(phase)},target=[{v:1}],define=Object.defineProperty,same=Object.is;let stolen;
+   const items=new Proxy(target,{get(object,key,receiver){
+    if(key==="length"&&phase==="capture"){Object.defineProperty=(copy,...args)=>{Object.defineProperty=define;stolen=copy;return define(copy,...args);};}
+    if(key==="length"&&phase==="compare"){Object.is=(left,right)=>{Object.is=same;stolen=left;return same(left,right);};}
+    return Reflect.get(object,key,receiver);
+   }});
+   try{
+    const proof=copyCheckpointValueSnapshot({items:phase==="capture"?items:target});
+    if(phase==="compare")unchangedCheckpointValueSnapshot(proof,{items});
+    else Object.defineProperty=define;
+    Object.is=same;
+    if(stolen===proof.snapshot)stolen.items=[{v:99}];
+    else if(stolen===proof.snapshot.items[0])stolen.v=99;
+    else return true;
+    return !proof.nodes&&!unchangedCheckpointValueSnapshot(proof,{items:[{v:1}]});
+   }finally{Object.defineProperty=define;Object.is=same;}
+  })()`);
+  assert.equal(observed,true,'CHECKPOINT_TRANSIENT_NATIVE_CUSTODY:'+phase);
+ }
+
+ const operationStart=source.indexOf('const operationalEqualityScope='),operationEnd=source.indexOf('function assertOperationalChange(');
+ const treeStart=source.indexOf('function operationalPatchTree('),treeEnd=source.indexOf('function copyOperationalAncestor(');
+ assert.ok(operationStart>=0&&operationEnd>operationStart&&treeStart>=0&&treeEnd>treeStart);
+ run(`let coldComparisons=0;const equivalent=(a,b)=>{coldComparisons++;return hash.sha256Value(a)===hash.sha256Value(b)};
+   ${source.slice(operationStart,operationEnd)}${source.slice(treeStart,treeEnd)}
+   const mirrored=v=>{const shared={v};return {a:shared,b:shared};};`);
+ for(const value of ['"text"','"👩‍🔬"','null','Number.MAX_SAFE_INTEGER','Object.assign(Object.create(null),{key:[true,1]})']){
+  const cold=run('coldComparisons');
+  assert.equal(run(`operationalValuesEqual(mirrored(${value}),mirrored(${value}))`),true);
+  assert.equal(run('coldComparisons'),cold,'OPERATIONAL_CANONICAL_SHARED_FAST_PATH:'+value);
+ }
+ for(const value of ['NaN','-0','0.5','1n','undefined','"\\ud800"','{["\\udc00"]:1}','new Array(2)','Object.assign([1],{hidden:2})','Object.setPrototypeOf([1],{})']){
+  const observe=expression=>{try{return run(expression);}catch(error){return [error.name,error.message];}};
+  const cold=run('coldComparisons');
+  assert.deepEqual(observe(`operationalValuesEqual(mirrored(${value}),mirrored(${value}))`),observe(`hash.sha256Value(mirrored(${value}))`),'OPERATIONAL_CANONICAL_REFUSAL:'+value);
+  assert.equal(run('coldComparisons'),cold+1,'OPERATIONAL_CANONICAL_FALLBACK:'+value);
+ }
+ assert.equal(run('operationalValuesEqual(mirrored(1),mirrored(2))'),false,'OPERATIONAL_SHARED_DIFFERENCE');
+ run('Object.getOwnPropertyNames=value=>originalNames(value);');
+ const cold=run('coldComparisons');try{assert.equal(run('operationalValuesEqual(mirrored(1),mirrored(1))'),true);assert.equal(run('coldComparisons'),cold+1,'OPERATIONAL_SHARED_NATIVE_SWAP_FALLBACK');}finally{run('Object.getOwnPropertyNames=originalNames;');}
  return {checkpointStateSnapshot:'PASS',currentWalksPerComparison:1,privateSnapshotAliasPreserved:true,currentMutationRejected:true,nativeReplacementInvalidates:true,restoredNativeDoesNotRevive:true,unusualInputCases:5,released:true};
 }
 
