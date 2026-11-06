@@ -1710,6 +1710,7 @@ async function readProjectMetadata(jobId,sourceProof=null,physicalCapture=null,p
   if(!row)return null;
   if(sourceProof&&committedRead){
     Object.assign(sourceProof,{row:committedRead.row,journal:committedRead.journal,current:true,storage:committedRead.storage,retainedRoot:committedRead.retainedRoot,snapshot:committedRead.snapshot});
+    carryCapturedIntegrity(sourceProof,committedRead);
     // Carry computation across this consumed exact-source proof. Validation is
     // carried only by a root certificate, under its recorded validators, inside
     // the checkpoint transaction; public reads still verify their own row cold.
@@ -1814,10 +1815,10 @@ async function readProjectForTransaction(jobId,readPurpose=null){
  // project again. Custody observers still run and the complete values are
  // compared again afterwards, exactly as for every other private read.
  if(readPurpose===CHECKPOINT_PAIR_READ&&sourceProof.current&&sourceProof.snapshot&&sourceProof.retainedRoot&&rootCertificates.has(sourceProof.retainedRoot)){
-  const integrity={kind:VERIFIED_PROJECT_INTEGRITY,project,digest:project.projectSha256,snapshot:sourceProof.snapshot};
+  const integrity=carryCapturedIntegrity({kind:VERIFIED_PROJECT_INTEGRITY,project,digest:project.projectSha256,snapshot:sourceProof.snapshot},sourceProof);
   await observeProjectArtifactCustody(project);
   if(!unchangedVerifiedProject(integrity,project,integrity.digest))throw storageError('Project or response data changed after verification. The newer state is preserved.','STALE_PROJECT_REVISION');
-  return {...sourceProof,...integrity,canonicalReadIntegrity:null};
+  return carryCapturedIntegrity({...sourceProof,...integrity,canonicalReadIntegrity:null},integrity);
  }
  const canonicalReadIntegrity=readPurpose===STARTUP_REFRESH_READ&&sourceProof.current?verifiedProjectIntegrity(project,project.projectSha256):null;
  // Custody/context observers may retain this project. Bind the verified source
@@ -2467,7 +2468,7 @@ async function commitRootCheckpoint(jobId,project,verifiedRead,prepared,operatio
     catalog[jobId]={jobId,title:prepared.state.title||'Saved project',activeId:prepared.state.activeId,activeRevision:prepared.state.activeRevision||0,removed:Boolean(prepared.state.removed)};
     meta.put({key:'recoveryCatalog',value:catalog,updatedAt:now()});fault('during-history-write');recordWorkerCommit(tx,operationId,project,project.projectSha256,checkpointId);
     owner.finish();await owner.completion;
-    rootCertificates.add(root);recentOperationalCommitRead={...verifiedRead,retainedRoot:root};return checkpointId;
+    rootCertificates.add(root);recentOperationalCommitRead=carryCapturedIntegrity({...verifiedRead,retainedRoot:root},verifiedRead);return checkpointId;
   }catch(error){const failure=owner.abort(error);await owner.completion.catch(()=>{});throw failure;}
   }finally{releaseCheckpointValueSnapshot(rootValueCapture);if(stateCapture)releaseCheckpointValueSnapshot(stateCapture);}
 }
@@ -2928,7 +2929,7 @@ async function saveCheckpoint(jobId,{expectedProjectRevision,expectedStateSha256
   }
   if(prepared.retainedRoot&&checkpointProject===project)return commitRootCheckpoint(jobId,project,verifiedRead,prepared,operationId,checkpointId);
   const tx=await openTransaction([PROJECTS,META],'readwrite');
-  try{const row=await projectRowWithOperations(tx,jobId,verifiedRead);if(row?.projectSha256!==project.projectSha256)throw storageError('Project changed before its checkpoint could be saved.','STALE_PROJECT_REVISION');await commitHistory(tx,prepared);recordWorkerCommit(tx,operationId,checkpointProject,checkpointDigest,checkpointId);await complete(tx);if(checkpointProject===project&&unchangedVerifiedProject(verifiedRead,project,project.projectSha256))recentOperationalCommitRead={...verifiedRead,retainedRoot:prepared.verifiedContinuation&&rootCertificates.has(prepared.verifiedContinuation)?prepared.verifiedContinuation:undefined};return checkpointId;}catch(error){try{tx.abort();}catch{}throw error;}
+  try{const row=await projectRowWithOperations(tx,jobId,verifiedRead);if(row?.projectSha256!==project.projectSha256)throw storageError('Project changed before its checkpoint could be saved.','STALE_PROJECT_REVISION');await commitHistory(tx,prepared);recordWorkerCommit(tx,operationId,checkpointProject,checkpointDigest,checkpointId);await complete(tx);if(checkpointProject===project&&unchangedVerifiedProject(verifiedRead,project,project.projectSha256))recentOperationalCommitRead=carryCapturedIntegrity({...verifiedRead,retainedRoot:prepared.verifiedContinuation&&rootCertificates.has(prepared.verifiedContinuation)?prepared.verifiedContinuation:undefined},verifiedRead);return checkpointId;}catch(error){try{tx.abort();}catch{}throw error;}
 }
 async function beginHistorySession(sessionId){
   if(!sessionId)throw new Error('Application session identity is required.');
