@@ -128,6 +128,25 @@ async function swappedPackageSource(storeSource){
  }});
 }
 const digestBindingSource=fs.readFileSync('project-store.js','utf8');
+{
+ const anchor='globalThis.closedLoopProjectStore=Object.freeze({STORAGE_IO_TIMEOUT_MS';
+ assert.equal(digestBindingSource.split(anchor).length,2);
+ const instrumented=digestBindingSource.replace(anchor,'globalThis.__comparePackageRow=packageRowMatches;'+anchor);
+ const realm=projectStoreRuntime({sourceOverrides:{...sourceOverrides,'project-store.js':instrumented}}).runtime;
+ const observed=vm.runInContext(`(()=>{
+  const measured=Object.freeze({title:'measured'}),stored={title:'damaged'},scope=closedLoopHash.createCanonicalDigestScope(null),set=Map.prototype.set;
+  let fired=false;
+  const row=new Proxy(stored,{getOwnPropertyDescriptor(target,key){
+   if(!fired&&key==='title'){
+    fired=true;Map.prototype.set=function(item,entries){Map.prototype.set=set;if(item===row)entries[1]='measured';return Reflect.apply(set,this,[item,entries]);};
+   }
+   return Reflect.getOwnPropertyDescriptor(target,key);
+  }});
+  try{return [__comparePackageRow(scope,measured,row),row.title,fired];}finally{Map.prototype.set=set;closedLoopHash.disposeCanonicalDigestScope(scope);}
+ })()`,realm);
+ assert.deepEqual([...observed],[false,'damaged',true],'PACKAGE_ROW_GRAPH_POISON_ORACLE');
+}
+
 // Exercise an ordinary public read after a real, authorized package. Count
 // whole-row digests independently of the returned project and its validation.
 {
