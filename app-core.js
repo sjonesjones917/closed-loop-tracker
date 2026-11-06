@@ -538,7 +538,7 @@ function operatorLaneMatches(item,n,{accepted=false,lane=null}={}){
   try{engine.assertOperationScope(current,n,operation,actual,{requireReserved:!accepted});return true;}catch{return false;}
 }
 function validationLaneRecord(validation){return safe(current.projectData.generatedPrompts).find(x=>(x.instructionId||x.promptId)===validation?.promptId)||validation;}
-// One synchronous screen build shares one lane per stage, and each lane
+// Within a single synchronous screen build each stage shares one lane, and each lane
 // predicate's result, under string keys of the presentation scope.
 function acceptedLaneChanges(n){const actions=typeof presentationActions!=='undefined'&&presentationActions,key='operatorLane:'+typeof n+':'+n,lane=actions?actions.get(key)||actions.set(key,{}).get(key):{};if(!Object.hasOwn(lane,'acceptedLaneChanges'))lane.acceptedLaneChanges=engine.acceptedChanges(current,n).filter(x=>operatorLaneMatches(x,n,{accepted:true,lane}));return actions?lane.acceptedLaneChanges.slice():lane.acceptedLaneChanges;}
 function promptMatches(record,n,options,requireCurrentRevision=true){if((record.historyActivationId||null)!==(current.historyActivationId||null)||Number(record.stage)!==Number(n)||record.invalidatedBy||(requireCurrentRevision&&Number(record.scope?.projectRevision)!==Number(current.revision||0))||record.operation!==options.operation||globalThis.closedLoopHash.sha256Value(record.contextManifest?.deferredDefinitionCorrectionTarget||null)!==globalThis.closedLoopHash.sha256Value(options.deferredDefinitionCorrectionTarget||null))return false;for(const [key,value] of Object.entries(options.scope||{}))if(String(record.scope?.[key]??'')!==String(value??''))return false;return true;}
