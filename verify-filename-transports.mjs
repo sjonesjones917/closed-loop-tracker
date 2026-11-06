@@ -133,7 +133,7 @@ const digestBindingSource=fs.readFileSync('project-store.js','utf8');
 {
  const cold='if(computed===null)computed=await hash.sha256Chunks(hash.canonicalChunks(canonicalProject(row.project)));';
  assert.equal(digestBindingSource.split(cold).length,2);
- const match='    const nodes=ordinaryPackageRowNodes(row);';assert.equal(digestBindingSource.split(match).length,2);
+ const match='    const ops=guardedGraphOperations(),nodes=ordinaryPackageRowNodes(row,ops);';assert.equal(digestBindingSource.split(match).length,2);
  const observed=digestBindingSource.replace(match,"    if(globalThis.__failPackageComparison){delete globalThis.__failPackageComparison;throw new Error('Synthetic comparison fault');}\n"+match).replace(cold,"if(computed===null){globalThis.__publicBaseCold=(globalThis.__publicBaseCold||0)+1;computed=await hash.sha256Chunks(hash.canonicalChunks(canonicalProject(row.project)));}");
  for(const scenario of ['unchanged','tamper','other-tab','validator-swap','comparison-throws','journal','migration']){
   const f=await assemblyFixture(observed,'PUBLIC-PACKAGE-BASE-'+scenario,{journal:scenario==='journal'}),r=f.r3,id=f.q.job.JOB_ID;

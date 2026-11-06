@@ -1691,11 +1691,11 @@ async function listProjectSummaries(){
 // hash natives before copying and on every resume, before the generator or
 // digest can observe another byte. An ineligible source or swap takes the
 // cooperative cold digest and the independent byte check before release.
-function ordinaryPackageRowNodes(row){
-  const nodes=verifiedGraphNodes(row);
-  if(!nodes)return null;
-  for(const item of nodes.keys())if(Array.isArray(item)&&Object.getPrototypeOf(item)!==Array.prototype)return null;
-  return nodes;
+function ordinaryPackageRowNodes(row,ops){
+  const nodes=verifiedGraphNodes(row,ops);if(!nodes)return null;
+  let ordinary=true;
+  ops.forEachNode(nodes,(_entries,item)=>{if(ops.array(item)&&ops.prototype(item)!==Array.prototype)ordinary=false;});
+  return ordinary?nodes:null;
 }
 function packagePrimitivesCurrent(scope){
   return Boolean(scope&&hash.canonicalDigestScopeMatches(scope,null)&&rootDigestPrimitivesUnchanged(initialRootDigestPrimitives));
@@ -1703,9 +1703,9 @@ function packagePrimitivesCurrent(scope){
 function packageRowMatches(scope,privateRow,row){
   try{
     if(!packagePrimitivesCurrent(scope))return false;
-    const nodes=ordinaryPackageRowNodes(row);
+    const ops=guardedGraphOperations(),nodes=ordinaryPackageRowNodes(row,ops);
     if(!nodes||!packagePrimitivesCurrent(scope))return false;
-    return verifiedNodeValuesEqual(privateRow,row,verifiedGraphNodes(privateRow),nodes,guardedGraphOperations())&&packagePrimitivesCurrent(scope);
+    return verifiedNodeValuesEqual(privateRow,row,verifiedGraphNodes(privateRow,ops),nodes,ops)&&packagePrimitivesCurrent(scope);
   }catch{return false;}
 }
 function capturePackageSources(source,{storage,row,journal}){
@@ -1721,10 +1721,10 @@ async function guardedPackageRowDigest(scope,privateRow){
   const current=()=>packagePrimitivesCurrent(scope);
   try{
     if(!current())return null;
-    const nodes=ordinaryPackageRowNodes(privateRow);if(!nodes)return null;
+    const ops=guardedGraphOperations(),nodes=ordinaryPackageRowNodes(privateRow,ops);if(!nodes)return null;
     // The generator resumes in later turns. No retained reference can change
     // the preimage between its first and last chunk.
-    for(const item of nodes.keys())Object.freeze(item);
+    ops.forEachNode(nodes,(_entries,item)=>Object.freeze(item));
     if(!current())return null;
     const digest=hash.createSha256(),chunks=hash.canonicalChunks(canonicalProject(privateRow.project));
     let units=0;
