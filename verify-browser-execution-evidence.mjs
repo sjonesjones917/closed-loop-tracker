@@ -1,4 +1,5 @@
 import {verifyBrowserObserverLifecycleControls} from './test-browser-observer-lifecycle.mjs';
+import {verifyBrowserProducerBudgets} from './test-browser-producer-budgets.mjs';
 import assert from 'node:assert/strict';
 import {validateBrowserExecution,loadBrowserExpectedSite,waitForBrowserExecutionObservations} from './browser-execution-evidence.mjs';
 
@@ -49,3 +50,4 @@ const state=()=>({pending:new Set(),errors:[],workerTargets:new Set([workerUrl])
 console.log(JSON.stringify({browserExecutionObserverScheduling:'PASS',synthetic:true,actualBrowser:false,observerCases}));
 
 console.log(JSON.stringify(await verifyBrowserObserverLifecycleControls()));
+console.log(JSON.stringify(await verifyBrowserProducerBudgets()));
