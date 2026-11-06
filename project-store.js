@@ -679,7 +679,7 @@ function verifiedGraphNodes(value){
   while(pending.length){
     const finish=pending.pop(),item=pending.pop();if(!item||typeof item!=='object'){if(typeof item==='function'||typeof item==='symbol')return null;continue;}
     if(finish){active.delete(item);continue;}
-    if(nodes.has(item)){if(active.has(item))return null;continue;}
+    if(active.has(item))return null;if(nodes.has(item))continue;
     if(!Array.isArray(item)&&Object.getPrototypeOf(item)!==Object.prototype&&Object.getPrototypeOf(item)!==null)return null;
     if(Object.getOwnPropertySymbols(item).length)return null;
     const entries=[];let hasChildren=false;
