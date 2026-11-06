@@ -104,7 +104,7 @@ async function custodyAssembly(storeSource){
 // A package digest may yield while holding a detached source. A change to
 // the live row just before its verification must take the normal cold path.
 async function liveDigestRowChange(source){
- const anchor='    if(digestScope&&computed!==null&&!packageRowMatches(digestScope,packageSource.row,row))computed=null;';
+ const anchor='    if(digestScope&&computed!==null){';
  const observe='    globalThis.__changeDigestRow?.(row);';
  assert.equal(source.split(anchor).length,2);
  const f=await assemblyFixture(source.replace(anchor,observe+'\n'+anchor),'ASSEMBLY-DIGEST-LIVE-ROW');
@@ -123,8 +123,9 @@ const digestBindingSource=fs.readFileSync('project-store.js','utf8');
 {
  const cold='if(computed===null)computed=await hash.sha256Chunks(hash.canonicalChunks(canonicalProject(row.project)));';
  assert.equal(digestBindingSource.split(cold).length,2);
- const observed=digestBindingSource.replace(cold,"if(computed===null){globalThis.__publicBaseCold=(globalThis.__publicBaseCold||0)+1;computed=await hash.sha256Chunks(hash.canonicalChunks(canonicalProject(row.project)));}");
- for(const scenario of ['unchanged','tamper','other-tab','validator-swap','journal','migration']){
+ const match='    const nodes=ordinaryPackageRowNodes(row);';assert.equal(digestBindingSource.split(match).length,2);
+ const observed=digestBindingSource.replace(match,"    if(globalThis.__failPackageComparison){delete globalThis.__failPackageComparison;throw new Error('Synthetic comparison fault');}\n"+match).replace(cold,"if(computed===null){globalThis.__publicBaseCold=(globalThis.__publicBaseCold||0)+1;computed=await hash.sha256Chunks(hash.canonicalChunks(canonicalProject(row.project)));}");
+ for(const scenario of ['unchanged','tamper','other-tab','validator-swap','comparison-throws','journal','migration']){
   const f=await assemblyFixture(observed,'PUBLIC-PACKAGE-BASE-'+scenario,{journal:scenario==='journal'}),r=f.r3,id=f.q.job.JOB_ID;
   r.runtime.__publicBaseCold=0;
   if(scenario==='unchanged'){
@@ -140,6 +141,9 @@ const digestBindingSource=fs.readFileSync('project-store.js','utf8');
   }else if(scenario==='validator-swap'){
    const original=r.runtime.closedLoopWorkflowEngine;r.runtime.closedLoopWorkflowEngine=Object.freeze({...original});
    try{const current=await r.store.readProject(id);assert.equal(current.projectSha256,f.q.projectSha256);assert.equal(r.runtime.__publicBaseCold,1,'PACKAGE_BASE_REPLACED_VALIDATOR_COLD');}finally{r.runtime.closedLoopWorkflowEngine=original;}
+  }else if(scenario==='comparison-throws'){
+   r.runtime.__failPackageComparison=true;const current=await r.store.readProject(id);
+   assert.equal(current.projectSha256,f.q.projectSha256);assert.equal(r.runtime.__publicBaseCold,1);assert.equal((await r.store.listQuarantinedProjects()).length,0,'PACKAGE_BASE_COMPARISON_COLD_FALLBACK');
   }else if(scenario==='journal'){
    r.rows.get('meta').get('responseOperations:'+id).value.sha256='0'.repeat(64);
    await assert.rejects(()=>r.store.readProject(id),e=>e.code==='OPERATIONAL_STATE_INTEGRITY_FAILED'&&e.message==='Saved response operations failed integrity verification. Their exact state was preserved in quarantine.');assert.equal(r.runtime.__publicBaseCold,1);assert.equal((await r.store.listQuarantinedProjects()).length,1);
@@ -167,7 +171,7 @@ assert.equal((await custodyAssembly(null)).custody,'UNKNOWN','HANDOFF_ASSEMBLY_C
 note('Artifact bytes corrupted during assembly lose custody at the staleness read, as at a cold read');
 // Intended faults: each removes one part of the staleness read and must be detected.
 const storeSource=fs.readFileSync('project-store.js','utf8'),storeFault=(name,before,after)=>{if(storeSource.split(before).length!==2)throw new Error('Fault anchor missing: '+name);return storeSource.replace(before,after);};
-const rehash='    if(unchanged&&verifyBytes&&source.guardedDigest!==sources.row.projectSha256){let computed=null;try{computed=await hash.sha256Chunks(hash.canonicalChunks(canonicalProject(sources.row.project)));}catch{computed=null;}unchanged=computed!==null&&computed===sources.row.projectSha256;}\n';
+const rehash='    if(unchanged&&verifyBytes&&certificate?.digest!==sources.row.projectSha256){let computed=null;try{computed=await hash.sha256Chunks(hash.canonicalChunks(canonicalProject(sources.row.project)));}catch{computed=null;}unchanged=computed!==null&&computed===sources.row.projectSha256;}\n';
 const assemblyFaults=[
  ['package-resume-native-unchecked',storeFault('package-resume-native-unchecked','        if(!current())return null;\n',''),async source=>firstReadSwap(source,'join',true,{duringYield:true}),swapRefused,'HANDOFF_ASSEMBLY_RESUMED_DIGEST_ORACLE'],
  ['first-read-digest-trusted',storeFault('first-read-digest-trusted',rehash,''),async source=>firstReadSwap(source,'join',false),swapRefused,'HANDOFF_ASSEMBLY_FIRST_READ_SWAP_ORACLE'],

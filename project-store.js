@@ -1705,15 +1705,22 @@ function packagePrimitivesCurrent(scope){
   return Boolean(scope&&hash.canonicalDigestScopeMatches(scope,null)&&rootDigestPrimitivesUnchanged(initialRootDigestPrimitives));
 }
 function packageRowMatches(scope,privateRow,row){
-  if(!packagePrimitivesCurrent(scope))return false;
-  const nodes=ordinaryPackageRowNodes(row);
-  return nodes&&verifiedNodeValuesEqual(privateRow,row,verifiedGraphNodes(privateRow),nodes)&&packagePrimitivesCurrent(scope);
+  try{
+    if(!packagePrimitivesCurrent(scope))return false;
+    const nodes=ordinaryPackageRowNodes(row);
+    if(!nodes||!packagePrimitivesCurrent(scope))return false;
+    return verifiedNodeValuesEqual(privateRow,row,verifiedGraphNodes(privateRow),nodes,guardedGraphOperations())&&packagePrimitivesCurrent(scope);
+  }catch{return false;}
 }
 function capturePackageSources(source,{storage,row,journal}){
-  let scope=null;try{scope=hash.createCanonicalDigestScope(null);}catch{}
-  Object.assign(source,{current:false,validators:null,storage,row:copyVerifiedTree(row),journal:copyVerifiedTree(journal)});
-  return scope;
+  // Only a guarded copy that constructed every node privately keeps a scope.
+  // A structured-clone fallback may invoke hooks and must never be frozen.
+  const capture=copyCheckpointValueSnapshot(row);
+  Object.assign(source,{current:false,validators:null,storage,row:capture.snapshot,journal:copyVerifiedTree(journal)});
+  return capture.scope;
 }
+const measuredPackageBases=new WeakMap();
+const rememberPackageBase=measuredPackageBases.set.bind(measuredPackageBases),packageBaseFor=measuredPackageBases.get.bind(measuredPackageBases);
 async function guardedPackageRowDigest(scope,privateRow){
   const current=()=>packagePrimitivesCurrent(scope);
   try{
@@ -1750,9 +1757,11 @@ function durableCommitRead(jobId){const proof=recentOperationalCommitRead;return
 // validates the active project, handles migrations and observes artifact bytes.
 let lastPackageBaseRead=null;
 function takePackageBaseDigest(proof,sources){
-  if(!proof||!packagePrimitivesCurrent(proof.validators.scope)||!rootValidatorsUnchanged(proof.validators))return null;
-  if(!physicalSourcesUnchanged(proof.storage,sources.storage)||!verifiedValuesEqual(proof.journal,sources.journal))return null;
-  return packageRowMatches(proof.validators.scope,proof.row,sources.row)?proof.digest:null;
+  try{
+    if(!proof||!packagePrimitivesCurrent(proof.validators.scope)||!rootValidatorsUnchanged(proof.validators))return null;
+    if(!physicalSourcesUnchanged(proof.storage,sources.storage)||!verifiedValuesEqual(proof.journal,sources.journal))return null;
+    return packageRowMatches(proof.validators.scope,proof.row,sources.row)?proof.digest:null;
+  }catch{return null;}
 }
 async function readProjectMetadata(jobId,sourceProof=null,physicalCapture=null,packageSource=null){
   // A public/cold reader cannot consume a proof. Release a one-use proof before
@@ -1777,12 +1786,15 @@ async function readProjectMetadata(jobId,sourceProof=null,physicalCapture=null,p
     recoveryProjectionBounds.set(committedRead.project,journal?.updatedAt||row.updatedAt);return committedRead.project;
   }
   if(sourceProof){sourceProof.row=copyVerifiedTree(row);sourceProof.journal=copyVerifiedTree(journal);sourceProof.storage=storage;sourceProof.current=true;}
+  const privateRow=packageSource?.row;
   let computed;try{
-    computed=digestScope?await guardedPackageRowDigest(digestScope,packageSource.row):takePackageBaseDigest(publicBase,sources);
+    computed=digestScope?await guardedPackageRowDigest(digestScope,privateRow):takePackageBaseDigest(publicBase,sources);
     // The verifier validates the live row, so bind it to the hashed snapshot
     // in this turn, after the digest's last await.
-    if(digestScope&&computed!==null&&!packageRowMatches(digestScope,packageSource.row,row))computed=null;
-    if(packageSource)packageSource.guardedDigest=computed;
+    if(digestScope&&computed!==null){
+      if(privateRow===packageSource.row&&packageRowMatches(digestScope,privateRow,row))rememberPackageBase(packageSource,Object.freeze({row:privateRow,digest:computed}));
+      else computed=null;
+    }
     if(computed===null)computed=await hash.sha256Chunks(hash.canonicalChunks(canonicalProject(row.project)));
   }catch(error){await quarantine(row,'PROJECT_ENCODING_INVALID: '+error.message,{physicalSources:sources});throw storageError('The stored project contains invalid canonical data. Its original state was preserved in quarantine.','PROJECT_INTEGRITY_FAILED');}finally{if(digestScope)releaseCheckpointValueSnapshot({scope:digestScope});}
   // A package read carries only the synchronous checks below, under validators
@@ -4722,16 +4734,16 @@ async function rereadPackageProject(jobId,source,{verifyBytes=true}={}){
     if(!durableCommitRead(jobId))recentOperationalCommitRead=null;
     // An IndexedDB read spanned awaits. Recheck before exposing either private
     // source to reflection, even when a subsequently restored native would pass.
-    let unchanged=Boolean(sources?.row)&&hash.canonicalDigestScopeMatches(source.validators.scope,null)&&physicalSourcesUnchanged(source.storage,sources.storage)&&(source.guardedDigest?packageRowMatches(source.validators.scope,source.row,sources.row):verifiedValuesEqual(source.row,sources.row))&&verifiedValuesEqual(source.journal,sources.journal);
+    const certificate=packageBaseFor(source);
+    let unchanged=Boolean(sources?.row)&&hash.canonicalDigestScopeMatches(source.validators.scope,null)&&physicalSourcesUnchanged(source.storage,sources.storage)&&(certificate?certificate.row===source.row&&packageRowMatches(source.validators.scope,certificate.row,sources.row):verifiedValuesEqual(source.row,sources.row))&&verifiedValuesEqual(source.journal,sources.journal);
     // This read's own digest of the stored row bytes, independent of the first read's.
-    if(unchanged&&verifyBytes&&source.guardedDigest!==sources.row.projectSha256){let computed=null;try{computed=await hash.sha256Chunks(hash.canonicalChunks(canonicalProject(sources.row.project)));}catch{computed=null;}unchanged=computed!==null&&computed===sources.row.projectSha256;}
+    if(unchanged&&verifyBytes&&certificate?.digest!==sources.row.projectSha256){let computed=null;try{computed=await hash.sha256Chunks(hash.canonicalChunks(canonicalProject(sources.row.project)));}catch{computed=null;}unchanged=computed!==null&&computed===sources.row.projectSha256;}
     if(unchanged&&rootValidatorsUnchanged(source.validators)){
       // The custody observation of a cold read of these sources, in its order.
+      const nextPublicBase=verifyBytes&&certificate&&certificate.digest===sources.row.projectSha256?{...certificate,journal:source.journal,storage:source.storage,validators:source.validators}:null;
       forgetArtifactCustody(jobId);
       for(const artifactId of source.artifactIds){try{await getArtifact(artifactId);}catch(error){if(!CUSTODY_UNAVAILABLE_CODES.includes(error.code))throw error;}}
-      if(verifyBytes&&source.guardedDigest===sources.row.projectSha256){
-        lastPackageBaseRead={digest:source.guardedDigest,row:source.row,journal:source.journal,storage:source.storage,validators:source.validators};
-      }
+      if(nextPublicBase)lastPackageBaseRead=nextPublicBase;
       return {...source.identity};
     }
   }
