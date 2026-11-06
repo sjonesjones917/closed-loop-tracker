@@ -115,13 +115,6 @@ export function verifyCheckpointStateSnapshot(){
   })()`);
   assert.equal(observed,true,'CHECKPOINT_DISCOVERY_METADATA_CUSTODY:'+attack);
  }
- // The write preflight's canonical-admissibility check is conservative. Its
- // callers run the encoder for every inadmissible graph and its diagnostics.
- run('const mirrored=v=>{const shared={v};return {a:shared,b:shared};};const ordinary=v=>canonicalVerifiedGraph(v,verifiedGraphNodes(v));');
- for(const value of ['"text"','"👩‍🔬"','null','Number.MAX_SAFE_INTEGER','Object.assign(Object.create(null),{key:[true,1]})'])
-  assert.equal(run(`ordinary(mirrored(${value}))`),true,'CANONICAL_VERIFIED_GRAPH_ACCEPT:'+value);
- for(const value of ['NaN','-0','0.5','1n','undefined','"\\ud800"','{["\\udc00"]:1}','new Array(2)','Object.assign([1],{hidden:2})','Object.setPrototypeOf([1],{})'])
-  assert.equal(run(`ordinary(mirrored(${value}))`),false,'CANONICAL_VERIFIED_GRAPH_COLD:'+value);
  return {checkpointStateSnapshot:'PASS',currentWalksPerComparison:1,privateSnapshotAliasPreserved:true,currentMutationRejected:true,nativeReplacementInvalidates:true,restoredNativeDoesNotRevive:true,unusualInputCases:5,released:true};
 }
 

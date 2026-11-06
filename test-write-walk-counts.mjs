@@ -15,8 +15,8 @@ import {projectStoreRuntime} from './test-project-store-runtime.mjs';
 // the operational write receipt, whose snapshot is copied again, walks both.
 export const WRITE_WALK_PINS=Object.freeze({
  canonicalWrite:Object.freeze({walks:26,copies:8,digestScopes:0}),
- firstOperationalWrite:Object.freeze({walks:58,copies:12,digestScopes:0}),
- operationalWrite:Object.freeze({walks:55,copies:12,digestScopes:0})
+ firstOperationalWrite:Object.freeze({walks:59,copies:12,digestScopes:0}),
+ operationalWrite:Object.freeze({walks:57,copies:12,digestScopes:0})
 });
 // Walks at the sites whose double walks were removed. The operational History
 // candidate is its own bound pair snapshot: each of the four pair checks walks
@@ -99,13 +99,11 @@ export async function measureWriteWalks({source=fs.readFileSync(new URL('./proje
 // admissibility, error text, required confirmation identity or CAS order.
 export async function verifyWriteDigestPreflights(){
  const source=fs.readFileSync(new URL('./project-store.js',import.meta.url),'utf8');
- const testExports='globalThis.closedLoopProjectStore=Object.freeze({STORAGE_IO_TIMEOUT_MS';
- const tapped=replaceOnce(source,testExports,'globalThis.__writeTrapCopy=checkpointPairSource;'+testExports);
  class LocalEncoder extends TextEncoder{}
  Object.defineProperty(LocalEncoder.prototype,'encode',Object.getOwnPropertyDescriptor(TextEncoder.prototype,'encode'));
- const r=projectStoreRuntime({storageWorker:false,sourceOverrides:{'project-store.js':tapped},environment:{TextEncoder:LocalEncoder}});
+ const r=projectStoreRuntime({storageWorker:false,sourceOverrides:{'project-store.js':source},environment:{TextEncoder:LocalEncoder}});
  let p=await r.store.createProject({commandId:'WRITE-DIGEST-PREFLIGHT'});
- p.writeTrapProbe=r.copy([{value:1}]);p.job.JOB_TITLE='Guarded preflight';r.engine.recalculate(p);p=await r.store.writeProject(p,{expectedProjectRevision:p.revision});
+ p.job.JOB_TITLE='Guarded preflight';r.engine.recalculate(p);p=await r.store.writeProject(p,{expectedProjectRevision:p.revision});
  const options=()=>({expectedProjectRevision:p.revision,expectedStateSha256:p.projectSha256});
  const oldRevision=p.revision;
  const canonical=r.copy(p);canonical.job.JOB_TITLE='Updated preflight';r.engine.recalculate(canonical);
@@ -115,19 +113,6 @@ export async function verifyWriteDigestPreflights(){
  assert.equal(unchanged.projectSha256,p.projectSha256);assert.equal(unchanged.revision,p.revision);
  const extra=r.copy(p);extra.activeView='Records';p=await r.store.writeProject(extra,{...options(),operational:true});
  assert.equal(p.projectSha256,r.store.projectSha256(p));
- // Read array lengths before a private pair copy can enter a swapped
- // defineProperty that restores itself on its first dispatch.
- r.runtime.__trapProject=r.copy(p);
- const trapped=vm.runInContext(`(()=>{
-  const candidate=__trapProject,define=Object.defineProperty;let lengths=0,stolen=false;
-  candidate.writeTrapProbe=new Proxy(candidate.writeTrapProbe,{get(target,key,receiver){
-    if(key==='length'&&++lengths===2)Object.defineProperty=(...args)=>{Object.defineProperty=define;stolen=true;return define(...args);};
-    return Reflect.get(target,key,receiver);
-  }});
-  try{return [__writeTrapCopy(candidate)===null,stolen,lengths];}
-  finally{Object.defineProperty=define;}
- })()`,r.runtime);
- assert.deepEqual([...trapped],[true,false,2],'WRITE_PAIR_COPY_TRANSIENT_NATIVE_ORACLE');
  const ordinary=r.store.mutationImpact(p,p,p);
  assert.equal(ordinary.candidateSha256,p.projectSha256);
  const prior=r.copy(p);
@@ -202,6 +187,66 @@ export async function verifyWriteDigestPreflights(){
   assert.equal(hooks,1,'WRITE_PRECHECK_REPLACED_HOOK_REACHED');assert.equal(reads,2,'WRITE_PRECHECK_REPLACED_HOOK_ENCODER_ORDER');
  }finally{r.runtime.closedLoopPromptEngine=prompts;}
 }
+// Both sources cross replaceable owners. An operational pair must inspect
+// its copy again. A warm read must describe the source actually replayed.
+export async function verifyOperationalWriteWitnesses(){
+ const source=fs.readFileSync(new URL('./project-store.js',import.meta.url),'utf8');
+ const pairBoundary='  const primitive=rootDigestPrimitivesUnchanged(initialRootDigestPrimitives)?initialRootDigestPrimitives:null,snapshot=';
+ const tapped=replaceOnce(source,pairBoundary,'  globalThis.__beginPairWitness?.();\n'+pairBoundary);
+ let pairActive=false,armedInput,installed=0,reads=0;
+ const r=projectStoreRuntime({storageWorker:false,sourceOverrides:{'project-store.js':tapped},environment:{__beginPairWitness(){pairActive=true;}}});
+ const prompts=r.runtime.closedLoopPromptEngine;
+ r.runtime.closedLoopPromptEngine=Object.freeze({...prompts,copyRetainedPromptContextFiles(from,to,...args){
+  const result=prompts.copyRetainedPromptContextFiles(from,to,...args);
+  if(armedInput&&from===armedInput){installed++;to.extra=new Proxy(to.extra,{
+   getOwnPropertyDescriptor(target,key){
+    const d=Reflect.getOwnPropertyDescriptor(target,key);
+    return pairActive&&key==='leaf'&&++reads===2?{configurable:true,enumerable:true,get(){return 1;}}:d;
+   },
+   get(target,key,receiver){
+    if(pairActive&&key==='leaf'&&reads===3)throw new Error('PAIR_REINSPECTION_REFUSAL');
+    return Reflect.get(target,key,receiver);
+   }
+  });}
+  return result;
+ }});
+ let transactionArmed=false,detachedRow,targetView,mutations=0;
+ const open=r.runtime.openStorageTransaction,engine=r.runtime.closedLoopWorkflowEngine;
+ r.runtime.openStorageTransaction=async(names,mode)=>{
+  const tx=await open(names,mode);
+  if(transactionArmed&&mode==='readwrite'){
+   const objectStore=tx.objectStore;
+   tx.objectStore=name=>{
+    const store=objectStore(name);
+    if(name==='projects'){const get=store.get;store.get=key=>{
+     const request=get(key);if(request.result?.project)detachedRow=request.result;return request;
+    };}
+    return store;
+   };
+  }
+  return tx;
+ };
+ r.runtime.closedLoopWorkflowEngine=Object.freeze({...engine,validateAllocationReceipts(...args){
+  // This owner runs after the row comparison, before diff and replay. Only
+  // the detached read is changed; the actual stored row retains its view.
+  if(transactionArmed&&detachedRow){detachedRow.project.activeView=targetView;mutations++;transactionArmed=false;}
+  return engine.validateAllocationReceipts(...args);
+ }});
+ let p=await r.store.createProject({commandId:'OPERATIONAL-SOURCE-WITNESSES'});
+ p.extra=r.copy({leaf:1});p.job.JOB_TITLE='Write sources';r.engine.recalculate(p);p=await r.store.writeProject(p,{expectedProjectRevision:p.revision});
+ const originalView=p.activeView,views=['Project','Workflow','Records'].filter(view=>view!==originalView);
+ const options=()=>({operational:true,expectedProjectRevision:p.revision,expectedStateSha256:p.projectSha256});
+ const op=view=>{const candidate=r.copy(p);candidate.activeView=view;return r.store.writeProject(candidate,options());};
+ armedInput=r.copy(p);armedInput.activeView=views[0];pairActive=false;
+ await assert.rejects(r.store.writeProject(armedInput,options()),error=>error.message==='PAIR_REINSPECTION_REFUSAL','PAIR_REINSPECTION_ORACLE');
+ assert.equal(installed,1);assert.equal(reads,3);assert.equal(r.rows.get('meta').has('responseOperations:'+p.job.JOB_ID),false,'REFUSED_PAIR_PRESERVES_STORAGE');
+ armedInput=null;p=await op(views[0]);targetView=views[1];transactionArmed=true;p=await op(targetView);
+ assert.equal(mutations,1,'DETACHED_SOURCE_MUTATION_REACHED');
+ assert.equal(r.rows.get('projects').get(p.job.JOB_ID).project.activeView,originalView,'DETACHED_SOURCE_LEAVES_NATIVE_ROW');
+ const journal=r.rows.get('meta').get('responseOperations:'+p.job.JOB_ID);
+ assert.equal(journal.value.patches.some(patch=>patch.path[0]==='activeView'),false,'DETACHED_SOURCE_JOURNAL_FIXTURE');
+ await assert.rejects(op(targetView),error=>error.code==='OPERATIONAL_STATE_INTEGRITY_FAILED'&&error.message==='Saved response operations failed integrity verification. Their exact state was preserved in quarantine.','REPLAY_SOURCE_QUARANTINE_ORACLE');
+}
 export async function verifyWriteWalkCounts(options={}){
  const {projectNodes,walkThreshold,cases}=await measureWriteWalks(options);
  for(const row of cases.filter(row=>Object.hasOwn(WRITE_WALK_PINS,row.command))){
@@ -218,7 +263,7 @@ export async function verifyWriteWalkCounts(options={}){
   assert.equal(row.rootContinuationWalks,row.rootContinuationCalls*WRITE_SITE_PINS.rootContinuationWalksPerCall,'WRITE_WALK_ROOT_CONTINUATION_ORACLE: '+row.command);
   assert.equal(row.rootBytesWalks,row.rootBytesCalls*WRITE_SITE_PINS.rootBytesWalksPerCall,'WRITE_WALK_ROOT_BYTES_ORACLE: '+row.command);
  }
- await verifyWriteDigestPreflights();
+ await verifyWriteDigestPreflights();await verifyOperationalWriteWitnesses();
  return {passed:true,projectNodes,walkThreshold,pins:WRITE_WALK_PINS,sitePins:WRITE_SITE_PINS,cases,boundary:'In-memory instrumented production store and hash sources over the transaction adapter; counts whole-project graph walks and copies per command, not time.'};
 }
 // Intended faults: each restores one removed pass and must fail its pin.

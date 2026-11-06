@@ -18,7 +18,7 @@ export const CAPTURED_RECEIPT_SITES=Object.freeze([
  ' const integrity=verifiedProjectIntegrity(project,project.projectSha256,CAPTURED_PROJECT_INTEGRITY);',
  'committedIntegrity=verifiedProjectIntegrity(privateCommitted,digest,CAPTURED_PROJECT_INTEGRITY);',
  'committedIntegrity=verifiedProjectIntegrity(privateCommitted,next.projectSha256,CAPTURED_PROJECT_INTEGRITY);',
- 'row:committedSourceRow,journal:capturedPrivateCopy(journalSnapshot),'
+ 'row:capturedPrivateCopy(base),journal:capturedPrivateCopy(journalSnapshot),'
 ]);
 // The operational write receipt's snapshot is walked again to copy the context
 // carrier and the returned project, so it must stay an ordinary receipt.
@@ -157,7 +157,7 @@ export const CAPTURED_RECEIPT_AUDIT_FAULTS=Object.freeze({
  // Faults apply to the instrumented source.
  'capture-canonical-encode-source':["integrity=verifiedProjectIntegrity(next,digest);globalThis.__privateSite?.('canonicalEncodeSource',","integrity=verifiedProjectIntegrity(next,digest,CAPTURED_PROJECT_INTEGRITY);globalThis.__privateSite?.('canonicalEncodeSource',",'CAPTURED_RECEIPT_NO_EXPOSURE_ORACLE'],
  'capture-mutation-candidate':['candidateProof=verifiedProjectIntegrity(candidate,candidateDigest);','candidateProof=verifiedProjectIntegrity(candidate,candidateDigest,CAPTURED_PROJECT_INTEGRITY);','CAPTURED_RECEIPT_NO_EXPOSURE_ORACLE'],
- 'capture-checkpoint-pair':[',snapshot=primitive?checkpointPairSource(next):null,measured=',',snapshot=primitive?capturedPrivateCopy(canonicalProject(next)):null,measured=','CAPTURED_RECEIPT_NO_EXPOSURE_ORACLE']
+ 'capture-checkpoint-pair':[',snapshot=primitive&&verifiedGraphNodes(next)?copyVerifiedTree(canonicalProject(next)):null,measured=',',snapshot=primitive?capturedPrivateCopy(canonicalProject(next)):null,measured=','CAPTURED_RECEIPT_NO_EXPOSURE_ORACLE']
 });
 export async function verifyCapturedReceiptAuditFaults({source=read('project-store.js')}={}){
  const faults=[];

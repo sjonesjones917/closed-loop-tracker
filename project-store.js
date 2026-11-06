@@ -586,10 +586,6 @@ function operationalPatches(before,after,path=[]){
   }
   return [{path,value:cloneOperationalPatchValue(after)}];
 }
-// This null-root scope guards native bindings only. It holds no project values
-// or digests and cannot authorize a result from a previous comparison.
-const operationalEqualityScope={scope:null};
-try{operationalEqualityScope.scope=hash.createCanonicalDigestScope(null);}catch{}
 function operationalValuesEqual(before,after){
   if(Object.is(before,after))return true;
   // Preserve the existing hashing behavior for unusual graphs/accessors. The
@@ -719,29 +715,6 @@ function copyVerifiedGraph(value,sourceNodes,capturedNodes=null,arrayLengths=nul
     if(captured)ops.mapSet(capturedNodes,target,captured);
   });
   return ops.mapGet(copies,value);
-}
-// A sufficient subset of canonical JSON. Send other values (including strings
-// with unpaired surrogates and arrays from other realms) to the encoder for
-// the full Unicode/prototype rules and its exact path-specific diagnostics.
-function canonicalVerifiedGraph(value,nodes){
-  if(!nodes)return false;
-  const scalar=item=>item===null||typeof item==='boolean'||
-    (typeof item==='number'&&Number.isSafeInteger(item)&&!Object.is(item,-0))||
-    (typeof item==='string'&&!/[\uD800-\uDFFF]/u.test(item));
-  if(!value||typeof value!=='object')return scalar(value);
-  for(const [source,entries] of nodes){
-    const array=Array.isArray(source);
-    if(array){
-      const prototype=Object.getPrototypeOf(source);
-      if((prototype!==Array.prototype&&prototype!==null)||source.length!==entries.length/2)return false;
-    }
-    for(let index=0;index<entries.length;index+=2){
-      const key=entries[index],child=entries[index+1];
-      if(array?key!==String(index/2):/[\uD800-\uDFFF]/u.test(key))return false;
-      if((!child||typeof child!=='object')&&!scalar(child))return false;
-    }
-  }
-  return true;
 }
 // Copy only private ordinary operational values, retaining string primitives
 // without recopying their bytes. Preserve shared aliases and mutable-container
@@ -1189,32 +1162,13 @@ function replayOperationalPatches(project,patches){
   assertOperationalChange(project,next);
   return next;
 }
-// The pair owns a detached canonical copy. On the ordinary path, its source
-// descriptors supply both eligibility and the copy. A changed native or an
-// unusual root keeps the original copy path and its diagnostics.
-function checkpointPairSource(project){
-  const guarded=checkpointSnapshotPrimitivesCurrent(operationalEqualityScope),nodes=verifiedGraphNodes(project);
-  if(!nodes)return null;
-  if(guarded&&canonicalVerifiedGraph(project,nodes)){
-    // Reading a Proxy array's length can replace a native for one call. Take
-    // every length before the private target exists and withhold the pair if
-    // that inspection changed a primitive.
-    const arrayLengths=new Map();
-    for(const source of nodes.keys())if(Array.isArray(source))arrayLengths.set(source,source.length);
-    if(!checkpointSnapshotPrimitivesCurrent(operationalEqualityScope))return null;
-    const snapshot=copyVerifiedGraph(project,nodes,null,arrayLengths);
-    delete snapshot.projectSha256;
-    return checkpointSnapshotPrimitivesCurrent(operationalEqualityScope)?snapshot:null;
-  }
-  return copyVerifiedTree(canonicalProject(project));
-}
 function applyOperationalJournal(row,journal,checkpointRead=null){
   if(!row||!journal)return row;
   const {sha256,...body}=journal;
   if(sha256!==hash.sha256Value(body)||body.schema!=='closed-loop-response-operations/1'||body.jobId!==String(row.jobId)||body.baseProjectSha256!==row.projectSha256||body.projectRevision!==Number(row.revision)||!Array.isArray(body.patches))throw storageError('Saved response operations do not match their canonical project.','OPERATIONAL_STATE_INTEGRITY_FAILED');
   const next=replayOperationalPatches(row.project,body.patches);
   const primitive=checkpointRead&&rootDigestPrimitivesUnchanged(initialRootDigestPrimitives)?initialRootDigestPrimitives:null;
-  const snapshot=primitive?checkpointPairSource(next):null;
+  const snapshot=primitive&&verifiedGraphNodes(next)?copyVerifiedTree(canonicalProject(next)):null;
   const pair=snapshot?historyProjectDigestsCold(next):null;
   if((pair?pair.projectSha256:projectSha256(next))!==body.projectSha256)throw storageError('Saved response operation contents are corrupt.','OPERATIONAL_STATE_INTEGRITY_FAILED');
   if(pair&&rootDigestPrimitivesUnchanged(primitive)&&verifiedValuesEqual(snapshot,canonicalProject(next))){
@@ -1282,7 +1236,7 @@ async function writeOperationalProject(project,options={}){
   const operationalDerived=writeDerivationBinding(operationalDerivation,operationalValidators);
   // Bind both measured labels to a private value snapshot before any await.
   // The ordinary context-copy hook may retain next, never this capture.
-  const primitive=rootDigestPrimitivesUnchanged(initialRootDigestPrimitives)?initialRootDigestPrimitives:null,snapshot=primitive?checkpointPairSource(next):null,measured=snapshot?historyProjectDigests(next):null;
+  const primitive=rootDigestPrimitivesUnchanged(initialRootDigestPrimitives)?initialRootDigestPrimitives:null,snapshot=primitive&&verifiedGraphNodes(next)?copyVerifiedTree(canonicalProject(next)):null,measured=snapshot?historyProjectDigests(next):null;
   const pair=measured&&rootDigestPrimitivesUnchanged(primitive)&&verifiedValuesEqual(snapshot,canonicalProject(next))?Object.freeze({primitive,snapshot,...measured}):null;if(pair)checkpointDigestPairs.add(pair);
   // With a bound pair or not, this receipt is never captured: its snapshot is
   // walked again to copy the context carrier and the returned project, so its
@@ -1358,11 +1312,7 @@ async function writeOperationalProject(project,options={}){
       globalThis.closedLoopPromptEngine.copyRetainedPromptContextFiles(committed,privateCommitted);
       if(!unchangedVerifiedProject(returnedIntegrity,committed,digest))throw storageError('Returned response values changed during context restoration.','STALE_PROJECT_REVISION');
       assertRetainedContexts(committed);if(unchangedVerifiedProject(committedIntegrity,privateCommitted,digest))assertRetainedContexts(privateCommitted);
-      // A source-row capture can be carried only while it has stayed private.
-      // A cold comparison under a swapped primitive releases it permanently.
-      const capturedRow=capturedValueProofs.get(verifiedRead.row);
-      const committedSourceRow=capturedRow?.nodes&&checkpointSnapshotPrimitivesCurrent(capturedRow)?verifiedRead.row:capturedPrivateCopy(base);
-      recentOperationalCommitRead=carryCapturedIntegrity({row:committedSourceRow,journal:capturedPrivateCopy(journalSnapshot),storage:{row:baseSource.identity,journal:committedJournalStorage},...committedIntegrity,checkpointDigestPair:checkpointPairMatches(pair,privateCommitted)?pair:null,retainedRoot:mintWriteRootCertificate(prepared,digest,primitive,operationalValidators,operationalDerived)},committedIntegrity);
+      recentOperationalCommitRead=carryCapturedIntegrity({row:capturedPrivateCopy(base),journal:capturedPrivateCopy(journalSnapshot),storage:{row:baseSource.identity,journal:committedJournalStorage},...committedIntegrity,checkpointDigestPair:checkpointPairMatches(pair,privateCommitted)?pair:null,retainedRoot:mintWriteRootCertificate(prepared,digest,primitive,operationalValidators,operationalDerived)},committedIntegrity);
       notifyProjectChange(committed,{operational:true});return committed;
     }catch(error){
       recentOperationalCommitRead=null;
