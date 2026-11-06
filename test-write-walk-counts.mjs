@@ -14,14 +14,14 @@ import {projectStoreRuntime} from './test-project-store-runtime.mjs';
 // private receipts and source copies compare by walking the current side only;
 // the operational write receipt, whose snapshot is copied again, walks both.
 export const WRITE_WALK_PINS=Object.freeze({
- canonicalWrite:Object.freeze({walks:26,copies:7,digestScopes:0}),
- firstOperationalWrite:Object.freeze({walks:57,copies:11,digestScopes:0}),
- operationalWrite:Object.freeze({walks:54,copies:11,digestScopes:0})
+ canonicalWrite:Object.freeze({walks:26,copies:8,digestScopes:0}),
+ firstOperationalWrite:Object.freeze({walks:58,copies:12,digestScopes:0}),
+ operationalWrite:Object.freeze({walks:56,copies:12,digestScopes:0})
 });
 // Walks at the sites whose double walks were removed. The operational History
 // candidate is its own bound pair snapshot: each of the four pair checks walks
 // it once. A write-certified root's snapshot is walked once per use for both
-// of its comparisons. A bound History candidate compares against the existing independent write snapshot.
+// of its comparisons. Only an unbound History candidate gets its own receipt.
 export const WRITE_SITE_PINS=Object.freeze({
  digestPairWalksPerOperationalWrite:4,
  operationalReceiptCopies:3,
@@ -193,7 +193,7 @@ export async function verifyWriteWalkCounts(options={}){
 export const WRITE_WALK_FAULTS=Object.freeze({
  'write-digest-scope':['  globalThis.closedLoopWorkflowEngine.recalculate(next);const operationalChangePatches=','  hash.disposeCanonicalDigestScope(hash.createCanonicalDigestScope({rawResponses:next.projectData.rawResponses}));globalThis.closedLoopWorkflowEngine.recalculate(next);const operationalChangePatches=','WRITE_WALK_COUNT_PIN_ORACLE'],
  'digest-pair-self-compare':['project===pair.snapshot?checkpointPairSnapshotMatches(pair):checkpointPairMatches(pair,project)','checkpointPairMatches(pair,project)','WRITE_WALK_COUNT_PIN_ORACLE'],
- 'bound-history-receipt':['historyIntegrity=pair?{kind:VERIFIED_PROJECT_INTEGRITY,project:historyCandidate,digest,snapshot:integrity.snapshot}:verifiedProjectIntegrity(historyCandidate,digest);','historyIntegrity=verifiedProjectIntegrity(historyCandidate,digest);','WRITE_WALK_COUNT_PIN_ORACLE'],
+ 'bound-history-receipt':['historyIntegrity=pair?null:verifiedProjectIntegrity(historyCandidate,digest);','historyIntegrity=verifiedProjectIntegrity(historyCandidate,digest);','WRITE_WALK_COUNT_PIN_ORACLE'],
  'root-continuation-double-walk':['verifiedValueMatchesNodes(proof.snapshot,snapshotNodes,canonicalProject(read.project))','verifiedValuesEqual(proof.snapshot,canonicalProject(read.project))','WRITE_WALK_ROOT_CONTINUATION_ORACLE'],
  'uncaptured-private-receipts':['if(capture!==CAPTURED_PROJECT_INTEGRITY)return {kind:VERIFIED_PROJECT_INTEGRITY,','if(true)return {kind:VERIFIED_PROJECT_INTEGRITY,','WRITE_WALK_COUNT_PIN_ORACLE'],
  'uncaptured-source-copies':['function capturedPrivateCopy(value){','function capturedPrivateCopy(value){return copyVerifiedTree(value);','WRITE_WALK_COUNT_PIN_ORACLE'],

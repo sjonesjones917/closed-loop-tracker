@@ -1311,10 +1311,10 @@ async function writeOperationalProject(project,options={}){
   if(pendingArtifacts.length)assertOperationalCandidate();
   // Every asynchronous History check, including original-source binding,
   // consumes the unexposed capture rather than hook-retained mutable values.
-  // Compare a bound candidate with the write’s independent measured snapshot
-  // inside encodeCheckpoint. Copy the encode source only after custody checks.
-  const historyCandidate=pair?pair.snapshot:integrity.snapshot,historyIntegrity=pair?{kind:VERIFIED_PROJECT_INTEGRITY,project:historyCandidate,digest,snapshot:integrity.snapshot}:verifiedProjectIntegrity(historyCandidate,digest);
-  const prepared=await prepareHistoryCommit(historyCandidate,prior,{label:options.historyLabel||'Response work saved',view:options.historyView,artifactRows:pendingArtifacts.length?[...byId.values()]:null,verifiedDigests:[[prior,prior.projectSha256],[historyCandidate,digest,pair?.workSha256]],verifiedIntegrity:[verifiedRead,historyIntegrity],verifiedDigestPair:pair});
+  // A bound pair encodes its own snapshot, so only an unbound candidate needs
+  // a receipt of its own.
+  const historyCandidate=pair?pair.snapshot:integrity.snapshot,historyIntegrity=pair?null:verifiedProjectIntegrity(historyCandidate,digest);
+  const prepared=await prepareHistoryCommit(historyCandidate,prior,{label:options.historyLabel||'Response work saved',view:options.historyView,artifactRows:pendingArtifacts.length?[...byId.values()]:null,verifiedDigests:[[prior,prior.projectSha256],[historyCandidate,digest,pair?.workSha256]],verifiedIntegrity:[verifiedRead,...(historyIntegrity?[historyIntegrity]:[])],verifiedDigestPair:pair});
   assertOperationalCandidate();fault('before-project-transaction');const tx=await openTransaction(pendingArtifacts.length?[PROJECTS,ARTIFACTS,META]:[PROJECTS,META],'readwrite');
   try{
     const meta=tx.objectStore(META),sources={},current=await projectRowWithOperations(tx,id,verifiedRead,null,sources),baseSource=sources.rowSource,base=baseSource.logical;
@@ -2918,7 +2918,7 @@ async function prepareHistoryCommit(next,prior,{label=null,view=null,preserveAct
     const boundPair=assertDigestPair(project),privateSource=boundPair?null:privateEncodeSources?.get(project)||null,checkpointProject=boundPair?boundPair.snapshot:privateSource||project;
     // Encoding can await retained-byte reads. Serialize the unexposed capture,
     // not a candidate retained by the ordinary prompt-context copy hook.
-    const snapshot=await encodeCheckpoint(checkpointProject,files,{parentId:state.activeId,label:entryLabel,view:entryView||historyView(project),projectDigest:digest(project),workSha256:workDigests.get(project)||reusableWork||historyWorkSha256(project),projectReference,retainValue,verifiedIntegrity:privateSource?{kind:VERIFIED_PROJECT_INTEGRITY,project:privateSource,digest:digest(project),snapshot:privateSource}:verifiedIntegrity.find(receipt=>receipt.project===project),integrityComparedSynchronously:Boolean(privateSource)||sourceUnchanged&&!boundPair,privateSource:Boolean(boundPair||privateSource)});
+    const snapshot=await encodeCheckpoint(checkpointProject,files,{parentId:state.activeId,label:entryLabel,view:entryView||historyView(project),projectDigest:digest(project),workSha256:workDigests.get(project)||reusableWork||historyWorkSha256(project),projectReference,retainValue,verifiedIntegrity:boundPair?verifiedProjectIntegrity(checkpointProject,boundPair.projectSha256):privateSource?{kind:VERIFIED_PROJECT_INTEGRITY,project:privateSource,digest:digest(project),snapshot:privateSource}:verifiedIntegrity.find(receipt=>receipt.project===project),integrityComparedSynchronously:Boolean(privateSource)||sourceUnchanged&&!boundPair,privateSource:Boolean(boundPair||privateSource)});
     if(boundPair&&(assertDigestPair(project)!==boundPair||snapshot.projectSha256!==boundPair.projectSha256||snapshot.workSha256!==boundPair.workSha256))throw storageError('Checkpoint digest identity changed during encoding.','HISTORY_VERSION_MISMATCH');
     const {blob,...descriptor}=snapshot;state.entries.push(historyStateEntry(descriptor));snapshots.push(snapshot);state.compressedProjectBytes+=blob.size;state.activeId=snapshot.id;state.activeProjectSha256=digest(project);state.activeViewOverride=null;state.redo=[];
   }
