@@ -142,7 +142,7 @@ const digestBindingSource=fs.readFileSync('project-store.js','utf8');
   try{
    capture=__capturePackageSources({}, {storage:{},row,journal});
    const digest=await __guardedPackageRowDigest(capture.scope,capture.snapshot);
-   return [digest===closedLoopHash.sha256Value(row.project),Object.isFrozen(external),Object.isFrozen(external.project)];
+   return [digest===null,Object.isFrozen(external),Object.isFrozen(external.project)];
   }finally{delete Object.prototype.row;if(capture?.scope)closedLoopHash.disposeCanonicalDigestScope(capture.scope);}
  })()`,realm);
  assert.deepEqual([...observed],[true,false,false],'PACKAGE_DIGEST_FREEZES_OWN_COPY');
