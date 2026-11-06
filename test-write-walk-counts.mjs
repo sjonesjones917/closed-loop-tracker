@@ -10,11 +10,12 @@ import {projectStoreRuntime} from './test-project-store-runtime.mjs';
 
 // Totals per command (walks include the walk inside each copy; a copy is a
 // copyVerifiedTree or copyCheckpointValueSnapshot copy of a project). Captured
-// private receipts and source copies compare by walking the current side only.
+// private receipts and source copies compare by walking the current side only;
+// the operational write receipt, whose snapshot is copied again, walks both.
 export const WRITE_WALK_PINS=Object.freeze({
  canonicalWrite:Object.freeze({walks:26,copies:8,digestScopes:0}),
- firstOperationalWrite:Object.freeze({walks:52,copies:12,digestScopes:0}),
- operationalWrite:Object.freeze({walks:50,copies:12,digestScopes:0})
+ firstOperationalWrite:Object.freeze({walks:59,copies:12,digestScopes:0}),
+ operationalWrite:Object.freeze({walks:57,copies:12,digestScopes:0})
 });
 // Walks at the sites whose double walks were removed. The operational History
 // candidate is its own bound pair snapshot: each of the four pair checks walks

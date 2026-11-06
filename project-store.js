@@ -1140,16 +1140,17 @@ async function writeOperationalProject(project,options={}){
   // The ordinary context-copy hook may retain next, never this capture.
   const primitive=rootDigestPrimitivesUnchanged(initialRootDigestPrimitives)?initialRootDigestPrimitives:null,snapshot=primitive&&verifiedGraphNodes(next)?copyVerifiedTree(canonicalProject(next)):null,measured=snapshot?historyProjectDigests(next):null;
   const pair=measured&&rootDigestPrimitivesUnchanged(primitive)&&verifiedValuesEqual(snapshot,canonicalProject(next))?Object.freeze({primitive,snapshot,...measured}):null;if(pair)checkpointDigestPairs.add(pair);
-  // With a bound pair History encodes the pair's own snapshot, so this
-  // receipt's snapshot is only copied and compared, never handed out.
-  const digest=pair?pair.projectSha256:projectSha256(next),integrity=verifiedProjectIntegrity(next,digest,pair?CAPTURED_PROJECT_INTEGRITY:null);
+  // With a bound pair or not, this receipt is never captured: its snapshot is
+  // walked again to copy the context carrier and the returned project, so its
+  // comparisons walk it too and see exactly the values those copies read.
+  const digest=pair?pair.projectSha256:projectSha256(next),integrity=verifiedProjectIntegrity(next,digest);
   const retentionState=globalThis.closedLoopPromptEngine.promptContextRetentionState,retainedStates=(next.projectData.generatedPrompts||[]).map(record=>retentionState(record));
   const assertRetainedContexts=project=>{const records=project.projectData.generatedPrompts||[];for(let index=0;index<retainedStates.length;index++){const expected=retainedStates[index];if(expected.availability==='AVAILABLE'&&!verifiedValuesEqual(expected,retentionState(records[index])))throw storageError('Previously retained prompt context bytes are unavailable on the committed response.','PROMPT_CONTEXT_INTEGRITY_FAILED');}};
   // Context bytes need their own carrier: never expose the digest snapshot to
   // the replaceable hook, and never depend on next after an asynchronous wait.
   const contextCarrier=copyVerifiedTree(integrity.snapshot);
   globalThis.closedLoopPromptEngine.copyRetainedPromptContextFiles(next,contextCarrier);
-  const assertOperationalCandidate=()=>{if(!unchangedVerifiedProject(integrity,next,digest)||!capturedSnapshotMatches(integrity,contextCarrier)||pair&&!checkpointPairMatches(pair,next))throw storageError('The prepared response candidate changed before commit. Prepare the current candidate again.','STALE_PROJECT_REVISION');};
+  const assertOperationalCandidate=()=>{if(!unchangedVerifiedProject(integrity,next,digest)||!verifiedValuesEqual(integrity.snapshot,contextCarrier)||pair&&!checkpointPairMatches(pair,next))throw storageError('The prepared response candidate changed before commit. Prepare the current candidate again.','STALE_PROJECT_REVISION');};
   assertRetainedContexts(contextCarrier);assertOperationalCandidate();if(digest===prior.projectSha256){if(pendingArtifacts.length)throw storageError('Pending returned files require their response mapping transaction.','PENDING_ARTIFACTS_WITHOUT_CHANGE');return prior;}
   const retainedArtifacts=pendingArtifacts.length?await listArtifacts(id):null,byId=new Map((retainedArtifacts||[]).map(row=>[row.artifactId,row]));
   for(const row of pendingArtifacts){const existing=byId.get(row.artifactId);if(existing&&(existing.sha256!==row.sha256||existing.byteSize!==row.byteSize||existing.filename!==row.filename||existing.mediaType!==row.mediaType||!equivalent(existing.lineage,row.lineage)))throw storageError('A pending returned artifact conflicts with stored bytes.','ARTIFACT_ID_REUSE');if(existing)row.createdAt=existing.createdAt;byId.set(row.artifactId,row);}
@@ -1204,7 +1205,7 @@ async function writeOperationalProject(project,options={}){
       const committed={...copyVerifiedTree(integrity.snapshot),projectSha256:digest},returnedIntegrity=verifiedProjectIntegrity(committed,digest);
       // Preserve exact prompt-context bytes on the trusted return carrier,
       // while binding its canonical values before the replaceable transfer.
-      if(!capturedSnapshotMatches(integrity,contextCarrier))throw storageError('Captured prompt context values changed during transaction completion.','STALE_PROJECT_REVISION');
+      if(!verifiedValuesEqual(integrity.snapshot,contextCarrier))throw storageError('Captured prompt context values changed during transaction completion.','STALE_PROJECT_REVISION');
       globalThis.closedLoopPromptEngine.copyRetainedPromptContextFiles(contextCarrier,committed);
       if(!unchangedVerifiedProject(returnedIntegrity,committed,digest))throw storageError('Returned response values changed during context restoration.','STALE_PROJECT_REVISION');
       assertRetainedContexts(committed);

@@ -2,8 +2,10 @@
 // description captured while its snapshot was copied, so each comparison walks
 // only the current value. This mirrors test-checkpoint-state-snapshot.mjs for
 // the receipt owners, checks that only the audited sites capture, that no
-// captured node ever reaches replaceable code or an excluded site, and that
-// store outcomes equal those of the same store with every capture disabled.
+// captured node ever reaches replaceable code or an excluded site, that no
+// captured snapshot is walked again while its capture is still compared (a
+// receipt whose snapshot is copied again stays uncaptured), and that store
+// outcomes equal those of the same store with every capture disabled.
 import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import {projectStoreRuntime} from './test-project-store-runtime.mjs';
@@ -14,16 +16,19 @@ const replaceOnce=(source,before,after)=>{assert.equal(source.split(before).leng
 // The audited opt-in sites, by the exact text that requests a capture.
 export const CAPTURED_RECEIPT_SITES=Object.freeze([
  ' const integrity=verifiedProjectIntegrity(project,project.projectSha256,CAPTURED_PROJECT_INTEGRITY);',
- 'integrity=verifiedProjectIntegrity(next,digest,pair?CAPTURED_PROJECT_INTEGRITY:null);',
  'committedIntegrity=verifiedProjectIntegrity(privateCommitted,digest,CAPTURED_PROJECT_INTEGRITY);',
  'committedIntegrity=verifiedProjectIntegrity(privateCommitted,next.projectSha256,CAPTURED_PROJECT_INTEGRITY);',
  'row:capturedPrivateCopy(base),journal:capturedPrivateCopy(journalSnapshot),'
 ]);
+// The operational write receipt's snapshot is walked again to copy the context
+// carrier and the returned project, so it must stay an ordinary receipt.
+export const UNCAPTURED_COPIED_RECEIPT_SITE='integrity=verifiedProjectIntegrity(next,digest);\n  const retentionState=globalThis.closedLoopPromptEngine.promptContextRetentionState';
 export function verifyCapturedReceiptSites(source=read('project-store.js')){
  for(const site of CAPTURED_RECEIPT_SITES)assert.equal(source.split(site).length,2,'CAPTURED_RECEIPT_SITE_ORACLE: '+site);
+ assert.equal(source.split(UNCAPTURED_COPIED_RECEIPT_SITE).length,2,'CAPTURED_RECEIPT_COPIED_SNAPSHOT_SITE_ORACLE');
  // Exactly the audited sites request a capture: the definition, the opt-in
- // check and the four receipt sites name the token; two copies name the helper.
- assert.equal(source.split('CAPTURED_PROJECT_INTEGRITY').length-1,6,'CAPTURED_RECEIPT_SITE_POPULATION_ORACLE');
+ // check and the three receipt sites name the token; two copies name the helper.
+ assert.equal(source.split('CAPTURED_PROJECT_INTEGRITY').length-1,5,'CAPTURED_RECEIPT_SITE_POPULATION_ORACLE');
  assert.equal(source.split('capturedPrivateCopy(').length-1,3,'CAPTURED_COPY_SITE_POPULATION_ORACLE');
  return {sites:CAPTURED_RECEIPT_SITES.length};
 }
@@ -81,7 +86,12 @@ export function verifyCapturedReceiptOwners({source=read('project-store.js')}={}
 // recorded; replaceable globals and the excluded store sites are watched for
 // any argument that reaches a captured node.
 function instrumentCaptureAudit(source){
- source=replaceOnce(source,"proof.snapshot=value&&typeof value==='object'?copies.get(value):value;proof.nodes=nodes;","proof.snapshot=value&&typeof value==='object'?copies.get(value):value;proof.nodes=nodes;globalThis.__recordCapturedNodes?.(nodes);");
+ source=replaceOnce(source,"proof.snapshot=value&&typeof value==='object'?copies.get(value):value;proof.nodes=nodes;","proof.snapshot=value&&typeof value==='object'?copies.get(value):value;proof.nodes=nodes;globalThis.__recordCapturedNodes?.(nodes,proof);");
+ // A captured snapshot walked again (by a copy or a cold comparison) is exposed
+ // to the reflection primitives current at that walk; its capture must never
+ // be compared after that.
+ source=replaceOnce(source,'    if(finish){active.delete(item);continue;}','    if(finish){active.delete(item);continue;}globalThis.__walkedNode?.(item);');
+ source=replaceOnce(source,'function unchangedCheckpointValueSnapshot(proof,current){','function unchangedCheckpointValueSnapshot(proof,current){globalThis.__capturedCompare?.(proof);');
  // The value each History owner encodes or exposes to its hooks.
  for(const [anchor,name,value]of [['async function encodeCheckpoint(project,artifactRows,{','encodeCheckpoint','project'],['async function prepareHistoryCommit(next,prior,{','historyCandidate','next']]){
   const at=source.indexOf(anchor),end='}={}){\n';assert.ok(at>=0&&source.indexOf(anchor,at+1)<0,'CAPTURED_RECEIPT_AUDIT_ANCHOR_ORACLE: '+name);
@@ -95,10 +105,12 @@ function instrumentCaptureAudit(source){
  return source;
 }
 function auditRuntime(source){
- const captured=new WeakSet(),violations=[],observed=new Map(),calls=new Map();
+ const captured=new WeakSet(),owners=new WeakMap(),exposed=new WeakSet(),violations=[],observed=new Map(),calls=new Map();
  const reaches=value=>{const seen=new Set(),pending=[value];while(pending.length){const item=pending.pop();if(!item||typeof item!=='object'||seen.has(item)||item instanceof Blob)continue;seen.add(item);if(captured.has(item))return true;if(seen.size>200000)return false;for(const key of Reflect.ownKeys(item)){const d=Reflect.getOwnPropertyDescriptor(item,key);if(d&&Object.hasOwn(d,'value'))pending.push(d.value);}}return false;};
  const r=projectStoreRuntime({storageWorker:false,sourceOverrides:{'project-store.js':source},environment:{
-  __recordCapturedNodes:nodes=>{for(const node of nodes.keys())captured.add(node);},
+  __recordCapturedNodes:(nodes,proof)=>{for(const node of nodes.keys()){captured.add(node);owners.set(node,proof);}},
+  __walkedNode:item=>{const proof=owners.get(item);if(proof?.nodes)exposed.add(proof);},
+  __capturedCompare:proof=>{if(proof.nodes&&exposed.has(proof))violations.push('compare-after-exposure');},
   __privateSite:(name,value)=>{observed.set(name,(observed.get(name)||0)+1);if(reaches(value))violations.push('site:'+name);}
  }});
  // Replaceable owners receive no captured node, directly or nested.
@@ -139,7 +151,9 @@ export async function verifyCapturedReceiptStoreAudit({source=read('project-stor
 // Intended faults: each captures at an excluded site and must be reported as
 // an exposure by the audit above.
 export const CAPTURED_RECEIPT_AUDIT_FAULTS=Object.freeze({
- 'capture-unbound-history-candidate':['integrity=verifiedProjectIntegrity(next,digest,pair?CAPTURED_PROJECT_INTEGRITY:null);','integrity=verifiedProjectIntegrity(next,digest,CAPTURED_PROJECT_INTEGRITY);','CAPTURED_RECEIPT_UNBOUND_NO_EXPOSURE_ORACLE'],
+ 'capture-unbound-history-candidate':['integrity=verifiedProjectIntegrity(next,digest);\n  const retentionState=','integrity=verifiedProjectIntegrity(next,digest,pair?null:CAPTURED_PROJECT_INTEGRITY);\n  const retentionState=','CAPTURED_RECEIPT_UNBOUND_NO_EXPOSURE_ORACLE'],
+ // The bound operational receipt: its snapshot is copied again after capture.
+ 'capture-copied-operational-receipt':['integrity=verifiedProjectIntegrity(next,digest);\n  const retentionState=','integrity=verifiedProjectIntegrity(next,digest,pair?CAPTURED_PROJECT_INTEGRITY:null);\n  const retentionState=','CAPTURED_RECEIPT_NO_EXPOSURE_ORACLE'],
  // Faults apply to the instrumented source.
  'capture-canonical-encode-source':["integrity=verifiedProjectIntegrity(next,digest);globalThis.__privateSite?.('canonicalEncodeSource',","integrity=verifiedProjectIntegrity(next,digest,CAPTURED_PROJECT_INTEGRITY);globalThis.__privateSite?.('canonicalEncodeSource',",'CAPTURED_RECEIPT_NO_EXPOSURE_ORACLE'],
  'capture-mutation-candidate':['candidateProof=verifiedProjectIntegrity(candidate,candidateDigest);','candidateProof=verifiedProjectIntegrity(candidate,candidateDigest,CAPTURED_PROJECT_INTEGRITY);','CAPTURED_RECEIPT_NO_EXPOSURE_ORACLE'],
@@ -186,8 +200,40 @@ export async function verifyCapturedReceiptEquivalence({source=read('project-sto
  assert.ok(captured.some(row=>row.error),'CAPTURED_RECEIPT_EQUIVALENCE_REFUSAL_FIXTURE_ORACLE');
  return {passed:true,steps:captured};
 }
+// A replaceable owner swaps a reflection primitive after the operational write
+// receipt is made, keeps the private snapshot nodes it is shown while the
+// context carrier is copied, restores the native and changes a kept node. The
+// candidate check walks the snapshot again and refuses before any durable
+// write, as the uncaptured receipt always has; a captured receipt would compare
+// its old description and return (and later persist) the changed value.
+async function copiedReceiptHarvest(source){
+ const r=projectStoreRuntime({storageWorker:false,sourceOverrides:{'project-store.js':source}}),{store,copy,engine,prompts}=r;
+ let p=await store.createProject({commandId:'CAPTURED-RECEIPT-HARVEST'});p.job.JOB_TITLE='Harvest original title';engine.recalculate(p);
+ p=await store.writeProject(p,{expectedProjectRevision:p.revision});
+ const reserved=copy(p);prompts.reserveAndBuildPromptRecord(reserved,1,{},{});p=await store.writeProject(reserved,{expectedProjectRevision:p.revision});
+ const O=r.runtime.Object,native=O.getOwnPropertyDescriptor,prompt=r.runtime.closedLoopPromptEngine,kept=new Set(),shown=new Set();let stage='idle';
+ const wrapped=Object.fromEntries(Reflect.ownKeys(prompt).map(key=>[key,prompt[key]]));
+ wrapped.promptContextRetentionState=function(record){if(stage==='armed'){stage='swapped';O.getOwnPropertyDescriptor=function(target,key){if(key==='JOB_TITLE'&&target&&typeof target==='object')kept.add(target);return native(target,key);};}return prompt.promptContextRetentionState(record);};
+ wrapped.copyRetainedPromptContextFiles=function(from,to,...rest){if(stage==='swapped'){stage='restored';O.getOwnPropertyDescriptor=native;shown.add(from?.job);shown.add(to?.job);for(const job of kept)if(!shown.has(job))job.JOB_TITLE='Harvested private snapshot change';}return prompt.copyRetainedPromptContextFiles(from,to,...rest);};
+ r.runtime.closedLoopPromptEngine=Object.freeze(wrapped);
+ const rows=()=>r.copy([...r.rows].map(([name,map])=>[name,[...map]])),before=rows(),next=copy(p);next.activeView='Records';stage='armed';
+ let outcome;try{const saved=await store.writeProject(next,{operational:true,expectedProjectRevision:p.revision,expectedStateSha256:p.projectSha256});outcome={committed:true,title:saved.job.JOB_TITLE};}catch(error){outcome={committed:false,code:error.code,message:error.message};}
+ O.getOwnPropertyDescriptor=native;r.runtime.closedLoopPromptEngine=prompt;
+ return {...outcome,stage,harvested:[...kept].filter(job=>!shown.has(job)).length,rowsUnchanged:(()=>{try{assert.deepEqual(rows(),before);return true;}catch{return false;}})()};
+}
+export async function verifyCopiedReceiptHarvest({source=read('project-store.js')}={}){
+ const refused=await copiedReceiptHarvest(source);
+ assert.deepEqual(refused,{committed:false,code:'STALE_PROJECT_REVISION',message:'The prepared response candidate changed before commit. Prepare the current candidate again.',stage:'restored',harvested:1,rowsUnchanged:true},'CAPTURED_RECEIPT_COPIED_SNAPSHOT_HARVEST_ORACLE');
+ // Fixture sensitivity: the same owner against a captured operational receipt
+ // whose carrier comparisons also use the capture.
+ const [before,after]=CAPTURED_RECEIPT_AUDIT_FAULTS['capture-copied-operational-receipt'];let faulted=replaceOnce(source,before,after);
+ for(const compare of ['||!verifiedValuesEqual(integrity.snapshot,contextCarrier)||pair&&','if(!verifiedValuesEqual(integrity.snapshot,contextCarrier))throw storageError(\'Captured prompt context'])faulted=replaceOnce(faulted,compare,compare.replace('verifiedValuesEqual(integrity.snapshot,contextCarrier)','capturedSnapshotMatches(integrity,contextCarrier)'));
+ const accepted=await copiedReceiptHarvest(faulted);
+ assert.deepEqual({committed:accepted.committed,title:accepted.title,stage:accepted.stage,harvested:accepted.harvested},{committed:true,title:'Harvested private snapshot change',stage:'restored',harvested:1},'CAPTURED_RECEIPT_COPIED_SNAPSHOT_FAULT_ORACLE');
+ return {passed:true,refused,capturedFaultAccepted:true};
+}
 export async function verifyCapturedProjectIntegrity(options={}){
- return {sites:verifyCapturedReceiptSites(options.source),owners:verifyCapturedReceiptOwners(options),storeAudit:await verifyCapturedReceiptStoreAudit(options),equivalence:await verifyCapturedReceiptEquivalence(options)};
+ return {sites:verifyCapturedReceiptSites(options.source),owners:verifyCapturedReceiptOwners(options),storeAudit:await verifyCapturedReceiptStoreAudit(options),copiedReceiptHarvest:await verifyCopiedReceiptHarvest(options),equivalence:await verifyCapturedReceiptEquivalence(options)};
 }
 if(import.meta.url===`file://${process.argv[1]}`){
  const report={capturedProjectIntegrity:await verifyCapturedProjectIntegrity()};
