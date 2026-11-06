@@ -130,6 +130,26 @@ async function swappedPackageSource(storeSource){
 const digestBindingSource=fs.readFileSync('project-store.js','utf8');
 {
  const anchor='globalThis.closedLoopProjectStore=Object.freeze({STORAGE_IO_TIMEOUT_MS';
+ const instrumented=digestBindingSource.replace(anchor,'globalThis.__capturePackageSources=capturePackageSources;globalThis.__guardedPackageRowDigest=guardedPackageRowDigest;'+anchor);
+ const realm=projectStoreRuntime({sourceOverrides:{...sourceOverrides,'project-store.js':instrumented}}).runtime;
+ const observed=await vm.runInContext(`(async()=>{
+  const external={project:{title:'caller-owned'}},row={project:{title:'measured'}};
+  const journal=new Proxy({id:1},{getOwnPropertyDescriptor(target,key){
+   if(key==='id')Object.defineProperty(Object.prototype,'row',{set(){delete Object.prototype.row;Object.defineProperty(this,'row',{value:external});},configurable:true});
+   return Reflect.getOwnPropertyDescriptor(target,key);
+  }});
+  let capture;
+  try{
+   capture=__capturePackageSources({}, {storage:{},row,journal});
+   const digest=await __guardedPackageRowDigest(capture.scope,capture.snapshot);
+   return [digest===closedLoopHash.sha256Value(row.project),Object.isFrozen(external),Object.isFrozen(external.project)];
+  }finally{delete Object.prototype.row;if(capture?.scope)closedLoopHash.disposeCanonicalDigestScope(capture.scope);}
+ })()`,realm);
+ assert.deepEqual([...observed],[true,false,false],'PACKAGE_DIGEST_FREEZES_OWN_COPY');
+}
+
+{
+ const anchor='globalThis.closedLoopProjectStore=Object.freeze({STORAGE_IO_TIMEOUT_MS';
  assert.equal(digestBindingSource.split(anchor).length,2);
  const instrumented=digestBindingSource.replace(anchor,'globalThis.__comparePackageRow=packageRowMatches;'+anchor);
  const realm=projectStoreRuntime({sourceOverrides:{...sourceOverrides,'project-store.js':instrumented}}).runtime;
@@ -203,7 +223,7 @@ note('Artifact bytes corrupted during assembly lose custody at the staleness rea
 const storeSource=fs.readFileSync('project-store.js','utf8'),storeFault=(name,before,after)=>{if(storeSource.split(before).length!==2)throw new Error('Fault anchor missing: '+name);return storeSource.replace(before,after);};
 const rehash='    if(unchanged&&verifyBytes&&certificate?.digest!==sources.row.projectSha256){let computed=null;try{computed=await hash.sha256Chunks(hash.canonicalChunks(canonicalProject(sources.row.project)));}catch{computed=null;}unchanged=computed!==null&&computed===sources.row.projectSha256;}\n';
 const assemblyFaults=[
- ['package-digest-unbound-row',storeFault('package-digest-unbound-row','    const certificate=packageBaseFor(source);','    const base=packageBaseFor(source),certificate=base&&{row:source.row,digest:base.digest};'),async source=>swappedPackageSource(source),swapRefused,'HANDOFF_ASSEMBLY_DIGEST_CARRIER_ORACLE'],
+ ['package-digest-unbound-row',storeFault('package-digest-unbound-row','    const certificate=packageBaseFor(source);','    const base=packageBaseFor(source),certificate=base&&{row:source.row??base.row,digest:base.digest};'),async source=>swappedPackageSource(source),swapRefused,'HANDOFF_ASSEMBLY_DIGEST_CARRIER_ORACLE'],
  ['package-resume-native-unchecked',storeFault('package-resume-native-unchecked','        if(!current())return null;\n',''),async source=>firstReadSwap(source,'join',true,{duringYield:true}),swapRefused,'HANDOFF_ASSEMBLY_RESUMED_DIGEST_ORACLE'],
  ['first-read-digest-trusted',storeFault('first-read-digest-trusted',rehash,''),async source=>firstReadSwap(source,'join',false),swapRefused,'HANDOFF_ASSEMBLY_FIRST_READ_SWAP_ORACLE'],
  ['package-digest-after-archive-only',storeFault('package-digest-after-archive-only','rereadPackageProject(canonicalJobId,packageSource,{verifyBytes:true})','rereadPackageProject(canonicalJobId,packageSource,{verifyBytes:false})').replace('rereadPackageProject(canonicalJobId,packageSource,{verifyBytes:false});if(!afterArchive','rereadPackageProject(canonicalJobId,packageSource,{verifyBytes:true});if(!afterArchive'),async source=>firstReadSwap(source,'join',true),swapRefused,'HANDOFF_ASSEMBLY_FIRST_READ_SWAP_ORACLE'],

@@ -1708,8 +1708,9 @@ function capturePackageSources(source,{storage,row,journal}){
   // Only a guarded copy that constructed every node privately keeps a scope.
   // A structured-clone fallback may invoke hooks and must never be frozen.
   const capture=copyCheckpointValueSnapshot(row);
-  Object.assign(source,{current:false,validators:null,storage,row:capture.snapshot,journal:copyVerifiedTree(journal)});
-  return capture.scope;
+  source.current=false;source.validators=null;source.storage=storage;source.journal=copyVerifiedTree(journal);
+  rememberPackageBase(source,{row:capture.snapshot,digest:null});
+  return capture;
 }
 const measuredPackageBases=new WeakMap();
 const rememberPackageBase=measuredPackageBases.set.bind(measuredPackageBases),packageBaseFor=measuredPackageBases.get.bind(measuredPackageBases);
@@ -1765,7 +1766,7 @@ async function readProjectMetadata(jobId,sourceProof=null,physicalCapture=null,p
   const publicBase=!sourceProof&&!physicalCapture&&!packageSource?lastPackageBaseRead:null;
   if(!sourceProof)lastPackageBaseRead=null;
   // A package read keeps private copies of the exact sources it verifies below.
-  const digestScope=packageSource&&row?capturePackageSources(packageSource,sources):null;
+  const packageCapture=packageSource&&row?capturePackageSources(packageSource,sources):null,digestScope=packageCapture?.scope;
   const committedRead=sourceProof&&sourceProof.readPurpose!==STARTUP_RECOVERY_CAPTURE?takeOperationalCommitRead(row,journal,sourceProof.readPurpose,storage):null;if(sourceProof?.readPurpose===STARTUP_RECOVERY_CAPTURE||!sourceProof&&!(!physicalCapture&&durableCommitRead(jobId)))recentOperationalCommitRead=null;
   if(!row)return null;
   if(sourceProof&&committedRead){
@@ -1778,13 +1779,13 @@ async function readProjectMetadata(jobId,sourceProof=null,physicalCapture=null,p
     recoveryProjectionBounds.set(committedRead.project,journal?.updatedAt||row.updatedAt);return committedRead.project;
   }
   if(sourceProof){sourceProof.row=copyVerifiedTree(row);sourceProof.journal=copyVerifiedTree(journal);sourceProof.storage=storage;sourceProof.current=true;}
-  const privateRow=packageSource?.row;
+  const privateRow=packageCapture?.snapshot;
   let computed;try{
     computed=digestScope?await guardedPackageRowDigest(digestScope,privateRow):takePackageBaseDigest(publicBase,sources);
     // The verifier validates the live row, so bind it to the hashed snapshot
     // in this turn, after the digest's last await.
     if(digestScope&&computed!==null){
-      if(privateRow===packageSource.row&&packageRowMatches(digestScope,privateRow,row))rememberPackageBase(packageSource,Object.freeze({row:privateRow,digest:computed}));
+      if(packageRowMatches(digestScope,privateRow,row))rememberPackageBase(packageSource,Object.freeze({row:privateRow,digest:computed}));
       else computed=null;
     }
     if(computed===null)computed=await hash.sha256Chunks(hash.canonicalChunks(canonicalProject(row.project)));
@@ -4699,7 +4700,7 @@ async function rereadPackageProject(jobId,source,{verifyBytes=true}={}){
     // An IndexedDB read spanned awaits. Recheck before exposing either private
     // source to reflection, even when a subsequently restored native would pass.
     const certificate=packageBaseFor(source);
-    let unchanged=Boolean(sources?.row)&&hash.canonicalDigestScopeMatches(source.validators.scope,null)&&physicalSourcesUnchanged(source.storage,sources.storage)&&(certificate?certificate.row===source.row&&packageRowMatches(source.validators.scope,certificate.row,sources.row):verifiedValuesEqual(source.row,sources.row))&&verifiedValuesEqual(source.journal,sources.journal);
+    let unchanged=Boolean(sources?.row)&&hash.canonicalDigestScopeMatches(source.validators.scope,null)&&physicalSourcesUnchanged(source.storage,sources.storage)&&(certificate?.digest?packageRowMatches(source.validators.scope,certificate.row,sources.row):certificate&&verifiedValuesEqual(certificate.row,sources.row))&&verifiedValuesEqual(source.journal,sources.journal);
     // This read's own digest of the stored row bytes, independent of the first read's.
     if(unchanged&&verifyBytes&&certificate?.digest!==sources.row.projectSha256){let computed=null;try{computed=await hash.sha256Chunks(hash.canonicalChunks(canonicalProject(sources.row.project)));}catch{computed=null;}unchanged=computed!==null&&computed===sources.row.projectSha256;}
     if(unchanged&&rootValidatorsUnchanged(source.validators)){
@@ -4717,7 +4718,7 @@ async function buildExecutionPackage({project=null,jobId=null,stage,operation=nu
   if(!project&&jobId)project=await readProject(jobId);
   if(!project||typeof project!=='object')throw new Error('A canonical project is required for an execution package.');
   const engine=globalThis.closedLoopWorkflowEngine,promptEngine=globalThis.closedLoopPromptEngine,canonicalJobId=projectIdentity(project);if(jobId&&String(jobId)!==canonicalJobId)throw storageError(`Execution-package job ${jobId} does not match canonical project ${canonicalJobId}.`,'EXECUTION_PACKAGE_JOB_MISMATCH');
-  const packageSource={},activeProject=await readPackageProject(canonicalJobId,packageSource);
+  const packageSource={__proto__:null},activeProject=await readPackageProject(canonicalJobId,packageSource);
   if(!activeProject||Number(activeProject.revision||0)!==Number(project.revision||0)||(activeProject.historyActivationId||null)!==(project.historyActivationId||null)||project.projectSha256&&activeProject.projectSha256!==project.projectSha256)throw storageError('The project changed before its handoff could be prepared. Open the current version and export again.','EXECUTION_PACKAGE_VERSION_STALE');
   project=activeProject;
   const normalizedStage=Number(stage),normalizedOperation=String(operation||globalThis.closedLoopWorkflowSchema?.STAGE_CONTRACTS?.[normalizedStage]?.operations?.[0]||'COMPLETE'),normalizedRunId=runId?String(runId):null,ids=[...new Set(testIds.map(String).filter(Boolean))];
