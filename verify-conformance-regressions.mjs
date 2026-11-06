@@ -208,7 +208,7 @@ function saveReport(file,report){
 // preload. Keep its raw reports and catalog assertions rather than dropping a
 // report, flattening colliding fields, or relaxing other gates' JSON contract.
 const OPERATIONAL_REPORT_OWNER='verify-operational-persistence.mjs';
-const OPERATIONAL_REPORT_MARKERS=Object.freeze(["operationalJournalCopy","validationRecordBackupRoundtrip","retainedEvidenceCustody","responseStagingRecovery","returnedSlotAtomicStaging","inboundArchiveParser","artifactByteSharing","artifactByteSharingFaults","promptContextStorage","operationalReadProof","operationalWarmProof","canonicalReadProof","retainedRootContinuation","checkpointCanonicalProof","workerMessageCodec","storageWorkerStartup","canonicalCommitWarmProof","startupSelectedReadReuse","verifiedGraphSemantics"]);
+const OPERATIONAL_REPORT_MARKERS=Object.freeze(["operationalJournalCopy","validationRecordBackupRoundtrip","retainedEvidenceCustody","responseStagingRecovery","returnedSlotAtomicStaging","inboundArchiveParser","artifactByteSharing","artifactByteSharingFaults","promptContextStorage","operationalReadProof","operationalWarmProof","canonicalReadProof","retainedRootContinuation","checkpointObservedCustody","checkpointCanonicalProof","workerMessageCodec","storageWorkerStartup","canonicalCommitWarmProof","startupSelectedReadReuse","verifiedGraphSemantics"]);
 export async function parseGateReport(gate,stdout){
  const operational=gate.name===OPERATIONAL_REPORT_OWNER&&(gate.command||process.execPath)===process.execPath&&gate.args?.length===1&&gate.args[0]===OPERATIONAL_REPORT_OWNER;
  if(operational){
