@@ -1744,6 +1744,16 @@ async function guardedPackageRowDigest(scope,privateRow){
 // restore and removal release it; startup one-use proofs and certificate-less
 // commit proofs keep their cold semantics.
 function durableCommitRead(jobId){const proof=recentOperationalCommitRead;return Boolean(proof?.retainedRoot&&!proof.requiredReadPurpose&&rootCertificates.has(proof.retainedRoot)&&projectIdentity(proof.project)===String(jobId));}
+// A successful package staleness read may lend its measured base-row digest
+// to one public read. The private row was frozen before hashing. The next
+// read still fetches storage, authenticates and replays the current journal,
+// validates the active project, handles migrations and observes artifact bytes.
+let lastPackageBaseRead=null;
+function takePackageBaseDigest(proof,sources){
+  if(!proof||!packagePrimitivesCurrent(proof.validators.scope)||!rootValidatorsUnchanged(proof.validators))return null;
+  if(!physicalSourcesUnchanged(proof.storage,sources.storage)||!verifiedValuesEqual(proof.journal,sources.journal))return null;
+  return packageRowMatches(proof.validators.scope,proof.row,sources.row)?proof.digest:null;
+}
 async function readProjectMetadata(jobId,sourceProof=null,physicalCapture=null,packageSource=null){
   // A public/cold reader cannot consume a proof. Release a one-use proof before
   // loading another full physical graph; the later clear covers interleaving writes.
@@ -1751,6 +1761,8 @@ async function readProjectMetadata(jobId,sourceProof=null,physicalCapture=null,p
   const tx=await openTransaction([PROJECTS,META],'readonly');let sources;
   try{sources=await readPhysicalProjectSources(tx,jobId);await complete(tx);}catch(error){try{tx.abort();}catch{}if(error?.code!=='PHYSICAL_RECORD_INVALID')throw error;await quarantinePhysicalProject(jobId,'PHYSICAL_RECORD_INVALID: '+error.message,error.physicalCapture);throw storageError('Stored physical project data failed integrity verification. Available original evidence was preserved in quarantine.','PROJECT_INTEGRITY_FAILED');}
   const {row,journal,storage}=sources;if(physicalCapture)physicalCapture.storage=storage;
+  const publicBase=!sourceProof&&!physicalCapture&&!packageSource?lastPackageBaseRead:null;
+  if(!sourceProof)lastPackageBaseRead=null;
   // A package read keeps private copies of the exact sources it verifies below.
   const digestScope=packageSource&&row?capturePackageSources(packageSource,sources):null;
   const committedRead=sourceProof&&sourceProof.readPurpose!==STARTUP_RECOVERY_CAPTURE?takeOperationalCommitRead(row,journal,sourceProof.readPurpose,storage):null;if(sourceProof?.readPurpose===STARTUP_RECOVERY_CAPTURE||!sourceProof&&!(!physicalCapture&&durableCommitRead(jobId)))recentOperationalCommitRead=null;
@@ -1766,10 +1778,10 @@ async function readProjectMetadata(jobId,sourceProof=null,physicalCapture=null,p
   }
   if(sourceProof){sourceProof.row=copyVerifiedTree(row);sourceProof.journal=copyVerifiedTree(journal);sourceProof.storage=storage;sourceProof.current=true;}
   let computed;try{
-    computed=digestScope?await guardedPackageRowDigest(digestScope,packageSource.row):null;
+    computed=digestScope?await guardedPackageRowDigest(digestScope,packageSource.row):takePackageBaseDigest(publicBase,sources);
     // The verifier validates the live row, so bind it to the hashed snapshot
     // in this turn, after the digest's last await.
-    if(computed!==null&&!packageRowMatches(digestScope,packageSource.row,row))computed=null;
+    if(digestScope&&computed!==null&&!packageRowMatches(digestScope,packageSource.row,row))computed=null;
     if(packageSource)packageSource.guardedDigest=computed;
     if(computed===null)computed=await hash.sha256Chunks(hash.canonicalChunks(canonicalProject(row.project)));
   }catch(error){await quarantine(row,'PROJECT_ENCODING_INVALID: '+error.message,{physicalSources:sources});throw storageError('The stored project contains invalid canonical data. Its original state was preserved in quarantine.','PROJECT_INTEGRITY_FAILED');}finally{if(digestScope)releaseCheckpointValueSnapshot({scope:digestScope});}
@@ -4717,6 +4729,9 @@ async function rereadPackageProject(jobId,source,{verifyBytes=true}={}){
       // The custody observation of a cold read of these sources, in its order.
       forgetArtifactCustody(jobId);
       for(const artifactId of source.artifactIds){try{await getArtifact(artifactId);}catch(error){if(!CUSTODY_UNAVAILABLE_CODES.includes(error.code))throw error;}}
+      if(verifyBytes&&source.guardedDigest===sources.row.projectSha256){
+        lastPackageBaseRead={digest:source.guardedDigest,row:source.row,journal:source.journal,storage:source.storage,validators:source.validators};
+      }
       return {...source.identity};
     }
   }

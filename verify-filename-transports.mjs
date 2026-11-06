@@ -104,7 +104,7 @@ async function custodyAssembly(storeSource){
 // A package digest may yield while holding a detached source. A change to
 // the live row just before its verification must take the normal cold path.
 async function liveDigestRowChange(source){
- const anchor='    if(computed!==null&&!packageRowMatches(digestScope,packageSource.row,row))computed=null;';
+ const anchor='    if(digestScope&&computed!==null&&!packageRowMatches(digestScope,packageSource.row,row))computed=null;';
  const observe='    globalThis.__changeDigestRow?.(row);';
  assert.equal(source.split(anchor).length,2);
  const f=await assemblyFixture(source.replace(anchor,observe+'\n'+anchor),'ASSEMBLY-DIGEST-LIVE-ROW');
@@ -118,6 +118,41 @@ async function privateDigestRowChange(source){
  assert.deepEqual([outcome.released,changed],[true,false],'HANDOFF_ASSEMBLY_PRIVATE_DIGEST_SOURCE_ORACLE');
 }
 const digestBindingSource=fs.readFileSync('project-store.js','utf8');
+// Exercise an ordinary public read after a real, authorized package. Count
+// whole-row digests independently of the returned project and its validation.
+{
+ const cold='if(computed===null)computed=await hash.sha256Chunks(hash.canonicalChunks(canonicalProject(row.project)));';
+ assert.equal(digestBindingSource.split(cold).length,2);
+ const observed=digestBindingSource.replace(cold,"if(computed===null){globalThis.__publicBaseCold=(globalThis.__publicBaseCold||0)+1;computed=await hash.sha256Chunks(hash.canonicalChunks(canonicalProject(row.project)));}");
+ for(const scenario of ['unchanged','tamper','other-tab','validator-swap','journal','migration']){
+  const f=await assemblyFixture(observed,'PUBLIC-PACKAGE-BASE-'+scenario,{journal:scenario==='journal'}),r=f.r3,id=f.q.job.JOB_ID;
+  r.runtime.__publicBaseCold=0;
+  if(scenario==='unchanged'){
+   const first=await r.store.readProject(id);assert.equal(r.runtime.__publicBaseCold,0,'PACKAGE_BASE_DIGEST_REUSED_ONCE');first.job.JOB_TITLE+=' caller edit';
+   const again=await r.store.readProject(id);assert.equal(r.runtime.__publicBaseCold,1);assert.notEqual(again.job.JOB_TITLE,first.job.JOB_TITLE);assert.equal(again.projectSha256,r.store.projectSha256(again));
+  }else if(scenario==='tamper'){
+   r.rows.get('projects').get(id).project.activeView='Corrupted with the same stored digest';
+   await assert.rejects(()=>r.store.readProject(id),e=>e.code==='PROJECT_HASH_MISMATCH'&&e.message==='Project hash mismatch. The original row was preserved in quarantine.');assert.equal((await r.store.listQuarantinedProjects()).length,1);
+  }else if(scenario==='other-tab'){
+   const tab=projectStoreRuntime();tab.rows.get=name=>r.rows.get(name);tab.rows.set=(name,value)=>r.rows.set(name,value);
+   const next=await tab.store.readProject(id);next.job.JOB_TITLE='Written by the other tab';const saved=await tab.store.writeProject(next,{expectedProjectRevision:next.revision,expectedStateSha256:next.projectSha256});
+   const current=await r.store.readProject(id);assert.equal(r.runtime.__publicBaseCold,1);assert.equal(current.job.JOB_TITLE,next.job.JOB_TITLE);assert.equal(current.projectSha256,saved.projectSha256);
+  }else if(scenario==='validator-swap'){
+   const original=r.runtime.closedLoopWorkflowEngine;r.runtime.closedLoopWorkflowEngine=Object.freeze({...original});
+   try{const current=await r.store.readProject(id);assert.equal(current.projectSha256,f.q.projectSha256);assert.equal(r.runtime.__publicBaseCold,1,'PACKAGE_BASE_REPLACED_VALIDATOR_COLD');}finally{r.runtime.closedLoopWorkflowEngine=original;}
+  }else if(scenario==='journal'){
+   r.rows.get('meta').get('responseOperations:'+id).value.sha256='0'.repeat(64);
+   await assert.rejects(()=>r.store.readProject(id),e=>e.code==='OPERATIONAL_STATE_INTEGRITY_FAILED'&&e.message==='Saved response operations failed integrity verification. Their exact state was preserved in quarantine.');assert.equal(r.runtime.__publicBaseCold,1);assert.equal((await r.store.listQuarantinedProjects()).length,1);
+  }else{
+   const tab=projectStoreRuntime(),legacy=tab.core.createBlankState(id);tab.engine.ensureShape(legacy);
+   const fields=['EXACT_DELIVERABLE_REQUESTED','ASSUMPTIONS','UNKNOWN_INFORMATION','INPUT_SET_CONTENTS'];for(const key of fields)legacy.job[key]='';tab.engine.recalculate(legacy);
+   const saved=await tab.store.writeProject(legacy,{expectedProjectRevision:0,createOnly:true});
+   for(const [name,rows] of tab.rows)r.rows.set(name,rows);
+   const migrated=await r.store.readProject(id);assert.equal(migrated.revision,saved.revision+1);assert.ok(migrated.projectData.migrationArchives.some(item=>item.kind==='LEGACY_UNACCEPTED_AGENT_JOB_DEFAULTS'));assert.ok(fields.every(key=>!Object.hasOwn(migrated.job,key)));assert.ok(r.runtime.__publicBaseCold>0);
+  }
+ }
+}
+
 const liveChanged=await liveDigestRowChange(digestBindingSource);
 assert.deepEqual(liveChanged,{released:false,code:'STALE_PROJECT_REVISION',quarantined:0},'HANDOFF_ASSEMBLY_LIVE_DIGEST_SOURCE_ORACLE');
 await privateDigestRowChange(digestBindingSource);
