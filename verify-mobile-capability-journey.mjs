@@ -10,6 +10,7 @@ import {createOperatorBrowser} from './operator-browser-driver.mjs';
 
 const directory=path.resolve(process.env.MOBILE_EVIDENCE_DIR||'mobile-capability-evidence'),browser=await createOperatorBrowser({directory,captureExecution:true}),cases=[];
 let browserExecution,inboundArchiveJourney,intakeCapacityJourney,complete=false;
+const writeCapabilityEvidence=()=>fs.writeFileSync(path.join(directory,'capability.json'),JSON.stringify({browserExecution,inboundArchiveJourney,intakeCapacityJourney,complete,basis:'ACTUAL_CHROMIUM_FILE_TRANSPORT',physicalIPhoneAcceptance:false,cases,events:browser.events},null,2)+'\n');
 const record=(name,observation)=>{cases.push({name,result:'PASS',observation});console.log(JSON.stringify(cases.at(-1)));};
 async function panel(){await browser.click('[data-view="Workflow"]');await browser.fill('#stage-picker',30);}
 async function shownTarget(){return JSON.parse(await browser.evaluate(`document.querySelector('#mobile-acceptance-target-json').value`));}
@@ -46,6 +47,18 @@ try{
   await browser.evaluate(`(()=>{const node=document.createElement('div');node.id='synthetic-overflow-fixture';node.style.cssText='position:absolute;left:0;top:0;height:1px;pointer-events:none;width:'+(document.documentElement.clientWidth+40)+'px';document.body.append(node);return true;})()`);await browser.click('#record-mobile-acceptance-measurements');
   const measured=await savedSession(target),failed=measured.observations.find(row=>row.kind==='ACCESSIBILITY_AND_OVERFLOW_VERIFIED'&&row.result==='FAIL'&&row.observation.horizontalOverflowPx>=20);assert.ok(failed,'MOBILE_BROWSER_MEASURED_FAILURE_ORACLE');await browser.reload();await panel();assert.ok((await savedSession(target)).observations.some(row=>row.receiptId===failed.receiptId&&row.result==='FAIL'&&row.observation.horizontalOverflowPx===failed.observation.horizontalOverflowPx),'MOBILE_BROWSER_MEASURED_FAILURE_RELOAD_ORACLE');record('actual measurement records controlled overflow failure and preserves it across reload',{receiptId:failed.receiptId,horizontalOverflowPx:failed.observation.horizontalOverflowPx,result:'FAIL',syntheticDomPerturbation:true});
   assert.deepEqual(browser.exceptions(),[]);await browser.inspect(1);browserExecution=await browser.executionEvidence();complete=true;
-}catch(error){cases.push({name:'journey failure',result:'FAIL',message:error.stack,visibleState:await browser.evaluate(`document.querySelector('#mobile-acceptance-panel')?.innerText||document.body.innerText`)});try{await browser.inspect(30);}catch{}console.error(error);process.exitCode=1;}
-finally{fs.writeFileSync(path.join(directory,'capability.json'),JSON.stringify({browserExecution,inboundArchiveJourney,intakeCapacityJourney,complete,basis:'ACTUAL_CHROMIUM_FILE_TRANSPORT',physicalIPhoneAcceptance:false,cases,events:browser.events},null,2)+'\n');await browser.close();}
+}catch(error){
+  const primaryError={name:error?.name||'Error',message:error?.message||String(error),stack:error?.stack||String(error)};
+  const failure={name:'journey failure',result:'FAIL',message:primaryError.stack,primaryError,diagnosticErrors:[]};
+  cases.push(failure);process.exitCode=1;console.error(error);
+  // Retain the first failure before optional browser diagnostics can time out.
+  writeCapabilityEvidence();
+  try{failure.visibleState=await browser.evaluate(`document.querySelector('#mobile-acceptance-panel')?.innerText||document.body.innerText`);}
+  catch(diagnosticError){failure.diagnosticErrors.push({operation:'visible-state',name:diagnosticError?.name||'Error',message:diagnosticError?.message||String(diagnosticError),stack:diagnosticError?.stack||String(diagnosticError)});}
+  writeCapabilityEvidence();
+  try{await browser.inspect(30);}
+  catch(diagnosticError){failure.diagnosticErrors.push({operation:'inspect',name:diagnosticError?.name||'Error',message:diagnosticError?.message||String(diagnosticError),stack:diagnosticError?.stack||String(diagnosticError)});}
+  writeCapabilityEvidence();
+}
+finally{try{writeCapabilityEvidence();}finally{await browser.close();}}
 console.log(JSON.stringify({mobileCapabilityJourney:complete,browserExecution,inboundArchiveJourney,intakeCapacityJourney,cases,physicalIPhoneAcceptance:false}));

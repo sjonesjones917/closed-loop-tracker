@@ -1,3 +1,4 @@
+import {verifyMobileFailureRetention} from './test-mobile-failure-retention.mjs';
 import {verifyBrowserEvidenceInventory} from './test-browser-evidence-inventory.mjs';
 import {verifyBrowserObserverLifecycleControls} from './test-browser-observer-lifecycle.mjs';
 import {verifyBrowserProducerBudgets} from './test-browser-producer-budgets.mjs';
@@ -54,3 +55,5 @@ console.log(JSON.stringify(await verifyBrowserObserverLifecycleControls()));
 console.log(JSON.stringify(await verifyBrowserProducerBudgets()));
 
 console.log(JSON.stringify(await verifyBrowserEvidenceInventory()));
+
+console.log(JSON.stringify(await verifyMobileFailureRetention()));

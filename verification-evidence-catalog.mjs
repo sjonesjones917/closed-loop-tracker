@@ -3979,3 +3979,30 @@ for(const owner of Object.values(browserVerificationCatalog))owner.sourceInputs=
 const downloadedBackupDecoderConsumerCases=['positive',...downloadedBackupDecoderCases.flatMap(id=>['missing:'+id,'failed:'+id]),'duplicate','unknown','wrong-parent-schema','parent-not-synthetic','missing-report','wrong-schema','not-passed','not-synthetic','browser-overclaim','application-overclaim','wrong-decoder','wrong-literals','missing-split','small-member','string-byte-count','nonfinite-string-count','wrong-depth','missing-malformed','missing-resource-refusal','wrong-retained-oracle','missing-driver-route','selector-positive','selector-missing','selector-duplicate','selector-wrong-marker','source:downloaded-backup-decoder.mjs','source:test-downloaded-backup-decoder.mjs','source:test-retained-history-browser.mjs',...['verify-browser.mjs','verify-browser-extra.mjs','verify-human-stage-walkthrough.mjs','verify-mobile-stage-action.mjs','verify-mobile-capability-journey.mjs','verify-complete-operator-journey.mjs','verify-browser-recovery.mjs'].map(name=>'browser-source:'+name)];
 verificationCatalog['verify-final-acceptance.mjs'].checks.push(check('acceptance.downloaded-backup-decoder-consumers','finalAcceptanceGate','normativeCatalogConsumers.downloadedBackupDecoderCatalogConsumers',undefined,'test-normative-catalog-consumers.mjs exact independent decoder report, selector and source dependency controls',{basis:'EXECUTED_REPORT_CONSUMER_ASSERTIONS',expectedDescription:'Exactly74 synthetic report-consumer controls reject missing, failed, duplicated, foreign or misattributed decoder evidence and require all browser/ingestion source dependencies. No producer, application, browser or eligible receipt claim.',condition:value=>value?.passed===true&&value.consumerOnly===true&&value.syntheticReportFixture===true&&value.actualProducerExecuted===false&&value.eligibleReceiptCreated===false&&value.actualBrowser===false&&value.caseCount===74&&isDeepStrictEqual(value.cases,downloadedBackupDecoderConsumerCases)}));
 verificationCatalog['verify-final-acceptance.mjs'].sourceInputs=[...new Set([...(verificationCatalog['verify-final-acceptance.mjs'].sourceInputs||[]),'downloaded-backup-decoder.mjs','test-downloaded-backup-decoder.mjs'])];
+
+const mobileFailureRetentionCases=[
+ ['original-failure-with-successful-diagnostics','PASS'],
+ ['secondary-visible-state-failure','PASS'],
+ ['secondary-inspection-failure','PASS'],
+ ['both-secondary-failures-retain-primary','PASS'],
+ ['durable-before-pending-visible-state','PASS'],
+ ['durable-before-pending-inspection','PASS'],
+ ['failed-evidence-write-still-closes','PASS'],
+ ['failed-close-keeps-durable-primary','PASS'],
+ ['former-await-before-recording-loses-durability','FORMER_DURABILITY_GAP_OBSERVED'],
+ ['missing-early-write-mutant','DETECTED']
+];
+function completeMobileFailureRetention(report){
+ return Boolean(closedReportFields(report,['mobileFailureRetention','synthetic','actualBrowser','sourceBodyExecutedUnchanged','sourceMutationControlsExplicit','cases'])&&
+  report.mobileFailureRetention==='PASS'&&report.synthetic===true&&report.actualBrowser===false&&report.sourceBodyExecutedUnchanged===true&&report.sourceMutationControlsExplicit===true&&
+  Array.isArray(report.cases)&&report.cases.length===mobileFailureRetentionCases.length&&new Set(report.cases.map(row=>row?.name)).size===report.cases.length&&
+  mobileFailureRetentionCases.every(([name,result])=>report.cases.some(row=>closedReportFields(row,['name','result'])&&row.name===name&&row.result===result)));
+}
+verificationCatalog['verify-executed-evidence.mjs'].sourceInputs=[...new Set([...verificationCatalog['verify-executed-evidence.mjs'].sourceInputs,'test-mobile-failure-retention.mjs','verify-mobile-capability-journey.mjs','verifier-runtime.mjs'])];
+verificationCatalog['verify-executed-evidence.mjs'].checks.push(check(
+ 'receipts.mobile-failure-retention','executedEvidenceProtection','mobileFailureRetention',undefined,
+ 'Actual current mobile evidence writer and catch/finally bodies executed with controlled diagnostic outcomes and real temporary-file custody',{
+  expectedDescription:'Exactly10 named controls preserve the primary failure before pending diagnostics, retain secondary failures separately, attempt owned close, and expose the former durability gap and early-write omission mutant.',
+  condition:completeMobileFailureRetention
+ }
+));
