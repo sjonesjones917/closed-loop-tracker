@@ -33,6 +33,7 @@ if(process.argv.includes('--fault=incorrect-storage-persistence')){
 }
 const workflowActionCall=source.slice(source.indexOf('function workflow(')).match(/\$\{(nextActionMarkup\([^}]+\))\}/)?.[1];
 const cases=[];
+let downloadedBackupDecoder;
 // Choosing the already selected view does not leave it. Its current drafts and
 // pending review stay visible, while ordinary navigation still captures History.
 {
@@ -339,7 +340,7 @@ for(const stage of [1]){
  assert.deepEqual(phases,['FINAL_BACKUP_HISTORY_OBSERVATION','FINAL_BACKUP_EXPORT','FINAL_BACKUP_HISTORY_EXPORT_VERIFY','FINAL_BACKUP_IMPORT','FINAL_BACKUP_VERIFY','FINAL_BACKUP_HISTORY_RESTORE_VERIFY'],'FINAL_BACKUP_PHASE_ORACLE: an interruption must identify the actual final operation');
  assert.deepEqual(calls,['READ_CURRENT','OBSERVE_CANONICAL_BEFORE','OBSERVE_CURRENT_HISTORY','EXPORT','VERIFY_CANONICAL_EXPORT','VERIFY_HISTORY_EXPORT','IMPORT','READ_RESTORED','VERIFY_CANONICAL_RESTORE','OBSERVE_RESTORED_HISTORY','VERIFY_HISTORY_RESTORE'],'FINAL_BACKUP_SEQUENCE_DEPENDENCY_ORDER_ORACLE');
  cases.push({caseId:'FINAL-BACKUP-OBSERVATION',result:'PASS',actualBrowser:false,exports:exported,freshReads:reads,historyExportChecked:exportChecked,historyRestoreChecked:restoreChecked,phases,canonicalFamilySequenceChecked:true,canonicalFamilyContentProof:false,calls});
- const retainedOracles=await verifyRetainedHistoryOracles();cases.push(...retainedOracles.cases);
+ const retainedOracles=await verifyRetainedHistoryOracles();cases.push(...retainedOracles.cases);downloadedBackupDecoder=retainedOracles.downloadedBackupDecoder;
 }
 // The complete-export and backup controls share the same pending UI action.
 // A second disabled control is not another queued operator request. Once that
@@ -646,4 +647,4 @@ const [backupImportStaging,backupStagingStore,backupExtensionByteRetention,backu
 const resultsFor=group=>controlResults.filter((_,index)=>controlJobs[index].group===group);
 const backupStagingFaults=resultsFor('backup'),responseStagingUIFaults=resultsFor('response'),operatorSafetyFeedbackFaults=resultsFor('safety');
 cases.push(...backupImportStaging.cases,...backupStagingStore.cases.map(row=>({...row,caseId:'STORE-BACKUP-STAGING-'+row.caseId,result:row.passed?'PASS':'FAIL'})),...responseStagingRecoveryUI.cases,...operatorSafetyFeedback.cases);
-console.log(JSON.stringify({schema:'closed-loop-executed-cases/1',synthetic:true,environment:'Node VM with delayed operation and frame boundary',scope:'Shared action binding and production workflow markup ownership; not browser layout or stage-by-stage file-transport acceptance.',backupImportStaging,backupStagingStore,backupExtensionByteRetention,backupExtensionBindingControls,backupStagingFaults,responseStagingRecoveryUI,responseStagingUIFaults,operatorSafetyFeedback,operatorSafetyFeedbackFaults,cases},null,2));
+console.log(JSON.stringify({schema:'closed-loop-executed-cases/1',synthetic:true,environment:'Node VM with delayed operation and frame boundary',scope:'Shared action binding and production workflow markup ownership; not browser layout or stage-by-stage file-transport acceptance.',downloadedBackupDecoder,backupImportStaging,backupStagingStore,backupExtensionByteRetention,backupExtensionBindingControls,backupStagingFaults,responseStagingRecoveryUI,responseStagingUIFaults,operatorSafetyFeedback,operatorSafetyFeedbackFaults,cases},null,2));

@@ -1,3 +1,4 @@
+import {verifyDownloadedBackupDecoder} from './test-downloaded-backup-decoder.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {createHash} from 'node:crypto';
@@ -54,6 +55,6 @@ export async function verifyRetainedHistoryOracles(){
  await rejectObservation('RETAINED_HISTORY_STATE_FORM_MISSING_RECORD_GUARD_ORACLE',stateHistory,[null,records[1]],'RETAINED_HISTORY_RECORD_MISSING');
  const changedParts=structuredClone(recordedBody);changedParts.recovery.entries[0].projectParts.entries[0].byteSize++;
  assert.throws(()=>verifyRetainedBackup(observed,download(changedParts)),error=>String(error.message).includes('RETAINED_HISTORY_IMMUTABLE_PREFIX_ORACLE'),'RETAINED_HISTORY_STATE_FORM_PREFIX_GUARD_ORACLE: a backup whose recorded parts differ was accepted.');stateFormRows.push({caseId:'RETAINED_HISTORY_STATE_FORM_PREFIX_GUARD_ORACLE',result:'PASS',intendedOracle:'RETAINED_HISTORY_IMMUTABLE_PREFIX_ORACLE'});
- return {schema:'closed-loop-retained-history-verifier-oracles/1',cases:rows,stateFormCases:stateFormRows,passed:true,synthetic:true,boundary:'Independent literal exported package bytes and retained descriptors test the verifier assertions; a controlled page over literal rows tests the state-form observation. No application/browser storage behavior is asserted.',helperSha256:sha(text)};
+ return {schema:'closed-loop-retained-history-verifier-oracles/1',cases:rows,stateFormCases:stateFormRows,downloadedBackupDecoder:await verifyDownloadedBackupDecoder(),passed:true,synthetic:true,boundary:'Independent literal exported package bytes and retained descriptors test the verifier assertions; a controlled page over literal rows tests the state-form observation. No application/browser storage behavior is asserted.',helperSha256:sha(text)};
 }
 if(process.argv[1]&&pathToFileURL(process.argv[1]).href===import.meta.url)console.log(JSON.stringify(await verifyRetainedHistoryOracles(),null,2));
