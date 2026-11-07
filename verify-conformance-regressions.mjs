@@ -1,4 +1,5 @@
 import {COUNTERPART_FAULT_CASES} from './operator-journey-fixtures.mjs';
+import {groupHasRunningProcesses} from './browser-extra-aggregate.mjs';
 import fs from 'node:fs';
 import crypto from 'node:crypto';
 import path from 'node:path';
@@ -113,7 +114,7 @@ export function selectConformanceGroup(args=[]){
 }
 export function conformanceSources(){
  const verifierRuntimeConsumers=fs.readdirSync('.').filter(path=>/\.mjs$/.test(path)&&fs.readFileSync(path,'utf8').includes("from './verifier-runtime.mjs'"));
- return [...new Set(['.github/workflows/pages.yml','verify-conformance-handoff.mjs','verify-conformance-regressions.mjs','verification-evidence.mjs','browser-extra-aggregate.mjs','browser-extra-mixed-recovery.mjs','test-browser-extra-mixed-recovery.mjs','verify-browser-extra-aggregate.mjs','browser-execution-evidence.mjs','test-browser-observer-lifecycle.mjs','verify-browser-execution-evidence.mjs','reviewed-project-handoff.mjs','verify-reviewed-project-handoff.mjs','build-static-site.mjs','deployment-contract-identities.mjs','verified-site.mjs','TEST_PROJECT.json','.nojekyll','verification-evidence-catalog.mjs','verification-evidence-preload.mjs','collect-verification-evidence.mjs','verification-assertion-bindings.json','verification-negative-populations.json','operator-browser-driver.mjs','verify-browser.mjs','verify-browser-extra.mjs','verify-mobile-stage-action.mjs','verify-complete-operator-journey.mjs','verify-acceptance-viewport.mjs','verifier-runtime.mjs','workbook.js','hash.js','app-core.js','index.html','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','test-runtime.js','test-worker.js','test-project-store-runtime.mjs','test-operational-journal-copy.mjs','test-checkpoint-state-snapshot.mjs','test-write-walk-counts.mjs','test-captured-project-integrity.mjs','test-primary-guidance-current-run.mjs','test-history-static-read.mjs','test-history-small-part-allocation.mjs','test-app-markup.mjs','test-artifact-fixtures.mjs','operator-journey-fixtures.mjs','stage19-fixture.mjs','verify-mobile-acceptance-evidence.mjs','test-retained-history-browser.mjs','verify-retained-history-oracles.mjs','test-human-job-authority.mjs','test-human-job-controls.mjs','test-ingestion-syntax-transport.mjs','test-response-retry-browser.mjs','test-semantic-response-retries.mjs','test-returned-attachment-boundaries.mjs','test-lifecycle-control-worker.mjs','test-recoverable-history-expiry.mjs','test-file-first-components.mjs','test-file-first-component-results.mjs','test-backup-import-staging.mjs','test-backup-staging-store.mjs','test-response-staging-recovery-ui.mjs','test-response-staging-recovery.mjs','test-returned-slot-atomic-staging.mjs','test-startup-storage-boundaries.mjs','test-mobile-preparation-ui.mjs','test-mobile-session-storage.mjs','test-verifier-context-relations.mjs','test-verifier-context-ui.mjs','test-prompt-context-storage.mjs','test-job-pointer-integrity.mjs','test-staging-safe-cleanup.mjs','test-operator-safety-feedback.mjs','test-inbound-response-archive.mjs','test-inbound-archive-parser.mjs','test-inbound-archive-browser.mjs','test-artifact-byte-sharing.mjs',...verifierRuntimeConsumers,...suites])];
+ return [...new Set(['.github/workflows/pages.yml','verify-conformance-handoff.mjs','verify-conformance-regressions.mjs','verification-evidence.mjs','browser-extra-aggregate.mjs','browser-extra-mixed-recovery.mjs','test-browser-extra-mixed-recovery.mjs','verify-browser-extra-aggregate.mjs','test-conformance-process-groups.mjs','browser-execution-evidence.mjs','test-browser-observer-lifecycle.mjs','verify-browser-execution-evidence.mjs','reviewed-project-handoff.mjs','verify-reviewed-project-handoff.mjs','build-static-site.mjs','deployment-contract-identities.mjs','verified-site.mjs','TEST_PROJECT.json','.nojekyll','verification-evidence-catalog.mjs','verification-evidence-preload.mjs','collect-verification-evidence.mjs','verification-assertion-bindings.json','verification-negative-populations.json','operator-browser-driver.mjs','verify-browser.mjs','verify-browser-extra.mjs','verify-mobile-stage-action.mjs','verify-complete-operator-journey.mjs','verify-acceptance-viewport.mjs','verifier-runtime.mjs','workbook.js','hash.js','app-core.js','index.html','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','test-runtime.js','test-worker.js','test-project-store-runtime.mjs','test-operational-journal-copy.mjs','test-checkpoint-state-snapshot.mjs','test-write-walk-counts.mjs','test-captured-project-integrity.mjs','test-primary-guidance-current-run.mjs','test-history-static-read.mjs','test-history-small-part-allocation.mjs','test-app-markup.mjs','test-artifact-fixtures.mjs','operator-journey-fixtures.mjs','stage19-fixture.mjs','verify-mobile-acceptance-evidence.mjs','test-retained-history-browser.mjs','verify-retained-history-oracles.mjs','test-human-job-authority.mjs','test-human-job-controls.mjs','test-ingestion-syntax-transport.mjs','test-response-retry-browser.mjs','test-semantic-response-retries.mjs','test-returned-attachment-boundaries.mjs','test-lifecycle-control-worker.mjs','test-recoverable-history-expiry.mjs','test-file-first-components.mjs','test-file-first-component-results.mjs','test-backup-import-staging.mjs','test-backup-staging-store.mjs','test-response-staging-recovery-ui.mjs','test-response-staging-recovery.mjs','test-returned-slot-atomic-staging.mjs','test-startup-storage-boundaries.mjs','test-mobile-preparation-ui.mjs','test-mobile-session-storage.mjs','test-verifier-context-relations.mjs','test-verifier-context-ui.mjs','test-prompt-context-storage.mjs','test-job-pointer-integrity.mjs','test-staging-safe-cleanup.mjs','test-operator-safety-feedback.mjs','test-inbound-response-archive.mjs','test-inbound-archive-parser.mjs','test-inbound-archive-browser.mjs','test-artifact-byte-sharing.mjs',...verifierRuntimeConsumers,...suites])];
 }
 
 const sha=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
@@ -240,7 +241,15 @@ export function executeGate(gate,{directory,signal,timeoutMs=CHILD_TIMEOUT_MS,ki
   // control pipe. A blocked or killed intermediate JS process cannot prevent
   // that owner from stopping the process groups it registered.
   const child=spawn(command,gate.args,{cwd,env:{...process.env,...env,[ownerVariable]:'3'},detached:process.platform!=='win32',stdio:[gate.input===undefined?'ignore':'pipe','pipe','pipe',inheritedOwner?3:'pipe']});
-  const killGroup=(pid,kind)=>{try{process.kill(process.platform==='win32'?pid:-pid,kind);}catch(e){if(e.code!=='ESRCH')error={code:e.code,message:e.message};}};
+  const killGroup=(pid,kind)=>{try{process.kill(process.platform==='win32'?pid:-pid,kind);}catch(e){
+   if(e.code==='ESRCH')return;
+   // Darwin can deny signals to a zombie-only group. Accept that race only
+   // after the shared fresh native inspection proves no live exact-PGID member.
+   if(process.platform==='darwin'&&e.code==='EPERM'){
+    try{if(!groupHasRunningProcesses(pid))return;}catch(inspectionError){e.cause??=inspectionError;}
+   }
+   error={code:e.code,message:e.message,...(e.cause!==undefined?{cause:{code:e.cause?.code??null,message:e.cause?.message??String(e.cause)}}:{})};
+  }};
   const descendantOf=(row,pid)=>{const seen=new Set();while(row&&!seen.has(row.pid)){if(row.pid===pid)return true;seen.add(row.pid);row=groups.get(row.parent);}return false;};
   // Give the immediate owner its grace interval to record and relay the cause.
   // The hard stop still reaches every registered descendant if that owner blocks.
@@ -739,6 +748,10 @@ function isRunnerEntryPoint(){
  if(path.resolve(entry)===moduleFile)return true;
  try{return fs.realpathSync(entry)===fs.realpathSync(moduleFile);}catch{return false;}
 }
+async function verifyConformanceProcessGroups(){
+ const {verifyConformanceProcessGroupControls}=await import('./test-conformance-process-groups.mjs');
+ return verifyConformanceProcessGroupControls();
+}
 async function verifyRunnerFaults(){
  const original=fs.readFileSync(fileURLToPath(import.meta.url),'utf8'),directory=fs.mkdtempSync(path.join(os.tmpdir(),'clrt-runner-fault-')),faults=[];
  const mutations=[
@@ -773,7 +786,7 @@ async function verifyRunnerFaults(){
  // Preserve the shared fixture authority when the supervisor owner is copied
  // into a disposable module outside the repository for fault injection.
  const fixtureUrl=new URL('./operator-journey-fixtures.mjs',import.meta.url).href;
- const serializedImplementation=implementation.replace("from './operator-journey-fixtures.mjs'","from "+JSON.stringify(fixtureUrl)).replace("import('./full-cycle-prerequisite.mjs')","import("+JSON.stringify(new URL('./full-cycle-prerequisite.mjs',import.meta.url).href)+")").replace("new URL('./operator-journey-fixtures.mjs',import.meta.url).href",JSON.stringify(fixtureUrl)).replace("new URL('./test-scope-rejection-preservation.mjs',import.meta.url).href",JSON.stringify(new URL('./test-scope-rejection-preservation.mjs',import.meta.url).href));
+ const serializedImplementation=implementation.replace("from './operator-journey-fixtures.mjs'","from "+JSON.stringify(fixtureUrl)).replace("from './browser-extra-aggregate.mjs'","from "+JSON.stringify(new URL('./browser-extra-aggregate.mjs',import.meta.url).href)).replace("import('./test-conformance-process-groups.mjs')","import("+JSON.stringify(new URL('./test-conformance-process-groups.mjs',import.meta.url).href)+")").replace("import('./full-cycle-prerequisite.mjs')","import("+JSON.stringify(new URL('./full-cycle-prerequisite.mjs',import.meta.url).href)+")").replace("new URL('./operator-journey-fixtures.mjs',import.meta.url).href",JSON.stringify(fixtureUrl)).replace("new URL('./test-scope-rejection-preservation.mjs',import.meta.url).href",JSON.stringify(new URL('./test-scope-rejection-preservation.mjs',import.meta.url).href));
  try{
   for(const [name,before,after,oracle]of mutations){
    assert.equal(implementation.split(before).length,2,'Unique runner fault anchor required: '+name);
@@ -808,7 +821,7 @@ if(process.argv.includes('--counterpart-budget-contract-only')){
  console.log(JSON.stringify(await verifyCreationMatrixContract(),null,2));
 }else if(process.argv.includes('--runner-contract-only')){
  const contract=await verifyRunnerContract();
- if(!process.argv.includes('--fault-probe')){contract.creationMatrix=await verifyCreationMatrixContract();contract.creationMatrixFaults=await verifyCreationMatrixFaults();Object.assign(contract,await verifyRunnerFaults());contract.restored=await verifyRunnerContract();}
+ if(!process.argv.includes('--fault-probe')){contract.platformProcessGroupCleanup=await verifyConformanceProcessGroups();contract.creationMatrix=await verifyCreationMatrixContract();contract.creationMatrixFaults=await verifyCreationMatrixFaults();Object.assign(contract,await verifyRunnerFaults());contract.restored=await verifyRunnerContract();}
  console.log(JSON.stringify(contract,null,2));
 }else{
  const selected=selectConformanceGroup(process.argv.slice(2));

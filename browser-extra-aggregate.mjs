@@ -250,3 +250,6 @@ export async function superviseBrowserExtra({cwd=process.cwd(),script=BROWSER_EX
  check(completedResult.browserExtraAggregate.elapsedMs<deadlineMs,'final aggregate validation exceeded absolute deadline');
  return completedResult;
 }
+
+// Shared observation only; callers retain ownership of signals and deadlines.
+export {groupHasRunningProcesses};

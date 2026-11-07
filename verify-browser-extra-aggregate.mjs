@@ -26,7 +26,8 @@ function nativeProcessRunning(pid){
  try{process.kill(pid,0);return true;}catch(error){if(error.code==='ESRCH')return false;throw error;}
 }
 
-export async function verifyBrowserExtraDarwinGroupControls(){
+export async function verifyBrowserExtraDarwinGroupControls({onNativeZombie}={}){
+ assert(onNativeZombie===undefined||typeof onNativeZombie==='function','native zombie callback must be a function');
  const source=fs.readFileSync(new URL('./browser-extra-aggregate.mjs',import.meta.url),'utf8');
  const start='function killGroup(',end='const replayFailure=';
  assert.equal(source.split(start).length,2);assert.equal(source.split(end).length,2);
@@ -92,6 +93,7 @@ export async function verifyBrowserExtraDarwinGroupControls(){
    assert.equal(control.groupHasRunningProcesses(zombie),false);assert.doesNotThrow(()=>control.killGroup({pid:zombie}));
    assert.equal(darwinProcessState(reaper.pid),'T','native reaper must remain stopped');
    assert(nativeProcessRunning(reaper.pid),'stopped reaper must remain live');
+   if(onNativeZombie){await onNativeZombie(zombie);assert.equal(darwinProcessState(reaper.pid),'T','native reaper must remain stopped through the caller control');}
    nativeZombie={observed:true,state:'Z',groupEqualsChildPid:true,parentStopped:true,nativeSignalZero:'EPERM',nativeSigkill:'EPERM',runningMember:false,cleanupAccepted:true};
   }finally{
    try{
