@@ -1,4 +1,4 @@
-name: Diagnostic Stage 30 checkpoint on frozen 50f53978
+name: Diagnostic Stage 30 eventual completion on frozen 50f53978
 
 on:
   workflow_dispatch:
@@ -8,15 +8,15 @@ permissions:
   actions: read
 
 concurrency:
-  group: diagnostic-stage30-${{ github.ref }}
+  group: diagnostic-stage30-completion-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  checkpoint-diagnostic:
+  checkpoint-completion-diagnostic:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 90
     env:
-      DIAG_OUT: ${{ github.workspace }}/checkpoint-diagnostic
+      DIAG_OUT: ${{ github.workspace }}/checkpoint-completion-diagnostic
       BROWSER: /usr/bin/google-chrome
       NODE_OPTIONS: ''
     steps:
@@ -62,7 +62,7 @@ jobs:
       - name: Materialize external diagnostic helpers
         shell: bash
         run: |
-          cat > "$RUNNER_TEMP/restore.py" <<'RESTORE'
+          cat > "$RUNNER_TEMP/stage30-completion-restore.py" <<'RESTORE'
           #!/usr/bin/env python3
           """Restore only the authenticated synthetic native profile into a fresh copy.
 
@@ -170,7 +170,7 @@ jobs:
           if __name__ == '__main__':
               main()
           RESTORE
-          cat > "$RUNNER_TEMP/replay.mjs" <<'REPLAY'
+          cat > "$RUNNER_TEMP/stage30-completion-replay.mjs" <<'REPLAY'
           // Diagnostic only. Original action outcome remains distinct from passive capture.
           import fs from 'node:fs';
           import path from 'node:path';
@@ -186,7 +186,7 @@ jobs:
           // selector so ordinary startup reads the current saved project, not a restore.
           const PAGE_URL='http://127.0.0.1:4173/?project='+JOB+'&stage=30&view=Workflow';
           const BROWSER_VERSION='156.0.8078.79',INTERVAL_US=10000,ACTION_MS=180000;
-          const started=Date.now(),captureEnds=started+14*60*1000;
+          const started=Date.now(),captureEnds=started+60*60*1000;
           const sha=b=>createHash('sha256').update(b).digest('hex');
           const save=(name,value)=>fs.writeFileSync(path.join(out,name),JSON.stringify(value,null,2)+'\n');
           const log=(name,value)=>fs.appendFileSync(path.join(out,name),JSON.stringify({at:new Date().toISOString(),...value})+'\n');
@@ -213,7 +213,7 @@ jobs:
           const {observeRetainedHistory}=await import(pathToFileURL(path.join(source,'test-retained-history-browser.mjs')));
           let interrupted=null,browser=null,opening=null,openingSettled=false,finalizing=false,connection=null,server=null,chrome=null,mode=null,phaseIndex=0,actionStarted=null,cleanupComplete=false,serverShutdownRequested=false,serverError=null,serverExit=null,main=null;
           const profiles=new Map(),observedProcesses=new Map(),downloadEvents=[];
-          const result={diagnosticOnly:true,eligibleVerificationReceipt:false,completeJourney:false,sourceCommit:EXPECTED,sourceTree:TREE,profileVersion:BROWSER_VERSION,samplingIntervalUs:INTERVAL_US,actionTimeoutMs:ACTION_MS,captureLimitMs:14*60*1000,outerSupervisorLimitMs:15*60*1000,startedAt:new Date(started).toISOString(),originalUrl:ORIGINAL_URL,replayUrl:PAGE_URL,originalAction:null,profileGaps:[],observerInputs:{scope:'LOCAL',sourceCommit:EXPECTED,staticSiteRoot:process.env.STATIC_SITE_ROOT,pageUrl:PAGE_URL},limitations:['Restored native session can add view/session custody; canonical project identity is checked before the click.','CPU profiling and independent native observations add diagnostic overhead.','Passive observation after the original action outcome is not a raised test deadline or acceptance proof.']};
+          const result={diagnosticOnly:true,eligibleVerificationReceipt:false,completeJourney:false,sourceCommit:EXPECTED,sourceTree:TREE,profileVersion:BROWSER_VERSION,samplingIntervalUs:INTERVAL_US,actionTimeoutMs:ACTION_MS,captureLimitMs:60*60*1000,outerSupervisorLimitMs:65*60*1000,startedAt:new Date(started).toISOString(),originalUrl:ORIGINAL_URL,replayUrl:PAGE_URL,originalAction:null,profileGaps:[],observerInputs:{scope:'LOCAL',sourceCommit:EXPECTED,staticSiteRoot:process.env.STATIC_SITE_ROOT,pageUrl:PAGE_URL},limitations:['Restored native session can add view/session custody; canonical project identity is checked before the click.','CPU profiling and independent native observations add diagnostic overhead.','Passive observation after the original action outcome is not a raised test deadline or acceptance proof.']};
           let stopResolve;const stopping=new Promise(resolve=>stopResolve=resolve);
           const onSignal=s=>{interrupted=s;log('signals.jsonl',{signal:s});stopResolve();};
           process.on('SIGTERM',onSignal);process.on('SIGINT',onSignal);
@@ -291,7 +291,7 @@ jobs:
            process.removeListener('SIGTERM',onSignal);process.removeListener('SIGINT',onSignal);
           }
           REPLAY
-          cat > "$RUNNER_TEMP/supervisor.mjs" <<'SUPERVISOR'
+          cat > "$RUNNER_TEMP/stage30-completion-supervisor.mjs" <<'SUPERVISOR'
           // Source-owned bounded process cleanup, not a verification owner or receipt.
           import fs from 'node:fs';
           import path from 'node:path';
@@ -307,17 +307,17 @@ jobs:
           const controller=new AbortController(),relay=signal=>controller.abort(signal);
           process.on('SIGTERM',relay);process.on('SIGINT',relay);
           try{
-           const result=await executeGate({name:'checkpoint-diagnostic',command:process.execPath,args:[path.resolve(replay),out]}, {cwd:source,directory:path.join(out,'supervisor'),signal:controller.signal,timeoutMs:900000,killGraceMs:10000,maxOutputBytes:64*1024*1024,forwardOutput:true,requireJson:false});
+           const result=await executeGate({name:'checkpoint-completion-diagnostic',command:process.execPath,args:[path.resolve(replay),out]}, {cwd:source,directory:path.join(out,'supervisor'),signal:controller.signal,timeoutMs:3900000,killGraceMs:10000,maxOutputBytes:64*1024*1024,forwardOutput:true,requireJson:false});
            fs.writeFileSync(path.join(out,'supervisor-result.json'),JSON.stringify({diagnosticOnly:true,eligibleVerificationReceipt:false,notCompleteJourney:true,sourceRoot:source,...result},null,2)+'\n');
            if(result.exitCode!==0||result.signal||result.reason||result.error)process.exitCode=1;
           }finally{process.removeListener('SIGTERM',relay);process.removeListener('SIGINT',relay);}
           SUPERVISOR
-          cp "$RUNNER_TEMP/restore.py" "$RUNNER_TEMP/replay.mjs" "$RUNNER_TEMP/supervisor.mjs" "$DIAG_OUT/"
+          cp "$RUNNER_TEMP/stage30-completion-restore.py" "$RUNNER_TEMP/stage30-completion-replay.mjs" "$RUNNER_TEMP/stage30-completion-supervisor.mjs" "$DIAG_OUT/"
       - name: Restore an authenticated disposable native-profile copy
         shell: bash
         run: |
           set -euo pipefail
-          python3 "$RUNNER_TEMP/restore.py" --archive "$DIAG_OUT/original.zip" --directory "$DIAG_OUT/replay" | tee "$DIAG_OUT/restore.log"
+          python3 "$RUNNER_TEMP/stage30-completion-restore.py" --archive "$DIAG_OUT/original.zip" --directory "$DIAG_OUT/replay" | tee "$DIAG_OUT/restore.log"
       - name: Build the unchanged original source with original provenance
         working-directory: app
         shell: bash
@@ -329,12 +329,12 @@ jobs:
           echo '8352b036eca02dfd86bb441df4ea3fe0ea54b9ad6bcaaee9a000219ddfae09c5  TEST_PROJECT.json' | sha256sum --check
           node build-static-site.mjs --out "$DIAG_OUT/site" --source-commit 315f85b3dc34c274e4470fe4e84e9dcebc9a1551 --workflow-run 42374851354 | tee "$DIAG_OUT/build.log"
           test -z "$(git status --porcelain)"
-      - name: Capture one original-budget click and bounded passive diagnosis
+      - name: Capture one original-budget click and up to 60-minute diagnostic window
         working-directory: app
         shell: bash
         run: |
           set -euo pipefail
-          node "$RUNNER_TEMP/supervisor.mjs" "$RUNNER_TEMP/replay.mjs" "$DIAG_OUT"
+          node "$RUNNER_TEMP/stage30-completion-supervisor.mjs" "$RUNNER_TEMP/stage30-completion-replay.mjs" "$DIAG_OUT"
       - name: Preserve original archive identity and final source state
         if: always()
         working-directory: app
@@ -352,7 +352,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: diagnostic-only-stage30-50f53978-${{ github.run_id }}-${{ github.run_attempt }}
+          name: diagnostic-only-stage30-completion-50f53978-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ env.DIAG_OUT }}
           if-no-files-found: error
           include-hidden-files: true
