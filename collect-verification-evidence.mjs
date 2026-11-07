@@ -3,7 +3,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {checkedVerifier,runVerifier,suiteTimeoutMs} from './verify-conformance-regressions.mjs';
 import {verificationCatalog,browserVerificationCatalog} from './verification-evidence-catalog.mjs';
-import {evidenceFingerprint,readExecutionReceipt,readExecutionReceipts,aggregateExecutedEvidence,validateExecutionReceipt,createExecutionReceipt,sha} from './verification-evidence.mjs';
+import {evidenceFingerprint,readExecutionReceipt,readExecutionReceipts,aggregateExecutedEvidence,requireBrowserScope,validateExecutionReceipt,createExecutionReceipt,sha} from './verification-evidence.mjs';
 
 export async function executeEvidenceProducer(suite,{directory,cwd=process.cwd(),environment=process.env,fingerprint=evidenceFingerprint(cwd),evidenceDirectory,timeout}={}){
   if(!verificationCatalog[suite])throw new Error('EXECUTED_EVIDENCE_ORACLE: unregistered producer '+suite);
@@ -57,6 +57,17 @@ export async function collectVerificationEvidence({directory=process.env.CLOSED_
   if(outputPath){fs.mkdirSync(path.dirname(outputPath),{recursive:true});fs.writeFileSync(outputPath,JSON.stringify(output,null,2)+'\n');}
   return output;
 }
+export async function requireBrowserEvidence({
+  scope,suites,directory=process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS||'.verification-receipts',
+  cwd=process.cwd(),environment=process.env
+}={}){
+  const site=environment.STATIC_SITE_ROOT||environment.VERIFIED_SITE_DIR;
+  if(!site)throw new Error('EXECUTED_EVIDENCE_ORACLE: required browser proof needs the retained built site');
+  const {validateSite}=await import('./verified-site.mjs');
+  const manifest=validateSite(path.resolve(cwd,site)),fingerprint=evidenceFingerprint(cwd);
+  const receipts=readExecutionReceipts(path.resolve(cwd,directory),fingerprint);
+  return requireBrowserScope(receipts,fingerprint,{scope,manifest,...(suites?{suites}:{})});
+}
 export function exportOwnerReports({suite,marker,directory=process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS||'.verification-receipts'}={}){
   if(!suite||!Object.hasOwn(verificationCatalog,suite))throw new Error('EXECUTED_EVIDENCE_ORACLE: unregistered export owner '+suite);
   const fingerprint=evidenceFingerprint(),receipt=readExecutionReceipts(directory,fingerprint).get(suite);
@@ -66,9 +77,27 @@ export function exportOwnerReports({suite,marker,directory=process.env.CLOSED_LO
   return reports.map(report=>JSON.stringify(report)).join('\n')+'\n';
 }
 if(process.argv[1]===fileURLToPath(import.meta.url)){
+  const requiredPrefixes=['--require-browser-scope=','--exclude-browser-suite=','--browser-suite-only='];
+  const requiredScope=process.argv.find(arg=>arg.startsWith('--require-browser-scope='))?.slice(24);
   const browserSuite=process.argv.find(arg=>arg.startsWith('--browser-suite='))?.slice(16);
   const exportOwner=process.argv.find(arg=>arg.startsWith('--export-owner='))?.slice(15);
-  if(process.argv.some(arg=>arg.startsWith('--export-owner=')||arg.startsWith('--report-marker='))){
+  if(process.argv.some(arg=>requiredPrefixes.some(prefix=>arg===prefix.slice(0,-1)||arg.startsWith(prefix)))){
+    const args=process.argv.slice(2),prefixes=requiredPrefixes;
+    const count=prefix=>args.filter(arg=>arg.startsWith(prefix)).length;
+    if(args.some(arg=>!prefixes.some(prefix=>arg.startsWith(prefix)))||
+      count(prefixes[0])!==1||count(prefixes[1])+count(prefixes[2])>1||
+      !['LOCAL','DEPLOYED'].includes(requiredScope)){
+      throw new Error('EXECUTED_EVIDENCE_ORACLE: incompatible required browser arguments');
+    }
+    const journey='verify-complete-operator-journey.mjs';
+    const exclude=args.find(arg=>arg.startsWith(prefixes[1]))?.slice(prefixes[1].length);
+    const only=args.find(arg=>arg.startsWith(prefixes[2]))?.slice(prefixes[2].length);
+    if(exclude!==undefined&&exclude!==journey||only!==undefined&&only!==journey){
+      throw new Error('EXECUTED_EVIDENCE_ORACLE: unsupported required browser subset');
+    }
+    const suites=only?[journey]:Object.keys(browserVerificationCatalog).filter(suite=>suite!==exclude);
+    console.log(JSON.stringify({requiredBrowserEvidence:'PASS',...await requireBrowserEvidence({scope:requiredScope,suites})}));
+  }else if(process.argv.some(arg=>arg.startsWith('--export-owner=')||arg.startsWith('--report-marker='))){
     const args=process.argv.slice(2),allowed=args.every(arg=>arg.startsWith('--export-owner=')||arg.startsWith('--report-marker='));
     if(!allowed||args.filter(arg=>arg.startsWith('--export-owner=')).length!==1||args.filter(arg=>arg.startsWith('--report-marker=')).length>1)throw new Error('EXECUTED_EVIDENCE_ORACLE: incompatible report-export arguments');
     process.stdout.write(exportOwnerReports({suite:exportOwner,marker:args.find(arg=>arg.startsWith('--report-marker='))?.slice(16)}));

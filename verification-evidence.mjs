@@ -379,6 +379,59 @@ export function readExecutionReceipts(directory,fingerprint=evidenceFingerprint(
   for(const scope of ['LOCAL','DEPLOYED'])for(const suite of Object.keys(browserVerificationCatalog)){const file=path.join(directory,'browser',scope,suite+'.json');if(fs.existsSync(file)){const receipt=validateExecutionReceipt(readJson(file),suite,fingerprint);requireEvidence(receipt.browser.scope===scope,'browser receipt stored under wrong scope');receipts.set(`browser/${scope}/${suite}`,receipt);}}
   return receipts;
 }
+// A producer handoff is complete only when its declared browser population is
+// present and valid. Generic metric aggregation may legitimately report UNKNOWN
+// before browsers run, so release and split-job joins use this explicit gate.
+export function requireBrowserScope(receipts,fingerprint,{scope,manifest,suites=Object.keys(browserVerificationCatalog)}={}){
+  requireEvidence(['LOCAL','DEPLOYED'].includes(scope),'required browser scope is invalid');
+  const all=Object.keys(browserVerificationCatalog),journey='verify-complete-operator-journey.mjs';
+  requireEvidence(
+    Array.isArray(suites)&&suites.length>0&&
+    new Set(suites).size===suites.length&&suites.every(suite=>all.includes(suite)),
+    'required browser producer selection is invalid'
+  );
+  const selected=[...suites].sort(),allowed=[all,all.filter(suite=>suite!==journey),[journey]];
+  requireEvidence(
+    allowed.some(population=>isDeepStrictEqual([...population].sort(),selected)),
+    'required browser producer population is incomplete'
+  );
+  requireEvidence(
+    manifest?.sourceCommit===fingerprint.sourceCommit&&
+    typeof manifest.buildIdentity==='string'&&Array.isArray(manifest.runtimeResources)&&
+    typeof manifest.workflowFileSha256==='string'&&typeof manifest.manifestDigest?.digest==='string',
+    'required browser site is not the current candidate'
+  );
+  let originalManifest=null;
+  for(const suite of suites){
+    const receipt=receipts.get(`browser/${scope}/${suite}`);
+    requireEvidence(Boolean(receipt),'missing required '+scope+' browser receipt '+suite);
+    validateExecutionReceipt(receipt,suite,fingerprint);
+    requireEvidence(receipt.browser?.scope===scope,'required browser receipt has a different scope');
+    const tested=receipt.browser.manifest;
+    requireEvidence(
+      tested.buildIdentity===manifest.buildIdentity&&
+      tested.workflowFileSha256===manifest.workflowFileSha256&&
+      isDeepStrictEqual(tested.runtimeResources,manifest.runtimeResources),
+      'required browser receipt concerns a different built runtime graph'
+    );
+    if(originalManifest){
+      requireEvidence(isDeepStrictEqual(tested,originalManifest),'required browser receipts concern different retained manifests');
+    }else originalManifest=tested;
+    if(scope==='LOCAL'&&tested.sourceCommit!==fingerprint.sourceCommit){
+      const promotion=receipt.promotion;
+      requireEvidence(
+        promotion?.sourceCommit===fingerprint.sourceCommit&&promotion.sourceTree===fingerprint.sourceTree&&
+        promotion.verifiedSourceCommit===tested.sourceCommit&&
+        String(promotion.verifiedRunId)===String(tested.workflowRunIdentity)&&
+        Number.isSafeInteger(promotion.verifiedRunAttempt)&&promotion.verifiedRunAttempt>0,
+        'required browser receipt lacks authenticated same-tree promotion'
+      );
+    }else{
+      requireEvidence(tested.manifestDigest.digest===manifest.manifestDigest.digest,'required browser receipt concerns a different current manifest');
+    }
+  }
+  return {scope,suites:[...suites],receiptCount:suites.length,buildIdentity:manifest.buildIdentity,sourceCommit:fingerprint.sourceCommit};
+}
 export function aggregateExecutedEvidence(receipts,fingerprint,{mobile=null}={}){
   const observations=new Map(),receiptRefs=[];
   for(const [key,receipt] of receipts){const suite=receipt.suite;validateExecutionReceipt(receipt,suite,fingerprint);receiptRefs.push(`${key}.json#${receipt.receiptSha256}`);for(const observation of receipt.observations){requireEvidence(!observations.has(observation.checkId),`duplicate observation ${observation.checkId}`);observations.set(observation.checkId,{...observation,suite,receiptSha256:receipt.receiptSha256});}}

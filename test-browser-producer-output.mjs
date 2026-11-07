@@ -8,7 +8,7 @@ import {runVerifier} from './verify-conformance-regressions.mjs';
 const originalForward="  process.stdout.write(result.stdout||'');process.stderr.write(result.stderr||'');";
 const drainedForward="  await Promise.all([new Promise((resolve,reject)=>process.stdout.write('',error=>error?reject(error):resolve())),new Promise((resolve,reject)=>process.stderr.write('',error=>error?reject(error):resolve()))]);";
 const sha=value=>createHash('sha256').update(value).digest('hex');
-const baselineSha256='fc2ef23be71f4b3816875d56449d611c243c85d695ea1315eba92b700a48d08c';
+const baselineSha256='673deb3b45824b579f3cfbbcfa75b0dfdbcdc659d95e95088e727ca2fe85768f';
 
 // Actual collector function and real backpressured OS pipes. Only its external
 // producer/site/receipt dependencies are explicit fixtures; no browser or

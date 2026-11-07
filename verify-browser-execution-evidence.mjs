@@ -1,3 +1,4 @@
+import {verifyBrowserEvidenceInventory} from './test-browser-evidence-inventory.mjs';
 import {verifyBrowserObserverLifecycleControls} from './test-browser-observer-lifecycle.mjs';
 import {verifyBrowserProducerBudgets} from './test-browser-producer-budgets.mjs';
 import assert from 'node:assert/strict';
@@ -51,3 +52,5 @@ console.log(JSON.stringify({browserExecutionObserverScheduling:'PASS',synthetic:
 
 console.log(JSON.stringify(await verifyBrowserObserverLifecycleControls()));
 console.log(JSON.stringify(await verifyBrowserProducerBudgets()));
+
+console.log(JSON.stringify(await verifyBrowserEvidenceInventory()));
