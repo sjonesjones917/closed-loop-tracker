@@ -129,7 +129,7 @@ function assertDedicatedJourneyWorkflow(workflow){
 export function assertLifecycleWorkflowCommand(workflow){
   assertWorkflowPreloadBoundaries(workflow);
   const foundation=workflowJob(workflow,'foundation'),deferredJob=workflowJob(workflow,'deferred-matrix'),workflowGates=workflowJob(workflow,'workflow-gates'),conformanceJob=workflowJob(workflow,'conformance'),protectedTest=workflowJob(workflow,'test-checks'),finalTest=workflowJob(workflow,'test');
-  requireValue(deferredJob.includes('    needs: foundation\n')&&workflowGates.includes('    needs: [foundation, deferred-matrix]\n')&&conformanceJob.includes('    needs: workflow-gates\n')&&protectedTest.includes('    needs: [foundation, deferred-matrix, workflow-gates, conformance]\n'),'Required proof phase dependencies must preserve foundation, deferred, workflow, conformance, and browser order.');
+  requireValue(deferredJob.includes('    needs: foundation\n')&&workflowGates.includes('    needs: [foundation, deferred-matrix]\n')&&conformanceJob.includes('    needs: foundation\n')&&protectedTest.includes('    needs: [foundation, deferred-matrix, workflow-gates, conformance]\n'),'Required proof phase dependencies must join complete deferred, workflow, and parallel conformance proof before browsers.');
   let previous=-1;
   for(const name of foundationProofSteps){const marker='      - name: '+name+'\n',at=foundation.indexOf(marker);requireValue(at>previous&&foundation.indexOf(marker,at+marker.length)<0,'Required foundation proof order is absent, duplicated, or changed: '+name);previous=at;}
   requireValue(foundation.includes('          node verify-contract-closure.mjs\n')&&foundation.includes('          node verify-stage-operation-registry.mjs\n'),'Required authoritative registry proofs are absent.');
@@ -147,12 +147,19 @@ export function assertLifecycleWorkflowCommand(workflow){
   requireValue(conformanceJob.includes('group: [core, creation, counterpart]')&&conformanceJob.includes('fail-fast: false')&&conformanceJob.includes('node verify-conformance-regressions.mjs --group=${{ matrix.group }} > /tmp/conformance-regressions.json')&&conformanceJob.includes('name: Preserve complete conformance group report')&&conformanceJob.includes('name: Preserve conformance execution receipts'),'Required complete conformance group execution or artifacts are absent.');
   const ingestionProducer='          node verify-ingestion.mjs\n',ingestionExport='        run: node collect-verification-evidence.mjs --export-owner=verify-ingestion.mjs\n';
   requireValue(foundation.split(ingestionProducer).length===2&&(workflow.match(/^\s*node verify-ingestion\.mjs(?:\s|$)/gm)||[]).length===1,'Required ingestion proof must execute its complete producer once in the foundation phase.');
-  for(const [name,job,artifact]of [['deferred-matrix',deferredJob,'foundation-proof'],['workflow-gates',workflowGates,'foundation-proof'],['conformance',conformanceJob,'workflow-gate-proof'],['test-checks',protectedTest,'workflow-gate-proof']]){
-    requireValue(job.includes('          name: '+artifact+'-${{ github.sha }}-${{ github.run_id }}\n')&&job.split(ingestionExport).length===2,'Required current ingestion receipt must be transferred and validated before '+name+' consumers.');
-  }
   requireValue(conformanceJob.indexOf(ingestionExport)<conformanceJob.indexOf('      - name: Execute complete conformance group\n'),'Required current ingestion receipt must be produced before the core evidence consumer.');
+  const prerequisiteArtifactName=artifact=>artifact+'-${{ github.sha }}-${{ github.run_id }}'+(artifact==='foundation-proof'?'-${{ github.run_attempt }}':'');
+  for(const [name,job,artifact]of [['deferred-matrix',deferredJob,'foundation-proof'],['workflow-gates',workflowGates,'foundation-proof'],['conformance',conformanceJob,'foundation-proof'],['test-checks',protectedTest,'workflow-gate-proof']]){
+    requireValue(job.includes('          name: '+prerequisiteArtifactName(artifact)+'\n')&&job.split(ingestionExport).length===2,'Required current ingestion receipt must be transferred and validated before '+name+' consumers.');
+    if(artifact==='foundation-proof'){
+      const download=workflowStep(job,'Download foundation proof'),validation=workflowStep(job,'Validate foundation ingestion receipt');
+      const execute="        if: steps.reuse.outputs.reused != 'true'\n";
+      requireValue(download.includes('          name: '+prerequisiteArtifactName(artifact)+'\n')&&download.includes('          path: .\n')&&download.includes(execute)&&(download.match(/^        if:/gm)||[]).length===1&&!/^          (?:run-id|github-token|artifact-ids|pattern):/m.test(download),'Required foundation receipt transfer must use this SHA, run, and attempt without an alternate artifact scope.');
+      requireValue(validation.includes(execute)&&(validation.match(/^        if:/gm)||[]).length===1&&validation.includes(ingestionExport)&&job.indexOf(download)<job.indexOf(validation),'Required foundation receipt validation must follow its unconditional fresh-proof transfer.');
+    }
+  }
   requireValue(protectedTest.includes('name: Download complete conformance group reports')&&protectedTest.includes('name: Download complete conformance execution receipts')&&protectedTest.includes('node verify-conformance-handoff.mjs'),'Required conformance group proof handoff is absent.');
-  for(const [job,artifact]of [[foundation,'foundation-proof'],[workflowGates,'workflow-gate-proof']])requireValue(job.includes('          name: '+artifact+'-${{ github.sha }}-${{ github.run_id }}\n')&&job.includes('            .verification-receipts/\n            TEST_PROJECT.json\n')&&job.includes('          include-hidden-files: true\n'),'Required complete prerequisite proof artifact is absent.');
+  for(const [job,artifact]of [[foundation,'foundation-proof'],[workflowGates,'workflow-gate-proof']])requireValue(job.includes('          name: '+prerequisiteArtifactName(artifact)+'\n')&&job.includes('            .verification-receipts/\n            TEST_PROJECT.json\n')&&job.includes('          include-hidden-files: true\n'),'Required complete prerequisite proof artifact is absent.');
   const collect='      - name: Complete current non-browser assertion evidence\n',collectAt=protectedTest.indexOf(collect),browserAt=protectedTest.indexOf('      - name: Stale project navigation and draft preservation\n');
   requireValue(collectAt>=0&&collectAt<browserAt&&(protectedTest.match(/^        run: node collect-verification-evidence\.mjs$/gm)||[]).length===1&&!protectedTest.includes('collect-verification-evidence.mjs --run-missing')&&finalTest.includes('      - name: Collect current executed assertion evidence\n        run: node collect-verification-evidence.mjs\n'),'Missing non-browser proof must finish before Chromium; final aggregation must not execute producers.');
   // Below, validate the original cross-phase command invariants over the actual
@@ -278,7 +285,7 @@ export function assertPassedRun(run,jobs,{repository,headSha,workflowId}){
   for(const group of ['core','creation','counterpart']){
     const matches=jobs.filter(job=>job.name==='conformance-'+group);
     requireValue(matches.length===1&&matches[0].status==='completed'&&matches[0].conclusion==='success','Required conformance group job has not passed: '+group);
-    for(const name of ['Validate current authority receipts','Execute complete conformance group','Preserve complete conformance group report','Preserve conformance execution receipts']){
+    for(const name of ['Download foundation proof','Validate foundation ingestion receipt','Validate current authority receipts','Execute complete conformance group','Preserve complete conformance group report','Preserve conformance execution receipts']){
       const steps=matches[0].steps.filter(step=>step.name===name);
       requireValue(steps.length===1&&steps[0].status==='completed'&&steps[0].conclusion==='success','Required conformance group execution or artifact did not pass: '+group+' '+name);
     }

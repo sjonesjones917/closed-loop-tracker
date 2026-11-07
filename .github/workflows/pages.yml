@@ -197,7 +197,7 @@ jobs:
         env:
           NODE_OPTIONS: ''
         with:
-          name: foundation-proof-${{ github.sha }}-${{ github.run_id }}
+          name: foundation-proof-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             .verification-receipts/
             TEST_PROJECT.json
@@ -255,7 +255,7 @@ jobs:
         if: steps.reuse.outputs.reused != 'true'
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          name: foundation-proof-${{ github.sha }}-${{ github.run_id }}
+          name: foundation-proof-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: .
       - name: Validate foundation ingestion receipt
         if: steps.reuse.outputs.reused != 'true'
@@ -348,7 +348,7 @@ jobs:
         if: steps.reuse.outputs.reused != 'true'
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          name: foundation-proof-${{ github.sha }}-${{ github.run_id }}
+          name: foundation-proof-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: .
       - name: Validate foundation ingestion receipt
         if: steps.reuse.outputs.reused != 'true'
@@ -432,7 +432,7 @@ jobs:
 
   conformance:
     name: conformance-${{ matrix.group }}
-    needs: workflow-gates
+    needs: foundation
     strategy:
       fail-fast: false
       matrix:
@@ -479,13 +479,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: node verified-site.mjs reuse
-      - name: Download workflow gate proof
+      - name: Download foundation proof
         if: steps.reuse.outputs.reused != 'true'
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          name: workflow-gate-proof-${{ github.sha }}-${{ github.run_id }}
+          name: foundation-proof-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: .
-      - name: Validate workflow gate ingestion receipt
+      - name: Validate foundation ingestion receipt
         if: steps.reuse.outputs.reused != 'true'
         run: node collect-verification-evidence.mjs --export-owner=verify-ingestion.mjs
 

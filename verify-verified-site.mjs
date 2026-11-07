@@ -22,7 +22,7 @@ function assertNoNestedCataloguedOwners(sources){
 const repository='test-owner/test-repo',headSha='a'.repeat(40),workflowId=42;
 const run={id:123,run_attempt:1,event:'pull_request',status:'completed',conclusion:'success',repository:{full_name:repository},head_repository:{full_name:repository},head_sha:headSha,workflow_id:workflowId,path:'.github/workflows/pages.yml'};
 const jobs=[{name:'test',status:'completed',conclusion:'success',steps:fullTestSteps.map(name=>({name,status:'completed',conclusion:'success'}))},{name:'deferred-matrix',status:'completed',conclusion:'success',steps:['Execute complete deferred stage matrix','Preserve complete deferred matrix receipt'].map(name=>({name,status:'completed',conclusion:'success'}))}];
-for(const group of ['core','creation','counterpart'])jobs.push({name:'conformance-'+group,status:'completed',conclusion:'success',steps:['Validate current authority receipts','Execute complete conformance group','Preserve complete conformance group report','Preserve conformance execution receipts'].map(name=>({name,status:'completed',conclusion:'success'}))});
+for(const group of ['core','creation','counterpart'])jobs.push({name:'conformance-'+group,status:'completed',conclusion:'success',steps:['Download foundation proof','Validate foundation ingestion receipt','Validate current authority receipts','Execute complete conformance group','Preserve complete conformance group report','Preserve conformance execution receipts'].map(name=>({name,status:'completed',conclusion:'success'}))});
 for(const [name,steps]of [['foundation',foundationProofSteps],['workflow-gates',workflowGateProofSteps],['test-checks',testCheckProofSteps],['operator-journey',operatorJourneyProofSteps]])jobs.push({name,status:'completed',conclusion:'success',steps:steps.map(name=>({name,status:'completed',conclusion:'success'}))});
 for(const job of jobs)Object.assign(job,{run_id:run.id,run_attempt:run.run_attempt,head_sha:headSha,run_url:`https://api.github.com/repos/${repository}/actions/runs/${run.id}`});
 const bindings={repository,headSha,workflowId};
@@ -51,7 +51,7 @@ try{
     const name='conformance-'+group;
     await rejects('missing-'+name,()=>assertPassedRun(run,jobs.filter(job=>job.name!==name),bindings),/Required conformance group job/);
     for(const conclusion of ['failure','cancelled','skipped']){const altered=clone(jobs);altered.find(job=>job.name===name).conclusion=conclusion;await rejects('unpassed-'+name+'-'+conclusion,()=>assertPassedRun(run,altered,bindings),/Required conformance group job/);}
-    for(const step of ['Validate current authority receipts','Execute complete conformance group','Preserve complete conformance group report','Preserve conformance execution receipts']){const altered=clone(jobs);altered.find(job=>job.name===name).steps=altered.find(job=>job.name===name).steps.filter(row=>row.name!==step);await rejects('missing-'+name+'-'+step,()=>assertPassedRun(run,altered,bindings),/Required conformance group execution or artifact/);}
+    for(const step of ['Download foundation proof','Validate foundation ingestion receipt','Validate current authority receipts','Execute complete conformance group','Preserve complete conformance group report','Preserve conformance execution receipts']){const altered=clone(jobs);altered.find(job=>job.name===name).steps=altered.find(job=>job.name===name).steps.filter(row=>row.name!==step);await rejects('missing-'+name+'-'+step,()=>assertPassedRun(run,altered,bindings),/Required conformance group execution or artifact/);}
   }
   (await rejects('missing-deferred-matrix-job',()=>assertPassedRun(run,[jobs[0]],bindings),/Required deferred matrix job/));
   for(const conclusion of ['failure','skipped',null]){
@@ -74,6 +74,16 @@ try{
     for(const stepName of (jobName==='test'?fullTestSteps:jobName==='test-checks'?testCheckProofSteps:operatorJourneyProofSteps))for(const conclusion of ['skipped','cancelled','failure']){
       const altered=clone(jobs);altered.find(job=>job.name===jobName).steps.find(step=>step.name===stepName).conclusion=conclusion;
       await rejects('unpassed-'+jobName+'-'+stepName+'-'+conclusion,()=>assertPassedRun(run,altered,bindings),/did not pass/);
+    }
+  }
+  for(const jobName of ['foundation','conformance-core','conformance-creation','conformance-counterpart']){
+    for(const [field,value]of [['run_id',999],['run_attempt',2],['head_sha','b'.repeat(40)],['run_url','https://api.github.com/repos/other/repo/actions/runs/123']]){
+      const altered=clone(jobs);altered.find(job=>job.name===jobName)[field]=value;
+      await rejects('foreign-'+jobName+'-'+field,()=>assertPassedRun(run,altered,bindings),/different run, attempt, repository, or head/);
+    }
+    if(jobName.startsWith('conformance-'))for(const stepName of ['Download foundation proof','Validate foundation ingestion receipt'])for(const conclusion of ['failure','cancelled','skipped']){
+      const altered=clone(jobs);altered.find(job=>job.name===jobName).steps.find(step=>step.name===stepName).conclusion=conclusion;
+      await rejects('unpassed-'+jobName+'-'+stepName+'-'+conclusion,()=>assertPassedRun(run,altered,bindings),/Required conformance group execution or artifact/);
     }
   }
   // Synthetic authenticated-bundle boundary controls. Runtime changes must
@@ -250,9 +260,18 @@ try{
   assertLifecycleWorkflowCommand(workflow);cases.push('ingestion-report-reuse-restored-workflow');
   for(const [name,from,to]of [
     ['deferred-before-foundation','    needs: foundation\n',''],
-    ['workflow-before-deferred','    needs: [foundation, deferred-matrix]\n','    needs: foundation\n'],
-    ['conformance-before-prompts','    needs: workflow-gates\n','    needs: foundation\n']
+    ['workflow-before-deferred','    needs: [foundation, deferred-matrix]\n','    needs: foundation\n']
   ]){const changed=workflow.replace(from,to);assert.notEqual(changed,workflow);await rejects('phase-order-'+name,()=>assertLifecycleWorkflowCommand(changed),/proof phase dependencies/);}
+  for(const [name,mutate,diagnostic]of [
+    ['missing-foundation',text=>text.replace('    needs: foundation\n',''),/proof phase dependencies/],
+    ['serialized-after-workflow',text=>text.replace('    needs: foundation\n','    needs: workflow-gates\n'),/proof phase dependencies/],
+    ['missing-foundation-download',text=>text.replace('name: Download foundation proof','name: Omitted foundation proof'),/workflow step is absent/],
+    ['prior-foundation-attempt',text=>text.replace('foundation-proof-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}','foundation-proof-${{ github.sha }}-${{ github.run_id }}-1'),/current ingestion receipt must be transferred/],
+    ['foreign-foundation-run',text=>text.replace('foundation-proof-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}','foundation-proof-${{ github.sha }}-1-${{ github.run_attempt }}'),/current ingestion receipt must be transferred/],
+    ['foreign-foundation-sha',text=>text.replace('foundation-proof-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}','foundation-proof-old-${{ github.run_id }}-${{ github.run_attempt }}'),/current ingestion receipt must be transferred/],
+    ['alternate-foundation-run',text=>text.replace('          path: .\n','          run-id: 1\n          path: .\n'),/foundation receipt transfer/],
+    ['conditional-foundation-validation',text=>text.replace("      - name: Validate foundation ingestion receipt\n        if: steps.reuse.outputs.reused != 'true'\n","      - name: Validate foundation ingestion receipt\n        if: matrix.group == 'core'\n"),/foundation receipt validation/]
+  ]){const changed=conformanceExport(mutate);assert.notEqual(changed,workflow,'PARALLEL_CONFORMANCE_FAULT_SETUP_ORACLE: '+name);await rejects('parallel-conformance-'+name,()=>assertLifecycleWorkflowCommand(changed),diagnostic);}
   for(const [job,label]of [['foundation','foundation job'],['workflow-gates','workflow gate job']]){
     const guard='      - name: Require successful '+label+'\n        run: test "${{ needs.'+job+'.result }}" = "success"\n';
     await rejects('phase-missing-'+job+'-required-guard',()=>assertLifecycleWorkflowCommand(workflow.replace(guard,'')),new RegExp('failed '+job+' must fail'));
