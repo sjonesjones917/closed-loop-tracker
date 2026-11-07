@@ -3,12 +3,16 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
+import {EventEmitter} from 'node:events';
+import {isDeepStrictEqual} from 'node:util';
+import {validateBrowserExecution} from './browser-execution-evidence.mjs';
 import {fileURLToPath} from 'node:url';
 import {spawn,execFileSync} from 'node:child_process';
 import vm from 'node:vm';
 import {once} from 'node:events';
-import {createHash} from 'node:crypto';
-import {BROWSER_EXTRA_LANES,BROWSER_EXTRA_CHILD_SCHEMA,BROWSER_EXTRA_AGGREGATE_SCHEMA,browserExtraRequiredPopulations,browserExtraSourceFingerprint,browserExtraFingerprintFromInputs,parseBrowserExtraChildOutput,validateBrowserExtraAggregate,superviseBrowserExtra} from './browser-extra-aggregate.mjs';
+import {createHash,randomBytes} from 'node:crypto';
+import {BROWSER_EXTRA_LANES,BROWSER_EXTRA_CHILD_SCHEMA,BROWSER_EXTRA_AGGREGATE_SCHEMA,browserExtraRequiredPopulations,browserExtraSourceFingerprint,browserExtraFingerprintFromInputs,parseBrowserExtraChildOutput,validateBrowserExtraAggregate,superviseBrowserExtra,groupHasRunningProcesses} from './browser-extra-aggregate.mjs';
 import {createExecutionReceipt,validateExecutionReceipt} from './verification-evidence.mjs';
 
 function darwinProcessState(pid){
@@ -164,6 +168,210 @@ export async function verifyBrowserExtraCleanupRetentionControl(){
  return {...proof,testOwnedCleanupComplete:true};
 }
 
+
+// The signal protocol below is explicitly injected. Native child membership,
+// liveness, closure and root custody are measured separately, on every OS.
+export async function verifyBrowserExtraPendingCleanupControls(terminalByLane){
+ const source=fs.readFileSync(new URL('./browser-extra-aggregate.mjs',import.meta.url),'utf8');
+ const productionSourceSha256=createHash('sha256').update(source).digest('hex');
+ const unitCases=[],processCases=[],rows=[];
+ const error=(code,message,cause)=>Object.assign(new Error(message),{code},cause===undefined?{}:{cause});
+ const killBody=source.slice(source.indexOf('function killGroup('),source.indexOf('function groupHasRunningProcesses('));
+ assert(killBody.startsWith('function killGroup('),'PENDING_KILL_BODY_ORACLE');
+ const killControl=(kill,inspect)=>{const context=vm.createContext({process:{platform:'darwin',kill},groupHasRunningProcesses:inspect});vm.runInContext("'use strict';"+killBody+'globalThis.call=killGroup;',context);return context.call;};
+ assert.equal(killControl(()=>true,()=>{throw Error('unexpected inspection');})({pid:11}),true);unitCases.push('native-signal-acknowledgement-true');
+ assert.equal(killControl(()=>{throw Error('unexpected signal');},()=>true)({}),false);unitCases.push('no-pid-not-acknowledgement');
+ assert.equal(killControl(()=>{throw error('ESRCH','absent');},()=>true)({pid:11}),false);unitCases.push('absent-group-not-acknowledgement');
+ assert.equal(killControl(()=>{throw error('EPERM','zombie');},()=>false)({pid:11}),false);unitCases.push('zombie-only-not-acknowledgement');
+ const start=' const stopStates=new WeakMap();',end=' const ensureTime=';
+ assert.equal(source.split(start).length,2);assert.equal(source.split(end).length,2);
+ const stateBody=source.slice(source.indexOf(start),source.indexOf(end));
+ const stateControl=(platform='darwin')=>{
+  const outcomes=[],context=vm.createContext({process:{platform},killGroup:()=>{const value=outcomes.shift();if(value instanceof Error)throw value;return value;}});
+  vm.runInContext("'use strict';"+stateBody+'globalThis.step=stopRow;globalThis.state=row=>stopStates.get(row);',context);
+  return {outcomes,step:context.step,state:context.state};
+ };
+ const row={process:{pid:11}},other={process:{pid:12}};
+ let control=stateControl();control.outcomes.push(true);control.step(row);assert.equal(control.state(row).successfulKill,true);unitCases.push('true-acknowledgement-seeds-row');
+ control=stateControl();control.outcomes.push(false,error('EPERM','FALSE_NOT_ACK'));control.step(row);assert.throws(()=>control.step(row),/FALSE_NOT_ACK/);unitCases.push('false-not-acknowledgement');
+ control=stateControl();control.outcomes.push(true,error('EPERM','OTHER_ROW_NOT_ACK'));control.step(other);assert.throws(()=>control.step(row),/OTHER_ROW_NOT_ACK/);unitCases.push('foreign-row-not-acknowledgement');
+ for(const [name,platform,failure]of [
+  ['non-darwin-denial-refused','linux',error('EPERM','NON_DARWIN')],
+  ['non-permission-error-refused','darwin',error('EACCES','OTHER_ERROR')],
+  ['inspection-cause-refused','darwin',error('EPERM','INSPECTION_CAUSE',new Error('inspection'))],
+  ['null-cause-refused','darwin',error('EPERM','NULL_CAUSE',null)]
+ ]){
+  control=stateControl(platform);control.outcomes.push(true,failure);control.step(row);assert.throws(()=>control.step(row),observed=>observed===failure);unitCases.push(name);
+ }
+ control=stateControl();const first=error('EPERM','FIRST_PENDING'),second=error('EPERM','SECOND_PENDING');
+ control.outcomes.push(true,first,second);control.step(row);control.step(row);control.step(row);assert.equal(control.state(row).pendingError,first);unitCases.push('first-pending-error-preserved');
+ control.outcomes.push(true);control.step(row);assert.equal(control.state(row).pendingError,first);unitCases.push('later-true-does-not-discharge');
+ control.outcomes.push(false);control.step(row);assert.equal(control.state(row).pendingError,first);unitCases.push('later-false-does-not-discharge');
+ const hard=error('EIO','HARD_AFTER_PENDING');control.outcomes.push(hard);assert.throws(()=>control.step(row),observed=>observed===hard);unitCases.push('hard-error-after-pending-refused');
+
+ const definitions=[
+  ['pending-repeat-live-settles','settles','PASS',true,false],
+  ['pending-final-denial-settles','final-settles','PASS',true,false],
+  ['pending-first-denial-refused','first','FAIL',true,false],
+  ['pending-absent-result-not-ack','absent','FAIL',true,false],
+  ['pending-zombie-result-not-ack','zombie','FAIL',true,false],
+  ['pending-other-row-ack-refused','other-row','FAIL',true,false],
+  ['pending-inspection-failure-refused','inspection','FAIL',true,false],
+  ['pending-other-error-refused','other-error','FAIL',true,false],
+  ['pending-non-darwin-refused','non-darwin','FAIL',true,false],
+  ['pending-persistent-live-retains-root','persistent','FAIL',false,true],
+  ['pending-no-close-retains-root','no-close','FAIL',true,true],
+  ['pending-child-failure-retained','child','FAIL',true,false],
+  ['pending-report-failure-retained','report','FAIL',true,false],
+  ['pending-source-failure-retained','source','FAIL',true,false],
+  ['pending-interruption-retained','interruption','FAIL',true,false],
+  ['pending-cleanup-source-change-refused','cleanup-source','FAIL',true,false],
+  ['pending-late-proof-retains-root','late-proof','FAIL',true,true],
+  ['pending-routing-bypass-fault-detected','routing-fault','FAIL',true,false],
+  ['pending-exit-routing-fault-detected','exit-routing-fault','FAIL',true,false],
+  ['pending-precompletion-routing-fault-detected','precompletion-routing-fault','FAIL',true,false],
+  ['pending-final-routing-fault-detected','final-routing-fault','FAIL',true,false],
+  ['pending-abort-routing-fault-detected','abort-routing-fault','FAIL',true,false]
+ ];
+ const nativeRows=group=>{
+  const output=execFileSync('/bin/ps',['-axo','pid=,pgid=,stat='],{encoding:'utf8',timeout:1000,killSignal:'SIGKILL',maxBuffer:4*1024*1024,env:{...process.env,LC_ALL:'C'}});
+  assert(output.endsWith('\n'),'PENDING_NATIVE_SNAPSHOT_COMPLETE_ORACLE');
+  return output.trim().split('\n').map(line=>{const match=/^\s*(\d+)\s+(\d+)\s+(\S+)\s*$/.exec(line);assert(match,'PENDING_NATIVE_SNAPSHOT_ROW_ORACLE');return {pid:Number(match[1]),pgid:Number(match[2]),state:match[3]};}).filter(row=>row.pgid===group);
+ };
+ const active=rows=>rows.some(row=>row.state[0]!=='Z'&&!(process.platform==='linux'&&row.state[0]==='X'));
+ const failureText=failure=>[failure?.message,failure?.cause?.message,...(failure?.cleanupErrors||[])].filter(Boolean).join('\n');
+ const childCode=[
+  "const fs=require('node:fs'),cp=require('node:child_process');",
+  "const lane=process.env.CLOSED_LOOP_BROWSER_EXTRA_LANE,mode=process.env.PENDING_MODE,folder=process.env.PENDING_FOLDER;",
+  "const child=JSON.parse(process.env.PENDING_CHILDREN)[lane];child.invocationId=process.env.CLOSED_LOOP_BROWSER_EXTRA_INVOCATION_ID;child.sourceFingerprint=process.env.CLOSED_LOOP_BROWSER_EXTRA_SOURCE_FINGERPRINT;child.browserExecution=null;",
+  "for(const key of ['outcome','exitCode','signal','timedOut','reportsSha256'])delete child[key];",
+  "const complete=()=>{for(const report of child.reports)console.log(JSON.stringify(report));console.log(JSON.stringify({browserExtraChild:child}));};",
+  "const orphan=lane==='lane1'||(lane==='lane2'&&mode==='other-row');",
+  "if(orphan){const ready=folder+'/'+lane+'.descendant';cp.spawn(process.execPath,['-e',\"require('node:fs').writeFileSync(process.argv[1],String(process.pid));setInterval(()=>{},50)\",ready],{stdio:'ignore'});}",
+  "const by=Number(process.env.CLOSED_LOOP_BROWSER_EXTRA_DEADLINE_AT);",
+  "const finish=()=>{if(Date.now()>by)throw Error('PENDING_CHILD_READY_DEADLINE');if(orphan&&!fs.existsSync(folder+'/'+lane+'.descendant'))return setTimeout(finish,5);if(lane==='lane1'&&mode==='other-row'&&!fs.existsSync(folder+'/other-ack'))return setTimeout(finish,5);if(lane==='lane2'&&['child','report'].includes(mode)&&!fs.existsSync(folder+'/target-ack'))return setTimeout(finish,5);if(lane==='lane2'&&mode==='child')process.exit(7);if(lane==='lane2'&&mode==='report')console.log(JSON.stringify({browserExtraChild:{}}));else complete();process.exit(0);};",
+  "setTimeout(finish,20);"
+ ].join('\n');
+ const directory=fs.mkdtempSync(path.join(os.tmpdir(),'clrt-pending-cleanup-'));
+ try{
+  for(const [name,mode,expected,nativeGoneExpected,rootRetainedExpected]of definitions){
+   const folder=path.join(directory,mode);fs.mkdirSync(folder);
+   const fixtureSuite=path.join(folder,'verify-browser-extra.mjs'),fixtureAggregate=path.join(folder,'browser-extra-aggregate.mjs');
+   fs.writeFileSync(fixtureSuite,'// synthetic source identity only\n');fs.writeFileSync(fixtureAggregate,'// synthetic source identity only\n');
+   const initialFixture=fs.readFileSync(fixtureSuite),owned=[],signals=[],nativeObservations=[],events=new EventEmitter();
+   let target,callCount=0,syntheticInspection=false,released=false,delayed=false,deadlineAt,nativeReleaseTimer;
+   const finalDenial=['final-settles','final-routing-fault'].includes(mode);
+   const nativeRelease=()=>{try{process.kill(-target.pid,'SIGKILL');}catch(failure){if(!['ESRCH','EPERM'].includes(failure.code))throw failure;}released=true;};
+   const observeLive=()=>{
+    const group=target.pid,descendant=Number(fs.readFileSync(path.join(folder,'lane1.descendant'),'utf8')),members=nativeRows(group);
+    assert(members.some(row=>row.pid===descendant&&row.pgid===group&&row.state[0]!=='Z'&&!(process.platform==='linux'&&row.state[0]==='X')),'PENDING_REAL_OWNED_DESCENDANT_LIVE_ORACLE');
+    const fact={groupId:group,descendantId:descendant,members};nativeObservations.push(fact);return fact;
+   };
+   const kill=(pid,signal)=>{
+    if(pid!==-target?.pid){
+     const result=process.kill(pid,signal);
+     if(mode==='other-row'&&owned.find(row=>row.pid===-pid)?.laneId==='lane2')fs.writeFileSync(path.join(folder,'other-ack'),'native acknowledgement');
+     return result;
+    }
+    assert.equal(signal,'SIGKILL');callCount++;
+    if(callCount===1){
+     observeLive();
+     if(mode==='first'||mode==='other-row'){signals.push('injected-first-denial');throw error('EPERM','CONTROLLED_FIRST_DENIAL');}
+     if(mode==='absent'){signals.push('injected-absent');throw error('ESRCH','CONTROLLED_ABSENT');}
+     if(mode==='zombie'){signals.push('injected-zombie-inspection');syntheticInspection=true;throw error('EPERM','CONTROLLED_ZOMBIE_RESULT');}
+     signals.push('injected-acknowledgement-without-signal');fs.writeFileSync(path.join(folder,'target-ack'),'synthetic acknowledgement');return true;
+    }
+    if(finalDenial&&callCount===2){observeLive();signals.push('injected-second-acknowledgement-without-signal');return true;}
+    if(finalDenial&&callCount===3){observeLive();signals.push('injected-final-denial');nativeReleaseTimer=setTimeout(nativeRelease,25);throw error('EPERM','CONTROLLED_FINAL_DENIAL');}
+    if(callCount===2){
+     observeLive();signals.push('injected-repeat-denial');
+     if(mode==='other-error')throw error('EACCES','CONTROLLED_OTHER_SIGNAL_ERROR');
+     throw error('EPERM','CONTROLLED_REPEAT_DENIAL');
+    }
+    if(mode==='persistent'){signals.push('injected-persistent-denial');throw error('EPERM','CONTROLLED_PERSISTENT_DENIAL');}
+    signals.push('native-cleanup-signal');let result;
+    try{result=process.kill(pid,signal);}catch(failure){if(failure.code!=='ESRCH')throw failure;result=true;}
+    released=true;
+    if(mode==='cleanup-source')fs.appendFileSync(fixtureSuite,'// changed during cleanup\n');
+    return result;
+   };
+   const inspect=group=>{
+    if(group===target?.pid){
+     if(syntheticInspection){syntheticInspection=false;return false;}
+     if(mode==='inspection'&&callCount===2)throw error('EIO','CONTROLLED_INSPECTION_FAILURE');
+     const running=groupHasRunningProcesses(group);
+     if(mode==='late-proof'&&released&&!running&&!delayed){delayed=true;while(Date.now()<=deadlineAt){}}
+     return running;
+    }
+    return groupHasRunningProcesses(group);
+   };
+   const controlledProcess={platform:mode==='non-darwin'?'linux':'darwin',pid:process.pid,execPath:process.execPath,env:process.env,cwd:process.cwd.bind(process),stderr:process.stderr,kill,once:events.once.bind(events),removeListener:events.removeListener.bind(events)};
+   const sourceMutation=mode.endsWith('routing-fault');
+   let candidate=source;
+   if(sourceMutation){
+    assert.equal(source.split('stopRow(row)').length-1,4,'PENDING_ROUTING_FAULT_ANCHOR_ORACLE');
+    const site={ 'abort-routing-fault':0,'exit-routing-fault':1,'precompletion-routing-fault':2,'final-routing-fault':3 }[mode];
+    let index=0;candidate=source.replaceAll('stopRow(row)',match=>{const replace=mode==='routing-fault'||index===site;index++;return replace?'killGroup(row.process)':match;});
+    assert.notEqual(candidate,source);
+   }
+   const executedSourceSha256=createHash('sha256').update(candidate).digest('hex');
+   const body=candidate.replace(/^import .+;\r?\n/gm,'').replace(/^export \{groupHasRunningProcesses\};\r?\n?/gm,'').replace(/^export /gm,'');
+   const supervisorStart=candidate.indexOf('export async function superviseBrowserExtra('),exportEnd=candidate.lastIndexOf('\nexport {groupHasRunningProcesses};');
+   assert(supervisorStart>=0&&exportEnd>supervisorStart);assert(body.includes(candidate.slice(supervisorStart+'export '.length,exportEnd)),'PENDING_EXACT_SUPERVISOR_BODY_ORACLE');
+   assert(body.includes(candidate.slice(candidate.indexOf('function killGroup('),candidate.indexOf('function groupHasRunningProcesses('))),'PENDING_EXACT_KILL_BODY_ORACLE');
+   const context=vm.createContext({assert,fs,path,os,createHash,randomBytes,spawn,execFileSync,isDeepStrictEqual,validateBrowserExecution,process:controlledProcess,Buffer,URL,setTimeout,clearTimeout,__nativeInspection:inspect});
+   vm.runInContext("'use strict';"+body+'\ngroupHasRunningProcesses=__nativeInspection;globalThis.supervisor=superviseBrowserExtra;',context,{filename:'actual-browser-extra-aggregate-controlled-seams.mjs'});
+   let failure,result,nativeGoneAtReturn,rootRetainedAtReturn;
+   try{
+    const startedAt=Date.now();deadlineAt=startedAt+2500;
+    try{
+     result=await context.supervisor({cwd:folder,startedAt,deadlineMs:2500,sourceChecks:phase=>{
+      if(phase==='after'&&['source','abort-routing-fault'].includes(mode))throw Error('CONTROLLED_PRIMARY_SOURCE_FAILURE');
+      if(phase==='after'&&mode==='interruption')events.emit('SIGTERM');
+     },environment:process.env,outputDirectory:path.join(folder,'output'),onFailureOutput:()=>{},spawnChild:(_command,_args,options)=>{
+      const child=spawn(process.execPath,['-e',childCode],{...options,env:{...options.env,PENDING_MODE:mode,PENDING_FOLDER:folder,PENDING_CHILDREN:JSON.stringify(terminalByLane)}});
+      const record={pid:child.pid,laneId:options.env.CLOSED_LOOP_BROWSER_EXTRA_LANE,profile:options.env.CLOSED_LOOP_BROWSER_EXTRA_PROFILE_PATH,child,nativeCloseObserved:false};owned.push(record);
+      if(record.laneId==='lane1')target=record;
+      const emit=child.emit.bind(child);child.emit=(event,...args)=>{if(event==='close'){record.nativeCloseObserved=true;if(mode==='no-close'&&record===target)return false;}return emit(event,...args);};
+      return child;
+     }});
+    }catch(observed){failure=observed;}
+    assert(target&&nativeObservations.length>0,'PENDING_NATIVE_ENDPOINT_POPULATION_ORACLE');
+    nativeGoneAtReturn=!active(nativeRows(target.pid));rootRetainedAtReturn=fs.existsSync(target.profile);
+    assert.equal(failure?'FAIL':'PASS',expected,'PENDING_CONTROL_OUTCOME_ORACLE: '+name);
+    assert.equal(nativeGoneAtReturn,nativeGoneExpected,'PENDING_NATIVE_RETURN_STATE_ORACLE: '+name);
+    assert.equal(rootRetainedAtReturn,rootRetainedExpected,'PENDING_ROOT_CUSTODY_ORACLE: '+name);
+    if(expected==='PASS'){assert.equal(result.browserExtraAggregate.complete,true);assert.equal(result.browserExtraAggregate.cleanupComplete,true);assert(result.browserExtraAggregate.elapsedMs<2500);assert(owned.every(row=>row.nativeCloseObserved));}
+    else{
+     const text=failureText(failure);
+     const marker=mode==='child'?'failed exit 7':mode==='report'?'terminal reports differ from actual buffered stdout':['source','abort-routing-fault'].includes(mode)?'CONTROLLED_PRIMARY_SOURCE_FAILURE':mode==='interruption'?'parent received SIGTERM':mode==='cleanup-source'?'source changed during child cleanup':mode==='other-error'?'CONTROLLED_OTHER_SIGNAL_ERROR':mode==='inspection'?'CONTROLLED_INSPECTION_FAILURE':mode==='final-routing-fault'?'CONTROLLED_FINAL_DENIAL':['first','other-row'].includes(mode)?'CONTROLLED_FIRST_DENIAL':'CONTROLLED_REPEAT_DENIAL';
+     assert(text.includes(marker),'PENDING_ORIGINAL_FAILURE_ORACLE: '+name+' '+text);
+     if(mode==='source')assert(!(failure.cleanupErrors||[]).some(message=>message.includes('CONTROLLED_REPEAT_DENIAL')),'PENDING_ABORT_ROUTE_ORACLE');
+     if(mode==='abort-routing-fault')assert((failure.cleanupErrors||[]).some(message=>message.includes('CONTROLLED_REPEAT_DENIAL')),'PENDING_ABORT_MUTATION_ORACLE');
+     if(['persistent','no-close','late-proof'].includes(mode))assert(/deadline/.test(text),'PENDING_DEADLINE_CAUSE_ORACLE: '+name);
+    }
+   }finally{
+    clearTimeout(nativeReleaseTimer);
+    const by=Date.now()+2500;
+    for(;;){
+     const live=owned.filter(row=>active(nativeRows(row.pid)));
+     if(!live.length)break;
+     assert(Date.now()<by,'PENDING_TEST_OWNED_GROUP_CLEANUP_ORACLE');
+     for(const row of live)try{process.kill(-row.pid,'SIGKILL');}catch(error){if(!['ESRCH','EPERM'].includes(error.code))throw error;}
+     await new Promise(resolve=>setTimeout(resolve,10));
+    }
+    while(!owned.every(row=>row.nativeCloseObserved)){assert(Date.now()<by,'PENDING_NATIVE_CLOSE_CLEANUP_ORACLE');await new Promise(resolve=>setTimeout(resolve,10));}
+    for(const row of owned){assert(!active(nativeRows(row.pid)));fs.rmSync(row.profile,{recursive:true,force:true});assert(!fs.existsSync(row.profile));}
+    fs.writeFileSync(fixtureSuite,initialFixture);
+   }
+   assert.equal(fs.readFileSync(new URL('./browser-extra-aggregate.mjs',import.meta.url),'utf8'),source,'PENDING_PRODUCTION_SOURCE_RESTORED_ORACLE');
+   rows.push({name,expected,observed:failure?'FAIL':'PASS',passed:true,signalInjectionsSynthetic:true,inspectionInjectionsSynthetic:['zombie','inspection'].includes(mode),injectedPlatform:controlledProcess.platform,nativePlatform:process.platform,nativeLive: nativeObservations[0],nativeGoneAtReturn,ownedRootRetainedAtReturn:rootRetainedAtReturn,allNativeGoneAfterControlCleanup:true,allOwnedRootsRemovedAfterControlCleanup:true,allNativeCloseObserved:true,productionSourceUnchanged:true,executedSourceSha256,sourceMutation,failurePreserved:expected==='FAIL',deadlineMs:2500});
+   processCases.push(name);
+  }
+ }finally{fs.rmSync(directory,{recursive:true,force:true});}
+ return {schema:'closed-loop-browser-extra-pending-cleanup-controls/1',productionSourceSha256,unmutatedBodiesUnchanged:true,syntheticSignalProtocol:true,actualNativeEndpoints:true,actualBrowser:false,eligibleReceiptCreated:false,platform:process.platform,unitCases,cases:rows,testOwnedCleanupComplete:true,processCases};
+}
+
 export async function verifyBrowserExtraAggregateControls(){
 const sha=value=>createHash('sha256').update(typeof value==='string'||Buffer.isBuffer(value)?value:JSON.stringify(value)).digest('hex');
 const suite='verify-browser-extra.mjs',sourceCommit='1'.repeat(40),hex='2'.repeat(64),invocationId='3'.repeat(64),buildIdentity='build-sha256-'+hex;
@@ -298,6 +506,7 @@ else{const descendant=cp.spawn(process.execPath,['-e',"process.on('SIGTERM',()=>
  const partialDir=path.join(directory,'partial-spawn');fs.mkdirSync(partialDir);const partialProfiles=[];let partialLaunches=0,firstChild;await assert.rejects(()=>superviseBrowserExtra({cwd:directory,sourceChecks:()=>{},onFailureOutput:()=>{},outputDirectory:partialDir,spawnChild:(command,args,options)=>{inspectOwnedProfile(options,partialDir,partialProfiles);if(++partialLaunches===2)throw new Error('CONTROLLED_SYNC_SPAWN_FAILURE');firstChild=spawn(command,['-e','setInterval(()=>{},50)'],options);return firstChild;}}),/CONTROLLED_SYNC_SPAWN_FAILURE/);assert.equal(live(firstChild.pid),false);assert.equal(partialProfiles.length,2);for(const profile of partialProfiles)assert(!fs.existsSync(profile),'partial spawn profile leaked');processCases.push('partial-spawn-failure-cleans-started-child');
  let spawned=false;await assert.rejects(()=>superviseBrowserExtra({cwd:directory,deadlineMs:50,startedAt:Date.now()-100,onFailureOutput:()=>{},sourceChecks:()=>{},outputDirectory:path.join(directory,'expired-setup'),spawnChild:()=>{spawned=true;throw Error('should not launch');}}),/deadline/);assert.equal(spawned,false);processCases.push('setup-already-exhausted-never-launches');
 }finally{fs.rmSync(directory,{recursive:true,force:true});}
-return {browserExtraAggregateControls:'PASS',synthetic:true,actualBrowser:false,applicationAssertionsExecuted:false,eligibleReceiptCreated:false,cases,processCases,socketProofs,processGroupProof};
+const pendingCleanupProof=await verifyBrowserExtraPendingCleanupControls(Object.fromEntries(valid.aggregate.children.map(row=>[row.laneId,row])));processCases.push(...pendingCleanupProof.processCases);
+return {browserExtraAggregateControls:'PASS',synthetic:true,actualBrowser:false,applicationAssertionsExecuted:false,eligibleReceiptCreated:false,cases,processCases,socketProofs,processGroupProof,pendingCleanupProof};
 }
 if(path.resolve(process.argv[1]||'')===fileURLToPath(import.meta.url))console.log(JSON.stringify(await verifyBrowserExtraAggregateControls()));

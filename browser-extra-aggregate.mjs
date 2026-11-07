@@ -115,14 +115,14 @@ export function validateBrowserExtraAggregate(aggregate,{browserExecution,report
 // One process group per lane includes Chromium and its descendants. Descendant
 // termination is owned here even when a child exits early or ignores SIGTERM.
 function killGroup(child){
- if(!child?.pid)return;
- try{process.kill(-child.pid,'SIGKILL');}catch(error){
-  if(error.code==='ESRCH')return;
+ if(!child?.pid)return false;
+ try{process.kill(-child.pid,'SIGKILL');return true;}catch(error){
+  if(error.code==='ESRCH')return false;
   // Darwin can return EPERM for a group containing only zombies. A fresh,
   // complete native snapshot must prove no running member before accepting
   // that race; denied live groups and failed inspections still reject.
   if(process.platform==='darwin'&&error.code==='EPERM'){
-   try{if(!groupHasRunningProcesses(child.pid))return;}catch(inspectionError){error.cause??=inspectionError;}
+   try{if(!groupHasRunningProcesses(child.pid))return false;}catch(inspectionError){error.cause??=inspectionError;}
   }
   throw error;
  }
@@ -164,9 +164,20 @@ export async function superviseBrowserExtra({cwd=process.cwd(),script=BROWSER_EX
  const directory=outputDirectory||(environment.VERIFIER_CHILD_EVIDENCE_DIRECTORY?path.join(environment.VERIFIER_CHILD_EVIDENCE_DIRECTORY,'browser-extra-'+invocationId):fs.mkdtempSync(path.join(os.tmpdir(),'closed-loop-browser-extra-aggregate-')));
  fs.mkdirSync(directory,{recursive:true});
  const rawChildren=[],running=[],profilePaths=[],sourceFingerprint=browserExtraSourceFingerprint(cwd);let rejected=false,timer,abortError;
+ // A successful signal request is distinct from ESRCH or an accepted zombie
+ // inspection. Repeated Darwin EPERM may be pending only for that owned row.
+ const stopStates=new WeakMap();
+ const stopRow=row=>{
+  let state=stopStates.get(row);if(!state){state={successfulKill:false,pendingError:null,hadPending:false};stopStates.set(row,state);}
+  try{if(killGroup(row.process)===true)state.successfulKill=true;}
+  catch(error){
+   if(process.platform==='darwin'&&error.code==='EPERM'&&error.cause===undefined&&state.successfulKill){state.pendingError??=error;state.hadPending=true;return;}
+   throw error;
+  }
+ };
  const ensureTime=()=>check(!rejected&&Date.now()<workDeadlineAt,'absolute deadline elapsed or aggregate already failed');
  let rejectAbort;const aborted=new Promise((_,reject)=>{rejectAbort=reject;});aborted.catch(()=>{});
- const abort=error=>{if(rejected)return;rejected=true;abortError=error;for(const row of running){try{killGroup(row.process);}catch(killError){error.cleanupErrors??=[];error.cleanupErrors.push(killError.message);}}rejectAbort(error);};
+ const abort=error=>{if(rejected)return;rejected=true;abortError=error;for(const row of running){try{stopRow(row);}catch(killError){error.cleanupErrors??=[];error.cleanupErrors.push(killError.message);}}rejectAbort(error);};
  timer=setTimeout(()=>abort(new Error('BROWSER_EXTRA_AGGREGATE_ORACLE: one absolute deadline expired')),Math.max(0,workDeadlineAt-Date.now()));
  const signalHandler=signal=>abort(new Error('BROWSER_EXTRA_AGGREGATE_ORACLE: parent received '+signal));
  const onTerm=()=>signalHandler('SIGTERM'),onInt=()=>signalHandler('SIGINT');process.once('SIGTERM',onTerm);process.once('SIGINT',onInt);
@@ -189,7 +200,7 @@ export async function superviseBrowserExtra({cwd=process.cwd(),script=BROWSER_EX
    const job=new Promise((resolve,reject)=>{
     row.closedComplete=false;row.closed=new Promise(done=>child.once('close',()=>{row.stdout=Buffer.concat(row.rawBuffers.stdout).toString('utf8');row.stderr=Buffer.concat(row.rawBuffers.stderr).toString('utf8');row.closedComplete=true;done();}));
     child.once('error',error=>{abort(error);reject(error);});
-    child.once('exit',(code,signal)=>{row.exitCode=code;row.signal=signal;try{killGroup(child);}catch(error){abort(error);}if(code!==0||signal){const error=new Error('BROWSER_EXTRA_AGGREGATE_ORACLE: '+lane.laneId+' failed exit '+code+' signal '+signal);abort(error);reject(error);}});
+    child.once('exit',(code,signal)=>{row.exitCode=code;row.signal=signal;try{stopRow(row);}catch(error){abort(error);}if(code!==0||signal){const error=new Error('BROWSER_EXTRA_AGGREGATE_ORACLE: '+lane.laneId+' failed exit '+code+' signal '+signal);abort(error);reject(error);}});
     child.once('close',()=>{
      try{
       ensureTime();check(row.exitCode===0&&row.signal===null,'nonzero/signal child exit');
@@ -206,7 +217,7 @@ export async function superviseBrowserExtra({cwd=process.cwd(),script=BROWSER_EX
   check(await bounded(()=>sourceChecks('after'))!==false,'source-only postcheck failed');
   check(browserExtraSourceFingerprint(cwd)===sourceFingerprint,'source changed during child execution or postcheck');
   ensureTime();
-  for(const row of running)killGroup(row.process);
+  for(const row of running)stopRow(row);
   const elapsedMs=Date.now()-startedAt;
   check(elapsedMs<deadlineMs,'completion after absolute deadline');
   const browserExtraAggregate={schema:BROWSER_EXTRA_AGGREGATE_SCHEMA,invocationId,sourceFingerprint,complete:false,elapsedMs,deadlineMs,maxConcurrent:4,cleanupComplete:false,sourceChecks:{before:true,after:true},children};
@@ -215,21 +226,30 @@ export async function superviseBrowserExtra({cwd=process.cwd(),script=BROWSER_EX
  }catch(error){abort(error);primaryError=error;}
  finally{
   clearTimeout(timer);
-  const cleanupErrors=[];
+  const cleanupErrors=[];let cleanupProved=false;
   try{
-   for(const row of running){try{killGroup(row.process);}catch(error){cleanupErrors.push(error);}}
+   for(const row of running){try{stopRow(row);}catch(error){cleanupErrors.push(error);}}
    for(;;){
     const closed=running.every(row=>row.closedComplete),groupsGone=running.every(row=>!groupHasRunningProcesses(row.process.pid));
-    if(closed&&groupsGone)break;
+    if(closed&&groupsGone){
+     check(Date.now()<deadlineAt,'child closure/process-group cleanup exceeded absolute deadline');
+     cleanupProved=true;for(const row of running){const state=stopStates.get(row);if(state)state.pendingError=null;}break;
+    }
     check(Date.now()<deadlineAt,'child closure/process-group cleanup exceeded absolute deadline');
     await new Promise(resolve=>setTimeout(resolve,Math.min(10,Math.max(1,deadlineAt-Date.now()))));
    }
   }catch(error){cleanupErrors.push(error);}
+  const unresolved=running.map(row=>stopStates.get(row)?.pendingError).filter(Boolean);
+  if(unresolved.length){
+   if(cleanupErrors[0]&&cleanupErrors[0]!==unresolved[0])unresolved[0].cause??=cleanupErrors[0];
+   cleanupErrors.unshift(...unresolved);
+  }
   for(const profilePath of profilePaths){
    const owner=running.find(row=>row.profilePath===profilePath);
    try{
     // Failed cleanup cannot authorize deleting a live process's temporary root.
     // A never-spawned root is safe; an existing owner's group must be absent.
+    if(owner&&stopStates.get(owner)?.hadPending)check(cleanupProved&&owner.closedComplete&&Date.now()<deadlineAt,'owned browser/temp root retained: pending cleanup proof incomplete');
     if(owner)check(!groupHasRunningProcesses(owner.process.pid),'owned browser/temp root retained: process group still running');
     fs.rmSync(profilePath,{recursive:true,force:true,maxRetries:3,retryDelay:50});check(!fs.existsSync(profilePath),'owned browser profile survived cleanup');
    }catch(error){cleanupErrors.push(new Error(error.message+'; profilePath='+profilePath+'; processGroup='+(owner?.process.pid??'not-spawned')));}
@@ -237,7 +257,11 @@ export async function superviseBrowserExtra({cwd=process.cwd(),script=BROWSER_EX
   for(const row of rawChildren){for(const kind of ['stdout','stderr']){const bytes=Buffer.concat(row.rawBuffers[kind]);row[kind]=bytes.toString('utf8');try{fs.writeFileSync(row[kind+'Path'],bytes);}catch(error){cleanupErrors.push(error);}}}
   if(Date.now()>=deadlineAt)cleanupErrors.push(new Error('BROWSER_EXTRA_AGGREGATE_ORACLE: cleanup/log persistence exceeded absolute deadline'));
   primaryError??=abortError;
-  if(cleanupErrors.length){if(primaryError)primaryError.cleanupErrors=[...(primaryError.cleanupErrors||[]),...cleanupErrors.map(error=>error.message)];else primaryError=cleanupErrors[0];}
+  if(!primaryError&&!cleanupErrors.length&&completedResult){try{check(browserExtraSourceFingerprint(cwd)===sourceFingerprint,'source changed during child cleanup');}catch(error){cleanupErrors.push(error);}}
+  if(cleanupErrors.length){
+   if(!primaryError){primaryError=cleanupErrors.shift();}
+   if(cleanupErrors.length)primaryError.cleanupErrors=[...(primaryError.cleanupErrors||[]),...cleanupErrors.map(error=>error.message)];
+  }
   const diagnostics=rawChildren.map(({process,closed,closedComplete,rawBuffers,rawSizes,...row})=>row);
   if(primaryError&&rawChildren.length){primaryError.rawChildren=diagnostics;try{onFailureOutput(diagnostics);}catch(error){primaryError.outputError=error.message;}}
   process.removeListener('SIGTERM',onTerm);process.removeListener('SIGINT',onInt);
