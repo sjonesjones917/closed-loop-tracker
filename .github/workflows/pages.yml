@@ -548,8 +548,8 @@ jobs:
             /tmp/conformance-regressions.json
           if-no-files-found: error
 
-  test:
-    name: test
+  test-checks:
+    name: test-checks
     needs: [foundation, deferred-matrix, workflow-gates, conformance]
     if: always()
     permissions:
@@ -563,10 +563,6 @@ jobs:
       CLOSED_LOOP_VERIFICATION_RECEIPTS: ${{ github.workspace }}/.verification-receipts
       VERIFIER_CHILD_EVIDENCE_DIRECTORY: ${{ github.workspace }}/../clrt-verifier-children
       NODE_OPTIONS: --import ${{ github.workspace }}/verification-evidence-preload.mjs
-    outputs:
-      verified_artifact_name: ${{ steps.verified.outputs.artifact_name }}
-      verification_run_id: ${{ steps.reuse.outputs.run_id || github.run_id }}
-      verification_source_commit: ${{ steps.reuse.outputs.tested_commit || github.sha }}
     steps:
       - name: Require successful foundation job
         run: test "${{ needs.foundation.result }}" = "success"
@@ -781,7 +777,7 @@ jobs:
         if: steps.reuse.outputs.reused != 'true'
         run: node build-static-site.mjs --out _site --source-commit "$GITHUB_SHA" --workflow-run "$GITHUB_RUN_ID"
 
-      - name: Local Chromium operator path
+      - name: Local Chromium supporting paths
         if: steps.reuse.outputs.reused != 'true'
         env:
           BROWSER: /usr/bin/google-chrome
@@ -807,22 +803,163 @@ jobs:
             timeout --signal=TERM --kill-after=10s "$budget" node collect-verification-evidence.mjs --browser-suite="$script" --browser-scope="$CLOSED_LOOP_BROWSER_SCOPE" 2>&1 | tee "$log"
           }
           BROWSER_VERIFY_RESULT=0
-          # Exercise lifecycle and recovery controls before the long journey.
+          # Keep all six supporting suites in their original relative order.
           run_browser_verifier verify-browser-extra.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-browser.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-human-stage-walkthrough.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-mobile-stage-action.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-mobile-capability-journey.mjs || BROWSER_VERIFY_RESULT=1
-          # Run5926 reached all30 stages and imported its backup before the90m
-          # deadline cut off final proof. The integrity-checked branch reached
-          # Stage 17 at 120m. The journey has 240m under the 360m job limit
-          # and uses a 180 s per-action wait via OPERATOR_ACTION_WAIT_MS.
-          run_browser_verifier verify-complete-operator-journey.mjs 240m || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-browser-recovery.mjs || BROWSER_VERIFY_RESULT=1
           test "$BROWSER_VERIFY_RESULT" = 0
           kill "$SERVER_PID" 2>/dev/null || true
           trap - EXIT
 
+      - name: Preserve local supporting operator evidence
+        if: always() && steps.reuse.outputs.reused != 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        env:
+          NODE_OPTIONS: ''
+        with:
+          name: supporting-operator-journeys-${{ github.sha }}-${{ github.run_id }}
+          path: |
+            recovery-browser-evidence/recovery.json
+            recovery-browser-evidence/stage-*.png
+            recovery-browser-evidence/downloads/
+            mobile-capability-evidence/capability.json
+            mobile-capability-evidence/stage-*.png
+            mobile-capability-evidence/downloads/
+            /tmp/verify-*.mjs.log
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Validate local supporting browser receipts
+        if: steps.reuse.outputs.reused != 'true'
+        env:
+          STATIC_SITE_ROOT: _site
+        run: node collect-verification-evidence.mjs --require-browser-scope=LOCAL --exclude-browser-suite=verify-complete-operator-journey.mjs
+      - name: Preserve test checks proof
+        if: steps.reuse.outputs.reused != 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        env:
+          NODE_OPTIONS: ''
+        with:
+          name: test-checks-proof-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            _site/
+            .verification-receipts/
+            TEST_PROJECT.json
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 30
+      - name: Normalize verifier child failure upload path
+        if: failure()
+        run: |
+          set -euo pipefail
+          canonical=$(realpath -m -- "$VERIFIER_CHILD_EVIDENCE_DIRECTORY")
+          printf 'VERIFIER_CHILD_EVIDENCE_DIRECTORY=%s\n' "$canonical" >> "$GITHUB_ENV"
+      - name: Preserve verifier child logs after an earlier failed gate
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        env:
+          NODE_OPTIONS: ''
+        with:
+          name: test-checks-child-failure-${{ github.sha }}-${{ github.run_id }}
+          path: ${{ env.VERIFIER_CHILD_EVIDENCE_DIRECTORY }}/
+          retention-days: 30
+          if-no-files-found: warn
+
+  operator-journey:
+    name: operator-journey
+    needs: test-checks
+    if: always()
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    env:
+      CLOSED_LOOP_VERIFICATION_SOURCE_ROOT: ${{ github.workspace }}
+      CLOSED_LOOP_VERIFICATION_RECEIPTS: ${{ github.workspace }}/.verification-receipts
+      VERIFIER_CHILD_EVIDENCE_DIRECTORY: /tmp/clrt-operator-journey-children
+      NODE_OPTIONS: --import ${{ github.workspace }}/verification-evidence-preload.mjs
+    steps:
+      - name: Require successful test checks job
+        run: test "${{ needs.test-checks.result }}" = "success"
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        env:
+          # The repository preload does not exist until checkout completes.
+          NODE_OPTIONS: ''
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22.23.3'
+
+      - name: Find completed PR verification for this main commit
+        id: candidate
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node verified-site.mjs select
+      - name: Download the passing PR artifact
+        if: steps.candidate.outputs.artifact_id != ''
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          artifact-ids: ${{ steps.candidate.outputs.artifact_id }}
+          run-id: ${{ steps.candidate.outputs.run_id }}
+          github-token: ${{ github.token }}
+          merge-multiple: true
+          path: _verified-pr
+      - name: Verify matching source and promote tested runtime files
+        id: reuse
+        if: steps.candidate.outputs.artifact_id != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node verified-site.mjs reuse
+      - name: Download test checks proof
+        if: steps.reuse.outputs.reused != 'true'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: test-checks-proof-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .
+      - name: Verify prepared runtime source and bytes
+        if: steps.reuse.outputs.reused != 'true'
+        run: node verified-site.mjs verify-prepared
+      - name: Validate prepared local browser receipts
+        if: steps.reuse.outputs.reused != 'true'
+        env:
+          STATIC_SITE_ROOT: _site
+        run: node collect-verification-evidence.mjs --require-browser-scope=LOCAL --exclude-browser-suite=verify-complete-operator-journey.mjs
+      - name: Complete local operator journey
+        if: steps.reuse.outputs.reused != 'true'
+        env:
+          BROWSER: /usr/bin/google-chrome
+          STATIC_SITE_ROOT: _site
+          CLOSED_LOOP_BROWSER_SCOPE: LOCAL
+        run: |
+          set -euo pipefail
+          if [ ! -x "$BROWSER" ]; then
+            BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+            export BROWSER
+          fi
+          test -n "$BROWSER"
+          python3 -m http.server 4173 --directory _site >/tmp/operator-journey-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          run_browser_verifier() {
+            script="$1"
+            budget="$2"
+            timeout --signal=TERM --kill-after=10s "$budget" node collect-verification-evidence.mjs --browser-suite="$script" --browser-scope="$CLOSED_LOOP_BROWSER_SCOPE" 2>&1 | tee "/tmp/${script}.log"
+          }
+          # The approved dedicated job keeps a finite 330m journey budget and
+          # the existing 180s per-action wait via OPERATOR_ACTION_WAIT_MS.
+          run_browser_verifier verify-complete-operator-journey.mjs 330m
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+      - name: Validate complete local operator receipt
+        if: steps.reuse.outputs.reused != 'true'
+        env:
+          STATIC_SITE_ROOT: _site
+        run: node collect-verification-evidence.mjs --require-browser-scope=LOCAL --browser-suite-only=verify-complete-operator-journey.mjs
       - name: Preserve complete operator journey evidence
         if: always() && steps.reuse.outputs.reused != 'true'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -831,15 +968,109 @@ jobs:
         with:
           name: operator-journeys-${{ github.sha }}-${{ github.run_id }}
           path: |
-            recovery-browser-evidence/recovery.json
-            recovery-browser-evidence/stage-*.png
-            recovery-browser-evidence/downloads/
-            operator-evidence/journey.json
-            operator-evidence/stage-*.png
-            operator-evidence/downloads/
-            mobile-capability-evidence/capability.json
-            mobile-capability-evidence/stage-*.png
-            mobile-capability-evidence/downloads/
+            operator-evidence/
+            /tmp/verify-complete-operator-journey.mjs.log
+            /tmp/operator-journey-http.log
+            /tmp/clrt-operator-journey-children/
+          retention-days: 30
+          if-no-files-found: warn
+      - name: Preserve complete local operator receipt
+        if: steps.reuse.outputs.reused != 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        env:
+          NODE_OPTIONS: ''
+        with:
+          name: operator-journey-receipt-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .verification-receipts/browser/LOCAL/verify-complete-operator-journey.mjs.json
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 30
+
+  test:
+    name: test
+    needs: [foundation, deferred-matrix, workflow-gates, conformance, test-checks, operator-journey]
+    if: always()
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    env:
+      CLOSED_LOOP_VERIFICATION_SOURCE_ROOT: ${{ github.workspace }}
+      CLOSED_LOOP_VERIFICATION_RECEIPTS: ${{ github.workspace }}/.verification-receipts
+      VERIFIER_CHILD_EVIDENCE_DIRECTORY: ${{ github.workspace }}/../clrt-verifier-children
+      NODE_OPTIONS: --import ${{ github.workspace }}/verification-evidence-preload.mjs
+    outputs:
+      verified_artifact_name: ${{ steps.verified.outputs.artifact_name }}
+      verification_run_id: ${{ steps.reuse.outputs.run_id || github.run_id }}
+      verification_source_commit: ${{ steps.reuse.outputs.tested_commit || github.sha }}
+    steps:
+      - name: Require successful foundation job
+        run: test "${{ needs.foundation.result }}" = "success"
+      - name: Require successful workflow gate job
+        run: test "${{ needs.workflow-gates.result }}" = "success"
+      - name: Require successful deferred matrix job
+        run: test "${{ needs.deferred-matrix.result }}" = "success"
+      - name: Require successful conformance groups
+        run: test "${{ needs.conformance.result }}" = "success"
+      - name: Require successful test checks job
+        run: test "${{ needs.test-checks.result }}" = "success"
+      - name: Require successful operator journey job
+        run: test "${{ needs.operator-journey.result }}" = "success"
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        env:
+          # The repository preload does not exist until checkout completes.
+          NODE_OPTIONS: ''
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22.23.3'
+
+      - name: Find completed PR verification for this main commit
+        id: candidate
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node verified-site.mjs select
+      - name: Download the passing PR artifact
+        if: steps.candidate.outputs.artifact_id != ''
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          artifact-ids: ${{ steps.candidate.outputs.artifact_id }}
+          run-id: ${{ steps.candidate.outputs.run_id }}
+          github-token: ${{ github.token }}
+          merge-multiple: true
+          path: _verified-pr
+      - name: Verify matching source and promote tested runtime files
+        id: reuse
+        if: steps.candidate.outputs.artifact_id != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node verified-site.mjs reuse
+      - name: Download test checks proof
+        if: steps.reuse.outputs.reused != 'true'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: test-checks-proof-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .
+      - name: Verify prepared runtime source and bytes
+        if: steps.reuse.outputs.reused != 'true'
+        run: node verified-site.mjs verify-prepared
+      - name: Validate prepared local browser receipts
+        if: steps.reuse.outputs.reused != 'true'
+        env:
+          STATIC_SITE_ROOT: _site
+        run: node collect-verification-evidence.mjs --require-browser-scope=LOCAL --exclude-browser-suite=verify-complete-operator-journey.mjs
+      - name: Download complete local operator receipt
+        if: steps.reuse.outputs.reused != 'true'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: operator-journey-receipt-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .verification-receipts/browser/LOCAL
+      - name: Validate complete local browser receipt set
+        env:
+          STATIC_SITE_ROOT: _site
+        run: node collect-verification-evidence.mjs --require-browser-scope=LOCAL
       - name: Preserve the exact browser-verified Pages artifact
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa
@@ -945,7 +1176,6 @@ jobs:
           BROWSER_VERIFY_RESULT=0
           run_browser_verifier verify-mobile-stage-action.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-mobile-capability-journey.mjs || BROWSER_VERIFY_RESULT=1
-          run_browser_verifier verify-complete-operator-journey.mjs 240m || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-browser-recovery.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-browser.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-browser-extra.mjs || BROWSER_VERIFY_RESULT=1
@@ -960,7 +1190,6 @@ jobs:
         with:
           name: deployed-operator-journeys-${{ github.sha }}-${{ github.run_id }}
           path: |
-            operator-evidence/
             recovery-browser-evidence/
             mobile-capability-evidence/
             /tmp/verify-*.mjs.log
@@ -968,23 +1197,154 @@ jobs:
           retention-days: 90
           if-no-files-found: warn
 
+      - name: Validate supporting deployed browser receipts
+        run: node collect-verification-evidence.mjs --require-browser-scope=DEPLOYED --exclude-browser-suite=verify-complete-operator-journey.mjs
       - name: Preserve current deployed browser assertion receipts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         env:
           NODE_OPTIONS: ''
         with:
-          name: deployed-browser-receipts-${{ github.sha }}-${{ github.run_id }}
+          name: deployed-browser-receipts-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: .verification-receipts/browser/DEPLOYED/
+          include-hidden-files: true
           retention-days: 90
           if-no-files-found: error
+
+  deployed-operator-journey:
+    name: deployed-operator-journey
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [test, deploy, verify-live]
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    env:
+      PAGE_URL: ${{ needs.deploy.outputs.page_url }}
+      VERIFIED_SITE_DIR: _verified-site/site
+      CLOSED_LOOP_BROWSER_SCOPE: DEPLOYED
+      CLOSED_LOOP_VERIFICATION_SOURCE_ROOT: ${{ github.workspace }}
+      CLOSED_LOOP_VERIFICATION_RECEIPTS: ${{ github.workspace }}/.verification-receipts
+      VERIFIER_CHILD_EVIDENCE_DIRECTORY: /tmp/clrt-deployed-operator-journey-children
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22.23.3'
+      - name: Download the exact verified deployment files
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: ${{ needs.test.outputs.verified_artifact_name }}
+          path: _verified-site
+      - name: Restore the verified retained fixture
+        run: cp _verified-site/site/TEST_PROJECT.json TEST_PROJECT.json
+      - name: Complete deployed operator journey
+        run: |
+          set -euo pipefail
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          run_browser_verifier() {
+            script="$1"
+            budget="$2"
+            timeout --signal=TERM --kill-after=10s "$budget" node collect-verification-evidence.mjs --browser-suite="$script" --browser-scope="$CLOSED_LOOP_BROWSER_SCOPE" 2>&1 | tee "/tmp/${script}.log"
+          }
+          run_browser_verifier verify-complete-operator-journey.mjs 330m
+      - name: Validate complete deployed operator receipt
+        run: node collect-verification-evidence.mjs --require-browser-scope=DEPLOYED --browser-suite-only=verify-complete-operator-journey.mjs
+      - name: Preserve complete deployed operator journey evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        env:
+          NODE_OPTIONS: ''
+        with:
+          name: deployed-complete-operator-journey-${{ github.sha }}-${{ github.run_id }}
+          path: |
+            operator-evidence/
+            /tmp/verify-complete-operator-journey.mjs.log
+            /tmp/clrt-deployed-operator-journey-children/
+          retention-days: 90
+          if-no-files-found: warn
+      - name: Preserve complete deployed operator receipt
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        env:
+          NODE_OPTIONS: ''
+        with:
+          name: deployed-operator-journey-receipt-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .verification-receipts/browser/DEPLOYED/verify-complete-operator-journey.mjs.json
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 90
+
+  reverified-operator-journey:
+    name: reverified-operator-journey
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    needs: test
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    env:
+      PAGE_URL: https://sjonesjones917.github.io/closed-loop-tracker/
+      VERIFIED_SITE_DIR: _verified-site/site
+      CLOSED_LOOP_BROWSER_SCOPE: DEPLOYED
+      CLOSED_LOOP_VERIFICATION_SOURCE_ROOT: ${{ github.workspace }}
+      CLOSED_LOOP_VERIFICATION_RECEIPTS: ${{ github.workspace }}/.verification-receipts
+      VERIFIER_CHILD_EVIDENCE_DIRECTORY: /tmp/clrt-reverified-operator-journey-children
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22.23.3'
+      - name: Download the exact verified deployment files
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: ${{ needs.test.outputs.verified_artifact_name }}
+          path: _verified-site
+      - name: Restore the verified retained fixture
+        run: cp _verified-site/site/TEST_PROJECT.json TEST_PROJECT.json
+      - name: Complete reverified operator journey
+        run: |
+          set -euo pipefail
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          run_browser_verifier() {
+            script="$1"
+            budget="$2"
+            timeout --signal=TERM --kill-after=10s "$budget" node collect-verification-evidence.mjs --browser-suite="$script" --browser-scope="$CLOSED_LOOP_BROWSER_SCOPE" 2>&1 | tee "/tmp/${script}.log"
+          }
+          run_browser_verifier verify-complete-operator-journey.mjs 330m
+      - name: Validate complete reverified operator receipt
+        run: node collect-verification-evidence.mjs --require-browser-scope=DEPLOYED --browser-suite-only=verify-complete-operator-journey.mjs
+      - name: Preserve complete reverified operator journey evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        env:
+          NODE_OPTIONS: ''
+        with:
+          name: reverified-complete-operator-journey-${{ github.sha }}-${{ github.run_id }}
+          path: |
+            operator-evidence/
+            /tmp/verify-complete-operator-journey.mjs.log
+            /tmp/clrt-reverified-operator-journey-children/
+          retention-days: 90
+          if-no-files-found: warn
+      - name: Preserve complete reverified operator receipt
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        env:
+          NODE_OPTIONS: ''
+        with:
+          name: reverified-operator-journey-receipt-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .verification-receipts/browser/DEPLOYED/verify-complete-operator-journey.mjs.json
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 90
 
   publish-status:
     name: Publish machine acceptance status
     if: >-
       always() && github.ref == 'refs/heads/main' &&
-      ((github.event_name == 'push' && needs.test.result == 'success' && needs.deploy.result == 'success' && needs.verify-live.result == 'success') ||
-       (github.event_name == 'workflow_dispatch' && needs.test.result == 'success'))
-    needs: [test, deploy, verify-live]
+      ((github.event_name == 'push' && needs.test.result == 'success' && needs.deploy.result == 'success' && needs.verify-live.result == 'success' && needs.deployed-operator-journey.result == 'success') ||
+       (github.event_name == 'workflow_dispatch' && needs.test.result == 'success' && needs.reverified-operator-journey.result == 'success'))
+    needs: [test, deploy, verify-live, deployed-operator-journey, reverified-operator-journey]
     runs-on: ubuntu-latest
     env:
       CLOSED_LOOP_VERIFICATION_SOURCE_ROOT: ${{ github.workspace }}
@@ -1035,7 +1395,6 @@ jobs:
           BROWSER_VERIFY_RESULT=0
           run_browser_verifier verify-mobile-stage-action.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-mobile-capability-journey.mjs || BROWSER_VERIFY_RESULT=1
-          run_browser_verifier verify-complete-operator-journey.mjs 240m || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-browser-recovery.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-browser.mjs || BROWSER_VERIFY_RESULT=1
           run_browser_verifier verify-browser-extra.mjs || BROWSER_VERIFY_RESULT=1
@@ -1049,7 +1408,6 @@ jobs:
         with:
           name: reverified-deployed-operator-journeys-${{ github.sha }}-${{ github.run_id }}
           path: |
-            operator-evidence/
             recovery-browser-evidence/
             mobile-capability-evidence/
             /tmp/verify-*.mjs.log
@@ -1059,10 +1417,28 @@ jobs:
         if: github.event_name == 'push'
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          name: deployed-browser-receipts-${{ github.sha }}-${{ github.run_id }}
+          name: deployed-browser-receipts-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .verification-receipts/browser/DEPLOYED
+      - name: Download complete deployed operator receipt
+        if: github.event_name == 'push'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: deployed-operator-journey-receipt-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .verification-receipts/browser/DEPLOYED
+      - name: Download complete reverified operator receipt
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: reverified-operator-journey-receipt-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: .verification-receipts/browser/DEPLOYED
       - name: Reconcile local and deployed current assertion receipts
-        run: node collect-verification-evidence.mjs
+        env:
+          VERIFIED_SITE_DIR: _verified-evidence/site
+        run: |
+          set -euo pipefail
+          node collect-verification-evidence.mjs --require-browser-scope=LOCAL
+          node collect-verification-evidence.mjs --require-browser-scope=DEPLOYED
+          node collect-verification-evidence.mjs
       - name: Build acceptance artifact from executed proof jobs
         id: acceptance
         env:
