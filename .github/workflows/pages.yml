@@ -1,4 +1,4 @@
-name: Diagnostic retained mobile inbound boundary on frozen50
+name: Diagnostic passive startup and retained mobile inbound on frozen50
 
 on:
   workflow_dispatch:
@@ -8,15 +8,15 @@ permissions:
   actions: read
 
 concurrency:
-  group: diagnostic-mobile-inbound-${{ github.ref }}
+  group: diagnostic-mobile-inbound-continuation-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  retained-mobile-inbound:
+  retained-mobile-inbound-continuation:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      DIAG_OUT: ${{ github.workspace }}/mobile-inbound-diagnostic
+      DIAG_OUT: ${{ github.workspace }}/mobile-inbound-continuation-diagnostic
       BROWSER: /usr/bin/google-chrome
       NODE_OPTIONS: ''
     steps:
@@ -50,7 +50,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          cat > "$RUNNER_TEMP/frozen50-mobile-inbound-restore.py" <<'EXTERNAL_0'
+          cat > "$RUNNER_TEMP/frozen50-mobile-inbound-continuation-restore.py" <<'EXTERNAL_0'
           #!/usr/bin/env python3
           """Restore only the authenticated synthetic native profile into a fresh copy.
 
@@ -172,9 +172,9 @@ jobs:
           if __name__ == '__main__':
               main()
           EXTERNAL_0
-          echo "f2a8920ab90551b1090bcc7a34b66df4a068100300a7218539859818a37f7abf  $RUNNER_TEMP/frozen50-mobile-inbound-restore.py" | sha256sum --check
-          cp "$RUNNER_TEMP/frozen50-mobile-inbound-restore.py" "$DIAG_OUT/frozen50-mobile-inbound-restore.py"
-          cat > "$RUNNER_TEMP/frozen50-mobile-inbound-replay.mjs" <<'EXTERNAL_1'
+          echo "f2a8920ab90551b1090bcc7a34b66df4a068100300a7218539859818a37f7abf  $RUNNER_TEMP/frozen50-mobile-inbound-continuation-restore.py" | sha256sum --check
+          cp "$RUNNER_TEMP/frozen50-mobile-inbound-continuation-restore.py" "$DIAG_OUT/frozen50-mobile-inbound-continuation-restore.py"
+          cat > "$RUNNER_TEMP/frozen50-mobile-inbound-continuation.mjs" <<'EXTERNAL_1'
           // Diagnostic only: retained native profile, unchanged complete inbound helper.
           import assert from 'node:assert/strict';
           import fs from 'node:fs';
@@ -198,11 +198,39 @@ jobs:
           assert.equal(manifest.sourceCommit,expected);assert.equal(manifest.workflowRunIdentity,'42400075305');assert.equal(manifest.manifestDigest.digest,'7af4ac3b38d47bb805da7b852cdf61128d0e7e18700b0c355dc1d25d1535eb04');
           for(const row of manifest.runtimeResources){const b=fs.readFileSync(path.join(site,row.path));assert.equal(b.length,row.byteSize);assert.equal(sha(b),row.digest);}
           process.env.CLOSED_LOOP_BROWSER_SCOPE='LOCAL';process.env.CLOSED_LOOP_BROWSER_SOURCE_COMMIT=expected;process.env.STATIC_SITE_ROOT=site;
-          const {createOperatorBrowser}=await import(pathToFileURL(path.join(source,'operator-browser-driver.mjs'))),{verifyInboundArchiveOperator}=await import(pathToFileURL(path.join(source,'test-inbound-archive-browser.mjs')));
+          const originalDriver=fs.readFileSync(path.join(source,'operator-browser-driver.mjs'),'utf8');
+          assert.equal(sha(originalDriver),'a140064f45aa4c73fe53f17aa850a5e629beebe1ed6557192d0c34311608e3c9');
+          const initialIdle="try{await idle();}catch(error){await close();throw error;}return {createIsolatedTarget";
+          const continuationIdle="try{await idle();}catch(error){try{await globalThis.__clrtDiagnosticStartupContinuation({error,evaluate,idle});}catch(continuationError){await close();throw continuationError;}}return {createIsolatedTarget";
+          const observerImport="from './browser-execution-evidence.mjs'";
+          assert.equal(originalDriver.split(initialIdle).length,2);assert.equal(originalDriver.split(observerImport).length,2);
+          const derivedDriver=originalDriver.replace(initialIdle,continuationIdle).replace(observerImport,'from '+JSON.stringify(pathToFileURL(path.join(source,'browser-execution-evidence.mjs')).href));
+          const derivedPath=path.join(out,'derived-startup-diagnostic-driver.mjs');fs.writeFileSync(derivedPath,derivedDriver);
+          const {createOperatorBrowser}=await import(pathToFileURL(derivedPath)),{verifyInboundArchiveOperator}=await import(pathToFileURL(path.join(source,'test-inbound-archive-browser.mjs')));
           const started=Date.now(),result={diagnosticOnly:true,eligibleVerificationReceipt:false,fullMobileJourney:false,sourceCommit:expected,sourceTree:tree,originalArtifactId:13585083441,originalRun:42400075305,actionTimeoutMs:90000,outerTimeoutMs:600000,complete:false,primaryError:null,diagnosticErrors:[],sourceHashes:Object.fromEntries(['operator-browser-driver.mjs','test-inbound-archive-browser.mjs'].map(n=>[n,sha(fs.readFileSync(path.join(source,n)))]))};
           const save=()=>fs.writeFileSync(path.join(out,'inbound-replay-result.json'),JSON.stringify({...result,elapsedMs:Date.now()-started},null,2)+'\n');
           const errorRecord=e=>({name:e?.name||'Error',message:e?.message||String(e),stack:e?.stack||String(e),code:e?.code||null,timeoutMs:e?.timeoutMs||null,verifierObservation:e?.verifierObservation||null});
           const requests=[],server=http.createServer((req,res)=>{try{const pathname=decodeURIComponent(new URL(req.url,'http://127.0.0.1').pathname),file=path.resolve(site,'.'+(pathname==='/'?'/index.html':pathname));assert.equal(req.method,'GET');assert(file.startsWith(site+path.sep)&&fs.statSync(file).isFile());const bytes=fs.readFileSync(file);requests.push({path:pathname,byteSize:bytes.length,sha256:sha(bytes)});res.writeHead(200,{'Content-Type':file.endsWith('.html')?'text/html; charset=utf-8':file.endsWith('.js')?'text/javascript; charset=utf-8':file.endsWith('.json')?'application/json':'application/octet-stream','Content-Length':bytes.length,'Cache-Control':'no-store'});res.end(bytes);}catch{res.writeHead(404);res.end();}});
+          const passiveLimitMs=300000,passiveEvents=[];
+          result.driverDerivation={originalSha256:sha(originalDriver),derivedSha256:sha(derivedDriver),onlyInitialIdleFailureSplice:true,relativeObserverImportResolvedToExactOriginal:true,passiveStartupLimitMs:passiveLimitMs,allLaterActionTimeoutMs:90000};
+          const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+          async function bounded(promise,ms){let timer;try{return await Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('Diagnostic passive startup continuation expired')),ms);})]);}finally{clearTimeout(timer);}}
+          globalThis.__clrtDiagnosticStartupContinuation=async({error,evaluate,idle})=>{
+           result.originalStartupFailure=errorRecord(error);result.originalStartupOutcome='FAILED_ORIGINAL_90000MS_LIMIT';result.phase='PASSIVE_STARTUP_CONTINUATION';save();
+           fs.writeFileSync(path.join(out,'original-startup-failure.json'),JSON.stringify(result.originalStartupFailure,null,2)+'\n');console.error('ORIGINAL_STARTUP_FAILURE '+JSON.stringify(result.originalStartupFailure));
+           if(error.code!=='VERIFIER_TIMEOUT'||error.timeoutMs!==90000)throw error;
+           const begin=Date.now(),end=begin+passiveLimitMs;result.passiveStartupContinuation={limitMs:passiveLimitMs,outcome:'PENDING'};save();
+           const expression=`({ready:globalThis.closedLoopAppReady===true&&document.readyState==='complete'&&Boolean(document.querySelector('#app'))&&!document.querySelector('#app').hasAttribute('inert')&&document.querySelector('#app').getAttribute('aria-busy')!=='true',error:globalThis.closedLoopAppError?String(globalThis.closedLoopAppError):null,recoveryMessage:document.querySelector('#startup-detail')?.textContent||document.querySelector('#storage-status')?.textContent||''})`;
+           try{
+            while(Date.now()<end){
+             const observation=await bounded(evaluate(expression),Math.max(1,end-Date.now()));passiveEvents.push({elapsedMs:Date.now()-begin,observation});fs.writeFileSync(path.join(out,'passive-startup-observations.json'),JSON.stringify(passiveEvents,null,2)+'\n');
+             if(observation.error)throw new Error('Application startup error during diagnostic continuation: '+observation.error);
+             if(observation.ready){await bounded(idle(),Math.max(1,end-Date.now()));result.passiveStartupContinuation={limitMs:passiveLimitMs,outcome:'BECAME_INTERACTIVE',elapsedMs:Date.now()-begin,observation};save();return;}
+             await bounded(delay(1000),Math.max(1,end-Date.now()));
+            }
+            throw new Error('Diagnostic passive startup continuation expired');
+           }catch(e){result.passiveStartupContinuation={limitMs:passiveLimitMs,outcome:'FAILED',elapsedMs:Date.now()-begin,error:errorRecord(e)};save();throw e;}
+          };
           let browser=null;
           try{
            await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(4173,'127.0.0.1',resolve);});
@@ -220,17 +248,18 @@ jobs:
             try{await browser.inspect(1);}catch(e){result.diagnosticErrors.push({operation:'inspect',...errorRecord(e)});}save();
            }
           }finally{
+           delete globalThis.__clrtDiagnosticStartupContinuation;
            try{if(browser){result.events=browser.events;result.browserExceptions=browser.exceptions();try{save();}finally{await browser.close();result.driverCloseRequested=true;}}}
            catch(e){result.diagnosticErrors.push({operation:'driver-close',...errorRecord(e)});process.exitCode=1;}
            finally{server.closeAllConnections();await new Promise(resolve=>server.close(resolve));result.nativeServerClosed=true;}
            result.sourceCommitAfter=git('rev-parse','HEAD');result.sourceClean=git('status','--porcelain')==='';if(!result.sourceClean||result.sourceCommitAfter!==expected)process.exitCode=1;
            fs.writeFileSync(path.join(out,'http-resources.json'),JSON.stringify(requests,null,2)+'\n');save();
-           console.log(JSON.stringify({diagnosticOnly:true,eligibleVerificationReceipt:false,fullMobileJourney:false,complete:result.complete,primaryError:result.primaryError,nativeServerClosed:result.nativeServerClosed,sourceClean:result.sourceClean}));
+           console.log(JSON.stringify({diagnosticOnly:true,eligibleVerificationReceipt:false,fullMobileJourney:false,complete:result.complete,originalStartupOutcome:result.originalStartupOutcome||null,passiveStartupContinuation:result.passiveStartupContinuation||null,primaryError:result.primaryError,nativeServerClosed:result.nativeServerClosed,sourceClean:result.sourceClean}));
           }
           EXTERNAL_1
-          echo "d3915b7b21f418606054a42cf357b408466b31c2c850c1ab45775804c6b9c93e  $RUNNER_TEMP/frozen50-mobile-inbound-replay.mjs" | sha256sum --check
-          cp "$RUNNER_TEMP/frozen50-mobile-inbound-replay.mjs" "$DIAG_OUT/frozen50-mobile-inbound-replay.mjs"
-          cat > "$RUNNER_TEMP/frozen50-mobile-inbound-supervisor.mjs" <<'EXTERNAL_2'
+          echo "e909f19c40054289a23de7e40ea584f8d8d300fe176963a3de1218d8c899d527  $RUNNER_TEMP/frozen50-mobile-inbound-continuation.mjs" | sha256sum --check
+          cp "$RUNNER_TEMP/frozen50-mobile-inbound-continuation.mjs" "$DIAG_OUT/frozen50-mobile-inbound-continuation.mjs"
+          cat > "$RUNNER_TEMP/frozen50-mobile-inbound-continuation-supervisor.mjs" <<'EXTERNAL_2'
           import assert from 'node:assert/strict';
           import fs from 'node:fs';
           import path from 'node:path';
@@ -247,13 +276,13 @@ jobs:
           const {executeGate} = await import(pathToFileURL(path.join(source, 'verify-conformance-regressions.mjs')));
           const controller = new AbortController(), relay = signal => controller.abort(signal); process.on('SIGTERM', relay); process.on('SIGINT', relay);
           try {
-            const result = await executeGate({name: 'frozen-mobile-inbound-replay', command: process.execPath, args: [path.resolve(child), path.resolve(replay), out]}, {cwd: source, directory: path.join(out, 'supervisor'), signal: controller.signal, timeoutMs: 600000, killGraceMs: 10000, maxOutputBytes: 16 * 1024 * 1024, forwardOutput: true, requireJson: false});
+            const result = await executeGate({name: 'frozen-mobile-inbound-continuation', command: process.execPath, args: [path.resolve(child), path.resolve(replay), out]}, {cwd: source, directory: path.join(out, 'supervisor'), signal: controller.signal, timeoutMs: 600000, killGraceMs: 10000, maxOutputBytes: 16 * 1024 * 1024, forwardOutput: true, requireJson: false});
             fs.writeFileSync(path.join(out, 'inbound-supervisor.json'), JSON.stringify({diagnosticOnly: true, eligibleAcceptanceReceipt: false, sourceCommit: git('rev-parse', 'HEAD'), sourceTree: git('rev-parse', 'HEAD^{tree}'), actionTimeoutMs: 90000, ...result}, null, 2) + '\n');
             if (result.exitCode !== 0 || result.signal || result.reason || result.error) process.exitCode = 1;
           } finally { process.removeListener('SIGTERM', relay); process.removeListener('SIGINT', relay); assert.equal(git('status', '--porcelain'), ''); }
           EXTERNAL_2
-          echo "86409aabbc5f5896ec796777c8a1e79d9bcb6720e6fd30debba30c44c2307994  $RUNNER_TEMP/frozen50-mobile-inbound-supervisor.mjs" | sha256sum --check
-          cp "$RUNNER_TEMP/frozen50-mobile-inbound-supervisor.mjs" "$DIAG_OUT/frozen50-mobile-inbound-supervisor.mjs"
+          echo "20b4196022162c60dce017e6179bdb595de90251ca2b53f82fa12ceadc080e3a  $RUNNER_TEMP/frozen50-mobile-inbound-continuation-supervisor.mjs" | sha256sum --check
+          cp "$RUNNER_TEMP/frozen50-mobile-inbound-continuation-supervisor.mjs" "$DIAG_OUT/frozen50-mobile-inbound-continuation-supervisor.mjs"
       - name: Authenticate and restore exact failed native profile and site
         env:
           GH_TOKEN: ${{ github.token }}
@@ -271,15 +300,15 @@ jobs:
           assert row['workflow_run']['head_sha']=='7db4737d148547ae6594d82bcae4b13bbce432f3'
           METADATA
           gh api repos/sjonesjones917/closed-loop-tracker/actions/artifacts/13585083441/zip > "$RUNNER_TEMP/mobile-original.zip"
-          python3 "$RUNNER_TEMP/frozen50-mobile-inbound-restore.py" --archive "$RUNNER_TEMP/mobile-original.zip" --directory "$RUNNER_TEMP/mobile-inbound-replay"
+          python3 "$RUNNER_TEMP/frozen50-mobile-inbound-continuation-restore.py" --archive "$RUNNER_TEMP/mobile-original.zip" --directory "$RUNNER_TEMP/mobile-inbound-replay"
           cp "$RUNNER_TEMP/mobile-inbound-replay/profile-copy-provenance.json" "$DIAG_OUT/profile-copy-provenance.json"
           rm "$RUNNER_TEMP/mobile-original.zip"
-      - name: Execute full unchanged inbound helper with original action bounds
+      - name: Retain original startup outcome then diagnose unchanged inbound helper
         working-directory: app
         shell: bash
         run: |
           set -euo pipefail
-          node "$RUNNER_TEMP/frozen50-mobile-inbound-supervisor.mjs" "$RUNNER_TEMP/frozen50-mobile-inbound-replay.mjs" "$RUNNER_TEMP/mobile-inbound-replay" "$DIAG_OUT"
+          node "$RUNNER_TEMP/frozen50-mobile-inbound-continuation-supervisor.mjs" "$RUNNER_TEMP/frozen50-mobile-inbound-continuation.mjs" "$RUNNER_TEMP/mobile-inbound-replay" "$DIAG_OUT"
       - name: Preserve original source state
         if: always()
         working-directory: app
@@ -296,7 +325,7 @@ jobs:
         env:
           NODE_OPTIONS: ''
         with:
-          name: diagnostic-only-mobile-inbound-50f53978-${{ github.run_id }}-${{ github.run_attempt }}
+          name: diagnostic-only-mobile-inbound-continuation-50f53978-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ env.DIAG_OUT }}
           if-no-files-found: error
           retention-days: 7
