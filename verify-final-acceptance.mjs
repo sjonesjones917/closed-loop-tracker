@@ -3,7 +3,6 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
-import {pathToFileURL} from 'node:url';
 import assert from 'node:assert/strict';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import {projectStoreRuntime} from './test-project-store-runtime.mjs';
@@ -170,7 +169,7 @@ assert(withoutCheckedEvidence.blockers.some(row=>row.code==='CURRENT_NORMATIVE_P
 // summary acceptance boundary, not a synthetic claim that the app was released.
 const finalSource=fs.readFileSync(new URL('./final-acceptance.mjs',import.meta.url),'utf8'),proofGuard="  try{validateFinalNormativeProof(report,executedEvidence);}catch(error){fail('CURRENT_NORMATIVE_PROOF_REQUIRED','normativeRequirementTrace');blockers.at(-1).reason=String(error.message);}";
 assert.equal(finalSource.split(proofGuard).length,2,'NORMATIVE_FINAL_FAULT_ANCHOR_ORACLE');
-const formerFinalSource=finalSource.replace(proofGuard,'').replaceAll("'./verification-evidence.mjs'",JSON.stringify(pathToFileURL(new URL('./verification-evidence.mjs',import.meta.url).pathname).href)).replaceAll("'./visual-baseline-submission.mjs'",JSON.stringify(new URL('./visual-baseline-submission.mjs',import.meta.url).href));
+const formerFinalSource=finalSource.replace(proofGuard,'').replaceAll("'./verification-evidence.mjs'",JSON.stringify(new URL('./verification-evidence.mjs',import.meta.url).href)).replaceAll("'./visual-baseline-submission.mjs'",JSON.stringify(new URL('./visual-baseline-submission.mjs',import.meta.url).href));
 const formerFinalGate=(await import('data:text/javascript;base64,'+Buffer.from(formerFinalSource).toString('base64'))).evaluateFinalAcceptance;
 assert.equal(formerFinalGate(fixture,{visualBaseline:visual,baselineResourceGraph:{sourceCommit:visual.sourceCommit,paths:runtimePaths}}).accepted,true,'NORMATIVE_FINAL_PRE_FIX_ORACLE: former numeric-only admission was not reproduced');
 normativeProofCases.push({caseId:'former-numeric-only-final-acceptance',boundary:'Actual final gate with only the new normative receipt guard removed; earlier publication-summary behavior equivalent',preFixAcceptedWithoutNormativeEvidence:true,postFixRejectedWithoutNormativeEvidence:true,otherPublicationControlsRetained:true});
