@@ -5,6 +5,7 @@ import vm from 'node:vm';
 import {gunzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
 import {storedArtifactBody,projectStoreRuntime,bindProjectActivationUi,restoreArtifactFixture,hydrateRetainedPromptContexts} from './test-project-store-runtime.mjs';
+import {verifyHistoricalProofEpoch} from './test-historical-proof-epoch.mjs';
 const mutation=process.argv.find(arg=>arg.startsWith('--fault='))?.slice(8),faults={
  'mixed-versions':{id:'RESTORE-INCOMPATIBLE-VERSIONS',file:'project-store.js',before:'let next=clone(saved.project);',after:'let next={...clone(saved.project),projectData:clone(prior.projectData)};'},
  'import-projection':{id:'IMPORT-PROJECTION-INTEGRITY',file:'project-store.js',before:'withVerifiedRecoveryCustody(verifiedArtifacts,()=>assertRecoveryCompatibility(project))',after:'withVerifiedRecoveryCustody(verifiedArtifacts,()=>{})'},
@@ -69,4 +70,7 @@ const record=(name,details={})=>cases.push({name,...details,result:'PASS'});
  record('Expired readiness preserves historical views and exact bytes while current activation and revision refresh stay blocked',{syntheticClock:true,actualExpiry:report.validUntil,canonicalFamiliesPreserved:families,rawResponsesPreserved:originalRaw.length,staleRefreshRejected:true,sameEpochReadiness:true});
  verificationObservations.push({checkId:'history.expired-readiness-preserved',requirementRefs:[spec+':1160',spec+':1345',spec+':1569',spec+':2646'],boundary:'Production storage transaction adapter: exact legacy fixture write, historical root/reference views, current expected-revision refresh, History activation and full backup import; explicitly controlled clock',expected:'Expired current capability remains blocked, exact historical projection and raw/bytes remain recoverable, forged caches still reject, and each synchronous projection shares one readiness observation.',observed:{historicalViewReadable:true,referenceViewReadable:true,currentStage:'STAGE 02',expiredCapabilityBlocked:true,rawResponseCount:originalRaw.length,canonicalFamiliesPreserved:families,snapshotBytesUnchanged:true,refreshRevision:saved.revision+1,staleRefreshRejected:true,observationNegatives,projectionReadinessClockReads:1,syntheticClock:true,realIndexedDB:false,physicalDevice:false,trustedTime:false},passed:true});
 }
+const historicalProofEpoch=await verifyHistoricalProofEpoch();
+record('Current canonical proof expiry requires bounded full saved-epoch recovery validation');
+verificationObservations.push({checkId:'history.canonical-proof-recorded-epoch',requirementRefs:[spec+':1243',spec+':3088',spec+':3102',spec+':3117',spec+':3141'],boundary:'Current production acceptance and recovery APIs in the existing transaction adapter, plus exact extracted compatibility functions with explicitly controlled clocks and validator outcomes',expected:'Authentic saved canonical proof remains recoverable only after complete validation at its bounded recorded epoch; expired current authority, corrupt input and invalid bounds still refuse.',observed:historicalProofEpoch,passed:true});
 console.log(JSON.stringify({cases,verificationObservations,negativeCasePopulation}));

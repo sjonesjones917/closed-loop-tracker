@@ -3018,7 +3018,18 @@ function recordedProjectionObservation(project){
 }
 function historicalProjectionConsistent(project,error){
  const observationIssue='Application projection observations require a current refresh.';
- if(error?.code!=='PROJECT_INTEGRITY_FAILED'||!error.issues?.length||error.issues.some(issue=>issue!==observationIssue&&!/^Application-derived job field .* does not match deterministic recalculation\.$|^Stage \d+ (?:status|derivedData|decision|decisionEvidence|gate) does not match deterministic recalculation\.$/.test(issue)))return false;
+ const canonicalProofIssue='Application-derived canonical proof fields do not match deterministic recalculation.';
+ let canonicalProofChanged=false;
+ if(error?.code!=='PROJECT_INTEGRITY_FAILED'||!error.issues?.length||error.issues.some(issue=>{
+  if(issue===canonicalProofIssue){canonicalProofChanged=true;return false;}
+  return issue!==observationIssue&&!/^Application-derived job field .* does not match deterministic recalculation\.$|^Stage \d+ (?:status|derivedData|decision|decisionEvidence|gate) does not match deterministic recalculation\.$/.test(issue);
+ }))return false;
+ // A current-time proof change cannot use the retained-observation shortcut.
+ // Revalidate the complete saved project at its actual bounded root epoch.
+ if(canonicalProofChanged){
+  const observedAt=recordedProjectionObservation(project);
+  return observedAt!==null&&validateProjectIntegrity(project,{projectionObservedAt:observedAt}).valid;
+ }
  if(error.issues.includes(observationIssue)&&Object.hasOwn(project.projectData,'applicationProjection')&&globalThis.closedLoopWorkflowEngine.validateApplicationProjection(project,project,{useRetainedObservations:true}).valid)return true;
  const observedAt=recordedProjectionObservation(project);
  if(observedAt!==null&&validateProjectIntegrity(project,{projectionObservedAt:observedAt}).valid)return true;
