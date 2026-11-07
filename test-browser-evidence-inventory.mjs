@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import vm from 'node:vm';
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import {isDeepStrictEqual} from 'node:util';
 import {fileURLToPath} from 'node:url';
 import {execFileSync} from 'node:child_process';
@@ -23,7 +23,7 @@ export async function verifyBrowserEvidenceInventory(){
   const fingerprint={sourceCommit:'a'.repeat(40),sourceTree:'b'.repeat(40),sourceInputsSha256:'c'.repeat(64)};
   const manifest={sourceCommit:fingerprint.sourceCommit,workflowRunIdentity:'11',workflowFileSha256:'d'.repeat(64),buildIdentity:'build-sha256-'+'e'.repeat(64),runtimeResources:[{path:'index.html',digest:'f'.repeat(64),byteSize:9}],manifestDigest:{digest:'1'.repeat(64)}};
   const error=message=>new Error('BROWSER_INVENTORY_CONTROL: '+message);
-  const context=vm.createContext({
+  const context=createVerifierRuntime({
     browserVerificationCatalog:Object.fromEntries(suites.map(suite=>[suite,{}])),
     isDeepStrictEqual,
     requireEvidence(condition,message){if(!condition)throw error(message);},
@@ -33,7 +33,7 @@ export async function verifyBrowserEvidenceInventory(){
       return receipt;
     }
   });
-  vm.runInContext(body+'\nglobalThis.testRequireBrowserScope=requireBrowserScope;',context);
+  createVerifierRuntime.loadScript(context,body+'\nglobalThis.testRequireBrowserScope=requireBrowserScope;');
   const gate=context.testRequireBrowserScope,cases=[];
   const fixture=(scope='LOCAL')=>new Map(suites.map(suite=>['browser/'+scope+'/'+suite,{suite,complete:true,outcome:'PASS',identity:fingerprint.sourceInputsSha256,browser:{scope,manifest:structuredClone(manifest)}}]));
   const check=(receipts,options={})=>gate(receipts,fingerprint,{scope:'LOCAL',manifest,...options});

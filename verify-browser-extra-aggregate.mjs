@@ -9,7 +9,7 @@ import {isDeepStrictEqual} from 'node:util';
 import {validateBrowserExecution} from './browser-execution-evidence.mjs';
 import {fileURLToPath} from 'node:url';
 import {spawn,execFileSync} from 'node:child_process';
-import vm from 'node:vm';
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import {once} from 'node:events';
 import {createHash,randomBytes} from 'node:crypto';
 import {BROWSER_EXTRA_LANES,BROWSER_EXTRA_CHILD_SCHEMA,BROWSER_EXTRA_AGGREGATE_SCHEMA,browserExtraRequiredPopulations,browserExtraSourceFingerprint,browserExtraFingerprintFromInputs,parseBrowserExtraChildOutput,validateBrowserExtraAggregate,superviseBrowserExtra,groupHasRunningProcesses} from './browser-extra-aggregate.mjs';
@@ -37,8 +37,8 @@ export async function verifyBrowserExtraDarwinGroupControls({onNativeZombie}={})
  assert.equal(source.split(start).length,2);assert.equal(source.split(end).length,2);
  const functions=source.slice(source.indexOf(start),source.indexOf(end));
  const inspect=(kill,read,platform='darwin')=>{
-  const context=vm.createContext({process:{platform,pid:process.pid,env:process.env,kill},fs,execFileSync:read,check:(condition,message)=>assert(condition,message)});
-  vm.runInContext(functions,context);return context;
+  const context=createVerifierRuntime({process:{platform,pid:process.pid,env:process.env,kill},fs,execFileSync:read,check:(condition,message)=>assert(condition,message)});
+  createVerifierRuntime.loadScript(context,functions);return context;
  };
  const group=80000001,own=process.pid+' 80000000 S\n',permission=Object.assign(new Error('CONTROLLED_LIVE_GROUP_EPERM'),{code:'EPERM'}),cases=[];
  const reader=output=>(file,args,options)=>{
@@ -178,7 +178,7 @@ export async function verifyBrowserExtraPendingCleanupControls(terminalByLane){
  const error=(code,message,cause)=>Object.assign(new Error(message),{code},cause===undefined?{}:{cause});
  const killBody=source.slice(source.indexOf('function killGroup('),source.indexOf('function groupHasRunningProcesses('));
  assert(killBody.startsWith('function killGroup('),'PENDING_KILL_BODY_ORACLE');
- const killControl=(kill,inspect)=>{const context=vm.createContext({process:{platform:'darwin',kill},groupHasRunningProcesses:inspect});vm.runInContext("'use strict';"+killBody+'globalThis.call=killGroup;',context);return context.call;};
+ const killControl=(kill,inspect)=>{const context=createVerifierRuntime({process:{platform:'darwin',kill},groupHasRunningProcesses:inspect});createVerifierRuntime.loadScript(context,"'use strict';"+killBody+'globalThis.call=killGroup;');return context.call;};
  assert.equal(killControl(()=>true,()=>{throw Error('unexpected inspection');})({pid:11}),true);unitCases.push('native-signal-acknowledgement-true');
  assert.equal(killControl(()=>{throw Error('unexpected signal');},()=>true)({}),false);unitCases.push('no-pid-not-acknowledgement');
  assert.equal(killControl(()=>{throw error('ESRCH','absent');},()=>true)({pid:11}),false);unitCases.push('absent-group-not-acknowledgement');
@@ -187,8 +187,8 @@ export async function verifyBrowserExtraPendingCleanupControls(terminalByLane){
  assert.equal(source.split(start).length,2);assert.equal(source.split(end).length,2);
  const stateBody=source.slice(source.indexOf(start),source.indexOf(end));
  const stateControl=(platform='darwin')=>{
-  const outcomes=[],context=vm.createContext({process:{platform},killGroup:()=>{const value=outcomes.shift();if(value instanceof Error)throw value;return value;}});
-  vm.runInContext("'use strict';"+stateBody+'globalThis.step=stopRow;globalThis.state=row=>stopStates.get(row);',context);
+  const outcomes=[],context=createVerifierRuntime({process:{platform},killGroup:()=>{const value=outcomes.shift();if(value instanceof Error)throw value;return value;}});
+  createVerifierRuntime.loadScript(context,"'use strict';"+stateBody+'globalThis.step=stopRow;globalThis.state=row=>stopStates.get(row);');
   return {outcomes,step:context.step,state:context.state};
  };
  const row={process:{pid:11}},other={process:{pid:12}};
@@ -319,8 +319,8 @@ export async function verifyBrowserExtraPendingCleanupControls(terminalByLane){
    const supervisorStart=candidate.indexOf('export async function superviseBrowserExtra('),exportEnd=candidate.lastIndexOf('\nexport {groupHasRunningProcesses};');
    assert(supervisorStart>=0&&exportEnd>supervisorStart);assert(body.includes(candidate.slice(supervisorStart+'export '.length,exportEnd)),'PENDING_EXACT_SUPERVISOR_BODY_ORACLE');
    assert(body.includes(candidate.slice(candidate.indexOf('function killGroup('),candidate.indexOf('function groupHasRunningProcesses('))),'PENDING_EXACT_KILL_BODY_ORACLE');
-   const context=vm.createContext({assert,fs,path,os,createHash,randomBytes,spawn,execFileSync,isDeepStrictEqual,validateBrowserExecution,process:controlledProcess,Buffer,URL,setTimeout,clearTimeout,__nativeInspection:inspect});
-   vm.runInContext("'use strict';"+body+'\ngroupHasRunningProcesses=__nativeInspection;globalThis.supervisor=superviseBrowserExtra;',context,{filename:'actual-browser-extra-aggregate-controlled-seams.mjs'});
+   const context=createVerifierRuntime({assert,fs,path,os,createHash,randomBytes,spawn,execFileSync,isDeepStrictEqual,validateBrowserExecution,process:controlledProcess,Buffer,URL,setTimeout,clearTimeout,__nativeInspection:inspect});
+   createVerifierRuntime.loadScript(context,"'use strict';"+body+'\ngroupHasRunningProcesses=__nativeInspection;globalThis.supervisor=superviseBrowserExtra;',{filename:'actual-browser-extra-aggregate-controlled-seams.mjs'});
    let failure,result,nativeGoneAtReturn,rootRetainedAtReturn;
    try{
     const startedAt=Date.now();deadlineAt=startedAt+2500;

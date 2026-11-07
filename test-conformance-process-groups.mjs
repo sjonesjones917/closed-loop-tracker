@@ -2,7 +2,7 @@
 // These prove supervisor cleanup semantics; they do not claim browser execution.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import vm from 'node:vm';
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import {groupHasRunningProcesses} from './browser-extra-aggregate.mjs';
 import {verifyBrowserExtraDarwinGroupControls} from './verify-browser-extra-aggregate.mjs';
 
@@ -15,8 +15,8 @@ export async function verifyConformanceProcessGroupControls(){
  const statement=source.slice(source.indexOf(start),source.indexOf(end));
  const former="const killGroup=(pid,kind)=>{try{process.kill(process.platform==='win32'?pid:-pid,kind);}catch(e){if(e.code!=='ESRCH')error={code:e.code,message:e.message};}};";
  const control=(kill,inspect,platform='darwin',implementation=statement)=>{
-  const context=vm.createContext({process:{platform,kill},groupHasRunningProcesses:inspect});
-  vm.runInContext('let error=null;'+implementation+'globalThis.signalGroup=(pid,kind)=>{error=null;killGroup(pid,kind);return error;};',context);
+  const context=createVerifierRuntime({process:{platform,kill},groupHasRunningProcesses:inspect});
+  createVerifierRuntime.loadScript(context,'let error=null;'+implementation+'globalThis.signalGroup=(pid,kind)=>{error=null;killGroup(pid,kind);return error;};');
   return context.signalGroup;
  };
  const group=80000001,cases=[],permission=()=>Object.assign(new Error('CONTROLLED_GROUP_EPERM'),{code:'EPERM'});
