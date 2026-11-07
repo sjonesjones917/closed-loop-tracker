@@ -1,1659 +1,357 @@
-name: Verify and deploy the single reliability app
+name: Diagnostic full candidate mobile and recovery
 
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
   workflow_dispatch:
-    inputs:
-      mobile_acceptance_target_json:
-        description: Pinned physical-iPhone acceptance target JSON for the exact currently deployed main commit
-        required: false
-        type: string
-      mobile_acceptance_evidence_json:
-        description: Physical-iPhone mobile-acceptance-evidence JSON bound to the submitted target
-        required: false
-        type: string
-      visual_baseline_evidence_json:
-        description: Frozen visual baseline and exact-main comparison JSON; see README Repository visual acceptance submission
-        required: false
-        type: string
 
 permissions:
   contents: read
+  actions: read
 
 concurrency:
-  group: pages-${{ github.ref }}
-  # Verify the latest PR revision promptly; main deployments remain serialized.
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: diagnostic-mobile-backup-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  foundation:
-    name: foundation
-    permissions:
-      contents: read
-      actions: read
-      pull-requests: read
+  mobile-capability-diagnostic:
     runs-on: ubuntu-latest
-    timeout-minutes: 360
+    timeout-minutes: 25
     env:
-      CLOSED_LOOP_VERIFICATION_SOURCE_ROOT: ${{ github.workspace }}
-      CLOSED_LOOP_VERIFICATION_RECEIPTS: ${{ github.workspace }}/.verification-receipts
-      VERIFIER_CHILD_EVIDENCE_DIRECTORY: ${{ github.workspace }}/../clrt-verifier-children
-      NODE_OPTIONS: --import ${{ github.workspace }}/verification-evidence-preload.mjs
+      DIAG_OUT: ${{ github.workspace }}/mobile-capability-diagnostic
+      BROWSER: /usr/bin/google-chrome
+      NODE_OPTIONS: ''
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        env:
-          NODE_OPTIONS: ''
+      - name: Check out the exact candidate application
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: a5cd6c34d06891285dca9326708b5160c0c47b8a
+          path: app
+          persist-credentials: false
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
-          # Receipts bind the exact Node version across jobs and PR promotion.
-          node-version: '22.23.3'
-      - name: Find complete PR verification for this main commit
-        id: candidate
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: node verified-site.mjs select
-      - name: Download reusable PR artifact for prerequisite proof
-        if: steps.candidate.outputs.artifact_id != ''
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          artifact-ids: ${{ steps.candidate.outputs.artifact_id }}
-          run-id: ${{ steps.candidate.outputs.run_id }}
-          github-token: ${{ github.token }}
-          merge-multiple: true
-          path: _verified-pr
-      - name: Verify exact reusable source for prerequisite proof
-        id: reuse
-        if: steps.candidate.outputs.artifact_id != ''
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: node verified-site.mjs reuse
-      - name: Syntax
-        if: steps.reuse.outputs.reused != 'true'
+          node-version: 22.23.3
+      - name: Pin candidate source and Node runtime
+        working-directory: app
+        shell: bash
         run: |
           set -euo pipefail
-          for file in *.js *.mjs; do
-            node --check "$file"
-          done
-
-      - name: Schema, ownership, and single-architecture proof
-        if: steps.reuse.outputs.reused != 'true'
+          test ! -e "$DIAG_OUT"
+          mkdir "$DIAG_OUT"
+          test "$(git rev-parse HEAD)" = a5cd6c34d06891285dca9326708b5160c0c47b8a
+          test "$(git rev-parse 'HEAD^{tree}')" = 45c318632a0935e68864ec11b6689a35c0d50180
+          test -z "$(git status --porcelain)"
+          node --version | tee "$DIAG_OUT/node-version.txt"
+          test "$(node --version)" = v22.23.3
+          echo '8352b036eca02dfd86bb441df4ea3fe0ea54b9ad6bcaaee9a000219ddfae09c5  TEST_PROJECT.json' | sha256sum --check
+          git rev-parse HEAD > "$DIAG_OUT/source-commit-before.txt"
+          git rev-parse 'HEAD^{tree}' > "$DIAG_OUT/source-tree-before.txt"
+          uname -a > "$DIAG_OUT/uname.txt"
+      - name: Require the original installed Chrome
+        shell: bash
         run: |
           set -euo pipefail
-          node build-test-project.mjs
-          node verify.mjs
-          node verify-contract-closure.mjs
-          node verify-stage-operation-registry.mjs
-          node verify-stage-contract-closure.mjs
-          node --input-type=module - <<'NODE'
+          "$BROWSER" --product-version | tee "$DIAG_OUT/chrome-version.txt"
+          test "$("$BROWSER" --product-version)" = 156.0.8078.79
+      - name: Materialize external diagnostic supervision
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > "$RUNNER_TEMP/candidate-native-browser-runner.mjs" <<'EXTERNAL_0'
+          // Separate candidate CI namespace; invokes the complete normal browser collector CLI.
           import assert from 'node:assert/strict';
           import fs from 'node:fs';
-          import {runtimePaths} from './verified-site.mjs';
-          const fixtureHtml=['test-append-only-native.html','test-backup-extension-native.html','test-human-combined-cold.html','test-human-combined-native.html','test-human-combined-ui-seed.html','test-retained-root-native.html'];
-          const expectedRootHtml=['index.html',...fixtureHtml].sort();
-          const assertHtmlArchitecture=(rootEntries=fs.readdirSync('.',{withFileTypes:true}),deployedPaths=runtimePaths)=>{
-            const rootHtml=rootEntries.filter(row=>row.isFile()&&row.name.endsWith('.html')).map(row=>row.name).sort();
-            assert.deepEqual(rootHtml,expectedRootHtml,'Root HTML must be the application shell plus the exact non-deployed fixture allowlist.');
-            assert(fixtureHtml.every(name=>!deployedPaths.includes(name)),'A repository-only HTML fixture entered the verified deployment allowlist.');
-            assert.deepEqual(deployedPaths.filter(name=>name.endsWith('.html')).sort(),['index.html'],'The verified deployment must contain exactly one HTML document.');
-          };
-          assertHtmlArchitecture();
-          NODE
-          test ! -f app.js
-          test -z "$(find . -maxdepth 1 -type f -name '.repair-*' -print -quit)"
-          test -z "$(find .github/workflows -maxdepth 1 -type f ! -name 'pages.yml' -print -quit)"
-          ! grep -R "document.write" --include='*.js' --include='*.html' .
-          ! grep -R "MutationObserver" --include='*.js' --include='*.html' .
-          ! grep -REi "human-project/31|Stage 31|Operation 31" --include='*.js' --include='*.html' --include='TEST_PROJECT.json' .
-          node - <<'NODE'
-          const fs=require('fs');
-          const html=fs.readFileSync('index.html','utf8');
-          const expected=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
-          const src=[...html.matchAll(/<script\s+defer\s+src="([^"]+)"\s*><\/script>/g)].map(match=>match[1]);
-          if(src.length!==expected.length)throw new Error(`Expected ${expected.length} direct deferred scripts; found ${src.length}`);
-          const tokens=new Set();
-          expected.forEach((file,index)=>{
-            if(src[index]?.split('?')[0]!==file)throw new Error(`Wrong script order at ${file}`);
-            if(src.filter(value=>value.split('?')[0]===file).length!==1)throw new Error(`${file} is not unique`);
-            const token=new URLSearchParams(src[index].split('?')[1]||'').get('v');
-            if(!token)throw new Error(`${file} lacks build token`);
-            tokens.add(token);
-          });
-          if(tokens.size!==1)throw new Error('Mixed runtime build tokens');
-          if(!/worker-src\s+'self'/.test(html))throw new Error('CSP does not restrict the worker to same origin.');
-          NODE
-
-      - name: Deployment manifest, build identity, and reproducibility
-        if: steps.reuse.outputs.reused != 'true'
-        run: |
-          set -euo pipefail
-          node verify-deployment-manifest.mjs
-
-      - name: Complete 30-stage canonical data-route closure
-        if: steps.reuse.outputs.reused != 'true'
-        run: |
-          set -euo pipefail
-          node verify-data-route-closure.mjs
-
-      - name: Contract-profile migration
-        if: steps.reuse.outputs.reused != 'true'
-        run: |
-          set -euo pipefail
-          node verify-v3-migration.mjs
-
-      - name: Stage 01 agent response contract alignment
-        if: steps.reuse.outputs.reused != 'true'
-        run: |
-          set -euo pipefail
-          node verify-stage01-agent-contract-alignment.mjs
-
-      - name: Stage 01 raw intake and semantic accounting
-        if: steps.reuse.outputs.reused != 'true'
-        run: |
-          set -euo pipefail
-          node verify-stage01-intake-closure.mjs
-          node verify-one-time-intent-intake.mjs
-          node verify-stage01-review-subject.mjs
-
-      - name: Stage 02 bounded search and Stage 03 omission challenge
-        if: steps.reuse.outputs.reused != 'true'
-        run: |
-          set -euo pipefail
-          node verify-semantic-review-acceptance.mjs
-          node verify-stage03-agent-protocol.mjs
-
-      - name: Stage 04 obligation accounting and prompt completeness
-        if: steps.reuse.outputs.reused != 'true'
-        run: |
-          set -euo pipefail
-          node verify-zero-loss-accounting.mjs
-
-      - name: Test IR validation, security, and deterministic runtime
-        if: steps.reuse.outputs.reused != 'true'
-        run: |
-          set -euo pipefail
-          node verify-test-runtime-v3.mjs
-          node verify-test-runtime-limits.mjs
-          node verify-test-runtime.mjs
-          node verify-hash.mjs
-
-      - name: Raw-first ingestion and negative cases
-        if: steps.reuse.outputs.reused != 'true'
-        run: |
-          set -euo pipefail
-          node verify-ingestion.mjs
-          node verify-file-first-response.mjs
-          node verify-response-authority-integrity.mjs
-          node verify-returned-slot-authority.mjs
-          node verify-execution-reports.mjs
-          node verify-backup-json-stream.mjs
-
-      - name: Preserve foundation proof
-        if: steps.reuse.outputs.reused != 'true'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        env:
-          NODE_OPTIONS: ''
-        with:
-          name: foundation-proof-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: |
-            .verification-receipts/
-            TEST_PROJECT.json
-          include-hidden-files: true
-          if-no-files-found: error
-          retention-days: 30
-
-  deferred-matrix:
-    name: deferred-matrix
-    needs: foundation
-    permissions:
-      contents: read
-      actions: read
-      pull-requests: read
-    runs-on: ubuntu-latest
-    timeout-minutes: 360
-    env:
-      CLOSED_LOOP_VERIFICATION_SOURCE_ROOT: ${{ github.workspace }}
-      CLOSED_LOOP_VERIFICATION_RECEIPTS: ${{ github.workspace }}/.verification-receipts
-      VERIFIER_CHILD_EVIDENCE_DIRECTORY: ${{ github.workspace }}/../clrt-verifier-children
-      NODE_OPTIONS: --import ${{ github.workspace }}/verification-evidence-preload.mjs
-    outputs:
-      executed: ${{ steps.matrix.outputs.executed }}
-      receipt_name: ${{ steps.matrix.outputs.receipt_name }}
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        env:
-          NODE_OPTIONS: ''
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        with:
-          # Receipts bind the exact Node version across jobs and PR promotion.
-          node-version: '22.23.3'
-      - name: Find complete PR verification for this main commit
-        id: candidate
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: node verified-site.mjs select
-      - name: Download reusable PR artifact for deferred proof
-        if: steps.candidate.outputs.artifact_id != ''
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          artifact-ids: ${{ steps.candidate.outputs.artifact_id }}
-          run-id: ${{ steps.candidate.outputs.run_id }}
-          github-token: ${{ github.token }}
-          merge-multiple: true
-          path: _verified-pr
-      - name: Verify exact reusable source for deferred proof
-        id: reuse
-        if: steps.candidate.outputs.artifact_id != ''
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: node verified-site.mjs reuse
-      - name: Download foundation proof
-        if: steps.reuse.outputs.reused != 'true'
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: foundation-proof-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: .
-      - name: Validate foundation ingestion receipt
-        if: steps.reuse.outputs.reused != 'true'
-        run: node collect-verification-evidence.mjs --export-owner=verify-ingestion.mjs
-
-      - name: Execute complete deferred stage matrix
-        id: matrix
-        if: steps.reuse.outputs.reused != 'true'
-        timeout-minutes: 330
-        run: |
-          set -euo pipefail
-          node verify-due-stage-timing.mjs > /tmp/deferred-stage-matrix.json
-          node verify-deferred-proof-handoff.mjs
-          echo "executed=true" >> "$GITHUB_OUTPUT"
-          echo "receipt_name=deferred-matrix-${{ github.sha }}-${{ github.run_id }}" >> "$GITHUB_OUTPUT"
-      - name: Preserve complete deferred matrix receipt
-        if: always() && steps.matrix.outcome != 'skipped'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        env:
-          NODE_OPTIONS: ''
-        with:
-          name: deferred-matrix-${{ github.sha }}-${{ github.run_id }}
-          path: .verification-receipts/verify-due-stage-timing.mjs.json
-          include-hidden-files: true
-          if-no-files-found: error
-          retention-days: 30
-      - name: Stage deferred matrix diagnostics
-        if: always() && steps.matrix.outcome != 'skipped'
-        run: |
-          mkdir -p .ci-deferred-diagnostics
-          if test -f /tmp/deferred-stage-matrix.json; then cp /tmp/deferred-stage-matrix.json .ci-deferred-diagnostics/; fi
-          if test -f conformance-regression-evidence/deferred-phase-timings.json; then cp conformance-regression-evidence/deferred-phase-timings.json .ci-deferred-diagnostics/; fi
-          if test -d "$VERIFIER_CHILD_EVIDENCE_DIRECTORY"; then cp -a "$VERIFIER_CHILD_EVIDENCE_DIRECTORY" .ci-deferred-diagnostics/child-processes; fi
-      - name: Preserve deferred matrix diagnostics
-        if: always() && steps.matrix.outcome != 'skipped'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        env:
-          NODE_OPTIONS: ''
-        with:
-          name: deferred-matrix-diagnostics-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: .ci-deferred-diagnostics/
-          include-hidden-files: true
-          if-no-files-found: warn
-          retention-days: 30
-
-  workflow-gates:
-    name: workflow-gates
-    needs: [foundation, deferred-matrix]
-    permissions:
-      contents: read
-      actions: read
-      pull-requests: read
-    runs-on: ubuntu-latest
-    timeout-minutes: 360
-    env:
-      CLOSED_LOOP_VERIFICATION_SOURCE_ROOT: ${{ github.workspace }}
-      CLOSED_LOOP_VERIFICATION_RECEIPTS: ${{ github.workspace }}/.verification-receipts
-      VERIFIER_CHILD_EVIDENCE_DIRECTORY: ${{ github.workspace }}/../clrt-verifier-children
-      NODE_OPTIONS: --import ${{ github.workspace }}/verification-evidence-preload.mjs
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        env:
-          NODE_OPTIONS: ''
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        with:
-          # Receipts bind the exact Node version across jobs and PR promotion.
-          node-version: '22.23.3'
-      - name: Find complete PR verification for this main commit
-        id: candidate
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: node verified-site.mjs select
-      - name: Download reusable PR artifact for prerequisite proof
-        if: steps.candidate.outputs.artifact_id != ''
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          artifact-ids: ${{ steps.candidate.outputs.artifact_id }}
-          run-id: ${{ steps.candidate.outputs.run_id }}
-          github-token: ${{ github.token }}
-          merge-multiple: true
-          path: _verified-pr
-      - name: Verify exact reusable source for prerequisite proof
-        id: reuse
-        if: steps.candidate.outputs.artifact_id != ''
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: node verified-site.mjs reuse
-      - name: Download foundation proof
-        if: steps.reuse.outputs.reused != 'true'
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: foundation-proof-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: .
-      - name: Validate foundation ingestion receipt
-        if: steps.reuse.outputs.reused != 'true'
-        run: node collect-verification-evidence.mjs --export-owner=verify-ingestion.mjs
-
-      - name: Download complete deferred matrix receipt
-        if: steps.reuse.outputs.reused != 'true'
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: ${{ needs.deferred-matrix.outputs.receipt_name }}
-          path: .verification-receipts
-      - name: Validate complete deferred matrix receipt
-        if: steps.reuse.outputs.reused != 'true'
-        run: node verify-deferred-proof-handoff.mjs
-
-      - name: Validate current registry receipt
-        if: steps.reuse.outputs.reused != 'true'
-        run: node collect-verification-evidence.mjs --export-owner=verify-stage-operation-registry.mjs
-
-      - name: Cross-stage contract gates
-        if: steps.reuse.outputs.reused != 'true'
-        run: |
-          set -euo pipefail
-          node verify-v3-contract.mjs
-          node verify-spec3-contract.mjs
-
-      - name: Physical iPhone release-tag governance
-        if: steps.reuse.outputs.reused != 'true'
-        run: |
-          set -euo pipefail
-          node verify-mobile-acceptance-target.mjs
-          node verify-browser-execution-evidence.mjs
-          node verify-final-acceptance.mjs
-          node verify-visual-baseline-submission.mjs
-          node verify-final-product-timing.mjs
-          node verify-mobile-release-governance.mjs
-
-      - name: Workflow and gates
-        if: steps.reuse.outputs.reused != 'true'
-        run: |
-          set -euo pipefail
-          node verify-complete.mjs
-          node verify-proposal-acceptance-memory.mjs
-          node verify-verification-routing.mjs
-          node verify-independent-preflight.mjs
-          node verify-external-result-determination.mjs
-          node verify-stage28-artifact-delivery-intent.mjs
-          node verify-production-baseline-authority.mjs
-          node verify-definition-of-done.mjs --owner-receipt-controls
-          node verify-definition-of-done.mjs
-          node verify-project-lifecycle.mjs
-          node verify-v3-definition-of-done.mjs
-
-      - name: Prompt semantics and leakage
-        if: steps.reuse.outputs.reused != 'true'
-        run: |
-          set -euo pipefail
-          node verify-all-stage-prompts.mjs
-          node verify-stage-context-boundary.mjs
-          node verify-handoff-metadata-boundary.mjs
-          node verify-handoff-disclosure.mjs
-          node verify-stage-prompts-complete.mjs
-          node verify-user-prompt-invariants.mjs
-          node verify-prompt-file-identity.mjs
-          node verify-prompt-semantics.mjs
-          node verify-semantic-invariant.mjs
-
-      - name: Preserve workflow gate proof
-        if: steps.reuse.outputs.reused != 'true'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        env:
-          NODE_OPTIONS: ''
-        with:
-          name: workflow-gate-proof-${{ github.sha }}-${{ github.run_id }}
-          path: |
-            .verification-receipts/
-            TEST_PROJECT.json
-          include-hidden-files: true
-          if-no-files-found: error
-          retention-days: 30
-
-  conformance:
-    name: conformance-${{ matrix.group }}
-    needs: foundation
-    strategy:
-      fail-fast: false
-      matrix:
-        group: [core, creation, counterpart]
-    permissions:
-      contents: read
-      actions: read
-      pull-requests: read
-    runs-on: ubuntu-latest
-    timeout-minutes: 360
-    env:
-      CLOSED_LOOP_VERIFICATION_SOURCE_ROOT: ${{ github.workspace }}
-      CLOSED_LOOP_VERIFICATION_RECEIPTS: ${{ github.workspace }}/.verification-receipts
-      NODE_OPTIONS: --import ${{ github.workspace }}/verification-evidence-preload.mjs
-      CONFORMANCE_EVIDENCE_DIRECTORY: ${{ github.workspace }}/../clrt-conformance-${{ matrix.group }}
-      VERIFIER_CHILD_EVIDENCE_DIRECTORY: ${{ github.workspace }}/../clrt-conformance-${{ matrix.group }}/child-processes
-      CREATION_FAULT_EVIDENCE_DIRECTORY: ${{ github.workspace }}/../clrt-conformance-${{ matrix.group }}/creation-presentation-faults
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        env:
-          NODE_OPTIONS: ''
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        with:
-          # Receipts bind the exact Node version across jobs and PR promotion.
-          node-version: '22.23.3'
-      - name: Find complete PR verification for this main commit
-        id: candidate
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: node verified-site.mjs select
-      - name: Download reusable PR artifact for conformance proof
-        if: steps.candidate.outputs.artifact_id != ''
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          artifact-ids: ${{ steps.candidate.outputs.artifact_id }}
-          run-id: ${{ steps.candidate.outputs.run_id }}
-          github-token: ${{ github.token }}
-          merge-multiple: true
-          path: _verified-pr
-      - name: Verify exact reusable source for conformance proof
-        id: reuse
-        if: steps.candidate.outputs.artifact_id != ''
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: node verified-site.mjs reuse
-      - name: Download foundation proof
-        if: steps.reuse.outputs.reused != 'true'
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: foundation-proof-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: .
-      - name: Validate foundation ingestion receipt
-        if: steps.reuse.outputs.reused != 'true'
-        run: node collect-verification-evidence.mjs --export-owner=verify-ingestion.mjs
-
-      - name: Validate current authority receipts
-        if: steps.reuse.outputs.reused != 'true'
-        run: |
-          set -euo pipefail
-          node collect-verification-evidence.mjs --export-owner=verify-response-authority-integrity.mjs
-          node collect-verification-evidence.mjs --export-owner=verify-returned-slot-authority.mjs
-
-      - name: Execute complete conformance group
-        id: conformance
-        if: steps.reuse.outputs.reused != 'true'
-        timeout-minutes: 305
-        run: |
-          set -euo pipefail
-          node verify-conformance-regressions.mjs --group=${{ matrix.group }} > /tmp/conformance-regressions.json
-      - name: Stage conformance group report
-        if: always() && steps.conformance.outcome != 'skipped'
-        run: |
-          mkdir -p .ci-conformance-handoff
-          cp "$CONFORMANCE_EVIDENCE_DIRECTORY/report.json" .ci-conformance-handoff/${{ matrix.group }}.json
-      - name: Preserve complete conformance group report
-        if: always() && steps.conformance.outcome != 'skipped'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        env:
-          NODE_OPTIONS: ''
-        with:
-          name: conformance-report-${{ github.sha }}-${{ github.run_id }}-${{ matrix.group }}
-          path: .ci-conformance-handoff/
-          include-hidden-files: true
-          if-no-files-found: error
-          retention-days: 30
-      - name: Preserve conformance execution receipts
-        if: always() && steps.conformance.outcome != 'skipped'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        env:
-          NODE_OPTIONS: ''
-        with:
-          name: conformance-receipts-${{ github.sha }}-${{ github.run_id }}-${{ matrix.group }}
-          path: .verification-receipts/
-          include-hidden-files: true
-          if-no-files-found: warn
-          retention-days: 30
-      - name: Normalize conformance evidence upload path
-        if: always() && contains(fromJSON('["success","failure","cancelled"]'), steps.conformance.outcome)
-        run: |
-          set -euo pipefail
-          canonical=$(realpath -m -- "$CONFORMANCE_EVIDENCE_DIRECTORY")
-          printf 'CONFORMANCE_EVIDENCE_DIRECTORY=%s\n' "$canonical" >> "$GITHUB_ENV"
-      - name: Preserve executed regression evidence
-        if: always() && (steps.conformance.outcome == 'success' || steps.conformance.outcome == 'failure' || steps.conformance.outcome == 'cancelled')
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        env:
-          NODE_OPTIONS: ''
-        with:
-          name: conformance-regressions-${{ github.sha }}-${{ matrix.group }}
-          path: |
-            ${{ env.CONFORMANCE_EVIDENCE_DIRECTORY }}/
-            /tmp/conformance-regressions.json
-          if-no-files-found: error
-
-  test-checks:
-    name: test-checks
-    needs: [foundation, deferred-matrix, workflow-gates, conformance]
-    if: always()
-    permissions:
-      contents: read
-      actions: read
-      pull-requests: read
-    runs-on: ubuntu-latest
-    timeout-minutes: 360
-    env:
-      CLOSED_LOOP_VERIFICATION_SOURCE_ROOT: ${{ github.workspace }}
-      CLOSED_LOOP_VERIFICATION_RECEIPTS: ${{ github.workspace }}/.verification-receipts
-      VERIFIER_CHILD_EVIDENCE_DIRECTORY: ${{ github.workspace }}/../clrt-verifier-children
-      NODE_OPTIONS: --import ${{ github.workspace }}/verification-evidence-preload.mjs
-    steps:
-      - name: Require successful foundation job
-        run: test "${{ needs.foundation.result }}" = "success"
-      - name: Require successful workflow gate job
-        run: test "${{ needs.workflow-gates.result }}" = "success"
-      - name: Require successful deferred matrix job
-        run: test "${{ needs.deferred-matrix.result }}" = "success"
-      - name: Require successful conformance groups
-        run: test "${{ needs.conformance.result }}" = "success"
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        env:
-          # The repository preload does not exist until checkout completes.
-          NODE_OPTIONS: ''
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        with:
-          node-version: '22.23.3'
-
-      - name: Verified artifact reuse checks
-        run: node verify-verified-site.mjs
-
-      - name: Find completed PR verification for this main commit
-        id: candidate
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: node verified-site.mjs select
-      - name: Download the passing PR artifact
-        if: steps.candidate.outputs.artifact_id != ''
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          artifact-ids: ${{ steps.candidate.outputs.artifact_id }}
-          run-id: ${{ steps.candidate.outputs.run_id }}
-          github-token: ${{ github.token }}
-          merge-multiple: true
-          path: _verified-pr
-      - name: Verify matching source and promote tested runtime files
-        id: reuse
-        if: steps.candidate.outputs.artifact_id != ''
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: node verified-site.mjs reuse
-      - name: Download workflow gate proof
-        if: steps.reuse.outputs.reused != 'true'
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: workflow-gate-proof-${{ github.sha }}-${{ github.run_id }}
-          path: .
-      - name: Validate workflow gate ingestion receipt
-        if: steps.reuse.outputs.reused != 'true'
-        run: node collect-verification-evidence.mjs --export-owner=verify-ingestion.mjs
-
-      - name: Require deferred matrix proof or verified artifact reuse
-        if: steps.reuse.outputs.reused != 'true'
-        run: test "${{ needs.deferred-matrix.outputs.executed }}" = true
-      - name: Download complete deferred matrix receipt
-        if: steps.reuse.outputs.reused != 'true'
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: ${{ needs.deferred-matrix.outputs.receipt_name }}
-          path: .verification-receipts
-      - name: Validate complete deferred matrix receipt
-        if: steps.reuse.outputs.reused != 'true'
-        run: node verify-deferred-proof-handoff.mjs
-
-      # All non-browser conformance groups must finish before browser acceptance.
-      - name: Download complete conformance group reports
-        if: steps.reuse.outputs.reused != 'true'
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          pattern: conformance-report-${{ github.sha }}-${{ github.run_id }}-*
-          merge-multiple: true
-          path: .ci-conformance-handoff
-      - name: Download complete conformance execution receipts
-        if: steps.reuse.outputs.reused != 'true'
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          pattern: conformance-receipts-${{ github.sha }}-${{ github.run_id }}-*
-          merge-multiple: true
-          path: .verification-receipts
-      - name: Validate complete conformance handoff
-        if: steps.reuse.outputs.reused != 'true'
-        run: node verify-conformance-handoff.mjs
-
-      - name: Capture exact PR source workspace
-        if: github.event_name == 'pull_request'
-        run: tar --exclude=.git -czf /tmp/pr-source.tar.gz .
-      - name: Preserve exact PR source workspace
-        if: github.event_name == 'pull_request'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        env:
-          NODE_OPTIONS: ''
-        with:
-          name: pr-source-${{ github.event.pull_request.number }}-${{ github.sha }}
-          path: /tmp/pr-source.tar.gz
-          if-no-files-found: error
-          retention-days: 1
-
-      - name: Full cycle and terminal boundary
-        if: steps.reuse.outputs.reused != 'true'
-        run: |
-          set -euo pipefail
-          node test-quarantine-ui-export-owner.mjs
-          export CLRT_STAGE29_FIXTURE_PATH="$(mktemp)"
-          export CLRT_STAGE30_FIXTURE_PATH="$(mktemp)"
-          node verify-full-cycle.mjs | tee /tmp/full-cycle-proof.json
-          node --input-type=module -e "import fs from 'node:fs'; JSON.parse(fs.readFileSync('/tmp/full-cycle-proof.json','utf8'));"
-          node verify-stage29-evidence-chain-checkpoint.mjs
-          node verify-stage30-terminal-mobile-boundary.mjs
-
-      - name: Complete current non-browser assertion evidence
-        if: steps.reuse.outputs.reused != 'true'
-        run: node collect-verification-evidence.mjs
-
-      - name: Stale project navigation and draft preservation
-        if: steps.reuse.outputs.reused != 'true'
-        run: |
-          set -euo pipefail
-          node verify-stale-view-navigation.mjs
-          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
-          test -n "$BROWSER"
-          node build-static-site.mjs --out _stale_view_site --source-commit "$GITHUB_SHA" --workflow-run "$GITHUB_RUN_ID"
-          python3 -m http.server 4173 --directory _stale_view_site >/tmp/stale-view-http.log 2>&1 &
-          SERVER_PID=$!
-          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
-          timeout --signal=TERM --kill-after=10s 5m node verify-stale-view-browser.mjs
-
-      - name: Preserve stale project navigation observations
-        if: always() && steps.reuse.outputs.reused != 'true'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        env:
-          NODE_OPTIONS: ''
-        with:
-          name: stale-view-${{ github.sha }}-${{ github.run_id }}
-          path: |
-            stale-view-browser-evidence/stale-view.json
-            stale-view-browser-evidence/*/stage-*.png
-          if-no-files-found: warn
-
-      - name: Verification routing and capability evidence
-        if: steps.reuse.outputs.reused != 'true'
-        env:
-          BROWSER: /usr/bin/google-chrome
-        run: |
-          set -euo pipefail
-          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
-          test -n "$BROWSER"
-          node build-static-site.mjs --out _routing_site --source-commit "$GITHUB_SHA" --workflow-run "$GITHUB_RUN_ID"
-          python3 -m http.server 4173 --directory _routing_site >/tmp/verification-routing-http.log 2>&1 &
-          SERVER_PID=$!
-          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
-          timeout --signal=TERM --kill-after=10s 5m node verify-verification-routing-browser.mjs
-
-      - name: Preserve verification routing observations
-        if: always() && steps.reuse.outputs.reused != 'true'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        env:
-          NODE_OPTIONS: ''
-        with:
-          name: verification-routing-${{ github.sha }}-${{ github.run_id }}
-          path: |
-            verification-routing-browser-evidence/routing.json
-            verification-routing-browser-evidence/*/stage-*.png
-          if-no-files-found: warn
-
-      - name: Startup and scrolling at phone and desktop sizes
-        if: steps.reuse.outputs.reused != 'true'
-        env:
-          BROWSER: /usr/bin/google-chrome
-        run: |
-          set -euo pipefail
-          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
-          test -n "$BROWSER"
-          # Use the retained fixture already in this commit for fast UI feedback.
-          # The following viewport gate still regenerates and validates it.
-          node build-static-site.mjs --out _acceptance_site --source-commit "$GITHUB_SHA" --workflow-run "$GITHUB_RUN_ID"
-          python3 -m http.server 4173 --directory _acceptance_site >/tmp/acceptance-viewport-http.log 2>&1 &
-          SERVER_PID=$!
-          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
-          timeout --signal=TERM --kill-after=10s 10m node verify-browser.mjs --startup-scroll-only 2>&1 | tee /tmp/startup-scroll.log
-
-      - name: Acceptance viewport regression and targeted layout fault
-        if: steps.reuse.outputs.reused != 'true'
-        env:
-          BROWSER: /usr/bin/google-chrome
-        run: |
-          set -euo pipefail
-          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
-          test -n "$BROWSER"
-          node build-static-site.mjs --out _acceptance_site --source-commit "$GITHUB_SHA" --workflow-run "$GITHUB_RUN_ID"
-          python3 -m http.server 4173 --directory _acceptance_site >/tmp/acceptance-viewport-http.log 2>&1 &
-          SERVER_PID=$!
-          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
-          timeout --signal=TERM --kill-after=10s 15m node verify-acceptance-viewport.mjs 2>&1 | tee /tmp/acceptance-viewport.log
-
-      - name: Preserve acceptance viewport observations
-        if: always() && steps.reuse.outputs.reused != 'true'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        env:
-          NODE_OPTIONS: ''
-        with:
-          name: acceptance-viewport-${{ github.sha }}-${{ github.run_id }}
-          path: |
-            acceptance-viewport-evidence/acceptance-viewport.json
-            acceptance-viewport-evidence/*/stage-*.png
-            acceptance-viewport-evidence/*/downloads/
-            /tmp/acceptance-viewport.log
-            /tmp/startup-scroll.log
-            /tmp/startup-scroll-*.png
-          if-no-files-found: warn
-
-      - name: Build static application for operator verification
-        if: steps.reuse.outputs.reused != 'true'
-        run: node build-static-site.mjs --out _site --source-commit "$GITHUB_SHA" --workflow-run "$GITHUB_RUN_ID"
-
-      - name: Local Chromium supporting paths
-        if: steps.reuse.outputs.reused != 'true'
-        env:
-          BROWSER: /usr/bin/google-chrome
-          STATIC_SITE_ROOT: _site
-          CLOSED_LOOP_BROWSER_SCOPE: LOCAL
-        run: |
-          set -euo pipefail
-          if [ ! -x "$BROWSER" ]; then
-            BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
-            export BROWSER
-          fi
-          test -n "$BROWSER"
-          python3 -m http.server 4173 --directory _site >/tmp/closed-loop-http.log 2>&1 &
-          SERVER_PID=$!
-          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
-          run_browser_verifier() {
-            script="$1"
-            budget="${2:-10m}"
-            log="/tmp/${script}.log"
-            # A failed gate stays failed. Startup readiness is bounded in the
-            # browser driver; classified infrastructure failures may be rerun
-            # explicitly against the unchanged SHA after their logs are read.
-            timeout --signal=TERM --kill-after=10s "$budget" node collect-verification-evidence.mjs --browser-suite="$script" --browser-scope="$CLOSED_LOOP_BROWSER_SCOPE" 2>&1 | tee "$log"
-          }
-          BROWSER_VERIFY_RESULT=0
-          # Keep all six supporting suites in their original relative order.
-          run_browser_verifier verify-browser-extra.mjs || BROWSER_VERIFY_RESULT=1
-          run_browser_verifier verify-browser.mjs || BROWSER_VERIFY_RESULT=1
-          run_browser_verifier verify-human-stage-walkthrough.mjs || BROWSER_VERIFY_RESULT=1
-          run_browser_verifier verify-mobile-stage-action.mjs || BROWSER_VERIFY_RESULT=1
-          run_browser_verifier verify-mobile-capability-journey.mjs || BROWSER_VERIFY_RESULT=1
-          run_browser_verifier verify-browser-recovery.mjs || BROWSER_VERIFY_RESULT=1
-          test "$BROWSER_VERIFY_RESULT" = 0
-          kill "$SERVER_PID" 2>/dev/null || true
-          trap - EXIT
-
-      - name: Preserve local supporting operator evidence
-        if: always() && steps.reuse.outputs.reused != 'true'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        env:
-          NODE_OPTIONS: ''
-        with:
-          name: supporting-operator-journeys-${{ github.sha }}-${{ github.run_id }}
-          path: |
-            recovery-browser-evidence/recovery.json
-            recovery-browser-evidence/stage-*.png
-            recovery-browser-evidence/downloads/
-            mobile-capability-evidence/capability.json
-            mobile-capability-evidence/stage-*.png
-            mobile-capability-evidence/downloads/
-            /tmp/verify-*.mjs.log
-          if-no-files-found: warn
-          retention-days: 30
-
-      - name: Validate local supporting browser receipts
-        if: steps.reuse.outputs.reused != 'true'
-        env:
-          STATIC_SITE_ROOT: _site
-        run: node collect-verification-evidence.mjs --require-browser-scope=LOCAL --exclude-browser-suite=verify-complete-operator-journey.mjs
-      - name: Preserve test checks proof
-        if: steps.reuse.outputs.reused != 'true'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        env:
-          NODE_OPTIONS: ''
-        with:
-          name: test-checks-proof-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: |
-            _site/
-            .verification-receipts/
-            TEST_PROJECT.json
-          include-hidden-files: true
-          if-no-files-found: error
-          retention-days: 30
-      - name: Normalize verifier child failure upload path
-        if: failure()
-        run: |
-          set -euo pipefail
-          canonical=$(realpath -m -- "$VERIFIER_CHILD_EVIDENCE_DIRECTORY")
-          printf 'VERIFIER_CHILD_EVIDENCE_DIRECTORY=%s\n' "$canonical" >> "$GITHUB_ENV"
-      - name: Preserve verifier child logs after an earlier failed gate
-        if: failure()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        env:
-          NODE_OPTIONS: ''
-        with:
-          name: test-checks-child-failure-${{ github.sha }}-${{ github.run_id }}
-          path: ${{ env.VERIFIER_CHILD_EVIDENCE_DIRECTORY }}/
-          retention-days: 30
-          if-no-files-found: warn
-
-  operator-journey:
-    name: operator-journey
-    needs: foundation
-    if: always()
-    permissions:
-      contents: read
-      actions: read
-      pull-requests: read
-    runs-on: ubuntu-latest
-    timeout-minutes: 360
-    env:
-      CLOSED_LOOP_VERIFICATION_SOURCE_ROOT: ${{ github.workspace }}
-      CLOSED_LOOP_VERIFICATION_RECEIPTS: ${{ github.workspace }}/.verification-receipts
-      VERIFIER_CHILD_EVIDENCE_DIRECTORY: /tmp/clrt-operator-journey-children
-      NODE_OPTIONS: --import ${{ github.workspace }}/verification-evidence-preload.mjs
-    steps:
-      - name: Require successful foundation job
-        run: test "${{ needs.foundation.result }}" = "success"
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        env:
-          # The repository preload does not exist until checkout completes.
-          NODE_OPTIONS: ''
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        with:
-          node-version: '22.23.3'
-
-      - name: Find completed PR verification for this main commit
-        id: candidate
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: node verified-site.mjs select
-      - name: Download the passing PR artifact
-        if: steps.candidate.outputs.artifact_id != ''
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          artifact-ids: ${{ steps.candidate.outputs.artifact_id }}
-          run-id: ${{ steps.candidate.outputs.run_id }}
-          github-token: ${{ github.token }}
-          merge-multiple: true
-          path: _verified-pr
-      - name: Verify matching source and promote tested runtime files
-        id: reuse
-        if: steps.candidate.outputs.artifact_id != ''
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: node verified-site.mjs reuse
-      - name: Download foundation proof
-        if: steps.reuse.outputs.reused != 'true'
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: foundation-proof-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: .
-      - name: Validate foundation ingestion receipt
-        if: steps.reuse.outputs.reused != 'true'
-        run: node collect-verification-evidence.mjs --export-owner=verify-ingestion.mjs
-      - name: Build independent local journey runtime
-        if: steps.reuse.outputs.reused != 'true'
-        run: node build-static-site.mjs --out _site --source-commit "$GITHUB_SHA" --workflow-run "$GITHUB_RUN_ID"
-      - name: Verify prepared runtime source and bytes
-        if: steps.reuse.outputs.reused != 'true'
-        run: node verified-site.mjs verify-prepared
-      - name: Complete local operator journey
-        if: steps.reuse.outputs.reused != 'true'
-        env:
-          BROWSER: /usr/bin/google-chrome
-          STATIC_SITE_ROOT: _site
-          CLOSED_LOOP_BROWSER_SCOPE: LOCAL
-        run: |
-          set -euo pipefail
-          if [ ! -x "$BROWSER" ]; then
-            BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
-            export BROWSER
-          fi
-          test -n "$BROWSER"
-          python3 -m http.server 4173 --directory _site >/tmp/operator-journey-http.log 2>&1 &
-          SERVER_PID=$!
-          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
-          run_browser_verifier() {
-            script="$1"
-            budget="$2"
-            timeout --signal=TERM --kill-after=10s "$budget" node collect-verification-evidence.mjs --browser-suite="$script" --browser-scope="$CLOSED_LOOP_BROWSER_SCOPE" 2>&1 | tee "/tmp/${script}.log"
-          }
-          # The approved dedicated job keeps a finite 330m journey budget and
-          # the existing 180s per-action wait via OPERATOR_ACTION_WAIT_MS.
-          run_browser_verifier verify-complete-operator-journey.mjs 330m
-          kill "$SERVER_PID" 2>/dev/null || true
-          trap - EXIT
-      - name: Validate complete local operator receipt
-        if: steps.reuse.outputs.reused != 'true'
-        env:
-          STATIC_SITE_ROOT: _site
-        run: node collect-verification-evidence.mjs --require-browser-scope=LOCAL --browser-suite-only=verify-complete-operator-journey.mjs
-      - name: Preserve complete operator journey evidence
-        if: always() && steps.reuse.outputs.reused != 'true'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        env:
-          NODE_OPTIONS: ''
-        with:
-          name: operator-journeys-${{ github.sha }}-${{ github.run_id }}
-          path: |
-            operator-evidence/
-            /tmp/verify-complete-operator-journey.mjs.log
-            /tmp/operator-journey-http.log
-            /tmp/clrt-operator-journey-children/
-          retention-days: 30
-          if-no-files-found: warn
-      - name: Preserve complete local operator receipt
-        if: steps.reuse.outputs.reused != 'true'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        env:
-          NODE_OPTIONS: ''
-        with:
-          name: operator-journey-receipt-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: .verification-receipts/browser/LOCAL/verify-complete-operator-journey.mjs.json
-          include-hidden-files: true
-          if-no-files-found: error
-          retention-days: 30
-
-  test:
-    name: test
-    needs: [foundation, deferred-matrix, workflow-gates, conformance, test-checks, operator-journey]
-    if: always()
-    permissions:
-      contents: read
-      actions: read
-      pull-requests: read
-    runs-on: ubuntu-latest
-    timeout-minutes: 360
-    env:
-      CLOSED_LOOP_VERIFICATION_SOURCE_ROOT: ${{ github.workspace }}
-      CLOSED_LOOP_VERIFICATION_RECEIPTS: ${{ github.workspace }}/.verification-receipts
-      VERIFIER_CHILD_EVIDENCE_DIRECTORY: ${{ github.workspace }}/../clrt-verifier-children
-      NODE_OPTIONS: --import ${{ github.workspace }}/verification-evidence-preload.mjs
-    outputs:
-      verified_artifact_name: ${{ steps.verified.outputs.artifact_name }}
-      verification_run_id: ${{ steps.reuse.outputs.run_id || github.run_id }}
-      verification_source_commit: ${{ steps.reuse.outputs.tested_commit || github.sha }}
-    steps:
-      - name: Require successful foundation job
-        run: test "${{ needs.foundation.result }}" = "success"
-      - name: Require successful workflow gate job
-        run: test "${{ needs.workflow-gates.result }}" = "success"
-      - name: Require successful deferred matrix job
-        run: test "${{ needs.deferred-matrix.result }}" = "success"
-      - name: Require successful conformance groups
-        run: test "${{ needs.conformance.result }}" = "success"
-      - name: Require successful test checks job
-        run: test "${{ needs.test-checks.result }}" = "success"
-      - name: Require successful operator journey job
-        run: test "${{ needs.operator-journey.result }}" = "success"
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        env:
-          # The repository preload does not exist until checkout completes.
-          NODE_OPTIONS: ''
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        with:
-          node-version: '22.23.3'
-
-      - name: Find completed PR verification for this main commit
-        id: candidate
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: node verified-site.mjs select
-      - name: Download the passing PR artifact
-        if: steps.candidate.outputs.artifact_id != ''
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          artifact-ids: ${{ steps.candidate.outputs.artifact_id }}
-          run-id: ${{ steps.candidate.outputs.run_id }}
-          github-token: ${{ github.token }}
-          merge-multiple: true
-          path: _verified-pr
-      - name: Verify matching source and promote tested runtime files
-        id: reuse
-        if: steps.candidate.outputs.artifact_id != ''
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: node verified-site.mjs reuse
-      - name: Download test checks proof
-        if: steps.reuse.outputs.reused != 'true'
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: test-checks-proof-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: .
-      - name: Verify prepared runtime source and bytes
-        if: steps.reuse.outputs.reused != 'true'
-        run: node verified-site.mjs verify-prepared
-      - name: Validate prepared local browser receipts
-        if: steps.reuse.outputs.reused != 'true'
-        env:
-          STATIC_SITE_ROOT: _site
-        run: node collect-verification-evidence.mjs --require-browser-scope=LOCAL --exclude-browser-suite=verify-complete-operator-journey.mjs
-      - name: Download complete local operator receipt
-        if: steps.reuse.outputs.reused != 'true'
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: operator-journey-receipt-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: .verification-receipts/browser/LOCAL
-      - name: Validate complete local browser receipt set
-        env:
-          STATIC_SITE_ROOT: _site
-        run: node collect-verification-evidence.mjs --require-browser-scope=LOCAL
-      - name: Preserve the exact browser-verified Pages artifact
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa
-        with:
-          path: _site
-
-      - name: Collect current executed assertion evidence
-        run: node collect-verification-evidence.mjs
-
-      # This is reached only after full verification or proven reuse of the
-      # identical Git tree and runtime bytes from a fully passing PR attempt.
-      - name: Seal verified deployment artifact
-        id: verified
-        run: node verified-site.mjs seal
-      - name: Preserve verified site for merge and live verification
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        env:
-          NODE_OPTIONS: ''
-        with:
-          name: ${{ steps.verified.outputs.artifact_name }}
-          path: _verified-site/
-          include-hidden-files: true
-          if-no-files-found: error
-          retention-days: 30
-      - name: Normalize verifier child failure upload path
-        if: failure()
-        run: |
-          set -euo pipefail
-          canonical=$(realpath -m -- "$VERIFIER_CHILD_EVIDENCE_DIRECTORY")
-          printf 'VERIFIER_CHILD_EVIDENCE_DIRECTORY=%s\n' "$canonical" >> "$GITHUB_ENV"
-      - name: Preserve verifier child logs after an earlier failed gate
-        if: failure()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        env:
-          NODE_OPTIONS: ''
-        with:
-          name: verifier-child-failure-${{ github.sha }}-${{ github.run_id }}
-          path: ${{ env.VERIFIER_CHILD_EVIDENCE_DIRECTORY }}/
-          retention-days: 30
-          if-no-files-found: warn
-
-  deploy:
-    name: Deploy exact verified bytes
-    permissions:
-      pages: write
-      id-token: write
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: test
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    outputs:
-      page_url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b
-      - name: Deploy application
-        id: deployment
-        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e
-
-  verify-live:
-    name: Verify deployed bytes and operator path
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [test, deploy]
-    runs-on: ubuntu-latest
-    timeout-minutes: 360
-    env:
-      PAGE_URL: ${{ needs.deploy.outputs.page_url }}
-      VERIFIED_SITE_DIR: _verified-site/site
-      CLOSED_LOOP_BROWSER_SCOPE: DEPLOYED
-      CLOSED_LOOP_VERIFICATION_RECEIPTS: ${{ github.workspace }}/.verification-receipts
-      VERIFIER_CHILD_EVIDENCE_DIRECTORY: ${{ github.workspace }}/../clrt-verifier-children
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        with:
-          node-version: '22.23.3'
-      - name: Download the exact verified deployment files
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: ${{ needs.test.outputs.verified_artifact_name }}
-          path: _verified-site
-      - name: Restore the verified retained fixture
-        run: cp _verified-site/site/TEST_PROJECT.json TEST_PROJECT.json
-      - name: Exact deployed-byte verification
-        run: |
-          set -euo pipefail
-          node verify-live.mjs 2>&1 | tee /tmp/deployed-byte-proof.log
-      - name: Deployed Chromium operator path
-        run: |
-          set -euo pipefail
-          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
-          test -n "$BROWSER"
-          run_browser_verifier() {
-            script="$1"
-            budget="${2:-10m}"
-            log="/tmp/${script}.log"
-            # A failed gate stays failed. Startup readiness is bounded in the
-            # browser driver; classified infrastructure failures may be rerun
-            # explicitly against the unchanged SHA after their logs are read.
-            timeout --signal=TERM --kill-after=10s "$budget" node collect-verification-evidence.mjs --browser-suite="$script" --browser-scope="$CLOSED_LOOP_BROWSER_SCOPE" 2>&1 | tee "$log"
-          }
-          BROWSER_VERIFY_RESULT=0
-          run_browser_verifier verify-mobile-stage-action.mjs || BROWSER_VERIFY_RESULT=1
-          run_browser_verifier verify-mobile-capability-journey.mjs || BROWSER_VERIFY_RESULT=1
-          run_browser_verifier verify-browser-recovery.mjs || BROWSER_VERIFY_RESULT=1
-          run_browser_verifier verify-browser.mjs || BROWSER_VERIFY_RESULT=1
-          run_browser_verifier verify-browser-extra.mjs || BROWSER_VERIFY_RESULT=1
-          run_browser_verifier verify-human-stage-walkthrough.mjs || BROWSER_VERIFY_RESULT=1
-          test "$BROWSER_VERIFY_RESULT" = 0
-
-      - name: Preserve deployed operator evidence
-        if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        env:
-          NODE_OPTIONS: ''
-        with:
-          name: deployed-operator-journeys-${{ github.sha }}-${{ github.run_id }}
-          path: |
-            recovery-browser-evidence/
-            mobile-capability-evidence/
-            /tmp/verify-*.mjs.log
-            /tmp/deployed-byte-proof.log
-          retention-days: 90
-          if-no-files-found: warn
-
-      - name: Validate supporting deployed browser receipts
-        run: node collect-verification-evidence.mjs --require-browser-scope=DEPLOYED --exclude-browser-suite=verify-complete-operator-journey.mjs
-      - name: Preserve current deployed browser assertion receipts
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        env:
-          NODE_OPTIONS: ''
-        with:
-          name: deployed-browser-receipts-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: .verification-receipts/browser/DEPLOYED/
-          include-hidden-files: true
-          retention-days: 90
-          if-no-files-found: error
-
-  deployed-operator-journey:
-    name: deployed-operator-journey
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [test, deploy, verify-live]
-    permissions:
-      contents: read
-    runs-on: ubuntu-latest
-    timeout-minutes: 360
-    env:
-      PAGE_URL: ${{ needs.deploy.outputs.page_url }}
-      VERIFIED_SITE_DIR: _verified-site/site
-      CLOSED_LOOP_BROWSER_SCOPE: DEPLOYED
-      CLOSED_LOOP_VERIFICATION_SOURCE_ROOT: ${{ github.workspace }}
-      CLOSED_LOOP_VERIFICATION_RECEIPTS: ${{ github.workspace }}/.verification-receipts
-      VERIFIER_CHILD_EVIDENCE_DIRECTORY: /tmp/clrt-deployed-operator-journey-children
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        with:
-          node-version: '22.23.3'
-      - name: Download the exact verified deployment files
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: ${{ needs.test.outputs.verified_artifact_name }}
-          path: _verified-site
-      - name: Restore the verified retained fixture
-        run: cp _verified-site/site/TEST_PROJECT.json TEST_PROJECT.json
-      - name: Complete deployed operator journey
-        run: |
-          set -euo pipefail
-          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
-          test -n "$BROWSER"
-          run_browser_verifier() {
-            script="$1"
-            budget="$2"
-            timeout --signal=TERM --kill-after=10s "$budget" node collect-verification-evidence.mjs --browser-suite="$script" --browser-scope="$CLOSED_LOOP_BROWSER_SCOPE" 2>&1 | tee "/tmp/${script}.log"
-          }
-          run_browser_verifier verify-complete-operator-journey.mjs 330m
-      - name: Validate complete deployed operator receipt
-        run: node collect-verification-evidence.mjs --require-browser-scope=DEPLOYED --browser-suite-only=verify-complete-operator-journey.mjs
-      - name: Preserve complete deployed operator journey evidence
-        if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        env:
-          NODE_OPTIONS: ''
-        with:
-          name: deployed-complete-operator-journey-${{ github.sha }}-${{ github.run_id }}
-          path: |
-            operator-evidence/
-            /tmp/verify-complete-operator-journey.mjs.log
-            /tmp/clrt-deployed-operator-journey-children/
-          retention-days: 90
-          if-no-files-found: warn
-      - name: Preserve complete deployed operator receipt
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        env:
-          NODE_OPTIONS: ''
-        with:
-          name: deployed-operator-journey-receipt-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: .verification-receipts/browser/DEPLOYED/verify-complete-operator-journey.mjs.json
-          include-hidden-files: true
-          if-no-files-found: error
-          retention-days: 90
-
-  reverified-operator-journey:
-    name: reverified-operator-journey
-    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
-    needs: test
-    permissions:
-      contents: read
-    runs-on: ubuntu-latest
-    timeout-minutes: 360
-    env:
-      PAGE_URL: https://sjonesjones917.github.io/closed-loop-tracker/
-      VERIFIED_SITE_DIR: _verified-site/site
-      CLOSED_LOOP_BROWSER_SCOPE: DEPLOYED
-      CLOSED_LOOP_VERIFICATION_SOURCE_ROOT: ${{ github.workspace }}
-      CLOSED_LOOP_VERIFICATION_RECEIPTS: ${{ github.workspace }}/.verification-receipts
-      VERIFIER_CHILD_EVIDENCE_DIRECTORY: /tmp/clrt-reverified-operator-journey-children
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        with:
-          node-version: '22.23.3'
-      - name: Download the exact verified deployment files
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: ${{ needs.test.outputs.verified_artifact_name }}
-          path: _verified-site
-      - name: Restore the verified retained fixture
-        run: cp _verified-site/site/TEST_PROJECT.json TEST_PROJECT.json
-      - name: Complete reverified operator journey
-        run: |
-          set -euo pipefail
-          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
-          test -n "$BROWSER"
-          run_browser_verifier() {
-            script="$1"
-            budget="$2"
-            timeout --signal=TERM --kill-after=10s "$budget" node collect-verification-evidence.mjs --browser-suite="$script" --browser-scope="$CLOSED_LOOP_BROWSER_SCOPE" 2>&1 | tee "/tmp/${script}.log"
-          }
-          run_browser_verifier verify-complete-operator-journey.mjs 330m
-      - name: Validate complete reverified operator receipt
-        run: node collect-verification-evidence.mjs --require-browser-scope=DEPLOYED --browser-suite-only=verify-complete-operator-journey.mjs
-      - name: Preserve complete reverified operator journey evidence
-        if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        env:
-          NODE_OPTIONS: ''
-        with:
-          name: reverified-complete-operator-journey-${{ github.sha }}-${{ github.run_id }}
-          path: |
-            operator-evidence/
-            /tmp/verify-complete-operator-journey.mjs.log
-            /tmp/clrt-reverified-operator-journey-children/
-          retention-days: 90
-          if-no-files-found: warn
-      - name: Preserve complete reverified operator receipt
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        env:
-          NODE_OPTIONS: ''
-        with:
-          name: reverified-operator-journey-receipt-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: .verification-receipts/browser/DEPLOYED/verify-complete-operator-journey.mjs.json
-          include-hidden-files: true
-          if-no-files-found: error
-          retention-days: 90
-
-  publish-status:
-    name: Publish machine acceptance status
-    if: >-
-      always() && github.ref == 'refs/heads/main' &&
-      ((github.event_name == 'push' && needs.test.result == 'success' && needs.deploy.result == 'success' && needs.verify-live.result == 'success' && needs.deployed-operator-journey.result == 'success') ||
-       (github.event_name == 'workflow_dispatch' && needs.test.result == 'success' && needs.reverified-operator-journey.result == 'success'))
-    needs: [test, deploy, verify-live, deployed-operator-journey, reverified-operator-journey]
-    runs-on: ubuntu-latest
-    env:
-      CLOSED_LOOP_VERIFICATION_SOURCE_ROOT: ${{ github.workspace }}
-      CLOSED_LOOP_VERIFICATION_RECEIPTS: ${{ github.workspace }}/.verification-receipts
-      VERIFIER_CHILD_EVIDENCE_DIRECTORY: ${{ github.workspace }}/../clrt-verifier-children
-      # Publication consumes reconciled proof; missing registered receipts block it.
-      CLOSED_LOOP_REQUIRE_CURRENT_OWNER_RECEIPTS: '1'
-      NODE_OPTIONS: --import ${{ github.workspace }}/verification-evidence-preload.mjs
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        env:
-          NODE_OPTIONS: ''
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        with:
-          node-version: '22.23.3'
-      - name: Download current executed assertion evidence
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: ${{ needs.test.outputs.verified_artifact_name }}
-          path: _verified-evidence
-      - name: Validate current executed assertion evidence handoff
-        run: |
-          set -euo pipefail
-          mkdir -p .verification-receipts
-          cp -R _verified-evidence/proofs/. .verification-receipts/
-          node collect-verification-evidence.mjs
-      - name: Reverify deployed Chromium for authenticated mobile acceptance
-        if: github.event_name == 'workflow_dispatch'
-        env:
-          PAGE_URL: https://sjonesjones917.github.io/closed-loop-tracker/
-          VERIFIED_SITE_DIR: _verified-evidence/site
-          CLOSED_LOOP_BROWSER_SCOPE: DEPLOYED
-        run: |
-          set -euo pipefail
-          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
-          test -n "$BROWSER"
-          run_browser_verifier() {
-            script="$1"
-            budget="${2:-10m}"
-            log="/tmp/${script}.log"
-            # A failed gate stays failed. Startup readiness is bounded in the
-            # browser driver; classified infrastructure failures may be rerun
-            # explicitly against the unchanged SHA after their logs are read.
-            timeout --signal=TERM --kill-after=10s "$budget" node collect-verification-evidence.mjs --browser-suite="$script" --browser-scope="$CLOSED_LOOP_BROWSER_SCOPE" 2>&1 | tee "$log"
-          }
-          BROWSER_VERIFY_RESULT=0
-          run_browser_verifier verify-mobile-stage-action.mjs || BROWSER_VERIFY_RESULT=1
-          run_browser_verifier verify-mobile-capability-journey.mjs || BROWSER_VERIFY_RESULT=1
-          run_browser_verifier verify-browser-recovery.mjs || BROWSER_VERIFY_RESULT=1
-          run_browser_verifier verify-browser.mjs || BROWSER_VERIFY_RESULT=1
-          run_browser_verifier verify-browser-extra.mjs || BROWSER_VERIFY_RESULT=1
-          run_browser_verifier verify-human-stage-walkthrough.mjs || BROWSER_VERIFY_RESULT=1
-          test "$BROWSER_VERIFY_RESULT" = 0
-      - name: Preserve reverified deployed operator evidence
-        if: always() && github.event_name == 'workflow_dispatch'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        env:
-          NODE_OPTIONS: ''
-        with:
-          name: reverified-deployed-operator-journeys-${{ github.sha }}-${{ github.run_id }}
-          path: |
-            recovery-browser-evidence/
-            mobile-capability-evidence/
-            /tmp/verify-*.mjs.log
-          retention-days: 90
-          if-no-files-found: warn
-      - name: Download current deployed browser assertion receipts
-        if: github.event_name == 'push'
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: deployed-browser-receipts-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: .verification-receipts/browser/DEPLOYED
-      - name: Download complete deployed operator receipt
-        if: github.event_name == 'push'
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: deployed-operator-journey-receipt-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: .verification-receipts/browser/DEPLOYED
-      - name: Download complete reverified operator receipt
-        if: github.event_name == 'workflow_dispatch'
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: reverified-operator-journey-receipt-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: .verification-receipts/browser/DEPLOYED
-      - name: Reconcile local and deployed current assertion receipts
-        env:
-          VERIFIED_SITE_DIR: _verified-evidence/site
-        run: |
-          set -euo pipefail
-          node collect-verification-evidence.mjs --require-browser-scope=LOCAL
-          node collect-verification-evidence.mjs --require-browser-scope=DEPLOYED
-          node collect-verification-evidence.mjs
-      - name: Build acceptance artifact from executed proof jobs
-        id: acceptance
-        env:
-          TEST_RESULT: ${{ needs.test.result }}
-          DEPLOY_RESULT: ${{ github.event_name == 'workflow_dispatch' && 'success' || needs.deploy.result }}
-          LIVE_RESULT: ${{ github.event_name == 'workflow_dispatch' && 'success' || needs.verify-live.result }}
-          VERIFICATION_RUN_ID: ${{ needs.test.outputs.verification_run_id }}
-          VERIFICATION_SOURCE_COMMIT: ${{ needs.test.outputs.verification_source_commit }}
-          MOBILE_ACCEPTANCE_TARGET_JSON: ${{ inputs.mobile_acceptance_target_json || '' }}
-          MOBILE_ACCEPTANCE_EVIDENCE_JSON: ${{ inputs.mobile_acceptance_evidence_json || '' }}
-          VISUAL_BASELINE_EVIDENCE_JSON: ${{ inputs.visual_baseline_evidence_json || '' }}
-        run: |
-          set -euo pipefail
-          test "$TEST_RESULT" = success
-          test "$DEPLOY_RESULT" = success
-          test "$LIVE_RESULT" = success
-          node verify-definition-of-done.mjs > /tmp/definition.json
-          node verify-v3-definition-of-done.mjs > /tmp/v3.json
-          node collect-verification-evidence.mjs --export-owner=verify-ingestion.mjs > /tmp/ingestion.out
-          node collect-verification-evidence.mjs --export-owner=verify-stage01-intake-closure.mjs --report-marker=stage01IntakeClosure > /tmp/stage01.out
-          node verify-zero-loss-accounting.mjs > /tmp/zero-loss.out
-          node collect-verification-evidence.mjs --export-owner=verify-full-cycle.mjs --report-marker=stagesCompleted > /tmp/full-cycle.json
-          node verify-data-route-closure.mjs > /tmp/data-route.json
-          node verify-infrastructure-route-closure.mjs > /tmp/infrastructure-route.json
-          node collect-verification-evidence.mjs --export-owner=verify-mobile-release-governance.mjs --report-marker=mobileReleaseGovernance > /tmp/mobile-governance.json
-          USED_MOBILE_CHALLENGES_JSON="$(git ls-remote --tags origin 'refs/tags/mobile-acceptance-challenge-*' | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const a=s.split(/\n/).filter(Boolean).map(l=>l.trim().split(/\s+/)[1]||'').map(r=>r.replace('refs/tags/mobile-acceptance-challenge-','').replace(/\^\{\}$/,'')).filter(Boolean);process.stdout.write(JSON.stringify([...new Set(a)]));});")"
-          export USED_MOBILE_CHALLENGES_JSON
-          node --input-type=module - <<'NODE'
-          import fs from 'node:fs';
-          import {evaluateFinalAcceptance} from './final-acceptance.mjs';
-          import {selectExecutionReport} from './execution-report.mjs';
+          import path from 'node:path';
+          import http from 'node:http';
           import {execFileSync} from 'node:child_process';
-          import {resolveVisualBaselineSubmission} from './visual-baseline-submission.mjs';
-          import {applyExecutedEvidence,readReleaseExecutedEvidence} from './verification-evidence.mjs';
-          import {evaluateMobileAcceptanceSubmission} from './evaluate-mobile-acceptance-submission.mjs';
-          const definition=JSON.parse(fs.readFileSync('/tmp/definition.json','utf8'));
-          const v3=JSON.parse(fs.readFileSync('/tmp/v3.json','utf8'));
-          const stage01=JSON.parse(fs.readFileSync('/tmp/stage01.out','utf8'));
-          const zeroLoss=selectExecutionReport(fs.readFileSync('/tmp/zero-loss.out','utf8'),'zeroLossStage01');
-          const fullCycle=JSON.parse(fs.readFileSync('/tmp/full-cycle.json','utf8'));
-          const dataRoute=JSON.parse(fs.readFileSync('/tmp/data-route.json','utf8'));
-          const infrastructureRoute=JSON.parse(fs.readFileSync('/tmp/infrastructure-route.json','utf8'));
-          const mobileGovernance=JSON.parse(fs.readFileSync('/tmp/mobile-governance.json','utf8'));
-          const executedEvidence=await readReleaseExecutedEvidence('.verification-receipts/evidence.json',{siteDirectory:'_verified-evidence/site',targetJson:process.env.MOBILE_ACCEPTANCE_TARGET_JSON||'',evidenceJson:process.env.MOBILE_ACCEPTANCE_EVIDENCE_JSON||'',submitter:process.env.GITHUB_ACTOR,usedChallenges:JSON.parse(process.env.USED_MOBILE_CHALLENGES_JSON||'[]')});
-          const mobileAcceptance=executedEvidence.externalMobileResult||evaluateMobileAcceptanceSubmission(executedEvidence.externalMobile||{submitter:process.env.GITHUB_ACTOR});
-          const ingestionText=fs.readFileSync('/tmp/ingestion.out','utf8');
-          const stage01RawInputAccounting=Number(Boolean(stage01.stage01IntakeClosure&&stage01.currentManifestBound&&stage01.incompleteAccountingRejected));
-          const stage01RequiredFileInspectionAccounting=Number(Boolean(stage01.artifactIdentityBound&&stage01.currentManifestBound&&stage01.incompleteAccountingRejected));
-          const stage01AcceptedSemanticMappingCoverage=Number(Boolean(zeroLoss.zeroLossStage01&&zeroLoss.incompleteIntakeRejected));
-          const stage04ObligationAccounting=Number(Boolean(zeroLoss.zeroLossStage04&&zeroLoss.completeStage03ResearchUnion&&zeroLoss.incompleteObligationRejected));
-          const negativeMatches=[...ingestionText.matchAll(/"totalNegativeCases"\s*:\s*(\d+)/g)];
-          if(!negativeMatches.length)throw new Error('Ingestion proof did not publish totalNegativeCases.');
-          if(dataRoute.dataRouteClosure!=='PASS')throw new Error('Canonical data-route closure proof did not pass.');
-          if(infrastructureRoute.infrastructureRouteClosure!=='PASS')throw new Error('Infrastructure route-closure proof did not pass.');
-          if(mobileGovernance.mobileReleaseGovernance!=='PASS')throw new Error('Physical-iPhone release-tag governance proof did not pass.');
-          // A favorable top-level summary must never mask incomplete detailed proof.
-          for(const [key,value] of Object.entries({stage01RawInputAccounting,stage01RequiredFileInspectionAccounting,stage01AcceptedSemanticMappingCoverage,stage04ObligationAccounting})){
-            if(v3.section49CoverageMetrics?.[key]?.value!==value)throw new Error(`Conflicting executed metric evidence: ${key}`);
-          }
-          const physicalIPhoneAccepted=mobileAcceptance.actualIPhoneSafariAcceptance===true&&mobileAcceptance.mobileAcceptanceResult==='ACCEPTED';
-          const finalAcceptancePublication=false;
-          let report={
-            commit:process.env.GITHUB_SHA,
-            verificationSource:{runId:process.env.VERIFICATION_RUN_ID,sourceCommit:process.env.VERIFICATION_SOURCE_COMMIT},
-            workflow:'mobile-closed-loop/30',
-            contractProfileId:'closed-loop-completion-profile/1',
-            projectSchema:'closed-loop-project/3',
-            responseSchema:'closed-loop-stage-response/3',
-            testIrSchema:'closed-loop-test-spec/1',
-            verificationPackageSchema:'closed-loop-verification-package/1',
-            stageCount:30,
-            ...definition,
-            ...v3,
-            dataRouteClosure:dataRoute.dataRouteClosure,
-            infrastructureRouteClosure:infrastructureRoute.infrastructureRouteClosure,
-            routeOperationsChecked:dataRoute.operationsChecked,
-            routeCanonicalFamilies:dataRoute.canonicalFamilies,
-            routeReadEdgesChecked:dataRoute.readEdgesChecked,
-            routeWritableCollectionsChecked:dataRoute.writableCollectionsChecked,
-            routeWritableFieldsChecked:dataRoute.writableFieldsChecked,
-            routeRelationshipDefinitionsChecked:dataRoute.relationshipDefinitionsChecked,
-            routeInvalidationStagesChecked:dataRoute.invalidationStagesChecked,
-            routeCurrentScopeStaleExclusion:dataRoute.currentScopeStaleExclusion,
-            routePromptReadSerialization:dataRoute.promptReadSerialization,
-            routeResponseAuthorizationClosure:dataRoute.responseAuthorizationClosure,
-            routeProvenanceContractClosure:dataRoute.provenanceContractClosure,
-            routeDownstreamForwardingClosure:dataRoute.downstreamForwardingClosure,
-            routeDownstreamOnlyInvalidation:dataRoute.downstreamOnlyInvalidation,
-            routeSubjectNeutralPromptAuthority:dataRoute.subjectNeutralPromptAuthority,
-            routeHumanExperiencePromptContract:dataRoute.humanExperiencePromptContract,
-            infrastructureFamiliesChecked:infrastructureRoute.infrastructureFamilies,
-            infrastructureRawFirstCapture:infrastructureRoute.rawFirstCapture,
-            infrastructurePrecommitRevalidation:infrastructureRoute.precommitRevalidation,
-            infrastructureExtractionManifestProvenance:infrastructureRoute.extractionManifestProvenance,
-            infrastructurePromptContextManifestRoute:infrastructureRoute.promptContextManifestRoute,
-            infrastructureAuthorityPartitionsSeparated:infrastructureRoute.authorityPartitionsSeparated,
-            infrastructureCurrentScopeRoute:infrastructureRoute.currentScopeRoute,
-            infrastructurePersistenceIntegrityRoute:infrastructureRoute.persistenceIntegrityRoute,
-            infrastructureStructuredOperatorActionRoute:infrastructureRoute.structuredOperatorActionRoute,
-            currentScopeSelectorCoverage:definition.currentScopeSelectorCoverage,
-            exactReqRunTestCoverage:definition.exactReqRunTestCoverage,
-            applicableCurrentRegressionSuccess:definition.applicableCurrentRegressionSuccess,
-            mandatoryEvidenceChainStructuralCoverage:definition.mandatoryEvidenceChainCoverage,
-            mandatoryEvidenceSufficiencyCoverage:v3.mandatoryEvidenceSufficiencyCoverage,
-            releaseArtifactIdentityCoverage:definition.releaseArtifactIdentityCoverage,
-            unauthorizedFieldMutationsAccepted:definition.unauthorizedFieldMutationsAccepted,
-            canonicalMutationsBeforeAcceptance:definition.canonicalMutationsBeforeAcceptance,
-            partialCommitsAfterInjectedFailure:definition.partialCommitsAfterInjectedFailure,
-            staleProposalsAccepted:definition.staleProposalsAccepted,
-            crossProjectRelationshipsAccepted:definition.crossProjectRelationshipsAccepted,
-            historicalScopeSatisfyingCurrentGates:definition.historicalScopeSatisfyingCurrentGates,
-            unmatchedDeliveryFilesAuthorized:definition.unmatchedDeliveryFilesAuthorized,
-            appendOnlyHistoryRewritesAccepted:definition.appendOnlyHistoryRewritesAccepted,
-            unsupportedTestIrTreatedAsExecutable:v3.unsupportedTestIrTreatedAsExecutable,
-            externalAssertionsOverridingApplicationProof:v3.externalAssertionsOverridingApplicationProof,
-            nativeExecutionReceiptsFabricatedExternally:v3.nativeExecutionReceiptsFabricatedExternally,
-            releaseAcceptedWithContradiction:v3.releaseAcceptedWithContradiction,
-            stage01RawInputAccounting,
-            stage01RequiredFileInspectionAccounting,
-            stage01AcceptedSemanticMappingCoverage,
-            stage04ObligationAccounting,
-            stagesCompleted:Number(fullCycle.stagesCompleted||0),
-            negativeCasesPassed:Number(negativeMatches.at(-1)[1]),
-            deployedByteIdentity:process.env.LIVE_RESULT==='success',
-            deploymentManifestSchema:'closed-loop-deployment-manifest/1',
-            finalDeploymentResourceIdentityCoverage:process.env.LIVE_RESULT==='success'?1:0,
-            localChromiumAcceptance:process.env.TEST_RESULT==='success',
-            deployedChromiumAcceptance:process.env.LIVE_RESULT==='success',
-            testedBrowserWidths:[320,393,'desktop'],
-            mobileReleaseTagGovernanceCoverage:Number(mobileGovernance.mobileReleaseGovernance==='PASS'),
-            ...mobileAcceptance,
-            finalAcceptancePublication,
-            releaseTagEligible:finalAcceptancePublication,
-            realThirtyStageProjectAcceptance:false,
-            fullProductionMaturity:false,
-            jobResults:{test:process.env.TEST_RESULT,deploy:process.env.DEPLOY_RESULT,live:process.env.LIVE_RESULT,physicalIPhone:mobileAcceptance.physicalIPhoneJobResult},
-            nextProofStep:finalAcceptancePublication?'Use the authorized repository connection to recheck this exact acceptance report, consume its unused challenge marker, and create the release tag for this commit.':'Pinned actual-iPhone Safari acceptance for the exact deployed commit and deployment manifest.',
-            proofSources:{
-              ownership:'verify.mjs',
-              canonicalDataRoutes:'verify-data-route-closure.mjs',
-              infrastructureRoutes:'verify-infrastructure-route-closure.mjs',
-              migration:'verify-v3-migration.mjs',
-              stage01:'verify-stage01-intake-closure.mjs',
-              stage01Reuse:'verify-one-time-intent-intake.mjs',
-              stage04:'verify-zero-loss-accounting.mjs',
-              testIr:'verify-test-runtime-v3.mjs',
-              limits:'verify-test-runtime-limits.mjs',
-              ingestion:'verify-ingestion.mjs',
-              workflow:'verify-complete.mjs',
-              fullCycle:'verify-full-cycle.mjs',
-              prompts:'verify-prompt-semantics.mjs',
-              localBrowser:'verify-browser.mjs and verify-browser-extra.mjs',
-              deployedIdentity:'verify-live.mjs or evaluate-mobile-acceptance-submission.mjs exact deployed manifest/resource verification',
-              deploymentManifest:'build-static-site.mjs and verify-deployment-manifest.mjs',
-              deployedBrowser:'verify-browser.mjs and verify-browser-extra.mjs',
-              physicalIPhoneReleaseGovernance:'verify-mobile-release-governance.mjs',
-              physicalIPhoneAcceptance:physicalIPhoneAccepted?`${mobileAcceptance.mobileAcceptanceEvidenceId} (${mobileAcceptance.mobileAcceptanceEvidenceBasis})`:'BLOCKED_ENVIRONMENT or BLOCKED: current physical-device evidence did not satisfy the gate'
-            }
-          };
-          const mobileMetric=report.section49CoverageMetrics.actualIPhoneSafariAcceptanceCoverage;
-          mobileMetric.numerator=Number(physicalIPhoneAccepted);
-          mobileMetric.value=Number(physicalIPhoneAccepted);
-          mobileMetric.disposition=physicalIPhoneAccepted?'SATISFIED':mobileAcceptance.mobileAcceptanceResult;
-          mobileMetric.scopeHash=`commit:${report.commit}:manifest:${mobileAcceptance.mobileAcceptanceDeploymentManifestDigest||'UNPROVEN'}`;
-          mobileMetric.evidenceReferences=physicalIPhoneAccepted?[`mobile-evidence:${mobileAcceptance.mobileAcceptanceEvidenceId}`,`submitter:${mobileAcceptance.mobileAcceptanceSubmitter}`]:['evaluate-mobile-acceptance-submission.mjs:physical-proof-unavailable'];
-          report.actualIPhoneSafariAcceptanceCoverage=mobileMetric.value;
-          report=applyExecutedEvidence(report,executedEvidence);
-          // Resolve only the supplied exact source object in this repository.
-          // A shallow checkout may need that immutable predecessor object; no
-          // branch, checkout, workflow run, or published history is changed.
-          if(process.env.VISUAL_BASELINE_EVIDENCE_JSON?.trim()){
-            let sourceCommit;
-            try{sourceCommit=JSON.parse(process.env.VISUAL_BASELINE_EVIDENCE_JSON)?.sourceCommit;}catch{} // The owning parser reports malformed input.
-            if(typeof sourceCommit==='string'&&/^[0-9a-f]{40}$/.test(sourceCommit)){
-              try{execFileSync('git',['cat-file','-e',`${sourceCommit}^{commit}`],{stdio:'pipe',timeout:30000});}
-              catch{execFileSync('git',['fetch','--no-tags','--depth=1','origin',sourceCommit],{stdio:'pipe',timeout:30000});}
-            }
-          }
-          const visualBaseline=resolveVisualBaselineSubmission({
-            inputJson:process.env.VISUAL_BASELINE_EVIDENCE_JSON,
-            ledgerVisualBaseline:JSON.parse(fs.readFileSync('verification/closed-loop-build-state.json','utf8')).visualBaseline,
-            eventName:process.env.GITHUB_EVENT_NAME,ref:process.env.GITHUB_REF,
-            submitter:process.env.GITHUB_ACTOR,commit:report.commit,
-            deploymentManifestDigest:report.mobileAcceptanceDeploymentManifestDigest
+          import {createHash} from 'node:crypto';
+          import {pathToFileURL} from 'node:url';
+          const [suite, outArg] = process.argv.slice(2), out = path.resolve(outArg), source = process.cwd();
+          assert(['verify-mobile-capability-journey.mjs', 'verify-browser-recovery.mjs'].includes(suite));
+          const git = (...args) => execFileSync('git', args, {encoding: 'utf8'}).trim();
+          const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+          const expected = 'a5cd6c34d06891285dca9326708b5160c0c47b8a';
+          assert.equal(git('rev-parse', 'HEAD'), expected);
+          assert.equal(git('rev-parse', 'HEAD^{tree}'), '45c318632a0935e68864ec11b6689a35c0d50180');
+          assert.equal(git('status', '--porcelain'), '');
+          assert.equal(process.version, 'v22.23.3'); assert.equal(process.platform, 'linux'); assert.equal(process.arch, 'x64');
+          assert.equal(execFileSync(process.env.BROWSER, ['--product-version'], {encoding: 'utf8'}).trim(), '156.0.8078.79');
+          assert.equal(process.env.NODE_OPTIONS, '--import ' + path.join(source, 'verification-evidence-preload.mjs'));
+          assert.equal(process.env.CLOSED_LOOP_VERIFICATION_SOURCE_ROOT, source);
+          assert.equal(process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS, path.join(out, 'receipts'));
+          assert.equal(process.env.VERIFIER_CHILD_EVIDENCE_DIRECTORY, path.join(out, 'children'));
+          assert.equal(process.env.STATIC_SITE_ROOT, path.join(out, 'site'));
+          assert.equal(process.env.MOBILE_EVIDENCE_DIR, path.join(out, 'mobile-capability-evidence'));
+          assert.equal(process.env.RECOVERY_EVIDENCE_DIR, path.join(out, 'recovery-browser-evidence'));
+          for (const key of ['OPERATOR_DRIVER_MODULE', 'BASELINE_COMMIT', 'CLOSED_LOOP_VERIFIER_OWNER_FD']) assert(!process.env[key], 'Unexpected diagnostic override: ' + key);
+          const {executeGate} = await import(pathToFileURL(path.join(source, 'verify-conformance-regressions.mjs')));
+          const {evidenceFingerprint,readExecutionReceipts} = await import(pathToFileURL(path.join(source, 'verification-evidence.mjs')));
+          const {browserVerificationCatalog} = await import(pathToFileURL(path.join(source, 'verification-evidence-catalog.mjs')));
+          assert.equal(browserVerificationCatalog[suite].timeoutMs, 600000);
+          assert(fs.readFileSync('operator-browser-driver.mjs', 'utf8').includes('captureExecution=false,actionTimeoutMs=90000}={}'));
+          const fingerprint = evidenceFingerprint(source);
+          assert.equal(fingerprint.sourceCommit, expected);
+          assert.equal(fingerprint.sourceTree, '45c318632a0935e68864ec11b6689a35c0d50180');
+          assert.equal(sha(fs.readFileSync('project-store.js')),'720c65a6dfd778e05a4c43e03afcd4e89c777dc2a80b665552cd1ebd9014809a');
+          assert.equal(sha(fs.readFileSync('operator-browser-driver.mjs')),'a140064f45aa4c73fe53f17aa850a5e629beebe1ed6557192d0c34311608e3c9');
+          assert.equal(sha(fs.readFileSync('TEST_PROJECT.json')),'8352b036eca02dfd86bb441df4ea3fe0ea54b9ad6bcaaee9a000219ddfae09c5');
+          for(const directory of ['receipts','children','mobile-capability-evidence','recovery-browser-evidence'])assert(!fs.existsSync(path.join(out,directory)), 'Fresh normal evidence and profile required: '+directory);
+          assert.equal(fingerprint.sourceInputsSha256, '9d9bffeed7ec8430f6e2504b574c0a4b5621c69ad7e5a9760be07aba1c304c5e');
+          fs.writeFileSync(path.join(out, 'source-identity-before.json'), JSON.stringify(fingerprint, null, 2) + '\n');
+          const site = path.join(out, 'site'), manifest = fs.readFileSync(path.join(site, 'closed-loop-deployment-manifest.json'));
+          const {verifyPreparedSite}=await import(pathToFileURL(path.join(source,'verified-site.mjs')));
+          const prepared=await verifyPreparedSite({cwd:source,directory:site,context:{commit:expected,runId:process.env.GITHUB_RUN_ID}});
+          assert.deepEqual(prepared,JSON.parse(manifest));
+          fs.writeFileSync(path.join(out,'fresh-fixture-binding.json'),JSON.stringify({sourceCommit:expected,sourceTree:fingerprint.sourceTree,fixtureSource:'CURRENT_TRACKED_TEST_PROJECT',fixtureSha256:sha(fs.readFileSync('TEST_PROJECT.json')),fixtureSubstitution:false,retainedProfileRestored:false,actualVerifyPreparedSitePassed:true,buildIdentity:prepared.buildIdentity,manifestDigest:prepared.manifestDigest.digest,browserFixtures:'Unchanged normal owners create disposable projects and response/archive bytes through their original helpers and native controls.'},null,2)+'\n');
+          const requests = [], server = http.createServer((request, response) => {
+            try {
+              const pathname = decodeURIComponent(new URL(request.url, 'http://127.0.0.1').pathname);
+              const file = path.resolve(site, '.' + (pathname === '/' ? '/index.html' : pathname));
+              if (request.method !== 'GET' || !file.startsWith(site + path.sep) || !fs.statSync(file).isFile()) throw new Error('Unavailable path');
+              const bytes = fs.readFileSync(file), type = file.endsWith('.html') ? 'text/html; charset=utf-8' : file.endsWith('.js') ? 'text/javascript; charset=utf-8' : file.endsWith('.css') ? 'text/css; charset=utf-8' : file.endsWith('.json') ? 'application/json' : 'application/octet-stream';
+              requests.push({path: pathname, byteSize: bytes.length, sha256: sha(bytes)});
+              response.writeHead(200, {'Content-Type': type, 'Content-Length': bytes.length, 'Cache-Control': 'no-store'}); response.end(bytes);
+            } catch { response.writeHead(404); response.end(); }
           });
-          const finalGate=evaluateFinalAcceptance(report,{visualBaseline,executedEvidence});
-          report.finalAcceptanceGate=finalGate;
-          report.finalAcceptancePublication=finalGate.accepted;
-          report.releaseTagEligible=finalGate.accepted;
-          report.visualBaselineEvidence=visualBaseline;
-          report.nextProofStep=finalGate.accepted?'Use the authorized repository connection to recheck this exact acceptance report, consume its unused challenge marker, and create the release tag for this commit.':finalGate.blockers.map(item=>`${item.requiredActor}: ${item.code} (${item.path})`).join('; ');
-          fs.writeFileSync('closed-loop-acceptance.json',JSON.stringify(report,null,2)+'\n');
-          if(!process.env.GITHUB_OUTPUT)throw new Error('GITHUB_OUTPUT is unavailable.');
-          fs.appendFileSync(process.env.GITHUB_OUTPUT,[
-            `actual_iphone=${report.actualIPhoneSafariAcceptance}`,
-            `final_acceptance=${report.finalAcceptancePublication}`,
-            ''
-          ].join('\n'));
-          NODE
-      - name: Upload acceptance report
+          const controller = new AbortController(), relay = signal => controller.abort(signal);
+          process.on('SIGTERM', relay); process.on('SIGINT', relay);
+          let execution = null;
+          try {
+            await new Promise((resolve, reject) => { server.once('error', reject); server.listen(4173, '127.0.0.1', resolve); });
+            const response = await fetch('http://127.0.0.1:4173/closed-loop-deployment-manifest.json', {signal: AbortSignal.timeout(5000)});
+            assert(response.ok); assert.deepEqual(Buffer.from(await response.arrayBuffer()), manifest);
+            // Outer600s matches the normal workflow bound; collector's original catalog
+            // child also remains600s and its unchanged driver action boundary is90s.
+            execution = await executeGate({name: 'diagnostic-' + suite, command: process.execPath, args: ['collect-verification-evidence.mjs', '--browser-suite=' + suite, '--browser-scope=LOCAL']}, {cwd: source, directory: path.join(out, 'supervisor'), signal: controller.signal, timeoutMs: 600000, killGraceMs: 10000, maxOutputBytes: 64 * 1024 * 1024, forwardOutput: true, requireJson: false});
+            fs.writeFileSync(path.join(out, 'normal-cli-result.json'), JSON.stringify({diagnosticOnly: true, requiredCiCheck: false, sourceCommit: expected, suite, actionTimeoutMs: 90000, catalogTimeoutMs: 600000, ...execution}, null, 2) + '\n');
+            if (execution.exitCode !== 0 || execution.signal || execution.reason || execution.error || execution.reportError) process.exitCode = 1;
+              else {
+                assert.equal(execution.outcome,'PASS');assert(execution.ownedProcessGroups.length>0);assert(execution.ownedProcessGroups.every(row=>row.active===false));
+                const receipt=readExecutionReceipts(path.join(out,'receipts'),fingerprint).get('browser/LOCAL/'+suite);
+                assert(receipt,'Missing actual current LOCAL browser receipt');assert.equal(receipt.promotion,undefined);assert.equal(receipt.browser.scope,'LOCAL');assert.deepEqual(receipt.browser.manifest,prepared);
+                fs.writeFileSync(path.join(out,'normal-browser-validation.json'),JSON.stringify({suite,outcome:'PASS',sourceCommit:expected,sourceTree:fingerprint.sourceTree,sourceInputsSha256:fingerprint.sourceInputsSha256,receiptSha256:receipt.receiptSha256,observationCount:receipt.observations.length,actualNormalProducer:true,originalActionTimeoutMs:90000,originalCatalogAndOuterTimeoutMs:600000,freshProfile:true,fixtureSubstitution:false,requiredOriginalCiCheck:false},null,2)+'\n');
+              }
+          } finally {
+            server.closeAllConnections(); await new Promise(resolve => server.close(resolve));
+            process.removeListener('SIGTERM', relay); process.removeListener('SIGINT', relay);
+            const after = evidenceFingerprint(source);
+            fs.writeFileSync(path.join(out, 'source-identity-after.json'), JSON.stringify(after, null, 2) + '\n');
+            fs.writeFileSync(path.join(out, 'http-resources.json'), JSON.stringify(requests, null, 2) + '\n');
+            assert.equal(git('status', '--porcelain'), ''); assert.deepEqual(after, fingerprint);
+            fs.writeFileSync(path.join(out, 'diagnostic-summary.json'), JSON.stringify({diagnosticOnly: true, requiredCiCheck: false, sourceUnchanged: true, nativeServerClosed: true, suite, result: execution?.outcome || null, originalActionAndCatalogBoundsRetained: true, limits: ['This is the normal original suite in a separate diagnostic workflow; it is not the original required CI job.', 'Synthetic Chromium mobile controls are not physical iPhone acceptance.']}, null, 2) + '\n');
+          }
+          EXTERNAL_0
+          echo "1c11225ca5fb6c9c0441e1f97e021d849c026a92f5aa6b868d908e2c6ac8112b  $RUNNER_TEMP/candidate-native-browser-runner.mjs" | sha256sum --check
+          cp "$RUNNER_TEMP/candidate-native-browser-runner.mjs" "$DIAG_OUT/"
+      - name: Build exact candidate application bytes
+        working-directory: app
+        shell: bash
+        run: |
+          set -euo pipefail
+          node build-static-site.mjs --out "$DIAG_OUT/site" --source-commit a5cd6c34d06891285dca9326708b5160c0c47b8a --workflow-run "$GITHUB_RUN_ID" | tee "$DIAG_OUT/build.log"
+          test -z "$(git status --porcelain)"
+      - name: Execute unchanged normal browser collector with original bounds
+        working-directory: app
+        shell: bash
+        run: |
+          set -euo pipefail
+          export CLOSED_LOOP_VERIFICATION_SOURCE_ROOT="$PWD"
+          export CLOSED_LOOP_VERIFICATION_RECEIPTS="$DIAG_OUT/receipts"
+          export VERIFIER_CHILD_EVIDENCE_DIRECTORY="$DIAG_OUT/children"
+          export NODE_OPTIONS="--import $PWD/verification-evidence-preload.mjs"
+          export STATIC_SITE_ROOT="$DIAG_OUT/site"
+          export PAGE_URL=http://127.0.0.1:4173/
+          export CLOSED_LOOP_BROWSER_SCOPE=LOCAL
+          export MOBILE_EVIDENCE_DIR="$DIAG_OUT/mobile-capability-evidence"
+          export RECOVERY_EVIDENCE_DIR="$DIAG_OUT/recovery-browser-evidence"
+          node "$RUNNER_TEMP/candidate-native-browser-runner.mjs" verify-mobile-capability-journey.mjs "$DIAG_OUT"
+      - name: Preserve exact source state
+        if: always()
+        working-directory: app
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rev-parse HEAD > "$DIAG_OUT/source-commit-after.txt"
+          git status --porcelain > "$DIAG_OUT/source-status-after.txt"
+          test "$(git rev-parse HEAD)" = a5cd6c34d06891285dca9326708b5160c0c47b8a
+          test -z "$(git status --porcelain)"
+      - name: Retain diagnostic evidence without changing required CI
+        if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        env:
-          NODE_OPTIONS: ''
         with:
-          name: closed-loop-acceptance-${{ github.sha }}-${{ github.run_id }}
-          path: closed-loop-acceptance.json
-      - name: Record blocked actual-iPhone acceptance
-        if: steps.acceptance.outputs.final_acceptance != 'true'
+          name: candidate-full-mobile-capability-a5cd6c34-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.DIAG_OUT }}
+          include-hidden-files: true
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 7
+
+  recovery-diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      DIAG_OUT: ${{ github.workspace }}/recovery-diagnostic
+      BROWSER: /usr/bin/google-chrome
+      NODE_OPTIONS: ''
+    steps:
+      - name: Check out the exact candidate application
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: a5cd6c34d06891285dca9326708b5160c0c47b8a
+          path: app
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22.23.3
+      - name: Pin candidate source and Node runtime
+        working-directory: app
+        shell: bash
         run: |
           set -euo pipefail
-          echo "::notice title=Release tag blocked::Final Section 49 and actor acceptance is not proven for ${GITHUB_SHA}; see closed-loop-acceptance.json blockers. No release tag was created."
-          test "${{ steps.acceptance.outputs.final_acceptance }}" = false
-      - name: Record release tag eligibility for authorized repository connection
-        if: steps.acceptance.outputs.final_acceptance == 'true'
+          test ! -e "$DIAG_OUT"
+          mkdir "$DIAG_OUT"
+          test "$(git rev-parse HEAD)" = a5cd6c34d06891285dca9326708b5160c0c47b8a
+          test "$(git rev-parse 'HEAD^{tree}')" = 45c318632a0935e68864ec11b6689a35c0d50180
+          test -z "$(git status --porcelain)"
+          node --version | tee "$DIAG_OUT/node-version.txt"
+          test "$(node --version)" = v22.23.3
+          echo '8352b036eca02dfd86bb441df4ea3fe0ea54b9ad6bcaaee9a000219ddfae09c5  TEST_PROJECT.json' | sha256sum --check
+          git rev-parse HEAD > "$DIAG_OUT/source-commit-before.txt"
+          git rev-parse 'HEAD^{tree}' > "$DIAG_OUT/source-tree-before.txt"
+          uname -a > "$DIAG_OUT/uname.txt"
+      - name: Require the original installed Chrome
+        shell: bash
         run: |
           set -euo pipefail
-          echo "::notice title=Release tag eligible::Recheck closed-loop-acceptance.json through the authorized repository connection, consume its unused challenge marker, and publish the tag for ${GITHUB_SHA}."
+          "$BROWSER" --product-version | tee "$DIAG_OUT/chrome-version.txt"
+          test "$("$BROWSER" --product-version)" = 156.0.8078.79
+      - name: Materialize external diagnostic supervision
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > "$RUNNER_TEMP/candidate-native-browser-runner.mjs" <<'EXTERNAL_0'
+          // Separate candidate CI namespace; invokes the complete normal browser collector CLI.
+          import assert from 'node:assert/strict';
+          import fs from 'node:fs';
+          import path from 'node:path';
+          import http from 'node:http';
+          import {execFileSync} from 'node:child_process';
+          import {createHash} from 'node:crypto';
+          import {pathToFileURL} from 'node:url';
+          const [suite, outArg] = process.argv.slice(2), out = path.resolve(outArg), source = process.cwd();
+          assert(['verify-mobile-capability-journey.mjs', 'verify-browser-recovery.mjs'].includes(suite));
+          const git = (...args) => execFileSync('git', args, {encoding: 'utf8'}).trim();
+          const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+          const expected = 'a5cd6c34d06891285dca9326708b5160c0c47b8a';
+          assert.equal(git('rev-parse', 'HEAD'), expected);
+          assert.equal(git('rev-parse', 'HEAD^{tree}'), '45c318632a0935e68864ec11b6689a35c0d50180');
+          assert.equal(git('status', '--porcelain'), '');
+          assert.equal(process.version, 'v22.23.3'); assert.equal(process.platform, 'linux'); assert.equal(process.arch, 'x64');
+          assert.equal(execFileSync(process.env.BROWSER, ['--product-version'], {encoding: 'utf8'}).trim(), '156.0.8078.79');
+          assert.equal(process.env.NODE_OPTIONS, '--import ' + path.join(source, 'verification-evidence-preload.mjs'));
+          assert.equal(process.env.CLOSED_LOOP_VERIFICATION_SOURCE_ROOT, source);
+          assert.equal(process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS, path.join(out, 'receipts'));
+          assert.equal(process.env.VERIFIER_CHILD_EVIDENCE_DIRECTORY, path.join(out, 'children'));
+          assert.equal(process.env.STATIC_SITE_ROOT, path.join(out, 'site'));
+          assert.equal(process.env.MOBILE_EVIDENCE_DIR, path.join(out, 'mobile-capability-evidence'));
+          assert.equal(process.env.RECOVERY_EVIDENCE_DIR, path.join(out, 'recovery-browser-evidence'));
+          for (const key of ['OPERATOR_DRIVER_MODULE', 'BASELINE_COMMIT', 'CLOSED_LOOP_VERIFIER_OWNER_FD']) assert(!process.env[key], 'Unexpected diagnostic override: ' + key);
+          const {executeGate} = await import(pathToFileURL(path.join(source, 'verify-conformance-regressions.mjs')));
+          const {evidenceFingerprint,readExecutionReceipts} = await import(pathToFileURL(path.join(source, 'verification-evidence.mjs')));
+          const {browserVerificationCatalog} = await import(pathToFileURL(path.join(source, 'verification-evidence-catalog.mjs')));
+          assert.equal(browserVerificationCatalog[suite].timeoutMs, 600000);
+          assert(fs.readFileSync('operator-browser-driver.mjs', 'utf8').includes('captureExecution=false,actionTimeoutMs=90000}={}'));
+          const fingerprint = evidenceFingerprint(source);
+          assert.equal(fingerprint.sourceCommit, expected);
+          assert.equal(fingerprint.sourceTree, '45c318632a0935e68864ec11b6689a35c0d50180');
+          assert.equal(sha(fs.readFileSync('project-store.js')),'720c65a6dfd778e05a4c43e03afcd4e89c777dc2a80b665552cd1ebd9014809a');
+          assert.equal(sha(fs.readFileSync('operator-browser-driver.mjs')),'a140064f45aa4c73fe53f17aa850a5e629beebe1ed6557192d0c34311608e3c9');
+          assert.equal(sha(fs.readFileSync('TEST_PROJECT.json')),'8352b036eca02dfd86bb441df4ea3fe0ea54b9ad6bcaaee9a000219ddfae09c5');
+          for(const directory of ['receipts','children','mobile-capability-evidence','recovery-browser-evidence'])assert(!fs.existsSync(path.join(out,directory)), 'Fresh normal evidence and profile required: '+directory);
+          assert.equal(fingerprint.sourceInputsSha256, '9d9bffeed7ec8430f6e2504b574c0a4b5621c69ad7e5a9760be07aba1c304c5e');
+          fs.writeFileSync(path.join(out, 'source-identity-before.json'), JSON.stringify(fingerprint, null, 2) + '\n');
+          const site = path.join(out, 'site'), manifest = fs.readFileSync(path.join(site, 'closed-loop-deployment-manifest.json'));
+          const {verifyPreparedSite}=await import(pathToFileURL(path.join(source,'verified-site.mjs')));
+          const prepared=await verifyPreparedSite({cwd:source,directory:site,context:{commit:expected,runId:process.env.GITHUB_RUN_ID}});
+          assert.deepEqual(prepared,JSON.parse(manifest));
+          fs.writeFileSync(path.join(out,'fresh-fixture-binding.json'),JSON.stringify({sourceCommit:expected,sourceTree:fingerprint.sourceTree,fixtureSource:'CURRENT_TRACKED_TEST_PROJECT',fixtureSha256:sha(fs.readFileSync('TEST_PROJECT.json')),fixtureSubstitution:false,retainedProfileRestored:false,actualVerifyPreparedSitePassed:true,buildIdentity:prepared.buildIdentity,manifestDigest:prepared.manifestDigest.digest,browserFixtures:'Unchanged normal owners create disposable projects and response/archive bytes through their original helpers and native controls.'},null,2)+'\n');
+          const requests = [], server = http.createServer((request, response) => {
+            try {
+              const pathname = decodeURIComponent(new URL(request.url, 'http://127.0.0.1').pathname);
+              const file = path.resolve(site, '.' + (pathname === '/' ? '/index.html' : pathname));
+              if (request.method !== 'GET' || !file.startsWith(site + path.sep) || !fs.statSync(file).isFile()) throw new Error('Unavailable path');
+              const bytes = fs.readFileSync(file), type = file.endsWith('.html') ? 'text/html; charset=utf-8' : file.endsWith('.js') ? 'text/javascript; charset=utf-8' : file.endsWith('.css') ? 'text/css; charset=utf-8' : file.endsWith('.json') ? 'application/json' : 'application/octet-stream';
+              requests.push({path: pathname, byteSize: bytes.length, sha256: sha(bytes)});
+              response.writeHead(200, {'Content-Type': type, 'Content-Length': bytes.length, 'Cache-Control': 'no-store'}); response.end(bytes);
+            } catch { response.writeHead(404); response.end(); }
+          });
+          const controller = new AbortController(), relay = signal => controller.abort(signal);
+          process.on('SIGTERM', relay); process.on('SIGINT', relay);
+          let execution = null;
+          try {
+            await new Promise((resolve, reject) => { server.once('error', reject); server.listen(4173, '127.0.0.1', resolve); });
+            const response = await fetch('http://127.0.0.1:4173/closed-loop-deployment-manifest.json', {signal: AbortSignal.timeout(5000)});
+            assert(response.ok); assert.deepEqual(Buffer.from(await response.arrayBuffer()), manifest);
+            // Outer600s matches the normal workflow bound; collector's original catalog
+            // child also remains600s and its unchanged driver action boundary is90s.
+            execution = await executeGate({name: 'diagnostic-' + suite, command: process.execPath, args: ['collect-verification-evidence.mjs', '--browser-suite=' + suite, '--browser-scope=LOCAL']}, {cwd: source, directory: path.join(out, 'supervisor'), signal: controller.signal, timeoutMs: 600000, killGraceMs: 10000, maxOutputBytes: 64 * 1024 * 1024, forwardOutput: true, requireJson: false});
+            fs.writeFileSync(path.join(out, 'normal-cli-result.json'), JSON.stringify({diagnosticOnly: true, requiredCiCheck: false, sourceCommit: expected, suite, actionTimeoutMs: 90000, catalogTimeoutMs: 600000, ...execution}, null, 2) + '\n');
+            if (execution.exitCode !== 0 || execution.signal || execution.reason || execution.error || execution.reportError) process.exitCode = 1;
+              else {
+                assert.equal(execution.outcome,'PASS');assert(execution.ownedProcessGroups.length>0);assert(execution.ownedProcessGroups.every(row=>row.active===false));
+                const receipt=readExecutionReceipts(path.join(out,'receipts'),fingerprint).get('browser/LOCAL/'+suite);
+                assert(receipt,'Missing actual current LOCAL browser receipt');assert.equal(receipt.promotion,undefined);assert.equal(receipt.browser.scope,'LOCAL');assert.deepEqual(receipt.browser.manifest,prepared);
+                fs.writeFileSync(path.join(out,'normal-browser-validation.json'),JSON.stringify({suite,outcome:'PASS',sourceCommit:expected,sourceTree:fingerprint.sourceTree,sourceInputsSha256:fingerprint.sourceInputsSha256,receiptSha256:receipt.receiptSha256,observationCount:receipt.observations.length,actualNormalProducer:true,originalActionTimeoutMs:90000,originalCatalogAndOuterTimeoutMs:600000,freshProfile:true,fixtureSubstitution:false,requiredOriginalCiCheck:false},null,2)+'\n');
+              }
+          } finally {
+            server.closeAllConnections(); await new Promise(resolve => server.close(resolve));
+            process.removeListener('SIGTERM', relay); process.removeListener('SIGINT', relay);
+            const after = evidenceFingerprint(source);
+            fs.writeFileSync(path.join(out, 'source-identity-after.json'), JSON.stringify(after, null, 2) + '\n');
+            fs.writeFileSync(path.join(out, 'http-resources.json'), JSON.stringify(requests, null, 2) + '\n');
+            assert.equal(git('status', '--porcelain'), ''); assert.deepEqual(after, fingerprint);
+            fs.writeFileSync(path.join(out, 'diagnostic-summary.json'), JSON.stringify({diagnosticOnly: true, requiredCiCheck: false, sourceUnchanged: true, nativeServerClosed: true, suite, result: execution?.outcome || null, originalActionAndCatalogBoundsRetained: true, limits: ['This is the normal original suite in a separate diagnostic workflow; it is not the original required CI job.', 'Synthetic Chromium mobile controls are not physical iPhone acceptance.']}, null, 2) + '\n');
+          }
+          EXTERNAL_0
+          echo "1c11225ca5fb6c9c0441e1f97e021d849c026a92f5aa6b868d908e2c6ac8112b  $RUNNER_TEMP/candidate-native-browser-runner.mjs" | sha256sum --check
+          cp "$RUNNER_TEMP/candidate-native-browser-runner.mjs" "$DIAG_OUT/"
+      - name: Build exact candidate application bytes
+        working-directory: app
+        shell: bash
+        run: |
+          set -euo pipefail
+          node build-static-site.mjs --out "$DIAG_OUT/site" --source-commit a5cd6c34d06891285dca9326708b5160c0c47b8a --workflow-run "$GITHUB_RUN_ID" | tee "$DIAG_OUT/build.log"
+          test -z "$(git status --porcelain)"
+      - name: Execute unchanged normal browser collector with original bounds
+        working-directory: app
+        shell: bash
+        run: |
+          set -euo pipefail
+          export CLOSED_LOOP_VERIFICATION_SOURCE_ROOT="$PWD"
+          export CLOSED_LOOP_VERIFICATION_RECEIPTS="$DIAG_OUT/receipts"
+          export VERIFIER_CHILD_EVIDENCE_DIRECTORY="$DIAG_OUT/children"
+          export NODE_OPTIONS="--import $PWD/verification-evidence-preload.mjs"
+          export STATIC_SITE_ROOT="$DIAG_OUT/site"
+          export PAGE_URL=http://127.0.0.1:4173/
+          export CLOSED_LOOP_BROWSER_SCOPE=LOCAL
+          export MOBILE_EVIDENCE_DIR="$DIAG_OUT/mobile-capability-evidence"
+          export RECOVERY_EVIDENCE_DIR="$DIAG_OUT/recovery-browser-evidence"
+          node "$RUNNER_TEMP/candidate-native-browser-runner.mjs" verify-browser-recovery.mjs "$DIAG_OUT"
+      - name: Preserve exact source state
+        if: always()
+        working-directory: app
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rev-parse HEAD > "$DIAG_OUT/source-commit-after.txt"
+          git status --porcelain > "$DIAG_OUT/source-status-after.txt"
+          test "$(git rev-parse HEAD)" = a5cd6c34d06891285dca9326708b5160c0c47b8a
+          test -z "$(git status --porcelain)"
+      - name: Retain diagnostic evidence without changing required CI
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: candidate-full-recovery-a5cd6c34-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.DIAG_OUT }}
+          include-hidden-files: true
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 7
