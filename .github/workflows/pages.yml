@@ -1,4 +1,4 @@
-name: Diagnostic frozen decoder on actual829MB backup
+name: Diagnostic frozen decoder actual829MB with default heap
 
 on:
   workflow_dispatch:
@@ -8,7 +8,7 @@ permissions:
   actions: read
 
 concurrency:
-  group: diagnostic-backup-decoder-${{ github.ref }}
+  group: diagnostic-backup-decoder-default-heap-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      DIAG_OUT: ${{ github.workspace }}/actual-backup-decoder-diagnostic
+      DIAG_OUT: ${{ github.workspace }}/actual-backup-decoder-default-heap-diagnostic
       NODE_OPTIONS: ''
     steps:
       - name: Check out the exact original tested application
@@ -173,7 +173,12 @@ jobs:
           import path from 'node:path';
           import {createHash} from 'node:crypto';
           import {pathToFileURL} from 'node:url';
+          import {getHeapStatistics} from 'node:v8';
           const [decoderPath, inputsArg, outArg] = process.argv.slice(2), inputs = path.resolve(inputsArg), out = path.resolve(outArg);
+          const runtimeMemory = {heapMode: 'NODE_DEFAULT', heapSizeLimitBytes: getHeapStatistics().heap_size_limit, execArgv: [...process.execArgv], nodeOptions: process.env.NODE_OPTIONS || ''};
+          assert.deepEqual(runtimeMemory.execArgv, []); assert.equal(runtimeMemory.nodeOptions, '');
+          assert(Number.isSafeInteger(runtimeMemory.heapSizeLimitBytes) && runtimeMemory.heapSizeLimitBytes > 0);
+          fs.writeFileSync(path.join(out, 'child-heap-runtime.json'), JSON.stringify(runtimeMemory, null, 2) + '\n');
           const sha = bytes => createHash('sha256').update(bytes).digest('hex');
           assert.equal(sha(fs.readFileSync(decoderPath)), '8b6301c498c226b2b1190e87988139cfcc0bd9ea8f1bbcff85e37cada1522b69');
           assert.equal(sha(fs.readFileSync('test-retained-history-browser.mjs')), 'cf6e8b9a5abf2784b2bd3e908bad0c90071de741ec9b0940f70771e37b80c145');
@@ -188,7 +193,7 @@ jobs:
           await import(pathToFileURL(path.join(process.cwd(), 'hash.js')));
           const hash = globalThis.closedLoopHash;
           assert.equal(hash.sha256Text('abc'), 'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad');
-          const started = performance.now(), result = {diagnosticOnly: true, eligibleAcceptanceReceipt: false, fullJourney: false, node: process.version, platform: process.platform, arch: process.arch, decoderSha256: sha(fs.readFileSync(decoderPath)), compressedBytes: bytes.length, compressedSha256: sha(bytes), phases: []};
+          const started = performance.now(), result = {diagnosticOnly: true, eligibleAcceptanceReceipt: false, fullJourney: false, runtimeMemory, node: process.version, platform: process.platform, arch: process.arch, decoderSha256: sha(fs.readFileSync(decoderPath)), compressedBytes: bytes.length, compressedSha256: sha(bytes), phases: []};
           const record = (phase, fields = {}) => { const row = {phase, elapsedMs: performance.now() - started, memory: process.memoryUsage(), ...fields}; result.phases.push(row); console.log(JSON.stringify({diagnosticOnly: true, ...row})); };
           let nextProgress = 64 * 1024 * 1024, finalProgress = null;
           try {
@@ -227,19 +232,20 @@ jobs:
           import path from 'node:path';
           import {execFileSync} from 'node:child_process';
           import {pathToFileURL} from 'node:url';
+          import {getHeapStatistics} from 'node:v8';
           const [child, decoder, inputs, outArg] = process.argv.slice(2), out = path.resolve(outArg), source = process.cwd();
           const git = (...args) => execFileSync('git', args, {encoding: 'utf8'}).trim();
           assert.equal(git('rev-parse', 'HEAD'), '315f85b3dc34c274e4470fe4e84e9dcebc9a1551');
           assert.equal(git('rev-parse', 'HEAD^{tree}'), '24735288da9f734997c1920c111ad4d472e743e5');
           assert.equal(git('status', '--porcelain'), '');
           assert.equal(process.version, 'v22.23.3'); assert.equal(process.platform, 'linux'); assert.equal(process.arch, 'x64');
-          assert(!process.env.NODE_OPTIONS);
+          assert(!process.env.NODE_OPTIONS); assert.deepEqual(process.execArgv, []);
           for (const key of Object.keys(process.env)) assert(!/^(CLOSED_LOOP_|VERIFIER_|CONFORMANCE_)/.test(key), 'Unexpected receipt environment: ' + key);
           const {executeGate} = await import(pathToFileURL(path.join(source, 'verify-conformance-regressions.mjs')));
           const controller = new AbortController(), relay = signal => controller.abort(signal); process.on('SIGTERM', relay); process.on('SIGINT', relay);
           try {
-            const result = await executeGate({name: 'frozen-decoder-actual-backup', command: process.execPath, args: ['--max-old-space-size=4096', path.resolve(child), path.resolve(decoder), path.resolve(inputs), out]}, {cwd: source, directory: path.join(out, 'supervisor'), signal: controller.signal, timeoutMs: 600000, killGraceMs: 10000, maxOutputBytes: 16 * 1024 * 1024, forwardOutput: true, requireJson: false});
-            fs.writeFileSync(path.join(out, 'decoder-supervisor.json'), JSON.stringify({diagnosticOnly: true, eligibleAcceptanceReceipt: false, sourceCommit: git('rev-parse', 'HEAD'), sourceTree: git('rev-parse', 'HEAD^{tree}'), heapLimitMiB: 4096, ...result}, null, 2) + '\n');
+            const result = await executeGate({name: 'frozen-decoder-actual-backup', command: process.execPath, args: [path.resolve(child), path.resolve(decoder), path.resolve(inputs), out]}, {cwd: source, directory: path.join(out, 'supervisor'), signal: controller.signal, timeoutMs: 600000, killGraceMs: 10000, maxOutputBytes: 16 * 1024 * 1024, forwardOutput: true, requireJson: false});
+            fs.writeFileSync(path.join(out, 'decoder-supervisor.json'), JSON.stringify({diagnosticOnly: true, eligibleAcceptanceReceipt: false, sourceCommit: git('rev-parse', 'HEAD'), sourceTree: git('rev-parse', 'HEAD^{tree}'), heapMode: 'NODE_DEFAULT', supervisorHeapSizeLimitBytes: getHeapStatistics().heap_size_limit, supervisorExecArgv: [...process.execArgv], ...result}, null, 2) + '\n');
             if (result.exitCode !== 0 || result.signal || result.reason || result.error) process.exitCode = 1;
           } finally { process.removeListener('SIGTERM', relay); process.removeListener('SIGINT', relay); assert.equal(git('status', '--porcelain'), ''); }
           EXTERNAL_3
@@ -285,7 +291,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: diagnostic-only-decoder-actual-backup-50f53978-${{ github.run_id }}-${{ github.run_attempt }}
+          name: diagnostic-only-decoder-default-heap-50f53978-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ env.DIAG_OUT }}
           include-hidden-files: true
           if-no-files-found: error
