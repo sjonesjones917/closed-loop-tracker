@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {execFileSync,spawnSync} from 'node:child_process';
-import {runtimePaths,manifestName,foundationProofSteps,workflowGateProofSteps,testCheckProofSteps,operatorJourneyProofSteps,fullTestSteps,preloadedWorkflowJobs,digest,validateSite,assertLifecycleWorkflowCommand,assertPassedRun,assertReceipt,promoteSite,promoteExecutedProofs,executedProofFileHashes,verifyPreparedSite,sealSite} from './verified-site.mjs';
+import {runtimePaths,manifestName,foundationProofSteps,workflowGateProofSteps,testCheckProofSteps,operatorJourneyProofSteps,fullTestSteps,preloadedWorkflowJobs,digest,validateSite,assertRuntimeEqual,assertLifecycleWorkflowCommand,assertPassedRun,assertReceipt,promoteSite,promoteExecutedProofs,executedProofFileHashes,verifyPreparedSite,sealSite} from './verified-site.mjs';
 import {verificationCatalog} from './verification-evidence-catalog.mjs';
 
 const root=process.cwd(),temporary=fs.mkdtempSync(path.join(root,'.verify-artifact-'));
@@ -135,6 +135,29 @@ try{
   const receiptBindings={run,repository,headSha,sourceCommit:testedCommit,sourceTree:tree,workflowDigest:digest(fs.readFileSync(path.join(workspace,'.github/workflows/pages.yml')))};
   assert.deepEqual(await verifyPreparedSite({cwd:workspace,directory:site,context}),manifest);
   for(const [name,alter]of [['source',c=>({...c,commit:'b'.repeat(40)})],['run',c=>({...c,runId:'999'})]])await rejects('prepared-runtime-wrong-'+name,()=>verifyPreparedSite({cwd:workspace,directory:site,context:alter(context)}),/does not belong/);
+  // A separate producer checkout builds from the exact foundation fixture;
+  // it does not consume the later supporting-browser site's runtime bytes.
+  const journeyWorkspace=path.join(temporary,'independent-journey-workspace'),journeySite=path.join(temporary,'independent-journey-site');
+  fs.cpSync(workspace,journeyWorkspace,{recursive:true});
+  const buildJourney=directory=>checkedVerifier(process.execPath,['build-static-site.mjs','--out',directory,'--source-commit',testedCommit,'--workflow-run','123'],{cwd:journeyWorkspace,stdio:'pipe'});
+  await buildJourney(journeySite);
+  assert.deepEqual(await verifyPreparedSite({cwd:journeyWorkspace,directory:journeySite,context}),manifest);
+  assertRuntimeEqual(site,journeySite);
+  const journeyManifestBytes=fs.readFileSync(path.join(journeySite,manifestName));
+  assert(fs.readFileSync(path.join(site,manifestName)).equals(journeyManifestBytes),'Independent builders must produce identical complete manifests.');
+  cases.push('independent-journey-build-and-prepared-bytes-identical');
+  const fixturePath=path.join(journeyWorkspace,'TEST_PROJECT.json'),fixtureBytes=fs.readFileSync(fixturePath),differentFixtureSite=path.join(temporary,'independent-wrong-fixture-site');
+  try{
+    fs.appendFileSync(fixturePath,'\n');await buildJourney(differentFixtureSite);
+    await rejects('independent-journey-wrong-fixture-runtime',()=>assertRuntimeEqual(site,differentFixtureSite),/runtime build identity differs/);
+  }finally{fs.writeFileSync(fixturePath,fixtureBytes);}
+  const wrongToolchain=clone(manifest);wrongToolchain.dependencyAndToolchainManifestIdentity.node='v0.0.0';
+  const unsignedToolchain={...wrongToolchain};delete unsignedToolchain.manifestDigest;
+  wrongToolchain.manifestDigest.digest=globalThis.closedLoopHash.sha256Value(unsignedToolchain);
+  try{
+    fs.writeFileSync(path.join(journeySite,manifestName),JSON.stringify(wrongToolchain,null,2)+'\n');
+    await rejects('independent-journey-wrong-toolchain',()=>verifyPreparedSite({cwd:journeyWorkspace,directory:journeySite,context}),/manifest is not reproducible/);
+  }finally{fs.writeFileSync(path.join(journeySite,manifestName),journeyManifestBytes);}
   assertReceipt(receipt,manifest,receiptBindings);cases.push('sealed-reproducible-artifact');
   for(const [field,value] of [['runId','999'],['runAttempt',2],['sourceCommit','b'.repeat(40)],['sourceTree','b'.repeat(40)],['workflowFileSha256','0'.repeat(64)],['manifestDigest','0'.repeat(64)],['buildIdentity','changed'],['headSha','b'.repeat(40)],['event','push'],['repository','other/repo']]){
     (await rejects(`wrong-receipt-${field}`,()=>assertReceipt({...receipt,[field]:value},manifest,receiptBindings),/mismatch|differs|belong/));
@@ -434,6 +457,21 @@ try{
   }
   const mutateJob=(text,name,alter)=>{const marker='\n  '+name+':\n',start=text.indexOf(marker),tail=text.slice(start+marker.length),next=tail.search(/\n  [a-z][\w-]*:\n/),end=next<0?text.length:start+marker.length+next;assert(start>=0);return text.slice(0,start)+alter(text.slice(start,end))+text.slice(end);};
   for(const [name,job,alter,diagnostic]of [
+    ['early-wrong-prerequisite','operator-journey',text=>text.replace('    needs: foundation\n','    needs: test-checks\n'),/failed or skipped prerequisites/],
+    ['early-missing-foundation-success','operator-journey',text=>text.replace('run: test "${{ needs.foundation.result }}" = "success"','run: true'),/prerequisite must be checked/],
+    ['early-conditional-foundation-success','operator-journey',text=>text.replace('      - name: Require successful foundation job\n','      - name: Require successful foundation job\n        if: false\n'),/prerequisite must be checked/],
+    ['early-wrong-foundation-sha','operator-journey',text=>text.replace('foundation-proof-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}','foundation-proof-old-${{ github.run_id }}-${{ github.run_attempt }}'),/foundation artifact must bind/],
+    ['early-wrong-foundation-run','operator-journey',text=>text.replace('foundation-proof-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}','foundation-proof-${{ github.sha }}-1-${{ github.run_attempt }}'),/foundation artifact must bind/],
+    ['early-alternate-foundation-scope','operator-journey',text=>text.replace('          path: .\n','          run-id: 1\n          path: .\n'),/foundation artifact must bind/],
+    ['early-missing-ingestion-validation','operator-journey',text=>text.replace('run: node collect-verification-evidence.mjs --export-owner=verify-ingestion.mjs','run: true'),/complete current foundation ingestion receipt/],
+    ['early-missing-build','operator-journey',text=>text.replace('name: Build independent local journey runtime','name: Missing independent runtime'),/step is absent/],
+    ['early-build-before-ingestion-validation','operator-journey',text=>text.replace(/(      - name: Validate foundation ingestion receipt\n[\s\S]*?)(      - name: Build independent local journey runtime\n[\s\S]*?)(?=      - name: Verify prepared runtime source and bytes\n)/,'$2$1'),/must precede execution in order/],
+    ['early-wrong-build-source','operator-journey',text=>text.replace('--source-commit "$GITHUB_SHA"','--source-commit "old-source"'),/independent journey build command/i],
+    ['early-missing-prepared-check','operator-journey',text=>text.replace('name: Verify prepared runtime source and bytes','name: Missing prepared validation'),/step is absent/],
+    ['early-skipped-build','operator-journey',text=>text.replace("name: Build independent local journey runtime\n        if: steps.reuse.outputs.reused != 'true'","name: Build independent local journey runtime\n        if: false"),/Fresh LOCAL journey preparation/],
+    ['early-skipped-prepared-check','operator-journey',text=>text.replace("name: Verify prepared runtime source and bytes\n        if: steps.reuse.outputs.reused != 'true'","name: Verify prepared runtime source and bytes\n        if: false"),/Fresh LOCAL journey preparation/],
+    ['early-preparation-soft-failure','operator-journey',text=>text.replace('name: Build independent local journey runtime\n','name: Build independent local journey runtime\n        continue-on-error: true\n'),/Fresh LOCAL journey preparation/],
+    ['early-preparation-source-override','operator-journey',text=>text.replace('name: Build independent local journey runtime\n','name: Build independent local journey runtime\n        env:\n          CLOSED_LOOP_VERIFICATION_SOURCE_ROOT: /other-source\n'),/Repository proof step must retain its current source and receipt environment/],
     ['missing-local-journey','operator-journey',text=>text.replace('run_browser_verifier verify-complete-operator-journey.mjs 330m','true'),/complete default producer/],
     ['shortened-local-journey','operator-journey',text=>text.replace('verify-complete-operator-journey.mjs 330m','verify-complete-operator-journey.mjs 240m'),/complete default producer/],
     ['extra-journey-option','operator-journey',text=>text.replace('verify-complete-operator-journey.mjs 330m','verify-complete-operator-journey.mjs 330m --focused'),/complete default producer/],
@@ -444,7 +482,7 @@ try{
     ['missing-final-journey-receipt','test',text=>text.replace('name: Download complete local operator receipt','name: Missing local operator receipt'),/step is absent/],
     ['skipped-final-join','test',text=>text.replace('      - name: Validate complete local browser receipt set\n','      - name: Validate complete local browser receipt set\n        if: false\n'),/strict complete LOCAL join/],
     ['unauthenticated-prepared-runtime','operator-journey',text=>text.replace('run: node verified-site.mjs verify-prepared','run: true'),/reproduce current runtime bytes/],
-    ['wrong-prepared-attempt','operator-journey',text=>text.replace('name: test-checks-proof-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}','name: test-checks-proof-${{ github.sha }}-${{ github.run_id }}-1'),/current attempt/],
+    ['wrong-prepared-attempt','operator-journey',text=>text.replace('name: foundation-proof-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}','name: foundation-proof-${{ github.sha }}-${{ github.run_id }}-1'),/current attempt/],
     ['missing-short-browser','test-checks',text=>text.replace('run_browser_verifier verify-browser.mjs || BROWSER_VERIFY_RESULT=1','true'),/Six supporting browser producers/],
     ['wrong-deployed-dependency','deployed-operator-journey',text=>text.replace('needs: [test, deploy, verify-live]','needs: test'),/Deployed journey dependencies/],
     ['wrong-manual-event','reverified-operator-journey',text=>text.replace("github.event_name == 'workflow_dispatch'","github.event_name == 'push'"),/event scopes/],

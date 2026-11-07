@@ -870,7 +870,7 @@ jobs:
 
   operator-journey:
     name: operator-journey
-    needs: test-checks
+    needs: foundation
     if: always()
     permissions:
       contents: read
@@ -884,8 +884,8 @@ jobs:
       VERIFIER_CHILD_EVIDENCE_DIRECTORY: /tmp/clrt-operator-journey-children
       NODE_OPTIONS: --import ${{ github.workspace }}/verification-evidence-preload.mjs
     steps:
-      - name: Require successful test checks job
-        run: test "${{ needs.test-checks.result }}" = "success"
+      - name: Require successful foundation job
+        run: test "${{ needs.foundation.result }}" = "success"
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         env:
           # The repository preload does not exist until checkout completes.
@@ -915,20 +915,21 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: node verified-site.mjs reuse
-      - name: Download test checks proof
+      - name: Download foundation proof
         if: steps.reuse.outputs.reused != 'true'
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          name: test-checks-proof-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          name: foundation-proof-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: .
+      - name: Validate foundation ingestion receipt
+        if: steps.reuse.outputs.reused != 'true'
+        run: node collect-verification-evidence.mjs --export-owner=verify-ingestion.mjs
+      - name: Build independent local journey runtime
+        if: steps.reuse.outputs.reused != 'true'
+        run: node build-static-site.mjs --out _site --source-commit "$GITHUB_SHA" --workflow-run "$GITHUB_RUN_ID"
       - name: Verify prepared runtime source and bytes
         if: steps.reuse.outputs.reused != 'true'
         run: node verified-site.mjs verify-prepared
-      - name: Validate prepared local browser receipts
-        if: steps.reuse.outputs.reused != 'true'
-        env:
-          STATIC_SITE_ROOT: _site
-        run: node collect-verification-evidence.mjs --require-browser-scope=LOCAL --exclude-browser-suite=verify-complete-operator-journey.mjs
       - name: Complete local operator journey
         if: steps.reuse.outputs.reused != 'true'
         env:

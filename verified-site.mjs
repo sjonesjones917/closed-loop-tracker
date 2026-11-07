@@ -35,7 +35,7 @@ export const testCheckProofSteps=[
   'Preserve test checks proof'
 ];
 export const operatorJourneyProofSteps=[
-  'Require successful test checks job','Download test checks proof','Verify prepared runtime source and bytes','Validate prepared local browser receipts',
+  'Require successful foundation job','Download foundation proof','Validate foundation ingestion receipt','Build independent local journey runtime','Verify prepared runtime source and bytes',
   'Complete local operator journey','Validate complete local operator receipt','Preserve complete operator journey evidence','Preserve complete local operator receipt'
 ];
 export const fullTestSteps=[
@@ -85,8 +85,8 @@ function workflowStep(job,name){
 }
 function assertDedicatedJourneyWorkflow(workflow){
   const checks=workflowJob(workflow,'test-checks'),operator=workflowJob(workflow,'operator-journey'),final=workflowJob(workflow,'test'),live=workflowJob(workflow,'verify-live'),deployed=workflowJob(workflow,'deployed-operator-journey'),reverified=workflowJob(workflow,'reverified-operator-journey'),publish=workflowJob(workflow,'publish-status');
-  requireValue(operator.includes('    needs: test-checks\n')&&final.includes('    needs: [foundation, deferred-matrix, workflow-gates, conformance, test-checks, operator-journey]\n')&&/^    if: always\(\)$/m.test(operator)&&/^    if: always\(\)$/m.test(final),'Dedicated LOCAL journey and final required test must fail on failed or skipped prerequisites.');
-  for(const [block,job,label]of [[operator,'test-checks','test checks job'],...['foundation','workflow-gates','deferred-matrix','conformance','test-checks','operator-journey'].map((job,index)=>[final,job,['foundation job','workflow gate job','deferred matrix job','conformance groups','test checks job','operator journey job'][index]])]){
+  requireValue(operator.includes('    needs: foundation\n')&&final.includes('    needs: [foundation, deferred-matrix, workflow-gates, conformance, test-checks, operator-journey]\n')&&/^    if: always\(\)$/m.test(operator)&&/^    if: always\(\)$/m.test(final),'Dedicated LOCAL journey and final required test must fail on failed or skipped prerequisites.');
+  for(const [block,job,label]of [[operator,'foundation','foundation job'],...['foundation','workflow-gates','deferred-matrix','conformance','test-checks','operator-journey'].map((job,index)=>[final,job,['foundation job','workflow gate job','deferred matrix job','conformance groups','test checks job','operator journey job'][index]])]){
     const step=workflowStep(block,'Require successful '+label);
     requireValue(step.includes('        run: test "${{ needs.'+job+'.result }}" = "success"\n')&&!/^        if:/m.test(step)&&block.indexOf(step)<block.indexOf('      - uses: actions/checkout@'),'Required dedicated journey prerequisite must be checked before checkout: '+job);
   }
@@ -108,12 +108,25 @@ function assertDedicatedJourneyWorkflow(workflow){
     const suites=[...block.matchAll(/^          run_browser_verifier (verify-[\w-]+\.mjs) \|\| BROWSER_VERIFY_RESULT=1$/gm)].map(match=>match[1]).sort();
     requireValue(JSON.stringify(suites)===JSON.stringify(['verify-browser.mjs','verify-browser-extra.mjs','verify-human-stage-walkthrough.mjs','verify-mobile-stage-action.mjs','verify-mobile-capability-journey.mjs','verify-browser-recovery.mjs'].sort()),'Six supporting browser producers must remain complete outside the dedicated journey jobs.');
   }
-  for(const block of [operator,final]){
+  for(const block of [final]){
     const downloaded=workflowStep(block,'Download test checks proof'),prepared=workflowStep(block,'Verify prepared runtime source and bytes');
     requireValue(downloaded.includes('          name: test-checks-proof'+suffix+'\n')&&downloaded.includes('          path: .\n')&&prepared.includes('        run: node verified-site.mjs verify-prepared\n')&&block.indexOf(downloaded)<block.indexOf(prepared),'Downloaded preparation must bind current attempt and reproduce current runtime bytes.');
     const partial=workflowStep(block,'Validate prepared local browser receipts');
     requireValue(partial.includes('node collect-verification-evidence.mjs --require-browser-scope=LOCAL --exclude-browser-suite='+journey+'\n')&&block.indexOf(prepared)<block.indexOf(partial),'Prepared supporting receipts must be validated after runtime authentication.');
   }
+  const foundationDownload=workflowStep(operator,'Download foundation proof'),ingestion=workflowStep(operator,'Validate foundation ingestion receipt');
+  const independentBuild=workflowStep(operator,'Build independent local journey runtime'),independentPrepared=workflowStep(operator,'Verify prepared runtime source and bytes');
+  const freshCondition="        if: steps.reuse.outputs.reused != 'true'\n";
+  requireValue(!/^    continue-on-error:/m.test(operator),'Independent LOCAL journey job must retain failure propagation.');
+  for(const step of [foundationDownload,ingestion,independentBuild,independentPrepared]){
+    requireValue(step.includes(freshCondition)&&(step.match(/^        if:/gm)||[]).length===1&&!/^        (?:continue-on-error|env):/m.test(step),'Fresh LOCAL journey preparation must execute with inherited source identity and failure propagation.');
+  }
+  requireValue(foundationDownload.includes('          name: foundation-proof'+suffix+'\n')&&foundationDownload.includes('          path: .\n')&&!/^          (?:run-id|github-token|artifact-ids|pattern):/m.test(foundationDownload),'Independent journey foundation artifact must bind this SHA, run, and current attempt without alternate scope.');
+  requireValue(ingestion.includes('        run: node collect-verification-evidence.mjs --export-owner=verify-ingestion.mjs\n'),'Independent journey must validate the complete current foundation ingestion receipt.');
+  requireValue(independentBuild.includes('        run: node build-static-site.mjs --out _site --source-commit "$GITHUB_SHA" --workflow-run "$GITHUB_RUN_ID"\n'),'Independent journey build command must bind exact current source, run, and foundation fixture.');
+  requireValue(independentPrepared.includes('        run: node verified-site.mjs verify-prepared\n'),'Independent journey prepared validation must reproduce current runtime bytes.');
+  const preparation=[foundationDownload,ingestion,independentBuild,independentPrepared,workflowStep(operator,'Complete local operator journey')];
+  requireValue(preparation.every((step,index)=>index===0||operator.indexOf(preparation[index-1])<operator.indexOf(step)),'Independent journey foundation validation, build, and prepared-byte check must precede execution in order.');
   const download=workflowStep(final,'Download complete local operator receipt'),join=workflowStep(final,'Validate complete local browser receipt set'),seal=workflowStep(final,'Seal verified deployment artifact');
   requireValue(download.includes('          name: operator-journey-receipt'+suffix+'\n')&&download.includes('          path: .verification-receipts/browser/LOCAL\n')&&join.includes('        run: node collect-verification-evidence.mjs --require-browser-scope=LOCAL\n')&&!/^        if:/m.test(join)&&final.indexOf(download)<final.indexOf(join)&&final.indexOf(join)<final.indexOf(seal),'Final seal requires the current-attempt journey receipt and strict complete LOCAL join.');
   requireValue(deployed.includes('    needs: [test, deploy, verify-live]\n')&&deployed.includes("    if: github.event_name == 'push' && github.ref == 'refs/heads/main'\n")&&reverified.includes('    needs: test\n')&&reverified.includes("    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'\n"),'Deployed journey dependencies and authenticated event scopes must remain intact.');
