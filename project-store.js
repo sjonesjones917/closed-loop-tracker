@@ -994,6 +994,17 @@ function decodePhysicalRow(row,ownerStore,payloadField,parts){
  const e=physicalEnvelope(row,ownerStore,payloadField);if(!e)return row;
  if(!Array.isArray(parts)||parts.length!==e.partCount)throw physicalInvalid('part inventory count');
  const nodes=new Map(),strings=new Map(),blobs=new Map(),usedBlobs=new Set();const canonicalPayload=ownerStore===PROJECTS||ownerStore===META&&e.ownerKey.startsWith('responseOperations:');let rootSeen=false,rootValue,commands=0,stringCodeUnits=0,activeNode=null,activeString=null;
+ // Sharing happens only after the original join has run. A private bounded
+ // list needs no mutable collection methods and never observes stored objects.
+ // Equal primitive strings retain every exact value without separate backing
+ // strings for repeated fields in this one physical read.
+ let sharedStrings=null,sharedStringCount=0;
+ function shareJoinedString(value){
+  if(typeof value!=='string'||value.length<PHYSICAL_STRING_FRAGMENT)return value;
+  for(let entry=sharedStrings;entry!==null;entry=entry.next)if(entry.value===value)return entry.value;
+  if(sharedStringCount<64){sharedStrings={value,next:sharedStrings};sharedStringCount++;}
+  return value;
+ }
  const integer=(value,label)=>{if(!Number.isSafeInteger(value)||value<0)throw physicalInvalid(label);return value;};
  const text=tok=>{if(!physicalOwnArray(tok,2))throw physicalInvalid('string token shape');let value;if(tok[0]==='string'){if(typeof tok[1]!=='string'||tok[1].length>PHYSICAL_INLINE_STRING)throw physicalInvalid('inline string');value=tok[1];}
   else if(tok[0]==='stringRef'){const s=strings.get(integer(tok[1],'string reference'));if(!s?.finished||s.used)throw physicalInvalid('unresolved or repeated string reference');s.used=true;value=s.value;}
@@ -1015,7 +1026,7 @@ function decodePhysicalRow(row,ownerStore,payloadField,parts){
    switch(c[0]){
     case 'stringStart':{if(c.length!==2||activeString!==null||integer(c[1],'string id')!==strings.size)throw physicalInvalid('string start');strings.set(c[1],{pieces:[],units:0,next:0,finished:false,used:false});activeString=c[1];break;}
     case 'stringPart':{const s=strings.get(c[1]);if(c.length!==4||activeString!==c[1]||!s||c[2]!==s.next||typeof c[3]!=='string'||!c[3].length||c[3].length>PHYSICAL_STRING_FRAGMENT)throw physicalInvalid('string part');s.next++;s.units+=c[3].length;if(!Number.isSafeInteger(s.units))throw physicalInvalid('string length overflow');s.pieces.push(c[3]);break;}
-    case 'stringEnd':{const s=strings.get(c[1]);if(c.length!==3||activeString!==c[1]||!s||c[2]!==s.units||s.units<=PHYSICAL_INLINE_STRING)throw physicalInvalid('string end');s.value=s.pieces.join('');s.pieces=null;s.finished=true;activeString=null;break;}
+    case 'stringEnd':{const s=strings.get(c[1]);if(c.length!==3||activeString!==c[1]||!s||c[2]!==s.units||s.units<=PHYSICAL_INLINE_STRING)throw physicalInvalid('string end');s.value=shareJoinedString(s.pieces.join(''));s.pieces=null;s.finished=true;activeString=null;break;}
     case 'blob':if(c.length!==3||activeString!==null||integer(c[1],'blob id')!==blobs.size||!(c[2] instanceof Blob))throw physicalInvalid('blob command');blobs.set(c[1],c[2]);break;
     case 'root':if(c.length!==2||rootSeen||activeString!==null||activeNode!==null)throw physicalInvalid('root command');rootValue=token(c[1]);rootSeen=true;break;
     case 'node':{const n=nodes.get(c[1]);if(c.length!==3||!rootSeen||activeString!==null||activeNode!==null||!n||n.kind!==c[2]||n.started)throw physicalInvalid('node command');n.started=true;activeNode=c[1];break;}
