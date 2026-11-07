@@ -1,0 +1,1562 @@
+[
+  {
+    "predecessorIndex": 1690,
+    "predecessorId": "NREQ-5b036f8b1c0124cb731770c3e8d103f6",
+    "originalStatement": "The single ingestion path rejects before canonical mutation: unknown closed properties.",
+    "priorReviewedStatement": "The single ingestion path rejects before canonical mutation: unknown closed properties.",
+    "independentMechanismClass": "FIXED_CLOSED_SCHEMA_AND_AUTHORITY",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "The exact predicate rejects an unknown property, ownership violation or invalid field/argument shape/type/enum/null/empty/artifact binding. Technical33 preserves canonical node shape, one-node arity, grammar and same-execution provenance; it adds no property, type, writer or artifact requirement. Actual SELECT_XML result semantics and explicit node choice remain independently linked.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1709,
+    "predecessorId": "NREQ-40932758a8de1112d37864c66d03b7ec",
+    "originalStatement": "The single ingestion path rejects before canonical mutation: ownership violations.",
+    "priorReviewedStatement": "The single ingestion path rejects before canonical mutation: ownership violations.",
+    "independentMechanismClass": "FIXED_CLOSED_SCHEMA_AND_AUTHORITY",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "The exact predicate rejects an unknown property, ownership violation or invalid field/argument shape/type/enum/null/empty/artifact binding. Technical33 preserves canonical node shape, one-node arity, grammar and same-execution provenance; it adds no property, type, writer or artifact requirement. Actual SELECT_XML result semantics and explicit node choice remain independently linked.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1710,
+    "predecessorId": "NREQ-486b3d356d1077e6a811948127d14ba7",
+    "originalStatement": "The single ingestion path rejects before canonical mutation: wrong type.",
+    "priorReviewedStatement": "The single ingestion path rejects before canonical mutation: wrong type.",
+    "independentMechanismClass": "FIXED_CLOSED_SCHEMA_AND_AUTHORITY",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "The exact predicate rejects an unknown property, ownership violation or invalid field/argument shape/type/enum/null/empty/artifact binding. Technical33 preserves canonical node shape, one-node arity, grammar and same-execution provenance; it adds no property, type, writer or artifact requirement. Actual SELECT_XML result semantics and explicit node choice remain independently linked.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1711,
+    "predecessorId": "NREQ-54108df4b15bc3d6ce28c364da7a1e13",
+    "originalStatement": "The single ingestion path rejects before canonical mutation: wrong enum.",
+    "priorReviewedStatement": "The single ingestion path rejects before canonical mutation: wrong enum.",
+    "independentMechanismClass": "FIXED_CLOSED_SCHEMA_AND_AUTHORITY",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "The exact predicate rejects an unknown property, ownership violation or invalid field/argument shape/type/enum/null/empty/artifact binding. Technical33 preserves canonical node shape, one-node arity, grammar and same-execution provenance; it adds no property, type, writer or artifact requirement. Actual SELECT_XML result semantics and explicit node choice remain independently linked.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1712,
+    "predecessorId": "NREQ-e31de1f4a6adb627d3fa7d45227ddbe1",
+    "originalStatement": "The single ingestion path rejects before canonical mutation: prohibited null.",
+    "priorReviewedStatement": "The single ingestion path rejects before canonical mutation: prohibited null.",
+    "independentMechanismClass": "FIXED_CLOSED_SCHEMA_AND_AUTHORITY",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "The exact predicate rejects an unknown property, ownership violation or invalid field/argument shape/type/enum/null/empty/artifact binding. Technical33 preserves canonical node shape, one-node arity, grammar and same-execution provenance; it adds no property, type, writer or artifact requirement. Actual SELECT_XML result semantics and explicit node choice remain independently linked.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1713,
+    "predecessorId": "NREQ-b49c0aa202067a0945396558f406da8f",
+    "originalStatement": "The single ingestion path rejects before canonical mutation: invalid required empty.",
+    "priorReviewedStatement": "The single ingestion path rejects before canonical mutation: invalid required empty.",
+    "independentMechanismClass": "FIXED_CLOSED_SCHEMA_AND_AUTHORITY",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "The exact predicate rejects an unknown property, ownership violation or invalid field/argument shape/type/enum/null/empty/artifact binding. Technical33 preserves canonical node shape, one-node arity, grammar and same-execution provenance; it adds no property, type, writer or artifact requirement. Actual SELECT_XML result semantics and explicit node choice remain independently linked.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 2342,
+    "predecessorId": "NREQ-a9e4fee76435c3c36eefe92d6c148fd4",
+    "originalStatement": "Stage 22 finished-product artifact selection must include the same relevant product artifacts included for Stages 23-25 whenever Stage 22 execution requires those bytes.",
+    "priorReviewedStatement": "Stage 22 finished-product artifact selection must include the same relevant product artifacts included for Stages 23-25 whenever Stage 22 execution requires those bytes.",
+    "independentMechanismClass": "REQUIRED_PRODUCT_ARTIFACT_INCLUSION",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This requires the same relevant product artifacts for Stage22 when their bytes are needed, preserving the declared implementation sequence. Technical33 changes selector invocation rooting, not which finished-product artifact must be handed off. Actual XML test execution on those bytes remains separately governed.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 3654,
+    "predecessorId": "NREQ-4795046d03862a64be7d2de0101fda07",
+    "originalStatement": "Stage 08: The prompt must use accepted tests.",
+    "priorReviewedStatement": "Stage 08: The prompt must use accepted tests.",
+    "independentMechanismClass": "CURRENT_ACCEPTED_SEMANTIC_IDENTITIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Actual accepted-test/candidate closure, tool/validator semantic configuration, zero-change audit and current-scope chains must use the current SELECT_XML meaning. Technical33 fixes the supplied node as invocation root and forbids implicit ambient ancestry. Under base21.16, materially different XML meaning cannot reuse historical identity/evidence. Preserve exact frozen-component/human-selection/currentness rules and leave unrelated identities unchanged.",
+        "effectiveBranchCondition": "Only the exact current predicate’s affected SELECT_XML native definition, supplied-node execution/result or current semantic-identity dependency. No universal XML requirement and no change to unrelated native operations.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 3716,
+    "predecessorId": "NREQ-bc011cdbdffb114ee65589a7af2678a8",
+    "originalStatement": "Stage 10: Completion requires all required components to be present.",
+    "priorReviewedStatement": "Stage 10: Completion requires all required components to be present.",
+    "independentMechanismClass": "CURRENT_ACCEPTED_SEMANTIC_IDENTITIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Actual accepted-test/candidate closure, tool/validator semantic configuration, zero-change audit and current-scope chains must use the current SELECT_XML meaning. Technical33 fixes the supplied node as invocation root and forbids implicit ambient ancestry. Under base21.16, materially different XML meaning cannot reuse historical identity/evidence. Preserve exact frozen-component/human-selection/currentness rules and leave unrelated identities unchanged.",
+        "effectiveBranchCondition": "Only the exact current predicate’s affected SELECT_XML native definition, supplied-node execution/result or current semantic-identity dependency. No universal XML requirement and no change to unrelated native operations.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 3729,
+    "predecessorId": "NREQ-4acac329375ed5ae4e06c5f629655397",
+    "originalStatement": "Stage 10 must include the TOOL_CONFIGURATION_RECORDS field under the specification-controlled FIELD_REGISTRY contract; ownership, requiredness and value semantics follow the applicable explicit contract or ordered closed defaults, not an implementation-selected interpretation.",
+    "priorReviewedStatement": "FIELD TOOL_CONFIGURATION_RECORDS",
+    "independentMechanismClass": "CURRENT_ACCEPTED_SEMANTIC_IDENTITIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Actual accepted-test/candidate closure, tool/validator semantic configuration, zero-change audit and current-scope chains must use the current SELECT_XML meaning. Technical33 fixes the supplied node as invocation root and forbids implicit ambient ancestry. Under base21.16, materially different XML meaning cannot reuse historical identity/evidence. Preserve exact frozen-component/human-selection/currentness rules and leave unrelated identities unchanged.",
+        "effectiveBranchCondition": "Only the exact current predicate’s affected SELECT_XML native definition, supplied-node execution/result or current semantic-identity dependency. No universal XML requirement and no change to unrelated native operations.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 3762,
+    "predecessorId": "NREQ-4ea353d83976de7674fac104bb364c2f",
+    "originalStatement": "Stage 12: Every required tuple must have exactly one valid determination.",
+    "priorReviewedStatement": "Stage 12: Every required tuple must have exactly one valid determination.",
+    "independentMechanismClass": "CURRENT_VALID_RESULTS_AND_SUMMARIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "The current valid tuple, complete comparison/correction/RCA, deterministic result, mandatory-failure or exact derived count/summary predicate consumes actual XML outcomes where relevant. Technical33 determines those outcomes and their current semantic identity. Bind that input meaning without changing arithmetic, ownership, evidence threshold, ten-run completeness or the distinct failure/violation/UNKNOWN categories. No missing/failed result becomes favorable evidence.",
+        "effectiveBranchCondition": "Only the exact current predicate’s affected SELECT_XML native definition, supplied-node execution/result or current semantic-identity dependency. No universal XML requirement and no change to unrelated native operations.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 3865,
+    "predecessorId": "NREQ-8d3903dbd07a63b682407aa7b8203490",
+    "originalStatement": "Stage 17: The shared evaluator must prove comparison.",
+    "priorReviewedStatement": "Stage 17: The shared evaluator must prove comparison.",
+    "independentMechanismClass": "CURRENT_VALID_RESULTS_AND_SUMMARIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "The current valid tuple, complete comparison/correction/RCA, deterministic result, mandatory-failure or exact derived count/summary predicate consumes actual XML outcomes where relevant. Technical33 determines those outcomes and their current semantic identity. Bind that input meaning without changing arithmetic, ownership, evidence threshold, ten-run completeness or the distinct failure/violation/UNKNOWN categories. No missing/failed result becomes favorable evidence.",
+        "effectiveBranchCondition": "Only the exact current predicate’s affected SELECT_XML native definition, supplied-node execution/result or current semantic-identity dependency. No universal XML requirement and no change to unrelated native operations.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 3867,
+    "predecessorId": "NREQ-2a15b1d36fd88737b0c70316cd94b495",
+    "originalStatement": "Stage 17: The shared evaluator must prove correction behavior.",
+    "priorReviewedStatement": "Stage 17: The shared evaluator must prove correction behavior.",
+    "independentMechanismClass": "CURRENT_VALID_RESULTS_AND_SUMMARIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "The current valid tuple, complete comparison/correction/RCA, deterministic result, mandatory-failure or exact derived count/summary predicate consumes actual XML outcomes where relevant. Technical33 determines those outcomes and their current semantic identity. Bind that input meaning without changing arithmetic, ownership, evidence threshold, ten-run completeness or the distinct failure/violation/UNKNOWN categories. No missing/failed result becomes favorable evidence.",
+        "effectiveBranchCondition": "Only the exact current predicate’s affected SELECT_XML native definition, supplied-node execution/result or current semantic-identity dependency. No universal XML requirement and no change to unrelated native operations.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 3868,
+    "predecessorId": "NREQ-d1d08694c3d979bd39d3641ae6f10c5f",
+    "originalStatement": "Stage 17: The shared evaluator must prove RCA.",
+    "priorReviewedStatement": "Stage 17: The shared evaluator must prove RCA.",
+    "independentMechanismClass": "CURRENT_VALID_RESULTS_AND_SUMMARIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "The current valid tuple, complete comparison/correction/RCA, deterministic result, mandatory-failure or exact derived count/summary predicate consumes actual XML outcomes where relevant. Technical33 determines those outcomes and their current semantic identity. Bind that input meaning without changing arithmetic, ownership, evidence threshold, ten-run completeness or the distinct failure/violation/UNKNOWN categories. No missing/failed result becomes favorable evidence.",
+        "effectiveBranchCondition": "Only the exact current predicate’s affected SELECT_XML native definition, supplied-node execution/result or current semantic-identity dependency. No universal XML requirement and no change to unrelated native operations.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 3872,
+    "predecessorId": "NREQ-11096e0a4de65bfce5d0f58de88843cf",
+    "originalStatement": "Stage 17 must include the COMPARE_COMPLETED field under the specification-controlled FIELD_REGISTRY contract; ownership, requiredness and value semantics follow the applicable explicit contract or ordered closed defaults, not an implementation-selected interpretation.",
+    "priorReviewedStatement": "Stage 17 must include the COMPARE_COMPLETED field under the specification-controlled FIELD_REGISTRY contract; ownership, requiredness and value semantics follow the applicable explicit contract or ordered closed defaults, not an implementation-selected interpretation.",
+    "independentMechanismClass": "CURRENT_VALID_RESULTS_AND_SUMMARIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "The current valid tuple, complete comparison/correction/RCA, deterministic result, mandatory-failure or exact derived count/summary predicate consumes actual XML outcomes where relevant. Technical33 determines those outcomes and their current semantic identity. Bind that input meaning without changing arithmetic, ownership, evidence threshold, ten-run completeness or the distinct failure/violation/UNKNOWN categories. No missing/failed result becomes favorable evidence.",
+        "effectiveBranchCondition": "Only the exact current predicate’s affected SELECT_XML native definition, supplied-node execution/result or current semantic-identity dependency. No universal XML requirement and no change to unrelated native operations.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 3873,
+    "predecessorId": "NREQ-9037b9efc58057cf3fae273ed9a8c59d",
+    "originalStatement": "Stage 17 must include the CORRECTIONS_COMPLETED field under the specification-controlled FIELD_REGISTRY contract; ownership, requiredness and value semantics follow the applicable explicit contract or ordered closed defaults, not an implementation-selected interpretation.",
+    "priorReviewedStatement": "Stage 17 must include the CORRECTIONS_COMPLETED field under the specification-controlled FIELD_REGISTRY contract; ownership, requiredness and value semantics follow the applicable explicit contract or ordered closed defaults, not an implementation-selected interpretation.",
+    "independentMechanismClass": "CURRENT_VALID_RESULTS_AND_SUMMARIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "The current valid tuple, complete comparison/correction/RCA, deterministic result, mandatory-failure or exact derived count/summary predicate consumes actual XML outcomes where relevant. Technical33 determines those outcomes and their current semantic identity. Bind that input meaning without changing arithmetic, ownership, evidence threshold, ten-run completeness or the distinct failure/violation/UNKNOWN categories. No missing/failed result becomes favorable evidence.",
+        "effectiveBranchCondition": "Only the exact current predicate’s affected SELECT_XML native definition, supplied-node execution/result or current semantic-identity dependency. No universal XML requirement and no change to unrelated native operations.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 3885,
+    "predecessorId": "NREQ-f8cb75b67813666fbb91046b02e87191",
+    "originalStatement": "Stage 17 must include the ROOT_CAUSE_COMPLETED field under the specification-controlled FIELD_REGISTRY contract; ownership, requiredness and value semantics follow the applicable explicit contract or ordered closed defaults, not an implementation-selected interpretation.",
+    "priorReviewedStatement": "Stage 17 must include the ROOT_CAUSE_COMPLETED field under the specification-controlled FIELD_REGISTRY contract; ownership, requiredness and value semantics follow the applicable explicit contract or ordered closed defaults, not an implementation-selected interpretation.",
+    "independentMechanismClass": "CURRENT_VALID_RESULTS_AND_SUMMARIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "The current valid tuple, complete comparison/correction/RCA, deterministic result, mandatory-failure or exact derived count/summary predicate consumes actual XML outcomes where relevant. Technical33 determines those outcomes and their current semantic identity. Bind that input meaning without changing arithmetic, ownership, evidence threshold, ten-run completeness or the distinct failure/violation/UNKNOWN categories. No missing/failed result becomes favorable evidence.",
+        "effectiveBranchCondition": "Only the exact current predicate’s affected SELECT_XML native definition, supplied-node execution/result or current semantic-identity dependency. No universal XML requirement and no change to unrelated native operations.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 3966,
+    "predecessorId": "NREQ-813c92cd7f153355fb61bce61c016a7a",
+    "originalStatement": "Stage 19 must include the ZERO_CHANGE_AUDIT field under the specification-controlled FIELD_REGISTRY contract; ownership, requiredness and value semantics follow the applicable explicit contract or ordered closed defaults, not an implementation-selected interpretation.",
+    "priorReviewedStatement": "Stage 19 must include the ZERO_CHANGE_AUDIT field under the specification-controlled FIELD_REGISTRY contract; ownership, requiredness and value semantics follow the applicable explicit contract or ordered closed defaults, not an implementation-selected interpretation.",
+    "independentMechanismClass": "CURRENT_ACCEPTED_SEMANTIC_IDENTITIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Actual accepted-test/candidate closure, tool/validator semantic configuration, zero-change audit and current-scope chains must use the current SELECT_XML meaning. Technical33 fixes the supplied node as invocation root and forbids implicit ambient ancestry. Under base21.16, materially different XML meaning cannot reuse historical identity/evidence. Preserve exact frozen-component/human-selection/currentness rules and leave unrelated identities unchanged.",
+        "effectiveBranchCondition": "Only the exact current predicate’s affected SELECT_XML native definition, supplied-node execution/result or current semantic-identity dependency. No universal XML requirement and no change to unrelated native operations.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 4025,
+    "predecessorId": "NREQ-4506d1c5acd3b06f30df66c9315282f9",
+    "originalStatement": "Stage 22: The application must automatically execute every current ready native Test IR test.",
+    "priorReviewedStatement": "Stage 22: The application must automatically execute every current ready native Test IR test.",
+    "independentMechanismClass": "NATIVE_SUPPORT_EXECUTION_AND_COVERAGE",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Faithful native support, representability, execution of every ready native test or complete current native/worker coverage includes SELECT_XML supplied-node semantics. Technical33 confines traversal to that supplied subtree and requires explicitly passing the parsed root when intended. Preserve required readiness, application execution, exact authorized external capability, isolated worker bounds and implementation order. No implicit executor fallback or proven test result follows.",
+        "effectiveBranchCondition": "Only the exact current predicate’s affected SELECT_XML native definition, supplied-node execution/result or current semantic-identity dependency. No universal XML requirement and no change to unrelated native operations.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 4026,
+    "predecessorId": "NREQ-fc5daa788af1d6c1ba53a1268e50b454",
+    "originalStatement": "Stage 22: Unsupported tests must route to the exact required external capability. An unsupported native route remains blocked; an external route is usable only with its exact required capability and bytes.",
+    "priorReviewedStatement": "Stage 22: Unsupported tests must route to the exact required external capability. An unsupported native route remains blocked; an external route is usable only with its exact required capability and bytes.",
+    "independentMechanismClass": "NATIVE_SUPPORT_EXECUTION_AND_COVERAGE",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Faithful native support, representability, execution of every ready native test or complete current native/worker coverage includes SELECT_XML supplied-node semantics. Technical33 confines traversal to that supplied subtree and requires explicitly passing the parsed root when intended. Preserve required readiness, application execution, exact authorized external capability, isolated worker bounds and implementation order. No implicit executor fallback or proven test result follows.",
+        "effectiveBranchCondition": "Only the exact current predicate’s affected SELECT_XML native definition, supplied-node execution/result or current semantic-identity dependency. No universal XML requirement and no change to unrelated native operations.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 4027,
+    "predecessorId": "NREQ-cce5eaed7b1164570cd68662ca0d1c35",
+    "originalStatement": "Stage 22: All mandatory deterministic results must be satisfied.",
+    "priorReviewedStatement": "Stage 22: All mandatory deterministic results must be satisfied.",
+    "independentMechanismClass": "CURRENT_VALID_RESULTS_AND_SUMMARIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "The current valid tuple, complete comparison/correction/RCA, deterministic result, mandatory-failure or exact derived count/summary predicate consumes actual XML outcomes where relevant. Technical33 determines those outcomes and their current semantic identity. Bind that input meaning without changing arithmetic, ownership, evidence threshold, ten-run completeness or the distinct failure/violation/UNKNOWN categories. No missing/failed result becomes favorable evidence.",
+        "effectiveBranchCondition": "Only the exact current predicate’s affected SELECT_XML native definition, supplied-node execution/result or current semantic-identity dependency. No universal XML requirement and no change to unrelated native operations.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 4028,
+    "predecessorId": "NREQ-9983efcab0609f6e8b0f8ea675387067",
+    "originalStatement": "Stage 22: Every applicable mandatory deterministic test must have exactly one current sufficient result.",
+    "priorReviewedStatement": "Stage 22: Every applicable mandatory deterministic test must have exactly one current sufficient result.",
+    "independentMechanismClass": "CURRENT_VALID_RESULTS_AND_SUMMARIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "The current valid tuple, complete comparison/correction/RCA, deterministic result, mandatory-failure or exact derived count/summary predicate consumes actual XML outcomes where relevant. Technical33 determines those outcomes and their current semantic identity. Bind that input meaning without changing arithmetic, ownership, evidence threshold, ten-run completeness or the distinct failure/violation/UNKNOWN categories. No missing/failed result becomes favorable evidence.",
+        "effectiveBranchCondition": "Only the exact current predicate’s affected SELECT_XML native definition, supplied-node execution/result or current semantic-identity dependency. No universal XML requirement and no change to unrelated native operations.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 4030,
+    "predecessorId": "NREQ-dc962a9a72806366ecb936dfb2cf2350",
+    "originalStatement": "Stage 22 must include the DECISION_EVIDENCE field under the specification-controlled FIELD_REGISTRY contract; ownership, requiredness and value semantics follow the applicable explicit contract or ordered closed defaults, not an implementation-selected interpretation.",
+    "priorReviewedStatement": "FIELD DECISION_EVIDENCE",
+    "independentMechanismClass": "CURRENT_VALID_RESULTS_AND_SUMMARIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "The current valid tuple, complete comparison/correction/RCA, deterministic result, mandatory-failure or exact derived count/summary predicate consumes actual XML outcomes where relevant. Technical33 determines those outcomes and their current semantic identity. Bind that input meaning without changing arithmetic, ownership, evidence threshold, ten-run completeness or the distinct failure/violation/UNKNOWN categories. No missing/failed result becomes favorable evidence.",
+        "effectiveBranchCondition": "Only the exact current predicate’s affected SELECT_XML native definition, supplied-node execution/result or current semantic-identity dependency. No universal XML requirement and no change to unrelated native operations.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 4031,
+    "predecessorId": "NREQ-0f1b70a5129e48e7e3d9638f15f59a2c",
+    "originalStatement": "Stage 22 must include the DETERMINISTIC_TEST_RESULTS field under the specification-controlled FIELD_REGISTRY contract; ownership, requiredness and value semantics follow the applicable explicit contract or ordered closed defaults, not an implementation-selected interpretation.",
+    "priorReviewedStatement": "FIELD DETERMINISTIC_TEST_RESULTS",
+    "independentMechanismClass": "CURRENT_VALID_RESULTS_AND_SUMMARIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "The current valid tuple, complete comparison/correction/RCA, deterministic result, mandatory-failure or exact derived count/summary predicate consumes actual XML outcomes where relevant. Technical33 determines those outcomes and their current semantic identity. Bind that input meaning without changing arithmetic, ownership, evidence threshold, ten-run completeness or the distinct failure/violation/UNKNOWN categories. No missing/failed result becomes favorable evidence.",
+        "effectiveBranchCondition": "Only the exact current predicate’s affected SELECT_XML native definition, supplied-node execution/result or current semantic-identity dependency. No universal XML requirement and no change to unrelated native operations.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 4032,
+    "predecessorId": "NREQ-621f1b83a025905240a03d47c3ea2d79",
+    "originalStatement": "Stage 22 must include the EXECUTED field under the specification-controlled FIELD_REGISTRY contract; ownership, requiredness and value semantics follow the applicable explicit contract or ordered closed defaults, not an implementation-selected interpretation.",
+    "priorReviewedStatement": "FIELD EXECUTED",
+    "independentMechanismClass": "CURRENT_VALID_RESULTS_AND_SUMMARIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "The current valid tuple, complete comparison/correction/RCA, deterministic result, mandatory-failure or exact derived count/summary predicate consumes actual XML outcomes where relevant. Technical33 determines those outcomes and their current semantic identity. Bind that input meaning without changing arithmetic, ownership, evidence threshold, ten-run completeness or the distinct failure/violation/UNKNOWN categories. No missing/failed result becomes favorable evidence.",
+        "effectiveBranchCondition": "Only the exact current predicate’s affected SELECT_XML native definition, supplied-node execution/result or current semantic-identity dependency. No universal XML requirement and no change to unrelated native operations.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 4033,
+    "predecessorId": "NREQ-c1e59fbcf2da883e283fa81cf937f8ef",
+    "originalStatement": "Stage 22 must include the MISSING_TEST_RESULTS field under the specification-controlled FIELD_REGISTRY contract; ownership, requiredness and value semantics follow the applicable explicit contract or ordered closed defaults, not an implementation-selected interpretation.",
+    "priorReviewedStatement": "FIELD MISSING_TEST_RESULTS",
+    "independentMechanismClass": "CURRENT_VALID_RESULTS_AND_SUMMARIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "The current valid tuple, complete comparison/correction/RCA, deterministic result, mandatory-failure or exact derived count/summary predicate consumes actual XML outcomes where relevant. Technical33 determines those outcomes and their current semantic identity. Bind that input meaning without changing arithmetic, ownership, evidence threshold, ten-run completeness or the distinct failure/violation/UNKNOWN categories. No missing/failed result becomes favorable evidence.",
+        "effectiveBranchCondition": "Only the exact current predicate’s affected SELECT_XML native definition, supplied-node execution/result or current semantic-identity dependency. No universal XML requirement and no change to unrelated native operations.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 4036,
+    "predecessorId": "NREQ-9c48d9afc6eaa1930a4132a1f80485b0",
+    "originalStatement": "Stage 22 must include the PRODUCT_REJECTED_BY_MANDATORY_FAILURE field under the specification-controlled FIELD_REGISTRY contract; ownership, requiredness and value semantics follow the applicable explicit contract or ordered closed defaults, not an implementation-selected interpretation.",
+    "priorReviewedStatement": "FIELD PRODUCT_REJECTED_BY_MANDATORY_FAILURE",
+    "independentMechanismClass": "CURRENT_VALID_RESULTS_AND_SUMMARIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "The current valid tuple, complete comparison/correction/RCA, deterministic result, mandatory-failure or exact derived count/summary predicate consumes actual XML outcomes where relevant. Technical33 determines those outcomes and their current semantic identity. Bind that input meaning without changing arithmetic, ownership, evidence threshold, ten-run completeness or the distinct failure/violation/UNKNOWN categories. No missing/failed result becomes favorable evidence.",
+        "effectiveBranchCondition": "Only the exact current predicate’s affected SELECT_XML native definition, supplied-node execution/result or current semantic-identity dependency. No universal XML requirement and no change to unrelated native operations.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 4038,
+    "predecessorId": "NREQ-5274989419d6d06e3cf53011e7812519",
+    "originalStatement": "Stage 22 must include the SATISFIED field under the specification-controlled FIELD_REGISTRY contract; ownership, requiredness and value semantics follow the applicable explicit contract or ordered closed defaults, not an implementation-selected interpretation.",
+    "priorReviewedStatement": "FIELD SATISFIED",
+    "independentMechanismClass": "CURRENT_VALID_RESULTS_AND_SUMMARIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "The current valid tuple, complete comparison/correction/RCA, deterministic result, mandatory-failure or exact derived count/summary predicate consumes actual XML outcomes where relevant. Technical33 determines those outcomes and their current semantic identity. Bind that input meaning without changing arithmetic, ownership, evidence threshold, ten-run completeness or the distinct failure/violation/UNKNOWN categories. No missing/failed result becomes favorable evidence.",
+        "effectiveBranchCondition": "Only the exact current predicate’s affected SELECT_XML native definition, supplied-node execution/result or current semantic-identity dependency. No universal XML requirement and no change to unrelated native operations.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 4039,
+    "predecessorId": "NREQ-7083e61d3ac9d3f869bb89e686bca99e",
+    "originalStatement": "Stage 22 must include the STAGE_DECISION field under the specification-controlled FIELD_REGISTRY contract; ownership, requiredness and value semantics follow the applicable explicit contract or ordered closed defaults, not an implementation-selected interpretation.",
+    "priorReviewedStatement": "FIELD STAGE_DECISION",
+    "independentMechanismClass": "CURRENT_VALID_RESULTS_AND_SUMMARIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "The current valid tuple, complete comparison/correction/RCA, deterministic result, mandatory-failure or exact derived count/summary predicate consumes actual XML outcomes where relevant. Technical33 determines those outcomes and their current semantic identity. Bind that input meaning without changing arithmetic, ownership, evidence threshold, ten-run completeness or the distinct failure/violation/UNKNOWN categories. No missing/failed result becomes favorable evidence.",
+        "effectiveBranchCondition": "Only the exact current predicate’s affected SELECT_XML native definition, supplied-node execution/result or current semantic-identity dependency. No universal XML requirement and no change to unrelated native operations.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 4041,
+    "predecessorId": "NREQ-0d3ca193f63a863cbdd9fef1874c4704",
+    "originalStatement": "Stage 22 must include the UNDETERMINED field under the specification-controlled FIELD_REGISTRY contract; ownership, requiredness and value semantics follow the applicable explicit contract or ordered closed defaults, not an implementation-selected interpretation.",
+    "priorReviewedStatement": "FIELD UNDETERMINED",
+    "independentMechanismClass": "CURRENT_VALID_RESULTS_AND_SUMMARIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "The current valid tuple, complete comparison/correction/RCA, deterministic result, mandatory-failure or exact derived count/summary predicate consumes actual XML outcomes where relevant. Technical33 determines those outcomes and their current semantic identity. Bind that input meaning without changing arithmetic, ownership, evidence threshold, ten-run completeness or the distinct failure/violation/UNKNOWN categories. No missing/failed result becomes favorable evidence.",
+        "effectiveBranchCondition": "Only the exact current predicate’s affected SELECT_XML native definition, supplied-node execution/result or current semantic-identity dependency. No universal XML requirement and no change to unrelated native operations.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 4042,
+    "predecessorId": "NREQ-b4b3d994816392e4798dd98bc4af0de9",
+    "originalStatement": "Stage 22 must include the VALIDATOR_VERSION field under the specification-controlled FIELD_REGISTRY contract; ownership, requiredness and value semantics follow the applicable explicit contract or ordered closed defaults, not an implementation-selected interpretation.",
+    "priorReviewedStatement": "FIELD VALIDATOR_VERSION",
+    "independentMechanismClass": "CURRENT_ACCEPTED_SEMANTIC_IDENTITIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Actual accepted-test/candidate closure, tool/validator semantic configuration, zero-change audit and current-scope chains must use the current SELECT_XML meaning. Technical33 fixes the supplied node as invocation root and forbids implicit ambient ancestry. Under base21.16, materially different XML meaning cannot reuse historical identity/evidence. Preserve exact frozen-component/human-selection/currentness rules and leave unrelated identities unchanged.",
+        "effectiveBranchCondition": "Only the exact current predicate’s affected SELECT_XML native definition, supplied-node execution/result or current semantic-identity dependency. No universal XML requirement and no change to unrelated native operations.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 4043,
+    "predecessorId": "NREQ-1c9840bb1ffd29a8aec04d965b8812e1",
+    "originalStatement": "Stage 22 must include the VIOLATED field under the specification-controlled FIELD_REGISTRY contract; ownership, requiredness and value semantics follow the applicable explicit contract or ordered closed defaults, not an implementation-selected interpretation.",
+    "priorReviewedStatement": "FIELD VIOLATED",
+    "independentMechanismClass": "CURRENT_VALID_RESULTS_AND_SUMMARIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "The current valid tuple, complete comparison/correction/RCA, deterministic result, mandatory-failure or exact derived count/summary predicate consumes actual XML outcomes where relevant. Technical33 determines those outcomes and their current semantic identity. Bind that input meaning without changing arithmetic, ownership, evidence threshold, ten-run completeness or the distinct failure/violation/UNKNOWN categories. No missing/failed result becomes favorable evidence.",
+        "effectiveBranchCondition": "Only the exact current predicate’s affected SELECT_XML native definition, supplied-node execution/result or current semantic-identity dependency. No universal XML requirement and no change to unrelated native operations.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 4268,
+    "predecessorId": "NREQ-cd0ce5815abacafb34ca06eb6c3b54d5",
+    "originalStatement": "Stage 29: Every mandatory chain must be current-scope.",
+    "priorReviewedStatement": "Stage 29: Every mandatory chain must be current-scope.",
+    "independentMechanismClass": "CURRENT_ACCEPTED_SEMANTIC_IDENTITIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Actual accepted-test/candidate closure, tool/validator semantic configuration, zero-change audit and current-scope chains must use the current SELECT_XML meaning. Technical33 fixes the supplied node as invocation root and forbids implicit ambient ancestry. Under base21.16, materially different XML meaning cannot reuse historical identity/evidence. Preserve exact frozen-component/human-selection/currentness rules and leave unrelated identities unchanged.",
+        "effectiveBranchCondition": "Only the exact current predicate’s affected SELECT_XML native definition, supplied-node execution/result or current semantic-identity dependency. No universal XML requirement and no change to unrelated native operations.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5420,
+    "predecessorId": "NREQ-478942f7323d71354cf74753fc1b83d8",
+    "originalStatement": "The mandatory deterministic and behavioral suite must verify: Byte test with verified hashes and identities → sufficient.",
+    "priorReviewedStatement": "The mandatory deterministic and behavioral suite must verify: Byte test with verified hashes and identities → sufficient.",
+    "independentMechanismClass": "OBJECTIVE_BYTE_IDENTITY_EVIDENCE",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This exact byte-test predicate binds verified hashes and identities for objective byte evidence. Technical33 concerns SELECT_XML traversal and does not change byte-hash sufficiency. Broader Stage22 evidence context cannot turn this atom into an XML selector proposition; evidence still must support the claimed byte proposition.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5435,
+    "predecessorId": "NREQ-05239ea98d7b28e9f1b0992c0e28f313",
+    "originalStatement": "The mandatory suite must verify: The exact count is verified for undetermined results",
+    "priorReviewedStatement": "The mandatory suite must verify: The exact count is verified for undetermined results",
+    "independentMechanismClass": "CURRENT_VALID_RESULTS_AND_SUMMARIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "The current valid tuple, complete comparison/correction/RCA, deterministic result, mandatory-failure or exact derived count/summary predicate consumes actual XML outcomes where relevant. Technical33 determines those outcomes and their current semantic identity. Bind that input meaning without changing arithmetic, ownership, evidence threshold, ten-run completeness or the distinct failure/violation/UNKNOWN categories. No missing/failed result becomes favorable evidence.",
+        "effectiveBranchCondition": "Only the exact current predicate’s affected SELECT_XML native definition, supplied-node execution/result or current semantic-identity dependency. No universal XML requirement and no change to unrelated native operations.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5436,
+    "predecessorId": "NREQ-e769fa5da5f3ad0071d772cb70a4d01d",
+    "originalStatement": "The mandatory suite must verify: The exact count is verified for violations",
+    "priorReviewedStatement": "The mandatory suite must verify: The exact count is verified for violations",
+    "independentMechanismClass": "CURRENT_VALID_RESULTS_AND_SUMMARIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "The current valid tuple, complete comparison/correction/RCA, deterministic result, mandatory-failure or exact derived count/summary predicate consumes actual XML outcomes where relevant. Technical33 determines those outcomes and their current semantic identity. Bind that input meaning without changing arithmetic, ownership, evidence threshold, ten-run completeness or the distinct failure/violation/UNKNOWN categories. No missing/failed result becomes favorable evidence.",
+        "effectiveBranchCondition": "Only the exact current predicate’s affected SELECT_XML native definition, supplied-node execution/result or current semantic-identity dependency. No universal XML requirement and no change to unrelated native operations.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5495,
+    "predecessorId": "NREQ-45046b541d8b374e8ac5655f222f6d48",
+    "originalStatement": "The mandatory deterministic and behavioral suite must verify: Weak Stage 22 evidence cannot satisfy deterministic verification.",
+    "priorReviewedStatement": "The mandatory deterministic and behavioral suite must verify: Weak Stage 22 evidence cannot satisfy deterministic verification.",
+    "independentMechanismClass": "CURRENT_VALID_RESULTS_AND_SUMMARIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "The current valid tuple, complete comparison/correction/RCA, deterministic result, mandatory-failure or exact derived count/summary predicate consumes actual XML outcomes where relevant. Technical33 determines those outcomes and their current semantic identity. Bind that input meaning without changing arithmetic, ownership, evidence threshold, ten-run completeness or the distinct failure/violation/UNKNOWN categories. No missing/failed result becomes favorable evidence.",
+        "effectiveBranchCondition": "Only the exact current predicate’s affected SELECT_XML native definition, supplied-node execution/result or current semantic-identity dependency. No universal XML requirement and no change to unrelated native operations.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5496,
+    "predecessorId": "NREQ-6ccc8a20f0c20862dc459a13b2a32ecd",
+    "originalStatement": "The mandatory deterministic and behavioral suite must verify: Correct objective evidence can.",
+    "priorReviewedStatement": "The mandatory deterministic and behavioral suite must verify: Correct objective evidence can.",
+    "independentMechanismClass": "CURRENT_VALID_RESULTS_AND_SUMMARIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "The current valid tuple, complete comparison/correction/RCA, deterministic result, mandatory-failure or exact derived count/summary predicate consumes actual XML outcomes where relevant. Technical33 determines those outcomes and their current semantic identity. Bind that input meaning without changing arithmetic, ownership, evidence threshold, ten-run completeness or the distinct failure/violation/UNKNOWN categories. No missing/failed result becomes favorable evidence.",
+        "effectiveBranchCondition": "Only the exact current predicate’s affected SELECT_XML native definition, supplied-node execution/result or current semantic-identity dependency. No universal XML requirement and no change to unrelated native operations.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5846,
+    "predecessorId": "NREQ-7be9f7af0b7913126c7289a30fec2be2",
+    "originalStatement": "The mandatory Test IR suite must test that migration creates valid defaults for Test IR fields",
+    "priorReviewedStatement": "The mandatory Test IR suite must test that migration creates valid defaults for Test IR fields",
+    "independentMechanismClass": "VALID_MIGRATION_DEFAULTS",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "A valid migration default in the current Test IR migration contract cannot silently establish an old ambient-root interpretation or preserve incompatible semantic identity. Technical33 and base21.16 govern affected XML semantic validity/equivalence. This does not add a default node, implicit input or property; closed explicit field/default rules and explicit input binding remain required.",
+        "effectiveBranchCondition": "Only the exact current predicate’s affected SELECT_XML native definition, supplied-node execution/result or current semantic-identity dependency. No universal XML requirement and no change to unrelated native operations.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5850,
+    "predecessorId": "NREQ-6570b18b49093c903ebf52690094316a",
+    "originalStatement": "The mandatory Test IR suite must test that unknown operation property is rejected",
+    "priorReviewedStatement": "The mandatory Test IR suite must test that unknown operation property is rejected",
+    "independentMechanismClass": "FIXED_CLOSED_SCHEMA_AND_AUTHORITY",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "The exact predicate rejects an unknown property, ownership violation or invalid field/argument shape/type/enum/null/empty/artifact binding. Technical33 preserves canonical node shape, one-node arity, grammar and same-execution provenance; it adds no property, type, writer or artifact requirement. Actual SELECT_XML result semantics and explicit node choice remain independently linked.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5851,
+    "predecessorId": "NREQ-3e12b5242a7e6e67550c5f2340d8601c",
+    "originalStatement": "The mandatory Test IR suite must test that missing operation argument is rejected",
+    "priorReviewedStatement": "The mandatory Test IR suite must test that missing operation argument is rejected",
+    "independentMechanismClass": "FIXED_CLOSED_SCHEMA_AND_AUTHORITY",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "The exact predicate rejects an unknown property, ownership violation or invalid field/argument shape/type/enum/null/empty/artifact binding. Technical33 preserves canonical node shape, one-node arity, grammar and same-execution provenance; it adds no property, type, writer or artifact requirement. Actual SELECT_XML result semantics and explicit node choice remain independently linked.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5852,
+    "predecessorId": "NREQ-6789a3daa361dd675dbdb42563d1b556",
+    "originalStatement": "The mandatory Test IR suite must test that wrong argument type is rejected",
+    "priorReviewedStatement": "The mandatory Test IR suite must test that wrong argument type is rejected",
+    "independentMechanismClass": "FIXED_CLOSED_SCHEMA_AND_AUTHORITY",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "The exact predicate rejects an unknown property, ownership violation or invalid field/argument shape/type/enum/null/empty/artifact binding. Technical33 preserves canonical node shape, one-node arity, grammar and same-execution provenance; it adds no property, type, writer or artifact requirement. Actual SELECT_XML result semantics and explicit node choice remain independently linked.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5853,
+    "predecessorId": "NREQ-c3f9bb9ae33a3da19ad1491938f3b910",
+    "originalStatement": "The mandatory Test IR suite must test that invalid artifact binding is rejected",
+    "priorReviewedStatement": "The mandatory Test IR suite must test that invalid artifact binding is rejected",
+    "independentMechanismClass": "FIXED_CLOSED_SCHEMA_AND_AUTHORITY",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "The exact predicate rejects an unknown property, ownership violation or invalid field/argument shape/type/enum/null/empty/artifact binding. Technical33 preserves canonical node shape, one-node arity, grammar and same-execution provenance; it adds no property, type, writer or artifact requirement. Actual SELECT_XML result semantics and explicit node choice remain independently linked.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5888,
+    "predecessorId": "NREQ-db1cecf5c7c4843f68d260ebb653b693",
+    "originalStatement": "The mandatory Test IR suite must test that one failed native mandatory test rejects the product",
+    "priorReviewedStatement": "The mandatory Test IR suite must test that one failed native mandatory test rejects the product",
+    "independentMechanismClass": "CURRENT_VALID_RESULTS_AND_SUMMARIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "The current valid tuple, complete comparison/correction/RCA, deterministic result, mandatory-failure or exact derived count/summary predicate consumes actual XML outcomes where relevant. Technical33 determines those outcomes and their current semantic identity. Bind that input meaning without changing arithmetic, ownership, evidence threshold, ten-run completeness or the distinct failure/violation/UNKNOWN categories. No missing/failed result becomes favorable evidence.",
+        "effectiveBranchCondition": "Only the exact current predicate’s affected SELECT_XML native definition, supplied-node execution/result or current semantic-identity dependency. No universal XML requirement and no change to unrelated native operations.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5889,
+    "predecessorId": "NREQ-29b5931587da51c1a0cffac238163cb3",
+    "originalStatement": "The mandatory Test IR suite must test that execution failure remains distinct from violation",
+    "priorReviewedStatement": "The mandatory Test IR suite must test that execution failure remains distinct from violation",
+    "independentMechanismClass": "FIXED_TERMINAL_CATEGORY_SEPARATION",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "Execution failure remains distinct from violation under current D. Technical33 may affect the actual XML outcome but preserves terminal categories and their propagation. The category-separation predicate itself requires no rooting interpretation; actual evaluated outcomes remain separately governed.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5892,
+    "predecessorId": "NREQ-9a5979ed71eb2d51f45d679cd2df2234",
+    "originalStatement": "The mandatory Test IR suite must test that only current sufficient native results enter release and evidence-chain calculations.",
+    "priorReviewedStatement": "The mandatory Test IR suite must test that only current sufficient native results enter release and evidence-chain calculations.",
+    "independentMechanismClass": "CURRENT_VALID_RESULTS_AND_SUMMARIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "The current valid tuple, complete comparison/correction/RCA, deterministic result, mandatory-failure or exact derived count/summary predicate consumes actual XML outcomes where relevant. Technical33 determines those outcomes and their current semantic identity. Bind that input meaning without changing arithmetic, ownership, evidence threshold, ten-run completeness or the distinct failure/violation/UNKNOWN categories. No missing/failed result becomes favorable evidence.",
+        "effectiveBranchCondition": "Only the exact current predicate’s affected SELECT_XML native definition, supplied-node execution/result or current semantic-identity dependency. No universal XML requirement and no change to unrelated native operations.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5926,
+    "predecessorId": "NREQ-9590a74410136a1eb148fea10a556ea3",
+    "originalStatement": "The test-the-tests suite must include the mutation unsupported Test IR operation",
+    "priorReviewedStatement": "The test-the-tests suite must include the mutation unsupported Test IR operation",
+    "independentMechanismClass": "NATIVE_SUPPORT_EXECUTION_AND_COVERAGE",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Faithful native support, representability, execution of every ready native test or complete current native/worker coverage includes SELECT_XML supplied-node semantics. Technical33 confines traversal to that supplied subtree and requires explicitly passing the parsed root when intended. Preserve required readiness, application execution, exact authorized external capability, isolated worker bounds and implementation order. No implicit executor fallback or proven test result follows.",
+        "effectiveBranchCondition": "Only the exact current predicate’s affected SELECT_XML native definition, supplied-node execution/result or current semantic-identity dependency. No universal XML requirement and no change to unrelated native operations.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5995,
+    "predecessorId": "NREQ-8dc9b9c9851a82e0e76a12341548c630",
+    "originalStatement": "The acceptance suite must at minimum cover weak Stage 22 evidence",
+    "priorReviewedStatement": "The acceptance suite must at minimum cover weak Stage 22 evidence",
+    "independentMechanismClass": "CURRENT_VALID_RESULTS_AND_SUMMARIES",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "The current valid tuple, complete comparison/correction/RCA, deterministic result, mandatory-failure or exact derived count/summary predicate consumes actual XML outcomes where relevant. Technical33 determines those outcomes and their current semantic identity. Bind that input meaning without changing arithmetic, ownership, evidence threshold, ten-run completeness or the distinct failure/violation/UNKNOWN categories. No missing/failed result becomes favorable evidence.",
+        "effectiveBranchCondition": "Only the exact current predicate’s affected SELECT_XML native definition, supplied-node execution/result or current semantic-identity dependency. No universal XML requirement and no change to unrelated native operations.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6500,
+    "predecessorId": "NREQ-e8e65fcc62f49bbcd54bb77440a5cf83",
+    "originalStatement": "prompt-engine.js must generate retry context from actual validation failures",
+    "priorReviewedStatement": "prompt-engine.js must generate retry context from actual validation failures",
+    "independentMechanismClass": "CURRENT_NATIVE_BINDING_RETURN_CONTRACT",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "The already-reconciled complete current native-definition/binding or return validation contract includes its actual semantic registry/binding. Technical33 requires same-execution explicit supplied-node inputs and explicit earlier parsed-root binding if that root is intended. Link only this semantic definition/binding branch; JSON framing, carrier selection and unrelated responses are unchanged. Retry context must describe actual failures and cannot invent them.",
+        "effectiveBranchCondition": "Only the exact current predicate’s affected SELECT_XML native definition, supplied-node execution/result or current semantic-identity dependency. No universal XML requirement and no change to unrelated native operations.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6508,
+    "predecessorId": "NREQ-d105a7a923c2b7fc6f6c958994552aee",
+    "originalStatement": "response-ingestion.js must validate before accepting Stage 06 proposals the Test IR bindings",
+    "priorReviewedStatement": "response-ingestion.js must validate before accepting Stage 06 proposals the Test IR bindings",
+    "independentMechanismClass": "CURRENT_NATIVE_BINDING_RETURN_CONTRACT",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "The already-reconciled complete current native-definition/binding or return validation contract includes its actual semantic registry/binding. Technical33 requires same-execution explicit supplied-node inputs and explicit earlier parsed-root binding if that root is intended. Link only this semantic definition/binding branch; JSON framing, carrier selection and unrelated responses are unchanged. Retry context must describe actual failures and cannot invent them.",
+        "effectiveBranchCondition": "Only the exact current predicate’s affected SELECT_XML native definition, supplied-node execution/result or current semantic-identity dependency. No universal XML requirement and no change to unrelated native operations.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6512,
+    "predecessorId": "NREQ-4933db566cb09805bd87d4f9f89e8ae5",
+    "originalStatement": "response-ingestion.js must validate file-first response JSON",
+    "priorReviewedStatement": "response-ingestion.js must validate file-first response JSON",
+    "independentMechanismClass": "CURRENT_NATIVE_BINDING_RETURN_CONTRACT",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "The already-reconciled complete current native-definition/binding or return validation contract includes its actual semantic registry/binding. Technical33 requires same-execution explicit supplied-node inputs and explicit earlier parsed-root binding if that root is intended. Link only this semantic definition/binding branch; JSON framing, carrier selection and unrelated responses are unchanged. Retry context must describe actual failures and cannot invent them.",
+        "effectiveBranchCondition": "Only the exact current predicate’s affected SELECT_XML native definition, supplied-node execution/result or current semantic-identity dependency. No universal XML requirement and no change to unrelated native operations.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6535,
+    "predecessorId": "NREQ-0c37b1f80cc8b076ee2800d2e3d3438a",
+    "originalStatement": "app-core.js must provide native Run Tests action",
+    "priorReviewedStatement": "app-core.js must provide native Run Tests action",
+    "independentMechanismClass": "NATIVE_SUPPORT_EXECUTION_AND_COVERAGE",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Faithful native support, representability, execution of every ready native test or complete current native/worker coverage includes SELECT_XML supplied-node semantics. Technical33 confines traversal to that supplied subtree and requires explicitly passing the parsed root when intended. Preserve required readiness, application execution, exact authorized external capability, isolated worker bounds and implementation order. No implicit executor fallback or proven test result follows.",
+        "effectiveBranchCondition": "Only the exact current predicate’s affected SELECT_XML native definition, supplied-node execution/result or current semantic-identity dependency. No universal XML requirement and no change to unrelated native operations.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6577,
+    "predecessorId": "NREQ-499c00c19b06c2d4726d5214021d65a6",
+    "originalStatement": ".github/workflows/pages.yml must run native Stage 22 tests",
+    "priorReviewedStatement": ".github/workflows/pages.yml must run native Stage 22 tests",
+    "independentMechanismClass": "NATIVE_SUPPORT_EXECUTION_AND_COVERAGE",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Faithful native support, representability, execution of every ready native test or complete current native/worker coverage includes SELECT_XML supplied-node semantics. Technical33 confines traversal to that supplied subtree and requires explicitly passing the parsed root when intended. Preserve required readiness, application execution, exact authorized external capability, isolated worker bounds and implementation order. No implicit executor fallback or proven test result follows.",
+        "effectiveBranchCondition": "Only the exact current predicate’s affected SELECT_XML native definition, supplied-node execution/result or current semantic-identity dependency. No universal XML requirement and no change to unrelated native operations.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6684,
+    "predecessorId": "NREQ-42c463fc620ce2321ec2a4c4a0295c9b",
+    "originalStatement": "Phase 2 — repair current operator defects: Fix Stage 22 artifact inclusion. This step follows the declared preceding steps in this required sequence.",
+    "priorReviewedStatement": "Phase 2 — repair current operator defects: Fix Stage 22 artifact inclusion. This step follows the declared preceding steps in this required sequence.",
+    "independentMechanismClass": "REQUIRED_PRODUCT_ARTIFACT_INCLUSION",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This requires the same relevant product artifacts for Stage22 when their bytes are needed, preserving the declared implementation sequence. Technical33 changes selector invocation rooting, not which finished-product artifact must be handed off. Actual XML test execution on those bytes remains separately governed.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6711,
+    "predecessorId": "NREQ-4164f5240eb94008d867d81c4c1e632a",
+    "originalStatement": "Phase 5 — native Stage 22: Run all current ready native tests. This step follows the declared preceding steps in this required sequence.",
+    "priorReviewedStatement": "Phase 5 — native Stage 22: Run all current ready native tests. This step follows the declared preceding steps in this required sequence.",
+    "independentMechanismClass": "NATIVE_SUPPORT_EXECUTION_AND_COVERAGE",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Faithful native support, representability, execution of every ready native test or complete current native/worker coverage includes SELECT_XML supplied-node semantics. Technical33 confines traversal to that supplied subtree and requires explicitly passing the parsed root when intended. Preserve required readiness, application execution, exact authorized external capability, isolated worker bounds and implementation order. No implicit executor fallback or proven test result follows.",
+        "effectiveBranchCondition": "Only the exact current predicate’s affected SELECT_XML native definition, supplied-node execution/result or current semantic-identity dependency. No universal XML requirement and no change to unrelated native operations.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6734,
+    "predecessorId": "NREQ-a9867379ed34a4b79500fa75a1e0884b",
+    "originalStatement": "Phase 7 — external execution packages: Package exact return contract. Retain the stated implementation ordering.",
+    "priorReviewedStatement": "Phase 7 — external execution packages: Package exact return contract. Retain the stated implementation ordering.",
+    "independentMechanismClass": "CURRENT_NATIVE_BINDING_RETURN_CONTRACT",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "The already-reconciled complete current native-definition/binding or return validation contract includes its actual semantic registry/binding. Technical33 requires same-execution explicit supplied-node inputs and explicit earlier parsed-root binding if that root is intended. Link only this semantic definition/binding branch; JSON framing, carrier selection and unrelated responses are unchanged. Retry context must describe actual failures and cannot invent them.",
+        "effectiveBranchCondition": "Only the exact current predicate’s affected SELECT_XML native definition, supplied-node execution/result or current semantic-identity dependency. No universal XML requirement and no change to unrelated native operations.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6738,
+    "predecessorId": "NREQ-17eb2a015fb7d7531df8ea28abc28fca",
+    "originalStatement": "Phase 7 — external execution packages: Verify returned response JSON files. Retain the stated implementation ordering.",
+    "priorReviewedStatement": "Phase 7 — external execution packages: Verify returned response JSON files. Retain the stated implementation ordering.",
+    "independentMechanismClass": "CURRENT_NATIVE_BINDING_RETURN_CONTRACT",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "The already-reconciled complete current native-definition/binding or return validation contract includes its actual semantic registry/binding. Technical33 requires same-execution explicit supplied-node inputs and explicit earlier parsed-root binding if that root is intended. Link only this semantic definition/binding branch; JSON framing, carrier selection and unrelated responses are unchanged. Retry context must describe actual failures and cannot invent them.",
+        "effectiveBranchCondition": "Only the exact current predicate’s affected SELECT_XML native definition, supplied-node execution/result or current semantic-identity dependency. No universal XML requirement and no change to unrelated native operations.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6743,
+    "predecessorId": "NREQ-4cabecd0cdcfb63323f1aa43b1e4184e",
+    "originalStatement": "A specialized parser may be added only when a demonstrated current test cannot be represented by existing primitives",
+    "priorReviewedStatement": "A specialized parser may be added only when a demonstrated current test cannot be represented by existing primitives",
+    "independentMechanismClass": "NATIVE_SUPPORT_EXECUTION_AND_COVERAGE",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Faithful native support, representability, execution of every ready native test or complete current native/worker coverage includes SELECT_XML supplied-node semantics. Technical33 confines traversal to that supplied subtree and requires explicitly passing the parsed root when intended. Preserve required readiness, application execution, exact authorized external capability, isolated worker bounds and implementation order. No implicit executor fallback or proven test result follows.",
+        "effectiveBranchCondition": "Only the exact current predicate’s affected SELECT_XML native definition, supplied-node execution/result or current semantic-identity dependency. No universal XML requirement and no change to unrelated native operations.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6982,
+    "predecessorId": "NREQ-88ec0e733af173b9097dbd7f45f8c85a",
+    "originalStatement": "Full production maturity additionally requires one real project using native Test IR under the current language and operation-registry identities",
+    "priorReviewedStatement": "Full production maturity additionally requires one real project using native Test IR under the current language and operation-registry identities",
+    "independentMechanismClass": "NATIVE_SUPPORT_EXECUTION_AND_COVERAGE",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Faithful native support, representability, execution of every ready native test or complete current native/worker coverage includes SELECT_XML supplied-node semantics. Technical33 confines traversal to that supplied subtree and requires explicitly passing the parsed root when intended. Preserve required readiness, application execution, exact authorized external capability, isolated worker bounds and implementation order. No implicit executor fallback or proven test result follows.",
+        "effectiveBranchCondition": "Only the exact current predicate’s affected SELECT_XML native definition, supplied-node execution/result or current semantic-identity dependency. No universal XML requirement and no change to unrelated native operations.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 7131,
+    "predecessorId": "NREQ-7b4d062761508e45884bc3e82b78491b",
+    "originalStatement": "pages.yml runs worker tests.",
+    "priorReviewedStatement": "pages.yml runs worker tests.",
+    "independentMechanismClass": "NATIVE_SUPPORT_EXECUTION_AND_COVERAGE",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Faithful native support, representability, execution of every ready native test or complete current native/worker coverage includes SELECT_XML supplied-node semantics. Technical33 confines traversal to that supplied subtree and requires explicitly passing the parsed root when intended. Preserve required readiness, application execution, exact authorized external capability, isolated worker bounds and implementation order. No implicit executor fallback or proven test result follows.",
+        "effectiveBranchCondition": "Only the exact current predicate’s affected SELECT_XML native definition, supplied-node execution/result or current semantic-identity dependency. No universal XML requirement and no change to unrelated native operations.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  }
+]

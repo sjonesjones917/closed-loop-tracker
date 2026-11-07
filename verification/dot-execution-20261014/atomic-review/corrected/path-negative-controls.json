@@ -1,0 +1,1 @@
+{"passed":true,"tests":["nested-read-positive","verification/../bad.json rejected","verification/x/../../bad.json rejected","verification/%2e%2e/bad.json rejected","verification//bad.json rejected","/tmp/bad.json rejected","specification/./bad.json rejected","directory-symlink-escape rejected"]}

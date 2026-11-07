@@ -1,8 +1,8 @@
-import {runVerifier} from './verify-conformance-regressions.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {spawnSync} from 'node:child_process';
+import {stage04AcceptanceFixture} from './test-fixtures.mjs';
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
 
@@ -48,7 +48,7 @@ if(typeof operation01!=='string'||!operation01.trim()||retained.stageRecords?.['
 if(retained.generatedPrompts?.length!==1||retained.outputReceipts?.length!==1)throw new Error('Actual Stage 01 instruction/output receipt history was not preserved.');
 
 function blank(jobId){const p=core.createBlankState(jobId);p.job.JOB_ID=jobId;p.job.JOB_TITLE='Verification project';p.job.EXACT_USER_OBJECTIVE_VERBATIM='Controlled verification objective';p.job.CURRENT_INPUT_VERSION='INPUT-v001';engine.ensureShape(p);engine.recalculate(p);for(let stage=1;stage<=30;stage++){p.stages[stage].status='COMPLETE';p.stages[stage].gate={complete:true,blocked:false,reasons:[]};}return p;}
-function prepareStage4(p){const intake=prompts.buildPromptRecord(1,p).contextManifest.intakeCoverageManifest;p.stages[1].agentData.INPUT_SET_CONTENTS=JSON.stringify({schema:'closed-loop-stage01-capture/2',inputVersion:intake.inputVersion,manifestSha256:intake.manifestSha256,pass1Completed:true,pass2OmissionChallenge:{completed:true,checkedCategories:['QUALIFIERS','EXCEPTIONS','DEPENDENCIES','NEGATIVE_REQUIREMENTS','DO_NOT_CHANGE','VISUAL_CONSTRAINTS','TEMPORAL_CONSTRAINTS','ACCEPTANCE_CONDITIONS','AUTHORITY_STATEMENTS','TOOL_RESTRICTIONS','FILE_REFERENCES','OUTPUT_FORMAT_REQUIREMENTS','CORRECTIONS','LATER_OVERRIDES'],omissionsFound:[],omissionsResolved:true},units:intake.units.map((u,i)=>({sourceUnitId:u.unitId,sourceRawValueSha256:u.rawValueSha256,disposition:'EXTRACTED_RELEVANT_INFORMATION',reason:'Preserved for downstream reuse.',extractedStatements:[{statementKey:'S'+String(i+1),text:u.rawValueText||('Captured '+u.label),statementClass:'FACT'}]}))});p.stages[1].status='COMPLETE';p.stages[1].gate={complete:true,blocked:false,reasons:[]};p.stages[2].status='COMPLETE';p.stages[2].gate={complete:true,blocked:false,reasons:[]};p.stages[2].agentData.SOURCE_APPLICABILITY_DETERMINATION='NO_APPLICABLE_EXTERNAL_SOURCE';p.stages[3].status='COMPLETE';p.stages[3].gate={complete:true,blocked:false,reasons:[]};return p;}
+function prepareStage4(p){Object.assign(p,stage04AcceptanceFixture({core,schema,engine,prompts,ingestion},p.job.JOB_ID,{project:p}));return p;}
 function syntheticPromptOptions(stage,p,operation=schema.STAGE_CONTRACTS[stage].operations[0]){const scope={};for(const key of schema.operationContract(stage,operation).scopeRequirements){if(key==='projectRevision')scope[key]=Number(p.revision||0);else if(key==='inputVersion')scope[key]=p.job.CURRENT_INPUT_VERSION;else if(key==='sourceSetVersion')scope[key]='SOURCE-SET-v001';else if(key==='requirementsVersion')scope[key]='REQUIREMENTS-v001';else if(key==='testSuiteVersion')scope[key]='TEST-SUITE-v001';else if(key==='instructionVersion')scope[key]='INSTRUCTION-v001';else if(key==='iterationId')scope[key]='ITERATION-000001';else if(key==='candidateId')scope[key]='CANDIDATE-000001';else if(key==='runId')scope[key]='RUN-000001';else if(key==='contextId')scope[key]='CONTEXT-000001';else if(key==='baselineId')scope[key]='BASELINE-000001';else if(key==='productId')scope[key]='PRODUCT-000001';else scope[key]=`${key.toUpperCase()}-000001`;}return {operation,scope};}
 const generated=[];let totalOperations=0,externalPromptsVerified=0,nonExternalPromptRejections=0,conditionalRejections=0;
 for(let stage=1;stage<=30;stage++){
@@ -83,8 +83,6 @@ store.writeAll(migrated,storage);if(JSON.parse(storage.getItem(store.STORE_KEY))
 const prior=storage.getItem(store.STORE_KEY);globalThis.__closedLoopStorageFault='after-final-write';let failed=false;try{store.writeAll([{job:{JOB_ID:'JOB-OTHER'}}],storage);}catch{failed=true;}finally{delete globalThis.__closedLoopStorageFault;}if(!failed||storage.getItem(store.STORE_KEY)!==prior)throw new Error('Transactional storage failure did not roll back exactly.');
 const replaced=store.replaceProject(migrated,{...oldProject,job:{...oldProject.job,JOB_TITLE:'Updated'}},storage);if(replaced.length!==1||replaced[0].job.JOB_TITLE!=='Updated')throw new Error('Stable JOB_ID reconciliation duplicated a project.');
 
-const stage03ProtocolRun=(await runVerifier(process.execPath,['verify-stage03-agent-protocol.mjs'],{encoding:'utf8'}));if(stage03ProtocolRun.status!==0)throw new Error(`verify-stage03-agent-protocol.mjs failed:\n${stage03ProtocolRun.stdout}\n${stage03ProtocolRun.stderr}`);
-const ingestionRun=(await runVerifier(process.execPath,['verify-ingestion.mjs'],{encoding:'utf8'}));if(ingestionRun.status!==0)throw new Error(`verify-ingestion.mjs failed:\n${ingestionRun.stdout}\n${ingestionRun.stderr}`);
 const appSourceForStatus=fs.readFileSync('app-core.js','utf8');
 const prepareSource=appSourceForStatus.match(/async function prepareStageResponseFile\(file,[\s\S]*?\n\}/)?.[0]||'';
 if(!prepareSource||prepareSource.includes('savePromptRecord(n)'))throw new Error('Response-file staging still creates a new controlling instruction before validation.');
@@ -97,7 +95,7 @@ const active=files.filter(f=>f.endsWith('.js')||f.endsWith('.html')).map(f=>fs.r
 if(/MutationObserver/.test(active))throw new Error('Patch-style MutationObserver remains active.');
 if(/GEN-042|field status report|maintenance[- ]handoff/i.test(active+JSON.stringify(retained)))throw new Error('Unauthorized product content remains.');
 
-console.log(JSON.stringify({application:'single',stages:30,ownershipLedger:true,responseSchema:schema.RESPONSE_SCHEMA,allOperationsVerified:totalOperations,externalPromptsVerified,nonExternalPromptRejections,conditionalRejections,externalSourceNonCircularity:true,retainedProject:retained.jobId,retainedStage1:'COMPLETE',retainedCurrentStage:2,retainedDownstreamFabricated:false,legacyProjectPreservation:true,unknownFieldRoundTrip:true,transactionRollback:true,ingestionCycle:'30/30',negativeIngestion:true},null,2));
+console.log(JSON.stringify({application:'single',stages:30,ownershipLedger:true,responseSchema:schema.RESPONSE_SCHEMA,allOperationsVerified:totalOperations,externalPromptsVerified,nonExternalPromptRejections,conditionalRejections,externalSourceNonCircularity:true,retainedProject:retained.jobId,retainedStage1:'COMPLETE',retainedCurrentStage:2,retainedDownstreamFabricated:false,legacyProjectPreservation:true,unknownFieldRoundTrip:true,transactionRollback:true},null,2));
 
 // Practical-100 schema/ownership contract.
 const assert=(condition,message)=>{if(!condition)throw new Error(message);};

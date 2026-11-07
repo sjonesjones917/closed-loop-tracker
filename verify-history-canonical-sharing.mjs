@@ -1,3 +1,4 @@
+import {verifyHistorySmallPartAllocation} from './test-history-small-part-allocation.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {createHash} from 'node:crypto';
@@ -8,16 +9,23 @@ import {stage04AcceptanceFixture} from './test-fixtures.mjs';
 // Scaled reproduction of the retained-version capacity failure from the real
 // all-stage browser journey. This is not a production-capacity browser claim.
 const source=fs.readFileSync(process.env.HISTORY_SOURCE||'project-store.js','utf8');
+const smallPartAllocation=await verifyHistorySmallPartAllocation({source});
 const faultMode=process.argv.find(value=>value.startsWith('--fault='))?.slice(8);
 const faults={
  'duplicate-canonical-content':{before:'const contents=projectReference?null:await encodeHistoryProject(canonical,retainValue);',after:'const contents={project:canonical};'},
  'repeat-import-shared-content':{before:'const project=body.project; // verifiedParts belongs to this read/import only.',after:'const project=body.project;verifiedParts=new Map(); // disposable repeat-decoding fault'},
- // The size contract has two enforcing consumers. Mutating either alone is
- // behaviorally masked by the other; the fault removes that one contract at
- // both sites, while the disposable input contains only one size violation.
+ // A part's promised size must match the retained-file manifest, the actual
+ // import Blob and the decoded value. Remove only those import size checks:
+ // any surviving consumer masks this fault's single conflicting-size input.
+ // Keep file presence, Blob/hash/job identity, private cache-proof validation
+ // and the non-import Blob/decoded-value size checks intact. The import also
+ // converts each imported complete entry to the History state form through
+ // the shared per-root retained-parts check, which observes the same size.
  'skip-import-shared-size':{changes:[
-  {before:'entry.projectReference||entry.projectParts.entries.some(part=>state.files[part.sha256]?.byteSize!==part.byteSize)',after:'entry.projectReference'},
-  {before:'if(value.byteSize!==part.byteSize)',after:'if(false)'}
+  {before:'entry.projectReference||entry.projectParts.entries.some(part=>state.files[part.sha256]?.byteSize!==part.byteSize)',after:'entry.projectReference||entry.projectParts.entries.some(part=>!state.files[part.sha256])'},
+  {before:'if(parts.entries.some(part=>state.files[part.sha256]?.byteSize!==part.byteSize))',after:'if(parts.entries.some(part=>!state.files[part.sha256]))'},
+  {before:'if(verifiedByteDigests){\n      const file=await readFile(part.sha256);\n      if(!(file?.blob instanceof Blob)||file.blob.size!==part.byteSize||await historyBlobSha256(file.blob,verifiedByteDigests)!==part.sha256)',after:'if(verifiedByteDigests){\n      const file=await readFile(part.sha256);\n      if(!(file?.blob instanceof Blob)||await historyBlobSha256(file.blob,verifiedByteDigests)!==part.sha256)'},
+  {before:'if(value.byteSize!==part.byteSize)',after:'if(!verifiedByteDigests&&value.byteSize!==part.byteSize)'}
  ]}
 };
 const engineFaults={
@@ -42,12 +50,12 @@ if(engineFaults[faultMode]){const fault=engineFaults[faultMode];assert.equal(obs
 const adjudicationProbeAnchor='for(const collection of collections)copy.projectData[collection]=safe(project?.projectData?.[collection]).map(record=>clone(record));';
 assert.equal(observedEngineSource.split(adjudicationProbeAnchor).length-1,1);
 observedEngineSource=observedEngineSource.replace(adjudicationProbeAnchor,'globalThis.__historyAdjudication?.(project);'+adjudicationProbeAnchor);
-const stageProbeAnchor='ensure(p);const b=e0.gate(stage,p),';
+const stageProbeAnchor='ensure(p);const supplemental=reasons(p,stage),';
 assert.equal(observedEngineSource.split(stageProbeAnchor).length-1,1);
-observedEngineSource=observedEngineSource.replace(stageProbeAnchor,'ensure(p);globalThis.__historyCompatibilityStage?.(stage,p);const b=e0.gate(stage,p),');
+observedEngineSource=observedEngineSource.replace(stageProbeAnchor,'ensure(p);globalThis.__historyCompatibilityStage?.(stage,p);const supplemental=reasons(p,stage),');
 // Expose the existing base projection only in this disposable verifier realm.
 // Production's public wrapper deliberately owns its installed gate callbacks.
-const projectionProbeAnchor='globalThis.closedLoopWorkflowEngine=Object.freeze({stageContext,';
+const projectionProbeAnchor='globalThis.closedLoopWorkflowEngine=Object.freeze({';
 assert.equal(observedEngineSource.split(projectionProbeAnchor).length-1,1);
 observedEngineSource=observedEngineSource.replace(projectionProbeAnchor,'globalThis.__historyRecalculateKernel=recalculate;'+projectionProbeAnchor);
 const make=()=>{
@@ -55,8 +63,8 @@ const make=()=>{
  if(faults[faultMode])for(const fault of faults[faultMode].changes||[faults[faultMode]]){assert.equal(implementation.split(fault.before).length-1,1);implementation=implementation.replace(fault.before,fault.after);}
  // Observe actual immutable-content decoding during an import, not a source
  // match or elapsed-time guess. No storage or return-value behavior changes.
- assert.equal(implementation.split(parseAnchor).length-1,1);
- implementation=implementation.replace(parseAnchor,"globalThis.__historyDecodedParts?.push({sha256:part.sha256,byteSize:part.byteSize});"+parseAnchor);
+ assert.equal(implementation.split(parseAnchor).length-1,2);
+ implementation=implementation.replaceAll(parseAnchor,"globalThis.__historyDecodedParts?.push({sha256:part.sha256,byteSize:part.byteSize});"+parseAnchor);
  return projectStoreRuntime({sourceOverrides:{'project-store.js':implementation,'workflow-engine.js':observedEngineSource}});
 };
 const r=make(),{store,core,engine,copy}=r;
@@ -236,7 +244,9 @@ assert.deepEqual(frozenRows(),beforeRejected,'An invalid retained version cannot
 const corrected=await rejected.store.importPackage(backup);assert.equal(corrected.job.JOB_ID,p.job.JOB_ID);
 cases.push({caseId:'HISTORY-IMPORT-SHARED-SIZE-CONFLICT',result:'PASS',failedImportPreservesAllRows:true,correctedImport:'PASS'});
 
-const state=await store.metaGet('recovery:'+p.job.JOB_ID),part=state.entries.flatMap(entry=>entry.projectParts?.entries||[]).find(part=>JSON.stringify(part.path)===JSON.stringify(['job','EXACT_USER_OBJECTIVE_VERBATIM']));
+// The History state names each complete version's parts by digest; the
+// immutable snapshot record keeps the parts themselves.
+const state=await store.metaGet('recovery:'+p.job.JOB_ID),records=await Promise.all(state.entries.map(entry=>store.metaGet('recovery:'+p.job.JOB_ID+':snapshot:'+entry.id))),part=records.flatMap(record=>record?.projectParts?.entries||[]).find(part=>JSON.stringify(part.path)===JSON.stringify(['job','EXACT_USER_OBJECTIVE_VERBATIM']));
 assert.ok(part,'The retained input must have exact-byte custody.');
 const key='recovery:'+p.job.JOB_ID+':bytes:'+part.sha256,original=r.rows.get('meta').get(key),before=copy(await store.readProject(p.job.JOB_ID)),beforeHistory=copy(await store.historyList(p.job.JOB_ID));
 for(const failure of ['missing','corrupt']){
@@ -253,4 +263,4 @@ const next=copy(p);next.job.JOB_TITLE='Interrupted correction';engine.recordHuma
 await assert.rejects(()=>store.writeProject(next,{expectedProjectRevision:p.revision}),error=>error.code==='INJECTED_STORAGE_FAILURE');
 r.runtime.__closedLoopStorageFault=null;assert.deepEqual(await store.readProject(p.job.JOB_ID),before);assert.deepEqual(await store.historyList(p.job.JOB_ID),beforeHistory);
 cases.push({caseId:'HISTORY-CANONICAL-ATOMIC-FAILURE',result:'PASS'});
-console.log(JSON.stringify({synthetic:true,actualBrowser:false,productionByteCapacityTested:false,implementationFault:faultMode||null,sourceSha256:createHash('sha256').update(source).digest('hex'),disposableCapacity:capacity,cases},null,2));
+console.log(JSON.stringify({smallPartAllocation,synthetic:true,actualBrowser:false,productionByteCapacityTested:false,implementationFault:faultMode||null,sourceSha256:createHash('sha256').update(source).digest('hex'),disposableCapacity:capacity,cases},null,2));

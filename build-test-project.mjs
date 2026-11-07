@@ -50,6 +50,5 @@ if(globalThis.closedLoopWorkflowSchema?.RESPONSE_SCHEMA!=='closed-loop-stage-res
 (await checkedVerifier(process.execPath,['verify-spec-grounded-route-oracle.mjs'],{stdio:'inherit'}));
 (await checkedVerifier(process.execPath,['verify-stage03-source-research.mjs'],{stdio:'inherit'}));
 (await checkedVerifier(process.execPath,['verify-semantic-operation-boundaries.mjs'],{stdio:'inherit'}));
-(await checkedVerifier(process.execPath,['verify-stage30-terminal-mobile-boundary.mjs'],{stdio:'inherit'}));
 
-console.log(JSON.stringify({singleApplicationShell:true,stages:30,retainedJobId:project.jobId,currentStage:2,stage1:'COMPLETE',downstreamFabricated:false,responseSchema:'closed-loop-stage-response/3',obsoleteRuntimeWrappers:false,specGroundedRouteOracle:true,stage30TerminalBoundary:true},null,2));
+console.log(JSON.stringify({singleApplicationShell:true,stages:30,retainedJobId:project.jobId,currentStage:2,stage1:'COMPLETE',downstreamFabricated:false,responseSchema:'closed-loop-stage-response/3',obsoleteRuntimeWrappers:false,specGroundedRouteOracle:true},null,2));

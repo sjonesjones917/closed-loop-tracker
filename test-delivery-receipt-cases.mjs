@@ -1,0 +1,450 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import vm from 'node:vm';
+import assert from 'node:assert/strict';
+import {fileURLToPath} from 'node:url';
+import {createHash} from 'node:crypto';
+import {createVerifierRuntime} from './verifier-runtime.mjs';
+import {projectStoreRuntime,restoreArtifactFixture,bindArtifactFixture,hydrateRetainedPromptContexts} from './test-project-store-runtime.mjs';
+
+// This unregistered helper reports a partial case group, never an owning suite
+// PASS. Importing its report contract does not bootstrap or execute product code.
+export const DELIVERY_CASE_NAMES=Object.freeze([
+  "preserve original and current instruction context bytes before checkpointing",
+  "authorized transfer receipts remain durably valid through every result",
+  "the continuation oracle detects premature completion after the final stage gate",
+  "the persistence oracle detects an invalid initial receipt and preserves strict reference validation",
+  "default transfer uses the authorized destination and channel",
+  "exact command retry is idempotent and a new transfer consumes a new allowance",
+  "pending transfer consumes its allowance before any export",
+  "command identity cannot be reused with different input",
+  "completion appends a receipt and preserves the pending receipt",
+  "unrelated human observation cannot establish delivery",
+  "direct human observation binds exact transfer and preserves its actual basis",
+  "interrupted transfer remains unresolved after reload until an observation is supplied",
+  "completion evidence cannot reuse a withdrawn authorization",
+  "failure outcome cannot be changed by retry",
+  "a negative or uncertain human outcome does not establish delivery",
+  "retained successful transfer exposes its required observation despite an obsolete saved action",
+  "the rendered-action oracle rejects trusting an obsolete retained projection",
+  "receipt outcomes retain the required controls across reload without asserting physical delivery",
+  "restore transfer and observation versions without replaying delivery",
+  "UI checks the exhausted transfer allowance before exporting",
+  "UI exports nothing when the pending receipt cannot be saved",
+  "UI checks a concurrent upstream correction immediately before transfer",
+  "UI preserves uncertainty after an interrupted browser transfer",
+  "UI records authorization, transfer, and completion evidence separately"
+]);
+export const DELIVERY_CASE_GROUPS=Object.freeze(Object.fromEntries(Object.entries({
+  "receipts": [
+    "authorized transfer receipts remain durably valid through every result"
+  ],
+  "receipt-faults": [
+    "the continuation oracle detects premature completion after the final stage gate",
+    "the persistence oracle detects an invalid initial receipt and preserves strict reference validation"
+  ],
+  "delivery": [
+    "default transfer uses the authorized destination and channel",
+    "exact command retry is idempotent and a new transfer consumes a new allowance",
+    "pending transfer consumes its allowance before any export",
+    "command identity cannot be reused with different input",
+    "completion appends a receipt and preserves the pending receipt",
+    "unrelated human observation cannot establish delivery",
+    "direct human observation binds exact transfer and preserves its actual basis",
+    "interrupted transfer remains unresolved after reload until an observation is supplied",
+    "completion evidence cannot reuse a withdrawn authorization",
+    "failure outcome cannot be changed by retry",
+    "a negative or uncertain human outcome does not establish delivery",
+    "retained successful transfer exposes its required observation despite an obsolete saved action",
+    "the rendered-action oracle rejects trusting an obsolete retained projection",
+    "receipt outcomes retain the required controls across reload without asserting physical delivery",
+    "restore transfer and observation versions without replaying delivery",
+    "UI checks the exhausted transfer allowance before exporting",
+    "UI exports nothing when the pending receipt cannot be saved",
+    "UI checks a concurrent upstream correction immediately before transfer",
+    "UI preserves uncertainty after an interrupted browser transfer",
+    "UI records authorization, transfer, and completion evidence separately"
+  ]
+}).map(([group,names])=>[group,Object.freeze(names)])));
+const GROUP_FAULTS=Object.freeze(Object.fromEntries(Object.entries({
+  "receipts": [],
+  "receipt-faults": [
+    "DELIVERY-PREMATURE-TERMINAL-COMPLETION",
+    "DELIVERY-INVALID-INITIAL-RECEIPT"
+  ],
+  "delivery": [
+    "DELIVERY-TRUST-OBSOLETE-SAVED-ACTION"
+  ]
+}).map(([group,names])=>[group,Object.freeze(names)])));
+export const DELIVERY_SOURCE_INPUTS=Object.freeze([
+  "verify-delivery-transfer-boundary.mjs",
+  "test-delivery-receipt-cases.mjs",
+  "verify-full-cycle.mjs",
+  "verify-conformance-regressions.mjs",
+  "test-project-store-runtime.mjs",
+  "verifier-runtime.mjs",
+  "workbook.js",
+  "hash.js",
+  "workflow-schema.js",
+  "test-runtime.js",
+  "workflow-engine.js",
+  "prompt-engine.js",
+  "response-ingestion.js",
+  "project-store.js",
+  "app-core.js"
+]);
+
+const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
+export const deliverySourceHashes=()=>Object.fromEntries(DELIVERY_SOURCE_INPUTS.map(file=>[file,sha(fs.readFileSync(file))]));
+function assertCasePopulation(cases,names){
+  assert.ok(Array.isArray(cases),'DELIVERY_CASE_POPULATION_ORACLE: missing cases.');
+  assert.equal(cases.length,names.length,'DELIVERY_CASE_POPULATION_ORACLE: wrong case count.');
+  assert.equal(new Set(cases.map(row=>row?.name)).size,names.length,'DELIVERY_CASE_POPULATION_ORACLE: duplicate case.');
+  assert.deepEqual(cases.map(row=>row?.name),names,'DELIVERY_CASE_POPULATION_ORACLE: missing, foreign, or unordered case.');
+  assert.ok(cases.every(row=>row&&['PASS','FAIL'].includes(row.result)),'DELIVERY_CASE_RESULT_ORACLE');
+}
+const FAULT_CASE_NAMES=Object.freeze({
+  'DELIVERY-PREMATURE-TERMINAL-COMPLETION':'the continuation oracle detects premature completion after the final stage gate',
+  'DELIVERY-INVALID-INITIAL-RECEIPT':'the persistence oracle detects an invalid initial receipt and preserves strict reference validation',
+  'DELIVERY-TRUST-OBSOLETE-SAVED-ACTION':'the rendered-action oracle rejects trusting an obsolete retained projection'
+});
+function assertFaultPopulation(faults,expected,sourceInputs,failedCases=[]){
+  assert.ok(Array.isArray(faults),'DELIVERY_FAULT_POPULATION_ORACLE');
+  const ids=faults.map(row=>row?.faultId);
+  assert.equal(new Set(ids).size,ids.length,'DELIVERY_FAULT_POPULATION_ORACLE: duplicate fault.');
+  assert.deepEqual(ids,expected.filter(id=>ids.includes(id)),'DELIVERY_FAULT_POPULATION_ORACLE: foreign or unordered fault.');
+  assert.ok(expected.every(id=>ids.includes(id)||failedCases.includes(FAULT_CASE_NAMES[id])),'DELIVERY_FAULT_POPULATION_ORACLE: a passing fault case omitted its detector.');
+  for(const row of faults){
+    assert.equal(row.result,'DETECTED','DELIVERY_FAULT_RESULT_ORACLE');
+    assert.equal(row.sourceRestored,true,'DELIVERY_FAULT_SOURCE_RESTORATION_ORACLE');
+    const target=row.faultId==='DELIVERY-TRUST-OBSOLETE-SAVED-ACTION'?['app-core.js','DELIVERY_RENDERED_ACTION_ORACLE']:row.faultId==='DELIVERY-PREMATURE-TERMINAL-COMPLETION'?['workflow-engine.js','DELIVERY_NEXT_ACTION_ORACLE']:['workflow-engine.js','DELIVERY_RECEIPT_PERSISTENCE_ORACLE'];
+    assert.equal(row.file,target[0],'DELIVERY_FAULT_TARGET_ORACLE');
+    assert.equal(row.caughtBy,target[1],'DELIVERY_FAULT_DETECTOR_ORACLE');
+    assert.match(row.originalSha256,/^[a-f0-9]{64}$/,'DELIVERY_FAULT_SOURCE_IDENTITY_ORACLE');
+    assert.equal(row.originalSha256,sourceInputs[row.file],'DELIVERY_FAULT_SOURCE_IDENTITY_ORACLE');
+    assert.match(row.injectedSha256,/^[a-f0-9]{64}$/,'DELIVERY_FAULT_INJECTION_IDENTITY_ORACLE');
+    assert.notEqual(row.injectedSha256,row.originalSha256,'DELIVERY_FAULT_INJECTION_IDENTITY_ORACLE');
+  }
+}
+export function validateDeliveryWorkerResult(result,group,binding){
+  assert.ok(Object.hasOwn(DELIVERY_CASE_GROUPS,group),'DELIVERY_WORKER_GROUP_ORACLE');
+  assert.ok(result&&[0,1].includes(result.status)&&result.exitCode===result.status&&result.outcome===(result.status===0?'PASS':'FAIL'),'DELIVERY_WORKER_COMPLETION_ORACLE');
+  for(const field of ['signal','error','reason','reportError'])assert.equal(result[field],null,'DELIVERY_WORKER_COMPLETION_ORACLE: '+field);
+  const report=JSON.parse(result.stdout);
+  assert.equal(report.schema,'closed-loop-delivery-case-group/1','DELIVERY_WORKER_REPORT_SCHEMA_ORACLE');
+  assert.equal(report.scope,'PARTIAL_CASE_GROUP_ONLY','DELIVERY_WORKER_SCOPE_ORACLE');
+  assert.equal(report.ownerComplete,false,'DELIVERY_WORKER_SCOPE_ORACLE');
+  assert.equal(report.group,group,'DELIVERY_WORKER_GROUP_ORACLE');
+  assert.equal(Object.hasOwn(report,'deliveryTransferBoundary'),false,'DELIVERY_WORKER_OWNER_CLAIM_ORACLE');
+  assert.deepEqual(report.binding,binding,'DELIVERY_WORKER_INPUT_BINDING_ORACLE');
+  assertCasePopulation(report.cases,DELIVERY_CASE_GROUPS[group]);
+  const passed=report.cases.every(row=>row.result==='PASS');
+  assert.equal(report.partialResult,passed?'PASS':'FAIL','DELIVERY_WORKER_RESULT_ORACLE');
+  assert.equal(result.status,passed?0:1,'DELIVERY_WORKER_CASE_RESULT_ORACLE');
+  assertFaultPopulation(report.faults,GROUP_FAULTS[group],binding.sourceInputs,report.cases.filter(row=>row.result==='FAIL').map(row=>row.name));
+  return report;
+}
+export function aggregateDeliveryWorkers(retainedContextCase,results,binding){
+  const groups=Object.keys(DELIVERY_CASE_GROUPS);
+  assert.ok(Array.isArray(results)&&results.length===groups.length,'DELIVERY_WORKER_POPULATION_ORACLE');
+  const reports=results.map((result,index)=>validateDeliveryWorkerResult(result,groups[index],binding));
+  const cases=[retainedContextCase,...reports.flatMap(report=>report.cases)],faults=reports.flatMap(report=>report.faults);
+  assertCasePopulation(cases,DELIVERY_CASE_NAMES);
+  assert.equal(cases.length,24,'DELIVERY_COMPLETE_POPULATION_ORACLE');
+  assert.equal(retainedContextCase.result,'PASS','DELIVERY_CONTEXT_RESULT_ORACLE');
+  assert.deepEqual(retainedContextCase.fault,{faultId:'DELIVERY-OMIT-SUPERSEDED-PROMPT-CONTEXT',kind:'CONTROLLED_VERIFIER_HYDRATION_FAULT',caughtBy:'PACKAGE_ARTIFACT_CUSTODY_MISMATCH',result:'DETECTED',productionSourceUnchanged:true},'DELIVERY_CONTEXT_FAULT_ORACLE');
+  assertFaultPopulation(faults,groups.flatMap(group=>GROUP_FAULTS[group]),binding.sourceInputs,cases.filter(row=>row.result==='FAIL').map(row=>row.name));
+  return {cases,faults};
+}
+
+export async function assertRetainedPromptContextCustody(r,project){
+  const hash=r.runtime.closedLoopHash,jobId=project.job.JOB_ID;
+  let verified=0;
+  for(const record of project.projectData.generatedPrompts)for(const required of record.contextManifest?.promptContext?.attachments||[]){
+    const artifactId='PROMPT-CONTEXT-'+hash.sha256Value(r.copy({jobId:String(jobId),sha256:required.sha256})),row=await r.store.getArtifact(artifactId);
+    assert.ok(row,'RETAINED_PROMPT_CONTEXT_CUSTODY_ORACLE: a saved instruction has no original stored context bytes.');
+    assert.equal(row.jobId,String(jobId),'RETAINED_PROMPT_CONTEXT_CUSTODY_ORACLE: context belongs to another project.');
+    assert.equal(row.filename,required.filename,'RETAINED_PROMPT_CONTEXT_CUSTODY_ORACLE: original context filename changed.');
+    assert.equal(row.mediaType,required.mediaType,'RETAINED_PROMPT_CONTEXT_CUSTODY_ORACLE: original context media type changed.');
+    assert.equal(row.byteSize,required.byteSize,'RETAINED_PROMPT_CONTEXT_CUSTODY_ORACLE: original context length changed.');
+    assert.equal(row.sha256,required.sha256,'RETAINED_PROMPT_CONTEXT_CUSTODY_ORACLE: original context identity changed.');
+    assert.equal(row.blob.size,required.byteSize);
+    assert.equal(createHash('sha256').update(Buffer.from(await row.blob.arrayBuffer())).digest('hex'),required.sha256,'RETAINED_PROMPT_CONTEXT_CUSTODY_ORACLE: read-back bytes differ from their original identity.');
+    verified++;
+  }
+  return verified;
+}
+
+async function runDeliveryGroup(){
+  const args=process.argv.slice(2);
+  assert.ok(args.length===1&&/^--group=(receipts|receipt-faults|delivery)$/.test(args[0]),'DELIVERY_WORKER_ARGUMENT_ORACLE');
+  const group=args[0].slice('--group='.length),binding=JSON.parse(fs.readFileSync(0,'utf8'));
+  assert.deepEqual(Object.keys(binding).sort(),['deadlineAt','fixture','sourceInputs'],'DELIVERY_WORKER_INPUT_SHAPE_ORACLE');
+  assert.ok(Number.isSafeInteger(binding.deadlineAt)&&Date.now()<binding.deadlineAt,'DELIVERY_OWNER_DEADLINE_ORACLE');
+  assert.deepEqual(binding.sourceInputs,deliverySourceHashes(),'DELIVERY_WORKER_SOURCE_BINDING_ORACLE');
+  const fixtureBytes=fs.readFileSync(binding.fixture.path);
+  assert.equal(fixtureBytes.length,binding.fixture.byteLength,'DELIVERY_WORKER_FIXTURE_LENGTH_ORACLE');
+  assert.equal(sha(fixtureBytes),binding.fixture.sha256,'DELIVERY_WORKER_FIXTURE_HASH_ORACLE');
+  const generated=JSON.parse(fixtureBytes),fixture=generated.project,fixtureArtifacts=generated.artifacts,fixtureContextFiles=generated.contextFiles;
+  const appSource=fs.readFileSync('app-core.js','utf8'),retainedActionFaultTarget='return presentationAction(canonicalCurrentStage());';
+  assert.equal(appSource.split(retainedActionFaultTarget).length-1,1,'The retained-action fault must alter exactly one display owner.');
+globalThis.dispatchEvent=()=>true;
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
+const engine=globalThis.closedLoopWorkflowEngine,h=globalThis.closedLoopHash;
+await bindArtifactFixture(fixtureArtifacts);
+const value=engine.recordValue,id=(r,c)=>engine.recordId(r,c),fresh=()=>structuredClone(fixture),cases=[],faults=[];
+const deliveryId=p=>id(engine.recordsForCurrentScope(p,'deliveryRecords').at(-1),'deliveryRecords');
+const attempt=(p,options={})=>engine.recordDeliveryAttempt(p,{deliveryId:deliveryId(p),commandId:'CONTROLLED-TRANSFER-1',...options});
+async function check(name,run){process.stderr.write('delivery: '+name+'\n');try{await run();cases.push({name,result:'PASS'});}catch(error){cases.push({name,result:'FAIL',message:error.message,underlying:error.actual?.message||null,stack:error.stack});}process.stderr.write('delivery: '+cases.at(-1).result+' '+name+'\n');}
+
+// A valid authorized project must be able to retain its application-owned
+// transfer receipt before the browser side effect. Use the persistence
+// validator, not a save stub, for the initial receipt and every outcome.
+function receiptPersistenceOracle(runtimeEngine,runtimeStore,copy=structuredClone){
+  const control=copy(fixture);runtimeEngine.recalculate(control);
+  const controlIntegrity=runtimeStore.validateProjectIntegrity(control);
+  assert.equal(controlIntegrity.valid,true,'The otherwise valid delivery fixture must pass canonical integrity before the operation: '+controlIntegrity.issues.join(' | '));
+  for(const result of ['PENDING','SUCCEEDED','FAILED','UNKNOWN']){
+    const p=copy(control),first=runtimeEngine.recordDeliveryAttempt(p,{commandId:'CONTROLLED-TRANSFER-1',result});runtimeEngine.recalculate(p);
+    const integrity=runtimeStore.validateProjectIntegrity(p);
+    assert.equal(integrity.valid,true,'DELIVERY_RECEIPT_PERSISTENCE_ORACLE: '+result+': '+integrity.issues.join(' | '));
+    const expectedAction=result==='FAILED'?'EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS':'RECORD_DELIVERY_EVIDENCE';
+    assert.equal(p.job.NEXT_REQUIRED_ACTION.actionType,expectedAction,'DELIVERY_NEXT_ACTION_ORACLE: the stored next action must retain the required operation after '+result+'.');
+    const authorizedId=runtimeEngine.recordId(runtimeEngine.recordsForCurrentScope(p,'deliveryRecords').at(-1),'deliveryRecords');
+    assert.equal(runtimeEngine.deliveryTransferPrecondition(p).deliveryId,authorizedId,'A receipt must not invalidate its own delivery authorization.');
+    if(result==='PENDING')for(const outcome of ['SUCCEEDED','FAILED','UNKNOWN']){
+      const completed=copy(p),before=JSON.stringify(first),receipt=runtimeEngine.completeDeliveryAttempt(completed,{attemptId:id(first,'deliveryAttempts'),result:outcome});runtimeEngine.recalculate(completed);
+      const final=runtimeStore.validateProjectIntegrity(completed);
+      assert.equal(final.valid,true,'DELIVERY_RECEIPT_PERSISTENCE_ORACLE: '+outcome+' completion: '+final.issues.join(' | '));
+      assert.equal(completed.job.NEXT_REQUIRED_ACTION.actionType,outcome==='FAILED'?'EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS':'RECORD_DELIVERY_EVIDENCE','DELIVERY_NEXT_ACTION_ORACLE: a completed transfer must retain its evidence operation after '+outcome+'.');
+      assert.equal(JSON.stringify(completed.projectData.deliveryAttempts[0]),before,'Completion mutated the retained initial receipt.');
+      assert.equal(value(receipt,'PREVIOUS_ATTEMPT_ID'),id(first,'deliveryAttempts'),'Completion lost its exact predecessor.');
+    }
+  }
+}
+if(group==='receipts'){
+await check('authorized transfer receipts remain durably valid through every result',()=>receiptPersistenceOracle(engine,globalThis.closedLoopProjectStore));
+}
+if(group==='receipt-faults'){
+await check('the continuation oracle detects premature completion after the final stage gate',async()=>{
+  const source=fs.readFileSync('workflow-engine.js','utf8'),before='project.job.NEXT_REQUIRED_ACTION=nextAction(project,currentStage);';
+  assert.equal(source.split(before).length-1,1,'The continuation fault must alter exactly one projection owner.');
+  const injected=source.replace(before,"project.job.NEXT_REQUIRED_ACTION=workflowComplete?actionEnvelope(project,currentStage,{actionType:'COMPLETE',heading:'Workflow complete',explanation:'Preserve the completed workflow and exact release evidence.',primaryButton:null}):nextAction(project,currentStage);");
+  const fault=projectStoreRuntime({sourceOverrides:{'workflow-engine.js':injected}});await restoreArtifactFixture(fault.store,fixtureArtifacts);
+  assert.throws(()=>receiptPersistenceOracle(fault.engine,fault.store,fault.copy),/DELIVERY_NEXT_ACTION_ORACLE: a completed transfer.*SUCCEEDED/,'DELIVERY_NEXT_ACTION_FAULT_ORACLE: premature completion was not detected.');
+  assert.equal(fs.readFileSync('workflow-engine.js','utf8'),source);
+  faults.push({faultId:'DELIVERY-PREMATURE-TERMINAL-COMPLETION',file:'workflow-engine.js',originalSha256:h.sha256Text(source),injectedSha256:h.sha256Text(injected),caughtBy:'DELIVERY_NEXT_ACTION_ORACLE',result:'DETECTED',sourceRestored:true});
+});
+await check('the persistence oracle detects an invalid initial receipt and preserves strict reference validation',async()=>{
+  const source=fs.readFileSync('workflow-engine.js','utf8'),before='COMMAND_ID:commandId,HUMAN_DELIVERY_AUTHORIZATION_ID:intentId';
+  assert.equal(source.split(before).length-1,1,'The receipt fault must alter exactly one constructor.');
+  const injected=source.replace(before,"COMMAND_ID:commandId,PREVIOUS_ATTEMPT_ID:'',HUMAN_DELIVERY_AUTHORIZATION_ID:intentId");
+  const fault=projectStoreRuntime({sourceOverrides:{'workflow-engine.js':injected}});await restoreArtifactFixture(fault.store,fixtureArtifacts);
+  assert.throws(()=>receiptPersistenceOracle(fault.engine,fault.store,fault.copy),/DELIVERY_RECEIPT_PERSISTENCE_ORACLE: PENDING:/,'DELIVERY_RECEIPT_FAULT_ORACLE: malformed initial receipt was not detected.');
+  const p=fresh(),pending=attempt(p,{result:'PENDING'}),completed=engine.completeDeliveryAttempt(p,{attemptId:id(pending,'deliveryAttempts'),result:'SUCCEEDED'});
+  completed.fields.PREVIOUS_ATTEMPT_ID=completed.PREVIOUS_ATTEMPT_ID='MISSING-DELIVERY-ATTEMPT';engine.refreshRecordHashes(completed,'deliveryAttempts');engine.recalculate(p);
+  const rejected=globalThis.closedLoopProjectStore.validateProjectIntegrity(p);
+  assert.equal(rejected.valid,false,'DELIVERY_RECEIPT_REFERENCE_ORACLE: a nonexistent predecessor was accepted.');
+  assert.ok(rejected.issues.some(issue=>issue.includes('PREVIOUS_ATTEMPT_ID references missing deliveryAttempts record')),'The rejection must identify the deliberately broken receipt link.');
+  assert.equal(fs.readFileSync('workflow-engine.js','utf8'),source,'Fault injection modified the retained implementation.');
+  faults.push({faultId:'DELIVERY-INVALID-INITIAL-RECEIPT',file:'workflow-engine.js',originalSha256:h.sha256Text(source),injectedSha256:h.sha256Text(injected),caughtBy:'DELIVERY_RECEIPT_PERSISTENCE_ORACLE',result:'DETECTED',sourceRestored:true});
+});
+
+}
+if(group==='delivery'){
+// These outcomes follow §36.11: authorization and current scope before transfer,
+// one receipt per actual action, append-only history, and attributable completion.
+await check('default transfer uses the authorized destination and channel',()=>{const p=fresh(),r=attempt(p),intent=engine.records(p,'humanDecisions').find(r=>value(r,'PURPOSE')==='DELIVERY_INTENT'),v=value(intent,'VALUE');assert.equal(value(r,'INTENDED_RECIPIENT_OR_DESTINATION'),v.destination);assert.equal(value(r,'CHANNEL'),v.transferChannel);});
+await check('exact command retry is idempotent and a new transfer consumes a new allowance',()=>{const p=fresh(),r=attempt(p);assert.equal(id(attempt(p),'deliveryAttempts'),id(r,'deliveryAttempts'));assert.throws(()=>attempt(p,{commandId:'CONTROLLED-TRANSFER-2'}),/transfer count.*exhausted/i);});
+await check('pending transfer consumes its allowance before any export',()=>{const p=fresh(),r=attempt(p,{result:'PENDING'});assert.equal(value(r,'RESULT'),'PENDING');assert.throws(()=>attempt(p,{commandId:'CONTROLLED-TRANSFER-2',result:'PENDING'}),/transfer count.*exhausted/i);});
+await check('command identity cannot be reused with different input',()=>{const p=fresh();attempt(p,{result:'PENDING'});assert.throws(()=>attempt(p,{result:'SUCCEEDED'}),/command.*different|retry.*payload/i);});
+await check('completion appends a receipt and preserves the pending receipt',()=>{const p=fresh(),pending=attempt(p,{result:'PENDING'}),before=JSON.stringify(pending),done=engine.completeDeliveryAttempt(p,{attemptId:id(pending,'deliveryAttempts'),result:'SUCCEEDED'});assert.equal(JSON.stringify(pending),before);assert.notEqual(id(done,'deliveryAttempts'),id(pending,'deliveryAttempts'));assert.equal(value(done,'PREVIOUS_ATTEMPT_ID'),id(pending,'deliveryAttempts'));assert.equal(id(engine.completeDeliveryAttempt(p,{attemptId:id(pending,'deliveryAttempts'),result:'SUCCEEDED'}),'deliveryAttempts'),id(done,'deliveryAttempts'));});
+await check('unrelated human observation cannot establish delivery',()=>{const p=fresh(),r=attempt(p),e={id:'EVIDENCE-UNRELATED',source:'HUMAN_OBSERVATION',active:true,stage:30,scope:engine.currentScope(p),fields:{EVIDENCE_ID:'EVIDENCE-UNRELATED',APPLICATION_EVIDENCE_KIND:'HUMAN_OBSERVATION',APPLICATION_EVIDENCE_CONTENT:'Observed an unrelated verification test.',STATUS:'CURRENT'}};engine.refreshRecordHashes(e,'evidenceRecords');p.projectData.evidenceRecords.push(e);assert.throws(()=>engine.recordDeliveryEvidence(p,{attemptId:id(r,'deliveryAttempts'),evidenceIds:[e.id]}),/bound.*attempt|delivery.*binding/i);});
+await check('direct human observation binds exact transfer and preserves its actual basis',()=>{const p=fresh(),r=attempt(p),before=JSON.stringify(r),result=engine.recordDeliveryEvidence(p,{attemptId:id(r,'deliveryAttempts'),outcome:'RECEIVED',observation:'I opened the exported file in the authorized destination and verified the content.',evidenceDescription:'Operator selected exported file in Files.',operatorLabel:'SYNTHETIC-OPERATOR'});assert.equal(JSON.stringify(r),before);assert.equal(result.epistemicBasis,'HUMAN_OBSERVATION');assert.equal(engine.deliveryAttemptState(p,r).status,'DELIVERED');assert.equal(engine.operationalNextAction(p,30).actionType,'COMPLETE');});
+await check('interrupted transfer remains unresolved after reload until an observation is supplied',()=>{let p=fresh();const pending=attempt(p,{result:'PENDING'});p=JSON.parse(JSON.stringify(p));engine.recalculate(p);assert.equal(engine.operationalNextAction(p,30).actionType,'RECORD_DELIVERY_EVIDENCE');assert.notEqual(engine.deliveryAttemptState(p,pending).status,'DELIVERED');assert.throws(()=>engine.recordDeliveryEvidence(p,{attemptId:id(pending,'deliveryAttempts'),outcome:'RECEIVED',observation:''}),/observation|evidence/i);const result=engine.recordDeliveryEvidence(p,{attemptId:id(pending,'deliveryAttempts'),outcome:'RECEIVED',observation:'I found and opened the exported copy after reloading.',operatorLabel:'SYNTHETIC-OPERATOR'});assert.equal(result.epistemicBasis,'HUMAN_OBSERVATION');assert.equal(engine.operationalNextAction(p,30).actionType,'COMPLETE');});
+await check('completion evidence cannot reuse a withdrawn authorization',()=>{const p=fresh(),r=attempt(p);engine.invalidateDownstream(p,28,'Synthetic upstream correction');assert.throws(()=>engine.recordDeliveryEvidence(p,{attemptId:id(r,'deliveryAttempts'),outcome:'RECEIVED',observation:'An old transfer was seen.',operatorLabel:'SYNTHETIC-OPERATOR'}),/current delivery-attempt|current.*authoriz|stale|withdrawn/i);});
+await check('failure outcome cannot be changed by retry',()=>{const p=fresh(),r=attempt(p,{result:'PENDING'});engine.completeDeliveryAttempt(p,{attemptId:id(r,'deliveryAttempts'),result:'FAILED'});assert.throws(()=>engine.completeDeliveryAttempt(p,{attemptId:id(r,'deliveryAttempts'),result:'SUCCEEDED'}),/different|already.*outcome/i);});
+await check('a negative or uncertain human outcome does not establish delivery',()=>{for(const outcome of ['NOT_RECEIVED','UNKNOWN']){const p=fresh(),r=attempt(p);const result=engine.recordDeliveryEvidence(p,{attemptId:id(r,'deliveryAttempts'),outcome,observation:'I checked the destination.',operatorLabel:'SYNTHETIC-OPERATOR'});assert.equal(result.status,'ATTEMPTED');assert.equal(engine.operationalNextAction(p,30).actionType,'RECORD_DELIVERY_EVIDENCE');}});
+
+// Execute the real UI transfer function. The disposable store is the fault
+// boundary here; this evidence does not claim actual browser file transport.
+function actionView(project,source=appSource){
+  const api={project,engine,schema:globalThis.closedLoopWorkflowSchema,core:globalThis.closedLoopCore};
+  const context=createVerifierRuntime({api,closedLoopPromptEngine:globalThis.closedLoopPromptEngine,console,URL,Blob,crypto:globalThis.crypto,structuredClone:value=>structuredClone(value),document:{currentScript:null,querySelector:()=>({value:'',focus(){},setAttribute(){},removeAttribute(){},addEventListener(){}})}});
+  vm.runInContext(source.slice(0,source.indexOf('globalThis.closedLoopAppReady=false;'))+`
+    engine=api.engine;schema=api.schema;core=api.core;current=api.project;
+    globalThis.actionView={action:displayedStageAction(current.activeStage),html:nextActionMarkup(true,current.activeStage)};
+  })();`,context);
+  return context.actionView;
+}
+function deliveryViewOracle(project,expected='RECORD_DELIVERY_EVIDENCE',source=appSource){
+  const before=structuredClone(project),view=actionView(project,source);
+  assert.equal(view.action.actionType,expected,'DELIVERY_RENDERED_ACTION_ORACLE: the selected version must expose its actual remaining operation.');
+  for(const control of ['delivery-observed-outcome','delivery-observation','record-delivery-evidence'])assert.equal(view.html.includes('id="'+control+'"'),expected==='RECORD_DELIVERY_EVIDENCE','DELIVERY_RENDERED_ACTION_ORACLE: the required delivery control is missing or incorrectly retained: '+control);
+  assert.deepEqual(project,before,'Displaying a retained version must not rewrite its canonical data or saved projection.');
+}
+await check('retained successful transfer exposes its required observation despite an obsolete saved action',()=>{
+  const p=fresh();p.activeStage=globalThis.closedLoopWorkflowSchema.STAGE_COUNT;attempt(p,{result:'SUCCEEDED'});engine.recalculate(p);
+  // Obsolete completion classification emitted by the pre-repair kernel.
+  // Retained versions must remain immutable while current controls derive from
+  // that version's actual transfer and evidence records.
+  p.job.NEXT_REQUIRED_ACTION={...p.job.NEXT_REQUIRED_ACTION,actionType:'COMPLETE',primaryButton:null};
+  deliveryViewOracle(p);
+});
+await check('the rendered-action oracle rejects trusting an obsolete retained projection',()=>{
+  const p=fresh();p.activeStage=globalThis.closedLoopWorkflowSchema.STAGE_COUNT;attempt(p,{result:'SUCCEEDED'});engine.recalculate(p);
+  p.job.NEXT_REQUIRED_ACTION={...p.job.NEXT_REQUIRED_ACTION,actionType:'COMPLETE',primaryButton:null};
+  const injected=appSource.replace(retainedActionFaultTarget,'return current.job.NEXT_REQUIRED_ACTION;');
+  assert.throws(()=>deliveryViewOracle(p,'RECORD_DELIVERY_EVIDENCE',injected),error=>error.code==='ERR_ASSERTION'&&error.message.startsWith('DELIVERY_RENDERED_ACTION_ORACLE'));
+  deliveryViewOracle(p);
+  assert.equal(fs.readFileSync('app-core.js','utf8'),appSource);
+  faults.push({faultId:'DELIVERY-TRUST-OBSOLETE-SAVED-ACTION',file:'app-core.js',originalSha256:h.sha256Text(appSource),injectedSha256:h.sha256Text(injected),caughtBy:'DELIVERY_RENDERED_ACTION_ORACLE',result:'DETECTED',sourceRestored:true});
+});
+await check('receipt outcomes retain the required controls across reload without asserting physical delivery',()=>{
+  for(const outcome of ['RECEIVED','NOT_RECEIVED','UNKNOWN']){
+    let p=fresh();p.activeStage=globalThis.closedLoopWorkflowSchema.STAGE_COUNT;
+    const receipt=attempt(p,{result:'SUCCEEDED'}),retained=JSON.stringify(receipt);
+    engine.recalculate(p);deliveryViewOracle(p);
+    const completed=Object.values(p.stages).filter(stage=>stage.status==='COMPLETE').length;
+    assert.equal(completed,globalThis.closedLoopWorkflowSchema.STAGE_COUNT,'Successful controlled transfer completes the stage gates before attributed delivery is established.');
+    const result=engine.recordDeliveryEvidence(p,{attemptId:id(receipt,'deliveryAttempts'),outcome,observation:'Synthetic operator checked the authorized destination.',operatorLabel:'SYNTHETIC-OPERATOR'});
+    assert.equal(result.epistemicBasis,'HUMAN_OBSERVATION');
+    p=JSON.parse(JSON.stringify(p));engine.recalculate(p);
+    const expected=outcome==='RECEIVED'?'COMPLETE':'RECORD_DELIVERY_EVIDENCE';
+    assert.equal(p.job.NEXT_REQUIRED_ACTION.actionType,expected);deliveryViewOracle(p,expected);
+    assert.equal(JSON.stringify(p.projectData.deliveryAttempts[0]),retained,'An observation or reload rewrote the retained transfer receipt.');
+    assert.equal(Object.values(p.stages).filter(stage=>stage.status==='COMPLETE').length,completed,'An observation must not conflate stage completion with attributed delivery.');
+  }
+});
+process.stderr.write('delivery: restore transfer and observation versions without replaying delivery\n');
+let restorationPhase='build disposable persistence';
+try{
+  const unchanged=projectStoreRuntime();let control=unchanged.runtime.closedLoopCore.createBlankState('MATCHING-RELEASE-RESTORE');
+  unchanged.engine.recordReleaseDetermination(control);control=await unchanged.store.writeProject(control,{expectedProjectRevision:0,createOnly:true});
+  const matching=unchanged.engine.records(control,'releaseRecords').at(-1),checkpoint=(await unchanged.store.historyList(control.job.JOB_ID)).activeId;
+  const activated=(await unchanged.store.restoreCheckpoint(control.job.JOB_ID,checkpoint,{expectedProjectRevision:control.revision})).project;
+  assert.deepEqual(unchanged.engine.records(activated,'releaseRecords').at(-1),matching,'A release whose exact binding remains current must not be retired.');
+  const r=projectStoreRuntime(),jobId=fixture.job.JOB_ID,versions=[];
+  assert.ok(generated.preTerminalProject,'Restoration requires the genuine lifecycle state captured before terminal authorization.');
+  let p=r.copy(generated.preTerminalProject);p.activeStage=r.runtime.closedLoopWorkflowSchema.STAGE_COUNT;
+  await restoreArtifactFixture(r.store,fixtureArtifacts);
+  restorationPhase='retain every original instruction context file';
+  await hydrateRetainedPromptContexts(r,p,fixtureContextFiles);
+  await assertRetainedPromptContextCustody(r,p);
+  for(const artifact of r.engine.records(p,'artifacts')){
+    const file=await r.store.getArtifact(r.engine.recordId(artifact,'artifacts'),{jobId});
+    assert.ok(file,'The lifecycle builder must provide every retained artifact’s exact bytes.');
+    assert.equal(file.byteSize,Number(r.engine.recordValue(artifact,'BYTE_SIZE')),'Retained artifact byte length must match its canonical record.');
+    assert.equal(await h.sha256Bytes(file.blob),r.engine.recordValue(artifact,'SHA256'),'Retained artifact bytes must match their canonical digest.');
+  }
+  // Initial persistence establishes revision 1 before the genuine terminal
+  // command binds its authority to the ordinary next committed revision.
+  restorationPhase='initialize the pre-terminal lifecycle fixture';
+  p=await r.store.writeProject(p,{expectedProjectRevision:0,createOnly:true});
+  const initialRevision=p.revision,terminal=r.engine.calculateTerminal(p,{expectedRevision:initialRevision});
+  assert.equal(r.engine.recordValue(terminal,'DELIVERY_STATE'),'AUTHORIZED');
+  const terminalBytes=JSON.stringify(terminal),allocationBytes=JSON.stringify(p.projectData.allocationReceipts);
+  restorationPhase='save the authorized lifecycle fixture';
+  p=await r.store.writeProject(p,{expectedProjectRevision:initialRevision});
+  assert.equal(JSON.stringify(r.engine.records(p,'deliveryRecords').find(row=>r.engine.recordId(row,'deliveryRecords')===r.engine.recordId(terminal,'deliveryRecords'))),terminalBytes,'Saving must preserve the genuine terminal authorization.');
+  assert.equal(JSON.stringify(p.projectData.allocationReceipts),allocationBytes,'Saving must preserve the terminal allocation receipt.');
+  const currentRelease=r.engine.records(p,'releaseRecords').at(-1),currentBinding=r.engine.releaseBinding(p);
+  assert.equal(r.engine.releaseRecordMatchesBinding(currentRelease,currentBinding),true);
+  for(const [field,value] of [['DETERMINATION','BLOCKED'],['MANDATORY_REQUIREMENT_COUNTS',Number(currentRelease.MANDATORY_REQUIREMENT_COUNTS)+1]]){
+    const changed=r.copy(currentRelease);changed.fields[field]=value;changed[field]=value;r.engine.refreshRecordHashes(changed,'releaseRecords');
+    assert.equal(r.engine.releaseRecordMatchesBinding(changed,currentBinding),false,'Changed current release output must not pass its original derivation receipt.');
+  }
+  const corrupted=r.copy(p),corruptedRelease=r.engine.records(corrupted,'releaseRecords').at(-1);
+  corruptedRelease.fields.DETERMINATION='BLOCKED';corruptedRelease.DETERMINATION='BLOCKED';r.engine.refreshRecordHashes(corruptedRelease,'releaseRecords');
+  const corruptedIntegrity=r.store.validateProjectIntegrity(corrupted);
+  assert.equal(corruptedIntegrity.valid,false,'Changed current determination must remain an integrity failure.');
+  assert.ok(corruptedIntegrity.issues.some(issue=>String(issue).includes('Current release determination BLOCKED does not match deterministic release calculation ACCEPTED.')),'The changed determination itself must be rejected.');
+  await r.store.beginHistorySession('DELIVERY-CONTINUATION');
+  async function retain(expected){const history=await r.store.historyList(jobId);versions.push({id:history.activeId,checkpoint:r.copy(history.entries.find(row=>row.id===history.activeId)),project:JSON.parse(JSON.stringify(p)),expected});}
+  await retain('EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS');
+  let next=r.copy(p);r.engine.recordDeliveryAttempt(next,{commandId:'HISTORY-CONTROLLED-TRANSFER',result:'SUCCEEDED'});
+  restorationPhase='save successful transfer';
+  p=await r.store.writeProject(next,{expectedProjectRevision:p.revision});await retain('RECORD_DELIVERY_EVIDENCE');
+  next=r.copy(p);const receipt=r.engine.records(next,'deliveryAttempts').at(-1);
+  r.engine.recordDeliveryEvidence(next,{attemptId:r.engine.recordId(receipt,'deliveryAttempts'),outcome:'RECEIVED',observation:'Synthetic receipt of the exact controlled transfer.',operatorLabel:'SYNTHETIC-OPERATOR'});
+  restorationPhase='save attributed observation';
+  p=await r.store.writeProject(next,{expectedProjectRevision:p.revision});await retain('COMPLETE');
+  for(const point of [...versions].reverse().concat(versions)){
+    restorationPhase='restore '+point.expected;
+    p=(await r.store.restoreCheckpoint(jobId,point.id,{expectedProjectRevision:p.revision})).project;
+    const runtimeReloaded=await r.store.readProject(jobId),reloaded=JSON.parse(JSON.stringify(runtimeReloaded));
+    assert.deepEqual((await r.store.historyList(jobId)).entries.find(row=>row.id===point.id),point.checkpoint,'Restoration must preserve the immutable checkpoint descriptor and snapshot hashes.');
+    for(const family of ['deliveryAttempts','evidenceRecords','regressionExecutions','rawResponses','acceptedChanges'])assert.deepEqual(reloaded.projectData[family],point.project.projectData[family],'Restoration must preserve historical '+family+' without replay.');
+    assert.equal(reloaded.projectData.releaseRecords.length,point.project.projectData.releaseRecords.length,'Restoration must not calculate a new release.');
+    for(const prior of point.project.projectData.releaseRecords){
+      const retained=reloaded.projectData.releaseRecords.find(row=>row.id===prior.id);assert.ok(retained);
+      for(const key of ['fields','derivationInput','derivationReceipt','releaseEvidenceSha256'])assert.deepEqual(retained[key],prior[key],'Historical release '+key+' must remain exact.');
+      if(prior.active!==false&&!prior.invalidatedBy){assert.equal(retained.active,false);assert.equal(retained.invalidatedBy,'HISTORY_ACTIVATION_CHANGED');}else assert.deepEqual(retained,prior);
+    }
+    const subject=r.engine.records(runtimeReloaded,'failureTests').find(row=>r.runtime.closedLoopWorkflowSchema.deferredDefinitionCompatibilityRequired(row,'failureTests'));assert.ok(subject);
+    const compatibility=r.engine.deferredDefinitionCompatibilityState(runtimeReloaded,subject,'failureTests');
+    assert.equal(compatibility.compatible,false);assert.ok(compatibility.issues.some(issue=>issue.code==='STALE_DEFINITION_COMPATIBILITY_AUTHORITY'));
+    assert.equal(r.engine.gate(27,runtimeReloaded).complete,false,'Historical release evidence must not grant current release authority.');
+    assert.equal(reloaded.job.NEXT_REQUIRED_ACTION.actionType,'BLOCKED');
+    restorationPhase='render blocked historical activation';deliveryViewOracle(reloaded,'BLOCKED');
+    await assert.rejects(r.store.assertRecoveryTransfer(runtimeReloaded),/An AUTHORIZED Stage 30 delivery record is required before export\/share\./);
+    for(const artifact of r.engine.records(p,'artifacts')){
+      const stored=await r.store.getArtifact(r.engine.recordId(artifact,'artifacts'));
+      assert.equal(await h.sha256Bytes(stored.blob),r.engine.recordValue(artifact,'SHA256'));
+    }
+    restorationPhase='reject repeated transfer '+point.expected;
+    await assert.rejects(r.store.assertRecoveryTransfer(r.copy(point.project)),error=>error.code==='RETAINED_TRANSFER_LIMIT_REACHED','Restoration must not erase the consumed transfer allowance of the original authorization.');
+  }
+  cases.push({name:'restore transfer and observation versions without replaying delivery',result:'PASS',versions:versions.length,restores:versions.length*2,environment:'Production persistence with shared transaction adapter; no physical delivery asserted'});
+}catch(error){cases.push({name:'restore transfer and observation versions without replaying delivery',result:'FAIL',message:error.message,phase:restorationPhase,stack:error.stack});}
+process.stderr.write('delivery: '+cases.at(-1).result+' restore transfer and observation versions without replaying delivery\n');
+async function uiCase(name,{priorAttempt=false,failSave=false,failTransfer=false,staleBeforeTransfer=false}={}){
+  process.stderr.write('delivery: '+name+'\n');
+  try{
+    let persisted=fresh(),exports=0,errors=[],saves=0,rendered='';
+    if(priorAttempt)attempt(persisted);
+    const api={
+      engine,schema:globalThis.closedLoopWorkflowSchema,core:globalThis.closedLoopCore,project:structuredClone(persisted),
+      render:html=>{rendered=html;},
+      read:async()=>{const p=structuredClone(persisted);if(staleBeforeTransfer)engine.invalidateDownstream(p,28,'Concurrent correction');return p;},
+      persist:async p=>{saves++;if(failSave)throw new Error('Injected storage write failure');const next=structuredClone(p);next.revision++;engine.recalculate(next);const integrity=globalThis.closedLoopProjectStore.validateProjectIntegrity(next);assert.equal(integrity.valid,true,'DELIVERY_UI_RECEIPT_PERSISTENCE_ORACLE: '+integrity.issues.join(' | '));persisted=next;return structuredClone(persisted);},
+      transfer:()=>{assert.equal(value(engine.records(persisted,'deliveryAttempts').at(-1),'RESULT'),'PENDING','The transfer began before a pending receipt was committed.');exports++;if(failTransfer)throw new Error('Injected browser transfer failure');},
+      error:e=>errors.push(e.message)
+    };
+    // The controller runs in a VM while these deliberately injected engine
+    // and storage boundaries run in the host realm. Keep their project values
+    // in that same realm; the shared runtime supports this explicit override.
+    const context=createVerifierRuntime({api,closedLoopPromptEngine:globalThis.closedLoopPromptEngine,console,URL,Blob,crypto:globalThis.crypto,structuredClone:value=>structuredClone(value),setTimeout,clearTimeout,document:{currentScript:null,querySelector:()=>({focus(){},setAttribute(){},removeAttribute(){},addEventListener(){}})},requestAnimationFrame:fn=>fn()});
+    vm.runInContext(appSource.slice(0,appSource.indexOf('globalThis.closedLoopAppReady=false;'))+`
+      engine=api.engine;schema=api.schema;core=api.core;current=api.project;current.activeStage=30;
+      projectStore={readProject:api.read,assertRecoveryTransfer:async project=>engine.deliveryTransferPrecondition(project)};
+      persistReplacement=async p=>{current=await api.persist(p);};
+      verifiedCanonicalArtifact=async artifactId=>({blob:new Blob(['synthetic transfer']),filename:artifactId});
+      downloadBlob=api.transfer;render=()=>api.render(nextActionMarkup(true,current.activeStage));announce=()=>{};reportActionFailure=api.error;
+      focusAfterAction=()=>{};
+      globalThis.runTransfer=exportAuthorizedArtifacts;
+    })();`,context);
+    await context.runTransfer();
+    if(priorAttempt||failSave||staleBeforeTransfer){assert.equal(exports,0);assert.ok(errors.length);}
+    else if(failTransfer){assert.equal(exports,1,JSON.stringify(errors));assert.equal(value(engine.records(persisted,'deliveryAttempts').at(-1),'RESULT'),'UNKNOWN');assert.ok(errors.length);assert.ok(rendered.includes('id="delivery-observed-outcome"'),'An uncertain transfer must offer attributable observation.');}
+    else{assert.ok(exports>0,JSON.stringify(errors));assert.equal(value(engine.records(persisted,'deliveryAttempts').at(-1),'RESULT'),'SUCCEEDED');assert.deepEqual(errors,[]);assert.equal(engine.deliveryAttemptState(persisted,engine.records(persisted,'deliveryAttempts').at(-1)).status,'ATTEMPTED');assert.ok(rendered.includes('id="delivery-observed-outcome"'),'A successful export must expose the delivery-evidence control.');}
+    cases.push({name,result:'PASS',exports,saves,environment:'Actual app function with disposable storage and transfer boundary'});
+  }catch(error){cases.push({name,result:'FAIL',message:error.message});}
+  process.stderr.write('delivery: '+cases.at(-1).result+' '+name+'\n');
+}
+await uiCase('UI checks the exhausted transfer allowance before exporting',{priorAttempt:true});
+await uiCase('UI exports nothing when the pending receipt cannot be saved',{failSave:true});
+await uiCase('UI checks a concurrent upstream correction immediately before transfer',{staleBeforeTransfer:true});
+await uiCase('UI preserves uncertainty after an interrupted browser transfer',{failTransfer:true});
+await uiCase('UI records authorization, transfer, and completion evidence separately');
+
+}
+
+  assertCasePopulation(cases,DELIVERY_CASE_GROUPS[group]);
+  assert.deepEqual(deliverySourceHashes(),binding.sourceInputs,'DELIVERY_WORKER_SOURCE_RESTORATION_ORACLE');
+  assert.equal(sha(fs.readFileSync(binding.fixture.path)),binding.fixture.sha256,'DELIVERY_WORKER_FIXTURE_RESTORATION_ORACLE');
+  assert.ok(Date.now()<binding.deadlineAt,'DELIVERY_OWNER_DEADLINE_ORACLE');
+  console.log(JSON.stringify({schema:'closed-loop-delivery-case-group/1',scope:'PARTIAL_CASE_GROUP_ONLY',ownerComplete:false,group,partialResult:cases.every(c=>c.result==='PASS')?'PASS':'FAIL',binding,faults,cases},null,2));
+  if(cases.some(c=>c.result!=='PASS'))process.exitCode=1;
+}
+if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url))await runDeliveryGroup();

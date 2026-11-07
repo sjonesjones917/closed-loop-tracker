@@ -1,0 +1,26 @@
+Independent multi-contributor provenance and context-disagreement support review
+Disposition: ACCEPT for bounded support integration at a35c4cb14ba097622888e36f3946ff90dbb5342d.
+Reviewed chain: ffb508a42d3f348689283b8deeaae101900f03eb →174f89b93fef628f3d65955c002bd00a1e75275e →a35c4cb14ba097622888e36f3946ff90dbb5342d, based on accepted singleton support fe006bd2f7ecf4a117f305c9cb2592900a9ef0b1.
+Independent expectations frozen before patch inspection:
+- multicontributor-independent-expectations.txt SHA25629adb27a6beccdb01397cfceae563d6e83560bcab4e7b1207d61cc420ec3c33d.
+- context-disagreement-independent-expectations.txt SHA25621106071b7631c8081cdba3c36e775b9593014daa3d6a6a656514f2dd6132f78.
+Both are in /workspace/shared/clrt-atomic-review-evidence.
+
+Three independently reproduced defects were corrected:
+1. Stripping mechanicalProjection while retaining aggregate CONTRIBUTOR-SET identities previously bypassed constituent requirements. Such reserved aliases now require projection.
+2. A projected /propositions constituent could wrap nested composite identities, concealing shared actual cross-role contexts and untraversed inner evidence. Nested projected constituents and aggregate aliases for actual contributors now fail; genuine original single-pass records still work.
+3. Normalization could add HISTORICAL_NONNORMATIVE_CONTEXT where the frozen original contained no classification. Exact presence and value now both must match, preserving absent classification instead of inventing original agreement.
+Original failure outputs remain in challenge-result.json and corrected/challenge-result.json; final replays under final/.
+
+Executed final checks on Node22.23.3:
+- 8 independently authored provenance controls PASS: four actual contributor positive, actual cross-role context reuse, missing/tampered constituent, exact dependency inclusion, stripped projection, nested projection and invented original classification. final/challenge.mjs and challenge-result.json.
+- 10 independently authored context controls PASS: genuine author/reviewer classification disagreement resolves through third exact pinned pass without rewriting original evidence; same-context reconciler, unresolved list, fake original classification, wrong source hash, missing original member, missing anchor, omitted mapping, ungrounded governed range and missing original file reject. final/context-challenge.mjs and context-result.json.
+- Focused permanent suite125 controls PASS, including original historical and new integration cases. final/test-atomic-specification-governance.log.
+- Source-adoption16 and source-classification7 controls PASS. Corresponding final/ logs.
+- Exact-candidate core:19 preserved historical controls plus125 focused controls, expected exit1 with BLOCKED_ATOMIC_REQUIREMENT_COMPLETENESS. final/core.log.
+- Code and all corrective diffs inspected; first-party path containment, raw constituent hashes, actual canonical task contexts, exact member pointers, source/context membership and fingerprint inclusion retained. No runtime source changed. git diff --check PASS.
+
+The actual original reviewer attestations were read with their limitations intact. Canonical task paths may serve as real native context identities; no opaque UUID was invented. Tail helper/checkpoint and directory-metadata exposure was not erased. Declaration validation does not prove hidden provider-state separation; Dot's actual isolation/input history remains necessary.
+
+Bounded acceptance does not certify the final source extraction, all real constituent semantic scope, final atomic reconciliation, product conformance, or app acceptance. Original frozen evidence must remain unchanged and be integrated with exact current identities. Section coverage, component convergence and COMPONENT_OF_CONTRACT support are separately pending review. No push/deployment/runtime edit or historical proof renewal occurred. Reviewer worktree contains only generated-manifest changes from test execution.
+Completed2026-10-14 05:47 UTC.

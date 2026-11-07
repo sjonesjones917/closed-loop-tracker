@@ -1,0 +1,317 @@
+{
+  "schema": "closed-loop-independent-ci-source-delta-review/1",
+  "reviewedAtUtc": "2026-10-10T16:23:43.586693+00:00",
+  "decision": "SCOPED_SOURCE_DELTA_REVIEW_COMPLETE",
+  "reviewPerformed": true,
+  "reviewer": {
+    "actor": "Codex independent CI source reviewer",
+    "contextId": "/root/ci_independent_review",
+    "distinctFromImplementer": true
+  },
+  "implementationAuthors": [
+    {
+      "contextId": "/root/ci_delivery_review",
+      "scope": "workflow, promotion guards and owning source-mutation suite"
+    },
+    {
+      "contextId": "/root/ci_phase_mapping",
+      "scope": "v3 registry report and executed-evidence ownership receipt consumers"
+    },
+    {
+      "contextId": "/root/activation_delta",
+      "scope": "mobile governance inventory and exact permission fault anchors"
+    }
+  ],
+  "source": {
+    "checkoutCommit": "1599f9cfb33cc246292ade693c877fbe200b1986",
+    "includesUncommittedIntegration": true,
+    "identityAuthority": "Exact input SHA-256 values below, not a claimed committed or hosted-tested revision"
+  },
+  "controllingSpecification": {
+    "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+    "sha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
+    "sections": [
+      "46",
+      "46.1",
+      "46.2",
+      "46.3"
+    ]
+  },
+  "reviewedInputs": [
+    {
+      "path": ".github/workflows/pages.yml",
+      "sha256": "1081433eb92a0b736bc354c1b616e2ac1995898b91a3720b0cdd1b6cf0def4a1"
+    },
+    {
+      "path": "verified-site.mjs",
+      "sha256": "d60bb92fc56f4f8def2dd772d6be6d0ed3d4993bb131db0a4f47ad850395f3cf"
+    },
+    {
+      "path": "verify-verified-site.mjs",
+      "sha256": "f948c07c29ff48c6393682c215bc22133b8b00403348ee9a739860dea96185e4"
+    },
+    {
+      "path": "verify-mobile-release-governance.mjs",
+      "sha256": "87f5f9e7cde239e13d3a392613e263d3df6cd94bd2fd69751727137ad9d35dd2"
+    },
+    {
+      "path": "verify-v3-contract.mjs",
+      "sha256": "ffe52ebab48784e7025f8852b353b3918456344a40e77970b6d2f0d752bcc437"
+    },
+    {
+      "path": "verify-executed-evidence.mjs",
+      "sha256": "0c104f64eda5a0e304a495b2415750f5d1688ee09296d86740f9e774429ecdc3"
+    }
+  ],
+  "unchangedOwnersReviewed": [
+    {
+      "path": "verification-evidence.mjs",
+      "sha256": "1fa8705ab0951782d31d4136fcfb1f9be772fb9f6b9039627a32b527320ce972"
+    },
+    {
+      "path": "verification-evidence-preload.mjs",
+      "sha256": "3c7835db4197c92c07dc83abae8f1f63bf1815d389d9f8392e08096093d92ffa"
+    },
+    {
+      "path": "collect-verification-evidence.mjs",
+      "sha256": "1954c33089333e7195a078eb9871263ae042f595ad72a475d7a16d08060fb616"
+    },
+    {
+      "path": "verification-evidence-catalog.mjs",
+      "sha256": "5d8e04d46601123d4552e796d0e69027f29774155d5309d5e1356c6456c53010"
+    },
+    {
+      "path": "verify-conformance-regressions.mjs",
+      "sha256": "cec69ce4a4eb45ad2c49dccd164852a35cd7386f6b269e22d318d5ed63204a39"
+    },
+    {
+      "path": "verify-conformance-handoff.mjs",
+      "sha256": "56046fdde03170fb9b13027fab1672b06135809a5b07f550135dfec0452a97cd"
+    },
+    {
+      "path": "verify-deferred-proof-handoff.mjs",
+      "sha256": "ee3e2826087d10e5bf023b4b66673e8e8f39965559b8cc7ec5f8896db2df02b0"
+    },
+    {
+      "path": "final-acceptance.mjs",
+      "sha256": "5f5187e5f8426d8681f4e88afbc2511ac08a5e3d1ca28fbae10d0632d147d4f2"
+    }
+  ],
+  "scope": "Exact CI scheduling, complete report reuse, failure propagation, proof handoff, promotion and permission-test changes only. No application runtime owner, controlling clause, operation population, stage count, required independent run or unchanged-confirmation rule changed.",
+  "method": [
+    "Read all six exact changed-source diffs and surrounding unchanged receipt, conformance, artifact seal/promotion and final-publication consumers; reviewed Section46 source and its precedence without substituting step titles for primary asserted behavior.",
+    "Traced dependency order foundation -> deferred -> workflow-gates -> conformance -> required test; traced same-run uploaded receipt paths, current Node/runtime/source/specification/catalog/full-invocation validation, explicit required owner exports, strict prebrowser/final aggregation and unchanged main-only deploy/live/publication gates.",
+    "Reviewed complete original-to-current command map and every changed regression block. Existing independent expected report markers, canonical observation populations, source/artifact equality controls, failure and skipped-step rejection, browser failure accumulation, and all three conformance populations remain identifiable.",
+    "Read retained producer outcomes rather than launching duplicate verification. Inspected exact bounded old/new routing controls and independent registry assertions; distinguished controlled runner substitutions from real receipt authentication and full owner execution.",
+    "Read official GitHub Actions dependency, artifact, permission and matrix guidance. New phase jobs retain only existing read scopes; artifact download success and warning-only digest validation remain subordinate to application receipt validation."
+  ],
+  "findings": [],
+  "resolvedFindings": [
+    {
+      "id": "CI-BROAD-PROMPT-PHASE",
+      "identifiedBy": "/root/ci_independent_review",
+      "before": "Six broad prompt/context/disclosure suites still ran under the Stage04 heading before ingestion, contrary to their primary proof boundary and Section46 order.",
+      "after": "All six unchanged suites now execute in Prompt semantics and leakage after workflow gates; each has exact missing, duplicate and former-early-placement controls. Stage04 retains its real zero-loss accounting owner."
+    },
+    {
+      "id": "CI-REGISTRY-HANDOFF-MISSING",
+      "identifiedBy": "/root/ci_independent_review",
+      "before": "Absent transferred registry receipt could invoke standalone fallback after migration.",
+      "after": "Workflow gate explicitly validates and exports the complete current registry owner receipt before the v3 consumer. Missing/current-invalid receipt fails before fallback; standalone behavior remains supported."
+    },
+    {
+      "id": "CI-ROUTING-OWNER-LATE",
+      "identifiedBy": "/root",
+      "before": "Non-browser routing owner ran after the proposed strict prebrowser collector.",
+      "after": "The same owner now runs once within Workflow and gates; the browser routing interaction remains later. Exact former-late-placement and missing-collector controls pass."
+    },
+    {
+      "id": "CI-ACCEPTANCE-MEMORY-PHASE",
+      "identifiedBy": "/root",
+      "before": "Actual admission/commit/gate memory proof was grouped with schema checks.",
+      "after": "The unchanged suite now runs once in Workflow and gates after ingestion; early/missing/duplicate placement controls pass."
+    }
+  ],
+  "caseEquivalence": {
+    "retainedMap": {
+      "path": "verification/ci-phase-owner-reuse-repair-20261010.json",
+      "sha256": "66e2756f992a82c2f272590609d981b2c0dd51aae79c1ce1259cb419e9512e8f"
+    },
+    "preserved": "All prior distinct source assertions and required producer populations remain. Foundation has one complete ingestion invocation; consumers use its full authenticated reports. Registry, authority and returned-slot consumers retain full reports, literal expected results and standalone original producers. Six previously implicit required owners move to explicit earlier phases; none is replaced by a representative case. Both final collectors now require current completed receipts without starting producers.",
+    "permissionControls": "Eight original named permission mutations retain their intended CI_JOB_PERMISSION_ORACLE and restored conforming control; six new mutations cover new proof-job scopes. Exact unique anchors now reject no-op substitutions.",
+    "performance": "One duplicate full ingestion producer, one nested registry producer and two private authority/slot producers are removed. Required phase barriers and two new job setups may increase critical-path elapsed time. Historical timings in author record are source-qualified failed-run context, not comparable before/after release benchmarks; net runner and elapsed savings remain unmeasured."
+  },
+  "evidence": [
+    {
+      "kind": "FOCUSED_OWNER_EXECUTION_OBSERVED_FROM_RETAINED_REPORT",
+      "owner": "verify-verified-site.mjs",
+      "command": "PATH=/workspace/scratch/runtime/node_modules/node/bin:$PATH /workspace/scratch/runtime/node_modules/node/bin/node verify-verified-site.mjs",
+      "exitCode": 0,
+      "runtime": "Node22.23.3",
+      "reportObservedAtUtc": "2026-10-10T16:21:42.355959+00:00",
+      "cases": 190,
+      "reportSha256": "442803b6aa1387de1735a8b4c8d35a4b58e2645bbae382e744fa620e7c1b34b4",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sourceHashes": {
+        ".github/workflows/pages.yml": "1081433eb92a0b736bc354c1b616e2ac1995898b91a3720b0cdd1b6cf0def4a1",
+        "verified-site.mjs": "d60bb92fc56f4f8def2dd772d6be6d0ed3d4993bb131db0a4f47ad850395f3cf",
+        "verify-verified-site.mjs": "f948c07c29ff48c6393682c215bc22133b8b00403348ee9a739860dea96185e4"
+      },
+      "boundary": "Actual promotion/seal CLI and independent source/job/API/fault controls; synthetic API fixtures, not hosted GitHub execution"
+    },
+    {
+      "kind": "FINAL_MOBILE_GOVERNANCE_EXECUTION_OBSERVED",
+      "record": {
+        "command": [
+          "node22.23.3",
+          "verify-mobile-release-governance.mjs"
+        ],
+        "finishedAtUtc": "2026-10-10T16:22:07.454906+00:00",
+        "elapsedSeconds": 0.468424040000059,
+        "exitCode": 0,
+        "inputs": {
+          ".github/workflows/pages.yml": "1081433eb92a0b736bc354c1b616e2ac1995898b91a3720b0cdd1b6cf0def4a1",
+          "verify-mobile-release-governance.mjs": "87f5f9e7cde239e13d3a392613e263d3df6cd94bd2fd69751727137ad9d35dd2"
+        },
+        "stdoutSha256": "a1e00f4190edb195adac0a0b59e677951ba280077079ecac10612cfa6a196495",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "originalRepairRecord": {
+        "path": "verification/ci-mobile-governance-repair-20261010.json",
+        "sha256": "3d9994c7c4dbb93cc3b17e05abd48a0779099191e32c74515212fed7ec671fc2"
+      },
+      "boundary": "14 permission faults,2 repository-write faults and retained mobile-governance controls; no physical-device performance claim"
+    },
+    {
+      "kind": "BOUNDED_CONSUMER_ROUTING_CONTROLS",
+      "record": {
+        "registryConsumerRouting": "PASS",
+        "boundary": "Exact old/new consumer source with controlled scheduling dependencies; actual unchanged registry owner separately executed, not a receipt-authentication or full-v3 proof",
+        "preFixChildInvocations": 1,
+        "currentReceiptChildInvocations": 0,
+        "missingStandaloneChildInvocations": 1,
+        "completeRegistryReportRetained": true,
+        "originalMarkerAssertionRetained": true,
+        "ownerFailurePropagatesWithoutFallback": true,
+        "stages": 30,
+        "operations": 104,
+        "sourceSha256": "ffe52ebab48784e7025f8852b353b3918456344a40e77970b6d2f0d752bcc437"
+      },
+      "sourceRecordSha256": "81c465b74c2ccb3d1e93cf0c12cc2bc14d563774e6f28b42bf502ce7694d576e"
+    },
+    {
+      "kind": "BOUNDED_CONSUMER_ROUTING_CONTROLS",
+      "record": {
+        "ownershipConsumerRouting": "PASS",
+        "boundary": "Exact maintained routing function/controls plus pinned old dispatch with controlled report/runner dependencies; no ingestion/authority/slot producer or receipt-authentication proof claimed",
+        "formerExtraProducerInvocations": [
+          "verify-response-authority-integrity.mjs",
+          "verify-returned-slot-authority.mjs"
+        ],
+        "currentExtraProducerInvocations": [],
+        "oldCompleteReportsPreserved": true,
+        "currentControls": {
+          "syntheticRoutingControls": true,
+          "receiptAuthenticationClaimed": false,
+          "cases": [
+            {
+              "owner": "verify-ingestion.mjs",
+              "currentReceiptExtraInvocations": 0,
+              "standaloneAbsentInvocations": 1,
+              "completeReportPreserved": true,
+              "missingCurrentRejected": true,
+              "invalidCurrentRejectedWithoutFallback": true
+            },
+            {
+              "owner": "verify-response-authority-integrity.mjs",
+              "currentReceiptExtraInvocations": 0,
+              "standaloneAbsentInvocations": 1,
+              "completeReportPreserved": true,
+              "missingCurrentRejected": true,
+              "invalidCurrentRejectedWithoutFallback": true
+            },
+            {
+              "owner": "verify-returned-slot-authority.mjs",
+              "currentReceiptExtraInvocations": 0,
+              "standaloneAbsentInvocations": 1,
+              "completeReportPreserved": true,
+              "missingCurrentRejected": true,
+              "invalidCurrentRejectedWithoutFallback": true
+            }
+          ]
+        },
+        "formerDuplicateFaultDetected": true,
+        "sourceSha256": "0c104f64eda5a0e304a495b2415750f5d1688ee09296d86740f9e774429ecdc3"
+      },
+      "sourceRecordSha256": "6322fe8b4bffaa0bfb538a2f8b99515b6a0541493759d0f7c325aca23c2a9698"
+    }
+  ],
+  "currentCoverageRenewal": {
+    "normativeRequirementIds": [
+      "NREQ-bedc4564e47ae7ebf86911eb8426b6f0",
+      "NREQ-4b26e20f450b23eb551b2da03e69c9c9",
+      "NREQ-befdab6cc6a4121936987a35fc18e1c9",
+      "NREQ-a011968eff2ed2dc314d58ed27dfad88"
+    ],
+    "reason": "Only workflow and verified-site exact owner/input hashes changed in these four active source-bound reviews. Their Section46.2 identity projection obligations/checks, controlling source, and independent semantic assessment are unchanged. Other four changed verifier files have no active fullCoverage direct owner or reviewed-input bindings.",
+    "permittedChanges": [
+      "Matching productionOwners sha256",
+      "Matching reviewedInputs sha256",
+      "coverage declaration digest and reviewed declaration digest",
+      "active review-file sha256",
+      "renewal timestamp/actor and append this independent delta reference"
+    ],
+    "preserve": "Earlier author/reviewer attribution, all historical review records and embedded source hashes, requirement text, governing context, expected outcomes, scope limits, obligation decomposition and check IDs."
+  },
+  "primaryResearch": [
+    {
+      "topic": "Dependency and failure propagation",
+      "url": "https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-jobs",
+      "applicableComponent": ".github/workflows/pages.yml phase dependencies and required test gate",
+      "sourceFact": "needs requires successful completion; failure or skipped dependency skips downstream jobs unless an explicit always() condition permits continuation.",
+      "decision": "Use dependency barriers between specification proof phases. Keep required test if: always() and explicit success checks so earlier failure makes required test fail rather than silently skipping.",
+      "verification": "Read workflow dependency edges and exact guard; focused source-mutation controls owned by verify-verified-site.mjs; hosted required check remains necessary.",
+      "accessDateUtc": "2026-10-10",
+      "authority": "Official GitHub Actions documentation; platform behavior/guidance, not additional controlling application requirements"
+    },
+    {
+      "topic": "Artifact handoff and identity",
+      "url": "https://docs.github.com/en/actions/how-tos/writing-workflows/choosing-what-your-workflow-does/storing-and-sharing-data-from-a-workflow",
+      "applicableComponent": "same-run prerequisite/conformance/deferred receipt handoff and PR artifact reuse",
+      "sourceFact": "upload/download-artifact share artifacts between workflow jobs; consumers require needs; other-run download needs token and run identifier; v4 artifacts are immutable; automatic artifact digest mismatch produces a warning.",
+      "decision": "Keep exact current-run artifact selectors and repository source-bound receipt owner validation; do not equate artifact download or warning-only digest behavior with accepted proof. PR promotion retains explicit run, attempt, head/tree, workflow, manifest and resource equality checks.",
+      "verification": "Read current receipt validation and assertPassedRun/promotion gates; focused missing, stale, failed, malformed and wrong-input negative controls. No platform compromise claim.",
+      "accessDateUtc": "2026-10-10",
+      "authority": "Official GitHub Actions documentation; platform behavior/guidance, not additional controlling application requirements"
+    },
+    {
+      "topic": "Least privilege",
+      "url": "https://docs.github.com/en/actions/security-for-github-actions/security-guides/automatic-token-authentication",
+      "applicableComponent": "job permissions for checkout, Actions PR-artifact discovery, deployment and status publication",
+      "sourceFact": "Actions can access github.token even without explicitly receiving it; use permissions at workflow/job scope to grant only least required access.",
+      "decision": "Retain default contents: read and scoped actions: read/pull-requests: read where PR verification discovery actually needs it. Do not add write permissions to proof jobs. Existing deployment/publication owners retain their necessary scopes.",
+      "verification": "Compare workflow permission declarations before/after and actual API calls used by verified-site.mjs.",
+      "accessDateUtc": "2026-10-10",
+      "authority": "Official GitHub Actions documentation; platform behavior/guidance, not additional controlling application requirements"
+    },
+    {
+      "topic": "Matrix failure behavior",
+      "url": "https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs",
+      "applicableComponent": "three isolated conformance jobs and required downstream result checks",
+      "sourceFact": "strategy.fail-fast controls cancellation of other matrix jobs on failure; continue-on-error changes failure propagation independently.",
+      "decision": "Retain fail-fast: false to allow independent diagnostics to complete, no continue-on-error for required proof, and aggregate needs.conformance.result success guard plus exact three job outcomes when promoting a PR artifact.",
+      "verification": "Read YAML and promotion checks; required negative controls for failed/missing/skipped group execution/upload; no duplicate full benchmarking run.",
+      "accessDateUtc": "2026-10-10",
+      "authority": "Official GitHub Actions documentation; platform behavior/guidance, not additional controlling application requirements"
+    }
+  ],
+  "limitations": [
+    "Independent scoped source review and retained focused outcomes only; no full current-candidate CI execution, protected merge, artifact publication, live behavior, real external-agent journey or physical iPhone acceptance established.",
+    "The executed-evidence and v3 consumer controls use bounded runner/report substitutions; real canonical owner suites and authentication remain required through the coherent CI candidate.",
+    "Metadata renewal does not convert prior semantic review into new executed proof or establish whole-clause conformance.",
+    "Hosted source/artifact-bound verification and later deployment/live/human gates remain mandatory."
+  ],
+  "applicationConformanceEstablished": false,
+  "fullCiPassEstablished": false,
+  "physicalDeviceAcceptanceEstablished": false
+}

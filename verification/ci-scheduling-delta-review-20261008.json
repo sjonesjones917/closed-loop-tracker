@@ -1,0 +1,136 @@
+{
+  "schema": "closed-loop-ci-scheduling-delta-review/1",
+  "reviewedAtUtc": "2026-10-08T12:22:00Z",
+  "actor": "Codex current source integrator",
+  "contextId": "/root",
+  "priorIndependentSemanticReviewRetained": true,
+  "newIndependentSemanticReviewClaimed": false,
+  "narrowNormativeRequirementIds": [
+    "NREQ-bedc4564e47ae7ebf86911eb8426b6f0",
+    "NREQ-4b26e20f450b23eb551b2da03e69c9c9",
+    "NREQ-befdab6cc6a4121936987a35fc18e1c9",
+    "NREQ-a011968eff2ed2dc314d58ed27dfad88"
+  ],
+  "sourceScope": [
+    ".github/workflows/pages.yml",
+    "verified-site.mjs",
+    "verify-verified-site.mjs",
+    "verify-spec-residual-closure.mjs",
+    "verify-deferred-proof-handoff.mjs",
+    "test-due-verification-scheduling.mjs",
+    "verify-executed-evidence.mjs",
+    "verify-stage03-agent-protocol.mjs",
+    "collect-verification-evidence.mjs",
+    "verify-browser.mjs"
+  ],
+  "preFixEvidence": {
+    "head": "32b9bf8018086e0c3bf3e81dc499abfcb55c1582",
+    "runId": 37730277595,
+    "testJobId": 113157585809,
+    "outcome": "FAILURE",
+    "owner": "verify-spec-residual-closure.mjs -> verify-due-stage-timing.mjs",
+    "failure": "The complete deferred matrix child was terminated at its three-hour deadline after accepted synthetic Stage 17 ROOT_CAUSE; no matrix assertion failure or completed receipt was reported.",
+    "childStartedAtUtc": "2026-10-08T05:50:15.116Z",
+    "childTerminatedAtUtc": "2026-10-08T08:50:15.259Z",
+    "childTimeoutMilliseconds": 10800000,
+    "localExecutedEvidenceTimeout": {
+      "boundary": "verify-executed-evidence.mjs -> executeEvidenceProducer(verify-ingestion.mjs) -> checkedVerifier",
+      "startedAtUtc": "2026-10-08T09:26:25.136Z",
+      "endedAtUtc": "2026-10-08T09:46:25.240Z",
+      "timeoutMilliseconds": 1200000,
+      "result": "ETIMEDOUT/SIGTERM after reaching nonbrowser:large-history-execution-package, with no intended ingestion assertion failure; the earlier workflow ingestion step already executes this producer."
+    },
+    "localOwnerPopulationMismatch": {
+      "boundary": "verify-executed-evidence.mjs exact registered owner population after validating and reusing a current 73-report/87-observation ingestion receipt",
+      "startedAtUtc": "2026-10-08T10:26:08Z",
+      "endedAtUtc": "2026-10-08T10:36:40Z",
+      "result": "The response-authority producer passed and emitted 11 assertion IDs; its consumer expected only the previous 10 and failed at OBSERVATION_OWNER_ORACLE before examining the returned-slot ID set. The additional RESPONSE-CLOSED-FAMILY-BOUNDARY is registered in verification-evidence-catalog.mjs with 15 explicit rejections."
+    },
+    "localNormativeLinkMismatch": {
+      "boundary": "verify-executed-evidence.mjs -> composed exact owner receipts -> normativeRequirementTrace",
+      "sourceCommit": "41178d281428ca27ac9a80f68439594b73811999",
+      "startedAtUtc": "2026-10-08T11:10:30Z",
+      "endedAtUtc": "2026-10-08T11:20:16Z",
+      "result": "Producer population and catalog check passed, but the consumer required every emitted owner assertion to have a normative binding. RESPONSE-CLOSED-FAMILY-BOUNDARY is a supplemental catalog regression, absent from the reviewed normative binding list, so the old all-ID trace assertion failed."
+    },
+    "localBrowserPreviewMismatch": {
+      "boundary": "Built static site at head 41178d, actual local Chromium Stage 02 UI after startup and navigation",
+      "result": "The real generated instruction was 82408 characters; the UI explicitly displayed its exact 65536-character prefix with export guidance. The response schema occurred at character 73892. The old test wrongly required the schema and a removed transport phrase in visible truncated text; no app runtime failure was established."
+    },
+    "requiredCheckSkip": {
+      "sourceCommit": "96ee3a0b0f0e86ac8282bb8f2c6979c181bc2455",
+      "workflow": "test needs deferred-matrix but job-level if is always() && needs.deferred-matrix.result == success",
+      "protectedBranch": "Ruleset 21578362 requires only GitHub Actions check test (integration 15368).",
+      "mechanism": "When deferred-matrix fails, the required test job is skipped; GitHub documents a skipped required job as Success for merging.",
+      "boundary": "Actual current workflow and repository ruleset inspected; platform behavior from official documentation. No failed matrix run was deliberately induced."
+    },
+    "storagePopulationFixtureMismatch": {
+      "sourceCommit": "96ee3a0b0f0e86ac8282bb8f2c6979c181bc2455",
+      "boundary": "verify-executed-evidence.mjs controlled persistence catalog-consumer fixture after validated current ingestion receipt and separately executed authority/returned-slot owners",
+      "startedAtUtc": "2026-10-08T12:07:46Z",
+      "endedAtUtc": "2026-10-08T12:19:19Z",
+      "result": "Exit 1 at line 369: EXECUTED_EVIDENCE_ORACLE expected exactly one report marker responseStagingRecovery; received 0. The fixture intentionally contained only retained and current input custody controls, while the actual persistence producer catalog has eight independently owned markers. This is a fixture scope defect, not an observed app rejection."
+    }
+  },
+  "platformSource": {
+    "url": "https://docs.github.com/en/actions/reference/limits",
+    "accessedAtUtc": "2026-10-08",
+    "fact": "All GitHub-hosted runners have a six-hour job execution time limit."
+  },
+  "sourceReview": {
+    "unchangedClauseOwners": "The publish-status acceptance report projection and validateSite registry identity checks retain their earlier logic; the new workflow schedules the complete deferred matrix in a separate required job.",
+    "proofHandoff": "The deferred job executes the unchanged complete producer and uploads its executed receipt. The dependent test job always starts, fails immediately when the deferred job did not succeed, and otherwise downloads and validates the same-run receipt against source/specification/catalog/runtime/commit and all observations before reuse. Missing, failed, stale, corrupt, or incomplete receipts fail; direct verification without a receipt still runs the producer.",
+    "publicationGate": "The test job now starts after any deferred-matrix outcome and its first unconditional step fails unless the matrix job succeeded. The protected test check therefore cannot pass through a skipped test job when matrix execution or upload fails. Artifact reuse still requires the completed PR test, successful deferred job and its execution/upload steps; the existing seal, deployed-byte check and live operator checks remain required.",
+    "sourceChangesDoNotReplaceExecutionEvidence": true,
+    "testOnlyCorrections": "The Stage 03 fixture still requires rejection of invalid nested targetId aliases, now asserted through both exact early nested-type rejection codes and paths; its conforming control passes. The scheduling fixture now asserts the separate checked producer and its 330-minute bounded budget while retaining failed, malformed, collector and direct execution controls. The evidence-owner assertion includes actual child stderr on failure. No product runtime rule was changed by these test corrections.",
+    "ingestionReceiptReuse": "The executed-evidence consumer now requires and validates the exact current ingestion receipt when a receipt directory is configured, then uses its original reports and observations in all existing negative/ownership controls. Missing, stale, corrupt, or incomplete receipts fail; standalone execution without a receipt directory can still run the full owner with the existing bounded aggregate timeout. The shared producer helper accepts an explicit timeout without changing other callers.",
+    "ownerPopulation": "The consumer exact-set oracle now includes the independently registered RESPONSE-CLOSED-FAMILY-BOUNDARY check. No owner assertion or negative case was removed; omitted, duplicate, or unregistered IDs still fail the exact comparison. Full corrected consumer execution remains required.",
+    "supplementalOwnerLinkage": "The exact owner ID universe and required catalog check remain enforced. The normative trace assertion now applies to the 17 IDs declared by reviewed normative bindings, while an explicit one-ID supplemental set checks RESPONSE-CLOSED-FAMILY-BOUNDARY. Any further missing normative binding or supplemental catalog check fails.",
+    "browserPreview": "The Stage 02 browser assertion checks the schema in the complete generated instruction, confirms the visible 65536-character preview is an exact prefix with export guidance, and checks the current file-first response guidance in the visible operator UI. It does not require a token beyond the preview cutoff to appear on screen.",
+    "requiredCheckSkipCorrection": "The prior job-level success condition silently skipped the only branch-required test check on deferred failure. A job-level always() and first unconditional success guard preserve the same normal path and turn failure/cancellation/skipping into a red required test result. verified-site.mjs now requires that guard to have passed in a reusable artifact and rejects the old workflow; no product runtime source changed.",
+    "focusedStorageCatalogFixture": "The controlled two-custody report now runs against an isolated copy of exactly those two current production catalog checks, with try/finally removal. The actual full persistence producer catalog and receipt path are unchanged and explicitly reject this partial fixture. The conforming control and all six missing/wrong outcome/detail/marker negatives remain. Later Stage 28 and native binding catalog fixtures were checked separately against the current catalog; their eleven named controls pass."
+  },
+  "executedFocusedEvidence": {
+    "nodeVersion": "22.23.3",
+    "verifiedSiteOwner": "PASS: Node 22.23.3 direct verify-verified-site.mjs exit 0, 74 checks including new skipped-required-test and missing-required-gate mutations; full CI was not run by this focused owner.",
+    "yamlParse": "PASS: deferred-matrix, test, deploy, verify-live, and publish-status jobs present with test dependent on deferred-matrix.",
+    "missingReceiptControl": "PASS: required handoff rejects an absent receipt with exit status 1 and an exact missing-receipt diagnostic.",
+    "syntaxAndDiff": "PASS for all changed executable modules and git diff --check.",
+    "stage03Owner": "PASS: Node 22.23.3 direct Stage 03 protocol verifier, including valid recordId and both invalid nested targetId paths; original pre-fix UNKNOWN_PROPERTY-only assertion failed because current nested-type preflight rejected both references earlier.",
+    "schedulingOwner": "PARTIAL: both synthetic scheduling fixture groups passed before the original broad evidence run reached its cold-checkout Stage 03 assertion; complete post-correction evidence owner remains running.",
+    "actionlint": "PASS: actionlint v1.7.12, GitHub release SHA256 8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8; .github/workflows/pages.yml produced no diagnostics.",
+    "ingestionReceipt": "PASS: current standalone ingestion producer exit 0; its actual receipt validated against exact integration source with 73 reports and 87 observations, SHA256 c94039f021a932722e5b756eb6a455d13ec478578dfcd4e44f3b8d0a795cd4f4. This receipt predates the final expected-ID source edit and cannot be promoted as final-source execution.",
+    "firstReuseOwner": "FAILED: current ingestion receipt was reused without another ingestion child and the consumer reached the independent authority owner; exact expected-ID population omitted one registered closed-family assertion. Corrected source must still execute.",
+    "currentIngestionReceipt": "PASS: Node 22.23.3 old-head 96ee3a0 source ingestion ended 2026-10-08T12:07:18Z, 73 reports/87 observations, complete current-source receipt validated; raw receipt SHA256 424ad2abaf6aba2ff61e3290741379f439a851f04fccf67254f31d9fc1b47cf8. It is old-head diagnostic evidence after a new workflow commit, not final 20bab8e source proof.",
+    "secondReuseOwner": "FAILED: reused current ingestion receipt without another ingestion child, then exact normative link assertion incorrectly included the supplemental closed-family ID. The producer catalog check itself passed; the corrected consumer still requires post-fix execution.",
+    "browserDiagnostic": "PASS: isolated actual built-head Chromium --startup-scroll-only at 320/393/1280 after correcting two stale visible-text premises; source built artifact remained 41178d. This diagnostic had a modified test file and is not final-source owning receipt.",
+    "requiredCheckSkip": "PASS: corrected workflow owner rejects the exact old workflow; the first guard exits 1 for failure/cancelled/skipped and 0 for success; actionlint v1.7.12 exits 0 on the corrected YAML.",
+    "storagePopulationFixture": "PASS: exact old fixture snippet reproduces missing responseStagingRecovery marker; current exact snippet passes the conforming two-check catalog fixture and six negative controls, verifies the full producer rejects the partial report, and removes the temporary fixture catalog entry. The subsequent Stage 28/native binding controlled section passes eleven controls. Node 22.23.3 syntax passes; complete executed-evidence consumer on the corrected source remains pending.",
+    "thirdReuseOwner": "FAILED on 96ee3a0: reused its validated ingestion receipt without a second ingestion child, then reached the controlled storage fixture missing an independently added persistence marker. The corrected fixture is focused-pass only; the full consumer must run on the next exact source."
+  },
+  "remainingEvidence": [
+    "The replacement hosted deferred matrix must finish and produce a validated receipt on its exact source revision.",
+    "The dependent complete test job, verified artifact, protected merge, Pages deployment, and live operator path must pass.",
+    "The isolated local complete compatibility consumer is running; no verdict is recorded here.",
+    "The pre-fix complete executed-evidence owner failed at the measured 20-minute redundant ingestion timeout. The corrected reuse route and standalone fallback still require direct post-fix verification on the exact candidate.",
+    "A replacement required PR run on the exact corrected gate revision, protected merge, Pages deployment and live verification remain required.",
+    "The complete executed-evidence consumer must run on the exact corrected source; the 96ee3a0 receipt is not promoted after this source edit."
+  ],
+  "sourceSha256": {
+    ".github/workflows/pages.yml": "5976e1e69757ff7742673a9fcad04a52fc34857d161a44fc121a769e52e7d36b",
+    "verified-site.mjs": "c32ef23aa3bf1dda105fc774d84911ddb7603febe0479a2aabb751fb8820659a",
+    "verify-verified-site.mjs": "3e07b83cfd373e4470654327a0b180d050d9e3c1b8036dfcd877865cd23c109a",
+    "verify-spec-residual-closure.mjs": "d9649a4916d916e212d73a3ca756fe42d84e42cd1da9083f4d9e3b73ac8d4720",
+    "verify-deferred-proof-handoff.mjs": "ee3e2826087d10e5bf023b4b66673e8e8f39965559b8cc7ec5f8896db2df02b0",
+    "test-due-verification-scheduling.mjs": "c182697281c056c7f56734a305af1207c4a224ce98dc7a02fa62ea56e126f7b9",
+    "verify-executed-evidence.mjs": "8e120a5cd95f616ba81fecb3aa3bcd2a568cbbac1a07f06e7af30dedf479da16",
+    "verify-stage03-agent-protocol.mjs": "23cacea56a1d54596bfd75146dcc1766f9b8bef849d0c777f9c2aacc7e240d7e",
+    "collect-verification-evidence.mjs": "408461939020fae60a99950e8fc42364132cd75eb5384dc05d29e75b253535ff",
+    "verify-browser.mjs": "1d69e2fcb227a1161e695db06c64fc27215b506137e95ec60aa66a3effc972bd"
+  },
+  "platformSkippedJobSource": {
+    "url": "https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-jobs-with-conditions",
+    "accessedAtUtc": "2026-10-08",
+    "fact": "A skipped job reports Success and does not prevent merging even if it is a required check."
+  }
+}

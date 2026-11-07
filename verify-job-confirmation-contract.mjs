@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import {verifyJobPointerIntegrity,verifyLegacyJobPointerRecovery,verifyJobPointerIntegrityFaults} from './test-job-pointer-integrity.mjs';
 import crypto from 'node:crypto';
 import {responseFixture,OBJECTIVE} from './operator-journey-fixtures.mjs';
 import {execFileSync} from 'node:child_process';
@@ -15,12 +16,15 @@ const expected=[...chapter.matchAll(/^- ([A-Z][A-Z0-9_]*) — (HUMAN_DECISION|HU
 if(!expected.length)throw new Error('The controlling Job field table was not parsed.');
 const cases=expected.map(([text,name,producer,type,editable,nullable,required])=>{const d=schema.JOB_FIELDS[name],types={String:'STRING',Integer:'INTEGER'},want={producer,editable:editable==='Yes',nullable:nullable==='Yes',requiredAtStage:required==='—'?null:Number(required)},observed=d?Object.fromEntries(Object.keys(want).map(k=>[k,d[k]])):null,metadataMatches=JSON.stringify(want)===JSON.stringify(observed),typeMatches=types[type]?d?.valueType===types[type]:d?.valueType!=='STRING';return {caseId:'JOB-FIELD-'+name,sourceText:text,expected:{...want,type},actual:d||null,status:metadataMatches&&typeMatches?'PASS':'FAIL'};});
 cases.push({caseId:'CONFIRMATION-APPEND-CONTRACT',expected:'Specification section 38 requires APPEND_SCOPED independently of application-owned fields.',actual:{recordPolicy:schema.RECORD_SCHEMAS.confirmationRecords.commitPolicy,durablePolicy:schema.DURABLE_OBJECT_REGISTRY.confirmationRecords.policy},status:schema.RECORD_SCHEMAS.confirmationRecords.commitPolicy==='APPEND_SCOPED'&&schema.DURABLE_OBJECT_REGISTRY.confirmationRecords.policy==='APPEND_SCOPED'?'PASS':'FAIL'});
-const ingestion=fs.readFileSync('response-ingestion.js','utf8'),start=ingestion.indexOf('function validateValue('),end=ingestion.indexOf('\nfunction ',start+1);
-c.schema=schema;c.hash=c.closedLoopHash;
-createVerifierRuntime.loadScript(c,ingestion.slice(ingestion.indexOf('const object=value=>'),ingestion.indexOf('const unknownKeys='))+ingestion.slice(start,end),{filename:'response-ingestion.js#typed-value-owner'});
+// Report the owning declaration failure before a downstream projection guard
+// observes the same malformed field contract. Conforming declarations execute all owners below.
+const declarationFailures=cases.filter(row=>row.status==='FAIL');
+if(declarationFailures.length)throw new Error('JOB_CONTRACT_ORACLE: '+declarationFailures.map(row=>row.caseId).join(', '));
+// Use the loaded production export with its complete lexical dependencies.
+const validateValue=c.closedLoopResponseIngestion.validateValue;
 const project=c.closedLoopCore.createBlankState('JOB-DECLARED-TYPE-PROOF');c.closedLoopWorkflowEngine.recalculate(project);
 for(const name of ['CURRENT_BLOCKERS','NEXT_REQUIRED_ACTION']){
- const value=project.job[name],validIssues=[],invalidIssues=[];c.validateValue(schema.JOB_FIELDS[name],value,'/job/'+name,validIssues);c.validateValue(schema.JOB_FIELDS[name],'unstructured prose','/job/'+name,invalidIssues);
+ const value=project.job[name],validIssues=[],invalidIssues=[];validateValue(schema.JOB_FIELDS[name],value,'/job/'+name,validIssues);validateValue(schema.JOB_FIELDS[name],'unstructured prose','/job/'+name,invalidIssues);
  cases.push({caseId:'JOB-TYPED-DERIVATION-'+name,expected:'The declared field contract accepts the structured value produced by its application authority and rejects unstructured prose.',actual:{value,validIssues,invalidIssues},status:validIssues.length===0&&invalidIssues.some(x=>x.code==='WRONG_VALUE_TYPE')?'PASS':'FAIL'});
 }
 project.job.EXACT_USER_OBJECTIVE_VERBATIM=OBJECTIVE;c.closedLoopWorkflowEngine.recalculate(project);
@@ -28,7 +32,8 @@ const {prompt}=c.closedLoopPromptEngine.reserveAndBuildPromptRecord(project,1,{o
 const prepared=c.closedLoopResponseIngestion.prepare(project,{stage:1,text:JSON.stringify(response),promptRecord:prompt,transport:{packageId:prompt.packageId,operationReservationId:prompt.operationReservationId,challengeNonce:prompt.challengeNonce}});
 if(!prepared.validation.valid)throw new Error(JSON.stringify(prepared.validation.issues));
 const committed=c.closedLoopResponseIngestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'SYNTHETIC_JOB_CONTRACT'}),acceptedIntake=committed.project.job.INPUT_SET_CONTENTS;
-c.validateValue(schema.STAGE_FIELDS[1].INPUT_SET_CONTENTS,intake,'/stageData/INPUT_SET_CONTENTS',stageIssues);c.validateValue(schema.JOB_FIELDS.INPUT_SET_CONTENTS,acceptedIntake,'/job/INPUT_SET_CONTENTS',jobIssues);
+validateValue(schema.STAGE_FIELDS[1].INPUT_SET_CONTENTS,intake,'/stageData/INPUT_SET_CONTENTS',stageIssues);validateValue(schema.JOB_FIELDS.INPUT_SET_CONTENTS,acceptedIntake,'/job/INPUT_SET_CONTENTS',jobIssues);
 cases.push({caseId:'JOB-INTAKE-PROJECTION',expected:'The Job projection accepts the exact intake value accepted by the Stage 1 field contract, without changing its bytes or producer.',actual:{fixture:'Authoritative responseFixture from generated Stage 1 instruction bytes',type:typeof intake,acceptedProjectionMatches:acceptedIntake===intake,acceptedChangeId:committed.acceptedChange.changeId,sha256:crypto.createHash('sha256').update(intake).digest('hex'),stageIssues,jobIssues},status:acceptedIntake===intake&&stageIssues.length===0&&jobIssues.length===0?'PASS':'FAIL'});
-console.log(JSON.stringify({sourceCommit:execFileSync('git',['rev-parse','HEAD'],{timeout:30000,killSignal:'SIGKILL',encoding:'utf8'}).trim(),specificationSha256:crypto.createHash('sha256').update(spec).digest('hex'),basis:'INDEPENDENT_SPECIFICATION_TABLE_AND_EXECUTED_PRODUCTION_TYPED_VALIDATOR',synthetic:true,actualBrowser:false,cases},null,2));
+const pointerEvidence=cases.every(row=>row.status==='PASS')?{jobPointerIntegrity:await verifyJobPointerIntegrity(),legacyJobPointerRecovery:await verifyLegacyJobPointerRecovery(),jobPointerIntegrityFaults:await verifyJobPointerIntegrityFaults()}:{};
+console.log(JSON.stringify({...pointerEvidence,sourceCommit:execFileSync('git',['rev-parse','HEAD'],{timeout:30000,killSignal:'SIGKILL',encoding:'utf8'}).trim(),specificationSha256:crypto.createHash('sha256').update(spec).digest('hex'),basis:'INDEPENDENT_SPECIFICATION_TABLE_AND_EXECUTED_PRODUCTION_TYPED_VALIDATOR',synthetic:true,actualBrowser:false,cases},null,2));
 if(cases.some(x=>x.status==='FAIL')){process.stderr.write('JOB_CONTRACT_ORACLE: '+cases.filter(x=>x.status==='FAIL').map(x=>x.caseId).join(', ')+'\n');process.exitCode=1;}

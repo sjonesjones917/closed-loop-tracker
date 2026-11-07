@@ -1,0 +1,85 @@
+{
+  "schema": "closed-loop-source-scope-successor-freeze/1",
+  "status": "FROZEN",
+  "inputs": [
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-016-deliverable-manifest.json",
+      "sha256": "dd36cb06bf5bca6f1fc004c394a354bcf8a25ea4248b819c1e5a29cfa3aacbb7",
+      "byteLength": 5113,
+      "semanticReadScope": "EXACT_ARCHIVE_CUSTODY"
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-016-frozen-payloads.tar.gz",
+      "sha256": "4a223b1e41a70df8a72f90e658558c2ac82861389005d3dbb4362decd5955d8e",
+      "byteLength": 105409,
+      "semanticReadScope": "EXACT_REGULAR_MEMBERS_HASHED"
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-016/freeze-manifest.json",
+      "sha256": "fb26335e0776fd7b1c1fd6294ce441f83b2f7b860460575e408ae27ffe4cd779",
+      "byteLength": 25032,
+      "semanticReadScope": "IMMUTABLE_OUTPUT_PINS"
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-016/batch-016-reconciliation.json",
+      "sha256": "d0580c1c564a506bcc8e79fb2e0508b70154fe36a1b68b088a83bb94444566b7",
+      "byteLength": 562106,
+      "semanticReadScope": "/67 ONLY"
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-016/mechanism-adjudication.json",
+      "sha256": "2764061bb54548911dea088a0f7ab5b7b64074570df737723f82a0e7e5d5867e",
+      "byteLength": 16379,
+      "semanticReadScope": "/decisions/CORRECTION_312 ONLY"
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-016/shared-evidence.json",
+      "sha256": "e206f75219dce9f87e5088113cfdffaa7058e382e655e849333461cee1a2b186",
+      "byteLength": 75636,
+      "semanticReadScope": "/sourcePassages A AND ORIGINAL_REFERENCE_PINS"
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "byteLength": 369901,
+      "semanticReadScope": "365;1260–1262;1637–1650;2524–2551"
+    }
+  ],
+  "outputs": [
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/coacceptance-scope-successor-001/actual-read-inventory.json",
+      "sha256": "1244ccec55f2514a357e7c030dddfcb43378a5aabc499cfbbe1036df3472974a",
+      "byteLength": 2195
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/coacceptance-scope-successor-001/mechanism-adjudication.json",
+      "sha256": "303d25ffc76e35942ee10b5a7a46ffd27ab1d2505fb926b7861b73483c687eea",
+      "byteLength": 1024
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/coacceptance-scope-successor-001/per-id-reconciliation.json",
+      "sha256": "ac05bac55d284f8d01d6accdfb73b29351e87b89eb9c2bd55991604e0419f9f8",
+      "byteLength": 5382
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/coacceptance-scope-successor-001/reconcile.py",
+      "sha256": "8ad5fda6689828594efe9b768d283bc05ecf69feb50e97becc39a925c63dad0a",
+      "byteLength": 8992
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/coacceptance-scope-successor-001/reconciliation.json",
+      "sha256": "c5af8782053f441b309a86ed82b5641c68d0cdb38e8b03daeb433b3bf9904397",
+      "byteLength": 1811
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/coacceptance-scope-successor-001/shared-evidence.json",
+      "sha256": "fdbd286176e3724171030328f73b9b0c457945dc6b7289858985814f75e2a448",
+      "byteLength": 12496
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/coacceptance-scope-successor-001/validation.json",
+      "sha256": "f5bad4c1f60af9b6cc40352576206e79b47a7697b17a0890120b19b632c514b5",
+      "byteLength": 417
+    }
+  ]
+}

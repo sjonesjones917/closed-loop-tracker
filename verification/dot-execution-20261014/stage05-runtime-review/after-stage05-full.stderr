@@ -1,0 +1,37 @@
+(node:8) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+{"phase":"stage-complete","stage":1}
+{"phase":"stage-complete","stage":2}
+{"phase":"stage-complete","stage":3}
+{"phase":"stage-complete","stage":4}
+{"phase":"stage-complete","stage":5}
+{"phase":"stage-complete","stage":6}
+{"phase":"stage-complete","stage":4}
+{"phase":"stage-complete","stage":5}
+{"phase":"stage-complete","stage":5}
+{"phase":"stage-complete","stage":6}
+{"phase":"stage-complete","stage":7}
+{"phase":"stage-complete","stage":8}
+{"phase":"stage-complete","stage":9}
+{"phase":"stage-complete","stage":10}
+{"phase":"stage-complete","stage":11}
+{"phase":"stage-complete","stage":12}
+{"phase":"stage-complete","stage":13}
+{"phase":"stage-complete","stage":14}
+{"phase":"stage-complete","stage":15}
+{"phase":"stage-complete","stage":16}
+{"phase":"stage-complete","stage":17}
+{"phase":"stage-complete","stage":18}
+{"phase":"stage-complete","stage":19}
+{"phase":"stage-complete","stage":20}
+file:///workspace/shared/clrt-review-stage05-projection/verify-full-cycle.mjs:47
+const assert=(v,m)=>{if(!v)throw new Error(m)};assert(schema.RECORD_SCHEMAS.evidenceChains.fieldDefinitions.TEST_ID.valueType==='REFERENCE_ARRAY','Evidence-chain TEST_ID must remain plural.');assert(schema.RECORD_SCHEMAS.evidenceChains.fieldDefinitions.ARTIFACT_HASH_IDENTITY.valueType==='REFERENCE_ARRAY','Evidence-chain artifact identities must remain plural.');assert(schema.RECORD_SCHEMAS.evidenceChains.fieldDefinitions.TEST_RESULT_ID.valueType==='STRING_ARRAY','Evidence-chain result identities must remain plural.');assert(schema.RECORD_SCHEMAS.evidenceChains.fieldDefinitions.EVIDENCE_ID.valueType==='REFERENCE_ARRAY','Evidence-chain evidence identities must remain plural references.');assert(schema.RECORD_SCHEMAS.evidenceChains.fieldDefinitions.MISSING_LINKS.valueType==='STRING_ARRAY','Evidence-chain missing links must remain plural.');let p=core.createBlankState('JOB-FULL-CYCLE');Object.assign(p.job,{JOB_TITLE:'Full lifecycle proof',EXACT_USER_OBJECTIVE_VERBATIM:'Prove one complete closed-loop lifecycle.',EXPLICIT_USER_REQUIREMENTS:'The deliverable must contain the required verified content.',AVAILABLE_TOOLS:'fixture-required_capability',CURRENT_INPUT_VERSION:'INPUT-v001'});engine.ensureShape(p);engine.recalculate(p);
+                                 ^
+
+Error: Stage 21 COMPLETE cannot be persisted: Application-derived canonical proof fields do not match deterministic recalculation. | Application-derived job field CURRENT_STAGE does not match deterministic recalculation. | Application-derived job field NEXT_REQUIRED_ACTION does not match deterministic recalculation. | Stage 18 status does not match deterministic recalculation. | Stage 18 derivedData does not match deterministic recalculation. | Stage 18 decision does not match deterministic recalculation. | Stage 18 decisionEvidence does not match deterministic recalculation. | Stage 18 gate does not match deterministic recalculation. | Stage 19 status does not match deterministic recalculation. | Stage 19 derivedData does not match deterministic recalculation. | Stage 19 decision does not match deterministic recalculation. | Stage 19 decisionEvidence does not match deterministic recalculation. | Stage 19 gate does not match deterministic recalculation. | Stage 20 status does not match deterministic recalculation. | Stage 20 derivedData does not match deterministic recalculation. | Stage 20 decision does not match deterministic recalculation. | Stage 20 decisionEvidence does not match deterministic recalculation. | Stage 20 gate does not match deterministic recalculation. | Stage 21 status does not match deterministic recalculation. | Stage 21 derivedData does not match deterministic recalculation. | Stage 21 decision does not match deterministic recalculation. | Stage 21 decisionEvidence does not match deterministic recalculation. | Stage 21 gate does not match deterministic recalculation. | Stage 22 status does not match deterministic recalculation. | Stage 22 derivedData does not match deterministic recalculation. | Stage 22 decision does not match deterministic recalculation. | Stage 22 decisionEvidence does not match deterministic recalculation. | Stage 22 gate does not match deterministic recalculation.
+    at assert (file:///workspace/shared/clrt-review-stage05-projection/verify-full-cycle.mjs:47:34)
+    at data (file:///workspace/shared/clrt-review-stage05-projection/verify-full-cycle.mjs:145:1990)
+    at file:///workspace/shared/clrt-review-stage05-projection/verify-full-cycle.mjs:527:1267
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+Node.js v22.23.3

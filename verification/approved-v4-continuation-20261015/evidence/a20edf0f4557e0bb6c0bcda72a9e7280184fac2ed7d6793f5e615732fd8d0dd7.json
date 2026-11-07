@@ -1,0 +1,228 @@
+[
+  {
+    "predecessorId": "NREQ-140f64f723c7c8a1262d74fbfc842adf",
+    "predecessorIndex": 3504,
+    "originalEntrySha256": "72d62f2ce986762a2009ccec21bfa1616072df1f9d6b9d299b6f4c29fc9988b4",
+    "statement": "Stage 02 must include the UNRESOLVED_CONTROLLING_CONFLICTS field under the specification-controlled FIELD_REGISTRY contract; ownership, requiredness and value semantics follow the applicable explicit contract or ordered closed defaults, not an implementation-selected interpretation.",
+    "originalEvidence": {
+      "inputRole": "PREDECESSOR",
+      "jsonPointer": "/entries/3504",
+      "frozenArtifactSha256": "1cc93c4e49e3e5530ee2a802314617f3aa07d5c72282ded6cd1da68570dac280"
+    },
+    "priorBlockedRecord": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-004/batch-004-reconciliation.json",
+        "sha256": "6a4b2083ae2b06824278b3d1b3c6c81d85e5ac5aaf4ba0faac60a0f52b877ff7",
+        "byteLength": 1207645
+      },
+      "jsonPointer": "/36"
+    },
+    "distinctReview": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-status-judgment-20261015/source-only-judgment.json",
+        "sha256": "98ab88d761758370d59d5e78a1c3915343f3bfb9341b56171e9fb5a2961c2744",
+        "byteLength": 74430
+      },
+      "jsonPointer": "/decisions/0"
+    },
+    "originalOccurrenceSetReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/3504/originalOccurrenceBindings"
+    },
+    "originalOccurrenceTransport": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-occurrence-transport.json",
+      "sha256": "4157cda2f60669a2feba4c3021aa212f5bee00f4456a4e7a59d8e86da08a02d4",
+      "byteLength": 6309790
+    },
+    "reviewAdjudication": "ACCEPTED_WITH_SCOPE_EXPLICIT",
+    "sourceEvidencePointers": [
+      "ordered-field-defaults",
+      "canonical-projections",
+      "canonical-sole-authority",
+      "stage02-completion-and-fields",
+      "stage02-canonical-families",
+      "original-input-basis",
+      "universal-proposition-state",
+      "amendment-A",
+      "amendment-F2"
+    ],
+    "proofInheritance": false,
+    "implementationAcceptance": false,
+    "successorDisposition": "CHANGED",
+    "independentReason": "UNRESOLVED qualifies the established source-conflict category by current resolution status. Stage02 requires controlling conflicts resolved or blocked, while the field defaults and canonical sole-authority rule make its summary application-derived. F2 explicitly fixes the admissibility minimum for COMPLETE, SEARCH_ADEQUACY_REVIEW and RECONCILE_SOURCE_SEARCH. An unadmitted required resolution cannot clear a known conflict. This changes effective current-resolution context without changing conflict meaning, bounded source scope or imposing a new independent review on every conflict. A also governs any fallback proposal; F2 alone establishes the context change.",
+    "governingAddedSpans": [
+      {
+        "sourceRole": "SUCCESSOR",
+        "startLine": 1639,
+        "endLine": 1650,
+        "startByte": 122882,
+        "endByte": 126361,
+        "sha256": "557bc094d55063db7828d6b7a41776f3b162b1254a44d58fdb2f77406484b834",
+        "text": "humanInputRequests is a required, non-null ordered array, empty allowed. Each item is a closed object with exactly these required properties: temporaryKey, question, whyRequired, affectedStageFields, affectedRecords, answerType, allowedValues; its only optional property is blocking. No item property is nullable. All strings preserve their supplied scalar values; nonblank means containing at least one character outside U+0009–U+000D and U+0020.\n\n- temporaryKey is a string matching ^[A-Za-z][A-Za-z0-9._:-]{0,119}$, unique across response record tempKey values and temporaryKey values in attachments, evidence, humanInputRequests and humanAuthorityCandidates. It is a response-local reference, not a canonical identity.\n- question and whyRequired are nonblank strings.\n- affectedStageFields is an ordered array of strings naming registered fields of this response's stage; affectedRecords is an ordered array of strings naming canonical families in this operation's registered read, agent-writable or application-owned set. Both arrays may be empty. These names identify affected context, not authority to write the named fields or families.\n- answerType is exactly one of the eight controls already listed in this section.\n- allowedValues is an ordered array of strings. CHOICE and MULTI_CHOICE require one or more unique nonblank strings, compared exactly. For other controls the array may be empty; its values have no answer-validation effect.\n- blocking is Boolean; absence normalizes to true. No other absent property receives a default. False only makes this particular fallback request optional and cannot waive any governing requirement, human authority, missing evidence or unresolved material uncertainty.\n\nAll item content is an AGENT proposal admitted only through the owning registered external operation. The APPLICATION owns canonical request identity, envelope-derived job/stage/operation/scope, currentness and lifecycle. Answers remain HUMAN values written only by SAVE_HUMAN_INPUT. These proposal fields share the envelope's §14.7 scope, have no migration default other than the expressly stated blocking default for an otherwise valid request, and are invalidated by the owning input/prompt lifecycle under §18; references above point from the request to its affected stage fields/families and grant no reverse ownership.\n\nFor SAVE_HUMAN_INPUT, an absent/null/empty-string answer, or an empty MULTI_CHOICE array, is unanswered; a blocking request rejects it. A nonmissing TEXT or LONG_TEXT answer is a nonblank string; BOOLEAN is Boolean; NUMBER is either a JSON safe integer other than negative zero, or a string rational:N/D where N is a nonzero signed base-10 integer with no plus or leading zeros, D is a positive base-10 integer with no leading zeros, and gcd(abs(N),D)=1. D=1 is permitted only when N is outside the JSON safe-integer range. Zero is represented only by JSON integer 0. Other strings and typed objects are rejected; saving preserves this canonical representation; CHOICE is one exact allowed string; MULTI_CHOICE is an ordered duplicate-free array of exact allowed strings; DATE is a valid Gregorian calendar date in four-digit YYYY-MM-DD form with year 0001–9999, validated without time-zone conversion; FILE_REFERENCE is one current canonical artifact ID in the same project. Optional unanswered requests confer no factual assertion. Successful saving has precisely the existing §18 invalidation and replacement consequences.\n",
+        "includesFinalLineTerminator": true
+      },
+      {
+        "sourceRole": "SUCCESSOR",
+        "startLine": 2524,
+        "endLine": 2551,
+        "startByte": 181854,
+        "endByte": 185547,
+        "sha256": "d64000e5157c61f1e96a5ae2527f294cfb8ba9273b336a0af55e73da6a46d8fc",
+        "text": "F2. Insert after §26.6: closed-loop-external-input-binding-minima/1\n\nMINIMUM_INPUT_BINDING_BASIS is EXTERNALLY_SUPPORTED for the external route of each pair in the following closed mapping:\n01 COMPLETE, SEMANTIC_CHALLENGE, RECONCILE_INTAKE;\n02 COMPLETE, SEARCH_ADEQUACY_REVIEW, RECONCILE_SOURCE_SEARCH;\n03 COMPLETE, SEMANTIC_CHALLENGE, RECONCILE_RESEARCH;\n04 COMPLETE, DISPOSITION_CHALLENGE, ATOMICITY_CHALLENGE, RECONCILE_REQUIREMENTS;\n05 COMPLETE, SEMANTIC_REVIEW, RECONCILE_REQUIREMENT_SET;\n06 COMPLETE, PROOF_REVIEW, RECONCILE_VERIFICATION_SUITE;\n07 COMPLETE, EXECUTE_FAILURE_TEST when externally routed;\n08 COMPLETE; 09 COMPLETE; 11 EXECUTE_RUN; 12 VERIFY; 13 COMPARE; 14 ROOT_CAUSE;\n15 COMPLETE, EXECUTE_REGRESSION when externally routed;\n16 CORRECT;\n17 EXECUTE_RUN, VERIFY, COMPARE, ROOT_CAUSE, REGRESSION, CORRECT;\n19 EXECUTE_RUN, VERIFY, COMPARE (always external);\n19 REGRESSION_VERIFY only when externally routed;\n21 COMPLETE; 22 EXECUTE_EXTERNAL_TEST; 23 COMPLETE; 24 COMPLETE; 25 COMPLETE;\n26 COMPLETE, SEMANTIC_REVIEW, RECONCILE;\n27 ADVISORY_REVIEW; 29 INVESTIGATE_MISSING_EVIDENCE;\nand, only when externally routed, every one of the 38 exact conditional pairs listed in F1.\n\nThe mapping has 88 external routes: 50 from the original §14.6 list plus 23 later failure-test and 15 later regression routes. F1's closed lists, not a wildcard allowing arbitrary operation names or stages, determine the additional pairs. The minimum does not grant operation availability or new writer authority. ADVISORY_REVIEW remains optional and non-gating.\n\nFor the conditional native route of 07 EXECUTE_FAILURE_TEST, 15 EXECUTE_REGRESSION, 19 REGRESSION_VERIFY, and the 38 F1 pairs, the input-binding minimum is APPLICATION_OBSERVED. The application establishes that basis from actual custody and verification of each required exact input, its current identity/hash and scope, before execution may start. This is not a requirement that execution has already succeeded: execution outcome, isolation, provenance, disposition and evidence sufficiency are separately determined from the actual execution. An absent or mismatched required input blocks native execution; a download, actor echo or route label does not satisfy this native minimum. This clause does not change the execution mode or permit an unapproved fallback to a different executor. Existing application, human-decision and operator commands outside these conditional pairs retain their existing source contracts; no external evidence minimum is assigned to them by this amendment.\n\nFor an external route, exact attributable echoes of the application-issued package/manifest identity and each required member identity/digest may establish EXTERNALLY_SUPPORTED under the existing input-binding contract; missing or mismatched echoes cannot. A package download, filename, provider label or unbound assertion is insufficient. Echoes never become APPLICATION_OBSERVED external possession, VERIFIED_EXTERNAL attestation, or proof of hidden provider independence. Recording that the application supplied bytes does not prove that an external recipient independently possessed or executed them.\n\nIf the applicable proof obligation, evidence contract or dimensioned-independence contract requires a stronger or distinct basis, that requirement also must be met. This generic minimum cannot weaken it, convert SUPPORTS_ONLY into ESTABLISHES, remove a required accepted review, waive unknown freshness/independence, or supply a successful result. §29.14's registered attestation-verification contract remains necessary for VERIFIED_EXTERNAL. Actual basis and its supporting observations remain recorded and evaluated by the existing gates.\n",
+        "includesFinalLineTerminator": true
+      }
+    ],
+    "successorNormativeRequirementId": "NREQ-95bcc9dcdec76172ef07fb90a9ef8807",
+    "identityPreimageSha256": "95bcc9dcdec76172ef07fb90a9ef8807f18255ce40ba9bcba54ffad3ddd9d080",
+    "identityStatus": "FRESH_SOURCE_ONLY_PENDING_ADOPTION",
+    "resolvedPriorBlocker": "SRC-RECONCILIATION-STATUS-FIELD-CONTEXT-DISPUTE"
+  },
+  {
+    "predecessorId": "NREQ-3aa48dd165394ec001ca0f59d31ed944",
+    "predecessorIndex": 3595,
+    "originalEntrySha256": "9c3a8944333f207e87827c49b40b6f858b35b51406e5f25b6fe14e69b5584a71",
+    "statement": "Stage 05 must include the UNRESOLVED_CONFLICTS field under the specification-controlled FIELD_REGISTRY contract; ownership, requiredness and value semantics follow the applicable explicit contract or ordered closed defaults, not an implementation-selected interpretation.",
+    "originalEvidence": {
+      "inputRole": "PREDECESSOR",
+      "jsonPointer": "/entries/3595",
+      "frozenArtifactSha256": "1cc93c4e49e3e5530ee2a802314617f3aa07d5c72282ded6cd1da68570dac280"
+    },
+    "priorBlockedRecord": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-004/batch-004-reconciliation.json",
+        "sha256": "6a4b2083ae2b06824278b3d1b3c6c81d85e5ac5aaf4ba0faac60a0f52b877ff7",
+        "byteLength": 1207645
+      },
+      "jsonPointer": "/133"
+    },
+    "distinctReview": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-status-judgment-20261015/source-only-judgment.json",
+        "sha256": "98ab88d761758370d59d5e78a1c3915343f3bfb9341b56171e9fb5a2961c2744",
+        "byteLength": 74430
+      },
+      "jsonPointer": "/decisions/1"
+    },
+    "originalOccurrenceSetReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/3595/originalOccurrenceBindings"
+    },
+    "originalOccurrenceTransport": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-occurrence-transport.json",
+      "sha256": "4157cda2f60669a2feba4c3021aa212f5bee00f4456a4e7a59d8e86da08a02d4",
+      "byteLength": 6309790
+    },
+    "reviewAdjudication": "ACCEPTED_WITH_SCOPE_EXPLICIT",
+    "sourceEvidencePointers": [
+      "ordered-field-defaults",
+      "canonical-projections",
+      "canonical-sole-authority",
+      "stage05-completion-and-fields",
+      "stage05-canonical-families",
+      "independent-semantic-review",
+      "universal-proposition-state",
+      "amendment-A",
+      "amendment-F2"
+    ],
+    "proofInheritance": false,
+    "implementationAcceptance": false,
+    "successorDisposition": "CHANGED",
+    "independentReason": "UNRESOLVED is a current resolution-status qualifier, not merely the unchanged semantic conflict category. Stage05 requires every defect and disagreement independently reviewed and resolved or blocked; requirementResolutions assigns substance to the agent and status to the application. F2 fixes COMPLETE/SEMANTIC_REVIEW/RECONCILE_REQUIREMENT_SET input minima, so an inadmissible required review cannot establish resolution. The prior retained proposal overlooked that status qualifier. Conflict detection, mandatory population, independence and version/invalidation duties remain.",
+    "governingAddedSpans": [
+      {
+        "sourceRole": "SUCCESSOR",
+        "startLine": 1639,
+        "endLine": 1650,
+        "startByte": 122882,
+        "endByte": 126361,
+        "sha256": "557bc094d55063db7828d6b7a41776f3b162b1254a44d58fdb2f77406484b834",
+        "text": "humanInputRequests is a required, non-null ordered array, empty allowed. Each item is a closed object with exactly these required properties: temporaryKey, question, whyRequired, affectedStageFields, affectedRecords, answerType, allowedValues; its only optional property is blocking. No item property is nullable. All strings preserve their supplied scalar values; nonblank means containing at least one character outside U+0009–U+000D and U+0020.\n\n- temporaryKey is a string matching ^[A-Za-z][A-Za-z0-9._:-]{0,119}$, unique across response record tempKey values and temporaryKey values in attachments, evidence, humanInputRequests and humanAuthorityCandidates. It is a response-local reference, not a canonical identity.\n- question and whyRequired are nonblank strings.\n- affectedStageFields is an ordered array of strings naming registered fields of this response's stage; affectedRecords is an ordered array of strings naming canonical families in this operation's registered read, agent-writable or application-owned set. Both arrays may be empty. These names identify affected context, not authority to write the named fields or families.\n- answerType is exactly one of the eight controls already listed in this section.\n- allowedValues is an ordered array of strings. CHOICE and MULTI_CHOICE require one or more unique nonblank strings, compared exactly. For other controls the array may be empty; its values have no answer-validation effect.\n- blocking is Boolean; absence normalizes to true. No other absent property receives a default. False only makes this particular fallback request optional and cannot waive any governing requirement, human authority, missing evidence or unresolved material uncertainty.\n\nAll item content is an AGENT proposal admitted only through the owning registered external operation. The APPLICATION owns canonical request identity, envelope-derived job/stage/operation/scope, currentness and lifecycle. Answers remain HUMAN values written only by SAVE_HUMAN_INPUT. These proposal fields share the envelope's §14.7 scope, have no migration default other than the expressly stated blocking default for an otherwise valid request, and are invalidated by the owning input/prompt lifecycle under §18; references above point from the request to its affected stage fields/families and grant no reverse ownership.\n\nFor SAVE_HUMAN_INPUT, an absent/null/empty-string answer, or an empty MULTI_CHOICE array, is unanswered; a blocking request rejects it. A nonmissing TEXT or LONG_TEXT answer is a nonblank string; BOOLEAN is Boolean; NUMBER is either a JSON safe integer other than negative zero, or a string rational:N/D where N is a nonzero signed base-10 integer with no plus or leading zeros, D is a positive base-10 integer with no leading zeros, and gcd(abs(N),D)=1. D=1 is permitted only when N is outside the JSON safe-integer range. Zero is represented only by JSON integer 0. Other strings and typed objects are rejected; saving preserves this canonical representation; CHOICE is one exact allowed string; MULTI_CHOICE is an ordered duplicate-free array of exact allowed strings; DATE is a valid Gregorian calendar date in four-digit YYYY-MM-DD form with year 0001–9999, validated without time-zone conversion; FILE_REFERENCE is one current canonical artifact ID in the same project. Optional unanswered requests confer no factual assertion. Successful saving has precisely the existing §18 invalidation and replacement consequences.\n",
+        "includesFinalLineTerminator": true
+      },
+      {
+        "sourceRole": "SUCCESSOR",
+        "startLine": 2524,
+        "endLine": 2551,
+        "startByte": 181854,
+        "endByte": 185547,
+        "sha256": "d64000e5157c61f1e96a5ae2527f294cfb8ba9273b336a0af55e73da6a46d8fc",
+        "text": "F2. Insert after §26.6: closed-loop-external-input-binding-minima/1\n\nMINIMUM_INPUT_BINDING_BASIS is EXTERNALLY_SUPPORTED for the external route of each pair in the following closed mapping:\n01 COMPLETE, SEMANTIC_CHALLENGE, RECONCILE_INTAKE;\n02 COMPLETE, SEARCH_ADEQUACY_REVIEW, RECONCILE_SOURCE_SEARCH;\n03 COMPLETE, SEMANTIC_CHALLENGE, RECONCILE_RESEARCH;\n04 COMPLETE, DISPOSITION_CHALLENGE, ATOMICITY_CHALLENGE, RECONCILE_REQUIREMENTS;\n05 COMPLETE, SEMANTIC_REVIEW, RECONCILE_REQUIREMENT_SET;\n06 COMPLETE, PROOF_REVIEW, RECONCILE_VERIFICATION_SUITE;\n07 COMPLETE, EXECUTE_FAILURE_TEST when externally routed;\n08 COMPLETE; 09 COMPLETE; 11 EXECUTE_RUN; 12 VERIFY; 13 COMPARE; 14 ROOT_CAUSE;\n15 COMPLETE, EXECUTE_REGRESSION when externally routed;\n16 CORRECT;\n17 EXECUTE_RUN, VERIFY, COMPARE, ROOT_CAUSE, REGRESSION, CORRECT;\n19 EXECUTE_RUN, VERIFY, COMPARE (always external);\n19 REGRESSION_VERIFY only when externally routed;\n21 COMPLETE; 22 EXECUTE_EXTERNAL_TEST; 23 COMPLETE; 24 COMPLETE; 25 COMPLETE;\n26 COMPLETE, SEMANTIC_REVIEW, RECONCILE;\n27 ADVISORY_REVIEW; 29 INVESTIGATE_MISSING_EVIDENCE;\nand, only when externally routed, every one of the 38 exact conditional pairs listed in F1.\n\nThe mapping has 88 external routes: 50 from the original §14.6 list plus 23 later failure-test and 15 later regression routes. F1's closed lists, not a wildcard allowing arbitrary operation names or stages, determine the additional pairs. The minimum does not grant operation availability or new writer authority. ADVISORY_REVIEW remains optional and non-gating.\n\nFor the conditional native route of 07 EXECUTE_FAILURE_TEST, 15 EXECUTE_REGRESSION, 19 REGRESSION_VERIFY, and the 38 F1 pairs, the input-binding minimum is APPLICATION_OBSERVED. The application establishes that basis from actual custody and verification of each required exact input, its current identity/hash and scope, before execution may start. This is not a requirement that execution has already succeeded: execution outcome, isolation, provenance, disposition and evidence sufficiency are separately determined from the actual execution. An absent or mismatched required input blocks native execution; a download, actor echo or route label does not satisfy this native minimum. This clause does not change the execution mode or permit an unapproved fallback to a different executor. Existing application, human-decision and operator commands outside these conditional pairs retain their existing source contracts; no external evidence minimum is assigned to them by this amendment.\n\nFor an external route, exact attributable echoes of the application-issued package/manifest identity and each required member identity/digest may establish EXTERNALLY_SUPPORTED under the existing input-binding contract; missing or mismatched echoes cannot. A package download, filename, provider label or unbound assertion is insufficient. Echoes never become APPLICATION_OBSERVED external possession, VERIFIED_EXTERNAL attestation, or proof of hidden provider independence. Recording that the application supplied bytes does not prove that an external recipient independently possessed or executed them.\n\nIf the applicable proof obligation, evidence contract or dimensioned-independence contract requires a stronger or distinct basis, that requirement also must be met. This generic minimum cannot weaken it, convert SUPPORTS_ONLY into ESTABLISHES, remove a required accepted review, waive unknown freshness/independence, or supply a successful result. §29.14's registered attestation-verification contract remains necessary for VERIFIED_EXTERNAL. Actual basis and its supporting observations remain recorded and evaluated by the existing gates.\n",
+        "includesFinalLineTerminator": true
+      }
+    ],
+    "successorNormativeRequirementId": "NREQ-eddb4736d4d8903e453893918fd62ba1",
+    "identityPreimageSha256": "eddb4736d4d8903e453893918fd62ba1416a7b80eb9374d9285a0174a2216a08",
+    "identityStatus": "FRESH_SOURCE_ONLY_PENDING_ADOPTION",
+    "resolvedPriorBlocker": "SRC-RECONCILIATION-STATUS-FIELD-CONTEXT-DISPUTE"
+  },
+  {
+    "predecessorId": "NREQ-5ad9f8e779b15e02b947f0660ea681a7",
+    "predecessorIndex": 3818,
+    "originalEntrySha256": "2cf0381f17a5dbf3dc41f8410296cd31845e4f460f944c2b1ec7d34d6aca5bc1",
+    "statement": "Stage 14 must include the UNDETERMINED_ROOT_CAUSES field under the specification-controlled FIELD_REGISTRY contract; ownership, requiredness and value semantics follow the applicable explicit contract or ordered closed defaults, not an implementation-selected interpretation.",
+    "originalEvidence": {
+      "inputRole": "PREDECESSOR",
+      "jsonPointer": "/entries/3818",
+      "frozenArtifactSha256": "1cc93c4e49e3e5530ee2a802314617f3aa07d5c72282ded6cd1da68570dac280"
+    },
+    "priorBlockedRecord": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-004/batch-004-reconciliation.json",
+        "sha256": "6a4b2083ae2b06824278b3d1b3c6c81d85e5ac5aaf4ba0faac60a0f52b877ff7",
+        "byteLength": 1207645
+      },
+      "jsonPointer": "/283"
+    },
+    "distinctReview": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-status-judgment-20261015/source-only-judgment.json",
+        "sha256": "98ab88d761758370d59d5e78a1c3915343f3bfb9341b56171e9fb5a2961c2744",
+        "byteLength": 74430
+      },
+      "jsonPointer": "/decisions/2"
+    },
+    "originalOccurrenceSetReference": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+        "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+        "byteLength": 20401933
+      },
+      "jsonPointer": "/entries/3818/originalOccurrenceBindings"
+    },
+    "originalOccurrenceTransport": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-occurrence-transport.json",
+      "sha256": "4157cda2f60669a2feba4c3021aa212f5bee00f4456a4e7a59d8e86da08a02d4",
+      "byteLength": 6309790
+    },
+    "reviewAdjudication": "ACCEPTED_WITH_SCOPE_EXPLICIT",
+    "sourceEvidencePointers": [
+      "ordered-field-defaults",
+      "canonical-projections",
+      "canonical-sole-authority",
+      "stage14-completion-and-fields",
+      "stage14-canonical-families",
+      "universal-proposition-state",
+      "coverage-universe",
+      "derivation-closure",
+      "amendment-A",
+      "amendment-F2"
+    ],
+    "proofInheritance": false,
+    "implementationAcceptance": false,
+    "successorDisposition": "BLOCKED",
+    "successorNormativeRequirementId": null,
+    "identityStatus": "PENDING_EXACT_POPULATION_RESOLUTION_REVIEW",
+    "independentReason": "The source fixes every-current-material-defect evidence-supported RCA completion and UNKNOWN blocking, but does not uniquely identify this summary’s counting unit. The one-defect/no-RCA counterexample gives 0 under existing-RCA content and 1 under defect coverage while both can block completion. A focused attributed technical interpretation is therefore needed; the recommendation is not retroactive proof that the old source uniquely defined it.",
+    "remainingBlocker": "SRC-RECONCILIATION-STATUS-FIELD-CONTEXT-DISPUTE",
+    "minimalSourceDetermination": "Specify whether UNDETERMINED_ROOT_CAUSES enumerates current material defect IDs lacking an admissibly established known RCA, current RCA IDs with unknown semantic cause content, or another explicitly bounded population; specify inclusion of absent/rejected/stale/inadmissible RCA and the relation, if any, to BLOCKED_ANALYSES. Preserve all original material defects and blocking predicates.",
+    "technicalRecommendationStatus": "PROPOSED_SEPARATELY_UNDER_DELEGATED_INTENT_AUTHORITY_AWAITING_EXACT_INDEPENDENT_REVIEW"
+  }
+]

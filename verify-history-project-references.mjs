@@ -3,39 +3,43 @@ import fs from 'node:fs';
 import {createHash} from 'node:crypto';
 import {gzipSync,gunzipSync} from 'node:zlib';
 import {projectStoreRuntime} from './test-project-store-runtime.mjs';
+import {verifyHistoryStaticRead,HISTORY_STATIC_READ_FAULTS} from './test-history-static-read.mjs';
 
 const mode=process.argv.find(x=>x.startsWith('--fault='))?.slice(8),source=fs.readFileSync('project-store.js','utf8');
 const faults={
- 'repeat-import-compatibility':{id:'REPEAT_IMPORT_COMPATIBILITY',file:'project-store.js',before:'if(!validatedProjections?.has(projectionKey)){',after:'if(true){'},
+ ...HISTORY_STATIC_READ_FAULTS,
+ 'repeat-import-compatibility':{id:'REPEAT_IMPORT_COMPATIBILITY',file:'project-store.js',before:'if(!deferCompatibility&&!validatedProjections?.has(projectionKey)){',after:'if(!deferCompatibility){'},
  'share-import-compatibility-inventory':{id:'SHARE_IMPORT_COMPATIBILITY_INVENTORY',file:'project-store.js',before:'JSON.stringify([body.projectSha256,historyArtifactsSha256(artifacts)])',after:'JSON.stringify([body.projectSha256])'},
  'retain-import-compatibility':{id:'RETAIN_IMPORT_COMPATIBILITY',file:'project-store.js',before:'validatedProjections=new Set();',after:'validatedProjections=(globalThis.__retainedImportProjections ||= new Set());'},
- 'repeat-import-root-digest':{id:'REPEAT_IMPORT_ROOT_DIGEST',file:'project-store.js',before:'({projectSha256:verifiedProjectSha256,workSha256:verifiedWorkSha256}=historyProjectDigests(project));',after:'verifiedProjectSha256=projectSha256(project);verifiedWorkSha256=historyWorkSha256(project);'},
+ 'repeat-import-root-digest':{id:'REPEAT_IMPORT_ROOT_DIGEST',file:'project-store.js',before:'({projectSha256:verifiedProjectSha256,workSha256:verifiedWorkSha256}=checkpointPairMatches(measuredPair,project)?measuredPair:historyProjectDigests(project));',after:'verifiedProjectSha256=projectSha256(project);verifiedWorkSha256=historyWorkSha256(project);'},
  'repeat-import-byte-hash':{id:'REPEAT_IMPORT_BYTE_HASH',file:'project-store.js',before:'if(!verifiedByteDigests)return hash.sha256Bytes(blob);',after:'if(true)return hash.sha256Bytes(blob);'},
  'trust-import-declared-byte-hash':{id:'TRUST_IMPORT_DECLARED_BYTE_HASH',file:'project-store.js',before:'const digest=await historyBlobSha256(artifactBlob,verifiedByteDigests);',after:'const digest=a.sha256;verifiedByteDigests.set(artifactBlob,Promise.resolve(digest));'},
  'retain-import-project-roots':{id:'RETAIN_IMPORT_PROJECT_ROOTS',file:'project-store.js',before:'delete priorRoot.project;',after:'void priorRoot.project;'},
- 'repeat-import-project-root':{id:'REPEAT_IMPORT_PROJECT_ROOT',file:'project-store.js',before:'if(!body.projectReference&&validatedRoots.has(entry.id))',after:'if(false)'},
+ 'repeat-import-project-root':{id:'REPEAT_IMPORT_PROJECT_ROOT',file:'project-store.js',before:'if(!body.projectReference&&validatedRoots.has(entry.id)&&!inspection?.issues.length)',after:'if(false)'},
  'skip-selected-version-binding':{id:'SKIP_SELECTED_VERSION_BINDING',file:'project-store.js',before:"if(entry.id!==id||hash.sha256Value(descriptor)!==hash.sha256Value(expected))",after:'if(false)'},
- 'skip-project-body-byte-check':{id:'SKIP_PROJECT_BODY_BYTE_CHECK',file:'project-store.js',before:"if(!entry?.blob||entry.blob.size!==Number(entry.byteSize)||await historyBlobSha256(entry.blob,verifiedByteDigests)!==entry.sha256)",after:"if(!entry?.blob||entry.blob.size!==Number(entry.byteSize))"}
+ 'skip-project-body-byte-check':{id:'SKIP_PROJECT_BODY_BYTE_CHECK',file:'project-store.js',before:"if(!entry?.blob||entry.blob.size!==Number(entry.byteSize)||(consumeCheckpointByteObservation(entry,rootBytes)||await historyBlobSha256(entry.blob,verifiedByteDigests))!==entry.sha256)",after:"if(!entry?.blob||entry.blob.size!==Number(entry.byteSize))"}
 };
 if(mode&&!faults[mode])throw new Error('Unknown disposable implementation fault: '+mode);
+if(mode==='repeat-import-compatibility')assert.equal(source.split(faults[mode].before).length-1,1,'HISTORY_COMPATIBILITY_FAULT_SINGLE_ANCHOR_ORACLE');
 const cases=[],emit=(caseId,details={})=>cases.push({caseId,result:'PASS',...details});
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
-const validationAnchor='({projectSha256:verifiedProjectSha256,workSha256:verifiedWorkSha256}=historyProjectDigests(project));';
+const validationAnchor='({projectSha256:verifiedProjectSha256,workSha256:verifiedWorkSha256}=checkpointPairMatches(measuredPair,project)?measuredPair:historyProjectDigests(project));';
 const make=()=>{
  assert.equal(source.split(validationAnchor).length-1,1);
  const observed=source.replace(validationAnchor,"globalThis.__verifiedHistoryRoots?.push({checkpointId:entry.id,snapshotSha256:entry.sha256});globalThis.__historyDigestWatch={data:project.projectData,visits:0};"+validationAnchor+"globalThis.__historyDigestReads?.push({checkpointId:entry.id,visits:globalThis.__historyDigestWatch.visits});delete globalThis.__historyDigestWatch;");
- const residencyAnchor='checkpointId=>archiveSnapshots.get(checkpointId),validatedRoots,verifiedParts,verifiedByteDigests,validatedProjections);if(entry.id===incoming.activeId)';
+ // Observe the one post-decode consumer, shared by normal and compatibility branches.
+ const residencyAnchor='if(decoded&&entry.id===incoming.activeId)';
  assert.equal(observed.split(residencyAnchor).length-1,1);
- const measured=observed.replace(residencyAnchor,'checkpointId=>archiveSnapshots.get(checkpointId),validatedRoots,verifiedParts,verifiedByteDigests,validatedProjections);globalThis.__historyRootResidency?.push([...validatedRoots.values()].filter(root=>root?.project).length);if(entry.id===incoming.activeId)');
+ const measured=observed.replace(residencyAnchor,'globalThis.__historyRootResidency?.push([...validatedRoots.values()].filter(root=>root?.project).length);'+residencyAnchor);
  const inputAnchor='fileContents.delete(a);';
  assert.equal(measured.split(inputAnchor).length-1,1);
  const compatibilityAnchor='withVerifiedRecoveryCustody(artifacts,()=>assertRecoveryCompatibility(body.project));';
  assert.equal(measured.split(compatibilityAnchor).length-1,1);
- const withCompatibility=measured.replace(compatibilityAnchor,'globalThis.__historyCompatibilityChecks?.push({projectSha256:body.projectSha256,artifactManifestSha256:historyArtifactsSha256(artifacts)});'+compatibilityAnchor);
+ const withCompatibility=measured.replace(compatibilityAnchor,'globalThis.__historyCompatibilityChecks?.push({scope:validatedProjections?"incoming-import":"local-history",projectSha256:body.projectSha256,artifactManifestSha256:historyArtifactsSha256(artifacts)});'+compatibilityAnchor);
  const withBytes=withCompatibility.replace(inputAnchor,inputAnchor+'globalThis.__archiveImportByteObjects?.push(artifactBlob);');
  const hashSource=fs.readFileSync('hash.js','utf8'),hashAnchor='async function sha256Bytes(bytes){';
  assert.equal(hashSource.split(hashAnchor).length-1,1);
- const traversalAnchor='const frame=stack.at(-1),input=frame.value,path=frame.path;';assert.equal(hashSource.split(traversalAnchor).length-1,1);
+ const traversalAnchor='const frame=stack.at(-1),input=frame.value;diagnosticFrame=frame;';assert.equal(hashSource.split(traversalAnchor).length-1,1);
  const observedHash=hashSource.replace(hashAnchor,hashAnchor+'globalThis.__historyBlobHashes?.push(bytes);').replace(traversalAnchor,traversalAnchor+"if(frame.kind==='value'&&input===globalThis.__historyDigestWatch?.data)globalThis.__historyDigestWatch.visits++;");
  return projectStoreRuntime({fault:faults[mode],sourceOverrides:{'project-store.js':withBytes.replace('function historyProjectDigests(project){','globalThis.__historyProjectDigests=historyProjectDigests;function historyProjectDigests(project){'),'hash.js':observedHash}});
 };
@@ -61,6 +65,10 @@ function installSnapshot(f,id,value){
  stateRow.value.compressedProjectBytes=stateRow.value.entries.reduce((n,x)=>n+x.byteSize,0);meta.set(f.stateKey,stateRow);
 }
 function frozenRows(r){return new Map([...r.rows].map(([name,rows])=>[name,new Map([...rows].map(([key,row])=>[key,r.copy(row)]))]));}
+if(!mode||HISTORY_STATIC_READ_FAULTS[mode]){
+const staticRead=await verifyHistoryStaticRead({sourceOverrides:{'project-store.js':source},fault:HISTORY_STATIC_READ_FAULTS[mode]||null});
+emit('HISTORY-SINGLE-BODY-STATIC-VALIDATION',{caseCount:staticRead.caseCount,cases:staticRead.cases,sourceSha256:staticRead.sourceSha256});
+}
 const f=await fixture(make(),'HISTORY-PROJECT-REFERENCES'),{r,p}=f,meta=r.rows.get('meta');
 emit('HISTORY-REFERENCE-VALID-PROGRESSION',{savedViews:f.children.length});
 // Independent preimages retain the exact original exclusions, Unicode key
@@ -192,12 +200,17 @@ emit('HISTORY-REFERENCE-REORDERED-BACKUP-CLOSURE',{exportedBytes:exported.size,e
 // A later import and an ordinary History read must establish their own proof.
 fresh.runtime.__historyCompatibilityChecks=[];
 await fresh.store.importPackage(reorderedBlob);
-assert.equal(fresh.runtime.__historyCompatibilityChecks.length,compatibilityStates.size,'HISTORY_IMPORT_COMPATIBILITY_FRESH_ORACLE: completed projection receipts must not survive into another import');
+const repeatedCompatibilityChecks=Array.from(fresh.runtime.__historyCompatibilityChecks),reimportChecks=repeatedCompatibilityChecks.filter(row=>row.scope==='incoming-import'),localHistoryChecks=repeatedCompatibilityChecks.filter(row=>row.scope==='local-history');
+// Reimport independently verifies the reused local active checkpoint before
+// validating incoming archive projections with this import's fresh receipts.
+assert.equal(reimportChecks.length,compatibilityStates.size,'HISTORY_IMPORT_COMPATIBILITY_FRESH_ORACLE: completed projection receipts must not survive into another import');
+assert.equal(localHistoryChecks.length,1,'HISTORY_IMPORT_LOCAL_HISTORY_ORACLE: reimport must independently validate the reused local active checkpoint');
 fresh.runtime.__historyCompatibilityChecks=[];
 for(const child of f.children)await fresh.store.readHistoryView(p.job.JOB_ID,child);
 assert.equal(fresh.runtime.__historyCompatibilityChecks.length,f.children.length,'HISTORY_IMPORT_COMPATIBILITY_FRESH_ORACLE: ordinary History reads must validate the current stored bytes anew');
+assert.ok(fresh.runtime.__historyCompatibilityChecks.every(row=>row.scope==='local-history'),'HISTORY_IMPORT_COMPATIBILITY_FRESH_ORACLE: ordinary History reads cannot borrow incoming import receipts');
 delete fresh.runtime.__historyCompatibilityChecks;
-emit('HISTORY-IMPORT-COMPATIBILITY-FRESHNESS',{reimportChecks:compatibilityStates.size,independentHistoryChecks:f.children.length});
+emit('HISTORY-IMPORT-COMPATIBILITY-FRESHNESS',{reimportChecks:reimportChecks.length,independentLocalHistoryChecks:localHistoryChecks.length,independentHistoryChecks:f.children.length});
 // A canonical version can retain different file inventories in different
 // views. Construct both through the real store and preserve each exact view.
 const inventory=await fixture(make(),'HISTORY-COMPATIBILITY-INVENTORIES'),inventoryStore=inventory.r.store;
@@ -271,4 +284,119 @@ for(const id of [old.root,...old.children]){const body=await bodyOf(legacy.rows.
 const legacyBytes=await legacy.store.exportPackage(old.p.job.JOB_ID),newReader=make();await newReader.store.importPackage(legacyBytes);
 for(let i=0;i<old.children.length;i++)assert.deepEqual(legacy.copy(await newReader.store.readHistoryView(old.p.job.JOB_ID,old.children[i])),old.views[i]);
 emit('HISTORY-REFERENCE-LEGACY-INLINE-BACKUP',{legacyBytes:legacyBytes.size,legacySha256:sha(Buffer.from(await legacyBytes.arrayBuffer())),legacyEncoding:'Inline project member; sharing suppressed only in the disposable writer.'});
+// History state form. The state names a complete version's inline parts by the
+// canonical digest of that exact list; the immutable record, body and backup
+// keep the complete descriptor. Independent expected digests below.
+{
+ const json=x=>x===null||typeof x!=='object'?JSON.stringify(x):Array.isArray(x)?'['+x.map(json).join(',')+']':'{'+Object.keys(x).sort().map(k=>JSON.stringify(k)+':'+json(x[k])).join(',')+'}';
+ const stateForm=d=>{if(!d?.projectParts)return d;const {projectParts,...rest}=d;return {...rest,projectPartsSha256:sha(Buffer.from(json(projectParts)))};};
+ const w=make();let sp=w.core.createBlankState('HISTORY-STATE-FORM');sp.job.JOB_TITLE='State form retained title '.repeat(200);w.engine.ensureShape(sp);w.engine.recalculate(sp);sp=await w.store.writeProject(sp,{expectedProjectRevision:0});
+ const jobId=sp.job.JOB_ID,stateKey='recovery:'+jobId,recordKey=id=>stateKey+':snapshot:'+id,draft=(n,t=w)=>t.copy({activeView:'Workflow',activeStage:1,scrollY:n,drafts:{'#job-objective':{value:'State form draft '+n}}});
+ const firstRoot=(await w.store.historyList(jobId)).activeId,firstView=await w.store.saveCheckpoint(jobId,{expectedProjectRevision:sp.revision,view:draft(5,w)});
+ let next=w.copy(sp);next.job.JOB_TITLE='Second state form title '.repeat(200);w.engine.recalculate(next);sp=await w.store.writeProject(next,{expectedProjectRevision:sp.revision});
+ const secondRoot=(await w.store.historyList(jobId)).activeId,secondView=await w.store.saveCheckpoint(jobId,{expectedProjectRevision:sp.revision,view:draft(7,w)});
+ const stateOf=t=>t.rows.get('meta').get(stateKey).value,recordOf=(t,id)=>{const {blob,...descriptor}=t.rows.get('meta').get(recordKey(id)).value;return descriptor;};
+ const copyOf=from=>{const t=make();for(const [name,rows]of from.rows)t.rows.set(name,new Map([...rows].map(([key,row])=>[key,t.copy(row)])));return t;};
+ const views={[firstView]:5,[secondView]:7},readAll=async t=>{for(const [id,n]of Object.entries(views))assert.deepEqual(t.copy(await t.store.readHistoryView(jobId,id)),draft(n,t),'HISTORY_STATE_FORM_READ_ORACLE');};
+ const entryOf=(t,id)=>stateOf(t).entries.find(e=>e.id===id),inflate=(t,ids)=>{const state=stateOf(t);state.entries=state.entries.map(e=>ids.includes(e.id)?t.copy(recordOf(t,e.id)):e);};
+ const refused=async(t,action,code,message,oracle)=>{const before=frozenRows(t);await assert.rejects(action,e=>e.code===code&&(message===null||e.message===message),oracle);assert.deepEqual(frozenRows(t),before,oracle+': refusal preserves every row');};
+ const exportBody=async t=>{const blob=await t.store.exportPackage(jobId),body=JSON.parse(gunzipSync(Buffer.from(await blob.arrayBuffer())).toString('utf8'));const {packageSha256,exportedAt,...rest}=body;assert.equal(sha(Buffer.from(json({...rest,exportedAt}))),packageSha256,'HISTORY_STATE_FORM_PACKAGE_ORACLE');return {blob,rest};};
+ const firstPart=recordOf(w,firstRoot).projectParts.entries.find(part=>!recordOf(w,secondRoot).projectParts.entries.some(other=>other.sha256===part.sha256));
+ for(const id of [firstRoot,secondRoot]){const entry=entryOf(w,id),record=recordOf(w,id);assert.ok(record.projectParts?.entries?.length&&!Object.hasOwn(record,'projectPartsSha256'),'HISTORY_STATE_FORM_RECORD_ORACLE: the record keeps the complete descriptor');assert.equal(json(entry),json(stateForm(record)),'HISTORY_STATE_FORM_WRITE_ORACLE: a write records the exact state form');}
+ for(const id of [firstView,secondView])assert.equal(json(entryOf(w,id)),json(recordOf(w,id)),'HISTORY_STATE_FORM_REFERENCE_ORACLE: a view reference entry is unchanged');
+ assert.ok(firstPart,'HISTORY_STATE_FORM_DISTINCT_PART_FIXTURE_ORACLE');await readAll(w);
+ const reference=await exportBody(w);
+ for(const entry of reference.rest.recovery.entries)assert.equal(json(entry),json(recordOf(w,entry.id)),'HISTORY_STATE_FORM_EXPORT_ORACLE: a backup carries the complete recorded descriptor');
+ emit('HISTORY-STATE-FORM-WRITE',{roots:2,views:2,stateBytes:JSON.stringify(stateOf(w)).length,inlineStateBytes:JSON.stringify({...stateOf(w),entries:stateOf(w).entries.map(e=>recordOf(w,e.id))}).length});
+ // N1/N2: a digest that disagrees with the record or with the body.
+ {const t=copyOf(w);entryOf(t,firstRoot).projectPartsSha256='f'.repeat(64);
+  await refused(t,()=>t.store.readHistoryView(jobId,firstView),'HISTORY_VERSION_MISMATCH','Stored snapshot identity does not match the selected retained version.','HISTORY_STATE_FORM_RECORD_DIGEST_ORACLE read');
+  await refused(t,()=>t.store.restoreCheckpoint(jobId,firstRoot,{expectedProjectRevision:sp.revision}),'HISTORY_VERSION_MISMATCH','Stored snapshot identity does not match the selected retained version.','HISTORY_STATE_FORM_RECORD_DIGEST_ORACLE restore');
+  await refused(t,()=>t.store.exportPackage(jobId),'HISTORY_VERSION_MISMATCH','Saved project contents do not match their checkpoint.','HISTORY_STATE_FORM_BODY_DIGEST_ORACLE export');
+  await t.store.readHistoryView(jobId,secondView);
+  const u=copyOf(w);entryOf(u,secondRoot).projectPartsSha256='f'.repeat(64);
+  await refused(u,()=>u.store.saveCheckpoint(jobId,{expectedProjectRevision:sp.revision,view:draft(9,u)}),'HISTORY_SNAPSHOT_INTEGRITY_FAILED','A retained project body failed exact-byte verification. The new checkpoint was not committed.','HISTORY_STATE_FORM_RECORD_DIGEST_ORACLE reuse');
+  emit('HISTORY-STATE-FORM-DIGEST-MISMATCH',{read:'HISTORY_VERSION_MISMATCH',restore:'HISTORY_VERSION_MISMATCH',export:'HISTORY_VERSION_MISMATCH',reuse:'HISTORY_SNAPSHOT_INTEGRITY_FAILED',unrelatedRootReadable:true});}
+ // N3: both fields, a digest on a reference entry, or a malformed digest.
+ for(const [shape,change]of [['both-fields',t=>{entryOf(t,firstRoot).projectParts=t.copy(recordOf(t,firstRoot).projectParts);}],['reference-digest',t=>{entryOf(t,firstView).projectPartsSha256=entryOf(t,firstRoot).projectPartsSha256;}],['uppercase-digest',t=>{const e=entryOf(t,firstRoot);e.projectPartsSha256=e.projectPartsSha256.toUpperCase();}],['short-digest',t=>{const e=entryOf(t,firstRoot);e.projectPartsSha256=e.projectPartsSha256.slice(1);}],['non-string-digest',t=>{entryOf(t,firstRoot).projectPartsSha256={sha256:'0'.repeat(64)};}]]){
+  const t=copyOf(w);change(t);
+  await refused(t,()=>t.store.readHistoryView(jobId,secondView),'HISTORY_VERSION_MISMATCH','Saved project content references are unsupported.','HISTORY_STATE_FORM_SHAPE_ORACLE '+shape);
+  const changed=t.copy(sp);changed.job.JOB_TITLE='Refused state form write';t.engine.recalculate(changed);
+  await refused(t,()=>t.store.writeProject(changed,{expectedProjectRevision:sp.revision}),'HISTORY_VERSION_MISMATCH','Saved project content references are unsupported.','HISTORY_STATE_FORM_SHAPE_ORACLE write '+shape);
+  await refused(t,()=>t.store.exportPackage(jobId),'HISTORY_VERSION_MISMATCH','Saved project content references are unsupported.','HISTORY_STATE_FORM_SHAPE_ORACLE export '+shape);
+ }
+ emit('HISTORY-STATE-FORM-SHAPES',{shapes:5,code:'HISTORY_VERSION_MISMATCH'});
+ // N4: a state-form root whose part is not a retained file (accounting
+ // adjusted) is refused by every use of that root; other roots stay readable.
+ {const t=copyOf(w),state=stateOf(t);state.retainedFileBytes-=state.files[firstPart.sha256].byteSize;delete state.files[firstPart.sha256];
+  const notRetained='Recovery project contents are not retained in this complete history.';
+  await refused(t,()=>t.store.readHistoryView(jobId,firstView),'HISTORY_VERSION_MISMATCH',notRetained,'HISTORY_STATE_FORM_UNRETAINED_PART_ORACLE read');
+  await refused(t,()=>t.store.restoreCheckpoint(jobId,firstRoot,{expectedProjectRevision:sp.revision}),'HISTORY_VERSION_MISMATCH',notRetained,'HISTORY_STATE_FORM_UNRETAINED_PART_ORACLE restore');
+  await refused(t,()=>t.store.exportPackage(jobId),'HISTORY_VERSION_MISMATCH',notRetained,'HISTORY_STATE_FORM_UNRETAINED_PART_ORACLE export');
+  assert.deepEqual(t.copy(await t.store.readHistoryView(jobId,secondView)),draft(7,t),'HISTORY_STATE_FORM_UNRELATED_ROOT_ORACLE');
+  // Reusing the root for a new checkpoint is refused before commit.
+  const u=copyOf(w),ustate=stateOf(u),secondPart=recordOf(u,secondRoot).projectParts.entries.find(part=>!recordOf(u,firstRoot).projectParts.entries.some(other=>other.sha256===part.sha256));ustate.retainedFileBytes-=ustate.files[secondPart.sha256].byteSize;delete ustate.files[secondPart.sha256];
+  await refused(u,()=>u.store.saveCheckpoint(jobId,{expectedProjectRevision:sp.revision,view:draft(11,u)}),'HISTORY_VERSION_MISMATCH','A retained project content dependency is unavailable.','HISTORY_STATE_FORM_UNRETAINED_PART_ORACLE reuse');
+  emit('HISTORY-STATE-FORM-UNRETAINED-PART',{read:notRetained,restore:notRetained,export:notRetained,reuse:'A retained project content dependency is unavailable.',unrelatedRootReadable:true});}
+ // N11: an immutable record rewritten into the state form (its parts list
+ // replaced by that list's exact digest, body untouched) is never a stored
+ // record. Reads, restore and root reuse refuse it with the existing codes and
+ // messages, for a state-form and a legacy inline History; nothing is written.
+ {const forge=(t,id)=>{const row=t.rows.get('meta').get(recordKey(id)),forged={};for(const key of Object.keys(row.value))if(key==='projectParts')forged.projectPartsSha256=sha(Buffer.from(json(row.value.projectParts)));else forged[key]=row.value[key];row.value=forged;};
+  const identity='Stored snapshot identity does not match the selected retained version.',bodyFailure='A retained project body failed exact-byte verification. The new checkpoint was not committed.';
+  for(const form of ['state','legacy']){
+   const prepare=()=>{const t=copyOf(w);if(form==='legacy')inflate(t,[firstRoot,secondRoot]);return t;};
+   {const t=prepare();forge(t,firstRoot);
+    await refused(t,()=>t.store.readHistoryView(jobId,firstView),'HISTORY_VERSION_MISMATCH',identity,'HISTORY_STATE_FORM_FORGED_RECORD_ORACLE '+form+' read view');
+    await refused(t,()=>t.store.readHistoryView(jobId,firstRoot),'HISTORY_VERSION_MISMATCH',identity,'HISTORY_STATE_FORM_FORGED_RECORD_ORACLE '+form+' read root');
+    await refused(t,()=>t.store.restoreCheckpoint(jobId,firstRoot,{expectedProjectRevision:sp.revision}),'HISTORY_VERSION_MISMATCH',identity,'HISTORY_STATE_FORM_FORGED_RECORD_ORACLE '+form+' restore');
+    assert.deepEqual(t.copy(await t.store.readHistoryView(jobId,secondView)),draft(7,t),'HISTORY_STATE_FORM_FORGED_RECORD_UNRELATED_ROOT_ORACLE '+form);}
+   // A legacy inline entry whose part is unretained is refused at conversion (N5).
+   for(const dropped of form==='state'?[false,true]:[false]){const t=prepare();forge(t,secondRoot);
+    if(dropped){const state=stateOf(t),part=recordOf(w,secondRoot).projectParts.entries.find(part=>!recordOf(w,firstRoot).projectParts.entries.some(other=>other.sha256===part.sha256));state.retainedFileBytes-=state.files[part.sha256].byteSize;delete state.files[part.sha256];}
+    const generation=stateOf(t).generation;
+    await refused(t,()=>t.store.saveCheckpoint(jobId,{expectedProjectRevision:sp.revision,view:draft(21,t)}),'HISTORY_SNAPSHOT_INTEGRITY_FAILED',bodyFailure,'HISTORY_STATE_FORM_FORGED_RECORD_ORACLE '+form+' reuse'+(dropped?' with an unretained part':''));
+    assert.equal(stateOf(t).generation,generation,'HISTORY_STATE_FORM_FORGED_RECORD_ORACLE: generation unchanged');}
+  }
+  emit('HISTORY-STATE-FORM-FORGED-RECORD',{forms:['state','legacy'],read:'HISTORY_VERSION_MISMATCH',restore:'HISTORY_VERSION_MISMATCH',reuse:'HISTORY_SNAPSHOT_INTEGRITY_FAILED',reuseWithUnretainedPart:'HISTORY_SNAPSHOT_INTEGRITY_FAILED',unrelatedRootReadable:true});}
+ // N5: the first write converts legacy inline entries; a corrupted inline
+ // entry is refused, never converted, and nothing is written.
+ {const t=copyOf(w);inflate(t,[firstRoot,secondRoot]);const legacyState=json(stateOf(t));await readAll(t);
+  const legacyExport=await exportBody(t);assert.equal(json(legacyExport.rest),json(reference.rest),'HISTORY_STATE_FORM_LEGACY_EXPORT_ORACLE: legacy and state-form manifests export identical bytes');
+  assert.equal(json(stateOf(t)),legacyState,'HISTORY_STATE_FORM_LEGACY_EXPORT_ORACLE: reads and export never convert the stored state');
+  const bad=copyOf(t),state=stateOf(bad);state.retainedFileBytes-=state.files[firstPart.sha256].byteSize;delete state.files[firstPart.sha256];const generation=state.generation;
+  const changed=bad.copy(sp);changed.job.JOB_TITLE='Refused migration write';bad.engine.recalculate(changed);
+  await refused(bad,()=>bad.store.writeProject(changed,{expectedProjectRevision:sp.revision}),'HISTORY_VERSION_MISMATCH','Recovery project contents are not retained in this complete history.','HISTORY_STATE_FORM_MIGRATION_ORACLE write');
+  await refused(bad,()=>bad.store.saveCheckpoint(jobId,{expectedProjectRevision:sp.revision,view:draft(13,bad)}),'HISTORY_VERSION_MISMATCH','Recovery project contents are not retained in this complete history.','HISTORY_STATE_FORM_MIGRATION_ORACLE checkpoint');
+  assert.equal(stateOf(bad).generation,generation,'HISTORY_STATE_FORM_MIGRATION_ORACLE: generation unchanged');
+  const id=await t.store.saveCheckpoint(jobId,{expectedProjectRevision:sp.revision,view:draft(15,t)});
+  for(const root of [firstRoot,secondRoot])assert.equal(json(entryOf(t,root)),json(stateForm(recordOf(t,root))),'HISTORY_STATE_FORM_MIGRATION_ORACLE: converted once to the exact state form');
+  await readAll(t);assert.deepEqual(t.copy(await t.store.readHistoryView(jobId,id)),draft(15,t));
+  emit('HISTORY-STATE-FORM-MIGRATION',{legacyExportIdentical:true,corruptedLegacyRefused:'HISTORY_VERSION_MISMATCH',generationUnchanged:true,converted:2});}
+ // N8: an observed version keeps the inline shape its descriptorSha256 binds.
+ {const observe=t=>{const state=stateOf(t),root=entryOf(t,firstRoot);state.compatibility={schema:t.runtime.closedLoopWorkflowSchema.RECOVERY_COMPATIBILITY_CONTRACT.schema,observations:[{checkpointId:firstRoot,snapshotSha256:root.sha256,descriptorSha256:sha(Buffer.from(json(recordOf(t,firstRoot)))),issues:[{checkpointId:firstRoot,declaredWorkSha256:root.workSha256,measuredWorkSha256:'0'.repeat(64)}]}]};};
+  const slim=copyOf(w);observe(slim);
+  await refused(slim,()=>slim.store.readHistoryView(jobId,secondView),'HISTORY_VERSION_MISMATCH','Recovery observation does not identify its original checkpoint.','HISTORY_STATE_FORM_OBSERVED_ORACLE');
+  const inline=copyOf(w);observe(inline);inflate(inline,[firstRoot]);
+  assert.deepEqual(inline.copy(await inline.store.readHistoryView(jobId,secondView)),draft(7,inline),'HISTORY_STATE_FORM_OBSERVED_INLINE_CONTROL');
+  inflate(inline,[secondRoot]);await inline.store.saveCheckpoint(jobId,{expectedProjectRevision:sp.revision,view:draft(17,inline)});
+  assert.equal(json(entryOf(inline,firstRoot)),json(recordOf(inline,firstRoot)),'HISTORY_STATE_FORM_OBSERVED_ORACLE: an observed entry is never converted');
+  assert.equal(json(entryOf(inline,secondRoot)),json(stateForm(recordOf(inline,secondRoot))),'HISTORY_STATE_FORM_OBSERVED_ORACLE: other entries are converted');
+  emit('HISTORY-STATE-FORM-OBSERVED-ENTRY',{slimObservedRefused:'HISTORY_VERSION_MISMATCH',observedKeptInline:true});}
+ // N9: the backup format stays closed to the state form.
+ {const body={...reference.rest,exportedAt:'2026-11-04T00:00:00.000Z'};body.recovery={...body.recovery,entries:body.recovery.entries.map(stateForm)};
+  const crafted=new Blob([gzipSync(Buffer.from(json({...body,packageSha256:sha(Buffer.from(json(body)))})))],{type:'application/gzip'}),fresh=make();
+  await refused(fresh,()=>fresh.store.importPackage(crafted),'HISTORY_VERSION_MISMATCH','Backup History identity is invalid.','HISTORY_STATE_FORM_BACKUP_ORACLE');
+  const local=copyOf(w);await refused(local,()=>local.store.importPackage(crafted),'HISTORY_VERSION_MISMATCH','Backup History identity is invalid.','HISTORY_STATE_FORM_BACKUP_ORACLE existing');
+  emit('HISTORY-STATE-FORM-BACKUP-CLOSED',{code:'HISTORY_VERSION_MISMATCH'});}
+ // N10: a mixed state reads, writes, exports and imports exactly.
+ {const t=copyOf(w);inflate(t,[firstRoot]);await readAll(t);
+  const mixedExport=await exportBody(t);assert.equal(json(mixedExport.rest),json(reference.rest),'HISTORY_STATE_FORM_MIXED_EXPORT_ORACLE');
+  const fresh=make(),imported=await fresh.store.importPackage(mixedExport.blob);await readAll(fresh);
+  for(const entry of reference.rest.recovery.entries){assert.equal(json(entryOf(fresh,entry.id)),json(stateForm(entry)),'HISTORY_STATE_FORM_IMPORT_ORACLE: an import records the state form');assert.equal(json(recordOf(fresh,entry.id)),json(entry),'HISTORY_STATE_FORM_IMPORT_ORACLE: the imported record is complete');}
+  const again=await fresh.store.importPackage(mixedExport.blob);assert.equal(again.job.JOB_ID,jobId,'HISTORY_STATE_FORM_REIMPORT_ORACLE');await readAll(fresh);
+  const local=copyOf(t);await local.store.importPackage(mixedExport.blob);await readAll(local);for(const id of [firstRoot,secondRoot])assert.equal(json(entryOf(local,id)),json(stateForm(recordOf(local,id))),'HISTORY_STATE_FORM_IMPORT_ORACLE: local mixed entries agree in state form');
+  await t.store.saveCheckpoint(jobId,{expectedProjectRevision:sp.revision,view:draft(19,t)});await readAll(t);assert.equal(json(entryOf(t,firstRoot)),json(stateForm(recordOf(t,firstRoot))));
+  emit('HISTORY-STATE-FORM-MIXED',{exportIdentical:true,imported:imported.job.JOB_ID===jobId,reimported:true,writeConverted:true});}
+}
 console.log(JSON.stringify({case:'history-project-references',productionSourceSha256:sha(source),implementationFault:mode||null,synthetic:true,actualBrowser:false,environment:'Production persistence and complete compressed backup bytes in Node lifecycle transaction adapter',cases},null,2));

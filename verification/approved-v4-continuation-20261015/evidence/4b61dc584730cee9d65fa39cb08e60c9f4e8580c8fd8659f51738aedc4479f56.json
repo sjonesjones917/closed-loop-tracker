@@ -1,0 +1,42 @@
+{
+  "schema": "closed-loop-additive-source-impact-queue-delta/1",
+  "status": "ONE_EXAMINED_POPULATION_DISPUTE_RESOLVED_WITH_ATTRIBUTED_TECHNICAL_GOVERNOR",
+  "priorQueueDelta": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-008/combined-queue-delta.json",
+    "sha256": "952cad350e39396b8d0cc64a6aaa650ca6a635ff1370001cdb0ed80ca6e08271",
+    "byteLength": 81017
+  },
+  "removedUnexaminedIds": [],
+  "resolvedExaminedDisputeIds": [
+    "NREQ-5ad9f8e779b15e02b947f0660ea681a7"
+  ],
+  "perMemberNewDisposition": [
+    {
+      "predecessorNormativeRequirementId": "NREQ-5ad9f8e779b15e02b947f0660ea681a7",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-270de76f63dff78dc0918737ba20e34c",
+      "recordPointer": "/0"
+    }
+  ],
+  "deltaCounts": {
+    "RETAINED": 0,
+    "CHANGED": 1,
+    "BLOCKED": -1
+  },
+  "combinedCounts": {
+    "RETAINED": 2993,
+    "CHANGED": 808,
+    "BLOCKED": 3685
+  },
+  "remainingUnexaminedEntries": 3678,
+  "remainingExaminedStatusFieldDisputes": 0,
+  "remainingOriginalXmlAmbiguityEntries": 7,
+  "denominator": 7486,
+  "denominatorReduced": false,
+  "proofPromoted": false,
+  "conditionalGovernorRequirement": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/stage14-reviewed-resolution-successor/effective-governor-link.json",
+    "sha256": "c9e10ce00b5030e24d28ddab4f6d405f881e9fb9e5bfc936c33a71c15e0dd1f1",
+    "byteLength": 5418
+  }
+}

@@ -4,6 +4,7 @@ import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import {webcrypto,createHash} from 'node:crypto';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
+import {checkedVerifier} from './verify-conformance-regressions.mjs';
 
 const context={console,crypto:webcrypto,TextEncoder,TextDecoder,Uint8Array,ArrayBuffer,DataView,URL,setTimeout,clearTimeout,Date,Math,Promise};context.globalThis=context;createVerifierRuntime(context);
 vm.runInContext(fs.readFileSync(new URL('./hash.js',import.meta.url),'utf8'),context,{filename:'hash.js'});
@@ -101,6 +102,6 @@ const timeoutTest={TEST_ID:'TEST-TIMEOUT',EXECUTION_MODE:'APPLICATION_DETERMINIS
 const timeout=await runtime.executeTest(timeoutTest,{PRODUCT:binding('ART-TIMEOUT',encoder.encode('x'))},{},{Worker:SilentWorker,timeoutMs:5,workerUrl:'test-worker.js'});
 assert.equal(timeout.status,'EXECUTION_FAILED');assert.equal(timeout.failure.code,'WORKER_TIMEOUT');assert.equal(Array.isArray(timeout.observations)&&timeout.observations.length===0,true);
 
-await import('./verify-test-runtime-integrity.mjs');
+await checkedVerifier(process.execPath,[new URL('./verify-test-runtime-integrity.mjs',import.meta.url).pathname],{stdio:'inherit'});
 
 console.log(JSON.stringify({verifyTestRuntimeLimits:'PASS',limits:Object.keys(runtime.LIMITS).sort(),totalInputBoundary:true,textBoundary:true,parsedDepthBoundary:true,collectionBoundary:true,selectorDepthBoundary:true,regexPatternBoundary:true,regexInputBoundary:true,csvCellBoundary:true,xmlNodeBoundary:true,workerTimeoutBoundary:true,hashAuthority:true,oneArtifact:true,multiArtifact:true,arbitraryCodeImpossible:true,resourceEnvelopeBoundaries,limitValidationCases,limitFaults}));

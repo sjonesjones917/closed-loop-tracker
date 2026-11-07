@@ -1,0 +1,571 @@
+{
+  "schema": "closed-loop-independent-ci-prerequisite-delta-review/1",
+  "reviewedAtUtc": "2026-10-10T05:12:34Z",
+  "author": {
+    "actor": "Codex consolidated CI repair integrator",
+    "contextId": "/root"
+  },
+  "reviewer": {
+    "actor": "Codex independent CI evidence delta reviewer",
+    "contextId": "/root/evidence_review"
+  },
+  "decision": "SCOPED_SOURCE_DELTA_REVIEW_COMPLETE",
+  "reviewPerformed": true,
+  "findings": [],
+  "source": {
+    "checkoutCommit": "f97e095723d33a10ebbec078d47586602b9d9908",
+    "reviewedImplementationCommit": "d1ec7f27e501c432ef51949282c105f312ecaf8c",
+    "includesUncommittedIntegration": true,
+    "identityAuthority": "Exact reviewed source hashes below"
+  },
+  "independence": {
+    "reviewedExecutableChangesAuthoredByReviewer": false,
+    "reviewMetadataPreparedByReviewer": true,
+    "boundary": "Separate collaborator context reviewing the prerequisite implementation and dispatch controls; no human or physical-device review claim."
+  },
+  "reviewedInputs": [
+    {
+      "path": "full-cycle-prerequisite.mjs",
+      "sha256": "3a96470c6ed693a537419b9cf2761d54eae52ef8e5454778a0d28595b89d1fb9"
+    },
+    {
+      "path": "verify-stage28-artifact-delivery-intent.mjs",
+      "sha256": "da70ea4fc8f1dbbc06d8e7deaa98913ae230913764cbeaddd2bcf32ec8b94db7"
+    },
+    {
+      "path": "verify-conformance-regressions.mjs",
+      "sha256": "fb3f568736b16b87dff48e792fd0b0916284142c91680788bce850eea59f4128"
+    },
+    {
+      "path": "verify-full-cycle.mjs",
+      "sha256": "7d84034094b9c65e71ef594d70e3466ce5360b992d042d73253fa34bc00b582e"
+    },
+    {
+      "path": ".github/workflows/pages.yml",
+      "sha256": "13abf513018beffb97a8b51b778aae13b5b05b1f5fcced062985a53e22e632bb"
+    },
+    {
+      "path": "verification-evidence-preload.mjs",
+      "sha256": "3c7835db4197c92c07dc83abae8f1f63bf1815d389d9f8392e08096093d92ffa"
+    }
+  ],
+  "affectedCoverage": [
+    {
+      "normativeRequirementId": "NREQ-a1bafeb7c6f6f12bf0c7b0f6fcadaab9",
+      "reviewPath": "verification/requirement-coverage-NREQ-a1bafeb7c6f6f12bf0c7b0f6fcadaab9-20261007-context-4b6563194ed6-54e18bc1f938.json",
+      "previousActiveReviewSha256": "216553f0929c4a6243c352592401dd30b848f360cfa8657f03cc3fc4959f759e",
+      "declarationSha256": "4b6563194ed6451bde37bb95bbb327ce2dfdfb4a713ed404b9dcd6f7514a6275",
+      "unchangedCheckIds": [
+        "migration.unknown-preserved"
+      ],
+      "previousReviewer": {
+        "actor": "Codex independent verifier-context correction reviewer",
+        "contextId": "/root/pr_inventory_review"
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-f41a79c58369bd76c58ad7e831e953ce",
+      "reviewPath": "verification/requirement-coverage-NREQ-f41a79c58369bd76c58ad7e831e953ce-20261007-context-a6f639cd6cfc-54e18bc1f938.json",
+      "previousActiveReviewSha256": "4ce89b18166ba74d53f300d161da62cd755a18be4a596ba7ccd7511cc4a3c626",
+      "declarationSha256": "a6f639cd6cfc1a143d69a4ea4809ebfdc29f27d13833172cdb220275afd6e453",
+      "unchangedCheckIds": [
+        "migration.current-profile"
+      ],
+      "previousReviewer": {
+        "actor": "Codex independent verifier-context correction reviewer",
+        "contextId": "/root/pr_inventory_review"
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-5811c65fa83521ee7afeedd602cec806",
+      "reviewPath": "verification/requirement-coverage-NREQ-5811c65fa83521ee7afeedd602cec806-20261007-context-60e25b364eb4-54e18bc1f938.json",
+      "previousActiveReviewSha256": "14b7f047f735d204cab119f110864183f18796116c13d2673825b4d6f09b096f",
+      "declarationSha256": "60e25b364eb4ac2844630b117f34c0de7fa258e7f7b81d6aed1284368f99c009",
+      "unchangedCheckIds": [
+        "migration.current-profile"
+      ],
+      "previousReviewer": {
+        "actor": "Codex independent verifier-context correction reviewer",
+        "contextId": "/root/pr_inventory_review"
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-2046e21dd63ad76f992233d5582c716d",
+      "reviewPath": "verification/requirement-coverage-NREQ-2046e21dd63ad76f992233d5582c716d-20261007-context-8d03363ebd61-54e18bc1f938.json",
+      "previousActiveReviewSha256": "904300ceedf3f0cdb5fb00061cc3c6062e53d305c23df86933b3e184da361b24",
+      "declarationSha256": "8d03363ebd6158c54a4bb5c0a312b267b2da8b3478dfeb94b044514aa4a05598",
+      "unchangedCheckIds": [
+        "migration.current-profile"
+      ],
+      "previousReviewer": {
+        "actor": "Codex independent verifier-context correction reviewer",
+        "contextId": "/root/pr_inventory_review"
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-1b07d67693ef773b4800dc6e06626b5b",
+      "reviewPath": "verification/requirement-coverage-NREQ-1b07d67693ef773b4800dc6e06626b5b-20261007-context-dcaf72405bbe-54e18bc1f938.json",
+      "previousActiveReviewSha256": "01ef96344f443bd2c8f71cfb31b85b4a630de7ff18295996d05760ae1c9aef15",
+      "declarationSha256": "dcaf72405bbe5648c82e0177501205afd5d9c74742a8299925a8d4f817355bb9",
+      "unchangedCheckIds": [
+        "migration.current-profile"
+      ],
+      "previousReviewer": {
+        "actor": "Codex independent verifier-context correction reviewer",
+        "contextId": "/root/pr_inventory_review"
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-360281bfdd66bed29237ed7202962808",
+      "reviewPath": "verification/requirement-coverage-NREQ-360281bfdd66bed29237ed7202962808-20261007-context-defd14234c9a-54e18bc1f938.json",
+      "previousActiveReviewSha256": "285826e57f31814a99024855caa4c4eab50af692d1c6d9790d01c43d1929e5af",
+      "declarationSha256": "defd14234c9a9c9b416d64ba5cefca074d034d50a4eac3bbe906b92160f99453",
+      "unchangedCheckIds": [
+        "ingestion.scope-negative-population"
+      ],
+      "previousReviewer": {
+        "actor": "Codex independent verifier-context correction reviewer",
+        "contextId": "/root/pr_inventory_review"
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-a0db6ddcb33d9af123b08d4d481c8ebd",
+      "reviewPath": "verification/requirement-coverage-NREQ-a0db6ddcb33d9af123b08d4d481c8ebd-20261007-context-6d4092da78f9-54e18bc1f938.json",
+      "previousActiveReviewSha256": "cb45e974d78ed760f8b9d51eef27b077e731ca3f9fc3c5dfd29efbd3ff0788c9",
+      "declarationSha256": "6d4092da78f987aa6b32c9c767cc029af5a923094af2e94404ed227be08b729c",
+      "unchangedCheckIds": [
+        "ingestion.scope-negative-population"
+      ],
+      "previousReviewer": {
+        "actor": "Codex independent verifier-context correction reviewer",
+        "contextId": "/root/pr_inventory_review"
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-baa1c33b2e2490264f91881b06ff9da8",
+      "reviewPath": "verification/requirement-coverage-NREQ-baa1c33b2e2490264f91881b06ff9da8-20261007-context-029f6195f4ba-54e18bc1f938.json",
+      "previousActiveReviewSha256": "5ad9a77046fbd0c2576d89140990bb24b384345b484c9beada6102927ba77f81",
+      "declarationSha256": "029f6195f4ba08d56c5f01c0f4f29576c305c70b406662b0ddece5e41923137c",
+      "unchangedCheckIds": [
+        "ingestion.scope-negative-population"
+      ],
+      "previousReviewer": {
+        "actor": "Codex independent verifier-context correction reviewer",
+        "contextId": "/root/pr_inventory_review"
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-f1919b51ebfc8561d0140c02cbf08abd",
+      "reviewPath": "verification/requirement-coverage-NREQ-f1919b51ebfc8561d0140c02cbf08abd-20261007-context-5b509fd997c1-54e18bc1f938.json",
+      "previousActiveReviewSha256": "59b25d0b4c35ea13b39ac3c99b55ec0c7e72c545359c264095755a6f3f4dc83c",
+      "declarationSha256": "5b509fd997c1ef8eabdd1c92b94264a665aad59d57bb7d6eaba39e70eb8b0cfa",
+      "unchangedCheckIds": [
+        "ingestion.scope-negative-population"
+      ],
+      "previousReviewer": {
+        "actor": "Codex independent verifier-context correction reviewer",
+        "contextId": "/root/pr_inventory_review"
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-4b27c9f604f44c29404eacc12a59fd68",
+      "reviewPath": "verification/requirement-coverage-NREQ-4b27c9f604f44c29404eacc12a59fd68-20261007-context-0ea535138580-54e18bc1f938.json",
+      "previousActiveReviewSha256": "eaed04aa1c2306cbde081cd9069f8309fec58b40752d685a2e262e8c961252ac",
+      "declarationSha256": "0ea535138580657959dce0ddab041deb6c1f6372a06332b96a5be453b11501f1",
+      "unchangedCheckIds": [
+        "ingestion.scope-negative-population"
+      ],
+      "previousReviewer": {
+        "actor": "Codex independent verifier-context correction reviewer",
+        "contextId": "/root/pr_inventory_review"
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-71896faa31bc64e94d98bc976e1e6f1d",
+      "reviewPath": "verification/requirement-coverage-NREQ-71896faa31bc64e94d98bc976e1e6f1d-20261007-context-def6b5edfdba-54e18bc1f938.json",
+      "previousActiveReviewSha256": "81b13092164eb5f98b6684faad4ec3ea0eeea71886e606838e878a8dcab6349d",
+      "declarationSha256": "def6b5edfdbafc1815be64676cf2391616b12592afe4128331b924819775684c",
+      "unchangedCheckIds": [
+        "ingestion.scope-negative-population"
+      ],
+      "previousReviewer": {
+        "actor": "Codex independent verifier-context correction reviewer",
+        "contextId": "/root/pr_inventory_review"
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-78fef21919bbd7bb3bafba6f62210631",
+      "reviewPath": "verification/requirement-coverage-NREQ-78fef21919bbd7bb3bafba6f62210631-20261007-context-8f3806190781-54e18bc1f938.json",
+      "previousActiveReviewSha256": "da25cd506f22ae805967a6e87468290d87afada53133d724b12736140e74815f",
+      "declarationSha256": "8f38061907813c6e79c8d6aa0d41b2a7adb0bb48629f50aff0ce2c337ab53622",
+      "unchangedCheckIds": [
+        "ingestion.scope-negative-population"
+      ],
+      "previousReviewer": {
+        "actor": "Codex independent verifier-context correction reviewer",
+        "contextId": "/root/pr_inventory_review"
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-72aa03a305fb8893a65d384f41d86aeb",
+      "reviewPath": "verification/requirement-coverage-NREQ-72aa03a305fb8893a65d384f41d86aeb-20261007-context-6fb2556fc745-54e18bc1f938.json",
+      "previousActiveReviewSha256": "1e16c15be3e73b846527d43c20ecd099cd1ad10ff50ca90d43c5ab147e676efe",
+      "declarationSha256": "6fb2556fc745f970470b2df3327107a4f3d18f28136b4720d7c36b8dda3ea1b3",
+      "unchangedCheckIds": [
+        "ingestion.scope-negative-population"
+      ],
+      "previousReviewer": {
+        "actor": "Codex independent verifier-context correction reviewer",
+        "contextId": "/root/pr_inventory_review"
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-848909d4b95219bdb481803a4b1b91c2",
+      "reviewPath": "verification/requirement-coverage-NREQ-848909d4b95219bdb481803a4b1b91c2-20261007-context-73f60d480258-54e18bc1f938.json",
+      "previousActiveReviewSha256": "a5587464ba8ac5976df02c6f8abc1e0129324bad1f9ca29020d586fbabea2522",
+      "declarationSha256": "73f60d480258dd7481836d88dcfc64e4ddb55741b8285bb43bc49768d99ed0df",
+      "unchangedCheckIds": [
+        "ingestion.scope-negative-population"
+      ],
+      "previousReviewer": {
+        "actor": "Codex independent verifier-context correction reviewer",
+        "contextId": "/root/pr_inventory_review"
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-601ec85ffefcffd713520f4067f7529c",
+      "reviewPath": "verification/requirement-coverage-NREQ-601ec85ffefcffd713520f4067f7529c-20261007-context-be7aad854ceb-54e18bc1f938.json",
+      "previousActiveReviewSha256": "ce8845d272d4b5ce2776ee82065024ec7d220ecae91616ab73d3bfc746d37717",
+      "declarationSha256": "be7aad854cebaede71197f138c445744a1b2e9f91afaa8a167e3bbaab593c2c9",
+      "unchangedCheckIds": [
+        "ingestion.scope-negative-population"
+      ],
+      "previousReviewer": {
+        "actor": "Codex independent verifier-context correction reviewer",
+        "contextId": "/root/pr_inventory_review"
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-c0080ab56f40757c88225dc35a1f98f0",
+      "reviewPath": "verification/requirement-coverage-NREQ-c0080ab56f40757c88225dc35a1f98f0-20261007-context-79fe3bf8357b-54e18bc1f938.json",
+      "previousActiveReviewSha256": "acb20c9eb8913b74669efd2db9673118f51a62d1ccb265178859a045c5951194",
+      "declarationSha256": "79fe3bf8357bedef326de2651ac4a67a7b2d373b73b7723f0ba6ab283641006e",
+      "unchangedCheckIds": [
+        "ingestion.scope-negative-population"
+      ],
+      "previousReviewer": {
+        "actor": "Codex independent verifier-context correction reviewer",
+        "contextId": "/root/pr_inventory_review"
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-a42ec803577aa8ccbe176ed8e20a8595",
+      "reviewPath": "verification/requirement-coverage-NREQ-a42ec803577aa8ccbe176ed8e20a8595-20261007-context-66547fe135c2-54e18bc1f938.json",
+      "previousActiveReviewSha256": "08436d6ef9254262fe8ece4906312c981ef5642901dd0dd0bda647977b306aac",
+      "declarationSha256": "66547fe135c23602740fdffd94a8ac5427c302162d736a02ae16889541a1c601",
+      "unchangedCheckIds": [
+        "ingestion.scope-negative-population"
+      ],
+      "previousReviewer": {
+        "actor": "Codex independent verifier-context correction reviewer",
+        "contextId": "/root/pr_inventory_review"
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-928a65a08b403be3edc8b160ef9cc53c",
+      "reviewPath": "verification/requirement-coverage-NREQ-928a65a08b403be3edc8b160ef9cc53c-20261007-context-bc514f8d980c-54e18bc1f938.json",
+      "previousActiveReviewSha256": "e09ac06eb5c9e14304e6952bedcf5cc0f9c05be4e76f6e4623798e1d88f49e3d",
+      "declarationSha256": "bc514f8d980c624d1ff130aeacca8ef4175170f3e7069410ec8df26e3f23d35e",
+      "unchangedCheckIds": [
+        "ingestion.foreign-project-response"
+      ],
+      "previousReviewer": {
+        "actor": "Codex independent verifier-context correction reviewer",
+        "contextId": "/root/pr_inventory_review"
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-bedc4564e47ae7ebf86911eb8426b6f0",
+      "reviewPath": "verification/requirement-coverage-NREQ-bedc4564e47ae7ebf86911eb8426b6f0-20261007-context-303caf90caff-54e18bc1f938.json",
+      "previousActiveReviewSha256": "9819cd6b6916dbdc8519497cd4906645241875c59215d8ca28b5fb52a21b984e",
+      "declarationSha256": "9948a464aed87f36c381716ac277310a8ade25366118269993e3e6b3f2b02156",
+      "unchangedCheckIds": [
+        "acceptance.specification-identity"
+      ],
+      "previousReviewer": {
+        "actor": "Codex independent CI evidence delta reviewer",
+        "contextId": "/root/evidence_review"
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-4b26e20f450b23eb551b2da03e69c9c9",
+      "reviewPath": "verification/requirement-coverage-NREQ-4b26e20f450b23eb551b2da03e69c9c9-20261007-context-07d6150a1321-54e18bc1f938.json",
+      "previousActiveReviewSha256": "ed3f3b816a98dfb7a4332b4b724a519152059d64e5ea17b3277da2e6b087b087",
+      "declarationSha256": "cf42be2fa15dc2045de8628dd9d79a29d028eee134016716a5bd6b6b1497a112",
+      "unchangedCheckIds": [
+        "acceptance.specification-identity"
+      ],
+      "previousReviewer": {
+        "actor": "Codex independent CI evidence delta reviewer",
+        "contextId": "/root/evidence_review"
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-befdab6cc6a4121936987a35fc18e1c9",
+      "reviewPath": "verification/requirement-coverage-NREQ-befdab6cc6a4121936987a35fc18e1c9-20261007-context-c8b0b09a87ad-54e18bc1f938.json",
+      "previousActiveReviewSha256": "edf78116dd4d767957ff262641feb24004c360771f246c6680ff4f9fb61cea37",
+      "declarationSha256": "82bb466d8f04323c0d32f85a9c57e1f5f0b1ae50e9cd5a1f2a2fed87f1d550a5",
+      "unchangedCheckIds": [
+        "acceptance.registry-identity",
+        "deployment.registry-identities"
+      ],
+      "previousReviewer": {
+        "actor": "Codex independent CI evidence delta reviewer",
+        "contextId": "/root/evidence_review"
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-a011968eff2ed2dc314d58ed27dfad88",
+      "reviewPath": "verification/requirement-coverage-NREQ-a011968eff2ed2dc314d58ed27dfad88-20261007-context-87882d5bae07-54e18bc1f938.json",
+      "previousActiveReviewSha256": "d400cf2d22bf5f166b88739382b0d3a5d1c1c7b4ac51d2187572751e8e58e513",
+      "declarationSha256": "d74c0cd44e952e4d424a3659c622af8fd1c6be71669d3dc0cf2ae9aca05e7f09",
+      "unchangedCheckIds": [
+        "acceptance.registry-identity",
+        "deployment.registry-identities"
+      ],
+      "previousReviewer": {
+        "actor": "Codex independent CI evidence delta reviewer",
+        "contextId": "/root/evidence_review"
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-c94c878ef2cf8c6a35b0985da91c0c85",
+      "reviewPath": "verification/requirement-coverage-NREQ-c94c878ef2cf8c6a35b0985da91c0c85-20261007-context-fe6c073ad55f-54e18bc1f938.json",
+      "previousActiveReviewSha256": "73c3e94c96021e9f5efe77cd010724bd65fa7018d7bfd9513c0856e57e918d20",
+      "declarationSha256": "fe6c073ad55f40831bb495222406fb733cec2946ba3bf47c138039368d26cfe4",
+      "unchangedCheckIds": [
+        "store.hash-mismatch-quarantine",
+        "lifecycle.complete-report-population"
+      ],
+      "previousReviewer": {
+        "actor": "Codex independent CI evidence delta reviewer",
+        "contextId": "/root/evidence_review"
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-ea453611a3a1f48cdd2fbfbe946d7ac7",
+      "reviewPath": "verification/requirement-coverage-NREQ-ea453611a3a1f48cdd2fbfbe946d7ac7-20261007-context-5fb3beeac070-54e18bc1f938.json",
+      "previousActiveReviewSha256": "c9a6a14779dbbbdfe58fca9263567af55bd18f2ea85a1deb405a7dd5265b295d",
+      "declarationSha256": "5fb3beeac0707949f4e79fdb066df755bc05fc30226fbea0a9fe1c8f7c83ede5",
+      "unchangedCheckIds": [
+        "recovery.quarantine-controlled-deletion",
+        "recovery.quarantine-body-delete-fault"
+      ],
+      "previousReviewer": {
+        "actor": "Codex independent CI evidence delta reviewer",
+        "contextId": "/root/evidence_review"
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-7a68fe07ee725cf205dd2102cd997b7f",
+      "reviewPath": "verification/requirement-coverage-NREQ-7a68fe07ee725cf205dd2102cd997b7f-20261007-context-652ecb1fe1af-54e18bc1f938.json",
+      "previousActiveReviewSha256": "e4e86481fe8b53de729df2a2a4b0e6aa98df950eee5b95a63d3bae86282c6c3d",
+      "declarationSha256": "652ecb1fe1af490887e22e4b73ebb4cd67b7a72638d50cbf22d72814819f57e8",
+      "unchangedCheckIds": [
+        "ingestion.syntax.malformed-json"
+      ],
+      "previousReviewer": {
+        "actor": "Codex independent verifier-context correction reviewer",
+        "contextId": "/root/pr_inventory_review"
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-4bb86ccfacff0ea8bbbc59df67b0ca4f",
+      "reviewPath": "verification/requirement-coverage-NREQ-4bb86ccfacff0ea8bbbc59df67b0ca4f-20261007-context-6dcc93386d57-54e18bc1f938.json",
+      "previousActiveReviewSha256": "76e02deac8f1337abba3ca718fd14e067366bc0e502f2cb0475f9e3ef71e6a23",
+      "declarationSha256": "6dcc93386d570463d8332fedede64de205476e0f54ac34eff3401912ca8ffe12",
+      "unchangedCheckIds": [
+        "ingestion.syntax.truncated-json"
+      ],
+      "previousReviewer": {
+        "actor": "Codex independent verifier-context correction reviewer",
+        "contextId": "/root/pr_inventory_review"
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-768d67996244254c83c0d11796f63912",
+      "reviewPath": "verification/requirement-coverage-NREQ-768d67996244254c83c0d11796f63912-20261007-context-291bd5dd0e04-54e18bc1f938.json",
+      "previousActiveReviewSha256": "c1f3837342016804cab7591118a262944c158f01b1f101cb2d50a9afc33fff69",
+      "declarationSha256": "291bd5dd0e046514548613268644f20d78cda726eac1817a4297398e90435319",
+      "unchangedCheckIds": [
+        "ingestion.syntax.markdown-wrapper"
+      ],
+      "previousReviewer": {
+        "actor": "Codex independent verifier-context correction reviewer",
+        "contextId": "/root/pr_inventory_review"
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-59d5854af99ac5a566eb61e978519b21",
+      "reviewPath": "verification/requirement-coverage-NREQ-59d5854af99ac5a566eb61e978519b21-20261007-context-e53573db3335-54e18bc1f938.json",
+      "previousActiveReviewSha256": "88fd626b014223bb6026a698281aa2662d9891a2d02a1abfbac7115404a78136",
+      "declarationSha256": "e53573db33356eb258d72e607d2d8d4c26dd602715e4fc082d4629771b5054eb",
+      "unchangedCheckIds": [
+        "ingestion.syntax.oversized-json"
+      ],
+      "previousReviewer": {
+        "actor": "Codex independent verifier-context correction reviewer",
+        "contextId": "/root/pr_inventory_review"
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-75b670fc6ea047b7452b4148f12a30ba",
+      "reviewPath": "verification/requirement-coverage-NREQ-75b670fc6ea047b7452b4148f12a30ba-20261007-context-dfc64a21a246-54e18bc1f938.json",
+      "previousActiveReviewSha256": "e7edd9f3ff73adcb6fc22cc24c9e7aa2601d560162346aca21e25ef8f5f78c70",
+      "declarationSha256": "dfc64a21a2460348ea02c9221ed9c1f1765d58c06a53e582d45b2c0396349e77",
+      "unchangedCheckIds": [
+        "ingestion.syntax.duplicate-members"
+      ],
+      "previousReviewer": {
+        "actor": "Codex independent verifier-context correction reviewer",
+        "contextId": "/root/pr_inventory_review"
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-86651d173d1583e48cf6c03f9d486f4f",
+      "reviewPath": "verification/requirement-coverage-NREQ-86651d173d1583e48cf6c03f9d486f4f-20261007-context-327d2cc2c990-54e18bc1f938.json",
+      "previousActiveReviewSha256": "57c8e9f387b059a3088154ba268ae55e6a316b1e7faa440e2c1c50731c0b9967",
+      "declarationSha256": "327d2cc2c99085662e445f01e5f9546ec1d6ea54773804cf38503f9c1d70e450",
+      "unchangedCheckIds": [
+        "ingestion.syntax.unsafe-smart-quotes"
+      ],
+      "previousReviewer": {
+        "actor": "Codex independent verifier-context correction reviewer",
+        "contextId": "/root/pr_inventory_review"
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-1576e27fba46e1d68631bb2ade2e37f4",
+      "reviewPath": "verification/requirement-coverage-NREQ-1576e27fba46e1d68631bb2ade2e37f4-20261007-context-f03bceab9e8e-54e18bc1f938.json",
+      "previousActiveReviewSha256": "806c5d09722edfd1fbd8c9830a78b8c21bb1a4aa200e0b75ca8154e2885a2a79",
+      "declarationSha256": "f03bceab9e8e5c95df32ea74c7d241fb8e9f024b9dc4900623dedc3925a9260e",
+      "unchangedCheckIds": [
+        "ingestion.syntax.root-object"
+      ],
+      "previousReviewer": {
+        "actor": "Codex independent verifier-context correction reviewer",
+        "contextId": "/root/pr_inventory_review"
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-cf25cf824db06866df51c0e538fcbc03",
+      "reviewPath": "verification/requirement-coverage-NREQ-cf25cf824db06866df51c0e538fcbc03-20261007-context-fde639603c5f-54e18bc1f938.json",
+      "previousActiveReviewSha256": "9e584aa92fd649c80246b3e9b2162de8175e38bd2821c30fac077a70becf4aba",
+      "declarationSha256": "fde639603c5f4797a5828e21d3c196cbb45db2d7cc83d659ebc4df647b4544b6",
+      "unchangedCheckIds": [
+        "ingestion.transport.stage"
+      ],
+      "previousReviewer": {
+        "actor": "Codex independent verifier-context correction reviewer",
+        "contextId": "/root/pr_inventory_review"
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-41ab1c200b4ce5c9d1d96613a3e5b264",
+      "reviewPath": "verification/requirement-coverage-NREQ-41ab1c200b4ce5c9d1d96613a3e5b264-20261007-context-867dae61e345-54e18bc1f938.json",
+      "previousActiveReviewSha256": "270bafbee5362a6f3c8cbff4f94b52eec24b2132ac466c704a38effc4d3021b8",
+      "declarationSha256": "867dae61e345168b22fae2aba93262cc9ec323a317b3664f6fa376464acd6562",
+      "unchangedCheckIds": [
+        "ingestion.transport.operation"
+      ],
+      "previousReviewer": {
+        "actor": "Codex independent verifier-context correction reviewer",
+        "contextId": "/root/pr_inventory_review"
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-0c973b955d61ee36887734df0ade5e69",
+      "reviewPath": "verification/requirement-coverage-NREQ-0c973b955d61ee36887734df0ade5e69-20261007-context-aa211674369a-54e18bc1f938.json",
+      "previousActiveReviewSha256": "e887e393477be802cda62f5f9e1dd081aa775d81260c50b8c10fe55054c4ebb4",
+      "declarationSha256": "aa211674369ae81dae6868a2020b1dd0ce06186d6051c30ad0dc330668813f2b",
+      "unchangedCheckIds": [
+        "ingestion.transport.prompt-identity"
+      ],
+      "previousReviewer": {
+        "actor": "Codex independent verifier-context correction reviewer",
+        "contextId": "/root/pr_inventory_review"
+      }
+    },
+    {
+      "normativeRequirementId": "NREQ-971af7158d193e9b1d780c13b6c8e0ec",
+      "reviewPath": "verification/requirement-coverage-NREQ-971af7158d193e9b1d780c13b6c8e0ec-20261007-context-3e84d85be560-54e18bc1f938.json",
+      "previousActiveReviewSha256": "12d8fd986d43479eec47a0c29a57d04b07f265c97194913655e4ff797f8d1524",
+      "declarationSha256": "3e84d85be5606b4c881b3cf375f2ff0058f88ba68ad8eb99673d7e97b3fefcb9",
+      "unchangedCheckIds": [
+        "ingestion.transport.context-signature"
+      ],
+      "previousReviewer": {
+        "actor": "Codex independent verifier-context correction reviewer",
+        "contextId": "/root/pr_inventory_review"
+      }
+    }
+  ],
+  "assessment": {
+    "duplicateWork": "Stage 28 constructs a hidden, unregistered healthy lifecycle prerequisite and stops at the Stage 28 boundary. Its source previously also dispatched all eight timing fault children, which are independently required by the unchanged default full-cycle owner later in the workflow.",
+    "transformation": "The new helper requires exactly one complete timing-matrix guard and changes only that dispatch guard in the generated prerequisite. Missing or duplicate anchors throw. The real healthy Stage 1 through 27 traversal, required ten runs, canonical multi-file intake/selection/freeze/release owners, snapshot and artifact capture, 600-second deadline and every Stage 28 assertion remain in place.",
+    "proofOwnership": "The generated hidden module is not a registered full-cycle producer and cannot issue the default full-cycle receipt. verify-full-cycle.mjs is byte-identical to the prior source and its original required workflow command remains. No normal producer, assertion, case ID or timeout is removed.",
+    "supervisor": "Only verifyLifecycleFaultDispatch test controls and their copied-mutant dependency serialization changed in the supervisor module. After masking those two regions the file is byte-identical to HEAD. Shared child execution, timeouts, bounded streams, cleanup, failure propagation and source-restoration behavior are unchanged.",
+    "dependencyCorrection": "The helper is dynamically imported only inside the dispatch test. The copied supervisor mutant rewrites that import to its absolute source URL, preserving bounded disposable fixture imports without requiring unrelated copy lists to include the helper.",
+    "coverageRenewal": "All 35 declarations reference the supervisor as an executed-test dependency; none declares it as a production owner. Their controlling text, original production owner bytes, obligation decomposition, check IDs and earlier semantic assessment are unchanged. This supplement renews only the reviewed source dependency and does not assert new whole-clause semantic coverage."
+  },
+  "inspectedBoundedEvidence": {
+    "path": "/workspace/scratch/stage28-prerequisite-dispatch-controls-lazy.json",
+    "sha256": "5240caaf11700e32d9d04bbcf42751ff7dfeefb323835c606e2155d2b2feb5d4",
+    "executedByReviewer": false,
+    "normalDirectFaultIds": [
+      "premature-failure-execution",
+      "unreviewed-expression-identity",
+      "retained-version-alias",
+      "future-leaf-truth",
+      "dropped-timing-leaf",
+      "unreviewed-leaf-schedule",
+      "prerequisite-path-loss",
+      "activation-review-bypass"
+    ],
+    "normalImportedFaultIds": [
+      "premature-failure-execution",
+      "unreviewed-expression-identity",
+      "retained-version-alias",
+      "future-leaf-truth",
+      "dropped-timing-leaf",
+      "unreviewed-leaf-schedule",
+      "prerequisite-path-loss",
+      "activation-review-bypass"
+    ],
+    "restoredFaultIds": [
+      "premature-failure-execution",
+      "unreviewed-expression-identity",
+      "retained-version-alias",
+      "future-leaf-truth",
+      "dropped-timing-leaf",
+      "unreviewed-leaf-schedule",
+      "prerequisite-path-loss",
+      "activation-review-bypass"
+    ],
+    "prerequisiteDirectFaults": 0,
+    "prerequisiteImportedFaults": 0,
+    "allConformingChildExits": 0,
+    "wrongCallerMutationDetected": true,
+    "malformedAndDuplicateAnchorsRejected": true,
+    "defaultSourceRestored": true,
+    "scope": "Actual dispatch source with intentionally tiny child failures; not actual production timing invariant execution."
+  },
+  "remainingObligations": {
+    "correctedStage28Owner": "In progress on the exact amended source when this review was completed; no passing outcome claimed here.",
+    "normalFullCycleOwnerAndEightTimingFaults": "Required in complete current CI.",
+    "completeCI": "Pending consolidated candidate execution.",
+    "applicationConformanceEstablished": false,
+    "physicalDeviceAcceptanceEstablished": false,
+    "hostedTimeSavingsMeasured": false
+  }
+}

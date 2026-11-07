@@ -1,0 +1,242 @@
+{
+  "schema": "closed-loop-requirement-coverage-review/1",
+  "normativeRequirementId": "NREQ-d3216139914fb4c3ec1d54819ee18890",
+  "sourceLineSha256": "d67fa3327afe6e0acbc2e09feb581bfd7558c13a5bc231d28ada1a97a631c4bf",
+  "specificationSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
+  "declarationSha256": "e159112d367c8210353dc039c4f36d3577a4f7b66ce65721aa5d6d9fd99c0a9b",
+  "decision": "COMPLETE_COVERAGE",
+  "evidenceBasis": "EXTERNALLY_SUPPORTED",
+  "method": "The exact narrow controlling clause and unchanged proof decomposition were independently reviewed in the embedded original semantic assessment. Current production, verifier, fixture and catalog deltas were separately reviewed in the referenced source-delta review bundle. This is coverage-design evidence only: current frozen-source executed receipts remain independently required, and unsupported clauses are not promoted.",
+  "author": {
+    "actor": "Codex coordinated exact-clause renewal proposer",
+    "contextId": "/root"
+  },
+  "reviewer": {
+    "actor": "Codex independent narrow declaration reviewer",
+    "contextId": "/root/normative_review"
+  },
+  "reviewedInputs": [
+    {
+      "declarationSha256": "e159112d367c8210353dc039c4f36d3577a4f7b66ce65721aa5d6d9fd99c0a9b"
+    },
+    {
+      "path": "app-core.js",
+      "sha256": "74036d41bcf1178b7030b6b8ef28087e5becd6d61034c11f896443238d23b6a6"
+    },
+    {
+      "path": "hash.js",
+      "sha256": "a13cf57bd7c7414bc801f511d5937f80eaf7fd675c0e6c2b5a92b365df16e4d7"
+    },
+    {
+      "path": "project-store.js",
+      "sha256": "e6c37175a93b934585d7b461ad6448bb0a929670e24e8fc03940dcc132330db8"
+    },
+    {
+      "path": "prompt-engine.js",
+      "sha256": "66a1eb2976826eb15b3d8d2963363836a160e75bf8ebaf904673c64963a20ba4"
+    },
+    {
+      "path": "response-ingestion.js",
+      "sha256": "e761fb032005030b8a63e5250e56c4bbb3ea617625be5ea55bbbc2d0b5029117"
+    },
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d"
+    },
+    {
+      "path": "test-artifact-byte-sharing.mjs",
+      "sha256": "e14c46e5ade79461ac29b8befe1f02c14139670792f0adfe955178a50620d810"
+    },
+    {
+      "path": "test-fixtures.mjs",
+      "sha256": "fdcaa258f88be52f2b426785ac0fcdcd547392e702c33fbb0eb4823d9c2a711d"
+    },
+    {
+      "path": "test-handoff-authorization.mjs",
+      "sha256": "37bfb4e255afb6701fccaccdf055ee7961e838eaf03927c2963dfcf880cf82b6"
+    },
+    {
+      "path": "test-inbound-archive-parser.mjs",
+      "sha256": "12db876d97c010eded59f8274c37b465c853c1550c45c39a6a212fe9d035a39d"
+    },
+    {
+      "path": "test-ingestion-context-reference.mjs",
+      "sha256": "18e4446b5960a39981964a8c2fa80128fc10f6d1008d84111f418130b4d277ee"
+    },
+    {
+      "path": "test-project-store-runtime.mjs",
+      "sha256": "563817f6d8256a0ea3ebbc1d8836b6c5887fa7275b0378ade657ecfb61f00eed"
+    },
+    {
+      "path": "test-response-staging-recovery.mjs",
+      "sha256": "4c386f0d20b007d6206b143f1df17bedbac9952e6342a4cb8f792c9658ad8322"
+    },
+    {
+      "path": "test-returned-slot-atomic-staging.mjs",
+      "sha256": "ca39d31051682716f7f8d7f8a0e15fa92bdc5251e270e5c61bfcfd552aad08c5"
+    },
+    {
+      "path": "test-runtime.js",
+      "sha256": "e4e01a79c526592f9d044e2c104845e63c9aa341eb64837c138f5c3e3ecba353"
+    },
+    {
+      "path": "verification-evidence-catalog.mjs",
+      "sha256": "570fcea534cac49e62a5f062d7f44757e7123309595d61150e6b02229a7b5796"
+    },
+    {
+      "path": "verification/current-source-delta-review-20261007.json",
+      "sha256": "3fad9eab08ffad0ce72f8d64771514793b2a282bde132fbc7c036202239b0a73"
+    },
+    {
+      "path": "verification/normative-context-applicability-20261005.json",
+      "sha256": "7cd05ff0028578a1ca1c2560533519a602ce6a974c240ee11dbbd272524cf656"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-d3216139914fb4c3ec1d54819ee18890-20261005.json",
+      "sha256": "e9d12568f6f8903a1b66f475c026d1003c6c59f1768b940ba24847227df2dad5"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-d3216139914fb4c3ec1d54819ee18890-20261006-followup-633b432f0758.json",
+      "sha256": "e895d08e3572bac90cf77e67af12654e21df5ae00f4cdc42aae9dc889a2136d4"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-d3216139914fb4c3ec1d54819ee18890-20261006.json",
+      "sha256": "1712653af60e3a57a8b5e5b0e93cd33ed49d7a0bd1e22d44654d21e5b0910cb2"
+    },
+    {
+      "path": "verifier-runtime.mjs",
+      "sha256": "8a4c9058b6c72a5aa8dd68809e3cbfd8e5c217b358c41970347443a338f83933"
+    },
+    {
+      "path": "verify-operational-persistence.mjs",
+      "sha256": "52be3b11d1af0f2f4191eeefde382a97257147c92db7bc5bbeaec52f4cd3f0e7"
+    },
+    {
+      "path": "workbook.js",
+      "sha256": "3a8098a9bb4ea108eadaa9bec90c76a1522f57f6465f45341cedf60937ddd008"
+    },
+    {
+      "path": "workflow-engine.js",
+      "sha256": "fac2c0f35a3e10f4be41711ea36d6da4b4b49d86f45ec751b509134dc5ab8777"
+    },
+    {
+      "path": "workflow-schema.js",
+      "sha256": "656e9e632cea3a60e1c7e0fb486e6630d205011d7db32d9674ac5e88593d24f1"
+    }
+  ],
+  "findings": [],
+  "reviewPerformed": true,
+  "sourceLocation": {
+    "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+    "startLine": 3096,
+    "endLine": 3096,
+    "lineSha256": "d67fa3327afe6e0acbc2e09feb581bfd7558c13a5bc231d28ada1a97a631c4bf"
+  },
+  "controllingText": "- hashed on intake;",
+  "governingContext": [],
+  "additionalControllingContext": [],
+  "reviewedChecks": [
+    {
+      "suite": "verify-operational-persistence.mjs",
+      "checkId": "store.retained-evidence-custody"
+    },
+    {
+      "suite": "verify-operational-persistence.mjs",
+      "checkId": "store.current-supplied-input-custody"
+    }
+  ],
+  "scopeLimit": "Named byte-custody steps with current supplied and retained evidence; not every downstream byte consumer or full backup/browser route.",
+  "independentSemanticAssessment": {
+    "path": "/workspace/scratch/normative-review/24-declaration-semantic-review.json",
+    "sha256": "5440a66128d087b55a4d858ea0149fd024916806fa7d0ea9c23b6d0243f480ac",
+    "row": {
+      "normativeRequirementId": "NREQ-d3216139914fb4c3ec1d54819ee18890",
+      "sourceLocation": {
+        "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "startLine": 3096,
+        "endLine": 3096,
+        "lineSha256": "d67fa3327afe6e0acbc2e09feb581bfd7558c13a5bc231d28ada1a97a631c4bf"
+      },
+      "controllingText": "- hashed on intake;",
+      "review": {
+        "path": "verification/requirement-coverage-NREQ-d3216139914fb4c3ec1d54819ee18890-20261006-followup-633b432f0758.json",
+        "sha256": "e895d08e3572bac90cf77e67af12654e21df5ae00f4cdc42aae9dc889a2136d4"
+      },
+      "checkIds": [
+        "store.retained-evidence-custody",
+        "store.current-supplied-input-custody"
+      ],
+      "status": "NARROW_COVERAGE_DESIGN_GAP_CORRECTED_FOCUSED_VERIFIED",
+      "rationale": "Production storage/reload owner does compute/recheck digest and withdraw custody. However listed two custody test assertions accepted a digest-trusting implementation mutant: existing corrupt inputs differ in length. Independent same-size GOOD->EVIL control distinguishes correct UNKNOWN from mutantTRUE. This is a test coverage gap, not a production failure; current fullCoverage design cannot be renewed without same-size digest controls and independent intake digest/byte expectations. Correction now independently computes expected digest and exact bytes, adds both same-size negatives and maintained mutation required to fail intended custody oracle; corrected owning suite passes Node24.19.0. Independent reviewer found no issue. Final frozen-source Node22 receipt and renewed coverage references remain separate.",
+      "reviewedSourceInputs": [
+        {
+          "path": "project-store.js",
+          "sha256": "2d6896f47164f4a232c631d949cce64d2200e6d4e2202c2c3cdb29b08648cdf2"
+        },
+        {
+          "path": "workflow-engine.js",
+          "sha256": "b47195d41a130cb1b84425f5eb33bd8a163e1047c0e95e19eef59d47525e463d"
+        },
+        {
+          "path": "verify-operational-persistence.mjs",
+          "sha256": "df78d294a6c4e1fedc1e5f5a01ac3adbeeb93e0b3e552bc4f3c9db0366790f42"
+        },
+        {
+          "path": "verification-evidence-catalog.mjs",
+          "sha256": "e6378e7747ba860e5312a813c55625748d2fbaee5f2838d8ee4e97349ba4640f"
+        }
+      ],
+      "executedCurrentProducerByThisReview": true,
+      "fullApplicationConformanceClaim": false,
+      "previousStatus": "COVERAGE_DESIGN_GAP_CONFIRMED",
+      "correctionEvidence": "/workspace/scratch/normative-review/custody-coverage-correction.json",
+      "correctionExaminedInputs": [
+        {
+          "path": "project-store.js",
+          "sha256": "cb4d7ac8a6624c9cca00aaaf5621f00184048b65727488b805a088806a906c2f"
+        },
+        {
+          "path": "verify-operational-persistence.mjs",
+          "sha256": "682b268bfa65a86184f88978cecda8fe751ce51bcf3a473fea40c9c8c193f8ab"
+        },
+        {
+          "path": "workflow-engine.js",
+          "sha256": "b47195d41a130cb1b84425f5eb33bd8a163e1047c0e95e19eef59d47525e463d"
+        },
+        {
+          "path": "test-project-store-runtime.mjs",
+          "sha256": "955fc63a1b7ae3ec7f8b71f36fd4d76d4ad8ee8fa0de2fa8d2697a66b1458eef"
+        },
+        {
+          "path": "operator-journey-fixtures.mjs",
+          "sha256": "73cca7813dfdca430c66e76487efc60b91cbf4642bfcd93b96f6bad2a9314c38"
+        },
+        {
+          "path": "test-fixtures.mjs",
+          "sha256": "fdcaa258f88be52f2b426785ac0fcdcd547392e702c33fbb0eb4823d9c2a711d"
+        }
+      ]
+    }
+  },
+  "priorReview": {
+    "path": "verification/requirement-coverage-NREQ-d3216139914fb4c3ec1d54819ee18890-20261006-followup-633b432f0758.json",
+    "sha256": "e895d08e3572bac90cf77e67af12654e21df5ae00f4cdc42aae9dc889a2136d4",
+    "author": {
+      "actor": "Codex follow-up source-qualified renewal author",
+      "contextId": "/root/ci_delivery_audit"
+    },
+    "reviewer": {
+      "actor": "Codex independent exact-clause declaration reviewer",
+      "contextId": "/root/storage_audit"
+    },
+    "reviewCompletedAt": "2026-10-06T21:54:08.261034+00:00"
+  },
+  "reviewerPriorContributionDisclosure": "Actual reviewer contribution and boundary are retained in the embedded assessment. For the five custody clauses, this reviewer authored strengthened tests; parent and separate PR inventory reviewer independently inspected the delta and intended oracle. This does not establish external-agent context independence.",
+  "currentExecutionRequired": true,
+  "applicationConformanceClaim": false,
+  "reviewCompletedAt": "2026-10-07T01:21:18.248Z",
+  "currentDependencyDeltaReview": {
+    "path": "verification/current-source-delta-review-20261007.json",
+    "sha256": "3fad9eab08ffad0ce72f8d64771514793b2a282bde132fbc7c036202239b0a73"
+  }
+}

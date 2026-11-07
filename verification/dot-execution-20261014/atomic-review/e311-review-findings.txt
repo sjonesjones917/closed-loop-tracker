@@ -1,0 +1,21 @@
+Independent implementation review, original author commit e311c47f78b92547faec5bfc53887abb7e70ec96
+Pinned predecessor 46a3c55ec5a2776f1ca6dd921aa41d54677c4633
+Disposition: NEEDS_REVISION, limited to atomic-governance support. No app acceptance claim.
+Expectations frozen before implementation inspection in clrt-atomic-implementation-independent-expectations.txt, SHA256 80c88b06c560b94bab08386b5db0ee207c13472c9f9ce3cb46c5d7a922410113.
+
+R1 §2.2 / E01–E05. Independently discovered obligation on previously context/non-primary source line cannot activate. loadReviewedAtomicExtraction accepts the reviewed new atom; generator lines119–120 demand an old line-level requirement for its primary line. The synthetic independent fixture includes three distinct obligations on one line plus a newly discovered atom elsewhere, all independently accounted/reconciled. Production mapping fails with 'Atomic primary anchor has no independently reviewed source trace'. Correction: allow current independent atom extraction to supply new primary locations; derive candidate trace defaults only, not inherited proof. Repro challenge.mjs (independently authored), challenge-result.json. 14 positive/negative controls pass; final generator mapping fails.
+
+R2 §2.2, §49, Part A M08 / E06. verification-evidence.mjs line118 changes exact source decomposition to substring membership. A current synthetic full-coverage binding can claim CONFORMANT_PROVEN when its only obligation sourceText is merely 'MUST' and its atom source span is 'The worker MUST preserve α'. This drops all substantive text from decomposition while passing the source-accounting gate. Correction: exact ordered complete span accounting with omitted/partial/duplicate-span negatives. Repro partial-proof-challenge.mjs, partial-proof-result.json. This is an independent adversarial mutation of the author's synthetic proof fixture, not actual actor proof.
+
+R3 §2.2 / E06–E09. Loader accepts pinned nested verification/independent-nested/*.json descriptors, but evidenceFingerprint's basename-only regex rejects them. Thus a supported reviewed-evidence input cannot enter proof receipts. Correction: harmonize exact first-party path contract and retain traversal/symlink protections. Repro nested-evidence-challenge.mjs, nested-evidence-result.json. Test temporarily altered only reviewer-owned declarations and restored exact bytes; no author/integration writes.
+
+Other executed results on Node24.19.0:
+- Focused author controls:43 PASS; source-adoption16 PASS; classifications7 PASS.
+- Independent source/span/context/identity/reconciliation controls:14 PASS before R1.
+- Core verifier: expected exit1 at BLOCKED_ATOMIC_REQUIREMENT_COMPLETENESS after19 retained historical controls and43 atomic controls; source completeness remains honestly false. core.log.
+- External proof fixture:24 synthetic consumer controls PASS, no actual browser/device/external-review claim. compatibility.log.
+- Catalog/context compatibility: same stale-source-binding and stale-context errors on predecessor and candidate. compatibility.log, base-compatibility.log.
+- Runtime build: exact matching deployment build bytes with same explicit source/run identity. build-base.log, build-candidate.log and build directories. Runtime byte diff exit0.
+- Exact changed scope inspected:8 governance/test/evidence files, no runtime/source/workflow edits.
+
+Dot has routed all three findings to author for separate correction. Original failing results retained unchanged. Final corrected-commit review is pending. Full specification atomic inventory, actual draft/blind extraction/distinct reconciliation, scoped proof migration, existing source UNDEFINED_* blockers, deployed/browser/iPhone/maturity acceptance remain outside this bounded support review and unresolved as applicable.

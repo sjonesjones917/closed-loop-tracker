@@ -1,0 +1,297 @@
+{
+  "schema": "closed-loop-requirement-coverage-review/1",
+  "normativeRequirementId": "NREQ-601ec85ffefcffd713520f4067f7529c",
+  "sourceLineSha256": "fc21d8ad8a0258d3eda21e4f343205d3e7d0dbfa37f19000d8d9db078c141f08",
+  "specificationSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
+  "declarationSha256": "c09032a20ce65fc1a819e8489fd4ada0f0cd96027800a336baea06875180f09f",
+  "decision": "COMPLETE_COVERAGE",
+  "evidenceBasis": "EXTERNALLY_SUPPORTED",
+  "method": "Independent current review of exact transport-rejection clauses, current production type/scope comparator, actual named scope/job assertion path, current declared suite dependencies and identified direct imports. Full receipts separately fingerprint all tracked first-party inputs. Imported operator/reservation assertions are not evidence for these13 transport clauses; the complete suite must still exit successfully for a current receipt. No automatically exhaustive dynamic-module graph or full application conformance is claimed.",
+  "author": {
+    "actor": "Codex current-owner declaration renewal author",
+    "contextId": "/root/ci_delivery_audit"
+  },
+  "reviewer": {
+    "actor": "Codex independent exact-clause declaration reviewer",
+    "contextId": "/root/stage_contract_audit"
+  },
+  "reviewedInputs": [
+    {
+      "path": "app-core.js",
+      "sha256": "15d1b6ca2a49b77de75858c57080966b3bbd25560005322aa7ec25652fa6a2ad"
+    },
+    {
+      "path": "hash.js",
+      "sha256": "c5df5b7459ad610ee07e1793be3b3b38efbf0a65aeb22b03e2dd89026fed31a6"
+    },
+    {
+      "path": "index.html",
+      "sha256": "a696eed1a226a1a5ae3e93995485294a87791579325498229c75ae627e1aa0e6"
+    },
+    {
+      "path": "operator-journey-fixtures.mjs",
+      "sha256": "73cca7813dfdca430c66e76487efc60b91cbf4642bfcd93b96f6bad2a9314c38"
+    },
+    {
+      "path": "project-store.js",
+      "sha256": "2d6896f47164f4a232c631d949cce64d2200e6d4e2202c2c3cdb29b08648cdf2"
+    },
+    {
+      "path": "prompt-engine.js",
+      "sha256": "31489eaeffcd4f12696b473467c6be7e494e8e26a8eb64c4c8c69d18f215f94a"
+    },
+    {
+      "path": "response-ingestion.js",
+      "sha256": "be22dcb2f585410cf83e780a9cd24b175af3a08fffb18b327b5b1a3ed135fa92"
+    },
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d"
+    },
+    {
+      "path": "test-app-markup.mjs",
+      "sha256": "d72db0dc996779541d13f65aa2b8c42d9f744ac44a7e4837ce76d97fdfac369c"
+    },
+    {
+      "path": "test-artifact-fixtures.mjs",
+      "sha256": "d695e57716d9aef5ea7c5d96464ed9492ef036a4f759fff1b6147e0cae21c3b4"
+    },
+    {
+      "path": "test-fixtures.mjs",
+      "sha256": "fdcaa258f88be52f2b426785ac0fcdcd547392e702c33fbb0eb4823d9c2a711d"
+    },
+    {
+      "path": "test-handoff-authorization.mjs",
+      "sha256": "37bfb4e255afb6701fccaccdf055ee7961e838eaf03927c2963dfcf880cf82b6"
+    },
+    {
+      "path": "test-ingestion-context-reference.mjs",
+      "sha256": "10b58b712e3f39d774345f863d21103b87d10cbee7f27a9a91deebda3c859cb5"
+    },
+    {
+      "path": "test-project-store-runtime.mjs",
+      "sha256": "955fc63a1b7ae3ec7f8b71f36fd4d76d4ad8ee8fa0de2fa8d2697a66b1458eef"
+    },
+    {
+      "path": "test-reservation-scope-fixture.mjs",
+      "sha256": "cfe6f9fb9667170d311f971d79088bd7c44b14e00bb5d4f32a412c90e7554aff"
+    },
+    {
+      "path": "test-response-type-boundaries.mjs",
+      "sha256": "d9e1fb2c3b5783626fde66c501f90e746c9e4197746826c23a2e205fd6bf566b"
+    },
+    {
+      "path": "test-runtime.js",
+      "sha256": "e4e01a79c526592f9d044e2c104845e63c9aa341eb64837c138f5c3e3ecba353"
+    },
+    {
+      "path": "test-zip.mjs",
+      "sha256": "b5080a8e58eb7b13f421ecce5c63a3d95b765a5b021f5bd4543dce28d171e89d"
+    },
+    {
+      "path": "verification-evidence-catalog.mjs",
+      "sha256": "feedf2e728fca37acf303536dd55216389d591567c1ab89236a53aa0b2d19eed"
+    },
+    {
+      "path": "verification/normative-context-applicability-20261005.json",
+      "sha256": "7cd05ff0028578a1ca1c2560533519a602ce6a974c240ee11dbbd272524cf656"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-601ec85ffefcffd713520f4067f7529c-20261005.json",
+      "sha256": "ee776e48773502b267516f6f334fd0929c35537e51682469631cfe645506e5aa"
+    },
+    {
+      "path": "verification/stage01-retained-capture-legacy-fixture-20261005.json",
+      "sha256": "8352b036eca02dfd86bb441df4ea3fe0ea54b9ad6bcaaee9a000219ddfae09c5"
+    },
+    {
+      "path": "verifier-runtime.mjs",
+      "sha256": "8a4c9058b6c72a5aa8dd68809e3cbfd8e5c217b358c41970347443a338f83933"
+    },
+    {
+      "path": "verify-browser-extra.mjs",
+      "sha256": "810b3bdb953305876b91a1cdd56574e70a84520d178d053f3b6d1a363e7c2a79"
+    },
+    {
+      "path": "verify-file-first-operator.mjs",
+      "sha256": "1fe12b74371265804de8570b5ae54731cf3203f23f4e21b6f96f64ce68e6ebc2"
+    },
+    {
+      "path": "verify-handoff-authorization-ui.mjs",
+      "sha256": "1013ed85e4682b74e2b9c93459971aece451285293e43e7d2570b78f6e6af299"
+    },
+    {
+      "path": "verify-ingestion.mjs",
+      "sha256": "c6198175c0d9b0488fc6049026b222bc5e7c386a01ab5758a1b91ac8d405ce01"
+    },
+    {
+      "path": "verify-operator-action-lifecycle.mjs",
+      "sha256": "aae91bccc0e4b00ade4a25dfd16d634e069f96dad57a7d93d30b48055453eed5"
+    },
+    {
+      "path": "verify-reservation-contract.mjs",
+      "sha256": "8c26d4f085118e956af896460f5e05ad90398570736c0043a0a5378767721d86"
+    },
+    {
+      "path": "verify-response-contract-profile.mjs",
+      "sha256": "a925643310ee061f5de2e25481ab1a3e4bb4470d9fef4d5e58a1447ce9247ce6"
+    },
+    {
+      "path": "workbook.js",
+      "sha256": "3a8098a9bb4ea108eadaa9bec90c76a1522f57f6465f45341cedf60937ddd008"
+    },
+    {
+      "path": "workflow-engine.js",
+      "sha256": "b47195d41a130cb1b84425f5eb33bd8a163e1047c0e95e19eef59d47525e463d"
+    },
+    {
+      "path": "workflow-schema.js",
+      "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
+    },
+    {
+      "declarationSha256": "c09032a20ce65fc1a819e8489fd4ada0f0cd96027800a336baea06875180f09f"
+    }
+  ],
+  "findings": [],
+  "reviewPerformed": true,
+  "reviewCompletedAt": "2026-10-06T20:45:38.912205+00:00",
+  "sourceLocation": {
+    "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+    "startLine": 1445,
+    "endLine": 1445,
+    "lineSha256": "fc21d8ad8a0258d3eda21e4f343205d3e7d0dbfa37f19000d8d9db078c141f08"
+  },
+  "controllingText": "- stale run;",
+  "governingContext": [
+    {
+      "normativeRequirementId": "NREQ-6c392009e2925e9e3e3baaf1e42cbc93",
+      "sourceLineSha256": "a8a298876c99dfea0ed6a1c39c7a06c729213341e056ac22e85dc6ce6f53a8b0",
+      "controllingText": "17.5 Closed-schema rejection"
+    }
+  ],
+  "additionalControllingContext": [
+    {
+      "line": 1421,
+      "text": "The single ingestion path rejects before canonical mutation:",
+      "normativeRequirementId": "NREQ-f3c76d5b2691175b5c4f18f5b12f2892"
+    }
+  ],
+  "reviewedChecks": [
+    {
+      "suite": "verify-ingestion.mjs",
+      "checkId": "ingestion.scope-negative-population"
+    }
+  ],
+  "semanticDecision": "EXACT_TRANSPORT_SCOPE_REJECTION",
+  "reason": "Exact Section17.5 source clause requires rejection before canonical mutation. The shared production scope comparator checks all registered dimensions against the controlling prompt after noncoercing type validation; wrong-job uses exact current project identity. Current controls accept, literal typed stale controls reject at the intended dimension, and rejected preparations retain zero accepted changes. Scope union coverage is independently fixed at23 stage/key pairs over22 keys; no downstream reference-family, reservation lifecycle, operator, storage or stage-completion claim is inferred.",
+  "scopeLimit": "Machine transport identity boundary only; no universal agent semantic or reference-family guarantee.",
+  "actorIndependenceBoundary": "Actual renewal author /root/ci_delivery_audit and independent reviewer /root/stage_contract_audit are separate contexts. Root authored the scope test correction and does not independently approve these13 revised declarations.",
+  "reviewerPriorContributionDisclosure": "Read-only stage/contract audit and separate Stage17 graph-regression test contribution. No authorship of these13 declarations, current scope tests, production ingestion correction or new catalog scope consumer. Root authored scope test correction; CI agent authored catalog correction.",
+  "retainedReviewInputs": {
+    "proposal": {
+      "path": "/workspace/scratch/full-coverage-contracts-proposals.json",
+      "sha256": "890122bf31c612738f6bd7d9c994803656c02a7798994a7846f560f6cccb6fcc"
+    },
+    "priorSemanticReview": {
+      "path": "/workspace/scratch/independent-full-coverage-semantic-review-current45.json",
+      "sha256": "8b76d6c6c1425220853a1798090edf609fadde97ad840f2699e006b7ed2bb866"
+    }
+  },
+  "qualifiedExecutionAndReviewEvidence": [
+    {
+      "path": "/tmp/closed-loop-evidence/scope-complete-focused.log",
+      "sha256": "05d42c6af4eea778ccb54e54e45aa4ec4bdd2f6f9f90b61ef3cb1232c01a0e43",
+      "qualification": "Root-owned focused production ingestion assertions with synthetic prerequisites only; no full suite, file/storage/browser or current canonical receipt claim."
+    }
+  ],
+  "currentExecutionRequired": true,
+  "applicationConformanceClaim": false,
+  "priorReview": {
+    "path": "verification/requirement-coverage-NREQ-601ec85ffefcffd713520f4067f7529c-20261005.json",
+    "sha256": "ee776e48773502b267516f6f334fd0929c35537e51682469631cfe645506e5aa",
+    "author": {
+      "actor": "Codex declaration author",
+      "contextId": "/root/contracts"
+    },
+    "reviewer": {
+      "actor": "Codex independent declaration reviewer",
+      "contextId": "/root/independent_spec"
+    },
+    "reviewCompletedAt": "2026-10-05T17:00:42.227Z",
+    "declarationSha256": "5c5f11290f777aec297dd5d6564de1b588ee37e94c751621c54fd2d3638ae9f5"
+  },
+  "currentDependencyReconciliation": {
+    "classification": "DIRECT_PRODUCTION_OWNER_CHANGED",
+    "priorStaleInputs": [
+      "response-ingestion.js",
+      "test-fixtures.mjs",
+      "test-ingestion-context-reference.mjs",
+      "test-project-store-runtime.mjs",
+      "verification-evidence-catalog.mjs",
+      "verify-ingestion.mjs",
+      "workflow-schema.js"
+    ],
+    "newRequiredInputs": [
+      "test-response-type-boundaries.mjs",
+      "verification/stage01-retained-capture-legacy-fixture-20261005.json",
+      "app-core.js",
+      "test-project-store-runtime.mjs",
+      "test-fixtures.mjs",
+      "test-zip.mjs",
+      "operator-journey-fixtures.mjs",
+      "workflow-schema.js",
+      "workflow-engine.js",
+      "response-ingestion.js",
+      "prompt-engine.js",
+      "project-store.js",
+      "workbook.js",
+      "hash.js",
+      "verify-file-first-operator.mjs",
+      "verify-handoff-authorization-ui.mjs",
+      "test-app-markup.mjs",
+      "test-handoff-authorization.mjs"
+    ],
+    "changedProductionOwners": [
+      "response-ingestion.js",
+      "workflow-schema.js"
+    ],
+    "changedDirectSuiteFiles": [
+      "verify-ingestion.mjs"
+    ],
+    "priorDeclarationSha256": "5c5f11290f777aec297dd5d6564de1b588ee37e94c751621c54fd2d3638ae9f5",
+    "currentDeclarationSha256": "c09032a20ce65fc1a819e8489fd4ada0f0cd96027800a336baea06875180f09f",
+    "declarationChanges": "Only production-owner SHA256 values are changed; all controlling clause text, governing context, obligation decomposition, expected outcomes, evidence kinds, named assertions, nonapplicability and scope remain exact for independent reassessment.",
+    "sourceReviewStatus": "ACTUAL_INDEPENDENT_REVIEW_COMPLETE_NO_EXECUTION_CLAIM",
+    "additionalDirectInputs": [
+      "test-runtime.js",
+      "verify-reservation-contract.mjs",
+      "verify-response-contract-profile.mjs",
+      "test-reservation-scope-fixture.mjs",
+      "index.html",
+      "verify-operator-action-lifecycle.mjs",
+      "verify-browser-extra.mjs"
+    ],
+    "finalSourceFreezeStatus": "EXACT_FINAL_INPUTS_APPROVED_WITH_CURRENT_EXECUTION_REQUIRED",
+    "finalIndependentEvidence": {
+      "packet": {
+        "path": "/tmp/closed-loop-evidence/13-transport-final-renewal-proposal-376a527f18da01b9943dee0e05f1785fe6f0017a9acdb789601050a1d2a78c8c.json",
+        "sha256": "376a527f18da01b9943dee0e05f1785fe6f0017a9acdb789601050a1d2a78c8c"
+      },
+      "semanticReview": {
+        "path": "/tmp/closed-loop-evidence/13-intake-scope-independent-review-528d99272744ebba46a8125c2784425a6da055fad022d2826ec9c078de36a1b1.json",
+        "sha256": "528d99272744ebba46a8125c2784425a6da055fad022d2826ec9c078de36a1b1"
+      },
+      "finalDependencyReview": [
+        {
+          "path": "/tmp/closed-loop-evidence/70-declarations-quarantine-catalog-rebind-c08296767625709ae2665fd63eb61123eec14c5cf07577b6f813c829e22ee0ca.json",
+          "sha256": "c08296767625709ae2665fd63eb61123eec14c5cf07577b6f813c829e22ee0ca"
+        },
+        {
+          "path": "/tmp/closed-loop-evidence/13-transport-final-dependency-approval-edc874c48ac37b98ee82065f45cdc38b8e888236780c71ee0c90553ae5dfaa7b.json",
+          "sha256": "edc874c48ac37b98ee82065f45cdc38b8e888236780c71ee0c90553ae5dfaa7b"
+        }
+      ]
+    },
+    "finalDependencyFinding": "Independent exact final45-input reconciliation and actual retained7b147-to-fdcaa comment-only comparison. Existing13 narrow transport declaration semantics and named assertions unchanged; full current executed receipts remain required."
+  }
+}

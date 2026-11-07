@@ -47,8 +47,31 @@ assert(e.records(p,'proofObligations').every(row=>!e.recordValue(row,'SATISFACTI
 const unknown=obligation('UNKNOWN','Unclassified possible obligation.');reviewApplicabilityFixture(runtime,p);
 const unknownObligation=e.deriveProofObligations(p).records.find(row=>e.recordValue(row,'REQUIREMENT_ID')===unknown.req.id);
 assert(unknownObligation&&e.safe(e.recordValue(unknownObligation,'BLOCKING_REASONS')).includes('UNKNOWN_NORMATIVE_CLASS'),'Unknown possible-mandatory classification was silently reduced instead of blocked.');
+const obligationFor=proposition=>e.deriveProofObligations(p).records.find(row=>e.recordValue(row,'PROPOSITION_ID')===proposition.id);
+const initialDependencyObligation=obligationFor(ordinary.prop);
+assert(initialDependencyObligation&&initialDependencyObligation.stage===6&&initialDependencyObligation.source==='APPLICATION_DERIVED','Proof obligation was not application-derived at literal Stage 6.');
+assert(e.safe(e.recordValue(initialDependencyObligation,'REQUIRED_DEPENDENCY_IDS')).length===0,'Controlled proposition unexpectedly began with a required environment dependency.');
+const dependencyObligationId=initialDependencyObligation.id;
+const unrelatedDependency=rec('environmentDependencies',{DEPENDENCY_DESCRIPTION:'Unrelated controlled environment dependency.',PROPOSED_REQUIRED_CONDITION:'The unrelated proposition environment remains available.',TARGET_PROPOSITION_IDS:[conditional.prop.id]});
+const unrelatedDependencyObligation=obligationFor(ordinary.prop);
+assert(unrelatedDependencyObligation.id===dependencyObligationId,'An unrelated dependency replaced the controlled proposition obligation.');
+assert(e.safe(e.recordValue(unrelatedDependencyObligation,'REQUIRED_DEPENDENCY_IDS')).length===0,'An unrelated proposition dependency leaked into the controlled proposition obligation.');
+const unrelatedDependencySetHash=e.recordValue(unrelatedDependencyObligation,'PROOF_OBLIGATION_SET_HASH');
+const targetedDependency=rec('environmentDependencies',{DEPENDENCY_DESCRIPTION:'Controlled required environment dependency.',PROPOSED_REQUIRED_CONDITION:'The controlled proposition environment remains available.',TARGET_PROPOSITION_IDS:[ordinary.prop.id]});
+const targetedDependencyObligation=obligationFor(ordinary.prop);
+assert(targetedDependencyObligation.id===dependencyObligationId,'A dependency change replaced rather than recalculated the current proof obligation.');
+assert(JSON.stringify(e.safe(e.recordValue(targetedDependencyObligation,'REQUIRED_DEPENDENCY_IDS')))===JSON.stringify([targetedDependency.id]),'The recalculated proof obligation did not contain exactly the targeted current dependency.');
+assert(e.recordValue(targetedDependencyObligation,'PROOF_OBLIGATION_SET_HASH')!==unrelatedDependencySetHash,'A targeted dependency change did not change the proof-obligation set hash.');
+targetedDependency.active=false;e.refreshRecordHashes(targetedDependency,'environmentDependencies');
+const restoredDependencyObligation=obligationFor(ordinary.prop);
+assert(restoredDependencyObligation.id===dependencyObligationId,'Dependency removal replaced rather than recalculated the current proof obligation.');
+assert(e.safe(e.recordValue(restoredDependencyObligation,'REQUIRED_DEPENDENCY_IDS')).length===0,'An inactive dependency remained required by the recalculated proof obligation.');
+assert(e.recordValue(restoredDependencyObligation,'PROOF_OBLIGATION_SET_HASH')===unrelatedDependencySetHash,'Removing the targeted dependency did not restore the independently observed obligation-set hash.');
+
+const proofObligationDependencyRecalculation={schema:'closed-loop-proof-obligation-dependency-recalculation/1',status:'PASS',cases:['stage6-application-derived-initial-obligation','unrelated-dependency-excluded','targeted-dependency-recalculates-same-obligation','targeted-dependency-changes-set-hash','inactive-dependency-excluded','dependency-removal-restores-set-hash'],stage:6,source:'APPLICATION_DERIVED',synthetic:true,actualBrowser:false,persistenceExercised:false,fullClauseProof:false,boundary:'Synthetic in-memory production derivation for one current application-derived proposition: exact targeted environment dependency addition/removal, stable obligation identity and independently compared set-hash change/restoration. No persistence, browser, arbitrary dependency family, Stage 6 completion or whole-clause proof.'};
+
 const a=obligation('MANDATORY','Cycle A.'),b=obligation('MANDATORY','Cycle B.');set(a.req,'DEPENDENCIES',b.req.id);set(b.req,'DEPENDENCIES',a.req.id);e.refreshRecordHashes(a.req,'requirements');e.refreshRecordHashes(b.req,'requirements');reviewApplicabilityFixture(runtime,p);
 assert(e.gate(5,p).reasons.some(reason=>/Circular requirement dependency detected/.test(reason)),'Stage 05 did not block a circular requirement dependency.');
 for(const id of [a.req.id,b.req.id]){const row=p.projectData.requirements.find(item=>item.id===id);set(row,'DEPENDENCIES','');e.refreshRecordHashes(row,'requirements');}
 assert(!e.gate(5,p).reasons.some(reason=>/Circular requirement dependency detected/.test(reason)),'Stage 05 remained blocked after the circular dependency fixture was repaired.');
-console.log(JSON.stringify({semanticOperationBoundaries:'PASS',controllerStage:'17',applicationStage:'05',intentionalInvalidFixturesRejected:['missing-independent-applicability-review','self-review','unreconciled-disagreement','missing-reviewed-hashes','missing-activation-expression','changed-activation-contract','unsupported-normative-reduction','circular-dependency'],repairedPathProgressed:true,isolatedDisposableProject:true,reviewCommittedThroughProductionIngestion:true}));
+console.log(JSON.stringify({semanticOperationBoundaries:'PASS',proofObligationDependencyRecalculation,controllerStage:'17',applicationStage:'05',intentionalInvalidFixturesRejected:['missing-independent-applicability-review','self-review','unreconciled-disagreement','missing-reviewed-hashes','missing-activation-expression','changed-activation-contract','unsupported-normative-reduction','circular-dependency'],repairedPathProgressed:true,isolatedDisposableProject:true,reviewCommittedThroughProductionIngestion:true}));

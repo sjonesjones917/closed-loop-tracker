@@ -1,0 +1,195 @@
+{
+  "schema": "closed-loop-independent-ci-source-delta-review/1",
+  "reviewedAtUtc": "2026-10-10T06:43:53.678Z",
+  "integrationAuthor": {
+    "actor": "Codex CI repair integrator",
+    "contextId": "/root"
+  },
+  "decision": "SCOPED_SOURCE_DELTA_REVIEW_COMPLETE",
+  "reviewPerformed": true,
+  "source": {
+    "checkoutCommit": "970895f440f15ac7a869101c0441ef536a515462",
+    "includesUncommittedIntegration": true,
+    "identityAuthority": "Exact independently reviewed input hashes in the retained reports"
+  },
+  "independentReports": [
+    {
+      "originalPath": "/workspace/scratch/ingestion-order-independent-review.json",
+      "sha256": "0ab208284b117abfc9f86a138786d963a45c81620f89b06a3c53b42fb08314c9",
+      "report": {
+        "schema": "closed-loop-independent-ci-evidence-delta-review/1",
+        "reviewedAtUtc": "2026-10-10T06:38:33.138387+00:00",
+        "reviewer": {
+          "actor": "Codex independent ingestion scheduling source reviewer",
+          "contextId": "/root/comparison_failure"
+        },
+        "author": {
+          "actor": "Codex CI integrator",
+          "contextId": "/root"
+        },
+        "decision": "SCOPED_SOURCE_DELTA_REVIEW_COMPLETE",
+        "reviewPerformed": true,
+        "findings": [],
+        "independence": {
+          "reviewedExecutableChangesAuthoredByReviewer": false,
+          "reviewMetadataPreparedByReviewer": true,
+          "boundary": "Separate collaborator source review of three frozen scheduling/guard/test files; no human or external actor acceptance claim."
+        },
+        "source": {
+          "baselineCommit": "970895f440f15ac7a869101c0441ef536a515462",
+          "includesUncommittedReviewedExecutableChanges": true,
+          "identityAuthority": "Exact SHA-256 of reviewedInputs; checkout commit alone does not identify this candidate."
+        },
+        "reviewedInputs": [
+          {
+            "path": ".github/workflows/pages.yml",
+            "beforeSha256": "672ed097d02700d5c56c694b84cb7a2ff3713a4b926ef7d3cb1d08b9e6ed5cc8",
+            "sha256": "6a4be0e3a33d697272b9678703fb6e48f38420dade867dc8cf999305ff6660d6"
+          },
+          {
+            "path": "verified-site.mjs",
+            "beforeSha256": "4dbff6083f1bbff50968c6b75d3b771bbc4d7b3fb3d197a8e71657df0e0c7bc3",
+            "sha256": "6872dcd1e2bffee0383b252e953d328a2ea266b66a7d3b3f4eb531080dc3d697"
+          },
+          {
+            "path": "verify-verified-site.mjs",
+            "beforeSha256": "e074786f8fe89dc42c4ce0bac30b54f403c5830193285d7c54950a5b8c74bd3e",
+            "sha256": "1d9af82b616c8616ba9ea91d50726edf5701705e348a522bba94ab40d4ce7fc6"
+          }
+        ],
+        "assessment": {
+          "producerBeforeConsumer": "The core conformance step now runs the actual verify-ingestion.mjs producer before verify-conformance-regressions.mjs. Both run in the same checkout and preloaded environment with the same configured receipt directory and pinned Node22.23.3. The existing set -euo pipefail prevents producer failure from allowing the consumer to proceed. This satisfies the current ingestion receipt prerequisite enforced by unchanged verify-executed-evidence.mjs without inventing or relaxing receipt validation.",
+          "exactWorkflowGuard": "The deployment/reuse guard requires exactly one literal core-only ingestion command and its position before the conformance invocation. Missing producer, wrong group and late producer are individually exercised by newly added source mutation controls with their specific current-receipt ordering rejection.",
+          "unchangedRequirements": "All88 conformance suites, group population, existing mandatory CI dependencies, report/receipt handoff, current source fingerprint validation, proof reuse conditions, application behavior, assertion populations, existing negative controls and timeouts are unchanged. Creation and counterpart remain subject to their existing gates.",
+          "renewalScope": "Approve exact current source binding renewal for affected declarations while retaining prior obligation text, check decomposition, expected behavior, negative populations and independent semantic-review boundaries. This source scheduling review does not constitute a new whole-clause semantic assessment."
+        },
+        "limitations": {
+          "newTestsExecutedByReviewer": false,
+          "producerConsumerRunPerformedByReviewer": false,
+          "fullHostedCiPassed": false,
+          "actualDeviceAcceptanceClaimed": false
+        },
+        "supplements": [
+          {
+            "reviewedAtUtc": "2026-10-10T06:40:36.834426+00:00",
+            "reviewerContext": "/root/comparison_failure",
+            "previousReviewSha256": "a14e253d769794b052bfc8d8d05eaeb9d39f9b3b64068824c48102687eaf7011",
+            "path": "verify-verified-site.mjs",
+            "previousReviewedSha256": "8a252e8bb5f61e662b1491ddbb01240a538dc63cadd20406fd1843305bf8d45d",
+            "sha256": "616f2b5ffe4eaa9b4f6dd0cbedeb11eabd645507097607fb80888bd8e2358e82",
+            "decision": "SCOPED_SOURCE_DELTA_REVIEW_COMPLETE",
+            "findings": [],
+            "assessment": "The sole additional source delta changes the required Node setup population from four to five, matching the added conformance job and all five current exact 22.23.3 workflow pins. The existing assertion that every proof job select Node and the separate shared exact supported Node22 version assertion are preserved. No runtime pin, job, assertion or negative control is removed or relaxed. Previous reviewer attribution, ingestion ordering assessment, source renewal scope and execution limitations are retained."
+          },
+          {
+            "reviewedAtUtc": "2026-10-10T06:43:31.719458+00:00",
+            "reviewerContext": "/root/comparison_failure",
+            "previousReviewSha256": "94d0b685928d85af218c23646028bead0695479a8947c5f48771b96107b3a77b",
+            "path": "verify-verified-site.mjs",
+            "previousReviewedSha256": "616f2b5ffe4eaa9b4f6dd0cbedeb11eabd645507097607fb80888bd8e2358e82",
+            "sha256": "1d9af82b616c8616ba9ea91d50726edf5701705e348a522bba94ab40d4ce7fc6",
+            "decision": "SCOPED_SOURCE_DELTA_REVIEW_COMPLETE",
+            "findings": [],
+            "assessment": "The only additional changes repair existing assertions after the conformance group move. The prompt/full-cycle ordering mutation slices through the next current browser-step heading, preserving its same original swapped-block failure and specific order oracle. Browser and publication ordering assertions now reference the required Validate complete conformance handoff, whose complete successful group reports and current receipts are mandatory before browser work. The Require successful conformance groups gate joins the deferred gate in the always-run assertion branch: it must have no conditional skip, including artifact reuse. This strengthens the actual mandatory-gate check and does not remove any existing ordering mutation or assertion. The workflow and runtime proof logic are unchanged from the preceding reviewed candidate. Exact reverse substitution of these four source patterns reproduces the previous reviewed file hash. Prior ingestion/pin review attribution, renewal scope, and execution limitations are retained.",
+            "executionBoundary": "Integrator reports full verify-verified-site owner exit0 for this frozen candidate; reviewer performed source assessment only, without rerunning tests."
+          }
+        ]
+      }
+    }
+  ],
+  "affectedCoverage": [
+    {
+      "normativeRequirementId": "NREQ-bedc4564e47ae7ebf86911eb8426b6f0",
+      "reviewPath": "verification/requirement-coverage-NREQ-bedc4564e47ae7ebf86911eb8426b6f0-20261007-context-303caf90caff-54e18bc1f938.json",
+      "previousActiveReviewSha256": "69a159b07bd11d2dfb0f60a100993c4f5149136b63a82dcc697acbd6c32a130d",
+      "previousDeclarationSha256": "cb96e202197bf6b9bbb372b29286681453cc024428648ca7d49fac0e1ce3ede0",
+      "unchangedCheckIds": [
+        "acceptance.specification-identity"
+      ],
+      "changes": [
+        {
+          "path": ".github/workflows/pages.yml",
+          "beforeSha256": "672ed097d02700d5c56c694b84cb7a2ff3713a4b926ef7d3cb1d08b9e6ed5cc8",
+          "sha256": "6a4be0e3a33d697272b9678703fb6e48f38420dade867dc8cf999305ff6660d6"
+        },
+        {
+          "path": "verified-site.mjs",
+          "beforeSha256": "4dbff6083f1bbff50968c6b75d3b771bbc4d7b3fb3d197a8e71657df0e0c7bc3",
+          "sha256": "6872dcd1e2bffee0383b252e953d328a2ea266b66a7d3b3f4eb531080dc3d697"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-4b26e20f450b23eb551b2da03e69c9c9",
+      "reviewPath": "verification/requirement-coverage-NREQ-4b26e20f450b23eb551b2da03e69c9c9-20261007-context-07d6150a1321-54e18bc1f938.json",
+      "previousActiveReviewSha256": "6a7d5aa31878ad08699b87f4d2c9de4baafcbd6e62a66cf3217c8b96a3d63e93",
+      "previousDeclarationSha256": "53650ad7350ee396594c89dc1e8ad16f10a566849a82e2020bd106758b1fae47",
+      "unchangedCheckIds": [
+        "acceptance.specification-identity"
+      ],
+      "changes": [
+        {
+          "path": ".github/workflows/pages.yml",
+          "beforeSha256": "672ed097d02700d5c56c694b84cb7a2ff3713a4b926ef7d3cb1d08b9e6ed5cc8",
+          "sha256": "6a4be0e3a33d697272b9678703fb6e48f38420dade867dc8cf999305ff6660d6"
+        },
+        {
+          "path": "verified-site.mjs",
+          "beforeSha256": "4dbff6083f1bbff50968c6b75d3b771bbc4d7b3fb3d197a8e71657df0e0c7bc3",
+          "sha256": "6872dcd1e2bffee0383b252e953d328a2ea266b66a7d3b3f4eb531080dc3d697"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-befdab6cc6a4121936987a35fc18e1c9",
+      "reviewPath": "verification/requirement-coverage-NREQ-befdab6cc6a4121936987a35fc18e1c9-20261007-context-c8b0b09a87ad-54e18bc1f938.json",
+      "previousActiveReviewSha256": "3388fe68d09395411bf979764d69ead2a1beb404dc4235c0c66e4fde1b5b9798",
+      "previousDeclarationSha256": "010a5a82ee508d76cea8ed619f047e803fb79c81141b663f8b2d167b0d66fee7",
+      "unchangedCheckIds": [
+        "acceptance.registry-identity",
+        "deployment.registry-identities"
+      ],
+      "changes": [
+        {
+          "path": ".github/workflows/pages.yml",
+          "beforeSha256": "672ed097d02700d5c56c694b84cb7a2ff3713a4b926ef7d3cb1d08b9e6ed5cc8",
+          "sha256": "6a4be0e3a33d697272b9678703fb6e48f38420dade867dc8cf999305ff6660d6"
+        },
+        {
+          "path": "verified-site.mjs",
+          "beforeSha256": "4dbff6083f1bbff50968c6b75d3b771bbc4d7b3fb3d197a8e71657df0e0c7bc3",
+          "sha256": "6872dcd1e2bffee0383b252e953d328a2ea266b66a7d3b3f4eb531080dc3d697"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-a011968eff2ed2dc314d58ed27dfad88",
+      "reviewPath": "verification/requirement-coverage-NREQ-a011968eff2ed2dc314d58ed27dfad88-20261007-context-87882d5bae07-54e18bc1f938.json",
+      "previousActiveReviewSha256": "aa63634bc800a30a0238079510b7fba7fc4e160488fab48212942879f83679ad",
+      "previousDeclarationSha256": "d37c308eae79d5a227f6822c38bba15a2d410f4f421dd3feecb07e2ad992bba2",
+      "unchangedCheckIds": [
+        "acceptance.registry-identity",
+        "deployment.registry-identities"
+      ],
+      "changes": [
+        {
+          "path": ".github/workflows/pages.yml",
+          "beforeSha256": "672ed097d02700d5c56c694b84cb7a2ff3713a4b926ef7d3cb1d08b9e6ed5cc8",
+          "sha256": "6a4be0e3a33d697272b9678703fb6e48f38420dade867dc8cf999305ff6660d6"
+        },
+        {
+          "path": "verified-site.mjs",
+          "beforeSha256": "4dbff6083f1bbff50968c6b75d3b771bbc4d7b3fb3d197a8e71657df0e0c7bc3",
+          "sha256": "6872dcd1e2bffee0383b252e953d328a2ea266b66a7d3b3f4eb531080dc3d697"
+        }
+      ]
+    }
+  ],
+  "assessment": {
+    "scope": "Renew exact independently reviewed dependency and production-owner source hashes only. Preserve all existing controlling clauses, obligations, check decomposition, original independent semantic assessments and reviewer attribution. The core group now produces its required current ingestion receipt before the unchanged strict receipt consumer. Publication guards require core-only producer ordering. Existing workflow tests reference all five pinned proof jobs and the mandatory conformance handoff; all original ordering, negative controls, suite populations and validation remain. Current complete CI remains required.",
+    "integration": "Review metadata prepared by root from the retained independent collaborator records. This is not a new independent semantic review of all156 clauses, an executed receipt, or application acceptance."
+  },
+  "applicationConformanceEstablished": false,
+  "completeCiEstablished": false,
+  "physicalDeviceAcceptanceEstablished": false
+}

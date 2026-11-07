@@ -1,0 +1,10 @@
+{
+  "exact256InputSha256": "e7737acba378a2e376149859253fb3122f48853bd312161285b4d3ab9e239f3e",
+  "composed270Sha256": "7cd36c8544a66d2063f1f5553146e06f7a9f0b16726bfa0bc95ebc23e27a6aad",
+  "originalScopedRows": 243,
+  "reviewedSemanticRows": 13,
+  "unchangedCanonicalFullCoverageDeclarations": 14,
+  "arrayAndImplementationObjectsFullCoverageExcluded": true,
+  "schemaChecksWithoutReceipts": "UNKNOWN for all14;missing assertion evidence only",
+  "currentConformanceEstablished": false
+}

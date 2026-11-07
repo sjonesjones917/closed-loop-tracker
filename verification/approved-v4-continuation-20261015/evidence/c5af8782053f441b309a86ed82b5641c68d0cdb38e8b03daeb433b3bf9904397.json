@@ -1,0 +1,38 @@
+{
+  "schema": "closed-loop-additive-source-scope-successor/1",
+  "status": "FROZEN_ONE_EXACT_OMITTED_GOVERNOR_CORRECTION",
+  "records": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/coacceptance-scope-successor-001/per-id-reconciliation.json",
+    "sha256": "ac05bac55d284f8d01d6accdfb73b29351e87b89eb9c2bd55991604e0419f9f8",
+    "byteLength": 5382
+  },
+  "exactEvidence": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/coacceptance-scope-successor-001/shared-evidence.json",
+    "sha256": "fdbd286176e3724171030328f73b9b0c457945dc6b7289858985814f75e2a448",
+    "byteLength": 12496
+  },
+  "validation": {
+    "entryCount": 1,
+    "priorCurrentIdentityVerified": true,
+    "originalOccurrenceBindingCount": 8,
+    "originalOccurrenceEvidenceUnchanged": true,
+    "freshIdentityCount": 1,
+    "predecessorDispositionBefore": "CHANGED",
+    "predecessorDispositionAfter": "CHANGED",
+    "predecessorPopulationDelta": {
+      "RETAINED": 0,
+      "CHANGED": 0,
+      "BLOCKED": 0
+    },
+    "predecessorDenominator": 7486,
+    "proofPromoted": false
+  },
+  "mergeRule": "Require original predecessor index/id/hash and exact priorCurrentNormativeRequirementId plus priorCurrentEntryEvidence. Supersede only current candidate scope/identity with this declared CHANGED record. Preserve prior016 bytes, original proposition/occurrence bindings, prior A governor and independent human authority writer. Counts unchanged. Source review/proof never inherited.",
+  "previousBatchManifest": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-016-deliverable-manifest.json",
+    "sha256": "dd36cb06bf5bca6f1fc004c394a354bcf8a25ea4248b819c1e5a29cfa3aacbb7",
+    "byteLength": 5113
+  },
+  "sourceLedgerActivated": false,
+  "proofPromoted": false
+}

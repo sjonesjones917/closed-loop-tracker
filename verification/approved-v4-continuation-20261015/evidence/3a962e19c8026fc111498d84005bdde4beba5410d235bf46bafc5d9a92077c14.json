@@ -1,0 +1,62 @@
+{
+  "schema": "closed-loop-attributed-reference-edge-freeze/1",
+  "status": "FROZEN",
+  "outputs": [
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-003/chain-loader-v2.py",
+      "sha256": "75c044cb9c9a665288dd1e2e631664a5416017277c1e4f6a9b6940a6839db561",
+      "byteLength": 9786
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-003/completion-composite-governor-link.json",
+      "sha256": "ccf9f6cd3ab66373cd14b941c0f0fc1d1c401f03649f7e1f3a4cc956f25d99fe",
+      "byteLength": 2012
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-003/deferred-effective-governor-link.json",
+      "sha256": "51d16460052de0641646c9089a2bd2ea8ab52e2b883b3cae5172fd10b82fe362",
+      "byteLength": 10995
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-003/independent-scope-decisions.json",
+      "sha256": "57552f91d84984463d267b3cb3810666496c1d0d72379b4799335189e8ba997b",
+      "byteLength": 187674
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-003/per-entry-reconciliation.json",
+      "sha256": "83c69f771c4ba63b45f987d645ad022e3e4acda96c75db23a883d38564176529",
+      "byteLength": 711841
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-003/read-inventory.json",
+      "sha256": "4729aa6510457677d0534680e6d7bb2c110d8846baf2ca66af137480eccfa799",
+      "byteLength": 61356
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-003/reconcile.py",
+      "sha256": "34529ec2ef9499e35571da1c16ad27684e5abc6cb030c4ee35d9bfe5c1f8fce0",
+      "byteLength": 24120
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-003/reconciliation.json",
+      "sha256": "1ee98e9082491a94dee35c324a772b7d3512197a20183e676150d78257e77e92",
+      "byteLength": 3956
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-003/source-evidence.json",
+      "sha256": "25c32590e9c8aecba10ac28fa166096ed3d55704111988b23a29da8850791d8d",
+      "byteLength": 202829
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-003/validation.json",
+      "sha256": "948546c88729633120bd534728cdb8300b7a13780347d99335a15f07474cfecf",
+      "byteLength": 776
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-003/xml-effective-governor-link.json",
+      "sha256": "101e96ba58a52e2ce03fd48725753f225eb8b022bebc8dbb7b103ce598c10d7a",
+      "byteLength": 9047
+    }
+  ],
+  "sourceOnly": true
+}

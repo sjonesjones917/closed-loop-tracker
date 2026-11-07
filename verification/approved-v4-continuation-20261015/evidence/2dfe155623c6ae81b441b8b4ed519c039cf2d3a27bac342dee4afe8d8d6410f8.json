@@ -1,0 +1,37 @@
+{
+  "schema": "closed-loop-attributed-composite-source-resolution-custody-link/1",
+  "id": "V4-QUALIFIER-LINKAGE-009-COMPOSITE-6719",
+  "status": "LINKED_IN_ADDITIVE_CANDIDATE_SOURCE_GOVERNOR_SET_PENDING_EXPLICIT_COMPOSITE_CONSUMER_SUPPORT",
+  "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+  "governedPredecessorIndexes": [
+    6719
+  ],
+  "componentGovernors": [
+    {
+      "issueId": "SRC-GAP-DECODER-SUBSET",
+      "governorLink": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-009/decoder-effective-governor-link.json",
+        "sha256": "1181ceb497b1bfff8bc4dbccf3c51e956660f5333f45667ea62290522f6d57c2",
+        "byteLength": 12470
+      }
+    },
+    {
+      "issueId": "SRC-GAP-DEFERRED-BINDING",
+      "governorLink": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-009/deferred-effective-governor-link.json",
+        "sha256": "02e84c411b7e897845ac097872ad45992e0e440f538fcd4c65520a2f22b56312",
+        "byteLength": 11201
+      }
+    }
+  ],
+  "individualEffectiveScopeDecisions": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-009/independent-scope-decisions.json",
+    "sha256": "15828a8c735ea5a2d18da2806b667b9d01495072409012957b848876680ac35b",
+    "byteLength": 128374
+  },
+  "scopeRule": "Conjoin exactly the independently scoped actual issue edges for this predecessor. Neither substitutes for another, expands ordinary routes, or grants writer/executor authority.",
+  "identityRule": "The exact composite bytes and all pinned components are effective scope inputs. Never flatten into a singular issue or current source line.",
+  "sourceLedgerActivated": false,
+  "implementationAcceptance": false,
+  "proofPromoted": false
+}

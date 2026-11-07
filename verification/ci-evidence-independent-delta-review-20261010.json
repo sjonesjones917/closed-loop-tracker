@@ -1,0 +1,360 @@
+{
+  "schema": "closed-loop-independent-ci-evidence-delta-review/1",
+  "reviewedAtUtc": "2026-10-10T04:57:18Z",
+  "reviewer": {
+    "actor": "Codex independent CI evidence delta reviewer",
+    "contextId": "/root/evidence_review"
+  },
+  "author": {
+    "actor": "Codex consolidated CI repair integrator",
+    "contextId": "/root"
+  },
+  "decision": "SCOPED_SOURCE_DELTA_REVIEW_COMPLETE",
+  "reviewPerformed": true,
+  "findings": [],
+  "reviewKind": "Independent source-delta assessment preserving earlier narrow semantic coverage designs",
+  "independence": {
+    "reviewedExecutableChangesAuthoredByReviewer": false,
+    "reviewMetadataPreparedByReviewer": true,
+    "boundary": "Separate collaborator context reviewing the integrator and implementation-agent changes; no human, external real-agent execution, physical-device, or complete-system acceptance claim."
+  },
+  "source": {
+    "baselineCommit": "06e80b7e05bacc8f3a862518a2f1df5b29f09d90",
+    "currentCheckoutCommit": "f97e095723d33a10ebbec078d47586602b9d9908",
+    "includesUncommittedReviewedExecutableChanges": true,
+    "identityAuthority": "Exact SHA-256 of each reviewed source file below; the checkout commit alone does not identify the uncommitted candidate."
+  },
+  "reviewedInputs": [
+    {
+      "path": ".github/workflows/pages.yml",
+      "sha256": "13abf513018beffb97a8b51b778aae13b5b05b1f5fcced062985a53e22e632bb"
+    },
+    {
+      "path": "collect-verification-evidence.mjs",
+      "sha256": "1954c33089333e7195a078eb9871263ae042f595ad72a475d7a16d08060fb616"
+    },
+    {
+      "path": "verification-evidence.mjs",
+      "sha256": "1fa8705ab0951782d31d4136fcfb1f9be772fb9f6b9039627a32b527320ce972"
+    },
+    {
+      "path": "verified-site.mjs",
+      "sha256": "1f4b4178f49a0b82a21e27b5217ed0149e4aac38fb8cb8f717f6c8b55e752608"
+    },
+    {
+      "path": "verify-definition-of-done.mjs",
+      "sha256": "5edc6d0d0b83549ed5ebbc1b34d2364ae01583ca2e1b8c3122109163f7ea6351"
+    },
+    {
+      "path": "verify-infrastructure-route-closure.mjs",
+      "sha256": "a1f23b1c566c77c89de84f70c3c0cb116cc9611683753bb586020fd1b4b22cb9"
+    },
+    {
+      "path": "verify-specification-governance.mjs",
+      "sha256": "640ee2836b423b82cd088a6613be2582273962236989eff18ad5047e0e0caa71"
+    },
+    {
+      "path": "verify-v3-definition-of-done.mjs",
+      "sha256": "e6a76b428e800578d4975bb0ebc13b68b4a5c22db0716d90c86b80d8e581dd82"
+    },
+    {
+      "path": "test-due-verification-scheduling.mjs",
+      "sha256": "8c19acdfc3c72f2bcffec9df2603307d014d5f23e6d3034e0fb7769639a35282"
+    },
+    {
+      "path": "verify-verified-site.mjs",
+      "sha256": "f285ec3fb2d372d378166f3f2a08047c9610a3fc6e4bf64ac891aacaf0a684eb"
+    }
+  ],
+  "unchangedControls": [
+    {
+      "path": "verification-evidence-preload.mjs",
+      "sha256": "3c7835db4197c92c07dc83abae8f1f63bf1815d389d9f8392e08096093d92ffa"
+    },
+    {
+      "path": "verification-evidence-catalog.mjs",
+      "sha256": "f1aa5344f635d85140e476e3775a87f1e03e4d509eb4ad5260a9bf82a6eb03e3"
+    },
+    {
+      "path": "execution-report.mjs",
+      "sha256": "9995e43e7601a9956ec4918a8378c88d0586395902348a00e1b44126a0301306"
+    },
+    {
+      "path": "final-acceptance.mjs",
+      "sha256": "5f5187e5f8426d8681f4e88afbc2511ac08a5e3d1ca28fbae10d0632d147d4f2"
+    },
+    {
+      "path": "deployment-contract-identities.mjs",
+      "sha256": "f68c2aa2ae755ff856713af5ce7a4cc392b10131dd2976a76291b643056e334c"
+    },
+    {
+      "path": "verify-final-acceptance.mjs",
+      "sha256": "e21cea176e353bbadb0a98a5e7b344c0c11245019bb3830c564ad790981c1e41"
+    },
+    {
+      "path": "project-store.js",
+      "sha256": "79213ca03e60d7fe0b2b1c7d17c42a99158c063de8e25b88136bd8aed89650bb"
+    },
+    {
+      "path": "verify-quarantine-recovery.mjs",
+      "sha256": "16a10823e793b2023b59621ac688d94fe637c68cb454c5383219c49fe44f596d"
+    },
+    {
+      "path": "verify-integrity-recovery-faults.mjs",
+      "sha256": "9b5770fa7fb2bef7e20754cfefd54471d98bcfff5cbf0ec7facf1e85bee8a181"
+    },
+    {
+      "path": "verify-project-lifecycle.mjs",
+      "sha256": "4842f20f99c8663890ab6539bc6a8a69c3c6ba62c235e5c600abe1445715aa93"
+    }
+  ],
+  "activeCoverageRenewals": [
+    {
+      "normativeRequirementId": "NREQ-bedc4564e47ae7ebf86911eb8426b6f0",
+      "priorReview": {
+        "path": "verification/requirement-coverage-NREQ-bedc4564e47ae7ebf86911eb8426b6f0-20261007-context-303caf90caff-54e18bc1f938.json",
+        "sourceCommit": "f97e095723d33a10ebbec078d47586602b9d9908",
+        "sha256": "68bed395352a060e9929f572aa4b664650559a52447cc6a05a07c67562f192f7"
+      },
+      "priorDeclarationSha256": "1e901ed5baa6d5dc2fba6c5b6a5e98ca0af28e86a194638323988ba5885adefe",
+      "currentDeclarationSha256": "9948a464aed87f36c381716ac277310a8ade25366118269993e3e6b3f2b02156",
+      "unchangedCheckIds": [
+        "acceptance.specification-identity"
+      ],
+      "obligationTextAndCheckDecompositionChanged": false
+    },
+    {
+      "normativeRequirementId": "NREQ-4b26e20f450b23eb551b2da03e69c9c9",
+      "priorReview": {
+        "path": "verification/requirement-coverage-NREQ-4b26e20f450b23eb551b2da03e69c9c9-20261007-context-07d6150a1321-54e18bc1f938.json",
+        "sourceCommit": "f97e095723d33a10ebbec078d47586602b9d9908",
+        "sha256": "172425f8a4133bd393aa7b517c2e41e38892409162b31112e9caee2102cd7f9f"
+      },
+      "priorDeclarationSha256": "0dfbe9e677fbc83d9c60d82c10b875f26e477f5258039903a99f224fe86a1cb0",
+      "currentDeclarationSha256": "cf42be2fa15dc2045de8628dd9d79a29d028eee134016716a5bd6b6b1497a112",
+      "unchangedCheckIds": [
+        "acceptance.specification-identity"
+      ],
+      "obligationTextAndCheckDecompositionChanged": false
+    },
+    {
+      "normativeRequirementId": "NREQ-befdab6cc6a4121936987a35fc18e1c9",
+      "priorReview": {
+        "path": "verification/requirement-coverage-NREQ-befdab6cc6a4121936987a35fc18e1c9-20261007-context-c8b0b09a87ad-54e18bc1f938.json",
+        "sourceCommit": "f97e095723d33a10ebbec078d47586602b9d9908",
+        "sha256": "a2bab1c16a176ad3a94789d886fcb838a90a7b66d5bc11e7708a574052623936"
+      },
+      "priorDeclarationSha256": "c9774469a92eccd89bdaad3b0977c364c4c0f0619c742d155ab75cba545d6522",
+      "currentDeclarationSha256": "82bb466d8f04323c0d32f85a9c57e1f5f0b1ae50e9cd5a1f2a2fed87f1d550a5",
+      "unchangedCheckIds": [
+        "acceptance.registry-identity",
+        "deployment.registry-identities"
+      ],
+      "obligationTextAndCheckDecompositionChanged": false
+    },
+    {
+      "normativeRequirementId": "NREQ-a011968eff2ed2dc314d58ed27dfad88",
+      "priorReview": {
+        "path": "verification/requirement-coverage-NREQ-a011968eff2ed2dc314d58ed27dfad88-20261007-context-87882d5bae07-54e18bc1f938.json",
+        "sourceCommit": "f97e095723d33a10ebbec078d47586602b9d9908",
+        "sha256": "f239011c98a9a18542e2a1b60d1ab0e6fae887114a65afba7324c11058818ff1"
+      },
+      "priorDeclarationSha256": "35e62ec3950e0babd237aa60800e3e8d1fbe598c5d4be3ed69b2947ea15d5b5d",
+      "currentDeclarationSha256": "d74c0cd44e952e4d424a3659c622af8fd1c6be71669d3dc0cf2ae9aca05e7f09",
+      "unchangedCheckIds": [
+        "acceptance.registry-identity",
+        "deployment.registry-identities"
+      ],
+      "obligationTextAndCheckDecompositionChanged": false
+    },
+    {
+      "normativeRequirementId": "NREQ-c94c878ef2cf8c6a35b0985da91c0c85",
+      "priorReview": {
+        "path": "verification/requirement-coverage-NREQ-c94c878ef2cf8c6a35b0985da91c0c85-20261007-context-fe6c073ad55f-54e18bc1f938.json",
+        "sourceCommit": "f97e095723d33a10ebbec078d47586602b9d9908",
+        "sha256": "afd7d87bd98c3fc5839066cd18e6a7c40fd79e63aa7f01f56816e8d5d9fdec29"
+      },
+      "priorDeclarationSha256": "fe6c073ad55f40831bb495222406fb733cec2946ba3bf47c138039368d26cfe4",
+      "currentDeclarationSha256": "fe6c073ad55f40831bb495222406fb733cec2946ba3bf47c138039368d26cfe4",
+      "unchangedCheckIds": [
+        "store.hash-mismatch-quarantine",
+        "lifecycle.complete-report-population"
+      ],
+      "obligationTextAndCheckDecompositionChanged": false
+    },
+    {
+      "normativeRequirementId": "NREQ-ea453611a3a1f48cdd2fbfbe946d7ac7",
+      "priorReview": {
+        "path": "verification/requirement-coverage-NREQ-ea453611a3a1f48cdd2fbfbe946d7ac7-20261007-context-5fb3beeac070-54e18bc1f938.json",
+        "sourceCommit": "f97e095723d33a10ebbec078d47586602b9d9908",
+        "sha256": "cfa03ab5cde8cd69ae835e6d89efeaae4e78e80cd960e1ddc5c9c5a814de05cb"
+      },
+      "priorDeclarationSha256": "5fb3beeac0707949f4e79fdb066df755bc05fc30226fbea0a9fe1c8f7c83ede5",
+      "currentDeclarationSha256": "5fb3beeac0707949f4e79fdb066df755bc05fc30226fbea0a9fe1c8f7c83ede5",
+      "unchangedCheckIds": [
+        "recovery.quarantine-controlled-deletion",
+        "recovery.quarantine-body-delete-fault"
+      ],
+      "obligationTextAndCheckDecompositionChanged": false
+    }
+  ],
+  "assessment": {
+    "publicationIdentity": "The four Section 46.2 clauses retain the exact specification manifest path/digest, specification source commit/path, seven registry identities, and Test IR identities. specificationAcceptanceIdentity, readReleaseExecutedEvidence, applyExecutedEvidence, validateFinalNormativeProof, and final-acceptance comparisons retain their identity projections and rejection boundaries. Publication still reconciles current local/deployed evidence and retains physical/visual/freshness/final-acceptance gates.",
+    "collectorAndExport": "Collection rechecks a missing owner immediately before dispatch, requires the producer-owned receipt, and rereads final on-disk proof before aggregation. Read-only export uses current receipt validation, retains every ingestion report, selects one requested report marker, and rejects incompatible flags. Existing stale, failed, corrupt, focused, wrong-owner and foreign-commit evidence cannot authorize reuse.",
+    "reportConsumption": "Ordinary missing-owner execution remains available. Strict publication requires current registered receipts and blocks missing proof. The v3 mobile consumer retains all four assertions. Specification governance reuses the registered migration report and asserts PASS while preserving its separate governance work and unregistered response-profile child.",
+    "artifactPromotion": "Identical Git tree and authenticated successful PR/run/artifact selection remain prerequisites. The extracted proof promotion helper verifies the sealed proof-file set and bytes and current source inputs. Different runtime returns before any receipt copy, so the workflow performs fresh required verification; it does not alter historical runtime identity or promote incompatible proof.",
+    "workflowDiagnostics": "All four proof jobs pin the same exact Node 22.23.3. Deferred diagnostics include their hidden staging directory and deployed browser log globs match the actual output paths. Existing canonical deferred receipt artifact, required test check, failure propagation and environment boundaries remain.",
+    "quarantineClauses": "The two storage declarations retain their original deterministic quarantine/deletion obligations, production owner bytes, assertions, negative cases and proof boundaries. Their scheduling-helper dependency changes add collector/export/consumer controls without modifying the owned storage semantics or reducing the existing focused/fault receipt protections."
+  },
+  "inspectedExecutionEvidence": [
+    {
+      "path": "/tmp/workflow-verified-site-audit.out",
+      "sha256": "eefdf7239a442214cc815cee1785e86726362bdb56806d43a52e42ab966b0f0b",
+      "source": "Actual retained local execution output inspected by this reviewer; the reviewer did not execute these commands."
+    },
+    {
+      "path": "/workspace/scratch/ci-consolidated-local/scheduling.log",
+      "sha256": "fc4be35600c8d2d136ff3b3824c6a20f683f09b3450a1f3fe7073203412e1b95",
+      "source": "Actual retained local execution output inspected by this reviewer; the reviewer did not execute these commands."
+    },
+    {
+      "path": "/workspace/scratch/ci-collector-baseline-summary.json",
+      "sha256": "a5300c9bae5974555d7428046ce0854e1943eebf33d9e486e9f9df1f300cbf33",
+      "source": "Actual retained local execution output inspected by this reviewer; the reviewer did not execute these commands."
+    },
+    {
+      "path": "/workspace/scratch/external-result-published.stdout",
+      "sha256": "99d24184cf52f90bb9ee0900ea8d25ae8c9187c6226b9b92ee1eb37de0b1e24e",
+      "source": "Actual retained local execution output inspected by this reviewer; the reviewer did not execute these commands."
+    }
+  ],
+  "boundedResults": {
+    "verifiedSiteCases": 81,
+    "dueScheduling": "PASS",
+    "crossRunScheduling": "PASS",
+    "governanceConsumers": {
+      "sourceBoundGovernanceConsumers": true,
+      "results": [
+        {
+          "suite": "verify-mobile-release-governance.mjs",
+          "freshChildInvocations": 1,
+          "reuseChildInvocations": 0,
+          "fieldControls": [
+            {
+              "field": "mobileReleaseGovernance",
+              "mode": "missing",
+              "rejected": true,
+              "extraChildInvocations": 0
+            },
+            {
+              "field": "mobileReleaseGovernance",
+              "mode": "false",
+              "rejected": true,
+              "extraChildInvocations": 0
+            },
+            {
+              "field": "actualIPhoneRequiredForTag",
+              "mode": "missing",
+              "rejected": true,
+              "extraChildInvocations": 0
+            },
+            {
+              "field": "actualIPhoneRequiredForTag",
+              "mode": "false",
+              "rejected": true,
+              "extraChildInvocations": 0
+            },
+            {
+              "field": "unconditionalTagMutationDetected",
+              "mode": "missing",
+              "rejected": true,
+              "extraChildInvocations": 0
+            },
+            {
+              "field": "unconditionalTagMutationDetected",
+              "mode": "false",
+              "rejected": true,
+              "extraChildInvocations": 0
+            },
+            {
+              "field": "androidSubstitutionRejected",
+              "mode": "missing",
+              "rejected": true,
+              "extraChildInvocations": 0
+            },
+            {
+              "field": "androidSubstitutionRejected",
+              "mode": "false",
+              "rejected": true,
+              "extraChildInvocations": 0
+            }
+          ],
+          "staleReceiptRejectedWithoutFallback": true,
+          "strictMissingReceiptRejectedWithoutFallback": true,
+          "restoredCurrentReportAccepted": true
+        },
+        {
+          "suite": "verify-v3-migration.mjs",
+          "freshChildInvocations": 1,
+          "reuseChildInvocations": 0,
+          "fieldControls": [
+            {
+              "field": "verifyV3Migration",
+              "mode": "missing",
+              "rejected": true,
+              "extraChildInvocations": 0
+            },
+            {
+              "field": "verifyV3Migration",
+              "mode": "false",
+              "rejected": true,
+              "extraChildInvocations": 0
+            }
+          ],
+          "staleReceiptRejectedWithoutFallback": true,
+          "strictMissingReceiptRejectedWithoutFallback": true,
+          "restoredCurrentReportAccepted": true
+        }
+      ],
+      "synthetic": true,
+      "actualApplicationProof": false,
+      "actualIPhoneAcceptance": false
+    },
+    "collectorBaseline": [
+      {
+        "mode": "baseline",
+        "exitCode": 0,
+        "elapsedSeconds": 1.663,
+        "childInvocations": 2,
+        "receiptCount": 2,
+        "observationCount": 2,
+        "stderr": "",
+        "synthetic": true,
+        "actualApplicationSuiteExecuted": false
+      },
+      {
+        "mode": "just-in-time-receipt-control",
+        "exitCode": 0,
+        "elapsedSeconds": 1.321,
+        "childInvocations": 1,
+        "receiptCount": 2,
+        "observationCount": 2,
+        "stderr": "",
+        "synthetic": true,
+        "actualApplicationSuiteExecuted": false
+      }
+    ],
+    "externalResultOwner": "Published f97e095 owner output was inspected; it retains four stage families and all supported/negative outcome populations. This source file has no active coverage-review references and is outside the six renewals."
+  },
+  "limitations": {
+    "earlierIndependentSemanticAssessmentsRetained": true,
+    "newWholeClauseSemanticAssessmentClaimed": false,
+    "currentFrozenSourceExecutionStillRequired": true,
+    "fullCIRunCompletedByThisReview": false,
+    "currentRuntimeApplicationAssertionsExecutedByReviewer": false,
+    "actualIPhoneAcceptanceEstablished": false,
+    "applicationConformanceEstablished": false,
+    "hostedTimeSavingsMeasured": false,
+    "unrelatedPublishedFixtureCorrections": "The published cross-run anchor, projection recovery, and external-result fixture corrections are not added to these six narrow coverage claims."
+  }
+}

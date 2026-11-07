@@ -1,0 +1,2023 @@
+{
+  "schema": "closed-loop-compact-source-reconciliation-evidence/1",
+  "originalPredecessor": {
+    "role": "PREDECESSOR",
+    "path": "/workspace/shared/clrt-integration/verification/atomic-extraction-20261014/reconciliation.json",
+    "sha256": "1cc93c4e49e3e5530ee2a802314617f3aa07d5c72282ded6cd1da68570dac280",
+    "byteLength": 71701945
+  },
+  "originalLedger": {
+    "role": "LEDGER",
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+    "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+    "byteLength": 20401933
+  },
+  "originalOccurrences": {
+    "role": "OCCURRENCES",
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-occurrence-transport.json",
+    "sha256": "4157cda2f60669a2feba4c3021aa212f5bee00f4456a4e7a59d8e86da08a02d4",
+    "byteLength": 6309790
+  },
+  "proposal": {
+    "path": "/workspace/shared/clrt-v4-retained-impact-review/batch-008/per-id-decisions.json",
+    "sha256": "4e2986d9b86bb2bc71d219971befcb556d363a386bf4d74a9cd8fbc2601bc712",
+    "byteLength": 1546405
+  },
+  "sharedProposalReferenceTable": {
+    "path": "/workspace/shared/clrt-v4-retained-impact-review/batch-008/source-reference-table.json",
+    "sha256": "bab6084c9d1b697c0efcf4264fec3f1df180960b8eb34847f46a297497a688a4",
+    "byteLength": 838780
+  },
+  "sourcePassages": {
+    "BASE_SOURCE:292989:293011": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5321,
+      "endLine": 5321,
+      "startByte": 292989,
+      "endByte": 293011,
+      "sha256": "eee8c423ab3fe8e81caad57de4e5de944a7898ff1edcf515e00e63fb72831e07"
+    },
+    "BASE_SOURCE:293013:293050": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5323,
+      "endLine": 5323,
+      "startByte": 293013,
+      "endByte": 293050,
+      "sha256": "86176d44483a47ce4b30856e6cc400f898b9241d41211abbf293997ad2cb77d9"
+    },
+    "SUCCESSOR_SOURCE:122801:126361": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 1637,
+      "endLine": 1651,
+      "startByte": 122801,
+      "endByte": 126361,
+      "sha256": "1f02226ccf6e99fe0c9d31d773dd69ef747d08978cbf7a7a6b5cbcf3730bb190"
+    },
+    "SUCCESSOR_SOURCE:145511:149640": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 2041,
+      "endLine": 2051,
+      "startByte": 145511,
+      "endByte": 149640,
+      "sha256": "df9601b218510bd7992a22132ce98646d96313a8efaea3464e2a082e19bbb66e"
+    },
+    "SUCCESSOR_SOURCE:25996:53483": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 422,
+      "endLine": 495,
+      "startByte": 25996,
+      "endByte": 53483,
+      "sha256": "1edc5f5d721400425addba1c9dff124bb905532b9f27c2843b41d59afc9398dc"
+    },
+    "SUCCESSOR_SOURCE:149641:164021": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 2052,
+      "endLine": 2087,
+      "startByte": 149641,
+      "endByte": 164021,
+      "sha256": "9e838eac06445b2801b3af8e90d4ddd2993aa8b989b0a1364fd3e4c11cc1f6c9"
+    },
+    "SUCCESSOR_SOURCE:274758:278726": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 4055,
+      "endLine": 4066,
+      "startByte": 274758,
+      "endByte": 278726,
+      "sha256": "e7dea6d4e81c712bdd302094af708484b013f8921df3a74666d17e35d7b3a7dc"
+    },
+    "SUCCESSOR_SOURCE:88258:91453": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 1187,
+      "endLine": 1202,
+      "startByte": 88258,
+      "endByte": 91453,
+      "sha256": "f9af9a6cb894d615e75cdb1c289534b91e5601ded09308c8fa4ae413f5cc2481"
+    },
+    "SUCCESSOR_SOURCE:181854:185547": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 2524,
+      "endLine": 2552,
+      "startByte": 181854,
+      "endByte": 185547,
+      "sha256": "d64000e5157c61f1e96a5ae2527f294cfb8ba9273b336a0af55e73da6a46d8fc"
+    },
+    "BASE_SOURCE:293052:293108": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5325,
+      "endLine": 5325,
+      "startByte": 293052,
+      "endByte": 293108,
+      "sha256": "fb6731d9552eb27f385739fcb04b68de29636bee336337ae90bccacdec7bf3cd"
+    },
+    "BASE_SOURCE:293109:293165": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5326,
+      "endLine": 5326,
+      "startByte": 293109,
+      "endByte": 293165,
+      "sha256": "c21d62bbbbcbb90e094ae68a4993d4114ed5c2c060c179ec3fedc44f48a46329"
+    },
+    "BASE_SOURCE:293166:293222": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5327,
+      "endLine": 5327,
+      "startByte": 293166,
+      "endByte": 293222,
+      "sha256": "c4183f07bf76c348acfd4bf47e0b4c0c291068483626c2e766e564f3cdaf6786"
+    },
+    "BASE_SOURCE:293223:293279": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5328,
+      "endLine": 5328,
+      "startByte": 293223,
+      "endByte": 293279,
+      "sha256": "1c3563fed4d5c5d80148da638b111feb2a27dd8b1a423d96179706a7b1bf1d74"
+    },
+    "BASE_SOURCE:293280:293336": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5329,
+      "endLine": 5329,
+      "startByte": 293280,
+      "endByte": 293336,
+      "sha256": "cbf7f56fc645cc71f155c8a3e4c4f205aa6953605a9c973cd38c5b9b86137639"
+    },
+    "BASE_SOURCE:293337:293393": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5330,
+      "endLine": 5330,
+      "startByte": 293337,
+      "endByte": 293393,
+      "sha256": "362bd89be18bca5277a62319d16322adc1876778099920d8a32e590c0ee25e80"
+    },
+    "BASE_SOURCE:293394:293450": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5331,
+      "endLine": 5331,
+      "startByte": 293394,
+      "endByte": 293450,
+      "sha256": "a5f4ca27b6e36075428bb98fd9532dc00b1bb912434b2218a83c3fae1e58a27b"
+    },
+    "BASE_SOURCE:293451:293507": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5332,
+      "endLine": 5332,
+      "startByte": 293451,
+      "endByte": 293507,
+      "sha256": "9c890acaa556096dd57d877fc78e23d5f840b9ba93e0c5dd9f4303dfe2526221"
+    },
+    "BASE_SOURCE:293508:293564": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5333,
+      "endLine": 5333,
+      "startByte": 293508,
+      "endByte": 293564,
+      "sha256": "4c66956424a001514a1d9764df84edcc536979573c1663681ce14d0e550dd353"
+    },
+    "BASE_SOURCE:293565:293621": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5334,
+      "endLine": 5334,
+      "startByte": 293565,
+      "endByte": 293621,
+      "sha256": "57e2801b89f8ad97b75a9acbe56fdce7972e2a7151b7a81fbcd49891f5fb6316"
+    },
+    "BASE_SOURCE:293622:293680": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5335,
+      "endLine": 5335,
+      "startByte": 293622,
+      "endByte": 293680,
+      "sha256": "f207f3b7c1022993e0617b569648f790e8996e79b574737fb8c2a0afaa419509"
+    },
+    "BASE_SOURCE:293681:293737": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5336,
+      "endLine": 5336,
+      "startByte": 293681,
+      "endByte": 293737,
+      "sha256": "e05092d9d60437b82d008342a086dfe2f15a7a42dbb9b78fb2ecda2a740f076b"
+    },
+    "BASE_SOURCE:293738:293794": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5337,
+      "endLine": 5337,
+      "startByte": 293738,
+      "endByte": 293794,
+      "sha256": "64c35d5423444d6593ca516e50cccf8778bf24310b4488d0609ee487b1a60f11"
+    },
+    "BASE_SOURCE:293795:293851": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5338,
+      "endLine": 5338,
+      "startByte": 293795,
+      "endByte": 293851,
+      "sha256": "738e5019fa6cfcc4b71f25e1a3f108b994a2af820645fc343f59787ee3d1d17a"
+    },
+    "BASE_SOURCE:293852:293908": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5339,
+      "endLine": 5339,
+      "startByte": 293852,
+      "endByte": 293908,
+      "sha256": "55ba18b68d536788dd0ebda14e11962a0bbc99cc38f5fe7166adab310f555096"
+    },
+    "BASE_SOURCE:293909:293965": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5340,
+      "endLine": 5340,
+      "startByte": 293909,
+      "endByte": 293965,
+      "sha256": "1ec623bf42e053e67bd69138e320ce2d9e121b46d19e0f5797832d24a0db1186"
+    },
+    "BASE_SOURCE:293966:294022": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5341,
+      "endLine": 5341,
+      "startByte": 293966,
+      "endByte": 294022,
+      "sha256": "f17407c511f82475f1d3edc2860cd6a9ef705d545fd33417ff0bcbedf7629228"
+    },
+    "BASE_SOURCE:294023:294079": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5342,
+      "endLine": 5342,
+      "startByte": 294023,
+      "endByte": 294079,
+      "sha256": "e13b254829185249f936ae547559b62ce9bb4efa192b92ff04b6a9167c08afb6"
+    },
+    "BASE_SOURCE:294080:294136": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5343,
+      "endLine": 5343,
+      "startByte": 294080,
+      "endByte": 294136,
+      "sha256": "109214bfdc806db6c8d64ee919316ef76fff5c15efdbc552d94563937e034263"
+    },
+    "BASE_SOURCE:294137:294193": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5344,
+      "endLine": 5344,
+      "startByte": 294137,
+      "endByte": 294193,
+      "sha256": "6cc0252daf1a11a1bf03ab8335c191665125ecaa06c8ab3c35baf452059e7ec1"
+    },
+    "BASE_SOURCE:294194:294250": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5345,
+      "endLine": 5345,
+      "startByte": 294194,
+      "endByte": 294250,
+      "sha256": "7ddf26eacf7593524b56db5bc3597c49b900a84da7e964b0a3a260ab60bf6f3e"
+    },
+    "BASE_SOURCE:294251:294307": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5346,
+      "endLine": 5346,
+      "startByte": 294251,
+      "endByte": 294307,
+      "sha256": "aa391da0b7ab12e2eaf50b5946f98c997b8e1d2eefc28ff7be362dba0dd34ae9"
+    },
+    "BASE_SOURCE:294308:294364": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5347,
+      "endLine": 5347,
+      "startByte": 294308,
+      "endByte": 294364,
+      "sha256": "c01a1999fdd80143cf5da34452906b5473af732de4e243e49ff02b498d2868d0"
+    },
+    "BASE_SOURCE:294365:294421": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5348,
+      "endLine": 5348,
+      "startByte": 294365,
+      "endByte": 294421,
+      "sha256": "51f971f6b05444810926d6fa7d6e3a2007a2d576a1025424a61b24ff3c2a38fb"
+    },
+    "BASE_SOURCE:294422:294478": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5349,
+      "endLine": 5349,
+      "startByte": 294422,
+      "endByte": 294478,
+      "sha256": "d8eccb9fba23d554c7ae426e91f2cba4c6122631b23b92ae640ad409813a09fb"
+    },
+    "BASE_SOURCE:294479:294535": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5350,
+      "endLine": 5350,
+      "startByte": 294479,
+      "endByte": 294535,
+      "sha256": "83ddcdd034c313386afb2d0d33f057ae43d0e32ed1aadc669ec8c63b567cf3db"
+    },
+    "BASE_SOURCE:294536:294592": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5351,
+      "endLine": 5351,
+      "startByte": 294536,
+      "endByte": 294592,
+      "sha256": "a48914da77dcbd56ae7cacdb517ea480c86ec082c68115432db98b4ef9a05531"
+    },
+    "BASE_SOURCE:294593:294649": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5352,
+      "endLine": 5352,
+      "startByte": 294593,
+      "endByte": 294649,
+      "sha256": "b22ff39e4976d1ff18a553d662b6f4faf10f81cdedae30aca8229c3184c1ab66"
+    },
+    "BASE_SOURCE:294650:294706": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5353,
+      "endLine": 5353,
+      "startByte": 294650,
+      "endByte": 294706,
+      "sha256": "bec48384247310ac58cabfdd434934ddf61e5db0e1690472793be53b28099f84"
+    },
+    "BASE_SOURCE:294707:294763": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5354,
+      "endLine": 5354,
+      "startByte": 294707,
+      "endByte": 294763,
+      "sha256": "b797670e5cf72bedbc889868bcfc500958b603c98420edf1a0558ed1673a3fd2"
+    },
+    "BASE_SOURCE:294764:294820": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5355,
+      "endLine": 5355,
+      "startByte": 294764,
+      "endByte": 294820,
+      "sha256": "ace200d08d89f971941db84582b21e72cef422e99bca5476ba1acbf0813dd40e"
+    },
+    "BASE_SOURCE:294821:294877": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5356,
+      "endLine": 5356,
+      "startByte": 294821,
+      "endByte": 294877,
+      "sha256": "3633ce7801a66bbf37aff7326bff06becbcd77e6d019d810b246cc91a810c85c"
+    },
+    "BASE_SOURCE:294878:294934": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5357,
+      "endLine": 5357,
+      "startByte": 294878,
+      "endByte": 294934,
+      "sha256": "58d65dba3e6b4fe53ca514c3f15d476d1e2d855b97578fa4a0d4bf381f51c625"
+    },
+    "BASE_SOURCE:294935:294991": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5358,
+      "endLine": 5358,
+      "startByte": 294935,
+      "endByte": 294991,
+      "sha256": "3ee038fbf06b2a8b4ac106969a167084baa5a73891e4d0fee511d27f68266b2d"
+    },
+    "BASE_SOURCE:294992:295048": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5359,
+      "endLine": 5359,
+      "startByte": 294992,
+      "endByte": 295048,
+      "sha256": "42803818ef26ec0fb66ddf66d5a55fa02150ba51664374bc37f2d2ccf6470915"
+    },
+    "BASE_SOURCE:295050:295103": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5361,
+      "endLine": 5361,
+      "startByte": 295050,
+      "endByte": 295103,
+      "sha256": "f1806b241e5e2f9e83cfea8a8ba6251e1087a9d9fced09074f9b8e7ed26c4877"
+    },
+    "BASE_SOURCE:295104:295157": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5362,
+      "endLine": 5362,
+      "startByte": 295104,
+      "endByte": 295157,
+      "sha256": "18f9258ebb10053b4a0e9cf31f55d18af82753b94c6b0ed016fe954d6c5089b2"
+    },
+    "BASE_SOURCE:295158:295211": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5363,
+      "endLine": 5363,
+      "startByte": 295158,
+      "endByte": 295211,
+      "sha256": "448f0303f648759e37bb2c53883d52ce81765af9b6cc7cf1e18f3079728dea29"
+    },
+    "BASE_SOURCE:295212:295265": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5364,
+      "endLine": 5364,
+      "startByte": 295212,
+      "endByte": 295265,
+      "sha256": "908acf783c903b0a0de0a0d4580d9073457138437982c998a69f497f0f181e72"
+    },
+    "BASE_SOURCE:295266:295319": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5365,
+      "endLine": 5365,
+      "startByte": 295266,
+      "endByte": 295319,
+      "sha256": "b94aa09a24d96c14d18c672b0d2af98cc1199f3f9bfb1ffcae88a9e219670bfb"
+    },
+    "BASE_SOURCE:295320:295373": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5366,
+      "endLine": 5366,
+      "startByte": 295320,
+      "endByte": 295373,
+      "sha256": "eb01f02dabf0ef251c31a11c18dc65f65b22f62f669c2beb2e618dd5688121eb"
+    },
+    "BASE_SOURCE:295374:295427": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5367,
+      "endLine": 5367,
+      "startByte": 295374,
+      "endByte": 295427,
+      "sha256": "1738cd33a3d3fbfe5a2f69267855e68a265e0416336837de9687e801d445726d"
+    },
+    "BASE_SOURCE:295428:295481": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5368,
+      "endLine": 5368,
+      "startByte": 295428,
+      "endByte": 295481,
+      "sha256": "4034c9dbd40a4862cdc5c75c7e1d89c85f401c0ba12e95823300406019e7dc77"
+    },
+    "BASE_SOURCE:295482:295535": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5369,
+      "endLine": 5369,
+      "startByte": 295482,
+      "endByte": 295535,
+      "sha256": "201687651bf8a0cd301cacef47d7d91fb66e52f19c8e07ea00ab13d3b2275493"
+    },
+    "BASE_SOURCE:295536:295589": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5370,
+      "endLine": 5370,
+      "startByte": 295536,
+      "endByte": 295589,
+      "sha256": "1c3040582a42695435832ae7de65b80f05cdfe7a1e1e3beee47c589b795a3b27"
+    },
+    "BASE_SOURCE:295590:295643": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5371,
+      "endLine": 5371,
+      "startByte": 295590,
+      "endByte": 295643,
+      "sha256": "8db4800da1581797523a7687f69abf4166f3d2306682d7cbe82473c9a3212433"
+    },
+    "BASE_SOURCE:295644:295697": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5372,
+      "endLine": 5372,
+      "startByte": 295644,
+      "endByte": 295697,
+      "sha256": "65fc47e5044a2fbddb7146db13c3f5e5c87e9c8857d7774adaf292e0c59ec483"
+    },
+    "BASE_SOURCE:295698:295751": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5373,
+      "endLine": 5373,
+      "startByte": 295698,
+      "endByte": 295751,
+      "sha256": "698670d954fd166dc1649773f0a73408ff8065beeb4826dc3309ea853f5cd883"
+    },
+    "BASE_SOURCE:295752:295805": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5374,
+      "endLine": 5374,
+      "startByte": 295752,
+      "endByte": 295805,
+      "sha256": "84a1aa884a94bc6d0bf02d61cb591a2b45072bf6a017126ec6fff72ed561fd03"
+    },
+    "BASE_SOURCE:295806:295859": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5375,
+      "endLine": 5375,
+      "startByte": 295806,
+      "endByte": 295859,
+      "sha256": "849abe19e3ead428c617a3859eb833651949ee502a733da14ad7c0d62743bb19"
+    },
+    "BASE_SOURCE:295860:295913": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5376,
+      "endLine": 5376,
+      "startByte": 295860,
+      "endByte": 295913,
+      "sha256": "8c4f64e2c73306edbdc797dcd8aa4e53303b5d37846d14765f1313e11477fa26"
+    },
+    "BASE_SOURCE:295914:295967": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5377,
+      "endLine": 5377,
+      "startByte": 295914,
+      "endByte": 295967,
+      "sha256": "1d2a0da1750efd41d5f472c43236b0c2cea2ccbe21b05e94f7047cb0918f58b8"
+    },
+    "BASE_SOURCE:295968:296021": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5378,
+      "endLine": 5378,
+      "startByte": 295968,
+      "endByte": 296021,
+      "sha256": "00c29eb7b99f6cd8d702e439b9c7d1768f2f8a5789e6a8bfc45a665aa1f9b6ad"
+    },
+    "BASE_SOURCE:296022:296075": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5379,
+      "endLine": 5379,
+      "startByte": 296022,
+      "endByte": 296075,
+      "sha256": "0e18161def0314bb234db4201e04f23192b0d52e5d0a7a41abc9c8edaaf39fcd"
+    },
+    "BASE_SOURCE:296076:296129": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5380,
+      "endLine": 5380,
+      "startByte": 296076,
+      "endByte": 296129,
+      "sha256": "0118d262ea1f19e81d0f63c9cb8f0bda8282e169abc973292c68b01267297468"
+    },
+    "BASE_SOURCE:296130:296183": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5381,
+      "endLine": 5381,
+      "startByte": 296130,
+      "endByte": 296183,
+      "sha256": "21f31a6558375de04032499b24994c8e1c6a164f668fe6e16d8079bce6ea640f"
+    },
+    "BASE_SOURCE:296184:296237": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5382,
+      "endLine": 5382,
+      "startByte": 296184,
+      "endByte": 296237,
+      "sha256": "d08d14e969e47c774b12762d67c3c19e2020b6053d63c146847013ef068c0036"
+    },
+    "BASE_SOURCE:296238:296291": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5383,
+      "endLine": 5383,
+      "startByte": 296238,
+      "endByte": 296291,
+      "sha256": "84f2e18a750e5f4585700f31f6aedfa1d9f86ece05a16d9fc1b07989d53c8426"
+    },
+    "BASE_SOURCE:296292:296345": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5384,
+      "endLine": 5384,
+      "startByte": 296292,
+      "endByte": 296345,
+      "sha256": "9a94047f1a47fb70c2de07cab31a9580790bc7a50dfd17c4f3be8e3050983348"
+    },
+    "BASE_SOURCE:296346:296399": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5385,
+      "endLine": 5385,
+      "startByte": 296346,
+      "endByte": 296399,
+      "sha256": "2ab545072bb7f2be8fdc8904457e83aafd0356ab2e542ace3a3c5f20d7254e1d"
+    },
+    "BASE_SOURCE:296400:296453": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5386,
+      "endLine": 5386,
+      "startByte": 296400,
+      "endByte": 296453,
+      "sha256": "9fadc64d1509483e8d5f8af74d7f7411a95c149bb0d9bb90ffbf43df87f8e51a"
+    },
+    "BASE_SOURCE:296454:296507": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5387,
+      "endLine": 5387,
+      "startByte": 296454,
+      "endByte": 296507,
+      "sha256": "6b11dfa65a2b9f1a22a55d2d6f70a8063d71d58dcb2a893a2756f5529dab6b13"
+    },
+    "BASE_SOURCE:296508:296561": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5388,
+      "endLine": 5388,
+      "startByte": 296508,
+      "endByte": 296561,
+      "sha256": "5054fbb9e2a728e76edf0b45ef01b3b30dda3d187e3d7695c846c80063143eac"
+    },
+    "BASE_SOURCE:296562:296615": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5389,
+      "endLine": 5389,
+      "startByte": 296562,
+      "endByte": 296615,
+      "sha256": "f30810491539e8a7495bf30ea9cb678c43a4e1e4f8bf16366326bce863252e79"
+    },
+    "BASE_SOURCE:296616:296669": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5390,
+      "endLine": 5390,
+      "startByte": 296616,
+      "endByte": 296669,
+      "sha256": "50c981146fa26ccbee904c3108c8313ec1e614fd4d708b9a9e5cff731dc8aedb"
+    },
+    "BASE_SOURCE:296670:296723": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5391,
+      "endLine": 5391,
+      "startByte": 296670,
+      "endByte": 296723,
+      "sha256": "559f8af4bc71646c47e80f6b0274627be986881fde756ae7d9bba2ac70206046"
+    },
+    "BASE_SOURCE:296724:296777": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5392,
+      "endLine": 5392,
+      "startByte": 296724,
+      "endByte": 296777,
+      "sha256": "4260fc06fbce949e91005e281bf5f9caa3a134066a09d63b0ee2456f00e1129a"
+    },
+    "BASE_SOURCE:296778:296831": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5393,
+      "endLine": 5393,
+      "startByte": 296778,
+      "endByte": 296831,
+      "sha256": "9c3369cd46750e72d471609556efc2c4d5731e478a5dfa9427d7291a7577fd63"
+    },
+    "BASE_SOURCE:296832:296885": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5394,
+      "endLine": 5394,
+      "startByte": 296832,
+      "endByte": 296885,
+      "sha256": "f8d9ecbf299f939e9c80a9ff8f125bd196d6513e16873f3c46f93551483c3319"
+    },
+    "BASE_SOURCE:296886:296939": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5395,
+      "endLine": 5395,
+      "startByte": 296886,
+      "endByte": 296939,
+      "sha256": "b6f96ed9ce817cb08da62ccc3cc44d61668ab8063c8a1784c63100e268faaf3c"
+    },
+    "BASE_SOURCE:296940:296993": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5396,
+      "endLine": 5396,
+      "startByte": 296940,
+      "endByte": 296993,
+      "sha256": "8b4210a3d44f177fdfcdd25fed422821e78e65ec79499f94ab2ccd856fb6df5c"
+    },
+    "BASE_SOURCE:296994:297047": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5397,
+      "endLine": 5397,
+      "startByte": 296994,
+      "endByte": 297047,
+      "sha256": "e27eb8b032b2a48d6c7487d2367f8a56117f4ecc537b90c79ef16aedf1b5615f"
+    },
+    "BASE_SOURCE:297048:297101": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5398,
+      "endLine": 5398,
+      "startByte": 297048,
+      "endByte": 297101,
+      "sha256": "054abc9cc3e98c17e28eb15298c873326be96d3192b4ba1530e7a54309d8704a"
+    },
+    "BASE_SOURCE:297103:297521": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5400,
+      "endLine": 5400,
+      "startByte": 297103,
+      "endByte": 297521,
+      "sha256": "18e5db1d1a600de7b779dd5df6f8f923e1b002d69ee7af51bbf831cbe2663c3f"
+    },
+    "BASE_SOURCE:297523:298058": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5402,
+      "endLine": 5402,
+      "startByte": 297523,
+      "endByte": 298058,
+      "sha256": "19b5c72d03d511520e289de8e916372a11df40283b0d8ba52b270ad336f009d6"
+    },
+    "BASE_SOURCE:298060:298085": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5404,
+      "endLine": 5404,
+      "startByte": 298060,
+      "endByte": 298085,
+      "sha256": "68b9dfbd77da50992f72bb5db740ceaf1092e92b901cf9c1e562f9788829c175"
+    },
+    "BASE_SOURCE:298086:298113": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5405,
+      "endLine": 5405,
+      "startByte": 298086,
+      "endByte": 298113,
+      "sha256": "ee5a7e837e105c4a46d208623ccf57580653f090cf28d796c38e9852ffb9397c"
+    },
+    "BASE_SOURCE:298114:298143": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5406,
+      "endLine": 5406,
+      "startByte": 298114,
+      "endByte": 298143,
+      "sha256": "1d1e5a8f984186e1d01ca41739529f4e78631fc42d9409fa1963ebfc8ab61aae"
+    },
+    "BASE_SOURCE:298144:298173": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5407,
+      "endLine": 5407,
+      "startByte": 298144,
+      "endByte": 298173,
+      "sha256": "268a5c9dffa89dde4621926951534c31ed0d2d3b3647e5f94ecb1a7d75cac3d0"
+    },
+    "BASE_SOURCE:298174:298215": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5408,
+      "endLine": 5408,
+      "startByte": 298174,
+      "endByte": 298215,
+      "sha256": "c9d51b22b5f87e2db7dc75d2cca86fd59c3a710016208a05717b0307ae4f756c"
+    },
+    "BASE_SOURCE:298216:298250": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5409,
+      "endLine": 5409,
+      "startByte": 298216,
+      "endByte": 298250,
+      "sha256": "5b35b7f95c3c4a5adb5fd716e42482ac14198b18b97d2f9e1339e1628d82e3e2"
+    },
+    "BASE_SOURCE:298251:298285": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5410,
+      "endLine": 5410,
+      "startByte": 298251,
+      "endByte": 298285,
+      "sha256": "aaf73858c1afcc4b78db043884e7a26c405cf986a9e32118e43f079e249c9268"
+    },
+    "BASE_SOURCE:298286:298314": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5411,
+      "endLine": 5411,
+      "startByte": 298286,
+      "endByte": 298314,
+      "sha256": "7fd809fc689d8b2f8e87540b8350bd84edf55ca4f040404bc6e19a21b5ff802a"
+    },
+    "BASE_SOURCE:298315:298345": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5412,
+      "endLine": 5412,
+      "startByte": 298315,
+      "endByte": 298345,
+      "sha256": "e52c9482c9c967a349d4e37f2533c4ee5b1d846f359b58da83f3a77706fc9409"
+    },
+    "BASE_SOURCE:298347:298383": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5414,
+      "endLine": 5414,
+      "startByte": 298347,
+      "endByte": 298383,
+      "sha256": "109ed2094494eef3b573986bd8a952171c5cab4f420eb6042865e0cfd7770d5e"
+    },
+    "BASE_SOURCE:298384:298418": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5415,
+      "endLine": 5415,
+      "startByte": 298384,
+      "endByte": 298418,
+      "sha256": "68c1aa79d70783f9421194f2ba12175dca0286e8c85399ff3ad6ec8c66d3229e"
+    },
+    "BASE_SOURCE:298419:298450": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5416,
+      "endLine": 5416,
+      "startByte": 298419,
+      "endByte": 298450,
+      "sha256": "6988e2ca75192e8709721e96f88dee7aaf169c12cb9eefc5ceae9bf05a64d669"
+    },
+    "BASE_SOURCE:298451:298509": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5417,
+      "endLine": 5417,
+      "startByte": 298451,
+      "endByte": 298509,
+      "sha256": "b68ea0cd8fbda8e42193cd996e67330da855b2c22dced4a65e5edfdde2e1c88c"
+    },
+    "BASE_SOURCE:298510:298540": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5418,
+      "endLine": 5418,
+      "startByte": 298510,
+      "endByte": 298540,
+      "sha256": "145bcc84e04b519c2f7f1db3bcd4459453136e51795bbb8a9eda3ce2947b4fca"
+    },
+    "BASE_SOURCE:298541:298569": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5419,
+      "endLine": 5419,
+      "startByte": 298541,
+      "endByte": 298569,
+      "sha256": "ea980ba66429bf796e835c8cefde108d832a6c55831c57e77bc2b747d88bd3ca"
+    },
+    "BASE_SOURCE:298570:298627": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5420,
+      "endLine": 5420,
+      "startByte": 298570,
+      "endByte": 298627,
+      "sha256": "eb4c7f163fe238a72977e89a6a68b9ccd878d760481620e2dd94264126b2271e"
+    },
+    "BASE_SOURCE:298629:298655": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5422,
+      "endLine": 5422,
+      "startByte": 298629,
+      "endByte": 298655,
+      "sha256": "cd8222902dd71735d30964352ad9f820c561fb78a1d989ec322baf9938e8f7d5"
+    },
+    "BASE_SOURCE:298656:298675": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5423,
+      "endLine": 5423,
+      "startByte": 298656,
+      "endByte": 298675,
+      "sha256": "25419c4b14d9a537de33e8e477b4a8742db77f3a7ecc02a4df08ae0c905c7daa"
+    },
+    "BASE_SOURCE:298676:298702": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5424,
+      "endLine": 5424,
+      "startByte": 298676,
+      "endByte": 298702,
+      "sha256": "d96341eccd308f56dc073dcfc653e16c9e25ac3ceea738e840cda88a41e896a6"
+    },
+    "BASE_SOURCE:298703:298721": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5425,
+      "endLine": 5425,
+      "startByte": 298703,
+      "endByte": 298721,
+      "sha256": "de51ffb341f0e5cb82019b94e4d6316f66fa0f533073fab678127d5429f3ccd2"
+    },
+    "BASE_SOURCE:298722:298763": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5426,
+      "endLine": 5426,
+      "startByte": 298722,
+      "endByte": 298763,
+      "sha256": "54b83b718da1268837df56bc4536458fbef36ff10e86936cc52015b51b03a444"
+    },
+    "BASE_SOURCE:298764:298794": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5427,
+      "endLine": 5427,
+      "startByte": 298764,
+      "endByte": 298794,
+      "sha256": "083496aa22460a0d5ab6068b135a3cf23dd1d15ecdb779591beeef190160c068"
+    },
+    "BASE_SOURCE:298795:298860": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5428,
+      "endLine": 5428,
+      "startByte": 298795,
+      "endByte": 298860,
+      "sha256": "a93d62ea3d794213f368afd326acfd4308c244ee0951c25b9dd222003b254776"
+    },
+    "BASE_SOURCE:298862:298890": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5430,
+      "endLine": 5430,
+      "startByte": 298862,
+      "endByte": 298890,
+      "sha256": "a0aea548694a7bae6acb5c88a37ac41eb61c6c699cb599a02a2c6989ec5b372a"
+    },
+    "BASE_SOURCE:298891:298924": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5431,
+      "endLine": 5431,
+      "startByte": 298891,
+      "endByte": 298924,
+      "sha256": "5be468b350a8d709befeaaf2c1f46e049a1b63a03dd9f6c004d120155b34a5e0"
+    },
+    "BASE_SOURCE:298925:298961": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5432,
+      "endLine": 5432,
+      "startByte": 298925,
+      "endByte": 298961,
+      "sha256": "5b0ab3cb6959d08f983da1aca7cb29453e739a20b87e85fc89bef2d1170754f5"
+    },
+    "BASE_SOURCE:298962:299005": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5433,
+      "endLine": 5433,
+      "startByte": 298962,
+      "endByte": 299005,
+      "sha256": "4e0e9dbf829e6ca7463327505cee10781f6cda67c44f8cc3c683d92e5c8226f3"
+    },
+    "BASE_SOURCE:299006:299035": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5434,
+      "endLine": 5434,
+      "startByte": 299006,
+      "endByte": 299035,
+      "sha256": "127830134a1c65b99dcbbc7fc20508a24bfd16cd64834b215f1e3a622bf5fa49"
+    },
+    "BASE_SOURCE:299036:299064": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5435,
+      "endLine": 5435,
+      "startByte": 299036,
+      "endByte": 299064,
+      "sha256": "0a7b3e4fc0e8f67cf97e84cda02566ec48f7d7aac11b489f8d7bddb39bb8d2b2"
+    },
+    "BASE_SOURCE:299065:299094": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5436,
+      "endLine": 5436,
+      "startByte": 299065,
+      "endByte": 299094,
+      "sha256": "c4400a08f1c7aaedaf6900fcbe6c5ceda7e6066021a46870c877ffc8d4422e21"
+    },
+    "BASE_SOURCE:299095:299133": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5437,
+      "endLine": 5437,
+      "startByte": 299095,
+      "endByte": 299133,
+      "sha256": "441ca1a7c223b884ddf4a1ab2ade6cd7f6e46f6f187eb8ae77ab909e86ba1a96"
+    },
+    "BASE_SOURCE:299135:299174": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5439,
+      "endLine": 5439,
+      "startByte": 299135,
+      "endByte": 299174,
+      "sha256": "323569998ccdadc2adcf5234ce86e0ea796f5fd152d9b3cf40159435b94bea8e"
+    },
+    "BASE_SOURCE:299175:299212": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5440,
+      "endLine": 5440,
+      "startByte": 299175,
+      "endByte": 299212,
+      "sha256": "6ae90557fab5fd9f3cce4bf4831e43c25ded99af12d7b089bb1b394b3f4b7408"
+    },
+    "BASE_SOURCE:299213:299269": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5441,
+      "endLine": 5441,
+      "startByte": 299213,
+      "endByte": 299269,
+      "sha256": "930e37bbf54f9dfba66f7234615e95b88326fd91ed07a4d3cd7aca8ead59a3e8"
+    },
+    "BASE_SOURCE:299270:299317": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5442,
+      "endLine": 5442,
+      "startByte": 299270,
+      "endByte": 299317,
+      "sha256": "530f13aa7785c5af2e1e88b2ed84758477a90bc7b2915d3e97a6c2db905cba8f"
+    },
+    "BASE_SOURCE:299318:299353": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5443,
+      "endLine": 5443,
+      "startByte": 299318,
+      "endByte": 299353,
+      "sha256": "2120508085e00eae6f85149ecb7c53b4eeaa7b5999d2b21d4a3679b2f90986c8"
+    },
+    "BASE_SOURCE:299354:299379": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5444,
+      "endLine": 5444,
+      "startByte": 299354,
+      "endByte": 299379,
+      "sha256": "cb04f91cc596bfe95be70d9899c29b2b6b01ecf75755792e70457228cb4cb522"
+    },
+    "BASE_SOURCE:299380:299417": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5445,
+      "endLine": 5445,
+      "startByte": 299380,
+      "endByte": 299417,
+      "sha256": "18b2da386eb61fc648e244dd262df523b4264982203581ecc92f12baa4a0440b"
+    },
+    "BASE_SOURCE:299419:299432": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5447,
+      "endLine": 5447,
+      "startByte": 299419,
+      "endByte": 299432,
+      "sha256": "67fec1e7ecd02dd327b23412ff7658c3ea65b6b5281a87b9fe61e0aed40d7c31"
+    },
+    "BASE_SOURCE:299433:299488": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5448,
+      "endLine": 5448,
+      "startByte": 299433,
+      "endByte": 299488,
+      "sha256": "b8f3c442c7ee085c8ab0f4839bd3476afd026b4038d5a66acd2ed33a5dc6c468"
+    },
+    "BASE_SOURCE:299489:299539": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5449,
+      "endLine": 5449,
+      "startByte": 299489,
+      "endByte": 299539,
+      "sha256": "c7aaa515b75be8772d535a54f6706ee61f59da0e1f4d05ec1ec20bf41009cc7f"
+    },
+    "BASE_SOURCE:299540:299603": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5450,
+      "endLine": 5450,
+      "startByte": 299540,
+      "endByte": 299603,
+      "sha256": "f17deef691f94a151d94dcadc0b437245e82a47cfd5528209a341b555fb2a6a1"
+    },
+    "BASE_SOURCE:299604:299638": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5451,
+      "endLine": 5451,
+      "startByte": 299604,
+      "endByte": 299638,
+      "sha256": "594cbb357cde0aeb3a56ad0396036b9ff852ed9ad038552445b3bab2e01d4154"
+    },
+    "BASE_SOURCE:299639:299681": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5452,
+      "endLine": 5452,
+      "startByte": 299639,
+      "endByte": 299681,
+      "sha256": "1a1512c35bdbd555b8b7862d7799d6fffd235721177ef28b4866dff7baa98c47"
+    },
+    "BASE_SOURCE:299682:299725": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5453,
+      "endLine": 5453,
+      "startByte": 299682,
+      "endByte": 299725,
+      "sha256": "7cf82808793b38ee61bc3a5300335b76ef18e7e7400d13154dd56830603a1353"
+    },
+    "BASE_SOURCE:299726:299750": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5454,
+      "endLine": 5454,
+      "startByte": 299726,
+      "endByte": 299750,
+      "sha256": "d221159a5c50f55bccc0730ffe0f5f1b0a31262bc7e6f83ca9387be2f6ee3d31"
+    },
+    "BASE_SOURCE:299752:299765": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5456,
+      "endLine": 5456,
+      "startByte": 299752,
+      "endByte": 299765,
+      "sha256": "41c81e3fa172a9353b654a413f7623de5bd61d89e75f12676b3fc732ed11bc4e"
+    },
+    "BASE_SOURCE:299766:299831": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5457,
+      "endLine": 5457,
+      "startByte": 299766,
+      "endByte": 299831,
+      "sha256": "91fb6078574ba5b0bf44ef71602911ae003987e440a8dc41b52ea450426194d4"
+    },
+    "BASE_SOURCE:299832:299868": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5458,
+      "endLine": 5458,
+      "startByte": 299832,
+      "endByte": 299868,
+      "sha256": "5e4ba4b2ca9bad141a97d3bee3e32cd89db1fc67a22ab7d8080825b41c14b180"
+    },
+    "BASE_SOURCE:299869:299906": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5459,
+      "endLine": 5459,
+      "startByte": 299869,
+      "endByte": 299906,
+      "sha256": "f3d2136fa0c069b09f43c7b80b9d5004b3ab38f947f841abfd7476089f107826"
+    },
+    "BASE_SOURCE:299907:299942": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5460,
+      "endLine": 5460,
+      "startByte": 299907,
+      "endByte": 299942,
+      "sha256": "ae19fc6361db9375888b18cb10dbcd377d99f817c2572162705f7b96f4ae0eef"
+    },
+    "BASE_SOURCE:299944:299961": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5462,
+      "endLine": 5462,
+      "startByte": 299944,
+      "endByte": 299961,
+      "sha256": "e3ccc16651c8052af7a661f5ba0bf112c6a5a1f43385f84bb7f4bf3b327a0caf"
+    },
+    "BASE_SOURCE:299962:299990": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5463,
+      "endLine": 5463,
+      "startByte": 299962,
+      "endByte": 299990,
+      "sha256": "5042c391e7071ef1018cf580fc117f0b1dd19a4b4ce9819e940535b07fc1e3e8"
+    },
+    "BASE_SOURCE:299991:300018": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5464,
+      "endLine": 5464,
+      "startByte": 299991,
+      "endByte": 300018,
+      "sha256": "3344132b17a9fbe5d796cb61318d1050521e3ceb03914396e40ce24788cdc47f"
+    },
+    "BASE_SOURCE:300019:300050": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5465,
+      "endLine": 5465,
+      "startByte": 300019,
+      "endByte": 300050,
+      "sha256": "7f5f98adcbd03d2fd45f29a60dfc79d5e060efb79c1d7bc67d8fed25c4487b4c"
+    },
+    "BASE_SOURCE:300051:300087": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5466,
+      "endLine": 5466,
+      "startByte": 300051,
+      "endByte": 300087,
+      "sha256": "293cfd26ab1ebf7063d75be3168efcdf9e75f8ca533e73dff95e142e74656043"
+    },
+    "BASE_SOURCE:300088:300120": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5467,
+      "endLine": 5467,
+      "startByte": 300088,
+      "endByte": 300120,
+      "sha256": "fd6fcfd0d742ca864eed19ca5c1926b531c9d4b7a758f220083bab1daca7489f"
+    },
+    "BASE_SOURCE:300121:300175": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5468,
+      "endLine": 5468,
+      "startByte": 300121,
+      "endByte": 300175,
+      "sha256": "8af0a910516394dd40fc50653a370b9b1cad7e3407f5c16abe01c77ad637bd52"
+    },
+    "BASE_SOURCE:300176:300213": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5469,
+      "endLine": 5469,
+      "startByte": 300176,
+      "endByte": 300213,
+      "sha256": "b83c958ae5bd55a63613f54f884edce174082b14b53403bc4d99522c85c7fba1"
+    },
+    "BASE_SOURCE:300214:300243": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5470,
+      "endLine": 5470,
+      "startByte": 300214,
+      "endByte": 300243,
+      "sha256": "f98c4be2fa691c9425ab4c43aa1c56cc63c14cc10ebe9c6430e025a9d0a20178"
+    },
+    "BASE_SOURCE:300244:300289": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5471,
+      "endLine": 5471,
+      "startByte": 300244,
+      "endByte": 300289,
+      "sha256": "3179c6c591bad19d273de8307382e8c895cbef99486e0884e4583e2cf848a41b"
+    },
+    "BASE_SOURCE:300290:300335": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5472,
+      "endLine": 5472,
+      "startByte": 300290,
+      "endByte": 300335,
+      "sha256": "37312465cc0ceab9c740b3b8313bf4332ad45d5cedb28a1892edb95391d865e5"
+    },
+    "BASE_SOURCE:300337:300371": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5474,
+      "endLine": 5474,
+      "startByte": 300337,
+      "endByte": 300371,
+      "sha256": "9f1292654a990f262104b478ae8762fb4521543d568f9fdd8e4e305519050cd8"
+    },
+    "BASE_SOURCE:300373:300387": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5476,
+      "endLine": 5476,
+      "startByte": 300373,
+      "endByte": 300387,
+      "sha256": "3f4823e4800854166d5792351acb2b01aab0a473f70fddc973b2b1e68eb22bec"
+    },
+    "BASE_SOURCE:300388:300407": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5477,
+      "endLine": 5477,
+      "startByte": 300388,
+      "endByte": 300407,
+      "sha256": "d0fa3f3e7e9e60896dd1de8d1858e16a5436a8c9afc0ad12739cf17118ed5d57"
+    },
+    "BASE_SOURCE:300408:300428": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5478,
+      "endLine": 5478,
+      "startByte": 300408,
+      "endByte": 300428,
+      "sha256": "bc8e92ef9f62fbe80ebadda4356777b207c1f12515a5fc5cbf29de5bb7b50489"
+    },
+    "BASE_SOURCE:300429:300451": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5479,
+      "endLine": 5479,
+      "startByte": 300429,
+      "endByte": 300451,
+      "sha256": "8e1fd3779827e4e2440c3e35164558fb0d92ed931482485dfcf5ad962a0b579a"
+    },
+    "BASE_SOURCE:300452:300508": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5480,
+      "endLine": 5480,
+      "startByte": 300452,
+      "endByte": 300508,
+      "sha256": "5af087d5e30f99bf66a111dcbbba8b1c38daaacff3b5658a4987bb60cb16c6fb"
+    },
+    "BASE_SOURCE:300509:300540": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5481,
+      "endLine": 5481,
+      "startByte": 300509,
+      "endByte": 300540,
+      "sha256": "aa3abf135a98f6d97ce0b5c4d5afba411e9d733d11342258e92800cf1e932bb4"
+    },
+    "BASE_SOURCE:300541:300604": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5482,
+      "endLine": 5482,
+      "startByte": 300541,
+      "endByte": 300604,
+      "sha256": "47215f65d6378f92f9c7cd61ab23c2031591d4528d5ae8ccb6cdcdc401718004"
+    },
+    "BASE_SOURCE:300605:300625": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5483,
+      "endLine": 5483,
+      "startByte": 300605,
+      "endByte": 300625,
+      "sha256": "060468ea352bb6399461848da070c6622114cd84ae67dabd863cf2b65cd31d4c"
+    },
+    "BASE_SOURCE:300626:300635": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5484,
+      "endLine": 5484,
+      "startByte": 300626,
+      "endByte": 300635,
+      "sha256": "4a4d26899de2e7d34a9c6e7530b0289cae6e7120c8a277c431c5e3933165aacb"
+    },
+    "BASE_SOURCE:300636:300648": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5485,
+      "endLine": 5485,
+      "startByte": 300636,
+      "endByte": 300648,
+      "sha256": "25c8cb14d82a1ff46b4d132bd4823e1e558a8a8fc79600345e01484b71a077cf"
+    },
+    "BASE_SOURCE:300649:300700": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5486,
+      "endLine": 5486,
+      "startByte": 300649,
+      "endByte": 300700,
+      "sha256": "9f72d045ac0e11071f095592a56d19afee9a758c8fd56c01f04747d2cacefe26"
+    },
+    "BASE_SOURCE:300701:300735": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5487,
+      "endLine": 5487,
+      "startByte": 300701,
+      "endByte": 300735,
+      "sha256": "2cc4baf26f933ce71153fd4c7ba7f0c31ff740925e84ba039048cd27d9c4c59d"
+    },
+    "BASE_SOURCE:300736:300746": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5488,
+      "endLine": 5488,
+      "startByte": 300736,
+      "endByte": 300746,
+      "sha256": "6622d0fdd9d14c53ded4f72ecef2a1eaff4a0792b8bcff1290750a618a76ee38"
+    },
+    "BASE_SOURCE:300747:300757": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5489,
+      "endLine": 5489,
+      "startByte": 300747,
+      "endByte": 300757,
+      "sha256": "df6feb989c0599f6f445de7279a73ee217565ed000169af5a48be129cb035db7"
+    },
+    "BASE_SOURCE:300758:300766": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5490,
+      "endLine": 5490,
+      "startByte": 300758,
+      "endByte": 300766,
+      "sha256": "b1bed354fba1f280b7cc6530ef810808f4a99837b34b0ccb9708086a69d5703b"
+    },
+    "BASE_SOURCE:300767:300777": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5491,
+      "endLine": 5491,
+      "startByte": 300767,
+      "endByte": 300777,
+      "sha256": "33f6bb703bf6c3cac410c5ac2d463d45440ce77940aad8ab7041edf4586337f9"
+    },
+    "BASE_SOURCE:300778:300803": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5492,
+      "endLine": 5492,
+      "startByte": 300778,
+      "endByte": 300803,
+      "sha256": "94dc75545a2b949f97b38928248f7b50c7717dcd754d4d471e5db1fdeb5130bd"
+    },
+    "BASE_SOURCE:300804:300842": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5493,
+      "endLine": 5493,
+      "startByte": 300804,
+      "endByte": 300842,
+      "sha256": "ee369b2d6a5e802789859971f8bd32e021f722b1d93c3305689a164cfd4ad676"
+    },
+    "BASE_SOURCE:300843:300880": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5494,
+      "endLine": 5494,
+      "startByte": 300843,
+      "endByte": 300880,
+      "sha256": "c46167e4c862b2a22fc06f686518a0e897784dc83f001be9dbef986c2e31ce8b"
+    },
+    "BASE_SOURCE:300881:300910": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5495,
+      "endLine": 5495,
+      "startByte": 300881,
+      "endByte": 300910,
+      "sha256": "59ef07535adcb7a78b76e48f203ebf91363857f81ddc9d260c861932321724c1"
+    },
+    "BASE_SOURCE:300911:300938": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5496,
+      "endLine": 5496,
+      "startByte": 300911,
+      "endByte": 300938,
+      "sha256": "8031d7be80c5b10108a05c2982d0976eb78344cccc20dec09bfe2ee870f44ce5"
+    },
+    "BASE_SOURCE:300939:300970": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5497,
+      "endLine": 5497,
+      "startByte": 300939,
+      "endByte": 300970,
+      "sha256": "09357da1bd7b874f6b27b22d2aa342f90ca3abe68e40d2c9a3942401bd551065"
+    },
+    "BASE_SOURCE:300971:300994": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5498,
+      "endLine": 5498,
+      "startByte": 300971,
+      "endByte": 300994,
+      "sha256": "f34e24682e5be091a64225d842bfec311667746a31dd02d73de96214f3e43290"
+    },
+    "BASE_SOURCE:300995:301013": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5499,
+      "endLine": 5499,
+      "startByte": 300995,
+      "endByte": 301013,
+      "sha256": "47f04fb8f4a64c51ab6f3aec2dd76174358403ec02839abf4c50deb27f0d56c1"
+    },
+    "BASE_SOURCE:301014:301041": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5500,
+      "endLine": 5500,
+      "startByte": 301014,
+      "endByte": 301041,
+      "sha256": "b01b81f833f7f8edaa36438eb81666e0049d6aa18cc369aecfee250524429140"
+    },
+    "BASE_SOURCE:301042:301075": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5501,
+      "endLine": 5501,
+      "startByte": 301042,
+      "endByte": 301075,
+      "sha256": "2b4be8507b09ff12a221d10dea9c9ca5807a65c3ee6c0f11463cdd7316362c27"
+    },
+    "BASE_SOURCE:301076:301106": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5502,
+      "endLine": 5502,
+      "startByte": 301076,
+      "endByte": 301106,
+      "sha256": "af528a59d5b179f839533abe30f6de7696027e643a816a2ba0932569449fc396"
+    },
+    "BASE_SOURCE:301107:301136": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5503,
+      "endLine": 5503,
+      "startByte": 301107,
+      "endByte": 301136,
+      "sha256": "f5a320a3d28e8b73fea8be68bc0901904729641aa39ede18c25ba70ffcd8e192"
+    },
+    "BASE_SOURCE:301137:301184": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5504,
+      "endLine": 5504,
+      "startByte": 301137,
+      "endByte": 301184,
+      "sha256": "271b4ef5d78bbec64150d93ac41c3efa96442ba233137c37e102be90e93e702c"
+    },
+    "BASE_SOURCE:301185:301220": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5505,
+      "endLine": 5505,
+      "startByte": 301185,
+      "endByte": 301220,
+      "sha256": "bcc8aeb59c7c369fcb538a6102b87bd49961fecdd9f2db4c4022aa204d3e3368"
+    },
+    "BASE_SOURCE:306473:306547": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5617,
+      "endLine": 5617,
+      "startByte": 306473,
+      "endByte": 306547,
+      "sha256": "fc3acfa52043082cd6e74561bd23ee60e3df963b31e33686ba565d7aa6d105c9"
+    },
+    "BASE_SOURCE:306577:306597": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5620,
+      "endLine": 5620,
+      "startByte": 306577,
+      "endByte": 306597,
+      "sha256": "9d0a008735ce08ca0571374c823487f263162c0b3c599a274d6a00212c5f102d"
+    },
+    "BASE_SOURCE:306598:306609": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5621,
+      "endLine": 5621,
+      "startByte": 306598,
+      "endByte": 306609,
+      "sha256": "2d9dbb1905caef20be63cbf734413dc6d97458dececf69f959bc9806d2d62da6"
+    },
+    "BASE_SOURCE:306610:306634": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5622,
+      "endLine": 5622,
+      "startByte": 306610,
+      "endByte": 306634,
+      "sha256": "fcadca6561497250ea3f577e0070fc042bfa0140d769ae7bd3538b9e5ff08332"
+    },
+    "BASE_SOURCE:306635:306661": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5623,
+      "endLine": 5623,
+      "startByte": 306635,
+      "endByte": 306661,
+      "sha256": "d38c365b8f0c98782229663352e0c669c979cb4e12f50fbf2b196146e7f57002"
+    },
+    "BASE_SOURCE:306662:306705": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5624,
+      "endLine": 5624,
+      "startByte": 306662,
+      "endByte": 306705,
+      "sha256": "62fb0744a417e0ebcd25a8215eb4cbe9a02f53474ea2b4651c2af8f45723af40"
+    },
+    "BASE_SOURCE:306706:306722": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5625,
+      "endLine": 5625,
+      "startByte": 306706,
+      "endByte": 306722,
+      "sha256": "12a8d28937ba1e96fd49d203a6a79cdbb8cc44571f99318c4216186ceaf2ef6c"
+    },
+    "BASE_SOURCE:306723:306743": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5626,
+      "endLine": 5626,
+      "startByte": 306723,
+      "endByte": 306743,
+      "sha256": "f1e30c9b4be1c3fe811eeb5461e0a8185524bf4d0153354f7808fe52999f1d96"
+    },
+    "BASE_SOURCE:306744:306772": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5627,
+      "endLine": 5627,
+      "startByte": 306744,
+      "endByte": 306772,
+      "sha256": "79c89791207883c234fc9799ff8804c0502995cdfd6b443f7d012cedc3dbea9f"
+    },
+    "BASE_SOURCE:306773:306789": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5628,
+      "endLine": 5628,
+      "startByte": 306773,
+      "endByte": 306789,
+      "sha256": "d6ade0319e35bcbdeb3285729e0a090807c335bee833672aebbde506c4be7288"
+    },
+    "BASE_SOURCE:306790:306806": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5629,
+      "endLine": 5629,
+      "startByte": 306790,
+      "endByte": 306806,
+      "sha256": "ad65df6c6e6057b0c817d447f2b9cdfc2ac7751a788d6b6c92bfa732fc4a798b"
+    },
+    "BASE_SOURCE:306807:306839": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5630,
+      "endLine": 5630,
+      "startByte": 306807,
+      "endByte": 306839,
+      "sha256": "5e53fd7ceda3d1a4fc636347ea4ee8ea38526cf24ef1e9fe72fda7461c8f5f94"
+    },
+    "BASE_SOURCE:306840:306890": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5631,
+      "endLine": 5631,
+      "startByte": 306840,
+      "endByte": 306890,
+      "sha256": "da301e9c416caf5005f5c570293b5287bcf1de9c7ae0cf3aa7437aae392dea70"
+    },
+    "BASE_SOURCE:306891:306912": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5632,
+      "endLine": 5632,
+      "startByte": 306891,
+      "endByte": 306912,
+      "sha256": "31c41a58b21ff3c4d74278295c845c061ffd5661d5bcfbd7522c4b670ed833a9"
+    },
+    "BASE_SOURCE:306913:306925": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5633,
+      "endLine": 5633,
+      "startByte": 306913,
+      "endByte": 306925,
+      "sha256": "33f1ccf209d96e19353a9b42519f50ae583520d2cfadaa1919e9a45b39d042c0"
+    },
+    "BASE_SOURCE:306926:306944": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5634,
+      "endLine": 5634,
+      "startByte": 306926,
+      "endByte": 306944,
+      "sha256": "a0277b1d71411cd4cedbc74568694456f3032d00a779dad25448ab04f163e15f"
+    },
+    "BASE_SOURCE:306945:306972": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5635,
+      "endLine": 5635,
+      "startByte": 306945,
+      "endByte": 306972,
+      "sha256": "25f53ac7618ad1c2bffe9f2eb7611402beefa5b9f23a8b0fb19f1f555db2108f"
+    },
+    "BASE_SOURCE:306973:306983": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5636,
+      "endLine": 5636,
+      "startByte": 306973,
+      "endByte": 306983,
+      "sha256": "80ebdfbb38d6b76dc8444b3fc4755924d6d442252d10b1109d85f3df63bba48c"
+    },
+    "BASE_SOURCE:306985:307029": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5638,
+      "endLine": 5638,
+      "startByte": 306985,
+      "endByte": 307029,
+      "sha256": "2e48d7d97e50d3e1a0f8e87dcce0fd3fa5b0bf57819239aa35e747dc8f934199"
+    },
+    "BASE_SOURCE:307030:307171": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5639,
+      "endLine": 5639,
+      "startByte": 307030,
+      "endByte": 307171,
+      "sha256": "661103de367f60aa817065fd527470ea13968ab06edb678490a35bfe9716807b"
+    },
+    "BASE_SOURCE:307172:307303": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5640,
+      "endLine": 5640,
+      "startByte": 307172,
+      "endByte": 307303,
+      "sha256": "751bcb378abbb5c2782e55653ebf75ce9169a9b7c9f9aee2a3c6d7efc85dcb2d"
+    },
+    "BASE_SOURCE:307304:307434": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5641,
+      "endLine": 5641,
+      "startByte": 307304,
+      "endByte": 307434,
+      "sha256": "fa4cd70912f6d48bd45400251f711bbf34b9eb749b5612365056ce12fe1d18ee"
+    },
+    "BASE_SOURCE:307435:307526": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5642,
+      "endLine": 5642,
+      "startByte": 307435,
+      "endByte": 307526,
+      "sha256": "bc01f8652c65df19c74a5765faf48b6ebbbe6a454f4b7904ae1ba23fe5fea438"
+    },
+    "BASE_SOURCE:307527:307653": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5643,
+      "endLine": 5643,
+      "startByte": 307527,
+      "endByte": 307653,
+      "sha256": "4ea97bff95624c0d5c7d6e0be1df993b7b721a4bd7b01efbc3f88eaa44e46a72"
+    },
+    "BASE_SOURCE:307655:307943": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5645,
+      "endLine": 5645,
+      "startByte": 307655,
+      "endByte": 307943,
+      "sha256": "e65aba7a765a88c25c9fb0b7e2867683671ac711679029f8e17ff98fec3a7c27"
+    },
+    "BASE_SOURCE:307945:308234": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5647,
+      "endLine": 5647,
+      "startByte": 307945,
+      "endByte": 308234,
+      "sha256": "12b45cdcc5b5727cfca16972c59162081c874a1a681aeb073bed2dad64a4334c"
+    },
+    "BASE_SOURCE:308236:308568": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5649,
+      "endLine": 5649,
+      "startByte": 308236,
+      "endByte": 308568,
+      "sha256": "535c2d24a3fa5909766d6813a1cd96b893a2d7c9a1109dfa8e2db0dd278e0e6d"
+    },
+    "BASE_SOURCE:308570:308758": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5651,
+      "endLine": 5651,
+      "startByte": 308570,
+      "endByte": 308758,
+      "sha256": "39bf6478e61f3035f0509a3f1af51949585af7161632753b1b766ca8b00697ed"
+    },
+    "BASE_SOURCE:308760:309023": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5653,
+      "endLine": 5653,
+      "startByte": 308760,
+      "endByte": 309023,
+      "sha256": "20d1c04262fe84bd1b6f98674c252f303fa65c7c4fdf2ecfbd46bdab11412838"
+    },
+    "BASE_SOURCE:309025:309342": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5655,
+      "endLine": 5655,
+      "startByte": 309025,
+      "endByte": 309342,
+      "sha256": "e83e7c31112628af037a2331d5c5036c886bcf75b069d57291fa53f6b3c3aabe"
+    },
+    "BASE_SOURCE:309344:309480": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5657,
+      "endLine": 5657,
+      "startByte": 309344,
+      "endByte": 309480,
+      "sha256": "b52c93601fe856c7d7c9c0d7b3d465a6807492e6bcbdd32f40ac40aefc82fe0c"
+    },
+    "BASE_SOURCE:144019:144298": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 2709,
+      "endLine": 2716,
+      "startByte": 144019,
+      "endByte": 144298,
+      "sha256": "405da92c21225315c2b101a46ca9f855caca8d7bf7b96b830c413c4c367e67c1"
+    },
+    "BASE_SOURCE:298862:299133": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5430,
+      "endLine": 5437,
+      "startByte": 298862,
+      "endByte": 299133,
+      "sha256": "7b2991ba3e8b33116d504322ef04c6c6448fc6d9cc47d0547db7e8f2a186b450"
+    },
+    "BASE_SOURCE:300373:300540": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5476,
+      "endLine": 5481,
+      "startByte": 300373,
+      "endByte": 300540,
+      "sha256": "8c699e6118f3336eee982e91e06025633d79bfa2c3c7ae32f472cfc27303b498"
+    },
+    "BASE_SOURCE:91328:91945": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1523,
+      "endLine": 1533,
+      "startByte": 91328,
+      "endByte": 91945,
+      "sha256": "8b3a1034bfe0e4cfb5e89d69dbcdbb478c461e1d9a3566a206cbe0b5e3da677a"
+    },
+    "SUCCESSOR_SOURCE:26065:27236": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 424,
+      "endLine": 426,
+      "startByte": 26065,
+      "endByte": 27236,
+      "sha256": "601ed08598db2a118fa3feb9ce98b9ec46a1226120a4417a345ab3962f259be3"
+    },
+    "SUCCESSOR_SOURCE:122801:126360": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 1637,
+      "endLine": 1650,
+      "startByte": 122801,
+      "endByte": 126360,
+      "sha256": "97ac3a1f64ae1f0facc793723a2816c5a21bc69814b58fae25fd3dd703cbfc23"
+    }
+  },
+  "correctionAndBoundaryPassages": [
+    {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 2709,
+      "endLine": 2716,
+      "startByte": 144019,
+      "endByte": 144298,
+      "sha256": "405da92c21225315c2b101a46ca9f855caca8d7bf7b96b830c413c4c367e67c1",
+      "text": "These metrics expose:\n- unstable requirements;\n- unstable tests;\n- stochastic failure concentration;\n- novel-defect discovery by run;\n- unexplained variance.\n\nThey do not create new release thresholds unless existing convergence rules already require the corresponding condition."
+    },
+    {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5430,
+      "endLine": 5437,
+      "startByte": 298862,
+      "endByte": 299133,
+      "sha256": "7b2991ba3e8b33116d504322ef04c6c6448fc6d9cc47d0547db7e8f2a186b450",
+      "text": "For every ten-run iteration:\n- exactly ten current runs exist;\n- ten distinct valid contexts exist;\n- every run uses the same frozen candidate;\n- the complete matrix exists;\n- no self-validation exists;\n- stability values reconcile;\n- variance and defects remain visible."
+    },
+    {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 5476,
+      "endLine": 5481,
+      "startByte": 300373,
+      "endByte": 300540,
+      "sha256": "8c699e6118f3336eee982e91e06025633d79bfa2c3c7ae32f472cfc27303b498",
+      "text": "CREATE PROJECT\n→ RAW HUMAN INPUT\n→ STORE FILES ONCE\n→ CREATE RESERVATION\n→ EXPORT EXACT STAGE 01 PROMPT FILE AND REQUIRED FILES\n→ STAGE 01 HUMAN CONVERSATION"
+    },
+    {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1523,
+      "endLine": 1533,
+      "startByte": 91328,
+      "endByte": 91945,
+      "sha256": "8b3a1034bfe0e4cfb5e89d69dbcdbb478c461e1d9a3566a206cbe0b5e3da677a",
+      "text": "The human interacts conversationally.\nThe human MUST NOT be required to construct final-machine JSON during clarification.\n\nFor every stage:\n- the agent may ask genuinely human-only questions conversationally;\n- the agent must not ask for available facts again;\n- the agent must not ask for facts reliably obtainable from authorized materials or research;\n- later-discovered human-only decisions are asked at the stage where they become necessary;\n- one strict final JSON response file is returned only when the stage is ready.\n\nhumanInputRequests is the final structured fallback, not the normal conversation format."
+    },
+    {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 424,
+      "endLine": 426,
+      "startByte": 26065,
+      "endByte": 27236,
+      "sha256": "601ed08598db2a118fa3feb9ce98b9ec46a1226120a4417a345ab3962f259be3",
+      "text": "The unit universe is structural accounting. Retain the exact originating input and artifact bytes; no normalized projection replaces them or asserts inspection. Each unit binds the input version, supplied occurrence, exact structural location and source-value hash. Enumerate roots in their retained source occurrence order; within a structured value visit arrays in index order and object keys in unsigned Unicode-scalar order. A canonical mirror of the same originating field is visited only once, using the originating field; separately supplied equal values are separate occurrences.\n\nFor human text and string-valued structured human input, CRLF, CR and LF delimit physical lines. Retain original line positions. Emit each line containing a character other than U+0009–U+000D or U+0020; if a nonempty string has no such line, emit that entire string as one unit. Empty strings, null and absent scalar values emit no content unit. Other scalar leaves emit one unit retaining their declared type and value. Original blank lines and exact original text remain available to the mandatory semantic reader even when the line projection emits no separate blank-line unit."
+    },
+    {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 1637,
+      "endLine": 1650,
+      "startByte": 122801,
+      "endByte": 126360,
+      "sha256": "97ac3a1f64ae1f0facc793723a2816c5a21bc69814b58fae25fd3dd703cbfc23",
+      "text": "A. Insert after §18's unknown-key sentence: closed-loop-human-input-fallback/1\n\nhumanInputRequests is a required, non-null ordered array, empty allowed. Each item is a closed object with exactly these required properties: temporaryKey, question, whyRequired, affectedStageFields, affectedRecords, answerType, allowedValues; its only optional property is blocking. No item property is nullable. All strings preserve their supplied scalar values; nonblank means containing at least one character outside U+0009–U+000D and U+0020.\n\n- temporaryKey is a string matching ^[A-Za-z][A-Za-z0-9._:-]{0,119}$, unique across response record tempKey values and temporaryKey values in attachments, evidence, humanInputRequests and humanAuthorityCandidates. It is a response-local reference, not a canonical identity.\n- question and whyRequired are nonblank strings.\n- affectedStageFields is an ordered array of strings naming registered fields of this response's stage; affectedRecords is an ordered array of strings naming canonical families in this operation's registered read, agent-writable or application-owned set. Both arrays may be empty. These names identify affected context, not authority to write the named fields or families.\n- answerType is exactly one of the eight controls already listed in this section.\n- allowedValues is an ordered array of strings. CHOICE and MULTI_CHOICE require one or more unique nonblank strings, compared exactly. For other controls the array may be empty; its values have no answer-validation effect.\n- blocking is Boolean; absence normalizes to true. No other absent property receives a default. False only makes this particular fallback request optional and cannot waive any governing requirement, human authority, missing evidence or unresolved material uncertainty.\n\nAll item content is an AGENT proposal admitted only through the owning registered external operation. The APPLICATION owns canonical request identity, envelope-derived job/stage/operation/scope, currentness and lifecycle. Answers remain HUMAN values written only by SAVE_HUMAN_INPUT. These proposal fields share the envelope's §14.7 scope, have no migration default other than the expressly stated blocking default for an otherwise valid request, and are invalidated by the owning input/prompt lifecycle under §18; references above point from the request to its affected stage fields/families and grant no reverse ownership.\n\nFor SAVE_HUMAN_INPUT, an absent/null/empty-string answer, or an empty MULTI_CHOICE array, is unanswered; a blocking request rejects it. A nonmissing TEXT or LONG_TEXT answer is a nonblank string; BOOLEAN is Boolean; NUMBER is either a JSON safe integer other than negative zero, or a string rational:N/D where N is a nonzero signed base-10 integer with no plus or leading zeros, D is a positive base-10 integer with no leading zeros, and gcd(abs(N),D)=1. D=1 is permitted only when N is outside the JSON safe-integer range. Zero is represented only by JSON integer 0. Other strings and typed objects are rejected; saving preserves this canonical representation; CHOICE is one exact allowed string; MULTI_CHOICE is an ordered duplicate-free array of exact allowed strings; DATE is a valid Gregorian calendar date in four-digit YYYY-MM-DD form with year 0001–9999, validated without time-zone conversion; FILE_REFERENCE is one current canonical artifact ID in the same project. Optional unanswered requests confer no factual assertion. Successful saving has precisely the existing §18 invalidation and replacement consequences."
+    }
+  ],
+  "originalOccurrenceSetsUnchanged": true,
+  "amendmentClausesKeptSeparateFromOriginalOccurrences": true
+}

@@ -1,0 +1,306 @@
+{
+  "schema": "closed-loop-requirement-coverage-review/1",
+  "normativeRequirementId": "NREQ-971af7158d193e9b1d780c13b6c8e0ec",
+  "sourceLineSha256": "726c761ed6f54f1ec9a7d8ab6654f5e07507036d4e8070023fd5c5681d494a31",
+  "specificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+  "atomicObligationSha256": "2630d7786c628f0c573752967016fb6ba245dac357de1c63db127beab965b374",
+  "reviewedAtomicStatement": "The single ingestion path rejects before canonical mutation: wrong context signature.",
+  "contextSourceLocations": [
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "startLine": 1357,
+      "endLine": 1357,
+      "lineSha256": "a8a298876c99dfea0ed6a1c39c7a06c729213341e056ac22e85dc6ce6f53a8b0",
+      "controllingText": "17.5 Closed-schema rejection"
+    },
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "startLine": 1359,
+      "endLine": 1359,
+      "lineSha256": "d79d136180581dd41050286f4f83801fb731c7b2ceb4857985c292a1293a0f44",
+      "controllingText": "The single ingestion path rejects before canonical mutation:"
+    }
+  ],
+  "governingContext": [
+    {
+      "normativeRequirementId": "NREQ-6c392009e2925e9e3e3baaf1e42cbc93",
+      "sourceLineSha256": "a8a298876c99dfea0ed6a1c39c7a06c729213341e056ac22e85dc6ce6f53a8b0",
+      "controllingText": "17.5 Closed-schema rejection"
+    },
+    {
+      "normativeRequirementId": "NREQ-f3c76d5b2691175b5c4f18f5b12f2892",
+      "sourceLineSha256": "d79d136180581dd41050286f4f83801fb731c7b2ceb4857985c292a1293a0f44",
+      "controllingText": "The single ingestion path rejects before canonical mutation:"
+    }
+  ],
+  "declarationSha256": "5b6b234e0f2dde5edddade6004abf26808b6e8a9a5ff5b908213ea66b5a7e6b7",
+  "decision": "COMPLETE_COVERAGE",
+  "evidenceBasis": "EXTERNALLY_SUPPORTED",
+  "method": "Independently read the complete Section17 envelope/current prompt and17.5 rejection source with both structural governors, supporting17.6 raw-first separation and35.6 reservation transition rules; traced strictParse, validateEnvelopeWithDiagnostics, captureRaw, prepareCaptured, stageResponseFile/readStagedResponseFile, operational write/read and current reservation owners. The exact maintained Stage1 helper covers22 distinct invalid inputs with literal diagnostics, invalid/no-proposal controls, all five decoded duplicate forms, all six nonobject root types and all four prompt identity components. Its three conforming controls exercise ASCII escaped data, valid Unicode quotation data and exactly67108864 UTF-8 bytes;67108865 staged bytes fail before raw/proposal creation while retaining staged bytes/rejection receipt. The independent canonical snapshot covers every nonoperational project value and selected reservation binding/contentSha256 plus unrelated reservations. Operational fields are explicitly excluded only with separate old raw/audit-prefix, exact raw readback, gate/status/decision, source-input immutability and independent application-projection source/registry/input/output digest assertions. The positive pending-proposal output flag is broader than direct saved/read proposal assertions in this unchanged helper; this rejection-only review does not rely on that flag or claim proposal identity/status readback. The separately authored optional syntax patch is not integrated and is not evidence here. The reviewed9041129a composition preserves the exact eleven authored declarations. The actual unrelated raw-binding consumer and its six mutations moved to required final acceptance; the16 production admission/claim and3 fault controls plus33 report/discovery controls remain in ingestion. The partial native binding explicitly links the new final check. This makes removal of bindings from ingestion-local sourceInputs accurate while preserving full raw final/global execution fingerprints. Independently applied the relocation patch, checked exact40-case33+7 partition, executed the seven moved controls and24 independent catalog negatives, inspected author actual16+3+33 focused execution, and source-verified required default/CI/receipt collection dispatch. These checks establish this ownership correction only, not a full owning-suite receipt. This COMPLETE_COVERAGE decision certifies independently reviewed source/design adequacy for this exact atomic rejection proposition, not current execution. No current verify-ingestion receipt or eligible observation is available in this review. Actual aggregate-equivalent evaluator calls explicitly pass both governing contexts and an empty observation map; all eleven remain UNKNOWN. No receipt digest is inserted into source/review inputs. Current eligible owner execution against the final review-linked source fingerprint remains mandatory before CONFORMANT_PROVEN. Twelve stale-scope atoms remain withheld because acceptedChanges-only checks and synthetic unreserved fixtures do not establish complete before-mutation coverage.",
+  "author": {
+    "actor": "Ingestion coverage declaration author",
+    "contextId": "/root/repair_iteration_receipt_dependencies/author_ingestion_coverage_batch"
+  },
+  "reviewer": {
+    "actor": "Independent ingestion source and assertion reviewer",
+    "contextId": "/root/repair_iteration_receipt_dependencies/review_ingestion_coverage_batch"
+  },
+  "reviewedInputs": [
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883"
+    },
+    {
+      "path": "specification/closed-loop-normative-requirements.json",
+      "sha256": "4773f157f198781918b0fb9f20a696ad9d2b09dbea0120a9407ce0d24c96df5c"
+    },
+    {
+      "path": "specification/closed-loop-specification-manifest.json",
+      "sha256": "145100b0400cec823dca8ee8ee1678e6f9b58034e57e1894d2949308a82a8424"
+    },
+    {
+      "path": "specification/requirement-evidence-bindings.json",
+      "sha256": "cd5e2800f114801aacc2c194974088b37059c64013b8c5fbd02010c4d143774c"
+    },
+    {
+      "path": "review-specification-coverage.mjs",
+      "sha256": "fb836dd5c25049e6bd55677f7b5dfec5f4f4aea16679506b39754235421b066a"
+    },
+    {
+      "path": "verification-evidence.mjs",
+      "sha256": "6c3fc424b828bb7edbdda043f82116712e3870a0632c09b6adf795344948bf30"
+    },
+    {
+      "path": "verify-ingestion.mjs",
+      "sha256": "79e3d4f54b76cfbf9ede8b568ea76f0a445b9b8e90267f9507efe7bafd5ead18"
+    },
+    {
+      "path": "verification-evidence-catalog.mjs",
+      "sha256": "cb885d0686473be47b07fab05d2bbe5ee8de7a14c5f7f9e35fa919e4482e31c4"
+    },
+    {
+      "path": "test-response-type-boundaries.mjs",
+      "sha256": "ff8c0f99fd0100afac77c88e335db168e9dd88be343445ce261609c23f88bce2"
+    },
+    {
+      "path": "test-artifact-fixtures.mjs",
+      "sha256": "d695e57716d9aef5ea7c5d96464ed9492ef036a4f759fff1b6147e0cae21c3b4"
+    },
+    {
+      "path": "verification/stage01-retained-capture-legacy-fixture-20261005.json",
+      "sha256": "8352b036eca02dfd86bb441df4ea3fe0ea54b9ad6bcaaee9a000219ddfae09c5"
+    },
+    {
+      "path": "app-core.js",
+      "sha256": "38fad6b6170193b5675c4bf2c69374def1f735c100a51a5ac108489daa3b63b9"
+    },
+    {
+      "path": "test-project-store-runtime.mjs",
+      "sha256": "d5a2c93dde17700f524e4e1092e40ee1fdcd650d96022c6e56c117b601beeea0"
+    },
+    {
+      "path": "verifier-runtime.mjs",
+      "sha256": "051318fc24ea587ced6268d4a60278e5155e3fee8ed26309b28b532c921277f9"
+    },
+    {
+      "path": "test-fixtures.mjs",
+      "sha256": "cf29aa183e1f6079fb9ba0ec966a72dedc6a3dcf82549b5f7d154d087d2adda6"
+    },
+    {
+      "path": "test-zip.mjs",
+      "sha256": "b5080a8e58eb7b13f421ecce5c63a3d95b765a5b021f5bd4543dce28d171e89d"
+    },
+    {
+      "path": "operator-journey-fixtures.mjs",
+      "sha256": "de738c8e1d2a4b2b72105a8c8c592dc1bab16f548bec05ecadbfd5f75f251288"
+    },
+    {
+      "path": "workflow-schema.js",
+      "sha256": "626e51a6590e1bb19e6c4478a2531326daddceffabdb8ced225dbb4aa81deb1b"
+    },
+    {
+      "path": "workflow-engine.js",
+      "sha256": "1a0e0789abcb829c79dec4748dbaa0e90d2989d6d263ac3e6b6e1fcf26377d1f"
+    },
+    {
+      "path": "response-ingestion.js",
+      "sha256": "ea0c6d1798dfd3a5711bf96550b7a7d085d8374fdfdfaf5e694ee84b39ad28f9"
+    },
+    {
+      "path": "prompt-engine.js",
+      "sha256": "5d67f8096f91a1efc17ad6ce367dfa43ab5990ecaede9b52c9f12dcc34b41d20"
+    },
+    {
+      "path": "project-store.js",
+      "sha256": "be8a5b5f9a2ca7caa42024f2831447c38947fe099198c3303e7eb83e410965d0"
+    },
+    {
+      "path": "workbook.js",
+      "sha256": "11eff4fea42e47a5a70eafdc6b985d064ea2cdfe9a6feb72be6a74ec54c4b062"
+    },
+    {
+      "path": "hash.js",
+      "sha256": "bc1c486855fa2096623b560cfc44b7c5d9e263040546921eb00f54e7f38b7420"
+    },
+    {
+      "path": "verify-file-first-operator.mjs",
+      "sha256": "dd67495c65484e3da69e0fb05d517ab0a69649da0240fef9d5dee1e53fc205cc"
+    },
+    {
+      "path": "verify-handoff-authorization-ui.mjs",
+      "sha256": "27ec2eb22a9860c53e64319ae1f7d93b3d55b71a55a9cc1855a134c0178c3bc9"
+    },
+    {
+      "path": "test-app-markup.mjs",
+      "sha256": "f5b5b5ceac2981665fb4d8a91cc39cc6ad29004a9ad497e404e2bc9af59eb748"
+    },
+    {
+      "path": "test-handoff-authorization.mjs",
+      "sha256": "37bfb4e255afb6701fccaccdf055ee7961e838eaf03927c2963dfcf880cf82b6"
+    },
+    {
+      "path": "test-ingestion-syntax-transport.mjs",
+      "sha256": "42ac6486fd3d6333a560b23d953920c24d1934b5e18c25b474cd6e4418c6f070"
+    },
+    {
+      "path": "test-returned-attachment-boundaries.mjs",
+      "sha256": "895a14cef6cbfb7850ef485d7ec909c326b47916b01e97bf43da09002460a820"
+    },
+    {
+      "path": "test-ingestion-context-reference.mjs",
+      "sha256": "635648a2bb933a894892f98802ab234e9a2fbe5f4955273eb3a6d1bbfef04e66"
+    },
+    {
+      "path": "test-semantic-response-retries.mjs",
+      "sha256": "69032f44bf184202a47bd4029b68144f1801e34a8c6e34b2f354afcd9acf098d"
+    },
+    {
+      "path": "test-human-job-authority.mjs",
+      "sha256": "10c74d4810a355044ca2a5ceba55f67c20b2e0798ee267db17bf71ca98640afe"
+    },
+    {
+      "path": "test-human-job-controls.mjs",
+      "sha256": "ed5c7be79e2111667eeede3562115e396afaf0fc5d6a20236e668fe2c1ba7138"
+    },
+    {
+      "path": "test-runtime.js",
+      "sha256": "a9eadc5db096997c51540068fecddaa71dca221b7342eac703d243438a9d1c23"
+    },
+    {
+      "path": "test-inbound-response-archive.mjs",
+      "sha256": "22714bbfa1396b7dfc887f00a2a32cbb360beb135d4faddcff2f7c9b7b672a04"
+    },
+    {
+      "path": "verify-operator-action-lifecycle.mjs",
+      "sha256": "26a6ce05fe2701e41c3f47c14e7841c5da0bdb6878155b7bd00461cf11c34e4b"
+    },
+    {
+      "path": "test-backup-import-staging.mjs",
+      "sha256": "4a0073eedc1092ef2d673437f6ea789fd8ace4eb42d80e4b479fb72d28479e3f"
+    },
+    {
+      "path": "test-backup-staging-store.mjs",
+      "sha256": "c7ff5310cf4e55ef8df7a2636328767f70193157dfd5ee56395881ed84cd0fec"
+    },
+    {
+      "path": "test-response-staging-recovery-ui.mjs",
+      "sha256": "216a44b3c901f9df403473871004290b24428b9dc1e000e332d3ad56d97e1f68"
+    },
+    {
+      "path": "test-operator-safety-feedback.mjs",
+      "sha256": "a6e804b9b3f05952b6ceff89933b248b899dce50bed79039cb758998a4f91a45"
+    },
+    {
+      "path": "verify-conformance-regressions.mjs",
+      "sha256": "2117c526b9670de97b41c2103dfe6329302b36f48e6ca61261bd052c467846c1"
+    },
+    {
+      "path": "verify-retained-history-oracles.mjs",
+      "sha256": "a5b821d861295746c629fceedc52368ba98640e1d9231c1c149f36c6d26f18a6"
+    },
+    {
+      "path": "operator-browser-driver.mjs",
+      "sha256": "74bf92d2d68773320a97db0cdf8e3edfbfcf26a8059192bac111baac19a6f2f3"
+    },
+    {
+      "path": "test-backup-extension-byte-retention.mjs",
+      "sha256": "2cbc8722ccb29b8966b276e0336ecc2cae7122f99787d33dd78b15f926e30b2c"
+    },
+    {
+      "path": "test-backup-extension-binding-controls.mjs",
+      "sha256": "fad1ed3b079f84d284e7ca58686cec3c756f0b79caa96e74e3073d769f105c88"
+    },
+    {
+      "path": "test-manifest-record-backup.mjs",
+      "sha256": "cdb4466a95513ddb3f1a22b93f257c5172a826568d132394d283e64f0712e974"
+    },
+    {
+      "path": "test-handoff-authorization-transaction.mjs",
+      "sha256": "6b33b03deef336236709560f323419eb9e1b3591a6c9654507cee4c1c9653620"
+    },
+    {
+      "path": "verify-response-contract-profile.mjs",
+      "sha256": "a396e183dceca8723ce7c5819a405fda294288d8fbefab2bc3ba7755bcb78977"
+    },
+    {
+      "path": "test-response-physical-capacity.mjs",
+      "sha256": "2e4e3745361a6c687dd40df9819759de3281c8ed539ee4aae2f5200370c05964"
+    },
+    {
+      "path": "verify-reservation-contract.mjs",
+      "sha256": "a5beb78c239b96ea30077fdbf7c675f16005f99139fee92b5951ec3195f679a0"
+    },
+    {
+      "path": "test-reservation-scope-fixture.mjs",
+      "sha256": "cfe6f9fb9667170d311f971d79088bd7c44b14e00bb5d4f32a412c90e7554aff"
+    },
+    {
+      "path": "test-schema-reference-admission.mjs",
+      "sha256": "fe0ef2d96f6c36ba7b2d97ccdbdd80bbacfb01e62d0ba663a39b6325f1fe7f24"
+    },
+    {
+      "path": "test-schema-policy-runtime.mjs",
+      "sha256": "4c23530f9889cd1674c4dc3412737f32211b0f77b9e4e3ccd49a91a0b5a95a6c"
+    },
+    {
+      "path": "test-response-pending-authority-controls.mjs",
+      "sha256": "7132f26b7bf516859d4a17eee6701e174a3fbf1c2d5a064bac4948c95e6d9e77"
+    },
+    {
+      "declarationSha256": "5b6b234e0f2dde5edddade6004abf26808b6e8a9a5ff5b908213ea66b5a7e6b7"
+    }
+  ],
+  "reviewPerformed": true,
+  "reviewCompletedAt": "2026-10-15T02:22:47.605Z",
+  "reviewedCandidateCommit": "9041129a123c3ec7ccf8a06c0491f2759381a503",
+  "findings": [],
+  "sourceDesignAdequate": true,
+  "currentProducerExecuted": false,
+  "currentReceiptCreated": false,
+  "applicationConformanceClaim": false,
+  "authorProposalSha256": "625217f238f110419b17811d6cca5017bff3b9b82cdb55873e1e1158d8b4aacf",
+  "independentExpectedCases": [
+    {
+      "name": "stale context signature",
+      "expectedCode": "STALE_CONTEXT_SIGNATURE"
+    }
+  ],
+  "unreliedUponReportingOverstatement": {
+    "path": "test-ingestion-syntax-transport.mjs:174-177",
+    "field": "pendingProposalSavedAndReloaded",
+    "missingAssertion": "No direct saved/read proposal identity/status equality in the frozen helper; outside this rejection-only declaration.",
+    "optionalCorrectionIntegrated": false
+  },
+  "reviewSequencing": {
+    "sourceReviewBeforeCurrentReceipt": true,
+    "noFutureReceiptDigestInSourceInputs": true,
+    "currentEligibleReceiptRequiredForProof": true
+  },
+  "relatedSourceReviewEvidence": {
+    "relocationPatchSha256": "e3cb0182f775b2bed34b6b81ed27e3d6ac3c284c265a1d5b8953a0995316be7e",
+    "independentRelocationReviewSha256": "f80a968ab2601e343b5f1c336b4c42d78c85528f8952dbac75603c5554a5a15c",
+    "focusedRelocationOutcomeSha256": "a9eed1f8e821e78d2dba813a89047ea69b0fa412a4916555d7425b6ebbfd01ff",
+    "actualPriorContextDiagnosticSha256": "cff6c71077946e8e1e3b81bb2ba9495f7b80892f119ff39f73041d700e3c4020",
+    "sourceAuthorityUnchanged": true
+  }
+}

@@ -1,0 +1,299 @@
+{
+  "schema": "closed-loop-tail-reconciliation-correction/1",
+  "status": "PENDING_GLOBAL_ADOPTION",
+  "actorId": "/root/reconcile_tail_requirement_entries",
+  "inputs": [
+    {
+      "path": "/workspace/shared/clrt-atomic-reconciliation-tail.json",
+      "sha256": "20d437a1e012df7d81df83121398789aaa0def5a110a3bb1676330ecf8f64750"
+    },
+    {
+      "path": "/workspace/shared/clrt-controlling-part-b.txt",
+      "sha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883"
+    }
+  ],
+  "reason": "Historical identity review detected a line-number mistake in one equivalence edge. Neither current nor proposed value was omitted; the erroneous edge and source context must be replaced.",
+  "replaceEntries": [
+    {
+      "entryKind": "ATOMIC_OBLIGATION",
+      "sourceLocation": {
+        "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "startLine": 4090,
+        "endLine": 4090,
+        "lineSha256": "be28530d65997de6fb0094946fd43d8fe7e412856a00a2ee9969d74f1923a5d9"
+      },
+      "controllingText": "- current value;",
+      "atomicObligation": {
+        "key": "s39.proposal-diff.current-value",
+        "statement": "The normal proposal diff must show current value",
+        "sourceSpans": [
+          {
+            "startByte": 225366,
+            "endByte": 225382,
+            "text": "- current value;",
+            "sha256": "be28530d65997de6fb0094946fd43d8fe7e412856a00a2ee9969d74f1923a5d9"
+          }
+        ],
+        "contextSourceLocations": [
+          {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 3974,
+            "endLine": 3974,
+            "lineSha256": "1ab01ae83cd78704e028de0d1f6b8d07adaa063cf2d71a22aa4eb657b9514bd9",
+            "controllingText": "39. Operator interface"
+          },
+          {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 4083,
+            "endLine": 4083,
+            "lineSha256": "00f8cc75127116fb7401359749006d4da0a374d80914a6030a7d08e2c38e1f1e",
+            "controllingText": "39.7 Proposal review"
+          },
+          {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 4085,
+            "endLine": 4085,
+            "lineSha256": "5d3b529287aef7bddb3925311b1a9b2847b6146cad3780ca9439ff076f92840c",
+            "controllingText": "The normal proposal diff shows:"
+          },
+          {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 4096,
+            "endLine": 4096,
+            "lineSha256": "3eb6cc18c34717a7b0c0ac5ba9953f52718e34ac8dd25b24b14783d68f0d2881",
+            "controllingText": "The current-value column is mandatory."
+          }
+        ],
+        "sha256": "750039e49c32e202de617dfd12435c4d1817d2be272e7e2326e6d21bb25892e5"
+      },
+      "candidateClass": "NORMATIVE_REQUIREMENT",
+      "reviewStatus": "TAIL_SOURCE_RECONCILED_PROVISIONAL_IDENTITY",
+      "normativeStrength": "MUST",
+      "provisionalBirthIdentity": {
+        "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+        "sourceAnchor": {
+          "line": 4090,
+          "lineSha256": "be28530d65997de6fb0094946fd43d8fe7e412856a00a2ee9969d74f1923a5d9"
+        },
+        "atomicKey": "s39.proposal-diff.current-value"
+      },
+      "provisionalNormativeRequirementId": "NREQ-29477d674dccf0b3899d6a7c200a0891",
+      "identityStatus": "NOT_FINAL_PENDING_HISTORICAL_AND_WHOLE_SOURCE_EQUIVALENCE_REVIEW",
+      "proofDisposition": "UNKNOWN",
+      "sectionId": "39.7"
+    },
+    {
+      "entryKind": "ATOMIC_OBLIGATION",
+      "sourceLocation": {
+        "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "startLine": 4091,
+        "endLine": 4091,
+        "lineSha256": "29ca4e43e735916fc56f1331ce8471997c99958c1a09fb5fca6228244082064d"
+      },
+      "controllingText": "- proposed value;",
+      "atomicObligation": {
+        "key": "s39.proposal-diff.proposed-value",
+        "statement": "The normal proposal diff must show proposed value",
+        "sourceSpans": [
+          {
+            "startByte": 225383,
+            "endByte": 225400,
+            "text": "- proposed value;",
+            "sha256": "29ca4e43e735916fc56f1331ce8471997c99958c1a09fb5fca6228244082064d"
+          }
+        ],
+        "contextSourceLocations": [
+          {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 3974,
+            "endLine": 3974,
+            "lineSha256": "1ab01ae83cd78704e028de0d1f6b8d07adaa063cf2d71a22aa4eb657b9514bd9",
+            "controllingText": "39. Operator interface"
+          },
+          {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 4083,
+            "endLine": 4083,
+            "lineSha256": "00f8cc75127116fb7401359749006d4da0a374d80914a6030a7d08e2c38e1f1e",
+            "controllingText": "39.7 Proposal review"
+          },
+          {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "startLine": 4085,
+            "endLine": 4085,
+            "lineSha256": "5d3b529287aef7bddb3925311b1a9b2847b6146cad3780ca9439ff076f92840c",
+            "controllingText": "The normal proposal diff shows:"
+          }
+        ],
+        "sha256": "04b30a888d5d00b7c0e1d2ad5427850f65726c342383d0bafe59221d9a8accf2"
+      },
+      "candidateClass": "NORMATIVE_REQUIREMENT",
+      "reviewStatus": "TAIL_SOURCE_RECONCILED_PROVISIONAL_IDENTITY",
+      "normativeStrength": "MUST",
+      "provisionalBirthIdentity": {
+        "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+        "sourceAnchor": {
+          "line": 4091,
+          "lineSha256": "29ca4e43e735916fc56f1331ce8471997c99958c1a09fb5fca6228244082064d"
+        },
+        "atomicKey": "s39.proposal-diff.proposed-value"
+      },
+      "provisionalNormativeRequirementId": "NREQ-a0e488665e731b29b6780c463b8820d0",
+      "identityStatus": "NOT_FINAL_PENDING_HISTORICAL_AND_WHOLE_SOURCE_EQUIVALENCE_REVIEW",
+      "proofDisposition": "UNKNOWN",
+      "sectionId": "39.7"
+    }
+  ],
+  "replaceDecisionIds": [
+    "TAIL-DECISION-9d30226acf1f763fde1c",
+    "TAIL-DECISION-06c7dd51745f30ed4c80"
+  ],
+  "replacementDecisions": [
+    {
+      "decisionId": "TAIL-CORRECTED-DECISION-7e3388dcd6845438fa3a",
+      "status": "PROVISIONAL_SEMANTIC_MAPPING",
+      "disposition": "MAPPED",
+      "reason": "Current-value and proposed-value columns are independent. Line4096 repeats current-value line4090, never proposed-value line4091.",
+      "sourceLines": [
+        4090,
+        4096
+      ],
+      "exactSourceAnchors": [
+        {
+          "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+          "startLine": 4090,
+          "endLine": 4090,
+          "lineSha256": "be28530d65997de6fb0094946fd43d8fe7e412856a00a2ee9969d74f1923a5d9",
+          "controllingText": "- current value;"
+        },
+        {
+          "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+          "startLine": 4096,
+          "endLine": 4096,
+          "lineSha256": "3eb6cc18c34717a7b0c0ac5ba9953f52718e34ac8dd25b24b14783d68f0d2881",
+          "controllingText": "The current-value column is mandatory."
+        }
+      ],
+      "draftPropositionIds": [
+        "s39.proposal-diff.current-value",
+        "s39.operator-interface.the-current-value-column-is-mandatory"
+      ],
+      "independentReviewPropositionIds": [
+        "BLIND-TAIL-01229",
+        "BLIND-TAIL-01234"
+      ],
+      "provisionalNormativeRequirementIds": [
+        "NREQ-29477d674dccf0b3899d6a7c200a0891"
+      ],
+      "currentAtomicScopeSha256": {
+        "NREQ-29477d674dccf0b3899d6a7c200a0891": "750039e49c32e202de617dfd12435c4d1817d2be272e7e2326e6d21bb25892e5"
+      },
+      "candidateMappings": [
+        {
+          "passRole": "DRAFT",
+          "candidateId": "s39.proposal-diff.current-value",
+          "atomicKeys": [
+            "s39.proposal-diff.current-value"
+          ],
+          "relation": "SCOPED_MAPPING"
+        },
+        {
+          "passRole": "INDEPENDENT_REVIEW",
+          "candidateId": "BLIND-TAIL-01229",
+          "atomicKeys": [
+            "s39.proposal-diff.current-value"
+          ],
+          "relation": "COMPONENT_OR_COMPOUND_SCOPE_MAPPING",
+          "sourceQualification": "Interpret under exact source scope, list introduction and recorded tail resolutions; mapping does not promote evidence or imply each candidate independently proves every target."
+        },
+        {
+          "passRole": "DRAFT",
+          "candidateId": "s39.operator-interface.the-current-value-column-is-mandatory",
+          "atomicKeys": [
+            "s39.proposal-diff.current-value"
+          ],
+          "relation": "EQUIVALENT_MERGED"
+        },
+        {
+          "passRole": "INDEPENDENT_REVIEW",
+          "candidateId": "BLIND-TAIL-01234",
+          "atomicKeys": [
+            "s39.proposal-diff.current-value"
+          ],
+          "relation": "COMPONENT_OR_COMPOUND_SCOPE_MAPPING",
+          "sourceQualification": "Interpret under exact source scope, list introduction and recorded tail resolutions; mapping does not promote evidence or imply each candidate independently proves every target."
+        }
+      ],
+      "equivalenceReason": "The mandatory current-value column at4096 is exactly the current-value proposal-diff display required at4090."
+    },
+    {
+      "decisionId": "TAIL-CORRECTED-DECISION-17af9cbf3e4b07adc63c",
+      "status": "PROVISIONAL_SEMANTIC_MAPPING",
+      "disposition": "MAPPED",
+      "reason": "Current-value and proposed-value columns are independent. Line4096 repeats current-value line4090, never proposed-value line4091.",
+      "sourceLines": [
+        4091
+      ],
+      "exactSourceAnchors": [
+        {
+          "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+          "startLine": 4091,
+          "endLine": 4091,
+          "lineSha256": "29ca4e43e735916fc56f1331ce8471997c99958c1a09fb5fca6228244082064d",
+          "controllingText": "- proposed value;"
+        }
+      ],
+      "draftPropositionIds": [
+        "s39.proposal-diff.proposed-value"
+      ],
+      "independentReviewPropositionIds": [
+        "BLIND-TAIL-01230"
+      ],
+      "provisionalNormativeRequirementIds": [
+        "NREQ-a0e488665e731b29b6780c463b8820d0"
+      ],
+      "currentAtomicScopeSha256": {
+        "NREQ-a0e488665e731b29b6780c463b8820d0": "04b30a888d5d00b7c0e1d2ad5427850f65726c342383d0bafe59221d9a8accf2"
+      },
+      "candidateMappings": [
+        {
+          "passRole": "DRAFT",
+          "candidateId": "s39.proposal-diff.proposed-value",
+          "atomicKeys": [
+            "s39.proposal-diff.proposed-value"
+          ],
+          "relation": "SCOPED_MAPPING"
+        },
+        {
+          "passRole": "INDEPENDENT_REVIEW",
+          "candidateId": "BLIND-TAIL-01230",
+          "atomicKeys": [
+            "s39.proposal-diff.proposed-value"
+          ],
+          "relation": "COMPONENT_OR_COMPOUND_SCOPE_MAPPING",
+          "sourceQualification": "Interpret under exact source scope, list introduction and recorded tail resolutions; mapping does not promote evidence or imply each candidate independently proves every target."
+        }
+      ]
+    }
+  ],
+  "invalidateSemanticMerge": {
+    "retainedAtomicKey": "s39.proposal-diff.proposed-value",
+    "mergedAtomicKeys": [
+      "s39.operator-interface.the-current-value-column-is-mandatory"
+    ]
+  },
+  "replacementSemanticMerge": {
+    "retainedAtomicKey": "s39.proposal-diff.current-value",
+    "mergedAtomicKeys": [
+      "s39.operator-interface.the-current-value-column-is-mandatory"
+    ],
+    "reason": "Current value at4090 and mandatory current-value column at4096 are the same display obligation; proposed value at4091 remains separate."
+  },
+  "sourceContextAndAuditCorrection": {
+    "sourceLine": 4096,
+    "removeGoverningAtomicKey": "s39.proposal-diff.proposed-value",
+    "addGoverningAtomicKey": "s39.proposal-diff.current-value",
+    "rewriteProjectedDraftKey": "s39.operator-interface.the-current-value-column-is-mandatory"
+  },
+  "proofPromotion": false
+}

@@ -1,0 +1,320 @@
+{
+  "schema": "closed-loop-requirement-coverage-review/1",
+  "normativeRequirementId": "NREQ-ea453611a3a1f48cdd2fbfbe946d7ac7",
+  "sourceLineSha256": "3fb221aaa0c37d2bc7c8bc1c437d7d3771a00488e7c282fb0f5b5fa8257da994",
+  "specificationSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
+  "declarationSha256": "79558ee9298ec5b84e15b1f92a9a5f938aa74e31e44a87c6bc5cdf0fa761ebdd",
+  "decision": "COMPLETE_COVERAGE",
+  "evidenceBasis": "EXTERNALLY_SUPPORTED",
+  "method": "The unchanged narrow controlling clause and obligation/check decomposition retain their embedded earlier independent semantic assessment. A separate collaborator independently inspected the exact current source delta from 06e80b7 through the SHA-256-bound consolidated files in verification/ci-evidence-independent-delta-review-20261010.json, including the collector/export, strict publication, migration report reuse, runtime promotion and diagnostic changes. This renewal claims only that scoped source-delta assessment, preserves all existing proof boundaries, and requires current frozen-source execution separately.",
+  "author": {
+    "actor": "Codex consolidated CI repair integrator",
+    "contextId": "/root"
+  },
+  "reviewer": {
+    "actor": "Codex independent CI evidence delta reviewer",
+    "contextId": "/root/evidence_review"
+  },
+  "reviewedInputs": [
+    {
+      "declarationSha256": "79558ee9298ec5b84e15b1f92a9a5f938aa74e31e44a87c6bc5cdf0fa761ebdd"
+    },
+    {
+      "path": "app-core.js",
+      "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+    },
+    {
+      "path": "hash.js",
+      "sha256": "a13cf57bd7c7414bc801f511d5937f80eaf7fd675c0e6c2b5a92b365df16e4d7"
+    },
+    {
+      "path": "operator-journey-fixtures.mjs",
+      "sha256": "73cca7813dfdca430c66e76487efc60b91cbf4642bfcd93b96f6bad2a9314c38"
+    },
+    {
+      "path": "project-store.js",
+      "sha256": "4e8368f0d91eab0b937ee5c256a121c6ca2b3524e9d06ffc16c3f5637a05b060"
+    },
+    {
+      "path": "prompt-engine.js",
+      "sha256": "61e363381dfb88fcfd32a176066762e2a37cf7b14fb9d39bff4eacf7e6d5706f"
+    },
+    {
+      "path": "response-ingestion.js",
+      "sha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5"
+    },
+    {
+      "path": "specification/closed-loop-normative-requirements.json",
+      "sha256": "97b43f690b60219d67f498459439bce30416650b9f26c46c34a89b972a13929f"
+    },
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d"
+    },
+    {
+      "path": "specification/closed-loop-specification-manifest.json",
+      "sha256": "651e71dffee949524793d50195d4958a777dc7392cb31f40b5975079a846b258"
+    },
+    {
+      "path": "specification/requirement-evidence-bindings.json",
+      "sha256": "9c4631c86ccd2d8234f23469ffc7e11374bcda51eb4bb1f27c1f4a97ade7b72e"
+    },
+    {
+      "path": "test-due-verification-scheduling.mjs",
+      "sha256": "8c19acdfc3c72f2bcffec9df2603307d014d5f23e6d3034e0fb7769639a35282"
+    },
+    {
+      "path": "test-fixtures.mjs",
+      "sha256": "666a66d54f5944eae28c608eb0d627aefe45972413b8f5ac004db306205f00c7"
+    },
+    {
+      "path": "test-handoff-authorization.mjs",
+      "sha256": "37bfb4e255afb6701fccaccdf055ee7961e838eaf03927c2963dfcf880cf82b6"
+    },
+    {
+      "path": "test-normative-catalog-consumers.mjs",
+      "sha256": "6c14d578e5d70351f30288c9182ca9f6cbfcced5ec35e230167b22874a202044"
+    },
+    {
+      "path": "test-project-store-runtime.mjs",
+      "sha256": "743e74ce60e3f81f1601daf7a1bf589ac2a3b8600e275a5865c24fbd0f335f1b"
+    },
+    {
+      "path": "test-runtime.js",
+      "sha256": "e4e01a79c526592f9d044e2c104845e63c9aa341eb64837c138f5c3e3ecba353"
+    },
+    {
+      "path": "test-zip.mjs",
+      "sha256": "b5080a8e58eb7b13f421ecce5c63a3d95b765a5b021f5bd4543dce28d171e89d"
+    },
+    {
+      "path": "verification-evidence-catalog.mjs",
+      "sha256": "5d8e04d46601123d4552e796d0e69027f29774155d5309d5e1356c6456c53010"
+    },
+    {
+      "path": "verification-evidence-preload.mjs",
+      "sha256": "3c7835db4197c92c07dc83abae8f1f63bf1815d389d9f8392e08096093d92ffa"
+    },
+    {
+      "path": "verification/current-source-delta-review-20261007.json",
+      "sha256": "45cca5871ac89cf1583a3825aec5a7d488d4d40dc70afb51a8534470dececf09"
+    },
+    {
+      "path": "verification/normative-context-applicability-20261005.json",
+      "sha256": "7cd05ff0028578a1ca1c2560533519a602ce6a974c240ee11dbbd272524cf656"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-ea453611a3a1f48cdd2fbfbe946d7ac7-20261006-followup-42b0470a2dcc.json",
+      "sha256": "e446b9838962882498a057a7e9c476b90d4637facb60af0c63e81180bd9204b9"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-ea453611a3a1f48cdd2fbfbe946d7ac7-20261006.json",
+      "sha256": "6015f908837c8c9f9657700da4c9daae04e1cb4e100020c819b4c8f89601cd3d"
+    },
+    {
+      "path": "verifier-runtime.mjs",
+      "sha256": "051318fc24ea587ced6268d4a60278e5155e3fee8ed26309b28b532c921277f9"
+    },
+    {
+      "path": "verify-conformance-regressions.mjs",
+      "sha256": "cec69ce4a4eb45ad2c49dccd164852a35cd7386f6b269e22d318d5ed63204a39"
+    },
+    {
+      "path": "verify-filename-transports.mjs",
+      "sha256": "48bd2a5ef6731d755eb71be6371c764ecf94fac6ef05dc6a2905e1dd4934972a"
+    },
+    {
+      "path": "verify-integrity-recovery-faults.mjs",
+      "sha256": "9b5770fa7fb2bef7e20754cfefd54471d98bcfff5cbf0ec7facf1e85bee8a181"
+    },
+    {
+      "path": "verify-project-lifecycle-full.mjs",
+      "sha256": "4f11056968dc3696e8d61bf9f59363c129342ba91d599a1491ba77a1f592f789"
+    },
+    {
+      "path": "verify-quarantine-recovery.mjs",
+      "sha256": "16a10823e793b2023b59621ac688d94fe637c68cb454c5383219c49fe44f596d"
+    },
+    {
+      "path": "workbook.js",
+      "sha256": "3a8098a9bb4ea108eadaa9bec90c76a1522f57f6465f45341cedf60937ddd008"
+    },
+    {
+      "path": "workflow-engine.js",
+      "sha256": "16c2a16d61d6a462ecebd25cd7d530a3cce46e11c1d9f88664c2e9a27cf61295"
+    },
+    {
+      "path": "workflow-schema.js",
+      "sha256": "656e9e632cea3a60e1c7e0fb486e6630d205011d7db32d9674ac5e88593d24f1"
+    },
+    {
+      "path": "verification/ci-evidence-independent-delta-review-20261010.json",
+      "sha256": "2c95da9d8742f268ad2b73be4ad4baaed0089dfb798f471800d9314cf4f222cd"
+    },
+    {
+      "path": "verification/stage28-prerequisite-independent-delta-review-20261010.json",
+      "sha256": "a6d31e351f0b4c2264b014e93eb8c3e03cbc96264574c05cb485b1ab400c910b"
+    },
+    {
+      "path": "verification/runtime-storage-independent-delta-review-20261010.json",
+      "sha256": "1aeddf08767ed1d3a70ff7d4f31d69a74cde85099cce89d8d7a0d0e97404542a"
+    },
+    {
+      "path": "verification/ci-group-handoff-independent-delta-review-20261010.json",
+      "sha256": "3b8b941ac5a47dec4bd681f3e4dbe939230db8875d40c62c17e862e912f04c4d"
+    }
+  ],
+  "findings": [],
+  "reviewPerformed": true,
+  "sourceLocation": {
+    "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+    "startLine": 3162,
+    "endLine": 3162,
+    "lineSha256": "3fb221aaa0c37d2bc7c8bc1c437d7d3771a00488e7c282fb0f5b5fa8257da994"
+  },
+  "controllingText": "- delete the quarantined project.",
+  "governingContext": [],
+  "additionalControllingContext": [],
+  "reviewedChecks": [
+    {
+      "suite": "verify-quarantine-recovery.mjs",
+      "checkId": "recovery.quarantine-controlled-deletion"
+    },
+    {
+      "suite": "verify-integrity-recovery-faults.mjs",
+      "checkId": "recovery.quarantine-body-delete-fault"
+    }
+  ],
+  "scopeLimit": "Deterministic controlled store command under the lifecycle transaction adapter. This does not approve all quarantine recovery actions, real IndexedDB fault behavior, UI discoverability, browser/device acceptance or full application conformance.",
+  "independentSemanticAssessment": {
+    "path": "/workspace/scratch/normative-review/24-declaration-semantic-review.json",
+    "sha256": "5440a66128d087b55a4d858ea0149fd024916806fa7d0ea9c23b6d0243f480ac",
+    "row": {
+      "normativeRequirementId": "NREQ-ea453611a3a1f48cdd2fbfbe946d7ac7",
+      "sourceLocation": {
+        "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "startLine": 3162,
+        "endLine": 3162,
+        "lineSha256": "3fb221aaa0c37d2bc7c8bc1c437d7d3771a00488e7c282fb0f5b5fa8257da994"
+      },
+      "controllingText": "- delete the quarantined project.",
+      "review": {
+        "path": "verification/requirement-coverage-NREQ-ea453611a3a1f48cdd2fbfbe946d7ac7-20261006-followup-42b0470a2dcc.json",
+        "sha256": "e446b9838962882498a057a7e9c476b90d4637facb60af0c63e81180bd9204b9"
+      },
+      "checkIds": [
+        "recovery.quarantine-controlled-deletion",
+        "recovery.quarantine-body-delete-fault"
+      ],
+      "status": "NARROW_COVERAGE_DESIGN_REVIEWED_NO_GAP_FOUND",
+      "rationale": "Controlled deletion tests directly assert selected body absence and preserved active state/files; interrupted delete retains body; repeat same idempotency key returns same result and wrong reuse rejects. Maintained body-delete fault removes only meta.delete to require intended absence oracle. Other quarantine routes not inferred.",
+      "reviewedSourceInputs": [
+        {
+          "path": "project-store.js",
+          "sha256": "2d6896f47164f4a232c631d949cce64d2200e6d4e2202c2c3cdb29b08648cdf2"
+        },
+        {
+          "path": "verify-quarantine-recovery.mjs",
+          "sha256": "12a0dd0dfc01dc04b16915681c92967c30557ca8a5e626f1ce0b1ee57cce79cf"
+        },
+        {
+          "path": "verify-integrity-recovery-faults.mjs",
+          "sha256": "9b5770fa7fb2bef7e20754cfefd54471d98bcfff5cbf0ec7facf1e85bee8a181"
+        },
+        {
+          "path": "verification-evidence-catalog.mjs",
+          "sha256": "e6378e7747ba860e5312a813c55625748d2fbaee5f2838d8ee4e97349ba4640f"
+        }
+      ],
+      "executedCurrentProducerByThisReview": false,
+      "fullApplicationConformanceClaim": false
+    }
+  },
+  "priorReview": {
+    "path": "verification/requirement-coverage-NREQ-ea453611a3a1f48cdd2fbfbe946d7ac7-20261007-4bab29605585.json",
+    "sha256": "7d77bd21c6bc0853240e7af6c0d7461ad3f5103bab87786de33026114219a340",
+    "author": {
+      "actor": "Codex coordinated exact-clause renewal proposer",
+      "contextId": "/root"
+    },
+    "reviewer": {
+      "actor": "Codex independent narrow declaration reviewer",
+      "contextId": "/root/normative_review"
+    },
+    "reviewCompletedAt": "2026-10-07T01:21:18.248Z"
+  },
+  "reviewerPriorContributionDisclosure": "The /root/evidence_review collaborator did not author the reviewed executable changes. It inspected the consolidated source delta and retained bounded execution outputs, then prepared these review metadata renewals. This is a separate model context, not a human review or physical-device observation.",
+  "currentExecutionRequired": true,
+  "applicationConformanceClaim": false,
+  "reviewCompletedAt": "2026-10-07T05:10:44.883240+00:00",
+  "currentDependencyDeltaReview": {
+    "path": "verification/current-source-delta-review-20261007.json",
+    "sha256": "45cca5871ac89cf1583a3825aec5a7d488d4d40dc70afb51a8534470dececf09"
+  },
+  "currentIntegratorDelta": {
+    "path": "verification/ci-scheduling-delta-review-20261008.json",
+    "sha256": "cbfaccb8c4b0815a06cbe9f0bbb2c60d52a967c8b9eac38f6b5ed351ba1fa173",
+    "newIndependentSemanticReviewClaimed": false
+  },
+  "currentIntegratorReviewedAtUtc": "2026-10-08T09:46:23Z",
+  "currentIntegratorFollowup": {
+    "reviewedAtUtc": "2026-10-08T11:27:00Z",
+    "scope": "Exact supplemental assertion-link and Stage 02 bounded-preview test corrections on the existing CI scheduling candidate; no new independent semantic review claimed.",
+    "reviewPath": "verification/ci-scheduling-delta-review-20261008.json",
+    "reviewSha256": "cbfaccb8c4b0815a06cbe9f0bbb2c60d52a967c8b9eac38f6b5ed351ba1fa173"
+  },
+  "previousActiveReview": {
+    "path": "verification/requirement-coverage-NREQ-ea453611a3a1f48cdd2fbfbe946d7ac7-20261007-context-5fb3beeac070-54e18bc1f938.json",
+    "sourceCommit": "f97e095723d33a10ebbec078d47586602b9d9908",
+    "sha256": "cfa03ab5cde8cd69ae835e6d89efeaae4e78e80cd960e1ddc5c9c5a814de05cb",
+    "author": {
+      "actor": "Codex exact-source coverage renewal integrator",
+      "contextId": "/root"
+    },
+    "reviewer": {
+      "actor": "Codex independent verifier-context correction reviewer",
+      "contextId": "/root/pr_inventory_review"
+    },
+    "method": "The exact narrow controlling clause and unchanged proof decomposition were independently reviewed in the embedded original semantic assessment. Current production, verifier, fixture and catalog deltas were separately reviewed in the referenced source-delta review bundle. This is coverage-design evidence only: current frozen-source executed receipts remain independently required, and unsupported clauses are not promoted. The 2026-10-08 scheduling-fixture change was separately inspected by the current integrator in verification/ci-scheduling-delta-review-20261008.json; the earlier independent semantic assessment remains historical and no new independent semantic review of these current bytes is claimed.",
+    "reviewCompletedAt": "2026-10-07T05:10:44.883240+00:00"
+  },
+  "currentIndependentSourceDeltaReview": {
+    "path": "verification/ci-evidence-independent-delta-review-20261010.json",
+    "sha256": "2c95da9d8742f268ad2b73be4ad4baaed0089dfb798f471800d9314cf4f222cd",
+    "reviewer": {
+      "actor": "Codex independent CI evidence delta reviewer",
+      "contextId": "/root/evidence_review"
+    },
+    "reviewedAtUtc": "2026-10-10T04:57:18Z",
+    "scope": "Source delta only; earlier independent semantic assessment retained."
+  },
+  "reviewRenewedAt": "2026-10-10T06:13:50.965Z",
+  "renewalActor": {
+    "actor": "Codex CI repair integrator",
+    "contextId": "/root"
+  },
+  "supplementaryIndependentSourceDeltaReviews": [
+    {
+      "path": "verification/stage28-prerequisite-independent-delta-review-20261010.json",
+      "sha256": "a6d31e351f0b4c2264b014e93eb8c3e03cbc96264574c05cb485b1ab400c910b",
+      "reviewer": {
+        "actor": "Codex independent CI evidence delta reviewer",
+        "contextId": "/root/evidence_review"
+      },
+      "reviewedAtUtc": "2026-10-10T05:12:34Z",
+      "scope": "Unchanged supervisor execution implementation; added healthy prerequisite dispatch controls and dependency serialization only."
+    },
+    {
+      "path": "verification/runtime-storage-independent-delta-review-20261010.json",
+      "sha256": "1aeddf08767ed1d3a70ff7d4f31d69a74cde85099cce89d8d7a0d0e97404542a",
+      "reviewedAtUtc": "2026-10-10T05:59:54.689Z",
+      "scope": "Exact reviewed dependency and owner source delta; prior semantic obligation/check decomposition unchanged."
+    },
+    {
+      "path": "verification/ci-group-handoff-independent-delta-review-20261010.json",
+      "sha256": "3b8b941ac5a47dec4bd681f3e4dbe939230db8875d40c62c17e862e912f04c4d",
+      "reviewedAtUtc": "2026-10-10T06:13:50.965Z",
+      "scope": "Exact reviewed dependency and owner source delta; prior semantic obligation/check decomposition unchanged."
+    }
+  ]
+}

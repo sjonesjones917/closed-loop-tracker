@@ -2,6 +2,10 @@ import {artifactFixtureId} from './test-artifact-fixtures.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
+import {verifyHumanStageSave} from './test-human-stage-save.mjs';
+
+console.log(JSON.stringify(await verifyHumanStageSave()));
+if(process.argv.includes('--human-stage-save-only'))process.exit(0);
 
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);

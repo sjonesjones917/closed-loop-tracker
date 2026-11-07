@@ -1,0 +1,61 @@
+{
+  "schema": "closed-loop-incremental-retained-impact-freeze/2",
+  "status": "FROZEN_PENDING_DISTINCT_RECONCILIATION",
+  "batchId": "RETAINED-IMPACT-BATCH-009",
+  "files": [
+    {
+      "path": "/workspace/shared/clrt-v4-retained-impact-review/batch-009/mechanism-review.json",
+      "sha256": "fe0e3f4fdba98fcb6d8c6daabffc7717a134ff672c343d4cc9cec4eedae375b4",
+      "byteLength": 66190
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-retained-impact-review/batch-009/per-id-decisions.json",
+      "sha256": "6b1059315de035d5e91141b4a6778a876a16f9e36363d52d6fe6585f50e50474",
+      "byteLength": 1058132
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-retained-impact-review/batch-009/source-reference-table.json",
+      "sha256": "3de2c06e7071a97a060f2716b76cb3d77bb8b52da571811edd8b5b67ef24debc",
+      "byteLength": 599986
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-retained-impact-review/batch-009/actual-read-inventory.json",
+      "sha256": "a974aaa6838272b73d588803a5ebe21f72893bb0ab6398e730ba7b3ec0dd9e10",
+      "byteLength": 28814
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-retained-impact-review/batch-009/summary.json",
+      "sha256": "42552c52b3457df021ddbe0d4783672665cdcf47ca1ab2c8e1308f0c8afe132c",
+      "byteLength": 14785
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-retained-impact-review/batch-009/review-read-packet.json",
+      "sha256": "686457884047d6c51a7eb330ecb22f29cafe9adbe8294777a92fffa4a3a5aafa",
+      "byteLength": 2618871
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-retained-impact-review/batch-009/review-members.txt",
+      "sha256": "23c0d1f14e48d80925d77d61fd7285cadc2c8a0a2f9caeba7e313ccf6392fcfe",
+      "byteLength": 49107
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-retained-impact-review/batch-009/review-profiles.txt",
+      "sha256": "04a4e3e4e92870d24c602797b494681cfa402c3ce742eaedc7cd0c2d15bdcc37",
+      "byteLength": 7674
+    }
+  ],
+  "generators": [
+    {
+      "path": "/workspace/shared/clrt-v4-retained-impact-review/build_batch009.py",
+      "sha256": "c49ab30143ac0d4723262397376fbbd96304920d2c64e0183423873d087d1a88"
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-retained-impact-review/prepare_batch009_read.py",
+      "sha256": "54a99bb06e010861be971b4b0da5d7afe2ae42177a3424abde5e6dd17493b3dd"
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-retained-impact-review/build_review.py",
+      "sha256": "e6881bb211d1965c45a6006051a20c2a363a632da6a10561905e41b9d4d869c0"
+    }
+  ]
+}

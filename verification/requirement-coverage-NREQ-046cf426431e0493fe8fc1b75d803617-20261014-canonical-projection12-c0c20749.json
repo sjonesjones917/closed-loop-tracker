@@ -1,0 +1,127 @@
+{
+  "schema": "closed-loop-requirement-coverage-review/1",
+  "normativeRequirementId": "NREQ-046cf426431e0493fe8fc1b75d803617",
+  "sourceLineSha256": "3d14033f2bcab6a74bb1206dc1ffc21a22450ac131f2d2fdb084c28d43c05623",
+  "specificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+  "atomicObligationSha256": "569a2a80e5dc59b27a1eabc46834afc166a4f029f09d1a9ad5a7d6b05bcb1aab",
+  "reviewedAtomicStatement": "closed-loop-canonical-json/1 rejects undefined.",
+  "sourceSpans": [
+    {
+      "startByte": 151391,
+      "endByte": 151503,
+      "text": "- rejection of negative zero, NaN, Infinity, undefined, sparse holes, cyclic values, and implementation objects.",
+      "sha256": "3d14033f2bcab6a74bb1206dc1ffc21a22450ac131f2d2fdb084c28d43c05623"
+    }
+  ],
+  "contextSourceLocations": [
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "startLine": 2869,
+      "endLine": 2869,
+      "lineSha256": "774e4e8f76194d802466c7325360169af41c413cc053a82d83c1e1c9d69d8d40",
+      "controllingText": "34.1 Canonical serialization portability"
+    },
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "startLine": 2871,
+      "endLine": 2871,
+      "lineSha256": "15968ab6cfcb305b94e767f60e01fa39420bae94e6ae1edb6cfe288d3e347103",
+      "controllingText": "All canonical semantic hashes use closed-loop-canonical-json/1. Its implementation contract fixes:"
+    }
+  ],
+  "declarationSha256": "146332271275bab4ddf0510312235dedcdccf6ccaca9e2e31410b6b3e60abd53",
+  "decision": "COMPLETE_COVERAGE",
+  "evidenceBasis": "EXTERNALLY_SUPPORTED",
+  "method": "Fresh independent current-atom coverage-design review on frozen c0c20749c4f1b4fe1c7b3b05eb7b7822021303b0. Rechecked exact atomic statements, spans, governed context and original criteria. Actual hash.js/verify-hash.mjs bytes, canonicalDecimal/isCanonicalNumber/reducedNumber bodies and entire canonical owning catalog suite remain unchanged. Independently inspected current projection12/Stage19v8 wiring and27 actual source hashes;57 missing/wrong/historical source negatives pass. Prior7/8/9 constants remain byte-exact and prior10 payloads are retained. All14 negative mutation loops remain equivalent modulo current version labels. Executed receipt10, activation187, migration379 and Incremental controls; existing default wrapper carrier yields188 and final predicate rejects all188 omissions. Actual cd56 owner receipt60 admitted and all60 omissions rejected. Independently verified the current90 handoff labels against actual owner and286 populations5/6, with contaminated100/120/12 refused; this repairs a prior cross-owner fixture defect missed by the earlier focused review and does not retroactively validate it. Truthful future-only correction selector and full-cycle/migration suites remain unchanged, with54 correction negatives passing and no governed-negative coverage claim for that owner. Reran normal canonical producer and independent literal UTF8, scalar Unicode, safe-boundary, rejected-kind and deliberate UTF16-order fault challenges on exact current sources. Verified parent-authored two canonical schema-owner leaves only; migration owner metadata is outside this review. Exact14 coverage designs accepted; application receipts, full wrapper and application conformance remain unestablished. Earlier records retain their historical identities.",
+  "author": {
+    "actor": "Canonical JSON current-atom proof author",
+    "contextId": "/root/bind_canonical_json_proofs"
+  },
+  "reviewer": {
+    "actor": "Independent final-catalog canonical JSON reviewer",
+    "contextId": "/root/review_canonical_json_proofs"
+  },
+  "reviewedInputs": [
+    {
+      "declarationSha256": "146332271275bab4ddf0510312235dedcdccf6ccaca9e2e31410b6b3e60abd53"
+    },
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883"
+    },
+    {
+      "path": "specification/closed-loop-normative-requirements.json",
+      "sha256": "4773f157f198781918b0fb9f20a696ad9d2b09dbea0120a9407ce0d24c96df5c"
+    },
+    {
+      "path": "specification/requirement-evidence-bindings.json",
+      "sha256": "cd5e2800f114801aacc2c194974088b37059c64013b8c5fbd02010c4d143774c"
+    },
+    {
+      "path": "verify-hash.mjs",
+      "sha256": "78c7407c182cd96035293c7335c07c1a729b7312813cde5474af74b82e905e28"
+    },
+    {
+      "path": "verification-evidence-catalog.mjs",
+      "sha256": "86337f9122fb1993f0fe0d646271ae145fad271106f908f9f73f74cb724d6000"
+    },
+    {
+      "path": "verification-evidence.mjs",
+      "sha256": "6c3fc424b828bb7edbdda043f82116712e3870a0632c09b6adf795344948bf30"
+    },
+    {
+      "path": "workbook.js",
+      "sha256": "11eff4fea42e47a5a70eafdc6b985d064ea2cdfe9a6feb72be6a74ec54c4b062"
+    },
+    {
+      "path": "workflow-schema.js",
+      "sha256": "3e11c7233449bbd3e2efb48e543f9e94e372c137c88d98ea29efbba25775000e"
+    },
+    {
+      "path": "hash.js",
+      "sha256": "bc1c486855fa2096623b560cfc44b7c5d9e263040546921eb00f54e7f38b7420"
+    },
+    {
+      "path": "verifier-runtime.mjs",
+      "sha256": "051318fc24ea587ced6268d4a60278e5155e3fee8ed26309b28b532c921277f9"
+    },
+    {
+      "path": "test-canonical-prefix-supplier.mjs",
+      "sha256": "9460ed0c645255980e85c7f372134db3657e50489d2b9ab4c370a740f43776a5"
+    },
+    {
+      "path": "test-project-store-runtime.mjs",
+      "sha256": "d5a2c93dde17700f524e4e1092e40ee1fdcd650d96022c6e56c117b601beeea0"
+    },
+    {
+      "path": "test-runtime.js",
+      "sha256": "a9eadc5db096997c51540068fecddaa71dca221b7342eac703d243438a9d1c23"
+    },
+    {
+      "path": "workflow-engine.js",
+      "sha256": "d4e8b297f504dea6e56bf7975f6e0deb196563172d9df6e56125fb90fd207927"
+    },
+    {
+      "path": "prompt-engine.js",
+      "sha256": "5d67f8096f91a1efc17ad6ce367dfa43ab5990ecaede9b52c9f12dcc34b41d20"
+    },
+    {
+      "path": "response-ingestion.js",
+      "sha256": "ea0c6d1798dfd3a5711bf96550b7a7d085d8374fdfdfaf5e694ee84b39ad28f9"
+    },
+    {
+      "path": "project-store.js",
+      "sha256": "935761d3de772a00b1da1da48a6e29a7abeb16b3cc121f379ae87829addad281"
+    },
+    {
+      "path": "app-core.js",
+      "sha256": "38fad6b6170193b5675c4bf2c69374def1f735c100a51a5ac108489daa3b63b9"
+    },
+    {
+      "path": "test-complete-record-carrier-shapes.mjs",
+      "sha256": "7e0598b04149a45b241c0e7049f62e0d93446e026ca0b3faf94c1b3176859dfb"
+    }
+  ],
+  "findings": [],
+  "reviewPerformed": true
+}

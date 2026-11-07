@@ -1,0 +1,55 @@
+{
+  "schema": "closed-loop-distinct-retained-impact-mechanism-review/1",
+  "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+  "method": "Direct semantic review of each individual proposition and its exact original source/context sets, supported by row/family facet checks and byte/coordinate validation. Mechanical equality is necessary evidence preservation, never sufficient unaffectedness evidence.",
+  "classes": {
+    "SIX_FACET_LIST_GOVERNOR": "The six-column declaration is an interpretive table schema for exactly old rows 1180–1223. It does not acquire any new column, family, writer or row from A–F2. Keep its original bounded member/occurrence set, with changed authority facets separately qualified.",
+    "FIELD_FACET_OR_VALUE_INVARIANT": "This exact job-field facet or value invariant is selected by the first-priority Section 14.5 rule and its own Section 15 row/value clauses. A controls fallback answers, B timing relationships, C structural accounting, D native values, E variance normalization, and F route execution. None changes this specific field category, declared type, nullability/required stage, identity lifetime, enum/precedence or correction reset. This does not preserve any actual derived value or accept a current gate.",
+    "NEXT_ACTION_CURRENT_CONTRACT": "The authority name is unchanged but the current available-action contract has new route memberships, prerequisites, native semantics and evidence minima. Added governors change effective action readiness. Fresh context identity is required; any decoder, execution-binding or selected-XML-node dependency remains conditional and blocked rather than given an invented answer.",
+    "STAGE01_ACCEPTANCE_CONTEXT": "This authority explicitly names the Stage 01 gate or accepted Stage 01 proposal. Its current admission depends on complete raw-unit accounting, valid fallback answers when used, and the stated external input basis. The exact producer/type/stage facets are separate retained entries. This authority facet acquires source context, with inherited decoder closure still qualified.",
+    "FAMILY_EXISTENCE": "The exact named family/configuration object remains required by the original family inventory. A/B/E add nested or normalized contracts to existing owners; C/D introduce no canonical-family allocation alternative; F1 is expressly receipt-only. Presence is not implementation or full field-contract acceptance.",
+    "EXACT_FAMILY_CAPTION": "The local caption still names the same family and bounds the same original governed source occurrences. It does not assert that every child value or derivation is unchanged. Any changed child proposition is separately identified; new variance clauses are never assigned to this historical occurrence set.",
+    "FAMILY_ID": "The exact named canonical ID field and its application-allocation authority remain. C binding hashes are not record IDs, and A/B/E retain application canonical binding. No new family prefix, alias, allocation shortcut or content-identity collapse is introduced.",
+    "FAMILY_STAGE_SCOPE": "The exact owning stage or global/metadata/release-evidence scope remains. F1 conditionally admits later executions but expressly preserves owning writers and limits them to existing receipts. This family-stage statement neither grants those new routes nor accepts their current prerequisites.",
+    "COLLECTION_POLICY": "The declared collection policy is still one of the exact Section 34 policies with its original replacement/append/reservation/application-derived semantics. The amendment adds no alternative policy for this family and no waiver of currentness, history or invalidation.",
+    "OWNERSHIP_OR_PROVENANCE": "The exact actor, authority partition or observed-versus-claimed provenance boundary remains. Sections 14.5/14.9 and 22.5 separate ownership from the current value and its registered derivation. A/B/E preserve canonical application binding, D cannot turn raw external evidence into canonical ownership, and F1/F2 preserve writers and epistemic limits. No old derived value or proof is inherited.",
+    "QUALIFIED_FAMILY_INVARIANT": "This specific typed relationship, human authorization, origin distinction, available-artifact retrieval, registry discipline or release-evidence metadata condition remains under its exact existing qualifiers. No inserted clause waives it or changes its predicate. The distinct evidence-sufficiency/variance/completeness changes are not folded into this retained invariant.",
+    "FAMILY_MODEL_VARIANCE_ADDITION": "The full family-inventory context receives E as a new, narrowly scoped governing block for existing expectedVarianceContracts. Its old governed occurrence set crosses the insertion and is preserved as disjoint fragments; new E bytes are a separate current governor. The family set is not enlarged.",
+    "CONFIRMATION_CURRENT_EVALUATION": "The final confirmation determination explicitly consumes the current Stage 19 completion conjunction. New accepted-availability, execution semantics, variance, conditional-route and basis contracts affect those operands. Keep ownership and the original conjunction while issuing a fresh current context; reference ambiguities remain conditional blockers.",
+    "CONFIRMATION_VARIANCE_NORMALIZATION": "The confirmation variance derivation now consumes E’s exact normalized object, source/test binding, entire-object hash and observed freeze. This changes its effective semantic input context. Existing ten-run comparison/materiality and no-new-threshold limits remain mandatory.",
+    "EVIDENCE_CHAIN_CURRENT_MINIMUM": "The evidence-sufficiency status predicate now includes the explicitly enumerated F2 per-route input minima while retaining all stronger/distinct bases. This is an additional source governor, not acceptance of any echo or evidence record.",
+    "HUMAN_COMMAND_CLOSURE": "The exact closed human-decision command authority remains. A fallback answers are HUMAN values under SAVE_HUMAN_INPUT, not fabricated HUMAN_DECISION records; F1 admits receipt executions only. No new human-decision command or actor permission is inferred."
+  },
+  "specificCorrection": {
+    "predecessorId": "NREQ-1ba6a49f79c535838a7398b3fc6f6d84",
+    "sourceDecision": "The proposal classifies \"Application must derive completeness\" as ownership/provenance alone. The original Stage 19 completion clause expressly requires every due PREPRODUCT_ITERATION verification and regression to have executed. B fixes the accepted current target-availability relationship used to determine due work; F1/F2 qualify eligible current executions and their input basis, and D fixes native result/termination semantics. Thus this completeness derivation gains effective governors just as the separately changed final determination does. Its application ownership stays intact, but RETAINED without new context is unsupported.",
+    "baseAnchor": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3406,
+      "endLine": 3413,
+      "startByte": 192624,
+      "endByte": 193805,
+      "sha256": "53d1f156453d07fe0243e50fb76872180bd18af3f743ffd348ef606fa9655036",
+      "text": "Stage 19 — RUN AN UNCHANGED CONFIRMATION ITERATION\nRole: Unchanged-confirmation reviewer\nOperations: CONFIRM_FREEZE, EXECUTE_RUN, VERIFY, COMPARE, REGRESSION_VERIFY, CONFIRM\nVisible explanation: The unchanged final candidate is rerun to confirm stability.\nFreeze confirmation must be an explicit application operation with identity, receipt, context, and gate contribution.\nCompletion: Candidate versions and hashes are unchanged; ten new contexts exist; every due PREPRODUCT_ITERATION verification and regression executed; the independent requirement-discovery challenge is complete; no accepted new requirement candidate, missed due failure, material defect, contradiction, or unexplained variance exists.\nFields:\nSOURCE_CONVERGED_ITERATION, CONFIRMATION_ITERATION_ID, ZERO_CHANGE_AUDIT, TEN_NEW_CONTEXTS_CREATED, SAME_FROZEN_PACKAGE_USED, RUNS_COMPLETED, COMPLETE_TEST_SUITE_RUN, ALL_REGRESSION_TESTS_RUN, CROSS_RUN_COMPARISON_COMPLETED, NEW_CRITICAL_DEFECTS, NEW_MAJOR_DEFECTS, NEW_REQUIREMENTS_DISCOVERED, INJECTED_DEFECTS_NOT_DETECTED, NEW_CORRECTNESS_AFFECTING_VARIANCE, CONFIRMATION_ACCEPTANCE_CRITERIA_SATISFIED, REQUIRED_RETURN_STAGE, STAGE_DECISION, DECISION_EVIDENCE."
+    },
+    "additionalBaseAnchor": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3671,
+      "endLine": 3671,
+      "startByte": 210576,
+      "endByte": 210722,
+      "sha256": "2ddfab7afbce7b54bd562beb66162beadfde5da97876407309e07821e531e074",
+      "text": "- Application derives unchanged state, completeness, new-defect counts, new-requirement counts, variance, contradictions, and final determination."
+    }
+  },
+  "currentSourcePolicies": "Existing exact v4 A–F2 only. The separately reported implementation-aware technical resolution was not read or imported as source authority.",
+  "captionBoundaryRule": "A caption that defines a stable table/family category keeps its exact original membership; a new inserted governing block changes a broader context only within the new block’s expressly limited subject. Child semantic changes do not confer new authority on sibling facets.",
+  "ownershipVsDerivationRule": "Retain actor/producer and epistemic-partition propositions as such. A concrete semantic calculation named by an entry, including confirmation completeness, variance or final determination, requires current source-governor review and cannot be retained solely because the application is still responsible.",
+  "claims": {
+    "independentPerMemberSourceAdjudication": true,
+    "runtimeTestOrProofInspection": false,
+    "currentImplementationAcceptance": false
+  }
+}

@@ -1,0 +1,198 @@
+{
+  "schema": "closed-loop-source-edge-exact-evidence/1",
+  "sourcePassages": {
+    "L2073-2073": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 2073,
+      "endLine": 2073,
+      "startByte": 156581,
+      "endByte": 157422,
+      "sha256": "716f74d1c330a23d7f2f70d7900eef3e7acc01577fc5ef064adf55767e6945ca",
+      "text": "XML selectors start with exactly one slash, then child-element segments named [A-Za-z_][A-Za-z0-9_.:-]* or *, optionally followed by [positive safe integer]. The first segment matches the document element at position 1; later positions apply within each parent's matching child elements. Only the final segment may be @name or text(). Element results are arrays of the canonical element-node values defined in D4; attribute results are arrays of existing exact attribute strings; text() returns one string per selected element, concatenating descendant text/CDATA in document order and excluding comments. A wholly empty selection at any segment, including a final attribute selection, is UNDETERMINED. A selected element with no text yields the known empty string, not a missing selection. Other selector syntax is invalid before execution."
+    },
+    "L1817-1819": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 1817,
+      "endLine": 1819,
+      "startByte": 136321,
+      "endByte": 136822,
+      "sha256": "00a6aec52a11b506cefcf6a943303ec85248ec48dce837ddf3accb4dce82b0ac",
+      "text": "21.3 Canonical structure and dataflow\n\nTest IR is a topologically ordered directed acyclic graph. Every step has a unique application-validated stepId, one registered op, and an explicit inputs object. Each input references exactly one literal, immutable binding, or prior step output. A step may reference only an earlier step. Hidden accumulators, implicit stacks, ambient project state, ambient current values, operand-by-position rules, and implementation-dependent input selection are prohibited."
+    },
+    "L1883-1883": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 1883,
+      "endLine": 1883,
+      "startByte": 138236,
+      "endByte": 139020,
+      "sha256": "131718be957b731da086b38b31ead06f4440d95ec0118dc3d0a946c557f9a3da",
+      "text": "Every registered operation declares named input ports, output ports, exact types, cardinalities, deterministic error codes, error propagation, and resource-cost category. Each operation declares exact input arity and types and one normalized output type. Multi-artifact branches use explicit step references. BYTE_COMPARE and COMPARE receive explicit left and right inputs. Assertions receive explicit actual and expected inputs. A failed or unknown predecessor prevents dependent execution and propagates the registered terminal disposition without partial canonical result; errors propagate as typed execution failure and no later step may consume a failed output. Intermediate step outputs exist only for the current execution unless explicitly emitted as observations or evidence."
+    },
+    "L2016-2035": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 2016,
+      "endLine": 2035,
+      "startByte": 144010,
+      "endByte": 145165,
+      "sha256": "a46134ed95d1e5e8b43ee9a8dfe63ef30a6a597a505939cfa0c6b290f86b9c31",
+      "text": "21.15 Execution dispositions\n\n- Required material unavailable before execution → BLOCKED\n- Execution starts but exceeds a runtime limit → EXECUTION_FAILED\n- Execution finishes but cannot establish the proposition → UNDETERMINED\n- Assertion establishes compliance → SATISFIED\n- Assertion establishes noncompliance → VIOLATED\n\n21.16 Test IR language and registry identity\n\nEvery Test IR specification and every result binds:\n- TEST_IR_LANGUAGE_VERSION;\n- OPERATION_REGISTRY_VERSION;\n- OPERATION_REGISTRY_SHA256;\n- JSON_SELECTOR_REGISTRY_VERSION and digest when used;\n- XML_SELECTOR_REGISTRY_VERSION and digest when used;\n- REGEX_REGISTRY_VERSION and digest when used;\n- parser registry identities used by the execution.\n\nAny operation, argument, dataflow, output, parser, selector, regex, numeric, or error-semantic change creates a new language or registry identity. An affected test or result under an earlier identity becomes stale and cannot satisfy a current proof obligation until explicitly migrated and reverified. Two runtimes MUST NOT claim the same current language identity while accepting materially different operations or semantics."
+    },
+    "L2052-2052": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 2052,
+      "endLine": 2052,
+      "startByte": 149641,
+      "endByte": 149691,
+      "sha256": "803f92423eac8c679e2e669e0d41bc743183f2ae79d34ee02cd9943366423b32",
+      "text": "D. Insert after §21.17: residual native semantics"
+    },
+    "L2071-2071": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 2071,
+      "endLine": 2071,
+      "startByte": 155744,
+      "endByte": 155758,
+      "sha256": "c0ebcf4af5bc413a4642236113e2c84eeb5f67762fec4f1eda358cef02a0f5b7",
+      "text": "D3. Selectors."
+    },
+    "L2079-2079": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 2079,
+      "endLine": 2079,
+      "startByte": 159313,
+      "endByte": 160636,
+      "sha256": "672ff53b4e603a5b6e56a943274f5bd3d2ba03fd4bbecf86ed652772d3aa2247",
+      "text": "PARSE_XML returns the document element as a canonical JSON object with exactly four required non-null properties: name (exact element-name string), attributes (object of exact parsed attribute-name/string-value pairs), children (ordered array of its immediate element-node values), and content (ordered array of strings and immediate element-node values in source content order). Every child appears once in children and once as the same canonical value in content; this is duplicated value content, not a cyclic pointer or identity-based equality. Each nonempty ordinary text run between markup boundaries contributes one decoded string; each nonempty CDATA body contributes one literal string. Empty runs are omitted, comments contribute no entry, adjacent strings separated by comment/CDATA boundaries are not coalesced, and entity references within a text run are decoded into that one string. Outside-root whitespace and the declaration are not represented. Attribute order has no canonical-equality significance; child/content array order and text-run segmentation do. Thus differently ordered attributes with equal values compare equal, while mixed text/child content remains observable in exact document order. XML name/attribute/character normalization is precisely the parsing rule above, not namespace inference."
+    },
+    "L2086-2086": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 2086,
+      "endLine": 2086,
+      "startByte": 163277,
+      "endByte": 164020,
+      "sha256": "3e6fcb645fb8f451a8ea109cb41150f19a68da7b41ec9e741ea93392ffd68832",
+      "text": "Unsupported definition syntax, unknown arguments/operations and invalid declared types reject Stage 06 ingestion. Missing required material before execution is BLOCKED. Once started, invalid/unrepresentable data, no-match selection, empty required aggregate, numeric overflow or unsupported precision yields UNDETERMINED; runtime limit/platform/worker failure yields EXECUTION_FAILED. A dependency cannot consume an error or partial output. The operation registry declares deterministic typed codes for these categories; wording is not a new semantic contract. Apply §21.16 to every affected language/parser/selector/operation identity. No existing digest is endorsed by this amendment, and no same-identity incompatible runtime is permitted."
+    },
+    "L2054-2054": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 2054,
+      "endLine": 2054,
+      "startByte": 149693,
+      "endByte": 150070,
+      "sha256": "e76691f0ffff898b4a6adcf42502b908ffc04fe5e0b3e4703beef67d44983e8e",
+      "text": "These clauses close result-bearing primitive/parser choices, not replace §§21.1–21.17. Named ports, DAG validation, immutable bindings, prohibited execution, limits and required identities remain as already specified. Unless expressly defaulted below, an omitted required argument is invalid; no coercion supplies it. The published registry must encode these rules exactly."
+    },
+    "L2083-2083": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 2083,
+      "endLine": 2083,
+      "startByte": 161982,
+      "endByte": 163250,
+      "sha256": "e6964acdd1b58638b1309cf9f6b77872aa4587cb3070404b6bf0502b1c139871",
+      "text": "Remaining result-bearing argument/output closure: BYTE_COMPARE is exact length-and-byte equality of two byte inputs, with no ordering/operator default. ASSERT_MATCH asserts the same Boolean regex result as REGEX using actual/pattern/optional flags; ordered assertions use the exact ordering above. Each assertion yields only SATISFIED or VIOLATED on valid data, with other terminal dispositions propagated as D5 states. The optional message on assertions is a non-null string, absent by default, used only as diagnostic text and never to alter a result. SORT/UNIQUE require arrays and return arrays; MIN/MAX/SUM require arrays as stated. HASH_SHA256 requires bytes; REGEX requires string value/pattern; selectors require a string path and the defined structured value. Unknown optional arguments and implicit operand/binding selection are prohibited. Authoring shortcuts remain permitted only when they compile to the identical explicit §21.3 DAG and named ports. No extra primitive, alternate successful result type or undeclared default is authorized by registry publication. These additions close the result-bearing choices identified in the bounded argument/port omission comparison; the full generated registry still receives the independent §§2.2/14.5 review."
+    },
+    "L2078-2078": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 2078,
+      "endLine": 2078,
+      "startByte": 158449,
+      "endByte": 159312,
+      "sha256": "f3537aa2f98bd0a4f04bf680b232244ea2afc3e21ca1e40500b859e307b8aec6",
+      "text": "PARSE_XML supports the XML 1.0 UTF-8 subset with one root, scalar-valid XML characters, the element/attribute name grammar above, quoted unique attributes, matching tags, comments, CDATA, the five predefined entities and legal decimal/hex numeric character references. An optional initial declaration states version 1.0, optional encoding UTF-8 and optional standalone yes/no in that order. CRLF and CR normalize to LF; literal attribute tab/newline/CR normalize to spaces, while numeric character references preserve their referenced character. DTDs, custom entities, processing instructions, namespace expansion and unsupported declarations are not native semantics. Names containing a colon remain literal names, not namespace-resolved names. Comments do not enter text() output; CDATA does. Invalid/unsupported content cannot yield a successful partial parse."
+    },
+    "L2080-2080": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 2080,
+      "endLine": 2080,
+      "startByte": 160637,
+      "endByte": 161297,
+      "sha256": "d009130c570490da8892ab9bcbb88919dc23e706aba30c5b47ce96edec15ebf8",
+      "text": "These canonical node values may be consumed by canonical equality, UNIQUE, ASSERT_SET_EQUAL and SELECT_JSON_PATH without opaque host-object behavior. For JSON-path traversal their object keys, including attributes, use §34.1 key order; XML traversal uses children/content source order. SELECT_XML requires a parsed node value from PARSE_XML or a node selected from that parsed value in the same execution; a lookalike authored JSON object does not acquire XML-node provenance. Provenance does not affect canonical equality. Its input is one node, not an implicitly unwrapped array; extraction from an element-result array is explicit through SELECT_JSON_PATH."
+    },
+    "L2075-2075": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 2075,
+      "endLine": 2075,
+      "startByte": 157424,
+      "endByte": 157453,
+      "sha256": "9ad12a7bf78f2ba316547efa6566deb23449d275f66eec64e8b1129945e01079",
+      "text": "D4. Text, CSV, XML and regex."
+    }
+  },
+  "technicalSpan": {
+    "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+    "startLine": 31,
+    "endLine": 35,
+    "startByte": 9341,
+    "endByteExclusive": 10421,
+    "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+    "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+    "text": "D3/D4: root of SELECT_XML\n\nFor each SELECT_XML invocation, its one eligible input node is that invocation's root/document element. The first absolute child-path segment matches that node at position 1, including when it was selected from a larger parsed tree. Subsequent segments traverse only that node's children in source order. No original-root, ancestor or outside-sibling lookup is implicit. To query the original root, pass that earlier parsed root explicitly through the same execution's DAG. Same-execution XML-node provenance, explicit array extraction, exact four-property canonical node shape/equality, selector grammar, resource limits and v4 UNDETERMINED empty-selection behavior are unchanged.\n\nThis resolves a genuine ambiguity while retaining the observed subtree-root behavior; it is an explicitly recorded engineering interpretation, not a claim that old source uniquely specified it. Automatic original-document-root access would change observable results and scope. Disallowing selected nonroot input would narrow approved D4. Neither alternative is adopted.\n"
+  },
+  "attribution": "Separately accepted implementation-aware technical interpretation. Original blind-source outputs are preserved and no original-source entailment is claimed.",
+  "reviewMetadataRead": {
+    "schema": "closed-loop-independent-v4-reference-resolution-successor-review/1",
+    "status": "ACCEPT_NARROW_TECHNICAL_REFERENCE_RESOLUTION_SCOPE",
+    "proposalSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+    "freezeSha256": "d9a80e6f870fbd894d7375b30d07e00b470083754a8604e91cd0456552d3757f",
+    "newOwnerDecisionRequiredWithinScope": false,
+    "nextGate": "Lead may retain this exact reviewed technical resolution as a separately attributed reconciliation/adoption input. Preserve original blind artifacts and unresolved impacts; any successor reconciliation must identify this new technical input honestly. Source composition, independent impact/identity decisions and actual implementation/affected tests remain required."
+  },
+  "wrapperAcceptanceRead": {
+    "schema": "closed-loop-independent-technical-input-composition-boundary-review/1",
+    "status": "ACCEPT_ADDITIVE_TECHNICAL_INPUT_AND_DEPENDENCY_READY_PREPARATION",
+    "recordSha256": "62460d5001962238d5f09499545d5bf8bec7d0cac0948a057e7174d327ed6092"
+  }
+}

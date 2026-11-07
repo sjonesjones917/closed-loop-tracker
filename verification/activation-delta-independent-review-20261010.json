@@ -1,0 +1,216 @@
+{
+  "schema": "closed-loop-independent-activation-delta-review/1",
+  "reviewerContext": "/root/activation_delta",
+  "reviewedAtUtc": "2026-10-10T16:09:40.138966+00:00",
+  "decision": "SCOPED_SOURCE_DELTA_REVIEW_COMPLETE",
+  "reviewerAuthoredExecutableChanges": false,
+  "source": {
+    "checkoutCommit": "1599f9cfb33cc246292ade693c877fbe200b1986",
+    "baseCommit": "2c90a7dd982dd67b2ae41b91f9707dd73016da4d",
+    "trackedTreeWasCleanAtReview": false
+  },
+  "reviewedInputs": [
+    {
+      "path": "verify-project-activation.mjs",
+      "beforeSha256": "21af99967e4f10408941fb68028c08178b9fc2b5ec4d46c0e866baabf5cde93c",
+      "sha256": "040ddc8cef2ccc4e08b87f78f3e617b9647aba545fe346635188d9860609cfb7"
+    },
+    {
+      "path": "app-core.js",
+      "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+    },
+    {
+      "path": "project-store.js",
+      "sha256": "4e8368f0d91eab0b937ee5c256a121c6ca2b3524e9d06ffc16c3f5637a05b060"
+    },
+    {
+      "path": "test-project-store-runtime.mjs",
+      "sha256": "743e74ce60e3f81f1601daf7a1bf589ac2a3b8600e275a5865c24fbd0f335f1b"
+    },
+    {
+      "path": "test-mobile-preparation-ui.mjs",
+      "sha256": "c412d76eb8bbe753340e07c07f77876cb5e7a2b45644e4f1f997be6fc80a3184"
+    },
+    {
+      "path": "verification-evidence-catalog.mjs",
+      "sha256": "5d8e04d46601123d4552e796d0e69027f29774155d5309d5e1356c6456c53010"
+    },
+    {
+      "path": "verification-evidence.mjs",
+      "sha256": "1fa8705ab0951782d31d4136fcfb1f9be772fb9f6b9039627a32b527320ce972"
+    },
+    {
+      "path": "verify-conformance-regressions.mjs",
+      "sha256": "cec69ce4a4eb45ad2c49dccd164852a35cd7386f6b269e22d318d5ed63204a39"
+    },
+    {
+      "path": "verification-assertion-bindings.json",
+      "sha256": "6c53e50dba0e3ac69a00a6ac2b363086a6d6c1f785803ccb1b4ed35b9913d396"
+    },
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d"
+    },
+    {
+      "path": "specification/recovery-amendment-20260914.txt",
+      "sha256": "40340c453d52878d24aa00dc239ec52a2f3489a1c6989a9fc414158ae17b216f"
+    }
+  ],
+  "controllingBasis": [
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "section": "45.1",
+      "lineRange": [
+        5026,
+        5040
+      ],
+      "meaning": "Frozen mobile target includes initial project package, performer and identity assurance, and exact deployed build; this test supplies synthetic target prerequisites and calls the real production capture path."
+    },
+    {
+      "path": "specification/recovery-amendment-20260914.txt",
+      "clauses": [
+        "CTX-02",
+        "CTX-03",
+        "CTX-07",
+        "HIS-03",
+        "HIS-04",
+        "HIS-05"
+      ],
+      "meaning": "Existing partial activation and owned context/checkpoint proof remains under the same contractRefs."
+    }
+  ],
+  "findings": [],
+  "assessment": {
+    "rootCause": "Test fixture had not followed production mobile preparation changes introduced in 251702790: it supplied only testProjectId and did not install captureMobileInitialPackage into the VM. Current production correctly rejects the missing frozen preparation metadata before testing activation; supplying it alone then exposes the missing fixture helper.",
+    "correction": "Supply explicit controlled preparationId/performer/identityAssurance/buildIdentity and extract the actual production capture helper. Retain all existing assertions and add target equality, package job/media/size and independent Node SHA256 assertions.",
+    "unchangedCases": "Eight emitted observations remain, including every one of seven activation callers, exported instruction/reservation/durable ZIP byte checks, import/view/rejection/recovery controls, null-view isolation and same-project explicit selection. No existing assertion removed or weakened.",
+    "boundary": "Production handler, activation, storage transaction adapter, exported gzip backup, and independent hash check; DOM/history, target parser, deployment verification, mobile operation observation recording are controlled test doubles. actualBrowser=false.",
+    "independentExpectedValues": "COMPLETE remains literal expected operation; frozen target expected values are explicitly authored fixture constants independent of production derivation; package digest uses Node crypto over decoded bytes.",
+    "metadata": "No retained requirement-coverage review lists verify-project-activation.mjs in reviewedInputs, and no normative binding references activation.exported-owned-instruction. Its six CTX/HIS contractRefs are partial-scoped and unchanged. No 156-review metadata renewal is justified by this one-file correction. Current complete evidence/conformance source fingerprints include the changed test, so old source-bound receipts cannot substitute for current ones.",
+    "catalog": "Current complete owner report is accepted by observationsFromReports as activation.exported-owned-instruction PASS. Added assertions remain within that existing required owner.",
+    "efficiency": "Existing owning suite extended; no new CI entry point or duplicate full run. Focused pre-fix exit occurred earlier than full post-fix suite and therefore elapsed values are not comparable speed measurements."
+  },
+  "executions": [
+    {
+      "name": "pre-fix",
+      "command": [
+        "/workspace/scratch/runtime/node_modules/node/bin/node",
+        "/workspace/scratch/activation-delta/pre-fix-owner.mjs"
+      ],
+      "cwd": "/workspace/closed-loop-tracker",
+      "startUtc": "2026-10-10T16:07:50.427840+00:00",
+      "endUtc": "2026-10-10T16:07:54.006474+00:00",
+      "elapsedSeconds": 3.579,
+      "exitCode": 1
+    },
+    {
+      "name": "post-fix",
+      "command": [
+        "/workspace/scratch/runtime/node_modules/node/bin/node",
+        "verify-project-activation.mjs"
+      ],
+      "cwd": "/workspace/closed-loop-tracker",
+      "startUtc": "2026-10-10T16:07:54.006891+00:00",
+      "endUtc": "2026-10-10T16:08:00.765684+00:00",
+      "elapsedSeconds": 6.759,
+      "exitCode": 0
+    },
+    {
+      "name": "missing-capture",
+      "command": [
+        "/workspace/scratch/runtime/node_modules/node/bin/node",
+        "/workspace/scratch/activation-delta/missing-capture-owner.mjs"
+      ],
+      "environmentOverride": {},
+      "cwd": "/workspace/closed-loop-tracker",
+      "startUtc": "2026-10-10T16:08:45.456192+00:00",
+      "endUtc": "2026-10-10T16:08:49.091712+00:00",
+      "elapsedSeconds": 3.636,
+      "exitCode": 1
+    },
+    {
+      "name": "wrong-initial-digest",
+      "command": [
+        "/workspace/scratch/runtime/node_modules/node/bin/node",
+        "verify-project-activation.mjs"
+      ],
+      "environmentOverride": {
+        "APP_SOURCE": "/workspace/scratch/activation-delta/wrong-initial-digest-app.js"
+      },
+      "cwd": "/workspace/closed-loop-tracker",
+      "startUtc": "2026-10-10T16:08:49.092031+00:00",
+      "endUtc": "2026-10-10T16:08:52.684046+00:00",
+      "elapsedSeconds": 3.592,
+      "exitCode": 1
+    }
+  ],
+  "evidence": [
+    {
+      "path": "/workspace/scratch/activation-delta/catalog-observations.json",
+      "sha256": "264732a79e97e1ff63b4108a02daebb6d07d5d41a3eddc76230f3ea3987dd7ec"
+    },
+    {
+      "path": "/workspace/scratch/activation-delta/execution-ledger.json",
+      "sha256": "7b93c047deae5270625d6d103f5b54f81179dfd67bd4c520908572b0caca77f0"
+    },
+    {
+      "path": "/workspace/scratch/activation-delta/missing-capture-owner.mjs",
+      "sha256": "dd38d313061d1b43a7158548627ae95826b94371dfe2b3405e0886773a8f7e31"
+    },
+    {
+      "path": "/workspace/scratch/activation-delta/missing-capture.stderr.log",
+      "sha256": "70a71d4f19e0ed09c219833b8d7cf57429aaa6a24f439ea2c4281f064ab63c66"
+    },
+    {
+      "path": "/workspace/scratch/activation-delta/missing-capture.stdout.json",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/workspace/scratch/activation-delta/post-fix.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/workspace/scratch/activation-delta/post-fix.stdout.json",
+      "sha256": "2e1659d448c7ed13d87dd2db8308b29641c5499ef3b4751b5b6602267f2289f0"
+    },
+    {
+      "path": "/workspace/scratch/activation-delta/pre-fix-owner.mjs",
+      "sha256": "4c421ff5a6112d802d72036f35883279271f2212e6c832d07ead7c99e6d8a9d3"
+    },
+    {
+      "path": "/workspace/scratch/activation-delta/pre-fix.stderr.log",
+      "sha256": "e287bea04318628657382aaf85949b9e14a01e42b665aaf2e721b7f5393598bc"
+    },
+    {
+      "path": "/workspace/scratch/activation-delta/pre-fix.stdout.json",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/workspace/scratch/activation-delta/run-focused.py",
+      "sha256": "f62362dc23bf6d7eed6ae207431326c2d3a26f438c97ad20d0a26ac06c7722d5"
+    },
+    {
+      "path": "/workspace/scratch/activation-delta/wrong-initial-digest-app.js",
+      "sha256": "015b4e0116b5a6349601f6f7695c7805f0e0a437f1aa46ec84e774b4b1295a88"
+    },
+    {
+      "path": "/workspace/scratch/activation-delta/wrong-initial-digest.stderr.log",
+      "sha256": "a235f3c63b12ef67edee3e91511ca7bc52580e5e9fee8130b75678ca96740de7"
+    },
+    {
+      "path": "/workspace/scratch/activation-delta/wrong-initial-digest.stdout.json",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "executionInterpretation": {
+    "preFix": "Exit1 at exact missing preparationId message before mobile activation assertions; a fixture failure, not evidence application activation is broken.",
+    "postFix": "Exit0, eight observations and seven activation callers; full owning production-adapter boundary passed.",
+    "missingCapture": "Current owner with only helper extraction removed exits1 at exact ReferenceError captureMobileInitialPackage is not defined, independently establishes second fixture dependency.",
+    "wrongInitialDigest": "Isolated production-source mutation changes captured digest to f*64; real store rejects before new test assertions with MOBILE_ACCEPTANCE_INITIAL_PACKAGE_INVALID. This is a valid storage negative control, not claimed as detection by the newly added digest assertion."
+  },
+  "limits": [
+    "No physical-device, actual-browser, deployed-build, real-agent, full-stage or final release conformance claimed.",
+    "Initial gzip semantics/restore and failure-resume cases remain the dedicated test-mobile-preparation-ui.mjs owner; source reviewed here, not rerun in this focused test-only delta.",
+    "Fresh required complete candidate CI/evidence, deployment and supported external acceptance obligations remain open and owned by integration."
+  ]
+}

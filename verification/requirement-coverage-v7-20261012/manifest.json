@@ -1,0 +1,181 @@
+{
+  "candidatePathCount": 23,
+  "createdAtUtc": "2026-10-12T19:03:04.930858+00:00",
+  "digestBoundHistory": {
+    "localAppendedRecordExcluded": true,
+    "publishedHistoricalRecordPreserved": true,
+    "publishedHistoricalRecordSha256": "69a2e2e885d972ae5d42b1671a48221c4db29102a10462355b7567349f9a2e24",
+    "remoteContinuationPreservedAsExistingBaseline": true
+  },
+  "hashedNonSelfPaths": [
+    {
+      "bytes": 3103,
+      "path": "verification/requirement-coverage-v7-20261012/README.md",
+      "sha256": "25d011f7945ef5f36f799c76a02365434507d5a05b4c479be478e3990e276c69"
+    },
+    {
+      "bytes": 9284,
+      "path": "verification/requirement-coverage-v7-20261012/bounded-reconciliation-20261012.md",
+      "sha256": "e71cd9a95750f63f7652f18419cd93df62ac108707a89c4098fa8a2b47d4a3ea"
+    },
+    {
+      "bytes": 7629,
+      "path": "verification/requirement-coverage-v7-20261012/canonical-admission-20261012.json",
+      "sha256": "c651268ef75e573d43d6a38f16c62ccd3064d85b4b62e4ceef970678a336c28b"
+    },
+    {
+      "bytes": 3835,
+      "path": "verification/requirement-coverage-v7-20261012/canonical-admission-20261012.md",
+      "sha256": "674ca84d19cf02114bb7ababf14bdd8f324741d163e8da10f032b484ed5f0c7e"
+    },
+    {
+      "bytes": 12474,
+      "path": "verification/requirement-coverage-v7-20261012/canonical-admission-nine-20261012.json",
+      "sha256": "9b55f41958835dc29aab5c649fd257f7785ecf9d9f245dab037e7344ff84cb1a"
+    },
+    {
+      "bytes": 1997871,
+      "path": "verification/requirement-coverage-v7-20261012/complete-work-map.json.gz",
+      "sha256": "6daa30fa4e240e7a62716531db6882eeb04611d59dd4334e4037a5a8a8c39608"
+    },
+    {
+      "bytes": 11016,
+      "path": "verification/requirement-coverage-v7-20261012/current-source-evidence-delta-20261012.json",
+      "sha256": "471dad5f80f1924c9c3944aa7c6cefa9f9f55ad355398948d02ff8e862ab2c63"
+    },
+    {
+      "bytes": 3129,
+      "path": "verification/requirement-coverage-v7-20261012/current-source-evidence-delta-20261012.md",
+      "sha256": "0ac5f11615505279f57c3499953961b9098a7027bad48d6718d9cefb7cb72716"
+    },
+    {
+      "bytes": 2240,
+      "path": "verification/requirement-coverage-v7-20261012/current-status-correction-20261012.json",
+      "sha256": "911884d36f6fb11e8ad7a52379a006762e377afa234d61ec997b6d7d8beb3ee8"
+    },
+    {
+      "bytes": 4955,
+      "path": "verification/requirement-coverage-v7-20261012/current-status-delta-20261012.json",
+      "sha256": "dc0aaae446d2d8b3bb54c5dda1eebdb20090f10104fc853278385080e5449349"
+    },
+    {
+      "bytes": 5544,
+      "path": "verification/requirement-coverage-v7-20261012/current-status-delta-v2-20261012.json",
+      "sha256": "229e9d32f85d9a9116bd9202d8527fba1eceb27cc9edc92303057ba39587982b"
+    },
+    {
+      "bytes": 21338,
+      "path": "verification/requirement-coverage-v7-20261012/native-closure-current-state-20261012.json",
+      "sha256": "558baf3cbe69520fe691203aad8705daedbd64553c1cf41e59334030d40dc589"
+    },
+    {
+      "bytes": 1563,
+      "path": "verification/requirement-coverage-v7-20261012/native-closure-current-state-20261012.md",
+      "sha256": "24dc42e118d271aa7315b0f2936e4dfc540f729181c70dea3ffe772d706cd55d"
+    },
+    {
+      "bytes": 1844,
+      "path": "verification/requirement-coverage-v7-20261012/nine-clause-currentness-delta-20261012.json",
+      "sha256": "823f9c94f24d9d90955264515baba8018a180bbea2e5ca092e3b46c845ef75cf"
+    },
+    {
+      "bytes": 113940,
+      "path": "verification/requirement-coverage-v7-20261012/provenance-reference-errata.json",
+      "sha256": "ac105bd53b8d7c426489b8b70279c00023ea4f5a9423f838f097eaa89235d347"
+    },
+    {
+      "bytes": 2083,
+      "path": "verification/requirement-coverage-v7-20261012/provenance-reference-errata.md",
+      "sha256": "45407e93145221336f883ef2d85070c46fec60063dd6a417ccc9645c93a99e2e"
+    },
+    {
+      "bytes": 2836,
+      "path": "verification/requirement-coverage-v7-20261012/publication-75bcc721-20261012.json",
+      "sha256": "d1481ad07f268d31c8899edc459479eec0ae5f5a0a3792850df963a2c5cb5d17"
+    },
+    {
+      "bytes": 5981,
+      "path": "verification/requirement-coverage-v7-20261012/stage01-two-row-accounting-delta-20261012.json",
+      "sha256": "a5f22018b8ca214c6e9d0fc61121fc6d4e55bc5ded9d7fb80a6cffc7c598a116"
+    },
+    {
+      "bytes": 3781,
+      "path": "verification/requirement-coverage-v7-20261012/stage01-two-row-accounting-delta-v2-20261012.json",
+      "sha256": "dd42bf69883d5120eeec4dd1b94d79a596cd6c79539ac4e130c4d7c8146162b6"
+    },
+    {
+      "bytes": 1323,
+      "path": "verification/requirement-coverage-v7-20261012/stage30-renewal-status-20261012.json",
+      "sha256": "b9ac38694240b86636373b2f3b36c15bb628edaa77573b770aef21c1e09263ed"
+    },
+    {
+      "bytes": 24118,
+      "path": "verification/requirement-coverage-v7-20261012/v7-568-current-status-delta-20261012.json",
+      "sha256": "0b0867f9ffbcba930f7501e22cf23191a115b80f482df55aa62c9a1e55cba3ea"
+    },
+    {
+      "bytes": 44603,
+      "path": "verification/requirement-traceability.md",
+      "sha256": "54edd9d743057c138cc66f46429b408b41d603b2e18a9ee5bcb4dc47bcbb85e7"
+    }
+  ],
+  "map": {
+    "contextualSeparateIds": 67,
+    "deterministicGzip": true,
+    "gzipBytes": 1997871,
+    "gzipSha256": "6daa30fa4e240e7a62716531db6882eeb04611d59dd4334e4037a5a8a8c39608",
+    "jsonBytes": 12949610,
+    "jsonSha256": "8b10831c9cf7c1cf069fde6528869ab870f9079e5781e3fbe085e6afd5b33a97",
+    "rows": 3999,
+    "uniqueSubstantiveNreqIds": 3999
+  },
+  "privacy": {
+    "fixtureLocatorOccurrences": 62,
+    "fixtureLocatorOriginalsIncluded": false,
+    "fixtureLocatorTokens": 6,
+    "opaquePrivateEvidenceRefs": 89,
+    "privateEvidenceIncluded": false,
+    "privatePathBearingHistoricalRecord": {
+      "path": "verification/test-ir-native-contract-repair-20261010.json",
+      "privatePathOccurrences": 15,
+      "privatePathUniqueValues": 10,
+      "rawOriginalBytes": 56911,
+      "rawOriginalIncluded": false,
+      "rawOriginalSha256": "29e20a80fa9fcce3acd177c4f72cad881755bfb72338ae1643f34c8bd640f07a",
+      "repositorySourceIndexReferencesQualifiedUnavailable": 1,
+      "reviewSha256": "b3dab66b7d70d523af13081bc1736a4cc4454aeda9a78df8361ba49d4d86f40f",
+      "substantiveRowReferencesQualifiedUnavailable": 26,
+      "totalReferencesQualifiedUnavailable": 27
+    },
+    "profilesIncluded": false,
+    "rawFailureLogsIncluded": false,
+    "sourceArchivesIncluded": false
+  },
+  "proofQualification": {
+    "currentWholeClauseProvenNumerator": 9,
+    "historicalProofsRestamped": false,
+    "ownerReceipts": 6,
+    "releaseEstablished": false,
+    "totalSubstantive": 3999
+  },
+  "publicationQualification": {
+    "activeCiSnapshotRunId": 38288929237,
+    "historicalActualPublication": "75bcc72115d9ccb81bb193b636fc1f4052b50f76",
+    "remoteQueriedDuringRemediation": false,
+    "retainedCurrentPublishedHead": "77776ca53eb03734addb08beaa8e6f90828d9e5d"
+  },
+  "remainingPrerequisites": [
+    "Root must decide inclusion of the other 10 reviewed untracked source/test paths and the six additionally named dependency paths; this v2 correction does not make the 11-path set dependency-closed.",
+    "Reconcile candidate with current remote 77776ca delta without overwriting the digest-bound historical record or continuation.",
+    "Fresh terminal CI/head/branch-protection read immediately before any push.",
+    "Final privacy/diff review of the exact composed publication candidate."
+  ],
+  "schema": "portable-handoff-remediation-manifest/2",
+  "selfReference": {
+    "path": "verification/requirement-coverage-v7-20261012/manifest.json",
+    "readbackPinnedExternally": true,
+    "sha256": "OMITTED_TO_AVOID_RECURSION"
+  },
+  "sourceProposal": "Versioned privacy correction over frozen-b0efd prepush handoff remediation v1; raw private-path-bearing historical record remains excluded.",
+  "sourceProposalUpdateManifestSha256": "ab8eb53e3e452ccff1823e35859dcb601fc84603c20d15b7a5c731276fba94ee"
+}

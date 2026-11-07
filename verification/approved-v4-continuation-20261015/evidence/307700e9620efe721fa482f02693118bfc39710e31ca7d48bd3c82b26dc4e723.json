@@ -1,0 +1,1336 @@
+{
+  "schema": "closed-loop-source-edge-exact-evidence/1",
+  "sourcePassages": {
+    "SUCCESSOR_SOURCE-L454-454": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 454,
+      "endLine": 454,
+      "startByte": 35243,
+      "endByte": 36290,
+      "sha256": "43dda7d6fd854facea71f822e4ff44acbc19e8c40fd2beb6a0381616e05b2289",
+      "text": "The supported decoding subset is ordinary single-volume ZIP and the decoder's bounded ZIP64 forms, with stored or DEFLATE compression, permitted data descriptors, UTF-8 or CP437 names and the decoder's validated Unicode-path extras. Keep its existing checks for complete consistent local/central headers, exact boundaries, safe noncolliding canonical paths, actual expanded lengths, CRC and SHA-256, permitted flags/extras and resource/platform bounds. Encrypted entries, split volumes, self-extracting prefixes, directory/link/device/special entries, unsupported compression/extra fields and ambiguous or colliding paths do not become supported through this mapping. The exact intake safety profile below and existing worker isolation remain effective. The response transport contract remains unchanged. A resource or platform failure is not reclassified as an unsupported format to bypass a blocker. Intake uses this decoder's structural/byte validation, not the inbound response's manifest, response.json role or attachment-admission semantics."
+    },
+    "SUCCESSOR_SOURCE-L457-457": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 457,
+      "endLine": 457,
+      "startByte": 36325,
+      "endByte": 37445,
+      "sha256": "9e4c4defab17cefea45e5b26ceb08a2941d2ec35567133989ba876b7abe29dfb",
+      "text": "Apply the same recognition test to each supplied root and each verified expanded child. A byte candidate exists if the first four bytes are a ZIP local-header, EOCD, ZIP64 EOCD or ZIP64-locator signature (respectively hexadecimal 504b0304, 504b0506, 504b0606, 504b0607), or if the EOCD signature 504b0506 occurs anywhere in the last min(byteLength,65557) bytes. Also attempt validation when a supplied filename ends with .zip under ASCII case-insensitive comparison, or the supplied media type, before a semicolon and after ASCII whitespace trim/case-fold, is application/zip or application/x-zip-compressed. Names and media types can require an attempt but cannot suppress a byte candidate or establish success. A random signature or claimed filename can never create successful ZIP coverage: the complete retained structural, boundary, path and integrity checks decide that. Missing bytes retain an unavailable inventory/blocker; they do not establish absence of ZIP structure. Noncandidate bytes without a ZIP claim do not receive ZIP nodes through speculation; C's other available accounting rules remain applicable."
+    },
+    "SUCCESSOR_SOURCE-L467-467": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 467,
+      "endLine": 467,
+      "startByte": 42621,
+      "endByte": 43030,
+      "sha256": "7b070b0d2bedd7fd7e2c3d8430050c63a569995ddb4b0987c0958d7adbc701b0",
+      "text": "- ZIP_CONTROL_RECORD for each present end-of-central-directory fixed record, ZIP64 end record and ZIP64 locator. locatorValue is [\"CONTROL\", recordType, offset]; recordType is EOCD, ZIP64_EOCD or ZIP64_LOCATOR. v has exactly recordType, offset, byteLength and rawHex. The ordinary EOCD record excludes its following archive-comment bytes; ZIP64 records use the exact validated decoder-supported record extent."
+    },
+    "SUCCESSOR_SOURCE-L492-492": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 492,
+      "endLine": 492,
+      "startByte": 52069,
+      "endByte": 52903,
+      "sha256": "eb7f4a8d919c326205b2809ea9fe7dba3d928557ae0bf6858bf0f7dcb0ad1e14",
+      "text": "A structurally established zero-entry EOCD with zero central-directory size and consistent offsets is a known empty archive, not malformed merely because the existing decoder rejects count=0. Preserve its inventory and exposed control/comment nodes, emit no invented member or child inventory, and record EMPTY_ARCHIVE_DECODER_BOUNDARY as INACCESSIBLE_OR_BLOCKED for detailed decoding under this current parser scope. It does not yield a successful detailed-coverage claim or unsupported-format fallback. A missing or unusable DEFLATE implementation/worker is unavailable evidence, not unsupported ZIP format; preserve originals, established nodes and blocked child inventories. Corrupt bytes, an unsupported feature, unsafe paths, actual resource exhaustion and unavailable machinery retain distinct causes and recovery requirements."
+    },
+    "SUCCESSOR_SOURCE-L1760-1760": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 1760,
+      "endLine": 1760,
+      "startByte": 134223,
+      "endByte": 134838,
+      "sha256": "895520edeae84bb9fd204461ad0de9330c8a0bf0507b232297a56c5388239471",
+      "text": "Archive intake and export fail closed on traversal, absolute paths, duplicate or colliding paths, symlinks, hard links, device entries, unsupported special files, unsupported or encrypted members outside a registered encrypted contract, unsupported compression, excessive nesting, entry count, per-entry size, total compressed or expanded size, compression ratio, path depth, filename length, Unicode ambiguity, manifest mismatch, unmanifested extra members, missing members, or modified bytes. Expansion occurs only in an isolated bounded parser path and never makes content executable or prompt-visible by itself."
+    },
+    "SUCCESSOR_SOURCE-L471-471": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 471,
+      "endLine": 471,
+      "startByte": 43444,
+      "endByte": 44257,
+      "sha256": "64aa126f962c63705f7753b1ac4d7aaa1335a22b0b2408ff154dfbbb5a159528",
+      "text": "1. One ZIP_MEMBER structural node, with occurrence P and locatorValue [\"MEMBER\", i, centralHeaderOffset]. Its v has exactly index, centralHeaderOffset, localHeaderOffset, rawFilename, rawFilenameHex, canonicalPath, compressionMethod, compressedByteLength, compressedSha256, expandedByteLength, expandedSha256 and crc32. rawFilename is the decoder's exact decoded central name before path normalization; rawFilenameHex retains its exact original name bytes. canonicalPath is the separately validated safe canonical path, never a replacement for the raw name. compressionMethod is integer 0 or 8; both digests are H of the actual compressed data span and actual verified expanded bytes respectively; crc32 is the verified unsigned integer. No timestamp, name or claimed digest substitutes for observed member bytes."
+    },
+    "SUCCESSOR_SOURCE-L473-473": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 473,
+      "endLine": 473,
+      "startByte": 44866,
+      "endByte": 45539,
+      "sha256": "6eac90668cc2d411b16b6cae19647521e205a8896665c74f41c070c2b63fe171",
+      "text": "3. One ZIP_EXTRA_FIELD node per actually present local extra field, followed by one per actually present central extra field; preserve byte order within each area, including separately present equal fields in the two areas. locatorValue is [\"EXTRA_FIELD\", i, area, ordinal, offset], with area LOCAL or CENTRAL and ordinal zero-based within that area. v has exactly area, headerId, offset, byteLength and rawHex. byteLength and rawHex cover the full 4-byte ID/length header plus its declared payload. Existing duplicate/unsupported/malformed-extra rejection is unchanged. No decoded timestamp, UID, Unicode name or other extra interpretation replaces its exact source bytes."
+    },
+    "SUCCESSOR_SOURCE-L490-490": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 490,
+      "endLine": 490,
+      "startByte": 51025,
+      "endByte": 52067,
+      "sha256": "f7ac514bdfa570b575477da4f6e03e4eee26bdbff0eacbeac6a87d142b69cebf",
+      "text": "Preserve independently established exact metadata and comment spans as their corresponding ACCESSIBLE structural units even when the owning member is blocked; accessibility here concerns the exact metadata bytes, not the member's safe expansion or semantic validity. An extra field receives its specified unit only when its own 4-byte header and full declared payload are in bounds; duplicate/unsupported fields can be preserved as separate observed bytes but still block member admission. If malformed metadata prevents complete field segmentation, preserve the exact whole extra-area bytes as diagnostic provenance on the blocked occurrence, without inventing extra-field units. For a blocked member whose local metadata is not safely established, emit only established central metadata/extras/comments, then its blocked child inventory. This is bounded read-only exposure; it does not relax existing decoder rejection. Unknown remaining structure remains an explicit archive-level blocker, and a smaller observed count cannot discharge it."
+    },
+    "SUCCESSOR_SOURCE-L1756-1756": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 1756,
+      "endLine": 1756,
+      "startByte": 133345,
+      "endByte": 133917,
+      "sha256": "8cf7bcf332a5ee6afe0b77074b0a79ade7ac871a7c254bd415144aba782ce3c8",
+      "text": "Every artifact preserves rawFilename and has a safe displayFilename and canonicalPath under closed-loop-filename/1. Canonical comparison uses Unicode 15.1.0 NFC, case-sensitive identity, and separately checked Unicode 15.1.0 default-case-fold and registered platform-risk collision keys. Absolute paths, drive prefixes, NUL, control characters, empty segments, `.` and `..`, duplicate canonical paths, case-fold collisions, extraction-target collisions, and supported confusable collisions are rejected. An unauthorized rename never matches solely because bytes are equal."
+    },
+    "SUCCESSOR_SOURCE-L462-462": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 462,
+      "endLine": 462,
+      "startByte": 40813,
+      "endByte": 41360,
+      "sha256": "c2fff10ac606737d192c949a6216d3dcc5f316601519c4b5645d314d6bc04e57",
+      "text": "Let P be the parent archive's C occurrence path, already bound to the owning input version. Number central-directory entries from zero in their exact central-directory order, not local-file-offset order, canonical-filename order or extraction completion order. The child occurrence for entry i is P followed by i. Different supplied archives and different nested occurrences remain distinct even when bytes or names are equal. Local/central identity validation is still required; choosing central-directory order for accounting does not weaken it."
+    },
+    "SUCCESSOR_SOURCE-L472-472": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 472,
+      "endLine": 472,
+      "startByte": 44258,
+      "endByte": 44865,
+      "sha256": "d20c95a857c23fa4bda61db271b25da31538c188a143601e2cb9a43eea17ebbc",
+      "text": "2. ZIP_MEMBER_METADATA nodes for the central fixed header, local fixed header and data descriptor if present, in that order. locatorValue is [\"MEMBER_METADATA\", i, recordType, offset], with recordType CENTRAL_HEADER, LOCAL_HEADER or DATA_DESCRIPTOR. v has exactly recordType, offset, byteLength and rawHex. Central and local fixed-header extents are 46 and 30 bytes respectively; the descriptor extent is the exact 12/16/20/24-byte form validated by the existing decoder. Filename, extras and comment bytes are excluded from these fixed-header units because their exact representations are bound separately."
+    },
+    "SUCCESSOR_SOURCE-L452-452": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 452,
+      "endLine": 452,
+      "startByte": 34674,
+      "endByte": 35241,
+      "sha256": "feb2a2bb266c413e20bd9aa37fc6bfa63175db50ebcb8ba19ffab5b40395be61",
+      "text": "Apply this mapping to a supplied ZIP occurrence for which the application can use its existing bounded closed-loop-inbound-zip/1 structural decoder. Preserve the exact compressed archive bytes, their original supplied occurrence, byte length and SHA-256. Expanded member bytes are verified immutable child copies; they never replace the original archive. Decode and retain bytes only in the existing isolated in-memory/Blob/storage path. No member is extracted to a filesystem, executed, followed as a link, or used as a path outside that path-safe storage authority."
+    },
+    "SUCCESSOR_SOURCE-L459-459": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 459,
+      "endLine": 459,
+      "startByte": 37447,
+      "endByte": 40781,
+      "sha256": "c93a102ad5030b7f2be69e49d28c674a111a836f5fa3f9eea3bd388301544165",
+      "text": "Use a centralized, versioned intake profile closed-loop-raw-units-zip-limits/1. Its bounds are: 27 cumulative central-directory entries across the entire selected input-version archive-mapping pass, including every supplied root and recursively decoded child; 67108864 bytes per expanded member; 70254592 cumulative reserved-or-produced expanded bytes; 140509184 cumulative archive bytes submitted to decoding (count a nested archive again when it is submitted); compression ratio at most 1100 per member; filename byte length at most 65535; canonical path depth at most 128; maximum archive nesting level 27 with the supplied archive at level 1; and one cumulative elapsed-worker deadline of 600000 ms for that entire input-version archive-mapping pass. The entry budget is charged on exposure before expansion, including unsupported/blocked entries; the maximum depth cannot bypass that budget. Expansion and byte accounting are checked before allocation and incrementally, against both declared and actual lengths; declared metadata never substitutes for verified bytes. The expansion safety counter reserves each declared output length before allocation; actual production within that reservation does not charge the same byte twice, while any additional produced byte must first fit and consume remaining budget. Every produced/reserved byte remains charged even if later CRC, validation or decoding fails; no refund, reset or retry can escape the pass-wide ceiling. It includes every child occurrence at every depth, including a nested archive's bytes as its parent's output and its own children separately. This work-safety counter is distinct from the semantic aggregate-byte review sum, which includes only actually verified retained child bytes. The archive-byte sum counts each archive occurrence once when submitted to decoding. The same original per-archive structural and byte checks remain; a bound can stop processing earlier, never authorize weaker checking. These ceilings reuse the current default decoder's 27 entries, 64 MiB file bound, 64 MiB + 1 MiB response + 2 MiB manifest total, twice-total archive bound, ratio/name/path/work bounds; the intake profile assigns those generic ceilings without granting any response.json/manifest.json role or larger filename-specific allowance. Transport recursiveExpansion=false and maxNestingDepth=0 remain response-transport rules, not intake accounting rules. A lower already-applicable storage/worker bound still stops work and remains explicitly blocked; it must not silently change this profile or yield favorable completeness. The exact profile-hash preimage is C({\"version\":\"closed-loop-raw-units-zip-limits/1\",\"scope\":\"INPUT_VERSION_PASS\",\"maxEntries\":27,\"maxEntryBytes\":67108864,\"maxExpandedBytes\":70254592,\"maxArchiveBytes\":140509184,\"maxCompressionRatio\":1100,\"maxFilenameBytes\":65535,\"maxPathDepth\":128,\"maxNestingDepth\":27,\"workerTimeoutMs\":600000}); its SHA-256 is the profile hash. The retained unitization derivation binds the owning input version, mapping ID, this exact profile ID/hash, actual counters and completion/blocker status; changed profile or source invalidates reuse under the existing derivation rules. Repeated equal roots and members are charged separately. Any future profile change follows existing versioning and acceptance requirements."
+    },
+    "SUCCESSOR_SOURCE-L486-486": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 486,
+      "endLine": 486,
+      "startByte": 49238,
+      "endByte": 49886,
+      "sha256": "47a08e2bbc57fb02f4e11c6fe8e1e58ab9bd02c385ec568350d3d48a27923c32",
+      "text": "A supplied archive always retains its C inventory, exact original bytes when available, and a precise outcome. Distinguish (a) unsupported/encrypted structural features; (b) malformed/truncated/inconsistent structures, bad CRC or changed bytes; (c) unsafe/duplicate/colliding member identities; (d) absent/unreadable required bytes or unavailable decompressor/worker; and (e) resource-limit, timeout or interrupted execution. None is a successful parse or a favorable whole-file completeness result. Keep the exact typed cause and existing recovery route; do not silently drop the failing member, retry with weaker validation or invent child bytes."
+    },
+    "SUCCESSOR_SOURCE-L488-488": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 488,
+      "endLine": 488,
+      "startByte": 49888,
+      "endByte": 51023,
+      "sha256": "906a84bdc20de99dea212859c501ef701195fe58178bb27aea01c174d8208638",
+      "text": "Only fully verified members receive ACCESSIBLE ZIP_MEMBER values with observed expanded hashes/lengths. An exposed member means a central-directory record with the exact central signature and complete in-bounds fixed header, filename, extra area and comment area, within the established central-directory extent and traversal order. Its entry index and central-header offset establish the member locator even when local validation or expansion fails. Preserve each such exposed occurrence, including duplicate names, directories, links and unsupported entries, as INACCESSIBLE_OR_BLOCKED with value=null when it cannot be validated; do not expand it or grant its path authority. It still receives exactly one child ARTIFACT_INVENTORY at P followed by i under C: when verified expanded bytes are unavailable, both byteLength and contentSha256 are null, with an explicit blocked disposition. A claimed member size or digest does not fill these values. Distinct colliding/duplicate central occurrences are never merged to hide them. No child inventory is created for a guessed entry, unparsed count or incomplete/unbounded central record."
+    },
+    "SUCCESSOR_SOURCE-L478-478": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 478,
+      "endLine": 478,
+      "startByte": 46685,
+      "endByte": 47457,
+      "sha256": "1ed750e08a32947e0541f40cd8f81b4eec00bf486774901f6be52d12dd3941c6",
+      "text": "For every verified expanded child, apply the byte/claim recognition test above. A ZIP candidate is mapped recursively by this same mapping, in depth-first central-directory order, under the entire input-version mapping pass's shared cumulative safety counters and deadline. The expanded child becomes the next archive occurrence P; no new root identity, fresh budget or favorable parent result is substituted. Exact expanded bytes remain retained and bound even when their own ZIP structure is blocked. A ZIP-based document can expose these ZIP members without thereby claiming semantic Office/XML/PDF parsing. A child that is not a ZIP candidate still receives its inventory and applicable exact UTF-8 physical spans under C; this addendum invents no other media mapping."
+    },
+    "SUCCESSOR_SOURCE-L480-480": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 480,
+      "endLine": 480,
+      "startByte": 47459,
+      "endByte": 48196,
+      "sha256": "ac33f22f2205283891dff84fe2de161e6ad7cd767435eda1def10973d94740b1",
+      "text": "When a depth, entry, byte, ratio, path, name, worker or work bound actually stops a recognized child, retain that child's already exposed member occurrence, inventory and available exact bytes, mark its unresolved subdivision INACCESSIBLE_OR_BLOCKED with the precise cause, and stop the affected expansion safely. It is neither a successful opaque fallback nor proof that children do not exist. Never reset counters for nested ZIPs, invoke unbounded recursive decompression, fabricate descendants, or treat unknown remaining units as zero. A separately supplied copy is a separate root occurrence with its own identity and is charged again to the same input-version pass counters; equality of bytes does not merge it or reset the budget."
+    },
+    "SUCCESSOR_SOURCE-L494-494": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 494,
+      "endLine": 494,
+      "startByte": 52905,
+      "endByte": 53482,
+      "sha256": "1785e14d6310a2ad84b5ea0ec1351a2c6fce3d70b3649fb377845fa37591e921",
+      "text": "This mapping adopts accounting order, unit granularity, raw-name/metadata/comment identity, additive counts, recursive traversal and its explicit bounded intake profile only. It does not adopt arbitrary parser output as normative truth, authorize an unbounded parser or relaxed safety policy, establish semantic inspection, waive current evidence requirements, or accept historical coverage proof. Implementation must expose the required exact locators/bytes from the existing decoder without changing its retained safety predicates; actual boundary and fault tests remain due."
+    },
+    "SUCCESSOR_SOURCE-L2043-2050": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 2043,
+      "endLine": 2050,
+      "startByte": 145576,
+      "endByte": 149639,
+      "sha256": "2a7ea17118329b02878be6338ec2cc6ae978d3fda775c7f8b2789a30268b7a45",
+      "text": "TARGET_AVAILABILITY_CONDITION is a required, non-null closed canonical object with exactly one required non-null property PROOF_EXPRESSION_ID, a canonical proofExpressions ID string. It is one immutable owning-record-to-proofExpressions relationship, with no default. Its producer, scope, writable operation and invalidation owner follow the owning record's existing proposal/acceptance contract; the APPLICATION alone resolves and installs the canonical relationship. It is stored on that existing record, not in a new family.\n\nThe authored form is records.<owning family>[i].fields.TARGET_AVAILABILITY_CONDITION = {\"PROOF_EXPRESSION_ID\": <reference>}. Here <reference> uses the existing response-local relationship convention: exactly {\"tempKey\":\"<same-response proofExpressions tempKey>\"} or {\"recordId\":\"<current proofExpressions canonical ID supplied by the operation>\"}, with no other keys, nulls or defaults. A tempKey must resolve uniquely to a proofExpressions proposal in the same response; a recordId must resolve to the correct current family, project and scope. The APPLICATION resolves this nested relationship through the single ingestion path and at proposal acceptance replaces <reference> with the allocated/resolved canonical ID string. Agents do not write the canonical string directly. This declares the nested relationship's placement, not a second ingestion path.\n\nStage 06 COMPLETE or RECONCILE_VERIFICATION_SUITE may admit structurally valid tests and their availability expressions together using existing proposal acceptance. Admission and canonical ID installation do not establish proof sufficiency. Pending PROOF_REVIEW blocks readiness/evaluation as accepted availability evidence, not initial authoring or proposal admission. Stage 06 PROOF_REVIEW then assesses the installed exact expression and target proposition under the existing review contract; accepted current review permits evaluation. A failed review uses the existing reconciliation/replacement/invalidation lifecycle. No user-operated reference creation is required. The expression's proposition must be availability of the exact target identified by the owning obligation's current scope; the appropriate agent proposes its semantic meaning and composition, and the application validates it.\nThe expression uses only the existing LEAF, ALL_OF, ANY_OF and AT_LEAST_K language, existing valid leaf targets, evidence classes, truth extraction, accepted sufficiency review and current-scope bindings. It evaluates solely under §§29.12–29.14 and the target's existing byte/currentness/identity requirements. It must not depend on completion of the very execution whose availability it determines; ordinary acyclic prerequisite availability proof is permitted. A bare artifact record, filename, digest claim or phase label does not itself establish required byte availability. Missing, stale, unaccepted, circular or unresolved references cannot establish TRUE; apply the existing UNKNOWN/blocking rules without treating unknown as known absence. Closed-universe evidence is required to establish FALSE.\n\nThis reference does not change §16.1's due predicate or phase timing. No PHASE_TARGET, CURRENT_RECORD, VERIFIED_ARTIFACT_BYTES, or other additional condition-node grammar is introduced. An older representation may migrate only after a recorded lossless equivalence demonstration covering target, evidence, scope and TRUE/FALSE/UNKNOWN outcomes; otherwise affected timing/proofs remain stale pending reauthoring and review. Equivalence covers the whole effective predicate, including any separately applied phase-target constraints that the controlling source actually requires, not just the old serialized object. Existing compliant target/currentness/byte-observation functions and three-valued evaluators may be retained when their outputs are bound to the accepted existing proof contract and equivalence is demonstrated; old custom node objects are not admitted as a second canonical language. No pinned phase helper is grandfathered merely because it exists."
+    },
+    "SUCCESSOR_SOURCE-L1195-1201": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 1195,
+      "endLine": 1201,
+      "startByte": 88812,
+      "endByte": 91452,
+      "sha256": "fe647bc618f5bcc462050543fa2e8b607557d0a51fc438647ccf6bdc4082c7b4",
+      "text": "These are the existing later-than-owning-stage deferred failure-test and regression execution routes. A pair is available only for a current accepted definition and its current accepted, independently reviewed execution-test binding, with established definition/test/fixture/target/outcome compatibility, the declared earliest executable stage reached, and the required current target-availability and phase conditions TRUE. Unknown, stale or unavailable prerequisites block; a legitimately future definition remains visible and unexecuted. Timing, compatibility and authority cannot be supplied by this list or inferred from a route label.\n\nThe routes remain receipt-only: one appended regressionExecutions receipt for the selected subject and ordinary supporting evidence, through the existing reserved external response path or existing isolated application-native execution path as its reviewed execution mode requires. They cannot rewrite definitions, complete unrelated ordinary stage work, expose future-stage material early, or mutate canonical user data as a test fixture. Owning Stage07/Stage15 writers and Stage17 REGRESSION permissions are unchanged. No new operation name, executor, store or canonical family is introduced.\n\nEach execution retains exact subject/test/fixture/target identities and hashes, selected stage and operation, current scope and history activation, actual isolation and attributable raw/native provenance. Failure validation requires an actual observation establishing rejection of the bound known-invalid fixture. Regression pre-correction failure and post-correction success require distinct executions and distinct actual target input identities; one observation cannot prove both. Existing capability, risk/disclosure authorization, human review where required, compatibility, reservation, retry, replacement, receipt, freshness and restoration controls remain mandatory and cannot be bypassed by an input-basis minimum. Supported semantic compatibility and application-observed input custody remain separate facts; a supported author interpretation does not change a valid native executor into an external one.\n\nThis is the explicit current-source inclusion of exactly the 38 previously adopted conditional pairs. It preserves their bounded authority; it does not adopt every omitted historical clause, widen their writer permissions, migrate old evidence into current proof, or certify that any implementation or execution conforms. Historical approval identifies the preserved lineage only. Each current result must independently satisfy the current governing source and exact current identities."
+    },
+    "SUCCESSOR_SOURCE-L1357-1373": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 1357,
+      "endLine": 1373,
+      "startByte": 109250,
+      "endByte": 110957,
+      "sha256": "1d06b5d9c87e8f15ab11951d699150ccb05cb86f7c42d2b95f8199376c169045",
+      "text": "16.1 Verification phase and due-stage model\n\nEvery release-bearing proposition, proof obligation, test, observation obligation, regression, and deferred failure test declares:\n\n- VERIFICATION_PHASE: PREPRODUCT_ITERATION, FINAL_PRODUCT_DETERMINISTIC, FINAL_PRODUCT_MEANING, FINAL_PRODUCT_ADVERSARIAL, FINAL_REPRESENTATION, DELIVERY_IDENTITY, EVIDENCE_CLOSURE, REGISTRY_CLOSURE, or TERMINAL_DELIVERY;\n- EARLIEST_EXECUTABLE_STAGE;\n- REQUIRED_BY_STAGE;\n- PER_RUN_REQUIRED;\n- FINAL_PRODUCT_REQUIRED;\n- DELIVERY_REQUIRED;\n- TARGET_AVAILABILITY_CONDITION.\n\nThe application derives DUE_NOW only when the current stage is at least EARLIEST_EXECUTABLE_STAGE, the target-availability condition is TRUE, the obligation is current and applicable, and the current stage is at or beyond its REQUIRED_BY_STAGE. UNKNOWN target availability blocks only when the obligation could be due.\n\nStages 12, 13, 18, and 19 evaluate only current applicable PREPRODUCT_ITERATION obligations whose PER_RUN_REQUIRED value is TRUE and that are due by the relevant stage. Final-product, representation, delivery, evidence-closure, registry-closure, and terminal-delivery obligations do not block Stage 18 or Stage 19 before their targets exist, and Stages 12, 13, 18, and 19 MUST NOT require product-only, representation-only, delivery-only, or terminal-only propositions before their targets exist. They remain preserved as future required obligations and become due at their declared stages.\n\nA deferred target-dependent test becomes due no earlier than the first stage where its target exists and no later than REQUIRED_BY_STAGE. It is never required before the target exists and is never represented as executed before actual execution."
+    },
+    "SUCCESSOR_SOURCE-L2953-2993": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 2953,
+      "endLine": 2993,
+      "startByte": 202596,
+      "endByte": 205113,
+      "sha256": "29b650dce5ab98e82748dc0b3432746a3736d1b273f659feee93ca5380dde5b1",
+      "text": "32.2 Stage 07 completion\n\nFor every applicable mutation:\n- the fixture is identifiable;\n- required bytes exist when byte-backed;\n- execution occurred through a capable route;\n- expected rejection exists;\n- actual result exists;\n- actual rejection matches expected rejection;\n- evidence is sufficient;\n- an accepted invalid fixture has a linked validator defect.\n\nFixture creation is not fixture execution.\n\n32.3 Stage 15 regression\n\nEvery confirmed defect requires:\n- preserved failure fixture;\n- exact reproduction procedure;\n- detection method;\n- actual pre-correction execution;\n- pre-correction failure result;\n- sufficient pre-correction evidence;\n- correction;\n- distinct later corrected execution;\n- post-correction success;\n- sufficient post-correction evidence;\n- permanent active status unless legitimately retired.\n\nA statement that a test \"would have detected\" the defect is insufficient.\nOne execution cannot establish both pre-correction failure and later post-correction success.\n\n32.4 Due-stage and isolation rule\n\nA failure or regression test is executed only when its target exists and its current EARLIEST_EXECUTABLE_STAGE has been reached. Its REQUIRED_BY_STAGE may not precede target availability. A not-yet-due test remains registered and visible as future work but does not falsely block a prior convergence stage.\n\nEvery negative, mutation, adversarial, storage-failure, parser-hostility, and deliberately invalid fixture executes against isolated disposable state: a test-only project clone, test-only IndexedDB namespace, immutable read-only artifact copy, isolated worker input, or explicitly authorized external sandbox. The suite must prove that no fixture mutated a canonical user project or an unauthorized third-party target. Canonical user projects and third-party systems are never mutation targets unless the exact action is separately authorized and safely bounded.\n\n32.5 Regression retirement\n\nA regression is ACTIVE, SUPERSEDED, or RETIRED. Retirement requires sufficient current evidence that the linked proposition left scope, was replaced so the old mechanism is inapplicable, or the failure mechanism is impossible under the current evidenced architecture; current NOT_APPLICABLE status; required human authorization; independent review; an append-only retirement record; and no current baseline or product dependency. A failing, inconvenient, expensive, unavailable, or flaky regression cannot be retired for that reason. UNKNOWN legitimacy blocks. History is never deleted."
+    },
+    "SUCCESSOR_SOURCE-L3950-3955": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 3950,
+      "endLine": 3955,
+      "startByte": 270341,
+      "endByte": 270556,
+      "sha256": "d6975273a48c3c712e2e61bd3113461f0b5c37f2bf7baab629d886219e182ffb",
+      "text": "regressionExecutions\n- ID: REG_EXEC_ID\n- Stage: 15\n- Policy: APPEND_SCOPED\n- Agent or native runtime supplies observations.\n- Application normalizes identity, scope, result, evidence sufficiency, and execution time."
+    },
+    "SUCCESSOR_SOURCE-L448-448": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 448,
+      "endLine": 448,
+      "startByte": 34349,
+      "endByte": 34406,
+      "sha256": "503f0d8534bf3d5bbd3b3cce8b5e64e28d0638b498c1b3b422fe1115bbe3f41f",
+      "text": "C1. Named structured mapping: closed-loop-raw-units-zip/1"
+    },
+    "SUCCESSOR_SOURCE-L451-451": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 451,
+      "endLine": 451,
+      "startByte": 34651,
+      "endByte": 34673,
+      "sha256": "9c328d65139ea56542fdbc1b4f6292e3b0f55c8f30aef136db9114db5ef03c89",
+      "text": "Scope and preservation"
+    },
+    "SUCCESSOR_SOURCE-L424-424": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 424,
+      "endLine": 424,
+      "startByte": 26065,
+      "endByte": 26652,
+      "sha256": "4a555abf5f67317278c80573e8c60350da989fe209755ddab63123206955f72a",
+      "text": "The unit universe is structural accounting. Retain the exact originating input and artifact bytes; no normalized projection replaces them or asserts inspection. Each unit binds the input version, supplied occurrence, exact structural location and source-value hash. Enumerate roots in their retained source occurrence order; within a structured value visit arrays in index order and object keys in unsigned Unicode-scalar order. A canonical mirror of the same originating field is visited only once, using the originating field; separately supplied equal values are separate occurrences."
+    },
+    "SUCCESSOR_SOURCE-L449-449": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 449,
+      "endLine": 449,
+      "startByte": 34407,
+      "endByte": 34649,
+      "sha256": "f561233673f0198819e3ef1684c1ed93e9fb962afbc9b025360be40cc3b68967",
+      "text": "Insert immediately after C's common raw-unit rules. This is the only structured-media mapping added by this revision. It makes the following counting choices explicit; the existence of a transport parser alone did not authorize these choices."
+    },
+    "SUCCESSOR_SOURCE-L416-420": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 416,
+      "endLine": 420,
+      "startByte": 24672,
+      "endByte": 25994,
+      "sha256": "ac8cae0f0095518841f968e8ac229bd21b4690ec552be5424945520bdeca1ee9",
+      "text": "6.5A Raw-unitization contract\n\nRaw-input accounting MUST use one versioned RAW_UNITIZATION_VERSION — current value closed-loop-raw-units/1 — with deterministic media-specific unit rules. Text-message boundaries, structured text units, document pages and sections where mechanically available, archive members, embedded documents, native images and media, unsupported-format whole-file fallbacks, and source locations receive stable application-owned unit identities.\n\nThe unitization contract explicitly defines treatment of comments, annotations, tracked changes, metadata, embedded objects, inaccessible content, and unsupported formats. A supported subdivision cannot be replaced by one whole-file unit merely to make coverage vacuous. SEMANTIC_CHALLENGE_LIMITS/1 triggers a challenge when any one of these thresholds is exceeded: 1,048,576 stored bytes in one text or document artifact; 100 mechanically countable pages; 20 supplied files or archive members; 500 raw units; or 5,242,880 aggregate supplied bytes. A material uncovered unit, broad exclusion, INACCESSIBLE_OR_BLOCKED material, material uncertainty, contradiction, or operator request triggers regardless of size. These limits are centralized, versioned, and acceptance-tested and may be lowered but not raised without a new contract-profile identity."
+    },
+    "SUCCESSOR_SOURCE-L434-442": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 434,
+      "endLine": 442,
+      "startByte": 30117,
+      "endByte": 33226,
+      "sha256": "7f1658a5546166b2c3accfdef17a8ffca06852fa69c40909a1e8aa66e2588a59",
+      "text": "Source hashes and binding are closed as follows. C(x) means the exact UTF-8 bytes of §34.1 canonical JSON; H(b) means lowercase SHA-256 hexadecimal of exact bytes b. Source-value hash preimages by kind are:\n- HUMAN_TEXT_LINE or HUMAN_TEXT_WHOLE: C({\"type\":\"STRING\",\"value\":s}), where s is the exact emitted line excluding its terminator, or the entire whitespace-only nonempty string respectively. Physical line number and original field pointer retain position; retained originating bytes preserve terminators.\n- HUMAN_SCALAR: C({\"type\":t,\"value\":v}), where t is the declared scalar type and v its exact canonical value; no string coercion. Null/absent values remain excluded as above.\n- ARTIFACT_INVENTORY: C({\"byteLength\":n,\"contentSha256\":h}), where n is exact byte length and h=H(exact artifact bytes). If bytes are unavailable, both values are null; asserted length/digest remains source context, never substituted for observed bytes. The unit remains inaccessible/blocked, with its retained occurrence/locator binding.\n- PHYSICAL_SPAN: the exact original byte span including its terminator, without canonical JSON wrapping. Its locator binds zero-based byte start and exclusive end plus the one-based page/line coordinates.\n- STRUCTURAL_NODE: C({\"nodeKind\":k,\"status\":q,\"value\":v}), where k and v are the exact kind and canonical source value fixed by the authorized format mapping, and q is ACCESSIBLE or INACCESSIBLE_OR_BLOCKED. Inaccessible nodes have v=null; exact exposed parent/locator and k remain bound. No invented serialization of an adapter object is permitted.\n- STRUCTURAL_TEXT_SPAN: exact UTF-8 bytes of the mapped exact textual leaf's physical span, including its terminator. The authorized mapping identifies the leaf and its exact extraction; no silent whitespace normalization is allowed.\n\nEach unit's binding hash preimage is C({\"algorithm\":\"closed-loop-raw-units/1\",\"inputVersion\":V,\"occurrence\":O,\"kind\":K,\"locator\":L,\"sourceValueSha256\":S}). V is the exact owning input-version identity string; O is the ordered zero-based safe-integer path of supplied root and, where applicable, child-member occurrence indices; K is exactly one of the seven uppercase kinds above; S is the corresponding source-value hash. L is an ordered locator array: human units use [originating JSON pointer, one-based physical line] or [originating JSON pointer] for whole strings/scalars; inventories use []; whole-file spans use [startByte,endByte,page,line]; structural nodes use [normative format mapping ID, exact mapping locator]; structural textual spans append [startByte,endByte,page,line] to their structural-leaf locator. Byte offsets for a structural textual leaf refer to its exact UTF-8 extraction. The source-value hash alone does not identify the occurrence: binding hash plus retained input/source supplies the exact type, location and occurrence. These accounting hashes/locators are not §34.2 canonical record IDs. Distinct roots are numbered in retained source occurrence order, including separately supplied identical roots; a canonical mirror does not receive a second root number."
+    },
+    "SUCCESSOR_SOURCE-L446-446": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 446,
+      "endLine": 446,
+      "startByte": 33753,
+      "endByte": 34347,
+      "sha256": "8e228f3357803b33eef576f4bcc014514feee7c84c21e6edfab6665287ff9d56",
+      "text": "Deduplicate only repeated accounting references to the same occurrence, kind, location and exact source-value hash. Never merge distinct supplied occurrences, even with identical hashes. Order and retained source identity determine stable accounting references; canonical record IDs still use §34.2. Count the entire resulting unit universe, including inventory, structural and inaccessible units, when applying the unchanged §6.5A limits. The raw-unit challenge condition is strictly greater than 500, not greater than or equal to 500; every other size-independent trigger remains effective."
+    },
+    "SUCCESSOR_SOURCE-L448-449": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 448,
+      "endLine": 449,
+      "startByte": 34349,
+      "endByte": 34649,
+      "sha256": "6fe7096069d31d77f8c8d1909100a783b003c7a0d1dfd79d9ea0dbb959a13d14",
+      "text": "C1. Named structured mapping: closed-loop-raw-units-zip/1\nInsert immediately after C's common raw-unit rules. This is the only structured-media mapping added by this revision. It makes the following counting choices explicit; the existence of a transport parser alone did not authorize these choices."
+    },
+    "SUCCESSOR_SOURCE-L452-454": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 452,
+      "endLine": 454,
+      "startByte": 34674,
+      "endByte": 36290,
+      "sha256": "8c590fca3266a837a3a81e85d77a3cc029c0f9b3ff6f02ccf3c8676e715ac9c0",
+      "text": "Apply this mapping to a supplied ZIP occurrence for which the application can use its existing bounded closed-loop-inbound-zip/1 structural decoder. Preserve the exact compressed archive bytes, their original supplied occurrence, byte length and SHA-256. Expanded member bytes are verified immutable child copies; they never replace the original archive. Decode and retain bytes only in the existing isolated in-memory/Blob/storage path. No member is extracted to a filesystem, executed, followed as a link, or used as a path outside that path-safe storage authority.\n\nThe supported decoding subset is ordinary single-volume ZIP and the decoder's bounded ZIP64 forms, with stored or DEFLATE compression, permitted data descriptors, UTF-8 or CP437 names and the decoder's validated Unicode-path extras. Keep its existing checks for complete consistent local/central headers, exact boundaries, safe noncolliding canonical paths, actual expanded lengths, CRC and SHA-256, permitted flags/extras and resource/platform bounds. Encrypted entries, split volumes, self-extracting prefixes, directory/link/device/special entries, unsupported compression/extra fields and ambiguous or colliding paths do not become supported through this mapping. The exact intake safety profile below and existing worker isolation remain effective. The response transport contract remains unchanged. A resource or platform failure is not reclassified as an unsupported format to bypass a blocker. Intake uses this decoder's structural/byte validation, not the inbound response's manifest, response.json role or attachment-admission semantics."
+    },
+    "SUCCESSOR_SOURCE-L462-464": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 462,
+      "endLine": 464,
+      "startByte": 40813,
+      "endByte": 42442,
+      "sha256": "8a4b0903ca8ddfc4e0abacb884590cebe1a44cffac715aecfa11eafbbc1d9d89",
+      "text": "Let P be the parent archive's C occurrence path, already bound to the owning input version. Number central-directory entries from zero in their exact central-directory order, not local-file-offset order, canonical-filename order or extraction completion order. The child occurrence for entry i is P followed by i. Different supplied archives and different nested occurrences remain distinct even when bytes or names are equal. Local/central identity validation is still required; choosing central-directory order for accounting does not weaken it.\n\nUse the base C unit kinds STRUCTURAL_NODE, ARTIFACT_INVENTORY, PHYSICAL_SPAN and STRUCTURAL_TEXT_SPAN only; do not add canonical record families or a second unit-ID scheme. Every archive, member, metadata, extra and comment structural node uses occurrence P of the archive being mapped; child inventories/content and recursively mapped child archive nodes use P followed by i. Every ZIP structural unit's locator is [\"closed-loop-raw-units-zip/1\", locatorValue], where locatorValue is one of the exact ordered arrays below. All offsets and lengths are nonnegative safe integers measured in the parent archive's original bytes; an index is a zero-based safe integer. A node with verified source bytes has status ACCESSIBLE. Its C source-value hash is H(C({\"nodeKind\":k,\"status\":\"ACCESSIBLE\",\"value\":v})); the outer binding hash uses the unchanged C input-version/occurrence/kind/locator/source-value preimage. Exact raw bytes below use lowercase hexadecimal, preserving every byte without character decoding. Metadata offsets/bytes belong to the archive, not to a reserialized ZIP."
+    },
+    "SUCCESSOR_SOURCE-L475-475": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 475,
+      "endLine": 475,
+      "startByte": 45824,
+      "endByte": 46661,
+      "sha256": "abfe12518b8a25c1f0d680dc3e1e6b8a07d2a9e36956262f8d6b3b9f62b57f00",
+      "text": "5. One child ARTIFACT_INVENTORY with occurrence P followed by i and inventory locator [], binding the actual expanded byte length and H(expanded bytes) by C. Then emit that child's exact verified UTF-8 physical spans when C permits them, using offsets in the expanded child bytes, and apply the recursive rule below before proceeding to entry i+1. A recursively mapped child archive uses this already-emitted inventory and physical spans without emitting them a second time. The ZIP_MEMBER structural node and child inventory are different accounting obligations and both count. Metadata/comment nodes are not child files and do not receive inventory units. This mapping creates no semantic XML/JSON/CSV/Office/PDF section or annotation units from a member's contents; plain supported UTF-8 spans do not claim such parsing or inspection."
+    },
+    "SUCCESSOR_SOURCE-L478-480": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 478,
+      "endLine": 480,
+      "startByte": 46685,
+      "endByte": 48196,
+      "sha256": "b81469b46ebfae5885182eab44876b5d2405f326ac3a579556037b15e2d65d60",
+      "text": "For every verified expanded child, apply the byte/claim recognition test above. A ZIP candidate is mapped recursively by this same mapping, in depth-first central-directory order, under the entire input-version mapping pass's shared cumulative safety counters and deadline. The expanded child becomes the next archive occurrence P; no new root identity, fresh budget or favorable parent result is substituted. Exact expanded bytes remain retained and bound even when their own ZIP structure is blocked. A ZIP-based document can expose these ZIP members without thereby claiming semantic Office/XML/PDF parsing. A child that is not a ZIP candidate still receives its inventory and applicable exact UTF-8 physical spans under C; this addendum invents no other media mapping.\n\nWhen a depth, entry, byte, ratio, path, name, worker or work bound actually stops a recognized child, retain that child's already exposed member occurrence, inventory and available exact bytes, mark its unresolved subdivision INACCESSIBLE_OR_BLOCKED with the precise cause, and stop the affected expansion safely. It is neither a successful opaque fallback nor proof that children do not exist. Never reset counters for nested ZIPs, invoke unbounded recursive decompression, fabricate descendants, or treat unknown remaining units as zero. A separately supplied copy is a separate root occurrence with its own identity and is charged again to the same input-version pass counters; equality of bytes does not merge it or reset the budget."
+    },
+    "SUCCESSOR_SOURCE-L486-492": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 486,
+      "endLine": 492,
+      "startByte": 49238,
+      "endByte": 52903,
+      "sha256": "1817553c5d56948f99399a875607b41f65e7355b814515ae83fffe6fff7de476",
+      "text": "A supplied archive always retains its C inventory, exact original bytes when available, and a precise outcome. Distinguish (a) unsupported/encrypted structural features; (b) malformed/truncated/inconsistent structures, bad CRC or changed bytes; (c) unsafe/duplicate/colliding member identities; (d) absent/unreadable required bytes or unavailable decompressor/worker; and (e) resource-limit, timeout or interrupted execution. None is a successful parse or a favorable whole-file completeness result. Keep the exact typed cause and existing recovery route; do not silently drop the failing member, retry with weaker validation or invent child bytes.\n\nOnly fully verified members receive ACCESSIBLE ZIP_MEMBER values with observed expanded hashes/lengths. An exposed member means a central-directory record with the exact central signature and complete in-bounds fixed header, filename, extra area and comment area, within the established central-directory extent and traversal order. Its entry index and central-header offset establish the member locator even when local validation or expansion fails. Preserve each such exposed occurrence, including duplicate names, directories, links and unsupported entries, as INACCESSIBLE_OR_BLOCKED with value=null when it cannot be validated; do not expand it or grant its path authority. It still receives exactly one child ARTIFACT_INVENTORY at P followed by i under C: when verified expanded bytes are unavailable, both byteLength and contentSha256 are null, with an explicit blocked disposition. A claimed member size or digest does not fill these values. Distinct colliding/duplicate central occurrences are never merged to hide them. No child inventory is created for a guessed entry, unparsed count or incomplete/unbounded central record.\n\nPreserve independently established exact metadata and comment spans as their corresponding ACCESSIBLE structural units even when the owning member is blocked; accessibility here concerns the exact metadata bytes, not the member's safe expansion or semantic validity. An extra field receives its specified unit only when its own 4-byte header and full declared payload are in bounds; duplicate/unsupported fields can be preserved as separate observed bytes but still block member admission. If malformed metadata prevents complete field segmentation, preserve the exact whole extra-area bytes as diagnostic provenance on the blocked occurrence, without inventing extra-field units. For a blocked member whose local metadata is not safely established, emit only established central metadata/extras/comments, then its blocked child inventory. This is bounded read-only exposure; it does not relax existing decoder rejection. Unknown remaining structure remains an explicit archive-level blocker, and a smaller observed count cannot discharge it.\n\nA structurally established zero-entry EOCD with zero central-directory size and consistent offsets is a known empty archive, not malformed merely because the existing decoder rejects count=0. Preserve its inventory and exposed control/comment nodes, emit no invented member or child inventory, and record EMPTY_ARCHIVE_DECODER_BOUNDARY as INACCESSIBLE_OR_BLOCKED for detailed decoding under this current parser scope. It does not yield a successful detailed-coverage claim or unsupported-format fallback. A missing or unusable DEFLATE implementation/worker is unavailable evidence, not unsupported ZIP format; preserve originals, established nodes and blocked child inventories. Corrupt bytes, an unsupported feature, unsafe paths, actual resource exhaustion and unavailable machinery retain distinct causes and recovery requirements."
+    },
+    "BASE_SOURCE-L1639-1641": {
+      "artifact": {
+        "role": "BASE_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/source-only/base-original-2933.txt",
+        "sha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+        "byteLength": 309482
+      },
+      "startLine": 1639,
+      "endLine": 1641,
+      "startByte": 96499,
+      "endByte": 97986,
+      "sha256": "5924877c730990c82c25514fbce637cbd83eed34612bdbeee7457dc437017aa4",
+      "text": "An optional archive is only a transport representation of the same logical container. It must use the registered deterministic archive profile and pass the archive safety rules. The current profile is closed-loop-archive-profile/1: a ZIP archive containing only STORE (uncompressed) entries, entries ordered by canonical-path unsigned byte order, the UTF-8 filename flag set, every timestamp fixed to 1980-01-01T00:00:00, no directory entries, no symlinks or special entries, no archive comment, no encryption, and no extra fields except a Zip64 field exactly where an entry or archive size requires it. The manifest is always at `manifest.json`; the authoritative prompt is at `instruction.txt`; an inbound response is at `response.json`. Directory entries, timestamps, permissions, compression method, compression level, and path normalization are fixed by the registered archive profile. An archive mismatch does not alter the logical package identity; it rejects the transport representation.\n\nThe deterministic profile governs application-produced archives only. An inbound archive from an external actor is a nonauthoritative convenience container: it must pass the Section 19.9 safety rules, is exploded into named attachment slots with per-member byte verification, and its original bytes are preserved as evidence. External actors are never required to produce the deterministic profile; the authoritative inbound representation remains response.json plus attachment-slot files."
+    },
+    "BASE_SOURCE-L1649-1655": {
+      "artifact": {
+        "role": "BASE_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/source-only/base-original-2933.txt",
+        "sha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+        "byteLength": 309482
+      },
+      "startLine": 1649,
+      "endLine": 1655,
+      "startByte": 99057,
+      "endByte": 100593,
+      "sha256": "b630d5604bd99bfbb7c06630f398bfcc0c2494cc00e077231342b1826e5aba02",
+      "text": "19.9 Filename, format, and archive safety\n\nEvery artifact preserves rawFilename and has a safe displayFilename and canonicalPath under closed-loop-filename/1. Canonical comparison uses Unicode 15.1.0 NFC, case-sensitive identity, and separately checked Unicode 15.1.0 default-case-fold and registered platform-risk collision keys. Absolute paths, drive prefixes, NUL, control characters, empty segments, `.` and `..`, duplicate canonical paths, case-fold collisions, extraction-target collisions, and supported confusable collisions are rejected. An unauthorized rename never matches solely because bytes are equal.\n\nFile extension and browser MIME type are claims. Format-dependent work records the authorized parser or adapter and detected interpretation. A materially ambiguous polyglot is BLOCKED unless one interpretation is explicitly authorized and every alternate interpretation is harmless under the operation.\n\nArchive intake and export fail closed on traversal, absolute paths, duplicate or colliding paths, symlinks, hard links, device entries, unsupported special files, unsupported or encrypted members outside a registered encrypted contract, unsupported compression, excessive nesting, entry count, per-entry size, total compressed or expanded size, compression ratio, path depth, filename length, Unicode ambiguity, manifest mismatch, unmanifested extra members, missing members, or modified bytes. Expansion occurs only in an isolated bounded parser path and never makes content executable or prompt-visible by itself."
+    },
+    "BASE_SOURCE-L1883-1887": {
+      "artifact": {
+        "role": "BASE_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/source-only/base-original-2933.txt",
+        "sha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+        "byteLength": 309482
+      },
+      "startLine": 1883,
+      "endLine": 1887,
+      "startByte": 108899,
+      "endByte": 109127,
+      "sha256": "ade140af34134741f4605224ec75662ab134572b407a5fdcd077f1780ac4eca5",
+      "text": "21.12 Format adapters\n\nPDF, DOCX, XLSX, SVG, DXF, STL, G-code, image, archive, and other specialized parsers are adapters.\nThey are not project-subject modules.\nAn unsupported format cannot be represented as natively executable."
+    },
+    "BASE_SOURCE-L1894-1909": {
+      "artifact": {
+        "role": "BASE_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/source-only/base-original-2933.txt",
+        "sha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+        "byteLength": 309482
+      },
+      "startLine": 1894,
+      "endLine": 1909,
+      "startByte": 109309,
+      "endByte": 109763,
+      "sha256": "a3a550913fed067c8a39d79a980ce61808950ef857f223c7d4fbfe9a06e19e93",
+      "text": "21.14 Resource limits\n\nCentralized hard limits cover:\n- total input bytes;\n- decompressed bytes;\n- IR step count;\n- selector depth;\n- parsed structure depth;\n- collection size;\n- regex pattern size;\n- regex input size;\n- worker execution duration;\n- archive expansion where applicable.\n\nThe implementation selects explicit constants, centralizes them, documents them, and regression-tests every boundary.\nLimits must not be scattered throughout the code."
+    },
+    "BASE_SOURCE-L1953-1966": {
+      "artifact": {
+        "role": "BASE_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/source-only/base-original-2933.txt",
+        "sha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+        "byteLength": 309482
+      },
+      "startLine": 1953,
+      "endLine": 1966,
+      "startByte": 111694,
+      "endByte": 112105,
+      "sha256": "2e4e275ad1b22cf48e76f6b0343d7fde7b25279f034d084fefb2a7336da0e410",
+      "text": "22.2 test-worker.js\n\nTest execution occurs in a Web Worker.\n\nThe worker:\n- receives only normalized Test IR;\n- receives only explicitly bound artifact bytes;\n- receives only immutable permitted metadata;\n- has no arbitrary network access;\n- has no unrestricted project access;\n- enforces resource limits;\n- returns a deterministic normalized result;\n- can be terminated on timeout;\n- cannot block the UI thread."
+    },
+    "SUCCESSOR_SOURCE-L1744-1746": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 1744,
+      "endLine": 1746,
+      "startByte": 130744,
+      "endByte": 132231,
+      "sha256": "5924877c730990c82c25514fbce637cbd83eed34612bdbeee7457dc437017aa4",
+      "text": "An optional archive is only a transport representation of the same logical container. It must use the registered deterministic archive profile and pass the archive safety rules. The current profile is closed-loop-archive-profile/1: a ZIP archive containing only STORE (uncompressed) entries, entries ordered by canonical-path unsigned byte order, the UTF-8 filename flag set, every timestamp fixed to 1980-01-01T00:00:00, no directory entries, no symlinks or special entries, no archive comment, no encryption, and no extra fields except a Zip64 field exactly where an entry or archive size requires it. The manifest is always at `manifest.json`; the authoritative prompt is at `instruction.txt`; an inbound response is at `response.json`. Directory entries, timestamps, permissions, compression method, compression level, and path normalization are fixed by the registered archive profile. An archive mismatch does not alter the logical package identity; it rejects the transport representation.\n\nThe deterministic profile governs application-produced archives only. An inbound archive from an external actor is a nonauthoritative convenience container: it must pass the Section 19.9 safety rules, is exploded into named attachment slots with per-member byte verification, and its original bytes are preserved as evidence. External actors are never required to produce the deterministic profile; the authoritative inbound representation remains response.json plus attachment-slot files."
+    },
+    "SUCCESSOR_SOURCE-L1754-1760": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 1754,
+      "endLine": 1760,
+      "startByte": 133302,
+      "endByte": 134838,
+      "sha256": "b630d5604bd99bfbb7c06630f398bfcc0c2494cc00e077231342b1826e5aba02",
+      "text": "19.9 Filename, format, and archive safety\n\nEvery artifact preserves rawFilename and has a safe displayFilename and canonicalPath under closed-loop-filename/1. Canonical comparison uses Unicode 15.1.0 NFC, case-sensitive identity, and separately checked Unicode 15.1.0 default-case-fold and registered platform-risk collision keys. Absolute paths, drive prefixes, NUL, control characters, empty segments, `.` and `..`, duplicate canonical paths, case-fold collisions, extraction-target collisions, and supported confusable collisions are rejected. An unauthorized rename never matches solely because bytes are equal.\n\nFile extension and browser MIME type are claims. Format-dependent work records the authorized parser or adapter and detected interpretation. A materially ambiguous polyglot is BLOCKED unless one interpretation is explicitly authorized and every alternate interpretation is harmless under the operation.\n\nArchive intake and export fail closed on traversal, absolute paths, duplicate or colliding paths, symlinks, hard links, device entries, unsupported special files, unsupported or encrypted members outside a registered encrypted contract, unsupported compression, excessive nesting, entry count, per-entry size, total compressed or expanded size, compression ratio, path depth, filename length, Unicode ambiguity, manifest mismatch, unmanifested extra members, missing members, or modified bytes. Expansion occurs only in an isolated bounded parser path and never makes content executable or prompt-visible by itself."
+    },
+    "SUCCESSOR_SOURCE-L1988-1992": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 1988,
+      "endLine": 1992,
+      "startByte": 143144,
+      "endByte": 143372,
+      "sha256": "ade140af34134741f4605224ec75662ab134572b407a5fdcd077f1780ac4eca5",
+      "text": "21.12 Format adapters\n\nPDF, DOCX, XLSX, SVG, DXF, STL, G-code, image, archive, and other specialized parsers are adapters.\nThey are not project-subject modules.\nAn unsupported format cannot be represented as natively executable."
+    },
+    "SUCCESSOR_SOURCE-L1999-2014": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 1999,
+      "endLine": 2014,
+      "startByte": 143554,
+      "endByte": 144008,
+      "sha256": "a3a550913fed067c8a39d79a980ce61808950ef857f223c7d4fbfe9a06e19e93",
+      "text": "21.14 Resource limits\n\nCentralized hard limits cover:\n- total input bytes;\n- decompressed bytes;\n- IR step count;\n- selector depth;\n- parsed structure depth;\n- collection size;\n- regex pattern size;\n- regex input size;\n- worker execution duration;\n- archive expansion where applicable.\n\nThe implementation selects explicit constants, centralizes them, documents them, and regression-tests every boundary.\nLimits must not be scattered throughout the code."
+    },
+    "SUCCESSOR_SOURCE-L2105-2118": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 2105,
+      "endLine": 2118,
+      "startByte": 164450,
+      "endByte": 164861,
+      "sha256": "2e4e275ad1b22cf48e76f6b0343d7fde7b25279f034d084fefb2a7336da0e410",
+      "text": "22.2 test-worker.js\n\nTest execution occurs in a Web Worker.\n\nThe worker:\n- receives only normalized Test IR;\n- receives only explicitly bound artifact bytes;\n- receives only immutable permitted metadata;\n- has no arbitrary network access;\n- has no unrestricted project access;\n- enforces resource limits;\n- returns a deterministic normalized result;\n- can be terminated on timeout;\n- cannot block the UI thread."
+    },
+    "SUCCESSOR_SOURCE-L457-459": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 457,
+      "endLine": 459,
+      "startByte": 36325,
+      "endByte": 40781,
+      "sha256": "515c4e2c8066ea7e50e418d61554b9463c39b52ebb16b5e413129ad6b00af255",
+      "text": "Apply the same recognition test to each supplied root and each verified expanded child. A byte candidate exists if the first four bytes are a ZIP local-header, EOCD, ZIP64 EOCD or ZIP64-locator signature (respectively hexadecimal 504b0304, 504b0506, 504b0606, 504b0607), or if the EOCD signature 504b0506 occurs anywhere in the last min(byteLength,65557) bytes. Also attempt validation when a supplied filename ends with .zip under ASCII case-insensitive comparison, or the supplied media type, before a semicolon and after ASCII whitespace trim/case-fold, is application/zip or application/x-zip-compressed. Names and media types can require an attempt but cannot suppress a byte candidate or establish success. A random signature or claimed filename can never create successful ZIP coverage: the complete retained structural, boundary, path and integrity checks decide that. Missing bytes retain an unavailable inventory/blocker; they do not establish absence of ZIP structure. Noncandidate bytes without a ZIP claim do not receive ZIP nodes through speculation; C's other available accounting rules remain applicable.\n\nUse a centralized, versioned intake profile closed-loop-raw-units-zip-limits/1. Its bounds are: 27 cumulative central-directory entries across the entire selected input-version archive-mapping pass, including every supplied root and recursively decoded child; 67108864 bytes per expanded member; 70254592 cumulative reserved-or-produced expanded bytes; 140509184 cumulative archive bytes submitted to decoding (count a nested archive again when it is submitted); compression ratio at most 1100 per member; filename byte length at most 65535; canonical path depth at most 128; maximum archive nesting level 27 with the supplied archive at level 1; and one cumulative elapsed-worker deadline of 600000 ms for that entire input-version archive-mapping pass. The entry budget is charged on exposure before expansion, including unsupported/blocked entries; the maximum depth cannot bypass that budget. Expansion and byte accounting are checked before allocation and incrementally, against both declared and actual lengths; declared metadata never substitutes for verified bytes. The expansion safety counter reserves each declared output length before allocation; actual production within that reservation does not charge the same byte twice, while any additional produced byte must first fit and consume remaining budget. Every produced/reserved byte remains charged even if later CRC, validation or decoding fails; no refund, reset or retry can escape the pass-wide ceiling. It includes every child occurrence at every depth, including a nested archive's bytes as its parent's output and its own children separately. This work-safety counter is distinct from the semantic aggregate-byte review sum, which includes only actually verified retained child bytes. The archive-byte sum counts each archive occurrence once when submitted to decoding. The same original per-archive structural and byte checks remain; a bound can stop processing earlier, never authorize weaker checking. These ceilings reuse the current default decoder's 27 entries, 64 MiB file bound, 64 MiB + 1 MiB response + 2 MiB manifest total, twice-total archive bound, ratio/name/path/work bounds; the intake profile assigns those generic ceilings without granting any response.json/manifest.json role or larger filename-specific allowance. Transport recursiveExpansion=false and maxNestingDepth=0 remain response-transport rules, not intake accounting rules. A lower already-applicable storage/worker bound still stops work and remains explicitly blocked; it must not silently change this profile or yield favorable completeness. The exact profile-hash preimage is C({\"version\":\"closed-loop-raw-units-zip-limits/1\",\"scope\":\"INPUT_VERSION_PASS\",\"maxEntries\":27,\"maxEntryBytes\":67108864,\"maxExpandedBytes\":70254592,\"maxArchiveBytes\":140509184,\"maxCompressionRatio\":1100,\"maxFilenameBytes\":65535,\"maxPathDepth\":128,\"maxNestingDepth\":27,\"workerTimeoutMs\":600000}); its SHA-256 is the profile hash. The retained unitization derivation binds the owning input version, mapping ID, this exact profile ID/hash, actual counters and completion/blocker status; changed profile or source invalidates reuse under the existing derivation rules. Repeated equal roots and members are charged separately. Any future profile change follows existing versioning and acceptance requirements."
+    },
+    "SUCCESSOR_SOURCE-L464-464": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 464,
+      "endLine": 464,
+      "startByte": 41362,
+      "endByte": 42442,
+      "sha256": "02d51b7c42e0245bf1c8667d24cb3a6545cd6f487cd9cf5420701dfbdaa0c172",
+      "text": "Use the base C unit kinds STRUCTURAL_NODE, ARTIFACT_INVENTORY, PHYSICAL_SPAN and STRUCTURAL_TEXT_SPAN only; do not add canonical record families or a second unit-ID scheme. Every archive, member, metadata, extra and comment structural node uses occurrence P of the archive being mapped; child inventories/content and recursively mapped child archive nodes use P followed by i. Every ZIP structural unit's locator is [\"closed-loop-raw-units-zip/1\", locatorValue], where locatorValue is one of the exact ordered arrays below. All offsets and lengths are nonnegative safe integers measured in the parent archive's original bytes; an index is a zero-based safe integer. A node with verified source bytes has status ACCESSIBLE. Its C source-value hash is H(C({\"nodeKind\":k,\"status\":\"ACCESSIBLE\",\"value\":v})); the outer binding hash uses the unchanged C input-version/occurrence/kind/locator/source-value preimage. Exact raw bytes below use lowercase hexadecimal, preserving every byte without character decoding. Metadata offsets/bytes belong to the archive, not to a reserialized ZIP."
+    },
+    "SUCCESSOR_SOURCE-L424-446": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 424,
+      "endLine": 446,
+      "startByte": 26065,
+      "endByte": 34347,
+      "sha256": "405ac1ce12a6094fd3050828157db5a597a8878bbbe6a2d9f13043a3950d12da",
+      "text": "The unit universe is structural accounting. Retain the exact originating input and artifact bytes; no normalized projection replaces them or asserts inspection. Each unit binds the input version, supplied occurrence, exact structural location and source-value hash. Enumerate roots in their retained source occurrence order; within a structured value visit arrays in index order and object keys in unsigned Unicode-scalar order. A canonical mirror of the same originating field is visited only once, using the originating field; separately supplied equal values are separate occurrences.\n\nFor human text and string-valued structured human input, CRLF, CR and LF delimit physical lines. Retain original line positions. Emit each line containing a character other than U+0009–U+000D or U+0020; if a nonempty string has no such line, emit that entire string as one unit. Empty strings, null and absent scalar values emit no content unit. Other scalar leaves emit one unit retaining their declared type and value. Original blank lines and exact original text remain available to the mandatory semantic reader even when the line projection emits no separate blank-line unit.\n\nFor every supplied artifact occurrence, emit one inventory unit. Where exact bytes are valid UTF-8 and the text projection re-encodes to those exact bytes, also emit physical content units: scan left to right, treating CRLF as one terminator and otherwise CR, LF or form feed as a terminator; each unit contains the span through its terminator. Retain every nonempty span, including blank lines; emit a final unterminated span if present, but no zero-length trailing span. Coordinates start at page 1/line 1; form feed increments page and resets line to 1, other terminators increment line. BOM bytes, if present, remain part of the exact projection, not silently removed. This rule is accounting, not a claim that every UTF-8 artifact's media semantics have been parsed.\n\nFor a mechanically supported structured-media subdivision, emit one structural unit per exposed page, section, archive member, embedded document/object, comment, annotation, tracked change or metadata object, using its exact parent and source locator; traverse children in source order, breaking any absent source-order tie by unsigned Unicode-scalar locator order. Recurse into textual leaves using the physical-content rule and into child media using this rule. A structural node is counted once per occurrence/location/kind; a node's structural unit and its descendant content units are distinct. Preserve inaccessible exposed nodes as INACCESSIBLE_OR_BLOCKED; do not fabricate children. Detailed coverage requires a closed format mapping that is part of this named versioned normative algorithm or an explicitly identified versioned normative format mapping authorized under §34.3. Merely publishing an implementation descriptor does not authorize such semantics. The mapping must fix node kinds, source locators, ordering, exact canonical source values and child extraction. This insertion adds no format-specific adapter or mapping. A claim of supported detailed coverage without that normative mapping is blocked; genuinely unsupported formats retain the fallback below. A mechanically available subdivision cannot be suppressed or relabeled unsupported to avoid that blocker.\n\nSubdivision is additive: an exact UTF-8 whole-file projection emits its physical spans even when a supported structured mapping also emits structural nodes and textual leaves. Whole-file spans, structural nodes and structural textual-leaf spans have distinct kinds and locators and are all counted; overlap in underlying bytes does not deduplicate these different accounting obligations. Each archive-member or embedded-file occurrence emits both its parent structural occurrence unit and its own child inventory unit, followed by its own supported content/subdivisions. A textual leaf is not a child file and gets no inventory unit. Repeated references to the same emitted unit still deduplicate under the rule below.\n\nSource hashes and binding are closed as follows. C(x) means the exact UTF-8 bytes of §34.1 canonical JSON; H(b) means lowercase SHA-256 hexadecimal of exact bytes b. Source-value hash preimages by kind are:\n- HUMAN_TEXT_LINE or HUMAN_TEXT_WHOLE: C({\"type\":\"STRING\",\"value\":s}), where s is the exact emitted line excluding its terminator, or the entire whitespace-only nonempty string respectively. Physical line number and original field pointer retain position; retained originating bytes preserve terminators.\n- HUMAN_SCALAR: C({\"type\":t,\"value\":v}), where t is the declared scalar type and v its exact canonical value; no string coercion. Null/absent values remain excluded as above.\n- ARTIFACT_INVENTORY: C({\"byteLength\":n,\"contentSha256\":h}), where n is exact byte length and h=H(exact artifact bytes). If bytes are unavailable, both values are null; asserted length/digest remains source context, never substituted for observed bytes. The unit remains inaccessible/blocked, with its retained occurrence/locator binding.\n- PHYSICAL_SPAN: the exact original byte span including its terminator, without canonical JSON wrapping. Its locator binds zero-based byte start and exclusive end plus the one-based page/line coordinates.\n- STRUCTURAL_NODE: C({\"nodeKind\":k,\"status\":q,\"value\":v}), where k and v are the exact kind and canonical source value fixed by the authorized format mapping, and q is ACCESSIBLE or INACCESSIBLE_OR_BLOCKED. Inaccessible nodes have v=null; exact exposed parent/locator and k remain bound. No invented serialization of an adapter object is permitted.\n- STRUCTURAL_TEXT_SPAN: exact UTF-8 bytes of the mapped exact textual leaf's physical span, including its terminator. The authorized mapping identifies the leaf and its exact extraction; no silent whitespace normalization is allowed.\n\nEach unit's binding hash preimage is C({\"algorithm\":\"closed-loop-raw-units/1\",\"inputVersion\":V,\"occurrence\":O,\"kind\":K,\"locator\":L,\"sourceValueSha256\":S}). V is the exact owning input-version identity string; O is the ordered zero-based safe-integer path of supplied root and, where applicable, child-member occurrence indices; K is exactly one of the seven uppercase kinds above; S is the corresponding source-value hash. L is an ordered locator array: human units use [originating JSON pointer, one-based physical line] or [originating JSON pointer] for whole strings/scalars; inventories use []; whole-file spans use [startByte,endByte,page,line]; structural nodes use [normative format mapping ID, exact mapping locator]; structural textual spans append [startByte,endByte,page,line] to their structural-leaf locator. Byte offsets for a structural textual leaf refer to its exact UTF-8 extraction. The source-value hash alone does not identify the occurrence: binding hash plus retained input/source supplies the exact type, location and occurrence. These accounting hashes/locators are not §34.2 canonical record IDs. Distinct roots are numbered in retained source occurrence order, including separately supplied identical roots; a canonical mirror does not receive a second root number.\n\nAn image/media occurrence without a supported finer subdivision uses its inventory unit as its whole-media unit. A format with no supported mechanically available subdivision likewise uses its inventory unit as the whole-file fallback, with an explicit unsupported/unavailable-subdivision basis and the original bytes retained. These fallbacks neither prove inspection nor remove existing material uncertainty/blockers. Comments, annotations, tracked changes, metadata and embedded content are not discarded as nonsemantic.\n\nDeduplicate only repeated accounting references to the same occurrence, kind, location and exact source-value hash. Never merge distinct supplied occurrences, even with identical hashes. Order and retained source identity determine stable accounting references; canonical record IDs still use §34.2. Count the entire resulting unit universe, including inventory, structural and inaccessible units, when applying the unchanged §6.5A limits. The raw-unit challenge condition is strictly greater than 500, not greater than or equal to 500; every other size-independent trigger remains effective."
+    },
+    "SUCCESSOR_SOURCE-L456-456": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 456,
+      "endLine": 456,
+      "startByte": 36292,
+      "endByte": 36324,
+      "sha256": "97515b67c3b4389dfea67887da9081cb7ee3b5b1fda2fa614101f7c81e2be841",
+      "text": "Recognition and bounded decoding"
+    },
+    "SUCCESSOR_SOURCE-L461-461": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 461,
+      "endLine": 461,
+      "startByte": 40783,
+      "endByte": 40812,
+      "sha256": "51a0f2a5dec3c9eaa15ce67ec5a2178991db7734757316d787a61ef20d9d105d",
+      "text": "Occurrence identity and order"
+    },
+    "SUCCESSOR_SOURCE-L485-485": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 485,
+      "endLine": 485,
+      "startByte": 49210,
+      "endByte": 49237,
+      "sha256": "3ff87c368f3ea2af1fc793bc02cfc952fee4cb7f9a2ebd5dad420d557ed3dc31",
+      "text": "Failure and unknown content"
+    },
+    "SUCCESSOR_SOURCE-L468-468": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 468,
+      "endLine": 468,
+      "startByte": 43031,
+      "endByte": 43364,
+      "sha256": "91f6e146b488a4bdc0391225bb124d9d9cf4f62dc62048dab1d070df926b5e17",
+      "text": "- ZIP_ARCHIVE_COMMENT only when the EOCD archive-comment length is nonzero. locatorValue is [\"ARCHIVE_COMMENT\", offset]. v has exactly offset, byteLength and rawHex for all declared comment bytes. An empty comment creates no comment unit. No character-set guess or interpretation makes comment bytes executable or favorable evidence."
+    },
+    "SUCCESSOR_SOURCE-L474-474": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 474,
+      "endLine": 474,
+      "startByte": 45540,
+      "endByte": 45823,
+      "sha256": "e1a6e81c06b1792c0a5e5ad3d58815c361abd3ac22dd8963964a6bd62fb6bccc",
+      "text": "4. ZIP_MEMBER_COMMENT only when the central entry's comment length is nonzero. locatorValue is [\"MEMBER_COMMENT\", i, offset]. v has exactly offset, byteLength and rawHex. Empty comments create no comment unit. These bytes are counted even though comments have no transport authority."
+    },
+    "BASE_SOURCE-L1633-1643": {
+      "artifact": {
+        "role": "BASE_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/source-only/base-original-2933.txt",
+        "sha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+        "byteLength": 309482
+      },
+      "startLine": 1633,
+      "endLine": 1643,
+      "startByte": 95855,
+      "endByte": 98442,
+      "sha256": "84ac2618b84e60cf2d7498a8575245d8dc07cfbd722f3e5130f3e1d6a992073a",
+      "text": "19.7 closed-loop-handoff-container/1\n\nThe current canonical handoff container is a logical manifest plus separately selected exact files. Its identity is the SHA-256 of the canonical manifest, which lists every member by package-relative canonical path, ATTACHMENT_SLOT_ID or outbound role, byte length, hash algorithm, digest, media type, disclosure classification, and requiredness. Member order, file-picker order, download order, and archive order are nonauthoritative.\n\nThe canonical manifest contains packageManifestSha256 computed from closed-loop-canonical-json/1 with packageManifestSha256 omitted. No package digest includes itself.\n\nAn optional archive is only a transport representation of the same logical container. It must use the registered deterministic archive profile and pass the archive safety rules. The current profile is closed-loop-archive-profile/1: a ZIP archive containing only STORE (uncompressed) entries, entries ordered by canonical-path unsigned byte order, the UTF-8 filename flag set, every timestamp fixed to 1980-01-01T00:00:00, no directory entries, no symlinks or special entries, no archive comment, no encryption, and no extra fields except a Zip64 field exactly where an entry or archive size requires it. The manifest is always at `manifest.json`; the authoritative prompt is at `instruction.txt`; an inbound response is at `response.json`. Directory entries, timestamps, permissions, compression method, compression level, and path normalization are fixed by the registered archive profile. An archive mismatch does not alter the logical package identity; it rejects the transport representation.\n\nThe deterministic profile governs application-produced archives only. An inbound archive from an external actor is a nonauthoritative convenience container: it must pass the Section 19.9 safety rules, is exploded into named attachment slots with per-member byte verification, and its original bytes are preserved as evidence. External actors are never required to produce the deterministic profile; the authoritative inbound representation remains response.json plus attachment-slot files.\n\nrawFilename records the device-selected transport name. canonicalPath and ATTACHMENT_SLOT_ID control package membership. An operating system or external service may apply a duplicate-name suffix to a transport filename; that rename is accepted only when the slot, embedded response binding, actual bytes, media contract, and expected digest where available establish the exact member. Transport-name tolerance never authorizes a delivery-artifact rename."
+    },
+    "BASE_SOURCE-L2210-2212": {
+      "artifact": {
+        "role": "BASE_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/source-only/base-original-2933.txt",
+        "sha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+        "byteLength": 309482
+      },
+      "startLine": 2210,
+      "endLine": 2212,
+      "startByte": 119988,
+      "endByte": 120379,
+      "sha256": "1367d65280caa2c5f1df4f322eb7c5a4e6db1723853edbfa71a6e1373754b496",
+      "text": "24.2 Returned attachment slots\n\nEvery expected returned file receives an application-owned ATTACHMENT_SLOT_ID under the contract in Section 17.10. The response references the slot ID, role, claimed filename, media type, size, and digest. The operator selects returned files into named slots. Mapping by array order or filename alone is prohibited. Duplicate or ambiguous matches fail closed."
+    },
+    "BASE_SOURCE-L2257-2263": {
+      "artifact": {
+        "role": "BASE_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/source-only/base-original-2933.txt",
+        "sha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+        "byteLength": 309482
+      },
+      "startLine": 2257,
+      "endLine": 2263,
+      "startByte": 122041,
+      "endByte": 123062,
+      "sha256": "d7f56f05c86a1f73651841e6ec3f30b7c15c550f4169550a5e350a5497a2fba0",
+      "text": "An optional archive representation is accepted only under the registered deterministic archive profile and must contain exactly the manifest-declared entries. The logical package identity remains the canonical manifest digest and member digests, not picker order or archive entry order.\n\nReturned files are selected into their named attachment slots. The application verifies actual bytes, membership, slot relationships, reservation, package, prompt identity, revision, scope, and response contract before proposal creation.\n\n25.1 Handoff-container contract binding\n\nExternal multi-file handoff uses only the one current closed-loop-handoff-container/1 contract defined in Section 19.7, which fixes the manifest path, member identity rules, path rules, timestamp policy, compression method and parameters where compression is used, deterministic rebuild rules, media types, package-level digest, directory-entry policy, and response-bundle form. The implementation MUST NOT select archive semantics ad hoc per operation."
+    },
+    "SUCCESSOR_SOURCE-L1738-1748": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 1738,
+      "endLine": 1748,
+      "startByte": 130100,
+      "endByte": 132687,
+      "sha256": "84ac2618b84e60cf2d7498a8575245d8dc07cfbd722f3e5130f3e1d6a992073a",
+      "text": "19.7 closed-loop-handoff-container/1\n\nThe current canonical handoff container is a logical manifest plus separately selected exact files. Its identity is the SHA-256 of the canonical manifest, which lists every member by package-relative canonical path, ATTACHMENT_SLOT_ID or outbound role, byte length, hash algorithm, digest, media type, disclosure classification, and requiredness. Member order, file-picker order, download order, and archive order are nonauthoritative.\n\nThe canonical manifest contains packageManifestSha256 computed from closed-loop-canonical-json/1 with packageManifestSha256 omitted. No package digest includes itself.\n\nAn optional archive is only a transport representation of the same logical container. It must use the registered deterministic archive profile and pass the archive safety rules. The current profile is closed-loop-archive-profile/1: a ZIP archive containing only STORE (uncompressed) entries, entries ordered by canonical-path unsigned byte order, the UTF-8 filename flag set, every timestamp fixed to 1980-01-01T00:00:00, no directory entries, no symlinks or special entries, no archive comment, no encryption, and no extra fields except a Zip64 field exactly where an entry or archive size requires it. The manifest is always at `manifest.json`; the authoritative prompt is at `instruction.txt`; an inbound response is at `response.json`. Directory entries, timestamps, permissions, compression method, compression level, and path normalization are fixed by the registered archive profile. An archive mismatch does not alter the logical package identity; it rejects the transport representation.\n\nThe deterministic profile governs application-produced archives only. An inbound archive from an external actor is a nonauthoritative convenience container: it must pass the Section 19.9 safety rules, is exploded into named attachment slots with per-member byte verification, and its original bytes are preserved as evidence. External actors are never required to produce the deterministic profile; the authoritative inbound representation remains response.json plus attachment-slot files.\n\nrawFilename records the device-selected transport name. canonicalPath and ATTACHMENT_SLOT_ID control package membership. An operating system or external service may apply a duplicate-name suffix to a transport filename; that rename is accepted only when the slot, embedded response binding, actual bytes, media contract, and expected digest where available establish the exact member. Transport-name tolerance never authorizes a delivery-artifact rename."
+    },
+    "SUCCESSOR_SOURCE-L2362-2364": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 2362,
+      "endLine": 2364,
+      "startByte": 172744,
+      "endByte": 173135,
+      "sha256": "1367d65280caa2c5f1df4f322eb7c5a4e6db1723853edbfa71a6e1373754b496",
+      "text": "24.2 Returned attachment slots\n\nEvery expected returned file receives an application-owned ATTACHMENT_SLOT_ID under the contract in Section 17.10. The response references the slot ID, role, claimed filename, media type, size, and digest. The operator selects returned files into named slots. Mapping by array order or filename alone is prohibited. Duplicate or ambiguous matches fail closed."
+    },
+    "SUCCESSOR_SOURCE-L2409-2415": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 2409,
+      "endLine": 2415,
+      "startByte": 174797,
+      "endByte": 175818,
+      "sha256": "d7f56f05c86a1f73651841e6ec3f30b7c15c550f4169550a5e350a5497a2fba0",
+      "text": "An optional archive representation is accepted only under the registered deterministic archive profile and must contain exactly the manifest-declared entries. The logical package identity remains the canonical manifest digest and member digests, not picker order or archive entry order.\n\nReturned files are selected into their named attachment slots. The application verifies actual bytes, membership, slot relationships, reservation, package, prompt identity, revision, scope, and response contract before proposal creation.\n\n25.1 Handoff-container contract binding\n\nExternal multi-file handoff uses only the one current closed-loop-handoff-container/1 contract defined in Section 19.7, which fixes the manifest path, member identity rules, path rules, timestamp policy, compression method and parameters where compression is used, deterministic rebuild rules, media types, package-level digest, directory-entry policy, and response-bundle form. The implementation MUST NOT select archive semantics ad hoc per operation."
+    },
+    "BASE_SOURCE-L901-901": {
+      "artifact": {
+        "role": "BASE_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/source-only/base-original-2933.txt",
+        "sha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+        "byteLength": 309482
+      },
+      "startLine": 901,
+      "endLine": 901,
+      "startByte": 50102,
+      "endByte": 50881,
+      "sha256": "3b7f108dcf9e19a94e2cd8ec02652c42386d204f896c2bc10eef6d8466fe1419",
+      "text": "The following versioned contract identities defined elsewhere in this specification are equally controlling and version-bound under Section 13.2: closed-loop-canonical-json/1, closed-loop-id/1, closed-loop-filename/1, closed-loop-handoff-container/1, closed-loop-specification-manifest/1, closed-loop-normative-requirements/1, closed-loop-deployment-manifest/1, closed-loop-encrypted-export/1, closed-loop-test-ir-language/1, closed-loop-test-ir-operations/1, closed-loop-json-selector/1, closed-loop-xml-selector/1, closed-loop-regex/1, closed-loop-trusted-time/1, closed-loop-raw-units/1, closed-loop-archive-profile/1 where archives are used, SEMANTIC_CHALLENGE_LIMITS/1, PROMPT_INLINE_LIMITS/1, and every parser, selector, regex, normalizer, and derivation registry identity."
+    },
+    "BASE_SOURCE-L932-940": {
+      "artifact": {
+        "role": "BASE_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/source-only/base-original-2933.txt",
+        "sha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+        "byteLength": 309482
+      },
+      "startLine": 932,
+      "endLine": 940,
+      "startByte": 51817,
+      "endByte": 53168,
+      "sha256": "5a7590a95e045a4dbc80e356328e3d053a861b06b22dfdd2f484461bc360e296",
+      "text": "13.1 Contract-profile migration\n\nEvery current /3 project carries CONTRACT_PROFILE_ID = closed-loop-completion-profile/1. A /3 project lacking that exact profile is pre-profile legacy data and cannot satisfy current gates. Migration either deterministically creates every required current-profile record and field with auditable receipts and valid provenance or preserves the project as historical and non-gating. Merely setting CONTRACT_PROFILE_ID without satisfying the profile validator is rejected.\n\nMigration defaults cannot fabricate semantic review, human authority, execution, evidence, freshness, independence, backup custody, mobile acceptance, or delivery. Any such missing release-bearing fact remains UNKNOWN or incomplete. Contract-profile migration is idempotent and is covered by invalid legacy fixtures.\n\n13.2 Registry-version migration\n\nEvery persisted reference to a field contract, stage operation, scope matrix, Test IR language or operation registry, parser or selector registry, canonicalization contract, ID contract, filename contract, date/time contract, handoff container, normalizer, or derivation is version-bound. Import or migration must either prove compatibility under an explicit migration rule or invalidate and regenerate the affected current work. Equal high-level schema names do not imply registry compatibility."
+    },
+    "BASE_SOURCE-L2907-2911": {
+      "artifact": {
+        "role": "BASE_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/source-only/base-original-2933.txt",
+        "sha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+        "byteLength": 309482
+      },
+      "startLine": 2907,
+      "endLine": 2911,
+      "startByte": 155211,
+      "endByte": 156143,
+      "sha256": "12a33cf89cb32b33c65dfa96402a65551b9aebaaf116aa33cb3b3ffc7d358875",
+      "text": "34.3 Registered normalizers and derivations\n\nEvery normalizer and application derivation has an immutable registry ID, version, implementation-owner file, canonical input contract, output contract, hash or build identity, and invalidation consequences. Every derived value records the exact derivation ID and source-record hashes. A changed normalizer or derivation invalidates affected current values and results unless an explicit compatibility migration proves byte- and semantic-equivalent output.\n\nEvery release-bearing derivation and normalizer is completely defined by this specification or by an explicitly named versioned normative algorithm. The semantics defined in Sections 14.6, 15, 16.1, 26, 29, 30, 31, 34.1, 34.2, and 36 control their registry entries, and an entry cannot deviate from them. A release-bearing derivation or normalizer whose semantics are not so defined is UNDEFINED_DERIVATION and blocks acceptance."
+    },
+    "BASE_SOURCE-L2943-2958": {
+      "artifact": {
+        "role": "BASE_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/source-only/base-original-2933.txt",
+        "sha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+        "byteLength": 309482
+      },
+      "startLine": 2943,
+      "endLine": 2958,
+      "startByte": 157172,
+      "endByte": 157630,
+      "sha256": "189389e2549952fc50d2292d3173a6109fc2e50966deb63f3c8af4cdd8ad0d47",
+      "text": "35.3 Artifact bytes\n\nActual artifact Blobs are:\n- stored;\n- hashed on intake;\n- read back;\n- rehashed;\n- marked unavailable when verification fails.\n\nByte-dependent work blocks when bytes are unavailable or unverified.\n\n35.4 Storage status\n\nAt startup, the application should request persistent storage and estimate quota.\nThe result is displayed honestly.\nBrowser-local storage is not represented as protection from device, browser-profile, or browser loss."
+    },
+    "SUCCESSOR_SOURCE-L975-975": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 975,
+      "endLine": 975,
+      "startByte": 77590,
+      "endByte": 78369,
+      "sha256": "3b7f108dcf9e19a94e2cd8ec02652c42386d204f896c2bc10eef6d8466fe1419",
+      "text": "The following versioned contract identities defined elsewhere in this specification are equally controlling and version-bound under Section 13.2: closed-loop-canonical-json/1, closed-loop-id/1, closed-loop-filename/1, closed-loop-handoff-container/1, closed-loop-specification-manifest/1, closed-loop-normative-requirements/1, closed-loop-deployment-manifest/1, closed-loop-encrypted-export/1, closed-loop-test-ir-language/1, closed-loop-test-ir-operations/1, closed-loop-json-selector/1, closed-loop-xml-selector/1, closed-loop-regex/1, closed-loop-trusted-time/1, closed-loop-raw-units/1, closed-loop-archive-profile/1 where archives are used, SEMANTIC_CHALLENGE_LIMITS/1, PROMPT_INLINE_LIMITS/1, and every parser, selector, regex, normalizer, and derivation registry identity."
+    },
+    "SUCCESSOR_SOURCE-L1006-1014": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 1006,
+      "endLine": 1014,
+      "startByte": 79305,
+      "endByte": 80656,
+      "sha256": "5a7590a95e045a4dbc80e356328e3d053a861b06b22dfdd2f484461bc360e296",
+      "text": "13.1 Contract-profile migration\n\nEvery current /3 project carries CONTRACT_PROFILE_ID = closed-loop-completion-profile/1. A /3 project lacking that exact profile is pre-profile legacy data and cannot satisfy current gates. Migration either deterministically creates every required current-profile record and field with auditable receipts and valid provenance or preserves the project as historical and non-gating. Merely setting CONTRACT_PROFILE_ID without satisfying the profile validator is rejected.\n\nMigration defaults cannot fabricate semantic review, human authority, execution, evidence, freshness, independence, backup custody, mobile acceptance, or delivery. Any such missing release-bearing fact remains UNKNOWN or incomplete. Contract-profile migration is idempotent and is covered by invalid legacy fixtures.\n\n13.2 Registry-version migration\n\nEvery persisted reference to a field contract, stage operation, scope matrix, Test IR language or operation registry, parser or selector registry, canonicalization contract, ID contract, filename contract, date/time contract, handoff container, normalizer, or derivation is version-bound. Import or migration must either prove compatibility under an explicit migration rule or invalidate and regenerate the affected current work. Equal high-level schema names do not imply registry compatibility."
+    },
+    "SUCCESSOR_SOURCE-L3088-3092": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 3088,
+      "endLine": 3092,
+      "startByte": 211661,
+      "endByte": 212593,
+      "sha256": "12a33cf89cb32b33c65dfa96402a65551b9aebaaf116aa33cb3b3ffc7d358875",
+      "text": "34.3 Registered normalizers and derivations\n\nEvery normalizer and application derivation has an immutable registry ID, version, implementation-owner file, canonical input contract, output contract, hash or build identity, and invalidation consequences. Every derived value records the exact derivation ID and source-record hashes. A changed normalizer or derivation invalidates affected current values and results unless an explicit compatibility migration proves byte- and semantic-equivalent output.\n\nEvery release-bearing derivation and normalizer is completely defined by this specification or by an explicitly named versioned normative algorithm. The semantics defined in Sections 14.6, 15, 16.1, 26, 29, 30, 31, 34.1, 34.2, and 36 control their registry entries, and an entry cannot deviate from them. A release-bearing derivation or normalizer whose semantics are not so defined is UNDEFINED_DERIVATION and blocks acceptance."
+    },
+    "SUCCESSOR_SOURCE-L3124-3139": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 3124,
+      "endLine": 3139,
+      "startByte": 213622,
+      "endByte": 214080,
+      "sha256": "189389e2549952fc50d2292d3173a6109fc2e50966deb63f3c8af4cdd8ad0d47",
+      "text": "35.3 Artifact bytes\n\nActual artifact Blobs are:\n- stored;\n- hashed on intake;\n- read back;\n- rehashed;\n- marked unavailable when verification fails.\n\nByte-dependent work blocks when bytes are unavailable or unverified.\n\n35.4 Storage status\n\nAt startup, the application should request persistent storage and estimate quota.\nThe result is displayed honestly.\nBrowser-local storage is not represented as protection from device, browser-profile, or browser loss."
+    },
+    "SUCCESSOR_SOURCE-L478-483": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 478,
+      "endLine": 483,
+      "startByte": 46685,
+      "endByte": 49208,
+      "sha256": "ef7a88c23ec05940593a3b1de71e94401482f03cda0d8c7c4cd49decc30d6679",
+      "text": "For every verified expanded child, apply the byte/claim recognition test above. A ZIP candidate is mapped recursively by this same mapping, in depth-first central-directory order, under the entire input-version mapping pass's shared cumulative safety counters and deadline. The expanded child becomes the next archive occurrence P; no new root identity, fresh budget or favorable parent result is substituted. Exact expanded bytes remain retained and bound even when their own ZIP structure is blocked. A ZIP-based document can expose these ZIP members without thereby claiming semantic Office/XML/PDF parsing. A child that is not a ZIP candidate still receives its inventory and applicable exact UTF-8 physical spans under C; this addendum invents no other media mapping.\n\nWhen a depth, entry, byte, ratio, path, name, worker or work bound actually stops a recognized child, retain that child's already exposed member occurrence, inventory and available exact bytes, mark its unresolved subdivision INACCESSIBLE_OR_BLOCKED with the precise cause, and stop the affected expansion safely. It is neither a successful opaque fallback nor proof that children do not exist. Never reset counters for nested ZIPs, invoke unbounded recursive decompression, fabricate descendants, or treat unknown remaining units as zero. A separately supplied copy is a separate root occurrence with its own identity and is charged again to the same input-version pass counters; equality of bytes does not merge it or reset the budget.\n\nCounting and thresholds\nEvery emitted inventory, member, metadata, comment and content unit participates in C's unchanged greater-than-500 raw-unit trigger. The supplied-file/archive-member count includes the supplied archive occurrence once and each enumerated child member occurrence once; metadata/comments do not add file occurrences. For the existing aggregate-supplied-byte challenge, count each retained file occurrence's actual bytes once: the original compressed archive plus each verified expanded child occurrence at every recursive depth; do not count metadata byte spans again or deduplicate equal occurrences. Apply the existing per-text/document and mechanically countable-page thresholds to eligible original/child content by their existing rules. This additive count can trigger review sooner than treating an archive as one opaque file; no threshold value is raised or reduced. Storage/expansion safety budgets remain separate from these review triggers and retain their original enforcement."
+    },
+    "BASE_SOURCE-L1651-1655": {
+      "artifact": {
+        "role": "BASE_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/source-only/base-original-2933.txt",
+        "sha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+        "byteLength": 309482
+      },
+      "startLine": 1651,
+      "endLine": 1655,
+      "startByte": 99100,
+      "endByte": 100593,
+      "sha256": "8b9be2e4aad113f84b805014be10a507404f27cfec6d9478047def32b82115b1",
+      "text": "Every artifact preserves rawFilename and has a safe displayFilename and canonicalPath under closed-loop-filename/1. Canonical comparison uses Unicode 15.1.0 NFC, case-sensitive identity, and separately checked Unicode 15.1.0 default-case-fold and registered platform-risk collision keys. Absolute paths, drive prefixes, NUL, control characters, empty segments, `.` and `..`, duplicate canonical paths, case-fold collisions, extraction-target collisions, and supported confusable collisions are rejected. An unauthorized rename never matches solely because bytes are equal.\n\nFile extension and browser MIME type are claims. Format-dependent work records the authorized parser or adapter and detected interpretation. A materially ambiguous polyglot is BLOCKED unless one interpretation is explicitly authorized and every alternate interpretation is harmless under the operation.\n\nArchive intake and export fail closed on traversal, absolute paths, duplicate or colliding paths, symlinks, hard links, device entries, unsupported special files, unsupported or encrypted members outside a registered encrypted contract, unsupported compression, excessive nesting, entry count, per-entry size, total compressed or expanded size, compression ratio, path depth, filename length, Unicode ambiguity, manifest mismatch, unmanifested extra members, missing members, or modified bytes. Expansion occurs only in an isolated bounded parser path and never makes content executable or prompt-visible by itself."
+    },
+    "BASE_SOURCE-L2943-2952": {
+      "artifact": {
+        "role": "BASE_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/source-only/base-original-2933.txt",
+        "sha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+        "byteLength": 309482
+      },
+      "startLine": 2943,
+      "endLine": 2952,
+      "startByte": 157172,
+      "endByte": 157390,
+      "sha256": "65a61e37fce6870b72f3a95b61b2aaddb349f13f1db90ab8c7c6f15fa9d40587",
+      "text": "35.3 Artifact bytes\n\nActual artifact Blobs are:\n- stored;\n- hashed on intake;\n- read back;\n- rehashed;\n- marked unavailable when verification fails.\n\nByte-dependent work blocks when bytes are unavailable or unverified."
+    },
+    "SUCCESSOR_SOURCE-L1756-1760": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 1756,
+      "endLine": 1760,
+      "startByte": 133345,
+      "endByte": 134838,
+      "sha256": "8b9be2e4aad113f84b805014be10a507404f27cfec6d9478047def32b82115b1",
+      "text": "Every artifact preserves rawFilename and has a safe displayFilename and canonicalPath under closed-loop-filename/1. Canonical comparison uses Unicode 15.1.0 NFC, case-sensitive identity, and separately checked Unicode 15.1.0 default-case-fold and registered platform-risk collision keys. Absolute paths, drive prefixes, NUL, control characters, empty segments, `.` and `..`, duplicate canonical paths, case-fold collisions, extraction-target collisions, and supported confusable collisions are rejected. An unauthorized rename never matches solely because bytes are equal.\n\nFile extension and browser MIME type are claims. Format-dependent work records the authorized parser or adapter and detected interpretation. A materially ambiguous polyglot is BLOCKED unless one interpretation is explicitly authorized and every alternate interpretation is harmless under the operation.\n\nArchive intake and export fail closed on traversal, absolute paths, duplicate or colliding paths, symlinks, hard links, device entries, unsupported special files, unsupported or encrypted members outside a registered encrypted contract, unsupported compression, excessive nesting, entry count, per-entry size, total compressed or expanded size, compression ratio, path depth, filename length, Unicode ambiguity, manifest mismatch, unmanifested extra members, missing members, or modified bytes. Expansion occurs only in an isolated bounded parser path and never makes content executable or prompt-visible by itself."
+    },
+    "SUCCESSOR_SOURCE-L3124-3133": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 3124,
+      "endLine": 3133,
+      "startByte": 213622,
+      "endByte": 213840,
+      "sha256": "65a61e37fce6870b72f3a95b61b2aaddb349f13f1db90ab8c7c6f15fa9d40587",
+      "text": "35.3 Artifact bytes\n\nActual artifact Blobs are:\n- stored;\n- hashed on intake;\n- read back;\n- rehashed;\n- marked unavailable when verification fails.\n\nByte-dependent work blocks when bytes are unavailable or unverified."
+    },
+    "SUCCESSOR_SOURCE-L430-442": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 430,
+      "endLine": 442,
+      "startByte": 28011,
+      "endByte": 33226,
+      "sha256": "8bf6db648f678c69b63dd5d0964c08bacda84b11f7ea8f25385bea16899a1eb3",
+      "text": "For a mechanically supported structured-media subdivision, emit one structural unit per exposed page, section, archive member, embedded document/object, comment, annotation, tracked change or metadata object, using its exact parent and source locator; traverse children in source order, breaking any absent source-order tie by unsigned Unicode-scalar locator order. Recurse into textual leaves using the physical-content rule and into child media using this rule. A structural node is counted once per occurrence/location/kind; a node's structural unit and its descendant content units are distinct. Preserve inaccessible exposed nodes as INACCESSIBLE_OR_BLOCKED; do not fabricate children. Detailed coverage requires a closed format mapping that is part of this named versioned normative algorithm or an explicitly identified versioned normative format mapping authorized under §34.3. Merely publishing an implementation descriptor does not authorize such semantics. The mapping must fix node kinds, source locators, ordering, exact canonical source values and child extraction. This insertion adds no format-specific adapter or mapping. A claim of supported detailed coverage without that normative mapping is blocked; genuinely unsupported formats retain the fallback below. A mechanically available subdivision cannot be suppressed or relabeled unsupported to avoid that blocker.\n\nSubdivision is additive: an exact UTF-8 whole-file projection emits its physical spans even when a supported structured mapping also emits structural nodes and textual leaves. Whole-file spans, structural nodes and structural textual-leaf spans have distinct kinds and locators and are all counted; overlap in underlying bytes does not deduplicate these different accounting obligations. Each archive-member or embedded-file occurrence emits both its parent structural occurrence unit and its own child inventory unit, followed by its own supported content/subdivisions. A textual leaf is not a child file and gets no inventory unit. Repeated references to the same emitted unit still deduplicate under the rule below.\n\nSource hashes and binding are closed as follows. C(x) means the exact UTF-8 bytes of §34.1 canonical JSON; H(b) means lowercase SHA-256 hexadecimal of exact bytes b. Source-value hash preimages by kind are:\n- HUMAN_TEXT_LINE or HUMAN_TEXT_WHOLE: C({\"type\":\"STRING\",\"value\":s}), where s is the exact emitted line excluding its terminator, or the entire whitespace-only nonempty string respectively. Physical line number and original field pointer retain position; retained originating bytes preserve terminators.\n- HUMAN_SCALAR: C({\"type\":t,\"value\":v}), where t is the declared scalar type and v its exact canonical value; no string coercion. Null/absent values remain excluded as above.\n- ARTIFACT_INVENTORY: C({\"byteLength\":n,\"contentSha256\":h}), where n is exact byte length and h=H(exact artifact bytes). If bytes are unavailable, both values are null; asserted length/digest remains source context, never substituted for observed bytes. The unit remains inaccessible/blocked, with its retained occurrence/locator binding.\n- PHYSICAL_SPAN: the exact original byte span including its terminator, without canonical JSON wrapping. Its locator binds zero-based byte start and exclusive end plus the one-based page/line coordinates.\n- STRUCTURAL_NODE: C({\"nodeKind\":k,\"status\":q,\"value\":v}), where k and v are the exact kind and canonical source value fixed by the authorized format mapping, and q is ACCESSIBLE or INACCESSIBLE_OR_BLOCKED. Inaccessible nodes have v=null; exact exposed parent/locator and k remain bound. No invented serialization of an adapter object is permitted.\n- STRUCTURAL_TEXT_SPAN: exact UTF-8 bytes of the mapped exact textual leaf's physical span, including its terminator. The authorized mapping identifies the leaf and its exact extraction; no silent whitespace normalization is allowed.\n\nEach unit's binding hash preimage is C({\"algorithm\":\"closed-loop-raw-units/1\",\"inputVersion\":V,\"occurrence\":O,\"kind\":K,\"locator\":L,\"sourceValueSha256\":S}). V is the exact owning input-version identity string; O is the ordered zero-based safe-integer path of supplied root and, where applicable, child-member occurrence indices; K is exactly one of the seven uppercase kinds above; S is the corresponding source-value hash. L is an ordered locator array: human units use [originating JSON pointer, one-based physical line] or [originating JSON pointer] for whole strings/scalars; inventories use []; whole-file spans use [startByte,endByte,page,line]; structural nodes use [normative format mapping ID, exact mapping locator]; structural textual spans append [startByte,endByte,page,line] to their structural-leaf locator. Byte offsets for a structural textual leaf refer to its exact UTF-8 extraction. The source-value hash alone does not identify the occurrence: binding hash plus retained input/source supplies the exact type, location and occurrence. These accounting hashes/locators are not §34.2 canonical record IDs. Distinct roots are numbered in retained source occurrence order, including separately supplied identical roots; a canonical mirror does not receive a second root number."
+    },
+    "SUCCESSOR_SOURCE-L454-459": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 454,
+      "endLine": 459,
+      "startByte": 35243,
+      "endByte": 40781,
+      "sha256": "7c414ce1dff357eff3b47770bb08d441166f20814c9ffd08050452f99f15d93c",
+      "text": "The supported decoding subset is ordinary single-volume ZIP and the decoder's bounded ZIP64 forms, with stored or DEFLATE compression, permitted data descriptors, UTF-8 or CP437 names and the decoder's validated Unicode-path extras. Keep its existing checks for complete consistent local/central headers, exact boundaries, safe noncolliding canonical paths, actual expanded lengths, CRC and SHA-256, permitted flags/extras and resource/platform bounds. Encrypted entries, split volumes, self-extracting prefixes, directory/link/device/special entries, unsupported compression/extra fields and ambiguous or colliding paths do not become supported through this mapping. The exact intake safety profile below and existing worker isolation remain effective. The response transport contract remains unchanged. A resource or platform failure is not reclassified as an unsupported format to bypass a blocker. Intake uses this decoder's structural/byte validation, not the inbound response's manifest, response.json role or attachment-admission semantics.\n\nRecognition and bounded decoding\nApply the same recognition test to each supplied root and each verified expanded child. A byte candidate exists if the first four bytes are a ZIP local-header, EOCD, ZIP64 EOCD or ZIP64-locator signature (respectively hexadecimal 504b0304, 504b0506, 504b0606, 504b0607), or if the EOCD signature 504b0506 occurs anywhere in the last min(byteLength,65557) bytes. Also attempt validation when a supplied filename ends with .zip under ASCII case-insensitive comparison, or the supplied media type, before a semicolon and after ASCII whitespace trim/case-fold, is application/zip or application/x-zip-compressed. Names and media types can require an attempt but cannot suppress a byte candidate or establish success. A random signature or claimed filename can never create successful ZIP coverage: the complete retained structural, boundary, path and integrity checks decide that. Missing bytes retain an unavailable inventory/blocker; they do not establish absence of ZIP structure. Noncandidate bytes without a ZIP claim do not receive ZIP nodes through speculation; C's other available accounting rules remain applicable.\n\nUse a centralized, versioned intake profile closed-loop-raw-units-zip-limits/1. Its bounds are: 27 cumulative central-directory entries across the entire selected input-version archive-mapping pass, including every supplied root and recursively decoded child; 67108864 bytes per expanded member; 70254592 cumulative reserved-or-produced expanded bytes; 140509184 cumulative archive bytes submitted to decoding (count a nested archive again when it is submitted); compression ratio at most 1100 per member; filename byte length at most 65535; canonical path depth at most 128; maximum archive nesting level 27 with the supplied archive at level 1; and one cumulative elapsed-worker deadline of 600000 ms for that entire input-version archive-mapping pass. The entry budget is charged on exposure before expansion, including unsupported/blocked entries; the maximum depth cannot bypass that budget. Expansion and byte accounting are checked before allocation and incrementally, against both declared and actual lengths; declared metadata never substitutes for verified bytes. The expansion safety counter reserves each declared output length before allocation; actual production within that reservation does not charge the same byte twice, while any additional produced byte must first fit and consume remaining budget. Every produced/reserved byte remains charged even if later CRC, validation or decoding fails; no refund, reset or retry can escape the pass-wide ceiling. It includes every child occurrence at every depth, including a nested archive's bytes as its parent's output and its own children separately. This work-safety counter is distinct from the semantic aggregate-byte review sum, which includes only actually verified retained child bytes. The archive-byte sum counts each archive occurrence once when submitted to decoding. The same original per-archive structural and byte checks remain; a bound can stop processing earlier, never authorize weaker checking. These ceilings reuse the current default decoder's 27 entries, 64 MiB file bound, 64 MiB + 1 MiB response + 2 MiB manifest total, twice-total archive bound, ratio/name/path/work bounds; the intake profile assigns those generic ceilings without granting any response.json/manifest.json role or larger filename-specific allowance. Transport recursiveExpansion=false and maxNestingDepth=0 remain response-transport rules, not intake accounting rules. A lower already-applicable storage/worker bound still stops work and remains explicitly blocked; it must not silently change this profile or yield favorable completeness. The exact profile-hash preimage is C({\"version\":\"closed-loop-raw-units-zip-limits/1\",\"scope\":\"INPUT_VERSION_PASS\",\"maxEntries\":27,\"maxEntryBytes\":67108864,\"maxExpandedBytes\":70254592,\"maxArchiveBytes\":140509184,\"maxCompressionRatio\":1100,\"maxFilenameBytes\":65535,\"maxPathDepth\":128,\"maxNestingDepth\":27,\"workerTimeoutMs\":600000}); its SHA-256 is the profile hash. The retained unitization derivation binds the owning input version, mapping ID, this exact profile ID/hash, actual counters and completion/blocker status; changed profile or source invalidates reuse under the existing derivation rules. Repeated equal roots and members are charged separately. Any future profile change follows existing versioning and acceptance requirements."
+    },
+    "SUCCESSOR_SOURCE-L466-475": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 466,
+      "endLine": 475,
+      "startByte": 42444,
+      "endByte": 46661,
+      "sha256": "3954d176e892edbd6e33a6a7b69583c7064bee8d2dc805a50c1e29dc839063b6",
+      "text": "Emit the parent's inventory and any applicable exact whole-file UTF-8 spans under C first. Then emit the following archive-level nodes in increasing original byte-offset order:\n- ZIP_CONTROL_RECORD for each present end-of-central-directory fixed record, ZIP64 end record and ZIP64 locator. locatorValue is [\"CONTROL\", recordType, offset]; recordType is EOCD, ZIP64_EOCD or ZIP64_LOCATOR. v has exactly recordType, offset, byteLength and rawHex. The ordinary EOCD record excludes its following archive-comment bytes; ZIP64 records use the exact validated decoder-supported record extent.\n- ZIP_ARCHIVE_COMMENT only when the EOCD archive-comment length is nonzero. locatorValue is [\"ARCHIVE_COMMENT\", offset]. v has exactly offset, byteLength and rawHex for all declared comment bytes. An empty comment creates no comment unit. No character-set guess or interpretation makes comment bytes executable or favorable evidence.\n\nThen, for every entry i in central-directory order, emit in this exact order:\n1. One ZIP_MEMBER structural node, with occurrence P and locatorValue [\"MEMBER\", i, centralHeaderOffset]. Its v has exactly index, centralHeaderOffset, localHeaderOffset, rawFilename, rawFilenameHex, canonicalPath, compressionMethod, compressedByteLength, compressedSha256, expandedByteLength, expandedSha256 and crc32. rawFilename is the decoder's exact decoded central name before path normalization; rawFilenameHex retains its exact original name bytes. canonicalPath is the separately validated safe canonical path, never a replacement for the raw name. compressionMethod is integer 0 or 8; both digests are H of the actual compressed data span and actual verified expanded bytes respectively; crc32 is the verified unsigned integer. No timestamp, name or claimed digest substitutes for observed member bytes.\n2. ZIP_MEMBER_METADATA nodes for the central fixed header, local fixed header and data descriptor if present, in that order. locatorValue is [\"MEMBER_METADATA\", i, recordType, offset], with recordType CENTRAL_HEADER, LOCAL_HEADER or DATA_DESCRIPTOR. v has exactly recordType, offset, byteLength and rawHex. Central and local fixed-header extents are 46 and 30 bytes respectively; the descriptor extent is the exact 12/16/20/24-byte form validated by the existing decoder. Filename, extras and comment bytes are excluded from these fixed-header units because their exact representations are bound separately.\n3. One ZIP_EXTRA_FIELD node per actually present local extra field, followed by one per actually present central extra field; preserve byte order within each area, including separately present equal fields in the two areas. locatorValue is [\"EXTRA_FIELD\", i, area, ordinal, offset], with area LOCAL or CENTRAL and ordinal zero-based within that area. v has exactly area, headerId, offset, byteLength and rawHex. byteLength and rawHex cover the full 4-byte ID/length header plus its declared payload. Existing duplicate/unsupported/malformed-extra rejection is unchanged. No decoded timestamp, UID, Unicode name or other extra interpretation replaces its exact source bytes.\n4. ZIP_MEMBER_COMMENT only when the central entry's comment length is nonzero. locatorValue is [\"MEMBER_COMMENT\", i, offset]. v has exactly offset, byteLength and rawHex. Empty comments create no comment unit. These bytes are counted even though comments have no transport authority.\n5. One child ARTIFACT_INVENTORY with occurrence P followed by i and inventory locator [], binding the actual expanded byte length and H(expanded bytes) by C. Then emit that child's exact verified UTF-8 physical spans when C permits them, using offsets in the expanded child bytes, and apply the recursive rule below before proceeding to entry i+1. A recursively mapped child archive uses this already-emitted inventory and physical spans without emitting them a second time. The ZIP_MEMBER structural node and child inventory are different accounting obligations and both count. Metadata/comment nodes are not child files and do not receive inventory units. This mapping creates no semantic XML/JSON/CSV/Office/PDF section or annotation units from a member's contents; plain supported UTF-8 spans do not claim such parsing or inspection."
+    },
+    "SUCCESSOR_SOURCE-L430-430": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 430,
+      "endLine": 430,
+      "startByte": 28011,
+      "endByte": 29395,
+      "sha256": "ebd56bb57068ae090dc4ce6310850699b344b42c146b0f4b5b83845456a66da2",
+      "text": "For a mechanically supported structured-media subdivision, emit one structural unit per exposed page, section, archive member, embedded document/object, comment, annotation, tracked change or metadata object, using its exact parent and source locator; traverse children in source order, breaking any absent source-order tie by unsigned Unicode-scalar locator order. Recurse into textual leaves using the physical-content rule and into child media using this rule. A structural node is counted once per occurrence/location/kind; a node's structural unit and its descendant content units are distinct. Preserve inaccessible exposed nodes as INACCESSIBLE_OR_BLOCKED; do not fabricate children. Detailed coverage requires a closed format mapping that is part of this named versioned normative algorithm or an explicitly identified versioned normative format mapping authorized under §34.3. Merely publishing an implementation descriptor does not authorize such semantics. The mapping must fix node kinds, source locators, ordering, exact canonical source values and child extraction. This insertion adds no format-specific adapter or mapping. A claim of supported detailed coverage without that normative mapping is blocked; genuinely unsupported formats retain the fallback below. A mechanically available subdivision cannot be suppressed or relabeled unsupported to avoid that blocker."
+    },
+    "SUCCESSOR_SOURCE-L1195-1195": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 1195,
+      "endLine": 1195,
+      "startByte": 88812,
+      "endByte": 89452,
+      "sha256": "4261764a656b9d882e224ba5af8337f653a6b313052ccc7ca199700be42e1180",
+      "text": "These are the existing later-than-owning-stage deferred failure-test and regression execution routes. A pair is available only for a current accepted definition and its current accepted, independently reviewed execution-test binding, with established definition/test/fixture/target/outcome compatibility, the declared earliest executable stage reached, and the required current target-availability and phase conditions TRUE. Unknown, stale or unavailable prerequisites block; a legitimately future definition remains visible and unexecuted. Timing, compatibility and authority cannot be supplied by this list or inferred from a route label."
+    },
+    "SUCCESSOR_SOURCE-L1152-1186": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 1152,
+      "endLine": 1186,
+      "startByte": 86783,
+      "endByte": 88257,
+      "sha256": "b428f1fa34ed8efffb591f46d1c9e33411315a77d84f3af8415972939d92b592",
+      "text": "14.6 Closed stage-operation registry\n\nThe exact stage-operation set is:\n\n- Stage 01: COMPLETE, SEMANTIC_CHALLENGE, RECONCILE_INTAKE;\n- Stage 02: COMPLETE, SEARCH_ADEQUACY_REVIEW, RECONCILE_SOURCE_SEARCH;\n- Stage 03: COMPLETE, SEMANTIC_CHALLENGE, RECONCILE_RESEARCH;\n- Stage 04: COMPLETE, DISPOSITION_CHALLENGE, ATOMICITY_CHALLENGE, RECONCILE_REQUIREMENTS;\n- Stage 05: COMPLETE, SEMANTIC_REVIEW, RECONCILE_REQUIREMENT_SET;\n- Stage 06: COMPLETE, PROOF_REVIEW, RECONCILE_VERIFICATION_SUITE;\n- Stage 07: COMPLETE, EXECUTE_FAILURE_TEST;\n- Stage 08: COMPLETE;\n- Stage 09: COMPLETE;\n- Stage 10: FREEZE;\n- Stage 11: EXECUTE_RUN;\n- Stage 12: VERIFY;\n- Stage 13: COMPARE;\n- Stage 14: ROOT_CAUSE;\n- Stage 15: COMPLETE, EXECUTE_REGRESSION;\n- Stage 16: CORRECT;\n- Stage 17: FREEZE, EXECUTE_RUN, VERIFY, COMPARE, ROOT_CAUSE, REGRESSION, CORRECT;\n- Stage 18: COMPLETE;\n- Stage 19: CONFIRM_FREEZE, EXECUTE_RUN, VERIFY, COMPARE, REGRESSION_VERIFY, CONFIRM;\n- Stage 20: FREEZE_BASELINE;\n- Stage 21: COMPLETE;\n- Stage 22: RUN_NATIVE_TESTS, EXECUTE_EXTERNAL_TEST;\n- Stage 23: COMPLETE;\n- Stage 24: RUN_NATIVE_ATTACKS, COMPLETE;\n- Stage 25: FREEZE_DELIVERY_CANDIDATE, COMPLETE;\n- Stage 26: COMPLETE, SEMANTIC_REVIEW, RECONCILE;\n- Stage 27: CALCULATE_RELEASE, ADVISORY_REVIEW;\n- Stage 28: VERIFY_IDENTITY, CAPTURE_DELIVERY_INTENT;\n- Stage 29: CALCULATE_EVIDENCE_CHAINS, INVESTIGATE_MISSING_EVIDENCE;\n- Stage 30: CALCULATE_TERMINAL, EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS, RECORD_DELIVERY_EVIDENCE.\n"
+    },
+    "SUCCESSOR_SOURCE-L1203-1212": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 1203,
+      "endLine": 1212,
+      "startByte": 91454,
+      "endByte": 95679,
+      "sha256": "bbee17d82a2c37c8be071fb4f4ab0ac8dc9eccabc67fe5f42a5ce28fdb2eb3d2",
+      "text": "No other stage-operation combination is valid. The registry declares for each listed operation its allowed response types, target-slot derivation, required input families, writable fields and collections, reservation requirement, independence requirement, completion predicate, retry behavior, and whether it is agent, human, or application executed.\n\nOperation execution and response permissions are closed:\n\n- External-agent operations are COMPLETE at Stages 01-09, 15, 21, 23, 24, 25, and 26; SEMANTIC_CHALLENGE; RECONCILE_INTAKE; SEARCH_ADEQUACY_REVIEW; RECONCILE_SOURCE_SEARCH; RECONCILE_RESEARCH; DISPOSITION_CHALLENGE; ATOMICITY_CHALLENGE; RECONCILE_REQUIREMENTS; SEMANTIC_REVIEW; RECONCILE_REQUIREMENT_SET; PROOF_REVIEW; RECONCILE_VERIFICATION_SUITE; EXECUTE_RUN; VERIFY; COMPARE; ROOT_CAUSE; REGRESSION; CORRECT; RECONCILE at Stage 26; ADVISORY_REVIEW at Stage 27; EXECUTE_EXTERNAL_TEST; INVESTIGATE_MISSING_EVIDENCE; and EXECUTE_FAILURE_TEST, EXECUTE_REGRESSION, and REGRESSION_VERIFY when externally routed. They require an operation reservation and file-first package. Their responseType is exactly DATA_PROPOSAL, HUMAN_INPUT_REQUIRED, BLOCKED, or EXECUTION_FAILED as permitted by the operation's field contract. ADVISORY_REVIEW at Stage 27 is optional and non-gating: it writes releaseGateReviews records only and cannot modify, delay, or substitute for any CALCULATE_RELEASE input, calculation, or state.\n- Application commands are EXECUTE_FAILURE_TEST when natively routed, EXECUTE_REGRESSION when natively routed, REGRESSION_VERIFY when natively routed, FREEZE, CONFIRM_FREEZE, COMPLETE at Stage 18, CONFIRM at Stage 19, FREEZE_BASELINE, RUN_NATIVE_TESTS, RUN_NATIVE_ATTACKS, FREEZE_DELIVERY_CANDIDATE, VERIFY_IDENTITY, CALCULATE_RELEASE, CALCULATE_EVIDENCE_CHAINS, and CALCULATE_TERMINAL. They accept no external response envelope and commit only application-owned results through the universal command path. COMPLETE at Stage 18 and CONFIRM at Stage 19 are application-calculated convergence and confirmation determinations; agents contribute only the separately declared explanatory fields of the owning record families. FREEZE, CONFIRM_FREEZE, FREEZE_BASELINE, and FREEZE_DELIVERY_CANDIDATE consume and reference the required current humanDecisions records; they never create human authority.\n- HUMAN_DECISION commands are CAPTURE_DELIVERY_INTENT; application confirmation of a newly reported human-origin answer; and RECORD_HUMAN_DECISION, one global application-validated command bound to exactly one registered purpose and target per invocation. The closed RECORD_HUMAN_DECISION purpose enum is INTENT_CONFIRMATION, CANDIDATE_COMPONENT_SELECTION, BASELINE_AUTHORIZATION, DISCLOSURE_AUTHORIZATION, EXTERNAL_ACTION_RISK_AUTHORIZATION, CONTROLLED_EXCEPTION, REGRESSION_RETIREMENT_AUTHORIZATION, BACKUP_POLICY_SELECTION, TRADEOFF_OR_SCOPE_DECISION, VISUAL_BASELINE_AUTHORIZATION, and HUMAN_AUTHORITY_CORRECTION. Each purpose writes only the humanDecisions record and the human-decision-owned fields FIELD_REGISTRY declares for that purpose and target. HUMAN commands are SAVE_HUMAN_INPUT, which creates and edits User Job Input and saves Section 18 fallback answers with their declared consequences, and RECORD_HUMAN_OBSERVATION, which records human-owned observation and evidence records for human-inspection routes. These commands write only their declared HUMAN or HUMAN_DECISION fields and records, accept no agent-owned canonical fields, and accept no external response envelope.\n- EXPORT_PROMPT_FILE, EXPORT_EXECUTION_PACKAGE, SELECT_RESPONSE_JSON_FILE, SELECT_RETURNED_FILES, EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS, and RECORD_DELIVERY_EVIDENCE are operator actions. They create only the application receipts and human or external evidence explicitly declared by their contracts.\n\nFor every operation, TARGET_SLOT = SHA-256(closed-loop-canonical-json/1 of contractProfileId, jobId, stage, operation, and all operation-specific target identities required by Section 14.7). The target slot excludes projectRevision so an exact retry retains its slot; expectedRevision and scopeHash remain separate mandatory preconditions. No operation can write a family or field not listed in its FIELD_REGISTRY entry."
+    },
+    "SUCCESSOR_SOURCE-L1187-1187": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 1187,
+      "endLine": 1187,
+      "startByte": 88258,
+      "endByte": 88342,
+      "sha256": "e5f9d7c3fdcdda07a428980dc8717b877abd3b2426cd93fdafe949f8d4074dd2",
+      "text": "F. R02: exact operation minima and narrow reconciliation of existing deferred routes"
+    },
+    "SUCCESSOR_SOURCE-L1189-1189": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 1189,
+      "endLine": 1189,
+      "startByte": 88344,
+      "endByte": 88480,
+      "sha256": "d338439cca19562d7103c89f8e051c760a3634934bf8113a6e928d2d313f1a32",
+      "text": "F1. Insert after the Stage30 line of the §14.6 closed stage-operation list, before “No other stage-operation combination is valid.”"
+    },
+    "SUCCESSOR_SOURCE-L1199-1199": {
+      "artifact": {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "byteLength": 369901
+      },
+      "startLine": 1199,
+      "endLine": 1199,
+      "startByte": 90050,
+      "endByte": 90964,
+      "sha256": "24639ff720fa152a382969900c2c731f738936533cfa8264b148ec5af2e4023d",
+      "text": "Each execution retains exact subject/test/fixture/target identities and hashes, selected stage and operation, current scope and history activation, actual isolation and attributable raw/native provenance. Failure validation requires an actual observation establishing rejection of the bound known-invalid fixture. Regression pre-correction failure and post-correction success require distinct executions and distinct actual target input identities; one observation cannot prove both. Existing capability, risk/disclosure authorization, human review where required, compatibility, reservation, retry, replacement, receipt, freshness and restoration controls remain mandatory and cannot be bypassed by an input-basis minimum. Supported semantic compatibility and application-observed input custody remain separate facts; a supported author interpretation does not change a valid native executor into an external one."
+    }
+  },
+  "decoderPreservationMatrix": [
+    {
+      "technicalLine": 11,
+      "startByte": 1652,
+      "endByteExclusive": 1875,
+      "sha256": "cde081df91ca08a61dad39f5d5d689bf471ed21597796728a2edb6275120962d",
+      "text": "- One volume, no prefix or suffix, exact local-record/central-directory/end-record boundaries, nonoverlapping payload extents; EOCD fixed 22+declared comment ends exactly at EOF; ordinary disk fields zero and counts equal.\n",
+      "sourcePassageKeys": [
+        "SUCCESSOR_SOURCE-L454-454",
+        "SUCCESSOR_SOURCE-L457-457",
+        "SUCCESSOR_SOURCE-L467-467",
+        "SUCCESSOR_SOURCE-L492-492",
+        "SUCCESSOR_SOURCE-L1760-1760"
+      ],
+      "decision": "CONSISTENT_WITH_CONTROLLING_SOURCE_PRESERVATION",
+      "reason": "Single-volume, no prefix/suffix and complete nonoverlapping structural boundaries instantiate the expressly retained structural/boundary checks. Known empty EOCD remains a distinct explicit C1 blocked case; this does not import transport manifest/role admission.",
+      "implementationConformance": "UNKNOWN"
+    },
+    {
+      "technicalLine": 12,
+      "startByte": 1875,
+      "endByteExclusive": 2508,
+      "sha256": "6458bb166f5db2bbf8a15150c7af818637e6f0fd6c9cc3682b498b6ba6d558f0",
+      "text": "- ZIP64 only as the existing bounded forms: locator 20, one disk, safe-integer offsets; ZIP64 EOCD 56 with declared body 44, required version ≤45, zero disk fields/equal counts, immediately before locator; nonsentinel ordinary values must agree. Central/local 0x0001 extras contain exactly the sentinel-requested expanded/compressed/local-offset/disk fields in that order and prescribed 8/8/8/4 byte widths, with local extras limited to expanded/compressed widths 8/8. No unused payload bytes; safe integers. Optional ZIP64 with agreeing nonsentinel ordinary values remains within the inherited subset; no extensible EOCD sectors.\n",
+      "sourcePassageKeys": [
+        "SUCCESSOR_SOURCE-L454-454",
+        "SUCCESSOR_SOURCE-L467-467",
+        "SUCCESSOR_SOURCE-L1760-1760"
+      ],
+      "decision": "CONSISTENT_WITH_CONTROLLING_SOURCE_PRESERVATION",
+      "reason": "Exact bounded ZIP64 widths, version/disk/count constraints and safe offsets close the previously missing subset/record extent. They do not add extensible sectors or reinterpret optional agreeing forms as transport output policy.",
+      "implementationConformance": "UNKNOWN"
+    },
+    {
+      "technicalLine": 13,
+      "startByte": 2508,
+      "endByteExclusive": 2795,
+      "sha256": "42e62bfcebbf90d60bc644e6627d3646f231fdfa08da5db4de0be40301d32f93",
+      "text": "- Required member version 10..45; STORE 0 or DEFLATE 8; only flag bits 1,2,3,11 (mask 0x080e), with STORE rejecting bits 1/2. Encrypted and other flags remain rejected. Do not silently add a descriptor-width/ZIP64-sentinel or version/method coupling absent from the inherited mechanism.\n",
+      "sourcePassageKeys": [
+        "SUCCESSOR_SOURCE-L454-454",
+        "SUCCESSOR_SOURCE-L471-471",
+        "SUCCESSOR_SOURCE-L1760-1760"
+      ],
+      "decision": "CONSISTENT_WITH_CONTROLLING_SOURCE_PRESERVATION",
+      "reason": "STORE/DEFLATE and exact permitted flag/version predicates refine the preserved subset. Encrypted/unsupported flags remain rejected; no extra descriptor-width or version/method coupling is invented.",
+      "implementationConformance": "UNKNOWN"
+    },
+    {
+      "technicalLine": 14,
+      "startByte": 2795,
+      "endByteExclusive": 3317,
+      "sha256": "16675f400d2f54715a35abe11fc4d1e46782e12a7d1e37359bd2b9a13028ba03",
+      "text": "- Nonempty bounded name; allowed extra IDs exactly 0x0001,0x000a,0x000d,0x5455,0x5855,0x7855,0x7875,0x7075,0x6375,0x756e. Every extra area requires complete ID/length/payload framing and unique IDs. 0x000d payload length 12; 0x756e length 14 with CRC over bytes 4 onward, type bits 0 or regular 0x8000 and recorded value at offset 6 zero. The remaining timestamp/UID/comment extras have only their retained framing/allowlist checks unless explicitly described here; they supply no path, permission or execution authority.\n",
+      "sourcePassageKeys": [
+        "SUCCESSOR_SOURCE-L454-454",
+        "SUCCESSOR_SOURCE-L473-473",
+        "SUCCESSOR_SOURCE-L490-490",
+        "SUCCESSOR_SOURCE-L1760-1760"
+      ],
+      "decision": "CONSISTENT_WITH_CONTROLLING_SOURCE_PRESERVATION",
+      "reason": "The exact extra allowlist/framing/uniqueness and two payload checks close inherited extra rejection. C1 still preserves independently established bytes of rejected/duplicate extras and never grants them member admission or path authority.",
+      "implementationConformance": "UNKNOWN"
+    },
+    {
+      "technicalLine": 15,
+      "startByte": 3317,
+      "endByteExclusive": 3768,
+      "sha256": "f7a20a767fe72257fe697f56e951b041f7a3d21d1da021ca5c015a95f644eab5",
+      "text": "- Bit 11 names use fatal UTF-8 with BOM retained; otherwise exact pinned CP437. Unicode-path extra 0x7075 requires version 1, at least 5 bytes, CRC of raw filename and fatal UTF-8 alternate whose pinned NFC equals the decoded base-name NFC. It does not replace rawFilename. Local raw name bytes and independently interpreted names must exactly match the central name. Unknown extras, invalid alternatives, collisions and unsafe paths remain rejected.\n",
+      "sourcePassageKeys": [
+        "SUCCESSOR_SOURCE-L454-454",
+        "SUCCESSOR_SOURCE-L471-471",
+        "SUCCESSOR_SOURCE-L1756-1756"
+      ],
+      "decision": "CONSISTENT_WITH_CONTROLLING_SOURCE_PRESERVATION",
+      "reason": "Fatal UTF-8 or pinned CP437, validated Unicode-path alternate and central/local exact-name agreement close rawFilename derivation; raw source bytes and decoded base name are preserved, not replaced by NFC or an alternate extra name. Current safe-path/collision checks still apply.",
+      "implementationConformance": "UNKNOWN"
+    },
+    {
+      "technicalLine": 16,
+      "startByte": 3768,
+      "endByteExclusive": 4127,
+      "sha256": "f8d05e14a38876ab4005d2a9cccf48c6a2a5616971d6e68aeb4f1c7fd187f0b8",
+      "text": "- Local/central required version, flags, method, timestamps, CRC and resolved sizes must agree, except bit 3 allows local CRC/sizes zero or exact declared central value. Descriptor consumes exactly its boundary gap: 12/16/20/24 bytes for unsigned/signed narrow/wide forms; signed signature 0x08074b50 and exact central CRC/length matches. No unexplained gap.\n",
+      "sourcePassageKeys": [
+        "SUCCESSOR_SOURCE-L454-454",
+        "SUCCESSOR_SOURCE-L462-462",
+        "SUCCESSOR_SOURCE-L472-472"
+      ],
+      "decision": "CONSISTENT_WITH_CONTROLLING_SOURCE_PRESERVATION",
+      "reason": "Header agreement, bit3 permitted zero-or-equal fields and exact gap-consuming 12/16/20/24 descriptor forms close inherited metadata validation. C1 emission retains its own fixed extent/order and only safely established bytes; no unvalidated gap is admitted.",
+      "implementationConformance": "UNKNOWN"
+    },
+    {
+      "technicalLine": 17,
+      "startByte": 4127,
+      "endByteExclusive": 4409,
+      "sha256": "dc9d46a589d495dfe440b8ef613af562036e963af0dd066b74b15a244830a199",
+      "text": "- Directory, link, device and special-file rejection, pinned Unicode 15.1 NFC/casefold/confusable and platform-risk collision checks, safe canonical paths, filename/path depth bounds and isolated storage authority stay effective. Original archive bytes/occurrence remain preserved.\n",
+      "sourcePassageKeys": [
+        "SUCCESSOR_SOURCE-L452-452",
+        "SUCCESSOR_SOURCE-L454-454",
+        "SUCCESSOR_SOURCE-L459-459",
+        "SUCCESSOR_SOURCE-L1756-1756",
+        "SUCCESSOR_SOURCE-L1760-1760"
+      ],
+      "decision": "CONSISTENT_WITH_CONTROLLING_SOURCE_PRESERVATION",
+      "reason": "The explicit path/collision/name/depth/type/isolation preservation retains the source safety boundary and original archive identity, without filesystem extraction or permission authority.",
+      "implementationConformance": "UNKNOWN"
+    },
+    {
+      "technicalLine": 18,
+      "startByte": 4409,
+      "endByteExclusive": 4701,
+      "sha256": "8533f7d7ab0cb631fd99920c95573ef2a85e48c3d03fe5dfbface436eccfa1bd",
+      "text": "- STORE lengths agree. DEFLATE frame walk and actual decompression both remain required; exact compressed-span exhaustion, output-length agreement, valid symbols/back-references and actual CRC/SHA verification remain. A successful frame parse is never a substitute for verified output bytes.\n",
+      "sourcePassageKeys": [
+        "SUCCESSOR_SOURCE-L454-454",
+        "SUCCESSOR_SOURCE-L471-471",
+        "SUCCESSOR_SOURCE-L486-486",
+        "SUCCESSOR_SOURCE-L488-488"
+      ],
+      "decision": "CONSISTENT_WITH_CONTROLLING_SOURCE_PRESERVATION",
+      "reason": "Exact compressed exhaustion, actual output/length/CRC/SHA and DEFLATE checks instantiate verified-byte requirements. Parsing alone never grants ACCESSIBLE member values or substitutes for produced bytes.",
+      "implementationConformance": "UNKNOWN"
+    },
+    {
+      "technicalLine": 19,
+      "startByte": 4701,
+      "endByteExclusive": 5183,
+      "sha256": "58ce8c4c85a38653d5a25874301a511ace922edf168c63461df1ad1c587ff326",
+      "text": "- C1's explicit pass-wide entries/reserved-or-produced bytes/archive bytes/ratio/name/path/nesting/deadline profile governs intake. Transport member roles, special manifest/response size allowances and nonrecursive response policy are not intake semantics. Existing worker isolation, request/build identity and lower actual platform/storage/read bounds remain; no failure becomes favorable completeness or unsupported-format bypass. C1's explicit empty-archive blocker is retained.\n",
+      "sourcePassageKeys": [
+        "SUCCESSOR_SOURCE-L459-459",
+        "SUCCESSOR_SOURCE-L478-478",
+        "SUCCESSOR_SOURCE-L480-480",
+        "SUCCESSOR_SOURCE-L486-486",
+        "SUCCESSOR_SOURCE-L488-488",
+        "SUCCESSOR_SOURCE-L490-490",
+        "SUCCESSOR_SOURCE-L492-492",
+        "SUCCESSOR_SOURCE-L494-494"
+      ],
+      "decision": "CONSISTENT_WITH_CONTROLLING_SOURCE_PRESERVATION",
+      "reason": "C1 pass-wide limits, recursive accounting, early stops, exposure exceptions and empty-archive blocker remain controlling. Transport-only roles/allowances/nonrecursive policy are excluded; lower real platform bounds remain explicit blockers rather than changed source limits or favorable completeness.",
+      "implementationConformance": "UNKNOWN"
+    }
+  ],
+  "currentAvailabilityAndDeferredScopePassageKeys": [
+    "SUCCESSOR_SOURCE-L2043-2050",
+    "SUCCESSOR_SOURCE-L1195-1201",
+    "SUCCESSOR_SOURCE-L1357-1373",
+    "SUCCESSOR_SOURCE-L2953-2993",
+    "SUCCESSOR_SOURCE-L3950-3955"
+  ],
+  "attribution": "Exact independently accepted implementation-aware technical text is consumed as attributed input. No implementation, tests, observed-predicate trace or proof output was read.",
+  "reviewMetadataRead": {
+    "schema": "closed-loop-independent-v4-reference-resolution-successor-review/1",
+    "status": "ACCEPT_NARROW_TECHNICAL_REFERENCE_RESOLUTION_SCOPE",
+    "proposalSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+    "freezeSha256": "d9a80e6f870fbd894d7375b30d07e00b470083754a8604e91cd0456552d3757f",
+    "newOwnerDecisionRequiredWithinScope": false,
+    "nextGate": "Lead may retain this exact reviewed technical resolution as a separately attributed reconciliation/adoption input. Preserve original blind artifacts and unresolved impacts; any successor reconciliation must identify this new technical input honestly. Source composition, independent impact/identity decisions and actual implementation/affected tests remain required."
+  },
+  "wrapperAcceptanceRead": {
+    "schema": "closed-loop-independent-technical-input-composition-boundary-review/1",
+    "status": "ACCEPT_ADDITIVE_TECHNICAL_INPUT_AND_DEPENDENCY_READY_PREPARATION",
+    "recordSha256": "62460d5001962238d5f09499545d5bf8bec7d0cac0948a057e7174d327ed6092"
+  }
+}

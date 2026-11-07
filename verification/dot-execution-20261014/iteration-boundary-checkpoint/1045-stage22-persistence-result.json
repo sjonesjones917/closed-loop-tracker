@@ -1,0 +1,32 @@
+{
+  "result": "PASS",
+  "commit": "1045c016bb3876d9d9b6ee706108a7bf4e827cac",
+  "fullJourneyExecution": false,
+  "newStage22OperationsExecuted": false,
+  "sourceCaptureSha256": "f7e7617fd54d11ec96eaa27cd9fd08f1afc7a0c2543fa1f45257d0c5cc2698bc",
+  "originalUnsavedCandidateCanonicalSha256": "349fef7ce56bbf04ca31b32fdf6f7dcb7c39d6e51830ff177f44ad3b3d71db7a",
+  "verifiedPriorAdapterIdentity": {
+    "revision": 3,
+    "projectSha256": "faf00fa1204d89cc797c4123861af1414831e3e9158e80fdf382ea83c6203ab7",
+    "canonicalProjectSha256": "faf00fa1204d89cc797c4123861af1414831e3e9158e80fdf382ea83c6203ab7"
+  },
+  "publicRevision": 4,
+  "publicProjectSha256": "c501eb1f6286267f5b191229eb75b3db2bf543e7af5faae0f3886d1a1fd707bd",
+  "finalAdapterSha256": "e25b1591c90b4d01016a67d5f0466f6db7b034dd97cb3851298d970ee145aace",
+  "receiptRawHistoryPreserved": true,
+  "gates": [
+    {
+      "stage": 18,
+      "complete": true
+    },
+    {
+      "stage": 19,
+      "complete": true
+    },
+    {
+      "stage": 22,
+      "complete": true
+    }
+  ],
+  "driverSha256": "a2fde5686177140a6ff19130bc9ce054be7f647b34e512a94965484cfdd5c424"
+}

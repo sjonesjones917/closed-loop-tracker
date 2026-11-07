@@ -1,0 +1,44 @@
+{
+  "schema": "closed-loop-additive-new-duty-technical-reference-resolution/1",
+  "status": "FROZEN_THREE_EXACT_XML_AMENDMENT_EDGES",
+  "records": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/xml-amendment-edge-successor-001/per-entry-reconciliation.json",
+    "sha256": "efe78313f39e1343ce4fa793977b1c345b4b68107c014b0deda1f9b669f70753",
+    "byteLength": 12220
+  },
+  "exactEvidence": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/xml-amendment-edge-successor-001/source-evidence.json",
+    "sha256": "340476496bbbca666d1211415eb5559d8c4f73f22ea0a3751c7a25254a906ddd",
+    "byteLength": 18417
+  },
+  "validation": {
+    "entryCount": 3,
+    "freshAttributedIdentityCount": 1,
+    "retainedIdentityCount": 2,
+    "verifiedSourceLocationOccurrences": 36,
+    "uniqueSourcePassages": 13,
+    "verifiedAtomicSourceSpans": 3,
+    "birthIdentityChecks": 3,
+    "postIdAliasDigestChecks": 3,
+    "predecessorDenominatorChange": 0,
+    "newDutyDenominator": 712,
+    "newDutyDenominatorChange": 0,
+    "blanketDependencyClosureClaim": false,
+    "remainingOriginal425EdgePopulation": 422,
+    "laterBatchEdgesSeparatelyPending": true,
+    "proofPromoted": false
+  },
+  "mergeRule": "Address originalNewDutyIndex/canonicalId and require exact originalEntryEvidence hash plus current originalNewDutyId. Replace only current identity/effective-scope status with the declared successor; preserve historical entries/qualifiers and the712-member denominator. Two retained IDs receive diagnostic edge closure only, with no effectiveGovernorLink. The fresh identity includes the typed external governor in its explicit preimage. No predecessor queue or unexamined population is changed.",
+  "originalFreeze": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/freeze-manifest.json",
+    "sha256": "49580d98e96917aaa6cad169c29930005682fed83beaa0591437f97b5cb5cecc",
+    "byteLength": 12165
+  },
+  "requiredTypedGovernor": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/xml-reviewed-resolution-successor/effective-governor-link.json",
+    "sha256": "20dfd446263cdffd35a8b12b70844cad851cf7abb5ad059548bbb5f088c5875c",
+    "byteLength": 7671
+  },
+  "sourceLedgerActivated": false,
+  "proofPromoted": false
+}

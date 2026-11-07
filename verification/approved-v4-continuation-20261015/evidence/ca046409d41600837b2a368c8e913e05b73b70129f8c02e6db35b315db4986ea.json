@@ -1,0 +1,84 @@
+{
+  "schema": "closed-loop-additive-source-citation-correction/1",
+  "status": "FROZEN_CITATION_ONLY_SUCCESSOR",
+  "originalManifest": {
+    "path": "/tmp/clrt-source-final-archives/retained-impact-021-deliverable-manifest.json",
+    "sha256": "4979613b530c02b38a3b80a9973a74fbeb68dbdba20248ba7d8a98c4457d2590",
+    "byteLength": 5101
+  },
+  "originalArchive": {
+    "path": "/tmp/clrt-source-final-archives/retained-impact-021-frozen-payloads.tar.gz",
+    "sha256": "25318dc98628bebe9d14d40c762d7429d383d3bb1705821c25872e48bd79df09",
+    "byteLength": 152655
+  },
+  "changes": [
+    {
+      "artifact": {
+        "logicalPath": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-021/mechanism-adjudication.json",
+        "archiveMember": "retained-impact-021/mechanism-adjudication.json",
+        "sha256": "1ccd0318b731af1e95d21b1fc82d59ca1eec8e6ba9d4938892b68ba0fbdaf191",
+        "byteLength": 24477
+      },
+      "jsonPointer": "/decisions/CORRECTION_2654",
+      "expectedPriorValue": "Base2576 defines test-to-leaf and expression-to-proposition relations as sufficiency established by accepted Stage06 PROOF_REVIEW, distinct from proposition EQUIVALENT. B2047 expressly uses the existing review contract and separates structural admission from accepted availability evaluation; E4064 separates frozen bytes from semantic acceptance. Neither changes the relation type or review authority. Retain this exact boundary while current review content remains separately governed.",
+      "replacementValue": "Base2576 defines test-to-leaf and expression-to-proposition relations as sufficiency established by accepted Stage06 PROOF_REVIEW, distinct from proposition EQUIVALENT. B2047 expressly uses the existing review contract and separates structural admission from accepted availability evaluation; E4063 separates frozen bytes from semantic acceptance. Neither changes the relation type or review authority. Retain this exact boundary while current review content remains separately governed."
+    },
+    {
+      "artifact": {
+        "logicalPath": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-021/mechanism-adjudication.json",
+        "archiveMember": "retained-impact-021/mechanism-adjudication.json",
+        "sha256": "1ccd0318b731af1e95d21b1fc82d59ca1eec8e6ba9d4938892b68ba0fbdaf191",
+        "byteLength": 24477
+      },
+      "jsonPointer": "/specificCorrections/2654/reason",
+      "expectedPriorValue": "Base2576 defines test-to-leaf and expression-to-proposition relations as sufficiency established by accepted Stage06 PROOF_REVIEW, distinct from proposition EQUIVALENT. B2047 expressly uses the existing review contract and separates structural admission from accepted availability evaluation; E4064 separates frozen bytes from semantic acceptance. Neither changes the relation type or review authority. Retain this exact boundary while current review content remains separately governed.",
+      "replacementValue": "Base2576 defines test-to-leaf and expression-to-proposition relations as sufficiency established by accepted Stage06 PROOF_REVIEW, distinct from proposition EQUIVALENT. B2047 expressly uses the existing review contract and separates structural admission from accepted availability evaluation; E4063 separates frozen bytes from semantic acceptance. Neither changes the relation type or review authority. Retain this exact boundary while current review content remains separately governed."
+    },
+    {
+      "artifact": {
+        "logicalPath": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-021/shared-evidence.json",
+        "archiveMember": "retained-impact-021/shared-evidence.json",
+        "sha256": "5c2bd67549aa257ee433ab37acffb433dd17fa539ad4c2c6f9920c8f2b8ba1dd",
+        "byteLength": 87929
+      },
+      "jsonPointer": "/correctionAndBoundaryPassages/10",
+      "expectedPriorValue": {
+        "role": "SUCCESSOR_SOURCE",
+        "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "startLine": 4064,
+        "endLine": 4064,
+        "startByte": 278290,
+        "endByte": 278290,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "text": ""
+      },
+      "replacementValue": {
+        "role": "SUCCESSOR_SOURCE",
+        "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "startLine": 4063,
+        "endLine": 4063,
+        "startByte": 277526,
+        "endByte": 278289,
+        "sha256": "7f5024bebc4255527f1cf2ecee66b4e76d5da31dfa2ec23645b1496f5b750fdc",
+        "text": "FROZEN_AT records the actual validation observation that creates an immutable normalized snapshot and STATUS=FROZEN denotes immutable bytes, not accepted semantic review. For an absent legacy counterpart, use only verified exact accepted source and the actual activation observation; never invent an earlier freeze time. Present corrupt/stale data cannot be treated as absence. Readiness and comparison still require the existing accepted current proof/review and frozen-candidate/test-suite bindings. Hash identity alone does not establish that a difference is allowed. Semantic evaluation, independent materiality review, all-ten-run comparison, defects and UNKNOWN blocking remain governed by the existing source; no comparison-rate release threshold is added."
+      }
+    }
+  ],
+  "correctedExactCitation": {
+    "artifact": {
+      "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "byteLength": 369901
+    },
+    "startLine": 4063,
+    "endLine": 4063,
+    "startByte": 277526,
+    "endByte": 278289,
+    "sha256": "7f5024bebc4255527f1cf2ecee66b4e76d5da31dfa2ec23645b1496f5b750fdc",
+    "text": "FROZEN_AT records the actual validation observation that creates an immutable normalized snapshot and STATUS=FROZEN denotes immutable bytes, not accepted semantic review. For an absent legacy counterpart, use only verified exact accepted source and the actual activation observation; never invent an earlier freeze time. Present corrupt/stale data cannot be treated as absence. Readiness and comparison still require the existing accepted current proof/review and frozen-candidate/test-suite bindings. Hash identity alone does not establish that a difference is allowed. Semantic evaluation, independent materiality review, all-ten-run comparison, defects and UNKNOWN blocking remain governed by the existing source; no comparison-rate release threshold is added."
+  },
+  "interpretation": "Only the citation to E frozen-bytes versus accepted semantic review changes from blank4064 to actual4063. The substantive sentence, per-ID2654 disposition, identity, full original/source context, other records and all population counts remain unchanged. The existing full E governor passage already contains4063. Preserve original artifacts and apply these checked replacements only in an attributed additive view.",
+  "countsOrIdentityChange": false,
+  "sourceLedgerActivated": false,
+  "proofPromoted": false
+}

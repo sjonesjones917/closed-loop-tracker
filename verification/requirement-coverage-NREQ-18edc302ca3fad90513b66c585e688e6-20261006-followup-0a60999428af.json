@@ -1,0 +1,363 @@
+{
+  "schema": "closed-loop-requirement-coverage-review/1",
+  "normativeRequirementId": "NREQ-18edc302ca3fad90513b66c585e688e6",
+  "sourceLineSha256": "4b1c67f82807f321836cc86584cd655af485c8d0585649afe7b9c081d95bbedf",
+  "specificationSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
+  "declarationSha256": "d684b889d31d6f2ae6391a49f665d8668b018625e9abc3355121b40658266d7c",
+  "decision": "COMPLETE_COVERAGE",
+  "evidenceBasis": "EXTERNALLY_SUPPORTED",
+  "method": "Fresh metadata/source rebind following environmental deletion of prior temporary artifacts. Compared all70 current reconstructed bindings against retained published bindings with only production-owner digests/review references removed: no source text, scope, obligations, checks or governing-context changes. Rechecked all70 literal source lines and declaration digests; all181 distinct listed files match their current digests; every named check occurs exactly once. Retains earlier independent source review of 57 literal operation-list clauses and13 transport identity clauses; catalog additions authored by this reviewer are outside those named check scopes and separately independently reviewed. No new runtime execution or application conformance is asserted.",
+  "author": {
+    "actor": "Codex follow-up source-qualified renewal author",
+    "contextId": "/root/ci_delivery_audit"
+  },
+  "reviewer": {
+    "actor": "Codex independent existing stage/transport declaration reviewer",
+    "contextId": "/root/stage_contract_audit"
+  },
+  "reviewedInputs": [
+    {
+      "path": "hash.js",
+      "sha256": "c5df5b7459ad610ee07e1793be3b3b38efbf0a65aeb22b03e2dd89026fed31a6"
+    },
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d"
+    },
+    {
+      "path": "verification-evidence-catalog.mjs",
+      "sha256": "e6378e7747ba860e5312a813c55625748d2fbaee5f2838d8ee4e97349ba4640f"
+    },
+    {
+      "path": "verification/normative-context-applicability-20261005.json",
+      "sha256": "7cd05ff0028578a1ca1c2560533519a602ce6a974c240ee11dbbd272524cf656"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-18edc302ca3fad90513b66c585e688e6-20261005.json",
+      "sha256": "e99202db51bb3616a989ec839881ebb0655d93165dc81b9fcb66b94606883871"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-18edc302ca3fad90513b66c585e688e6-20261006.json",
+      "sha256": "3c235d78078b84af522fb08af701feec056aa59a0e6615966040f9e7fc58dbf5"
+    },
+    {
+      "path": "verifier-runtime.mjs",
+      "sha256": "8a4c9058b6c72a5aa8dd68809e3cbfd8e5c217b358c41970347443a338f83933"
+    },
+    {
+      "path": "verify-stage-operation-registry.mjs",
+      "sha256": "100817c52843c0a68c05a6d52f9edc026e534dbfced00bf9df5e0a803582fe54"
+    },
+    {
+      "path": "workbook.js",
+      "sha256": "3a8098a9bb4ea108eadaa9bec90c76a1522f57f6465f45341cedf60937ddd008"
+    },
+    {
+      "path": "workflow-schema.js",
+      "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
+    },
+    {
+      "declarationSha256": "d684b889d31d6f2ae6391a49f665d8668b018625e9abc3355121b40658266d7c"
+    }
+  ],
+  "findings": [],
+  "reviewPerformed": true,
+  "reviewCompletedAt": "2026-10-06T21:53:44.471Z",
+  "sourceLocation": {
+    "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+    "startLine": 3425,
+    "endLine": 3425,
+    "lineSha256": "4b1c67f82807f321836cc86584cd655af485c8d0585649afe7b9c081d95bbedf"
+  },
+  "controllingText": "Operations: COMPLETE, SEMANTIC_REVIEW, RECONCILE_REQUIREMENT_SET",
+  "governingContext": [],
+  "additionalControllingContext": [],
+  "reviewedChecks": [
+    {
+      "suite": "verify-stage-operation-registry.mjs",
+      "checkId": "declaration.stage05.operations"
+    }
+  ],
+  "semanticDecision": "EXACT_FINITE_SCHEMA_DECLARATION",
+  "reason": "The complete source clause enumerates operation names only. Exact source list, independent literal test and consumer list agree with loaded registry membership. Semantic/admission/persistence/gate behavior remains outside this clause; nonapplicability rationale applies only to this finite list declaration.",
+  "scopeLimit": "No all-stage operation behavior, real external-agent journey or maturity claim.",
+  "actorIndependenceBoundary": "Renewal author /root/ci_delivery_audit and actual reviewer /root/stage_contract_audit are separate agent contexts. This declaration sufficiency review does not certify hidden-context or external-actor independence.",
+  "reviewerPriorContributionDisclosure": "Fresh metadata/source rebind following environmental deletion of prior temporary artifacts. Compared all70 current reconstructed bindings against retained published bindings with only production-owner digests/review references removed: no source text, scope, obligations, checks or governing-context changes. Rechecked all70 literal source lines and declaration digests; all181 distinct listed files match their current digests; every named check occurs exactly once. Retains earlier independent source review of 57 literal operation-list clauses and13 transport identity clauses; catalog additions authored by this reviewer are outside those named check scopes and separately independently reviewed. No new runtime execution or application conformance is asserted. Separate syntax/catalog authorship is outside these retained scopes and independently reviewed.",
+  "retainedReviewInputs": {
+    "proposal": {
+      "path": "/workspace/scratch/stage-declaration-bindings-proposal.json",
+      "sha256": "82964ba5e0f13e7176c3969436171aa43f945becabd95a36e6e526e6a9af2112"
+    },
+    "priorSemanticReview": {
+      "path": "/workspace/scratch/independent-full-coverage-semantic-review-current45.json",
+      "sha256": "8b76d6c6c1425220853a1798090edf609fadde97ad840f2699e006b7ed2bb866"
+    },
+    "currentProposal": {
+      "path": "/tmp/closed-loop-evidence/57-operation-declarations-proposed-29418001106679fad745042f4a639759112b3b6207d1341a83578a2e6d420f40.json",
+      "sha256": "29418001106679fad745042f4a639759112b3b6207d1341a83578a2e6d420f40"
+    },
+    "currentIndependentReview": {
+      "path": "/tmp/closed-loop-evidence/57-operation-declarations-independent-review-caba5a5e7d6df37bf9c0487e3e721a2b9fa75dd03e4332b5751046a360db6c4d.json",
+      "sha256": "caba5a5e7d6df37bf9c0487e3e721a2b9fa75dd03e4332b5751046a360db6c4d"
+    },
+    "currentDependencyReview": {
+      "path": "/tmp/closed-loop-evidence/57-operation-declarations-catalog-final-rebind-2fd7f1d57b886f267ed6c300e1dd2f4b4389194470585fe978af1b996a6478a2.json",
+      "sha256": "2fd7f1d57b886f267ed6c300e1dd2f4b4389194470585fe978af1b996a6478a2"
+    }
+  },
+  "qualifiedExecutionAndReviewEvidence": [
+    {
+      "path": "/workspace/scratch/independent-stage-declaration-controls-current45.json",
+      "sha256": "cde928d67fb93f846a6b56a72100306ba1be2aae30e37d7f2da436ce798de6c7",
+      "qualification": "Retained actual boundary/source tuple only; this reference does not substitute for current canonical executed receipts."
+    },
+    {
+      "path": "/workspace/scratch/stage-declaration-collector-integration.json",
+      "sha256": "ec78917b631ca3f8a0f3efb0e366480161707c72d03cd918f6b07b78d682d82e",
+      "qualification": "Retained actual boundary/source tuple only; this reference does not substitute for current canonical executed receipts."
+    }
+  ],
+  "currentExecutionRequired": true,
+  "applicationConformanceClaim": false,
+  "priorReview": {
+    "path": "verification/requirement-coverage-NREQ-18edc302ca3fad90513b66c585e688e6-20261006.json",
+    "sha256": "3c235d78078b84af522fb08af701feec056aa59a0e6615966040f9e7fc58dbf5",
+    "author": {
+      "actor": "Codex operation declaration renewal author",
+      "contextId": "/root/ci_delivery_audit"
+    },
+    "reviewer": {
+      "actor": "Codex independent stage-operation declaration reviewer",
+      "contextId": "/root/stage_contract_audit"
+    },
+    "reviewCompletedAt": "2026-10-06T20:26:25.595417+00:00",
+    "retainedEarlierPriorReview": {
+      "path": "verification/requirement-coverage-NREQ-18edc302ca3fad90513b66c585e688e6-20261005.json",
+      "sha256": "e99202db51bb3616a989ec839881ebb0655d93165dc81b9fcb66b94606883871",
+      "author": {
+        "actor": "Codex declaration author",
+        "contextId": "/root/stage_regressions"
+      },
+      "reviewer": {
+        "actor": "Codex independent declaration reviewer",
+        "contextId": "/root/independent_spec"
+      },
+      "reviewCompletedAt": "2026-10-05T17:00:42.299Z",
+      "declarationSha256": "3814868690fecd1271dbdf107587e4be785cec661f101c3bdb3ce097846bcbdb"
+    }
+  },
+  "currentDependencyReconciliation": {
+    "status": "APPROVED_EXACT_CURRENT_SOURCE_REBIND",
+    "baselineHead": "5fd6d120cea99e514560365684ffe3eec53ea206",
+    "sourceInputsSha256": "3de26df2d3c285c252614b63a5d45bd5fe31e7c283b0bcc022f94caa525b22fd",
+    "changes": [
+      {
+        "path": "verification-evidence-catalog.mjs",
+        "sha256": "e6378e7747ba860e5312a813c55625748d2fbaee5f2838d8ee4e97349ba4640f",
+        "priorSha256": "feedf2e728fca37acf303536dd55216389d591567c1ab89236a53aa0b2d19eed",
+        "kind": "CHANGED_PREVIOUSLY_REVIEWED_INPUT"
+      },
+      {
+        "path": "verification/requirement-coverage-NREQ-18edc302ca3fad90513b66c585e688e6-20261006.json",
+        "sha256": "3c235d78078b84af522fb08af701feec056aa59a0e6615966040f9e7fc58dbf5",
+        "priorSha256": null,
+        "kind": "ADDED_ACTUAL_DEPENDENCY_OR_RETAINED_REVIEW"
+      }
+    ],
+    "changedOwners": [],
+    "supplementalInputRationale": [],
+    "priorReview": {
+      "path": "verification/requirement-coverage-NREQ-18edc302ca3fad90513b66c585e688e6-20261006.json",
+      "sha256": "3c235d78078b84af522fb08af701feec056aa59a0e6615966040f9e7fc58dbf5"
+    },
+    "sourceReviewStatus": "COMPLETE_COVERAGE_DECLARATION_SUFFICIENCY_ONLY",
+    "executionStatus": "CURRENT_COMPLETE_PRODUCER_RECEIPTS_STILL_REQUIRED"
+  },
+  "currentSourceReviewHistory": [
+    {
+      "sha256": "8f43813e528315d29d98725725be7696797dc7691328bc3cec079d7ab2258415",
+      "retainedEncoding": "Exact UTF-8 JSON.stringify(record,null,2) plus LF",
+      "record": {
+        "schema": "closed-loop-requirement-coverage-review/1",
+        "normativeRequirementId": "NREQ-18edc302ca3fad90513b66c585e688e6",
+        "sourceLineSha256": "4b1c67f82807f321836cc86584cd655af485c8d0585649afe7b9c081d95bbedf",
+        "specificationSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
+        "declarationSha256": "d684b889d31d6f2ae6391a49f665d8668b018625e9abc3355121b40658266d7c",
+        "decision": "COMPLETE_COVERAGE",
+        "evidenceBasis": "EXTERNALLY_SUPPORTED",
+        "method": "Actual independent review of the complete literal ordinary operation-list clause and approved conditional operation reuse, compared against current authoritative registry construction and independently literal specification arrays. The current declaration changes only the reviewed workflow-schema.js owner hash. Operation execution, admission, persistence, gates, external actors and full application conformance are separate obligations.",
+        "author": {
+          "actor": "Codex operation declaration renewal author",
+          "contextId": "/root/ci_delivery_audit"
+        },
+        "reviewer": {
+          "actor": "Codex independent stage-operation declaration reviewer",
+          "contextId": "/root/stage_contract_audit"
+        },
+        "reviewedInputs": [
+          {
+            "path": "hash.js",
+            "sha256": "c5df5b7459ad610ee07e1793be3b3b38efbf0a65aeb22b03e2dd89026fed31a6"
+          },
+          {
+            "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+            "sha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d"
+          },
+          {
+            "path": "verification-evidence-catalog.mjs",
+            "sha256": "83ddfd41592602113b552ef386e4de5c5ccf8ee0c627e5cfd5f1d3b75082744e"
+          },
+          {
+            "path": "verification/normative-context-applicability-20261005.json",
+            "sha256": "7cd05ff0028578a1ca1c2560533519a602ce6a974c240ee11dbbd272524cf656"
+          },
+          {
+            "path": "verification/requirement-coverage-NREQ-18edc302ca3fad90513b66c585e688e6-20261005.json",
+            "sha256": "e99202db51bb3616a989ec839881ebb0655d93165dc81b9fcb66b94606883871"
+          },
+          {
+            "path": "verifier-runtime.mjs",
+            "sha256": "8a4c9058b6c72a5aa8dd68809e3cbfd8e5c217b358c41970347443a338f83933"
+          },
+          {
+            "path": "verify-stage-operation-registry.mjs",
+            "sha256": "100817c52843c0a68c05a6d52f9edc026e534dbfced00bf9df5e0a803582fe54"
+          },
+          {
+            "path": "workbook.js",
+            "sha256": "3a8098a9bb4ea108eadaa9bec90c76a1522f57f6465f45341cedf60937ddd008"
+          },
+          {
+            "path": "workflow-schema.js",
+            "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
+          },
+          {
+            "declarationSha256": "d684b889d31d6f2ae6391a49f665d8668b018625e9abc3355121b40658266d7c"
+          }
+        ],
+        "findings": [],
+        "reviewPerformed": true,
+        "reviewCompletedAt": "2026-10-06T20:02:59.549844+00:00",
+        "sourceLocation": {
+          "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+          "startLine": 3425,
+          "endLine": 3425,
+          "lineSha256": "4b1c67f82807f321836cc86584cd655af485c8d0585649afe7b9c081d95bbedf"
+        },
+        "controllingText": "Operations: COMPLETE, SEMANTIC_REVIEW, RECONCILE_REQUIREMENT_SET",
+        "governingContext": [],
+        "additionalControllingContext": [],
+        "reviewedChecks": [
+          {
+            "suite": "verify-stage-operation-registry.mjs",
+            "checkId": "declaration.stage05.operations"
+          }
+        ],
+        "semanticDecision": "EXACT_FINITE_SCHEMA_DECLARATION",
+        "reason": "The complete source clause enumerates operation names only. Exact source list, independent literal test and consumer list agree with loaded registry membership. Semantic/admission/persistence/gate behavior remains outside this clause; nonapplicability rationale applies only to this finite list declaration.",
+        "scopeLimit": "No all-stage operation behavior, real external-agent journey or maturity claim.",
+        "actorIndependenceBoundary": "Renewal author /root/ci_delivery_audit is a different agent context from actual independent reviewer /root/stage_contract_audit. This records actual review attribution without asserting hidden-context authentication or independent authorship of every source/test.",
+        "reviewerPriorContributionDisclosure": "Read-only all-stage/operation audit plus a separate Stage17 graph-regression test contribution in verify-due-stage-timing.mjs. No authorship or edit of these57 declaration obligations, registry membership lists, or verify-stage-operation-registry expected literals.",
+        "retainedReviewInputs": {
+          "proposal": {
+            "path": "/workspace/scratch/stage-declaration-bindings-proposal.json",
+            "sha256": "82964ba5e0f13e7176c3969436171aa43f945becabd95a36e6e526e6a9af2112"
+          },
+          "priorSemanticReview": {
+            "path": "/workspace/scratch/independent-full-coverage-semantic-review-current45.json",
+            "sha256": "8b76d6c6c1425220853a1798090edf609fadde97ad840f2699e006b7ed2bb866"
+          },
+          "currentProposal": {
+            "path": "/tmp/closed-loop-evidence/57-operation-declarations-proposed-29418001106679fad745042f4a639759112b3b6207d1341a83578a2e6d420f40.json",
+            "sha256": "29418001106679fad745042f4a639759112b3b6207d1341a83578a2e6d420f40"
+          },
+          "currentIndependentReview": {
+            "path": "/tmp/closed-loop-evidence/57-operation-declarations-independent-review-caba5a5e7d6df37bf9c0487e3e721a2b9fa75dd03e4332b5751046a360db6c4d.json",
+            "sha256": "caba5a5e7d6df37bf9c0487e3e721a2b9fa75dd03e4332b5751046a360db6c4d"
+          },
+          "currentDependencyReview": {
+            "path": "/tmp/closed-loop-evidence/57-operation-declarations-catalog-final-rebind-2fd7f1d57b886f267ed6c300e1dd2f4b4389194470585fe978af1b996a6478a2.json",
+            "sha256": "2fd7f1d57b886f267ed6c300e1dd2f4b4389194470585fe978af1b996a6478a2"
+          }
+        },
+        "qualifiedExecutionAndReviewEvidence": [
+          {
+            "path": "/workspace/scratch/independent-stage-declaration-controls-current45.json",
+            "sha256": "cde928d67fb93f846a6b56a72100306ba1be2aae30e37d7f2da436ce798de6c7",
+            "qualification": "Retained actual boundary/source tuple only; this reference does not substitute for current canonical executed receipts."
+          },
+          {
+            "path": "/workspace/scratch/stage-declaration-collector-integration.json",
+            "sha256": "ec78917b631ca3f8a0f3efb0e366480161707c72d03cd918f6b07b78d682d82e",
+            "qualification": "Retained actual boundary/source tuple only; this reference does not substitute for current canonical executed receipts."
+          }
+        ],
+        "currentExecutionRequired": true,
+        "applicationConformanceClaim": false,
+        "priorReview": {
+          "path": "verification/requirement-coverage-NREQ-18edc302ca3fad90513b66c585e688e6-20261005.json",
+          "sha256": "e99202db51bb3616a989ec839881ebb0655d93165dc81b9fcb66b94606883871",
+          "author": {
+            "actor": "Codex declaration author",
+            "contextId": "/root/stage_regressions"
+          },
+          "reviewer": {
+            "actor": "Codex independent declaration reviewer",
+            "contextId": "/root/independent_spec"
+          },
+          "reviewCompletedAt": "2026-10-05T17:00:42.299Z",
+          "declarationSha256": "3814868690fecd1271dbdf107587e4be785cec661f101c3bdb3ce097846bcbdb"
+        },
+        "currentDependencyReconciliation": {
+          "classification": "DIRECT_OWNER_FILE_CHANGED_WITH_OPERATION_DECLARATIONS_RETAINED",
+          "changedOwner": "workflow-schema.js",
+          "priorOwnerSha256": "c781af759788be96148fb6e9ef99ff45c2face2720cc9fb800303ab9d4cc4c6c",
+          "currentOwnerSha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8",
+          "priorCatalogSha256": "576202e5983c4d2056a26db06815d650ac734d99dee33edea68cb7e319ec4671",
+          "currentCatalogSha256": "4af6b3153c1aea23a6dbc2906662dcce1c53cb157281c2220317e7f59bc0db99",
+          "declarationChanges": "Only workflow-schema.js production-owner SHA256 changes; obligation text, expected behavior, permitted evidence kind, check IDs, scope and nonapplicability rationale remain exact.",
+          "sourceDeltaEvidence": "/tmp/closed-loop-evidence/workflow-schema.js-since-139-review.patch",
+          "sourceReviewStatus": "APPROVED_EXACT_CURRENT_INPUTS_NO_EXECUTION_CLAIM",
+          "independentApproval": {
+            "packet": {
+              "path": "/tmp/closed-loop-evidence/57-operation-declarations-proposed-29418001106679fad745042f4a639759112b3b6207d1341a83578a2e6d420f40.json",
+              "sha256": "29418001106679fad745042f4a639759112b3b6207d1341a83578a2e6d420f40"
+            },
+            "independent": {
+              "path": "/tmp/closed-loop-evidence/57-operation-declarations-independent-review-caba5a5e7d6df37bf9c0487e3e721a2b9fa75dd03e4332b5751046a360db6c4d.json",
+              "sha256": "caba5a5e7d6df37bf9c0487e3e721a2b9fa75dd03e4332b5751046a360db6c4d"
+            },
+            "rebind": {
+              "path": "/tmp/closed-loop-evidence/57-operation-declarations-catalog-final-rebind-2fd7f1d57b886f267ed6c300e1dd2f4b4389194470585fe978af1b996a6478a2.json",
+              "sha256": "2fd7f1d57b886f267ed6c300e1dd2f4b4389194470585fe978af1b996a6478a2"
+            },
+            "clauseDecision": "APPROVE_COMPLETE_COVERAGE_FOR_LITERAL_DECLARATION_ONLY",
+            "dependencyFinding": "Complete catalog delta adds completeScopeNegativePopulation and replaces only ingestion.scope-negative-population condition/description. All57 named registry operation-list conditions, source obligation scopes and dependent source hashes remain unchanged. Catalog still uses independent literal stage operation lists; new ingestion check has no dependency on those lists. This reconciles one changed shared source and preserves the completed clause review."
+          }
+        }
+      }
+    }
+  ],
+  "currentIndependentReview": {
+    "path": "/workspace/.closed-loop-engineering/followup-145-renewal-recovered/stage70-reconstructed-independent-approval.json",
+    "sha256": "ae202fc2623a5607790e9e129de9ec2806ee20129626403d410f3862d7b7d05b",
+    "decision": "APPROVE_EXACT_RECONSTRUCTED_PACKET_FOR_EXISTING_70_SCOPES",
+    "proposal": {
+      "path": "/workspace/.closed-loop-engineering/followup-145-renewal-recovered/stage70.json",
+      "sha256": "7f6fd5b59b71266a99b4d1e916c7a6cfbeb9ab6a8d1662cc5dd3f56bf8af5439"
+    },
+    "reviewCompletedAt": "2026-10-06T21:53:44.471Z",
+    "reviewer": {
+      "actor": "Codex independent existing stage/transport declaration reviewer",
+      "contextId": "/root/stage_contract_audit"
+    },
+    "sourceReviewOnly": true
+  },
+  "recoveryQualification": {
+    "historicalTemporaryArtifactBytesAvailable": false,
+    "priorObservedApprovalSha256": "869069ffe64bb4b292b71118bdf7017d1e04aa39770ed890f4fa38b19e2216cc",
+    "freshApprovalRequiredAndObtained": true,
+    "retainedRepositoryReviewFilesPreserved": true,
+    "executionEvidenceRecreated": false
+  }
+}

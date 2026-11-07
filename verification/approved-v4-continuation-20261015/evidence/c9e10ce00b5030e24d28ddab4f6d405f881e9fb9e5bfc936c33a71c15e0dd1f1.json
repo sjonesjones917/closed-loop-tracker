@@ -1,0 +1,89 @@
+{
+  "schema": "closed-loop-attributed-source-resolution-custody-link/1",
+  "id": "STAGE14-REVIEWED-POPULATION-GOVERNOR-20261015",
+  "status": "LINKED_IN_ADDITIVE_CANDIDATE_SOURCE_GOVERNOR_SET",
+  "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+  "authority": {
+    "reportedDelegatedAuthority": {
+      "author": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+      "kind": "EXPLICIT_TECHNICAL_SOURCE_POPULATION_CHOICE",
+      "sourceOnlyOriginalMeaningClaim": false,
+      "implementationCodeConsulted": false,
+      "delegatedAuthorityMessageVerbatim": "Root authorizes proceeding under delegated intent authority with the independently reviewed Stage14 interpretation: count all current material defects lacking an admissibly established known RCA, allowing overlap with blocked analyses. Prepare a small attributed technical-resolution input with exact controlling spans and rationale that existing-record-only counting omits unresolved material defects. No fabricated RCA rows or implementation/proof claim. Keep Stage14 pending until independent review of that exact interpretation; preserve source-only ambiguity report and original five-choice resolution.",
+      "authorityMessageSender": "/root/repair_iteration_receipt_dependencies",
+      "authorityReportedAs": "Root/user-delegated intent-consistent engineering decisions; this record does not invent a new owner approval or claim independent review already occurred."
+    },
+    "subsequentLeadInstruction": "Stage14 technical input db589552 independently ACCEPTED, review34adf62296afeb790cf1b5ed1fab439fba3c9dfce4f3b2eaf8d1bc466ab7f683. Formally link attributed technical input before conditional CHANGED identity.",
+    "instructionSender": "/root/repair_iteration_receipt_dependencies"
+  },
+  "sourceBasis": {
+    "baseSource": {
+      "role": "BASE_SOURCE",
+      "path": "/workspace/shared/clrt-v4-adoption-design-2933/source-only/base-original-2933.txt",
+      "sha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "byteLength": 309482
+    },
+    "successorSource": {
+      "role": "SUCCESSOR_SOURCE",
+      "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "byteLength": 369901
+    },
+    "ownerApprovedV4": {
+      "role": "EXACT_APPROVED_V4",
+      "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/verification/approved-owner-decisions-v4-20261015.txt",
+      "sha256": "aa966b7ac8f38f66b046ce796ab55de5c69dc3f8485f6bba499e32442e29476f",
+      "byteLength": 65481
+    }
+  },
+  "technicalResolution": {
+    "artifact": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/stage14-population-resolution-input/proposed-population-resolution.json",
+      "sha256": "db589552eca3753f84e6cde9171984cdde30a1bfd647c16a3e193256d636e47c",
+      "byteLength": 30886
+    },
+    "jsonPointer": "/proposedControllingInterpretation",
+    "relationship": "ADDITIONAL_EXPLICIT_POPULATION_GOVERNOR",
+    "scope": {
+      "predecessorId": "NREQ-5ad9f8e779b15e02b947f0660ea681a7",
+      "field": "UNDETERMINED_ROOT_CAUSES",
+      "stage": 14
+    }
+  },
+  "distinctTechnicalAcceptance": {
+    "path": "/workspace/shared/clrt-iteration-repair-evidence/independent-release-review-20261014/stage14-population-resolution-input-review.json",
+    "sha256": "34adf62296afeb790cf1b5ed1fab439fba3c9dfce4f3b2eaf8d1bc466ab7f683",
+    "byteLength": 3395
+  },
+  "sourceHistory": {
+    "originalAmbiguity": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-status-judgment-20261015/source-only-judgment.json",
+        "sha256": "98ab88d761758370d59d5e78a1c3915343f3bfb9341b56171e9fb5a2961c2744",
+        "byteLength": 74430
+      },
+      "jsonPointer": "/decisions/2",
+      "ambiguityStatusUnchanged": "UNRESOLVED_SOURCE_POPULATION_AMBIGUITY"
+    },
+    "priorBlockedRecord": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/status-field-judgment-successor/per-id-reconciliation.json",
+        "sha256": "a20edf0f4557e0bb6c0bcda72a9e7280184fac2ed7d6793f5e615732fd8d0dd7",
+        "byteLength": 26279
+      },
+      "jsonPointer": "/2"
+    },
+    "historicalStatusesUnmodified": true
+  },
+  "precedence": "Use the explicit reviewed defect-ID population only for Stage14 UNDETERMINED_ROOT_CAUSES. Preserve the original every-material-defect completion, RCA authority, currentness, evidence, duplicate/conflict checks and all F2/stronger proof conditions. Do not generalize this count to other fields.",
+  "activationBoundary": "This file formally links the reviewed technical record to the additive candidate effective-governor set for source identity reconciliation. The original successor text, repository source integration and active source ledger are not changed. A consumer claiming this conditional successor identity must include this exact link and technical record; v4 bytes alone are insufficient.",
+  "statuses": {
+    "technicalReviewAccepted": true,
+    "candidateGovernorLinked": true,
+    "sourceLedgerActivated": false,
+    "implementationComplete": "UNKNOWN",
+    "testConformance": "UNKNOWN",
+    "proofPromoted": false,
+    "blindSourceOriginClaim": false
+  }
+}

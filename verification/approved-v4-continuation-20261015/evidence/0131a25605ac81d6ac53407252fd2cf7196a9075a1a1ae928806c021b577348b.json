@@ -1,0 +1,45 @@
+{
+  "schema": "closed-loop-independent-v4-reference-resolution-successor-review/1",
+  "reviewedAtUtc": "2026-10-15T09:13:01.101372+00:00",
+  "status": "ACCEPT_NARROW_TECHNICAL_REFERENCE_RESOLUTION_SCOPE",
+  "predecessorIndependentReviewSha256": "d27ad95230a2d145c164c7dbd67b1dab83d5221774eeaef63fbb3bfef2f1b15b",
+  "successorDirectory": "/workspace/shared/clrt-v4-reference-resolution-b-precedence",
+  "proposalSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+  "freezeSha256": "d9a80e6f870fbd894d7375b30d07e00b470083754a8604e91cd0456552d3757f",
+  "diffSha256": "6a54d8ae9260f8ec8a7d3c669c601b449d813a0b60d88b30881ec62188416574",
+  "supportingResolutionSha256": "83e5d054e3378580c009903aa0e18ecb59eb3a2baf54911039411cd4239a9726",
+  "machineResolutionSha256": "17b2fe2497a2a8029fdb76bd09ed7e04e0010a5a5a97973d842d113fc772b03f",
+  "checks": {
+    "identity": "All 11 successor frozen artifact SHA256/lengths and all nine predecessor frozen artifacts independently verified. Predecessor files remain unchanged.",
+    "evidence": "Original 13 inputs and 28 exact reference records remain identical, with only a historical-use qualifier added to the timing record. Exactly one current-v4 B reference was added.",
+    "newCurrentReference": {
+      "sourceSha256": "aa966b7ac8f38f66b046ce796ab55de5c69dc3f8485f6bba499e32442e29476f",
+      "startLine": 28,
+      "endLine": 37,
+      "startByte": 5099,
+      "endByteExclusive": 9228,
+      "spanSha256IncludingLineTerminators": "df9601b218510bd7992a22132ce98646d96313a8efaea3464e2a082e19bbb66e",
+      "exactLineAndByteAndTextMatch": true
+    },
+    "precedence": "Main proposal, supporting item 7 and machine-readable F1 consistently make v4 B controlling. The required PROOF_EXPRESSION_ID relationship is the sole current canonical availability representation. Initial structural admission remains distinct from accepted current proof review/evaluation.",
+    "migration": "Historical custom grammar and phase-target table are historical/migration comparison evidence only. Each effective phase constraint needs independent current-source authority. Lossless migration must cover the whole target/evidence/scope and TRUE/FALSE/UNKNOWN predicate; missing equivalence leaves affected timing/proofs stale pending reauthoring and review. No helper grandfathering.",
+    "preservation": "ZIP artifacts and ZIP/XML interpretation text are byte-identical to the previously accepted scope. Non-F1 machine-readable resolution objects are unchanged.",
+    "scope": "Only the expressly preserved F1 binding/compatibility/receipt/restoration duties are recovered. No blanket historical or runtime adoption, new execution/writer permission, stronger proof basis or favorable unknown migration.",
+    "reviewType": "Explicit implementation-aware technical reference review, not a blind source-only extraction."
+  },
+  "acceptedRecordScope": [
+    "The narrowly traced inherited decoder-subset denotation under approved C1 precedence and unchanged safety refusal boundary.",
+    "F1 expressly preserved historical binding, receipt, compatibility and restoration meanings under explicit approved-v4 B precedence.",
+    "SELECT_XML uses its single eligible supplied node as this invocation root, with explicit subtree boundaries and approved provenance/empty-selection rules."
+  ],
+  "nextGate": "Lead may retain this exact reviewed technical resolution as a separately attributed reconciliation/adoption input. Preserve original blind artifacts and unresolved impacts; any successor reconciliation must identify this new technical input honestly. Source composition, independent impact/identity decisions and actual implementation/affected tests remain required.",
+  "newOwnerDecisionRequiredWithinScope": false,
+  "testsExecuted": false,
+  "repositoryEdits": false,
+  "blindArtifactsEdited": false,
+  "sourceAdoptionEstablished": false,
+  "completeImpactReconciliationEstablished": false,
+  "implementationConformanceEstablished": false,
+  "fiveFindingClosureEstablished": false,
+  "ciOrDeploymentAcceptanceEstablished": false
+}

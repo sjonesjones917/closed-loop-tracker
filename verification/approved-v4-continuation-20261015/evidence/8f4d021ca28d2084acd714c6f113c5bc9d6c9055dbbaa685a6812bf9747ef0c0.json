@@ -1,0 +1,55 @@
+{
+  "schema": "closed-loop-additive-predecessor-technical-reference-resolution/1",
+  "status": "FROZEN_EIGHTEEN_ORIGINAL_DECODER_REFERENCE_EDGES",
+  "records": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/original-decoder-edge-successor-002/per-entry-reconciliation.json",
+    "sha256": "3bf9f32de26a8ab9cc93002a498bea9f083668a7792b774f62898dd9937955bd",
+    "byteLength": 76969
+  },
+  "exactEvidence": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/original-decoder-edge-successor-002/source-evidence.json",
+    "sha256": "25adb0d0d114f76938ee954c5d2c4106ee564bb136017131cb77be3cbc71458d",
+    "byteLength": 64086
+  },
+  "validation": {
+    "entryCount": 18,
+    "freshCurrentIdentityCount": 6,
+    "retainedCurrentIdentityCount": 12,
+    "originalPredecessorDispositionBefore": {
+      "CHANGED": 18
+    },
+    "originalPredecessorDispositionAfter": {
+      "CHANGED": 18
+    },
+    "verifiedOriginalOccurrenceBindings": 74,
+    "uniqueOccurrenceIds": 8,
+    "currentIssueEffectsClearedOnlyForExact18Entries": true,
+    "predecessorDenominator": 7486,
+    "predecessorPopulationDelta": {
+      "RETAINED": 0,
+      "CHANGED": 0,
+      "BLOCKED": 0
+    },
+    "otherHistoricalQualifierEdgesUnchanged": true,
+    "proofPromoted": false
+  },
+  "requiredTypedGovernor": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/original-decoder-edge-successor-002/effective-governor-link.json",
+    "sha256": "67b3ebd38914df4b7b055e238fc0f2bed4ac195c1a83dadcec7cab9eb6302d13",
+    "byteLength": 11967
+  },
+  "mergeRule": "Require predecessor index/id/entry hash, exact priorCurrentNormativeRequirementId and priorCurrentEntryEvidence. Preserve original source payload, ordered occurrence set, already-added source governors and all historical effects. For six ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE rows, install the explicit typed governor and issued fresh identity after verifying the preimage. For twelve DIAGNOSTIC_QUALIFIER_ONLY rows, retain current identity and do not add an effective governor. Current unresolvedSourceEffects and blockedInheritedReferenceDetails become exactly the explicit empty arrays only for these18 addressed rows. All18 remain CHANGED relative to the immutable predecessor; no denominator, original retained/changed population, review or proof state is promoted.",
+  "originalFreeze": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/freeze-manifest.json",
+    "sha256": "49580d98e96917aaa6cad169c29930005682fed83beaa0591437f97b5cb5cecc",
+    "byteLength": 12165
+  },
+  "preservedPriorFrozenPacket": {
+    "path": "/tmp/clrt-source-final-archives/original-decoder-edge-successor-001-deliverable-manifest.json",
+    "sha256": "056e53b547b2eb77dbc826304cd259d8f4a877d0ecf4af9e864b811aa7d759c1",
+    "byteLength": 4374
+  },
+  "priorPacketStatus": "PRESERVED_NOT_SELECTED_IN_CURRENT_CHAIN; successor binds its own six original-predecessor governor targets rather than reusing the eight-new-duty target wrapper",
+  "sourceLedgerActivated": false,
+  "proofPromoted": false
+}

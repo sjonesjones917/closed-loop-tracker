@@ -1,0 +1,18 @@
+[
+  {
+    "name": "missing-atomic",
+    "rejected": true
+  },
+  {
+    "name": "wrong-atomic",
+    "rejected": true
+  },
+  {
+    "name": "false-fullCoverage",
+    "rejected": true
+  },
+  {
+    "name": "wrong-owner",
+    "rejected": true
+  }
+]

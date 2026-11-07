@@ -14,10 +14,14 @@ function runtime(fault=null){
  let implementation=parser;
  if(fault){assert.ok(implementation.includes(fault.before),'Implementation fault anchor must exist');implementation=implementation.replace(fault.before,fault.after);}
  implementation=implementation.replace('for(let i=0;i<text.length;i++){','for(let i=0;i<text.length;i++){globalThis.parserSteps++;');
- const context=createVerifierRuntime({Blob,TextEncoder,TextDecoder,DecompressionStream,setTimeout,clearTimeout,parserSteps:0});
+ const events=new EventTarget();
+ const context=createVerifierRuntime({Blob,TextEncoder,TextDecoder,DecompressionStream,setTimeout,clearTimeout,Event,dispatchEvent:events.dispatchEvent.bind(events),parserSteps:0});
  // Preserve the parser's production read deadline rather than replacing it
  // with a pass-through in this extracted-function fixture.
- vm.runInContext(fs.readFileSync('hash.js','utf8')+'\nglobalThis.hash=closedLoopHash;',context,{filename:'hash.js'});
+ // The extracted parser reads the same package-extension contract as storage.
+ // Load its real production dependencies in their normal browser order.
+ for(const file of ['workbook.js','hash.js','workflow-schema.js'])vm.runInContext(fs.readFileSync(file,'utf8'),context,{filename:file});
+ vm.runInContext('globalThis.hash=closedLoopHash;',context);
  vm.runInContext(implementation+'\nglobalThis.decode=readPackageJson;',context);
  return context;
 }
@@ -89,7 +93,7 @@ note('Fixed metadata byte budget, exact overflow continuation and malformed/inva
 const unboundedMetadata=observeNativeReads(runtime({before:'if(metadataText&&expandedBytes>METADATA_PARSE_BYTE_LIMIT)',after:'if(false)'}));
 await unboundedMetadata.decode(compressed(oversizeText),{spoolArtifacts:false});
 assert.ok(Math.max(...unboundedMetadata.nativeParseBytes)>metadataByteLimit,'Removed metadata byte bound must be detected by the same buffer oracle');
-const repeatedMetadata=runtime({before:'let metadataText=spoolArtifacts?null:[];',after:'let metadataText=null;'});
+const repeatedMetadata=runtime({before:'let metadataText=spoolArtifacts||capturePackageExtensions?null:[];',after:'let metadataText=null;'});
 await repeatedMetadata.decode(compressed(metadataText),{spoolArtifacts:false});
 assert.ok(repeatedMetadata.parserSteps>=metadataStepBound,'Repeated metadata scanning fault must violate the same cost oracle');
 note('Targeted repeated-metadata-work and removed-buffer-bound faults are detected without weakening byte or format checks');

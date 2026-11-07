@@ -1,0 +1,66 @@
+{
+  "composition": "isolated diagnostic at e246367a plus exact14 canonical accepted declarations/reviews and current verify-hash.mjs",
+  "bindings": 257,
+  "preservedScoped": 243,
+  "fullCoverage": 14,
+  "acceptedReviewInputs": [
+    {
+      "id": "NREQ-47111062e64d0d3b30e6cc9e1826cfc3",
+      "reviewInputsUnchanged": true
+    },
+    {
+      "id": "NREQ-f25aa7572d552a605b446c527f7ffb29",
+      "reviewInputsUnchanged": true
+    },
+    {
+      "id": "NREQ-51ce4098cc4744b966dc6d89fc7d5621",
+      "reviewInputsUnchanged": true
+    },
+    {
+      "id": "NREQ-eb942909863b29d2c26fd0ae5480625f",
+      "reviewInputsUnchanged": true
+    },
+    {
+      "id": "NREQ-662eca90789c91ae31177173980783dd",
+      "reviewInputsUnchanged": true
+    },
+    {
+      "id": "NREQ-b7e22bb7fad4a45b444f988e4eabca55",
+      "reviewInputsUnchanged": true
+    },
+    {
+      "id": "NREQ-5d8520fcb9a6a88eae542e3a1f2fcfb9",
+      "reviewInputsUnchanged": true
+    },
+    {
+      "id": "NREQ-046cf426431e0493fe8fc1b75d803617",
+      "reviewInputsUnchanged": true
+    },
+    {
+      "id": "NREQ-853a934199459ed6bf419687ca08ba34",
+      "reviewInputsUnchanged": true
+    },
+    {
+      "id": "NREQ-636ebdfdf26f0c6df9d969321a522f19",
+      "reviewInputsUnchanged": true
+    },
+    {
+      "id": "NREQ-eecb88f846482530ebd5e963183f2711",
+      "reviewInputsUnchanged": true
+    },
+    {
+      "id": "NREQ-dba22c5f93e4359c4b7d4ebdd9799dbf",
+      "reviewInputsUnchanged": true
+    },
+    {
+      "id": "NREQ-27f437fe3040767de849d06a48cdb3c3",
+      "reviewInputsUnchanged": true
+    },
+    {
+      "id": "NREQ-be0ecfa19d607c0df242b048d6ef63bf",
+      "reviewInputsUnchanged": true
+    }
+  ],
+  "unsupportedFullCoverageExcluded": true,
+  "applicationReceiptsAdmitted": false
+}

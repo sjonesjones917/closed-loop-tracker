@@ -28,11 +28,12 @@ for(const value of [0,1,'rational:1/2','rational:9007199254740993/1']){
 cases.push({name:'Decimal entry preserves precision; canonical NUMBER validation rejects the violation and accepts exact values',result:'PASS'});
 
 let p=await store.createProject({commandId:'EXACT-PROGRESS-PROJECT'}),draft=copy(p);
-draft.job.CURRENT_REQUIREMENTS_VERSION='DISPOSABLE-REQUIREMENTS';draft.job.CURRENT_TEST_SUITE_VERSION='DISPOSABLE-TESTS';
-const scope=engine.currentScope(draft),requirements=[];
-function fixtureRecord(collection,stage,values){const id=engine.allocateId(draft,collection),fields={...values,[schema.RECORD_SCHEMAS[collection].idField]:id},record=copy({id,stage,active:true,scope,fields,...fields,source:'SYNTHETIC_DISPOSABLE_FIXTURE'});engine.refreshRecordHashes(record,collection);draft.projectData[collection].push(record);return record;}
+const requirements=[];
+function fixtureRecord(collection,stage,values){const id=engine.allocateId(draft,collection),fields={...values,[schema.RECORD_SCHEMAS[collection].idField]:id},record=copy({id,stage,active:true,scope:engine.currentScope(draft),fields,...fields,source:'SYNTHETIC_DISPOSABLE_FIXTURE'});engine.refreshRecordHashes(record,collection);draft.projectData[collection].push(record);return record;}
 for(let index=0;index<2;index++)requirements.push(fixtureRecord('requirements',4,{OBLIGATION:'Disposable coverage subject '+index,MANDATORY_OPTIONAL_STATUS:'MANDATORY',APPLICABILITY:'APPLICABLE'}));
+engine.registerStageVersion(draft,4,'SYNTHETIC_EXACT_PROGRESS_REQUIREMENTS');
 fixtureRecord('tests',6,{REQ_ID:engine.recordId(requirements[0],'requirements'),STATUS:'READY'});
+engine.registerStageVersion(draft,6,'SYNTHETIC_EXACT_PROGRESS_TESTS');
 const derived=engine.DERIVATIONS['stage06.mandatoryTestCoverage'](draft);
 assert.equal(derived.value,'rational:1/2','EXACT_PROGRESS_ORACLE: partial coverage must use a canonical exact value');
 p=await store.writeProject(draft,{expectedProjectRevision:p.revision});

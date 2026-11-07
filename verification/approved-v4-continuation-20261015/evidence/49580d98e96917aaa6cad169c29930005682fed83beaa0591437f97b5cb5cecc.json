@@ -1,0 +1,265 @@
+{
+  "schema": "closed-loop-source-reconciliation-freeze-manifest/1",
+  "status": "FROZEN",
+  "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+  "role": "RECONCILIATION",
+  "inputs": [
+    {
+      "role": "INPUT_MANIFEST",
+      "path": "/workspace/shared/clrt-v4-adoption-design-2933/source-only-input-manifest.json",
+      "sha256": "63a5426c7880fa594b4a4acfda247e32686bfcc57c9993f093c3f9d26829d66f",
+      "byteLength": 7500,
+      "purpose": "Pinned source-only evidence",
+      "readMode": "WHOLE_FILE_BYTES_FOR_HASH_AND_STRUCTURAL_ACCOUNTING"
+    },
+    {
+      "role": "AUTHOR",
+      "path": "/workspace/shared/clrt-v4-source-delta-author/source-delta-frozen.json",
+      "sha256": "49604690f8dacbd884f32ff95ae3ccebebac5760e285dc3a88ebe3a4c08b00aa",
+      "byteLength": 22373909,
+      "purpose": "Pinned source-only evidence",
+      "readMode": "WHOLE_FILE_BYTES_FOR_HASH_AND_STRUCTURAL_ACCOUNTING"
+    },
+    {
+      "role": "AUTHOR_FREEZE",
+      "path": "/workspace/shared/clrt-v4-source-delta-author/freeze-manifest.json",
+      "sha256": "7b884c36db22b4125b00e54656645acb2a7bdc0746b3b89038ada3cf8ea449e8",
+      "byteLength": 4081,
+      "purpose": "Pinned source-only evidence",
+      "readMode": "WHOLE_FILE_BYTES_FOR_HASH_AND_STRUCTURAL_ACCOUNTING"
+    },
+    {
+      "role": "REVIEWER",
+      "path": "/workspace/shared/clrt-v4-source-delta-reviewer/reviewer-source-delta.json",
+      "sha256": "70c01b2369af7affa59805d65c03efe77b51a364f3bf1981964fb72fee26428b",
+      "byteLength": 10756902,
+      "purpose": "Pinned source-only evidence",
+      "readMode": "WHOLE_FILE_BYTES_FOR_HASH_AND_STRUCTURAL_ACCOUNTING"
+    },
+    {
+      "role": "REVIEWER_FREEZE",
+      "path": "/workspace/shared/clrt-v4-source-delta-reviewer/frozen-output-manifest.json",
+      "sha256": "53775733d8bd601838102b2e4581724c3accf2ab12c9a790eb49e00b3c9e451c",
+      "byteLength": 1612,
+      "purpose": "Pinned source-only evidence",
+      "readMode": "WHOLE_FILE_BYTES_FOR_HASH_AND_STRUCTURAL_ACCOUNTING"
+    },
+    {
+      "role": "REVIEWER_INVENTORY",
+      "path": "/workspace/shared/clrt-v4-source-delta-reviewer/source-read-inventory.json",
+      "sha256": "acdf1d8a6d4f7769aa6dfcfb8fe8f21cfadc54506a755e1c3e0a2607ea1317f0",
+      "byteLength": 68661,
+      "purpose": "Pinned source-only evidence",
+      "readMode": "WHOLE_FILE_BYTES_FOR_HASH_AND_STRUCTURAL_ACCOUNTING"
+    },
+    {
+      "role": "PREDECESSOR",
+      "path": "/workspace/shared/clrt-integration/verification/atomic-extraction-20261014/reconciliation.json",
+      "sha256": "1cc93c4e49e3e5530ee2a802314617f3aa07d5c72282ded6cd1da68570dac280",
+      "byteLength": 71701945,
+      "purpose": "Pinned source-only evidence",
+      "readMode": "WHOLE_FILE_BYTES_FOR_HASH_AND_STRUCTURAL_ACCOUNTING"
+    },
+    {
+      "role": "BASE_SOURCE",
+      "path": "/workspace/shared/clrt-v4-adoption-design-2933/source-only/base-original-2933.txt",
+      "sha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "byteLength": 309482,
+      "purpose": "Pinned source-only evidence",
+      "readMode": "WHOLE_FILE_BYTES_FOR_HASH_AND_STRUCTURAL_ACCOUNTING"
+    },
+    {
+      "role": "SUCCESSOR_SOURCE",
+      "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "byteLength": 369901,
+      "purpose": "Pinned source-only evidence",
+      "readMode": "WHOLE_FILE_BYTES_FOR_HASH_AND_STRUCTURAL_ACCOUNTING"
+    },
+    {
+      "role": "EXACT_APPROVED_V4",
+      "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/verification/approved-owner-decisions-v4-20261015.txt",
+      "sha256": "aa966b7ac8f38f66b046ce796ab55de5c69dc3f8485f6bba499e32442e29476f",
+      "byteLength": 65481,
+      "purpose": "Pinned source-only evidence",
+      "readMode": "WHOLE_FILE_BYTES_FOR_HASH_AND_STRUCTURAL_ACCOUNTING"
+    },
+    {
+      "role": "APPROVAL_PROVENANCE",
+      "path": "/workspace/shared/clrt-v4-adoption-design-2933/source-only-approval-provenance.json",
+      "sha256": "87652453a6e2875bac77abbabfaed9e81b59c55ddeb66dcaf7a822634aad8fb2",
+      "byteLength": 1715,
+      "purpose": "Pinned source-only evidence",
+      "readMode": "WHOLE_FILE_BYTES_FOR_HASH_AND_STRUCTURAL_ACCOUNTING"
+    },
+    {
+      "role": "INSERTION_MAP",
+      "path": "/workspace/shared/clrt-v4-adoption-design-2933/source-only-insertion-map.json",
+      "sha256": "01c66373e254d319a6ae6f7a3292de55389eb363b84e5253199913b5496cef33",
+      "byteLength": 6936,
+      "purpose": "Pinned source-only evidence",
+      "readMode": "WHOLE_FILE_BYTES_FOR_HASH_AND_STRUCTURAL_ACCOUNTING"
+    },
+    {
+      "role": "SOURCE_EVIDENCE_LOCATOR",
+      "path": "/workspace/shared/clrt-integration/specification/requirement-evidence-bindings.json",
+      "sha256": "cd5e2800f114801aacc2c194974088b37059c64013b8c5fbd02010c4d143774c",
+      "byteLength": 3040,
+      "purpose": "Locate and confirm pinned atomic source reconciliation only; no linked runtime evidence read",
+      "readMode": "WHOLE_FILE_BYTES_FOR_HASH_AND_STRUCTURAL_ACCOUNTING"
+    },
+    {
+      "role": "COUNTING_RECONCILIATION",
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/counting-review/reconciliation.json",
+      "sha256": "ad6e97033b8b620c84be902355d1a9fbed74df6fb2937c3af809956b19802b2a",
+      "byteLength": 1913972,
+      "purpose": "Source-only C/C1 sub-adjudication; derived work product from the same permitted inputs, not a new normative authority",
+      "readMode": "WHOLE_FILE_BYTES_FOR_HASH_AND_STRUCTURAL_ACCOUNTING"
+    }
+  ],
+  "outputs": [
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/supplied-insertion-map.json",
+      "sha256": "01c66373e254d319a6ae6f7a3292de55389eb363b84e5253199913b5496cef33",
+      "byteLength": 6936
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/corrected-insertion-map.json",
+      "sha256": "b36a4e0746f749eb6fb1977dac4b1f91f47d73c74b04046687619e2b278fceca",
+      "byteLength": 7919
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/candidate-coordinate-validation.json",
+      "sha256": "4d1d6eb04582319fc1d5333ed7604aed7a7793db20beb204fd5cd9969c51a61c",
+      "byteLength": 139
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/inserted-line-decisions.json",
+      "sha256": "ec36dfbcde409dd6dfc35d8cac7640c4355ad1f2e5723fb09bccf599bb813cce",
+      "byteLength": 348510
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/new-amendment-obligations.json",
+      "sha256": "529ab908025aa47387337eae07de480d3cf09d9af952945d21f5dfc3cbc25eca",
+      "byteLength": 11169039
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/all-obligation-candidate-decisions.json",
+      "sha256": "b81a130806946ae9a1b837043152e5dba589bda3e35a27613348e69a837b4160",
+      "byteLength": 986558
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/reconciled-source-contexts.json",
+      "sha256": "3836e9438de6841a01d1eb9eee9ff663c977fdb4976366024eb93a968c069552",
+      "byteLength": 151522
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/source-context-candidate-decisions.json",
+      "sha256": "d65fa04897102b18a7be784ebb74d703ba07f43727c100e0eda4fba392a8bd4f",
+      "byteLength": 53463
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-candidate-decisions.json",
+      "sha256": "0318663b9a3975baf2584973d2d86e8dee2d3277baf82a82d27ceb3702177853",
+      "byteLength": 417710
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-correspondence.json",
+      "sha256": "bb58ed549475b74844be8db89a42c10bb6e643603aeea46099dda3831b1f4232",
+      "byteLength": 8447
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/cross-reference-candidate-decisions.json",
+      "sha256": "21d1550ddfacc472dda17ccc4149a30c1c7fb9fc4edf29c13e4d075760efc35b",
+      "byteLength": 1434799
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/cross-reference-correspondence.json",
+      "sha256": "b33bfa22a4f5614639aba86ecf41e4c6422f42e682ab5b607db71ff2715c2801",
+      "byteLength": 46259
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/unresolved-source-issues.json",
+      "sha256": "4fa1d3346256df3e0cddec2059d19afc49cd24f9e9f1c12e78e25bb7abfddff9",
+      "byteLength": 40545
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/unresolved-finding-candidate-decisions.json",
+      "sha256": "be5de17a97f04ebf2c2f1d40960ed7cd68ebe4952b4db965ac91bbe054151005",
+      "byteLength": 4138
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-occurrence-transport.json",
+      "sha256": "4157cda2f60669a2feba4c3021aa212f5bee00f4456a4e7a59d8e86da08a02d4",
+      "byteLength": 6309790
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+      "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+      "byteLength": 20401933
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/changed-predecessor-source-identities.json",
+      "sha256": "1b930ac4232f104ed03d8c6b3d4b9bdfad860b965ac20ab87739f37d425acb51",
+      "byteLength": 1135159
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-display-qualifications.json",
+      "sha256": "b36d059e7089471d4186bee6c1300f606dc68c842373ed80249eb46b15d73680",
+      "byteLength": 135299
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/blocked-predecessor-review-queue.json",
+      "sha256": "6c8413d7c3f88d058c10caa441c262f4f07ec67a57cf7e7fd1a62e2ee94a6039",
+      "byteLength": 20602036
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/blocked-review-partitions.json",
+      "sha256": "7399539acb4a4a4fd7df902f65f3ec8fa97e2e2509fbd904200009455dbda7fa",
+      "byteLength": 993346
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/source-read-inventory.json",
+      "sha256": "00c1b039d85c807fc7bb84bc8d74a9bb7a15f2da3d65f753a011baab589b1d54",
+      "byteLength": 11451
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/validation.json",
+      "sha256": "fa04d4170ef514e44d1a529c5040c9ab57b27dd4ed2e010a456d470fcbc5bce0",
+      "byteLength": 1600
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/reconciliation.json",
+      "sha256": "68e43e1a4dace5980c54f9a5704638e2479d431e0096eb67540c351981843e92",
+      "byteLength": 19317
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/README.md",
+      "sha256": "63288c59c881cf7362231fac3c39fb6a16d363316b3671786246b35e0885785d",
+      "byteLength": 4525
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/build_reconciliation.py",
+      "sha256": "35fd0efa0552680a851c3e6eaee421d3fe8cd73f26baafc555841543d76b4628",
+      "byteLength": 95578
+    }
+  ],
+  "countingWorkProduct": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/counting-review/reconciliation.json",
+    "sha256": "ad6e97033b8b620c84be902355d1a9fbed74df6fb2937c3af809956b19802b2a",
+    "byteLength": 1913972
+  },
+  "claims": {
+    "boundedAmendmentSourceReconciliationComplete": true,
+    "allInsertedLinesAndFrozenCandidatesAccounted": true,
+    "allPredecessorEntriesAccountedExactlyOnce": true,
+    "allPredecessorSemanticEffectsResolved": false,
+    "fullCurrentAtomicManifestCompleteness": false,
+    "implementationConformance": false,
+    "currentProof": false,
+    "releaseAcceptance": false,
+    "sourceIntegration": false
+  },
+  "immutableOriginalEvidencePreserved": true,
+  "originalInputsRehashedAfterBuild": true
+}

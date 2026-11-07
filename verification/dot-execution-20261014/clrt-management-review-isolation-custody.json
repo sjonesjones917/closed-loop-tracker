@@ -1,0 +1,7 @@
+{
+  "historicalSourceCommit": "61f30b450b4a1049a11f4f59b52f6dd47e5bb33b",
+  "historicalGitBlob": "2e0ffc653392ad9190eb8e92a60de2a122a64195",
+  "historicalSha256": "fbadb75d5cefdd5f662b8463671001e4b4cb6d79b4770045f30ebdce09401420",
+  "archive": "clrt-management-review-isolation.mjs.txt",
+  "purpose": "Byte-exact historical executable archive. The .mjs file is now a maintained portable migration through the common verifier runtime. Prior execution evidence remains historical; no new ancestry or DONE claim is conferred."
+}

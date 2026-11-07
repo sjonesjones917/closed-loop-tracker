@@ -1,0 +1,101 @@
+{
+  "schema": "scoped-external-verification-record/1",
+  "recordedAt": "2026-10-13T02:40:07.984446+00:00",
+  "provenance": {
+    "kind": "USER_RELAYED_INDEPENDENT_ISOLATED_VERIFIER_RESULT",
+    "custodian": "dot separate authorized isolated verification workspace",
+    "rawLogsLocallyRead": false,
+    "manifestLocallyRead": false,
+    "manifestSha256": "611e02b0dfe504c2b929733b2918806d919c14f8dfdda639d164ac037a16c575",
+    "accessPrerequisite": "Request retained logs/manifest from the authorized verifier custodian; this record does not grant access or substitute for raw-byte verification."
+  },
+  "source": {
+    "baseCommit": "995f450f073d8069ed7e4cfa92a85ec40ae5b264",
+    "baseTree": "9669d0fae6283702309d77aa2c70a9b45718656f",
+    "changedFiles": [
+      {
+        "path": "verify-stage01-review-subject.mjs",
+        "preimageSha256": "30c04cefd6dc96cfae601f7f57d5a35cd4f7985ff358a902820351f04266a8a0",
+        "preimageBytes": 29718,
+        "postimageSha256": "6ccf0edc9d8bd10ed3adb243e02f12e35c781c1cfac0271548b8fc2137453f44",
+        "postimageBytes": 30916
+      }
+    ],
+    "patchSha256": "e7e8e0542d64c8c451d531ea8bca4552c81aa2e5892608b2709f543d04dac0f4",
+    "patchBytes": 7330,
+    "companionRepositoryFilesRequired": []
+  },
+  "environment": {
+    "nodeVersion": "v22.23.3",
+    "nodeBinarySha256": "fde6a4bf8d0562f7751d1a2d6cb9b417c4cfe107bbcb0aa3e9a24e125e348f48",
+    "cwd": "complete isolated repository checkout root",
+    "resourceLimitsMeasuredByExternalVerifier": true,
+    "resourceNumbersNotSupplied": true
+  },
+  "command": "env -u NODE_OPTIONS -u CLOSED_LOOP_VERIFICATION_RECEIPTS -u VERIFIER_CHILD_EVIDENCE_DIRECTORY timeout --signal=TERM --kill-after=5s 120s node --max-old-space-size=256 verify-stage01-review-subject.mjs",
+  "preFix": {
+    "startUtc": "2026-10-13T02:31:04Z",
+    "endUtc": "2026-10-13T02:32:26Z",
+    "elapsedSeconds": 82,
+    "exitCode": 1,
+    "assertion": "Stage 02 control did not retain unchanged prompt epoch",
+    "line": 237,
+    "actual": "closed-loop-prompt-engine/source-applicability-20261011",
+    "expected": "closed-loop-prompt-engine/90",
+    "stderrSha256": "6cd52953a100c6fbe02bda56e22a0f79ba6b4b9f5504951cff202506e6641622"
+  },
+  "postFix": {
+    "startUtc": "2026-10-13T02:32:44Z",
+    "endUtc": "2026-10-13T02:34:13Z",
+    "elapsedSeconds": 89,
+    "exitCode": 0,
+    "stdout": {
+      "stage01ReviewSubject": "PASS",
+      "stage04Control": "PASS",
+      "stage03BlindCarrier": "PASS",
+      "browserSavedPromptSelectors": "PASS",
+      "exportedOperations": [
+        "SEMANTIC_CHALLENGE",
+        "RECONCILE_INTAKE",
+        "SEMANTIC_CHALLENGE"
+      ],
+      "acceptedChallengeAndReconciliation": true,
+      "gateAfterReload": true,
+      "oldStage01PacketRejectedAndReplaced": true,
+      "unaffectedStage04PacketRetained": true,
+      "syntheticExternalActor": true,
+      "realHumanOrAgentActionEstablished": false
+    },
+    "stdoutSha256": "cd7bdd5322ea913be58ac99b85171d354b1161724057c25db4f3491361cbc857",
+    "stderrSha256": "f7494c2d7d97c854731bd741374e092876312e2505d980d910c7bf39d6fc0b5b",
+    "stderrClassification": "Experimental EnvHttpProxyAgent warning only, per external result"
+  },
+  "review": {
+    "owner": "root/consumer_split_root_author",
+    "sha256": "1c4927936fcf530f70b88c795900ad3283f3f797349163276bc4633993b64ca8",
+    "decision": "Independent source review approved exact one-file correction; complete default execution supplied separately by external verifier."
+  },
+  "cause": "Test oracle drift: obsolete Stage02 positive /90 expectation disagreed with independently pinned current source-applicability authority. Production currentness guard remains unchanged.",
+  "preservedControls": [
+    "Stage01 old /90 rejection and /91 replacement",
+    "Stage04 unaffected packet",
+    "Stage03 blind carrier",
+    "Stage02 revisited review binding",
+    "wrong-operation, missing-operation and global-only-version controls"
+  ],
+  "addedControl": "Saved Stage02 current prompt is prepared before controlled Stage01 producer fault and remains current afterward; stale Stage02 /90 is rejected.",
+  "applicability": {
+    "scope": "Complete default owning verifier on exact published base plus the one-file patch, supplied independent execution evidence. No duplicate local run.",
+    "canonicalCurrentReceipt": false,
+    "wholeDirtyCandidateEquivalence": false,
+    "wholeClauseAdmission": false,
+    "hostedCiPass": false,
+    "fullReleasePass": false,
+    "sourceChangeInvalidatesPriorGlobalFingerprint": "721dcfbb533aba05dd8d8367e850d104741294e0a201a5a7dc075b8fd372a72f",
+    "priorProofStatus": "Preserve earlier one-clause and nine-clause snapshots as historical after this executable change; no restamping."
+  },
+  "publication": {
+    "scope": "Exact owner postimage plus this portable record and continuation append only; all other published files inherited unchanged from the pinned parent.",
+    "remaining": "fresh head/run guard, exact included diff/manifest/privacy review; hosted checks remain required after publication."
+  }
+}

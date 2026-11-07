@@ -1,0 +1,21 @@
+(node:8) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "independentConfirmationReview": "PASS",
+  "independentRecoveryReview": "PASS",
+  "currentDerivation": "closed-loop-derivation/project-current-projection/7",
+  "pendingCandidateStaleProjectionOnly": true,
+  "refusalAllStoreRowsUnchanged": true,
+  "realStoreCommittedRevisionDelta": 1,
+  "postCommitIntegrityValid": true,
+  "recoveryStillBlocked": true,
+  "rawRetained": true,
+  "continuationReused": true,
+  "recoveryIdempotent": true,
+  "basis": "Production prepareProjectWrite/writeProject, ingestion, confirmation UI and disposable Map transaction adapter. The unsupported legacy RESULT was an explicit retained-state fault, not an admitted agent proposal."
+}
+
+real	0m22.927s
+user	0m26.239s
+sys	0m0.540s
+EXIT=0

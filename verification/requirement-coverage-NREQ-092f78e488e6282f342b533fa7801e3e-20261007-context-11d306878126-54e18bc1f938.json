@@ -1,0 +1,207 @@
+{
+  "schema": "closed-loop-requirement-coverage-review/1",
+  "normativeRequirementId": "NREQ-092f78e488e6282f342b533fa7801e3e",
+  "sourceLineSha256": "fb8415999d70c76547bbf7d4c83eb4fe172f05049463bc91ee382c156bb8dc4c",
+  "specificationSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
+  "declarationSha256": "11d306878126d8be270e3c3c3ec4dd8161a5fab073c23035491e9705d1c9be2d",
+  "decision": "COMPLETE_COVERAGE",
+  "evidenceBasis": "EXTERNALLY_SUPPORTED",
+  "method": "The exact narrow controlling clause and unchanged proof decomposition were independently reviewed in the embedded original semantic assessment. Current production, verifier, fixture and catalog deltas were separately reviewed in the referenced source-delta review bundle. This is coverage-design evidence only: current frozen-source executed receipts remain independently required, and unsupported clauses are not promoted.",
+  "author": {
+    "actor": "Codex exact-source coverage renewal integrator",
+    "contextId": "/root"
+  },
+  "reviewer": {
+    "actor": "Codex independent verifier-context correction reviewer",
+    "contextId": "/root/pr_inventory_review"
+  },
+  "reviewedInputs": [
+    {
+      "declarationSha256": "11d306878126d8be270e3c3c3ec4dd8161a5fab073c23035491e9705d1c9be2d"
+    },
+    {
+      "path": "app-core.js",
+      "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+    },
+    {
+      "path": "hash.js",
+      "sha256": "a13cf57bd7c7414bc801f511d5937f80eaf7fd675c0e6c2b5a92b365df16e4d7"
+    },
+    {
+      "path": "project-store.js",
+      "sha256": "4e8368f0d91eab0b937ee5c256a121c6ca2b3524e9d06ffc16c3f5637a05b060"
+    },
+    {
+      "path": "prompt-engine.js",
+      "sha256": "61e363381dfb88fcfd32a176066762e2a37cf7b14fb9d39bff4eacf7e6d5706f"
+    },
+    {
+      "path": "response-ingestion.js",
+      "sha256": "0a78d1af4421a3bd2c332e9c553a70c0a0959b6b8ee3b18eab4ae51acee3cbd5"
+    },
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d"
+    },
+    {
+      "path": "test-fixtures.mjs",
+      "sha256": "666a66d54f5944eae28c608eb0d627aefe45972413b8f5ac004db306205f00c7"
+    },
+    {
+      "path": "test-handoff-authorization.mjs",
+      "sha256": "37bfb4e255afb6701fccaccdf055ee7961e838eaf03927c2963dfcf880cf82b6"
+    },
+    {
+      "path": "test-project-store-runtime.mjs",
+      "sha256": "743e74ce60e3f81f1601daf7a1bf589ac2a3b8600e275a5865c24fbd0f335f1b"
+    },
+    {
+      "path": "test-runtime-operation-registry.mjs",
+      "sha256": "8892e1f7aea7a6565af693233fe802785d8dbcabee972c6b61890a66a02f233e"
+    },
+    {
+      "path": "test-runtime.js",
+      "sha256": "e4e01a79c526592f9d044e2c104845e63c9aa341eb64837c138f5c3e3ecba353"
+    },
+    {
+      "path": "verification-evidence-catalog.mjs",
+      "sha256": "5d8e04d46601123d4552e796d0e69027f29774155d5309d5e1356c6456c53010"
+    },
+    {
+      "path": "verification/current-source-delta-review-20261007.json",
+      "sha256": "45cca5871ac89cf1583a3825aec5a7d488d4d40dc70afb51a8534470dececf09"
+    },
+    {
+      "path": "verification/deferred-definition-compatibility-legacy-fixture-20261005.json",
+      "sha256": "d7a1b076de3d301ee108660c1e7ea5dafdf4e630e202f2c498d32c30d3f72bb1"
+    },
+    {
+      "path": "verification/normative-context-applicability-20261005.json",
+      "sha256": "7cd05ff0028578a1ca1c2560533519a602ce6a974c240ee11dbbd272524cf656"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-092f78e488e6282f342b533fa7801e3e-20261005.json",
+      "sha256": "ae9f2407f539cf27c6b8c052486bf89789a11f65a890a30bd08e3f82bcc9312f"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-092f78e488e6282f342b533fa7801e3e-20261006-followup-6b8b5a6e3779.json",
+      "sha256": "677337e68bfa37055c873e53db292416a819e95d22c09011bb9b27de13806ca0"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-092f78e488e6282f342b533fa7801e3e-20261006.json",
+      "sha256": "9efb46aace15acbe487920d9356f32da518ba656fa5719f5bc0d8eb6661cdcea"
+    },
+    {
+      "path": "verifier-runtime.mjs",
+      "sha256": "051318fc24ea587ced6268d4a60278e5155e3fee8ed26309b28b532c921277f9"
+    },
+    {
+      "path": "verify-test-runtime-v3.mjs",
+      "sha256": "4a86e7340d01ad8ccafc364fa0784f01a49583ab6423a65323f625c09424a971"
+    },
+    {
+      "path": "workbook.js",
+      "sha256": "3a8098a9bb4ea108eadaa9bec90c76a1522f57f6465f45341cedf60937ddd008"
+    },
+    {
+      "path": "workflow-engine.js",
+      "sha256": "16c2a16d61d6a462ecebd25cd7d530a3cce46e11c1d9f88664c2e9a27cf61295"
+    },
+    {
+      "path": "workflow-schema.js",
+      "sha256": "656e9e632cea3a60e1c7e0fb486e6630d205011d7db32d9674ac5e88593d24f1"
+    },
+    {
+      "path": "verification/runtime-storage-independent-delta-review-20261010.json",
+      "sha256": "1aeddf08767ed1d3a70ff7d4f31d69a74cde85099cce89d8d7a0d0e97404542a"
+    },
+    {
+      "path": "verification/ci-group-handoff-independent-delta-review-20261010.json",
+      "sha256": "3b8b941ac5a47dec4bd681f3e4dbe939230db8875d40c62c17e862e912f04c4d"
+    }
+  ],
+  "findings": [],
+  "reviewPerformed": true,
+  "sourceLocation": {
+    "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+    "startLine": 1927,
+    "endLine": 1927,
+    "lineSha256": "fb8415999d70c76547bbf7d4c83eb4fe172f05049463bc91ee382c156bb8dc4c"
+  },
+  "controllingText": "- Integer operations remain exact.",
+  "governingContext": [],
+  "additionalControllingContext": [],
+  "reviewedChecks": [
+    {
+      "suite": "verify-test-runtime-v3.mjs",
+      "checkId": "test-ir.exact-integer-boundary-population"
+    },
+    {
+      "suite": "verify-test-runtime-v3.mjs",
+      "checkId": "test-ir.exact-integer"
+    }
+  ],
+  "scopeLimit": "Integer operation exactness; independent floating-point/noninteger/parser resource clauses are outside this approval.",
+  "independentSemanticAssessment": {
+    "path": "/workspace/scratch/normative-review/root-37-semantic-review.json",
+    "sha256": "c2bcfc442003d363c9a1abb2430eaa67d8182d55a87c5c89288b36cf35f06c28",
+    "row": {
+      "normativeRequirementId": "NREQ-092f78e488e6282f342b533fa7801e3e",
+      "sourceLocation": {
+        "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "startLine": 1927,
+        "endLine": 1927,
+        "lineSha256": "fb8415999d70c76547bbf7d4c83eb4fe172f05049463bc91ee382c156bb8dc4c"
+      },
+      "controllingText": "- Integer operations remain exact.",
+      "activeDeclarationReview": {
+        "path": "verification/requirement-coverage-NREQ-092f78e488e6282f342b533fa7801e3e-20261006-followup-6b8b5a6e3779.json",
+        "sha256": "677337e68bfa37055c873e53db292416a819e95d22c09011bb9b27de13806ca0"
+      },
+      "decision": "DESIGN_ADEQUATE_FOR_EXACT_NARROW_CLAUSE",
+      "basis": "Reviewed SUM/MIN/MAX/COUNT execution and six literal valid exact integer boundary cases, six precise UNDETERMINED failures including overflow-before-cancellation, and restored valid control. Arithmetic uses supported safe integers, rejects unsupported precision rather than silently rounding; other precision/decimal routing obligations are separate.",
+      "executionStatus": "CURRENT_CANDIDATE_OWNING_RECEIPT_PENDING",
+      "findings": []
+    }
+  },
+  "priorReview": {
+    "path": "verification/requirement-coverage-NREQ-092f78e488e6282f342b533fa7801e3e-20261007-11d306878126.json",
+    "sha256": "57686c95c275e800e9d45b7c2e6dabd9e7c3234940087a12981fb36aa6f46a44",
+    "author": {
+      "actor": "Codex coordinated exact-clause renewal proposer",
+      "contextId": "/root/normative_review"
+    },
+    "reviewer": {
+      "actor": "Codex independent narrow declaration reviewer",
+      "contextId": "/root"
+    },
+    "reviewCompletedAt": "2026-10-07T01:21:18.248Z"
+  },
+  "reviewerPriorContributionDisclosure": "Reviewer authored only the conformanceSources registration of test-verifier-context-ui.mjs and test-prompt-context-storage.mjs. CI owner independently reviewed those additive source-input registrations. No runtime repair or owning behavioral test was authored by this reviewer in this correction chain.",
+  "currentExecutionRequired": true,
+  "applicationConformanceClaim": false,
+  "reviewCompletedAt": "2026-10-07T05:10:44.883240+00:00",
+  "currentDependencyDeltaReview": {
+    "path": "verification/current-source-delta-review-20261007.json",
+    "sha256": "45cca5871ac89cf1583a3825aec5a7d488d4d40dc70afb51a8534470dececf09"
+  },
+  "supplementaryIndependentSourceDeltaReviews": [
+    {
+      "path": "verification/runtime-storage-independent-delta-review-20261010.json",
+      "sha256": "1aeddf08767ed1d3a70ff7d4f31d69a74cde85099cce89d8d7a0d0e97404542a",
+      "reviewedAtUtc": "2026-10-10T05:59:54.689Z",
+      "scope": "Exact reviewed dependency and owner source delta; prior semantic obligation/check decomposition unchanged."
+    },
+    {
+      "path": "verification/ci-group-handoff-independent-delta-review-20261010.json",
+      "sha256": "3b8b941ac5a47dec4bd681f3e4dbe939230db8875d40c62c17e862e912f04c4d",
+      "reviewedAtUtc": "2026-10-10T06:13:50.965Z",
+      "scope": "Exact reviewed dependency and owner source delta; prior semantic obligation/check decomposition unchanged."
+    }
+  ],
+  "reviewRenewedAt": "2026-10-10T06:13:50.965Z",
+  "renewalActor": {
+    "actor": "Codex CI repair integrator",
+    "contextId": "/root"
+  }
+}

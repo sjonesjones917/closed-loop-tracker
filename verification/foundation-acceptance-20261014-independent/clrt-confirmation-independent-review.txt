@@ -1,0 +1,115 @@
+ACCEPT — independent review of 5e587742daaabf265ae284d3733d571d9f7e293e
+
+Verifier-only confirmation adapter, whole-state refusal oracle, recovery persistence-boundary expectation, and current projection migration literal; no overall application acceptance.
+
+Findings:
+- No blocking finding in this assigned delta. Production files and verify-browser-extra.mjs are unchanged.
+- Stage 05 reconciliation in this fixture has empty semantic acceptance impact but actual storage impact retires accepted applicability/review rows. The added adapter guard matches the real prepareProjectWrite boundary rather than weakening production acceptance.
+- Both missing and stale exact storage keys fail closed before canonical publication; independently compared all store rows/Blob bytes and complete current/persisted project, not only accepted-change counts.
+- The /7 expectation is independently anchored to the already-current PROJECT_PROJECTION_DERIVATION_CONTRACT on the pinned base. The original /4 fixture and its byte digests are unchanged. /5 is an obsolete expectation, not a required current identity.
+- The recovery return is a prepared transaction candidate with a newly reserved continuation; actual production persistence reconciles revision/projection receipts. Independent production-store controls verify the candidate-before/committed-after distinction and still-blocked semantics.
+- All 8 source-file hashes in the author evidence match the isolated candidate; status remains AWAITING_INDEPENDENT_REVIEW in that author record, appropriately avoiding self-acceptance.
+
+Executed checks (Node v22.23.3):
+- Pinned-base original full verifier: exit 1 (0m26.585s). Original missing-expected-rejection at skipped confirmation, reproduced without author loader. Log: /workspace/shared/clrt-confirmation-review-base.log SHA256 801b3b9db454ff9ed8a200b724d824769791cbc37e4f438fab442de42de34f37
+- Frozen-candidate full verifier: exit 0 (0m48.313s). PASS, including required replacement confirmation, skipped helper click detection, restored acceptance, persisted recovery and /4-to-/7 activation/restore/import. Log: /workspace/shared/clrt-confirmation-review-candidate.log SHA256 cbabda54c54ed7fe868dbb4d8a2b7849d2b4905cf888b91fb3be6dd9e9f1fb86
+- Frozen-candidate storage-confirmation mutation: exit 1 (0m28.917s). Detected at BROWSER_ACCEPTANCE_REQUIRED_CONFIRMATION_ORACLE, false !== true. Log: /workspace/shared/clrt-confirmation-review-fault.log SHA256 f1afc75b2842e1980a5989257db733d1c6d2b2cb968e27e7b7ee762f75082ddf
+- Independent actual-store confirmation controls: exit 0 (0m21.613s). Missing/stale confirmation rejected; full current and persisted project unchanged; every Map row and Blob byte unchanged on direct refusal; Keep current progress unchanged; exact confirmation commits once; second confirmation no-op; history retained; independent re-review required and passes. Log: /workspace/shared/clrt-confirmation-review-independent.log SHA256 1a79113da5300805a4c4d36e878125ef09fc826da311049682d50431ea0e57f1
+- Independent actual-store recovery controls: exit 0 (0m22.927s). Includes preceding controls, then unsupported retained RESULT synthetic fault; prepared recovery has only stale projection receipts; unconfirmed recovery rejected with all stores unchanged; confirmed production write repairs projection in one revision, retains bytes, remains blocked, reuses continuation, is idempotent. Log: /workspace/shared/clrt-confirmation-review-recovery.log SHA256 db8de1946d149778e30d6fdc2567786803e1de63982f99f583f73dfda35c0967
+- Pinned-base obsolete migration literal: exit 1 (0m5.061s). Detected SOURCE_APPLICABILITY_NAMED_ACTIVATION_ORACLE: actual /7 versus obsolete expected /5. Log: /workspace/shared/clrt-confirmation-review-base-migration.log SHA256 548f85e12bc2dc87cc6e2e94205c928b458e96549123a7ef00031ee1ae39d270
+
+Limits:
+- Actual production ingestion, application handlers and project-store preparation/commit owners executed with the existing disposable Map transaction adapter. This is not native IndexedDB or visible browser evidence.
+- Browser helper source was read and replayed through the existing simulated DOM/CDP boundary. No deployed, physical-iPhone or new CI evidence was collected.
+- No repository, author source, production, or existing test file was edited by this reviewer; independent scripts live outside the repository. No push, merge or deploy performed.
+- Review does not prove full application readiness or resolve other project blockers.
+
+Additional complete source clauses read after independent expectations freeze:
+
+Part B lines 890-940:
+890: 13. Versioning and migration
+891: 
+892: Required identities:
+893: WORKFLOW_ID      = mobile-closed-loop/30
+894: PROJECT_SCHEMA   = closed-loop-project/3
+895: RESPONSE_SCHEMA  = closed-loop-stage-response/3
+896: TEST_IR_SCHEMA   = closed-loop-test-spec/1
+897: PACKAGE_SCHEMA   = closed-loop-verification-package/1
+898: STAGE_COUNT      = 30
+899: CONTRACT_PROFILE = closed-loop-completion-profile/1
+900: 
+901: The following versioned contract identities defined elsewhere in this specification are equally controlling and version-bound under Section 13.2: closed-loop-canonical-json/1, closed-loop-id/1, closed-loop-filename/1, closed-loop-handoff-container/1, closed-loop-specification-manifest/1, closed-loop-normative-requirements/1, closed-loop-deployment-manifest/1, closed-loop-encrypted-export/1, closed-loop-test-ir-language/1, closed-loop-test-ir-operations/1, closed-loop-json-selector/1, closed-loop-xml-selector/1, closed-loop-regex/1, closed-loop-trusted-time/1, closed-loop-raw-units/1, closed-loop-archive-profile/1 where archives are used, SEMANTIC_CHALLENGE_LIMITS/1, PROMPT_INLINE_LIMITS/1, and every parser, selector, regex, normalizer, and derivation registry identity.
+902: 
+903: Required deterministic migration:
+904: human-project/30
+905: → closed-loop-project/2
+906: → closed-loop-project/3
+907: 
+908: A direct legacy-to-/3 migration is permitted only when it produces the same canonical result and audit history.
+909: 
+910: Migration MUST preserve:
+911: - unknown extension data;
+912: - raw responses;
+913: - validation results;
+914: - pending proposals;
+915: - receipts;
+916: - extraction manifests;
+917: - Stage 01 raw-input and semantic intake metadata;
+918: - Stage 04 obligation manifests;
+919: - prompt/context manifests;
+920: - historical records;
+921: - project identity;
+922: - artifact identity;
+923: - actual artifact bytes;
+924: - all 30 stages;
+925: - append-only history;
+926: - original imported payload as non-operational audit evidence.
+927: 
+928: Old /2 raw responses remain historical.
+929: They MUST NOT satisfy a current /3 prompt or contract.
+930: Imported legacy stage records, nested original projects, recovery payloads, or duplicate state must not become competing active canonical state or satisfy current gates.
+931: 
+932: 13.1 Contract-profile migration
+933: 
+934: Every current /3 project carries CONTRACT_PROFILE_ID = closed-loop-completion-profile/1. A /3 project lacking that exact profile is pre-profile legacy data and cannot satisfy current gates. Migration either deterministically creates every required current-profile record and field with auditable receipts and valid provenance or preserves the project as historical and non-gating. Merely setting CONTRACT_PROFILE_ID without satisfying the profile validator is rejected.
+935: 
+936: Migration defaults cannot fabricate semantic review, human authority, execution, evidence, freshness, independence, backup custody, mobile acceptance, or delivery. Any such missing release-bearing fact remains UNKNOWN or incomplete. Contract-profile migration is idempotent and is covered by invalid legacy fixtures.
+937: 
+938: 13.2 Registry-version migration
+939: 
+940: Every persisted reference to a field contract, stage operation, scope matrix, Test IR language or operation registry, parser or selector registry, canonicalization contract, ID contract, filename contract, date/time contract, handoff container, normalizer, or derivation is version-bound. Import or migration must either prove compatibility under an explicit migration rule or invalidate and regenerate the affected current work. Equal high-level schema names do not imply registry compatibility.
+
+Part B lines 2907-2911:
+2907: 34.3 Registered normalizers and derivations
+2908: 
+2909: Every normalizer and application derivation has an immutable registry ID, version, implementation-owner file, canonical input contract, output contract, hash or build identity, and invalidation consequences. Every derived value records the exact derivation ID and source-record hashes. A changed normalizer or derivation invalidates affected current values and results unless an explicit compatibility migration proves byte- and semantic-equivalent output.
+2910: 
+2911: Every release-bearing derivation and normalizer is completely defined by this specification or by an explicitly named versioned normative algorithm. The semantics defined in Sections 14.6, 15, 16.1, 26, 29, 30, 31, 34.1, 34.2, and 36 control their registry entries, and an entry cannot deviate from them. A release-bearing derivation or normalizer whose semantics are not so defined is UNDEFINED_DERIVATION and blocks acceptance.
+
+Part B lines 4072-4097:
+4072: 39.6 Canonical-change certainty
+4073: 
+4074: Every rejection, stale response, acceptance, or invalidation displays:
+4075: 
+4076: Canonical state changed: YES or NO
+4077: Accepted change: <identity or NONE>
+4078: Downstream invalidated: <stages or NONE>
+4079: New prompt required: YES or NO
+4080: 
+4081: This comes from receipts and invalidation records, not CSS appearance.
+4082: 
+4083: 39.7 Proposal review
+4084: 
+4085: The normal proposal diff shows:
+4086: - record type;
+4087: - response temporary key;
+4088: - canonical ID to be assigned;
+4089: - field or relationship;
+4090: - current value;
+4091: - proposed value;
+4092: - exact JSON pointer;
+4093: - evidence reference;
+4094: - validation status.
+4095: 
+4096: The current-value column is mandatory.
+4097: Stage 01 does not force line-by-line review of information already supplied.
