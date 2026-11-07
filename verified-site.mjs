@@ -7,7 +7,7 @@ import {pathToFileURL} from 'node:url';
 import {isDeepStrictEqual} from 'node:util';
 import './hash.js';
 import {validateDeploymentContractIdentities} from './deployment-contract-identities.mjs';
-import {evidenceFingerprint,readExecutionReceipts,aggregateExecutedEvidence,sha as evidenceSha} from './verification-evidence.mjs';
+import {evidenceFingerprint,readExecutionReceipts,aggregateExecutedEvidence,requireBrowserScope,sha as evidenceSha} from './verification-evidence.mjs';
 
 const hash=globalThis.closedLoopHash;
 export const manifestName='closed-loop-deployment-manifest.json';
@@ -24,26 +24,37 @@ export const workflowGateProofSteps=[
   'Validate complete deferred matrix receipt','Validate current registry receipt','Cross-stage contract gates','Physical iPhone release-tag governance',
   'Workflow and gates','Prompt semantics and leakage','Preserve workflow gate proof'
 ];
-export const fullTestSteps=[
+export const testCheckProofSteps=[
   'Require successful foundation job','Require successful workflow gate job','Require successful deferred matrix job','Require successful conformance groups',
   'Download workflow gate proof','Validate workflow gate ingestion receipt','Download complete conformance group reports',
   'Download complete conformance execution receipts','Validate complete conformance handoff','Verified artifact reuse checks',
   'Require deferred matrix proof or verified artifact reuse','Download complete deferred matrix receipt','Validate complete deferred matrix receipt',
   'Full cycle and terminal boundary','Complete current non-browser assertion evidence','Stale project navigation and draft preservation',
   'Verification routing and capability evidence','Startup and scrolling at phone and desktop sizes',
-  'Acceptance viewport regression and targeted layout fault','Build static application for operator verification','Local Chromium operator path',
-  'Collect current executed assertion evidence','Seal verified deployment artifact'
+  'Acceptance viewport regression and targeted layout fault','Build static application for operator verification','Local Chromium supporting paths','Validate local supporting browser receipts',
+  'Preserve test checks proof'
+];
+export const operatorJourneyProofSteps=[
+  'Require successful test checks job','Download test checks proof','Verify prepared runtime source and bytes','Validate prepared local browser receipts',
+  'Complete local operator journey','Validate complete local operator receipt','Preserve complete operator journey evidence','Preserve complete local operator receipt'
+];
+export const fullTestSteps=[
+  'Require successful foundation job','Require successful workflow gate job','Require successful deferred matrix job','Require successful conformance groups',
+  'Require successful test checks job','Require successful operator journey job','Download test checks proof','Verify prepared runtime source and bytes',
+  'Validate prepared local browser receipts','Download complete local operator receipt','Validate complete local browser receipt set',
+  'Collect current executed assertion evidence','Seal verified deployment artifact','Preserve verified site for merge and live verification'
 ];
 export const digest=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
 const requireValue=(condition,message)=>{if(!condition)throw new Error(message);};
 function workflowJob(workflow,name){
   const marker='\n  '+name+':\n',start=workflow.indexOf(marker);
-  requireValue(start>=0,'Required '+name+' proof job is absent.');
+  requireValue(start>=0&&workflow.indexOf(marker,start+marker.length)<0,'Required '+name+' proof job is absent or duplicated.');
   const following=workflow.slice(start+marker.length),end=following.search(/\n  [a-z][\w-]*:\n/);
   return end<0?following:following.slice(0,end);
 }
+export const preloadedWorkflowJobs=['foundation','deferred-matrix','workflow-gates','conformance','test-checks','operator-journey','test','publish-status'];
 export function assertWorkflowPreloadBoundaries(workflow){
-  const preloadedJobs=['foundation','deferred-matrix','workflow-gates','conformance','test','publish-status'];
+  const preloadedJobs=preloadedWorkflowJobs;
   const expected='--import ${{ github.workspace }}/verification-evidence-preload.mjs',uploads=[];
   for(const name of preloadedJobs){
     const job=workflowJob(workflow,name),environment=job.split('    env:\n')[1]?.split(/\n    [a-z][\w-]*:/)[0];
@@ -59,15 +70,65 @@ export function assertWorkflowPreloadBoundaries(workflow){
         uploads.push({job,name,inheritedNodeOptions:preloadedJobs.includes(job)?expected:'',nodeOptions:''});
       }else if(preloadedJobs.includes(job)&&/^        run:/m.test(step)){
         requireValue(nodeOptions===undefined,'Repository producer step must retain its job preload: '+job+'/'+name);
+        requireValue(!/^          CLOSED_LOOP_VERIFICATION_(?:SOURCE_ROOT|RECEIPTS):/m.test(step),'Repository proof step must retain its current source and receipt environment: '+job+'/'+name);
       }
     }
   }
   requireValue(uploads.length>0,'Required artifact upload actions are absent.');
   return uploads;
 }
+function workflowStep(job,name){
+  const marker='      - name: '+name+'\n',at=job.indexOf(marker);
+  requireValue(at>=0&&job.indexOf(marker,at+marker.length)<0,'Required dedicated journey workflow step is absent or duplicated: '+name);
+  const rest=job.slice(at+marker.length),end=rest.search(/\n      - /);
+  return marker+(end<0?rest:rest.slice(0,end)+'\n');
+}
+function assertDedicatedJourneyWorkflow(workflow){
+  const checks=workflowJob(workflow,'test-checks'),operator=workflowJob(workflow,'operator-journey'),final=workflowJob(workflow,'test'),live=workflowJob(workflow,'verify-live'),deployed=workflowJob(workflow,'deployed-operator-journey'),reverified=workflowJob(workflow,'reverified-operator-journey'),publish=workflowJob(workflow,'publish-status');
+  requireValue(operator.includes('    needs: test-checks\n')&&final.includes('    needs: [foundation, deferred-matrix, workflow-gates, conformance, test-checks, operator-journey]\n')&&/^    if: always\(\)$/m.test(operator)&&/^    if: always\(\)$/m.test(final),'Dedicated LOCAL journey and final required test must fail on failed or skipped prerequisites.');
+  for(const [block,job,label]of [[operator,'test-checks','test checks job'],...['foundation','workflow-gates','deferred-matrix','conformance','test-checks','operator-journey'].map((job,index)=>[final,job,['foundation job','workflow gate job','deferred matrix job','conformance groups','test checks job','operator journey job'][index]])]){
+    const step=workflowStep(block,'Require successful '+label);
+    requireValue(step.includes('        run: test "${{ needs.'+job+'.result }}" = "success"\n')&&!/^        if:/m.test(step)&&block.indexOf(step)<block.indexOf('      - uses: actions/checkout@'),'Required dedicated journey prerequisite must be checked before checkout: '+job);
+  }
+  for(const [name,block]of [['test-checks',checks],['operator-journey',operator],['test',final],['deployed-operator-journey',deployed],['reverified-operator-journey',reverified]]){
+    requireValue(block.includes('      CLOSED_LOOP_VERIFICATION_SOURCE_ROOT: ${{ github.workspace }}\n')&&block.includes('      CLOSED_LOOP_VERIFICATION_RECEIPTS: ${{ github.workspace }}/.verification-receipts\n'),'Dedicated proof jobs require current checkout source and receipt environments: '+name);
+  }
+  const suffix='-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}',journey='verify-complete-operator-journey.mjs';
+  for(const [block,scope,label,artifact]of [[operator,'LOCAL','local','operator-journey-receipt'],[deployed,'DEPLOYED','deployed','deployed-operator-journey-receipt'],[reverified,'DEPLOYED','reverified','reverified-operator-journey-receipt']]){
+    requireValue(/^    timeout-minutes: 360$/m.test(block),'Dedicated journey job must retain its360-minute cap.');
+    const execution=workflowStep(block,'Complete '+label+' operator journey');
+    requireValue(execution.includes('          set -euo pipefail\n')&&execution.includes('timeout --signal=TERM --kill-after=10s "$budget" node collect-verification-evidence.mjs --browser-suite="$script" --browser-scope="$CLOSED_LOOP_BROWSER_SCOPE" 2>&1 | tee "/tmp/${script}.log"\n')&&(execution.match(/^          run_browser_verifier verify-complete-operator-journey\.mjs 330m$/gm)||[]).length===1,'Dedicated journey must execute the complete default producer once with its330-minute deadline and retain failures.');
+    requireValue(block.includes('CLOSED_LOOP_BROWSER_SCOPE: '+scope+'\n'),'Dedicated journey scope differs from its producer.');
+    const validation=workflowStep(block,'Validate complete '+label+' operator receipt'),upload=workflowStep(block,'Preserve complete '+label+' operator receipt');
+    requireValue(validation.includes('        run: node collect-verification-evidence.mjs --require-browser-scope='+scope+' --browser-suite-only='+journey+'\n')&&upload.includes('          name: '+artifact+suffix+'\n')&&upload.includes('          path: .verification-receipts/browser/'+scope+'/'+journey+'.json\n')&&upload.includes('          include-hidden-files: true\n')&&upload.includes('          if-no-files-found: error\n'),'Dedicated journey receipt validation and current-attempt artifact are required.');
+    requireValue(block.indexOf(execution)<block.indexOf(validation)&&block.indexOf(validation)<block.indexOf(upload),'Dedicated journey receipt must follow execution and validation.');
+  }
+  requireValue((workflow.match(/^          run_browser_verifier verify-complete-operator-journey\.mjs .*$/gm)||[]).length===3,'Complete journeys must appear only in their three dedicated jobs.');
+  for(const block of [checks,live,publish]){
+    const suites=[...block.matchAll(/^          run_browser_verifier (verify-[\w-]+\.mjs) \|\| BROWSER_VERIFY_RESULT=1$/gm)].map(match=>match[1]).sort();
+    requireValue(JSON.stringify(suites)===JSON.stringify(['verify-browser.mjs','verify-browser-extra.mjs','verify-human-stage-walkthrough.mjs','verify-mobile-stage-action.mjs','verify-mobile-capability-journey.mjs','verify-browser-recovery.mjs'].sort()),'Six supporting browser producers must remain complete outside the dedicated journey jobs.');
+  }
+  for(const block of [operator,final]){
+    const downloaded=workflowStep(block,'Download test checks proof'),prepared=workflowStep(block,'Verify prepared runtime source and bytes');
+    requireValue(downloaded.includes('          name: test-checks-proof'+suffix+'\n')&&downloaded.includes('          path: .\n')&&prepared.includes('        run: node verified-site.mjs verify-prepared\n')&&block.indexOf(downloaded)<block.indexOf(prepared),'Downloaded preparation must bind current attempt and reproduce current runtime bytes.');
+    const partial=workflowStep(block,'Validate prepared local browser receipts');
+    requireValue(partial.includes('node collect-verification-evidence.mjs --require-browser-scope=LOCAL --exclude-browser-suite='+journey+'\n')&&block.indexOf(prepared)<block.indexOf(partial),'Prepared supporting receipts must be validated after runtime authentication.');
+  }
+  const download=workflowStep(final,'Download complete local operator receipt'),join=workflowStep(final,'Validate complete local browser receipt set'),seal=workflowStep(final,'Seal verified deployment artifact');
+  requireValue(download.includes('          name: operator-journey-receipt'+suffix+'\n')&&download.includes('          path: .verification-receipts/browser/LOCAL\n')&&join.includes('        run: node collect-verification-evidence.mjs --require-browser-scope=LOCAL\n')&&!/^        if:/m.test(join)&&final.indexOf(download)<final.indexOf(join)&&final.indexOf(join)<final.indexOf(seal),'Final seal requires the current-attempt journey receipt and strict complete LOCAL join.');
+  requireValue(deployed.includes('    needs: [test, deploy, verify-live]\n')&&deployed.includes("    if: github.event_name == 'push' && github.ref == 'refs/heads/main'\n")&&reverified.includes('    needs: test\n')&&reverified.includes("    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'\n"),'Deployed journey dependencies and authenticated event scopes must remain intact.');
+  requireValue(publish.includes('    needs: [test, deploy, verify-live, deployed-operator-journey, reverified-operator-journey]\n')&&publish.includes("needs.deployed-operator-journey.result == 'success'")&&publish.includes("needs.reverified-operator-journey.result == 'success'"),'Publication must require the corresponding successful dedicated journey job.');
+  requireValue(publish.slice(publish.indexOf('    if:'),publish.indexOf('    needs:'))==="    if: >-\n      always() && github.ref == 'refs/heads/main' &&\n      ((github.event_name == 'push' && needs.test.result == 'success' && needs.deploy.result == 'success' && needs.verify-live.result == 'success' && needs.deployed-operator-journey.result == 'success') ||\n       (github.event_name == 'workflow_dispatch' && needs.test.result == 'success' && needs.reverified-operator-journey.result == 'success'))\n",'Publication condition must authenticate all required producer outcomes.');
+  for(const [label,event,artifact]of [['deployed','push','deployed-operator-journey-receipt'],['reverified','workflow_dispatch','reverified-operator-journey-receipt']]){
+    const step=workflowStep(publish,'Download complete '+label+' operator receipt');
+    requireValue(step.includes("        if: github.event_name == '"+event+"'\n")&&step.includes('          name: '+artifact+suffix+'\n')&&step.includes('          path: .verification-receipts/browser/DEPLOYED\n'),'Publication must download its current-attempt DEPLOYED journey receipt.');
+  }
+  const reconciliation=workflowStep(publish,'Reconcile local and deployed current assertion receipts');
+  requireValue(reconciliation.includes('          node collect-verification-evidence.mjs --require-browser-scope=LOCAL\n')&&reconciliation.includes('          node collect-verification-evidence.mjs --require-browser-scope=DEPLOYED\n')&&publish.indexOf(reconciliation)<publish.indexOf('      - name: Build acceptance artifact from executed proof jobs\n'),'Publication must strictly join both complete browser scopes before building acceptance.');
+}
 export function assertLifecycleWorkflowCommand(workflow){
   assertWorkflowPreloadBoundaries(workflow);
-  const foundation=workflowJob(workflow,'foundation'),deferredJob=workflowJob(workflow,'deferred-matrix'),workflowGates=workflowJob(workflow,'workflow-gates'),conformanceJob=workflowJob(workflow,'conformance'),protectedTest=workflowJob(workflow,'test');
+  const foundation=workflowJob(workflow,'foundation'),deferredJob=workflowJob(workflow,'deferred-matrix'),workflowGates=workflowJob(workflow,'workflow-gates'),conformanceJob=workflowJob(workflow,'conformance'),protectedTest=workflowJob(workflow,'test-checks'),finalTest=workflowJob(workflow,'test');
   requireValue(deferredJob.includes('    needs: foundation\n')&&workflowGates.includes('    needs: [foundation, deferred-matrix]\n')&&conformanceJob.includes('    needs: workflow-gates\n')&&protectedTest.includes('    needs: [foundation, deferred-matrix, workflow-gates, conformance]\n'),'Required proof phase dependencies must preserve foundation, deferred, workflow, conformance, and browser order.');
   let previous=-1;
   for(const name of foundationProofSteps){const marker='      - name: '+name+'\n',at=foundation.indexOf(marker);requireValue(at>previous&&foundation.indexOf(marker,at+marker.length)<0,'Required foundation proof order is absent, duplicated, or changed: '+name);previous=at;}
@@ -86,14 +147,14 @@ export function assertLifecycleWorkflowCommand(workflow){
   requireValue(conformanceJob.includes('group: [core, creation, counterpart]')&&conformanceJob.includes('fail-fast: false')&&conformanceJob.includes('node verify-conformance-regressions.mjs --group=${{ matrix.group }} > /tmp/conformance-regressions.json')&&conformanceJob.includes('name: Preserve complete conformance group report')&&conformanceJob.includes('name: Preserve conformance execution receipts'),'Required complete conformance group execution or artifacts are absent.');
   const ingestionProducer='          node verify-ingestion.mjs\n',ingestionExport='        run: node collect-verification-evidence.mjs --export-owner=verify-ingestion.mjs\n';
   requireValue(foundation.split(ingestionProducer).length===2&&(workflow.match(/^\s*node verify-ingestion\.mjs(?:\s|$)/gm)||[]).length===1,'Required ingestion proof must execute its complete producer once in the foundation phase.');
-  for(const [name,job,artifact]of [['deferred-matrix',deferredJob,'foundation-proof'],['workflow-gates',workflowGates,'foundation-proof'],['conformance',conformanceJob,'workflow-gate-proof'],['test',protectedTest,'workflow-gate-proof']]){
+  for(const [name,job,artifact]of [['deferred-matrix',deferredJob,'foundation-proof'],['workflow-gates',workflowGates,'foundation-proof'],['conformance',conformanceJob,'workflow-gate-proof'],['test-checks',protectedTest,'workflow-gate-proof']]){
     requireValue(job.includes('          name: '+artifact+'-${{ github.sha }}-${{ github.run_id }}\n')&&job.split(ingestionExport).length===2,'Required current ingestion receipt must be transferred and validated before '+name+' consumers.');
   }
   requireValue(conformanceJob.indexOf(ingestionExport)<conformanceJob.indexOf('      - name: Execute complete conformance group\n'),'Required current ingestion receipt must be produced before the core evidence consumer.');
   requireValue(protectedTest.includes('name: Download complete conformance group reports')&&protectedTest.includes('name: Download complete conformance execution receipts')&&protectedTest.includes('node verify-conformance-handoff.mjs'),'Required conformance group proof handoff is absent.');
   for(const [job,artifact]of [[foundation,'foundation-proof'],[workflowGates,'workflow-gate-proof']])requireValue(job.includes('          name: '+artifact+'-${{ github.sha }}-${{ github.run_id }}\n')&&job.includes('            .verification-receipts/\n            TEST_PROJECT.json\n')&&job.includes('          include-hidden-files: true\n'),'Required complete prerequisite proof artifact is absent.');
   const collect='      - name: Complete current non-browser assertion evidence\n',collectAt=protectedTest.indexOf(collect),browserAt=protectedTest.indexOf('      - name: Stale project navigation and draft preservation\n');
-  requireValue(collectAt>=0&&collectAt<browserAt&&(protectedTest.match(/^        run: node collect-verification-evidence\.mjs$/gm)||[]).length===2&&!protectedTest.includes('collect-verification-evidence.mjs --run-missing')&&protectedTest.includes('      - name: Collect current executed assertion evidence\n        run: node collect-verification-evidence.mjs\n'),'Missing non-browser proof must finish before Chromium; final aggregation must not execute producers.');
+  requireValue(collectAt>=0&&collectAt<browserAt&&(protectedTest.match(/^        run: node collect-verification-evidence\.mjs$/gm)||[]).length===1&&!protectedTest.includes('collect-verification-evidence.mjs --run-missing')&&finalTest.includes('      - name: Collect current executed assertion evidence\n        run: node collect-verification-evidence.mjs\n'),'Missing non-browser proof must finish before Chromium; final aggregation must not execute producers.');
   // Below, validate the original cross-phase command invariants over the actual
   // dependency-ordered source while keeping each producer in its owning job.
   const testJob=foundation+workflowGates+protectedTest;
@@ -150,6 +211,7 @@ export function assertLifecycleWorkflowCommand(workflow){
     (gate.match(/^          node verify-project-lifecycle\.mjs$/gm)||[]).length===1&&
     (gate.match(/^          node verify-v3-definition-of-done\.mjs$/gm)||[]).length===1&&
     gate.indexOf(lifecycle)<gate.indexOf(definition),'Required project lifecycle proof must execute exactly once before v3 definition of done in the Workflow gate.');
+  assertDedicatedJourneyWorkflow(workflow);
 }
 const readJson=file=>JSON.parse(fs.readFileSync(file,'utf8'));
 const writeJson=(file,value)=>{fs.mkdirSync(path.dirname(file),{recursive:true});fs.writeFileSync(file,JSON.stringify(value,null,2)+'\n');};
@@ -221,7 +283,7 @@ export function assertPassedRun(run,jobs,{repository,headSha,workflowId}){
       requireValue(steps.length===1&&steps[0].status==='completed'&&steps[0].conclusion==='success','Required conformance group execution or artifact did not pass: '+group+' '+name);
     }
   }
-  for(const [jobName,names]of [['foundation',foundationProofSteps],['workflow-gates',workflowGateProofSteps]]){
+  for(const [jobName,names]of [['foundation',foundationProofSteps],['workflow-gates',workflowGateProofSteps],['test-checks',testCheckProofSteps],['operator-journey',operatorJourneyProofSteps]]){
     const matches=jobs.filter(job=>job.name===jobName);
     requireValue(matches.length===1&&matches[0].status==='completed'&&matches[0].conclusion==='success','Required '+jobName+' proof job has not passed.');
     for(const name of names){const steps=matches[0].steps.filter(step=>step.name===name);requireValue(steps.length===1&&steps[0].status==='completed'&&steps[0].conclusion==='success','Required '+jobName+' proof did not pass: '+name);}
@@ -229,6 +291,12 @@ export function assertPassedRun(run,jobs,{repository,headSha,workflowId}){
   for(const name of fullTestSteps){
     const steps=tests[0].steps.filter(step=>step.name===name);
     requireValue(steps.length===1&&steps[0].status==='completed'&&steps[0].conclusion==='success',`Required PR verification did not pass: ${name}`);
+  }
+  // Jobs are returned by the exact attempt endpoint; bind each required result
+  // to the queried run/repository/head instead of accepting matching names.
+  requireValue(Number.isSafeInteger(run.run_attempt)&&run.run_attempt>0,'PR verification attempt is invalid.');
+  for(const job of jobs.filter(job=>['test','test-checks','operator-journey','foundation','workflow-gates','deferred-matrix','conformance-core','conformance-creation','conformance-counterpart'].includes(job.name))){
+    requireValue(String(job.run_id)===String(run.id)&&job.head_sha===headSha&&job.run_url===`https://api.github.com/repos/${repository}/actions/runs/${run.id}`&&(job.run_attempt===undefined||job.run_attempt===run.run_attempt),'Required PR verification job belongs to a different run, attempt, repository, or head: '+job.name);
   }
 }
 
@@ -275,22 +343,30 @@ export async function promoteSite({cwd,verifiedDirectory,outputDirectory,commit,
   }
 }
 
-export async function sealSite({cwd,directory,bundleDirectory,context}){
+export async function verifyPreparedSite({cwd,directory,context}){
   assertCleanSource(cwd);
   const manifest=validateSite(directory);
   requireValue(manifest.sourceCommit===context.commit&&String(manifest.workflowRunIdentity)===String(context.runId),'Site does not belong to this verification run.');
+  requireValue(manifest.workflowFileSha256===digest(fs.readFileSync(path.join(cwd,'.github/workflows/pages.yml'))),'Prepared site workflow differs from the current checkout.');
   const rebuilt=fs.mkdtempSync(path.join(cwd,'.verified-seal-'));
   try{
     (await build(cwd,rebuilt,context.commit,context.runId));
     assertRuntimeEqual(directory,rebuilt);
     requireValue(fs.readFileSync(path.join(directory,manifestName)).equals(fs.readFileSync(path.join(rebuilt,manifestName))),'Verified deployment manifest is not reproducible.');
   }finally{fs.rmSync(rebuilt,{recursive:true,force:true});}
+  return manifest;
+}
+
+export async function sealSite({cwd,directory,bundleDirectory,context}){
+  const manifest=await verifyPreparedSite({cwd,directory,context});
   fs.rmSync(bundleDirectory,{recursive:true,force:true});
   fs.mkdirSync(bundleDirectory,{recursive:true});
   fs.cpSync(directory,path.join(bundleDirectory,'site'),{recursive:true});
   let executedEvidence;
   if(collectsExecutedEvidence(cwd)){
-    const fingerprint=evidenceFingerprint(cwd),receipts=readExecutionReceipts(process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS,fingerprint),evidence=aggregateExecutedEvidence(receipts,fingerprint);
+    const fingerprint=evidenceFingerprint(cwd),receipts=readExecutionReceipts(process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS,fingerprint);
+    requireBrowserScope(receipts,fingerprint,{scope:'LOCAL',manifest});
+    const evidence=aggregateExecutedEvidence(receipts,fingerprint);
     requireValue([...receipts.keys()].filter(key=>!key.startsWith('browser/')).length===Object.keys((await import('./verification-evidence-catalog.mjs')).verificationCatalog).length,'Required executed assertion receipt is absent at artifact seal.');
     fs.cpSync(process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS,path.join(bundleDirectory,'proofs'),{recursive:true});
     const proofFiles=executedProofFileHashes(path.join(bundleDirectory,'proofs'));
@@ -374,6 +450,10 @@ async function reuseCandidate(c){
   }
   }
   (await promoteSite({cwd:process.cwd(),verifiedDirectory:path.resolve('_verified-pr/site'),outputDirectory:path.resolve('_site'),commit:c.commit,runId:c.runId}));
+  if(collectsExecutedEvidence(process.cwd())){
+    const fingerprint=evidenceFingerprint(process.cwd()),receipts=readExecutionReceipts(process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS,fingerprint);
+    requireBrowserScope(receipts,fingerprint,{scope:'LOCAL',manifest:validateSite('_site')});
+  }
   writeJson('.verified-reuse.json',{...candidate,testedCommit:source.sha,sourceTree:mainTree,manifestDigest:manifest.manifestDigest.digest});
   output('reused','true');
   output('run_id',run.id);output('tested_commit',source.sha);
@@ -385,13 +465,17 @@ async function main(){
   switch(process.argv[2]){
     case 'select':return selectCandidate(c);
     case 'reuse':return reuseCandidate(c);
+    case 'verify-prepared':{
+      const manifest=await verifyPreparedSite({cwd:process.cwd(),directory:path.resolve('_site'),context:c});
+      console.log(JSON.stringify({preparedRuntimeVerified:true,sourceCommit:manifest.sourceCommit,manifestDigest:manifest.manifestDigest.digest}));return;
+    }
     case 'seal':{
       if(fs.existsSync('.verified-reuse.json'))c.reusedFrom=readJson('.verified-reuse.json');
       const receipt=(await sealSite({cwd:process.cwd(),directory:path.resolve('_site'),bundleDirectory:path.resolve('_verified-site'),context:c}));
       output('artifact_name',artifactName(c.runId,c.runAttempt));
       console.log(JSON.stringify({sealed:true,sourceCommit:receipt.sourceCommit,sourceTree:receipt.sourceTree,reusedFrom:receipt.reusedFrom||null}));return;
     }
-    default:throw new Error('Expected select, reuse, or seal.');
+    default:throw new Error('Expected select, reuse, verify-prepared, or seal.');
   }
 }
 if(process.argv[1]&&pathToFileURL(path.resolve(process.argv[1])).href===import.meta.url)await main();

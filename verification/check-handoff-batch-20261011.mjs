@@ -11,7 +11,7 @@ const {sha}=await import(pathToFileURL(path.join(root,'verification-evidence.mjs
 const {assertWorkflowPreloadBoundaries,assertLifecycleWorkflowCommand}=await import(pathToFileURL(path.join(root,'verified-site.mjs')));
 async function verifyColdUploadBootstrap(workflow,directory,bootstrapNode=process.env.CLOSED_LOOP_ACTION_NODE||process.execPath){
   const actions=assertWorkflowPreloadBoundaries(workflow);
-  assert.equal(actions.length,18,'COLD_UPLOAD_ORACLE: the maintained upload action population changed.');
+  assert.equal(actions.length,26,'COLD_UPLOAD_ORACLE: the maintained upload action population changed.');
   assert(actions.every(row=>row.nodeOptions===''),'COLD_UPLOAD_ORACLE: upload environments must share the empty Node options.');
   const workspace=path.join(directory,'cold-upload');fs.mkdirSync(workspace);
   const inherited=actions.find(row=>row.job==='test')?.inheritedNodeOptions;
@@ -41,7 +41,7 @@ const workflow=fs.readFileSync('.github/workflows/pages.yml','utf8'),cases=[];
 async function rejects(name,operation,expected){await assert.rejects(async()=>await operation(),expected);cases.push(name);}
 assertLifecycleWorkflowCommand(workflow);
   const uploadSteps=[...workflow.matchAll(/^      - [\s\S]*?(?=^      - |^  [a-z][\w-]*:\n|(?![\s\S]))/gm)].map(match=>match[0]).filter(step=>/^        uses: actions\/upload-artifact@/m.test(step));
-  assert.equal(uploadSteps.length,18,'CI_UPLOAD_PRELOAD_ORACLE: all maintained artifact upload actions must be covered.');
+  assert.equal(uploadSteps.length,26,'CI_UPLOAD_PRELOAD_ORACLE: all maintained artifact upload actions must be covered.');
   for(const [index,step] of uploadSteps.entries()){
     const override="        env:\n          NODE_OPTIONS: ''\n";
     assert.equal(step.split(override).length,2,'CI_UPLOAD_PRELOAD_ORACLE: exact scoped action override required.');
@@ -52,7 +52,7 @@ assertLifecycleWorkflowCommand(workflow);
     }
   }
   const jobPreload='      NODE_OPTIONS: --import ${{ github.workspace }}/verification-evidence-preload.mjs\n';
-  assert.equal(workflow.split(jobPreload).length-1,6,'CI_UPLOAD_PRELOAD_ORACLE: six producer job preloads must remain.');
+  assert.equal(workflow.split(jobPreload).length-1,8,'CI_UPLOAD_PRELOAD_ORACLE: eight producer job preloads must remain.');
   await rejects('upload-fix-must-not-disable-job-preload',()=>assertLifecycleWorkflowCommand(workflow.replaceAll(jobPreload,"      NODE_OPTIONS: ''\n")),/repository producer job preload must remain enabled/);
   const producer='      - name: Syntax\n';
   assert.equal(workflow.split(producer).length,2);

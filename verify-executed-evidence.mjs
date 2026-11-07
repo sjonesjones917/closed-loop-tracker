@@ -249,7 +249,7 @@ async function verifyPreloadFailureVisibility(directory,{preloadFile=path.resolv
 
 async function verifyColdUploadBootstrap(workflow,directory,bootstrapNode=process.env.CLOSED_LOOP_ACTION_NODE||process.execPath){
   const actions=assertWorkflowPreloadBoundaries(workflow);
-  assert.equal(actions.length,18,'COLD_UPLOAD_ORACLE: the maintained upload action population changed.');
+  assert.equal(actions.length,26,'COLD_UPLOAD_ORACLE: the maintained upload action population changed.');
   assert(actions.every(row=>row.nodeOptions===''),'COLD_UPLOAD_ORACLE: upload environments must share the empty Node options.');
   const workspace=path.join(directory,'cold-upload');fs.mkdirSync(workspace);
   const inherited=actions.find(row=>row.job==='test')?.inheritedNodeOptions;

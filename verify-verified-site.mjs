@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {execFileSync,spawnSync} from 'node:child_process';
-import {runtimePaths,manifestName,foundationProofSteps,workflowGateProofSteps,fullTestSteps,digest,validateSite,assertLifecycleWorkflowCommand,assertPassedRun,assertReceipt,promoteSite,promoteExecutedProofs,executedProofFileHashes,sealSite} from './verified-site.mjs';
+import {runtimePaths,manifestName,foundationProofSteps,workflowGateProofSteps,testCheckProofSteps,operatorJourneyProofSteps,fullTestSteps,preloadedWorkflowJobs,digest,validateSite,assertLifecycleWorkflowCommand,assertPassedRun,assertReceipt,promoteSite,promoteExecutedProofs,executedProofFileHashes,verifyPreparedSite,sealSite} from './verified-site.mjs';
 import {verificationCatalog} from './verification-evidence-catalog.mjs';
 
 const root=process.cwd(),temporary=fs.mkdtempSync(path.join(root,'.verify-artifact-'));
@@ -23,7 +23,8 @@ const repository='test-owner/test-repo',headSha='a'.repeat(40),workflowId=42;
 const run={id:123,run_attempt:1,event:'pull_request',status:'completed',conclusion:'success',repository:{full_name:repository},head_repository:{full_name:repository},head_sha:headSha,workflow_id:workflowId,path:'.github/workflows/pages.yml'};
 const jobs=[{name:'test',status:'completed',conclusion:'success',steps:fullTestSteps.map(name=>({name,status:'completed',conclusion:'success'}))},{name:'deferred-matrix',status:'completed',conclusion:'success',steps:['Execute complete deferred stage matrix','Preserve complete deferred matrix receipt'].map(name=>({name,status:'completed',conclusion:'success'}))}];
 for(const group of ['core','creation','counterpart'])jobs.push({name:'conformance-'+group,status:'completed',conclusion:'success',steps:['Validate current authority receipts','Execute complete conformance group','Preserve complete conformance group report','Preserve conformance execution receipts'].map(name=>({name,status:'completed',conclusion:'success'}))});
-for(const [name,steps]of [['foundation',foundationProofSteps],['workflow-gates',workflowGateProofSteps]])jobs.push({name,status:'completed',conclusion:'success',steps:steps.map(name=>({name,status:'completed',conclusion:'success'}))});
+for(const [name,steps]of [['foundation',foundationProofSteps],['workflow-gates',workflowGateProofSteps],['test-checks',testCheckProofSteps],['operator-journey',operatorJourneyProofSteps]])jobs.push({name,status:'completed',conclusion:'success',steps:steps.map(name=>({name,status:'completed',conclusion:'success'}))});
+for(const job of jobs)Object.assign(job,{run_id:run.id,run_attempt:run.run_attempt,head_sha:headSha,run_url:`https://api.github.com/repos/${repository}/actions/runs/${run.id}`});
 const bindings={repository,headSha,workflowId};
 const clone=value=>structuredClone(value);
 try{
@@ -60,10 +61,20 @@ try{
   (await rejects('missing-deferred-matrix-step',()=>assertPassedRun(run,[jobs[0],{...jobs[1],steps:[]}],bindings),/Required complete deferred matrix/));
   (await rejects('missing-deferred-matrix-upload',()=>assertPassedRun(run,[jobs[0],{...jobs[1],steps:jobs[1].steps.slice(0,1)}],bindings),/Required complete deferred matrix/));
 
-  for(const [name,requiredSteps]of [['foundation',foundationProofSteps],['workflow-gates',workflowGateProofSteps]]){
+  for(const [name,requiredSteps]of [['foundation',foundationProofSteps],['workflow-gates',workflowGateProofSteps],['test-checks',testCheckProofSteps],['operator-journey',operatorJourneyProofSteps]]){
     await rejects('missing-'+name+'-job',()=>assertPassedRun(run,jobs.filter(job=>job.name!==name),bindings),new RegExp('Required '+name+' proof job'));
     for(const conclusion of ['failure','cancelled','skipped']){const altered=clone(jobs);altered.find(job=>job.name===name).conclusion=conclusion;await rejects('unpassed-'+name+'-'+conclusion,()=>assertPassedRun(run,altered,bindings),new RegExp('Required '+name+' proof job'));}
     for(const step of requiredSteps){const altered=clone(jobs);altered.find(job=>job.name===name).steps=altered.find(job=>job.name===name).steps.filter(row=>row.name!==step);await rejects('missing-'+name+'-'+step,()=>assertPassedRun(run,altered,bindings),new RegExp('Required '+name+' proof did not pass'));}
+  }
+  for(const jobName of ['test-checks','operator-journey','test']){
+    for(const [field,value]of [['run_id',999],['run_attempt',2],['head_sha','b'.repeat(40)],['run_url','https://api.github.com/repos/other/repo/actions/runs/123']]){
+      const altered=clone(jobs);altered.find(job=>job.name===jobName)[field]=value;
+      await rejects('foreign-'+jobName+'-'+field,()=>assertPassedRun(run,altered,bindings),/different run, attempt, repository, or head/);
+    }
+    for(const stepName of (jobName==='test'?fullTestSteps:jobName==='test-checks'?testCheckProofSteps:operatorJourneyProofSteps))for(const conclusion of ['skipped','cancelled','failure']){
+      const altered=clone(jobs);altered.find(job=>job.name===jobName).steps.find(step=>step.name===stepName).conclusion=conclusion;
+      await rejects('unpassed-'+jobName+'-'+stepName+'-'+conclusion,()=>assertPassedRun(run,altered,bindings),/did not pass/);
+    }
   }
   // Synthetic authenticated-bundle boundary controls. Runtime changes must
   // require fresh execution without copying even an earlier compatible proof.
@@ -112,8 +123,10 @@ try{
   const receipt=(await sealSite({cwd:workspace,directory:site,bundleDirectory:bundle,context}));
   const manifest=validateSite(path.join(bundle,'site'));
   const receiptBindings={run,repository,headSha,sourceCommit:testedCommit,sourceTree:tree,workflowDigest:digest(fs.readFileSync(path.join(workspace,'.github/workflows/pages.yml')))};
+  assert.deepEqual(await verifyPreparedSite({cwd:workspace,directory:site,context}),manifest);
+  for(const [name,alter]of [['source',c=>({...c,commit:'b'.repeat(40)})],['run',c=>({...c,runId:'999'})]])await rejects('prepared-runtime-wrong-'+name,()=>verifyPreparedSite({cwd:workspace,directory:site,context:alter(context)}),/does not belong/);
   assertReceipt(receipt,manifest,receiptBindings);cases.push('sealed-reproducible-artifact');
-  for(const [field,value] of [['runId','999'],['runAttempt',2],['sourceCommit','b'.repeat(40)],['sourceTree','b'.repeat(40)],['workflowFileSha256','0'.repeat(64)],['manifestDigest','0'.repeat(64)]]){
+  for(const [field,value] of [['runId','999'],['runAttempt',2],['sourceCommit','b'.repeat(40)],['sourceTree','b'.repeat(40)],['workflowFileSha256','0'.repeat(64)],['manifestDigest','0'.repeat(64)],['buildIdentity','changed'],['headSha','b'.repeat(40)],['event','push'],['repository','other/repo']]){
     (await rejects(`wrong-receipt-${field}`,()=>assertReceipt({...receipt,[field]:value},manifest,receiptBindings),/mismatch|differs|belong/));
   }
   const corrupt=path.join(temporary,'corrupt');fs.cpSync(site,corrupt,{recursive:true});
@@ -167,6 +180,8 @@ try{
   (await runCLI('reuse'));assert.match(fs.readFileSync(outputFile,'utf8'),/reused=true/);
   for(const name of runtimePaths)assert.deepEqual(fs.readFileSync(path.join(workspace,'_site',name)),fs.readFileSync(path.join(site,name)));
   cases.push('main-selects-and-reuses-passing-artifact-through-actual-CLI-mocked-API');
+  fs.writeFileSync(outputFile,'');assert.match(await runCLI('verify-prepared'),/preparedRuntimeVerified/);assert.equal(fs.readFileSync(outputFile,'utf8'),'','Prepared runtime verification must not publish a seal or reuse grant.');
+  cases.push('downloaded-preparation-verified-through-actual-CLI-without-seal');
   fs.writeFileSync(outputFile,'');responses[prefix+'/git/commits/'+testedCommit].tree.sha='b'.repeat(40);writeResponses();
   assert.match((await runCLI('reuse')),/Full verification is required/);assert.doesNotMatch(fs.readFileSync(outputFile,'utf8'),/reused=true/);
   cases.push('changed-merge-tree-falls-back-to-full-checks');
@@ -186,17 +201,17 @@ try{
 
   const workflow=fs.readFileSync('.github/workflows/pages.yml','utf8');
   const nodeVersions=[...workflow.matchAll(/^          node-version: '([^']+)'$/gm)].map(match=>match[1]);
-  assert.equal(nodeVersions.length,7,'CI_RUNTIME_IDENTITY_ORACLE: every proof job must select Node explicitly.');
+  assert.equal(nodeVersions.length,11,'CI_RUNTIME_IDENTITY_ORACLE: every proof job must select Node explicitly.');
   assert(nodeVersions.every(version=>/^22\.\d+\.\d+$/.test(version)&&version===nodeVersions[0]),'CI_RUNTIME_IDENTITY_ORACLE: all proof jobs require the same exact supported Node version.');
   const deferredDiagnostics=workflow.match(/      - name: Preserve deferred matrix diagnostics\n([\s\S]*?)(?=\n      - name:|\n  [a-z])/);
   assert(deferredDiagnostics,'CI_DEFERRED_DIAGNOSTICS_ORACLE: deferred diagnostics upload is required.');
   assert.match(deferredDiagnostics[1],/path: \.ci-deferred-diagnostics\//);
   assert.match(deferredDiagnostics[1],/include-hidden-files: true/,'CI_DEFERRED_DIAGNOSTICS_ORACLE: the hidden diagnostic directory must be included.');
   cases.push('exact-runtime-and-visible-deferred-diagnostics');
-  const testWorkflow=workflow.slice(workflow.indexOf('\n  test:'),workflow.indexOf('\n  deploy:'));
+  const testWorkflow=workflow.slice(workflow.indexOf('\n  test-checks:'),workflow.indexOf('\n  deploy:'));
   assertLifecycleWorkflowCommand(workflow);
   const uploadSteps=[...workflow.matchAll(/^      - [\s\S]*?(?=^      - |^  [a-z][\w-]*:\n|(?![\s\S]))/gm)].map(match=>match[0]).filter(step=>/^        uses: actions\/upload-artifact@/m.test(step));
-  assert.equal(uploadSteps.length,18,'CI_UPLOAD_PRELOAD_ORACLE: all maintained artifact upload actions must be covered.');
+  assert.equal(uploadSteps.length,26,'CI_UPLOAD_PRELOAD_ORACLE: all maintained artifact upload actions must be covered.');
   for(const [index,step] of uploadSteps.entries()){
     const override="        env:\n          NODE_OPTIONS: ''\n";
     assert.equal(step.split(override).length,2,'CI_UPLOAD_PRELOAD_ORACLE: exact scoped action override required.');
@@ -207,13 +222,13 @@ try{
     }
   }
   const jobPreload='      NODE_OPTIONS: --import ${{ github.workspace }}/verification-evidence-preload.mjs\n';
-  assert.equal(workflow.split(jobPreload).length-1,6,'CI_UPLOAD_PRELOAD_ORACLE: six producer job preloads must remain.');
+  assert.equal(workflow.split(jobPreload).length-1,preloadedWorkflowJobs.length,'CI_UPLOAD_PRELOAD_ORACLE: every producer job preload must remain.');
   await rejects('upload-fix-must-not-disable-job-preload',()=>assertLifecycleWorkflowCommand(workflow.replaceAll(jobPreload,"      NODE_OPTIONS: ''\n")),/repository producer job preload must remain enabled/);
   const producer='      - name: Syntax\n';
   assert.equal(workflow.split(producer).length,2);
   await rejects('upload-fix-must-not-disable-producer-step',()=>assertLifecycleWorkflowCommand(workflow.replace(producer,producer+"        env:\n          NODE_OPTIONS: ''\n")),/Repository producer step must retain/);
   cases.push('all-upload-preloads-isolated-with-producer-preloads-retained');
-  const conformanceStart=workflow.indexOf('\n  conformance:\n'),conformanceEnd=workflow.indexOf('\n  test:\n'),conformanceWorkflow=workflow.slice(conformanceStart,conformanceEnd);
+  const conformanceStart=workflow.indexOf('\n  conformance:\n'),conformanceEnd=workflow.indexOf('\n  test-checks:\n'),conformanceWorkflow=workflow.slice(conformanceStart,conformanceEnd);
   for(const [name,before,after,diagnostic] of [
     ['missing-group','group: [core, creation, counterpart]','group: [core, creation]',/complete conformance group execution/],
     ['missing-execution','node verify-conformance-regressions.mjs --group=${{ matrix.group }} > /tmp/conformance-regressions.json','node missing-conformance.mjs',/complete conformance group execution/],
@@ -221,7 +236,7 @@ try{
     ['missing-receipts','name: Preserve conformance execution receipts','name: Missing group receipts',/complete conformance group execution/],
     ['missing-handoff','node verify-conformance-handoff.mjs','node missing-handoff.mjs',/conformance group proof handoff/],
     ['missing-group-gate','      - name: Require successful conformance groups\n        run: test "${{ needs.conformance.result }}" = "success"\n','',/failed conformance group must fail/]
-  ]){assert.equal(workflow.split(before).length,2,'CONFORMANCE_CI_FAULT_SETUP_ORACLE: '+name);await rejects('conformance-workflow-'+name,()=>assertLifecycleWorkflowCommand(workflow.replace(before,after)),diagnostic);}
+  ]){assert.equal(workflow.split(before).length,name==='missing-group-gate'?3:2,'CONFORMANCE_CI_FAULT_SETUP_ORACLE: '+name);await rejects('conformance-workflow-'+name,()=>assertLifecycleWorkflowCommand(workflow.replace(before,after)),diagnostic);}
   const ingestionExport='        run: node collect-verification-evidence.mjs --export-owner=verify-ingestion.mjs\n';
   const conformanceExport=mutate=>workflow.slice(0,conformanceStart)+mutate(conformanceWorkflow)+workflow.slice(conformanceEnd);
   for(const [name,mutate,diagnostic] of [
@@ -337,7 +352,7 @@ try{
   assertLifecycleWorkflowCommand(workflow);cases.push('quarantine-owner-restored-workflow');
   assert.equal((workflow.match(/^          node build-test-project\.mjs$/gm)||[]).length,1,'CI_DUPLICATE_FIXTURE_ORACLE: retained fixture verification runs once');
   const conformancePosition=testWorkflow.indexOf('name: Validate complete conformance handoff');
-  for(const name of ['Stale project navigation and draft preservation','Verification routing and capability evidence','Startup and scrolling at phone and desktop sizes','Acceptance viewport regression and targeted layout fault','Local Chromium operator path'])assert.ok(conformancePosition>=0&&testWorkflow.indexOf('name: '+name)>conformancePosition,'CI_PROOF_ORDER_ORACLE: non-browser proof precedes '+name);
+  for(const name of ['Stale project navigation and draft preservation','Verification routing and capability evidence','Startup and scrolling at phone and desktop sizes','Acceptance viewport regression and targeted layout fault','Local Chromium supporting paths'])assert.ok(conformancePosition>=0&&testWorkflow.indexOf('name: '+name)>conformancePosition,'CI_PROOF_ORDER_ORACLE: non-browser proof precedes '+name);
   // Execute the early prompt entry point with the actual child-launch boundary
   // rejecting its former transitive browser call. The later browser gate still
   // owns the independently executable walkthrough and all its assertions.
@@ -350,13 +365,13 @@ try{
   fs.writeFileSync(earlyBrowser,`await import(${JSON.stringify(pathToFileURL(promptEntry).href)});const {runVerifier}=await import(${JSON.stringify(pathToFileURL(path.join(root,'verify-conformance-regressions.mjs')).href)});await runVerifier(process.execPath,['verify-human-stage-walkthrough.mjs']);\n`);
   const violation=await runVerifier(process.execPath,['--import',proofGuard,earlyBrowser],{cwd:root});
   assertDetectedFault(violation,'CI_TRANSITIVE_PROOF_ORDER_ORACLE','early transitive browser launch');
-  const browserStep=testWorkflow.slice(testWorkflow.indexOf('name: Local Chromium operator path'));
+  const browserStep=testWorkflow.slice(testWorkflow.indexOf('name: Local Chromium supporting paths'));
   assert.match(browserStep,/run_browser_verifier verify-human-stage-walkthrough\.mjs \|\| BROWSER_VERIFY_RESULT=1/,'The mandatory browser walkthrough must retain exit propagation in its later gate.');
   cases.push('non-browser-prompt-entry-rejects-transitive-browser-launch');
   // Exercise the actual shell functions, including pipefail. A connection
   // diagnostic from an earlier phase must not excuse a later assertion failure.
   const browserFunctions=[...workflow.matchAll(/^          run_browser_verifier\(\) \{\n[\s\S]*?^          \}/gm)].map(match=>match[0]);
-  assert.equal(browserFunctions.length,3,'BROWSER_GATE_WIRING_ORACLE');
+  assert.equal(browserFunctions.length,6,'BROWSER_GATE_WIRING_ORACLE');
   const retryFixture=path.join(temporary,'retry-fixture');fs.mkdirSync(retryFixture);
   fs.writeFileSync(path.join(retryFixture,'failure.mjs'),"import fs from 'node:fs';const p='attempts';const n=fs.existsSync(p)?Number(fs.readFileSync(p,'utf8'))+1:1;fs.writeFileSync(p,String(n));if(n===1){console.error('Earlier diagnostic: ECONNREFUSED 127.0.0.1:9222');console.error('AssertionError: CONTROLLED_BROWSER_ASSERTION');process.exitCode=1;}else console.log('Would pass after retry');\n");
   fs.writeFileSync(path.join(retryFixture,'healthy.mjs'),"console.log('healthy browser-boundary control');\n");
@@ -364,7 +379,17 @@ try{
   // The wrapper adapter executes the supplied failing/healthy child once; real
   // receipt parsing and source/scope validation have separate owning controls.
   fs.writeFileSync(path.join(retryFixture,'collect-verification-evidence.mjs'),"import {spawnSync} from 'node:child_process';const suite=process.argv.find(arg=>arg.startsWith('--browser-suite='))?.slice(16);const result=spawnSync(process.execPath,[suite],{stdio:'inherit'});process.exitCode=result.status??1;\n");
-  const executeBrowserFunction=(source,fixture)=>spawnSync('bash',['-c','set -euo pipefail\n'+source.replaceAll('/tmp/','./')+'\nrun_browser_verifier '+fixture+' 2s'],{cwd:retryFixture,encoding:'utf8',timeout:5000,killSignal:'SIGKILL',env:{...process.env,CLOSED_LOOP_BROWSER_SCOPE:'LOCAL'}});
+  const browserShellEnvironment={...process.env,CLOSED_LOOP_BROWSER_SCOPE:'LOCAL'};
+  // Linux CI exercises its actual GNU timeout command. A non-Linux host without
+  // that command uses the existing real child supervisor only inside this
+  // disposable shell fixture; it retains finite deadlines and exit propagation.
+  if(process.platform!=='linux'&&spawnSync('timeout',['--version'],{encoding:'utf8'}).error?.code==='ENOENT'){
+    const timeoutAdapter=path.join(retryFixture,'timeout');
+    fs.writeFileSync(timeoutAdapter,`#!/usr/bin/env node\n(async()=>{const {runVerifier}=await import(${JSON.stringify(pathToFileURL(path.join(root,'verify-conformance-regressions.mjs')).href)});const args=process.argv.slice(2);if(args.shift()!=='--signal=TERM'||args.shift()!=='--kill-after=10s')throw new Error('SHELL_TIMEOUT_ADAPTER_ARGUMENT_ORACLE');const duration=args.shift();if(!/^\\d+s$/.test(duration))throw new Error('SHELL_TIMEOUT_ADAPTER_DEADLINE_ORACLE');const result=await runVerifier(args.shift(),args,{timeout:Number(duration.slice(0,-1))*1000,env:process.env,stdio:'inherit'});process.exitCode=result.outcome==='TIMEOUT'?124:result.status??1;})().catch(error=>{console.error(error);process.exitCode=1;});\n`,{mode:0o755});
+    browserShellEnvironment.PATH=retryFixture+path.delimiter+process.env.PATH;
+    cases.push('non-linux-shell-fixture-uses-real-child-supervisor');
+  }
+  const executeBrowserFunction=(source,fixture)=>spawnSync('bash',['-c','set -euo pipefail\n'+source.replaceAll('/tmp/','./')+'\nrun_browser_verifier '+fixture+' 2s'],{cwd:retryFixture,encoding:'utf8',timeout:5000,killSignal:'SIGKILL',env:browserShellEnvironment});
   for(const [index,source] of browserFunctions.entries()){
     fs.rmSync(path.join(retryFixture,'attempts'),{force:true});
     const failed=executeBrowserFunction(source,'failure.mjs');
@@ -374,19 +399,44 @@ try{
     assert.equal(fs.readFileSync(path.join(retryFixture,'attempts'),'utf8'),'1','BROWSER_GATE_RETRY_ORACLE: no unclassified retry');
     assert.match(failed.stdout,/CONTROLLED_BROWSER_ASSERTION/,'BROWSER_GATE_RAW_FAILURE_ORACLE');
     const healthy=executeBrowserFunction(source,'healthy.mjs');assert.equal(healthy.status,0,healthy.stderr);
-    const fault=source.replace(' | tee "$log"',' | tee "$log" || true');assert.notEqual(fault,source,'BROWSER_GATE_FAULT_ANCHOR_ORACLE');
+    const fault=source.replace(/( \| tee "[^"]+")/,'$1 || true');assert.notEqual(fault,source,'BROWSER_GATE_FAULT_ANCHOR_ORACLE');
     fs.rmSync(path.join(retryFixture,'attempts'),{force:true});
     const masked=executeBrowserFunction(fault,'failure.mjs');
     assert.throws(()=>assert.equal(masked.status,1,'BROWSER_GATE_FAILURE_ORACLE'),error=>error.code==='ERR_ASSERTION'&&error.message.startsWith('BROWSER_GATE_FAILURE_ORACLE'),'BROWSER_GATE_FAULT_DETECTION_ORACLE');
     cases.push('browser-gate-'+index+'-failure-retained-and-masking-fault-detected');
   }
-  for(const name of [...foundationProofSteps,...workflowGateProofSteps,...fullTestSteps]){
-    const escaped=name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
-    const step=workflow.match(new RegExp('^      - name: '+escaped+'\\n(?:(?!      - ).*(?:\\n|$))*','m'))?.[0];
-    assert.ok(step,`Required gate missing from workflow: ${name}`);
-    if(!['Require successful foundation job','Require successful workflow gate job','Require successful deferred matrix job','Require successful conformance groups','Verified artifact reuse checks','Collect current executed assertion evidence','Seal verified deployment artifact'].includes(name))assert.match(step,/if: steps\.reuse\.outputs\.reused != 'true'/,'Only proven reuse may skip a full check.');
-    else assert.doesNotMatch(step,/^        if:/m,'The matrix gate, artifact contract, and final seal must always run.');
+  const workflowBlock=name=>{const start=workflow.indexOf('\n  '+name+':\n'),rest=workflow.slice(start+1),end=rest.slice(1).search(/\n  [a-z][\w-]*:\n/);return end<0?rest:rest.slice(0,end+1);};
+  for(const [job,names]of [['foundation',foundationProofSteps],['workflow-gates',workflowGateProofSteps],['test-checks',testCheckProofSteps],['operator-journey',operatorJourneyProofSteps],['test',fullTestSteps]])for(const name of names){
+    const block=workflowBlock(job),marker='      - name: '+name+'\n',start=block.indexOf(marker),rest=block.slice(start+marker.length),next=rest.search(/\n      - /),step=marker+(next<0?rest:rest.slice(0,next));
+    assert.ok(start>=0,`Required gate missing from workflow: ${job}/${name}`);
+    const unconditional=name.startsWith('Require successful ')||['Verified artifact reuse checks','Validate complete local browser receipt set','Collect current executed assertion evidence','Seal verified deployment artifact','Preserve verified site for merge and live verification'].includes(name);
+    if(unconditional)assert.doesNotMatch(step,/^        if:/m,'Prerequisite gates, strict final join, and final seal must always run.');
+    else assert.match(step,/if: (?:always\(\) && )?steps\.reuse\.outputs\.reused != 'true'/,'Only authenticated reuse may skip a full check.');
   }
+  const mutateJob=(text,name,alter)=>{const marker='\n  '+name+':\n',start=text.indexOf(marker),tail=text.slice(start+marker.length),next=tail.search(/\n  [a-z][\w-]*:\n/),end=next<0?text.length:start+marker.length+next;assert(start>=0);return text.slice(0,start)+alter(text.slice(start,end))+text.slice(end);};
+  for(const [name,job,alter,diagnostic]of [
+    ['missing-local-journey','operator-journey',text=>text.replace('run_browser_verifier verify-complete-operator-journey.mjs 330m','true'),/complete default producer/],
+    ['shortened-local-journey','operator-journey',text=>text.replace('verify-complete-operator-journey.mjs 330m','verify-complete-operator-journey.mjs 240m'),/complete default producer/],
+    ['extra-journey-option','operator-journey',text=>text.replace('verify-complete-operator-journey.mjs 330m','verify-complete-operator-journey.mjs 330m --focused'),/complete default producer/],
+    ['skipped-local-prerequisite','operator-journey',text=>text.replace('    if: always()','    if: false'),/failed or skipped prerequisites/],
+    ['missing-final-success-gate','test',text=>text.replace('        run: test "${{ needs.operator-journey.result }}" = "success"','        run: true'),/prerequisite must be checked/],
+    ['stale-local-journey-receipt','test',text=>text.replace('name: operator-journey-receipt-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}','name: operator-journey-receipt-${{ github.sha }}-${{ github.run_id }}-1'),/current-attempt journey receipt/],
+    ['wrong-final-scope','test',text=>text.replace('run: node collect-verification-evidence.mjs --require-browser-scope=LOCAL\n','run: node collect-verification-evidence.mjs --require-browser-scope=DEPLOYED\n'),/strict complete LOCAL join/],
+    ['missing-final-journey-receipt','test',text=>text.replace('name: Download complete local operator receipt','name: Missing local operator receipt'),/step is absent/],
+    ['skipped-final-join','test',text=>text.replace('      - name: Validate complete local browser receipt set\n','      - name: Validate complete local browser receipt set\n        if: false\n'),/strict complete LOCAL join/],
+    ['unauthenticated-prepared-runtime','operator-journey',text=>text.replace('run: node verified-site.mjs verify-prepared','run: true'),/reproduce current runtime bytes/],
+    ['wrong-prepared-attempt','operator-journey',text=>text.replace('name: test-checks-proof-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}','name: test-checks-proof-${{ github.sha }}-${{ github.run_id }}-1'),/current attempt/],
+    ['missing-short-browser','test-checks',text=>text.replace('run_browser_verifier verify-browser.mjs || BROWSER_VERIFY_RESULT=1','true'),/Six supporting browser producers/],
+    ['wrong-deployed-dependency','deployed-operator-journey',text=>text.replace('needs: [test, deploy, verify-live]','needs: test'),/Deployed journey dependencies/],
+    ['wrong-manual-event','reverified-operator-journey',text=>text.replace("github.event_name == 'workflow_dispatch'","github.event_name == 'push'"),/event scopes/],
+    ['missing-publication-journey','publish-status',text=>text.replace(" && needs.deployed-operator-journey.result == 'success'",''),/corresponding successful dedicated journey/],
+    ['missing-manual-publication-journey','publish-status',text=>text.replace(" && needs.reverified-operator-journey.result == 'success'",''),/corresponding successful dedicated journey/],
+    ['stale-deployed-receipt','publish-status',text=>text.replace('name: deployed-operator-journey-receipt-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}','name: deployed-operator-journey-receipt-${{ github.sha }}-${{ github.run_id }}-1'),/current-attempt DEPLOYED journey receipt/],
+    ['missing-deployed-join','publish-status',text=>text.replace('          node collect-verification-evidence.mjs --require-browser-scope=DEPLOYED\n',''),/strictly join both complete browser scopes/],
+    ['disabled-seal-receipts','test',text=>text.replace('      - name: Seal verified deployment artifact\n','      - name: Seal verified deployment artifact\n        env:\n          CLOSED_LOOP_VERIFICATION_RECEIPTS: \'\'\n'),/retain its current source and receipt environment/],
+    ['weakened-publication-condition','publish-status',text=>text.replace("needs.reverified-operator-journey.result == 'success'))","needs.reverified-operator-journey.result == 'success')) || true"),/condition must authenticate/]
+  ]){const changed=mutateJob(workflow,job,alter);assert.notEqual(changed,workflow,'DEDICATED_JOURNEY_FAULT_SETUP_ORACLE: '+name);await rejects('dedicated-journey-'+name,()=>assertLifecycleWorkflowCommand(changed),diagnostic);}
+  cases.push('dedicated-journey-source-attempt-scope-and-publication-faults');
   assert.ok(workflow.indexOf('name: Seal verified deployment artifact')>workflow.indexOf('name: Validate complete conformance handoff'));
   assert.ok(workflow.indexOf('name: Collect current executed assertion evidence')>workflow.indexOf('name: Validate complete conformance handoff'));
   assert.ok(workflow.indexOf('name: Seal verified deployment artifact')>workflow.indexOf('name: Collect current executed assertion evidence'));
