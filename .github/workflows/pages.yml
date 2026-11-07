@@ -1,4 +1,4 @@
-name: Diagnostic Stage 30 eventual completion on frozen 50f53978
+name: Diagnostic original mobile and recovery on frozen50
 
 on:
   workflow_dispatch:
@@ -8,15 +8,15 @@ permissions:
   actions: read
 
 concurrency:
-  group: diagnostic-stage30-completion-${{ github.ref }}
+  group: diagnostic-mobile-backup-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  checkpoint-completion-diagnostic:
+  mobile-capability-diagnostic:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 25
     env:
-      DIAG_OUT: ${{ github.workspace }}/checkpoint-completion-diagnostic
+      DIAG_OUT: ${{ github.workspace }}/mobile-capability-diagnostic
       BROWSER: /usr/bin/google-chrome
       NODE_OPTIONS: ''
     steps:
@@ -29,313 +29,125 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22.23.3
-      - name: Record runtime and require the original installed Chrome
+      - name: Pin original source and Node runtime
+        working-directory: app
         shell: bash
         run: |
           set -euo pipefail
           test ! -e "$DIAG_OUT"
           mkdir "$DIAG_OUT"
-          node --version | tee "$DIAG_OUT/node-version.txt"
-          "$BROWSER" --product-version | tee "$DIAG_OUT/chrome-version.txt"
-          test "$(node --version)" = v22.23.3
-          test "$("$BROWSER" --product-version)" = 156.0.8078.79
-          uname -a > "$DIAG_OUT/uname.txt"
-      - name: Download and authenticate the retained original artifact metadata
-        env:
-          GH_TOKEN: ${{ github.token }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          gh api repos/sjonesjones917/closed-loop-tracker/actions/artifacts/13580754986 > "$DIAG_OUT/original-artifact-metadata.json"
-          python3 - <<'PYMETA'
-          import json, os
-          from pathlib import Path
-          metadata=json.loads((Path(os.environ['DIAG_OUT'])/'original-artifact-metadata.json').read_text())
-          assert metadata['id']==13580754986
-          assert metadata['size_in_bytes']==611651635
-          assert metadata['digest']=='sha256:b6a35d9e0eda405d69a240008c444a0502df96c1f2b17c42d696b44d3f295e56'
-          assert metadata['expired'] is False
-          assert metadata['workflow_run']['id']==42374851354
-          assert metadata['workflow_run']['head_sha']=='50f539785914002b6bcdf398a71e4e29605d376c'
-          PYMETA
-          gh api repos/sjonesjones917/closed-loop-tracker/actions/artifacts/13580754986/zip > "$DIAG_OUT/original.zip"
-      - name: Materialize external diagnostic helpers
-        shell: bash
-        run: |
-          cat > "$RUNNER_TEMP/stage30-completion-restore.py" <<'RESTORE'
-          #!/usr/bin/env python3
-          """Restore only the authenticated synthetic native profile into a fresh copy.
-
-          This diagnostic utility neither changes an original artifact nor creates test
-          receipts. It is intended for the isolated Linux runner, not the active Mac run.
-          """
-          import argparse
-          import hashlib
-          import json
-          import pathlib
-          import stat
-          import zipfile
-
-          ARTIFACT_SHA256 = 'b6a35d9e0eda405d69a240008c444a0502df96c1f2b17c42d696b44d3f295e56'
-          ARTIFACT_BYTES = 611651635
-          PREFIX = 'home/runner/work/closed-loop-tracker/closed-loop-tracker/operator-evidence/profile/'
-          PROFILE_FILES = 5402
-          PROFILE_BYTES = 770745044
-          CHROME_VERSION = '156.0.8078.79'
-
-
-          def require(condition, message):
-              if not condition:
-                  raise RuntimeError(message)
-
-
-          def sha256_file(file):
-              value = hashlib.sha256()
-              with file.open('rb') as stream:
-                  for chunk in iter(lambda: stream.read(1024 * 1024), b''):
-                      value.update(chunk)
-              return value.hexdigest()
-
-
-          def main():
-              parser = argparse.ArgumentParser(description=__doc__)
-              parser.add_argument('--archive', type=pathlib.Path, required=True)
-              parser.add_argument('--directory', type=pathlib.Path, required=True)
-              args = parser.parse_args()
-              archive = args.archive.resolve(strict=True)
-              output = args.directory.resolve()
-              require(archive.is_file(), 'Original archive is not a regular file')
-              require(archive.stat().st_size == ARTIFACT_BYTES, 'Original archive size mismatch')
-              require(sha256_file(archive) == ARTIFACT_SHA256, 'Original archive SHA-256 mismatch')
-              require(not output.exists(), 'Diagnostic browser directory must be fresh')
-              with zipfile.ZipFile(archive) as zipped:
-                  members = [item for item in zipped.infolist() if item.filename.startswith(PREFIX)]
-                  require(len(members) == PROFILE_FILES, 'Original profile member count mismatch')
-                  require(sum(item.file_size for item in members) == PROFILE_BYTES, 'Original profile byte count mismatch')
-                  seen = set()
-                  selected = []
-                  for item in members:
-                      suffix = item.filename[len(PREFIX):]
-                      relative = pathlib.PurePosixPath(suffix)
-                      require(suffix and not relative.is_absolute(), 'Invalid profile path')
-                      require(all(part not in ('', '.', '..') for part in suffix.split('/')), 'Noncanonical profile path')
-                      require('\\' not in suffix and '\x00' not in suffix, 'Ambiguous profile path')
-                      require(suffix not in seen, 'Duplicate original profile path')
-                      require(not item.is_dir(), 'Unexpected explicit directory member')
-                      mode = item.external_attr >> 16
-                      require(stat.S_IFMT(mode) in (0, stat.S_IFREG), 'Nonregular profile entry is not extracted')
-                      seen.add(suffix)
-                      selected.append((item, relative))
-                  require(zipped.read(PREFIX + 'Last Version').decode().strip() == CHROME_VERSION,
-                          'Original native Chrome profile version mismatch')
-                  output.mkdir(parents=True, exist_ok=False)
-                  profile = output / 'profile'
-                  profile.mkdir()
-                  records = []
-                  for item, relative in selected:
-                      destination = profile.joinpath(*relative.parts)
-                      destination.parent.mkdir(parents=True, exist_ok=True)
-                      digest = hashlib.sha256()
-                      size = 0
-                      with zipped.open(item) as source, destination.open('xb') as target:
-                          for chunk in iter(lambda: source.read(1024 * 1024), b''):
-                              size += len(chunk)
-                              require(size <= item.file_size, 'Archive member exceeds its declared size')
-                              digest.update(chunk)
-                              target.write(chunk)
-                      require(size == item.file_size, 'Profile member byte count mismatch')
-                      records.append({'path': relative.as_posix(), 'byteSize': size, 'sha256': digest.hexdigest()})
-              require(sha256_file(archive) == ARTIFACT_SHA256, 'Original archive changed during restoration')
-              provenance = {
-                  'schema': 'clrt-checkpoint-diagnostic-native-profile-copy/1',
-                  'purpose': 'Diagnostic replay only; not a complete journey or acceptance receipt',
-                  'artifactId': 13580754986,
-                  'originalRun': 42374851354,
-                  'originalTestedCommit': '315f85b3dc34c274e4470fe4e84e9dcebc9a1551',
-                  'originalHeadCommit': '50f539785914002b6bcdf398a71e4e29605d376c',
-                  'archive': str(archive), 'archiveSha256': ARTIFACT_SHA256,
-                  'archiveBytes': ARTIFACT_BYTES, 'originalArchiveUnchanged': True,
-                  'profileDirectory': str(profile), 'profileFileCount': len(records),
-                  'profileBytes': sum(record['byteSize'] for record in records),
-                  'originalChromeVersion': CHROME_VERSION, 'files': records,
-                  'applicationStateChangedByThisUtility': False,
-                  'testReceiptCreated': False,
-              }
-              with (output / 'profile-copy-provenance.json').open('x') as target:
-                  json.dump(provenance, target, indent=2)
-                  target.write('\n')
-              print(json.dumps({key: value for key, value in provenance.items() if key != 'files'}))
-
-
-          if __name__ == '__main__':
-              main()
-          RESTORE
-          cat > "$RUNNER_TEMP/stage30-completion-replay.mjs" <<'REPLAY'
-          // Diagnostic only. Original action outcome remains distinct from passive capture.
-          import fs from 'node:fs';
-          import path from 'node:path';
-          import assert from 'node:assert/strict';
-          import {spawn,execFileSync} from 'node:child_process';
-          import {createHash} from 'node:crypto';
-          import {pathToFileURL} from 'node:url';
-          const out=path.resolve(process.argv[2]),source=process.cwd(),profile=path.join(out,'replay','profile');
-          const EXPECTED='315f85b3dc34c274e4470fe4e84e9dcebc9a1551',TREE='24735288da9f734997c1920c111ad4d472e743e5';
-          const JOB='JOB-jmrfcbj0n5mn23la3bg99ttk9e5vlpui',PROJECT='ff56c1fb25d9b1a054791b0f855159a80968a58d7d585e104e142da0b1c16256';
-          const ORIGINAL_URL='http://127.0.0.1:4173/?project='+JOB+'&version=b52168b6-683a-4621-a0e5-1417043e83e5&stage=30&view=Workflow';
-          // A new native target has no original history.state: omit the history-version
-          // selector so ordinary startup reads the current saved project, not a restore.
-          const PAGE_URL='http://127.0.0.1:4173/?project='+JOB+'&stage=30&view=Workflow';
-          const BROWSER_VERSION='156.0.8078.79',INTERVAL_US=10000,ACTION_MS=180000;
-          const started=Date.now(),captureEnds=started+60*60*1000;
-          const sha=b=>createHash('sha256').update(b).digest('hex');
-          const save=(name,value)=>fs.writeFileSync(path.join(out,name),JSON.stringify(value,null,2)+'\n');
-          const log=(name,value)=>fs.appendFileSync(path.join(out,name),JSON.stringify({at:new Date().toISOString(),...value})+'\n');
-          const delay=ms=>new Promise(r=>setTimeout(r,ms));
-          const git=(...a)=>execFileSync('git',a,{encoding:'utf8'}).trim();
-          async function bounded(promise,label,ms=20000){let timer;try{return await Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('Diagnostic limit: '+label)),ms);})]);}finally{clearTimeout(timer);}}
-          assert.equal(git('rev-parse','HEAD'),EXPECTED);assert.equal(git('rev-parse','HEAD^{tree}'),TREE);assert.equal(git('status','--porcelain'),'');
-          assert.equal(process.version,'v22.23.3');assert.equal(process.platform,'linux');assert.equal(process.arch,'x64');
-          assert.equal(fs.readFileSync(path.join(profile,'Last Version'),'utf8').trim(),BROWSER_VERSION);
-          assert.equal(execFileSync(process.env.BROWSER,['--product-version'],{encoding:'utf8'}).trim(),BROWSER_VERSION);
-          for(const k of Object.keys(process.env))if(k.startsWith('CLOSED_LOOP_')||k.startsWith('VERIFIER_')||k.startsWith('CONFORMANCE_'))assert(k==='CLOSED_LOOP_VERIFIER_OWNER_FD'&&process.env[k]==='3','Unexpected diagnostic owner/receipt override: '+k);
-          assert(!process.env.NODE_OPTIONS);assert(!process.env.BASELINE_COMMIT);assert(!process.env.OPERATOR_DRIVER_MODULE);
-          // Required by the unchanged strict observer; no receipt/preload environment is set.
-          process.env.CLOSED_LOOP_BROWSER_SCOPE='LOCAL';
-          process.env.CLOSED_LOOP_BROWSER_SOURCE_COMMIT=EXPECTED;
-          process.env.STATIC_SITE_ROOT=path.join(out,'site');
-          process.env.PAGE_URL=PAGE_URL;
-          const manifest=JSON.parse(fs.readFileSync(path.join(out,'site/closed-loop-deployment-manifest.json'),'utf8'));
-          assert.equal(manifest.sourceCommit,EXPECTED);
-          assert.equal(manifest.buildIdentity,'build-sha256-b1483a0a8c201adf14a2a04eb9ee6451a5518fd9c6619e3f81859cb575833ed2');
-          assert.equal(manifest.manifestDigest.digest,'817d87c06d6a13e8ec975b3388746c449dfdac6d942e17e464bead8424f9926b');
-          for(const r of manifest.runtimeResources){const b=fs.readFileSync(path.join(out,'site',r.path));assert.equal(b.length,r.byteSize);assert.equal(sha(b),r.digest);}
-          const {createOperatorBrowser}=await import(pathToFileURL(path.join(source,'operator-browser-driver.mjs')));
-          const {observeRetainedHistory}=await import(pathToFileURL(path.join(source,'test-retained-history-browser.mjs')));
-          let interrupted=null,browser=null,opening=null,openingSettled=false,finalizing=false,connection=null,server=null,chrome=null,mode=null,phaseIndex=0,actionStarted=null,cleanupComplete=false,serverShutdownRequested=false,serverError=null,serverExit=null,main=null;
-          const profiles=new Map(),observedProcesses=new Map(),downloadEvents=[];
-          const result={diagnosticOnly:true,eligibleVerificationReceipt:false,completeJourney:false,sourceCommit:EXPECTED,sourceTree:TREE,profileVersion:BROWSER_VERSION,samplingIntervalUs:INTERVAL_US,actionTimeoutMs:ACTION_MS,captureLimitMs:60*60*1000,outerSupervisorLimitMs:65*60*1000,startedAt:new Date(started).toISOString(),originalUrl:ORIGINAL_URL,replayUrl:PAGE_URL,originalAction:null,profileGaps:[],observerInputs:{scope:'LOCAL',sourceCommit:EXPECTED,staticSiteRoot:process.env.STATIC_SITE_ROOT,pageUrl:PAGE_URL},limitations:['Restored native session can add view/session custody; canonical project identity is checked before the click.','CPU profiling and independent native observations add diagnostic overhead.','Passive observation after the original action outcome is not a raised test deadline or acceptance proof.']};
-          let stopResolve;const stopping=new Promise(resolve=>stopResolve=resolve);
-          const onSignal=s=>{interrupted=s;log('signals.jsonl',{signal:s});stopResolve();};
-          process.on('SIGTERM',onSignal);process.on('SIGINT',onSignal);
-          const cap=setTimeout(()=>{interrupted='DIAGNOSTIC_CAPTURE_LIMIT';stopResolve();},Math.max(1,captureEnds-Date.now()));
-          function proc(pid){try{const s=fs.readFileSync(`/proc/${pid}/stat`,'utf8'),v=s.slice(s.lastIndexOf(')')+2).trim().split(' ');return {pid:Number(pid),state:v[0],ppid:Number(v[1]),pgid:Number(v[2]),startedTicks:v[19]};}catch(e){if(e.code==='ENOENT'||e.code==='ESRCH')return null;throw e;}}
-          function recordDescendants(){const rows=fs.readdirSync('/proc').filter(x=>/^\d+$/.test(x)).map(proc).filter(Boolean),owned=new Set([process.pid]);let changed=true;while(changed){changed=false;for(const r of rows)if(owned.has(r.ppid)&&!owned.has(r.pid)){owned.add(r.pid);changed=true;}}for(const r of rows)if(owned.has(r.pid)&&r.pid!==process.pid)observedProcesses.set(r.pid+':'+r.startedTicks,r);return rows.filter(r=>owned.has(r.pid));}
-          class CDP{
-           constructor(url){this.ws=new WebSocket(url);this.pending=new Map();this.listeners=[];this.id=0;this.ready=new Promise((res,rej)=>{this.ws.onopen=res;this.ws.onerror=rej;});this.ws.onmessage=e=>{const v=JSON.parse(e.data),p=this.pending.get(v.id);if(p){this.pending.delete(v.id);clearTimeout(p.timer);v.error?p.reject(new Error(v.error.message)):p.resolve(v.result);}else for(const f of this.listeners)f(v);};}
-           async send(method,params={},sessionId){await this.ready;return new Promise((resolve,reject)=>{const id=++this.id,timer=setTimeout(()=>{this.pending.delete(id);reject(new Error('Diagnostic CDP timeout '+method));},10000);this.pending.set(id,{resolve,reject,timer});this.ws.send(JSON.stringify({id,method,params,...(sessionId?{sessionId}:{})}));});}
-           close(){this.ws.close();for(const p of this.pending.values()){clearTimeout(p.timer);p.reject(new Error('Diagnostic CDP closed'));}this.pending.clear();}
-          }
-          async function discoverChrome(){for(let n=0;n<100;n++){const children=recordDescendants().filter(p=>p.ppid===process.pid),matches=[];for(const row of children){let args;try{args=fs.readFileSync(`/proc/${row.pid}/cmdline`,'utf8').split('\0');}catch{continue;}if(args.includes('--user-data-dir='+profile)&&!args.some(x=>x.startsWith('--type='))){const flag=args.find(x=>/^--remote-debugging-port=\d+$/.test(x));if(flag)matches.push({...row,port:Number(flag.split('=')[1]),args});}}assert(matches.length<=1,'Ambiguous owned Chrome');if(matches.length)return matches[0];await delay(100);}throw new Error('Exact owned Chrome process not found');}
-          async function setProfile(row,name){
-           row.serial=row.serial.then(async()=>{await row.readyPromise;if(row.error||row.active?.name===name||(!row.active&&name===null))return;
-            if(row.active){const phase=row.active;row.active=null;try{const p=await connection.send('Profiler.stop',{},row.sessionId);save(`cpu-${phase.index}-${phase.name}-${row.target.targetId}.cpuprofile`,p.profile);log('profiles.jsonl',{target:row.target,phase:phase.name,sampleCount:p.profile.samples?.length||0});}catch(e){log('profiles.jsonl',{target:row.target,phase:phase.name,error:String(e)});result.profileGaps.push({targetId:row.target.targetId,phase:phase.name,error:String(e)});}}
-            if(name){await connection.send('Profiler.start',{},row.sessionId);row.active={name,index:phaseIndex};}
-           }).catch(e=>{row.error=String(e);result.profileGaps.push({targetId:row.target.targetId,phase:name,error:String(e)});log('targets.jsonl',{event:'profiler-error',target:row.target,error:String(e)});});return row.serial;
-          }
-          async function attach(info){
-           let row=profiles.get(info.targetId);
-           if(!row){row={target:info,sessionId:null,active:null,ready:false,serial:Promise.resolve()};profiles.set(info.targetId,row);
-            row.readyPromise=(async()=>{try{const a=await connection.send('Target.attachToTarget',{targetId:info.targetId,flatten:true});row.sessionId=a.sessionId;await connection.send('Runtime.enable',{},a.sessionId);await connection.send('Profiler.enable',{},a.sessionId);await connection.send('Profiler.setSamplingInterval',{interval:INTERVAL_US},a.sessionId);row.ready=true;log('targets.jsonl',{event:'profiler-attached',target:info,sessionId:a.sessionId});}catch(e){row.error=String(e);log('targets.jsonl',{event:'attach-error',target:info,error:String(e)});result.profileGaps.push({targetId:info.targetId,phase:mode,error:String(e)});}})();
-           }
-           await row.readyPromise;if(mode)await setProfile(row,mode);return row;
-          }
-          async function discoverTargets(){const {targetInfos}=await connection.send('Target.getTargets');const pages=targetInfos.filter(t=>t.type==='page'&&t.url.startsWith('http://127.0.0.1:4173/'));assert.equal(pages.length,1,'Exactly one owned app document required');for(const t of targetInfos)if(t.targetId===pages[0].targetId||(t.type==='worker'&&t.url.startsWith('http://127.0.0.1:4173/')))await attach(t);return pages[0];}
-          async function startProfiles(name){mode=name;await Promise.all([...profiles.values()].map(r=>setProfile(r,name)));}
-          async function stopProfiles(){mode=null;await Promise.all([...profiles.values()].map(r=>setProfile(r,null)));phaseIndex++;}
-          async function snapshot(){const {result:r,exceptionDetails}=await connection.send('Runtime.evaluate',{expression:`(()=>({ready:globalThis.closedLoopAppReady===true,error:globalThis.closedLoopAppError?String(globalThis.closedLoopAppError):null,busy:document.querySelector('#app')?.getAttribute('aria-busy'),inert:document.querySelector('#app')?.hasAttribute('inert'),action:document.querySelector('#next-required-action')?.innerText,operation:document.querySelector('#operation-label')?.textContent,storage:document.querySelector('#storage-status')?.textContent,warning:globalThis.__closedLoopPostCommitRecoveryWarning||null,latency:globalThis.closedLoopOperationLatencyEvidence?.()}))()`,returnByValue:true,awaitPromise:false},main.sessionId);if(exceptionDetails)throw new Error(JSON.stringify(exceptionDetails));return r.value;}
-          try{
-           const httpLog=fs.openSync(path.join(out,'http.log'),'wx');server=spawn('python3',['-u','-m','http.server','4173','--bind','127.0.0.1','--directory',path.join(out,'site')],{stdio:['ignore',httpLog,httpLog]});fs.closeSync(httpLog);server.on('error',e=>{serverError=String(e);log('http-errors.jsonl',{error:serverError});});server.on('exit',(code,signal)=>{serverExit={code,signal,shutdownRequested:serverShutdownRequested};});
-           let serving=false;for(let i=0;i<100;i++){assert(!serverError&&server.exitCode===null&&server.signalCode===null,'Owned HTTP server exited');try{const response=await fetch('http://127.0.0.1:4173/closed-loop-deployment-manifest.json',{signal:AbortSignal.timeout(1000)});const text=await response.text();if(response.ok&&text===fs.readFileSync(path.join(out,'site/closed-loop-deployment-manifest.json'),'utf8')&&fs.readFileSync(path.join(out,'http.log'),'utf8').includes('Serving HTTP on 127.0.0.1 port 4173')){serving=true;break;}}catch{}await delay(100);}assert(serving,'Exact site must be served by the newly bound owned server');
-           opening=createOperatorBrowser({url:PAGE_URL,directory:path.join(out,'replay'),captureExecution:true,actionTimeoutMs:ACTION_MS}).then(async value=>{openingSettled=true;browser=value;if(finalizing)await value.close();return value;},error=>{openingSettled=true;throw error;});opening.catch(()=>{});
-           chrome=await discoverChrome();save('owned-chrome.json',chrome);
-           browser=await Promise.race([opening,stopping.then(()=>{throw new Error('Interrupted before browser ready');})]);
-           const version=await (await fetch(`http://127.0.0.1:${chrome.port}/json/version`,{signal:AbortSignal.timeout(10000)})).json();assert.equal(version.Browser.split('/').at(-1),BROWSER_VERSION);save('browser-version.json',version);
-           connection=new CDP(version.webSocketDebuggerUrl);await bounded(connection.ready,'diagnostic WebSocket');
-           const nativeProcesses=await connection.send('SystemInfo.getProcessInfo');const browserProcesses=nativeProcesses.processInfo.filter(p=>p.type==='browser');assert.equal(browserProcesses.length,1);assert.equal(browserProcesses[0].id,chrome.pid,'CDP endpoint must belong to the discovered owned Chrome child');assert.equal(proc(chrome.pid)?.startedTicks,chrome.startedTicks,'Owned Chrome PID identity changed');save('cdp-owned-process-proof.json',{chrome,nativeProcesses});
-           connection.listeners.push(event=>{if(event.method==='Target.targetDestroyed'||event.method==='Target.targetCrashed'){const targetId=event.params.targetId;if(profiles.has(targetId)){profiles.get(targetId).destroyed=true;result.profileGaps.push({at:new Date().toISOString(),phase:mode,event});log('targets.jsonl',{event:'profile-target-lost',targetId,phase:mode});}}if(event.method?.startsWith('Browser.download'))downloadEvents.push(event);if(event.method?.startsWith('Browser.download')||['Target.targetCrashed','Target.detachedFromTarget','Runtime.exceptionThrown','Inspector.targetCrashed'].includes(event.method))log('protocol-events.jsonl',event);if(!finalizing&&event.method==='Target.targetCreated'&&event.params.targetInfo.type==='worker'&&event.params.targetInfo.url.startsWith('http://127.0.0.1:4173/'))attach(event.params.targetInfo).catch(e=>log('diagnostic-errors.jsonl',{phase:'new-worker-profiler',error:String(e)}));});
-           // Same native download policy/path as the unchanged driver; this connection also records native events.
-           await connection.send('Browser.setDownloadBehavior',{behavior:'allowAndName',downloadPath:path.join(out,'replay/downloads'),eventsEnabled:true});
-           const page=await discoverTargets();main=profiles.get(page.targetId);assert(main?.ready&&main.sessionId&&!main.error,'Main profiler unavailable');await connection.send('Target.setDiscoverTargets',{discover:true});
-           const observed=await Promise.race([browser.readWorkflow([30]),stopping.then(()=>{throw new Error('Capture limit before stored-state check');})]),p=observed.project;
-           const state={jobId:p.job.JOB_ID,revision:p.revision,projectSha256:p.projectSha256,projectBytes:Buffer.byteLength(JSON.stringify(p)),workflow:observed.workflow};save('before-state.json',state);
-           assert.equal(state.jobId,JOB);assert.equal(state.revision,281);assert.equal(state.projectSha256,PROJECT);assert.equal(state.projectBytes,61511476);assert.equal(observed.workflow[0].action.actionType,'EXPORT_PRE_DELIVERY_CHECKPOINT');assert.equal(observed.workflow[0].gate.complete,false);
-           const history=await Promise.race([observeRetainedHistory(browser,p),stopping.then(()=>{throw new Error('Capture limit before retained-history observation');})]);save('before-history.json',history);save('before-history-summary.json',{generation:history.history.generation,entries:history.history.entries.length,files:Object.keys(history.history.files||{}).length,sessions:Object.keys(history.history.sessions||{}).length,jobId:history.jobId,revision:history.revision,projectSha256:history.projectSha256});
-           await discoverTargets();assert([...profiles.values()].some(r=>r.ready&&r.sessionId&&!r.error&&r.target.type==='worker'&&r.target.url.includes('storeWorker=1')),'Store-worker profiler unavailable before action');
-           // executionEvidence() calls finish() and closes the strict observer: final-only below.
-           await startProfiles('original-180s');
-           assert(main.ready&&!main.error&&!main.destroyed&&main.active?.name==='original-180s','Main CPU profiler must be running before the native click');
-           assert([...profiles.values()].some(r=>r.ready&&!r.error&&!r.destroyed&&r.target.type==='worker'&&r.target.url.includes('storeWorker=1')&&r.active?.name==='original-180s'),'Store-worker CPU profiler must be running before the native click');
-           assert(!interrupted&&Date.now()<captureEnds,'No native click after diagnostic cancellation');actionStarted=Date.now();result.actionStartedAt=new Date(actionStarted).toISOString();
-           try{const files=await Promise.race([browser.download('#export-pre-delivery-checkpoint'),stopping.then(()=>{throw new Error('Diagnostic interrupted during original action');})]);result.originalAction={outcome:'COMPLETED_WITHIN_ORIGINAL_DRIVER_LIMITS',elapsedMs:Date.now()-actionStarted,downloads:files.map(f=>({filename:f.filename,sha256:f.sha256,byteSize:f.bytes.length,path:f.path})),notFullJourneyPass:true};}
-           catch(e){result.originalAction={outcome:'FAILED_ORIGINAL_ACTION',elapsedMs:Date.now()-actionStarted,error:String(e.stack||e),code:e.code||null,timeoutMs:e.timeoutMs||null,verifierObservation:e.verifierObservation||null};}
-           save('original-action.json',result.originalAction);await stopProfiles();
-           if(!interrupted&&result.originalAction.outcome==='FAILED_ORIGINAL_ACTION'){
-            await startProfiles('passive-after-original-failure');
-            while(!interrupted&&Date.now()<captureEnds){recordDescendants();try{await discoverTargets();const observation=await snapshot();log('passive-observations.jsonl',{elapsedSinceClickMs:Date.now()-actionStarted,observation});if(observation.ready&&!observation.inert&&observation.busy!=='true'){result.eventualInteractive={elapsedSinceClickMs:Date.now()-actionStarted,observation};break;}}catch(e){log('passive-observations.jsonl',{error:String(e)});}await Promise.race([delay(5000),stopping]);}
-           }
-           await stopProfiles(); // Exclude the following diagnostic project read from passive CPU samples.
-           if(!interrupted&&Date.now()<captureEnds&&(!result.originalAction?.error||result.eventualInteractive)){try{const after=await bounded(browser.readWorkflow([30]),'final stored state',Math.max(1,Math.min(20000,captureEnds-Date.now())));save('after-state.json',{jobId:after.project.job.JOB_ID,revision:after.project.revision,projectSha256:after.project.projectSha256,workflow:after.workflow});}catch(e){save('after-state-error.json',{error:String(e)});}}
-          }catch(e){result.setupOrDiagnosticError=String(e.stack||e);process.exitCode=1;}
-          finally{
-           finalizing=true;clearTimeout(cap);result.interrupted=interrupted;recordDescendants();
-           if(connection)try{await bounded(stopProfiles(),'final CPU profile capture',20000);}catch(error){result.profileGaps.push({phase:'finalization',error:String(error)});log('profiles.jsonl',{phase:'finalization',error:String(error)});}
-           if(browser){save('driver-events.json',browser.events);save('driver-exceptions.json',browser.exceptions());try{save('final-runtime-observation.json',await bounded(browser.executionEvidence(),'final strict observer'));}catch(e){log('diagnostic-errors.jsonl',{phase:'runtime-observation',error:String(e)});}try{await browser.close();}catch(e){log('diagnostic-errors.jsonl',{phase:'native-driver-close',error:String(e)});}}
-           if(connection)connection.close();
-           if(server&&server.exitCode===null&&server.signalCode===null){serverShutdownRequested=true;server.kill('SIGTERM');}
-           for(let i=0;i<100;i++){const live=[...observedProcesses.values()].filter(old=>{const current=proc(old.pid);return current&&current.startedTicks===old.startedTicks&&current.state!=='Z';});if(!live.length&&(!opening||openingSettled)&&(!server||server.exitCode!==null||server.signalCode!==null)){cleanupComplete=true;break;}await delay(100);}
-           const completed=[];for(const e of downloadEvents.filter(e=>e.method==='Browser.downloadProgress'&&e.params.state==='completed')){const {guid,receivedBytes}=e.params;assert.match(guid,/^[a-zA-Z0-9-]+$/);const file=path.join(out,'replay/downloads',guid);try{const bytes=fs.readFileSync(file);assert.equal(bytes.length,receivedBytes);completed.push({guid,path:file,byteSize:bytes.length,sha256:sha(bytes),suggestedFilename:downloadEvents.find(x=>x.method==='Browser.downloadWillBegin'&&x.params.guid===guid)?.params.suggestedFilename||null});}catch(error){completed.push({guid,error:String(error)});}}save('native-downloads.json',completed);
-           result.cleanup={complete:cleanupComplete,driverClose:'Unchanged driver SIGKILL; only the owned live HTTP child receives SIGTERM',openingSettled,serverExit,serverError,observedProcesses:[...observedProcesses.values()],stillLive:[...observedProcesses.values()].filter(old=>{const n=proc(old.pid);return n&&n.startedTicks===old.startedTicks&&n.state!=='Z';})};
-           result.finishedAt=new Date().toISOString();result.elapsedMs=Date.now()-started;result.sourceClean=git('status','--porcelain')==='';result.sourceCommitAfter=git('rev-parse','HEAD');
-           save('diagnostic-result.json',result);if(!cleanupComplete||result.profileGaps.length||serverError||serverExit?.shutdownRequested!==true||!result.sourceClean||result.sourceCommitAfter!==EXPECTED||interrupted)process.exitCode=1;
-           console.log(JSON.stringify({diagnosticOnly:true,eligibleVerificationReceipt:false,originalAction:result.originalAction?.outcome||null,eventualInteractiveMs:result.eventualInteractive?.elapsedSinceClickMs||null,cleanupComplete,setupOrDiagnosticError:result.setupOrDiagnosticError||null}));
-           process.removeListener('SIGTERM',onSignal);process.removeListener('SIGINT',onSignal);
-          }
-          REPLAY
-          cat > "$RUNNER_TEMP/stage30-completion-supervisor.mjs" <<'SUPERVISOR'
-          // Source-owned bounded process cleanup, not a verification owner or receipt.
-          import fs from 'node:fs';
-          import path from 'node:path';
-          import assert from 'node:assert/strict';
-          import {execFileSync} from 'node:child_process';
-          import {pathToFileURL} from 'node:url';
-          const [replay,outArg]=process.argv.slice(2),out=path.resolve(outArg),source=process.cwd();
-          assert.equal(execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),'315f85b3dc34c274e4470fe4e84e9dcebc9a1551');
-          assert.equal(execFileSync('git',['status','--porcelain'],{encoding:'utf8'}).trim(),'');
-          assert(!process.env.NODE_OPTIONS,'No receipt preload or inherited heap override');
-          for(const key of Object.keys(process.env))assert(!/^(CLOSED_LOOP_|VERIFIER_|CONFORMANCE_)/.test(key),'Unexpected inherited owner/receipt environment: '+key);
-          const {executeGate}=await import(pathToFileURL(path.join(source,'verify-conformance-regressions.mjs')));
-          const controller=new AbortController(),relay=signal=>controller.abort(signal);
-          process.on('SIGTERM',relay);process.on('SIGINT',relay);
-          try{
-           const result=await executeGate({name:'checkpoint-completion-diagnostic',command:process.execPath,args:[path.resolve(replay),out]}, {cwd:source,directory:path.join(out,'supervisor'),signal:controller.signal,timeoutMs:3900000,killGraceMs:10000,maxOutputBytes:64*1024*1024,forwardOutput:true,requireJson:false});
-           fs.writeFileSync(path.join(out,'supervisor-result.json'),JSON.stringify({diagnosticOnly:true,eligibleVerificationReceipt:false,notCompleteJourney:true,sourceRoot:source,...result},null,2)+'\n');
-           if(result.exitCode!==0||result.signal||result.reason||result.error)process.exitCode=1;
-          }finally{process.removeListener('SIGTERM',relay);process.removeListener('SIGINT',relay);}
-          SUPERVISOR
-          cp "$RUNNER_TEMP/stage30-completion-restore.py" "$RUNNER_TEMP/stage30-completion-replay.mjs" "$RUNNER_TEMP/stage30-completion-supervisor.mjs" "$DIAG_OUT/"
-      - name: Restore an authenticated disposable native-profile copy
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 "$RUNNER_TEMP/stage30-completion-restore.py" --archive "$DIAG_OUT/original.zip" --directory "$DIAG_OUT/replay" | tee "$DIAG_OUT/restore.log"
-      - name: Build the unchanged original source with original provenance
-        working-directory: app
-        shell: bash
-        run: |
-          set -euo pipefail
           test "$(git rev-parse HEAD)" = 315f85b3dc34c274e4470fe4e84e9dcebc9a1551
           test "$(git rev-parse 'HEAD^{tree}')" = 24735288da9f734997c1920c111ad4d472e743e5
           test -z "$(git status --porcelain)"
+          node --version | tee "$DIAG_OUT/node-version.txt"
+          test "$(node --version)" = v22.23.3
           echo '8352b036eca02dfd86bb441df4ea3fe0ea54b9ad6bcaaee9a000219ddfae09c5  TEST_PROJECT.json' | sha256sum --check
-          node build-static-site.mjs --out "$DIAG_OUT/site" --source-commit 315f85b3dc34c274e4470fe4e84e9dcebc9a1551 --workflow-run 42374851354 | tee "$DIAG_OUT/build.log"
-          test -z "$(git status --porcelain)"
-      - name: Capture one original-budget click and up to 60-minute diagnostic window
+          git rev-parse HEAD > "$DIAG_OUT/source-commit-before.txt"
+          git rev-parse 'HEAD^{tree}' > "$DIAG_OUT/source-tree-before.txt"
+          uname -a > "$DIAG_OUT/uname.txt"
+      - name: Require the original installed Chrome
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$BROWSER" --product-version | tee "$DIAG_OUT/chrome-version.txt"
+          test "$("$BROWSER" --product-version)" = 156.0.8078.79
+      - name: Materialize external diagnostic supervision
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > "$RUNNER_TEMP/frozen50-browser-baseline-runner.mjs" <<'EXTERNAL_0'
+          // Diagnostic namespace; invokes the unchanged, normal browser collector CLI.
+          import assert from 'node:assert/strict';
+          import fs from 'node:fs';
+          import path from 'node:path';
+          import http from 'node:http';
+          import {execFileSync} from 'node:child_process';
+          import {createHash} from 'node:crypto';
+          import {pathToFileURL} from 'node:url';
+          const [suite, outArg] = process.argv.slice(2), out = path.resolve(outArg), source = process.cwd();
+          assert(['verify-mobile-capability-journey.mjs', 'verify-browser-recovery.mjs'].includes(suite));
+          const git = (...args) => execFileSync('git', args, {encoding: 'utf8'}).trim();
+          const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+          const expected = '315f85b3dc34c274e4470fe4e84e9dcebc9a1551';
+          assert.equal(git('rev-parse', 'HEAD'), expected);
+          assert.equal(git('rev-parse', 'HEAD^{tree}'), '24735288da9f734997c1920c111ad4d472e743e5');
+          assert.equal(git('status', '--porcelain'), '');
+          assert.equal(process.version, 'v22.23.3'); assert.equal(process.platform, 'linux'); assert.equal(process.arch, 'x64');
+          assert.equal(execFileSync(process.env.BROWSER, ['--product-version'], {encoding: 'utf8'}).trim(), '156.0.8078.79');
+          assert.equal(process.env.NODE_OPTIONS, '--import ' + path.join(source, 'verification-evidence-preload.mjs'));
+          assert.equal(process.env.CLOSED_LOOP_VERIFICATION_SOURCE_ROOT, source);
+          assert.equal(process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS, path.join(out, 'receipts'));
+          assert.equal(process.env.VERIFIER_CHILD_EVIDENCE_DIRECTORY, path.join(out, 'children'));
+          assert.equal(process.env.STATIC_SITE_ROOT, path.join(out, 'site'));
+          assert.equal(process.env.MOBILE_EVIDENCE_DIR, path.join(out, 'mobile-capability-evidence'));
+          assert.equal(process.env.RECOVERY_EVIDENCE_DIR, path.join(out, 'recovery-browser-evidence'));
+          for (const key of ['OPERATOR_DRIVER_MODULE', 'BASELINE_COMMIT']) assert(!process.env[key], 'Unexpected diagnostic override: ' + key);
+          const {executeGate} = await import(pathToFileURL(path.join(source, 'verify-conformance-regressions.mjs')));
+          const {evidenceFingerprint} = await import(pathToFileURL(path.join(source, 'verification-evidence.mjs')));
+          const {browserVerificationCatalog} = await import(pathToFileURL(path.join(source, 'verification-evidence-catalog.mjs')));
+          assert.equal(browserVerificationCatalog[suite].timeoutMs, 600000);
+          assert(fs.readFileSync('operator-browser-driver.mjs', 'utf8').includes('captureExecution=false,actionTimeoutMs=90000}={}'));
+          const fingerprint = evidenceFingerprint(source);
+          assert.equal(fingerprint.sourceCommit, expected);
+          assert.equal(fingerprint.sourceInputsSha256, '7fdf2a3ea62b617960895cc939cb719cd172107f6d001c83b7e428a751d77c54');
+          fs.writeFileSync(path.join(out, 'source-identity-before.json'), JSON.stringify(fingerprint, null, 2) + '\n');
+          const site = path.join(out, 'site'), manifest = fs.readFileSync(path.join(site, 'closed-loop-deployment-manifest.json'));
+          const requests = [], server = http.createServer((request, response) => {
+            try {
+              const pathname = decodeURIComponent(new URL(request.url, 'http://127.0.0.1').pathname);
+              const file = path.resolve(site, '.' + (pathname === '/' ? '/index.html' : pathname));
+              if (request.method !== 'GET' || !file.startsWith(site + path.sep) || !fs.statSync(file).isFile()) throw new Error('Unavailable path');
+              const bytes = fs.readFileSync(file), type = file.endsWith('.html') ? 'text/html; charset=utf-8' : file.endsWith('.js') ? 'text/javascript; charset=utf-8' : file.endsWith('.css') ? 'text/css; charset=utf-8' : file.endsWith('.json') ? 'application/json' : 'application/octet-stream';
+              requests.push({path: pathname, byteSize: bytes.length, sha256: sha(bytes)});
+              response.writeHead(200, {'Content-Type': type, 'Content-Length': bytes.length, 'Cache-Control': 'no-store'}); response.end(bytes);
+            } catch { response.writeHead(404); response.end(); }
+          });
+          const controller = new AbortController(), relay = signal => controller.abort(signal);
+          process.on('SIGTERM', relay); process.on('SIGINT', relay);
+          let execution = null;
+          try {
+            await new Promise((resolve, reject) => { server.once('error', reject); server.listen(4173, '127.0.0.1', resolve); });
+            const response = await fetch('http://127.0.0.1:4173/closed-loop-deployment-manifest.json', {signal: AbortSignal.timeout(5000)});
+            assert(response.ok); assert.deepEqual(Buffer.from(await response.arrayBuffer()), manifest);
+            // Outer600s matches the normal workflow bound; collector's original catalog
+            // child also remains600s and its unchanged driver action boundary is90s.
+            execution = await executeGate({name: 'diagnostic-' + suite, command: process.execPath, args: ['collect-verification-evidence.mjs', '--browser-suite=' + suite, '--browser-scope=LOCAL']}, {cwd: source, directory: path.join(out, 'supervisor'), signal: controller.signal, timeoutMs: 600000, killGraceMs: 10000, maxOutputBytes: 64 * 1024 * 1024, forwardOutput: true, requireJson: false});
+            fs.writeFileSync(path.join(out, 'normal-cli-result.json'), JSON.stringify({diagnosticOnly: true, requiredCiCheck: false, sourceCommit: expected, suite, actionTimeoutMs: 90000, catalogTimeoutMs: 600000, ...execution}, null, 2) + '\n');
+            if (execution.exitCode !== 0 || execution.signal || execution.reason || execution.error) process.exitCode = 1;
+          } finally {
+            server.closeAllConnections(); await new Promise(resolve => server.close(resolve));
+            process.removeListener('SIGTERM', relay); process.removeListener('SIGINT', relay);
+            const after = evidenceFingerprint(source);
+            fs.writeFileSync(path.join(out, 'source-identity-after.json'), JSON.stringify(after, null, 2) + '\n');
+            fs.writeFileSync(path.join(out, 'http-resources.json'), JSON.stringify(requests, null, 2) + '\n');
+            assert.equal(git('status', '--porcelain'), ''); assert.deepEqual(after, fingerprint);
+            fs.writeFileSync(path.join(out, 'diagnostic-summary.json'), JSON.stringify({diagnosticOnly: true, requiredCiCheck: false, sourceUnchanged: true, nativeServerClosed: true, suite, result: execution?.outcome || null, originalActionAndCatalogBoundsRetained: true, limits: ['This is the normal original suite in a separate diagnostic workflow; it is not the original required CI job.', 'Synthetic Chromium mobile controls are not physical iPhone acceptance.']}, null, 2) + '\n');
+          }
+          EXTERNAL_0
+          cp "$RUNNER_TEMP/frozen50-browser-baseline-runner.mjs" "$DIAG_OUT/"
+      - name: Build exact original application bytes
         working-directory: app
         shell: bash
         run: |
           set -euo pipefail
-          node "$RUNNER_TEMP/stage30-completion-supervisor.mjs" "$RUNNER_TEMP/stage30-completion-replay.mjs" "$DIAG_OUT"
-      - name: Preserve original archive identity and final source state
+          node build-static-site.mjs --out "$DIAG_OUT/site" --source-commit 315f85b3dc34c274e4470fe4e84e9dcebc9a1551 --workflow-run "$GITHUB_RUN_ID" | tee "$DIAG_OUT/build.log"
+          test -z "$(git status --porcelain)"
+      - name: Execute unchanged normal browser collector with original bounds
+        working-directory: app
+        shell: bash
+        run: |
+          set -euo pipefail
+          export CLOSED_LOOP_VERIFICATION_SOURCE_ROOT="$PWD"
+          export CLOSED_LOOP_VERIFICATION_RECEIPTS="$DIAG_OUT/receipts"
+          export VERIFIER_CHILD_EVIDENCE_DIRECTORY="$DIAG_OUT/children"
+          export NODE_OPTIONS="--import $PWD/verification-evidence-preload.mjs"
+          export STATIC_SITE_ROOT="$DIAG_OUT/site"
+          export PAGE_URL=http://127.0.0.1:4173/
+          export CLOSED_LOOP_BROWSER_SCOPE=LOCAL
+          export MOBILE_EVIDENCE_DIR="$DIAG_OUT/mobile-capability-evidence"
+          export RECOVERY_EVIDENCE_DIR="$DIAG_OUT/recovery-browser-evidence"
+          node "$RUNNER_TEMP/frozen50-browser-baseline-runner.mjs" verify-mobile-capability-journey.mjs "$DIAG_OUT"
+      - name: Preserve exact source state
         if: always()
         working-directory: app
         shell: bash
@@ -343,18 +155,171 @@ jobs:
           set -euo pipefail
           git rev-parse HEAD > "$DIAG_OUT/source-commit-after.txt"
           git status --porcelain > "$DIAG_OUT/source-status-after.txt"
-          if test -f "$DIAG_OUT/original.zip"; then
-            sha256sum "$DIAG_OUT/original.zip" > "$DIAG_OUT/original-archive-after.sha256"
-            echo 'b6a35d9e0eda405d69a240008c444a0502df96c1f2b17c42d696b44d3f295e56  '"$DIAG_OUT/original.zip" | sha256sum --check
-          fi
+          test "$(git rev-parse HEAD)" = 315f85b3dc34c274e4470fe4e84e9dcebc9a1551
           test -z "$(git status --porcelain)"
-      - name: Retain diagnostic artifacts without creating acceptance evidence
+      - name: Retain diagnostic evidence without changing required CI
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: diagnostic-only-stage30-completion-50f53978-${{ github.run_id }}-${{ github.run_attempt }}
+          name: diagnostic-only-mobile-capability-diagnostic-50f53978-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ env.DIAG_OUT }}
-          if-no-files-found: error
           include-hidden-files: true
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 7
+
+  recovery-diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      DIAG_OUT: ${{ github.workspace }}/recovery-diagnostic
+      BROWSER: /usr/bin/google-chrome
+      NODE_OPTIONS: ''
+    steps:
+      - name: Check out the exact original tested application
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: 315f85b3dc34c274e4470fe4e84e9dcebc9a1551
+          path: app
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22.23.3
+      - name: Pin original source and Node runtime
+        working-directory: app
+        shell: bash
+        run: |
+          set -euo pipefail
+          test ! -e "$DIAG_OUT"
+          mkdir "$DIAG_OUT"
+          test "$(git rev-parse HEAD)" = 315f85b3dc34c274e4470fe4e84e9dcebc9a1551
+          test "$(git rev-parse 'HEAD^{tree}')" = 24735288da9f734997c1920c111ad4d472e743e5
+          test -z "$(git status --porcelain)"
+          node --version | tee "$DIAG_OUT/node-version.txt"
+          test "$(node --version)" = v22.23.3
+          echo '8352b036eca02dfd86bb441df4ea3fe0ea54b9ad6bcaaee9a000219ddfae09c5  TEST_PROJECT.json' | sha256sum --check
+          git rev-parse HEAD > "$DIAG_OUT/source-commit-before.txt"
+          git rev-parse 'HEAD^{tree}' > "$DIAG_OUT/source-tree-before.txt"
+          uname -a > "$DIAG_OUT/uname.txt"
+      - name: Require the original installed Chrome
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$BROWSER" --product-version | tee "$DIAG_OUT/chrome-version.txt"
+          test "$("$BROWSER" --product-version)" = 156.0.8078.79
+      - name: Materialize external diagnostic supervision
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > "$RUNNER_TEMP/frozen50-browser-baseline-runner.mjs" <<'EXTERNAL_0'
+          // Diagnostic namespace; invokes the unchanged, normal browser collector CLI.
+          import assert from 'node:assert/strict';
+          import fs from 'node:fs';
+          import path from 'node:path';
+          import http from 'node:http';
+          import {execFileSync} from 'node:child_process';
+          import {createHash} from 'node:crypto';
+          import {pathToFileURL} from 'node:url';
+          const [suite, outArg] = process.argv.slice(2), out = path.resolve(outArg), source = process.cwd();
+          assert(['verify-mobile-capability-journey.mjs', 'verify-browser-recovery.mjs'].includes(suite));
+          const git = (...args) => execFileSync('git', args, {encoding: 'utf8'}).trim();
+          const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+          const expected = '315f85b3dc34c274e4470fe4e84e9dcebc9a1551';
+          assert.equal(git('rev-parse', 'HEAD'), expected);
+          assert.equal(git('rev-parse', 'HEAD^{tree}'), '24735288da9f734997c1920c111ad4d472e743e5');
+          assert.equal(git('status', '--porcelain'), '');
+          assert.equal(process.version, 'v22.23.3'); assert.equal(process.platform, 'linux'); assert.equal(process.arch, 'x64');
+          assert.equal(execFileSync(process.env.BROWSER, ['--product-version'], {encoding: 'utf8'}).trim(), '156.0.8078.79');
+          assert.equal(process.env.NODE_OPTIONS, '--import ' + path.join(source, 'verification-evidence-preload.mjs'));
+          assert.equal(process.env.CLOSED_LOOP_VERIFICATION_SOURCE_ROOT, source);
+          assert.equal(process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS, path.join(out, 'receipts'));
+          assert.equal(process.env.VERIFIER_CHILD_EVIDENCE_DIRECTORY, path.join(out, 'children'));
+          assert.equal(process.env.STATIC_SITE_ROOT, path.join(out, 'site'));
+          assert.equal(process.env.MOBILE_EVIDENCE_DIR, path.join(out, 'mobile-capability-evidence'));
+          assert.equal(process.env.RECOVERY_EVIDENCE_DIR, path.join(out, 'recovery-browser-evidence'));
+          for (const key of ['OPERATOR_DRIVER_MODULE', 'BASELINE_COMMIT']) assert(!process.env[key], 'Unexpected diagnostic override: ' + key);
+          const {executeGate} = await import(pathToFileURL(path.join(source, 'verify-conformance-regressions.mjs')));
+          const {evidenceFingerprint} = await import(pathToFileURL(path.join(source, 'verification-evidence.mjs')));
+          const {browserVerificationCatalog} = await import(pathToFileURL(path.join(source, 'verification-evidence-catalog.mjs')));
+          assert.equal(browserVerificationCatalog[suite].timeoutMs, 600000);
+          assert(fs.readFileSync('operator-browser-driver.mjs', 'utf8').includes('captureExecution=false,actionTimeoutMs=90000}={}'));
+          const fingerprint = evidenceFingerprint(source);
+          assert.equal(fingerprint.sourceCommit, expected);
+          assert.equal(fingerprint.sourceInputsSha256, '7fdf2a3ea62b617960895cc939cb719cd172107f6d001c83b7e428a751d77c54');
+          fs.writeFileSync(path.join(out, 'source-identity-before.json'), JSON.stringify(fingerprint, null, 2) + '\n');
+          const site = path.join(out, 'site'), manifest = fs.readFileSync(path.join(site, 'closed-loop-deployment-manifest.json'));
+          const requests = [], server = http.createServer((request, response) => {
+            try {
+              const pathname = decodeURIComponent(new URL(request.url, 'http://127.0.0.1').pathname);
+              const file = path.resolve(site, '.' + (pathname === '/' ? '/index.html' : pathname));
+              if (request.method !== 'GET' || !file.startsWith(site + path.sep) || !fs.statSync(file).isFile()) throw new Error('Unavailable path');
+              const bytes = fs.readFileSync(file), type = file.endsWith('.html') ? 'text/html; charset=utf-8' : file.endsWith('.js') ? 'text/javascript; charset=utf-8' : file.endsWith('.css') ? 'text/css; charset=utf-8' : file.endsWith('.json') ? 'application/json' : 'application/octet-stream';
+              requests.push({path: pathname, byteSize: bytes.length, sha256: sha(bytes)});
+              response.writeHead(200, {'Content-Type': type, 'Content-Length': bytes.length, 'Cache-Control': 'no-store'}); response.end(bytes);
+            } catch { response.writeHead(404); response.end(); }
+          });
+          const controller = new AbortController(), relay = signal => controller.abort(signal);
+          process.on('SIGTERM', relay); process.on('SIGINT', relay);
+          let execution = null;
+          try {
+            await new Promise((resolve, reject) => { server.once('error', reject); server.listen(4173, '127.0.0.1', resolve); });
+            const response = await fetch('http://127.0.0.1:4173/closed-loop-deployment-manifest.json', {signal: AbortSignal.timeout(5000)});
+            assert(response.ok); assert.deepEqual(Buffer.from(await response.arrayBuffer()), manifest);
+            // Outer600s matches the normal workflow bound; collector's original catalog
+            // child also remains600s and its unchanged driver action boundary is90s.
+            execution = await executeGate({name: 'diagnostic-' + suite, command: process.execPath, args: ['collect-verification-evidence.mjs', '--browser-suite=' + suite, '--browser-scope=LOCAL']}, {cwd: source, directory: path.join(out, 'supervisor'), signal: controller.signal, timeoutMs: 600000, killGraceMs: 10000, maxOutputBytes: 64 * 1024 * 1024, forwardOutput: true, requireJson: false});
+            fs.writeFileSync(path.join(out, 'normal-cli-result.json'), JSON.stringify({diagnosticOnly: true, requiredCiCheck: false, sourceCommit: expected, suite, actionTimeoutMs: 90000, catalogTimeoutMs: 600000, ...execution}, null, 2) + '\n');
+            if (execution.exitCode !== 0 || execution.signal || execution.reason || execution.error) process.exitCode = 1;
+          } finally {
+            server.closeAllConnections(); await new Promise(resolve => server.close(resolve));
+            process.removeListener('SIGTERM', relay); process.removeListener('SIGINT', relay);
+            const after = evidenceFingerprint(source);
+            fs.writeFileSync(path.join(out, 'source-identity-after.json'), JSON.stringify(after, null, 2) + '\n');
+            fs.writeFileSync(path.join(out, 'http-resources.json'), JSON.stringify(requests, null, 2) + '\n');
+            assert.equal(git('status', '--porcelain'), ''); assert.deepEqual(after, fingerprint);
+            fs.writeFileSync(path.join(out, 'diagnostic-summary.json'), JSON.stringify({diagnosticOnly: true, requiredCiCheck: false, sourceUnchanged: true, nativeServerClosed: true, suite, result: execution?.outcome || null, originalActionAndCatalogBoundsRetained: true, limits: ['This is the normal original suite in a separate diagnostic workflow; it is not the original required CI job.', 'Synthetic Chromium mobile controls are not physical iPhone acceptance.']}, null, 2) + '\n');
+          }
+          EXTERNAL_0
+          cp "$RUNNER_TEMP/frozen50-browser-baseline-runner.mjs" "$DIAG_OUT/"
+      - name: Build exact original application bytes
+        working-directory: app
+        shell: bash
+        run: |
+          set -euo pipefail
+          node build-static-site.mjs --out "$DIAG_OUT/site" --source-commit 315f85b3dc34c274e4470fe4e84e9dcebc9a1551 --workflow-run "$GITHUB_RUN_ID" | tee "$DIAG_OUT/build.log"
+          test -z "$(git status --porcelain)"
+      - name: Execute unchanged normal browser collector with original bounds
+        working-directory: app
+        shell: bash
+        run: |
+          set -euo pipefail
+          export CLOSED_LOOP_VERIFICATION_SOURCE_ROOT="$PWD"
+          export CLOSED_LOOP_VERIFICATION_RECEIPTS="$DIAG_OUT/receipts"
+          export VERIFIER_CHILD_EVIDENCE_DIRECTORY="$DIAG_OUT/children"
+          export NODE_OPTIONS="--import $PWD/verification-evidence-preload.mjs"
+          export STATIC_SITE_ROOT="$DIAG_OUT/site"
+          export PAGE_URL=http://127.0.0.1:4173/
+          export CLOSED_LOOP_BROWSER_SCOPE=LOCAL
+          export MOBILE_EVIDENCE_DIR="$DIAG_OUT/mobile-capability-evidence"
+          export RECOVERY_EVIDENCE_DIR="$DIAG_OUT/recovery-browser-evidence"
+          node "$RUNNER_TEMP/frozen50-browser-baseline-runner.mjs" verify-browser-recovery.mjs "$DIAG_OUT"
+      - name: Preserve exact source state
+        if: always()
+        working-directory: app
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rev-parse HEAD > "$DIAG_OUT/source-commit-after.txt"
+          git status --porcelain > "$DIAG_OUT/source-status-after.txt"
+          test "$(git rev-parse HEAD)" = 315f85b3dc34c274e4470fe4e84e9dcebc9a1551
+          test -z "$(git status --porcelain)"
+      - name: Retain diagnostic evidence without changing required CI
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: diagnostic-only-recovery-diagnostic-50f53978-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.DIAG_OUT }}
+          include-hidden-files: true
+          if-no-files-found: error
           compression-level: 0
           retention-days: 7
