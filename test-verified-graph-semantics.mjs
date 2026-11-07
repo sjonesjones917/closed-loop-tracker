@@ -5,6 +5,8 @@
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
+import vm from 'node:vm';
+import {projectStoreRuntime} from './test-project-store-runtime.mjs';
 const original=`function verifiedGraphNodes(value){
   const nodes=new Map(),active=new WeakSet(),pending=[[value,false]];
   while(pending.length){
@@ -57,6 +59,24 @@ const factories=[];const add=(name,fn)=>factories.push([name,fn]);
 function state(){const trace=[];let calls=0;const observe=(name,target,hooks={})=>new Proxy(target,{getPrototypeOf(t){trace.push(name+':prototype');return hooks.proto?hooks.proto(t):Reflect.getPrototypeOf(t)},ownKeys(t){trace.push(name+':keys');return hooks.keys?hooks.keys(t):Reflect.ownKeys(t)},getOwnPropertyDescriptor(t,k){trace.push(name+':descriptor:'+String(k));return hooks.descriptor?hooks.descriptor(t,k):Reflect.getOwnPropertyDescriptor(t,k)},get(t,k,r){trace.push(name+':get:'+String(k));return Reflect.get(t,k,r)}});return {trace,observe,getCalls:()=>calls,getter(){calls++;throw Error('GETTER_CALLED')}};}
 add('two-throwing-proxy-order',()=>{const s=state();return {...s,left:{nested:s.observe('L',{}, {proto(){throw new TypeError('LEFT_TRAP')}})},right:s.observe('R',{}, {proto(){throw new RangeError('RIGHT_TRAP')}})}});
 add('paired-v2-false-to-true-counterexample',()=>{const s=state(),right={a:1,b:2};return {...s,right,left:s.observe('L',{a:1,b:2},{descriptor(t,k){if(k==='b')right.a=999;return Reflect.getOwnPropertyDescriptor(t,k)}})}});
+for(const kind of ['transient-add-before-later-descriptor','transient-add-before-later-refusal','primitive-leaf-bookkeeping'])add(kind,()=>{
+ const s=state(),add=WeakSet.prototype.add,remove=WeakSet.prototype.delete;
+ const left={first:kind==='primitive-leaf-bookkeeping'?1:{value:1},late:2},right=structuredClone(left);
+ const cleanup=()=>{WeakSet.prototype.add=add;WeakSet.prototype.delete=remove;};
+ return {...s,right,cleanup,left:s.observe('L',left,{descriptor(target,key){
+  if(kind==='primitive-leaf-bookkeeping'&&key==='late'){
+   WeakSet.prototype.add=function(value){s.trace.push('active:add');WeakSet.prototype.add=add;return Reflect.apply(add,this,[value]);};
+   WeakSet.prototype.delete=function(value){s.trace.push('active:delete');WeakSet.prototype.delete=remove;return Reflect.apply(remove,this,[value]);};
+  }else if(kind!=='primitive-leaf-bookkeeping'){
+   if(key==='first')WeakSet.prototype.add=function(){throw new Error('TRANSIENT_COLLECTION_SWAP');};
+   if(key==='late'){
+    if(kind==='transient-add-before-later-refusal')throw new RangeError('LATE_DESCRIPTOR_ORACLE');
+    WeakSet.prototype.add=add;
+   }
+  }
+  return Reflect.getOwnPropertyDescriptor(target,key);
+ }})};
+});
 for(const side of ['left','right'])for(const kind of ['throw-descriptor','throw-prototype','throw-symbols','add-symbol','add-hidden','add-accessor','change-prototype','change-late-value','delete-late','deep-cycle'])add(side+':'+kind,()=>{const s=state(),left={first:1,late:{a:1,b:2}},right={first:1,late:{a:1,b:2}},target=side==='left'?left:right,other=side==='left'?right:left;let fired=false;const hooks={descriptor(t,k){if(!fired&&k==='first'){fired=true;if(kind==='throw-descriptor')throw new TypeError(side+' DESCRIPTOR');if(kind==='add-symbol')other[Symbol('new')]=1;if(kind==='add-hidden')Object.defineProperty(other,'hidden',{value:1});if(kind==='add-accessor')Object.defineProperty(other,'access',{enumerable:true,get:s.getter});if(kind==='change-prototype')Object.setPrototypeOf(other,{inherited:true});if(kind==='change-late-value')other.late.a=999;if(kind==='delete-late')delete other.late;if(kind==='deep-cycle')other.late.back=other;}return Reflect.getOwnPropertyDescriptor(t,k)}};if(kind==='throw-prototype')hooks.proto=()=>{throw new RangeError(side+' PROTOTYPE')};if(kind==='throw-symbols')hooks.keys=()=>{throw new SyntaxError(side+' SYMBOLS')};return {...s,left:side==='left'?s.observe('L',left,hooks):left,right:side==='right'?s.observe('R',right,hooks):right};});
 for(const kind of ['reordered-keys','shared-versus-duplicated','wide-shared','sparse','sparse-versus-undefined','array-prototype-null','array-extra-key','nonenumerable','accessor','symbol-key','symbol-value','function','asymmetric-cycle','same-reference-cycle','null-prototype','negative-zero','NaN','infinities','bigint','date-fallback','map-fallback','deep-dag'])add(kind,()=>{const s=state();let left={a:1,b:2},right={a:1,b:2};switch(kind){case'reordered-keys':right={b:2,a:1};break;case'shared-versus-duplicated':{const a={x:2};left={a,b:a};right={a:{x:2},b:{x:2}};break;}case'wide-shared':{const a={x:{v:3}};left={rows:Array(80).fill(a)};right={rows:Array.from({length:80},()=>({x:{v:3}}))};break;}case'sparse':left=Array(5);left[3]=2;right=Array(5);right[3]=2;break;case'sparse-versus-undefined':left=Array(2);right=[undefined,undefined];break;case'array-prototype-null':left=[1];right=[1];Object.setPrototypeOf(left,null);break;case'array-extra-key':left=[1];right=[1];left.extra=2;right.extra=2;break;case'nonenumerable':Object.defineProperty(left,'hidden',{value:2});break;case'accessor':Object.defineProperty(left,'x',{enumerable:true,get:s.getter});break;case'symbol-key':left[Symbol('x')]=2;break;case'symbol-value':left.a=Symbol('x');break;case'function':left.a=()=>2;break;case'asymmetric-cycle':right.b={child:{}};right.b.child.back=right.b;break;case'same-reference-cycle':left.self=left;right=left;break;case'null-prototype':left=Object.assign(Object.create(null),{a:1,b:2});break;case'negative-zero':left.a=-0;right.a=0;break;case'NaN':left.a=NaN;right.a=NaN;break;case'infinities':left={pos:Infinity,neg:-Infinity};right={pos:Infinity,neg:-Infinity};break;case'bigint':left.a=2n;right.a=2n;break;case'date-fallback':left=new Date(10);right=new Date(10);break;case'map-fallback':left=new Map([['x',{v:2}]]);right=new Map([['x',{v:2}]]);break;case'deep-dag':{const shared={z:3};left={x:shared,y:{x:shared},z:{y:{x:shared}}};right={x:{z:3},y:{x:{z:3}},z:{y:{x:{z:3}}}};break;}
 }
@@ -64,8 +84,53 @@ return {...s,left,right};});
 const results=[];
 for(const [name,make]of factories)for(const operation of ['graph','copy','equal']){
  const observations=[];
- for(const [label,testSource]of [['original',original],['candidate',source]]){const s=make(),events=[],api=load(testSource,events);let result,error;try{const raw=operation==='equal'?api.equal(s.left,s.right):api[operation](s.left);result=operation==='equal'?raw:operation==='graph'?graphDescription(raw):describe(raw);}catch(e){error={name:e.name,message:e.message}}observations.push({result,error,events,trace:s.trace,getterCalls:s.getCalls()});}
+ for(const [label,testSource]of [['original',original],['candidate',source]]){const s=make(),events=[],api=load(testSource,events);let result,error;try{const raw=operation==='equal'?api.equal(s.left,s.right):api[operation](s.left);result=operation==='equal'?raw:operation==='graph'?graphDescription(raw):describe(raw);}catch(e){error={name:e.name,message:e.message}}finally{s.cleanup?.();}observations.push({result,error,events,trace:s.trace,getterCalls:s.getCalls()});}
  assert.deepEqual(observations[1],observations[0],name+':'+operation);if(operation==='equal'){assert.equal(observations[1].getterCalls,0);if(name==='paired-v2-false-to-true-counterexample')assert.equal(observations[1].result,false);if(name==='two-throwing-proxy-order')assert.deepEqual(observations[1].error,{name:'TypeError',message:'LEFT_TRAP'});}results.push({caseId:name+':'+operation,equivalent:true,result:observations[1].result??null,error:observations[1].error??null,traceCount:observations[1].trace.length,cloneFallback:observations[1].events.length});
 }
 return {passed:true,sourceSha256:crypto.createHash('sha256').update(source).digest('hex'),referenceStoreSha256:'aec7fc8dc313cf5fe9dec966879426017e5fd272210219821f9b6a6e113cf14b',freshFixturesPerImplementation:true,caseCount:results.length,cases:results,boundary:'Extracted actual private graph validator/copy/equality functions with fresh synthetic graphs and proxy inspection traps. Original reflection order, captured values, alias topology, fallback and fixed false/throw counterexamples; no browser or storage-admission proof.'};
+}
+
+// A public operational ingress accepts the same canonical values while a Proxy
+// briefly replaces a collection native between two descriptor observations.
+// The former early-bookkeeping optimization refused before the restoring trap.
+export async function verifyPublicGraphReflectionOrder({source=fs.readFileSync(new URL('./project-store.js',import.meta.url),'utf8')}={}){
+ const begin=source.indexOf('function verifiedGraphNodes(value){'),end=source.indexOf('function protectedGraphNodes(value,ops){',begin);
+ assert.ok(begin>=0&&end>begin,'PUBLIC_GRAPH_ORDER_OWNER_ORACLE');
+ const section=source.slice(begin,end),phase='    nodes.set(item,entries);active.add(item);pending.push(item,true);\n    for(let index=1;index<entries.length;index+=2)pending.push(entries[index],false);';
+ assert.equal(section.split(phase).length,2,'PUBLIC_GRAPH_ORDER_FAULT_ANCHOR_ORACLE');
+ const former=section.replace('const entries=[];','const entries=[];let hasChildren=false;').replace('entries.push(key,descriptor.value);',`const child=descriptor.value;entries.push(key,child);
+      const type=typeof child;
+      if(child!==null&&(type==='object'||type==='function'||type==='symbol')){
+        if(!hasChildren){active.add(item);pending.push(item,true);hasChildren=true;}
+        pending.push(child,false);
+      }`).replace(phase,'    nodes.set(item,entries);');
+ const run=async storeSource=>{
+  const r=projectStoreRuntime({storageWorker:false,sourceOverrides:{'project-store.js':storeSource}}),prior=await r.store.createProject({commandId:'GRAPH-REFLECTION-ORDER'}),next=r.copy(prior);
+  next.activeView='Records';r.runtime.__graphCandidate=next;
+  const candidate=vm.runInContext(`(()=>{
+   const add=WeakSet.prototype.add;globalThis.__graphTrace=[];globalThis.__restoreGraphNative=()=>{WeakSet.prototype.add=add;};
+   return new Proxy(__graphCandidate,{getOwnPropertyDescriptor(target,key){
+    if(new Error().stack.includes('verifiedGraphNodes')){
+     __graphTrace.push(key);
+     if(key==='job')WeakSet.prototype.add=function(){throw new Error('TRANSIENT_COLLECTION_SWAP');};
+     if(key==='stages')WeakSet.prototype.add=add;
+    }
+    return Reflect.getOwnPropertyDescriptor(target,key);
+   }});
+  })()`,r.runtime);
+  let outcome;
+  try{const saved=await r.store.writeProject(candidate,{operational:true,expectedProjectRevision:prior.revision,expectedStateSha256:prior.projectSha256});outcome={accepted:true,view:saved.activeView,revision:saved.revision,digest:saved.projectSha256};}
+  catch(error){outcome={accepted:false,name:error.name,code:error.code??null,message:error.message};}
+  finally{r.runtime.__restoreGraphNative();}
+  const stored=await r.store.readProject(prior.job.JOB_ID);
+  return {outcome,trace:Array.from(r.runtime.__graphTrace),keys:Object.getOwnPropertyNames(next),prior:{view:prior.activeView,revision:prior.revision,digest:prior.projectSha256},stored:{view:stored.activeView,revision:stored.revision,digest:stored.projectSha256}};
+ };
+ const current=await run(source);
+ assert.deepEqual(current.outcome,{accepted:true,view:'Records',revision:current.prior.revision,digest:current.stored.digest},'PUBLIC_GRAPH_ORDER_OPERATIONAL_WRITE_ORACLE');
+ assert.equal(current.stored.view,'Records');assert.deepEqual(current.trace,[...current.keys,...current.keys],'PUBLIC_GRAPH_ORDER_TWO_COMPLETE_INSPECTIONS');
+ const faulted=await run(source.slice(0,begin)+former+source.slice(end));
+ assert.deepEqual(faulted.outcome,{accepted:false,name:'Error',code:null,message:'TRANSIENT_COLLECTION_SWAP'},'PUBLIC_GRAPH_ORDER_FORMER_REFUSAL_ORACLE');
+ assert.deepEqual(faulted.trace,faulted.keys.slice(0,faulted.keys.indexOf('job')+1),'PUBLIC_GRAPH_ORDER_FORMER_REFLECTION_ORACLE');
+ assert.deepEqual(faulted.stored,faulted.prior,'PUBLIC_GRAPH_ORDER_FAILURE_ATOMICITY_ORACLE');
+ return {passed:true,publicOperationalWrite:true,synthetic:true,actualBrowser:false,completeInspections:2,formerOptimizationRejected:true,formerError:faulted.outcome,failedWritePreservesStoredState:true};
 }

@@ -665,22 +665,18 @@ function verifiedGraphNodes(value){
     if(active.has(item))return null;if(nodes.has(item))continue;
     if(!Array.isArray(item)&&Object.getPrototypeOf(item)!==Object.prototype&&Object.getPrototypeOf(item)!==null)return null;
     if(Object.getOwnPropertySymbols(item).length)return null;
-    const entries=[];let hasChildren=false;
+    const entries=[];
     for(const key of Object.getOwnPropertyNames(item)){
       if(Array.isArray(item)&&key==='length')continue;
       const descriptor=Object.getOwnPropertyDescriptor(item,key);
       if(!descriptor.enumerable||!Object.hasOwn(descriptor,'value'))return null;
-      const child=descriptor.value;
-      entries.push(key,child);
-      // Only objects and unsupported leaves need a visit. Stack them in
-      // insertion order so a later sibling's trap still runs first.
-      const type=typeof child;
-      if(child!==null&&(type==='object'||type==='function'||type==='symbol')){
-        if(!hasChildren){active.add(item);pending.push(item,true);hasChildren=true;}
-        pending.push(child,false);
-      }
+      entries.push(key,descriptor.value);
     }
-    nodes.set(item,entries);
+    // Candidate descriptors can temporarily replace collection methods.
+    // Keep their complete inspection ahead of the historical bookkeeping,
+    // including primitive-only nodes; protected private discovery is separate.
+    nodes.set(item,entries);active.add(item);pending.push(item,true);
+    for(let index=1;index<entries.length;index+=2)pending.push(entries[index],false);
   }
   return nodes;
 }
