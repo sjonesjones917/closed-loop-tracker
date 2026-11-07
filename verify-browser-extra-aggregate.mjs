@@ -14,7 +14,7 @@ import {createExecutionReceipt,validateExecutionReceipt} from './verification-ev
 function darwinProcessState(pid){
  let output;
  try{output=execFileSync('/bin/ps',['-p',String(pid),'-o','pid=,stat='],{encoding:'utf8',timeout:1000,killSignal:'SIGKILL'});}catch(error){if(error.status===1&&error.stdout===''&&error.stderr==='')return null;throw error;}
- const match=/^\s*(\d+)\s+([IRSTUZ][+<>AELNSsVWX]*)\s*$/.exec(output);
+ const match=/^\s*(\d+)\s+([HIRSTUZ?][+<>AELNSsVWX]*)\s*$/.exec(output);
  assert(match&&Number(match[1])===pid,'native process inspection did not identify its exact PID');
  return match[2][0];
 }
@@ -48,6 +48,19 @@ export async function verifyBrowserExtraDarwinGroupControls({onNativeZombie}={})
   const control=inspect(()=>{throw permission;},reader(own+group+' '+group+' Z\n'+(group+1)+' '+group+' '+state+'\n'));
   assert.equal(control.groupHasRunningProcesses(group),true);assert.throws(()=>control.killGroup({pid:group}),error=>error===permission);cases.push('live-'+state+'-permission-refused');
  }
+ for(const [state,label]of [['H','H'],['?','question']]){
+  for(const [mode,output,live]of [
+   ['single',own+group+' '+group+' '+state+'\n',true],
+   ['mixed',own+group+' '+group+' Z\n'+(group+1)+' '+group+' '+state+'E\n',true],
+   ['unrelated',own+group+' '+group+' Z\n'+(group+1)+' '+(group+1)+' '+state+'+\n',false]
+  ]){
+   const control=inspect(()=>{throw permission;},reader(output));
+   assert.equal(control.groupHasRunningProcesses(group),live);
+   if(live)assert.throws(()=>control.killGroup({pid:group}),error=>error===permission);
+   else assert.doesNotThrow(()=>control.killGroup({pid:group}));
+   cases.push(mode==='unrelated'?'different-exact-group-'+label:mode+'-'+label+'-permission-refused');
+  }
+ }
  for(const [name,output]of [
   ['empty',''],['truncated',own+group+' '+group+' Z'],['missing-own-process',group+' '+group+' Z\n'],
   ['malformed-row',own+'not-a-process\n'],['unknown-state',own+group+' '+group+' INVALID\n'],
@@ -55,6 +68,16 @@ export async function verifyBrowserExtraDarwinGroupControls({onNativeZombie}={})
  ]){
   const control=inspect(()=>{throw permission;},reader(output));assert.throws(()=>control.groupHasRunningProcesses(group),/Darwin process/);
   delete permission.cause;assert.throws(()=>control.killGroup({pid:group}),error=>error===permission&&/Darwin process/.test(error.cause?.message));cases.push('inspection-'+name+'-refused');
+  if(name==='malformed-row'){
+   const malformed='bad"\\\t\r'+'\u0001'.repeat(100)+' tail',bounded=inspect(()=>{throw permission;},reader(own+malformed+'\n'));
+   const diagnostic=error=>{
+    const prefix='malformed Darwin process inspection: ';assert(error.message.startsWith(prefix));
+    const encoded=error.message.slice(prefix.length);assert(encoded.length<=160);assert(!/[\r\n\t]/.test(encoded));
+    const decoded=JSON.parse(encoded);assert(decoded.length>0&&malformed.startsWith(decoded));return true;
+   };
+   assert.throws(()=>bounded.groupHasRunningProcesses(group),diagnostic);
+   delete permission.cause;assert.throws(()=>bounded.killGroup({pid:group}),error=>error===permission&&diagnostic(error.cause));
+  }
  }
  for(const code of ['EACCES','ETIMEDOUT','ENOBUFS']){
   const failure=Object.assign(new Error('CONTROLLED_PS_'+code),{code}),control=inspect(()=>{throw permission;},()=>{throw failure;});

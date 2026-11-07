@@ -3886,6 +3886,8 @@ verificationCatalog['verify-final-acceptance.mjs'].checks.push(check('acceptance
 const browserExtraProcessGroupCases=[
  'zombie-only','absent-group','different-exact-group',
  'live-I-permission-refused','live-R-permission-refused','live-S-permission-refused','live-T-permission-refused','live-U-permission-refused',
+ 'single-H-permission-refused','mixed-H-permission-refused','different-exact-group-H',
+ 'single-question-permission-refused','mixed-question-permission-refused','different-exact-group-question',
  'inspection-empty-refused','inspection-truncated-refused','inspection-missing-own-process-refused','inspection-malformed-row-refused',
  'inspection-unknown-state-refused','inspection-unsafe-identity-refused','inspection-duplicate-pid-refused','inspection-extra-column-refused',
  'inspection-EACCES-refused','inspection-ETIMEDOUT-refused','inspection-ENOBUFS-refused','other-error-refused','linux-permission-refused'
@@ -3894,7 +3896,7 @@ verificationCatalog['verify-executed-evidence.mjs'].checks.push(check(
  'receipts.browser-extra-process-group-liveness','executedEvidenceProtection','browserExtraAggregateControl.processGroupProof',undefined,
  'Native owned process-group cleanup and exact permission/inspection refusal controls',{
   basis:'EXECUTED_RECEIPT_AND_PROCESS_ASSERTIONS',
-  expectedDescription:'All21 inspection controls pass, cleanup completes, and Darwin retains its actual zombie-only native reproduction.',
+  expectedDescription:'All27 inspection controls pass, cleanup completes, and Darwin retains its actual zombie-only native reproduction.',
   condition:(value,report)=>Boolean(
    report?.executedEvidenceProtection==='PASS'&&
    closedReportFields(value,['caseName','platform','cases','nativeZombie','testOwnedCleanupComplete'])&&
@@ -3919,10 +3921,10 @@ verificationCatalog['verify-final-acceptance.mjs'].checks.push(check(
  'normativeCatalogConsumers.browserExtraProcessGroupCatalogConsumers',undefined,
  'Independent literal process-group proof fixture and actual report-selector mutation controls',{
   basis:'EXECUTED_REPORT_CONSUMER_ASSERTIONS',
-  expectedDescription:'Exactly41 consumer controls reject missing inspections, wrong platform, incomplete cleanup and altered native proof.',
+  expectedDescription:'Exactly47 consumer controls reject missing inspections, wrong platform, incomplete cleanup and altered native proof.',
   condition:value=>Boolean(
    closedReportFields(value,['passed','cases','caseCount','consumerOnly','syntheticReportFixture','actualProducerExecuted','eligibleReceiptCreated','actualBrowser'])&&
-   value.passed===true&&value.caseCount===41&&exactNamedCases(value.cases,browserExtraProcessGroupConsumerCases)&&
+   value.passed===true&&value.caseCount===47&&exactNamedCases(value.cases,browserExtraProcessGroupConsumerCases)&&
    value.consumerOnly===true&&value.syntheticReportFixture===true&&value.actualProducerExecuted===false&&
    value.eligibleReceiptCreated===false&&value.actualBrowser===false
   )

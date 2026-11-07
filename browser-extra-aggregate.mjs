@@ -133,8 +133,13 @@ function groupHasRunningProcesses(groupId){
   const output=execFileSync('/bin/ps',['-axo','pid=,pgid=,stat='],{encoding:'utf8',timeout:1000,killSignal:'SIGKILL',maxBuffer:4*1024*1024,env:{...process.env,LC_ALL:'C'}});
   check(output.endsWith('\n'),'incomplete Darwin process inspection');
   const rows=output.trim().split('\n').map(line=>{
-   const match=/^\s*(\d+)\s+(\d+)\s+([IRSTUZ][+<>AELNSsVWX]*)\s*$/.exec(line);
-   check(match,'malformed Darwin process inspection');
+   // Apple's native formatter also emits H and ?. Both remain non-Z/live.
+   const match=/^\s*(\d+)\s+(\d+)\s+([HIRSTUZ?][+<>AELNSsVWX]*)\s*$/.exec(line);
+   if(!match){
+    let diagnostic=line.slice(0,158);
+    while(JSON.stringify(diagnostic).length>160)diagnostic=diagnostic.slice(0,-1);
+    check(false,'malformed Darwin process inspection: '+JSON.stringify(diagnostic));
+   }
    const pid=Number(match[1]),pgid=Number(match[2]);
    check(Number.isSafeInteger(pid)&&pid>0&&Number.isSafeInteger(pgid)&&pgid>=0,'invalid Darwin process identity');
    return {pid,pgid,state:match[3][0]};

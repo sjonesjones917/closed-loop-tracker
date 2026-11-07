@@ -1952,6 +1952,8 @@ export function verifyBrowserExtraProcessGroupCatalogConsumers(){
  const required=[
   'zombie-only','absent-group','different-exact-group',
   'live-I-permission-refused','live-R-permission-refused','live-S-permission-refused','live-T-permission-refused','live-U-permission-refused',
+  'single-H-permission-refused','mixed-H-permission-refused','different-exact-group-H',
+  'single-question-permission-refused','mixed-question-permission-refused','different-exact-group-question',
   'inspection-empty-refused','inspection-truncated-refused','inspection-missing-own-process-refused','inspection-malformed-row-refused',
   'inspection-unknown-state-refused','inspection-unsafe-identity-refused','inspection-duplicate-pid-refused','inspection-extra-column-refused',
   'inspection-EACCES-refused','inspection-ETIMEDOUT-refused','inspection-ENOBUFS-refused','other-error-refused','linux-permission-refused'
