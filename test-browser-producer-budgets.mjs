@@ -6,7 +6,7 @@ import {fileURLToPath,pathToFileURL} from 'node:url';
 import {execFileSync} from 'node:child_process';
 import {runVerifier} from './verify-conformance-regressions.mjs';
 
-const journey='verify-complete-operator-journey.mjs',journeyMs=240*60*1000,ordinaryMs=10*60*1000;
+const journey='verify-complete-operator-journey.mjs',journeyMs=330*60*1000,ordinaryMs=10*60*1000;
 const ordinary=['verify-browser.mjs','verify-browser-extra.mjs','verify-human-stage-walkthrough.mjs','verify-mobile-stage-action.mjs','verify-mobile-capability-journey.mjs','verify-browser-recovery.mjs'];
 const dispatch='const result=await runVerifier(',option='timeout:definition.timeoutMs';
 const oracle='BROWSER_PRODUCER_BUDGET_ORACLE';
@@ -22,9 +22,22 @@ export async function verifyBrowserProducerBudgets(){
  function assertWorkflowBudgets(text){
   const budgets=[...text.matchAll(/run_browser_verifier verify-complete-operator-journey\.mjs (\d+)m/g)].map(match=>Number(match[1])*60000);
   assert.deepEqual(budgets,[journeyMs,journeyMs,journeyMs],oracle+': candidate, deployed and manual journey budgets');
+  const jobs=new Map([...text.matchAll(/^  ([a-z][a-z-]*):\n([\s\S]*?)(?=^  [a-z][a-z-]*:\n|(?![\s\S]))/gm)].map(match=>[match[1],match[2]]));
+  const dedicated=['operator-journey','deployed-operator-journey','reverified-operator-journey'];
+  for(const [job,body]of jobs){
+   const count=[...body.matchAll(/run_browser_verifier verify-complete-operator-journey\.mjs (\d+)m/g)].length;
+   assert.equal(count,dedicated.includes(job)?1:0,oracle+': journey owns dedicated job '+job);
+  }
+  for(const job of dedicated){
+   const body=jobs.get(job);assert.ok(body,oracle+': required job '+job);
+   assert.match(body,/^    timeout-minutes: 360$/m,oracle+': finite dedicated job ceiling '+job);
+   assert.match(body,/timeout --signal=TERM --kill-after=10s/,oracle+': finite child termination '+job);
+   assert.match(body,/run_browser_verifier verify-complete-operator-journey\.mjs 330m(?:\s*\n|$)/,oracle+': full default journey '+job);
+  }
  }
  assertWorkflowBudgets(workflow);
- for(const replacement of ['120m','300m'])assert.throws(()=>assertWorkflowBudgets(workflow.replace('verify-complete-operator-journey.mjs 240m','verify-complete-operator-journey.mjs '+replacement)),error=>error.code==='ERR_ASSERTION'&&error.message.includes(oracle));
+ for(const replacement of ['120m','240m','360m'])assert.throws(()=>assertWorkflowBudgets(workflow.replace('verify-complete-operator-journey.mjs 330m','verify-complete-operator-journey.mjs '+replacement)),error=>error.code==='ERR_ASSERTION'&&error.message.includes(oracle));
+ assert.throws(()=>assertWorkflowBudgets(workflow.replace('  operator-journey:\n','  displaced-journey:\n')),error=>error.code==='ERR_ASSERTION'&&error.message.includes(oracle));
  assert.equal(source.split(dispatch).length,2,oracle+': unique current dispatch');
  assert.equal(source.split(option).length,2,oracle+': unique catalog budget forwarding');
  const directory=fs.mkdtempSync(path.join(os.tmpdir(),'browser-producer-budgets-')),site=path.join(directory,'site'),cases=[];
@@ -61,7 +74,7 @@ export async function verifyBrowserProducerBudgets(){
    assert.equal(result.timeoutMs,timeout,oracle+': real supervisor deadline');
   }
   const faults=[];
-  for(const [name,replacement]of [['former120m','timeout:120*60*1000'],['dropped-forwarding','timeout:undefined']]){
+  for(const [name,replacement]of [['former120m','timeout:120*60*1000'],['former240m','timeout:240*60*1000'],['dropped-forwarding','timeout:undefined']]){
    const altered=await observer(source.replace(option,replacement));
    await assert.rejects(()=>observe(altered,journey,'LOCAL',journeyMs),error=>error.code==='ERR_ASSERTION'&&error.message.includes(oracle));
    faults.push({fault:name,result:'DETECTED'});

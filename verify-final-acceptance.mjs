@@ -1,3 +1,4 @@
+import {verifySourceSearchFixtureBudget} from './test-source-search-fixture-budget.mjs';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -292,9 +293,16 @@ function assertPublicationWiring(source){
   for(const [job,text,prefix] of [['verify-live',live,'deployed'],['publish-status',publication,'reverified-deployed']]){
     assert.ok(text.includes('name: '+prefix+'-operator-journeys-${{ github.sha }}-${{ github.run_id }}'),'DEPLOYED_JOURNEY_ARTIFACT_ORACLE: '+job+' must preserve raw observations against the exact SHA/run');
     assert.match(text,/if: always\(\)/,'DEPLOYED_JOURNEY_ARTIFACT_ORACLE: retain failure evidence');
-    for(const directory of ['operator-evidence/','recovery-browser-evidence/','mobile-capability-evidence/'])assert.ok(text.includes(directory),'DEPLOYED_JOURNEY_ARTIFACT_ORACLE: '+directory);
+    for(const directory of ['recovery-browser-evidence/','mobile-capability-evidence/'])assert.ok(text.includes(directory),'DEPLOYED_JOURNEY_ARTIFACT_ORACLE: '+directory);
   }
   assert.ok(live.includes('node verify-live.mjs 2>&1 | tee /tmp/deployed-byte-proof.log'),'DEPLOYED_JOURNEY_ARTIFACT_ORACLE: retain raw deployed-byte proof');
+  for(const prefix of ['deployed','reverified']){
+    const job=source.match(new RegExp('^  '+prefix+'-operator-journey:\\n([\\s\\S]*?)(?=^  [a-z][a-z-]*:\\n|(?![\\s\\S]))','gm'))?.[0];
+    assert.ok(job,'DEPLOYED_JOURNEY_ARTIFACT_ORACLE: missing '+prefix+' dedicated job');
+    assert.ok(job.includes('name: '+prefix+'-complete-operator-journey-${{ github.sha }}-${{ github.run_id }}'),'DEPLOYED_JOURNEY_ARTIFACT_ORACLE: dedicated raw journey archive');
+    assert.match(job,/if: always\(\)/,'DEPLOYED_JOURNEY_ARTIFACT_ORACLE: dedicated failure archive');
+    assert.ok(job.includes('operator-evidence/'),'DEPLOYED_JOURNEY_ARTIFACT_ORACLE: complete raw observations');
+  }
 }
 assertPublicationWiring(workflow);
 function assertRegressionEvidenceEligibility(source){
@@ -322,9 +330,69 @@ assert.ok(evidenceStep.includes('if-no-files-found: error'),'Missing evidence el
 const silentMissingEvidence=workflow.replace(evidenceStep,evidenceStep.replace('if-no-files-found: error','if-no-files-found: warn'));
 assert.throws(()=>assertRegressionEvidenceEligibility(silentMissingEvidence),/REGRESSION_EVIDENCE_ELIGIBILITY_ORACLE/);
 assertRegressionEvidenceEligibility(workflow);regressionEvidenceFaults.push({fault:'silent-missing-evidence',result:'DETECTED',restored:'PASS'});
+function assertJourneyPublicationJoins(source){
+ const oracle='DEDICATED_JOURNEY_JOIN_ORACLE';
+ const jobs=new Map([...source.matchAll(/^  ([a-z][a-z-]*):\n([\s\S]*?)(?=^  [a-z][a-z-]*:\n|(?![\s\S]))/gm)].map(match=>[match[1],match[2]]));
+ const job=name=>{const body=jobs.get(name);assert.ok(body,oracle+': missing '+name);return body;};
+ const step=(body,name)=>{const escaped=name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),match=body.match(new RegExp('      - name: '+escaped+'\\n([\\s\\S]*?)(?=\\n      - |$)'));assert.ok(match,oracle+': missing '+name);return match[1];};
+ const requiredStep=(body,name)=>{const value=step(body,name);assert.doesNotMatch(value,/^        (?:if|continue-on-error):/m,oracle+': unconditional gate '+name);return value;};
+ const test=job('test'),publication=job('publish-status');
+ const prerequisites=['foundation','deferred-matrix','workflow-gates','conformance','test-checks','operator-journey'];
+ assert.match(test,/^    if: always\(\)$/m,oracle+': join observes failed or skipped dependencies');
+ assert.deepEqual(test.match(/^    needs: \[([^\]]+)\]/m)?.[1].split(',').map(name=>name.trim()),prerequisites,oracle+': test dependency inventory');
+ for(const [dependency,name]of [['foundation','foundation job'],['workflow-gates','workflow gate job'],['deferred-matrix','deferred matrix job'],['conformance','conformance groups'],['test-checks','test checks job'],['operator-journey','operator journey job']]){
+  assert.equal(requiredStep(test,'Require successful '+name).match(/^        run: (.+)$/m)?.[1],'test "${{ needs.'+dependency+'.result }}" = "success"',oracle+': successful '+dependency+' producer');
+ }
+ const local=requiredStep(test,'Validate complete local browser receipt set');
+ assert.match(local,/^        run: node collect-verification-evidence\.mjs --require-browser-scope=LOCAL$/m,oracle+': complete local scope');
+ assert.ok(test.indexOf('Validate complete local browser receipt set')<test.indexOf('Collect current executed assertion evidence')&&test.indexOf('Collect current executed assertion evidence')<test.indexOf('Seal verified deployment artifact'),oracle+': join before aggregate and seal');
+ const publicationNeeds=['test','deploy','verify-live','deployed-operator-journey','reverified-operator-journey'];
+ assert.deepEqual(publication.match(/^    needs: \[([^\]]+)\]/m)?.[1].split(',').map(name=>name.trim()),publicationNeeds,oracle+': publication dependency inventory');
+ const condition=publication.match(/^    if: >-\n((?:      [^\n]+\n)+)/m)?.[1];assert.ok(condition,oracle+': explicit publication routing');
+ const evaluate=Function('github','needs','always','return ('+condition.replace(/needs\.([a-z][a-z-]*)\.result/g,(_match,name)=>'needs['+JSON.stringify(name)+'].result')+');');
+ const base=()=>Object.fromEntries(publicationNeeds.map(name=>[name,{result:'success'}]));
+ for(const [event,required,other]of [['push',['test','deploy','verify-live','deployed-operator-journey'],'reverified-operator-journey'],['workflow_dispatch',['test','reverified-operator-journey'],'deployed-operator-journey']]){
+  const github={event_name:event,ref:'refs/heads/main'},needs=base();needs[other].result='skipped';
+  assert.equal(evaluate(github,needs,()=>true),true,oracle+': valid '+event+' route');
+  for(const name of required)for(const result of ['failure','cancelled','skipped','',undefined]){const changed=structuredClone(needs);changed[name].result=result;assert.equal(evaluate(github,changed,()=>true),false,oracle+': '+event+' '+name+' '+result);}
+  assert.equal(evaluate({...github,ref:'refs/heads/other'},needs,()=>true),false,oracle+': main only');
+ }
+ assert.equal(evaluate({event_name:'pull_request',ref:'refs/heads/main'},base(),()=>true),false,oracle+': no pull-request publication');
+ for(const [name,event,prefix]of [['Download complete deployed operator receipt','push','deployed'],['Download complete reverified operator receipt','workflow_dispatch','reverified']]){
+  const download=step(publication,name);
+  assert.ok(download.includes("if: github.event_name == '"+event+"'"),oracle+': route receipt '+event);
+  assert.ok(download.includes('name: '+prefix+'-operator-journey-receipt-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}'),oracle+': current attempt receipt '+event);
+  assert.match(download,/path: \.verification-receipts\/browser\/DEPLOYED/,oracle+': deployed receipt destination');
+ }
+ const reconcile=requiredStep(publication,'Reconcile local and deployed current assertion receipts');
+ assert.match(reconcile,/^          set -euo pipefail$/m,oracle+': receipt rejection terminates publication');
+ for(const scope of ['LOCAL','DEPLOYED'])assert.match(reconcile,new RegExp('^          node collect-verification-evidence\\.mjs --require-browser-scope='+scope+'$','m'),oracle+': complete '+scope+' publication proof');
+ assert.match(reconcile,/VERIFIED_SITE_DIR: _verified-evidence\/site/,oracle+': retained resource graph');
+ assert.ok(publication.indexOf('Reconcile local and deployed current assertion receipts')<publication.indexOf('Build acceptance artifact from executed proof jobs'),oracle+': strict proof before publication');
+}
+assertJourneyPublicationJoins(workflow);
+const journeyJoinFaults=[];
+for(const [name,before,after]of [
+ ['local-journey-result', 'run: test "${{ needs.operator-journey.result }}" = "success"','run: true'],
+ ['checks-result','run: test "${{ needs.test-checks.result }}" = "success"','run: true'],
+ ['push-journey-result',"needs.deployed-operator-journey.result == 'success'",'true'],
+ ['manual-journey-result',"needs.reverified-operator-journey.result == 'success'",'true'],
+ ['masked-local-producer', 'run: test "${{ needs.operator-journey.result }}" = "success"','run: test "${{ needs.operator-journey.result }}" = "success" || true'],
+ ['conditional-local-join','      - name: Validate complete local browser receipt set\n','      - name: Validate complete local browser receipt set\n        if: false\n'],
+ ['local-full-set','run: node collect-verification-evidence.mjs --require-browser-scope=LOCAL\n','run: node collect-verification-evidence.mjs\n'],
+ ['deployed-full-set','          node collect-verification-evidence.mjs --require-browser-scope=DEPLOYED\n','          node collect-verification-evidence.mjs\n'],
+ ['current-push-attempt','name: deployed-operator-journey-receipt-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}','name: deployed-operator-journey-receipt-${{ github.sha }}-${{ github.run_id }}'],
+ ['current-manual-attempt','name: reverified-operator-journey-receipt-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}','name: reverified-operator-journey-receipt-${{ github.sha }}-${{ github.run_id }}']
+]){
+ assert.ok(workflow.includes(before),'DEDICATED_JOURNEY_JOIN_FAULT_ANCHOR: '+name);
+ const mutated=workflow.replaceAll(before,after);
+ assert.throws(()=>assertJourneyPublicationJoins(mutated),/DEDICATED_JOURNEY_JOIN_ORACLE/,name);journeyJoinFaults.push({fault:name,result:'DETECTED'});
+}
+
+const sourceSearchFixtureBudget=verifySourceSearchFixtureBudget();
 const journeyInvocations=[...workflow.matchAll(/run_browser_verifier verify-complete-operator-journey\.mjs (\d+)m/g)];
 assert.equal(journeyInvocations.length,3,'Every candidate, main and re-verification journey remains required.');
-assert.ok(journeyInvocations.every(match=>Number(match[1])===240),'All existing complete journeys require the same finite240m execution budget.');
+assert.ok(journeyInvocations.every(match=>Number(match[1])===330),'All existing complete journeys require the same finite 330m execution budget.');
 
 for(const token of ['node verify-final-acceptance.mjs','const finalGate=evaluateFinalAcceptance(report,{visualBaseline,executedEvidence})','report.finalAcceptancePublication=finalGate.accepted','report.releaseTagEligible=finalGate.accepted',"if: steps.acceptance.outputs.final_acceptance == 'true'"])assert.throws(()=>assertPublicationWiring(workflow.replace(token,'')),error=>error.code==='ERR_ASSERTION');
 const artifactFaults=[];
@@ -332,6 +400,10 @@ for(const prefix of ['deployed','reverified-deployed']){
  const token='name: '+prefix+'-operator-journeys-${{ github.sha }}-${{ github.run_id }}';
  assert.throws(()=>assertPublicationWiring(workflow.replace(token,'')),/DEPLOYED_JOURNEY_ARTIFACT_ORACLE/);assertPublicationWiring(workflow);artifactFaults.push({fault:'remove-'+prefix+'-archive',oracle:'DEPLOYED_JOURNEY_ARTIFACT_ORACLE',result:'DETECTED',restored:'PASS'});
 }
+for(const prefix of ['deployed','reverified']){
+ const token='name: '+prefix+'-complete-operator-journey-${{ github.sha }}-${{ github.run_id }}';
+ assert.throws(()=>assertPublicationWiring(workflow.replace(token,'')),/DEPLOYED_JOURNEY_ARTIFACT_ORACLE/);artifactFaults.push({fault:'remove-'+prefix+'-dedicated-archive',oracle:'DEPLOYED_JOURNEY_ARTIFACT_ORACLE',result:'DETECTED',restored:'PASS'});
+}
 const normativeCatalogConsumers=await verifyNormativeCatalogConsumers();
 const externalNormativeProof=await verifyExternalNormativeProof(normativeFixture);
-console.log(JSON.stringify({finalAcceptanceGate:'PASS',historicalProofSourceControls,normativeProofFixture:{sourceUniverse:normativeFixture.sourceUniverse,currentAtomicProof:normativeFixture.currentAtomicProof,syntheticConsumerControls:true},specificationIdentityCases,deploymentContractIdentityCases,normativeCatalogConsumers,externalNormativeProof,normativeContextApplicability,normativeProofCases,runtimeAdmissionConsumerControls,coverageMetrics:35,zeroInvariants:38,mutationsDetected,metricMasksRejected:true,missingProofRejected:true,deviceAndVisualAuthorityRequired:true,repairedFixtureAccepted:true,intakeMetricCases,intakeMetricFaults,staticEvidenceFaults,artifactFaults,regressionEvidenceFaults,artifactEvidenceLimit:'Wiring and report-derivation regression only; underlying intake behavior, actual deployed artifact publication and byte verification execute separately.'}));
+console.log(JSON.stringify({finalAcceptanceGate:'PASS',sourceSearchFixtureBudget,journeyJoinFaults,historicalProofSourceControls,normativeProofFixture:{sourceUniverse:normativeFixture.sourceUniverse,currentAtomicProof:normativeFixture.currentAtomicProof,syntheticConsumerControls:true},specificationIdentityCases,deploymentContractIdentityCases,normativeCatalogConsumers,externalNormativeProof,normativeContextApplicability,normativeProofCases,runtimeAdmissionConsumerControls,coverageMetrics:35,zeroInvariants:38,mutationsDetected,metricMasksRejected:true,missingProofRejected:true,deviceAndVisualAuthorityRequired:true,repairedFixtureAccepted:true,intakeMetricCases,intakeMetricFaults,staticEvidenceFaults,artifactFaults,regressionEvidenceFaults,artifactEvidenceLimit:'Wiring and report-derivation regression only; underlying intake behavior, actual deployed artifact publication and byte verification execute separately.'}));

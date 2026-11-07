@@ -39,7 +39,7 @@ export function assertJobScopedCIPermissions(workflow){
   const defaults=readPermissions(workflow,'');
   assert.deepEqual(defaults,{contents:'read'},'CI_JOB_PERMISSION_ORACLE: default execution must only read repository contents.');
   const jobs=[...workflow.slice(workflow.indexOf('\njobs:\n')).matchAll(/^  ([a-z][a-z-]*):\n([\s\S]*?)(?=^  [a-z][a-z-]*:\n|(?![\s\S]))/gm)];
-  const expected={foundation:{contents:'read',actions:'read','pull-requests':'read'},'deferred-matrix':{contents:'read',actions:'read','pull-requests':'read'},'workflow-gates':{contents:'read',actions:'read','pull-requests':'read'},conformance:{contents:'read',actions:'read','pull-requests':'read'},test:{contents:'read',actions:'read','pull-requests':'read'},deploy:{pages:'write','id-token':'write'},'verify-live':{contents:'read'},'publish-status':{contents:'read'}};
+  const expected={foundation:{contents:'read',actions:'read','pull-requests':'read'},'deferred-matrix':{contents:'read',actions:'read','pull-requests':'read'},'workflow-gates':{contents:'read',actions:'read','pull-requests':'read'},conformance:{contents:'read',actions:'read','pull-requests':'read'},'test-checks':{contents:'read',actions:'read','pull-requests':'read'},'operator-journey':{contents:'read',actions:'read','pull-requests':'read'},test:{contents:'read',actions:'read','pull-requests':'read'},deploy:{pages:'write','id-token':'write'},'verify-live':{contents:'read'},'deployed-operator-journey':{contents:'read'},'reverified-operator-journey':{contents:'read'},'publish-status':{contents:'read'}};
   assert.deepEqual(jobs.map(match=>match[1]).sort(),Object.keys(expected).sort(),'CI_JOB_PERMISSION_ORACLE: job permission inventory changed.');
   for(const [,name,body]of jobs)assert.deepEqual(readPermissions(body,'    ')||defaults,expected[name],'CI_JOB_PERMISSION_ORACLE: incorrect privileges for '+name);
 }
@@ -208,7 +208,7 @@ const mutateJobPermission=(name,before,after,fault)=>{
  const changedPermissions=replacePermissionAnchor(permissions,before,after,fault);
  return replacePermissionAnchor(workflow,job,replacePermissionAnchor(job,permissions,changedPermissions,fault),fault);
 };
-const verificationPermissionFaults=[['foundation','foundation'],['matrix','deferred-matrix'],['workflow-gates','workflow-gates'],['conformance','conformance'],['test','test']].flatMap(([label,job])=>[
+const verificationPermissionFaults=[['foundation','foundation'],['matrix','deferred-matrix'],['workflow-gates','workflow-gates'],['conformance','conformance'],['test-checks','test-checks'],['operator-journey','operator-journey'],['test','test']].flatMap(([label,job])=>[
  [label+'-pages-write',mutateJobPermission(job,'      pull-requests: read\n','      pull-requests: read\n      pages: write\n',label+'-pages-write')],
  ['missing-'+label+'-artifact-read',mutateJobPermission(job,'      actions: read\n','','missing-'+label+'-artifact-read')]
 ]);
@@ -217,6 +217,7 @@ for(const [fault,mutated]of [
  ...verificationPermissionFaults,
  ['missing-deployment-oidc',mutateJobPermission('deploy','      id-token: write\n','','missing-deployment-oidc')],
  ['missing-deployment-pages',mutateJobPermission('deploy','      pages: write\n','','missing-deployment-pages')],
+ ...['deployed-operator-journey','reverified-operator-journey'].map(job=>[job+'-status-write',mutateJobPermission(job,'      contents: read\n','      contents: read\n      statuses: write\n',job+'-status-write')]),
  ['live-status-write',replacePermissionAnchor(workflow,'  verify-live:\n','  verify-live:\n    permissions:\n      contents: read\n      statuses: write\n','live-status-write')]
 ]){
  assert.throws(()=>assertJobScopedCIPermissions(mutated),/CI_JOB_PERMISSION_ORACLE/,'Job permission regression did not reach its intended oracle: '+fault);assertJobScopedCIPermissions(workflow);jobPermissionFaults.push({fault,result:'DETECTED',restored:'PASS'});
