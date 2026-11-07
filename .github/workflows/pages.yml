@@ -1,1659 +1,756 @@
-name: Verify and deploy the single reliability app
+name: Diagnostic Stage 30 suffix and final backup on frozen 50f53978
 
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
   workflow_dispatch:
-    inputs:
-      mobile_acceptance_target_json:
-        description: Pinned physical-iPhone acceptance target JSON for the exact currently deployed main commit
-        required: false
-        type: string
-      mobile_acceptance_evidence_json:
-        description: Physical-iPhone mobile-acceptance-evidence JSON bound to the submitted target
-        required: false
-        type: string
-      visual_baseline_evidence_json:
-        description: Frozen visual baseline and exact-main comparison JSON; see README Repository visual acceptance submission
-        required: false
-        type: string
 
 permissions:
   contents: read
+  actions: read
 
 concurrency:
-  group: pages-${{ github.ref }}
-  # Verify the latest PR revision promptly; main deployments remain serialized.
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: diagnostic-stage30-suffix-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  foundation:
-    name: foundation
-    permissions:
-      contents: read
-      actions: read
-      pull-requests: read
+  stage30-suffix-diagnostic:
     runs-on: ubuntu-latest
-    timeout-minutes: 360
+    timeout-minutes: 120
     env:
-      CLOSED_LOOP_VERIFICATION_SOURCE_ROOT: ${{ github.workspace }}
-      CLOSED_LOOP_VERIFICATION_RECEIPTS: ${{ github.workspace }}/.verification-receipts
-      VERIFIER_CHILD_EVIDENCE_DIRECTORY: ${{ github.workspace }}/../clrt-verifier-children
-      NODE_OPTIONS: --import ${{ github.workspace }}/verification-evidence-preload.mjs
+      DIAG_OUT: ${{ github.workspace }}/stage30-suffix-diagnostic
+      BROWSER: /usr/bin/google-chrome
+      NODE_OPTIONS: ''
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        env:
-          NODE_OPTIONS: ''
+      - name: Check out the exact original tested application
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: 315f85b3dc34c274e4470fe4e84e9dcebc9a1551
+          path: app
+          persist-credentials: false
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
-          # Receipts bind the exact Node version across jobs and PR promotion.
-          node-version: '22.23.3'
-      - name: Find complete PR verification for this main commit
-        id: candidate
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: node verified-site.mjs select
-      - name: Download reusable PR artifact for prerequisite proof
-        if: steps.candidate.outputs.artifact_id != ''
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          artifact-ids: ${{ steps.candidate.outputs.artifact_id }}
-          run-id: ${{ steps.candidate.outputs.run_id }}
-          github-token: ${{ github.token }}
-          merge-multiple: true
-          path: _verified-pr
-      - name: Verify exact reusable source for prerequisite proof
-        id: reuse
-        if: steps.candidate.outputs.artifact_id != ''
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: node verified-site.mjs reuse
-      - name: Syntax
-        if: steps.reuse.outputs.reused != 'true'
+          node-version: 22.23.3
+      - name: Require the original runtime and prepare a fresh diagnostic output
+        shell: bash
         run: |
           set -euo pipefail
-          for file in *.js *.mjs; do
-            node --check "$file"
-          done
+          test ! -e "$DIAG_OUT"
+          mkdir "$DIAG_OUT"
+          node --version | tee "$DIAG_OUT/node-version.txt"
+          "$BROWSER" --product-version | tee "$DIAG_OUT/chrome-version.txt"
+          test "$(node --version)" = v22.23.3
+          test "$("$BROWSER" --product-version)" = 156.0.8078.79
+          uname -a > "$DIAG_OUT/uname.txt"
+          python3 - <<'IDENTITY'
+          import json, os
+          from pathlib import Path
+          fields=('GITHUB_REPOSITORY','GITHUB_RUN_ID','GITHUB_RUN_ATTEMPT','GITHUB_SHA','GITHUB_REF')
+          (Path(os.environ['DIAG_OUT'])/'diagnostic-workflow-identity.json').write_text(json.dumps({key:os.environ[key] for key in fields},indent=2)+'\n')
+          IDENTITY
+      - name: Authenticate the exact retained completion artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api repos/sjonesjones917/closed-loop-tracker/actions/artifacts/13584232921 > "$DIAG_OUT/original-artifact-metadata.json"
+          python3 - <<'METADATA'
+          import json, os
+          from pathlib import Path
+          metadata=json.loads((Path(os.environ['DIAG_OUT'])/'original-artifact-metadata.json').read_text())
+          assert metadata['id']==13584232921
+          assert metadata['size_in_bytes']==2490627623
+          assert metadata['digest']=='sha256:e69c1b720115c28c623877868404865c239879b680b491df4679f314bfc53092'
+          assert metadata['expired'] is False
+          assert metadata['workflow_run']['id']==42395549736
+          assert metadata['workflow_run']['repository_id']==1341211619
+          assert metadata['workflow_run']['head_repository_id']==1341211619
+          assert metadata['workflow_run']['head_sha']=='3e576f4f35bf28aebe3de29d3d0fb5602fce86b0'
+          assert metadata['workflow_run']['head_branch']=='diagnostic/stage30-completion-50f53978'
+          METADATA
+          test ! -e "$RUNNER_TEMP/stage30-suffix-original.zip"
+          gh api repos/sjonesjones917/closed-loop-tracker/actions/artifacts/13584232921/zip > "$RUNNER_TEMP/stage30-suffix-original.zip"
+      - name: Materialize the six reviewed external diagnostic helpers
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir "$DIAG_OUT/runner-helpers"
+          cat > "$DIAG_OUT/runner-helpers/restore-profile.py" <<'FROZEN_HELPER_0'
+          #!/usr/bin/env python3
+          """Restore only the authenticated synthetic native profile into a fresh copy.
 
-      - name: Schema, ownership, and single-architecture proof
-        if: steps.reuse.outputs.reused != 'true'
-        run: |
-          set -euo pipefail
-          node build-test-project.mjs
-          node verify.mjs
-          node verify-contract-closure.mjs
-          node verify-stage-operation-registry.mjs
-          node verify-stage-contract-closure.mjs
-          node --input-type=module - <<'NODE'
+          This diagnostic utility neither changes an original artifact nor creates test
+          receipts. It is intended for the isolated Linux runner, not the active Mac run.
+          """
+          import argparse
+          import hashlib
+          import json
+          import pathlib
+          import stat
+          import zipfile
+
+          ARTIFACT_SHA256 = 'e69c1b720115c28c623877868404865c239879b680b491df4679f314bfc53092'
+          ARTIFACT_BYTES = 2490627623
+          PREFIX = 'replay/profile/'
+          PROFILE_FILES = 5464
+          PROFILE_BYTES = 1275130437
+          CHROME_VERSION = '156.0.8078.79'
+
+
+          def require(condition, message):
+              if not condition:
+                  raise RuntimeError(message)
+
+
+          def sha256_file(file):
+              value = hashlib.sha256()
+              with file.open('rb') as stream:
+                  for chunk in iter(lambda: stream.read(1024 * 1024), b''):
+                      value.update(chunk)
+              return value.hexdigest()
+
+
+          def main():
+              parser = argparse.ArgumentParser(description=__doc__)
+              parser.add_argument('--archive', type=pathlib.Path, required=True)
+              parser.add_argument('--directory', type=pathlib.Path, required=True)
+              args = parser.parse_args()
+              archive = args.archive.resolve(strict=True)
+              output = args.directory.resolve()
+              require(archive.is_file(), 'Original archive is not a regular file')
+              require(archive.stat().st_size == ARTIFACT_BYTES, 'Original archive size mismatch')
+              require(sha256_file(archive) == ARTIFACT_SHA256, 'Original archive SHA-256 mismatch')
+              require(not output.exists(), 'Diagnostic browser directory must be fresh')
+              with zipfile.ZipFile(archive) as zipped:
+                  members = [item for item in zipped.infolist() if item.filename.startswith(PREFIX)]
+                  require(len(members) == PROFILE_FILES, 'Original profile member count mismatch')
+                  require(sum(item.file_size for item in members) == PROFILE_BYTES, 'Original profile byte count mismatch')
+                  seen = set()
+                  selected = []
+                  for item in members:
+                      suffix = item.filename[len(PREFIX):]
+                      relative = pathlib.PurePosixPath(suffix)
+                      require(suffix and not relative.is_absolute(), 'Invalid profile path')
+                      require(all(part not in ('', '.', '..') for part in suffix.split('/')), 'Noncanonical profile path')
+                      require('\\' not in suffix and '\x00' not in suffix, 'Ambiguous profile path')
+                      require(suffix not in seen, 'Duplicate original profile path')
+                      require(not item.is_dir(), 'Unexpected explicit directory member')
+                      mode = item.external_attr >> 16
+                      require(stat.S_IFMT(mode) in (0, stat.S_IFREG), 'Nonregular profile entry is not extracted')
+                      seen.add(suffix)
+                      selected.append((item, relative))
+                  require(zipped.read(PREFIX + 'Last Version').decode().strip() == CHROME_VERSION,
+                          'Original native Chrome profile version mismatch')
+                  output.mkdir(parents=True, exist_ok=False)
+                  profile = output / 'profile'
+                  profile.mkdir()
+                  records = []
+                  for item, relative in selected:
+                      destination = profile.joinpath(*relative.parts)
+                      destination.parent.mkdir(parents=True, exist_ok=True)
+                      digest = hashlib.sha256()
+                      size = 0
+                      with zipped.open(item) as source, destination.open('xb') as target:
+                          for chunk in iter(lambda: source.read(1024 * 1024), b''):
+                              size += len(chunk)
+                              require(size <= item.file_size, 'Archive member exceeds its declared size')
+                              digest.update(chunk)
+                              target.write(chunk)
+                      require(size == item.file_size, 'Profile member byte count mismatch')
+                      records.append({'path': relative.as_posix(), 'byteSize': size, 'sha256': digest.hexdigest()})
+                  # Preserve the original manifest and every original served runtime byte.
+                  site_members = [item for item in zipped.infolist() if item.filename.startswith('site/')]
+                  expected_site = {'.nojekyll', 'TEST_PROJECT.json', 'app-core.js',
+                      'closed-loop-deployment-manifest.json', 'hash.js', 'index.html',
+                      'project-store.js', 'prompt-engine.js', 'response-ingestion.js',
+                      'test-runtime.js', 'test-worker.js', 'workbook.js',
+                      'workflow-engine.js', 'workflow-schema.js'}
+                  require(len(site_members) == 14 and sum(item.file_size for item in site_members) == 3970967,
+                          'Original site inventory mismatch')
+                  require({item.filename[5:] for item in site_members} == expected_site,
+                          'Original site has missing, duplicate or unexpected members')
+                  site = output.parent / 'site'
+                  site.mkdir(exist_ok=False)
+                  site_records = []
+                  for item in site_members:
+                      suffix = item.filename[5:]
+                      require(not item.is_dir() and stat.S_IFMT(item.external_attr >> 16) in (0, stat.S_IFREG),
+                              'Nonregular original site member')
+                      destination = site / suffix
+                      digest = hashlib.sha256()
+                      size = 0
+                      with zipped.open(item) as source, destination.open('xb') as target:
+                          for chunk in iter(lambda: source.read(1024 * 1024), b''):
+                              size += len(chunk)
+                              require(size <= item.file_size, 'Site member exceeds declared length')
+                              digest.update(chunk)
+                              target.write(chunk)
+                      require(size == item.file_size, 'Site member byte count mismatch')
+                      site_records.append({'path': suffix, 'byteSize': size, 'sha256': digest.hexdigest()})
+              require(sha256_file(archive) == ARTIFACT_SHA256, 'Original archive changed during restoration')
+              provenance = {
+                  'schema': 'clrt-checkpoint-diagnostic-native-profile-copy/1',
+                  'purpose': 'Diagnostic replay only; not a complete journey or acceptance receipt',
+                  'artifactId': 13584232921,
+                  'originalRun': 42395549736,
+                  'originalTestedCommit': '315f85b3dc34c274e4470fe4e84e9dcebc9a1551',
+                  'originalHeadCommit': '50f539785914002b6bcdf398a71e4e29605d376c',
+                  'archive': str(archive), 'archiveSha256': ARTIFACT_SHA256,
+                  'archiveBytes': ARTIFACT_BYTES, 'originalArchiveUnchanged': True,
+                  'profileDirectory': str(profile), 'profileFileCount': len(records),
+                  'profileBytes': sum(record['byteSize'] for record in records),
+                  'originalChromeVersion': CHROME_VERSION, 'files': records,
+                  'siteDirectory': str(site), 'siteFileCount': len(site_records),
+                  'siteBytes': sum(record['byteSize'] for record in site_records), 'siteFiles': site_records,
+                  'applicationStateChangedByThisUtility': False,
+                  'testReceiptCreated': False,
+              }
+              with (output / 'profile-copy-provenance.json').open('x') as target:
+                  json.dump(provenance, target, indent=2)
+                  target.write('\n')
+              print(json.dumps({key: value for key, value in provenance.items() if key != 'files'}))
+
+
+          if __name__ == '__main__':
+              main()
+          FROZEN_HELPER_0
+          cat > "$DIAG_OUT/runner-helpers/prepare-helpers.mjs" <<'FROZEN_HELPER_1'
+          // Produce external diagnostic adapters from pinned source; never edit the checkout.
+          import fs from 'node:fs';
+          import path from 'node:path';
           import assert from 'node:assert/strict';
-          import fs from 'node:fs';
-          import {runtimePaths} from './verified-site.mjs';
-          const fixtureHtml=['test-append-only-native.html','test-backup-extension-native.html','test-human-combined-cold.html','test-human-combined-native.html','test-human-combined-ui-seed.html','test-retained-root-native.html'];
-          const expectedRootHtml=['index.html',...fixtureHtml].sort();
-          const assertHtmlArchitecture=(rootEntries=fs.readdirSync('.',{withFileTypes:true}),deployedPaths=runtimePaths)=>{
-            const rootHtml=rootEntries.filter(row=>row.isFile()&&row.name.endsWith('.html')).map(row=>row.name).sort();
-            assert.deepEqual(rootHtml,expectedRootHtml,'Root HTML must be the application shell plus the exact non-deployed fixture allowlist.');
-            assert(fixtureHtml.every(name=>!deployedPaths.includes(name)),'A repository-only HTML fixture entered the verified deployment allowlist.');
-            assert.deepEqual(deployedPaths.filter(name=>name.endsWith('.html')).sort(),['index.html'],'The verified deployment must contain exactly one HTML document.');
-          };
-          assertHtmlArchitecture();
-          NODE
-          test ! -f app.js
-          test -z "$(find . -maxdepth 1 -type f -name '.repair-*' -print -quit)"
-          test -z "$(find .github/workflows -maxdepth 1 -type f ! -name 'pages.yml' -print -quit)"
-          ! grep -R "document.write" --include='*.js' --include='*.html' .
-          ! grep -R "MutationObserver" --include='*.js' --include='*.html' .
-          ! grep -REi "human-project/31|Stage 31|Operation 31" --include='*.js' --include='*.html' --include='TEST_PROJECT.json' .
-          node - <<'NODE'
-          const fs=require('fs');
-          const html=fs.readFileSync('index.html','utf8');
-          const expected=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
-          const src=[...html.matchAll(/<script\s+defer\s+src="([^"]+)"\s*><\/script>/g)].map(match=>match[1]);
-          if(src.length!==expected.length)throw new Error(`Expected ${expected.length} direct deferred scripts; found ${src.length}`);
-          const tokens=new Set();
-          expected.forEach((file,index)=>{
-            if(src[index]?.split('?')[0]!==file)throw new Error(`Wrong script order at ${file}`);
-            if(src.filter(value=>value.split('?')[0]===file).length!==1)throw new Error(`${file} is not unique`);
-            const token=new URLSearchParams(src[index].split('?')[1]||'').get('v');
-            if(!token)throw new Error(`${file} lacks build token`);
-            tokens.add(token);
-          });
-          if(tokens.size!==1)throw new Error('Mixed runtime build tokens');
-          if(!/worker-src\s+'self'/.test(html))throw new Error('CSP does not restrict the worker to same origin.');
-          NODE
-
-      - name: Deployment manifest, build identity, and reproducibility
-        if: steps.reuse.outputs.reused != 'true'
-        run: |
-          set -euo pipefail
-          node verify-deployment-manifest.mjs
-
-      - name: Complete 30-stage canonical data-route closure
-        if: steps.reuse.outputs.reused != 'true'
-        run: |
-          set -euo pipefail
-          node verify-data-route-closure.mjs
-
-      - name: Contract-profile migration
-        if: steps.reuse.outputs.reused != 'true'
-        run: |
-          set -euo pipefail
-          node verify-v3-migration.mjs
-
-      - name: Stage 01 agent response contract alignment
-        if: steps.reuse.outputs.reused != 'true'
-        run: |
-          set -euo pipefail
-          node verify-stage01-agent-contract-alignment.mjs
-
-      - name: Stage 01 raw intake and semantic accounting
-        if: steps.reuse.outputs.reused != 'true'
-        run: |
-          set -euo pipefail
-          node verify-stage01-intake-closure.mjs
-          node verify-one-time-intent-intake.mjs
-          node verify-stage01-review-subject.mjs
-
-      - name: Stage 02 bounded search and Stage 03 omission challenge
-        if: steps.reuse.outputs.reused != 'true'
-        run: |
-          set -euo pipefail
-          node verify-semantic-review-acceptance.mjs
-          node verify-stage03-agent-protocol.mjs
-
-      - name: Stage 04 obligation accounting and prompt completeness
-        if: steps.reuse.outputs.reused != 'true'
-        run: |
-          set -euo pipefail
-          node verify-zero-loss-accounting.mjs
-
-      - name: Test IR validation, security, and deterministic runtime
-        if: steps.reuse.outputs.reused != 'true'
-        run: |
-          set -euo pipefail
-          node verify-test-runtime-v3.mjs
-          node verify-test-runtime-limits.mjs
-          node verify-test-runtime.mjs
-          node verify-hash.mjs
-
-      - name: Raw-first ingestion and negative cases
-        if: steps.reuse.outputs.reused != 'true'
-        run: |
-          set -euo pipefail
-          node verify-ingestion.mjs
-          node verify-file-first-response.mjs
-          node verify-response-authority-integrity.mjs
-          node verify-returned-slot-authority.mjs
-          node verify-execution-reports.mjs
-          node verify-backup-json-stream.mjs
-
-      - name: Preserve foundation proof
-        if: steps.reuse.outputs.reused != 'true'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        env:
-          NODE_OPTIONS: ''
-        with:
-          name: foundation-proof-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: |
-            .verification-receipts/
-            TEST_PROJECT.json
-          include-hidden-files: true
-          if-no-files-found: error
-          retention-days: 30
-
-  deferred-matrix:
-    name: deferred-matrix
-    needs: foundation
-    permissions:
-      contents: read
-      actions: read
-      pull-requests: read
-    runs-on: ubuntu-latest
-    timeout-minutes: 360
-    env:
-      CLOSED_LOOP_VERIFICATION_SOURCE_ROOT: ${{ github.workspace }}
-      CLOSED_LOOP_VERIFICATION_RECEIPTS: ${{ github.workspace }}/.verification-receipts
-      VERIFIER_CHILD_EVIDENCE_DIRECTORY: ${{ github.workspace }}/../clrt-verifier-children
-      NODE_OPTIONS: --import ${{ github.workspace }}/verification-evidence-preload.mjs
-    outputs:
-      executed: ${{ steps.matrix.outputs.executed }}
-      receipt_name: ${{ steps.matrix.outputs.receipt_name }}
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        env:
-          NODE_OPTIONS: ''
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        with:
-          # Receipts bind the exact Node version across jobs and PR promotion.
-          node-version: '22.23.3'
-      - name: Find complete PR verification for this main commit
-        id: candidate
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: node verified-site.mjs select
-      - name: Download reusable PR artifact for deferred proof
-        if: steps.candidate.outputs.artifact_id != ''
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          artifact-ids: ${{ steps.candidate.outputs.artifact_id }}
-          run-id: ${{ steps.candidate.outputs.run_id }}
-          github-token: ${{ github.token }}
-          merge-multiple: true
-          path: _verified-pr
-      - name: Verify exact reusable source for deferred proof
-        id: reuse
-        if: steps.candidate.outputs.artifact_id != ''
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: node verified-site.mjs reuse
-      - name: Download foundation proof
-        if: steps.reuse.outputs.reused != 'true'
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: foundation-proof-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: .
-      - name: Validate foundation ingestion receipt
-        if: steps.reuse.outputs.reused != 'true'
-        run: node collect-verification-evidence.mjs --export-owner=verify-ingestion.mjs
-
-      - name: Execute complete deferred stage matrix
-        id: matrix
-        if: steps.reuse.outputs.reused != 'true'
-        timeout-minutes: 330
-        run: |
-          set -euo pipefail
-          node verify-due-stage-timing.mjs > /tmp/deferred-stage-matrix.json
-          node verify-deferred-proof-handoff.mjs
-          echo "executed=true" >> "$GITHUB_OUTPUT"
-          echo "receipt_name=deferred-matrix-${{ github.sha }}-${{ github.run_id }}" >> "$GITHUB_OUTPUT"
-      - name: Preserve complete deferred matrix receipt
-        if: always() && steps.matrix.outcome != 'skipped'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        env:
-          NODE_OPTIONS: ''
-        with:
-          name: deferred-matrix-${{ github.sha }}-${{ github.run_id }}
-          path: .verification-receipts/verify-due-stage-timing.mjs.json
-          include-hidden-files: true
-          if-no-files-found: error
-          retention-days: 30
-      - name: Stage deferred matrix diagnostics
-        if: always() && steps.matrix.outcome != 'skipped'
-        run: |
-          mkdir -p .ci-deferred-diagnostics
-          if test -f /tmp/deferred-stage-matrix.json; then cp /tmp/deferred-stage-matrix.json .ci-deferred-diagnostics/; fi
-          if test -f conformance-regression-evidence/deferred-phase-timings.json; then cp conformance-regression-evidence/deferred-phase-timings.json .ci-deferred-diagnostics/; fi
-          if test -d "$VERIFIER_CHILD_EVIDENCE_DIRECTORY"; then cp -a "$VERIFIER_CHILD_EVIDENCE_DIRECTORY" .ci-deferred-diagnostics/child-processes; fi
-      - name: Preserve deferred matrix diagnostics
-        if: always() && steps.matrix.outcome != 'skipped'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        env:
-          NODE_OPTIONS: ''
-        with:
-          name: deferred-matrix-diagnostics-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: .ci-deferred-diagnostics/
-          include-hidden-files: true
-          if-no-files-found: warn
-          retention-days: 30
-
-  workflow-gates:
-    name: workflow-gates
-    needs: [foundation, deferred-matrix]
-    permissions:
-      contents: read
-      actions: read
-      pull-requests: read
-    runs-on: ubuntu-latest
-    timeout-minutes: 360
-    env:
-      CLOSED_LOOP_VERIFICATION_SOURCE_ROOT: ${{ github.workspace }}
-      CLOSED_LOOP_VERIFICATION_RECEIPTS: ${{ github.workspace }}/.verification-receipts
-      VERIFIER_CHILD_EVIDENCE_DIRECTORY: ${{ github.workspace }}/../clrt-verifier-children
-      NODE_OPTIONS: --import ${{ github.workspace }}/verification-evidence-preload.mjs
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        env:
-          NODE_OPTIONS: ''
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        with:
-          # Receipts bind the exact Node version across jobs and PR promotion.
-          node-version: '22.23.3'
-      - name: Find complete PR verification for this main commit
-        id: candidate
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: node verified-site.mjs select
-      - name: Download reusable PR artifact for prerequisite proof
-        if: steps.candidate.outputs.artifact_id != ''
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          artifact-ids: ${{ steps.candidate.outputs.artifact_id }}
-          run-id: ${{ steps.candidate.outputs.run_id }}
-          github-token: ${{ github.token }}
-          merge-multiple: true
-          path: _verified-pr
-      - name: Verify exact reusable source for prerequisite proof
-        id: reuse
-        if: steps.candidate.outputs.artifact_id != ''
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: node verified-site.mjs reuse
-      - name: Download foundation proof
-        if: steps.reuse.outputs.reused != 'true'
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: foundation-proof-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: .
-      - name: Validate foundation ingestion receipt
-        if: steps.reuse.outputs.reused != 'true'
-        run: node collect-verification-evidence.mjs --export-owner=verify-ingestion.mjs
-
-      - name: Download complete deferred matrix receipt
-        if: steps.reuse.outputs.reused != 'true'
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: ${{ needs.deferred-matrix.outputs.receipt_name }}
-          path: .verification-receipts
-      - name: Validate complete deferred matrix receipt
-        if: steps.reuse.outputs.reused != 'true'
-        run: node verify-deferred-proof-handoff.mjs
-
-      - name: Validate current registry receipt
-        if: steps.reuse.outputs.reused != 'true'
-        run: node collect-verification-evidence.mjs --export-owner=verify-stage-operation-registry.mjs
-
-      - name: Cross-stage contract gates
-        if: steps.reuse.outputs.reused != 'true'
-        run: |
-          set -euo pipefail
-          node verify-v3-contract.mjs
-          node verify-spec3-contract.mjs
-
-      - name: Physical iPhone release-tag governance
-        if: steps.reuse.outputs.reused != 'true'
-        run: |
-          set -euo pipefail
-          node verify-mobile-acceptance-target.mjs
-          node verify-browser-execution-evidence.mjs
-          node verify-final-acceptance.mjs
-          node verify-visual-baseline-submission.mjs
-          node verify-final-product-timing.mjs
-          node verify-mobile-release-governance.mjs
-
-      - name: Workflow and gates
-        if: steps.reuse.outputs.reused != 'true'
-        run: |
-          set -euo pipefail
-          node verify-complete.mjs
-          node verify-proposal-acceptance-memory.mjs
-          node verify-verification-routing.mjs
-          node verify-independent-preflight.mjs
-          node verify-external-result-determination.mjs
-          node verify-stage28-artifact-delivery-intent.mjs
-          node verify-production-baseline-authority.mjs
-          node verify-definition-of-done.mjs --owner-receipt-controls
-          node verify-definition-of-done.mjs
-          node verify-project-lifecycle.mjs
-          node verify-v3-definition-of-done.mjs
-
-      - name: Prompt semantics and leakage
-        if: steps.reuse.outputs.reused != 'true'
-        run: |
-          set -euo pipefail
-          node verify-all-stage-prompts.mjs
-          node verify-stage-context-boundary.mjs
-          node verify-handoff-metadata-boundary.mjs
-          node verify-handoff-disclosure.mjs
-          node verify-stage-prompts-complete.mjs
-          node verify-user-prompt-invariants.mjs
-          node verify-prompt-file-identity.mjs
-          node verify-prompt-semantics.mjs
-          node verify-semantic-invariant.mjs
-
-      - name: Preserve workflow gate proof
-        if: steps.reuse.outputs.reused != 'true'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        env:
-          NODE_OPTIONS: ''
-        with:
-          name: workflow-gate-proof-${{ github.sha }}-${{ github.run_id }}
-          path: |
-            .verification-receipts/
-            TEST_PROJECT.json
-          include-hidden-files: true
-          if-no-files-found: error
-          retention-days: 30
-
-  conformance:
-    name: conformance-${{ matrix.group }}
-    needs: foundation
-    strategy:
-      fail-fast: false
-      matrix:
-        group: [core, creation, counterpart]
-    permissions:
-      contents: read
-      actions: read
-      pull-requests: read
-    runs-on: ubuntu-latest
-    timeout-minutes: 360
-    env:
-      CLOSED_LOOP_VERIFICATION_SOURCE_ROOT: ${{ github.workspace }}
-      CLOSED_LOOP_VERIFICATION_RECEIPTS: ${{ github.workspace }}/.verification-receipts
-      NODE_OPTIONS: --import ${{ github.workspace }}/verification-evidence-preload.mjs
-      CONFORMANCE_EVIDENCE_DIRECTORY: ${{ github.workspace }}/../clrt-conformance-${{ matrix.group }}
-      VERIFIER_CHILD_EVIDENCE_DIRECTORY: ${{ github.workspace }}/../clrt-conformance-${{ matrix.group }}/child-processes
-      CREATION_FAULT_EVIDENCE_DIRECTORY: ${{ github.workspace }}/../clrt-conformance-${{ matrix.group }}/creation-presentation-faults
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        env:
-          NODE_OPTIONS: ''
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        with:
-          # Receipts bind the exact Node version across jobs and PR promotion.
-          node-version: '22.23.3'
-      - name: Find complete PR verification for this main commit
-        id: candidate
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: node verified-site.mjs select
-      - name: Download reusable PR artifact for conformance proof
-        if: steps.candidate.outputs.artifact_id != ''
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          artifact-ids: ${{ steps.candidate.outputs.artifact_id }}
-          run-id: ${{ steps.candidate.outputs.run_id }}
-          github-token: ${{ github.token }}
-          merge-multiple: true
-          path: _verified-pr
-      - name: Verify exact reusable source for conformance proof
-        id: reuse
-        if: steps.candidate.outputs.artifact_id != ''
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: node verified-site.mjs reuse
-      - name: Download foundation proof
-        if: steps.reuse.outputs.reused != 'true'
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: foundation-proof-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: .
-      - name: Validate foundation ingestion receipt
-        if: steps.reuse.outputs.reused != 'true'
-        run: node collect-verification-evidence.mjs --export-owner=verify-ingestion.mjs
-
-      - name: Validate current authority receipts
-        if: steps.reuse.outputs.reused != 'true'
-        run: |
-          set -euo pipefail
-          node collect-verification-evidence.mjs --export-owner=verify-response-authority-integrity.mjs
-          node collect-verification-evidence.mjs --export-owner=verify-returned-slot-authority.mjs
-
-      - name: Execute complete conformance group
-        id: conformance
-        if: steps.reuse.outputs.reused != 'true'
-        timeout-minutes: 305
-        run: |
-          set -euo pipefail
-          node verify-conformance-regressions.mjs --group=${{ matrix.group }} > /tmp/conformance-regressions.json
-      - name: Stage conformance group report
-        if: always() && steps.conformance.outcome != 'skipped'
-        run: |
-          mkdir -p .ci-conformance-handoff
-          cp "$CONFORMANCE_EVIDENCE_DIRECTORY/report.json" .ci-conformance-handoff/${{ matrix.group }}.json
-      - name: Preserve complete conformance group report
-        if: always() && steps.conformance.outcome != 'skipped'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        env:
-          NODE_OPTIONS: ''
-        with:
-          name: conformance-report-${{ github.sha }}-${{ github.run_id }}-${{ matrix.group }}
-          path: .ci-conformance-handoff/
-          include-hidden-files: true
-          if-no-files-found: error
-          retention-days: 30
-      - name: Preserve conformance execution receipts
-        if: always() && steps.conformance.outcome != 'skipped'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        env:
-          NODE_OPTIONS: ''
-        with:
-          name: conformance-receipts-${{ github.sha }}-${{ github.run_id }}-${{ matrix.group }}
-          path: .verification-receipts/
-          include-hidden-files: true
-          if-no-files-found: warn
-          retention-days: 30
-      - name: Normalize conformance evidence upload path
-        if: always() && contains(fromJSON('["success","failure","cancelled"]'), steps.conformance.outcome)
-        run: |
-          set -euo pipefail
-          canonical=$(realpath -m -- "$CONFORMANCE_EVIDENCE_DIRECTORY")
-          printf 'CONFORMANCE_EVIDENCE_DIRECTORY=%s\n' "$canonical" >> "$GITHUB_ENV"
-      - name: Preserve executed regression evidence
-        if: always() && (steps.conformance.outcome == 'success' || steps.conformance.outcome == 'failure' || steps.conformance.outcome == 'cancelled')
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        env:
-          NODE_OPTIONS: ''
-        with:
-          name: conformance-regressions-${{ github.sha }}-${{ matrix.group }}
-          path: |
-            ${{ env.CONFORMANCE_EVIDENCE_DIRECTORY }}/
-            /tmp/conformance-regressions.json
-          if-no-files-found: error
-
-  test-checks:
-    name: test-checks
-    needs: [foundation, deferred-matrix, workflow-gates, conformance]
-    if: always()
-    permissions:
-      contents: read
-      actions: read
-      pull-requests: read
-    runs-on: ubuntu-latest
-    timeout-minutes: 360
-    env:
-      CLOSED_LOOP_VERIFICATION_SOURCE_ROOT: ${{ github.workspace }}
-      CLOSED_LOOP_VERIFICATION_RECEIPTS: ${{ github.workspace }}/.verification-receipts
-      VERIFIER_CHILD_EVIDENCE_DIRECTORY: ${{ github.workspace }}/../clrt-verifier-children
-      NODE_OPTIONS: --import ${{ github.workspace }}/verification-evidence-preload.mjs
-    steps:
-      - name: Require successful foundation job
-        run: test "${{ needs.foundation.result }}" = "success"
-      - name: Require successful workflow gate job
-        run: test "${{ needs.workflow-gates.result }}" = "success"
-      - name: Require successful deferred matrix job
-        run: test "${{ needs.deferred-matrix.result }}" = "success"
-      - name: Require successful conformance groups
-        run: test "${{ needs.conformance.result }}" = "success"
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        env:
-          # The repository preload does not exist until checkout completes.
-          NODE_OPTIONS: ''
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        with:
-          node-version: '22.23.3'
-
-      - name: Verified artifact reuse checks
-        run: node verify-verified-site.mjs
-
-      - name: Find completed PR verification for this main commit
-        id: candidate
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: node verified-site.mjs select
-      - name: Download the passing PR artifact
-        if: steps.candidate.outputs.artifact_id != ''
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          artifact-ids: ${{ steps.candidate.outputs.artifact_id }}
-          run-id: ${{ steps.candidate.outputs.run_id }}
-          github-token: ${{ github.token }}
-          merge-multiple: true
-          path: _verified-pr
-      - name: Verify matching source and promote tested runtime files
-        id: reuse
-        if: steps.candidate.outputs.artifact_id != ''
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: node verified-site.mjs reuse
-      - name: Download workflow gate proof
-        if: steps.reuse.outputs.reused != 'true'
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: workflow-gate-proof-${{ github.sha }}-${{ github.run_id }}
-          path: .
-      - name: Validate workflow gate ingestion receipt
-        if: steps.reuse.outputs.reused != 'true'
-        run: node collect-verification-evidence.mjs --export-owner=verify-ingestion.mjs
-
-      - name: Require deferred matrix proof or verified artifact reuse
-        if: steps.reuse.outputs.reused != 'true'
-        run: test "${{ needs.deferred-matrix.outputs.executed }}" = true
-      - name: Download complete deferred matrix receipt
-        if: steps.reuse.outputs.reused != 'true'
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: ${{ needs.deferred-matrix.outputs.receipt_name }}
-          path: .verification-receipts
-      - name: Validate complete deferred matrix receipt
-        if: steps.reuse.outputs.reused != 'true'
-        run: node verify-deferred-proof-handoff.mjs
-
-      # All non-browser conformance groups must finish before browser acceptance.
-      - name: Download complete conformance group reports
-        if: steps.reuse.outputs.reused != 'true'
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          pattern: conformance-report-${{ github.sha }}-${{ github.run_id }}-*
-          merge-multiple: true
-          path: .ci-conformance-handoff
-      - name: Download complete conformance execution receipts
-        if: steps.reuse.outputs.reused != 'true'
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          pattern: conformance-receipts-${{ github.sha }}-${{ github.run_id }}-*
-          merge-multiple: true
-          path: .verification-receipts
-      - name: Validate complete conformance handoff
-        if: steps.reuse.outputs.reused != 'true'
-        run: node verify-conformance-handoff.mjs
-
-      - name: Capture exact PR source workspace
-        if: github.event_name == 'pull_request'
-        run: tar --exclude=.git -czf /tmp/pr-source.tar.gz .
-      - name: Preserve exact PR source workspace
-        if: github.event_name == 'pull_request'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        env:
-          NODE_OPTIONS: ''
-        with:
-          name: pr-source-${{ github.event.pull_request.number }}-${{ github.sha }}
-          path: /tmp/pr-source.tar.gz
-          if-no-files-found: error
-          retention-days: 1
-
-      - name: Full cycle and terminal boundary
-        if: steps.reuse.outputs.reused != 'true'
-        run: |
-          set -euo pipefail
-          node test-quarantine-ui-export-owner.mjs
-          export CLRT_STAGE29_FIXTURE_PATH="$(mktemp)"
-          export CLRT_STAGE30_FIXTURE_PATH="$(mktemp)"
-          node verify-full-cycle.mjs | tee /tmp/full-cycle-proof.json
-          node --input-type=module -e "import fs from 'node:fs'; JSON.parse(fs.readFileSync('/tmp/full-cycle-proof.json','utf8'));"
-          node verify-stage29-evidence-chain-checkpoint.mjs
-          node verify-stage30-terminal-mobile-boundary.mjs
-
-      - name: Complete current non-browser assertion evidence
-        if: steps.reuse.outputs.reused != 'true'
-        run: node collect-verification-evidence.mjs
-
-      - name: Stale project navigation and draft preservation
-        if: steps.reuse.outputs.reused != 'true'
-        run: |
-          set -euo pipefail
-          node verify-stale-view-navigation.mjs
-          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
-          test -n "$BROWSER"
-          node build-static-site.mjs --out _stale_view_site --source-commit "$GITHUB_SHA" --workflow-run "$GITHUB_RUN_ID"
-          python3 -m http.server 4173 --directory _stale_view_site >/tmp/stale-view-http.log 2>&1 &
-          SERVER_PID=$!
-          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
-          timeout --signal=TERM --kill-after=10s 5m node verify-stale-view-browser.mjs
-
-      - name: Preserve stale project navigation observations
-        if: always() && steps.reuse.outputs.reused != 'true'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        env:
-          NODE_OPTIONS: ''
-        with:
-          name: stale-view-${{ github.sha }}-${{ github.run_id }}
-          path: |
-            stale-view-browser-evidence/stale-view.json
-            stale-view-browser-evidence/*/stage-*.png
-          if-no-files-found: warn
-
-      - name: Verification routing and capability evidence
-        if: steps.reuse.outputs.reused != 'true'
-        env:
-          BROWSER: /usr/bin/google-chrome
-        run: |
-          set -euo pipefail
-          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
-          test -n "$BROWSER"
-          node build-static-site.mjs --out _routing_site --source-commit "$GITHUB_SHA" --workflow-run "$GITHUB_RUN_ID"
-          python3 -m http.server 4173 --directory _routing_site >/tmp/verification-routing-http.log 2>&1 &
-          SERVER_PID=$!
-          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
-          timeout --signal=TERM --kill-after=10s 5m node verify-verification-routing-browser.mjs
-
-      - name: Preserve verification routing observations
-        if: always() && steps.reuse.outputs.reused != 'true'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        env:
-          NODE_OPTIONS: ''
-        with:
-          name: verification-routing-${{ github.sha }}-${{ github.run_id }}
-          path: |
-            verification-routing-browser-evidence/routing.json
-            verification-routing-browser-evidence/*/stage-*.png
-          if-no-files-found: warn
-
-      - name: Startup and scrolling at phone and desktop sizes
-        if: steps.reuse.outputs.reused != 'true'
-        env:
-          BROWSER: /usr/bin/google-chrome
-        run: |
-          set -euo pipefail
-          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
-          test -n "$BROWSER"
-          # Use the retained fixture already in this commit for fast UI feedback.
-          # The following viewport gate still regenerates and validates it.
-          node build-static-site.mjs --out _acceptance_site --source-commit "$GITHUB_SHA" --workflow-run "$GITHUB_RUN_ID"
-          python3 -m http.server 4173 --directory _acceptance_site >/tmp/acceptance-viewport-http.log 2>&1 &
-          SERVER_PID=$!
-          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
-          timeout --signal=TERM --kill-after=10s 10m node verify-browser.mjs --startup-scroll-only 2>&1 | tee /tmp/startup-scroll.log
-
-      - name: Acceptance viewport regression and targeted layout fault
-        if: steps.reuse.outputs.reused != 'true'
-        env:
-          BROWSER: /usr/bin/google-chrome
-        run: |
-          set -euo pipefail
-          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
-          test -n "$BROWSER"
-          node build-static-site.mjs --out _acceptance_site --source-commit "$GITHUB_SHA" --workflow-run "$GITHUB_RUN_ID"
-          python3 -m http.server 4173 --directory _acceptance_site >/tmp/acceptance-viewport-http.log 2>&1 &
-          SERVER_PID=$!
-          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
-          timeout --signal=TERM --kill-after=10s 15m node verify-acceptance-viewport.mjs 2>&1 | tee /tmp/acceptance-viewport.log
-
-      - name: Preserve acceptance viewport observations
-        if: always() && steps.reuse.outputs.reused != 'true'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        env:
-          NODE_OPTIONS: ''
-        with:
-          name: acceptance-viewport-${{ github.sha }}-${{ github.run_id }}
-          path: |
-            acceptance-viewport-evidence/acceptance-viewport.json
-            acceptance-viewport-evidence/*/stage-*.png
-            acceptance-viewport-evidence/*/downloads/
-            /tmp/acceptance-viewport.log
-            /tmp/startup-scroll.log
-            /tmp/startup-scroll-*.png
-          if-no-files-found: warn
-
-      - name: Build static application for operator verification
-        if: steps.reuse.outputs.reused != 'true'
-        run: node build-static-site.mjs --out _site --source-commit "$GITHUB_SHA" --workflow-run "$GITHUB_RUN_ID"
-
-      - name: Local Chromium supporting paths
-        if: steps.reuse.outputs.reused != 'true'
-        env:
-          BROWSER: /usr/bin/google-chrome
-          STATIC_SITE_ROOT: _site
-          CLOSED_LOOP_BROWSER_SCOPE: LOCAL
-        run: |
-          set -euo pipefail
-          if [ ! -x "$BROWSER" ]; then
-            BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
-            export BROWSER
-          fi
-          test -n "$BROWSER"
-          python3 -m http.server 4173 --directory _site >/tmp/closed-loop-http.log 2>&1 &
-          SERVER_PID=$!
-          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
-          run_browser_verifier() {
-            script="$1"
-            budget="${2:-10m}"
-            log="/tmp/${script}.log"
-            # A failed gate stays failed. Startup readiness is bounded in the
-            # browser driver; classified infrastructure failures may be rerun
-            # explicitly against the unchanged SHA after their logs are read.
-            timeout --signal=TERM --kill-after=10s "$budget" node collect-verification-evidence.mjs --browser-suite="$script" --browser-scope="$CLOSED_LOOP_BROWSER_SCOPE" 2>&1 | tee "$log"
-          }
-          BROWSER_VERIFY_RESULT=0
-          # Keep all six supporting suites in their original relative order.
-          run_browser_verifier verify-browser-extra.mjs || BROWSER_VERIFY_RESULT=1
-          run_browser_verifier verify-browser.mjs || BROWSER_VERIFY_RESULT=1
-          run_browser_verifier verify-human-stage-walkthrough.mjs || BROWSER_VERIFY_RESULT=1
-          run_browser_verifier verify-mobile-stage-action.mjs || BROWSER_VERIFY_RESULT=1
-          run_browser_verifier verify-mobile-capability-journey.mjs || BROWSER_VERIFY_RESULT=1
-          run_browser_verifier verify-browser-recovery.mjs || BROWSER_VERIFY_RESULT=1
-          test "$BROWSER_VERIFY_RESULT" = 0
-          kill "$SERVER_PID" 2>/dev/null || true
-          trap - EXIT
-
-      - name: Preserve local supporting operator evidence
-        if: always() && steps.reuse.outputs.reused != 'true'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        env:
-          NODE_OPTIONS: ''
-        with:
-          name: supporting-operator-journeys-${{ github.sha }}-${{ github.run_id }}
-          path: |
-            recovery-browser-evidence/recovery.json
-            recovery-browser-evidence/stage-*.png
-            recovery-browser-evidence/downloads/
-            mobile-capability-evidence/capability.json
-            mobile-capability-evidence/stage-*.png
-            mobile-capability-evidence/downloads/
-            /tmp/verify-*.mjs.log
-          if-no-files-found: warn
-          retention-days: 30
-
-      - name: Validate local supporting browser receipts
-        if: steps.reuse.outputs.reused != 'true'
-        env:
-          STATIC_SITE_ROOT: _site
-        run: node collect-verification-evidence.mjs --require-browser-scope=LOCAL --exclude-browser-suite=verify-complete-operator-journey.mjs
-      - name: Preserve test checks proof
-        if: steps.reuse.outputs.reused != 'true'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        env:
-          NODE_OPTIONS: ''
-        with:
-          name: test-checks-proof-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: |
-            _site/
-            .verification-receipts/
-            TEST_PROJECT.json
-          include-hidden-files: true
-          if-no-files-found: error
-          retention-days: 30
-      - name: Normalize verifier child failure upload path
-        if: failure()
-        run: |
-          set -euo pipefail
-          canonical=$(realpath -m -- "$VERIFIER_CHILD_EVIDENCE_DIRECTORY")
-          printf 'VERIFIER_CHILD_EVIDENCE_DIRECTORY=%s\n' "$canonical" >> "$GITHUB_ENV"
-      - name: Preserve verifier child logs after an earlier failed gate
-        if: failure()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        env:
-          NODE_OPTIONS: ''
-        with:
-          name: test-checks-child-failure-${{ github.sha }}-${{ github.run_id }}
-          path: ${{ env.VERIFIER_CHILD_EVIDENCE_DIRECTORY }}/
-          retention-days: 30
-          if-no-files-found: warn
-
-  operator-journey:
-    name: operator-journey
-    needs: foundation
-    if: always()
-    permissions:
-      contents: read
-      actions: read
-      pull-requests: read
-    runs-on: ubuntu-latest
-    timeout-minutes: 360
-    env:
-      CLOSED_LOOP_VERIFICATION_SOURCE_ROOT: ${{ github.workspace }}
-      CLOSED_LOOP_VERIFICATION_RECEIPTS: ${{ github.workspace }}/.verification-receipts
-      VERIFIER_CHILD_EVIDENCE_DIRECTORY: /tmp/clrt-operator-journey-children
-      NODE_OPTIONS: --import ${{ github.workspace }}/verification-evidence-preload.mjs
-    steps:
-      - name: Require successful foundation job
-        run: test "${{ needs.foundation.result }}" = "success"
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        env:
-          # The repository preload does not exist until checkout completes.
-          NODE_OPTIONS: ''
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        with:
-          node-version: '22.23.3'
-
-      - name: Find completed PR verification for this main commit
-        id: candidate
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: node verified-site.mjs select
-      - name: Download the passing PR artifact
-        if: steps.candidate.outputs.artifact_id != ''
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          artifact-ids: ${{ steps.candidate.outputs.artifact_id }}
-          run-id: ${{ steps.candidate.outputs.run_id }}
-          github-token: ${{ github.token }}
-          merge-multiple: true
-          path: _verified-pr
-      - name: Verify matching source and promote tested runtime files
-        id: reuse
-        if: steps.candidate.outputs.artifact_id != ''
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: node verified-site.mjs reuse
-      - name: Download foundation proof
-        if: steps.reuse.outputs.reused != 'true'
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: foundation-proof-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: .
-      - name: Validate foundation ingestion receipt
-        if: steps.reuse.outputs.reused != 'true'
-        run: node collect-verification-evidence.mjs --export-owner=verify-ingestion.mjs
-      - name: Build independent local journey runtime
-        if: steps.reuse.outputs.reused != 'true'
-        run: node build-static-site.mjs --out _site --source-commit "$GITHUB_SHA" --workflow-run "$GITHUB_RUN_ID"
-      - name: Verify prepared runtime source and bytes
-        if: steps.reuse.outputs.reused != 'true'
-        run: node verified-site.mjs verify-prepared
-      - name: Complete local operator journey
-        if: steps.reuse.outputs.reused != 'true'
-        env:
-          BROWSER: /usr/bin/google-chrome
-          STATIC_SITE_ROOT: _site
-          CLOSED_LOOP_BROWSER_SCOPE: LOCAL
-        run: |
-          set -euo pipefail
-          if [ ! -x "$BROWSER" ]; then
-            BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
-            export BROWSER
-          fi
-          test -n "$BROWSER"
-          python3 -m http.server 4173 --directory _site >/tmp/operator-journey-http.log 2>&1 &
-          SERVER_PID=$!
-          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
-          run_browser_verifier() {
-            script="$1"
-            budget="$2"
-            timeout --signal=TERM --kill-after=10s "$budget" node collect-verification-evidence.mjs --browser-suite="$script" --browser-scope="$CLOSED_LOOP_BROWSER_SCOPE" 2>&1 | tee "/tmp/${script}.log"
-          }
-          # The approved dedicated job keeps a finite 330m journey budget and
-          # the existing 180s per-action wait via OPERATOR_ACTION_WAIT_MS.
-          run_browser_verifier verify-complete-operator-journey.mjs 330m
-          kill "$SERVER_PID" 2>/dev/null || true
-          trap - EXIT
-      - name: Validate complete local operator receipt
-        if: steps.reuse.outputs.reused != 'true'
-        env:
-          STATIC_SITE_ROOT: _site
-        run: node collect-verification-evidence.mjs --require-browser-scope=LOCAL --browser-suite-only=verify-complete-operator-journey.mjs
-      - name: Preserve complete operator journey evidence
-        if: always() && steps.reuse.outputs.reused != 'true'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        env:
-          NODE_OPTIONS: ''
-        with:
-          name: operator-journeys-${{ github.sha }}-${{ github.run_id }}
-          path: |
-            operator-evidence/
-            /tmp/verify-complete-operator-journey.mjs.log
-            /tmp/operator-journey-http.log
-            /tmp/clrt-operator-journey-children/
-          retention-days: 30
-          if-no-files-found: warn
-      - name: Preserve complete local operator receipt
-        if: steps.reuse.outputs.reused != 'true'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        env:
-          NODE_OPTIONS: ''
-        with:
-          name: operator-journey-receipt-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: .verification-receipts/browser/LOCAL/verify-complete-operator-journey.mjs.json
-          include-hidden-files: true
-          if-no-files-found: error
-          retention-days: 30
-
-  test:
-    name: test
-    needs: [foundation, deferred-matrix, workflow-gates, conformance, test-checks, operator-journey]
-    if: always()
-    permissions:
-      contents: read
-      actions: read
-      pull-requests: read
-    runs-on: ubuntu-latest
-    timeout-minutes: 360
-    env:
-      CLOSED_LOOP_VERIFICATION_SOURCE_ROOT: ${{ github.workspace }}
-      CLOSED_LOOP_VERIFICATION_RECEIPTS: ${{ github.workspace }}/.verification-receipts
-      VERIFIER_CHILD_EVIDENCE_DIRECTORY: ${{ github.workspace }}/../clrt-verifier-children
-      NODE_OPTIONS: --import ${{ github.workspace }}/verification-evidence-preload.mjs
-    outputs:
-      verified_artifact_name: ${{ steps.verified.outputs.artifact_name }}
-      verification_run_id: ${{ steps.reuse.outputs.run_id || github.run_id }}
-      verification_source_commit: ${{ steps.reuse.outputs.tested_commit || github.sha }}
-    steps:
-      - name: Require successful foundation job
-        run: test "${{ needs.foundation.result }}" = "success"
-      - name: Require successful workflow gate job
-        run: test "${{ needs.workflow-gates.result }}" = "success"
-      - name: Require successful deferred matrix job
-        run: test "${{ needs.deferred-matrix.result }}" = "success"
-      - name: Require successful conformance groups
-        run: test "${{ needs.conformance.result }}" = "success"
-      - name: Require successful test checks job
-        run: test "${{ needs.test-checks.result }}" = "success"
-      - name: Require successful operator journey job
-        run: test "${{ needs.operator-journey.result }}" = "success"
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        env:
-          # The repository preload does not exist until checkout completes.
-          NODE_OPTIONS: ''
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        with:
-          node-version: '22.23.3'
-
-      - name: Find completed PR verification for this main commit
-        id: candidate
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: node verified-site.mjs select
-      - name: Download the passing PR artifact
-        if: steps.candidate.outputs.artifact_id != ''
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          artifact-ids: ${{ steps.candidate.outputs.artifact_id }}
-          run-id: ${{ steps.candidate.outputs.run_id }}
-          github-token: ${{ github.token }}
-          merge-multiple: true
-          path: _verified-pr
-      - name: Verify matching source and promote tested runtime files
-        id: reuse
-        if: steps.candidate.outputs.artifact_id != ''
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: node verified-site.mjs reuse
-      - name: Download test checks proof
-        if: steps.reuse.outputs.reused != 'true'
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: test-checks-proof-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: .
-      - name: Verify prepared runtime source and bytes
-        if: steps.reuse.outputs.reused != 'true'
-        run: node verified-site.mjs verify-prepared
-      - name: Validate prepared local browser receipts
-        if: steps.reuse.outputs.reused != 'true'
-        env:
-          STATIC_SITE_ROOT: _site
-        run: node collect-verification-evidence.mjs --require-browser-scope=LOCAL --exclude-browser-suite=verify-complete-operator-journey.mjs
-      - name: Download complete local operator receipt
-        if: steps.reuse.outputs.reused != 'true'
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: operator-journey-receipt-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: .verification-receipts/browser/LOCAL
-      - name: Validate complete local browser receipt set
-        env:
-          STATIC_SITE_ROOT: _site
-        run: node collect-verification-evidence.mjs --require-browser-scope=LOCAL
-      - name: Preserve the exact browser-verified Pages artifact
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa
-        with:
-          path: _site
-
-      - name: Collect current executed assertion evidence
-        run: node collect-verification-evidence.mjs
-
-      # This is reached only after full verification or proven reuse of the
-      # identical Git tree and runtime bytes from a fully passing PR attempt.
-      - name: Seal verified deployment artifact
-        id: verified
-        run: node verified-site.mjs seal
-      - name: Preserve verified site for merge and live verification
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        env:
-          NODE_OPTIONS: ''
-        with:
-          name: ${{ steps.verified.outputs.artifact_name }}
-          path: _verified-site/
-          include-hidden-files: true
-          if-no-files-found: error
-          retention-days: 30
-      - name: Normalize verifier child failure upload path
-        if: failure()
-        run: |
-          set -euo pipefail
-          canonical=$(realpath -m -- "$VERIFIER_CHILD_EVIDENCE_DIRECTORY")
-          printf 'VERIFIER_CHILD_EVIDENCE_DIRECTORY=%s\n' "$canonical" >> "$GITHUB_ENV"
-      - name: Preserve verifier child logs after an earlier failed gate
-        if: failure()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        env:
-          NODE_OPTIONS: ''
-        with:
-          name: verifier-child-failure-${{ github.sha }}-${{ github.run_id }}
-          path: ${{ env.VERIFIER_CHILD_EVIDENCE_DIRECTORY }}/
-          retention-days: 30
-          if-no-files-found: warn
-
-  deploy:
-    name: Deploy exact verified bytes
-    permissions:
-      pages: write
-      id-token: write
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: test
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    outputs:
-      page_url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b
-      - name: Deploy application
-        id: deployment
-        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e
-
-  verify-live:
-    name: Verify deployed bytes and operator path
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [test, deploy]
-    runs-on: ubuntu-latest
-    timeout-minutes: 360
-    env:
-      PAGE_URL: ${{ needs.deploy.outputs.page_url }}
-      VERIFIED_SITE_DIR: _verified-site/site
-      CLOSED_LOOP_BROWSER_SCOPE: DEPLOYED
-      CLOSED_LOOP_VERIFICATION_RECEIPTS: ${{ github.workspace }}/.verification-receipts
-      VERIFIER_CHILD_EVIDENCE_DIRECTORY: ${{ github.workspace }}/../clrt-verifier-children
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        with:
-          node-version: '22.23.3'
-      - name: Download the exact verified deployment files
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: ${{ needs.test.outputs.verified_artifact_name }}
-          path: _verified-site
-      - name: Restore the verified retained fixture
-        run: cp _verified-site/site/TEST_PROJECT.json TEST_PROJECT.json
-      - name: Exact deployed-byte verification
-        run: |
-          set -euo pipefail
-          node verify-live.mjs 2>&1 | tee /tmp/deployed-byte-proof.log
-      - name: Deployed Chromium operator path
-        run: |
-          set -euo pipefail
-          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
-          test -n "$BROWSER"
-          run_browser_verifier() {
-            script="$1"
-            budget="${2:-10m}"
-            log="/tmp/${script}.log"
-            # A failed gate stays failed. Startup readiness is bounded in the
-            # browser driver; classified infrastructure failures may be rerun
-            # explicitly against the unchanged SHA after their logs are read.
-            timeout --signal=TERM --kill-after=10s "$budget" node collect-verification-evidence.mjs --browser-suite="$script" --browser-scope="$CLOSED_LOOP_BROWSER_SCOPE" 2>&1 | tee "$log"
-          }
-          BROWSER_VERIFY_RESULT=0
-          run_browser_verifier verify-mobile-stage-action.mjs || BROWSER_VERIFY_RESULT=1
-          run_browser_verifier verify-mobile-capability-journey.mjs || BROWSER_VERIFY_RESULT=1
-          run_browser_verifier verify-browser-recovery.mjs || BROWSER_VERIFY_RESULT=1
-          run_browser_verifier verify-browser.mjs || BROWSER_VERIFY_RESULT=1
-          run_browser_verifier verify-browser-extra.mjs || BROWSER_VERIFY_RESULT=1
-          run_browser_verifier verify-human-stage-walkthrough.mjs || BROWSER_VERIFY_RESULT=1
-          test "$BROWSER_VERIFY_RESULT" = 0
-
-      - name: Preserve deployed operator evidence
-        if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        env:
-          NODE_OPTIONS: ''
-        with:
-          name: deployed-operator-journeys-${{ github.sha }}-${{ github.run_id }}
-          path: |
-            recovery-browser-evidence/
-            mobile-capability-evidence/
-            /tmp/verify-*.mjs.log
-            /tmp/deployed-byte-proof.log
-          retention-days: 90
-          if-no-files-found: warn
-
-      - name: Validate supporting deployed browser receipts
-        run: node collect-verification-evidence.mjs --require-browser-scope=DEPLOYED --exclude-browser-suite=verify-complete-operator-journey.mjs
-      - name: Preserve current deployed browser assertion receipts
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        env:
-          NODE_OPTIONS: ''
-        with:
-          name: deployed-browser-receipts-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: .verification-receipts/browser/DEPLOYED/
-          include-hidden-files: true
-          retention-days: 90
-          if-no-files-found: error
-
-  deployed-operator-journey:
-    name: deployed-operator-journey
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [test, deploy, verify-live]
-    permissions:
-      contents: read
-    runs-on: ubuntu-latest
-    timeout-minutes: 360
-    env:
-      PAGE_URL: ${{ needs.deploy.outputs.page_url }}
-      VERIFIED_SITE_DIR: _verified-site/site
-      CLOSED_LOOP_BROWSER_SCOPE: DEPLOYED
-      CLOSED_LOOP_VERIFICATION_SOURCE_ROOT: ${{ github.workspace }}
-      CLOSED_LOOP_VERIFICATION_RECEIPTS: ${{ github.workspace }}/.verification-receipts
-      VERIFIER_CHILD_EVIDENCE_DIRECTORY: /tmp/clrt-deployed-operator-journey-children
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        with:
-          node-version: '22.23.3'
-      - name: Download the exact verified deployment files
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: ${{ needs.test.outputs.verified_artifact_name }}
-          path: _verified-site
-      - name: Restore the verified retained fixture
-        run: cp _verified-site/site/TEST_PROJECT.json TEST_PROJECT.json
-      - name: Complete deployed operator journey
-        run: |
-          set -euo pipefail
-          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
-          test -n "$BROWSER"
-          run_browser_verifier() {
-            script="$1"
-            budget="$2"
-            timeout --signal=TERM --kill-after=10s "$budget" node collect-verification-evidence.mjs --browser-suite="$script" --browser-scope="$CLOSED_LOOP_BROWSER_SCOPE" 2>&1 | tee "/tmp/${script}.log"
-          }
-          run_browser_verifier verify-complete-operator-journey.mjs 330m
-      - name: Validate complete deployed operator receipt
-        run: node collect-verification-evidence.mjs --require-browser-scope=DEPLOYED --browser-suite-only=verify-complete-operator-journey.mjs
-      - name: Preserve complete deployed operator journey evidence
-        if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        env:
-          NODE_OPTIONS: ''
-        with:
-          name: deployed-complete-operator-journey-${{ github.sha }}-${{ github.run_id }}
-          path: |
-            operator-evidence/
-            /tmp/verify-complete-operator-journey.mjs.log
-            /tmp/clrt-deployed-operator-journey-children/
-          retention-days: 90
-          if-no-files-found: warn
-      - name: Preserve complete deployed operator receipt
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        env:
-          NODE_OPTIONS: ''
-        with:
-          name: deployed-operator-journey-receipt-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: .verification-receipts/browser/DEPLOYED/verify-complete-operator-journey.mjs.json
-          include-hidden-files: true
-          if-no-files-found: error
-          retention-days: 90
-
-  reverified-operator-journey:
-    name: reverified-operator-journey
-    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
-    needs: test
-    permissions:
-      contents: read
-    runs-on: ubuntu-latest
-    timeout-minutes: 360
-    env:
-      PAGE_URL: https://sjonesjones917.github.io/closed-loop-tracker/
-      VERIFIED_SITE_DIR: _verified-site/site
-      CLOSED_LOOP_BROWSER_SCOPE: DEPLOYED
-      CLOSED_LOOP_VERIFICATION_SOURCE_ROOT: ${{ github.workspace }}
-      CLOSED_LOOP_VERIFICATION_RECEIPTS: ${{ github.workspace }}/.verification-receipts
-      VERIFIER_CHILD_EVIDENCE_DIRECTORY: /tmp/clrt-reverified-operator-journey-children
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        with:
-          node-version: '22.23.3'
-      - name: Download the exact verified deployment files
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: ${{ needs.test.outputs.verified_artifact_name }}
-          path: _verified-site
-      - name: Restore the verified retained fixture
-        run: cp _verified-site/site/TEST_PROJECT.json TEST_PROJECT.json
-      - name: Complete reverified operator journey
-        run: |
-          set -euo pipefail
-          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
-          test -n "$BROWSER"
-          run_browser_verifier() {
-            script="$1"
-            budget="$2"
-            timeout --signal=TERM --kill-after=10s "$budget" node collect-verification-evidence.mjs --browser-suite="$script" --browser-scope="$CLOSED_LOOP_BROWSER_SCOPE" 2>&1 | tee "/tmp/${script}.log"
-          }
-          run_browser_verifier verify-complete-operator-journey.mjs 330m
-      - name: Validate complete reverified operator receipt
-        run: node collect-verification-evidence.mjs --require-browser-scope=DEPLOYED --browser-suite-only=verify-complete-operator-journey.mjs
-      - name: Preserve complete reverified operator journey evidence
-        if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        env:
-          NODE_OPTIONS: ''
-        with:
-          name: reverified-complete-operator-journey-${{ github.sha }}-${{ github.run_id }}
-          path: |
-            operator-evidence/
-            /tmp/verify-complete-operator-journey.mjs.log
-            /tmp/clrt-reverified-operator-journey-children/
-          retention-days: 90
-          if-no-files-found: warn
-      - name: Preserve complete reverified operator receipt
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        env:
-          NODE_OPTIONS: ''
-        with:
-          name: reverified-operator-journey-receipt-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: .verification-receipts/browser/DEPLOYED/verify-complete-operator-journey.mjs.json
-          include-hidden-files: true
-          if-no-files-found: error
-          retention-days: 90
-
-  publish-status:
-    name: Publish machine acceptance status
-    if: >-
-      always() && github.ref == 'refs/heads/main' &&
-      ((github.event_name == 'push' && needs.test.result == 'success' && needs.deploy.result == 'success' && needs.verify-live.result == 'success' && needs.deployed-operator-journey.result == 'success') ||
-       (github.event_name == 'workflow_dispatch' && needs.test.result == 'success' && needs.reverified-operator-journey.result == 'success'))
-    needs: [test, deploy, verify-live, deployed-operator-journey, reverified-operator-journey]
-    runs-on: ubuntu-latest
-    env:
-      CLOSED_LOOP_VERIFICATION_SOURCE_ROOT: ${{ github.workspace }}
-      CLOSED_LOOP_VERIFICATION_RECEIPTS: ${{ github.workspace }}/.verification-receipts
-      VERIFIER_CHILD_EVIDENCE_DIRECTORY: ${{ github.workspace }}/../clrt-verifier-children
-      # Publication consumes reconciled proof; missing registered receipts block it.
-      CLOSED_LOOP_REQUIRE_CURRENT_OWNER_RECEIPTS: '1'
-      NODE_OPTIONS: --import ${{ github.workspace }}/verification-evidence-preload.mjs
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        env:
-          NODE_OPTIONS: ''
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        with:
-          node-version: '22.23.3'
-      - name: Download current executed assertion evidence
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: ${{ needs.test.outputs.verified_artifact_name }}
-          path: _verified-evidence
-      - name: Validate current executed assertion evidence handoff
-        run: |
-          set -euo pipefail
-          mkdir -p .verification-receipts
-          cp -R _verified-evidence/proofs/. .verification-receipts/
-          node collect-verification-evidence.mjs
-      - name: Reverify deployed Chromium for authenticated mobile acceptance
-        if: github.event_name == 'workflow_dispatch'
-        env:
-          PAGE_URL: https://sjonesjones917.github.io/closed-loop-tracker/
-          VERIFIED_SITE_DIR: _verified-evidence/site
-          CLOSED_LOOP_BROWSER_SCOPE: DEPLOYED
-        run: |
-          set -euo pipefail
-          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
-          test -n "$BROWSER"
-          run_browser_verifier() {
-            script="$1"
-            budget="${2:-10m}"
-            log="/tmp/${script}.log"
-            # A failed gate stays failed. Startup readiness is bounded in the
-            # browser driver; classified infrastructure failures may be rerun
-            # explicitly against the unchanged SHA after their logs are read.
-            timeout --signal=TERM --kill-after=10s "$budget" node collect-verification-evidence.mjs --browser-suite="$script" --browser-scope="$CLOSED_LOOP_BROWSER_SCOPE" 2>&1 | tee "$log"
-          }
-          BROWSER_VERIFY_RESULT=0
-          run_browser_verifier verify-mobile-stage-action.mjs || BROWSER_VERIFY_RESULT=1
-          run_browser_verifier verify-mobile-capability-journey.mjs || BROWSER_VERIFY_RESULT=1
-          run_browser_verifier verify-browser-recovery.mjs || BROWSER_VERIFY_RESULT=1
-          run_browser_verifier verify-browser.mjs || BROWSER_VERIFY_RESULT=1
-          run_browser_verifier verify-browser-extra.mjs || BROWSER_VERIFY_RESULT=1
-          run_browser_verifier verify-human-stage-walkthrough.mjs || BROWSER_VERIFY_RESULT=1
-          test "$BROWSER_VERIFY_RESULT" = 0
-      - name: Preserve reverified deployed operator evidence
-        if: always() && github.event_name == 'workflow_dispatch'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        env:
-          NODE_OPTIONS: ''
-        with:
-          name: reverified-deployed-operator-journeys-${{ github.sha }}-${{ github.run_id }}
-          path: |
-            recovery-browser-evidence/
-            mobile-capability-evidence/
-            /tmp/verify-*.mjs.log
-          retention-days: 90
-          if-no-files-found: warn
-      - name: Download current deployed browser assertion receipts
-        if: github.event_name == 'push'
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: deployed-browser-receipts-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: .verification-receipts/browser/DEPLOYED
-      - name: Download complete deployed operator receipt
-        if: github.event_name == 'push'
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: deployed-operator-journey-receipt-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: .verification-receipts/browser/DEPLOYED
-      - name: Download complete reverified operator receipt
-        if: github.event_name == 'workflow_dispatch'
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: reverified-operator-journey-receipt-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: .verification-receipts/browser/DEPLOYED
-      - name: Reconcile local and deployed current assertion receipts
-        env:
-          VERIFIED_SITE_DIR: _verified-evidence/site
-        run: |
-          set -euo pipefail
-          node collect-verification-evidence.mjs --require-browser-scope=LOCAL
-          node collect-verification-evidence.mjs --require-browser-scope=DEPLOYED
-          node collect-verification-evidence.mjs
-      - name: Build acceptance artifact from executed proof jobs
-        id: acceptance
-        env:
-          TEST_RESULT: ${{ needs.test.result }}
-          DEPLOY_RESULT: ${{ github.event_name == 'workflow_dispatch' && 'success' || needs.deploy.result }}
-          LIVE_RESULT: ${{ github.event_name == 'workflow_dispatch' && 'success' || needs.verify-live.result }}
-          VERIFICATION_RUN_ID: ${{ needs.test.outputs.verification_run_id }}
-          VERIFICATION_SOURCE_COMMIT: ${{ needs.test.outputs.verification_source_commit }}
-          MOBILE_ACCEPTANCE_TARGET_JSON: ${{ inputs.mobile_acceptance_target_json || '' }}
-          MOBILE_ACCEPTANCE_EVIDENCE_JSON: ${{ inputs.mobile_acceptance_evidence_json || '' }}
-          VISUAL_BASELINE_EVIDENCE_JSON: ${{ inputs.visual_baseline_evidence_json || '' }}
-        run: |
-          set -euo pipefail
-          test "$TEST_RESULT" = success
-          test "$DEPLOY_RESULT" = success
-          test "$LIVE_RESULT" = success
-          node verify-definition-of-done.mjs > /tmp/definition.json
-          node verify-v3-definition-of-done.mjs > /tmp/v3.json
-          node collect-verification-evidence.mjs --export-owner=verify-ingestion.mjs > /tmp/ingestion.out
-          node collect-verification-evidence.mjs --export-owner=verify-stage01-intake-closure.mjs --report-marker=stage01IntakeClosure > /tmp/stage01.out
-          node verify-zero-loss-accounting.mjs > /tmp/zero-loss.out
-          node collect-verification-evidence.mjs --export-owner=verify-full-cycle.mjs --report-marker=stagesCompleted > /tmp/full-cycle.json
-          node verify-data-route-closure.mjs > /tmp/data-route.json
-          node verify-infrastructure-route-closure.mjs > /tmp/infrastructure-route.json
-          node collect-verification-evidence.mjs --export-owner=verify-mobile-release-governance.mjs --report-marker=mobileReleaseGovernance > /tmp/mobile-governance.json
-          USED_MOBILE_CHALLENGES_JSON="$(git ls-remote --tags origin 'refs/tags/mobile-acceptance-challenge-*' | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const a=s.split(/\n/).filter(Boolean).map(l=>l.trim().split(/\s+/)[1]||'').map(r=>r.replace('refs/tags/mobile-acceptance-challenge-','').replace(/\^\{\}$/,'')).filter(Boolean);process.stdout.write(JSON.stringify([...new Set(a)]));});")"
-          export USED_MOBILE_CHALLENGES_JSON
-          node --input-type=module - <<'NODE'
-          import fs from 'node:fs';
-          import {evaluateFinalAcceptance} from './final-acceptance.mjs';
-          import {selectExecutionReport} from './execution-report.mjs';
+          import {createHash} from 'node:crypto';
           import {execFileSync} from 'node:child_process';
-          import {resolveVisualBaselineSubmission} from './visual-baseline-submission.mjs';
-          import {applyExecutedEvidence,readReleaseExecutedEvidence} from './verification-evidence.mjs';
-          import {evaluateMobileAcceptanceSubmission} from './evaluate-mobile-acceptance-submission.mjs';
-          const definition=JSON.parse(fs.readFileSync('/tmp/definition.json','utf8'));
-          const v3=JSON.parse(fs.readFileSync('/tmp/v3.json','utf8'));
-          const stage01=JSON.parse(fs.readFileSync('/tmp/stage01.out','utf8'));
-          const zeroLoss=selectExecutionReport(fs.readFileSync('/tmp/zero-loss.out','utf8'),'zeroLossStage01');
-          const fullCycle=JSON.parse(fs.readFileSync('/tmp/full-cycle.json','utf8'));
-          const dataRoute=JSON.parse(fs.readFileSync('/tmp/data-route.json','utf8'));
-          const infrastructureRoute=JSON.parse(fs.readFileSync('/tmp/infrastructure-route.json','utf8'));
-          const mobileGovernance=JSON.parse(fs.readFileSync('/tmp/mobile-governance.json','utf8'));
-          const executedEvidence=await readReleaseExecutedEvidence('.verification-receipts/evidence.json',{siteDirectory:'_verified-evidence/site',targetJson:process.env.MOBILE_ACCEPTANCE_TARGET_JSON||'',evidenceJson:process.env.MOBILE_ACCEPTANCE_EVIDENCE_JSON||'',submitter:process.env.GITHUB_ACTOR,usedChallenges:JSON.parse(process.env.USED_MOBILE_CHALLENGES_JSON||'[]')});
-          const mobileAcceptance=executedEvidence.externalMobileResult||evaluateMobileAcceptanceSubmission(executedEvidence.externalMobile||{submitter:process.env.GITHUB_ACTOR});
-          const ingestionText=fs.readFileSync('/tmp/ingestion.out','utf8');
-          const stage01RawInputAccounting=Number(Boolean(stage01.stage01IntakeClosure&&stage01.currentManifestBound&&stage01.incompleteAccountingRejected));
-          const stage01RequiredFileInspectionAccounting=Number(Boolean(stage01.artifactIdentityBound&&stage01.currentManifestBound&&stage01.incompleteAccountingRejected));
-          const stage01AcceptedSemanticMappingCoverage=Number(Boolean(zeroLoss.zeroLossStage01&&zeroLoss.incompleteIntakeRejected));
-          const stage04ObligationAccounting=Number(Boolean(zeroLoss.zeroLossStage04&&zeroLoss.completeStage03ResearchUnion&&zeroLoss.incompleteObligationRejected));
-          const negativeMatches=[...ingestionText.matchAll(/"totalNegativeCases"\s*:\s*(\d+)/g)];
-          if(!negativeMatches.length)throw new Error('Ingestion proof did not publish totalNegativeCases.');
-          if(dataRoute.dataRouteClosure!=='PASS')throw new Error('Canonical data-route closure proof did not pass.');
-          if(infrastructureRoute.infrastructureRouteClosure!=='PASS')throw new Error('Infrastructure route-closure proof did not pass.');
-          if(mobileGovernance.mobileReleaseGovernance!=='PASS')throw new Error('Physical-iPhone release-tag governance proof did not pass.');
-          // A favorable top-level summary must never mask incomplete detailed proof.
-          for(const [key,value] of Object.entries({stage01RawInputAccounting,stage01RequiredFileInspectionAccounting,stage01AcceptedSemanticMappingCoverage,stage04ObligationAccounting})){
-            if(v3.section49CoverageMetrics?.[key]?.value!==value)throw new Error(`Conflicting executed metric evidence: ${key}`);
+          import {pathToFileURL,fileURLToPath} from 'node:url';
+          const source=process.cwd(),out=path.resolve(process.argv[2]),templates=path.dirname(fileURLToPath(import.meta.url));
+          const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
+          assert(out!==source&&!out.startsWith(source+path.sep),'Derived helpers must remain outside the checkout');
+          assert.equal(execFileSync('git',['rev-parse','HEAD^{tree}'],{encoding:'utf8'}).trim(),'24735288da9f734997c1920c111ad4d472e743e5');
+          const actualHead=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
+          const localPreparationOnly=process.argv[3]==='--allow-equal-tree-preparation-only';
+          assert.equal(process.argv[3],localPreparationOnly?'--allow-equal-tree-preparation-only':undefined);
+          assert.equal(actualHead,localPreparationOnly?'50f539785914002b6bcdf398a71e4e29605d376c':'315f85b3dc34c274e4470fe4e84e9dcebc9a1551');
+          assert.equal(execFileSync('git',['status','--porcelain'],{encoding:'utf8'}).trim(),'');
+          fs.mkdirSync(out,{recursive:true});
+          const original=fs.readFileSync('verify-complete-operator-journey.mjs','utf8');
+          assert.equal(sha(original),'2230f620058797e78960b1c96cf59c2d38ab2cdaf6d94ae03747f1a4bffe8cfe');
+          const wait=fs.readFileSync(path.join(templates,'reviewed-wait-driver-template.mjs'),'utf8');
+          assert.equal(sha(wait),'5e5ba59cad1d014569282c9412e895959b5af74de2a1c37c49a4e90072355a94');
+          const decoder=fs.readFileSync(path.join(templates,'downloaded-backup-decoder.mjs'));
+          assert.equal(sha(decoder),'8b6301c498c226b2b1190e87988139cfcc0bd9ea8f1bbcff85e37cada1522b69');
+          fs.writeFileSync(path.join(out,'downloaded-backup-decoder.mjs'),decoder,{flag:'wx'});
+          const replaceExact=(text,from,to,count=1)=>{assert.equal(text.split(from).length-1,count,'Exact adapter anchor changed');return text.split(from).join(to);};
+          let driver=replaceExact(wait,"from './browser-execution-evidence.mjs'",'from '+JSON.stringify(pathToFileURL(path.join(source,'browser-execution-evidence.mjs')).href));
+          driver=replaceExact(driver,"import {gunzipSync} from 'node:zlib';","import {decodeDownloadedBackup} from './downloaded-backup-decoder.mjs';");
+          driver=replaceExact(driver,"JSON.parse(gunzipSync(file.bytes).toString('utf8'))","await decodeDownloadedBackup(file.bytes)",2);
+          // Observe the real ordinary readiness refusal first. The extended wait is a
+          // diagnostic continuation. The readiness allowance is 60 minutes; ordinary
+          // layout and downloaded-byte checks retain their separate existing bounds.
+          const completion='async()=>{await completionReadiness.idle();await idle();}';
+          const diagnosticCompletion=`async()=>{
+                const completionStarted=Date.now();
+                const record=value=>fs.appendFileSync(path.join(process.env.DIAG_OUT,'export-completion-observations.jsonl'),JSON.stringify({at:new Date().toISOString(),selector,...value})+'\\n');
+                try{await idle();record({ordinaryActionOutcome:'COMPLETED_WITHIN_ORIGINAL_LIMIT',elapsedMs:Date.now()-completionStarted,ordinaryTimeoutMs:actionTimeoutMs});}
+                catch(error){record({ordinaryActionOutcome:'FAILED_ORIGINAL_LIMIT',elapsedMs:Date.now()-completionStarted,error:{name:error.name,code:error.code||null,message:error.message,timeoutMs:error.timeoutMs||null,stack:error.stack}});if(error.code!=='VERIFIER_TIMEOUT'||error.timeoutMs!==actionTimeoutMs)throw error;const remaining=completionTimeoutMs-(Date.now()-completionStarted);assert(remaining>0,'Diagnostic export completion budget exhausted');await createBrowserReadiness(page,evaluate,{timeout:remaining}).idle();await idle();record({diagnosticExtendedCompletion:true,elapsedMs:Date.now()-completionStarted,notOriginalActionPass:true});}
+              }`;
+          driver=replaceExact(driver,completion,diagnosticCompletion);
+          fs.writeFileSync(path.join(out,'diagnostic-driver.mjs'),driver,{flag:'wx'});
+          function between(start,end){const a=original.indexOf(start),b=original.indexOf(end,a+start.length);assert(a>=0&&b>a);return original.slice(a,b).trimEnd();}
+          const latency=between('async function captureOperationLatency(','async function inspectPresentation(');
+          const presentation=between('async function inspectPresentation(','async function saved(');
+          const saved=between('async function saved(','async function verifyFinalBackupRoundTrip(');
+          const final=between('async function verifyFinalBackupRoundTrip(','async function ingest(');
+          const loop=between('  for(stage=1;stage<=30;stage++){','  for(const selected of globalThis.closedLoopCore.STAGES)');
+          const presentations=between('  for(const selected of globalThis.closedLoopCore.STAGES)','  await verifyFinalBackupRoundTrip();');
+          const tailStart=final.indexOf('  const observed=await saved({workflow:true,stages:Array.from(');assert(tailStart>0);
+          const postImport=final.slice(tailStart,final.lastIndexOf('}')).trimEnd();
+          const suffixLoop=replaceExact(loop,'for(stage=1;stage<=30;stage++){','for(stage=30;stage<=30;stage++){');
+          const code=`// Exact pinned original bodies, with only the stage-loop start limited to30.\nimport assert from 'node:assert/strict';\nexport function createSuffixHelpers(dependencies){\nconst {browser,report,engine,schema,hash,observeRetainedHistory,verifyRetainedBackup,verifyRetainedRestore,observeBackupCanonicalFamilies,verifyBackupCanonicalFamilies,observeWorkflowDOM,assertWorkflowPresentation,verifyCompletedStageProjection,preserveReport,OUTPUT,CANDIDATE}=dependencies;\nlet snapshot,stage=30,sequence=131,rejected=false,reloaded=false;\nconst external=()=>{throw Error('Unplanned external response in Stage30 diagnostic suffix');};\n${latency}\n${presentation}\n${saved}\n${final}\nasync function finishStage30(){\n${suffixLoop}\n}\nasync function checkCompletedPresentations(){\n${presentations}\n}\nasync function checkPostImportSeparately(before,canonicalBefore,exported,backup,canonicalExport){\n${postImport}\n}\nreturn {finishStage30,checkCompletedPresentations,verifyFinalBackupRoundTrip,captureOperationLatency,checkPostImportSeparately};\n}\n`;
+          fs.writeFileSync(path.join(out,'exact-suffix-helpers.mjs'),code,{flag:'wx'});
+          const manifest={diagnosticOnly:true,eligibleVerificationReceipt:false,localPreparationOnly,sourceCommit:actualHead,originalJourneySha256:sha(original),reviewedWaitDriverSha256:sha(wait),decoderSha256:sha(decoder),diagnosticDriverSha256:sha(driver),extractedModuleSha256:sha(code),extractedSourceBodies:Object.fromEntries(Object.entries({latency,presentation,saved,final,loop,presentations,postImport}).map(([name,text])=>[name,{sha256:sha(text),bytes:Buffer.byteLength(text)}])),sourceLoopChange:'Only stage=1 becomes stage=30; all original loop body assertions and handlers remain.',excludedFullJourneyClaim:'The original report.stages.length===30 assertion cannot be satisfied by a suffix and is neither fabricated nor claimed; all30 presentation and restored-gate assertions execute.'};
+          fs.writeFileSync(path.join(out,'helper-provenance.json'),JSON.stringify(manifest,null,2)+'\n',{flag:'wx'});
+          console.log(JSON.stringify(manifest));
+          FROZEN_HELPER_1
+          cat > "$DIAG_OUT/runner-helpers/replay.mjs" <<'FROZEN_HELPER_2'
+          // Cloud-only diagnostic suffix. It cannot establish a complete journey or receipt.
+          import fs from 'node:fs';
+          import path from 'node:path';
+          import assert from 'node:assert/strict';
+          import {spawn,execFileSync} from 'node:child_process';
+          import {createHash} from 'node:crypto';
+          import {pathToFileURL} from 'node:url';
+          const source=process.cwd(),out=path.resolve(process.argv[2]),helpers=path.join(out,'helpers'),replay=path.join(out,'replay'),profile=path.join(replay,'profile');
+          const COMMIT='315f85b3dc34c274e4470fe4e84e9dcebc9a1551',TREE='24735288da9f734997c1920c111ad4d472e743e5';
+          const JOB='JOB-jmrfcbj0n5mn23la3bg99ttk9e5vlpui',PROJECT='07e34678977a8f6ab842801009d798ed2cae6b44765f86e846b8ce1b15900775';
+          const URL='http://127.0.0.1:4173/?project='+JOB+'&stage=30&view=Workflow',CHROME='156.0.8078.79';
+          const sha=bytes=>createHash('sha256').update(bytes).digest('hex'),save=(name,value)=>fs.writeFileSync(path.join(out,name),JSON.stringify(value,null,2)+'\n');
+          const log=(name,value)=>fs.appendFileSync(path.join(out,name),JSON.stringify({at:new Date().toISOString(),...value})+'\n');
+          const git=(...args)=>execFileSync('git',args,{encoding:'utf8'}).trim(),delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+          const errorRecord=error=>({name:error.name,code:error.code||null,message:error.message,stack:error.stack,timeoutMs:error.timeoutMs||null,verifierObservation:error.verifierObservation||null});
+          async function bounded(promise,label,ms=20000){let timer;try{return await Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Diagnostic deadline: '+label)),ms);})]);}finally{clearTimeout(timer);}}
+          assert.equal(git('rev-parse','HEAD'),COMMIT);assert.equal(git('rev-parse','HEAD^{tree}'),TREE);assert.equal(git('status','--porcelain'),'');
+          assert.equal(process.platform,'linux');assert.equal(process.arch,'x64');assert.equal(process.version,'v22.23.3');assert(!process.env.NODE_OPTIONS);assert(!process.env.CLOSED_LOOP_VERIFICATION_RECEIPTS);
+          assert.equal(fs.readFileSync(path.join(profile,'Last Version'),'utf8').trim(),CHROME);assert.equal(execFileSync(process.env.BROWSER,['--product-version'],{encoding:'utf8'}).trim(),CHROME);
+          assert(out!==source&&!out.startsWith(source+path.sep));
+          for(const key of Object.keys(process.env))if(/^(CLOSED_LOOP_|VERIFIER_|CONFORMANCE_)/.test(key))assert(key==='CLOSED_LOOP_VERIFIER_OWNER_FD'&&process.env[key]==='3','Unexpected inherited proof/owner environment: '+key);
+          const provenance=JSON.parse(fs.readFileSync(path.join(helpers,'helper-provenance.json'),'utf8'));
+          assert.equal(provenance.localPreparationOnly,false);assert.equal(provenance.sourceCommit,COMMIT);
+          assert.equal(sha(fs.readFileSync('verify-complete-operator-journey.mjs')),provenance.originalJourneySha256);
+          for(const [file,key]of [['diagnostic-driver.mjs','diagnosticDriverSha256'],['downloaded-backup-decoder.mjs','decoderSha256'],['exact-suffix-helpers.mjs','extractedModuleSha256']])assert.equal(sha(fs.readFileSync(path.join(helpers,file))),provenance[key]);
+          process.env.PAGE_URL=URL;process.env.STATIC_SITE_ROOT=path.join(out,'site');process.env.CLOSED_LOOP_BROWSER_SCOPE='LOCAL';process.env.CLOSED_LOOP_BROWSER_SOURCE_COMMIT=COMMIT;process.env.DIAG_OUT=out;
+          const {validateSite}=await import(pathToFileURL(path.join(source,'verified-site.mjs')));
+          const manifest=validateSite(process.env.STATIC_SITE_ROOT);
+          assert.equal(manifest.sourceCommit,COMMIT);assert.equal(manifest.manifestDigest.digest,'817d87c06d6a13e8ec975b3388746c449dfdac6d942e17e464bead8424f9926b');assert.equal(manifest.buildIdentity,'build-sha256-b1483a0a8c201adf14a2a04eb9ee6451a5518fd9c6619e3f81859cb575833ed2');
+          const {createOperatorBrowser}=await import(pathToFileURL(path.join(helpers,'diagnostic-driver.mjs')));
+          const {createSuffixHelpers}=await import(pathToFileURL(path.join(helpers,'exact-suffix-helpers.mjs')));
+          const retained=await import(pathToFileURL(path.join(source,'test-retained-history-browser.mjs')));
+          const markup=await import(pathToFileURL(path.join(source,'test-app-markup.mjs')));
+          const {verifyCompletedStageProjection}=await import(pathToFileURL(path.join(source,'stage-projection-verification.mjs')));
+          const {OUTPUT,CANDIDATE}=await import(pathToFileURL(path.join(source,'operator-journey-fixtures.mjs')));
+          const {createVerifierRuntime}=await import(pathToFileURL(path.join(source,'verifier-runtime.mjs')));
+          globalThis.dispatchEvent=()=>true;
+          for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
+          const engine=globalThis.closedLoopWorkflowEngine,schema=globalThis.closedLoopWorkflowSchema,hash=globalThis.closedLoopHash;
+          assert.equal(schema.STAGE_COUNT,30);assert.equal(Buffer.byteLength(OUTPUT),9);
+          let browser,opening,openingSettled=false,server,serverError=null,serverExit=null,serverShutdownRequested=false,cdp,mainSession,chrome,finalizing=false,interrupted=null;
+          const report={diagnosticOnly:true,eligibleVerificationReceipt:false,completeOperatorJourney:false,complete:false,sourceCommit:COMMIT,sourceTree:TREE,startedAt:new Date().toISOString(),basis:'RESUMED_NATIVE_PROFILE_STAGE30_SUFFIX_ONLY',ordinaryActionTimeoutMs:180000,diagnosticExportReadinessTimeoutMs:3600000,ordinaryLayoutAndDownloadTimeoutMs:180000,passiveImportLimitMs:1200000,operations:[],presentationCases:[],stages:[],failures:[],suffixCompleted:false,originalFinalRoundTrip:null,separateEventualImportChecks:null};
+          const preserveReport=()=>{report.events=browser?.events||[];const pending=path.join(out,'suffix.json.pending');fs.writeFileSync(pending,JSON.stringify(report,null,2)+'\n');fs.renameSync(pending,path.join(out,'suffix.json'));};
+          let stop;const stopping=new Promise(resolve=>{stop=resolve;});const signal=value=>{interrupted=value;stop();},onTerm=()=>signal('SIGTERM'),onInt=()=>signal('SIGINT');process.on('SIGTERM',onTerm);process.on('SIGINT',onInt);
+          function proc(pid){try{const raw=fs.readFileSync(`/proc/${pid}/stat`,'utf8'),v=raw.slice(raw.lastIndexOf(')')+2).trim().split(' ');return {pid:Number(pid),state:v[0],ppid:Number(v[1]),pgid:Number(v[2]),startTicks:v[19]};}catch(error){if(error.code==='ENOENT'||error.code==='ESRCH')return null;throw error;}}
+          class CDP{
+           constructor(url){this.ws=new WebSocket(url);this.sequence=0;this.pending=new Map();this.listeners=[];this.ready=new Promise((resolve,reject)=>{this.ws.onopen=resolve;this.ws.onerror=reject;});this.ws.onmessage=event=>{const value=JSON.parse(event.data),p=this.pending.get(value.id);if(p){this.pending.delete(value.id);clearTimeout(p.timer);value.error?p.reject(Error(value.error.message)):p.resolve(value.result);}else for(const listen of this.listeners)listen(value);};}
+           async send(method,params={},sessionId){await this.ready;return new Promise((resolve,reject)=>{const id=++this.sequence,timer=setTimeout(()=>{this.pending.delete(id);reject(Error('Diagnostic CDP timeout '+method));},10000);this.pending.set(id,{resolve,reject,timer});this.ws.send(JSON.stringify({id,method,params,...(sessionId?{sessionId}:{})}));});}
+           close(){this.ws.close();for(const p of this.pending.values()){clearTimeout(p.timer);p.reject(Error('Diagnostic transport closed'));}this.pending.clear();}
           }
-          const physicalIPhoneAccepted=mobileAcceptance.actualIPhoneSafariAcceptance===true&&mobileAcceptance.mobileAcceptanceResult==='ACCEPTED';
-          const finalAcceptancePublication=false;
-          let report={
-            commit:process.env.GITHUB_SHA,
-            verificationSource:{runId:process.env.VERIFICATION_RUN_ID,sourceCommit:process.env.VERIFICATION_SOURCE_COMMIT},
-            workflow:'mobile-closed-loop/30',
-            contractProfileId:'closed-loop-completion-profile/1',
-            projectSchema:'closed-loop-project/3',
-            responseSchema:'closed-loop-stage-response/3',
-            testIrSchema:'closed-loop-test-spec/1',
-            verificationPackageSchema:'closed-loop-verification-package/1',
-            stageCount:30,
-            ...definition,
-            ...v3,
-            dataRouteClosure:dataRoute.dataRouteClosure,
-            infrastructureRouteClosure:infrastructureRoute.infrastructureRouteClosure,
-            routeOperationsChecked:dataRoute.operationsChecked,
-            routeCanonicalFamilies:dataRoute.canonicalFamilies,
-            routeReadEdgesChecked:dataRoute.readEdgesChecked,
-            routeWritableCollectionsChecked:dataRoute.writableCollectionsChecked,
-            routeWritableFieldsChecked:dataRoute.writableFieldsChecked,
-            routeRelationshipDefinitionsChecked:dataRoute.relationshipDefinitionsChecked,
-            routeInvalidationStagesChecked:dataRoute.invalidationStagesChecked,
-            routeCurrentScopeStaleExclusion:dataRoute.currentScopeStaleExclusion,
-            routePromptReadSerialization:dataRoute.promptReadSerialization,
-            routeResponseAuthorizationClosure:dataRoute.responseAuthorizationClosure,
-            routeProvenanceContractClosure:dataRoute.provenanceContractClosure,
-            routeDownstreamForwardingClosure:dataRoute.downstreamForwardingClosure,
-            routeDownstreamOnlyInvalidation:dataRoute.downstreamOnlyInvalidation,
-            routeSubjectNeutralPromptAuthority:dataRoute.subjectNeutralPromptAuthority,
-            routeHumanExperiencePromptContract:dataRoute.humanExperiencePromptContract,
-            infrastructureFamiliesChecked:infrastructureRoute.infrastructureFamilies,
-            infrastructureRawFirstCapture:infrastructureRoute.rawFirstCapture,
-            infrastructurePrecommitRevalidation:infrastructureRoute.precommitRevalidation,
-            infrastructureExtractionManifestProvenance:infrastructureRoute.extractionManifestProvenance,
-            infrastructurePromptContextManifestRoute:infrastructureRoute.promptContextManifestRoute,
-            infrastructureAuthorityPartitionsSeparated:infrastructureRoute.authorityPartitionsSeparated,
-            infrastructureCurrentScopeRoute:infrastructureRoute.currentScopeRoute,
-            infrastructurePersistenceIntegrityRoute:infrastructureRoute.persistenceIntegrityRoute,
-            infrastructureStructuredOperatorActionRoute:infrastructureRoute.structuredOperatorActionRoute,
-            currentScopeSelectorCoverage:definition.currentScopeSelectorCoverage,
-            exactReqRunTestCoverage:definition.exactReqRunTestCoverage,
-            applicableCurrentRegressionSuccess:definition.applicableCurrentRegressionSuccess,
-            mandatoryEvidenceChainStructuralCoverage:definition.mandatoryEvidenceChainCoverage,
-            mandatoryEvidenceSufficiencyCoverage:v3.mandatoryEvidenceSufficiencyCoverage,
-            releaseArtifactIdentityCoverage:definition.releaseArtifactIdentityCoverage,
-            unauthorizedFieldMutationsAccepted:definition.unauthorizedFieldMutationsAccepted,
-            canonicalMutationsBeforeAcceptance:definition.canonicalMutationsBeforeAcceptance,
-            partialCommitsAfterInjectedFailure:definition.partialCommitsAfterInjectedFailure,
-            staleProposalsAccepted:definition.staleProposalsAccepted,
-            crossProjectRelationshipsAccepted:definition.crossProjectRelationshipsAccepted,
-            historicalScopeSatisfyingCurrentGates:definition.historicalScopeSatisfyingCurrentGates,
-            unmatchedDeliveryFilesAuthorized:definition.unmatchedDeliveryFilesAuthorized,
-            appendOnlyHistoryRewritesAccepted:definition.appendOnlyHistoryRewritesAccepted,
-            unsupportedTestIrTreatedAsExecutable:v3.unsupportedTestIrTreatedAsExecutable,
-            externalAssertionsOverridingApplicationProof:v3.externalAssertionsOverridingApplicationProof,
-            nativeExecutionReceiptsFabricatedExternally:v3.nativeExecutionReceiptsFabricatedExternally,
-            releaseAcceptedWithContradiction:v3.releaseAcceptedWithContradiction,
-            stage01RawInputAccounting,
-            stage01RequiredFileInspectionAccounting,
-            stage01AcceptedSemanticMappingCoverage,
-            stage04ObligationAccounting,
-            stagesCompleted:Number(fullCycle.stagesCompleted||0),
-            negativeCasesPassed:Number(negativeMatches.at(-1)[1]),
-            deployedByteIdentity:process.env.LIVE_RESULT==='success',
-            deploymentManifestSchema:'closed-loop-deployment-manifest/1',
-            finalDeploymentResourceIdentityCoverage:process.env.LIVE_RESULT==='success'?1:0,
-            localChromiumAcceptance:process.env.TEST_RESULT==='success',
-            deployedChromiumAcceptance:process.env.LIVE_RESULT==='success',
-            testedBrowserWidths:[320,393,'desktop'],
-            mobileReleaseTagGovernanceCoverage:Number(mobileGovernance.mobileReleaseGovernance==='PASS'),
-            ...mobileAcceptance,
-            finalAcceptancePublication,
-            releaseTagEligible:finalAcceptancePublication,
-            realThirtyStageProjectAcceptance:false,
-            fullProductionMaturity:false,
-            jobResults:{test:process.env.TEST_RESULT,deploy:process.env.DEPLOY_RESULT,live:process.env.LIVE_RESULT,physicalIPhone:mobileAcceptance.physicalIPhoneJobResult},
-            nextProofStep:finalAcceptancePublication?'Use the authorized repository connection to recheck this exact acceptance report, consume its unused challenge marker, and create the release tag for this commit.':'Pinned actual-iPhone Safari acceptance for the exact deployed commit and deployment manifest.',
-            proofSources:{
-              ownership:'verify.mjs',
-              canonicalDataRoutes:'verify-data-route-closure.mjs',
-              infrastructureRoutes:'verify-infrastructure-route-closure.mjs',
-              migration:'verify-v3-migration.mjs',
-              stage01:'verify-stage01-intake-closure.mjs',
-              stage01Reuse:'verify-one-time-intent-intake.mjs',
-              stage04:'verify-zero-loss-accounting.mjs',
-              testIr:'verify-test-runtime-v3.mjs',
-              limits:'verify-test-runtime-limits.mjs',
-              ingestion:'verify-ingestion.mjs',
-              workflow:'verify-complete.mjs',
-              fullCycle:'verify-full-cycle.mjs',
-              prompts:'verify-prompt-semantics.mjs',
-              localBrowser:'verify-browser.mjs and verify-browser-extra.mjs',
-              deployedIdentity:'verify-live.mjs or evaluate-mobile-acceptance-submission.mjs exact deployed manifest/resource verification',
-              deploymentManifest:'build-static-site.mjs and verify-deployment-manifest.mjs',
-              deployedBrowser:'verify-browser.mjs and verify-browser-extra.mjs',
-              physicalIPhoneReleaseGovernance:'verify-mobile-release-governance.mjs',
-              physicalIPhoneAcceptance:physicalIPhoneAccepted?`${mobileAcceptance.mobileAcceptanceEvidenceId} (${mobileAcceptance.mobileAcceptanceEvidenceBasis})`:'BLOCKED_ENVIRONMENT or BLOCKED: current physical-device evidence did not satisfy the gate'
-            }
-          };
-          const mobileMetric=report.section49CoverageMetrics.actualIPhoneSafariAcceptanceCoverage;
-          mobileMetric.numerator=Number(physicalIPhoneAccepted);
-          mobileMetric.value=Number(physicalIPhoneAccepted);
-          mobileMetric.disposition=physicalIPhoneAccepted?'SATISFIED':mobileAcceptance.mobileAcceptanceResult;
-          mobileMetric.scopeHash=`commit:${report.commit}:manifest:${mobileAcceptance.mobileAcceptanceDeploymentManifestDigest||'UNPROVEN'}`;
-          mobileMetric.evidenceReferences=physicalIPhoneAccepted?[`mobile-evidence:${mobileAcceptance.mobileAcceptanceEvidenceId}`,`submitter:${mobileAcceptance.mobileAcceptanceSubmitter}`]:['evaluate-mobile-acceptance-submission.mjs:physical-proof-unavailable'];
-          report.actualIPhoneSafariAcceptanceCoverage=mobileMetric.value;
-          report=applyExecutedEvidence(report,executedEvidence);
-          // Resolve only the supplied exact source object in this repository.
-          // A shallow checkout may need that immutable predecessor object; no
-          // branch, checkout, workflow run, or published history is changed.
-          if(process.env.VISUAL_BASELINE_EVIDENCE_JSON?.trim()){
-            let sourceCommit;
-            try{sourceCommit=JSON.parse(process.env.VISUAL_BASELINE_EVIDENCE_JSON)?.sourceCommit;}catch{} // The owning parser reports malformed input.
-            if(typeof sourceCommit==='string'&&/^[0-9a-f]{40}$/.test(sourceCommit)){
-              try{execFileSync('git',['cat-file','-e',`${sourceCommit}^{commit}`],{stdio:'pipe',timeout:30000});}
-              catch{execFileSync('git',['fetch','--no-tags','--depth=1','origin',sourceCommit],{stdio:'pipe',timeout:30000});}
-            }
+          async function discoverChrome(){for(let attempt=0;attempt<100;attempt++){const matches=[];for(const name of fs.readdirSync('/proc').filter(name=>/^\d+$/.test(name))){const row=proc(name);if(row?.ppid!==process.pid)continue;let args;try{args=fs.readFileSync(`/proc/${name}/cmdline`,'utf8').split('\0');}catch{continue;}if(args.includes('--user-data-dir='+profile)&&!args.some(value=>value.startsWith('--type='))){const flag=args.find(value=>/^--remote-debugging-port=\d+$/.test(value));if(flag)matches.push({...row,args,port:Number(flag.split('=')[1])});}}assert(matches.length<=1,'Ambiguous owned browser');if(matches.length)return matches[0];await delay(100);}throw Error('Owned restored-profile Chrome not found');}
+          async function passiveImportObservation(){
+           const deadline=Date.now()+1200000,started=Date.now();
+           while(Date.now()<deadline&&!interrupted){
+            const remaining=deadline-Date.now();let state;
+            try{const response=await bounded(cdp.send('Runtime.evaluate',{expression:`(()=>({ready:globalThis.closedLoopAppReady===true&&document.readyState==='complete'&&Boolean(document.querySelector('#app'))&&!document.querySelector('#app').hasAttribute('inert')&&document.querySelector('#app').getAttribute('aria-busy')!=='true',error:globalThis.closedLoopAppError?String(globalThis.closedLoopAppError):null,busy:document.querySelector('#app')?.getAttribute('aria-busy'),status:document.querySelector('#storage-status')?.textContent,operationError:document.querySelector('#operation-error')?.textContent}))()`,returnByValue:true},mainSession),'passive import observation',Math.min(10000,remaining));assert(!response.exceptionDetails);state=response.result.value;}
+            catch(error){log('passive-import.jsonl',{elapsedMs:Date.now()-started,error:errorRecord(error)});if(Date.now()>=deadline)break;throw error;}
+            log('passive-import.jsonl',{elapsedMs:Date.now()-started,state});if(state.error)throw Error('Application error during passive import: '+state.error);if(state.ready)return {elapsedAfterOriginalFailureMs:Date.now()-started,state};await delay(Math.min(2000,Math.max(0,deadline-Date.now())));
+           }
+           return null;
           }
-          const visualBaseline=resolveVisualBaselineSubmission({
-            inputJson:process.env.VISUAL_BASELINE_EVIDENCE_JSON,
-            ledgerVisualBaseline:JSON.parse(fs.readFileSync('verification/closed-loop-build-state.json','utf8')).visualBaseline,
-            eventName:process.env.GITHUB_EVENT_NAME,ref:process.env.GITHUB_REF,
-            submitter:process.env.GITHUB_ACTOR,commit:report.commit,
-            deploymentManifestDigest:report.mobileAcceptanceDeploymentManifestDigest
-          });
-          const finalGate=evaluateFinalAcceptance(report,{visualBaseline,executedEvidence});
-          report.finalAcceptanceGate=finalGate;
-          report.finalAcceptancePublication=finalGate.accepted;
-          report.releaseTagEligible=finalGate.accepted;
-          report.visualBaselineEvidence=visualBaseline;
-          report.nextProofStep=finalGate.accepted?'Use the authorized repository connection to recheck this exact acceptance report, consume its unused challenge marker, and create the release tag for this commit.':finalGate.blockers.map(item=>`${item.requiredActor}: ${item.code} (${item.path})`).join('; ');
-          fs.writeFileSync('closed-loop-acceptance.json',JSON.stringify(report,null,2)+'\n');
-          if(!process.env.GITHUB_OUTPUT)throw new Error('GITHUB_OUTPUT is unavailable.');
-          fs.appendFileSync(process.env.GITHUB_OUTPUT,[
-            `actual_iphone=${report.actualIPhoneSafariAcceptance}`,
-            `final_acceptance=${report.finalAcceptancePublication}`,
-            ''
-          ].join('\n'));
-          NODE
-      - name: Upload acceptance report
+          const binding={};
+          async function run(){
+           const logFd=fs.openSync(path.join(out,'http.log'),'wx');server=spawn('python3',['-u','-m','http.server','4173','--bind','127.0.0.1','--directory',path.join(out,'site')],{stdio:['ignore',logFd,logFd]});fs.closeSync(logFd);server.on('error',error=>{serverError=String(error);});server.on('exit',(code,signal)=>{serverExit={code,signal,shutdownRequested:serverShutdownRequested};});
+           let serving=false;for(let attempt=0;attempt<100;attempt++){assert(!serverError&&server.exitCode===null&&server.signalCode===null,'Owned server failed');try{const response=await fetch('http://127.0.0.1:4173/closed-loop-deployment-manifest.json',{signal:AbortSignal.timeout(1000)});if(response.ok&&await response.text()===fs.readFileSync(path.join(out,'site/closed-loop-deployment-manifest.json'),'utf8')&&fs.readFileSync(path.join(out,'http.log'),'utf8').includes('Serving HTTP on 127.0.0.1 port 4173')){serving=true;break;}}catch{}await delay(100);}assert(serving,'Exact original site must be bound by owned server');
+           opening=createOperatorBrowser({url:URL,directory:replay,captureExecution:true,actionTimeoutMs:180000}).then(async value=>{openingSettled=true;browser=value;if(finalizing)await value.close();return value;},error=>{openingSettled=true;throw error;});opening.catch(()=>{});
+           chrome=await discoverChrome();browser=await opening;const version=await(await fetch(`http://127.0.0.1:${chrome.port}/json/version`,{signal:AbortSignal.timeout(10000)})).json();assert.equal(version.Browser.split('/').at(-1),CHROME);cdp=new CDP(version.webSocketDebuggerUrl);await bounded(cdp.ready,'browser identity socket');const actual=await cdp.send('SystemInfo.getProcessInfo'),native=actual.processInfo.filter(row=>row.type==='browser');assert.equal(native.length,1);assert.equal(native[0].id,chrome.pid);assert.equal(proc(chrome.pid)?.startTicks,chrome.startTicks);save('owned-chrome.json',{chrome,version,native});
+           const pages=(await cdp.send('Target.getTargets')).targetInfos.filter(row=>row.type==='page'&&row.url.startsWith('http://127.0.0.1:4173/'));assert.equal(pages.length,1);mainSession=(await cdp.send('Target.attachToTarget',{targetId:pages[0].targetId,flatten:true})).sessionId;await cdp.send('Runtime.enable',{},mainSession);cdp.listeners.push(event=>{if(event.method?.startsWith('Browser.download'))log('native-downloads.jsonl',event);});await cdp.send('Browser.setDownloadBehavior',{behavior:'allowAndName',downloadPath:path.join(replay,'downloads'),eventsEnabled:true});
+           const observed=await browser.readWorkflow([30]);assert.equal(observed.project.job.JOB_ID,JOB);assert.equal(observed.project.revision,283);assert.equal(observed.project.projectSha256,PROJECT);assert.equal(observed.workflow[0].action.actionType,'CALCULATE_TERMINAL');assert.equal(observed.workflow[0].gate.complete,false);save('before-state.json',{jobId:JOB,revision:283,projectSha256:PROJECT,workflow:observed.workflow});
+           const readWorkflow=browser.readWorkflow;let finishingStage=true;
+           browser.readWorkflow=async(...args)=>{const value=await readWorkflow(...args);if(finishingStage)for(const row of value.workflow)assert(['CALCULATE_TERMINAL','EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS','RECORD_DELIVERY_EVIDENCE','COMPLETE'].includes(row.action.actionType),'Unexpected remaining Stage30 action: '+row.action.actionType);return value;};
+           const originalProject=browser.project;browser.project=async(...args)=>{assert.equal(args.length,0,'Exact original helper invokes project without options');const value=await originalProject({completionTimeoutMs:3600000});binding.backup=value;save('final-backup-download.json',{filename:value.file.filename,sha256:value.file.sha256,byteSize:value.file.bytes.length,path:value.file.path,projectRevision:value.project.revision,projectSha256:value.project.projectSha256});return value;};
+           const dependencies={browser,report,engine,schema,hash,...retained,...markup,verifyCompletedStageProjection,preserveReport,OUTPUT,CANDIDATE};
+           dependencies.observeBackupCanonicalFamilies=project=>{const value=retained.observeBackupCanonicalFamilies(project);if(report.currentOperation?.phase==='FINAL_BACKUP_HISTORY_OBSERVATION')binding.canonicalBefore=value;return value;};
+           dependencies.verifyRetainedBackup=(...args)=>{const value=retained.verifyRetainedBackup(...args);binding.exported=value;return value;};
+           dependencies.verifyBackupCanonicalFamilies=(...args)=>{const value=retained.verifyBackupCanonicalFamilies(...args);if(args[2]==='DOWNLOADED_BACKUP')binding.canonicalExport=value;return value;};
+           const exact=createSuffixHelpers(dependencies);
+           await exact.finishStage30();finishingStage=false;assert.equal(report.stages.length,1);assert.equal(report.stages[0].stage,30);report.stage30SuffixCompleted=true;preserveReport();
+           await exact.checkCompletedPresentations();assert.equal(report.presentationCases.filter(row=>row.caseId?.startsWith('completed-stage-selection-')).length,30,'All30 completed-stage presentation controls must be observed');
+           try{await exact.verifyFinalBackupRoundTrip();report.originalFinalRoundTrip={outcome:'COMPLETED_UNDER_DIAGNOSTIC_EXPORT_WAIT',ordinaryImportTimeoutMs:180000,notOriginalExportDeadlinePass:true};}
+           catch(error){report.originalFinalRoundTrip={outcome:'FAIL',phase:report.currentOperation?.phase,error:errorRecord(error)};preserveReport();if(report.currentOperation?.phase!=='FINAL_BACKUP_IMPORT'||error.code!=='VERIFIER_TIMEOUT'||error.timeoutMs!==180000)throw error;const eventual=await passiveImportObservation();report.eventualImportInteractive=eventual;preserveReport();if(!eventual)throw error;assert(binding.backup&&binding.canonicalBefore&&binding.exported&&binding.canonicalExport,'Missing exact pre-import assertion bindings');report.currentOperation={phase:'SEPARATE_EVENTUAL_IMPORT_ASSERTIONS',stage:30,sequence:131};await exact.checkPostImportSeparately(binding.backup.project,binding.canonicalBefore,binding.exported,binding.backup.file,binding.canonicalExport);report.separateEventualImportChecks={outcome:'PASS',originalFailureRetained:true,notOriginalRoundTripPass:true};}
+           await exact.captureOperationLatency();assert.equal(report.operationLatency.thresholdMs,1500,'Operator loading threshold changed outside D-1 configured default.');assert.ok(report.operationLatency.samples.length>0,'Diagnostic suffix did not record operation latency.');assert.ok(report.operationLatency.samples.every(sample=>Number.isFinite(sample.durationMs)&&sample.durationMs>=0),'Operation latency evidence contains an invalid duration.');assert.deepEqual(browser.exceptions(),[]);
+           report.browserExecution=await bounded(browser.executionEvidence(),'final strict observer');report.suffixCompleted=true;preserveReport();
+          }
+          try{await Promise.race([run(),stopping.then(()=>{throw Error('Diagnostic interrupted: '+interrupted);})]);}
+          catch(error){report.failures.push({phase:report.currentOperation?.phase||'SETUP',error:errorRecord(error)});process.exitCode=1;}
+          finally{
+           finalizing=true;report.interrupted=interrupted;report.cleanup={};
+           try{if(!report.browserExecution&&browser)report.finalBrowserObservation=await bounded(browser.executionEvidence(),'failed final strict observer');}catch(error){report.observerError=errorRecord(error);}
+           try{cdp?.close();if(browser)await bounded(browser.close(),'original driver close');else if(opening&&!openingSettled)await bounded(opening.catch(()=>{}),'unfinished browser opening');}catch(error){report.cleanup.browserError=errorRecord(error);process.exitCode=1;}
+           if(chrome){for(let attempt=0;attempt<100;attempt++){const now=proc(chrome.pid);if(!now||now.startTicks!==chrome.startTicks||now.state==='Z'){report.cleanup.chrome={pid:chrome.pid,absent:!now,replaced:!!now&&now.startTicks!==chrome.startTicks,state:now?.state||null,live:false};break;}await delay(100);}if(!report.cleanup.chrome){report.cleanup.chrome={pid:chrome.pid,live:true};process.exitCode=1;}}
+           if(server){try{assert(!serverError,'HTTP spawn error');assert(!serverExit,'Owned HTTP server exited unexpectedly before shutdown');serverShutdownRequested=true;if(server.exitCode===null&&server.signalCode===null)server.kill('SIGTERM');await bounded(new Promise(resolve=>server.once('close',resolve)),'owned HTTP close',10000);report.cleanup.server=serverExit;}catch(error){report.cleanup.serverError=errorRecord(error);process.exitCode=1;}}
+           report.finishedAt=new Date().toISOString();report.sourceCommitAfter=git('rev-parse','HEAD');report.sourceCleanAfter=git('status','--porcelain')==='';if(!report.sourceCleanAfter||report.sourceCommitAfter!==COMMIT)process.exitCode=1;if(report.originalFinalRoundTrip?.outcome==='FAIL')process.exitCode=1;preserveReport();save('diagnostic-result.json',report);process.removeListener('SIGTERM',onTerm);process.removeListener('SIGINT',onInt);
+          }
+          console.log(JSON.stringify({diagnosticOnly:true,eligibleVerificationReceipt:false,completeOperatorJourney:false,suffixCompleted:report.suffixCompleted,originalFinalRoundTrip:report.originalFinalRoundTrip,separateEventualImportChecks:report.separateEventualImportChecks,failures:report.failures,cleanup:report.cleanup}));
+          FROZEN_HELPER_2
+          cat > "$DIAG_OUT/runner-helpers/supervisor.mjs" <<'FROZEN_HELPER_3'
+          import fs from 'node:fs';import path from 'node:path';import assert from 'node:assert/strict';import {execFileSync} from 'node:child_process';import {pathToFileURL,fileURLToPath} from 'node:url';
+          const out=path.resolve(process.argv[2]),script=path.join(path.dirname(fileURLToPath(import.meta.url)),'replay.mjs');assert.equal(execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),'315f85b3dc34c274e4470fe4e84e9dcebc9a1551');assert.equal(execFileSync('git',['status','--porcelain'],{encoding:'utf8'}).trim(),'');assert(!process.env.NODE_OPTIONS);for(const key of Object.keys(process.env))assert(!/^(CLOSED_LOOP_|VERIFIER_|CONFORMANCE_)/.test(key),'Unexpected inherited proof environment');
+          const {executeGate}=await import(pathToFileURL(path.join(process.cwd(),'verify-conformance-regressions.mjs')));const controller=new AbortController(),term=()=>controller.abort('SIGTERM'),int=()=>controller.abort('SIGINT');process.on('SIGTERM',term);process.on('SIGINT',int);
+          try{const result=await executeGate({name:'stage30-final-suffix-diagnostic',args:['--max-old-space-size=4096',script,out]},{directory:path.join(out,'supervisor'),timeoutMs:110*60*1000,killGraceMs:10000,signal:controller.signal,forwardOutput:true,requireJson:false});fs.writeFileSync(path.join(out,'supervisor-result.json'),JSON.stringify({diagnosticOnly:true,eligibleVerificationReceipt:false,...result},null,2)+'\n');if(result.exitCode||result.signal||result.reason||result.error)process.exitCode=1;}finally{process.removeListener('SIGTERM',term);process.removeListener('SIGINT',int);}
+          FROZEN_HELPER_3
+          cat > "$DIAG_OUT/runner-helpers/reviewed-wait-driver-template.mjs" <<'FROZEN_HELPER_4'
+          import {createBrowserExecutionObserver} from './browser-execution-evidence.mjs';
+          import fs from 'node:fs';
+          import path from 'node:path';
+          import os from 'node:os';
+          import {spawn} from 'node:child_process';
+          import {createHash} from 'node:crypto';
+          import {gunzipSync} from 'node:zlib';
+          import assert from 'node:assert/strict';
+
+          const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+          export const digest=bytes=>createHash('sha256').update(bytes).digest('hex');
+          // The gate owns its deadline even when the browser transport never answers.
+          // Observe late rejection, stop follow-up work, and release timer ownership on
+          // every terminal path. A request-level timeout may be longer than this gate.
+          async function verifierDeadline(work,description,timeout){
+            if(!Number.isFinite(timeout)||timeout<=0)throw new RangeError('A verifier deadline must be a positive finite duration.');
+            let timer,active=true;
+            const error=Object.assign(new Error(`${description}: verifier timed out after ${timeout} ms`),{code:'VERIFIER_TIMEOUT',timeoutMs:timeout});
+            const requireActive=()=>{if(!active)throw error;};
+            const deadline=new Promise((_,reject)=>{timer=setTimeout(()=>{active=false;reject(error);},timeout);});
+            try{return await Promise.race([Promise.resolve().then(()=>work(requireActive)),deadline]);}
+            finally{active=false;clearTimeout(timer);}
+          }
+          async function until(read,description,timeout=90000){
+            let last,retryTimer;
+            try{return await verifierDeadline(async requireActive=>{
+              while(true){
+                requireActive();
+                try{const value=await read();requireActive();if(value)return value;}
+                catch(error){requireActive();if(error.verifierTerminal===true)throw error;last=error;}
+                await new Promise(resolve=>{retryTimer=setTimeout(resolve,80);});
+              }
+            },description,timeout);}
+            catch(error){if(error.code==='VERIFIER_TIMEOUT'&&last)error.cause=last;throw error;}
+            finally{clearTimeout(retryTimer);}
+          }
+          // Every browser consumer uses the same document and interaction boundary.
+          // CDP can acknowledge navigation while the previous document is still ready.
+          export function createBrowserReadiness(cdp,evaluate,{timeout=90000,wait=until}={}){
+            const interactive=`globalThis.closedLoopAppReady===true&&document.readyState==='complete'&&Boolean(document.querySelector('#app'))&&!document.querySelector('#app').hasAttribute('inert')&&document.querySelector('#app').getAttribute('aria-busy')!=='true'`;
+            const snapshot=`({ready:Boolean(${interactive}),error:globalThis.closedLoopAppError?String(globalThis.closedLoopAppError):null,documentState:document.readyState,url:location.href,appPresent:Boolean(document.querySelector('#app')),appInert:Boolean(document.querySelector('#app')?.hasAttribute('inert')),appBusy:document.querySelector('#app')?.getAttribute('aria-busy')||null,recoveryMessage:document.querySelector('#startup-detail')?.textContent||document.querySelector('#storage-status')?.textContent||''})`;
+            const failure=(error,trace)=>{if(error&&typeof error==='object')error.verifierObservation={...trace};return error;};
+            async function idle({allowStartupFailure=false,__trace=null}={}){
+              const trace=__trace||{lastCompletedPhase:'NONE'};trace.phase='WAIT_INTERACTIVE';
+              try{return await wait(async()=>{
+                const observed=await evaluate(snapshot);
+                // Boolean observations remain supported by the existing injected wait
+                // adapters. Real CDP evaluations return the complete document snapshot.
+                trace.startup=observed;
+                if(observed?.error){
+                  if(allowStartupFailure)return true;
+                  throw Object.assign(new Error('Application startup failed: '+observed.error),{code:'BROWSER_STARTUP_FAILED',verifierTerminal:true});
+                }
+                return observed===true||observed?.ready===true;
+              },'The application did not become interactive',timeout);}
+              catch(error){throw failure(error,trace);}
+            }
+            async function navigate(method,params={},options={}){
+              const trace={method,phase:'READ_PREVIOUS_DOCUMENT',lastCompletedPhase:'NONE'};
+              options={...options,__trace:trace};
+              try{return await verifierDeadline(async requireActive=>{
+              const previous=(await cdp.send('Page.getFrameTree')).frameTree.frame.loaderId;
+              requireActive();
+              trace.previousLoader=previous;trace.lastCompletedPhase='READ_PREVIOUS_DOCUMENT';trace.phase='REQUEST_NAVIGATION';
+              const result=await cdp.send(method,params);
+              requireActive();
+              trace.lastCompletedPhase='REQUEST_NAVIGATION';trace.phase='WAIT_DESTINATION_DOCUMENT';trace.requestedLoader=result.loaderId||null;
+              if(result.errorText)throw new Error(result.errorText);
+              await wait(async()=>{requireActive();const destination=(await cdp.send('Page.getFrameTree')).frameTree.frame.loaderId;requireActive();trace.destinationLoader=destination;return Boolean(destination&&destination!==previous&&(!result.loaderId||destination===result.loaderId));},'The destination document did not arrive',timeout);
+              requireActive();trace.lastCompletedPhase='DESTINATION_DOCUMENT';if(options.waitForInteractive!==false)await idle(options);
+              },'The destination navigation did not complete',timeout);}
+              catch(error){throw failure(error,trace);}
+            }
+            async function restoreEntry(entryId){
+              const trace={entryId,phase:'REQUEST_HISTORY',lastCompletedPhase:'NONE'};
+              try{return await verifierDeadline(async requireActive=>{
+              await cdp.send('Page.navigateToHistoryEntry',{entryId});
+              requireActive();trace.lastCompletedPhase='REQUEST_HISTORY';trace.phase='WAIT_HISTORY_DESTINATION';
+              await wait(async()=>{requireActive();const state=await cdp.send('Page.getNavigationHistory');requireActive();trace.destinationEntry=state.entries[state.currentIndex]?.id;return trace.destinationEntry===entryId;},'The destination history entry did not arrive',timeout);
+              requireActive();trace.lastCompletedPhase='HISTORY_DESTINATION';await idle({__trace:trace});
+              },'The destination history traversal did not complete',timeout);}
+              catch(error){throw failure(error,trace);}
+            }
+            return {idle,navigate,restoreEntry};
+          }
+          // Workflow decisions depend on the application's verified artifact custody.
+          // Observe them with the stored version in its owning runtime, before JSON
+          // crosses CDP. The observer performs no workflow command or canonical write.
+          export function createWorkflowObservation(evaluate){
+            return async function observe(stages=[]){
+              assert.ok(Array.isArray(stages)&&stages.every(Number.isInteger)&&new Set(stages).size===stages.length,'Workflow observation requires distinct integer stages.');
+              const result=await evaluate(`(async()=>{
+                const store=closedLoopProjectStore,engine=closedLoopWorkflowEngine,schema=closedLoopWorkflowSchema;
+                const id=history.state?.jobId||await store.metaGet('selectedProject'),project=await store.readProject(id),stages=${JSON.stringify(stages)};
+                if(!project?.job?.JOB_ID||project.job.JOB_ID!==id)throw new Error('WORKFLOW_OBSERVATION_PROJECT_MISMATCH');
+                if(stages.some(stage=>stage<1||stage>schema.STAGE_COUNT))throw new Error('WORKFLOW_OBSERVATION_INVALID_STAGE');
+                const workflow=stages.map(stage=>({stage,gate:engine.gate(stage,project),action:engine.operationalNextAction(project,stage)}));
+                return {project,workflow};
+              })()`);
+              assert.ok(result?.project?.job?.JOB_ID&&Array.isArray(result.workflow),'The application did not return a stored workflow observation.');
+              assert.deepEqual(result.workflow.map(row=>row.stage),stages,'Workflow observations must preserve the requested stage identities.');
+              return result;
+            };
+          }
+          class Connection{
+            constructor(url){this.ws=new WebSocket(url);this.pending=new Map();this.events=[];this.listeners=new Set();this.sequence=0;this.ready=new Promise((resolve,reject)=>{this.ws.onopen=resolve;this.ws.onerror=reject;});this.ws.onmessage=event=>{const message=JSON.parse(event.data),waiting=this.pending.get(message.id);if(waiting){this.pending.delete(message.id);clearTimeout(waiting.timer);message.error?waiting.reject(new Error(message.error.message)):waiting.resolve(message.result);}else {this.events.push(message);for(const listener of this.listeners)listener(message);}};}
+            onEvent(listener){this.listeners.add(listener);return ()=>this.listeners.delete(listener);}
+            async send(method,params={},sessionId){await this.ready;const id=++this.sequence;return new Promise((resolve,reject)=>{const timer=setTimeout(()=>{this.pending.delete(id);reject(new Error(`Browser command timed out: ${method}`));},90000);this.pending.set(id,{resolve,reject,timer});this.ws.send(JSON.stringify({id,method,params,...(sessionId?{sessionId}:{})}));});}
+            close(){this.ws.close();for(const pending of this.pending.values()){clearTimeout(pending.timer);pending.reject(new Error('Browser closed'));}this.pending.clear();}
+          }
+
+          // Share the operator activation policy across all CDP journey consumers.
+          // Geometry is observed after any required reveal; native input performs the hit.
+          export async function activateOperatorControl(cdp,evaluate,idle,selector,completionIdle=idle){
+           const select=`const target=document.querySelector(${JSON.stringify(selector)});if(!target)return {missing:true};let disclosure=null,closedCount=0;for(let p=target.parentElement;p;p=p.parentElement)if(p.tagName==='DETAILS'&&!p.open){const summary=p.querySelector(':scope > summary');if(summary!==target&&!summary?.contains(target)){disclosure=p;closedCount++;}}const node=disclosure?disclosure.querySelector(':scope > summary'):target;if(!node)return {missing:true};`;
+           // Interactivity can precede queued focus placement and responsive layout.
+           // All callers must observe settled geometry before revealing or hitting a
+           // control, including callers whose idle predicate only checks app readiness.
+           const settleLayout=async()=>assert.ok(await evaluate(`new Promise(resolve=>{let previous='',stable=0,frames=0;const sample=()=>{const geometry=(()=>{${select}const rect=node.getBoundingClientRect();return [globalThis.scrollX||0,globalThis.scrollY||0,rect.top,rect.left,rect.width,rect.height,globalThis.visualViewport?.offsetLeft||0,globalThis.visualViewport?.offsetTop||0,globalThis.visualViewport?.width||innerWidth,globalThis.visualViewport?.height||innerHeight];})();if(geometry.missing)return resolve(true);const current=JSON.stringify(geometry);stable=current===previous?stable+1:0;previous=current;frames++;if(frames>=4&&stable>=2)return resolve(true);if(frames>=120)return resolve(false);requestAnimationFrame(sample);};requestAnimationFrame(sample);})`),'DRIVER_LAYOUT_QUIESCENCE_ORACLE: control geometry did not settle '+selector);
+           await idle();await settleLayout();let previousClosedCount=Infinity;
+           for(;;){
+            const reveal=await evaluate(`(()=>{${select}if(node.disabled||node.matches?.(':disabled')||node.closest?.('[inert]'))return {disabled:true};const rect=node.getBoundingClientRect(),viewport=globalThis.visualViewport,left=viewport?.offsetLeft||0,top=viewport?.offsetTop||0,right=left+(viewport?.width||innerWidth),bottom=top+(viewport?.height||innerHeight);if(rect.top<top||rect.left<left||rect.bottom>bottom||rect.right>right)node.scrollIntoView({block:'nearest',inline:'nearest'});return {closedCount};})()`);
+            assert.ok(reveal&&!reveal.missing&&!reveal.disabled,'DRIVER_INTERACTABILITY_ORACLE: missing, disabled, or inert control '+selector);
+            await idle();await settleLayout();
+            const observe=()=>evaluate(`(()=>{${select}const rect=node.getBoundingClientRect(),style=getComputedStyle(node),viewport=globalThis.visualViewport,left=viewport?.offsetLeft||0,top=viewport?.offsetTop||0,width=viewport?.width||innerWidth,height=viewport?.height||innerHeight,layoutX=(Math.max(left,rect.left)+Math.min(left+width,rect.right))/2,layoutY=(Math.max(top,rect.top)+Math.min(top+height,rect.bottom))/2,front=document.elementFromPoint(layoutX,layoutY),x=layoutX-left,y=layoutY-top;return {closedCount,x,y,layoutX,layoutY,disabled:Boolean(node.disabled||node.matches?.(':disabled')||node.closest?.('[inert]')),visible:style.display!=='none'&&style.visibility!=='hidden'&&style.visibility!=='collapse'&&Number(style.opacity)!==0&&rect.width>0&&rect.height>0&&x>=0&&y>=0&&x<width&&y<height,unobscured:Boolean(front&&(front===node||node.contains(front)))};})()`);
+            let observed=await observe();
+            // A sticky header can cover an in-viewport control after scrolling or resize.
+            // Center first, then use the viewport end if a tall sticky panel still covers
+            // the center. Each reveal must settle and pass the real hit test.
+            if(observed?.visible&&!observed.disabled&&!observed.unobscured){
+             await evaluate(`(()=>{${select}node.scrollIntoView({block:'center',inline:'nearest',behavior:'instant'});return true;})()`);
+             await idle();await settleLayout();observed=await observe();
+            }
+            if(observed?.visible&&!observed.disabled&&!observed.unobscured){
+             await evaluate(`(()=>{${select}node.scrollIntoView({block:'end',inline:'nearest',behavior:'instant'});return true;})()`);
+             await idle();await settleLayout();observed=await observe();
+            }
+            assert.ok(observed&&!observed.missing&&!observed.disabled&&observed.visible&&observed.unobscured,'DRIVER_INTERACTABILITY_ORACLE: control is hidden or obstructed '+selector+' '+JSON.stringify(observed));
+            assert.ok(observed.closedCount===0||observed.closedCount<previousClosedCount,'DRIVER_DISCLOSURE_ORACLE: the selected disclosure did not open');
+            // DOM hit testing uses layout-viewport CSS coordinates. CDP input uses
+            // visible-viewport CSS coordinates; Chrome applies page scale itself.
+            await cdp.send('Input.dispatchMouseEvent',{type:'mousePressed',x:observed.x,y:observed.y,button:'left',buttons:1,clickCount:1});
+            await cdp.send('Input.dispatchMouseEvent',{type:'mouseReleased',x:observed.x,y:observed.y,button:'left',buttons:0,clickCount:1});
+            if(observed.closedCount===0){await completionIdle();await settleLayout();return observed;}
+            previousClosedCount=observed.closedCount;await idle();await settleLayout();
+           }
+          }
+
+          // This starts its own disposable CI browser. It never connects to an operator's
+          // browser and never invokes workflow commands or writes project state through JS.
+          // Keep the 90-second default for suites that do not specify an action budget.
+          export async function createOperatorBrowser({url=process.env.PAGE_URL||'http://127.0.0.1:4173/',directory,width=393,height=852,captureExecution=false,actionTimeoutMs=90000}={}){
+            const executable=process.env.BROWSER||['/usr/bin/google-chrome','/usr/bin/chromium','/usr/bin/chrome'].find(fs.existsSync);
+            if(!executable)throw new Error('Chrome/Chromium is required for the complete operator journey.');
+            directory=path.resolve(directory||fs.mkdtempSync(path.join(os.tmpdir(),'operator-journey-')));fs.mkdirSync(directory,{recursive:true});
+            const downloads=path.join(directory,'downloads'),inputs=path.join(directory,'inputs'),profile=path.join(directory,'profile');for(const folder of [downloads,inputs,profile])fs.mkdirSync(folder,{recursive:true});
+            const port=11000+Math.floor(Math.random()*1500),child=spawn(executable,['--headless=new','--no-sandbox','--disable-dev-shm-usage','--disable-gpu','--disable-background-networking','--no-first-run','--no-default-browser-check',`--remote-debugging-port=${port}`,`--user-data-dir=${profile}`,'about:blank'],{stdio:['ignore','ignore','pipe']});
+            let stderr='';child.stderr.on('data',bytes=>{stderr=(stderr+bytes).slice(-8000);});
+            const json=async(route,options)=>{const response=await fetch(`http://127.0.0.1:${port}${route}`,options);if(!response.ok)throw new Error(`Browser ${route}: ${response.status}`);return response.json();};
+            const version=await until(()=>json('/json/version'),`Browser did not start: ${stderr}`),root=new Connection(version.webSocketDebuggerUrl);await root.ready;
+            // CDP Browser.downloadProgress and allowAndName provide actual downloaded
+            // bytes, not a mocked Blob or an application-declared success flag.
+            await root.send('Browser.setDownloadBehavior',{behavior:'allowAndName',downloadPath:downloads,eventsEnabled:true});
+            const target=await json(`/json/new?${encodeURIComponent('about:blank')}`,{method:'PUT'}),page=new Connection(target.webSocketDebuggerUrl);await page.ready;await page.send('Runtime.enable');await page.send('Page.enable');
+            await page.send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:width<600});
+            let executionObserver;
+            try{executionObserver=captureExecution?await createBrowserExecutionObserver({webSocketDebuggerUrl:target.webSocketDebuggerUrl,pageUrl:url}):null;await page.send('Page.navigate',{url});}
+            catch(error){executionObserver?.close();page.close();root.close();child.kill('SIGKILL');throw error;}
+            const events=[];let inputSequence=0;
+            async function evaluate(expression){const result=await page.send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true,userGesture:true});if(result.exceptionDetails)throw new Error(result.exceptionDetails.exception?.description||result.exceptionDetails.text);return result.result?.value;}
+            const readiness=createBrowserReadiness(page,evaluate,{timeout:actionTimeoutMs});
+            async function idle(){await readiness.idle();await evaluate(`(async()=>{await document.fonts?.ready;return new Promise((resolve,reject)=>{let previous='',stable=0,frames=0;const sample=()=>{const current=JSON.stringify([globalThis.scrollX||0,globalThis.scrollY||0,...[...document.querySelectorAll('#app,#screen,#next-required-action,#replacement-confirmation,#operation-error')].map(node=>node.getBoundingClientRect().toJSON())]);stable=current===previous?stable+1:0;previous=current;frames++;if(frames>=4&&stable>=2)return resolve(true);if(frames>=120)return reject(new Error('LAYOUT_QUIESCENCE_ORACLE: destination layout did not settle'));requestAnimationFrame(sample);};requestAnimationFrame(sample);});})()`);await readiness.idle();}
+            async function exists(selector){return evaluate(`Boolean(document.querySelector(${JSON.stringify(selector)}))`);}
+            async function visible(selector){return evaluate(`(()=>{const node=document.querySelector(${JSON.stringify(selector)});if(!node||node.disabled)return false;const rect=node.getBoundingClientRect(),style=getComputedStyle(node);return style.visibility!=='hidden'&&style.display!=='none'&&rect.width>0&&rect.height>0&&rect.top>=0&&rect.bottom<=innerHeight;})()`);}
+            async function click(selector){const started=performance.now();const observed=await activateOperatorControl(page,evaluate,idle,selector);events.push({operation:'click',selector,elapsedMs:performance.now()-started,activation:'NATIVE_POINTER',point:{x:observed.x,y:observed.y}});}
+            async function fill(selector,value){const started=performance.now();await idle();const filled=await evaluate(`(()=>{const node=document.querySelector(${JSON.stringify(selector)});if(!node||node.disabled)return false;for(const box of [...(function*(n){for(let p=n.parentElement;p;p=p.parentElement)if(p.tagName==='DETAILS'&&!p.open)yield p;})(node)].reverse())box.querySelector(':scope > summary')?.click();node.value=${JSON.stringify(String(value))};node.dispatchEvent(new Event('input',{bubbles:true}));node.dispatchEvent(new Event('change',{bubbles:true}));return true;})()`);assert.equal(filled,true,`Missing or disabled field: ${selector}`);await idle();events.push({operation:'fill',selector,elapsedMs:performance.now()-started});}
+            async function selectFiles(selector,members){await idle();const paths=members.map(member=>{const filename=String(member.filename||'response.json');assert.equal(path.basename(filename),filename,'Test file names must be individual file names');const folder=path.join(inputs,String(++inputSequence));fs.mkdirSync(folder);const file=path.join(folder,filename);fs.writeFileSync(file,member.bytes);events.push({operation:'selectFile',selector,filename,sha256:digest(member.bytes),byteSize:member.bytes.length});return file;});const handle=await page.send('Runtime.evaluate',{expression:`document.querySelector(${JSON.stringify(selector)})`,returnByValue:false});assert.ok(handle.result?.objectId,`Missing file input: ${selector}`);await page.send('DOM.setFileInputFiles',{objectId:handle.result.objectId,files:paths});await idle();}
+            async function collectDownloads(after,minimum=1){const begun=await until(()=>{const items=root.events.slice(after).filter(event=>event.method==='Browser.downloadWillBegin');return items.length>=minimum?items:null;},'The browser did not begin the requested download',actionTimeoutMs);const completed=[];for(const event of begun){const {guid,suggestedFilename}=event.params;const result=await until(()=>root.events.find(item=>item.method==='Browser.downloadProgress'&&item.params.guid===guid&&item.params.state!=='inProgress'),'The browser did not complete the download',actionTimeoutMs);assert.equal(result.params.state,'completed',`Download cancelled: ${suggestedFilename}`);assert.match(guid,/^[a-zA-Z0-9-]+$/);const bytes=fs.readFileSync(path.join(downloads,guid));assert.equal(bytes.length,result.params.receivedBytes,'Downloaded byte length differs from the browser completion event');completed.push({filename:suggestedFilename,bytes,sha256:digest(bytes),path:path.join(downloads,guid)});events.push({operation:'download',filename:suggestedFilename,sha256:digest(bytes),byteSize:bytes.length});}return completed;}
+            async function captureDownloads(action,minimum=1){assert.equal(typeof action,'function','Download capture requires an explicit operator action.');const after=root.events.length;await action();return collectDownloads(after,minimum);}
+            async function download(selector,minimum=1,{completionTimeoutMs}={}){
+              if(completionTimeoutMs===undefined)return captureDownloads(()=>click(selector),minimum);
+              assert.ok(Number.isFinite(completionTimeoutMs)&&completionTimeoutMs>=actionTimeoutMs,'A download completion wait must be finite and at least the ordinary action wait.');
+              // A whole-History export may need a separate completion budget. Selection,
+              // disclosure, native input, layout, and download-byte checks keep their
+              // ordinary policies; only readiness after the requested hit uses this wait.
+              const completionReadiness=createBrowserReadiness(page,evaluate,{timeout:completionTimeoutMs});
+              return captureDownloads(async()=>{
+                const started=performance.now();
+                const observed=await activateOperatorControl(page,evaluate,idle,selector,async()=>{await completionReadiness.idle();await idle();});
+                events.push({operation:'click',selector,elapsedMs:performance.now()-started,activation:'NATIVE_POINTER',point:{x:observed.x,y:observed.y},completionTimeoutMs});
+              },minimum);
+            }
+            async function project({completionTimeoutMs}={}){if(completionTimeoutMs!==undefined)assert.ok(Number.isFinite(completionTimeoutMs)&&completionTimeoutMs>=actionTimeoutMs,'A download completion wait must be finite and at least the ordinary action wait.');if(!(await evaluate(`document.querySelector('#project-actions-toggle')?.closest('details')?.open`)))await click('#project-actions-toggle');const [file]=await download('#export-project',1,{completionTimeoutMs}),decoded=JSON.parse(gunzipSync(file.bytes).toString('utf8'));assert.equal(decoded.schema,'closed-loop-project-package/1');assert.ok(decoded.project?.job?.JOB_ID);return {project:decoded.project,package:decoded,file};}
+            // Observe stored results without adding another whole-History backup action
+            // to every ordinary control interaction. Required exports still use downloads.
+            const observeWorkflow=createWorkflowObservation(evaluate);
+            async function readWorkflow(stages=[]){const started=performance.now();await idle();const result=await observeWorkflow(stages),project=result.project;events.push({operation:'observeStoredProject',jobId:project.job.JOB_ID,revision:project.revision,projectSha256:project.projectSha256,elapsedMs:performance.now()-started,projectBytes:Buffer.byteLength(JSON.stringify(project)),workflow:result.workflow.map(row=>({stage:row.stage,complete:row.gate.complete,action:row.action.actionType}))});return result;}
+            async function readProject(){return (await readWorkflow()).project;}
+            async function inspect(stage){await idle();const result=await evaluate(`(()=>{const body=document.documentElement,controls=[...document.querySelectorAll('button,input,select,textarea')].filter(node=>node.getBoundingClientRect().height&&getComputedStyle(node).visibility!=='hidden'),sizes=controls.map(node=>({id:node.id,label:node.getAttribute('aria-label')||node.textContent||node.labels?.[0]?.textContent||'',width:node.getBoundingClientRect().width,height:node.getBoundingClientRect().height}));return {width:innerWidth,height:innerHeight,horizontalOverflow:Math.max(0,body.scrollWidth-innerWidth),action:document.querySelector('#next-required-action')?.innerText||'',controls:sizes,liveStatus:Boolean(document.querySelector('[role="status"]')),activeElement:document.activeElement?.id||''};})()`);assert.ok(result.horizontalOverflow<=1,`Stage ${stage}: horizontal overflow ${result.horizontalOverflow}px`);assert.ok(result.liveStatus,`Stage ${stage}: missing live status`);const picture=await page.send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});fs.writeFileSync(path.join(directory,`stage-${String(stage).padStart(2,'0')}.png`),Buffer.from(picture.data,'base64'));return result;}
+            async function reload(){await readiness.navigate('Page.reload',{ignoreCache:true});await idle();events.push({operation:'reload'});}
+            async function navigationHistory(){return page.send('Page.getNavigationHistory');}
+            async function restoreEntry(entryId){await readiness.restoreEntry(entryId);await idle();events.push({operation:'browserHistoryTraversal',entryId});}
+            async function openUrl(destination){await readiness.navigate('Page.navigate',{url:destination});await idle();events.push({operation:'directLink',url:destination});}
+            // One supplemental document in the existing disposable browser; its response
+            // instrumentation cannot alter the main target's execution-evidence channel.
+            const supplementalTargets=new Set();
+            async function createIsolatedTarget(){
+              const target=await json(`/json/new?${encodeURIComponent('about:blank')}`,{method:'PUT'}),connection=new Connection(target.webSocketDebuggerUrl);await connection.ready;
+              supplementalTargets.add(connection);
+              const targetEvents=[];
+              const evaluate=async expression=>{const result=await connection.send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true,userGesture:true});if(result.exceptionDetails)throw new Error(result.exceptionDetails.exception?.description||result.exceptionDetails.text);return result.result?.value;};
+              const readiness=createBrowserReadiness(connection,evaluate,{timeout:actionTimeoutMs}),idle=()=>readiness.idle();
+              const exists=selector=>evaluate(`Boolean(document.querySelector(${JSON.stringify(selector)}))`);
+              const click=async selector=>{const point=await activateOperatorControl(connection,evaluate,idle,selector);targetEvents.push({operation:'click',selector,activation:'NATIVE_POINTER',point:{x:point.x,y:point.y}});};
+              const fill=async(selector,value)=>{await idle();assert.equal(await evaluate(`(()=>{const node=document.querySelector(${JSON.stringify(selector)});if(!node||node.disabled)return false;node.value=${JSON.stringify(String(value))};node.dispatchEvent(new Event('input',{bubbles:true}));node.dispatchEvent(new Event('change',{bubbles:true}));return true;})()`),true,'Missing or disabled isolated-target field: '+selector);await idle();targetEvents.push({operation:'fill',selector});};
+              const selectFiles=async(selector,members)=>{await idle();const files=members.map(member=>{assert.equal(path.basename(member.filename),member.filename);const folder=path.join(inputs,String(++inputSequence));fs.mkdirSync(folder);const file=path.join(folder,member.filename);fs.writeFileSync(file,member.bytes);targetEvents.push({operation:'selectFile',selector,filename:member.filename,sha256:digest(member.bytes),byteSize:member.bytes.length});return file;});const handle=await connection.send('Runtime.evaluate',{expression:`document.querySelector(${JSON.stringify(selector)})`,returnByValue:false});assert.ok(handle.result?.objectId,'Missing isolated-target file selector');await connection.send('DOM.setFileInputFiles',{objectId:handle.result.objectId,files});await idle();};
+              const download=(selector,minimum=1)=>captureDownloads(()=>click(selector),minimum);
+              const project=async()=>{if(!(await evaluate(`document.querySelector('#project-actions-toggle')?.closest('details')?.open`)))await click('#project-actions-toggle');const [file]=await download('#export-project'),decoded=JSON.parse(gunzipSync(file.bytes).toString('utf8'));assert.equal(decoded.schema,'closed-loop-project-package/1');assert.ok(decoded.project?.job?.JOB_ID);await click('#project-actions-toggle');return {project:decoded.project,package:decoded,file};};
+              const observe=createWorkflowObservation(evaluate),readProject=async()=>{await idle();return (await observe()).project;};
+              const close=async()=>{connection.close();supplementalTargets.delete(connection);const response=await fetch(`http://127.0.0.1:${port}/json/close/${target.id}`);if(!response.ok)throw new Error(`Browser close target: ${response.status} ${await response.text()}`);await response.text();};
+              try{await connection.send('Runtime.enable');await connection.send('Page.enable');await connection.send('Network.enable');await connection.send('Network.setCacheDisabled',{cacheDisabled:true});await connection.send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:width<600});}
+              catch(error){await close();throw error;}
+              return {url,send:connection.send.bind(connection),onEvent:connection.onEvent.bind(connection),evaluate,exists,click,fill,selectFiles,download,captureDownloads,project,readProject,settle:idle,openUrl:destination=>readiness.navigate('Page.navigate',{url:destination}),reload:()=>readiness.navigate('Page.reload',{ignoreCache:true}),events:targetEvents,protocolEvents:connection.events,exceptions:()=>connection.events.filter(event=>event.method==='Runtime.exceptionThrown'||event.method==='Page.javascriptDialogOpening'),close};
+            }
+
+            async function close(){try{executionObserver?.close();for(const supplemental of supplementalTargets)supplemental.close();supplementalTargets.clear();page.close();root.close();}finally{child.kill('SIGKILL');}}
+            try{await idle();}catch(error){await close();throw error;}return {createIsolatedTarget,click,fill,selectFiles,download,captureDownloads,project,readProject,readWorkflow,inspect,reload,exists,visible,settle:idle,evaluate,navigationHistory,restoreEntry,openUrl,events,directory,close,executionEvidence:()=>executionObserver?.finish(),exceptions:()=>page.events.filter(event=>event.method==='Runtime.exceptionThrown'||event.method==='Page.javascriptDialogOpening')};
+          }
+          FROZEN_HELPER_4
+          cat > "$DIAG_OUT/runner-helpers/downloaded-backup-decoder.mjs" <<'FROZEN_HELPER_5'
+          // Independent verifier transport decoder prototype. It does not import the app
+          // parser and does not select, normalize, or discard any JSON member.
+          import {Readable} from 'node:stream';
+          import {createGunzip} from 'node:zlib';
+          import {StringDecoder} from 'node:string_decoder';
+          import {constants as bufferConstants} from 'node:buffer';
+
+          const CHUNK_BYTES=65536;
+          const whitespace=char=>char===' '||char==='\t'||char==='\r'||char==='\n';
+          const delimiter=char=>whitespace(char)||char===','||char===']'||char==='}'||char===':'||char==='['||char==='{';
+          const own=(object,key,value)=>Object.defineProperty(object,key,{value,enumerable:true,writable:true,configurable:true});
+          function limit(value,fallback,name){if(value===undefined)return fallback;if(!Number.isSafeInteger(value)||value<1)throw new RangeError(name+' must be a positive safe integer.');return value;}
+          function resourceError(message){return Object.assign(new RangeError(message),{code:'BACKUP_DECODE_RESOURCE_LIMIT'});}
+          class JsonMemberParser {
+           constructor(options){
+            this.maxStringCodeUnits=limit(options.maxStringCodeUnits,bufferConstants.MAX_STRING_LENGTH,'maxStringCodeUnits');
+            this.maxValues=limit(options.maxValues,Number.MAX_SAFE_INTEGER,'maxValues');
+            this.stack=[];this.root=undefined;this.done=false;this.mode=null;this.offset=0;this.values=0;this.stringCodeUnits=0;this.maxDepth=0;
+           }
+           syntax(message){throw new SyntaxError('Downloaded backup JSON: '+message+' at UTF-16 offset '+this.offset+'.');}
+           count(){if(++this.values>this.maxValues)throw resourceError('Downloaded backup exceeds the configured JSON value count.');}
+           accept(value,counted=false){
+            if(!counted)this.count();const parent=this.stack.at(-1);
+            if(!parent){if(this.done)this.syntax('more than one root value');this.root=value;this.done=true;return;}
+            if(parent.kind==='array'){if(parent.state!=='value'&&parent.state!=='valueOrEnd')this.syntax('unexpected array value');parent.value.push(value);parent.state='commaOrEnd';}
+            else{if(parent.state!=='value')this.syntax('unexpected object value');own(parent.value,parent.key,value);parent.key=null;parent.state='commaOrEnd';}
+           }
+           open(kind){this.count();this.stack.push({kind,value:kind==='array'?[]:{},state:kind==='array'?'valueOrEnd':'keyOrEnd',key:null});this.maxDepth=Math.max(this.maxDepth,this.stack.length);}
+           close(){const frame=this.stack.pop();this.accept(frame.value,true);}
+           beginString(key){this.mode='string';this.stringKey=key;this.parts=[];this.part='';this.units=0;this.escape=false;this.unicodeDigits=null;}
+           append(text){if(!text)return;this.units+=text.length;if(this.units>this.maxStringCodeUnits||this.units>bufferConstants.MAX_STRING_LENGTH)throw resourceError('A downloaded backup JSON string exceeds the supported string length.');if(this.part.length+text.length>CHUNK_BYTES){if(this.part)this.parts.push(this.part);this.part='';}this.part+=text;}
+           finishString(){const value=this.parts.length?[...this.parts,this.part].join(''):this.part;this.stringCodeUnits+=value.length;this.parts=null;this.part='';this.mode=null;if(this.stringKey){const frame=this.stack.at(-1);frame.key=value;frame.state='colon';}else this.accept(value);}
+           finishAtom(){let value;try{value=JSON.parse(this.atom);}catch{this.syntax('invalid primitive token');}if(value!==null&&typeof value!=='boolean'&&typeof value!=='number')this.syntax('invalid primitive token');this.atom='';this.mode=null;this.accept(value);}
+           feed(text){
+            let index=0;const special=/["\\\u0000-\u001f]/g;
+            while(index<text.length){
+             if(this.mode==='string'){
+              if(this.unicodeDigits!==null){const char=text[index];if(!/[0-9a-fA-F]/.test(char))this.syntax('invalid Unicode escape');this.unicodeDigits+=char;index++;this.offset++;if(this.unicodeDigits.length===4){this.append(String.fromCharCode(parseInt(this.unicodeDigits,16)));this.unicodeDigits=null;}continue;}
+              if(this.escape){const char=text[index++];this.offset++;this.escape=false;if(char==='u'){this.unicodeDigits='';continue;}const escapes={'"':'"','\\':'\\','/':'/','b':'\b','f':'\f','n':'\n','r':'\r','t':'\t'};if(!Object.hasOwn(escapes,char))this.syntax('invalid string escape');this.append(escapes[char]);continue;}
+              special.lastIndex=index;const match=special.exec(text),end=match?match.index:text.length;this.append(text.slice(index,end));this.offset+=end-index;index=end;if(!match)continue;
+              const char=text[index++];this.offset++;if(char==='"'){this.finishString();continue;}if(char==='\\'){this.escape=true;continue;}this.syntax('unescaped control character in string');
+             }
+             if(this.mode==='atom'){
+              const start=index;while(index<text.length&&!delimiter(text[index]))index++;this.atom+=text.slice(start,index);this.offset+=index-start;if(this.atom.length>this.maxStringCodeUnits)throw resourceError('A downloaded backup primitive token exceeds the supported length.');if(index<text.length)this.finishAtom();else continue;
+             }
+             const char=text[index];if(whitespace(char)){index++;this.offset++;continue;}
+             const frame=this.stack.at(-1);
+             if(!frame&&this.done)this.syntax('trailing non-whitespace after root value');
+             if(frame?.kind==='object'&&(frame.state==='keyOrEnd'||frame.state==='key')){
+              if(char==='}'&&frame.state==='keyOrEnd'){index++;this.offset++;this.close();continue;}
+              if(char!=='"')this.syntax('object member name must be a string');index++;this.offset++;this.beginString(true);continue;
+             }
+             if(frame?.state==='colon'){if(char!==':')this.syntax('missing colon after member name');frame.state='value';index++;this.offset++;continue;}
+             if(frame?.state==='commaOrEnd'){
+              if(char===','){frame.state=frame.kind==='array'?'value':'key';index++;this.offset++;continue;}
+              if(char===(frame.kind==='array'?']':'}')){index++;this.offset++;this.close();continue;}
+              this.syntax('expected comma or container end');
+             }
+             if(frame?.kind==='array'&&frame.state==='valueOrEnd'&&char===']'){index++;this.offset++;this.close();continue;}
+             if(char==='{'){index++;this.offset++;this.open('object');continue;}
+             if(char==='['){index++;this.offset++;this.open('array');continue;}
+             if(char==='"'){index++;this.offset++;this.beginString(false);continue;}
+             if(char==='-'||(char>='0'&&char<='9')||char==='t'||char==='f'||char==='n'){this.mode='atom';this.atom='';continue;}
+             this.syntax('expected JSON value');
+            }
+           }
+           finish(){if(this.mode==='atom')this.finishAtom();if(this.mode==='string')this.syntax('unterminated string');if(this.stack.length)this.syntax('unterminated container');if(!this.done)this.syntax('missing JSON value');return this.root;}
+          }
+
+          export async function parseDownloadedBackupJson(chunks,options={}){
+           const maxExpandedBytes=limit(options.maxExpandedBytes,Number.MAX_SAFE_INTEGER,'maxExpandedBytes'),parser=new JsonMemberParser(options),decoder=new StringDecoder('utf8');
+           let expandedBytes=0,parseError=null;
+           // Remember syntax failures while draining the gzip iterator: the old path
+           // completed gunzip before JSON.parse, so a later gzip/CRC error must win.
+           for await(const bytes of chunks){
+            if(!(bytes instanceof Uint8Array))throw new TypeError('Downloaded backup parser chunks must be UTF-8 byte arrays.');
+            expandedBytes+=bytes.byteLength;if(!Number.isSafeInteger(expandedBytes)||expandedBytes>maxExpandedBytes)throw resourceError('Downloaded backup exceeds the configured expanded-byte bound.');
+            if(!parseError){try{parser.feed(decoder.write(Buffer.from(bytes.buffer,bytes.byteOffset,bytes.byteLength)));}catch(error){if(error.code==='BACKUP_DECODE_RESOURCE_LIMIT')throw error;parseError=error;}}
+            options.onProgress?.({expandedBytes,values:parser.values,stringCodeUnits:parser.stringCodeUnits,maxDepth:parser.maxDepth});
+           }
+           if(parseError)throw parseError;
+           parser.feed(decoder.end());const result=parser.finish();options.onProgress?.({expandedBytes,values:parser.values,stringCodeUnits:parser.stringCodeUnits,maxDepth:parser.maxDepth,complete:true});return result;
+          }
+
+          export async function decodeDownloadedBackup(bytes,options={}){
+           if(!(bytes instanceof Uint8Array))throw new TypeError('Downloaded backup must be compressed bytes.');
+           const source=Readable.from((function*(){for(let offset=0;offset<bytes.byteLength;offset+=CHUNK_BYTES)yield bytes.subarray(offset,offset+CHUNK_BYTES);})()),gunzip=createGunzip({chunkSize:CHUNK_BYTES});
+           source.pipe(gunzip);
+           try{return await parseDownloadedBackupJson(gunzip,options);}finally{source.destroy();gunzip.destroy();}
+          }
+          FROZEN_HELPER_5
+          cat > "$DIAG_OUT/runner-helpers/SHA256SUMS" <<'HELPER_HASHES'
+          3f63581f766c0753aa4c8c11aa1e5847ca62c22f74b2ef2c9f971c45f6dee102  restore-profile.py
+          9e7a3d87a35ebc0dd45cc954bfb20f29cc829830860d40c575a71ae1a255c974  prepare-helpers.mjs
+          743008339b44d825ea345dc7f963aee283233fcfed443e76cbf28b44b509f592  replay.mjs
+          879c488fe582ca26631520389d2e8ca7e828489c4965526b5ce22cea70d42911  supervisor.mjs
+          5e5ba59cad1d014569282c9412e895959b5af74de2a1c37c49a4e90072355a94  reviewed-wait-driver-template.mjs
+          8b6301c498c226b2b1190e87988139cfcc0bd9ea8f1bbcff85e37cada1522b69  downloaded-backup-decoder.mjs
+          HELPER_HASHES
+          (cd "$DIAG_OUT/runner-helpers" && sha256sum --check SHA256SUMS)
+      - name: Restore an authenticated disposable profile and exact original site
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 "$DIAG_OUT/runner-helpers/restore-profile.py" --archive "$RUNNER_TEMP/stage30-suffix-original.zip" --directory "$DIAG_OUT/replay" | tee "$DIAG_OUT/restore.log"
+      - name: Authenticate source and extract unchanged remaining-stage assertions
+        working-directory: app
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = 315f85b3dc34c274e4470fe4e84e9dcebc9a1551
+          test "$(git rev-parse 'HEAD^{tree}')" = 24735288da9f734997c1920c111ad4d472e743e5
+          test -z "$(git status --porcelain)"
+          node "$DIAG_OUT/runner-helpers/prepare-helpers.mjs" "$DIAG_OUT/helpers" | tee "$DIAG_OUT/prepare.log"
+          for script in "$DIAG_OUT/runner-helpers/"*.mjs "$DIAG_OUT/helpers/"*.mjs; do node --check "$script"; done
+          test -z "$(git status --porcelain)"
+      - name: Execute only the remaining Stage 30 suffix and final backup diagnostic
+        working-directory: app
+        shell: bash
+        run: |
+          set -euo pipefail
+          (cd "$DIAG_OUT/runner-helpers" && sha256sum --check SHA256SUMS)
+          node "$DIAG_OUT/runner-helpers/supervisor.mjs" "$DIAG_OUT"
+      - name: Preserve original archive identity and final source state
+        if: always()
+        working-directory: app
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rev-parse HEAD > "$DIAG_OUT/source-commit-after.txt"
+          git status --porcelain > "$DIAG_OUT/source-status-after.txt"
+          if test -f "$RUNNER_TEMP/stage30-suffix-original.zip"; then
+            sha256sum "$RUNNER_TEMP/stage30-suffix-original.zip" > "$DIAG_OUT/original-archive-after.sha256"
+            echo 'e69c1b720115c28c623877868404865c239879b680b491df4679f314bfc53092  '"$RUNNER_TEMP/stage30-suffix-original.zip" | sha256sum --check
+          fi
+          if test -f "$DIAG_OUT/runner-helpers/SHA256SUMS"; then
+            (cd "$DIAG_OUT/runner-helpers" && sha256sum --check SHA256SUMS) > "$DIAG_OUT/runner-helper-hashes-after.txt"
+          fi
+          test "$(git rev-parse HEAD)" = 315f85b3dc34c274e4470fe4e84e9dcebc9a1551
+          test -z "$(git status --porcelain)"
+      - name: Retain new diagnostic evidence without the original archive or acceptance claims
+        if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        env:
-          NODE_OPTIONS: ''
         with:
-          name: closed-loop-acceptance-${{ github.sha }}-${{ github.run_id }}
-          path: closed-loop-acceptance.json
-      - name: Record blocked actual-iPhone acceptance
-        if: steps.acceptance.outputs.final_acceptance != 'true'
-        run: |
-          set -euo pipefail
-          echo "::notice title=Release tag blocked::Final Section 49 and actor acceptance is not proven for ${GITHUB_SHA}; see closed-loop-acceptance.json blockers. No release tag was created."
-          test "${{ steps.acceptance.outputs.final_acceptance }}" = false
-      - name: Record release tag eligibility for authorized repository connection
-        if: steps.acceptance.outputs.final_acceptance == 'true'
-        run: |
-          set -euo pipefail
-          echo "::notice title=Release tag eligible::Recheck closed-loop-acceptance.json through the authorized repository connection, consume its unused challenge marker, and publish the tag for ${GITHUB_SHA}."
+          name: diagnostic-only-stage30-suffix-50f53978-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.DIAG_OUT }}
+          if-no-files-found: error
+          include-hidden-files: true
+          compression-level: 0
+          retention-days: 7
