@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      DIAG_OUT: ${{ runner.temp }}/checkpoint-diagnostic
+      DIAG_OUT: ${{ github.workspace }}/checkpoint-diagnostic
       BROWSER: /usr/bin/google-chrome
       NODE_OPTIONS: ''
     steps:
@@ -353,7 +353,7 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: diagnostic-only-stage30-50f53978-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/checkpoint-diagnostic
+          path: ${{ env.DIAG_OUT }}
           if-no-files-found: error
           include-hidden-files: true
           compression-level: 0
