@@ -4,17 +4,116 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {spawn} from 'node:child_process';
+import {spawn,execFileSync} from 'node:child_process';
+import vm from 'node:vm';
+import {once} from 'node:events';
 import {createHash} from 'node:crypto';
 import {BROWSER_EXTRA_LANES,BROWSER_EXTRA_CHILD_SCHEMA,BROWSER_EXTRA_AGGREGATE_SCHEMA,browserExtraRequiredPopulations,browserExtraSourceFingerprint,browserExtraFingerprintFromInputs,parseBrowserExtraChildOutput,validateBrowserExtraAggregate,superviseBrowserExtra} from './browser-extra-aggregate.mjs';
 import {createExecutionReceipt,validateExecutionReceipt} from './verification-evidence.mjs';
+
+function darwinProcessState(pid){
+ let output;
+ try{output=execFileSync('/bin/ps',['-p',String(pid),'-o','pid=,stat='],{encoding:'utf8',timeout:1000,killSignal:'SIGKILL'});}catch(error){if(error.status===1&&error.stdout===''&&error.stderr==='')return null;throw error;}
+ const match=/^\s*(\d+)\s+([IRSTUZ][+<>AELNSsVWX]*)\s*$/.exec(output);
+ assert(match&&Number(match[1])===pid,'native process inspection did not identify its exact PID');
+ return match[2][0];
+}
+function nativeProcessRunning(pid){
+ if(process.platform==='darwin'){const state=darwinProcessState(pid);return state!==null&&state!=='Z';}
+ if(process.platform==='linux'){
+  try{return !/\) [ZX] /.test(fs.readFileSync('/proc/'+pid+'/stat','utf8'));}catch(error){if(['ENOENT','ESRCH'].includes(error.code))return false;throw error;}
+ }
+ try{process.kill(pid,0);return true;}catch(error){if(error.code==='ESRCH')return false;throw error;}
+}
+
+export async function verifyBrowserExtraDarwinGroupControls(){
+ const source=fs.readFileSync(new URL('./browser-extra-aggregate.mjs',import.meta.url),'utf8');
+ const start='function killGroup(',end='const replayFailure=';
+ assert.equal(source.split(start).length,2);assert.equal(source.split(end).length,2);
+ const functions=source.slice(source.indexOf(start),source.indexOf(end));
+ const inspect=(kill,read,platform='darwin')=>{
+  const context=vm.createContext({process:{platform,pid:process.pid,env:process.env,kill},fs,execFileSync:read,check:(condition,message)=>assert(condition,message)});
+  vm.runInContext(functions,context);return context;
+ };
+ const group=80000001,own=process.pid+' 80000000 S\n',permission=Object.assign(new Error('CONTROLLED_LIVE_GROUP_EPERM'),{code:'EPERM'}),cases=[];
+ const reader=output=>(file,args,options)=>{
+  assert.equal(file,'/bin/ps');assert.deepEqual(Array.from(args),['-axo','pid=,pgid=,stat=']);
+  assert.equal(options.timeout,1000);assert.equal(options.killSignal,'SIGKILL');assert.equal(options.maxBuffer,4*1024*1024);assert.equal(options.env.LC_ALL,'C');return output;
+ };
+ for(const [name,output]of [['zombie-only',own+group+' '+group+' Z\n'],['absent-group',own],['different-exact-group',own+group+' '+(group+1)+' R\n']]){
+  const control=inspect(()=>{throw permission;},reader(output));assert.equal(control.groupHasRunningProcesses(group),false);assert.doesNotThrow(()=>control.killGroup({pid:group}));cases.push(name);
+ }
+ for(const state of ['I','R','S','T','U']){
+  const control=inspect(()=>{throw permission;},reader(own+group+' '+group+' Z\n'+(group+1)+' '+group+' '+state+'\n'));
+  assert.equal(control.groupHasRunningProcesses(group),true);assert.throws(()=>control.killGroup({pid:group}),error=>error===permission);cases.push('live-'+state+'-permission-refused');
+ }
+ for(const [name,output]of [
+  ['empty',''],['truncated',own+group+' '+group+' Z'],['missing-own-process',group+' '+group+' Z\n'],
+  ['malformed-row',own+'not-a-process\n'],['unknown-state',own+group+' '+group+' INVALID\n'],
+  ['unsafe-identity',own+'9007199254740992 '+group+' Z\n'],['duplicate-pid',own+own],['extra-column',own+group+' '+group+' Z extra\n']
+ ]){
+  const control=inspect(()=>{throw permission;},reader(output));assert.throws(()=>control.groupHasRunningProcesses(group),/Darwin process/);
+  delete permission.cause;assert.throws(()=>control.killGroup({pid:group}),error=>error===permission&&/Darwin process/.test(error.cause?.message));cases.push('inspection-'+name+'-refused');
+ }
+ for(const code of ['EACCES','ETIMEDOUT','ENOBUFS']){
+  const failure=Object.assign(new Error('CONTROLLED_PS_'+code),{code}),control=inspect(()=>{throw permission;},()=>{throw failure;});
+  delete permission.cause;assert.throws(()=>control.killGroup({pid:group}),error=>error===permission&&error.cause===failure);cases.push('inspection-'+code+'-refused');
+ }
+ for(const [name,platform,error]of [['other-error','darwin',Object.assign(new Error('CONTROLLED_KILL_EACCES'),{code:'EACCES'})],['linux-permission','linux',permission]]){
+  const control=inspect(()=>{throw error;},()=>{throw new Error('inspection must not run');},platform);
+  assert.throws(()=>control.killGroup({pid:group}),observed=>observed===error);cases.push(name+'-refused');
+ }
+ let nativeZombie=null;
+ if(process.platform==='darwin'){
+  // Stop only the owned reaper, outside the child's detached session. Its
+  // exited child remains a real zombie until the finally block resumes it.
+  const reaper=spawn(process.execPath,['-e',"const {spawn}=require('node:child_process');const child=spawn(process.execPath,['-e','process.exit(0)'],{detached:true,stdio:'ignore'});process.stdout.write(String(child.pid)+'\\n',()=>process.kill(process.pid,'SIGSTOP'));setInterval(()=>{},1000);"],{stdio:['ignore','pipe','pipe']});
+  const closed=once(reaper,'close');let zombie;
+  try{
+   const reported=await new Promise((resolve,reject)=>{
+    let buffer='';
+    const finish=(error,line)=>{clearTimeout(deadline);reaper.stdout.removeListener('data',onData);reaper.stdout.removeListener('end',onEnd);reaper.stdout.removeListener('error',onError);error?reject(error):resolve(line);};
+    const onData=bytes=>{buffer+=bytes.toString('utf8');if(buffer.length>32)return finish(new Error('native child PID message exceeded its bound'));if(buffer.includes('\n'))finish(null,buffer);};
+    const onEnd=()=>finish(new Error('native child PID message ended before newline')),onError=error=>finish(error);
+    const deadline=setTimeout(()=>finish(new Error('native child PID message timed out')),3000);
+    reaper.stdout.on('data',onData);reaper.stdout.once('end',onEnd);reaper.stdout.once('error',onError);
+   });
+   assert(/^\d+\n$/.test(reported),'native child PID message malformed');
+   const reportedPid=Number(reported.trim());assert(Number.isSafeInteger(reportedPid)&&reportedPid>1);
+   const endAt=Date.now()+3000;let observed;
+   for(;;){
+    observed=execFileSync('/bin/ps',['-p',String(reportedPid),'-o','pid=,ppid=,pgid=,stat='],{encoding:'utf8',timeout:1000,killSignal:'SIGKILL'}).trim().split(/\s+/);
+    assert.equal(Number(observed[0]),reportedPid);assert.equal(Number(observed[1]),reaper.pid);assert.equal(Number(observed[2]),reportedPid);
+    zombie=reportedPid; // Cleanup may signal only this natively proven child.
+    if(observed[3][0]==='Z')break;assert(Date.now()<endAt,'native child did not become a zombie');await new Promise(resolve=>setTimeout(resolve,10));
+   }
+   for(const signal of [0,'SIGKILL'])assert.throws(()=>process.kill(-zombie,signal),error=>error.code==='EPERM','native zombie-only group did not reproduce EPERM');
+   const control=inspect(process.kill.bind(process),execFileSync);
+   assert.equal(control.groupHasRunningProcesses(zombie),false);assert.doesNotThrow(()=>control.killGroup({pid:zombie}));
+   assert.equal(darwinProcessState(reaper.pid),'T','native reaper must remain stopped');
+   assert(nativeProcessRunning(reaper.pid),'stopped reaper must remain live');
+   nativeZombie={observed:true,state:'Z',groupEqualsChildPid:true,parentStopped:true,nativeSignalZero:'EPERM',nativeSigkill:'EPERM',runningMember:false,cleanupAccepted:true};
+  }finally{
+   try{
+    if(zombie){try{process.kill(zombie,'SIGKILL');}catch(error){if(error.code!=='ESRCH')throw error;}}
+    try{process.kill(reaper.pid,'SIGCONT');}catch(error){if(error.code!=='ESRCH')throw error;}
+    if(zombie){const endAt=Date.now()+3000;while(darwinProcessState(zombie)!==null){assert(Date.now()<endAt,'native zombie fixture child was not reaped');await new Promise(resolve=>setTimeout(resolve,10));}}
+   }finally{
+    try{process.kill(reaper.pid,'SIGKILL');}catch(error){if(error.code!=='ESRCH')throw error;}
+    await closed;
+   }
+   assert.equal(darwinProcessState(reaper.pid),null);if(zombie)assert.equal(darwinProcessState(zombie),null);
+  }
+ }
+ return {caseName:'platform-process-group-liveness',platform:process.platform,cases,nativeZombie,testOwnedCleanupComplete:true};
+}
 
 // Explicitly obstruct only this control's own process groups, then prove that
 // failed supervisor cleanup retains their roots rather than deleting live data.
 export async function verifyBrowserExtraCleanupRetentionControl(){
  const directory=fs.mkdtempSync(path.join(process.cwd(),'.browser-extra-retention-control-'));
  const children=[],profiles=[],suppressedSignals=[],originalKill=process.kill;
- const live=pid=>{try{return !/\) [ZX] /.test(fs.readFileSync('/proc/'+pid+'/stat','utf8'));}catch{return false;}};
+ const live=nativeProcessRunning;
  let failure,proof;
  try{
   for(const name of ['verify-browser-extra.mjs','browser-extra-aggregate.mjs'])fs.writeFileSync(path.join(directory,name),'// synthetic retention-control source\n');
@@ -113,10 +212,11 @@ assert.deepEqual(parseBrowserExtraChildOutput(childStdout).child,child);
 for(const [name,output]of [['duplicate-child-terminal',childStdout+JSON.stringify({browserExtraChild:child})+'\n'],['missing-child-terminal','progress\n'],['incomplete-child-terminal',childStdout.slice(0,-5)],['stdout-after-terminal',childStdout+'late progress\n'],['stdout-report-substitution',childStdout.replace('"syntheticLane":"lane1"','"syntheticLane":"WRONG"')]]){assert.throws(()=>parseBrowserExtraChildOutput(output),/AGGREGATE/,name);cases.push(name);}
 
 // These controls launch real isolated Node process groups, never Chromium.
+const processGroupProof=await verifyBrowserExtraDarwinGroupControls();
 const directory=fs.mkdtempSync(path.join(process.cwd(),'.browser-extra-process-controls-'));
 const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
-const live=pid=>{try{const status=fs.readFileSync('/proc/'+pid+'/stat','utf8');return !/\) [ZX] /.test(status);}catch{return false;}};
-const processCases=[],socketProofs=[];
+const live=nativeProcessRunning;
+const processCases=[processGroupProof.caseName],socketProofs=[];
 try{
  fs.writeFileSync(path.join(directory,suite),'// synthetic process-control source\n');fs.writeFileSync(path.join(directory,'browser-extra-aggregate.mjs'),'// synthetic process-control source\n');
  const terminalByLane=Object.fromEntries(valid.aggregate.children.map(row=>[row.laneId,row]));
@@ -173,6 +273,6 @@ else{const descendant=cp.spawn(process.execPath,['-e',"process.on('SIGTERM',()=>
  const partialDir=path.join(directory,'partial-spawn');fs.mkdirSync(partialDir);const partialProfiles=[];let partialLaunches=0,firstChild;await assert.rejects(()=>superviseBrowserExtra({cwd:directory,sourceChecks:()=>{},onFailureOutput:()=>{},outputDirectory:partialDir,spawnChild:(command,args,options)=>{inspectOwnedProfile(options,partialDir,partialProfiles);if(++partialLaunches===2)throw new Error('CONTROLLED_SYNC_SPAWN_FAILURE');firstChild=spawn(command,['-e','setInterval(()=>{},50)'],options);return firstChild;}}),/CONTROLLED_SYNC_SPAWN_FAILURE/);assert.equal(live(firstChild.pid),false);assert.equal(partialProfiles.length,2);for(const profile of partialProfiles)assert(!fs.existsSync(profile),'partial spawn profile leaked');processCases.push('partial-spawn-failure-cleans-started-child');
  let spawned=false;await assert.rejects(()=>superviseBrowserExtra({cwd:directory,deadlineMs:50,startedAt:Date.now()-100,onFailureOutput:()=>{},sourceChecks:()=>{},outputDirectory:path.join(directory,'expired-setup'),spawnChild:()=>{spawned=true;throw Error('should not launch');}}),/deadline/);assert.equal(spawned,false);processCases.push('setup-already-exhausted-never-launches');
 }finally{fs.rmSync(directory,{recursive:true,force:true});}
-return {browserExtraAggregateControls:'PASS',synthetic:true,actualBrowser:false,applicationAssertionsExecuted:false,eligibleReceiptCreated:false,cases,processCases,socketProofs};
+return {browserExtraAggregateControls:'PASS',synthetic:true,actualBrowser:false,applicationAssertionsExecuted:false,eligibleReceiptCreated:false,cases,processCases,socketProofs,processGroupProof};
 }
 if(path.resolve(process.argv[1]||'')===fileURLToPath(import.meta.url))console.log(JSON.stringify(await verifyBrowserExtraAggregateControls()));

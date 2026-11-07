@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import {createHash,randomBytes} from 'node:crypto';
-import {spawn} from 'node:child_process';
+import {spawn,execFileSync} from 'node:child_process';
 import {isDeepStrictEqual} from 'node:util';
 import {validateBrowserExecution} from './browser-execution-evidence.mjs';
 
@@ -116,10 +116,32 @@ export function validateBrowserExtraAggregate(aggregate,{browserExecution,report
 // termination is owned here even when a child exits early or ignores SIGTERM.
 function killGroup(child){
  if(!child?.pid)return;
- try{process.kill(-child.pid,'SIGKILL');}catch(error){if(error.code!=='ESRCH')throw error;}
+ try{process.kill(-child.pid,'SIGKILL');}catch(error){
+  if(error.code==='ESRCH')return;
+  // Darwin can return EPERM for a group containing only zombies. A fresh,
+  // complete native snapshot must prove no running member before accepting
+  // that race; denied live groups and failed inspections still reject.
+  if(process.platform==='darwin'&&error.code==='EPERM'){
+   try{if(!groupHasRunningProcesses(child.pid))return;}catch(inspectionError){error.cause??=inspectionError;}
+  }
+  throw error;
+ }
 }
 function groupHasRunningProcesses(groupId){
  if(!groupId)return false;
+ if(process.platform==='darwin'){
+  const output=execFileSync('/bin/ps',['-axo','pid=,pgid=,stat='],{encoding:'utf8',timeout:1000,killSignal:'SIGKILL',maxBuffer:4*1024*1024,env:{...process.env,LC_ALL:'C'}});
+  check(output.endsWith('\n'),'incomplete Darwin process inspection');
+  const rows=output.trim().split('\n').map(line=>{
+   const match=/^\s*(\d+)\s+(\d+)\s+([IRSTUZ][+<>AELNSsVWX]*)\s*$/.exec(line);
+   check(match,'malformed Darwin process inspection');
+   const pid=Number(match[1]),pgid=Number(match[2]);
+   check(Number.isSafeInteger(pid)&&pid>0&&Number.isSafeInteger(pgid)&&pgid>=0,'invalid Darwin process identity');
+   return {pid,pgid,state:match[3][0]};
+  });
+  check(rows.some(row=>row.pid===process.pid)&&new Set(rows.map(row=>row.pid)).size===rows.length,'incomplete or duplicate Darwin process inspection');
+  return rows.some(row=>row.pgid===groupId&&row.state!=='Z');
+ }
  if(process.platform!=='linux'){try{process.kill(-groupId,0);return true;}catch(error){if(error.code==='ESRCH')return false;throw error;}}
  for(const name of fs.readdirSync('/proc')){
   if(!/^\d+$/.test(name))continue;let fields;
