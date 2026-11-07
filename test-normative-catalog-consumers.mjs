@@ -974,6 +974,7 @@ async function stage01SpecificationOwnerReport({currentReceiptDirectory=process.
 }
 
 export async function verifyNormativeCatalogConsumers(){
+ const browserExtraProcessGroupCatalogConsumers=verifyBrowserExtraProcessGroupCatalogConsumers();
  const ciJourneyCatalogConsumers=verifyCiJourneyCatalogConsumers();
  const numericRuntimeCatalogConsumers=verifyNumericRuntimeCatalogConsumers();
  const browserProducerOutputCatalogConsumers=verifyBrowserProducerOutputCatalogConsumers();
@@ -1076,6 +1077,7 @@ export async function verifyNormativeCatalogConsumers(){
  assert.equal(result.stage30SourceInputCatalogConsumers,stage30SourceInputCatalogConsumers,'STAGE30_SOURCE_INPUT_CONSUMER_RETURN_ORACLE');
  assert.equal(result.stage01FirstReaderRequiredFileCatalogConsumers,stage01FirstReaderRequiredFileCatalogConsumers,'STAGE01_FIRST_READER_FILE_DEFAULT_CONSUMER_ORACLE');
  result.ciJourneyCatalogConsumers=ciJourneyCatalogConsumers;
+ result.browserExtraProcessGroupCatalogConsumers=browserExtraProcessGroupCatalogConsumers;
  return result;
 }
 
@@ -1940,5 +1942,62 @@ export function verifyCiJourneyCatalogConsumers(){
  const positive={sourceSearchFixtureBudget:'PASS',synthetic:true,actualBrowser:false,externalActorExecuted:false,eligibleReceiptCreated:false,productionFreshnessExecuted:true,budgetMs:19800000,cases:[{case:'last-valid-millisecond',result:'PASS',capabilityReady:true},{case:'at-expiry',result:'PASS',capabilityReady:false},{case:'after-expiry',result:'PASS',capabilityReady:false}],former240mDetected:true,exactAuthorityPreserved:true};
  assert.equal(horizon.condition(positive),true,'CI_FIXTURE_HORIZON_VALID_ORACLE');cases.push('horizon-valid');
  for(const [name,change]of [['old240m',r=>r.budgetMs=14400000],['unbounded',r=>r.budgetMs=Infinity],['expiry-allowed',r=>r.cases[1].capabilityReady=true],['missing-expiry',r=>r.cases.pop()],['duplicate-expiry',r=>r.cases[1]=copy(r.cases[2])],['authority-mutated',r=>r.exactAuthorityPreserved=false],['browser-overclaim',r=>r.actualBrowser=true],['external-actor-overclaim',r=>r.externalActorExecuted=true],['receipt-overclaim',r=>r.eligibleReceiptCreated=true]]){const bad=copy(positive);change(bad);assert.equal(horizon.condition(bad),false,'CI_FIXTURE_HORIZON_NEGATIVE_ORACLE: '+name);cases.push('horizon-'+name);}
+ return {passed:true,cases,caseCount:cases.length,consumerOnly:true,syntheticReportFixture:true,actualProducerExecuted:false,eligibleReceiptCreated:false,actualBrowser:false};
+}
+
+export function verifyBrowserExtraProcessGroupCatalogConsumers(){
+ const suite='verify-executed-evidence.mjs',id='receipts.browser-extra-process-group-liveness';
+ const owner=verificationCatalog[suite],check=owner.checks.find(row=>row.id===id),cases=[];
+ assert(check,'PROCESS_GROUP_CATALOG_DISCOVERY_ORACLE');
+ const required=[
+  'zombie-only','absent-group','different-exact-group',
+  'live-I-permission-refused','live-R-permission-refused','live-S-permission-refused','live-T-permission-refused','live-U-permission-refused',
+  'inspection-empty-refused','inspection-truncated-refused','inspection-missing-own-process-refused','inspection-malformed-row-refused',
+  'inspection-unknown-state-refused','inspection-unsafe-identity-refused','inspection-duplicate-pid-refused','inspection-extra-column-refused',
+  'inspection-EACCES-refused','inspection-ETIMEDOUT-refused','inspection-ENOBUFS-refused','other-error-refused','linux-permission-refused'
+ ];
+ const native={observed:true,state:'Z',groupEqualsChildPid:true,parentStopped:true,nativeSignalZero:'EPERM',nativeSigkill:'EPERM',runningMember:false,cleanupAccepted:true};
+ const fixture={caseName:'platform-process-group-liveness',platform:process.platform,cases:required,nativeZombie:process.platform==='darwin'?native:null,testOwnedCleanupComplete:true};
+ const report={executedEvidenceProtection:'PASS',browserExtraAggregateControl:{processGroupProof:fixture}};
+ assert.equal(check.condition(fixture,report),true);cases.push('valid-current-platform');
+ const reject=(name,change)=>{
+  const altered=structuredClone(fixture);change(altered);
+  assert.equal(check.condition(altered,report),false,'PROCESS_GROUP_CATALOG_NEGATIVE_ORACLE: '+name);cases.push(name);
+ };
+ for(const name of required)reject('missing:'+name,value=>{value.cases=value.cases.filter(item=>item!==name);});
+ for(const [name,change]of [
+  ['wrong-case-name',value=>{value.caseName='other';}],
+  ['wrong-platform',value=>{value.platform=process.platform==='darwin'?'linux':'darwin';}],
+  ['missing-cleanup',value=>{delete value.testOwnedCleanupComplete;}],
+  ['false-cleanup',value=>{value.testOwnedCleanupComplete=false;}],
+  ['unknown-field',value=>{value.unknown=true;}],
+  ['duplicate-case',value=>{value.cases[1]=value.cases[0];}],
+  ['unknown-case',value=>{value.cases[0]='unknown';}],
+  ['extra-case',value=>{value.cases.push('extra');}],
+  ['native-proof-mismatch',value=>{value.nativeZombie=process.platform==='darwin'?null:structuredClone(native);}],
+  ['native-proof-omitted',value=>{delete value.nativeZombie;}],
+  ['native-proof-extra',value=>{value.nativeZombie={...native,unknown:true};}],
+  ['native-proof-incomplete',value=>{value.nativeZombie={...native};delete value.nativeZombie.parentStopped;}]
+ ])reject(name,change);
+ const saved=owner.checks,population=negativePopulationCatalog[suite];
+ try{
+  owner.checks=[check];delete negativePopulationCatalog[suite];
+  assert.deepEqual(observationsFromReports(suite,[report]).map(row=>[row.checkId,row.passed]),[[id,true]]);cases.push('selector-positive');
+  for(const [name,reports]of [
+   ['missing',[]],['duplicate',[report,structuredClone(report)]],['wrong-marker',[{otherOwner:true,browserExtraAggregateControl:report.browserExtraAggregateControl}]]
+  ]){
+   assert.throws(()=>observationsFromReports(suite,reports),/expected exactly one report marker/);cases.push('selector-'+name);
+  }
+  for(const [name,value]of [
+   ['missing-property',{executedEvidenceProtection:'PASS'}],
+   ['wrong-property',{executedEvidenceProtection:'PASS',other:fixture}],
+   ['failed-cleanup',{executedEvidenceProtection:'PASS',browserExtraAggregateControl:{processGroupProof:{...fixture,testOwnedCleanupComplete:false}}}]
+  ]){
+   assert.deepEqual(observationsFromReports(suite,[value]).map(row=>row.passed),[false]);cases.push('selector-'+name);
+  }
+ }finally{
+  owner.checks=saved;
+  if(population===undefined)delete negativePopulationCatalog[suite];else negativePopulationCatalog[suite]=population;
+ }
  return {passed:true,cases,caseCount:cases.length,consumerOnly:true,syntheticReportFixture:true,actualProducerExecuted:false,eligibleReceiptCreated:false,actualBrowser:false};
 }
