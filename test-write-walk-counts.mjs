@@ -22,9 +22,21 @@ export const WRITE_WALK_PINS=Object.freeze({
 // write whose root no checkpoint consumed, so the lazy first use of that
 // root's write certificate (firstUsePendingWriteRoot, which mints its History
 // root proof) runs inside it: one writeRootBytesVerified call (its
-// rootBytesWalksPerCall walks, plus the private copy of the restored root,
-// one copy and its walk) moves from the next checkpoint into the next write:
-// +4 walks and +1 copy per such write, checkpoints unchanged.
+// rootBytesWalksPerCall walks, plus the private copy of the restored root, one
+// copy and its walk), +4 walks and +1 copy per such write; checkpoint rows are
+// unchanged. This is ADDED work, not moved work: no checkpoint ever consumes
+// these roots, so the adapter realm never decodes them. Over this sequence the
+// worker realm makes 206 walks, 38 copies and 4 writeRootBytesVerified calls,
+// the adapter realm 194, 35 and 1. These pins count verifiedGraphNodes walks
+// and copies only; the first use's decode, digests and strict static check are
+// not in them. Measured (Node, this container, 2026-11-11): 2.27-2.49 s added
+// per such write on the s17 fixture (34 MB project: 12.4 s against 10.2-10.5 s
+// per operational write) and 5.2-5.4 s for the real Stage 30 last root (61.5 M
+// characters). Estimated, not measured, for the real journey: 162 roots after
+// the Stage 5 reload are superseded without a checkpoint (5,162 M characters
+// of inline and part project text), about 0.086 s per M characters, so about
+// 7.4 min more locally over the journey, at most 5.4 s per write. That cost is
+// flagged for owner review.
 export const WRITE_WALK_WORKER_PINS=Object.freeze({
  canonicalWrite:Object.freeze({walks:30,copies:9,digestScopes:0,rootBytesCalls:1}),
  firstOperationalWrite:Object.freeze({walks:63,copies:13,digestScopes:0,rootBytesCalls:1}),
