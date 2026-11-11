@@ -157,7 +157,7 @@ export function assertLifecycleWorkflowCommand(workflow){
     const gate='      - name: Require successful '+label+'\n        run: test "${{ needs.'+job+'.result }}" = "success"\n';
     requireValue(protectedTest.includes(gate)&&protectedTest.indexOf(gate)<protectedTest.indexOf('      - uses: actions/checkout@'),'A failed '+(job==='deferred-matrix'?'deferred matrix':job==='conformance'?'conformance group':job)+' must fail the required test job.');
   }
-  requireValue(conformanceJob.includes('group: [core, creation, counterpart]')&&conformanceJob.includes('fail-fast: false')&&conformanceJob.includes('node verify-conformance-regressions.mjs --group=${{ matrix.group }} > /tmp/conformance-regressions.json')&&conformanceJob.includes('name: Preserve complete conformance group report')&&conformanceJob.includes('name: Preserve conformance execution receipts'),'Required complete conformance group execution or artifacts are absent.');
+  requireValue(conformanceJob.includes('group: [core, history, creation, counterpart]')&&conformanceJob.includes('fail-fast: false')&&conformanceJob.includes('node verify-conformance-regressions.mjs --group=${{ matrix.group }} > /tmp/conformance-regressions.json')&&conformanceJob.includes('name: Preserve complete conformance group report')&&conformanceJob.includes('name: Preserve conformance execution receipts'),'Required complete conformance group execution or artifacts are absent.');
   const ingestionProducer='          node verify-ingestion.mjs\n',ingestionExport='        run: node collect-verification-evidence.mjs --export-owner=verify-ingestion.mjs\n';
   requireValue(foundation.split(ingestionProducer).length===2&&(workflow.match(/^\s*node verify-ingestion\.mjs(?:\s|$)/gm)||[]).length===1,'Required ingestion proof must execute its complete producer once in the foundation phase.');
   requireValue(conformanceJob.indexOf(ingestionExport)<conformanceJob.indexOf('      - name: Execute complete conformance group\n'),'Required current ingestion receipt must be produced before the core evidence consumer.');
@@ -295,7 +295,7 @@ export function assertPassedRun(run,jobs,{repository,headSha,workflowId}){
     const matrixSteps=deferred[0].steps.filter(step=>step.name===name);
     requireValue(matrixSteps.length===1&&matrixSteps[0].status==='completed'&&matrixSteps[0].conclusion==='success','Required complete deferred matrix did not pass: '+name);
   }
-  for(const group of ['core','creation','counterpart']){
+  for(const group of ['core','history','creation','counterpart']){
     const matches=jobs.filter(job=>job.name==='conformance-'+group);
     requireValue(matches.length===1&&matches[0].status==='completed'&&matches[0].conclusion==='success','Required conformance group job has not passed: '+group);
     for(const name of ['Download foundation proof','Validate foundation ingestion receipt','Validate current authority receipts','Execute complete conformance group','Preserve complete conformance group report','Preserve conformance execution receipts']){
@@ -315,7 +315,7 @@ export function assertPassedRun(run,jobs,{repository,headSha,workflowId}){
   // Jobs are returned by the exact attempt endpoint; bind each required result
   // to the queried run/repository/head instead of accepting matching names.
   requireValue(Number.isSafeInteger(run.run_attempt)&&run.run_attempt>0,'PR verification attempt is invalid.');
-  for(const job of jobs.filter(job=>['test','test-checks','operator-journey','foundation','workflow-gates','deferred-matrix','conformance-core','conformance-creation','conformance-counterpart'].includes(job.name))){
+  for(const job of jobs.filter(job=>['test','test-checks','operator-journey','foundation','workflow-gates','deferred-matrix','conformance-core','conformance-history','conformance-creation','conformance-counterpart'].includes(job.name))){
     requireValue(String(job.run_id)===String(run.id)&&job.head_sha===headSha&&job.run_url===`https://api.github.com/repos/${repository}/actions/runs/${run.id}`&&(job.run_attempt===undefined||job.run_attempt===run.run_attempt),'Required PR verification job belongs to a different run, attempt, repository, or head: '+job.name);
   }
 }

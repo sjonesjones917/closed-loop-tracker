@@ -7,7 +7,7 @@ import {conformanceGroups,conformanceSources,suiteTimeoutMs} from './verify-conf
 import {verificationCatalog} from './verification-evidence-catalog.mjs';
 import {evidenceFingerprint,readExecutionReceipt,sha} from './verification-evidence.mjs';
 
-const groups=['core','creation','counterpart'];
+const groups=['core','history','creation','counterpart'];
 // Source-bound runner report boundary: the synchronized cleanup fixture is
 // explicitly controlled, while the original automatic deadline controls remain.
 export function validateRunnerDescendantReport(report){
@@ -110,7 +110,8 @@ export function verifyConformanceHandoffControls(){
  const fixture=runnerDescendantConsumerFixture();for(const report of Object.values(reports)){const result=report.results[0];result.stdout=JSON.stringify(fixture);result.stdoutSha256=sha(result.stdout);}
  const expected={sourceCommit,sourceFiles};validateConformanceReports(reports,expected);
  const mutations=[
-  ['missing-group',r=>delete r.creation],['extra-group',r=>{r.extra=r.core;}],
+  ['missing-group',r=>delete r.creation],['missing-history-group',r=>delete r.history],['extra-group',r=>{r.extra=r.core;}],
+  ['history-suite-in-core',r=>{r.core.results.push(r.history.results.pop());}],
   ['wrong-group',r=>{r.creation.group='core';}],['stale-commit',r=>{r.core.sourceCommit='c'.repeat(40);} ],
   ['dirty-source',r=>{r.core.workingTreeChanges=' M app-core.js';}],['missing-source',r=>{r.core.sourceFiles=[];}],
   ['source-not-restored',r=>{r.core.sourceFilesAtFinish=[];}],['source-changed',r=>{r.core.sourceChangedDuringRun=true;}],
