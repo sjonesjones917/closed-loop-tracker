@@ -2712,7 +2712,8 @@ function checkpointTransactionOwner(tx,jobId){
   return {external,completion,abort,finish(){running=false;clearTimeout(timer);}};
 }
 async function commitRootCheckpoint(jobId,project,verifiedRead,prepared,operationId,checkpointId){
-  const pairInputs=captureHistoryProofInputs(),root=prepared.retainedRoot,primitive=root.primitive,rootValueCapture=copyCheckpointValueSnapshot(root.snapshot);let stateCapture=null;
+  const root=prepared.retainedRoot,primitive=root.primitive,rootValueCapture=copyCheckpointValueSnapshot(root.snapshot);let stateCapture=null;
+  const pairInputs=captureHistoryProofInputs();
   try{
   const rootDescriptorSnapshot=copyVerifiedTree(root.descriptor),rootDigests={projectSha256:root.projectSha256,workSha256:root.workSha256},rootBodySnapshot=copyVerifiedTree({...root.body,project:undefined,artifacts:root.body.artifacts.map(historyDescriptor)});
   stateCapture=copyCheckpointValueSnapshot(prepared.state);
@@ -3077,7 +3078,7 @@ function mintWriteRootCertificate(preparedHistory,digest,primitive,validators,de
     // The write's own derivation, under these validators, of exactly this value
     // with custody answers that the root's artifacts reproduce byte for byte.
     if(derivation&&derivation.validators===validators&&writeDerivationArtifactsRetained(derivation,encoded.body.artifacts))writeDerivations.set(root,derivation);
-    rootCertificates.add(root);unverifiedWriteRoots.add(root);if(HISTORY_ROOT_PROOFS)pendingFirstUseRoot=root;return root;
+    if(HISTORY_ROOT_PROOFS)pendingFirstUseRoot=root;rootCertificates.add(root);unverifiedWriteRoots.add(root);return root;
   }catch{return undefined;}
 }
 async function prepareHistoryCommit(next,prior,{label=null,view=null,preserveActiveView=false,sessionId=null,baseState=null,artifactRows=null,retainedFiles=[],verifiedRead=null,verifiedDigests=null,verifiedIntegrity=[],checkpointRootRead=false,verifiedDigestPair=null,privateEncodeSources=null}={}){
@@ -4437,7 +4438,9 @@ async function exportPackage(jobId,{passphrase=null,historyRecovery=false,[COLD_
       else{
       await readCheckpointBody(jobId,{...entry,blob:saved.blob},async id=>{const expected=recovery.entries.find(item=>item.id===id),stored=await metaGet(snapshotKey(jobId,id));return expected&&stored?.blob?{...expected,blob:stored.blob}:null;},verifiedHistoryRoots,false,sha=>metaGet(historyFileKey(jobId,sha)),verifiedHistoryParts);
       }
-      requiresEncryption=requiresEncryption||(proven?proven.credential:containsCredentialSecret(checkpoint));
+      // A proof carries the credential classification of these same bytes.
+      if(proven)requiresEncryption=requiresEncryption||proven.credential;
+      else requiresEncryption=requiresEncryption||containsCredentialSecret(checkpoint);
       // The backup keeps the legacy inline shape: a state-form entry is exported
       // as its immutable record descriptor once that record matches it exactly
       // and its parts are retained files. Legacy entries are exported unchanged.
