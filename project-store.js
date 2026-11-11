@@ -1991,6 +1991,9 @@ function readAll(storage){return storage?readAllLegacy(storage):readAllIndexed()
 const HISTORY_SCHEMA='closed-loop-recovery/1';
 const HISTORY_PROJECT_REFERENCE='closed-loop-recovery-project-reference/1';
 const HISTORY_PROJECT_PARTS='closed-loop-recovery-project-parts/1';
+// A complete version whose record arrays are stored as content-defined
+// segments (encodeHistoryProject); a version without such an array stays /1.
+const HISTORY_PROJECT_PARTS_SEGMENTED='closed-loop-recovery-project-parts/2';
 const HISTORY_SOURCE_REFERENCE=globalThis.closedLoopWorkflowSchema.RECOVERY_SOURCE_REFERENCE_CONTRACT.schema;
 const HISTORY_ACTIVATION_FIELDS=globalThis.closedLoopWorkflowSchema.RECOVERY_SOURCE_REFERENCE_CONTRACT.activationFields;
 const HISTORY_LIMITS=Object.freeze({maxCheckpoints:2048,maxCompressedProjectBytes:512*1024*1024,maxRetainedFileBytes:1024*1024*1024});
@@ -2190,7 +2193,7 @@ function validateRecoveryManifest(state){
   }
   for(const entry of state.entries)if(entry.projectParts){
     assertHistoryProjectParts(entry.projectParts);
-    if(entry.projectReference||entry.projectParts.entries.some(part=>state.files[part.sha256]?.byteSize!==part.byteSize))throw storageError('Recovery project contents are not retained in this complete history.','HISTORY_VERSION_MISMATCH');
+    if(entry.projectReference||historyPartFiles(entry.projectParts).some(part=>state.files[part.sha256]?.byteSize!==part.byteSize))throw storageError('Recovery project contents are not retained in this complete history.','HISTORY_VERSION_MISMATCH');
   }
   // State-form entries name their parts by digest; each per-root use reads the
   // parts from the immutable record and checks them against these files.
@@ -2463,7 +2466,9 @@ function historyProofFactsMatch(proof,jobId,entry){
   return true;
 }
 // The part list of a complete version: a legacy entry's own, or the stored
-// record's for a state-form entry (the merge with segmented roots swaps this).
+// record's for a state-form entry. The proof binds this list by its digest;
+// the files it rereads are historyPartFiles(list), every value part and every
+// segment, exactly as the cold decoder reads them.
 function historyProofPartList(entry,record){return Object.hasOwn(entry,'projectPartsSha256')?record?.projectParts:entry.projectParts;}
 // The parts of a proven root, reread and rehashed in this operation in the
 // cold decoder's order; the list is bound to the proven bytes by its digest.
@@ -2473,7 +2478,7 @@ async function historyProofPartsRetained(proof,parts,readFile,operation,jobId,ve
   if(!proof.hasProjectParts)return !parts;
   if(!parts||hash.sha256Value(parts)!==proof.projectPartsSha256)return false;
   assertHistoryProjectParts(parts);
-  for(const part of parts.entries){
+  for(const part of historyPartFiles(parts)){
     const hashed=operation.hashedParts.get(part.sha256)??coldParts?.get(part.sha256)?.byteSize;
     if(hashed!==undefined){if(hashed!==part.byteSize)return false;continue;}
     const file=await readFile(part.sha256),bytePrimitive=checkpointBytePrimitives(file?.blob);
@@ -2817,7 +2822,7 @@ async function commitRootCheckpoint(jobId,project,verifiedRead,prepared,operatio
       if(checkpointBytePrimitivesMatch(bytePrimitive)){const observation={blob:body.blob,byteSize,sha256,primitive:bytePrimitive};checkpointByteObservations.add(observation);byteObservations.set(body.blob,observation);}
       bytes.set(sha256,body);return body;
     }
-    if(root.descriptor.projectParts){assertHistoryProjectParts(root.descriptor.projectParts);for(const part of root.descriptor.projectParts.entries){if(current.files[part.sha256]?.byteSize!==part.byteSize)throw storageError('A retained project part is unavailable.','HISTORY_VERSION_MISMATCH');await retainedBytes(part.sha256,part.byteSize);}}
+    if(root.descriptor.projectParts){assertHistoryProjectParts(root.descriptor.projectParts);for(const part of historyPartFiles(root.descriptor.projectParts)){if(current.files[part.sha256]?.byteSize!==part.byteSize)throw storageError('A retained project part is unavailable.','HISTORY_VERSION_MISMATCH');await retainedBytes(part.sha256,part.byteSize);}}
     const rootArtifacts=[];
     for(const descriptor of root.body.artifacts){const body=await retainedBytes(descriptor.sha256,descriptor.byteSize);rootArtifacts.push({...historyDescriptor(descriptor),blob:body.blob});}
     const currentRows=await request(tx.objectStore(ARTIFACTS).index('jobId').getAll(String(jobId))),files=await hydrateArtifactRows(tx,currentRows,{backingBodies:{jobId:String(jobId),rows:bytes}});
@@ -2901,12 +2906,37 @@ function assertRecoveryViewFiles(jobId,view,artifacts){
 }
 async function readHistoryView(jobId,checkpointId=null){const state=await metaGet(historyKey(jobId)),id=checkpointId||state?.activeId;if(!id)return null;const saved=await readRetainedCheckpoint(jobId,id,state);return clone(id===state.activeId&&state.activeViewOverride?state.activeViewOverride:saved.view);}
 function assertHistoryProjectParts(parts){
+  if(parts?.schema===HISTORY_PROJECT_PARTS_SEGMENTED)return assertSegmentedHistoryProjectParts(parts);
   const seen=new Set();
   if(parts?.schema!==HISTORY_PROJECT_PARTS||Object.keys(parts).some(key=>!['schema','entries'].includes(key))||!Array.isArray(parts.entries)||!parts.entries.length)throw storageError('Saved project content references are unsupported.','HISTORY_VERSION_MISMATCH');
   for(const part of parts.entries){
     if(!part||Object.keys(part).some(key=>!['path','sha256','byteSize'].includes(key))||!Array.isArray(part.path)||!part.path.length||part.path.some(key=>typeof key!=='string'&&(!Number.isSafeInteger(key)||key<0))||!/^[a-f0-9]{64}$/.test(part.sha256||'')||!Number.isSafeInteger(part.byteSize)||part.byteSize<=0)throw storageError('Saved project content identity is invalid.','HISTORY_VERSION_MISMATCH');
     const path=JSON.stringify(part.path);if(seen.has(path))throw storageError('Saved project content has duplicate destinations.','HISTORY_VERSION_MISMATCH');seen.add(path);
   }
+}
+// A /2 list: /1 value entries {path,sha256,byteSize} and segments entries
+// {path,sha256,byteSize,segments:[{sha256,byteSize,count}]}, at least one of
+// them. A segments entry never lies under another entry, and a value entry
+// that descends into a segmented array follows that array's entry.
+function assertSegmentedHistoryProjectParts(parts){
+  if(Object.keys(parts).some(key=>!['schema','entries'].includes(key))||!Array.isArray(parts.entries)||!parts.entries.length)throw storageError('Saved project content references are unsupported.','HISTORY_VERSION_MISMATCH');
+  const invalid=()=>storageError('Saved project content identity is invalid.','HISTORY_VERSION_MISMATCH'),digest=value=>typeof value==='string'&&/^[a-f0-9]{64}$/.test(value),size=value=>Number.isSafeInteger(value)&&value>0;
+  const destinations=new Map(),segmented=new Map();
+  parts.entries.forEach((part,index)=>{
+    const segments=part&&typeof part==='object'&&Object.hasOwn(part,'segments');
+    if(!part||typeof part!=='object'||Array.isArray(part)||Object.keys(part).some(key=>!(segments?['path','sha256','byteSize','segments']:['path','sha256','byteSize']).includes(key))||!Array.isArray(part.path)||!part.path.length||part.path.some(key=>typeof key!=='string'&&(!Number.isSafeInteger(key)||key<0))||!digest(part.sha256)||!size(part.byteSize))throw invalid();
+    if(segments&&(!Array.isArray(part.segments)||!part.segments.length||part.segments.length>65536||part.segments.some(segment=>!segment||typeof segment!=='object'||Array.isArray(segment)||Object.keys(segment).length!==3||Object.keys(segment).some(key=>!['sha256','byteSize','count'].includes(key))||!digest(segment.sha256)||!size(segment.byteSize)||!size(segment.count))))throw invalid();
+    const path=JSON.stringify(part.path);if(destinations.has(path))throw storageError('Saved project content has duplicate destinations.','HISTORY_VERSION_MISMATCH');destinations.set(path,index);
+    if(segments)segmented.set(path,index);
+  });
+  if(!segmented.size)throw invalid();
+  parts.entries.forEach((part,index)=>{
+    let prefix='';
+    for(let depth=0;depth<part.path.length-1;depth++){
+      prefix+=(depth?',':'')+JSON.stringify(part.path[depth]);const key='['+prefix+']';
+      if(Object.hasOwn(part,'segments')?destinations.has(key):segmented.has(key)&&segmented.get(key)>index)throw invalid();
+    }
+  });
 }
 // The History state names a complete version's inline project parts by the
 // canonical digest of that exact list. The immutable per-snapshot record keeps
@@ -2943,11 +2973,27 @@ function historyDescriptorMatches(record,entry){
 function assertHistoryStateFormEntry(entry){
   if(Object.hasOwn(entry,'projectParts')||entry.projectReference||typeof entry.projectPartsSha256!=='string'||!/^[a-f0-9]{64}$/.test(entry.projectPartsSha256))throw storageError('Saved project content references are unsupported.','HISTORY_VERSION_MISMATCH');
 }
+// The History files one complete version's part list depends on, in restore
+// order: each value entry's file and each segment of each segments entry. A
+// segments entry's own sha256/byteSize, its whole array's canonical identity,
+// is never a file here. Every part-custody site (manifest validation, the
+// root checkpoint commit, the append's base root, the certified-root reread,
+// retained-part checks, History proofs and backup export) reads this list
+// and no other; a site that read each entry's sha256/byteSize instead would
+// find no retained file for a segments entry and refuse.
+function historyPartFiles(parts){
+  const files=[];
+  for(const part of parts.entries){
+    if(Object.hasOwn(part,'segments'))for(const segment of part.segments)files.push({sha256:segment.sha256,byteSize:segment.byteSize});
+    else files.push({sha256:part.sha256,byteSize:part.byteSize});
+  }
+  return files;
+}
 // Each part of one retained complete version is a retained History file of
 // exactly its promised size.
 function assertHistoryPartsRetained(state,parts){
   assertHistoryProjectParts(parts);
-  if(parts.entries.some(part=>state.files[part.sha256]?.byteSize!==part.byteSize))throw storageError('Recovery project contents are not retained in this complete history.','HISTORY_VERSION_MISMATCH');
+  if(historyPartFiles(parts).some(part=>state.files[part.sha256]?.byteSize!==part.byteSize))throw storageError('Recovery project contents are not retained in this complete history.','HISTORY_VERSION_MISMATCH');
 }
 // A state-form entry's parts are its stored record's complete list, bound by
 // the entry's digest before use; each part is a retained file.
@@ -2971,6 +3017,13 @@ function assertHistoryRecordPartsRetained(state,entry,record){
 // plain project writes still succeed. Nothing is lost: every record keeps its
 // complete descriptor, and this build reads the state again. A rollback past
 // this build needs the state entries re-inflated from their records first.
+// Segmented roots (closed-loop-recovery-project-parts/2) are one-way in the
+// same way: a build without /2 refuses every version written as /2 (reads,
+// restore, checkpoints from it, export and import of a backup holding it) in
+// assertHistoryProjectParts with 'Saved project content references are
+// unsupported.' (HISTORY_VERSION_MISMATCH). /1 versions keep their bytes and
+// stay readable there; nothing is rewritten or discarded, and this build
+// reads both. A rollback past this build needs /2 roots re-encoded first.
 function slimHistoryStateEntries(state){
   for(let index=0;index<state.entries.length;index++){
     const entry=state.entries[index];
@@ -3023,6 +3076,103 @@ async function encodeHistoryProject(project,retainValue){
     if(entries.length===start&&!Array.isArray(value)&&(arrayItem||path.length===2)&&await retain())return null;
     return result;
   }
+  // closed-loop-recovery-project-parts/2. An array of 4096 or more canonical
+  // bytes in the skeleton (never one inside a stored part) is stored as
+  // content-defined segments: a segments entry
+  // {path,sha256,byteSize,segments:[{sha256,byteSize,count}]} with null at its
+  // destination. A segment is the canonical JSON array of consecutive items,
+  // '['+items.join(',')+']', retained by the SHA-256 of those bytes like a
+  // part. An item of SEGMENT_TARGET bytes or more is a segment of its own;
+  // otherwise a segment closes after an item whose FNV-1a32 over its canonical
+  // UTF-8 bytes, read as a fraction of 2^32, is below itemBytes/SEGMENT_TARGET,
+  // or once it holds 4*SEGMENT_TARGET bytes. A boundary depends only on the
+  // items since the previous boundary: appending items keeps every closed
+  // segment, and an edited item rewrites only the segments up to the next
+  // boundary. The entry's sha256 and byteSize are the canonical identity of
+  // the whole array as its segments hold it (the identity a /1 value part of
+  // that array would have); restore requires the concatenated segments to
+  // reproduce it. No History file is retained under that identity for this
+  // entry (unless the array is one segment without extracted strings, which
+  // is then exactly that file), so a custody check reading only each entry's
+  // sha256/byteSize finds no file and refuses.
+  // A string of 4096 or more code units inside an item is a value part as in
+  // the skeleton: null in the segment and a value entry with its absolute path
+  // after the segments entry. A non-array object at depth two or more is a
+  // value part from 4096 bytes up to OBJECT_PART_CAP when it holds no such
+  // string (as in /1); a larger one, or one that holds such a string, is
+  // visited. Everything else is copied inline. Nothing is retained until the
+  // encode has finished, in visit order: a project without a segmented array
+  // retains nothing here and is encoded as /1 by visit(), byte for byte.
+  const SEGMENT_TARGET=16384,OBJECT_PART_CAP=65536,utf8=new TextEncoder(),OPEN=utf8.encode('['),COMMA=utf8.encode(','),CLOSE=utf8.encode(']');
+  const chunkBytes=chunk=>typeof chunk==='string'?utf8.encode(chunk):new Uint8Array(chunk.buffer,chunk.byteOffset,chunk.byteLength);
+  function canonicalBytes(value){
+    const pieces=[];let size=0;for(const chunk of hash.canonicalChunks(value)){const bytes=chunkBytes(chunk);pieces.push(bytes);size+=bytes.length;}
+    if(pieces.length===1)return pieces[0];
+    const bytes=new Uint8Array(size);let offset=0;for(const piece of pieces){bytes.set(piece,offset);offset+=piece.length;}return bytes;
+  }
+  function canonicalAtLeast(value,limit){let size=0;for(const chunk of hash.canonicalChunks(value)){size+=chunkBytes(chunk).length;if(size>=limit)return true;}return false;}
+  function fnv1a32(bytes){let state=0x811c9dc5;for(let index=0;index<bytes.length;index++)state=Math.imul(state^bytes[index],0x01000193);return state>>>0;}
+  function holdsArray(value){if(!value||typeof value!=='object')return false;if(Array.isArray(value))return true;for(const key of Object.keys(value))if(holdsArray(value[key]))return true;return false;}
+  function holdsLongString(value){if(typeof value==='string')return value.length>=4096;if(!value||typeof value!=='object')return false;for(const key of Object.keys(value))if(holdsLongString(value[key]))return true;return false;}
+  function encodeSegmented(root){
+    const result={entries:[],retained:[],strings:new Map(),segments:0};
+    function retainChunks(value,path,chunks,target){
+      const blob=new Blob(chunks,{type:'application/json'}),sha256=retainedChunksSha256(chunks)??hash.sha256Value(value),identity={sha256,byteSize:blob.size};
+      result.retained.push([sha256,blob]);target.push({path,...identity});return identity;
+    }
+    function retainString(value,path,target){
+      const prior=result.strings.get(value);
+      if(prior){target.push({path,...prior});return;}
+      result.strings.set(value,retainChunks(value,path,[...hash.canonicalChunks(value)],target));
+    }
+    // A copy of a value kept inline or inside a segment.
+    function pack(value,path,target){
+      if(typeof value==='string'&&value.length>=4096){retainString(value,[...path],target);return null;}
+      if(!value||typeof value!=='object')return value;
+      const array=Array.isArray(value),copy=array?[]:{};
+      for(const key of Object.keys(value)){path.push(array?Number(key):key);Object.defineProperty(copy,key,{value:pack(value[key],path,target),enumerable:true,writable:true,configurable:true});path.pop();}
+      return copy;
+    }
+    function segmentArray(value,path){
+      const local=[],segments=[],whole=hash.createSha256();let wholeBytes=2,open=[],openBytes=0;
+      whole.update(OPEN);
+      const close=()=>{
+        if(!open.length)return;
+        const pieces=[OPEN],digest=hash.createSha256();for(let index=0;index<open.length;index++){if(index)pieces.push(COMMA);pieces.push(open[index]);}pieces.push(CLOSE);
+        for(const piece of pieces)digest.update(piece);
+        const blob=new Blob(pieces,{type:'application/json'}),sha256=digest.digest();
+        result.retained.push([sha256,blob]);segments.push({sha256,byteSize:blob.size,count:open.length});open=[];openBytes=0;
+      };
+      for(let index=0;index<value.length;index++){
+        path.push(index);const bytes=canonicalBytes(pack(value[index],path,local));path.pop();
+        if(index){whole.update(COMMA);wholeBytes++;}whole.update(bytes);wholeBytes+=bytes.length;
+        if(bytes.length>=SEGMENT_TARGET){close();open.push(bytes);close();continue;}
+        openBytes+=bytes.length+(open.length?1:0);open.push(bytes);
+        if(fnv1a32(bytes)/4294967296<bytes.length/SEGMENT_TARGET||openBytes+2>=4*SEGMENT_TARGET)close();
+      }
+      close();whole.update(CLOSE);
+      result.segments+=segments.length;result.entries.push({path:[...path],sha256:whole.digest(),byteSize:wholeBytes,segments});
+      for(const entry of local)result.entries.push(entry);
+    }
+    function visitSegmented(value,path){
+      if(typeof value==='string'&&value.length>=4096){retainString(value,[...path],result.entries);return null;}
+      if(!value||typeof value!=='object')return value;
+      if(Array.isArray(value)){if(!canonicalAtLeast(value,4096))return pack(value,path,result.entries);segmentArray(value,path);return null;}
+      if(path.length>=2){
+        const chunks=[];let size=0,storage=null;
+        for(const chunk of hash.canonicalChunks(value)){size+=chunkBytes(chunk).length;if(size>OBJECT_PART_CAP){storage='visit';break;}chunks.push(chunk);}
+        if(!storage&&size<4096)return pack(value,path,result.entries);
+        if(!storage&&!holdsLongString(value)){retainChunks(value,[...path],chunks,result.entries);return null;}
+      }
+      const copy={};
+      for(const key of Object.keys(value)){path.push(key);Object.defineProperty(copy,key,{value:visitSegmented(value[key],path),enumerable:true,writable:true,configurable:true});path.pop();}
+      return copy;
+    }
+    const packed=visitSegmented(root,[]);
+    return result.segments?{project:packed,entries:result.entries,retained:result.retained}:null;
+  }
+  const segmented=holdsArray(project)?encodeSegmented(project):null;
+  if(segmented){for(const [sha256,blob] of segmented.retained)await retainValue(sha256,blob);return {project:segmented.project,projectParts:{schema:HISTORY_PROJECT_PARTS_SEGMENTED,entries:segmented.entries}};}
   const packed=await visit(project);
   return {project:packed,...(entries.length?{projectParts:{schema:HISTORY_PROJECT_PARTS,entries}}:{})};
 }
@@ -3059,6 +3209,12 @@ async function historyBlobSha256(blob,verifiedByteDigests=null){
   if(!digest){digest=hash.sha256Bytes(blob);verifiedByteDigests.set(blob,digest);}
   return digest;
 }
+// The SHA-256 and UTF-8 byte length of a value's canonical encoding.
+function historyCanonicalIdentity(value){
+  const digest=hash.createSha256(),encoder=new TextEncoder();let byteSize=0;
+  for(const chunk of hash.canonicalChunks(value)){const bytes=encoder.encode(chunk);byteSize+=bytes.length;digest.update(bytes);}
+  return {sha256:digest.digest(),byteSize};
+}
 // Import-only decoded-data proof. Never a root/validator/activation receipt:
 // every use reads the current archived row and binds its actual immutable Blob.
 // The private snapshot also detects mutation of the operation's parsed-part map.
@@ -3069,7 +3225,9 @@ async function restoreHistoryProject(body,readFile,verifiedParts=new Map(),verif
   // Reuse only content verified against this operation's immutable input.
   // Each destination still receives its own clone; retained versions cannot alias.
   const project=body.project; // verifiedParts belongs to this read/import only.
-  for(const part of body.projectParts.entries){
+  // One History file of this version, a value part or one segment of a
+  // segmented array: the same byte, size, job and proof checks for both.
+  async function verifiedPart(part){
     let value=verifiedParts.get(part.sha256);
     if(verifiedByteDigests){
       const file=await readFile(part.sha256);
@@ -3091,6 +3249,14 @@ async function restoreHistoryProject(body,readFile,verifiedParts=new Map(),verif
       const decoded=await readPackageJson(file.blob,{compressed:false,spoolArtifacts:false});value={contents:decoded.payload,byteSize:file.blob.size};verifiedParts.set(part.sha256,value);
     }
     if(value.byteSize!==part.byteSize)throw storageError('Saved project content sizes conflict.','HISTORY_VERSION_MISMATCH');
+    return value;
+  }
+  for(const part of body.projectParts.entries){
+    // A segmented array: every segment is a verified array of its declared
+    // count, and their concatenation is the array the entry identifies.
+    const segments=Object.hasOwn(part,'segments')?[]:null;let value;
+    if(segments)for(const segment of part.segments){const verified=await verifiedPart(segment);if(!Array.isArray(verified.contents)||verified.contents.length!==segment.count)throw storageError('Saved project content sizes conflict.','HISTORY_VERSION_MISMATCH');segments.push(verified);}
+    else value=await verifiedPart(part);
     let parent=project;
     for(const key of part.path.slice(0,-1)){if(!parent||typeof parent!=='object'||!Object.hasOwn(parent,key)||Array.isArray(parent)!==(typeof key==='number'))throw storageError('Saved project content destination is unavailable.','HISTORY_VERSION_MISMATCH');parent=parent[key];}
     const key=part.path.at(-1);
@@ -3098,8 +3264,15 @@ async function restoreHistoryProject(body,readFile,verifiedParts=new Map(),verif
     const privateRead=importDigestHolders.get(verifiedParts)?.privateRead;
     // Newly decoded JSON has no retained prompt-context side channel. Keep it
     // private rather than exposing it to the mutable ordinary clone hook.
-    if(privateRead&&!verifiedGraphNodes(value.contents))throw storageError('Saved project contents are not ordinary JSON data.','HISTORY_FILE_INTEGRITY_FAILED');
-    Object.defineProperty(parent,key,{value:verifiedByteDigests||privateRead?copyVerifiedTree(value.contents):clone(value.contents),enumerable:true,writable:true,configurable:true});
+    if(privateRead&&(segments?segments.some(segment=>!verifiedGraphNodes(segment.contents)):!verifiedGraphNodes(value.contents)))throw storageError('Saved project contents are not ordinary JSON data.','HISTORY_FILE_INTEGRITY_FAILED');
+    // Each segment is copied on its own: equal segments share one verified
+    // file, and the restored items must never alias each other.
+    let restored;
+    if(segments){
+      restored=[];for(const segment of segments)for(const item of verifiedByteDigests||privateRead?copyVerifiedTree(segment.contents):clone(segment.contents))restored.push(item);
+      const identity=historyCanonicalIdentity(restored);if(identity.sha256!==part.sha256||identity.byteSize!==part.byteSize)throw storageError('Saved project content sizes conflict.','HISTORY_VERSION_MISMATCH');
+    }else restored=verifiedByteDigests||privateRead?copyVerifiedTree(value.contents):clone(value.contents);
+    Object.defineProperty(parent,key,{value:restored,enumerable:true,writable:true,configurable:true});
   }
   return bindImportDigestScope(project,verifiedParts);
 }
@@ -3234,7 +3407,7 @@ async function prepareHistoryCommit(next,prior,{label=null,view=null,preserveAct
       // a reused continuation commits only through commitRootCheckpoint, which
       // rereads and rehashes every part inside its transaction (requalification
       // failure throws before any fallback). Non-root preparations check here.
-      if(descriptor.projectParts){assertHistoryProjectParts(descriptor.projectParts);for(const part of descriptor.projectParts.entries){if(state.files[part.sha256]?.byteSize!==part.byteSize)throw storageError('A retained project content dependency is unavailable.','HISTORY_VERSION_MISMATCH');if(!rootPreparation)await retainValue(part.sha256,null);}}
+      if(descriptor.projectParts){assertHistoryProjectParts(descriptor.projectParts);for(const part of historyPartFiles(descriptor.projectParts)){if(state.files[part.sha256]?.byteSize!==part.byteSize)throw storageError('A retained project content dependency is unavailable.','HISTORY_VERSION_MISMATCH');if(!rootPreparation)await retainValue(part.sha256,null);}}
       const measuredPair=rootPreparation&&checkpointPairMatches(verifiedRead.checkpointDigestPair,project)?verifiedRead.checkpointDigestPair:null;
       const decoded=await decodeCheckpoint(jobId,{...descriptor,blob},sha=>newFiles.find(file=>file.sha256===sha)||retainedFiles.find(file=>file.sha256===sha)||metaGet(historyFileKey(jobId,sha)),async id=>snapshots.find(entry=>entry.id===id)||metaGet(snapshotKey(jobId,id)),new Map(),new Map(),null,null,null,reuse,measuredPair,rootBytes);
       if(measuredPair&&(!checkpointPairMatches(measuredPair,project)||!checkpointPairMatches(measuredPair,decoded.project)))throw storageError('Checkpoint digest input changed during verification.','HISTORY_VERSION_MISMATCH');
@@ -3471,7 +3644,7 @@ async function readRetainedCheckpoint(jobId,checkpointId,state=null,rootRead=nul
   if(proof.descriptor.projectParts&&!unverifiedWriteRoots.has(proof)){
     assertHistoryProjectParts(proof.descriptor.projectParts);const checked=new Map();
     if(Object.hasOwn(descriptor,'projectPartsSha256'))assertHistoryPartsRetained(manifest,proof.descriptor.projectParts);
-    for(const part of proof.descriptor.projectParts.entries){
+    for(const part of historyPartFiles(proof.descriptor.projectParts)){
       if(checked.has(part.sha256)){if(checked.get(part.sha256)!==part.byteSize)throw storageError('Saved project content sizes conflict.','HISTORY_VERSION_MISMATCH');continue;}
       const file=await metaGet(historyFileKey(jobId,part.sha256));
       if(!(file?.blob instanceof Blob)||file.blob.size!==part.byteSize||await hash.sha256Bytes(file.blob)!==part.sha256)throw storageError('Saved project contents are missing or corrupt. The current version is preserved.','HISTORY_FILE_INTEGRITY_FAILED');
@@ -4531,7 +4704,9 @@ async function exportPackage(jobId,{passphrase=null,historyRecovery=false,operat
       if(exported!==entry){if(!historyDescriptorMatches(record,entry))throw storageError('Saved project content references differ from their retained manifest.','HISTORY_VERSION_MISMATCH');assertHistoryPartsRetained(recovery,record.projectParts);}
       exportedEntries.push(exported);
       if(!equivalent(checkpoint.projectParts||null,exported.projectParts||null))throw storageError('Saved project content references differ from their retained manifest.','HISTORY_VERSION_MISMATCH');
-      for(const part of checkpoint.projectParts?.entries||[]){const prior=classifiedProjectParts.get(part.sha256);if(prior!==undefined&&prior!==part.byteSize)throw storageError('Saved project content sizes conflict.','HISTORY_VERSION_MISMATCH');classifiedProjectParts.set(part.sha256,part.byteSize);}
+      // Every value part and every segment is classified, exported as a
+      // RECOVERY_BYTES member and credential-scanned once below.
+      for(const part of checkpoint.projectParts?historyPartFiles(checkpoint.projectParts):[]){const prior=classifiedProjectParts.get(part.sha256);if(prior!==undefined&&prior!==part.byteSize)throw storageError('Saved project content sizes conflict.','HISTORY_VERSION_MISMATCH');classifiedProjectParts.set(part.sha256,part.byteSize);}
     }
     for(const [sha256,info] of Object.entries(recovery.files)){const file=await metaGet(historyFileKey(jobId,sha256));if(!file?.blob)throw storageError('A retained file is missing. Backup export did not complete.','HISTORY_FILE_INTEGRITY_FAILED');await member({artifactId:'RECOVERY-BYTES-'+sha256,jobId,filename:sha256+'.bin',mediaType:'application/octet-stream',archiveKind:'RECOVERY_BYTES',byteSize:info.byteSize,sha256,blob:file.blob});
       if(classifiedProjectParts.has(sha256)){

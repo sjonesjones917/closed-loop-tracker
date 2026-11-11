@@ -22,8 +22,8 @@ const faults={
  // converts each imported complete entry to the History state form through
  // the shared per-root retained-parts check, which observes the same size.
  'skip-import-shared-size':{changes:[
-  {before:'entry.projectReference||entry.projectParts.entries.some(part=>state.files[part.sha256]?.byteSize!==part.byteSize)',after:'entry.projectReference||entry.projectParts.entries.some(part=>!state.files[part.sha256])'},
-  {before:'if(parts.entries.some(part=>state.files[part.sha256]?.byteSize!==part.byteSize))',after:'if(parts.entries.some(part=>!state.files[part.sha256]))'},
+  {before:'entry.projectReference||historyPartFiles(entry.projectParts).some(part=>state.files[part.sha256]?.byteSize!==part.byteSize)',after:'entry.projectReference||historyPartFiles(entry.projectParts).some(part=>!state.files[part.sha256])'},
+  {before:'if(historyPartFiles(parts).some(part=>state.files[part.sha256]?.byteSize!==part.byteSize))',after:'if(historyPartFiles(parts).some(part=>!state.files[part.sha256]))'},
   {before:'if(verifiedByteDigests){\n      const file=await readFile(part.sha256);\n      if(!(file?.blob instanceof Blob)||file.blob.size!==part.byteSize||await historyBlobSha256(file.blob,verifiedByteDigests)!==part.sha256)',after:'if(verifiedByteDigests){\n      const file=await readFile(part.sha256);\n      if(!(file?.blob instanceof Blob)||await historyBlobSha256(file.blob,verifiedByteDigests)!==part.sha256)'},
   {before:'if(value.byteSize!==part.byteSize)',after:'if(!verifiedByteDigests&&value.byteSize!==part.byteSize)'}
  ]}
@@ -219,15 +219,18 @@ cases.push({caseId:'HISTORY-CANONICAL-EXPORTED-BYTES',result:'PASS',versions:ver
 // enclosing checkpoint and archive consistently, leaving one size conflict as
 // the sole violation. The importer must reject before any durable mutation.
 const archive=JSON.parse(gunzipSync(Buffer.from(await backup.arrayBuffer())).toString('utf8'));
+// The shared content is any retained file of a complete version: a value
+// part, or one segment of a segmented (/2) array.
+const partFiles=parts=>(parts?.entries||[]).flatMap(part=>part.segments?part.segments:[part]);
 const referencedRoots=new Set(archive.recovery.entries.map(entry=>entry.projectReference?.checkpointId).filter(Boolean)),seenParts=new Set();let changedEntry,changedPart;
 for(const entry of archive.recovery.entries){
- if(!entry.projectReference&&!referencedRoots.has(entry.id))for(const part of entry.projectParts?.entries||[])if(seenParts.has(part.sha256)){changedEntry=entry;changedPart=part;break;}
- for(const part of entry.projectParts?.entries||[])seenParts.add(part.sha256);
+ if(!entry.projectReference&&!referencedRoots.has(entry.id))for(const part of partFiles(entry.projectParts))if(seenParts.has(part.sha256)){changedEntry=entry;changedPart=part;break;}
+ for(const part of partFiles(entry.projectParts))seenParts.add(part.sha256);
 }
 assert.ok(changedEntry&&changedPart,'The negative control needs a later complete version sharing earlier verified content.');
 const archivedSnapshot=archive.artifacts.find(file=>file.archiveKind==='RECOVERY_SNAPSHOT'&&file.checkpointId===changedEntry.id);
 const snapshot=JSON.parse(gunzipSync(Buffer.from(archivedSnapshot.base64,'base64')).toString('utf8'));
-const snapshotPart=snapshot.projectParts.entries.find(part=>JSON.stringify(part.path)===JSON.stringify(changedPart.path));
+const snapshotPart=partFiles(snapshot.projectParts)[partFiles(changedEntry.projectParts).indexOf(changedPart)];
 assert.equal(snapshotPart.sha256,changedPart.sha256);snapshotPart.byteSize++;changedPart.byteSize++;
 const sign=value=>{delete value.packageSha256;value.packageSha256=r.runtime.closedLoopHash.sha256Value(copy(value));return gzipSync(Buffer.from(JSON.stringify(value)));};
 const snapshotBytes=sign(snapshot),snapshotSha256=createHash('sha256').update(snapshotBytes).digest('hex');
