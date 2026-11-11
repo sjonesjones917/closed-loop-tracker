@@ -1996,28 +1996,50 @@ const HISTORY_PROJECT_PARTS='closed-loop-recovery-project-parts/1';
 const HISTORY_PROJECT_PARTS_SEGMENTED='closed-loop-recovery-project-parts/2';
 const HISTORY_SOURCE_REFERENCE=globalThis.closedLoopWorkflowSchema.RECOVERY_SOURCE_REFERENCE_CONTRACT.schema;
 const HISTORY_ACTIVATION_FIELDS=globalThis.closedLoopWorkflowSchema.RECOVERY_SOURCE_REFERENCE_CONTRACT.activationFields;
-const HISTORY_LIMITS=Object.freeze({maxCheckpoints:2048,maxCompressedProjectBytes:512*1024*1024,maxRetainedFileBytes:1024*1024*1024});
+const HISTORY_LIMITS=Object.freeze({maxCheckpoints:2048,maxCompressedProjectBytes:512*1024*1024,maxRetainedFileBytes:1024*1024*1024,maxRestoredProjectBytes:32*1024*1024*1024});
 // The storage worker's watchdog for EXPORT_PACKAGE and IMPORT_PACKAGE. A
 // worker without History root proofs (after a reload, a lost worker or a new
-// build, and always on another device) verifies every retained version cold.
-// The bound is that cold cost at the declared History limits, from rates
-// measured in Node (this repository's container, 2026-11-11) on the real
-// Stage 30 store of hosted run 42374851354: 1,570 versions, 452,833,709 bytes
-// (431.86 MiB) of compressed snapshots, 91,380,133 bytes of retained files.
-//   coldMsPerSnapshotMiB 3638: the slower cold operation, a complete cold
-//     import (1,570,846 ms / 431.86 MiB; a cold export took 1,006,893 ms),
-//     charged wholly to snapshot bytes, so file work is counted twice;
+// build, and always on another device) verifies every retained version cold:
+// it restores every complete version and runs both digests and the strict
+// static check over it, so the work follows the canonical project bytes it
+// restores, not the compressed snapshot bytes. Segmented roots (/2) shrank
+// the real Stage 30 snapshots from 452,833,709 to 61,018,873 bytes while every
+// root is still restored, so the bound charges each kind of version to the
+// declared limit that bounds its work:
+//   a version written before /2 carries no projectBytes and is bounded by
+//     its compressed snapshot bytes (maxCompressedProjectBytes);
+//   every complete version this build writes declares its canonical
+//     project's UTF-8 length (projectBytes, in its body and descriptor; a
+//     cold decode measures it), and their total is bounded by
+//     maxRestoredProjectBytes, 32 GiB, enforced at commit and import with
+//     HISTORY_LIMIT_REACHED. The real Stage 30 History of hosted run
+//     42374851354 needs 16,046,911,459 bytes (14.94 GiB): 2.14x headroom.
+// Rates measured in Node (this repository's container, 2026-11-11) in a
+// storage-worker realm on the real Stage 30 store (1,570 versions):
+//   coldMsPerSnapshotMiB 3638: the store as stored (/1, 431.86 MiB of
+//     snapshots): a complete cold import took 1,570,846 ms (a cold export
+//     1,006,893 ms), charged wholly to snapshot bytes;
+//   coldMsPerRestoredMiB 122: the same store re-encoded as /2 by this
+//     build's encoder (measurement only; 15,303.53 MiB of declared canonical
+//     bytes): the slower cold operation, an import verifying every root cold,
+//     took 1,860,885 ms (a cold export 1,027,393 ms), charged wholly to the
+//     restored bytes;
 //   transportMsPerFileMiB 129: per retained-file MiB, export hashing and
 //     classification (3,091 ms / 87.15 MiB) plus base64, gzip and package
 //     digest (55,104 ms per 790.8 MiB of package text, 4/3 text per byte),
 //     from the Stage 30 design's transport-floor export of the same store;
 //   hostedSlowdown 2: the upper end of the 1.5-2x hosted/local factor the
 //     Stage 30 analysis assumes (an assumption, not a measurement).
+// Each rate charges a whole operation to one quantity, so snapshot and file
+// work is counted more than once, and a /2 version's snapshot bytes are
+// charged at the /1 rate as well.
 //   bound = slowdown * (coldMsPerSnapshotMiB * maxCompressedProjectBytes/MiB
+//                       + coldMsPerRestoredMiB * maxRestoredProjectBytes/MiB
 //                       + transportMsPerFileMiB * maxRetainedFileBytes/MiB)
-//         = 2 * (3638 * 512 + 129 * 1024) = 3,989,504 ms (about 66.5 minutes).
-const HISTORY_WATCHDOG_MEASUREMENT=Object.freeze({coldMsPerSnapshotMiB:3638,transportMsPerFileMiB:129,hostedSlowdown:2});
-const STORAGE_WORKER_HISTORY_TIMEOUT_MS=Math.ceil(HISTORY_WATCHDOG_MEASUREMENT.hostedSlowdown*(HISTORY_WATCHDOG_MEASUREMENT.coldMsPerSnapshotMiB*HISTORY_LIMITS.maxCompressedProjectBytes/1048576+HISTORY_WATCHDOG_MEASUREMENT.transportMsPerFileMiB*HISTORY_LIMITS.maxRetainedFileBytes/1048576));
+//         = 2 * (3638 * 512 + 122 * 32768 + 129 * 1024)
+//         = 11,984,896 ms (about 199.7 minutes).
+const HISTORY_WATCHDOG_MEASUREMENT=Object.freeze({coldMsPerSnapshotMiB:3638,coldMsPerRestoredMiB:122,transportMsPerFileMiB:129,hostedSlowdown:2});
+const STORAGE_WORKER_HISTORY_TIMEOUT_MS=Math.ceil(HISTORY_WATCHDOG_MEASUREMENT.hostedSlowdown*(HISTORY_WATCHDOG_MEASUREMENT.coldMsPerSnapshotMiB*HISTORY_LIMITS.maxCompressedProjectBytes/1048576+HISTORY_WATCHDOG_MEASUREMENT.coldMsPerRestoredMiB*HISTORY_LIMITS.maxRestoredProjectBytes/1048576+HISTORY_WATCHDOG_MEASUREMENT.transportMsPerFileMiB*HISTORY_LIMITS.maxRetainedFileBytes/1048576));
 const historyKey=jobId=>'recovery:'+String(jobId);
 const snapshotKey=(jobId,id)=>historyKey(jobId)+':snapshot:'+id;
 const historyFileKey=(jobId,sha256)=>historyKey(jobId)+':bytes:'+sha256;
@@ -2195,6 +2217,10 @@ function validateRecoveryManifest(state){
     assertHistoryProjectParts(entry.projectParts);
     if(entry.projectReference||historyPartFiles(entry.projectParts).some(part=>state.files[part.sha256]?.byteSize!==part.byteSize))throw storageError('Recovery project contents are not retained in this complete history.','HISTORY_VERSION_MISMATCH');
   }
+  // A complete version written by this build declares its canonical project's
+  // UTF-8 length; its snapshot body carries the same value, which a cold
+  // decode measures.
+  for(const entry of state.entries)if(Object.hasOwn(entry,'projectBytes')&&(entry.projectReference||!Number.isSafeInteger(entry.projectBytes)||entry.projectBytes<=0))throw storageError('Recovery storage accounting does not match its retained contents.','HISTORY_VERSION_MISMATCH');
   // State-form entries name their parts by digest; each per-root use reads the
   // parts from the immutable record and checks them against these files.
   for(const entry of state.entries)if(Object.hasOwn(entry,'projectPartsSha256'))assertHistoryStateFormEntry(entry);
@@ -2231,8 +2257,12 @@ function validateHistoryCompatibility(state){
  }
 }
 function nonactivatableHistoryEntry(state,id){return state.compatibility?.observations.some(row=>row.checkpointId===id)===true;}
+// The decode work a History holds: the canonical project bytes every complete
+// version written by this build declares (projectBytes). A version without it
+// was written before /2 and is bounded by its compressed snapshot bytes.
+function historyRestoredProjectBytes(state){return state.entries.reduce((total,entry)=>total+(Object.hasOwn(entry,'projectBytes')?Number(entry.projectBytes):0),0);}
 function assertHistoryLimits(state){
-  if(state.entries.length>HISTORY_LIMITS.maxCheckpoints||state.compressedProjectBytes>HISTORY_LIMITS.maxCompressedProjectBytes||state.retainedFileBytes>HISTORY_LIMITS.maxRetainedFileBytes)throw storageError('History storage limit reached. The current project and every retained version are preserved. Export a complete backup before continuing in a new project.','HISTORY_LIMIT_REACHED');
+  if(state.entries.length>HISTORY_LIMITS.maxCheckpoints||state.compressedProjectBytes>HISTORY_LIMITS.maxCompressedProjectBytes||state.retainedFileBytes>HISTORY_LIMITS.maxRetainedFileBytes||historyRestoredProjectBytes(state)>HISTORY_LIMITS.maxRestoredProjectBytes)throw storageError('History storage limit reached. The current project and every retained version are preserved. Export a complete backup before continuing in a new project.','HISTORY_LIMIT_REACHED');
 }
 function historyArtifactsSha256(rows){return hash.sha256Value(rows.map(historyDescriptor).sort((a,b)=>hash.compareUnicodeScalarSequence(a.artifactId,b.artifactId)));}
 function historyWorkSha256(project){const work={...project};for(const key of HISTORY_ACTIVATION_FIELDS)delete work[key];return hash.sha256Value(work);}
@@ -2246,27 +2276,31 @@ function historyProjectDigests(project){
  // helpers. A changed primitive or full preimage takes the ordinary cold route.
  if(!hash.canonicalDigestScopeMatches(scope,canonical))return historyProjectDigestsCold(project);
  const prior=importDigestPairs.get(scope);
- if(prior&&rootDigestPrimitivesUnchanged(prior.primitive)&&verifiedValuesEqual(prior.activationFields,HISTORY_ACTIVATION_FIELDS))return {...prior.digests};
+ if(prior&&rootDigestPrimitivesUnchanged(prior.primitive)&&verifiedValuesEqual(prior.activationFields,HISTORY_ACTIVATION_FIELDS)){if(prior.projectBytes!==undefined)canonicalProjectByteCounts.set(project,prior.projectBytes);return {...prior.digests};}
  const primitive=captureRootDigestPrimitives(),digests=hash.withCanonicalDigestScope(scope,()=>historyProjectDigestsCold(project));
- if(primitive&&rootDigestPrimitivesUnchanged(primitive)&&hash.canonicalDigestScopeMatches(scope,canonical))importDigestPairs.set(scope,{digests:{...digests},primitive,activationFields:copyVerifiedTree(HISTORY_ACTIVATION_FIELDS)});
+ if(primitive&&rootDigestPrimitivesUnchanged(primitive)&&hash.canonicalDigestScopeMatches(scope,canonical))importDigestPairs.set(scope,{digests:{...digests},projectBytes:canonicalProjectByteCounts.get(project),primitive,activationFields:copyVerifiedTree(HISTORY_ACTIVATION_FIELDS)});
  return digests;
 }
+// The UTF-8 length of the canonical project each digest pass encoded, keyed
+// by the project it was given: the size a complete version's projectBytes
+// declares. Set only by the passes below; read in the same synchronous turn.
+const canonicalProjectByteCounts=new WeakMap();
 function historyProjectDigestsCold(project){
-  const canonical=canonicalProject(project),projectDigest=hash.createSha256(),workDigest=hash.createSha256();
+  const canonical=canonicalProject(project),projectDigest=hash.createSha256(),workDigest=hash.createSha256();let projectBytes=0;
   const omitted=new Set(HISTORY_ACTIVATION_FIELDS);
   if(Object.getOwnPropertySymbols(canonical).length)throw new TypeError('Cannot canonically hash symbol-keyed project properties.');
   const encoder=new TextEncoder(),keys=Object.keys(canonical).sort(hash.compareUnicodeScalarSequence);
-  const write=(text,includeWork=true)=>{const bytes=encoder.encode(text);projectDigest.update(bytes);if(includeWork)workDigest.update(bytes);};
+  const write=(text,includeWork=true)=>{const bytes=encoder.encode(text);projectBytes+=bytes.length;projectDigest.update(bytes);if(includeWork)workDigest.update(bytes);};
   write('{');let projectCount=0,workCount=0;
   for(const key of keys){
     const includeWork=!omitted.has(key);
-    if(projectCount++)projectDigest.updateText(',');
+    if(projectCount++){projectDigest.updateText(',');projectBytes++;}
     if(includeWork&&workCount++)workDigest.updateText(',');
     for(const chunk of hash.canonicalChunks(key))write(chunk,includeWork);
     write(':',includeWork);
     for(const chunk of hash.canonicalChunks(canonical[key]))write(chunk,includeWork);
   }
-  write('}');
+  write('}');canonicalProjectByteCounts.set(project,projectBytes);
   return {projectSha256:projectDigest.digest(),workSha256:workDigest.digest()};
 }
 // One-use retained computations, never a validation-success cache — with one
@@ -2417,7 +2451,7 @@ function mintHistorySnapshotProof(jobId,entry,body,payload,basis,inputs,verified
       if(body.view?.pendingMutation&&body.view.pendingMutation.baseProjectSha256!==body.projectSha256)throw new Error();
       viewChecked=true;
     }catch{artifactBytes.length=0;}
-    const record=Object.freeze({kind:basis.kind,jobId:String(jobId),snapshotSha256:entry.sha256,schema:body.schema,id:body.id,bodyJobId:body.jobId,parentId:body.parentId,label:body.label,createdAt:body.createdAt,activeStage:Number(body.view?.activeStage),artifactsArray:Array.isArray(body.artifacts),projectReferenceSha256:hash.sha256Value(body.projectReference||null),rootSnapshotSha256,hasProjectParts:Boolean(body.projectParts),projectPartsSha256:hash.sha256Value(body.projectParts||null),projectSha256:body.projectSha256,workSha256:body.workSha256,verifiedProjectSha256,verifiedWorkSha256,viewSha256:hash.sha256Value(body.view),artifactManifestSha256:body.artifactManifestSha256,artifactsSha256:historyArtifactsSha256(body.artifacts),descriptorsSha256:historyDescriptorRowsSha256(body.artifacts),credential:containsCredentialSecret(payload),viewChecked,artifactBytes:Object.freeze(artifactBytes),primitive:inputs.primitive,natives:inputs.natives,validators});
+    const record=Object.freeze({kind:basis.kind,jobId:String(jobId),snapshotSha256:entry.sha256,schema:body.schema,projectBytes:body.projectBytes,id:body.id,bodyJobId:body.jobId,parentId:body.parentId,label:body.label,createdAt:body.createdAt,activeStage:Number(body.view?.activeStage),artifactsArray:Array.isArray(body.artifacts),projectReferenceSha256:hash.sha256Value(body.projectReference||null),rootSnapshotSha256,hasProjectParts:Boolean(body.projectParts),projectPartsSha256:hash.sha256Value(body.projectParts||null),projectSha256:body.projectSha256,workSha256:body.workSha256,verifiedProjectSha256,verifiedWorkSha256,viewSha256:hash.sha256Value(body.view),artifactManifestSha256:body.artifactManifestSha256,artifactsSha256:historyArtifactsSha256(body.artifacts),descriptorsSha256:historyDescriptorRowsSha256(body.artifacts),credential:containsCredentialSecret(payload),viewChecked,artifactBytes:Object.freeze(artifactBytes),primitive:inputs.primitive,natives:inputs.natives,validators});
     // Every fact above was computed in this synchronous turn.
     if(!historyProofInputsCurrent(inputs))return;
     retainHistoryProof(historyRootProofs,jobId,entry.sha256,record);
@@ -2462,6 +2496,7 @@ function historyProofFactsMatch(proof,jobId,entry){
   if(proof.projectReferenceSha256!==hash.sha256Value(entry.projectReference||null)||Boolean(entry.projectReference)!==(proof.kind==='reference'))return false;
   if(Object.hasOwn(entry,'projectPartsSha256')?Object.hasOwn(entry,'projectParts')||!proof.hasProjectParts||proof.projectPartsSha256!==entry.projectPartsSha256:proof.projectPartsSha256!==hash.sha256Value(entry.projectParts||null))return false;
   if(entry.viewSha256&&entry.viewSha256!==proof.viewSha256)return false;
+  if(proof.projectBytes!==entry.projectBytes)return false;
   if(proof.workSha256!==entry.workSha256||proof.artifactManifestSha256!==entry.artifactManifestSha256||proof.artifactManifestSha256&&proof.artifactManifestSha256!==proof.artifactsSha256)return false;
   return true;
 }
@@ -3276,6 +3311,15 @@ async function restoreHistoryProject(body,readFile,verifiedParts=new Map(),verif
   }
   return bindImportDigestScope(project,verifiedParts);
 }
+// The UTF-8 length of an encoded complete version's canonical project: the
+// skeleton's canonical bytes with each entry's canonical bytes in place of its
+// null. Exact for this encoder's canonical parts, segments and arrays.
+function historyEncodedProjectBytes(contents){
+  const encoder=new TextEncoder();let size=0;
+  for(const chunk of hash.canonicalChunks(contents.project))size+=encoder.encode(chunk).length;
+  for(const part of contents.projectParts?.entries||[])size+=part.byteSize-4;
+  return size;
+}
 async function encodeCheckpoint(project,artifactRows,{id=crypto.randomUUID(),parentId=null,label='Saved project',view=historyView(project),workSha256=historyWorkSha256(project),projectDigest=projectSha256(project),artifactManifestSha256=historyArtifactsSha256(artifactRows),projectReference=null,retainValue=null,verifiedIntegrity=null,integrityComparedSynchronously=false,privateSource=false}={}){
   const jobId=projectIdentity(project),exposedCanonical=canonicalProject(project),artifacts=artifactRows.map(historyDescriptor);
   // The caller may have compared this exact receipt with the project in the
@@ -3292,10 +3336,12 @@ async function encodeCheckpoint(project,artifactRows,{id=crypto.randomUUID(),par
   // all views, drafts, artifact inventories, parents, and identities stay local
   // to their own checkpoint. This is a versioned internal storage encoding.
   const contents=projectReference?null:await encodeHistoryProject(canonical,retainValue);
-  const body={schema:HISTORY_SCHEMA,id,jobId,parentId,label,workSha256,artifactManifestSha256,createdAt:now(),...(projectReference?{projectReference:clone(projectReference)}:contents),projectSha256:projectDigest,artifacts,view:clone(view)};
+  // A complete version declares its canonical project's UTF-8 length, the
+  // decode work HISTORY_LIMITS.maxRestoredProjectBytes bounds.
+  const body={schema:HISTORY_SCHEMA,id,jobId,parentId,label,workSha256,artifactManifestSha256,createdAt:now(),...(projectReference?{projectReference:clone(projectReference)}:contents),projectSha256:projectDigest,...(contents?{projectBytes:historyEncodedProjectBytes(contents)}:{}),artifacts,view:clone(view)};
   fault('before-history-checkpoint');const encoded=await compressPackage(body);
   const sha256=await hash.sha256Bytes(encoded.blob);
-  const snapshot={id,parentId,label,workSha256,viewSha256:hash.sha256Value(body.view),artifactManifestSha256:body.artifactManifestSha256,createdAt:body.createdAt,stage:Number(view.activeStage||project.activeStage||1),projectSha256:body.projectSha256,...(projectReference?{projectReference:clone(projectReference)}:{}),...(body.projectParts?{projectParts:clone(body.projectParts)}:{}),sha256,byteSize:encoded.blob.size,blob:encoded.blob};
+  const snapshot={id,parentId,label,workSha256,viewSha256:hash.sha256Value(body.view),artifactManifestSha256:body.artifactManifestSha256,createdAt:body.createdAt,stage:Number(view.activeStage||project.activeStage||1),projectSha256:body.projectSha256,...(projectReference?{projectReference:clone(projectReference)}:{}),...(body.projectParts?{projectParts:clone(body.projectParts)}:{}),...(Object.hasOwn(body,'projectBytes')?{projectBytes:body.projectBytes}:{}),sha256,byteSize:encoded.blob.size,blob:encoded.blob};
   if(!projectReference&&privateSource)encodedCheckpointBodies.set(snapshot,{body,source:canonical});
   return snapshot;
 }
@@ -3710,6 +3756,7 @@ async function readCheckpointBody(jobId,entry,readSnapshot,validatedRoots=new Ma
   async function bindCheckpointBody(body,carried){
   if(body.schema!==HISTORY_SCHEMA||body.id!==entry.id||body.jobId!==String(jobId)||body.projectSha256!==entry.projectSha256||body.parentId!==entry.parentId||body.label!==entry.label||body.createdAt!==entry.createdAt||Number(body.view?.activeStage)!==Number(entry.stage)||!Array.isArray(body.artifacts))throw storageError('Saved project identity or contents do not match the checkpoint.','HISTORY_VERSION_MISMATCH');
   if(hash.sha256Value(body.projectReference||null)!==hash.sha256Value(entry.projectReference||null))throw storageError('Saved project reference does not match its checkpoint.','HISTORY_VERSION_MISMATCH');
+  if(body.projectBytes!==entry.projectBytes||Object.hasOwn(body,'projectBytes')&&(body.projectReference||!Number.isSafeInteger(body.projectBytes)||body.projectBytes<=0))throw storageError('Saved project identity or contents do not match the checkpoint.','HISTORY_VERSION_MISMATCH');
   if(Object.hasOwn(entry,'projectPartsSha256')?Object.hasOwn(entry,'projectParts')||!body.projectParts||hash.sha256Value(body.projectParts)!==entry.projectPartsSha256:hash.sha256Value(body.projectParts||null)!==hash.sha256Value(entry.projectParts||null))throw storageError('Saved project contents do not match their checkpoint.','HISTORY_VERSION_MISMATCH');
   let project=body.project,verifiedProjectSha256,verifiedWorkSha256,proofBasis=null;
   if(body.projectReference){
@@ -3755,6 +3802,8 @@ async function readCheckpointBody(jobId,entry,readSnapshot,validatedRoots=new Ma
       project=await restoreHistoryProject(body,readFile,verifiedParts,verifiedByteDigests);
       if(projectIdentity(project)!==String(jobId))throw storageError('Saved project belongs to another job.','HISTORY_VERSION_MISMATCH');
       ({projectSha256:verifiedProjectSha256,workSha256:verifiedWorkSha256}=checkpointPairMatches(measuredPair,project)?measuredPair:historyProjectDigests(project));
+      // The digest pass measured the restored project's canonical length.
+      if(Object.hasOwn(body,'projectBytes')&&canonicalProjectByteCounts.has(project)&&canonicalProjectByteCounts.get(project)!==body.projectBytes)throw storageError('Saved canonical project bytes do not match their checkpoint identity.','HISTORY_VERSION_MISMATCH');
       if(inspection){
         try{assertProjectIntegrity(project,{verifyDerived:false});}catch(error){if(!legacyJobPointerProjection(project,{verifyDerived:false}))throw error;}
       }else{
