@@ -72,6 +72,28 @@ for(const reply of ['acknowledged','absent','invalid-build'])await check('IO-WOR
  else{await deliverStorage(e,r);assert.equal(r.state,'REJECTED');assert.equal(r.existingProjectsUnchanged,true);assert.equal(e.events.workerTerminated,1);}
  assert.equal(w.messages.length,1);return {reply,state:r.state,workerRequests:w.messages.length};
 });
+// The worker runs one command at a time in posting order. A command queued
+// behind a long backup export waits untimed; its own bound starts when it is
+// the current command, so the export is never killed by the queued command.
+await check('IO-WORKER-QUEUED-BEHIND-EXPORT','A command queued behind a silent backup export is not timed while it waits: the worker is not terminated at 600000 ms, and the queued command keeps its own full bound once it is current.',async()=>{
+ const e=environment({worker:true});await e.context.closedLoopProjectStore.ready;
+ const exported=e.settle(e.store.exportPackage('QUEUED',{}));await flush();
+ const saved=e.settle(e.store.saveCheckpoint('QUEUED',{expectedProjectRevision:4,view:{activeView:'Workflow',activeStage:1,scrollY:5,drafts:{}}}));await flush();
+ assert.equal(e.workers.length,1);const w=e.workers[0];assert.deepEqual(w.messages.map(m=>m.method),['EXPORT_PACKAGE','SAVE_CHECKPOINT'],'IO_WORKER_QUEUE_ORDER_ORACLE');
+ await e.advance(600000);
+ assert.equal(e.events.workerTerminated,0,'IO_WORKER_QUEUE_DEADLINE_ORACLE: a command queued behind an export terminated the worker');
+ assert.equal(exported.state,'PENDING');assert.equal(saved.state,'PENDING');
+ w.onmessage({data:{operationId:w.messages[0].operationId,buildIdentity:'FIXTURE-BUILD',ok:true,packageBlob:new Blob(['verified backup'],{type:'application/gzip'})}});await flush();
+ assert.equal(exported.state,'RESOLVED','IO_WORKER_QUEUE_EXPORT_ORACLE: the export completes');
+ // Acknowledge the export's receipt cleanup before the clock moves on.
+ let steps=0;await deliverStorage(e,{get state(){return ++steps>40?'SETTLED':'PENDING';}});
+ await e.advance(599999);assert.equal(e.events.workerTerminated,0,'IO_WORKER_QUEUE_DEADLINE_ORACLE: the queued save starts its bound when it becomes current');
+ await e.advance(1);assert.equal(e.events.workerTerminated,1,'IO_WORKER_QUEUE_DEADLINE_ORACLE: the queued save keeps its own 600000 ms bound');
+ await deliverStorage(e,saved);
+ assert.equal(saved.state,'REJECTED');assert.equal(saved.code,'STORAGE_WORKER_STOPPED');assert.equal(saved.message,'Storage worker did not return SAVE_CHECKPOINT within 600000 ms. Its durable commit receipt is being checked before retry is permitted.','IO_WORKER_QUEUE_MESSAGE_ORACLE: the expired deadline names its command');
+ assert.equal(saved.existingProjectsUnchanged,true);assert.equal(w.messages.length,2);
+ return {export:exported.state,save:{state:saved.state,code:saved.code},events:e.events};
+});
 await check('IO-WORKER-ABSENT','A silent worker is terminated, then a confirmed absent commit receipt rejects without automatically repeating execution.',async()=>{const e=environment({worker:true}),{result:r,worker:w}=await e.dispatchWorker(()=>e.store.writeProject({job:{JOB_ID:'PENDING'}}));await e.advance(600000);assert.equal(e.events.workerTerminated,1,'IO_WORKER_DEADLINE_ORACLE');assert.equal(r.state,'PENDING','Outcome must wait for durable receipt reconciliation');await deliverStorage(e,r);assert.equal(r.state,'REJECTED');assert.equal(r.existingProjectsUnchanged,true);assert.equal(w.messages.length,1);w.onmessage({data:{operationId:w.messages[0].operationId,buildIdentity:'FIXTURE-BUILD',ok:true,project:{revision:999}}});await flush();assert.equal(r.state,'REJECTED');return {result:r,events:e.events};});
 await check('IO-WORKER-UNCONFIRMED','When durable outcome read-back is itself unavailable, report an unconfirmed outcome rather than rollback or success.',async()=>{const e=environment({worker:true}),{result:r}=await e.dispatchWorker(()=>e.store.writeProject({job:{JOB_ID:'UNKNOWN'}}));await e.advance(630000);assert.equal(r.state,'REJECTED','IO_WORKER_UNCONFIRMED_ORACLE');assert.equal(r.code,'STORAGE_OUTCOME_UNCONFIRMED');assert.equal(r.existingProjectsUnchanged,false);assert.equal(e.events.workerTerminated,1);return {result:r,events:e.events};});
 await check('IO-WORKER-COMMITTED','A timed-out worker with a matching durable receipt resolves the verified committed project without resubmitting the command.',async()=>{const e=environment({worker:true}),p=e.context.closedLoopCore.createBlankState('WORKER-RECEIPT');e.context.closedLoopWorkflowEngine.ensureShape(p);e.context.closedLoopWorkflowEngine.recalculate(p);p.revision=7;const digest=e.store.projectSha256(p),{result:r,worker:w,message:m}=await e.dispatchWorker(()=>e.store.writeProject(p)),rows=new Map([['meta:storageOperation:'+m.operationId,{value:{operationId:m.operationId,jobId:p.job.JOB_ID,revision:7,projectSha256:digest}}],['projects:'+p.job.JOB_ID,{project:p,revision:7,projectSha256:digest}]]);await e.advance(600000);assert.equal(e.events.workerTerminated,1,'IO_WORKER_COMMIT_RECOVERY_ORACLE');await deliverStorage(e,r,rows);assert.equal(r.state,'RESOLVED');assert.equal(r.value.projectSha256,digest);assert.equal(r.value.revision,7);assert.equal(w.messages.length,1);return {state:r.state,revision:r.value.revision,projectSha256:digest,events:e.events};});

@@ -244,9 +244,19 @@ const workerRequests=new Map();
 function recordWorkerCommit(tx,operationId,project,digest,checkpointId=null){if(operationId)tx.objectStore(META).put({key:'storageOperation:'+operationId,value:{operationId,jobId:projectIdentity(project),revision:project.revision,projectSha256:digest,...(checkpointId?{checkpointId}:{})},updatedAt:now()});}
 async function clearWorkerCommit(operationId){try{const tx=await openTransaction(META,'readwrite');tx.objectStore(META).delete('storageOperation:'+operationId);await complete(tx);}catch{/* An unacknowledged minimal receipt remains recoverable. */}}
 async function recoverWorkerOperation(pending,error){
-  // A backup export commits no project or History change and no operation
-  // receipt; its outcome is the original refusal with its code and message.
-  if(pending.method==='EXPORT_PACKAGE'){pending.reject(Object.assign(error,{existingProjectsUnchanged:true}));return;}
+  // A backup export changes no project or History. Its only write is the final
+  // verified-export record, committed with this operation's receipt. Without
+  // that receipt nothing was written: the refusal keeps its code and message
+  // and claims unchanged projects unless the worker reported its outcome
+  // unconfirmed. With the receipt, or when it cannot be read, the record may
+  // be committed although the package was never returned: unconfirmed.
+  if(pending.method==='EXPORT_PACKAGE'){
+    try{const receipt=await metaGet('storageOperation:'+pending.operationId);
+      if(receipt===undefined){pending.reject(Object.assign(error,{existingProjectsUnchanged:error?.existingProjectsUnchanged!==false}));return;}
+      await clearWorkerCommit(pending.operationId);pending.reject(Object.assign(error,{existingProjectsUnchanged:false}));
+    }catch(recoveryError){pending.reject(Object.assign(storageError(`The storage outcome could not be confirmed. Reload and verify the stored project before retrying: ${recoveryError.message||recoveryError}`,'STORAGE_OUTCOME_UNCONFIRMED'),{existingProjectsUnchanged:false}));}
+    return;
+  }
   try{const receipt=await metaGet('storageOperation:'+pending.operationId);if(receipt!==undefined){
     if(!receipt||typeof receipt!=='object'||Array.isArray(receipt)||receipt.operationId!==pending.operationId||typeof receipt.jobId!=='string'||!receipt.jobId.trim()||!Number.isSafeInteger(receipt.revision)||receipt.revision<0||typeof receipt.projectSha256!=='string'||!/^[a-f0-9]{64}$/.test(receipt.projectSha256)||pending.jobId!==null&&receipt.jobId!==pending.jobId)throw storageError('The durable storage receipt does not match this operation.','INVALID_STORAGE_OPERATION_RECEIPT');
     if(pending.method==='SAVE_CHECKPOINT'){
@@ -311,20 +321,34 @@ async function requestStoreWorker(method,args){
     const url=new URL(STORE_SCRIPT_URL);url.searchParams.set('storeWorker','1');url.searchParams.set('storeContext',STORE_CONTEXT_ID);const worker=new Worker(url.href);operationWorker=worker;
     const lost=event=>{if(operationWorker!==worker)return;operationWorker=null;worker.terminate();const pending=[...workerRequests.values()];workerRequests.clear();for(const entry of pending){clearTimeout(entry.timer);void recoverWorkerOperation(entry,storageError(event?.message||'Storage worker stopped before returning its result.','STORAGE_WORKER_STOPPED'));}};
     worker.onerror=lost;worker.onmessageerror=lost;
-    worker.onmessage=event=>{if(operationWorker!==worker)return;const message=event.data||{},pending=workerRequests.get(message.operationId);if(!pending)return;if(message.buildIdentity!==STORE_BUILD_ID){lost({message:'Storage worker build identity mismatch.'});return;}if(message.ok&&pending.method!=='SAVE_CHECKPOINT'&&pending.method!=='EXPORT_PACKAGE')try{message.project=unpackStorageWorkerValue(message.project,message.projectStrings);}catch(error){lost({message:error.message});return;}workerRequests.delete(message.operationId);clearTimeout(pending.timer);if(message.ok){
+    worker.onmessage=event=>{if(operationWorker!==worker)return;const message=event.data||{},pending=workerRequests.get(message.operationId);if(!pending)return;if(message.buildIdentity!==STORE_BUILD_ID){lost({message:'Storage worker build identity mismatch.'});return;}if(message.ok&&pending.method!=='SAVE_CHECKPOINT'&&pending.method!=='EXPORT_PACKAGE')try{message.project=unpackStorageWorkerValue(message.project,message.projectStrings);}catch(error){lost({message:error.message});return;}workerRequests.delete(message.operationId);clearTimeout(pending.timer);armStoreWorkerWatchdog(worker);if(message.ok){
       if(pending.method==='SAVE_CHECKPOINT'){
         if(typeof message.checkpointId!=='string'||!message.checkpointId){void recoverWorkerOperation(pending,storageError('Storage worker returned an invalid saved-view identity.','INVALID_STORAGE_WORKER_RESULT'));return;}
         void clearWorkerCommit(message.operationId);pending.resolve(message.checkpointId);return;
       }
       // The verified backup is the worker's own Blob; it carries no project
-      // value to unpack and changes no custody observation in this realm.
-      if(pending.method==='EXPORT_PACKAGE'){if(!(message.packageBlob instanceof Blob)){void recoverWorkerOperation(pending,storageError('Storage worker returned an invalid backup.','INVALID_STORAGE_WORKER_RESULT'));return;}pending.resolve(message.packageBlob);return;}
+      // value to unpack and changes no custody observation in this realm. Its
+      // receipt, committed with the verified-export record, is then cleared.
+      if(pending.method==='EXPORT_PACKAGE'){if(!(message.packageBlob instanceof Blob)){void recoverWorkerOperation(pending,storageError('Storage worker returned an invalid backup.','INVALID_STORAGE_WORKER_RESULT'));return;}void clearWorkerCommit(message.operationId);pending.resolve(message.packageBlob);return;}
       void observeProjectArtifactCustody(message.project).then(()=>{void clearWorkerCommit(message.operationId);pending.resolve(message.project);},error=>recoverWorkerOperation(pending,error));}else void recoverWorkerOperation(pending,Object.assign(new Error(message.error?.message||'Storage operation failed.'),message.error));};
   }
   // A complete backup export or import verifies every retained History version
   // this worker holds no proof of; it has the measured History bound
-  // STORAGE_WORKER_HISTORY_TIMEOUT_MS (derived beside HISTORY_LIMITS).
-  const operationId=crypto.randomUUID(),worker=operationWorker;return new Promise((resolve,reject)=>{const timeoutMs=method==='EXPORT_PACKAGE'||method==='IMPORT_PACKAGE'?STORAGE_WORKER_HISTORY_TIMEOUT_MS:STORAGE_WORKER_TIMEOUT_MS,timer=setTimeout(()=>{if(workerRequests.has(operationId)&&operationWorker===worker)worker.onerror({message:`Storage worker did not return within ${timeoutMs} ms. Its durable commit receipt is being checked before retry is permitted.`});},timeoutMs);workerRequests.set(operationId,{operationId,method,jobId:method==='SAVE_CHECKPOINT'||method==='EXPORT_PACKAGE'?String(args[0]):method==='WRITE_PROJECT'?projectIdentity(args[0]):method==='COMMIT_NATIVE_PRODUCT_RESULTS'?String(args[0]?.jobId||''):null,resolve,reject,timer});try{const packed=packStorageWorkerValue(args);worker.postMessage({operationId,method,args:packed.value,...(packed.stringTable?{argumentStrings:packed.stringTable}:{}),buildIdentity:STORE_BUILD_ID,fault:globalThis.__closedLoopStorageFault||null});}catch(error){clearTimeout(timer);workerRequests.delete(operationId);reject(Object.assign(error,{existingProjectsUnchanged:true}));}});
+  // STORAGE_WORKER_HISTORY_TIMEOUT_MS (derived beside HISTORY_LIMITS). Every
+  // other command has STORAGE_WORKER_TIMEOUT_MS. Each bound runs only while its
+  // command is the worker's current one (armStoreWorkerWatchdog).
+  const operationId=crypto.randomUUID(),worker=operationWorker;return new Promise((resolve,reject)=>{const timeoutMs=method==='EXPORT_PACKAGE'||method==='IMPORT_PACKAGE'?STORAGE_WORKER_HISTORY_TIMEOUT_MS:STORAGE_WORKER_TIMEOUT_MS;workerRequests.set(operationId,{operationId,method,jobId:method==='SAVE_CHECKPOINT'||method==='EXPORT_PACKAGE'?String(args[0]):method==='WRITE_PROJECT'?projectIdentity(args[0]):method==='COMMIT_NATIVE_PRODUCT_RESULTS'?String(args[0]?.jobId||''):null,resolve,reject,timer:null,timeoutMs});try{const packed=packStorageWorkerValue(args);worker.postMessage({operationId,method,args:packed.value,...(packed.stringTable?{argumentStrings:packed.stringTable}:{}),buildIdentity:STORE_BUILD_ID,fault:globalThis.__closedLoopStorageFault||null});armStoreWorkerWatchdog(worker);}catch(error){workerRequests.delete(operationId);reject(Object.assign(error,{existingProjectsUnchanged:true}));}});
+}
+// The storage worker runs commands one at a time in the order they are posted
+// (its message queue). A command's watchdog therefore starts only once every
+// earlier command on that worker has settled: a command queued behind a long
+// backup export or import is not timed while it waits, and the deadline that
+// expires names its own command. Called after each post and each settlement.
+function armStoreWorkerWatchdog(worker){
+  if(operationWorker!==worker)return;
+  const head=workerRequests.values().next().value;
+  if(!head||head.timer!==null)return;
+  head.timer=setTimeout(()=>{if(workerRequests.get(head.operationId)===head&&operationWorker===worker)worker.onerror({message:`Storage worker did not return ${head.method} within ${head.timeoutMs} ms. Its durable commit receipt is being checked before retry is permitted.`});},head.timeoutMs);
 }
 const useStoreWorker=()=>Boolean(STORE_SCRIPT_URL&&typeof Worker==='function');
 const runSynchronousMutator=(mutator,next,before)=>{const result=mutator(next,before);if(result&&typeof result.then==='function')throw storageError('Project transaction mutators must be synchronous. Complete asynchronous work before opening the canonical IndexedDB transaction.','ASYNC_TRANSACTION_MUTATOR');return result;};
@@ -1350,6 +1374,8 @@ async function writeOperationalProject(project,options={}){
       if(!unchangedVerifiedProject(returnedIntegrity,committed,digest))throw storageError('Returned response values changed during context restoration.','STALE_PROJECT_REVISION');
       assertRetainedContexts(committed);if(unchangedVerifiedProject(committedIntegrity,privateCommitted,digest))assertRetainedContexts(privateCommitted);
       recentOperationalCommitRead=carryCapturedIntegrity({row:capturedPrivateCopy(base),journal:capturedPrivateCopy(journalSnapshot),storage:{row:baseSource.identity,journal:committedJournalStorage},...committedIntegrity,checkpointDigestPair:checkpointPairMatches(pair,privateCommitted)?pair:null,retainedRoot:mintWriteRootCertificate(prepared,digest,primitive,operationalValidators,operationalDerived)},committedIntegrity);
+      // A 'Previous project' reference this write committed gains its proof.
+      if(HISTORY_ROOT_PROOFS)await proveCommittedReferences(id,prepared);
       notifyProjectChange(committed,{operational:true});return committed;
     }catch(error){
       recentOperationalCommitRead=null;
@@ -2290,8 +2316,21 @@ function retainHistoryProof(ledger,jobId,key,record){
   bucket.delete(key);bucket.set(key,record);while(bucket.size>HISTORY_LIMITS.maxCheckpoints)bucket.delete(bucket.keys().next().value);
 }
 function historyRootProof(jobId,sha256){return HISTORY_ROOT_PROOFS?historyRootProofs.get(String(jobId))?.get(String(sha256))||null:null;}
-const historyPairKey=(projectSha256,artifactsSha256)=>JSON.stringify([String(projectSha256),String(artifactsSha256)]);
-function historyPairProof(jobId,projectSha256,artifactsSha256){return HISTORY_ROOT_PROOFS?historyPairProofs.get(String(jobId))?.get(historyPairKey(projectSha256,artifactsSha256))||null:null;}
+// A pair is keyed by its project digest and the digest of the exact descriptor
+// rows it was checked with, in their order (each row's blob aside), never by
+// their normalized historyDescriptor form: the custody and source checks a
+// pair carries read each row's own fields (an original source's mediaType).
+const historyDescriptorRowsSha256=rows=>hash.sha256Value(rows.map(({blob,...descriptor})=>descriptor));
+const historyPairKey=(projectSha256,descriptorsSha256)=>JSON.stringify([String(projectSha256),String(descriptorsSha256)]);
+function historyPairProof(jobId,projectSha256,descriptorsSha256){return HISTORY_ROOT_PROOFS?historyPairProofs.get(String(jobId))?.get(historyPairKey(projectSha256,descriptorsSha256))||null:null;}
+// A version its own artifact checks refused keeps no proof: neither the root
+// proof its readCheckpointBody minted before those checks nor its pair serves
+// Tier 2, so the same bytes take the cold path and its refusal again.
+function withdrawHistoryProofs(jobId,entry,body){
+  if(!HISTORY_ROOT_PROOFS)return;
+  try{historyRootProofs.get(String(jobId))?.delete(String(entry?.sha256));}catch{/* Nothing is retained for it. */}
+  try{if(Array.isArray(body?.artifacts))historyPairProofs.get(String(jobId))?.delete(historyPairKey(body.projectSha256,historyDescriptorRowsSha256(body.artifacts)));}catch{/* Nothing is retained for it. */}
+}
 // The decode and byte natives a cold check runs through that the digest
 // primitives do not pin: the package decoder's stream, decompression, text
 // and JSON natives, and the byte hash's Blob, buffer and crypto natives.
@@ -2351,17 +2390,21 @@ function mintHistorySnapshotProof(jobId,entry,body,payload,basis,inputs,verified
     if(!HISTORY_ROOT_PROOFS||!basis||!inputs||!historyProofInputsCurrent(inputs))return;
     const scalar=value=>value===null||value===undefined||['string','number','boolean'].includes(typeof value);
     if(![body.schema,body.id,body.jobId,body.parentId,body.label,body.createdAt,body.projectSha256,body.workSha256,body.artifactManifestSha256,entry.sha256].every(scalar))return;
-    // The same proof under the same captures needs no second mint.
-    const existing=historyRootProof(jobId,entry.sha256);
-    if(existing&&existing.kind===basis.kind&&existing.verifiedProjectSha256===verifiedProjectSha256&&existing.verifiedWorkSha256===verifiedWorkSha256&&existing.validators===(basis.kind==='reference'?lastRootValidators:basis.validators)&&existing.primitive===inputs.primitive&&historyProofInputsCurrent(existing))return;
     let validators=basis.validators||null,rootSnapshotSha256=null;
     if(basis.kind==='reference'){
+      // A reference's own checks read no validator. It is used only after its
+      // root, under that root proof's validators, which the using operation
+      // checks once; its mint walks no validator graph.
       rootSnapshotSha256=body.projectReference.snapshotSha256;
       const root=historyRootProof(jobId,rootSnapshotSha256);
       if(!root||root.kind!=='root'||root.verifiedProjectSha256!==verifiedProjectSha256||root.verifiedWorkSha256!==verifiedWorkSha256)return;
-      validators=captureRootValidators(inputs.primitive);
-    }else if(!validators||!rootValidatorsUnchanged(validators))return;
+      validators=root.validators;
+    }
     if(!validators)return;
+    // The same proof under the same captures needs no second mint.
+    const existing=historyRootProof(jobId,entry.sha256);
+    if(existing&&existing.kind===basis.kind&&existing.verifiedProjectSha256===verifiedProjectSha256&&existing.verifiedWorkSha256===verifiedWorkSha256&&existing.validators===validators&&existing.primitive===inputs.primitive&&historyProofInputsCurrent(existing))return;
+    if(basis.kind==='root'&&!rootValidatorsUnchanged(validators))return;
     // The checks validateCheckpointArtifacts makes that read only these bytes.
     let viewChecked=false;const artifactBytes=[];
     try{
@@ -2371,23 +2414,23 @@ function mintHistorySnapshotProof(jobId,entry,body,payload,basis,inputs,verified
       if(body.view?.pendingMutation&&body.view.pendingMutation.baseProjectSha256!==body.projectSha256)throw new Error();
       viewChecked=true;
     }catch{artifactBytes.length=0;}
-    const record=Object.freeze({kind:basis.kind,jobId:String(jobId),snapshotSha256:entry.sha256,schema:body.schema,id:body.id,bodyJobId:body.jobId,parentId:body.parentId,label:body.label,createdAt:body.createdAt,activeStage:Number(body.view?.activeStage),artifactsArray:Array.isArray(body.artifacts),projectReferenceSha256:hash.sha256Value(body.projectReference||null),rootSnapshotSha256,hasProjectParts:Boolean(body.projectParts),projectPartsSha256:hash.sha256Value(body.projectParts||null),projectSha256:body.projectSha256,workSha256:body.workSha256,verifiedProjectSha256,verifiedWorkSha256,viewSha256:hash.sha256Value(body.view),artifactManifestSha256:body.artifactManifestSha256,artifactsSha256:historyArtifactsSha256(body.artifacts),credential:containsCredentialSecret(payload),viewChecked,artifactBytes:Object.freeze(artifactBytes),primitive:inputs.primitive,natives:inputs.natives,validators});
+    const record=Object.freeze({kind:basis.kind,jobId:String(jobId),snapshotSha256:entry.sha256,schema:body.schema,id:body.id,bodyJobId:body.jobId,parentId:body.parentId,label:body.label,createdAt:body.createdAt,activeStage:Number(body.view?.activeStage),artifactsArray:Array.isArray(body.artifacts),projectReferenceSha256:hash.sha256Value(body.projectReference||null),rootSnapshotSha256,hasProjectParts:Boolean(body.projectParts),projectPartsSha256:hash.sha256Value(body.projectParts||null),projectSha256:body.projectSha256,workSha256:body.workSha256,verifiedProjectSha256,verifiedWorkSha256,viewSha256:hash.sha256Value(body.view),artifactManifestSha256:body.artifactManifestSha256,artifactsSha256:historyArtifactsSha256(body.artifacts),descriptorsSha256:historyDescriptorRowsSha256(body.artifacts),credential:containsCredentialSecret(payload),viewChecked,artifactBytes:Object.freeze(artifactBytes),primitive:inputs.primitive,natives:inputs.natives,validators});
     // Every fact above was computed in this synchronous turn.
     if(!historyProofInputsCurrent(inputs))return;
     retainHistoryProof(historyRootProofs,jobId,entry.sha256,record);
   }catch{/* An unproven snapshot keeps the cold path. */}
 }
 // Mint a pair proof: for one project (by digest) and one byte-verified
-// artifact inventory, assertPackageArtifactCustody and
+// artifact inventory (by its exact descriptor rows), assertPackageArtifactCustody and
 // verifyOriginalSourceBindings passed, and, when derived is a time, the
 // recovery compatibility (derived) check passed strictly at that time under
 // these validators. A later non-strict outcome withdraws the carried time.
 function mintHistoryPairProof(jobId,projectSha256,artifacts,{derived='NOT_CHECKED',derivedAt=null,validators=null,inputs=null}={}){
   try{
     if(!HISTORY_ROOT_PROOFS||!inputs||!validators||!historyProofInputsCurrent(inputs)||!rootValidatorsUnchanged(validators))return;
-    const artifactsSha256=historyArtifactsSha256(artifacts),key=historyPairKey(projectSha256,artifactsSha256),prior=historyPairProof(jobId,projectSha256,artifactsSha256);
+    const descriptorsSha256=historyDescriptorRowsSha256(artifacts),key=historyPairKey(projectSha256,descriptorsSha256),prior=historyPairProof(jobId,projectSha256,descriptorsSha256);
     const carried=derived==='STRICT'&&Number.isFinite(derivedAt)?derivedAt:derived==='NOT_STRICT'?null:prior&&prior.validators===validators?prior.derivedAt:null;
-    retainHistoryProof(historyPairProofs,jobId,key,Object.freeze({projectSha256:String(projectSha256),artifactsSha256,derivedAt:carried,validators,primitive:inputs.primitive,natives:inputs.natives}));
+    retainHistoryProof(historyPairProofs,jobId,key,Object.freeze({projectSha256:String(projectSha256),descriptorsSha256,derivedAt:carried,validators,primitive:inputs.primitive,natives:inputs.natives}));
   }catch{/* An unproven pair keeps the cold path. */}
 }
 // One export or import: each distinct validator capture is checked once
@@ -2478,7 +2521,8 @@ async function provenImportEntry(jobId,entry,snapshot,readFile,validatedRoots,pr
       verifiedProjectSha256=base.projectSha256;verifiedWorkSha256=base.workSha256;
     }else if(!await historyProofPartsRetained(proof,entry.projectParts,readFile,operation,jobId,verifiedByteDigests))return null;
     for(let index=0;index<proof.artifactBytes.length;index+=2){const file=await readFile(proof.artifactBytes[index]);if(!(file?.blob instanceof Blob)||file.blob.size!==proof.artifactBytes[index+1]||await historyBlobSha256(file.blob,verifiedByteDigests)!==proof.artifactBytes[index])return null;}
-    const projectionKey=JSON.stringify([proof.projectSha256,proof.artifactsSha256]),pair=historyPairProof(jobId,proof.projectSha256,proof.artifactsSha256);
+    // The pair must have been checked with this snapshot's own descriptor rows.
+    const projectionKey=JSON.stringify([proof.projectSha256,proof.artifactsSha256]),pair=historyPairProof(jobId,proof.projectSha256,proof.descriptorsSha256);
     if(!pair||!historyProofInputsCurrent(pair)||!historyProofValidatorsCurrent(operation,pair.validators))return null;
     // Derived compatibility is carried under the rule carriedDerived applies
     // at a checkpoint commit: it passed strictly, never in the future, under
@@ -2489,11 +2533,33 @@ async function provenImportEntry(jobId,entry,snapshot,readFile,validatedRoots,pr
     return {verifiedProjectSha256,verifiedWorkSha256};
   }catch{return null;}
 }
+// A committed checkpoint's view references gain their proofs at once: the
+// stored bytes of each are read back and decoded by readCheckpointBody's own
+// reference branch, against its root's proof in place of the root's bytes (as
+// an export does after re-binding a proven root). The commit is already final;
+// a reference that does not verify here stays unproven and is decoded cold.
+async function proveCommittedReferences(jobId,prepared){
+  if(!HISTORY_ROOT_PROOFS)return;
+  try{
+    for(const snapshot of prepared?.snapshots||[]){
+      try{
+        const reference=snapshot?.projectReference,root=reference?historyRootProof(jobId,reference.snapshotSha256):null;
+        if(!root||root.kind!=='root'||!historyProofInputsCurrent(root))continue;
+        const entry=prepared.state.entries.find(row=>row.id===snapshot.id),stored=entry?await metaGet(snapshotKey(jobId,entry.id)):null;
+        if(!(stored?.blob instanceof Blob)||stored.sha256!==entry.sha256)continue;
+        await readCheckpointBody(jobId,{...entry,blob:stored.blob},async()=>null,new Map([[reference.checkpointId,{snapshotSha256:root.snapshotSha256,proven:true,projectSha256:root.verifiedProjectSha256,workSha256:root.verifiedWorkSha256}]]));
+      }catch{/* This reference stays unproven. */}
+    }
+  }catch{/* No reference is proven. */}
+}
 // Lazy first use: a write's root certificate that no checkpoint consumed is
 // first-used before the next root-creating write, by the same decode-and-
 // compare a checkpoint makes (writeRootBytesVerified), so the superseded root
 // gains its proof. A failure mints nothing and raises nothing: the later
-// checkpoint, export or import refuses exactly as before.
+// checkpoint, export or import refuses exactly as before. pendingFirstUseRoot
+// is set only where proofs are minted (the storage worker, whose command
+// arguments are its own copies); callers await it only when it is set, so no
+// other realm yields there and no caller value is read across that await.
 let pendingFirstUseRoot=null;
 async function firstUsePendingWriteRoot(){
   const root=pendingFirstUseRoot;pendingFirstUseRoot=null;
@@ -2510,10 +2576,12 @@ async function firstUsePendingWriteRoot(){
 }
 // A 'Previous project' reference pairs a retained root with the current
 // files, a pair the normal flow never validates. Validate it once here.
-async function proveHistoryPair(jobId,decoded,artifacts){
+async function proveHistoryPair(jobId,decoded,files){
   if(!HISTORY_ROOT_PROOFS)return;
   try{
-    if(historyPairProof(jobId,decoded.projectSha256,historyArtifactsSha256(artifacts))?.derivedAt!=null)return;
+    // The descriptor rows the reference snapshot stores (encodeCheckpoint).
+    const artifacts=files.map(row=>({...historyDescriptor(row),blob:row.blob}));
+    if(historyPairProof(jobId,decoded.projectSha256,historyDescriptorRowsSha256(artifacts))?.derivedAt!=null)return;
     // Legacy run contexts are hydrated per artifact inventory; a commit that
     // follows must observe only its own, so such a project is left unproven.
     if((decoded.project?.projectData?.generatedPrompts||[]).some(record=>globalThis.closedLoopPromptEngine.requiresRetainedRunContext(record)))return;
@@ -2817,6 +2885,7 @@ async function commitRootCheckpoint(jobId,project,verifiedRead,prepared,operatio
     // The committed root's own artifact pair: its custody and source checks
     // passed above, and its derivation is the one this commit carries.
     if(pairInputs&&root.validators)mintHistoryPairProof(jobId,root.projectSha256,rootArtifacts,root.derivedVerified?{derived:'STRICT',derivedAt:root.derivedAt,validators:root.validators,inputs:pairInputs}:{derived:carriedDerived?'NOT_CHECKED':'NOT_STRICT',validators:root.validators,inputs:pairInputs});
+    if(HISTORY_ROOT_PROOFS)await proveCommittedReferences(jobId,prepared);
     return checkpointId;
   }catch(error){const failure=owner.abort(error);await owner.completion.catch(()=>{});throw failure;}
   }finally{releaseCheckpointValueSnapshot(rootValueCapture);if(stateCapture)releaseCheckpointValueSnapshot(stateCapture);}
@@ -3279,7 +3348,7 @@ async function saveCheckpoint(jobId,{expectedProjectRevision,expectedStateSha256
   }
   if(prepared.retainedRoot&&checkpointProject===project)return commitRootCheckpoint(jobId,project,verifiedRead,prepared,operationId,checkpointId);
   const tx=await openTransaction([PROJECTS,META],'readwrite');
-  try{const row=await projectRowWithOperations(tx,jobId,verifiedRead);if(row?.projectSha256!==project.projectSha256)throw storageError('Project changed before its checkpoint could be saved.','STALE_PROJECT_REVISION');await commitHistory(tx,prepared);recordWorkerCommit(tx,operationId,checkpointProject,checkpointDigest,checkpointId);await complete(tx);if(checkpointProject===project&&unchangedVerifiedProject(verifiedRead,project,project.projectSha256))recentOperationalCommitRead=carryCapturedIntegrity({...verifiedRead,retainedRoot:prepared.verifiedContinuation&&rootCertificates.has(prepared.verifiedContinuation)?prepared.verifiedContinuation:undefined},verifiedRead);return checkpointId;}catch(error){try{tx.abort();}catch{}throw error;}
+  try{const row=await projectRowWithOperations(tx,jobId,verifiedRead);if(row?.projectSha256!==project.projectSha256)throw storageError('Project changed before its checkpoint could be saved.','STALE_PROJECT_REVISION');await commitHistory(tx,prepared);recordWorkerCommit(tx,operationId,checkpointProject,checkpointDigest,checkpointId);await complete(tx);if(checkpointProject===project&&unchangedVerifiedProject(verifiedRead,project,project.projectSha256))recentOperationalCommitRead=carryCapturedIntegrity({...verifiedRead,retainedRoot:prepared.verifiedContinuation&&rootCertificates.has(prepared.verifiedContinuation)?prepared.verifiedContinuation:undefined},verifiedRead);if(HISTORY_ROOT_PROOFS)await proveCommittedReferences(jobId,prepared);return checkpointId;}catch(error){try{tx.abort();}catch{}throw error;}
 }
 async function beginHistorySession(sessionId){
   if(!sessionId)throw new Error('Application session identity is required.');
@@ -3579,7 +3648,8 @@ async function decodeCheckpoint(jobId,entry,readFile=sha=>metaGet(historyFileKey
   if(holder)importDigestHolders.set(verifiedParts,holder);
   try{
     const body=await readCheckpointBody(jobId,entry,readSnapshot,validatedRoots,false,readFile,verifiedParts,verifiedByteDigests,null,rootContinuation,measuredPair,rootBytes);
-    return await validateCheckpointArtifacts(jobId,body,readFile,verifiedByteDigests,validatedProjections,verifiedSources,rootContinuation&&body.project===rootContinuation.project);
+    try{return await validateCheckpointArtifacts(jobId,body,readFile,verifiedByteDigests,validatedProjections,verifiedSources,rootContinuation&&body.project===rootContinuation.project);}
+    catch(error){withdrawHistoryProofs(jobId,entry,body);throw error;}
   }finally{
     if(holder){if(holder.scope)hash.disposeCanonicalDigestScope(holder.scope);importDigestHolders.delete(verifiedParts);}
   }
@@ -3872,7 +3942,7 @@ function assertNativeProductCommand(command){
  const seen=new Set();for(const item of command.results){if(!item||typeof item!=='object'||Array.isArray(item)||Object.keys(item).some(key=>!['testId','runtimeResult','inputArtifacts'].includes(key))||typeof item.testId!=='string'||!item.testId||seen.has(item.testId)||!item.runtimeResult||typeof item.runtimeResult!=='object'||Array.isArray(item.runtimeResult)||!Array.isArray(item.inputArtifacts))throw storageError('Native execution results must contain unique test identities and their exact observations.','INVALID_NATIVE_PRODUCT_COMMAND');seen.add(item.testId);}
 }
 async function commitNativeProductResultsLocal(command,operationId=null){
- assertNativeProductCommand(command);await firstUsePendingWriteRoot();command=clone(command);
+ assertNativeProductCommand(command);command=clone(command);if(pendingFirstUseRoot)await firstUsePendingWriteRoot();
  const prior=await readProject(command.jobId);
  if(!prior||Number(prior.revision)!==command.expectedProjectRevision||prior.projectSha256!==command.expectedStateSha256)throw storageError('The project changed while native tests were executing. Retained observations cannot replace a different revision.','STALE_PROJECT_REVISION');
  const next=clone(prior),engine=globalThis.closedLoopWorkflowEngine,productId=String(prior.job.CURRENT_PRODUCT_ID||'');
@@ -3953,7 +4023,7 @@ async function writeProject(project,options={}){
   if(options.initialMobileAcceptanceSession!==undefined&&(!options.createOnly||options.operational))throw storageError('Initial mobile sessions require a create-only project transaction.','MOBILE_ACCEPTANCE_CREATION_INVALID');
   if(options.pendingArtifacts!==undefined&&!options.operational)throw storageError('Pending returned bytes require an operational response transaction.','PENDING_ARTIFACTS_UNSUPPORTED');
   if(useStoreWorker())return requestStoreWorker('WRITE_PROJECT',[project,options]);
-  await firstUsePendingWriteRoot();
+  if(pendingFirstUseRoot)await firstUsePendingWriteRoot();
   if(!options.operational)options={...options,[APPEND_ONLY_CANONICAL_WRITE]:true};
   options={...options,[ROOT_CERTIFICATE_WRITE]:true};
   assertCanonicalFieldValues(project);
@@ -3968,6 +4038,8 @@ async function writeProject(project,options={}){
       const assertCommittedReturn=()=>{if(!committedProject||next.projectSha256!==committedDigest||!verifiedValuesEqual(canonicalProject(committedProject),canonicalProject(next)))throw storageError('The committed project return changed during completion or context restoration.','STALE_PROJECT_REVISION');};
       assertCommittedReturn();
       if(committedRow){const privateCommitted=copyVerifiedTree(next),committedIntegrity=verifiedProjectIntegrity(privateCommitted,next.projectSha256,CAPTURED_PROJECT_INTEGRITY);globalThis.closedLoopPromptEngine?.copyRetainedPromptContextFiles?.(next,privateCommitted);assertCommittedReturn();recentOperationalCommitRead=carryCapturedIntegrity({row:committedRow,journal:undefined,storage:proof.committedStorage,...committedIntegrity,retainedRoot:mintWriteRootCertificate(prepared.options.preparedHistory,next.projectSha256,proof.primitive,proof.validators,proof.derivation)},committedIntegrity);}
+      // A 'Previous project' reference this write committed gains its proof.
+      if(HISTORY_ROOT_PROOFS)await proveCommittedReferences(projectIdentity(next),prepared.options.preparedHistory);
       notifyProjectChange(next);return next;
     }catch(error){
       recentOperationalCommitRead=null;
@@ -4410,7 +4482,7 @@ async function decryptPackage(blob,passphrase){
   if(hash.sha256Value(parsed.payload.packageManifest)!==container.manifestSha256)throw storageError('The decrypted backup does not match its protected manifest.','BACKUP_AUTHENTICATION_FAILED');
   new Uint8Array(plaintext).fill(0);return result;
 }
-async function exportPackage(jobId,{passphrase=null,historyRecovery=false,[COLD_HISTORY_VERIFICATION]:coldHistory=false}={}){
+async function exportPackage(jobId,{passphrase=null,historyRecovery=false,operationId=null,[COLD_HISTORY_VERIFICATION]:coldHistory=false}={}){
   // Export runs in the store worker, which owns the History root proofs; the
   // page realm never holds them. Its queue orders export with this tab's writes.
   if(useStoreWorker())return requestStoreWorker('EXPORT_PACKAGE',[jobId,{passphrase,historyRecovery}]);
@@ -4473,7 +4545,7 @@ async function exportPackage(jobId,{passphrase=null,historyRecovery=false,[COLD_
     if(classifiedProjectParts.size)throw storageError('Referenced saved project contents are missing. Backup export did not complete.','HISTORY_FILE_INTEGRITY_FAILED');
     // A validator, primitive or native a used proof relied on changed during
     // this export: its outcome is the cold export's, so redo it cold.
-    if(proofs&&!historyProofOperationCurrent(proofs))return exportPackage(jobId,{passphrase,historyRecovery,[COLD_HISTORY_VERIFICATION]:true});
+    if(proofs&&!historyProofOperationCurrent(proofs))return exportPackage(jobId,{passphrase,historyRecovery,operationId,[COLD_HISTORY_VERIFICATION]:true});
     // The exported manifest is the complete legacy form; validate it whole.
     recovery.entries=exportedEntries;validateRecoveryManifest(recovery);
   }
@@ -4486,7 +4558,7 @@ async function exportPackage(jobId,{passphrase=null,historyRecovery=false,[COLD_
   const tx=await openTransaction([PROJECTS,META],'readwrite'),finished=complete(tx);
   try{const current=await projectRowWithOperations(tx,jobId),history=(await request(tx.objectStore(META).get(historyKey(jobId))))?.value||null;
    if(current?.projectSha256!==project.projectSha256||Number(current?.revision)!==Number(project.revision)||Number(history?.generation||0)!==Number(captured.recovery?.generation||0))throw storageError('Project or History changed before its backup completed. Retry from the current version.','STALE_PROJECT_REVISION');
-   tx.objectStore(META).put({key:'lastVerifiedExport',value:exportRecord,updatedAt:now()});tx.objectStore(META).put({key:'lastVerifiedExport:'+jobId,value:exportRecord,updatedAt:now()});await finished;return result;
+   tx.objectStore(META).put({key:'lastVerifiedExport',value:exportRecord,updatedAt:now()});tx.objectStore(META).put({key:'lastVerifiedExport:'+jobId,value:exportRecord,updatedAt:now()});recordWorkerCommit(tx,operationId,project,project.projectSha256);await finished;return result;
   }catch(error){try{tx.abort();}catch{}await finished.catch(()=>{});throw error;}
 
 }
@@ -4611,7 +4683,7 @@ async function importPackage(blob,{operationId=null,passphrase=null,pendingBacku
     blob=stagedBackup.blob;
   }
   if(useStoreWorker())return requestStoreWorker('IMPORT_PACKAGE',[blob,{passphrase}]);
-  await firstUsePendingWriteRoot();
+  if(pendingFirstUseRoot)await firstUsePendingWriteRoot();
   // Tier 2: a non-active archived version this worker proved skips its decode
   // only after its bytes, parts, files, descriptor and inputs re-bind.
   const proofs=coldHistory?null:historyProofOperation();
@@ -5447,8 +5519,8 @@ const ready=(async()=>{hash.assertPinnedUnicodeHost();if(globalThis.indexedDB&&!
  try{await recoverResponseStaging();globalThis.closedLoopStagingRecoveryError=null;}catch(error){globalThis.closedLoopStagingRecoveryError=String(error?.message||error);console.error('Response staging recovery could not finish. Preserved project and file data remain available.',error);}
  }return true;})();
 if(STORE_WORKER){let queue=Promise.resolve();globalThis.addEventListener('message',event=>{const message=event.data||{};queue=queue.then(async()=>{try{if(message.buildIdentity!==STORE_BUILD_ID||!message.operationId||!['WRITE_PROJECT','IMPORT_PACKAGE','SAVE_CHECKPOINT','EXPORT_PACKAGE','EXTRACT_INBOUND_ARCHIVE','COMMIT_NATIVE_PRODUCT_RESULTS'].includes(message.method)||ARCHIVE_PARSER_WORKER&&message.method!=='EXTRACT_INBOUND_ARCHIVE'||!Array.isArray(message.args))throw storageError('Invalid storage worker command or build identity.','INVALID_STORAGE_WORKER_REQUEST');message.args=unpackStorageWorkerValue(message.args,message.argumentStrings);await ready;globalThis.__closedLoopStorageFault=message.fault;
-  const result=message.method==='EXTRACT_INBOUND_ARCHIVE'?{archiveResult:await parseInboundArchive(message.args[0],message.args[1])}:message.method==='EXPORT_PACKAGE'?{packageBlob:await exportPackage(message.args[0],message.args[1])}:message.method==='SAVE_CHECKPOINT'?{checkpointId:await saveCheckpoint(message.args[0],{...message.args[1],operationId:message.operationId})}:{project:message.method==='COMMIT_NATIVE_PRODUCT_RESULTS'?await commitNativeProductResultsLocal(message.args[0],message.operationId):message.method==='WRITE_PROJECT'?await writeProject(message.args[0],{...message.args[1],operationId:message.operationId}):await importPackage(message.args[0],{...message.args[1],operationId:message.operationId})};
-  const packed=result.project?packStorageWorkerValue(result.project):null;globalThis.postMessage({operationId:message.operationId,buildIdentity:STORE_BUILD_ID,ok:true,...result,...(packed?{project:packed.value,...(packed.stringTable?{projectStrings:packed.stringTable}:{})}:{})});}catch(error){globalThis.postMessage({operationId:message.operationId,buildIdentity:STORE_BUILD_ID,ok:false,error:{code:error?.code||'STORAGE_OPERATION_FAILED',message:String(error?.message||error),...(error?.code==='MUTATION_CONFIRMATION_REQUIRED'&&error.impact?{impact:error.impact}:{}),...(Array.isArray(error?.issues)&&error.issues.every(issue=>typeof issue==='string')?{issues:[...error.issues]}:{})}});}finally{delete globalThis.__closedLoopStorageFault;}}).catch(error=>{setTimeout(()=>{throw error;},0);});});}
+  const result=message.method==='EXTRACT_INBOUND_ARCHIVE'?{archiveResult:await parseInboundArchive(message.args[0],message.args[1])}:message.method==='EXPORT_PACKAGE'?{packageBlob:await exportPackage(message.args[0],{...message.args[1],operationId:message.operationId})}:message.method==='SAVE_CHECKPOINT'?{checkpointId:await saveCheckpoint(message.args[0],{...message.args[1],operationId:message.operationId})}:{project:message.method==='COMMIT_NATIVE_PRODUCT_RESULTS'?await commitNativeProductResultsLocal(message.args[0],message.operationId):message.method==='WRITE_PROJECT'?await writeProject(message.args[0],{...message.args[1],operationId:message.operationId}):await importPackage(message.args[0],{...message.args[1],operationId:message.operationId})};
+  const packed=result.project?packStorageWorkerValue(result.project):null;globalThis.postMessage({operationId:message.operationId,buildIdentity:STORE_BUILD_ID,ok:true,...result,...(packed?{project:packed.value,...(packed.stringTable?{projectStrings:packed.stringTable}:{})}:{})});}catch(error){globalThis.postMessage({operationId:message.operationId,buildIdentity:STORE_BUILD_ID,ok:false,error:{code:error?.code||'STORAGE_OPERATION_FAILED',message:String(error?.message||error),...(error?.code==='MUTATION_CONFIRMATION_REQUIRED'&&error.impact?{impact:error.impact}:{}),...(Array.isArray(error?.issues)&&error.issues.every(issue=>typeof issue==='string')?{issues:[...error.issues]}:{}),...(typeof error?.existingProjectsUnchanged==='boolean'?{existingProjectsUnchanged:error.existingProjectsUnchanged}:{})}});}finally{delete globalThis.__closedLoopStorageFault;}}).catch(error=>{setTimeout(()=>{throw error;},0);});});}
 globalThis.closedLoopProjectStore=Object.freeze({STORAGE_IO_TIMEOUT_MS,STORAGE_WORKER_TIMEOUT_MS,STORAGE_WORKER_HISTORY_TIMEOUT_MS,listQuarantinedProjects,exportQuarantinedProject,exportHistoryRecoveryEvidence,exportLegacyMigrationData,removeQuarantinedProject,ENCRYPTED_EXPORT_PROFILE,isEncryptedPackage,HISTORY_LIMITS,mutationImpact,rebaseHistoryView,assertRecoveryTransfer,historyList,listRecoverableProjects,readOriginalSourceArchive,readHistoryView,saveCheckpoint,beginHistorySession,restoreCheckpoint,persistPromptContextFiles,readPromptContextFile,archiveMigrationPayload,version:'closed-loop-project-store/2',DB_NAME,DB_VERSION,stores:Object.freeze({projects:PROJECTS,artifacts:ARTIFACTS,meta:META}),STORE_KEY,LEGACY_KEYS,clone,projectIdentity,projectSha256,validateProjectIntegrity,openDatabase,ready,readAll,readProject,refreshProjectProjection,listProjectSummaries,writeAll,writeProject,commitNativeProductResults,replaceProject,transact,removeProject,putArtifact,getArtifact,deleteArtifact,listArtifacts,artifactCustodyState,verifyProjectArtifacts,createExecutionPackage,prepareExecutionPackageReview,takeRetainedExecutionPackage,readAuthorizedHandoffMember,prepareCapabilityRequestReview,readAuthorizedCapabilityRequest,extractInboundArchive,exportPackage,importPackage,stageBackupImport,pendingBackupImportIdentity,readPendingBackupImport,recoverResponseStaging,listResponseStagingRecovery,stageResponseFile,readStagedResponseFile,removeStagedResponseFile,storageHealth,metaGet,metaPut,clearLegacy,createProject});
 })();
 ;(()=>{
