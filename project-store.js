@@ -2476,7 +2476,20 @@ function mintHistoryPairProof(jobId,projectSha256,artifacts,{derived='NOT_CHECKE
 // One export or import: each distinct validator capture is checked once
 // (rootValidatorsUnchanged walks the whole validator graph), and before the
 // operation commits every capture and input it relied on is checked again.
-function historyProofOperation(){return HISTORY_ROOT_PROOFS?{validators:new Map(),natives:new Set(),primitives:new Set(),hashedParts:new Map(),used:false}:null;}
+// partsDigests holds, for this operation only, the canonical digest of each
+// History parts list it parsed itself (historyPartsDigest).
+function historyProofOperation(){return HISTORY_ROOT_PROOFS?{validators:new Map(),natives:new Set(),primitives:new Set(),hashedParts:new Map(),partsDigests:new WeakMap(),used:false}:null;}
+// The canonical digest of a parts list, computed once per proof operation, as
+// verifiedByteDigests holds one Blob's digest per import. A list is a key only
+// while no code but this module's own can reach it: importPackage parses its
+// backup's entries itself and drops a list's digest before the entry is
+// handed to clone (whose prompt-context hook is replaceable). Without an
+// operation the digest is computed afresh.
+function historyPartsDigest(parts,digests=null){
+  if(!digests||!parts||typeof parts!=='object')return hash.sha256Value(parts);
+  let digest=digests.get(parts);if(digest===undefined){digest=hash.sha256Value(parts);digests.set(parts,digest);}
+  return digest;
+}
 function historyProofUsed(operation,proof){operation.used=true;operation.natives.add(proof.natives);operation.primitives.add(proof.primitive);}
 function historyProofValidatorsCurrent(operation,validators){
   if(!validators)return false;
@@ -2493,11 +2506,11 @@ function historyProofOperationCurrent(operation){
 // The checks readCheckpointBody, and export's identity step before it, make
 // of a stored snapshot against its History entry, evaluated on a proof's
 // facts. True only when each of them would pass with these exact bytes.
-function historyProofFactsMatch(proof,jobId,entry){
+function historyProofFactsMatch(proof,jobId,entry,operation=null){
   if(!proof||proof.jobId!==String(jobId)||proof.snapshotSha256!==entry.sha256)return false;
   if(proof.schema!==HISTORY_SCHEMA||proof.id!==entry.id||proof.bodyJobId!==String(jobId)||proof.projectSha256!==entry.projectSha256||proof.parentId!==entry.parentId||proof.label!==entry.label||proof.createdAt!==entry.createdAt||proof.activeStage!==Number(entry.stage)||!proof.artifactsArray)return false;
   if(proof.projectReferenceSha256!==hash.sha256Value(entry.projectReference||null)||Boolean(entry.projectReference)!==(proof.kind==='reference'))return false;
-  if(Object.hasOwn(entry,'projectPartsSha256')?Object.hasOwn(entry,'projectParts')||!proof.hasProjectParts||proof.projectPartsSha256!==entry.projectPartsSha256:proof.projectPartsSha256!==hash.sha256Value(entry.projectParts||null))return false;
+  if(Object.hasOwn(entry,'projectPartsSha256')?Object.hasOwn(entry,'projectParts')||!proof.hasProjectParts||proof.projectPartsSha256!==entry.projectPartsSha256:proof.projectPartsSha256!==historyPartsDigest(entry.projectParts||null,operation?.partsDigests))return false;
   if(entry.viewSha256&&entry.viewSha256!==proof.viewSha256)return false;
   if(proof.projectBytes!==entry.projectBytes)return false;
   if(proof.workSha256!==entry.workSha256||proof.artifactManifestSha256!==entry.artifactManifestSha256||proof.artifactManifestSha256&&proof.artifactManifestSha256!==proof.artifactsSha256)return false;
@@ -2514,7 +2527,7 @@ function historyProofPartList(entry,record){return Object.hasOwn(entry,'projectP
 // this same entry.
 async function historyProofPartsRetained(proof,parts,readFile,operation,jobId,verifiedByteDigests=null,coldParts=null){
   if(!proof.hasProjectParts)return !parts;
-  if(!parts||hash.sha256Value(parts)!==proof.projectPartsSha256)return false;
+  if(!parts||historyPartsDigest(parts,operation.partsDigests)!==proof.projectPartsSha256)return false;
   assertHistoryProjectParts(parts);
   for(const part of historyPartFiles(parts)){
     const hashed=operation.hashedParts.get(part.sha256)??coldParts?.get(part.sha256)?.byteSize;
@@ -2555,7 +2568,7 @@ async function provenExportEntry(jobId,entry,saved,validatedRoots,bytePrimitive,
 async function provenImportEntry(jobId,entry,snapshot,readFile,validatedRoots,provenRoots,verifiedByteDigests,validatedProjections,operation){
   try{
     const proof=historyRootProof(jobId,entry.sha256);
-    if(!proof?.viewChecked||!historyProofInputsCurrent(proof)||!historyProofFactsMatch(proof,jobId,entry)||!historyProofValidatorsCurrent(operation,proof.validators))return null;
+    if(!proof?.viewChecked||!historyProofInputsCurrent(proof)||!historyProofFactsMatch(proof,jobId,entry,operation)||!historyProofValidatorsCurrent(operation,proof.validators))return null;
     if(!(snapshot.blob instanceof Blob)||snapshot.blob.size!==Number(entry.byteSize)||await historyBlobSha256(snapshot.blob,verifiedByteDigests)!==entry.sha256)return null;
     let verifiedProjectSha256=proof.verifiedProjectSha256,verifiedWorkSha256=proof.verifiedWorkSha256;
     if(proof.kind==='reference'){
@@ -2571,7 +2584,9 @@ async function provenImportEntry(jobId,entry,snapshot,readFile,validatedRoots,pr
     // at a checkpoint commit: it passed strictly, never in the future, under
     // unchanged validators; or this import already validated the pair.
     if(!validatedProjections.has(projectionKey)&&!(pair.derivedAt!==null&&Date.now()>=pair.derivedAt))return null;
-    if(!historyProofInputsCurrent(proof))return null;
+    // The pair's inputs were checked above in this same synchronous turn; a
+    // pair that shares the proof's captures needs no second check of them.
+    if(!(pair.natives===proof.natives&&pair.primitive===proof.primitive)&&!historyProofInputsCurrent(proof))return null;
     historyProofUsed(operation,proof);historyProofUsed(operation,pair);validatedProjections.add(projectionKey);
     return {verifiedProjectSha256,verifiedWorkSha256};
   }catch{return null;}
@@ -2981,11 +2996,12 @@ function assertSegmentedHistoryProjectParts(parts){
 // the complete descriptor and its parts; records, bodies and backups never
 // change. A state entry carries projectParts (legacy inline), projectPartsSha256
 // (state form) or neither; carrying both is never a state form (null).
-function historyStateForm(descriptor){
+// partsDigests: an import's proof operation's digests (historyPartsDigest).
+function historyStateForm(descriptor,partsDigests=null){
   if(!descriptor?.projectParts)return descriptor;
   if(Object.hasOwn(descriptor,'projectPartsSha256'))return null;
   const entry={};
-  for(const key of Object.keys(descriptor))Object.defineProperty(entry,key==='projectParts'?'projectPartsSha256':key,{value:key==='projectParts'?hash.sha256Value(descriptor.projectParts):descriptor[key],enumerable:true,writable:true,configurable:true});
+  for(const key of Object.keys(descriptor))Object.defineProperty(entry,key==='projectParts'?'projectPartsSha256':key,{value:key==='projectParts'?historyPartsDigest(descriptor.projectParts,partsDigests):descriptor[key],enumerable:true,writable:true,configurable:true});
   return entry;
 }
 // An immutable snapshot record always keeps its complete descriptor. A record
@@ -5091,7 +5107,9 @@ async function importPackage(blob,{operationId=null,passphrase=null,pendingBacku
       if(decoded&&entry.id===incoming.activeId){importedActive=decoded;importedView=incoming.activeViewOverride||decoded.view;}
 
       const existing=merged.entries.find(item=>item.id===entry.id);
-      if(existing&&hash.sha256Value(historyStateForm(existing))!==hash.sha256Value(historyStateForm(entry)))throw storageError('Backup History conflicts with a retained version.','IMMUTABLE_HISTORY_CONFLICT');
+      // The parts list's digest of the proof checks above is used once more.
+      if(existing&&hash.sha256Value(historyStateForm(existing))!==hash.sha256Value(historyStateForm(entry,proofs?.partsDigests)))throw storageError('Backup History conflicts with a retained version.','IMMUTABLE_HISTORY_CONFLICT');
+      if(entry.projectParts)proofs?.partsDigests.delete(entry.projectParts);
       if(!existing){merged.entries.push(clone(entry));merged.compressedProjectBytes+=entry.byteSize;importSnapshots.push(snapshot);}
     }
     }finally{if(digestHolder.scope)hash.disposeCanonicalDigestScope(digestHolder.scope);importDigestHolders.delete(verifiedParts);}

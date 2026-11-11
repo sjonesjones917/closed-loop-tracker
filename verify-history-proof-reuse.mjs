@@ -57,6 +57,12 @@ const PACKAGE_DIGEST="if(body.recovery&&body.recovery.activeProjectSha256!==pack
 const PACKAGE_DIGEST_REUSE='viewRebased?null:packageProjectDigest());';
 const ACTIVE_WORK='const activeWorkMatches=Boolean(importedActive)&&historyWorkSha256(importedActive.project)===historyWorkSha256(project);';
 const ACTIVE_WORK_REUSE='?activeWorkMatches:historyWorkSha256(importedActive.project)===historyWorkSha256(project))){';
+// The parts-list digests one proof operation holds, and the pair input check
+// a Tier 2 hit shares with its root proof.
+const PARTS_DIGEST='function historyPartsDigest(parts,digests=null){';
+// (or, in a mutant without the pair's input and validator checks, its presence check).
+const PAIR_INPUTS=['if(!pair||!historyProofInputsCurrent(pair)||!historyProofValidatorsCurrent(operation,pair.validators))return null;','if(!pair)return null;'];
+const PAIR_INPUTS_SHARED='    if(!(pair.natives===proof.natives&&pair.primitive===proof.primitive)&&!historyProofInputsCurrent(proof))return null;';
 const EXPORT_ROUTE="  if(useStoreWorker())return requestStoreWorker('EXPORT_PACKAGE',[jobId,{passphrase,historyRecovery}]);\n";
 // The measured watchdog (project-store.js HISTORY_WATCHDOG_MEASUREMENT),
 // re-derived here from its stated arithmetic at the declared History limits.
@@ -65,6 +71,7 @@ export const HISTORY_WATCHDOG_MS=Math.ceil(HISTORY_WATCHDOG_PIN.hostedSlowdown*(
 const replaceOnce=(source,before,after,label)=>{assert.equal(source.split(before).length,2,'HISTORY_PROOF_ANCHOR_ORACLE '+label);return source.replace(before,after);};
 // The first of these anchors that the source holds, exactly once.
 const insertBeforeFirst=(source,anchors,insert,label)=>{const anchor=anchors.find(text=>source.includes(text));assert.ok(anchor,'HISTORY_PROOF_ANCHOR_ORACLE '+label);return replaceOnce(source,anchor,insert+anchor,label);};
+const insertAfterFirst=(source,anchors,insert,label)=>{const anchor=anchors.find(text=>source.includes(text));assert.ok(anchor,'HISTORY_PROOF_ANCHOR_ORACLE '+label);return replaceOnce(source,anchor,anchor+insert,label);};
 const sha=value=>createHash('sha256').update(value).digest('hex');
 const plain=value=>JSON.parse(JSON.stringify(value));
 
@@ -87,7 +94,7 @@ export const HISTORY_PROOF_FAULTS=Object.freeze({
  'drop-export-recheck':fault(['mid-operation'],'HISTORY_PROOF_MID_OPERATION_ORACLE',[['    if(proofs&&!historyProofOperationCurrent(proofs))return exportPackage(jobId,{passphrase,historyRecovery,operationId,[COLD_HISTORY_VERIFICATION]:true});','']]),
  'drop-import-recheck':fault(['mid-operation'],'HISTORY_PROOF_MID_OPERATION_ORACLE',[['  if(proofs&&!historyProofOperationCurrent(proofs))return importPackage(suppliedBlob,{operationId,passphrase,pendingBackupImport,[COLD_HISTORY_VERIFICATION]:true});','']]),
  // Import Tier 2.
- 'import-skip-facts-match':fault(['import'],'HISTORY_PROOF_IMPORT_EQUIVALENCE_ORACLE',[['if(!proof?.viewChecked||!historyProofInputsCurrent(proof)||!historyProofFactsMatch(proof,jobId,entry)||','if(!proof?.viewChecked||!historyProofInputsCurrent(proof)||']]),
+ 'import-skip-facts-match':fault(['import'],'HISTORY_PROOF_IMPORT_EQUIVALENCE_ORACLE',[['if(!proof?.viewChecked||!historyProofInputsCurrent(proof)||!historyProofFactsMatch(proof,jobId,entry,operation)||','if(!proof?.viewChecked||!historyProofInputsCurrent(proof)||']]),
  'import-skip-artifact-rehash':fault(['import'],'HISTORY_PROOF_IMPORT_EQUIVALENCE_ORACLE',[['    for(let index=0;index<proof.artifactBytes.length;index+=2){const file=await readFile(','    for(let index=0;false;index+=2){const file=await readFile(']]),
  'import-skip-derived-carry-check':fault(['import'],'HISTORY_PROOF_TIER2_DERIVED_ORACLE',[['if(!validatedProjections.has(projectionKey)&&!(pair.derivedAt!==null&&Date.now()>=pair.derivedAt))return null;','if(false)return null;']]),
  'import-skip-pair-validators':fault(['import'],'HISTORY_PROOF_TIER2_PAIR_VALIDATORS_ORACLE',[['if(!pair||!historyProofInputsCurrent(pair)||!historyProofValidatorsCurrent(operation,pair.validators))return null;','if(!pair)return null;']]),
@@ -116,7 +123,9 @@ export const HISTORY_PROOF_FAULTS=Object.freeze({
  'retained-skip-snapshot-rehash':fault(['retained-checkpoint'],'HISTORY_PROOF_RETAINED_EQUIVALENCE_ORACLE',[['if(blob.size!==Number(item.byteSize)||saved.sha256!==item.sha256||await hash.sha256Bytes(blob)!==item.sha256)return false;','if(blob.size!==Number(item.byteSize)||saved.sha256!==item.sha256)return false;']]),
  'retained-skip-last-inputs':fault(['retained-checkpoint'],'HISTORY_PROOF_RETAINED_INPUTS_ORACLE',[['    if(!historyProofInputsCurrent(proof)||[...validators].some(capture=>!rootValidatorsUnchanged(capture)))return false;\n','']]),
  // Digests reused within one synchronous span (importPackage).
- 'digest-work-reused-across-await':fault(['digest-spans'],'HISTORY_PROOF_DIGEST_SPAN_ORACLE',[['if(importedActive&&(activatedExisting?activeWorkMatches:','if(importedActive&&(true?activeWorkMatches:']])
+ 'digest-work-reused-across-await':fault(['digest-spans'],'HISTORY_PROOF_DIGEST_SPAN_ORACLE',[['if(importedActive&&(activatedExisting?activeWorkMatches:','if(importedActive&&(true?activeWorkMatches:']]),
+ 'parts-digests-shared-across-operations':fault(['digest-spans'],'HISTORY_PROOF_PARTS_DIGEST_ORACLE',[['function historyProofOperation(){return HISTORY_ROOT_PROOFS?{validators:new Map(),natives:new Set(),primitives:new Set(),hashedParts:new Map(),partsDigests:new WeakMap(),used:false}:null;}','const sharedPartsDigests=new WeakMap();function historyProofOperation(){return HISTORY_ROOT_PROOFS?{validators:new Map(),natives:new Set(),primitives:new Set(),hashedParts:new Map(),partsDigests:sharedPartsDigests,used:false}:null;}']]),
+ 'parts-digest-wrong-key':fault(['digest-spans'],'HISTORY_PROOF_PARTS_DIGEST_ORACLE',[['  let digest=digests.get(parts);if(digest===undefined){digest=hash.sha256Value(parts);digests.set(parts,digest);}','  let digest=digests.get(digests);if(digest===undefined){digest=hash.sha256Value(parts);digests.set(digests,digest);}']])
 });
 
 // Test-only observation (never a production export): the worker ledger, counts
@@ -148,6 +157,11 @@ export function observed(source){
  source=replaceOnce(source,PACKAGE_DIGEST_REUSE,"viewRebased?null:(packageProjectSha256!==null&&globalThis.__digestSpan?.use('package-project',packageProjectSha256,()=>projectSha256(project)),packageProjectDigest()));",'package-digest-reuse');
  source=replaceOnce(source,ACTIVE_WORK,ACTIVE_WORK+"globalThis.__digestSpan?.open('active-work');",'active-work');
  source=replaceOnce(source,ACTIVE_WORK_REUSE,"?(globalThis.__digestSpan?.use('active-work',activeWorkMatches,()=>historyWorkSha256(importedActive.project)===historyWorkSha256(project)),activeWorkMatches):historyWorkSha256(importedActive.project)===historyWorkSha256(project))){",'active-work-reuse');
+ // Every call with an operation's digests reports that map, the digest it
+ // returns and a fresh computation; a shared capture reports its skipped check.
+ source=replaceOnce(source,PARTS_DIGEST,"function historyPartsDigest(parts,digests=null){const held=Boolean(digests&&parts&&typeof parts==='object'&&digests.has(parts)),value=historyPartsDigestObserved(parts,digests);if(digests)globalThis.__partsDigest?.(digests,parts,value,()=>hash.sha256Value(parts),held);return value;}\nfunction historyPartsDigestObserved(parts,digests=null){",'parts-digest');
+ source=insertAfterFirst(source,PAIR_INPUTS,"globalThis.__digestSpan?.open('pair-inputs');",'pair-inputs');
+ source=replaceOnce(source,PAIR_INPUTS_SHARED,"    if(pair.natives===proof.natives&&pair.primitive===proof.primitive)globalThis.__digestSpan?.use('pair-inputs',true,()=>historyProofInputsCurrent(proof));\n"+PAIR_INPUTS_SHARED,'pair-inputs-shared');
  source=replaceOnce(source,RETAINED_VERDICT,"rootPreparation.verifiedContinuation=rootPreparation.read.retainedRoot;}globalThis.__onImportReuse?.('retained-verdict');}catch(error){",'retained-verdict');
  // Test-only: a recovery-compatibility (derived) refusal of the versions a
  // predicate selects, raised where the derived check runs.
@@ -967,9 +981,15 @@ async function digestSpansSection(context){
  const {source,emit}=context;
  const b=browser(source),{jobId}=await fixture(b);
  assert.equal((await exportOutcome(b.store,jobId)).ok,true,'HISTORY_PROOF_DIGEST_SPAN_FIXTURE_ORACLE: the minting export');
+ // P4: each parts-list digest an operation holds, observed with a fresh
+ // computation at every call; a hit is a call the operation's digests answered.
+ const partsCalls=[],pairInputReuses=[];
  const spanImport=async(label,blob,expected)=>{
-  const ids=(await backupBody(blob)).recovery.entries.map(entry=>entry.id),before=copyRows(b.rows,b.page),spans=digestSpans(b.worker().realm.runtime);let same;
-  try{same=await importOutcome(b,blob,jobId,ids);}finally{spans.undo();}
+  const ids=(await backupBody(blob)).recovery.entries.map(entry=>entry.id),before=copyRows(b.rows,b.page),worker=b.worker().realm.runtime,spans=digestSpans(worker),calls=[];let same;
+  worker.__partsDigest=(digests,parts,value,fresh,hit)=>{calls.push({digests,hit,equal:value===fresh()});};
+  try{same=await importOutcome(b,blob,jobId,ids);}finally{spans.undo();delete worker.__partsDigest;}
+  assert.ok(calls.every(call=>call.equal),'HISTORY_PROOF_PARTS_DIGEST_ORACLE '+label+': a parts digest differs from a fresh computation');
+  partsCalls.push(calls);
   const other=await importOutcome(browser(source,before),blob,jobId,ids);
   assert.deepEqual(same,other,'HISTORY_PROOF_DIGEST_SPAN_EQUIVALENCE_ORACLE '+label+': the import differs from a fresh cold import');
   assert.equal(same.ok,true,'HISTORY_PROOF_DIGEST_SPAN_FIXTURE_ORACLE '+label);
@@ -977,6 +997,7 @@ async function digestSpansSection(context){
    assert.equal(use.sameTurn,true,'HISTORY_PROOF_DIGEST_SPAN_ORACLE '+label+' '+use.name+': a digest was reused across an await');
    assert.equal(use.equal,true,'HISTORY_PROOF_DIGEST_SPAN_ORACLE '+label+' '+use.name+': a reused digest differs from a fresh computation');
   }
+  pairInputReuses.push(...spans.uses.filter(use=>use.name==='pair-inputs'));
   const count=name=>spans.uses.filter(use=>use.name===name).length;
   assert.deepEqual({packageProject:count('package-project'),activeWork:count('active-work')},expected,'HISTORY_PROOF_DIGEST_SPAN_REUSE_ORACLE '+label+': the digests reused');
   emit('HISTORY-PROOF-DIGEST-SPAN-'+label,{packageProjectReuses:count('package-project'),activeWorkReuses:count('active-work'),sameTurn:true,equal:true});
@@ -987,6 +1008,17 @@ async function digestSpansSection(context){
  // its active version's, so the import prepares a new version (an await).
  {let p=await b.store.readProject(jobId);const next=b.store.clone(p);await storeFile(b.page,next,{stage:1,filename:'span.txt',text:'Exact Stage 1 file span.\n',commandId:'HISTORY-PROOF-REUSE-span'});}
  await spanImport('new-version',await b.store.exportPackage(jobId),{packageProject:1,activeWork:0});
+ // P4: one operation's digests per import, never another's; every digest
+ // used equals a fresh computation; each list is digested once and its digest
+ // reused by the later checks of the same import.
+ const maps=partsCalls.map(calls=>new Set(calls.map(call=>call.digests)));
+ for(const [index,set] of maps.entries())assert.equal(set.size,1,'HISTORY_PROOF_PARTS_DIGEST_ORACLE import '+index+': parts digests of more than one operation');
+ assert.notEqual([...maps[0]][0],[...maps[1]][0],'HISTORY_PROOF_PARTS_DIGEST_ORACLE: two imports shared parts digests');
+ assert.ok(partsCalls.flat().every(call=>call.equal),'HISTORY_PROOF_PARTS_DIGEST_ORACLE: a parts digest differs from a fresh computation');
+ const hits=partsCalls.map(calls=>calls.filter(call=>call.hit).length),pairInputs=pairInputReuses.length;
+ assert.ok(hits.every(count=>count>0),'HISTORY_PROOF_PARTS_DIGEST_REUSE_ORACLE: a parts list was digested again in the same import');
+ assert.ok(pairInputs>0&&pairInputReuses.every(use=>use.sameTurn&&use.equal),'HISTORY_PROOF_PARTS_DIGEST_REUSE_ORACLE: a Tier 2 hit sharing its root proof\'s captures checked them twice');
+ emit('HISTORY-PROOF-PARTS-DIGEST-ONCE',{imports:partsCalls.length,operationsPerImport:1,distinctAcrossImports:true,hits,equal:true,pairInputReuses:pairInputs,sameTurn:true});
 }
 
 const SECTION_RUNNERS=Object.freeze({'export':exportSection,'import':importSection,'mid-operation':midOperationSection,'nested':nestedSection,'permissive-writer':permissiveWriterSection,'credential':credentialSection,'watchdog':watchdogSection,'pair-descriptors':pairDescriptorSection,'minting':mintingSection,'realms':realmsSection,'unconfirmed-export':unconfirmedExportSection,'input-capture':inputCaptureSection,'retained-checkpoint':retainedCheckpointSection,'digest-spans':digestSpansSection});
