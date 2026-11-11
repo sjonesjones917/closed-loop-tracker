@@ -106,7 +106,9 @@ for(const method of ['WRITE_PROJECT','IMPORT_PACKAGE'])for(const variant of ['ma
  if(variant==='false-receipt')receipt=false;
  if(variant==='array-receipt')receipt=[receipt];
  const storedDigest=e.store.projectSha256(stored),key='storageOperation:'+message.operationId,rows=new Map([['meta:'+key,{value:receipt}],['projects:'+stored.job.JOB_ID,{project:stored,revision:stored.revision,projectSha256:storedDigest}]]);
- if(variant==='worker-error-after-commit')w.onmessage({data:{operationId:message.operationId,buildIdentity:'FIXTURE-BUILD',ok:false,error:{code:'POST_COMMIT_READ_FAILED',message:'Synthetic failure after durable commit.'}}});else await e.advance(600000);
+ // A backup import keeps the measured History watchdog past the 600000 ms
+ // command watchdog; its receipt recovery then runs exactly as a write's.
+ if(variant==='worker-error-after-commit')w.onmessage({data:{operationId:message.operationId,buildIdentity:'FIXTURE-BUILD',ok:false,error:{code:'POST_COMMIT_READ_FAILED',message:'Synthetic failure after durable commit.'}}});else{await e.advance(600000);if(method==='IMPORT_PACKAGE'){assert.equal(e.events.workerTerminated,0,'IO_WORKER_HISTORY_DEADLINE_ORACLE: an import keeps its History watchdog past the command watchdog');assert.ok(Number.isSafeInteger(e.store.STORAGE_WORKER_HISTORY_TIMEOUT_MS)&&e.store.STORAGE_WORKER_HISTORY_TIMEOUT_MS>600000,'IO_WORKER_HISTORY_DEADLINE_ORACLE');await e.advance(e.store.STORAGE_WORKER_HISTORY_TIMEOUT_MS-600000);assert.equal(e.events.workerTerminated,1,'IO_WORKER_HISTORY_DEADLINE_ORACLE: the History watchdog terminates the silent worker');}}
  await deliverStorage(e,r,rows);
  const accepted=['matching','newer-state','worker-error-after-commit'].includes(variant);
  if(accepted){assert.equal(r.state,'RESOLVED','IO_WORKER_RECEIPT_VALID_CONTROL_ORACLE: '+method+'/'+variant);assert.equal(r.value.revision,stored.revision);assert.equal(r.value.projectSha256,storedDigest);assert(e.transactions.some(tx=>tx.deleted===key),'IO_WORKER_RECEIPT_ACKNOWLEDGED_CLEANUP_ORACLE');}
