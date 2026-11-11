@@ -1972,11 +1972,22 @@ const HISTORY_LIMITS=Object.freeze({maxCheckpoints:2048,maxCompressedProjectByte
 // worker without History root proofs (after a reload, a lost worker or a new
 // build, and always on another device) verifies every retained version cold.
 // The bound is that cold cost at the declared History limits, from rates
-// measured in Node on the real Stage 30 store of hosted run 42374851354
-// (HISTORY_WATCHDOG_MEASUREMENT), times the hosted runner's slowdown:
+// measured in Node (this repository's container, 2026-11-11) on the real
+// Stage 30 store of hosted run 42374851354: 1,570 versions, 452,833,709 bytes
+// (431.86 MiB) of compressed snapshots, 91,380,133 bytes of retained files.
+//   coldMsPerSnapshotMiB 3638: the slower cold operation, a complete cold
+//     import (1,570,846 ms / 431.86 MiB; a cold export took 1,006,893 ms),
+//     charged wholly to snapshot bytes, so file work is counted twice;
+//   transportMsPerFileMiB 129: per retained-file MiB, export hashing and
+//     classification (3,091 ms / 87.15 MiB) plus base64, gzip and package
+//     digest (55,104 ms per 790.8 MiB of package text, 4/3 text per byte),
+//     from the Stage 30 design's transport-floor export of the same store;
+//   hostedSlowdown 2: the upper end of the 1.5-2x hosted/local factor the
+//     Stage 30 analysis assumes (an assumption, not a measurement).
 //   bound = slowdown * (coldMsPerSnapshotMiB * maxCompressedProjectBytes/MiB
 //                       + transportMsPerFileMiB * maxRetainedFileBytes/MiB)
-const HISTORY_WATCHDOG_MEASUREMENT=Object.freeze({coldMsPerSnapshotMiB:2400,transportMsPerFileMiB:90,hostedSlowdown:2});
+//         = 2 * (3638 * 512 + 129 * 1024) = 3,989,504 ms (about 66.5 minutes).
+const HISTORY_WATCHDOG_MEASUREMENT=Object.freeze({coldMsPerSnapshotMiB:3638,transportMsPerFileMiB:129,hostedSlowdown:2});
 const STORAGE_WORKER_HISTORY_TIMEOUT_MS=Math.ceil(HISTORY_WATCHDOG_MEASUREMENT.hostedSlowdown*(HISTORY_WATCHDOG_MEASUREMENT.coldMsPerSnapshotMiB*HISTORY_LIMITS.maxCompressedProjectBytes/1048576+HISTORY_WATCHDOG_MEASUREMENT.transportMsPerFileMiB*HISTORY_LIMITS.maxRetainedFileBytes/1048576));
 const historyKey=jobId=>'recovery:'+String(jobId);
 const snapshotKey=(jobId,id)=>historyKey(jobId)+':snapshot:'+id;

@@ -3974,7 +3974,7 @@ export const HISTORY_PROOF_REUSE_CASE_IDS=Object.freeze([
  'HISTORY-PROOF-HAPPY-after-export',...HISTORY_PROOF_REUSE_FAULT_CASES.map(id=>'HISTORY-PROOF-FAULT-after-export-'+id),'HISTORY-PROOF-IMPORT-TIER2','HISTORY-PROOF-WORKER-LOSS-AND-RELOAD',
  'HISTORY-PROOF-NESTED-INCOMPATIBLE','HISTORY-PROOF-PERMISSIVE-WRITER','HISTORY-PROOF-RETAINED-CREDENTIAL','HISTORY-PROOF-WATCHDOG']);
 export const HISTORY_PROOF_REUSE_IMPLEMENTATION_FAULTS=Object.freeze({'skip-part-rehash':'HISTORY_PROOF_EQUIVALENCE_ORACLE','skip-descriptor-match':'HISTORY_PROOF_EQUIVALENCE_ORACLE','skip-native-check':'HISTORY_PROOF_EQUIVALENCE_ORACLE','skip-validator-check':'HISTORY_PROOF_EQUIVALENCE_ORACLE','mint-certificate-unchecked':'HISTORY_PROOF_PERMISSIVE_WRITER_ORACLE','ignore-proven-credential':'HISTORY_PROOF_CREDENTIAL_ORACLE','export-in-page':'HISTORY_PROOF_HIT_ORACLE'});
-export const HISTORY_PROOF_REUSE_WATCHDOG_MS=2641920;
+export const HISTORY_PROOF_REUSE_WATCHDOG_MS=3989504;
 export function completeHistoryProofReuse(value){
  if(!value||typeof value!=='object'||Array.isArray(value))return false;
  if(!exactNamedCases(Object.keys(value),['result','synthetic','actualBrowser','transactionAdapter','storageWorkerRealm','productionSourceSha256','watchdogMs','caseCount','cases','faults']))return false;
