@@ -3996,11 +3996,13 @@ async function validateCheckpointArtifacts(jobId,body,readFile,verifiedByteDiges
   if(pairCheck?.validators)mintHistoryPairProof(jobId,body.projectSha256,artifacts,{derived:pairCheck.strict?'STRICT':'NOT_STRICT',derivedAt:pairCheck.at,validators:pairCheck.validators,inputs:pairInputs});
   return {...body,artifacts};
 }
-function bindRestoredCandidates(next,saved,checkpointId,view=null){
+// savedSha256: projectSha256(saved), when the caller computed it in this same
+// synchronous span (importPackage).
+function bindRestoredCandidates(next,saved,checkpointId,view=null,savedSha256=null){
   // Only response bytes already present in this complete checkpoint may be
   // revalidated locally. A newly arriving response never acquires this binding.
   const proposals=saved.projectData?.responseProposals||[],raws=saved.projectData?.rawResponses||[];
-  next.restoredCandidates={activationId:next.historyActivationId,activationRevision:next.revision,checkpointId,sourceProjectSha256:projectSha256(saved),proposals:{},rawResponses:{},selectedFiles:{}};
+  next.restoredCandidates={activationId:next.historyActivationId,activationRevision:next.revision,checkpointId,sourceProjectSha256:savedSha256??projectSha256(saved),proposals:{},rawResponses:{},selectedFiles:{}};
   for(const raw of raws){if(!['PRESERVED','VALIDATION_FAILED','VALIDATED_PENDING_REVIEW'].includes(raw.status)||hash.sha256Text(raw.completeRawResponse)!==raw.sha256)continue;next.restoredCandidates.rawResponses[raw.rawResponseId]={rawResponseId:raw.rawResponseId,rawSha256:raw.sha256,promptId:raw.promptInstructionId,sourceRevision:Number(raw.promptScope?.projectRevision)};}
   for(const selection of Object.values(view?.fileSelections||{})){if(selection.kind!=='response'||selection.jobId!==projectIdentity(saved)||!selection.promptId)continue;for(const file of selection.files)next.restoredCandidates.selectedFiles[file.artifactId]={rawSha256:file.sha256,promptId:selection.promptId,stage:selection.stage,sourceRevision:Number((saved.projectData?.generatedPrompts||[]).find(prompt=>(prompt.instructionId||prompt.promptId)===selection.promptId)?.scope?.projectRevision)};}
   for(const proposal of proposals){
@@ -5116,14 +5118,29 @@ async function importPackage(blob,{operationId=null,passphrase=null,pendingBacku
   if(!(projectSourceBlob instanceof Blob))throw storageError('The imported project source bytes are unavailable.','SOURCE_ARCHIVE_INTEGRITY_FAILED');
   const packageSourceSha256=await hash.sha256Bytes(blob),extensionSources=await preparePackageExtensionSources(id,packageMembers,rootMemberCounts,packageSourceSha256,packageSha256);
   const importSourceRows=[],importSource=await retainProjectSource(next,{blob:projectSourceBlob,payload:project,sourceSha256:packageSourceSha256,sourceEncoding:'UTF-8',sourceLocation:{jsonPointer:'/project',containerEncoding:'gzip'},parserIdentity:'closed-loop-project-package-json-reader',parserVersion:'1'},importSourceRows,{recordProject:false});
-  if(body.recovery&&body.recovery.activeProjectSha256!==projectSha256(project))throw storageError('Backup active project does not match its recovery version.','HISTORY_VERSION_MISMATCH');
+  // The package project's digest, computed once for the recovery check and
+  // bindRestoredCandidates in one synchronous span: between them no await
+  // runs and no replaceable code receives project (the view file check reads
+  // the view and files; a view without a pending correction is returned
+  // unchanged). A pending correction is rebased through replaceable code, so
+  // its project is then digested anew. Values and throw positions are the
+  // ones of a digest at each site.
+  let packageProjectSha256=null;const packageProjectDigest=()=>packageProjectSha256??=projectSha256(project);
+  if(body.recovery&&body.recovery.activeProjectSha256!==packageProjectDigest())throw storageError('Backup active project does not match its recovery version.','HISTORY_VERSION_MISMATCH');
   assertRecoveryViewFiles(id,importedView,activeArtifacts);
+  const viewRebased=Boolean(importedView?.pendingMutation);
   importedView=rebaseHistoryView(project,importedView);
-  bindRestoredCandidates(next,project,importedActive?body.recovery?.activeId||null:null,importedView);
+  bindRestoredCandidates(next,project,importedActive?body.recovery?.activeId||null:null,importedView,viewRebased?null:packageProjectDigest());
   withVerifiedRecoveryCustody(activeArtifacts,()=>{next=recalculateChangedProjection(next,{sourceProjectSha256:manifest.projectSha256});assertProjectIntegrity(next);});
   importedView=rebaseHistoryView(next,importedView);
-  let prepared;
-  if(importedActive&&historyWorkSha256(importedActive.project)===historyWorkSha256(project)&&historyArtifactsSha256(importedActive.artifacts)===historyArtifactsSha256(activeArtifacts)){
+  // The work comparison of the active version, computed once: the source
+  // reference below reuses it only after activating that existing version,
+  // whose branch runs no await and hands neither project to replaceable code
+  // (reconcileRecoveryTransfers reads rows of next, a separate copy). After
+  // a new version's preparation, an await, it is computed again.
+  let prepared,activatedExisting=false;
+  const activeWorkMatches=Boolean(importedActive)&&historyWorkSha256(importedActive.project)===historyWorkSha256(project);
+  if(activeWorkMatches&&historyArtifactsSha256(importedActive.artifacts)===historyArtifactsSha256(activeArtifacts)){activatedExisting=true;
     // Activating an existing complete version needs no additional retention
     // slot, exactly as Undo and native history restoration do.
     merged.activeProjectSha256=projectSha256(next);merged.activeRevision=next.revision;merged.activeViewOverride=importedView;merged.title=String(next.job?.JOB_TITLE||'');merged.removed=false;merged.redo=[];merged.generation=Number(localState?.generation||0)+1;reconcileRecoveryTransfers(merged,next);
@@ -5136,7 +5153,7 @@ async function importPackage(blob,{operationId=null,passphrase=null,pendingBacku
   // record the exact bytes from which this activation was read.
   const sourceRow=importSourceRows[0],sourceKey=hash.sha256Value(importSource);
   let sourceReference=null;
-  if(importedActive&&historyWorkSha256(importedActive.project)===historyWorkSha256(project)){
+  if(importedActive&&(activatedExisting?activeWorkMatches:historyWorkSha256(importedActive.project)===historyWorkSha256(project))){
     const checkpoint=prepared.state.entries.find(entry=>entry.id===body.recovery.activeId),activation=Object.fromEntries(HISTORY_ACTIVATION_FIELDS.filter(key=>Object.hasOwn(project,key)).map(key=>[key,clone(project[key])])),reference={schema:HISTORY_SOURCE_REFERENCE,checkpointId:checkpoint.id,snapshotSha256:checkpoint.sha256,activation};
     // Equality is proved against the actual received bytes before sharing.
     // Different whitespace, escapes, number spelling, and unknown extension
