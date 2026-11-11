@@ -18,6 +18,20 @@ export const WRITE_WALK_PINS=Object.freeze({
  firstOperationalWrite:Object.freeze({walks:59,copies:12,digestScopes:0}),
  operationalWrite:Object.freeze({walks:57,copies:12,digestScopes:0})
 });
+// The same commands in a storage-worker realm. Each measured write follows a
+// write whose root no checkpoint consumed, so the lazy first use of that
+// root's write certificate (firstUsePendingWriteRoot, which mints its History
+// root proof) runs inside it: one writeRootBytesVerified call (its
+// rootBytesWalksPerCall walks, plus the private copy of the restored root,
+// one copy and its walk) moves from the next checkpoint into the next write:
+// +4 walks and +1 copy per such write, checkpoints unchanged.
+export const WRITE_WALK_WORKER_PINS=Object.freeze({
+ canonicalWrite:Object.freeze({walks:30,copies:9,digestScopes:0,rootBytesCalls:1}),
+ firstOperationalWrite:Object.freeze({walks:63,copies:13,digestScopes:0,rootBytesCalls:1}),
+ operationalWrite:Object.freeze({walks:61,copies:13,digestScopes:0,rootBytesCalls:1}),
+ 'viewCheckpoint:Project':Object.freeze({walks:28,copies:2,digestScopes:0,rootBytesCalls:1}),
+ 'viewCheckpoint:Workflow':Object.freeze({walks:24,copies:1,digestScopes:0,rootBytesCalls:0})
+});
 // Walks at the sites whose double walks were removed. The operational History
 // candidate is its own bound pair snapshot: each of the four pair checks walks
 // it once. A write-certified root's snapshot is walked once per use for both
@@ -55,9 +69,12 @@ function summarize(passes){
   rootBytesCalls:passes.filter(row=>row.kind==='call:writeRootBytesVerified').length};
 }
 // Runs the commands and returns the observed passes per command.
-export async function measureWriteWalks({source=fs.readFileSync(new URL('./project-store.js',import.meta.url),'utf8'),hashSource=fs.readFileSync(new URL('./hash.js',import.meta.url),'utf8')}={}){
+// workerRealm runs the same commands in a storage-worker realm
+// (project-store.js?storeWorker=1), where History root proofs are minted.
+export async function measureWriteWalks({source=fs.readFileSync(new URL('./project-store.js',import.meta.url),'utf8'),hashSource=fs.readFileSync(new URL('./hash.js',import.meta.url),'utf8'),workerRealm=false}={}){
  const instrumented=instrumentWriteWalks(source,hashSource);let passes=[];
- const r=projectStoreRuntime({storageWorker:false,sourceOverrides:{'project-store.js':instrumented.source,'hash.js':instrumented.hashSource},environment:{__walkThreshold:Infinity,__recordPass:(kind,frames)=>passes.push({kind,frames:[...frames]})}});
+ const worker=workerRealm?{location:{search:'?storeWorker=1&v=WRITE-WALK-COUNTS'},URLSearchParams,importScripts(){},addEventListener(){},postMessage(){}}:{};
+ const r=projectStoreRuntime({storageWorker:false,sourceOverrides:{'project-store.js':instrumented.source,'hash.js':instrumented.hashSource},environment:{...worker,__walkThreshold:Infinity,__recordPass:(kind,frames)=>passes.push({kind,frames:[...frames]})}});
  r.runtime.Error.stackTraceLimit=Math.max(Number(r.runtime.Error.stackTraceLimit)||0,16);
  const measure=async command=>{passes=[];const result=await command();return {result,observed:summarize(passes)};};
  let p=await r.store.createProject({commandId:'WRITE-WALK-COUNTS'});p.job.JOB_TITLE='Exact walk count title '+'independent retained content '.repeat(300);r.engine.recalculate(p);
@@ -263,8 +280,15 @@ export async function verifyWriteWalkCounts(options={}){
   assert.equal(row.rootContinuationWalks,row.rootContinuationCalls*WRITE_SITE_PINS.rootContinuationWalksPerCall,'WRITE_WALK_ROOT_CONTINUATION_ORACLE: '+row.command);
   assert.equal(row.rootBytesWalks,row.rootBytesCalls*WRITE_SITE_PINS.rootBytesWalksPerCall,'WRITE_WALK_ROOT_BYTES_ORACLE: '+row.command);
  }
+ const worker=await measureWriteWalks({...options,workerRealm:true});
+ assert.deepEqual(worker.cases.map(row=>row.command),Object.keys(WRITE_WALK_WORKER_PINS),'WRITE_WALK_WORKER_FIXTURE_ORACLE');
+ for(const row of worker.cases){
+  const pin=WRITE_WALK_WORKER_PINS[row.command];
+  assert.deepEqual({walks:row.walks,copies:row.copies,digestScopes:row.digestScopes,rootBytesCalls:row.rootBytesCalls},{...pin},'WRITE_WALK_WORKER_PIN_ORACLE: '+row.command);
+  assert.equal(row.rootBytesWalks,row.rootBytesCalls*WRITE_SITE_PINS.rootBytesWalksPerCall,'WRITE_WALK_ROOT_BYTES_ORACLE worker: '+row.command);
+ }
  await verifyWriteDigestPreflights();await verifyOperationalWriteWitnesses();
- return {passed:true,projectNodes,walkThreshold,pins:WRITE_WALK_PINS,sitePins:WRITE_SITE_PINS,cases,boundary:'In-memory instrumented production store and hash sources over the transaction adapter; counts whole-project graph walks and copies per command, not time.'};
+ return {passed:true,projectNodes,walkThreshold,pins:WRITE_WALK_PINS,workerPins:WRITE_WALK_WORKER_PINS,sitePins:WRITE_SITE_PINS,cases,workerCases:worker.cases,boundary:'In-memory instrumented production store and hash sources over the transaction adapter; counts whole-project graph walks and copies per command, not time.'};
 }
 // Intended faults: each restores one removed pass and must fail its pin.
 export const WRITE_WALK_FAULTS=Object.freeze({
@@ -274,7 +298,8 @@ export const WRITE_WALK_FAULTS=Object.freeze({
  'root-continuation-double-walk':['verifiedValueMatchesNodes(proof.snapshot,snapshotNodes,canonicalProject(read.project))','verifiedValuesEqual(proof.snapshot,canonicalProject(read.project))','WRITE_WALK_ROOT_CONTINUATION_ORACLE'],
  'uncaptured-private-receipts':['if(capture!==CAPTURED_PROJECT_INTEGRITY)return {kind:VERIFIED_PROJECT_INTEGRITY,','if(true)return {kind:VERIFIED_PROJECT_INTEGRITY,','WRITE_WALK_COUNT_PIN_ORACLE'],
  'uncaptured-source-copies':['function capturedPrivateCopy(value){','function capturedPrivateCopy(value){return copyVerifiedTree(value);','WRITE_WALK_COUNT_PIN_ORACLE'],
- 'root-bytes-double-walk':['verifiedValueMatchesNodes(proof.snapshot,snapshotNodes,proof.project)){unverifiedWriteRoots.delete(proof);','verifiedValuesEqual(proof.snapshot,proof.project)){unverifiedWriteRoots.delete(proof);','WRITE_WALK_ROOT_BYTES_ORACLE']
+ 'root-bytes-double-walk':['verifiedValueMatchesNodes(proof.snapshot,snapshotNodes,proof.project)){unverifiedWriteRoots.delete(proof);','verifiedValuesEqual(proof.snapshot,proof.project)){unverifiedWriteRoots.delete(proof);','WRITE_WALK_ROOT_BYTES_ORACLE'],
+ 'skip-lazy-first-use':['async function firstUsePendingWriteRoot(){\n','async function firstUsePendingWriteRoot(){return;\n','WRITE_WALK_WORKER_PIN_ORACLE']
 });
 export async function verifyWriteWalkCountFaults({source=fs.readFileSync(new URL('./project-store.js',import.meta.url),'utf8')}={}){
  const faults=[];
