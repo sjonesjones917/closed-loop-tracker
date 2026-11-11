@@ -53,6 +53,7 @@ const suites=[
  "verify-file-correction-faults.mjs",
  "verify-history-view-cost.mjs",
  "verify-history-project-references.mjs",
+ "verify-history-proof-reuse.mjs",
  "verify-quarantine-recovery.mjs",
  "verify-integrity-recovery-faults.mjs",
  "verify-ui-persistence-preconditions.mjs",
@@ -474,9 +475,9 @@ async function verifyCounterpartRestoredBudget(directory){
 }
 function verifyConformanceGroups(){
  const groups=Object.values(conformanceGroups),population=groups.flat();
- assert.equal(suites.length,88,'CONFORMANCE_FULL_POPULATION_ORACLE');
+ assert.equal(suites.length,89,'CONFORMANCE_FULL_POPULATION_ORACLE');
  assert.deepEqual(Object.keys(conformanceGroups),['core','creation','counterpart'],'CONFORMANCE_GROUP_POPULATION_ORACLE');
- assert.deepEqual(groups.map(group=>group.length),[84,2,2],'CONFORMANCE_GROUP_POPULATION_ORACLE');
+ assert.deepEqual(groups.map(group=>group.length),[85,2,2],'CONFORMANCE_GROUP_POPULATION_ORACLE');
  assert.equal(new Set(population).size,population.length,'CONFORMANCE_GROUP_DISJOINT_ORACLE');
  assert.deepEqual([...population].sort(),[...suites].sort(),'CONFORMANCE_GROUP_UNION_ORACLE');
  assert.ok(Object.isFrozen(suites)&&Object.isFrozen(conformanceGroups)&&groups.every(Object.isFrozen),'CONFORMANCE_GROUP_IMMUTABLE_ORACLE');

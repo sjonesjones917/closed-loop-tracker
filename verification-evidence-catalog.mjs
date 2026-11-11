@@ -3962,3 +3962,37 @@ verificationCatalog['verify-final-acceptance.mjs'].checks.push(check(
   )
  }
 ));
+// History root proof reuse (verify-history-proof-reuse.mjs): a proof-holding
+// storage worker must export exactly as a fresh cold runtime under every
+// listed fault, never mint from a refused or permissively written root, skip
+// the decode of proven entries, carry Tier 2 proofs into a same-session import
+// and pin the measured History watchdog. Literal populations, never derived
+// from the report under test.
+export const HISTORY_PROOF_REUSE_FAULT_CASES=Object.freeze(['snapshot-root-bytes','snapshot-reference-bytes','part-bytes','part-removed','N1-state-form-digest','N2-record-part-size','N3-both-fields','N3-reference-digest','N3-uppercase-digest','N3-short-digest','N4-unretained-part','entry-parent','entry-label','entry-created-at','entry-view-stage','entry-view-digest','entry-project-reference','entry-work-digest','record-label','record-parent','stale-manifest-active','stale-manifest-snapshot','swap-text-encoder','swap-hash-sha256-bytes','swap-json-parse','swap-json-parse-benign','swap-decompression-stream','swap-decompression-stream-benign','swap-blob-array-buffer','validator-engine-property','validator-schema-definition','concurrent-generation-bump']);
+export const HISTORY_PROOF_REUSE_CASE_IDS=Object.freeze([
+ 'HISTORY-PROOF-HAPPY-write-checkpoint-flow',...HISTORY_PROOF_REUSE_FAULT_CASES.map(id=>'HISTORY-PROOF-FAULT-write-checkpoint-flow-'+id),
+ 'HISTORY-PROOF-HAPPY-after-export',...HISTORY_PROOF_REUSE_FAULT_CASES.map(id=>'HISTORY-PROOF-FAULT-after-export-'+id),'HISTORY-PROOF-IMPORT-TIER2','HISTORY-PROOF-WORKER-LOSS-AND-RELOAD',
+ 'HISTORY-PROOF-NESTED-INCOMPATIBLE','HISTORY-PROOF-PERMISSIVE-WRITER','HISTORY-PROOF-WATCHDOG']);
+export const HISTORY_PROOF_REUSE_IMPLEMENTATION_FAULTS=Object.freeze({'skip-part-rehash':'HISTORY_PROOF_EQUIVALENCE_ORACLE','skip-descriptor-match':'HISTORY_PROOF_EQUIVALENCE_ORACLE','skip-native-check':'HISTORY_PROOF_EQUIVALENCE_ORACLE','skip-validator-check':'HISTORY_PROOF_EQUIVALENCE_ORACLE','mint-certificate-unchecked':'HISTORY_PROOF_PERMISSIVE_WRITER_ORACLE','export-in-page':'HISTORY_PROOF_HIT_ORACLE'});
+export const HISTORY_PROOF_REUSE_WATCHDOG_MS=2641920;
+export function completeHistoryProofReuse(value){
+ if(!value||typeof value!=='object'||Array.isArray(value))return false;
+ if(!exactNamedCases(Object.keys(value),['result','synthetic','actualBrowser','transactionAdapter','storageWorkerRealm','productionSourceSha256','watchdogMs','caseCount','cases','faults']))return false;
+ if(value.result!=='PASS'||value.synthetic!==true||value.actualBrowser!==false||value.transactionAdapter!==true||value.storageWorkerRealm!==true||!/^[a-f0-9]{64}$/.test(value.productionSourceSha256||'')||value.watchdogMs!==HISTORY_PROOF_REUSE_WATCHDOG_MS)return false;
+ if(!Array.isArray(value.cases)||value.caseCount!==value.cases.length||!isDeepStrictEqual(value.cases.map(row=>row?.caseId),[...HISTORY_PROOF_REUSE_CASE_IDS])||!value.cases.every(row=>row.result==='PASS'))return false;
+ const row=id=>value.cases.find(entry=>entry.caseId===id);
+ for(const origin of ['write-checkpoint-flow','after-export']){
+  const happy=row('HISTORY-PROOF-HAPPY-'+origin);
+  if(happy.bytesEqualCold!==true||happy.coldRoots!==0||!Number.isSafeInteger(happy.entries)||happy.entries<8||!Number.isSafeInteger(happy.proofs)||happy.exportHits!==(origin==='after-export'?happy.entries:happy.proofs)||origin==='after-export'&&(happy.decodes!==0||happy.proofs!==happy.entries))return false;
+  for(const id of HISTORY_PROOF_REUSE_FAULT_CASES)if(row('HISTORY-PROOF-FAULT-'+origin+'-'+id).coldFallback!==true)return false;
+ }
+ const tier2=row('HISTORY-PROOF-IMPORT-TIER2'),loss=row('HISTORY-PROOF-WORKER-LOSS-AND-RELOAD'),nested=row('HISTORY-PROOF-NESTED-INCOMPATIBLE'),permissive=row('HISTORY-PROOF-PERMISSIVE-WRITER'),watchdog=row('HISTORY-PROOF-WATCHDOG');
+ if(tier2.identical!==true||!(tier2.importHits>0)||!(tier2.coldRoots<tier2.freshColdRoots))return false;
+ if(loss.correct!==true||!(loss.lostColdRoots>0)||!(loss.reloadColdRoots>0))return false;
+ if(nested.minted!==false||nested.code!=='PROJECT_INTEGRITY_FAILED'||!(nested.issueCount>0))return false;
+ if(permissive.minted!==false||permissive.code!=='PROJECT_INTEGRITY_FAILED')return false;
+ if(watchdog.historyTimeoutMs!==HISTORY_PROOF_REUSE_WATCHDOG_MS||watchdog.commandTimeoutMs!==600000)return false;
+ const names=Object.keys(HISTORY_PROOF_REUSE_IMPLEMENTATION_FAULTS);
+ return Array.isArray(value.faults)&&isDeepStrictEqual(value.faults.map(fault=>fault?.fault),names)&&value.faults.every(fault=>closedReportFields(fault,['fault','detected','oracle'])&&fault.detected===true&&fault.oracle===HISTORY_PROOF_REUSE_IMPLEMENTATION_FAULTS[fault.fault]);
+}
+verificationCatalog['verify-history-proof-reuse.mjs']={boundary:'Production page and storage-worker store realms over one transaction-adapter database (production requestStoreWorker path); History root proofs observed by in-memory instrumentation; no native browser, IndexedDB or worker isolation claim',sourceInputs:['verify-history-proof-reuse.mjs','test-project-store-runtime.mjs','verifier-runtime.mjs','project-store.js','hash.js','workflow-schema.js','workflow-engine.js','response-ingestion.js','prompt-engine.js','test-runtime.js','workbook.js','app-core.js'],checks:[check('history.root-proof-reuse','historyProofReuse','historyProofReuse',undefined,'verify-history-proof-reuse.mjs: every listed fault applied in ONE proof-holding worker exports exactly as a fresh cold runtime; refused and permissively written roots never mint; proven entries skip their decode; Tier 2 same-session import equals a cold import; worker loss and reload export cold; the History watchdog is pinned',{expectedDescription:'71 named cases (two proof-holding states x 32 faults, happy paths, Tier 2 import, worker loss and reload, nested incompatible checkpoint, permissive writer, watchdog) and all six implementation faults detected by their oracles',condition:completeHistoryProofReuse})]};
