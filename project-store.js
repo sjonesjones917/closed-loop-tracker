@@ -4087,7 +4087,9 @@ async function exportPackage(jobId,{passphrase=null,historyRecovery=false}={}){
   const captured=await readExportSnapshot(jobId),{project,artifacts}=captured,recovery=captured.recovery?clone(captured.recovery):null,artifactEntries=[],fileContents=new WeakMap();assertPackageArtifactCustody(project,artifacts);
   let requiresEncryption=historyRecovery||containsCredentialSecret(project)||artifacts.some(containsCredentialSecret);
   const compatibilityObservations=[];
-  const classifiedProjectParts=new Map(),verifiedHistoryRoots=new Map(),verifiedHistoryParts=new Map();let previousHistoryRootId=null;
+  // As in import, a root that a view reference names is kept once its own
+  // entry has been verified, so that reference does not decode it again.
+  const classifiedProjectParts=new Map(),verifiedHistoryRoots=new Map((recovery?.entries||[]).filter(entry=>entry?.projectReference).map(entry=>[entry.projectReference.checkpointId,null])),verifiedHistoryParts=new Map();let previousHistoryRootId=null;
   if(recovery&&recovery.activeProjectSha256!==project.projectSha256)throw storageError('Project changed while assembling its backup. Retry from the current version.','STALE_PROJECT_REVISION');
   async function member(a){
     const actualSize=a.blob.size,actualSha256=await hash.sha256Bytes(a.blob);

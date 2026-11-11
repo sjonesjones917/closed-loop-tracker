@@ -254,7 +254,18 @@ for(let i=0;i<3;i++){
  const viewId=await boundedWriter.store.saveCheckpoint(boundedProject.job.JOB_ID,{expectedProjectRevision:boundedProject.revision,view:boundedWriter.copy({activeView:'Workflow',activeStage:1,scrollY:i+1})});
  retainedStates.push({id:viewId,project:boundedWriter.copy(boundedProject)});
 }
-const boundedExport=await boundedWriter.store.exportPackage(boundedProject.job.JOB_ID),boundedArchive=JSON.parse(gunzipSync(Buffer.from(await boundedExport.arrayBuffer())).toString('utf8'));
+// Export verifies each complete root once. A view reference that follows its
+// root reuses that verification instead of decoding the root a second time;
+// at Stage 30 the repeat decodes alone cost several minutes per backup.
+boundedWriter.runtime.__verifiedHistoryRoots=[];
+const boundedExport=await boundedWriter.store.exportPackage(boundedProject.job.JOB_ID);
+{const exportValidations=Array.from(boundedWriter.runtime.__verifiedHistoryRoots);delete boundedWriter.runtime.__verifiedHistoryRoots;
+ const writerEntries=(await boundedWriter.store.metaGet('recovery:'+boundedProject.job.JOB_ID)).entries,completeRoots=writerEntries.filter(entry=>!entry.projectReference).length;
+ assert.ok(writerEntries.some(entry=>entry.projectReference)&&completeRoots===3,'HISTORY_EXPORT_ROOT_REUSE_FIXTURE_ORACLE: the fixture needs three complete roots, each followed by a view reference');
+ console.error(JSON.stringify({caseId:'HISTORY-EXPORT-ROOT-REUSE',validations:exportValidations.length,completeRoots}));
+ assert.equal(new Set(exportValidations.map(root=>root.snapshotSha256)).size,completeRoots,'HISTORY_EXPORT_ROOT_REUSE_ORACLE: an export must still validate every complete root');
+ assert.equal(exportValidations.length,completeRoots,'HISTORY_EXPORT_ROOT_REUSE_ORACLE: an export must validate each complete root once; a view reference must reuse the root its own entry just verified');}
+const boundedArchive=JSON.parse(gunzipSync(Buffer.from(await boundedExport.arrayBuffer())).toString('utf8'));
 boundedArchive.recovery.entries.sort((a,b)=>Number(Boolean(a.projectReference))-Number(Boolean(b.projectReference)));delete boundedArchive.packageSha256;
 const groupedBody={...boundedArchive,packageSha256:r.runtime.closedLoopHash.sha256Value(r.copy(boundedArchive))},groupedBlob=new Blob([gzipSync(Buffer.from(JSON.stringify(groupedBody)))],{type:'application/gzip'}),boundedReader=make();
 boundedReader.runtime.__historyRootResidency=[];boundedReader.runtime.__verifiedHistoryRoots=[];boundedReader.runtime.__historyDigestReads=[];
