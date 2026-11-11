@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {createHash} from 'node:crypto';
 import {performance} from 'node:perf_hooks';
+import {historyListFiles} from './test-history-part-files.mjs';
 import {projectStoreRuntime} from './test-project-store-runtime.mjs';
 
 export const HISTORY_STATIC_READ_FAULTS=Object.freeze({
@@ -57,7 +58,7 @@ for(const mode of ['repeat-public-cold','snapshot-corrupt','snapshot-descriptor'
  const before=r.copy([...r.rows].map(([family,rows])=>[family,[...rows]]));let error=null;
  if(mode==='snapshot-corrupt'){const row=meta.get(historyKey+':snapshot:'+active.id);row.value.blob=new Blob(['x'.repeat(row.value.byteSize)]);error='HISTORY_SNAPSHOT_INTEGRITY_FAILED';}
  if(mode==='snapshot-descriptor'){meta.get(historyKey+':snapshot:'+active.id).value.label='Changed descriptor';error='HISTORY_VERSION_MISMATCH';}
- if(mode==='part-corrupt'){assert.ok(root,'HISTORY_PART_FIXTURE_ORACLE');const part=meta.get(historyKey+':snapshot:'+root.id).value.projectParts.entries[0];const row=meta.get(historyKey+':bytes:'+part.sha256);row.value.blob=new Blob(['x'.repeat(row.value.blob.size)]);error='HISTORY_FILE_INTEGRITY_FAILED';}
+ if(mode==='part-corrupt'){assert.ok(root,'HISTORY_PART_FIXTURE_ORACLE');const part=historyListFiles(meta.get(historyKey+':snapshot:'+root.id).value.projectParts)[0];const row=meta.get(historyKey+':bytes:'+part.sha256);row.value.blob=new Blob(['x'.repeat(row.value.blob.size)]);error='HISTORY_FILE_INTEGRITY_FAILED';}
  if(mode==='artifact-corrupt'||mode==='missing-artifact'){const file=[...meta].find(([key,row])=>key.startsWith(historyKey+':bytes:')&&row.value.blob.size===29);assert.ok(file,'HISTORY_ARTIFACT_FIXTURE_ORACLE');if(mode==='missing-artifact')meta.delete(file[0]);else file[1].value.blob=new Blob(['x'.repeat(29)]);error='HISTORY_FILE_INTEGRITY_FAILED';}
  if(mode.startsWith('changed-')){r.runtime.__historyAfterHydration=async project=>{delete r.runtime.__historyAfterHydration;if(mode==='changed-static-after-await')project.stageCount=29;if(mode==='changed-derived-after-await')project.stages[1].gate.complete=true;if(mode==='changed-definition-after-await')project.projectData.applicationProjection.receipt.derivationId='SYNTHETIC_UNKNOWN';};error='HISTORY_VERSION_INCOMPATIBLE';}
  const execute=()=>r.store.readHistoryView(jobId);

@@ -31,11 +31,12 @@ if(process.argv.includes('--owner-receipt-controls')){
   'Inline historical classification retains its existing protection',
   'Literal JSON-looking text is not promoted into a credential classification',
   'Missing referenced JSON bytes reject instead of bypassing the protection decision',
-  'Same-size corrupt referenced JSON bytes reject at their byte-identity boundary'
+  'Same-size corrupt referenced JSON bytes reject at their byte-identity boundary',
+  'A classified record inside a retained array segment blocks plaintext export and restores exactly'
  ];
  const fixture={synthetic:true,actualBrowser:false,testedArtifactBytes:65539,testedLargeArtifactBytes:6291459,encryptedBackupBytes:9000000,cases:originalNames.map(name=>({name,result:'PASS'})),credentialHistoryParts:{status:'PASS',synthetic:true,actualBrowser:false,cases:partNames.map(name=>({name,result:'PASS'}))}},checks=verificationCatalog[suite].checks,cases=[];
  const accepts=report=>checks.every(check=>check.condition(check.path.split('.').reduce((value,key)=>value?.[key],report),report));
- assert.equal(checks.length,17,'ENCRYPTION_CATALOG_POPULATION_ORACLE');assert.equal(accepts(fixture),true,'ENCRYPTION_CATALOG_CONTROL_ORACLE');
+ assert.equal(checks.length,18,'ENCRYPTION_CATALOG_POPULATION_ORACLE');assert.equal(accepts(fixture),true,'ENCRYPTION_CATALOG_CONTROL_ORACLE');
  for(const [group,names]of [['cases',originalNames],['credentialHistoryParts',partNames]])for(const name of names)for(const kind of ['missing','failed','duplicate']){
   const changed=structuredClone(fixture),rows=group==='cases'?changed.cases:changed.credentialHistoryParts.cases,index=rows.findIndex(row=>row.name===name);
   if(kind==='missing')rows.splice(index,1);else if(kind==='failed')rows[index].result='FAIL';else rows.push({...rows[index]});
@@ -54,7 +55,7 @@ if(process.argv.includes('--owner-receipt-controls')){
  console.log(JSON.stringify({encryptedOwnerReceiptControls:'PASS',syntheticReceiptUnitFixtures:true,producerExecuted:false,cases},null,2));
 }else{
 const cases=[];
-for(const [fault,oracle] of [['secret','SECRET_EXPORT_ORACLE'],['history','RETAINED_SECRET_ORACLE'],['base64-stack','ENCRYPTED_LARGE_GRAMMAR_ORACLE']]){
+for(const [fault,oracle] of [['secret','SECRET_EXPORT_ORACLE'],['history','RETAINED_SECRET_ORACLE'],['segment','SEGMENTED_RETAINED_SECRET_ORACLE'],['base64-stack','ENCRYPTED_LARGE_GRAMMAR_ORACLE']]){
  const run=(await runVerifier(process.execPath,['verify-encrypted-backups.mjs','--fault='+fault],{encoding:'utf8',maxBuffer:16*1024*1024}));assertDetectedFault(run,oracle,'Encryption fault was not detected: '+fault);assert.ok((run.stdout+run.stderr).includes(oracle),'The fault failed for an unrelated reason: '+run.stderr);cases.push({fault,oracle,result:'DETECTED'});
 }
 const restored=await restoredPositive();assert.equal(restored.synthetic,true);assert.equal(restored.actualBrowser,false);

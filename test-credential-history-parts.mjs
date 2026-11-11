@@ -81,5 +81,28 @@ export async function verifyCredentialHistoryParts({sourceOverrides={}}={}){
  assert.equal(JSON.stringify(await packed.store.metaGet('lastVerifiedExport:'+packed.jobId)),priorExport,'PACKED_SECRET_CORRUPT_NO_EXPORT_RECEIPT_ORACLE');
  assert.equal(JSON.stringify(await packed.store.historyList(packed.jobId)),priorHistory,'PACKED_SECRET_CORRUPT_HISTORY_UNCHANGED_ORACLE');
  rows.set(key,original);note('Same-size corrupt referenced JSON bytes reject at their byte-identity boundary');
+
+ // A record array of a /2 root is stored as segments: the classified record
+ // lives only in a segment file, never in the snapshot skeleton. Export must
+ // classify, export and scan every segment like a part.
+ const segmentRecords=Array.from({length:420},(_,index)=>({id:'SYNTHETIC-RECORD-'+index,text:'Synthetic ordinary record '+index+' '+'.'.repeat(160)}));
+ segmentRecords.splice(211,0,{id:'SYNTHETIC-RECORD-CLASSIFIED',disclosureClassification:'CREDENTIAL_SECRET',value:'SYNTHETIC-SEGMENT-SECRET-NOT-A-REAL-CREDENTIAL'});
+ const segmented=await prepare('SEGMENTED',{records:segmentRecords});
+ const segmentRecord=await segmented.store.metaGet('recovery:'+segmented.jobId+':snapshot:'+segmented.entry.id),segmentsEntry=segmentRecord?.projectParts?.entries.find(row=>row.segments&&JSON.stringify(row.path)===JSON.stringify(['vendorExtension','retained','records']));
+ assert.ok(segmentRecord.projectParts.schema==='closed-loop-recovery-project-parts/2'&&segmentsEntry?.segments.length>1,'SEGMENTED_CREDENTIAL_PREREQUISITE');
+ const segmentTexts=await Promise.all(segmentsEntry.segments.map(async segment=>(await segmented.store.metaGet('recovery:'+segmented.jobId+':bytes:'+segment.sha256)).blob.text()));
+ assert.equal(segmentTexts.filter(text=>text.includes('CREDENTIAL_SECRET')).length,1,'SEGMENTED_CREDENTIAL_IN_ONE_SEGMENT_PREREQUISITE');
+ const segmentSkeleton=gunzipSync(Buffer.from(await segmented.r.rows.get('meta').get('recovery:'+segmented.jobId+':snapshot:'+segmented.entry.id).value.blob.arrayBuffer())).toString();
+ assert.equal(segmentSkeleton.includes('CREDENTIAL_SECRET'),false,'SEGMENTED_CREDENTIAL_NOT_IN_SKELETON_PREREQUISITE');
+ await assert.rejects(segmented.store.exportPackage(segmented.jobId),error=>error.code==='BACKUP_PASSPHRASE_REQUIRED','SEGMENTED_CURRENT_SECRET_ORACLE');
+ await segmented.leaveInHistory();
+ const segmentedBefore=JSON.stringify(await segmented.store.historyList(segmented.jobId));
+ await assert.rejects(segmented.store.exportPackage(segmented.jobId),error=>error.code==='BACKUP_PASSPHRASE_REQUIRED','SEGMENTED_RETAINED_SECRET_ORACLE');
+ assert.equal(await segmented.store.metaGet('lastVerifiedExport:'+segmented.jobId),undefined,'SEGMENTED_SECRET_NO_SUCCESS_RECEIPT_ORACLE');
+ assert.equal(JSON.stringify(await segmented.store.historyList(segmented.jobId)),segmentedBefore,'SEGMENTED_SECRET_HISTORY_UNCHANGED_ORACLE');
+ const segmentedBackup=await segmented.store.exportPackage(segmented.jobId,{passphrase}),segmentedFresh=projectStoreRuntime({sourceOverrides,storageWorker:false}),segmentedImported=await segmentedFresh.store.importPackage(segmentedBackup,{passphrase});
+ const segmentedRestored=await segmentedFresh.store.restoreCheckpoint(segmentedImported.job.JOB_ID,segmented.entry.id,{expectedProjectRevision:segmentedImported.revision});
+ assert.deepEqual(JSON.parse(JSON.stringify(segmentedRestored.project.vendorExtension.retained.records)),segmentRecords,'SEGMENTED_SECRET_EXACT_RESTORE_ORACLE');
+ note('A classified record inside a retained array segment blocks plaintext export and restores exactly');
  return {status:'PASS',synthetic:true,actualBrowser:false,boundary:'Production store/History/encrypted export/import/restore through existing transaction adapter',cases};
 }

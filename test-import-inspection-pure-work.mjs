@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {createHash} from 'node:crypto';
 import {gzipSync,gunzipSync} from 'node:zlib';
+import {rebuildHistoryProject,historyListFiles,historyValueEntries} from './test-history-part-files.mjs';
 import {projectStoreRuntime} from './test-project-store-runtime.mjs';
 import {artifactFixtureId} from './test-artifact-fixtures.mjs';
 
@@ -55,8 +56,8 @@ export async function verifyImportInspectionPureWork({sourceOverrides={},baselin
  const state=seed.rows.get('meta').get('recovery:'+jobId).value,child=state.entries.findLast(e=>!!e.projectReference),root=state.entries.find(e=>e.id===child.projectReference.checkpointId);
  const recordOf=id=>seed.rows.get('meta').get('recovery:'+jobId+':snapshot:'+id).value;
  assert.ok(recordOf(root.id).projectParts?.entries?.length,'IMPORT_PURE_PARSED_PART_FIXTURE_ORACLE');
- const distinctParts=new Set(state.entries.flatMap(entry=>recordOf(entry.id).projectParts?.entries?.map(part=>part.sha256)||[]));
- async function rootValue(){const b=JSON.parse(gunzipSync(new Uint8Array(await seed.rows.get('meta').get('recovery:'+jobId+':snapshot:'+root.id).value.blob.arrayBuffer())).toString());const p=JSON.parse(JSON.stringify(b.project));for(const part of b.projectParts.entries){const file=seed.rows.get('meta').get('recovery:'+jobId+':bytes:'+part.sha256).value,bytes=new Uint8Array(await file.blob.arrayBuffer());assert.equal(sha(bytes),part.sha256,'IMPORT_PURE_INDEPENDENT_PART_BYTES_ORACLE');assert.equal(bytes.length,part.byteSize);let at=p;for(const key of part.path.slice(0,-1))at=at[key];at[part.path.at(-1)]=JSON.parse(Buffer.from(bytes).toString());}return p;}
+ const distinctParts=new Set(state.entries.flatMap(entry=>historyListFiles(recordOf(entry.id).projectParts).map(part=>part.sha256)));
+ async function rootValue(){const b=JSON.parse(gunzipSync(new Uint8Array(await seed.rows.get('meta').get('recovery:'+jobId+':snapshot:'+root.id).value.blob.arrayBuffer())).toString());return rebuildHistoryProject(JSON.parse(JSON.stringify(b.project)),b.projectParts,async digest=>new Uint8Array(await seed.rows.get('meta').get('recovery:'+jobId+':bytes:'+digest).value.blob.arrayBuffer()),{label:'IMPORT_PURE_INDEPENDENT_PART_BYTES_ORACLE'});}
  const expectedProject=await rootValue(),work={...expectedProject};for(const key of omit)delete work[key];const expected={projectSha256:sha(canonical(expectedProject)),workSha256:sha(canonical(work))};
  assert.equal(root.projectSha256,expected.projectSha256);assert.equal(root.workSha256,expected.workSha256);
  const passphrase='isolated tiny owning regression';

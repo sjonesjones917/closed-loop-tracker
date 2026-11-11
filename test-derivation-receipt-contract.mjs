@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import fs from 'node:fs';
 import {gzipSync,gunzipSync} from 'node:zlib';
+import {rebuildHistoryProject} from './test-history-part-files.mjs';
 import {projectStoreRuntime,restoreArtifactFixture} from './test-project-store-runtime.mjs';
 import {artifactFixtureId} from './test-artifact-fixtures.mjs';
 
@@ -317,7 +318,7 @@ export async function verifyLegacyProjection3ActivationContract({sourceOverrides
  let savedBody=JSON.parse(gunzipSync(snapshotBytes).toString('utf8'));
  if(savedBody.projectReference){const reference=savedBody.projectReference,root=current.rows.get('meta').get('recovery:'+old.job.JOB_ID+':snapshot:'+reference.checkpointId).value,bytes=new Uint8Array(await root.blob.arrayBuffer());assert.equal(createHash('sha256').update(bytes).digest('hex'),reference.snapshotSha256);assert.equal(root.projectSha256,savedBody.projectSha256);savedBody=JSON.parse(gunzipSync(bytes).toString('utf8'));assert.equal(savedBody.projectReference,undefined);}
  const work=savedBody.project;
- for(const part of savedBody.projectParts?.entries||[]){const partRow=await current.store.metaGet('recovery:'+old.job.JOB_ID+':bytes:'+part.sha256),bytes=new Uint8Array(await partRow.blob.arrayBuffer());assert.equal(bytes.length,part.byteSize);assert.equal(createHash('sha256').update(bytes).digest('hex'),part.sha256);let parent=work;for(const key of part.path.slice(0,-1))parent=parent[key];parent[part.path.at(-1)]=JSON.parse(new TextDecoder().decode(bytes));} 
+ await rebuildHistoryProject(work,savedBody.projectParts,async digest=>new Uint8Array(await (await current.store.metaGet('recovery:'+old.job.JOB_ID+':bytes:'+digest)).blob.arrayBuffer())); 
  for(const key of ['projectSha256','projectHash','revision','historyActivationId','restoredCandidates','activeView','activeStage'])delete work[key];
  // Explicit string construction preserves lexicographic numeric object keys.
  // Object insertion followed by JSON.stringify would reorder integer keys.

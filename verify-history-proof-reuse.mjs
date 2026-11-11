@@ -163,13 +163,18 @@ async function storeFile(r,next,{stage,filename,text,commandId}){
  return stored;
 }
 const retainedText=n=>'Exact retained History title '+n+' '+'independent retained content '.repeat(300);
+// A record array that grows with each write (over 64 KiB, so in several
+// segments): its roots are segmented (/2), and every closed segment is shared
+// with the next root.
+const retainedRecords=n=>({records:Array.from({length:800+60*n},(_,i)=>({id:'HISTORY-PROOF-RECORD-'+i,text:'Exact retained record '+i+' '+'.'.repeat(i%41)}))});
+const SEGMENTED='closed-loop-recovery-project-parts/2';
 // Roots with retained parts, view references, a root superseded without a
 // checkpoint (lazy first use) and 'Previous project' references (new files).
 export async function fixture(b){
  const {store,page}=b;
  let p=await store.createProject({commandId:'HISTORY-PROOF-REUSE'});const jobId=p.job.JOB_ID;
  const view=(n,name='Workflow')=>page.copy({activeStage:1,activeView:name,drafts:{'#exact':{value:'Exact draft '+n}},scrollX:0,scrollY:n});
- const write=async(n,file=null)=>{const next=store.clone(p);next.job.JOB_TITLE=retainedText(n);if(file)await storeFile(page,next,{stage:1,filename:file+'.txt',text:'Exact Stage 1 file '+file+'.\n',commandId:'HISTORY-PROOF-REUSE-'+file});p=await store.writeProject(next,{expectedProjectRevision:p.revision});};
+ const write=async(n,file=null)=>{const next=store.clone(p);next.job.JOB_TITLE=retainedText(n);next.vendorExtension=page.copy(retainedRecords(n));if(file)await storeFile(page,next,{stage:1,filename:file+'.txt',text:'Exact Stage 1 file '+file+'.\n',commandId:'HISTORY-PROOF-REUSE-'+file});p=await store.writeProject(next,{expectedProjectRevision:p.revision});};
  const save=async n=>store.saveCheckpoint(jobId,{expectedProjectRevision:p.revision,expectedStateSha256:p.projectSha256,view:view(n),label:'Saved view'});
  await write(1,'first');await save(1);await save(2);
  await write(2);                       // superseded without a checkpoint
@@ -183,6 +188,8 @@ export async function fixture(b){
  assert.ok(state.entries.some(entry=>entry.projectReference)&&state.entries.filter(entry=>!entry.projectReference).length>=4,'HISTORY_PROOF_FIXTURE_ORACLE: roots and view references');
  assert.ok(state.entries.some(entry=>Object.hasOwn(entry,'projectPartsSha256')),'HISTORY_PROOF_FIXTURE_ORACLE: state-form roots with retained parts');
  assert.ok(state.entries.some(entry=>entry.label==='Previous project'),'HISTORY_PROOF_FIXTURE_ORACLE: a Previous project version');
+ const schemas=state.entries.filter(entry=>!entry.projectReference).map(entry=>b.rows.get('meta').get('recovery:'+jobId+':snapshot:'+entry.id).value.projectParts?.schema);
+ assert.ok(schemas.filter(schema=>schema===SEGMENTED).length>=4&&schemas.some(schema=>schema!==SEGMENTED),'HISTORY_PROOF_FIXTURE_ORACLE: segmented (/2) roots beside a /1 root');
  return {jobId,project:p,state};
 }
 // One root with retained parts, its checkpoint, and a view reference.
@@ -226,6 +233,9 @@ function exportFaultCases(jobId){
  const roots=rows=>historyOf(rows,jobId).entries.filter(entry=>!entry.projectReference),refs=rows=>historyOf(rows,jobId).entries.filter(entry=>entry.projectReference);
  const stateRoot=rows=>roots(rows).find(entry=>Object.hasOwn(entry,'projectPartsSha256'));
  const firstPart=rows=>snapshotRow(rows,jobId,stateRoot(rows).id).value.projectParts.entries[0];
+ // A segment (not the first) of a segmented root's record array.
+ const segmentedRoot=rows=>roots(rows).find(entry=>Object.hasOwn(entry,'projectPartsSha256')&&snapshotRow(rows,jobId,entry.id).value.projectParts.schema===SEGMENTED);
+ const segment=rows=>snapshotRow(rows,jobId,segmentedRoot(rows).id).value.projectParts.entries.find(entry=>entry.segments&&entry.segments.length>1).segments[1];
  const edit=(select,field,value)=>rows=>{const entry=select(rows),before=Object.hasOwn(entry,field),prior=entry[field];entry[field]=typeof value==='function'?value(entry,rows):value;return ()=>{if(before)entry[field]=prior;else delete entry[field];};};
  const replaceBlob=(row)=>{const prior=row.value.blob;row.value.blob=corrupt(prior);return ()=>{row.value.blob=prior;};};
  const realm=apply=>({realm:apply});
@@ -244,6 +254,13 @@ function exportFaultCases(jobId){
   ['N3-uppercase-digest',edit(stateRoot,'projectPartsSha256',entry=>entry.projectPartsSha256.toUpperCase())],
   ['N3-short-digest',edit(stateRoot,'projectPartsSha256',entry=>entry.projectPartsSha256.slice(1))],
   ['N4-unretained-part',rows=>{const state=historyOf(rows,jobId),part=firstPart(rows),files=state.files;state.files=Object.fromEntries(Object.entries(files).filter(([sha256])=>sha256!==part.sha256));state.retainedFileBytes-=files[part.sha256].byteSize;return ()=>{state.files=files;state.retainedFileBytes+=files[part.sha256].byteSize;};}],
+  // A proven segmented root: its segments are re-hashed like parts.
+  ['segment-bytes',rows=>replaceBlob(fileRow(rows,jobId,segment(rows).sha256))],
+  ['segment-removed',rows=>{const key='recovery:'+jobId+':bytes:'+segment(rows).sha256,row=rows.get('meta').get(key);rows.get('meta').delete(key);return ()=>rows.get('meta').set(key,row);}],
+  ['N2-record-segment-count',rows=>{const target=segment(rows),prior=target.count;target.count=prior+1;return ()=>{target.count=prior;};}],
+  ['N4-unretained-segment',rows=>{const state=historyOf(rows,jobId),target=segment(rows),files=state.files;state.files=Object.fromEntries(Object.entries(files).filter(([sha256])=>sha256!==target.sha256));state.retainedFileBytes-=files[target.sha256].byteSize;return ()=>{state.files=files;state.retainedFileBytes+=files[target.sha256].byteSize;};}],
+  // The declared canonical size binds the entry to its body like any field.
+  ['entry-project-bytes',edit(stateRoot,'projectBytes',entry=>entry.projectBytes+1)],
   ['entry-parent',edit(rows=>roots(rows).at(-1),'parentId',(entry,rows)=>roots(rows)[0].id)],
   ['entry-label',edit(stateRoot,'label','Edited label')],
   ['entry-created-at',edit(stateRoot,'createdAt','2026-01-01T00:00:00.000Z')],
@@ -380,7 +397,7 @@ async function importSection(context){
  assert.ok(happy.sameCounts.coldRoots<happy.freshCounts.coldRoots,'HISTORY_PROOF_TIER2_ORACLE: proven versions are not decoded again');
  emit('HISTORY-PROOF-IMPORT-TIER2',{importHits:happy.sameCounts.importHits,coldRoots:happy.sameCounts.coldRoots,freshColdRoots:happy.freshCounts.coldRoots,identical:true});
  // Byte and descriptor faults in the backup, packageSha256 recomputed.
- const target=recovery.entries.find(entry=>!entry.projectReference&&entry.id!==recovery.activeId&&entry.projectParts),reference=recovery.entries.find(entry=>entry.projectReference&&entry.id!==recovery.activeId);
+ const target=recovery.entries.find(entry=>!entry.projectReference&&entry.id!==recovery.activeId&&entry.projectParts?.schema===SEGMENTED),reference=recovery.entries.find(entry=>entry.projectReference&&entry.id!==recovery.activeId);
  const edited=async edit=>{const copy=plain(body);await edit(copy);return encodeBackup(b.worker().realm,copy);};
  const editEntry=(id,field,value)=>copy=>{copy.recovery.entries.find(entry=>entry.id===id)[field]=value;};
  // The cases whose comparison detects an intended fault come first.
@@ -395,6 +412,7 @@ async function importSection(context){
   ['manifest-reference-view-digest',editEntry(reference.id,'viewSha256','e'.repeat(64))],
   ['snapshot-member-bytes',async copy=>{const {member,snapshot}=await snapshotMember(copy,target.id);snapshot.view={...snapshot.view,scrollY:999};const bytes=Buffer.from(await (await encodeBackup(b.worker().realm,snapshot)).arrayBuffer());const entry=copy.recovery.entries.find(row=>row.id===target.id);copy.recovery.compressedProjectBytes+=bytes.length-entry.byteSize;entry.sha256=await setMemberBytes(b.worker().realm,copy,member,bytes);entry.byteSize=bytes.length;}],
   ['part-member-bytes',async copy=>{const entry=copy.recovery.entries.find(row=>row.id===target.id),part=entry.projectParts.entries[0],member=copy.artifacts.find(a=>a.archiveKind==='RECOVERY_BYTES'&&a.sha256===part.sha256),bytes=Buffer.concat([Buffer.from(member.base64,'base64'),Buffer.from(' ')]);const info=copy.recovery.files[part.sha256];delete copy.recovery.files[part.sha256];const sha256=await setMemberBytes(b.worker().realm,copy,member,bytes);member.filename=sha256+'.bin';member.artifactId='RECOVERY-BYTES-'+sha256;const row=copy.packageManifest.artifacts.find(a=>a.sha256===sha256);Object.assign(row,{artifactId:member.artifactId,filename:member.filename});copy.recovery.files[sha256]={...info,byteSize:bytes.length};copy.recovery.retainedFileBytes+=bytes.length-info.byteSize;part.sha256=sha256;part.byteSize=bytes.length;}],
+  ['segment-member-bytes',async copy=>{const entry=copy.recovery.entries.find(row=>row.id===target.id),part=entry.projectParts.entries.find(row=>row.segments&&row.segments.length>1).segments[1],member=copy.artifacts.find(a=>a.archiveKind==='RECOVERY_BYTES'&&a.sha256===part.sha256),bytes=Buffer.concat([Buffer.from(member.base64,'base64'),Buffer.from(' ')]);const info=copy.recovery.files[part.sha256];delete copy.recovery.files[part.sha256];const sha256=await setMemberBytes(b.worker().realm,copy,member,bytes);member.filename=sha256+'.bin';member.artifactId='RECOVERY-BYTES-'+sha256;const row=copy.packageManifest.artifacts.find(a=>a.sha256===sha256);Object.assign(row,{artifactId:member.artifactId,filename:member.filename});copy.recovery.files[sha256]={...info,byteSize:bytes.length};copy.recovery.retainedFileBytes+=bytes.length-info.byteSize;part.sha256=sha256;part.byteSize=bytes.length;}],
  ];
  for(const [label,edit] of cases.slice(0,2)){
   const result=await compare(label,await edited(edit));

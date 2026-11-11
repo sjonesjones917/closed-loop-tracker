@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
+import {historyValueEntries} from './test-history-part-files.mjs';
 import {projectStoreRuntime} from './test-project-store-runtime.mjs';
 import {createHash} from 'node:crypto';
 import {performance} from 'node:perf_hooks';
@@ -82,7 +83,7 @@ export async function verifyRetainedRootContinuation({fault=null,caseFilter=null
   if(mode==='wrong-root-descriptor')proof.descriptor.label='Unrelated immutable root';
   // The certificate carries the record descriptor; the History state names its
   // parts by digest. Changed parts no longer match and the save decodes cold.
-  if(mode==='wrong-root-descriptor-parts'){assert.ok(proof.descriptor.projectParts?.entries?.length,'RETAINED_ROOT_RECORD_DESCRIPTOR_ORACLE');proof.descriptor.projectParts.entries[0].sha256='0'.repeat(64);}
+  if(mode==='wrong-root-descriptor-parts'){assert.ok(historyValueEntries(proof.descriptor.projectParts).length,'RETAINED_ROOT_RECORD_DESCRIPTOR_ORACLE');historyValueEntries(proof.descriptor.projectParts)[0].sha256='0'.repeat(64);}
   if(mode==='mutated-root-value')proof.project.job.JOB_TITLE='Caller mutation of private retained value';
   if(mode==='mutated-root-snapshot')proof.snapshot.job.JOB_TITLE='Changed private proof snapshot';
   // The carried envelope is never trusted over the stored bytes: a changed
@@ -142,7 +143,7 @@ export async function verifyRetainedRootContinuation({fault=null,caseFilter=null
   // refused by the stored-root comparison; nothing is written or published.
   if(mode==='mutated-candidate-parts-before-commit'){
    const snapshot=r.copy([...r.rows].map(([name,rows])=>[name,[...rows]]));let reached=false;
-   r.runtime.__beforeRootCommit=root=>{reached=true;delete r.runtime.__beforeRootCommit;assert.ok(root.descriptor.projectParts?.entries?.length,'RETAINED_ROOT_RECORD_DESCRIPTOR_ORACLE: the candidate carries the complete record descriptor');root.descriptor.projectParts.entries[0].byteSize++;};
+   r.runtime.__beforeRootCommit=root=>{reached=true;delete r.runtime.__beforeRootCommit;assert.ok(historyValueEntries(root.descriptor.projectParts).length,'RETAINED_ROOT_RECORD_DESCRIPTOR_ORACLE: the candidate carries the complete record descriptor');historyValueEntries(root.descriptor.projectParts)[0].byteSize++;};
    await assert.rejects(()=>save('Workflow'),e=>e.code==='HISTORY_SNAPSHOT_INTEGRITY_FAILED'&&e.message==='The retained root changed before checkpoint commit.','RETAINED_ROOT_CANDIDATE_PARTS_ORACLE');
    assert.equal(reached,true,'RETAINED_ROOT_CANDIDATE_PARTS_FIXTURE_ORACLE');assert.deepEqual(r.copy([...r.rows].map(([name,rows])=>[name,[...rows]])),snapshot);assert.ok(r.runtime.__rootProof()===undefined);
    cases.push({mode,result:'PASS',error:'HISTORY_SNAPSHOT_INTEGRITY_FAILED',noCheckpointReturned:true,noProofPublished:true,exactStatePreserved:true});continue;

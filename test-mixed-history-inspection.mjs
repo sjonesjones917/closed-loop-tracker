@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {createHash} from 'node:crypto';
 import {gzipSync,gunzipSync} from 'node:zlib';
+import {rebuildHistoryProject,historyListFiles,historyValueEntries} from './test-history-part-files.mjs';
 import {projectStoreRuntime} from './test-project-store-runtime.mjs';
 import {artifactFixtureId} from './test-artifact-fixtures.mjs';
 import {verifyImportInspectionPureWork} from './test-import-inspection-pure-work.mjs';
@@ -21,7 +22,7 @@ const check=async(name,work)=>{const detail=await work();receipt.checks.push({na
 const bodyAt=async(r,id)=>JSON.parse(gunzipSync(new Uint8Array(await r.rows.get('meta').get('recovery:'+jobId+':snapshot:'+id).value.blob.arrayBuffer())).toString('utf8'));
 async function replaceBody(r,id,change){const state=r.rows.get('meta').get('recovery:'+jobId).value,entry=state.entries.find(x=>x.id===id),snapshot=r.rows.get('meta').get('recovery:'+jobId+':snapshot:'+id).value,body=await bodyAt(r,id);change(body,entry,snapshot);delete body.packageSha256;body.packageSha256=sha(canonical(body));const bytes=gzipSync(Buffer.from(canonical(body))),delta=bytes.length-entry.byteSize;for(const row of[entry,snapshot]){row.sha256=sha(bytes);row.byteSize=bytes.length;}snapshot.blob=new Blob([bytes]);state.compressedProjectBytes+=delta;return body;}
 const wrongWork=async r=>replaceBody(r,checkpointId,(body,entry,snapshot)=>{body.workSha256='0'.repeat(64);entry.workSha256=body.workSha256;snapshot.workSha256=body.workSha256;});
-async function expectedWork(r,id){const body=await bodyAt(r,id);let root=body.projectReference?await bodyAt(r,body.projectReference.checkpointId):body;const project=JSON.parse(JSON.stringify(root.project));for(const part of root.projectParts?.entries||[]){const file=r.rows.get('meta').get('recovery:'+jobId+':bytes:'+part.sha256).value,bytes=new Uint8Array(await file.blob.arrayBuffer());assert.equal(sha(bytes),part.sha256);assert.equal(bytes.length,part.byteSize);let target=project;for(const key of part.path.slice(0,-1))target=target[key];target[part.path.at(-1)]=JSON.parse(Buffer.from(bytes).toString('utf8'));}const projectSha256=sha(canonical(project));const work={...project};for(const key of['projectSha256','projectHash','revision','historyActivationId','restoredCandidates','activeView','activeStage'])delete work[key];return {projectSha256,workSha256:sha(canonical(work))};}
+async function expectedWork(r,id){const body=await bodyAt(r,id);let root=body.projectReference?await bodyAt(r,body.projectReference.checkpointId):body;const project=await rebuildHistoryProject(JSON.parse(JSON.stringify(root.project)),root.projectParts,async digest=>new Uint8Array(await r.rows.get('meta').get('recovery:'+jobId+':bytes:'+digest).value.blob.arrayBuffer()));const projectSha256=sha(canonical(project));const work={...project};for(const key of['projectSha256','projectHash','revision','historyActivationId','restoredCandidates','activeView','activeStage'])delete work[key];return {projectSha256,workSha256:sha(canonical(work))};}
 const exactWorkError=e=>e.code==='HISTORY_VERSION_MISMATCH'&&e.message==='Saved work identity does not match its complete project.';
 let base,jobId,checkpointId,selected;
 try{
