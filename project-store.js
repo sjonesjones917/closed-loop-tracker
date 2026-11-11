@@ -2318,10 +2318,14 @@ function historyProofNativesUnchanged(natives){
   }catch{return false;}
 }
 // The inputs a cold check runs under besides its validators: the unchanged
-// initial digest primitives and the decode and byte natives.
+// initial digest primitives and the decode and byte natives. An unchanged
+// earlier capture describes exactly the current natives, so proofs share it.
+let lastHistoryProofInputs=null;
 function captureHistoryProofInputs(){
   if(!HISTORY_ROOT_PROOFS||!rootDigestPrimitivesUnchanged(initialRootDigestPrimitives))return null;
-  const natives=captureHistoryProofNatives();return natives?{primitive:initialRootDigestPrimitives,natives}:null;
+  if(lastHistoryProofInputs&&historyProofNativesUnchanged(lastHistoryProofInputs.natives))return lastHistoryProofInputs;
+  const natives=captureHistoryProofNatives();if(!natives)return null;
+  lastHistoryProofInputs=Object.freeze({primitive:initialRootDigestPrimitives,natives});return lastHistoryProofInputs;
 }
 function historyProofInputsCurrent(inputs){return Boolean(inputs)&&rootDigestPrimitivesUnchanged(inputs.primitive)&&historyProofNativesUnchanged(inputs.natives);}
 // Mint (readCheckpointBody, after its last check): the facts the cold path
@@ -2378,7 +2382,8 @@ function mintHistoryPairProof(jobId,projectSha256,artifacts,{derived='NOT_CHECKE
 // One export or import: each distinct validator capture is checked once
 // (rootValidatorsUnchanged walks the whole validator graph), and before the
 // operation commits every capture and input it relied on is checked again.
-function historyProofOperation(){return HISTORY_ROOT_PROOFS?{validators:new Map(),inputs:new Set(),hashedParts:new Map(),used:false}:null;}
+function historyProofOperation(){return HISTORY_ROOT_PROOFS?{validators:new Map(),natives:new Set(),primitives:new Set(),hashedParts:new Map(),used:false}:null;}
+function historyProofUsed(operation,proof){operation.used=true;operation.natives.add(proof.natives);operation.primitives.add(proof.primitive);}
 function historyProofValidatorsCurrent(operation,validators){
   if(!validators)return false;
   if(!operation.validators.has(validators))operation.validators.set(validators,rootValidatorsUnchanged(validators));
@@ -2387,7 +2392,8 @@ function historyProofValidatorsCurrent(operation,validators){
 function historyProofOperationCurrent(operation){
   if(!operation?.used)return true;
   for(const [validators,current] of operation.validators)if(current&&!rootValidatorsUnchanged(validators))return false;
-  for(const inputs of operation.inputs)if(!historyProofInputsCurrent(inputs))return false;
+  for(const primitive of operation.primitives)if(!rootDigestPrimitivesUnchanged(primitive))return false;
+  for(const natives of operation.natives)if(!historyProofNativesUnchanged(natives))return false;
   return true;
 }
 // The checks readCheckpointBody, and export's identity step before it, make
@@ -2441,7 +2447,7 @@ async function provenExportEntry(jobId,entry,saved,validatedRoots,bytePrimitive,
       verifiedProjectSha256=base.projectSha256;verifiedWorkSha256=base.workSha256;
     }else if(!await historyProofPartsRetained(proof,parts,sha=>metaGet(historyFileKey(jobId,sha)),operation,jobId,null,coldParts))return null;
     if(!historyProofInputsCurrent(proof)||!checkpointBytePrimitivesMatch(bytePrimitive))return null;
-    operation.used=true;operation.inputs.add(proof);
+    historyProofUsed(operation,proof);
     return {payload:{schema:proof.schema,id:proof.id,jobId:proof.bodyJobId,projectSha256:proof.projectSha256,...(proof.hasProjectParts?{projectParts:parts}:{})},credential:proof.credential,verifiedProjectSha256,verifiedWorkSha256};
   }catch{return null;}
 }
@@ -2468,7 +2474,7 @@ async function provenImportEntry(jobId,entry,snapshot,readFile,validatedRoots,pr
     // unchanged validators; or this import already validated the pair.
     if(!validatedProjections.has(projectionKey)&&!(pair.derivedAt!==null&&Date.now()>=pair.derivedAt))return null;
     if(!historyProofInputsCurrent(proof))return null;
-    operation.used=true;operation.inputs.add(proof);operation.inputs.add(pair);validatedProjections.add(projectionKey);
+    historyProofUsed(operation,proof);historyProofUsed(operation,pair);validatedProjections.add(projectionKey);
     return {verifiedProjectSha256,verifiedWorkSha256};
   }catch{return null;}
 }

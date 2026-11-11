@@ -26,8 +26,8 @@ const PAGE_SCRIPT="const STORE_SCRIPT_URL=typeof document!=='undefined'?document
 const LEDGER="const historyRootProofs=new Map(),historyPairProofs=new Map();";
 const COLD_ROOT='({projectSha256:verifiedProjectSha256,workSha256:verifiedWorkSha256}=checkpointPairMatches(measuredPair,project)?measuredPair:historyProjectDigests(project));';
 const SNAPSHOT_DECODE='const {payload,fileContents}=await readPackageJson(entry.blob,{spoolArtifacts:false}),{packageSha256,...body}=payload;';
-const EXPORT_HIT='    operation.used=true;operation.inputs.add(proof);\n    return {payload:';
-const IMPORT_HIT='operation.used=true;operation.inputs.add(proof);operation.inputs.add(pair);';
+const EXPORT_HIT='    historyProofUsed(operation,proof);\n    return {payload:';
+const IMPORT_HIT='historyProofUsed(operation,proof);historyProofUsed(operation,pair);';
 // The measured watchdog (project-store.js HISTORY_WATCHDOG_MEASUREMENT),
 // re-derived here from its stated arithmetic at the declared History limits.
 export const HISTORY_WATCHDOG_PIN=Object.freeze({coldMsPerSnapshotMiB:2400,transportMsPerFileMiB:90,hostedSlowdown:2,maxCompressedProjectMiB:512,maxRetainedFileMiB:1024});
@@ -51,7 +51,7 @@ export function observed(source){
  source=replaceOnce(source,LEDGER,LEDGER+'globalThis.__historyProofLedger={roots:()=>[...historyRootProofs.values()].flatMap(bucket=>[...bucket.values()]).map(proof=>({kind:proof.kind,jobId:proof.jobId,snapshotSha256:proof.snapshotSha256,id:proof.id})),pairs:()=>[...historyPairProofs.values()].reduce((count,bucket)=>count+bucket.size,0)};','ledger');
  source=replaceOnce(source,COLD_ROOT,'if(globalThis.__historyCounts)globalThis.__historyCounts.coldRoots++;'+COLD_ROOT,'cold-root');
  source=replaceOnce(source,SNAPSHOT_DECODE,'if(globalThis.__historyCounts)globalThis.__historyCounts.decodes++;'+SNAPSHOT_DECODE,'decode');
- source=replaceOnce(source,EXPORT_HIT,'    operation.used=true;operation.inputs.add(proof);if(globalThis.__historyCounts)globalThis.__historyCounts.exportHits++;\n    return {payload:','export-hit');
+ source=replaceOnce(source,EXPORT_HIT,'    historyProofUsed(operation,proof);if(globalThis.__historyCounts)globalThis.__historyCounts.exportHits++;\n    return {payload:','export-hit');
  source=replaceOnce(source,IMPORT_HIT,IMPORT_HIT+'if(globalThis.__historyCounts)globalThis.__historyCounts.importHits++;','import-hit');
  return source;
 }
