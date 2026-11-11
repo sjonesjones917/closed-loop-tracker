@@ -3135,9 +3135,10 @@ async function encodeHistoryProject(project,retainValue){
   // after the segments entry. A non-array object at depth two or more is a
   // value part from 4096 bytes up to OBJECT_PART_CAP when it holds no such
   // string (as in /1); a larger one, or one that holds such a string, is
-  // visited. Everything else is copied inline. Nothing is retained until the
-  // encode has finished, in visit order: a project without a segmented array
-  // retains nothing here and is encoded as /1 by visit(), byte for byte.
+  // visited. Everything else is copied inline. A project without a segmented
+  // array is encoded as /1 by visit() alone, byte for byte; a /2 encode retains
+  // its parts and segments after it has finished, in visit order. A string of
+  // 4096 or more code units is canonicalized only for its own retained part.
   const SEGMENT_TARGET=16384,OBJECT_PART_CAP=65536,utf8=new TextEncoder(),OPEN=utf8.encode('['),COMMA=utf8.encode(','),CLOSE=utf8.encode(']');
   const chunkBytes=chunk=>typeof chunk==='string'?utf8.encode(chunk):new Uint8Array(chunk.buffer,chunk.byteOffset,chunk.byteLength);
   function canonicalBytes(value){
@@ -3147,8 +3148,37 @@ async function encodeHistoryProject(project,retainValue){
   }
   function canonicalAtLeast(value,limit){let size=0;for(const chunk of hash.canonicalChunks(value)){size+=chunkBytes(chunk).length;if(size>=limit)return true;}return false;}
   function fnv1a32(bytes){let state=0x811c9dc5;for(let index=0;index<bytes.length;index++)state=Math.imul(state^bytes[index],0x01000193);return state>>>0;}
-  function holdsArray(value){if(!value||typeof value!=='object')return false;if(Array.isArray(value))return true;for(const key of Object.keys(value))if(holdsArray(value[key]))return true;return false;}
-  function holdsLongString(value){if(typeof value==='string')return value.length>=4096;if(!value||typeof value!=='object')return false;for(const key of Object.keys(value))if(holdsLongString(value[key]))return true;return false;}
+  const arrays=new WeakMap();
+  function holdsArray(value){
+    if(!value||typeof value!=='object')return false;
+    if(Array.isArray(value))return true;
+    let held=arrays.get(value);
+    if(held===undefined){held=false;for(const key of Object.keys(value))if(holdsArray(value[key])){held=true;break;}arrays.set(value,held);}
+    return held;
+  }
+  // Whether a value holds a string of 4096 or more code units, known once per
+  // object in this encode. Such a value is never sized: a long string is
+  // canonicalized only for its own retained part.
+  const longStrings=new WeakMap();
+  function holdsLongString(value){
+    if(typeof value==='string')return value.length>=4096;
+    if(!value||typeof value!=='object')return false;
+    let held=longStrings.get(value);
+    if(held===undefined){held=false;for(const key of Object.keys(value))if(holdsLongString(value[key])){held=true;break;}longStrings.set(value,held);}
+    return held;
+  }
+  // Whether the /2 encoding of a value would segment an array: the same
+  // decisions as visitSegmented below, made without retaining or encoding
+  // anything for a stored part, so a project without such an array is encoded
+  // by visit() alone.
+  function holdsSegmentedArray(value,depth){
+    if(!value||typeof value!=='object')return false;
+    if(Array.isArray(value))return holdsLongString(value)||canonicalAtLeast(value,4096);
+    if(!holdsArray(value))return false;
+    if(depth>=2&&!holdsLongString(value)){let size=0;for(const chunk of hash.canonicalChunks(value)){size+=chunkBytes(chunk).length;if(size>OBJECT_PART_CAP)break;}if(size<=OBJECT_PART_CAP)return false;}
+    for(const key of Object.keys(value))if(holdsSegmentedArray(value[key],depth+1))return true;
+    return false;
+  }
   function encodeSegmented(root){
     const result={entries:[],retained:[],strings:new Map(),segments:0};
     function retainChunks(value,path,chunks,target){
@@ -3192,12 +3222,13 @@ async function encodeHistoryProject(project,retainValue){
     function visitSegmented(value,path){
       if(typeof value==='string'&&value.length>=4096){retainString(value,[...path],result.entries);return null;}
       if(!value||typeof value!=='object')return value;
-      if(Array.isArray(value)){if(!canonicalAtLeast(value,4096))return pack(value,path,result.entries);segmentArray(value,path);return null;}
-      if(path.length>=2){
+      // An array holding a long string has 4096 or more canonical bytes.
+      if(Array.isArray(value)){if(!holdsLongString(value)&&!canonicalAtLeast(value,4096))return pack(value,path,result.entries);segmentArray(value,path);return null;}
+      if(path.length>=2&&!holdsLongString(value)){
         const chunks=[];let size=0,storage=null;
         for(const chunk of hash.canonicalChunks(value)){size+=chunkBytes(chunk).length;if(size>OBJECT_PART_CAP){storage='visit';break;}chunks.push(chunk);}
         if(!storage&&size<4096)return pack(value,path,result.entries);
-        if(!storage&&!holdsLongString(value)){retainChunks(value,[...path],chunks,result.entries);return null;}
+        if(!storage){retainChunks(value,[...path],chunks,result.entries);return null;}
       }
       const copy={};
       for(const key of Object.keys(value)){path.push(key);Object.defineProperty(copy,key,{value:visitSegmented(value[key],path),enumerable:true,writable:true,configurable:true});path.pop();}
@@ -3206,7 +3237,7 @@ async function encodeHistoryProject(project,retainValue){
     const packed=visitSegmented(root,[]);
     return result.segments?{project:packed,entries:result.entries,retained:result.retained}:null;
   }
-  const segmented=holdsArray(project)?encodeSegmented(project):null;
+  const segmented=holdsSegmentedArray(project,0)?encodeSegmented(project):null;
   if(segmented){for(const [sha256,blob] of segmented.retained)await retainValue(sha256,blob);return {project:segmented.project,projectParts:{schema:HISTORY_PROJECT_PARTS_SEGMENTED,entries:segmented.entries}};}
   const packed=await visit(project);
   return {project:packed,...(entries.length?{projectParts:{schema:HISTORY_PROJECT_PARTS,entries}}:{})};
@@ -3337,8 +3368,10 @@ async function encodeCheckpoint(project,artifactRows,{id=crypto.randomUUID(),par
   // to their own checkpoint. This is a versioned internal storage encoding.
   const contents=projectReference?null:await encodeHistoryProject(canonical,retainValue);
   // A complete version declares its canonical project's UTF-8 length, the
-  // decode work HISTORY_LIMITS.maxRestoredProjectBytes bounds.
-  const body={schema:HISTORY_SCHEMA,id,jobId,parentId,label,workSha256,artifactManifestSha256,createdAt:now(),...(projectReference?{projectReference:clone(projectReference)}:contents),projectSha256:projectDigest,...(contents?{projectBytes:historyEncodedProjectBytes(contents)}:{}),artifacts,view:clone(view)};
+  // decode work HISTORY_LIMITS.maxRestoredProjectBytes bounds, measured on
+  // the encoding before its envelope is assembled.
+  const projectBytes=contents?historyEncodedProjectBytes(contents):undefined;
+  const body={schema:HISTORY_SCHEMA,id,jobId,parentId,label,workSha256,artifactManifestSha256,createdAt:now(),...(projectReference?{projectReference:clone(projectReference)}:contents),projectSha256:projectDigest,...(contents?{projectBytes}:{}),artifacts,view:clone(view)};
   fault('before-history-checkpoint');const encoded=await compressPackage(body);
   const sha256=await hash.sha256Bytes(encoded.blob);
   const snapshot={id,parentId,label,workSha256,viewSha256:hash.sha256Value(body.view),artifactManifestSha256:body.artifactManifestSha256,createdAt:body.createdAt,stage:Number(view.activeStage||project.activeStage||1),projectSha256:body.projectSha256,...(projectReference?{projectReference:clone(projectReference)}:{}),...(body.projectParts?{projectParts:clone(body.projectParts)}:{}),...(Object.hasOwn(body,'projectBytes')?{projectBytes:body.projectBytes}:{}),sha256,byteSize:encoded.blob.size,blob:encoded.blob};
