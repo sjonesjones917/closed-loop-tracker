@@ -2343,6 +2343,9 @@ const HISTORY_ROOT_PROOFS=STORE_WORKER&&!ARCHIVE_PARSER_WORKER;
 // An option no caller can supply (structured clone drops symbol keys): the
 // operation redone cold after an input of its proofs changed while it ran.
 const COLD_HISTORY_VERIFICATION=Symbol('private cold History verification');
+// The private option by which importPackage, and only importPackage, hands
+// its proof operation to the preparation of its prior project.
+const IMPORT_HISTORY_PROOFS=Symbol('private import History proofs');
 const HISTORY_PROOF_JOBS=16;
 const historyRootProofs=new Map(),historyPairProofs=new Map();
 function retainHistoryProof(ledger,jobId,key,record){
@@ -3413,7 +3416,63 @@ function mintWriteRootCertificate(preparedHistory,digest,primitive,validators,de
     if(HISTORY_ROOT_PROOFS)pendingFirstUseRoot=root;rootCertificates.add(root);unverifiedWriteRoots.add(root);return root;
   }catch{return undefined;}
 }
-async function prepareHistoryCommit(next,prior,{label=null,view=null,preserveActiveView=false,sessionId=null,baseState=null,artifactRows=null,retainedFiles=[],verifiedRead=null,verifiedDigests=null,verifiedIntegrity=[],checkpointRootRead=false,verifiedDigestPair=null,privateEncodeSources=null}={}){
+// Import only: importPackage prepares its prior project, and that no-op
+// preparation proves the local active checkpoint still restorable with
+// readRetainedCheckpoint, whose decoded value it discards. In the store worker
+// holding that checkpoint's proofs, the import re-binds every input of that
+// cold read instead, as it re-binds an archived version (Tier 2):
+// - the manifest, as validateRecoveryManifest checks it;
+// - for a view reference its root first, then the checkpoint: the stored
+//   record's id and descriptor against its History entry and its parts
+//   retained (the reader's checks), the stored snapshot bytes re-hashed, and
+//   the proof facts, every part re-read and re-hashed (provenExportEntry, in a
+//   parts map of this check's own);
+// - the checkpoint's own files re-read and re-hashed, its view and file checks
+//   (viewChecked), and its project/file pair, whose derived check passed
+//   strictly and never in the future (the rule carriedDerived applies);
+// - the captured digest primitives, decode natives and validators, checked
+//   (the validators walked) again in the synchronous turn of the verdict, and
+//   registered with the import's proof operation only when every check
+//   passed, so that a change before the import commits redoes it cold.
+// Any miss returns false and the unchanged readRetainedCheckpoint runs, so its
+// refusal, code, message and order stand. A hit mints nothing.
+async function provenRetainedCheckpoint(jobId,state,checkpointId,operation){
+  if(!HISTORY_ROOT_PROOFS||!operation)return false;
+  try{
+    validateRecoveryManifest(state);
+    const byId=new Map(state.entries.map(entry=>[entry.id,entry])),entry=byId.get(checkpointId);if(!entry)return false;
+    const chain=entry.projectReference?[byId.get(entry.projectReference.checkpointId),entry]:[entry],roots=new Map();
+    // Local parts are hashed in this check's own map: no archived part counts as re-read here.
+    const local={validators:operation.validators,natives:new Set(),primitives:new Set(),hashedParts:new Map(),used:false};
+    for(const item of chain){
+      if(!item)return false;
+      const saved=await metaGet(snapshotKey(jobId,item.id));
+      if(!(saved?.blob instanceof Blob)||saved.id!==item.id)return false;
+      const {blob,...record}=saved;
+      if(hash.sha256Value(historyRecordForm(record))!==hash.sha256Value(historyStateForm(item)))return false;
+      if(Object.hasOwn(item,'projectPartsSha256'))assertHistoryPartsRetained(state,record.projectParts);
+      const bytePrimitive=checkpointBytePrimitives(blob);
+      if(blob.size!==Number(item.byteSize)||saved.sha256!==item.sha256||await hash.sha256Bytes(blob)!==item.sha256)return false;
+      const proven=await provenExportEntry(jobId,item,saved,roots,bytePrimitive,local,null);
+      if(!proven)return false;
+      if(!item.projectReference)roots.set(item.id,{snapshotSha256:item.sha256,proven:true,projectSha256:proven.verifiedProjectSha256,workSha256:proven.verifiedWorkSha256});
+    }
+    const proof=historyRootProof(jobId,entry.sha256);
+    if(!proof?.viewChecked)return false;
+    for(let index=0;index<proof.artifactBytes.length;index+=2){const file=await metaGet(historyFileKey(jobId,proof.artifactBytes[index]));if(!(file?.blob instanceof Blob)||file.blob.size!==proof.artifactBytes[index+1]||await hash.sha256Bytes(file.blob)!==proof.artifactBytes[index])return false;}
+    const pair=historyPairProof(jobId,proof.projectSha256,proof.descriptorsSha256);
+    if(!pair||!historyProofInputsCurrent(pair)||!historyProofValidatorsCurrent(local,pair.validators)||pair.derivedAt===null||!(Date.now()>=pair.derivedAt))return false;
+    // In the synchronous turn of the verdict the natives are checked and the
+    // validators walked again: a change at any point before it reads the
+    // checkpoint cold, as the cold read would run under it.
+    const validators=new Set([proof.validators,pair.validators,...chain.map(item=>historyRootProof(jobId,item.sha256)?.validators)]);
+    if(!historyProofInputsCurrent(proof)||[...validators].some(capture=>!rootValidatorsUnchanged(capture)))return false;
+    historyProofUsed(local,proof);historyProofUsed(local,pair);
+    for(const natives of local.natives)operation.natives.add(natives);for(const primitive of local.primitives)operation.primitives.add(primitive);operation.used=true;
+    return true;
+  }catch{return false;}
+}
+async function prepareHistoryCommit(next,prior,{label=null,view=null,preserveActiveView=false,sessionId=null,baseState=null,artifactRows=null,retainedFiles=[],verifiedRead=null,verifiedDigests=null,verifiedIntegrity=[],checkpointRootRead=false,verifiedDigestPair=null,privateEncodeSources=null,[IMPORT_HISTORY_PROOFS]:importProofs=null}={}){
   // saveCheckpoint hands over its private read in the same synchronous turn in
   // which readProjectForTransaction compared the complete values; the append
   // and the commit gates compare them again after every await.
@@ -3518,9 +3577,11 @@ async function prepareHistoryCommit(next,prior,{label=null,view=null,preserveAct
   if(prior&&(state.activeProjectSha256!==digest(prior)||state.entries.find(entry=>entry.id===state.activeId)?.artifactManifestSha256!==historyArtifactsSha256(files)))await append(prior,'Previous project',preservedPriorView||view||historyView(prior));
   // A no-op preparation still promises a restorable view/session checkpoint.
   // Matching project labels cannot certify its independently stored work.
+  // An import whose proofs re-bind that checkpoint (provenRetainedCheckpoint)
+  // reads nothing more; any miss reads it cold.
   const currentEntry=state.entries.find(entry=>entry.id===state.activeId),unchangedView=!view||hash.sha256Value(view)===(state.activeViewOverride?hash.sha256Value(state.activeViewOverride):currentEntry?.viewSha256);
   if(state.activeId&&!snapshots.length&&((sessionId&&!state.sessions[sessionId])||(viewOnly&&unchangedView))){
-    try{const retained=await readRetainedCheckpoint(jobId,state.activeId,state,rootPreparation?.read);if(rootPreparation?.read.retainedRoot&&verifiedRetainedContinuations.get(retained)===rootPreparation.read.retainedRoot)rootPreparation.verifiedContinuation=rootPreparation.read.retainedRoot;}catch(error){
+    try{if(!importProofs||rootPreparation||!await provenRetainedCheckpoint(jobId,state,state.activeId,importProofs)){const retained=await readRetainedCheckpoint(jobId,state.activeId,state,rootPreparation?.read);if(rootPreparation?.read.retainedRoot&&verifiedRetainedContinuations.get(retained)===rootPreparation.read.retainedRoot)rootPreparation.verifiedContinuation=rootPreparation.read.retainedRoot;}}catch(error){
       if(error.code!=='HISTORY_VERSION_MISMATCH'||error.message!=='Saved work identity does not match its complete project.')throw error;
       // Only the coherent stale-work defect is recoverable here. The full
       // inspection still checks all other bytes, identities, views and derived
@@ -4942,7 +5003,8 @@ async function importPackage(blob,{operationId=null,passphrase=null,pendingBacku
   if(useStoreWorker())return requestStoreWorker('IMPORT_PACKAGE',[blob,{passphrase}]);
   if(pendingFirstUseRoot)await firstUsePendingWriteRoot();
   // Tier 2: a non-active archived version this worker proved skips its decode
-  // only after its bytes, parts, files, descriptor and inputs re-bind.
+  // only after its bytes, parts, files, descriptor and inputs re-bind. The
+  // same operation re-binds the prior's active checkpoint (provenRetainedCheckpoint).
   const proofs=coldHistory?null:historyProofOperation();
   const protectedTransport=await isEncryptedPackage(blob);if(protectedTransport)blob=await decryptPackage(blob,passphrase);
   if(typeof DecompressionStream!=='function')throw storageError('DecompressionStream is required for complete package import.','DECOMPRESSION_STREAM_REQUIRED');
@@ -4970,7 +5032,8 @@ async function importPackage(blob,{operationId=null,passphrase=null,pendingBacku
   const activeArtifacts=verifiedArtifacts.filter(a=>!a.archiveKind);await verifyOriginalSourceBindings(project,activeArtifacts,verifiedSources);const priorPhysical={},priorProject=await readProject(id,{[PHYSICAL_SOURCE_CAPTURE]:priorPhysical});
   if(Number(priorProject?.revision||0)!==Number(observedHeads.get(id)||0))throw storageError('This project changed while the backup was being verified. Its newer work is preserved.','STALE_PROJECT_REVISION');
   let preparedPrior=null;
-  if(priorProject){try{preparedPrior=await prepareHistoryCommit(priorProject,priorProject);}catch(error){
+  // The prior's active checkpoint: proven, it is re-bound, not decoded again.
+  if(priorProject){try{preparedPrior=await prepareHistoryCommit(priorProject,priorProject,{[IMPORT_HISTORY_PROOFS]:proofs});}catch(error){
     if(!['PACKAGE_ARTIFACT_CUSTODY_MISMATCH','HISTORY_FILE_INTEGRITY_FAILED'].includes(error.code))throw error;
     // Restoring verified bytes must remain possible when the active file copy
     // is damaged. Use the already-retained matching complete version; never
