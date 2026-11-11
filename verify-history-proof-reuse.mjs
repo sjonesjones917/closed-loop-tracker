@@ -42,6 +42,7 @@ export const HISTORY_PROOF_FAULTS=Object.freeze({
  'skip-native-check':{oracle:'HISTORY_PROOF_EQUIVALENCE_ORACLE',apply:s=>replaceOnce(s,'function historyProofNativesUnchanged(natives){','function historyProofNativesUnchanged(natives){return Boolean(natives);',"skip-native-check")},
  'skip-validator-check':{oracle:'HISTORY_PROOF_EQUIVALENCE_ORACLE',apply:s=>replaceOnce(replaceOnce(s,'  if(!operation.validators.has(validators))operation.validators.set(validators,rootValidatorsUnchanged(validators));','  if(!operation.validators.has(validators))operation.validators.set(validators,true);','skip-validator-check'),'  for(const [validators,current] of operation.validators)if(current&&!rootValidatorsUnchanged(validators))return false;\n','','skip-validator-gate')},
  'mint-certificate-unchecked':{oracle:'HISTORY_PROOF_PERMISSIVE_WRITER_ORACLE',apply:s=>replaceOnce(s,'if(proofValidators&&digests.projectSha256===verifiedProjectSha256&&digests.workSha256===verifiedWorkSha256){assertProjectIntegrity(project,{verifyDerived:false});proofBasis','if(proofValidators){proofBasis','mint-certificate-unchecked')},
+ 'ignore-proven-credential':{oracle:'HISTORY_PROOF_CREDENTIAL_ORACLE',apply:s=>replaceOnce(s,'      if(proven)requiresEncryption=requiresEncryption||proven.credential;','      if(proven){}','ignore-proven-credential')},
  'export-in-page':{oracle:'HISTORY_PROOF_HIT_ORACLE',apply:s=>replaceOnce(s,"  if(useStoreWorker())return requestStoreWorker('EXPORT_PACKAGE',[jobId,{passphrase,historyRecovery}]);\n","",'export-in-page')}
 });
 
@@ -294,7 +295,23 @@ export async function verifyHistoryProofReuse({fault=null}={}){
   assert.deepEqual(refused,cold,'HISTORY_PROOF_PERMISSIVE_WRITER_ORACLE: identical to the cold export');
   emit('HISTORY-PROOF-PERMISSIVE-WRITER',{checkpoint,code:refused.code,minted:false});
  }
- // 4. The measured, finite History watchdog: EXPORT_PACKAGE and IMPORT_PACKAGE
+ // 4. Credential material only a retained version carries still requires a
+ // backup password when that version is proven: its classification is the
+ // proof's, computed from the same bytes.
+ {
+  const b=browser(source),{jobId}=await fixture(b);let p=await b.store.readProject(jobId);
+  await b.store.putArtifact({artifactId:'HISTORY-PROOF-SECRET',jobId,blob:new Blob(['Exact retained secret bytes.']),filename:'retained-secret.bin',lineage:b.page.copy({stage:1,DISCLOSURE_CLASSIFICATION:'CREDENTIAL_SECRET'})});
+  await b.store.saveCheckpoint(jobId,{expectedProjectRevision:p.revision,label:'Saved view'});
+  await b.store.deleteArtifact('HISTORY-PROOF-SECRET',jobId);
+  const passphrase='history proof reuse passphrase',protectedExport=await b.store.exportPackage(jobId,{passphrase});
+  assert.equal(protectedExport.type,'application/vnd.closed-loop.encrypted+json','HISTORY_PROOF_CREDENTIAL_FIXTURE_ORACLE: the retained secret requires protection');
+  b.resetCounts();const refused=await exportOutcome(b.store,jobId),hits=b.counts().exportHits,cold=await exportOutcome(coldCopy(b.rows,production).store,jobId);
+  assert.ok(hits>0,'HISTORY_PROOF_CREDENTIAL_ORACLE: the proven versions are hits');
+  assert.equal(refused.code,'BACKUP_PASSPHRASE_REQUIRED','HISTORY_PROOF_CREDENTIAL_ORACLE: a proven retained secret still requires a backup password');
+  assert.deepEqual(refused,cold,'HISTORY_PROOF_CREDENTIAL_ORACLE: identical to the cold export');
+  emit('HISTORY-PROOF-RETAINED-CREDENTIAL',{code:refused.code,exportHits:hits});
+ }
+ // 5. The measured, finite History watchdog: EXPORT_PACKAGE and IMPORT_PACKAGE
  // use it; every other command keeps the 600000 ms storage watchdog. A fired
  // watchdog rejects the export with the worker-loss code; no receipt exists.
  {

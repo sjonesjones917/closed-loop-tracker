@@ -2093,15 +2093,16 @@ export function verifyHistoryProofReuseCatalogConsumers(){
  // tests the catalog condition only and never becomes producer evidence.
  const faultIds=['snapshot-root-bytes','snapshot-reference-bytes','part-bytes','part-removed','N1-state-form-digest','N2-record-part-size','N3-both-fields','N3-reference-digest','N3-uppercase-digest','N3-short-digest','N4-unretained-part','entry-parent','entry-label','entry-created-at','entry-view-stage','entry-view-digest','entry-project-reference','entry-work-digest','record-label','record-parent','stale-manifest-active','stale-manifest-snapshot','swap-text-encoder','swap-hash-sha256-bytes','swap-json-parse','swap-json-parse-benign','swap-decompression-stream','swap-decompression-stream-benign','swap-blob-array-buffer','validator-engine-property','validator-schema-definition','concurrent-generation-bump'];
  const faultRows=origin=>faultIds.map(id=>({caseId:'HISTORY-PROOF-FAULT-'+origin+'-'+id,result:'PASS',refused:true,code:'HISTORY_VERSION_MISMATCH',coldFallback:true}));
- const watchdogMs=2641920,fixture={result:'PASS',synthetic:true,actualBrowser:false,transactionAdapter:true,storageWorkerRealm:true,productionSourceSha256:'d'.repeat(64),watchdogMs,caseCount:71,cases:[
+ const watchdogMs=2641920,fixture={result:'PASS',synthetic:true,actualBrowser:false,transactionAdapter:true,storageWorkerRealm:true,productionSourceSha256:'d'.repeat(64),watchdogMs,caseCount:72,cases:[
   {caseId:'HISTORY-PROOF-HAPPY-write-checkpoint-flow',result:'PASS',entries:12,proofs:5,exportHits:5,coldRoots:0,decodes:7,bytesEqualCold:true},...faultRows('write-checkpoint-flow'),
   {caseId:'HISTORY-PROOF-HAPPY-after-export',result:'PASS',entries:12,proofs:12,exportHits:12,coldRoots:0,decodes:0,bytesEqualCold:true},...faultRows('after-export'),
   {caseId:'HISTORY-PROOF-IMPORT-TIER2',result:'PASS',importHits:11,coldRoots:2,freshColdRoots:6,identical:true},
   {caseId:'HISTORY-PROOF-WORKER-LOSS-AND-RELOAD',result:'PASS',lostColdRoots:5,reloadColdRoots:5,correct:true},
   {caseId:'HISTORY-PROOF-NESTED-INCOMPATIBLE',result:'PASS',code:'PROJECT_INTEGRITY_FAILED',issueCount:1,minted:false},
   {caseId:'HISTORY-PROOF-PERMISSIVE-WRITER',result:'PASS',checkpoint:'HISTORY_VERSION_INCOMPATIBLE',code:'PROJECT_INTEGRITY_FAILED',minted:false},
+  {caseId:'HISTORY-PROOF-RETAINED-CREDENTIAL',result:'PASS',code:'BACKUP_PASSPHRASE_REQUIRED',exportHits:13},
   {caseId:'HISTORY-PROOF-WATCHDOG',result:'PASS',historyTimeoutMs:watchdogMs,commandTimeoutMs:600000}],
-  faults:[['skip-part-rehash','HISTORY_PROOF_EQUIVALENCE_ORACLE'],['skip-descriptor-match','HISTORY_PROOF_EQUIVALENCE_ORACLE'],['skip-native-check','HISTORY_PROOF_EQUIVALENCE_ORACLE'],['skip-validator-check','HISTORY_PROOF_EQUIVALENCE_ORACLE'],['mint-certificate-unchecked','HISTORY_PROOF_PERMISSIVE_WRITER_ORACLE'],['export-in-page','HISTORY_PROOF_HIT_ORACLE']].map(([fault,oracle])=>({fault,detected:true,oracle}))};
+  faults:[['skip-part-rehash','HISTORY_PROOF_EQUIVALENCE_ORACLE'],['skip-descriptor-match','HISTORY_PROOF_EQUIVALENCE_ORACLE'],['skip-native-check','HISTORY_PROOF_EQUIVALENCE_ORACLE'],['skip-validator-check','HISTORY_PROOF_EQUIVALENCE_ORACLE'],['mint-certificate-unchecked','HISTORY_PROOF_PERMISSIVE_WRITER_ORACLE'],['ignore-proven-credential','HISTORY_PROOF_CREDENTIAL_ORACLE'],['export-in-page','HISTORY_PROOF_HIT_ORACLE']].map(([fault,oracle])=>({fault,detected:true,oracle}))};
  const suite='verify-history-proof-reuse.mjs',key='historyProofReuse',id='history.root-proof-reuse',owner=verificationCatalog[suite],check=owner?.checks.find(row=>row.id===id),cases=[];
  assert(check,'HISTORY_PROOF_CATALOG_OWNER');assert.equal(check.marker,key);assert.equal(check.path,key);
  assert.equal(check.condition(fixture),true,'HISTORY_PROOF_CATALOG_POSITIVE');cases.push('positive');
@@ -2109,7 +2110,7 @@ export function verifyHistoryProofReuseCatalogConsumers(){
  const reject=(name,mutate)=>{const value=structuredClone(fixture);mutate(value);assert.equal(check.condition(value),false,'HISTORY_PROOF_CATALOG_REFUSAL '+name);cases.push(name);};
  for(const field of Object.keys(fixture))reject('missing:'+field,value=>{delete value[field];});
  reject('extra-field',value=>{value.unclaimed=true;});
- for(const [field,changed]of [['result','FAIL'],['synthetic',false],['actualBrowser',true],['transactionAdapter',false],['storageWorkerRealm',false],['productionSourceSha256','unknown'],['watchdogMs',600000],['caseCount',70]])reject('changed:'+field,value=>{value[field]=changed;});
+ for(const [field,changed]of [['result','FAIL'],['synthetic',false],['actualBrowser',true],['transactionAdapter',false],['storageWorkerRealm',false],['productionSourceSha256','unknown'],['watchdogMs',600000],['caseCount',71]])reject('changed:'+field,value=>{value[field]=changed;});
  reject('missing-case',value=>{value.cases.pop();value.caseCount--;});reject('duplicate-case',value=>{value.cases[1]=structuredClone(value.cases[0]);});reject('reordered-case',value=>{[value.cases[1],value.cases[2]]=[value.cases[2],value.cases[1]];});reject('extra-case',value=>{value.cases.push({caseId:'HISTORY-PROOF-OTHER',result:'PASS'});value.caseCount++;});reject('failed-case',value=>{value.cases[3].result='FAIL';});
  for(const origin of ['write-checkpoint-flow','after-export']){
   const happy='HISTORY-PROOF-HAPPY-'+origin;
@@ -2122,6 +2123,7 @@ export function verifyHistoryProofReuseCatalogConsumers(){
  reject('loss-not-cold',value=>{find(value,'HISTORY-PROOF-WORKER-LOSS-AND-RELOAD').lostColdRoots=0;});reject('reload-not-cold',value=>{find(value,'HISTORY-PROOF-WORKER-LOSS-AND-RELOAD').reloadColdRoots=0;});reject('loss-incorrect',value=>{find(value,'HISTORY-PROOF-WORKER-LOSS-AND-RELOAD').correct=false;});
  reject('nested-minted',value=>{find(value,'HISTORY-PROOF-NESTED-INCOMPATIBLE').minted=true;});reject('nested-code',value=>{find(value,'HISTORY-PROOF-NESTED-INCOMPATIBLE').code='HISTORY_VERSION_MISMATCH';});
  reject('permissive-minted',value=>{find(value,'HISTORY-PROOF-PERMISSIVE-WRITER').minted=true;});
+ reject('credential-unprotected',value=>{find(value,'HISTORY-PROOF-RETAINED-CREDENTIAL').code=null;});reject('credential-not-proven',value=>{find(value,'HISTORY-PROOF-RETAINED-CREDENTIAL').exportHits=0;});
  reject('watchdog-changed',value=>{find(value,'HISTORY-PROOF-WATCHDOG').historyTimeoutMs=600000;});reject('command-watchdog-changed',value=>{find(value,'HISTORY-PROOF-WATCHDOG').commandTimeoutMs=1200000;});
  reject('missing-fault',value=>{value.faults.pop();});reject('undetected-fault',value=>{value.faults[0].detected=false;});reject('wrong-oracle',value=>{value.faults[4].oracle='HISTORY_PROOF_EQUIVALENCE_ORACLE';});reject('fault-extra-field',value=>{value.faults[0].unclaimed=true;});reject('reordered-fault',value=>{[value.faults[0],value.faults[1]]=[value.faults[1],value.faults[0]];});
  const savedChecks=owner.checks,savedPopulation=negativePopulationCatalog[suite];
