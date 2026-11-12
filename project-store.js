@@ -2591,6 +2591,20 @@ async function provenImportEntry(jobId,entry,snapshot,readFile,validatedRoots,pr
     return {verifiedProjectSha256,verifiedWorkSha256};
   }catch{return null;}
 }
+// Import (Tier 1.5): a root whose proof matches its History entry under
+// unchanged primitives, natives and validators, though no pair proof serves
+// it (a version proven by an export, or a pair derived in the future or
+// under earlier validators). readCheckpointBody then restores it from its
+// re-hashed bytes without repeating the digest pass and static check, and the
+// pair check runs exactly as cold. null keeps the cold read.
+function provenImportRoot(jobId,entry,operation){
+  try{
+    if(!HISTORY_ROOT_PROOFS||!operation)return null;
+    const proof=historyRootProof(jobId,entry.sha256);
+    if(proof?.kind!=='root'||!historyProofInputsCurrent(proof)||!historyProofFactsMatch(proof,jobId,entry,operation)||!historyProofValidatorsCurrent(operation,proof.validators))return null;
+    return proof;
+  }catch{return null;}
+}
 // A committed checkpoint's view references gain their proofs at once: the
 // stored bytes of each are read back and decoded by readCheckpointBody's own
 // reference branch, against its root's proof in place of the root's bytes (as
@@ -3850,7 +3864,8 @@ async function inspectRetainedCheckpoint(jobId,checkpointId,state=null,readFile=
     measuredWorkSha256:fact.measuredWorkSha256,artifactManifestSha256:historyArtifactsSha256(checked.artifacts),
     viewSha256:hash.sha256Value(body.view),artifactCount:checked.artifacts.length};
 }
-async function readCheckpointBody(jobId,entry,readSnapshot,validatedRoots=new Map(),inlineOnly=false,readFile=sha=>metaGet(historyFileKey(jobId,sha)),verifiedParts=new Map(),verifiedByteDigests=null,inspection=null,rootContinuation=null,measuredPair=null,rootBytes=null){
+// importProofs: the proof operation of importPackage, its only caller with it.
+async function readCheckpointBody(jobId,entry,readSnapshot,validatedRoots=new Map(),inlineOnly=false,readFile=sha=>metaGet(historyFileKey(jobId,sha)),verifiedParts=new Map(),verifiedByteDigests=null,inspection=null,rootContinuation=null,measuredPair=null,rootBytes=null,importProofs=null){
   // In the store worker, a strict pass below mints this snapshot's root proof
   // under the digest primitives and natives captured before any byte is read.
   const proofInputs=HISTORY_ROOT_PROOFS&&!inspection?captureHistoryProofInputs():null;
@@ -3879,7 +3894,7 @@ async function readCheckpointBody(jobId,entry,readSnapshot,validatedRoots=new Ma
       const retained=await readSnapshot(reference.checkpointId);
       if(!retained)throw storageError('The retained project body required by this checkpoint is unavailable.','HISTORY_PROJECT_REFERENCE_UNAVAILABLE');
       if(retained.projectReference||retained.id!==reference.checkpointId||retained.sha256!==reference.snapshotSha256||retained.projectSha256!==body.projectSha256)throw storageError('Saved project reference identifies incompatible retained contents.','HISTORY_VERSION_MISMATCH');
-      const decoded=await readCheckpointBody(jobId,retained,readSnapshot,validatedRoots,true,readFile,verifiedParts,verifiedByteDigests,inspection,rootContinuation,measuredPair);
+      const decoded=await readCheckpointBody(jobId,retained,readSnapshot,validatedRoots,true,readFile,verifiedParts,verifiedByteDigests,inspection,rootContinuation,measuredPair,null,importProofs);
       base={snapshotSha256:retained.sha256,project:decoded.project,projectSha256:decoded.projectSha256,workSha256:inspection?.workFacts.get(retained.id)?.measuredWorkSha256||decoded.workSha256||historyWorkSha256(decoded.project)};if(!inspection?.issues.length)validatedRoots.set(reference.checkpointId,base);
     }
     if(base.snapshotSha256!==reference.snapshotSha256||base.projectSha256!==body.projectSha256)throw storageError('Saved project reference does not match its verified project body.','HISTORY_VERSION_MISMATCH');
@@ -3909,8 +3924,22 @@ async function readCheckpointBody(jobId,entry,readSnapshot,validatedRoots=new Ma
         if(proofValidators&&digests.projectSha256===verifiedProjectSha256&&digests.workSha256===verifiedWorkSha256){assertProjectIntegrity(project,{verifyDerived:false});proofBasis={kind:'root',validators:proofValidators};}
       }catch{/* The root stays unproven; this read's outcome is unchanged. */}
     }else{
+      // Tier 1.5 (importPackage only): a root this worker proved is still
+      // restored from its stored bytes, which this read has re-hashed above
+      // and whose parts restoreHistoryProject re-reads and re-hashes; only its
+      // digest pass and static check, which its proof attests for these exact
+      // bytes, are not repeated (provenImportRoot). Once it is restored, in
+      // the synchronous turn of that use, its natives and primitives are
+      // checked and its validators walked again: after any change the cold
+      // checks below run under it. Every other check of this read and the
+      // pair check that follows it (validateCheckpointArtifacts) run as cold.
+      const provenRoot=importProofs&&!inspection&&!measuredPair?provenImportRoot(jobId,entry,importProofs):null;
       project=await restoreHistoryProject(body,readFile,verifiedParts,verifiedByteDigests);
       if(projectIdentity(project)!==String(jobId))throw storageError('Saved project belongs to another job.','HISTORY_VERSION_MISMATCH');
+      if(provenRoot&&historyProofInputsCurrent(provenRoot)&&rootValidatorsUnchanged(provenRoot.validators)){
+        verifiedProjectSha256=provenRoot.verifiedProjectSha256;verifiedWorkSha256=provenRoot.verifiedWorkSha256;
+        recoveryBodyStaticIntegrity.set(project,verifiedProjectIntegrity(project,verifiedProjectSha256));historyProofUsed(importProofs,provenRoot);
+      }else{
       ({projectSha256:verifiedProjectSha256,workSha256:verifiedWorkSha256}=checkpointPairMatches(measuredPair,project)?measuredPair:historyProjectDigests(project));
       // The digest pass measured the restored project's canonical length.
       if(Object.hasOwn(body,'projectBytes')&&canonicalProjectByteCounts.has(project)&&canonicalProjectByteCounts.get(project)!==body.projectBytes)throw storageError('Saved canonical project bytes do not match their checkpoint identity.','HISTORY_VERSION_MISMATCH');
@@ -3922,6 +3951,7 @@ async function readCheckpointBody(jobId,entry,readSnapshot,validatedRoots=new Ma
         const proofValidators=proofInputs?captureRootValidators(proofInputs.primitive):null;
         try{assertProjectIntegrity(project,{verifyDerived:false});recoveryBodyStaticIntegrity.set(project,verifiedProjectIntegrity(project,verifiedProjectSha256));}catch(error){if(!legacyJobPointerProjection(project,{verifyDerived:false}))throw error;}
         if(proofValidators&&recoveryBodyStaticIntegrity.get(project)?.project===project)proofBasis={kind:'root',validators:proofValidators};
+      }
       }
     }
   }
@@ -3970,7 +4000,7 @@ function certifiedRootEnvelope(entry,validatedRoots,inspection,proof){
   // descriptors only. The certified project replaces the inline project.
   return {...carried,project:undefined,artifacts:carried.artifacts.map(({blob,...descriptor})=>descriptor)};
 }
-async function decodeCheckpoint(jobId,entry,readFile=sha=>metaGet(historyFileKey(jobId,sha)),readSnapshot=id=>metaGet(snapshotKey(jobId,id)),validatedRoots=new Map(),verifiedParts=new Map(),verifiedByteDigests=null,validatedProjections=null,verifiedSources=null,rootContinuation=null,measuredPair=null,rootBytes=null){
+async function decodeCheckpoint(jobId,entry,readFile=sha=>metaGet(historyFileKey(jobId,sha)),readSnapshot=id=>metaGet(snapshotKey(jobId,id)),validatedRoots=new Map(),verifiedParts=new Map(),verifiedByteDigests=null,validatedProjections=null,verifiedSources=null,rootContinuation=null,measuredPair=null,rootBytes=null,importProofs=null){
   // Reuse pure digest computation only during this fresh parser-owned decode.
   // Existing import scopes and retained-root continuations keep their owners;
   // no validation, byte-custody, or activation result is borrowed or retained.
@@ -3979,7 +4009,7 @@ async function decodeCheckpoint(jobId,entry,readFile=sha=>metaGet(historyFileKey
   const holder=!verifiedByteDigests&&!validatedRoots.size&&!verifiedParts.size&&!importDigestHolders.has(verifiedParts)?{scope:null,attempted:Boolean(rootContinuation),privateRead:true}:null;
   if(holder)importDigestHolders.set(verifiedParts,holder);
   try{
-    const body=await readCheckpointBody(jobId,entry,readSnapshot,validatedRoots,false,readFile,verifiedParts,verifiedByteDigests,null,rootContinuation,measuredPair,rootBytes);
+    const body=await readCheckpointBody(jobId,entry,readSnapshot,validatedRoots,false,readFile,verifiedParts,verifiedByteDigests,null,rootContinuation,measuredPair,rootBytes,importProofs);
     try{return await validateCheckpointArtifacts(jobId,body,readFile,verifiedByteDigests,validatedProjections,verifiedSources,rootContinuation&&body.project===rootContinuation.project);}
     catch(error){withdrawHistoryProofs(jobId,entry,body);throw error;}
   }finally{
@@ -5103,7 +5133,11 @@ async function importPackage(blob,{operationId=null,passphrase=null,pendingBacku
       }else if(proofs&&entry.id!==incoming.activeId&&(proven=await provenImportEntry(id,entry,snapshot,sha=>archiveFiles.get(sha),validatedRoots,provenRoots,verifiedByteDigests,validatedProjections,proofs))){
        // The active version is always decoded: its value is the source reference.
        if(!entry.projectReference&&validatedRoots.has(entry.id))provenRoots.set(entry.id,{snapshotSha256:entry.sha256,projectSha256:proven.verifiedProjectSha256,workSha256:proven.verifiedWorkSha256});
-      }else decoded=await decodeCheckpoint(id,snapshot,sha=>archiveFiles.get(sha),checkpointId=>archiveSnapshots.get(checkpointId),validatedRoots,verifiedParts,verifiedByteDigests,validatedProjections,verifiedSources);
+      }else{
+       // A proven root without a usable pair, itself or as a view reference's
+       // root, is restored under its proof (Tier 1.5, provenImportRoot).
+       decoded=await decodeCheckpoint(id,snapshot,sha=>archiveFiles.get(sha),checkpointId=>archiveSnapshots.get(checkpointId),validatedRoots,verifiedParts,verifiedByteDigests,validatedProjections,verifiedSources,null,null,null,entry.id!==incoming.activeId?proofs:null);
+      }
       if(decoded&&entry.id===incoming.activeId){importedActive=decoded;importedView=incoming.activeViewOverride||decoded.view;}
 
       const existing=merged.entries.find(item=>item.id===entry.id);
