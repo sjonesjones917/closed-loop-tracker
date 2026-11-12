@@ -2359,15 +2359,29 @@ function projectDigestCoversValue(value){
   for(const key of Object.keys(value))if(!Object.hasOwn(Object.getOwnPropertyDescriptor(value,key),'value'))return false;
   return true;
 }
+// Every native a canonical digest pass dispatches through is the one this
+// realm loaded with: the digest-scope native baseline (hash.js: the Object,
+// Array, String, Number, Boolean, Math, JSON, Reflect, Map, WeakMap, Set,
+// WeakSet, RegExp, typed-array, ArrayBuffer, DataView and TextEncoder
+// globals, their prototypes and methods, the array, string and collection
+// iterators and canonicalChunks' generator chain, each descriptor compared as
+// an own field) and the initial digest primitives (hash's canonicalChunks,
+// createSha256 and compareUnicodeScalarSequence, TextEncoder and its encode,
+// the activation fields). baseline is a null-root digest scope
+// (hash.createCanonicalDigestScope(null)), null when the baseline did not
+// hold at its creation.
+function packageDigestNativesUnchanged(baseline){return Boolean(baseline)&&hash.canonicalDigestScopeMatches(baseline,null)&&rootDigestPrimitivesUnchanged(initialRootDigestPrimitives);}
 // A parsed package project's project and work digests from one canonical
-// pass, only under the initial digest primitives, confirmed in this
-// synchronous turn before and after it: the pass then hashes exactly the
-// canonical bytes projectSha256 and historyWorkSha256 hash. null leaves each
-// digest to its site, whose own refusal then stands. No byte count is kept.
-function packageProjectDigestPair(project){
-  if(!rootDigestPrimitivesUnchanged(initialRootDigestPrimitives))return null;
+// pass, only under those natives, confirmed in this synchronous turn before
+// and after it. The parsed project is ordinary JSON data, so with them
+// unchanged before it the pass runs no other code: it hashes exactly the
+// canonical bytes projectSha256 and historyWorkSha256 hash, and a change that
+// would undo itself within the pass is seen before it. null leaves each digest
+// to its site, whose own refusal then stands. No byte count is kept.
+function packageProjectDigestPair(project,baseline){
+  if(!packageDigestNativesUnchanged(baseline))return null;
   const counted=canonicalProjectByteCounts.has(project);
-  try{const digests=historyProjectDigestsCold(project);return rootDigestPrimitivesUnchanged(initialRootDigestPrimitives)?digests:null;}
+  try{const digests=historyProjectDigestsCold(project);return packageDigestNativesUnchanged(baseline)?digests:null;}
   catch{return null;}
   finally{if(!counted)canonicalProjectByteCounts.delete(project);}
 }
@@ -2462,13 +2476,21 @@ function withdrawHistoryProofs(jobId,entry,body){
 const HISTORY_PROOF_NATIVE_GLOBALS=Object.freeze(['JSON','DecompressionStream','TextDecoder','TextEncoder','Blob','Response','ReadableStream','Uint8Array','Uint16Array','Uint32Array','ArrayBuffer','DataView','Promise','crypto']);
 // Stream and reader prototypes are reachable only through instances.
 const historyProofInstancePrototypes=(()=>{try{const stream=new Blob([]).stream(),reader=stream.getReader();reader.releaseLock?.();return [Object.getPrototypeOf(stream),Object.getPrototypeOf(reader),Object.getPrototypeOf(Uint8Array.prototype)];}catch{return [Object.getPrototypeOf(Uint8Array.prototype)];}})();
-// A current property descriptor equals a captured one: as many own fields,
-// and each captured field the same value. fields is Reflect.ownKeys(before),
-// read once: a captured descriptor is a private copy no code changes
-// afterwards, so its field names are read when it is captured (a capture
-// compared many times) or once in its comparison (a capture compared once).
+// A current property descriptor equals a captured one: the same own field
+// names in the same order (a descriptor reader reports value and writable,
+// or get and set, then enumerable and configurable), and each captured field
+// the same value. The names are compared before any field is read, so every
+// field read is an own data read: a field the current descriptor lacks never
+// resolves through its prototype chain (a data property made an accessor
+// whose captured value and writable a realm's Object.prototype supplies is
+// refused). fields is Reflect.ownKeys(before), read once: a captured
+// descriptor is a private copy no code changes afterwards, so its field names
+// are read when it is captured (a capture compared many times) or once in its
+// comparison (a capture compared once).
 function capturedDescriptorMatches(before,fields,after){
-  if(fields.length!==Reflect.ownKeys(after).length)return false;
+  const current=Reflect.ownKeys(after);
+  if(fields.length!==current.length)return false;
+  for(let index=0;index<fields.length;index++)if(current[index]!==fields[index])return false;
   for(let index=0;index<fields.length;index++)if(!Object.is(before[fields[index]],after[fields[index]]))return false;
   return true;
 }
@@ -2826,7 +2848,7 @@ function rootDigestPrimitivesUnchanged(proof){
     const keys=Reflect.ownKeys(target);if(Object.getPrototypeOf(target)!==prototype||keys.length!==descriptors.length)return false;
     for(let index=0;index<keys.length;index++){
       const [key,before]=descriptors[index],after=Object.getOwnPropertyDescriptor(target,key);
-      if(keys[index]!==key||!after||fields[index].some(field=>!Object.is(before[field],after[field]))||fields[index].length!==Reflect.ownKeys(after).length)return false;
+      if(keys[index]!==key||!after||!capturedDescriptorMatches(before,fields[index],after))return false;
     }
   }
   return true;
@@ -5341,8 +5363,12 @@ async function importPackage(blob,{operationId=null,passphrase=null,pendingBacku
   // its retained source, the recovery check, bindRestoredCandidates and an
   // incoming active version's work comparison in one synchronous span: one
   // canonical pass yields its project and work digests
-  // (packageProjectDigestPair), each reused under the initial digest
-  // primitives confirmed at its use. Between the sites no await runs and no
+  // (packageProjectDigestPair), each reused under the digest natives
+  // (packageDigestNativesUnchanged) confirmed at its use. A change of a native
+  // made before the pass, even one that would undo itself within it, is seen
+  // by the pass's own first check, so no site takes a digest made under it; a
+  // change made after the pass is seen at the use, which then digests at its
+  // site under it, as before. Between the sites no await runs and no
   // replaceable code receives project (the source location is cloned on its
   // own; the view file check reads the view and files; a view without a
   // pending correction is returned unchanged; recalculation and the
@@ -5352,9 +5378,11 @@ async function importPackage(blob,{operationId=null,passphrase=null,pendingBacku
   // canonicalProject leaves its canonical bytes unchanged
   // (projectDigestCoversValue). Values and throw positions are the ones of a
   // digest at each site.
-  let packageProjectSha256=null,packageDigests=null,packageDigestsTried=false;
-  const packageDigestPass=()=>{if(!packageDigestsTried){packageDigestsTried=true;packageDigests=packageProjectDigestPair(project);}return packageDigests&&rootDigestPrimitivesUnchanged(initialRootDigestPrimitives)?packageDigests:null;};
-  const packagePayloadDigest=payload=>payload===project&&projectDigestCoversValue(project)?packageDigestPass()?.projectSha256??null:null;
+  let packageProjectSha256=null,packageDigests=null,packageDigestsTried=false,packageDigestBaseline=null;
+  const packageDigestPass=()=>{if(!packageDigestsTried){packageDigestsTried=true;packageDigestBaseline=hash.createCanonicalDigestScope(null);packageDigests=packageProjectDigestPair(project,packageDigestBaseline);}return packageDigests&&packageDigestNativesUnchanged(packageDigestBaseline)?packageDigests:null;};
+  // projectDigestCoversValue runs right after the natives it dispatches
+  // through are confirmed (packageDigestPass), with nothing in between.
+  const packagePayloadDigest=payload=>payload===project&&packageDigestPass()&&projectDigestCoversValue(project)?packageDigests.projectSha256:null;
   // The rest of retainProjectSource after its byte digest runs no await here:
   // this import's source rows are new and its source has no container.
   const importSourceRows=[],projectSource={blob:projectSourceBlob,payload:project,sourceSha256:packageSourceSha256,sourceEncoding:'UTF-8',sourceLocation:{jsonPointer:'/project',containerEncoding:'gzip'},parserIdentity:'closed-loop-project-package-json-reader',parserVersion:'1'},projectSourceJobId=projectIdentity(next),projectSourceSha256=await hash.sha256Bytes(projectSourceBlob);
@@ -5373,9 +5401,9 @@ async function importPackage(blob,{operationId=null,passphrase=null,pendingBacku
   // (reconcileRecoveryTransfers reads rows of next, a separate copy). After
   // a new version's preparation, an await, it is computed again.
   let prepared,activatedExisting=false;
-  // The package project's work digest is the pass's above under the initial
-  // digest primitives, confirmed here; otherwise it is computed here.
-  const activeWorkMatches=Boolean(importedActive)&&historyWorkSha256(importedActive.project)===(packageDigests?.workSha256&&!viewRebased&&rootDigestPrimitivesUnchanged(initialRootDigestPrimitives)?packageDigests.workSha256:historyWorkSha256(project));
+  // The package project's work digest is the pass's above under the digest
+  // natives, confirmed here; otherwise it is computed here.
+  const activeWorkMatches=Boolean(importedActive)&&historyWorkSha256(importedActive.project)===(packageDigests?.workSha256&&!viewRebased&&packageDigestNativesUnchanged(packageDigestBaseline)?packageDigests.workSha256:historyWorkSha256(project));
   if(activeWorkMatches&&historyArtifactsSha256(importedActive.artifacts)===historyArtifactsSha256(activeArtifacts)){activatedExisting=true;
     // Activating an existing complete version needs no additional retention
     // slot, exactly as Undo and native history restoration do.

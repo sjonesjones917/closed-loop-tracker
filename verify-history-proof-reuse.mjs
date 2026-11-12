@@ -55,14 +55,21 @@ const RECOVERY_DERIVED='if(currentDefinition&&unchangedVerifiedProject(staticInt
 const RETAINED_REBOUND=['    const validators=new Set([proof.validators,pair.validators,'];
 const RETAINED_COLD_READ='{const retained=await readRetainedCheckpoint(jobId,state.activeId,state,rootPreparation?.read);';
 const RETAINED_VERDICT='rootPreparation.verifiedContinuation=rootPreparation.read.retainedRoot;}}catch(error){';
+// The start of the prior's retained-checkpoint read, proven or cold: after
+// the preparation's own artifact-row check, before the re-binding re-reads
+// the checkpoint's files (or the cold read reads them).
+const RETAINED_START='    try{if(!importProofs||rootPreparation||!await provenRetainedCheckpoint(';
 // The digests importPackage reuses within one synchronous span: where each
 // is first computed and where it is reused.
 const PACKAGE_DIGEST="if(body.recovery&&body.recovery.activeProjectSha256!==packageProjectDigest())throw storageError('Backup active project does not match its recovery version.','HISTORY_VERSION_MISMATCH');";
 const PACKAGE_DIGEST_REUSE='viewRebased?null:packageProjectDigest());';
 // The package project's canonical pass, the retained source's payload digest
 // and the recovery check's project digest, each from that pass.
-const PACKAGE_PASS='packageDigests=packageProjectDigestPair(project);}';
+const PACKAGE_PASS='packageDigests=packageProjectDigestPair(project,packageDigestBaseline);}';
 const SOURCE_PAYLOAD='const packagePayloadDigest=payload=>';
+// The clone of a retained source's location (describeProjectSource), right
+// before its payload digest.
+const SOURCE_LOCATION='sourceLocation:clone(source.sourceLocation),parser:';
 const PACKAGE_PASS_REUSE='const packageProjectDigest=()=>packageProjectSha256??=packageDigestPass()?.projectSha256??projectSha256(project);';
 // The end of the first work comparison, where the package project's work
 // digest from the pass of its project digest is reused or computed.
@@ -88,9 +95,15 @@ const RESTORE_POINT='      const provenRoot=importProofs&&!inspection&&!measured
 const HISTORY_LOOP='    try{for(const entry of incoming.entries){\n';
 const HISTORY_LOOP_END='    }finally{if(digestHolder.scope)hash.disposeCanonicalDigestScope(digestHolder.scope);importDigestHolders.delete(verifiedParts);}';
 const HISTORY_ENTRY='      previousRootId=rootId;\n';
-// The captured-descriptor comparison of the input checks (capturedDescriptorMatches).
-const CAPTURED_FIELD_COUNT='  if(fields.length!==Reflect.ownKeys(after).length)return false;\n';
+// The captured-descriptor comparison of the input checks (capturedDescriptorMatches):
+// the field count, the own field names, then each captured field's value.
+const CAPTURED_FIELD_COUNT='  if(fields.length!==current.length)return false;\n';
+const CAPTURED_FIELD_NAMES='  for(let index=0;index<fields.length;index++)if(current[index]!==fields[index])return false;\n';
 const CAPTURED_FIELDS_COMPARED='  for(let index=0;index<fields.length;index++)if(!Object.is(before[fields[index]],after[fields[index]]))return false;\n';
+// The package pass's natives check (digest-scope baseline and digest primitives).
+const PACKAGE_PASS_NATIVES='function packageDigestNativesUnchanged(baseline){return Boolean(baseline)&&hash.canonicalDigestScopeMatches(baseline,null)&&rootDigestPrimitivesUnchanged(initialRootDigestPrimitives);}';
+// The P1 re-binding's re-read of the checkpoint's files.
+const RETAINED_FILES='    for(let index=0;index<proof.artifactBytes.length;index+=2){const file=await metaGet(historyFileKey(jobId,proof.artifactBytes[index]));';
 const EXPORT_ROUTE="  if(useStoreWorker())return requestStoreWorker('EXPORT_PACKAGE',[jobId,{passphrase,historyRecovery}]);\n";
 // The measured watchdog (project-store.js HISTORY_WATCHDOG_MEASUREMENT),
 // re-derived here from its stated arithmetic at the declared History limits.
@@ -173,10 +186,15 @@ export const HISTORY_PROOF_FAULTS=Object.freeze({
  'retained-shares-validator-memo':fault(['retained-checkpoint'],'HISTORY_PROOF_RETAINED_EQUIVALENCE_ORACLE',[['    const local={validators:new Map(),','    const local={validators:operation.validators,']]),
  'retained-skip-parts-retained':fault(['retained-checkpoint'],'HISTORY_PROOF_RETAINED_EQUIVALENCE_ORACLE',[["      if(Object.hasOwn(item,'projectPartsSha256'))assertHistoryPartsRetained(state,record.projectParts);\n",'']]),
  'retained-skip-manifest':fault(['retained-checkpoint'],'HISTORY_PROOF_RETAINED_EQUIVALENCE_ORACLE',[['    validateRecoveryManifest(state);\n    const byId=new Map(state.entries.map(entry=>[entry.id,entry])),entry=byId.get(checkpointId);','    const byId=new Map(state.entries.map(entry=>[entry.id,entry])),entry=byId.get(checkpointId);']]),
+ // The re-binding re-reads none of the checkpoint's files.
+ 'retained-skip-file-rehash':fault(['retained-checkpoint'],'HISTORY_PROOF_RETAINED_EQUIVALENCE_ORACLE',[[RETAINED_FILES,RETAINED_FILES.replace('index<proof.artifactBytes.length','false')]]),
  // Digests reused within one synchronous span (importPackage).
  'package-pass-across-await':fault(['digest-spans'],'HISTORY_PROOF_DIGEST_SPAN_ORACLE',[['{recordProject:false,payloadSha256:packagePayloadDigest});','{recordProject:false,payloadSha256:packagePayloadDigest});await null;']]),
- 'payload-digest-unguarded':fault(['digest-spans'],'HISTORY_PROOF_DIGEST_SPAN_ORACLE',[['payload===project&&projectDigestCoversValue(project)?','payload===project?']]),
- 'package-work-unconfirmed-primitives':fault(['digest-spans'],'HISTORY_PROOF_DIGEST_SPAN_REUSE_ORACLE',[['packageDigests?.workSha256&&!viewRebased&&rootDigestPrimitivesUnchanged(initialRootDigestPrimitives)?packageDigests.workSha256:','packageDigests?.workSha256&&!viewRebased?packageDigests.workSha256:']]),
+ 'payload-digest-unguarded':fault(['digest-spans'],'HISTORY_PROOF_DIGEST_SPAN_ORACLE',[['payload===project&&packageDigestPass()&&projectDigestCoversValue(project)?','payload===project&&packageDigestPass()?']]),
+ 'package-work-unconfirmed-primitives':fault(['digest-spans'],'HISTORY_PROOF_DIGEST_SPAN_REUSE_ORACLE',[['packageDigests?.workSha256&&!viewRebased&&packageDigestNativesUnchanged(packageDigestBaseline)?packageDigests.workSha256:','packageDigests?.workSha256&&!viewRebased?packageDigests.workSha256:']]),
+ // The package pass and its uses confirm the digest primitives only, not
+ // the digest-scope native baseline (Set, Object, Array and their iterators).
+ 'package-pass-unconfirmed-natives':fault(['digest-spans'],'HISTORY_PROOF_DIGEST_SPAN_NATIVES_ORACLE',[[PACKAGE_PASS_NATIVES,'function packageDigestNativesUnchanged(baseline){return rootDigestPrimitivesUnchanged(initialRootDigestPrimitives);}']]),
  'digest-work-reused-across-await':fault(['digest-spans'],'HISTORY_PROOF_DIGEST_SPAN_ORACLE',[['if(importedActive&&(activatedExisting?activeWorkMatches:','if(importedActive&&(true?activeWorkMatches:']]),
  'parts-digests-shared-across-operations':fault(['digest-spans'],'HISTORY_PROOF_PARTS_DIGEST_ORACLE',[['function historyProofOperation(){return HISTORY_ROOT_PROOFS?{validators:new Map(),natives:new Set(),primitives:new Set(),hashedParts:new Map(),partsDigests:new WeakMap(),','const sharedPartsDigests=new WeakMap();function historyProofOperation(){return HISTORY_ROOT_PROOFS?{validators:new Map(),natives:new Set(),primitives:new Set(),hashedParts:new Map(),partsDigests:sharedPartsDigests,']]),
  'parts-digest-wrong-key':fault(['digest-spans'],'HISTORY_PROOF_PARTS_DIGEST_ORACLE',[['  let held=digests.get(parts);if(held===undefined){held={digest:hash.sha256Value(parts),inputs};digests.set(parts,held);}','  let held=digests.get(digests);if(held===undefined){held={digest:hash.sha256Value(parts),inputs};digests.set(digests,held);}']]),
@@ -195,10 +213,12 @@ export const HISTORY_PROOF_FAULTS=Object.freeze({
  'conflict-parts-digest-unconfirmed':fault(['restored-conflicts'],'HISTORY_PROOF_TIER15_EQUIVALENCE_ORACLE',[['  return held?.inputs&&historyProofInputsCurrent(held.inputs)?held.digest:hash.sha256Value(parts);','  return held?held.digest:hash.sha256Value(parts);']]),
  // The active version (P2) restored under its root's proof.
  'active-root-decoded-cold':fault(['active-roots'],'HISTORY_PROOF_ACTIVE_HIT_ORACLE',[['validatedProjections,verifiedSources,null,null,null,proofs);','validatedProjections,verifiedSources,null,null,null,entry.id!==incoming.activeId?proofs:null);']]),
- // The input checks compare every field of a captured descriptor, and as
- // many fields as it had, with the field names read once at capture.
+ // The input checks compare every field of a captured descriptor, as many
+ // fields as it had and the same own field names, with the field names read
+ // once at capture.
  'captured-fields-unread':fault(['input-checks'],'HISTORY_PROOF_INPUT_CHECK_ORACLE',[[CAPTURED_FIELDS_COMPARED,'']]),
- 'captured-field-count-unread':fault(['input-checks'],'HISTORY_PROOF_INPUT_CHECK_ORACLE',[[CAPTURED_FIELD_COUNT,'']])
+ 'captured-field-count-unread':fault(['input-checks'],'HISTORY_PROOF_INPUT_CHECK_ORACLE',[[CAPTURED_FIELD_COUNT,'']]),
+ 'captured-field-names-unread':fault(['input-checks'],'HISTORY_PROOF_INPUT_CHECK_ORACLE',[[CAPTURED_FIELD_NAMES,'']])
 });
 
 // Test-only observation (never a production export): the worker ledger, counts
@@ -227,8 +247,9 @@ export function observed(source){
  // Each reuse records whether it ran in the span of the computation and
  // whether a fresh computation at the reuse equals the reused value.
  source=replaceOnce(source,PACKAGE_DIGEST,PACKAGE_DIGEST+"if(packageProjectSha256!==null)globalThis.__digestSpan?.open('package-project');",'package-digest');
- source=replaceOnce(source,PACKAGE_PASS,"packageDigests=packageProjectDigestPair(project);if(packageDigests){globalThis.__digestSpan?.open('source-payload');globalThis.__digestSpan?.open('package-pass');globalThis.__digestSpan?.open('package-work');}}",'package-pass');
+ source=replaceOnce(source,PACKAGE_PASS,"packageDigests=packageProjectDigestPair(project,packageDigestBaseline);if(packageDigests){globalThis.__digestSpan?.open('source-payload');globalThis.__digestSpan?.open('package-pass');globalThis.__digestSpan?.open('package-work');}}",'package-pass');
  source=replaceOnce(source,SOURCE_PAYLOAD,"const packagePayloadDigest=payload=>{const value=packagePayloadDigestObserved(payload);if(value!==null)globalThis.__digestSpan?.use('source-payload',value,()=>hash.sha256Value(payload));return value;};const packagePayloadDigestObserved=payload=>",'source-payload');
+ source=replaceOnce(source,SOURCE_LOCATION,"sourceLocation:(globalThis.__onImportReuse?.('source-location'),clone(source.sourceLocation)),parser:",'source-location');
  source=replaceOnce(source,PACKAGE_PASS_REUSE,"const packageProjectDigest=()=>{if(packageProjectSha256===null&&packageDigestPass())globalThis.__digestSpan?.use('package-pass',packageDigestPass().projectSha256,()=>projectSha256(project));return packageProjectSha256??=packageDigestPass()?.projectSha256??projectSha256(project);};",'package-pass-reuse');
  source=replaceOnce(source,PACKAGE_DIGEST_REUSE,"viewRebased?null:(packageProjectSha256!==null&&globalThis.__digestSpan?.use('package-project',packageProjectSha256,()=>projectSha256(project)),packageProjectDigest()));\nglobalThis.__digestSpan?.between?.();",'package-digest-reuse');
  source=replaceOnce(source,ACTIVE_WORK,"?(globalThis.__digestSpan?.use('package-work',packageDigests.workSha256,()=>historyWorkSha256(project)),packageDigests.workSha256):historyWorkSha256(project));globalThis.__digestSpan?.open('active-work');",'active-work');
@@ -246,6 +267,7 @@ export function observed(source){
  source=replaceOnce(source,HISTORY_LOOP,"    globalThis.__historyLoop=(globalThis.__historyLoop||0)+1;\n"+HISTORY_LOOP,'history-loop');
  source=replaceOnce(source,HISTORY_LOOP_END,HISTORY_LOOP_END.replace('}finally{','}finally{globalThis.__historyLoop--;'),'history-loop-end');
  source=replaceOnce(source,HISTORY_ENTRY,HISTORY_ENTRY+"      globalThis.__onImportReuse?.('history-entry',String(entry.id));\n",'history-entry');
+ source=replaceOnce(source,RETAINED_START,RETAINED_START.replace('try{','try{globalThis.__onImportReuse?.(\'retained-start\');'),'retained-start');
  source=replaceOnce(source,RETAINED_VERDICT,"rootPreparation.verifiedContinuation=rootPreparation.read.retainedRoot;}globalThis.__onImportReuse?.('retained-verdict');}catch(error){",'retained-verdict');
  // Test-only: a recovery-compatibility (derived) refusal of the versions a
  // predicate selects, raised where the derived check runs.
@@ -984,7 +1006,12 @@ async function inputCaptureSection(context){
 // manifest and retained-parts checks see. A validator change that refuses
 // every version by its revision, made after the verdict (left in place, or
 // undone when the History loop reaches the active version), refuses at the
-// same version as cold: the History loop walks the validators again.
+// same version as cold: the History loop walks the validators again. The
+// checkpoint's History file damaged (or removed) after the preparation's own
+// artifact-row check, at the start of the retained-checkpoint read, is seen
+// only by the re-binding's re-read of the checkpoint's files, or by the cold
+// read: it is refused as cold and never re-bound.
+export const RETAINED_LATE_FAULT_CASES=Object.freeze(['local-checkpoint-file-bytes','local-checkpoint-file-removed']);
 export const RETAINED_FAULT_CASES=Object.freeze(['local-active-snapshot-bytes','local-root-snapshot-bytes','local-root-part-bytes','local-root-part-removed','local-root-segment-bytes','local-checkpoint-file-bytes','local-checkpoint-file-removed','local-record-label','local-manifest-stage','local-root-part-unretained','local-root-segment-unretained','local-manifest-missing-parent']);
 export const RETAINED_REALM_CASES=Object.freeze(['text-encoder','hash-sha256-bytes','json-parse','decompression-stream','blob-array-buffer','engine-property','schema-definition']);
 export const RETAINED_AFTER_VERDICT_CASES=Object.freeze(['schema-named','schema-named-transient']);
@@ -999,20 +1026,21 @@ async function retainedCheckpointSection(context){
  // fault: an in-place edit of the rows; realm: a change applied to both
  // workers before the import; at: a change made at the same point of the
  // prior's preparation in both workers (proven in one, cold in the other),
- // and undone at at.until (a later point of the import), when given.
+ // given that worker's realm and its database rows, and undone at at.until
+ // (a later point of the import), when given.
  const compare=async(label,held,{fault=null,realm=null,at=null,ledger=null,blob=backup}={})=>{
   resetTo(held);fault?.(b.rows);ledger?.(ledgerOf());
   // Natives may be shared by every realm of this process: each runtime's
   // change is applied, used and undone in turn.
-  const before=copyRows(b.rows,b.page),undos=[],apply=runtime=>{
+  const before=copyRows(b.rows,b.page),undos=[],apply=(runtime,rows)=>{
    if(realm)undos.push(realm(runtime));
-   if(at){let applied=false,undo=null;runtime.__onImportReuse=(point,id)=>{if(point===at.point&&!applied){applied=true;undo=at.change(runtime);}else if(undo&&at.until&&point===at.until.point&&id===at.until.id){undo();undo=null;}};undos.push(()=>{undo?.();undo=null;delete runtime.__onImportReuse;});}
+   if(at){let applied=false,undo=null;runtime.__onImportReuse=(point,id)=>{if(point===at.point&&!applied){applied=true;undo=at.change(runtime,rows);}else if(undo&&at.until&&point===at.until.point&&id===at.until.id){undo();undo=null;}};undos.push(()=>{undo?.();undo=null;delete runtime.__onImportReuse;});}
   };
   const undoAll=()=>{for(const undo of undos.splice(0).reverse())undo?.();};
   b.resetCounts();let same;
-  try{apply(b.worker().realm.runtime);same=await importOutcome(b,blob,jobId,ids);}finally{undoAll();}
+  try{apply(b.worker().realm.runtime,b.rows);same=await importOutcome(b,blob,jobId,ids);}finally{undoAll();}
   const sameCounts={...b.counts()};let other;
-  try{const fresh=browser(source,before,{onWorker:realm||at?runtime=>apply(runtime.runtime):null});other=await importOutcome(fresh,blob,jobId,ids);}finally{undoAll();}
+  try{const fresh=browser(source,before,{onWorker:realm||at?worker=>apply(worker.runtime,before):null});other=await importOutcome(fresh,blob,jobId,ids);}finally{undoAll();}
   assert.deepEqual(same,other,'HISTORY_PROOF_RETAINED_EQUIVALENCE_ORACLE '+label+': a proof-holding worker must import exactly as a fresh cold worker');
   return {same,sameCounts};
  };
@@ -1077,6 +1105,21 @@ async function retainedCheckpointSection(context){
   const result=await compare(label,holding,{fault});
   emit('HISTORY-PROOF-RETAINED-FAULT-'+label,{refused:!result.same.ok,code:result.same.code??null,retainedHits:result.sameCounts.retainedHits});
  }
+ // The checkpoint's History file damaged after the preparation's artifact-row
+ // check (which reads the same bytes row): the re-binding's file re-hash, or
+ // the cold read, is the first check to see it.
+ const lateFaults={
+  'local-checkpoint-file-bytes':rows=>replaceBlob(fileRow(rows,jobId,checkpointFile)),
+  'local-checkpoint-file-removed':removeRow(()=>'recovery:'+jobId+':bytes:'+checkpointFile)};
+ assert.deepEqual(Object.keys(lateFaults),[...RETAINED_LATE_FAULT_CASES]);
+ for(const [label,damage] of Object.entries(lateFaults)){
+  let damaged=0;
+  const result=await compare('late-'+label,holding,{at:{point:'retained-start',change:(runtime,rows)=>{damage(rows);damaged++;return null;}}});
+  assert.equal(damaged,2,'HISTORY_PROOF_RETAINED_FIXTURE_ORACLE late-'+label+': the file is damaged at the retained-checkpoint read of both workers');
+  assert.equal(result.sameCounts.retainedHits,0,'HISTORY_PROOF_RETAINED_FILE_ORACLE late-'+label+': a checkpoint file damaged before the re-binding re-read it was re-bound');
+  assert.equal(result.same.code,'HISTORY_FILE_INTEGRITY_FAILED','HISTORY_PROOF_RETAINED_FILE_ORACLE late-'+label+': a checkpoint file damaged before the re-binding re-read it was accepted');
+  emit('HISTORY-PROOF-RETAINED-LATE-FAULT-'+label,{refused:!result.same.ok,code:result.same.code??null,retainedHits:result.sameCounts.retainedHits});
+ }
  // Realm changes before the import, and right after the re-binding.
  const realms={'text-encoder':swaps.textEncoder,'hash-sha256-bytes':swaps.hashBytes,'json-parse':swaps.jsonParse,'decompression-stream':swaps.decompression,'blob-array-buffer':swaps.blobArrayBuffer,'engine-property':swaps.engineProperty,'schema-definition':swaps.schemaRefusesEarly};
  assert.deepEqual(Object.keys(realms),[...RETAINED_REALM_CASES]);
@@ -1120,7 +1163,10 @@ async function retainedCheckpointSection(context){
 // fresh computation at the reuse. After a new version's preparation (an
 // await) the work comparison is computed again, not reused. With the digest
 // primitives changed between the package digests and the work comparison,
-// the work is digested at its comparison.
+// the work is digested at its comparison. A native the package pass
+// dispatches through, changed before it so that the change undoes itself
+// within the pass (DIGEST_SPAN_SWAP_CASES), is seen by the pass's own check:
+// the import equals the same import with every digest made at its site.
 function digestSpans(runtime,between=null){
  const spans=new Map(),uses=[];
  runtime.__digestSpan={open(name){const span={closed:false};queueMicrotask(()=>{span.closed=true;});spans.set(name,span);},use(name,used,fresh){const span=spans.get(name);uses.push({name,sameTurn:Boolean(span)&&!span.closed,equal:Object.is(used,fresh())});},...(between?{between}:{})};
@@ -1134,6 +1180,79 @@ function benignEncoderChange(){
  const between=()=>{if(original)return;original=Object.getOwnPropertyDescriptor(TextEncoder.prototype,'encode');const encode=original.value;Object.defineProperty(TextEncoder.prototype,'encode',{...original,value:function(text){return Reflect.apply(encode,this,[text]);}});};
  between.undo=()=>{if(original){Object.defineProperty(TextEncoder.prototype,'encode',original);original=null;}};
  return between;
+}
+// Changes armed at the clone of the package project's source location, which
+// describeProjectSource makes right before the retained source's payload
+// digest and the package pass, each undoing itself at its first use, and
+// otherwise when the synchronous span of the package digests ends:
+// TextEncoder.prototype.encode made an accessor whose captured value and
+// writable the realm's Object.prototype supplies, encoding the first text
+// holding the tampered note as the original once (a backup whose embedded
+// project's note differs from its recovery version, its package digests
+// recomputed); and Set.prototype.has answering false once for revision on the
+// activation-field set (the untampered backup).
+export const DIGEST_SPAN_SWAP_CASES=Object.freeze(['encoder-shadowed-accessor','set-has']);
+const PACKAGE_PASS_ON='packageDigests=packageProjectDigestPair(project,packageDigestBaseline);if(packageDigests)';
+function armAtSourceLocation(runtime,change){
+ const state={armed:0,fired:0};let undo=null;
+ runtime.__onImportReuse=point=>{if(point!=='source-location')return;undo?.();state.armed++;const current=undo=change(runtime,()=>{state.fired++;});queueMicrotask(()=>current());};
+ return {state,undo(){undo?.();undo=null;delete runtime.__onImportReuse;}};
+}
+const encoderShadowSwap=(tampered,original)=>(runtime,fired)=>{
+ const proto=runtime.TextEncoder.prototype,d=Object.getOwnPropertyDescriptor(proto,'encode'),encode=d.value,shadow=runtime.Object.prototype;let active=true;
+ const undo=()=>{if(!active)return;active=false;Object.defineProperty(proto,'encode',d);delete shadow.value;delete shadow.writable;};
+ const swapped=function(text){const value=String(text);if(active&&value.includes(tampered)){fired();undo();return Reflect.apply(encode,this,[value.replace(tampered,original)]);}return Reflect.apply(encode,this,[text]);};
+ // Host-realm descriptor literals: the realm's Object.prototype supplies none of their fields.
+ Object.defineProperty(shadow,'value',{value:encode,writable:true,enumerable:false,configurable:true});
+ Object.defineProperty(shadow,'writable',{value:d.writable,writable:true,enumerable:false,configurable:true});
+ Object.defineProperty(proto,'encode',{get(){return swapped;},set:undefined,enumerable:d.enumerable,configurable:true});
+ return undo;
+};
+const setHasSwap=(runtime,fired)=>{
+ const proto=runtime.Set.prototype,d=Object.getOwnPropertyDescriptor(proto,'has'),has=d.value;let active=true;
+ const undo=()=>{if(active){active=false;Object.defineProperty(proto,'has',d);}};
+ Object.defineProperty(proto,'has',{...d,value:function(key){if(active&&key==='revision'&&Reflect.apply(has,this,['historyActivationId'])&&Reflect.apply(has,this,['projectSha256'])){fired();undo();return false;}return Reflect.apply(has,this,[key]);}});
+ return undo;
+};
+async function digestSpanSwaps(context){
+ const {source,emit}=context;
+ assert.equal(source.split(PACKAGE_PASS_ON).length,2,'HISTORY_PROOF_ANCHOR_ORACLE package-pass-on');
+ const sites=source.replace(PACKAGE_PASS_ON,'packageDigests=null;if(packageDigests)');
+ const b=browser(source),{store,page}=b;
+ let p=await store.createProject({commandId:'HISTORY-PROOF-REUSE-SWAP'});const jobId=p.job.JOB_ID;
+ const ORIGINAL='swap note ORIGINAL-0001',TAMPERED='swap note TAMPERED-0001';
+ {const next=store.clone(p);next.vendorExtension=page.copy({note:'Exact '+ORIGINAL+' '+'retained vendor text '.repeat(300)});p=await store.writeProject(next,{expectedProjectRevision:p.revision});}
+ for(const scrollY of [1,2])await store.saveCheckpoint(jobId,{expectedProjectRevision:p.revision,expectedStateSha256:p.projectSha256,view:page.copy({activeStage:1,activeView:'Workflow',drafts:{},scrollX:0,scrollY}),label:'Saved view'});
+ assert.equal((await exportOutcome(store,jobId)).ok,true,'HISTORY_PROOF_DIGEST_SPAN_FIXTURE_ORACLE: the swap fixture\'s minting export');
+ const backup=await store.exportPackage(jobId),body=await backupBody(backup),ids=body.recovery.entries.map(entry=>entry.id);
+ assert.equal(body.recovery.activeProjectSha256,body.packageManifest.projectSha256,'HISTORY_PROOF_DIGEST_SPAN_FIXTURE_ORACLE: the embedded project is the recovery active version');
+ const tamperedBody=structuredClone(body);tamperedBody.project.vendorExtension.note=tamperedBody.project.vendorExtension.note.replace(ORIGINAL,TAMPERED);
+ tamperedBody.packageManifest.projectSha256=store.projectSha256(page.copy(tamperedBody.project));
+ const tampered=await encodeBackup(b.worker().realm,tamperedBody),held=copyRows(b.rows,page);
+ const run=async(target,rows,blob,change)=>{
+  for(const [name,data] of held)rows.set(name,new Map([...data].map(([key,value])=>[key,page.copy(value)])));
+  let armed=null;const arm=realm=>{armed=armAtSourceLocation(realm.runtime,change);};
+  if(target.workers.length)arm(target.worker().realm);else target.onWorker=arm;
+  let outcome;try{outcome=await importOutcome(target,blob,jobId,ids);}finally{armed?.undo();target.onWorker=null;}
+  return {outcome,state:{...armed.state}};
+ };
+ const cases={'encoder-shadowed-accessor':[tampered,encoderShadowSwap(TAMPERED,ORIGINAL)],'set-has':[backup,setHasSwap]};
+ assert.deepEqual(Object.keys(cases),[...DIGEST_SPAN_SWAP_CASES]);
+ for(const [label,[blob,change]] of Object.entries(cases)){
+  // The proof-holding worker after the minting export, and a fresh worker
+  // whose import digests at every site (the package pass disabled).
+  const same=await run(b,b.rows,blob,change),control=browser(sites,new Map());const atSites=await run(control,control.rows,blob,change);
+  assert.deepEqual(same.outcome,atSites.outcome,'HISTORY_PROOF_DIGEST_SPAN_NATIVES_ORACLE '+label+': a change the package pass dispatches through, undone within it, gave the import another outcome than digests at their sites');
+  assert.equal(same.state.armed,1,'HISTORY_PROOF_DIGEST_SPAN_FIXTURE_ORACLE '+label+': the change is armed once at the source location\'s clone');
+  assert.deepEqual(same.state,atSites.state,'HISTORY_PROOF_DIGEST_SPAN_NATIVES_ORACLE '+label+': the change fired elsewhere than with digests at their sites');
+  if(label==='encoder-shadowed-accessor'){
+   assert.equal(same.state.fired,1,'HISTORY_PROOF_DIGEST_SPAN_FIXTURE_ORACLE '+label+': the change fired at the payload digest');
+   assert.deepEqual([same.outcome.ok,same.outcome.code,same.outcome.message],[false,'HISTORY_VERSION_MISMATCH','Backup active project does not match its recovery version.'],'HISTORY_PROOF_DIGEST_SPAN_NATIVES_ORACLE '+label+': the recovery check\'s refusal');
+  }else{
+   assert.deepEqual([same.outcome.ok,same.outcome.activeId,same.outcome.versions],[true,body.recovery.activeId,ids.length],'HISTORY_PROOF_DIGEST_SPAN_NATIVES_ORACLE '+label+': the backup\'s active version is activated');
+  }
+  emit('HISTORY-PROOF-DIGEST-SPAN-swap-'+label,{refused:!same.outcome.ok,code:same.outcome.code??null,activatedExisting:same.outcome.ok?same.outcome.activeId===body.recovery.activeId:false,changeFired:same.state.fired>0,equalToSiteDigests:true});
+ }
 }
 async function digestSpansSection(context){
  const {source,emit}=context;
@@ -1190,6 +1309,7 @@ async function digestSpansSection(context){
  assert.ok(conflictReuses.every(count=>count>0),'HISTORY_PROOF_PARTS_DIGEST_REUSE_ORACLE: the conflict check never reused a parts digest under confirmed natives');
  assert.ok(pairInputs>0&&pairInputReuses.every(use=>use.sameTurn&&use.equal),'HISTORY_PROOF_PARTS_DIGEST_REUSE_ORACLE: a Tier 2 hit sharing its root proof\'s captures checked them twice');
  emit('HISTORY-PROOF-PARTS-DIGEST-ONCE',{imports:partsCalls.length,operationsPerImport:1,distinctAcrossImports:true,hits,conflictReuses,equal:true,pairInputReuses:pairInputs,sameTurn:true});
+ await digestSpanSwaps(context);
 }
 
 // 15. Tier 1.5: an archived root whose root proof matches, but which no pair
@@ -1501,9 +1621,10 @@ async function restoredUnboundSection(context){
 // descriptor with its capture, whose field names they read once. In a
 // storage-worker realm each check refuses every change of a captured
 // descriptor (its value, writable, enumerable, a data property made an
-// accessor, an extra field), an added own key, a changed prototype and a
-// changed Map entry of the validator graph, and accepts the state again once
-// the change is undone.
+// accessor, the same made an accessor whose captured value and writable the
+// realm's Object.prototype supplies, an extra field), an added own key, a
+// changed prototype and a changed Map entry of the validator graph, and
+// accepts the state again once the change is undone.
 export const INPUT_CHECKS=Object.freeze(['validators','natives','byte-primitives','digest-primitives']);
 const INPUT_CHECK_NATIVES=Object.freeze({'natives':['JSON.parse','TextDecoder.prototype.decode','DecompressionStream.prototype.readable','Response.prototype.arrayBuffer','Blob.prototype.arrayBuffer','ReadableStream.prototype.getReader','Uint16Array.prototype.set','Promise.prototype.then'],'byte-primitives':['Blob.prototype.arrayBuffer','Blob.prototype.slice','Uint8Array.prototype.set','Uint32Array.prototype.subarray','ArrayBuffer.prototype.slice','DataView.prototype.getUint32','TextEncoder.prototype.encode'],'digest-primitives':['TextEncoder.prototype.encode','TextEncoder.prototype.encodeInto']});
 async function inputChecksSection(context){
@@ -1517,12 +1638,18 @@ async function inputChecksSection(context){
   'digest-primitives':()=>{const captured=I.captureRootDigestPrimitives();assert.ok(captured,'HISTORY_PROOF_INPUT_CHECK_FIXTURE_ORACLE digest primitives: captured');return ()=>I.rootDigestPrimitivesUnchanged(captured);}};
  const describe=realm.Object.getOwnPropertyDescriptor;
  // Each change returns its undo; the extra field is reported only by the
- // realm's descriptor reader, for that one property.
+ // realm's descriptor reader, for that one property. The shadowed accessor's
+ // descriptor literals are the host's, whose prototype the change leaves.
  const changes={
   'value':(target,key,d)=>{realm.Object.defineProperty(target,key,Object.hasOwn(d,'value')?{...d,value:realm.Function('return function changed(){}')()}:{...d,get:realm.Function('return function changed(){}')()});return ()=>realm.Object.defineProperty(target,key,d);},
   'writable':(target,key,d)=>{if(!Object.hasOwn(d,'value'))return null;realm.Object.defineProperty(target,key,{...d,writable:!d.writable});return ()=>realm.Object.defineProperty(target,key,d);},
   'enumerable':(target,key,d)=>{realm.Object.defineProperty(target,key,{...d,enumerable:!d.enumerable});return ()=>realm.Object.defineProperty(target,key,d);},
   'accessor':(target,key,d)=>{if(!Object.hasOwn(d,'value'))return null;const value=d.value;realm.Object.defineProperty(target,key,{get:()=>value,enumerable:d.enumerable,configurable:true});return ()=>realm.Object.defineProperty(target,key,d);},
+  'shadowed-accessor':(target,key,d)=>{
+   if(!Object.hasOwn(d,'value'))return null;const shadow=realm.Object.prototype,changed=realm.Function('return function changed(){}')();
+   Object.defineProperty(target,key,{get:()=>changed,set:undefined,enumerable:d.enumerable,configurable:true});
+   Object.defineProperty(shadow,'value',{value:d.value,writable:true,enumerable:false,configurable:true});Object.defineProperty(shadow,'writable',{value:d.writable,writable:true,enumerable:false,configurable:true});
+   return ()=>{delete shadow.value;delete shadow.writable;Object.defineProperty(target,key,{value:d.value,writable:d.writable,enumerable:d.enumerable,configurable:d.configurable});};},
   'extra-field':(target,key)=>{realm.Object.getOwnPropertyDescriptor=function(object,name){const found=Reflect.apply(describe,this,[object,name]);return object===target&&name===key&&found?{...found,extra:true}:found;};return ()=>{realm.Object.getOwnPropertyDescriptor=describe;};},
   'added':target=>{if(!realm.Object.isExtensible(target))return null;realm.Object.defineProperty(target,'__inputCheckAdded',{value:1,writable:true,enumerable:true,configurable:true});return ()=>{delete target.__inputCheckAdded;};}};
  const results=Object.fromEntries(INPUT_CHECKS.map(name=>[name,{changes:0,refused:0,acceptedAfterUndo:0}]));
